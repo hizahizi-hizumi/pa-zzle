@@ -1,0 +1,72 @@
+[project]
+name = "backend"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = ["mypy>=2.3.1", "pytest>=9.1.1", "ruff>=0.16.7"]
+
+[tool.uv]
+exclude-newer = "1 week"
+
+[tool.pytest.ini_options]
+testpaths = ["."]
+norecursedirs = [
+    "*.egg",
+    "_darcs",
+    "build",
+    "CVS",
+    "dist",
+    "node_modules",
+    "venv",
+    ".git",
+    ".venv",
+    ".pytest_cache",
+]
+
+[tool.ruff]
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    # Docstring は強制しない
+    "D",
+
+    # Ruff Formatter と併用するため除外
+    "W191",
+    "E111",
+    "E114",
+    "E117",
+    "Q000",
+    "Q001",
+    "Q002",
+    "Q003",
+    "Q004",
+    "COM812",
+    "COM819",
+    "ISC002",
+
+    # プロジェクト特性上、除外
+    "CPY001",
+    "RUF001",
+
+    # 将来見直し候補
+    "T201",
+    "TRY003",
+    "EM101",
+    "EM102",
+    "PLR0913",
+    "PLR0911",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/test_*.py" = ["S101", "N802", "PLC2401", "ARG005", "PLR2004"]
+
+[tool.mypy]
+strict = true
+show_error_codes = true
+files = ["."]
+explicit_package_bases = true
