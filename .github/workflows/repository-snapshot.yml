@@ -1,0 +1,273 @@
+name: Repository Snapshot
+
+on:
+  # pull_request:
+  #   types:
+  #     - opened
+  #     - synchronize
+  #     - reopened
+  #     - closed
+  # push:
+  #   branches:
+  #     - main
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: repository-snapshot-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  snapshot:
+    if: github.event_name != 'pull_request' || github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      target-sha: ${{ steps.target.outputs.sha }}
+      dependency-build-needed: ${{ steps.dependencies.outputs.build }}
+    steps:
+      - name: Resolve snapshot target
+        id: target
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          snapshot_base_sha=""
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            snapshot_target="pr-${PR_NUMBER}"
+            snapshot_sha="$PR_HEAD_SHA"
+            snapshot_base_sha="$PR_BASE_SHA"
+          elif [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            snapshot_target="dispatch"
+            snapshot_sha="$GITHUB_SHA"
+          else
+            snapshot_target="main"
+            snapshot_sha="$GITHUB_SHA"
+          fi
+
+          if [[ ! "$snapshot_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Expected a 40-character commit SHA, got: $snapshot_sha" >&2
+            exit 1
+          fi
+          if [[ -n "$snapshot_base_sha" && ! "$snapshot_base_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Expected a 40-character base SHA, got: $snapshot_base_sha" >&2
+            exit 1
+          fi
+
+          echo "target=$snapshot_target" >> "$GITHUB_OUTPUT"
+          echo "sha=$snapshot_sha" >> "$GITHUB_OUTPUT"
+          echo "base_sha=$snapshot_base_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.target.outputs.sha }}
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Build snapshot
+        id: snapshot
+        uses: ./.github/actions/repository-snapshot
+        with:
+          target: ${{ steps.target.outputs.target }}
+          sha: ${{ steps.target.outputs.sha }}
+
+      - name: Build git bundle
+        id: bundle
+        uses: ./.github/actions/repository-bundle
+        with:
+          target: ${{ steps.target.outputs.target }}
+          sha: ${{ steps.target.outputs.sha }}
+          base-sha: ${{ steps.target.outputs.base_sha }}
+
+      - name: Upload snapshot
+        id: upload-snapshot
+        uses: actions/upload-artifact@v7
+        with:
+          # With archive=false, upload-artifact uses this file name as the artifact name.
+          name: ${{ steps.snapshot.outputs.archive }}
+          path: ${{ steps.snapshot.outputs.archive }}
+          archive: false
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Upload git bundle
+        id: upload-bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.bundle.outputs.bundle }}
+          path: ${{ steps.bundle.outputs.bundle }}
+          archive: false
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Prune obsolete Repository Snapshot artifacts
+        if: github.event_name != 'workflow_dispatch'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SNAPSHOT_TARGET: ${{ steps.target.outputs.target }}
+          SNAPSHOT_SHA: ${{ steps.target.outputs.sha }}
+          SNAPSHOT_ARTIFACT_ID: ${{ steps.upload-snapshot.outputs.artifact-id }}
+          BUNDLE_ARTIFACT_ID: ${{ steps.upload-bundle.outputs.artifact-id }}
+        run: >-
+          .github/workflows/scripts/prune-repository-snapshot-artifacts.sh
+          "$SNAPSHOT_TARGET"
+          "$SNAPSHOT_SHA"
+          "$SNAPSHOT_ARTIFACT_ID"
+          "$BUNDLE_ARTIFACT_ID"
+
+      - name: Plan Offline Dependencies
+        if: github.event_name != 'workflow_dispatch' || github.ref_name == github.event.repository.default_branch
+        id: dependencies
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: python3 .github/actions/offline-dependencies/scripts/artifact_state.py plan --repo-root "$GITHUB_WORKSPACE"
+
+      - name: Prune obsolete Offline Dependencies after main update
+        if: steps.dependencies.outcome == 'success' && github.event_name == 'push'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          python3 .github/actions/offline-dependencies/scripts/artifact_state.py
+          prune
+          --repo-root "$GITHUB_WORKSPACE"
+
+  # build-offline-dependencies:
+  #   needs: snapshot
+  #   if: needs.snapshot.outputs.dependency-build-needed == 'true'
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 30
+  #   concurrency:
+  #     group: offline-dependencies-artifact-pool
+  #     cancel-in-progress: false
+  #   steps:
+  #     - name: Checkout dependency target
+  #       uses: actions/checkout@v6
+  #       with:
+  #         ref: ${{ needs.snapshot.outputs.target-sha }}
+  #         fetch-depth: 1
+
+  #     - name: Re-plan Offline Dependencies under pool lock
+  #       id: dependencies
+  #       shell: bash
+  #       env:
+  #         GITHUB_TOKEN: ${{ github.token }}
+  #         PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+  #         PR_NUMBER: ${{ github.event.pull_request.number }}
+  #       run: python3 .github/actions/offline-dependencies/scripts/artifact_state.py plan --repo-root "$GITHUB_WORKSPACE"
+
+  #     - name: Prune inactive Offline Dependencies
+  #       if: steps.dependencies.outputs.build == 'true'
+  #       shell: bash
+  #       env:
+  #         GITHUB_TOKEN: ${{ github.token }}
+  #         PR_NUMBER: ${{ github.event.pull_request.number }}
+  #       run: >-
+  #         python3 .github/actions/offline-dependencies/scripts/artifact_state.py
+  #         prune
+  #         --repo-root "$GITHUB_WORKSPACE"
+  #         --inactive-only
+
+  #     - name: Build Offline Dependencies
+  #       if: steps.dependencies.outputs.build == 'true'
+  #       id: dependencies-build
+  #       uses: ./.github/actions/offline-dependencies
+  #       with:
+  #         repo-root: ${{ github.workspace }}
+  #         sha: ${{ needs.snapshot.outputs.target-sha }}
+  #         input-key: ${{ steps.dependencies.outputs.input-key }}
+
+  #     - name: Verify Offline Dependencies without package registry access
+  #       if: steps.dependencies.outputs.build == 'true'
+  #       shell: bash
+  #       env:
+  #         DEPENDENCIES_ARCHIVE: ${{ steps.dependencies-build.outputs.archive }}
+  #       run: >-
+  #         .github/workflows/scripts/run-chatgpt-quality.sh
+  #         "$DEPENDENCIES_ARCHIVE"
+  #         "$GITHUB_WORKSPACE"
+
+  #     - name: Replace manual Offline Dependencies
+  #       if: github.event_name == 'workflow_dispatch' && steps.dependencies.outputs.build == 'true'
+  #       shell: bash
+  #       env:
+  #         GITHUB_TOKEN: ${{ github.token }}
+  #       run: >-
+  #         python3 .github/actions/offline-dependencies/scripts/artifact_state.py
+  #         replace-current
+  #         --repo-root "$GITHUB_WORKSPACE"
+
+  #     - name: Upload Offline Dependencies
+  #       if: steps.dependencies.outputs.build == 'true'
+  #       uses: actions/upload-artifact@v7
+  #       with:
+  #         name: ${{ steps.dependencies.outputs.artifact-name }}
+  #         path: ${{ steps.dependencies-build.outputs.archive }}
+  #         archive: false
+  #         if-no-files-found: error
+
+  #     - name: Prune obsolete Offline Dependencies
+  #       if: steps.dependencies.outcome == 'success'
+  #       shell: bash
+  #       env:
+  #         GITHUB_TOKEN: ${{ github.token }}
+  #         PR_NUMBER: ${{ github.event.pull_request.number }}
+  #       run: >-
+  #         python3 .github/actions/offline-dependencies/scripts/artifact_state.py
+  #         prune
+  #         --repo-root "$GITHUB_WORKSPACE"
+
+  cleanup-repository-snapshot:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout closed PR head
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 1
+
+      - name: Delete closed PR Repository Snapshot artifacts
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SNAPSHOT_TARGET: pr-${{ github.event.pull_request.number }}
+        run: .github/workflows/scripts/prune-repository-snapshot-artifacts.sh "$SNAPSHOT_TARGET"
+
+  # cleanup-offline-dependencies:
+  #   if: github.event_name == 'pull_request' && github.event.action == 'closed'
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 5
+  #   concurrency:
+  #     group: offline-dependencies-artifact-pool
+  #     cancel-in-progress: false
+  #   steps:
+  #     - name: Checkout main
+  #       uses: actions/checkout@v6
+  #       with:
+  #         ref: main
+  #         fetch-depth: 1
+
+  #     - name: Prune obsolete Offline Dependencies
+  #       shell: bash
+  #       env:
+  #         GITHUB_TOKEN: ${{ github.token }}
+  #       run: >-
+  #         python3 .github/actions/offline-dependencies/scripts/artifact_state.py
+  #         prune
+  #         --repo-root "$GITHUB_WORKSPACE"
