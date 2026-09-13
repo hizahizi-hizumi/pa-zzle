@@ -28,7 +28,7 @@ jobs:
     timeout-minutes: 30
     outputs:
       target-sha: ${{ steps.target.outputs.sha }}
-      # dependency-build-needed: ${{ steps.dependencies.outputs.build }}
+      dependency-build-needed: ${{ steps.dependencies.outputs.build }}
     steps:
       - name: Resolve snapshot target
         id: target
@@ -126,110 +126,111 @@ jobs:
           "$SNAPSHOT_ARTIFACT_ID"
           "$BUNDLE_ARTIFACT_ID"
 
-      # - name: Plan Offline Dependencies
-      #   if: github.event_name != 'workflow_dispatch' || github.ref_name == github.event.repository.default_branch
-      #   id: dependencies
-      #   shell: bash
-      #   env:
-      #     GITHUB_TOKEN: ${{ github.token }}
-      #     PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-      #     PR_NUMBER: ${{ github.event.pull_request.number }}
-      #   run: python3 .github/actions/offline-dependencies/scripts/artifact_state.py plan --repo-root "$GITHUB_WORKSPACE"
+      - name: Plan Offline Dependencies
+        if: github.event_name != 'workflow_dispatch' || github.ref_name == github.event.repository.default_branch
+        id: dependencies
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: python3 .github/actions/offline-dependencies/scripts/artifact_state.py plan --repo-root "$GITHUB_WORKSPACE"
 
-      # - name: Prune obsolete Offline Dependencies after main update
-      #   if: steps.dependencies.outcome == 'success' && github.event_name == 'push'
-      #   shell: bash
-      #   env:
-      #     GITHUB_TOKEN: ${{ github.token }}
-      #   run: >-
-      #     python3 .github/actions/offline-dependencies/scripts/artifact_state.py
-      #     prune
-      #     --repo-root "$GITHUB_WORKSPACE"
+      - name: Prune obsolete Offline Dependencies after main update
+        if: steps.dependencies.outcome == 'success' && github.event_name == 'push'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          python3 .github/actions/offline-dependencies/scripts/artifact_state.py
+          prune
+          --repo-root "$GITHUB_WORKSPACE"
 
-  # build-offline-dependencies:
-  #   needs: snapshot
-  #   if: needs.snapshot.outputs.dependency-build-needed == 'true'
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 30
-  #   concurrency:
-  #     group: offline-dependencies-artifact-pool
-  #     cancel-in-progress: false
-  #   steps:
-  #     - name: Checkout dependency target
-  #       uses: actions/checkout@v6
-  #       with:
-  #         ref: ${{ needs.snapshot.outputs.target-sha }}
-  #         fetch-depth: 1
+  build-offline-dependencies:
+    needs: snapshot
+    if: needs.snapshot.outputs.dependency-build-needed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: offline-dependencies-artifact-pool
+      cancel-in-progress: false
+    steps:
+      - name: Checkout dependency target
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.snapshot.outputs.target-sha }}
+          fetch-depth: 1
 
-  #     - name: Re-plan Offline Dependencies under pool lock
-  #       id: dependencies
-  #       shell: bash
-  #       env:
-  #         GITHUB_TOKEN: ${{ github.token }}
-  #         PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-  #         PR_NUMBER: ${{ github.event.pull_request.number }}
-  #       run: python3 .github/actions/offline-dependencies/scripts/artifact_state.py plan --repo-root "$GITHUB_WORKSPACE"
+      - name: Re-plan Offline Dependencies under pool lock
+        id: dependencies
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: python3 .github/actions/offline-dependencies/scripts/artifact_state.py plan --repo-root "$GITHUB_WORKSPACE"
 
-  #     - name: Prune inactive Offline Dependencies
-  #       if: steps.dependencies.outputs.build == 'true'
-  #       shell: bash
-  #       env:
-  #         GITHUB_TOKEN: ${{ github.token }}
-  #         PR_NUMBER: ${{ github.event.pull_request.number }}
-  #       run: >-
-  #         python3 .github/actions/offline-dependencies/scripts/artifact_state.py
-  #         prune
-  #         --repo-root "$GITHUB_WORKSPACE"
-  #         --inactive-only
+      - name: Prune inactive Offline Dependencies
+        if: steps.dependencies.outputs.build == 'true'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: >-
+          python3 .github/actions/offline-dependencies/scripts/artifact_state.py
+          prune
+          --repo-root "$GITHUB_WORKSPACE"
+          --inactive-only
 
-  #     - name: Build Offline Dependencies
-  #       if: steps.dependencies.outputs.build == 'true'
-  #       id: dependencies-build
-  #       uses: ./.github/actions/offline-dependencies
-  #       with:
-  #         repo-root: ${{ github.workspace }}
-  #         sha: ${{ needs.snapshot.outputs.target-sha }}
-  #         input-key: ${{ steps.dependencies.outputs.input-key }}
+      - name: Build Offline Dependencies
+        if: steps.dependencies.outputs.build == 'true'
+        id: dependencies-build
+        uses: ./.github/actions/offline-dependencies
+        with:
+          repo-root: ${{ github.workspace }}
+          sha: ${{ needs.snapshot.outputs.target-sha }}
+          input-key: ${{ steps.dependencies.outputs.input-key }}
 
-  #     - name: Verify Offline Dependencies without package registry access
-  #       if: steps.dependencies.outputs.build == 'true'
-  #       shell: bash
-  #       env:
-  #         DEPENDENCIES_ARCHIVE: ${{ steps.dependencies-build.outputs.archive }}
-  #       run: >-
-  #         .github/workflows/scripts/run-chatgpt-quality.sh
-  #         "$DEPENDENCIES_ARCHIVE"
-  #         "$GITHUB_WORKSPACE"
+      - name: Verify Offline Dependencies without package registry access
+        if: steps.dependencies.outputs.build == 'true'
+        shell: bash
+        env:
+          DEPENDENCIES_ARCHIVE: ${{ steps.dependencies-build.outputs.archive }}
+        run: >-
+          .github/workflows/scripts/run-chatgpt-quality.sh
+          "$DEPENDENCIES_ARCHIVE"
+          "$GITHUB_WORKSPACE"
 
-  #     - name: Replace manual Offline Dependencies
-  #       if: github.event_name == 'workflow_dispatch' && steps.dependencies.outputs.build == 'true'
-  #       shell: bash
-  #       env:
-  #         GITHUB_TOKEN: ${{ github.token }}
-  #       run: >-
-  #         python3 .github/actions/offline-dependencies/scripts/artifact_state.py
-  #         replace-current
-  #         --repo-root "$GITHUB_WORKSPACE"
+      - name: Replace manual Offline Dependencies
+        if: github.event_name == 'workflow_dispatch' && steps.dependencies.outputs.build == 'true'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          python3 .github/actions/offline-dependencies/scripts/artifact_state.py
+          replace-current
+          --repo-root "$GITHUB_WORKSPACE"
 
-  #     - name: Upload Offline Dependencies
-  #       if: steps.dependencies.outputs.build == 'true'
-  #       uses: actions/upload-artifact@v7
-  #       with:
-  #         name: ${{ steps.dependencies.outputs.artifact-name }}
-  #         path: ${{ steps.dependencies-build.outputs.archive }}
-  #         archive: false
-  #         if-no-files-found: error
+      - name: Upload Offline Dependencies
+        if: steps.dependencies.outputs.build == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.dependencies.outputs.artifact-name }}
+          path: ${{ steps.dependencies-build.outputs.archive }}
+          archive: false
+          retention-days: ${{ steps.dependencies.outputs.retention-days }}
+          if-no-files-found: error
 
-  #     - name: Prune obsolete Offline Dependencies
-  #       if: steps.dependencies.outcome == 'success'
-  #       shell: bash
-  #       env:
-  #         GITHUB_TOKEN: ${{ github.token }}
-  #         PR_NUMBER: ${{ github.event.pull_request.number }}
-  #       run: >-
-  #         python3 .github/actions/offline-dependencies/scripts/artifact_state.py
-  #         prune
-  #         --repo-root "$GITHUB_WORKSPACE"
+      - name: Prune obsolete Offline Dependencies
+        if: steps.dependencies.outcome == 'success'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: >-
+          python3 .github/actions/offline-dependencies/scripts/artifact_state.py
+          prune
+          --repo-root "$GITHUB_WORKSPACE"
 
   cleanup-repository-snapshot:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
@@ -249,25 +250,25 @@ jobs:
           SNAPSHOT_TARGET: pr-${{ github.event.pull_request.number }}
         run: .github/workflows/scripts/prune-repository-snapshot-artifacts.sh "$SNAPSHOT_TARGET"
 
-  # cleanup-offline-dependencies:
-  #   if: github.event_name == 'pull_request' && github.event.action == 'closed'
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 5
-  #   concurrency:
-  #     group: offline-dependencies-artifact-pool
-  #     cancel-in-progress: false
-  #   steps:
-  #     - name: Checkout main
-  #       uses: actions/checkout@v6
-  #       with:
-  #         ref: main
-  #         fetch-depth: 1
+  cleanup-offline-dependencies:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: offline-dependencies-artifact-pool
+      cancel-in-progress: false
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 1
 
-  #     - name: Prune obsolete Offline Dependencies
-  #       shell: bash
-  #       env:
-  #         GITHUB_TOKEN: ${{ github.token }}
-  #       run: >-
-  #         python3 .github/actions/offline-dependencies/scripts/artifact_state.py
-  #         prune
-  #         --repo-root "$GITHUB_WORKSPACE"
+      - name: Prune obsolete Offline Dependencies
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          python3 .github/actions/offline-dependencies/scripts/artifact_state.py
+          prune
+          --repo-root "$GITHUB_WORKSPACE"
