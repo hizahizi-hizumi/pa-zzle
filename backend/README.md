@@ -1,17 +1,23 @@
 # Backend
 
-pa-zzle の Backend 用ディレクトリです。
+パズル pa-zzle のバックエンド実装領域。
 
-現時点ではアプリケーション構造をまだ決めていません。PoC を通して API 境界やドメイン構造を検証しながら決めます。
+現時点では Python の開発・検証環境だけを用意しており、PoC で判断する API、ドメイン、永続化などの構造は先取りしていない。
 
-## 開発環境
+## Python
 
-Python の利用バージョンは `.python-version` を参照してください。
-
-依存関係管理には uv を使用します。
+利用する Python は `.python-version` に固定している。依存関係は uv で管理する。
 
 ```sh
-uv sync --directory backend
+uv sync
 ```
 
-品質検証コマンドはルートの `AGENTS.md` を参照してください。
+## 検証
+
+実装追加後は以下を利用する。
+
+```sh
+uv run pytest
+uv run mypy .
+uv run ruff check .
+```
