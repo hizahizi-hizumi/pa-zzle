@@ -50,13 +50,13 @@ paths:
 
 ## 6. 本リポ固有の追加観点
 
-- 外部参照（`docs/style/` / `docs/review/` / `docs/article-types/` 等）を持つスキルは参照先パスをSKILL.md内に明示する
+- 外部参照を持つスキルは参照先パスをSKILL.md内に明示する
 - ディレクトリ名 = `name` フィールド = 起動コマンド `/<name>` の三者が一致する
 - `description` には英語の起動条件を必ず含める。日本語の起動条件は任意
 
 ## 7. アンチパターン
 
-- 曖昧な `description`（例: `helper` `assistant` のような汎用語のみ）
+- 曖昧な `description`（例: `helper` `assistant` 等の汎用語のみ）
 - SKILL.md本文に詳細を詰め込み過ぎる（`references/` に分離すべき内容）
 - `description` が第二人称
 - 起動条件の文言が抜けている（Claudeが起動条件を判断できない）

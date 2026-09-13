@@ -71,7 +71,7 @@ Task ツールで `skill-reviewer` Agent を起動し、findings を取得する
 
 - `.claude/rules/skills.md` — Skill 記法ルール (frontmatter / 本文 / アンチパターン)
 - `.claude/rules/context-engineering.md` — Skill が適切なレイヤーかの判断軸 (Skill 起動前提なので原則確認済みだが、提案前に再確認)
-- 既存 Skill (`.claude/skills/*/SKILL.md`) — 同種パターンの参考 (例: adr-create / discover-topics)
+- 既存 Skill (`.claude/skills/*/SKILL.md`) — 同種パターンの参考
 
 ## 制約
 

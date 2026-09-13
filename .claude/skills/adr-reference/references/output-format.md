@@ -7,9 +7,9 @@
 ヒット1件:
 
 ```markdown
-### ADR-0001: バリデーション責務を構造保証に限定する
-- status: accepted / date: 2026-08-22
-- パス: dev/docs/adr/ADR-0001-validation-responsibility.md
+### ADR-0001: API境界をHTTPで統一する
+- status: accepted / date: 2026-09-13
+- パス: docs/adr/ADR-0001-http-api-boundary.md
 
 ---
 
@@ -19,7 +19,7 @@
 ヒット0件:
 
 ```text
-ADR-<NNNN> は見つかりません。dev/docs/adr/ 配下に該当ファイルなし。
+ADR-<NNNN> は見つかりません。docs/adr/ 配下に該当ファイルなし。
 連番の typo または欠番を確認してください。
 ```
 
@@ -32,8 +32,8 @@ ADR-<NNNN> は見つかりません。dev/docs/adr/ 配下に該当ファイル�
 ```markdown
 ### マッチ <N> 件 (キーワード: "<keyword>")
 
-- **ADR-0001** (status: accepted, date: 2026-08-22): バリデーション責務を構造保証に限定する
-  - パス: dev/docs/adr/ADR-0001-validation-responsibility.md
+- **ADR-0001** (status: accepted, date: 2026-09-13): API境界をHTTPで統一する
+  - パス: docs/adr/ADR-0001-http-api-boundary.md
   - 概要: <index.csv の summary>
   - ヒット位置: index.csv (本文 Read 省略)
 ```
@@ -52,8 +52,8 @@ ADR-<NNNN> は見つかりません。dev/docs/adr/ 配下に該当ファイル�
 
 ```text
 キーワード "<keyword>" でマッチする ADR は見つかりません。
-- dev/docs/adr/index.csv
-- dev/docs/adr/ADR-*.md
+- docs/adr/index.csv
+- docs/adr/ADR-*.md
 の両方を検索しました。別キーワードを試してください。
 ```
 
@@ -72,4 +72,4 @@ ADR-<NNNN> は見つかりません。dev/docs/adr/ 配下に該当ファイル�
 
 ## 現在仕様との関係
 
-ADR は判断履歴であり、現在仕様の正本ではない。ユーザーが「現在どうなっているか」を尋ねている場合、ADRだけで回答を確定せず、`AGENTS.md` が指定する現在仕様の正本も確認する。
+ADR は判断履歴であり、現在仕様の正本ではない。ユーザーが「現在どうなっているか」を尋ねている場合、ADRだけで回答を確定せず、関連するコード・設定・現行文書も確認する。

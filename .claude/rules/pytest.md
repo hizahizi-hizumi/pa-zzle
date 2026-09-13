@@ -2,7 +2,7 @@
 paths:
   - "**/test_*.py"
   - "**/conftest.py"
-  - "pyproject.toml"
+  - "backend/pyproject.toml"
 ---
 
 # pytest のコーディング規約

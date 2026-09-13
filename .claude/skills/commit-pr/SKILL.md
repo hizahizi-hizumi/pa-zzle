@@ -5,7 +5,7 @@ description: >
   "変更をPRにまとめて", "差分をコミット・PR化して", "commit and create PR",
   "作業内容をPRにして", "変更をGitHubに上げてPRを作成して".
   Analyzes uncommitted diffs, designs commit and PR boundaries, creates branches as needed,
-  then orchestrates the commit and pr skills to produce one or more draft pull requests.
+  then orchestrates the commit and pr skills to produce one or more open pull requests.
 argument-hint: "baseBranch=main, preview=false"
 allowed-tools: Read, Glob, Bash(git *), Bash(find *), Bash(*validate-input.sh*), Skill, TaskCreate, TaskUpdate, TaskGet, TaskList
 ---
@@ -68,7 +68,7 @@ git diff --staged
 - タイトル候補
 - base
 
-AmuQueryでは、problem / fixture / oracle / 採点基準 / manifest や、LUの設計・教材・評価などをフォルダ単位で機械的に分割しない。成立するVertical Sliceや契約単位を優先する。
+フォルダ単位で機械的に分割せず、成立する垂直スライスや契約単位を優先する。
 
 1PRで十分なら分けない。5PRを超えそうなら、実行前に分割方針を明示する。
 
@@ -129,6 +129,7 @@ git switch -c "<type>/<short-description>-<timestamp>" "<branch-base>"
 
 ## 制約
 
+- 作業中に `main` を取り込まない。`main` 追従は `pr` Skill の完了時競合確認に従う。
 - force pushしない。
 - `main` / `master` / `staging` へ直接コミットしない。
 - 計画外の差分を勝手に捨てない。
