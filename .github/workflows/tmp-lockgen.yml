@@ -1,0 +1,40 @@
+name: Temporary lock generation
+
+on:
+  push:
+    branches:
+      - chore/vite-generouted-lockgen
+
+permissions:
+  contents: write
+
+jobs:
+  generate-lock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: chore/vite-generouted-lockgen
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+
+      - name: Regenerate frontend lock
+        working-directory: frontend
+        run: bun install
+
+      - name: Commit lock
+        shell: bash
+        run: |
+          if git diff --quiet -- frontend/bun.lock; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/bun.lock
+          git commit -m "chore(frontend): bun.lockを再生成"
+          git push
