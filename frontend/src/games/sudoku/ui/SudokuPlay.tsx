@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import {
   Card,
   CardContent,
@@ -6,15 +6,15 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/components/ui/Card";
 import type { Seed } from "@/games/core/seed";
 import {
-  getWaterSortDifficultyLabel,
-  type WaterSortDifficulty,
-} from "@/games/water-sort/game/difficulty";
+  getSudokuDifficultyLabel,
+  type SudokuDifficulty,
+} from "@/games/sudoku/game/difficulty";
 
-type WaterSortPlayProps = {
-  difficulty: WaterSortDifficulty;
+type SudokuPlayProps = {
+  difficulty: SudokuDifficulty;
   seed: Seed;
   status: "playing" | "cleared";
   clear: () => void;
@@ -22,22 +22,21 @@ type WaterSortPlayProps = {
   onChangeDifficulty: () => void;
 };
 
-export function WaterSortPlay({
+export function SudokuPlay({
   difficulty,
   seed,
   status,
   clear,
   retry,
   onChangeDifficulty,
-}: WaterSortPlayProps) {
+}: SudokuPlayProps) {
   if (status === "cleared") {
     return (
       <Card className="mx-auto max-w-xl">
         <CardHeader>
           <CardTitle className="text-2xl">クリア</CardTitle>
           <CardDescription>
-            {getWaterSortDifficultyLabel(difficulty)}
-            のカラーウォーターソートをクリアしました。
+            {getSudokuDifficultyLabel(difficulty)}のナンプレをクリアしました。
           </CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
@@ -56,9 +55,9 @@ export function WaterSortPlay({
   return (
     <Card className="mx-auto max-w-xl">
       <CardHeader>
-        <CardTitle>カラーウォーターソート</CardTitle>
+        <CardTitle>ナンプレ</CardTitle>
         <CardDescription>
-          難易度: {getWaterSortDifficultyLabel(difficulty)}
+          難易度: {getSudokuDifficultyLabel(difficulty)}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { parseSudokuDifficulty } from "@/games/sudoku/game/difficulty";
 import { useSudokuGame } from "@/games/sudoku/hooks/use-sudoku-game";
-import { SudokuPlay } from "@/games/sudoku/ui/sudoku-play";
+import { SudokuPlay } from "@/games/sudoku/ui/SudokuPlay";
 import { Link, useNavigate, useParams } from "@/router";
 
 export default function SudokuPlayPage() {
