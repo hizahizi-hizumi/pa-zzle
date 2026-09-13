@@ -9,6 +9,11 @@ const outputDir = fileURLToPath(new URL("./dist-chatgpt/", import.meta.url));
 export default defineConfig({
   root: frontendRoot,
   plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      "@": frontendRoot,
+    },
+  },
   build: {
     outDir: outputDir,
     emptyOutDir: true,
