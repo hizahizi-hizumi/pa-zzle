@@ -3,7 +3,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/Card";
+} from "@/components/ui/card";
 import { waterSortDifficulties } from "@/games/water-sort/game/difficulty";
 import { Link } from "@/router";
 
