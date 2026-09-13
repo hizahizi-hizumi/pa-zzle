@@ -1,21 +1,28 @@
-# bun-react-tailwind-shadcn-template
+# Frontend
 
-To install dependencies:
+パズル pa-zzle のフロントエンド。
 
-```bash
+現時点では、PoC の画面構成やディレクトリ構成を先取りせず、React アプリとして起動・検証できる最小構成だけを置いている。
+
+## セットアップ
+
+Bun はリポジトリルートの `.bun-version` に固定している。
+
+```sh
 bun install
 ```
 
-To start a development server:
+## 開発
 
-```bash
-bun dev
+```sh
+bun run dev
 ```
 
-To run for production:
+## 検証
 
-```bash
-bun start
+```sh
+bun run check
+bun run typecheck
+bun run test
+bun run build
 ```
-
-This project was created using `bun init` in bun v1.4.0. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
