@@ -47,12 +47,6 @@ mkdir -p "$stage/frontend"
   bun install --frozen-lockfile
 )
 
-tailwindcss_version="$(node -p "require('./frontend/node_modules/tailwindcss/package.json').version")"
-(
-  cd frontend
-  bun add --no-save --exact "@tailwindcss/vite@$tailwindcss_version"
-)
-
 rm -rf frontend/node_modules/bun frontend/node_modules/@oven
 rm -f frontend/node_modules/.bin/bun frontend/node_modules/.bin/bunx
 find frontend/node_modules -mindepth 1 -maxdepth 2 -type d -name '*linux-x64-musl*' -prune -exec rm -rf {} +
