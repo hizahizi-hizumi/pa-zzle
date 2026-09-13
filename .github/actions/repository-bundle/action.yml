@@ -1,0 +1,69 @@
+name: Repository Bundle
+description: 対象SHAと必要なbase履歴を取得し、オフライン調査用git bundleを生成します。
+
+inputs:
+  target:
+    description: Artifact名に使う対象識別子です。
+    required: true
+  sha:
+    description: Bundle対象の40文字commit SHAです。
+    required: true
+  base-sha:
+    description: PRのbase commit SHAです。PR以外では空文字にします。
+    required: false
+    default: ""
+
+outputs:
+  bundle:
+    description: 生成したgit bundleのパスです。
+    value: ${{ steps.bundle.outputs.bundle }}
+
+runs:
+  using: composite
+  steps:
+    - name: Fetch bundle history
+      shell: bash
+      env:
+        SNAPSHOT_SHA: ${{ inputs.sha }}
+        SNAPSHOT_BASE_SHA: ${{ inputs.base-sha }}
+      run: |
+        set -euo pipefail
+
+        actual_sha="$(git rev-parse HEAD)"
+        if [[ "$actual_sha" != "$SNAPSHOT_SHA" ]]; then
+          echo "Checked out $actual_sha, expected $SNAPSHOT_SHA" >&2
+          exit 1
+        fi
+
+        if [[ "$(git rev-parse --is-shallow-repository)" == "true" ]]; then
+          git fetch --no-tags --no-recurse-submodules --unshallow origin "$SNAPSHOT_SHA"
+        fi
+
+        if [[ -n "$SNAPSHOT_BASE_SHA" ]] && ! git cat-file -e "${SNAPSHOT_BASE_SHA}^{commit}" 2>/dev/null; then
+          git fetch --no-tags --no-recurse-submodules origin "$SNAPSHOT_BASE_SHA"
+        fi
+
+    - name: Build git bundle
+      id: bundle
+      shell: bash
+      env:
+        SNAPSHOT_TARGET: ${{ inputs.target }}
+        SNAPSHOT_SHA: ${{ inputs.sha }}
+        SNAPSHOT_BASE_SHA: ${{ inputs.base-sha }}
+      run: |
+        set -euo pipefail
+
+        bundle="repository-bundle-${SNAPSHOT_TARGET}-${SNAPSHOT_SHA}.bundle"
+        git update-ref refs/heads/snapshot-head "$SNAPSHOT_SHA"
+        bundle_refs=(refs/heads/snapshot-head)
+
+        if [[ -n "$SNAPSHOT_BASE_SHA" ]]; then
+          git cat-file -e "${SNAPSHOT_BASE_SHA}^{commit}"
+          git update-ref refs/heads/snapshot-base "$SNAPSHOT_BASE_SHA"
+          bundle_refs+=(refs/heads/snapshot-base)
+        fi
+
+        git bundle create "$bundle" "${bundle_refs[@]}"
+        git bundle verify "$bundle"
+
+        echo "bundle=$bundle" >> "$GITHUB_OUTPUT"
