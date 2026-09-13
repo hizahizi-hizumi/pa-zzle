@@ -1,0 +1,35 @@
+name: Offline Dependencies
+description: ChatGPTのオフライン開発に必要なBun runtimeとFrontend依存を生成します。
+
+inputs:
+  repo-root:
+    description: 依存をmaterializeするrepository rootです。
+    required: true
+  sha:
+    description: 対象repositoryの40文字commit SHAです。
+    required: true
+  input-key:
+    description: dependency inputsから算出済みのArtifact keyです。
+    required: true
+
+outputs:
+  archive:
+    description: 生成したtar.zstのパスです。
+    value: ${{ steps.build.outputs.archive }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      with:
+        bun-version-file: .bun-version
+
+    - name: Build offline dependencies
+      id: build
+      shell: bash
+      run: >-
+        "$GITHUB_ACTION_PATH/scripts/build.sh"
+        "${{ inputs.repo-root }}"
+        "${{ inputs.sha }}"
+        "${{ inputs.input-key }}"
