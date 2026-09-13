@@ -47,10 +47,10 @@ mkdir -p "$stage/frontend" "$stage/runtime"
   bun install --frozen-lockfile
 )
 
-if [[ -d frontend/node_modules/.bun ]]; then
-  find frontend/node_modules/.bun -mindepth 1 -maxdepth 1 -type d -name '*linux-x64-musl@*' -prune -exec rm -rf {} +
-  find frontend/node_modules -type l -lname '*linux-x64-musl*' -delete
-fi
+rm -rf frontend/node_modules/bun frontend/node_modules/@oven
+rm -f frontend/node_modules/.bin/bun frontend/node_modules/.bin/bunx
+find frontend/node_modules -mindepth 1 -maxdepth 2 -type d -name '*linux-x64-musl*' -prune -exec rm -rf {} +
+find frontend/node_modules -type l -lname '*linux-x64-musl*' -delete
 
 mv frontend/node_modules "$stage/frontend/node_modules"
 cp "$(command -v bun)" "$stage/runtime/bun"
