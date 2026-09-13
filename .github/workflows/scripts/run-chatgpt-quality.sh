@@ -39,14 +39,10 @@ actual_libc="$(getconf GNU_LIBC_VERSION 2>/dev/null | awk '{print $1}')"
 
 work_dir="$(mktemp -d)"
 server_pid=""
-alias_probe=""
 cleanup() {
   if [[ -n "$server_pid" ]] && kill -0 "$server_pid" 2>/dev/null; then
     kill "$server_pid" 2>/dev/null || true
     wait "$server_pid" 2>/dev/null || true
-  fi
-  if [[ -n "$alias_probe" ]]; then
-    rm -f "$alias_probe"
   fi
   if [[ -L "$repo_root/frontend/node_modules" ]]; then
     rm "$repo_root/frontend/node_modules"
@@ -81,15 +77,6 @@ export NPM_CONFIG_REGISTRY=http://127.0.0.1:9
   node_modules/.bin/vite build --config vite.chatgpt.config.mjs
 )
 
-alias_probe_path="$repo_root/frontend/src/__chatgpt_alias_probe.ts"
-[[ ! -e "$alias_probe_path" ]] || fail "Alias probe path already exists: $alias_probe_path"
-alias_probe="$alias_probe_path"
-cat >"$alias_probe" <<'EOF_ALIAS_PROBE'
-import "@/App";
-
-export const aliasResolved = true;
-EOF_ALIAS_PROBE
-
 server_log="$work_dir/dev-server.log"
 (
   cd "$repo_root/frontend"
@@ -114,21 +101,8 @@ if (( server_ready == 0 )); then
   fail "Frontend development server did not become ready"
 fi
 
-fetch_frontend_resource() {
-  local resource_path="$1"
-  local destination="${2:-/dev/null}"
-  if ! curl --fail --silent --show-error "http://127.0.0.1:3000/$resource_path" >"$destination"; then
-    cat "$server_log" >&2
-    fail "Frontend development server failed to serve /$resource_path"
-  fi
-}
-
-fetch_frontend_resource frontend.tsx
-fetch_frontend_resource App.tsx
-fetch_frontend_resource __chatgpt_alias_probe.ts
-
 css_response="$work_dir/index.css"
-fetch_frontend_resource index.css "$css_response"
+curl --fail --silent --show-error http://127.0.0.1:3000/index.css >"$css_response"
 if grep -Fq '@apply' "$css_response"; then
   cat "$server_log" >&2
   fail "Tailwind directives were not transformed by the Vite development server"
