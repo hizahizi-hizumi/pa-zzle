@@ -7,10 +7,11 @@
     "dev": "bun --hot src/index.ts",
     "start": "NODE_ENV=production bun src/index.ts",
     "build": "bun run build.ts",
-    "test": "vitest",
-    "test:run": "vitest run",
-    "format": "biome format --write .",
-    "lint": "biome check ."
+    "check": "biome check .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "format": "biome format --write ."
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.7",
