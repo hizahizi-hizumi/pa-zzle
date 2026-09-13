@@ -36,6 +36,10 @@ uv run --directory backend mypy . # mypy の型チェック
 uv run --directory backend ruff check . # Ruff の静的解析
 ```
 
+## 検証
+
+- 既存のテスト基盤・静的解析・ビルドツールなどの汎用的な検証手段を用いず、特定の変更や不具合のために独自実装した検証は `main` に入れない。
+
 ## 文書
 
 - `docs/立ち上げ/`: 現在のPoC方針・アプリ概要・調査資料。PoCの要件や方向性を扱うときに参照する。
