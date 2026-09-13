@@ -1,23 +1,11 @@
 @import "../styles/globals.css";
 
-:root {
-  font-family: system-ui, sans-serif;
-}
+@layer base {
+  :root {
+    @apply font-sans;
+  }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-#root {
-  min-height: 100vh;
-}
-
-main {
-  display: grid;
-  min-height: 100vh;
-  place-items: center;
-  padding: 2rem;
-  box-sizing: border-box;
+  body {
+    @apply min-w-[320px] min-h-screen m-0 bg-background text-foreground;
+  }
 }
