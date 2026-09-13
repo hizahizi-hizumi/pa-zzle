@@ -1,7 +1,6 @@
 ---
 paths:
   - "**/*.{py,sh,sql,toml,yaml,yml,ts,tsx}"
-  - "amu"
 ---
 
 # 自己説明的なコード

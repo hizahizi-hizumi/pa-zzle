@@ -70,7 +70,7 @@ Task ツールで `agent-reviewer` Agent を起動し、findings を取得する
 
 - `.claude/rules/agents.md` — Agent 記法ルール (frontmatter / system prompt / アンチパターン)
 - `.claude/rules/context-engineering.md` — Agent が適切なレイヤーかの判断軸 (Agent 起動前提なので原則確認済みだが、提案前に再確認)
-- 既存 Agent (`.claude/agents/*.md`) — 同種パターンの参考 (例: topics-discoverer / verifier / updater)
+- 既存 Agent (`.claude/agents/*.md`) — 同種パターンの参考
 
 ## 制約
 

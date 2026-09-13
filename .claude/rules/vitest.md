@@ -1,7 +1,6 @@
 ---
 paths:
-  - "amu_query/frontend/src/**/*.test.{ts,tsx}"
-  - "amu_query/frontend/scripts/*.test.mjs"
+  - "frontend/**/*.test.{ts,tsx,mjs}"
 ---
 
 # Vitest のコーディング規約

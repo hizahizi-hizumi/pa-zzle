@@ -49,7 +49,7 @@ tools: Read, Grep, Glob
 
 ### 本リポ固有
 
-- 外部参照 (`docs/style/` / `docs/review/` / `docs/article-types/` 等) を持つ Skill では参照先パスが SKILL.md 内に明示されている
+- 外部参照を持つ Skill では参照先パスが SKILL.md 内に明示されている
 - description には英語の起動 trigger が必ず含まれる (日本語 trigger は任意)
 
 ### アンチパターン
