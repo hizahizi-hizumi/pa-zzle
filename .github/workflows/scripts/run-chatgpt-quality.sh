@@ -27,10 +27,12 @@ repo_root="$(realpath "${2:-.}")"
 source "$repo_root/.github/actions/offline-dependencies/inputs.env"
 expected_schema="$OFFLINE_DEPENDENCIES_SCHEMA"
 
+actual_node_major="$(node -p 'process.versions.node.split(".")[0]')"
 actual_platform="$(uname -s | tr '[:upper:]' '[:lower:]')"
 actual_arch="$(uname -m)"
 actual_libc="$(getconf GNU_LIBC_VERSION 2>/dev/null | awk '{print $1}')"
 
+[[ "$actual_node_major" == "$NODE_MAJOR" ]] || fail "Node $NODE_MAJOR is required, got $actual_node_major"
 [[ "$actual_platform" == "$PLATFORM" ]] || fail "platform $PLATFORM is required, got $actual_platform"
 [[ "$actual_arch" == "$ARCH" ]] || fail "architecture $ARCH is required, got $actual_arch"
 [[ "$actual_libc" == "$LIBC" ]] || fail "libc $LIBC is required, got ${actual_libc:-unknown}"
@@ -45,13 +47,12 @@ cleanup() {
   if [[ -L "$repo_root/frontend/node_modules" ]]; then
     rm "$repo_root/frontend/node_modules"
   fi
-  rm -rf "$work_dir"
+  rm -rf "$repo_root/frontend/dist-chatgpt" "$work_dir"
 }
 trap cleanup EXIT
 
 tar --zstd -xf "$archive" -C "$work_dir"
 [[ -f "$work_dir/manifest.env" ]] || fail "manifest.env not found in Artifact"
-[[ -x "$work_dir/runtime/bun" ]] || fail "Bun runtime not found in Artifact"
 [[ -d "$work_dir/frontend/node_modules" ]] || fail "frontend node_modules not found in Artifact"
 
 # shellcheck disable=SC1091
@@ -60,25 +61,27 @@ source "$work_dir/manifest.env"
 expected_key="$(python3 "$repo_root/.github/actions/offline-dependencies/scripts/artifact_state.py" key --repo-root "$repo_root")"
 [[ "$INPUT_KEY" == "$expected_key" ]] || fail "Artifact key does not match Repository Snapshot"
 
-expected_bun_version="$(tr -d '[:space:]' < "$repo_root/.bun-version")"
-actual_bun_version="$($work_dir/runtime/bun --version)"
-[[ "$actual_bun_version" == "$expected_bun_version" ]] || fail "Artifact Bun version does not match Repository Snapshot"
-
 if [[ -e "$repo_root/frontend/node_modules" || -L "$repo_root/frontend/node_modules" ]]; then
   fail "frontend/node_modules already exists: $repo_root/frontend/node_modules"
 fi
 ln -s "$work_dir/frontend/node_modules" "$repo_root/frontend/node_modules"
 
-export PATH="$work_dir/runtime:$PATH"
 export npm_config_registry=http://127.0.0.1:9
 export NPM_CONFIG_REGISTRY=http://127.0.0.1:9
-export BUN_CONFIG_REGISTRY=http://127.0.0.1:9
 
-cd "$repo_root"
-./scripts/verify.sh
+(
+  cd "$repo_root/frontend"
+  node_modules/.bin/biome check .
+  TERM=dumb node_modules/.bin/tsc --noEmit --pretty false
+  node_modules/.bin/vitest run
+  node_modules/.bin/vite build --config vite.chatgpt.config.mjs
+)
 
 server_log="$work_dir/dev-server.log"
-PORT=3000 bun run --cwd frontend dev >"$server_log" 2>&1 &
+(
+  cd "$repo_root/frontend"
+  node_modules/.bin/vite --config vite.chatgpt.config.mjs --host 127.0.0.1 --port 3000
+) >"$server_log" 2>&1 &
 server_pid=$!
 server_ready=0
 for _ in $(seq 1 40); do
@@ -96,6 +99,13 @@ done
 if (( server_ready == 0 )); then
   cat "$server_log" >&2
   fail "Frontend development server did not become ready"
+fi
+
+css_response="$work_dir/index.css"
+curl --fail --silent --show-error http://127.0.0.1:3000/index.css >"$css_response"
+if grep -Fq '@apply' "$css_response"; then
+  cat "$server_log" >&2
+  fail "Tailwind directives were not transformed by the Vite development server"
 fi
 
 kill "$server_pid"

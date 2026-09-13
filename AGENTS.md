@@ -13,11 +13,17 @@
 ### Frontend
 
 ```sh
-bun run --cwd frontend dev # 開発サーバー起動
+bun run --cwd frontend dev # PC環境の開発サーバー起動
 bun run --cwd frontend check # Biome のチェック
 bun run --cwd frontend typecheck # TypeScript の型検査
 bun run --cwd frontend test # Vitest の1回実行
 bun run --cwd frontend build # プロダクションビルド
+```
+
+Repository Snapshot と Offline Dependencies を使う ChatGPT 実行環境では、依存アーティファクトを `frontend/node_modules` に配置して Vite を使う。
+
+```sh
+frontend/node_modules/.bin/vite --config frontend/vite.chatgpt.config.mjs --host 127.0.0.1 --port 3000
 ```
 
 ### Backend

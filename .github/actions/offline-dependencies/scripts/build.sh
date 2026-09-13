@@ -40,11 +40,17 @@ actual_bun_version="$(bun --version)"
 
 stage="$RUNNER_TEMP/offline-dependencies-stage"
 rm -rf "$stage" frontend/node_modules
-mkdir -p "$stage/frontend" "$stage/runtime"
+mkdir -p "$stage/frontend"
 
 (
   cd frontend
   bun install --frozen-lockfile
+)
+
+tailwindcss_version="$(node -p "require('./frontend/node_modules/tailwindcss/package.json').version")"
+(
+  cd frontend
+  bun add --no-save --exact "@tailwindcss/vite@$tailwindcss_version"
 )
 
 rm -rf frontend/node_modules/bun frontend/node_modules/@oven
@@ -53,8 +59,6 @@ find frontend/node_modules -mindepth 1 -maxdepth 2 -type d -name '*linux-x64-mus
 find frontend/node_modules -type l -lname '*linux-x64-musl*' -delete
 
 mv frontend/node_modules "$stage/frontend/node_modules"
-cp "$(command -v bun)" "$stage/runtime/bun"
-chmod 0755 "$stage/runtime/bun"
 
 cat > "$stage/manifest.env" <<EOF_MANIFEST
 OFFLINE_DEPENDENCIES_SCHEMA=$OFFLINE_DEPENDENCIES_SCHEMA
