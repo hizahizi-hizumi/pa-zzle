@@ -4,13 +4,20 @@
 
 ## 実行コマンド
 
+### リポジトリ全体
+
+```sh
+./scripts/verify.sh # 現時点の全品質検証
+```
+
 ### Frontend
 
 ```sh
-bun --cwd frontend run dev # 開発サーバー起動
-bun --cwd frontend run build # プロダクションビルド
-bun --cwd frontend run lint # Biome のチェック
-bun --cwd frontend run test # Vitest のテスト実行
+bun run --cwd frontend dev # 開発サーバー起動
+bun run --cwd frontend check # Biome のチェック
+bun run --cwd frontend typecheck # TypeScript の型検査
+bun run --cwd frontend test # Vitest の1回実行
+bun run --cwd frontend build # プロダクションビルド
 ```
 
 ### Backend
