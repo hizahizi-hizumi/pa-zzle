@@ -1,0 +1,38 @@
+name: Repository Snapshot
+description: 対象SHAのtracked filesをRepository Snapshot ZIPへまとめます。
+
+inputs:
+  target:
+    description: Artifact名に使う対象識別子です。
+    required: true
+  sha:
+    description: Snapshot対象の40文字commit SHAです。
+    required: true
+
+outputs:
+  archive:
+    description: 生成したSnapshot ZIPのパスです。
+    value: ${{ steps.snapshot.outputs.archive }}
+
+runs:
+  using: composite
+  steps:
+    - name: Build snapshot
+      id: snapshot
+      shell: bash
+      env:
+        SNAPSHOT_TARGET: ${{ inputs.target }}
+        SNAPSHOT_SHA: ${{ inputs.sha }}
+      run: |
+        set -euo pipefail
+
+        actual_sha="$(git rev-parse HEAD)"
+        if [[ "$actual_sha" != "$SNAPSHOT_SHA" ]]; then
+          echo "Checked out $actual_sha, expected $SNAPSHOT_SHA" >&2
+          exit 1
+        fi
+
+        archive="repository-snapshot-${SNAPSHOT_TARGET}-${SNAPSHOT_SHA}.zip"
+        git ls-files -z | xargs -0 zip -q -y "$archive" --
+
+        echo "archive=$archive" >> "$GITHUB_OUTPUT"
