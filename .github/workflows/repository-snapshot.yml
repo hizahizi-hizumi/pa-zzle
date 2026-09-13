@@ -126,6 +126,7 @@ jobs:
           "$SNAPSHOT_ARTIFACT_ID"
           "$BUNDLE_ARTIFACT_ID"
 
+      # Offline Dependencies は pa-zzle 向けの移植が完了するまで手動で無効化しておく。
       # - name: Plan Offline Dependencies
       #   if: github.event_name != 'workflow_dispatch' || github.ref_name == github.event.repository.default_branch
       #   id: dependencies
