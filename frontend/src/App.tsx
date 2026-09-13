@@ -163,7 +163,10 @@ function WaterSortPlay({
       difficulty={difficulty}
       onClear={onClear}
     >
-      <div className="flex items-end justify-center gap-3 py-6" aria-hidden="true">
+      <div
+        className="flex items-end justify-center gap-3 py-6"
+        aria-hidden="true"
+      >
         {["bg-sky-300", "bg-amber-300", "bg-violet-300", "bg-emerald-300"].map(
           (color) => (
             <div
@@ -186,7 +189,17 @@ function SudokuPlay({
   difficulty: DifficultyId;
   onClear: (result: GameSessionResult) => void;
 }) {
-  const cells = ["5", "", "8", "", "7", "", "4", "", "2"];
+  const cells = [
+    { id: "r1c1", value: "5" },
+    { id: "r1c2", value: "" },
+    { id: "r1c3", value: "8" },
+    { id: "r2c1", value: "" },
+    { id: "r2c2", value: "7" },
+    { id: "r2c3", value: "" },
+    { id: "r3c1", value: "4" },
+    { id: "r3c2", value: "" },
+    { id: "r3c3", value: "2" },
+  ];
 
   return (
     <PlaceholderPlayCard
@@ -194,13 +207,16 @@ function SudokuPlay({
       difficulty={difficulty}
       onClear={onClear}
     >
-      <div className="mx-auto grid w-48 grid-cols-3 border-2" aria-hidden="true">
-        {cells.map((value, index) => (
+      <div
+        className="mx-auto grid w-48 grid-cols-3 border-2"
+        aria-hidden="true"
+      >
+        {cells.map((cell) => (
           <div
-            key={`${index}-${value}`}
+            key={cell.id}
             className="flex aspect-square items-center justify-center border text-lg font-semibold"
           >
-            {value}
+            {cell.value}
           </div>
         ))}
       </div>
@@ -226,7 +242,8 @@ function PlaceholderPlayCard({
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>
-          {difficultyDefinition.name}・共通プレイ導線を確認するための仮プレイ画面
+          {difficultyDefinition.name}
+          ・共通プレイ導線を確認するための仮プレイ画面
         </CardDescription>
       </CardHeader>
       <CardContent>{children}</CardContent>
