@@ -9,11 +9,11 @@
 ### Frontend
 
 ```sh
-bun --cwd frontend run dev # 開発サーバー起動
-bun --cwd frontend run check # Biome のチェック
-bun --cwd frontend run typecheck # TypeScript の型検査
-bun --cwd frontend run test # Vitest の1回実行
-bun --cwd frontend run build # プロダクションビルド
+bun run --cwd frontend dev # 開発サーバー起動
+bun run --cwd frontend check # Biome のチェック
+bun run --cwd frontend typecheck # TypeScript の型検査
+bun run --cwd frontend test # Vitest の1回実行
+bun run --cwd frontend build # プロダクションビルド
 ```
 
 ### Backend（実装開始後）
