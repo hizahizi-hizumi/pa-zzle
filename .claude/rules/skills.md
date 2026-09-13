@@ -56,7 +56,7 @@ paths:
 
 ## 7. アンチパターン
 
-- 曖昧な `description`（例: `helper` `assistant` 等の汎用語のみ）
+- 曖昧な `description`（例: `helper` `assistant` のような汎用語のみ）
 - SKILL.md本文に詳細を詰め込み過ぎる（`references/` に分離すべき内容）
 - `description` が第二人称
 - 起動条件の文言が抜けている（Claudeが起動条件を判断できない）
