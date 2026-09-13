@@ -56,7 +56,7 @@ paths:
 
 - Claude Codeは `CLAUDE.md` を読む（`AGENTS.md` ではない）
 - Claude Codeと他のAIコーディングエージェントで共有したい場合はCLAUDE.mdから `@AGENTS.md` で取り込むかシンボリックリンクを張る
-- 本リポでは `CLAUDE.md → AGENTS.md` のシンボリックリンク。実体は `AGENTS.md`
+- 本リポでは `CLAUDE.md` から `@AGENTS.md` で共通指示を読み込む
 
 ## 9. アンチパターン
 

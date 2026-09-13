@@ -12,7 +12,7 @@ allowed-tools: Read, Glob, Bash(git *), TaskCreate, TaskUpdate, TaskGet, TaskLis
 
 # 現在ブランチへのコミット作成
 
-現在ブランチの staged / unstaged / untracked 差分を分析し、AmuQueryの変更を論理単位でコミットする。ブランチ作成と push は行わない。
+現在ブランチの staged / unstaged / untracked 差分を分析し、変更を論理単位でコミットする。ブランチ作成と push は行わない。
 
 ## 入力
 
@@ -52,9 +52,9 @@ git diff --staged
 - 機械的変更と意味変更を分ける。
 - 純粋なリファクタと挙動変更を原則分ける。
 - 依存更新 / CI / 開発環境変更と機能変更を原則分ける。
-- 対応するテスト、fixture、oracle、契約変更は、分離すると中間状態が壊れる場合は同じコミットに置く。
-- AmuQueryではディレクトリ単位で機械的に分けない。1つの問題・LU・Vertical Sliceを成立させる複数ディレクトリの変更は、同一論理変更として扱える。
-- 可能な範囲で各コミットを `uv run --frozen python -m dev.tools.validate` 可能な状態に寄せる。
+- 実装と対応するテスト・契約変更を分離すると中間状態が壊れる場合は同じコミットに置く。
+- ディレクトリ境界ではなく、変更理由と独立してrevertできる単位で判断する。
+- 可能な範囲で各コミットを、変更範囲に対応する `AGENTS.md` の検証コマンドが通る状態にする。
 
 各コミットについて、対象ファイル / hunk、メッセージ、順序を確定する。
 

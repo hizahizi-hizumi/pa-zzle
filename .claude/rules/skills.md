@@ -50,7 +50,7 @@ paths:
 
 ## 6. 本リポ固有の追加観点
 
-- 外部参照（`docs/style/` / `docs/review/` / `docs/article-types/` 等）を持つスキルは参照先パスをSKILL.md内に明示する
+- 外部参照を持つスキルは参照先パスをSKILL.md内に明示する
 - ディレクトリ名 = `name` フィールド = 起動コマンド `/<name>` の三者が一致する
 - `description` には英語の起動条件を必ず含める。日本語の起動条件は任意
 
