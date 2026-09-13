@@ -16,7 +16,7 @@ bun run --cwd frontend test # Vitest の1回実行
 bun run --cwd frontend build # プロダクションビルド
 ```
 
-### Backend（実装開始後）
+### Backend
 
 ```sh
 uv run --directory backend pytest # pytest のテスト実行

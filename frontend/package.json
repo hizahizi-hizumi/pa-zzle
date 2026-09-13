@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "format": "biome format --write ."
+    "format": "biome check --write ."
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.7",
