@@ -102,7 +102,7 @@ if (( server_ready == 0 )); then
 fi
 
 css_response="$work_dir/index.css"
-curl --fail --silent --show-error http://127.0.0.1:3000/index.css >"$css_response"
+curl --fail --silent --show-error http://127.0.0.1:3000/src/index.css >"$css_response"
 if grep -Fq '@apply' "$css_response"; then
   cat "$server_log" >&2
   fail "Tailwind directives were not transformed by the Vite development server"

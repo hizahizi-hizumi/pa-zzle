@@ -4,7 +4,8 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
-const frontendRoot = fileURLToPath(new URL("./src/", import.meta.url));
+const frontendRoot = fileURLToPath(new URL("./", import.meta.url));
+const sourceRoot = fileURLToPath(new URL("./src/", import.meta.url));
 const pagesRoot = fileURLToPath(new URL("./src/pages/", import.meta.url));
 const routerPath = fileURLToPath(new URL("./src/router.ts", import.meta.url));
 const outputDir = fileURLToPath(new URL("./dist/", import.meta.url));
@@ -24,7 +25,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "@": frontendRoot,
+      "@": sourceRoot,
     },
   },
   build: {
