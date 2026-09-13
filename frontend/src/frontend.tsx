@@ -7,7 +7,8 @@ if (rootElement === null) {
   throw new Error("root element was not found");
 }
 
-const root = (import.meta.hot.data.root ??= createRoot(rootElement));
+const root = import.meta.hot.data.root ?? createRoot(rootElement);
+import.meta.hot.data.root = root;
 root.render(
   <StrictMode>
     <App />
