@@ -17,10 +17,10 @@ run_check() {
   fi
 }
 
-run_check "Frontend Biome" bun --cwd frontend run check
-run_check "Frontend TypeScript" bun --cwd frontend run typecheck
-run_check "Frontend Vitest" bun --cwd frontend run test
-run_check "Frontend build" bun --cwd frontend run build
+run_check "Frontend Biome" bun run --cwd frontend check
+run_check "Frontend TypeScript" bun run --cwd frontend typecheck
+run_check "Frontend Vitest" bun run --cwd frontend test
+run_check "Frontend build" bun run --cwd frontend build
 
 if (( ${#failed_checks[@]} > 0 )); then
   printf '\nQuality verification failed:\n' >&2
