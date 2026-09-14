@@ -1,18 +1,15 @@
 name: Temporary update puzzle research
 
 on:
-  pull_request:
+  push:
     branches:
-      - main
-    types:
-      - synchronize
+      - docs/puzzle-candidate-priority-20260914
 
 permissions:
   contents: write
 
 jobs:
   update:
-    if: github.event.pull_request.head.ref == 'docs/puzzle-candidate-priority-20260914'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,52 +17,21 @@ jobs:
           ref: docs/puzzle-candidate-priority-20260914
 
       - name: Update puzzle research facts
+        env:
+          FACTS_BASE64: LS0tCiMjIOiqv+afu+WJjeOBq+eiuuiqjeOBp+OBjeOCi+WklumDqOS6i+WunwoK5oiQ56uL5oCn6Kq/5p+744Gu5YmN44Gn44KC56K66KqN44Gn44GN44KL5LqL5a6f44Go44GX44Gm44CB5Luj6KGo55qE44Gq44Oi44OQ44Kk44Or44Ki44OX44Oq44Gu44K544OI44Ki6KGo56S65YCk44KS6KiY6Yyy44GZ44KL44CCCgrnorroqo3ml6U6IDIwMjYtMDktMTQKCi0gR29vZ2xlIFBsYXkg44Gu44OA44Km44Oz44Ot44O844OJ5pWw44GvIGAx5YSEK2Ag44Gu44KI44GG44Gq57Sv56mN44Gu5biv6KGo56S644Gn44GC44KK44CB54++5Zyo44Gu5Yip55So6ICF5pWw44Gn44Gv44Gq44GE44CCCi0gR29vZ2xlIFBsYXkg44Gu44Os44OT44Ol44O85Lu25pWw44Go5pel5pysIEFwcCBTdG9yZSDjga7oqZXkvqHku7bmlbDjga/jgIHjgZ3jgozjgZ7jgozliKXjgrnjg4jjgqLjga7ntK/nqY3lgKTjgafjgYLjgorjgIHnm7TmjqXlkIzjgZjmr43pm4blm6PjgajjgZfjgabmr5TovIPjgafjgY3jgarjgYTjgIIKLSDlkITooYzjga7mlbDlgKTjga/jg5Hjgrrjg6vlvaLlvI/lhajkvZPjga7lkIjoqIjjgafjga/jgarjgY/jgIHnorroqo3jgafjgY3jgZ/ku6PooajjgqLjg5fjg6ox5pys44Gu5YCk44Gn44GC44KL44CCCi0g5pWw5YCk44Gu5aSn5bCP44Gg44GR44Gn5o6h55So5Y+v5ZCm44KE6Kq/5p+75YSq5YWI5bqm44KS5rG644KB44Gq44GE44CCCi0g6KGM6aCG44Gv5YSq5YWI5bqm44KS6KGo44GV44Gq44GE44CCCgp8IOODkeOCuuODqyB8IEdvb2dsZSBQbGF5IOS7o+ihqOS+iyB8IOODgOOCpuODs+ODreODvOODiSB8IOODrOODk+ODpeODvOS7tuaVsCB8IOaXpeacrCBBcHAgU3RvcmUg5Luj6KGo5L6LIHwg6KmV5L6h5Lu25pWwIHwg6KOc6LazIHwKfC0tLXwtLS18LS0tOnwtLS06fC0tLXwtLS06fC0tLXwKfCDjg4rjg7Pjg5fjg6wgfCBbU3Vkb2t1LmNvbV0oaHR0cHM6Ly9wbGF5Lmdvb2dsZS5jb20vc3RvcmUvYXBwcy9kZXRhaWxzP2lkPWNvbS5lYXN5YnJhaW4uc3Vkb2t1LmFuZHJvaWQmaGw9amEpIHwgMeWEhCsgfCAyNDnkuIcgfCBb44OK44Oz44OX44OsIC0g5pWw5a2X44OR44K644Or44Ky44O844OgXShodHRwczovL2FwcHMuYXBwbGUuY29tL2pwL2FwcC9pZDExOTM1MDgzMjkpIHwgNTfkuIcgfCDln7rmupbjgajjgZfjgaboqJjpjLIgfAp8IOOCq+ODqeODvOOCpuOCqeODvOOCv+ODvOOCveODvOODiCB8IFtXYXRlciBTb3J0IFB1enpsZV0oaHR0cHM6Ly9wbGF5Lmdvb2dsZS5jb20vc3RvcmUvYXBwcy9kZXRhaWxzP2lkPWNvbS5nbWEud2F0ZXIuc29ydC5wdXp6bGUmaGw9amEpIHwgMeWEhCsgfCAxMzTkuIcgfCBbV2F0ZXIgU29ydCBQdXp6bGVdKGh0dHBzOi8vYXBwcy5hcHBsZS5jb20vanAvYXBwL2lkMTUxNDU0MjE1NykgfCAyLjTkuIcgfCDln7rmupbjgajjgZfjgaboqJjpjLLjgIJHb29nbGUgUGxheSDjgavjga/liKXjgr/jgqTjg4jjg6vjgafjgoIxLDAwMOS4hyvopo/mqKHjga7kvovjgYzopIfmlbDjgYLjgosgfAp8IOODkeODvOOCreODs+OCsOOCuOODo+ODoCB8IFtQYXJraW5nIEphbSAzRF0oaHR0cHM6Ly9wbGF5Lmdvb2dsZS5jb20vc3RvcmUvYXBwcy9kZXRhaWxzP2lkPWNvbS5sc3plbmxhbXpyLnBhcmtpbmdqYW0maGw9amEpIHwgMeWEhCsgfCAxNzfkuIcgfCBbUGFya2luZyBKYW0gM0RdKGh0dHBzOi8vYXBwcy5hcHBsZS5jb20vanAvYXBwL2lkMTQ5ODIyOTUzMykgfCAxMeS4hyB8IOWQjOS4gOOCv+OCpOODiOODq+OCkuS4oeOCueODiOOCouOBp+eiuuiqjSB8Cnwg44Oe44Kk44Oz44K544Kk44O844OR44O8IHwgW+ODnuOCpOODs+OCueOCpOODvOODkV0oaHR0cHM6Ly9wbGF5Lmdvb2dsZS5jb20vc3RvcmUvYXBwcy9kZXRhaWxzP2lkPURyYXppdy5CdXR0b24uTWluZXMmaGw9amEpIHwgMSwwMDDkuIcrIHwgMzkuOeS4hyB8IFvjg57jgqTjg7PjgrnjgqTjg7zjg5Hjg7wgWkVST10oaHR0cHM6Ly9hcHBzLmFwcGxlLmNvbS9qcC9hcHAvaWQxMTQ4MjcxNjczKSB8IDIuNOS4hyB8IOOCueODiOOCoumWk+OBp+S7o+ihqOOCouODl+ODquOBr+WIpeOCv+OCpOODiOODqyB8Cnwg44OO44OO44Kw44Op44OgIC8g44Kk44Op44K544OI44Ot44K444OD44KvIHwgW05vbm9ncmFtLmNvbV0oaHR0cHM6Ly9wbGF5Lmdvb2dsZS5jb20vc3RvcmUvYXBwcy9kZXRhaWxzP2lkPWNvbS5lYXN5YnJhaW4ubm9ub2dyYW0maGw9amEpIHwgNSwwMDDkuIcrIHwg57SEOTDkuIcgfCBbTm9ub2dyYW0uY29tXShodHRwczovL2FwcHMuYXBwbGUuY29tL2pwL2FwcC9pZDE0NTI5OTI5NTQpIHwgNi4z5LiHIHwg5ZCM57O75YiX44Gu5Luj6KGo44Ki44OX44Oq44KS5Lih44K544OI44Ki44Gn56K66KqNIHwKfCDjg4rjg7Pjg5Djg7zjg6rjg7Pjgq8gLyDntYzot6/mjqXntpogfCBbRmxvdyBGcmVlXShodHRwczovL3BsYXkuZ29vZ2xlLmNvbS9zdG9yZS9hcHBzL2RldGFpbHM/aWQ9Y29tLmJpZ2R1Y2tnYW1lcy5mbG93JmhsPWphKSB8IDHlhIQrIHwgMTU15LiHIHwgW0Zsb3cgRnJlZV0oaHR0cHM6Ly9hcHBzLmFwcGxlLmNvbS9qcC9hcHAvaWQ1MjY2NDE0MjcpIHwgMSwyNDIgfCBgRmxvd2AgLyBgRmxvdyBGcmVlYCDjga8gQmlnIER1Y2sgR2FtZXMg44Gu55m76Yyy5ZWG5qiZ44CC57WM6Lev5o6l57aa5Z6L44Gu5Luj6KGo44Ki44OX44Oq44Go44GX44Gm6KiY6YyyIHwKfCDjg5bjg63jg4Pjgq/ohLHlh7ogfCBbVW5ibG9jayBNZV0oaHR0cHM6Ly9wbGF5Lmdvb2dsZS5jb20vc3RvcmUvYXBwcy9kZXRhaWxzP2lkPWNvbS5raXJhZ2FtZXMudW5ibG9ja21lZnJlZSZobD1qYSkgfCA1LDAwMOS4hysgfCA2OeS4hyB8IFtVbmJsb2NrIE1lXShodHRwczovL2FwcHMuYXBwbGUuY29tL2pwL2FwcC9pZDMxNTAxOTExMSkgfCAxLDcxMyB8IOWQjOS4gOOCv+OCpOODiOODq+OCkuS4oeOCueODiOOCouOBp+eiuuiqjSB8Cnwg44OR44Kk44OX44OR44K644OrIHwgW1dhdGVyIFBpcGVzXShodHRwczovL3BsYXkuZ29vZ2xlLmNvbS9zdG9yZS9hcHBzL2RldGFpbHM/aWQ9Y29tLm1vYmlsb2lkcy53YXRlcnBpcGVzcHV6emxlJmhsPWphKSB8IDEsMDAw5LiHKyB8IDMuNjPkuIcgfCAtIHwgLSB8IOWQjOS4gOODq+ODvOODq+ODu+WQjOS4gOOCv+OCpOODiOODq+OBqOOBl+OBpuavlOi8g+OBp+OBjeOCi+aXpeacrCBBcHAgU3RvcmUg5Luj6KGo5L6L44Gv5pyq56K66KqNIHwKfCDov7fot68gfCBb6L+36LevOiDjgqjjg7Pjg4njg6zjgrnjgafnsKHljZhdKGh0dHBzOi8vcGxheS5nb29nbGUuY29tL3N0b3JlL2FwcHMvZGV0YWlscz9pZD1jb20ucmlrdWRvZ2FtZXMubWF6ZSZobD1qYSkgfCAxLDAwMOS4hysgfCAxNC415LiHIHwgW+i/t+i3r++8muWFieOBrumBk10oaHR0cHM6Ly9hcHBzLmFwcGxlLmNvbS9qcC9hcHAvaWQxNTkyMTYzODI2KSB8IDEwMCB8IOWQjOS4gOmWi+eZuuWFg+OBrui/t+i3r+OCouODl+ODquOCkuS4oeOCueODiOOCouOBp+eiuuiqjSB8Cnwg44K/44Kv44K6IC8g44OQ44Kk44OK44Oq44OR44K644OrIHwgW01yLiBCaW5haXJvIC0gQmluYXJ5IFN1ZG9rdV0oaHR0cHM6Ly9wbGF5Lmdvb2dsZS5jb20vc3RvcmUvYXBwcy9kZXRhaWxzP2lkPWNvbS5BcHBzcGFyYWd1cy5NckJpbmFpcm8uYXBwJmhsPWphKSB8IDEw5LiHKyB8IDk1NCB8IFtCaW5hcmlvOiBUYWt1enUgQmluYXJ5IFB1enpsZV0oaHR0cHM6Ly9hcHBzLmFwcGxlLmNvbS9qcC9hcHAvaWQ2NzU5MTk1Mjc2KSB8IC0gfCBHb29nbGUgUGxheSAvIEFwcCBTdG9yZSDjga7oqqzmmI7jgacgQmluYWlybyAvIFRha3V6dSDnrYnjga7lkbznp7DjgpLnorroqo3jgILml6XmnKwgQXBwIFN0b3JlIOOBr+ipleS+oeS7tuaVsOihqOekuuOBquOBlyB8CnwgSGlkYXRvIHwgW0hpZGF0b10oaHR0cHM6Ly9wbGF5Lmdvb2dsZS5jb20vc3RvcmUvYXBwcy9kZXRhaWxzP2lkPWNvbS5oaWRhdG8uYXBwJmhsPWphKSB8IC0gfCAtIHwgLSB8IC0gfCBHb29nbGUgUGxheSDjgavlkIzlkI3jgqLjg5fjg6rjga/norroqo3jgafjgY3jgZ/jgYzjgIHmr5TovIPlj6/og73jgarooajnpLrlgKTjgajml6XmnKwgQXBwIFN0b3JlIOS7o+ihqOS+i+OBr+S7iuWbnueiuuWumuOBl+OBpuOBhOOBquOBhCB8CgrjgZPjga7ooajjga/luILloLTopo/mqKHjgZ3jga7jgoLjga7jgpLmuKzjgovjgoLjga7jgafjga/jgarjgY/jgIHmiJDnq4vmgKfoqr/mn7vliY3jgavnorroqo3jgafjgY3jgovlpJbpg6jkuovlrp/jgpLmrovjgZnjgZ/jgoHjga7jgoLjga7jgajjgZnjgovjgIIKCg==
         run: |
           python - <<'PY'
+          import base64
           from pathlib import Path
-
           path = Path('docs/立ち上げ/パズル調査.md')
           text = path.read_text()
-          marker = '\n---\n\n## 評価記号\n'
           heading = '## 調査前に確認できる外部事実'
-
+          marker = '\n---\n\n## 評価記号\n'
           if heading in text:
-              raise SystemExit('facts section already exists')
+              raise SystemExit(0)
           if marker not in text:
               raise SystemExit('insertion marker not found')
-
-          section = r'''
----
-
-## 調査前に確認できる外部事実
-
-成立性調査の前でも確認できる事実として、代表的なモバイルアプリのストア表示値を記録する。
-
-確認日: 2026-09-14
-
-- Google Play のダウンロード数は `1億+` のような累積の帯表示であり、現在の利用者数ではない。
-- Google Play のレビュー件数と日本 App Store の評価件数は、それぞれ別ストアの累積値であり、直接同じ母集団として比較できない。
-- 各行の数値はパズル形式全体の合計ではなく、確認できた代表アプリ1本の値である。
-- 数値の大小だけで採用可否や調査優先度を決めない。
-- 行順は優先度を表さない。
-
-| パズル | Google Play 代表例 | ダウンロード | レビュー件数 | 日本 App Store 代表例 | 評価件数 | 補足 |
-|---|---|---:|---:|---|---:|---|
-| ナンプレ | [Sudoku.com](https://play.google.com/store/apps/details?id=com.easybrain.sudoku.android&hl=ja) | 1億+ | 249万 | [ナンプレ - 数字パズルゲーム](https://apps.apple.com/jp/app/id1193508329) | 57万 | 基準として記録 |
-| カラーウォーターソート | [Water Sort Puzzle](https://play.google.com/store/apps/details?id=com.gma.water.sort.puzzle&hl=ja) | 1億+ | 134万 | [Water Sort Puzzle](https://apps.apple.com/jp/app/id1514542157) | 2.4万 | 基準として記録。Google Play には別タイトルでも1,000万+規模の例が複数ある |
-| パーキングジャム | [Parking Jam 3D](https://play.google.com/store/apps/details?id=com.lszenlamzr.parkingjam&hl=ja) | 1億+ | 177万 | [Parking Jam 3D](https://apps.apple.com/jp/app/id1498229533) | 11万 | 同一タイトルを両ストアで確認 |
-| マインスイーパー | [マインスイーパ](https://play.google.com/store/apps/details?id=Draziw.Button.Mines&hl=ja) | 1,000万+ | 39.9万 | [マインスイーパー ZERO](https://apps.apple.com/jp/app/id1148271673) | 2.4万 | ストア間で代表アプリは別タイトル |
-| ノノグラム / イラストロジック | [Nonogram.com](https://play.google.com/store/apps/details?id=com.easybrain.nonogram&hl=ja) | 5,000万+ | 90.1万 | [Nonogram.com](https://apps.apple.com/jp/app/id1452992954) | 6.3万 | 同系列の代表アプリを両ストアで確認 |
-| ナンバーリンク / 経路接続 | [Flow Free](https://play.google.com/store/apps/details?id=com.bigduckgames.flow&hl=ja) | 1億+ | 155万 | [Flow Free](https://apps.apple.com/jp/app/id526641427) | 1,242 | `Flow` / `Flow Free` は Big Duck Games の登録商標。経路接続型の代表アプリとして記録 |
-| ブロック脱出 | [Unblock Me](https://play.google.com/store/apps/details?id=com.kiragames.unblockmefree&hl=ja) | 5,000万+ | 69万 | [Unblock Me](https://apps.apple.com/jp/app/id315019111) | 1,713 | 同一タイトルを両ストアで確認 |
-| パイプパズル | [Water Pipes](https://play.google.com/store/apps/details?id=com.mobiloids.waterpipespuzzle&hl=ja) | 1,000万+ | 3.63万 | - | - | 同一ルール・同一タイトルとして比較できる日本 App Store 代表例は未確認 |
-| 迷路 | [迷路: エンドレスで簡単](https://play.google.com/store/apps/details?id=com.rikudogames.maze&hl=ja) | 1,000万+ | 14.5万 | [迷路：光の道](https://apps.apple.com/jp/app/id1592163826) | 100 | 同一開発元の迷路アプリを両ストアで確認 |
-| タクズ / バイナリパズル | [Mr. Binairo - Binary Sudoku](https://play.google.com/store/apps/details?id=com.Appsparagus.MrBinairo.app&hl=ja) | 10万+ | 954 | [Binario: Takuzu Binary Puzzle](https://apps.apple.com/jp/app/id6759195276) | - | Google Play / App Store の説明で Binairo / Takuzu 等の呼称を確認。日本 App Store は評価件数表示なし |
-| Hidato | [Hidato](https://play.google.com/store/apps/details?id=com.hidato.app&hl=ja) | - | - | - | - | Google Play に同名アプリは確認できたが、比較可能な表示値と日本 App Store 代表例は今回確定していない |
-
-この表は市場規模そのものを測るものではなく、成立性調査前に確認できる外部事実を残すためのものとする。
-'''
-
+          section = base64.b64decode(__import__('os').environ['FACTS_BASE64']).decode()
           path.write_text(text.replace(marker, '\n' + section + marker, 1))
           PY
 
