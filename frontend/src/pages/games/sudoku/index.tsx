@@ -3,7 +3,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/Card";
+} from "@/components/ui/card";
 import { sudokuDifficulties } from "@/games/sudoku/game/difficulty";
 import { Link } from "@/router";
 
