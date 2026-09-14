@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { parseWaterSortDifficulty } from "@/games/water-sort/game/difficulty";
 import { useWaterSortGame } from "@/games/water-sort/hooks/use-water-sort-game";
-import { WaterSortPlay } from "@/games/water-sort/ui/water-sort-play";
+import { WaterSortPlay } from "@/games/water-sort/ui/WaterSortPlay";
 import { Link, useNavigate, useParams } from "@/router";
 
 export default function WaterSortPlayPage() {
