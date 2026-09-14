@@ -1,0 +1,143 @@
+name: Temporary fill puzzle market facts
+
+on:
+  push:
+    branches:
+      - docs/puzzle-candidate-priority-20260914
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    if: github.event.head_commit.message != 'docs: 市場実績の未確認を解消'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: docs/puzzle-candidate-priority-20260914
+
+      - name: Fill market facts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('docs/立ち上げ/パズル調査.md')
+          text = path.read_text()
+
+          text = text.replace('確認日: 2026-09-14', '確認日: 2026-09-15', 1)
+          text = text.replace(
+              '- `未確認` は需要がないことを意味せず、今回まだ確認していないだけ。',
+              '- `代表例を特定できず` は需要がないことを意味せず、今回の検索条件では同一形式の代表アプリを特定できなかったことを示す。',
+              1,
+          )
+
+          facts = {
+              'キラー数独': '[Play: 5万+ / 299レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.relitygames.killersudoku) / [JP: 2評価](https://apps.apple.com/jp/app/id6766061657)',
+              'カックロ': '[Play: 100万+ / 1.87万レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.pinkpointer.kakuro) / [JP: 22評価](https://apps.apple.com/jp/app/id1445001139)',
+              'KenKen / Calcudoku': '[Play: 50万+ / 1.31万レビュー](https://play.google.com/store/apps/details?hl=ja&id=kenkenclassic.com) / [JP: 37評価](https://apps.apple.com/jp/app/id485694706)',
+              '不等号ナンプレ': '[Play: 10万+ / 9,300レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.alexuvarov.android.futoshiki) / [JP: 11評価](https://apps.apple.com/jp/app/id1299537476)',
+              'ビルディングパズル': '[Play: 1,000+ / レビュー件数表示なし](https://play.google.com/store/apps/details?hl=ja&id=com.algotgames.skyscrapers) / [JP: 3評価](https://apps.apple.com/jp/app/id6667121815)',
+              'ひとりにしてくれ': '[Play: 5万+ / 383レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.pijappi.logibrainhitori) / [JP: 21評価](https://apps.apple.com/jp/app/id1054652505)',
+              'Hidato': '[Play: ダウンロード・レビュー件数表示なし](https://play.google.com/store/apps/details?hl=ja&id=com.hidato.app) / JP: 代表例を特定できず',
+              'ナンブリックス': 'Play: 代表例を特定できず / [JP: 評価件数表示なし](https://apps.apple.com/jp/app/id6758319195)',
+              '魔方陣': '[Play: 1万+ / レビュー件数表示なし](https://play.google.com/store/apps/details?hl=ja&id=air.com.uni_ty.education.magicsquare) / [JP: 評価件数表示なし](https://apps.apple.com/jp/app/id6472091701)',
+              '数式穴埋め / 数式穴埋め': '[Play: ダウンロード・レビュー件数表示なし](https://play.google.com/store/apps/details?hl=ja&id=math.crossword.puzzle) / [JP: 18評価](https://apps.apple.com/jp/app/id6449007993)',
+              '24ゲーム': '[Play: 5万+ / 1,040レビュー](https://play.google.com/store/apps/details?gl=JP&hl=ja&id=qqapp.cocos2dx.math24) / [JP: 評価件数表示なし](https://apps.apple.com/jp/app/id6778693630)',
+              '覆面算': 'Play: 代表例を特定できず / [JP: 3評価](https://apps.apple.com/jp/app/id1082186545)',
+              'スリザーリンク': 'Play: 代表例を特定できず / [JP: 568評価](https://apps.apple.com/jp/app/id1645673398)',
+              '橋をかけろ': '[Play: 500+ / レビュー件数表示なし](https://play.google.com/store/apps/details?hl=ja&id=com.iyond.game.puzzle.hashi) / [JP: 15評価](https://apps.apple.com/jp/app/id1638725709)',
+              'ぬりかべ': '[Play: 100+ / レビュー件数表示なし](https://play.google.com/store/apps/details?hl=ja&id=com.nurikabe.android) / [JP: 評価件数表示なし](https://apps.apple.com/jp/app/id6757597395)',
+              '美術館': '[Play: 1万+ / 246レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.iwp.akari) / [JP: 23評価](https://apps.apple.com/jp/app/id6503335592)',
+              '四角に切れ': '[Play: 500+ / レビュー件数表示なし](https://play.google.com/store/apps/details?hl=ja&id=com.alswin.shikakubasic) / [JP: 評価件数表示なし](https://apps.apple.com/jp/app/id6768706445)',
+              'ましゅ': 'Play: 代表例を特定できず / [JP: 7評価](https://apps.apple.com/jp/app/id1071607348)',
+              'テントと木': '[Play: 1万+ / 134レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.tapcake.tents.and.trees.puzzle.game) / [JP: 2評価](https://apps.apple.com/jp/app/id6443657629)',
+              '戦艦パズル': '[Play: ダウンロード・レビュー件数表示なし](https://play.google.com/store/apps/details?hl=ja&id=com.eldstorm.battleships) / [JP: 13評価](https://apps.apple.com/jp/app/id1018588166)',
+              'スターバトル': '[Play: 10万+ / 6,350レビュー](https://play.google.com/store/apps/details?id=com.brennerd.grid_puzzle.star_battle) / [JP: 1評価](https://apps.apple.com/jp/app/id6751416837)',
+              'ボールソート': '[Play: 1億+ / 107万レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.GMA.Ball.Sort.Puzzle) / [JP: 3.4万評価](https://apps.apple.com/jp/app/id1494648714)',
+              '15パズル': '[Play: 10万+ / 3,830レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.zeeron.puzzle15) / JP: 代表例を特定できず',
+              '8パズル': '[Play: 10万+ / 3,830レビュー（3×3対応）](https://play.google.com/store/apps/details?hl=ja&id=com.zeeron.puzzle15) / JP: 代表例を特定できず',
+              'スライドパズル': '[Play: 10万+ / 3,830レビュー（数字スライド代表）](https://play.google.com/store/apps/details?hl=ja&id=com.zeeron.puzzle15) / JP: 代表例を特定できず',
+              'ライツアウト': '[Play: 1,000+ / 12レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.FirstCenturyThinking.lightsout) / [JP: 評価件数表示なし](https://apps.apple.com/jp/app/id6505043239)',
+              'ハノイの塔系': '[Play: 50万+ / 4,260レビュー](https://play.google.com/store/apps/details?hl=ja&id=johan.moller.towerofhanoi) / [JP: 評価件数表示なし](https://apps.apple.com/jp/app/id1026838065)',
+              'ペグ・ソリティア': '[Play: 10万+ / 1,160レビュー](https://play.google.com/store/apps/details?id=com.pinkpointer.pegsolitaire) / [JP: 2評価](https://apps.apple.com/jp/app/id1053108139)',
+              'ラッシュアワー': '[Play: 1,000+ / 44レビュー](https://play.google.com/store/apps/details?id=com.rush_hour) / [JP: 3評価](https://apps.apple.com/jp/app/id6759151362)',
+              'Klotski / 箱入り娘': '[Play: 1万+ / レビュー件数表示なし](https://play.google.com/store/apps/details?hl=ja&id=com.momokka.hakoiri) / [JP: 2評価](https://apps.apple.com/jp/app/id6502583899)',
+              'パイプパズル': '[Water Pipes Play: 1,000万+ / 3.63万レビュー](https://play.google.com/store/apps/details?id=com.mobiloids.waterpipespuzzle&hl=ja) / JP: 代表例を特定できず',
+              '電線接続': '[Play: 1,000+ / レビュー件数表示なし](https://play.google.com/store/apps/details?hl=ja&id=com.wireconnect.linkpuzzle.game) / JP: 代表例を特定できず',
+              'タイル回転系': 'Play: 代表例を特定できず / [JP: 評価件数表示なし](https://apps.apple.com/jp/app/id6761855432)',
+              '倉庫番': '[Play: 10万+ / 801レビュー](https://play.google.com/store/apps/details?hl=ja&id=jp.thinkingrabbit.sokobantouch_free) / [JP: 18評価](https://apps.apple.com/jp/app/id1510952025)',
+              '箱押し': '[Play: 50万+ / 4,280レビュー](https://play.google.com/store/apps/details?hl=ja&id=br.com.orangevoid.sokobanfree) / [JP: 18評価（倉庫番代表）](https://apps.apple.com/jp/app/id1510952025)',
+              'ウッドブロック配置': '[Play: 1,000万+ / 3.1万レビュー](https://play.google.com/store/apps/details?hl=ja&id=wood.block.jigsaw.puzzle.android) / [JP: 2,386評価](https://apps.apple.com/jp/app/id1498176588)',
+              'タイル合わせ': '[Play: 5,000万+ / 37.5万レビュー](https://play.google.com/store/apps/details?hl=ja&id=linkdesks.tile.match.fun) / [JP: 4評価](https://apps.apple.com/jp/app/id1570830903)',
+              '麻雀ソリティア': '[Play: 1,000万+ / 20.3万レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.bitmango.go.mahjongsolitaireclassic) / [JP: 809評価](https://apps.apple.com/jp/app/id1288458862)',
+              '点つなぎ': '[Play: 100万+ / 3.68万レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.yoogalabgaming.puzzle.connect.dots) / JP: 代表例を特定できず',
+              'ワードサーチ': '[Play: 1億+ / 76.7万レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.playvalve.wsjourney) / JP: 代表例を特定できず',
+              'アナグラム': '[Play: 10万+ / 2,160レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.pinkpointer.anagram) / JP: 代表例を特定できず',
+              '文字並べ替え': '[Play: 10万+ / 2,980レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.panagola.game.jumblefree) / JP: 代表例を特定できず',
+              'ワードラダー': 'Play: 代表例を特定できず / [JP: 評価件数表示なし](https://apps.apple.com/jp/app/id6450907105)',
+              'Boggle': '[Play: 1万+ / レビュー件数表示なし（Boggle系代表）](https://play.google.com/store/apps/details?gl=jp&hl=ja&id=words.drop.letter.tiles) / JP: 代表例を特定できず',
+              'Wordle型': 'Play: 代表例を特定できず / [JP: 評価件数表示なし（Wordle系代表）](https://apps.apple.com/jp/app/id1095569891)',
+              'ハングマン': '[Play: 100万+ / 1.3万レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.gsoftteam.hangman) / JP: 代表例を特定できず',
+              'フィルインクロスワード': '[Play: 100万+ / 1.59万レビュー](https://play.google.com/store/apps/details?id=net.lrstudios.wordfit) / JP: 代表例を特定できず',
+              'しりとり問題': '[Play: 100+ / レビュー件数表示なし](https://play.google.com/store/apps/details?hl=ja&id=jp.ken.shiritori) / [JP: 136評価](https://apps.apple.com/jp/app/id540209774)',
+              '熟語パズル': '[Play: 10万+ / レビュー件数表示なし（漢字パズル代表）](https://play.google.com/store/apps/details?hl=ja&id=jp.co.trips.crosswordkanji) / [JP: 評価件数表示なし（漢字パズル代表）](https://apps.apple.com/jp/app/id6461048603)',
+              '漢字クロス': '[Play: 10万+ / レビュー件数表示なし](https://play.google.com/store/apps/details?hl=ja&id=jp.co.trips.crosswordkanji) / [JP: 評価件数表示なし](https://apps.apple.com/jp/app/id6461048603)',
+              'フリーセル': 'Play: 代表例を特定できず / [JP: 6,236評価](https://apps.apple.com/jp/app/id301987699)',
+              'クロンダイク': '[Play: ダウンロード・レビュー件数表示なし](https://play.google.com/store/apps/details?hl=ja&id=com.solebon.klondike) / [JP: 306評価](https://apps.apple.com/jp/app/id284791396)',
+              'スパイダー': '[Play: 5,000万+ / 74.7万レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.mobilityware.spider) / [JP: 2.5万評価](https://apps.apple.com/jp/app/id395979574)',
+              'ピラミッド': '[Play: 500万+ / 13.2万レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.mobilityware.PyramidFree) / [JP: 2,124評価](https://apps.apple.com/jp/app/id572537866)',
+              'ペア消し': '[Play: 500万+ / 8,260レビュー（ペアマッチ代表）](https://play.google.com/store/apps/details?hl=ja&id=com.labdogstudio.pairs) / [JP: 7評価](https://apps.apple.com/jp/app/id467939841)',
+              '神経衰弱': '[Play: 500万+ / 8,260レビュー（記憶ゲーム代表）](https://play.google.com/store/apps/details?hl=ja&id=com.labdogstudio.pairs) / [JP: 7評価](https://apps.apple.com/jp/app/id467939841)',
+              '詰将棋': '[Play: 10万+ / 1,930レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.crossfield.shogitsume) / JP: 代表例を特定できず',
+              'チェスのN手詰め': 'Play: 代表例を特定できず / [JP: 評価件数表示なし](https://apps.apple.com/jp/app/id6792025595)',
+              'チェス戦術問題': '[Play: 100万+ / 6.86万レビュー](https://play.google.com/store/apps/details?hl=ja&id=net.lrstudios.android.chess_problems) / JP: 代表例を特定できず',
+              '詰碁 / 詰碁': '[Play: 10万+ / 273レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.tygem.tsumego) / JP: 代表例を特定できず',
+              'オセロ終盤問題': 'Play: 代表例を特定できず / [JP: 19評価](https://apps.apple.com/jp/app/id1308323178)',
+              'タングラム': '[Play: 1,000+ / 53レビュー](https://play.google.com/store/apps/details?hl=ja&id=studio.onepixel.tangrambee) / JP: 代表例を特定できず',
+              'ブロック配置': '[Play: 1,000万+ / 19.5万レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.dxm.nopuzzle) / [JP: 2,386評価](https://apps.apple.com/jp/app/id1498176588)',
+              '詰め込みパズル': 'Play: 代表例を特定できず / [JP: 評価件数表示なし](https://apps.apple.com/jp/app/id6794732993)',
+              'マッチ棒パズル': '[Play: 1万+ / 130レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.gg.matchsticks) / [JP: 評価件数表示なし](https://apps.apple.com/jp/app/id1582188282)',
+              'ピン抜き': 'Play: 代表例を特定できず / [JP: 3万評価](https://apps.apple.com/jp/app/id1496150467)',
+              'ロープほどき': '[Play: ダウンロード・レビュー件数表示なし](https://play.google.com/store/apps/details?hl=ja&id=com.mogal.rope) / JP: 代表例を特定できず',
+              'ネジ外し系': '[Play: 1,000万+ / 57.4万レビュー](https://play.google.com/store/apps/details?hl=ja&id=com.wood.bolt.wordle.screw.nuts.puzzle) / [JP: 4,489評価](https://apps.apple.com/jp/app/id6468194355)',
+              '物理ボール系': '[Play: 100万+ / 4.22万レビュー](https://play.google.com/store/apps/details?hl=ja&id=game.color.ballz.block.brick.puzzle.free.physics.balls) / JP: 代表例を特定できず',
+          }
+
+          fallback = 'Google Play / 日本 App Store: 今回の検索で同一形式の代表例を特定できず'
+          start_marker = '# 18. ゲーム性要素との親和性（初期版選定用）'
+          end_marker = '# 19. 初期版で「実装」と「記録」を分ける案'
+          before, rest = text.split(start_marker, 1)
+          section, after = rest.split(end_marker, 1)
+
+          out = []
+          fallback_names = []
+          for line in section.splitlines():
+              if line.startswith('|') and not line.startswith('|---') and not line.startswith('| パズル |'):
+                  cells = [cell.strip() for cell in line.strip().strip('|').split('|')]
+                  if len(cells) >= 2 and ('未確認' in cells[-1] or '表示値未確認' in cells[-1]):
+                      puzzle = cells[0]
+                      value = facts.get(puzzle, fallback)
+                      if puzzle not in facts:
+                          fallback_names.append(puzzle)
+                      cells[-1] = value
+                      line = '| ' + ' | '.join(cells) + ' |'
+              out.append(line)
+
+          section = '\n'.join(out)
+          if '未確認' in section:
+              raise SystemExit('section 18 still contains 未確認')
+
+          text = before + start_marker + section + '\n' + end_marker + after
+          path.write_text(text)
+          print('代表例を特定できず:', ', '.join(dict.fromkeys(fallback_names)))
+          PY
+
+      - name: Commit update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/立ち上げ/パズル調査.md
+          git diff --cached --quiet && exit 0
+          git commit -m "docs: 市場実績の未確認を解消"
+          git push origin HEAD:docs/puzzle-candidate-priority-20260914
