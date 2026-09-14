@@ -47,7 +47,7 @@ cleanup() {
   if [[ -L "$repo_root/frontend/node_modules" ]]; then
     rm "$repo_root/frontend/node_modules"
   fi
-  rm -rf "$repo_root/frontend/dist-chatgpt" "$work_dir"
+  rm -rf "$repo_root/frontend/dist" "$work_dir"
 }
 trap cleanup EXIT
 
@@ -74,13 +74,13 @@ export NPM_CONFIG_REGISTRY=http://127.0.0.1:9
   node_modules/.bin/biome check .
   TERM=dumb node_modules/.bin/tsc --noEmit --pretty false
   node_modules/.bin/vitest run
-  node_modules/.bin/vite build --config vite.chatgpt.config.mjs
+  node_modules/.bin/vite build --config vite.config.ts
 )
 
 server_log="$work_dir/dev-server.log"
 (
   cd "$repo_root/frontend"
-  node_modules/.bin/vite --config vite.chatgpt.config.mjs --host 127.0.0.1 --port 3000
+  node_modules/.bin/vite --config vite.config.ts --host 127.0.0.1 --port 3000
 ) >"$server_log" 2>&1 &
 server_pid=$!
 server_ready=0
@@ -102,7 +102,7 @@ if (( server_ready == 0 )); then
 fi
 
 css_response="$work_dir/index.css"
-curl --fail --silent --show-error http://127.0.0.1:3000/index.css >"$css_response"
+curl --fail --silent --show-error http://127.0.0.1:3000/src/index.css >"$css_response"
 if grep -Fq '@apply' "$css_response"; then
   cat "$server_log" >&2
   fail "Tailwind directives were not transformed by the Vite development server"

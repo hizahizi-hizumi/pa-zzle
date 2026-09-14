@@ -32,5 +32,5 @@
     "noPropertyAccessFromIndexSignature": false
   },
 
-  "exclude": ["dist", "dist-chatgpt", "node_modules", "vite.chatgpt.config.mjs"]
+  "exclude": ["dist", "node_modules"]
 }
