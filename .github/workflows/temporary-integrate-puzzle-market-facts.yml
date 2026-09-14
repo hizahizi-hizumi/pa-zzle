@@ -1,0 +1,96 @@
+name: Temporary integrate puzzle market facts
+
+on:
+  push:
+    branches:
+      - docs/puzzle-candidate-priority-20260914
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: docs/puzzle-candidate-priority-20260914
+
+      - name: Integrate market facts into existing tables
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('docs/立ち上げ/パズル調査.md')
+          text = path.read_text()
+
+          # Remove the separately added market-facts table.
+          start_marker = '## 調査前に確認できる外部事実\n'
+          end_marker = '## 評価記号\n'
+          start = text.index(start_marker)
+          section_start = text.rfind('---\n', 0, start)
+          end = text.index(end_marker, start)
+          text = text[:section_start] + '---\n\n' + text[end:]
+
+          section18_marker = '# 18. ゲーム性要素との親和性（初期版選定用）\n\n'
+          note = '''市場実績列は、成立性の詳細調査前でも確認できる外部事実として、代表的なモバイルアプリのストア表示値を記録する。\n\n確認日: 2026-09-14\n\n- `Google Play` は代表アプリ1本の累積ダウンロード帯 / レビュー件数、`JP` は日本 App Store の評価件数。\n- 市場実績はパズル形式全体の合計でも現在の利用者数でもない。\n- `未確認` は需要がないことを意味せず、今回まだ確認していないだけ。\n- 市場実績の大小だけで採用可否や調査順を決めない。\n- この列以外の `◎ / ○ / △ / ×` は一次調査時点の評価・仮説であり、市場実績列とは性質が異なる。\n\n'''
+          if note not in text:
+              text = text.replace(section18_marker, section18_marker + note, 1)
+
+          facts = {
+              'ナンプレ': '[Play: 1億+ / 249万レビュー](https://play.google.com/store/apps/details?id=com.easybrain.sudoku.android&hl=ja) / [JP: 57万評価](https://apps.apple.com/jp/app/id1193508329)',
+              'タクズ / バイナリパズル': '[Play: 10万+ / 954レビュー](https://play.google.com/store/apps/details?id=com.Appsparagus.MrBinairo.app&hl=ja) / [JP: 評価表示なし](https://apps.apple.com/jp/app/id6759195276)',
+              'Hidato': '[Play: 表示値未確認](https://play.google.com/store/apps/details?id=com.hidato.app&hl=ja) / JP: 未確認',
+              'ノノグラム / イラストロジック': '[Play: 5,000万+ / 約90万レビュー](https://play.google.com/store/apps/details?id=com.easybrain.nonogram&hl=ja) / [JP: 6.3万評価](https://apps.apple.com/jp/app/id1452992954)',
+              'ナンバーリンク / フロー': '[Flow Free Play: 1億+ / 155万レビュー](https://play.google.com/store/apps/details?id=com.bigduckgames.flow&hl=ja) / [JP: 1,242評価](https://apps.apple.com/jp/app/id526641427)',
+              'ナンバーリンク': '[Flow Free Play: 1億+ / 155万レビュー](https://play.google.com/store/apps/details?id=com.bigduckgames.flow&hl=ja) / [JP: 1,242評価](https://apps.apple.com/jp/app/id526641427)',
+              'Flow Free系': '[Flow Free Play: 1億+ / 155万レビュー](https://play.google.com/store/apps/details?id=com.bigduckgames.flow&hl=ja) / [JP: 1,242評価](https://apps.apple.com/jp/app/id526641427)',
+              'マインスイーパー': '[Play: 1,000万+ / 39.9万レビュー](https://play.google.com/store/apps/details?id=Draziw.Button.Mines&hl=ja) / [JP: 2.4万評価](https://apps.apple.com/jp/app/id1148271673)',
+              'カラーウォーターソート': '[Play: 1億+ / 134万レビュー](https://play.google.com/store/apps/details?id=com.gma.water.sort.puzzle&hl=ja) / [JP: 2.4万評価](https://apps.apple.com/jp/app/id1514542157)',
+              'パーキングジャム': '[Play: 1億+ / 177万レビュー](https://play.google.com/store/apps/details?id=com.lszenlamzr.parkingjam&hl=ja) / [JP: 11万評価](https://apps.apple.com/jp/app/id1498229533)',
+              'Unblock Me': '[Play: 5,000万+ / 69万レビュー](https://play.google.com/store/apps/details?id=com.kiragames.unblockmefree&hl=ja) / [JP: 1,713評価](https://apps.apple.com/jp/app/id315019111)',
+              'ブロック脱出': '[Unblock Me Play: 5,000万+ / 69万レビュー](https://play.google.com/store/apps/details?id=com.kiragames.unblockmefree&hl=ja) / [JP: 1,713評価](https://apps.apple.com/jp/app/id315019111)',
+              'パイプパズル': '[Water Pipes Play: 1,000万+ / 3.63万レビュー](https://play.google.com/store/apps/details?id=com.mobiloids.waterpipespuzzle&hl=ja) / JP: 未確認',
+              '迷路': '[Play: 1,000万+ / 14.5万レビュー](https://play.google.com/store/apps/details?id=com.rikudogames.maze&hl=ja) / [JP: 100評価](https://apps.apple.com/jp/app/id1592163826)',
+          }
+
+          before, section18 = text.split(section18_marker, 1)
+          section18_body, after = section18.split('# 19. 初期版で「実装」と「記録」を分ける案', 1)
+          lines = section18_body.splitlines()
+          in_target_table = False
+          expect_separator = False
+          out = []
+          for line in lines:
+              if line.startswith('| パズル | 難易度 |'):
+                  in_target_table = True
+                  expect_separator = True
+                  out.append(line[:-1] + ' 市場実績（代表例） |')
+                  continue
+              if in_target_table and expect_separator:
+                  out.append(line[:-1] + '---|')
+                  expect_separator = False
+                  continue
+              if in_target_table:
+                  if not line.startswith('|'):
+                      in_target_table = False
+                      out.append(line)
+                      continue
+                  cells = [cell.strip() for cell in line.strip().strip('|').split('|')]
+                  puzzle = cells[0]
+                  value = facts.get(puzzle, '未確認')
+                  out.append(line[:-1] + f' {value} |')
+                  continue
+              out.append(line)
+
+          text = before + section18_marker + '\n'.join(out) + '\n# 19. 初期版で「実装」と「記録」を分ける案' + after
+          path.write_text(text)
+          PY
+
+      - name: Commit update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/立ち上げ/パズル調査.md
+          git diff --cached --quiet && exit 0
+          git commit -m "docs: 市場実績を既存の候補表へ統合"
+          git push origin HEAD:docs/puzzle-candidate-priority-20260914
