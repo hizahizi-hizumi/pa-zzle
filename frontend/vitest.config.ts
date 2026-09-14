@@ -17,5 +17,10 @@ export default defineConfig({
     globals: true,
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
     passWithNoTests: true,
+    server: {
+      deps: {
+        inline: ["@generouted/react-router", "generouted"],
+      },
+    },
   },
 });
