@@ -52,4 +52,4 @@ uv run --directory backend ruff check . # Ruff の静的解析
 - PRはドラフトではなくオープンで作成する。
 - PRはmerge commitでマージする。squash merge / rebase mergeは使わない。
 - 作業中に`main`を取り込まない。
-- 作業完了時、PRが`main`とコンフリクトしている場合のみ、最新`main`をmerge commitで取り込む。コンフリクトしていなければ取り込まない。
+- 作業完了時、PRが`main`とコンフリクトしている場合のみ、最新`main`へrebaseする。コンフリクトしていなければrebaseしない。
