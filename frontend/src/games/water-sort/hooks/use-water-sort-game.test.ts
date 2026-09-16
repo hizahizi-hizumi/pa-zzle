@@ -34,16 +34,24 @@ function solveCurrentProblem(result: { current: HookResult }) {
 }
 
 describe("useWaterSortGame", () => {
-  test("生成済みの実盤面と最短手数をプレイ開始時から保持すること", () => {
-    const { result } = renderHook(() => useWaterSortGame("easy"));
+  test.each([
+    ["easy", 6],
+    ["normal", 8],
+    ["hard", 10],
+  ] as const)(
+    "%s と分類された実盤面と最短手数をプレイ開始時から保持すること",
+    (difficulty, bottleCount) => {
+      const { result } = renderHook(() => useWaterSortGame(difficulty));
 
-    const state = result.current.state;
-    const optimalMoveCount = result.current.optimalMoveCount;
+      const state = result.current.state;
+      const optimalMoveCount = result.current.optimalMoveCount;
 
-    expect(state).toHaveLength(6);
-    expect(state.filter((bottle) => bottle.length === 0)).toHaveLength(2);
-    expect(optimalMoveCount).toBeGreaterThan(0);
-  });
+      expect(state).toHaveLength(bottleCount);
+      expect(state.filter((bottle) => bottle.length === 0)).toHaveLength(2);
+      expect(optimalMoveCount).toBeGreaterThan(0);
+      expect(result.current.problemDifficulty.difficulty).toBe(difficulty);
+    },
+  );
 
   test("合法な注ぎ元と注ぎ先を順に選ぶとゲーム核の状態遷移を適用すること", () => {
     const { result } = renderHook(() => useWaterSortGame("easy"));
@@ -168,6 +176,7 @@ describe("useWaterSortGame", () => {
       restartCount: 0,
       optimalMoveCount: result.current.optimalMoveCount,
       moveDelta: 0,
+      score: 100,
     });
   });
 

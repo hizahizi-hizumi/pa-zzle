@@ -1,3 +1,5 @@
+import type { WaterSortProblemFeatures } from "./solver";
+
 export const waterSortDifficulties = [
   {
     id: "easy",
@@ -18,6 +20,17 @@ export const waterSortDifficulties = [
 
 export type WaterSortDifficulty = (typeof waterSortDifficulties)[number]["id"];
 
+export type WaterSortDifficultyAssessment = {
+  difficulty: WaterSortDifficulty;
+  index: number;
+};
+
+const averageDistinctChoiceWeight = 2;
+const noEmptyBottleStateWeight = 4;
+const forcedChoiceWeight = 2;
+const normalDifficultyIndexThreshold = 24;
+const hardDifficultyIndexThreshold = 32;
+
 export function parseWaterSortDifficulty(
   value: string | undefined,
 ): WaterSortDifficulty | undefined {
@@ -32,4 +45,30 @@ export function getWaterSortDifficultyLabel(
     waterSortDifficulties.find((option) => option.id === difficulty)?.label ??
     difficulty
   );
+}
+
+export function calculateWaterSortDifficultyIndex(
+  features: WaterSortProblemFeatures,
+): number {
+  return (
+    features.shortestMoveCount +
+    features.averageDistinctChoiceCountOnSolution *
+      averageDistinctChoiceWeight +
+    features.noEmptyBottleStateRatio * noEmptyBottleStateWeight -
+    features.forcedChoiceRatio * forcedChoiceWeight
+  );
+}
+
+export function assessWaterSortDifficulty(
+  features: WaterSortProblemFeatures,
+): WaterSortDifficultyAssessment {
+  const index = calculateWaterSortDifficultyIndex(features);
+
+  if (index < normalDifficultyIndexThreshold) {
+    return { difficulty: "easy", index };
+  }
+  if (index < hardDifficultyIndexThreshold) {
+    return { difficulty: "normal", index };
+  }
+  return { difficulty: "hard", index };
 }

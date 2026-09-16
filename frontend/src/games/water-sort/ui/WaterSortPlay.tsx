@@ -11,6 +11,7 @@ import type { Seed } from "@/games/core/seed";
 import {
   getWaterSortDifficultyLabel,
   type WaterSortDifficulty,
+  type WaterSortDifficultyAssessment,
 } from "@/games/water-sort/game/difficulty";
 import type { WaterSortState } from "@/games/water-sort/game/state";
 import type { WaterSortResult } from "@/games/water-sort/hooks/use-water-sort-game";
@@ -26,6 +27,7 @@ type WaterSortPlayProps = {
   undoCount: number;
   restartCount: number;
   optimalMoveCount: number;
+  problemDifficulty: WaterSortDifficultyAssessment;
   canUndo: boolean;
   sourceBottleIndex: number | null;
   selectableBottleIndexes: ReadonlySet<number>;
@@ -47,6 +49,7 @@ export function WaterSortPlay({
   undoCount,
   restartCount,
   optimalMoveCount,
+  problemDifficulty,
   canUndo,
   sourceBottleIndex,
   selectableBottleIndexes,
@@ -68,13 +71,26 @@ export function WaterSortPlay({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="rounded-md border bg-muted/30 p-4 text-center">
+            <p className="text-xs text-muted-foreground">プレイ評価（仮）</p>
+            <p className="mt-1 font-mono text-3xl font-semibold">
+              {result.score} / 100
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              最短手数に対する手数効率から算出しています。
+            </p>
+          </div>
           <PlayMetrics
             elapsedMs={result.elapsedMs}
             moveCount={result.moveCount}
             undoCount={result.undoCount}
             restartCount={result.restartCount}
           />
-          <dl className="grid grid-cols-2 gap-2 text-center">
+          <dl className="grid grid-cols-3 gap-2 text-center">
+            <Metric
+              label="問題難易度"
+              value={getWaterSortDifficultyLabel(problemDifficulty.difficulty)}
+            />
             <Metric label="最短手数" value={String(result.optimalMoveCount)} />
             <Metric
               label="最短との差"
