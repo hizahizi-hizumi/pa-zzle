@@ -12,10 +12,16 @@ import { Link } from "@/router";
 export default function HomePage() {
   return (
     <section className="space-y-section">
-      <PageHeader context="ゲームを選ぶ" title="今日はどのパズルで遊びますか？" />
+      <PageHeader
+        context="ゲームを選ぶ"
+        title="今日はどのパズルで遊びますか？"
+      />
 
       <div className="grid gap-list sm:grid-cols-2">
-        <Link to="/games/water-sort" className="group rounded-xl outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
+        <Link
+          to="/games/water-sort"
+          className="group rounded-xl outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        >
           <Card className="h-full transition-colors group-hover:border-foreground/30 motion-reduce:transition-none">
             <CardHeader>
               <Droplets className="size-8" aria-hidden="true" />
@@ -27,7 +33,10 @@ export default function HomePage() {
           </Card>
         </Link>
 
-        <Link to="/games/sudoku" className="group rounded-xl outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
+        <Link
+          to="/games/sudoku"
+          className="group rounded-xl outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        >
           <Card className="h-full transition-colors group-hover:border-foreground/30 motion-reduce:transition-none">
             <CardHeader>
               <Grid3X3 className="size-8" aria-hidden="true" />

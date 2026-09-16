@@ -7,7 +7,10 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-muted/30">
       <header className="border-b bg-background">
         <div className="mx-auto flex min-h-app-header w-full max-w-app items-center px-page-inline sm:px-page-inline-wide">
-          <Link to="/" className="rounded-sm font-heading tracking-tight outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
+          <Link
+            to="/"
+            className="rounded-sm font-heading tracking-tight outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          >
             パズル pa-zzle
           </Link>
         </div>

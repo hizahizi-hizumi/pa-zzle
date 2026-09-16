@@ -13,7 +13,10 @@ export default function WaterSortDifficultyPage() {
     <section className="space-y-section">
       <PageHeader
         context={
-          <Link to="/" className="rounded-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:transition-none">
+          <Link
+            to="/"
+            className="rounded-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:transition-none"
+          >
             ← ゲーム選択へ
           </Link>
         }
