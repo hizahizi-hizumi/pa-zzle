@@ -45,7 +45,6 @@ type SearchNode = {
   stateKey: string;
   cost: number;
   heuristic: number;
-  sequence: number;
   parent: SearchNode | null;
   moveFromParent: WaterSortMove | null;
 };
@@ -141,6 +140,16 @@ class SearchQueue {
   }
 }
 
+function compareStateKeys(left: string, right: string): number {
+  if (left < right) {
+    return -1;
+  }
+  if (left > right) {
+    return 1;
+  }
+  return 0;
+}
+
 function compareSearchNodes(left: SearchNode, right: SearchNode): number {
   const leftScore = left.cost + left.heuristic;
   const rightScore = right.cost + right.heuristic;
@@ -148,7 +157,7 @@ function compareSearchNodes(left: SearchNode, right: SearchNode): number {
   return (
     leftScore - rightScore ||
     left.heuristic - right.heuristic ||
-    left.sequence - right.sequence
+    compareStateKeys(left.stateKey, right.stateKey)
   );
 }
 
@@ -268,7 +277,6 @@ export function solveWaterSort(
     stateKey: initialStateKey,
     cost: 0,
     heuristic: estimateRemainingMoves(initialState),
-    sequence: 0,
     parent: null,
     moveFromParent: null,
   };
@@ -279,7 +287,6 @@ export function solveWaterSort(
   let expandedStates = 0;
   let generatedTransitions = 0;
   let maxFrontierSize = 1;
-  let sequence = 1;
 
   while (queue.size > 0) {
     const current = queue.pop();
@@ -342,11 +349,9 @@ export function solveWaterSort(
         stateKey: transition.stateKey,
         cost: nextCost,
         heuristic: estimateRemainingMoves(transition.state),
-        sequence,
         parent: current,
         moveFromParent: transition.move,
       });
-      sequence += 1;
     }
 
     maxFrontierSize = Math.max(maxFrontierSize, queue.size);

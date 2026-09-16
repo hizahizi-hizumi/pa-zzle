@@ -1,6 +1,9 @@
 import { describe, expect, test } from "vitest";
 
-import { generateWaterSortProblem } from "./generator";
+import {
+  generateWaterSortProblem,
+  recreateWaterSortProblem,
+} from "./generator";
 import {
   isCompleteWaterSortBottle,
   isStandardWaterSortInitialState,
@@ -54,6 +57,28 @@ describe("generateWaterSortProblem", () => {
 
     expect(solvedCandidateCount).toBe(2);
     expect(problem.generationAttempt).toBeGreaterThan(1);
+  });
+
+  test("保存した問題識別情報から採用条件に依存せず同じ問題を再現すること", () => {
+    let solvedCandidateCount = 0;
+    const problem = generateWaterSortProblem({
+      seed: "water-sort-acceptance-policy",
+      colorCount: 3,
+      acceptCandidate: () => {
+        solvedCandidateCount += 1;
+        return solvedCandidateCount >= 2;
+      },
+    });
+    const identity = {
+      generatorVersion: problem.generatorVersion,
+      seed: problem.seed,
+      conditions: problem.conditions,
+      generationAttempt: problem.generationAttempt,
+    };
+
+    const reproduced = recreateWaterSortProblem(identity);
+
+    expect(reproduced).toEqual(problem);
   });
 
   test("採用条件を満たす候補が上限内に無ければ失敗を返すこと", () => {

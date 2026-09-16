@@ -21,17 +21,20 @@ export type WaterSortGenerationConditions = {
   emptyBottleCount: typeof WATER_SORT_EMPTY_BOTTLE_COUNT;
 };
 
+export type WaterSortProblemIdentity = {
+  generatorVersion: typeof WATER_SORT_GENERATOR_VERSION;
+  seed: Seed;
+  conditions: WaterSortGenerationConditions;
+  generationAttempt: number;
+};
+
 export type WaterSortGeneratedCandidate = {
   attempt: number;
   initialState: WaterSortState;
   solveResult: WaterSortSolveResult;
 };
 
-export type WaterSortProblem = {
-  generatorVersion: typeof WATER_SORT_GENERATOR_VERSION;
-  seed: Seed;
-  conditions: WaterSortGenerationConditions;
-  generationAttempt: number;
+export type WaterSortProblem = WaterSortProblemIdentity & {
   initialState: WaterSortState;
   solutionMoves: WaterSortSolveResult["moves"];
   searchStatistics: WaterSortSolveResult["statistics"];
@@ -70,6 +73,18 @@ function createSeededRandom(seed: string): () => number {
     value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
     return ((value ^ (value >>> 14)) >>> 0) / 0x1_0000_0000;
   };
+}
+
+function createGeneratorRandom(seed: Seed, colorCount: number): () => number {
+  return createSeededRandom(
+    [
+      WATER_SORT_GENERATOR_VERSION,
+      seed,
+      colorCount,
+      WATER_SORT_BOTTLE_CAPACITY,
+      WATER_SORT_EMPTY_BOTTLE_COUNT,
+    ].join(":"),
+  );
 }
 
 function shuffle<T>(values: readonly T[], random: () => number): T[] {
@@ -115,15 +130,111 @@ function hasInitiallyCompletedBottle(state: WaterSortState): boolean {
   return state.some(isCompleteWaterSortBottle);
 }
 
-function validateGeneratorOptions(options: WaterSortGeneratorOptions): void {
-  if (!Number.isInteger(options.colorCount) || options.colorCount < 2) {
+function validateColorCount(colorCount: number): void {
+  if (!Number.isInteger(colorCount) || colorCount < 2) {
     throw new RangeError("colorCount must be an integer of two or greater");
   }
+}
+
+function validateGeneratorOptions(options: WaterSortGeneratorOptions): void {
+  validateColorCount(options.colorCount);
 
   const maximumAttempts = options.maximumAttempts ?? 100;
   if (!Number.isInteger(maximumAttempts) || maximumAttempts < 1) {
     throw new RangeError("maximumAttempts must be a positive integer");
   }
+}
+
+function validateProblemIdentity(identity: WaterSortProblemIdentity): void {
+  if (identity.generatorVersion !== WATER_SORT_GENERATOR_VERSION) {
+    throw new Error(
+      `Unsupported water sort generator version: ${identity.generatorVersion}`,
+    );
+  }
+
+  validateColorCount(identity.conditions.colorCount);
+  if (
+    identity.conditions.capacity !== WATER_SORT_BOTTLE_CAPACITY ||
+    identity.conditions.emptyBottleCount !== WATER_SORT_EMPTY_BOTTLE_COUNT
+  ) {
+    throw new Error("Unsupported water sort generation conditions");
+  }
+
+  if (
+    !Number.isInteger(identity.generationAttempt) ||
+    identity.generationAttempt < 1
+  ) {
+    throw new RangeError("generationAttempt must be a positive integer");
+  }
+}
+
+function createProblem(
+  identity: WaterSortProblemIdentity,
+  initialState: WaterSortState,
+  solveResult: WaterSortSolveResult,
+  features: NonNullable<WaterSortSolveResult["features"]>,
+): WaterSortProblem {
+  return {
+    ...identity,
+    initialState,
+    solutionMoves: solveResult.moves,
+    searchStatistics: solveResult.statistics,
+    features,
+  };
+}
+
+function findCandidateAtAttempt(
+  identity: WaterSortProblemIdentity,
+): WaterSortState {
+  const random = createGeneratorRandom(
+    identity.seed,
+    identity.conditions.colorCount,
+  );
+  const seenStates = new Set<string>();
+
+  for (let attempt = 1; attempt <= identity.generationAttempt; attempt += 1) {
+    const initialState = createStandardCandidate(
+      identity.conditions.colorCount,
+      random,
+    );
+    if (hasInitiallyCompletedBottle(initialState)) {
+      if (attempt === identity.generationAttempt) {
+        break;
+      }
+      continue;
+    }
+
+    const stateIdentity = createWaterSortStateKey(initialState);
+    if (seenStates.has(stateIdentity)) {
+      if (attempt === identity.generationAttempt) {
+        break;
+      }
+      continue;
+    }
+    seenStates.add(stateIdentity);
+
+    if (attempt === identity.generationAttempt) {
+      return initialState;
+    }
+  }
+
+  throw new Error("Water sort problem identity does not reference a candidate");
+}
+
+export function recreateWaterSortProblem(
+  identity: WaterSortProblemIdentity,
+): WaterSortProblem {
+  validateProblemIdentity(identity);
+
+  const initialState = findCandidateAtAttempt(identity);
+  const solveResult = solveWaterSort(initialState);
+  if (solveResult.status !== "solved" || !solveResult.features) {
+    throw new Error(
+      "Water sort problem identity references an unsolved candidate",
+    );
+  }
+
+  return createProblem(identity, initialState, solveResult, solveResult.features);
 }
 
 export function generateWaterSortProblem(
@@ -132,15 +243,12 @@ export function generateWaterSortProblem(
   validateGeneratorOptions(options);
 
   const maximumAttempts = options.maximumAttempts ?? 100;
-  const random = createSeededRandom(
-    [
-      WATER_SORT_GENERATOR_VERSION,
-      options.seed,
-      options.colorCount,
-      WATER_SORT_BOTTLE_CAPACITY,
-      WATER_SORT_EMPTY_BOTTLE_COUNT,
-    ].join(":"),
-  );
+  const conditions: WaterSortGenerationConditions = {
+    colorCount: options.colorCount,
+    capacity: WATER_SORT_BOTTLE_CAPACITY,
+    emptyBottleCount: WATER_SORT_EMPTY_BOTTLE_COUNT,
+  };
+  const random = createGeneratorRandom(options.seed, options.colorCount);
   const seenStates = new Set<string>();
 
   for (let attempt = 1; attempt <= maximumAttempts; attempt += 1) {
@@ -165,20 +273,17 @@ export function generateWaterSortProblem(
       continue;
     }
 
-    return {
-      generatorVersion: WATER_SORT_GENERATOR_VERSION,
-      seed: options.seed,
-      conditions: {
-        colorCount: options.colorCount,
-        capacity: WATER_SORT_BOTTLE_CAPACITY,
-        emptyBottleCount: WATER_SORT_EMPTY_BOTTLE_COUNT,
+    return createProblem(
+      {
+        generatorVersion: WATER_SORT_GENERATOR_VERSION,
+        seed: options.seed,
+        conditions,
+        generationAttempt: attempt,
       },
-      generationAttempt: attempt,
       initialState,
-      solutionMoves: solveResult.moves,
-      searchStatistics: solveResult.statistics,
-      features: solveResult.features,
-    };
+      solveResult,
+      solveResult.features,
+    );
   }
 
   throw new Error(

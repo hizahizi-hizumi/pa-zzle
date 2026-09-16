@@ -92,6 +92,32 @@ describe("solveWaterSort", () => {
     expect(isWaterSortCleared(finalState)).toBe(true);
   });
 
+  test("ボトルの表示順を変えても同じ問題特徴量を返すこと", () => {
+    const state: WaterSortState = [
+      [3, 3, 2, 1],
+      [2, 1, 0, 3],
+      [0, 1, 0, 2],
+      [2, 1, 0, 3],
+      [],
+      [],
+    ];
+    const reorderedState: WaterSortState = [
+      [0, 1, 0, 2],
+      [2, 1, 0, 3],
+      [2, 1, 0, 3],
+      [],
+      [],
+      [3, 3, 2, 1],
+    ];
+
+    const result = solveWaterSort(state);
+    const reorderedResult = solveWaterSort(reorderedState);
+
+    expect(result.status).toBe("solved");
+    expect(reorderedResult.status).toBe("solved");
+    expect(reorderedResult.features).toEqual(result.features);
+  });
+
   test("探索上限に整数以外を指定したら拒否すること", () => {
     const initialState: WaterSortState = [[0, 1, 0, 1], [1, 0, 1, 0], [], []];
     const act = () => solveWaterSort(initialState, { maxExpandedStates: 0.5 });
