@@ -80,10 +80,7 @@ export function isStandardWaterSortInitialState(
 
   const colorCounts = new Map<WaterSortColor, number>();
   for (const bottle of state) {
-    if (
-      bottle.length !== 0 &&
-      bottle.length !== WATER_SORT_BOTTLE_CAPACITY
-    ) {
+    if (bottle.length !== 0 && bottle.length !== WATER_SORT_BOTTLE_CAPACITY) {
       return false;
     }
 

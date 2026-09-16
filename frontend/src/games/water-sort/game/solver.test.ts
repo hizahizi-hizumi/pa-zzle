@@ -46,20 +46,10 @@ function shortestDistanceByBreadthFirstSearch(
 
 const shortestPathSamples = [
   {
-    state: [
-      [0, 1, 0, 1],
-      [1, 0, 1, 0],
-      [],
-      [],
-    ] satisfies WaterSortState,
+    state: [[0, 1, 0, 1], [1, 0, 1, 0], [], []] satisfies WaterSortState,
   },
   {
-    state: [
-      [0, 0, 1, 1],
-      [1, 1, 0, 0],
-      [],
-      [],
-    ] satisfies WaterSortState,
+    state: [[0, 0, 1, 1], [1, 1, 0, 0], [], []] satisfies WaterSortState,
   },
   {
     state: [
@@ -87,12 +77,7 @@ describe("solveWaterSort", () => {
   );
 
   test("返した手順を入力盤面へ適用するとクリアできること", () => {
-    const initialState: WaterSortState = [
-      [0, 1, 0, 1],
-      [1, 0, 1, 0],
-      [],
-      [],
-    ];
+    const initialState: WaterSortState = [[0, 1, 0, 1], [1, 0, 1, 0], [], []];
     const result = solveWaterSort(initialState);
 
     const finalState = result.moves.reduce<WaterSortState>((state, move) => {
@@ -108,12 +93,7 @@ describe("solveWaterSort", () => {
   });
 
   test("探索上限に整数以外を指定したら拒否すること", () => {
-    const initialState: WaterSortState = [
-      [0, 1, 0, 1],
-      [1, 0, 1, 0],
-      [],
-      [],
-    ];
+    const initialState: WaterSortState = [[0, 1, 0, 1], [1, 0, 1, 0], [], []];
     const act = () => solveWaterSort(initialState, { maxExpandedStates: 0.5 });
 
     expect(act).toThrow(
@@ -122,12 +102,7 @@ describe("solveWaterSort", () => {
   });
 
   test("探索上限へ到達したことを解なしと区別して返すこと", () => {
-    const initialState: WaterSortState = [
-      [0, 1, 0, 1],
-      [1, 0, 1, 0],
-      [],
-      [],
-    ];
+    const initialState: WaterSortState = [[0, 1, 0, 1], [1, 0, 1, 0], [], []];
 
     const result = solveWaterSort(initialState, { maxExpandedStates: 0 });
 
@@ -136,12 +111,7 @@ describe("solveWaterSort", () => {
   });
 
   test("最短経路上の分岐と空ボトル圧力を特徴量として返すこと", () => {
-    const initialState: WaterSortState = [
-      [0, 0, 1, 1],
-      [1, 1, 0, 0],
-      [],
-      [],
-    ];
+    const initialState: WaterSortState = [[0, 0, 1, 1], [1, 1, 0, 0], [], []];
 
     const result = solveWaterSort(initialState);
 

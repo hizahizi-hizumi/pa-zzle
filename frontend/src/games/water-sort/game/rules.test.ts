@@ -28,10 +28,7 @@ describe("getWaterSortPourAmount", () => {
   });
 
   test("注ぎ先の最上段が異なる色なら移せないこと", () => {
-    const state: WaterSortState = [
-      [0, 1],
-      [2],
-    ];
+    const state: WaterSortState = [[0, 1], [2]];
 
     const result = getWaterSortPourAmount(state, {
       sourceBottleIndex: 0,
@@ -44,11 +41,7 @@ describe("getWaterSortPourAmount", () => {
 
 describe("applyWaterSortMove", () => {
   test("成立した注水を新しい盤面として返し入力盤面を変更しないこと", () => {
-    const state: WaterSortState = [
-      [0, 1, 1],
-      [2, 1],
-      [],
-    ];
+    const state: WaterSortState = [[0, 1, 1], [2, 1], []];
 
     const result = applyWaterSortMove(state, {
       sourceBottleIndex: 0,
@@ -105,12 +98,7 @@ describe("listWaterSortLegalMoves", () => {
 
 describe("isWaterSortCleared", () => {
   test("空または容量4の単色ボトルだけならクリアと判定すること", () => {
-    const state: WaterSortState = [
-      [0, 0, 0, 0],
-      [1, 1, 1, 1],
-      [],
-      [],
-    ];
+    const state: WaterSortState = [[0, 0, 0, 0], [1, 1, 1, 1], [], []];
 
     const result = isWaterSortCleared(state);
 
@@ -140,12 +128,7 @@ describe("createWaterSortStateKey", () => {
 
 describe("isStandardWaterSortInitialState", () => {
   test("各色4単位の満杯ボトルと空ボトル2本を受け入れること", () => {
-    const state: WaterSortState = [
-      [0, 1, 0, 1],
-      [1, 0, 1, 0],
-      [],
-      [],
-    ];
+    const state: WaterSortState = [[0, 1, 0, 1], [1, 0, 1, 0], [], []];
 
     const result = isStandardWaterSortInitialState(state, 2);
 
@@ -153,12 +136,7 @@ describe("isStandardWaterSortInitialState", () => {
   });
 
   test("色の個数が容量と一致しない盤面を拒否すること", () => {
-    const state: WaterSortState = [
-      [0, 1, 0, 1],
-      [1, 0, 1, 1],
-      [],
-      [],
-    ];
+    const state: WaterSortState = [[0, 1, 0, 1], [1, 0, 1, 1], [], []];
 
     const result = isStandardWaterSortInitialState(state, 2);
 

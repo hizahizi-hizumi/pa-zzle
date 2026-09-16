@@ -239,9 +239,7 @@ function calculateProblemFeatures(
     averageDistinctChoiceCountOnSolution:
       moveCount === 0 ? 0 : totalDistinctChoices / moveCount,
     maximumDistinctChoiceCountOnSolution:
-      distinctChoiceCounts.length === 0
-        ? 0
-        : Math.max(...distinctChoiceCounts),
+      distinctChoiceCounts.length === 0 ? 0 : Math.max(...distinctChoiceCounts),
     forcedChoiceRatio: moveCount === 0 ? 0 : forcedChoiceCount / moveCount,
     noEmptyBottleStateRatio:
       moveCount === 0 ? 0 : noEmptyBottleStateCount / moveCount,

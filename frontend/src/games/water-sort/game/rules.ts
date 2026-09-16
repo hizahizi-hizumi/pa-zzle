@@ -54,10 +54,7 @@ export function getWaterSortPourAmount(
 
   const sourceColor = topColor(source);
   const destinationColor = topColor(destination);
-  if (
-    destinationColor !== undefined &&
-    destinationColor !== sourceColor
-  ) {
+  if (destinationColor !== undefined && destinationColor !== sourceColor) {
     return 0;
   }
 

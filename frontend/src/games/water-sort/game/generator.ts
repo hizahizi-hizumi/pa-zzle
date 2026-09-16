@@ -6,10 +6,10 @@ import {
   type WaterSortSolverOptions,
 } from "./solver";
 import {
-  WATER_SORT_BOTTLE_CAPACITY,
-  WATER_SORT_EMPTY_BOTTLE_COUNT,
   createWaterSortStateKey,
   isCompleteWaterSortBottle,
+  WATER_SORT_BOTTLE_CAPACITY,
+  WATER_SORT_EMPTY_BOTTLE_COUNT,
   type WaterSortState,
 } from "./state";
 
