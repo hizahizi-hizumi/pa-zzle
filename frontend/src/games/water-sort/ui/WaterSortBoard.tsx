@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 import type { WaterSortState } from "@/games/water-sort/game/state";
 
@@ -19,15 +19,15 @@ const waterSortColors = [
 
 const bottleSlots = [0, 1, 2, 3] as const;
 
-const pourAnimationDurationMs = 520;
-const applyMoveDelayMs = 300;
+const pourAnimationDurationMs = 760;
+const revealDestinationDelayMs = 470;
+const activeBottlePresentations = new WeakMap<HTMLButtonElement, () => void>();
 
 type WaterSortBoardProps = {
   state: WaterSortState;
   sourceBottleIndex: number | null;
   selectableBottleIndexes: ReadonlySet<number>;
   onSelectBottle: (bottleIndex: number) => void;
-  onBusyChange?: (busy: boolean) => void;
 };
 
 export function WaterSortBoard({
@@ -35,32 +35,23 @@ export function WaterSortBoard({
   sourceBottleIndex,
   selectableBottleIndexes,
   onSelectBottle,
-  onBusyChange,
 }: WaterSortBoardProps) {
   const bottleRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const timersRef = useRef<number[]>([]);
-  const [isPouring, setIsPouring] = useState(false);
 
   useEffect(() => {
     return () => {
-      for (const timerId of timersRef.current) {
-        window.clearTimeout(timerId);
+      for (const bottle of bottleRefs.current) {
+        if (bottle) {
+          activeBottlePresentations.get(bottle)?.();
+        }
       }
-      onBusyChange?.(false);
     };
-  }, [onBusyChange]);
-
-  const schedule = (callback: () => void, delayMs: number) => {
-    const timerId = window.setTimeout(() => {
-      timersRef.current = timersRef.current.filter((id) => id !== timerId);
-      callback();
-    }, delayMs);
-    timersRef.current.push(timerId);
-  };
+  }, []);
 
   const selectBottle = (bottleIndex: number) => {
-    if (isPouring) {
-      return;
+    const clickedBottle = bottleRefs.current[bottleIndex];
+    if (clickedBottle) {
+      activeBottlePresentations.get(clickedBottle)?.();
     }
 
     if (sourceBottleIndex === null || bottleIndex === sourceBottleIndex) {
@@ -95,14 +86,8 @@ export function WaterSortBoard({
       return;
     }
 
-    setIsPouring(true);
-    onBusyChange?.(true);
     animatePour(sourceBottle, destinationBottle);
-    schedule(() => onSelectBottle(bottleIndex), applyMoveDelayMs);
-    schedule(() => {
-      setIsPouring(false);
-      onBusyChange?.(false);
-    }, pourAnimationDurationMs);
+    onSelectBottle(bottleIndex);
   };
 
   const layout = getBoardLayout(state.length);
@@ -235,54 +220,123 @@ function animatePour(
   sourceBottle: HTMLButtonElement,
   destinationBottle: HTMLButtonElement,
 ) {
+  activeBottlePresentations.get(sourceBottle)?.();
+  activeBottlePresentations.get(destinationBottle)?.();
+
   const sourceRect = sourceBottle.getBoundingClientRect();
   const destinationRect = destinationBottle.getBoundingClientRect();
+  const sourceGhost = createBottleGhost(sourceBottle, sourceRect, 30);
+  const destinationGhost = createBottleGhost(
+    destinationBottle,
+    destinationRect,
+    25,
+  );
+  document.body.append(sourceGhost, destinationGhost);
+
+  sourceBottle.style.opacity = "0";
+  sourceBottle.style.pointerEvents = "none";
+
   const deltaX = destinationRect.left - sourceRect.left;
   const deltaY = destinationRect.top - sourceRect.top;
-  const hoverY = deltaY - sourceRect.height - 8;
+  const hoverY = deltaY - sourceRect.height * 0.78;
   const direction = deltaX >= 0 ? 1 : -1;
+  let destinationRevealed = false;
+  let cleaned = false;
 
-  sourceBottle.style.zIndex = "20";
-  const sourceAnimation = sourceBottle.animate(
-    [
-      { transform: "translateY(-8px) rotate(0deg)", offset: 0 },
-      { transform: "translateY(-30px) rotate(0deg)", offset: 0.2 },
-      {
-        transform: `translate(${deltaX}px, ${hoverY}px) rotate(0deg)`,
-        offset: 0.5,
-      },
-      {
-        transform: `translate(${deltaX}px, ${hoverY}px) rotate(${direction * 24}deg)`,
-        offset: 0.62,
-      },
-      {
-        transform: `translate(${deltaX}px, ${hoverY}px) rotate(${direction * 24}deg)`,
-        offset: 0.72,
-      },
-      {
-        transform: `translate(${deltaX}px, ${hoverY}px) rotate(0deg)`,
-        offset: 0.8,
-      },
-      { transform: "translateY(0) rotate(0deg)", offset: 1 },
-    ],
-    { duration: pourAnimationDurationMs, easing: "ease-in-out" },
+  const revealDestination = () => {
+    if (destinationRevealed) {
+      return;
+    }
+    destinationRevealed = true;
+    destinationGhost.remove();
+    destinationBottle.animate(
+      [
+        { transform: "scale(1)" },
+        { transform: "scale(1.035)" },
+        { transform: "scale(1)" },
+      ],
+      { duration: 300, easing: "ease-out" },
+    );
+  };
+
+  const revealTimer = window.setTimeout(
+    revealDestination,
+    revealDestinationDelayMs,
   );
-  void sourceAnimation.finished.finally(() => {
-    sourceBottle.style.zIndex = "";
-  });
 
-  destinationBottle.animate(
+  const cleanup = () => {
+    if (cleaned) {
+      return;
+    }
+    cleaned = true;
+    window.clearTimeout(revealTimer);
+    revealDestination();
+    sourceAnimation.cancel();
+    sourceGhost.remove();
+    sourceBottle.style.opacity = "";
+    sourceBottle.style.pointerEvents = "";
+    if (activeBottlePresentations.get(sourceBottle) === cleanup) {
+      activeBottlePresentations.delete(sourceBottle);
+    }
+    if (activeBottlePresentations.get(destinationBottle) === cleanup) {
+      activeBottlePresentations.delete(destinationBottle);
+    }
+  };
+
+  activeBottlePresentations.set(sourceBottle, cleanup);
+  activeBottlePresentations.set(destinationBottle, cleanup);
+
+  const sourceAnimation = sourceGhost.animate(
     [
-      { transform: "scale(1)" },
-      { transform: "scale(1.04)" },
-      { transform: "scale(1)" },
+      { transform: "translateY(0) rotate(0deg)", offset: 0 },
+      { transform: "translateY(-10px) rotate(0deg)", offset: 0.16 },
+      {
+        transform: `translate(${deltaX}px, ${hoverY}px) rotate(0deg)`,
+        offset: 0.46,
+      },
+      {
+        transform: `translate(${deltaX}px, ${hoverY}px) rotate(${direction * 20}deg)`,
+        offset: 0.6,
+      },
+      {
+        transform: `translate(${deltaX}px, ${hoverY}px) rotate(${direction * 20}deg)`,
+        offset: 0.76,
+      },
+      {
+        transform: `translate(${deltaX}px, ${hoverY}px) rotate(0deg)`,
+        offset: 0.86,
+      },
+      { transform: "translate(0, 0) rotate(0deg)", offset: 1 },
     ],
     {
-      duration: 220,
-      delay: applyMoveDelayMs - 20,
-      easing: "ease-out",
+      duration: pourAnimationDurationMs,
+      easing: "cubic-bezier(.4,0,.2,1)",
     },
   );
+  void sourceAnimation.finished.then(cleanup, cleanup);
+}
+
+function createBottleGhost(
+  bottle: HTMLButtonElement,
+  rect: DOMRect,
+  zIndex: number,
+): HTMLButtonElement {
+  const ghost = bottle.cloneNode(true) as HTMLButtonElement;
+  ghost.setAttribute("aria-hidden", "true");
+  ghost.removeAttribute("aria-label");
+  ghost.removeAttribute("aria-pressed");
+  ghost.removeAttribute("data-selected");
+  ghost.tabIndex = -1;
+  ghost.style.position = "fixed";
+  ghost.style.left = `${rect.left}px`;
+  ghost.style.top = `${rect.top}px`;
+  ghost.style.width = `${rect.width}px`;
+  ghost.style.height = `${rect.height}px`;
+  ghost.style.margin = "0";
+  ghost.style.pointerEvents = "none";
+  ghost.style.transition = "none";
+  ghost.style.zIndex = String(zIndex);
+  return ghost;
 }
 
 function getColorView(colorIndex: number) {

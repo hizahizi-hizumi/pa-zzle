@@ -7,7 +7,6 @@ afterEach(cleanup);
 
 const baseProps = {
   difficulty: "normal" as const,
-  seed: "test-seed",
   status: "playing" as const,
   state: [[0, 1], []] as const,
   problemDifficulty: { difficulty: "normal" as const, index: 28.2 },
@@ -32,7 +31,6 @@ describe("WaterSortPlay", () => {
     fireEvent.click(bottle);
 
     expect(screen.queryByText("00:05")).toBeNull();
-    expect(screen.queryByText("問題シード: test-seed")).toBeNull();
     expect(screen.queryByText(/最短 9手/)).toBeNull();
     expect(selectBottle).toHaveBeenCalledWith(0);
   });
@@ -133,9 +131,12 @@ describe("WaterSortPlay", () => {
     expect(screen.getByText("01:05")).toBeTruthy();
     expect(screen.getByText("12")).toBeTruthy();
     expect(screen.getByText("10")).toBeTruthy();
+    expect(screen.getByText("スコア")).toBeTruthy();
+    expect(screen.getByText("83")).toBeTruthy();
+    expect(screen.getByText("/ 100")).toBeTruthy();
     expect(screen.getByText("プレイ詳細")).toBeTruthy();
-    expect(screen.getByText("83 / 100")).toBeTruthy();
     expect(screen.getByText("+2")).toBeTruthy();
+    expect(screen.queryByText(/seed:/)).toBeNull();
   });
 
   test("クリア後に次の問題・再挑戦・難易度変更・ホーム移動を通知すること", () => {

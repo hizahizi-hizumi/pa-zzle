@@ -10,7 +10,6 @@ import {
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import type { Seed } from "@/games/core/seed";
 import {
   getWaterSortDifficultyLabel,
   type WaterSortDifficulty,
@@ -22,7 +21,6 @@ import { WaterSortBoard } from "@/games/water-sort/ui/WaterSortBoard";
 
 type WaterSortPlayProps = {
   difficulty: WaterSortDifficulty;
-  seed: Seed;
   status: "playing" | "cleared";
   state: WaterSortState;
   problemDifficulty: WaterSortDifficultyAssessment;
@@ -40,7 +38,6 @@ type WaterSortPlayProps = {
 
 export function WaterSortPlay({
   difficulty,
-  seed,
   status,
   state,
   problemDifficulty,
@@ -55,13 +52,10 @@ export function WaterSortPlay({
   onChangeDifficulty,
   onBackToHome,
 }: WaterSortPlayProps) {
-  const [isBoardBusy, setIsBoardBusy] = useState(false);
-
   if (status === "cleared" && result) {
     return (
       <WaterSortResultScreen
         difficulty={difficulty}
-        seed={seed}
         problemDifficulty={problemDifficulty}
         result={result}
         restart={restart}
@@ -81,7 +75,6 @@ export function WaterSortPlay({
           size="icon-lg"
           aria-label="難易度選択へ戻る"
           onClick={onChangeDifficulty}
-          disabled={isBoardBusy}
         >
           <ArrowLeft />
         </Button>
@@ -93,7 +86,6 @@ export function WaterSortPlay({
           newGame={newGame}
           onChangeDifficulty={onChangeDifficulty}
           onBackToHome={onBackToHome}
-          disabled={isBoardBusy}
         />
       </header>
 
@@ -103,7 +95,6 @@ export function WaterSortPlay({
           sourceBottleIndex={sourceBottleIndex}
           selectableBottleIndexes={selectableBottleIndexes}
           onSelectBottle={selectBottle}
-          onBusyChange={setIsBoardBusy}
         />
       </main>
 
@@ -115,7 +106,7 @@ export function WaterSortPlay({
           className="size-12 rounded-full border bg-background shadow-sm"
           aria-label="元に戻す"
           onClick={undo}
-          disabled={!canUndo || isBoardBusy}
+          disabled={!canUndo}
         >
           <Undo2 className="size-5" />
         </Button>
@@ -126,7 +117,6 @@ export function WaterSortPlay({
 
 type WaterSortResultScreenProps = {
   difficulty: WaterSortDifficulty;
-  seed: Seed;
   problemDifficulty: WaterSortDifficultyAssessment;
   result: WaterSortResult;
   restart: () => void;
@@ -137,7 +127,6 @@ type WaterSortResultScreenProps = {
 
 function WaterSortResultScreen({
   difficulty,
-  seed,
   problemDifficulty,
   result,
   restart,
@@ -156,7 +145,19 @@ function WaterSortResultScreen({
           </p>
         </div>
 
-        <dl className="mt-8 grid grid-cols-3 gap-2 text-center">
+        <div className="mt-7 text-center">
+          <p className="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
+            スコア
+          </p>
+          <p className="mt-1 font-mono text-5xl font-bold tracking-tight tabular-nums">
+            {result.score}
+            <span className="ml-1 text-base font-medium text-muted-foreground">
+              / 100
+            </span>
+          </p>
+        </div>
+
+        <dl className="mt-7 grid grid-cols-3 gap-2 text-center">
           <ResultMetric label="手数" value={String(result.moveCount)} />
           <ResultMetric label="最短" value={String(result.optimalMoveCount)} />
           <ResultMetric
@@ -195,7 +196,6 @@ function WaterSortResultScreen({
             プレイ詳細
           </summary>
           <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
-            <DetailMetric label="評価（仮）" value={`${result.score} / 100`} />
             <DetailMetric
               label="最短との差"
               value={formatMoveDelta(result.moveDelta)}
@@ -207,9 +207,6 @@ function WaterSortResultScreen({
               value={getWaterSortDifficultyLabel(problemDifficulty.difficulty)}
             />
           </dl>
-          <p className="mt-4 break-all font-mono text-[11px] leading-relaxed text-muted-foreground/80">
-            seed: {seed}
-          </p>
         </details>
       </div>
     </section>
@@ -246,7 +243,6 @@ type PlayMenuProps = {
   newGame: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
-  disabled?: boolean;
 };
 
 function PlayMenu({
@@ -254,7 +250,6 @@ function PlayMenu({
   newGame,
   onChangeDifficulty,
   onBackToHome,
-  disabled = false,
 }: PlayMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -272,7 +267,6 @@ function PlayMenu({
         aria-label="その他の操作"
         aria-expanded={isOpen}
         onClick={() => setIsOpen((current) => !current)}
-        disabled={disabled}
       >
         <MoreHorizontal />
       </Button>
@@ -285,24 +279,20 @@ function PlayMenu({
             icon={<RotateCcw />}
             label="最初から"
             onClick={() => runAndClose(restart)}
-            disabled={disabled}
           />
           <MenuButton
             icon={<RefreshCw />}
             label="新しい問題"
             onClick={() => runAndClose(newGame)}
-            disabled={disabled}
           />
           <MenuButton
             label="難易度を変える"
             onClick={() => runAndClose(onChangeDifficulty)}
-            disabled={disabled}
           />
           <MenuButton
             icon={<Home />}
             label="ホームへ"
             onClick={() => runAndClose(onBackToHome)}
-            disabled={disabled}
           />
         </div>
       )}
@@ -314,12 +304,10 @@ function MenuButton({
   icon,
   label,
   onClick,
-  disabled = false,
 }: {
   icon?: ReactNode;
   label: string;
   onClick: () => void;
-  disabled?: boolean;
 }) {
   return (
     <button
@@ -327,7 +315,6 @@ function MenuButton({
       role="menuitem"
       className="flex min-h-10 items-center gap-2 rounded-lg px-3 text-left text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       onClick={onClick}
-      disabled={disabled}
     >
       {icon}
       <span>{label}</span>
