@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 
 import {
   generateWaterSortProblem,
-  recreateWaterSortProblem,
+  restoreWaterSortProblem,
 } from "./generator";
 import {
   isCompleteWaterSortBottle,
@@ -76,7 +76,7 @@ describe("generateWaterSortProblem", () => {
       generationAttempt: problem.generationAttempt,
     };
 
-    const reproduced = recreateWaterSortProblem(identity);
+    const reproduced = restoreWaterSortProblem(identity);
 
     expect(reproduced).toEqual(problem);
   });

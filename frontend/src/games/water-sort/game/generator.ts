@@ -221,7 +221,7 @@ function findCandidateAtAttempt(
   throw new Error("Water sort problem identity does not reference a candidate");
 }
 
-export function recreateWaterSortProblem(
+export function restoreWaterSortProblem(
   identity: WaterSortProblemIdentity,
 ): WaterSortProblem {
   validateProblemIdentity(identity);
