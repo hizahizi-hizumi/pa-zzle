@@ -1,9 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import {
-  generateWaterSortProblem,
-  restoreWaterSortProblem,
-} from "./generator";
+import { generateWaterSortProblem, restoreWaterSortProblem } from "./generator";
 import {
   isCompleteWaterSortBottle,
   isStandardWaterSortInitialState,
