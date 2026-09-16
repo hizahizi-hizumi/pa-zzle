@@ -1,5 +1,6 @@
 import { Droplets, Grid3X3 } from "lucide-react";
 
+import { PageHeader } from "@/components/PageHeader";
 import {
   Card,
   CardDescription,
@@ -10,19 +11,12 @@ import { Link } from "@/router";
 
 export default function HomePage() {
   return (
-    <section className="space-y-8">
-      <div className="space-y-2">
-        <p className="text-sm font-medium text-muted-foreground">
-          ゲームを選ぶ
-        </p>
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          今日はどのパズルで遊びますか？
-        </h1>
-      </div>
+    <section className="space-y-section">
+      <PageHeader context="ゲームを選ぶ" title="今日はどのパズルで遊びますか？" />
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Link to="/games/water-sort" className="group">
-          <Card className="h-full transition-colors group-hover:border-foreground/30">
+      <div className="grid gap-list sm:grid-cols-2">
+        <Link to="/games/water-sort" className="group rounded-xl outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
+          <Card className="h-full transition-colors group-hover:border-foreground/30 motion-reduce:transition-none">
             <CardHeader>
               <Droplets className="size-8" aria-hidden="true" />
               <CardTitle>カラーウォーターソート</CardTitle>
@@ -33,8 +27,8 @@ export default function HomePage() {
           </Card>
         </Link>
 
-        <Link to="/games/sudoku" className="group">
-          <Card className="h-full transition-colors group-hover:border-foreground/30">
+        <Link to="/games/sudoku" className="group rounded-xl outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
+          <Card className="h-full transition-colors group-hover:border-foreground/30 motion-reduce:transition-none">
             <CardHeader>
               <Grid3X3 className="size-8" aria-hidden="true" />
               <CardTitle>ナンプレ</CardTitle>

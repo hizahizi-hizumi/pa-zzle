@@ -6,13 +6,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-muted/30">
       <header className="border-b bg-background">
-        <div className="mx-auto flex min-h-14 w-full max-w-5xl items-center px-4 sm:px-6">
-          <Link to="/" className="font-semibold tracking-tight">
+        <div className="mx-auto flex min-h-app-header w-full max-w-app items-center px-page-inline sm:px-page-inline-wide">
+          <Link to="/" className="rounded-sm font-heading tracking-tight outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
             パズル pa-zzle
           </Link>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
+      <main className="mx-auto w-full max-w-app px-page-inline py-page-block sm:px-page-inline-wide sm:py-page-block-wide">
         {children}
       </main>
     </div>
