@@ -30,6 +30,7 @@ describe("WaterSortPlay", () => {
     const bottle = screen.getByRole("button", { name: "ボトル 1: 赤、青" });
     fireEvent.click(bottle);
 
+    expect(screen.getByText("パズル pa-zzle")).toBeTruthy();
     expect(screen.queryByText("00:05")).toBeNull();
     expect(screen.queryByText(/最短 9手/)).toBeNull();
     expect(selectBottle).toHaveBeenCalledWith(0);
@@ -133,10 +134,33 @@ describe("WaterSortPlay", () => {
     expect(screen.getByText("10")).toBeTruthy();
     expect(screen.getByText("スコア")).toBeTruthy();
     expect(screen.getByText("83")).toBeTruthy();
+    expect(screen.getByText("ナイスプレイ！")).toBeTruthy();
+    expect(screen.getByText("パズル pa-zzle")).toBeTruthy();
     expect(screen.getByText("/ 100")).toBeTruthy();
     expect(screen.getByText("プレイ詳細")).toBeTruthy();
     expect(screen.getByText("+2")).toBeTruthy();
     expect(screen.queryByText(/seed:/)).toBeNull();
+  });
+
+  test("100点では最高評価として強く称えること", () => {
+    render(
+      <WaterSortPlay
+        {...baseProps}
+        status="cleared"
+        result={{
+          elapsedMs: 42000,
+          moveCount: 10,
+          undoCount: 0,
+          restartCount: 0,
+          optimalMoveCount: 10,
+          moveDelta: 0,
+          score: 100,
+        }}
+      />,
+    );
+
+    expect(screen.getByText("パーフェクト！")).toBeTruthy();
+    expect(screen.getByText("100")).toBeTruthy();
   });
 
   test("クリア後に次の問題・再挑戦・難易度変更・ホーム移動を通知すること", () => {

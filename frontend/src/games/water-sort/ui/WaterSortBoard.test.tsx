@@ -15,7 +15,11 @@ describe("WaterSortBoard", () => {
     Object.defineProperty(HTMLElement.prototype, "animate", {
       configurable: true,
       value: vi.fn(
-        () => ({ finished: animationFinished }) as unknown as Animation,
+        () =>
+          ({
+            finished: animationFinished,
+            cancel: vi.fn(),
+          }) as unknown as Animation,
       ),
     });
     const onSelectBottle = vi.fn();
