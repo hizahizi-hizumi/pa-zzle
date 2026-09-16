@@ -30,6 +30,7 @@ function PlayableWaterSort({
     <WaterSortPlay
       {...game}
       onChangeDifficulty={() => navigate("/games/water-sort")}
+      onBackToHome={() => navigate("/")}
     />
   );
 }

@@ -1,12 +1,15 @@
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  ArrowLeft,
+  Home,
+  MoreHorizontal,
+  RefreshCw,
+  RotateCcw,
+  Trophy,
+  Undo2,
+} from "lucide-react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
+
+import { Button } from "@/components/ui/button";
 import type { Seed } from "@/games/core/seed";
 import {
   getWaterSortDifficultyLabel,
@@ -22,11 +25,6 @@ type WaterSortPlayProps = {
   seed: Seed;
   status: "playing" | "cleared";
   state: WaterSortState;
-  elapsedMs: number;
-  moveCount: number;
-  undoCount: number;
-  restartCount: number;
-  optimalMoveCount: number;
   problemDifficulty: WaterSortDifficultyAssessment;
   canUndo: boolean;
   sourceBottleIndex: number | null;
@@ -37,6 +35,7 @@ type WaterSortPlayProps = {
   restart: () => void;
   newGame: () => void;
   onChangeDifficulty: () => void;
+  onBackToHome: () => void;
 };
 
 export function WaterSortPlay({
@@ -44,11 +43,6 @@ export function WaterSortPlay({
   seed,
   status,
   state,
-  elapsedMs,
-  moveCount,
-  undoCount,
-  restartCount,
-  optimalMoveCount,
   problemDifficulty,
   canUndo,
   sourceBottleIndex,
@@ -59,137 +53,305 @@ export function WaterSortPlay({
   restart,
   newGame,
   onChangeDifficulty,
+  onBackToHome,
 }: WaterSortPlayProps) {
+  const [isBoardBusy, setIsBoardBusy] = useState(false);
+
   if (status === "cleared" && result) {
     return (
-      <Card className="mx-auto max-w-2xl">
-        <CardHeader>
-          <CardTitle className="text-2xl">クリア</CardTitle>
-          <CardDescription>
-            {getWaterSortDifficultyLabel(difficulty)}
-            のカラーウォーターソートをクリアしました。
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-md border bg-muted/30 p-4 text-center">
-            <p className="text-xs text-muted-foreground">プレイ評価（仮）</p>
-            <p className="mt-1 font-mono text-3xl font-semibold">
-              {result.score} / 100
-            </p>
-            <p className="mt-2 text-xs text-muted-foreground">
-              最短手数に対する手数効率から算出しています。
-            </p>
-          </div>
-          <PlayMetrics
-            elapsedMs={result.elapsedMs}
-            moveCount={result.moveCount}
-            undoCount={result.undoCount}
-            restartCount={result.restartCount}
-          />
-          <dl className="grid grid-cols-3 gap-2 text-center">
-            <Metric
-              label="問題難易度"
-              value={getWaterSortDifficultyLabel(problemDifficulty.difficulty)}
-            />
-            <Metric label="最短手数" value={String(result.optimalMoveCount)} />
-            <Metric
-              label="最短との差"
-              value={formatMoveDelta(result.moveDelta)}
-            />
-          </dl>
-          <ProblemSeed seed={seed} />
-        </CardContent>
-        <CardFooter className="flex flex-wrap gap-3">
-          <Button onClick={restart}>同じ問題をもう一度</Button>
-          <Button variant="outline" onClick={newGame}>
-            新しい問題
-          </Button>
-          <Button variant="outline" onClick={onChangeDifficulty}>
-            難易度を変える
-          </Button>
-        </CardFooter>
-      </Card>
+      <WaterSortResultScreen
+        difficulty={difficulty}
+        seed={seed}
+        problemDifficulty={problemDifficulty}
+        result={result}
+        restart={restart}
+        newGame={newGame}
+        onChangeDifficulty={onChangeDifficulty}
+        onBackToHome={onBackToHome}
+      />
     );
   }
 
   return (
-    <Card className="mx-auto max-w-2xl">
-      <CardHeader>
-        <CardTitle>カラーウォーターソート</CardTitle>
-        <CardDescription>
-          難易度: {getWaterSortDifficultyLabel(difficulty)} / 最短{" "}
-          {optimalMoveCount}手
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        <PlayMetrics
-          elapsedMs={elapsedMs}
-          moveCount={moveCount}
-          undoCount={undoCount}
-          restartCount={restartCount}
+    <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+      <header className="flex h-14 shrink-0 items-center justify-between px-3">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-lg"
+          aria-label="難易度選択へ戻る"
+          onClick={onChangeDifficulty}
+          disabled={isBoardBusy}
+        >
+          <ArrowLeft />
+        </Button>
+        <span className="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
+          {getWaterSortDifficultyLabel(difficulty)}
+        </span>
+        <PlayMenu
+          restart={restart}
+          newGame={newGame}
+          onChangeDifficulty={onChangeDifficulty}
+          onBackToHome={onBackToHome}
+          disabled={isBoardBusy}
         />
+      </header>
+
+      <main className="flex min-h-0 flex-1 items-center justify-center px-3 py-2 sm:px-6">
         <WaterSortBoard
           state={state}
           sourceBottleIndex={sourceBottleIndex}
           selectableBottleIndexes={selectableBottleIndexes}
           onSelectBottle={selectBottle}
+          onBusyChange={setIsBoardBusy}
         />
-        <p className="text-center text-xs text-muted-foreground">
-          注ぎ元を選んだあと、注げるボトルを選んでください。
-        </p>
-        <ProblemSeed seed={seed} />
-      </CardContent>
-      <CardFooter className="flex flex-wrap gap-3">
-        <Button variant="outline" onClick={undo} disabled={!canUndo}>
-          元に戻す
+      </main>
+
+      <footer className="flex h-16 shrink-0 items-center justify-center px-4">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-lg"
+          className="size-12 rounded-full border bg-background shadow-sm"
+          aria-label="元に戻す"
+          onClick={undo}
+          disabled={!canUndo || isBoardBusy}
+        >
+          <Undo2 className="size-5" />
         </Button>
-        <Button variant="outline" onClick={restart}>
-          やり直す
-        </Button>
-        <Button variant="outline" onClick={newGame}>
-          新しい問題
-        </Button>
-        <Button variant="outline" onClick={onChangeDifficulty}>
-          難易度を変える
-        </Button>
-      </CardFooter>
-    </Card>
+      </footer>
+    </section>
   );
 }
 
-function PlayMetrics({
-  elapsedMs,
-  moveCount,
-  undoCount,
-  restartCount,
-}: Pick<
-  WaterSortResult,
-  "elapsedMs" | "moveCount" | "undoCount" | "restartCount"
->) {
+type WaterSortResultScreenProps = {
+  difficulty: WaterSortDifficulty;
+  seed: Seed;
+  problemDifficulty: WaterSortDifficultyAssessment;
+  result: WaterSortResult;
+  restart: () => void;
+  newGame: () => void;
+  onChangeDifficulty: () => void;
+  onBackToHome: () => void;
+};
+
+function WaterSortResultScreen({
+  difficulty,
+  seed,
+  problemDifficulty,
+  result,
+  restart,
+  newGame,
+  onChangeDifficulty,
+  onBackToHome,
+}: WaterSortResultScreenProps) {
   return (
-    <dl className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
-      <Metric label="経過時間" value={formatElapsedTime(elapsedMs)} />
-      <Metric label="手数" value={String(moveCount)} />
-      <Metric label="元に戻した回数" value={String(undoCount)} />
-      <Metric label="やり直した回数" value={String(restartCount)} />
-    </dl>
+    <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-y-auto bg-background px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-5">
+        <div className="text-center">
+          <ClearMark />
+          <h1 className="mt-5 text-3xl font-bold tracking-tight">クリア!</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {getWaterSortDifficultyLabel(difficulty)}
+          </p>
+        </div>
+
+        <dl className="mt-8 grid grid-cols-3 gap-2 text-center">
+          <ResultMetric label="手数" value={String(result.moveCount)} />
+          <ResultMetric label="最短" value={String(result.optimalMoveCount)} />
+          <ResultMetric
+            label="時間"
+            value={formatElapsedTime(result.elapsedMs)}
+          />
+        </dl>
+
+        <div className="mt-8 grid gap-3">
+          <Button size="lg" className="h-12 text-base" onClick={newGame}>
+            次の問題
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            className="h-12 text-base"
+            onClick={restart}
+          >
+            <RefreshCw />
+            もう一度
+          </Button>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <Button variant="ghost" onClick={onChangeDifficulty}>
+            難易度を変える
+          </Button>
+          <Button variant="ghost" onClick={onBackToHome}>
+            <Home />
+            ホームへ
+          </Button>
+        </div>
+
+        <details className="mt-6 rounded-lg border px-4 py-3 text-sm text-muted-foreground">
+          <summary className="cursor-pointer select-none font-medium text-foreground">
+            プレイ詳細
+          </summary>
+          <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
+            <DetailMetric label="評価（仮）" value={`${result.score} / 100`} />
+            <DetailMetric
+              label="最短との差"
+              value={formatMoveDelta(result.moveDelta)}
+            />
+            <DetailMetric label="元に戻す" value={`${result.undoCount}回`} />
+            <DetailMetric label="やり直し" value={`${result.restartCount}回`} />
+            <DetailMetric
+              label="問題難易度"
+              value={getWaterSortDifficultyLabel(problemDifficulty.difficulty)}
+            />
+          </dl>
+          <p className="mt-4 break-all font-mono text-[11px] leading-relaxed text-muted-foreground/80">
+            seed: {seed}
+          </p>
+        </details>
+      </div>
+    </section>
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function ClearMark() {
+  const markRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    markRef.current?.animate?.(
+      [
+        { transform: "scale(0.65) rotate(-8deg)", opacity: 0 },
+        { transform: "scale(1.08) rotate(3deg)", opacity: 1, offset: 0.7 },
+        { transform: "scale(1) rotate(0deg)", opacity: 1 },
+      ],
+      { duration: 520, easing: "cubic-bezier(.2,.8,.2,1)" },
+    );
+  }, []);
+
   return (
-    <div className="rounded-md border bg-muted/30 px-2 py-3">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="mt-1 font-mono text-lg font-semibold">{value}</dd>
+    <div
+      ref={markRef}
+      className="mx-auto flex size-20 items-center justify-center rounded-full bg-amber-100 text-amber-700 shadow-sm dark:bg-amber-950/50 dark:text-amber-300"
+      aria-hidden="true"
+    >
+      <Trophy className="size-9" />
     </div>
   );
 }
 
-function ProblemSeed({ seed }: { seed: Seed }) {
+type PlayMenuProps = {
+  restart: () => void;
+  newGame: () => void;
+  onChangeDifficulty: () => void;
+  onBackToHome: () => void;
+  disabled?: boolean;
+};
+
+function PlayMenu({
+  restart,
+  newGame,
+  onChangeDifficulty,
+  onBackToHome,
+  disabled = false,
+}: PlayMenuProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const runAndClose = (action: () => void) => {
+    setIsOpen(false);
+    action();
+  };
+
   return (
-    <p className="break-all font-mono text-xs text-muted-foreground">
-      問題シード: {seed}
-    </p>
+    <div className="relative">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-lg"
+        aria-label="その他の操作"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((current) => !current)}
+        disabled={disabled}
+      >
+        <MoreHorizontal />
+      </Button>
+      {isOpen && (
+        <div
+          role="menu"
+          className="absolute top-11 right-0 z-10 grid w-44 gap-1 rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-lg"
+        >
+          <MenuButton
+            icon={<RotateCcw />}
+            label="最初から"
+            onClick={() => runAndClose(restart)}
+            disabled={disabled}
+          />
+          <MenuButton
+            icon={<RefreshCw />}
+            label="新しい問題"
+            onClick={() => runAndClose(newGame)}
+            disabled={disabled}
+          />
+          <MenuButton
+            label="難易度を変える"
+            onClick={() => runAndClose(onChangeDifficulty)}
+            disabled={disabled}
+          />
+          <MenuButton
+            icon={<Home />}
+            label="ホームへ"
+            onClick={() => runAndClose(onBackToHome)}
+            disabled={disabled}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MenuButton({
+  icon,
+  label,
+  onClick,
+  disabled = false,
+}: {
+  icon?: ReactNode;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      className="flex min-h-10 items-center gap-2 rounded-lg px-3 text-left text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function ResultMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl bg-muted/70 px-2 py-4">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="mt-1 font-mono text-xl font-semibold tracking-tight">
+        {value}
+      </dd>
+    </div>
+  );
+}
+
+function DetailMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-xs">{label}</dt>
+      <dd className="mt-0.5 font-medium text-foreground">{value}</dd>
+    </div>
   );
 }
 
