@@ -24,6 +24,9 @@ type WaterSortPlayProps = {
   status: "playing" | "cleared";
   state: WaterSortState;
   problemDifficulty: WaterSortDifficultyAssessment;
+  elapsedMs: number;
+  moveCount: number;
+  undoCount: number;
   canUndo: boolean;
   sourceBottleIndex: number | null;
   selectableBottleIndexes: ReadonlySet<number>;
@@ -41,6 +44,9 @@ export function WaterSortPlay({
   status,
   state,
   problemDifficulty,
+  elapsedMs,
+  moveCount,
+  undoCount,
   canUndo,
   sourceBottleIndex,
   selectableBottleIndexes,
@@ -68,7 +74,7 @@ export function WaterSortPlay({
 
   return (
     <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-      <header className="flex h-14 shrink-0 items-center justify-between px-3">
+      <header className="grid h-[4.5rem] shrink-0 grid-cols-[3rem_minmax(0,1fr)_3rem] items-center px-3">
         <Button
           type="button"
           variant="ghost"
@@ -78,7 +84,11 @@ export function WaterSortPlay({
         >
           <ArrowLeft />
         </Button>
-        <BrandMark />
+        <PlayHeaderSummary
+          elapsedMs={elapsedMs}
+          moveCount={moveCount}
+          undoCount={undoCount}
+        />
         <PlayMenu
           restart={restart}
           newGame={newGame}
@@ -110,6 +120,51 @@ export function WaterSortPlay({
         </Button>
       </footer>
     </section>
+  );
+}
+
+function PlayHeaderSummary({
+  elapsedMs,
+  moveCount,
+  undoCount,
+}: {
+  elapsedMs: number;
+  moveCount: number;
+  undoCount: number;
+}) {
+  return (
+    <div className="min-w-0 text-center">
+      <BrandMark />
+      <h1 className="mt-0.5 truncate text-sm font-semibold tracking-tight">
+        カラーウォーターソート
+      </h1>
+      <div className="mt-1 flex items-center justify-center gap-2 text-[10px] leading-none text-muted-foreground">
+        <PlayMetric label="手数" value={String(moveCount)} />
+        <MetricSeparator />
+        <PlayMetric label="時間" value={formatElapsedTime(elapsedMs)} />
+        <MetricSeparator />
+        <PlayMetric label="待った" value={String(undoCount)} />
+      </div>
+    </div>
+  );
+}
+
+function PlayMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="flex items-baseline gap-1 whitespace-nowrap">
+      <span>{label}</span>
+      <span className="font-mono font-medium tabular-nums text-foreground/80">
+        {value}
+      </span>
+    </span>
+  );
+}
+
+function MetricSeparator() {
+  return (
+    <span aria-hidden="true" className="text-border">
+      ·
+    </span>
   );
 }
 

@@ -10,6 +10,9 @@ const baseProps = {
   status: "playing" as const,
   state: [[0, 1], []] as const,
   problemDifficulty: { difficulty: "normal" as const, index: 28.2 },
+  elapsedMs: 5000,
+  moveCount: 7,
+  undoCount: 2,
   canUndo: true,
   sourceBottleIndex: null,
   selectableBottleIndexes: new Set([0, 1]),
@@ -23,7 +26,7 @@ const baseProps = {
 };
 
 describe("WaterSortPlay", () => {
-  test("プレイ中は盤面を表示して計測値を常設しないこと", () => {
+  test("プレイ中はゲーム名と主要な計測値をミニマルに表示すること", () => {
     const selectBottle = vi.fn();
 
     render(<WaterSortPlay {...baseProps} selectBottle={selectBottle} />);
@@ -31,7 +34,15 @@ describe("WaterSortPlay", () => {
     fireEvent.click(bottle);
 
     expect(screen.getByText("パズル pa-zzle")).toBeTruthy();
-    expect(screen.queryByText("00:05")).toBeNull();
+    expect(
+      screen.getByRole("heading", { name: "カラーウォーターソート" }),
+    ).toBeTruthy();
+    expect(screen.getByText("手数")).toBeTruthy();
+    expect(screen.getByText("7")).toBeTruthy();
+    expect(screen.getByText("時間")).toBeTruthy();
+    expect(screen.getByText("00:05")).toBeTruthy();
+    expect(screen.getByText("待った")).toBeTruthy();
+    expect(screen.getByText("2")).toBeTruthy();
     expect(screen.queryByText(/最短 9手/)).toBeNull();
     expect(selectBottle).toHaveBeenCalledWith(0);
   });

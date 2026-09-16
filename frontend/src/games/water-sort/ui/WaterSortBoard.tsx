@@ -24,8 +24,8 @@ const waterSortColors = [
 
 const bottleSlots = [0, 1, 2, 3] as const;
 
-const pourAnimationDurationMs = 1050;
-const pourRevealDelayMs = 640;
+const pourAnimationDurationMs = 1600;
+const pourRevealDelayMs = 950;
 const sourcePourLayerZIndex = 70;
 const destinationPourLayerZIndex = 65;
 
@@ -252,29 +252,41 @@ function PourPresentationLayer({
 
     const sourceAnimation = sourceElement.animate(
       [
-        { transform: "translate(0, 0) rotate(0deg)", offset: 0 },
-        { transform: "translate(0, -8px) rotate(0deg)", offset: 0.18 },
         {
-          transform: `translate(${deltaX}px, ${hoverY}px) rotate(0deg)`,
-          offset: 0.5,
+          transform: "translate(0, 0) rotate(0deg)",
+          offset: 0,
+          easing: "ease-out",
         },
         {
-          transform: `translate(${deltaX}px, ${hoverY}px) rotate(${direction * 16}deg)`,
-          offset: 0.64,
-        },
-        {
-          transform: `translate(${deltaX}px, ${hoverY}px) rotate(${direction * 16}deg)`,
-          offset: 0.76,
+          transform: "translate(0, -8px) rotate(0deg)",
+          offset: 0.08,
+          easing: "cubic-bezier(.22,.61,.36,1)",
         },
         {
           transform: `translate(${deltaX}px, ${hoverY}px) rotate(0deg)`,
-          offset: 0.86,
+          offset: 0.23,
+          easing: "ease-in-out",
+        },
+        {
+          transform: `translate(${deltaX}px, ${hoverY}px) rotate(${direction * 16}deg)`,
+          offset: 0.34,
+          easing: "linear",
+        },
+        {
+          transform: `translate(${deltaX}px, ${hoverY}px) rotate(${direction * 16}deg)`,
+          offset: 0.72,
+          easing: "ease-in-out",
+        },
+        {
+          transform: `translate(${deltaX}px, ${hoverY}px) rotate(0deg)`,
+          offset: 0.82,
+          easing: "cubic-bezier(.22,.61,.36,1)",
         },
         { transform: "translate(0, 0) rotate(0deg)", offset: 1 },
       ],
       {
         duration: pourAnimationDurationMs,
-        easing: "cubic-bezier(.22,.61,.36,1)",
+        easing: "linear",
       },
     );
 
@@ -309,7 +321,10 @@ function PourPresentationLayer({
           ref={destinationRef}
           aria-hidden="true"
           className="group pointer-events-none fixed aspect-[0.36] rounded-b-[1.45rem]"
-          style={getOverlayStyle(presentation.destinationRect, destinationPourLayerZIndex)}
+          style={getOverlayStyle(
+            presentation.destinationRect,
+            destinationPourLayerZIndex,
+          )}
         >
           <BottleVisual bottle={presentation.destinationBefore} />
         </div>
