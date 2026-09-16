@@ -234,7 +234,12 @@ export function recreateWaterSortProblem(
     );
   }
 
-  return createProblem(identity, initialState, solveResult, solveResult.features);
+  return createProblem(
+    identity,
+    initialState,
+    solveResult,
+    solveResult.features,
+  );
 }
 
 export function generateWaterSortProblem(
