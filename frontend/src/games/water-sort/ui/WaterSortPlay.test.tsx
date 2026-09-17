@@ -46,7 +46,7 @@ describe("WaterSortPlay", () => {
     fireEvent.click(bottle);
     expect(screen.getByText("パズル pa-zzle")).toBeTruthy();
     expect(
-      screen.getByRole("heading", { name: "カラーウォーターソート" }),
+      screen.getByRole("heading", { name: "ウォーターソート" }),
     ).toBeTruthy();
     expect(screen.getByText("手数")).toBeTruthy();
     expect(screen.getByText("7")).toBeTruthy();
@@ -217,7 +217,7 @@ describe("WaterSortPlay", () => {
       />,
     );
     expect(screen.getByRole("heading", { name: "クリア!" })).toBeTruthy();
-    expect(screen.getByText("カラーウォーターソート")).toBeTruthy();
+    expect(screen.getByText("ウォーターソート")).toBeTruthy();
     expect(screen.getByText("01:05")).toBeTruthy();
     expect(screen.getByText("12")).toBeTruthy();
     expect(screen.getByText("10")).toBeTruthy();

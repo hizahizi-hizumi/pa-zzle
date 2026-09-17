@@ -17,9 +17,7 @@ export default function WaterSortDifficultyPage() {
         >
           ← ゲーム選択へ
         </Link>
-        <h1 className="text-3xl font-bold tracking-tight">
-          カラーウォーターソート
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight">ウォーターソート</h1>
         <p className="text-muted-foreground">
           難易度を選んでプレイを始めます。
         </p>

@@ -25,7 +25,7 @@ export default function HomePage() {
           <Card className="h-full transition-colors group-hover:border-foreground/30">
             <CardHeader>
               <Droplets className="size-8" aria-hidden="true" />
-              <CardTitle>カラーウォーターソート</CardTitle>
+              <CardTitle>ウォーターソート</CardTitle>
               <CardDescription>
                 同じ色の水を1本のボトルにまとめるパズルです。
               </CardDescription>
