@@ -22,6 +22,8 @@
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
+  --color-brand-inverse-foreground: var(--brand-inverse-foreground);
+  --color-brand-inverse: var(--brand-inverse);
   --color-brand-foreground: var(--brand-foreground);
   --color-brand-strong: var(--brand-strong);
   --color-brand-subtle: var(--brand-subtle);
@@ -51,6 +53,8 @@
   --brand-subtle: #eef1f4;
   --brand-strong: #aeb8c2;
   --brand-foreground: #27313a;
+  --brand-inverse: #27313a;
+  --brand-inverse-foreground: #fff;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);

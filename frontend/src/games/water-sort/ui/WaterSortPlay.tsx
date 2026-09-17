@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
-import { BrandMark } from "@/components/BrandMark";
+import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { Button } from "@/components/ui/button";
 import {
   getWaterSortDifficultyLabel,
@@ -87,8 +87,9 @@ export function WaterSortPlay({
   }
 
   return (
-    <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-      <header className="grid h-[4.5rem] shrink-0 grid-cols-[3rem_minmax(0,1fr)_3rem] items-center px-3">
+    <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
+      <BrandIdentityHeader />
+      <header className="grid h-[4.5rem] shrink-0 grid-cols-[3rem_minmax(0,1fr)_3rem] items-start bg-background px-3 pt-1.5">
         <Button
           type="button"
           variant="ghost"
@@ -191,8 +192,7 @@ function PlayHeaderSummary({
 }) {
   return (
     <div className="min-w-0 text-center">
-      <BrandMark size="compact" />
-      <h1 className="mt-0.5 truncate text-sm font-semibold tracking-tight">
+      <h1 className="truncate text-sm font-semibold tracking-tight">
         ウォーターソート
       </h1>
       <div className="mt-1 flex items-center justify-center gap-2 text-[10px] leading-none text-muted-foreground">
@@ -243,12 +243,10 @@ function WaterSortResultScreen({
 }: WaterSortResultScreenProps) {
   const scorePresentation = getScorePresentation(result.score);
   return (
-    <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-y-auto bg-background px-5 pt-[max(2.75rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-      <div className="pointer-events-none absolute inset-x-0 top-[max(0.8rem,env(safe-area-inset-top))] z-10 flex justify-center">
-        <BrandMark size="compact" />
-      </div>
+    <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-y-auto bg-background pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <BrandIdentityHeader />
       <ConfettiBurst intensity={scorePresentation.confettiIntensity} />
-      <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-5">
+      <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-5">
         <div className="text-center">
           <ClearMark className={scorePresentation.markClassName} />
           <p className="mt-4 text-sm font-semibold tracking-tight">
