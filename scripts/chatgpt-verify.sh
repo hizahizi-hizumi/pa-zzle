@@ -4,12 +4,12 @@ set -euo pipefail
 usage() {
   cat <<'EOF_USAGE'
 Usage:
-  .github/workflows/scripts/run-chatgpt-quality.sh <offline-dependencies.tar.zst> [repository-root]
+  ./scripts/chatgpt-verify.sh <offline-dependencies.tar.zst> [repository-root]
 EOF_USAGE
 }
 
 fail() {
-  printf 'chatgpt-quality: %s\n' "$*" >&2
+  printf 'chatgpt-verify: %s\n' "$*" >&2
   exit 1
 }
 
@@ -112,4 +112,4 @@ kill "$server_pid"
 wait "$server_pid" 2>/dev/null || true
 server_pid=""
 
-printf 'chatgpt-quality: PASS input_key=%s\n' "$INPUT_KEY"
+printf 'chatgpt-verify: PASS input_key=%s\n' "$INPUT_KEY"

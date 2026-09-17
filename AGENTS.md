@@ -7,7 +7,8 @@
 ### リポジトリ全体
 
 ```sh
-./scripts/verify.sh # 現時点の全品質検証
+./scripts/verify.sh # 通常開発環境での全品質検証
+./scripts/chatgpt-verify.sh <offline-dependencies.tar.zst> # ChatGPT実行環境での全品質検証
 ```
 
 ### Frontend
@@ -20,7 +21,7 @@ bun run --cwd frontend test # Vitest の1回実行
 bun run --cwd frontend build # プロダクションビルド
 ```
 
-Repository Snapshot と Offline Dependencies を使う ChatGPT 実行環境では、対象Snapshotと同じworkflow runの `repository-environment-<target>-<sha>.json` から依存アーティファクトを取得し、`frontend/node_modules` に配置して Vite を使う。
+Repository Snapshot と Offline Dependencies を使う ChatGPT 実行環境では、対象Snapshotと同じworkflow runの `repository-environment-<target>-<sha>.json` から依存アーティファクトを取得する。全品質検証ではそのアーカイブを `scripts/chatgpt-verify.sh` に渡す。画面確認などで Vite を直接使う場合は、依存アーティファクトの `frontend/node_modules` を配置して次を実行する。
 
 ```sh
 frontend/node_modules/.bin/vite --config frontend/vite.chatgpt.config.ts --host 127.0.0.1 --port 3000
