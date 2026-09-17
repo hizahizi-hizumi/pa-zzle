@@ -10,26 +10,26 @@ export type BottleRect = {
 
 type PourOperation = Extract<WaterSortOperation, { type: "poured" }>;
 
-type PourPresentationBottle = {
+type PourAnimationBottle = {
   bottleIndex: number;
   before: WaterSortBottle;
   after: WaterSortBottle;
   rect: BottleRect;
 };
 
-export type PourPresentation = {
+export type PourAnimation = {
   id: number;
-  source: PourPresentationBottle;
-  destination: PourPresentationBottle;
+  source: PourAnimationBottle;
+  destination: PourAnimationBottle;
   colorIndex: number;
   isClearingMove: boolean;
 };
 
-export function createPourPresentation(
+export function createPourAnimation(
   operation: PourOperation,
   sourceRect: BottleRect,
   destinationRect: BottleRect,
-): PourPresentation | null {
+): PourAnimation | null {
   const sourceBefore = operation.stateBefore[operation.sourceBottleIndex] ?? [];
   const colorIndex = sourceBefore[sourceBefore.length - 1];
   if (colorIndex === undefined) {
@@ -55,45 +55,45 @@ export function createPourPresentation(
   };
 }
 
-export function addPourPresentation(
-  current: readonly PourPresentation[],
-  next: PourPresentation,
-): readonly PourPresentation[] {
+export function addPourAnimation(
+  current: readonly PourAnimation[],
+  next: PourAnimation,
+): readonly PourAnimation[] {
   return [
-    ...current.filter((active) => canPresentConcurrently(active, next)),
+    ...current.filter((active) => canAnimateConcurrently(active, next)),
     next,
   ];
 }
 
-export function interruptPourPresentationsForBottle(
-  current: readonly PourPresentation[],
+export function interruptPourAnimationsForBottle(
+  current: readonly PourAnimation[],
   bottleIndex: number,
-): readonly PourPresentation[] {
+): readonly PourAnimation[] {
   return current.filter(
-    (presentation) =>
-      presentation.source.bottleIndex !== bottleIndex &&
-      presentation.destination.bottleIndex !== bottleIndex,
+    (animation) =>
+      animation.source.bottleIndex !== bottleIndex &&
+      animation.destination.bottleIndex !== bottleIndex,
   );
 }
 
-export function groupPourPresentationsByDestination(
-  presentations: readonly PourPresentation[],
-): readonly (readonly PourPresentation[])[] {
-  const groups = new Map<number, PourPresentation[]>();
+export function groupPourAnimationsByDestination(
+  animations: readonly PourAnimation[],
+): readonly (readonly PourAnimation[])[] {
+  const groups = new Map<number, PourAnimation[]>();
 
-  for (const presentation of presentations) {
-    const destinationBottleIndex = presentation.destination.bottleIndex;
+  for (const animation of animations) {
+    const destinationBottleIndex = animation.destination.bottleIndex;
     const current = groups.get(destinationBottleIndex) ?? [];
-    current.push(presentation);
+    current.push(animation);
     groups.set(destinationBottleIndex, current);
   }
 
   return [...groups.values()];
 }
 
-function canPresentConcurrently(
-  active: PourPresentation,
-  next: PourPresentation,
+function canAnimateConcurrently(
+  active: PourAnimation,
+  next: PourAnimation,
 ): boolean {
   return (
     active.source.bottleIndex !== next.source.bottleIndex &&

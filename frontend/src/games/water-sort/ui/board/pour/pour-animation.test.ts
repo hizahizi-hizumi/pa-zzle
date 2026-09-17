@@ -2,11 +2,11 @@ import { describe, expect, test } from "vitest";
 
 import type { WaterSortOperation } from "@/games/water-sort/hooks/use-water-sort-game";
 import {
-  addPourPresentation,
-  createPourPresentation,
-  groupPourPresentationsByDestination,
-  interruptPourPresentationsForBottle,
-} from "./pour-presentation";
+  addPourAnimation,
+  createPourAnimation,
+  groupPourAnimationsByDestination,
+  interruptPourAnimationsForBottle,
+} from "./pour-animation";
 
 const rect = { left: 0, top: 0, width: 40, height: 120 };
 
@@ -28,12 +28,12 @@ function pouredOperation(
   };
 }
 
-function presentation(
+function animation(
   id: number,
   sourceBottleIndex: number,
   destinationBottleIndex: number,
 ) {
-  const result = createPourPresentation(
+  const result = createPourAnimation(
     pouredOperation(
       id,
       sourceBottleIndex,
@@ -54,52 +54,52 @@ function presentation(
   return result;
 }
 
-describe("addPourPresentation", () => {
+describe("addPourAnimation", () => {
   test("同じ注ぎ先への注水を並行して保持すること", () => {
-    const first = presentation(1, 0, 2);
-    const second = presentation(2, 1, 2);
+    const first = animation(1, 0, 2);
+    const second = animation(2, 1, 2);
 
-    const result = addPourPresentation([first], second);
+    const result = addPourAnimation([first], second);
 
     expect(result.map(({ id }) => id)).toEqual([1, 2]);
   });
 
   test.each([
-    ["同じ注ぎ元", presentation(2, 0, 3)],
-    ["既存の注ぎ先を次の注ぎ元にする操作", presentation(2, 2, 3)],
-    ["既存の注ぎ元を次の注ぎ先にする操作", presentation(2, 1, 0)],
+    ["同じ注ぎ元", animation(2, 0, 3)],
+    ["既存の注ぎ先を次の注ぎ元にする操作", animation(2, 2, 3)],
+    ["既存の注ぎ元を次の注ぎ先にする操作", animation(2, 1, 0)],
   ])("競合する先行注水を終了すること: %s", (_label, next) => {
-    const first = presentation(1, 0, 2);
+    const first = animation(1, 0, 2);
 
-    const result = addPourPresentation([first], next);
+    const result = addPourAnimation([first], next);
 
     expect(result.map(({ id }) => id)).toEqual([2]);
   });
 });
 
-describe("interruptPourPresentationsForBottle", () => {
+describe("interruptPourAnimationsForBottle", () => {
   test("操作対象のボトルが関与する注水だけを終了すること", () => {
-    const presentations = [
-      presentation(1, 0, 2),
-      presentation(2, 1, 3),
-      presentation(3, 3, 2),
+    const animations = [
+      animation(1, 0, 2),
+      animation(2, 1, 3),
+      animation(3, 3, 2),
     ];
 
-    const result = interruptPourPresentationsForBottle(presentations, 2);
+    const result = interruptPourAnimationsForBottle(animations, 2);
 
     expect(result.map(({ id }) => id)).toEqual([2]);
   });
 });
 
-describe("groupPourPresentationsByDestination", () => {
+describe("groupPourAnimationsByDestination", () => {
   test("同じ注ぎ先の注水を成立順のまままとめること", () => {
-    const presentations = [
-      presentation(1, 0, 2),
-      presentation(2, 1, 2),
-      presentation(3, 2, 3),
+    const animations = [
+      animation(1, 0, 2),
+      animation(2, 1, 2),
+      animation(3, 2, 3),
     ];
 
-    const result = groupPourPresentationsByDestination(presentations);
+    const result = groupPourAnimationsByDestination(animations);
 
     expect(result.map((group) => group.map(({ id }) => id))).toEqual([
       [1, 2],

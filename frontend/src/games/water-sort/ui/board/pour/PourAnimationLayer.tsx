@@ -5,9 +5,9 @@ import { getWaterColorView } from "../water-bottle/get-water-color-view";
 import { WaterBottle } from "../water-bottle/WaterBottle";
 import {
   type BottleRect,
-  groupPourPresentationsByDestination,
-  type PourPresentation,
-} from "./pour-presentation";
+  groupPourAnimationsByDestination,
+  type PourAnimation,
+} from "./pour-animation";
 
 const pourAnimationDurationMs = 1600;
 const pourTransferStartOffset = 0.38;
@@ -16,29 +16,29 @@ const sourcePourLayerZIndex = 70;
 const streamPourLayerZIndex = 69;
 const destinationPourLayerZIndex = 65;
 
-type PourPresentationLayerProps = {
-  presentations: readonly PourPresentation[];
-  onFinish: (presentationId: number) => void;
+type PourAnimationLayerProps = {
+  animations: readonly PourAnimation[];
+  onFinish: (animationId: number) => void;
 };
 
-export function PourPresentationLayer({
-  presentations,
+export function PourAnimationLayer({
+  animations,
   onFinish,
-}: PourPresentationLayerProps) {
+}: PourAnimationLayerProps) {
   return (
     <>
-      {presentations.map((presentation) => (
+      {animations.map((animation) => (
         <PourSourceLayer
-          key={presentation.id}
-          presentation={presentation}
+          key={animation.id}
+          animation={animation}
           onFinish={onFinish}
         />
       ))}
-      {groupPourPresentationsByDestination(presentations).map(
-        (destinationPresentations) => (
+      {groupPourAnimationsByDestination(animations).map(
+        (destinationAnimations) => (
           <PourDestinationLayer
-            key={destinationPresentations[0]?.destination.bottleIndex}
-            presentations={destinationPresentations}
+            key={destinationAnimations[0]?.destination.bottleIndex}
+            animations={destinationAnimations}
           />
         ),
       )}
@@ -47,11 +47,11 @@ export function PourPresentationLayer({
 }
 
 function PourSourceLayer({
-  presentation,
+  animation,
   onFinish,
 }: {
-  presentation: PourPresentation;
-  onFinish: (presentationId: number) => void;
+  animation: PourAnimation;
+  onFinish: (animationId: number) => void;
 }) {
   const sourceRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<HTMLDivElement>(null);
@@ -61,12 +61,12 @@ function PourSourceLayer({
     const sourceElement = sourceRef.current;
     const streamElement = streamRef.current;
     if (!sourceElement?.animate) {
-      onFinish(presentation.id);
+      onFinish(animation.id);
       return;
     }
 
-    const { rect: sourceRect } = presentation.source;
-    const { rect: destinationRect } = presentation.destination;
+    const { rect: sourceRect } = animation.source;
+    const { rect: destinationRect } = animation.destination;
     const deltaX = destinationRect.left - sourceRect.left;
     const deltaY = destinationRect.top - sourceRect.top;
     const hoverY = deltaY - sourceRect.height * 0.55;
@@ -142,7 +142,7 @@ function PourSourceLayer({
 
     const finishIfActive = () => {
       if (active) {
-        onFinish(presentation.id);
+        onFinish(animation.id);
       }
     };
     void sourceAnimation.finished.then(finishIfActive, finishIfActive);
@@ -153,7 +153,7 @@ function PourSourceLayer({
       streamAnimation?.cancel();
       sourceTransferAnimation?.cancel();
     };
-  }, [onFinish, presentation]);
+  }, [onFinish, animation]);
 
   return createPortal(
     <>
@@ -161,18 +161,18 @@ function PourSourceLayer({
         ref={sourceRef}
         aria-hidden="true"
         className="pointer-events-none fixed aspect-[0.36] origin-top rounded-b-[1.45rem] will-change-transform"
-        style={getOverlayStyle(presentation.source.rect, sourcePourLayerZIndex)}
+        style={getOverlayStyle(animation.source.rect, sourcePourLayerZIndex)}
       >
         <WaterBottle
-          contents={presentation.source.after}
+          contents={animation.source.after}
           waterOverlay={
             <TransferLiquidView
               transfer={{
-                colorIndex: presentation.colorIndex,
-                startSlot: presentation.source.after.length,
+                colorIndex: animation.colorIndex,
+                startSlot: animation.source.after.length,
                 slotCount:
-                  presentation.source.before.length -
-                  presentation.source.after.length,
+                  animation.source.before.length -
+                  animation.source.after.length,
                 elementRef: sourceTransferRef,
                 initialScaleY: 1,
               }}
@@ -184,7 +184,7 @@ function PourSourceLayer({
         ref={streamRef}
         aria-hidden="true"
         className="pointer-events-none fixed origin-top rounded-full opacity-0 will-change-transform"
-        style={getPourStreamStyle(presentation)}
+        style={getPourStreamStyle(animation)}
       />
     </>,
     document.body,
@@ -192,12 +192,12 @@ function PourSourceLayer({
 }
 
 function PourDestinationLayer({
-  presentations,
+  animations,
 }: {
-  presentations: readonly PourPresentation[];
+  animations: readonly PourAnimation[];
 }) {
-  const firstPresentation = presentations[0];
-  if (!firstPresentation) {
+  const firstAnimation = animations[0];
+  if (!firstAnimation) {
     return null;
   }
 
@@ -206,16 +206,16 @@ function PourDestinationLayer({
       aria-hidden="true"
       className="pointer-events-none fixed aspect-[0.36] rounded-b-[1.45rem]"
       style={getOverlayStyle(
-        firstPresentation.destination.rect,
+        firstAnimation.destination.rect,
         destinationPourLayerZIndex,
       )}
     >
       <WaterBottle
-        contents={firstPresentation.destination.before}
-        waterOverlay={presentations.map((presentation) => (
+        contents={firstAnimation.destination.before}
+        waterOverlay={animations.map((animation) => (
           <AnimatedDestinationTransfer
-            key={presentation.id}
-            presentation={presentation}
+            key={animation.id}
+            animation={animation}
           />
         ))}
       />
@@ -225,9 +225,9 @@ function PourDestinationLayer({
 }
 
 function AnimatedDestinationTransfer({
-  presentation,
+  animation,
 }: {
-  presentation: PourPresentation;
+  animation: PourAnimation;
 }) {
   const transferRef = useRef<HTMLSpanElement>(null);
 
@@ -248,11 +248,11 @@ function AnimatedDestinationTransfer({
   return (
     <TransferLiquidView
       transfer={{
-        colorIndex: presentation.colorIndex,
-        startSlot: presentation.destination.before.length,
+        colorIndex: animation.colorIndex,
+        startSlot: animation.destination.before.length,
         slotCount:
-          presentation.destination.after.length -
-          presentation.destination.before.length,
+          animation.destination.after.length -
+          animation.destination.before.length,
         elementRef: transferRef,
         initialScaleY: 0,
       }}
@@ -293,12 +293,12 @@ function getOverlayStyle(rect: BottleRect, zIndex: number) {
   };
 }
 
-function getPourStreamStyle(presentation: PourPresentation) {
-  const { rect: sourceRect } = presentation.source;
-  const { rect: destinationRect } = presentation.destination;
+function getPourStreamStyle(animation: PourAnimation) {
+  const { rect: sourceRect } = animation.source;
+  const { rect: destinationRect } = animation.destination;
   const streamTop = destinationRect.top - sourceRect.height * 0.55;
   const streamHeight = destinationRect.top - streamTop + 6;
-  const color = getWaterColorView(presentation.colorIndex).color;
+  const color = getWaterColorView(animation.colorIndex).color;
 
   return {
     left: `${destinationRect.left + destinationRect.width / 2 - 2}px`,

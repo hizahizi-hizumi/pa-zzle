@@ -2,8 +2,8 @@ import { useLayoutEffect, useRef } from "react";
 
 import type { WaterSortState } from "@/games/water-sort/game/state";
 import type { WaterSortOperation } from "@/games/water-sort/hooks/use-water-sort-game";
-import { PourPresentationLayer } from "./pour/PourPresentationLayer";
-import { usePourPresentations } from "./pour/use-pour-presentations";
+import { PourAnimationLayer } from "./pour/PourAnimationLayer";
+import { usePourAnimations } from "./pour/use-pour-animations";
 import { getWaterColorView } from "./water-bottle/get-water-color-view";
 import { WaterBottle } from "./water-bottle/WaterBottle";
 
@@ -13,7 +13,7 @@ type WaterSortBoardProps = {
   operation: WaterSortOperation | null;
   onSelectBottle: (bottleIndex: number) => void;
   interactionDisabled?: boolean;
-  onPourPresentationActivityChange?: (active: boolean) => void;
+  onPourAnimationActivityChange?: (active: boolean) => void;
   onClearingPourComplete?: () => void;
 };
 
@@ -23,15 +23,15 @@ export function WaterSortBoard({
   operation,
   onSelectBottle,
   interactionDisabled = false,
-  onPourPresentationActivityChange,
+  onPourAnimationActivityChange,
   onClearingPourComplete,
 }: WaterSortBoardProps) {
   const bottleRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const { presentations, finishPresentation, interruptForBottleInteraction } =
-    usePourPresentations({
+  const { animations, finishAnimation, interruptForBottleInteraction } =
+    usePourAnimations({
       operation,
       bottleRefs,
-      onActivityChange: onPourPresentationActivityChange,
+      onActivityChange: onPourAnimationActivityChange,
       onClearingPourComplete,
     });
 
@@ -52,9 +52,9 @@ export function WaterSortBoard({
   };
 
   const animatedBottleIndexes = new Set(
-    presentations.flatMap((presentation) => [
-      presentation.source.bottleIndex,
-      presentation.destination.bottleIndex,
+    animations.flatMap((animation) => [
+      animation.source.bottleIndex,
+      animation.destination.bottleIndex,
     ]),
   );
   const layout = getBoardLayout(state.length);
@@ -104,10 +104,7 @@ export function WaterSortBoard({
         })}
       </fieldset>
 
-      <PourPresentationLayer
-        presentations={presentations}
-        onFinish={finishPresentation}
-      />
+      <PourAnimationLayer animations={animations} onFinish={finishAnimation} />
     </>
   );
 }

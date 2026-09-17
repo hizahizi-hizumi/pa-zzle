@@ -8,37 +8,35 @@ import {
 
 import type { WaterSortOperation } from "@/games/water-sort/hooks/use-water-sort-game";
 import {
-  addPourPresentation,
+  addPourAnimation,
   type BottleRect,
-  createPourPresentation,
-  interruptPourPresentationsForBottle,
-  type PourPresentation,
-} from "./pour-presentation";
+  createPourAnimation,
+  interruptPourAnimationsForBottle,
+  type PourAnimation,
+} from "./pour-animation";
 
-type UsePourPresentationsOptions = {
+type UsePourAnimationsOptions = {
   operation: WaterSortOperation | null;
   bottleRefs: RefObject<Array<HTMLButtonElement | null>>;
   onActivityChange?: (active: boolean) => void;
   onClearingPourComplete?: () => void;
 };
 
-export function usePourPresentations({
+export function usePourAnimations({
   operation,
   bottleRefs,
   onActivityChange,
   onClearingPourComplete,
-}: UsePourPresentationsOptions) {
-  const [presentations, setPresentations] = useState<
-    readonly PourPresentation[]
-  >([]);
-  const presentationsRef = useRef<readonly PourPresentation[]>([]);
+}: UsePourAnimationsOptions) {
+  const [animations, setAnimations] = useState<readonly PourAnimation[]>([]);
+  const animationsRef = useRef<readonly PourAnimation[]>([]);
   const activeRef = useRef(false);
   const processedPourIdsRef = useRef(new Set<number>());
 
-  const replacePresentations = useCallback(
-    (next: readonly PourPresentation[]) => {
-      presentationsRef.current = next;
-      setPresentations(next);
+  const replaceAnimations = useCallback(
+    (next: readonly PourAnimation[]) => {
+      animationsRef.current = next;
+      setAnimations(next);
 
       const active = next.length > 0;
       if (activeRef.current !== active) {
@@ -49,38 +47,35 @@ export function usePourPresentations({
     [onActivityChange],
   );
 
-  const finishPresentation = useCallback(
-    (presentationId: number) => {
-      const current = presentationsRef.current;
-      const presentation = current.find(({ id }) => id === presentationId);
-      if (!presentation) {
+  const finishAnimation = useCallback(
+    (animationId: number) => {
+      const current = animationsRef.current;
+      const animation = current.find(({ id }) => id === animationId);
+      if (!animation) {
         return;
       }
 
-      replacePresentations(current.filter(({ id }) => id !== presentationId));
-      if (presentation.isClearingMove) {
+      replaceAnimations(current.filter(({ id }) => id !== animationId));
+      if (animation.isClearingMove) {
         onClearingPourComplete?.();
       }
     },
-    [onClearingPourComplete, replacePresentations],
+    [onClearingPourComplete, replaceAnimations],
   );
 
   const interruptForBottleInteraction = useCallback(
     (bottleIndex: number) => {
-      replacePresentations(
-        interruptPourPresentationsForBottle(
-          presentationsRef.current,
-          bottleIndex,
-        ),
+      replaceAnimations(
+        interruptPourAnimationsForBottle(animationsRef.current, bottleIndex),
       );
     },
-    [replacePresentations],
+    [replaceAnimations],
   );
 
   useLayoutEffect(() => {
     if (!operation) {
       processedPourIdsRef.current.clear();
-      replacePresentations([]);
+      replaceAnimations([]);
       return;
     }
     if (operation.type !== "poured") {
@@ -116,26 +111,24 @@ export function usePourPresentations({
       return;
     }
 
-    const presentation = createPourPresentation(
+    const animation = createPourAnimation(
       operation,
       sourceRect,
       destinationRect,
     );
-    if (!presentation) {
+    if (!animation) {
       if (operation.isClearingMove) {
         onClearingPourComplete?.();
       }
       return;
     }
 
-    replacePresentations(
-      addPourPresentation(presentationsRef.current, presentation),
-    );
-  }, [bottleRefs, onClearingPourComplete, operation, replacePresentations]);
+    replaceAnimations(addPourAnimation(animationsRef.current, animation));
+  }, [bottleRefs, onClearingPourComplete, operation, replaceAnimations]);
 
   return {
-    presentations,
-    finishPresentation,
+    animations,
+    finishAnimation,
     interruptForBottleInteraction,
   };
 }
