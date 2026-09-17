@@ -1,4 +1,5 @@
 import {
+  type ReactNode,
   type RefObject,
   useCallback,
   useEffect,
@@ -87,26 +88,17 @@ export function WaterSortBoard({
     );
   }, []);
 
-  const finishPresentationsForBottle = useCallback((bottleIndex: number) => {
-    setPourPresentations((current) =>
-      current.filter(
-        (presentation) =>
-          presentation.sourceBottleIndex !== bottleIndex &&
-          presentation.destinationBottleIndex !== bottleIndex,
-      ),
-    );
-  }, []);
-
   useEffect(() => {
-    if (!operation) return;
+    if (!operation) {
+      setPourPresentations([]);
+      return;
+    }
     if (operation.type === "invalid") {
       animateInvalidBottle(bottleRefs.current[operation.bottleIndex]);
       return;
     }
     if (operation.type !== "poured") return;
 
-    finishPresentationsForBottle(operation.sourceBottleIndex);
-    finishPresentationsForBottle(operation.destinationBottleIndex);
     const sourceBottle = bottleRefs.current[operation.sourceBottleIndex];
     const destinationBottle =
       bottleRefs.current[operation.destinationBottleIndex];
@@ -150,17 +142,23 @@ export function WaterSortBoard({
           activePresentation.destinationBottleIndex !==
             operation.sourceBottleIndex &&
           activePresentation.sourceBottleIndex !==
-            operation.destinationBottleIndex &&
-          activePresentation.destinationBottleIndex !==
             operation.destinationBottleIndex,
       ),
       presentation,
     ]);
-  }, [operation, onClearingPourComplete, finishPresentationsForBottle]);
+  }, [operation, onClearingPourComplete]);
 
   const selectBottle = (bottleIndex: number) => {
     if (interactionDisabled) return;
-    finishPresentationsForBottle(bottleIndex);
+    if (sourceBottleIndex === null) {
+      setPourPresentations((current) =>
+        current.filter(
+          (presentation) =>
+            presentation.sourceBottleIndex !== bottleIndex &&
+            presentation.destinationBottleIndex !== bottleIndex,
+        ),
+      );
+    }
     onSelectBottle(bottleIndex);
   };
 
@@ -208,27 +206,38 @@ export function WaterSortBoard({
               className="group relative aspect-[0.36] w-full origin-top cursor-pointer touch-manipulation rounded-b-[1.45rem] transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4"
               data-selected={isSource || undefined}
               disabled={interactionDisabled}
-              style={{ visibility: isAnimated ? "hidden" : undefined }}
             >
-              <BottleVisual bottle={bottle} />
+              <span
+                className={`absolute inset-0 ${isAnimated ? "invisible" : ""}`}
+              >
+                <BottleVisual bottle={bottle} />
+              </span>
             </button>
           );
         })}
       </fieldset>
 
       {pourPresentations.map((presentation) => (
-        <PourPresentationLayer
+        <PourSourceLayer
           key={presentation.id}
           presentation={presentation}
           onFinish={finishPresentation}
           onClearingPourComplete={onClearingPourComplete}
         />
       ))}
+      {groupPresentationsByDestination(pourPresentations).map(
+        (presentations) => (
+          <PourDestinationLayer
+            key={presentations[0]?.destinationBottleIndex}
+            presentations={presentations}
+          />
+        ),
+      )}
     </>
   );
 }
 
-function PourPresentationLayer({
+function PourSourceLayer({
   presentation,
   onFinish,
   onClearingPourComplete,
@@ -238,10 +247,8 @@ function PourPresentationLayer({
   onClearingPourComplete?: () => void;
 }) {
   const sourceRef = useRef<HTMLDivElement>(null);
-  const destinationRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<HTMLDivElement>(null);
   const sourceTransferRef = useRef<HTMLSpanElement>(null);
-  const destinationTransferRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     const sourceElement = sourceRef.current;
@@ -260,7 +267,6 @@ function PourPresentationLayer({
     const hoverY = deltaY - sourceRect.height * 0.55;
     const direction = deltaX >= 0 ? 1 : -1;
     const sourceTransferElement = sourceTransferRef.current;
-    const destinationTransferElement = destinationTransferRef.current;
     let active = true;
 
     const sourceAnimation = sourceElement.animate(
@@ -328,16 +334,6 @@ function PourPresentationLayer({
       ],
       { duration: pourAnimationDurationMs, easing: "linear", fill: "forwards" },
     );
-    const destinationTransferAnimation = destinationTransferElement?.animate?.(
-      [
-        { transform: "scaleY(0)", offset: 0 },
-        { transform: "scaleY(0)", offset: pourTransferStartOffset },
-        { transform: "scaleY(1)", offset: pourTransferEndOffset },
-        { transform: "scaleY(1)", offset: 1 },
-      ],
-      { duration: pourAnimationDurationMs, easing: "linear", fill: "forwards" },
-    );
-
     void sourceAnimation.finished.then(
       () => {
         if (!active) {
@@ -356,7 +352,6 @@ function PourPresentationLayer({
       sourceAnimation.cancel();
       streamAnimation?.cancel();
       sourceTransferAnimation?.cancel();
-      destinationTransferAnimation?.cancel();
     };
   }, [onClearingPourComplete, onFinish, presentation]);
 
@@ -387,31 +382,107 @@ function PourPresentationLayer({
         className="pointer-events-none fixed origin-top rounded-full opacity-0 will-change-transform"
         style={getPourStreamStyle(presentation)}
       />
-      <div
-        ref={destinationRef}
-        aria-hidden="true"
-        className="group pointer-events-none fixed aspect-[0.36] rounded-b-[1.45rem]"
-        style={getOverlayStyle(
-          presentation.destinationRect,
-          destinationPourLayerZIndex,
-        )}
-      >
-        <BottleVisual
-          bottle={presentation.destinationBefore}
-          transfer={{
-            colorIndex: presentation.pourColorIndex,
-            startSlot: presentation.destinationBefore.length,
-            slotCount:
-              presentation.destinationAfter.length -
-              presentation.destinationBefore.length,
-            elementRef: destinationTransferRef,
-            initialScaleY: 0,
-          }}
-        />
-      </div>
     </>,
     document.body,
   );
+}
+
+function PourDestinationLayer({
+  presentations,
+}: {
+  presentations: readonly PourPresentation[];
+}) {
+  const firstPresentation = presentations[0];
+  if (!firstPresentation) {
+    return null;
+  }
+
+  return createPortal(
+    <div
+      aria-hidden="true"
+      className="group pointer-events-none fixed aspect-[0.36] rounded-b-[1.45rem]"
+      style={getOverlayStyle(
+        firstPresentation.destinationRect,
+        destinationPourLayerZIndex,
+      )}
+    >
+      <BottleVisual
+        bottle={firstPresentation.destinationBefore}
+        liquidOverlay={presentations.map((presentation) => (
+          <AnimatedDestinationTransfer
+            key={presentation.id}
+            presentation={presentation}
+          />
+        ))}
+      />
+    </div>,
+    document.body,
+  );
+}
+
+function AnimatedDestinationTransfer({
+  presentation,
+}: {
+  presentation: PourPresentation;
+}) {
+  const transferRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const animation = transferRef.current?.animate?.(
+      [
+        { transform: "scaleY(0)", offset: 0 },
+        { transform: "scaleY(0)", offset: pourTransferStartOffset },
+        { transform: "scaleY(1)", offset: pourTransferEndOffset },
+        { transform: "scaleY(1)", offset: 1 },
+      ],
+      { duration: pourAnimationDurationMs, easing: "linear", fill: "forwards" },
+    );
+
+    return () => animation?.cancel();
+  }, []);
+
+  return (
+    <TransferLiquidView
+      transfer={{
+        colorIndex: presentation.pourColorIndex,
+        startSlot: presentation.destinationBefore.length,
+        slotCount:
+          presentation.destinationAfter.length -
+          presentation.destinationBefore.length,
+        elementRef: transferRef,
+        initialScaleY: 0,
+      }}
+    />
+  );
+}
+
+function TransferLiquidView({ transfer }: { transfer: TransferLiquid }) {
+  return (
+    <span
+      ref={transfer.elementRef}
+      className="absolute inset-x-0 origin-bottom will-change-transform"
+      style={{
+        bottom: `${transfer.startSlot * 25}%`,
+        height: `${transfer.slotCount * 25}%`,
+        backgroundColor: getColorView(transfer.colorIndex).color,
+        transform: `scaleY(${transfer.initialScaleY})`,
+      }}
+    />
+  );
+}
+
+function groupPresentationsByDestination(
+  presentations: readonly PourPresentation[],
+): readonly (readonly PourPresentation[])[] {
+  const groups = new Map<number, PourPresentation[]>();
+
+  for (const presentation of presentations) {
+    const current = groups.get(presentation.destinationBottleIndex) ?? [];
+    current.push(presentation);
+    groups.set(presentation.destinationBottleIndex, current);
+  }
+
+  return [...groups.values()];
 }
 
 type TransferLiquid = {
@@ -425,9 +496,11 @@ type TransferLiquid = {
 function BottleVisual({
   bottle,
   transfer,
+  liquidOverlay,
 }: {
   bottle: WaterSortBottle;
   transfer?: TransferLiquid;
+  liquidOverlay?: ReactNode;
 }) {
   return (
     <>
@@ -453,18 +526,8 @@ function BottleVisual({
             />
           );
         })}
-        {transfer ? (
-          <span
-            ref={transfer.elementRef}
-            className="absolute inset-x-0 origin-bottom will-change-transform"
-            style={{
-              bottom: `${transfer.startSlot * 25}%`,
-              height: `${transfer.slotCount * 25}%`,
-              backgroundColor: getColorView(transfer.colorIndex).color,
-              transform: `scaleY(${transfer.initialScaleY})`,
-            }}
-          />
-        ) : null}
+        {transfer ? <TransferLiquidView transfer={transfer} /> : null}
+        {liquidOverlay}
       </span>
       <span
         aria-hidden="true"
