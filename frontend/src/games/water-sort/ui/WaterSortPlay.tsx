@@ -69,15 +69,9 @@ export function WaterSortPlay({
   onChangeDifficulty,
   onBackToHome,
 }: WaterSortPlayProps) {
-  const [completedPourOperationId, setCompletedPourOperationId] = useState<
-    number | null
-  >(null);
-  const activePourOperationId =
-    operation?.type === "poured" ? operation.id : null;
-  const isPourAnimating =
-    activePourOperationId !== null &&
-    completedPourOperationId !== activePourOperationId;
-  const showDeadlockNotice = isDeadlocked && !isPourAnimating;
+  const [hasActivePourPresentation, setHasActivePourPresentation] =
+    useState(false);
+  const showDeadlockNotice = isDeadlocked && !hasActivePourPresentation;
 
   if (progress === "result" && status === "cleared" && result) {
     return (
@@ -124,7 +118,7 @@ export function WaterSortPlay({
           operation={operation}
           onSelectBottle={selectBottle}
           interactionDisabled={progress !== "playing"}
-          onPourComplete={setCompletedPourOperationId}
+          onPourPresentationActivityChange={setHasActivePourPresentation}
           onClearingPourComplete={completeClearingPour}
         />
       </main>
