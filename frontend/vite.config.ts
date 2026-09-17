@@ -10,10 +10,8 @@ const sourceRoot = fileURLToPath(new URL("./src/", import.meta.url));
 const pagesRoot = fileURLToPath(new URL("./src/pages/", import.meta.url));
 const routerPath = fileURLToPath(new URL("./src/router.ts", import.meta.url));
 const outputDir = fileURLToPath(new URL("./dist/", import.meta.url));
-const previewDiagnostics =
-  env.WORKERS_CI === "1" &&
-  typeof env.WORKERS_CI_BRANCH === "string" &&
-  env.WORKERS_CI_BRANCH !== "main";
+const internalDiagnosticsEnabled =
+  env.PA_ZZLE_INTERNAL_DIAGNOSTICS === "true";
 const buildRevision = env.WORKERS_CI_COMMIT_SHA ?? env.GITHUB_SHA ?? null;
 
 export default defineConfig({
@@ -30,7 +28,7 @@ export default defineConfig({
     }),
   ],
   define: {
-    __PA_ZZLE_PREVIEW_DIAGNOSTICS__: JSON.stringify(previewDiagnostics),
+    __PA_ZZLE_INTERNAL_DIAGNOSTICS__: JSON.stringify(internalDiagnosticsEnabled),
     __PA_ZZLE_BUILD_REVISION__: JSON.stringify(buildRevision),
   },
   resolve: {
