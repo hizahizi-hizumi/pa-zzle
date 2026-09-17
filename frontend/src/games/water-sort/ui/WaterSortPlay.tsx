@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
+import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/button";
 import {
   getWaterSortDifficultyLabel,
@@ -142,7 +143,7 @@ function PlayHeaderSummary({
 }) {
   return (
     <div className="min-w-0 text-center">
-      <BrandMark />
+      <BrandMark size="compact" />
       <h1 className="mt-0.5 truncate text-sm font-semibold tracking-tight">
         カラーウォーターソート
       </h1>
@@ -196,7 +197,7 @@ function WaterSortResultScreen({
   return (
     <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-y-auto bg-background px-5 pt-[max(2.75rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <div className="pointer-events-none absolute inset-x-0 top-[max(0.8rem,env(safe-area-inset-top))] z-10 flex justify-center">
-        <BrandMark />
+        <BrandMark size="compact" />
       </div>
       <ConfettiBurst intensity={scorePresentation.confettiIntensity} />
       <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-5">
@@ -355,13 +356,6 @@ function ScoreCard({
         </span>
       </p>
     </div>
-  );
-}
-function BrandMark() {
-  return (
-    <span className="select-none text-[11px] font-semibold tracking-[0.12em] text-muted-foreground/80">
-      パズル pa-zzle
-    </span>
   );
 }
 function ClearMark({ className }: { className: string }) {
