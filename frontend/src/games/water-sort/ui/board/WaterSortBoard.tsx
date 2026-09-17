@@ -2,6 +2,7 @@ import {
   type RefObject,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -75,7 +76,7 @@ export function WaterSortBoard({
     );
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!operation) {
       setPourPresentations([]);
       return;
