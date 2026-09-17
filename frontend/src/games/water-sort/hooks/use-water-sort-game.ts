@@ -2,6 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { createSeed, type Seed } from "@/games/core/seed";
 import {
+  classifyWaterSortDeadlock,
+  type WaterSortDeadlockStatus,
+} from "@/games/water-sort/game/deadlock";
+import {
   assessWaterSortDifficulty,
   type WaterSortDifficulty,
 } from "@/games/water-sort/game/difficulty";
@@ -12,7 +16,6 @@ import {
   applyWaterSortMove,
   listWaterSortLegalMoves,
 } from "@/games/water-sort/game/rules";
-import { solveWaterSort } from "@/games/water-sort/game/solver";
 import {
   isCompleteWaterSortBottle,
   isWaterSortCleared,
@@ -61,20 +64,8 @@ type WaterSortPlayState = {
   sourceBottleIndex: number | null;
   progress: WaterSortProgress;
   operation: WaterSortOperation | null;
+  deadlockStatus: WaterSortDeadlockStatus;
 };
-
-const DEADLOCK_SEARCH_STATE_LIMIT = 10_000;
-
-export function isWaterSortDeadlocked(state: WaterSortState): boolean {
-  if (isWaterSortCleared(state)) {
-    return false;
-  }
-
-  const solveResult = solveWaterSort(state, {
-    maxExpandedStates: DEADLOCK_SEARCH_STATE_LIMIT,
-  });
-  return solveResult.status === "unsolvable";
-}
 
 function generateProblem(
   difficulty: WaterSortDifficulty,
@@ -103,6 +94,7 @@ function createPlayState(
     sourceBottleIndex: null,
     progress: "playing",
     operation: null,
+    deadlockStatus: classifyWaterSortDeadlock(problem.initialState),
   };
 }
 
@@ -186,6 +178,9 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
         status: cleared ? "cleared" : "playing",
         progress: cleared ? "clearing" : "playing",
         state: nextState,
+        deadlockStatus: cleared
+          ? "playable"
+          : classifyWaterSortDeadlock(nextState),
         history: [...current.history, current.state],
         finishedAt: cleared ? selectedAt : null,
         moveCount: current.moveCount + 1,
@@ -217,6 +212,7 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
       return {
         ...current,
         state: previousState,
+        deadlockStatus: classifyWaterSortDeadlock(previousState),
         history: current.history.slice(0, -1),
         undoCount: current.undoCount + 1,
         sourceBottleIndex: null,
@@ -236,6 +232,7 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
       return {
         ...current,
         state: current.problem.initialState,
+        deadlockStatus: classifyWaterSortDeadlock(current.problem.initialState),
         history: [],
         restartCount: current.restartCount + 1,
         sourceBottleIndex: null,
@@ -261,10 +258,8 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
 
   const elapsedMs = Math.max(0, (play.finishedAt ?? now) - play.startedAt);
   const optimalMoveCount = play.problem.solutionMoves.length;
-  const isDeadlocked = useMemo(
-    () => play.progress === "playing" && isWaterSortDeadlocked(play.state),
-    [play.progress, play.state],
-  );
+  const isDeadlocked =
+    play.progress === "playing" && play.deadlockStatus === "deadlocked";
   const problemDifficulty = assessWaterSortDifficulty(
     play.problem.difficultyAnalysis,
   );
