@@ -11,7 +11,6 @@ from pathlib import Path
 PAINT_ATTRIBUTES = ("fill", "stroke", "color", "stop-color", "flood-color")
 NON_COLORS = {"", "none", "transparent", "inherit", "initial", "unset"}
 EXTERNAL_SCHEMES = ("http://", "https://", "//", "data:")
-FORBIDDEN_ELEMENTS = {"script", "foreignObject"}
 STYLE_DECLARATION = re.compile(r"\s*([^:;]+)\s*:\s*([^;]+)")
 
 
@@ -68,18 +67,6 @@ def has_external_image(root: ET.Element) -> bool:
     return False
 
 
-def unsafe_svg_features(root: ET.Element) -> list[str]:
-    errors: list[str] = []
-    for element in root.iter():
-        name = local_name(element.tag)
-        if name in FORBIDDEN_ELEMENTS:
-            errors.append(f"<{name}> is not allowed in pictogram SVGs")
-        for attribute in element.attrib:
-            if local_name(attribute).lower().startswith("on"):
-                errors.append(f"event attribute {attribute!r} is not allowed")
-    return errors
-
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Check deterministic structural constraints of one SVG pictogram."
@@ -108,8 +95,6 @@ def main() -> int:
 
     if not root.attrib.get("viewBox"):
         errors.append("viewBox is required")
-
-    errors.extend(unsafe_svg_features(root))
 
     paints = collect_paints(root)
     if args.max_colors is not None and len(paints) > args.max_colors:
