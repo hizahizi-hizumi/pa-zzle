@@ -1,5 +1,4 @@
 import {
-  type ReactNode,
   type RefObject,
   useCallback,
   useEffect,
@@ -13,23 +12,8 @@ import type {
   WaterSortState,
 } from "@/games/water-sort/game/state";
 import type { WaterSortOperation } from "@/games/water-sort/hooks/use-water-sort-game";
-
-const waterSortColors = [
-  { label: "赤", color: "#ef5350" },
-  { label: "青", color: "#4d7ee8" },
-  { label: "緑", color: "#35b96b" },
-  { label: "黄", color: "#f2c94c" },
-  { label: "紫", color: "#9b6de3" },
-  { label: "橙", color: "#f2994a" },
-  { label: "水色", color: "#42b9d3" },
-  { label: "桃", color: "#df6ca6" },
-  { label: "黄緑", color: "#9fc84a" },
-  { label: "紺", color: "#3856a6" },
-  { label: "茶", color: "#a96d45" },
-  { label: "青緑", color: "#269a91" },
-] as const;
-
-const bottleSlots = [0, 1, 2, 3] as const;
+import { getWaterColorView } from "./water-bottle/get-water-color-view";
+import { WaterBottle } from "./water-bottle/WaterBottle";
 
 const pourAnimationDurationMs = 1600;
 const pourTransferStartOffset = 0.38;
@@ -194,7 +178,7 @@ export function WaterSortBoard({
             bottle.length === 0
               ? "空"
               : bottle
-                  .map((colorIndex) => getColorView(colorIndex).label)
+                  .map((colorIndex) => getWaterColorView(colorIndex).name)
                   .join("、");
           const isSource = bottleIndex === sourceBottleIndex;
           const isAnimated = animatedBottleIndexes.has(bottleIndex);
@@ -209,14 +193,13 @@ export function WaterSortBoard({
               aria-label={`${bottleLabel}: ${contents}`}
               aria-pressed={isSource}
               onClick={() => selectBottle(bottleIndex)}
-              className="group relative aspect-[0.36] w-full origin-top cursor-pointer touch-manipulation rounded-b-[1.45rem] transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4"
-              data-selected={isSource || undefined}
+              className="relative aspect-[0.36] w-full origin-top cursor-pointer touch-manipulation rounded-b-[1.45rem] transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4"
               disabled={interactionDisabled}
             >
               <span
                 className={`absolute inset-0 ${isAnimated ? "invisible" : ""}`}
               >
-                <BottleVisual bottle={bottle} />
+                <WaterBottle contents={bottle} selected={isSource} />
               </span>
             </button>
           );
@@ -371,20 +354,24 @@ function PourSourceLayer({
       <div
         ref={sourceRef}
         aria-hidden="true"
-        className="group pointer-events-none fixed aspect-[0.36] origin-top rounded-b-[1.45rem] will-change-transform"
+        className="pointer-events-none fixed aspect-[0.36] origin-top rounded-b-[1.45rem] will-change-transform"
         style={getOverlayStyle(presentation.sourceRect, sourcePourLayerZIndex)}
       >
-        <BottleVisual
-          bottle={presentation.sourceAfter}
-          transfer={{
-            colorIndex: presentation.pourColorIndex,
-            startSlot: presentation.sourceAfter.length,
-            slotCount:
-              presentation.sourceBefore.length -
-              presentation.sourceAfter.length,
-            elementRef: sourceTransferRef,
-            initialScaleY: 1,
-          }}
+        <WaterBottle
+          contents={presentation.sourceAfter}
+          waterOverlay={
+            <TransferLiquidView
+              transfer={{
+                colorIndex: presentation.pourColorIndex,
+                startSlot: presentation.sourceAfter.length,
+                slotCount:
+                  presentation.sourceBefore.length -
+                  presentation.sourceAfter.length,
+                elementRef: sourceTransferRef,
+                initialScaleY: 1,
+              }}
+            />
+          }
         />
       </div>
       <div
@@ -411,15 +398,15 @@ function PourDestinationLayer({
   return createPortal(
     <div
       aria-hidden="true"
-      className="group pointer-events-none fixed aspect-[0.36] rounded-b-[1.45rem]"
+      className="pointer-events-none fixed aspect-[0.36] rounded-b-[1.45rem]"
       style={getOverlayStyle(
         firstPresentation.destinationRect,
         destinationPourLayerZIndex,
       )}
     >
-      <BottleVisual
-        bottle={firstPresentation.destinationBefore}
-        liquidOverlay={presentations.map((presentation) => (
+      <WaterBottle
+        contents={firstPresentation.destinationBefore}
+        waterOverlay={presentations.map((presentation) => (
           <AnimatedDestinationTransfer
             key={presentation.id}
             presentation={presentation}
@@ -475,7 +462,7 @@ function TransferLiquidView({ transfer }: { transfer: TransferLiquid }) {
       style={{
         bottom: `${transfer.startSlot * 25}%`,
         height: `${transfer.slotCount * 25}%`,
-        backgroundColor: getColorView(transfer.colorIndex).color,
+        backgroundColor: getWaterColorView(transfer.colorIndex).color,
         transform: `scaleY(${transfer.initialScaleY})`,
       }}
     />
@@ -503,54 +490,6 @@ type TransferLiquid = {
   elementRef: RefObject<HTMLSpanElement | null>;
   initialScaleY: number;
 };
-
-function BottleVisual({
-  bottle,
-  transfer,
-  liquidOverlay,
-}: {
-  bottle: WaterSortBottle;
-  transfer?: TransferLiquid;
-  liquidOverlay?: ReactNode;
-}) {
-  return (
-    <>
-      <span
-        aria-hidden="true"
-        className="absolute inset-x-[4px] bottom-[4px] top-3 overflow-hidden rounded-b-[1.15rem] bg-black/[0.015]"
-      >
-        {bottleSlots.map((slotIndex) => {
-          const colorIndex = bottle[slotIndex];
-          if (colorIndex === undefined) {
-            return null;
-          }
-
-          const color = getColorView(colorIndex);
-          return (
-            <span
-              key={`${slotIndex}-${colorIndex}-${bottle.length}`}
-              className="absolute inset-x-0 h-1/4 transition-[background-color] duration-200"
-              style={{
-                bottom: `${slotIndex * 25}%`,
-                backgroundColor: color.color,
-              }}
-            />
-          );
-        })}
-        {transfer ? <TransferLiquidView transfer={transfer} /> : null}
-        {liquidOverlay}
-      </span>
-      <span
-        aria-hidden="true"
-        className="absolute inset-x-0 bottom-0 top-2 rounded-b-[1.45rem] border-[3px] border-t-0 border-slate-400/55 shadow-[inset_0_-2px_5px_rgba(15,23,42,0.08),0_5px_12px_rgba(15,23,42,0.06)] transition-[border-color,filter] duration-150 group-data-[selected=true]:border-slate-500 group-data-[selected=true]:drop-shadow-md"
-      />
-      <span
-        aria-hidden="true"
-        className="absolute left-1/2 top-0 h-[3px] w-[calc(100%-2px)] -translate-x-1/2 rounded-full bg-slate-400/55"
-      />
-    </>
-  );
-}
 
 function getBoardLayout(bottleCount: number) {
   const columnCount = Math.max(3, Math.ceil(bottleCount / 2));
@@ -628,7 +567,7 @@ function getPourStreamStyle(presentation: PourPresentation) {
   const { sourceRect, destinationRect } = presentation;
   const streamTop = destinationRect.top - sourceRect.height * 0.55;
   const streamHeight = destinationRect.top - streamTop + 6;
-  const color = getColorView(presentation.pourColorIndex).color;
+  const color = getWaterColorView(presentation.pourColorIndex).color;
 
   return {
     left: `${destinationRect.left + destinationRect.width / 2 - 2}px`,
@@ -639,16 +578,4 @@ function getPourStreamStyle(presentation: PourPresentation) {
     boxShadow: `0 0 5px ${color}66`,
     zIndex: streamPourLayerZIndex,
   };
-}
-
-function getColorView(colorIndex: number) {
-  const color = waterSortColors[colorIndex];
-  if (!color) {
-    return {
-      label: `色 ${colorIndex + 1}`,
-      color: `hsl(${(colorIndex * 47) % 360} 70% 58%)`,
-    };
-  }
-
-  return color;
 }
