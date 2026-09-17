@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/PageHeader";
 import {
   Card,
   CardDescription,
@@ -9,31 +10,29 @@ import { Link } from "@/router";
 
 export default function WaterSortDifficultyPage() {
   return (
-    <section className="space-y-8">
-      <div className="space-y-2">
-        <Link
-          to="/"
-          className="text-sm text-muted-foreground hover:text-foreground"
-        >
-          ← ゲーム選択へ
-        </Link>
-        <h1 className="text-3xl font-bold tracking-tight">
-          カラーウォーターソート
-        </h1>
-        <p className="text-muted-foreground">
-          難易度を選んでプレイを始めます。
-        </p>
-      </div>
+    <section className="space-y-section">
+      <PageHeader
+        context={
+          <Link
+            to="/"
+            className="rounded-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:transition-none"
+          >
+            ← ゲーム選択へ
+          </Link>
+        }
+        title="カラーウォーターソート"
+        description="難易度を選んでプレイを始めます。"
+      />
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-list sm:grid-cols-3">
         {waterSortDifficulties.map((difficulty) => (
           <Link
             key={difficulty.id}
             to="/games/water-sort/play/:difficulty"
             params={{ difficulty: difficulty.id }}
-            className="group"
+            className="group rounded-xl outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
-            <Card className="h-full transition-colors group-hover:border-foreground/30">
+            <Card className="h-full transition-colors group-hover:border-foreground/30 motion-reduce:transition-none">
               <CardHeader>
                 <CardTitle>{difficulty.label}</CardTitle>
                 <CardDescription>{difficulty.description}</CardDescription>

@@ -59,9 +59,9 @@ export function WaterSortPlay({
 }: WaterSortPlayProps) {
   if (status === "cleared" && result) {
     return (
-      <Card className="mx-auto max-w-2xl">
+      <Card className="mx-auto max-w-play">
         <CardHeader>
-          <CardTitle className="text-2xl">クリア</CardTitle>
+          <CardTitle className="text-section-title">クリア</CardTitle>
           <CardDescription>
             {getWaterSortDifficultyLabel(difficulty)}
             のカラーウォーターソートをクリアしました。
@@ -74,11 +74,11 @@ export function WaterSortPlay({
             undoCount={result.undoCount}
             restartCount={result.restartCount}
           />
-          <p className="break-all font-mono text-xs text-muted-foreground">
+          <p className="break-all font-mono text-meta text-muted-foreground">
             問題シード: {seed}
           </p>
         </CardContent>
-        <CardFooter className="flex flex-wrap gap-3">
+        <CardFooter className="flex flex-wrap gap-control-group">
           <Button onClick={restart}>同じ問題をやり直す</Button>
           <Button variant="outline" onClick={newGame}>
             新しい問題
@@ -92,7 +92,7 @@ export function WaterSortPlay({
   }
 
   return (
-    <Card className="mx-auto max-w-2xl">
+    <Card className="mx-auto max-w-play">
       <CardHeader>
         <CardTitle>カラーウォーターソート</CardTitle>
         <CardDescription>
@@ -112,14 +112,14 @@ export function WaterSortPlay({
           targetBottleId={targetBottleId}
           onSelectBottle={selectBottle}
         />
-        <p className="text-center text-xs text-muted-foreground">
+        <p className="text-center text-meta text-muted-foreground">
           ボトルを選び、注ぎ元と注ぎ先を指定できます。
         </p>
-        <p className="break-all font-mono text-xs text-muted-foreground">
+        <p className="break-all font-mono text-meta text-muted-foreground">
           問題シード: {seed}
         </p>
       </CardContent>
-      <CardFooter className="flex flex-wrap gap-3">
+      <CardFooter className="flex flex-wrap gap-control-group">
         <Button variant="outline" onClick={undo} disabled={!canUndo}>
           元に戻す
         </Button>
@@ -156,7 +156,7 @@ function PlayMetrics({
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border bg-muted/30 px-2 py-3">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dt className="text-meta text-muted-foreground">{label}</dt>
       <dd className="mt-1 font-mono text-lg font-semibold">{value}</dd>
     </div>
   );
