@@ -15,6 +15,7 @@ const baseProps = {
   undoCount: 1,
   restartCount: 2,
   optimalMoveCount: 9,
+  problemDifficulty: { difficulty: "normal" as const, index: 28.2 },
   canUndo: true,
   sourceBottleIndex: null,
   selectableBottleIndexes: new Set([0, 1]),
@@ -106,6 +107,7 @@ describe("WaterSortPlay", () => {
           restartCount: 1,
           optimalMoveCount: 10,
           moveDelta: 2,
+          score: 83,
         }}
       />,
     );
@@ -115,6 +117,8 @@ describe("WaterSortPlay", () => {
     expect(screen.getByText("12")).toBeTruthy();
     expect(screen.getByText("10")).toBeTruthy();
     expect(screen.getByText("+2")).toBeTruthy();
+    expect(screen.getByText("83 / 100")).toBeTruthy();
+    expect(screen.getByText("問題難易度")).toBeTruthy();
   });
 
   test("最短手数でクリアした成績は差をゼロとして表示すること", () => {
@@ -129,6 +133,7 @@ describe("WaterSortPlay", () => {
           restartCount: 0,
           optimalMoveCount: 9,
           moveDelta: 0,
+          score: 100,
         }}
       />,
     );
@@ -151,6 +156,7 @@ describe("WaterSortPlay", () => {
           restartCount: 1,
           optimalMoveCount: 10,
           moveDelta: 2,
+          score: 83,
         }}
         restart={restart}
         newGame={newGame}
