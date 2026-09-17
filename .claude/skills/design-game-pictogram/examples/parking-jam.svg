@@ -3,9 +3,9 @@
         fill="none" stroke="#111" stroke-width="4"
         stroke-linecap="round" stroke-linejoin="round"/>
 
-  <g fill="#fff" stroke="#111" stroke-width="4" stroke-linejoin="round">
+  <g fill="none" stroke="#111" stroke-width="4" stroke-linejoin="round">
     <rect x="24" y="24" width="20" height="44" rx="4"/>
-    <path d="M28 36H40" fill="none" stroke-linecap="round"/>
+    <path d="M28 36H40" stroke-linecap="round"/>
   </g>
 
   <g fill="#777" stroke="#111" stroke-width="4" stroke-linejoin="round">
@@ -13,8 +13,8 @@
     <path d="M80 52V64" fill="none" stroke-linecap="round"/>
   </g>
 
-  <g fill="#fff" stroke="#111" stroke-width="4" stroke-linejoin="round">
+  <g fill="none" stroke="#111" stroke-width="4" stroke-linejoin="round">
     <rect x="24" y="76" width="72" height="20" rx="4"/>
-    <path d="M36 80V92" fill="none" stroke-linecap="round"/>
+    <path d="M36 80V92" stroke-linecap="round"/>
   </g>
 </svg>
