@@ -1,6 +1,6 @@
 import type { WaterSortBottle } from "@/games/water-sort/game/state";
 
-import { getWaterColorView } from "./water-colors";
+import { getWaterColorView } from "./get-water-color-view";
 
 const bottleSlots = [0, 1, 2, 3] as const;
 

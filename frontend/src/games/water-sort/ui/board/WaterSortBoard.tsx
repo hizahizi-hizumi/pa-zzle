@@ -12,9 +12,8 @@ import type {
   WaterSortState,
 } from "@/games/water-sort/game/state";
 import type { WaterSortOperation } from "@/games/water-sort/hooks/use-water-sort-game";
-
+import { getWaterColorView } from "./water-bottle/get-water-color-view";
 import { WaterBottle } from "./water-bottle/WaterBottle";
-import { getWaterColorView } from "./water-bottle/water-colors";
 
 const pourAnimationDurationMs = 1600;
 const pourTransferStartOffset = 0.38;
@@ -179,404 +178,147 @@ export function WaterSortBoard({
             bottle.length === 0
               ? "ç©º"
               : bottle
-                  .map((colorIndex) => getWaterColorView(colorIndex).label)
+                  .map((colorIndex) => getWaterColorView(colorIndex).name)
                   .join("ã€");
-          const isSource = bottleIndex === sourceBottleIndex;
-          const isAnimated = animatedBottleIndexes.has(bottleIndex);
+         ÛÛœİ\ÔÛİ\˜ÙHH›İR[™^OOHÛİ\˜ÙP›İR[™^ÂˆÛÛœİ\Ğ[š[X]YH[š[X]Y›İR[™^\Ëš\Ê›İR[™^
+NÂ‚ˆ™]\›ˆ
+ˆ]Û‚ˆÙ^O^Ø›İSX™[Bˆ™Y^Ê[[Y[
+HOˆÂˆ›İT™YœË˜İ\œ™[Ø›İR[™^HH[[Y[Âˆ_Bˆ\OH˜]Ûˆ‚ˆ\šXK[X™[^Ø	Ø›İSX™[Nˆ	ØÛÛ[ßXBˆ\šXK\™\ÜÙY^Ú\ÔÛİ\˜Ù_BˆÛÛXÚÏ^Ê
+HOˆÙ[Xİ›İJ›İR[™^
+_BˆÛ\ÜÓ˜[YOHœ™[]]™H\ÜXİVÌŒÍ—HËY[ÜšYÚ[‹]Üİ\œÛÜ‹\Ú[\ˆİXÚ[X[š\[][Ûˆ›İ[™YX‹VÌK\™[WH˜[œÚ][Û‹]˜[œÙ›Ü›H\˜][Û‹LMLX\ÙK[İ]›Øİ\Ë]š\ÚX›N›İ][™K[›Û™H›Øİ\Ë]š\ÚX›Nœš[™ËLˆ›Øİ\Ë]š\ÚX›Nœš[™Ë\š[™È›Øİ\Ë]š\ÚX›Nœš[™Ë[Ù™œÙ]M‚ˆ\ØX›Y^Ú[\˜Xİ[Û‘\ØX›YBˆ‚ˆÜ[‚ˆÛ\ÜÓ˜[YO^ØXœÛÛ]H[œÙ]L	Ú\Ğ[š[X]YÈš[š\ÚX›HˆˆˆŸXBˆ‚ˆØ]\›İHÛÛ[Ï^Ø›İ_HÙ[XİY^Ú\ÔÛİ\˜Ù_HÏ‚ˆÜÜ[‚ˆØ]Û‚ˆ
+NÂˆJ_BˆÙšY[Ù]‚‚ˆÜİ\”™\Ù[][ÛœË›X\
 
-          return (
-            <button
-              key={bottleLabel}
-              ref={(element) => {
-                bottleRefs.current[bottleIndex] = element;
-              }}
-              type="button"
-              aria-label={`${bottleLabel}: ${contents}`}
-              aria-pressed={isSource}
-              onClick={() => selectBottle(bottleIndex)}
-              className="relative aspect-[0.36] w-full origin-top cursor-pointer touch-manipulation rounded-b-[1.45rem] transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4"
-              disabled={interactionDisabled}
-            >
-              <span
-                className={`absolute inset-0 ${isAnimated ? "invisible" : ""}`}
-              >
-                <WaterBottle contents={bottle} selected={isSource} />
-              </span>
-            </button>
-          );
-        })}
-      </fieldset>
+™\Ù[][ÛŠHOˆ
+ˆİ\”Ûİ\˜ÙS^Y\‚ˆÙ^O^Ü™\Ù[][Û‹šYBˆ™\Ù[][Û^Ü™\Ù[][ÛŸBˆÛ‘š[š\Ú^Ùš[š\Ú™\Ù[][ÛŸBˆÛ”İ\ÛÛ\]O^ÛÛ”İ\ÛÛ\]_BˆÛÛX\š[™Ôİ\ÛÛ\]O^ÛÛÛX\š[™Ôİ\ÛÛ\]_BˆÏ‚ˆ
+J_BˆÙÜ›İ\™\Ù[][ÛœĞQ\İ[˜][ÛŠİ\”™\Ù[][ÛœÊK›X\
+ˆ
+™\Ù[][ÛœÊHOˆ
+ˆİ\‘\İ[˜][Û“^Y\‚ˆÙ^O^Ü™\Ù[][ÛœÖÌOË™\İ[˜][Û›İR[™^Bˆ™\Ù[][ÛœÏ^Ü™\Ù[][ÛœßBˆÏ‚ˆ
+Kˆ
+_BˆÏ‚ˆ
+NÂŸB‚™[˜İ[Ûˆİ\”Ûİ\˜ÙS^Y\ŠÂˆ™\Ù[][Û‹ˆÛ‘š[š\ÚˆÛ”İ\ÛÛ\]KˆÛÛX\š[™Ôİ\ÛÛ\]KŸNˆÂˆ™\Ù[][Ûˆİ\”™\Ù[][ÛÂˆÛ‘š[š\Úˆ
+™\Ù[][Û’Yˆ[X™\ŠHOˆ›ÚYÂˆÛ”İ\ÛÛ\]OÎˆ
+Ü\˜][Û’Yˆ[X™\ŠHOˆ›ÚYÂˆÛÛX\š[™Ôİ\ÛÛ\]OÎˆ
 
-      {pourPresentations.map((presentation) => (
-        <PourSourceLayer
-          key={presentation.id}
-          presentation={presentation}
-          onFinish={finishPresentation}
-          onPourComplete={onPourComplete}
-          onClearingPourComplete={onClearingPourComplete}
-        />
-      ))}
-      {groupPresentationsByDestination(pourPresentations).map(
-        (presentations) => (
-          <PourDestinationLayer
-            key={presentations[0]?.destinationBottleIndex}
-            presentations={presentations}
-          />
-        ),
-      )}
-    </>
-  );
-}
+HOˆ›ÚYÂŸJHÂˆÛÛœİÛİ\˜ÙT™YˆH\ÙT™YS]‘[[Y[Š[
+NÂˆÛÛœİİ™X[T™YˆH\ÙT™YS]‘[[Y[Š[
+NÂˆÛÛœİÛİ\˜ÙU˜[œÙ™\”™YˆH\ÙT™YSÜ[‘[[Y[Š[
+NÂ‚ˆ\ÙQY™™Xİ
 
-function PourSourceLayer({
-  presentation,
-  onFinish,
-  onPourComplete,
-  onClearingPourComplete,
-}: {
-  presentation: PourPresentation;
-  onFinish: (presentationId: number) => void;
-  onPourComplete?: (operationId: number) => void;
-  onClearingPourComplete?: () => void;
-}) {
-  const sourceRef = useRef<HTMLDivElement>(null);
-  const streamRef = useRef<HTMLDivElement>(null);
-  const sourceTransferRef = useRef<HTMLSpanElement>(null);
 
-  useEffect(() => {
-    const sourceElement = sourceRef.current;
-    const streamElement = streamRef.current;
-    if (!sourceElement?.animate) {
-      onFinish(presentation.id);
-      onPourComplete?.(presentation.operationId);
-      if (presentation.isClearingMove) {
-        onClearingPourComplete?.();
-      }
-      return;
-    }
+HOˆÂˆÛÛœİÛİ\˜ÙQ[[Y[HÛİ\˜ÙT™Y‹˜İ\œ™[ÂˆÛÛœİİ™X[Q[[Y[Hİ™X[T™Y‹˜İ\œ™[ÂˆYˆ
+\Ûİ\˜ÙQ[[Y[Ë˜[š[X]JHÂˆÛ‘š[š\Ú
+™\Ù[][Û‹šY
+NÂˆÛ”İ\ÛÛ\]OËŠ™\Ù[][Û‹›Ü\˜][Û’Y
+NÂˆYˆ
+™\Ù[][Û‹š\ĞÛX\š[™Ó[İ™JHÂˆÛÛX\š[™Ôİ\ÛÛ\]OËŠ
+NÂˆBˆ™]\›ÂˆB‚ˆÛÛœİÈÛİ\˜ÙT™Xİ\İ[˜][Û”™XİHH™\Ù[][ÛÂˆÛÛœİ[VH\İ[˜][Û”™Xİ›YHÛİ\˜ÙT™Xİ›YÂˆÛÛœİ[VHH\İ[˜][Û›İT™XİÜHÛİ\˜ÙT™XİÜÂˆÛÛœİİ™\–HH[VHHÛİ\˜ÙT™XİšZYÚ
+ˆMNÂˆÛÛœİ\™Xİ[ÛˆH[VHÈHˆLNÂˆÛÛœİÛİ\˜ÙU˜[œÙ™\‘[[Y[HÛİ\˜ÙU˜[œÙ™\”™Y‹˜İ\œ™[Âˆ]Xİ]™HHYNÂ‚ˆÛÛœİÛİ\˜ÙP[š[X][ÛˆHÛİ\˜ÙQ[[Y[˜[š[X]JˆÂˆÂˆ˜[œÙ›Ü›Nˆ˜[œÛ]J
+H›İ]JYÊH‹ˆÙ™œÙ]ˆˆX\Ú[™Îˆ™X\ÙK[İ]‹ˆKˆÂˆ˜[œÙ›Ü›Nˆ˜[œÛ]JM
+H›İ]JYÊH‹ˆÙ™œÙ]ˆŒ‹ˆX\Ú[™Îˆ˜İXšXËX™^šY\ŠŒŒ‹ŒKŒÍ‹JH‹ˆKˆÂˆ˜[œÙ›Ü›Nˆ˜[œÛ]J	Ù[V\	Úİ™\–_\
+H›İ]JYÊXˆÙ™œÙ]ˆŒ‹ˆX\Ú[™Îˆ™X\ÙKZ[‹[İ]‹ˆKˆÂˆ˜[œÙ›Ü›Nˆ˜[œÛ]J	Ù[V\	Úİ™\–_\
+H›İ]J	Ù\™Xİ[Ûˆ
+ˆYYÊXˆÙ™œÙ]ˆŒÌ‹ˆX\Ú[™Îˆ™X\ÙK[İ]‹ˆKˆÂˆ˜[œÙ›Ü›Nˆ˜[œÛ]J	Ù[V\	Úİ™\–_\
+H›İ]J	Ù\™Xİ[Ûˆ
+ˆYYÊXˆÙ™œÙ]ˆÍ‹ˆX\Ú[™Îˆ™X\ÙKZ[ˆ‹ˆKˆÂˆ˜[œÙ›Ü›Nˆ˜[œÛ]J	Ù[V\	Úİ™\–_\
+H›İ]JYÊXˆÙ™œÙ]ˆ‹ˆX\Ú[™Îˆ˜İXšXËX™^šY\ŠŒŒ‹ŒKŒÍ‹JH‹ˆKˆÈ˜[œÙ›Ü›Nˆ˜[œÛ]J
+H›İ]JYÊH‹Ù™œÙ]ˆHKˆKˆÂˆ\˜][Ûˆİ\[š[X][Û‘\˜][Û“\ËˆX\Ú[™Îˆ›[™X\ˆ‹ˆKˆ
+NÂ‚ˆÛÛœİİ™X[P[š[X][ÛˆHİ™X[Q[[Y[Ë˜[š[X]OËŠˆÂˆÈÜXÚ]Nˆ˜[œÙ›Ü›NˆœØØ[VJŒMJH‹Ù™œÙ]ˆKˆÈÜXÚ]Nˆ˜[œÙ›Ü›NˆœØØ[VJŒMJH‹Ù™œÙ]ˆŒÌˆKˆÂˆÜXÚ]NˆKˆ˜[œÙ›Ü›NˆœØØ[VJJH‹ˆÙ™œÙ]ˆİ\•˜[œÙ™\”İ\Ù™œÙ]ˆKˆÈÜXÚ]NˆK˜[œÙ›Ü›NˆœØØ[VJJH‹Ù™œÙ]ˆÈKˆÈÜXÚ]Nˆ˜[œÙ›Ü›NˆœØØ[VJŒÍJH‹Ù™œÙ]ˆÍÈKˆÈÜXÚ]Nˆ˜[œÙ›Ü›NˆœØØ[VJŒMJH‹Ù™œÙ]ˆHKˆKˆÈ\˜][Ûˆİ\[š[X][Û‘\˜][Û“\ËX\Ú[™Îˆ›[™X\ˆˆKˆ
+NÂ‚ˆÛÛœİÛİ\˜ÙU˜[œÙ™\[š[X][ÛˆHÛİ\˜ÙU˜[œÙ™\‘[[Y[Ë˜[š[X]OËŠˆÂˆÈ˜[œÙ›Ü›NˆœØØ[VJJH‹Ù™œÙ]ˆKˆÈ˜[œÙ›Ü›NˆœØØ[VJJH‹Ù™œÙ]ˆİ\•˜[œÙ™\”İ\Ù™œÙ]KˆÈ˜[œÙ›Ü›NˆœØØ[VJ
+H‹Ù™œÙ]ˆİ\•˜[œÙ™\‘[™Ù™œÙ]KˆÈ˜[œÙ›Ü›NˆœØØ[VJ
+H‹Ù™œÙ]ˆHKˆKˆÈ\˜][Ûˆİ\[š[X][Û‘\˜][Û“\ËX\Ú[™Îˆ›[™X\ˆ‹š[ˆ™›ÜØ\™ÈˆKˆ
+NÂˆ›ÚYÛİ\˜ÙP[š[X][Û‹™š[š\ÚY[Šˆ
 
-    const { sourceRect, destinationRect } = presentation;
-    const deltaX = destinationRect.left - sourceRect.left;
-    const deltaY = destinationRect.top - sourceRect.top;
-    const hoverY = deltaY - sourceRect.height * 0.55;
-    const direction = deltaX >= 0 ? 1 : -1;
-    const sourceTransferElement = sourceTransferRef.current;
-    let active = true;
+HOˆÂˆYˆ
+XXİ]™JHÂˆ™]\›ÂˆBˆÛ‘š[š\Ú
+™\Ù[][Û‹šY
+NÂˆÛ”İ\ÛÛ\]OËŠ™\Ù[][Û‹›Ü\˜][Û’Y
+NÂˆYˆ
+™\Ù[][Û‹š\ĞÛX\š[™Ó[İ™JHÂˆÛÛX\š[™Ôİ\ÛÛ\]OËŠ
+NÂˆBˆKˆ
 
-    const sourceAnimation = sourceElement.animate(
-      [
-        {
-          transform: "translate(0, 0) rotate(0deg)",
-          offset: 0,
-          easing: "ease-out",
-        },
-        {
-          transform: "translate(0, -4px) rotate(0deg)",
-          offset: 0.06,
-          easing: "cubic-bezier(.22,.61,.36,1)",
-        },
-        {
-          transform: `translate(${deltaX}px, ${hoverY}px) rotate(0deg)`,
-          offset: 0.2,
-          easing: "ease-in-out",
-        },
-        {
-          transform: `translate(${deltaX}px, ${hoverY}px) rotate(${direction * 68}deg)`,
-          offset: 0.32,
-          easing: "ease-out",
-        },
-        {
-          transform: `translate(${deltaX}px, ${hoverY}px) rotate(${direction * 68}deg)`,
-          offset: 0.76,
-          easing: "ease-in",
-        },
-        {
-          transform: `translate(${deltaX}px, ${hoverY}px) rotate(0deg)`,
-          offset: 0.86,
-          easing: "cubic-bezier(.22,.61,.36,1)",
-        },
-        { transform: "translate(0, 0) rotate(0deg)", offset: 1 },
-      ],
-      {
-        duration: pourAnimationDurationMs,
-        easing: "linear",
-      },
-    );
+HOˆ[™Yš[™Yˆ
+NÂ‚ˆ™]\›ˆ
 
-    const streamAnimation = streamElement?.animate?.(
-      [
-        { opacity: 0, transform: "scaleY(0.15)", offset: 0 },
-        { opacity: 0, transform: "scaleY(0.15)", offset: 0.32 },
-        {
-          opacity: 0.9,
-          transform: "scaleY(1)",
-          offset: pourTransferStartOffset,
-        },
-        { opacity: 0.9, transform: "scaleY(1)", offset: 0.7 },
-        { opacity: 0, transform: "scaleY(0.35)", offset: 0.77 },
-        { opacity: 0, transform: "scaleY(0.15)", offset: 1 },
-      ],
-      { duration: pourAnimationDurationMs, easing: "linear" },
-    );
+HOˆÂˆXİ]™HH˜[ÙNÂˆÛİ\˜ÙP[š[X][Û‹˜Ø[˜Ù[
 
-    const sourceTransferAnimation = sourceTransferElement?.animate?.(
-      [
-        { transform: "scaleY(1)", offset: 0 },
-        { transform: "scaleY(1)", offset: pourTransferStartOffset },
-        { transform: "scaleY(0)", offset: pourTransferEndOffset },
-        { transform: "scaleY(0)", offset: 1 },
-      ],
-      { duration: pourAnimationDurationMs, easing: "linear", fill: "forwards" },
-    );
-    void sourceAnimation.finished.then(
-      () => {
-        if (!active) {
-          return;
-        }
-        onFinish(presentation.id);
-        onPourComplete?.(presentation.operationId);
-        if (presentation.isClearingMove) {
-          onClearingPourComplete?.();
-        }
-      },
-      () => undefined,
-    );
+NÂˆİ™X[P[š[X][ÛË˜Ø[˜Ù[
 
-    return () => {
-      active = false;
-      sourceAnimation.cancel();
-      streamAnimation?.cancel();
-      sourceTransferAnimation?.cancel();
-    };
-  }, [onPourComplete, onClearingPourComplete, onFinish, presentation]);
+NÂˆÛİ\˜ÙU˜[œÙ™\[š[X][ÛË˜Ø[˜Ù[
 
-  return createPortal(
-    <>
-      <div
-        ref={sourceRef}
-        aria-hidden="true"
-        className="pointer-events-none fixed aspect-[0.36] origin-top rounded-b-[1.45rem] will-change-transform"
-        style={getOverlayStyle(presentation.sourceRect, sourcePourLayerZIndex)}
-      >
-        <WaterBottle
-          contents={presentation.sourceAfter}
-          waterOverlay={
-            <TransferLiquidView
-              transfer={{
-                colorIndex: presentation.pourColorIndex,
-                startSlot: presentation.sourceAfter.length,
-                slotCount:
-                  presentation.sourceBefore.length -
-                  presentation.sourceAfter.length,
-                elementRef: sourceTransferRef,
-                initialScaleY: 1,
-              }}
-            />
-          }
-        />
-      </div>
-      <div
-        ref={streamRef}
-        aria-hidden="true"
-        className="pointer-events-none fixed origin-top rounded-full opacity-0 will-change-transform"
-        style={getPourStreamStyle(presentation)}
-      />
-    </>,
-    document.body,
-  );
-}
+NÂˆNÂˆKÛÛ”İ\ÛÛ\]KÛÛX\š[™Ôİ\ÛÛ\]KÛ‘š[š\Ú™\Ù[][Û—JNÂ‚ˆ™]\›ˆÜ™X]TÜ[
+ˆ‚ˆ]‚ˆ™Y^ÜÛİ\˜ÙT™YŸBˆ\šXKZY[HYH‚ˆÛ\ÜÓ˜[YOHœÚ[\‹Y]™[Ë[›Û™Hš^Y\ÜXİVÌŒÍ—HÜšYÚ[‹]Ü›İ[™YX‹VÌK\™[WHÚ[XÚ[™ÙK]˜[œÙ›Ü›H‚ˆİ[O^ÙÙ]İ™\›^Tİ[J™\Ù[][Û‹œÛİ\˜ÙT™XİÛİ\˜ÙTİ\“^Y\–’[™^
+_Bˆ‚ˆØ]\›İBˆÛÛ[Ï^Ü™\Ù[][Û‹œÛİ\˜ÙPY\ŸBˆØ]\“İ™\›^O^Âˆ˜[œÙ™\“\]ZYšY]Âˆ˜[œÙ™\^ŞÂˆÛÛÜ’[™^ˆ™\Ù[][Û‹œİ\ÛÛÜ’[™^ˆİ\Ûİˆ™\Ù[][Û‹œÛİ\˜ÙPY\‹›[™İˆÛİÛİ[‚ˆ™\Ù[][Û‹œÛİ\˜ÙP™Y›Ü™K›[™İBˆ™\Ù[][Û‹œÛİ\˜ÙPY\‹›[™İˆ[[Y[™YˆÛİ\˜ÙU˜[œÙ™\”™Y‹ˆ[š]X[ØØ[VNˆKˆ_BˆÏ‚ˆBˆÏ‚ˆÙ]‚ˆ]‚ˆ™Y^Üİ™X[T™YŸBˆ\šXKZY[HYH‚ˆÛ\ÜÓ˜[YOHœÚ[\‹Y]™[Ë[›Û™Hš^YÜšYÚ[‹]Ü›İ[™YY[ÜXÚ]KLÚ[XÚ[™ÙK]˜[œÙ›Ü›H‚ˆİ[O^ÙÙ]İ\”İ™X[Tİ[J™\Ù[][ÛŠ_BˆÏ‚ˆÏ‹ˆØİ[Y[˜›ÙKˆ
+NÂŸB‚™[˜İ[Ûˆİ\‘\İ[˜][Û“^Y\ŠÂˆ™\Ù[][ÛœËŸNˆÂˆ™\Ù[][ÛœÎˆ™XYÛ›Hİ\”™\Ù[][Û–×NÂŸJHÂˆÛÛœİš\œİ™\Ù[][ÛˆH™\Ù[][ÛœÖÌNÂˆYˆ
+Yš\œİ™\Ù[][ÛŠHÂˆ™]\›ˆ[ÂˆB‚ˆ™]\›ˆÜ™X]TÜ[
+ˆ]‚ˆ\šXKZY[HYH‚ˆÛ\ÜÓ˜[YOHœÚ[\‹Y]™[Ë[›Û™Hš^Y\ÜXİVÌŒÍ—H›İ[™YX‹VÌK\™[WH‚ˆİ[O^ÙÙ]İ™\›^Tİ[Jˆš\œİ™\Ù[][Û‹™\İ[˜][Û”™Xİˆ\İ[˜][Û”İ\“^Y\–’[™^ˆ
+_Bˆ‚ˆØ]\›İBˆÛÛ[Ï^Ùš\œİ™\Ù[][Û‹™\İ[˜][Û™Y›Ü™_BˆØ]\“İ™\›^O^Ü™\Ù[][ÛœË›X\
 
-function PourDestinationLayer({
-  presentations,
-}: {
-  presentations: readonly PourPresentation[];
-}) {
-  const firstPresentation = presentations[0];
-  if (!firstPresentation) {
-    return null;
-  }
+™\Ù[][ÛŠHOˆ
+ˆ[š[X]Y\İ[˜][Û•˜[œÙ™\‚ˆÙ^O^Ü™\Ù[][Û‹šYBˆ™\Ù[][Û^Ü™\Ù[][ÛŸBˆÏ‚ˆ
+J_BˆÏ‚ˆÙ]‹ˆØİ[Y[˜›ÙKˆ
+NÂŸB‚™[˜İ[Ûˆ[š[X]Y\İ[˜][Û•˜[œÙ™\ŠÂˆ™\Ù[][Û‹ŸNˆÂˆ™\Ù[][Ûˆİ\”™\Ù[][ÛÂŸJHÂˆÛÛœİ˜[œÙ™\”™YˆH\ÙT™YSÜ[‘[[Y[Š[
+NÂ‚ˆ\ÙQY™™Xİ
 
-  return createPortal(
-    <div
-      aria-hidden="true"
-      className="pointer-events-none fixed aspect-[0.36] rounded-b-[1.45rem]"
-      style={getOverlayStyle(
-        firstPresentation.destinationRect,
-        destinationPourLayerZIndex,
-      )}
-    >
-      <WaterBottle
-        contents={firstPresentation.destinationBefore}
-        waterOverlay={presentations.map((presentation) => (
-          <AnimatedDestinationTransfer
-            key={presentation.id}
-            presentation={presentation}
-          />
-        ))}
-      />
-    </div>,
-    document.body,
-  );
-}
 
-function AnimatedDestinationTransfer({
-  presentation,
-}: {
-  presentation: PourPresentation;
-}) {
-  const transferRef = useRef<HTMLSpanElement>(null);
+HOˆÂˆÛÛœİ[š[X][ÛˆH˜[œÙ™\”™Y‹˜İ\œ™[Ë˜[š[X]OËŠˆÂˆÈ˜[œÙ›Ü›NˆœØØ[VJ
+H‹Ù™œÙ]ˆKˆÈ˜[œÙ›Ü›NˆœØØ[VJ
+H‹Ù™œÙ]ˆİ\•˜[œÙ™\”İ\Ù™œÙ]KˆÈ˜[œÙ›Ü›NˆœØØ[VJJH‹Ù™œÙ]ˆİ\•˜[œÙ™\‘[™Ù™œÙ]KˆÈ˜[œÙ›Ü›NˆœØØ[VJJH‹Ù™œÙ]ˆHKˆKˆÈ\˜][Ûˆİ\[š[X][Û‘\˜][Û“\ËX\Ú[™Îˆ›[™X\ˆ‹š[ˆ™›ÜØ\™ÈˆKˆ
+NÂ‚ˆ™]\›ˆ
 
-  useEffect(() => {
-    const animation = transferRef.current?.animate?.(
-      [
-        { transform: "scaleY(0)", offset: 0 },
-        { transform: "scaleY(0)", offset: pourTransferStartOffset },
-        { transform: "scaleY(1)", offset: pourTransferEndOffset },
-        { transform: "scaleY(1)", offset: 1 },
-      ],
-      { duration: pourAnimationDurationMs, easing: "linear", fill: "forwards" },
-    );
+HOˆ[š[X][ÛË˜Ø[˜Ù[
 
-    return () => animation?.cancel();
-  }, []);
+NÂˆK×JNÂ‚ˆ™]\›ˆ
+ˆ˜[œÙ™\“\]ZYšY]Âˆ˜[œÙ™\^ŞÂˆÛÛÜ’[™^ˆ™\Ù[][Û‹œİ\ÛÛÜ’[™^ˆİ\Ûİˆ™\Ù[][Û‹™\İ[˜][Û™Y›Ü™K›[™İˆÛİÛİ[‚ˆ™\Ù[][Û‹™\İ[˜][ÛY\‹›[™İBˆ™\Ù[][Û‹™\İ[˜][Û™Y›Ü™K›[™İˆ[[Y[™Yˆ˜[œÙ™\”™Y‹ˆ[š]X[ØØ[VNˆˆ_BˆÏ‚ˆ
+NÂŸB‚™[˜İ[Ûˆ˜[œÙ™\“\]ZYšY]ÊÈ˜[œÙ™\ˆNˆÈ˜[œÙ™\ˆ˜[œÙ™\“\]ZYJHÂˆ™]\›ˆ
+ˆÜ[‚ˆ™Y^İ˜[œÙ™\‹™[[Y[™YŸBˆÛ\ÜÓ˜[YOH˜XœÛÛ]H[œÙ]^LÜšYÚ[‹X›İÛHÚ[XÚ[™ÙK]˜[œÙ›Ü›H‚ˆİ[O^ŞÂˆ›İÛNˆ	İ˜[œÙ™\‹œİ\Ûİ
+ˆ_IXˆZYÚˆ	İ˜[œÙ™\‹œÛİÛİ[
+ˆ_IXˆ˜XÚÙÜ›İ[™ÛÛÜˆÙ]Ø]\ÛÛÜ•šY]Ê˜[œÙ™\‹˜ÛÛÜ’[™^
+K˜ÛÛÜ‹ˆ˜[œÙ›Ü›NˆØØ[VJ	İ˜[œÙ™\‹š[š]X[ØØ[V_JXˆ_BˆÏ‚ˆ
+NÂŸB‚™[˜İ[ÛˆÜ›İ\™\Ù[][ÛœĞQ\İ[˜][ÛŠˆ™\Ù[][ÛœÎˆ™XYÛ›Hİ\”™\Ù[][Û–×KŠNˆ™XYÛ›H
+™XYÛ›Hİ\”™\Ù[][Û–×JV×HÂˆÛÛœİÜ›İ\ÈH™]ÈX\[X™\‹İ\”™\Ù[][Û–×OŠ
+NÂ‚ˆ›Üˆ
+ÛÛœİ™\Ù[][ÛˆÙˆ™\Ù[][ÛœÊHÂˆÛÛœİİ\œ™[HÜ›İ\Ë™Ù]
+™\Ù[][Û‹™\İ[˜][Û›İR[™^
+HÏÈ×NÂˆİ\œ™[œ\Ú
+™\Ù[][ÛŠNÂˆÜ›İ\ËœÙ]
+™\Ù[][Û‹™\İ[˜][Û›İR[™^İ\œ™[
+NÂˆB‚ˆ™]\›ˆË‹‹™Ü›İ\Ë˜[Y\Ê
+WNÂŸB‚\H˜[œÙ™\“\]ZYHÂˆÛÛÜ’[™^ˆ[X™\Âˆİ\Ûİˆ[X™\ÂˆÛİÛİ[ˆ[X™\Âˆ[[Y[™Yˆ™Y“Øš™XİSÜ[‘[[Y[[Âˆ[š]X[ØØ[VNˆ[X™\ÂŸNÂ‚™[˜İ[ÛˆÙ]›Ø\™^[İ]
+›İPÛİ[ˆ[X™\ŠHÂˆÛÛœİÛÛ[[Ûİ[HX]›X^
+ËX]˜ÙZ[
+›İPÛİ[ÈŠJNÂ‚ˆYˆ
+ÛÛ[[Ûİ[HŠHÂˆ™]\›ˆÂˆÛÛ[[Ûİ[ˆÚYˆ›Z[ŠL	KÛ[\
+ÍœËMÌ
+JH‹ˆÛÛ[[‘Ø\ˆLˆ›İÑØ\ˆÍˆNÂˆBˆYˆ
+ÛÛ[[Ûİ[OOHJHÂˆ™]\›ˆÂˆÛÛ[[Ûİ[ˆÚYˆ›Z[ŠL	KÛ[\
+ÍŒËLŒ
+JH‹ˆÛÛ[[‘Ø\ˆMˆ›İÑØ\ˆˆNÂˆBˆYˆ
+ÛÛ[[Ûİ[OOH
+HÂˆ™]\›ˆÂˆÛÛ[[Ûİ[ˆÚYˆ›Z[ŠL	KÛ[\
+ÌŒËL
+JH‹ˆÛÛ[[‘Ø\ˆM‹ˆ›İÑØ\ˆ‹ˆNÂˆBˆ™]\›ˆÂˆÛÛ[[Ûİ[ˆÚYˆ›Z[ŠL	KÛ[\
+LÌËÍ
+JH‹ˆÛÛ[[‘Ø\ˆNˆ›İÑØ\ˆˆNÂŸB‚™[˜İ[Ûˆ[š[X]R[˜[Y›İJ[[Y[ˆS]Û‘[[Y[[[™Yš[™Y
+HÂˆYˆ
+Y[[Y[Ë˜[š[X]JHÂˆ™]\›ÂˆB‚ˆ[[Y[˜[š[X]JˆÂˆÈ˜[œÙ›Ü›Nˆ˜[œÛ]V
+
+HˆKˆÈ˜[œÙ›Ü›Nˆ˜[œÛ]V
+M
+HˆKˆÈ˜[œÙ›Ü›Nˆ˜[œÛ]V
+
+HˆKˆÈ˜[œÙ›Ü›Nˆ˜[œÛ]V
+Lœ
+HˆKˆÈ˜[œÙ›Ü›Nˆ˜[œÛ]V
+
+HˆKˆKˆÈ\˜][ÛˆŒŒX\Ú[™Îˆ™X\ÙK[İ]ˆKˆ
+NÂŸB‚™[˜İ[ÛˆØ\\™T™Xİ
+[[Y[ˆS[[Y[
+Nˆ›İT™XİÂˆÛÛœİ™XİH[[Y[™Ù]›İ[™[™ĞÛY[™Xİ
 
-  return (
-    <TransferLiquidView
-      transfer={{
-        colorIndex: presentation.pourColorIndex,
-        startSlot: presentation.destinationBefore.length,
-        slotCount:
-          presentation.destinationAfter.length -
-          presentation.destinationBefore.length,
-        elementRef: transferRef,
-        initialScaleY: 0,
-      }}
-    />
-  );
-}
-
-function TransferLiquidView({ transfer }: { transfer: TransferLiquid }) {
-  return (
-    <span
-      ref={transfer.elementRef}
-      className="absolute inset-x-0 origin-bottom will-change-transform"
-      style={{
-        bottom: `${transfer.startSlot * 25}%`,
-        height: `${transfer.slotCount * 25}%`,
-        backgroundColor: getWaterColorView(transfer.colorIndex).color,
-        transform: `scaleY(${transfer.initialScaleY})`,
-      }}
-    />
-  );
-}
-
-function groupPresentationsByDestination(
-  presentations: readonly PourPresentation[],
-): readonly (readonly PourPresentation[])[] {
-  const groups = new Map<number, PourPresentation[]>();
-
-  for (const presentation of presentations) {
-    const current = groups.get(presentation.destinationBottleIndex) ?? [];
-    current.push(presentation);
-    groups.set(presentation.destinationBottleIndex, current);
-  }
-
-  return [...groups.values()];
-}
-
-type TransferLiquid = {
-  colorIndex: number;
-  startSlot: number;
-  slotCount: number;
-  elementRef: RefObject<HTMLSpanElement | null>;
-  initialScaleY: number;
-};
-
-function getBoardLayout(bottleCount: number) {
-  const columnCount = Math.max(3, Math.ceil(bottleCount / 2));
-
-  if (columnCount >= 6) {
-    return {
-      columnCount,
-      width: "min(100%, clamp(366px, 48vw, 570px))",
-      columnGap: 10,
-      rowGap: 34,
-    };
-  }
-  if (columnCount === 5) {
-    return {
-      columnCount,
-      width: "min(100%, clamp(360px, 44vw, 520px))",
-      columnGap: 14,
-      rowGap: 40,
-    };
-  }
-  if (columnCount === 4) {
-    return {
-      columnCount,
-      width: "min(100%, clamp(320px, 40vw, 450px))",
-      columnGap: 16,
-      rowGap: 42,
-    };
-  }
-  return {
-    columnCount,
-    width: "min(100%, clamp(250px, 32vw, 340px))",
-    columnGap: 18,
-    rowGap: 44,
-  };
-}
-
-function animateInvalidBottle(element: HTMLButtonElement | null | undefined) {
-  if (!element?.animate) {
-    return;
-  }
-
-  element.animate(
-    [
-      { transform: "translateX(0)" },
-      { transform: "translateX(-4px)" },
-      { transform: "translateX(4px)" },
-      { transform: "translateX(-2px)" },
-      { transform: "translateX(0)" },
-    ],
-    { duration: 220, easing: "ease-out" },
-  );
-}
-
-function captureRect(element: HTMLElement): BottleRect {
-  const rect = element.getBoundingClientRect();
-  return {
-    left: rect.left,
-    top: rect.top,
-    width: rect.width,
-    height: rect.height,
-  };
-}
-
-function getOverlayStyle(rect: BottleRect, zIndex: number) {
-  return {
-    left: `${rect.left}px`,
-    top: `${rect.top}px`,
-    width: `${rect.width}px`,
-    height: `${rect.height}px`,
-    zIndex,
-  };
-}
-
-function getPourStreamStyle(presentation: PourPresentation) {
-  const { sourceRect, destinationRect } = presentation;
-  const streamTop = destinationRect.top - sourceRect.height * 0.55;
-  const streamHeight = destinationRect.top - streamTop + 6;
-  const color = getWaterColorView(presentation.pourColorIndex).color;
-
-  return {
-    left: `${destinationRect.left + destinationRect.width / 2 - 2}px`,
-    top: `${streamTop + 3}px`,
-    width: "4px",
-    height: `${streamHeight}px`,
-    backgroundColor: color,
-    boxShadow: `0 0 5px ${color}66`,
-    zIndex: streamPourLayerZIndex,
-  };
-}
+NÂˆ™]\›ˆÂˆYˆ™Xİ›YˆÜˆ™XİÜˆÚYˆ™XİÚYˆZYÚˆ™XİšZYÚˆNÂŸB‚™[˜İ[ÛˆÙ]İ™\›^Tİ[J™Xİˆ›İT™Xİ’[™^ˆ[X™\ŠHÂˆ™]\›ˆÂˆYˆ	Ü™Xİ›Y\ˆÜˆ	Ü™XİÜ\ˆÚYˆ	Ü™XİÚY\ˆZYÚˆ	Ü™XİšZYÚ\ˆ’[™^ˆNÂŸB‚™[˜İ[ÛˆÙ]İ\”İ™X[Tİ[J™\Ù[][Ûˆİ\”™\Ù[][ÛŠHÂˆÛÛœİÈÛİ\˜ÙT™Xİ\İ[˜][Û”™XİHH™\Ù[][ÛÂˆÛÛœİİ™X[UÜH\İ[˜][Û”™XİÜHÛİ\˜ÙT™XİšZYÚ
+ˆMNÂˆÛÛœİİ™X[RZYÚH\İ[˜][Û”™XİÜHİ™X[UÜ
+ÈÂˆÛÛœİÛÛÜˆHÙ]Ø]\ÛÛÜ•šY]Ê™\Ù[][Û‹œİ\ÛÛÜ’[™^
+K˜ÛÛÜÂ‚ˆ™]\›ˆÂˆYˆ	Ù\İ[˜][Û”™Xİ›Y
+È\İ[˜][Û”™XİÚYÈˆHŸ\ˆÜˆ	Üİ™X[UÜ
+Èß\ˆÚYˆ‹ˆZYÚˆ	Üİ™X[RZYÚ\ˆ˜XÚÙÜ›İ[™ÛÛÜˆÛÛÜ‹ˆ›ŞÚYİÎˆ\	ØÛÛÜŸM˜ˆ’[™^ˆİ™X[Tİ\“^Y\–’[™^ˆNÂŸB
