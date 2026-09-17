@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <mask id="seam" maskUnits="userSpaceOnUse" x="0" y="0" width="660" height="440">
+      <rect width="660" height="440" fill="#fff"/>
+      <g fill="none" stroke="#000" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M150,102 L205,102 L290,338 L80,338 Z" stroke-width="116"/>
+        <path d="M241.7,204 L387.4,204" stroke-width="92"/>
+      </g>
+      <circle cx="387.4" cy="204" r="60" fill="#000"/>
+    </mask>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#eef1f4"/>
+  <g transform="translate(35.5 104.4) scale(0.69)">
+    <g mask="url(#seam)" fill="none" stroke="#27313a" stroke-width="84" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M310,185 L310,102 L560,102 L430,338"/>
+      <path d="M392,338 L560,338"/>
+      <circle cx="397.8" cy="309.5" r="46" fill="#27313a" stroke="none"/>
+    </g>
+    <g fill="none" stroke="#27313a" stroke-width="84" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M150,102 L205,102 L290,338 L80,338 Z"/>
+      <path d="M241.7,204 L387.4,204" stroke-width="60"/>
+      <circle cx="387.4" cy="204" r="44" fill="#27313a" stroke="none"/>
+    </g>
+  </g>
+</svg>
