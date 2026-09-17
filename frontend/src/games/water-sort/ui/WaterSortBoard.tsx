@@ -47,6 +47,7 @@ type BottleRect = {
 
 type PourPresentation = {
   id: number;
+  operationId: number;
   sourceBottleIndex: number;
   destinationBottleIndex: number;
   sourceBefore: WaterSortBottle;
@@ -65,6 +66,7 @@ type WaterSortBoardProps = {
   operation: WaterSortOperation | null;
   onSelectBottle: (bottleIndex: number) => void;
   interactionDisabled?: boolean;
+  onPourComplete?: (operationId: number) => void;
   onClearingPourComplete?: () => void;
 };
 
@@ -74,6 +76,7 @@ export function WaterSortBoard({
   operation,
   onSelectBottle,
   interactionDisabled = false,
+  onPourComplete,
   onClearingPourComplete,
 }: WaterSortBoardProps) {
   const bottleRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -106,6 +109,7 @@ export function WaterSortBoard({
       "(prefers-reduced-motion: reduce)",
     ).matches;
     if (!sourceBottle || !destinationBottle || prefersReducedMotion) {
+      onPourComplete?.(operation.id);
       if (operation.isClearingMove) onClearingPourComplete?.();
       return;
     }
@@ -114,12 +118,14 @@ export function WaterSortBoard({
       operation.stateBefore[operation.sourceBottleIndex] ?? [];
     const pourColorIndex = sourceBefore[sourceBefore.length - 1];
     if (pourColorIndex === undefined) {
+      onPourComplete?.(operation.id);
       if (operation.isClearingMove) onClearingPourComplete?.();
       return;
     }
 
     const presentation: PourPresentation = {
       id: nextPresentationId.current++,
+      operationId: operation.id,
       sourceBottleIndex: operation.sourceBottleIndex,
       destinationBottleIndex: operation.destinationBottleIndex,
       sourceBefore,
@@ -146,7 +152,7 @@ export function WaterSortBoard({
       ),
       presentation,
     ]);
-  }, [operation, onClearingPourComplete]);
+  }, [operation, onPourComplete, onClearingPourComplete]);
 
   const selectBottle = (bottleIndex: number) => {
     if (interactionDisabled) return;
@@ -222,6 +228,7 @@ export function WaterSortBoard({
           key={presentation.id}
           presentation={presentation}
           onFinish={finishPresentation}
+          onPourComplete={onPourComplete}
           onClearingPourComplete={onClearingPourComplete}
         />
       ))}
@@ -240,10 +247,12 @@ export function WaterSortBoard({
 function PourSourceLayer({
   presentation,
   onFinish,
+  onPourComplete,
   onClearingPourComplete,
 }: {
   presentation: PourPresentation;
   onFinish: (presentationId: number) => void;
+  onPourComplete?: (operationId: number) => void;
   onClearingPourComplete?: () => void;
 }) {
   const sourceRef = useRef<HTMLDivElement>(null);
@@ -255,6 +264,7 @@ function PourSourceLayer({
     const streamElement = streamRef.current;
     if (!sourceElement?.animate) {
       onFinish(presentation.id);
+      onPourComplete?.(presentation.operationId);
       if (presentation.isClearingMove) {
         onClearingPourComplete?.();
       }
@@ -340,6 +350,7 @@ function PourSourceLayer({
           return;
         }
         onFinish(presentation.id);
+        onPourComplete?.(presentation.operationId);
         if (presentation.isClearingMove) {
           onClearingPourComplete?.();
         }
@@ -353,7 +364,7 @@ function PourSourceLayer({
       streamAnimation?.cancel();
       sourceTransferAnimation?.cancel();
     };
-  }, [onClearingPourComplete, onFinish, presentation]);
+  }, [onPourComplete, onClearingPourComplete, onFinish, presentation]);
 
   return createPortal(
     <>
