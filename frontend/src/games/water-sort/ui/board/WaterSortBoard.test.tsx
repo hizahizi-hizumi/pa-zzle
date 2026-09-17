@@ -23,6 +23,7 @@ afterEach(() => {
   cleanup();
   delete (HTMLElement.prototype as { animate?: Element["animate"] }).animate;
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("WaterSortBoard", () => {
@@ -183,5 +184,108 @@ describe("WaterSortBoard", () => {
     for (const cancelAnimation of firstPourAnimations) {
       expect(cancelAnimation).not.toHaveBeenCalled();
     }
+  });
+
+  test("最新の操作結果が不正操作へ変わっても進行中の注水表示を維持すること", () => {
+    installPendingAnimations();
+    const onSelectBottle = vi.fn();
+    const { rerender } = render(
+      <WaterSortBoard
+        state={[[], [0], []]}
+        sourceBottleIndex={null}
+        operation={{
+          id: 1,
+          type: "poured",
+          sourceBottleIndex: 0,
+          destinationBottleIndex: 1,
+          stateBefore: [[0], [], []],
+          stateAfter: [[], [0], []],
+          isClearingMove: false,
+        }}
+        onSelectBottle={onSelectBottle}
+      />,
+    );
+
+    rerender(
+      <WaterSortBoard
+        state={[[], [0], []]}
+        sourceBottleIndex={null}
+        operation={{ id: 2, type: "invalid", bottleIndex: 2 }}
+        onSelectBottle={onSelectBottle}
+      />,
+    );
+
+    const sourceBottle = screen.getByRole("button", { name: "ボトル 1: 空" });
+    const destinationBottle = screen.getByRole("button", {
+      name: "ボトル 2: 赤",
+    });
+    expect(
+      sourceBottle.firstElementChild?.classList.contains("invisible"),
+    ).toBe(true);
+    expect(
+      destinationBottle.firstElementChild?.classList.contains("invisible"),
+    ).toBe(true);
+  });
+
+  test("動きを減らす設定では最終注水を待たずに完了通知すること", () => {
+    const animate = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "animate", {
+      configurable: true,
+      value: animate,
+    });
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({ matches: true }) as MediaQueryList),
+    );
+    const onClearingPourComplete = vi.fn();
+
+    render(
+      <WaterSortBoard
+        state={[[], [0, 0, 0, 0]]}
+        sourceBottleIndex={null}
+        operation={{
+          id: 1,
+          type: "poured",
+          sourceBottleIndex: 0,
+          destinationBottleIndex: 1,
+          stateBefore: [[0], [0, 0, 0]],
+          stateAfter: [[], [0, 0, 0, 0]],
+          isClearingMove: true,
+        }}
+        onSelectBottle={vi.fn()}
+        onClearingPourComplete={onClearingPourComplete}
+      />,
+    );
+
+    expect(animate).not.toHaveBeenCalled();
+    expect(onClearingPourComplete).toHaveBeenCalledOnce();
+  });
+
+  test("注水対象のDOMを取得できなくても最終注水の進行を停止しないこと", () => {
+    Object.defineProperty(HTMLElement.prototype, "animate", {
+      configurable: true,
+      value: vi.fn(),
+    });
+    const onClearingPourComplete = vi.fn();
+
+    render(
+      <WaterSortBoard
+        state={[[]]}
+        sourceBottleIndex={null}
+        operation={{
+          id: 1,
+          type: "poured",
+          sourceBottleIndex: 0,
+          destinationBottleIndex: 1,
+          stateBefore: [[0], []],
+          stateAfter: [[], [0]],
+          isClearingMove: true,
+        }}
+        onSelectBottle={vi.fn()}
+        onClearingPourComplete={onClearingPourComplete}
+      />,
+    );
+
+    expect(onClearingPourComplete).toHaveBeenCalledOnce();
   });
 });

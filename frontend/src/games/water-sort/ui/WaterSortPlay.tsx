@@ -69,15 +69,8 @@ export function WaterSortPlay({
   onChangeDifficulty,
   onBackToHome,
 }: WaterSortPlayProps) {
-  const [completedPourOperationId, setCompletedPourOperationId] = useState<
-    number | null
-  >(null);
-  const activePourOperationId =
-    operation?.type === "poured" ? operation.id : null;
-  const isPourAnimating =
-    activePourOperationId !== null &&
-    completedPourOperationId !== activePourOperationId;
-  const showDeadlockNotice = isDeadlocked && !isPourAnimating;
+  const [hasActivePourAnimation, setHasActivePourAnimation] = useState(false);
+  const showDeadlockNotice = isDeadlocked && !hasActivePourAnimation;
 
   if (progress === "result" && status === "cleared" && result) {
     return (
@@ -124,7 +117,7 @@ export function WaterSortPlay({
           operation={operation}
           onSelectBottle={selectBottle}
           interactionDisabled={progress !== "playing"}
-          onPourComplete={setCompletedPourOperationId}
+          onPourAnimationActivityChange={setHasActivePourAnimation}
           onClearingPourComplete={completeClearingPour}
         />
       </main>
@@ -266,7 +259,7 @@ function WaterSortResultScreen({
             {getWaterSortDifficultyLabel(difficulty)}
           </p>
         </div>
-        <ScoreCard score={result.score} presentation={scorePresentation} />
+        <ScoreCard score={result.score} animation={scorePresentation} />
         <dl className="mt-6 grid grid-cols-3 gap-2 text-center">
           <ResultMetric label="手数" value={String(result.moveCount)} />
           <ResultMetric label="最短" value={String(result.optimalMoveCount)} />
@@ -368,10 +361,10 @@ function getScorePresentation(score: number): ScorePresentation {
 }
 function ScoreCard({
   score,
-  presentation,
+  animation,
 }: {
   score: number;
-  presentation: ScorePresentation;
+  animation: ScorePresentation;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -391,18 +384,18 @@ function ScoreCard({
   return (
     <div
       ref={cardRef}
-      className={`mt-6 rounded-3xl border px-5 py-5 text-center shadow-sm ${presentation.panelClassName}`}
+      className={`mt-6 rounded-3xl border px-5 py-5 text-center shadow-sm ${animation.panelClassName}`}
     >
       <p
-        className={`text-sm font-bold tracking-wide ${presentation.scoreClassName}`}
+        className={`text-sm font-bold tracking-wide ${animation.scoreClassName}`}
       >
-        {presentation.message}
+        {animation.message}
       </p>
       <p className="mt-1 text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
         スコア
       </p>
       <p
-        className={`mt-1 font-mono text-6xl font-bold tracking-tight tabular-nums ${presentation.scoreClassName}`}
+        className={`mt-1 font-mono text-6xl font-bold tracking-tight tabular-nums ${animation.scoreClassName}`}
       >
         {score}
         <span className="ml-1 text-base font-medium text-muted-foreground">
