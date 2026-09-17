@@ -86,9 +86,7 @@ describe("WaterSortBoard", () => {
     );
 
     const sourceBottle = screen.getByLabelText("ボトル 1: 空");
-    const destinationBottle = screen.getByLabelText(
-      "ボトル 2: 赤、赤、赤、赤",
-    );
+    const destinationBottle = screen.getByLabelText("ボトル 2: 赤、赤、赤、赤");
 
     expect(sourceBottle.style.visibility).toBe("hidden");
     expect(destinationBottle.style.visibility).toBe("hidden");
