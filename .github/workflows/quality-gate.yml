@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: quality-gate-${{ github.event.pull_request.number || github.ref || github.run_id }}
@@ -25,6 +25,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -34,6 +36,20 @@ jobs:
       - name: Install frontend dependencies
         working-directory: frontend
         run: bun install --frozen-lockfile
+
+      - name: Apply Biome fixes
+        if: github.event_name == 'pull_request'
+        run: |
+          cd frontend
+          bunx biome check . --write
+          cd ..
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend
+          if ! git diff --cached --quiet; then
+            git commit -m "style(frontend): Biomeの指摘を修正"
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          fi
 
       - name: Verify repository quality
         run: ./scripts/verify.sh
