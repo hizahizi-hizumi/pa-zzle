@@ -128,7 +128,7 @@ export function WaterSortPlay({
           onClearingPourComplete={completeClearingPour}
         />
       </main>
-      <footer className="shrink-0 px-4 pb-2">
+      <footer className="grid h-28 shrink-0 items-end px-4 pb-2">
         {showDeadlockNotice ? (
           <DeadlockNotice canUndo={canUndo} undo={undo} restart={restart} />
         ) : (
