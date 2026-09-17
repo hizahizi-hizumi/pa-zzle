@@ -23,7 +23,7 @@ bun run --cwd frontend build # プロダクションビルド
 Repository Snapshot と Offline Dependencies を使う ChatGPT 実行環境では、依存アーティファクトを `frontend/node_modules` に配置して Vite を使う。
 
 ```sh
-frontend/node_modules/.bin/vite --config frontend/vite.config.ts --host 127.0.0.1 --port 3000
+frontend/node_modules/.bin/vite --config frontend/vite.chatgpt.config.ts --host 127.0.0.1 --port 3000
 ```
 
 ChatGPT環境で画面確認する場合は、`docs/メモ/ChatGPT画面確認.md` の手順に従い、`scripts/chatgpt_playwright.py` を使って描画・操作・スクリーンショット・ブラウザエラーまで確認する。

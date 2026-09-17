@@ -33,11 +33,13 @@ ln -s /path/to/offline-dependencies/frontend/node_modules frontend/node_modules
 
 ```sh
 frontend/node_modules/.bin/vite \
-  --config frontend/vite.config.ts \
+  --config frontend/vite.chatgpt.config.ts \
   --host 127.0.0.1 \
   --port 3000 \
   --strictPort
 ```
+
+`vite.chatgpt.config.ts` は実行時の `src` モジュールを依存最適化の入口として指定する。これにより、新しい実行環境でもViteの起動中に依存最適化を完了させ、Playwright描画中の再最適化によるページ再読み込みを防ぐ。
 
 `curl` では開発サーバーへ直接到達できることを確認できる。
 
@@ -100,7 +102,7 @@ page.screenshot(path="/tmp/pa-zzle-mobile.png", full_page=True)
 
 ## 仕組み
 
-`ChatGPTBrowser` は次の処理を行う。
+Viteは `vite.chatgpt.config.ts` により依存最適化を起動時に完了させる。その後、`ChatGPTBrowser` は次の処理を行う。
 
 1. PythonからViteのHTMLを取得し、`page.set_content()` で `about:blank` に描画する。
 2. `<base>` をViteへ向け、JS・CSS・画像などの要求を `page.route()` で捕捉する。
