@@ -235,11 +235,15 @@ function analyzeRepresentativeChoiceRisk(
     evaluatedChoiceCount,
     unresolvedChoiceCount,
     optimalChoiceRatio:
-      evaluatedChoiceCount === 0 ? 0 : optimalChoiceCount / evaluatedChoiceCount,
+      evaluatedChoiceCount === 0
+        ? 0
+        : optimalChoiceCount / evaluatedChoiceCount,
     detourChoiceRatio:
       evaluatedChoiceCount === 0 ? 0 : detourChoiceCount / evaluatedChoiceCount,
     deadEndChoiceRatio:
-      evaluatedChoiceCount === 0 ? 0 : deadEndChoiceCount / evaluatedChoiceCount,
+      evaluatedChoiceCount === 0
+        ? 0
+        : deadEndChoiceCount / evaluatedChoiceCount,
     maximumDetourMoves,
   };
 }
@@ -272,7 +276,8 @@ export function analyzeWaterSortDifficulty(
   const shortestMoveCount = solutionMoves.length;
   const minimumMergeMoveCount = Math.max(
     0,
-    countWaterSortColorBlocks(initialState) - countWaterSortColors(initialState),
+    countWaterSortColorBlocks(initialState) -
+      countWaterSortColors(initialState),
   );
   const preparationMoveCount = Math.max(
     0,
@@ -283,8 +288,7 @@ export function analyzeWaterSortDifficulty(
       0,
       Math.min(
         1,
-        1 -
-          countEmptyWaterSortBottles(state) / WATER_SORT_EMPTY_BOTTLE_COUNT,
+        1 - countEmptyWaterSortBottles(state) / WATER_SORT_EMPTY_BOTTLE_COUNT,
       ),
     ),
   );

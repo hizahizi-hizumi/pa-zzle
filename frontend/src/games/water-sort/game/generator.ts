@@ -51,7 +51,6 @@ export type WaterSortProblemAcceptance = (
   candidate: WaterSortGeneratedCandidate,
 ) => boolean;
 
-
 export class WaterSortGenerationExhaustedError extends Error {
   constructor(maximumAttempts: number) {
     super(

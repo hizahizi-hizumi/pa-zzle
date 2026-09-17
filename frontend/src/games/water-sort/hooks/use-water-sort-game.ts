@@ -6,8 +6,8 @@ import {
   type WaterSortDifficulty,
 } from "@/games/water-sort/game/difficulty";
 import type { WaterSortProblem } from "@/games/water-sort/game/generator";
-import { generateWaterSortProblemForDifficulty } from "@/games/water-sort/game/problem-selection";
 import { calculateWaterSortPlayScore } from "@/games/water-sort/game/performance";
+import { generateWaterSortProblemForDifficulty } from "@/games/water-sort/game/problem-selection";
 import {
   applyWaterSortMove,
   listWaterSortLegalMoves,

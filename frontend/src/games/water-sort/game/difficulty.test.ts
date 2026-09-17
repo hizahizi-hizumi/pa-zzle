@@ -1,10 +1,9 @@
 import { describe, expect, test } from "vitest";
-
-import type { WaterSortDifficultyAnalysis } from "./difficulty-analysis";
 import {
   assessWaterSortDifficulty,
   parseWaterSortDifficulty,
 } from "./difficulty";
+import type { WaterSortDifficultyAnalysis } from "./difficulty-analysis";
 
 const baseAnalysis: WaterSortDifficultyAnalysis = {
   shortestMoveCount: 20,

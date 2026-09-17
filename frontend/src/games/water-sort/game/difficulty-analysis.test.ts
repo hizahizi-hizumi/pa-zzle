@@ -4,12 +4,7 @@ import { analyzeWaterSortDifficulty } from "./difficulty-analysis";
 import { solveWaterSort } from "./solver";
 import type { WaterSortState } from "./state";
 
-const initialState: WaterSortState = [
-  [0, 1, 0, 1],
-  [1, 0, 1, 0],
-  [],
-  [],
-];
+const initialState: WaterSortState = [[0, 1, 0, 1], [1, 0, 1, 0], [], []];
 
 function solveInitialState() {
   const solved = solveWaterSort(initialState);
@@ -65,9 +60,9 @@ describe("analyzeWaterSortDifficulty", () => {
       maxExpandedStatesPerRiskChoice: 0,
     });
 
-    expect(analysis.representativeChoiceRisk.unresolvedChoiceCount).toBeGreaterThan(
-      0,
-    );
+    expect(
+      analysis.representativeChoiceRisk.unresolvedChoiceCount,
+    ).toBeGreaterThan(0);
   });
 
   test("評価数を 1 件に絞っても既知の最短経路へ続く選択肢を含めること", () => {
