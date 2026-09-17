@@ -27,7 +27,7 @@ describe("WaterSortBoard", () => {
       <WaterSortBoard
         state={[[0], [], [1], []]}
         sourceBottleIndex={0}
-        selectableBottleIndexes={new Set([0, 1])}
+        operation={null}
         onSelectBottle={onSelectBottle}
       />,
     );
@@ -37,7 +37,15 @@ describe("WaterSortBoard", () => {
       <WaterSortBoard
         state={[[], [0], [1], []]}
         sourceBottleIndex={2}
-        selectableBottleIndexes={new Set([2, 3])}
+        operation={{
+          id: 1,
+          type: "poured",
+          sourceBottleIndex: 0,
+          destinationBottleIndex: 1,
+          stateBefore: [[0], [], [1], []],
+          stateAfter: [[], [0], [1], []],
+          isClearingMove: false,
+        }}
         onSelectBottle={onSelectBottle}
       />,
     );
@@ -62,18 +70,25 @@ describe("WaterSortBoard", () => {
     const onSelectBottle = vi.fn();
     render(
       <WaterSortBoard
-        state={[[0], [0, 0, 0]]}
-        sourceBottleIndex={0}
-        selectableBottleIndexes={new Set([0, 1])}
+        state={[[], [0, 0, 0, 0]]}
+        sourceBottleIndex={null}
+        operation={{
+          id: 1,
+          type: "poured",
+          sourceBottleIndex: 0,
+          destinationBottleIndex: 1,
+          stateBefore: [[0], [0, 0, 0]],
+          stateAfter: [[], [0, 0, 0, 0]],
+          isClearingMove: true,
+        }}
         onSelectBottle={onSelectBottle}
       />,
     );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "ボトル 2: 赤、赤、赤" }),
+    const sourceBottle = screen.getByLabelText("ボトル 1: 空");
+    const destinationBottle = screen.getByLabelText(
+      "ボトル 2: 赤、赤、赤、赤",
     );
-    const sourceBottle = screen.getByLabelText("ボトル 1: 赤");
-    const destinationBottle = screen.getByLabelText("ボトル 2: 赤、赤、赤");
 
     expect(sourceBottle.style.visibility).toBe("hidden");
     expect(destinationBottle.style.visibility).toBe("hidden");
