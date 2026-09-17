@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  type RefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 
 import { applyWaterSortMove } from "@/games/water-sort/game/rules";
@@ -26,7 +32,8 @@ const waterSortColors = [
 const bottleSlots = [0, 1, 2, 3] as const;
 
 const pourAnimationDurationMs = 1600;
-const pourTransferDelayMs = 860;
+const pourTransferStartOffset = 0.38;
+const pourTransferEndOffset = 0.72;
 const sourcePourLayerZIndex = 70;
 const streamPourLayerZIndex = 69;
 const destinationPourLayerZIndex = 65;
@@ -252,14 +259,11 @@ function PourPresentationLayer({
   const sourceRef = useRef<HTMLDivElement>(null);
   const destinationRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<HTMLDivElement>(null);
-  const [sourceBottle, setSourceBottle] = useState(presentation.sourceBefore);
-  const [destinationBottle, setDestinationBottle] = useState(
-    presentation.destinationBefore,
-  );
+  const sourceTransferRef = useRef<HTMLSpanElement>(null);
+  const destinationTransferRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     const sourceElement = sourceRef.current;
-    const destinationElement = destinationRef.current;
     const streamElement = streamRef.current;
     if (!sourceElement?.animate) {
       onFinish(presentation.id);
@@ -274,23 +278,9 @@ function PourPresentationLayer({
     const deltaY = destinationRect.top - sourceRect.top;
     const hoverY = deltaY - sourceRect.height * 0.55;
     const direction = deltaX >= 0 ? 1 : -1;
+    const sourceTransferElement = sourceTransferRef.current;
+    const destinationTransferElement = destinationTransferRef.current;
     let active = true;
-
-    const transferTimer = window.setTimeout(() => {
-      if (!active) {
-        return;
-      }
-      setSourceBottle(presentation.sourceAfter);
-      setDestinationBottle(presentation.destinationAfter);
-      destinationElement?.animate?.(
-        [
-          { transform: "scale(1)" },
-          { transform: "scale(1.02)" },
-          { transform: "scale(1)" },
-        ],
-        { duration: 280, easing: "ease-out" },
-      );
-    }, pourTransferDelayMs);
 
     const sourceAnimation = sourceElement.animate(
       [
@@ -336,12 +326,35 @@ function PourPresentationLayer({
       [
         { opacity: 0, transform: "scaleY(0.15)", offset: 0 },
         { opacity: 0, transform: "scaleY(0.15)", offset: 0.32 },
-        { opacity: 0.9, transform: "scaleY(1)", offset: 0.38 },
+        {
+          opacity: 0.9,
+          transform: "scaleY(1)",
+          offset: pourTransferStartOffset,
+        },
         { opacity: 0.9, transform: "scaleY(1)", offset: 0.7 },
         { opacity: 0, transform: "scaleY(0.35)", offset: 0.77 },
         { opacity: 0, transform: "scaleY(0.15)", offset: 1 },
       ],
       { duration: pourAnimationDurationMs, easing: "linear" },
+    );
+
+    const sourceTransferAnimation = sourceTransferElement?.animate?.(
+      [
+        { transform: "scaleY(1)", offset: 0 },
+        { transform: "scaleY(1)", offset: pourTransferStartOffset },
+        { transform: "scaleY(0)", offset: pourTransferEndOffset },
+        { transform: "scaleY(0)", offset: 1 },
+      ],
+      { duration: pourAnimationDurationMs, easing: "linear", fill: "forwards" },
+    );
+    const destinationTransferAnimation = destinationTransferElement?.animate?.(
+      [
+        { transform: "scaleY(0)", offset: 0 },
+        { transform: "scaleY(0)", offset: pourTransferStartOffset },
+        { transform: "scaleY(1)", offset: pourTransferEndOffset },
+        { transform: "scaleY(1)", offset: 1 },
+      ],
+      { duration: pourAnimationDurationMs, easing: "linear", fill: "forwards" },
     );
 
     void sourceAnimation.finished.then(
@@ -359,9 +372,10 @@ function PourPresentationLayer({
 
     return () => {
       active = false;
-      window.clearTimeout(transferTimer);
       sourceAnimation.cancel();
       streamAnimation?.cancel();
+      sourceTransferAnimation?.cancel();
+      destinationTransferAnimation?.cancel();
     };
   }, [onClearingPourComplete, onFinish, presentation]);
 
@@ -373,7 +387,18 @@ function PourPresentationLayer({
         className="group pointer-events-none fixed aspect-[0.36] origin-top rounded-b-[1.45rem] will-change-transform"
         style={getOverlayStyle(presentation.sourceRect, sourcePourLayerZIndex)}
       >
-        <BottleVisual bottle={sourceBottle} />
+        <BottleVisual
+          bottle={presentation.sourceAfter}
+          transfer={{
+            colorIndex: presentation.pourColorIndex,
+            startSlot: presentation.sourceAfter.length,
+            slotCount:
+              presentation.sourceBefore.length -
+              presentation.sourceAfter.length,
+            elementRef: sourceTransferRef,
+            initialScaleY: 1,
+          }}
+        />
       </div>
       <div
         ref={streamRef}
@@ -390,14 +415,39 @@ function PourPresentationLayer({
           destinationPourLayerZIndex,
         )}
       >
-        <BottleVisual bottle={destinationBottle} />
+        <BottleVisual
+          bottle={presentation.destinationBefore}
+          transfer={{
+            colorIndex: presentation.pourColorIndex,
+            startSlot: presentation.destinationBefore.length,
+            slotCount:
+              presentation.destinationAfter.length -
+              presentation.destinationBefore.length,
+            elementRef: destinationTransferRef,
+            initialScaleY: 0,
+          }}
+        />
       </div>
     </>,
     document.body,
   );
 }
 
-function BottleVisual({ bottle }: { bottle: WaterSortBottle }) {
+type TransferLiquid = {
+  colorIndex: number;
+  startSlot: number;
+  slotCount: number;
+  elementRef: RefObject<HTMLSpanElement | null>;
+  initialScaleY: number;
+};
+
+function BottleVisual({
+  bottle,
+  transfer,
+}: {
+  bottle: WaterSortBottle;
+  transfer?: TransferLiquid;
+}) {
   return (
     <>
       <span
@@ -422,6 +472,18 @@ function BottleVisual({ bottle }: { bottle: WaterSortBottle }) {
             />
           );
         })}
+        {transfer ? (
+          <span
+            ref={transfer.elementRef}
+            className="absolute inset-x-0 origin-bottom will-change-transform"
+            style={{
+              bottom: `${transfer.startSlot * 25}%`,
+              height: `${transfer.slotCount * 25}%`,
+              backgroundColor: getColorView(transfer.colorIndex).color,
+              transform: `scaleY(${transfer.initialScaleY})`,
+            }}
+          />
+        ) : null}
       </span>
       <span
         aria-hidden="true"
