@@ -1,20 +1,20 @@
-import type { WaterSortProblemFeatures } from "./solver";
+import type { WaterSortDifficultyAnalysis } from "./difficulty-analysis";
 
 export const waterSortDifficulties = [
   {
     id: "easy",
     label: "かんたん",
-    description: "まずは操作とルールに慣れる難易度です。",
+    description: "目の前のまとまりを追いながら進めやすい難易度です。",
   },
   {
     id: "normal",
     label: "ふつう",
-    description: "何手か先を考えながら進める難易度です。",
+    description: "空きボトルと数手先を考えながら進める難易度です。",
   },
   {
     id: "hard",
     label: "むずかしい",
-    description: "手順を慎重に組み立てる難易度です。",
+    description: "誤った選択の代償まで考えて手順を組み立てる難易度です。",
   },
 ] as const;
 
@@ -22,14 +22,15 @@ export type WaterSortDifficulty = (typeof waterSortDifficulties)[number]["id"];
 
 export type WaterSortDifficultyAssessment = {
   difficulty: WaterSortDifficulty;
-  index: number;
 };
 
-const averageDistinctChoiceWeight = 2;
-const noEmptyBottleStateWeight = 4;
-const forcedChoiceWeight = 2;
-const normalDifficultyIndexThreshold = 24;
-const hardDifficultyIndexThreshold = 32;
+const easyMaximumPreparationMoves = 2;
+const easyMaximumEmptyBottlePressure = 0.65;
+const hardMinimumPreparationMoves = 3;
+const hardMinimumEmptyBottlePressure = 0.75;
+const hardMinimumDeadEndChoiceRatio = 0.125;
+const hardMinimumRiskyChoiceRatio = 0.75;
+const hardMinimumDetourMoves = 2;
 
 export function parseWaterSortDifficulty(
   value: string | undefined,
@@ -47,28 +48,35 @@ export function getWaterSortDifficultyLabel(
   );
 }
 
-export function calculateWaterSortDifficultyIndex(
-  features: WaterSortProblemFeatures,
-): number {
-  return (
-    features.shortestMoveCount +
-    features.averageDistinctChoiceCountOnSolution *
-      averageDistinctChoiceWeight +
-    features.noEmptyBottleStateRatio * noEmptyBottleStateWeight -
-    features.forcedChoiceRatio * forcedChoiceWeight
-  );
-}
-
 export function assessWaterSortDifficulty(
-  features: WaterSortProblemFeatures,
+  analysis: WaterSortDifficultyAnalysis,
 ): WaterSortDifficultyAssessment {
-  const index = calculateWaterSortDifficultyIndex(features);
+  const risk = analysis.representativeChoiceRisk;
+  const hasResolvedChoiceRisk = risk.unresolvedChoiceCount === 0;
+  const riskyChoiceRatio = risk.detourChoiceRatio + risk.deadEndChoiceRatio;
 
-  if (index < normalDifficultyIndexThreshold) {
-    return { difficulty: "easy", index };
+  const isEasy =
+    hasResolvedChoiceRisk &&
+    analysis.preparationMoveCount <= easyMaximumPreparationMoves &&
+    analysis.averageEmptyBottlePressure <= easyMaximumEmptyBottlePressure &&
+    risk.deadEndChoiceRatio === 0 &&
+    risk.maximumDetourMoves <= 1;
+  if (isEasy) {
+    return { difficulty: "easy" };
   }
-  if (index < hardDifficultyIndexThreshold) {
-    return { difficulty: "normal", index };
+
+  const hasMeaningfulWrongChoicePenalty =
+    risk.deadEndChoiceRatio >= hardMinimumDeadEndChoiceRatio ||
+    risk.maximumDetourMoves >= hardMinimumDetourMoves ||
+    riskyChoiceRatio >= hardMinimumRiskyChoiceRatio;
+  const isHard =
+    hasResolvedChoiceRisk &&
+    analysis.preparationMoveCount >= hardMinimumPreparationMoves &&
+    analysis.averageEmptyBottlePressure >= hardMinimumEmptyBottlePressure &&
+    hasMeaningfulWrongChoicePenalty;
+  if (isHard) {
+    return { difficulty: "hard" };
   }
-  return { difficulty: "hard", index };
+
+  return { difficulty: "normal" };
 }

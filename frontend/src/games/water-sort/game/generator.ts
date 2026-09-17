@@ -1,6 +1,10 @@
 import type { Seed } from "@/games/core/seed";
 
 import {
+  analyzeWaterSortDifficulty,
+  type WaterSortDifficultyAnalysis,
+} from "./difficulty-analysis";
+import {
   solveWaterSort,
   type WaterSortSolveResult,
   type WaterSortSolverOptions,
@@ -32,6 +36,7 @@ export type WaterSortGeneratedCandidate = {
   attempt: number;
   initialState: WaterSortState;
   solveResult: WaterSortSolveResult;
+  difficultyAnalysis: WaterSortDifficultyAnalysis;
 };
 
 export type WaterSortProblem = WaterSortProblemIdentity & {
@@ -39,11 +44,22 @@ export type WaterSortProblem = WaterSortProblemIdentity & {
   solutionMoves: WaterSortSolveResult["moves"];
   searchStatistics: WaterSortSolveResult["statistics"];
   features: NonNullable<WaterSortSolveResult["features"]>;
+  difficultyAnalysis: WaterSortDifficultyAnalysis;
 };
 
 export type WaterSortProblemAcceptance = (
   candidate: WaterSortGeneratedCandidate,
 ) => boolean;
+
+
+export class WaterSortGenerationExhaustedError extends Error {
+  constructor(maximumAttempts: number) {
+    super(
+      `Failed to generate a water sort problem within ${maximumAttempts} attempts`,
+    );
+    this.name = "WaterSortGenerationExhaustedError";
+  }
+}
 
 export type WaterSortGeneratorOptions = {
   seed: Seed;
@@ -173,6 +189,7 @@ function createProblem(
   initialState: WaterSortState,
   solveResult: WaterSortSolveResult,
   features: NonNullable<WaterSortSolveResult["features"]>,
+  difficultyAnalysis: WaterSortDifficultyAnalysis,
 ): WaterSortProblem {
   return {
     ...identity,
@@ -180,6 +197,7 @@ function createProblem(
     solutionMoves: solveResult.moves,
     searchStatistics: solveResult.statistics,
     features,
+    difficultyAnalysis,
   };
 }
 
@@ -234,11 +252,17 @@ export function restoreWaterSortProblem(
     );
   }
 
+  const difficultyAnalysis = analyzeWaterSortDifficulty(
+    initialState,
+    solveResult.moves,
+  );
+
   return createProblem(
     identity,
     initialState,
     solveResult,
     solveResult.features,
+    difficultyAnalysis,
   );
 }
 
@@ -273,7 +297,16 @@ export function generateWaterSortProblem(
       continue;
     }
 
-    const candidate = { attempt, initialState, solveResult };
+    const difficultyAnalysis = analyzeWaterSortDifficulty(
+      initialState,
+      solveResult.moves,
+    );
+    const candidate = {
+      attempt,
+      initialState,
+      solveResult,
+      difficultyAnalysis,
+    };
     if (options.acceptCandidate && !options.acceptCandidate(candidate)) {
       continue;
     }
@@ -288,10 +321,9 @@ export function generateWaterSortProblem(
       initialState,
       solveResult,
       solveResult.features,
+      difficultyAnalysis,
     );
   }
 
-  throw new Error(
-    `Failed to generate a water sort problem within ${maximumAttempts} attempts`,
-  );
+  throw new WaterSortGenerationExhaustedError(maximumAttempts);
 }

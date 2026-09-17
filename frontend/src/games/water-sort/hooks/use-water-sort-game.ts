@@ -5,10 +5,8 @@ import {
   assessWaterSortDifficulty,
   type WaterSortDifficulty,
 } from "@/games/water-sort/game/difficulty";
-import {
-  generateWaterSortProblem,
-  type WaterSortProblem,
-} from "@/games/water-sort/game/generator";
+import type { WaterSortProblem } from "@/games/water-sort/game/generator";
+import { generateWaterSortProblemForDifficulty } from "@/games/water-sort/game/problem-selection";
 import { calculateWaterSortPlayScore } from "@/games/water-sort/game/performance";
 import {
   applyWaterSortMove,
@@ -64,23 +62,11 @@ type WaterSortPlayState = {
   operation: WaterSortOperation | null;
 };
 
-const colorCountsByDifficulty: Record<WaterSortDifficulty, number> = {
-  easy: 4,
-  normal: 6,
-  hard: 8,
-};
-
 function generateProblem(
   difficulty: WaterSortDifficulty,
   seed: Seed,
 ): WaterSortProblem {
-  return generateWaterSortProblem({
-    seed,
-    colorCount: colorCountsByDifficulty[difficulty],
-    acceptCandidate: ({ solveResult }) =>
-      solveResult.features !== null &&
-      assessWaterSortDifficulty(solveResult.features).difficulty === difficulty,
-  });
+  return generateWaterSortProblemForDifficulty(difficulty, seed);
 }
 
 function createPlayState(
@@ -261,7 +247,9 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
 
   const elapsedMs = Math.max(0, (play.finishedAt ?? now) - play.startedAt);
   const optimalMoveCount = play.problem.solutionMoves.length;
-  const problemDifficulty = assessWaterSortDifficulty(play.problem.features);
+  const problemDifficulty = assessWaterSortDifficulty(
+    play.problem.difficultyAnalysis,
+  );
   const result = useMemo<WaterSortResult | null>(() => {
     if (play.status !== "cleared") {
       return null;
