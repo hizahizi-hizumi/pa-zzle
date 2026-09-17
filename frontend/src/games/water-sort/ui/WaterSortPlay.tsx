@@ -22,7 +22,7 @@ import type {
   WaterSortProgress,
   WaterSortResult,
 } from "@/games/water-sort/hooks/use-water-sort-game";
-import { WaterSortBoard } from "@/games/water-sort/ui/WaterSortBoard";
+import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
 
 type WaterSortPlayProps = {
   difficulty: WaterSortDifficulty;
