@@ -71,11 +71,11 @@ with ChatGPTBrowser(path="/") as browser:
     ).wait_for()
     page.get_by_role(
         "link",
-        name=re.compile("カラーウォーターソート"),
+        name=re.compile("ウォーターソート"),
     ).click()
     page.get_by_role(
         "heading",
-        name="カラーウォーターソート",
+        name="ウォーターソート",
     ).wait_for()
 
     page.screenshot(path="/tmp/pa-zzle.png", full_page=True)

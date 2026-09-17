@@ -200,7 +200,7 @@ function PlayHeaderSummary({
     <div className="min-w-0 text-center">
       <BrandMark size="compact" />
       <h1 className="mt-0.5 truncate text-sm font-semibold tracking-tight">
-        カラーウォーターソート
+        ウォーターソート
       </h1>
       <div className="mt-1 flex items-center justify-center gap-2 text-[10px] leading-none text-muted-foreground">
         <PlayMetric label="手数" value={String(moveCount)} />
@@ -259,7 +259,7 @@ function WaterSortResultScreen({
         <div className="text-center">
           <ClearMark className={scorePresentation.markClassName} />
           <p className="mt-4 text-sm font-semibold tracking-tight">
-            カラーウォーターソート
+            ウォーターソート
           </p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight">クリア!</h1>
           <p className="mt-1 text-sm text-muted-foreground">

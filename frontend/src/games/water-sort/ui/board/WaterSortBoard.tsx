@@ -171,7 +171,6 @@ export function WaterSortBoard({
           rowGap: layout.rowGap,
           width: layout.width,
         }}
-        aria-label="カラーウォーターソート盤面"
       >
         {state.map((bottle, bottleIndex) => {
           const bottleLabel = `ボトル ${bottleIndex + 1}`;
