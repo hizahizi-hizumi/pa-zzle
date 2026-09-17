@@ -27,15 +27,11 @@ function solveCurrentProblem(result: { current: HookResult }) {
 }
 
 describe("useWaterSortGame", () => {
-  test.each([
-    ["easy", 6],
-    ["normal", 8],
-    ["hard", 10],
-  ] as const)(
-    "%s と分類された実盤面と最短手数をプレイ開始時から保持すること",
-    (difficulty, bottleCount) => {
+  test.each(["easy", "normal", "hard"] as const)(
+    "%s の特徴量条件を満たす実盤面と最短手数をプレイ開始時から保持すること",
+    (difficulty) => {
       const { result } = renderHook(() => useWaterSortGame(difficulty));
-      expect(result.current.state).toHaveLength(bottleCount);
+
       expect(
         result.current.state.filter((bottle) => bottle.length === 0),
       ).toHaveLength(2);

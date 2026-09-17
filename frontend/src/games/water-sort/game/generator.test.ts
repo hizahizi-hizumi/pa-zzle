@@ -38,6 +38,9 @@ describe("generateWaterSortProblem", () => {
     expect(problem.features.shortestMoveCount).toBe(
       problem.solutionMoves.length,
     );
+    expect(problem.difficultyAnalysis.shortestMoveCount).toBe(
+      problem.solutionMoves.length,
+    );
   });
 
   test("生成器と独立した採用条件で候補を棄却できること", () => {
