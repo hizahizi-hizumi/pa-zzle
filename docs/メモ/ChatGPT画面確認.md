@@ -16,7 +16,9 @@ Chromiumの管理ポリシーは変更しない。ViteへのHTTP通信をPython�
 
 Repository Snapshot Artifactは対象refの最新HEADとSHAが一致するものを使う。
 
-Offline Dependenciesを展開し、`manifest.env` の `INPUT_KEY` と対象Snapshotから計算したkeyが一致することを確認する。
+対象Snapshotと同じRepository Snapshot workflow runにある `repository-environment-<target>-<sha>.json` を取得する。`snapshot.sha` が対象refの最新HEADと一致することを確認し、`offline_dependencies.artifact_id` でOffline Dependenciesを取得する。過去のworkflow runから依存Artifactを探索しない。
+
+Offline Dependenciesを展開し、`manifest.env` の `INPUT_KEY` と環境マニフェストの `offline_dependencies.key`、対象Snapshotから計算したkeyが一致することを確認する。
 
 ```sh
 python3 .github/actions/offline-dependencies/scripts/artifact_state.py key --repo-root .

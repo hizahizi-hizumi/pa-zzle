@@ -27,8 +27,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
+      target: ${{ steps.target.outputs.target }}
       target-sha: ${{ steps.target.outputs.sha }}
       dependency-build-needed: ${{ steps.dependencies.outputs.build }}
+      dependency-input-key: ${{ steps.dependencies.outputs.input-key }}
     steps:
       - name: Resolve snapshot target
         id: target
@@ -231,6 +233,77 @@ jobs:
           python3 .github/actions/offline-dependencies/scripts/artifact_state.py
           prune
           --repo-root "$GITHUB_WORKSPACE"
+
+  publish-environment-manifest:
+    needs:
+      - snapshot
+      - build-offline-dependencies
+    if: >-
+      always() &&
+      needs.snapshot.result == 'success' &&
+      needs.snapshot.outputs.dependency-input-key != '' &&
+      (needs.build-offline-dependencies.result == 'success' ||
+       needs.build-offline-dependencies.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout snapshot target
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.snapshot.outputs.target-sha }}
+          fetch-depth: 1
+
+      - name: Resolve Offline Dependencies
+        id: dependencies
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          python3 .github/actions/offline-dependencies/scripts/artifact_state.py
+          resolve
+          --repo-root "$GITHUB_WORKSPACE"
+
+      - name: Build environment manifest
+        id: manifest
+        shell: bash
+        env:
+          SNAPSHOT_TARGET: ${{ needs.snapshot.outputs.target }}
+          SNAPSHOT_SHA: ${{ needs.snapshot.outputs.target-sha }}
+          OFFLINE_DEPENDENCIES_KEY: ${{ steps.dependencies.outputs.input-key }}
+          OFFLINE_DEPENDENCIES_ARTIFACT_ID: ${{ steps.dependencies.outputs.artifact-id }}
+          OFFLINE_DEPENDENCIES_ARTIFACT_NAME: ${{ steps.dependencies.outputs.artifact-name }}
+          OFFLINE_DEPENDENCIES_EXPIRES_AT: ${{ steps.dependencies.outputs.expires-at }}
+        run: |
+          set -euo pipefail
+
+          manifest="repository-environment-${SNAPSHOT_TARGET}-${SNAPSHOT_SHA}.json"
+          jq -n \
+            --arg target "$SNAPSHOT_TARGET" \
+            --arg sha "$SNAPSHOT_SHA" \
+            --arg dependency_key "$OFFLINE_DEPENDENCIES_KEY" \
+            --argjson dependency_artifact_id "$OFFLINE_DEPENDENCIES_ARTIFACT_ID" \
+            --arg dependency_artifact_name "$OFFLINE_DEPENDENCIES_ARTIFACT_NAME" \
+            --arg dependency_expires_at "$OFFLINE_DEPENDENCIES_EXPIRES_AT" \
+            '{
+              schema: 1,
+              snapshot: {target: $target, sha: $sha},
+              offline_dependencies: {
+                key: $dependency_key,
+                artifact_id: $dependency_artifact_id,
+                artifact_name: $dependency_artifact_name,
+                expires_at: $dependency_expires_at
+              }
+            }' > "$manifest"
+          echo "manifest=$manifest" >> "$GITHUB_OUTPUT"
+
+      - name: Upload environment manifest
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.manifest.outputs.manifest }}
+          path: ${{ steps.manifest.outputs.manifest }}
+          archive: false
+          retention-days: 30
+          if-no-files-found: error
 
   cleanup-repository-snapshot:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'

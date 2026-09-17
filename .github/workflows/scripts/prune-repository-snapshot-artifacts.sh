@@ -44,6 +44,7 @@ fi
 
 snapshot_pattern="^repository-snapshot-${target}-[0-9a-f]{40}\\.zip$"
 bundle_pattern="^repository-bundle-${target}-[0-9a-f]{40}\\.bundle$"
+environment_pattern="^repository-environment-${target}-[0-9a-f]{40}\\.json$"
 
 delete_artifact() {
   local artifact_id="$1"
@@ -64,7 +65,7 @@ delete_artifact() {
 gh api --paginate "/repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" \
   --jq '.artifacts[] | [.id, .name] | @tsv' |
 while IFS=$'\t' read -r artifact_id artifact_name; do
-  if [[ ! "$artifact_name" =~ $snapshot_pattern && ! "$artifact_name" =~ $bundle_pattern ]]; then
+  if [[ ! "$artifact_name" =~ $snapshot_pattern && ! "$artifact_name" =~ $bundle_pattern && ! "$artifact_name" =~ $environment_pattern ]]; then
     continue
   fi
 
