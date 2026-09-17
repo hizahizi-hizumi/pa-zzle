@@ -219,7 +219,9 @@ python3 .claude/skills/design-game-pictogram/scripts/make_review_sheet.py \
 
 ## 完成見本
 
-完成品質の基準を確認するときは `examples/README.md` と `examples/*.svg` を参照する。
+完成品質の基準を確認するときは `examples/README.md` を参照し、そこに列挙された SVG を確認する。完成見本がプロダクションでも使われる場合は、プロダクション側の SVG を正本として直接参照する。
+
+現在、ウォーターソートの完成見本は `frontend/src/games/water-sort/assets/pictogram.svg` を正本として参照する。
 
 - 形状そのものをテンプレートとして流用せず、識別要素・視覚階層・余白・光学的重量の品質基準として使う
 - PoC の途中案や不採用案は完成見本として扱わず、`docs/立ち上げ/ゲーム選択ピクトグラムPoC.md` と同名ディレクトリを参照する
