@@ -167,9 +167,6 @@ function DeadlockNotice({
     >
       <div className="text-center">
         <p className="text-sm font-semibold">手詰まりです</p>
-        <p className="text-xs text-muted-foreground">
-          待ったで1手戻すか、最初からやり直せます。
-        </p>
       </div>
       <div className="mt-1 flex justify-center gap-1">
         <Button
