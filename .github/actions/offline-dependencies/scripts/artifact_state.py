@@ -113,6 +113,13 @@ def reusable_artifact_exists(artifacts: list[Artifact], name: str, event_name: s
     return any(item.retention_at_most(MAIN_RETENTION_DAYS) for item in candidates)
 
 
+def latest_live_artifact(artifacts: list[Artifact], name: str) -> Artifact:
+    candidates = [item for item in artifacts if item.name == name and not item.expired]
+    if not candidates:
+        raise StateError(f"Offline Dependencies Artifact not found: {name}")
+    return max(candidates, key=lambda item: (item.created_at, item.artifact_id))
+
+
 def decide_plan(
     *,
     event_name: str,
@@ -400,6 +407,17 @@ def command_plan(repo_root: Path) -> None:
     write_output("retention-days", str(plan.retention_days))
 
 
+def command_resolve(repo_root: Path) -> None:
+    client = client_from_environment()
+    input_key = compute_repository_key(repo_root)
+    artifact = latest_live_artifact(client.artifacts(), artifact_name(input_key))
+    print(f"offline-dependencies: resolved key={input_key} artifact_id={artifact.artifact_id}")
+    write_output("input-key", input_key)
+    write_output("artifact-id", str(artifact.artifact_id))
+    write_output("artifact-name", artifact.name)
+    write_output("expires-at", artifact.expires_at)
+
+
 def command_replace_current(repo_root: Path) -> None:
     client = client_from_environment()
     current_key = compute_repository_key(repo_root)
@@ -429,7 +447,7 @@ def command_prune(repo_root: Path, *, inactive_only: bool) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("key", "plan", "prune", "replace-current"))
+    parser.add_argument("command", choices=("key", "plan", "prune", "replace-current", "resolve"))
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
     parser.add_argument("--inactive-only", action="store_true")
     args = parser.parse_args()
@@ -442,6 +460,8 @@ def main() -> None:
             command_plan(repo_root)
         elif args.command == "replace-current":
             command_replace_current(repo_root)
+        elif args.command == "resolve":
+            command_resolve(repo_root)
         else:
             command_prune(repo_root, inactive_only=args.inactive_only)
     except (StateError, OSError, urllib.error.HTTPError, urllib.error.URLError) as error:

@@ -20,7 +20,7 @@ bun run --cwd frontend test # Vitest の1回実行
 bun run --cwd frontend build # プロダクションビルド
 ```
 
-Repository Snapshot と Offline Dependencies を使う ChatGPT 実行環境では、依存アーティファクトを `frontend/node_modules` に配置して Vite を使う。
+Repository Snapshot と Offline Dependencies を使う ChatGPT 実行環境では、対象Snapshotと同じworkflow runの `repository-environment-<target>-<sha>.json` から依存アーティファクトを取得し、`frontend/node_modules` に配置して Vite を使う。
 
 ```sh
 frontend/node_modules/.bin/vite --config frontend/vite.chatgpt.config.ts --host 127.0.0.1 --port 3000
