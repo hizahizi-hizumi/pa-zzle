@@ -4,14 +4,7 @@ from __future__ import annotations
 
 import argparse
 import html
-import xml.etree.ElementTree as ET
 from pathlib import Path
-
-FORBIDDEN_ELEMENTS = {"script", "foreignObject"}
-
-
-def local_name(tag: str) -> str:
-    return tag.rsplit("}", 1)[-1]
 
 
 def parse_args() -> argparse.Namespace:
@@ -26,18 +19,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def load_svg(path: Path) -> str:
-    source = path.read_text(encoding="utf-8")
-    root = ET.fromstring(source)
-    if local_name(root.tag) != "svg":
-        raise ValueError(f"{path}: root element is not <svg>")
-    for element in root.iter():
-        name = local_name(element.tag)
-        if name in FORBIDDEN_ELEMENTS:
-            raise ValueError(f"{path}: <{name}> is not allowed")
-        for attribute in element.attrib:
-            if local_name(attribute).lower().startswith("on"):
-                raise ValueError(f"{path}: event attribute {attribute!r} is not allowed")
-    return source
+    return path.read_text(encoding="utf-8")
 
 
 def card(path: Path, svg: str, size: int, show_label: bool) -> str:
