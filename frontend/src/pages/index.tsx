@@ -1,12 +1,6 @@
-import { Droplets, Grid3X3 } from "lucide-react";
-
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Link } from "@/router";
+import { GameSelectionCard } from "@/components/GameSelectionCard";
+import sudokuPictogram from "../../../.claude/skills/design-game-pictogram/examples/sudoku.svg";
+import waterSortPictogram from "../../../.claude/skills/design-game-pictogram/examples/water-sort.svg";
 
 export default function HomePage() {
   return (
@@ -21,29 +15,16 @@ export default function HomePage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Link to="/games/water-sort" className="group">
-          <Card className="h-full transition-colors group-hover:border-foreground/30">
-            <CardHeader>
-              <Droplets className="size-8" aria-hidden="true" />
-              <CardTitle>カラーウォーターソート</CardTitle>
-              <CardDescription>
-                同じ色の水を1本のボトルにまとめるパズルです。
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
-
-        <Link to="/games/sudoku" className="group">
-          <Card className="h-full transition-colors group-hover:border-foreground/30">
-            <CardHeader>
-              <Grid3X3 className="size-8" aria-hidden="true" />
-              <CardTitle>ナンプレ</CardTitle>
-              <CardDescription>
-                1から9までの数字を規則に沿って埋めるパズルです。
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
+        <GameSelectionCard
+          to="/games/water-sort"
+          name="カラーウォーターソート"
+          pictogramSrc={waterSortPictogram}
+        />
+        <GameSelectionCard
+          to="/games/sudoku"
+          name="ナンプレ"
+          pictogramSrc={sudokuPictogram}
+        />
       </div>
     </section>
   );
