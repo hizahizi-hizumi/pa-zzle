@@ -82,11 +82,13 @@ with ChatGPTBrowser(path="/") as browser:
     browser.assert_no_browser_errors()
 ```
 
-実行には環境組み込みのPlaywrightを使う。
+実行には環境組み込みのPlaywrightを使う。画面確認全体が30秒を超えたら打ち切る。個々のPlaywrightやHTTP通信のタイムアウトだけでは要求中継の待ち時間が直列に積み上がる場合があるため、必ずプロセス全体にも上限を設ける。
 
 ```sh
-/opt/pyvenv/bin/python /tmp/check_page.py
+timeout --signal=TERM --kill-after=5s 30s /opt/pyvenv/bin/python /tmp/check_page.py
 ```
+
+`timeout` の終了コードが `124` の場合は画面確認の失敗として扱い、同じ実行を無制限に繰り返さずViteまたは要求中継の待機状態を調査する。
 
 任意のルートから確認したい場合は `path` を指定する。
 
