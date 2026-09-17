@@ -76,7 +76,7 @@ describe("WaterSortPlay", () => {
     expect(selectBottle).toHaveBeenCalledWith(1);
   });
 
-  test("手詰まり時だけ進行不能を案内し、元に戻す・最初からへつなぐこと", () => {
+  test("手詰まり時だけ進行不能を案内し、待った・最初からへつなぐこと", () => {
     const undo = vi.fn();
     const restart = vi.fn();
     const { rerender } = render(
@@ -88,7 +88,7 @@ describe("WaterSortPlay", () => {
       />,
     );
     expect(screen.getByRole("status").textContent).toContain("手詰まりです");
-    fireEvent.click(screen.getByRole("button", { name: "元に戻す" }));
+    fireEvent.click(screen.getByRole("button", { name: "待った" }));
     fireEvent.click(screen.getByRole("button", { name: "最初から" }));
     expect(undo).toHaveBeenCalledOnce();
     expect(restart).toHaveBeenCalledOnce();
@@ -158,10 +158,10 @@ describe("WaterSortPlay", () => {
     expect(screen.queryByText("手詰まりです")).toBeNull();
   });
 
-  test("元に戻すをプレイ中の直接操作として通知すること", () => {
+  test("待ったをプレイ中の直接操作として通知すること", () => {
     const undo = vi.fn();
     render(<WaterSortPlay {...baseProps} undo={undo} />);
-    fireEvent.click(screen.getByRole("button", { name: "元に戻す" }));
+    fireEvent.click(screen.getByRole("button", { name: "待った" }));
     expect(undo).toHaveBeenCalledOnce();
   });
 
@@ -193,9 +193,9 @@ describe("WaterSortPlay", () => {
     expect(onBackToHome).toHaveBeenCalledOnce();
   });
 
-  test("元に戻せる手がない操作を無効にすること", () => {
+  test("待ったで戻せる手がない操作を無効にすること", () => {
     render(<WaterSortPlay {...baseProps} canUndo={false} />);
-    const button = screen.getByRole("button", { name: "元に戻す" });
+    const button = screen.getByRole("button", { name: "待った" });
     expect((button as HTMLButtonElement).disabled).toBe(true);
   });
 
@@ -228,6 +228,7 @@ describe("WaterSortPlay", () => {
     expect(screen.getByText("/ 100")).toBeTruthy();
     expect(screen.getByText("プレイ詳細")).toBeTruthy();
     expect(screen.getByText("+2")).toBeTruthy();
+    expect(screen.getByText("待った")).toBeTruthy();
     expect(screen.queryByText(/seed:/)).toBeNull();
   });
 
