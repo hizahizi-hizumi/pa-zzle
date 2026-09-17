@@ -1,83 +1,101 @@
-export type WaterSortLayerView = {
-  id: string;
-  label: string;
-  symbol: string;
-  color: string;
-};
+import type { WaterSortState } from "@/games/water-sort/game/state";
 
-export type WaterSortBottleView = {
-  id: string;
-  label: string;
-  layers: readonly WaterSortLayerView[];
-};
+const waterSortColors = [
+  { label: "赤", symbol: "赤", color: "#f87171" },
+  { label: "青", symbol: "青", color: "#60a5fa" },
+  { label: "緑", symbol: "緑", color: "#4ade80" },
+  { label: "黄", symbol: "黄", color: "#facc15" },
+  { label: "紫", symbol: "紫", color: "#c084fc" },
+  { label: "橙", symbol: "橙", color: "#fb923c" },
+  { label: "水", symbol: "水", color: "#22d3ee" },
+  { label: "桃", symbol: "桃", color: "#f472b6" },
+] as const;
+
+const bottleSlots = [0, 1, 2, 3] as const;
 
 type WaterSortBoardProps = {
-  bottles: readonly WaterSortBottleView[];
-  sourceBottleId: string | null;
-  targetBottleId: string | null;
-  onSelectBottle: (bottleId: string) => void;
+  state: WaterSortState;
+  sourceBottleIndex: number | null;
+  selectableBottleIndexes: ReadonlySet<number>;
+  onSelectBottle: (bottleIndex: number) => void;
 };
 
 export function WaterSortBoard({
-  bottles,
-  sourceBottleId,
-  targetBottleId,
+  state,
+  sourceBottleIndex,
+  selectableBottleIndexes,
   onSelectBottle,
 }: WaterSortBoardProps) {
   return (
     <fieldset
-      className="flex min-h-48 flex-wrap items-end justify-center gap-x-4 gap-y-8 rounded-lg border bg-muted/20 p-4 sm:p-6"
+      className="flex min-h-48 flex-wrap items-end justify-center gap-x-3 gap-y-6 rounded-lg border bg-muted/20 p-3 sm:gap-x-4 sm:gap-y-8 sm:p-6"
       aria-label="カラーウォーターソート盤面"
     >
-      {bottles.length === 0 && (
-        <p className="self-center text-sm text-muted-foreground">
-          盤面データを接続すると、ここにボトルが表示されます。
-        </p>
-      )}
-      {bottles.map((bottle) => {
-        const selection =
-          bottle.id === sourceBottleId
-            ? "source"
-            : bottle.id === targetBottleId
-              ? "target"
-              : null;
+      {state.map((bottle, bottleIndex) => {
+        const bottleLabel = `ボトル ${bottleIndex + 1}`;
         const contents =
-          bottle.layers.length === 0
+          bottle.length === 0
             ? "空"
-            : bottle.layers.map((layer) => layer.label).join("、");
+            : bottle
+                .map((colorIndex) => getColorView(colorIndex).label)
+                .join("、");
+        const isSource = bottleIndex === sourceBottleIndex;
+        const isSelectable = selectableBottleIndexes.has(bottleIndex);
 
         return (
-          <div key={bottle.id} className="flex flex-col items-center gap-2">
+          <div
+            key={bottleLabel}
+            className="flex flex-col items-center gap-1.5 sm:gap-2"
+          >
             <span className="h-5 text-xs font-medium text-muted-foreground">
-              {selection === "source" && "注ぎ元"}
-              {selection === "target" && "注ぎ先"}
+              {isSource && "注ぎ元"}
             </span>
             <button
               type="button"
-              aria-label={`${bottle.label}: ${contents}`}
-              aria-pressed={selection !== null}
-              onClick={() => onSelectBottle(bottle.id)}
-              className="flex h-36 w-16 flex-col-reverse overflow-hidden rounded-b-3xl border-2 border-t-0 bg-background p-1 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[selected=source]:-translate-y-2 data-[selected=source]:ring-2 data-[selected=source]:ring-ring data-[selected=target]:ring-2 data-[selected=target]:ring-ring"
-              data-selected={selection ?? undefined}
+              aria-label={`${bottleLabel}: ${contents}`}
+              aria-pressed={isSource}
+              disabled={!isSelectable}
+              onClick={() => onSelectBottle(bottleIndex)}
+              className="flex h-32 w-14 flex-col-reverse overflow-hidden rounded-b-3xl border-2 border-t-0 bg-background p-1 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-45 data-[selected=true]:-translate-y-2 data-[selected=true]:ring-2 data-[selected=true]:ring-ring sm:h-36 sm:w-16"
+              data-selected={isSource || undefined}
             >
-              {bottle.layers.map((layer) => (
-                <span
-                  key={layer.id}
-                  className="flex min-h-6 items-center justify-center rounded-sm border border-black/10 text-xs font-bold text-black/80"
-                  style={{ backgroundColor: layer.color }}
-                  title={layer.label}
-                >
-                  <span aria-hidden="true">{layer.symbol}</span>
-                  <span className="sr-only">{layer.label}</span>
-                </span>
-              ))}
+              {bottleSlots.map((slotIndex) => {
+                const colorIndex = bottle[slotIndex];
+                if (colorIndex === undefined) {
+                  return <span key={`slot-${slotIndex}`} className="min-h-6" />;
+                }
+
+                const color = getColorView(colorIndex);
+                return (
+                  <span
+                    key={`slot-${slotIndex}`}
+                    className="flex min-h-6 items-center justify-center rounded-sm border border-black/10 text-[10px] font-bold text-black/80 sm:text-xs"
+                    style={{ backgroundColor: color.color }}
+                    title={color.label}
+                  >
+                    <span aria-hidden="true">{color.symbol}</span>
+                    <span className="sr-only">{color.label}</span>
+                  </span>
+                );
+              })}
             </button>
-            <span className="text-xs text-muted-foreground">
-              {bottle.label}
-            </span>
+            <span className="text-xs text-muted-foreground">{bottleLabel}</span>
           </div>
         );
       })}
     </fieldset>
   );
+}
+
+function getColorView(colorIndex: number) {
+  const color = waterSortColors[colorIndex];
+  if (!color) {
+    return {
+      label: `色 ${colorIndex + 1}`,
+      symbol: String(colorIndex + 1),
+      color: `hsl(${(colorIndex * 47) % 360} 75% 70%)`,
+    };
+  }
+
+  return color;
 }

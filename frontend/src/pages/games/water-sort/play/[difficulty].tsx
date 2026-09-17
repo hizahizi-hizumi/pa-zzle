@@ -29,7 +29,6 @@ function PlayableWaterSort({
   return (
     <WaterSortPlay
       {...game}
-      bottles={[]}
       onChangeDifficulty={() => navigate("/games/water-sort")}
     />
   );

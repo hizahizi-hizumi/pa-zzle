@@ -12,26 +12,25 @@ import {
   getWaterSortDifficultyLabel,
   type WaterSortDifficulty,
 } from "@/games/water-sort/game/difficulty";
+import type { WaterSortState } from "@/games/water-sort/game/state";
 import type { WaterSortResult } from "@/games/water-sort/hooks/use-water-sort-game";
-import {
-  WaterSortBoard,
-  type WaterSortBottleView,
-} from "@/games/water-sort/ui/WaterSortBoard";
+import { WaterSortBoard } from "@/games/water-sort/ui/WaterSortBoard";
 
 type WaterSortPlayProps = {
   difficulty: WaterSortDifficulty;
   seed: Seed;
   status: "playing" | "cleared";
+  state: WaterSortState;
   elapsedMs: number;
   moveCount: number;
   undoCount: number;
   restartCount: number;
+  optimalMoveCount: number;
   canUndo: boolean;
-  sourceBottleId: string | null;
-  targetBottleId: string | null;
+  sourceBottleIndex: number | null;
+  selectableBottleIndexes: ReadonlySet<number>;
   result: WaterSortResult | null;
-  bottles: readonly WaterSortBottleView[];
-  selectBottle: (bottleId: string) => void;
+  selectBottle: (bottleIndex: number) => void;
   undo: () => void;
   restart: () => void;
   newGame: () => void;
@@ -42,15 +41,16 @@ export function WaterSortPlay({
   difficulty,
   seed,
   status,
+  state,
   elapsedMs,
   moveCount,
   undoCount,
   restartCount,
+  optimalMoveCount,
   canUndo,
-  sourceBottleId,
-  targetBottleId,
+  sourceBottleIndex,
+  selectableBottleIndexes,
   result,
-  bottles,
   selectBottle,
   undo,
   restart,
@@ -74,12 +74,17 @@ export function WaterSortPlay({
             undoCount={result.undoCount}
             restartCount={result.restartCount}
           />
-          <p className="break-all font-mono text-xs text-muted-foreground">
-            問題シード: {seed}
-          </p>
+          <dl className="grid grid-cols-2 gap-2 text-center">
+            <Metric label="最短手数" value={String(result.optimalMoveCount)} />
+            <Metric
+              label="最短との差"
+              value={formatMoveDelta(result.moveDelta)}
+            />
+          </dl>
+          <ProblemSeed seed={seed} />
         </CardContent>
         <CardFooter className="flex flex-wrap gap-3">
-          <Button onClick={restart}>同じ問題をやり直す</Button>
+          <Button onClick={restart}>同じ問題をもう一度</Button>
           <Button variant="outline" onClick={newGame}>
             新しい問題
           </Button>
@@ -96,7 +101,8 @@ export function WaterSortPlay({
       <CardHeader>
         <CardTitle>カラーウォーターソート</CardTitle>
         <CardDescription>
-          難易度: {getWaterSortDifficultyLabel(difficulty)}
+          難易度: {getWaterSortDifficultyLabel(difficulty)} / 最短{" "}
+          {optimalMoveCount}手
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -107,17 +113,15 @@ export function WaterSortPlay({
           restartCount={restartCount}
         />
         <WaterSortBoard
-          bottles={bottles}
-          sourceBottleId={sourceBottleId}
-          targetBottleId={targetBottleId}
+          state={state}
+          sourceBottleIndex={sourceBottleIndex}
+          selectableBottleIndexes={selectableBottleIndexes}
           onSelectBottle={selectBottle}
         />
         <p className="text-center text-xs text-muted-foreground">
-          ボトルを選び、注ぎ元と注ぎ先を指定できます。
+          注ぎ元を選んだあと、注げるボトルを選んでください。
         </p>
-        <p className="break-all font-mono text-xs text-muted-foreground">
-          問題シード: {seed}
-        </p>
+        <ProblemSeed seed={seed} />
       </CardContent>
       <CardFooter className="flex flex-wrap gap-3">
         <Button variant="outline" onClick={undo} disabled={!canUndo}>
@@ -142,7 +146,10 @@ function PlayMetrics({
   moveCount,
   undoCount,
   restartCount,
-}: WaterSortResult) {
+}: Pick<
+  WaterSortResult,
+  "elapsedMs" | "moveCount" | "undoCount" | "restartCount"
+>) {
   return (
     <dl className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
       <Metric label="経過時間" value={formatElapsedTime(elapsedMs)} />
@@ -160,6 +167,18 @@ function Metric({ label, value }: { label: string; value: string }) {
       <dd className="mt-1 font-mono text-lg font-semibold">{value}</dd>
     </div>
   );
+}
+
+function ProblemSeed({ seed }: { seed: Seed }) {
+  return (
+    <p className="break-all font-mono text-xs text-muted-foreground">
+      問題シード: {seed}
+    </p>
+  );
+}
+
+function formatMoveDelta(moveDelta: number): string {
+  return moveDelta === 0 ? "±0" : `+${moveDelta}`;
 }
 
 function formatElapsedTime(elapsedMs: number): string {
