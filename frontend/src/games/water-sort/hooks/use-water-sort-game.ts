@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { createSeed, type Seed } from "@/games/core/seed";
 import {
@@ -19,6 +19,25 @@ import {
   isWaterSortCleared,
   type WaterSortState,
 } from "@/games/water-sort/game/state";
+
+export type WaterSortOperation =
+  | {
+      id: number;
+      type: "source-selected" | "source-deselected";
+      bottleIndex: number;
+    }
+  | { id: number; type: "invalid"; bottleIndex: number }
+  | {
+      id: number;
+      type: "poured";
+      sourceBottleIndex: number;
+      destinationBottleIndex: number;
+      stateBefore: WaterSortState;
+      stateAfter: WaterSortState;
+      isClearingMove: boolean;
+    };
+
+export type WaterSortProgress = "playing" | "clearing" | "result";
 
 export type WaterSortResult = {
   elapsedMs: number;
@@ -41,6 +60,8 @@ type WaterSortPlayState = {
   undoCount: number;
   restartCount: number;
   sourceBottleIndex: number | null;
+  progress: WaterSortProgress;
+  operation: WaterSortOperation | null;
 };
 
 const colorCountsByDifficulty: Record<WaterSortDifficulty, number> = {
@@ -80,6 +101,8 @@ function createPlayState(
     undoCount: 0,
     restartCount: 0,
     sourceBottleIndex: null,
+    progress: "playing",
+    operation: null,
   };
 }
 
@@ -88,6 +111,7 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
     createPlayState(difficulty, createSeed()),
   );
   const [now, setNow] = useState(() => Date.now());
+  const nextOperationId = useRef(0);
 
   useEffect(() => {
     if (play.status !== "playing") {
@@ -102,9 +126,10 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
 
   const selectBottle = useCallback((bottleIndex: number) => {
     const selectedAt = Date.now();
+    const operationId = nextOperationId.current++;
     setNow(selectedAt);
     setPlay((current) => {
-      if (current.status !== "playing" || !current.state[bottleIndex]) {
+      if (current.progress !== "playing" || !current.state[bottleIndex]) {
         return current;
       }
 
@@ -114,34 +139,66 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
           (move) => move.sourceBottleIndex === bottleIndex,
         );
         if (!bottle || isCompleteWaterSortBottle(bottle) || !hasLegalMove) {
-          return current;
+          return {
+            ...current,
+            operation: { id: operationId, type: "invalid", bottleIndex },
+          };
         }
 
-        return { ...current, sourceBottleIndex: bottleIndex };
+        return {
+          ...current,
+          sourceBottleIndex: bottleIndex,
+          operation: {
+            id: operationId,
+            type: "source-selected",
+            bottleIndex,
+          },
+        };
       }
 
       if (current.sourceBottleIndex === bottleIndex) {
-        return { ...current, sourceBottleIndex: null };
+        return {
+          ...current,
+          sourceBottleIndex: null,
+          operation: {
+            id: operationId,
+            type: "source-deselected",
+            bottleIndex,
+          },
+        };
       }
 
+      const sourceBottleIndex = current.sourceBottleIndex;
       const nextState = applyWaterSortMove(current.state, {
-        sourceBottleIndex: current.sourceBottleIndex,
+        sourceBottleIndex,
         destinationBottleIndex: bottleIndex,
       });
       if (!nextState) {
-        return current;
+        return {
+          ...current,
+          operation: { id: operationId, type: "invalid", bottleIndex },
+        };
       }
 
       const cleared = isWaterSortCleared(nextState);
-
       return {
         ...current,
         status: cleared ? "cleared" : "playing",
+        progress: cleared ? "clearing" : "playing",
         state: nextState,
         history: [...current.history, current.state],
         finishedAt: cleared ? selectedAt : null,
         moveCount: current.moveCount + 1,
         sourceBottleIndex: null,
+        operation: {
+          id: operationId,
+          type: "poured",
+          sourceBottleIndex,
+          destinationBottleIndex: bottleIndex,
+          stateBefore: current.state,
+          stateAfter: nextState,
+          isClearingMove: cleared,
+        },
       };
     });
   }, []);
@@ -163,6 +220,7 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
         history: current.history.slice(0, -1),
         undoCount: current.undoCount + 1,
         sourceBottleIndex: null,
+        operation: null,
       };
     });
   }, []);
@@ -181,6 +239,8 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
         history: [],
         restartCount: current.restartCount + 1,
         sourceBottleIndex: null,
+        progress: "playing",
+        operation: null,
       };
     });
   }, [difficulty]);
@@ -191,31 +251,13 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
     setPlay(next);
   }, [difficulty]);
 
-  const selectableBottleIndexes = useMemo(() => {
-    if (play.status !== "playing") {
-      return new Set<number>();
-    }
-
-    const legalMoves = listWaterSortLegalMoves(play.state);
-    if (play.sourceBottleIndex === null) {
-      return new Set(
-        legalMoves
-          .map((move) => move.sourceBottleIndex)
-          .filter(
-            (bottleIndex) =>
-              !isCompleteWaterSortBottle(play.state[bottleIndex] ?? []),
-          ),
-      );
-    }
-
-    const selectable = new Set<number>([play.sourceBottleIndex]);
-    for (const move of legalMoves) {
-      if (move.sourceBottleIndex === play.sourceBottleIndex) {
-        selectable.add(move.destinationBottleIndex);
-      }
-    }
-    return selectable;
-  }, [play.sourceBottleIndex, play.state, play.status]);
+  const completeClearingPour = useCallback(() => {
+    setPlay((current) =>
+      current.progress === "clearing"
+        ? { ...current, progress: "result", operation: null }
+        : current,
+    );
+  }, []);
 
   const elapsedMs = Math.max(0, (play.finishedAt ?? now) - play.startedAt);
   const optimalMoveCount = play.problem.solutionMoves.length;
@@ -247,6 +289,7 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
     difficulty,
     seed: play.problem.seed,
     status: play.status,
+    progress: play.progress,
     state: play.state,
     elapsedMs,
     moveCount: play.moveCount,
@@ -254,13 +297,14 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
     restartCount: play.restartCount,
     optimalMoveCount,
     problemDifficulty,
-    canUndo: play.status === "playing" && play.history.length > 0,
+    canUndo: play.progress === "playing" && play.history.length > 0,
     sourceBottleIndex: play.sourceBottleIndex,
-    selectableBottleIndexes,
+    operation: play.operation,
     result,
     selectBottle,
     undo,
     restart,
     newGame,
+    completeClearingPour,
   };
 }

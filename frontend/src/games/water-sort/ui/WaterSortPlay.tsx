@@ -7,13 +7,7 @@ import {
   Trophy,
   Undo2,
 } from "lucide-react";
-import {
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -22,12 +16,17 @@ import {
   type WaterSortDifficultyAssessment,
 } from "@/games/water-sort/game/difficulty";
 import type { WaterSortState } from "@/games/water-sort/game/state";
-import type { WaterSortResult } from "@/games/water-sort/hooks/use-water-sort-game";
+import type {
+  WaterSortOperation,
+  WaterSortProgress,
+  WaterSortResult,
+} from "@/games/water-sort/hooks/use-water-sort-game";
 import { WaterSortBoard } from "@/games/water-sort/ui/WaterSortBoard";
 
 type WaterSortPlayProps = {
   difficulty: WaterSortDifficulty;
   status: "playing" | "cleared";
+  progress: WaterSortProgress;
   state: WaterSortState;
   problemDifficulty: WaterSortDifficultyAssessment;
   elapsedMs: number;
@@ -35,12 +34,13 @@ type WaterSortPlayProps = {
   undoCount: number;
   canUndo: boolean;
   sourceBottleIndex: number | null;
-  selectableBottleIndexes: ReadonlySet<number>;
+  operation: WaterSortOperation | null;
   result: WaterSortResult | null;
   selectBottle: (bottleIndex: number) => void;
   undo: () => void;
   restart: () => void;
   newGame: () => void;
+  completeClearingPour: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
 };
@@ -48,6 +48,7 @@ type WaterSortPlayProps = {
 export function WaterSortPlay({
   difficulty,
   status,
+  progress,
   state,
   problemDifficulty,
   elapsedMs,
@@ -55,27 +56,17 @@ export function WaterSortPlay({
   undoCount,
   canUndo,
   sourceBottleIndex,
-  selectableBottleIndexes,
+  operation,
   result,
   selectBottle,
   undo,
   restart,
   newGame,
+  completeClearingPour,
   onChangeDifficulty,
   onBackToHome,
 }: WaterSortPlayProps) {
-  const [isWaitingForClearAnimation, setIsWaitingForClearAnimation] =
-    useState(false);
-  const handleClearingPourStart = useCallback(
-    () => setIsWaitingForClearAnimation(true),
-    [],
-  );
-  const handleClearingPourComplete = useCallback(
-    () => setIsWaitingForClearAnimation(false),
-    [],
-  );
-
-  if (status === "cleared" && result && !isWaitingForClearAnimation) {
+  if (progress === "result" && status === "cleared" && result) {
     return (
       <WaterSortResultScreen
         difficulty={difficulty}
@@ -113,19 +104,16 @@ export function WaterSortPlay({
           onBackToHome={onBackToHome}
         />
       </header>
-
       <main className="flex min-h-0 flex-1 items-center justify-center px-3 py-2 sm:px-6">
         <WaterSortBoard
           state={state}
           sourceBottleIndex={sourceBottleIndex}
-          selectableBottleIndexes={selectableBottleIndexes}
+          operation={operation}
           onSelectBottle={selectBottle}
-          interactionDisabled={status === "cleared"}
-          onClearingPourStart={handleClearingPourStart}
-          onClearingPourComplete={handleClearingPourComplete}
+          interactionDisabled={progress !== "playing"}
+          onClearingPourComplete={completeClearingPour}
         />
       </main>
-
       <footer className="flex h-16 shrink-0 items-center justify-center px-4">
         <Button
           type="button"
@@ -168,7 +156,6 @@ function PlayHeaderSummary({
     </div>
   );
 }
-
 function PlayMetric({ label, value }: { label: string; value: string }) {
   return (
     <span className="flex items-baseline gap-1 whitespace-nowrap">
@@ -179,7 +166,6 @@ function PlayMetric({ label, value }: { label: string; value: string }) {
     </span>
   );
 }
-
 function MetricSeparator() {
   return (
     <span aria-hidden="true" className="text-border">
@@ -197,7 +183,6 @@ type WaterSortResultScreenProps = {
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
 };
-
 function WaterSortResultScreen({
   difficulty,
   problemDifficulty,
@@ -208,14 +193,12 @@ function WaterSortResultScreen({
   onBackToHome,
 }: WaterSortResultScreenProps) {
   const scorePresentation = getScorePresentation(result.score);
-
   return (
     <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-y-auto bg-background px-5 pt-[max(2.75rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <div className="pointer-events-none absolute inset-x-0 top-[max(0.8rem,env(safe-area-inset-top))] z-10 flex justify-center">
         <BrandMark />
       </div>
       <ConfettiBurst intensity={scorePresentation.confettiIntensity} />
-
       <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-5">
         <div className="text-center">
           <ClearMark className={scorePresentation.markClassName} />
@@ -227,9 +210,7 @@ function WaterSortResultScreen({
             {getWaterSortDifficultyLabel(difficulty)}
           </p>
         </div>
-
         <ScoreCard score={result.score} presentation={scorePresentation} />
-
         <dl className="mt-6 grid grid-cols-3 gap-2 text-center">
           <ResultMetric label="手数" value={String(result.moveCount)} />
           <ResultMetric label="最短" value={String(result.optimalMoveCount)} />
@@ -238,7 +219,6 @@ function WaterSortResultScreen({
             value={formatElapsedTime(result.elapsedMs)}
           />
         </dl>
-
         <div className="mt-7 grid gap-3">
           <Button size="lg" className="h-12 text-base" onClick={newGame}>
             次の問題
@@ -253,7 +233,6 @@ function WaterSortResultScreen({
             もう一度
           </Button>
         </div>
-
         <div className="mt-4 grid grid-cols-2 gap-3">
           <Button variant="ghost" onClick={onChangeDifficulty}>
             難易度を変える
@@ -263,7 +242,6 @@ function WaterSortResultScreen({
             ホームへ
           </Button>
         </div>
-
         <details className="mt-6 rounded-lg border px-4 py-3 text-sm text-muted-foreground">
           <summary className="cursor-pointer select-none font-medium text-foreground">
             プレイ詳細
@@ -293,9 +271,8 @@ type ScorePresentation = {
   markClassName: string;
   confettiIntensity: "strong" | "light" | null;
 };
-
 function getScorePresentation(score: number): ScorePresentation {
-  if (score >= 100) {
+  if (score >= 100)
     return {
       message: "パーフェクト！",
       scoreClassName: "text-amber-600 dark:text-amber-300",
@@ -305,8 +282,7 @@ function getScorePresentation(score: number): ScorePresentation {
         "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
       confettiIntensity: "strong",
     };
-  }
-  if (score >= 90) {
+  if (score >= 90)
     return {
       message: "すばらしい！",
       scoreClassName: "text-emerald-600 dark:text-emerald-300",
@@ -316,8 +292,7 @@ function getScorePresentation(score: number): ScorePresentation {
         "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
       confettiIntensity: "light",
     };
-  }
-  if (score >= 80) {
+  if (score >= 80)
     return {
       message: "ナイスプレイ！",
       scoreClassName: "text-sky-600 dark:text-sky-300",
@@ -327,7 +302,6 @@ function getScorePresentation(score: number): ScorePresentation {
         "bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300",
       confettiIntensity: null,
     };
-  }
   return {
     message: "クリア！",
     scoreClassName: "text-foreground",
@@ -336,7 +310,6 @@ function getScorePresentation(score: number): ScorePresentation {
     confettiIntensity: null,
   };
 }
-
 function ScoreCard({
   score,
   presentation,
@@ -345,15 +318,11 @@ function ScoreCard({
   presentation: ScorePresentation;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    const prefersReducedMotion = window.matchMedia?.(
+    const reduced = window.matchMedia?.(
       "(prefers-reduced-motion: reduce)",
     ).matches;
-    if (prefersReducedMotion) {
-      return;
-    }
-
+    if (reduced) return;
     cardRef.current?.animate?.(
       [
         { transform: "scale(0.94)", opacity: 0 },
@@ -363,7 +332,6 @@ function ScoreCard({
       { duration: 620, easing: "cubic-bezier(.2,.8,.2,1)", delay: 120 },
     );
   }, []);
-
   return (
     <div
       ref={cardRef}
@@ -382,13 +350,13 @@ function ScoreCard({
       >
         {score}
         <span className="ml-1 text-base font-medium text-muted-foreground">
+          {" "}
           / 100
         </span>
       </p>
     </div>
   );
 }
-
 function BrandMark() {
   return (
     <span className="select-none text-[11px] font-semibold tracking-[0.12em] text-muted-foreground/80">
@@ -396,18 +364,13 @@ function BrandMark() {
     </span>
   );
 }
-
 function ClearMark({ className }: { className: string }) {
   const markRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    const prefersReducedMotion = window.matchMedia?.(
+    const reduced = window.matchMedia?.(
       "(prefers-reduced-motion: reduce)",
     ).matches;
-    if (prefersReducedMotion) {
-      return;
-    }
-
+    if (reduced) return;
     markRef.current?.animate?.(
       [
         { transform: "scale(0.65) rotate(-8deg)", opacity: 0 },
@@ -417,7 +380,6 @@ function ClearMark({ className }: { className: string }) {
       { duration: 520, easing: "cubic-bezier(.2,.8,.2,1)" },
     );
   }, []);
-
   return (
     <div
       ref={markRef}
@@ -428,7 +390,6 @@ function ClearMark({ className }: { className: string }) {
     </div>
   );
 }
-
 const confettiPieces = [
   [-130, -170, -210, "#f59e0b"],
   [-100, -125, 170, "#10b981"],
@@ -455,25 +416,18 @@ const confettiPieces = [
   [92, -224, -170, "#22c55e"],
   [154, -196, 240, "#a78bfa"],
 ] as const;
-
 function ConfettiBurst({
   intensity,
 }: {
   intensity: ScorePresentation["confettiIntensity"];
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    if (!intensity) {
-      return;
-    }
-    const prefersReducedMotion = window.matchMedia?.(
+    if (!intensity) return;
+    const reduced = window.matchMedia?.(
       "(prefers-reduced-motion: reduce)",
     ).matches;
-    if (prefersReducedMotion) {
-      return;
-    }
-
+    if (reduced) return;
     const pieces = Array.from(
       containerRef.current?.querySelectorAll<HTMLElement>(
         "[data-confetti-piece]",
@@ -507,13 +461,8 @@ function ConfettiBurst({
       );
     }
   }, [intensity]);
-
-  if (!intensity) {
-    return null;
-  }
-
+  if (!intensity) return null;
   const pieceCount = intensity === "strong" ? 24 : 12;
-
   return (
     <div
       ref={containerRef}
@@ -531,14 +480,12 @@ function ConfettiBurst({
     </div>
   );
 }
-
 type PlayMenuProps = {
   restart: () => void;
   newGame: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
 };
-
 function PlayMenu({
   restart,
   newGame,
@@ -546,12 +493,10 @@ function PlayMenu({
   onBackToHome,
 }: PlayMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
-
   const runAndClose = (action: () => void) => {
     setIsOpen(false);
     action();
   };
-
   return (
     <div className="relative">
       <Button
@@ -593,7 +538,6 @@ function PlayMenu({
     </div>
   );
 }
-
 function MenuButton({
   icon,
   label,
@@ -615,7 +559,6 @@ function MenuButton({
     </button>
   );
 }
-
 function ResultMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-muted/70 px-2 py-4">
@@ -626,7 +569,6 @@ function ResultMetric({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
 function DetailMetric({ label, value }: { label: string; value: string }) {
   return (
     <div>
@@ -635,20 +577,15 @@ function DetailMetric({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
 function formatMoveDelta(moveDelta: number): string {
   return moveDelta === 0 ? "±0" : `+${moveDelta}`;
 }
-
 function formatElapsedTime(elapsedMs: number): string {
   const totalSeconds = Math.floor(elapsedMs / 1000);
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-
-  if (hours > 0) {
+  if (hours > 0)
     return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-  }
-
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }

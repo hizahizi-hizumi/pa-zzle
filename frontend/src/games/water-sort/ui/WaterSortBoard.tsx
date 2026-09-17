@@ -7,12 +7,11 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { applyWaterSortMove } from "@/games/water-sort/game/rules";
-import {
-  isWaterSortCleared,
-  type WaterSortBottle,
-  type WaterSortState,
+import type {
+  WaterSortBottle,
+  WaterSortState,
 } from "@/games/water-sort/game/state";
+import type { WaterSortOperation } from "@/games/water-sort/hooks/use-water-sort-game";
 
 const waterSortColors = [
   { label: "赤", color: "#ef5350" },
@@ -62,20 +61,18 @@ type PourPresentation = {
 type WaterSortBoardProps = {
   state: WaterSortState;
   sourceBottleIndex: number | null;
-  selectableBottleIndexes: ReadonlySet<number>;
+  operation: WaterSortOperation | null;
   onSelectBottle: (bottleIndex: number) => void;
   interactionDisabled?: boolean;
-  onClearingPourStart?: () => void;
   onClearingPourComplete?: () => void;
 };
 
 export function WaterSortBoard({
   state,
   sourceBottleIndex,
-  selectableBottleIndexes,
+  operation,
   onSelectBottle,
   interactionDisabled = false,
-  onClearingPourStart,
   onClearingPourComplete,
 }: WaterSortBoardProps) {
   const bottleRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -90,7 +87,7 @@ export function WaterSortBoard({
     );
   }, []);
 
-  const finishPresentationsForBottle = (bottleIndex: number) => {
+  const finishPresentationsForBottle = useCallback((bottleIndex: number) => {
     setPourPresentations((current) =>
       current.filter(
         (presentation) =>
@@ -98,88 +95,72 @@ export function WaterSortBoard({
           presentation.destinationBottleIndex !== bottleIndex,
       ),
     );
-  };
+  }, []);
 
-  const selectBottle = (bottleIndex: number) => {
-    if (interactionDisabled) {
+  useEffect(() => {
+    if (!operation) return;
+    if (operation.type === "invalid") {
+      animateInvalidBottle(bottleRefs.current[operation.bottleIndex]);
       return;
     }
+    if (operation.type !== "poured") return;
 
-    finishPresentationsForBottle(bottleIndex);
-
-    if (sourceBottleIndex === null || bottleIndex === sourceBottleIndex) {
-      if (
-        sourceBottleIndex === null &&
-        !selectableBottleIndexes.has(bottleIndex)
-      ) {
-        animateInvalidBottle(bottleRefs.current[bottleIndex]);
-      }
-      onSelectBottle(bottleIndex);
-      return;
-    }
-
-    if (!selectableBottleIndexes.has(bottleIndex)) {
-      animateInvalidBottle(bottleRefs.current[bottleIndex]);
-      onSelectBottle(bottleIndex);
-      return;
-    }
-
-    const move = {
-      sourceBottleIndex,
-      destinationBottleIndex: bottleIndex,
-    };
-    const nextState = applyWaterSortMove(state, move);
-    const sourceBottle = bottleRefs.current[sourceBottleIndex];
-    const destinationBottle = bottleRefs.current[bottleIndex];
+    finishPresentationsForBottle(operation.sourceBottleIndex);
+    finishPresentationsForBottle(operation.destinationBottleIndex);
+    const sourceBottle = bottleRefs.current[operation.sourceBottleIndex];
+    const destinationBottle =
+      bottleRefs.current[operation.destinationBottleIndex];
     const prefersReducedMotion = window.matchMedia?.(
       "(prefers-reduced-motion: reduce)",
     ).matches;
-
-    if (
-      !nextState ||
-      !sourceBottle ||
-      !destinationBottle ||
-      prefersReducedMotion
-    ) {
-      onSelectBottle(bottleIndex);
+    if (!sourceBottle || !destinationBottle || prefersReducedMotion) {
+      if (operation.isClearingMove) onClearingPourComplete?.();
       return;
     }
 
-    const sourceBefore = state[sourceBottleIndex] ?? [];
+    const sourceBefore =
+      operation.stateBefore[operation.sourceBottleIndex] ?? [];
     const pourColorIndex = sourceBefore[sourceBefore.length - 1];
     if (pourColorIndex === undefined) {
-      onSelectBottle(bottleIndex);
+      if (operation.isClearingMove) onClearingPourComplete?.();
       return;
     }
 
     const presentation: PourPresentation = {
-      id: nextPresentationId.current,
-      sourceBottleIndex,
-      destinationBottleIndex: bottleIndex,
+      id: nextPresentationId.current++,
+      sourceBottleIndex: operation.sourceBottleIndex,
+      destinationBottleIndex: operation.destinationBottleIndex,
       sourceBefore,
-      sourceAfter: nextState[sourceBottleIndex] ?? [],
-      destinationBefore: state[bottleIndex] ?? [],
-      destinationAfter: nextState[bottleIndex] ?? [],
+      sourceAfter: operation.stateAfter[operation.sourceBottleIndex] ?? [],
+      destinationBefore:
+        operation.stateBefore[operation.destinationBottleIndex] ?? [],
+      destinationAfter:
+        operation.stateAfter[operation.destinationBottleIndex] ?? [],
       pourColorIndex,
-      isClearingMove: isWaterSortCleared(nextState),
+      isClearingMove: operation.isClearingMove,
       sourceRect: captureRect(sourceBottle),
       destinationRect: captureRect(destinationBottle),
     };
-    nextPresentationId.current += 1;
 
     setPourPresentations((current) => [
       ...current.filter(
         (activePresentation) =>
-          activePresentation.sourceBottleIndex !== sourceBottleIndex &&
-          activePresentation.destinationBottleIndex !== sourceBottleIndex &&
-          activePresentation.sourceBottleIndex !== bottleIndex &&
-          activePresentation.destinationBottleIndex !== bottleIndex,
+          activePresentation.sourceBottleIndex !==
+            operation.sourceBottleIndex &&
+          activePresentation.destinationBottleIndex !==
+            operation.sourceBottleIndex &&
+          activePresentation.sourceBottleIndex !==
+            operation.destinationBottleIndex &&
+          activePresentation.destinationBottleIndex !==
+            operation.destinationBottleIndex,
       ),
       presentation,
     ]);
-    if (presentation.isClearingMove) {
-      onClearingPourStart?.();
-    }
+  }, [operation, onClearingPourComplete, finishPresentationsForBottle]);
+
+  const selectBottle = (bottleIndex: number) => {
+    if (interactionDisabled) return;
+    finishPresentationsForBottle(bottleIndex);
     onSelectBottle(bottleIndex);
   };
 
