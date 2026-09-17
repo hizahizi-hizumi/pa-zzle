@@ -27,7 +27,7 @@ describe("WaterSortBoard", () => {
       <WaterSortBoard
         state={[[0], [], [1], []]}
         sourceBottleIndex={0}
-        selectableBottleIndexes={new Set([0, 1])}
+        selectionResult={null}
         onSelectBottle={onSelectBottle}
       />,
     );
@@ -37,7 +37,17 @@ describe("WaterSortBoard", () => {
       <WaterSortBoard
         state={[[], [0], [1], []]}
         sourceBottleIndex={2}
-        selectableBottleIndexes={new Set([2, 3])}
+        selectionResult={{
+          id: 0,
+          type: "poured",
+          sourceBottleIndex: 0,
+          destinationBottleIndex: 1,
+          sourceBefore: [0],
+          sourceAfter: [],
+          destinationBefore: [],
+          destinationAfter: [0],
+          isClearingMove: false,
+        }}
         onSelectBottle={onSelectBottle}
       />,
     );
@@ -64,7 +74,17 @@ describe("WaterSortBoard", () => {
       <WaterSortBoard
         state={[[0], [0, 0, 0]]}
         sourceBottleIndex={0}
-        selectableBottleIndexes={new Set([0, 1])}
+        selectionResult={{
+          id: 0,
+          type: "poured",
+          sourceBottleIndex: 0,
+          destinationBottleIndex: 1,
+          sourceBefore: [0],
+          sourceAfter: [],
+          destinationBefore: [0, 0, 0],
+          destinationAfter: [0, 0, 0, 0],
+          isClearingMove: true,
+        }}
         onSelectBottle={onSelectBottle}
       />,
     );

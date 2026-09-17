@@ -82,7 +82,10 @@ describe("useWaterSortGame", () => {
     const illegalDestination = result.current.state.findIndex(
       (_, bottleIndex) =>
         bottleIndex !== legalMove.sourceBottleIndex &&
-        !result.current.selectableBottleIndexes.has(bottleIndex),
+        applyWaterSortMove(result.current.state, {
+          sourceBottleIndex: legalMove.sourceBottleIndex,
+          destinationBottleIndex: bottleIndex,
+        }) === null,
     );
     expect(illegalDestination).toBeGreaterThanOrEqual(0);
     act(() => result.current.selectBottle(illegalDestination));
@@ -90,6 +93,10 @@ describe("useWaterSortGame", () => {
     expect(result.current.state).toEqual(initialState);
     expect(result.current.moveCount).toBe(0);
     expect(result.current.sourceBottleIndex).toBe(legalMove.sourceBottleIndex);
+    expect(result.current.selectionResult).toMatchObject({
+      type: "invalid",
+      bottleIndex: illegalDestination,
+    });
   });
 
   test("元に戻して盤面を復元しても成立済みの注水手数を減らさないこと", () => {
@@ -169,6 +176,11 @@ describe("useWaterSortGame", () => {
     solveCurrentProblem(result);
 
     expect(result.current.status).toBe("cleared");
+    expect(result.current.phase).toBe("clearing");
+    expect(result.current.selectionResult).toMatchObject({
+      type: "poured",
+      isClearingMove: true,
+    });
     expect(result.current.result).toEqual({
       elapsedMs: expect.any(Number),
       moveCount: result.current.optimalMoveCount,
@@ -178,6 +190,15 @@ describe("useWaterSortGame", () => {
       moveDelta: 0,
       score: 100,
     });
+  });
+
+  test("最終注水の演出完了を受け取ると結果表示へ進むこと", () => {
+    const { result } = renderHook(() => useWaterSortGame("easy"));
+    solveCurrentProblem(result);
+
+    act(() => result.current.completeClearPresentation());
+
+    expect(result.current.phase).toBe("result");
   });
 
   test("クリア後に同じ問題へ再挑戦すると同じシードで別プレイとして計測すること", () => {

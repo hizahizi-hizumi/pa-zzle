@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import {
   type ReactNode,
-  useCallback,
   useEffect,
   useRef,
   useState,
@@ -22,7 +21,11 @@ import {
   type WaterSortDifficultyAssessment,
 } from "@/games/water-sort/game/difficulty";
 import type { WaterSortState } from "@/games/water-sort/game/state";
-import type { WaterSortResult } from "@/games/water-sort/hooks/use-water-sort-game";
+import type {
+  WaterSortBottleSelectionResult,
+  WaterSortPlayPhase,
+  WaterSortResult,
+} from "@/games/water-sort/hooks/use-water-sort-game";
 import { WaterSortBoard } from "@/games/water-sort/ui/WaterSortBoard";
 
 type WaterSortPlayProps = {
@@ -35,12 +38,14 @@ type WaterSortPlayProps = {
   undoCount: number;
   canUndo: boolean;
   sourceBottleIndex: number | null;
-  selectableBottleIndexes: ReadonlySet<number>;
+  phase: WaterSortPlayPhase;
+  selectionResult: WaterSortBottleSelectionResult | null;
   result: WaterSortResult | null;
   selectBottle: (bottleIndex: number) => void;
   undo: () => void;
   restart: () => void;
   newGame: () => void;
+  completeClearPresentation: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
 };
@@ -55,27 +60,18 @@ export function WaterSortPlay({
   undoCount,
   canUndo,
   sourceBottleIndex,
-  selectableBottleIndexes,
+  phase,
+  selectionResult,
   result,
   selectBottle,
   undo,
   restart,
   newGame,
+  completeClearPresentation,
   onChangeDifficulty,
   onBackToHome,
 }: WaterSortPlayProps) {
-  const [isWaitingForClearAnimation, setIsWaitingForClearAnimation] =
-    useState(false);
-  const handleClearingPourStart = useCallback(
-    () => setIsWaitingForClearAnimation(true),
-    [],
-  );
-  const handleClearingPourComplete = useCallback(
-    () => setIsWaitingForClearAnimation(false),
-    [],
-  );
-
-  if (status === "cleared" && result && !isWaitingForClearAnimation) {
+  if (phase === "result" && status === "cleared" && result) {
     return (
       <WaterSortResultScreen
         difficulty={difficulty}
@@ -118,11 +114,10 @@ export function WaterSortPlay({
         <WaterSortBoard
           state={state}
           sourceBottleIndex={sourceBottleIndex}
-          selectableBottleIndexes={selectableBottleIndexes}
+          selectionResult={selectionResult}
           onSelectBottle={selectBottle}
-          interactionDisabled={status === "cleared"}
-          onClearingPourStart={handleClearingPourStart}
-          onClearingPourComplete={handleClearingPourComplete}
+          interactionDisabled={phase !== "playing"}
+          onClearPresentationComplete={completeClearPresentation}
         />
       </main>
 

@@ -25,12 +25,14 @@ const baseProps = {
   undoCount: 2,
   canUndo: true,
   sourceBottleIndex: null,
-  selectableBottleIndexes: new Set([0, 1]),
+  phase: "playing" as const,
+  selectionResult: null,
   result: null,
   selectBottle: vi.fn(),
   undo: vi.fn(),
   restart: vi.fn(),
   newGame: vi.fn(),
+  completeClearPresentation: vi.fn(),
   onChangeDifficulty: vi.fn(),
   onBackToHome: vi.fn(),
 };
@@ -70,13 +72,7 @@ describe("WaterSortPlay", () => {
 
   test("合法手を教えるためにボトル操作を無効化しないこと", () => {
     const selectBottle = vi.fn();
-    render(
-      <WaterSortPlay
-        {...baseProps}
-        selectableBottleIndexes={new Set([0])}
-        selectBottle={selectBottle}
-      />,
-    );
+    render(<WaterSortPlay {...baseProps} selectBottle={selectBottle} />);
 
     const bottle = screen.getByRole("button", { name: "ボトル 2: 空" });
     fireEvent.click(bottle);
@@ -137,6 +133,7 @@ describe("WaterSortPlay", () => {
       <WaterSortPlay
         {...baseProps}
         status="cleared"
+        phase="result"
         result={{
           elapsedMs: 65000,
           moveCount: 12,
@@ -169,6 +166,7 @@ describe("WaterSortPlay", () => {
       <WaterSortPlay
         {...baseProps}
         status="cleared"
+        phase="result"
         result={{
           elapsedMs: 42000,
           moveCount: 10,
@@ -214,7 +212,6 @@ describe("WaterSortPlay", () => {
         {...baseProps}
         state={[[0], [0, 0, 0]]}
         sourceBottleIndex={0}
-        selectableBottleIndexes={new Set([0, 1])}
       />,
     );
 
@@ -225,9 +222,20 @@ describe("WaterSortPlay", () => {
       <WaterSortPlay
         {...baseProps}
         status="cleared"
+        phase="clearing"
         state={[[], [0, 0, 0, 0]]}
         sourceBottleIndex={null}
-        selectableBottleIndexes={new Set()}
+        selectionResult={{
+          id: 0,
+          type: "poured",
+          sourceBottleIndex: 0,
+          destinationBottleIndex: 1,
+          sourceBefore: [0],
+          sourceAfter: [],
+          destinationBefore: [0, 0, 0],
+          destinationAfter: [0, 0, 0, 0],
+          isClearingMove: true,
+        }}
         canUndo={false}
         result={result}
       />,
@@ -239,6 +247,19 @@ describe("WaterSortPlay", () => {
       resolveAnimation?.();
       await animationFinished;
     });
+
+    expect(baseProps.completeClearPresentation).toHaveBeenCalledOnce();
+
+    rerender(
+      <WaterSortPlay
+        {...baseProps}
+        status="cleared"
+        phase="result"
+        state={[[], [0, 0, 0, 0]]}
+        canUndo={false}
+        result={result}
+      />,
+    );
 
     expect(screen.getByRole("heading", { name: "クリア!" })).toBeTruthy();
   });
@@ -252,6 +273,7 @@ describe("WaterSortPlay", () => {
       <WaterSortPlay
         {...baseProps}
         status="cleared"
+        phase="result"
         result={{
           elapsedMs: 65000,
           moveCount: 12,

@@ -7,12 +7,11 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { applyWaterSortMove } from "@/games/water-sort/game/rules";
-import {
-  isWaterSortCleared,
-  type WaterSortBottle,
-  type WaterSortState,
+import type {
+  WaterSortBottle,
+  WaterSortState,
 } from "@/games/water-sort/game/state";
+import type { WaterSortBottleSelectionResult } from "@/games/water-sort/hooks/use-water-sort-game";
 
 const waterSortColors = [
   { label: "赤", color: "#ef5350" },
@@ -62,24 +61,21 @@ type PourPresentation = {
 type WaterSortBoardProps = {
   state: WaterSortState;
   sourceBottleIndex: number | null;
-  selectableBottleIndexes: ReadonlySet<number>;
+  selectionResult: WaterSortBottleSelectionResult | null;
   onSelectBottle: (bottleIndex: number) => void;
   interactionDisabled?: boolean;
-  onClearingPourStart?: () => void;
-  onClearingPourComplete?: () => void;
+  onClearPresentationComplete?: () => void;
 };
 
 export function WaterSortBoard({
   state,
   sourceBottleIndex,
-  selectableBottleIndexes,
+  selectionResult,
   onSelectBottle,
   interactionDisabled = false,
-  onClearingPourStart,
-  onClearingPourComplete,
+  onClearPresentationComplete,
 }: WaterSortBoardProps) {
   const bottleRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const nextPresentationId = useRef(0);
   const [pourPresentations, setPourPresentations] = useState<
     readonly PourPresentation[]
   >([]);
@@ -106,82 +102,73 @@ export function WaterSortBoard({
     }
 
     finishPresentationsForBottle(bottleIndex);
+    onSelectBottle(bottleIndex);
+  };
 
-    if (sourceBottleIndex === null || bottleIndex === sourceBottleIndex) {
-      if (
-        sourceBottleIndex === null &&
-        !selectableBottleIndexes.has(bottleIndex)
-      ) {
-        animateInvalidBottle(bottleRefs.current[bottleIndex]);
-      }
-      onSelectBottle(bottleIndex);
+  useEffect(() => {
+    if (!selectionResult) {
       return;
     }
 
-    if (!selectableBottleIndexes.has(bottleIndex)) {
-      animateInvalidBottle(bottleRefs.current[bottleIndex]);
-      onSelectBottle(bottleIndex);
+    if (selectionResult.type === "invalid") {
+      animateInvalidBottle(bottleRefs.current[selectionResult.bottleIndex]);
       return;
     }
 
-    const move = {
-      sourceBottleIndex,
-      destinationBottleIndex: bottleIndex,
-    };
-    const nextState = applyWaterSortMove(state, move);
-    const sourceBottle = bottleRefs.current[sourceBottleIndex];
-    const destinationBottle = bottleRefs.current[bottleIndex];
+    if (selectionResult.type !== "poured") {
+      return;
+    }
+
+    const sourceBottle = bottleRefs.current[selectionResult.sourceBottleIndex];
+    const destinationBottle =
+      bottleRefs.current[selectionResult.destinationBottleIndex];
+    const pourColorIndex =
+      selectionResult.sourceBefore[selectionResult.sourceBefore.length - 1];
     const prefersReducedMotion = window.matchMedia?.(
       "(prefers-reduced-motion: reduce)",
     ).matches;
 
     if (
-      !nextState ||
       !sourceBottle ||
       !destinationBottle ||
+      pourColorIndex === undefined ||
       prefersReducedMotion
     ) {
-      onSelectBottle(bottleIndex);
-      return;
-    }
-
-    const sourceBefore = state[sourceBottleIndex] ?? [];
-    const pourColorIndex = sourceBefore[sourceBefore.length - 1];
-    if (pourColorIndex === undefined) {
-      onSelectBottle(bottleIndex);
+      if (selectionResult.isClearingMove) {
+        onClearPresentationComplete?.();
+      }
       return;
     }
 
     const presentation: PourPresentation = {
-      id: nextPresentationId.current,
-      sourceBottleIndex,
-      destinationBottleIndex: bottleIndex,
-      sourceBefore,
-      sourceAfter: nextState[sourceBottleIndex] ?? [],
-      destinationBefore: state[bottleIndex] ?? [],
-      destinationAfter: nextState[bottleIndex] ?? [],
+      id: selectionResult.id,
+      sourceBottleIndex: selectionResult.sourceBottleIndex,
+      destinationBottleIndex: selectionResult.destinationBottleIndex,
+      sourceBefore: selectionResult.sourceBefore,
+      sourceAfter: selectionResult.sourceAfter,
+      destinationBefore: selectionResult.destinationBefore,
+      destinationAfter: selectionResult.destinationAfter,
       pourColorIndex,
-      isClearingMove: isWaterSortCleared(nextState),
+      isClearingMove: selectionResult.isClearingMove,
       sourceRect: captureRect(sourceBottle),
       destinationRect: captureRect(destinationBottle),
     };
-    nextPresentationId.current += 1;
 
     setPourPresentations((current) => [
       ...current.filter(
         (activePresentation) =>
-          activePresentation.sourceBottleIndex !== sourceBottleIndex &&
-          activePresentation.destinationBottleIndex !== sourceBottleIndex &&
-          activePresentation.sourceBottleIndex !== bottleIndex &&
-          activePresentation.destinationBottleIndex !== bottleIndex,
+          activePresentation.sourceBottleIndex !==
+            presentation.sourceBottleIndex &&
+          activePresentation.destinationBottleIndex !==
+            presentation.sourceBottleIndex &&
+          activePresentation.sourceBottleIndex !==
+            presentation.destinationBottleIndex &&
+          activePresentation.destinationBottleIndex !==
+            presentation.destinationBottleIndex,
       ),
       presentation,
     ]);
-    if (presentation.isClearingMove) {
-      onClearingPourStart?.();
-    }
-    onSelectBottle(bottleIndex);
-  };
+  }, [selectionResult, onClearPresentationComplete]);
 
   const animatedBottleIndexes = new Set(
     pourPresentations.flatMap((presentation) => [
@@ -240,7 +227,7 @@ export function WaterSortBoard({
           key={presentation.id}
           presentation={presentation}
           onFinish={finishPresentation}
-          onClearingPourComplete={onClearingPourComplete}
+          onClearingPourComplete={onClearPresentationComplete}
         />
       ))}
     </>

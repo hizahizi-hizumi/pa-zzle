@@ -17,8 +17,27 @@ import {
 import {
   isCompleteWaterSortBottle,
   isWaterSortCleared,
+  type WaterSortBottle,
   type WaterSortState,
 } from "@/games/water-sort/game/state";
+
+export type WaterSortBottleSelectionResult =
+  | { id: number; type: "source-selected"; bottleIndex: number }
+  | { id: number; type: "source-deselected"; bottleIndex: number }
+  | { id: number; type: "invalid"; bottleIndex: number }
+  | {
+      id: number;
+      type: "poured";
+      sourceBottleIndex: number;
+      destinationBottleIndex: number;
+      sourceBefore: WaterSortBottle;
+      sourceAfter: WaterSortBottle;
+      destinationBefore: WaterSortBottle;
+      destinationAfter: WaterSortBottle;
+      isClearingMove: boolean;
+    };
+
+export type WaterSortPlayPhase = "playing" | "clearing" | "result";
 
 export type WaterSortResult = {
   elapsedMs: number;
@@ -41,6 +60,9 @@ type WaterSortPlayState = {
   undoCount: number;
   restartCount: number;
   sourceBottleIndex: number | null;
+  phase: WaterSortPlayPhase;
+  selectionResult: WaterSortBottleSelectionResult | null;
+  nextSelectionResultId: number;
 };
 
 const colorCountsByDifficulty: Record<WaterSortDifficulty, number> = {
@@ -80,6 +102,9 @@ function createPlayState(
     undoCount: 0,
     restartCount: 0,
     sourceBottleIndex: null,
+    phase: "playing",
+    selectionResult: null,
+    nextSelectionResultId: 0,
   };
 }
 
@@ -104,7 +129,16 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
     const selectedAt = Date.now();
     setNow(selectedAt);
     setPlay((current) => {
-      if (current.status !== "playing" || !current.state[bottleIndex]) {
+      const resultId = current.nextSelectionResultId;
+      const withSelectionResult = (
+        selectionResult: WaterSortBottleSelectionResult,
+      ) => ({
+        ...current,
+        selectionResult,
+        nextSelectionResultId: resultId + 1,
+      });
+
+      if (current.phase !== "playing" || !current.state[bottleIndex]) {
         return current;
       }
 
@@ -114,22 +148,45 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
           (move) => move.sourceBottleIndex === bottleIndex,
         );
         if (!bottle || isCompleteWaterSortBottle(bottle) || !hasLegalMove) {
-          return current;
+          return withSelectionResult({
+            id: resultId,
+            type: "invalid",
+            bottleIndex,
+          });
         }
 
-        return { ...current, sourceBottleIndex: bottleIndex };
+        return {
+          ...withSelectionResult({
+            id: resultId,
+            type: "source-selected",
+            bottleIndex,
+          }),
+          sourceBottleIndex: bottleIndex,
+        };
       }
 
       if (current.sourceBottleIndex === bottleIndex) {
-        return { ...current, sourceBottleIndex: null };
+        return {
+          ...withSelectionResult({
+            id: resultId,
+            type: "source-deselected",
+            bottleIndex,
+          }),
+          sourceBottleIndex: null,
+        };
       }
 
+      const sourceBottleIndex = current.sourceBottleIndex;
       const nextState = applyWaterSortMove(current.state, {
-        sourceBottleIndex: current.sourceBottleIndex,
+        sourceBottleIndex,
         destinationBottleIndex: bottleIndex,
       });
       if (!nextState) {
-        return current;
+        return withSelectionResult({
+          id: resultId,
+          type: "invalid",
+          bottleIndex,
+        });
       }
 
       const cleared = isWaterSortCleared(nextState);
@@ -137,11 +194,24 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
       return {
         ...current,
         status: cleared ? "cleared" : "playing",
+        phase: cleared ? "clearing" : "playing",
         state: nextState,
         history: [...current.history, current.state],
         finishedAt: cleared ? selectedAt : null,
         moveCount: current.moveCount + 1,
         sourceBottleIndex: null,
+        selectionResult: {
+          id: resultId,
+          type: "poured",
+          sourceBottleIndex,
+          destinationBottleIndex: bottleIndex,
+          sourceBefore: current.state[sourceBottleIndex] ?? [],
+          sourceAfter: nextState[sourceBottleIndex] ?? [],
+          destinationBefore: current.state[bottleIndex] ?? [],
+          destinationAfter: nextState[bottleIndex] ?? [],
+          isClearingMove: cleared,
+        },
+        nextSelectionResultId: resultId + 1,
       };
     });
   }, []);
@@ -191,31 +261,11 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
     setPlay(next);
   }, [difficulty]);
 
-  const selectableBottleIndexes = useMemo(() => {
-    if (play.status !== "playing") {
-      return new Set<number>();
-    }
-
-    const legalMoves = listWaterSortLegalMoves(play.state);
-    if (play.sourceBottleIndex === null) {
-      return new Set(
-        legalMoves
-          .map((move) => move.sourceBottleIndex)
-          .filter(
-            (bottleIndex) =>
-              !isCompleteWaterSortBottle(play.state[bottleIndex] ?? []),
-          ),
-      );
-    }
-
-    const selectable = new Set<number>([play.sourceBottleIndex]);
-    for (const move of legalMoves) {
-      if (move.sourceBottleIndex === play.sourceBottleIndex) {
-        selectable.add(move.destinationBottleIndex);
-      }
-    }
-    return selectable;
-  }, [play.sourceBottleIndex, play.state, play.status]);
+  const completeClearPresentation = useCallback(() => {
+    setPlay((current) =>
+      current.phase === "clearing" ? { ...current, phase: "result" } : current,
+    );
+  }, []);
 
   const elapsedMs = Math.max(0, (play.finishedAt ?? now) - play.startedAt);
   const optimalMoveCount = play.problem.solutionMoves.length;
@@ -256,11 +306,13 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
     problemDifficulty,
     canUndo: play.status === "playing" && play.history.length > 0,
     sourceBottleIndex: play.sourceBottleIndex,
-    selectableBottleIndexes,
+    phase: play.phase,
+    selectionResult: play.selectionResult,
     result,
     selectBottle,
     undo,
     restart,
     newGame,
+    completeClearPresentation,
   };
 }
