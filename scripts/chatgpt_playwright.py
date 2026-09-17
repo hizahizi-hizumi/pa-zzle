@@ -2,14 +2,21 @@ from __future__ import annotations
 
 import json
 import re
-from urllib.error import HTTPError
 from urllib.parse import urlsplit
-from urllib.request import Request, urlopen
 
-from playwright.sync_api import Browser, Page, Playwright, Route, sync_playwright
+from playwright.sync_api import (
+    APIRequestContext,
+    Browser,
+    Error as PlaywrightError,
+    Page,
+    Playwright,
+    Route,
+    sync_playwright,
+)
 
 DEFAULT_TARGET = "http://127.0.0.1:3000"
 DEFAULT_VIEWPORT = {"width": 1280, "height": 800}
+HTTP_TIMEOUT_MS = 10_000
 HOP_BY_HOP_HEADERS = {
     "connection",
     "content-length",
@@ -53,40 +60,57 @@ class ChatGPTBrowser:
         self.page: Page
         self.browser: Browser
         self._playwright: Playwright
+        self._request_context: APIRequestContext
 
     def __enter__(self) -> ChatGPTBrowser:
         self._playwright = sync_playwright().start()
-        self.browser = self._playwright.chromium.launch(
-            headless=True,
-            executable_path="/usr/bin/chromium",
-        )
-        self.page = self.browser.new_page(viewport=self.viewport)
-        self.page.on(
-            "console",
-            lambda message: (
-                self.console_errors.append(message.text)
-                if message.type == "error"
-                else None
-            ),
-        )
-        self.page.on("pageerror", lambda error: self.page_errors.append(str(error)))
-        self.page.on(
-            "requestfailed",
-            lambda request: self.failed_requests.append(
-                f"{request.url}: {request.failure}"
-            ),
-        )
-        self.page.route(f"{self.target}/**", self._proxy)
-        self.page.set_content(
-            self._entry_html(),
-            wait_until="domcontentloaded",
-            timeout=15_000,
-        )
+        try:
+            self._request_context = self._playwright.request.new_context()
+            self.browser = self._playwright.chromium.launch(
+                headless=True,
+                executable_path="/usr/bin/chromium",
+            )
+            self.page = self.browser.new_page(viewport=self.viewport)
+            self.page.on(
+                "console",
+                lambda message: (
+                    self.console_errors.append(message.text)
+                    if message.type == "error"
+                    else None
+                ),
+            )
+            self.page.on("pageerror", lambda error: self.page_errors.append(str(error)))
+            self.page.on(
+                "requestfailed",
+                lambda request: self.failed_requests.append(
+                    f"{request.url}: {request.failure}"
+                ),
+            )
+            self.page.route(f"{self.target}/**", self._proxy)
+            self.page.set_content(
+                self._entry_html(),
+                wait_until="domcontentloaded",
+                timeout=15_000,
+            )
+        except BaseException:
+            self._close()
+            raise
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
-        self.browser.close()
-        self._playwright.stop()
+        self._close()
+
+    def _close(self) -> None:
+        try:
+            if hasattr(self, "browser"):
+                self.browser.close()
+        finally:
+            try:
+                if hasattr(self, "_request_context"):
+                    self._request_context.dispose()
+            finally:
+                if hasattr(self, "_playwright"):
+                    self._playwright.stop()
 
     def assert_no_browser_errors(self) -> None:
         errors = []
@@ -107,23 +131,21 @@ class ChatGPTBrowser:
         headers: dict[str, str] | None = None,
         data: bytes | None = None,
     ) -> tuple[int, dict[str, str], bytes]:
-        request = Request(
+        request_headers = {"accept-encoding": "identity", **(headers or {})}
+        response = self._request_context.fetch(
             self.target + path,
-            data=data,
-            headers=headers or {},
             method=method,
+            headers=request_headers,
+            data=data,
+            timeout=HTTP_TIMEOUT_MS,
+            fail_on_status_code=False,
         )
-        try:
-            response = urlopen(request, timeout=10)
-        except HTTPError as error:
-            response = error
-
         response_headers = {
             key: value
             for key, value in response.headers.items()
             if key.lower() not in HOP_BY_HOP_HEADERS
         }
-        return response.status, response_headers, response.read()
+        return response.status, response_headers, response.body()
 
     def _entry_html(self) -> str:
         status, _, body = self._fetch("/")
@@ -145,22 +167,25 @@ class ChatGPTBrowser:
             for key, value in request.headers.items()
             if key.lower() not in REQUEST_HEADERS_TO_DROP
         }
-        status, response_headers, body = self._fetch(
-            path,
-            method=request.method,
-            headers=headers,
-            data=request.post_data_buffer,
-        )
+        try:
+            status, response_headers, body = self._fetch(
+                path,
+                method=request.method,
+                headers=headers,
+                data=request.post_data_buffer,
+            )
 
-        if "@generouted_react-router.js" in url.path:
-            body = self._patch_generouted(body)
-            response_headers = {
-                key: value
-                for key, value in response_headers.items()
-                if key.lower() != "content-length"
-            }
+            if "@generouted_react-router.js" in url.path:
+                body = self._patch_generouted(body)
+                response_headers = {
+                    key: value
+                    for key, value in response_headers.items()
+                    if key.lower() != "content-length"
+                }
 
-        route.fulfill(status=status, headers=response_headers, body=body)
+            route.fulfill(status=status, headers=response_headers, body=body)
+        except PlaywrightError:
+            route.abort("failed")
 
     def _patch_generouted(self, body: bytes) -> bytes:
         text = body.decode()
