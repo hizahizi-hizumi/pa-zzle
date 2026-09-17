@@ -1,4 +1,4 @@
-import { applyWaterSortMove, listWaterSortLegalMoves } from "./rules";
+import { listWaterSortLegalMoves } from "./rules";
 import {
   countEmptyWaterSortBottles,
   countWaterSortColorBlocks,
@@ -8,6 +8,7 @@ import {
   type WaterSortMove,
   type WaterSortState,
 } from "./state";
+import { listWaterSortDistinctTransitions } from "./transitions";
 
 export type WaterSortSearchStatus = "solved" | "unsolvable" | "limit-reached";
 
@@ -47,12 +48,6 @@ type SearchNode = {
   heuristic: number;
   parent: SearchNode | null;
   moveFromParent: WaterSortMove | null;
-};
-
-type SearchTransition = {
-  state: WaterSortState;
-  stateKey: string;
-  move: WaterSortMove;
 };
 
 class SearchQueue {
@@ -168,31 +163,6 @@ function estimateRemainingMoves(state: WaterSortState): number {
   );
 }
 
-function listDistinctSearchTransitions(
-  state: WaterSortState,
-): SearchTransition[] {
-  const currentStateKey = createWaterSortStateKey(state);
-  const seenStateKeys = new Set<string>();
-  const transitions: SearchTransition[] = [];
-
-  for (const move of listWaterSortLegalMoves(state)) {
-    const nextState = applyWaterSortMove(state, move);
-    if (!nextState) {
-      continue;
-    }
-
-    const stateKey = createWaterSortStateKey(nextState);
-    if (stateKey === currentStateKey || seenStateKeys.has(stateKey)) {
-      continue;
-    }
-
-    seenStateKeys.add(stateKey);
-    transitions.push({ state: nextState, stateKey, move });
-  }
-
-  return transitions;
-}
-
 function reconstructPath(goal: SearchNode): SearchNode[] {
   const reversedPath: SearchNode[] = [];
   let node: SearchNode | null = goal;
@@ -211,7 +181,7 @@ function calculateProblemFeatures(
   const initialState = path[0]?.state ?? [];
   const playableStates = path.slice(0, -1);
   const distinctChoiceCounts = playableStates.map(
-    ({ state }) => listDistinctSearchTransitions(state).length,
+    ({ state }) => listWaterSortDistinctTransitions(state).length,
   );
   const noEmptyBottleFlags = playableStates.map(
     ({ state }) => countEmptyWaterSortBottles(state) === 0,
@@ -333,7 +303,7 @@ export function solveWaterSort(
     }
 
     expandedStates += 1;
-    const transitions = listDistinctSearchTransitions(current.state);
+    const transitions = listWaterSortDistinctTransitions(current.state);
     generatedTransitions += transitions.length;
 
     for (const transition of transitions) {
