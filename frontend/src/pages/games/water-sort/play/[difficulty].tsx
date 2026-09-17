@@ -1,8 +1,16 @@
+import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createWaterSortDiagnosticSnapshot } from "@/games/water-sort/diagnostics";
 import { parseWaterSortDifficulty } from "@/games/water-sort/game/difficulty";
 import { useWaterSortGame } from "@/games/water-sort/hooks/use-water-sort-game";
+import { WaterSortDiagnostics } from "@/games/water-sort/ui/WaterSortDiagnostics";
 import { WaterSortPlay } from "@/games/water-sort/ui/WaterSortPlay";
+import {
+  buildRevision,
+  internalDiagnosticsAvailable,
+} from "@/lib/internal-diagnostics";
 import { Link, useNavigate, useParams } from "@/router";
 
 export default function WaterSortPlayPage() {
@@ -25,13 +33,33 @@ function PlayableWaterSort({
 }) {
   const game = useWaterSortGame(difficulty);
   const navigate = useNavigate();
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
+  const diagnostics = internalDiagnosticsAvailable
+    ? createWaterSortDiagnosticSnapshot({
+        difficulty: game.difficulty,
+        problemIdentity: game.problemIdentity,
+        buildRevision,
+      })
+    : null;
 
   return (
-    <WaterSortPlay
-      {...game}
-      onChangeDifficulty={() => navigate("/games/water-sort")}
-      onBackToHome={() => navigate("/")}
-    />
+    <>
+      <WaterSortPlay
+        {...game}
+        onChangeDifficulty={() => navigate("/games/water-sort")}
+        onBackToHome={() => navigate("/")}
+        onOpenDiagnostics={
+          diagnostics ? () => setDiagnosticsOpen(true) : undefined
+        }
+      />
+      {diagnostics && (
+        <WaterSortDiagnostics
+          snapshot={diagnostics}
+          open={diagnosticsOpen}
+          onClose={() => setDiagnosticsOpen(false)}
+        />
+      )}
+    </>
   );
 }
 

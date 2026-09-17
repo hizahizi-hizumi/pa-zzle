@@ -6,6 +6,7 @@ import {
   RotateCcw,
   Trophy,
   Undo2,
+  Wrench,
 } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
@@ -45,6 +46,7 @@ type WaterSortPlayProps = {
   completeClearingPour: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
+  onOpenDiagnostics?: () => void;
 };
 
 export function WaterSortPlay({
@@ -68,6 +70,7 @@ export function WaterSortPlay({
   completeClearingPour,
   onChangeDifficulty,
   onBackToHome,
+  onOpenDiagnostics,
 }: WaterSortPlayProps) {
   const [completedPourOperationId, setCompletedPourOperationId] = useState<
     number | null
@@ -89,6 +92,7 @@ export function WaterSortPlay({
         newGame={newGame}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
+        onOpenDiagnostics={onOpenDiagnostics}
       />
     );
   }
@@ -115,6 +119,7 @@ export function WaterSortPlay({
           newGame={newGame}
           onChangeDifficulty={onChangeDifficulty}
           onBackToHome={onBackToHome}
+          onOpenDiagnostics={onOpenDiagnostics}
         />
       </header>
       <main className="flex min-h-0 flex-1 items-center justify-center px-3 py-2 sm:px-6">
@@ -241,6 +246,7 @@ type WaterSortResultScreenProps = {
   newGame: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
+  onOpenDiagnostics?: () => void;
 };
 function WaterSortResultScreen({
   difficulty,
@@ -250,6 +256,7 @@ function WaterSortResultScreen({
   newGame,
   onChangeDifficulty,
   onBackToHome,
+  onOpenDiagnostics,
 }: WaterSortResultScreenProps) {
   const scorePresentation = getScorePresentation(result.score);
   return (
@@ -318,6 +325,19 @@ function WaterSortResultScreen({
             />
           </dl>
         </details>
+        {onOpenDiagnostics && (
+          <div className="mt-3 flex justify-center">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onOpenDiagnostics}
+            >
+              <Wrench />
+              検証情報
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -537,12 +557,14 @@ type PlayMenuProps = {
   newGame: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
+  onOpenDiagnostics?: () => void;
 };
 function PlayMenu({
   restart,
   newGame,
   onChangeDifficulty,
   onBackToHome,
+  onOpenDiagnostics,
 }: PlayMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const runAndClose = (action: () => void) => {
@@ -585,6 +607,16 @@ function PlayMenu({
             label="ホームへ"
             onClick={() => runAndClose(onBackToHome)}
           />
+          {onOpenDiagnostics && (
+            <>
+              <div className="my-1 border-t" />
+              <MenuButton
+                icon={<Wrench />}
+                label="検証情報"
+                onClick={() => runAndClose(onOpenDiagnostics)}
+              />
+            </>
+          )}
         </div>
       )}
     </div>

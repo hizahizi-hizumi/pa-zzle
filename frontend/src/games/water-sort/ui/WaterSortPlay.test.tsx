@@ -170,6 +170,7 @@ describe("WaterSortPlay", () => {
     const newGame = vi.fn();
     const onChangeDifficulty = vi.fn();
     const onBackToHome = vi.fn();
+    const onOpenDiagnostics = vi.fn();
     render(
       <WaterSortPlay
         {...baseProps}
@@ -177,6 +178,7 @@ describe("WaterSortPlay", () => {
         newGame={newGame}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
+        onOpenDiagnostics={onOpenDiagnostics}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
@@ -187,10 +189,21 @@ describe("WaterSortPlay", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "難易度を変える" }));
     fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "ホームへ" }));
+    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "検証情報" }));
     expect(restart).toHaveBeenCalledOnce();
     expect(newGame).toHaveBeenCalledOnce();
     expect(onChangeDifficulty).toHaveBeenCalledOnce();
     expect(onBackToHome).toHaveBeenCalledOnce();
+    expect(onOpenDiagnostics).toHaveBeenCalledOnce();
+  });
+
+  test("診断導線が許可されていなければメニューへ表示しないこと", () => {
+    render(<WaterSortPlay {...baseProps} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
+
+    expect(screen.queryByRole("menuitem", { name: "検証情報" })).toBeNull();
   });
 
   test("待ったで戻せる手がない操作を無効にすること", () => {
@@ -230,6 +243,31 @@ describe("WaterSortPlay", () => {
     expect(screen.getByText("+2")).toBeTruthy();
     expect(screen.getByText("待った")).toBeTruthy();
     expect(screen.queryByText(/seed:/)).toBeNull();
+  });
+
+  test("結果画面から診断情報を開けること", () => {
+    const onOpenDiagnostics = vi.fn();
+    render(
+      <WaterSortPlay
+        {...baseProps}
+        status="cleared"
+        progress="result"
+        result={{
+          elapsedMs: 65000,
+          moveCount: 12,
+          undoCount: 3,
+          restartCount: 1,
+          optimalMoveCount: 10,
+          moveDelta: 2,
+          score: 83,
+        }}
+        onOpenDiagnostics={onOpenDiagnostics}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "検証情報" }));
+
+    expect(onOpenDiagnostics).toHaveBeenCalledOnce();
   });
 
   test("100点では最高評価として強く称えること", () => {
