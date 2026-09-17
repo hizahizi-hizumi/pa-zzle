@@ -128,7 +128,7 @@ export function WaterSortPlay({
           onClearingPourComplete={completeClearingPour}
         />
       </main>
-      <footer className="shrink-0 px-4 pb-2">
+      <footer className="grid h-28 shrink-0 items-end px-4 pb-2">
         {showDeadlockNotice ? (
           <DeadlockNotice canUndo={canUndo} undo={undo} restart={restart} />
         ) : (
@@ -166,15 +166,12 @@ function DeadlockNotice({
       className="mx-auto max-w-md rounded-xl border bg-muted/50 px-3 py-2"
     >
       <div className="text-center">
-        <p className="text-sm font-semibold">手詰まりです</p>
-        <p className="text-xs text-muted-foreground">
-          待ったで1手戻すか、最初からやり直せます。
-        </p>
+        <p className="text-sm font-semibold">手詰まり</p>
       </div>
       <div className="mt-1 flex justify-center gap-1">
         <Button
           type="button"
-          variant="ghost"
+          variant="outline"
           onClick={undo}
           disabled={!canUndo}
         >
