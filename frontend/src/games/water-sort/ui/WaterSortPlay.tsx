@@ -166,7 +166,7 @@ function DeadlockNotice({
       className="mx-auto max-w-md rounded-xl border bg-muted/50 px-3 py-2"
     >
       <div className="text-center">
-        <p className="text-sm font-semibold">手詰まりです</p>
+        <p className="text-sm font-semibold">手詰まり</p>
       </div>
       <div className="mt-1 flex justify-center gap-1">
         <Button

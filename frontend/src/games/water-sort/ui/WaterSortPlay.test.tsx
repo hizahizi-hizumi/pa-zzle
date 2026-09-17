@@ -87,7 +87,7 @@ describe("WaterSortPlay", () => {
         restart={restart}
       />,
     );
-    expect(screen.getByRole("status").textContent).toContain("手詰まりです");
+    expect(screen.getByRole("status").textContent).toContain("手詰まり");
     fireEvent.click(screen.getByRole("button", { name: "待った" }));
     fireEvent.click(screen.getByRole("button", { name: "最初から" }));
     expect(undo).toHaveBeenCalledOnce();
@@ -100,7 +100,7 @@ describe("WaterSortPlay", () => {
         restart={restart}
       />,
     );
-    expect(screen.queryByText("手詰まりです")).toBeNull();
+    expect(screen.queryByText("手詰まり")).toBeNull();
   });
 
   test("注水演出が完了してから手詰まりを案内すること", async () => {
@@ -143,19 +143,19 @@ describe("WaterSortPlay", () => {
       />,
     );
 
-    expect(screen.queryByText("手詰まりです")).toBeNull();
+    expect(screen.queryByText("手詰まり")).toBeNull();
 
     await act(async () => {
       resolveAnimation?.();
       await animationFinished;
     });
 
-    expect(screen.getByRole("status").textContent).toContain("手詰まりです");
+    expect(screen.getByRole("status").textContent).toContain("手詰まり");
   });
 
   test("合法手が残っている通常時は手詰まりを案内しないこと", () => {
     render(<WaterSortPlay {...baseProps} />);
-    expect(screen.queryByText("手詰まりです")).toBeNull();
+    expect(screen.queryByText("手詰まり")).toBeNull();
   });
 
   test("待ったをプレイ中の直接操作として通知すること", () => {
