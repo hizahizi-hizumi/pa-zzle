@@ -171,7 +171,7 @@ function DeadlockNotice({
       <div className="mt-1 flex justify-center gap-1">
         <Button
           type="button"
-          variant="ghost"
+          variant="outline"
           onClick={undo}
           disabled={!canUndo}
         >
