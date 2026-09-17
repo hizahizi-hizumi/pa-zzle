@@ -18,6 +18,7 @@ afterEach(() => {
 const baseProps = {
   difficulty: "normal" as const,
   status: "playing" as const,
+  progress: "playing" as const,
   state: [[0, 1], []] as const,
   problemDifficulty: { difficulty: "normal" as const, index: 28.2 },
   elapsedMs: 5000,
@@ -25,12 +26,13 @@ const baseProps = {
   undoCount: 2,
   canUndo: true,
   sourceBottleIndex: null,
-  selectableBottleIndexes: new Set([0, 1]),
+  operation: null,
   result: null,
   selectBottle: vi.fn(),
   undo: vi.fn(),
   restart: vi.fn(),
   newGame: vi.fn(),
+  completeClearingPour: vi.fn(),
   onChangeDifficulty: vi.fn(),
   onBackToHome: vi.fn(),
 };
@@ -38,15 +40,11 @@ const baseProps = {
 describe("WaterSortPlay", () => {
   test("プレイ中はゲーム名と主要な計測値をミニマルに表示すること", () => {
     const selectBottle = vi.fn();
-
     render(<WaterSortPlay {...baseProps} selectBottle={selectBottle} />);
     const bottle = screen.getByRole("button", { name: "ボトル 1: 赤、青" });
     fireEvent.click(bottle);
-
     expect(screen.getByText("パズル pa-zzle")).toBeTruthy();
-    expect(
-      screen.getByRole("heading", { name: "カラーウォーターソート" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "カラーウォーターソート" })).toBeTruthy();
     expect(screen.getByText("手数")).toBeTruthy();
     expect(screen.getByText("7")).toBeTruthy();
     expect(screen.getByText("時間")).toBeTruthy();
@@ -59,28 +57,16 @@ describe("WaterSortPlay", () => {
 
   test("選択中の注ぎ元だけを選択状態として表すこと", () => {
     render(<WaterSortPlay {...baseProps} sourceBottleIndex={0} />);
-
-    const sourceBottle = screen.getByRole("button", {
-      name: "ボトル 1: 赤、青",
-    });
-
+    const sourceBottle = screen.getByRole("button", { name: "ボトル 1: 赤、青" });
     expect(sourceBottle.getAttribute("aria-pressed")).toBe("true");
     expect(screen.queryByText("注ぎ元")).toBeNull();
   });
 
   test("合法手を教えるためにボトル操作を無効化しないこと", () => {
     const selectBottle = vi.fn();
-    render(
-      <WaterSortPlay
-        {...baseProps}
-        selectableBottleIndexes={new Set([0])}
-        selectBottle={selectBottle}
-      />,
-    );
-
+    render(<WaterSortPlay {...baseProps} selectBottle={selectBottle} />);
     const bottle = screen.getByRole("button", { name: "ボトル 2: 空" });
     fireEvent.click(bottle);
-
     expect((bottle as HTMLButtonElement).disabled).toBe(false);
     expect(selectBottle).toHaveBeenCalledWith(1);
   });
@@ -88,9 +74,7 @@ describe("WaterSortPlay", () => {
   test("元に戻すをプレイ中の直接操作として通知すること", () => {
     const undo = vi.fn();
     render(<WaterSortPlay {...baseProps} undo={undo} />);
-
     fireEvent.click(screen.getByRole("button", { name: "元に戻す" }));
-
     expect(undo).toHaveBeenCalledOnce();
   });
 
@@ -99,16 +83,7 @@ describe("WaterSortPlay", () => {
     const newGame = vi.fn();
     const onChangeDifficulty = vi.fn();
     const onBackToHome = vi.fn();
-    render(
-      <WaterSortPlay
-        {...baseProps}
-        restart={restart}
-        newGame={newGame}
-        onChangeDifficulty={onChangeDifficulty}
-        onBackToHome={onBackToHome}
-      />,
-    );
-
+    render(<WaterSortPlay {...baseProps} restart={restart} newGame={newGame} onChangeDifficulty={onChangeDifficulty} onBackToHome={onBackToHome} />);
     fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "最初から" }));
     fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
@@ -117,7 +92,6 @@ describe("WaterSortPlay", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "難易度を変える" }));
     fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "ホームへ" }));
-
     expect(restart).toHaveBeenCalledOnce();
     expect(newGame).toHaveBeenCalledOnce();
     expect(onChangeDifficulty).toHaveBeenCalledOnce();
@@ -126,29 +100,12 @@ describe("WaterSortPlay", () => {
 
   test("元に戻せる手がない操作を無効にすること", () => {
     render(<WaterSortPlay {...baseProps} canUndo={false} />);
-
     const button = screen.getByRole("button", { name: "元に戻す" });
-
     expect((button as HTMLButtonElement).disabled).toBe(true);
   });
 
   test("クリア後は主要な成績だけを先に表示すること", () => {
-    render(
-      <WaterSortPlay
-        {...baseProps}
-        status="cleared"
-        result={{
-          elapsedMs: 65000,
-          moveCount: 12,
-          undoCount: 3,
-          restartCount: 1,
-          optimalMoveCount: 10,
-          moveDelta: 2,
-          score: 83,
-        }}
-      />,
-    );
-
+    render(<WaterSortPlay {...baseProps} status="cleared" progress="result" result={{ elapsedMs: 65000, moveCount: 12, undoCount: 3, restartCount: 1, optimalMoveCount: 10, moveDelta: 2, score: 83 }} />);
     expect(screen.getByRole("heading", { name: "クリア!" })).toBeTruthy();
     expect(screen.getByText("カラーウォーターソート")).toBeTruthy();
     expect(screen.getByText("01:05")).toBeTruthy();
@@ -165,117 +122,31 @@ describe("WaterSortPlay", () => {
   });
 
   test("100点では最高評価として強く称えること", () => {
-    render(
-      <WaterSortPlay
-        {...baseProps}
-        status="cleared"
-        result={{
-          elapsedMs: 42000,
-          moveCount: 10,
-          undoCount: 0,
-          restartCount: 0,
-          optimalMoveCount: 10,
-          moveDelta: 0,
-          score: 100,
-        }}
-      />,
-    );
-
+    render(<WaterSortPlay {...baseProps} status="cleared" progress="result" result={{ elapsedMs: 42000, moveCount: 10, undoCount: 0, restartCount: 0, optimalMoveCount: 10, moveDelta: 0, score: 100 }} />);
     expect(screen.getByText("パーフェクト！")).toBeTruthy();
     expect(screen.getByText("100")).toBeTruthy();
   });
 
   test("最後の注水演出が完了してから結果画面を表示すること", async () => {
     let resolveAnimation: (() => void) | undefined;
-    const animationFinished = new Promise<void>((resolve) => {
-      resolveAnimation = resolve;
-    });
-    Object.defineProperty(HTMLElement.prototype, "animate", {
-      configurable: true,
-      value: vi.fn(
-        () =>
-          ({
-            finished: animationFinished,
-            cancel: vi.fn(),
-          }) as unknown as Animation,
-      ),
-    });
-    const result = {
-      elapsedMs: 65000,
-      moveCount: 12,
-      undoCount: 0,
-      restartCount: 0,
-      optimalMoveCount: 12,
-      moveDelta: 0,
-      score: 100,
-    };
-    const { rerender } = render(
-      <WaterSortPlay
-        {...baseProps}
-        state={[[0], [0, 0, 0]]}
-        sourceBottleIndex={0}
-        selectableBottleIndexes={new Set([0, 1])}
-      />,
-    );
-
-    fireEvent.click(
-      screen.getByRole("button", { name: "ボトル 2: 赤、赤、赤" }),
-    );
-    rerender(
-      <WaterSortPlay
-        {...baseProps}
-        status="cleared"
-        state={[[], [0, 0, 0, 0]]}
-        sourceBottleIndex={null}
-        selectableBottleIndexes={new Set()}
-        canUndo={false}
-        result={result}
-      />,
-    );
-
+    const animationFinished = new Promise<void>((resolve) => { resolveAnimation = resolve; });
+    Object.defineProperty(HTMLElement.prototype, "animate", { configurable: true, value: vi.fn(() => ({ finished: animationFinished, cancel: vi.fn() }) as unknown as Animation) });
+    const result = { elapsedMs: 65000, moveCount: 12, undoCount: 0, restartCount: 0, optimalMoveCount: 12, moveDelta: 0, score: 100 };
+    const { rerender } = render(<WaterSortPlay {...baseProps} state={[[0], [0, 0, 0]]} sourceBottleIndex={0} />);
+    fireEvent.click(screen.getByRole("button", { name: "ボトル 2: 赤、赤、赤" }));
+    rerender(<WaterSortPlay {...baseProps} status="cleared" progress="clearing" state={[[], [0, 0, 0, 0]]} sourceBottleIndex={null} operation={{ id: 1, type: "poured", sourceBottleIndex: 0, destinationBottleIndex: 1, stateBefore: [[0], [0, 0, 0]], stateAfter: [[], [0, 0, 0, 0]], isClearingMove: true }} canUndo={false} result={result} />);
     expect(screen.queryByRole("heading", { name: "クリア!" })).toBeNull();
-
-    await act(async () => {
-      resolveAnimation?.();
-      await animationFinished;
-    });
-
-    expect(screen.getByRole("heading", { name: "クリア!" })).toBeTruthy();
+    await act(async () => { resolveAnimation?.(); await animationFinished; });
+    expect(baseProps.completeClearingPour).toHaveBeenCalledOnce();
   });
 
   test("クリア後に次の問題・再挑戦・難易度変更・ホーム移動を通知すること", () => {
-    const restart = vi.fn();
-    const newGame = vi.fn();
-    const onChangeDifficulty = vi.fn();
-    const onBackToHome = vi.fn();
-    render(
-      <WaterSortPlay
-        {...baseProps}
-        status="cleared"
-        result={{
-          elapsedMs: 65000,
-          moveCount: 12,
-          undoCount: 3,
-          restartCount: 1,
-          optimalMoveCount: 10,
-          moveDelta: 2,
-          score: 83,
-        }}
-        restart={restart}
-        newGame={newGame}
-        onChangeDifficulty={onChangeDifficulty}
-        onBackToHome={onBackToHome}
-      />,
-    );
-
+    const restart = vi.fn(); const newGame = vi.fn(); const onChangeDifficulty = vi.fn(); const onBackToHome = vi.fn();
+    render(<WaterSortPlay {...baseProps} status="cleared" progress="result" result={{ elapsedMs: 65000, moveCount: 12, undoCount: 3, restartCount: 1, optimalMoveCount: 10, moveDelta: 2, score: 83 }} restart={restart} newGame={newGame} onChangeDifficulty={onChangeDifficulty} onBackToHome={onBackToHome} />);
     fireEvent.click(screen.getByRole("button", { name: "次の問題" }));
     fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
     fireEvent.click(screen.getByRole("button", { name: "難易度を変える" }));
     fireEvent.click(screen.getByRole("button", { name: "ホームへ" }));
-
-    expect(newGame).toHaveBeenCalledOnce();
-    expect(restart).toHaveBeenCalledOnce();
-    expect(onChangeDifficulty).toHaveBeenCalledOnce();
-    expect(onBackToHome).toHaveBeenCalledOnce();
+    expect(newGame).toHaveBeenCalledOnce(); expect(restart).toHaveBeenCalledOnce(); expect(onChangeDifficulty).toHaveBeenCalledOnce(); expect(onBackToHome).toHaveBeenCalledOnce();
   });
 });
