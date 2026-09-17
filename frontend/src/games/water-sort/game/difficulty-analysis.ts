@@ -1,4 +1,4 @@
-import { applyWaterSortMove, listWaterSortLegalMoves } from "./rules";
+import { applyWaterSortMove } from "./rules";
 import { solveWaterSort } from "./solver";
 import {
   countEmptyWaterSortBottles,
@@ -9,6 +9,10 @@ import {
   type WaterSortMove,
   type WaterSortState,
 } from "./state";
+import {
+  listWaterSortDistinctTransitions,
+  type WaterSortTransition,
+} from "./transitions";
 
 export type WaterSortRepresentativeChoiceRisk = {
   stateIndex: number;
@@ -38,41 +42,13 @@ export type WaterSortDifficultyAnalysisOptions = {
   maxExpandedStatesPerRiskChoice?: number;
 };
 
-type DistinctTransition = {
-  state: WaterSortState;
-  stateKey: string;
-};
-
 type RepresentativeChoiceState = {
   stateIndex: number;
-  transitions: readonly DistinctTransition[];
+  transitions: readonly WaterSortTransition[];
 };
 
 const defaultMaximumRiskChoices = 8;
 const defaultMaxExpandedStatesPerRiskChoice = 10_000;
-
-function listDistinctTransitions(state: WaterSortState): DistinctTransition[] {
-  const currentStateKey = createWaterSortStateKey(state);
-  const transitionsByStateKey = new Map<string, DistinctTransition>();
-
-  for (const move of listWaterSortLegalMoves(state)) {
-    const nextState = applyWaterSortMove(state, move);
-    if (!nextState) {
-      continue;
-    }
-
-    const stateKey = createWaterSortStateKey(nextState);
-    if (stateKey === currentStateKey || transitionsByStateKey.has(stateKey)) {
-      continue;
-    }
-
-    transitionsByStateKey.set(stateKey, { state: nextState, stateKey });
-  }
-
-  return [...transitionsByStateKey.values()].sort((left, right) =>
-    left.stateKey.localeCompare(right.stateKey),
-  );
-}
 
 function buildSolutionStates(
   initialState: WaterSortState,
@@ -108,9 +84,11 @@ function findRepresentativeChoiceState(
   );
   let representative: RepresentativeChoiceState = {
     stateIndex: firstCandidateIndex,
-    transitions: listDistinctTransitions(
-      solutionStates[firstCandidateIndex] ?? solutionStates[0] ?? [],
-    ),
+    transitions: [
+      ...listWaterSortDistinctTransitions(
+        solutionStates[firstCandidateIndex] ?? solutionStates[0] ?? [],
+      ),
+    ].sort((left, right) => left.stateKey.localeCompare(right.stateKey)),
   };
 
   for (
@@ -122,7 +100,9 @@ function findRepresentativeChoiceState(
     if (!state) {
       continue;
     }
-    const transitions = listDistinctTransitions(state);
+    const transitions = [...listWaterSortDistinctTransitions(state)].sort(
+      (left, right) => left.stateKey.localeCompare(right.stateKey),
+    );
     if (transitions.length > representative.transitions.length) {
       representative = { stateIndex, transitions };
     }
@@ -132,10 +112,10 @@ function findRepresentativeChoiceState(
 }
 
 function selectEvenlySpacedTransitions(
-  transitions: readonly DistinctTransition[],
+  transitions: readonly WaterSortTransition[],
   maximumCount: number,
   preferredStateKey: string | undefined,
-): DistinctTransition[] {
+): WaterSortTransition[] {
   if (transitions.length <= maximumCount) {
     return [...transitions];
   }
@@ -153,7 +133,7 @@ function selectEvenlySpacedTransitions(
     );
     return candidates[candidateIndex];
   }).filter(
-    (transition): transition is DistinctTransition => transition !== undefined,
+    (transition): transition is WaterSortTransition => transition !== undefined,
   );
 
   return preferred ? [preferred, ...sampled] : sampled;

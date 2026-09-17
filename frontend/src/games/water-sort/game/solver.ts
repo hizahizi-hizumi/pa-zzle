@@ -1,6 +1,4 @@
-import { listWaterSortLegalMoves } from "./rules";
 import {
-  countEmptyWaterSortBottles,
   countWaterSortColorBlocks,
   countWaterSortColors,
   createWaterSortStateKey,
@@ -12,29 +10,9 @@ import { listWaterSortDistinctTransitions } from "./transitions";
 
 export type WaterSortSearchStatus = "solved" | "unsolvable" | "limit-reached";
 
-export type WaterSortSearchStatistics = {
-  expandedStates: number;
-  generatedTransitions: number;
-  uniqueStates: number;
-  maxFrontierSize: number;
-};
-
-export type WaterSortProblemFeatures = {
-  shortestMoveCount: number;
-  initialLegalMoveCount: number;
-  initialDistinctChoiceCount: number;
-  averageDistinctChoiceCountOnSolution: number;
-  maximumDistinctChoiceCountOnSolution: number;
-  forcedChoiceRatio: number;
-  noEmptyBottleStateRatio: number;
-  longestNoEmptyBottleRun: number;
-};
-
 export type WaterSortSolveResult = {
   status: WaterSortSearchStatus;
   moves: readonly WaterSortMove[];
-  statistics: WaterSortSearchStatistics;
-  features: WaterSortProblemFeatures | null;
 };
 
 export type WaterSortSolverOptions = {
@@ -175,57 +153,6 @@ function reconstructPath(goal: SearchNode): SearchNode[] {
   return reversedPath.reverse();
 }
 
-function calculateProblemFeatures(
-  path: readonly SearchNode[],
-): WaterSortProblemFeatures {
-  const initialState = path[0]?.state ?? [];
-  const playableStates = path.slice(0, -1);
-  const distinctChoiceCounts = playableStates.map(
-    ({ state }) => listWaterSortDistinctTransitions(state).length,
-  );
-  const noEmptyBottleFlags = playableStates.map(
-    ({ state }) => countEmptyWaterSortBottles(state) === 0,
-  );
-
-  let longestNoEmptyBottleRun = 0;
-  let currentNoEmptyBottleRun = 0;
-  for (const hasNoEmptyBottle of noEmptyBottleFlags) {
-    if (hasNoEmptyBottle) {
-      currentNoEmptyBottleRun += 1;
-      longestNoEmptyBottleRun = Math.max(
-        longestNoEmptyBottleRun,
-        currentNoEmptyBottleRun,
-      );
-    } else {
-      currentNoEmptyBottleRun = 0;
-    }
-  }
-
-  const moveCount = Math.max(0, path.length - 1);
-  const totalDistinctChoices = distinctChoiceCounts.reduce(
-    (sum, count) => sum + count,
-    0,
-  );
-  const forcedChoiceCount = distinctChoiceCounts.filter(
-    (count) => count === 1,
-  ).length;
-  const noEmptyBottleStateCount = noEmptyBottleFlags.filter(Boolean).length;
-
-  return {
-    shortestMoveCount: moveCount,
-    initialLegalMoveCount: listWaterSortLegalMoves(initialState).length,
-    initialDistinctChoiceCount: distinctChoiceCounts[0] ?? 0,
-    averageDistinctChoiceCountOnSolution:
-      moveCount === 0 ? 0 : totalDistinctChoices / moveCount,
-    maximumDistinctChoiceCountOnSolution:
-      distinctChoiceCounts.length === 0 ? 0 : Math.max(...distinctChoiceCounts),
-    forcedChoiceRatio: moveCount === 0 ? 0 : forcedChoiceCount / moveCount,
-    noEmptyBottleStateRatio:
-      moveCount === 0 ? 0 : noEmptyBottleStateCount / moveCount,
-    longestNoEmptyBottleRun,
-  };
-}
-
 export function solveWaterSort(
   initialState: WaterSortState,
   options: WaterSortSolverOptions = {},
@@ -255,8 +182,6 @@ export function solveWaterSort(
 
   const bestCostByState = new Map([[initialStateKey, 0]]);
   let expandedStates = 0;
-  let generatedTransitions = 0;
-  let maxFrontierSize = 1;
 
   while (queue.size > 0) {
     const current = queue.pop();
@@ -278,13 +203,6 @@ export function solveWaterSort(
       return {
         status: "solved",
         moves,
-        statistics: {
-          expandedStates,
-          generatedTransitions,
-          uniqueStates: bestCostByState.size,
-          maxFrontierSize,
-        },
-        features: calculateProblemFeatures(path),
       };
     }
 
@@ -292,19 +210,11 @@ export function solveWaterSort(
       return {
         status: "limit-reached",
         moves: [],
-        statistics: {
-          expandedStates,
-          generatedTransitions,
-          uniqueStates: bestCostByState.size,
-          maxFrontierSize,
-        },
-        features: null,
       };
     }
 
     expandedStates += 1;
     const transitions = listWaterSortDistinctTransitions(current.state);
-    generatedTransitions += transitions.length;
 
     for (const transition of transitions) {
       const nextCost = current.cost + 1;
@@ -323,19 +233,10 @@ export function solveWaterSort(
         moveFromParent: transition.move,
       });
     }
-
-    maxFrontierSize = Math.max(maxFrontierSize, queue.size);
   }
 
   return {
     status: "unsolvable",
     moves: [],
-    statistics: {
-      expandedStates,
-      generatedTransitions,
-      uniqueStates: bestCostByState.size,
-      maxFrontierSize,
-    },
-    features: null,
   };
 }
