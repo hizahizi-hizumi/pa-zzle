@@ -71,7 +71,6 @@ describe("solveWaterSort", () => {
       const result = solveWaterSort(state);
 
       expect(result.status).toBe("solved");
-      expect(result.features?.shortestMoveCount).toBe(expected);
       expect(result.moves).toHaveLength(expected ?? 0);
     },
   );
@@ -115,7 +114,7 @@ describe("solveWaterSort", () => {
 
     expect(result.status).toBe("solved");
     expect(reorderedResult.status).toBe("solved");
-    expect(reorderedResult.features).toEqual(result.features);
+    expect(reorderedResult.moves).toHaveLength(result.moves.length);
   });
 
   test("探索上限に整数以外を指定したら拒否すること", () => {
@@ -133,23 +132,5 @@ describe("solveWaterSort", () => {
     const result = solveWaterSort(initialState, { maxExpandedStates: 0 });
 
     expect(result.status).toBe("limit-reached");
-    expect(result.features).toBeNull();
-  });
-
-  test("最短経路上の分岐と空ボトル圧力を特徴量として返すこと", () => {
-    const initialState: WaterSortState = [[0, 0, 1, 1], [1, 1, 0, 0], [], []];
-
-    const result = solveWaterSort(initialState);
-
-    expect(result.features).not.toBeNull();
-    expect(result.features?.initialLegalMoveCount).toBeGreaterThan(0);
-    expect(result.features?.initialDistinctChoiceCount).toBeGreaterThan(0);
-    expect(
-      result.features?.averageDistinctChoiceCountOnSolution,
-    ).toBeGreaterThan(0);
-    expect(result.features?.forcedChoiceRatio).toBeGreaterThanOrEqual(0);
-    expect(result.features?.forcedChoiceRatio).toBeLessThanOrEqual(1);
-    expect(result.features?.noEmptyBottleStateRatio).toBeGreaterThanOrEqual(0);
-    expect(result.features?.noEmptyBottleStateRatio).toBeLessThanOrEqual(1);
   });
 });

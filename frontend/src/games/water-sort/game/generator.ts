@@ -35,15 +35,12 @@ export type WaterSortProblemIdentity = {
 export type WaterSortGeneratedCandidate = {
   attempt: number;
   initialState: WaterSortState;
-  solveResult: WaterSortSolveResult;
   difficultyAnalysis: WaterSortDifficultyAnalysis;
 };
 
 export type WaterSortProblem = WaterSortProblemIdentity & {
   initialState: WaterSortState;
   solutionMoves: WaterSortSolveResult["moves"];
-  searchStatistics: WaterSortSolveResult["statistics"];
-  features: NonNullable<WaterSortSolveResult["features"]>;
   difficultyAnalysis: WaterSortDifficultyAnalysis;
 };
 
@@ -187,15 +184,12 @@ function createProblem(
   identity: WaterSortProblemIdentity,
   initialState: WaterSortState,
   solveResult: WaterSortSolveResult,
-  features: NonNullable<WaterSortSolveResult["features"]>,
   difficultyAnalysis: WaterSortDifficultyAnalysis,
 ): WaterSortProblem {
   return {
     ...identity,
     initialState,
     solutionMoves: solveResult.moves,
-    searchStatistics: solveResult.statistics,
-    features,
     difficultyAnalysis,
   };
 }
@@ -245,7 +239,7 @@ export function restoreWaterSortProblem(
 
   const initialState = findCandidateAtAttempt(identity);
   const solveResult = solveWaterSort(initialState);
-  if (solveResult.status !== "solved" || !solveResult.features) {
+  if (solveResult.status !== "solved") {
     throw new Error(
       "Water sort problem identity references an unsolved candidate",
     );
@@ -256,13 +250,7 @@ export function restoreWaterSortProblem(
     solveResult.moves,
   );
 
-  return createProblem(
-    identity,
-    initialState,
-    solveResult,
-    solveResult.features,
-    difficultyAnalysis,
-  );
+  return createProblem(identity, initialState, solveResult, difficultyAnalysis);
 }
 
 export function generateWaterSortProblem(
@@ -292,7 +280,7 @@ export function generateWaterSortProblem(
     seenStates.add(stateIdentity);
 
     const solveResult = solveWaterSort(initialState, options.solverOptions);
-    if (solveResult.status !== "solved" || !solveResult.features) {
+    if (solveResult.status !== "solved") {
       continue;
     }
 
@@ -303,7 +291,6 @@ export function generateWaterSortProblem(
     const candidate = {
       attempt,
       initialState,
-      solveResult,
       difficultyAnalysis,
     };
     if (options.acceptCandidate && !options.acceptCandidate(candidate)) {
@@ -319,7 +306,6 @@ export function generateWaterSortProblem(
       },
       initialState,
       solveResult,
-      solveResult.features,
       difficultyAnalysis,
     );
   }
