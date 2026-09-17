@@ -1,31 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="24 48 638 344" style="color:#27313a">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="26 50 660 340" style="color:#27313a">
   <defs>
-    <clipPath id="side-a"><path d="M0,0 L225.0,0 L262.5,117.8 A24,24 0 1 0 290.9,152.0 A48,48 0 1 1 311.8,217.9 A24,24 0 1 0 308.4,262.2 L364.9,440 L0,440 Z" clip-rule="evenodd"/></clipPath>
-    <clipPath id="side-z"><path d="M690,0 L225.0,0 L262.5,117.8 A24,24 0 1 0 290.9,152.0 A48,48 0 1 1 311.8,217.9 A24,24 0 1 0 308.4,262.2 L364.9,440 L690,440 Z" clip-rule="evenodd"/></clipPath>
-    <mask id="seam" maskUnits="userSpaceOnUse" x="0" y="0" width="690" height="440">
-      <rect width="690" height="440" fill="#fff"/>
-      <path d="M225.0,0 L262.5,117.8 A24,24 0 1 0 290.9,152.0 A48,48 0 1 1 311.8,217.9 A24,24 0 1 0 308.4,262.2 L364.9,440" fill="none" stroke="#000" stroke-width="16"/>
+    <mask id="socket" maskUnits="userSpaceOnUse" x="0" y="0" width="700" height="440">
+      <rect width="700" height="440" fill="#fff"/>
+      <g fill="none" stroke="#000" stroke-width="128" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M192,102 L262,102 M192,102 L83,338 M262,102 L305,338 M120,272 L310,272"/>
+        <path d="M300,202 L382,202" stroke-width="92"/>
+      </g>
+      <circle cx="382" cy="202" r="56" fill="#000"/>
+    </mask>
+    <mask id="pinch" maskUnits="userSpaceOnUse" x="0" y="0" width="700" height="440">
+      <rect width="700" height="440" fill="#fff"/>
+      <circle cx="352" cy="242" r="16" fill="#000"/>
     </mask>
   </defs>
-  <g mask="url(#seam)">
-    <g clip-path="url(#side-a)">
-      <path d="M150,102 L205,102 L280,338 L80,338 Z"
-            fill="none" stroke="currentColor" stroke-width="84" stroke-linejoin="round"/>
-      <path d="M233.0,190.0 L333.1,174.9"
-            fill="none" stroke="currentColor" stroke-width="70" stroke-linecap="round"/>
-      <circle cx="333.1" cy="174.9" r="48" fill="currentColor"/>
+  <g mask="url(#pinch)" fill="none" stroke="currentColor" stroke-width="84"
+     stroke-linecap="round" stroke-linejoin="round">
+    <g mask="url(#socket)">
+      <path d="M360,102 L596,102 L412,338"/>
+      <path d="M436,338 L634,338"/>
     </g>
-    <g clip-path="url(#side-z)">
-      <path d="M259.1,80.8 A16,16 0 0 1 274.4,60.0 L399.4,60.0 L436.0,175.0 L289.1,175.0 Z" fill="currentColor"/>
-      <circle cx="269.7" cy="140.6" r="24" fill="currentColor"/>
-      <circle cx="301.1" cy="239.4" r="24" fill="currentColor"/>
-      <path d="M360.9,170.0 L380.6,232.0" fill="none"
-            stroke="currentColor" stroke-width="140" stroke-linecap="round"/>
-      <g fill="none" stroke="currentColor" stroke-width="84" stroke-linejoin="round"
-         stroke-linecap="round">
-        <path d="M370,102 L610,102 L455,338"/>
-        <path d="M400,338 L610,338"/>
-      </g>
-    </g>
+    <path d="M192,102 L262,102 M192,102 L83,338 M262,102 L305,338 M120,272 L310,272"/>
+    <path d="M300,202 L382,202" stroke-width="48"/>
+    <circle cx="382" cy="202" r="34" fill="currentColor" stroke="none"/>
   </g>
 </svg>
