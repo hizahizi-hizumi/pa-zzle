@@ -16,9 +16,11 @@ paths:
 ## 例
 
 ```tsx
-// NG
-<Button className="bg-red-500 px-8" />
+// 外観差分は公開APIにする
+<Button className="bg-red-500" /> // NG
+<Button variant="destructive" /> // OK
 
-// OK
-<Button variant="destructive" />
+// 独立したUIは利用側で組み立てない
+<div className="...">...</div> // NG
+<GameCard game={game} /> // OK
 ```
