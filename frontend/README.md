@@ -45,5 +45,3 @@ bun run typecheck
 bun run test
 bun run build
 ```
-
-<!-- temporary hook-fix trigger -->
