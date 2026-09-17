@@ -138,7 +138,7 @@ export function WaterSortPlay({
               variant="ghost"
               size="icon-lg"
               className="size-12 rounded-full border bg-background shadow-sm"
-              aria-label="元に戻す"
+              aria-label="待った"
               onClick={undo}
               disabled={!canUndo}
             >
@@ -168,7 +168,7 @@ function DeadlockNotice({
       <div className="text-center">
         <p className="text-sm font-semibold">手詰まりです</p>
         <p className="text-xs text-muted-foreground">
-          元に戻すか、最初からやり直せます。
+          待ったで1手戻すか、最初からやり直せます。
         </p>
       </div>
       <div className="mt-1 flex justify-center gap-1">
@@ -179,7 +179,7 @@ function DeadlockNotice({
           disabled={!canUndo}
         >
           <Undo2 />
-          元に戻す
+          待った
         </Button>
         <Button type="button" variant="outline" onClick={restart}>
           <RotateCcw />
@@ -310,7 +310,7 @@ function WaterSortResultScreen({
               label="最短との差"
               value={formatMoveDelta(result.moveDelta)}
             />
-            <DetailMetric label="元に戻す" value={`${result.undoCount}回`} />
+            <DetailMetric label="待った" value={`${result.undoCount}回`} />
             <DetailMetric label="やり直し" value={`${result.restartCount}回`} />
             <DetailMetric
               label="問題難易度"
