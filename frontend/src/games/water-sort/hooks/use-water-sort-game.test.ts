@@ -6,7 +6,7 @@ import {
   listWaterSortLegalMoves,
 } from "@/games/water-sort/game/rules";
 import { solveWaterSort } from "@/games/water-sort/game/solver";
-import { useWaterSortGame } from "./use-water-sort-game";
+import { isWaterSortDeadlocked, useWaterSortGame } from "./use-water-sort-game";
 
 afterEach(() => {
   cleanup();
@@ -25,6 +25,49 @@ function solveCurrentProblem(result: { current: HookResult }) {
   expect(solved.status).toBe("solved");
   for (const move of solved.moves) performMove(result, move);
 }
+
+describe("isWaterSortDeadlocked", () => {
+  test("未クリアでクリアへ到達できない盤面を手詰まりと判定すること", () => {
+    const deadlocked = isWaterSortDeadlocked([
+      [0, 0, 0, 0],
+      [1, 1, 1],
+      [2, 2, 2],
+      [3, 3, 3],
+    ]);
+
+    expect(deadlocked).toBe(true);
+  });
+
+  test("同色を往復できるだけの盤面を手詰まりと判定すること", () => {
+    const deadlocked = isWaterSortDeadlocked([
+      [0, 1, 2, 2],
+      [3, 1, 4, 4],
+      [1, 5, 6, 6],
+      [7, 3],
+      [6, 3, 2, 2],
+      [4, 1],
+      [0, 4, 6],
+      [3, 7, 7, 7],
+      [5, 5, 5],
+      [0, 0],
+    ]);
+
+    expect(deadlocked).toBe(true);
+  });
+
+  test("クリアへ到達できる盤面とクリア盤面を手詰まりにしないこと", () => {
+    const solvable = isWaterSortDeadlocked([
+      [0, 0, 1, 1],
+      [1, 1, 0, 0],
+      [],
+      [],
+    ]);
+    const cleared = isWaterSortDeadlocked([[0, 0, 0, 0], []]);
+
+    expect(solvable).toBe(false);
+    expect(cleared).toBe(false);
+  });
+});
 
 describe("useWaterSortGame", () => {
   test.each(["easy", "normal", "hard"] as const)(

@@ -25,6 +25,7 @@ const baseProps = {
   moveCount: 7,
   undoCount: 2,
   canUndo: true,
+  isDeadlocked: false,
   sourceBottleIndex: null,
   operation: null,
   result: null,
@@ -73,6 +74,88 @@ describe("WaterSortPlay", () => {
     fireEvent.click(bottle);
     expect((bottle as HTMLButtonElement).disabled).toBe(false);
     expect(selectBottle).toHaveBeenCalledWith(1);
+  });
+
+  test("手詰まり時だけ進行不能を案内し、元に戻す・最初からへつなぐこと", () => {
+    const undo = vi.fn();
+    const restart = vi.fn();
+    const { rerender } = render(
+      <WaterSortPlay
+        {...baseProps}
+        isDeadlocked
+        undo={undo}
+        restart={restart}
+      />,
+    );
+    expect(screen.getByRole("status").textContent).toContain("手詰まりです");
+    fireEvent.click(screen.getByRole("button", { name: "元に戻す" }));
+    fireEvent.click(screen.getByRole("button", { name: "最初から" }));
+    expect(undo).toHaveBeenCalledOnce();
+    expect(restart).toHaveBeenCalledOnce();
+    rerender(
+      <WaterSortPlay
+        {...baseProps}
+        isDeadlocked={false}
+        undo={undo}
+        restart={restart}
+      />,
+    );
+    expect(screen.queryByText("手詰まりです")).toBeNull();
+  });
+
+  test("注水演出が完了してから手詰まりを案内すること", async () => {
+    let resolveAnimation: (() => void) | undefined;
+    const animationFinished = new Promise<void>((resolve) => {
+      resolveAnimation = resolve;
+    });
+    Object.defineProperty(HTMLElement.prototype, "animate", {
+      configurable: true,
+      value: vi.fn(
+        () =>
+          ({
+            finished: animationFinished,
+            cancel: vi.fn(),
+          }) as unknown as Animation,
+      ),
+    });
+    const { rerender } = render(
+      <WaterSortPlay
+        {...baseProps}
+        state={[[0, 1], []]}
+        sourceBottleIndex={0}
+      />,
+    );
+
+    rerender(
+      <WaterSortPlay
+        {...baseProps}
+        state={[[0], [1]]}
+        isDeadlocked
+        operation={{
+          id: 1,
+          type: "poured",
+          sourceBottleIndex: 0,
+          destinationBottleIndex: 1,
+          stateBefore: [[0, 1], []],
+          stateAfter: [[0], [1]],
+          isClearingMove: false,
+        }}
+      />,
+    );
+
+    expect(screen.queryByText("手詰まりです")).toBeNull();
+
+    await act(async () => {
+      resolveAnimation?.();
+      await animationFinished;
+    });
+
+    expect(screen.getByRole("status").textContent).toContain("手詰まりです");
+  });
+
+  test("合法手が残っている通常時は手詰まりを案内しないこと", () => {
+    render(<WaterSortPlay {...baseProps} />);
+    expect(screen.queryByText("手詰まりです")).toBeNull();
   });
 
   test("元に戻すをプレイ中の直接操作として通知すること", () => {

@@ -12,6 +12,7 @@ import {
   applyWaterSortMove,
   listWaterSortLegalMoves,
 } from "@/games/water-sort/game/rules";
+import { solveWaterSort } from "@/games/water-sort/game/solver";
 import {
   isCompleteWaterSortBottle,
   isWaterSortCleared,
@@ -61,6 +62,19 @@ type WaterSortPlayState = {
   progress: WaterSortProgress;
   operation: WaterSortOperation | null;
 };
+
+const DEADLOCK_SEARCH_STATE_LIMIT = 10_000;
+
+export function isWaterSortDeadlocked(state: WaterSortState): boolean {
+  if (isWaterSortCleared(state)) {
+    return false;
+  }
+
+  const solveResult = solveWaterSort(state, {
+    maxExpandedStates: DEADLOCK_SEARCH_STATE_LIMIT,
+  });
+  return solveResult.status === "unsolvable";
+}
 
 function generateProblem(
   difficulty: WaterSortDifficulty,
@@ -247,6 +261,10 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
 
   const elapsedMs = Math.max(0, (play.finishedAt ?? now) - play.startedAt);
   const optimalMoveCount = play.problem.solutionMoves.length;
+  const isDeadlocked = useMemo(
+    () => play.progress === "playing" && isWaterSortDeadlocked(play.state),
+    [play.progress, play.state],
+  );
   const problemDifficulty = assessWaterSortDifficulty(
     play.problem.difficultyAnalysis,
   );
@@ -286,6 +304,7 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
     optimalMoveCount,
     problemDifficulty,
     canUndo: play.progress === "playing" && play.history.length > 0,
+    isDeadlocked,
     sourceBottleIndex: play.sourceBottleIndex,
     operation: play.operation,
     result,

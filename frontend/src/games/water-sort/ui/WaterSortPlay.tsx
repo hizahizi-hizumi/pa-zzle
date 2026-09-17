@@ -34,6 +34,7 @@ type WaterSortPlayProps = {
   moveCount: number;
   undoCount: number;
   canUndo: boolean;
+  isDeadlocked: boolean;
   sourceBottleIndex: number | null;
   operation: WaterSortOperation | null;
   result: WaterSortResult | null;
@@ -56,6 +57,7 @@ export function WaterSortPlay({
   moveCount,
   undoCount,
   canUndo,
+  isDeadlocked,
   sourceBottleIndex,
   operation,
   result,
@@ -67,6 +69,16 @@ export function WaterSortPlay({
   onChangeDifficulty,
   onBackToHome,
 }: WaterSortPlayProps) {
+  const [completedPourOperationId, setCompletedPourOperationId] = useState<
+    number | null
+  >(null);
+  const activePourOperationId =
+    operation?.type === "poured" ? operation.id : null;
+  const isPourAnimating =
+    activePourOperationId !== null &&
+    completedPourOperationId !== activePourOperationId;
+  const showDeadlockNotice = isDeadlocked && !isPourAnimating;
+
   if (progress === "result" && status === "cleared" && result) {
     return (
       <WaterSortResultScreen
@@ -112,23 +124,69 @@ export function WaterSortPlay({
           operation={operation}
           onSelectBottle={selectBottle}
           interactionDisabled={progress !== "playing"}
+          onPourComplete={setCompletedPourOperationId}
           onClearingPourComplete={completeClearingPour}
         />
       </main>
-      <footer className="flex h-16 shrink-0 items-center justify-center px-4">
+      <footer className="shrink-0 px-4 pb-2">
+        {showDeadlockNotice ? (
+          <DeadlockNotice canUndo={canUndo} undo={undo} restart={restart} />
+        ) : (
+          <div className="flex h-14 items-center justify-center">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-lg"
+              className="size-12 rounded-full border bg-background shadow-sm"
+              aria-label="元に戻す"
+              onClick={undo}
+              disabled={!canUndo}
+            >
+              <Undo2 className="size-5" />
+            </Button>
+          </div>
+        )}
+      </footer>
+    </section>
+  );
+}
+
+function DeadlockNotice({
+  canUndo,
+  undo,
+  restart,
+}: {
+  canUndo: boolean;
+  undo: () => void;
+  restart: () => void;
+}) {
+  return (
+    <div
+      role="status"
+      className="mx-auto max-w-md rounded-xl border bg-muted/50 px-3 py-2"
+    >
+      <div className="text-center">
+        <p className="text-sm font-semibold">手詰まりです</p>
+        <p className="text-xs text-muted-foreground">
+          元に戻すか、最初からやり直せます。
+        </p>
+      </div>
+      <div className="mt-1 flex justify-center gap-1">
         <Button
           type="button"
           variant="ghost"
-          size="icon-lg"
-          className="size-12 rounded-full border bg-background shadow-sm"
-          aria-label="元に戻す"
           onClick={undo}
           disabled={!canUndo}
         >
-          <Undo2 className="size-5" />
+          <Undo2 />
+          元に戻す
         </Button>
-      </footer>
-    </section>
+        <Button type="button" variant="outline" onClick={restart}>
+          <RotateCcw />
+          最初から
+        </Button>
+      </div>
+    </div>
   );
 }
 
