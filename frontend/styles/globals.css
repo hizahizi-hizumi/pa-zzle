@@ -22,6 +22,10 @@
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-subtle: var(--brand-subtle);
+  --color-brand: var(--brand);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -43,6 +47,10 @@
 
 :root {
   --radius: 0.625rem;
+  --brand: #cbd1d8;
+  --brand-subtle: #eef1f4;
+  --brand-strong: #aeb8c2;
+  --brand-foreground: #27313a;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
