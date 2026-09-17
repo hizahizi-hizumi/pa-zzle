@@ -37,7 +37,7 @@ function PlayableWaterSort({
 
 function InvalidDifficulty() {
   return (
-    <Card className="mx-auto max-w-form">
+    <Card className="mx-auto max-w-xl">
       <CardHeader>
         <CardTitle>この難易度は選べません</CardTitle>
       </CardHeader>

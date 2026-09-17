@@ -30,7 +30,7 @@ export function WaterSortBoard({
       aria-label="カラーウォーターソート盤面"
     >
       {bottles.length === 0 && (
-        <p className="self-center text-supporting text-muted-foreground">
+        <p className="self-center text-sm text-muted-foreground">
           盤面データを接続すると、ここにボトルが表示されます。
         </p>
       )}
@@ -48,7 +48,7 @@ export function WaterSortBoard({
 
         return (
           <div key={bottle.id} className="flex flex-col items-center gap-2">
-            <span className="h-5 text-meta font-control text-muted-foreground">
+            <span className="h-5 text-xs font-medium text-muted-foreground">
               {selection === "source" && "注ぎ元"}
               {selection === "target" && "注ぎ先"}
             </span>
@@ -57,7 +57,7 @@ export function WaterSortBoard({
               aria-label={`${bottle.label}: ${contents}`}
               aria-pressed={selection !== null}
               onClick={() => onSelectBottle(bottle.id)}
-              className="flex h-36 w-16 flex-col-reverse overflow-hidden rounded-b-3xl border-2 border-t-0 bg-background p-1 shadow-sm transition ease-feedback focus-visible:outline-none motion-reduce:transition-none motion-reduce:data-[selected=source]:translate-y-0 focus-visible:ring-2 focus-visible:ring-ring data-[selected=source]:-translate-y-2 data-[selected=source]:ring-2 data-[selected=source]:ring-ring data-[selected=target]:ring-2 data-[selected=target]:ring-ring"
+              className="flex h-36 w-16 flex-col-reverse overflow-hidden rounded-b-3xl border-2 border-t-0 bg-background p-1 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[selected=source]:-translate-y-2 data-[selected=source]:ring-2 data-[selected=source]:ring-ring data-[selected=target]:ring-2 data-[selected=target]:ring-ring"
               data-selected={selection ?? undefined}
             >
               {bottle.layers.map((layer) => (
@@ -72,7 +72,7 @@ export function WaterSortBoard({
                 </span>
               ))}
             </button>
-            <span className="text-meta text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               {bottle.label}
             </span>
           </div>

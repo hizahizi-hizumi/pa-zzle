@@ -32,19 +32,17 @@ export function SudokuPlay({
 }: SudokuPlayProps) {
   if (status === "cleared") {
     return (
-      <Card className="mx-auto max-w-form">
+      <Card className="mx-auto max-w-xl">
         <CardHeader>
-          <CardTitle className="text-section-title">クリア</CardTitle>
+          <CardTitle className="text-2xl">クリア</CardTitle>
           <CardDescription>
             {getSudokuDifficultyLabel(difficulty)}のナンプレをクリアしました。
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <p className="break-all font-mono text-meta text-muted-foreground">
-            問題シード: {seed}
-          </p>
+        <CardContent className="text-sm text-muted-foreground">
+          <p className="break-all font-mono">問題シード: {seed}</p>
         </CardContent>
-        <CardFooter className="flex flex-wrap gap-control-group">
+        <CardFooter className="flex flex-wrap gap-3">
           <Button onClick={retry}>もう一度</Button>
           <Button variant="outline" onClick={onChangeDifficulty}>
             難易度を変える
@@ -55,7 +53,7 @@ export function SudokuPlay({
   }
 
   return (
-    <Card className="mx-auto max-w-form">
+    <Card className="mx-auto max-w-xl">
       <CardHeader>
         <CardTitle>ナンプレ</CardTitle>
         <CardDescription>
@@ -63,14 +61,14 @@ export function SudokuPlay({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="rounded-lg border border-dashed bg-muted/40 p-8 text-center text-supporting text-muted-foreground">
+        <div className="rounded-lg border border-dashed bg-muted/40 p-8 text-center text-sm text-muted-foreground">
           プレイ領域
         </div>
-        <p className="break-all font-mono text-meta text-muted-foreground">
+        <p className="break-all font-mono text-xs text-muted-foreground">
           問題シード: {seed}
         </p>
       </CardContent>
-      <CardFooter className="flex flex-wrap gap-control-group">
+      <CardFooter className="flex flex-wrap gap-3">
         <Button onClick={clear}>クリア確認</Button>
         <Button variant="outline" onClick={onChangeDifficulty}>
           難易度を変える
