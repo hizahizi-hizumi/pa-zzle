@@ -1,6 +1,8 @@
-# 再現性検証例
+# ゲーム選択ピクトグラム PoC
 
-`/design-game-pictogram` の方法を、既に調整済みの2ゲームと未調整の1ゲームへ適用した検証例。
+Issue #90 で、ゲーム選択用ピクトグラムを個別の職人調整ではなく、再現可能な設計・比較・収束手順へ落とし込めるか検証した記録。
+
+この文書と `ゲーム選択ピクトグラムPoC/` 配下の SVG は **PoC の検証成果物** であり、今後の制作で模倣すべき完成見本ではない。再利用する手順・評価方法・スクリプトは `.claude/skills/design-game-pictogram/` を正とする。
 
 ## 共通条件
 
@@ -10,10 +12,10 @@
 - gradient / filter / 外部画像 / `<text>` を使わない
 - ゲーム本体の盤面を縮小コピーしない
 
-検査コマンド:
+検査例:
 
 ```sh
-for svg in .claude/skills/design-game-pictogram/examples/*.svg; do
+for svg in docs/立ち上げ/ゲーム選択ピクトグラムPoC/*.svg; do
   python3 .claude/skills/design-game-pictogram/scripts/check_svg.py \
     "$svg" \
     --max-colors 2 \
@@ -24,15 +26,15 @@ for svg in .claude/skills/design-game-pictogram/examples/*.svg; do
 done
 ```
 
-比較シート:
+比較シート例:
 
 ```sh
 python3 .claude/skills/design-game-pictogram/scripts/make_review_sheet.py \
   --output /tmp/pictogram-review.html \
   --size 112 \
-  .claude/skills/design-game-pictogram/examples/water-sort.svg \
-  .claude/skills/design-game-pictogram/examples/sudoku.svg \
-  .claude/skills/design-game-pictogram/examples/parking-jam.svg
+  docs/立ち上げ/ゲーム選択ピクトグラムPoC/water-sort.svg \
+  docs/立ち上げ/ゲーム選択ピクトグラムPoC/sudoku.svg \
+  docs/立ち上げ/ゲーム選択ピクトグラムPoC/parking-jam.svg
 ```
 
 ## ウォーターソート
@@ -49,6 +51,8 @@ python3 .claude/skills/design-game-pictogram/scripts/make_review_sheet.py \
 - 1種類の灰色の水
 - 水量差は形と余白で表現
 
+検証用 SVG: `ゲーム選択ピクトグラムPoC/water-sort.svg`
+
 ## ナンプレ
 
 視覚語彙:
@@ -63,6 +67,8 @@ python3 .claude/skills/design-game-pictogram/scripts/make_review_sheet.py \
 - 数字はフォント依存を避け、格子線と同じ線幅の幾何形状で描く
 
 PoC中に数字が格子線へ視覚的に負けたため、意味上必要な副要素の光学的重量を確認する必要があることが分かった。
+
+検証用 SVG: `ゲーム選択ピクトグラムPoC/sudoku.svg`
 
 ## パーキングジャム: 未調整ゲームでの再現性検証
 
@@ -80,7 +86,7 @@ PoC中に数字が格子線へ視覚的に負けたため、意味上必要な�
 
 #### A: 構造優先
 
-`parking-jam-a-structure.svg`
+`ゲーム選択ピクトグラムPoC/parking-jam-a-structure.svg`
 
 仮説:
 
@@ -99,7 +105,7 @@ PoC中に数字が格子線へ視覚的に負けたため、意味上必要な�
 
 #### B: 出口との関係優先
 
-`parking-jam-b-relation.svg`
+`ゲーム選択ピクトグラムPoC/parking-jam-b-relation.svg`
 
 仮説:
 
@@ -118,7 +124,7 @@ PoC中に数字が格子線へ視覚的に負けたため、意味上必要な�
 
 #### C: 余白優先
 
-`parking-jam-c-whitespace.svg`
+`ゲーム選択ピクトグラムPoC/parking-jam-c-whitespace.svg`
 
 仮説:
 
@@ -143,7 +149,7 @@ A / B / C を全体採用せず、評価軸ごとに良かった部分を組み�
 - Bから: 出口へ向く車両だけを灰色面にする関係表現
 - Cから: 出口周辺の余白と、灰色面を小さくする考え方
 
-最初の合成結果を `parking-jam-composite-v1.svg` として残した。
+最初の合成結果を `ゲーム選択ピクトグラムPoC/parking-jam-composite-v1.svg` として残した。
 
 ### 観察 → 修正
 
@@ -162,7 +168,7 @@ A / B / C を全体採用せず、評価軸ごとに良かった部分を組み�
 - 障害車両2台は維持する
 - 外枠全体も少し内側へ寄せ、余白量を整える
 
-この局所修正後を `parking-jam.svg` とした。
+この局所修正後を `ゲーム選択ピクトグラムPoC/parking-jam.svg` とした。
 
 ### 収束判断
 
@@ -174,4 +180,14 @@ A / B / C を全体採用せず、評価軸ごとに良かった部分を組み�
 - 光学的重量: 合成初版より灰色面が抑えられ、一覧比較で突出しにくい
 - 機械検査: 同じ `check_svg.py` と同じ制約でPASSする
 
-この結果は「`parking-jam.svg` が最終デザインとして正解」であることではない。**未調整ゲームでも、複数仮説の発散、比較、部分採用、合成、観察、局所修正、収束までをゲーム専用の手順分岐なしで再実行できた**ことを再現性の証拠とする。
+この結果は `parking-jam.svg` が完成見本として正しいことを示さない。**未調整ゲームでも、複数仮説の発散、比較、部分採用、合成、観察、局所修正、収束までをゲーム専用の手順分岐なしで再実行できた**ことを再現性の証拠とする。
+
+## PoC から Skill へ残したもの
+
+PoC 固有の形状や途中案はこの文書側に残し、次回以降も再利用するものだけを `.claude/skills/design-game-pictogram/` に残した。
+
+- 視覚語彙を抽出する手順
+- 複数候補を意図的に発散させる手順
+- 評価軸に基づく比較、部分採用、合成、再分岐、収束
+- 一般研究・実践例を整理した `references/`
+- SVG の開発用検査と実サイズ比較を行う `scripts/`
