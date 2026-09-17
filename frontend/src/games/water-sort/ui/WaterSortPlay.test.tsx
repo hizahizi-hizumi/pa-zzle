@@ -1,9 +1,19 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { WaterSortPlay } from "./WaterSortPlay";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  delete (HTMLElement.prototype as { animate?: Element["animate"] }).animate;
+  vi.restoreAllMocks();
+});
 
 const baseProps = {
   difficulty: "normal" as const,
@@ -140,6 +150,7 @@ describe("WaterSortPlay", () => {
     );
 
     expect(screen.getByRole("heading", { name: "クリア!" })).toBeTruthy();
+    expect(screen.getByText("カラーウォーターソート")).toBeTruthy();
     expect(screen.getByText("01:05")).toBeTruthy();
     expect(screen.getByText("12")).toBeTruthy();
     expect(screen.getByText("10")).toBeTruthy();
@@ -172,6 +183,64 @@ describe("WaterSortPlay", () => {
 
     expect(screen.getByText("パーフェクト！")).toBeTruthy();
     expect(screen.getByText("100")).toBeTruthy();
+  });
+
+  test("最後の注水演出が完了してから結果画面を表示すること", async () => {
+    let resolveAnimation: (() => void) | undefined;
+    const animationFinished = new Promise<void>((resolve) => {
+      resolveAnimation = resolve;
+    });
+    Object.defineProperty(HTMLElement.prototype, "animate", {
+      configurable: true,
+      value: vi.fn(
+        () =>
+          ({
+            finished: animationFinished,
+            cancel: vi.fn(),
+          }) as unknown as Animation,
+      ),
+    });
+    const result = {
+      elapsedMs: 65000,
+      moveCount: 12,
+      undoCount: 0,
+      restartCount: 0,
+      optimalMoveCount: 12,
+      moveDelta: 0,
+      score: 100,
+    };
+    const { rerender } = render(
+      <WaterSortPlay
+        {...baseProps}
+        state={[[0], [0, 0, 0]]}
+        sourceBottleIndex={0}
+        selectableBottleIndexes={new Set([0, 1])}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "ボトル 2: 赤、赤、赤" }),
+    );
+    rerender(
+      <WaterSortPlay
+        {...baseProps}
+        status="cleared"
+        state={[[], [0, 0, 0, 0]]}
+        sourceBottleIndex={null}
+        selectableBottleIndexes={new Set()}
+        canUndo={false}
+        result={result}
+      />,
+    );
+
+    expect(screen.queryByRole("heading", { name: "クリア!" })).toBeNull();
+
+    await act(async () => {
+      resolveAnimation?.();
+      await animationFinished;
+    });
+
+    expect(screen.getByRole("heading", { name: "クリア!" })).toBeTruthy();
   });
 
   test("クリア後に次の問題・再挑戦・難易度変更・ホーム移動を通知すること", () => {

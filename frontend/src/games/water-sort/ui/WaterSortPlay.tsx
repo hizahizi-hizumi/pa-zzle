@@ -7,7 +7,13 @@ import {
   Trophy,
   Undo2,
 } from "lucide-react";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -58,7 +64,18 @@ export function WaterSortPlay({
   onChangeDifficulty,
   onBackToHome,
 }: WaterSortPlayProps) {
-  if (status === "cleared" && result) {
+  const [isWaitingForClearAnimation, setIsWaitingForClearAnimation] =
+    useState(false);
+  const handleClearingPourStart = useCallback(
+    () => setIsWaitingForClearAnimation(true),
+    [],
+  );
+  const handleClearingPourComplete = useCallback(
+    () => setIsWaitingForClearAnimation(false),
+    [],
+  );
+
+  if (status === "cleared" && result && !isWaitingForClearAnimation) {
     return (
       <WaterSortResultScreen
         difficulty={difficulty}
@@ -103,6 +120,9 @@ export function WaterSortPlay({
           sourceBottleIndex={sourceBottleIndex}
           selectableBottleIndexes={selectableBottleIndexes}
           onSelectBottle={selectBottle}
+          interactionDisabled={status === "cleared"}
+          onClearingPourStart={handleClearingPourStart}
+          onClearingPourComplete={handleClearingPourComplete}
         />
       </main>
 
@@ -199,7 +219,10 @@ function WaterSortResultScreen({
       <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-5">
         <div className="text-center">
           <ClearMark className={scorePresentation.markClassName} />
-          <h1 className="mt-5 text-3xl font-bold tracking-tight">クリア!</h1>
+          <p className="mt-4 text-sm font-semibold tracking-tight">
+            カラーウォーターソート
+          </p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight">クリア!</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {getWaterSortDifficultyLabel(difficulty)}
           </p>

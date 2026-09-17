@@ -2,9 +2,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { applyWaterSortMove } from "@/games/water-sort/game/rules";
-import type {
-  WaterSortBottle,
-  WaterSortState,
+import {
+  isWaterSortCleared,
+  type WaterSortBottle,
+  type WaterSortState,
 } from "@/games/water-sort/game/state";
 
 const waterSortColors = [
@@ -25,8 +26,9 @@ const waterSortColors = [
 const bottleSlots = [0, 1, 2, 3] as const;
 
 const pourAnimationDurationMs = 1600;
-const pourRevealDelayMs = 950;
+const pourTransferDelayMs = 860;
 const sourcePourLayerZIndex = 70;
+const streamPourLayerZIndex = 69;
 const destinationPourLayerZIndex = 65;
 
 type BottleRect = {
@@ -43,6 +45,9 @@ type PourPresentation = {
   sourceBefore: WaterSortBottle;
   sourceAfter: WaterSortBottle;
   destinationBefore: WaterSortBottle;
+  destinationAfter: WaterSortBottle;
+  pourColorIndex: number;
+  isClearingMove: boolean;
   sourceRect: BottleRect;
   destinationRect: BottleRect;
 };
@@ -52,6 +57,9 @@ type WaterSortBoardProps = {
   sourceBottleIndex: number | null;
   selectableBottleIndexes: ReadonlySet<number>;
   onSelectBottle: (bottleIndex: number) => void;
+  interactionDisabled?: boolean;
+  onClearingPourStart?: () => void;
+  onClearingPourComplete?: () => void;
 };
 
 export function WaterSortBoard({
@@ -59,6 +67,9 @@ export function WaterSortBoard({
   sourceBottleIndex,
   selectableBottleIndexes,
   onSelectBottle,
+  interactionDisabled = false,
+  onClearingPourStart,
+  onClearingPourComplete,
 }: WaterSortBoardProps) {
   const bottleRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const nextPresentationId = useRef(0);
@@ -83,6 +94,10 @@ export function WaterSortBoard({
   };
 
   const selectBottle = (bottleIndex: number) => {
+    if (interactionDisabled) {
+      return;
+    }
+
     finishPresentationsForBottle(bottleIndex);
 
     if (sourceBottleIndex === null || bottleIndex === sourceBottleIndex) {
@@ -123,13 +138,23 @@ export function WaterSortBoard({
       return;
     }
 
+    const sourceBefore = state[sourceBottleIndex] ?? [];
+    const pourColorIndex = sourceBefore[sourceBefore.length - 1];
+    if (pourColorIndex === undefined) {
+      onSelectBottle(bottleIndex);
+      return;
+    }
+
     const presentation: PourPresentation = {
       id: nextPresentationId.current,
       sourceBottleIndex,
       destinationBottleIndex: bottleIndex,
-      sourceBefore: state[sourceBottleIndex] ?? [],
+      sourceBefore,
       sourceAfter: nextState[sourceBottleIndex] ?? [],
       destinationBefore: state[bottleIndex] ?? [],
+      destinationAfter: nextState[bottleIndex] ?? [],
+      pourColorIndex,
+      isClearingMove: isWaterSortCleared(nextState),
       sourceRect: captureRect(sourceBottle),
       destinationRect: captureRect(destinationBottle),
     };
@@ -145,11 +170,17 @@ export function WaterSortBoard({
       ),
       presentation,
     ]);
+    if (presentation.isClearingMove) {
+      onClearingPourStart?.();
+    }
     onSelectBottle(bottleIndex);
   };
 
-  const animatedSourceIndexes = new Set(
-    pourPresentations.map((presentation) => presentation.sourceBottleIndex),
+  const animatedBottleIndexes = new Set(
+    pourPresentations.flatMap((presentation) => [
+      presentation.sourceBottleIndex,
+      presentation.destinationBottleIndex,
+    ]),
   );
   const layout = getBoardLayout(state.length);
 
@@ -174,7 +205,7 @@ export function WaterSortBoard({
                   .map((colorIndex) => getColorView(colorIndex).label)
                   .join("、");
           const isSource = bottleIndex === sourceBottleIndex;
-          const isAnimatedSource = animatedSourceIndexes.has(bottleIndex);
+          const isAnimated = animatedBottleIndexes.has(bottleIndex);
 
           return (
             <button
@@ -186,9 +217,10 @@ export function WaterSortBoard({
               aria-label={`${bottleLabel}: ${contents}`}
               aria-pressed={isSource}
               onClick={() => selectBottle(bottleIndex)}
-              className="group relative aspect-[0.36] w-full origin-top cursor-pointer touch-manipulation rounded-b-[1.45rem] transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 data-[selected=true]:-translate-y-2"
+              className="group relative aspect-[0.36] w-full origin-top cursor-pointer touch-manipulation rounded-b-[1.45rem] transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4"
               data-selected={isSource || undefined}
-              style={{ visibility: isAnimatedSource ? "hidden" : undefined }}
+              disabled={interactionDisabled}
+              style={{ visibility: isAnimated ? "hidden" : undefined }}
             >
               <BottleVisual bottle={bottle} />
             </button>
@@ -201,6 +233,7 @@ export function WaterSortBoard({
           key={presentation.id}
           presentation={presentation}
           onFinish={finishPresentation}
+          onClearingPourComplete={onClearingPourComplete}
         />
       ))}
     </>
@@ -210,20 +243,29 @@ export function WaterSortBoard({
 function PourPresentationLayer({
   presentation,
   onFinish,
+  onClearingPourComplete,
 }: {
   presentation: PourPresentation;
   onFinish: (presentationId: number) => void;
+  onClearingPourComplete?: () => void;
 }) {
   const sourceRef = useRef<HTMLDivElement>(null);
   const destinationRef = useRef<HTMLDivElement>(null);
+  const streamRef = useRef<HTMLDivElement>(null);
   const [sourceBottle, setSourceBottle] = useState(presentation.sourceBefore);
-  const [showDestinationSnapshot, setShowDestinationSnapshot] = useState(true);
+  const [destinationBottle, setDestinationBottle] = useState(
+    presentation.destinationBefore,
+  );
 
   useEffect(() => {
     const sourceElement = sourceRef.current;
     const destinationElement = destinationRef.current;
+    const streamElement = streamRef.current;
     if (!sourceElement?.animate) {
       onFinish(presentation.id);
+      if (presentation.isClearingMove) {
+        onClearingPourComplete?.();
+      }
       return;
     }
 
@@ -234,21 +276,21 @@ function PourPresentationLayer({
     const direction = deltaX >= 0 ? 1 : -1;
     let active = true;
 
-    const revealTimer = window.setTimeout(() => {
+    const transferTimer = window.setTimeout(() => {
       if (!active) {
         return;
       }
       setSourceBottle(presentation.sourceAfter);
-      setShowDestinationSnapshot(false);
+      setDestinationBottle(presentation.destinationAfter);
       destinationElement?.animate?.(
         [
           { transform: "scale(1)" },
-          { transform: "scale(1.025)" },
+          { transform: "scale(1.02)" },
           { transform: "scale(1)" },
         ],
-        { duration: 320, easing: "ease-out" },
+        { duration: 280, easing: "ease-out" },
       );
-    }, pourRevealDelayMs);
+    }, pourTransferDelayMs);
 
     const sourceAnimation = sourceElement.animate(
       [
@@ -258,28 +300,28 @@ function PourPresentationLayer({
           easing: "ease-out",
         },
         {
-          transform: "translate(0, -8px) rotate(0deg)",
-          offset: 0.08,
+          transform: "translate(0, -4px) rotate(0deg)",
+          offset: 0.06,
           easing: "cubic-bezier(.22,.61,.36,1)",
         },
         {
           transform: `translate(${deltaX}px, ${hoverY}px) rotate(0deg)`,
-          offset: 0.23,
+          offset: 0.2,
           easing: "ease-in-out",
         },
         {
-          transform: `translate(${deltaX}px, ${hoverY}px) rotate(${direction * 16}deg)`,
-          offset: 0.34,
-          easing: "linear",
+          transform: `translate(${deltaX}px, ${hoverY}px) rotate(${direction * 68}deg)`,
+          offset: 0.32,
+          easing: "ease-out",
         },
         {
-          transform: `translate(${deltaX}px, ${hoverY}px) rotate(${direction * 16}deg)`,
-          offset: 0.72,
-          easing: "ease-in-out",
+          transform: `translate(${deltaX}px, ${hoverY}px) rotate(${direction * 68}deg)`,
+          offset: 0.76,
+          easing: "ease-in",
         },
         {
           transform: `translate(${deltaX}px, ${hoverY}px) rotate(0deg)`,
-          offset: 0.82,
+          offset: 0.86,
           easing: "cubic-bezier(.22,.61,.36,1)",
         },
         { transform: "translate(0, 0) rotate(0deg)", offset: 1 },
@@ -290,10 +332,26 @@ function PourPresentationLayer({
       },
     );
 
+    const streamAnimation = streamElement?.animate?.(
+      [
+        { opacity: 0, transform: "scaleY(0.15)", offset: 0 },
+        { opacity: 0, transform: "scaleY(0.15)", offset: 0.32 },
+        { opacity: 0.9, transform: "scaleY(1)", offset: 0.38 },
+        { opacity: 0.9, transform: "scaleY(1)", offset: 0.7 },
+        { opacity: 0, transform: "scaleY(0.35)", offset: 0.77 },
+        { opacity: 0, transform: "scaleY(0.15)", offset: 1 },
+      ],
+      { duration: pourAnimationDurationMs, easing: "linear" },
+    );
+
     void sourceAnimation.finished.then(
       () => {
-        if (active) {
-          onFinish(presentation.id);
+        if (!active) {
+          return;
+        }
+        onFinish(presentation.id);
+        if (presentation.isClearingMove) {
+          onClearingPourComplete?.();
         }
       },
       () => undefined,
@@ -301,10 +359,11 @@ function PourPresentationLayer({
 
     return () => {
       active = false;
-      window.clearTimeout(revealTimer);
+      window.clearTimeout(transferTimer);
       sourceAnimation.cancel();
+      streamAnimation?.cancel();
     };
-  }, [onFinish, presentation]);
+  }, [onClearingPourComplete, onFinish, presentation]);
 
   return createPortal(
     <>
@@ -316,19 +375,23 @@ function PourPresentationLayer({
       >
         <BottleVisual bottle={sourceBottle} />
       </div>
-      {showDestinationSnapshot && (
-        <div
-          ref={destinationRef}
-          aria-hidden="true"
-          className="group pointer-events-none fixed aspect-[0.36] rounded-b-[1.45rem]"
-          style={getOverlayStyle(
-            presentation.destinationRect,
-            destinationPourLayerZIndex,
-          )}
-        >
-          <BottleVisual bottle={presentation.destinationBefore} />
-        </div>
-      )}
+      <div
+        ref={streamRef}
+        aria-hidden="true"
+        className="pointer-events-none fixed origin-top rounded-full opacity-0 will-change-transform"
+        style={getPourStreamStyle(presentation)}
+      />
+      <div
+        ref={destinationRef}
+        aria-hidden="true"
+        className="group pointer-events-none fixed aspect-[0.36] rounded-b-[1.45rem]"
+        style={getOverlayStyle(
+          presentation.destinationRect,
+          destinationPourLayerZIndex,
+        )}
+      >
+        <BottleVisual bottle={destinationBottle} />
+      </div>
     </>,
     document.body,
   );
@@ -441,6 +504,23 @@ function getOverlayStyle(rect: BottleRect, zIndex: number) {
     width: `${rect.width}px`,
     height: `${rect.height}px`,
     zIndex,
+  };
+}
+
+function getPourStreamStyle(presentation: PourPresentation) {
+  const { sourceRect, destinationRect } = presentation;
+  const streamTop = destinationRect.top - sourceRect.height * 0.55;
+  const streamHeight = destinationRect.top - streamTop + 6;
+  const color = getColorView(presentation.pourColorIndex).color;
+
+  return {
+    left: `${destinationRect.left + destinationRect.width / 2 - 2}px`,
+    top: `${streamTop + 3}px`,
+    width: "4px",
+    height: `${streamHeight}px`,
+    backgroundColor: color,
+    boxShadow: `0 0 5px ${color}66`,
+    zIndex: streamPourLayerZIndex,
   };
 }
 
