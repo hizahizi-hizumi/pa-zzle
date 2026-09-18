@@ -171,7 +171,7 @@ describe("SudokuPlay", () => {
     ).toBe(true);
   });
 
-  test("クリア後に成績生データと次の操作を表示すること", () => {
+  test("クリア後に共通の結果階層で採点結果を表示すること", () => {
     const props = createProps();
     const newGame = vi.fn();
     render(
@@ -199,11 +199,26 @@ describe("SudokuPlay", () => {
       />,
     );
 
-    const heading = screen.getByRole("heading", { name: "クリア" });
-    fireEvent.click(screen.getByRole("button", { name: "新しい問題" }));
+    const heading = screen.getByRole("heading", { name: "クリア!" });
 
     expect(heading).toBeTruthy();
     expect(screen.getByText("02:05")).toBeTruthy();
+    expect(screen.getByText("79")).toBeTruthy();
+    expect(screen.getByText("クリア！")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "次の問題" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "もう一度" })).toBeTruthy();
+
+    fireEvent.click(screen.getByText("プレイ詳細"));
+
+    expect(screen.getByText("30 / 40")).toBeTruthy();
+    expect(screen.getByText("9 / 20")).toBeTruthy();
+    expect(screen.getByText("採点基準")).toBeTruthy();
+    expect(screen.getByText(/ミス1回につき/)).toBeTruthy();
+    expect(screen.getByText(/1分単位で切り上げ/)).toBeTruthy();
+    expect(screen.getByText(/待った1回につき/)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "次の問題" }));
+
     expect(newGame).toHaveBeenCalledOnce();
   });
 });
