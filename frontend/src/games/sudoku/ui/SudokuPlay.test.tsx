@@ -141,6 +141,10 @@ describe("SudokuPlay", () => {
       mistakeCount: 0,
       undoCount: 0,
       restartCount: 0,
+      score: {
+        total: 100,
+        breakdown: { accuracy: 40, speed: 40, stability: 20 },
+      },
       problemIdentity: {
         generatorVersion: "1" as const,
         seed: "test-seed",
@@ -180,6 +184,10 @@ describe("SudokuPlay", () => {
           mistakeCount: 2,
           undoCount: 3,
           restartCount: 1,
+          score: {
+            total: 79,
+            breakdown: { accuracy: 30, speed: 40, stability: 9 },
+          },
           problemIdentity: {
             generatorVersion: "1",
             seed: "test-seed",

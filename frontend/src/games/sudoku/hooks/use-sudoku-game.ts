@@ -6,6 +6,10 @@ import {
   generateSudokuProblem,
   type SudokuProblemIdentity,
 } from "@/games/sudoku/game/generator";
+import {
+  calculateSudokuPlayScore,
+  type SudokuPlayScore,
+} from "@/games/sudoku/game/performance";
 import { findSudokuConflictCellIndices } from "@/games/sudoku/game/rules";
 import {
   canUndoSudokuSession,
@@ -30,6 +34,7 @@ export type SudokuProgress = "playing" | "clearing" | "result";
 
 export type SudokuResult = SudokuSessionResult & {
   problemIdentity: SudokuProblemIdentity;
+  score: SudokuPlayScore;
 };
 
 type SudokuReactState = {
@@ -180,7 +185,11 @@ export function useSudokuGame(difficulty: SudokuDifficulty) {
   const result = useMemo<SudokuResult | null>(
     () =>
       sessionResult
-        ? { ...sessionResult, problemIdentity: play.problemIdentity }
+        ? {
+            ...sessionResult,
+            problemIdentity: play.problemIdentity,
+            score: calculateSudokuPlayScore(sessionResult),
+          }
         : null,
     [play.problemIdentity, sessionResult],
   );
