@@ -4,17 +4,14 @@ export const waterSortDifficulties = [
   {
     id: "easy",
     label: "かんたん",
-    description: "目の前のまとまりを追いながら進めやすい難易度です。",
   },
   {
     id: "normal",
     label: "ふつう",
-    description: "空きボトルと数手先を考えながら進める難易度です。",
   },
   {
     id: "hard",
     label: "むずかしい",
-    description: "誤った選択の代償まで考えて手順を組み立てる難易度です。",
   },
 ] as const;
 
