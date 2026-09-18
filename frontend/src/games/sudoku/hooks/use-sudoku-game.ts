@@ -12,6 +12,7 @@ import {
   clearSudokuCell,
   createSudokuSession,
   enterSudokuDigit,
+  findCompletedSudokuDigits,
   findSudokuMistakeCellIndices,
   getSudokuSessionElapsedMs,
   getSudokuSessionResult,
@@ -150,7 +151,7 @@ export function useSudokuGame(difficulty: SudokuDifficulty) {
     setPlay(createReactState(startedAt));
   }, []);
 
-  const completeClearPresentation = useCallback(() => {
+  const completeClearAnimation = useCallback(() => {
     setPlay((current) =>
       current.session.status === "cleared" && current.progress === "clearing"
         ? { ...current, progress: "result" }
@@ -165,6 +166,10 @@ export function useSudokuGame(difficulty: SudokuDifficulty) {
   );
   const mistakeCellIndices = useMemo(
     () => findSudokuMistakeCellIndices(session),
+    [session],
+  );
+  const completedDigits = useMemo(
+    () => findCompletedSudokuDigits(session),
     [session],
   );
   const elapsedMs = getSudokuSessionElapsedMs(session, now);
@@ -191,6 +196,7 @@ export function useSudokuGame(difficulty: SudokuDifficulty) {
     selectedCellIndex: play.selectedCellIndex,
     conflictCellIndices,
     mistakeCellIndices,
+    completedDigits,
     notesMode: play.notesMode,
     elapsedMs,
     mistakeCount: session.mistakeCount,
@@ -206,6 +212,6 @@ export function useSudokuGame(difficulty: SudokuDifficulty) {
     restart,
     replay,
     newGame,
-    completeClearPresentation,
+    completeClearAnimation,
   };
 }

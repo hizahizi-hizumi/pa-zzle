@@ -67,3 +67,11 @@ export function getSudokuBlockIndex(cellIndex: number): number {
     Math.floor(column / SUDOKU_BLOCK_SIZE)
   );
 }
+
+export function areSudokuCellsRelated(left: number, right: number): boolean {
+  return (
+    getSudokuRowIndex(left) === getSudokuRowIndex(right) ||
+    getSudokuColumnIndex(left) === getSudokuColumnIndex(right) ||
+    getSudokuBlockIndex(left) === getSudokuBlockIndex(right)
+  );
+}

@@ -27,7 +27,7 @@ describe("useSudokuGame", () => {
     expect(result.current.progress).toBe("clearing");
     expect(result.current.result).not.toBeNull();
 
-    act(() => result.current.completeClearPresentation());
+    act(() => result.current.completeClearAnimation());
 
     expect(result.current.progress).toBe("result");
   });

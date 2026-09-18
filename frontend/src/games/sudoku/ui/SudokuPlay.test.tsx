@@ -25,6 +25,7 @@ function createProps(): ComponentProps<typeof SudokuPlay> {
     selectedCellIndex: 0,
     conflictCellIndices: [],
     mistakeCellIndices: [],
+    completedDigits: [],
     notesMode: false,
     elapsedMs: 65_000,
     mistakeCount: 2,
@@ -42,7 +43,7 @@ function createProps(): ComponentProps<typeof SudokuPlay> {
     newGame: vi.fn(),
     onChangeDifficulty: vi.fn(),
     onBackToHome: vi.fn(),
-    completeClearPresentation: vi.fn(),
+    completeClearAnimation: vi.fn(),
   };
 }
 
@@ -91,13 +92,9 @@ describe("SudokuPlay", () => {
     expect(screen.getByText("ナンプレ")).toBeTruthy();
   });
 
-  test("9個使われた数字の入力を無効にすること", () => {
+  test("使い切った数字の入力を無効にすること", () => {
     const props = createProps();
-    const board = [...props.board];
-    for (let index = 0; index < 9; index += 1) {
-      board[index] = 9;
-    }
-    render(<SudokuPlay {...props} board={board} selectedCellIndex={9} />);
+    render(<SudokuPlay {...props} completedDigits={[9]} />);
     const digit = screen.getByRole("button", { name: "9" });
 
     const disabled = digit.hasAttribute("disabled");
@@ -105,20 +102,9 @@ describe("SudokuPlay", () => {
     expect(disabled).toBe(true);
   });
 
-  test("誤答を含む9個だけでは数字入力を使い切り扱いにしないこと", () => {
+  test("使い切っていない数字の入力を有効にすること", () => {
     const props = createProps();
-    const board = [...props.board];
-    for (let index = 0; index < 9; index += 1) {
-      board[index] = 9;
-    }
-    render(
-      <SudokuPlay
-        {...props}
-        board={board}
-        selectedCellIndex={9}
-        mistakeCellIndices={[0]}
-      />,
-    );
+    render(<SudokuPlay {...props} completedDigits={[]} />);
     const digit = screen.getByRole("button", { name: "9" });
 
     const disabled = digit.hasAttribute("disabled");
