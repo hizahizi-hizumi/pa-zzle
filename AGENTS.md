@@ -27,7 +27,7 @@ Repository Snapshot と Offline Dependencies を使う ChatGPT 実行環境で�
 frontend/node_modules/.bin/vite --config frontend/vite.chatgpt.config.ts --host 127.0.0.1 --port 3000
 ```
 
-ChatGPT環境で画面確認する場合は、`docs/メモ/ChatGPT画面確認.md` の手順に従い、`scripts/chatgpt_playwright.py` を使って描画・操作・スクリーンショット・ブラウザエラーまで確認する。
+画面変更を確認する場合は、`docs/開発/画面レビュー手順.md` に従って実ブラウザで操作・途中状態・遷移まで確認する。ChatGPT環境では、環境固有の起動・接続方法として `docs/メモ/ChatGPT画面確認.md` と `scripts/chatgpt_playwright.py` を使う。
 
 ### Backend
 
@@ -52,6 +52,7 @@ uv run --directory backend ruff check . # Ruff の静的解析
 ## 文書
 
 - `docs/画面/`: 画面種別ごとの目的、情報構造、共通とゲーム固有の境界、成立条件の正本。対象画面を実装・レビューするときに参照する。
+- `docs/開発/`: 開発・レビューで繰り返し使うチェックリストと手順書。新パズル候補の評価や画面レビューなど、既存の正本をどう検証・評価するかを扱う。
 - `docs/パズル/`: パズル候補の調査、成立性・導入判断、難易度検証など、MVP前後を問わず継続するパズル固有の調査・検証資料。現在仕様の正本としては扱わず、実装時は `GAME.md` と対象コードを優先する。
 - `docs/立ち上げ/`: アプリ立ち上げ期に固有のPoC・仮説・正本化の経緯を残す資料。立ち上げ時の経緯や根拠を扱うときに参照し、長期的な正本として保守しない。正本へ昇格済みの内容は `APP.md` / `GAME.md` / `DESIGN.md` を優先する。
 - `docs/adr/`: 意思決定の背景・比較・理由を残す。ADRだけを現在仕様の正本として扱わない。
