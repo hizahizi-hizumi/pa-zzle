@@ -1,0 +1,220 @@
+---
+name: design-game-pictogram-animation
+description: >
+  This skill should be used when exploring, prototyping, comparing, refining, or reviewing animation gimmicks for a
+  game-selection pictogram, animated pictogram, animated game icon, or SVG motion used in pa-zzle. It expands the
+  search space with diverse gimmick hypotheses, prototypes representative candidates, builds review galleries, and
+  uses human direction to refine promising motion without pretending to score fun automatically.
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash
+---
+
+# design-game-pictogram-animation
+
+ゲーム選択用ピクトグラムのアニメーションについて、面白さが上振れる候補を広く探索し、人間が選んだ方向を完成品質まで育てる Skill。
+
+## 起動
+
+`/design-game-pictogram-animation`
+
+完成済みの静的ピクトグラム、対象ゲーム、利用箇所や表示サイズなどの既知の制約を引数または会話 context から受け取る。
+
+## 目的
+
+大量生成そのものを目的にしない。未知の探索空間では低コストに幅を出し、有望な方向が見つかった後は生成量を減らして掘り下げる。
+
+面白さを自動採点して上位候補を決めない。Skill の役割は、次を効率化することに置く。
+
+- 同じ発想の微差量産を避けながら、ギミック仮説の幅を広げる
+- 方向性の違う候補を、実際に動く試作として比較できる状態にする
+- 自動検査と実描画レビューで、壊れた候補や明らかな実装破綻を人間レビュー前に除外する
+- 人間の「これを掘る」「この部分を使う」という方向指定を次の探索へ反映する
+- 採用された方向を少数案へ収束させ、完成品質まで調整する
+
+## 入力
+
+最低限、次を確認する。
+
+- 完成済みの静的ピクトグラム SVG
+- 対象ゲームの主要な対象、操作、状態変化、達成や解消の瞬間
+- 実表示サイズと利用文脈
+- 既知の SVG / 色 /実装上の制約
+
+静的ピクトグラムそのものを新規設計する場合は `/design-game-pictogram` の責務とする。この Skill では、アニメーション実装に必要な `path` 分割、`g` 化、clip の追加など、静止時の見た目を変えない内部構造変更は行ってよい。
+
+静止時の見た目を変えなければ成立しない案は、変更を暗黙に採用せず、人間レビューで分かる形にする。
+
+## 成果物
+
+探索段階に応じて次を残す。
+
+- ギミック仮説群
+- 試作候補の自己完結した SVG 群
+- `manifest.json` に候補の意図と系統をまとめた比較用メタデータ
+- `scripts/check_animation.py` の検査結果
+- `self-review.json` に候補ごとのセルフレビューチェック結果
+- `scripts/make_review_gallery.py` で生成した比較ギャラリー
+- 人間レビューで選ばれた方向、残す部分、捨てる部分の短い記録
+- 最終的に採用するアニメーション候補
+
+候補数は成果指標にしない。探索幅が足りなければ増やし、十分に異なる方向が揃ったら数が少なくても試作へ進む。
+
+## 動作フロー
+
+### 1. 動きの材料を抽出する
+
+ゲームから、アニメーションで使える材料だけを短く列挙する。
+
+- 動かせる対象
+- 実ゲームで起こる操作や状態変化
+- 達成、解消、確定など見せ場になりうる瞬間
+- 重力、流動、衝突、整列など題材に由来する物理的特徴
+- ゲーム中には実際に起きなくても、ゲームの意味から無理なく連想できる誇張や意外性
+
+ここで完成案を決めない。詳細は `references/exploration.md` を参照する。
+
+### 2. ギミック仮説を広く発散する
+
+コードを書く前に、何が起こるかが異なるアイデアカードを複数の独立した発散で作る。
+
+各カードには最低限、次を付ける。
+
+- `id`
+- 短い名前
+- 何が起こるか
+- 面白さの核として狙うもの
+- ゲームの何を参照しているか
+
+速度、移動量、角度だけが違う案を別のギミックとして数えない。同じ局所解へ寄らない発散方法と整理方法は `references/exploration.md` に従う。
+
+### 3. 面白さの核で近い案をまとめる
+
+見た目の動きだけでなく「なぜ面白い想定なのか」で近い案を束ねる。
+
+- 同じ面白さの核を持つ微差は代表案へまとめる
+- 動作が似ていても、間、意外性、達成感など面白さの核が違えば残す
+- 外れ値や説明しにくい案を、既存の系統に無理に押し込まない
+- モデル自身の「面白そう」という予測だけで上位案へ絞らない
+
+試作へ進める候補は、多様な系統が残ることを優先して選ぶ。
+
+### 4. 代表候補を低コストで試作する
+
+各系統の代表を、ギミックの核心が人間に伝わるところまで実装する。初回から細かなイージング、液体変形、装飾などを完成品質まで詰めない。
+
+候補 SVG は単体で描画可能な自己完結形式にする。候補固有の JavaScript や外部リソースを埋め込まず、SVG の宣言的アニメーションまたは CSS animation を基本とする。
+
+比較用 `manifest.json` は `references/review.md` の形式で作成する。
+
+### 5. 技術的な破綻を落とす
+
+試作候補を次で検査する。
+
+```sh
+python3 .claude/skills/design-game-pictogram-animation/scripts/check_animation.py \
+  --manifest path/to/manifest.json
+```
+
+この検査は、SVG としての構造、アニメーションの存在、重複 ID、埋め込みスクリプト、外部依存など、決定論的に扱える問題だけを検査する。
+
+面白さ、ゲームらしさ、テンポ、気持ちよさを PASS / FAIL 判定しない。`PASS` は人間へ提示できる品質を意味しない。
+
+### 6. セルフレビュー用ギャラリーを作る
+
+全候補を同じ条件で確認できるギャラリーへまとめる。
+
+```sh
+python3 .claude/skills/design-game-pictogram-animation/scripts/make_review_gallery.py \
+  --manifest path/to/manifest.json \
+  --audience self \
+  --output /tmp/pictogram-animation-self-review.html \
+  --size 112
+```
+
+生成したギャラリーでは、JavaScript が無効でも候補アニメーション自体を表示できる。JavaScript が有効な環境では、一斉再生、個別再生、停止も行える。
+
+### 7. 人間に見せる前にセルフレビューゲートを通す
+
+現在の `DESIGN.md` を確認し、実ブラウザで全候補をレビューする。`references/self-review.md` の必須チェックリストを候補ごとに埋め、結果を `self-review.json` に記録する。
+
+開始状態や代表フレーム数枚だけでは合格としない。実表示サイズで少なくとも 1 ループ全体を観察し、主要な途中状態は拡大表示でも確認する。1 項目でも満たせない候補は修正して再レビューするか `reject` にする。
+
+記録を次で検査する。
+
+```sh
+python3 .claude/skills/design-game-pictogram-animation/scripts/check_self_review.py \
+  --manifest path/to/manifest.json \
+  --self-review path/to/self-review.json
+```
+
+この検査が PASS する前に候補を人間へ提示しない。人間用ギャラリーは必ずセルフレビュー結果を渡して生成する。
+
+```sh
+python3 .claude/skills/design-game-pictogram-animation/scripts/make_review_gallery.py \
+  --manifest path/to/manifest.json \
+  --self-review path/to/self-review.json \
+  --audience human \
+  --output /tmp/pictogram-animation-review.html \
+  --size 112
+```
+
+`--audience human` では全チェックを満たした `pass` 候補だけを掲載する。ここでは面白さを代理評価して候補を狭めず、**人間がギミックを比較できる最低品質まで整えること**を目的にする。
+
+### 8. 人間の方向指定を受ける
+
+人間には数値採点を要求せず、次のような判断を受け取る。
+
+- この候補をベースにしたい
+- この系統をもっと掘りたい
+- この候補の一部分だけ使いたい
+- この方向は捨てる
+
+「A の発想 + B の液体表現 + C の最後の間」のような部分採用も正式な入力として扱う。
+
+### 9. 選ばれた方向だけを再発散する
+
+方向が選ばれた後は、初回と同じ規模の大量生成を繰り返さない。
+
+選択理由を保ったまま、間、軌道、対象同士の反応、誇張の強さ、終わり方など、候補を良くする可能性がある差分だけを少数案へ分岐する。
+
+新しい方向が必要と分かった場合だけ探索を広げ直す。
+
+### 10. 仕上げて再レビューする
+
+最終候補は、実表示サイズでギミックが読み取れる状態まで詰める。
+
+- 選ばれた面白さの核が微調整で消えていない
+- 静止状態でも元のピクトグラムとして成立する
+- 不要な複雑さを増やしていない
+- `check_animation.py` を通る
+- 比較ギャラリーで開始から終了まで破綻なく見える
+
+仕上げ後も Step 7 と同じセルフレビューチェックを新しい記録としてやり直す。1 ループ通して問題を観察し、全項目が `true` になるまで人間へ提示しない。自動検査の PASS や一部フレームのスクリーンショットだけで完成扱いにしない。
+
+採用判断は人間が行う。良い候補がなければ無理に収束させず、発散へ戻る。
+
+## 出力先
+
+作業用候補は、対象タスクの一時成果物または明示された検証用ディレクトリへ置く。Skill 自体へ特定ゲームの大量生成物を恒久保存しない。
+
+Skill 配下には、再利用する手順、検査、比較手段だけを残す。
+
+## 参照する真実情報
+
+- `.claude/skills/design-game-pictogram/` — 静的ピクトグラムの設計・検証
+- `references/exploration.md` — 発散、重複整理、試作候補選定
+- `references/review.md` — manifest と人間レビューの扱い
+- `references/self-review.md` — 人間提示前の必須チェックリストと `self-review.json`
+- `scripts/check_animation.py` — 候補 SVG の決定論的検査
+- `scripts/check_self_review.py` — セルフレビュー記録の品質ゲート検査
+- `scripts/make_review_gallery.py` — セルフレビュー / 人間レビュー用ギャラリー生成
+- `DESIGN.md` — pa-zzle の視覚・動きの正本
+
+## 制約
+
+- 候補数を満たすための微差量産をしない
+- 面白さを擬似精密な点数へ還元しない
+- 自動評価だけで候補を採用・不採用にしない
+- 実装の都合だけを理由に静止時の完成品質を下げない
+- 人間が選んだ方向と異なる探索へ、明示的な理由なく戻らない
+- `check_self_review.py` が PASS していない候補を人間へ提示しない
+- `reject` またはセルフレビュー未完了の候補を人間用ギャラリーへ含めない
