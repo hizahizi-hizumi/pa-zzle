@@ -89,18 +89,18 @@ export function SudokuBoard({
             aria-pressed={selected}
             aria-invalid={conflict || undefined}
             className={cn(
-              "relative flex aspect-square min-h-0 items-center justify-center border-t border-l border-border text-[clamp(1rem,5vw,2rem)] outline-none transition-colors focus-visible:bg-sky-100 dark:focus-visible:bg-sky-950/50",
+              "relative flex aspect-square min-h-0 items-center justify-center border-t border-l border-border text-[clamp(1rem,5vw,2rem)] outline-none transition-colors focus-visible:bg-brand-subtle dark:focus-visible:bg-brand/25",
               row % 3 === 0 && "border-t-2 border-t-foreground/55",
               column % 3 === 0 && "border-l-2 border-l-foreground/55",
               row === SUDOKU_SIZE - 1 && "border-b-2 border-b-foreground/55",
               column === SUDOKU_SIZE - 1 && "border-r-2 border-r-foreground/55",
-              related && "bg-sky-50 dark:bg-sky-950/25",
-              matching && "bg-sky-100 dark:bg-sky-900/45",
-              selected && "bg-sky-200 dark:bg-sky-800/55",
+              related && "bg-brand-subtle/55 dark:bg-brand-subtle/10",
+              matching && "bg-brand-subtle dark:bg-brand/25",
+              selected && "bg-brand dark:bg-brand-strong/45",
               clue && "font-semibold text-foreground",
               !clue &&
                 value !== null &&
-                "font-medium text-sky-700 dark:text-sky-300",
+                "font-medium text-brand-foreground dark:text-brand",
               conflict &&
                 "bg-rose-100 text-rose-700 dark:bg-rose-950/45 dark:text-rose-300",
             )}
@@ -109,7 +109,7 @@ export function SudokuBoard({
             {value ?? (
               <span
                 aria-hidden="true"
-                className="grid h-full w-full grid-cols-3 grid-rows-3 place-items-center text-[clamp(0.42rem,1.8vw,0.72rem)] leading-none font-medium text-sky-700/75 dark:text-sky-300/75"
+                className="grid h-full w-full grid-cols-3 grid-rows-3 place-items-center text-[clamp(0.42rem,1.8vw,0.72rem)] leading-none font-medium text-brand-foreground/75 dark:text-brand/75"
               >
                 {SUDOKU_DIGITS.map((digit) => (
                   <span key={digit}>

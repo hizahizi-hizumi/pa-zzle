@@ -153,7 +153,7 @@ export function SudokuPlay({
               <button
                 key={digit}
                 type="button"
-                className="h-14 min-w-0 rounded-lg px-0 text-[clamp(1.5rem,7vw,2.25rem)] font-medium tabular-nums text-sky-700 transition-colors hover:bg-accent/60 focus-visible:bg-accent focus-visible:outline-none dark:text-sky-300 disabled:pointer-events-none disabled:text-muted-foreground/35"
+                className="h-14 min-w-0 rounded-lg px-0 text-[clamp(1.5rem,7vw,2.25rem)] font-medium tabular-nums text-brand-foreground transition-colors hover:bg-accent/60 focus-visible:bg-accent focus-visible:outline-none dark:text-brand disabled:pointer-events-none disabled:text-muted-foreground/35"
                 onClick={() => inputDigit(digit)}
                 disabled={!canEnterDigit}
               >
