@@ -61,9 +61,11 @@ export function SudokuBoard({
   onSelectCell,
 }: SudokuBoardProps) {
   const conflictCells = new Set(conflictCellIndices);
+  const selectedValue =
+    selectedCellIndex === null ? null : (board[selectedCellIndex] ?? null);
 
   return (
-    <div className="grid aspect-square w-[min(94vw,calc(100svh-13rem),36rem)] grid-cols-9 bg-background">
+    <div className="grid aspect-square w-[min(96vw,calc(100svh-12rem),38rem)] grid-cols-9 bg-background">
       {SUDOKU_CELL_INDICES.map((cellIndex) => {
         const value = board[cellIndex] ?? null;
         const row = getSudokuRowIndex(cellIndex);
@@ -73,6 +75,8 @@ export function SudokuBoard({
           selectedCellIndex !== null &&
           !selected &&
           isRelatedCell(selectedCellIndex, cellIndex);
+        const matching =
+          selectedValue !== null && !selected && value === selectedValue;
         const clue = clues[cellIndex] !== null;
         const conflict = conflictCells.has(cellIndex);
         const cellNotes = notes[cellIndex] ?? [];
@@ -85,13 +89,14 @@ export function SudokuBoard({
             aria-pressed={selected}
             aria-invalid={conflict || undefined}
             className={cn(
-              "relative flex aspect-square min-h-0 items-center justify-center border-t border-l border-border text-[clamp(1rem,5vw,2rem)] outline-none transition-colors focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+              "relative flex aspect-square min-h-0 items-center justify-center border-t border-l border-border text-[clamp(1rem,5vw,2rem)] outline-none transition-colors focus-visible:bg-sky-100 dark:focus-visible:bg-sky-950/50",
               row % 3 === 0 && "border-t-2 border-t-foreground/55",
               column % 3 === 0 && "border-l-2 border-l-foreground/55",
               row === SUDOKU_SIZE - 1 && "border-b-2 border-b-foreground/55",
               column === SUDOKU_SIZE - 1 && "border-r-2 border-r-foreground/55",
-              related && "bg-muted/60",
-              selected && "z-[1] bg-accent ring-2 ring-ring ring-inset",
+              related && "bg-sky-50 dark:bg-sky-950/25",
+              matching && "bg-sky-100 dark:bg-sky-900/45",
+              selected && "bg-sky-200 dark:bg-sky-800/55",
               clue && "font-semibold text-foreground",
               !clue &&
                 value !== null &&

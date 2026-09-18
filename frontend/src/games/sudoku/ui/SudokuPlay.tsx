@@ -95,8 +95,7 @@ export function SudokuPlay({
 
   return (
     <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
-      <BrandIdentityHeader />
-      <header className="grid h-[4.5rem] shrink-0 grid-cols-[3rem_minmax(0,1fr)_3rem] items-start bg-background px-3 pt-1.5">
+      <header className="grid h-16 shrink-0 grid-cols-[3rem_minmax(0,1fr)_3rem] items-center bg-background px-3">
         <Button
           type="button"
           variant="ghost"
@@ -106,11 +105,7 @@ export function SudokuPlay({
         >
           <ArrowLeft />
         </Button>
-        <PlayHeaderSummary
-          elapsedMs={elapsedMs}
-          mistakeCount={mistakeCount}
-          undoCount={undoCount}
-        />
+        <PlayHeaderSummary elapsedMs={elapsedMs} mistakeCount={mistakeCount} />
         <PlayMenu
           restart={restart}
           newGame={newGame}
@@ -119,7 +114,7 @@ export function SudokuPlay({
         />
       </header>
 
-      <main className="flex min-h-0 flex-1 items-center justify-center px-2 py-1 sm:px-6">
+      <main className="flex shrink-0 justify-center px-2 pt-1 sm:px-6 sm:pt-3">
         <SudokuBoard
           board={board}
           clues={clues}
@@ -130,44 +125,35 @@ export function SudokuPlay({
         />
       </main>
 
-      <footer className="shrink-0 px-3 pb-2 pt-1">
-        <div className="mx-auto grid w-full max-w-xl gap-2">
-          <div className="grid grid-cols-3 gap-2">
-            <Button
-              type="button"
-              variant="ghost"
+      <footer className="shrink-0 px-3 pb-3 pt-2">
+        <div className="mx-auto grid w-full max-w-xl gap-1">
+          <div className="grid grid-cols-3">
+            <PlayActionButton
+              icon={<Undo2 />}
+              label="元に戻す"
               onClick={undo}
               disabled={!canUndo}
-            >
-              <Undo2 />
-              待った
-            </Button>
-            <Button
-              type="button"
-              variant={notesMode ? "secondary" : "ghost"}
-              aria-pressed={notesMode}
-              onClick={toggleNotesMode}
-            >
-              <Pencil />
-              メモ
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
+            />
+            <PlayActionButton
+              icon={<Eraser />}
+              label="消す"
               onClick={erase}
               disabled={!selectedIsEditable || !selectedHasAnswer}
-            >
-              <Eraser />
-              消す
-            </Button>
+            />
+            <PlayActionButton
+              icon={<Pencil />}
+              label="メモ"
+              active={notesMode}
+              onClick={toggleNotesMode}
+            />
           </div>
-          <fieldset className="grid grid-cols-9 gap-1">
+          <fieldset className="grid grid-cols-9">
             <legend className="sr-only">数字入力</legend>
             {SUDOKU_DIGITS.map((digit) => (
               <button
                 key={digit}
                 type="button"
-                className="h-11 min-w-0 rounded-md border bg-background px-0 text-lg font-semibold tabular-nums shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                className="h-14 min-w-0 rounded-lg px-0 text-[clamp(1.5rem,7vw,2.25rem)] font-medium tabular-nums text-sky-700 transition-colors hover:bg-accent/60 focus-visible:bg-accent focus-visible:outline-none dark:text-sky-300 disabled:pointer-events-none disabled:text-muted-foreground/35"
                 onClick={() => inputDigit(digit)}
                 disabled={!canEnterDigit}
               >
@@ -184,44 +170,60 @@ export function SudokuPlay({
 function PlayHeaderSummary({
   elapsedMs,
   mistakeCount,
-  undoCount,
 }: {
   elapsedMs: number;
   mistakeCount: number;
-  undoCount: number;
 }) {
   return (
-    <div className="min-w-0 text-center">
-      <h1 className="truncate text-sm font-semibold tracking-tight">
-        ナンプレ
-      </h1>
-      <div className="mt-1 flex items-center justify-center gap-2 text-[10px] leading-none text-muted-foreground">
-        <PlayMetric label="時間" value={formatElapsedTime(elapsedMs)} />
-        <MetricSeparator />
-        <PlayMetric label="ミス" value={String(mistakeCount)} />
-        <MetricSeparator />
-        <PlayMetric label="待った" value={String(undoCount)} />
-      </div>
+    <div className="flex items-center justify-center gap-8 text-center">
+      <PlayMetric label="ミス" value={String(mistakeCount)} />
+      <PlayMetric label="時間" value={formatElapsedTime(elapsedMs)} />
     </div>
   );
 }
 
 function PlayMetric({ label, value }: { label: string; value: string }) {
   return (
-    <span className="flex items-baseline gap-1 whitespace-nowrap">
-      <span>{label}</span>
-      <span className="font-mono font-medium tabular-nums text-foreground/80">
+    <span className="grid gap-0.5 whitespace-nowrap">
+      <span className="text-[10px] text-muted-foreground">{label}</span>
+      <span className="font-mono text-base font-medium leading-none tabular-nums text-foreground/85">
         {value}
       </span>
     </span>
   );
 }
 
-function MetricSeparator() {
+function PlayActionButton({
+  icon,
+  label,
+  active = false,
+  disabled = false,
+  onClick,
+}: {
+  icon: ReactNode;
+  label: string;
+  active?: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
   return (
-    <span aria-hidden="true" className="text-border">
-      ·
-    </span>
+    <button
+      type="button"
+      aria-pressed={active || undefined}
+      className="relative flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground focus-visible:bg-accent focus-visible:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-35"
+      disabled={disabled}
+      onClick={onClick}
+    >
+      <span aria-hidden="true" className="[&>svg]:size-6">
+        {icon}
+      </span>
+      <span className="text-[11px] leading-none">{label}</span>
+      {active && (
+        <span className="absolute top-1.5 right-[calc(50%-2rem)] rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-medium leading-none text-foreground">
+          ON
+        </span>
+      )}
+    </button>
   );
 }
 

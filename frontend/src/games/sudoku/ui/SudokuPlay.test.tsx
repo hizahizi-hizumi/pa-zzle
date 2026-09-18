@@ -73,7 +73,7 @@ describe("SudokuPlay", () => {
     render(<SudokuPlay {...props} />);
 
     fireEvent.click(screen.getByRole("button", { name: "メモ" }));
-    fireEvent.click(screen.getByRole("button", { name: "待った" }));
+    fireEvent.click(screen.getByRole("button", { name: "元に戻す" }));
 
     expect(props.toggleNotesMode).toHaveBeenCalledOnce();
     expect(props.undo).toHaveBeenCalledOnce();
