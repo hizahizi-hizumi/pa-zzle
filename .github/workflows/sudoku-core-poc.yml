@@ -1,4 +1,4 @@
-name: Sudoku Core PoC
+name: Sudoku Rating PoC
 
 on:
   push:
@@ -9,13 +9,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: sudoku-core-poc-${{ github.ref }}
+  group: sudoku-rating-poc-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  evaluate:
+  compare:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -24,6 +24,12 @@ jobs:
         uses: oven-sh/setup-bun@v2
         with:
           bun-version-file: .bun-version
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
 
       - name: Install repository dependencies
         working-directory: frontend
@@ -36,48 +42,69 @@ jobs:
           bun add sudoku-core@3.0.3 --exact
           node -e 'const p=require("./node_modules/sudoku-core/package.json"); console.log(p.name + "@" + p.version)'
 
-      - name: Evaluate sudoku-core with generated puzzles
+      - name: Generate comparison corpus and core ratings
         working-directory: frontend
         env:
-          SUDOKU_CORE_POC_SAMPLES_PER_CLUE: "200"
+          SUDOKU_RATING_SAMPLES_PER_CLUE: "50"
+        run: bun run scripts/sudoku-rating-prepare.ts
+
+      - name: Download Sukaku Explainer
+        working-directory: frontend
         run: |
           set -euo pipefail
-          mkdir -p tmp
-          bun run scripts/sudoku-core-poc.ts | tee tmp/sudoku-core-poc.log
+          curl --fail --location --retry 3             --output tmp/SukakuExplainer.jar             https://github.com/SudokuMonster/SukakuExplainer/releases/download/v1.18.1/SukakuExplainer.jar
+          sha256sum tmp/SukakuExplainer.jar
+          java -version
+
+      - name: Rate the same puzzles with serate
+        working-directory: frontend
+        run: |
+          set -euo pipefail
+          java -Xrs -Xmx1g -cp tmp/SukakuExplainer.jar diuf.sudoku.test.serate             --input=tmp/rating-comparison/puzzles.txt             --output=tmp/rating-comparison/serate.txt
+
+      - name: Compare ratings
+        working-directory: frontend
+        run: bun run scripts/sudoku-rating-analyze.ts | tee tmp/rating-comparison/comparison.log
 
       - name: Write job summary
         if: always()
         working-directory: frontend
         run: |
-          if [[ ! -f tmp/sudoku-core-poc.json ]]; then
-            echo "PoC result JSON was not produced." >> "$GITHUB_STEP_SUMMARY"
+          if [[ ! -f tmp/rating-comparison/comparison.json ]]; then
+            echo "Comparison JSON was not produced." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
           node <<'NODE' >> "$GITHUB_STEP_SUMMARY"
           const fs = require("node:fs");
-          const result = JSON.parse(fs.readFileSync("tmp/sudoku-core-poc.json", "utf8"));
+          const result = JSON.parse(fs.readFileSync("tmp/rating-comparison/comparison.json", "utf8"));
 
-          console.log(`## ${result.package.name}@${result.package.version}`);
+          console.log(`## ${result.package.name}@${result.package.version} vs Sukaku Explainer v1.18.1`);
           console.log("");
-          console.log("| clues | generated | human solved | core claimed | core trusted | added coverage | invalid claimed |");
-          console.log("| ---: | ---: | ---: | ---: | ---: | ---: | ---: |");
-          for (const row of result.summaries) {
-            console.log(
-              `| ${row.clueCount} | ${row.generated} | ${row.humanSolved} | ${row.coreClaimedSolved} | ${row.coreTrustedSolved} | ${row.coreAddedCoverage} | ${row.coreInvalidSolvedBoards} |`,
-            );
+          console.log(`Samples: ${result.sampleCount}, core rated: ${result.coreRatedCount}, serate rated: ${result.serateRatedCount}`);
+          console.log("");
+          console.log("| comparison | Pearson | Spearman | n |");
+          console.log("| --- | ---: | ---: | ---: |");
+          for (const [name, value] of Object.entries(result.correlations)) {
+            console.log(`| ${name} | ${value.pearson} | ${value.spearman} | ${value.count} |`);
           }
           console.log("");
-          console.log(`Invalid solved-board samples: ${result.invalidSamples.length}`);
+          console.log(`Core score mismatches against its reported strategy counts: ${result.scoreConsistency.mismatchCount} (${result.scoreConsistency.mismatchRate})`);
+          console.log("");
+          console.log("| core difficulty | n | SE ER min | p25 | median | p75 | max |");
+          console.log("| --- | ---: | ---: | ---: | ---: | ---: | ---: |");
+          for (const [difficulty, value] of Object.entries(result.byDifficulty)) {
+            console.log(
+              `| ${difficulty} | ${value.count} | ${value.serateEr.min} | ${value.serateEr.p25} | ${value.serateEr.median} | ${value.serateEr.p75} | ${value.serateEr.max} |`,
+            );
+          }
           NODE
 
-      - name: Upload PoC results
+      - name: Upload comparison results
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: sudoku-core-poc-${{ github.sha }}
-          path: |
-            frontend/tmp/sudoku-core-poc.json
-            frontend/tmp/sudoku-core-poc.log
+          name: sudoku-rating-comparison-${{ github.sha }}
+          path: frontend/tmp/rating-comparison
           if-no-files-found: warn
           retention-days: 14
