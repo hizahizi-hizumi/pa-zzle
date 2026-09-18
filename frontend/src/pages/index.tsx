@@ -1,5 +1,5 @@
 import { GameSelectionGallery } from "@/components/GameSelectionGallery";
-import sudokuPictogramSvg from "@/games/sudoku/assets/pictogram.svg?raw";
+import nanpurePictogramSvg from "@/games/nanpure/assets/pictogram.svg?raw";
 import waterSortPictogramSvg from "@/games/water-sort/assets/pictogram.svg?raw";
 
 const games = [
@@ -10,7 +10,7 @@ const games = [
   },
   {
     name: "ナンプレ",
-    pictogramSvg: sudokuPictogramSvg,
+    pictogramSvg: nanpurePictogramSvg,
     to: "/games/sudoku",
   },
 ] as const;

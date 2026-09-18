@@ -1,33 +1,33 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { parseSudokuDifficulty } from "@/games/sudoku/game/difficulty";
-import { useSudokuGame } from "@/games/sudoku/hooks/use-sudoku-game";
-import { SudokuPlay } from "@/games/sudoku/ui/SudokuPlay";
+import { parseNanpureDifficulty } from "@/games/nanpure/game/difficulty";
+import { useNanpureGame } from "@/games/nanpure/hooks/use-nanpure-game";
+import { NanpurePlay } from "@/games/nanpure/ui/NanpurePlay";
 import { Link, useNavigate, useParams } from "@/router";
 
-export default function SudokuPlayPage() {
+export default function NanpurePlayPage() {
   const { difficulty: difficultyParam } = useParams(
     "/games/sudoku/play/:difficulty",
   );
-  const difficulty = parseSudokuDifficulty(difficultyParam);
+  const difficulty = parseNanpureDifficulty(difficultyParam);
 
   if (!difficulty) {
     return <InvalidDifficulty />;
   }
 
-  return <PlayableSudoku difficulty={difficulty} />;
+  return <PlayableNanpure difficulty={difficulty} />;
 }
 
-function PlayableSudoku({
+function PlayableNanpure({
   difficulty,
 }: {
-  difficulty: NonNullable<ReturnType<typeof parseSudokuDifficulty>>;
+  difficulty: NonNullable<ReturnType<typeof parseNanpureDifficulty>>;
 }) {
-  const game = useSudokuGame(difficulty);
+  const game = useNanpureGame(difficulty);
   const navigate = useNavigate();
 
   return (
-    <SudokuPlay
+    <NanpurePlay
       {...game}
       onChangeDifficulty={() => navigate("/games/sudoku")}
       onBackToHome={() => navigate("/")}

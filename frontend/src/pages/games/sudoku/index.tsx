@@ -1,7 +1,7 @@
-import { sudokuDifficulties } from "@/games/sudoku/game/difficulty";
+import { nanpureDifficulties } from "@/games/nanpure/game/difficulty";
 import { Link } from "@/router";
 
-export default function SudokuDifficultyPage() {
+export default function NanpureDifficultyPage() {
   return (
     <section className="space-y-8">
       <div className="space-y-2">
@@ -15,7 +15,7 @@ export default function SudokuDifficultyPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        {sudokuDifficulties.map((difficulty) => (
+        {nanpureDifficulties.map((difficulty) => (
           <Link
             key={difficulty.id}
             to="/games/sudoku/play/:difficulty"

@@ -12,7 +12,7 @@ const games = [
   },
   {
     name: "ナンプレ",
-    pictogramSvg: '<svg viewBox="0 0 120 120" data-game="sudoku" />',
+    pictogramSvg: '<svg viewBox="0 0 120 120" data-game="nanpure" />',
     to: "/games/sudoku",
   },
 ] as const;
@@ -45,12 +45,12 @@ test("最初のパズルをヒーローとして表示すること", () => {
 
 test("候補を選ぶとヒーローを切り替えること", () => {
   renderGallery();
-  const sudokuButton = screen.getByRole("button", { name: "ナンプレを選択" });
+  const nanpureButton = screen.getByRole("button", { name: "ナンプレを選択" });
 
-  fireEvent.click(sudokuButton);
+  fireEvent.click(nanpureButton);
 
   const heroLink = screen.getByRole("link", { name: "ナンプレを遊ぶ" });
   expect(heroLink.getAttribute("href")).toBe("/games/sudoku");
-  expect(heroLink.querySelector('svg[data-game="sudoku"]')).toBeTruthy();
-  expect(sudokuButton.getAttribute("aria-pressed")).toBe("true");
+  expect(heroLink.querySelector('svg[data-game="nanpure"]')).toBeTruthy();
+  expect(nanpureButton.getAttribute("aria-pressed")).toBe("true");
 });
