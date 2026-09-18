@@ -1,3 +1,5 @@
+import { ChevronRight } from "lucide-react";
+
 import {
   type WaterSortDifficulty,
   waterSortDifficulties,
@@ -45,20 +47,39 @@ export default function WaterSortDifficultyPage() {
 
       <div className="grid gap-4 sm:grid-cols-3">
         {waterSortDifficulties.map((difficulty) => (
-          <Link
+          <WaterSortDifficultyOption
             key={difficulty.id}
-            to="/games/water-sort/play/:difficulty"
-            params={{ difficulty: difficulty.id }}
-            className="group flex min-h-36 flex-col items-center justify-center gap-4 rounded-2xl px-4 py-5 transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-h-56 sm:gap-6 sm:py-8"
-          >
-            <WaterSortDifficultyPreview difficulty={difficulty.id} />
-            <span className="text-lg font-semibold tracking-tight sm:text-xl">
-              {difficulty.label}
-            </span>
-          </Link>
+            difficulty={difficulty.id}
+            label={difficulty.label}
+          />
         ))}
       </div>
     </section>
+  );
+}
+
+function WaterSortDifficultyOption({
+  difficulty,
+  label,
+}: {
+  difficulty: WaterSortDifficulty;
+  label: string;
+}) {
+  return (
+    <Link
+      to="/games/water-sort/play/:difficulty"
+      params={{ difficulty }}
+      className="group relative flex min-h-36 flex-col items-center justify-center gap-4 rounded-2xl border bg-background px-10 py-5 transition-colors hover:bg-accent/60 active:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-h-56 sm:gap-6 sm:py-8"
+    >
+      <WaterSortDifficultyPreview difficulty={difficulty} />
+      <span className="text-lg font-semibold tracking-tight sm:text-xl">
+        {label}
+      </span>
+      <ChevronRight
+        className="absolute right-4 size-5 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+        aria-hidden="true"
+      />
+    </Link>
   );
 }
 
