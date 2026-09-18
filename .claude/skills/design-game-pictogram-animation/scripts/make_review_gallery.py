@@ -9,23 +9,27 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
+from check_self_review import load_json as load_self_review_json
+from check_self_review import validate as validate_self_review
+
 DECISIONS = (
     ("candidate", "å€™è£œ"),
     ("explore", "æ˜ã‚‹"),
     ("part", "ä¸€éƒ¨"),
     ("reject", "é™¤å¤–"),
 )
-
 PREVIEW_STYLE = "<style>html,body{margin:0;width:100%;height:100%;display:grid;place-items:center;overflow:hidden}svg{width:100%;height:100%;max-width:100%;max-height:100%}.paused *{animation-play-state:paused!important}</style>"
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Generate an interactive review gallery for animated SVG pictograms."
+        description="Generate a self-review or human-review gallery for animated SVG pictograms."
     )
     parser.add_argument("--manifest", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--size", type=int, default=112)
+    parser.add_argument("--audience", choices=("self", "human"), default="self")
+    parser.add_argument("--self-review", type=Path)
     return parser.parse_args()
 
 
@@ -35,6 +39,29 @@ def load_manifest(path: Path) -> dict[str, Any]:
     if not isinstance(candidates, list) or not candidates:
         raise ValueError("manifest candidates must be a non-empty array")
     return manifest
+
+
+def human_candidates(
+    manifest: dict[str, Any], self_review_path: Path | None
+) -> list[dict[str, Any]]:
+    if self_review_path is None:
+        raise ValueError("--audience human requires --self-review")
+
+    self_review = load_self_review_json(self_review_path)
+    errors = validate_self_review(manifest, self_review)
+    if errors:
+        raise ValueError("self-review gate failed: " + "; ".join(errors))
+
+    reviews = self_review["candidates"]
+    candidates = [
+        candidate
+        for candidate in manifest["candidates"]
+        if isinstance(candidate, dict)
+        and reviews[candidate["id"]]["result"] == "pass"
+    ]
+    if not candidates:
+        raise ValueError("human review requires at least one self-reviewed pass candidate")
+    return candidates
 
 
 def candidate_svg(manifest_path: Path, candidate: dict[str, Any]) -> str:
@@ -52,13 +79,11 @@ def preview_document(svg: str) -> str:
 
 
 def decision_buttons(candidate_id: str) -> str:
-    buttons = []
-    for value, label in DECISIONS:
-        buttons.append(
-            f'<button type="button" class="decision" data-id="{html.escape(candidate_id)}" '
-            f'data-decision="{value}">{label}</button>'
-        )
-    return "".join(buttons)
+    return "".join(
+        f'<button type="button" class="decision" data-id="{html.escape(candidate_id)}" '
+        f'data-decision="{value}">{label}</button>'
+        for value, label in DECISIONS
+    )
 
 
 def candidate_card(manifest_path: Path, candidate: dict[str, Any], size: int) -> str:
@@ -84,7 +109,7 @@ def candidate_card(manifest_path: Path, candidate: dict[str, Any], size: int) ->
   <div class="body">
     <div class="title-row">
       <h3>{escaped_id}</h3>
-      <button type="button" class="replay-one" data-id="{escaped_id}">å†ç”Ÿ</button>
+      <button type="button" class="replay-one">å†ç”Ÿ</button>
     </div>
     <p><strong>æ¡ˆ:</strong> {html.escape(hypothesis)}</p>
     <p><strong>é¢ç™½ã•ã®æ ¸:</strong> {html.escape(interesting_point)}</p>
@@ -93,7 +118,7 @@ def candidate_card(manifest_path: Path, candidate: dict[str, Any], size: int) ->
       {decision_buttons(candidate_id)}
     </div>
     <label class="note-label">ãƒ¡ãƒ¢
-      <textarea class="review-note" data-id="{escaped_id}" rows="2"></textarea>
+      <textarea class="review-note" rows="2"></textarea>
     </label>
   </div>
 </article>
@@ -112,18 +137,18 @@ def family_section(
 """
 
 
-def build_document(manifest_path: Path, manifest: dict[str, Any], size: int) -> str:
-    title = str(manifest.get("title") or "Pictogram animation review")
+def build_document(
+    manifest_path: Path, title: str, candidates: list[dict[str, Any]], size: int
+) -> str:
     grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for candidate in manifest["candidates"]:
+    for candidate in candidates:
         if not isinstance(candidate, dict):
             raise ValueError("each candidate must be an object")
-        family = str(candidate.get("family") or "æœªåˆ†é¡")
-        grouped[family].append(candidate)
+        grouped[str(candidate.get("family") or "æœªåˆ†é¡")].append(candidate)
 
     sections = "\n".join(
-        family_section(manifest_path, family, candidates, size)
-        for family, candidates in grouped.items()
+        family_section(manifest_path, family, family_candidates, size)
+        for family, family_candidates in grouped.items()
     )
     storage_key = "pictogram-animation-review:" + str(manifest_path.resolve())
 
@@ -149,7 +174,7 @@ def build_document(manifest_path: Path, manifest: dict[str, Any], size: int) -> 
   .art {{ height: calc(var(--art-size) + 56px); display: grid; place-items: center; background: #fafafa; overflow: hidden; }}
   .preview {{ width: var(--art-size); height: var(--art-size); border: 0; background: transparent; }}
   .body {{ padding: 14px; border-top: 1px solid #e5e5e5; }}
-  .title-row {{ display: flex; gap: 8px; align-items: center; justify-content: space-between; }}
+  .title-row {{ display: flex; gap: 8px; align-items: center; justify-content: space-between }}
   h3 {{ margin: 0; font-size: 15px; }}
   p {{ margin: 9px 0 0; font-size: 13px; line-height: 1.5; }}
   .notes {{ color: #555; }}
@@ -181,7 +206,6 @@ def build_document(manifest_path: Path, manifest: dict[str, Any], size: int) -> 
   let review = {{}};
 
   try {{ review = JSON.parse(localStorage.getItem(storageKey) || '{{}}'); }} catch {{ review = {{}}; }}
-
   const save = () => {{ try {{ localStorage.setItem(storageKey, JSON.stringify(review)); }} catch {{}} }};
 
   const applyPause = (card) => {{
@@ -205,58 +229,64 @@ def build_document(manifest_path: Path, manifest: dict[str, Any], size: int) -> 
   document.querySelectorAll('.card').forEach((card) => {{
     const id = card.dataset.candidateId;
     const state = review[id] || {{}};
-    if (state.decision) {{
-      card.querySelector(`[data-decision="${{state.decision}}"]`)?.classList.add('active');
-    }}
-    card.querySelectoŠ	Ëœ™]šY]Ë[›İIÊK˜[YHHİ]K››İH	ÉÎÂˆ™\^JØ\™
-NÂˆ_JNÂ‚ˆØİ[Y[™Ù][[Y[RY
-	Ü™\^KX[	ÊK˜Y]™[\İ[™\Š	ØÛXÚÉË
+    if (state.decision) card.querySelector(`[data-decision="$
+{state.decision}}"]`)?.classList.add('active');
+    card.querySelector('.review-note').value = state.note || '';
+  }});
 
-HOˆŞÂˆØİ[Y[œ]Y\TÙ[XİÜ[
-	Ë˜Ø\™	ÊK™›Ü‘XXÚ
-™\^JNÂˆ_JNÂ‚ˆØİ[Y[™Ù][[Y[RY
-	Ü]\ÙKX[	ÊK˜Y]™[\İ[™\Š	ØÛXÚÉË
-]™[
-HOˆŞÂˆ]\ÙYH\]\ÙYÂˆØİ[Y[œ]Y\TÙ[XİÜ[
-	Ë˜Ø\™	ÊK™›Ü‘XXÚ
-\T]\ÙJNÂˆ]™[˜İ\œ™[\™Ù]^ÛÛ[H]\ÙYÈ	ùa£ze¢ÉÈˆ	ù. 9¦`¹`g9«h‰ÎÂˆ_JNÂ‚ˆØİ[Y[œ]Y\TÙ[XİÜ[
-	Ëœ™\^K[Û™IÊK™›Ü‘XXÚ
+  document.getElementById('replay-all').addEventListener('click', () => document.querySelectorAll('.card').forEach(replay));
+  document.getElementById('pause-all').addEventListener('click', (event) => {{
+    paused = !paused;
+    document.querySelectorAll('.card').forEach(applyPause);
+    event.currentTarget.textContent = paused ? 'å†é–‹' : 'ä¸€æ™‚åœæ­¢';
+  }});
+  document.querySelectorAll('.replay-one').forEach((button) => button.addEventListener('click', () => replay(button.closest('.card'))));
+  document.querySelectorAll('.decision').forEach((button) => button.addEventListener('click', () => {{
+    const card = button.closest('.card');
+    const id = card.dataset.candidateId;
+    const nextDecision = button.dataset.decision;
+    const currentDecision = review[id]?.decision;
+    review[id] = {{ ...(review[id] || {{}}), decision: currentDecision === nextDecision ? null : nextDecision }};
+    card.querySelectorAll('.decision').forEach((item) => item.classList.remove('active'));
+    if (review[id].decision) button.classList.add('active');
+    save();
+  }}));
+  document.querySelectorAll('.review-note').forEach((textarea) => textarea.addEventListener('input', () => {{
+    const id = textarea.closest('.card').dataset.candidateId;
+    review[id] = {{ ...(review[id] || {{}}), note: textarea.value }};
+    save();
+  }}));
+  document.getElementById('show-review').addEventListener('click', () => {{
+    output.value = JSON.stringify(review, null, 2);
+    output.style.display = 'block';
+    output.select();
+  }});
+}})();
+</script>
+</body>
+</html>
+"""
 
-]ÛŠHOˆŞÂˆ]Û‹˜Y]™[\İ[™\Š	ØÛXÚÉË
 
-HOˆ™\^J]Û‹˜ÛÜÙ\İ
-	Ë˜Ø\™	ÊJJNÂˆ_JNÂ‚ˆØİ[Y[œ]Y\TÙ[XİÜ[
-	Ë™XÚ\Ú[Û‰ÊK™›Ü‘XXÚ
+def main() -> int:
+    args = parse_args()
+    try:
+        manifest = load_manifest(args.manifest)
+        candidates = (
+            human_candidates(manifest, args.self_review)
+            if args.audience == "human"
+            else manifest["candidates"]
+        )
+        title = str(manifest.get("title") or "Pictogram animation review")
+        document = build_document(args.manifest, title, candidates, args.size)
+    except (OSError, json.JSONDecodeError, ValueError) as error:
+        raise SystemExit(f"ERROR: {error}") from error
 
-]ÛŠHOˆŞÂˆ]Û‹˜Y]™[\İ[™\Š	ØÛXÚÉË
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(document, encoding="utf-8")
+    print(args.output)
+    return 0
 
-HOˆŞÂˆÛÛœİYH]Û‹™]\Ù]šYÂˆÛÛœİ™^XÚ\Ú[ÛˆH]Û‹™]\Ù]™XÚ\Ú[ÛÂˆÛÛœİİ\œ™[XÚ\Ú[ÛˆH™]šY]ÖÚYOË™XÚ\Ú[ÛÂˆ™]šY]ÖÚYHHŞÈ‹‹Š™]šY]ÖÚYHŞß_JKXÚ\Ú[Ûˆİ\œ™[XÚ\Ú[ÛˆOOH™^XÚ\Ú[ÛˆÈ[ˆ™^XÚ\Ú[Ûˆ_NÂˆ]Û‹˜ÛÜÙ\İ
-	Ë™XÚ\Ú[ÛœÉÊKœ]Y\TÙ[XİÜ[
-	Ë™XÚ\Ú[Û‰ÊK™›Ü‘XXÚ
 
-][JHOˆ][K˜Û\ÜÓ\İœ™[[İ™J	ØXİ]™IÊJNÂˆYˆ
-™]šY]ÖÚYK™XÚ\Ú[ÛŠH]Û‹˜Û\ÜÓ\İ˜Y
-	ØXİ]™IÊNÂˆØ]™J
-NÂˆ_JNÂˆ_JNÂ‚ˆØİ[Y[œ]Y\TÙ[XİÜ[
-	Ëœ™]šY]Ë[›İIÊK™›Ü‘XXÚ
-
-^\™XJHOˆŞÂˆ^\™XK˜Y]™[\İ[™\Š	Ú[œ]	Ë
-
-HOˆŞÂˆÛÛœİYH^\™XK™]\Ù]šYÂˆ™]šY]ÖÚYHHŞÈ‹‹Š™]šY]ÖÚYHŞß_JK›İNˆ^\™XK˜[YH_NÂˆØ]™J
-NÂˆ_JNÂˆ_JNÂ‚ˆØİ[Y[™Ù][[Y[RY
-	ÜÚİË\™]šY]ÉÊK˜Y]™[\İ[™\Š	ØÛXÚÉË
-
-HOˆŞÂˆİ]]˜[YHH”ÓÓ‹œİš[™ÚYJ™]šY]Ë[ŠNÂˆİ]]œİ[K™\Ü^HH	Ø›ØÚÉÎÂˆİ]]œÙ[Xİ
-
-NÂˆ_JNÂŸ_JJ
-NÂÜØÜš\‚Ø›ÙO‚Ú[‚ˆˆˆ‚‚‚™YˆXZ[Š
-HOˆ[‚ˆ\™ÜÈH\œÙWØ\™ÜÊ
-BˆX[šY™\İHØYÛX[šY™\İ
-\™ÜË›X[šY™\İ
-BˆØİ[Y[HZ[ÙØİ[Y[
-\™ÜË›X[šY™\İX[šY™\İ\™ÜËœÚ^™JBˆ\™ÜË›İ]]œ\™[›ZÙ\Š\™[ÏUYK^\İÛÚÏUYJBˆ\™ÜË›İ]]Üš]Wİ^
-Øİ[Y[[˜ÛÙ[™ÏH]‹NŠBˆš[
-\™ÜË›İ]]
-Bˆ™]\›ˆ‚‚šYˆ×Û˜[YW×ÈOH—×ÛXZ[—×È‚ˆ˜Z\ÙHŞ\İ[Q^]
-XZ[Š
-JB
+if __name__ == "__main__":
+    raise SystemExit(main())
