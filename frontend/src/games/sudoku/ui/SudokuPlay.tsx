@@ -189,7 +189,7 @@ export function SudokuPlay({
               disabled={!interactionEnabled}
             />
           </div>
-          <fieldset className="grid grid-cols-9">
+          <fieldset className="grid grid-cols-9 gap-x-1">
             <legend className="sr-only">数字入力</legend>
             {SUDOKU_DIGITS.map((digit) => (
               <button
