@@ -6,7 +6,10 @@ import {
   assessWaterSortDifficulty,
   type WaterSortDifficulty,
 } from "@/games/water-sort/game/difficulty";
-import type { WaterSortProblem } from "@/games/water-sort/game/generator";
+import type {
+  WaterSortProblem,
+  WaterSortProblemIdentity,
+} from "@/games/water-sort/game/generator";
 import { generateWaterSortProblemForDifficulty } from "@/games/water-sort/game/problem-selection";
 import {
   applyWaterSortSessionMove,
@@ -232,9 +235,20 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
     [now, session],
   );
 
+  const problemIdentity = useMemo<WaterSortProblemIdentity>(
+    () => ({
+      generatorVersion: session.problem.generatorVersion,
+      seed: session.problem.seed,
+      conditions: { ...session.problem.conditions },
+      generationAttempt: session.problem.generationAttempt,
+    }),
+    [session.problem],
+  );
+
   return {
     difficulty,
     seed: session.problem.seed,
+    problemIdentity,
     status: session.status,
     progress: play.progress,
     state: session.state,

@@ -102,6 +102,7 @@ describe("useWaterSortGame", () => {
     const { result } = renderHook(() => useWaterSortGame("easy"));
     const initialState = result.current.state;
     const initialSeed = result.current.seed;
+    const initialProblemIdentity = result.current.problemIdentity;
     const move = listWaterSortLegalMoves(initialState)[0];
     expect(move).toBeDefined();
     if (!move) return;
@@ -110,6 +111,7 @@ describe("useWaterSortGame", () => {
     act(() => result.current.restart());
     expect(result.current.state).toEqual(initialState);
     expect(result.current.seed).toBe(initialSeed);
+    expect(result.current.problemIdentity).toEqual(initialProblemIdentity);
     expect(result.current.moveCount).toBe(1);
     expect(result.current.restartCount).toBe(1);
     expect(result.current.elapsedMs).toBe(3000);
@@ -118,6 +120,7 @@ describe("useWaterSortGame", () => {
   test("新しい問題では別シードへ切り替えてプレイ成績を初期化すること", () => {
     const { result } = renderHook(() => useWaterSortGame("easy"));
     const initialSeed = result.current.seed;
+    const initialProblemIdentity = result.current.problemIdentity;
     const move = listWaterSortLegalMoves(result.current.state)[0];
     expect(move).toBeDefined();
     if (!move) return;
@@ -126,6 +129,8 @@ describe("useWaterSortGame", () => {
     act(() => result.current.restart());
     act(() => result.current.newGame());
     expect(result.current.seed).not.toBe(initialSeed);
+    expect(result.current.problemIdentity).not.toEqual(initialProblemIdentity);
+    expect(result.current.problemIdentity.seed).toBe(result.current.seed);
     expect(result.current.moveCount).toBe(0);
     expect(result.current.undoCount).toBe(0);
     expect(result.current.restartCount).toBe(0);
