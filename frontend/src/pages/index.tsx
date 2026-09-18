@@ -1,16 +1,16 @@
 import { GameSelectionGallery } from "@/components/GameSelectionGallery";
-import waterSortPictogram from "@/games/water-sort/assets/pictogram.svg";
-import sudokuPictogram from "../../../.claude/skills/design-game-pictogram/examples/sudoku.svg";
+import waterSortPictogramSvg from "@/games/water-sort/assets/pictogram.svg?raw";
+import sudokuPictogramSvg from "../../../.claude/skills/design-game-pictogram/examples/sudoku.svg?raw";
 
 const games = [
   {
     name: "ウォーターソート",
-    pictogramSrc: waterSortPictogram,
+    pictogramSvg: waterSortPictogramSvg,
     to: "/games/water-sort",
   },
   {
     name: "ナンプレ",
-    pictogramSrc: sudokuPictogram,
+    pictogramSvg: sudokuPictogramSvg,
     to: "/games/sudoku",
   },
 ] as const;

@@ -10,6 +10,7 @@ import {
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
+import { GamePictogram } from "@/components/GamePictogram";
 import { Button } from "@/components/ui/button";
 import waterSortPictogramSvg from "@/games/water-sort/assets/pictogram.svg?raw";
 import {
@@ -424,31 +425,6 @@ function ScoreCard({
     </div>
   );
 }
-function WaterSortClearPictogram() {
-  const containerRef = useRef<HTMLSpanElement>(null);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const parsedSvg = new DOMParser().parseFromString(
-      waterSortPictogramSvg,
-      "image/svg+xml",
-    ).documentElement;
-    container.replaceChildren(document.importNode(parsedSvg, true));
-
-    return () => container.replaceChildren();
-  }, []);
-
-  return (
-    <span
-      ref={containerRef}
-      className="block size-12 [--water-sort-pictogram-fill:currentColor] [--water-sort-pictogram-fill-opacity:0.55] [--water-sort-pictogram-stroke:currentColor] [&>svg]:block [&>svg]:size-full"
-      aria-hidden="true"
-    />
-  );
-}
-
 function ClearMark({ className }: { className: string }) {
   const markRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -471,7 +447,9 @@ function ClearMark({ className }: { className: string }) {
       className={`mx-auto flex size-20 items-center justify-center rounded-full shadow-sm ${className}`}
       aria-hidden="true"
     >
-      <WaterSortClearPictogram />
+      <span className="block size-12">
+        <GamePictogram svg={waterSortPictogramSvg} variant="result" />
+      </span>
     </div>
   );
 }

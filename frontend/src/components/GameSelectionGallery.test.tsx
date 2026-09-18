@@ -7,12 +7,12 @@ import { GameSelectionGallery } from "@/components/GameSelectionGallery";
 const games = [
   {
     name: "ウォーターソート",
-    pictogramSrc: "/water-sort.svg",
+    pictogramSvg: '<svg viewBox="0 0 120 120" data-game="water-sort" />',
     to: "/games/water-sort",
   },
   {
     name: "ナンプレ",
-    pictogramSrc: "/sudoku.svg",
+    pictogramSvg: '<svg viewBox="0 0 120 120" data-game="sudoku" />',
     to: "/games/sudoku",
   },
 ] as const;
@@ -35,6 +35,7 @@ test("最初のパズルをヒーローとして表示すること", () => {
   });
 
   expect(heroLink.getAttribute("href")).toBe("/games/water-sort");
+  expect(heroLink.querySelector('svg[data-game="water-sort"]')).toBeTruthy();
   expect(
     screen
       .getByRole("button", { name: "ウォーターソートを選択" })
@@ -50,5 +51,6 @@ test("候補を選ぶとヒーローを切り替えること", () => {
 
   const heroLink = screen.getByRole("link", { name: "ナンプレを遊ぶ" });
   expect(heroLink.getAttribute("href")).toBe("/games/sudoku");
+  expect(heroLink.querySelector('svg[data-game="sudoku"]')).toBeTruthy();
   expect(sudokuButton.getAttribute("aria-pressed")).toBe("true");
 });

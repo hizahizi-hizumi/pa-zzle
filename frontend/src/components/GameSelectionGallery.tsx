@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router";
 
+import { GamePictogram } from "@/components/GamePictogram";
 import type { Path } from "@/router";
 
 type GameSelectionGame = {
   name: string;
-  pictogramSrc: string;
+  pictogramSvg: string;
   to: Path;
 };
 
@@ -33,11 +34,9 @@ export function GameSelectionGallery({ games }: GameSelectionGalleryProps) {
           aria-label={`${selectedGame.name}を遊ぶ`}
           className="flex h-full flex-col items-center justify-center transition-colors hover:bg-muted/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         >
-          <img
-            src={selectedGame.pictogramSrc}
-            alt=""
-            className="size-[10.625rem] p-[1.0625rem] sm:size-[14.0625rem] sm:p-[1.5625rem]"
-          />
+          <span className="size-[10.625rem] p-[1.0625rem] sm:size-[14.0625rem] sm:p-[1.5625rem]">
+            <GamePictogram svg={selectedGame.pictogramSvg} />
+          </span>
           <span className="mt-2 text-lg font-semibold tracking-tight sm:mt-2.5 sm:text-[1.375rem]">
             {selectedGame.name}
           </span>
@@ -68,7 +67,7 @@ export function GameSelectionGallery({ games }: GameSelectionGalleryProps) {
                       : "border-border group-hover:bg-accent"
                   }`}
                 >
-                  <img src={game.pictogramSrc} alt="" className="size-full" />
+                  <GamePictogram svg={game.pictogramSvg} />
                 </span>
                 <span className="mt-1.5 w-full truncate text-center text-[10px] font-semibold leading-tight sm:mt-[0.4375rem]">
                   {game.name}
