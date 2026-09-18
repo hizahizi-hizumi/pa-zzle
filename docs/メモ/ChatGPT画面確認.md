@@ -1,6 +1,8 @@
 # ChatGPT環境での画面確認
 
-ChatGPT実行環境で `pa-zzle` のVite開発サーバーをPlaywright / Chromiumから確認する手順。
+ChatGPT実行環境で `pa-zzle` のVite開発サーバーをPlaywright / Chromiumから確認するための環境固有手順。
+
+画面レビューで何を確認するかは `../開発/画面レビュー手順.md` を正とし、この文書ではChatGPT環境でそれを実行するための起動・接続方法だけを扱う。
 
 ## 前提
 
