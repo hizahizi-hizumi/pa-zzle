@@ -28,6 +28,7 @@ type SudokuHumanSolveStepBase = {
   digit: SudokuDigit;
   candidatesBefore: readonly SudokuDigit[];
   candidateChanges: readonly SudokuCandidateChange[];
+  availablePlacementCount: number;
 };
 
 export type SudokuHumanSolveStep =
@@ -40,11 +41,19 @@ export type SudokuHumanSolveStep =
       unitCandidateCellIndices: readonly number[];
     });
 
+export type SudokuDependencyFeatures = {
+  observedStepCount: number;
+  meanAvailablePlacementCount: number;
+  minimumAvailablePlacementCount: number;
+  singleOptionStepCount: number;
+};
+
 export type SudokuHumanSolveFeatures = {
   stepCount: number;
   usedTechniques: readonly SudokuHumanTechnique[];
   techniqueCounts: Readonly<Record<SudokuHumanTechnique, number>>;
   solvedWithSupportedTechniques: boolean;
+  dependency: SudokuDependencyFeatures;
 };
 
 export type SudokuHumanSolveResult = {
@@ -71,6 +80,7 @@ type Placement =
     };
 
 const UNIT_KINDS = ["row", "column", "block"] as const;
+export const SUDOKU_DEPENDENCY_WINDOW_STEP_COUNT = 25;
 
 function getCandidateState(board: SudokuBoard): CandidateState {
   return Array.from({ length: SUDOKU_CELL_COUNT }, (_, cellIndex) =>
@@ -104,6 +114,26 @@ function getUnitIndex(kind: SudokuUnit["kind"], cellIndex: number): number {
   }
 }
 
+function getUnitCandidateCellIndices(
+  candidates: CandidateState,
+  kind: SudokuUnit["kind"],
+  unitIndex: number,
+  digit: SudokuDigit,
+): number[] {
+  const cellIndices: number[] = [];
+
+  for (let cellIndex = 0; cellIndex < candidates.length; cellIndex += 1) {
+    if (
+      getUnitIndex(kind, cellIndex) === unitIndex &&
+      candidates[cellIndex]!.includes(digit)
+    ) {
+      cellIndices.push(cellIndex);
+    }
+  }
+
+  return cellIndices;
+}
+
 function findHiddenSingle(candidates: CandidateState): Placement | null {
   for (let cellIndex = 0; cellIndex < candidates.length; cellIndex += 1) {
     const cellCandidates = candidates[cellIndex]!;
@@ -111,20 +141,12 @@ function findHiddenSingle(candidates: CandidateState): Placement | null {
     for (const digit of cellCandidates) {
       for (const kind of UNIT_KINDS) {
         const unitIndex = getUnitIndex(kind, cellIndex);
-        const unitCandidateCellIndices: number[] = [];
-
-        for (
-          let peerCellIndex = 0;
-          peerCellIndex < candidates.length;
-          peerCellIndex += 1
-        ) {
-          if (
-            getUnitIndex(kind, peerCellIndex) === unitIndex &&
-            candidates[peerCellIndex]!.includes(digit)
-          ) {
-            unitCandidateCellIndices.push(peerCellIndex);
-          }
-        }
+        const unitCandidateCellIndices = getUnitCandidateCellIndices(
+          candidates,
+          kind,
+          unitIndex,
+          digit,
+        );
 
         if (unitCandidateCellIndices.length === 1) {
           return {
@@ -140,6 +162,34 @@ function findHiddenSingle(candidates: CandidateState): Placement | null {
   }
 
   return null;
+}
+
+function countAvailablePlacements(candidates: CandidateState): number {
+  const placements = new Set<string>();
+
+  for (let cellIndex = 0; cellIndex < candidates.length; cellIndex += 1) {
+    const cellCandidates = candidates[cellIndex]!;
+    if (cellCandidates.length === 1) {
+      placements.add(`${cellIndex}:${cellCandidates[0]}`);
+    }
+
+    for (const digit of cellCandidates) {
+      for (const kind of UNIT_KINDS) {
+        const unitIndex = getUnitIndex(kind, cellIndex);
+        const unitCandidateCellIndices = getUnitCandidateCellIndices(
+          candidates,
+          kind,
+          unitIndex,
+          digit,
+        );
+        if (unitCandidateCellIndices.length === 1) {
+          placements.add(`${cellIndex}:${digit}`);
+        }
+      }
+    }
+  }
+
+  return placements.size;
 }
 
 function findNextPlacement(candidates: CandidateState): Placement | null {
@@ -181,6 +231,7 @@ function createStep(
     digit: placement.digit,
     candidatesBefore: candidatesBefore[placement.cellIndex]!,
     candidateChanges: candidateChanges(candidatesBefore, candidatesAfter),
+    availablePlacementCount: countAvailablePlacements(candidatesBefore),
   };
 
   if (placement.technique === "naked-single") {
@@ -192,6 +243,30 @@ function createStep(
     technique: placement.technique,
     unit: placement.unit,
     unitCandidateCellIndices: placement.unitCandidateCellIndices,
+  };
+}
+
+function summarizeDependency(
+  steps: readonly SudokuHumanSolveStep[],
+): SudokuDependencyFeatures {
+  const observedSteps = steps.slice(0, SUDOKU_DEPENDENCY_WINDOW_STEP_COUNT);
+  if (observedSteps.length === 0) {
+    return {
+      observedStepCount: 0,
+      meanAvailablePlacementCount: 0,
+      minimumAvailablePlacementCount: 0,
+      singleOptionStepCount: 0,
+    };
+  }
+
+  const counts = observedSteps.map((step) => step.availablePlacementCount);
+  const total = counts.reduce((sum, count) => sum + count, 0);
+
+  return {
+    observedStepCount: observedSteps.length,
+    meanAvailablePlacementCount: total / observedSteps.length,
+    minimumAvailablePlacementCount: Math.min(...counts),
+    singleOptionStepCount: counts.filter((count) => count === 1).length,
   };
 }
 
@@ -217,6 +292,7 @@ function summarizeSteps(
     usedTechniques,
     techniqueCounts,
     solvedWithSupportedTechniques,
+    dependency: summarizeDependency(steps),
   };
 }
 

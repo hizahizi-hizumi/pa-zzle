@@ -139,4 +139,26 @@ describe("traceSudokuHumanSolve", () => {
       unitCandidateCellIndices: [12],
     });
   });
+
+  test("解法序盤の次の一手候補数を依存構造の特徴量として集計すること", () => {
+    const result = traceSudokuHumanSolve(basicPuzzle);
+    const observedSteps = result.steps.slice(0, 25);
+    const availablePlacementCounts = observedSteps.map(
+      (step) => step.availablePlacementCount,
+    );
+
+    expect(result.features.dependency.observedStepCount).toBe(
+      observedSteps.length,
+    );
+    expect(result.features.dependency.meanAvailablePlacementCount).toBe(
+      availablePlacementCounts.reduce((sum, count) => sum + count, 0) /
+        availablePlacementCounts.length,
+    );
+    expect(result.features.dependency.minimumAvailablePlacementCount).toBe(
+      Math.min(...availablePlacementCounts),
+    );
+    expect(result.features.dependency.singleOptionStepCount).toBe(
+      availablePlacementCounts.filter((count) => count === 1).length,
+    );
+  });
 });
