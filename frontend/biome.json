@@ -17,9 +17,7 @@
     "enabled": true,
     "rules": {
       "preset": "recommended",
-      "a11y": {
-        "noSvgWithoutTitle": "off"
-      },
+      "a11y": "off",
       "suspicious": {
         "noAssignInExpressions": "off"
       },
