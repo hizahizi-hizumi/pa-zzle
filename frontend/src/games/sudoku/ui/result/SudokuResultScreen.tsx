@@ -1,6 +1,7 @@
 import { Home, RefreshCw } from "lucide-react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
+import { GamePictogram } from "@/components/GamePictogram";
 import {
   GameResultConfetti,
   GameResultMark,
@@ -8,6 +9,7 @@ import {
   getGameResultScorePresentation,
 } from "@/components/GameResultPresentation";
 import { Button } from "@/components/ui/button";
+import sudokuPictogramSvg from "@/games/sudoku/assets/pictogram.svg?raw";
 import {
   SUDOKU_MISTAKE_PENALTY,
   SUDOKU_RESTART_PENALTY,
@@ -43,7 +45,9 @@ export function SudokuResultScreen({
       <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-5">
         <div className="text-center">
           <GameResultMark presentation={scorePresentation}>
-            <span className="text-4xl font-semibold">✓</span>
+            <span className="block size-12">
+              <GamePictogram svg={sudokuPictogramSvg} variant="result" />
+            </span>
           </GameResultMark>
           <p className="mt-4 text-sm font-semibold tracking-tight">ナンプレ</p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight">クリア!</h1>

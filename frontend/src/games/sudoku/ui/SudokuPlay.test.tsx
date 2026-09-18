@@ -200,8 +200,10 @@ describe("SudokuPlay", () => {
     );
 
     const heading = screen.getByRole("heading", { name: "クリア!" });
+    const pictogram = document.querySelector('svg[aria-label="ナンプレ"]');
 
     expect(heading).toBeTruthy();
+    expect(pictogram).toBeTruthy();
     expect(screen.getByText("02:05")).toBeTruthy();
     expect(screen.getByText("79")).toBeTruthy();
     expect(screen.getByText("クリア！")).toBeTruthy();
