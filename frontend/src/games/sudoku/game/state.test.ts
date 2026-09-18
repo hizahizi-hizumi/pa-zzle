@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import {
+  areSudokuCellsRelated,
   assertSudokuBoard,
   getSudokuBlockIndex,
   getSudokuColumnIndex,
@@ -35,6 +36,13 @@ test("セル番号から行・列・ブロックを算出できること", () =>
   const block = getSudokuBlockIndex(cellIndex);
 
   expect({ row, column, block }).toEqual({ row: 5, column: 5, block: 4 });
+});
+
+test("同じ行・列・ブロックのマスを関連マスとして判定すること", () => {
+  expect(areSudokuCellsRelated(0, 8)).toBe(true);
+  expect(areSudokuCellsRelated(0, 72)).toBe(true);
+  expect(areSudokuCellsRelated(0, 20)).toBe(true);
+  expect(areSudokuCellsRelated(0, 40)).toBe(false);
 });
 
 test("81マスではない盤面を拒否すること", () => {

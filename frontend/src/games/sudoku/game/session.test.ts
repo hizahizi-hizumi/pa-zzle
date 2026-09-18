@@ -6,6 +6,7 @@ import {
   clearSudokuCell,
   createSudokuSession,
   enterSudokuDigit,
+  findCompletedSudokuDigits,
   findSudokuMistakeCellIndices,
   getSudokuSessionElapsedMs,
   getSudokuSessionResult,
@@ -150,6 +151,23 @@ describe("toggleSudokuNote", () => {
     expect(answered.notes[9]).toEqual([7]);
     expect(answered.notes[10]).toEqual([2]);
     expect(answered.notes[40]).toEqual([5]);
+  });
+});
+
+describe("findCompletedSudokuDigits", () => {
+  test("誤答を含めて9個見えても正解が揃っていない数字は完了扱いにしないこと", () => {
+    const problem = createProblem();
+    const clues = [...problem.clues];
+    clues[6] = null;
+    let session = createSudokuSession({ ...problem, clues }, 1_000);
+
+    session = enterSudokuDigit(session, 0, 9, 2_000);
+    const beforeCorrectEntry = findCompletedSudokuDigits(session);
+    session = enterSudokuDigit(session, 6, 9, 2_500);
+    const afterCorrectEntry = findCompletedSudokuDigits(session);
+
+    expect(beforeCorrectEntry).not.toContain(9);
+    expect(afterCorrectEntry).toContain(9);
   });
 });
 

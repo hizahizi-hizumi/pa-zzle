@@ -1,18 +1,24 @@
+import {
+  clearSudokuCellNotes,
+  clearSudokuNotesForCorrectEntry,
+  createEmptySudokuNotes,
+  type SudokuNotes,
+  toggleSudokuNoteDigit,
+} from "./notes";
 import { isSudokuSolved } from "./rules";
 import {
   assertSudokuBoard,
   assertSudokuCellIndex,
-  getSudokuBlockIndex,
-  getSudokuColumnIndex,
-  getSudokuRowIndex,
-  SUDOKU_CELL_COUNT,
+  SUDOKU_DIGITS,
+  SUDOKU_SIZE,
   type SudokuBoard,
   type SudokuDigit,
   type SudokuProblem,
 } from "./state";
 
+export type { SudokuNotes } from "./notes";
+
 export type SudokuSessionStatus = "playing" | "cleared";
-export type SudokuNotes = readonly (readonly SudokuDigit[])[];
 
 type SudokuSessionSnapshot = {
   board: SudokuBoard;
@@ -39,10 +45,6 @@ export type SudokuSessionResult = {
   restartCount: number;
 };
 
-function createEmptyNotes(): SudokuNotes {
-  return Array.from({ length: SUDOKU_CELL_COUNT }, () => []);
-}
-
 function validateProblem(problem: SudokuProblem): void {
   assertSudokuBoard(problem.clues);
   assertSudokuBoard(problem.solution);
@@ -61,37 +63,6 @@ function validateProblem(problem: SudokuProblem): void {
 
 function isEditableCell(session: SudokuSession, cellIndex: number): boolean {
   return session.problem.clues[cellIndex] === null;
-}
-
-function isRelatedCell(left: number, right: number): boolean {
-  return (
-    getSudokuRowIndex(left) === getSudokuRowIndex(right) ||
-    getSudokuColumnIndex(left) === getSudokuColumnIndex(right) ||
-    getSudokuBlockIndex(left) === getSudokuBlockIndex(right)
-  );
-}
-
-function clearNotesForEnteredDigit(
-  notes: SudokuNotes,
-  cellIndex: number,
-  digit: SudokuDigit,
-  clearRelatedNotes: boolean,
-): SudokuNotes {
-  return notes.map((cellNotes, index) => {
-    if (index === cellIndex) {
-      return cellNotes.length > 0 ? [] : cellNotes;
-    }
-
-    if (
-      !clearRelatedNotes ||
-      !isRelatedCell(cellIndex, index) ||
-      !cellNotes.includes(digit)
-    ) {
-      return cellNotes;
-    }
-
-    return cellNotes.filter((note) => note !== digit);
-  });
 }
 
 function withHistory(
@@ -119,7 +90,7 @@ export function createSudokuSession(
     status: "playing",
     problem,
     board: [...problem.clues],
-    notes: createEmptyNotes(),
+    notes: createEmptySudokuNotes(),
     history: [],
     startedAt,
     finishedAt: null,
@@ -148,12 +119,9 @@ export function enterSudokuDigit(
   const board = [...session.board];
   board[cellIndex] = digit;
   const isCorrect = session.problem.solution[cellIndex] === digit;
-  const notes = clearNotesForEnteredDigit(
-    session.notes,
-    cellIndex,
-    digit,
-    isCorrect,
-  );
+  const notes = isCorrect
+    ? clearSudokuNotesForCorrectEntry(session.notes, cellIndex, digit)
+    : clearSudokuCellNotes(session.notes, cellIndex);
   const cleared = isSudokuSolved(board);
 
   return {
@@ -182,12 +150,7 @@ export function clearSudokuCell(
 
   const board = [...session.board];
   board[cellIndex] = null;
-  const notes =
-    cellNotes.length === 0
-      ? session.notes
-      : session.notes.map((notesAtCell, index) =>
-          index === cellIndex ? [] : notesAtCell,
-        );
+  const notes = clearSudokuCellNotes(session.notes, cellIndex);
 
   return {
     ...session,
@@ -210,13 +173,7 @@ export function toggleSudokuNote(
     return session;
   }
 
-  const currentNotes = session.notes[cellIndex] ?? [];
-  const nextCellNotes = currentNotes.includes(digit)
-    ? currentNotes.filter((note) => note !== digit)
-    : [...currentNotes, digit].sort((left, right) => left - right);
-  const notes = session.notes.map((cellNotes, index) =>
-    index === cellIndex ? nextCellNotes : cellNotes,
-  );
+  const notes = toggleSudokuNoteDigit(session.notes, cellIndex, digit);
 
   return {
     ...session,
@@ -251,7 +208,7 @@ export function restartSudokuSession(session: SudokuSession): SudokuSession {
   return {
     ...session,
     board: [...session.problem.clues],
-    notes: createEmptyNotes(),
+    notes: createEmptySudokuNotes(),
     history: [],
     restartCount: session.restartCount + 1,
   };
@@ -262,6 +219,18 @@ export function findSudokuMistakeCellIndices(session: SudokuSession): number[] {
     cell !== null && cell !== session.problem.solution[cellIndex]
       ? [cellIndex]
       : [],
+  );
+}
+
+export function findCompletedSudokuDigits(
+  session: SudokuSession,
+): SudokuDigit[] {
+  return SUDOKU_DIGITS.filter(
+    (digit) =>
+      session.board.filter(
+        (cell, cellIndex) =>
+          cell === digit && session.problem.solution[cellIndex] === digit,
+      ).length === SUDOKU_SIZE,
   );
 }
 
