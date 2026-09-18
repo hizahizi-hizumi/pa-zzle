@@ -29,22 +29,20 @@ type JoinedRow = CoreRatingRow & {
 };
 
 function parseSerateLine(line: string): {
-  puzzle: string;
   er: number;
   ep: number;
   ed: number;
 } {
   const match = line.trim().match(
-    /^([0-9.]{81})\s+ED=([0-9.]+)\/([0-9.]+)\/([0-9.]+)$/,
+    /^(?:[0-9.]{81}\s+ED=)?([0-9.]+)\/([0-9.]+)\/([0-9.]+)$/,
   );
   if (!match) {
     throw new Error(`Unexpected serate output: ${line}`);
   }
   return {
-    puzzle: match[1] ?? "",
-    er: Number(match[2]),
-    ep: Number(match[3]),
-    ed: Number(match[4]),
+    er: Number(match[1]),
+    ep: Number(match[2]),
+    ed: Number(match[3]),
   };
 }
 
@@ -145,8 +143,8 @@ if (core.rows.length !== serateRows.length) {
 
 const joined: JoinedRow[] = core.rows.map((row, index) => {
   const serate = serateRows[index];
-  if (!serate || serate.puzzle !== row.puzzle) {
-    throw new Error(`Puzzle order mismatch at row ${index}`);
+  if (!serate) {
+    throw new Error(`Missing serate rating at row ${index}`);
   }
   return {
     ...row,
