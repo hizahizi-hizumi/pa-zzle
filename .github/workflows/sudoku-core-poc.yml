@@ -34,12 +34,12 @@ jobs:
         run: |
           set -euo pipefail
           bun add sudoku-core@3.0.3 --exact
-          node -e "const p=require('./node_modules/sudoku-core/package.json'); console.log(`${p.name}@${p.version}`)"
+          node -e 'const p=require("./node_modules/sudoku-core/package.json"); console.log(p.name + "@" + p.version)'
 
       - name: Evaluate sudoku-core with generated puzzles
         working-directory: frontend
         env:
-          SUDOKU_CORE_POC_SAMPLES_PER_CLUE: "50"
+          SUDOKU_CORE_POC_SAMPLES_PER_CLUE: "200"
         run: |
           set -euo pipefail
           mkdir -p tmp
