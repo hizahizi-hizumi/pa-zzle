@@ -30,6 +30,7 @@ function PlayableSudoku({
     <SudokuPlay
       {...game}
       onChangeDifficulty={() => navigate("/games/sudoku")}
+      onBackToHome={() => navigate("/")}
     />
   );
 }
