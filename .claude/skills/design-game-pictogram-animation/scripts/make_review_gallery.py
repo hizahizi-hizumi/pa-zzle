@@ -229,8 +229,7 @@ def build_document(
   document.querySelectorAll('.card').forEach((card) => {{
     const id = card.dataset.candidateId;
     const state = review[id] || {{}};
-    if (state.decision) card.querySelector(`[data-decision="$
-{state.decision}}"]`)?.classList.add('active');
+    if (state.decision) card.querySelector(`[data-decision="${{state.decision}}"]`)?.classList.add('active');
     card.querySelector('.review-note').value = state.note || '';
   }});
 
