@@ -5,9 +5,10 @@ type GamePictogramProps = {
   variant?: "default" | "result";
 };
 
-const baseClassName =
-  "block size-full [--game-pictogram-soft:var(--muted-foreground)] [--game-pictogram-strong:var(--foreground)] [&>svg]:block [&>svg]:size-full";
-const resultClassName =
+const baseClassName = "block size-full [&>svg]:block [&>svg]:size-full";
+const defaultColorClassName =
+  "[--game-pictogram-soft:var(--muted-foreground)] [--game-pictogram-strong:var(--foreground)]";
+const resultColorClassName =
   "[--game-pictogram-soft:color-mix(in_oklab,currentColor_55%,transparent)] [--game-pictogram-strong:currentColor]";
 
 export function GamePictogram({
@@ -32,7 +33,7 @@ export function GamePictogram({
   return (
     <span
       ref={containerRef}
-      className={`${baseClassName} ${variant === "result" ? resultClassName : ""}`}
+      className={`${baseClassName} ${variant === "result" ? resultColorClassName : defaultColorClassName}`}
       aria-hidden="true"
     />
   );
