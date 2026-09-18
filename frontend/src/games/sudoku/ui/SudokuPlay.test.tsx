@@ -141,6 +141,10 @@ describe("SudokuPlay", () => {
       mistakeCount: 0,
       undoCount: 0,
       restartCount: 0,
+      score: {
+        total: 100,
+        breakdown: { accuracy: 40, speed: 40, stability: 20 },
+      },
       problemIdentity: {
         generatorVersion: "1" as const,
         seed: "test-seed",
@@ -167,7 +171,7 @@ describe("SudokuPlay", () => {
     ).toBe(true);
   });
 
-  test("クリア後に成績生データと次の操作を表示すること", () => {
+  test("クリア後に共通の結果階層で採点結果を表示すること", () => {
     const props = createProps();
     const newGame = vi.fn();
     render(
@@ -180,6 +184,10 @@ describe("SudokuPlay", () => {
           mistakeCount: 2,
           undoCount: 3,
           restartCount: 1,
+          score: {
+            total: 79,
+            breakdown: { accuracy: 30, speed: 40, stability: 9 },
+          },
           problemIdentity: {
             generatorVersion: "1",
             seed: "test-seed",
@@ -191,11 +199,28 @@ describe("SudokuPlay", () => {
       />,
     );
 
-    const heading = screen.getByRole("heading", { name: "クリア" });
-    fireEvent.click(screen.getByRole("button", { name: "新しい問題" }));
+    const heading = screen.getByRole("heading", { name: "クリア!" });
+    const pictogram = document.querySelector('svg[aria-label="ナンプレ"]');
 
     expect(heading).toBeTruthy();
+    expect(pictogram).toBeTruthy();
     expect(screen.getByText("02:05")).toBeTruthy();
+    expect(screen.getByText("79")).toBeTruthy();
+    expect(screen.getByText("クリア！")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "次の問題" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "もう一度" })).toBeTruthy();
+
+    fireEvent.click(screen.getByText("プレイ詳細"));
+
+    expect(screen.getByText("30 / 40")).toBeTruthy();
+    expect(screen.getByText("9 / 20")).toBeTruthy();
+    expect(screen.getByText("採点基準")).toBeTruthy();
+    expect(screen.getByText(/ミス1回につき/)).toBeTruthy();
+    expect(screen.getByText(/1分単位で切り上げ/)).toBeTruthy();
+    expect(screen.getByText(/待った1回につき/)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "次の問題" }));
+
     expect(newGame).toHaveBeenCalledOnce();
   });
 });

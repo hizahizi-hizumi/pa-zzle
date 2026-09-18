@@ -1,7 +1,23 @@
-import { useEffect, useRef } from "react";
+import { Home, RefreshCw } from "lucide-react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
+import { GamePictogram } from "@/components/GamePictogram";
+import {
+  GameResultConfetti,
+  GameResultMark,
+  GameResultScoreCard,
+  getGameResultScorePresentation,
+} from "@/components/GameResultPresentation";
 import { Button } from "@/components/ui/button";
+import sudokuPictogramSvg from "@/games/sudoku/assets/pictogram.svg?raw";
+import {
+  SUDOKU_MISTAKE_PENALTY,
+  SUDOKU_RESTART_PENALTY,
+  SUDOKU_SCORE_MAXIMUMS,
+  SUDOKU_SPEED_FULL_SCORE_MS,
+  SUDOKU_SPEED_PENALTY_PER_INTERVAL,
+  SUDOKU_UNDO_PENALTY,
+} from "@/games/sudoku/game/performance";
 import type { SudokuResult } from "@/games/sudoku/hooks/use-sudoku-game";
 import { formatElapsedTime } from "@/games/sudoku/ui/format-elapsed-time";
 
@@ -20,74 +36,123 @@ export function SudokuResultScreen({
   onChangeDifficulty,
   onBackToHome,
 }: SudokuResultScreenProps) {
-  const contentRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const animation = contentRef.current?.animate?.(
-      [
-        { opacity: 0, transform: "translateY(0.5rem)" },
-        { opacity: 1, transform: "translateY(0)" },
-      ],
-      { duration: 280, easing: "ease-out" },
-    );
-
-    return () => animation?.cancel();
-  }, []);
+  const scorePresentation = getGameResultScorePresentation(result.score.total);
 
   return (
     <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-y-auto bg-background pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <BrandIdentityHeader />
-      <div
-        ref={contentRef}
-        className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-6 text-center"
-      >
-        <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-emerald-100 text-3xl font-semibold text-emerald-700 dark:bg-emerald-950/45 dark:text-emerald-300">
-          ✓
+      <GameResultConfetti intensity={scorePresentation.confettiIntensity} />
+      <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-5">
+        <div className="text-center">
+          <GameResultMark presentation={scorePresentation}>
+            <span className="block size-12">
+              <GamePictogram svg={sudokuPictogramSvg} variant="result" />
+            </span>
+          </GameResultMark>
+          <p className="mt-4 text-sm font-semibold tracking-tight">ナンプレ</p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight">クリア!</h1>
         </div>
-        <p className="mt-4 text-sm font-semibold">ナンプレ</p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight">クリア</h1>
 
-        <dl className="mt-6 grid grid-cols-2 gap-2">
+        <GameResultScoreCard
+          score={result.score.total}
+          presentation={scorePresentation}
+        />
+
+        <dl className="mt-6 grid grid-cols-3 gap-2 text-center">
           <ResultMetric
             label="時間"
             value={formatElapsedTime(result.elapsedMs)}
           />
           <ResultMetric label="ミス" value={String(result.mistakeCount)} />
           <ResultMetric label="待った" value={String(result.undoCount)} />
-          <ResultMetric label="やり直し" value={String(result.restartCount)} />
         </dl>
 
-        <div className="mt-6 grid gap-2">
-          <Button type="button" size="lg" onClick={newGame}>
-            新しい問題
+        <div className="mt-7 grid gap-3">
+          <Button size="lg" className="h-12 text-base" onClick={newGame}>
+            次の問題
           </Button>
-          <Button type="button" variant="outline" onClick={replay}>
-            同じ問題をもう一度
+          <Button
+            variant="outline"
+            size="lg"
+            className="h-12 text-base"
+            onClick={replay}
+          >
+            <RefreshCw />
+            もう一度
           </Button>
-          <Button type="button" variant="ghost" onClick={onChangeDifficulty}>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <Button variant="ghost" onClick={onChangeDifficulty}>
             難易度を変える
           </Button>
-          <Button type="button" variant="ghost" onClick={onBackToHome}>
+          <Button variant="ghost" onClick={onBackToHome}>
+            <Home />
             ホームへ
           </Button>
         </div>
 
-        <details className="mt-5 text-left text-xs text-muted-foreground">
-          <summary className="cursor-pointer text-center">問題情報</summary>
-          <dl className="mt-3 grid gap-1 rounded-lg bg-muted/50 px-3 py-2">
-            <DetailMetric label="seed" value={result.problemIdentity.seed} />
+        <details className="mt-6 rounded-lg border px-4 py-3 text-sm text-muted-foreground">
+          <summary className="cursor-pointer select-none font-medium text-foreground">
+            プレイ詳細
+          </summary>
+          <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
             <DetailMetric
-              label="generator"
-              value={result.problemIdentity.generatorVersion}
+              label="正確さ"
+              value={`${result.score.breakdown.accuracy} / ${SUDOKU_SCORE_MAXIMUMS.accuracy}`}
             />
             <DetailMetric
-              label="clues"
-              value={String(result.problemIdentity.conditions.clueCount)}
+              label="速さ"
+              value={`${result.score.breakdown.speed} / ${SUDOKU_SCORE_MAXIMUMS.speed}`}
             />
+            <DetailMetric
+              label="安定性"
+              value={`${result.score.breakdown.stability} / ${SUDOKU_SCORE_MAXIMUMS.stability}`}
+            />
+            <DetailMetric label="やり直し" value={`${result.restartCount}回`} />
           </dl>
+          <div className="mt-4 border-t pt-4">
+            <p className="font-medium text-foreground">採点基準</p>
+            <ScoreCriteria />
+          </div>
         </details>
       </div>
     </section>
+  );
+}
+
+function ScoreCriteria() {
+  return (
+    <dl className="mt-3 grid gap-3 text-xs">
+      <div>
+        <dt className="font-semibold text-foreground">正確さ</dt>
+        <dd className="mt-0.5">
+          ミスなしで{SUDOKU_SCORE_MAXIMUMS.accuracy}点。ミス1回につき
+          {SUDOKU_MISTAKE_PENALTY}点減点。
+        </dd>
+      </div>
+      <div>
+        <dt className="font-semibold text-foreground">速さ</dt>
+        <dd className="mt-0.5">
+          {formatElapsedTime(SUDOKU_SPEED_FULL_SCORE_MS)}以内で
+          {SUDOKU_SCORE_MAXIMUMS.speed}点。超過時間を1分単位で切り上げ、
+          1分につき{SUDOKU_SPEED_PENALTY_PER_INTERVAL}点減点。
+        </dd>
+      </div>
+      <div>
+        <dt className="font-semibold text-foreground">安定性</dt>
+        <dd className="mt-0.5">
+          待った・やり直しなしで{SUDOKU_SCORE_MAXIMUMS.stability}
+          点。待った1回につき
+          {SUDOKU_UNDO_PENALTY}点、やり直し1回につき
+          {SUDOKU_RESTART_PENALTY}点減点。
+        </dd>
+      </div>
+      <div>
+        <dt className="sr-only">下限</dt>
+        <dd>各項目は0点を下限とします。</dd>
+      </div>
+    </dl>
   );
 }
 
@@ -95,7 +160,7 @@ function ResultMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-muted/70 px-2 py-4">
       <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="mt-1 font-mono text-xl font-semibold tracking-tight tabular-nums">
+      <dd className="mt-1 font-mono text-xl font-semibold tracking-tight">
         {value}
       </dd>
     </div>
@@ -105,8 +170,8 @@ function ResultMetric({ label, value }: { label: string; value: string }) {
 function DetailMetric({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt>{label}</dt>
-      <dd className="break-all font-mono text-foreground">{value}</dd>
+      <dt className="text-xs">{label}</dt>
+      <dd className="mt-0.5 font-medium text-foreground">{value}</dd>
     </div>
   );
 }

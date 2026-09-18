@@ -1,6 +1,6 @@
 import { GameSelectionGallery } from "@/components/GameSelectionGallery";
+import sudokuPictogramSvg from "@/games/sudoku/assets/pictogram.svg?raw";
 import waterSortPictogramSvg from "@/games/water-sort/assets/pictogram.svg?raw";
-import sudokuPictogramSvg from "../../../.claude/skills/design-game-pictogram/examples/sudoku.svg?raw";
 
 const games = [
   {
