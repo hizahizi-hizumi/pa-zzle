@@ -163,7 +163,7 @@ export function SudokuPlay({
       </main>
 
       <footer className="shrink-0 px-3 pb-3 pt-2">
-        <div className="mx-auto grid w-full max-w-xl gap-1">
+        <div className="mx-auto grid w-full max-w-xl gap-3">
           <div className="grid grid-cols-3">
             <PlayActionButton
               icon={<Undo2 />}
@@ -196,9 +196,9 @@ export function SudokuPlay({
                 key={digit}
                 type="button"
                 className={cn(
-                  "h-14 min-w-0 rounded-lg px-0 text-[clamp(1.5rem,7vw,2.25rem)] tabular-nums transition-colors hover:bg-accent/60 focus-visible:bg-accent focus-visible:outline-none disabled:pointer-events-none disabled:text-muted-foreground/35",
+                  "h-14 min-w-0 rounded-lg px-0 text-[clamp(1.5rem,7vw,2.25rem)] tabular-nums transition-colors hover:bg-accent/60 focus-visible:bg-accent focus-visible:outline-none disabled:pointer-events-none disabled:text-muted-foreground/20",
                   notesMode
-                    ? "font-normal text-muted-foreground/50"
+                    ? "font-medium text-violet-400/75 dark:text-violet-400/70"
                     : "font-medium text-violet-600 dark:text-violet-300",
                 )}
                 onClick={() => inputDigit(digit)}

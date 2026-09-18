@@ -76,7 +76,7 @@ export function SudokuBoard({
     selectedCellIndex === null ? null : (board[selectedCellIndex] ?? null);
 
   return (
-    <div className="grid aspect-square w-[min(96vw,calc(100svh-12rem),38rem)] grid-cols-9 bg-background">
+    <div className="grid aspect-square w-[min(96vw,calc(100svh-12rem),38rem)] grid-cols-9 overflow-hidden border-2 border-foreground/55 bg-background">
       {SUDOKU_CELL_INDICES.map((cellIndex) => {
         const value = board[cellIndex] ?? null;
         const row = getSudokuRowIndex(cellIndex);
@@ -109,11 +109,15 @@ export function SudokuBoard({
             aria-invalid={conflict || mistake || undefined}
             disabled={interactionDisabled}
             className={cn(
-              "relative flex aspect-square min-h-0 items-center justify-center border-t border-l border-border text-[clamp(1rem,5vw,2rem)] outline-none transition-colors focus-visible:bg-violet-200 dark:focus-visible:bg-violet-900/55",
-              row % 3 === 0 && "border-t-2 border-t-foreground/55",
-              column % 3 === 0 && "border-l-2 border-l-foreground/55",
-              row === SUDOKU_SIZE - 1 && "border-b-2 border-b-foreground/55",
-              column === SUDOKU_SIZE - 1 && "border-r-2 border-r-foreground/55",
+              "relative flex aspect-square min-h-0 items-center justify-center text-[clamp(1rem,5vw,2rem)] outline-none transition-colors focus-visible:bg-violet-200 dark:focus-visible:bg-violet-900/55",
+              row !== SUDOKU_SIZE - 1 && "border-b border-b-border",
+              column !== SUDOKU_SIZE - 1 && "border-r border-r-border",
+              row % 3 === 2 &&
+                row !== SUDOKU_SIZE - 1 &&
+                "border-b-2 border-b-foreground/55",
+              column % 3 === 2 &&
+                column !== SUDOKU_SIZE - 1 &&
+                "border-r-2 border-r-foreground/55",
               related && "bg-violet-100/70 dark:bg-violet-950/35",
               matching && "bg-violet-200/75 dark:bg-violet-900/50",
               selected && "bg-violet-300/80 dark:bg-violet-800/60",
@@ -131,10 +135,17 @@ export function SudokuBoard({
             {value ?? (
               <span
                 aria-hidden="true"
-                className="grid h-full w-full grid-cols-3 grid-rows-3 place-items-center text-[clamp(0.42rem,1.8vw,0.72rem)] leading-none font-normal text-muted-foreground/50"
+                className="grid h-full w-full grid-cols-3 grid-rows-3 place-items-center text-[clamp(0.58rem,2.4vw,0.9rem)] leading-none font-normal text-muted-foreground/60"
               >
                 {SUDOKU_DIGITS.map((digit) => (
-                  <span key={digit}>
+                  <span
+                    key={digit}
+                    className={cn(
+                      selectedValue === digit &&
+                        cellNotes.includes(digit) &&
+                        "font-semibold text-violet-700 dark:text-violet-300",
+                    )}
+                  >
                     {cellNotes.includes(digit) ? digit : ""}
                   </span>
                 ))}
