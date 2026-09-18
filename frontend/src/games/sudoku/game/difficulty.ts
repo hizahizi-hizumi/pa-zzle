@@ -2,17 +2,14 @@ export const sudokuDifficulties = [
   {
     id: "easy",
     label: "かんたん",
-    description: "基本的な候補の絞り込みで解ける難易度です。",
   },
   {
     id: "normal",
     label: "ふつう",
-    description: "複数の考え方を組み合わせる難易度です。",
   },
   {
     id: "hard",
     label: "むずかしい",
-    description: "より深い推論が必要になる難易度です。",
   },
 ] as const;
 

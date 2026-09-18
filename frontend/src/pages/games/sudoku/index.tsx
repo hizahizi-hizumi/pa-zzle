@@ -1,9 +1,3 @@
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { sudokuDifficulties } from "@/games/sudoku/game/difficulty";
 import { Link } from "@/router";
 
@@ -15,12 +9,9 @@ export default function SudokuDifficultyPage() {
           to="/"
           className="text-sm text-muted-foreground hover:text-foreground"
         >
-          ← ゲーム選択へ
+          ← 戻る
         </Link>
         <h1 className="text-3xl font-bold tracking-tight">ナンプレ</h1>
-        <p className="text-muted-foreground">
-          難易度を選んでプレイを始めます。
-        </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -29,14 +20,9 @@ export default function SudokuDifficultyPage() {
             key={difficulty.id}
             to="/games/sudoku/play/:difficulty"
             params={{ difficulty: difficulty.id }}
-            className="group"
+            className="block py-4 text-center text-xl font-semibold tracking-tight underline-offset-4 hover:underline"
           >
-            <Card className="h-full transition-colors group-hover:border-foreground/30">
-              <CardHeader>
-                <CardTitle>{difficulty.label}</CardTitle>
-                <CardDescription>{difficulty.description}</CardDescription>
-              </CardHeader>
-            </Card>
+            {difficulty.label}
           </Link>
         ))}
       </div>
