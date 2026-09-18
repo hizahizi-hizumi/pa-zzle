@@ -75,13 +75,18 @@ function clearNotesForEnteredDigit(
   notes: SudokuNotes,
   cellIndex: number,
   digit: SudokuDigit,
+  clearRelatedNotes: boolean,
 ): SudokuNotes {
   return notes.map((cellNotes, index) => {
     if (index === cellIndex) {
       return cellNotes.length > 0 ? [] : cellNotes;
     }
 
-    if (!isRelatedCell(cellIndex, index) || !cellNotes.includes(digit)) {
+    if (
+      !clearRelatedNotes ||
+      !isRelatedCell(cellIndex, index) ||
+      !cellNotes.includes(digit)
+    ) {
       return cellNotes;
     }
 
@@ -142,7 +147,13 @@ export function enterSudokuDigit(
 
   const board = [...session.board];
   board[cellIndex] = digit;
-  const notes = clearNotesForEnteredDigit(session.notes, cellIndex, digit);
+  const isCorrect = session.problem.solution[cellIndex] === digit;
+  const notes = clearNotesForEnteredDigit(
+    session.notes,
+    cellIndex,
+    digit,
+    isCorrect,
+  );
   const cleared = isSudokuSolved(board);
 
   return {
@@ -150,32 +161,37 @@ export function enterSudokuDigit(
     ...withHistory(session, board, notes),
     status: cleared ? "cleared" : "playing",
     finishedAt: cleared ? enteredAt : null,
-    mistakeCount:
-      session.mistakeCount +
-      (session.problem.solution[cellIndex] === digit ? 0 : 1),
+    mistakeCount: session.mistakeCount + (isCorrect ? 0 : 1),
   };
 }
 
-export function eraseSudokuDigit(
+export function clearSudokuCell(
   session: SudokuSession,
   cellIndex: number,
 ): SudokuSession {
   assertSudokuCellIndex(cellIndex);
 
-  if (
-    session.status !== "playing" ||
-    !isEditableCell(session, cellIndex) ||
-    session.board[cellIndex] === null
-  ) {
+  if (session.status !== "playing" || !isEditableCell(session, cellIndex)) {
+    return session;
+  }
+
+  const cellNotes = session.notes[cellIndex] ?? [];
+  if (session.board[cellIndex] === null && cellNotes.length === 0) {
     return session;
   }
 
   const board = [...session.board];
   board[cellIndex] = null;
+  const notes =
+    cellNotes.length === 0
+      ? session.notes
+      : session.notes.map((notesAtCell, index) =>
+          index === cellIndex ? [] : notesAtCell,
+        );
 
   return {
     ...session,
-    ...withHistory(session, board, session.notes),
+    ...withHistory(session, board, notes),
   };
 }
 
@@ -262,7 +278,7 @@ export function getSudokuSessionElapsedMs(
 
 export function getSudokuSessionResult(
   session: SudokuSession,
-  now: numer,
+  now: number,
 ): SudokuSessionResult | null {
   if (session.status !== "cleared") {
     return null;

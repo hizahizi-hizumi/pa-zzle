@@ -8,7 +8,7 @@ import {
   RotateCcw,
   Undo2,
 } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { Button } from "@/components/ui/button";
@@ -20,13 +20,17 @@ import {
   type SudokuBoard as SudokuBoardState,
   type SudokuDigit,
 } from "@/games/sudoku/game/state";
-import type { SudokuResult } from "@/games/sudoku/hooks/use-sudoku-game";
+import type {
+  SudokuProgress,
+  SudokuResult,
+} from "@/games/sudoku/hooks/use-sudoku-game";
 import { SudokuBoard } from "@/games/sudoku/ui/board/SudokuBoard";
 import { cn } from "@/lib/utils";
 
 type SudokuPlayProps = {
   difficulty: SudokuDifficulty;
   status: "playing" | "cleared";
+  progress: SudokuProgress;
   clues: SudokuBoardState;
   board: SudokuBoardState;
   notes: SudokuNotes;
@@ -50,10 +54,12 @@ type SudokuPlayProps = {
   newGame: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
+  completeClearPresentation: () => void;
 };
 
 export function SudokuPlay({
   status,
+  progress,
   clues,
   board,
   notes,
@@ -77,8 +83,9 @@ export function SudokuPlay({
   newGame,
   onChangeDifficulty,
   onBackToHome,
+  completeClearPresentation,
 }: SudokuPlayProps) {
-  if (status === "cleared" && result) {
+  if (progress === "result" && status === "cleared" && result) {
     return (
       <SudokuResultScreen
         result={result}
@@ -90,15 +97,24 @@ export function SudokuPlay({
     );
   }
 
+  const interactionEnabled = status === "playing" && progress === "playing";
   const selectedIsEditable =
     selectedCellIndex !== null && clues[selectedCellIndex] === null;
   const selectedHasAnswer =
     selectedCellIndex !== null && board[selectedCellIndex] !== null;
+  const selectedHasNotes =
+    selectedCellIndex !== null && (notes[selectedCellIndex]?.length ?? 0) > 0;
   const canEnterDigit =
-    selectedIsEditable && (!notesMode || !selectedHasAnswer);
+    interactionEnabled &&
+    selectedIsEditable &&
+    (!notesMode || !selectedHasAnswer);
+  const mistakeCells = new Set(mistakeCellIndices);
   const completedDigits = new Set(
     SUDOKU_DIGITS.filter(
-      (digit) => board.filter((cell) => cell === digit).length >= SUDOKU_SIZE,
+      (digit) =>
+        board.filter(
+          (cell, cellIndex) => cell === digit && !mistakeCells.has(cellIndex),
+        ).length >= SUDOKU_SIZE,
     ),
   );
 
@@ -129,15 +145,21 @@ export function SudokuPlay({
       </header>
 
       <main className="flex shrink-0 justify-center px-2 pt-1 sm:px-6 sm:pt-3">
-        <SudokuBoard
-          board={board}
-          clues={clues}
-          notes={notes}
-          selectedCellIndex={selectedCellIndex}
-          conflictCellIndices={conflictCellIndices}
-          mistakeCellIndices={mistakeCellIndices}
-          onSelectCell={selectCell}
-        />
+        <SudokuClearMoment
+          active={progress === "clearing"}
+          onComplete={completeClearPresentation}
+        >
+          <SudokuBoard
+            board={board}
+            clues={clues}
+            notes={notes}
+            selectedCellIndex={selectedCellIndex}
+            conflictCellIndices={conflictCellIndices}
+            mistakeCellIndices={mistakeCellIndices}
+            interactionDisabled={!interactionEnabled}
+            onSelectCell={selectCell}
+          />
+        </SudokuClearMoment>
       </main>
 
       <footer className="shrink-0 px-3 pb-3 pt-2">
@@ -147,19 +169,24 @@ export function SudokuPlay({
               icon={<Undo2 />}
               label="待った"
               onClick={undo}
-              disabled={!canUndo}
+              disabled={!interactionEnabled || !canUndo}
             />
             <PlayActionButton
               icon={<Eraser />}
               label="消す"
               onClick={erase}
-              disabled={!selectedIsEditable || !selectedHasAnswer}
+              disabled={
+                !interactionEnabled ||
+                !selectedIsEditable ||
+                (!selectedHasAnswer && !selectedHasNotes)
+              }
             />
             <PlayActionButton
               icon={<Pencil />}
               label="メモ"
               active={notesMode}
               onClick={toggleNotesMode}
+              disabled={!interactionEnabled}
             />
           </div>
           <fieldset className="grid grid-cols-9">
@@ -184,6 +211,62 @@ export function SudokuPlay({
         </div>
       </footer>
     </section>
+  );
+}
+
+function SudokuClearMoment({
+  active,
+  onComplete,
+  children,
+}: {
+  active: boolean;
+  onComplete: () => void;
+  children: ReactNode;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!active) {
+      return;
+    }
+
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      onComplete();
+      return;
+    }
+
+    const animation = containerRef.current?.animate?.(
+      [
+        { transform: "scale(1)", filter: "saturate(1)" },
+        {
+          transform: "scale(1.012)",
+          filter: "saturate(1.18)",
+          offset: 0.55,
+        },
+        { transform: "scale(1)", filter: "saturate(1)" },
+      ],
+      { duration: 460, easing: "cubic-bezier(.2,.8,.2,1)" },
+    );
+
+    if (!animation) {
+      const timer = window.setTimeout(onComplete, 460);
+      return () => window.clearTimeout(timer);
+    }
+
+    animation.onfinish = onComplete;
+    return () => animation.cancel();
+  }, [active, onComplete]);
+
+  return (
+    <div ref={containerRef} className="relative">
+      {children}
+      {active && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-violet-200/15 dark:bg-violet-700/10"
+        />
+      )}
+    </div>
   );
 }
 

@@ -42,11 +42,11 @@ describe("SudokuBoard", () => {
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: "1行2列、3" })).toBeTruthy();
     expect(
-      screen.getByRole("buttton", { name: "1行3列、空き、メモ 1、4" }),
+      screen.getByRole("button", { name: "1行3列、空き、メモ 1、4" }),
     ).toBeTruthy();
   });
 
-  test("マス選択をセラド㕪号で通知すること", () => {
+  test("マス選択をセル番号で通知すること", () => {
     const onSelectCell = vi.fn();
     render(
       <SudokuBoard
@@ -88,7 +88,7 @@ describe("SudokuBoard", () => {
     expect(invalid).toBe("true");
   });
 
-  test("競合しない観答を利用者から識別できる状態にすること", () => {
+  test("競合しない誤答も利用者から識別できる状態にすること", () => {
     const board = [...emptyBoard()];
     board[0] = 3;
     render(

@@ -21,6 +21,7 @@ type SudokuBoardProps = {
   selectedCellIndex: number | null;
   conflictCellIndices: readonly number[];
   mistakeCellIndices: readonly number[];
+  interactionDisabled?: boolean;
   onSelectCell: (cellIndex: number) => void;
 };
 
@@ -66,6 +67,7 @@ export function SudokuBoard({
   selectedCellIndex,
   conflictCellIndices,
   mistakeCellIndices,
+  interactionDisabled = false,
   onSelectCell,
 }: SudokuBoardProps) {
   const conflictCells = new Set(conflictCellIndices);
@@ -105,15 +107,16 @@ export function SudokuBoard({
             )}
             aria-pressed={selected}
             aria-invalid={conflict || mistake || undefined}
+            disabled={interactionDisabled}
             className={cn(
-              "relative flex aspect-square min-h-0 items-center justify-center border-t border-l border-border text-[clamp(1rem,5vw,2rem)] outline-none transition-colors focus-visible:bg-violet-100 dark:focus-visible:bg-violet-950/50",
+              "relative flex aspect-square min-h-0 items-center justify-center border-t border-l border-border text-[clamp(1rem,5vw,2rem)] outline-none transition-colors focus-visible:bg-violet-200 dark:focus-visible:bg-violet-900/55",
               row % 3 === 0 && "border-t-2 border-t-foreground/55",
               column % 3 === 0 && "border-l-2 border-l-foreground/55",
               row === SUDOKU_SIZE - 1 && "border-b-2 border-b-foreground/55",
               column === SUDOKU_SIZE - 1 && "border-r-2 border-r-foreground/55",
-              related && "bg-muted/55",
-              matching && "bg-violet-100/75 dark:bg-violet-950/35",
-              selected && "bg-violet-200 dark:bg-violet-900/50",
+              related && "bg-violet-100/70 dark:bg-violet-950/35",
+              matching && "bg-violet-200/75 dark:bg-violet-900/50",
+              selected && "bg-violet-300/80 dark:bg-violet-800/60",
               clue && "font-semibold text-foreground",
               !clue &&
                 value !== null &&

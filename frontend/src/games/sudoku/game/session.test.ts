@@ -3,9 +3,9 @@ import { describe, expect, test } from "vitest";
 import { findSudokuConflictCellIndices } from "./rules";
 import {
   canUndoSudokuSession,
+  clearSudokuCell,
   createSudokuSession,
   enterSudokuDigit,
-  eraseSudokuDigit,
   findSudokuMistakeCellIndices,
   getSudokuSessionElapsedMs,
   getSudokuSessionResult,
@@ -88,6 +88,19 @@ describe("enterSudokuDigit", () => {
     const next = enterSudokuDigit(session, 2, 4, 2_000);
 
     expect(next).toBe(session);
+  });
+
+  test("誤答では関連マスの手動メモを消さないこと", () => {
+    const problem = createProblem();
+    const clues = [...problem.clues];
+    clues[9] = null;
+    let session = createSudokuSession({ ...problem, clues }, 1_000);
+    session = toggleSudokuNote(session, 9, 3);
+
+    const answered = enterSudokuDigit(session, 0, 3, 2_000);
+
+    expect(answered.notes[9]).toEqual([3]);
+    expect(answered.mistakeCount).toBe(1);
   });
 
   test("最後の正解入力で自動的にクリアすること", () => {
@@ -174,7 +187,7 @@ describe("undoSudokuSession", () => {
   });
 });
 
-describe("eraseSudokuDigit", () => {
+describe("clearSudokuCell", () => {
   test("プレイヤーが入力した回答を削除できること", () => {
     const session = enterSudokuDigit(
       createSudokuSession(createProblem(), 1_000),
@@ -183,10 +196,23 @@ describe("eraseSudokuDigit", () => {
       2_000,
     );
 
-    const erased = eraseSudokuDigit(session, 0);
+    const erased = clearSudokuCell(session, 0);
 
     expect(erased.board[0]).toBeNull();
   });
+});
+
+test("手動メモだけのマスを空にできること", () => {
+  const session = toggleSudokuNote(
+    createSudokuSession(createProblem(), 1_000),
+    0,
+    4,
+  );
+
+  const cleared = clearSudokuCell(session, 0);
+
+  expect(cleared.board[0]).toBeNull();
+  expect(cleared.notes[0]).toEqual([]);
 });
 
 describe("restartSudokuSession", () => {

@@ -18,6 +18,7 @@ function createProps(): ComponentProps<typeof SudokuPlay> {
   return {
     difficulty: "normal",
     status: "playing",
+    progress: "playing",
     clues: emptyBoard(),
     board: emptyBoard(),
     notes: emptyNotes(),
@@ -41,6 +42,7 @@ function createProps(): ComponentProps<typeof SudokuPlay> {
     newGame: vi.fn(),
     onChangeDifficulty: vi.fn(),
     onBackToHome: vi.fn(),
+    completeClearPresentation: vi.fn(),
   };
 }
 
@@ -55,7 +57,7 @@ describe("SudokuPlay", () => {
     expect(props.inputDigit).toHaveBeenCalledWith(5);
   });
 
-  test("初期ヒントを選択している間は数字入力を無劸にすること", () => {
+  test("初期ヒントを選択している間は数字入力を無効にすること", () => {
     const props = createProps();
     const clues = [...props.clues];
     const board = [...props.board];
@@ -103,6 +105,39 @@ describe("SudokuPlay", () => {
     expect(disabled).toBe(true);
   });
 
+  test("誤答を含む9個だけでは数字入力を使い切り扱いにしないこと", () => {
+    const props = createProps();
+    const board = [...props.board];
+    for (let index = 0; index < 9; index += 1) {
+      board[index] = 9;
+    }
+    render(
+      <SudokuPlay
+        {...props}
+        board={board}
+        selectedCellIndex={9}
+        mistakeCellIndices={[0]}
+      />,
+    );
+    const digit = screen.getByRole("button", { name: "9" });
+
+    const disabled = digit.hasAttribute("disabled");
+
+    expect(disabled).toBe(false);
+  });
+
+  test("手動メモだけの選択マスでも消す操作を有効にすること", () => {
+    const props = createProps();
+    const notes = [...props.notes];
+    notes[0] = [4];
+    render(<SudokuPlay {...props} notes={notes} />);
+    const erase = screen.getByRole("button", { name: "消す" });
+
+    const disabled = erase.hasAttribute("disabled");
+
+    expect(disabled).toBe(false);
+  });
+
   test("その他の操作から同じ問題のやり直しを通知すること", () => {
     const props = createProps();
     render(<SudokuPlay {...props} />);
@@ -113,6 +148,39 @@ describe("SudokuPlay", () => {
     expect(props.restart).toHaveBeenCalledOnce();
   });
 
+  test("クリア直後は完成盤を見せて結果画面への遷移を待つこと", () => {
+    const props = createProps();
+    const result = {
+      elapsedMs: 125_000,
+      mistakeCount: 0,
+      undoCount: 0,
+      restartCount: 0,
+      problemIdentity: {
+        generatorVersion: "1" as const,
+        seed: "test-seed",
+        conditions: { clueCount: 32 },
+        generationAttempt: 1,
+      },
+    };
+    render(
+      <SudokuPlay
+        {...props}
+        status="cleared"
+        progress="clearing"
+        result={result}
+      />,
+    );
+
+    expect(screen.queryByRole("heading", { name: "クリア" })).toBeNull();
+    expect(screen.getAllByRole("button", { name: /行.*列/ })).toHaveLength(81);
+    expect(
+      screen.getByRole("button", { name: "消す" }).hasAttribute("disabled"),
+    ).toBe(true);
+    expect(
+      screen.getByRole("button", { name: "1" }).hasAttribute("disabled"),
+    ).toBe(true);
+  });
+
   test("クリア後に成績生データと次の操作を表示すること", () => {
     const props = createProps();
     const newGame = vi.fn();
@@ -120,6 +188,7 @@ describe("SudokuPlay", () => {
       <SudokuPlay
         {...props}
         status="cleared"
+        progress="result"
         result={{
           elapsedMs: 125_000,
           mistakeCount: 2,

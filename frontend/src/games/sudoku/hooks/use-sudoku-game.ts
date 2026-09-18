@@ -9,9 +9,9 @@ import {
 import { findSudokuConflictCellIndices } from "@/games/sudoku/game/rules";
 import {
   canUndoSudokuSession,
+  clearSudokuCell,
   createSudokuSession,
   enterSudokuDigit,
-  eraseSudokuDigit,
   findSudokuMistakeCellIndices,
   getSudokuSessionElapsedMs,
   getSudokuSessionResult,
@@ -25,6 +25,8 @@ import type { SudokuDigit } from "@/games/sudoku/game/state";
 
 const SUDOKU_BASELINE_CLUE_COUNT = 32;
 
+export type SudokuProgress = "playing" | "clearing" | "result";
+
 export type SudokuResult = SudokuSessionResult & {
   problemIdentity: SudokuProblemIdentity;
 };
@@ -34,6 +36,7 @@ type SudokuReactState = {
   problemIdentity: SudokuProblemIdentity;
   selectedCellIndex: number | null;
   notesMode: boolean;
+  progress: SudokuProgress;
 };
 
 function createReactState(startedAt: number): SudokuReactState {
@@ -47,6 +50,7 @@ function createReactState(startedAt: number): SudokuReactState {
     problemIdentity: problem.identity,
     selectedCellIndex: null,
     notesMode: false,
+    progress: "playing",
   };
 }
 
@@ -84,7 +88,14 @@ export function useSudokuGame(difficulty: SudokuDifficulty) {
         ? toggleSudokuNote(current.session, cellIndex, digit)
         : enterSudokuDigit(current.session, cellIndex, digit, enteredAt);
 
-      return session === current.session ? current : { ...current, session };
+      return session === current.session
+        ? current
+        : {
+            ...current,
+            session,
+            progress:
+              session.status === "cleared" ? "clearing" : current.progress,
+          };
     });
   }, []);
 
@@ -95,7 +106,7 @@ export function useSudokuGame(difficulty: SudokuDifficulty) {
         return current;
       }
 
-      const session = eraseSudokuDigit(current.session, cellIndex);
+      const session = clearSudokuCell(current.session, cellIndex);
       return session === current.session ? current : { ...current, session };
     });
   }, []);
@@ -117,6 +128,7 @@ export function useSudokuGame(difficulty: SudokuDifficulty) {
       session: restartSudokuSession(current.session),
       selectedCellIndex: null,
       notesMode: false,
+      progress: "playing",
     }));
   }, []);
 
@@ -128,6 +140,7 @@ export function useSudokuGame(difficulty: SudokuDifficulty) {
       session: createSudokuSession(current.session.problem, startedAt),
       selectedCellIndex: null,
       notesMode: false,
+      progress: "playing",
     }));
   }, []);
 
@@ -135,6 +148,14 @@ export function useSudokuGame(difficulty: SudokuDifficulty) {
     const startedAt = Date.now();
     setNow(startedAt);
     setPlay(createReactState(startedAt));
+  }, []);
+
+  const completeClearPresentation = useCallback(() => {
+    setPlay((current) =>
+      current.session.status === "cleared" && current.progress === "clearing"
+        ? { ...current, progress: "result" }
+        : current,
+    );
   }, []);
 
   const { session } = play;
@@ -162,6 +183,7 @@ export function useSudokuGame(difficulty: SudokuDifficulty) {
   return {
     difficulty,
     status: session.status,
+    progress: play.progress,
     clues: session.problem.clues,
     board: session.board,
     notes: session.notes,
@@ -184,5 +206,6 @@ export function useSudokuGame(difficulty: SudokuDifficulty) {
     restart,
     replay,
     newGame,
+    completeClearPresentation,
   };
 }
