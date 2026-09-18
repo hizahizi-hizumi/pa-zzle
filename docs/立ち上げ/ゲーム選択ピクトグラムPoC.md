@@ -33,7 +33,7 @@ python3 .claude/skills/design-game-pictogram/scripts/make_review_sheet.py \
   --output /tmp/pictogram-review.html \
   --size 112 \
   docs/立ち上げ/ゲーム選択ピクトグラムPoC/water-sort.svg \
-  docs/立ち上げ/ゲーム選択ピクトグラムPoC/sudoku.svg \
+  docs/立ち上げ/ゲーム選択ピクトグラムPoC/nanpure.svg \
   docs/立ち上げ/ゲーム選択ピクトグラムPoC/parking-jam.svg
 ```
 
@@ -68,7 +68,7 @@ python3 .claude/skills/design-game-pictogram/scripts/make_review_sheet.py \
 
 PoC中に数字が格子線へ視覚的に負けたため、意味上必要な副要素の光学的重量を確認する必要があることが分かった。
 
-検証用 SVG: `ゲーム選択ピクトグラムPoC/sudoku.svg`
+検証用 SVG: `ゲーム選択ピクトグラムPoC/nanpure.svg`
 
 ## パーキングジャム: 未調整ゲームでの再現性検証
 
