@@ -1,5 +1,9 @@
 import type { Seed } from "@/games/core/seed";
 
+import {
+  rateUniqueSudokuDifficulty,
+  type SudokuDifficultyRating,
+} from "./difficulty-rating";
 import { classifySudokuSolutions, findSudokuSolution } from "./solver";
 import {
   SUDOKU_CELL_COUNT,
@@ -22,14 +26,25 @@ export type SudokuProblemIdentity = {
   generationAttempt: number;
 };
 
+export type SudokuGeneratedCandidate = SudokuProblem & {
+  attempt: number;
+  difficultyRating: SudokuDifficultyRating;
+};
+
+export type SudokuProblemAcceptance = (
+  candidate: SudokuGeneratedCandidate,
+) => boolean;
+
 export type GeneratedSudokuProblem = SudokuProblem & {
   identity: SudokuProblemIdentity;
+  difficultyRating: SudokuDifficultyRating;
 };
 
 export type SudokuGeneratorOptions = {
   seed: Seed;
   clueCount: number;
   maximumAttempts?: number;
+  acceptCandidate?: SudokuProblemAcceptance;
 };
 
 export class SudokuGenerationExhaustedError extends Error {
@@ -186,7 +201,11 @@ export function restoreSudokuProblem(
     );
   }
 
-  return { ...problem, identity };
+  return {
+    ...problem,
+    identity,
+    difficultyRating: rateUniqueSudokuDifficulty(problem.clues),
+  };
 }
 
 export function generateSudokuProblem(
@@ -205,6 +224,16 @@ export function generateSudokuProblem(
       continue;
     }
 
+    const difficultyRating = rateUniqueSudokuDifficulty(problem.clues);
+    const candidate: SudokuGeneratedCandidate = {
+      ...problem,
+      attempt,
+      difficultyRating,
+    };
+    if (options.acceptCandidate && !options.acceptCandidate(candidate)) {
+      continue;
+    }
+
     return {
       ...problem,
       identity: {
@@ -213,6 +242,7 @@ export function generateSudokuProblem(
         conditions: { clueCount: options.clueCount },
         generationAttempt: attempt,
       },
+      difficultyRating,
     };
   }
 
