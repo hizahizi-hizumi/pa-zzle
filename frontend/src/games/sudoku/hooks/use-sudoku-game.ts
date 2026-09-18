@@ -12,6 +12,7 @@ import {
   createSudokuSession,
   enterSudokuDigit,
   eraseSudokuDigit,
+  findSudokuMistakeCellIndices,
   getSudokuSessionElapsedMs,
   getSudokuSessionResult,
   restartSudokuSession,
@@ -141,6 +142,10 @@ export function useSudokuGame(difficulty: SudokuDifficulty) {
     () => findSudokuConflictCellIndices(session.board),
     [session.board],
   );
+  const mistakeCellIndices = useMemo(
+    () => findSudokuMistakeCellIndices(session),
+    [session],
+  );
   const elapsedMs = getSudokuSessionElapsedMs(session, now);
   const sessionResult = useMemo(
     () => getSudokuSessionResult(session, now),
@@ -163,6 +168,7 @@ export function useSudokuGame(difficulty: SudokuDifficulty) {
     problemIdentity: play.problemIdentity,
     selectedCellIndex: play.selectedCellIndex,
     conflictCellIndices,
+    mistakeCellIndices,
     notesMode: play.notesMode,
     elapsedMs,
     mistakeCount: session.mistakeCount,

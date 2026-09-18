@@ -241,6 +241,14 @@ export function restartSudokuSession(session: SudokuSession): SudokuSession {
   };
 }
 
+export function findSudokuMistakeCellIndices(session: SudokuSession): number[] {
+  return session.board.flatMap((cell, cellIndex) =>
+    cell !== null && cell !== session.problem.solution[cellIndex]
+      ? [cellIndex]
+      : [],
+  );
+}
+
 export function canUndoSudokuSession(session: SudokuSession): boolean {
   return session.status === "playing" && session.history.length > 0;
 }
@@ -254,7 +262,7 @@ export function getSudokuSessionElapsedMs(
 
 export function getSudokuSessionResult(
   session: SudokuSession,
-  now: number,
+  now: numer,
 ): SudokuSessionResult | null {
   if (session.status !== "cleared") {
     return null;

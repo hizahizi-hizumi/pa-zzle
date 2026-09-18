@@ -23,6 +23,7 @@ function createProps(): ComponentProps<typeof SudokuPlay> {
     notes: emptyNotes(),
     selectedCellIndex: 0,
     conflictCellIndices: [],
+    mistakeCellIndices: [],
     notesMode: false,
     elapsedMs: 65_000,
     mistakeCount: 2,
@@ -54,7 +55,7 @@ describe("SudokuPlay", () => {
     expect(props.inputDigit).toHaveBeenCalledWith(5);
   });
 
-  test("初期ヒントを選択している間は数字入力を無効にすること", () => {
+  test("初期ヒントを選択している間は数字入力を無劸にすること", () => {
     const props = createProps();
     const clues = [...props.clues];
     const board = [...props.board];
@@ -73,10 +74,33 @@ describe("SudokuPlay", () => {
     render(<SudokuPlay {...props} />);
 
     fireEvent.click(screen.getByRole("button", { name: "メモ" }));
-    fireEvent.click(screen.getByRole("button", { name: "元に戻す" }));
+    fireEvent.click(screen.getByRole("button", { name: "待った" }));
 
     expect(props.toggleNotesMode).toHaveBeenCalledOnce();
     expect(props.undo).toHaveBeenCalledOnce();
+  });
+
+  test("ミスと待ったを別のプレイ状況として表示すること", () => {
+    const props = createProps();
+    render(<SudokuPlay {...props} />);
+
+    expect(screen.getByText("ミス")).toBeTruthy();
+    expect(screen.getAllByText("待った")).toHaveLength(2);
+    expect(screen.getByText("ナンプレ")).toBeTruthy();
+  });
+
+  test("9個使われた数字の入力を無効にすること", () => {
+    const props = createProps();
+    const board = [...props.board];
+    for (let index = 0; index < 9; index += 1) {
+      board[index] = 9;
+    }
+    render(<SudokuPlay {...props} board={board} selectedCellIndex={9} />);
+    const digit = screen.getByRole("button", { name: "9" });
+
+    const disabled = digit.hasAttribute("disabled");
+
+    expect(disabled).toBe(true);
   });
 
   test("その他の操作から同じ問題のやり直しを通知すること", () => {

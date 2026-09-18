@@ -20,6 +20,7 @@ type SudokuBoardProps = {
   notes: SudokuNotes;
   selectedCellIndex: number | null;
   conflictCellIndices: readonly number[];
+  mistakeCellIndices: readonly number[];
   onSelectCell: (cellIndex: number) => void;
 };
 
@@ -36,6 +37,8 @@ function getCellLabel(
   clues: SudokuBoardState,
   notes: SudokuNotes,
   cellIndex: number,
+  conflict: boolean,
+  mistake: boolean,
 ): string {
   const row = getSudokuRowIndex(cellIndex) + 1;
   const column = getSudokuColumnIndex(cellIndex) + 1;
@@ -43,7 +46,11 @@ function getCellLabel(
   const prefix = `${row}行${column}列`;
 
   if (value !== null && value !== undefined) {
-    return `${prefix}、${value}${clues[cellIndex] === null ? "" : "、初期ヒント"}`;
+    const source = clues[cellIndex] === null ? "" : "、初期ヒント";
+    const states = [mistake ? "誤り" : null, conflict ? "競合" : null]
+      .filter((state) => state !== null)
+      .join("、");
+    return `${prefix}、${value}${source}${states ? `、${states}` : ""}`;
   }
 
   const cellNotes = notes[cellIndex] ?? [];
@@ -58,9 +65,11 @@ export function SudokuBoard({
   notes,
   selectedCellIndex,
   conflictCellIndices,
+  mistakeCellIndices,
   onSelectCell,
 }: SudokuBoardProps) {
   const conflictCells = new Set(conflictCellIndices);
+  const mistakeCells = new Set(mistakeCellIndices);
   const selectedValue =
     selectedCellIndex === null ? null : (board[selectedCellIndex] ?? null);
 
@@ -79,28 +88,38 @@ export function SudokuBoard({
           selectedValue !== null && !selected && value === selectedValue;
         const clue = clues[cellIndex] !== null;
         const conflict = conflictCells.has(cellIndex);
+        const mistake = mistakeCells.has(cellIndex);
         const cellNotes = notes[cellIndex] ?? [];
 
         return (
           <button
             key={cellIndex}
             type="button"
-            aria-label={getCellLabel(board, clues, notes, cellIndex)}
+            aria-label={getCellLabel(
+              board,
+              clues,
+              notes,
+              cellIndex,
+              conflict,
+              mistake,
+            )}
             aria-pressed={selected}
-            aria-invalid={conflict || undefined}
+            aria-invalid={conflict || mistake || undefined}
             className={cn(
-              "relative flex aspect-square min-h-0 items-center justify-center border-t border-l border-border text-[clamp(1rem,5vw,2rem)] outline-none transition-colors focus-visible:bg-brand-subtle dark:focus-visible:bg-brand/25",
+              "relative flex aspect-square min-h-0 items-center justify-center border-t border-l border-border text-[clamp(1rem,5vw,2rem)] outline-none transition-colors focus-visible:bg-violet-100 dark:focus-visible:bg-violet-950/50",
               row % 3 === 0 && "border-t-2 border-t-foreground/55",
               column % 3 === 0 && "border-l-2 border-l-foreground/55",
               row === SUDOKU_SIZE - 1 && "border-b-2 border-b-foreground/55",
               column === SUDOKU_SIZE - 1 && "border-r-2 border-r-foreground/55",
-              related && "bg-brand-subtle/55 dark:bg-brand-subtle/10",
-              matching && "bg-brand-subtle dark:bg-brand/25",
-              selected && "bg-brand dark:bg-brand-strong/45",
+              related && "bg-muted/55",
+              matching && "bg-violet-100/75 dark:bg-violet-950/35",
+              selected && "bg-violet-200 dark:bg-violet-900/50",
               clue && "font-semibold text-foreground",
               !clue &&
                 value !== null &&
-                "font-medium text-brand-foreground dark:text-brand",
+                "font-medium text-violet-600 dark:text-violet-300",
+              mistake &&
+                "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300",
               conflict &&
                 "bg-rose-100 text-rose-700 dark:bg-rose-950/45 dark:text-rose-300",
             )}

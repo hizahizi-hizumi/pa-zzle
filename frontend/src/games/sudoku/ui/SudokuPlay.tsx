@@ -16,6 +16,7 @@ import type { SudokuDifficulty } from "@/games/sudoku/game/difficulty";
 import type { SudokuNotes } from "@/games/sudoku/game/session";
 import {
   SUDOKU_DIGITS,
+  SUDOKU_SIZE,
   type SudokuBoard as SudokuBoardState,
   type SudokuDigit,
 } from "@/games/sudoku/game/state";
@@ -31,6 +32,7 @@ type SudokuPlayProps = {
   notes: SudokuNotes;
   selectedCellIndex: number | null;
   conflictCellIndices: readonly number[];
+  mistakeCellIndices: readonly number[];
   notesMode: boolean;
   elapsedMs: number;
   mistakeCount: number;
@@ -57,6 +59,7 @@ export function SudokuPlay({
   notes,
   selectedCellIndex,
   conflictCellIndices,
+  mistakeCellIndices,
   notesMode,
   elapsedMs,
   mistakeCount,
@@ -93,10 +96,16 @@ export function SudokuPlay({
     selectedCellIndex !== null && board[selectedCellIndex] !== null;
   const canEnterDigit =
     selectedIsEditable && (!notesMode || !selectedHasAnswer);
+  const completedDigits = new Set(
+    SUDOKU_DIGITS.filter(
+      (digit) => board.filter((cell) => cell === digit).length >= SUDOKU_SIZE,
+    ),
+  );
 
   return (
     <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
-      <header className="grid h-16 shrink-0 grid-cols-[3rem_minmax(0,1fr)_3rem] items-center bg-background px-3">
+      <BrandIdentityHeader />
+      <header className="grid h-[4.5rem] shrink-0 grid-cols-[3rem_minmax(0,1fr)_3rem] items-start bg-background px-3 pt-1.5">
         <Button
           type="button"
           variant="ghost"
@@ -106,7 +115,11 @@ export function SudokuPlay({
         >
           <ArrowLeft />
         </Button>
-        <PlayHeaderSummary elapsedMs={elapsedMs} mistakeCount={mistakeCount} />
+        <PlayHeaderSummary
+          elapsedMs={elapsedMs}
+          mistakeCount={mistakeCount}
+          undoCount={undoCount}
+        />
         <PlayMenu
           restart={restart}
           newGame={newGame}
@@ -122,6 +135,7 @@ export function SudokuPlay({
           notes={notes}
           selectedCellIndex={selectedCellIndex}
           conflictCellIndices={conflictCellIndices}
+          mistakeCellIndices={mistakeCellIndices}
           onSelectCell={selectCell}
         />
       </main>
@@ -131,7 +145,7 @@ export function SudokuPlay({
           <div className="grid grid-cols-3">
             <PlayActionButton
               icon={<Undo2 />}
-              label="元に戻す"
+              label="待った"
               onClick={undo}
               disabled={!canUndo}
             />
@@ -158,10 +172,10 @@ export function SudokuPlay({
                   "h-14 min-w-0 rounded-lg px-0 text-[clamp(1.5rem,7vw,2.25rem)] tabular-nums transition-colors hover:bg-accent/60 focus-visible:bg-accent focus-visible:outline-none disabled:pointer-events-none disabled:text-muted-foreground/35",
                   notesMode
                     ? "font-normal text-muted-foreground/50"
-                    : "font-medium text-brand-foreground dark:text-brand",
+                    : "font-medium text-violet-600 dark:text-violet-300",
                 )}
                 onClick={() => inputDigit(digit)}
-                disabled={!canEnterDigit}
+                disabled={!canEnterDigit || completedDigits.has(digit)}
               >
                 {digit}
               </button>
@@ -176,25 +190,43 @@ export function SudokuPlay({
 function PlayHeaderSummary({
   elapsedMs,
   mistakeCount,
+  undoCount,
 }: {
   elapsedMs: number;
   mistakeCount: number;
+  undoCount: number;
 }) {
   return (
-    <div className="flex items-center justify-center gap-8 text-center">
-      <PlayMetric label="ミス" value={String(mistakeCount)} />
-      <PlayMetric label="時間" value={formatElapsedTime(elapsedMs)} />
+    <div className="min-w-0 text-center">
+      <h1 className="truncate text-sm font-semibold tracking-tight">
+        ナンプレ
+      </h1>
+      <div className="mt-1 flex items-center justify-center gap-2 text-[10px] leading-none text-muted-foreground">
+        <PlayMetric label="ミス" value={String(mistakeCount)} />
+        <MetricSeparator />
+        <PlayMetric label="時間" value={formatElapsedTime(elapsedMs)} />
+        <MetricSeparator />
+        <PlayMetric label="待った" value={String(undoCount)} />
+      </div>
     </div>
   );
 }
 
 function PlayMetric({ label, value }: { label: string; value: string }) {
   return (
-    <span className="grid gap-0.5 whitespace-nowrap">
-      <span className="text-[10px] text-muted-foreground">{label}</span>
-      <span className="font-mono text-base font-medium leading-none tabular-nums text-foreground/85">
+    <span className="flex items-baseline gap-1 whitespace-nowrap">
+      <span>{label}</span>
+      <span className="font-mono font-medium tabular-nums text-foreground/80">
         {value}
       </span>
+    </span>
+  );
+}
+
+function MetricSeparator() {
+  return (
+    <span aria-hidden="true" className="text-border">
+      ·
     </span>
   );
 }
@@ -218,7 +250,8 @@ function PlayActionButton({
       aria-pressed={active || undefined}
       className={cn(
         "relative flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground focus-visible:bg-accent focus-visible:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-35",
-        active && "bg-brand-subtle text-brand-foreground",
+        active &&
+          "bg-violet-100 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300",
       )}
       disabled={disabled}
       onClick={onClick}

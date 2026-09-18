@@ -32,6 +32,7 @@ describe("SudokuBoard", () => {
         notes={notes}
         selectedCellIndex={null}
         conflictCellIndices={[]}
+        mistakeCellIndices={[]}
         onSelectCell={vi.fn()}
       />,
     );
@@ -41,11 +42,11 @@ describe("SudokuBoard", () => {
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: "1行2列、3" })).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "1行3列、空き、メモ 1、4" }),
+      screen.getByRole("buttton", { name: "1行3列、空き、メモ 1、4" }),
     ).toBeTruthy();
   });
 
-  test("マス選択をセル番号で通知すること", () => {
+  test("マス選択をセラド㕪号で通知すること", () => {
     const onSelectCell = vi.fn();
     render(
       <SudokuBoard
@@ -54,6 +55,7 @@ describe("SudokuBoard", () => {
         notes={emptyNotes()}
         selectedCellIndex={null}
         conflictCellIndices={[]}
+        mistakeCellIndices={[]}
         onSelectCell={onSelectCell}
       />,
     );
@@ -75,12 +77,34 @@ describe("SudokuBoard", () => {
         notes={emptyNotes()}
         selectedCellIndex={null}
         conflictCellIndices={[0, 1]}
+        mistakeCellIndices={[]}
         onSelectCell={vi.fn()}
       />,
     );
-    const conflict = screen.getByRole("button", { name: "1行1列、5" });
+    const conflict = screen.getByRole("button", { name: "1行1列、5、競合" });
 
     const invalid = conflict.getAttribute("aria-invalid");
+
+    expect(invalid).toBe("true");
+  });
+
+  test("競合しない観答を利用者から識別できる状態にすること", () => {
+    const board = [...emptyBoard()];
+    board[0] = 3;
+    render(
+      <SudokuBoard
+        board={board}
+        clues={emptyBoard()}
+        notes={emptyNotes()}
+        selectedCellIndex={null}
+        conflictCellIndices={[]}
+        mistakeCellIndices={[0]}
+        onSelectCell={vi.fn()}
+      />,
+    );
+    const mistake = screen.getByRole("button", { name: "1行1列、3、誤り" });
+
+    const invalid = mistake.getAttribute("aria-invalid");
 
     expect(invalid).toBe("true");
   });

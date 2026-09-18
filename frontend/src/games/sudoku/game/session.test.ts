@@ -1,10 +1,12 @@
 import { describe, expect, test } from "vitest";
 
+import { findSudokuConflictCellIndices } from "./rules";
 import {
   canUndoSudokuSession,
   createSudokuSession,
   enterSudokuDigit,
   eraseSudokuDigit,
+  findSudokuMistakeCellIndices,
   getSudokuSessionElapsedMs,
   getSudokuSessionResult,
   restartSudokuSession,
@@ -63,12 +65,19 @@ describe("createSudokuSession", () => {
 });
 
 describe("enterSudokuDigit", () => {
-  test("誤答を受理してミスとして記録すること", () => {
-    const session = createSudokuSession(createProblem(), 1_000);
+  test("競合しない誤答も完成解との不一致からミスとして記録すること", () => {
+    const problem = createProblem();
+    const clues = [...problem.clues];
+    clues[72] = null;
+    const session = createSudokuSession({ ...problem, clues }, 1_000);
 
-    const next = enterSudokuDigit(session, 0, 4, 2_000);
+    const next = enterSudokuDigit(session, 0, 3, 2_000);
+    const conflicts = findSudokuConflictCellIndices(next.board);
+    const mistakes = findSudokuMistakeCellIndices(next);
 
-    expect(next.board[0]).toBe(4);
+    expect(next.board[0]).toBe(3);
+    expect(conflicts).toEqual([]);
+    expect(mistakes).toEqual([0]);
     expect(next.mistakeCount).toBe(1);
     expect(next.status).toBe("playing");
   });
@@ -142,6 +151,16 @@ describe("undoSudokuSession", () => {
     expect(undone.board[0]).toBeNull();
     expect(undone.notes[0]).toEqual([4]);
     expect(undone.mistakeCount).toBe(1);
+    expect(undone.undoCount).toBe(1);
+  });
+
+  test("正解入力を戻すと待っただけを増やすこと", () => {
+    let session = createSudokuSession(createProblem(), 1_000);
+    session = enterSudokuDigit(session, 0, 5, 2_000);
+
+    const undone = undoSudokuSession(session);
+
+    expect(undone.mistakeCount).toBe(0);
     expect(undone.undoCount).toBe(1);
   });
 
