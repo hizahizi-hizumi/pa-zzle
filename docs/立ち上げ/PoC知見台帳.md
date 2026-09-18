@@ -41,7 +41,7 @@ Issue、PR、調査文書、コード、テスト、実測は結論そのもの�
 
 ## 棚卸し再走査で新規捕捉した知見
 
-既存126件の再分類ではなく、最新main、PR #141 の現行スナップショット、全Issue / PR、規約、Skill、コード、テスト、パズル調査を再走査し、**台帳に項目自体が存在しなかった知見を40件追加**した。
+既存126件の再分類ではなく、最新main、PR #141 の現行スナップショット、全Issue / PR、規約、Skill、コード、テスト、パズル調査を再走査し、**台帳に項目自体が存在しなかった知見を41件追加**した。
 
 | ID | 概要 | 扱い | 正の種別 / 所有先 |
 | --- | --- | --- | --- |
@@ -87,13 +87,15 @@ Issue、PR、調査文書、コード、テスト、実測は結論そのもの�
 | VISUAL-12 | ピクトグラム等の小型グラフィックは viewBox の幾何学中心・寸法一致だけで整えず、実際に使う表示サイズ・同一コンテナ・既存群との比較で光学中心と視覚重量を確認し、必要な補正を許容する。 | 既存の正で十分 | Skill / design-game-pictogram Skill |
 | VISUAL-13 | UI・デザインの判断では、APP / GAME の体験を起点に DESIGN の意味体系へ翻訳し、既存トークンで表せるかを確認してから、新しい意味トークンや共通部品を追加する。同じ意味と振る舞いが複数箇所で確認できる前に、トークンや部品を先行抽象化しない。 | 未所有 | チェックリスト候補 / — |
 | VISUAL-13 | UI・デザインの判断では、APP / GAME の体験を起点に DESIGN の意味体系へ翻訳し、既存トークンで表せるかを確認してから、新しい意味トークンや共通部品を追加する。同じ意味と振る舞いが複数箇所で確認できる前に、トークンや部品を先行抽象化しない。 | デザイン実装・レビュー | 有力 | 未所有 | チェックリスト候補 | — | — | docs/立ち上げ/正本化検討メモ.md, #73, PR #84, PR #85 |
-| VERIFY-06 | ローカル開発・コーディングAI・CIで別々の品質検証ロジックを持たず、同じ品質項目と一括検証入口を共有する。環境差は実行方法へ閉じ込め、CI専用の別仕様を作らない。 | 既存の正で十分 | 開発規約 / コード契約 / AGENTS.md / scripts/verify.sh / scripts/chatgpt-verify.sh / .github/workflows/quality-gate.yml |
+| VERIFY-06 | 通常開発環境とChatGPT環境はそれぞれ明示的な一括検証入口を持ってよいが、実行する品質項目を揃え、CIだけに別の検証ロジックを持たない。環境差は依存解決・起動方法等のアダプタへ閉じ込める。 | 既存の正で十分 | 開発規約 / コード契約 / AGENTS.md / scripts/verify.sh / scripts/chatgpt-verify.sh / .github/workflows/quality-gate.yml |
 | VERIFY-07 | ChatGPT環境の画面確認はプロセス全体に時間上限を設け、上限超過を検証失敗として扱う。同じ実行を無制限に繰り返さず、Vite・要求中継・ブラウザのどこで待機しているかを診断する。 | 既存の正で十分 | 環境手順 / docs/メモ/ChatGPT画面確認.md |
 | VERIFY-08 | ChatGPT環境固有のブラウザ制約は検証用アダプタで吸収し、製品コードやChromium管理ポリシーを検証都合で変更しない。環境差を利用者向け実装へ侵入させない。 | 既存の正で十分 | 環境手順 / コード契約 / docs/メモ/ChatGPT画面確認.md / scripts/chatgpt_playwright.py |
 | VERIFY-09 | フロントエンド変更はPR時点の実装をスマートフォン実機から確認できるプレビュー経路を維持し、開発中成果物のプレビュー公開範囲と本番公開を分離する。非公開リポジトリのプレビューは認証で保護する。 | 既存の正で十分 | 開発環境契約 / frontend/README.md / frontend/wrangler.jsonc |
+| VERIFY-10 | Snapshotを使う再現・検証では、対象refのHEADとSnapshot SHAを一致させ、同じRepository Snapshot runの環境マニフェストが指すOffline Dependenciesを使う。任意の過去runから依存Artifactを探索して組み合わせず、Snapshotと依存の来歴を機械的に追跡できるようにする。 | 既存の正で十分 | 開発環境契約 / AGENTS.md / docs/メモ/ChatGPT画面確認.md / Repository Snapshot workflow |
 | VERIFY-07 | ChatGPT環境の画面確認はプロセス全体に時間上限を設け、上限超過を検証失敗として扱う。同じ実行を無制限に繰り返さず、Vite・要求中継・ブラウザのどこで待機しているかを診断する。 | ChatGPT画面検証 | 確定 | 既存の正で十分 | 環境手順 | docs/メモ/ChatGPT画面確認.md | — | PR #95, PR #98, docs/メモ/ChatGPT画面確認.md |
 | VERIFY-08 | ChatGPT環境固有のブラウザ制約は検証用アダプタで吸収し、製品コードやChromium管理ポリシーを検証都合で変更しない。環境差を利用者向け実装へ侵入させない。 | ChatGPT画面検証 | 確定 | 既存の正で十分 | 環境手順 / コード契約 | docs/メモ/ChatGPT画面確認.md / scripts/chatgpt_playwright.py | — | PR #75, PR #78, PR #98 |
 | VERIFY-09 | フロントエンド変更はPR時点の実装をスマートフォン実機から確認できるプレビュー経路を維持し、開発中成果物のプレビュー公開範囲と本番公開を分離する。非公開リポジトリのプレビューは認証で保護する。 | PRレビュー基盤 | 確定 | 既存の正で十分 | 開発環境契約 | frontend/README.md / frontend/wrangler.jsonc | — | #65, PR #66, frontend/README.md |
+| VERIFY-10 | Snapshotを使う再現・検証では、対象refのHEADとSnapshot SHAを一致させ、同じRepository Snapshot runの環境マニフェストが指すOffline Dependenciesを使う。任意の過去runから依存Artifactを探索して組み合わせず、Snapshotと依存の来歴を機械的に追跡できるようにする。 | ChatGPT・再現検証 | 確定 | 既存の正で十分 | 開発環境契約 | AGENTS.md / docs/メモ/ChatGPT画面確認.md / Repository Snapshot workflow | — | PR #89, AGENTS.md, docs/メモ/ChatGPT画面確認.md |
 
 ## 後続Issue所有（正本レビュー対象外）
 
@@ -358,11 +360,11 @@ PoC知見のうち、既存Issueが要件・設計・コーディング規約・
 | VERIFY-03 | レスポンシブなゲーム体験はスマートフォン相当幅を実描画・実操作して確認し、必要に応じてタップ領域や要素位置を実測する。 | UI検証 | 確定 | 既存の正で十分 | レビュー手順 | docs/開発/画面レビュー手順.md | — | AGENTS.md, PR #109, PR #130, #36〜#44 |
 | VERIFY-04 | 恒久的な品質保証には既存のテスト・静的解析・ビルド等の汎用検証を使い、個別不具合専用の検査基盤を安易に増やさない。 | 開発全体 | 確定 | 既存の正で十分 | 開発規約 | AGENTS.md | — | AGENTS.md |
 | VERIFY-05 | 正本・ルール・Skill・コードは同じ情報を重複保持せず、その情報の責務に合う場所を一つの正として参照する。 | 開発文書 | 確定 | 既存の正で十分 | 開発規約 | AGENTS.md / context rules | — | AGENTS.md, .claude/rules/context-engineering.md, #73, PR #136 |
-| VERIFY-06 | ローカル開発・コーディングAI・CIで別々の品質検証ロジックを持たず、同じ品質項目と一括検証入口を共有する。環境差は実行方法へ閉じ込め、CI専用の別仕様を作らない。 | 開発・CI | 確定 | 既存の正で十分 | 開発規約 / コード契約 | AGENTS.md / scripts/verify.sh / scripts/chatgpt-verify.sh / .github/workflows/quality-gate.yml | — | #12, PR #15, AGENTS.md |
+| VERIFY-06 | 通常開発環境とChatGPT環境はそれぞれ明示的な一括検証入口を持ってよいが、実行する品質項目を揃え、CIだけに別の検証ロジックを持たない。環境差は依存解決・起動方法等のアダプタへ閉じ込める。 | 開発・CI | 確定 | 既存の正で十分 | 開発規約 / コード契約 | AGENTS.md / scripts/verify.sh / scripts/chatgpt-verify.sh / .github/workflows/quality-gate.yml | — | #12, PR #15, AGENTS.md |
 
 ## 正本化・後続作業の優先順
 
-1. 正本化済み 87 件は、文書・チェックリスト・レビュー手順・Skill・コード契約など現在の所有先を正として扱い、重複記述を増やさない。
+1. 正本化済み 88 件は、文書・チェックリスト・レビュー手順・Skill・コード契約など現在の所有先を正として扱い、重複記述を増やさない。
 2. 後続Issue所有 74 件は、Issue完了時に要件・設計・コーディング規約・画面正本・語彙正本・コード契約など責務に合う正へ反映する。
 3. 未所有 1 件は、正本化要否と置き場所をレビューする。
 4. 検証待ち 4 件は、追加検証が終わるまで正本化しない。
