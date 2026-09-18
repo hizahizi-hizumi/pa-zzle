@@ -43,7 +43,7 @@ function createProps(): ComponentProps<typeof SudokuPlay> {
     newGame: vi.fn(),
     onChangeDifficulty: vi.fn(),
     onBackToHome: vi.fn(),
-    completeClearPresentation: vi.fn(),
+    completeClearAnimation: vi.fn(),
   };
 }
 
