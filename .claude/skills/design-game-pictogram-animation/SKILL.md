@@ -51,6 +51,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 - 試作候補の自己完結した SVG 群
 - `manifest.json` に候補の意図と系統をまとめた比較用メタデータ
 - `scripts/check_animation.py` の検査結果
+- `self-review.json` に候補ごとのセルフレビューチェック結果
 - `scripts/make_review_gallery.py` で生成した比較ギャラリー
 - 人間レビューで選ばれた方向、残す部分、捨てる部分の短い記録
 - 最終的に採用するアニメーション候補
@@ -117,35 +118,46 @@ python3 .claude/skills/design-game-pictogram-animation/scripts/check_animation.p
 
 面白さ、ゲームらしさ、テンポ、気持ちよさを PASS / FAIL 判定しない。`PASS` は人間へ提示できる品質を意味しない。
 
-### 6. 同じ条件で比較する
+### 6. セルフレビュー用ギャラリーを作る
 
-候補をギャラリーへまとめる。
+全候補を同じ条件で確認できるギャラリーへまとめる。
 
 ```sh
 python3 .claude/skills/design-game-pictogram-animation/scripts/make_review_gallery.py \
   --manifest path/to/manifest.json \
+  --audience self \
+  --output /tmp/pictogram-animation-self-review.html \
+  --size 112
+```
+
+生成したギャラリーでは、JavaScript が無効でも候補アニメーション自体を表示できる。JavaScript が有効な環境では、一斉再生、個別再生、停止も行える。
+
+### 7. 人間に見せる前にセルフレビューゲートを通す
+
+現在の `DESIGN.md` を確認し、実ブラウザで全候補をレビューする。`references/self-review.md` の必須チェックリストを候補ごとに埋め、結果を `self-review.json` に記録する。
+
+開始状態や代表フレーム数枚だけでは合格としない。実表示サイズで少なくとも 1 ループ全体を観察し、主要な途中状態は拡大表示でも確認する。1 項目でも満たせない候補は修正して再レビューするか `reject` にする。
+
+記録を次で検査する。
+
+```sh
+python3 .claude/skills/design-game-pictogram-animation/scripts/check_self_review.py \
+  --manifest path/to/manifest.json \
+  --self-review path/to/self-review.json
+```
+
+この検査が PASS する前に候補を人間へ提示しない。人間用ギャラリーは必ずセルフレビュー結果を渡して生成する。
+
+```sh
+python3 .claude/skills/design-game-pictogram-animation/scripts/make_review_gallery.py \
+  --manifest path/to/manifest.json \
+  --self-review path/to/self-review.json \
+  --audience human \
   --output /tmp/pictogram-animation-review.html \
   --size 112
 ```
 
-生成したギャラリーでは、JavaScript が無効でも候補アニメーション自体を表示できる。JavaScript が有効な環境では、一斉再生、個別再生、停止、候補ごとの簡易レビューも行える。
-
-### 7. 人間に見せる前に実描画レビューする
-
-人間へ候補を提示する前に、現在の `DESIGN.md` を確認し、実ブラウザで全候補を実表示サイズにしてレビューする。詳細は `references/review.md` に従う。
-
-各候補は少なくとも 1 ループを通して観察し、開始状態だけや代表フレーム数枚だけで合格としない。開始、主要な動き、ギミックの見せ場、終了または静止状態への復帰までを確認する。
-
-次のような視覚破綻があれば、人間へ見せる前に修正するか候補から除外し、修正後はもう一度 1 ループ確認する。
-
-- 容器や盤面から要素が不自然にはみ出す
-- 本来つながる対象が離れる、または不自然に重なる
-- 回転中心や変形によって形状が壊れる
-- 一瞬だけ破綻するフレームがある
-- 実表示サイズで何が起きたか読み取れない
-- 終了時に元の静止ピクトグラムとして成立しない
-
-ブラウザの `pageerror` と意図しない `console.error` も確認する。ここでは面白さを代理評価して候補を狭めず、**人間がギミックを比較できる最低品質まで整えること**を目的にする。
+`--audience human` では全チェックを満たした `pass` 候補だけを掲載する。ここでは面白さを代理評価して候補を狭めず、**人間がギミックを比較できる最低品質まで整えること**を目的にする。
 
 ### 8. 人間の方向指定を受ける
 
@@ -176,7 +188,7 @@ python3 .claude/skills/design-game-pictogram-animation/scripts/make_review_galle
 - `check_animation.py` を通る
 - 比較ギャラリーで開始から終了まで破綻なく見える
 
-仕上げ後も Step 7 と同じ実描画レビューを行う。1 ループ通して問題を観察し、問題があれば修正して再確認する。自動検査の PASS や一部フレームのスクリーンショットだけで完成扱いにしない。
+仕上げ後も Step 7 と同じセルフレビューチェックを新しい記録としてやり直す。1 ループ通して問題を観察し、全項目が `true` になるまで人間へ提示しない。自動検査の PASS や一部フレームのスクリーンショットだけで完成扱いにしない。
 
 採用判断は人間が行う。良い候補がなければ無理に収束させず、発散へ戻る。
 
@@ -191,8 +203,10 @@ Skill 配下には、再利用する手順、検査、比較手段だけを残�
 - `.claude/skills/design-game-pictogram/` — 静的ピクトグラムの設計・検証
 - `references/exploration.md` — 発散、重複整理、試作候補選定
 - `references/review.md` — manifest と人間レビューの扱い
+- `references/self-review.md` — 人間提示前の必須チェックリストと `self-review.json`
 - `scripts/check_animation.py` — 候補 SVG の決定論的検査
-- `scripts/make_review_gallery.py` — 比較ギャラリー生成
+- `scripts/check_self_review.py` — セルフレビュー記録の品質ゲート検査
+- `scripts/make_review_gallery.py` — セルフレビュー / 人間レビュー用ギャラリー生成
 - `DESIGN.md` — pa-zzle の視覚・動きの正本
 
 ## 制約
@@ -202,3 +216,5 @@ Skill 配下には、再利用する手順、検査、比較手段だけを残�
 - 自動評価だけで候補を採用・不採用にしない
 - 実装の都合だけを理由に静止時の完成品質を下げない
 - 人間が選んだ方向と異なる探索へ、明示的な理由なく戻らない
+- `check_self_review.py` が PASS していない候補を人間へ提示しない
+- `reject` またはセルフレビュー未完了の候補を人間用ギャラリーへ含めない
