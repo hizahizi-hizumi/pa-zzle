@@ -62,7 +62,7 @@ def main() -> int:
   .section {{ margin: 0 0 36px; }}
   .grid {{ display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch; }}
   .card {{ width: calc(var(--card-size, {args.size}px) + 48px); border: 1px solid #ddd; border-radius: 12px; overflow: hidden; background: #fff; }}
-  .art {{ width: 100%; height: calc(var(--size) + 48px); display: grid; place-items: center; background: #fafafa; }}
+  .art {{ --game-pictogram-strong: currentColor; --game-pictogram-soft: color-mix(in oklab, currentColor 55%, transparent); width: 100%; height: calc(var(--size) + 48px); display: grid; place-items: center; background: #fafafa; }}
   .art > svg {{ width: var(--size); height: var(--size); max-width: var(--size); max-height: var(--size); }}
   .caption {{ border-top: 1px solid #ddd; padding: 12px 16px; font-size: 14px; font-weight: 600; }}
   @media (max-width: 520px) {{ body {{ margin: 16px; }} .grid {{ gap: 12px; }} }}
