@@ -5,7 +5,7 @@ description: >
   game pictogram, puzzle pictogram, game icon, or SVG used to identify a game in the pa-zzle game list.
   It explores many low-cost concepts before SVG production, filters candidates in stages, compares SVGs at
   real display sizes, and refines the strongest directions into a high-quality final pictogram.
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash(python3 .claude/skills/design-game-pictogram/scripts/check_svg.py *), Bash(python3 .claude/skills/design-game-pictogram/scripts/make_review_sheet.py *)
 ---
 
 # design-game-pictogram
@@ -31,6 +31,14 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 - `scripts/check_svg.py` の最終検査結果
 
 探索途中の大量候補、比較シート、試作 SVG は原則として一時ファイルに置き、対象 Issue や依頼で保存が必要な場合だけリポジトリへ残す。
+
+## 依頼別の入口
+
+依頼内容に応じて開始位置を変える。
+
+- **新規制作**: Step 1 から開始し、着眼点の探索から完成 SVG まで進める。
+- **既存 SVG の改善**: 既存 SVG と利用条件を読み、Step 7 で問題を診断してから Step 8 以降で再探索・仕上げを行う。
+- **レビュー / 検証のみ**: 対象 SVG を変更せず、Step 7 の実サイズ比較と Step 10 の機械検査を行い、`references/method.md` の評価軸に沿って findings を返す。変更は依頼された場合だけ行う。
 
 ## 参照する正本
 
@@ -85,15 +93,7 @@ SVG を作る前に、「何を描くか」の候補を一文程度で大量生�
 
 ### 3. 着眼点を粗くふるい分ける
 
-`references/method.md` の初期選別観点を使い、SVG にする価値が低い案を早い段階で落とす。
-
-主に次を確認する。
-
-- 対象ゲーム固有の手掛かりがあるか
-- 汎用的な水滴、格子、車などだけへ還元されていないか
-- 小さな一枚絵へ落とし込めそうか
-- 説明文がなければ成立しない概念ではないか
-- 盤面全体の縮小コピーを前提にしていないか
+`references/method.md` の「着眼点の選別」を使い、ゲーム固有性が弱い、説明依存が強い、小さな一枚絵へ落とし込みにくいなど、SVG にする価値が低い案を早い段階で落とす。
 
 類似案は方向ごとにまとめ、代表案を残す。有望な方向が複数ある場合は、現時点の完成度だけで一本化しない。
 
@@ -115,15 +115,7 @@ SVG を作る前に、「何を描くか」の候補を一文程度で大量生�
 
 ### 5. SVG 化する案をふるい分ける
 
-具体的な構図案から、実際に描いて比較する価値があるものを残す。
-
-この段階では主に次を見る。
-
-- 対象ゲームへの意味的距離
-- 他ゲームとの弁別性
-- 視覚複雑性
-- 具体性
-- 実表示サイズへ縮小できる見込み
+具体的な構図案から、`references/method.md` の「構図案の選別」を使って、実際に描いて比較する価値があるものを残す。
 
 弱い案を落とした後も、着眼点の異なる候補を複数残す。評価軸ごとの点数合計で上位だけを残す方法は使わない。
 
@@ -152,14 +144,7 @@ python3 .claude/skills/design-game-pictogram/scripts/make_review_sheet.py \
 
 代表サイズに加えて、実際に使う最小サイズでも確認する。
 
-主に次を見る。
-
-- 各構成要素を意図した対象・形として知覚できるか
-- ゲーム固有の手掛かりが残っているか
-- 既存ゲーム群と見分けられるか
-- 一つだけ強すぎたり弱すぎたりしないか
-- 線、隙間、状態表現が小サイズで潰れていないか
-- 単体ではなく一覧の中で魅力的に見えるか
+`references/method.md` の「SVG 試作の選別」を使い、構成要素の知覚可能性、実表示サイズ、光学的重量、弁別性、一覧内での見え方を比較する。
 
 ゲーム名を隠した表示は診断に使えるが、ゲーム名を完全に当てられること自体を絶対条件にはしない。
 
@@ -222,15 +207,9 @@ python3 .claude/skills/design-game-pictogram/scripts/check_svg.py \
 
 ## 完成条件
 
-次を満たす完成 SVG を得ることを完了条件とする。
+`references/method.md` の収束条件を満たし、採用 SVG が最終機械検査を通ることを完了条件とする。
 
-- 対象ゲームらしい視覚的手掛かりがある
-- 必要な構成要素が実表示サイズで知覚できる
-- 既存ゲーム群と弁別できる
-- 一覧内で光学的重量が突出しない
-- 盤面の縮小コピーでも汎用アイコンでもなく、ゲーム自身の姿を縮約できている
-- 与えられた SVG 制約を満たす
-- 比較時に重大な問題が残っていない
+特に、盤面の縮小コピーでも汎用アイコンでもなく、そのゲーム自身の姿を一覧向けに縮約できていることを確認する。
 
 候補数、反復回数、判断記録の網羅性、工程の再現そのものを完成条件にしない。
 
