@@ -239,22 +239,30 @@ function SudokuClearMoment({
       [
         { transform: "scale(1)", filter: "saturate(1)" },
         {
-          transform: "scale(1.012)",
-          filter: "saturate(1.18)",
-          offset: 0.55,
+          transform: "scale(1.014)",
+          filter: "saturate(1.24)",
+          offset: 0.5,
         },
         { transform: "scale(1)", filter: "saturate(1)" },
       ],
-      { duration: 460, easing: "cubic-bezier(.2,.8,.2,1)" },
+      { duration: 700, easing: "cubic-bezier(.2,.8,.2,1)" },
     );
 
     if (!animation) {
-      const timer = window.setTimeout(onComplete, 460);
+      const timer = window.setTimeout(onComplete, 900);
       return () => window.clearTimeout(timer);
     }
 
-    animation.onfinish = onComplete;
-    return () => animation.cancel();
+    let settleTimer: number | undefined;
+    animation.onfinish = () => {
+      settleTimer = window.setTimeout(onComplete, 200);
+    };
+    return () => {
+      animation.cancel();
+      if (settleTimer !== undefined) {
+        window.clearTimeout(settleTimer);
+      }
+    };
   }, [active, onComplete]);
 
   return (
@@ -443,10 +451,27 @@ function SudokuResultScreen({
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
 }) {
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const animation = contentRef.current?.animate?.(
+      [
+        { opacity: 0, transform: "translateY(0.5rem)" },
+        { opacity: 1, transform: "translateY(0)" },
+      ],
+      { duration: 280, easing: "ease-out" },
+    );
+
+    return () => animation?.cancel();
+  }, []);
+
   return (
     <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-y-auto bg-background pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <BrandIdentityHeader />
-      <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-6 text-center">
+      <div
+        ref={contentRef}
+        className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-6 text-center"
+      >
         <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-emerald-100 text-3xl font-semibold text-emerald-700 dark:bg-emerald-950/45 dark:text-emerald-300">
           ✓
         </div>
