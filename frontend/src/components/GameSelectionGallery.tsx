@@ -36,7 +36,7 @@ export function GameSelectionGallery({ games }: GameSelectionGalleryProps) {
           <img
             src={selectedGame.pictogramSrc}
             alt=""
-            className="size-[10.625rem] p-[10%] sm:size-[14.0625rem] sm:p-[11%]"
+            className="size-[10.625rem] p-[1.0625rem] sm:size-[14.0625rem] sm:p-[1.5625rem]"
           />
           <span className="mt-2 text-lg font-semibold tracking-tight sm:mt-2.5 sm:text-[1.375rem]">
             {selectedGame.name}
