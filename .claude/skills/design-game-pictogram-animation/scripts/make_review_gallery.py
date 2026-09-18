@@ -16,6 +16,8 @@ DECISIONS = (
     ("reject", "é™¤å¤–"),
 )
 
+PREVIEW_STYLE = "<style>html,body{margin:0;width:100%;height:100%;display:grid;place-items:center;overflow:hidden}svg{width:100%;height:100%;max-width:100%;max-height:100%}.paused *{animation-play-state:paused!important}</style>"
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -45,6 +47,10 @@ def candidate_svg(manifest_path: Path, candidate: dict[str, Any]) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def preview_document(svg: str) -> str:
+    return f"<!doctype html><html><head>{PREVIEW_STYLE}</head><body>{svg}</body></html>"
+
+
 def decision_buttons(candidate_id: str) -> str:
     buttons = []
     for value, label in DECISIONS:
@@ -64,6 +70,7 @@ def candidate_card(manifest_path: Path, candidate: dict[str, Any], size: int) ->
         raise ValueError("candidate id, hypothesis, and interesting_point are required")
 
     svg = candidate_svg(manifest_path, candidate)
+    preview_srcdoc = html.escape(preview_document(svg), quote=True)
     notes_html = (
         f'<p class="notes"><strong>è£œè¶³:</strong> {html.escape(notes)}</p>' if notes else ""
     )
@@ -71,7 +78,7 @@ def candidate_card(manifest_path: Path, candidate: dict[str, Any], size: int) ->
     return f"""
 <article class="card" data-candidate-id="{escaped_id}">
   <div class="art" style="--art-size:{size}px">
-    <iframe class="preview" title="{escaped_id} animation preview" sandbox="allow-same-origin"></iframe>
+    <iframe class="preview" title="{escaped_id} animation preview" sandbox="allow-same-origin" srcdoc="{preview_srcdoc}"></iframe>
   </div>
   <template class="svg-source">{svg}</template>
   <div class="body">
@@ -169,7 +176,7 @@ def build_document(manifest_path: Path, manifest: dict[str, Any], size: int) -> 
 (() => {{
   const storageKey = {json.dumps(storage_key)};
   const output = document.getElementById('review-output');
-  const frameStyle = '<style>html,body{{margin:0;width:100%;height:100%;display:grid;place-items:center;overflow:hidden}}svg{{width:100%;height:100%;max-width:100%;max-height:100%}}.paused *{{animation-play-state:paused!important}}</style>';
+  const frameStyle = {json.dumps(PREVIEW_STYLE)};
   let paused = false;
   let review = {{}};
 
@@ -201,65 +208,55 @@ def build_document(manifest_path: Path, manifest: dict[str, Any], size: int) -> 
     if (state.decision) {{
       card.querySelector(`[data-decision="${{state.decision}}"]`)?.classList.add('active');
     }}
-    card.querySelector('.review-note').value = state.note || '';
-    replay(card);
-  }});
+    card.querySelectoŠ	Ëœ™]šY]Ë[›İIÊK˜[YHHİ]K››İH	ÉÎÂˆ™\^JØ\™
+NÂˆ_JNÂ‚ˆØİ[Y[™Ù][[Y[RY
+	Ü™\^KX[	ÊK˜Y]™[\İ[™\Š	ØÛXÚÉË
 
-  document.getElementById('replay-all').addEventListener('click', () => {{
-    document.querySelectorAll('.card').forEach(replay);
-  }});
+HOˆŞÂˆØİ[Y[œ]Y\TÙ[XİÜ[
+	Ë˜Ø\™	ÊK™›Ü‘XXÚ
+™\^JNÂˆ_JNÂ‚ˆØİ[Y[™Ù][[Y[RY
+	Ü]\ÙKX[	ÊK˜Y]™[\İ[™\Š	ØÛXÚÉË
+]™[
+HOˆŞÂˆ]\ÙYH\]\ÙYÂˆØİ[Y[œ]Y\TÙ[XİÜ[
+	Ë˜Ø\™	ÊK™›Ü‘XXÚ
+\T]\ÙJNÂˆ]™[˜İ\œ™[\™Ù]^ÛÛ[H]\ÙYÈ	ùa£ze¢ÉÈˆ	ù. 9¦`¹`g9«h‰ÎÂˆ_JNÂ‚ˆØİ[Y[œ]Y\TÙ[XİÜ[
+	Ëœ™\^K[Û™IÊK™›Ü‘XXÚ
 
-  document.getElementById('pause-all').addEventListener('click', (event) => {{
-    paused = !paused;
-    document.querySelectorAll('.card').forEach(applyPause);
-    event.currentTarget.textContent = paused ? 'å†é–‹' : 'ä¸€æ™‚åœæ­¢';
-  }});
+]ÛŠHOˆŞÂˆ]Û‹˜Y]™[\İ[™\Š	ØÛXÚÉË
 
-  document.querySelectorAll('.replay-one').forEach((button) => {{
-    button.addEventListener('click', () => replay(button.closest('.card')));
-  }});
+HOˆ™\^J]Û‹˜ÛÜÙ\İ
+	Ë˜Ø\™	ÊJJNÂˆ_JNÂ‚ˆØİ[Y[œ]Y\TÙ[XİÜ[
+	Ë™XÚ\Ú[Û‰ÊK™›Ü‘XXÚ
 
-  document.querySelectorAll('.decision').forEach((button) => {{
-    button.addEventListener('click', () => {{
-      const id = button.dataset.id;
-      const nextDecision = button.dataset.decision;
-      const currentDecision = review[id]?.decision;
-      review[id] = {{ ...(review[id] || {{}}), decision: currentDecision === nextDecision ? null : nextDecision }};
-      button.closest('.decisions').querySelectorAll('.decision').forEach((item) => item.classList.remove('active'));
-      if (review[id].decision) button.classList.add('active');
-      save();
-    }});
-  }});
+]ÛŠHOˆŞÂˆ]Û‹˜Y]™[\İ[™\Š	ØÛXÚÉË
 
-  document.querySelectorAll('.review-note').forEach((textarea) => {{
-    textarea.addEventListener('input', () => {{
-      const id = textarea.dataset.id;
-      review[id] = {{ ...(review[id] || {{}}), note: textarea.value }};
-      save();
-    }});
-  }});
+HOˆŞÂˆÛÛœİYH]Û‹™]\Ù]šYÂˆÛÛœİ™^XÚ\Ú[ÛˆH]Û‹™]\Ù]™XÚ\Ú[ÛÂˆÛÛœİİ\œ™[XÚ\Ú[ÛˆH™]šY]ÖÚYOË™XÚ\Ú[ÛÂˆ™]šY]ÖÚYHHŞÈ‹‹Š™]šY]ÖÚYHŞß_JKXÚ\Ú[Ûˆİ\œ™[XÚ\Ú[ÛˆOOH™^XÚ\Ú[ÛˆÈ[ˆ™^XÚ\Ú[Ûˆ_NÂˆ]Û‹˜ÛÜÙ\İ
+	Ë™XÚ\Ú[ÛœÉÊKœ]Y\TÙ[XİÜ[
+	Ë™XÚ\Ú[Û‰ÊK™›Ü‘XXÚ
 
-  document.getElementById('show-review').addEventListener('click', () => {{
-    output.value = JSON.stringify(review, null, 2);
-    output.style.display = 'block';
-    output.select();
-  }});
-}})();
-</script>
-</body>
-</html>
-"""
+][JHOˆ][K˜Û\ÜÓ\İœ™[[İ™J	ØXİ]™IÊJNÂˆYˆ
+™]šY]ÖÚYK™XÚ\Ú[ÛŠH]Û‹˜Û\ÜÓ\İ˜Y
+	ØXİ]™IÊNÂˆØ]™J
+NÂˆ_JNÂˆ_JNÂ‚ˆØİ[Y[œ]Y\TÙ[XİÜ[
+	Ëœ™]šY]Ë[›İIÊK™›Ü‘XXÚ
 
+^\™XJHOˆŞÂˆ^\™XK˜Y]™[\İ[™\Š	Ú[œ]	Ë
 
-def main() -> int:
-    args = parse_args()
-    manifest = load_manifest(args.manifest)
-    document = build_document(args.manifest, manifest, args.size)
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(document, encoding="utf-8")
-    print(args.output)
-    return 0
+HOˆŞÂˆÛÛœİYH^\™XK™]\Ù]šYÂˆ™]šY]ÖÚYHHŞÈ‹‹Š™]šY]ÖÚYHŞß_JK›İNˆ^\™XK˜[YH_NÂˆØ]™J
+NÂˆ_JNÂˆ_JNÂ‚ˆØİ[Y[™Ù][[Y[RY
+	ÜÚİË\™]šY]ÉÊK˜Y]™[\İ[™\Š	ØÛXÚÉË
 
+HOˆŞÂˆİ]]˜[YHH”ÓÓ‹œİš[™ÚYJ™]šY]Ë[ŠNÂˆİ]]œİ[K™\Ü^HH	Ø›ØÚÉÎÂˆİ]]œÙ[Xİ
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+NÂˆ_JNÂŸ_JJ
+NÂÜØÜš\‚Ø›ÙO‚Ú[‚ˆˆˆ‚‚‚™YˆXZ[Š
+HOˆ[‚ˆ\™ÜÈH\œÙWØ\™ÜÊ
+BˆX[šY™\İHØYÛX[šY™\İ
+\™ÜË›X[šY™\İ
+BˆØİ[Y[HZ[ÙØİ[Y[
+\™ÜË›X[šY™\İX[šY™\İ\™ÜËœÚ^™JBˆ\™ÜË›İ]]œ\™[›ZÙ\Š\™[ÏUYK^\İÛÚÏUYJBˆ\™ÜË›İ]]Üš]Wİ^
+Øİ[Y[[˜ÛÙ[™ÏH]‹NŠBˆš[
+\™ÜË›İ]]
+Bˆ™]\›ˆ‚‚šYˆ×Û˜[YW×ÈOH—×ÛXZ[—×È‚ˆ˜Z\ÙHŞ\İ[Q^]
+XZ[Š
+JB
