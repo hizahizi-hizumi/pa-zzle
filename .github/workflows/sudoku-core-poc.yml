@@ -45,7 +45,7 @@ jobs:
       - name: Generate comparison corpus and core ratings
         working-directory: frontend
         env:
-          SUDOKU_RATING_SAMPLES_PER_CLUE: "50"
+          SUDOKU_RATING_SAMPLES_PER_CLUE: "200"
         run: bun run scripts/sudoku-rating-prepare.ts
 
       - name: Download Sukaku Explainer
@@ -64,7 +64,9 @@ jobs:
 
       - name: Compare ratings
         working-directory: frontend
-        run: bun run scripts/sudoku-rating-analyze.ts | tee tmp/rating-comparison/comparison.log
+        run: |
+          set -euo pipefail
+          bun run scripts/sudoku-rating-analyze.ts | tee tmp/rating-comparison/comparison.log
 
       - name: Write job summary
         if: always()
