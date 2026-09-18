@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ナンプレ">
-  <g fill="none" stroke="var(--game-pictogram-soft, var(--muted-foreground, #737373))" stroke-width="2">
+  <g fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2">
     <path d="M46 18v84M74 18v84M18 46h84M18 74h84"/>
   </g>
-  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong, var(--foreground, #0a0a0a))" stroke-width="4"/>
-  <path d="M137 1493H1262V1276L680 0H305L856 1210H137Z" transform="matrix(0.013396 0 0 -0.013396 50.630 42.000)" fill="var(--game-pictogram-strong, var(--foreground, #0a0a0a))"/>
-  <path d="M754 1176 332 551H754ZM690 1493H1118V551H1331V272H1118V0H754V272H92V602Z" transform="matrix(0.013396 0 0 -0.013396 78.469 98.000)" fill="var(--game-pictogram-strong, var(--foreground, #0a0a0a))"/>
+  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <path d="M137 1493H1262V1276L680 0H305L856 1210H137Z" transform="matrix(0.013396 0 0 -0.013396 50.630 42.000)" fill="var(--game-pictogram-strong)"/>
+  <path d="M754 1176 332 551H754ZM690 1493H1118V551H1331V272H1118V0H754V272H92V602Z" transform="matrix(0.013396 0 0 -0.013396 78.469 98.000)" fill="var(--game-pictogram-strong)"/>
 </svg>

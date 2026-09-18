@@ -5,7 +5,8 @@ type GamePictogramProps = {
   variant?: "default" | "result";
 };
 
-const baseClassName = "block size-full [&>svg]:block [&>svg]:size-full";
+const baseClassName =
+  "block size-full [--game-pictogram-soft:var(--muted-foreground)] [--game-pictogram-strong:var(--foreground)] [&>svg]:block [&>svg]:size-full";
 const resultClassName =
   "[--game-pictogram-soft:color-mix(in_oklab,currentColor_55%,transparent)] [--game-pictogram-strong:currentColor]";
 
