@@ -343,11 +343,6 @@ function PlayActionButton({
         {icon}
       </span>
       <span className="text-[11px] leading-none">{label}</span>
-      {active && (
-        <span className="absolute top-1.5 right-[calc(50%-2rem)] rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-medium leading-none text-foreground">
-          ON
-        </span>
-      )}
     </button>
   );
 }
