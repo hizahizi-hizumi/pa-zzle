@@ -1,16 +1,16 @@
 import { type ReactNode, useEffect, useRef } from "react";
 
-type SudokuClearPresentationProps = {
+type SudokuClearAnimationProps = {
   active: boolean;
   onComplete: () => void;
   children: ReactNode;
 };
 
-export function SudokuClearPresentation({
+export function SudokuClearAnimation({
   active,
   onComplete,
   children,
-}: SudokuClearPresentationProps) {
+}: SudokuClearAnimationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

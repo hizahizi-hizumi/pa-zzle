@@ -1,7 +1,7 @@
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 
-import { SudokuClearPresentation } from "./SudokuClearPresentation";
+import { SudokuClearAnimation } from "./SudokuClearAnimation";
 
 afterEach(() => {
   cleanup();
@@ -17,9 +17,9 @@ test("動きを減らす設定ではクリア演出を待たずに完了通知�
   const onComplete = vi.fn();
 
   render(
-    <SudokuClearPresentation active onComplete={onComplete}>
+    <SudokuClearAnimation active onComplete={onComplete}>
       <div>盤面</div>
-    </SudokuClearPresentation>,
+    </SudokuClearAnimation>,
   );
 
   expect(onComplete).toHaveBeenCalledOnce();

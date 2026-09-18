@@ -151,7 +151,7 @@ export function useSudokuGame(difficulty: SudokuDifficulty) {
     setPlay(createReactState(startedAt));
   }, []);
 
-  const completeClearPresentation = useCallback(() => {
+  const completeClearAnimation = useCallback(() => {
     setPlay((current) =>
       current.session.status === "cleared" && current.progress === "clearing"
         ? { ...current, progress: "result" }
@@ -212,6 +212,6 @@ export function useSudokuGame(difficulty: SudokuDifficulty) {
     restart,
     replay,
     newGame,
-    completeClearPresentation,
+    completeClearAnimation,
   };
 }

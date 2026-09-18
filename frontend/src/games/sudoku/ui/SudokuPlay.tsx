@@ -9,7 +9,7 @@ import type {
   SudokuProgress,
   SudokuResult,
 } from "@/games/sudoku/hooks/use-sudoku-game";
-import { SudokuClearPresentation } from "@/games/sudoku/ui/board/clear/SudokuClearPresentation";
+import { SudokuClearAnimation } from "@/games/sudoku/ui/board/clear/SudokuClearAnimation";
 import { SudokuBoard } from "@/games/sudoku/ui/board/SudokuBoard";
 import { SudokuInputPanel } from "@/games/sudoku/ui/play/SudokuInputPanel";
 import { SudokuPlayHeader } from "@/games/sudoku/ui/play/SudokuPlayHeader";
@@ -43,7 +43,7 @@ type SudokuPlayProps = {
   newGame: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
-  completeClearPresentation: () => void;
+  completeClearAnimation: () => void;
 };
 
 export function SudokuPlay({
@@ -72,7 +72,7 @@ export function SudokuPlay({
   newGame,
   onChangeDifficulty,
   onBackToHome,
-  completeClearPresentation,
+  completeClearAnimation,
 }: SudokuPlayProps) {
   if (progress === "result" && status === "cleared" && result) {
     return (
@@ -108,9 +108,9 @@ export function SudokuPlay({
       />
 
       <main className="flex shrink-0 justify-center px-2 pt-1 sm:px-6 sm:pt-3">
-        <SudokuClearPresentation
+        <SudokuClearAnimation
           active={progress === "clearing"}
-          onComplete={completeClearPresentation}
+          onComplete={completeClearAnimation}
         >
           <SudokuBoard
             board={board}
@@ -122,7 +122,7 @@ export function SudokuPlay({
             interactionDisabled={!interactionEnabled}
             onSelectCell={selectCell}
           />
-        </SudokuClearPresentation>
+        </SudokuClearAnimation>
       </main>
 
       <SudokuInputPanel
