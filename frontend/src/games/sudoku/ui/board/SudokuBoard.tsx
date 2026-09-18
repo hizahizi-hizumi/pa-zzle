@@ -109,7 +109,7 @@ export function SudokuBoard({
             {value ?? (
               <span
                 aria-hidden="true"
-                className="grid h-full w-full grid-cols-3 grid-rows-3 place-items-center text-[clamp(0.42rem,1.8vw,0.72rem)] leading-none font-medium text-brand-foreground/75 dark:text-brand/75"
+                className="grid h-full w-full grid-cols-3 grid-rows-3 place-items-center text-[clamp(0.42rem,1.8vw,0.72rem)] leading-none font-normal text-muted-foreground/50"
               >
                 {SUDOKU_DIGITS.map((digit) => (
                   <span key={digit}>

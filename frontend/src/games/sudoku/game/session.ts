@@ -2,6 +2,9 @@ import { isSudokuSolved } from "./rules";
 import {
   assertSudokuBoard,
   assertSudokuCellIndex,
+  getSudokuBlockIndex,
+  getSudokuColumnIndex,
+  getSudokuRowIndex,
   SUDOKU_CELL_COUNT,
   type SudokuBoard,
   type SudokuDigit,
@@ -60,6 +63,32 @@ function isEditableCell(session: SudokuSession, cellIndex: number): boolean {
   return session.problem.clues[cellIndex] === null;
 }
 
+function isRelatedCell(left: number, right: number): boolean {
+  return (
+    getSudokuRowIndex(left) === getSudokuRowIndex(right) ||
+    getSudokuColumnIndex(left) === getSudokuColumnIndex(right) ||
+    getSudokuBlockIndex(left) === getSudokuBlockIndex(right)
+  );
+}
+
+function clearNotesForEnteredDigit(
+  notes: SudokuNotes,
+  cellIndex: number,
+  digit: SudokuDigit,
+): SudokuNotes {
+  return notes.map((cellNotes, index) => {
+    if (index === cellIndex) {
+      return cellNotes.length > 0 ? [] : cellNotes;
+    }
+
+    if (!isRelatedCell(cellIndex, index) || !cellNotes.includes(digit)) {
+      return cellNotes;
+    }
+
+    return cellNotes.filter((note) => note !== digit);
+  });
+}
+
 function withHistory(
   session: SudokuSession,
   board: SudokuBoard,
@@ -113,9 +142,7 @@ export function enterSudokuDigit(
 
   const board = [...session.board];
   board[cellIndex] = digit;
-  const notes = session.notes.map((cellNotes, index) =>
-    index === cellIndex && cellNotes.length > 0 ? [] : cellNotes,
-  );
+  const notes = clearNotesForEnteredDigit(session.notes, cellIndex, digit);
   const cleared = isSudokuSolved(board);
 
   return {

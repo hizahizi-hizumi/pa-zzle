@@ -105,16 +105,29 @@ describe("toggleSudokuNote", () => {
     expect(removed.mistakeCount).toBe(0);
   });
 
-  test("回答入力で同じマスの手動メモを消すこと", () => {
-    const session = toggleSudokuNote(
-      createSudokuSession(createProblem(), 1_000),
-      0,
-      4,
-    );
+  test("回答入力した数字を同じマスと関連マスの手動メモから消すこと", () => {
+    const problem = createProblem();
+    const clues = [...problem.clues];
+    clues[9] = null;
+    clues[10] = null;
+    clues[40] = null;
+    let session = createSudokuSession({ ...problem, clues }, 1_000);
+    session = toggleSudokuNote(session, 0, 4);
+    session = toggleSudokuNote(session, 1, 5);
+    session = toggleSudokuNote(session, 1, 8);
+    session = toggleSudokuNote(session, 9, 5);
+    session = toggleSudokuNote(session, 9, 7);
+    session = toggleSudokuNote(session, 10, 2);
+    session = toggleSudokuNote(session, 10, 5);
+    session = toggleSudokuNote(session, 40, 5);
 
     const answered = enterSudokuDigit(session, 0, 5, 2_000);
 
     expect(answered.notes[0]).toEqual([]);
+    expect(answered.notes[1]).toEqual([8]);
+    expect(answered.notes[9]).toEqual([7]);
+    expect(answered.notes[10]).toEqual([2]);
+    expect(answered.notes[40]).toEqual([5]);
   });
 });
 

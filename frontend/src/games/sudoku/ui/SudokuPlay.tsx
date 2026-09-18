@@ -21,6 +21,7 @@ import {
 } from "@/games/sudoku/game/state";
 import type { SudokuResult } from "@/games/sudoku/hooks/use-sudoku-game";
 import { SudokuBoard } from "@/games/sudoku/ui/board/SudokuBoard";
+import { cn } from "@/lib/utils";
 
 type SudokuPlayProps = {
   difficulty: SudokuDifficulty;
@@ -153,7 +154,12 @@ export function SudokuPlay({
               <button
                 key={digit}
                 type="button"
-                className="h-14 min-w-0 rounded-lg px-0 text-[clamp(1.5rem,7vw,2.25rem)] font-medium tabular-nums text-brand-foreground transition-colors hover:bg-accent/60 focus-visible:bg-accent focus-visible:outline-none dark:text-brand disabled:pointer-events-none disabled:text-muted-foreground/35"
+                className={cn(
+                  "h-14 min-w-0 rounded-lg px-0 text-[clamp(1.5rem,7vw,2.25rem)] tabular-nums transition-colors hover:bg-accent/60 focus-visible:bg-accent focus-visible:outline-none disabled:pointer-events-none disabled:text-muted-foreground/35",
+                  notesMode
+                    ? "font-normal text-muted-foreground/50"
+                    : "font-medium text-brand-foreground dark:text-brand",
+                )}
                 onClick={() => inputDigit(digit)}
                 disabled={!canEnterDigit}
               >
@@ -210,7 +216,10 @@ function PlayActionButton({
     <button
       type="button"
       aria-pressed={active || undefined}
-      className="relative flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground focus-visible:bg-accent focus-visible:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-35"
+      className={cn(
+        "relative flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground focus-visible:bg-accent focus-visible:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-35",
+        active && "bg-brand-subtle text-brand-foreground",
+      )}
       disabled={disabled}
       onClick={onClick}
     >
