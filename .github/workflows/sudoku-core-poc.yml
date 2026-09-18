@@ -1,0 +1,83 @@
+name: Sudoku Core PoC
+
+on:
+  push:
+    branches:
+      - poc/issue-48-sudoku-core-gha-20260918
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sudoku-core-poc-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+
+      - name: Install repository dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Add sudoku-core
+        working-directory: frontend
+        run: |
+          set -euo pipefail
+          bun add sudoku-core@3.0.3 --exact
+          node -e "const p=require('./node_modules/sudoku-core/package.json'); console.log(`${p.name}@${p.version}`)"
+
+      - name: Evaluate sudoku-core with generated puzzles
+        working-directory: frontend
+        env:
+          SUDOKU_CORE_POC_SAMPLES_PER_CLUE: "50"
+        run: |
+          set -euo pipefail
+          mkdir -p tmp
+          bun run scripts/sudoku-core-poc.ts | tee tmp/sudoku-core-poc.log
+
+      - name: Write job summary
+        if: always()
+        working-directory: frontend
+        run: |
+          if [[ ! -f tmp/sudoku-core-poc.json ]]; then
+            echo "PoC result JSON was not produced." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          node <<'NODE' >> "$GITHUB_STEP_SUMMARY"
+          const fs = require("node:fs");
+          const result = JSON.parse(fs.readFileSync("tmp/sudoku-core-poc.json", "utf8"));
+
+          console.log(`## ${result.package.name}@${result.package.version}`);
+          console.log("");
+          console.log("| clues | generated | human solved | core claimed | core trusted | added coverage | invalid claimed |");
+          console.log("| ---: | ---: | ---: | ---: | ---: | ---: | ---: |");
+          for (const row of result.summaries) {
+            console.log(
+              `| ${row.clueCount} | ${row.generated} | ${row.humanSolved} | ${row.coreClaimedSolved} | ${row.coreTrustedSolved} | ${row.coreAddedCoverage} | ${row.coreInvalidSolvedBoards} |`,
+            );
+          }
+          console.log("");
+          console.log(`Invalid solved-board samples: ${result.invalidSamples.length}`);
+          NODE
+
+      - name: Upload PoC results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: sudoku-core-poc-${{ github.sha }}
+          path: |
+            frontend/tmp/sudoku-core-poc.json
+            frontend/tmp/sudoku-core-poc.log
+          if-no-files-found: warn
+          retention-days: 14
