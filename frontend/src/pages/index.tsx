@@ -11,7 +11,7 @@ const games = [
   {
     name: "ナンプレ",
     pictogramSvg: nanpurePictogramSvg,
-    to: "/games/sudoku",
+    to: "/games/nanpure",
   },
 ] as const;
 

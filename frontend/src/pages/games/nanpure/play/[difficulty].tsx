@@ -7,7 +7,7 @@ import { Link, useNavigate, useParams } from "@/router";
 
 export default function NanpurePlayPage() {
   const { difficulty: difficultyParam } = useParams(
-    "/games/sudoku/play/:difficulty",
+    "/games/nanpure/play/:difficulty",
   );
   const difficulty = parseNanpureDifficulty(difficultyParam);
 
@@ -29,7 +29,7 @@ function PlayableNanpure({
   return (
     <NanpurePlay
       {...game}
-      onChangeDifficulty={() => navigate("/games/sudoku")}
+      onChangeDifficulty={() => navigate("/games/nanpure")}
       onBackToHome={() => navigate("/")}
     />
   );
@@ -43,7 +43,7 @@ function InvalidDifficulty() {
       </CardHeader>
       <CardContent>
         <Button asChild>
-          <Link to="/games/sudoku">難易度選択へ戻る</Link>
+          <Link to="/games/nanpure">難易度選択へ戻る</Link>
         </Button>
       </CardContent>
     </Card>

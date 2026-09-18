@@ -18,7 +18,7 @@ export default function NanpureDifficultyPage() {
         {nanpureDifficulties.map((difficulty) => (
           <Link
             key={difficulty.id}
-            to="/games/sudoku/play/:difficulty"
+            to="/games/nanpure/play/:difficulty"
             params={{ difficulty: difficulty.id }}
             className="block py-4 text-center text-xl font-semibold tracking-tight underline-offset-4 hover:underline"
           >

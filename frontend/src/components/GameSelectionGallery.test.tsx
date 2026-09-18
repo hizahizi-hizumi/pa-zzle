@@ -13,7 +13,7 @@ const games = [
   {
     name: "ナンプレ",
     pictogramSvg: '<svg viewBox="0 0 120 120" data-game="nanpure" />',
-    to: "/games/sudoku",
+    to: "/games/nanpure",
   },
 ] as const;
 
@@ -50,7 +50,7 @@ test("候補を選ぶとヒーローを切り替えること", () => {
   fireEvent.click(nanpureButton);
 
   const heroLink = screen.getByRole("link", { name: "ナンプレを遊ぶ" });
-  expect(heroLink.getAttribute("href")).toBe("/games/sudoku");
+  expect(heroLink.getAttribute("href")).toBe("/games/nanpure");
   expect(heroLink.querySelector('svg[data-game="nanpure"]')).toBeTruthy();
   expect(nanpureButton.getAttribute("aria-pressed")).toBe("true");
 });

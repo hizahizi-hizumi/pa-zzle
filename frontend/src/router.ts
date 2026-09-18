@@ -5,13 +5,13 @@ import { components, hooks, utils } from '@generouted/react-router/client'
 
 export type Path =
   | `/`
-  | `/games/sudoku`
-  | `/games/sudoku/play/:difficulty`
+  | `/games/nanpure`
+  | `/games/nanpure/play/:difficulty`
   | `/games/water-sort`
   | `/games/water-sort/play/:difficulty`
 
 export type Params = {
-  '/games/sudoku/play/:difficulty': { difficulty: string }
+  '/games/nanpure/play/:difficulty': { difficulty: string }
   '/games/water-sort/play/:difficulty': { difficulty: string }
 }
 
