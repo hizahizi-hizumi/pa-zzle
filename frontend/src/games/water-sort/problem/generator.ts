@@ -1,3 +1,4 @@
+import { shuffleProblemValues } from "@/games/problem-random";
 import {
   createProblemSeededRandom,
   type ProblemSeed,
@@ -64,23 +65,6 @@ function createGeneratorRandom(
   );
 }
 
-function shuffle<T>(values: readonly T[], random: () => number): T[] {
-  const shuffled = [...values];
-
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(random() * (index + 1));
-    const value = shuffled[index];
-    const swapValue = shuffled[swapIndex];
-    if (value === undefined || swapValue === undefined) {
-      continue;
-    }
-    shuffled[index] = swapValue;
-    shuffled[swapIndex] = value;
-  }
-
-  return shuffled;
-}
-
 function createStandardCandidate(
   colorCount: number,
   emptyBottleCount: number,
@@ -90,7 +74,7 @@ function createStandardCandidate(
     { length: colorCount * WATER_SORT_BOTTLE_CAPACITY },
     (_, index) => Math.floor(index / WATER_SORT_BOTTLE_CAPACITY),
   );
-  const shuffledUnits = shuffle(units, random);
+  const shuffledUnits = shuffleProblemValues(units, random);
   const bottles = Array.from({ length: colorCount }, (_, bottleIndex) =>
     shuffledUnits.slice(
       bottleIndex * WATER_SORT_BOTTLE_CAPACITY,
