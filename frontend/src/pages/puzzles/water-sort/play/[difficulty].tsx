@@ -20,7 +20,7 @@ import { Link, useNavigate, useParams } from "@/router";
 
 export default function WaterSortPlayPage() {
   const { difficulty: difficultyParam } = useParams(
-    "/games/water-sort/play/:difficulty",
+    "/puzzles/water-sort/play/:difficulty",
   );
   const difficulty = parseWaterSortDifficulty(difficultyParam);
 
@@ -76,7 +76,7 @@ function PlayableWaterSort({
         {...play}
         recordOutcome={recordOutcome}
         onOpenRecords={() => navigate("/records")}
-        onChangeDifficulty={() => navigate("/games/water-sort")}
+        onChangeDifficulty={() => navigate("/puzzles/water-sort")}
         onBackToHome={() => navigate("/")}
         onOpenDiagnostics={
           diagnostics ? () => setDiagnosticsOpen(true) : undefined
@@ -101,7 +101,7 @@ function InvalidDifficulty() {
       </CardHeader>
       <CardContent>
         <Button asChild>
-          <Link to="/games/water-sort">難易度選択へ戻る</Link>
+          <Link to="/puzzles/water-sort">難易度選択へ戻る</Link>
         </Button>
       </CardContent>
     </Card>

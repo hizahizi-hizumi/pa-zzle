@@ -66,7 +66,7 @@ function WaterSortDifficultyOption({
 }) {
   return (
     <Link
-      to="/games/water-sort/play/:difficulty"
+      to="/puzzles/water-sort/play/:difficulty"
       params={{ difficulty }}
       className="group block rounded-2xl focus-visible:outline-none"
     >
