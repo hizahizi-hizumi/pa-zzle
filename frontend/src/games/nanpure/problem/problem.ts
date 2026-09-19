@@ -5,7 +5,7 @@ import {
   type NanpureSolution,
 } from "../puzzle/board";
 import { isNanpureSolved } from "../puzzle/rules";
-import type { NanpureDifficultyRating } from "./difficulty-rating";
+import type { NanpureDifficultyAnalysis } from "./difficulty-analysis";
 
 export const NANPURE_GENERATOR_VERSION = "1";
 
@@ -27,7 +27,7 @@ export type NanpureProblemIdentity = {
 
 export type NanpureGeneratedProblem = NanpureProblem & {
   identity: NanpureProblemIdentity;
-  difficultyRating: NanpureDifficultyRating;
+  difficultyAnalysis: NanpureDifficultyAnalysis;
 };
 
 export function assertNanpureProblem(problem: NanpureProblem): void {

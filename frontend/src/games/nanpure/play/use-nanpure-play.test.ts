@@ -1,7 +1,10 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 
-import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
-import { rateUniqueNanpureDifficulty } from "@/games/nanpure/problem/difficulty-rating";
+import {
+  assessNanpureDifficulty,
+  type NanpureDifficulty,
+} from "@/games/nanpure/difficulty";
+import { analyzeNanpureDifficulty } from "@/games/nanpure/problem/difficulty-analysis";
 import { restoreNanpureProblem } from "@/games/nanpure/problem/generator";
 import * as problemSeed from "@/games/problem-seed";
 import { useNanpurePlay } from "./use-nanpure-play";
@@ -29,9 +32,11 @@ describe("useNanpurePlay", () => {
     });
 
     test("対応する難易度の問題でプレイを開始すること", () => {
-      const rating = rateUniqueNanpureDifficulty(result.current.clues);
+      const assessment = assessNanpureDifficulty(
+        analyzeNanpureDifficulty(result.current.clues),
+      );
 
-      expect(rating).toMatchObject({ status: "rated", difficulty });
+      expect(assessment).toMatchObject({ status: "rated", difficulty });
     });
   });
 
@@ -56,9 +61,14 @@ describe("useNanpurePlay", () => {
     test("現在選択中の難易度を問題生成へ反映すること", () => {
       rerender({ difficulty: "hard" });
       act(() => result.current.startNewProblem());
-      const rating = rateUniqueNanpureDifficulty(result.current.clues);
+      const assessment = assessNanpureDifficulty(
+        analyzeNanpureDifficulty(result.current.clues),
+      );
 
-      expect(rating).toMatchObject({ status: "rated", difficulty: "hard" });
+      expect(assessment).toMatchObject({
+        status: "rated",
+        difficulty: "hard",
+      });
     });
   });
 

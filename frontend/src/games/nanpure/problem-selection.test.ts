@@ -1,5 +1,6 @@
-import { classifyNanpureSolutions } from "./problem/generation/solver";
+import { assessNanpureDifficulty } from "./difficulty";
 import { generateNanpureProblemForDifficulty } from "./problem-selection";
+import { classifyNanpureSolutions } from "./problem/generation/solver";
 
 describe("generateNanpureProblemForDifficulty", () => {
   const cases = [
@@ -13,12 +14,10 @@ describe("generateNanpureProblemForDifficulty", () => {
     (difficulty, seed) => {
       const problem = generateNanpureProblemForDifficulty(difficulty, seed);
       const solution = classifyNanpureSolutions(problem.clues);
+      const assessment = assessNanpureDifficulty(problem.difficultyAnalysis);
 
       expect(solution.status).toBe("unique");
-      expect(problem.difficultyRating).toMatchObject({
-        status: "rated",
-        difficulty,
-      });
+      expect(assessment).toMatchObject({ status: "rated", difficulty });
     },
   );
 });
