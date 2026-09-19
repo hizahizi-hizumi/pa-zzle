@@ -44,17 +44,20 @@ function getLabel(): string {
 - props全体の契約をhookの戻り値や別責務の型そのものに委ねず、コンポーネントが必要とする値を明示する。
 - コールバックpropsは `onXxx` と命名し、子コンポーネントで発生した操作・事象の意味を表す。
 - Reactのstate setterをpropsの公開契約にしない。値の変更を要求する場合は `onChange: (value: T) => void` のように必要な操作だけを公開する。
+- 子コンポーネントが必要とする操作能力だけを公開し、親側の汎用的な状態更新手段を公開しない。
 
 ```tsx
-type DifficultySelectorProps = {
+type DifficultyDialogProps = {
   value: Difficulty;
   onChange: (value: Difficulty) => void;
+  onClose: () => void;
 };
 
-export function DifficultySelector({
+export function DifficultyDialog({
   value,
   onChange,
-}: DifficultySelectorProps) {
+  onClose,
+}: DifficultyDialogProps) {
   // ...
 }
 ```

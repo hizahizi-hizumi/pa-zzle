@@ -35,6 +35,28 @@ const scoreLabel = `${score}点`;
 - ブラウザAPI、タイマー、購読、ストレージなど、React外部との接続には `useEffect` を使用してよい。
 
 ```tsx
+// NG: ユーザー操作をstate経由でeffectへ迂回する
+const [submitted, setSubmitted] = useState(false);
+
+useEffect(() => {
+  if (submitted) {
+    save();
+  }
+}, [submitted]);
+
+function handleSubmit() {
+  setSubmitted(true);
+}
+```
+
+```tsx
+// OK: ユーザー操作に起因する処理はイベントで実行する
+function handleSubmit() {
+  save();
+}
+```
+
+```tsx
 // OK: React外部の document と同期する
 useEffect(() => {
   document.title = title;
