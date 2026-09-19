@@ -5,9 +5,10 @@ import type * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-type LabelProps = React.ComponentProps<typeof LabelPrimitive.Root>;
-
-function Label({ className, ...props }: LabelProps) {
+function Label({
+  className,
+  ...props
+}: React.ComponentProps<typeof LabelPrimitive.Root>) {
   return (
     <LabelPrimitive.Root
       data-slot="label"
