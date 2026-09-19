@@ -5,6 +5,10 @@ paths:
 
 # TypeScript React
 
+## 適用除外
+
+- `frontend/src/components/ui/**` は shadcn/ui の上流形状を維持するため、本規約の適用対象外とする。
+
 ## 1ファイル1コンポーネント
 
 - 1つの `.tsx` ファイルには、Reactコンポーネントを1つだけ定義する。

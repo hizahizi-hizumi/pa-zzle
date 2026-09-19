@@ -5,6 +5,10 @@ paths:
 
 # React Hooks
 
+## 適用除外
+
+- `frontend/src/components/ui/**` は shadcn/ui の上流形状を維持するため、本規約の適用対象外とする。
+
 ## state
 
 - stateは、その値を表示する場所ではなく、その意味を所有する責務で管理する。
