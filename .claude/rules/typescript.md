@@ -19,14 +19,14 @@ export function helper() {}
 ```
 
 ```ts
-// implementation.ts
+// OK: _private で公開する
 function helper() {}
 
 export const _private = { helper };
 ```
 
 ```ts
-// implementation.test.ts
+// OK: テストから _private 経由で参照する
 import { _private } from "./implementation";
 
 const { helper } = _private;
