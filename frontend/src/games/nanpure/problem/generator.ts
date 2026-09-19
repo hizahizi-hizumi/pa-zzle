@@ -9,9 +9,9 @@ import {
   findNanpureSolution,
 } from "../puzzle/solver";
 import {
-  type NanpureDifficultyRating,
-  rateUniqueNanpureDifficulty,
-} from "./difficulty-rating";
+  analyzeNanpureDifficulty,
+  type NanpureDifficultyAnalysis,
+} from "./difficulty-analysis";
 import {
   NANPURE_GENERATOR_VERSION,
   type NanpureGeneratedProblem,
@@ -23,7 +23,7 @@ export const NANPURE_MINIMUM_UNIQUE_CLUE_COUNT = 17;
 
 export type NanpureGeneratedCandidate = NanpureProblem & {
   attempt: number;
-  difficultyRating: NanpureDifficultyRating;
+  difficultyAnalysis: NanpureDifficultyAnalysis;
 };
 
 export type NanpureProblemAcceptance = (
@@ -197,7 +197,7 @@ export function restoreNanpureProblem(
   return {
     ...problem,
     identity,
-    difficultyRating: rateUniqueNanpureDifficulty(problem.clues),
+    difficultyAnalysis: analyzeNanpureDifficulty(problem.clues),
   };
 }
 
@@ -217,11 +217,11 @@ export function generateNanpureProblem(
       continue;
     }
 
-    const difficultyRating = rateUniqueNanpureDifficulty(problem.clues);
+    const difficultyAnalysis = analyzeNanpureDifficulty(problem.clues);
     const candidate: NanpureGeneratedCandidate = {
       ...problem,
       attempt,
-      difficultyRating,
+      difficultyAnalysis,
     };
     if (options.acceptCandidate && !options.acceptCandidate(candidate)) {
       continue;
@@ -235,7 +235,7 @@ export function generateNanpureProblem(
         conditions: { clueCount: options.clueCount },
         generationAttempt: attempt,
       },
-      difficultyRating,
+      difficultyAnalysis,
     };
   }
 

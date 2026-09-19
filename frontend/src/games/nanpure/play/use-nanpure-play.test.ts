@@ -1,8 +1,11 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
-import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
-import { rateUniqueNanpureDifficulty } from "@/games/nanpure/problem/difficulty-rating";
+import {
+  assessNanpureDifficulty,
+  type NanpureDifficulty,
+} from "@/games/nanpure/difficulty";
+import { analyzeNanpureDifficulty } from "@/games/nanpure/problem/difficulty-analysis";
 import { findNanpureSolution } from "@/games/nanpure/puzzle/solver";
 import * as problemSeed from "@/games/problem-seed";
 import { useNanpurePlay } from "./use-nanpure-play";
@@ -23,7 +26,9 @@ describe("useNanpurePlay", () => {
       vi.spyOn(problemSeed, "createProblemSeed").mockReturnValue(seed);
 
       const { result } = renderHook(() => useNanpurePlay(difficulty));
-      const rating = rateUniqueNanpureDifficulty(result.current.clues);
+      const rating = assessNanpureDifficulty(
+        analyzeNanpureDifficulty(result.current.clues),
+      );
 
       expect(rating).toMatchObject({ status: "rated", difficulty });
     },
@@ -38,11 +43,15 @@ describe("useNanpurePlay", () => {
         useNanpurePlay(difficulty),
       { initialProps: { difficulty: "easy" } },
     );
-    const initialRating = rateUniqueNanpureDifficulty(result.current.clues);
+    const initialRating = assessNanpureDifficulty(
+      analyzeNanpureDifficulty(result.current.clues),
+    );
 
     rerender({ difficulty: "hard" });
     act(() => result.current.startNewProblem());
-    const nextRating = rateUniqueNanpureDifficulty(result.current.clues);
+    const nextRating = assessNanpureDifficulty(
+      analyzeNanpureDifficulty(result.current.clues),
+    );
 
     expect(initialRating).toMatchObject({
       status: "rated",

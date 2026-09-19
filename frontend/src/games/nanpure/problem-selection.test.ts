@@ -1,4 +1,6 @@
 import { describe, expect, test } from "vitest";
+
+import { assessNanpureDifficulty } from "./difficulty";
 import { generateNanpureProblemForDifficulty } from "./problem-selection";
 import { classifyNanpureSolutions } from "./puzzle/solver";
 
@@ -12,9 +14,8 @@ describe("generateNanpureProblemForDifficulty", () => {
     const solution = classifyNanpureSolutions(problem.clues);
 
     expect(solution.status).toBe("unique");
-    expect(problem.difficultyRating).toMatchObject({
-      status: "rated",
-      difficulty,
-    });
+    const assessment = assessNanpureDifficulty(problem.difficultyAnalysis);
+
+    expect(assessment).toMatchObject({ status: "rated", difficulty });
   });
 });

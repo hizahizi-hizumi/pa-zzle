@@ -1,6 +1,6 @@
 import type { ProblemSeed } from "@/games/problem-seed";
 
-import type { NanpureDifficulty } from "./difficulty";
+import { assessNanpureDifficulty, type NanpureDifficulty } from "./difficulty";
 import {
   generateNanpureProblem,
   NanpureGenerationExhaustedError,
@@ -28,9 +28,13 @@ export function generateNanpureProblemForDifficulty(
         seed,
         clueCount,
         maximumAttempts: MAXIMUM_ATTEMPTS_PER_CLUE_COUNT,
-        acceptCandidate: ({ difficultyRating }) =>
-          difficultyRating.status === "rated" &&
-          difficultyRating.difficulty === difficulty,
+        acceptCandidate: ({ difficultyAnalysis }) => {
+          const assessment = assessNanpureDifficulty(difficultyAnalysis);
+          return (
+            assessment.status === "rated" &&
+            assessment.difficulty === difficulty
+          );
+        },
       });
     } catch (error) {
       if (!(error instanceof NanpureGenerationExhaustedError)) {
