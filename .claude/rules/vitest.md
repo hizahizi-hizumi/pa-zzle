@@ -87,6 +87,7 @@ test("不正な入力を拒否すること", () => {
 ```ts
 import { expect, test } from "vitest";
 
+
 test.each([
   ["1", 1],
   ["2", 2],
