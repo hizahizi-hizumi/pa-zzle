@@ -8,7 +8,7 @@ import {
   type NanpureBoard,
   type NanpureDigit,
   type NanpureSolution,
-} from "./board";
+} from "../../puzzle/board";
 
 const ALL_DIGITS_MASK = 0b11_1111_1110;
 

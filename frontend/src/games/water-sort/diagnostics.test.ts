@@ -18,10 +18,10 @@ describe("WaterSortDiagnosticSnapshot", () => {
     const snapshot = createWaterSortDiagnosticSnapshot({
       difficulty: "normal",
       problemIdentity: {
-        generatorVersion: problem.generatorVersion,
-        seed: problem.seed,
-        conditions: problem.conditions,
-        generationAttempt: problem.generationAttempt,
+        generatorVersion: problem.identity.generatorVersion,
+        seed: problem.identity.seed,
+        conditions: problem.identity.conditions,
+        generationAttempt: problem.identity.generationAttempt,
       },
       buildRevision: "abcdef1234567890",
     });
@@ -31,8 +31,8 @@ describe("WaterSortDiagnosticSnapshot", () => {
     const restored = restoreWaterSortProblemFromDiagnosticSnapshot(parsed);
 
     expect(parsed).toEqual(snapshot);
-    expect(restored.initialState).toEqual(problem.initialState);
-    expect(restored.solutionMoves).toEqual(problem.solutionMoves);
+    expect(restored.problem.initialState).toEqual(problem.problem.initialState);
+    expect(restored.optimalMoveCount).toBe(problem.optimalMoveCount);
     expect(restored.difficultyAnalysis).toEqual(problem.difficultyAnalysis);
   });
 

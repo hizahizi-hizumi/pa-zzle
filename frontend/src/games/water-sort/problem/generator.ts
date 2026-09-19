@@ -1,10 +1,5 @@
 import type { ProblemSeed } from "@/games/problem-seed";
 import {
-  solveWaterSort,
-  type WaterSortSolveResult,
-  type WaterSortSolverOptions,
-} from "../puzzle/solver";
-import {
   createWaterSortStateKey,
   isCompleteWaterSortBottle,
   WATER_SORT_BOTTLE_CAPACITY,
@@ -16,9 +11,14 @@ import {
   type WaterSortDifficultyAnalysis,
 } from "./difficulty-analysis";
 import {
+  solveWaterSort,
+  type WaterSortSolveResult,
+  type WaterSortSolverOptions,
+} from "./generation/solver";
+import {
   WATER_SORT_GENERATOR_VERSION,
+  type WaterSortGeneratedProblem,
   type WaterSortGenerationConditions,
-  type WaterSortProblem,
   type WaterSortProblemIdentity,
 } from "./problem";
 
@@ -172,11 +172,11 @@ function createProblem(
   initialState: WaterSortState,
   solveResult: WaterSortSolveResult,
   difficultyAnalysis: WaterSortDifficultyAnalysis,
-): WaterSortProblem {
+): WaterSortGeneratedProblem {
   return {
-    ...identity,
-    initialState,
-    solutionMoves: solveResult.moves,
+    problem: { initialState },
+    identity,
+    optimalMoveCount: solveResult.moves.length,
     difficultyAnalysis,
   };
 }
@@ -221,7 +221,7 @@ function findCandidateAtAttempt(
 
 export function restoreWaterSortProblem(
   identity: WaterSortProblemIdentity,
-): WaterSortProblem {
+): WaterSortGeneratedProblem {
   validateProblemIdentity(identity);
 
   const initialState = findCandidateAtAttempt(identity);
@@ -242,7 +242,7 @@ export function restoreWaterSortProblem(
 
 export function generateWaterSortProblem(
   options: WaterSortGeneratorOptions,
-): WaterSortProblem {
+): WaterSortGeneratedProblem {
   validateGeneratorOptions(options);
 
   const maximumAttempts = options.maximumAttempts ?? 100;

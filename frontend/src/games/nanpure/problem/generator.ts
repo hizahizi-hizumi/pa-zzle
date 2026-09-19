@@ -5,13 +5,13 @@ import {
   type NanpureSolution,
 } from "../puzzle/board";
 import {
-  classifyNanpureSolutions,
-  findNanpureSolution,
-} from "../puzzle/solver";
-import {
   type NanpureDifficultyRating,
   rateUniqueNanpureDifficulty,
 } from "./difficulty-rating";
+import {
+  classifyNanpureSolutions,
+  findNanpureSolution,
+} from "./generation/solver";
 import {
   NANPURE_GENERATOR_VERSION,
   type NanpureGeneratedProblem,

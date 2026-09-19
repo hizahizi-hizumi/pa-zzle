@@ -5,8 +5,8 @@ import {
   isWaterSortCleared,
   type WaterSortMove,
   type WaterSortState,
-} from "./state";
-import { listWaterSortDistinctTransitions } from "./transitions";
+} from "../../puzzle/state";
+import { listWaterSortDistinctTransitions } from "../../puzzle/transitions";
 
 export type WaterSortSearchStatus = "solved" | "unsolvable" | "limit-reached";
 

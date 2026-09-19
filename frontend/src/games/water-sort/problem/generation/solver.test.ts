@@ -1,12 +1,15 @@
 import { describe, expect, test } from "vitest";
 
-import { applyWaterSortMove, listWaterSortLegalMoves } from "./rules";
-import { solveWaterSort } from "./solver";
+import {
+  applyWaterSortMove,
+  listWaterSortLegalMoves,
+} from "../../puzzle/rules";
 import {
   createWaterSortStateKey,
   isWaterSortCleared,
   type WaterSortState,
-} from "./state";
+} from "../../puzzle/state";
+import { solveWaterSort } from "./solver";
 
 function shortestDistanceByBreadthFirstSearch(
   initialState: WaterSortState,

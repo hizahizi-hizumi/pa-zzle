@@ -4,7 +4,7 @@ import {
   type NanpureDependencyFeatures,
   type NanpureHumanSolveFeatures,
   traceNanpureHumanSolve,
-} from "../puzzle/human-solver";
+} from "./generation/human-solver";
 
 export const NANPURE_DIFFICULTY_MODEL_VERSION = "dependency-v1";
 

@@ -1,5 +1,4 @@
 import { applyWaterSortMove } from "../puzzle/rules";
-import { solveWaterSort } from "../puzzle/solver";
 import {
   countEmptyWaterSortBottles,
   countWaterSortColorBlocks,
@@ -13,6 +12,7 @@ import {
   listWaterSortDistinctTransitions,
   type WaterSortTransition,
 } from "../puzzle/transitions";
+import { solveWaterSort } from "./generation/solver";
 
 export type WaterSortRepresentativeChoiceRisk = {
   stateIndex: number;

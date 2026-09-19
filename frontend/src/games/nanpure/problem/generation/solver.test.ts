@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import type { NanpureBoard, NanpureCell } from "./board";
-import { isNanpureBoardConsistent, isNanpureSolved } from "./rules";
+import type { NanpureBoard, NanpureCell } from "../../puzzle/board";
+import { isNanpureBoardConsistent, isNanpureSolved } from "../../puzzle/rules";
 import { classifyNanpureSolutions, findNanpureSolution } from "./solver";
 
 function boardFromRows(rows: readonly string[]): NanpureBoard {
