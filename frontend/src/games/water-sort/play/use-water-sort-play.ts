@@ -10,7 +10,7 @@ import type {
   WaterSortGeneratedProblem,
   WaterSortProblemIdentity,
 } from "@/games/water-sort/problem/problem";
-import { generateWaterSortProblemForDifficulty } from "@/games/water-sort/problem/selection";
+import { generateWaterSortProblemForDifficulty } from "@/games/water-sort/problem-selection";
 import { classifyWaterSortDeadlock } from "@/games/water-sort/puzzle/deadlock";
 import {
   isCompleteWaterSortBottle,

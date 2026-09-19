@@ -1,11 +1,11 @@
 import type { ProblemSeed } from "@/games/problem-seed";
 
-import type { NanpureDifficulty } from "../difficulty";
+import type { NanpureDifficulty } from "./difficulty";
 import {
   generateNanpureProblem,
   NanpureGenerationExhaustedError,
-} from "./generator";
-import type { NanpureGeneratedProblem } from "./problem";
+} from "./problem/generator";
+import type { NanpureGeneratedProblem } from "./problem/problem";
 
 const MAXIMUM_ATTEMPTS_PER_CLUE_COUNT = 12;
 

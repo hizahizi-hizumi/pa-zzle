@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
-import { useNanpurePlay } from "@/games/nanpure/hooks/use-nanpure-play";
+import { useNanpurePlay } from "@/games/nanpure/play/use-nanpure-play";
 import {
   createNanpurePlayRecord,
   nanpurePlayRecordDefinition,
