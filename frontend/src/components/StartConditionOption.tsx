@@ -1,13 +1,15 @@
 import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 
+type StartConditionOptionProps = {
+  label: string;
+  children: ReactNode;
+};
+
 export function StartConditionOption({
   label,
   children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
+}: StartConditionOptionProps) {
   return (
     <span className="relative flex h-44 flex-col items-center justify-center gap-4 rounded-2xl border bg-background px-10 py-4 transition-colors group-hover:bg-accent/60 group-active:bg-accent group-focus-visible:ring-2 group-focus-visible:ring-ring sm:h-60 sm:gap-6 sm:py-8">
       {children}

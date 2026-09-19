@@ -40,7 +40,9 @@ describe("WaterSortDiagnosticSnapshot", () => {
       game: "water-sort",
     });
 
-    const act = () => parseWaterSortDiagnosticSnapshot(serialized);
+    function act() {
+      return parseWaterSortDiagnosticSnapshot(serialized);
+    }
 
     expect(act).toThrow("Invalid water sort diagnostic snapshot");
   });

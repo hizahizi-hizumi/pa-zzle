@@ -27,11 +27,13 @@ const previewEntries: Record<
   hard: { 3: "7", 25: "6", 40: "2" },
 };
 
+type NanpureDifficultyPreviewProps = {
+  difficulty: NanpureDifficulty;
+};
+
 export function NanpureDifficultyPreview({
   difficulty,
-}: {
-  difficulty: NanpureDifficulty;
-}) {
+}: NanpureDifficultyPreviewProps) {
   const cells = [...representativePuzzles[difficulty]];
   const entries = previewEntries[difficulty];
 

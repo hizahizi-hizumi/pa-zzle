@@ -30,13 +30,13 @@ const baseProps = {
   operation: null,
   result: null,
   recordOutcome: null,
-  selectBottle: vi.fn(),
-  undo: vi.fn(),
-  restart: vi.fn(),
-  replay: vi.fn(),
-  startNewProblem: vi.fn(),
+  onSelectBottle: vi.fn(),
+  onUndo: vi.fn(),
+  onRestart: vi.fn(),
+  onReplay: vi.fn(),
+  onStartNewProblem: vi.fn(),
   onOpenRecords: vi.fn(),
-  completeClearingPour: vi.fn(),
+  onClearingPourComplete: vi.fn(),
   onChangeDifficulty: vi.fn(),
   onBackToHome: vi.fn(),
 };
@@ -66,7 +66,7 @@ function createResult(
 describe("WaterSortPlay", () => {
   test("プレイ中はゲーム名と主要な計測値をミニマルに表示すること", () => {
     const selectBottle = vi.fn();
-    render(<WaterSortPlay {...baseProps} selectBottle={selectBottle} />);
+    render(<WaterSortPlay {...baseProps} onSelectBottle={selectBottle} />);
     const bottle = screen.getByRole("button", { name: "ボトル 1: 赤、青" });
     fireEvent.click(bottle);
     expect(screen.getByText("パズル pa-zzle")).toBeTruthy();
@@ -94,7 +94,7 @@ describe("WaterSortPlay", () => {
 
   test("合法手を教えるためにボトル操作を無効化しないこと", () => {
     const selectBottle = vi.fn();
-    render(<WaterSortPlay {...baseProps} selectBottle={selectBottle} />);
+    render(<WaterSortPlay {...baseProps} onSelectBottle={selectBottle} />);
     const bottle = screen.getByRole("button", { name: "ボトル 2: 空" });
     fireEvent.click(bottle);
     expect((bottle as HTMLButtonElement).disabled).toBe(false);
@@ -108,8 +108,8 @@ describe("WaterSortPlay", () => {
       <WaterSortPlay
         {...baseProps}
         isDeadlocked
-        undo={undo}
-        restart={restart}
+        onUndo={undo}
+        onRestart={restart}
       />,
     );
     expect(screen.getByRole("status").textContent).toContain("手詰まり");
@@ -121,8 +121,8 @@ describe("WaterSortPlay", () => {
       <WaterSortPlay
         {...baseProps}
         isDeadlocked={false}
-        undo={undo}
-        restart={restart}
+        onUndo={undo}
+        onRestart={restart}
       />,
     );
     expect(screen.queryByText("手詰まり")).toBeNull();
@@ -243,7 +243,7 @@ describe("WaterSortPlay", () => {
 
   test("待ったをプレイ中の直接操作として通知すること", () => {
     const undo = vi.fn();
-    render(<WaterSortPlay {...baseProps} undo={undo} />);
+    render(<WaterSortPlay {...baseProps} onUndo={undo} />);
     fireEvent.click(screen.getByRole("button", { name: "待った" }));
     expect(undo).toHaveBeenCalledOnce();
   });
@@ -257,8 +257,8 @@ describe("WaterSortPlay", () => {
     render(
       <WaterSortPlay
         {...baseProps}
-        restart={restart}
-        startNewProblem={startNewProblem}
+        onRestart={restart}
+        onStartNewProblem={startNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
         onOpenDiagnostics={onOpenDiagnostics}
@@ -432,7 +432,7 @@ describe("WaterSortPlay", () => {
       resolveAnimation?.();
       await animationFinished;
     });
-    expect(baseProps.completeClearingPour).toHaveBeenCalledOnce();
+    expect(baseProps.onClearingPourComplete).toHaveBeenCalledOnce();
   });
 
   test("クリア後に次の問題・再挑戦・難易度変更・ホーム移動を通知すること", () => {
@@ -446,8 +446,8 @@ describe("WaterSortPlay", () => {
         status="cleared"
         progress="result"
         result={createResult()}
-        replay={replay}
-        startNewProblem={startNewProblem}
+        onReplay={replay}
+        onStartNewProblem={startNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
       />,

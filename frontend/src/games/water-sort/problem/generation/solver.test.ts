@@ -120,7 +120,9 @@ describe("solveWaterSort", () => {
 
   test("探索上限に整数以外を指定したら拒否すること", () => {
     const initialState: WaterSortState = [[0, 1, 0, 1], [1, 0, 1, 0], [], []];
-    const act = () => solveWaterSort(initialState, { maxExpandedStates: 0.5 });
+    function act() {
+      return solveWaterSort(initialState, { maxExpandedStates: 0.5 });
+    }
 
     expect(act).toThrow(
       "maxExpandedStates must be a non-negative integer or Infinity",

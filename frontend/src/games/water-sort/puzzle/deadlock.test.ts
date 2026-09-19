@@ -50,7 +50,9 @@ describe("classifyWaterSortDeadlock", () => {
 
   test("探索上限に正の整数以外を指定したら拒否すること", () => {
     const state: WaterSortState = [[0, 0], [1], [2, 1, 1, 1]];
-    const act = () => classifyWaterSortDeadlock(state, { maxVisitedStates: 0 });
+    function act() {
+      return classifyWaterSortDeadlock(state, { maxVisitedStates: 0 });
+    }
 
     expect(act).toThrow(
       "maxVisitedStates must be a positive integer or Infinity",

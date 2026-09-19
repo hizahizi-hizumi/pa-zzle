@@ -1,12 +1,12 @@
 import {
   getNanpureColumnIndex,
   getNanpureRowIndex,
-  NANPURE_DIGITS,
   NANPURE_SIZE,
   type NanpureCell as NanpureCellValue,
   type NanpureDigit,
 } from "@/games/nanpure/puzzle/board";
 import type { NanpureNotes } from "@/games/nanpure/session/session";
+import { NanpureCellNotes } from "@/games/nanpure/ui/board/NanpureCell/NanpureCellNotes";
 import { cn } from "@/lib/utils";
 
 type NanpureCellProps = {
@@ -111,33 +111,5 @@ export function NanpureCell({
         <NanpureCellNotes notes={notes} selectedValue={selectedValue} />
       )}
     </button>
-  );
-}
-
-function NanpureCellNotes({
-  notes,
-  selectedValue,
-}: {
-  notes: NanpureNotes[number];
-  selectedValue: NanpureDigit | null;
-}) {
-  return (
-    <span
-      aria-hidden="true"
-      className="grid h-full w-full grid-cols-3 grid-rows-3 place-items-center text-[clamp(0.58rem,2.4vw,0.9rem)] leading-none font-normal text-muted-foreground/60"
-    >
-      {NANPURE_DIGITS.map((digit) => (
-        <span
-          key={digit}
-          className={cn(
-            selectedValue === digit &&
-              notes.includes(digit) &&
-              "font-semibold text-violet-700 dark:text-violet-300",
-          )}
-        >
-          {notes.includes(digit) ? digit : ""}
-        </span>
-      ))}
-    </span>
   );
 }

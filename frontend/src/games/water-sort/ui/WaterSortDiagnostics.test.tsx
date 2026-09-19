@@ -36,27 +36,13 @@ afterEach(() => {
 });
 
 describe("WaterSortDiagnostics", () => {
-  test("閉じている間は診断情報を表示しないこと", () => {
-    render(
-      <WaterSortDiagnostics
-        snapshot={snapshot}
-        open={false}
-        onClose={vi.fn()}
-      />,
-    );
-
-    const dialog = screen.queryByRole("dialog");
-
-    expect(dialog).toBeNull();
-  });
-
   test("問題識別情報を表示して再現用JSONをコピーできること", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
       value: { writeText },
     });
-    render(<WaterSortDiagnostics snapshot={snapshot} open onClose={vi.fn()} />);
+    render(<WaterSortDiagnostics snapshot={snapshot} onClose={vi.fn()} />);
 
     fireEvent.click(screen.getByRole("button", { name: "再現用JSONをコピー" }));
 
@@ -71,9 +57,18 @@ describe("WaterSortDiagnostics", () => {
 
   test("閉じる操作を通知すること", () => {
     const onClose = vi.fn();
-    render(<WaterSortDiagnostics snapshot={snapshot} open onClose={onClose} />);
+    render(<WaterSortDiagnostics snapshot={snapshot} onClose={onClose} />);
 
     fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  test("Escapeキーで閉じる操作を通知すること", () => {
+    const onClose = vi.fn();
+    render(<WaterSortDiagnostics snapshot={snapshot} onClose={onClose} />);
+
+    fireEvent.keyDown(window, { key: "Escape" });
 
     expect(onClose).toHaveBeenCalledOnce();
   });

@@ -81,11 +81,11 @@ describe("findNanpureSolution", () => {
     const emptyBoard = Array.from({ length: 81 }, () => null);
     const randomValues = [0.1, 0.7, 0.3, 0.9];
     let randomIndex = 0;
-    const random = () => {
+    function random() {
       const value = randomValues[randomIndex % randomValues.length]!;
       randomIndex += 1;
       return value;
-    };
+    }
 
     const solution = findNanpureSolution(emptyBoard, { random });
     const solved = solution ? isNanpureSolved(solution) : false;

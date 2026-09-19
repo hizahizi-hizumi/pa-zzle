@@ -40,7 +40,7 @@ export function classifyWaterSortDeadlock(
   let nextIndex = 0;
   let resolvedStatus: WaterSortDeadlockStatus | null = null;
 
-  const visit = (state: WaterSortState, stateKey: string): void => {
+  function visit(state: WaterSortState, stateKey: string): void {
     const index = nextIndex;
     nextIndex += 1;
     indexByState.set(stateKey, index);
@@ -110,7 +110,7 @@ export function classifyWaterSortDeadlock(
       // A separately completed SCC is reachable from, but cannot return to, the initial SCC.
       resolvedStatus = "playable";
     }
-  };
+  }
 
   visit(initialState, initialStateKey);
   return resolvedStatus ?? "deadlocked";
