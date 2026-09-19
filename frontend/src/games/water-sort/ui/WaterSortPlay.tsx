@@ -70,7 +70,6 @@ export function WaterSortPlay({
   const [hasActivePourAnimation, setHasActivePourAnimation] = useState(false);
   const showDeadlockNotice = isDeadlocked && !hasActivePourAnimation;
 
-
   if (progress === "result" && status === "cleared" && result) {
     return (
       <WaterSortResultScreen
