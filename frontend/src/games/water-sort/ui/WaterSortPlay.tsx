@@ -27,7 +27,7 @@ import type {
   WaterSortOperation,
   WaterSortProgress,
   WaterSortResult,
-} from "@/games/water-sort/hooks/use-water-sort-play";
+} from "@/games/water-sort/play/use-water-sort-play";
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import {
   getWaterSortGameResultLevel,

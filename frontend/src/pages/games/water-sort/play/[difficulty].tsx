@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createWaterSortDiagnosticSnapshot } from "@/games/water-sort/diagnostics";
 import { parseWaterSortDifficulty } from "@/games/water-sort/difficulty";
-import { useWaterSortPlay } from "@/games/water-sort/hooks/use-water-sort-play";
+import { useWaterSortPlay } from "@/games/water-sort/play/use-water-sort-play";
 import {
   createWaterSortPlayRecord,
   waterSortPlayRecordDefinition,

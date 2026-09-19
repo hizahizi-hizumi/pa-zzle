@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import type { NanpureProblemIdentity } from "@/games/nanpure/problem/problem";
-import { generateNanpureProblemForDifficulty } from "@/games/nanpure/problem/selection";
+import { generateNanpureProblemForDifficulty } from "@/games/nanpure/problem-selection";
 import type { NanpureDigit } from "@/games/nanpure/puzzle/board";
 import { findNanpureConflictCellIndices } from "@/games/nanpure/puzzle/rules";
 import {

@@ -9,7 +9,7 @@ import {
 } from "@/components/GameResult";
 import { Button } from "@/components/ui/button";
 import nanpurePictogramSvg from "@/games/nanpure/assets/pictogram.svg?raw";
-import type { NanpureResult } from "@/games/nanpure/hooks/use-nanpure-play";
+import type { NanpureResult } from "@/games/nanpure/play/use-nanpure-play";
 import {
   getNanpureGameResultLevel,
   NANPURE_MISTAKE_PENALTY,
