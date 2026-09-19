@@ -5,6 +5,10 @@ paths:
 
 # TypeScript React
 
+## 適用除外
+
+- `frontend/src/components/ui/**` は shadcn/ui の上流形状を維持するため、本規約の適用対象外とする。
+
 ## 1ファイル1コンポーネント
 
 - 1つの `.tsx` ファイルには、Reactコンポーネントを1つだけ定義する。
@@ -30,6 +34,28 @@ export function Hoge() {
 
 function getLabel(): string {
   return "hoge";
+}
+```
+
+## props
+
+- propsを受け取るコンポーネントは、`<ComponentName>Props` 型を明示する。
+- propsの型を関数引数へインラインで記述しない。
+- props全体の契約をhookの戻り値や別責務の型そのものに委ねず、コンポーネントが必要とする値を明示する。
+- コールバックpropsは `onXxx` と命名し、子コンポーネントで発生した操作・事象の意味を表す。
+- Reactのstate setterをpropsの公開契約にしない。値の変更を要求する場合は `onChange: (value: T) => void` のように必要な操作だけを公開する。
+
+```tsx
+type DifficultySelectorProps = {
+  value: Difficulty;
+  onChange: (value: Difficulty) => void;
+};
+
+export function DifficultySelector({
+  value,
+  onChange,
+}: DifficultySelectorProps) {
+  // ...
 }
 ```
 

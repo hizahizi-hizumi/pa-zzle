@@ -5,6 +5,10 @@ paths:
 
 # TypeScript のコーディング規約
 
+## 適用除外
+
+- `frontend/src/components/ui/**` は shadcn/ui の上流形状を維持するため、本規約の適用対象外とする。
+
 ## 責務と依存方向
 
 - 型・関数・モジュールは、実装方法ではなく意味と責務で分ける。
@@ -53,6 +57,19 @@ const playScoreDisplay = {
 ## 関数定義
 
 - 関数はアロー関数で定義せず、関数宣言を使う。
+
+## export
+
+- default exportは使用せず、named exportを使用する。
+- 外部フレームワークや生成ツールとの契約としてdefault exportが要求される境界に限り例外とする。
+
+```ts
+// NG
+export default function calculateScore() {}
+
+// OK
+export function calculateScore() {}
+```
 
 ## テスト専用公開
 
