@@ -3,7 +3,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import { rateUniqueNanpureDifficulty } from "@/games/nanpure/problem/difficulty-rating";
-import { findNanpureSolution } from "@/games/nanpure/puzzle/solver";
+import { restoreNanpureProblem } from "@/games/nanpure/problem/generator";
 import * as problemSeed from "@/games/problem-seed";
 import { useNanpurePlay } from "./use-nanpure-play";
 
@@ -55,13 +55,9 @@ describe("useNanpurePlay", () => {
       "nanpure-selection-normal",
     );
     const { result } = renderHook(() => useNanpurePlay("normal"));
-    const solution = findNanpureSolution(result.current.board);
-    expect(solution).not.toBeNull();
-    if (!solution) {
-      return;
-    }
+    const problem = restoreNanpureProblem(result.current.problemIdentity);
 
-    for (const [cellIndex, digit] of solution.entries()) {
+    for (const [cellIndex, digit] of problem.solution.entries()) {
       if (result.current.board[cellIndex] !== null) {
         continue;
       }

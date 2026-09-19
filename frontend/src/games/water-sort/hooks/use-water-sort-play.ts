@@ -5,8 +5,9 @@ import {
   assessWaterSortDifficulty,
   type WaterSortDifficulty,
 } from "@/games/water-sort/difficulty";
+import type { WaterSortDifficultyAnalysis } from "@/games/water-sort/problem/difficulty-analysis";
 import type {
-  WaterSortProblem,
+  WaterSortGeneratedProblem,
   WaterSortProblemIdentity,
 } from "@/games/water-sort/problem/problem";
 import { generateWaterSortProblemForDifficulty } from "@/games/water-sort/problem/selection";
@@ -63,6 +64,9 @@ export type WaterSortResult = WaterSortSessionResult & {
 type WaterSortPlayState = {
   session: WaterSortSession;
   sourceBottleIndex: number | null;
+  problemIdentity: WaterSortProblemIdentity;
+  optimalMoveCount: number;
+  difficultyAnalysis: WaterSortDifficultyAnalysis;
   progress: WaterSortProgress;
   operation: WaterSortOperation | null;
 };
@@ -70,7 +74,7 @@ type WaterSortPlayState = {
 function generateProblem(
   difficulty: WaterSortDifficulty,
   seed: ProblemSeed,
-): WaterSortProblem {
+): WaterSortGeneratedProblem {
   return generateWaterSortProblemForDifficulty(difficulty, seed);
 }
 
@@ -79,10 +83,13 @@ function createPlayState(
   seed: ProblemSeed,
   startedAt: number,
 ): WaterSortPlayState {
-  const problem = generateProblem(difficulty, seed);
+  const generatedProblem = generateProblem(difficulty, seed);
 
   return {
-    session: createWaterSortSession(problem, startedAt),
+    session: createWaterSortSession(generatedProblem.problem, startedAt),
+    problemIdentity: generatedProblem.identity,
+    optimalMoveCount: generatedProblem.optimalMoveCount,
+    difficultyAnalysis: generatedProblem.difficultyAnalysis,
     sourceBottleIndex: null,
     progress: "playing",
     operation: null,
@@ -244,16 +251,14 @@ export function useWaterSortPlay(difficulty: WaterSortDifficulty) {
 
   const { session } = play;
   const elapsedMs = getWaterSortSessionElapsedMs(session, now);
-  const optimalMoveCount = session.problem.solutionMoves.length;
+  const optimalMoveCount = play.optimalMoveCount;
   const isDeadlocked = useMemo(
     () =>
       play.progress === "playing" &&
       classifyWaterSortDeadlock(session.state) === "deadlocked",
     [play.progress, session.state],
   );
-  const problemDifficulty = assessWaterSortDifficulty(
-    session.problem.difficultyAnalysis,
-  );
+  const problemDifficulty = assessWaterSortDifficulty(play.difficultyAnalysis);
   const sessionResult = useMemo(
     () => getWaterSortSessionResult(session, now),
     [now, session],
@@ -263,7 +268,7 @@ export function useWaterSortPlay(difficulty: WaterSortDifficulty) {
       return null;
     }
 
-    const colorCount = session.problem.conditions.colorCount;
+    const colorCount = play.problemIdentity.conditions.colorCount;
     const speedFullScoreMs = calculateWaterSortSpeedFullScoreMs({
       optimalMoveCount,
       colorCount,
@@ -285,21 +290,17 @@ export function useWaterSortPlay(difficulty: WaterSortDifficulty) {
         colorCount,
       }),
     };
-  }, [optimalMoveCount, session.problem.conditions.colorCount, sessionResult]);
+  }, [
+    optimalMoveCount,
+    play.problemIdentity.conditions.colorCount,
+    sessionResult,
+  ]);
 
-  const problemIdentity = useMemo<WaterSortProblemIdentity>(
-    () => ({
-      generatorVersion: session.problem.generatorVersion,
-      seed: session.problem.seed,
-      conditions: { ...session.problem.conditions },
-      generationAttempt: session.problem.generationAttempt,
-    }),
-    [session.problem],
-  );
+  const problemIdentity = play.problemIdentity;
 
   return {
     difficulty,
-    seed: session.problem.seed,
+    seed: problemIdentity.seed,
     problemIdentity,
     status: session.status,
     startedAt: session.startedAt,

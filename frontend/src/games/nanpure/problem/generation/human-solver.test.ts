@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import type { NanpureBoard, NanpureCell } from "./board";
+import type { NanpureBoard, NanpureCell } from "../../puzzle/board";
 import { traceNanpureHumanSolve } from "./human-solver";
 import { classifyNanpureSolutions } from "./solver";
 

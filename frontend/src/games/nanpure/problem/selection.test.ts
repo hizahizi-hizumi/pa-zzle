@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { classifyNanpureSolutions } from "../puzzle/solver";
+import { classifyNanpureSolutions } from "./generation/solver";
 import { generateNanpureProblemForDifficulty } from "./selection";
 
 describe("generateNanpureProblemForDifficulty", () => {

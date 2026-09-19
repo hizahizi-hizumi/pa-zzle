@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { solveWaterSort } from "../puzzle/solver";
 import type { WaterSortState } from "../puzzle/state";
 import { analyzeWaterSortDifficulty } from "./difficulty-analysis";
+import { solveWaterSort } from "./generation/solver";
 
 const initialState: WaterSortState = [[0, 1, 0, 1], [1, 0, 1, 0], [], []];
 
