@@ -1,3 +1,7 @@
+import {
+  createProblemRandom,
+  shuffleProblemValues,
+} from "@/games/problem-random";
 import type { ProblemSeed } from "@/games/problem-seed";
 import {
   NANPURE_CELL_COUNT,
@@ -46,49 +50,13 @@ export class NanpureGenerationExhaustedError extends Error {
   }
 }
 
-function hashProblemSeed(seed: string): number {
-  let hash = 0x811c9dc5;
-  for (let index = 0; index < seed.length; index += 1) {
-    hash ^= seed.charCodeAt(index);
-    hash = Math.imul(hash, 0x01000193);
-  }
-
-  return hash >>> 0;
-}
-
-function createProblemSeededRandom(seed: string): () => number {
-  let state = hashProblemSeed(seed);
-
-  return () => {
-    state = (state + 0x6d2b79f5) >>> 0;
-    let value = state;
-    value = Math.imul(value ^ (value >>> 15), value | 1);
-    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
-    return ((value ^ (value >>> 14)) >>> 0) / 0x1_0000_0000;
-  };
-}
-
 function createGeneratorRandom(
   seed: ProblemSeed,
   clueCount: number,
 ): () => number {
-  return createProblemSeededRandom(
+  return createProblemRandom(
     [NANPURE_GENERATOR_VERSION, seed, clueCount].join(":"),
   );
-}
-
-function shuffle<T>(values: readonly T[], random: () => number): T[] {
-  const shuffled = [...values];
-
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(random() * (index + 1));
-    [shuffled[index], shuffled[swapIndex]] = [
-      shuffled[swapIndex]!,
-      shuffled[index]!,
-    ];
-  }
-
-  return shuffled;
 }
 
 function validateClueCount(clueCount: number): void {
@@ -134,7 +102,7 @@ function createProblemCandidate(
   }
 
   const clues = [...solution] as Array<NanpureSolution[number] | null>;
-  const removalOrder = shuffle(
+  const removalOrder = shuffleProblemValues(
     Array.from({ length: NANPURE_CELL_COUNT }, (_, index) => index),
     random,
   );
