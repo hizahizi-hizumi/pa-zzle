@@ -13,6 +13,11 @@ describe("generateParkingJamProblem", () => {
     obstacleCount: 4,
     exitProbability: 0.45,
   } as const;
+  let candidateCount = 0;
+
+  beforeEach(() => {
+    candidateCount = 0;
+  });
 
   test("同じseedと生成条件から同じ問題を再現すること", () => {
     const first = generateParkingJamProblem(options);
@@ -41,8 +46,6 @@ describe("generateParkingJamProblem", () => {
   });
 
   test("生成器と独立した採用条件で候補を棄却できること", () => {
-    let candidateCount = 0;
-
     const generated = generateParkingJamProblem({
       ...options,
       seed: "parking-jam-acceptance",
@@ -73,6 +76,25 @@ describe("generateParkingJamProblem", () => {
           (generated) => generated.solvabilityAnalysis.status === "solvable",
         ),
       ).toBe(true);
+    });
+  });
+
+  describe("遮断依存を優先して生成する場合", () => {
+    const blockingOptions = {
+      ...options,
+      seed: "parking-jam-blocking-reproducible",
+      blockingPlacementProbability: 1,
+    } as const;
+
+    test("問題識別情報から同じ問題を復元できること", () => {
+      const generated = generateParkingJamProblem(blockingOptions);
+
+      const restored = restoreParkingJamProblem(generated.identity);
+
+      expect(generated.identity.conditions.blockingPlacementProbability).toBe(
+        blockingOptions.blockingPlacementProbability,
+      );
+      expect(restored).toEqual(generated);
     });
   });
 });
