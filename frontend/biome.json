@@ -19,7 +19,13 @@
       "preset": "recommended",
       "a11y": "off",
       "suspicious": {
-        "noAssignInExpressions": "off"
+        "noAssignInExpressions": "off",
+        "noImportCycles": {
+          "level": "error",
+          "options": {
+            "ignoreTypes": false
+          }
+        }
       },
       "complexity": {
         "noImportantStyles": "off"
@@ -31,5 +37,1304 @@
         "noUnusedFunctionParameters": "off"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/lib/**/*.{ts,tsx}", "!**/*.test.{ts,tsx,mjs}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/components/**",
+                      "**/components/**",
+                      "@/games/**",
+                      "**/games/**",
+                      "@/records/**",
+                      "**/records/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router"
+                    ],
+                    "message": "lib はアプリ固有の上位責務へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/components/ui/**/*.{ts,tsx}",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/**",
+                      "**/games/**",
+                      "@/records/**",
+                      "**/records/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router"
+                    ],
+                    "message": "汎用UIはゲーム・記録・ページへ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/components/**/*.{ts,tsx}",
+        "!src/components/ui/**",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "@/records/**",
+                      "**/records/**",
+                      "@/pages/**",
+                      "**/pages/**"
+                    ],
+                    "message": "共通コンポーネントは具体ゲーム・記録・ページへ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/problem-seed.ts", "src/games/result.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "@/components/**",
+                      "**/components/**",
+                      "@/records/**",
+                      "**/records/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router",
+                      "react",
+                      "react/**",
+                      "react-dom",
+                      "react-dom/**",
+                      "react-router",
+                      "react-router/**",
+                      "@generouted/react-router",
+                      "@generouted/react-router/**"
+                    ],
+                    "message": "ゲーム共通契約は具体ゲームやUI・記録・外部表示環境へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/records/play-record.ts",
+        "src/records/play-record-definition.ts",
+        "src/records/personal-best.ts",
+        "src/records/save-play-record.ts",
+        "src/records/storage.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/components/**",
+                      "**/components/**",
+                      "@/games/**",
+                      "**/games/**",
+                      "@/records/hooks/**",
+                      "**/records/hooks/**",
+                      "@/records/ui/**",
+                      "**/records/ui/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router",
+                      "react",
+                      "react/**",
+                      "react-dom",
+                      "react-dom/**",
+                      "react-router",
+                      "react-router/**",
+                      "@generouted/react-router",
+                      "@generouted/react-router/**"
+                    ],
+                    "message": "記録の中核ロジックはReact・UI・ゲーム実装へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/records/hooks/**/*.{ts,tsx}",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/components/**",
+                      "**/components/**",
+                      "@/games/**",
+                      "**/games/**",
+                      "@/records/ui/**",
+                      "**/records/ui/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router"
+                    ],
+                    "message": "記録のReact接続はUI・ゲーム実装・ページへ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/records/ui/**/*.{ts,tsx}", "!**/*.test.{ts,tsx,mjs}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/records/hooks/**",
+                      "**/records/hooks/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router"
+                    ],
+                    "message": "記録UIはReact接続やページへ逆依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/nanpure/puzzle/**/*.{ts,tsx}",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "!@/games/nanpure/**",
+                      "**/water-sort/**"
+                    ],
+                    "message": "別ゲームの実装へ直接依存しない。"
+                  },
+                  {
+                    "group": [
+                      "**/problem/**",
+                      "**/session/**",
+                      "**/play/**",
+                      "**/hooks/**",
+                      "**/ui/**",
+                      "**/difficulty",
+                      "**/score",
+                      "**/problem-selection",
+                      "**/play-record",
+                      "**/diagnostics",
+                      "@/components/**",
+                      "**/components/**",
+                      "@/records/**",
+                      "**/records/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router",
+                      "react",
+                      "react/**",
+                      "react-dom",
+                      "react-dom/**",
+                      "react-router",
+                      "react-router/**",
+                      "@generouted/react-router",
+                      "@generouted/react-router/**"
+                    ],
+                    "message": "puzzle はパズル規則より上位のゲーム責務やReact・UIを知らない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/nanpure/problem/**/*.{ts,tsx}",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "!@/games/nanpure/**",
+                      "**/water-sort/**"
+                    ],
+                    "message": "別ゲームの実装へ直接依存しない。"
+                  },
+                  {
+                    "group": [
+                      "**/session/**",
+                      "**/play/**",
+                      "**/hooks/**",
+                      "**/ui/**",
+                      "**/difficulty",
+                      "**/score",
+                      "**/problem-selection",
+                      "**/play-record",
+                      "**/diagnostics",
+                      "@/components/**",
+                      "**/components/**",
+                      "@/records/**",
+                      "**/records/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router",
+                      "react",
+                      "react/**",
+                      "react-dom",
+                      "react-dom/**",
+                      "react-router",
+                      "react-router/**",
+                      "@generouted/react-router",
+                      "@generouted/react-router/**"
+                    ],
+                    "message": "problem は問題表現・生成・解析より上位の責務やReact・UIを知らない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/nanpure/session/**/*.{ts,tsx}",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "!@/games/nanpure/**",
+                      "**/water-sort/**"
+                    ],
+                    "message": "別ゲームの実装へ直接依存しない。"
+                  },
+                  {
+                    "group": [
+                      "**/problem/**",
+                      "!**/problem/problem",
+                      "**/difficulty",
+                      "**/problem-selection",
+                      "**/score",
+                      "**/play/**",
+                      "**/hooks/**",
+                      "**/ui/**",
+                      "**/play-record",
+                      "**/diagnostics",
+                      "@/components/**",
+                      "**/components/**",
+                      "@/records/**",
+                      "**/records/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router",
+                      "react",
+                      "react/**",
+                      "react-dom",
+                      "react-dom/**",
+                      "react-router",
+                      "react-router/**",
+                      "@generouted/react-router",
+                      "@generouted/react-router/**"
+                    ],
+                    "message": "session は遊ぶためのProblemとpuzzleだけに依存し、生成・評価・保存・React・UIを知らない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/nanpure/difficulty.ts",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "!@/games/nanpure/**",
+                      "**/water-sort/**"
+                    ],
+                    "message": "別ゲームの実装へ直接依存しない。"
+                  },
+                  {
+                    "group": [
+                      "**/problem/**",
+                      "!**/problem/difficulty-analysis",
+                      "**/puzzle/**",
+                      "**/session/**",
+                      "**/problem-selection",
+                      "**/score",
+                      "**/play/**",
+                      "**/hooks/**",
+                      "**/ui/**",
+                      "**/play-record",
+                      "**/diagnostics",
+                      "@/components/**",
+                      "**/components/**",
+                      "@/records/**",
+                      "**/records/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router",
+                      "react",
+                      "react/**",
+                      "react-dom",
+                      "react-dom/**",
+                      "react-router",
+                      "react-router/**",
+                      "@generouted/react-router",
+                      "@generouted/react-router/**"
+                    ],
+                    "message": "difficulty は問題解析結果の意味付けに限定し、他のゲーム責務を実行しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/nanpure/problem-selection.ts",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "!@/games/nanpure/**",
+                      "**/water-sort/**"
+                    ],
+                    "message": "別ゲームの実装へ直接依存しない。"
+                  },
+                  {
+                    "group": [
+                      "**/puzzle/**",
+                      "**/session/**",
+                      "**/score",
+                      "**/play/**",
+                      "**/hooks/**",
+                      "**/ui/**",
+                      "**/play-record",
+                      "**/diagnostics",
+                      "@/components/**",
+                      "**/components/**",
+                      "@/records/**",
+                      "**/records/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router",
+                      "react",
+                      "react/**",
+                      "react-dom",
+                      "react-dom/**",
+                      "react-router",
+                      "react-router/**",
+                      "@generouted/react-router",
+                      "@generouted/react-router/**"
+                    ],
+                    "message": "problem-selection は問題供給と難易度方針の調停に限定する。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/nanpure/score.ts", "!**/*.test.{ts,tsx,mjs}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "!@/games/nanpure/**",
+                      "**/water-sort/**"
+                    ],
+                    "message": "別ゲームの実装へ直接依存しない。"
+                  },
+                  {
+                    "group": [
+                      "**/play/**",
+                      "**/hooks/**",
+                      "**/ui/**",
+                      "**/play-record",
+                      "**/diagnostics",
+                      "@/components/**",
+                      "**/components/**",
+                      "@/records/**",
+                      "**/records/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router",
+                      "react",
+                      "react/**",
+                      "react-dom",
+                      "react-dom/**",
+                      "react-router",
+                      "react-router/**",
+                      "@generouted/react-router",
+                      "@generouted/react-router/**"
+                    ],
+                    "message": "score はプレイ事実の評価に限定し、プレイ進行・保存・UIへ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/nanpure/play/**/*.{ts,tsx}",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "!@/games/nanpure/**",
+                      "**/water-sort/**"
+                    ],
+                    "message": "別ゲームの実装へ直接依存しない。"
+                  },
+                  {
+                    "group": [
+                      "**/ui/**",
+                      "**/play-record",
+                      "**/diagnostics",
+                      "@/components/**",
+                      "**/components/**",
+                      "@/records/**",
+                      "**/records/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router"
+                    ],
+                    "message": "play は下位ゲーム責務を調停し、UI・記録・診断・ページへ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/nanpure/ui/**/*.{ts,tsx}",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "!@/games/nanpure/**",
+                      "**/water-sort/**"
+                    ],
+                    "message": "別ゲームの実装へ直接依存しない。"
+                  },
+                  {
+                    "group": [
+                      "**/problem/generator",
+                      "**/puzzle/solver",
+                      "**/puzzle/human-solver",
+                      "**/problem-selection",
+                      "@/records/hooks/**",
+                      "**/records/hooks/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router"
+                    ],
+                    "message": "ui は表示と入力に限定し、問題供給・解探索・ページへ逆依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/nanpure/play-record.ts",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "!@/games/nanpure/**",
+                      "**/water-sort/**"
+                    ],
+                    "message": "別ゲームの実装へ直接依存しない。"
+                  },
+                  {
+                    "group": [
+                      "**/play/**",
+                      "**/hooks/**",
+                      "**/ui/**",
+                      "**/diagnostics",
+                      "@/components/**",
+                      "**/components/**",
+                      "@/records/hooks/**",
+                      "**/records/hooks/**",
+                      "@/records/ui/**",
+                      "**/records/ui/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router",
+                      "react",
+                      "react/**",
+                      "react-dom",
+                      "react-dom/**",
+                      "react-router",
+                      "react-router/**",
+                      "@generouted/react-router",
+                      "@generouted/react-router/**"
+                    ],
+                    "message": "play-record は記録中核との接続に限定し、プレイ進行・UIへ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/nanpure/diagnostics.ts",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "!@/games/nanpure/**",
+                      "**/water-sort/**"
+                    ],
+                    "message": "別ゲームの実装へ直接依存しない。"
+                  },
+                  {
+                    "group": [
+                      "**/play/**",
+                      "**/hooks/**",
+                      "**/ui/**",
+                      "**/play-record",
+                      "@/components/**",
+                      "**/components/**",
+                      "@/records/**",
+                      "**/records/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router",
+                      "react",
+                      "react/**",
+                      "react-dom",
+                      "react-dom/**",
+                      "react-router",
+                      "react-router/**",
+                      "@generouted/react-router",
+                      "@generouted/react-router/**"
+                    ],
+                    "message": "diagnostics は診断用変換に限定し、通常プレイ・UI・記録へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/water-sort/puzzle/**/*.{ts,tsx}",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "!@/games/water-sort/**",
+                      "**/nanpure/**"
+                    ],
+                    "message": "別ゲームの実装へ直接依存しない。"
+                  },
+                  {
+                    "group": [
+                      "**/problem/**",
+                      "**/session/**",
+                      "**/play/**",
+                      "**/hooks/**",
+                      "**/ui/**",
+                      "**/difficulty",
+                      "**/score",
+                      "**/problem-selection",
+                      "**/play-record",
+                      "**/diagnostics",
+                      "@/components/**",
+                      "**/components/**",
+                      "@/records/**",
+                      "**/records/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router",
+                      "react",
+                      "react/**",
+                      "react-dom",
+                      "react-dom/**",
+                      "react-router",
+                      "react-router/**",
+                      "@generouted/react-router",
+                      "@generouted/react-router/**"
+                    ],
+                    "message": "puzzle はパズル規則より上位のゲーム責務やReact・UIを知らない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/water-sort/problem/**/*.{ts,tsx}",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "!@/games/water-sort/**",
+                      "**/nanpure/**"
+                    ],
+                    "message": "別ゲームの実装へ直接依存しない。"
+                  },
+                  {
+                    "group": [
+                      "**/session/**",
+                      "**/play/**",
+                      "**/hooks/**",
+                      "**/ui/**",
+                      "**/difficulty",
+                      "**/score",
+                      "**/problem-selection",
+                      "**/play-record",
+                      "**/diagnostics",
+                      "@/components/**",
+                      "**/components/**",
+                      "@/records/**",
+                      "**/records/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router",
+                      "react",
+                      "react/**",
+                      "react-dom",
+                      "react-dom/**",
+                      "react-router",
+                      "react-router/**",
+                      "@generouted/react-router",
+                      "@generouted/react-router/**"
+                    ],
+                    "message": "problem は問題表現・生成・解析より上位の責務やReact・UIを知らない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/water-sort/session/**/*.{ts,tsx}",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "!@/games/water-sort/**",
+                      "**/nanpure/**"
+                    ],
+                    "message": "別ゲームの実装へ直接依存しない。"
+                  },
+                  {
+                    "group": [
+                      "**/problem/**",
+                      "!**/problem/problem",
+                      "**/difficulty",
+                      "**/problem-selection",
+                      "**/score",
+                      "**/play/**",
+                      "**/hooks/**",
+                      "**/ui/**",
+                      "**/play-record",
+                      "**/diagnostics",
+                      "@/components/**",
+                      "**/components/**",
+                      "@/records/**",
+                      "**/records/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router",
+                      "react",
+                      "react/**",
+                      "react-dom",
+                      "react-dom/**",
+                      "react-router",
+                      "react-router/**",
+                      "@generouted/react-router",
+                      "@generouted/react-router/**"
+                    ],
+                    "message": "session は遊ぶためのProblemとpuzzleだけに依存し、生成・評価・保存・React・UIを知らない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/water-sort/difficulty.ts",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "!@/games/water-sort/**",
+                      "**/nanpure/**"
+                    ],
+                    "message": "別ゲームの実装へ直接依存しない。"
+                  },
+                  {
+                    "group": [
+                      "**/problem/**",
+                      "!**/problem/difficulty-analysis",
+                      "**/puzzle/**",
+                      "**/session/**",
+                      "**/problem-selection",
+                      "**/score",
+                      "**/play/**",
+                      "**/hooks/**",
+                      "**/ui/**",
+                      "**/play-record",
+                      "**/diagnostics",
+                      "@/components/**",
+                      "**/components/**",
+                      "@/records/**",
+                      "**/records/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router",
+                      "react",
+                      "react/**",
+                      "react-dom",
+                      "react-dom/**",
+                      "react-router",
+                      "react-router/**",
+                      "@generouted/react-router",
+                      "@generouted/react-router/**"
+                    ],
+                    "message": "difficulty は問題解析結果の意味付けに限定し、他のゲーム責務を実行しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/water-sort/problem-selection.ts",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "!@/games/water-sort/**",
+                      "**/nanpure/**"
+                    ],
+                    "message": "別ゲームの実装へ直接依存しない。"
+                  },
+                  {
+                    "group": [
+                      "**/puzzle/**",
+                      "**/session/**",
+                      "**/score",
+                      "**/play/**",
+                      "**/hooks/**",
+                      "**/ui/**",
+                      "**/play-record",
+                      "**/diagnostics",
+                      "@/components/**",
+                      "**/components/**",
+                      "@/records/**",
+                      "**/records/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router",
+                      "react",
+                      "react/**",
+                      "react-dom",
+                      "react-dom/**",
+                      "react-router",
+                      "react-router/**",
+                      "@generouted/react-router",
+                      "@generouted/react-router/**"
+                    ],
+                    "message": "problem-selection は問題供給と難易度方針の調停に限定する。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/water-sort/score.ts", "!**/*.test.{ts,tsx,mjs}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "!@/games/water-sort/**",
+                      "**/nanpure/**"
+                    ],
+                    "message": "別ゲームの実装へ直接依存しない。"
+                  },
+                  {
+                    "group": [
+                      "**/play/**",
+                      "**/hooks/**",
+                      "**/ui/**",
+                      "**/play-record",
+                      "**/diagnostics",
+                      "@/components/**",
+                      "**/components/**",
+                      "@/records/**",
+                      "**/records/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router",
+                      "react",
+                      "react/**",
+                      "react-dom",
+                      "react-dom/**",
+                      "react-router",
+                      "react-router/**",
+                      "@generouted/react-router",
+                      "@generouted/react-router/**"
+                    ],
+                    "message": "score はプレイ事実の評価に限定し、プレイ進行・保存・UIへ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/water-sort/play/**/*.{ts,tsx}",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "!@/games/water-sort/**",
+                      "**/nanpure/**"
+                    ],
+                    "message": "別ゲームの実装へ直接依存しない。"
+                  },
+                  {
+                    "group": [
+                      "**/ui/**",
+                      "**/play-record",
+                      "**/diagnostics",
+                      "@/components/**",
+                      "**/components/**",
+                      "@/records/**",
+                      "**/records/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router"
+                    ],
+                    "message": "play は下位ゲーム責務を調停し、UI・記録・診断・ページへ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/water-sort/ui/**/*.{ts,tsx}",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "!@/games/water-sort/**",
+                      "**/nanpure/**"
+                    ],
+                    "message": "別ゲームの実装へ直接依存しない。"
+                  },
+                  {
+                    "group": [
+                      "**/problem/generator",
+                      "**/puzzle/solver",
+                      "**/puzzle/human-solver",
+                      "**/problem-selection",
+                      "@/records/hooks/**",
+                      "**/records/hooks/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router"
+                    ],
+                    "message": "ui は表示と入力に限定し、問題供給・解探索・ページへ逆依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/water-sort/play-record.ts",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "!@/games/water-sort/**",
+                      "**/nanpure/**"
+                    ],
+                    "message": "別ゲームの実装へ直接依存しない。"
+                  },
+                  {
+                    "group": [
+                      "**/play/**",
+                      "**/hooks/**",
+                      "**/ui/**",
+                      "**/diagnostics",
+                      "@/components/**",
+                      "**/components/**",
+                      "@/records/hooks/**",
+                      "**/records/hooks/**",
+                      "@/records/ui/**",
+                      "**/records/ui/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router",
+                      "react",
+                      "react/**",
+                      "react-dom",
+                      "react-dom/**",
+                      "react-router",
+                      "react-router/**",
+                      "@generouted/react-router",
+                      "@generouted/react-router/**"
+                    ],
+                    "message": "play-record は記録中核との接続に限定し、プレイ進行・UIへ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/water-sort/diagnostics.ts",
+        "!**/*.test.{ts,tsx,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "!@/games/water-sort/**",
+                      "**/nanpure/**"
+                    ],
+                    "message": "別ゲームの実装へ直接依存しない。"
+                  },
+                  {
+                    "group": [
+                      "**/play/**",
+                      "**/hooks/**",
+                      "**/ui/**",
+                      "**/play-record",
+                      "@/components/**",
+                      "**/components/**",
+                      "@/records/**",
+                      "**/records/**",
+                      "@/pages/**",
+                      "**/pages/**",
+                      "@/router",
+                      "**/router",
+                      "react",
+                      "react/**",
+                      "react-dom",
+                      "react-dom/**",
+                      "react-router",
+                      "react-router/**",
+                      "@generouted/react-router",
+                      "@generouted/react-router/**"
+                    ],
+                    "message": "diagnostics は診断用変換に限定し、通常プレイ・UI・記録へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }
