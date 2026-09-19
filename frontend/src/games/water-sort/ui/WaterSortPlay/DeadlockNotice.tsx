@@ -33,7 +33,7 @@ export function DeadlockNotice({
         </Button>
         <Button type="button" variant="outline" onClick={onRestart}>
           <RotateCcw />
-          最初から
+          盤面を戻す
         </Button>
       </div>
     </div>

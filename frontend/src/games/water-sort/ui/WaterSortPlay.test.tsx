@@ -103,7 +103,7 @@ describe("WaterSortPlay", () => {
     expect(selectBottle).toHaveBeenCalledWith(1);
   });
 
-  test("手詰まり時だけ進行不能を案内し、待った・最初からへつなぐこと", () => {
+  test("手詰まり時だけ進行不能を案内し、待った・盤面を戻すへつなぐこと", () => {
     const undo = vi.fn();
     const restart = vi.fn();
     const { rerender } = render(
@@ -116,7 +116,7 @@ describe("WaterSortPlay", () => {
     );
     expect(screen.getByRole("status").textContent).toContain("手詰まり");
     fireEvent.click(screen.getByRole("button", { name: "待った" }));
-    fireEvent.click(screen.getByRole("button", { name: "最初から" }));
+    fireEvent.click(screen.getByRole("button", { name: "盤面を戻す" }));
     expect(undo).toHaveBeenCalledOnce();
     expect(restart).toHaveBeenCalledOnce();
     rerender(
@@ -252,6 +252,7 @@ describe("WaterSortPlay", () => {
 
   test("二次操作をメニューから通知すること", () => {
     const restart = vi.fn();
+    const replay = vi.fn();
     const startNewProblem = vi.fn();
     const onChangeDifficulty = vi.fn();
     const onBackToHome = vi.fn();
@@ -260,6 +261,7 @@ describe("WaterSortPlay", () => {
       <WaterSortPlay
         {...baseProps}
         onRestart={restart}
+        onReplay={replay}
         onStartNewProblem={startNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
@@ -267,16 +269,19 @@ describe("WaterSortPlay", () => {
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "最初から" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "盤面を戻す" }));
     fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "新しい問題" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "リセット" }));
     fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "難易度を変える" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "別の問題" }));
     fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "ホームへ" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "難易度変更" }));
+    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "ホーム" }));
     fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "検証情報" }));
     expect(restart).toHaveBeenCalledOnce();
+    expect(replay).toHaveBeenCalledOnce();
     expect(startNewProblem).toHaveBeenCalledOnce();
     expect(onChangeDifficulty).toHaveBeenCalledOnce();
     expect(onBackToHome).toHaveBeenCalledOnce();
