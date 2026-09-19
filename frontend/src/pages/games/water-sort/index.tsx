@@ -1,5 +1,4 @@
-import { ChevronRight } from "lucide-react";
-
+import { StartConditionOption } from "@/components/StartConditionOption";
 import {
   type WaterSortDifficulty,
   waterSortDifficulties,
@@ -69,16 +68,11 @@ function WaterSortDifficultyOption({
     <Link
       to="/games/water-sort/play/:difficulty"
       params={{ difficulty }}
-      className="group relative flex min-h-36 flex-col items-center justify-center gap-4 rounded-2xl border bg-background px-10 py-5 transition-colors hover:bg-accent/60 active:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-h-56 sm:gap-6 sm:py-8"
+      className="group block rounded-2xl focus-visible:outline-none"
     >
-      <WaterSortDifficultyPreview difficulty={difficulty} />
-      <span className="text-lg font-semibold tracking-tight sm:text-xl">
-        {label}
-      </span>
-      <ChevronRight
-        className="absolute right-4 size-5 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-        aria-hidden="true"
-      />
+      <StartConditionOption label={label}>
+        <WaterSortDifficultyPreview difficulty={difficulty} />
+      </StartConditionOption>
     </Link>
   );
 }

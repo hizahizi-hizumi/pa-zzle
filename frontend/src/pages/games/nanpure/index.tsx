@@ -1,4 +1,9 @@
-import { nanpureDifficulties } from "@/games/nanpure/difficulty";
+import { StartConditionOption } from "@/components/StartConditionOption";
+import {
+  type NanpureDifficulty,
+  nanpureDifficulties,
+} from "@/games/nanpure/difficulty";
+import { NanpureDifficultyPreview } from "@/games/nanpure/ui/NanpureDifficultyPreview";
 import { Link } from "@/router";
 
 export default function NanpureDifficultyPage() {
@@ -16,16 +21,33 @@ export default function NanpureDifficultyPage() {
 
       <div className="grid gap-4 sm:grid-cols-3">
         {nanpureDifficulties.map((difficulty) => (
-          <Link
+          <NanpureDifficultyOption
             key={difficulty.id}
-            to="/games/nanpure/play/:difficulty"
-            params={{ difficulty: difficulty.id }}
-            className="block py-4 text-center text-xl font-semibold tracking-tight underline-offset-4 hover:underline"
-          >
-            {difficulty.label}
-          </Link>
+            difficulty={difficulty.id}
+            label={difficulty.label}
+          />
         ))}
       </div>
     </section>
+  );
+}
+
+function NanpureDifficultyOption({
+  difficulty,
+  label,
+}: {
+  difficulty: NanpureDifficulty;
+  label: string;
+}) {
+  return (
+    <Link
+      to="/games/nanpure/play/:difficulty"
+      params={{ difficulty }}
+      className="group block rounded-2xl focus-visible:outline-none"
+    >
+      <StartConditionOption label={label}>
+        <NanpureDifficultyPreview difficulty={difficulty} />
+      </StartConditionOption>
+    </Link>
   );
 }
