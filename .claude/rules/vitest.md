@@ -37,23 +37,33 @@ paths:
 ### 基本原則
 
 - Arrange / Act / Assertの3相を明確に分離する。
-- テスト固有の準備はArrangeへ置き、複数ケースで共有する準備だけhelperやhookへ分離する。
+- Arrangeは `test` の内部に置かず、対象または条件を表す `describe` 側で準備する。`test` 本体はActとAssertに集中させる。
 - Actではテスト対象を明示的に実行し、戻り値や観測結果を変数へ受ける。テスト対象の呼び出しを `expect` へ直接埋め込まない。
 - ActとAssertの間は空行で分離する。
 - 例外送出自体が期待動作なら、テスト対象を呼び出す関数をActで作り、Assertで `toThrow` を検証する。
 - テスト対象の公開契約を検証し、実装手順や内部構造を固定するだけのassertionは置かない。
 - DOMを検証する場合は、role・accessible name・表示内容・ユーザー操作後の観測結果など、利用者から観測できる契約を優先する。
 
+### Arrangeの分離方法
+
+- 不変の入力値・期待値・テストデータは `describe` スコープの `const` として定義する。
+- テストごとに作り直す必要がある状態、モック、スパイ、コンポーネントの描画などは `describe` 内の `beforeEach` で準備する。
+- `beforeEach` ではArrangeだけを行い、検証対象となる操作を先に実行しない。
+- 一部のケースだけArrangeが異なる場合は、その条件を表す `describe` をネストするか、入力差分を `test.each` のケースとして表現する。
+- `test` 内でテストデータ生成、状態構築、モック構築、初期描画などのArrangeを始めない。
+
 ```ts
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 
 
-test("ユーザーを取得できること", () => {
+describe("getUser", () => {
   const userId = 1;
 
-  const result = getUser(userId);
+  test("ユーザーを取得できること", () => {
+    const result = getUser(userId);
 
-  expect(result.id).toBe(userId);
+    expect(result.id).toBe(userId);
+  });
 });
 ```
 
@@ -69,32 +79,41 @@ test("ユーザーが存在すること", () => {
 例外送出を検証する場合もActとAssertを分離する。
 
 ```ts
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 
 
-test("不正な入力を拒否すること", () => {
-  const act = () => parseUser("");
+describe("parseUser", () => {
+  const invalidInput = "";
 
-  expect(act).toThrow();
+  test("不正な入力を拒否すること", () => {
+    const act = () => parseUser(invalidInput);
+
+    expect(act).toThrow();
+  });
 });
 ```
 
 ### 入力違いのケース
 
 - 同じ期待動作を入力違いで検証する場合は `test.each` を使う。
+- `test.each` のケースデータは `describe` 側で定義し、コールバック引数として受け取った値をActへ渡す。
 - ケース名が必要なら条件やケース内容を説明する日本語の散文を使い、失敗時に条件を判別できるようにする。
 - 機械識別子やリテラルそのものを区別する必要がある場合は実際の表記を保持してよい。
 
 ```ts
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 
 
-test.each([
-  ["1", 1],
-  ["2", 2],
-])("文字列を数値へ変換できること: %s", (input, expected) => {
-  const result = parseNumber(input);
+describe("parseNumber", () => {
+  const cases = [
+    ["1", 1],
+    ["2", 2],
+  ] as const;
 
-  expect(result).toBe(expected);
+  test.each(cases)("文字列を数値へ変換できること: %s", (input, expected) => {
+    const result = parseNumber(input);
+
+    expect(result).toBe(expected);
+  });
 });
 ```
