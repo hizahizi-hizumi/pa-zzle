@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 
-import { assessWaterSortDifficulty } from "../difficulty";
-import { generateWaterSortProblemForDifficulty } from "./selection";
+import { assessWaterSortDifficulty } from "./difficulty";
+import { generateWaterSortProblemForDifficulty } from "./problem-selection";
 
 describe("generateWaterSortProblemForDifficulty", () => {
   test.each([

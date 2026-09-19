@@ -3,12 +3,12 @@ import type { ProblemSeed } from "@/games/problem-seed";
 import {
   assessWaterSortDifficulty,
   type WaterSortDifficulty,
-} from "../difficulty";
+} from "./difficulty";
 import {
   generateWaterSortProblem,
   WaterSortGenerationExhaustedError,
-} from "./generator";
-import type { WaterSortProblem } from "./problem";
+} from "./problem/generator";
+import type { WaterSortProblem } from "./problem/problem";
 
 const maximumAttemptsPerColorCount = 8;
 const maximumExpandedStatesPerCandidate = 100_000;

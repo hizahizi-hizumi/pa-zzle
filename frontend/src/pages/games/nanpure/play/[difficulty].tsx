@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { parseNanpureDifficulty } from "@/games/nanpure/difficulty";
-import { useNanpurePlay } from "@/games/nanpure/hooks/use-nanpure-play";
+import { useNanpurePlay } from "@/games/nanpure/play/use-nanpure-play";
 import {
   createNanpurePlayRecord,
   nanpurePlayRecordDefinition,

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { classifyNanpureSolutions } from "../puzzle/solver";
-import { generateNanpureProblemForDifficulty } from "./selection";
+import { generateNanpureProblemForDifficulty } from "./problem-selection";
+import { classifyNanpureSolutions } from "./puzzle/solver";
 
 describe("generateNanpureProblemForDifficulty", () => {
   test.each([

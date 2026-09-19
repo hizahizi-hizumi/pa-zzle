@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import type { WaterSortOperation } from "@/games/water-sort/hooks/use-water-sort-play";
+import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
 import {
   addPourAnimation,
   createPourAnimation,
