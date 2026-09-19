@@ -4,13 +4,13 @@ import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { GamePictogram } from "@/components/GamePictogram";
 import {
   GameResultConfetti,
-  type GameResultLevel,
   GameResultMark,
   GameResultScoreCard,
 } from "@/components/GameResult";
 import { Button } from "@/components/ui/button";
 import nanpurePictogramSvg from "@/games/nanpure/assets/pictogram.svg?raw";
 import {
+  getNanpureGameResultLevel,
   NANPURE_MISTAKE_PENALTY,
   NANPURE_RESTART_PENALTY,
   NANPURE_SCORE_MAXIMUMS,
@@ -20,21 +20,9 @@ import {
 } from "@/games/nanpure/game/performance";
 import type { NanpureResult } from "@/games/nanpure/hooks/use-nanpure-game";
 import { formatElapsedTime } from "@/games/nanpure/ui/format-elapsed-time";
+import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
 import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
-
-function getNanpureGameResultLevel(score: number): GameResultLevel {
-  if (score >= 100) {
-    return "perfect";
-  }
-  if (score >= 90) {
-    return "great";
-  }
-  if (score >= 80) {
-    return "good";
-  }
-  return "clear";
-}
 
 type NanpureResultScreenProps = {
   result: NanpureResult;
@@ -83,7 +71,10 @@ export function NanpureResultScreen({
           <ResultMetric label="待った" value={String(result.undoCount)} />
         </dl>
 
-        <PlayRecordOutcomeNotice outcome={recordOutcome} />
+        <PlayRecordOutcomeNotice
+          outcome={recordOutcome}
+          display={nanpurePlayRecordDisplay}
+        />
 
         <div className="mt-7 grid gap-3">
           <Button size="lg" className="h-12 text-base" onClick={newGame}>

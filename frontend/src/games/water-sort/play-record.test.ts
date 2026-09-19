@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 
 import {
   createWaterSortPlayRecord,
+  getWaterSortPlayRecordScore,
   waterSortPlayRecordDefinition,
 } from "./play-record";
 
@@ -47,10 +48,15 @@ test("評価値を保存せず評価元の事実だけを保存用記録へ写�
 test("保存した事実から現在のプレイ評価を導出すること", () => {
   const record = createRecord();
 
-  const summary = waterSortPlayRecordDefinition.getSummary(record);
+  const score = getWaterSortPlayRecordScore(record);
 
-  expect(summary?.primaryMetric).toEqual({
-    label: "プレイ評価",
-    value: "83点",
-  });
+  expect(score).toBe(83);
+});
+
+test("同じ開始条件を自己ベストの比較単位として扱うこと", () => {
+  const record = createRecord();
+
+  const comparisonKey = waterSortPlayRecordDefinition.getComparisonKey(record);
+
+  expect(comparisonKey).toBe("normal");
 });

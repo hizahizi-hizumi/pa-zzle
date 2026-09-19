@@ -1,13 +1,8 @@
-import { formatRecordElapsedMs } from "@/records/format";
 import type { PlayRecord } from "@/records/play-record";
 import { createPlayRecordId } from "@/records/play-record";
-import type {
-  PlayRecordDefinition,
-  PlayRecordSummary,
-} from "@/records/play-record-definition";
+import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
 import {
-  getNanpureDifficultyLabel,
   type NanpureDifficulty,
   parseNanpureDifficulty,
 } from "./game/difficulty";
@@ -135,90 +130,42 @@ export function createNanpurePlayRecord({
   };
 }
 
-function getScore(record: NanpurePlayRecord): number {
+export function getNanpurePlayRecordScore(record: NanpurePlayRecord): number {
   return calculateNanpurePlayScore(record.payload.performance).total;
-}
-
-function getNanpurePlayRecordSummary(
-  record: PlayRecord,
-): PlayRecordSummary | null {
-  if (!isNanpurePlayRecord(record)) {
-    return null;
-  }
-
-  return {
-    primaryMetric: {
-      label: "プレイ評価",
-      value: `${getScore(record)}点`,
-    },
-    detailMetrics: [
-      {
-        label: "時間",
-        value: formatRecordElapsedMs(record.payload.performance.elapsedMs),
-      },
-      {
-        label: "ミス",
-        value: String(record.payload.performance.mistakeCount),
-      },
-      {
-        label: "待った",
-        value: String(record.payload.performance.undoCount),
-      },
-      {
-        label: "やり直し",
-        value: String(record.payload.performance.restartCount),
-      },
-    ],
-  };
 }
 
 export const nanpurePlayRecordDefinition: PlayRecordDefinition = {
   gameId: NANPURE_GAME_ID,
-  gameLabel: "ナンプレ",
   isRecord: isNanpurePlayRecord,
-  getComparisonGroup(record) {
-    return isNanpurePlayRecord(record)
-      ? {
-          key: record.payload.difficulty,
-          label: getNanpureDifficultyLabel(record.payload.difficulty),
-        }
-      : null;
+  getComparisonKey(record) {
+    return isNanpurePlayRecord(record) ? record.payload.difficulty : null;
   },
-  getSummary: getNanpurePlayRecordSummary,
   personalBestMetrics: [
     {
       id: "play-score",
-      label: "最高評価",
       direction: "higher",
       getValue(record) {
-        return isNanpurePlayRecord(record) ? getScore(record) : null;
-      },
-      formatValue(value) {
-        return `${value}点`;
+        return isNanpurePlayRecord(record)
+          ? getNanpurePlayRecordScore(record)
+          : null;
       },
     },
     {
       id: "elapsed-ms",
-      label: "最速",
       direction: "lower",
       getValue(record) {
         return isNanpurePlayRecord(record)
           ? record.payload.performance.elapsedMs
           : null;
       },
-      formatValue: formatRecordElapsedMs,
     },
     {
       id: "mistake-count",
-      label: "最少ミス",
       direction: "lower",
       getValue(record) {
         return isNanpurePlayRecord(record)
           ? record.payload.performance.mistakeCount
           : null;
-      },
-      formatValue(value) {
-        return `${value}回`;
       },
     },
   ],

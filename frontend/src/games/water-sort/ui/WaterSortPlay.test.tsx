@@ -469,9 +469,8 @@ describe("WaterSortPlay", () => {
           updates: [
             {
               metricId: "play-score",
-              label: "最高評価",
-              previousValue: "92点",
-              currentValue: "100点",
+              previousValue: 92,
+              currentValue: 100,
             },
           ],
         }}
@@ -481,8 +480,11 @@ describe("WaterSortPlay", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "記録を見る" }));
 
-    expect(screen.getByText("自己ベスト更新")).toBeTruthy();
-    expect(screen.getByText("最高評価")).toBeTruthy();
+    const bestUpdate = screen.getByRole("region", { name: "自己ベスト更新" });
+
+    expect(bestUpdate.textContent).toContain("最高評価");
+    expect(bestUpdate.textContent).toContain("92点");
+    expect(bestUpdate.textContent).toContain("100点");
     expect(onOpenRecords).toHaveBeenCalledOnce();
   });
 });

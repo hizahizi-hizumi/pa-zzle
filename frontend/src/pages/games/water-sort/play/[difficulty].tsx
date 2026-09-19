@@ -15,7 +15,7 @@ import {
   buildRevision,
   internalDiagnosticsAvailable,
 } from "@/lib/internal-diagnostics";
-import { useSavePlayRecord } from "@/records/use-save-play-record";
+import { useSavePlayRecord } from "@/records/ui/use-save-play-record";
 import { Link, useNavigate, useParams } from "@/router";
 
 export default function WaterSortPlayPage() {

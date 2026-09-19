@@ -13,7 +13,6 @@ import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { GamePictogram } from "@/components/GamePictogram";
 import {
   GameResultConfetti,
-  type GameResultLevel,
   GameResultMark,
   GameResultScoreCard,
 } from "@/components/GameResult";
@@ -24,6 +23,7 @@ import {
   type WaterSortDifficulty,
   type WaterSortDifficultyAssessment,
 } from "@/games/water-sort/game/difficulty";
+import { getWaterSortGameResultLevel } from "@/games/water-sort/game/performance";
 import type { WaterSortState } from "@/games/water-sort/game/state";
 import type {
   WaterSortOperation,
@@ -31,6 +31,7 @@ import type {
   WaterSortResult,
 } from "@/games/water-sort/hooks/use-water-sort-game";
 import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
+import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 
@@ -243,19 +244,6 @@ function MetricSeparator() {
   );
 }
 
-function getWaterSortGameResultLevel(score: number): GameResultLevel {
-  if (score >= 100) {
-    return "perfect";
-  }
-  if (score >= 90) {
-    return "great";
-  }
-  if (score >= 80) {
-    return "good";
-  }
-  return "clear";
-}
-
 type WaterSortResultScreenProps = {
   difficulty: WaterSortDifficulty;
   problemDifficulty: WaterSortDifficultyAssessment;
@@ -309,7 +297,10 @@ function WaterSortResultScreen({
             value={formatElapsedTime(result.elapsedMs)}
           />
         </dl>
-        <PlayRecordOutcomeNotice outcome={recordOutcome} />
+        <PlayRecordOutcomeNotice
+          outcome={recordOutcome}
+          display={waterSortPlayRecordDisplay}
+        />
         <div className="mt-7 grid gap-3">
           <Button size="lg" className="h-12 text-base" onClick={newGame}>
             次の問題

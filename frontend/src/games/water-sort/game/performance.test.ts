@@ -1,6 +1,9 @@
 import { describe, expect, test } from "vitest";
 
-import { calculateWaterSortPlayScore } from "./performance";
+import {
+  calculateWaterSortPlayScore,
+  getWaterSortGameResultLevel,
+} from "./performance";
 
 describe("calculateWaterSortPlayScore", () => {
   test("最短手数でのクリアを100点として評価すること", () => {
@@ -19,5 +22,18 @@ describe("calculateWaterSortPlayScore", () => {
     const score = calculateWaterSortPlayScore(8, 10);
 
     expect(score).toBe(100);
+  });
+});
+
+describe("getWaterSortGameResultLevel", () => {
+  test.each([
+    [100, "perfect"],
+    [90, "great"],
+    [80, "good"],
+    [79, "clear"],
+  ] as const)("評価点 %i を %s 段階として扱うこと", (score, expected) => {
+    const level = getWaterSortGameResultLevel(score);
+
+    expect(level).toBe(expected);
   });
 });

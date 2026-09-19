@@ -1,11 +1,17 @@
 import type { PlayRecordSaveOutcome } from "../save-play-record";
+import {
+  getPersonalBestMetricDisplay,
+  type PlayRecordDisplayDefinition,
+} from "./play-record-display";
 
 type PlayRecordOutcomeNoticeProps = {
   outcome: PlayRecordSaveOutcome | null;
+  display: PlayRecordDisplayDefinition;
 };
 
 export function PlayRecordOutcomeNotice({
   outcome,
+  display,
 }: PlayRecordOutcomeNoticeProps) {
   if (!outcome || outcome.status === "recorded") {
     return null;
@@ -43,20 +49,30 @@ export function PlayRecordOutcomeNotice({
     >
       <p className="text-center font-semibold">自己ベスト更新</p>
       <dl className="mt-3 grid gap-2">
-        {outcome.updates.map((update) => (
-          <div
-            key={update.metricId}
-            className="flex items-baseline justify-between gap-4 text-sm"
-          >
-            <dt className="text-muted-foreground">{update.label}</dt>
-            <dd className="font-mono font-semibold tabular-nums">
-              <span className="text-muted-foreground line-through">
-                {update.previousValue}
-              </span>{" "}
-              → {update.currentValue}
-            </dd>
-          </div>
-        ))}
+        {outcome.updates.flatMap((update) => {
+          const metricDisplay = getPersonalBestMetricDisplay(
+            display,
+            update.metricId,
+          );
+          if (!metricDisplay) {
+            return [];
+          }
+
+          return [
+            <div
+              key={update.metricId}
+              className="flex items-baseline justify-between gap-4 text-sm"
+            >
+              <dt className="text-muted-foreground">{metricDisplay.label}</dt>
+              <dd className="font-mono font-semibold tabular-nums">
+                <span className="text-muted-foreground line-through">
+                  {metricDisplay.formatValue(update.previousValue)}
+                </span>{" "}
+                → {metricDisplay.formatValue(update.currentValue)}
+              </dd>
+            </div>,
+          ];
+        })}
       </dl>
     </section>
   );

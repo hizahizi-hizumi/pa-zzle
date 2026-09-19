@@ -17,34 +17,20 @@ function createRecord(id: string, value: number): PlayRecord {
 
 const definition: PlayRecordDefinition = {
   gameId: "test-game",
-  gameLabel: "テスト",
   isRecord(record) {
     return record.gameId === "test-game";
   },
-  getComparisonGroup(record) {
-    return record.gameId === "test-game"
-      ? { key: "normal", label: "ふつう" }
-      : null;
-  },
-  getSummary(record) {
-    const value = (record.payload as { value: number }).value;
-    return {
-      primaryMetric: { label: "値", value: String(value) },
-      detailMetrics: [],
-    };
+  getComparisonKey(record) {
+    return record.gameId === "test-game" ? "normal" : null;
   },
   personalBestMetrics: [
     {
       id: "value",
-      label: "最高値",
       direction: "higher",
       getValue(record) {
         return record.gameId === "test-game"
           ? (record.payload as { value: number }).value
           : null;
-      },
-      formatValue(value) {
-        return String(value);
       },
     },
   ],
@@ -69,9 +55,8 @@ test("既存ベストを上回った指標だけを更新として返すこと",
     updates: [
       {
         metricId: "value",
-        label: "最高値",
-        previousValue: "80",
-        currentValue: "95",
+        previousValue: 80,
+        currentValue: 95,
       },
     ],
   });

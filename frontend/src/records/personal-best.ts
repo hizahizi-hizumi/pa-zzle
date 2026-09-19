@@ -6,16 +6,13 @@ import type {
 
 export type PersonalBest = {
   metricId: string;
-  label: string;
-  value: string;
-  rawValue: number;
+  value: number;
 };
 
 export type PersonalBestUpdate = {
   metricId: string;
-  label: string;
-  previousValue: string;
-  currentValue: string;
+  previousValue: number;
+  currentValue: number;
 };
 
 export function isBetterPersonalBestValue(
@@ -50,15 +47,13 @@ export function getPersonalBests(
       : [
           {
             metricId: metric.id,
-            label: metric.label,
-            value: metric.formatValue(bestValue),
-            rawValue: bestValue,
+            value: bestValue,
           },
         ];
   });
 }
 
-export function getPersonalBestMetricLabelsForRecord(
+export function getPersonalBestMetricIdsForRecord(
   record: PlayRecord,
   personalBests: readonly PersonalBest[],
   definition: PlayRecordDefinition,
@@ -66,8 +61,6 @@ export function getPersonalBestMetricLabelsForRecord(
   return definition.personalBestMetrics.flatMap((metric) => {
     const value = metric.getValue(record);
     const best = personalBests.find((item) => item.metricId === metric.id);
-    return value !== null && best && value === best.rawValue
-      ? [metric.label]
-      : [];
+    return value !== null && best && value === best.value ? [metric.id] : [];
   });
 }

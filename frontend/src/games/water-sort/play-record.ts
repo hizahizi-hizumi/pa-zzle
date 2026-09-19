@@ -1,13 +1,8 @@
-import { formatRecordElapsedMs } from "@/records/format";
 import type { PlayRecord } from "@/records/play-record";
 import { createPlayRecordId } from "@/records/play-record";
-import type {
-  PlayRecordDefinition,
-  PlayRecordSummary,
-} from "@/records/play-record-definition";
+import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
 import {
-  getWaterSortDifficultyLabel,
   parseWaterSortDifficulty,
   type WaterSortDifficulty,
 } from "./game/difficulty";
@@ -147,97 +142,57 @@ export function createWaterSortPlayRecord({
   };
 }
 
-function getScore(record: WaterSortPlayRecord): number {
+export function getWaterSortPlayRecordScore(
+  record: WaterSortPlayRecord,
+): number {
   return calculateWaterSortPlayScore(
     record.payload.performance.moveCount,
     record.payload.performance.optimalMoveCount,
   );
 }
 
-function getMoveDelta(record: WaterSortPlayRecord): number {
+export function getWaterSortPlayRecordMoveDelta(
+  record: WaterSortPlayRecord,
+): number {
   return (
     record.payload.performance.moveCount -
     record.payload.performance.optimalMoveCount
   );
 }
 
-function formatMoveDelta(moveDelta: number): string {
-  return moveDelta === 0 ? "±0" : `+${moveDelta}`;
-}
-
-function getWaterSortPlayRecordSummary(
-  record: PlayRecord,
-): PlayRecordSummary | null {
-  if (!isWaterSortPlayRecord(record)) {
-    return null;
-  }
-
-  return {
-    primaryMetric: {
-      label: "プレイ評価",
-      value: `${getScore(record)}点`,
-    },
-    detailMetrics: [
-      {
-        label: "時間",
-        value: formatRecordElapsedMs(record.payload.performance.elapsedMs),
-      },
-      {
-        label: "手数",
-        value: String(record.payload.performance.moveCount),
-      },
-      {
-        label: "最短との差",
-        value: formatMoveDelta(getMoveDelta(record)),
-      },
-    ],
-  };
-}
-
 export const waterSortPlayRecordDefinition: PlayRecordDefinition = {
   gameId: WATER_SORT_GAME_ID,
-  gameLabel: "ウォーターソート",
   isRecord: isWaterSortPlayRecord,
-  getComparisonGroup(record) {
-    return isWaterSortPlayRecord(record)
-      ? {
-          key: record.payload.difficulty,
-          label: getWaterSortDifficultyLabel(record.payload.difficulty),
-        }
-      : null;
+  getComparisonKey(record) {
+    return isWaterSortPlayRecord(record) ? record.payload.difficulty : null;
   },
-  getSummary: getWaterSortPlayRecordSummary,
   personalBestMetrics: [
     {
       id: "play-score",
-      label: "最高評価",
       direction: "higher",
       getValue(record) {
-        return isWaterSortPlayRecord(record) ? getScore(record) : null;
-      },
-      formatValue(value) {
-        return `${value}点`;
+        return isWaterSortPlayRecord(record)
+          ? getWaterSortPlayRecordScore(record)
+          : null;
       },
     },
     {
       id: "elapsed-ms",
-      label: "最速",
       direction: "lower",
       getValue(record) {
         return isWaterSortPlayRecord(record)
           ? record.payload.performance.elapsedMs
           : null;
       },
-      formatValue: formatRecordElapsedMs,
     },
     {
       id: "move-delta",
-      label: "最短との差",
       direction: "lower",
       getValue(record) {
-        return isWaterSortPlayRecord(record) ? getMoveDelta(record) : null;
+        return isWaterSortPlayRecord(record)
+          ? getWaterSortPlayRecordMoveDelta(record)
+          : null;
       },
-      formatValue: formatMoveDelta,
     },
   ],
 };
