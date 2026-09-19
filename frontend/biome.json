@@ -1,13 +1,7 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
   "files": {
-    "includes": [
-      "**",
-      "!node_modules",
-      "!dist",
-      "!src/router.ts",
-      "!biome.dependency.json"
-    ]
+    "includes": ["**", "!node_modules", "!dist", "!src/router.ts"]
   },
   "formatter": {
     "enabled": true,
@@ -25,7 +19,13 @@
       "preset": "recommended",
       "a11y": "off",
       "suspicious": {
-        "noAssignInExpressions": "off"
+        "noAssignInExpressions": "off",
+        "noImportCycles": {
+          "level": "error",
+          "options": {
+            "ignoreTypes": false
+          }
+        }
       },
       "complexity": {
         "noImportantStyles": "off"
@@ -37,5 +37,369 @@
         "noUnusedFunctionParameters": "off"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/frontend.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@/components/**", "@/lib/**"],
+                    "message": "[dependency/bootstrap-boundary] bootstrap は廃止予定の components / lib を新しい依存先にしない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/pages/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/components/**",
+                      "@/games/**",
+                      "@/lib/**",
+                      "@/records/**",
+                      "@/pages/**"
+                    ],
+                    "message": "[dependency/pages-boundary] pages はルートと View の対応だけを持ち、画面の依存は View が合成する。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/views/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/views/**",
+                      "@/components/**",
+                      "@/lib/**",
+                      "@/pages/**"
+                    ],
+                    "message": "[dependency/views-boundary] View 内部は相対 import を使い、廃止予定の components / lib や pages へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/app/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/components/**",
+                      "@/games/*/**",
+                      "@/lib/**",
+                      "@/records/**",
+                      "@/views/**",
+                      "@/pages/**"
+                    ],
+                    "message": "[dependency/app-boundary] app はアプリ全体の責務だけを持ち、具体ゲーム・記録・画面合成へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/ui/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/app/**",
+                      "@/components/**",
+                      "@/games/**",
+                      "@/lib/**",
+                      "@/records/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/ui-boundary] UI 基盤はアプリ固有の責務・ルーティングへ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/components/ui/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/app/**",
+                      "@/components/**",
+                      "@/games/**",
+                      "@/lib/**",
+                      "@/records/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/legacy-ui-boundary] 現在の共通 UI 基盤はアプリ固有責務や lib へ依存しない理想形へ移行する。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/components/**/*.{ts,tsx}", "!src/components/ui/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/components/**",
+                      "@/lib/**",
+                      "@/records/**",
+                      "@/views/**",
+                      "@/pages/**"
+                    ],
+                    "message": "[dependency/legacy-components-boundary] components は新しい共有境界にせず、内部参照は相対 import、意味のある依存は所有責務へ置く。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/lib/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/app/**",
+                      "@/components/**",
+                      "@/games/**",
+                      "@/records/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router",
+                      "react*"
+                    ],
+                    "message": "[dependency/legacy-lib-boundary] lib は新しい共有境界にせず、アプリ固有責務へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/components/**",
+                      "@/games/*/**",
+                      "@/lib/**",
+                      "@/records/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router",
+                      "react*"
+                    ],
+                    "message": "[dependency/games-common-boundary] ゲーム共通契約は具体ゲーム・記録・React・アプリ UI へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/*/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/components/**",
+                      "@/games/*/**",
+                      "@/lib/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game 内部は相対 import を使い、別ゲーム・画面合成・記録 UI / hooks へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/records/**/*.{ts,tsx}",
+        "!src/records/hooks/**",
+        "!src/records/ui/**"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/components/**",
+                      "@/games/*/**",
+                      "@/lib/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router",
+                      "react*"
+                    ],
+                    "message": "[dependency/records-core-boundary] 記録の中核は具体ゲーム・React・UI・画面合成へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/records/hooks/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/components/**",
+                      "@/games/*/**",
+                      "@/lib/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/records-hooks-boundary] 記録 hooks は記録中核を React へ接続し、ゲーム・UI・画面合成へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/records/ui/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/components/**",
+                      "@/games/*/**",
+                      "@/lib/**",
+                      "@/records/hooks/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router",
+                      "react-router",
+                      "react-router/**"
+                    ],
+                    "message": "[dependency/records-ui-boundary] 記録 UI は記録の読み取り契約と UI 基盤に依存し、具体ゲーム・hooks・ルーティング・画面合成へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

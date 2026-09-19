@@ -7,12 +7,11 @@
     "dev": "vite",
     "start": "vite --host 0.0.0.0",
     "build": "vite build",
-    "check": "biome check .",
+    "check": "node scripts/biome-baseline.mjs --baseline=biome-baseline.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "format": "biome check --write .",
-    "dependency-check": "node scripts/biome-baseline.mjs --baseline=dependency-baseline.json --config=biome.dependency.json --path=src --only=lint/style/noRestrictedImports --only=lint/suspicious/noImportCycles"
+    "format": "biome check --write ."
   },
   "dependencies": {
     "@generouted/react-router": "^1.20.2",

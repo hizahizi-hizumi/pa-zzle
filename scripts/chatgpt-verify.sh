@@ -71,8 +71,7 @@ export NPM_CONFIG_REGISTRY=http://127.0.0.1:9
 
 (
   cd "$repo_root/frontend"
-  node_modules/.bin/biome check .
-  node scripts/biome-baseline.mjs --baseline=dependency-baseline.json --config=biome.dependency.json --path=src --only=lint/style/noRestrictedImports --only=lint/suspicious/noImportCycles
+  node scripts/biome-baseline.mjs --baseline=biome-baseline.json
   TERM=dumb node_modules/.bin/tsc --noEmit --pretty false
   node_modules/.bin/vitest run
   node_modules/.bin/vite build --config vite.config.ts
