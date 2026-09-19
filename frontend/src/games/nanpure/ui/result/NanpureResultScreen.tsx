@@ -20,19 +20,25 @@ import {
 } from "@/games/nanpure/game/performance";
 import type { NanpureResult } from "@/games/nanpure/hooks/use-nanpure-game";
 import { formatElapsedTime } from "@/games/nanpure/ui/format-elapsed-time";
+import type { PlayRecordSaveOutcome } from "@/records/presentation";
+import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 
 type NanpureResultScreenProps = {
   result: NanpureResult;
+  recordOutcome: PlayRecordSaveOutcome | null;
   replay: () => void;
   newGame: () => void;
+  onOpenRecords: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
 };
 
 export function NanpureResultScreen({
   result,
+  recordOutcome,
   replay,
   newGame,
+  onOpenRecords,
   onChangeDifficulty,
   onBackToHome,
 }: NanpureResultScreenProps) {
@@ -67,6 +73,8 @@ export function NanpureResultScreen({
           <ResultMetric label="待った" value={String(result.undoCount)} />
         </dl>
 
+        <PlayRecordOutcomeNotice outcome={recordOutcome} />
+
         <div className="mt-7 grid gap-3">
           <Button size="lg" className="h-12 text-base" onClick={newGame}>
             次の問題
@@ -82,14 +90,19 @@ export function NanpureResultScreen({
           </Button>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <Button variant="ghost" onClick={onChangeDifficulty}>
-            難易度を変える
+        <div className="mt-4 grid gap-2">
+          <Button variant="ghost" onClick={onOpenRecords}>
+            記録を見る
           </Button>
-          <Button variant="ghost" onClick={onBackToHome}>
-            <Home />
-            ホームへ
-          </Button>
+          <div className="grid grid-cols-2 gap-3">
+            <Button variant="ghost" onClick={onChangeDifficulty}>
+              難易度を変える
+            </Button>
+            <Button variant="ghost" onClick={onBackToHome}>
+              <Home />
+              ホームへ
+            </Button>
+          </div>
         </div>
 
         <details className="mt-6 rounded-lg border px-4 py-3 text-sm text-muted-foreground">

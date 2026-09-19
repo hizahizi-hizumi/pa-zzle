@@ -197,6 +197,8 @@ export function useNanpureGame(difficulty: NanpureDifficulty) {
   return {
     difficulty,
     status: session.status,
+    startedAt: session.startedAt,
+    completedAt: session.finishedAt,
     progress: play.progress,
     clues: session.problem.clues,
     board: session.board,

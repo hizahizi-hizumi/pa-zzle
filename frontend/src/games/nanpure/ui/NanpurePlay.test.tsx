@@ -33,6 +33,7 @@ function createProps(): ComponentProps<typeof NanpurePlay> {
     restartCount: 0,
     canUndo: true,
     result: null,
+    recordOutcome: null,
     selectCell: vi.fn(),
     inputDigit: vi.fn(),
     erase: vi.fn(),
@@ -41,6 +42,7 @@ function createProps(): ComponentProps<typeof NanpurePlay> {
     restart: vi.fn(),
     replay: vi.fn(),
     newGame: vi.fn(),
+    onOpenRecords: vi.fn(),
     onChangeDifficulty: vi.fn(),
     onBackToHome: vi.fn(),
     completeClearAnimation: vi.fn(),
@@ -222,5 +224,51 @@ describe("NanpurePlay", () => {
     fireEvent.click(screen.getByRole("button", { name: "次の問題" }));
 
     expect(newGame).toHaveBeenCalledOnce();
+  });
+
+  test("自己ベスト更新内容と記録画面への導線を表示すること", () => {
+    const props = createProps();
+    const onOpenRecords = vi.fn();
+    render(
+      <NanpurePlay
+        {...props}
+        status="cleared"
+        progress="result"
+        result={{
+          elapsedMs: 120_000,
+          mistakeCount: 0,
+          undoCount: 0,
+          restartCount: 0,
+          score: {
+            total: 100,
+            breakdown: { accuracy: 40, speed: 40, stability: 20 },
+          },
+          problemIdentity: {
+            generatorVersion: "1",
+            seed: "test-seed",
+            conditions: { clueCount: 32 },
+            generationAttempt: 1,
+          },
+        }}
+        recordOutcome={{
+          status: "updated",
+          updates: [
+            {
+              metricId: "elapsed-ms",
+              label: "最速",
+              previousValue: "02:30",
+              currentValue: "02:00",
+            },
+          ],
+        }}
+        onOpenRecords={onOpenRecords}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "記録を見る" }));
+
+    expect(screen.getByText("自己ベスト更新")).toBeTruthy();
+    expect(screen.getByText("最速")).toBeTruthy();
+    expect(onOpenRecords).toHaveBeenCalledOnce();
   });
 });

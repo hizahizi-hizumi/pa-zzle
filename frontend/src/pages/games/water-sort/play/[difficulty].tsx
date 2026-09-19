@@ -1,16 +1,21 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createWaterSortDiagnosticSnapshot } from "@/games/water-sort/diagnostics";
 import { parseWaterSortDifficulty } from "@/games/water-sort/game/difficulty";
 import { useWaterSortGame } from "@/games/water-sort/hooks/use-water-sort-game";
+import {
+  createWaterSortPlayRecord,
+  waterSortPlayRecordAdapter,
+} from "@/games/water-sort/play-record";
 import { WaterSortDiagnostics } from "@/games/water-sort/ui/WaterSortDiagnostics";
 import { WaterSortPlay } from "@/games/water-sort/ui/WaterSortPlay";
 import {
   buildRevision,
   internalDiagnosticsAvailable,
 } from "@/lib/internal-diagnostics";
+import { useSavePlayRecord } from "@/records/use-save-play-record";
 import { Link, useNavigate, useParams } from "@/router";
 
 export default function WaterSortPlayPage() {
@@ -33,6 +38,29 @@ function PlayableWaterSort({
 }) {
   const game = useWaterSortGame(difficulty);
   const navigate = useNavigate();
+  const playRecord = useMemo(
+    () =>
+      game.result && game.completedAt !== null
+        ? createWaterSortPlayRecord({
+            difficulty,
+            problemIdentity: game.problemIdentity,
+            startedAt: game.startedAt,
+            completedAt: game.completedAt,
+            result: game.result,
+          })
+        : null,
+    [
+      difficulty,
+      game.completedAt,
+      game.problemIdentity,
+      game.result,
+      game.startedAt,
+    ],
+  );
+  const recordOutcome = useSavePlayRecord(
+    playRecord,
+    waterSortPlayRecordAdapter,
+  );
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const diagnostics = internalDiagnosticsAvailable
     ? createWaterSortDiagnosticSnapshot({
@@ -46,6 +74,8 @@ function PlayableWaterSort({
     <>
       <WaterSortPlay
         {...game}
+        recordOutcome={recordOutcome}
+        onOpenRecords={() => navigate("/records")}
         onChangeDifficulty={() => navigate("/games/water-sort")}
         onBackToHome={() => navigate("/")}
         onOpenDiagnostics={

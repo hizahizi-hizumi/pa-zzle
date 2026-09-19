@@ -16,5 +16,5 @@ const games = [
 ] as const;
 
 export default function HomePage() {
-  return <GameSelectionGallery games={games} />;
+  return <GameSelectionGallery games={games} recordsTo="/records" />;
 }
