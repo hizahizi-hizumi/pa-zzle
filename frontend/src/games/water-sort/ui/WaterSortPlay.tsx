@@ -3,10 +3,7 @@ import { useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { Button } from "@/components/ui/button";
-import type {
-  WaterSortDifficulty,
-  WaterSortDifficultyAssessment,
-} from "@/games/water-sort/difficulty";
+import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import type {
   WaterSortOperation,
   WaterSortProgress,
@@ -24,7 +21,6 @@ type WaterSortPlayProps = {
   status: "playing" | "cleared";
   progress: WaterSortProgress;
   state: WaterSortState;
-  problemDifficulty: WaterSortDifficultyAssessment;
   elapsedMs: number;
   moveCount: number;
   undoCount: number;
@@ -51,7 +47,6 @@ export function WaterSortPlay({
   status,
   progress,
   state,
-  problemDifficulty,
   elapsedMs,
   moveCount,
   undoCount,
@@ -83,7 +78,6 @@ export function WaterSortPlay({
     return (
       <WaterSortResultScreen
         difficulty={difficulty}
-        problemDifficulty={problemDifficulty}
         result={result}
         recordOutcome={recordOutcome}
         onReplay={onReplay}

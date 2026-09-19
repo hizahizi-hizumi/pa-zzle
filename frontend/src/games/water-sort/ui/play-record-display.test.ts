@@ -25,13 +25,13 @@ function createRecord() {
   });
 }
 
-test("履歴に現在のプレイ評価とゲーム固有指標を表示すること", () => {
+test("履歴に現在のスコアとゲーム固有指標を表示すること", () => {
   const record = createRecord();
 
   const summary = waterSortPlayRecordDisplay.getSummary(record);
 
   expect(summary).toEqual({
-    primaryMetric: { label: "プレイ評価", value: "87点" },
+    primaryMetric: { label: "スコア", value: "87点" },
     detailMetrics: [
       { label: "時間", value: "01:05" },
       { label: "クリア手数", value: "12" },
@@ -68,7 +68,7 @@ test("復元不能な旧記録は評価を推測せず保存済み事実を表�
   const summary = waterSortPlayRecordDisplay.getSummary(record);
 
   expect(summary).toEqual({
-    primaryMetric: { label: "プレイ評価", value: "再計算不可" },
+    primaryMetric: { label: "スコア", value: "再計算不可" },
     detailMetrics: [
       { label: "時間", value: "01:05" },
       { label: "総手数", value: "14" },
