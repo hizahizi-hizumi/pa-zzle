@@ -26,24 +26,12 @@
       "src/components/GameSelectionGallery.tsx": [
         "import { GamePictogram } from \"@/components/GamePictogram\";"
       ],
-      "src/components/ui/button.tsx": [
-        "import { cn } from \"@/lib/utils\";"
-      ],
-      "src/components/ui/card.tsx": [
-        "import { cn } from \"@/lib/utils\";"
-      ],
-      "src/components/ui/input.tsx": [
-        "import { cn } from \"@/lib/utils\";"
-      ],
-      "src/components/ui/label.tsx": [
-        "import { cn } from \"@/lib/utils\";"
-      ],
-      "src/components/ui/select.tsx": [
-        "import { cn } from \"@/lib/utils\";"
-      ],
-      "src/components/ui/textarea.tsx": [
-        "import { cn } from \"@/lib/utils\";"
-      ],
+      "src/components/ui/button.tsx": ["import { cn } from \"@/lib/utils\";"],
+      "src/components/ui/card.tsx": ["import { cn } from \"@/lib/utils\";"],
+      "src/components/ui/input.tsx": ["import { cn } from \"@/lib/utils\";"],
+      "src/components/ui/label.tsx": ["import { cn } from \"@/lib/utils\";"],
+      "src/components/ui/select.tsx": ["import { cn } from \"@/lib/utils\";"],
+      "src/components/ui/textarea.tsx": ["import { cn } from \"@/lib/utils\";"],
       "src/games/nanpure/hooks/use-nanpure-play.test.ts": [
         "import type { NanpureDifficulty } from \"@/games/nanpure/difficulty\";",
         "import { rateUniqueNanpureDifficulty } from \"@/games/nanpure/problem/difficulty-rating\";",

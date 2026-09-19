@@ -196,6 +196,21 @@ function main() {
       baselinePath,
       `${JSON.stringify(serializeBaseline(current), null, 2)}\n`,
     );
+    const formatResult = spawnSync(
+      resolve(
+        dirname(fileURLToPath(import.meta.url)),
+        "../node_modules/.bin",
+        process.platform === "win32" ? "biome.cmd" : "biome",
+      ),
+      ["format", "--write", baselinePath],
+      { encoding: "utf8" },
+    );
+    if (formatResult.error) throw formatResult.error;
+    if (formatResult.status !== 0) {
+      throw new Error(
+        `Biome formatter failed with exit code ${formatResult.status}.\n${formatResult.stderr}`,
+      );
+    }
     console.log(
       `biome-baseline: updated ${options.baseline} (${current.length} diagnostics)`,
     );
