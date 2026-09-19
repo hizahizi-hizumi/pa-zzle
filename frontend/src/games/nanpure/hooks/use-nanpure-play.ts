@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
-import { generateNanpureProblem } from "@/games/nanpure/problem/generator";
 import type { NanpureProblemIdentity } from "@/games/nanpure/problem/problem";
+import { generateNanpureProblemForDifficulty } from "@/games/nanpure/problem/selection";
 import type { NanpureDigit } from "@/games/nanpure/puzzle/board";
 import { findNanpureConflictCellIndices } from "@/games/nanpure/puzzle/rules";
 import {
@@ -23,9 +23,7 @@ import {
   toggleNanpureNote,
   undoNanpureSession,
 } from "@/games/nanpure/session/session";
-import { createProblemSeed } from "@/games/problem-seed";
-
-const NANPURE_BASELINE_CLUE_COUNT = 32;
+import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
 
 export type NanpureProgress = "playing" | "clearing" | "result";
 
@@ -42,11 +40,12 @@ type NanpurePlayState = {
   progress: NanpureProgress;
 };
 
-function createPlayState(startedAt: number): NanpurePlayState {
-  const problem = generateNanpureProblem({
-    seed: createProblemSeed(),
-    clueCount: NANPURE_BASELINE_CLUE_COUNT,
-  });
+function createPlayState(
+  difficulty: NanpureDifficulty,
+  seed: ProblemSeed,
+  startedAt: number,
+): NanpurePlayState {
+  const problem = generateNanpureProblemForDifficulty(difficulty, seed);
 
   return {
     session: createNanpureSession(problem, startedAt),
@@ -59,7 +58,7 @@ function createPlayState(startedAt: number): NanpurePlayState {
 
 export function useNanpurePlay(difficulty: NanpureDifficulty) {
   const [play, setPlay] = useState<NanpurePlayState>(() =>
-    createPlayState(Date.now()),
+    createPlayState(difficulty, createProblemSeed(), Date.now()),
   );
   const [now, setNow] = useState(() => Date.now());
 
@@ -150,8 +149,8 @@ export function useNanpurePlay(difficulty: NanpureDifficulty) {
   const startNewProblem = useCallback(() => {
     const startedAt = Date.now();
     setNow(startedAt);
-    setPlay(createPlayState(startedAt));
-  }, []);
+    setPlay(createPlayState(difficulty, createProblemSeed(), startedAt));
+  }, [difficulty]);
 
   const completeClearAnimation = useCallback(() => {
     setPlay((current) =>
