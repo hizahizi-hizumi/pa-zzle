@@ -93,7 +93,7 @@ timeout --signal=TERM --kill-after=5s 30s /opt/pyvenv/bin/python /tmp/check_page
 任意のルートから確認したい場合は `path` を指定する。
 
 ```python
-with ChatGPTBrowser(path="/games/nanpure") as browser:
+with ChatGPTBrowser(path="/puzzles/nanpure") as browser:
     browser.page.get_by_role("heading", name="ナンプレ").wait_for()
 ```
 

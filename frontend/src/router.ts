@@ -5,15 +5,15 @@ import { components, hooks, utils } from '@generouted/react-router/client'
 
 export type Path =
   | `/`
-  | `/games/nanpure`
-  | `/games/nanpure/play/:difficulty`
-  | `/games/water-sort`
-  | `/games/water-sort/play/:difficulty`
+  | `/puzzles/nanpure`
+  | `/puzzles/nanpure/play/:difficulty`
+  | `/puzzles/water-sort`
+  | `/puzzles/water-sort/play/:difficulty`
   | `/records`
 
 export type Params = {
-  '/games/nanpure/play/:difficulty': { difficulty: string }
-  '/games/water-sort/play/:difficulty': { difficulty: string }
+  '/puzzles/nanpure/play/:difficulty': { difficulty: string }
+  '/puzzles/water-sort/play/:difficulty': { difficulty: string }
 }
 
 export type ModalPath = never

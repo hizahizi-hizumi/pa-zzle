@@ -41,7 +41,7 @@ function NanpureDifficultyOption({
 }) {
   return (
     <Link
-      to="/games/nanpure/play/:difficulty"
+      to="/puzzles/nanpure/play/:difficulty"
       params={{ difficulty }}
       className="group block rounded-2xl focus-visible:outline-none"
     >

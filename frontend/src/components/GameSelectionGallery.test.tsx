@@ -7,12 +7,12 @@ const games = [
   {
     name: "ウォーターソート",
     pictogramSvg: '<svg viewBox="0 0 120 120" data-game="water-sort" />',
-    to: "/games/water-sort",
+    to: "/puzzles/water-sort",
   },
   {
     name: "ナンプレ",
     pictogramSvg: '<svg viewBox="0 0 120 120" data-game="nanpure" />',
-    to: "/games/nanpure",
+    to: "/puzzles/nanpure",
   },
 ] as const;
 
@@ -33,7 +33,7 @@ test("最初のパズルをヒーローとして表示すること", () => {
     name: "ウォーターソートを遊ぶ",
   });
 
-  expect(heroLink.getAttribute("href")).toBe("/games/water-sort");
+  expect(heroLink.getAttribute("href")).toBe("/puzzles/water-sort");
   expect(heroLink.querySelector('svg[data-game="water-sort"]')).toBeTruthy();
   expect(
     screen
@@ -49,7 +49,7 @@ test("候補を選ぶとヒーローを切り替えること", () => {
   fireEvent.click(nanpureButton);
 
   const heroLink = screen.getByRole("link", { name: "ナンプレを遊ぶ" });
-  expect(heroLink.getAttribute("href")).toBe("/games/nanpure");
+  expect(heroLink.getAttribute("href")).toBe("/puzzles/nanpure");
   expect(heroLink.querySelector('svg[data-game="nanpure"]')).toBeTruthy();
   expect(nanpureButton.getAttribute("aria-pressed")).toBe("true");
 });

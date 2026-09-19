@@ -6,12 +6,12 @@ const games = [
   {
     name: "ウォーターソート",
     pictogramSvg: waterSortPictogramSvg,
-    to: "/games/water-sort",
+    to: "/puzzles/water-sort",
   },
   {
     name: "ナンプレ",
     pictogramSvg: nanpurePictogramSvg,
-    to: "/games/nanpure",
+    to: "/puzzles/nanpure",
   },
 ] as const;
 
