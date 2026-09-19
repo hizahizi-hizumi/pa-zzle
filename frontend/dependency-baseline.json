@@ -1,0 +1,230 @@
+{
+  "schema": 1,
+  "diagnostics": {
+    "lint/style/noRestrictedImports": {
+      "src/components/AppShell.tsx": [
+        "import { BrandIdentityHeader } from \"@/components/BrandIdentityHeader\";"
+      ],
+      "src/components/BrandIdentityHeader.tsx": [
+        "import { BrandMark } from \"@/components/BrandMark\";"
+      ],
+      "src/components/GamePictogram.test.tsx": [
+        "import { GamePictogram } from \"@/components/GamePictogram\";"
+      ],
+      "src/components/GameSelectionGallery.test.tsx": [
+        "import { GameSelectionGallery } from \"@/components/GameSelectionGallery\";"
+      ],
+      "src/components/GameSelectionGallery.tsx": [
+        "import { GamePictogram } from \"@/components/GamePictogram\";"
+      ],
+      "src/components/ui/button.tsx": ["import { cn } from \"@/lib/utils\";"],
+      "src/components/ui/card.tsx": ["import { cn } from \"@/lib/utils\";"],
+      "src/components/ui/input.tsx": ["import { cn } from \"@/lib/utils\";"],
+      "src/components/ui/label.tsx": ["import { cn } from \"@/lib/utils\";"],
+      "src/components/ui/select.tsx": ["import { cn } from \"@/lib/utils\";"],
+      "src/components/ui/textarea.tsx": ["import { cn } from \"@/lib/utils\";"],
+      "src/games/nanpure/hooks/use-nanpure-play.test.ts": [
+        "import type { NanpureDifficulty } from \"@/games/nanpure/difficulty\";",
+        "import { rateUniqueNanpureDifficulty } from \"@/games/nanpure/problem/difficulty-rating\";",
+        "import { restoreNanpureProblem } from \"@/games/nanpure/problem/generator\";"
+      ],
+      "src/games/nanpure/hooks/use-nanpure-play.ts": [
+        "import type { NanpureDifficulty } from \"@/games/nanpure/difficulty\";",
+        "import type { NanpureDigit } from \"@/games/nanpure/puzzle/board\";",
+        "import type { NanpureProblemIdentity } from \"@/games/nanpure/problem/problem\";",
+        "import { findNanpureConflictCellIndices } from \"@/games/nanpure/puzzle/rules\";",
+        "import { generateNanpureProblemForDifficulty } from \"@/games/nanpure/problem/selection\";",
+        "} from \"@/games/nanpure/score\";",
+        "} from \"@/games/nanpure/session/session\";"
+      ],
+      "src/games/nanpure/ui/NanpureDifficultyPreview.tsx": [
+        "import type { NanpureDifficulty } from \"@/games/nanpure/difficulty\";",
+        "import { cn } from \"@/lib/utils\";"
+      ],
+      "src/games/nanpure/ui/NanpurePlay.tsx": [
+        "import type { NanpureDifficulty } from \"@/games/nanpure/difficulty\";",
+        "import type { NanpureNotes } from \"@/games/nanpure/session/session\";",
+        "import { BrandIdentityHeader } from \"@/components/BrandIdentityHeader\";",
+        "import { NanpureBoard } from \"@/games/nanpure/ui/board/NanpureBoard\";",
+        "import { NanpureClearAnimation } from \"@/games/nanpure/ui/board/clear/NanpureClearAnimation\";",
+        "import { NanpureInputPanel } from \"@/games/nanpure/ui/play/NanpureInputPanel\";",
+        "import { NanpurePlayHeader } from \"@/games/nanpure/ui/play/NanpurePlayHeader\";",
+        "import { NanpureResultScreen } from \"@/games/nanpure/ui/result/NanpureResultScreen\";",
+        "} from \"@/games/nanpure/hooks/use-nanpure-play\";",
+        "} from \"@/games/nanpure/puzzle/board\";"
+      ],
+      "src/games/nanpure/ui/board/NanpureBoard.test.tsx": [
+        "import type { NanpureBoard as NanpureBoardState } from \"@/games/nanpure/puzzle/board\";",
+        "import type { NanpureNotes } from \"@/games/nanpure/session/session\";"
+      ],
+      "src/games/nanpure/ui/board/NanpureBoard.tsx": [
+        "import type { NanpureNotes } from \"@/games/nanpure/session/session\";",
+        "} from \"@/games/nanpure/puzzle/board\";"
+      ],
+      "src/games/nanpure/ui/board/NanpureCell.tsx": [
+        "import type { NanpureNotes } from \"@/games/nanpure/session/session\";",
+        "import { cn } from \"@/lib/utils\";",
+        "} from \"@/games/nanpure/puzzle/board\";"
+      ],
+      "src/games/nanpure/ui/play-record-display.test.ts": [
+        "import { createNanpurePlayRecord } from \"@/games/nanpure/play-record\";"
+      ],
+      "src/games/nanpure/ui/play-record-display.ts": [
+        "import type { PlayRecordDisplayDefinition } from \"@/records/ui/play-record-display\";",
+        "import { formatRecordElapsedMs } from \"@/records/ui/format\";",
+        "} from \"@/games/nanpure/difficulty\";",
+        "} from \"@/games/nanpure/play-record\";"
+      ],
+      "src/games/nanpure/ui/play/NanpureInputPanel.tsx": [
+        "import { cn } from \"@/lib/utils\";",
+        "} from \"@/games/nanpure/puzzle/board\";"
+      ],
+      "src/games/nanpure/ui/play/NanpurePlayHeader.tsx": [
+        "import { Button } from \"@/components/ui/button\";",
+        "import { formatElapsedTime } from \"@/games/nanpure/ui/format-elapsed-time\";"
+      ],
+      "src/games/nanpure/ui/result/NanpureResultScreen.tsx": [
+        "import nanpurePictogramSvg from \"@/games/nanpure/assets/pictogram.svg?raw\";",
+        "import type { NanpureResult } from \"@/games/nanpure/hooks/use-nanpure-play\";",
+        "import { BrandIdentityHeader } from \"@/components/BrandIdentityHeader\";",
+        "import { Button } from \"@/components/ui/button\";",
+        "import { GamePictogram } from \"@/components/GamePictogram\";",
+        "import { PlayRecordOutcomeNotice } from \"@/records/ui/PlayRecordOutcomeNotice\";",
+        "import { formatElapsedTime } from \"@/games/nanpure/ui/format-elapsed-time\";",
+        "import { nanpurePlayRecordDisplay } from \"@/games/nanpure/ui/play-record-display\";",
+        "} from \"@/components/GameResult\";",
+        "} from \"@/games/nanpure/score\";"
+      ],
+      "src/games/water-sort/diagnostics.test.ts": [
+        "import { generateWaterSortProblem } from \"@/games/water-sort/problem/generator\";"
+      ],
+      "src/games/water-sort/diagnostics.ts": [
+        "import { restoreWaterSortProblem } from \"@/games/water-sort/problem/generator\";",
+        "} from \"@/games/water-sort/difficulty\";",
+        "} from \"@/games/water-sort/problem/problem\";",
+        "} from \"@/games/water-sort/puzzle/state\";"
+      ],
+      "src/games/water-sort/hooks/use-water-sort-play.test.ts": [
+        "import type { WaterSortMove } from \"@/games/water-sort/puzzle/state\";",
+        "} from \"@/games/water-sort/puzzle/rules\";"
+      ],
+      "src/games/water-sort/hooks/use-water-sort-play.ts": [
+        "import type { WaterSortDifficultyAnalysis } from \"@/games/water-sort/problem/difficulty-analysis\";",
+        "import { classifyWaterSortDeadlock } from \"@/games/water-sort/puzzle/deadlock\";",
+        "import { generateWaterSortProblemForDifficulty } from \"@/games/water-sort/problem/selection\";",
+        "} from \"@/games/water-sort/difficulty\";",
+        "} from \"@/games/water-sort/problem/problem\";",
+        "} from \"@/games/water-sort/puzzle/state\";",
+        "} from \"@/games/water-sort/score\";",
+        "} from \"@/games/water-sort/session/session\";"
+      ],
+      "src/games/water-sort/ui/WaterSortDiagnostics.test.tsx": [
+        "} from \"@/games/water-sort/diagnostics\";"
+      ],
+      "src/games/water-sort/ui/WaterSortDiagnostics.tsx": [
+        "import { Button } from \"@/components/ui/button\";",
+        "import { getWaterSortDifficultyLabel } from \"@/games/water-sort/difficulty\";",
+        "} from \"@/games/water-sort/diagnostics\";"
+      ],
+      "src/games/water-sort/ui/WaterSortDifficultyPreview.tsx": [
+        "import type { WaterSortDifficulty } from \"@/games/water-sort/difficulty\";",
+        "import type { WaterSortState } from \"@/games/water-sort/puzzle/state\";",
+        "import { WaterBottle } from \"@/games/water-sort/ui/board/water-bottle/WaterBottle\";"
+      ],
+      "src/games/water-sort/ui/WaterSortPlay.tsx": [
+        "import type { WaterSortState } from \"@/games/water-sort/puzzle/state\";",
+        "import waterSortPictogramSvg from \"@/games/water-sort/assets/pictogram.svg?raw\";",
+        "import { BrandIdentityHeader } from \"@/components/BrandIdentityHeader\";",
+        "import { Button } from \"@/components/ui/button\";",
+        "import { GamePictogram } from \"@/components/GamePictogram\";",
+        "import { PlayRecordOutcomeNotice } from \"@/records/ui/PlayRecordOutcomeNotice\";",
+        "import { WaterSortBoard } from \"@/games/water-sort/ui/board/WaterSortBoard\";",
+        "import { waterSortPlayRecordDisplay } from \"@/games/water-sort/ui/play-record-display\";",
+        "} from \"@/components/GameResult\";",
+        "} from \"@/games/water-sort/difficulty\";",
+        "} from \"@/games/water-sort/hooks/use-water-sort-play\";",
+        "} from \"@/games/water-sort/score\";"
+      ],
+      "src/games/water-sort/ui/board/WaterSortBoard.tsx": [
+        "import type { WaterSortOperation } from \"@/games/water-sort/hooks/use-water-sort-play\";",
+        "import type { WaterSortState } from \"@/games/water-sort/puzzle/state\";"
+      ],
+      "src/games/water-sort/ui/board/pour/pour-animation.test.ts": [
+        "import type { WaterSortOperation } from \"@/games/water-sort/hooks/use-water-sort-play\";"
+      ],
+      "src/games/water-sort/ui/board/pour/pour-animation.ts": [
+        "import type { WaterSortBottle } from \"@/games/water-sort/puzzle/state\";",
+        "import type { WaterSortOperation } from \"@/games/water-sort/hooks/use-water-sort-play\";"
+      ],
+      "src/games/water-sort/ui/board/pour/use-pour-animations.ts": [
+        "import type { WaterSortOperation } from \"@/games/water-sort/hooks/use-water-sort-play\";"
+      ],
+      "src/games/water-sort/ui/board/water-bottle/Water.tsx": [
+        "import type { WaterSortBottle } from \"@/games/water-sort/puzzle/state\";"
+      ],
+      "src/games/water-sort/ui/board/water-bottle/WaterBottle.tsx": [
+        "import type { WaterSortBottle } from \"@/games/water-sort/puzzle/state\";"
+      ],
+      "src/games/water-sort/ui/play-record-display.test.ts": [
+        "import { createWaterSortPlayRecord } from \"@/games/water-sort/play-record\";"
+      ],
+      "src/games/water-sort/ui/play-record-display.ts": [
+        "import type { PlayRecordDisplayDefinition } from \"@/records/ui/play-record-display\";",
+        "import { formatRecordElapsedMs } from \"@/records/ui/format\";",
+        "} from \"@/games/water-sort/difficulty\";",
+        "} from \"@/games/water-sort/play-record\";"
+      ],
+      "src/pages/_app.tsx": [
+        "import { AppShell } from \"@/components/AppShell\";"
+      ],
+      "src/records/ui/PlayRecordsScreen.test.tsx": [
+        "import { MemoryRouter } from \"react-router\";",
+        "import { createNanpurePlayRecord } from \"@/games/nanpure/play-record\";",
+        "import { createWaterSortPlayRecord } from \"@/games/water-sort/play-record\";"
+      ],
+      "src/records/ui/PlayRecordsScreen.tsx": [
+        "import { Button } from \"@/components/ui/button\";",
+        "import { Link } from \"react-router\";",
+        "} from \"@/components/ui/select\";"
+      ],
+      "src/records/ui/catalog.ts": [
+        "import { nanpurePlayRecordDisplay } from \"@/games/nanpure/ui/play-record-display\";",
+        "import { waterSortPlayRecordDisplay } from \"@/games/water-sort/ui/play-record-display\";"
+      ],
+      "src/views/NanpureDifficultyView.tsx": [
+        "import { NanpureDifficultyOption } from \"@/views/NanpureDifficultyView/NanpureDifficultyOption\";"
+      ],
+      "src/views/NanpureDifficultyView/NanpureDifficultyOption.tsx": [
+        "import { StartConditionOption } from \"@/components/StartConditionOption\";"
+      ],
+      "src/views/NanpurePlayView.tsx": [
+        "import { InvalidDifficulty } from \"@/views/NanpurePlayView/InvalidDifficulty\";",
+        "import { PlayableNanpure } from \"@/views/NanpurePlayView/PlayableNanpure\";"
+      ],
+      "src/views/NanpurePlayView/InvalidDifficulty.tsx": [
+        "import { Button } from \"@/components/ui/button\";",
+        "import { Card, CardContent, CardHeader, CardTitle } from \"@/components/ui/card\";"
+      ],
+      "src/views/PuzzleSelectionView.tsx": [
+        "import { GameSelectionGallery } from \"@/components/GameSelectionGallery\";"
+      ],
+      "src/views/WaterSortDifficultyView.tsx": [
+        "import { WaterSortDifficultyOption } from \"@/views/WaterSortDifficultyView/WaterSortDifficultyOption\";"
+      ],
+      "src/views/WaterSortDifficultyView/WaterSortDifficultyOption.tsx": [
+        "import { StartConditionOption } from \"@/components/StartConditionOption\";"
+      ],
+      "src/views/WaterSortPlayView.tsx": [
+        "import { InvalidDifficulty } from \"@/views/WaterSortPlayView/InvalidDifficulty\";",
+        "import { PlayableWaterSort } from \"@/views/WaterSortPlayView/PlayableWaterSort\";"
+      ],
+      "src/views/WaterSortPlayView/InvalidDifficulty.tsx": [
+        "import { Button } from \"@/components/ui/button\";",
+        "import { Card, CardContent, CardHeader, CardTitle } from \"@/components/ui/card\";"
+      ],
+      "src/views/WaterSortPlayView/PlayableWaterSort.tsx": [
+        "} from \"@/lib/internal-diagnostics\";"
+      ]
+    }
+  }
+}

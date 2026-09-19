@@ -18,6 +18,7 @@ run_check() {
 }
 
 run_check "Frontend Biome" bun run --cwd frontend check
+run_check "Frontend dependency boundaries" bun run --cwd frontend dependency-check
 run_check "Frontend TypeScript" bun run --cwd frontend typecheck
 run_check "Frontend Vitest" bun run --cwd frontend test
 run_check "Frontend build" bun run --cwd frontend build
