@@ -63,13 +63,6 @@ const playScoreDisplay = {
 - default exportは使用せず、named exportを使用する。
 - 外部フレームワークや生成ツールとの契約としてdefault exportが要求される境界に限り例外とする。
 
-```ts
-// NG
-export default function calculateScore() {}
-
-// OK
-export function calculateScore() {}
-```
 
 ## テスト専用公開
 
