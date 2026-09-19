@@ -33,6 +33,28 @@ function getLabel(): string {
 }
 ```
 
+## props
+
+- propsを受け取るコンポーネントは、`<ComponentName>Props` 型を明示する。
+- propsの型を関数引数へインラインで記述しない。
+- props全体の契約をhookの戻り値や別責務の型そのものに委ねず、コンポーネントが必要とする値を明示する。
+- コールバックpropsは `onXxx` と命名し、子コンポーネントで発生した操作・事象の意味を表す。
+- Reactのstate setterをpropsの公開契約にしない。値の変更を要求する場合は `onChange: (value: T) => void` のように必要な操作だけを公開する。
+
+```tsx
+type DifficultySelectorProps = {
+  value: Difficulty;
+  onChange: (value: Difficulty) => void;
+};
+
+export function DifficultySelector({
+  value,
+  onChange,
+}: DifficultySelectorProps) {
+  // ...
+}
+```
+
 ## 子コンポーネントの配置
 
 - 親の内部実装としてのみ利用する子コンポーネントは、親と同名のディレクトリ配下へ配置する。

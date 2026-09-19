@@ -54,6 +54,19 @@ const playScoreDisplay = {
 
 - 関数はアロー関数で定義せず、関数宣言を使う。
 
+## export
+
+- default exportは使用せず、named exportを使用する。
+- 外部フレームワークや生成ツールとの契約としてdefault exportが要求される境界に限り例外とする。
+
+```ts
+// NG
+export default function calculateScore() {}
+
+// OK
+export function calculateScore() {}
+```
+
 ## テスト専用公開
 
 - テストから直接参照する内部要素は `_private` で公開し、`_private` はテストからのみ参照する。
