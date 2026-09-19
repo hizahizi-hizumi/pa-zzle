@@ -30,6 +30,12 @@ import type {
   WaterSortResult,
 } from "@/games/water-sort/hooks/use-water-sort-play";
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
+import {
+  WATER_SORT_SCORE_MAXIMUMS,
+  WATER_SORT_SPEED_INITIAL_RECOGNITION_MS,
+  WATER_SORT_SPEED_PER_COLOR_MS,
+  WATER_SORT_SPEED_PER_OPTIMAL_MOVE_MS,
+} from "@/games/water-sort/score";
 import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
 import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
@@ -282,7 +288,7 @@ function WaterSortResultScreen({
   onBackToHome,
   onOpenDiagnostics,
 }: WaterSortResultScreenProps) {
-  const resultLevel = getWaterSortGameResultLevel(result.score);
+  const resultLevel = getWaterSortGameResultLevel(result.score.total);
   return (
     <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-y-auto bg-background pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <BrandIdentityHeader />
@@ -302,9 +308,12 @@ function WaterSortResultScreen({
             {getWaterSortDifficultyLabel(difficulty)}
           </p>
         </div>
-        <GameResultScoreCard score={result.score} level={resultLevel} />
+        <GameResultScoreCard score={result.score.total} level={resultLevel} />
         <dl className="mt-6 grid grid-cols-3 gap-2 text-center">
-          <ResultMetric label="手数" value={String(result.moveCount)} />
+          <ResultMetric
+            label="クリア手数"
+            value={String(result.completionMoveCount)}
+          />
           <ResultMetric label="最短" value={String(result.optimalMoveCount)} />
           <ResultMetric
             label="時間"
@@ -350,6 +359,27 @@ function WaterSortResultScreen({
           </summary>
           <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
             <DetailMetric
+              label="効率"
+              value={`${result.score.breakdown.efficiency} / ${WATER_SORT_SCORE_MAXIMUMS.efficiency}`}
+            />
+            <DetailMetric
+              label="速さ"
+              value={`${result.score.breakdown.speed} / ${WATER_SORT_SCORE_MAXIMUMS.speed}`}
+            />
+            <DetailMetric
+              label="正確性"
+              value={`${result.score.breakdown.accuracy} / ${WATER_SORT_SCORE_MAXIMUMS.accuracy}`}
+            />
+            <DetailMetric
+              label="基準時間"
+              value={formatScoreTime(result.speedFullScoreMs)}
+            />
+            <DetailMetric label="総手数" value={String(result.moveCount)} />
+            <DetailMetric
+              label="手戻り"
+              value={`${result.backtrackMoveCount}手`}
+            />
+            <DetailMetric
               label="最短との差"
               value={formatMoveDelta(result.moveDelta)}
             />
@@ -360,6 +390,10 @@ function WaterSortResultScreen({
               value={getWaterSortDifficultyLabel(problemDifficulty.difficulty)}
             />
           </dl>
+          <div className="mt-4 border-t pt-4">
+            <p className="font-medium text-foreground">採点基準</p>
+            <ScoreCriteria result={result} />
+          </div>
         </details>
         {onOpenDiagnostics && (
           <div className="mt-3 flex justify-center">
@@ -376,6 +410,46 @@ function WaterSortResultScreen({
         )}
       </div>
     </section>
+  );
+}
+
+function ScoreCriteria({ result }: { result: WaterSortResult }) {
+  const efficiencyZeroMoveCount = result.optimalMoveCount * 2;
+  const speedZeroScoreMs = result.speedFullScoreMs * 2;
+
+  return (
+    <dl className="mt-3 grid gap-3 text-xs">
+      <div>
+        <dt className="font-semibold text-foreground">効率</dt>
+        <dd className="mt-0.5">
+          最短{result.optimalMoveCount}手で
+          {WATER_SORT_SCORE_MAXIMUMS.efficiency}点。
+          {efficiencyZeroMoveCount}手以上で0点、その間はクリア手数に応じて減点。
+        </dd>
+      </div>
+      <div>
+        <dt className="font-semibold text-foreground">速さ</dt>
+        <dd className="mt-0.5">
+          基準時間{formatScoreTime(result.speedFullScoreMs)}以内で
+          {WATER_SORT_SCORE_MAXIMUMS.speed}点。
+          {formatScoreTime(speedZeroScoreMs)}
+          以上で0点、その間は時間に応じて減点。 基準時間は
+          {`${WATER_SORT_SPEED_INITIAL_RECOGNITION_MS / 1000}秒 + ${result.colorCount}色 × ${WATER_SORT_SPEED_PER_COLOR_MS / 1000}秒 + 最短${result.optimalMoveCount}手 × ${WATER_SORT_SPEED_PER_OPTIMAL_MOVE_MS / 1000}秒`}
+          。
+        </dd>
+      </div>
+      <div>
+        <dt className="font-semibold text-foreground">正確性</dt>
+        <dd className="mt-0.5">
+          手戻りなしで{WATER_SORT_SCORE_MAXIMUMS.accuracy}点。手戻り
+          {result.optimalMoveCount}手以上で0点、その間は手戻り数に応じて減点。
+        </dd>
+      </div>
+      <div>
+        <dt className="sr-only">丸め</dt>
+        <dd>各項目は1点単位に四捨五入し、0点を下限とします。</dd>
+      </div>
+    </dl>
   );
 }
 
@@ -491,6 +565,16 @@ function DetailMetric({ label, value }: { label: string; value: string }) {
 function formatMoveDelta(moveDelta: number): string {
   return moveDelta === 0 ? "±0" : `+${moveDelta}`;
 }
+function formatScoreTime(elapsedMs: number): string {
+  const totalSeconds = elapsedMs / 1000;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds - minutes * 60;
+  const secondsText = Number.isInteger(seconds)
+    ? String(seconds).padStart(2, "0")
+    : seconds.toFixed(1).padStart(4, "0");
+  return `${String(minutes).padStart(2, "0")}:${secondsText}`;
+}
+
 function formatElapsedTime(elapsedMs: number): string {
   const totalSeconds = Math.floor(elapsedMs / 1000);
   const hours = Math.floor(totalSeconds / 3600);

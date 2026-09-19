@@ -27,6 +27,7 @@ function createWaterRecord(
     result: {
       elapsedMs,
       moveCount,
+      completionMoveCount: moveCount,
       undoCount: 0,
       restartCount: 0,
       optimalMoveCount: 10,
@@ -75,7 +76,7 @@ test("最新のゲーム条件について自己ベストと履歴一覧を表�
 
   expect(heading).toBeTruthy();
   expect(historyHeading).toBeTruthy();
-  expect(screen.getAllByText("100点").length).toBeGreaterThan(0);
+  expect(screen.getAllByText("93点").length).toBeGreaterThan(0);
   expect(screen.getAllByText("01:00").length).toBeGreaterThan(0);
   expect(screen.getByText("2件")).toBeTruthy();
 });

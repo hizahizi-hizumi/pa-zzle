@@ -23,6 +23,7 @@ export type WaterSortSession = {
 export type WaterSortSessionResult = {
   elapsedMs: number;
   moveCount: number;
+  completionMoveCount: number;
   undoCount: number;
   restartCount: number;
 };
@@ -134,6 +135,7 @@ export function getWaterSortSessionResult(
   return {
     elapsedMs: getWaterSortSessionElapsedMs(session, now),
     moveCount: session.moveCount,
+    completionMoveCount: session.history.length,
     undoCount: session.undoCount,
     restartCount: session.restartCount,
   };

@@ -7,6 +7,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
+import type { WaterSortResult } from "../hooks/use-water-sort-play";
 import { WaterSortPlay } from "./WaterSortPlay";
 
 afterEach(() => {
@@ -40,6 +41,28 @@ const baseProps = {
   onChangeDifficulty: vi.fn(),
   onBackToHome: vi.fn(),
 };
+
+function createResult(
+  overrides: Partial<WaterSortResult> = {},
+): WaterSortResult {
+  return {
+    elapsedMs: 65_000,
+    moveCount: 14,
+    completionMoveCount: 12,
+    undoCount: 2,
+    restartCount: 0,
+    optimalMoveCount: 10,
+    moveDelta: 2,
+    backtrackMoveCount: 2,
+    speedFullScoreMs: 64_000,
+    colorCount: 6,
+    score: {
+      total: 87,
+      breakdown: { efficiency: 32, speed: 39, accuracy: 16 },
+    },
+    ...overrides,
+  };
+}
 
 describe("WaterSortPlay", () => {
   test("プレイ中はゲーム名と主要な計測値をミニマルに表示すること", () => {
@@ -279,30 +302,29 @@ describe("WaterSortPlay", () => {
         {...baseProps}
         status="cleared"
         progress="result"
-        result={{
-          elapsedMs: 65000,
-          moveCount: 12,
-          undoCount: 3,
-          restartCount: 1,
-          optimalMoveCount: 10,
-          moveDelta: 2,
-          score: 83,
-        }}
+        result={createResult()}
       />,
     );
     expect(screen.getByRole("heading", { name: "クリア!" })).toBeTruthy();
     expect(screen.getByText("ウォーターソート")).toBeTruthy();
     expect(screen.getByText("01:05")).toBeTruthy();
+    expect(screen.getByText("クリア手数")).toBeTruthy();
     expect(screen.getByText("12")).toBeTruthy();
     expect(screen.getByText("10")).toBeTruthy();
     expect(screen.getByText("スコア")).toBeTruthy();
-    expect(screen.getByText("83")).toBeTruthy();
+    expect(screen.getByText("87")).toBeTruthy();
     expect(screen.getByText("ナイスプレイ！")).toBeTruthy();
     expect(screen.getByText("パズル pa-zzle")).toBeTruthy();
     expect(screen.getByText("/ 100")).toBeTruthy();
     expect(screen.getByText("プレイ詳細")).toBeTruthy();
     expect(screen.getByText("+2")).toBeTruthy();
     expect(screen.getByText("待った")).toBeTruthy();
+    expect(screen.getByText("採点基準")).toBeTruthy();
+    expect(screen.getAllByText("効率")).toHaveLength(2);
+    expect(screen.getAllByText("速さ")).toHaveLength(2);
+    expect(screen.getAllByText("正確性")).toHaveLength(2);
+    expect(screen.getByText("01:04")).toBeTruthy();
+    expect(screen.getByText(/6色 × 1.5秒/)).toBeTruthy();
     expect(screen.queryByText(/seed:/)).toBeNull();
   });
 
@@ -313,15 +335,7 @@ describe("WaterSortPlay", () => {
         {...baseProps}
         status="cleared"
         progress="result"
-        result={{
-          elapsedMs: 65000,
-          moveCount: 12,
-          undoCount: 3,
-          restartCount: 1,
-          optimalMoveCount: 10,
-          moveDelta: 2,
-          score: 83,
-        }}
+        result={createResult()}
         onOpenDiagnostics={onOpenDiagnostics}
       />,
     );
@@ -337,15 +351,19 @@ describe("WaterSortPlay", () => {
         {...baseProps}
         status="cleared"
         progress="result"
-        result={{
-          elapsedMs: 42000,
+        result={createResult({
+          elapsedMs: 42_000,
           moveCount: 10,
+          completionMoveCount: 10,
           undoCount: 0,
-          restartCount: 0,
           optimalMoveCount: 10,
           moveDelta: 0,
-          score: 100,
-        }}
+          backtrackMoveCount: 0,
+          score: {
+            total: 100,
+            breakdown: { efficiency: 40, speed: 40, accuracy: 20 },
+          },
+        })}
       />,
     );
     expect(screen.getByText("パーフェクト！")).toBeTruthy();
@@ -367,15 +385,19 @@ describe("WaterSortPlay", () => {
           }) as unknown as Animation,
       ),
     });
-    const result = {
-      elapsedMs: 65000,
+    const result = createResult({
       moveCount: 12,
+      completionMoveCount: 12,
       undoCount: 0,
-      restartCount: 0,
       optimalMoveCount: 12,
       moveDelta: 0,
-      score: 100,
-    };
+      backtrackMoveCount: 0,
+      speedFullScoreMs: 74_000,
+      score: {
+        total: 100,
+        breakdown: { efficiency: 40, speed: 40, accuracy: 20 },
+      },
+    });
     const { rerender } = render(
       <WaterSortPlay
         {...baseProps}
@@ -424,15 +446,7 @@ describe("WaterSortPlay", () => {
         {...baseProps}
         status="cleared"
         progress="result"
-        result={{
-          elapsedMs: 65000,
-          moveCount: 12,
-          undoCount: 3,
-          restartCount: 1,
-          optimalMoveCount: 10,
-          moveDelta: 2,
-          score: 83,
-        }}
+        result={createResult()}
         replay={replay}
         startNewProblem={startNewProblem}
         onChangeDifficulty={onChangeDifficulty}
@@ -456,15 +470,19 @@ describe("WaterSortPlay", () => {
         {...baseProps}
         status="cleared"
         progress="result"
-        result={{
+        result={createResult({
           elapsedMs: 55_000,
           moveCount: 10,
+          completionMoveCount: 10,
           undoCount: 0,
-          restartCount: 0,
           optimalMoveCount: 10,
           moveDelta: 0,
-          score: 100,
-        }}
+          backtrackMoveCount: 0,
+          score: {
+            total: 100,
+            breakdown: { efficiency: 40, speed: 40, accuracy: 20 },
+          },
+        })}
         recordOutcome={{
           status: "updated",
           updates: [
