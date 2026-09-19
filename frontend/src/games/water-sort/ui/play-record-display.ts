@@ -9,21 +9,22 @@ import {
   isWaterSortPlayRecord,
   waterSortPlayRecordDefinition,
 } from "@/games/water-sort/play-record";
-import { formatRecordElapsedMs } from "@/records/ui/format";
-import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
+import type { PlayRecord } from "@/records/play-record";
+
+import { formatWaterSortElapsedTime } from "./format-elapsed-time";
 
 function formatMoveDelta(moveDelta: number): string {
   return moveDelta === 0 ? "±0" : `+${moveDelta}`;
 }
 
-export const waterSortPlayRecordDisplay: PlayRecordDisplayDefinition = {
+export const waterSortPlayRecordDisplay = {
   definition: waterSortPlayRecordDefinition,
   gameLabel: "ウォーターソート",
-  getComparisonLabel(comparisonKey) {
+  getComparisonLabel(comparisonKey: string) {
     const difficulty = parseWaterSortDifficulty(comparisonKey);
     return difficulty ? getWaterSortDifficultyLabel(difficulty) : null;
   },
-  getSummary(record) {
+  getSummary(record: PlayRecord) {
     if (!isWaterSortPlayRecord(record)) {
       return null;
     }
@@ -43,7 +44,7 @@ export const waterSortPlayRecordDisplay: PlayRecordDisplayDefinition = {
           ? [
               {
                 label: "時間",
-                value: formatRecordElapsedMs(
+                value: formatWaterSortElapsedTime(
                   record.payload.performance.elapsedMs,
                 ),
               },
@@ -59,7 +60,7 @@ export const waterSortPlayRecordDisplay: PlayRecordDisplayDefinition = {
           : [
               {
                 label: "時間",
-                value: formatRecordElapsedMs(
+                value: formatWaterSortElapsedTime(
                   record.payload.performance.elapsedMs,
                 ),
               },
@@ -78,14 +79,14 @@ export const waterSortPlayRecordDisplay: PlayRecordDisplayDefinition = {
     {
       id: "play-score",
       label: "ベストスコア",
-      formatValue(value) {
+      formatValue(value: number) {
         return `${value}点`;
       },
     },
     {
       id: "elapsed-ms",
       label: "最速",
-      formatValue: formatRecordElapsedMs,
+      formatValue: formatWaterSortElapsedTime,
     },
     {
       id: "move-delta",

@@ -2,9 +2,17 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 
 import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
+import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
 import { createWaterSortPlayRecord } from "@/games/water-sort/play-record";
+import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 
 import { PlayRecordsScreen } from "./PlayRecordsScreen";
+import type { PlayRecordDisplayCatalog } from "./play-record-display";
+
+const playRecordDisplays = [
+  waterSortPlayRecordDisplay,
+  nanpurePlayRecordDisplay,
+] as const satisfies PlayRecordDisplayCatalog;
 
 afterEach(cleanup);
 
@@ -62,7 +70,11 @@ function renderScreen() {
   ];
   return render(
     <MemoryRouter>
-      <PlayRecordsScreen records={records} />
+      <PlayRecordsScreen
+        records={records}
+        displays={playRecordDisplays}
+        emptyAction={<a href="/">パズルを選ぶ</a>}
+      />
     </MemoryRouter>,
   );
 }

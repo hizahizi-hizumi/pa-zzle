@@ -5,6 +5,7 @@ import {
   RotateCcw,
   SlidersHorizontal,
 } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { GameResultConfetti } from "@/components/GameResultConfetti";
@@ -22,17 +23,14 @@ import {
   NANPURE_SCORE_MAXIMUMS,
 } from "@/games/nanpure/score";
 import { formatElapsedTime } from "@/games/nanpure/ui/format-elapsed-time";
-import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
 import { DetailMetric } from "@/games/nanpure/ui/result/NanpureResultScreen/DetailMetric";
 import { ResultMetric } from "@/games/nanpure/ui/result/NanpureResultScreen/ResultMetric";
 import { ScoreCriteria } from "@/games/nanpure/ui/result/NanpureResultScreen/ScoreCriteria";
-import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
-import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 
 type NanpureResultScreenProps = {
   difficulty: NanpureDifficulty;
   result: NanpureResult;
-  recordOutcome: PlayRecordSaveOutcome | null;
+  recordOutcomeNotice: ReactNode;
   onReplay: () => void;
   onStartNewProblem: () => void;
   onOpenRecords: () => void;
@@ -43,7 +41,7 @@ type NanpureResultScreenProps = {
 export function NanpureResultScreen({
   difficulty,
   result,
-  recordOutcome,
+  recordOutcomeNotice,
   onReplay,
   onStartNewProblem,
   onOpenRecords,
@@ -66,10 +64,7 @@ export function NanpureResultScreen({
 
         <GameResultScoreCard score={result.score.total} level={resultLevel} />
 
-        <PlayRecordOutcomeNotice
-          outcome={recordOutcome}
-          display={nanpurePlayRecordDisplay}
-        />
+        {recordOutcomeNotice}
 
         <dl className="mt-3 grid grid-cols-3 gap-2">
           <ResultMetric

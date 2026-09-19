@@ -6,6 +6,7 @@ import {
   SlidersHorizontal,
   Wrench,
 } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { GameResultConfetti } from "@/components/GameResultConfetti";
@@ -23,18 +24,15 @@ import {
   WATER_SORT_SCORE_MAXIMUMS,
 } from "@/games/water-sort/score";
 import { formatWaterSortElapsedTime } from "@/games/water-sort/ui/format-elapsed-time";
-import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 import { DetailMetric } from "@/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen/DetailMetric";
 import { formatScoreTime } from "@/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen/format-score-time";
 import { ResultMetric } from "@/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen/ResultMetric";
 import { ScoreCriteria } from "@/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen/ScoreCriteria";
-import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
-import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 
 type WaterSortResultScreenProps = {
   difficulty: WaterSortDifficulty;
   result: WaterSortResult;
-  recordOutcome: PlayRecordSaveOutcome | null;
+  recordOutcomeNotice: ReactNode;
   onReplay: () => void;
   onStartNewProblem: () => void;
   onOpenRecords: () => void;
@@ -46,7 +44,7 @@ type WaterSortResultScreenProps = {
 export function WaterSortResultScreen({
   difficulty,
   result,
-  recordOutcome,
+  recordOutcomeNotice,
   onReplay,
   onStartNewProblem,
   onOpenRecords,
@@ -70,10 +68,7 @@ export function WaterSortResultScreen({
 
         <GameResultScoreCard score={result.score.total} level={resultLevel} />
 
-        <PlayRecordOutcomeNotice
-          outcome={recordOutcome}
-          display={waterSortPlayRecordDisplay}
-        />
+        {recordOutcomeNotice}
 
         <dl className="mt-3 grid grid-cols-3 gap-2">
           <ResultMetric

@@ -1,6 +1,9 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 
+import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
+import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
+
 import { NanpurePlay } from "./NanpurePlay";
 
 afterEach(cleanup);
@@ -31,7 +34,7 @@ function createProps(): ComponentProps<typeof NanpurePlay> {
     undoCount: 1,
     canUndo: true,
     result: null,
-    recordOutcome: null,
+    recordOutcomeNotice: null,
     onSelectCell: vi.fn(),
     onInputDigit: vi.fn(),
     onErase: vi.fn(),
@@ -246,16 +249,21 @@ describe("NanpurePlay", () => {
             generationAttempt: 1,
           },
         }}
-        recordOutcome={{
-          status: "updated",
-          updates: [
-            {
-              metricId: "elapsed-ms",
-              previousValue: 150_000,
-              currentValue: 120_000,
-            },
-          ],
-        }}
+        recordOutcomeNotice={
+          <PlayRecordOutcomeNotice
+            outcome={{
+              status: "updated",
+              updates: [
+                {
+                  metricId: "elapsed-ms",
+                  previousValue: 150_000,
+                  currentValue: 120_000,
+                },
+              ],
+            }}
+            display={nanpurePlayRecordDisplay}
+          />
+        }
         onOpenRecords={onOpenRecords}
       />,
     );
