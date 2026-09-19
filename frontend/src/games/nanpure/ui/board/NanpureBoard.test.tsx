@@ -1,8 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
-
-import type { NanpureNotes } from "@/games/nanpure/game/session";
-import type { NanpureBoard as NanpureBoardState } from "@/games/nanpure/game/state";
+import type { NanpureBoard as NanpureBoardState } from "@/games/nanpure/puzzle/board";
+import type { NanpureNotes } from "@/games/nanpure/session/session";
 
 import { NanpureBoard } from "./NanpureBoard";
 

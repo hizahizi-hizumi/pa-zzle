@@ -33,7 +33,8 @@ const baseProps = {
   selectBottle: vi.fn(),
   undo: vi.fn(),
   restart: vi.fn(),
-  newGame: vi.fn(),
+  replay: vi.fn(),
+  startNewProblem: vi.fn(),
   onOpenRecords: vi.fn(),
   completeClearingPour: vi.fn(),
   onChangeDifficulty: vi.fn(),
@@ -227,7 +228,7 @@ describe("WaterSortPlay", () => {
 
   test("二次操作をメニューから通知すること", () => {
     const restart = vi.fn();
-    const newGame = vi.fn();
+    const startNewProblem = vi.fn();
     const onChangeDifficulty = vi.fn();
     const onBackToHome = vi.fn();
     const onOpenDiagnostics = vi.fn();
@@ -235,7 +236,7 @@ describe("WaterSortPlay", () => {
       <WaterSortPlay
         {...baseProps}
         restart={restart}
-        newGame={newGame}
+        startNewProblem={startNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
         onOpenDiagnostics={onOpenDiagnostics}
@@ -252,7 +253,7 @@ describe("WaterSortPlay", () => {
     fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "検証情報" }));
     expect(restart).toHaveBeenCalledOnce();
-    expect(newGame).toHaveBeenCalledOnce();
+    expect(startNewProblem).toHaveBeenCalledOnce();
     expect(onChangeDifficulty).toHaveBeenCalledOnce();
     expect(onBackToHome).toHaveBeenCalledOnce();
     expect(onOpenDiagnostics).toHaveBeenCalledOnce();
@@ -414,8 +415,8 @@ describe("WaterSortPlay", () => {
   });
 
   test("クリア後に次の問題・再挑戦・難易度変更・ホーム移動を通知すること", () => {
-    const restart = vi.fn();
-    const newGame = vi.fn();
+    const replay = vi.fn();
+    const startNewProblem = vi.fn();
     const onChangeDifficulty = vi.fn();
     const onBackToHome = vi.fn();
     render(
@@ -432,8 +433,8 @@ describe("WaterSortPlay", () => {
           moveDelta: 2,
           score: 83,
         }}
-        restart={restart}
-        newGame={newGame}
+        replay={replay}
+        startNewProblem={startNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
       />,
@@ -442,8 +443,8 @@ describe("WaterSortPlay", () => {
     fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
     fireEvent.click(screen.getByRole("button", { name: "難易度を変える" }));
     fireEvent.click(screen.getByRole("button", { name: "ホームへ" }));
-    expect(newGame).toHaveBeenCalledOnce();
-    expect(restart).toHaveBeenCalledOnce();
+    expect(startNewProblem).toHaveBeenCalledOnce();
+    expect(replay).toHaveBeenCalledOnce();
     expect(onChangeDifficulty).toHaveBeenCalledOnce();
     expect(onBackToHome).toHaveBeenCalledOnce();
   });

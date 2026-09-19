@@ -10,10 +10,10 @@ import {
   getNanpureDifficultyLabel,
   type NanpureDifficulty,
   parseNanpureDifficulty,
-} from "./game/difficulty";
-import type { NanpureProblemIdentity } from "./game/generator";
-import { calculateNanpurePlayScore } from "./game/performance";
-import type { NanpureSessionResult } from "./game/session";
+} from "./difficulty";
+import type { NanpureProblemIdentity } from "./problem/problem";
+import { calculateNanpurePlayScore } from "./score";
+import type { NanpureSessionResult } from "./session/session";
 
 const NANPURE_PLAY_RECORD_PAYLOAD_VERSION = 1;
 const NANPURE_GAME_ID = "nanpure";

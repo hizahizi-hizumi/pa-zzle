@@ -1,9 +1,9 @@
-import type { NanpureNotes } from "@/games/nanpure/game/session";
 import {
   areNanpureCellsRelated,
   NANPURE_SIZE,
   type NanpureBoard as NanpureBoardState,
-} from "@/games/nanpure/game/state";
+} from "@/games/nanpure/puzzle/board";
+import type { NanpureNotes } from "@/games/nanpure/session/session";
 
 import { NanpureCell } from "./NanpureCell";
 

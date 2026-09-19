@@ -23,13 +23,13 @@ import {
   getWaterSortDifficultyLabel,
   type WaterSortDifficulty,
   type WaterSortDifficultyAssessment,
-} from "@/games/water-sort/game/difficulty";
-import type { WaterSortState } from "@/games/water-sort/game/state";
+} from "@/games/water-sort/difficulty";
 import type {
   WaterSortOperation,
   WaterSortProgress,
   WaterSortResult,
-} from "@/games/water-sort/hooks/use-water-sort-game";
+} from "@/games/water-sort/hooks/use-water-sort-play";
+import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
 import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
@@ -52,7 +52,8 @@ type WaterSortPlayProps = {
   selectBottle: (bottleIndex: number) => void;
   undo: () => void;
   restart: () => void;
-  newGame: () => void;
+  replay: () => void;
+  startNewProblem: () => void;
   onOpenRecords: () => void;
   completeClearingPour: () => void;
   onChangeDifficulty: () => void;
@@ -78,7 +79,8 @@ export function WaterSortPlay({
   selectBottle,
   undo,
   restart,
-  newGame,
+  replay,
+  startNewProblem,
   onOpenRecords,
   completeClearingPour,
   onChangeDifficulty,
@@ -95,8 +97,8 @@ export function WaterSortPlay({
         problemDifficulty={problemDifficulty}
         result={result}
         recordOutcome={recordOutcome}
-        restart={restart}
-        newGame={newGame}
+        replay={replay}
+        startNewProblem={startNewProblem}
         onOpenRecords={onOpenRecords}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
@@ -125,7 +127,7 @@ export function WaterSortPlay({
         />
         <PlayMenu
           restart={restart}
-          newGame={newGame}
+          startNewProblem={startNewProblem}
           onChangeDifficulty={onChangeDifficulty}
           onBackToHome={onBackToHome}
           onOpenDiagnostics={onOpenDiagnostics}
@@ -261,8 +263,8 @@ type WaterSortResultScreenProps = {
   problemDifficulty: WaterSortDifficultyAssessment;
   result: WaterSortResult;
   recordOutcome: PlayRecordSaveOutcome | null;
-  restart: () => void;
-  newGame: () => void;
+  replay: () => void;
+  startNewProblem: () => void;
   onOpenRecords: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
@@ -273,8 +275,8 @@ function WaterSortResultScreen({
   problemDifficulty,
   result,
   recordOutcome,
-  restart,
-  newGame,
+  replay,
+  startNewProblem,
   onOpenRecords,
   onChangeDifficulty,
   onBackToHome,
@@ -311,14 +313,18 @@ function WaterSortResultScreen({
         </dl>
         <PlayRecordOutcomeNotice outcome={recordOutcome} />
         <div className="mt-7 grid gap-3">
-          <Button size="lg" className="h-12 text-base" onClick={newGame}>
+          <Button
+            size="lg"
+            className="h-12 text-base"
+            onClick={startNewProblem}
+          >
             次の問題
           </Button>
           <Button
             variant="outline"
             size="lg"
             className="h-12 text-base"
-            onClick={restart}
+            onClick={replay}
           >
             <RefreshCw />
             もう一度
@@ -375,14 +381,14 @@ function WaterSortResultScreen({
 
 type PlayMenuProps = {
   restart: () => void;
-  newGame: () => void;
+  startNewProblem: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
   onOpenDiagnostics?: () => void;
 };
 function PlayMenu({
   restart,
-  newGame,
+  startNewProblem,
   onChangeDifficulty,
   onBackToHome,
   onOpenDiagnostics,
@@ -417,7 +423,7 @@ function PlayMenu({
           <MenuButton
             icon={<RefreshCw />}
             label="新しい問題"
-            onClick={() => runAndClose(newGame)}
+            onClick={() => runAndClose(startNewProblem)}
           />
           <MenuButton
             label="難易度を変える"

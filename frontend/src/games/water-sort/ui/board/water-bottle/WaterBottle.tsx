@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import type { WaterSortBottle } from "@/games/water-sort/game/state";
+import type { WaterSortBottle } from "@/games/water-sort/puzzle/state";
 
 import { Bottle } from "./Bottle";
 import { Water } from "./Water";

@@ -15,7 +15,7 @@ type NanpurePlayHeaderProps = {
   mistakeCount: number;
   undoCount: number;
   restart: () => void;
-  newGame: () => void;
+  startNewProblem: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
 };
@@ -25,7 +25,7 @@ export function NanpurePlayHeader({
   mistakeCount,
   undoCount,
   restart,
-  newGame,
+  startNewProblem,
   onChangeDifficulty,
   onBackToHome,
 }: NanpurePlayHeaderProps) {
@@ -47,7 +47,7 @@ export function NanpurePlayHeader({
       />
       <PlayMenu
         restart={restart}
-        newGame={newGame}
+        startNewProblem={startNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
       />
@@ -101,14 +101,14 @@ function MetricSeparator() {
 
 type PlayMenuProps = {
   restart: () => void;
-  newGame: () => void;
+  startNewProblem: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
 };
 
 function PlayMenu({
   restart,
-  newGame,
+  startNewProblem,
   onChangeDifficulty,
   onBackToHome,
 }: PlayMenuProps) {
@@ -143,7 +143,7 @@ function PlayMenu({
           <MenuButton
             icon={<RefreshCw />}
             label="新しい問題"
-            onClick={() => runAndClose(newGame)}
+            onClick={() => runAndClose(startNewProblem)}
           />
           <MenuButton
             label="難易度を変える"

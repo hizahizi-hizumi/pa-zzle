@@ -3,8 +3,8 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createWaterSortDiagnosticSnapshot } from "@/games/water-sort/diagnostics";
-import { parseWaterSortDifficulty } from "@/games/water-sort/game/difficulty";
-import { useWaterSortGame } from "@/games/water-sort/hooks/use-water-sort-game";
+import { parseWaterSortDifficulty } from "@/games/water-sort/difficulty";
+import { useWaterSortPlay } from "@/games/water-sort/hooks/use-water-sort-play";
 import {
   createWaterSortPlayRecord,
   waterSortPlayRecordDefinition,
@@ -36,25 +36,25 @@ function PlayableWaterSort({
 }: {
   difficulty: NonNullable<ReturnType<typeof parseWaterSortDifficulty>>;
 }) {
-  const game = useWaterSortGame(difficulty);
+  const play = useWaterSortPlay(difficulty);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>
-      game.result && game.completedAt !== null
+      play.result && play.completedAt !== null
         ? createWaterSortPlayRecord({
             difficulty,
-            problemIdentity: game.problemIdentity,
-            startedAt: game.startedAt,
-            completedAt: game.completedAt,
-            result: game.result,
+            problemIdentity: play.problemIdentity,
+            startedAt: play.startedAt,
+            completedAt: play.completedAt,
+            result: play.result,
           })
         : null,
     [
       difficulty,
-      game.completedAt,
-      game.problemIdentity,
-      game.result,
-      game.startedAt,
+      play.completedAt,
+      play.problemIdentity,
+      play.result,
+      play.startedAt,
     ],
   );
   const recordOutcome = useSavePlayRecord(
@@ -64,8 +64,8 @@ function PlayableWaterSort({
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const diagnostics = internalDiagnosticsAvailable
     ? createWaterSortDiagnosticSnapshot({
-        difficulty: game.difficulty,
-        problemIdentity: game.problemIdentity,
+        difficulty: play.difficulty,
+        problemIdentity: play.problemIdentity,
         buildRevision,
       })
     : null;
@@ -73,7 +73,7 @@ function PlayableWaterSort({
   return (
     <>
       <WaterSortPlay
-        {...game}
+        {...play}
         recordOutcome={recordOutcome}
         onOpenRecords={() => navigate("/records")}
         onChangeDifficulty={() => navigate("/games/water-sort")}

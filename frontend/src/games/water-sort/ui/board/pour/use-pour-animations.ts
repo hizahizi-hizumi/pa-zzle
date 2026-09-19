@@ -6,7 +6,7 @@ import {
   useState,
 } from "react";
 
-import type { WaterSortOperation } from "@/games/water-sort/hooks/use-water-sort-game";
+import type { WaterSortOperation } from "@/games/water-sort/hooks/use-water-sort-play";
 import {
   addPourAnimation,
   type BottleRect,
