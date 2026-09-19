@@ -41,7 +41,7 @@ function createProps(): ComponentProps<typeof NanpurePlay> {
     undo: vi.fn(),
     restart: vi.fn(),
     replay: vi.fn(),
-    newGame: vi.fn(),
+    startNewProblem: vi.fn(),
     onOpenRecords: vi.fn(),
     onChangeDifficulty: vi.fn(),
     onBackToHome: vi.fn(),
@@ -175,7 +175,7 @@ describe("NanpurePlay", () => {
 
   test("クリア後に共通の結果階層で採点結果を表示すること", () => {
     const props = createProps();
-    const newGame = vi.fn();
+    const startNewProblem = vi.fn();
     render(
       <NanpurePlay
         {...props}
@@ -197,7 +197,7 @@ describe("NanpurePlay", () => {
             generationAttempt: 1,
           },
         }}
-        newGame={newGame}
+        startNewProblem={startNewProblem}
       />,
     );
 
@@ -223,7 +223,7 @@ describe("NanpurePlay", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "次の問題" }));
 
-    expect(newGame).toHaveBeenCalledOnce();
+    expect(startNewProblem).toHaveBeenCalledOnce();
   });
 
   test("自己ベスト更新内容と記録画面への導線を表示すること", () => {

@@ -1,7 +1,10 @@
 import { Eraser, Pencil, Undo2 } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { NANPURE_DIGITS, type NanpureDigit } from "@/games/nanpure/game/state";
+import {
+  NANPURE_DIGITS,
+  type NanpureDigit,
+} from "@/games/nanpure/puzzle/board";
 import { cn } from "@/lib/utils";
 
 type NanpureInputPanelProps = {

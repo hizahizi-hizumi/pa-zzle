@@ -1,4 +1,4 @@
-import { nanpureDifficulties } from "@/games/nanpure/game/difficulty";
+import { nanpureDifficulties } from "@/games/nanpure/difficulty";
 import { Link } from "@/router";
 
 export default function NanpureDifficultyPage() {

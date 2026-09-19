@@ -1,17 +1,17 @@
 import {
   parseWaterSortDifficulty,
   type WaterSortDifficulty,
-} from "@/games/water-sort/game/difficulty";
+} from "@/games/water-sort/difficulty";
+import { restoreWaterSortProblem } from "@/games/water-sort/problem/generator";
 import {
-  restoreWaterSortProblem,
   WATER_SORT_GENERATOR_VERSION,
   type WaterSortProblem,
   type WaterSortProblemIdentity,
-} from "@/games/water-sort/game/generator";
+} from "@/games/water-sort/problem/problem";
 import {
   WATER_SORT_BOTTLE_CAPACITY,
   WATER_SORT_EMPTY_BOTTLE_COUNT,
-} from "@/games/water-sort/game/state";
+} from "@/games/water-sort/puzzle/state";
 
 export const WATER_SORT_DIAGNOSTIC_FORMAT_VERSION = 1;
 

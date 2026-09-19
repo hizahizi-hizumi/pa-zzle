@@ -1,7 +1,6 @@
 import { useLayoutEffect, useRef } from "react";
-
-import type { WaterSortState } from "@/games/water-sort/game/state";
-import type { WaterSortOperation } from "@/games/water-sort/hooks/use-water-sort-game";
+import type { WaterSortOperation } from "@/games/water-sort/hooks/use-water-sort-play";
+import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import { PourAnimationLayer } from "./pour/PourAnimationLayer";
 import { usePourAnimations } from "./pour/use-pour-animations";
 import { getWaterColorView } from "./water-bottle/get-water-color-view";

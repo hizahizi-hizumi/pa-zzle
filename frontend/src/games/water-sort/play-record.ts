@@ -10,18 +10,20 @@ import {
   getWaterSortDifficultyLabel,
   parseWaterSortDifficulty,
   type WaterSortDifficulty,
-} from "./game/difficulty";
-import type { WaterSortProblemIdentity } from "./game/generator";
-import { calculateWaterSortPlayScore } from "./game/performance";
-import type { WaterSortSessionResult } from "./game/session";
+} from "./difficulty";
+import type { WaterSortProblemIdentity } from "./problem/problem";
+import { calculateWaterSortPlayScore } from "./score";
 
 const WATER_SORT_PLAY_RECORD_PAYLOAD_VERSION = 1;
 const WATER_SORT_GAME_ID = "water-sort";
 
-type WaterSortPlayPerformance = Pick<
-  WaterSortSessionResult,
-  "elapsedMs" | "moveCount" | "undoCount" | "restartCount" | "optimalMoveCount"
->;
+type WaterSortPlayPerformance = {
+  elapsedMs: number;
+  moveCount: number;
+  undoCount: number;
+  restartCount: number;
+  optimalMoveCount: number;
+};
 
 type WaterSortPlayRecordPayload = {
   difficulty: WaterSortDifficulty;
@@ -40,7 +42,7 @@ type CreateWaterSortPlayRecordInput = {
   problemIdentity: WaterSortProblemIdentity;
   startedAt: number;
   completedAt: number;
-  result: WaterSortSessionResult;
+  result: WaterSortPlayPerformance;
 };
 
 function isNonNegativeInteger(value: unknown): value is number {

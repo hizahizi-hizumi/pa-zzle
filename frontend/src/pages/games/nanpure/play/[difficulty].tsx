@@ -2,8 +2,8 @@ import { useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { parseNanpureDifficulty } from "@/games/nanpure/game/difficulty";
-import { useNanpureGame } from "@/games/nanpure/hooks/use-nanpure-game";
+import { parseNanpureDifficulty } from "@/games/nanpure/difficulty";
+import { useNanpurePlay } from "@/games/nanpure/hooks/use-nanpure-play";
 import {
   createNanpurePlayRecord,
   nanpurePlayRecordAdapter,
@@ -30,32 +30,32 @@ function PlayableNanpure({
 }: {
   difficulty: NonNullable<ReturnType<typeof parseNanpureDifficulty>>;
 }) {
-  const game = useNanpureGame(difficulty);
+  const play = useNanpurePlay(difficulty);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>
-      game.result && game.completedAt !== null
+      play.result && play.completedAt !== null
         ? createNanpurePlayRecord({
             difficulty,
-            problemIdentity: game.problemIdentity,
-            startedAt: game.startedAt,
-            completedAt: game.completedAt,
-            result: game.result,
+            problemIdentity: play.problemIdentity,
+            startedAt: play.startedAt,
+            completedAt: play.completedAt,
+            result: play.result,
           })
         : null,
     [
       difficulty,
-      game.completedAt,
-      game.problemIdentity,
-      game.result,
-      game.startedAt,
+      play.completedAt,
+      play.problemIdentity,
+      play.result,
+      play.startedAt,
     ],
   );
   const recordOutcome = useSavePlayRecord(playRecord, nanpurePlayRecordAdapter);
 
   return (
     <NanpurePlay
-      {...game}
+      {...play}
       recordOutcome={recordOutcome}
       onOpenRecords={() => navigate("/records")}
       onChangeDifficulty={() => navigate("/games/nanpure")}

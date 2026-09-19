@@ -1,5 +1,5 @@
-import type { WaterSortBottle } from "@/games/water-sort/game/state";
-import type { WaterSortOperation } from "@/games/water-sort/hooks/use-water-sort-game";
+import type { WaterSortOperation } from "@/games/water-sort/hooks/use-water-sort-play";
+import type { WaterSortBottle } from "@/games/water-sort/puzzle/state";
 
 export type BottleRect = {
   left: number;

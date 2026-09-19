@@ -3,8 +3,8 @@ import { ChevronRight } from "lucide-react";
 import {
   type WaterSortDifficulty,
   waterSortDifficulties,
-} from "@/games/water-sort/game/difficulty";
-import type { WaterSortState } from "@/games/water-sort/game/state";
+} from "@/games/water-sort/difficulty";
+import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import { WaterBottle } from "@/games/water-sort/ui/board/water-bottle/WaterBottle";
 import { Link } from "@/router";
 

@@ -1,4 +1,4 @@
-import type { WaterSortBottle } from "@/games/water-sort/game/state";
+import type { WaterSortBottle } from "@/games/water-sort/puzzle/state";
 
 import { getWaterColorView } from "./get-water-color-view";
 

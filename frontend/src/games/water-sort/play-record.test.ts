@@ -22,8 +22,6 @@ function createRecord() {
       undoCount: 1,
       restartCount: 0,
       optimalMoveCount: 10,
-      moveDelta: 2,
-      score: 83,
     },
   });
 }

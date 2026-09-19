@@ -30,8 +30,6 @@ function createWaterRecord(
       undoCount: 0,
       restartCount: 0,
       optimalMoveCount: 10,
-      moveDelta: moveCount - 10,
-      score: Math.round((10 / moveCount) * 100),
     },
   });
 }

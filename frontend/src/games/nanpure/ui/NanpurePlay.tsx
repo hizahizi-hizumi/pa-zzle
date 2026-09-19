@@ -1,14 +1,14 @@
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
-import type { NanpureDifficulty } from "@/games/nanpure/game/difficulty";
-import type { NanpureNotes } from "@/games/nanpure/game/session";
-import type {
-  NanpureBoard as NanpureBoardState,
-  NanpureDigit,
-} from "@/games/nanpure/game/state";
+import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import type {
   NanpureProgress,
   NanpureResult,
-} from "@/games/nanpure/hooks/use-nanpure-game";
+} from "@/games/nanpure/hooks/use-nanpure-play";
+import type {
+  NanpureBoard as NanpureBoardState,
+  NanpureDigit,
+} from "@/games/nanpure/puzzle/board";
+import type { NanpureNotes } from "@/games/nanpure/session/session";
 import { NanpureClearAnimation } from "@/games/nanpure/ui/board/clear/NanpureClearAnimation";
 import { NanpureBoard } from "@/games/nanpure/ui/board/NanpureBoard";
 import { NanpureInputPanel } from "@/games/nanpure/ui/play/NanpureInputPanel";
@@ -42,7 +42,7 @@ type NanpurePlayProps = {
   undo: () => void;
   restart: () => void;
   replay: () => void;
-  newGame: () => void;
+  startNewProblem: () => void;
   onOpenRecords: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
@@ -73,7 +73,7 @@ export function NanpurePlay({
   undo,
   restart,
   replay,
-  newGame,
+  startNewProblem,
   onOpenRecords,
   onChangeDifficulty,
   onBackToHome,
@@ -85,7 +85,7 @@ export function NanpurePlay({
         result={result}
         recordOutcome={recordOutcome}
         replay={replay}
-        newGame={newGame}
+        startNewProblem={startNewProblem}
         onOpenRecords={onOpenRecords}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
@@ -109,7 +109,7 @@ export function NanpurePlay({
         mistakeCount={mistakeCount}
         undoCount={undoCount}
         restart={restart}
-        newGame={newGame}
+        startNewProblem={startNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
       />

@@ -1,4 +1,3 @@
-import type { NanpureNotes } from "@/games/nanpure/game/session";
 import {
   getNanpureColumnIndex,
   getNanpureRowIndex,
@@ -6,7 +5,8 @@ import {
   NANPURE_SIZE,
   type NanpureCell as NanpureCellValue,
   type NanpureDigit,
-} from "@/games/nanpure/game/state";
+} from "@/games/nanpure/puzzle/board";
+import type { NanpureNotes } from "@/games/nanpure/session/session";
 import { cn } from "@/lib/utils";
 
 type NanpureCellProps = {

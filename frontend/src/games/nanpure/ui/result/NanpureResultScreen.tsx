@@ -10,6 +10,7 @@ import {
 } from "@/components/GameResultPresentation";
 import { Button } from "@/components/ui/button";
 import nanpurePictogramSvg from "@/games/nanpure/assets/pictogram.svg?raw";
+import type { NanpureResult } from "@/games/nanpure/hooks/use-nanpure-play";
 import {
   NANPURE_MISTAKE_PENALTY,
   NANPURE_RESTART_PENALTY,
@@ -17,8 +18,7 @@ import {
   NANPURE_SPEED_FULL_SCORE_MS,
   NANPURE_SPEED_PENALTY_PER_INTERVAL,
   NANPURE_UNDO_PENALTY,
-} from "@/games/nanpure/game/performance";
-import type { NanpureResult } from "@/games/nanpure/hooks/use-nanpure-game";
+} from "@/games/nanpure/score";
 import { formatElapsedTime } from "@/games/nanpure/ui/format-elapsed-time";
 import type { PlayRecordSaveOutcome } from "@/records/presentation";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
@@ -27,7 +27,7 @@ type NanpureResultScreenProps = {
   result: NanpureResult;
   recordOutcome: PlayRecordSaveOutcome | null;
   replay: () => void;
-  newGame: () => void;
+  startNewProblem: () => void;
   onOpenRecords: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
@@ -37,7 +37,7 @@ export function NanpureResultScreen({
   result,
   recordOutcome,
   replay,
-  newGame,
+  startNewProblem,
   onOpenRecords,
   onChangeDifficulty,
   onBackToHome,
@@ -76,7 +76,11 @@ export function NanpureResultScreen({
         <PlayRecordOutcomeNotice outcome={recordOutcome} />
 
         <div className="mt-7 grid gap-3">
-          <Button size="lg" className="h-12 text-base" onClick={newGame}>
+          <Button
+            size="lg"
+            className="h-12 text-base"
+            onClick={startNewProblem}
+          >
             次の問題
           </Button>
           <Button

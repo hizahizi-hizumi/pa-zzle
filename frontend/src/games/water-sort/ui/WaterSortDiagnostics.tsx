@@ -6,7 +6,7 @@ import {
   serializeWaterSortDiagnosticSnapshot,
   type WaterSortDiagnosticSnapshot,
 } from "@/games/water-sort/diagnostics";
-import { getWaterSortDifficultyLabel } from "@/games/water-sort/game/difficulty";
+import { getWaterSortDifficultyLabel } from "@/games/water-sort/difficulty";
 
 type WaterSortDiagnosticsProps = {
   snapshot: WaterSortDiagnosticSnapshot;
