@@ -7,17 +7,18 @@ import {
   isNanpurePlayRecord,
   nanpurePlayRecordDefinition,
 } from "@/games/nanpure/play-record";
-import { formatRecordElapsedMs } from "@/records/ui/format";
-import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
+import type { PlayRecord } from "@/records/play-record";
 
-export const nanpurePlayRecordDisplay: PlayRecordDisplayDefinition = {
+import { formatElapsedTime } from "./format-elapsed-time";
+
+export const nanpurePlayRecordDisplay = {
   definition: nanpurePlayRecordDefinition,
   gameLabel: "ナンプレ",
-  getComparisonLabel(comparisonKey) {
+  getComparisonLabel(comparisonKey: string) {
     const difficulty = parseNanpureDifficulty(comparisonKey);
     return difficulty ? getNanpureDifficultyLabel(difficulty) : null;
   },
-  getSummary(record) {
+  getSummary(record: PlayRecord) {
     if (!isNanpurePlayRecord(record)) {
       return null;
     }
@@ -30,7 +31,7 @@ export const nanpurePlayRecordDisplay: PlayRecordDisplayDefinition = {
       detailMetrics: [
         {
           label: "時間",
-          value: formatRecordElapsedMs(record.payload.performance.elapsedMs),
+          value: formatElapsedTime(record.payload.performance.elapsedMs),
         },
         {
           label: "ミス",
@@ -51,19 +52,19 @@ export const nanpurePlayRecordDisplay: PlayRecordDisplayDefinition = {
     {
       id: "play-score",
       label: "ベストスコア",
-      formatValue(value) {
+      formatValue(value: number) {
         return `${value}点`;
       },
     },
     {
       id: "elapsed-ms",
       label: "最速",
-      formatValue: formatRecordElapsedMs,
+      formatValue: formatElapsedTime,
     },
     {
       id: "mistake-count",
       label: "最少ミス",
-      formatValue(value) {
+      formatValue(value: number) {
         return `${value}回`;
       },
     },

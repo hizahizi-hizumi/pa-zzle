@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import type {
@@ -14,7 +16,6 @@ import { NanpureBoard } from "@/games/nanpure/ui/board/NanpureBoard";
 import { NanpureInputPanel } from "@/games/nanpure/ui/play/NanpureInputPanel";
 import { NanpurePlayHeader } from "@/games/nanpure/ui/play/NanpurePlayHeader";
 import { NanpureResultScreen } from "@/games/nanpure/ui/result/NanpureResultScreen";
-import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
 
 type NanpurePlayProps = {
   difficulty: NanpureDifficulty;
@@ -33,7 +34,7 @@ type NanpurePlayProps = {
   undoCount: number;
   canUndo: boolean;
   result: NanpureResult | null;
-  recordOutcome: PlayRecordSaveOutcome | null;
+  recordOutcomeNotice: ReactNode;
   onSelectCell: (cellIndex: number) => void;
   onInputDigit: (digit: NanpureDigit) => void;
   onErase: () => void;
@@ -65,7 +66,7 @@ export function NanpurePlay({
   undoCount,
   canUndo,
   result,
-  recordOutcome,
+  recordOutcomeNotice,
   onSelectCell,
   onInputDigit,
   onErase,
@@ -84,7 +85,7 @@ export function NanpurePlay({
       <NanpureResultScreen
         difficulty={difficulty}
         result={result}
-        recordOutcome={recordOutcome}
+        recordOutcomeNotice={recordOutcomeNotice}
         onReplay={onReplay}
         onStartNewProblem={onStartNewProblem}
         onOpenRecords={onOpenRecords}

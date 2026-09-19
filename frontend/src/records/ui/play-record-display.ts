@@ -25,6 +25,11 @@ export type PlayRecordDisplayDefinition = {
   personalBestMetrics: readonly PersonalBestMetricDisplay[];
 };
 
+export type PlayRecordDisplayCatalog = readonly [
+  PlayRecordDisplayDefinition,
+  ...PlayRecordDisplayDefinition[],
+];
+
 export function getPersonalBestMetricDisplay(
   display: PlayRecordDisplayDefinition,
   metricId: string,

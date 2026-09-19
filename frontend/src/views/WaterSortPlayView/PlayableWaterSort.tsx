@@ -7,6 +7,7 @@ import {
   createWaterSortPlayRecord,
   waterSortPlayRecordDefinition,
 } from "@/games/water-sort/play-record";
+import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 import { WaterSortDiagnostics } from "@/games/water-sort/ui/WaterSortDiagnostics";
 import { WaterSortPlay } from "@/games/water-sort/ui/WaterSortPlay";
 import {
@@ -14,6 +15,7 @@ import {
   internalDiagnosticsAvailable,
 } from "@/lib/internal-diagnostics";
 import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
+import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
 
 type PlayableWaterSortProps = {
@@ -70,7 +72,12 @@ export function PlayableWaterSort({ difficulty }: PlayableWaterSortProps) {
         sourceBottleIndex={play.sourceBottleIndex}
         operation={play.operation}
         result={play.result}
-        recordOutcome={recordOutcome}
+        recordOutcomeNotice={
+          <PlayRecordOutcomeNotice
+            outcome={recordOutcome}
+            display={waterSortPlayRecordDisplay}
+          />
+        }
         onSelectBottle={play.selectBottle}
         onUndo={play.undo}
         onRestart={play.restart}

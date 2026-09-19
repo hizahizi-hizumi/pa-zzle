@@ -1,5 +1,5 @@
 import { Undo2 } from "lucide-react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,6 @@ import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
 import { DeadlockNotice } from "@/games/water-sort/ui/WaterSortPlay/DeadlockNotice";
 import { WaterSortPlayHeader } from "@/games/water-sort/ui/WaterSortPlay/WaterSortPlayHeader";
 import { WaterSortResultScreen } from "@/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen";
-import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
 
 type WaterSortPlayProps = {
   difficulty: WaterSortDifficulty;
@@ -29,7 +28,7 @@ type WaterSortPlayProps = {
   sourceBottleIndex: number | null;
   operation: WaterSortOperation | null;
   result: WaterSortResult | null;
-  recordOutcome: PlayRecordSaveOutcome | null;
+  recordOutcomeNotice: ReactNode;
   onSelectBottle: (bottleIndex: number) => void;
   onUndo: () => void;
   onRestart: () => void;
@@ -55,7 +54,7 @@ export function WaterSortPlay({
   sourceBottleIndex,
   operation,
   result,
-  recordOutcome,
+  recordOutcomeNotice,
   onSelectBottle,
   onUndo,
   onRestart,
@@ -75,7 +74,7 @@ export function WaterSortPlay({
       <WaterSortResultScreen
         difficulty={difficulty}
         result={result}
-        recordOutcome={recordOutcome}
+        recordOutcomeNotice={recordOutcomeNotice}
         onReplay={onReplay}
         onStartNewProblem={onStartNewProblem}
         onOpenRecords={onOpenRecords}

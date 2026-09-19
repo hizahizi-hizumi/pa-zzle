@@ -7,7 +7,9 @@ import {
   nanpurePlayRecordDefinition,
 } from "@/games/nanpure/play-record";
 import { NanpurePlay } from "@/games/nanpure/ui/NanpurePlay";
+import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
 import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
+import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
 
 type PlayableNanpureProps = {
@@ -59,7 +61,12 @@ export function PlayableNanpure({ difficulty }: PlayableNanpureProps) {
       undoCount={play.undoCount}
       canUndo={play.canUndo}
       result={play.result}
-      recordOutcome={recordOutcome}
+      recordOutcomeNotice={
+        <PlayRecordOutcomeNotice
+          outcome={recordOutcome}
+          display={nanpurePlayRecordDisplay}
+        />
+      }
       onSelectCell={play.selectCell}
       onInputDigit={play.inputDigit}
       onErase={play.erase}

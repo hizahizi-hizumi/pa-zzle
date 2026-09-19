@@ -1,5 +1,4 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router";
+import { type ReactNode, useMemo, useState } from "react";
 
 import {
   Select,
@@ -12,14 +11,16 @@ import { EmptyRecords } from "@/records/ui/PlayRecordsScreen/EmptyRecords";
 import { PlayRecordRow } from "@/records/ui/PlayRecordsScreen/PlayRecordRow";
 import { getPersonalBests } from "../personal-best";
 import type { PlayRecord } from "../play-record";
-import { playRecordDisplays } from "./catalog";
 import {
   getPersonalBestMetricDisplay,
+  type PlayRecordDisplayCatalog,
   type PlayRecordDisplayDefinition,
 } from "./play-record-display";
 
 type PlayRecordsScreenProps = {
   records: readonly PlayRecord[];
+  displays: PlayRecordDisplayCatalog;
+  emptyAction: ReactNode;
 };
 
 type ComparisonOption = {
@@ -49,30 +50,31 @@ function getComparisonOptions(
   return Array.from(options, ([key, label]) => ({ key, label }));
 }
 
-export function PlayRecordsScreen({ records }: PlayRecordsScreenProps) {
+export function PlayRecordsScreen({
+  records,
+  displays,
+  emptyAction,
+}: PlayRecordsScreenProps) {
   const sortedRecords = useMemo(
     () =>
       [...records].sort((left, right) => right.completedAt - left.completedAt),
     [records],
   );
   const newestRecord = sortedRecords.find((record) =>
-    playRecordDisplays.some((display) => display.definition.isRecord(record)),
+    displays.some((display) => display.definition.isRecord(record)),
   );
   const newestDisplay = newestRecord
-    ? playRecordDisplays.find((display) =>
-        display.definition.isRecord(newestRecord),
-      )
+    ? displays.find((display) => display.definition.isRecord(newestRecord))
     : undefined;
   const [selectedGameId, setSelectedGameId] = useState(
-    newestDisplay?.definition.gameId ?? playRecordDisplays[0].definition.gameId,
+    newestDisplay?.definition.gameId ?? displays[0].definition.gameId,
   );
   const [selectedComparisonKey, setSelectedComparisonKey] = useState<
     string | null
   >(null);
   const display =
-    playRecordDisplays.find(
-      (item) => item.definition.gameId === selectedGameId,
-    ) ?? playRecordDisplays[0];
+    displays.find((item) => item.definition.gameId === selectedGameId) ??
+    displays[0];
   const { definition } = display;
   const comparisonOptions = getComparisonOptions(sortedRecords, display);
   const effectiveComparisonKey =
@@ -97,22 +99,14 @@ export function PlayRecordsScreen({ records }: PlayRecordsScreenProps) {
   }
 
   return (
-    <section className="mx-auto w-full max-w-3xl">
-      <Link
-        to="/"
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← パズル選択
-      </Link>
-      <h1 className="mt-3 text-2xl font-bold tracking-tight">記録</h1>
-
+    <>
       <div className="mt-4 flex flex-wrap items-center gap-2 border-b pb-3">
         <Select value={definition.gameId} onValueChange={handleGameChange}>
           <SelectTrigger size="sm" aria-label="パズル">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {playRecordDisplays.map((option) => (
+            {displays.map((option) => (
               <SelectItem
                 key={option.definition.gameId}
                 value={option.definition.gameId}
@@ -143,7 +137,7 @@ export function PlayRecordsScreen({ records }: PlayRecordsScreenProps) {
       </div>
 
       {comparisonOptions.length === 0 ? (
-        <EmptyRecords gameLabel={display.gameLabel} />
+        <EmptyRecords gameLabel={display.gameLabel} action={emptyAction} />
       ) : (
         <>
           <section
@@ -205,6 +199,6 @@ export function PlayRecordsScreen({ records }: PlayRecordsScreenProps) {
           </section>
         </>
       )}
-    </section>
+    </>
   );
 }

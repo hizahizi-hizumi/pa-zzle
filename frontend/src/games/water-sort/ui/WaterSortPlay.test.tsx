@@ -6,6 +6,9 @@ import {
   screen,
 } from "@testing-library/react";
 
+import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
+import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
+
 import type { WaterSortResult } from "../play/use-water-sort-play";
 import { WaterSortPlay } from "./WaterSortPlay";
 
@@ -28,7 +31,7 @@ const baseProps = {
   sourceBottleIndex: null,
   operation: null,
   result: null,
-  recordOutcome: null,
+  recordOutcomeNotice: null,
   onSelectBottle: vi.fn(),
   onUndo: vi.fn(),
   onRestart: vi.fn(),
@@ -479,16 +482,21 @@ describe("WaterSortPlay", () => {
             breakdown: { efficiency: 40, speed: 40, accuracy: 20 },
           },
         })}
-        recordOutcome={{
-          status: "updated",
-          updates: [
-            {
-              metricId: "play-score",
-              previousValue: 92,
-              currentValue: 100,
-            },
-          ],
-        }}
+        recordOutcomeNotice={
+          <PlayRecordOutcomeNotice
+            outcome={{
+              status: "updated",
+              updates: [
+                {
+                  metricId: "play-score",
+                  previousValue: 92,
+                  currentValue: 100,
+                },
+              ],
+            }}
+            display={waterSortPlayRecordDisplay}
+          />
+        }
         onOpenRecords={onOpenRecords}
       />,
     );

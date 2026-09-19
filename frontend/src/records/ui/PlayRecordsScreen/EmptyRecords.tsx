@@ -1,12 +1,13 @@
-import { Link } from "react-router";
+import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 
 type EmptyRecordsProps = {
   gameLabel: string;
+  action: ReactNode;
 };
 
-export function EmptyRecords({ gameLabel }: EmptyRecordsProps) {
+export function EmptyRecords({ gameLabel, action }: EmptyRecordsProps) {
   return (
     <div className="py-8 text-center">
       <p className="font-semibold">まだ記録がありません</p>
@@ -15,7 +16,7 @@ export function EmptyRecords({ gameLabel }: EmptyRecordsProps) {
       </p>
       <div className="mt-4">
         <Button asChild variant="outline" size="sm">
-          <Link to="/">パズルを選ぶ</Link>
+          {action}
         </Button>
       </div>
     </div>
