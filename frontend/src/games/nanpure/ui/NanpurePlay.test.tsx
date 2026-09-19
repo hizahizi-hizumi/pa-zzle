@@ -15,7 +15,6 @@ function emptyNotes() {
 
 function createProps(): ComponentProps<typeof NanpurePlay> {
   return {
-    difficulty: "normal",
     status: "playing",
     progress: "playing",
     clues: emptyBoard(),
@@ -29,22 +28,21 @@ function createProps(): ComponentProps<typeof NanpurePlay> {
     elapsedMs: 65_000,
     mistakeCount: 2,
     undoCount: 1,
-    restartCount: 0,
     canUndo: true,
     result: null,
     recordOutcome: null,
-    selectCell: vi.fn(),
-    inputDigit: vi.fn(),
-    erase: vi.fn(),
-    toggleNotesMode: vi.fn(),
-    undo: vi.fn(),
-    restart: vi.fn(),
-    replay: vi.fn(),
-    startNewProblem: vi.fn(),
+    onSelectCell: vi.fn(),
+    onInputDigit: vi.fn(),
+    onErase: vi.fn(),
+    onToggleNotesMode: vi.fn(),
+    onUndo: vi.fn(),
+    onRestart: vi.fn(),
+    onReplay: vi.fn(),
+    onStartNewProblem: vi.fn(),
     onOpenRecords: vi.fn(),
     onChangeDifficulty: vi.fn(),
     onBackToHome: vi.fn(),
-    completeClearAnimation: vi.fn(),
+    onClearAnimationComplete: vi.fn(),
   };
 }
 
@@ -56,7 +54,7 @@ describe("NanpurePlay", () => {
 
     fireEvent.click(digit);
 
-    expect(props.inputDigit).toHaveBeenCalledWith(5);
+    expect(props.onInputDigit).toHaveBeenCalledWith(5);
   });
 
   test("初期ヒントを選択している間は数字入力を無効にすること", () => {
@@ -80,8 +78,8 @@ describe("NanpurePlay", () => {
     fireEvent.click(screen.getByRole("button", { name: "メモ" }));
     fireEvent.click(screen.getByRole("button", { name: "待った" }));
 
-    expect(props.toggleNotesMode).toHaveBeenCalledOnce();
-    expect(props.undo).toHaveBeenCalledOnce();
+    expect(props.onToggleNotesMode).toHaveBeenCalledOnce();
+    expect(props.onUndo).toHaveBeenCalledOnce();
   });
 
   test("ミスと待ったを別のプレイ状況として表示すること", () => {
@@ -132,7 +130,7 @@ describe("NanpurePlay", () => {
     fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "最初から" }));
 
-    expect(props.restart).toHaveBeenCalledOnce();
+    expect(props.onRestart).toHaveBeenCalledOnce();
   });
 
   test("クリア直後は完成盤を見せて結果画面への遷移を待つこと", () => {
@@ -174,7 +172,7 @@ describe("NanpurePlay", () => {
 
   test("クリア後に共通の結果階層で採点結果を表示すること", () => {
     const props = createProps();
-    const startNewProblem = vi.fn();
+    const onStartNewProblem = vi.fn();
     render(
       <NanpurePlay
         {...props}
@@ -196,7 +194,7 @@ describe("NanpurePlay", () => {
             generationAttempt: 1,
           },
         }}
-        startNewProblem={startNewProblem}
+        onStartNewProblem={onStartNewProblem}
       />,
     );
 
@@ -222,7 +220,7 @@ describe("NanpurePlay", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "次の問題" }));
 
-    expect(startNewProblem).toHaveBeenCalledOnce();
+    expect(onStartNewProblem).toHaveBeenCalledOnce();
   });
 
   test("自己ベスト更新内容と記録画面への導線を表示すること", () => {

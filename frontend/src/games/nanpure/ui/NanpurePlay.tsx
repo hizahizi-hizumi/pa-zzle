@@ -1,5 +1,4 @@
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
-import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import type {
   NanpureProgress,
   NanpureResult,
@@ -17,7 +16,6 @@ import { NanpureResultScreen } from "@/games/nanpure/ui/result/NanpureResultScre
 import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
 
 type NanpurePlayProps = {
-  difficulty: NanpureDifficulty;
   status: "playing" | "cleared";
   progress: NanpureProgress;
   clues: NanpureBoardState;
@@ -31,22 +29,21 @@ type NanpurePlayProps = {
   elapsedMs: number;
   mistakeCount: number;
   undoCount: number;
-  restartCount: number;
   canUndo: boolean;
   result: NanpureResult | null;
   recordOutcome: PlayRecordSaveOutcome | null;
-  selectCell: (cellIndex: number) => void;
-  inputDigit: (digit: NanpureDigit) => void;
-  erase: () => void;
-  toggleNotesMode: () => void;
-  undo: () => void;
-  restart: () => void;
-  replay: () => void;
-  startNewProblem: () => void;
+  onSelectCell: (cellIndex: number) => void;
+  onInputDigit: (digit: NanpureDigit) => void;
+  onErase: () => void;
+  onToggleNotesMode: () => void;
+  onUndo: () => void;
+  onRestart: () => void;
+  onReplay: () => void;
+  onStartNewProblem: () => void;
   onOpenRecords: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
-  completeClearAnimation: () => void;
+  onClearAnimationComplete: () => void;
 };
 
 export function NanpurePlay({
@@ -66,26 +63,26 @@ export function NanpurePlay({
   canUndo,
   result,
   recordOutcome,
-  selectCell,
-  inputDigit,
-  erase,
-  toggleNotesMode,
-  undo,
-  restart,
-  replay,
-  startNewProblem,
+  onSelectCell,
+  onInputDigit,
+  onErase,
+  onToggleNotesMode,
+  onUndo,
+  onRestart,
+  onReplay,
+  onStartNewProblem,
   onOpenRecords,
   onChangeDifficulty,
   onBackToHome,
-  completeClearAnimation,
+  onClearAnimationComplete,
 }: NanpurePlayProps) {
   if (progress === "result" && status === "cleared" && result) {
     return (
       <NanpureResultScreen
         result={result}
         recordOutcome={recordOutcome}
-        replay={replay}
-        startNewProblem={startNewProblem}
+        onReplay={onReplay}
+        onStartNewProblem={onStartNewProblem}
         onOpenRecords={onOpenRecords}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
@@ -108,8 +105,8 @@ export function NanpurePlay({
         elapsedMs={elapsedMs}
         mistakeCount={mistakeCount}
         undoCount={undoCount}
-        restart={restart}
-        startNewProblem={startNewProblem}
+        onRestart={onRestart}
+        onStartNewProblem={onStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
       />
@@ -117,7 +114,7 @@ export function NanpurePlay({
       <main className="flex shrink-0 justify-center px-2 pt-1 sm:px-6 sm:pt-3">
         <NanpureClearAnimation
           active={progress === "clearing"}
-          onComplete={completeClearAnimation}
+          onComplete={onClearAnimationComplete}
         >
           <NanpureBoard
             board={board}
@@ -127,7 +124,7 @@ export function NanpurePlay({
             conflictCellIndices={conflictCellIndices}
             mistakeCellIndices={mistakeCellIndices}
             interactionDisabled={!interactionEnabled}
-            onSelectCell={selectCell}
+            onSelectCell={onSelectCell}
           />
         </NanpureClearAnimation>
       </main>
@@ -140,10 +137,10 @@ export function NanpurePlay({
         selectedHasNotes={selectedHasNotes}
         completedDigits={completedDigits}
         canUndo={canUndo}
-        onUndo={undo}
-        onErase={erase}
-        onToggleNotesMode={toggleNotesMode}
-        onInputDigit={inputDigit}
+        onUndo={onUndo}
+        onErase={onErase}
+        onToggleNotesMode={onToggleNotesMode}
+        onInputDigit={onInputDigit}
       />
     </section>
   );

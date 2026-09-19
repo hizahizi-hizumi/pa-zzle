@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -9,13 +8,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  getPersonalBestMetricIdsForRecord,
-  getPersonalBests,
-} from "../personal-best";
+import { EmptyRecords } from "@/records/ui/PlayRecordsScreen/EmptyRecords";
+import { PlayRecordRow } from "@/records/ui/PlayRecordsScreen/PlayRecordRow";
+import { getPersonalBests } from "../personal-best";
 import type { PlayRecord } from "../play-record";
 import { playRecordDisplays } from "./catalog";
-import { formatRecordCompletedAt } from "./format";
 import {
   getPersonalBestMetricDisplay,
   type PlayRecordDisplayDefinition,
@@ -90,6 +87,15 @@ export function PlayRecordsScreen({ records }: PlayRecordsScreenProps) {
   );
   const personalBests = getPersonalBests(selectedRecords, definition);
 
+  function handleGameChange(gameId: string) {
+    setSelectedGameId(gameId);
+    setSelectedComparisonKey(null);
+  }
+
+  function handleComparisonChange(comparisonKey: string) {
+    setSelectedComparisonKey(comparisonKey);
+  }
+
   return (
     <section className="mx-auto w-full max-w-3xl">
       <Link
@@ -101,13 +107,7 @@ export function PlayRecordsScreen({ records }: PlayRecordsScreenProps) {
       <h1 className="mt-3 text-2xl font-bold tracking-tight">記録</h1>
 
       <div className="mt-4 flex flex-wrap items-center gap-2 border-b pb-3">
-        <Select
-          value={definition.gameId}
-          onValueChange={(gameId) => {
-            setSelectedGameId(gameId);
-            setSelectedComparisonKey(null);
-          }}
-        >
+        <Select value={definition.gameId} onValueChange={handleGameChange}>
           <SelectTrigger size="sm" aria-label="パズル">
             <SelectValue />
           </SelectTrigger>
@@ -126,7 +126,7 @@ export function PlayRecordsScreen({ records }: PlayRecordsScreenProps) {
         {comparisonOptions.length > 0 && (
           <Select
             value={effectiveComparisonKey ?? undefined}
-            onValueChange={setSelectedComparisonKey}
+            onValueChange={handleComparisonChange}
           >
             <SelectTrigger size="sm" aria-label="開始条件">
               <SelectValue />
@@ -206,81 +206,5 @@ export function PlayRecordsScreen({ records }: PlayRecordsScreenProps) {
         </>
       )}
     </section>
-  );
-}
-
-function EmptyRecords({ gameLabel }: { gameLabel: string }) {
-  return (
-    <div className="py-8 text-center">
-      <p className="font-semibold">まだ記録がありません</p>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {gameLabel}をクリアすると、ここにプレイ結果が残ります。
-      </p>
-      <div className="mt-4">
-        <Button asChild variant="outline" size="sm">
-          <Link to="/">パズルを選ぶ</Link>
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-type PlayRecordRowProps = {
-  record: PlayRecord;
-  display: PlayRecordDisplayDefinition;
-  personalBests: ReturnType<typeof getPersonalBests>;
-};
-
-function PlayRecordRow({ record, display, personalBests }: PlayRecordRowProps) {
-  const summary = display.getSummary(record);
-  if (!summary) {
-    return null;
-  }
-
-  const bestMetricIds = getPersonalBestMetricIdsForRecord(
-    record,
-    personalBests,
-    display.definition,
-  );
-  const bestLabels = bestMetricIds.flatMap((metricId) => {
-    const metricDisplay = getPersonalBestMetricDisplay(display, metricId);
-    return metricDisplay ? [metricDisplay.label] : [];
-  });
-
-  return (
-    <li className="py-3">
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 sm:flex-nowrap">
-        <p className="w-full shrink-0 text-xs text-muted-foreground sm:w-24">
-          {formatRecordCompletedAt(record.completedAt)}
-        </p>
-        <div className="flex min-w-24 items-baseline gap-1.5">
-          <span className="text-xs text-muted-foreground">
-            {summary.primaryMetric.label}
-          </span>
-          <span className="font-mono text-base font-semibold tabular-nums">
-            {summary.primaryMetric.value}
-          </span>
-        </div>
-        <dl className="flex flex-1 flex-wrap items-baseline gap-x-4 gap-y-1 text-xs">
-          {summary.detailMetrics.map((metric) => (
-            <div key={metric.label} className="flex items-baseline gap-1">
-              <dt className="text-muted-foreground">{metric.label}</dt>
-              <dd className="font-mono font-medium tabular-nums">
-                {metric.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
-        {bestLabels.length > 0 && (
-          <span
-            className="shrink-0 text-xs font-medium"
-            aria-label={`自己ベスト: ${bestLabels.join("、")}`}
-            title={bestLabels.join("、")}
-          >
-            ベスト
-          </span>
-        )}
-      </div>
-    </li>
   );
 }

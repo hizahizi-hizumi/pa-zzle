@@ -2,33 +2,29 @@ import { Home, RefreshCw } from "lucide-react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { GamePictogram } from "@/components/GamePictogram";
-import {
-  GameResultConfetti,
-  GameResultMark,
-  GameResultScoreCard,
-} from "@/components/GameResult";
+import { GameResultConfetti } from "@/components/GameResultConfetti";
+import { GameResultMark } from "@/components/GameResultMark";
+import { GameResultScoreCard } from "@/components/GameResultScoreCard";
 import { Button } from "@/components/ui/button";
 import nanpurePictogramSvg from "@/games/nanpure/assets/pictogram.svg?raw";
 import type { NanpureResult } from "@/games/nanpure/hooks/use-nanpure-play";
 import {
   getNanpureGameResultLevel,
-  NANPURE_MISTAKE_PENALTY,
-  NANPURE_RESTART_PENALTY,
   NANPURE_SCORE_MAXIMUMS,
-  NANPURE_SPEED_FULL_SCORE_MS,
-  NANPURE_SPEED_PENALTY_PER_INTERVAL,
-  NANPURE_UNDO_PENALTY,
 } from "@/games/nanpure/score";
 import { formatElapsedTime } from "@/games/nanpure/ui/format-elapsed-time";
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
+import { DetailMetric } from "@/games/nanpure/ui/result/NanpureResultScreen/DetailMetric";
+import { ResultMetric } from "@/games/nanpure/ui/result/NanpureResultScreen/ResultMetric";
+import { ScoreCriteria } from "@/games/nanpure/ui/result/NanpureResultScreen/ScoreCriteria";
 import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 
 type NanpureResultScreenProps = {
   result: NanpureResult;
   recordOutcome: PlayRecordSaveOutcome | null;
-  replay: () => void;
-  startNewProblem: () => void;
+  onReplay: () => void;
+  onStartNewProblem: () => void;
   onOpenRecords: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
@@ -37,8 +33,8 @@ type NanpureResultScreenProps = {
 export function NanpureResultScreen({
   result,
   recordOutcome,
-  replay,
-  startNewProblem,
+  onReplay,
+  onStartNewProblem,
   onOpenRecords,
   onChangeDifficulty,
   onBackToHome,
@@ -80,7 +76,7 @@ export function NanpureResultScreen({
           <Button
             size="lg"
             className="h-12 text-base"
-            onClick={startNewProblem}
+            onClick={onStartNewProblem}
           >
             次の問題
           </Button>
@@ -88,7 +84,7 @@ export function NanpureResultScreen({
             variant="outline"
             size="lg"
             className="h-12 text-base"
-            onClick={replay}
+            onClick={onReplay}
           >
             <RefreshCw />
             もう一度
@@ -136,60 +132,5 @@ export function NanpureResultScreen({
         </details>
       </div>
     </section>
-  );
-}
-
-function ScoreCriteria() {
-  return (
-    <dl className="mt-3 grid gap-3 text-xs">
-      <div>
-        <dt className="font-semibold text-foreground">正確さ</dt>
-        <dd className="mt-0.5">
-          ミスなしで{NANPURE_SCORE_MAXIMUMS.accuracy}点。ミス1回につき
-          {NANPURE_MISTAKE_PENALTY}点減点。
-        </dd>
-      </div>
-      <div>
-        <dt className="font-semibold text-foreground">速さ</dt>
-        <dd className="mt-0.5">
-          {formatElapsedTime(NANPURE_SPEED_FULL_SCORE_MS)}以内で
-          {NANPURE_SCORE_MAXIMUMS.speed}点。超過時間を1分単位で切り上げ、
-          1分につき{NANPURE_SPEED_PENALTY_PER_INTERVAL}点減点。
-        </dd>
-      </div>
-      <div>
-        <dt className="font-semibold text-foreground">安定性</dt>
-        <dd className="mt-0.5">
-          待った・やり直しなしで{NANPURE_SCORE_MAXIMUMS.stability}
-          点。待った1回につき
-          {NANPURE_UNDO_PENALTY}点、やり直し1回につき
-          {NANPURE_RESTART_PENALTY}点減点。
-        </dd>
-      </div>
-      <div>
-        <dt className="sr-only">下限</dt>
-        <dd>各項目は0点を下限とします。</dd>
-      </div>
-    </dl>
-  );
-}
-
-function ResultMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl bg-muted/70 px-2 py-4">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="mt-1 font-mono text-xl font-semibold tracking-tight">
-        {value}
-      </dd>
-    </div>
-  );
-}
-
-function DetailMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <dt className="text-xs">{label}</dt>
-      <dd className="mt-0.5 font-medium text-foreground">{value}</dd>
-    </div>
   );
 }

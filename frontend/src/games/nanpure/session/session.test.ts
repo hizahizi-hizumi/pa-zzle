@@ -58,7 +58,9 @@ describe("createNanpureSession", () => {
     const problem = createProblem();
     const clues = [...problem.clues];
     clues[2] = 9;
-    const act = () => createNanpureSession({ ...problem, clues }, 1_000);
+    function act() {
+      return createNanpureSession({ ...problem, clues }, 1_000);
+    }
 
     expect(act).toThrow("Nanpure problem clues must match its solution");
   });

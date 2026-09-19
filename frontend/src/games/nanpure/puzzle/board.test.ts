@@ -45,7 +45,9 @@ test("同じ行・列・ブロックのマスを関連マスとして判定す�
 
 test("81マスではない盤面を拒否すること", () => {
   const board = Array.from({ length: NANPURE_CELL_COUNT - 1 }, () => null);
-  const act = () => assertNanpureBoard(board as NanpureBoard);
+  function act() {
+    return assertNanpureBoard(board as NanpureBoard);
+  }
 
   expect(act).toThrow("Nanpure board must contain 81 cells");
 });

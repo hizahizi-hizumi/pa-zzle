@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 
 import { createWaterSortDiagnosticSnapshot } from "@/games/water-sort/diagnostics";
-import type { parseWaterSortDifficulty } from "@/games/water-sort/difficulty";
+import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import { useWaterSortPlay } from "@/games/water-sort/hooks/use-water-sort-play";
 import {
   createWaterSortPlayRecord,
@@ -17,7 +17,7 @@ import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { useNavigate } from "@/router";
 
 type PlayableWaterSortProps = {
-  difficulty: NonNullable<ReturnType<typeof parseWaterSortDifficulty>>;
+  difficulty: WaterSortDifficulty;
 };
 
 export function PlayableWaterSort({ difficulty }: PlayableWaterSortProps) {
@@ -58,19 +58,36 @@ export function PlayableWaterSort({ difficulty }: PlayableWaterSortProps) {
   return (
     <>
       <WaterSortPlay
-        {...play}
+        difficulty={play.difficulty}
+        status={play.status}
+        progress={play.progress}
+        state={play.state}
+        problemDifficulty={play.problemDifficulty}
+        elapsedMs={play.elapsedMs}
+        moveCount={play.moveCount}
+        undoCount={play.undoCount}
+        canUndo={play.canUndo}
+        isDeadlocked={play.isDeadlocked}
+        sourceBottleIndex={play.sourceBottleIndex}
+        operation={play.operation}
+        result={play.result}
         recordOutcome={recordOutcome}
+        onSelectBottle={play.selectBottle}
+        onUndo={play.undo}
+        onRestart={play.restart}
+        onReplay={play.replay}
+        onStartNewProblem={play.startNewProblem}
         onOpenRecords={() => navigate("/records")}
+        onClearingPourComplete={play.completeClearingPour}
         onChangeDifficulty={() => navigate("/puzzles/water-sort")}
         onBackToHome={() => navigate("/")}
         onOpenDiagnostics={
           diagnostics ? () => setDiagnosticsOpen(true) : undefined
         }
       />
-      {diagnostics && (
+      {diagnostics && diagnosticsOpen && (
         <WaterSortDiagnostics
           snapshot={diagnostics}
-          open={diagnosticsOpen}
           onClose={() => setDiagnosticsOpen(false)}
         />
       )}

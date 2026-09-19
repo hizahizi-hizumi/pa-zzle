@@ -7,16 +7,15 @@ import {
   type WaterSortDiagnosticSnapshot,
 } from "@/games/water-sort/diagnostics";
 import { getWaterSortDifficultyLabel } from "@/games/water-sort/difficulty";
+import { DiagnosticRow } from "@/games/water-sort/ui/WaterSortDiagnostics/DiagnosticRow";
 
 type WaterSortDiagnosticsProps = {
   snapshot: WaterSortDiagnosticSnapshot;
-  open: boolean;
   onClose: () => void;
 };
 
 export function WaterSortDiagnostics({
   snapshot,
-  open,
   onClose,
 }: WaterSortDiagnosticsProps) {
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
@@ -24,23 +23,17 @@ export function WaterSortDiagnostics({
   );
 
   useEffect(() => {
-    if (!open) {
-      setCopyState("idle");
-      return;
-    }
-
-    const closeOnEscape = (event: KeyboardEvent) => {
+    function closeOnEscape(event: KeyboardEvent) {
       if (event.key === "Escape") {
         onClose();
       }
-    };
+    }
+
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [onClose, open]);
+  }, [onClose]);
 
-  if (!open) return null;
-
-  const copySnapshot = async () => {
+  async function copySnapshot() {
     try {
       await navigator.clipboard.writeText(
         serializeWaterSortDiagnosticSnapshot(snapshot),
@@ -50,7 +43,7 @@ export function WaterSortDiagnostics({
     } catch {
       setCopyState("failed");
     }
-  };
+  }
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-6">
@@ -137,29 +130,6 @@ export function WaterSortDiagnostics({
           不具合報告・再現確認のための内部情報です。
         </p>
       </section>
-    </div>
-  );
-}
-
-function DiagnosticRow({
-  label,
-  value,
-  mono = false,
-  breakAll = false,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-  breakAll?: boolean;
-}) {
-  return (
-    <div className="grid grid-cols-[5rem_minmax(0,1fr)] gap-3 py-3 text-sm">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd
-        className={`${mono ? "font-mono tabular-nums" : "font-medium"} ${breakAll ? "break-all" : ""} text-right text-foreground`}
-      >
-        {value}
-      </dd>
     </div>
   );
 }

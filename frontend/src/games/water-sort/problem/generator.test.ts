@@ -77,13 +77,14 @@ describe("generateWaterSortProblem", () => {
   });
 
   test("採用条件を満たす候補が上限内に無ければ失敗を返すこと", () => {
-    const act = () =>
-      generateWaterSortProblem({
+    function act() {
+      return generateWaterSortProblem({
         seed: "water-sort-reject-all",
         colorCount: 3,
         maximumAttempts: 2,
         acceptCandidate: () => false,
       });
+    }
 
     expect(act).toThrow(
       "Failed to generate a water sort problem within 2 attempts",

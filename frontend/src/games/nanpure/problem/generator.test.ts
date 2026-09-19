@@ -61,8 +61,12 @@ describe("generateNanpureProblem", () => {
   });
 
   test("不正なヒント数を拒否すること", () => {
-    const act = () =>
-      generateNanpureProblem({ seed: "nanpure-invalid-clues", clueCount: 16 });
+    function act() {
+      return generateNanpureProblem({
+        seed: "nanpure-invalid-clues",
+        clueCount: 16,
+      });
+    }
 
     expect(act).toThrow("clueCount must be an integer between 17 and 81");
   });

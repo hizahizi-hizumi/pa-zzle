@@ -40,7 +40,7 @@ export function WaterSortBoard({
     }
   }, [operation]);
 
-  const selectBottle = (bottleIndex: number) => {
+  function selectBottle(bottleIndex: number) {
     if (interactionDisabled) {
       return;
     }
@@ -48,7 +48,7 @@ export function WaterSortBoard({
       interruptForBottleInteraction(bottleIndex);
     }
     onSelectBottle(bottleIndex);
-  };
+  }
 
   const animatedBottleIndexes = new Set(
     animations.flatMap((animation) => [
