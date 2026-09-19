@@ -111,6 +111,7 @@ export function NanpurePlay({
         mistakeCount={mistakeCount}
         undoCount={undoCount}
         onRestart={onRestart}
+        onReplay={onReplay}
         onStartNewProblem={onStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}

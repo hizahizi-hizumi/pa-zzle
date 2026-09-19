@@ -93,6 +93,7 @@ export function WaterSortPlay({
         moveCount={moveCount}
         undoCount={undoCount}
         onRestart={onRestart}
+        onReplay={onReplay}
         onStartNewProblem={onStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}

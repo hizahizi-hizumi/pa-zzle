@@ -9,6 +9,7 @@ type NanpurePlayHeaderProps = {
   mistakeCount: number;
   undoCount: number;
   onRestart: () => void;
+  onReplay: () => void;
   onStartNewProblem: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
@@ -19,6 +20,7 @@ export function NanpurePlayHeader({
   mistakeCount,
   undoCount,
   onRestart,
+  onReplay,
   onStartNewProblem,
   onChangeDifficulty,
   onBackToHome,
@@ -41,6 +43,7 @@ export function NanpurePlayHeader({
       />
       <PlayMenu
         onRestart={onRestart}
+        onReplay={onReplay}
         onStartNewProblem={onStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}

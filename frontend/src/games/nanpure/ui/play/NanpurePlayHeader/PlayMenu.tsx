@@ -1,4 +1,11 @@
-import { Home, MoreHorizontal, RefreshCw, RotateCcw } from "lucide-react";
+import {
+  Home,
+  MoreHorizontal,
+  Play,
+  RefreshCw,
+  RotateCcw,
+  SlidersHorizontal,
+} from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -6,6 +13,7 @@ import { MenuButton } from "@/games/nanpure/ui/play/NanpurePlayHeader/PlayMenu/M
 
 type PlayMenuProps = {
   onRestart: () => void;
+  onReplay: () => void;
   onStartNewProblem: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
@@ -13,6 +21,7 @@ type PlayMenuProps = {
 
 export function PlayMenu({
   onRestart,
+  onReplay,
   onStartNewProblem,
   onChangeDifficulty,
   onBackToHome,
@@ -43,21 +52,27 @@ export function PlayMenu({
         >
           <MenuButton
             icon={<RotateCcw />}
-            label="最初から"
+            label="盤面を戻す"
             onClick={() => runAndClose(onRestart)}
           />
           <MenuButton
             icon={<RefreshCw />}
-            label="新しい問題"
+            label="リセット"
+            onClick={() => runAndClose(onReplay)}
+          />
+          <MenuButton
+            icon={<Play />}
+            label="別の問題"
             onClick={() => runAndClose(onStartNewProblem)}
           />
           <MenuButton
-            label="難易度を変える"
+            icon={<SlidersHorizontal />}
+            label="難易度変更"
             onClick={() => runAndClose(onChangeDifficulty)}
           />
           <MenuButton
             icon={<Home />}
-            label="ホームへ"
+            label="ホーム"
             onClick={() => runAndClose(onBackToHome)}
           />
         </div>

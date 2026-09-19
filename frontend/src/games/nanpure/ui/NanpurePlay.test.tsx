@@ -127,14 +127,17 @@ describe("NanpurePlay", () => {
     expect(disabled).toBe(false);
   });
 
-  test("その他の操作から同じ問題のやり直しを通知すること", () => {
+  test("その他の操作から盤面を戻すとリセットを通知すること", () => {
     const props = createProps();
     render(<NanpurePlay {...props} />);
 
     fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "最初から" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "盤面を戻す" }));
+    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "リセット" }));
 
     expect(props.onRestart).toHaveBeenCalledOnce();
+    expect(props.onReplay).toHaveBeenCalledOnce();
   });
 
   test("クリア直後は完成盤を見せて結果画面への遷移を待つこと", () => {
