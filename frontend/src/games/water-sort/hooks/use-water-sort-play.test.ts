@@ -143,11 +143,18 @@ describe("useWaterSortPlay", () => {
     expect(result.current.result).toEqual({
       elapsedMs: expect.any(Number),
       moveCount: result.current.optimalMoveCount,
+      completionMoveCount: result.current.optimalMoveCount,
       undoCount: 0,
       restartCount: 0,
       optimalMoveCount: result.current.optimalMoveCount,
       moveDelta: 0,
-      score: 100,
+      backtrackMoveCount: 0,
+      speedFullScoreMs: expect.any(Number),
+      colorCount: result.current.problemIdentity.conditions.colorCount,
+      score: {
+        total: 100,
+        breakdown: { efficiency: 40, speed: 40, accuracy: 20 },
+      },
     });
     act(() => result.current.completeClearingPour());
     expect(result.current.progress).toBe("result");

@@ -15,7 +15,11 @@ import {
   isCompleteWaterSortBottle,
   type WaterSortState,
 } from "@/games/water-sort/puzzle/state";
-import { calculateWaterSortPlayScore } from "@/games/water-sort/score";
+import {
+  calculateWaterSortPlayScore,
+  calculateWaterSortSpeedFullScoreMs,
+  type WaterSortPlayScore,
+} from "@/games/water-sort/score";
 import {
   applyWaterSortSessionMove,
   canUndoWaterSortSession,
@@ -50,7 +54,10 @@ export type WaterSortProgress = "playing" | "clearing" | "result";
 export type WaterSortResult = WaterSortSessionResult & {
   optimalMoveCount: number;
   moveDelta: number;
-  score: number;
+  backtrackMoveCount: number;
+  speedFullScoreMs: number;
+  colorCount: number;
+  score: WaterSortPlayScore;
 };
 
 type WaterSortPlayState = {
@@ -251,21 +258,34 @@ export function useWaterSortPlay(difficulty: WaterSortDifficulty) {
     () => getWaterSortSessionResult(session, now),
     [now, session],
   );
-  const result = useMemo<WaterSortResult | null>(
-    () =>
-      sessionResult
-        ? {
-            ...sessionResult,
-            optimalMoveCount,
-            moveDelta: sessionResult.moveCount - optimalMoveCount,
-            score: calculateWaterSortPlayScore(
-              sessionResult.moveCount,
-              optimalMoveCount,
-            ),
-          }
-        : null,
-    [optimalMoveCount, sessionResult],
-  );
+  const result = useMemo<WaterSortResult | null>(() => {
+    if (!sessionResult) {
+      return null;
+    }
+
+    const colorCount = session.problem.conditions.colorCount;
+    const speedFullScoreMs = calculateWaterSortSpeedFullScoreMs({
+      optimalMoveCount,
+      colorCount,
+    });
+
+    return {
+      ...sessionResult,
+      optimalMoveCount,
+      moveDelta: sessionResult.completionMoveCount - optimalMoveCount,
+      backtrackMoveCount:
+        sessionResult.moveCount - sessionResult.completionMoveCount,
+      speedFullScoreMs,
+      colorCount,
+      score: calculateWaterSortPlayScore({
+        elapsedMs: sessionResult.elapsedMs,
+        moveCount: sessionResult.moveCount,
+        completionMoveCount: sessionResult.completionMoveCount,
+        optimalMoveCount,
+        colorCount,
+      }),
+    };
+  }, [optimalMoveCount, session.problem.conditions.colorCount, sessionResult]);
 
   const problemIdentity = useMemo<WaterSortProblemIdentity>(
     () => ({

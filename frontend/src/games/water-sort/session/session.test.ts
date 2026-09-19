@@ -149,6 +149,7 @@ test("Reactなしで操作・待った・やり直しを経て一局を完結で
   expect(result).toEqual({
     elapsedMs: expect.any(Number),
     moveCount: problem.solutionMoves.length + 1,
+    completionMoveCount: problem.solutionMoves.length,
     undoCount: 1,
     restartCount: 1,
   });
