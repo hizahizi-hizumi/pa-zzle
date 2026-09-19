@@ -26,7 +26,7 @@ describe("generateWaterSortProblem", () => {
 
     const standard = isStandardWaterSortInitialState(
       problem.initialState,
-      problem.conditions.colorCount,
+      problem.identity.conditions.colorCount,
     );
     const hasCompletedBottle = problem.initialState.some(
       isCompleteWaterSortBottle,
@@ -52,7 +52,7 @@ describe("generateWaterSortProblem", () => {
     });
 
     expect(solvedCandidateCount).toBe(2);
-    expect(problem.generationAttempt).toBeGreaterThan(1);
+    expect(problem.identity.generationAttempt).toBeGreaterThan(1);
   });
 
   test("保存した問題識別情報から採用条件に依存せず同じ問題を再現すること", () => {
@@ -65,12 +65,7 @@ describe("generateWaterSortProblem", () => {
         return solvedCandidateCount >= 2;
       },
     });
-    const identity = {
-      generatorVersion: problem.generatorVersion,
-      seed: problem.seed,
-      conditions: problem.conditions,
-      generationAttempt: problem.generationAttempt,
-    };
+    const identity = problem.identity;
 
     const reproduced = restoreWaterSortProblem(identity);
 

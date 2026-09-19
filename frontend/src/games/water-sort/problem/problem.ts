@@ -15,6 +15,10 @@ export type WaterSortGenerationConditions = {
   emptyBottleCount: typeof WATER_SORT_EMPTY_BOTTLE_COUNT;
 };
 
+export type WaterSortProblem = {
+  initialState: WaterSortState;
+};
+
 export type WaterSortProblemIdentity = {
   generatorVersion: typeof WATER_SORT_GENERATOR_VERSION;
   seed: ProblemSeed;
@@ -22,8 +26,8 @@ export type WaterSortProblemIdentity = {
   generationAttempt: number;
 };
 
-export type WaterSortProblem = WaterSortProblemIdentity & {
-  initialState: WaterSortState;
+export type WaterSortGeneratedProblem = WaterSortProblem & {
+  identity: WaterSortProblemIdentity;
   solutionMoves: WaterSortSolveResult["moves"];
   difficultyAnalysis: WaterSortDifficultyAnalysis;
 };

@@ -8,7 +8,7 @@ import {
   generateWaterSortProblem,
   WaterSortGenerationExhaustedError,
 } from "./problem/generator";
-import type { WaterSortProblem } from "./problem/problem";
+import type { WaterSortGeneratedProblem } from "./problem/problem";
 
 const maximumAttemptsPerColorCount = 8;
 const maximumExpandedStatesPerCandidate = 100_000;
@@ -25,7 +25,7 @@ const preferredColorCountsByDifficulty: Record<
 export function generateWaterSortProblemForDifficulty(
   difficulty: WaterSortDifficulty,
   seed: ProblemSeed,
-): WaterSortProblem {
+): WaterSortGeneratedProblem {
   for (const colorCount of preferredColorCountsByDifficulty[difficulty]) {
     try {
       return generateWaterSortProblem({

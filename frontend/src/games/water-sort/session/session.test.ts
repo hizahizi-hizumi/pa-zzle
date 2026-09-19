@@ -22,7 +22,10 @@ function createProblem() {
 describe("applyWaterSortSessionMove", () => {
   test("合法手を適用して盤面と手数を進めること", () => {
     const problem = createProblem();
-    const session = createWaterSortSession(problem, 1000);
+    const session = createWaterSortSession(
+      { initialState: problem.initialState },
+      1000,
+    );
     const move = problem.solutionMoves[0];
     if (!move) {
       throw new Error("test problem must have a solution move");
@@ -38,7 +41,10 @@ describe("applyWaterSortSessionMove", () => {
 
   test("成立しない手ではセッションを変更しないこと", () => {
     const problem = createProblem();
-    const session = createWaterSortSession(problem, 1000);
+    const session = createWaterSortSession(
+      { initialState: problem.initialState },
+      1000,
+    );
 
     const result = applyWaterSortSessionMove(
       session,
@@ -54,7 +60,10 @@ describe("applyWaterSortSessionMove", () => {
 describe("undoWaterSortSession", () => {
   test("盤面を一手戻しても成立済みの注水手数を減らさないこと", () => {
     const problem = createProblem();
-    const initialSession = createWaterSortSession(problem, 1000);
+    const initialSession = createWaterSortSession(
+      { initialState: problem.initialState },
+      1000,
+    );
     const move = problem.solutionMoves[0];
     if (!move) {
       throw new Error("test problem must have a solution move");
@@ -74,7 +83,10 @@ describe("undoWaterSortSession", () => {
 
   test("戻せる履歴がなければ回数を変更しないこと", () => {
     const problem = createProblem();
-    const session = createWaterSortSession(problem, 1000);
+    const session = createWaterSortSession(
+      { initialState: problem.initialState },
+      1000,
+    );
 
     const result = undoWaterSortSession(session);
 
@@ -86,7 +98,10 @@ describe("undoWaterSortSession", () => {
 describe("restartWaterSortSession", () => {
   test("プレイ中は同じ計測を継続して初期盤面へ戻すこと", () => {
     const problem = createProblem();
-    const initialSession = createWaterSortSession(problem, 1000);
+    const initialSession = createWaterSortSession(
+      { initialState: problem.initialState },
+      1000,
+    );
     const move = problem.solutionMoves[0];
     if (!move) {
       throw new Error("test problem must have a solution move");
@@ -107,7 +122,10 @@ describe("restartWaterSortSession", () => {
 
   test("クリア済みのセッションはやり直さないこと", () => {
     const problem = createProblem();
-    let session = createWaterSortSession(problem, 1000);
+    let session = createWaterSortSession(
+      { initialState: problem.initialState },
+      1000,
+    );
     for (const [index, move] of problem.solutionMoves.entries()) {
       const next = applyWaterSortSessionMove(session, move, 1100 + index);
       if (!next) {
@@ -124,7 +142,10 @@ describe("restartWaterSortSession", () => {
 
 test("Reactなしで操作・待った・やり直しを経て一局を完結できること", () => {
   const problem = createProblem();
-  let session = createWaterSortSession(problem, 1000);
+  let session = createWaterSortSession(
+    { initialState: problem.initialState },
+    1000,
+  );
   const firstMove = problem.solutionMoves[0];
   if (!firstMove) {
     throw new Error("test problem must have a solution move");

@@ -17,12 +17,7 @@ describe("WaterSortDiagnosticSnapshot", () => {
     });
     const snapshot = createWaterSortDiagnosticSnapshot({
       difficulty: "normal",
-      problemIdentity: {
-        generatorVersion: problem.generatorVersion,
-        seed: problem.seed,
-        conditions: problem.conditions,
-        generationAttempt: problem.generationAttempt,
-      },
+      problemIdentity: problem.identity,
       buildRevision: "abcdef1234567890",
     });
 

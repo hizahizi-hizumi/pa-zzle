@@ -5,7 +5,7 @@ import {
 import { restoreWaterSortProblem } from "@/games/water-sort/problem/generator";
 import {
   WATER_SORT_GENERATOR_VERSION,
-  type WaterSortProblem,
+  type WaterSortGeneratedProblem,
   type WaterSortProblemIdentity,
 } from "@/games/water-sort/problem/problem";
 import {
@@ -83,7 +83,7 @@ export function parseWaterSortDiagnosticSnapshot(
 
 export function restoreWaterSortProblemFromDiagnosticSnapshot(
   snapshot: WaterSortDiagnosticSnapshot,
-): WaterSortProblem {
+): WaterSortGeneratedProblem {
   return restoreWaterSortProblem(snapshot.problemIdentity);
 }
 
