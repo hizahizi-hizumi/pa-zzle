@@ -1,5 +1,4 @@
 import { cleanup, render } from "@testing-library/react";
-import { afterEach, expect, test, vi } from "vitest";
 
 import { NanpureClearAnimation } from "./NanpureClearAnimation";
 

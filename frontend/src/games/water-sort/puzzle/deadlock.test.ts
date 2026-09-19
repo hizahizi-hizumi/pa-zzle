@@ -1,5 +1,3 @@
-import { describe, expect, test } from "vitest";
-
 import { classifyWaterSortDeadlock } from "./deadlock";
 import type { WaterSortState } from "./state";
 

@@ -5,7 +5,6 @@ import {
   render,
   screen,
 } from "@testing-library/react";
-import { afterEach, describe, expect, test, vi } from "vitest";
 
 import type { WaterSortResult } from "../hooks/use-water-sort-play";
 import { WaterSortPlay } from "./WaterSortPlay";

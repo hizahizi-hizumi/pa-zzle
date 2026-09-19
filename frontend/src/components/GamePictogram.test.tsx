@@ -1,5 +1,4 @@
 import { cleanup, render } from "@testing-library/react";
-import { afterEach, expect, test } from "vitest";
 
 import { GamePictogram } from "@/components/GamePictogram";
 

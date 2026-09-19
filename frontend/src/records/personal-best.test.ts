@@ -1,5 +1,3 @@
-import { expect, test } from "vitest";
-
 import { getPersonalBests } from "./personal-best";
 import type { PlayRecord } from "./play-record";
 import type { PlayRecordDefinition } from "./play-record-definition";

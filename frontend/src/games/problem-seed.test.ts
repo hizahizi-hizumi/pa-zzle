@@ -1,5 +1,3 @@
-import { describe, expect, test } from "vitest";
-
 import { createProblemSeed } from "@/games/problem-seed";
 
 describe("createProblemSeed", () => {

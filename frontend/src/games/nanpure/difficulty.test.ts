@@ -1,5 +1,3 @@
-import { expect, test } from "vitest";
-
 import { parseNanpureDifficulty } from "./difficulty";
 
 test.each(["easy", "normal", "hard"] as const)(

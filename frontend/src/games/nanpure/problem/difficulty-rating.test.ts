@@ -1,4 +1,3 @@
-import { describe, expect, test } from "vitest";
 import type { NanpureBoard, NanpureCell } from "../puzzle/board";
 import {
   classifyNanpureDependency,
