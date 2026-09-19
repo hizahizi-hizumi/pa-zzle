@@ -43,6 +43,7 @@ export function PlayableNanpure({ difficulty }: PlayableNanpureProps) {
 
   return (
     <NanpurePlay
+      difficulty={difficulty}
       status={play.status}
       progress={play.progress}
       clues={play.clues}

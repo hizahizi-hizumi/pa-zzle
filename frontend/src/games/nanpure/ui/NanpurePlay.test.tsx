@@ -15,6 +15,7 @@ function emptyNotes() {
 
 function createProps(): ComponentProps<typeof NanpurePlay> {
   return {
+    difficulty: "normal",
     status: "playing",
     progress: "playing",
     clues: emptyBoard(),
@@ -198,27 +199,25 @@ describe("NanpurePlay", () => {
       />,
     );
 
-    const heading = screen.getByRole("heading", { name: "クリア!" });
+    const heading = screen.getByRole("heading", { name: "プレイ結果" });
     const pictogram = document.querySelector('svg[aria-label="ナンプレ"]');
 
     expect(heading).toBeTruthy();
     expect(pictogram).toBeTruthy();
     expect(screen.getByText("02:05")).toBeTruthy();
     expect(screen.getByText("79")).toBeTruthy();
-    expect(screen.getByText("クリア！")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "次の問題" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "もう一度" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "プレイ！" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "同じ問題" })).toBeTruthy();
 
-    fireEvent.click(screen.getByText("プレイ詳細"));
+    fireEvent.click(screen.getByText("スコアの内訳・採点基準"));
 
     expect(screen.getByText("30 / 40")).toBeTruthy();
     expect(screen.getByText("9 / 20")).toBeTruthy();
-    expect(screen.getByText("採点基準")).toBeTruthy();
     expect(screen.getByText(/ミス1回につき/)).toBeTruthy();
     expect(screen.getByText(/1分単位で切り上げ/)).toBeTruthy();
     expect(screen.getByText(/待った1回につき/)).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "次の問題" }));
+    fireEvent.click(screen.getByRole("button", { name: "プレイ！" }));
 
     expect(onStartNewProblem).toHaveBeenCalledOnce();
   });
@@ -261,7 +260,7 @@ describe("NanpurePlay", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "記録を見る" }));
+    fireEvent.click(screen.getByRole("button", { name: "記録を確認" }));
 
     const bestUpdate = screen.getByRole("region", { name: "自己ベスト更新" });
 

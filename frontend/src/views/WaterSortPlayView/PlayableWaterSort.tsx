@@ -62,7 +62,6 @@ export function PlayableWaterSort({ difficulty }: PlayableWaterSortProps) {
         status={play.status}
         progress={play.progress}
         state={play.state}
-        problemDifficulty={play.problemDifficulty}
         elapsedMs={play.elapsedMs}
         moveCount={play.moveCount}
         undoCount={play.undoCount}

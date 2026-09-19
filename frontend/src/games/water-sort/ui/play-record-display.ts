@@ -35,7 +35,7 @@ export const waterSortPlayRecordDisplay: PlayRecordDisplayDefinition = {
 
     return {
       primaryMetric: {
-        label: "プレイ評価",
+        label: "スコア",
         value: score === null ? "再計算不可" : `${score}点`,
       },
       detailMetrics:
@@ -77,7 +77,7 @@ export const waterSortPlayRecordDisplay: PlayRecordDisplayDefinition = {
   personalBestMetrics: [
     {
       id: "play-score",
-      label: "最高評価",
+      label: "ベストスコア",
       formatValue(value) {
         return `${value}点`;
       },

@@ -20,7 +20,6 @@ const baseProps = {
   status: "playing" as const,
   progress: "playing" as const,
   state: [[0, 1], []] as const,
-  problemDifficulty: { difficulty: "normal" as const, index: 28.2 },
   elapsedMs: 5000,
   moveCount: 7,
   undoCount: 2,
@@ -295,7 +294,7 @@ describe("WaterSortPlay", () => {
     expect((button as HTMLButtonElement).disabled).toBe(true);
   });
 
-  test("クリア後は主要な成績だけを先に表示すること", () => {
+  test("クリア後は主要な結果だけを先に表示すること", () => {
     render(
       <WaterSortPlay
         {...baseProps}
@@ -304,21 +303,19 @@ describe("WaterSortPlay", () => {
         result={createResult()}
       />,
     );
-    expect(screen.getByRole("heading", { name: "クリア!" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "プレイ結果" })).toBeTruthy();
     expect(screen.getByText("ウォーターソート")).toBeTruthy();
     expect(screen.getByText("01:05")).toBeTruthy();
-    expect(screen.getByText("クリア手数")).toBeTruthy();
+    expect(screen.getByText("手数")).toBeTruthy();
     expect(screen.getByText("12")).toBeTruthy();
-    expect(screen.getByText("10")).toBeTruthy();
     expect(screen.getByText("スコア")).toBeTruthy();
     expect(screen.getByText("87")).toBeTruthy();
     expect(screen.getByText("ナイスプレイ！")).toBeTruthy();
     expect(screen.getByText("パズル pa-zzle")).toBeTruthy();
     expect(screen.getByText("/ 100")).toBeTruthy();
-    expect(screen.getByText("プレイ詳細")).toBeTruthy();
-    expect(screen.getByText("+2")).toBeTruthy();
+    expect(screen.getByText("スコアの内訳・採点基準")).toBeTruthy();
+    expect(screen.getByText(/最短\s*\+2/)).toBeTruthy();
     expect(screen.getByText("待った")).toBeTruthy();
-    expect(screen.getByText("採点基準")).toBeTruthy();
     expect(screen.getAllByText("効率")).toHaveLength(2);
     expect(screen.getAllByText("速さ")).toHaveLength(2);
     expect(screen.getAllByText("正確性")).toHaveLength(2);
@@ -344,7 +341,7 @@ describe("WaterSortPlay", () => {
     expect(onOpenDiagnostics).toHaveBeenCalledOnce();
   });
 
-  test("100点では最高評価として強く称えること", () => {
+  test("100点では最高段階として強く称えること", () => {
     render(
       <WaterSortPlay
         {...baseProps}
@@ -427,7 +424,7 @@ describe("WaterSortPlay", () => {
         result={result}
       />,
     );
-    expect(screen.queryByRole("heading", { name: "クリア!" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "プレイ結果" })).toBeNull();
     await act(async () => {
       resolveAnimation?.();
       await animationFinished;
@@ -452,10 +449,10 @@ describe("WaterSortPlay", () => {
         onBackToHome={onBackToHome}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "次の問題" }));
-    fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
-    fireEvent.click(screen.getByRole("button", { name: "難易度を変える" }));
-    fireEvent.click(screen.getByRole("button", { name: "ホームへ" }));
+    fireEvent.click(screen.getByRole("button", { name: "プレイ！" }));
+    fireEvent.click(screen.getByRole("button", { name: "同じ問題" }));
+    fireEvent.click(screen.getByRole("button", { name: "難易度変更" }));
+    fireEvent.click(screen.getByRole("button", { name: "ホーム" }));
     expect(startNewProblem).toHaveBeenCalledOnce();
     expect(replay).toHaveBeenCalledOnce();
     expect(onChangeDifficulty).toHaveBeenCalledOnce();
@@ -496,11 +493,11 @@ describe("WaterSortPlay", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "記録を見る" }));
+    fireEvent.click(screen.getByRole("button", { name: "記録を確認" }));
 
     const bestUpdate = screen.getByRole("region", { name: "自己ベスト更新" });
 
-    expect(bestUpdate.textContent).toContain("最高評価");
+    expect(bestUpdate.textContent).toContain("ベストスコア");
     expect(bestUpdate.textContent).toContain("92点");
     expect(bestUpdate.textContent).toContain("100点");
     expect(onOpenRecords).toHaveBeenCalledOnce();

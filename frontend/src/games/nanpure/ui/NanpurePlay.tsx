@@ -1,4 +1,5 @@
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
+import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import type {
   NanpureProgress,
   NanpureResult,
@@ -16,6 +17,7 @@ import { NanpureResultScreen } from "@/games/nanpure/ui/result/NanpureResultScre
 import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
 
 type NanpurePlayProps = {
+  difficulty: NanpureDifficulty;
   status: "playing" | "cleared";
   progress: NanpureProgress;
   clues: NanpureBoardState;
@@ -47,6 +49,7 @@ type NanpurePlayProps = {
 };
 
 export function NanpurePlay({
+  difficulty,
   status,
   progress,
   clues,
@@ -79,6 +82,7 @@ export function NanpurePlay({
   if (progress === "result" && status === "cleared" && result) {
     return (
       <NanpureResultScreen
+        difficulty={difficulty}
         result={result}
         recordOutcome={recordOutcome}
         onReplay={onReplay}

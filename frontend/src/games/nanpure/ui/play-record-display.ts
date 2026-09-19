@@ -24,7 +24,7 @@ export const nanpurePlayRecordDisplay: PlayRecordDisplayDefinition = {
 
     return {
       primaryMetric: {
-        label: "プレイ評価",
+        label: "スコア",
         value: `${getNanpurePlayRecordScore(record)}点`,
       },
       detailMetrics: [
@@ -50,7 +50,7 @@ export const nanpurePlayRecordDisplay: PlayRecordDisplayDefinition = {
   personalBestMetrics: [
     {
       id: "play-score",
-      label: "最高評価",
+      label: "ベストスコア",
       formatValue(value) {
         return `${value}点`;
       },

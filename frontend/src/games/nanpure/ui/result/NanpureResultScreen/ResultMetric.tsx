@@ -5,9 +5,9 @@ type ResultMetricProps = {
 
 export function ResultMetric({ label, value }: ResultMetricProps) {
   return (
-    <div className="rounded-xl bg-muted/70 px-2 py-4">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="mt-1 font-mono text-xl font-semibold tracking-tight">
+    <div className="rounded-xl bg-muted/55 px-3 py-2 text-center">
+      <dt className="text-[11px] text-muted-foreground">{label}</dt>
+      <dd className="mt-1 font-mono text-base font-semibold tabular-nums text-foreground">
         {value}
       </dd>
     </div>

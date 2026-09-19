@@ -22,13 +22,13 @@ function createRecord() {
   });
 }
 
-test("履歴にプレイ評価とゲーム固有指標を表示すること", () => {
+test("履歴にスコアとゲーム固有指標を表示すること", () => {
   const record = createRecord();
 
   const summary = nanpurePlayRecordDisplay.getSummary(record);
 
   expect(summary).toEqual({
-    primaryMetric: { label: "プレイ評価", value: "91点" },
+    primaryMetric: { label: "スコア", value: "91点" },
     detailMetrics: [
       { label: "時間", value: "02:00" },
       { label: "ミス", value: "1" },

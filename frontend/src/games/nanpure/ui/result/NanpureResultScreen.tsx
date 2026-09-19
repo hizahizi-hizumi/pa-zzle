@@ -1,12 +1,21 @@
-import { Home, RefreshCw } from "lucide-react";
+import {
+  BookOpen,
+  Home,
+  Play,
+  RotateCcw,
+  SlidersHorizontal,
+} from "lucide-react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
-import { GamePictogram } from "@/components/GamePictogram";
 import { GameResultConfetti } from "@/components/GameResultConfetti";
-import { GameResultMark } from "@/components/GameResultMark";
+import { GameResultIdentity } from "@/components/GameResultIdentity";
 import { GameResultScoreCard } from "@/components/GameResultScoreCard";
 import { Button } from "@/components/ui/button";
 import nanpurePictogramSvg from "@/games/nanpure/assets/pictogram.svg?raw";
+import {
+  getNanpureDifficultyLabel,
+  type NanpureDifficulty,
+} from "@/games/nanpure/difficulty";
 import type { NanpureResult } from "@/games/nanpure/hooks/use-nanpure-play";
 import {
   getNanpureGameResultLevel,
@@ -21,6 +30,7 @@ import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 
 type NanpureResultScreenProps = {
+  difficulty: NanpureDifficulty;
   result: NanpureResult;
   recordOutcome: PlayRecordSaveOutcome | null;
   onReplay: () => void;
@@ -31,6 +41,7 @@ type NanpureResultScreenProps = {
 };
 
 export function NanpureResultScreen({
+  difficulty,
   result,
   recordOutcome,
   onReplay,
@@ -42,23 +53,25 @@ export function NanpureResultScreen({
   const resultLevel = getNanpureGameResultLevel(result.score.total);
 
   return (
-    <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-y-auto bg-background pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+    <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-y-auto bg-background">
       <BrandIdentityHeader />
       <GameResultConfetti level={resultLevel} />
-      <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-5">
-        <div className="text-center">
-          <GameResultMark level={resultLevel}>
-            <span className="block size-12">
-              <GamePictogram svg={nanpurePictogramSvg} variant="result" />
-            </span>
-          </GameResultMark>
-          <p className="mt-4 text-sm font-semibold tracking-tight">ナンプレ</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight">クリア!</h1>
-        </div>
+      <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-4 py-3 pb-[max(0.875rem,env(safe-area-inset-bottom))]">
+        <GameResultIdentity
+          gameName="ナンプレ"
+          difficultyLabel={getNanpureDifficultyLabel(difficulty)}
+          pictogramSvg={nanpurePictogramSvg}
+          level={resultLevel}
+        />
 
         <GameResultScoreCard score={result.score.total} level={resultLevel} />
 
-        <dl className="mt-6 grid grid-cols-3 gap-2 text-center">
+        <PlayRecordOutcomeNotice
+          outcome={recordOutcome}
+          display={nanpurePlayRecordDisplay}
+        />
+
+        <dl className="mt-3 grid grid-cols-3 gap-2">
           <ResultMetric
             label="時間"
             value={formatElapsedTime(result.elapsedMs)}
@@ -67,50 +80,36 @@ export function NanpureResultScreen({
           <ResultMetric label="待った" value={String(result.undoCount)} />
         </dl>
 
-        <PlayRecordOutcomeNotice
-          outcome={recordOutcome}
-          display={nanpurePlayRecordDisplay}
-        />
-
-        <div className="mt-7 grid gap-3">
-          <Button
-            size="lg"
-            className="h-12 text-base"
-            onClick={onStartNewProblem}
-          >
-            次の問題
+        <div className="mt-4 grid gap-3">
+          <Button size="lg" onClick={onStartNewProblem}>
+            <Play />
+            プレイ！
           </Button>
-          <Button
-            variant="outline"
-            size="lg"
-            className="h-12 text-base"
-            onClick={onReplay}
-          >
-            <RefreshCw />
-            もう一度
-          </Button>
-        </div>
-
-        <div className="mt-4 grid gap-2">
-          <Button variant="ghost" onClick={onOpenRecords}>
-            記録を見る
-          </Button>
-          <div className="grid grid-cols-2 gap-3">
-            <Button variant="ghost" onClick={onChangeDifficulty}>
-              難易度を変える
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="outline" onClick={onReplay}>
+              <RotateCcw />
+              同じ問題
             </Button>
-            <Button variant="ghost" onClick={onBackToHome}>
+            <Button variant="outline" onClick={onOpenRecords}>
+              <BookOpen />
+              記録を確認
+            </Button>
+            <Button variant="outline" onClick={onChangeDifficulty}>
+              <SlidersHorizontal />
+              難易度変更
+            </Button>
+            <Button variant="outline" onClick={onBackToHome}>
               <Home />
-              ホームへ
+              ホーム
             </Button>
           </div>
         </div>
 
-        <details className="mt-6 rounded-lg border px-4 py-3 text-sm text-muted-foreground">
-          <summary className="cursor-pointer select-none font-medium text-foreground">
-            プレイ詳細
+        <details className="mt-3 rounded-xl border px-3 py-2 text-sm text-muted-foreground">
+          <summary className="cursor-pointer select-none text-center text-xs font-medium text-foreground">
+            スコアの内訳・採点基準
           </summary>
-          <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
+          <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">
             <DetailMetric
               label="正確さ"
               value={`${result.score.breakdown.accuracy} / ${NANPURE_SCORE_MAXIMUMS.accuracy}`}
@@ -125,8 +124,7 @@ export function NanpureResultScreen({
             />
             <DetailMetric label="やり直し" value={`${result.restartCount}回`} />
           </dl>
-          <div className="mt-4 border-t pt-4">
-            <p className="font-medium text-foreground">採点基準</p>
+          <div className="mt-3 border-t pt-3">
             <ScoreCriteria />
           </div>
         </details>
