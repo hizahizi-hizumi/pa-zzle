@@ -21,8 +21,8 @@ function selectComparableRecords(
   currentRecord: PlayRecord,
   definition: PlayRecordDefinition,
 ): PlayRecord[] {
-  const comparisonGroup = definition.getComparisonGroup(currentRecord);
-  if (comparisonGroup === null) {
+  const comparisonKey = definition.getComparisonKey(currentRecord);
+  if (comparisonKey === null) {
     return [];
   }
 
@@ -31,7 +31,7 @@ function selectComparableRecords(
       return false;
     }
 
-    return definition.getComparisonGroup(record)?.key === comparisonGroup.key;
+    return definition.getComparisonKey(record) === comparisonKey;
   });
 }
 
@@ -74,9 +74,8 @@ export function getPlayRecordSaveOutcome(
     return [
       {
         metricId: metric.id,
-        label: metric.label,
-        previousValue: metric.formatValue(previousBest),
-        currentValue: metric.formatValue(currentValue),
+        previousValue: previousBest,
+        currentValue,
       },
     ];
   });

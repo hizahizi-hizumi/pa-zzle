@@ -1,3 +1,5 @@
+import type { GameResultLevel } from "@/games/result";
+
 export const WATER_SORT_SCORE_MAXIMUMS = {
   efficiency: 40,
   speed: 40,
@@ -93,4 +95,17 @@ export function calculateWaterSortPlayScore({
     total: efficiency + speed + accuracy,
     breakdown: { efficiency, speed, accuracy },
   };
+}
+
+export function getWaterSortGameResultLevel(score: number): GameResultLevel {
+  if (score >= 100) {
+    return "perfect";
+  }
+  if (score >= 90) {
+    return "great";
+  }
+  if (score >= 80) {
+    return "good";
+  }
+  return "clear";
 }

@@ -9,7 +9,7 @@ import {
   nanpurePlayRecordDefinition,
 } from "@/games/nanpure/play-record";
 import { NanpurePlay } from "@/games/nanpure/ui/NanpurePlay";
-import { useSavePlayRecord } from "@/records/use-save-play-record";
+import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { Link, useNavigate, useParams } from "@/router";
 
 export default function NanpurePlayPage() {
