@@ -21,13 +21,33 @@
   ],
   [
     "lint/style/noRestrictedImports",
+    "src/components/GameResultIdentity.tsx",
+    "import { GamePictogram } from \"@/components/GamePictogram\";"
+  ],
+  [
+    "lint/style/noRestrictedImports",
+    "src/components/GameResultIdentity.tsx",
+    "import { GameResultMark } from \"@/components/GameResultMark\";"
+  ],
+  [
+    "lint/style/noRestrictedImports",
     "src/components/GameResultMark.tsx",
     "import { getGameResultStyle } from \"@/components/game-result-style\";"
   ],
   [
     "lint/style/noRestrictedImports",
     "src/components/GameResultScoreCard.tsx",
+    "import { GameResultSurface } from \"@/components/GameResultSurface\";"
+  ],
+  [
+    "lint/style/noRestrictedImports",
+    "src/components/GameResultScoreCard.tsx",
     "import { getGameResultStyle } from \"@/components/game-result-style\";"
+  ],
+  [
+    "lint/style/noRestrictedImports",
+    "src/components/GameResultSurface.tsx",
+    "import type { GameResultSurfaceVariant } from \"@/components/game-result-style\";"
   ],
   [
     "lint/style/noRestrictedImports",
@@ -71,52 +91,52 @@
   ],
   [
     "lint/style/noRestrictedImports",
-    "src/games/nanpure/hooks/use-nanpure-play.test.ts",
-    "import type { NanpureDifficulty } from \"@/games/nanpure/difficulty\";"
+    "src/games/nanpure/play/use-nanpure-play.test.ts",
+    "import { analyzeNanpureDifficulty } from \"@/games/nanpure/problem/difficulty-analysis\";"
   ],
   [
     "lint/style/noRestrictedImports",
-    "src/games/nanpure/hooks/use-nanpure-play.test.ts",
-    "import { rateUniqueNanpureDifficulty } from \"@/games/nanpure/problem/difficulty-rating\";"
-  ],
-  [
-    "lint/style/noRestrictedImports",
-    "src/games/nanpure/hooks/use-nanpure-play.test.ts",
+    "src/games/nanpure/play/use-nanpure-play.test.ts",
     "import { restoreNanpureProblem } from \"@/games/nanpure/problem/generator\";"
   ],
   [
     "lint/style/noRestrictedImports",
-    "src/games/nanpure/hooks/use-nanpure-play.ts",
+    "src/games/nanpure/play/use-nanpure-play.test.ts",
+    "} from \"@/games/nanpure/difficulty\";"
+  ],
+  [
+    "lint/style/noRestrictedImports",
+    "src/games/nanpure/play/use-nanpure-play.ts",
     "import type { NanpureDifficulty } from \"@/games/nanpure/difficulty\";"
   ],
   [
     "lint/style/noRestrictedImports",
-    "src/games/nanpure/hooks/use-nanpure-play.ts",
+    "src/games/nanpure/play/use-nanpure-play.ts",
     "import type { NanpureDigit } from \"@/games/nanpure/puzzle/board\";"
   ],
   [
     "lint/style/noRestrictedImports",
-    "src/games/nanpure/hooks/use-nanpure-play.ts",
+    "src/games/nanpure/play/use-nanpure-play.ts",
     "import type { NanpureProblemIdentity } from \"@/games/nanpure/problem/problem\";"
   ],
   [
     "lint/style/noRestrictedImports",
-    "src/games/nanpure/hooks/use-nanpure-play.ts",
+    "src/games/nanpure/play/use-nanpure-play.ts",
     "import { findNanpureConflictCellIndices } from \"@/games/nanpure/puzzle/rules\";"
   ],
   [
     "lint/style/noRestrictedImports",
-    "src/games/nanpure/hooks/use-nanpure-play.ts",
-    "import { generateNanpureProblemForDifficulty } from \"@/games/nanpure/problem/selection\";"
+    "src/games/nanpure/play/use-nanpure-play.ts",
+    "import { generateNanpureProblemForDifficulty } from \"@/games/nanpure/problem-selection\";"
   ],
   [
     "lint/style/noRestrictedImports",
-    "src/games/nanpure/hooks/use-nanpure-play.ts",
+    "src/games/nanpure/play/use-nanpure-play.ts",
     "} from \"@/games/nanpure/score\";"
   ],
   [
     "lint/style/noRestrictedImports",
-    "src/games/nanpure/hooks/use-nanpure-play.ts",
+    "src/games/nanpure/play/use-nanpure-play.ts",
     "} from \"@/games/nanpure/session/session\";"
   ],
   [
@@ -128,6 +148,11 @@
     "lint/style/noRestrictedImports",
     "src/games/nanpure/ui/NanpureDifficultyPreview.tsx",
     "import { cn } from \"@/lib/utils\";"
+  ],
+  [
+    "lint/style/noRestrictedImports",
+    "src/games/nanpure/ui/NanpurePlay.tsx",
+    "import type { NanpureDifficulty } from \"@/games/nanpure/difficulty\";"
   ],
   [
     "lint/style/noRestrictedImports",
@@ -167,7 +192,7 @@
   [
     "lint/style/noRestrictedImports",
     "src/games/nanpure/ui/NanpurePlay.tsx",
-    "} from \"@/games/nanpure/hooks/use-nanpure-play\";"
+    "} from \"@/games/nanpure/play/use-nanpure-play\";"
   ],
   [
     "lint/style/noRestrictedImports",
@@ -322,7 +347,7 @@
   [
     "lint/style/noRestrictedImports",
     "src/games/nanpure/ui/result/NanpureResultScreen.tsx",
-    "import type { NanpureResult } from \"@/games/nanpure/hooks/use-nanpure-play\";"
+    "import type { NanpureResult } from \"@/games/nanpure/play/use-nanpure-play\";"
   ],
   [
     "lint/style/noRestrictedImports",
@@ -342,17 +367,12 @@
   [
     "lint/style/noRestrictedImports",
     "src/games/nanpure/ui/result/NanpureResultScreen.tsx",
-    "import { GamePictogram } from \"@/components/GamePictogram\";"
-  ],
-  [
-    "lint/style/noRestrictedImports",
-    "src/games/nanpure/ui/result/NanpureResultScreen.tsx",
     "import { GameResultConfetti } from \"@/components/GameResultConfetti\";"
   ],
   [
     "lint/style/noRestrictedImports",
     "src/games/nanpure/ui/result/NanpureResultScreen.tsx",
-    "import { GameResultMark } from \"@/components/GameResultMark\";"
+    "import { GameResultIdentity } from \"@/components/GameResultIdentity\";"
   ],
   [
     "lint/style/noRestrictedImports",
@@ -383,6 +403,11 @@
     "lint/style/noRestrictedImports",
     "src/games/nanpure/ui/result/NanpureResultScreen.tsx",
     "import { nanpurePlayRecordDisplay } from \"@/games/nanpure/ui/play-record-display\";"
+  ],
+  [
+    "lint/style/noRestrictedImports",
+    "src/games/nanpure/ui/result/NanpureResultScreen.tsx",
+    "} from \"@/games/nanpure/difficulty\";"
   ],
   [
     "lint/style/noRestrictedImports",
@@ -426,52 +451,52 @@
   ],
   [
     "lint/style/noRestrictedImports",
-    "src/games/water-sort/hooks/use-water-sort-play.test.ts",
+    "src/games/water-sort/play/use-water-sort-play.test.ts",
     "import type { WaterSortMove } from \"@/games/water-sort/puzzle/state\";"
   ],
   [
     "lint/style/noRestrictedImports",
-    "src/games/water-sort/hooks/use-water-sort-play.test.ts",
+    "src/games/water-sort/play/use-water-sort-play.test.ts",
     "} from \"@/games/water-sort/puzzle/rules\";"
   ],
   [
     "lint/style/noRestrictedImports",
-    "src/games/water-sort/hooks/use-water-sort-play.ts",
+    "src/games/water-sort/play/use-water-sort-play.ts",
     "import type { WaterSortDifficultyAnalysis } from \"@/games/water-sort/problem/difficulty-analysis\";"
   ],
   [
     "lint/style/noRestrictedImports",
-    "src/games/water-sort/hooks/use-water-sort-play.ts",
+    "src/games/water-sort/play/use-water-sort-play.ts",
     "import { classifyWaterSortDeadlock } from \"@/games/water-sort/puzzle/deadlock\";"
   ],
   [
     "lint/style/noRestrictedImports",
-    "src/games/water-sort/hooks/use-water-sort-play.ts",
-    "import { generateWaterSortProblemForDifficulty } from \"@/games/water-sort/problem/selection\";"
+    "src/games/water-sort/play/use-water-sort-play.ts",
+    "import { generateWaterSortProblemForDifficulty } from \"@/games/water-sort/problem-selection\";"
   ],
   [
     "lint/style/noRestrictedImports",
-    "src/games/water-sort/hooks/use-water-sort-play.ts",
+    "src/games/water-sort/play/use-water-sort-play.ts",
     "} from \"@/games/water-sort/difficulty\";"
   ],
   [
     "lint/style/noRestrictedImports",
-    "src/games/water-sort/hooks/use-water-sort-play.ts",
+    "src/games/water-sort/play/use-water-sort-play.ts",
     "} from \"@/games/water-sort/problem/problem\";"
   ],
   [
     "lint/style/noRestrictedImports",
-    "src/games/water-sort/hooks/use-water-sort-play.ts",
+    "src/games/water-sort/play/use-water-sort-play.ts",
     "} from \"@/games/water-sort/puzzle/state\";"
   ],
   [
     "lint/style/noRestrictedImports",
-    "src/games/water-sort/hooks/use-water-sort-play.ts",
+    "src/games/water-sort/play/use-water-sort-play.ts",
     "} from \"@/games/water-sort/score\";"
   ],
   [
     "lint/style/noRestrictedImports",
-    "src/games/water-sort/hooks/use-water-sort-play.ts",
+    "src/games/water-sort/play/use-water-sort-play.ts",
     "} from \"@/games/water-sort/session/session\";"
   ],
   [
@@ -517,6 +542,11 @@
   [
     "lint/style/noRestrictedImports",
     "src/games/water-sort/ui/WaterSortPlay.tsx",
+    "import type { WaterSortDifficulty } from \"@/games/water-sort/difficulty\";"
+  ],
+  [
+    "lint/style/noRestrictedImports",
+    "src/games/water-sort/ui/WaterSortPlay.tsx",
     "import type { WaterSortState } from \"@/games/water-sort/puzzle/state\";"
   ],
   [
@@ -552,12 +582,7 @@
   [
     "lint/style/noRestrictedImports",
     "src/games/water-sort/ui/WaterSortPlay.tsx",
-    "} from \"@/games/water-sort/difficulty\";"
-  ],
-  [
-    "lint/style/noRestrictedImports",
-    "src/games/water-sort/ui/WaterSortPlay.tsx",
-    "} from \"@/games/water-sort/hooks/use-water-sort-play\";"
+    "} from \"@/games/water-sort/play/use-water-sort-play\";"
   ],
   [
     "lint/style/noRestrictedImports",
@@ -607,7 +632,7 @@
   [
     "lint/style/noRestrictedImports",
     "src/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen.tsx",
-    "import type { WaterSortResult } from \"@/games/water-sort/hooks/use-water-sort-play\";"
+    "import type { WaterSortResult } from \"@/games/water-sort/play/use-water-sort-play\";"
   ],
   [
     "lint/style/noRestrictedImports",
@@ -632,17 +657,12 @@
   [
     "lint/style/noRestrictedImports",
     "src/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen.tsx",
-    "import { GamePictogram } from \"@/components/GamePictogram\";"
-  ],
-  [
-    "lint/style/noRestrictedImports",
-    "src/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen.tsx",
     "import { GameResultConfetti } from \"@/components/GameResultConfetti\";"
   ],
   [
     "lint/style/noRestrictedImports",
     "src/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen.tsx",
-    "import { GameResultMark } from \"@/components/GameResultMark\";"
+    "import { GameResultIdentity } from \"@/components/GameResultIdentity\";"
   ],
   [
     "lint/style/noRestrictedImports",
@@ -692,7 +712,7 @@
   [
     "lint/style/noRestrictedImports",
     "src/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen/ScoreCriteria.tsx",
-    "import type { WaterSortResult } from \"@/games/water-sort/hooks/use-water-sort-play\";"
+    "import type { WaterSortResult } from \"@/games/water-sort/play/use-water-sort-play\";"
   ],
   [
     "lint/style/noRestrictedImports",
@@ -707,7 +727,7 @@
   [
     "lint/style/noRestrictedImports",
     "src/games/water-sort/ui/board/WaterSortBoard.tsx",
-    "import type { WaterSortOperation } from \"@/games/water-sort/hooks/use-water-sort-play\";"
+    "import type { WaterSortOperation } from \"@/games/water-sort/play/use-water-sort-play\";"
   ],
   [
     "lint/style/noRestrictedImports",
@@ -802,7 +822,7 @@
   [
     "lint/style/noRestrictedImports",
     "src/games/water-sort/ui/board/pour/pour-animation.test.ts",
-    "import type { WaterSortOperation } from \"@/games/water-sort/hooks/use-water-sort-play\";"
+    "import type { WaterSortOperation } from \"@/games/water-sort/play/use-water-sort-play\";"
   ],
   [
     "lint/style/noRestrictedImports",
@@ -812,12 +832,12 @@
   [
     "lint/style/noRestrictedImports",
     "src/games/water-sort/ui/board/pour/pour-animation.ts",
-    "import type { WaterSortOperation } from \"@/games/water-sort/hooks/use-water-sort-play\";"
+    "import type { WaterSortOperation } from \"@/games/water-sort/play/use-water-sort-play\";"
   ],
   [
     "lint/style/noRestrictedImports",
     "src/games/water-sort/ui/board/pour/use-pour-animations.ts",
-    "import type { WaterSortOperation } from \"@/games/water-sort/hooks/use-water-sort-play\";"
+    "import type { WaterSortOperation } from \"@/games/water-sort/play/use-water-sort-play\";"
   ],
   [
     "lint/style/noRestrictedImports",
@@ -858,6 +878,11 @@
     "lint/style/noRestrictedImports",
     "src/pages/_app.tsx",
     "import { AppShell } from \"@/components/AppShell\";"
+  ],
+  [
+    "lint/style/noRestrictedImports",
+    "src/records/ui/PlayRecordOutcomeNotice.tsx",
+    "import { GameResultSurface } from \"@/components/GameResultSurface\";"
   ],
   [
     "lint/style/noRestrictedImports",
