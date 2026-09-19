@@ -7,8 +7,6 @@ paths:
 
 ## テストAPI / 実行環境
 
-- `describe`、`test`、`expect`、`vi`、各種hookなどのVitestテストAPIは `vitest` から明示的にimportする。
-- Vitestのglobal API設定に依存せず、テストファイル単体で利用しているテストAPIが分かる状態にする。
 - `bun:test`、Bun test runner固有API、Bunでしか動作しないAPIへ依存しない。
 - テストはNode上のVitestで実行可能にする。
 
@@ -53,9 +51,6 @@ paths:
 - `test` 内でテストデータ生成、状態構築、モック構築、初期描画などのArrangeを始めない。
 
 ```ts
-import { describe, expect, test } from "vitest";
-
-
 describe("getUser", () => {
   const userId = 1;
 
@@ -79,9 +74,6 @@ test("ユーザーが存在すること", () => {
 例外送出を検証する場合もActとAssertを分離する。
 
 ```ts
-import { describe, expect, test } from "vitest";
-
-
 describe("parseUser", () => {
   const invalidInput = "";
 
@@ -101,9 +93,6 @@ describe("parseUser", () => {
 - 機械識別子やリテラルそのものを区別する必要がある場合は実際の表記を保持してよい。
 
 ```ts
-import { describe, expect, test } from "vitest";
-
-
 describe("parseNumber", () => {
   const cases = [
     ["1", 1],
