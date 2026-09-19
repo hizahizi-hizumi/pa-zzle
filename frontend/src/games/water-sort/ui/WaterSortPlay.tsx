@@ -70,9 +70,6 @@ export function WaterSortPlay({
   const [hasActivePourAnimation, setHasActivePourAnimation] = useState(false);
   const showDeadlockNotice = isDeadlocked && !hasActivePourAnimation;
 
-  function handlePourAnimationActivityChange(active: boolean) {
-    setHasActivePourAnimation(active);
-  }
 
   if (progress === "result" && status === "cleared" && result) {
     return (
@@ -110,7 +107,7 @@ export function WaterSortPlay({
           operation={operation}
           onSelectBottle={onSelectBottle}
           interactionDisabled={progress !== "playing"}
-          onPourAnimationActivityChange={handlePourAnimationActivityChange}
+          onPourAnimationActivityChange={setHasActivePourAnimation}
           onClearingPourComplete={onClearingPourComplete}
         />
       </main>
