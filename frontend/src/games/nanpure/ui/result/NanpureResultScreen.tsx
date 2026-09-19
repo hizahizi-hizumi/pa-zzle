@@ -4,7 +4,6 @@ import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { GamePictogram } from "@/components/GamePictogram";
 import {
   GameResultConfetti,
-  type GameResultLevel,
   GameResultMark,
   GameResultScoreCard,
 } from "@/components/GameResult";
@@ -12,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import nanpurePictogramSvg from "@/games/nanpure/assets/pictogram.svg?raw";
 import type { NanpureResult } from "@/games/nanpure/play/use-nanpure-play";
 import {
+  getNanpureGameResultLevel,
   NANPURE_MISTAKE_PENALTY,
   NANPURE_RESTART_PENALTY,
   NANPURE_SCORE_MAXIMUMS,
@@ -22,19 +22,6 @@ import {
 import { formatElapsedTime } from "@/games/nanpure/ui/format-elapsed-time";
 import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
-
-function getNanpureGameResultLevel(score: number): GameResultLevel {
-  if (score >= 100) {
-    return "perfect";
-  }
-  if (score >= 90) {
-    return "great";
-  }
-  if (score >= 80) {
-    return "good";
-  }
-  return "clear";
-}
 
 type NanpureResultScreenProps = {
   result: NanpureResult;

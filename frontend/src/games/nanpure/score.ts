@@ -1,3 +1,5 @@
+import type { GameResultLevel } from "@/games/game-result";
+
 export const NANPURE_SCORE_MAXIMUMS = {
   accuracy: 40,
   speed: 40,
@@ -60,4 +62,17 @@ export function calculateNanpurePlayScore({
     total: accuracy + speed + stability,
     breakdown: { accuracy, speed, stability },
   };
+}
+
+export function getNanpureGameResultLevel(score: number): GameResultLevel {
+  if (score >= 100) {
+    return "perfect";
+  }
+  if (score >= 90) {
+    return "great";
+  }
+  if (score >= 80) {
+    return "good";
+  }
+  return "clear";
 }

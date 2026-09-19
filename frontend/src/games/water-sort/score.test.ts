@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import {
   calculateWaterSortPlayScore,
   calculateWaterSortSpeedFullScoreMs,
+  getWaterSortGameResultLevel,
   WATER_SORT_SCORE_MAXIMUMS,
 } from "./score";
 
@@ -126,5 +127,20 @@ describe("calculateWaterSortPlayScore", () => {
         accuracy: 16,
       },
     });
+  });
+});
+
+describe("getWaterSortGameResultLevel", () => {
+  test.each([
+    [100, "perfect"],
+    [99, "great"],
+    [90, "great"],
+    [89, "good"],
+    [80, "good"],
+    [79, "clear"],
+  ] as const)("スコア %s を %s と評価すること", (score, level) => {
+    const result = getWaterSortGameResultLevel(score);
+
+    expect(result).toBe(level);
   });
 });

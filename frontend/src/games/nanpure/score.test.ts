@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 
 import {
   calculateNanpurePlayScore,
+  getNanpureGameResultLevel,
   NANPURE_SPEED_FULL_SCORE_MS,
 } from "./score";
 
@@ -74,5 +75,20 @@ describe("calculateNanpurePlayScore", () => {
       total: 0,
       breakdown: { accuracy: 0, speed: 0, stability: 0 },
     });
+  });
+});
+
+describe("getNanpureGameResultLevel", () => {
+  test.each([
+    [100, "perfect"],
+    [99, "great"],
+    [90, "great"],
+    [89, "good"],
+    [80, "good"],
+    [79, "clear"],
+  ] as const)("スコア %s を %s と評価すること", (score, level) => {
+    const result = getNanpureGameResultLevel(score);
+
+    expect(result).toBe(level);
   });
 });

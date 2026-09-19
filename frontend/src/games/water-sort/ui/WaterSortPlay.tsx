@@ -13,7 +13,6 @@ import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { GamePictogram } from "@/components/GamePictogram";
 import {
   GameResultConfetti,
-  type GameResultLevel,
   GameResultMark,
   GameResultScoreCard,
 } from "@/components/GameResult";
@@ -31,6 +30,7 @@ import type {
 } from "@/games/water-sort/play/use-water-sort-play";
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import {
+  getWaterSortGameResultLevel,
   WATER_SORT_SCORE_MAXIMUMS,
   WATER_SORT_SPEED_INITIAL_RECOGNITION_MS,
   WATER_SORT_SPEED_PER_COLOR_MS,
@@ -249,19 +249,6 @@ function MetricSeparator() {
       ·
     </span>
   );
-}
-
-function getWaterSortGameResultLevel(score: number): GameResultLevel {
-  if (score >= 100) {
-    return "perfect";
-  }
-  if (score >= 90) {
-    return "great";
-  }
-  if (score >= 80) {
-    return "good";
-  }
-  return "clear";
 }
 
 type WaterSortResultScreenProps = {

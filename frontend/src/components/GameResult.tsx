@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useRef } from "react";
 
-export type GameResultLevel = "clear" | "good" | "great" | "perfect";
+import type { GameResultLevel } from "@/games/game-result";
 
 type GameResultStyle = {
   message: string;
