@@ -2,9 +2,9 @@ import { formatRecordElapsedMs } from "@/records/format";
 import type { PlayRecord } from "@/records/play-record";
 import { createPlayRecordId } from "@/records/play-record";
 import type {
-  PlayRecordAdapter,
-  PlayRecordHistoryPresentation,
-} from "@/records/presentation";
+  PlayRecordDefinition,
+  PlayRecordSummary,
+} from "@/records/play-record-definition";
 
 import {
   getNanpureDifficultyLabel,
@@ -139,9 +139,9 @@ function getScore(record: NanpurePlayRecord): number {
   return calculateNanpurePlayScore(record.payload.performance).total;
 }
 
-function getNanpureHistoryPresentation(
+function getNanpurePlayRecordSummary(
   record: PlayRecord,
-): PlayRecordHistoryPresentation | null {
+): PlayRecordSummary | null {
   if (!isNanpurePlayRecord(record)) {
     return null;
   }
@@ -172,19 +172,19 @@ function getNanpureHistoryPresentation(
   };
 }
 
-export const nanpurePlayRecordAdapter: PlayRecordAdapter = {
+export const nanpurePlayRecordDefinition: PlayRecordDefinition = {
   gameId: NANPURE_GAME_ID,
   gameLabel: "ナンプレ",
   isRecord: isNanpurePlayRecord,
-  getComparisonKey(record) {
-    return isNanpurePlayRecord(record) ? record.payload.difficulty : null;
-  },
-  getComparisonLabel(record) {
+  getComparisonGroup(record) {
     return isNanpurePlayRecord(record)
-      ? getNanpureDifficultyLabel(record.payload.difficulty)
+      ? {
+          key: record.payload.difficulty,
+          label: getNanpureDifficultyLabel(record.payload.difficulty),
+        }
       : null;
   },
-  getHistoryPresentation: getNanpureHistoryPresentation,
+  getSummary: getNanpurePlayRecordSummary,
   personalBestMetrics: [
     {
       id: "play-score",

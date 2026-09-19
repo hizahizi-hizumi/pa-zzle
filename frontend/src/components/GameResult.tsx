@@ -1,6 +1,8 @@
 import { type ReactNode, useEffect, useRef } from "react";
 
-export type GameResultScorePresentation = {
+export type GameResultLevel = "clear" | "good" | "great" | "perfect";
+
+type GameResultStyle = {
   message: string;
   scoreClassName: string;
   panelClassName: string;
@@ -8,62 +10,56 @@ export type GameResultScorePresentation = {
   confettiIntensity: "strong" | "light" | null;
 };
 
-export function getGameResultScorePresentation(
-  score: number,
-): GameResultScorePresentation {
-  if (score >= 100) {
-    return {
-      message: "パーフェクト！",
-      scoreClassName: "text-amber-600 dark:text-amber-300",
-      panelClassName:
-        "border-amber-200 bg-amber-50/80 dark:border-amber-900/70 dark:bg-amber-950/30",
-      markClassName:
-        "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
-      confettiIntensity: "strong",
-    };
-  }
-
-  if (score >= 90) {
-    return {
-      message: "すばらしい！",
-      scoreClassName: "text-emerald-600 dark:text-emerald-300",
-      panelClassName:
-        "border-emerald-200 bg-emerald-50/75 dark:border-emerald-900/70 dark:bg-emerald-950/30",
-      markClassName:
-        "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
-      confettiIntensity: "light",
-    };
-  }
-
-  if (score >= 80) {
-    return {
-      message: "ナイスプレイ！",
-      scoreClassName: "text-sky-600 dark:text-sky-300",
-      panelClassName:
-        "border-sky-200 bg-sky-50/70 dark:border-sky-900/70 dark:bg-sky-950/30",
-      markClassName:
-        "bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300",
-      confettiIntensity: null,
-    };
-  }
-
-  return {
+const gameResultStyles: Record<GameResultLevel, GameResultStyle> = {
+  perfect: {
+    message: "パーフェクト！",
+    scoreClassName: "text-amber-600 dark:text-amber-300",
+    panelClassName:
+      "border-amber-200 bg-amber-50/80 dark:border-amber-900/70 dark:bg-amber-950/30",
+    markClassName:
+      "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
+    confettiIntensity: "strong",
+  },
+  great: {
+    message: "すばらしい！",
+    scoreClassName: "text-emerald-600 dark:text-emerald-300",
+    panelClassName:
+      "border-emerald-200 bg-emerald-50/75 dark:border-emerald-900/70 dark:bg-emerald-950/30",
+    markClassName:
+      "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
+    confettiIntensity: "light",
+  },
+  good: {
+    message: "ナイスプレイ！",
+    scoreClassName: "text-sky-600 dark:text-sky-300",
+    panelClassName:
+      "border-sky-200 bg-sky-50/70 dark:border-sky-900/70 dark:bg-sky-950/30",
+    markClassName:
+      "bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300",
+    confettiIntensity: null,
+  },
+  clear: {
     message: "クリア！",
     scoreClassName: "text-foreground",
     panelClassName: "border-border bg-muted/40",
     markClassName: "bg-muted text-foreground",
     confettiIntensity: null,
-  };
+  },
+};
+
+function getGameResultStyle(level: GameResultLevel): GameResultStyle {
+  return gameResultStyles[level];
 }
 
 export function GameResultScoreCard({
   score,
-  presentation,
+  level,
 }: {
   score: number;
-  presentation: GameResultScorePresentation;
+  level: GameResultLevel;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const style = getGameResultStyle(level);
 
   useEffect(() => {
     const reduced = window.matchMedia?.(
@@ -86,18 +82,16 @@ export function GameResultScoreCard({
   return (
     <div
       ref={cardRef}
-      className={`mt-6 rounded-3xl border px-5 py-5 text-center shadow-sm ${presentation.panelClassName}`}
+      className={`mt-6 rounded-3xl border px-5 py-5 text-center shadow-sm ${style.panelClassName}`}
     >
-      <p
-        className={`text-sm font-bold tracking-wide ${presentation.scoreClassName}`}
-      >
-        {presentation.message}
+      <p className={`text-sm font-bold tracking-wide ${style.scoreClassName}`}>
+        {style.message}
       </p>
       <p className="mt-1 text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
         スコア
       </p>
       <p
-        className={`mt-1 font-mono text-6xl font-bold tracking-tight tabular-nums ${presentation.scoreClassName}`}
+        className={`mt-1 font-mono text-6xl font-bold tracking-tight tabular-nums ${style.scoreClassName}`}
       >
         {score}
         <span className="ml-1 text-base font-medium text-muted-foreground">
@@ -110,13 +104,14 @@ export function GameResultScoreCard({
 }
 
 export function GameResultMark({
-  presentation,
+  level,
   children,
 }: {
-  presentation: GameResultScorePresentation;
+  level: GameResultLevel;
   children: ReactNode;
 }) {
   const markRef = useRef<HTMLDivElement>(null);
+  const style = getGameResultStyle(level);
 
   useEffect(() => {
     const reduced = window.matchMedia?.(
@@ -139,7 +134,7 @@ export function GameResultMark({
   return (
     <div
       ref={markRef}
-      className={`mx-auto flex size-20 items-center justify-center rounded-full shadow-sm ${presentation.markClassName}`}
+      className={`mx-auto flex size-20 items-center justify-center rounded-full shadow-sm ${style.markClassName}`}
       aria-hidden="true"
     >
       {children}
@@ -174,12 +169,9 @@ const confettiPieces = [
   [154, -196, 240, "#a78bfa"],
 ] as const;
 
-export function GameResultConfetti({
-  intensity,
-}: {
-  intensity: GameResultScorePresentation["confettiIntensity"];
-}) {
+export function GameResultConfetti({ level }: { level: GameResultLevel }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const intensity = getGameResultStyle(level).confettiIntensity;
 
   useEffect(() => {
     if (!intensity) {

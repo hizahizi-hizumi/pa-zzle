@@ -1,16 +1,18 @@
-import { nanpurePlayRecordAdapter } from "@/games/nanpure/play-record";
-import { waterSortPlayRecordAdapter } from "@/games/water-sort/play-record";
+import { nanpurePlayRecordDefinition } from "@/games/nanpure/play-record";
+import { waterSortPlayRecordDefinition } from "@/games/water-sort/play-record";
 
 import type { PlayRecord } from "./play-record";
-import type { PlayRecordAdapter } from "./presentation";
+import type { PlayRecordDefinition } from "./play-record-definition";
 
-export const playRecordAdapters = [
-  waterSortPlayRecordAdapter,
-  nanpurePlayRecordAdapter,
-] as const satisfies readonly PlayRecordAdapter[];
+export const playRecordDefinitions = [
+  waterSortPlayRecordDefinition,
+  nanpurePlayRecordDefinition,
+] as const satisfies readonly PlayRecordDefinition[];
 
-export function getPlayRecordAdapter(
+export function getPlayRecordDefinition(
   record: PlayRecord,
-): PlayRecordAdapter | undefined {
-  return playRecordAdapters.find((adapter) => adapter.isRecord(record));
+): PlayRecordDefinition | undefined {
+  return playRecordDefinitions.find((definition) =>
+    definition.isRecord(record),
+  );
 }

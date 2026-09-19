@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 
 import {
   createNanpurePlayRecord,
-  nanpurePlayRecordAdapter,
+  nanpurePlayRecordDefinition,
 } from "./play-record";
 
 function createRecord() {
@@ -51,9 +51,9 @@ test("完了プレイの事実だけを保存用記録へ写すこと", () => {
 test("保存した事実から現在のプレイ評価を導出すること", () => {
   const record = createRecord();
 
-  const presentation = nanpurePlayRecordAdapter.getHistoryPresentation(record);
+  const summary = nanpurePlayRecordDefinition.getSummary(record);
 
-  expect(presentation?.primaryMetric).toEqual({
+  expect(summary?.primaryMetric).toEqual({
     label: "プレイ評価",
     value: "91点",
   });
@@ -62,9 +62,8 @@ test("保存した事実から現在のプレイ評価を導出すること", ()
 test("同じ開始条件を自己ベストの比較単位として扱うこと", () => {
   const record = createRecord();
 
-  const comparisonKey = nanpurePlayRecordAdapter.getComparisonKey(record);
-  const comparisonLabel = nanpurePlayRecordAdapter.getComparisonLabel(record);
+  const comparisonGroup =
+    nanpurePlayRecordDefinition.getComparisonGroup(record);
 
-  expect(comparisonKey).toBe("normal");
-  expect(comparisonLabel).toBe("ふつう");
+  expect(comparisonGroup).toEqual({ key: "normal", label: "ふつう" });
 });

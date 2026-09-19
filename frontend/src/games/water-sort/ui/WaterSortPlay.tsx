@@ -13,10 +13,10 @@ import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { GamePictogram } from "@/components/GamePictogram";
 import {
   GameResultConfetti,
+  type GameResultLevel,
   GameResultMark,
   GameResultScoreCard,
-  getGameResultScorePresentation,
-} from "@/components/GameResultPresentation";
+} from "@/components/GameResult";
 import { Button } from "@/components/ui/button";
 import waterSortPictogramSvg from "@/games/water-sort/assets/pictogram.svg?raw";
 import {
@@ -31,7 +31,7 @@ import type {
   WaterSortResult,
 } from "@/games/water-sort/hooks/use-water-sort-game";
 import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
-import type { PlayRecordSaveOutcome } from "@/records/presentation";
+import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 
 type WaterSortPlayProps = {
@@ -243,6 +243,19 @@ function MetricSeparator() {
   );
 }
 
+function getWaterSortGameResultLevel(score: number): GameResultLevel {
+  if (score >= 100) {
+    return "perfect";
+  }
+  if (score >= 90) {
+    return "great";
+  }
+  if (score >= 80) {
+    return "good";
+  }
+  return "clear";
+}
+
 type WaterSortResultScreenProps = {
   difficulty: WaterSortDifficulty;
   problemDifficulty: WaterSortDifficultyAssessment;
@@ -267,14 +280,14 @@ function WaterSortResultScreen({
   onBackToHome,
   onOpenDiagnostics,
 }: WaterSortResultScreenProps) {
-  const scorePresentation = getGameResultScorePresentation(result.score);
+  const resultLevel = getWaterSortGameResultLevel(result.score);
   return (
     <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-y-auto bg-background pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <BrandIdentityHeader />
-      <GameResultConfetti intensity={scorePresentation.confettiIntensity} />
+      <GameResultConfetti level={resultLevel} />
       <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-5">
         <div className="text-center">
-          <GameResultMark presentation={scorePresentation}>
+          <GameResultMark level={resultLevel}>
             <span className="block size-12">
               <GamePictogram svg={waterSortPictogramSvg} variant="result" />
             </span>
@@ -287,10 +300,7 @@ function WaterSortResultScreen({
             {getWaterSortDifficultyLabel(difficulty)}
           </p>
         </div>
-        <GameResultScoreCard
-          score={result.score}
-          presentation={scorePresentation}
-        />
+        <GameResultScoreCard score={result.score} level={resultLevel} />
         <dl className="mt-6 grid grid-cols-3 gap-2 text-center">
           <ResultMetric label="手数" value={String(result.moveCount)} />
           <ResultMetric label="最短" value={String(result.optimalMoveCount)} />

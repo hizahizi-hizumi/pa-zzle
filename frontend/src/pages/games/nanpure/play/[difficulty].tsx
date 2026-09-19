@@ -6,7 +6,7 @@ import { parseNanpureDifficulty } from "@/games/nanpure/game/difficulty";
 import { useNanpureGame } from "@/games/nanpure/hooks/use-nanpure-game";
 import {
   createNanpurePlayRecord,
-  nanpurePlayRecordAdapter,
+  nanpurePlayRecordDefinition,
 } from "@/games/nanpure/play-record";
 import { NanpurePlay } from "@/games/nanpure/ui/NanpurePlay";
 import { useSavePlayRecord } from "@/records/use-save-play-record";
@@ -51,7 +51,10 @@ function PlayableNanpure({
       game.startedAt,
     ],
   );
-  const recordOutcome = useSavePlayRecord(playRecord, nanpurePlayRecordAdapter);
+  const recordOutcome = useSavePlayRecord(
+    playRecord,
+    nanpurePlayRecordDefinition,
+  );
 
   return (
     <NanpurePlay

@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 
 import {
   createWaterSortPlayRecord,
-  waterSortPlayRecordAdapter,
+  waterSortPlayRecordDefinition,
 } from "./play-record";
 
 function createRecord() {
@@ -47,10 +47,9 @@ test("評価値を保存せず評価元の事実だけを保存用記録へ写�
 test("保存した事実から現在のプレイ評価を導出すること", () => {
   const record = createRecord();
 
-  const presentation =
-    waterSortPlayRecordAdapter.getHistoryPresentation(record);
+  const summary = waterSortPlayRecordDefinition.getSummary(record);
 
-  expect(presentation?.primaryMetric).toEqual({
+  expect(summary?.primaryMetric).toEqual({
     label: "プレイ評価",
     value: "83点",
   });

@@ -14,7 +14,7 @@ import { NanpureBoard } from "@/games/nanpure/ui/board/NanpureBoard";
 import { NanpureInputPanel } from "@/games/nanpure/ui/play/NanpureInputPanel";
 import { NanpurePlayHeader } from "@/games/nanpure/ui/play/NanpurePlayHeader";
 import { NanpureResultScreen } from "@/games/nanpure/ui/result/NanpureResultScreen";
-import type { PlayRecordSaveOutcome } from "@/records/presentation";
+import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
 
 type NanpurePlayProps = {
   difficulty: NanpureDifficulty;
