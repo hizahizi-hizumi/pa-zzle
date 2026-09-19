@@ -1,7 +1,13 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
   "files": {
-    "includes": ["**", "!node_modules", "!dist", "!src/router.ts"]
+    "includes": [
+      "**",
+      "!node_modules",
+      "!dist",
+      "!src/router.ts",
+      "!src/components/ui"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -19,7 +25,13 @@
       "preset": "recommended",
       "a11y": "off",
       "suspicious": {
-        "noAssignInExpressions": "off"
+        "noAssignInExpressions": "off",
+        "noImportCycles": {
+          "level": "error",
+          "options": {
+            "ignoreTypes": false
+          }
+        }
       },
       "complexity": {
         "noImportantStyles": "off"
@@ -31,5 +43,338 @@
         "noUnusedFunctionParameters": "off"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/pages/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/components/**",
+                      "@/games/**",
+                      "@/lib/**",
+                      "@/records/**"
+                    ],
+                    "message": "[dependency/pages-boundary] pages はルートと View の対応だけを持ち、画面の依存は View が合成する。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/views/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@/pages/**"],
+                    "message": "[dependency/views-boundary] View は画面合成境界であり pages へ逆依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/app/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "@/records/**",
+                      "@/views/**",
+                      "@/pages/**"
+                    ],
+                    "message": "[dependency/app-boundary] app はアプリ全体の責務だけを持ち、具体ゲーム・記録・画面合成へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/ui/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/app/**",
+                      "@/games/**",
+                      "@/records/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/ui-boundary] UI 基盤はアプリ固有の責務・ルーティングへ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/components/**/*.{ts,tsx}", "!src/components/ui"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@/records/**", "@/views/**", "@/pages/**"],
+                    "message": "[dependency/legacy-components-boundary] 共有コンポーネントは記録・画面合成・pages へ逆依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/lib/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/app/**",
+                      "@/components/**",
+                      "@/games/**",
+                      "@/records/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router",
+                      "react*"
+                    ],
+                    "message": "[dependency/legacy-lib-boundary] lib はアプリ固有責務・React・ルーティングへ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/components/**",
+                      "@/games/*/**",
+                      "@/records/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router",
+                      "react*"
+                    ],
+                    "message": "[dependency/games-common-boundary] ゲーム共通契約は具体ゲーム・記録・React・UI合成へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/records/**/*.{ts,tsx}",
+        "!src/records/hooks/**",
+        "!src/records/ui/**"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/components/**",
+                      "@/games/*/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router",
+                      "react*"
+                    ],
+                    "message": "[dependency/records-core-boundary] 記録の中核は具体ゲーム・React・UI・画面合成へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/records/hooks/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/components/**",
+                      "@/games/*/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/records-hooks-boundary] 記録 hooks は記録中核を React へ接続し、具体ゲーム・UI・画面合成へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/records/ui/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/games/*/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router",
+                      "react-router",
+                      "react-router/**"
+                    ],
+                    "message": "[dependency/records-ui-boundary] 記録 UI は具体ゲーム・画面合成・ルーティングへ逆依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/nanpure/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": ["@/games/water-sort/**"],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/water-sort/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": ["@/games/nanpure/**"],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/**/*.test.{ts,tsx,mjs}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": "off"
+          }
+        }
+      }
+    }
+  ]
 }
