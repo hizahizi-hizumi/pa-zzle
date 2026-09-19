@@ -1,5 +1,4 @@
 import type { ProblemSeed } from "@/games/problem-seed";
-import type { WaterSortSolveResult } from "../puzzle/solver";
 import type {
   WATER_SORT_BOTTLE_CAPACITY,
   WATER_SORT_EMPTY_BOTTLE_COUNT,
@@ -28,6 +27,6 @@ export type WaterSortProblemIdentity = {
 
 export type WaterSortGeneratedProblem = WaterSortProblem & {
   identity: WaterSortProblemIdentity;
-  solutionMoves: WaterSortSolveResult["moves"];
+  optimalMoveCount: number;
   difficultyAnalysis: WaterSortDifficultyAnalysis;
 };

@@ -34,8 +34,8 @@ describe("generateWaterSortProblem", () => {
 
     expect(standard).toBe(true);
     expect(hasCompletedBottle).toBe(false);
-    expect(problem.difficultyAnalysis.shortestMoveCount).toBe(
-      problem.solutionMoves.length,
+    expect(problem.optimalMoveCount).toBe(
+      problem.difficultyAnalysis.shortestMoveCount,
     );
   });
 

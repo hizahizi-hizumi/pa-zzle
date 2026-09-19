@@ -3,6 +3,7 @@
 import { describe, expect, test } from "vitest";
 
 import { generateWaterSortProblem } from "../problem/generator";
+import { solveWaterSort } from "../puzzle/solver";
 import {
   applyWaterSortSessionMove,
   canUndoWaterSortSession,
@@ -19,6 +20,16 @@ function createProblem() {
   });
 }
 
+function getSolutionMoves(problem: {
+  initialState: Parameters<typeof solveWaterSort>[0];
+}) {
+  const result = solveWaterSort(problem.initialState);
+  if (result.status !== "solved") {
+    throw new Error("test problem must be solvable");
+  }
+  return result.moves;
+}
+
 describe("applyWaterSortSessionMove", () => {
   test("合法手を適用して盤面と手数を進めること", () => {
     const problem = createProblem();
@@ -26,7 +37,8 @@ describe("applyWaterSortSessionMove", () => {
       { initialState: problem.initialState },
       1000,
     );
-    const move = problem.solutionMoves[0];
+    const solutionMoves = getSolutionMoves(problem);
+    const move = solutionMoves[0];
     if (!move) {
       throw new Error("test problem must have a solution move");
     }
@@ -64,7 +76,8 @@ describe("undoWaterSortSession", () => {
       { initialState: problem.initialState },
       1000,
     );
-    const move = problem.solutionMoves[0];
+    const solutionMoves = getSolutionMoves(problem);
+    const move = solutionMoves[0];
     if (!move) {
       throw new Error("test problem must have a solution move");
     }
@@ -102,7 +115,8 @@ describe("restartWaterSortSession", () => {
       { initialState: problem.initialState },
       1000,
     );
-    const move = problem.solutionMoves[0];
+    const solutionMoves = getSolutionMoves(problem);
+    const move = solutionMoves[0];
     if (!move) {
       throw new Error("test problem must have a solution move");
     }
@@ -126,7 +140,8 @@ describe("restartWaterSortSession", () => {
       { initialState: problem.initialState },
       1000,
     );
-    for (const [index, move] of problem.solutionMoves.entries()) {
+    const solutionMoves = getSolutionMoves(problem);
+    for (const [index, move] of solutionMoves.entries()) {
       const next = applyWaterSortSessionMove(session, move, 1100 + index);
       if (!next) {
         throw new Error("test solution move must be legal");
@@ -146,7 +161,8 @@ test("Reactなしで操作・待った・やり直しを経て一局を完結で
     { initialState: problem.initialState },
     1000,
   );
-  const firstMove = problem.solutionMoves[0];
+  const solutionMoves = getSolutionMoves(problem);
+  const firstMove = solutionMoves[0];
   if (!firstMove) {
     throw new Error("test problem must have a solution move");
   }
@@ -157,7 +173,7 @@ test("Reactなしで操作・待った・やり直しを経て一局を完結で
   }
   session = undoWaterSortSession(firstMoved);
   session = restartWaterSortSession(session);
-  for (const [index, move] of problem.solutionMoves.entries()) {
+  for (const [index, move] of solutionMoves.entries()) {
     const next = applyWaterSortSessionMove(session, move, 1300 + index);
     if (!next) {
       throw new Error("test solution move must be legal");
@@ -169,8 +185,8 @@ test("Reactなしで操作・待った・やり直しを経て一局を完結で
   expect(session.status).toBe("cleared");
   expect(result).toEqual({
     elapsedMs: expect.any(Number),
-    moveCount: problem.solutionMoves.length + 1,
-    completionMoveCount: problem.solutionMoves.length,
+    moveCount: solutionMoves.length + 1,
+    completionMoveCount: solutionMoves.length,
     undoCount: 1,
     restartCount: 1,
   });

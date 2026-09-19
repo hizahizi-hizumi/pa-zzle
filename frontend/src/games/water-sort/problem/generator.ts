@@ -176,7 +176,7 @@ function createGeneratedProblem(
   return {
     initialState,
     identity,
-    solutionMoves: solveResult.moves,
+    optimalMoveCount: solveResult.moves.length,
     difficultyAnalysis,
   };
 }

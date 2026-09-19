@@ -239,7 +239,7 @@ export function useWaterSortPlay(difficulty: WaterSortDifficulty) {
 
   const { session } = play;
   const elapsedMs = getWaterSortSessionElapsedMs(session, now);
-  const optimalMoveCount = play.generatedProblem.solutionMoves.length;
+  const optimalMoveCount = play.generatedProblem.optimalMoveCount;
   const isDeadlocked = useMemo(
     () =>
       play.progress === "playing" &&

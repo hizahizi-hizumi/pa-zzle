@@ -27,7 +27,7 @@ describe("WaterSortDiagnosticSnapshot", () => {
 
     expect(parsed).toEqual(snapshot);
     expect(restored.initialState).toEqual(problem.initialState);
-    expect(restored.solutionMoves).toEqual(problem.solutionMoves);
+    expect(restored.optimalMoveCount).toBe(problem.optimalMoveCount);
     expect(restored.difficultyAnalysis).toEqual(problem.difficultyAnalysis);
   });
 
