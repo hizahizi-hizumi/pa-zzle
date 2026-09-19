@@ -14,13 +14,20 @@ paths:
 - テストから直接参照する内部要素は `_private` で公開し、`_private` はテストからのみ参照する。
 
 ```ts
-// NG
+// NG: テストのためだけに直接 export する
 export function helper() {}
 ```
 
 ```ts
-// OK
+// implementation.ts
 function helper() {}
 
 export const _private = { helper };
+```
+
+```ts
+// implementation.test.ts
+import { _private } from "./implementation";
+
+const { helper } = _private;
 ```
