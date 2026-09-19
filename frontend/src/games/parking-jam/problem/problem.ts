@@ -4,6 +4,7 @@ import type {
   ParkingJamMove,
   ParkingJamVehicleId,
 } from "../puzzle/board";
+import type { ParkingJamDifficultyAnalysis } from "./difficulty-analysis";
 
 export const PARKING_JAM_GENERATOR_VERSION = "1";
 
@@ -13,6 +14,7 @@ export type ParkingJamGenerationConditions = {
   vehicleCount: number;
   obstacleCount: number;
   exitProbability: number;
+  blockingPlacementProbability: number;
 };
 
 export type ParkingJamProblem = {
@@ -36,4 +38,5 @@ export type ParkingJamGeneratedProblem = {
   problem: ParkingJamProblem;
   identity: ParkingJamProblemIdentity;
   solvabilityAnalysis: ParkingJamSolvabilityAnalysis;
+  difficultyAnalysis: ParkingJamDifficultyAnalysis;
 };

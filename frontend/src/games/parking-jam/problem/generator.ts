@@ -17,6 +17,7 @@ import {
   validateParkingJamBoard,
 } from "../puzzle/board";
 import { listParkingJamLegalMoves } from "../puzzle/rules";
+import { analyzeParkingJamDifficulty } from "./difficulty-analysis";
 import { analyzeParkingJamSolvability } from "./generation/solvability";
 import {
   PARKING_JAM_GENERATOR_VERSION,
@@ -30,14 +31,19 @@ export type ParkingJamGeneratedCandidate = {
   attempt: number;
   board: ParkingJamBoard;
   solvabilityAnalysis: ParkingJamSolvabilityAnalysis;
+  difficultyAnalysis: ParkingJamGeneratedProblem["difficultyAnalysis"];
 };
 
 export type ParkingJamProblemAcceptance = (
   candidate: ParkingJamGeneratedCandidate,
 ) => boolean;
 
-export type ParkingJamGeneratorOptions = ParkingJamGenerationConditions & {
+export type ParkingJamGeneratorOptions = Omit<
+  ParkingJamGenerationConditions,
+  "blockingPlacementProbability"
+> & {
   seed: ProblemSeed;
+  blockingPlacementProbability?: number;
   maximumAttempts?: number;
   acceptCandidate?: ParkingJamProblemAcceptance;
 };
@@ -92,6 +98,15 @@ function validateConditions(conditions: ParkingJamGenerationConditions): void {
       "exitProbability must be greater than 0 and at most 1",
     );
   }
+  if (
+    !Number.isFinite(conditions.blockingPlacementProbability) ||
+    conditions.blockingPlacementProbability < 0 ||
+    conditions.blockingPlacementProbability > 1
+  ) {
+    throw new RangeError(
+      "blockingPlacementProbability must be between 0 and 1",
+    );
+  }
 }
 
 function validateMaximumAttempts(maximumAttempts: number): void {
@@ -113,6 +128,7 @@ function createGeneratorRandom(
       conditions.vehicleCount,
       conditions.obstacleCount,
       conditions.exitProbability,
+      conditions.blockingPlacementProbability,
     ].join(":"),
   );
 }
@@ -172,16 +188,29 @@ function cellsOverlap(
   );
 }
 
+type ParkingJamPlacementCandidate = {
+  vehicle: ParkingJamVehicle;
+  latestBlockedVehicleIndex: number | null;
+};
+
 function enumeratePlacements(
   board: Omit<ParkingJamBoard, "vehicles"> & {
     vehicles: readonly ParkingJamVehicle[];
   },
   vehicleId: string,
-): ParkingJamVehicle[] {
+): ParkingJamPlacementCandidate[] {
   const occupiedVehicleCells = board.vehicles.flatMap(
     listParkingJamVehicleCells,
   );
-  const placements: ParkingJamVehicle[] = [];
+  const legalVehicleIdsBeforePlacement = new Set(
+    listParkingJamLegalMoves(board, createParkingJamInitialState(board)).map(
+      (move) => move.vehicleId,
+    ),
+  );
+  const vehicleIndexById = new Map(
+    board.vehicles.map((vehicle, index) => [vehicle.id, index]),
+  );
+  const placements: ParkingJamPlacementCandidate[] = [];
   const orientations: readonly ParkingJamOrientation[] = [
     "horizontal",
     "vertical",
@@ -213,17 +242,61 @@ function enumeratePlacements(
             vehicles: [...board.vehicles, vehicle],
           };
           const state = createParkingJamInitialState(candidateBoard);
-          const vehicleCanExit = listParkingJamLegalMoves(
-            candidateBoard,
-            state,
-          ).some((move) => move.vehicleId === vehicleId);
-          if (vehicleCanExit) placements.push(vehicle);
+          const legalMoves = listParkingJamLegalMoves(candidateBoard, state);
+          const vehicleCanExit = legalMoves.some(
+            (move) => move.vehicleId === vehicleId,
+          );
+          if (!vehicleCanExit) continue;
+
+          const legalVehicleIdsAfterPlacement = new Set(
+            legalMoves.map((move) => move.vehicleId),
+          );
+          const latestBlockedVehicleIndex = [
+            ...legalVehicleIdsBeforePlacement,
+          ].reduce<number | null>((latestIndex, existingVehicleId) => {
+            if (legalVehicleIdsAfterPlacement.has(existingVehicleId)) {
+              return latestIndex;
+            }
+            const blockedVehicleIndex = vehicleIndexById.get(existingVehicleId);
+            if (blockedVehicleIndex === undefined) return latestIndex;
+            return latestIndex === null
+              ? blockedVehicleIndex
+              : Math.max(latestIndex, blockedVehicleIndex);
+          }, null);
+          placements.push({ vehicle, latestBlockedVehicleIndex });
         }
       }
     }
   }
 
   return placements;
+}
+
+function choosePlacement(
+  placements: readonly ParkingJamPlacementCandidate[],
+  blockingPlacementProbability: number,
+  random: ProblemRandom,
+): ParkingJamVehicle | null {
+  const blockingPlacements = placements.filter(
+    ({ latestBlockedVehicleIndex }) => latestBlockedVehicleIndex !== null,
+  );
+  const shouldPreferBlockingPlacement =
+    blockingPlacements.length > 0 && random() < blockingPlacementProbability;
+  const latestDependencyTargetIndex = shouldPreferBlockingPlacement
+    ? Math.max(
+        ...blockingPlacements.map(
+          ({ latestBlockedVehicleIndex }) => latestBlockedVehicleIndex ?? -1,
+        ),
+      )
+    : null;
+  const candidates = shouldPreferBlockingPlacement
+    ? blockingPlacements.filter(
+        ({ latestBlockedVehicleIndex }) =>
+          latestBlockedVehicleIndex === latestDependencyTargetIndex,
+      )
+    : placements;
+  const selected = candidates[Math.floor(random() * candidates.length)];
+  return selected?.vehicle ?? null;
 }
 
 function createCandidate(
@@ -247,7 +320,11 @@ function createCandidate(
       vehicleId,
     );
     if (placements.length === 0) return null;
-    const selected = placements[Math.floor(random() * placements.length)];
+    const selected = choosePlacement(
+      placements,
+      conditions.blockingPlacementProbability,
+      random,
+    );
     if (!selected) return null;
     vehicles.push(selected);
   }
@@ -265,7 +342,12 @@ function createGeneratedProblem(
   if (solvabilityAnalysis.status !== "solvable") {
     throw new Error("Parking jam generator produced an unsolvable problem");
   }
-  return { problem: { board }, identity, solvabilityAnalysis };
+  return {
+    problem: { board },
+    identity,
+    solvabilityAnalysis,
+    difficultyAnalysis: analyzeParkingJamDifficulty(board, solvabilityAnalysis),
+  };
 }
 
 function candidateAtAttempt(
@@ -310,6 +392,7 @@ export function generateParkingJamProblem(
     vehicleCount: options.vehicleCount,
     obstacleCount: options.obstacleCount,
     exitProbability: options.exitProbability,
+    blockingPlacementProbability: options.blockingPlacementProbability ?? 0,
   };
   validateConditions(conditions);
   const maximumAttempts = options.maximumAttempts ?? 100;
@@ -330,6 +413,7 @@ export function generateParkingJamProblem(
       attempt,
       board,
       solvabilityAnalysis: generated.solvabilityAnalysis,
+      difficultyAnalysis: generated.difficultyAnalysis,
     };
     if (options.acceptCandidate && !options.acceptCandidate(candidate))
       continue;
