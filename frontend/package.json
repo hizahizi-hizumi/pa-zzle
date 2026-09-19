@@ -7,7 +7,7 @@
     "dev": "vite",
     "start": "vite --host 0.0.0.0",
     "build": "vite build",
-    "check": "node scripts/biome-baseline.mjs --baseline=biome-baseline.json",
+    "check": "biome check .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
