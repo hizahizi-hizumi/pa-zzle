@@ -3,6 +3,8 @@ import { expect, test } from "vitest";
 import type { PlayRecord } from "@/records/play-record";
 import {
   createWaterSortPlayRecord,
+  getWaterSortPlayRecordCompletionMoveCount,
+  getWaterSortPlayRecordScore,
   isWaterSortPlayRecord,
   waterSortPlayRecordDefinition,
 } from "./play-record";
@@ -50,16 +52,17 @@ test("評価値を保存せず評価元の事実だけを保存用記録へ写�
 test("保存した事実から現在のプレイ評価を導出すること", () => {
   const record = createRecord();
 
-  const summary = waterSortPlayRecordDefinition.getSummary(record);
+  const score = getWaterSortPlayRecordScore(record);
 
-  expect(summary?.primaryMetric).toEqual({
-    label: "プレイ評価",
-    value: "87点",
-  });
-  expect(summary?.detailMetrics).toContainEqual({
-    label: "クリア手数",
-    value: "12",
-  });
+  expect(score).toBe(87);
+});
+
+test("同じ開始条件を自己ベストの比較単位として扱うこと", () => {
+  const record = createRecord();
+
+  const comparisonKey = waterSortPlayRecordDefinition.getComparisonKey(record);
+
+  expect(comparisonKey).toBe("normal");
 });
 
 test("やり直しのない旧記録は待った回数からクリア手数を復元して再評価すること", () => {
@@ -87,10 +90,13 @@ test("やり直しのない旧記録は待った回数からクリア手数を�
     },
   };
 
-  const summary = waterSortPlayRecordDefinition.getSummary(legacyRecord);
+  const completionMoveCount =
+    getWaterSortPlayRecordCompletionMoveCount(legacyRecord);
+  const score = getWaterSortPlayRecordScore(legacyRecord);
 
   expect(isWaterSortPlayRecord(legacyRecord)).toBe(true);
-  expect(summary?.primaryMetric.value).toBe("87点");
+  expect(completionMoveCount).toBe(12);
+  expect(score).toBe(87);
 });
 
 test("やり直しで失われた手数を復元できない旧記録は評価を推測しないこと", () => {
@@ -117,13 +123,14 @@ test("やり直しで失われた手数を復元できない旧記録は評価�
       },
     },
   };
-
-  const summary = waterSortPlayRecordDefinition.getSummary(legacyRecord);
   const scoreMetric = waterSortPlayRecordDefinition.personalBestMetrics.find(
     (metric) => metric.id === "play-score",
   );
 
+  const score = getWaterSortPlayRecordScore(legacyRecord);
+  const metricValue = scoreMetric?.getValue(legacyRecord);
+
   expect(isWaterSortPlayRecord(legacyRecord)).toBe(true);
-  expect(summary?.primaryMetric.value).toBe("再計算不可");
-  expect(scoreMetric?.getValue(legacyRecord)).toBeNull();
+  expect(score).toBeNull();
+  expect(metricValue).toBeNull();
 });

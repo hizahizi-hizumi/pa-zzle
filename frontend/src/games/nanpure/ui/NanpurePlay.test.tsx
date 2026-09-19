@@ -255,9 +255,8 @@ describe("NanpurePlay", () => {
           updates: [
             {
               metricId: "elapsed-ms",
-              label: "最速",
-              previousValue: "02:30",
-              currentValue: "02:00",
+              previousValue: 150_000,
+              currentValue: 120_000,
             },
           ],
         }}
@@ -267,8 +266,11 @@ describe("NanpurePlay", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "記録を見る" }));
 
-    expect(screen.getByText("自己ベスト更新")).toBeTruthy();
-    expect(screen.getByText("最速")).toBeTruthy();
+    const bestUpdate = screen.getByRole("region", { name: "自己ベスト更新" });
+
+    expect(bestUpdate.textContent).toContain("最速");
+    expect(bestUpdate.textContent).toContain("02:30");
+    expect(bestUpdate.textContent).toContain("02:00");
     expect(onOpenRecords).toHaveBeenCalledOnce();
   });
 });

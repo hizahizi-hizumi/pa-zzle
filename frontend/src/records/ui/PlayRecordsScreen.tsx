@@ -9,14 +9,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { playRecordDefinitions } from "../catalog";
-import { formatRecordCompletedAt } from "../format";
 import {
-  getPersonalBestMetricLabelsForRecord,
+  getPersonalBestMetricIdsForRecord,
   getPersonalBests,
 } from "../personal-best";
 import type { PlayRecord } from "../play-record";
-import type { PlayRecordDefinition } from "../play-record-definition";
+import { playRecordDisplays } from "./catalog";
+import { formatRecordCompletedAt } from "./format";
+import {
+  getPersonalBestMetricDisplay,
+  type PlayRecordDisplayDefinition,
+} from "./play-record-display";
 
 type PlayRecordsScreenProps = {
   records: readonly PlayRecord[];
@@ -29,17 +32,20 @@ type ComparisonOption = {
 
 function getComparisonOptions(
   records: readonly PlayRecord[],
-  definition: PlayRecordDefinition,
+  display: PlayRecordDisplayDefinition,
 ): ComparisonOption[] {
   const options = new Map<string, string>();
+  const { definition } = display;
+
   for (const record of records) {
     if (!definition.isRecord(record)) {
       continue;
     }
 
-    const group = definition.getComparisonGroup(record);
-    if (group !== null && !options.has(group.key)) {
-      options.set(group.key, group.label);
+    const key = definition.getComparisonKey(record);
+    const label = key === null ? null : display.getComparisonLabel(key);
+    if (key !== null && label !== null && !options.has(key)) {
+      options.set(key, label);
     }
   }
 
@@ -53,23 +59,25 @@ export function PlayRecordsScreen({ records }: PlayRecordsScreenProps) {
     [records],
   );
   const newestRecord = sortedRecords.find((record) =>
-    playRecordDefinitions.some((definition) => definition.isRecord(record)),
+    playRecordDisplays.some((display) => display.definition.isRecord(record)),
   );
-  const newestDefinition = newestRecord
-    ? playRecordDefinitions.find((definition) =>
-        definition.isRecord(newestRecord),
+  const newestDisplay = newestRecord
+    ? playRecordDisplays.find((display) =>
+        display.definition.isRecord(newestRecord),
       )
     : undefined;
   const [selectedGameId, setSelectedGameId] = useState(
-    newestDefinition?.gameId ?? playRecordDefinitions[0].gameId,
+    newestDisplay?.definition.gameId ?? playRecordDisplays[0].definition.gameId,
   );
   const [selectedComparisonKey, setSelectedComparisonKey] = useState<
     string | null
   >(null);
-  const definition =
-    playRecordDefinitions.find((item) => item.gameId === selectedGameId) ??
-    playRecordDefinitions[0];
-  const comparisonOptions = getComparisonOptions(sortedRecords, definition);
+  const display =
+    playRecordDisplays.find(
+      (item) => item.definition.gameId === selectedGameId,
+    ) ?? playRecordDisplays[0];
+  const { definition } = display;
+  const comparisonOptions = getComparisonOptions(sortedRecords, display);
   const effectiveComparisonKey =
     selectedComparisonKey &&
     comparisonOptions.some((option) => option.key === selectedComparisonKey)
@@ -78,7 +86,7 @@ export function PlayRecordsScreen({ records }: PlayRecordsScreenProps) {
   const selectedRecords = sortedRecords.filter(
     (record) =>
       definition.isRecord(record) &&
-      definition.getComparisonGroup(record)?.key === effectiveComparisonKey,
+      definition.getComparisonKey(record) === effectiveComparisonKey,
   );
   const personalBests = getPersonalBests(selectedRecords, definition);
 
@@ -104,8 +112,11 @@ export function PlayRecordsScreen({ records }: PlayRecordsScreenProps) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {playRecordDefinitions.map((option) => (
-              <SelectItem key={option.gameId} value={option.gameId}>
+            {playRecordDisplays.map((option) => (
+              <SelectItem
+                key={option.definition.gameId}
+                value={option.definition.gameId}
+              >
                 {option.gameLabel}
               </SelectItem>
             ))}
@@ -132,7 +143,7 @@ export function PlayRecordsScreen({ records }: PlayRecordsScreenProps) {
       </div>
 
       {comparisonOptions.length === 0 ? (
-        <EmptyRecords gameLabel={definition.gameLabel} />
+        <EmptyRecords gameLabel={display.gameLabel} />
       ) : (
         <>
           <section
@@ -146,19 +157,29 @@ export function PlayRecordsScreen({ records }: PlayRecordsScreenProps) {
               自己ベスト
             </h2>
             <dl className="flex flex-wrap items-baseline gap-x-5 gap-y-2">
-              {personalBests.map((best) => (
-                <div
-                  key={best.metricId}
-                  className="flex items-baseline gap-1.5"
-                >
-                  <dt className="text-xs text-muted-foreground">
-                    {best.label}
-                  </dt>
-                  <dd className="font-mono text-base font-semibold tabular-nums">
-                    {best.value}
-                  </dd>
-                </div>
-              ))}
+              {personalBests.flatMap((best) => {
+                const metricDisplay = getPersonalBestMetricDisplay(
+                  display,
+                  best.metricId,
+                );
+                if (!metricDisplay) {
+                  return [];
+                }
+
+                return [
+                  <div
+                    key={best.metricId}
+                    className="flex items-baseline gap-1.5"
+                  >
+                    <dt className="text-xs text-muted-foreground">
+                      {metricDisplay.label}
+                    </dt>
+                    <dd className="font-mono text-base font-semibold tabular-nums">
+                      {metricDisplay.formatValue(best.value)}
+                    </dd>
+                  </div>,
+                ];
+              })}
             </dl>
           </section>
 
@@ -176,7 +197,7 @@ export function PlayRecordsScreen({ records }: PlayRecordsScreenProps) {
                 <PlayRecordRow
                   key={record.id}
                   record={record}
-                  definition={definition}
+                  display={display}
                   personalBests={personalBests}
                 />
               ))}
@@ -206,25 +227,25 @@ function EmptyRecords({ gameLabel }: { gameLabel: string }) {
 
 type PlayRecordRowProps = {
   record: PlayRecord;
-  definition: PlayRecordDefinition;
+  display: PlayRecordDisplayDefinition;
   personalBests: ReturnType<typeof getPersonalBests>;
 };
 
-function PlayRecordRow({
-  record,
-  definition,
-  personalBests,
-}: PlayRecordRowProps) {
-  const summary = definition.getSummary(record);
+function PlayRecordRow({ record, display, personalBests }: PlayRecordRowProps) {
+  const summary = display.getSummary(record);
   if (!summary) {
     return null;
   }
 
-  const bestLabels = getPersonalBestMetricLabelsForRecord(
+  const bestMetricIds = getPersonalBestMetricIdsForRecord(
     record,
     personalBests,
-    definition,
+    display.definition,
   );
+  const bestLabels = bestMetricIds.flatMap((metricId) => {
+    const metricDisplay = getPersonalBestMetricDisplay(display, metricId);
+    return metricDisplay ? [metricDisplay.label] : [];
+  });
 
   return (
     <li className="py-3">
