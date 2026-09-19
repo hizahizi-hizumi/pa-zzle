@@ -12,9 +12,13 @@ type GameSelectionGame = {
 
 type GameSelectionGalleryProps = {
   games: readonly GameSelectionGame[];
+  recordsTo: Path;
 };
 
-export function GameSelectionGallery({ games }: GameSelectionGalleryProps) {
+export function GameSelectionGallery({
+  games,
+  recordsTo,
+}: GameSelectionGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const selectedGame = games[selectedIndex] ?? games[0];
 
@@ -28,6 +32,12 @@ export function GameSelectionGallery({ games }: GameSelectionGalleryProps) {
         <h1 className="absolute inset-x-0 top-0 z-10 flex h-[4.5rem] items-center justify-center border-b bg-background text-3xl font-bold tracking-tight sm:h-20">
           パズル選択
         </h1>
+        <Link
+          to={recordsTo}
+          className="absolute top-0 right-3 z-20 flex h-[4.5rem] items-center px-2 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:right-6 sm:h-20"
+        >
+          記録
+        </Link>
 
         <Link
           to={selectedGame.to}

@@ -29,10 +29,12 @@ const baseProps = {
   sourceBottleIndex: null,
   operation: null,
   result: null,
+  recordOutcome: null,
   selectBottle: vi.fn(),
   undo: vi.fn(),
   restart: vi.fn(),
   newGame: vi.fn(),
+  onOpenRecords: vi.fn(),
   completeClearingPour: vi.fn(),
   onChangeDifficulty: vi.fn(),
   onBackToHome: vi.fn(),
@@ -444,5 +446,43 @@ describe("WaterSortPlay", () => {
     expect(restart).toHaveBeenCalledOnce();
     expect(onChangeDifficulty).toHaveBeenCalledOnce();
     expect(onBackToHome).toHaveBeenCalledOnce();
+  });
+
+  test("自己ベスト更新内容と記録画面への導線を表示すること", () => {
+    const onOpenRecords = vi.fn();
+    render(
+      <WaterSortPlay
+        {...baseProps}
+        status="cleared"
+        progress="result"
+        result={{
+          elapsedMs: 55_000,
+          moveCount: 10,
+          undoCount: 0,
+          restartCount: 0,
+          optimalMoveCount: 10,
+          moveDelta: 0,
+          score: 100,
+        }}
+        recordOutcome={{
+          status: "updated",
+          updates: [
+            {
+              metricId: "play-score",
+              label: "最高評価",
+              previousValue: "92点",
+              currentValue: "100点",
+            },
+          ],
+        }}
+        onOpenRecords={onOpenRecords}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "記録を見る" }));
+
+    expect(screen.getByText("自己ベスト更新")).toBeTruthy();
+    expect(screen.getByText("最高評価")).toBeTruthy();
+    expect(onOpenRecords).toHaveBeenCalledOnce();
   });
 });

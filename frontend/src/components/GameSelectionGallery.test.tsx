@@ -22,7 +22,7 @@ afterEach(cleanup);
 function renderGallery() {
   return render(
     <MemoryRouter>
-      <GameSelectionGallery games={games} />
+      <GameSelectionGallery games={games} recordsTo="/records" />
     </MemoryRouter>,
   );
 }
@@ -53,4 +53,12 @@ test("候補を選ぶとヒーローを切り替えること", () => {
   expect(heroLink.getAttribute("href")).toBe("/games/nanpure");
   expect(heroLink.querySelector('svg[data-game="nanpure"]')).toBeTruthy();
   expect(nanpureButton.getAttribute("aria-pressed")).toBe("true");
+});
+
+test("記録画面への導線を表示すること", () => {
+  renderGallery();
+
+  const recordsLink = screen.getByRole("link", { name: "記録" });
+
+  expect(recordsLink.getAttribute("href")).toBe("/records");
 });

@@ -9,6 +9,7 @@ export type Path =
   | `/games/nanpure/play/:difficulty`
   | `/games/water-sort`
   | `/games/water-sort/play/:difficulty`
+  | `/records`
 
 export type Params = {
   '/games/nanpure/play/:difficulty': { difficulty: string }

@@ -14,6 +14,7 @@ import { NanpureBoard } from "@/games/nanpure/ui/board/NanpureBoard";
 import { NanpureInputPanel } from "@/games/nanpure/ui/play/NanpureInputPanel";
 import { NanpurePlayHeader } from "@/games/nanpure/ui/play/NanpurePlayHeader";
 import { NanpureResultScreen } from "@/games/nanpure/ui/result/NanpureResultScreen";
+import type { PlayRecordSaveOutcome } from "@/records/presentation";
 
 type NanpurePlayProps = {
   difficulty: NanpureDifficulty;
@@ -33,6 +34,7 @@ type NanpurePlayProps = {
   restartCount: number;
   canUndo: boolean;
   result: NanpureResult | null;
+  recordOutcome: PlayRecordSaveOutcome | null;
   selectCell: (cellIndex: number) => void;
   inputDigit: (digit: NanpureDigit) => void;
   erase: () => void;
@@ -41,6 +43,7 @@ type NanpurePlayProps = {
   restart: () => void;
   replay: () => void;
   newGame: () => void;
+  onOpenRecords: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
   completeClearAnimation: () => void;
@@ -62,6 +65,7 @@ export function NanpurePlay({
   undoCount,
   canUndo,
   result,
+  recordOutcome,
   selectCell,
   inputDigit,
   erase,
@@ -70,6 +74,7 @@ export function NanpurePlay({
   restart,
   replay,
   newGame,
+  onOpenRecords,
   onChangeDifficulty,
   onBackToHome,
   completeClearAnimation,
@@ -78,8 +83,10 @@ export function NanpurePlay({
     return (
       <NanpureResultScreen
         result={result}
+        recordOutcome={recordOutcome}
         replay={replay}
         newGame={newGame}
+        onOpenRecords={onOpenRecords}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
       />

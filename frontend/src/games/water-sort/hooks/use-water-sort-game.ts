@@ -250,6 +250,8 @@ export function useWaterSortGame(difficulty: WaterSortDifficulty) {
     seed: session.problem.seed,
     problemIdentity,
     status: session.status,
+    startedAt: session.startedAt,
+    completedAt: session.finishedAt,
     progress: play.progress,
     state: session.state,
     elapsedMs,
