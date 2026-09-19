@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { PlayRecord } from "./play-record";
-import type { PlayRecordAdapter, PlayRecordSaveOutcome } from "./presentation";
+import type { PlayRecordDefinition } from "./play-record-definition";
+import type { PlayRecordSaveOutcome } from "./save-play-record";
 import { savePlayRecord } from "./save-play-record";
 
 type SavedRecordOutcome = {
@@ -11,7 +12,7 @@ type SavedRecordOutcome = {
 
 export function useSavePlayRecord(
   record: PlayRecord | null,
-  adapter: PlayRecordAdapter,
+  definition: PlayRecordDefinition,
 ): PlayRecordSaveOutcome | null {
   const savedRecordId = useRef<string | null>(null);
   const [saved, setSaved] = useState<SavedRecordOutcome | null>(null);
@@ -24,9 +25,9 @@ export function useSavePlayRecord(
     savedRecordId.current = record.id;
     setSaved({
       recordId: record.id,
-      outcome: savePlayRecord(record, adapter),
+      outcome: savePlayRecord(record, definition),
     });
-  }, [adapter, record]);
+  }, [definition, record]);
 
   return record && saved?.recordId === record.id ? saved.outcome : null;
 }

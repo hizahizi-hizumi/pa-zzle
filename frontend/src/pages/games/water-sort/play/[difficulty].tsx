@@ -7,7 +7,7 @@ import { parseWaterSortDifficulty } from "@/games/water-sort/game/difficulty";
 import { useWaterSortGame } from "@/games/water-sort/hooks/use-water-sort-game";
 import {
   createWaterSortPlayRecord,
-  waterSortPlayRecordAdapter,
+  waterSortPlayRecordDefinition,
 } from "@/games/water-sort/play-record";
 import { WaterSortDiagnostics } from "@/games/water-sort/ui/WaterSortDiagnostics";
 import { WaterSortPlay } from "@/games/water-sort/ui/WaterSortPlay";
@@ -59,7 +59,7 @@ function PlayableWaterSort({
   );
   const recordOutcome = useSavePlayRecord(
     playRecord,
-    waterSortPlayRecordAdapter,
+    waterSortPlayRecordDefinition,
   );
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const diagnostics = internalDiagnosticsAvailable

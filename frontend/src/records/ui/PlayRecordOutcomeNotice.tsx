@@ -1,4 +1,4 @@
-import type { PlayRecordSaveOutcome } from "../presentation";
+import type { PlayRecordSaveOutcome } from "../save-play-record";
 
 type PlayRecordOutcomeNoticeProps = {
   outcome: PlayRecordSaveOutcome | null;

@@ -9,14 +9,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { playRecordAdapters } from "../catalog";
+import { playRecordDefinitions } from "../catalog";
 import { formatRecordCompletedAt } from "../format";
-import type { PlayRecord } from "../play-record";
 import {
   getPersonalBestMetricLabelsForRecord,
   getPersonalBests,
-  type PlayRecordAdapter,
-} from "../presentation";
+} from "../personal-best";
+import type { PlayRecord } from "../play-record";
+import type { PlayRecordDefinition } from "../play-record-definition";
 
 type PlayRecordsScreenProps = {
   records: readonly PlayRecord[];
@@ -29,18 +29,17 @@ type ComparisonOption = {
 
 function getComparisonOptions(
   records: readonly PlayRecord[],
-  adapter: PlayRecordAdapter,
+  definition: PlayRecordDefinition,
 ): ComparisonOption[] {
   const options = new Map<string, string>();
   for (const record of records) {
-    if (!adapter.isRecord(record)) {
+    if (!definition.isRecord(record)) {
       continue;
     }
 
-    const key = adapter.getComparisonKey(record);
-    const label = adapter.getComparisonLabel(record);
-    if (key !== null && label !== null && !options.has(key)) {
-      options.set(key, label);
+    const group = definition.getComparisonGroup(record);
+    if (group !== null && !options.has(group.key)) {
+      options.set(group.key, group.label);
     }
   }
 
@@ -54,21 +53,23 @@ export function PlayRecordsScreen({ records }: PlayRecordsScreenProps) {
     [records],
   );
   const newestRecord = sortedRecords.find((record) =>
-    playRecordAdapters.some((adapter) => adapter.isRecord(record)),
+    playRecordDefinitions.some((definition) => definition.isRecord(record)),
   );
-  const newestAdapter = newestRecord
-    ? playRecordAdapters.find((adapter) => adapter.isRecord(newestRecord))
+  const newestDefinition = newestRecord
+    ? playRecordDefinitions.find((definition) =>
+        definition.isRecord(newestRecord),
+      )
     : undefined;
   const [selectedGameId, setSelectedGameId] = useState(
-    newestAdapter?.gameId ?? playRecordAdapters[0].gameId,
+    newestDefinition?.gameId ?? playRecordDefinitions[0].gameId,
   );
   const [selectedComparisonKey, setSelectedComparisonKey] = useState<
     string | null
   >(null);
-  const adapter =
-    playRecordAdapters.find((item) => item.gameId === selectedGameId) ??
-    playRecordAdapters[0];
-  const comparisonOptions = getComparisonOptions(sortedRecords, adapter);
+  const definition =
+    playRecordDefinitions.find((item) => item.gameId === selectedGameId) ??
+    playRecordDefinitions[0];
+  const comparisonOptions = getComparisonOptions(sortedRecords, definition);
   const effectiveComparisonKey =
     selectedComparisonKey &&
     comparisonOptions.some((option) => option.key === selectedComparisonKey)
@@ -76,10 +77,10 @@ export function PlayRecordsScreen({ records }: PlayRecordsScreenProps) {
       : (comparisonOptions[0]?.key ?? null);
   const selectedRecords = sortedRecords.filter(
     (record) =>
-      adapter.isRecord(record) &&
-      adapter.getComparisonKey(record) === effectiveComparisonKey,
+      definition.isRecord(record) &&
+      definition.getComparisonGroup(record)?.key === effectiveComparisonKey,
   );
-  const personalBests = getPersonalBests(selectedRecords, adapter);
+  const personalBests = getPersonalBests(selectedRecords, definition);
 
   return (
     <section className="mx-auto w-full max-w-3xl">
@@ -93,7 +94,7 @@ export function PlayRecordsScreen({ records }: PlayRecordsScreenProps) {
 
       <div className="mt-4 flex flex-wrap items-center gap-2 border-b pb-3">
         <Select
-          value={adapter.gameId}
+          value={definition.gameId}
           onValueChange={(gameId) => {
             setSelectedGameId(gameId);
             setSelectedComparisonKey(null);
@@ -103,7 +104,7 @@ export function PlayRecordsScreen({ records }: PlayRecordsScreenProps) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {playRecordAdapters.map((option) => (
+            {playRecordDefinitions.map((option) => (
               <SelectItem key={option.gameId} value={option.gameId}>
                 {option.gameLabel}
               </SelectItem>
@@ -131,7 +132,7 @@ export function PlayRecordsScreen({ records }: PlayRecordsScreenProps) {
       </div>
 
       {comparisonOptions.length === 0 ? (
-        <EmptyRecords gameLabel={adapter.gameLabel} />
+        <EmptyRecords gameLabel={definition.gameLabel} />
       ) : (
         <>
           <section
@@ -175,7 +176,7 @@ export function PlayRecordsScreen({ records }: PlayRecordsScreenProps) {
                 <PlayRecordRow
                   key={record.id}
                   record={record}
-                  adapter={adapter}
+                  definition={definition}
                   personalBests={personalBests}
                 />
               ))}
@@ -205,20 +206,24 @@ function EmptyRecords({ gameLabel }: { gameLabel: string }) {
 
 type PlayRecordRowProps = {
   record: PlayRecord;
-  adapter: PlayRecordAdapter;
+  definition: PlayRecordDefinition;
   personalBests: ReturnType<typeof getPersonalBests>;
 };
 
-function PlayRecordRow({ record, adapter, personalBests }: PlayRecordRowProps) {
-  const presentation = adapter.getHistoryPresentation(record);
-  if (!presentation) {
+function PlayRecordRow({
+  record,
+  definition,
+  personalBests,
+}: PlayRecordRowProps) {
+  const summary = definition.getSummary(record);
+  if (!summary) {
     return null;
   }
 
   const bestLabels = getPersonalBestMetricLabelsForRecord(
     record,
     personalBests,
-    adapter,
+    definition,
   );
 
   return (
@@ -229,14 +234,14 @@ function PlayRecordRow({ record, adapter, personalBests }: PlayRecordRowProps) {
         </p>
         <div className="flex min-w-24 items-baseline gap-1.5">
           <span className="text-xs text-muted-foreground">
-            {presentation.primaryMetric.label}
+            {summary.primaryMetric.label}
           </span>
           <span className="font-mono text-base font-semibold tabular-nums">
-            {presentation.primaryMetric.value}
+            {summary.primaryMetric.value}
           </span>
         </div>
         <dl className="flex flex-1 flex-wrap items-baseline gap-x-4 gap-y-1 text-xs">
-          {presentation.detailMetrics.map((metric) => (
+          {summary.detailMetrics.map((metric) => (
             <div key={metric.label} className="flex items-baseline gap-1">
               <dt className="text-muted-foreground">{metric.label}</dt>
               <dd className="font-mono font-medium tabular-nums">

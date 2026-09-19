@@ -2,9 +2,9 @@ import { formatRecordElapsedMs } from "@/records/format";
 import type { PlayRecord } from "@/records/play-record";
 import { createPlayRecordId } from "@/records/play-record";
 import type {
-  PlayRecordAdapter,
-  PlayRecordHistoryPresentation,
-} from "@/records/presentation";
+  PlayRecordDefinition,
+  PlayRecordSummary,
+} from "@/records/play-record-definition";
 
 import {
   getWaterSortDifficultyLabel,
@@ -165,9 +165,9 @@ function formatMoveDelta(moveDelta: number): string {
   return moveDelta === 0 ? "±0" : `+${moveDelta}`;
 }
 
-function getWaterSortHistoryPresentation(
+function getWaterSortPlayRecordSummary(
   record: PlayRecord,
-): PlayRecordHistoryPresentation | null {
+): PlayRecordSummary | null {
   if (!isWaterSortPlayRecord(record)) {
     return null;
   }
@@ -194,19 +194,19 @@ function getWaterSortHistoryPresentation(
   };
 }
 
-export const waterSortPlayRecordAdapter: PlayRecordAdapter = {
+export const waterSortPlayRecordDefinition: PlayRecordDefinition = {
   gameId: WATER_SORT_GAME_ID,
   gameLabel: "ウォーターソート",
   isRecord: isWaterSortPlayRecord,
-  getComparisonKey(record) {
-    return isWaterSortPlayRecord(record) ? record.payload.difficulty : null;
-  },
-  getComparisonLabel(record) {
+  getComparisonGroup(record) {
     return isWaterSortPlayRecord(record)
-      ? getWaterSortDifficultyLabel(record.payload.difficulty)
+      ? {
+          key: record.payload.difficulty,
+          label: getWaterSortDifficultyLabel(record.payload.difficulty),
+        }
       : null;
   },
-  getHistoryPresentation: getWaterSortHistoryPresentation,
+  getSummary: getWaterSortPlayRecordSummary,
   personalBestMetrics: [
     {
       id: "play-score",

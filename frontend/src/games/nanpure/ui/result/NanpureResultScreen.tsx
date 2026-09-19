@@ -4,10 +4,10 @@ import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { GamePictogram } from "@/components/GamePictogram";
 import {
   GameResultConfetti,
+  type GameResultLevel,
   GameResultMark,
   GameResultScoreCard,
-  getGameResultScorePresentation,
-} from "@/components/GameResultPresentation";
+} from "@/components/GameResult";
 import { Button } from "@/components/ui/button";
 import nanpurePictogramSvg from "@/games/nanpure/assets/pictogram.svg?raw";
 import {
@@ -20,8 +20,21 @@ import {
 } from "@/games/nanpure/game/performance";
 import type { NanpureResult } from "@/games/nanpure/hooks/use-nanpure-game";
 import { formatElapsedTime } from "@/games/nanpure/ui/format-elapsed-time";
-import type { PlayRecordSaveOutcome } from "@/records/presentation";
+import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
+
+function getNanpureGameResultLevel(score: number): GameResultLevel {
+  if (score >= 100) {
+    return "perfect";
+  }
+  if (score >= 90) {
+    return "great";
+  }
+  if (score >= 80) {
+    return "good";
+  }
+  return "clear";
+}
 
 type NanpureResultScreenProps = {
   result: NanpureResult;
@@ -42,15 +55,15 @@ export function NanpureResultScreen({
   onChangeDifficulty,
   onBackToHome,
 }: NanpureResultScreenProps) {
-  const scorePresentation = getGameResultScorePresentation(result.score.total);
+  const resultLevel = getNanpureGameResultLevel(result.score.total);
 
   return (
     <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-y-auto bg-background pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <BrandIdentityHeader />
-      <GameResultConfetti intensity={scorePresentation.confettiIntensity} />
+      <GameResultConfetti level={resultLevel} />
       <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-5">
         <div className="text-center">
-          <GameResultMark presentation={scorePresentation}>
+          <GameResultMark level={resultLevel}>
             <span className="block size-12">
               <GamePictogram svg={nanpurePictogramSvg} variant="result" />
             </span>
@@ -59,10 +72,7 @@ export function NanpureResultScreen({
           <h1 className="mt-1 text-3xl font-bold tracking-tight">クリア!</h1>
         </div>
 
-        <GameResultScoreCard
-          score={result.score.total}
-          presentation={scorePresentation}
-        />
+        <GameResultScoreCard score={result.score.total} level={resultLevel} />
 
         <dl className="mt-6 grid grid-cols-3 gap-2 text-center">
           <ResultMetric
