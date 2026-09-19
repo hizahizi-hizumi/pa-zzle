@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
-import { getGameResultStyle } from "@/components/game-result-style";
 import { GameResultSurface } from "@/components/GameResultSurface";
+import { getGameResultStyle } from "@/components/game-result-style";
 import type { GameResultLevel } from "@/games/result";
 
 type GameResultScoreCardProps = {
