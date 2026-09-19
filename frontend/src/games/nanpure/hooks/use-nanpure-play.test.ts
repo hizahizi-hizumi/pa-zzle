@@ -1,5 +1,4 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
-import { afterEach, describe, expect, test, vi } from "vitest";
 
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import { rateUniqueNanpureDifficulty } from "@/games/nanpure/problem/difficulty-rating";

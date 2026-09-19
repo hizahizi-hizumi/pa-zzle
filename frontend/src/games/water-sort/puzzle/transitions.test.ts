@@ -1,5 +1,3 @@
-import { describe, expect, test } from "vitest";
-
 import type { WaterSortState } from "./state";
 import { listWaterSortDistinctTransitions } from "./transitions";
 

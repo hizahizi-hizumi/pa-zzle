@@ -1,7 +1,5 @@
 // @vitest-environment node
 
-import { describe, expect, test } from "vitest";
-
 import type { WaterSortProblem } from "../problem/problem";
 import type { WaterSortMove } from "../puzzle/state";
 import {

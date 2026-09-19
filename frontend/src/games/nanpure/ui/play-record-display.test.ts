@@ -1,5 +1,3 @@
-import { expect, test } from "vitest";
-
 import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
 
 import { nanpurePlayRecordDisplay } from "./play-record-display";

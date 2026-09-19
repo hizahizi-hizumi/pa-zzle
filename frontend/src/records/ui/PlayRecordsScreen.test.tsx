@@ -1,6 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import { afterEach, expect, test } from "vitest";
 
 import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
 import { createWaterSortPlayRecord } from "@/games/water-sort/play-record";
