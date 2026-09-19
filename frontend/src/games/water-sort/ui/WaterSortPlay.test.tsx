@@ -6,7 +6,7 @@ import {
   screen,
 } from "@testing-library/react";
 
-import type { WaterSortResult } from "../hooks/use-water-sort-play";
+import type { WaterSortResult } from "../play/use-water-sort-play";
 import { WaterSortPlay } from "./WaterSortPlay";
 
 afterEach(() => {

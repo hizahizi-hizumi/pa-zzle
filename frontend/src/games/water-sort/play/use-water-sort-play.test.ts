@@ -7,7 +7,7 @@ import {
 import type { WaterSortMove } from "@/games/water-sort/puzzle/state";
 import { useWaterSortPlay } from "./use-water-sort-play";
 
-vi.mock("@/games/water-sort/problem/selection", () => ({
+vi.mock("@/games/water-sort/problem-selection", () => ({
   generateWaterSortProblemForDifficulty: (
     difficulty: "easy" | "normal" | "hard",
     seed: string,

@@ -3,7 +3,7 @@ import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import type {
   NanpureProgress,
   NanpureResult,
-} from "@/games/nanpure/hooks/use-nanpure-play";
+} from "@/games/nanpure/play/use-nanpure-play";
 import type {
   NanpureBoard as NanpureBoardState,
   NanpureDigit,

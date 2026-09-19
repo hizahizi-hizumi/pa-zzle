@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 
 import { createWaterSortDiagnosticSnapshot } from "@/games/water-sort/diagnostics";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
-import { useWaterSortPlay } from "@/games/water-sort/hooks/use-water-sort-play";
+import { useWaterSortPlay } from "@/games/water-sort/play/use-water-sort-play";
 import {
   createWaterSortPlayRecord,
   waterSortPlayRecordDefinition,

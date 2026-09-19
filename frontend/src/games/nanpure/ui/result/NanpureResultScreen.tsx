@@ -16,7 +16,7 @@ import {
   getNanpureDifficultyLabel,
   type NanpureDifficulty,
 } from "@/games/nanpure/difficulty";
-import type { NanpureResult } from "@/games/nanpure/hooks/use-nanpure-play";
+import type { NanpureResult } from "@/games/nanpure/play/use-nanpure-play";
 import {
   getNanpureGameResultLevel,
   NANPURE_SCORE_MAXIMUMS,

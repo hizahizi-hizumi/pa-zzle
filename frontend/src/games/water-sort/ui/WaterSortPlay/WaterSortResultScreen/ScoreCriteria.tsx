@@ -1,4 +1,4 @@
-import type { WaterSortResult } from "@/games/water-sort/hooks/use-water-sort-play";
+import type { WaterSortResult } from "@/games/water-sort/play/use-water-sort-play";
 import {
   WATER_SORT_SCORE_MAXIMUMS,
   WATER_SORT_SPEED_INITIAL_RECOGNITION_MS,
