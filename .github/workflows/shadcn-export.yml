@@ -26,19 +26,30 @@ jobs:
           set -euo pipefail
           bunx --bun shadcn@latest add dialog dropdown-menu collapsible --cwd frontend --yes
 
-      - name: Export generated files
+      - name: Apply app integration patch
+        shell: bash
+        env:
+          APP_PATCH_GZ_B64: "H4sIAAAAAAACA+1c65Mbx3H/fn/FCOVy4QIsnod76UCJPDIRE5FU8aiSqmSWtdgd4DZc7KJ2F3cHXqGKdxc5khxZcWTRD8qhLckRy45USdlVjkjF/wx0d+Kn/AvpmdnHzOwu3irJNvgB3J2d6enp6fn1dE/P6UaziRSlZXhILTYd2/KwpRddRytqdrtjW9jy3OJVKHUs1bxsqC3Ldj1Dc+HRtFsFD7tewXMPUGOGxkuGpeMDVFkrr641NgqFRq1RKpdVVC6VVldWlhRFmYm3pVwuNxt/zz+PlNpqfg3l6C+86tjVHKOBs5nU5pk8yi6j+gV0uIQQ6i8/u4TIAyGazVxxNbWDB8efDk6+GBx98vT+W4Ojnw2Of3j23jtf/u8Hg+N/e3rvF+cPfzM4+jkUDo7eGxw94ugpQAc1DQdf2YMhFO7g3mV738rugxzt/Tw6RFCyifxOMrTvXHIT3da6bShIbkQZRggfdLDmZW1r27RdvFzw7BfUPXwJY2tbNU2s37A0nCXV2TD1GVVqWm0KFam2tlHTa81CYU1bKa9XtZkVaRYd8tWnnF9HuXK+vAras4QMaOl4IPPtXazdyaNt0+g0bNXR8+gVB1vabh69ivoIumujjNnVDB0rDlY1L/PskhI27rr4SrMJU5Mnjzue6uGwUVA7x9dOroI4fuIDuWnvhy2eH2vMxUQipKOwm0tdz7OtZLpdo9ign3nuif4y6vnokaoj/04nx+NKLtNl2vEM2+JKX8Cqjh2u4JbhmYRQGj86W9BUVF6vg1Hq2F9y7I6L6mzNk4VgaF3T672oNrC5iVzPMazWs1QhKhtEGXLVtXy5TBAFFhkZabNraYTd9C6yh2xVZgzdxJk8eaFLFUAhVIisiBQBTY0I7IbFlngWEyTYRP+Ae1T1KDAsB20QMpqIVSFgger1eogNXCWEfFQg698v6xPBhn3uqhbweaMDYAGPLZy14XETNWzbxKq1zKaW9fYM+RSWCKR9wgrrgwFdQdUZ0y8aLsw7drIZ4BQ+WACVwlAD3hzsdR3Lh1GfiIPb9h6ehE4/j17zWbvNkLXPkFJ1e5bGSdvu9HYstePu2l52GfnT5jk9eKQWpZxfWQGTspKvrkyhAX6nwZjYCLd0Yw94Vl33utrG9UzTOMA6MiwXe0oJ3VVeAyi8jZomoKTh4barAJihf+wC8WZP0TDpEbntTfYteu8oq5kLwfxuseUZqQBZEvWMv2ijYo4NteHaZhewJ+Ck0VKatoNbjt0FNK1Agard0WHxKA2z6wCbnYPbHCnVMVTFJIuonjn7+IOvHn1xdvLG6a/+mxjKwHRmRJ00tDv1Q3+a+sGnYjQIF1MpR40cUMh6xl/qUtdtW1eha8/p4kSuwAg2evWM4c+YokdTpngEXJLF4mBT9Yw9jPaVZtc0UVs9UPYVs4WoWLCueEr1wIS14gBeEZl17A4oq4M6B0oNdTzy01Beg2bZcqFSA1XOY2sv66pNrKgA7woTd8OGmWkvL9+GzceBFxDhJgC5uyrouwJ9wWQHnVfYK5n7gPsL0TC2dimKCsoWqZXrqaDKgWI1sLcPuwXUUjvKSoYjwhRWKEjQ4Yisr5GEToUN5sBFTYB9pY11o9tmZW3QNJ0bXkbqALpgVpbvxTXuYqVaqGU4JQn+nf7gjacnj7569Pjs/qcMnLbYSkQEsUDdInirH8qA178Q4NmWYKZA6PY+VU9mDeuHTdV0uephA2avuPKhMhou+pwsaano6xG/1MXoCYg1iE8BR6yYOA7Otl/gQWOryH9ZSiIl6uNuRVYIQx9zsceWfNtTykxMsMyp6FzcNhq2qYNlAAyE/QEQae16EpGYTvIjkvgt7lbkieY2TGCmtncNU48LjOlhXPYivsc+7xEctLx6prULUkioQGYW5KUltuahncNyqV6SCr2aoChbRTYIefxFTgDClMcnPBCDki4CZdjwlbShK2MMW6iTasYSFIJJQ0mShMIpRgKSxHbKkuy+/J93Tt/44+m/vgmKdvrjtwcnT05/8M75u386//DxV799Z3D02eDo4eD4CB7YGvUt89EnxHm9dyz0VRzWWfA1gDvEca6b0iKqwe56j7hFvdBYCpaSglCxUiOmUsA9idRkVHiBJ7tKwZQ++OjsZ++dPv6PDOiH2QWzIDkDfTJdY5NzMdZDSuSlj9q2ZaMGGPk7F2HnMA4x5oeWqySOUS75gYyJ3Y5wI8UvIVOaLdGC0OlqOYYuzoNYyf8exyN/DZmtTLQg+K11X4Jw9pF6utRpgVeDSO85tEW9beAdbcJz4HLDe38sCkx+lWq+XAIBlmcTIPu3iTL+YvrJo7/fuXEd9rOD498PTn4yOPki019KBLZU6NrqSEKvMkPjW+3AXoPbpRMrQzafxDkYY8s0KwRwCNSJduBFfwvul4hWPERstlnyy4PSC4HX2x8SbWqBHNyipVqdroOJG98x1V7xOnt/CZ4Z0BTJ4zVsdZMiT9PQ8KNQ5fWNmrq+WihUKtWaWlkbEoWaqpeEiNRUdIhWr1Gdht8aUekw6AJC3jEBHh33Bdsx7kJPqkkDDn6QammsGNXoqNO44aCILOE+1mrS4RcjKrFYE7iiJAJAauTlAiHOxJVfhU1yrHAHd1RH9Wwn9uWWY7RaNA6VGnfya8P22upy4adgAEK0ybZuYrr33/QDHHu2oYexplUA/epKfmUjCbMCelmf0CXYiN6yX7DbOM8KiDfDARqZ+E2RCz8mBBsd10OvGS5pkUfgfV6lj7eBy0AVstTPIbEU0iJkwulaFy2dRXxUWsQPJIw5hSQjMnQ/RVv4USgSKBoZGgmcby6wcWm8wEbqji/a7cHuPiV8MTj6JeDkl0/uwy+L9ssVYXZUshWpHzIx9hMCG0wwkSyyWtdxaPwOip8JXvpJfvs1APloOfMhEXnH6PePvvvdQIaBHHnjwOImVEP54qToj2d3YAOCHOLf0HBUpUT3BWhfWVmhbmU5eR8Wxj2UcqE2KopBRO876dxq47zw+BpM8IkSvKFUP2iIBySpRC7ZA0hSiuSd/laEWaIDQLqoH27dtMkS29b26bZGqOH3df7g46e//BB2GmdvPgH7nOZzMA3jF2UIMMsC4eJk/OGmg93d7XT+Bie/HRw/GZycDE7enIw5Avez8EYALZWt0zd/Q/Y377/79Nf/MglbO0Ri1/E+oGTDxO1Z+IvZ4lRmQ/fj9OO3zh78YRJ+WdDqcuitzMIwsSBD5vkBOfw8+dUk3EWWaRhfhzGLJWEYZT4eFZT9lh7gEQMhxUuKC6aOn5OBH+iKSYGTBB/KycRrDRWINM7lWC8y11tiAd9AdCiCL/HoWoIJyaUGYGDLHsfbZDAOAqOqabSsegaLocMteasFgtnBJvgQJEDiQ1NfZJRHQ/6DhIFCDELqZQIOCP7IDHBwx3/gQW4uvUswI7HhIxtfxuPZXDiQgUNiIQm8+AoSZM2FpQgtJGZ8YBJnxIejMXtOw5icgDBSFDbJL4hFMYePSeq0Hw+BhogjfxFCxnJ8NH2kDDNyHGIkLu2Ypy5svr4Gf51z3+bhukvklnQQuYd11DRMjNq2jgMHnrn31Q1VrzaahUKJ/ZuHXy+zQFz8oo73ilbXNP00kkoZ5Ur5EkkjCdxh6hMeopvEs75OGJV9bXC0aJ2IfOQ5KsxSPbcZtac+lCmmLCihHRLdS6VPycseZdRT9pDSzzOC+YAKcSAldnwXT/LaxMPmRI8s8kDIMVVYLJ9htQ1L2VXKpaTDrMDrMFsk1OsHzkzc9NiT20a7xNvYBF9E1UhL/51+ZSW8J9K0ta6r7BmuAWC8aXc907CwYoFnL30iwoXuEwrJTzgU4SQAHnzTzHlqIOJ+dLYNDuSFQyrw/laRvgW2vBG5eMRXnmg9giUDYA/09yZ929EcjMdbf8ObB0mAeH2jUd6AZbW6XlMrlUmiZiM6GCdgNoIEXYLV/CrKwS/L2wlDUn8HtFgDQMIm9jwjOaAVryekRkWfr+pQ3/B6o8gE9VLI7Gigl9sk0D2CTlhx9lStbds01Q7V5rz0zgfPuOLRwTAtqswx6M/dS4bm2S1Hbe/stVLigQAGGCh1gpoFd6/1nKMKiWnETLWw50//ZfHIJs+mv1TNVzbICcp6fqWUFE1LUB4x9u/vqGPvfIwFe6phurGAfjw6QuGq0wsO5N2xciC23G67rTo9nr7WdVzbUTq2wbJ+6I6DYVbSMULs2D8932Jw/Dk51Tj+kB0QfPXo94OTJ2c/+vX58eenDx+fPb4vnlv6vElpImZMFjRyRH4UUA0XBECg/EBhgSQQiMzG1mUq1GsYTJomu0mBK/bpR+cfPh4cvR/zw/zDt9e/c8gwouCS5VKgJ3Bkm1MAK9B1VK3XR0X0ncPrF6+/9PLNK9/f2b4Bv9cuvnr12svXdqJKr0uOWnEKZp/eezgVp26HniAOYZPVmAePp5+9dfrZL87ufTIFm57aMEwAtuGshrUmYjeMQhz/0+D47fMHfxgc/TQT58lhbuU2qLXXP33w76/3Y8fs5PBTGRJEIKoaBBFIzlY1ppcMeB3YljiGKnrTHEIOzf+hvdBdjpjMF8v4iUPuqHwQcc8lxzr9AKfbTsryGb3wx03fiLM9NIsD3hmAikKLm6GEhChJrJUhmFsdibmx3CpTPvMegWDxtBdh0cU+JyFZQqX5o1msk+IMzAfINg3nE6DbXHnmkG4qtidHu7myLwDhWCOIY+M4HDHAHJFzmAia8aGlA2d6YmBCOLM4FBeEzxzqpAWAhg+rnILSiZl4o3yzfRUaK7Br88gG+RXytgMvJJyQejNr/JaBR6ZVqxsVrVBYL62tVtdqIz2ysWinOmNjtSYb8WqlTDKZ2H/ClSyhkXgNK7zM5DKnDjb7l3q3ALyzmcHJ24Pjj4nJOvnp4OQ/4fn/vjjKLJPrTpfA6HS93V54E2EIkR8Pjh8PTn6HOqpy9y64KhMSKBLxxhspw3sdZWfjBKX7YBqJKkxJecSQimcf3Dt/+On33L/5Xq5SnFAcp396Y3D00eDo4bhyvGiaYdu3Pz//0T+zhuTC2ovYanm72crQK2pjKOFUaypKC9JWcEmtFAqNRlOtlkqzLaepV5J4LW2VDyceopct3a6k5fZEoQEaUwyjhvkxc30c1dKDkAWLfyYHFxIqCilA4wYmkBglDeUQefexFCJOclHaZowUTYQKqIEpcFR2z4ylCdIgUYlBk9QshSFRdgm8dLoEUYouqSdMREjiki3GeZIUgSY9FsUmArXLIGvT1u5ct8Go4RHUBLUqik2F64dEp1IytoZRjJoljziKok9ENqF9Mn0+ijNdDzwFuhZYGu5GvkzycMvryWmkArH03NtltDl8y0F3G7tKeUWMesf2H0rS/kMZdg9AGX4LQEm7AyCmRsVC9fQaSDnyuujFqCgTiNwTE9N93HaMHJ9aE1kQuRYXVCdaFjs51w1XhS2fXj98RlOTqsTzARhwyqNJuFOU5uhyqyShe8Q4DTmW076luOJymEG8VWzatkec5hksH7cWpzKCUvslC++nHa75Z2qFAl5bLalrmFrH6CRsGpMn905WITlHA+tXoadpufHMX24pR4E7IhedpeUipQlvuNKtFpsv8eQs16fE5IUf0c0ehtTyPgVyaiZ17N+XDU/NcvypWW5I4hqnpYZFz6coVgTrbwhcTLI2ya0myzXI0EiQw3bcb+QkLZoXP76t0KvNLqMUfrQ7qga7DaVWCsWUgiW5FAzJydgRPPmfosyXYViREw/rcvSwLtefafUmmLwxUt9noRj+XY/KKt4ojZ8IP1OfU2HDSKp/aUny0wpjkTK/SJlfpMx/kynz5UXK/CJlfpEyv0iZX6TML1LmFynzi5T5Rcr8X3vK/BycufkHAL62dPp5MbRIrl8k13/TyfUTHyDNuE7Tku4b5fVVrVIobOD11bWNxnwidOMn4E9HbpGM/21Lxt8PZy49HZ+b6wky8hNO7fmc/HI5X62xP8qzsjr0OHWRlf9nmJXvZ/JMnEGOia4YsLXzkypfuXjrys3v79y4eUvOq+Rqfksy89N5nV9yPssRnio5X8wPTmd2rhcemF6e/fz46f330lgGhW+rDD5vGW2cDfgnQvtb2OnRL9diXv9YlwXO//ju2Vs/PHv/v8KbAjt0Bxd0Qv6SME2HXe6PRzA6UIxLHJasnX7v4M/mOgPrue5z0F9cb1hcb5jH9YbAJEyTaj+tWfg2XnEYw0zMlW3OZMx+rWQ8szHfWxqCCUkfwvhmZHL2pjQn4xGd0KT8Fd8XGWaZ/jLuj/w/3eB+o91nAAA="
+        run: |
+          set -euo pipefail
+          printf '%s' "$APP_PATCH_GZ_B64" | base64 -d | gzip -d > /tmp/app.patch
+          git apply /tmp/app.patch
+
+      - name: Export final changes
         shell: bash
         run: |
           set -euo pipefail
-          for file in \
-            frontend/bun.lock \
-            frontend/package.json \
-            frontend/src/components/ui/collapsible.tsx \
-            frontend/src/components/ui/dialog.tsx \
-            frontend/src/components/ui/dropdown-menu.tsx
+          git add -A frontend
+          git diff --cached --name-status
+          while IFS= read -r -d '' file
           do
+            status="$(git diff --cached --name-status -- "$file" | cut -f1)"
+            if [[ "$status" == D* ]]; then
+              echo "DELETE_FILE $file"
+              continue
+            fi
             echo "BEGIN_FILE $file"
             base64 -w0 "$file"
             echo
             echo "END_FILE $file"
-          done
+          done < <(git diff --cached --name-only -z -- frontend)
