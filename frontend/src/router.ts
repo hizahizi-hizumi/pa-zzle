@@ -7,12 +7,14 @@ export type Path =
   | `/`
   | `/puzzles/nanpure`
   | `/puzzles/nanpure/play/:difficulty`
+  | `/puzzles/parking-jam/play/:difficulty`
   | `/puzzles/water-sort`
   | `/puzzles/water-sort/play/:difficulty`
   | `/records`
 
 export type Params = {
   '/puzzles/nanpure/play/:difficulty': { difficulty: string }
+  '/puzzles/parking-jam/play/:difficulty': { difficulty: string }
   '/puzzles/water-sort/play/:difficulty': { difficulty: string }
 }
 
