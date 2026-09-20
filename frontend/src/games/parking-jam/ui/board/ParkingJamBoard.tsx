@@ -1,14 +1,24 @@
-import { type KeyboardEvent, type PointerEvent, useRef } from "react";
+import {
+  type CSSProperties,
+  type KeyboardEvent,
+  type PointerEvent,
+  useRef,
+} from "react";
 
 import type { ParkingJamOperation } from "@/games/parking-jam/play/use-parking-jam-play";
 import type {
   ParkingJamBoard as ParkingJamBoardDefinition,
   ParkingJamDirection,
-  ParkingJamRoadOpening,
   ParkingJamState,
   ParkingJamVehicle,
   ParkingJamVehicleId,
 } from "@/games/parking-jam/puzzle/board";
+
+import {
+  PARKING_JAM_CELL,
+  PARKING_JAM_MARGIN,
+  parkingJamBoardGeometry,
+} from "./parking-jam-board-geometry";
 
 import "./parking-jam-board.css";
 
@@ -26,34 +36,7 @@ type ParkingJamBoardProps = {
   onExitAnimationComplete?: () => void;
 };
 
-const CELL = 100;
-const MARGIN = 58;
 const SWIPE_THRESHOLD = 18;
-
-function getOpeningGeometry(
-  opening: ParkingJamRoadOpening,
-  board: ParkingJamBoardDefinition,
-) {
-  const start = opening.startOffset * CELL;
-  const length = opening.length * CELL;
-  if (opening.side === "up")
-    return { x: start, y: -MARGIN, width: length, height: MARGIN + 4 };
-  if (opening.side === "down")
-    return {
-      x: start,
-      y: board.height * CELL - 4,
-      width: length,
-      height: MARGIN + 4,
-    };
-  if (opening.side === "left")
-    return { x: -MARGIN, y: start, width: MARGIN + 4, height: length };
-  return {
-    x: board.width * CELL - 4,
-    y: start,
-    width: MARGIN + 4,
-    height: length,
-  };
-}
 
 function getSwipeDirection(
   vehicle: ParkingJamVehicle,
@@ -93,8 +76,10 @@ export function ParkingJamBoard({
     y: number;
   } | null>(null);
   const remaining = new Set(state.remainingVehicleIds);
-  const width = board.width * CELL;
-  const height = board.height * CELL;
+  const width = board.width * PARKING_JAM_CELL;
+  const height = board.height * PARKING_JAM_CELL;
+  const boundaryCurbs = parkingJamBoardGeometry.getBoundaryCurbLines(board);
+  const parkingBayLines = parkingJamBoardGeometry.getParkingBayLines(board);
 
   function handlePointerDown(
     event: PointerEvent<SVGGElement>,
@@ -140,7 +125,7 @@ export function ParkingJamBoard({
     <svg
       role="group"
       aria-label="パーキングジャム盤面"
-      viewBox={`${-MARGIN} ${-MARGIN} ${width + MARGIN * 2} ${height + MARGIN * 2}`}
+      viewBox={`${-PARKING_JAM_MARGIN} ${-PARKING_JAM_MARGIN} ${width + PARKING_JAM_MARGIN * 2} ${height + PARKING_JAM_MARGIN * 2}`}
       className="parking-jam-board"
     >
       <defs>
@@ -203,87 +188,50 @@ export function ParkingJamBoard({
           />
         </pattern>
       </defs>
-      <rect
-        x={-MARGIN}
-        y={-MARGIN}
-        width={width + MARGIN * 2}
-        height={height + MARGIN * 2}
-        rx="24"
-        className="parking-jam-board__surround"
-      />
-      <rect
-        width={width}
-        height={height}
-        rx="18"
-        className="parking-jam-board__lot"
-      />
-      <rect
-        width={width}
-        height={height}
-        rx="18"
-        fill="url(#parking-jam-asphalt)"
-      />
-      <rect
-        x="7"
-        y="7"
-        width={width - 14}
-        height={height - 14}
-        rx="12"
-        className="parking-jam-board__curb"
-      />
+      <rect width={width} height={height} className="parking-jam-board__lot" />
+      <rect width={width} height={height} fill="url(#parking-jam-asphalt)" />
       {board.roadOpenings.map((opening) => {
-        const geometry = getOpeningGeometry(opening, board);
+        const geometry = parkingJamBoardGeometry.getAccessRoadGeometry(
+          opening,
+          board,
+        );
         return (
           <g key={`${opening.side}-${opening.startOffset}-${opening.length}`}>
-            <rect {...geometry} className="parking-jam-board__exit-road" />
-            <path
-              d={
-                opening.side === "left" || opening.side === "right"
-                  ? `M ${geometry.x} ${geometry.y + 12} H ${geometry.x + geometry.width} M ${geometry.x} ${geometry.y + geometry.height - 12} H ${geometry.x + geometry.width}`
-                  : `M ${geometry.x + 12} ${geometry.y} V ${geometry.y + geometry.height} M ${geometry.x + geometry.width - 12} ${geometry.y} V ${geometry.y + geometry.height}`
-              }
-              className="parking-jam-board__road-edge"
-            />
+            <rect {...geometry} className="parking-jam-board__access-road" />
+            <rect {...geometry} fill="url(#parking-jam-asphalt)" />
+            {parkingJamBoardGeometry
+              .getAccessRoadCurbLines(opening, board)
+              .map((line) => (
+                <line
+                  key={`${opening.side}-${opening.startOffset}-curb-${line.x1}-${line.y1}-${line.x2}-${line.y2}`}
+                  {...line}
+                  className="parking-jam-board__curb"
+                />
+              ))}
           </g>
         );
       })}
-      {board.roadOpenings.map((opening) => {
-        const geometry = getOpeningGeometry(opening, board);
-        const horizontal = opening.side === "up" || opening.side === "down";
-        return (
-          <g
-            key={`guide-${opening.side}-${opening.startOffset}-${opening.length}`}
-            className="parking-jam-board__exit-mark"
-          >
-            <path
-              d={
-                horizontal
-                  ? `M ${geometry.x + geometry.width / 2} ${geometry.y + 8} V ${geometry.y + geometry.height - 8}`
-                  : `M ${geometry.x + 8} ${geometry.y + geometry.height / 2} H ${geometry.x + geometry.width - 8}`
-              }
-            />
-            <path
-              d={
-                opening.side === "left"
-                  ? `M ${geometry.x + 12} ${geometry.y + geometry.height / 2} l 14 -10 v 20 z`
-                  : opening.side === "right"
-                    ? `M ${geometry.x + geometry.width - 12} ${geometry.y + geometry.height / 2} l -14 -10 v 20 z`
-                    : opening.side === "up"
-                      ? `M ${geometry.x + geometry.width / 2} ${geometry.y + 12} l -10 14 h 20 z`
-                      : `M ${geometry.x + geometry.width / 2} ${geometry.y + geometry.height - 12} l -10 -14 h 20 z`
-              }
-              className="parking-jam-board__exit-arrow"
-            />
-          </g>
-        );
-      })}
+      {parkingBayLines.map((line) => (
+        <line
+          key={`parking-bay-${line.x1}-${line.y1}-${line.x2}-${line.y2}`}
+          {...line}
+          className="parking-jam-board__parking-bay"
+        />
+      ))}
+      {boundaryCurbs.map((line) => (
+        <line
+          key={`boundary-curb-${line.x1}-${line.y1}-${line.x2}-${line.y2}`}
+          {...line}
+          className="parking-jam-board__curb"
+        />
+      ))}
       {board.fixedAreas.map((area) => (
         <rect
           key={`${area.row}-${area.column}-${area.width}-${area.height}`}
-          x={area.column * CELL + 10}
-          y={area.row * CELL + 10}
-          width={area.width * CELL - 20}
-          height={area.height * CELL - 20}
+          x={area.column * PARKING_JAM_CELL + 10}
+          y={area.row * PARKING_JAM_CELL + 10}
+          width={area.width * PARKING_JAM_CELL - 20}
+          height={area.height * PARKING_JAM_CELL - 20}
           rx="14"
           className="parking-jam-board__island"
         />
@@ -294,31 +242,31 @@ export function ParkingJamBoard({
           key={`island-${area.row}-${area.column}-${area.width}-${area.height}`}
         >
           <rect
-            x={area.column * CELL + 17}
-            y={area.row * CELL + 17}
-            width={area.width * CELL - 34}
-            height={area.height * CELL - 34}
-            rx="11"
+            x={area.column * PARKING_JAM_CELL + 25}
+            y={area.row * PARKING_JAM_CELL + 25}
+            width={area.width * PARKING_JAM_CELL - 50}
+            height={area.height * PARKING_JAM_CELL - 50}
+            rx="9"
             className="parking-jam-board__island-soil"
           />
           <rect
-            x={area.column * CELL + 27}
-            y={area.row * CELL + 27}
-            width={area.width * CELL - 54}
-            height={area.height * CELL - 54}
-            rx="8"
+            x={area.column * PARKING_JAM_CELL + 34}
+            y={area.row * PARKING_JAM_CELL + 34}
+            width={area.width * PARKING_JAM_CELL - 68}
+            height={area.height * PARKING_JAM_CELL - 68}
+            rx="6"
             className="parking-jam-board__island-green"
           />
           <circle
-            cx={(area.column + area.width / 2) * CELL}
-            cy={(area.row + area.height / 2) * CELL}
-            r={Math.min(area.width, area.height) * CELL * 0.2}
+            cx={(area.column + area.width / 2) * PARKING_JAM_CELL}
+            cy={(area.row + area.height / 2) * PARKING_JAM_CELL}
+            r={Math.min(area.width, area.height) * PARKING_JAM_CELL * 0.2}
             className="parking-jam-board__shrub-shadow"
           />
           <circle
-            cx={(area.column + area.width / 2) * CELL - 4}
-            cy={(area.row + area.height / 2) * CELL - 5}
-            r={Math.min(area.width, area.height) * CELL * 0.17}
+            cx={(area.column + area.width / 2) * PARKING_JAM_CELL - 4}
+            cy={(area.row + area.height / 2) * PARKING_JAM_CELL - 5}
+            r={Math.min(area.width, area.height) * PARKING_JAM_CELL * 0.17}
             className="parking-jam-board__shrub"
           />
         </g>
@@ -329,15 +277,31 @@ export function ParkingJamBoard({
         const exiting = targeted && operation?.type === "exited";
         if (!isRemaining && !exiting) return null;
         const horizontal = vehicle.orientation === "horizontal";
-        const vehicleWidth = (horizontal ? vehicle.length : 1) * CELL - 20;
-        const vehicleHeight = (horizontal ? 1 : vehicle.length) * CELL - 20;
-        const x = vehicle.column * CELL + 10;
-        const y = vehicle.row * CELL + 10;
+        const vehicleWidth =
+          (horizontal ? vehicle.length : 1) * PARKING_JAM_CELL - 20;
+        const vehicleHeight =
+          (horizontal ? 1 : vehicle.length) * PARKING_JAM_CELL - 20;
+        const x = vehicle.column * PARKING_JAM_CELL + 10;
+        const y = vehicle.row * PARKING_JAM_CELL + 10;
         const selected = selectedVehicleId === vehicle.id;
         const feedbackClass =
           targeted && operation
             ? ` parking-jam-car--${operation.type === "exited" ? "exit" : "blocked"}-${operation.direction}`
             : "";
+        const exitTranslation =
+          exiting && operation
+            ? parkingJamBoardGeometry.getVehicleExitTranslation(
+                board,
+                vehicle,
+                operation.direction,
+              )
+            : null;
+        const exitStyle = exitTranslation
+          ? ({
+              "--parking-jam-exit-x": `${exitTranslation.x}px`,
+              "--parking-jam-exit-y": `${exitTranslation.y}px`,
+            } as CSSProperties)
+          : undefined;
         return (
           <g
             key={targeted ? `${vehicle.id}-${operation?.id}` : vehicle.id}
@@ -346,6 +310,7 @@ export function ParkingJamBoard({
             aria-label={getVehicleLabel(vehicle)}
             aria-pressed={selected}
             className={`parking-jam-car${selected ? " parking-jam-car--selected" : ""}${feedbackClass}`}
+            style={exitStyle}
             onPointerDown={(event) => handlePointerDown(event, vehicle)}
             onPointerUp={(event) => handlePointerUp(event, vehicle)}
             onKeyDown={(event) => handleKeyDown(event, vehicle)}
@@ -504,4 +469,4 @@ export function ParkingJamBoard({
   );
 }
 
-export const _private = { getOpeningGeometry, getSwipeDirection };
+export const _private = { getSwipeDirection };
