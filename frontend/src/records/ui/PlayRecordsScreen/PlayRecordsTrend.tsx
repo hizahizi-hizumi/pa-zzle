@@ -171,6 +171,7 @@ export function PlayRecordsTrend({
             type="linear"
             stroke="var(--color-value)"
             strokeWidth={2}
+            isAnimationActive={false}
             dot={{ r: 3 }}
             activeDot={{ r: 5 }}
           />
