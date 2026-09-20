@@ -27,7 +27,7 @@ type ParkingJamBoardProps = {
 };
 
 const CELL = 100;
-const MARGIN = 38;
+const MARGIN = 72;
 const SWIPE_THRESHOLD = 18;
 
 function getOpeningGeometry(
@@ -208,8 +208,16 @@ export function ParkingJamBoard({
         y={-MARGIN}
         width={width + MARGIN * 2}
         height={height + MARGIN * 2}
-        rx="30"
+        rx="24"
         className="parking-jam-board__surround"
+      />
+      <rect
+        x={-MARGIN}
+        y={-MARGIN}
+        width={width + MARGIN * 2}
+        height={height + MARGIN * 2}
+        rx="24"
+        className="parking-jam-board__outside-paving"
       />
       <rect
         width={width}
@@ -224,21 +232,40 @@ export function ParkingJamBoard({
         fill="url(#parking-jam-asphalt)"
       />
       <rect
-        x="8"
-        y="8"
-        width={width - 16}
-        height={height - 16}
-        rx="13"
+        x="7"
+        y="7"
+        width={width - 14}
+        height={height - 14}
+        rx="12"
         className="parking-jam-board__curb"
       />
+      {Array.from({ length: board.width }).map((_, column) => (
+        <path
+          key={`parking-space-top-${column}`}
+          d={`M ${column * CELL + 12} 14 V 68 M ${column * CELL + 12} 14 H ${(column + 1) * CELL - 12}`}
+          className="parking-jam-board__parking-space"
+        />
+      ))}
+      {Array.from({ length: board.width }).map((_, column) => (
+        <path
+          key={`parking-space-bottom-${column}`}
+          d={`M ${column * CELL + 12} ${height - 14} V ${height - 68} M ${column * CELL + 12} ${height - 14} H ${(column + 1) * CELL - 12}`}
+          className="parking-jam-board__parking-space"
+        />
+      ))}
       {board.roadOpenings.map((opening) => {
         const geometry = getOpeningGeometry(opening, board);
         return (
-          <rect
-            key={`${opening.side}-${opening.startOffset}-${opening.length}`}
-            {...geometry}
-            className="parking-jam-board__opening"
-          />
+          <g key={`${opening.side}-${opening.startOffset}-${opening.length}`}>
+            <rect {...geometry} className="parking-jam-board__opening" />
+            <rect
+              x={geometry.x + (opening.side === "left" || opening.side === "right" ? 0 : 10)}
+              y={geometry.y + (opening.side === "up" || opening.side === "down" ? 0 : 10)}
+              width={geometry.width - (opening.side === "up" || opening.side === "down" ? 20 : 0)}
+              height={geometry.height - (opening.side === "left" || opening.side === "right" ? 20 : 0)}
+              className="parking-jam-board__exit-road"
+            />
+          </g>
         );
       })}
       {board.roadOpenings.map((opening) => {
@@ -252,14 +279,21 @@ export function ParkingJamBoard({
             <path
               d={
                 horizontal
-                  ? `M ${geometry.x + geometry.width / 2} ${geometry.y + 4} V ${geometry.y + geometry.height - 4}`
-                  : `M ${geometry.x + 4} ${geometry.y + geometry.height / 2} H ${geometry.x + geometry.width - 4}`
+                  ? `M ${geometry.x + geometry.width / 2} ${geometry.y + 8} V ${geometry.y + geometry.height - 8}`
+                  : `M ${geometry.x + 8} ${geometry.y + geometry.height / 2} H ${geometry.x + geometry.width - 8}`
               }
             />
-            <circle
-              cx={geometry.x + geometry.width / 2}
-              cy={geometry.y + geometry.height / 2}
-              r="5"
+            <path
+              d={
+                opening.side === "left"
+                  ? `M ${geometry.x + 12} ${geometry.y + geometry.height / 2} l 14 -10 v 20 z`
+                  : opening.side === "right"
+                    ? `M ${geometry.x + geometry.width - 12} ${geometry.y + geometry.height / 2} l -14 -10 v 20 z`
+                    : opening.side === "up"
+                      ? `M ${geometry.x + geometry.width / 2} ${geometry.y + 12} l -10 14 h 20 z`
+                      : `M ${geometry.x + geometry.width / 2} ${geometry.y + geometry.height - 12} l -10 -14 h 20 z`
+              }
+              className="parking-jam-board__exit-arrow"
             />
           </g>
         );
@@ -277,18 +311,28 @@ export function ParkingJamBoard({
       ))}
 
       {board.fixedAreas.map((area) => (
-        <g key={`wall-${area.row}-${area.column}-${area.width}-${area.height}`}>
+        <g key={`island-${area.row}-${area.column}-${area.width}-${area.height}`}>
           <rect
             x={area.column * CELL + 17}
             y={area.row * CELL + 17}
             width={area.width * CELL - 34}
             height={area.height * CELL - 34}
-            rx="8"
-            className="parking-jam-board__wall-top"
+            rx="11"
+            className="parking-jam-board__island-soil"
           />
-          <path
-            d={`M ${area.column * CELL + 27} ${area.row * CELL + 24} H ${(area.column + area.width) * CELL - 27}`}
-            className="parking-jam-board__wall-highlight"
+          <rect
+            x={area.column * CELL + 27}
+            y={area.row * CELL + 27}
+            width={area.width * CELL - 54}
+            height={area.height * CELL - 54}
+            rx="8"
+            className="parking-jam-board__island-green"
+          />
+          <circle
+            cx={(area.column + area.width / 2) * CELL}
+            cy={(area.row + area.height / 2) * CELL}
+            r={Math.min(area.width, area.height) * CELL * 0.18}
+            className="parking-jam-board__shrub"
           />
         </g>
       ))}

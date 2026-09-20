@@ -47,10 +47,15 @@
   touch-action: none;
 }
 .parking-jam-board__surround {
-  fill: #272d30;
-  stroke: #1f2427;
+  fill: #d5d1c5;
+  stroke: #b9b5aa;
   stroke-width: 3;
-  filter: drop-shadow(0 10px 10px rgb(0 0 0 / 0.24));
+  filter: drop-shadow(0 10px 10px rgb(0 0 0 / 0.22));
+}
+.parking-jam-board__outside-paving {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.28);
+  stroke-width: 4;
 }
 .parking-jam-board__lot {
   fill: url("#parking-jam-lot-gradient");
@@ -63,18 +68,34 @@
   stroke: #dedbd0;
   stroke-width: 14;
   vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 3px 1px rgb(0 0 0 / 0.3));
+  filter: drop-shadow(0 4px 2px rgb(0 0 0 / 0.34));
 }
-.parking-jam-board__opening {
-  fill: #272d30;
-}
-.parking-jam-board__exit-mark {
-  fill: rgb(246 238 187 / 0.7);
-  stroke: rgb(246 238 187 / 0.7);
-  stroke-width: 4;
-  stroke-dasharray: 9 7;
+.parking-jam-board__parking-space {
+  fill: none;
+  stroke: rgb(240 238 222 / 0.62);
+  stroke-width: 3;
   stroke-linecap: round;
   pointer-events: none;
+}
+.parking-jam-board__opening {
+  fill: #d5d1c5;
+}
+.parking-jam-board__exit-road {
+  fill: #41494d;
+  stroke: #2d3437;
+  stroke-width: 2;
+}
+.parking-jam-board__exit-mark {
+  fill: none;
+  stroke: rgb(244 238 194 / 0.78);
+  stroke-width: 3;
+  stroke-dasharray: 9 8;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+.parking-jam-board__exit-arrow {
+  fill: rgb(244 238 194 / 0.9);
+  stroke: none;
 }
 .parking-jam-board__island {
   fill: #73777a;
@@ -82,16 +103,19 @@
   stroke-width: 5;
   filter: drop-shadow(0 7px 3px rgb(0 0 0 / 0.34));
 }
-.parking-jam-board__wall-top {
-  fill: #9da1a2;
-  stroke: #c3c6c5;
-  stroke-width: 3;
+.parking-jam-board__island-soil {
+  fill: #8a7963;
+  stroke: #dedbd0;
+  stroke-width: 7;
+  filter: drop-shadow(0 5px 3px rgb(0 0 0 / 0.3));
 }
-.parking-jam-board__wall-highlight {
-  fill: none;
-  stroke: rgb(255 255 255 / 0.35);
+.parking-jam-board__island-green {
+  fill: #687b58;
+}
+.parking-jam-board__shrub {
+  fill: #83966c;
+  stroke: #a3b38c;
   stroke-width: 3;
-  stroke-linecap: round;
 }
 .parking-jam-car {
   cursor: grab;
