@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import type { ComponentProps } from "react";
 
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
@@ -54,7 +60,8 @@ describe("NanpurePlay", () => {
   test("選択した空きマスへ数字入力を通知すること", () => {
     const props = createProps();
     render(<NanpurePlay {...props} />);
-    const digit = screen.getByRole("button", { name: "5" });
+    const digitInput = screen.getByRole("group", { name: "数字入力" });
+    const digit = within(digitInput).getByRole("button", { name: "5" });
 
     fireEvent.click(digit);
 
@@ -68,7 +75,8 @@ describe("NanpurePlay", () => {
     clues[0] = 5;
     board[0] = 5;
     render(<NanpurePlay {...props} clues={clues} board={board} />);
-    const digit = screen.getByRole("button", { name: "5" });
+    const digitInput = screen.getByRole("group", { name: "数字入力" });
+    const digit = within(digitInput).getByRole("button", { name: "5" });
 
     const disabled = digit.hasAttribute("disabled");
 
@@ -98,7 +106,8 @@ describe("NanpurePlay", () => {
   test("使い切った数字の入力を無効にすること", () => {
     const props = createProps();
     render(<NanpurePlay {...props} completedDigits={[9]} />);
-    const digit = screen.getByRole("button", { name: "9" });
+    const digitInput = screen.getByRole("group", { name: "数字入力" });
+    const digit = within(digitInput).getByRole("button", { name: "9" });
 
     const disabled = digit.hasAttribute("disabled");
 
@@ -108,7 +117,8 @@ describe("NanpurePlay", () => {
   test("使い切っていない数字の入力を有効にすること", () => {
     const props = createProps();
     render(<NanpurePlay {...props} completedDigits={[]} />);
-    const digit = screen.getByRole("button", { name: "9" });
+    const digitInput = screen.getByRole("group", { name: "数字入力" });
+    const digit = within(digitInput).getByRole("button", { name: "9" });
 
     const disabled = digit.hasAttribute("disabled");
 
@@ -173,13 +183,20 @@ describe("NanpurePlay", () => {
       />,
     );
 
+    const board = screen.getByRole("main");
+    const digitInput = screen.getByRole("group", { name: "数字入力" });
+
     expect(screen.queryByRole("heading", { name: "クリア" })).toBeNull();
-    expect(screen.getAllByRole("button", { name: /行.*列/ })).toHaveLength(81);
+    expect(
+      within(board).getAllByRole("button", { name: /行.*列/ }),
+    ).toHaveLength(81);
     expect(
       screen.getByRole("button", { name: "消す" }).hasAttribute("disabled"),
     ).toBe(true);
     expect(
-      screen.getByRole("button", { name: "1" }).hasAttribute("disabled"),
+      within(digitInput)
+        .getByRole("button", { name: "1" })
+        .hasAttribute("disabled"),
     ).toBe(true);
   });
 
