@@ -265,10 +265,22 @@ export function ParkingJamBoard({
           <g key={`${opening.side}-${opening.startOffset}-${opening.length}`}>
             <rect {...geometry} className="parking-jam-board__opening" />
             <rect
-              x={\n                geometry.x +\n                (opening.side === "left" || opening.side === "right" ? 0 : 10)\n              }
-              y={\n                geometry.y +\n                (opening.side === "up" || opening.side === "down" ? 0 : 10)\n              }
-              width={\n                geometry.width -\n                (opening.side === "up" || opening.side === "down" ? 20 : 0)\n              }
-              height={\n                geometry.height -\n                (opening.side === "left" || opening.side === "right" ? 20 : 0)\n              }
+              x={
+                geometry.x +
+                (opening.side === "left" || opening.side === "right" ? 0 : 10)
+              }
+              y={
+                geometry.y +
+                (opening.side === "up" || opening.side === "down" ? 0 : 10)
+              }
+              width={
+                geometry.width -
+                (opening.side === "up" || opening.side === "down" ? 20 : 0)
+              }
+              height={
+                geometry.height -
+                (opening.side === "left" || opening.side === "right" ? 20 : 0)
+              }
               className="parking-jam-board__exit-road"
             />
           </g>
@@ -317,7 +329,9 @@ export function ParkingJamBoard({
       ))}
 
       {board.fixedAreas.map((area) => (
-        <g\n          key={`island-${area.row}-${area.column}-${area.width}-${area.height}`}\n        >
+        <g
+          key={`island-${area.row}-${area.column}-${area.width}-${area.height}`}
+        >
           <rect
             x={area.column * CELL + 17}
             y={area.row * CELL + 17}
