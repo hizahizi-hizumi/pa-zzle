@@ -239,16 +239,22 @@ export function ParkingJamBoard({
         rx="12"
         className="parking-jam-board__curb"
       />
-      {Array.from({ length: board.width }, (_, column) => `top-${column}`).map((key) => {\n        const column = Number(key.slice(4));\n        return (
+      {Array.from({ length: board.width }, (_, column) => ({
+        id: `top-${column}`,
+        column,
+      })).map(({ id, column }) => (
         <path
-          key={key}
+          key={id}
           d={`M ${column * CELL + 12} 14 V 68 M ${column * CELL + 12} 14 H ${(column + 1) * CELL - 12}`}
           className="parking-jam-board__parking-space"
         />
       ))}
-      {Array.from({ length: board.width }).map((_, column) => (
+      {Array.from({ length: board.width }, (_, column) => ({
+        id: `bottom-${column}`,
+        column,
+      })).map(({ id, column }) => (
         <path
-          key={key}
+          key={id}
           d={`M ${column * CELL + 12} ${height - 14} V ${height - 68} M ${column * CELL + 12} ${height - 14} H ${(column + 1) * CELL - 12}`}
           className="parking-jam-board__parking-space"
         />
