@@ -160,26 +160,6 @@ export function ParkingJamBoard({
           <stop offset="0.5" stopColor="#e84d45" />
           <stop offset="1" stopColor="#b92f35" />
         </linearGradient>
-        <linearGradient id="parking-jam-car-blue" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#55b8e8" />
-          <stop offset="0.5" stopColor="#268bc1" />
-          <stop offset="1" stopColor="#17618f" />
-        </linearGradient>
-        <linearGradient id="parking-jam-car-yellow" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#ffd967" />
-          <stop offset="0.5" stopColor="#f0b82e" />
-          <stop offset="1" stopColor="#c98a16" />
-        </linearGradient>
-        <linearGradient id="parking-jam-car-green" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#78d09a" />
-          <stop offset="0.5" stopColor="#45a66e" />
-          <stop offset="1" stopColor="#28734c" />
-        </linearGradient>
-        <linearGradient id="parking-jam-car-purple" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#b38ae4" />
-          <stop offset="0.5" stopColor="#835ec2" />
-          <stop offset="1" stopColor="#59408e" />
-        </linearGradient>
         <linearGradient
           id="parking-jam-glass-gradient"
           x1="0"
@@ -222,33 +202,7 @@ export function ParkingJamBoard({
             className="parking-jam-board__asphalt-speck"
           />
         </pattern>
-        <pattern
-          id="parking-jam-grid"
-          width={CELL}
-          height={CELL}
-          patternUnits="userSpaceOnUse"
-        >
-          <path
-            d={`M ${CELL} 16 V ${CELL - 16} M 16 ${CELL} H ${CELL - 16}`}
-            className="parking-jam-board__parking-line"
-          />
-        </pattern>
-        <pattern
-          id="parking-jam-grass"
-          width="18"
-          height="18"
-          patternUnits="userSpaceOnUse"
-        >
-          <rect
-            width="18"
-            height="18"
-            className="parking-jam-board__grass-base"
-          />
-          <path
-            d="M 2 15 L 6 9 M 9 18 L 11 11 M 14 14 L 17 8"
-            className="parking-jam-board__grass-blade"
-          />
-        </pattern>
+
       </defs>
       <rect
         x={-MARGIN}
@@ -269,12 +223,6 @@ export function ParkingJamBoard({
         height={height}
         rx="18"
         fill="url(#parking-jam-asphalt)"
-      />
-      <rect
-        width={width}
-        height={height}
-        rx="18"
-        fill="url(#parking-jam-grid)"
       />
       <rect
         x="8"
@@ -298,15 +246,23 @@ export function ParkingJamBoard({
         const geometry = getOpeningGeometry(opening, board);
         const horizontal = opening.side === "up" || opening.side === "down";
         return (
-          <path
+          <g
             key={`guide-${opening.side}-${opening.startOffset}-${opening.length}`}
-            d={
-              horizontal
-                ? `M ${geometry.x + geometry.width / 2} ${geometry.y + 5} V ${geometry.y + geometry.height - 5}`
-                : `M ${geometry.x + 5} ${geometry.y + geometry.height / 2} H ${geometry.x + geometry.width - 5}`
-            }
-            className="parking-jam-board__opening-guide"
-          />
+            className="parking-jam-board__exit-mark"
+          >
+            <path
+              d={
+                horizontal
+                  ? `M ${geometry.x + geometry.width / 2} ${geometry.y + 4} V ${geometry.y + geometry.height - 4}`
+                  : `M ${geometry.x + 4} ${geometry.y + geometry.height / 2} H ${geometry.x + geometry.width - 4}`
+              }
+            />
+            <circle
+              cx={geometry.x + geometry.width / 2}
+              cy={geometry.y + geometry.height / 2}
+              r="5"
+            />
+          </g>
         );
       })}
       {board.fixedAreas.map((area) => (
@@ -322,15 +278,20 @@ export function ParkingJamBoard({
       ))}
 
       {board.fixedAreas.map((area) => (
-        <rect
-          key={`grass-${area.row}-${area.column}-${area.width}-${area.height}`}
-          x={area.column * CELL + 18}
-          y={area.row * CELL + 18}
-          width={area.width * CELL - 36}
-          height={area.height * CELL - 36}
-          rx="9"
-          fill="url(#parking-jam-grass)"
-        />
+        <g key={`wall-${area.row}-${area.column}-${area.width}-${area.height}`}>
+          <rect
+            x={area.column * CELL + 17}
+            y={area.row * CELL + 17}
+            width={area.width * CELL - 34}
+            height={area.height * CELL - 34}
+            rx="8"
+            className="parking-jam-board__wall-top"
+          />
+          <path
+            d={`M ${area.column * CELL + 27} ${area.row * CELL + 24} H ${(area.column + area.width) * CELL - 27}`}
+            className="parking-jam-board__wall-highlight"
+          />
+        </g>
       ))}
       {board.vehicles.map((vehicle) => {
         const isRemaining = remaining.has(vehicle.id);
@@ -343,8 +304,6 @@ export function ParkingJamBoard({
         const x = vehicle.column * CELL + 10;
         const y = vehicle.row * CELL + 10;
         const selected = selectedVehicleId === vehicle.id;
-        const colorIndex =
-          board.vehicles.findIndex((item) => item.id === vehicle.id) % 5;
         const feedbackClass =
           targeted && operation
             ? ` parking-jam-car--${operation.type === "exited" ? "exit" : "blocked"}-${operation.direction}`
@@ -356,7 +315,7 @@ export function ParkingJamBoard({
             tabIndex={interactionDisabled || exiting ? -1 : 0}
             aria-label={getVehicleLabel(vehicle)}
             aria-pressed={selected}
-            className={`parking-jam-car parking-jam-car--color-${colorIndex}${selected ? " parking-jam-car--selected" : ""}${feedbackClass}`}
+            className={`parking-jam-car${selected ? " parking-jam-car--selected" : ""}${feedbackClass}`}
             onPointerDown={(event) => handlePointerDown(event, vehicle)}
             onPointerUp={(event) => handlePointerUp(event, vehicle)}
             onKeyDown={(event) => handleKeyDown(event, vehicle)}
@@ -378,14 +337,45 @@ export function ParkingJamBoard({
               rx="8"
               className="parking-jam-car__highlight"
             />
-            <rect
-              x={x + (horizontal ? vehicleWidth * 0.3 : vehicleWidth * 0.2)}
-              y={y + (horizontal ? vehicleHeight * 0.2 : vehicleHeight * 0.3)}
-              width={horizontal ? vehicleWidth * 0.4 : vehicleWidth * 0.6}
-              height={horizontal ? vehicleHeight * 0.6 : vehicleHeight * 0.4}
-              rx="12"
-              className="parking-jam-car__glass"
-            />
+            {horizontal ? (
+              <>
+                <rect
+                  x={x + vehicleWidth * 0.24}
+                  y={y + vehicleHeight * 0.2}
+                  width={vehicleWidth * 0.18}
+                  height={vehicleHeight * 0.6}
+                  rx="8"
+                  className="parking-jam-car__glass"
+                />
+                <rect
+                  x={x + vehicleWidth * 0.58}
+                  y={y + vehicleHeight * 0.2}
+                  width={vehicleWidth * 0.18}
+                  height={vehicleHeight * 0.6}
+                  rx="8"
+                  className="parking-jam-car__glass"
+                />
+              </>
+            ) : (
+              <>
+                <rect
+                  x={x + vehicleWidth * 0.2}
+                  y={y + vehicleHeight * 0.24}
+                  width={vehicleWidth * 0.6}
+                  height={vehicleHeight * 0.18}
+                  rx="8"
+                  className="parking-jam-car__glass"
+                />
+                <rect
+                  x={x + vehicleWidth * 0.2}
+                  y={y + vehicleHeight * 0.58}
+                  width={vehicleWidth * 0.6}
+                  height={vehicleHeight * 0.18}
+                  rx="8"
+                  className="parking-jam-car__glass"
+                />
+              </>
+            )}
             <path
               d={
                 horizontal
