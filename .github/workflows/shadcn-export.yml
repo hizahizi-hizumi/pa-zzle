@@ -1,0 +1,44 @@
+name: Export shadcn Components
+
+on:
+  push:
+    branches:
+      - automation/shadcn-export-interaction-20260920
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+
+      - name: Fetch shadcn components
+        run: |
+          set -euo pipefail
+          bunx --bun shadcn@latest add dialog dropdown-menu collapsible --cwd frontend --yes
+
+      - name: Export generated files
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in \
+            frontend/bun.lock \
+            frontend/package.json \
+            frontend/src/components/ui/collapsible.tsx \
+            frontend/src/components/ui/dialog.tsx \
+            frontend/src/components/ui/dropdown-menu.tsx
+          do
+            echo "BEGIN_FILE $file"
+            base64 -w0 "$file"
+            echo
+            echo "END_FILE $file"
+          done
