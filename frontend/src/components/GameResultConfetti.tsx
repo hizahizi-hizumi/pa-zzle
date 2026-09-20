@@ -60,25 +60,25 @@ export function GameResultConfetti({ level }: GameResultConfettiProps) {
       const [x, y, rotation] = confettiPieces[index] ?? [0, -100, 180];
       piece.animate?.(
         [
-          { transform: "translate(0, 0) scale(0.35)", opacity: 0 },
+          { transform: "translate(0, 0)", opacity: 0 },
           {
-            transform: "translate(0, -12px) scale(1)",
+            transform: "translate(0, -6px)",
             opacity: 1,
-            offset: 0.1,
+            offset: 0.16,
           },
           {
-            transform: `translate(${x * 0.78}px, ${y * 0.78}px) rotate(${rotation * 0.78}deg) scale(1)`,
+            transform: `translate(${x * 0.5}px, ${y * 0.5}px) rotate(${rotation * 0.5}deg)`,
             opacity: 1,
-            offset: 0.72,
+            offset: 0.68,
           },
           {
-            transform: `translate(${x}px, ${y}px) rotate(${rotation}deg) scale(0.85)`,
+            transform: `translate(${x * 0.6}px, ${y * 0.6}px) rotate(${rotation * 0.6}deg)`,
             opacity: 0,
           },
         ],
         {
-          duration: 1350 + (index % 4) * 100,
-          delay: 90 + (index % 6) * 34,
+          duration: 650 + (index % 4) * 50,
+          delay: 40 + (index % 4) * 25,
           easing: "cubic-bezier(.2,.7,.2,1)",
         },
       );
@@ -89,7 +89,7 @@ export function GameResultConfetti({ level }: GameResultConfettiProps) {
     return null;
   }
 
-  const pieceCount = intensity === "strong" ? 24 : 12;
+  const pieceCount = intensity === "strong" ? 8 : 4;
   return (
     <div
       ref={containerRef}
