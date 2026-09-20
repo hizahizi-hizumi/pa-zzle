@@ -154,13 +154,7 @@ export function ParkingJamBoard({
           <stop offset="0" stopColor="#626b70" />
           <stop offset="1" stopColor="#50585c" />
         </linearGradient>
-        <linearGradient
-          id="parking-jam-car-red"
-          x1="0"
-          y1="0"
-          x2="1"
-          y2="1"
-        >
+        <linearGradient id="parking-jam-car-red" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#ff6b62" />
           <stop offset="0.5" stopColor="#e84d45" />
           <stop offset="1" stopColor="#b92f35" />
@@ -268,7 +262,8 @@ export function ParkingJamBoard({
         const x = vehicle.column * CELL + 10;
         const y = vehicle.row * CELL + 10;
         const selected = selectedVehicleId === vehicle.id;
-        const colorIndex = board.vehicles.findIndex((item) => item.id === vehicle.id) % 5;
+        const colorIndex =
+          board.vehicles.findIndex((item) => item.id === vehicle.id) % 5;
         const feedbackClass =
           targeted && operation
             ? ` parking-jam-car--${operation.type === "exited" ? "exit" : "blocked"}-${operation.direction}`
@@ -318,8 +313,18 @@ export function ParkingJamBoard({
               }
               className="parking-jam-car__detail"
             />
-            <circle cx={horizontal ? x + 7 : x + vehicleWidth * 0.28} cy={horizontal ? y + vehicleHeight * 0.28 : y + 7} r="5" className="parking-jam-car__light" />
-            <circle cx={horizontal ? x + 7 : x + vehicleWidth * 0.72} cy={horizontal ? y + vehicleHeight * 0.72 : y + 7} r="5" className="parking-jam-car__light" />
+            <circle
+              cx={horizontal ? x + 7 : x + vehicleWidth * 0.28}
+              cy={horizontal ? y + vehicleHeight * 0.28 : y + 7}
+              r="5"
+              className="parking-jam-car__light"
+            />
+            <circle
+              cx={horizontal ? x + 7 : x + vehicleWidth * 0.72}
+              cy={horizontal ? y + vehicleHeight * 0.72 : y + 7}
+              r="5"
+              className="parking-jam-car__light"
+            />
             {horizontal ? (
               <>
                 <rect

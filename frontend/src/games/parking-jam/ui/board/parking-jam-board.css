@@ -91,12 +91,28 @@
   stroke-width: 4;
   filter: drop-shadow(0 7px 5px rgb(0 0 0 / 0.35));
 }
-.parking-jam-car--color-1 .parking-jam-car__body { fill: url("#parking-jam-car-blue"); }
-.parking-jam-car--color-2 .parking-jam-car__body { fill: url("#parking-jam-car-yellow"); }
-.parking-jam-car--color-3 .parking-jam-car__body { fill: url("#parking-jam-car-green"); }
-.parking-jam-car--color-4 .parking-jam-car__body { fill: url("#parking-jam-car-purple"); }
-.parking-jam-car__highlight { fill: rgb(255 255 255 / 0.18); pointer-events: none; }
-.parking-jam-car__light { fill: #fff4c2; stroke: rgb(255 255 255 / 0.55); stroke-width: 1.5; pointer-events: none; }
+.parking-jam-car--color-1 .parking-jam-car__body {
+  fill: url("#parking-jam-car-blue");
+}
+.parking-jam-car--color-2 .parking-jam-car__body {
+  fill: url("#parking-jam-car-yellow");
+}
+.parking-jam-car--color-3 .parking-jam-car__body {
+  fill: url("#parking-jam-car-green");
+}
+.parking-jam-car--color-4 .parking-jam-car__body {
+  fill: url("#parking-jam-car-purple");
+}
+.parking-jam-car__highlight {
+  fill: rgb(255 255 255 / 0.18);
+  pointer-events: none;
+}
+.parking-jam-car__light {
+  fill: #fff4c2;
+  stroke: rgb(255 255 255 / 0.55);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
 .parking-jam-car__glass {
   fill: url("#parking-jam-glass-gradient");
   stroke: #314f60;
