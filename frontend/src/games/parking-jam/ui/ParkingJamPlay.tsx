@@ -1,7 +1,13 @@
+import type { ReactNode } from "react";
+
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import type { ParkingJamDifficulty } from "@/games/parking-jam/difficulty";
 import { getParkingJamDifficultyLabel } from "@/games/parking-jam/difficulty";
-import type { ParkingJamOperation } from "@/games/parking-jam/play/use-parking-jam-play";
+import type {
+  ParkingJamOperation,
+  ParkingJamProgress,
+  ParkingJamResult,
+} from "@/games/parking-jam/play/use-parking-jam-play";
 import type {
   ParkingJamBoard as ParkingJamBoardDefinition,
   ParkingJamDirection,
@@ -11,10 +17,12 @@ import type {
 import { ParkingJamBoard } from "@/games/parking-jam/ui/board/ParkingJamBoard";
 import { ParkingJamDirectionControls } from "@/games/parking-jam/ui/ParkingJamPlay/ParkingJamDirectionControls";
 import { ParkingJamPlayHeader } from "@/games/parking-jam/ui/ParkingJamPlay/ParkingJamPlayHeader";
+import { ParkingJamResultScreen } from "@/games/parking-jam/ui/ParkingJamPlay/ParkingJamResultScreen";
 
 type ParkingJamPlayProps = {
   difficulty: ParkingJamDifficulty;
   status: "playing" | "cleared";
+  progress: ParkingJamProgress;
   board: ParkingJamBoardDefinition;
   state: ParkingJamState;
   selectedVehicleId: ParkingJamVehicleId | null;
@@ -23,17 +31,24 @@ type ParkingJamPlayProps = {
   failedMoveCount: number;
   canUndo: boolean;
   canRestart: boolean;
+  result: ParkingJamResult | null;
+  recordOutcomeNotice: ReactNode;
   onSelectVehicle: (vehicleId: ParkingJamVehicleId) => void;
   onDirection: (direction: ParkingJamDirection) => void;
   onUndo: () => void;
   onRestart: () => void;
   onReplay: () => void;
   onStartNewProblem: () => void;
+  onOpenRecords: () => void;
+  onChangeDifficulty: () => void;
+  onBackToHome: () => void;
+  onClearAnimationComplete: () => void;
 };
 
 export function ParkingJamPlay({
   difficulty,
   status,
+  progress,
   board,
   state,
   selectedVehicleId,
@@ -42,13 +57,34 @@ export function ParkingJamPlay({
   failedMoveCount,
   canUndo,
   canRestart,
+  result,
+  recordOutcomeNotice,
   onSelectVehicle,
   onDirection,
   onUndo,
   onRestart,
   onReplay,
   onStartNewProblem,
+  onOpenRecords,
+  onChangeDifficulty,
+  onBackToHome,
+  onClearAnimationComplete,
 }: ParkingJamPlayProps) {
+  if (progress === "result" && result) {
+    return (
+      <ParkingJamResultScreen
+        difficulty={difficulty}
+        result={result}
+        recordOutcomeNotice={recordOutcomeNotice}
+        onReplay={onReplay}
+        onStartNewProblem={onStartNewProblem}
+        onOpenRecords={onOpenRecords}
+        onChangeDifficulty={onChangeDifficulty}
+        onBackToHome={onBackToHome}
+      />
+    );
+  }
+
   const selectedVehicle = board.vehicles.find(
     (vehicle) => vehicle.id === selectedVehicleId,
   );
@@ -80,39 +116,19 @@ export function ParkingJamPlay({
             operation={operation}
             interactionDisabled={!playing}
             onSelectVehicle={onSelectVehicle}
+            onExitAnimationComplete={onClearAnimationComplete}
           />
         </div>
       </main>
 
       <footer className="h-28 shrink-0 px-4 pb-2">
-        {playing ? (
+        {playing && (
           <ParkingJamDirectionControls
             orientation={selectedVehicle?.orientation ?? null}
             feedback={feedback}
             disabled={!selectedVehicle}
             onDirection={onDirection}
           />
-        ) : (
-          <div
-            className="flex h-full items-center justify-center gap-3"
-            role="status"
-          >
-            <strong className="text-lg">クリア</strong>
-            <button
-              type="button"
-              onClick={onReplay}
-              className="rounded-md border px-4 py-2 text-sm font-medium outline-none transition-colors hover:bg-accent focus-visible:ring-4 focus-visible:ring-ring/30"
-            >
-              同じ問題
-            </button>
-            <button
-              type="button"
-              onClick={onStartNewProblem}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground outline-none transition-colors hover:bg-primary/90 focus-visible:ring-4 focus-visible:ring-ring/30"
-            >
-              新しい問題
-            </button>
-          </div>
         )}
       </footer>
     </section>

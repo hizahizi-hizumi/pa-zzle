@@ -19,6 +19,7 @@ type ParkingJamBoardProps = {
   operation: ParkingJamOperation | null;
   interactionDisabled: boolean;
   onSelectVehicle: (vehicleId: ParkingJamVehicleId) => void;
+  onExitAnimationComplete?: () => void;
 };
 
 function getCellStyle(
@@ -88,6 +89,7 @@ export function ParkingJamBoard({
   operation,
   interactionDisabled,
   onSelectVehicle,
+  onExitAnimationComplete,
 }: ParkingJamBoardProps) {
   const remainingVehicleIds = new Set(state.remainingVehicleIds);
 
@@ -145,6 +147,9 @@ export function ParkingJamBoard({
             feedbackDirection={targetedByOperation ? operation.direction : null}
             disabled={interactionDisabled || exiting}
             onSelect={() => onSelectVehicle(vehicle.id)}
+            onExitAnimationComplete={
+              exiting ? onExitAnimationComplete : undefined
+            }
           />
         );
       })}

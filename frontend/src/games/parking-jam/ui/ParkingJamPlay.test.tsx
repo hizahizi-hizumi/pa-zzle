@@ -9,6 +9,7 @@ function createProps(): ComponentProps<typeof ParkingJamPlay> {
   return {
     difficulty: "normal",
     status: "playing",
+    progress: "playing",
     board: {
       width: 5,
       height: 5,
@@ -41,12 +42,18 @@ function createProps(): ComponentProps<typeof ParkingJamPlay> {
     failedMoveCount: 2,
     canUndo: true,
     canRestart: true,
+    result: null,
+    recordOutcomeNotice: null,
     onSelectVehicle: vi.fn(),
     onDirection: vi.fn(),
     onUndo: vi.fn(),
     onRestart: vi.fn(),
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
+    onOpenRecords: vi.fn(),
+    onChangeDifficulty: vi.fn(),
+    onBackToHome: vi.fn(),
+    onClearAnimationComplete: vi.fn(),
   };
 }
 
@@ -123,26 +130,72 @@ describe("ParkingJamPlay", () => {
     });
   });
 
-  describe("クリアした場合", () => {
+  describe("クリア演出中の場合", () => {
     let props: ComponentProps<typeof ParkingJamPlay>;
 
     beforeEach(() => {
       props = {
         ...createProps(),
         status: "cleared",
+        progress: "clearing",
         state: { remainingVehicleIds: [] },
       };
       render(<ParkingJamPlay {...props} />);
     });
 
-    test("達成と次の行動を表示すること", () => {
-      const clear = screen.getByText("クリア");
-      const replay = screen.getByRole("button", { name: "同じ問題" });
-      const next = screen.getByRole("button", { name: "新しい問題" });
+    test("結果操作を先に表示しないこと", () => {
+      const replay = screen.queryByRole("button", { name: "同じ問題" });
 
-      expect(clear).toBeTruthy();
+      expect(replay).toBeNull();
+    });
+  });
+  describe("結果表示の場合", () => {
+    let props: ComponentProps<typeof ParkingJamPlay>;
+
+    beforeEach(() => {
+      props = {
+        ...createProps(),
+        status: "cleared",
+        progress: "result",
+        state: { remainingVehicleIds: [] },
+        result: {
+          elapsedMs: 90_000,
+          moveAttemptCount: 15,
+          successfulMoveCount: 14,
+          failedMoveCount: 1,
+          undoCount: 1,
+          restartCount: 0,
+          problemIdentity: {
+            generatorVersion: "1",
+            seed: "result-seed",
+            conditions: {
+              width: 8,
+              height: 8,
+              vehicleCount: 14,
+              obstacleCount: 4,
+              exitProbability: 0.45,
+              blockingPlacementProbability: 0,
+            },
+            generationAttempt: 1,
+          },
+          score: {
+            total: 93,
+            breakdown: { accuracy: 35, speed: 40, stability: 18 },
+          },
+        },
+      };
+      render(<ParkingJamPlay {...props} />);
+    });
+
+    test("評価点と主要成績と次の行動を表示すること", () => {
+      const score = screen.getByText("93");
+      const replay = screen.getByRole("button", { name: "同じ問題" });
+      const records = screen.getByRole("button", { name: "記録を確認" });
+
+      expect(score).toBeTruthy();
+      expect(screen.getByText("01:30")).toBeTruthy();
       expect(replay).toBeTruthy();
-      expect(next).toBeTruthy();
+      expect(records).toBeTruthy();
     });
   });
 });

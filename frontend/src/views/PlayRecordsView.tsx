@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
+import { parkingJamPlayRecordDisplay } from "@/games/parking-jam/ui/play-record-display";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 import { readPlayRecords } from "@/records/storage";
 import { PlayRecordsScreen } from "@/records/ui/PlayRecordsScreen";
@@ -10,6 +11,7 @@ import { Link } from "@/router";
 const playRecordDisplays = [
   waterSortPlayRecordDisplay,
   nanpurePlayRecordDisplay,
+  parkingJamPlayRecordDisplay,
 ] as const satisfies PlayRecordDisplayCatalog;
 
 export function PlayRecordsView() {
