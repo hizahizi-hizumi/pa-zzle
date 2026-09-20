@@ -97,39 +97,43 @@ export function useParkingJamPlay(difficulty: ParkingJamDifficulty) {
     });
   }, []);
 
-  const attemptDirection = useCallback((direction: ParkingJamDirection) => {
-    const attemptedAt = Date.now();
-    const operationId = nextOperationId.current++;
-    setNow(attemptedAt);
-    setPlay((current) => {
-      const vehicleId = current.selectedVehicleId;
-      if (vehicleId === null || current.session.status !== "playing") {
-        return current;
-      }
+  const attemptMove = useCallback(
+    (vehicleId: ParkingJamVehicleId, direction: ParkingJamDirection) => {
+      const attemptedAt = Date.now();
+      const operationId = nextOperationId.current++;
+      setNow(attemptedAt);
+      setPlay((current) => {
+        if (current.session.status !== "playing") {
+          return current;
+        }
 
-      const attempt = attemptParkingJamSessionMove(
-        current.session,
-        { vehicleId, direction },
-        attemptedAt,
-      );
-      if (!attempt) return current;
+        const attempt = attemptParkingJamSessionMove(
+          current.session,
+          { vehicleId, direction },
+          attemptedAt,
+        );
+        if (!attempt) return current;
 
-      return {
-        ...current,
-        session: attempt.session,
-        selectedVehicleId:
-          attempt.outcome === "exited" ? null : current.selectedVehicleId,
-        operation: {
-          id: operationId,
-          type: attempt.outcome,
-          vehicleId,
-          direction,
-        },
-        progress:
-          attempt.session.status === "cleared" ? "clearing" : current.progress,
-      };
-    });
-  }, []);
+        return {
+          ...current,
+          session: attempt.session,
+          selectedVehicleId:
+            attempt.outcome === "exited" ? null : current.selectedVehicleId,
+          operation: {
+            id: operationId,
+            type: attempt.outcome,
+            vehicleId,
+            direction,
+          },
+          progress:
+            attempt.session.status === "cleared"
+              ? "clearing"
+              : current.progress,
+        };
+      });
+    },
+    [],
+  );
 
   const undo = useCallback(() => {
     setPlay((current) => {
@@ -232,7 +236,7 @@ export function useParkingJamPlay(difficulty: ParkingJamDifficulty) {
     canRestart: canRestartParkingJamSession(session),
     result,
     selectVehicle,
-    attemptDirection,
+    attemptMove,
     undo,
     restart,
     replay,

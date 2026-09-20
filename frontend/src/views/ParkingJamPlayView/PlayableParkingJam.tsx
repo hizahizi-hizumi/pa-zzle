@@ -64,7 +64,7 @@ export function PlayableParkingJam({ difficulty }: PlayableParkingJamProps) {
         />
       }
       onSelectVehicle={play.selectVehicle}
-      onDirection={play.attemptDirection}
+      onMove={play.attemptMove}
       onUndo={play.undo}
       onRestart={play.restart}
       onReplay={play.replay}

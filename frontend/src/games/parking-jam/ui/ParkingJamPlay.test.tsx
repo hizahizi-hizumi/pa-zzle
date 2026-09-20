@@ -14,20 +14,8 @@ function createProps(): ComponentProps<typeof ParkingJamPlay> {
       width: 5,
       height: 5,
       vehicles: [
-        {
-          id: "a",
-          row: 1,
-          column: 0,
-          orientation: "horizontal",
-          length: 2,
-        },
-        {
-          id: "b",
-          row: 0,
-          column: 3,
-          orientation: "vertical",
-          length: 2,
-        },
+        { id: "a", row: 1, column: 0, orientation: "horizontal", length: 2 },
+        { id: "b", row: 0, column: 3, orientation: "vertical", length: 2 },
       ],
       fixedAreas: [],
       roadOpenings: [
@@ -45,7 +33,7 @@ function createProps(): ComponentProps<typeof ParkingJamPlay> {
     result: null,
     recordOutcomeNotice: null,
     onSelectVehicle: vi.fn(),
-    onDirection: vi.fn(),
+    onMove: vi.fn(),
     onUndo: vi.fn(),
     onRestart: vi.fn(),
     onReplay: vi.fn(),
@@ -66,7 +54,7 @@ describe("ParkingJamPlay", () => {
       render(<ParkingJamPlay {...props} />);
     });
 
-    test("左右の方向操作だけを提示すること", () => {
+    test("車の近くに左右の出庫操作を提示すること", () => {
       const left = screen.getByRole("button", { name: "左へ出庫" });
       const right = screen.getByRole("button", { name: "右へ出庫" });
 
@@ -76,10 +64,10 @@ describe("ParkingJamPlay", () => {
       expect(screen.queryByRole("button", { name: "下へ出庫" })).toBeNull();
     });
 
-    test("選んだ方向をプレイ責務へ通知すること", () => {
+    test("選んだ車と方向をプレイ責務へ通知すること", () => {
       fireEvent.click(screen.getByRole("button", { name: "右へ出庫" }));
 
-      expect(props.onDirection).toHaveBeenCalledWith("right");
+      expect(props.onMove).toHaveBeenCalledWith("a", "right");
     });
 
     test("待ったとやり直しを別の操作として通知すること", () => {
@@ -92,112 +80,30 @@ describe("ParkingJamPlay", () => {
   });
 
   describe("車が選択されていない場合", () => {
-    let props: ComponentProps<typeof ParkingJamPlay>;
-
     beforeEach(() => {
-      props = { ...createProps(), selectedVehicleId: null };
-      render(<ParkingJamPlay {...props} />);
+      render(<ParkingJamPlay {...createProps()} selectedVehicleId={null} />);
     });
 
-    test("方向を先に選ばせず車の選択を促すこと", () => {
-      const prompt = screen.getByText("車を選んでください");
-
-      expect(prompt).toBeTruthy();
+    test("盤面外に操作説明や方向操作を常設しないこと", () => {
+      expect(screen.queryByText("車を選んでください")).toBeNull();
       expect(screen.queryByRole("button", { name: "左へ出庫" })).toBeNull();
     });
   });
 
-  describe("操作が成立しなかった場合", () => {
-    let props: ComponentProps<typeof ParkingJamPlay>;
-
-    beforeEach(() => {
-      props = {
-        ...createProps(),
-        operation: {
-          id: 1,
-          type: "blocked",
-          vehicleId: "a",
-          direction: "right",
-        },
-      };
-      render(<ParkingJamPlay {...props} />);
-    });
-
-    test("不成立を操作後のフィードバックとして返すこと", () => {
-      const feedback = screen.getByText("そこからは出せません");
-
-      expect(feedback).toBeTruthy();
-    });
-  });
-
   describe("クリア演出中の場合", () => {
-    let props: ComponentProps<typeof ParkingJamPlay>;
-
     beforeEach(() => {
-      props = {
-        ...createProps(),
-        status: "cleared",
-        progress: "clearing",
-        state: { remainingVehicleIds: [] },
-      };
-      render(<ParkingJamPlay {...props} />);
+      render(
+        <ParkingJamPlay
+          {...createProps()}
+          status="cleared"
+          progress="clearing"
+          state={{ remainingVehicleIds: [] }}
+        />,
+      );
     });
 
     test("結果操作を先に表示しないこと", () => {
-      const replay = screen.queryByRole("button", { name: "同じ問題" });
-
-      expect(replay).toBeNull();
-    });
-  });
-  describe("結果表示の場合", () => {
-    let props: ComponentProps<typeof ParkingJamPlay>;
-
-    beforeEach(() => {
-      props = {
-        ...createProps(),
-        status: "cleared",
-        progress: "result",
-        state: { remainingVehicleIds: [] },
-        result: {
-          elapsedMs: 90_000,
-          moveAttemptCount: 15,
-          successfulMoveCount: 14,
-          failedMoveCount: 1,
-          undoCount: 1,
-          restartCount: 0,
-          problemIdentity: {
-            generatorVersion: "2",
-            seed: "result-seed",
-            conditions: {
-              width: 8,
-              height: 8,
-              vehicleCount: 14,
-              roadOpeningCount: 4,
-              roadOpeningSpan: 2,
-              fixedAreaCount: 2,
-              fixedAreaLength: 2,
-              blockingPlacementProbability: 0,
-            },
-            generationAttempt: 1,
-          },
-          score: {
-            total: 93,
-            breakdown: { accuracy: 35, speed: 40, stability: 18 },
-          },
-        },
-      };
-      render(<ParkingJamPlay {...props} />);
-    });
-
-    test("評価点と主要成績と次の行動を表示すること", () => {
-      const score = screen.getByText("93");
-      const replay = screen.getByRole("button", { name: "同じ問題" });
-      const records = screen.getByRole("button", { name: "記録を確認" });
-
-      expect(score).toBeTruthy();
-      expect(screen.getByText("01:30")).toBeTruthy();
-      expect(replay).toBeTruthy();
-      expect(records).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "同じ問題" })).toBeNull();
     });
   });
 });

@@ -1,4 +1,4 @@
-import type { AnimationEvent, CSSProperties } from "react";
+import { useRef, type AnimationEvent, type CSSProperties, type PointerEvent } from "react";
 
 import type {
   ParkingJamDirection,
@@ -17,17 +17,18 @@ type ParkingJamVehicleProps = {
   feedbackDirection: ParkingJamDirection | null;
   disabled: boolean;
   onSelect: () => void;
+  onDirection: (direction: ParkingJamDirection) => void;
   onExitAnimationComplete?: () => void;
 };
 
 const vehicleColorClassNames = [
-  "bg-cyan-400",
-  "bg-amber-400",
-  "bg-rose-400",
-  "bg-violet-400",
-  "bg-emerald-400",
-  "bg-orange-400",
-  "bg-sky-400",
+  "parking-jam-vehicle--cyan",
+  "parking-jam-vehicle--amber",
+  "parking-jam-vehicle--rose",
+  "parking-jam-vehicle--violet",
+  "parking-jam-vehicle--emerald",
+  "parking-jam-vehicle--orange",
+  "parking-jam-vehicle--sky",
 ] as const;
 
 function getFeedbackClassName(
@@ -63,6 +64,22 @@ function getVehicleLabel(vehicle: ParkingJamVehicleDefinition): string {
   return `${orientation}の車 行${vehicle.row + 1} 列${vehicle.column + 1}`;
 }
 
+function getSwipeDirection(
+  vehicle: ParkingJamVehicleDefinition,
+  deltaX: number,
+  deltaY: number,
+): ParkingJamDirection | null {
+  const threshold = 18;
+  if (vehicle.orientation === "horizontal") {
+    if (Math.abs(deltaX) < threshold || Math.abs(deltaX) < Math.abs(deltaY))
+      return null;
+    return deltaX < 0 ? "left" : "right";
+  }
+  if (Math.abs(deltaY) < threshold || Math.abs(deltaY) < Math.abs(deltaX))
+    return null;
+  return deltaY < 0 ? "up" : "down";
+}
+
 export function ParkingJamVehicle({
   vehicle,
   boardWidth,
@@ -73,14 +90,48 @@ export function ParkingJamVehicle({
   feedbackDirection,
   disabled,
   onSelect,
+  onDirection,
   onExitAnimationComplete,
 }: ParkingJamVehicleProps) {
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const swiped = useRef(false);
   const colorClassName =
     vehicleColorClassNames[colorIndex % vehicleColorClassNames.length] ??
     vehicleColorClassNames[0];
   const feedbackClassName = getFeedbackClassName(feedback, feedbackDirection);
+  const directions: ParkingJamDirection[] =
+    vehicle.orientation === "horizontal" ? ["left", "right"] : ["up", "down"];
 
-  function handleAnimationEnd(event: AnimationEvent<HTMLButtonElement>) {
+  function handlePointerDown(event: PointerEvent<HTMLButtonElement>) {
+    if (disabled) return;
+    pointerStart.current = { x: event.clientX, y: event.clientY };
+    swiped.current = false;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function handlePointerUp(event: PointerEvent<HTMLButtonElement>) {
+    const start = pointerStart.current;
+    pointerStart.current = null;
+    if (!start || disabled) return;
+    const direction = getSwipeDirection(
+      vehicle,
+      event.clientX - start.x,
+      event.clientY - start.y,
+    );
+    if (!direction) return;
+    swiped.current = true;
+    onDirection(direction);
+  }
+
+  function handleClick() {
+    if (swiped.current) {
+      swiped.current = false;
+      return;
+    }
+    onSelect();
+  }
+
+  function handleAnimationEnd(event: AnimationEvent<HTMLDivElement>) {
     if (
       event.target === event.currentTarget &&
       feedback === "exiting" &&
@@ -91,32 +142,45 @@ export function ParkingJamVehicle({
   }
 
   return (
-    <button
-      type="button"
-      aria-label={getVehicleLabel(vehicle)}
-      aria-pressed={selected}
-      disabled={disabled}
-      onClick={onSelect}
-      onAnimationEnd={handleAnimationEnd}
-      className={`absolute z-20 rounded-xl p-1 outline-none transition-[filter,box-shadow] focus-visible:ring-4 focus-visible:ring-white/90 disabled:pointer-events-none ${
-        selected
-          ? "ring-4 ring-white shadow-lg brightness-110"
-          : "hover:brightness-105"
-      } ${feedbackClassName}`}
+    <div
+      className={`parking-jam-vehicle absolute z-20 ${feedbackClassName}`}
       style={getVehicleStyle({ vehicle, boardWidth, boardHeight })}
+      onAnimationEnd={handleAnimationEnd}
     >
-      <span
-        className={`relative flex size-full items-center justify-center overflow-hidden rounded-lg shadow-sm ${colorClassName}`}
+      <button
+        type="button"
+        aria-label={getVehicleLabel(vehicle)}
+        aria-pressed={selected}
+        disabled={disabled}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onClick={handleClick}
+        className={`parking-jam-vehicle__body ${colorClassName} ${
+          selected ? "parking-jam-vehicle__body--selected" : ""
+        }`}
       >
-        <span className="absolute inset-[18%] rounded-md bg-slate-950/25" />
-        <span
-          className={`absolute rounded-full bg-white/55 ${
-            vehicle.orientation === "horizontal"
-              ? "left-[24%] right-[24%] top-1/2 h-1 -translate-y-1/2"
-              : "bottom-[24%] top-[24%] left-1/2 w-1 -translate-x-1/2"
-          }`}
-        />
-      </span>
-    </button>
+        <span aria-hidden="true" className="parking-jam-vehicle__cabin" />
+        <span aria-hidden="true" className="parking-jam-vehicle__windshield" />
+        <span aria-hidden="true" className="parking-jam-vehicle__wheel parking-jam-vehicle__wheel--a" />
+        <span aria-hidden="true" className="parking-jam-vehicle__wheel parking-jam-vehicle__wheel--b" />
+        <span aria-hidden="true" className="parking-jam-vehicle__wheel parking-jam-vehicle__wheel--c" />
+        <span aria-hidden="true" className="parking-jam-vehicle__wheel parking-jam-vehicle__wheel--d" />
+      </button>
+      {selected && !disabled
+        ? directions.map((direction) => (
+            <button
+              key={direction}
+              type="button"
+              aria-label={`${direction === "left" ? "左" : direction === "right" ? "右" : direction === "up" ? "上" : "下"}へ出庫`}
+              className={`parking-jam-vehicle__direction parking-jam-vehicle__direction--${direction}`}
+              onClick={() => onDirection(direction)}
+            >
+              <span aria-hidden="true" className="parking-jam-vehicle__chevron" />
+            </button>
+          ))
+        : null}
+    </div>
   );
 }
+
+export const _private = { getSwipeDirection };

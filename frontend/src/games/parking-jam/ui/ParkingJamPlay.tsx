@@ -10,12 +10,10 @@ import type {
 } from "@/games/parking-jam/play/use-parking-jam-play";
 import type {
   ParkingJamBoard as ParkingJamBoardDefinition,
-  ParkingJamDirection,
   ParkingJamState,
   ParkingJamVehicleId,
 } from "@/games/parking-jam/puzzle/board";
 import { ParkingJamBoard } from "@/games/parking-jam/ui/board/ParkingJamBoard";
-import { ParkingJamDirectionControls } from "@/games/parking-jam/ui/ParkingJamPlay/ParkingJamDirectionControls";
 import { ParkingJamPlayHeader } from "@/games/parking-jam/ui/ParkingJamPlay/ParkingJamPlayHeader";
 import { ParkingJamResultScreen } from "@/games/parking-jam/ui/ParkingJamPlay/ParkingJamResultScreen";
 
@@ -34,7 +32,10 @@ type ParkingJamPlayProps = {
   result: ParkingJamResult | null;
   recordOutcomeNotice: ReactNode;
   onSelectVehicle: (vehicleId: ParkingJamVehicleId) => void;
-  onDirection: (direction: ParkingJamDirection) => void;
+  onMove: (
+    vehicleId: ParkingJamVehicleId,
+    direction: import("@/games/parking-jam/puzzle/board").ParkingJamDirection,
+  ) => void;
   onUndo: () => void;
   onRestart: () => void;
   onReplay: () => void;
@@ -60,7 +61,7 @@ export function ParkingJamPlay({
   result,
   recordOutcomeNotice,
   onSelectVehicle,
-  onDirection,
+  onMove,
   onUndo,
   onRestart,
   onReplay,
@@ -85,10 +86,6 @@ export function ParkingJamPlay({
     );
   }
 
-  const selectedVehicle = board.vehicles.find(
-    (vehicle) => vehicle.id === selectedVehicleId,
-  );
-  const feedback = operation?.type ?? null;
   const playing = status === "playing";
 
   return (
@@ -104,7 +101,7 @@ export function ParkingJamPlay({
         onRestart={onRestart}
       />
 
-      <main className="flex min-h-0 flex-1 items-center justify-center px-1 py-1 sm:px-6 sm:py-3">
+      <main className="flex min-h-0 flex-1 items-center justify-center overflow-hidden px-2 py-2 sm:px-6 sm:py-4">
         <div className="flex w-full max-w-lg flex-col items-center gap-1.5">
           <span className="text-xs font-medium text-muted-foreground">
             {getParkingJamDifficultyLabel(difficulty)}
@@ -116,21 +113,11 @@ export function ParkingJamPlay({
             operation={operation}
             interactionDisabled={!playing}
             onSelectVehicle={onSelectVehicle}
+            onMove={onMove}
             onExitAnimationComplete={onClearAnimationComplete}
           />
         </div>
       </main>
-
-      <footer className="h-28 shrink-0 px-4 pb-2">
-        {playing && (
-          <ParkingJamDirectionControls
-            orientation={selectedVehicle?.orientation ?? null}
-            feedback={feedback}
-            disabled={!selectedVehicle}
-            onDirection={onDirection}
-          />
-        )}
-      </footer>
     </section>
   );
 }
