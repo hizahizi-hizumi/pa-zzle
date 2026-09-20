@@ -18,3 +18,21 @@ describe("generateParkingJamProblemForDifficulty", () => {
     });
   });
 });
+
+describe("hard の代表seed群の場合", () => {
+  const seeds = Array.from(
+    { length: 10 },
+    (_, index) => `parking-jam-hard-supply-${index}`,
+  );
+
+  test.each(seeds)("継続してhard問題を供給できること: %s", (seed) => {
+    const problem = generateParkingJamProblemForDifficulty("hard", seed);
+
+    const assessment = assessParkingJamDifficulty(problem.difficultyAnalysis);
+
+    expect(assessment).toMatchObject({
+      status: "rated",
+      difficulty: "hard",
+    });
+  });
+});

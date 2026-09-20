@@ -9,14 +9,16 @@ import {
 const record = createParkingJamPlayRecord({
   difficulty: "normal",
   problemIdentity: {
-    generatorVersion: "1",
+    generatorVersion: "2",
     seed: "record-seed",
     conditions: {
       width: 8,
       height: 8,
       vehicleCount: 14,
-      obstacleCount: 4,
-      exitProbability: 0.45,
+      roadOpeningCount: 4,
+      roadOpeningSpan: 2,
+      fixedAreaCount: 2,
+      fixedAreaLength: 2,
       blockingPlacementProbability: 0,
     },
     generationAttempt: 2,

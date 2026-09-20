@@ -3,16 +3,20 @@ import type {
   ParkingJamCell,
   ParkingJamDirection,
   ParkingJamMove,
+  ParkingJamRoadOpening,
   ParkingJamState,
   ParkingJamVehicle,
   ParkingJamVehicleId,
 } from "./board";
-import { listParkingJamVehicleCells } from "./board";
+import {
+  listParkingJamFixedAreaCells,
+  listParkingJamVehicleCells,
+} from "./board";
 
 export type ParkingJamMoveBlocker =
   | { kind: "invalid-direction" }
   | { kind: "wall" }
-  | { kind: "obstacle"; cell: ParkingJamCell }
+  | { kind: "fixed-area"; cell: ParkingJamCell }
   | { kind: "vehicle"; vehicleId: ParkingJamVehicleId };
 
 function vehicleSupportsDirection(
@@ -26,6 +30,16 @@ function vehicleSupportsDirection(
 
 function exitOffset(vehicle: ParkingJamVehicle): number {
   return vehicle.orientation === "horizontal" ? vehicle.row : vehicle.column;
+}
+
+function openingContainsOffset(
+  opening: ParkingJamRoadOpening,
+  offset: number,
+): boolean {
+  return (
+    opening.startOffset <= offset &&
+    offset < opening.startOffset + opening.length
+  );
 }
 
 function pathCells(
@@ -71,17 +85,20 @@ export function listParkingJamMoveBlockers(
   if (!vehicleSupportsDirection(vehicle, move.direction))
     return [{ kind: "invalid-direction" }];
 
-  const hasExit = board.exits.some(
-    (exit) =>
-      exit.side === move.direction && exit.offset === exitOffset(vehicle),
+  const hasRoadOpening = board.roadOpenings.some(
+    (opening) =>
+      opening.side === move.direction &&
+      openingContainsOffset(opening, exitOffset(vehicle)),
   );
-  if (!hasExit) return [{ kind: "wall" }];
+  if (!hasRoadOpening) return [{ kind: "wall" }];
 
   const path = pathCells(board, vehicle, move.direction);
   const blockers: ParkingJamMoveBlocker[] = [];
-  for (const obstacle of board.obstacles) {
-    if (path.some((cell) => sameCell(cell, obstacle)))
-      blockers.push({ kind: "obstacle", cell: obstacle });
+  for (const area of board.fixedAreas) {
+    const blockingCell = listParkingJamFixedAreaCells(area).find((cell) =>
+      path.some((pathCell) => sameCell(pathCell, cell)),
+    );
+    if (blockingCell) blockers.push({ kind: "fixed-area", cell: blockingCell });
   }
 
   for (const other of board.vehicles) {

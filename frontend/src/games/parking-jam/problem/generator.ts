@@ -6,13 +6,14 @@ import {
 import type { ProblemSeed } from "@/games/problem-seed";
 import {
   createParkingJamInitialState,
+  listParkingJamFixedAreaCells,
   listParkingJamVehicleCells,
-  PARKING_JAM_MAX_BOARD_SIZE,
   PARKING_JAM_VEHICLE_LENGTHS,
   type ParkingJamBoard,
   type ParkingJamCell,
-  type ParkingJamExit,
+  type ParkingJamFixedArea,
   type ParkingJamOrientation,
+  type ParkingJamRoadOpening,
   type ParkingJamVehicle,
   validateParkingJamBoard,
 } from "../puzzle/board";
@@ -62,14 +63,8 @@ function validateConditions(conditions: ParkingJamGenerationConditions): void {
     ["width", conditions.width],
     ["height", conditions.height],
   ] as const) {
-    if (
-      !Number.isInteger(value) ||
-      value < 2 ||
-      value > PARKING_JAM_MAX_BOARD_SIZE
-    ) {
-      throw new RangeError(
-        `${name} must be an integer between 2 and ${PARKING_JAM_MAX_BOARD_SIZE}`,
-      );
+    if (!Number.isInteger(value) || value < 2) {
+      throw new RangeError(`${name} must be an integer of at least 2`);
     }
   }
   if (
@@ -78,25 +73,40 @@ function validateConditions(conditions: ParkingJamGenerationConditions): void {
   ) {
     throw new RangeError("vehicleCount must be a positive integer");
   }
-  if (
-    !Number.isInteger(conditions.obstacleCount) ||
-    conditions.obstacleCount < 0
-  ) {
-    throw new RangeError("obstacleCount must be a non-negative integer");
+  for (const [name, value] of [
+    ["roadOpeningCount", conditions.roadOpeningCount],
+    ["roadOpeningSpan", conditions.roadOpeningSpan],
+    ["fixedAreaCount", conditions.fixedAreaCount],
+    ["fixedAreaLength", conditions.fixedAreaLength],
+  ] as const) {
+    if (
+      !Number.isInteger(value) ||
+      value < (name === "fixedAreaCount" ? 0 : 1)
+    ) {
+      throw new RangeError(
+        `${name} must be ${name === "fixedAreaCount" ? "a non-negative" : "a positive"} integer`,
+      );
+    }
   }
-  if (conditions.obstacleCount >= conditions.width * conditions.height) {
+  if (
+    conditions.roadOpeningSpan > Math.max(conditions.width, conditions.height)
+  ) {
+    throw new RangeError("roadOpeningSpan must fit at least one board side");
+  }
+  const maximumRoadOpeningCount =
+    2 * Math.floor((conditions.height + 1) / (conditions.roadOpeningSpan + 1)) +
+    2 * Math.floor((conditions.width + 1) / (conditions.roadOpeningSpan + 1));
+  if (conditions.roadOpeningCount > maximumRoadOpeningCount) {
     throw new RangeError(
-      "obstacleCount must leave at least one board cell available",
+      `roadOpeningCount must be at most ${maximumRoadOpeningCount} for this board`,
     );
   }
   if (
-    !Number.isFinite(conditions.exitProbability) ||
-    conditions.exitProbability <= 0 ||
-    conditions.exitProbability > 1
+    conditions.fixedAreaCount > 0 &&
+    conditions.fixedAreaLength >
+      Math.max(conditions.width - 2, conditions.height - 2)
   ) {
-    throw new RangeError(
-      "exitProbability must be greater than 0 and at most 1",
-    );
+    throw new RangeError("fixedAreaLength must fit inside the board boundary");
   }
   if (
     !Number.isFinite(conditions.blockingPlacementProbability) ||
@@ -126,54 +136,13 @@ function createGeneratorRandom(
       conditions.width,
       conditions.height,
       conditions.vehicleCount,
-      conditions.obstacleCount,
-      conditions.exitProbability,
+      conditions.roadOpeningCount,
+      conditions.roadOpeningSpan,
+      conditions.fixedAreaCount,
+      conditions.fixedAreaLength,
       conditions.blockingPlacementProbability,
     ].join(":"),
   );
-}
-
-function allCells(width: number, height: number): ParkingJamCell[] {
-  return Array.from({ length: width * height }, (_, index) => ({
-    row: Math.floor(index / width),
-    column: index % width,
-  }));
-}
-
-function createObstacles(
-  conditions: ParkingJamGenerationConditions,
-  random: ProblemRandom,
-): ParkingJamCell[] {
-  return shuffleProblemValues(
-    allCells(conditions.width, conditions.height),
-    random,
-  ).slice(0, conditions.obstacleCount);
-}
-
-function createExits(
-  conditions: ParkingJamGenerationConditions,
-  random: ProblemRandom,
-): ParkingJamExit[] {
-  const candidates: ParkingJamExit[] = [];
-  for (let row = 0; row < conditions.height; row += 1) {
-    candidates.push(
-      { side: "left", offset: row },
-      { side: "right", offset: row },
-    );
-  }
-  for (let column = 0; column < conditions.width; column += 1) {
-    candidates.push(
-      { side: "up", offset: column },
-      { side: "down", offset: column },
-    );
-  }
-
-  const exits = candidates.filter(() => random() < conditions.exitProbability);
-  if (exits.length > 0) return exits;
-
-  const fallbackIndex = Math.floor(random() * candidates.length);
-  const fallback = candidates[fallbackIndex];
-  return fallback ? [fallback] : [];
 }
 
 function cellsOverlap(
@@ -186,6 +155,98 @@ function cellsOverlap(
         leftCell.row === rightCell.row && leftCell.column === rightCell.column,
     ),
   );
+}
+
+function createFixedAreas(
+  conditions: ParkingJamGenerationConditions,
+  random: ProblemRandom,
+): ParkingJamFixedArea[] | null {
+  if (conditions.fixedAreaCount === 0) return [];
+
+  const candidates: ParkingJamFixedArea[] = [];
+  const dimensions =
+    conditions.fixedAreaLength === 1
+      ? [{ width: 1, height: 1 }]
+      : [
+          { width: conditions.fixedAreaLength, height: 1 },
+          { width: 1, height: conditions.fixedAreaLength },
+        ];
+  for (const { width, height } of dimensions) {
+    for (let row = 1; row + height < conditions.height; row += 1) {
+      for (let column = 1; column + width < conditions.width; column += 1) {
+        candidates.push({ row, column, width, height });
+      }
+    }
+  }
+
+  const selected: ParkingJamFixedArea[] = [];
+  for (const candidate of shuffleProblemValues(candidates, random)) {
+    const cells = listParkingJamFixedAreaCells(candidate);
+    if (
+      selected.some((area) =>
+        cellsOverlap(cells, listParkingJamFixedAreaCells(area)),
+      )
+    ) {
+      continue;
+    }
+    selected.push(candidate);
+    if (selected.length === conditions.fixedAreaCount) return selected;
+  }
+  return null;
+}
+
+function roadOpeningCandidates(
+  conditions: ParkingJamGenerationConditions,
+): ParkingJamRoadOpening[] {
+  const candidates: ParkingJamRoadOpening[] = [];
+  for (const side of ["left", "right", "up", "down"] as const) {
+    const limit =
+      side === "left" || side === "right"
+        ? conditions.height
+        : conditions.width;
+    for (
+      let startOffset = 0;
+      startOffset + conditions.roadOpeningSpan <= limit;
+      startOffset += 1
+    ) {
+      candidates.push({
+        side,
+        startOffset,
+        length: conditions.roadOpeningSpan,
+      });
+    }
+  }
+  return candidates;
+}
+
+function openingsOverlapOrTouch(
+  left: ParkingJamRoadOpening,
+  right: ParkingJamRoadOpening,
+): boolean {
+  if (left.side !== right.side) return false;
+  const leftEnd = left.startOffset + left.length;
+  const rightEnd = right.startOffset + right.length;
+  return left.startOffset <= rightEnd && right.startOffset <= leftEnd;
+}
+
+function createRoadOpenings(
+  conditions: ParkingJamGenerationConditions,
+  random: ProblemRandom,
+): ParkingJamRoadOpening[] | null {
+  const selected: ParkingJamRoadOpening[] = [];
+  for (const candidate of shuffleProblemValues(
+    roadOpeningCandidates(conditions),
+    random,
+  )) {
+    if (
+      selected.some((opening) => openingsOverlapOrTouch(opening, candidate))
+    ) {
+      continue;
+    }
+    selected.push(candidate);
+    if (selected.length === conditions.roadOpeningCount) return selected;
+  }
+  return null;
 }
 
 type ParkingJamPlacementCandidate = {
@@ -231,7 +292,10 @@ function enumeratePlacements(
           );
           if (
             !fits ||
-            cellsOverlap(cells, board.obstacles) ||
+            cellsOverlap(
+              cells,
+              board.fixedAreas.flatMap(listParkingJamFixedAreaCells),
+            ) ||
             cellsOverlap(cells, occupiedVehicleCells)
           ) {
             continue;
@@ -303,14 +367,15 @@ function createCandidate(
   conditions: ParkingJamGenerationConditions,
   random: ProblemRandom,
 ): ParkingJamBoard | null {
-  const obstacles = createObstacles(conditions, random);
-  const exits = createExits(conditions, random);
+  const fixedAreas = createFixedAreas(conditions, random);
+  const roadOpenings = createRoadOpenings(conditions, random);
+  if (!fixedAreas || !roadOpenings) return null;
   const vehicles: ParkingJamVehicle[] = [];
   const boardBase = {
     width: conditions.width,
     height: conditions.height,
-    obstacles,
-    exits,
+    fixedAreas,
+    roadOpenings,
   };
 
   for (let index = 0; index < conditions.vehicleCount; index += 1) {
@@ -390,8 +455,10 @@ export function generateParkingJamProblem(
     width: options.width,
     height: options.height,
     vehicleCount: options.vehicleCount,
-    obstacleCount: options.obstacleCount,
-    exitProbability: options.exitProbability,
+    roadOpeningCount: options.roadOpeningCount,
+    roadOpeningSpan: options.roadOpeningSpan,
+    fixedAreaCount: options.fixedAreaCount,
+    fixedAreaLength: options.fixedAreaLength,
     blockingPlacementProbability: options.blockingPlacementProbability ?? 0,
   };
   validateConditions(conditions);

@@ -12,11 +12,11 @@ describe("analyzeParkingJamDifficulty", () => {
         { id: "b", row: 2, column: 1, orientation: "horizontal", length: 2 },
         { id: "c", row: 4, column: 1, orientation: "horizontal", length: 2 },
       ],
-      obstacles: [],
-      exits: [
-        { side: "right", offset: 0 },
-        { side: "right", offset: 2 },
-        { side: "right", offset: 4 },
+      fixedAreas: [],
+      roadOpenings: [
+        { side: "right", startOffset: 0, length: 1 },
+        { side: "right", startOffset: 2, length: 1 },
+        { side: "right", startOffset: 4, length: 1 },
       ],
     };
     const solvability = analyzeParkingJamSolvability(board);
@@ -41,11 +41,11 @@ describe("analyzeParkingJamDifficulty", () => {
         { id: "b", row: 2, column: 2, orientation: "vertical", length: 2 },
         { id: "c", row: 1, column: 2, orientation: "horizontal", length: 2 },
       ],
-      obstacles: [],
-      exits: [
-        { side: "right", offset: 3 },
-        { side: "up", offset: 2 },
-        { side: "right", offset: 1 },
+      fixedAreas: [],
+      roadOpenings: [
+        { side: "right", startOffset: 3, length: 1 },
+        { side: "up", startOffset: 2, length: 1 },
+        { side: "right", startOffset: 1, length: 1 },
       ],
     };
     const solvability = analyzeParkingJamSolvability(board);
@@ -69,10 +69,10 @@ describe("_private.countLegalVehicleOrders", () => {
       { id: "a", row: 0, column: 1, orientation: "horizontal", length: 2 },
       { id: "b", row: 2, column: 1, orientation: "horizontal", length: 2 },
     ],
-    obstacles: [],
-    exits: [
-      { side: "right", offset: 0 },
-      { side: "right", offset: 2 },
+    fixedAreas: [],
+    roadOpenings: [
+      { side: "right", startOffset: 0, length: 1 },
+      { side: "right", startOffset: 2, length: 1 },
     ],
   };
 
