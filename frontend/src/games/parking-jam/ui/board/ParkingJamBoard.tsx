@@ -197,10 +197,30 @@ export function ParkingJamBoard({
           height="32"
           patternUnits="userSpaceOnUse"
         >
-          <circle cx="5" cy="8" r="1.2" className="parking-jam-board__asphalt-speck" />
-          <circle cx="22" cy="5" r="0.8" className="parking-jam-board__asphalt-speck" />
-          <circle cx="14" cy="23" r="1" className="parking-jam-board__asphalt-speck" />
-          <circle cx="29" cy="27" r="0.7" className="parking-jam-board__asphalt-speck" />
+          <circle
+            cx="5"
+            cy="8"
+            r="1.2"
+            className="parking-jam-board__asphalt-speck"
+          />
+          <circle
+            cx="22"
+            cy="5"
+            r="0.8"
+            className="parking-jam-board__asphalt-speck"
+          />
+          <circle
+            cx="14"
+            cy="23"
+            r="1"
+            className="parking-jam-board__asphalt-speck"
+          />
+          <circle
+            cx="29"
+            cy="27"
+            r="0.7"
+            className="parking-jam-board__asphalt-speck"
+          />
         </pattern>
         <pattern
           id="parking-jam-grid"
@@ -219,8 +239,15 @@ export function ParkingJamBoard({
           height="18"
           patternUnits="userSpaceOnUse"
         >
-          <rect width="18" height="18" className="parking-jam-board__grass-base" />
-          <path d="M 2 15 L 6 9 M 9 18 L 11 11 M 14 14 L 17 8" className="parking-jam-board__grass-blade" />
+          <rect
+            width="18"
+            height="18"
+            className="parking-jam-board__grass-base"
+          />
+          <path
+            d="M 2 15 L 6 9 M 9 18 L 11 11 M 14 14 L 17 8"
+            className="parking-jam-board__grass-blade"
+          />
         </pattern>
       </defs>
       <rect
