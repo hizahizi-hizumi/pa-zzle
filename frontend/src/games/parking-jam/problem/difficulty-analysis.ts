@@ -66,7 +66,7 @@ function countVehicleBlockingEdges(board: ParkingJamBoard): {
           ({ kind }) =>
             kind === "invalid-direction" ||
             kind === "wall" ||
-            kind === "obstacle",
+            kind === "fixed-area",
         )
       ) {
         continue;
@@ -109,7 +109,7 @@ function createExitPathsByVehicle(
           ({ kind }) =>
             kind === "invalid-direction" ||
             kind === "wall" ||
-            kind === "obstacle",
+            kind === "fixed-area",
         )
       ) {
         continue;

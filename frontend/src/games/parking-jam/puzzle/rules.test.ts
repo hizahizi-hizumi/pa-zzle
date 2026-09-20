@@ -16,10 +16,10 @@ describe("listParkingJamMoveBlockers", () => {
       { id: "a", row: 2, column: 1, orientation: "horizontal", length: 2 },
       { id: "b", row: 2, column: 4, orientation: "vertical", length: 2 },
     ],
-    obstacles: [{ row: 2, column: 0 }],
-    exits: [
-      { side: "left", offset: 2 },
-      { side: "right", offset: 2 },
+    fixedAreas: [{ row: 2, column: 0, width: 1, height: 1 }],
+    roadOpenings: [
+      { side: "left", startOffset: 2, length: 1 },
+      { side: "right", startOffset: 2, length: 1 },
     ],
   };
   const state = createParkingJamInitialState(board);
@@ -40,7 +40,7 @@ describe("listParkingJamMoveBlockers", () => {
     });
 
     expect(blockers).toEqual([
-      { kind: "obstacle", cell: { row: 2, column: 0 } },
+      { kind: "fixed-area", cell: { row: 2, column: 0 } },
     ]);
   });
 });
@@ -52,8 +52,8 @@ describe("applyParkingJamMove", () => {
     vehicles: [
       { id: "a", row: 1, column: 1, orientation: "horizontal", length: 2 },
     ],
-    obstacles: [],
-    exits: [{ side: "right", offset: 1 }],
+    fixedAreas: [],
+    roadOpenings: [{ side: "right", startOffset: 1, length: 1 }],
   };
   const state = createParkingJamInitialState(board);
 
@@ -84,10 +84,10 @@ describe("listParkingJamLegalMoves", () => {
       { id: "a", row: 1, column: 1, orientation: "horizontal", length: 2 },
       { id: "b", row: 3, column: 1, orientation: "horizontal", length: 2 },
     ],
-    obstacles: [],
-    exits: [
-      { side: "left", offset: 1 },
-      { side: "right", offset: 3 },
+    fixedAreas: [],
+    roadOpenings: [
+      { side: "left", startOffset: 1, length: 1 },
+      { side: "right", startOffset: 3, length: 1 },
     ],
   };
   const state = createParkingJamInitialState(board);
@@ -97,6 +97,29 @@ describe("listParkingJamLegalMoves", () => {
 
     expect(moves).toEqual([
       { vehicleId: "a", direction: "left" },
+      { vehicleId: "b", direction: "right" },
+    ]);
+  });
+});
+
+describe("連続した道路開口の場合", () => {
+  const board: ParkingJamBoard = {
+    width: 5,
+    height: 5,
+    vehicles: [
+      { id: "a", row: 1, column: 1, orientation: "horizontal", length: 2 },
+      { id: "b", row: 2, column: 1, orientation: "horizontal", length: 2 },
+    ],
+    fixedAreas: [],
+    roadOpenings: [{ side: "right", startOffset: 1, length: 2 }],
+  };
+  const state = createParkingJamInitialState(board);
+
+  test("開口区間に含まれる各レーンから出庫できること", () => {
+    const moves = listParkingJamLegalMoves(board, state);
+
+    expect(moves).toEqual([
+      { vehicleId: "a", direction: "right" },
       { vehicleId: "b", direction: "right" },
     ]);
   });
