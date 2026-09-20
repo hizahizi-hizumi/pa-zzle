@@ -75,11 +75,44 @@ describe("ParkingJamPlay", () => {
     expect(props.onMove).toHaveBeenCalledWith("a", "right");
   });
 
+  test("車の向きに沿う矢印キーで出庫を試せること", () => {
+    const vehicle = screen.getByRole("button", { name: "横向きの車 行2 列1" });
+
+    fireEvent.keyDown(vehicle, { key: "ArrowRight" });
+
+    expect(props.onMove).toHaveBeenCalledWith("a", "right");
+  });
+
   test("共通プレイヘッダーから盤面を戻せること", () => {
     fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
     fireEvent.click(screen.getByRole("button", { name: "盤面を戻す" }));
 
     expect(props.onRestart).toHaveBeenCalledOnce();
+  });
+});
+
+describe("横向きの車を選択している場合", () => {
+  let props: ComponentProps<typeof ParkingJamPlay>;
+
+  beforeEach(() => {
+    props = { ...createProps(), selectedVehicleId: "a" };
+    render(<ParkingJamPlay {...props} />);
+  });
+
+  test("車の両端に同格の方向操作を提示すること", () => {
+    const left = screen.getByRole("button", { name: "左へ出庫" });
+    const right = screen.getByRole("button", { name: "右へ出庫" });
+
+    expect(left).toBeTruthy();
+    expect(right).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "上へ出庫" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "下へ出庫" })).toBeNull();
+  });
+
+  test("近傍の方向操作から出庫を試せること", () => {
+    fireEvent.click(screen.getByRole("button", { name: "右へ出庫" }));
+
+    expect(props.onMove).toHaveBeenCalledWith("a", "right");
   });
 });
 

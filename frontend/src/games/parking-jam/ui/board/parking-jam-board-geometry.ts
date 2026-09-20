@@ -12,6 +12,8 @@ export const PARKING_JAM_MARGIN = 90;
 const PARKING_BAY_EDGE_INSET = 22;
 const PARKING_BAY_DEPTH = 178;
 const ROAD_OVERLAP = 10;
+const ROAD_MARKING_INSET = 16;
+const ROAD_MARKING_LOT_GAP = 18;
 
 type LineGeometry = {
   x1: number;
@@ -171,6 +173,47 @@ function getAccessRoadCurbLines(
   ];
 }
 
+function getAccessRoadCenterLine(
+  opening: ParkingJamRoadOpening,
+  board: ParkingJamBoard,
+): LineGeometry {
+  const { start, end } = getOpeningSegment(opening);
+  const center = (start + end) / 2;
+  const width = board.width * PARKING_JAM_CELL;
+  const height = board.height * PARKING_JAM_CELL;
+
+  if (opening.side === "up") {
+    return {
+      x1: center,
+      y1: -PARKING_JAM_MARGIN + ROAD_MARKING_INSET,
+      x2: center,
+      y2: -ROAD_MARKING_LOT_GAP,
+    };
+  }
+  if (opening.side === "down") {
+    return {
+      x1: center,
+      y1: height + ROAD_MARKING_LOT_GAP,
+      x2: center,
+      y2: height + PARKING_JAM_MARGIN - ROAD_MARKING_INSET,
+    };
+  }
+  if (opening.side === "left") {
+    return {
+      x1: -PARKING_JAM_MARGIN + ROAD_MARKING_INSET,
+      y1: center,
+      x2: -ROAD_MARKING_LOT_GAP,
+      y2: center,
+    };
+  }
+  return {
+    x1: width + ROAD_MARKING_LOT_GAP,
+    y1: center,
+    x2: width + PARKING_JAM_MARGIN - ROAD_MARKING_INSET,
+    y2: center,
+  };
+}
+
 function isBayDividerInsideOpening(
   position: number,
   openings: readonly ParkingJamRoadOpening[],
@@ -276,6 +319,7 @@ function getVehicleExitTranslation(
 }
 
 export const parkingJamBoardGeometry = {
+  getAccessRoadCenterLine,
   getAccessRoadCurbLines,
   getAccessRoadGeometry,
   getBoundaryCurbLines,
