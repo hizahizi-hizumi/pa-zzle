@@ -4,6 +4,7 @@ import {
   Play,
   RotateCcw,
   SlidersHorizontal,
+  Wrench,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -36,6 +37,7 @@ type NanpureResultScreenProps = {
   onOpenRecords: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
+  onOpenDiagnostics?: () => void;
 };
 
 export function NanpureResultScreen({
@@ -47,6 +49,7 @@ export function NanpureResultScreen({
   onOpenRecords,
   onChangeDifficulty,
   onBackToHome,
+  onOpenDiagnostics,
 }: NanpureResultScreenProps) {
   const resultLevel = getNanpureGameResultLevel(result.score.total);
 
@@ -123,6 +126,19 @@ export function NanpureResultScreen({
             <ScoreCriteria />
           </div>
         </details>
+        {onOpenDiagnostics && (
+          <div className="mt-1 flex justify-center">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onOpenDiagnostics}
+            >
+              <Wrench />
+              検証情報
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );

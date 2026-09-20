@@ -281,3 +281,74 @@ describe("NanpurePlay", () => {
     expect(onOpenRecords).toHaveBeenCalledOnce();
   });
 });
+
+describe("診断導線が許可されたプレイ中の場合", () => {
+  let onOpenDiagnostics: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    onOpenDiagnostics = vi.fn();
+    render(
+      <NanpurePlay
+        {...createProps()}
+        onOpenDiagnostics={onOpenDiagnostics}
+      />,
+    );
+  });
+
+  test("その他の操作から検証情報を開けること", () => {
+    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "検証情報" }));
+
+    expect(onOpenDiagnostics).toHaveBeenCalledOnce();
+  });
+});
+
+describe("診断導線が許可されていないプレイ中の場合", () => {
+  beforeEach(() => {
+    render(<NanpurePlay {...createProps()} />);
+  });
+
+  test("その他の操作へ検証情報を表示しないこと", () => {
+    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
+
+    expect(screen.queryByRole("menuitem", { name: "検証情報" })).toBeNull();
+  });
+});
+
+describe("診断導線が許可された結果表示の場合", () => {
+  let onOpenDiagnostics: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    onOpenDiagnostics = vi.fn();
+    render(
+      <NanpurePlay
+        {...createProps()}
+        status="cleared"
+        progress="result"
+        result={{
+          elapsedMs: 125_000,
+          mistakeCount: 0,
+          undoCount: 0,
+          restartCount: 0,
+          score: {
+            total: 100,
+            breakdown: { accuracy: 40, speed: 40, stability: 20 },
+          },
+          problemIdentity: {
+            generatorVersion: "1",
+            seed: "test-seed",
+            conditions: { clueCount: 32 },
+            generationAttempt: 1,
+          },
+        }}
+        onOpenDiagnostics={onOpenDiagnostics}
+      />,
+    );
+  });
+
+  test("結果画面から検証情報を開けること", () => {
+    fireEvent.click(screen.getByRole("button", { name: "検証情報" }));
+
+    expect(onOpenDiagnostics).toHaveBeenCalledOnce();
+  });
+});

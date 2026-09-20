@@ -5,6 +5,7 @@ import {
   RefreshCw,
   RotateCcw,
   SlidersHorizontal,
+  Wrench,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -17,6 +18,7 @@ type PlayMenuProps = {
   onStartNewProblem: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
+  onOpenDiagnostics?: () => void;
 };
 
 export function PlayMenu({
@@ -25,6 +27,7 @@ export function PlayMenu({
   onStartNewProblem,
   onChangeDifficulty,
   onBackToHome,
+  onOpenDiagnostics,
 }: PlayMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -75,6 +78,16 @@ export function PlayMenu({
             label="ホーム"
             onClick={() => runAndClose(onBackToHome)}
           />
+          {onOpenDiagnostics && (
+            <>
+              <div className="my-1 border-t" />
+              <MenuButton
+                icon={<Wrench />}
+                label="検証情報"
+                onClick={() => runAndClose(onOpenDiagnostics)}
+              />
+            </>
+          )}
         </div>
       )}
     </div>
