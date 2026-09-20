@@ -1,12 +1,17 @@
-import { ArrowLeft, Home, MoreHorizontal, Play, RefreshCw, RotateCcw, SlidersHorizontal } from "lucide-react";
+import {
+  ArrowLeft,
+  Home,
+  MoreHorizontal,
+  Play,
+  RefreshCw,
+  RotateCcw,
+  SlidersHorizontal,
+} from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 
-export type PlayHeaderMetric = {
-  label: string;
-  value: string;
-};
+export type PlayHeaderMetric = { label: string; value: string };
 
 type PlayHeaderProps = {
   title: string;
@@ -19,21 +24,10 @@ type PlayHeaderProps = {
 };
 
 export function PlayHeader({
-  title,
-  metrics,
-  onRestart,
-  onReplay,
-  onStartNewProblem,
-  onChangeDifficulty,
-  onBackToHome,
+  title, metrics, onRestart, onReplay, onStartNewProblem, onChangeDifficulty, onBackToHome,
 }: PlayHeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
-
-  function runAndClose(action: () => void) {
-    setIsOpen(false);
-    action();
-  }
-
+  function runAndClose(action: () => void) { setIsOpen(false); action(); }
   return (
     <header className="grid h-[4.5rem] shrink-0 grid-cols-[3rem_minmax(0,1fr)_3rem] items-start bg-background px-3 pt-1.5">
       <Button type="button" variant="ghost" size="icon-lg" aria-label="難易度選択へ戻る" onClick={onChangeDifficulty}>
@@ -45,7 +39,10 @@ export function PlayHeader({
           {metrics.map((metric, index) => (
             <span key={metric.label} className="contents">
               {index > 0 ? <span aria-hidden="true">·</span> : null}
-              <span><span className="sr-only">{metric.label} </span><span className="tabular-nums">{metric.value}</span></span>
+              <span>
+                <span className="sr-only">{metric.label} </span>
+                <span className="tabular-nums">{metric.value}</span>
+              </span>
             </span>
           ))}
         </div>
