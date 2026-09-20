@@ -35,6 +35,7 @@ export const waterSortPlayRecordDisplay = {
         return `${value}点`;
       },
       referenceValue: 100,
+      axis: { kind: "integer" as const, minimum: 0, maximum: 100 },
     },
     {
       id: "time-delta-ms",
@@ -42,6 +43,7 @@ export const waterSortPlayRecordDisplay = {
       historyLabel: "時間差",
       formatValue: formatTimeDelta,
       referenceValue: 0,
+      axis: { kind: "duration-ms" as const },
     },
     {
       id: "move-delta",
@@ -49,6 +51,7 @@ export const waterSortPlayRecordDisplay = {
       historyLabel: "手数差",
       formatValue: formatMoveDelta,
       referenceValue: 0,
+      axis: { kind: "integer" as const, minimum: 0 },
     },
   ],
 };
