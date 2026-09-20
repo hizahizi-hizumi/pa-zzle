@@ -47,6 +47,7 @@ type NanpurePlayProps = {
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
   onClearAnimationComplete: () => void;
+  onOpenDiagnostics?: () => void;
 };
 
 export function NanpurePlay({
@@ -79,6 +80,7 @@ export function NanpurePlay({
   onChangeDifficulty,
   onBackToHome,
   onClearAnimationComplete,
+  onOpenDiagnostics,
 }: NanpurePlayProps) {
   if (progress === "result" && status === "cleared" && result) {
     return (
@@ -91,6 +93,7 @@ export function NanpurePlay({
         onOpenRecords={onOpenRecords}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
+        onOpenDiagnostics={onOpenDiagnostics}
       />
     );
   }
@@ -115,6 +118,7 @@ export function NanpurePlay({
         onStartNewProblem={onStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
+        onOpenDiagnostics={onOpenDiagnostics}
       />
 
       <main className="flex shrink-0 justify-center px-2 pt-1 sm:px-6 sm:pt-3">

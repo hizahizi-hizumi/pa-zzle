@@ -1,16 +1,16 @@
-type DiagnosticRowProps = {
+type InternalDiagnosticRowProps = {
   label: string;
   value: string;
   mono?: boolean;
   breakAll?: boolean;
 };
 
-export function DiagnosticRow({
+export function InternalDiagnosticRow({
   label,
   value,
   mono = false,
   breakAll = false,
-}: DiagnosticRowProps) {
+}: InternalDiagnosticRowProps) {
   return (
     <div className="grid grid-cols-[5rem_minmax(0,1fr)] gap-3 py-3 text-sm">
       <dt className="text-muted-foreground">{label}</dt>

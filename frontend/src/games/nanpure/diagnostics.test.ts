@@ -1,18 +1,18 @@
 import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
-import { generateWaterSortProblem } from "@/games/water-sort/problem/generator";
+import { generateNanpureProblem } from "@/games/nanpure/problem/generator";
 
 import {
-  createWaterSortDiagnosticSnapshot,
-  parseWaterSortDiagnosticSnapshot,
-  restoreWaterSortProblemFromDiagnosticSnapshot,
+  createNanpureDiagnosticSnapshot,
+  parseNanpureDiagnosticSnapshot,
+  restoreNanpureProblemFromDiagnosticSnapshot,
 } from "./diagnostics";
 
-describe("WaterSortDiagnosticSnapshot", () => {
-  const problem = generateWaterSortProblem({
+describe("NanpureDiagnosticSnapshot", () => {
+  const problem = generateNanpureProblem({
     seed: "diagnostic-reproduction-seed",
-    colorCount: 4,
+    clueCount: 32,
   });
-  const snapshot = createWaterSortDiagnosticSnapshot({
+  const snapshot = createNanpureDiagnosticSnapshot({
     difficulty: "normal",
     problemIdentity: {
       generatorVersion: problem.identity.generatorVersion,
@@ -24,25 +24,25 @@ describe("WaterSortDiagnosticSnapshot", () => {
   });
   const invalidSerialized = JSON.stringify({
     formatVersion: 2,
-    game: "water-sort",
+    game: "nanpure",
   });
 
   test("コピー形式を復元して同じ初期問題を再現できること", () => {
     const serialized = serializeInternalDiagnosticSnapshot(snapshot);
-    const parsed = parseWaterSortDiagnosticSnapshot(serialized);
-    const restored = restoreWaterSortProblemFromDiagnosticSnapshot(parsed);
+    const parsed = parseNanpureDiagnosticSnapshot(serialized);
+    const restored = restoreNanpureProblemFromDiagnosticSnapshot(parsed);
 
     expect(parsed).toEqual(snapshot);
-    expect(restored.problem.initialState).toEqual(problem.problem.initialState);
-    expect(restored.optimalMoveCount).toBe(problem.optimalMoveCount);
+    expect(restored.clues).toEqual(problem.clues);
+    expect(restored.solution).toEqual(problem.solution);
     expect(restored.difficultyAnalysis).toEqual(problem.difficultyAnalysis);
   });
 
   test("診断形式ではないJSONを拒否すること", () => {
     function act() {
-      return parseWaterSortDiagnosticSnapshot(invalidSerialized);
+      return parseNanpureDiagnosticSnapshot(invalidSerialized);
     }
 
-    expect(act).toThrow("Invalid water sort diagnostic snapshot");
+    expect(act).toThrow("Invalid Nanpure diagnostic snapshot");
   });
 });

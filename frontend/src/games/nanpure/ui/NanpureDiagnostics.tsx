@@ -1,23 +1,23 @@
 import { InternalDiagnosticsDialog } from "@/components/InternalDiagnosticsDialog";
 import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
-import type { WaterSortDiagnosticSnapshot } from "@/games/water-sort/diagnostics";
-import { getWaterSortDifficultyLabel } from "@/games/water-sort/difficulty";
+import type { NanpureDiagnosticSnapshot } from "@/games/nanpure/diagnostics";
+import { getNanpureDifficultyLabel } from "@/games/nanpure/difficulty";
 
-type WaterSortDiagnosticsProps = {
-  snapshot: WaterSortDiagnosticSnapshot;
+type NanpureDiagnosticsProps = {
+  snapshot: NanpureDiagnosticSnapshot;
   onClose: () => void;
 };
 
-export function WaterSortDiagnostics({
+export function NanpureDiagnostics({
   snapshot,
   onClose,
-}: WaterSortDiagnosticsProps) {
+}: NanpureDiagnosticsProps) {
   return (
     <InternalDiagnosticsDialog
-      difficultyLabel={getWaterSortDifficultyLabel(snapshot.difficulty)}
+      difficultyLabel={getNanpureDifficultyLabel(snapshot.difficulty)}
       seed={snapshot.problemIdentity.seed}
       generatorVersion={snapshot.problemIdentity.generatorVersion}
-      generationConditions={`色 ${snapshot.problemIdentity.conditions.colorCount} / 容量 ${snapshot.problemIdentity.conditions.capacity} / 空 ${snapshot.problemIdentity.conditions.emptyBottleCount}`}
+      generationConditions={`ヒント ${snapshot.problemIdentity.conditions.clueCount}`}
       generationAttempt={snapshot.problemIdentity.generationAttempt}
       buildRevision={snapshot.buildRevision}
       serializedSnapshot={serializeInternalDiagnosticSnapshot(snapshot)}
