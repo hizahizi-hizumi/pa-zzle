@@ -1,0 +1,47 @@
+name: Issue 305 Happy DOM Package
+
+on:
+  push:
+    branches:
+      - experiment/issue305-happy-dom-20260921
+
+permissions:
+  contents: read
+
+jobs:
+  package-happy-dom:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Install Happy DOM for benchmark
+        working-directory: frontend
+        run: bun add --no-save happy-dom@20.14.5
+
+      - name: Package Happy DOM runtime
+        working-directory: frontend
+        run: |
+          tar -czf ../happy-dom-runtime.tgz \
+            node_modules/happy-dom \
+            node_modules/buffer-image-size \
+            node_modules/entities \
+            node_modules/whatwg-mimetype \
+            node_modules/ws
+
+      - name: Upload Happy DOM runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue305-happy-dom-runtime
+          path: happy-dom-runtime.tgz
+          if-no-files-found: error
