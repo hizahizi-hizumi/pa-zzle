@@ -54,7 +54,12 @@
   fill: #30363a;
 }
 .parking-jam-board__lot {
-  fill: #555d61;
+  fill: url("#parking-jam-lot-gradient");
+}
+.parking-jam-board__grid-line {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.055);
+  stroke-width: 1;
 }
 .parking-jam-board__curb {
   fill: none;
@@ -80,12 +85,12 @@
   cursor: grabbing;
 }
 .parking-jam-car__body {
-  fill: #6f8797;
+  fill: url("#parking-jam-car-gradient");
   stroke: #26343d;
   stroke-width: 4;
 }
 .parking-jam-car__glass {
-  fill: #b9c9d2;
+  fill: url("#parking-jam-glass-gradient");
   stroke: #526a79;
   stroke-width: 3;
 }
@@ -96,7 +101,7 @@
   stroke-linecap: round;
 }
 .parking-jam-car__body {
-  fill: #6f8797;
+  fill: url("#parking-jam-car-gradient");
   stroke: #26343d;
   stroke-width: 4;
 }
@@ -137,4 +142,7 @@
   [class*="parking-jam-car--exit-"] {
     animation-duration: 1ms;
   }
+}
+.parking-jam-car__wheel {
+  fill: #202a30;
 }
