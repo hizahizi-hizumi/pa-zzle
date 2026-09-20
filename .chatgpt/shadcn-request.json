@@ -1,0 +1,12 @@
+{
+  "requestId": "ui-consistency-20260920",
+  "targetSha": "103abff2f6bb882d0ceae30fd6348a5e8d007551",
+  "components": [
+    "dialog",
+    "dropdown-menu",
+    "collapsible",
+    "empty",
+    "alert",
+    "native-select"
+  ]
+}
