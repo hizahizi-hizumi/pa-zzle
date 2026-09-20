@@ -1,9 +1,8 @@
 {
-  "requestId": "interaction-ui-20260920",
-  "targetSha": "487dec71b22019be84596889c8571f129e40199f",
+  "requestId": "records-chart-20260920",
+  "targetSha": "35d91fe686a1e8b3092934d4b0f9393f4b97e97f",
   "components": [
-    "dialog",
-    "dropdown-menu",
-    "collapsible"
+    "chart",
+    "tabs"
   ]
 }
