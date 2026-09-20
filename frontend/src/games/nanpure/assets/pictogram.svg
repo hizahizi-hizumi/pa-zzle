@@ -3,6 +3,8 @@
     <path d="M46 18v84M74 18v84M18 46h84M18 74h84"/>
   </g>
   <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
-  <path d="M137 1493H1262V1276L680 0H305L856 1210H137Z" transform="matrix(0.013396 0 0 -0.013396 50.630 42.000)" fill="var(--game-pictogram-strong)"/>
-  <path d="M754 1176 332 551H754ZM690 1493H1118V551H1331V272H1118V0H754V272H92V602Z" transform="matrix(0.013396 0 0 -0.013396 78.469 98.000)" fill="var(--game-pictogram-strong)"/>
+  <g fill="var(--game-pictogram-strong)" font-size="19" font-weight="600" text-anchor="middle" dominant-baseline="central">
+    <text x="60" y="32">7</text>
+    <text x="88" y="88">4</text>
+  </g>
 </svg>
