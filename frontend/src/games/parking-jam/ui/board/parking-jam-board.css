@@ -33,6 +33,10 @@
   height: auto;
   overflow: visible;
   touch-action: none;
+  --parking-jam-car-body: #d46e67;
+  --parking-jam-car-roof: #ed948a;
+  --parking-jam-car-highlight: rgb(255 255 255 / 0.18);
+  --parking-jam-car-accent: #8d3934;
 }
 .parking-jam-board__lot,
 .parking-jam-board__access-road {
@@ -92,13 +96,19 @@
   cursor: grabbing;
 }
 .parking-jam-car__body {
-  fill: url("#parking-jam-car-red");
+  fill: var(--parking-jam-car-body);
   stroke: rgb(20 29 35 / 0.88);
   stroke-width: 5;
   filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.4));
 }
 .parking-jam-car__highlight {
-  fill: rgb(255 255 255 / 0.18);
+  fill: var(--parking-jam-car-highlight);
+  pointer-events: none;
+}
+.parking-jam-car__roof-panel {
+  fill: var(--parking-jam-car-roof);
+  stroke: rgb(255 255 255 / 0.22);
+  stroke-width: 2;
   pointer-events: none;
 }
 .parking-jam-car__front-light {
@@ -107,22 +117,22 @@
   stroke-width: 1.5;
   pointer-events: none;
 }
-.parking-jam-car__rear-light {
-  fill: #7d2026;
-  stroke: rgb(255 154 137 / 0.72);
-  stroke-width: 1.5;
-  pointer-events: none;
-}
-.parking-jam-car__glass {
+.parking-jam-car__glass,
+.parking-jam-car__rear-glass {
   fill: url("#parking-jam-glass-gradient");
   stroke: #314f60;
   stroke-width: 3;
+  pointer-events: none;
+}
+.parking-jam-car__rear-glass {
+  opacity: 0.9;
 }
 .parking-jam-car__detail {
   fill: none;
-  stroke: #31434e;
-  stroke-width: 5;
+  stroke: var(--parking-jam-car-accent);
+  stroke-width: 4;
   stroke-linecap: round;
+  pointer-events: none;
 }
 .parking-jam-car--selected .parking-jam-car__body {
   stroke: #fff;

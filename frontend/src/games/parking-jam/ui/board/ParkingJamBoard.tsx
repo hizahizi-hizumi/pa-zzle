@@ -76,6 +76,48 @@ type DirectionControl = {
   path: string;
 };
 
+type ParkingJamVehicleVisualType = "short" | "long";
+
+type ParkingJamCarPalette = {
+  body: string;
+  roof: string;
+  highlight: string;
+  accent: string;
+};
+
+type ParkingJamCarGlass = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rx: number;
+};
+
+type ParkingJamCarVisualSpec = {
+  frontGlass: ParkingJamCarGlass;
+  rearGlass: ParkingJamCarGlass;
+  roofPanel: ParkingJamCarGlass;
+  seamPaths: readonly string[];
+};
+
+const PARKING_JAM_CAR_PALETTES: Record<
+  ParkingJamVehicleVisualType,
+  ParkingJamCarPalette
+> = {
+  short: {
+    body: "#d46e67",
+    roof: "#ed948a",
+    highlight: "rgb(255 255 255 / 0.18)",
+    accent: "#8d3934",
+  },
+  long: {
+    body: "#617b95",
+    roof: "#7f9bb7",
+    highlight: "rgb(255 255 255 / 0.16)",
+    accent: "#41566c",
+  },
+};
+
 function getDirectionControls(vehicle: ParkingJamVehicle): DirectionControl[] {
   const horizontal = vehicle.orientation === "horizontal";
   const width = (horizontal ? vehicle.length : 1) * PARKING_JAM_CELL - 20;
@@ -145,6 +187,122 @@ function getIslandShrubs(area: ParkingJamFixedArea): IslandShrub[] {
         { cx: centerX, cy: centerY - spread, radius },
         { cx: centerX, cy: centerY + spread, radius },
       ];
+}
+
+function getVehicleVisualType(
+  vehicle: ParkingJamVehicle,
+): ParkingJamVehicleVisualType {
+  return vehicle.length === 3 ? "long" : "short";
+}
+
+function getVehiclePalette(vehicle: ParkingJamVehicle): ParkingJamCarPalette {
+  return PARKING_JAM_CAR_PALETTES[getVehicleVisualType(vehicle)];
+}
+
+function getVehicleVisualSpec(
+  vehicle: ParkingJamVehicle,
+  x: number,
+  y: number,
+  vehicleWidth: number,
+  vehicleHeight: number,
+  facingPositive: boolean,
+): ParkingJamCarVisualSpec {
+  const horizontal = vehicle.orientation === "horizontal";
+  const longBody = vehicle.length >= 3;
+  const frontInset = longBody ? 18 : 16;
+  const rearInset = longBody ? 16 : 14;
+  const frontGlassLength = longBody ? 22 : 24;
+  const rearGlassLength = longBody ? 18 : 16;
+  const roofStart = longBody ? 0.33 : 0.34;
+  const roofLength = longBody ? 0.34 : 0.28;
+
+  if (horizontal) {
+    const frontGlassX = facingPositive
+      ? x + vehicleWidth - frontInset - frontGlassLength
+      : x + frontInset;
+    const rearGlassX = facingPositive
+      ? x + rearInset
+      : x + vehicleWidth - rearInset - rearGlassLength;
+    const roofPanelX = x + vehicleWidth * roofStart;
+    const roofPanelWidth = vehicleWidth * roofLength;
+    const frontSeamX = facingPositive
+      ? frontGlassX - 8
+      : frontGlassX + frontGlassLength + 8;
+    const rearSeamX = facingPositive
+      ? rearGlassX + rearGlassLength + 8
+      : rearGlassX - 8;
+
+    return {
+      frontGlass: {
+        x: frontGlassX,
+        y: y + vehicleHeight * 0.18,
+        width: frontGlassLength,
+        height: vehicleHeight * 0.64,
+        rx: 8,
+      },
+      rearGlass: {
+        x: rearGlassX,
+        y: y + vehicleHeight * 0.24,
+        width: rearGlassLength,
+        height: vehicleHeight * 0.52,
+        rx: 7,
+      },
+      roofPanel: {
+        x: roofPanelX,
+        y: y + vehicleHeight * 0.16,
+        width: roofPanelWidth,
+        height: vehicleHeight * 0.68,
+        rx: 10,
+      },
+      seamPaths: [
+        `M ${frontSeamX} ${y + 9} V ${y + vehicleHeight - 9}`,
+        `M ${rearSeamX} ${y + 11} V ${y + vehicleHeight - 11}`,
+      ],
+    };
+  }
+
+  const frontGlassY = facingPositive
+    ? y + vehicleHeight - frontInset - frontGlassLength
+    : y + frontInset;
+  const rearGlassY = facingPositive
+    ? y + rearInset
+    : y + vehicleHeight - rearInset - rearGlassLength;
+  const roofPanelY = y + vehicleHeight * roofStart;
+  const roofPanelHeight = vehicleHeight * roofLength;
+  const frontSeamY = facingPositive
+    ? frontGlassY - 8
+    : frontGlassY + frontGlassLength + 8;
+  const rearSeamY = facingPositive
+    ? rearGlassY + rearGlassLength + 8
+    : rearGlassY - 8;
+
+  return {
+    frontGlass: {
+      x: x + vehicleWidth * 0.18,
+      y: frontGlassY,
+      width: vehicleWidth * 0.64,
+      height: frontGlassLength,
+      rx: 8,
+    },
+    rearGlass: {
+      x: x + vehicleWidth * 0.24,
+      y: rearGlassY,
+      width: vehicleWidth * 0.52,
+      height: rearGlassLength,
+      rx: 7,
+    },
+    roofPanel: {
+      x: x + vehicleWidth * 0.16,
+      y: roofPanelY,
+      width: vehicleWidth * 0.68,
+      height: roofPanelHeight,
+      rx: 10,
+    },
+    seamPaths: [
+      `M ${x + 9} ${frontSeamY} H ${x + vehicleWidth - 9}`,
+      `M ${x + 11} ${rearSeamY} H ${x + vehicleWidth - 11}`,
+    ],
+  };
 }
 
 function getDirectionLabel(direction: ParkingJamDirection): string {
@@ -263,11 +421,6 @@ export function ParkingJamBoard({
           <stop offset="0.55" stopColor="#4d565b" />
           <stop offset="1" stopColor="#424a4e" />
         </linearGradient>
-        <linearGradient id="parking-jam-car-red" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#ff6b62" />
-          <stop offset="0.5" stopColor="#e84d45" />
-          <stop offset="1" stopColor="#b92f35" />
-        </linearGradient>
         <linearGradient
           id="parking-jam-glass-gradient"
           x1="0"
@@ -279,6 +432,21 @@ export function ParkingJamBoard({
           <stop offset="0.45" stopColor="#a9cddd" />
           <stop offset="1" stopColor="#5f8294" />
         </linearGradient>
+        <clipPath id="parking-jam-vehicle-space">
+          <rect width={width} height={height} />
+          {board.roadOpenings.map((opening) => {
+            const geometry = parkingJamBoardGeometry.getAccessRoadGeometry(
+              opening,
+              board,
+            );
+            return (
+              <rect
+                key={`clip-${opening.side}-${opening.startOffset}-${opening.length}`}
+                {...geometry}
+              />
+            );
+          })}
+        </clipPath>
         <pattern
           id="parking-jam-asphalt"
           width="32"
@@ -405,7 +573,8 @@ export function ParkingJamBoard({
           ))}
         </g>
       ))}
-      {board.vehicles.map((vehicle) => {
+      <g clipPath="url(#parking-jam-vehicle-space)">
+        {board.vehicles.map((vehicle) => {
         const isRemaining = remaining.has(vehicle.id);
         const targeted = operation?.vehicleId === vehicle.id;
         const exiting = targeted && operation?.type === "exited";
@@ -424,21 +593,22 @@ export function ParkingJamBoard({
             ? x + vehicleWidth - 7
             : x + 7
           : null;
-        const rearX = horizontal
-          ? facingPositive
-            ? x + 7
-            : x + vehicleWidth - 7
-          : null;
         const frontY = horizontal
           ? null
           : facingPositive
             ? y + vehicleHeight - 7
             : y + 7;
-        const rearY = horizontal
-          ? null
-          : facingPositive
-            ? y + 7
-            : y + vehicleHeight - 7;
+        const palette = getVehiclePalette(vehicle);
+        const visualSpec = getVehicleVisualSpec(
+          vehicle,
+          x,
+          y,
+          vehicleWidth,
+          vehicleHeight,
+          facingPositive,
+        );
+        const wheelOffsetStart = vehicle.length >= 3 ? 0.14 : 0.18;
+        const wheelOffsetEnd = vehicle.length >= 3 ? 0.72 : 0.64;
         const feedbackClass =
           targeted && operation
             ? ` parking-jam-car--${operation.type === "exited" ? "exit" : "blocked"}-${operation.direction}`
@@ -451,12 +621,18 @@ export function ParkingJamBoard({
                 operation.direction,
               )
             : null;
-        const exitStyle = exitTranslation
-          ? ({
-              "--parking-jam-exit-x": `${exitTranslation.x}px`,
-              "--parking-jam-exit-y": `${exitTranslation.y}px`,
-            } as CSSProperties)
-          : undefined;
+        const exitStyle = {
+          "--parking-jam-car-body": palette.body,
+          "--parking-jam-car-roof": palette.roof,
+          "--parking-jam-car-highlight": palette.highlight,
+          "--parking-jam-car-accent": palette.accent,
+          ...(exitTranslation
+            ? {
+                "--parking-jam-exit-x": `${exitTranslation.x}px`,
+                "--parking-jam-exit-y": `${exitTranslation.y}px`,
+              }
+            : {}),
+        } as CSSProperties;
         return (
           <g
             key={targeted ? `${vehicle.id}-${operation?.id}` : vehicle.id}
@@ -487,53 +663,37 @@ export function ParkingJamBoard({
               rx="8"
               className="parking-jam-car__highlight"
             />
-            {horizontal ? (
-              <>
-                <rect
-                  x={x + vehicleWidth * 0.24}
-                  y={y + vehicleHeight * 0.2}
-                  width={vehicleWidth * 0.18}
-                  height={vehicleHeight * 0.6}
-                  rx="8"
-                  className="parking-jam-car__glass"
-                />
-                <rect
-                  x={x + vehicleWidth * 0.58}
-                  y={y + vehicleHeight * 0.2}
-                  width={vehicleWidth * 0.18}
-                  height={vehicleHeight * 0.6}
-                  rx="8"
-                  className="parking-jam-car__glass"
-                />
-              </>
-            ) : (
-              <>
-                <rect
-                  x={x + vehicleWidth * 0.2}
-                  y={y + vehicleHeight * 0.24}
-                  width={vehicleWidth * 0.6}
-                  height={vehicleHeight * 0.18}
-                  rx="8"
-                  className="parking-jam-car__glass"
-                />
-                <rect
-                  x={x + vehicleWidth * 0.2}
-                  y={y + vehicleHeight * 0.58}
-                  width={vehicleWidth * 0.6}
-                  height={vehicleHeight * 0.18}
-                  rx="8"
-                  className="parking-jam-car__glass"
-                />
-              </>
-            )}
-            <path
-              d={
-                horizontal
-                  ? `M ${x + vehicleWidth * 0.18} ${y + 7} V ${y + vehicleHeight - 7} M ${x + vehicleWidth * 0.82} ${y + 7} V ${y + vehicleHeight - 7}`
-                  : `M ${x + 7} ${y + vehicleHeight * 0.18} H ${x + vehicleWidth - 7} M ${x + 7} ${y + vehicleHeight * 0.82} H ${x + vehicleWidth - 7}`
-              }
-              className="parking-jam-car__detail"
+            <rect
+              x={visualSpec.roofPanel.x}
+              y={visualSpec.roofPanel.y}
+              width={visualSpec.roofPanel.width}
+              height={visualSpec.roofPanel.height}
+              rx={visualSpec.roofPanel.rx}
+              className="parking-jam-car__roof-panel"
             />
+            <rect
+              x={visualSpec.frontGlass.x}
+              y={visualSpec.frontGlass.y}
+              width={visualSpec.frontGlass.width}
+              height={visualSpec.frontGlass.height}
+              rx={visualSpec.frontGlass.rx}
+              className="parking-jam-car__glass"
+            />
+            <rect
+              x={visualSpec.rearGlass.x}
+              y={visualSpec.rearGlass.y}
+              width={visualSpec.rearGlass.width}
+              height={visualSpec.rearGlass.height}
+              rx={visualSpec.rearGlass.rx}
+              className="parking-jam-car__rear-glass"
+            />
+            {visualSpec.seamPaths.map((seamPath) => (
+              <path
+                key={seamPath}
+                d={seamPath}
+                className="parking-jam-car__detail"
+              />
+            ))}
             <circle
               cx={horizontal ? (frontX ?? 0) : x + vehicleWidth * 0.28}
               cy={horizontal ? y + vehicleHeight * 0.28 : (frontY ?? 0)}
@@ -546,22 +706,10 @@ export function ParkingJamBoard({
               r="5"
               className="parking-jam-car__front-light"
             />
-            <circle
-              cx={horizontal ? (rearX ?? 0) : x + vehicleWidth * 0.28}
-              cy={horizontal ? y + vehicleHeight * 0.28 : (rearY ?? 0)}
-              r="4.5"
-              className="parking-jam-car__rear-light"
-            />
-            <circle
-              cx={horizontal ? (rearX ?? 0) : x + vehicleWidth * 0.72}
-              cy={horizontal ? y + vehicleHeight * 0.72 : (rearY ?? 0)}
-              r="4.5"
-              className="parking-jam-car__rear-light"
-            />
             {horizontal ? (
               <>
                 <rect
-                  x={x + vehicleWidth * 0.16}
+                  x={x + vehicleWidth * wheelOffsetStart}
                   y={y - 3}
                   width={vehicleWidth * 0.18}
                   height="7"
@@ -569,7 +717,7 @@ export function ParkingJamBoard({
                   className="parking-jam-car__wheel"
                 />
                 <rect
-                  x={x + vehicleWidth * 0.66}
+                  x={x + vehicleWidth * wheelOffsetEnd}
                   y={y - 3}
                   width={vehicleWidth * 0.18}
                   height="7"
@@ -577,7 +725,7 @@ export function ParkingJamBoard({
                   className="parking-jam-car__wheel"
                 />
                 <rect
-                  x={x + vehicleWidth * 0.16}
+                  x={x + vehicleWidth * wheelOffsetStart}
                   y={y + vehicleHeight - 4}
                   width={vehicleWidth * 0.18}
                   height="7"
@@ -585,7 +733,7 @@ export function ParkingJamBoard({
                   className="parking-jam-car__wheel"
                 />
                 <rect
-                  x={x + vehicleWidth * 0.66}
+                  x={x + vehicleWidth * wheelOffsetEnd}
                   y={y + vehicleHeight - 4}
                   width={vehicleWidth * 0.18}
                   height="7"
@@ -597,7 +745,7 @@ export function ParkingJamBoard({
               <>
                 <rect
                   x={x - 3}
-                  y={y + vehicleHeight * 0.16}
+                  y={y + vehicleHeight * wheelOffsetStart}
                   width="7"
                   height={vehicleHeight * 0.18}
                   rx="3.5"
@@ -605,7 +753,7 @@ export function ParkingJamBoard({
                 />
                 <rect
                   x={x - 3}
-                  y={y + vehicleHeight * 0.66}
+                  y={y + vehicleHeight * wheelOffsetEnd}
                   width="7"
                   height={vehicleHeight * 0.18}
                   rx="3.5"
@@ -613,7 +761,7 @@ export function ParkingJamBoard({
                 />
                 <rect
                   x={x + vehicleWidth - 4}
-                  y={y + vehicleHeight * 0.16}
+                  y={y + vehicleHeight * wheelOffsetStart}
                   width="7"
                   height={vehicleHeight * 0.18}
                   rx="3.5"
@@ -621,7 +769,7 @@ export function ParkingJamBoard({
                 />
                 <rect
                   x={x + vehicleWidth - 4}
-                  y={y + vehicleHeight * 0.66}
+                  y={y + vehicleHeight * wheelOffsetEnd}
                   width="7"
                   height={vehicleHeight * 0.18}
                   rx="3.5"
@@ -631,7 +779,8 @@ export function ParkingJamBoard({
             )}
           </g>
         );
-      })}
+        })}
+      </g>
       {selectedVehicle && !interactionDisabled
         ? getDirectionControls(selectedVehicle).map((control) => (
             <g
