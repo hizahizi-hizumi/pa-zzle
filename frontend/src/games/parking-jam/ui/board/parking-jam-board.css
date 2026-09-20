@@ -11,7 +11,7 @@
 .parking-jam-car__body{fill:#6f8797;stroke:#26343d;stroke-width:4}
 .parking-jam-car__glass{fill:#b9c9d2;stroke:#526a79;stroke-width:3}
 .parking-jam-car__detail{fill:none;stroke:#31434e;stroke-width:5;stroke-linecap:round}
-.parking-jam-car:focus-visible .parking-jam-car__body,.parking-jam-car--selected .parking-jam-car__body{stroke:#fff;stroke-width:7}
+.parking-jam-car__body{fill:#6f8797;stroke:#26343d;stroke-width:4}\n.parking-jam-car:focus-visible .parking-jam-car__body{stroke:#fff;stroke-width:7}\n.parking-jam-car--selected .parking-jam-car__body{stroke:#fff;stroke-width:7}
 .parking-jam-car--blocked-left{animation:pj-block-x-neg 160ms ease-out}.parking-jam-car--blocked-right{animation:pj-block-x-pos 160ms ease-out}.parking-jam-car--blocked-up{animation:pj-block-y-neg 160ms ease-out}.parking-jam-car--blocked-down{animation:pj-block-y-pos 160ms ease-out}
 .parking-jam-car--exit-left{animation:pj-exit-left 230ms ease-in forwards}.parking-jam-car--exit-right{animation:pj-exit-right 230ms ease-in forwards}.parking-jam-car--exit-up{animation:pj-exit-up 230ms ease-in forwards}.parking-jam-car--exit-down{animation:pj-exit-down 230ms ease-in forwards}
 @media(prefers-reduced-motion:reduce){[class*="parking-jam-car--blocked-"],[class*="parking-jam-car--exit-"]{animation-duration:1ms}}
