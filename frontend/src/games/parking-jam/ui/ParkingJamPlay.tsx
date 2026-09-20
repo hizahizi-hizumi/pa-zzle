@@ -101,7 +101,7 @@ export function ParkingJamPlay({
         onRestart={onRestart}
       />
 
-      <main className="flex min-h-0 flex-1 items-center justify-center overflow-hidden px-2 py-2 sm:px-6 sm:py-4">
+      <main className="flex min-h-0 flex-1 items-start justify-center overflow-hidden px-2 pt-8 pb-2 sm:items-center sm:px-6 sm:py-4">
         <div className="flex w-full max-w-lg flex-col items-center gap-1.5">
           <span className="text-xs font-medium text-muted-foreground">
             {getParkingJamDifficultyLabel(difficulty)}

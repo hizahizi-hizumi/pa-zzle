@@ -31,8 +31,12 @@ describe("useParkingJamPlay", () => {
     });
 
     test("対応する難易度の問題でプレイを開始すること", () => {
-      const generated = restoreParkingJamProblem(result.current.problemIdentity);
-      const assessment = assessParkingJamDifficulty(generated.difficultyAnalysis);
+      const generated = restoreParkingJamProblem(
+        result.current.problemIdentity,
+      );
+      const assessment = assessParkingJamDifficulty(
+        generated.difficultyAnalysis,
+      );
 
       expect(assessment).toMatchObject({ status: "rated", difficulty });
     });
@@ -41,12 +45,17 @@ describe("useParkingJamPlay", () => {
   describe("問題を最後まで解く場合", () => {
     const difficulty: ParkingJamDifficulty = "normal";
     let result: { current: HookResult };
-    let solution: ReturnType<typeof restoreParkingJamProblem>["solvabilityAnalysis"]["solution"];
+    let solution: ReturnType<
+      typeof restoreParkingJamProblem
+    >["solvabilityAnalysis"]["solution"];
 
     beforeEach(() => {
-      vi.spyOn(problemSeed, "createProblemSeed").mockReturnValue("parking-jam-normal-selection");
+      vi.spyOn(problemSeed, "createProblemSeed").mockReturnValue(
+        "parking-jam-normal-selection",
+      );
       ({ result } = renderHook(() => useParkingJamPlay(difficulty)));
-      solution = restoreParkingJamProblem(result.current.problemIdentity).solvabilityAnalysis.solution;
+      solution = restoreParkingJamProblem(result.current.problemIdentity)
+        .solvabilityAnalysis.solution;
     });
 
     test("車と方向を直接指定する操作だけでクリアできること", () => {
@@ -76,7 +85,9 @@ describe("useParkingJamPlay", () => {
       if (!firstMove) throw new Error("Expected a solution move");
 
       expect(result.current.canRestart).toBe(false);
-      act(() => result.current.attemptMove(firstMove.vehicleId, firstMove.direction));
+      act(() =>
+        result.current.attemptMove(firstMove.vehicleId, firstMove.direction),
+      );
 
       expect(result.current.canRestart).toBe(true);
       act(() => result.current.undo());

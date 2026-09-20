@@ -20,11 +20,17 @@ type ParkingJamBoardProps = {
   operation: ParkingJamOperation | null;
   interactionDisabled: boolean;
   onSelectVehicle: (vehicleId: ParkingJamVehicleId) => void;
-  onMove: (vehicleId: ParkingJamVehicleId, direction: ParkingJamDirection) => void;
+  onMove: (
+    vehicleId: ParkingJamVehicleId,
+    direction: ParkingJamDirection,
+  ) => void;
   onExitAnimationComplete?: () => void;
 };
 
-function getFixedAreaStyle(area: ParkingJamFixedArea, board: ParkingJamBoardDefinition): CSSProperties {
+function getFixedAreaStyle(
+  area: ParkingJamFixedArea,
+  board: ParkingJamBoardDefinition,
+): CSSProperties {
   return {
     left: `${(area.column / board.width) * 100}%`,
     top: `${(area.row / board.height) * 100}%`,
@@ -33,7 +39,10 @@ function getFixedAreaStyle(area: ParkingJamFixedArea, board: ParkingJamBoardDefi
   };
 }
 
-function getRoadOpeningStyle(opening: ParkingJamRoadOpening, board: ParkingJamBoardDefinition): CSSProperties {
+function getRoadOpeningStyle(
+  opening: ParkingJamRoadOpening,
+  board: ParkingJamBoardDefinition,
+): CSSProperties {
   const horizontal = opening.side === "up" || opening.side === "down";
   const limit = horizontal ? board.width : board.height;
   const start = (opening.startOffset / limit) * 100;
@@ -57,7 +66,11 @@ export function ParkingJamBoard({
 
   return (
     <div className="parking-jam-scene w-full max-w-lg">
-      <div role="group" aria-label="パーキングジャム盤面" className="parking-jam-lot relative aspect-square w-full">
+      <div
+        role="group"
+        aria-label="パーキングジャム盤面"
+        className="parking-jam-lot relative aspect-square w-full"
+      >
         <div aria-hidden="true" className="parking-jam-lot__surface" />
         <div aria-hidden="true" className="parking-jam-lot__boundary" />
         {board.roadOpenings.map((opening) => (
@@ -82,7 +95,8 @@ export function ParkingJamBoard({
         ))}
         {board.vehicles.map((vehicle, colorIndex) => {
           const remaining = remainingVehicleIds.has(vehicle.id);
-          const exiting = operation?.type === "exited" && operation.vehicleId === vehicle.id;
+          const exiting =
+            operation?.type === "exited" && operation.vehicleId === vehicle.id;
           if (!remaining && !exiting) return null;
           const targeted = operation?.vehicleId === vehicle.id;
           return (
@@ -93,12 +107,20 @@ export function ParkingJamBoard({
               boardHeight={board.height}
               colorIndex={colorIndex}
               selected={selectedVehicleId === vehicle.id}
-              feedback={targeted ? operation.type : null}
+              feedback={
+                targeted
+                  ? operation.type === "exited"
+                    ? "exiting"
+                    : "blocked"
+                  : null
+              }
               feedbackDirection={targeted ? operation.direction : null}
               disabled={interactionDisabled || exiting}
               onSelect={() => onSelectVehicle(vehicle.id)}
               onDirection={(direction) => onMove(vehicle.id, direction)}
-              onExitAnimationComplete={exiting ? onExitAnimationComplete : undefined}
+              onExitAnimationComplete={
+                exiting ? onExitAnimationComplete : undefined
+              }
             />
           );
         })}

@@ -1,4 +1,9 @@
-import { useRef, type AnimationEvent, type CSSProperties, type PointerEvent } from "react";
+import {
+  type AnimationEvent,
+  type CSSProperties,
+  type PointerEvent,
+  useRef,
+} from "react";
 
 import type {
   ParkingJamDirection,
@@ -161,10 +166,22 @@ export function ParkingJamVehicle({
       >
         <span aria-hidden="true" className="parking-jam-vehicle__cabin" />
         <span aria-hidden="true" className="parking-jam-vehicle__windshield" />
-        <span aria-hidden="true" className="parking-jam-vehicle__wheel parking-jam-vehicle__wheel--a" />
-        <span aria-hidden="true" className="parking-jam-vehicle__wheel parking-jam-vehicle__wheel--b" />
-        <span aria-hidden="true" className="parking-jam-vehicle__wheel parking-jam-vehicle__wheel--c" />
-        <span aria-hidden="true" className="parking-jam-vehicle__wheel parking-jam-vehicle__wheel--d" />
+        <span
+          aria-hidden="true"
+          className="parking-jam-vehicle__wheel parking-jam-vehicle__wheel--a"
+        />
+        <span
+          aria-hidden="true"
+          className="parking-jam-vehicle__wheel parking-jam-vehicle__wheel--b"
+        />
+        <span
+          aria-hidden="true"
+          className="parking-jam-vehicle__wheel parking-jam-vehicle__wheel--c"
+        />
+        <span
+          aria-hidden="true"
+          className="parking-jam-vehicle__wheel parking-jam-vehicle__wheel--d"
+        />
       </button>
       {selected && !disabled
         ? directions.map((direction) => (
@@ -175,7 +192,10 @@ export function ParkingJamVehicle({
               className={`parking-jam-vehicle__direction parking-jam-vehicle__direction--${direction}`}
               onClick={() => onDirection(direction)}
             >
-              <span aria-hidden="true" className="parking-jam-vehicle__chevron" />
+              <span
+                aria-hidden="true"
+                className="parking-jam-vehicle__chevron"
+              />
             </button>
           ))
         : null}
