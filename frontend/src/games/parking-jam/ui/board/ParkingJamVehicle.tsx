@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { AnimationEvent, CSSProperties } from "react";
 
 import type {
   ParkingJamDirection,
@@ -17,6 +17,7 @@ type ParkingJamVehicleProps = {
   feedbackDirection: ParkingJamDirection | null;
   disabled: boolean;
   onSelect: () => void;
+  onExitAnimationComplete?: () => void;
 };
 
 const vehicleColorClassNames = [
@@ -72,11 +73,22 @@ export function ParkingJamVehicle({
   feedbackDirection,
   disabled,
   onSelect,
+  onExitAnimationComplete,
 }: ParkingJamVehicleProps) {
   const colorClassName =
     vehicleColorClassNames[colorIndex % vehicleColorClassNames.length] ??
     vehicleColorClassNames[0];
   const feedbackClassName = getFeedbackClassName(feedback, feedbackDirection);
+
+  function handleAnimationEnd(event: AnimationEvent<HTMLButtonElement>) {
+    if (
+      event.target === event.currentTarget &&
+      feedback === "exiting" &&
+      onExitAnimationComplete
+    ) {
+      onExitAnimationComplete();
+    }
+  }
 
   return (
     <button
@@ -85,6 +97,7 @@ export function ParkingJamVehicle({
       aria-pressed={selected}
       disabled={disabled}
       onClick={onSelect}
+      onAnimationEnd={handleAnimationEnd}
       className={`absolute z-20 rounded-xl p-1 outline-none transition-[filter,box-shadow] focus-visible:ring-4 focus-visible:ring-white/90 disabled:pointer-events-none ${
         selected
           ? "ring-4 ring-white shadow-lg brightness-110"

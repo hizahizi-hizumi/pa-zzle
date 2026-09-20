@@ -1,6 +1,7 @@
 import { GameSelectionGallery } from "@/components/GameSelectionGallery";
 import minesweeperPictogramSvg from "@/games/minesweeper/assets/pictogram.svg?raw";
 import nanpurePictogramSvg from "@/games/nanpure/assets/pictogram.svg?raw";
+import parkingJamPictogramSvg from "@/games/parking-jam/assets/pictogram.svg?raw";
 import waterSortPictogramSvg from "@/games/water-sort/assets/pictogram.svg?raw";
 
 const games = [
@@ -18,6 +19,11 @@ const games = [
     name: "マインスイーパー",
     pictogramSvg: minesweeperPictogramSvg,
     to: "/puzzles/minesweeper",
+  },
+  {
+    name: "パーキングジャム",
+    pictogramSvg: parkingJamPictogramSvg,
+    to: "/puzzles/parking-jam",
   },
 ] as const;
 
