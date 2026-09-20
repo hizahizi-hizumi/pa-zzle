@@ -96,13 +96,34 @@ ln -s "$dependency_dir/frontend/node_modules" "$repo_root/frontend/node_modules"
 export npm_config_registry=http://127.0.0.1:9
 export NPM_CONFIG_REGISTRY=http://127.0.0.1:9
 
-(
-  cd "$repo_root/frontend"
-  node_modules/.bin/biome check .
-  TERM=dumb node_modules/.bin/tsc --noEmit --pretty false
-  node_modules/.bin/vitest run --pool=vmForks
-  node_modules/.bin/vite build --config vite.config.ts
-)
+check_names=()
+check_pids=()
+run_frontend_check() {
+  local name="$1"
+  shift
+  (
+    cd "$repo_root/frontend"
+    "$@"
+  ) >"$run_dir/$name.log" 2>&1 &
+  check_names+=("$name")
+  check_pids+=("$!")
+}
+
+run_frontend_check biome node_modules/.bin/biome check .
+run_frontend_check typecheck env TERM=dumb node_modules/.bin/tsc --noEmit --pretty false
+run_frontend_check test node_modules/.bin/vitest run --pool=vmForks
+run_frontend_check build node_modules/.bin/vite build --config vite.config.ts
+
+checks_failed=0
+for index in "\${!check_pids[@]}"; do
+  if ! wait "\${check_pids[$index]}"; then
+    checks_failed=1
+  fi
+done
+for name in "\${check_names[@]}"; do
+  cat "$run_dir/$name.log"
+done
+(( checks_failed == 0 )) || fail "Frontend quality checks failed"
 
 server_log="$run_dir/dev-server.log"
 (
