@@ -1,0 +1,125 @@
+name: Fetch shadcn Components
+
+on:
+  push:
+    branches:
+      - automation/shadcn-fetch
+    paths:
+      - ".chatgpt/shadcn-request.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shadcn-fetch
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout request
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          path: request
+
+      - name: Validate request
+        id: request
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          request_file="request/.chatgpt/shadcn-request.json"
+
+          jq -e '
+            (.requestId | type == "string" and test("^[A-Za-z0-9._-]+$"))
+            and (.targetSha | type == "string" and test("^[0-9a-f]{40}$"))
+            and (.components | type == "array" and length > 0)
+            and all(
+              .components[];
+              type == "string" and test("^[a-z0-9]+(-[a-z0-9]+)*$")
+            )
+          ' "$request_file" >/dev/null
+
+          request_id="$(jq -r '.requestId' "$request_file")"
+          target_sha="$(jq -r '.targetSha' "$request_file")"
+
+          echo "request-id=$request_id" >> "$GITHUB_OUTPUT"
+          echo "target-sha=$target_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout target
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.request.outputs.target-sha }}
+          fetch-depth: 1
+          path: work
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: work/.bun-version
+
+      - name: Fetch shadcn components
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mapfile -t components < <(
+            jq -r '.components[]' request/.chatgpt/shadcn-request.json
+          )
+
+          bunx --bun shadcn@latest add \
+            --cwd work/frontend \
+            --yes \
+            "${components[@]}"
+
+      - name: Build patch
+        id: patch
+        shell: bash
+        env:
+          REQUEST_ID: ${{ steps.request.outputs.request-id }}
+          TARGET_SHA: ${{ steps.request.outputs.target-sha }}
+        run: |
+          set -euo pipefail
+
+          unexpected="$(
+            git -C work status --porcelain=v1 --untracked-files=all \
+              | sed -E 's/^.. //' \
+              | grep -v '^frontend/' \
+              || true
+          )"
+
+          if [[ -n "$unexpected" ]]; then
+            echo "shadcn changed files outside frontend:" >&2
+            echo "$unexpected" >&2
+            exit 1
+          fi
+
+          git -C work add -A frontend
+
+          if git -C work diff --cached --quiet; then
+            echo "shadcn produced no changes" >&2
+            exit 1
+          fi
+
+          patch_name="shadcn-${REQUEST_ID}-${TARGET_SHA}.patch"
+          git -C work diff \
+            --cached \
+            --binary \
+            --full-index \
+            -- frontend \
+            > "$patch_name"
+
+          echo "name=$patch_name" >> "$GITHUB_OUTPUT"
+          git -C work diff --cached --name-status
+
+      - name: Upload patch
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.patch.outputs.name }}
+          path: ${{ steps.patch.outputs.name }}
+          archive: false
+          retention-days: 3
+          if-no-files-found: error
