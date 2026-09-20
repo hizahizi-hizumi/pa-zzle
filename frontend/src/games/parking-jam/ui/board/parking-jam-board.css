@@ -76,15 +76,8 @@
   fill: #796a55;
 }
 .parking-jam-board__island-green {
-  fill: #687b58;
-}
-.parking-jam-board__shrub-shadow {
-  fill: rgb(29 43 24 / 0.42);
-}
-.parking-jam-board__shrub {
-  fill: #829868;
-  stroke: #a5b68b;
-  stroke-width: 3;
+  fill: #718064;
+  opacity: 0.78;
 }
 .parking-jam-car {
   cursor: grab;
