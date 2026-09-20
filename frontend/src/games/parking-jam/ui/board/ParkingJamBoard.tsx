@@ -3,8 +3,8 @@ import type { CSSProperties } from "react";
 import type { ParkingJamOperation } from "@/games/parking-jam/play/use-parking-jam-play";
 import type {
   ParkingJamBoard as ParkingJamBoardDefinition,
-  ParkingJamCell,
-  ParkingJamExit,
+  ParkingJamFixedArea,
+  ParkingJamRoadOpening,
   ParkingJamState,
   ParkingJamVehicleId,
 } from "@/games/parking-jam/puzzle/board";
@@ -22,54 +22,54 @@ type ParkingJamBoardProps = {
   onExitAnimationComplete?: () => void;
 };
 
-function getCellStyle(
-  cell: ParkingJamCell,
+function getFixedAreaStyle(
+  area: ParkingJamFixedArea,
   board: ParkingJamBoardDefinition,
 ): CSSProperties {
   return {
-    left: `${(cell.column / board.width) * 100}%`,
-    top: `${(cell.row / board.height) * 100}%`,
-    width: `${100 / board.width}%`,
-    height: `${100 / board.height}%`,
+    left: `${(area.column / board.width) * 100}%`,
+    top: `${(area.row / board.height) * 100}%`,
+    width: `${(area.width / board.width) * 100}%`,
+    height: `${(area.height / board.height) * 100}%`,
   };
 }
 
-function getExitStyle(
-  exit: ParkingJamExit,
+function getRoadOpeningStyle(
+  opening: ParkingJamRoadOpening,
   board: ParkingJamBoardDefinition,
 ): CSSProperties {
   const cellWidth = 100 / board.width;
   const cellHeight = 100 / board.height;
 
-  if (exit.side === "left") {
+  if (opening.side === "left") {
     return {
       left: 0,
-      top: `${exit.offset * cellHeight + cellHeight * 0.18}%`,
+      top: `${opening.startOffset * cellHeight}%`,
       width: "0.35rem",
-      height: `${cellHeight * 0.64}%`,
+      height: `${opening.length * cellHeight}%`,
     };
   }
-  if (exit.side === "right") {
+  if (opening.side === "right") {
     return {
       right: 0,
-      top: `${exit.offset * cellHeight + cellHeight * 0.18}%`,
+      top: `${opening.startOffset * cellHeight}%`,
       width: "0.35rem",
-      height: `${cellHeight * 0.64}%`,
+      height: `${opening.length * cellHeight}%`,
     };
   }
-  if (exit.side === "up") {
+  if (opening.side === "up") {
     return {
       top: 0,
-      left: `${exit.offset * cellWidth + cellWidth * 0.18}%`,
-      width: `${cellWidth * 0.64}%`,
+      left: `${opening.startOffset * cellWidth}%`,
+      width: `${opening.length * cellWidth}%`,
       height: "0.35rem",
     };
   }
 
   return {
     bottom: 0,
-    left: `${exit.offset * cellWidth + cellWidth * 0.18}%`,
-    width: `${cellWidth * 0.64}%`,
+    left: `${opening.startOffset * cellWidth}%`,
+    width: `${opening.length * cellWidth}%`,
     height: "0.35rem",
   };
 }
@@ -100,21 +100,21 @@ export function ParkingJamBoard({
       className="relative aspect-square w-full max-w-lg overflow-hidden rounded-2xl bg-slate-700 shadow-inner ring-2 ring-slate-950/20"
       style={getBoardStyle(board)}
     >
-      {board.exits.map((exit) => (
+      {board.roadOpenings.map((opening) => (
         <span
-          key={`${exit.side}-${exit.offset}`}
+          key={`${opening.side}-${opening.startOffset}-${opening.length}`}
           aria-hidden="true"
           className="absolute z-30 bg-background shadow-[0_0_0_2px_rgb(255_255_255_/_0.45)]"
-          style={getExitStyle(exit, board)}
+          style={getRoadOpeningStyle(opening, board)}
         />
       ))}
 
-      {board.obstacles.map((obstacle) => (
+      {board.fixedAreas.map((area) => (
         <span
-          key={`${obstacle.row}-${obstacle.column}`}
+          key={`${area.row}-${area.column}-${area.width}-${area.height}`}
           aria-hidden="true"
           className="absolute z-10 p-1.5"
-          style={getCellStyle(obstacle, board)}
+          style={getFixedAreaStyle(area, board)}
         >
           <span className="block size-full rounded-lg bg-emerald-900/80 shadow-inner ring-1 ring-white/10" />
         </span>

@@ -1,4 +1,3 @@
-export const PARKING_JAM_MAX_BOARD_SIZE = 8;
 export const PARKING_JAM_VEHICLE_LENGTHS = [2, 3] as const;
 
 export type ParkingJamVehicleLength =
@@ -19,17 +18,23 @@ export type ParkingJamVehicle = ParkingJamCell & {
   length: ParkingJamVehicleLength;
 };
 
-export type ParkingJamExit = {
+export type ParkingJamRoadOpening = {
   side: ParkingJamSide;
-  offset: number;
+  startOffset: number;
+  length: number;
+};
+
+export type ParkingJamFixedArea = ParkingJamCell & {
+  width: number;
+  height: number;
 };
 
 export type ParkingJamBoard = {
   width: number;
   height: number;
   vehicles: readonly ParkingJamVehicle[];
-  obstacles: readonly ParkingJamCell[];
-  exits: readonly ParkingJamExit[];
+  fixedAreas: readonly ParkingJamFixedArea[];
+  roadOpenings: readonly ParkingJamRoadOpening[];
 };
 
 export type ParkingJamState = {
@@ -61,27 +66,50 @@ export function listParkingJamVehicleCells(
   }));
 }
 
+export function listParkingJamFixedAreaCells(
+  area: ParkingJamFixedArea,
+): ParkingJamCell[] {
+  return Array.from({ length: area.width * area.height }, (_, offset) => ({
+    row: area.row + Math.floor(offset / area.width),
+    column: area.column + (offset % area.width),
+  }));
+}
+
 function cellKey(cell: ParkingJamCell): string {
   return `${cell.row}:${cell.column}`;
 }
 
-function validateBoardSize(value: number, name: string): void {
-  if (
-    !Number.isInteger(value) ||
-    value < 2 ||
-    value > PARKING_JAM_MAX_BOARD_SIZE
-  ) {
-    throw new RangeError(
-      `${name} must be an integer between 2 and ${PARKING_JAM_MAX_BOARD_SIZE}`,
-    );
+function validateBoardDimension(value: number, name: string): void {
+  if (!Number.isInteger(value) || value < 2) {
+    throw new RangeError(`${name} must be an integer of at least 2`);
   }
 }
 
-export function validateParkingJamBoard(board: ParkingJamBoard): void {
-  validateBoardSize(board.width, "width");
-  validateBoardSize(board.height, "height");
+function validatePositiveInteger(value: number, name: string): void {
+  if (!Number.isInteger(value) || value < 1) {
+    throw new RangeError(`${name} must be a positive integer`);
+  }
+}
 
-  const occupied = new Set<string>();
+function validateCellInsideBoard(
+  cell: ParkingJamCell,
+  board: ParkingJamBoard,
+  description: string,
+): void {
+  if (!Number.isInteger(cell.row) || !Number.isInteger(cell.column)) {
+    throw new RangeError(`${description} must use integer cell coordinates`);
+  }
+  if (
+    cell.row < 0 ||
+    cell.row >= board.height ||
+    cell.column < 0 ||
+    cell.column >= board.width
+  ) {
+    throw new RangeError(`${description} is outside the board`);
+  }
+}
+
+function validateVehicles(board: ParkingJamBoard, occupied: Set<string>): void {
   const vehicleIds = new Set<string>();
   for (const vehicle of board.vehicles) {
     if (vehicleIds.has(vehicle.id)) {
@@ -96,16 +124,7 @@ export function validateParkingJamBoard(board: ParkingJamBoard): void {
     }
 
     for (const cell of listParkingJamVehicleCells(vehicle)) {
-      if (
-        cell.row < 0 ||
-        cell.row >= board.height ||
-        cell.column < 0 ||
-        cell.column >= board.width
-      ) {
-        throw new RangeError(
-          `Parking jam vehicle ${vehicle.id} is outside the board`,
-        );
-      }
+      validateCellInsideBoard(cell, board, `Parking jam vehicle ${vehicle.id}`);
       const key = cellKey(cell);
       if (occupied.has(key)) {
         throw new Error(`Parking jam vehicles overlap at ${key}`);
@@ -113,45 +132,72 @@ export function validateParkingJamBoard(board: ParkingJamBoard): void {
       occupied.add(key);
     }
   }
+}
 
-  for (const obstacle of board.obstacles) {
-    if (
-      obstacle.row < 0 ||
-      obstacle.row >= board.height ||
-      obstacle.column < 0 ||
-      obstacle.column >= board.width
-    ) {
-      throw new RangeError("Parking jam obstacle is outside the board");
+function validateFixedAreas(
+  board: ParkingJamBoard,
+  occupied: Set<string>,
+): void {
+  for (const area of board.fixedAreas) {
+    validatePositiveInteger(area.width, "Parking jam fixed area width");
+    validatePositiveInteger(area.height, "Parking jam fixed area height");
+
+    for (const cell of listParkingJamFixedAreaCells(area)) {
+      validateCellInsideBoard(cell, board, "Parking jam fixed area");
+      const key = cellKey(cell);
+      if (occupied.has(key)) {
+        throw new Error(`Parking jam fixed area overlaps at ${key}`);
+      }
+      occupied.add(key);
     }
-    const key = cellKey(obstacle);
-    if (occupied.has(key)) {
-      throw new Error(`Parking jam obstacle overlaps a vehicle at ${key}`);
-    }
-    if (occupied.has(`obstacle:${key}`)) {
-      throw new Error(`Duplicate parking jam obstacle at ${key}`);
-    }
-    occupied.add(`obstacle:${key}`);
   }
+}
 
-  const exitKeys = new Set<string>();
-  for (const exit of board.exits) {
-    const maximumOffset =
-      exit.side === "left" || exit.side === "right"
-        ? board.height
-        : board.width;
+function openingLimit(board: ParkingJamBoard, side: ParkingJamSide): number {
+  return side === "left" || side === "right" ? board.height : board.width;
+}
+
+function openingsOverlapOrTouch(
+  left: ParkingJamRoadOpening,
+  right: ParkingJamRoadOpening,
+): boolean {
+  if (left.side !== right.side) return false;
+  const leftEnd = left.startOffset + left.length;
+  const rightEnd = right.startOffset + right.length;
+  return left.startOffset <= rightEnd && right.startOffset <= leftEnd;
+}
+
+function validateRoadOpenings(board: ParkingJamBoard): void {
+  const validated: ParkingJamRoadOpening[] = [];
+  for (const opening of board.roadOpenings) {
+    validatePositiveInteger(opening.length, "Parking jam road opening length");
     if (
-      !Number.isInteger(exit.offset) ||
-      exit.offset < 0 ||
-      exit.offset >= maximumOffset
+      !Number.isInteger(opening.startOffset) ||
+      opening.startOffset < 0 ||
+      opening.startOffset + opening.length > openingLimit(board, opening.side)
     ) {
       throw new RangeError(
-        `Parking jam exit offset is outside the board: ${exit.side}:${exit.offset}`,
+        `Parking jam road opening is outside the board: ${opening.side}:${opening.startOffset}+${opening.length}`,
       );
     }
-    const key = `${exit.side}:${exit.offset}`;
-    if (exitKeys.has(key)) {
-      throw new Error(`Duplicate parking jam exit: ${key}`);
+
+    if (
+      validated.some((candidate) => openingsOverlapOrTouch(candidate, opening))
+    ) {
+      throw new Error(
+        `Parking jam road openings overlap or touch on ${opening.side}`,
+      );
     }
-    exitKeys.add(key);
+    validated.push(opening);
   }
+}
+
+export function validateParkingJamBoard(board: ParkingJamBoard): void {
+  validateBoardDimension(board.width, "width");
+  validateBoardDimension(board.height, "height");
+
+  const occupied = new Set<string>();
+  validateVehicles(board, occupied);
+  validateFixedAreas(board, occupied);
+  validateRoadOpenings(board);
 }
