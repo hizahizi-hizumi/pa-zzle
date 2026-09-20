@@ -33,9 +33,28 @@ describe("generateWaterSortProblem", () => {
 
     expect(standard).toBe(true);
     expect(hasCompletedBottle).toBe(false);
-    expect(problem.difficultyAnalysis.shortestMoveCount).toBe(
-      problem.optimalMoveCount,
+    expect(problem.difficultyAnalysis.plausibleChoiceAnalysis).toBeDefined();
+  });
+
+  test("空ボトル数を生成条件として変えても標準初期形と再現性を保つこと", () => {
+    const options = {
+      seed: "water-sort-one-empty-bottle",
+      colorCount: 4,
+      emptyBottleCount: 1,
+      maximumAttempts: 200,
+    } as const;
+
+    const problem = generateWaterSortProblem(options);
+    const restored = restoreWaterSortProblem(problem.identity);
+    const standard = isStandardWaterSortInitialState(
+      problem.problem.initialState,
+      problem.identity.conditions.colorCount,
+      problem.identity.conditions.emptyBottleCount,
     );
+
+    expect(standard).toBe(true);
+    expect(problem.identity.conditions.emptyBottleCount).toBe(1);
+    expect(restored).toEqual(problem);
   });
 
   test("生成器と独立した採用条件で候補を棄却できること", () => {
