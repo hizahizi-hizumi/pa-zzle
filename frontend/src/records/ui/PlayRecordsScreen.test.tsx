@@ -96,8 +96,7 @@ test("ゲームを選択してそのゲームの自己ベストと履歴を確�
   renderScreen();
 
   const gameSelect = screen.getByRole("combobox", { name: "パズル" });
-  fireEvent.click(gameSelect);
-  fireEvent.click(screen.getByRole("option", { name: "ナンプレ" }));
+  fireEvent.change(gameSelect, { target: { value: "nanpure" } });
 
   expect(screen.getAllByText("01:30").length).toBeGreaterThan(0);
   expect(screen.getAllByText("最少ミス").length).toBeGreaterThan(0);

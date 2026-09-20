@@ -1,12 +1,9 @@
-import { type ReactNode, useMemo, useState } from "react";
+import { type ChangeEvent, type ReactNode, useMemo, useState } from "react";
 
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 import { EmptyRecords } from "@/records/ui/PlayRecordsScreen/EmptyRecords";
 import { PlayRecordRow } from "@/records/ui/PlayRecordsScreen/PlayRecordRow";
 import { getPersonalBests } from "../personal-best";
@@ -89,50 +86,47 @@ export function PlayRecordsScreen({
   );
   const personalBests = getPersonalBests(selectedRecords, definition);
 
-  function handleGameChange(gameId: string) {
-    setSelectedGameId(gameId);
+  function handleGameChange(event: ChangeEvent<HTMLSelectElement>) {
+    setSelectedGameId(event.target.value);
     setSelectedComparisonKey(null);
   }
 
-  function handleComparisonChange(comparisonKey: string) {
-    setSelectedComparisonKey(comparisonKey);
+  function handleComparisonChange(event: ChangeEvent<HTMLSelectElement>) {
+    setSelectedComparisonKey(event.target.value);
   }
 
   return (
     <>
       <div className="mt-4 flex flex-wrap items-center gap-2 border-b pb-3">
-        <Select value={definition.gameId} onValueChange={handleGameChange}>
-          <SelectTrigger size="sm" aria-label="パズル">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {displays.map((option) => (
-              <SelectItem
-                key={option.definition.gameId}
-                value={option.definition.gameId}
-              >
-                {option.gameLabel}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <NativeSelect
+          size="sm"
+          aria-label="パズル"
+          value={definition.gameId}
+          onChange={handleGameChange}
+        >
+          {displays.map((option) => (
+            <NativeSelectOption
+              key={option.definition.gameId}
+              value={option.definition.gameId}
+            >
+              {option.gameLabel}
+            </NativeSelectOption>
+          ))}
+        </NativeSelect>
 
         {comparisonOptions.length > 0 && (
-          <Select
-            value={effectiveComparisonKey ?? undefined}
-            onValueChange={handleComparisonChange}
+          <NativeSelect
+            size="sm"
+            aria-label="開始条件"
+            value={effectiveComparisonKey ?? ""}
+            onChange={handleComparisonChange}
           >
-            <SelectTrigger size="sm" aria-label="開始条件">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {comparisonOptions.map((option) => (
-                <SelectItem key={option.key} value={option.key}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            {comparisonOptions.map((option) => (
+              <NativeSelectOption key={option.key} value={option.key}>
+                {option.label}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
         )}
       </div>
 

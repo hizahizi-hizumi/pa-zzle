@@ -1,6 +1,7 @@
 import { Sparkles, Trophy } from "lucide-react";
 
 import { GameResultSurface } from "@/components/GameResultSurface";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { PlayRecordSaveOutcome } from "../save-play-record";
 import {
   getPersonalBestMetricDisplay,
@@ -76,12 +77,13 @@ export function PlayRecordOutcomeNotice({
 
   if (outcome.status === "failed") {
     return (
-      <p
-        role="status"
-        className="mt-3 rounded-xl border border-dashed px-4 py-2 text-center text-xs text-muted-foreground"
-      >
-        このプレイの記録を保存できませんでした
-      </p>
+      <div className="mt-3">
+        <Alert>
+          <AlertDescription>
+            このプレイの記録を保存できませんでした
+          </AlertDescription>
+        </Alert>
+      </div>
     );
   }
 

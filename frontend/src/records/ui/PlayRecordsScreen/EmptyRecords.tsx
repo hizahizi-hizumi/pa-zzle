@@ -1,6 +1,13 @@
 import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty";
 
 type EmptyRecordsProps = {
   gameLabel: string;
@@ -9,16 +16,18 @@ type EmptyRecordsProps = {
 
 export function EmptyRecords({ gameLabel, action }: EmptyRecordsProps) {
   return (
-    <div className="py-8 text-center">
-      <p className="font-semibold">まだ記録がありません</p>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {gameLabel}をクリアすると、ここにプレイ結果が残ります。
-      </p>
-      <div className="mt-4">
+    <Empty>
+      <EmptyHeader>
+        <EmptyTitle>まだ記録がありません</EmptyTitle>
+        <EmptyDescription>
+          {gameLabel}をクリアすると、ここにプレイ結果が残ります。
+        </EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
         <Button asChild variant="outline" size="sm">
           {action}
         </Button>
-      </div>
-    </div>
+      </EmptyContent>
+    </Empty>
   );
 }
