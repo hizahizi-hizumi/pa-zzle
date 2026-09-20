@@ -59,7 +59,8 @@ export function WaterSortResultScreen({
   onBackToHome,
   onOpenDiagnostics,
 }: WaterSortResultScreenProps) {
-  const [detailsOpen, setDetailsOpen] = useState(false);\n  const resultLevel = getWaterSortGameResultLevel(result.score.total);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const resultLevel = getWaterSortGameResultLevel(result.score.total);
 
   return (
     <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-y-auto bg-background">
