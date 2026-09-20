@@ -268,17 +268,35 @@ describe("WaterSortPlay", () => {
         onOpenDiagnostics={onOpenDiagnostics}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
+    fireEvent.pointerDown(
+      screen.getByRole("button", { name: "その他の操作" }),
+      { button: 0, ctrlKey: false },
+    );
     fireEvent.click(screen.getByRole("menuitem", { name: "盤面を戻す" }));
-    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
+    fireEvent.pointerDown(
+      screen.getByRole("button", { name: "その他の操作" }),
+      { button: 0, ctrlKey: false },
+    );
     fireEvent.click(screen.getByRole("menuitem", { name: "リセット" }));
-    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
+    fireEvent.pointerDown(
+      screen.getByRole("button", { name: "その他の操作" }),
+      { button: 0, ctrlKey: false },
+    );
     fireEvent.click(screen.getByRole("menuitem", { name: "別の問題" }));
-    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
+    fireEvent.pointerDown(
+      screen.getByRole("button", { name: "その他の操作" }),
+      { button: 0, ctrlKey: false },
+    );
     fireEvent.click(screen.getByRole("menuitem", { name: "難易度変更" }));
-    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
+    fireEvent.pointerDown(
+      screen.getByRole("button", { name: "その他の操作" }),
+      { button: 0, ctrlKey: false },
+    );
     fireEvent.click(screen.getByRole("menuitem", { name: "ホーム" }));
-    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
+    fireEvent.pointerDown(
+      screen.getByRole("button", { name: "その他の操作" }),
+      { button: 0, ctrlKey: false },
+    );
     fireEvent.click(screen.getByRole("menuitem", { name: "検証情報" }));
     expect(restart).toHaveBeenCalledOnce();
     expect(replay).toHaveBeenCalledOnce();
@@ -291,7 +309,10 @@ describe("WaterSortPlay", () => {
   test("診断導線が許可されていなければメニューへ表示しないこと", () => {
     render(<WaterSortPlay {...baseProps} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
+    fireEvent.pointerDown(
+      screen.getByRole("button", { name: "その他の操作" }),
+      { button: 0, ctrlKey: false },
+    );
 
     expect(screen.queryByRole("menuitem", { name: "検証情報" })).toBeNull();
   });
