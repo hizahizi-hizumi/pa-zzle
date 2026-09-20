@@ -56,19 +56,28 @@ function createProps(): ComponentProps<typeof NanpurePlay> {
   };
 }
 
-describe("NanpurePlay", () => {
-  test("選択した空きマスへ数字入力を通知すること", () => {
-    const props = createProps();
+describe("空きマスを選択している場合", () => {
+  let props: ComponentProps<typeof NanpurePlay>;
+  let digit: HTMLElement;
+
+  beforeEach(() => {
+    props = createProps();
     render(<NanpurePlay {...props} />);
     const digitInput = screen.getByRole("group", { name: "数字入力" });
-    const digit = within(digitInput).getByRole("button", { name: "5" });
+    digit = within(digitInput).getByRole("button", { name: "5" });
+  });
 
+  test("数字入力を通知すること", () => {
     fireEvent.click(digit);
 
     expect(props.onInputDigit).toHaveBeenCalledWith(5);
   });
+});
 
-  test("初期ヒントを選択している間は数字入力を無効にすること", () => {
+describe("初期ヒントを選択している場合", () => {
+  let digit: HTMLElement;
+
+  beforeEach(() => {
     const props = createProps();
     const clues = [...props.clues];
     const board = [...props.board];
@@ -76,17 +85,25 @@ describe("NanpurePlay", () => {
     board[0] = 5;
     render(<NanpurePlay {...props} clues={clues} board={board} />);
     const digitInput = screen.getByRole("group", { name: "数字入力" });
-    const digit = within(digitInput).getByRole("button", { name: "5" });
+    digit = within(digitInput).getByRole("button", { name: "5" });
+  });
 
+  test("数字入力を無効にすること", () => {
     const disabled = digit.hasAttribute("disabled");
 
     expect(disabled).toBe(true);
   });
+});
+
+describe("プレイ中の場合", () => {
+  let props: ComponentProps<typeof NanpurePlay>;
+
+  beforeEach(() => {
+    props = createProps();
+    render(<NanpurePlay {...props} />);
+  });
 
   test("手動メモモードと待ったを通知すること", () => {
-    const props = createProps();
-    render(<NanpurePlay {...props} />);
-
     fireEvent.click(screen.getByRole("button", { name: "メモ" }));
     fireEvent.click(screen.getByRole("button", { name: "待った" }));
 
@@ -95,52 +112,16 @@ describe("NanpurePlay", () => {
   });
 
   test("ミスと待ったを別のプレイ状況として表示すること", () => {
-    const props = createProps();
-    render(<NanpurePlay {...props} />);
+    const mistakeLabel = screen.getByText("ミス");
+    const undoLabels = screen.getAllByText("待った");
+    const gameName = screen.getByText("ナンプレ");
 
-    expect(screen.getByText("ミス")).toBeTruthy();
-    expect(screen.getAllByText("待った")).toHaveLength(2);
-    expect(screen.getByText("ナンプレ")).toBeTruthy();
-  });
-
-  test("使い切った数字の入力を無効にすること", () => {
-    const props = createProps();
-    render(<NanpurePlay {...props} completedDigits={[9]} />);
-    const digitInput = screen.getByRole("group", { name: "数字入力" });
-    const digit = within(digitInput).getByRole("button", { name: "9" });
-
-    const disabled = digit.hasAttribute("disabled");
-
-    expect(disabled).toBe(true);
-  });
-
-  test("使い切っていない数字の入力を有効にすること", () => {
-    const props = createProps();
-    render(<NanpurePlay {...props} completedDigits={[]} />);
-    const digitInput = screen.getByRole("group", { name: "数字入力" });
-    const digit = within(digitInput).getByRole("button", { name: "9" });
-
-    const disabled = digit.hasAttribute("disabled");
-
-    expect(disabled).toBe(false);
-  });
-
-  test("手動メモだけの選択マスでも消す操作を有効にすること", () => {
-    const props = createProps();
-    const notes = [...props.notes];
-    notes[0] = [4];
-    render(<NanpurePlay {...props} notes={notes} />);
-    const erase = screen.getByRole("button", { name: "消す" });
-
-    const disabled = erase.hasAttribute("disabled");
-
-    expect(disabled).toBe(false);
+    expect(mistakeLabel).toBeTruthy();
+    expect(undoLabels).toHaveLength(2);
+    expect(gameName).toBeTruthy();
   });
 
   test("その他の操作から盤面を戻すとリセットを通知すること", () => {
-    const props = createProps();
-    render(<NanpurePlay {...props} />);
-
     fireEvent.pointerDown(
       screen.getByRole("button", { name: "その他の操作" }),
       { button: 0, ctrlKey: false },
@@ -155,25 +136,82 @@ describe("NanpurePlay", () => {
     expect(props.onRestart).toHaveBeenCalledOnce();
     expect(props.onReplay).toHaveBeenCalledOnce();
   });
+});
 
-  test("クリア直後は完成盤を見せて結果画面への遷移を待つこと", () => {
+describe("数字9を使い切っている場合", () => {
+  let digit: HTMLElement;
+
+  beforeEach(() => {
     const props = createProps();
-    const result = {
-      elapsedMs: 125_000,
-      mistakeCount: 0,
-      undoCount: 0,
-      restartCount: 0,
-      score: {
-        total: 100,
-        breakdown: { accuracy: 40, speed: 40, stability: 20 },
-      },
-      problemIdentity: {
-        generatorVersion: "1" as const,
-        seed: "test-seed",
-        conditions: { clueCount: 32 },
-        generationAttempt: 1,
-      },
-    };
+    render(<NanpurePlay {...props} completedDigits={[9]} />);
+    const digitInput = screen.getByRole("group", { name: "数字入力" });
+    digit = within(digitInput).getByRole("button", { name: "9" });
+  });
+
+  test("数字9の入力を無効にすること", () => {
+    const disabled = digit.hasAttribute("disabled");
+
+    expect(disabled).toBe(true);
+  });
+});
+
+describe("数字9を使い切っていない場合", () => {
+  let digit: HTMLElement;
+
+  beforeEach(() => {
+    const props = createProps();
+    render(<NanpurePlay {...props} completedDigits={[]} />);
+    const digitInput = screen.getByRole("group", { name: "数字入力" });
+    digit = within(digitInput).getByRole("button", { name: "9" });
+  });
+
+  test("数字9の入力を有効にすること", () => {
+    const disabled = digit.hasAttribute("disabled");
+
+    expect(disabled).toBe(false);
+  });
+});
+
+describe("手動メモだけがあるマスを選択している場合", () => {
+  let erase: HTMLElement;
+
+  beforeEach(() => {
+    const props = createProps();
+    const notes = [...props.notes];
+    notes[0] = [4];
+    render(<NanpurePlay {...props} notes={notes} />);
+    erase = screen.getByRole("button", { name: "消す" });
+  });
+
+  test("消す操作を有効にすること", () => {
+    const disabled = erase.hasAttribute("disabled");
+
+    expect(disabled).toBe(false);
+  });
+});
+
+describe("クリア演出中の場合", () => {
+  const result = {
+    elapsedMs: 125_000,
+    mistakeCount: 0,
+    undoCount: 0,
+    restartCount: 0,
+    score: {
+      total: 100,
+      breakdown: { accuracy: 40, speed: 40, stability: 20 },
+    },
+    problemIdentity: {
+      generatorVersion: "1" as const,
+      seed: "test-seed",
+      conditions: { clueCount: 32 },
+      generationAttempt: 1,
+    },
+  };
+  let board: HTMLElement;
+  let digitInput: HTMLElement;
+
+  beforeEach(() => {
+    const props = createProps();
     render(
       <NanpurePlay
         {...props}
@@ -182,27 +220,29 @@ describe("NanpurePlay", () => {
         result={result}
       />,
     );
-
-    const board = screen.getByRole("main");
-    const digitInput = screen.getByRole("group", { name: "数字入力" });
-
-    expect(screen.queryByRole("heading", { name: "クリア" })).toBeNull();
-    expect(
-      within(board).getAllByRole("button", { name: /行.*列/ }),
-    ).toHaveLength(81);
-    expect(
-      screen.getByRole("button", { name: "消す" }).hasAttribute("disabled"),
-    ).toBe(true);
-    expect(
-      within(digitInput)
-        .getByRole("button", { name: "1" })
-        .hasAttribute("disabled"),
-    ).toBe(true);
+    board = screen.getByRole("main");
+    digitInput = screen.getByRole("group", { name: "数字入力" });
   });
 
-  test("クリア後に共通の結果階層で採点結果を表示すること", () => {
+  test("完成盤を見せて結果画面への遷移を待つこと", () => {
+    const resultHeading = screen.queryByRole("heading", { name: "クリア" });
+    const cells = within(board).getAllByRole("button", { name: /行.*列/ });
+    const erase = screen.getByRole("button", { name: "消す" });
+    const firstDigit = within(digitInput).getByRole("button", { name: "1" });
+
+    expect(resultHeading).toBeNull();
+    expect(cells).toHaveLength(81);
+    expect(erase.hasAttribute("disabled")).toBe(true);
+    expect(firstDigit.hasAttribute("disabled")).toBe(true);
+  });
+});
+
+describe("採点結果を表示している場合", () => {
+  let onStartNewProblem: () => void;
+
+  beforeEach(() => {
     const props = createProps();
-    const onStartNewProblem = vi.fn();
+    onStartNewProblem = vi.fn();
     render(
       <NanpurePlay
         {...props}
@@ -227,16 +267,22 @@ describe("NanpurePlay", () => {
         onStartNewProblem={onStartNewProblem}
       />,
     );
+  });
 
+  test("共通の結果階層で採点結果を表示すること", () => {
     const heading = screen.getByRole("heading", { name: "プレイ結果" });
     const pictogram = document.querySelector('svg[aria-label="ナンプレ"]');
+    const elapsedTime = screen.getByText("02:05");
+    const score = screen.getByText("79");
+    const playButton = screen.getByRole("button", { name: "プレイ！" });
+    const replayButton = screen.getByRole("button", { name: "同じ問題" });
 
     expect(heading).toBeTruthy();
     expect(pictogram).toBeTruthy();
-    expect(screen.getByText("02:05")).toBeTruthy();
-    expect(screen.getByText("79")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "プレイ！" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "同じ問題" })).toBeTruthy();
+    expect(elapsedTime).toBeTruthy();
+    expect(score).toBeTruthy();
+    expect(playButton).toBeTruthy();
+    expect(replayButton).toBeTruthy();
 
     fireEvent.click(screen.getByText("スコアの内訳・採点基準"));
 
@@ -246,14 +292,18 @@ describe("NanpurePlay", () => {
     expect(screen.getByText(/1分単位で切り上げ/)).toBeTruthy();
     expect(screen.getByText(/待った1回につき/)).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "プレイ！" }));
+    fireEvent.click(playButton);
 
     expect(onStartNewProblem).toHaveBeenCalledOnce();
   });
+});
 
-  test("自己ベスト更新内容と記録画面への導線を表示すること", () => {
+describe("自己ベスト更新がある場合", () => {
+  let onOpenRecords: () => void;
+
+  beforeEach(() => {
     const props = createProps();
-    const onOpenRecords = vi.fn();
+    onOpenRecords = vi.fn();
     render(
       <NanpurePlay
         {...props}
@@ -293,9 +343,10 @@ describe("NanpurePlay", () => {
         onOpenRecords={onOpenRecords}
       />,
     );
+  });
 
+  test("更新内容と記録画面への導線を表示すること", () => {
     fireEvent.click(screen.getByRole("button", { name: "記録を確認" }));
-
     const bestUpdate = screen.getByRole("region", { name: "自己ベスト更新" });
 
     expect(bestUpdate.textContent).toContain("クリア時間");
@@ -306,9 +357,10 @@ describe("NanpurePlay", () => {
 });
 
 describe("診断導線が許可されたプレイ中の場合", () => {
-  const onOpenDiagnostics = vi.fn<() => void>();
+  let onOpenDiagnostics: () => void;
 
   beforeEach(() => {
+    onOpenDiagnostics = vi.fn();
     render(
       <NanpurePlay {...createProps()} onOpenDiagnostics={onOpenDiagnostics} />,
     );
@@ -341,9 +393,10 @@ describe("診断導線が許可されていないプレイ中の場合", () => {
 });
 
 describe("診断導線が許可された結果表示の場合", () => {
-  const onOpenDiagnostics = vi.fn<() => void>();
+  let onOpenDiagnostics: () => void;
 
   beforeEach(() => {
+    onOpenDiagnostics = vi.fn();
     render(
       <NanpurePlay
         {...createProps()}
