@@ -1,6 +1,6 @@
 import {
   BookOpen,
-  ChevronDown,
+  ChevronRight,
   Home,
   Play,
   RotateCcw,
@@ -109,12 +109,12 @@ export function NanpureResultScreen({
           </div>
         </div>
 
-        <Collapsible>
+        <Collapsible className="group/score-details">
           <div className="mt-3 flex justify-center">
             <CollapsibleTrigger asChild>
               <Button type="button" variant="ghost" size="sm">
                 スコアの内訳・採点基準
-                <ChevronDown />
+                <ChevronRight className="group-data-[state=open]/score-details:rotate-90" />
               </Button>
             </CollapsibleTrigger>
           </div>
