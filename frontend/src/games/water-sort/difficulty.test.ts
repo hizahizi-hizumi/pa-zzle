@@ -23,6 +23,16 @@ const baseAnalysis: WaterSortDifficultyAnalysis = {
     deadEndChoiceRatio: 0,
     maximumDetourMoves: 1,
   },
+  plausibleChoiceSafety: {
+    sampledDecisionStateCount: 5,
+    evaluatedChoiceCount: 10,
+    unresolvedChoiceCount: 0,
+    deadEndChoiceCount: 0,
+    deadEndDecisionStateCount: 0,
+    deadEndDecisionStateRatio: 0,
+    deadEndChoiceRatio: 0,
+    minimumSolvableChoiceRatio: 1,
+  },
 };
 
 describe("parseWaterSortDifficulty", () => {

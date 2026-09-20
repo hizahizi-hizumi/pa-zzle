@@ -46,6 +46,16 @@ vi.mock("@/games/water-sort/problem-selection", () => ({
           deadEndChoiceRatio: 0,
           maximumDetourMoves,
         },
+        plausibleChoiceSafety: {
+          sampledDecisionStateCount: 1,
+          evaluatedChoiceCount: 1,
+          unresolvedChoiceCount: 0,
+          deadEndChoiceCount: 0,
+          deadEndDecisionStateCount: 0,
+          deadEndDecisionStateRatio: 0,
+          deadEndChoiceRatio: 0,
+          minimumSolvableChoiceRatio: 1,
+        },
       },
     };
   },
