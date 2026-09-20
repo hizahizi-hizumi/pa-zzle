@@ -185,12 +185,12 @@ function getVehicleVisualSpec(
 ): ParkingJamCarVisualSpec {
   const horizontal = vehicle.orientation === "horizontal";
   const longBody = getVehicleVisualType(vehicle) === "long";
-  const hoodLength = longBody ? 22 : 30;
-  const frontGlassDepth = longBody ? 23 : 25;
+  const hoodLength = longBody ? 22 : 52;
+  const glassDepth = longBody ? 23 : 24;
   const rearDeckLength = longBody ? 15 : 24;
-  const rearGlassDepth = longBody ? 18 : 20;
+  const glassOuterEndInset = longBody ? 14 : 15;
+  const glassInnerEndInset = longBody ? 18 : 20;
   const cabinInset = longBody ? 13 : 15;
-  const glassEdgeInset = longBody ? 20 : 22;
 
   if (horizontal) {
     const start = x;
@@ -201,23 +201,23 @@ function getVehicleVisualSpec(
       ? end - hoodLength
       : start + hoodLength;
     const frontGlassRear = facingPositive
-      ? frontGlassFront - frontGlassDepth
-      : frontGlassFront + frontGlassDepth;
+      ? frontGlassFront - glassDepth
+      : frontGlassFront + glassDepth;
     const rearGlassRear = facingPositive
       ? start + rearDeckLength
       : end - rearDeckLength;
     const rearGlassFront = facingPositive
-      ? rearGlassRear + rearGlassDepth
-      : rearGlassRear - rearGlassDepth;
+      ? rearGlassRear + glassDepth
+      : rearGlassRear - glassDepth;
     const roofStart = Math.min(frontGlassRear, rearGlassFront);
     const roofEnd = Math.max(frontGlassRear, rearGlassFront);
 
     const frontGlassPath = facingPositive
-      ? `M ${frontGlassRear} ${crossStart + cabinInset} L ${frontGlassFront} ${crossStart + glassEdgeInset} L ${frontGlassFront} ${crossEnd - glassEdgeInset} L ${frontGlassRear} ${crossEnd - cabinInset} Z`
-      : `M ${frontGlassFront} ${crossStart + glassEdgeInset} L ${frontGlassRear} ${crossStart + cabinInset} L ${frontGlassRear} ${crossEnd - cabinInset} L ${frontGlassFront} ${crossEnd - glassEdgeInset} Z`;
+      ? `M ${frontGlassRear} ${crossStart + glassInnerEndInset} L ${frontGlassFront} ${crossStart + glassOuterEndInset} L ${frontGlassFront} ${crossEnd - glassOuterEndInset} L ${frontGlassRear} ${crossEnd - glassInnerEndInset} Z`
+      : `M ${frontGlassFront} ${crossStart + glassOuterEndInset} L ${frontGlassRear} ${crossStart + glassInnerEndInset} L ${frontGlassRear} ${crossEnd - glassInnerEndInset} L ${frontGlassFront} ${crossEnd - glassOuterEndInset} Z`;
     const rearGlassPath = facingPositive
-      ? `M ${rearGlassRear} ${crossStart + glassEdgeInset} L ${rearGlassFront} ${crossStart + cabinInset} L ${rearGlassFront} ${crossEnd - cabinInset} L ${rearGlassRear} ${crossEnd - glassEdgeInset} Z`
-      : `M ${rearGlassFront} ${crossStart + cabinInset} L ${rearGlassRear} ${crossStart + glassEdgeInset} L ${rearGlassRear} ${crossEnd - glassEdgeInset} L ${rearGlassFront} ${crossEnd - cabinInset} Z`;
+      ? `M ${rearGlassRear} ${crossStart + glassOuterEndInset} L ${rearGlassFront} ${crossStart + glassInnerEndInset} L ${rearGlassFront} ${crossEnd - glassInnerEndInset} L ${rearGlassRear} ${crossEnd - glassOuterEndInset} Z`
+      : `M ${rearGlassFront} ${crossStart + glassInnerEndInset} L ${rearGlassRear} ${crossStart + glassOuterEndInset} L ${rearGlassRear} ${crossEnd - glassOuterEndInset} L ${rearGlassFront} ${crossEnd - glassInnerEndInset} Z`;
 
     return {
       frontGlassPath,
@@ -249,23 +249,23 @@ function getVehicleVisualSpec(
     ? end - hoodLength
     : start + hoodLength;
   const frontGlassRear = facingPositive
-    ? frontGlassFront - frontGlassDepth
-    : frontGlassFront + frontGlassDepth;
+    ? frontGlassFront - glassDepth
+    : frontGlassFront + glassDepth;
   const rearGlassRear = facingPositive
     ? start + rearDeckLength
     : end - rearDeckLength;
   const rearGlassFront = facingPositive
-    ? rearGlassRear + rearGlassDepth
-    : rearGlassRear - rearGlassDepth;
+    ? rearGlassRear + glassDepth
+    : rearGlassRear - glassDepth;
   const roofStart = Math.min(frontGlassRear, rearGlassFront);
   const roofEnd = Math.max(frontGlassRear, rearGlassFront);
 
   const frontGlassPath = facingPositive
-    ? `M ${crossStart + cabinInset} ${frontGlassRear} L ${crossStart + glassEdgeInset} ${frontGlassFront} L ${crossEnd - glassEdgeInset} ${frontGlassFront} L ${crossEnd - cabinInset} ${frontGlassRear} Z`
-    : `M ${crossStart + glassEdgeInset} ${frontGlassFront} L ${crossStart + cabinInset} ${frontGlassRear} L ${crossEnd - cabinInset} ${frontGlassRear} L ${crossEnd - glassEdgeInset} ${frontGlassFront} Z`;
+    ? `M ${crossStart + glassInnerEndInset} ${frontGlassRear} L ${crossStart + glassOuterEndInset} ${frontGlassFront} L ${crossEnd - glassOuterEndInset} ${frontGlassFront} L ${crossEnd - glassInnerEndInset} ${frontGlassRear} Z`
+    : `M ${crossStart + glassOuterEndInset} ${frontGlassFront} L ${crossStart + glassInnerEndInset} ${frontGlassRear} L ${crossEnd - glassInnerEndInset} ${frontGlassRear} L ${crossEnd - glassOuterEndInset} ${frontGlassFront} Z`;
   const rearGlassPath = facingPositive
-    ? `M ${crossStart + glassEdgeInset} ${rearGlassRear} L ${crossStart + cabinInset} ${rearGlassFront} L ${crossEnd - cabinInset} ${rearGlassFront} L ${crossEnd - glassEdgeInset} ${rearGlassRear} Z`
-    : `M ${crossStart + cabinInset} ${rearGlassFront} L ${crossStart + glassEdgeInset} ${rearGlassRear} L ${crossEnd - glassEdgeInset} ${rearGlassRear} L ${crossEnd - cabinInset} ${rearGlassFront} Z`;
+    ? `M ${crossStart + glassOuterEndInset} ${rearGlassRear} L ${crossStart + glassInnerEndInset} ${rearGlassFront} L ${crossEnd - glassInnerEndInset} ${rearGlassFront} L ${crossEnd - glassOuterEndInset} ${rearGlassRear} Z`
+    : `M ${crossStart + glassInnerEndInset} ${rearGlassFront} L ${crossStart + glassOuterEndInset} ${rearGlassRear} L ${crossEnd - glassOuterEndInset} ${rearGlassRear} L ${crossEnd - glassInnerEndInset} ${rearGlassFront} Z`;
 
   return {
     frontGlassPath,
