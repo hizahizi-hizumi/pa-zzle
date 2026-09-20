@@ -202,7 +202,6 @@ export function ParkingJamBoard({
             className="parking-jam-board__asphalt-speck"
           />
         </pattern>
-
       </defs>
       <rect
         x={-MARGIN}
