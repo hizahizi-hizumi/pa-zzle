@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  ChevronDown,
   ChevronRight,
   Home,
   Play,
@@ -7,7 +8,7 @@ import {
   SlidersHorizontal,
   Wrench,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { GameResultConfetti } from "@/components/GameResultConfetti";
@@ -57,7 +58,7 @@ export function NanpureResultScreen({
   onBackToHome,
   onOpenDiagnostics,
 }: NanpureResultScreenProps) {
-  const resultLevel = getNanpureGameResultLevel(result.score.total);
+  const [detailsOpen, setDetailsOpen] = useState(false);\n  const resultLevel = getNanpureGameResultLevel(result.score.total);
 
   return (
     <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-y-auto bg-background">
@@ -109,12 +110,12 @@ export function NanpureResultScreen({
           </div>
         </div>
 
-        <Collapsible className="group/score-details">
+        <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
           <div className="mt-3 flex justify-center">
             <CollapsibleTrigger asChild>
               <Button type="button" variant="ghost" size="sm">
                 スコアの内訳・採点基準
-                <ChevronRight className="group-data-[state=open]/score-details:rotate-90" />
+                {detailsOpen ? <ChevronDown /> : <ChevronRight />}
               </Button>
             </CollapsibleTrigger>
           </div>
