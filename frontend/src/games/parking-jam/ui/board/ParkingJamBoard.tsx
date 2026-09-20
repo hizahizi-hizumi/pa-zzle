@@ -27,7 +27,7 @@ type ParkingJamBoardProps = {
 };
 
 const CELL = 100;
-const MARGIN = 72;
+const MARGIN = 44;
 const SWIPE_THRESHOLD = 18;
 
 function getOpeningGeometry(
@@ -239,50 +239,11 @@ export function ParkingJamBoard({
         rx="12"
         className="parking-jam-board__curb"
       />
-      {Array.from({ length: board.width }, (_, column) => ({
-        id: `top-${column}`,
-        column,
-      })).map(({ id, column }) => (
-        <path
-          key={id}
-          d={`M ${column * CELL + 12} 14 V 68 M ${column * CELL + 12} 14 H ${(column + 1) * CELL - 12}`}
-          className="parking-jam-board__parking-space"
-        />
-      ))}
-      {Array.from({ length: board.width }, (_, column) => ({
-        id: `bottom-${column}`,
-        column,
-      })).map(({ id, column }) => (
-        <path
-          key={id}
-          d={`M ${column * CELL + 12} ${height - 14} V ${height - 68} M ${column * CELL + 12} ${height - 14} H ${(column + 1) * CELL - 12}`}
-          className="parking-jam-board__parking-space"
-        />
-      ))}
       {board.roadOpenings.map((opening) => {
         const geometry = getOpeningGeometry(opening, board);
         return (
           <g key={`${opening.side}-${opening.startOffset}-${opening.length}`}>
-            <rect {...geometry} className="parking-jam-board__opening" />
-            <rect
-              x={
-                geometry.x +
-                (opening.side === "left" || opening.side === "right" ? 0 : 10)
-              }
-              y={
-                geometry.y +
-                (opening.side === "up" || opening.side === "down" ? 0 : 10)
-              }
-              width={
-                geometry.width -
-                (opening.side === "up" || opening.side === "down" ? 20 : 0)
-              }
-              height={
-                geometry.height -
-                (opening.side === "left" || opening.side === "right" ? 20 : 0)
-              }
-              className="parking-jam-board__exit-road"
-            />
+            <rect {...geometry} className="parking-jam-board__exit-road" />
           </g>
         );
       })}
