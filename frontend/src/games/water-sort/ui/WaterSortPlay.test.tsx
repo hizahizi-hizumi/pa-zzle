@@ -321,7 +321,7 @@ describe("WaterSortPlay", () => {
     expect(screen.getByText("ナイスプレイ！")).toBeTruthy();
     expect(screen.getByText("パズル pa-zzle")).toBeTruthy();
     expect(screen.getByText("/ 100")).toBeTruthy();
-    expect(screen.getByText("スコアの内訳・採点基準")).toBeTruthy();
+    fireEvent.click(screen.getByText("スコアの内訳・採点基準"));
     expect(screen.getByText(/最短\s*\+2/)).toBeTruthy();
     expect(screen.getByText("待った")).toBeTruthy();
     expect(screen.getAllByText("効率")).toHaveLength(2);

@@ -56,7 +56,7 @@ describe("InternalDiagnosticsDialog", () => {
   });
 
   test("Escapeキーで閉じる操作を通知すること", () => {
-    fireEvent.keyDown(window, { key: "Escape" });
+    fireEvent.keyDown(document, { key: "Escape" });
 
     expect(onClose).toHaveBeenCalledOnce();
   });
