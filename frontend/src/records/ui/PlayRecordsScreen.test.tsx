@@ -111,7 +111,7 @@ describe("PlayRecordsScreen", () => {
 
   test("指標の推移を折れ線グラフへ切り替えて確認できること", () => {
     const trendButton = screen.getByRole("tab", { name: "推移" });
-    fireEvent.click(trendButton);
+    fireEvent.mouseDown(trendButton, { button: 0, ctrlKey: false });
     const metricSelect = screen.getByRole("combobox", { name: "推移する指標" });
     fireEvent.change(metricSelect, { target: { value: "time-delta-ms" } });
     const chart = screen.getByRole("img", { name: "基準時間との差の推移" });
