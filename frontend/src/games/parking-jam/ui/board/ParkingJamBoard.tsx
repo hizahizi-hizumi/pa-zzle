@@ -223,16 +223,6 @@ export function ParkingJamBoard({
         rx="18"
         fill="url(#parking-jam-asphalt)"
       />
-      {Array.from({ length: board.width + 1 }, (_, column) => ({
-        id: `column-${column}`,
-        x: column * CELL,
-      })).map(({ id, x }) => (
-        <path
-          key={id}
-          d={`M ${x} 18 V 64 M ${x} ${height - 18} V ${height - 64}`}
-          className="parking-jam-board__parking-line"
-        />
-      ))}
       <rect
         x="7"
         y="7"

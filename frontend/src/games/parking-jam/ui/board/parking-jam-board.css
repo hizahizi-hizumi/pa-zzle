@@ -58,13 +58,6 @@
 .parking-jam-board__asphalt-speck {
   fill: rgb(255 255 255 / 0.065);
 }
-.parking-jam-board__parking-line {
-  fill: none;
-  stroke: rgb(242 239 220 / 0.68);
-  stroke-width: 3;
-  stroke-linecap: round;
-  pointer-events: none;
-}
 .parking-jam-board__curb {
   fill: none;
   stroke: #c9c6bb;
