@@ -104,7 +104,7 @@ run_frontend_check() {
   (
     cd "$repo_root/frontend"
     "$@"
-  ) >"$run_dir/$name.log" 2>&1 &
+  ) &
   check_names+=("$name")
   check_pids+=("$!")
 }
@@ -114,16 +114,13 @@ run_frontend_check typecheck env TERM=dumb node_modules/.bin/tsc --noEmit --pret
 run_frontend_check test node_modules/.bin/vitest run --pool=vmForks
 run_frontend_check build node_modules/.bin/vite build --config vite.config.ts
 
-checks_failed=0
+failed_checks=()
 for index in "${!check_pids[@]}"; do
   if ! wait "${check_pids[$index]}"; then
-    checks_failed=1
+    failed_checks+=("${check_names[$index]}")
   fi
 done
-for name in "${check_names[@]}"; do
-  cat "$run_dir/$name.log"
-done
-(( checks_failed == 0 )) || fail "Frontend quality checks failed"
+(( ${#failed_checks[@]} == 0 )) || fail "Frontend quality checks failed: ${failed_checks[*]}"
 
 server_log="$run_dir/dev-server.log"
 (
