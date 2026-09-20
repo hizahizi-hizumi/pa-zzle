@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import type { ParkingJamDifficulty } from "@/games/parking-jam/difficulty";
-import { getParkingJamDifficultyLabel } from "@/games/parking-jam/difficulty";
 import type {
   ParkingJamOperation,
   ParkingJamProgress,
@@ -10,6 +9,7 @@ import type {
 } from "@/games/parking-jam/play/use-parking-jam-play";
 import type {
   ParkingJamBoard as ParkingJamBoardDefinition,
+  ParkingJamDirection,
   ParkingJamState,
   ParkingJamVehicleId,
 } from "@/games/parking-jam/puzzle/board";
@@ -32,10 +32,7 @@ type ParkingJamPlayProps = {
   result: ParkingJamResult | null;
   recordOutcomeNotice: ReactNode;
   onSelectVehicle: (vehicleId: ParkingJamVehicleId) => void;
-  onMove: (
-    vehicleId: ParkingJamVehicleId,
-    direction: import("@/games/parking-jam/puzzle/board").ParkingJamDirection,
-  ) => void;
+  onMove: (vehicleId: ParkingJamVehicleId, direction: ParkingJamDirection) => void;
   onUndo: () => void;
   onRestart: () => void;
   onReplay: () => void;
@@ -56,13 +53,10 @@ export function ParkingJamPlay({
   operation,
   elapsedMs,
   failedMoveCount,
-  canUndo,
-  canRestart,
   result,
   recordOutcomeNotice,
   onSelectVehicle,
   onMove,
-  onUndo,
   onRestart,
   onReplay,
   onStartNewProblem,
@@ -86,37 +80,29 @@ export function ParkingJamPlay({
     );
   }
 
-  const playing = status === "playing";
-
   return (
     <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
       <BrandIdentityHeader />
       <ParkingJamPlayHeader
         elapsedMs={elapsedMs}
         failedMoveCount={failedMoveCount}
-        canUndo={canUndo}
-        canRestart={canRestart}
-        playing={playing}
-        onUndo={onUndo}
         onRestart={onRestart}
+        onReplay={onReplay}
+        onStartNewProblem={onStartNewProblem}
+        onChangeDifficulty={onChangeDifficulty}
+        onBackToHome={onBackToHome}
       />
-
-      <main className="flex min-h-0 flex-1 items-start justify-center overflow-hidden px-2 pt-8 pb-2 sm:items-center sm:px-6 sm:py-4">
-        <div className="flex w-full max-w-lg flex-col items-center gap-1.5">
-          <span className="text-xs font-medium text-muted-foreground">
-            {getParkingJamDifficultyLabel(difficulty)}
-          </span>
-          <ParkingJamBoard
-            board={board}
-            state={state}
-            selectedVehicleId={selectedVehicleId}
-            operation={operation}
-            interactionDisabled={!playing}
-            onSelectVehicle={onSelectVehicle}
-            onMove={onMove}
-            onExitAnimationComplete={onClearAnimationComplete}
-          />
-        </div>
+      <main className="flex min-h-0 flex-1 items-start justify-center overflow-hidden px-3 pt-3 sm:items-center sm:px-6 sm:py-4">
+        <ParkingJamBoard
+          board={board}
+          state={state}
+          selectedVehicleId={selectedVehicleId}
+          operation={operation}
+          interactionDisabled={status !== "playing"}
+          onSelectVehicle={onSelectVehicle}
+          onMove={onMove}
+          onExitAnimationComplete={onClearAnimationComplete}
+        />
       </main>
     </section>
   );
