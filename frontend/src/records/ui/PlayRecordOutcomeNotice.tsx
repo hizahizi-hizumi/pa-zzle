@@ -54,6 +54,7 @@ function getImprovementLabel(
     case "elapsed-ms":
       return formatElapsedImprovement(improvementAmount);
     case "mistake-count":
+    case "failed-move-count":
       return `${improvementAmount}回減`;
     case "move-delta":
       return `${improvementAmount}手改善`;

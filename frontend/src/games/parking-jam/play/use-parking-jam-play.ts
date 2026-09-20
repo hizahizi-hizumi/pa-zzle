@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { ParkingJamDifficulty } from "@/games/parking-jam/difficulty";
 import type { ParkingJamProblemIdentity } from "@/games/parking-jam/problem/problem";
@@ -8,12 +8,18 @@ import type {
   ParkingJamVehicleId,
 } from "@/games/parking-jam/puzzle/board";
 import {
+  calculateParkingJamPlayScore,
+  type ParkingJamPlayScore,
+} from "@/games/parking-jam/score";
+import {
   attemptParkingJamSessionMove,
   canRestartParkingJamSession,
   canUndoParkingJamSession,
   createParkingJamSession,
   getParkingJamSessionElapsedMs,
+  getParkingJamSessionResult,
   type ParkingJamSession,
+  type ParkingJamSessionResult,
   restartParkingJamSession,
   undoParkingJamSession,
 } from "@/games/parking-jam/session/session";
@@ -26,11 +32,19 @@ export type ParkingJamOperation = {
   direction: ParkingJamDirection;
 };
 
+export type ParkingJamProgress = "playing" | "clearing" | "result";
+
+export type ParkingJamResult = ParkingJamSessionResult & {
+  problemIdentity: ParkingJamProblemIdentity;
+  score: ParkingJamPlayScore;
+};
+
 type ParkingJamPlayState = {
   session: ParkingJamSession;
   problemIdentity: ParkingJamProblemIdentity;
   selectedVehicleId: ParkingJamVehicleId | null;
   operation: ParkingJamOperation | null;
+  progress: ParkingJamProgress;
 };
 
 function createPlayState(
@@ -45,6 +59,7 @@ function createPlayState(
     problemIdentity: generated.identity,
     selectedVehicleId: null,
     operation: null,
+    progress: "playing",
   };
 }
 
@@ -110,6 +125,8 @@ export function useParkingJamPlay(difficulty: ParkingJamDifficulty) {
           vehicleId,
           direction,
         },
+        progress:
+          attempt.session.status === "cleared" ? "clearing" : current.progress,
       };
     });
   }, []);
@@ -138,6 +155,7 @@ export function useParkingJamPlay(difficulty: ParkingJamDifficulty) {
         session,
         selectedVehicleId: null,
         operation: null,
+        progress: "playing",
       };
     });
   }, []);
@@ -150,6 +168,7 @@ export function useParkingJamPlay(difficulty: ParkingJamDifficulty) {
       session: createParkingJamSession(current.session.problem, startedAt),
       selectedVehicleId: null,
       operation: null,
+      progress: "playing",
     }));
   }, []);
 
@@ -160,19 +179,50 @@ export function useParkingJamPlay(difficulty: ParkingJamDifficulty) {
     setPlay(next);
   }, [difficulty]);
 
+  const completeClearAnimation = useCallback(() => {
+    setPlay((current) =>
+      current.session.status === "cleared" && current.progress === "clearing"
+        ? { ...current, progress: "result" }
+        : current,
+    );
+  }, []);
+
   const { session } = play;
+  const elapsedMs = getParkingJamSessionElapsedMs(session, now);
+  const sessionResult = useMemo(
+    () => getParkingJamSessionResult(session, now),
+    [now, session],
+  );
+  const result = useMemo<ParkingJamResult | null>(
+    () =>
+      sessionResult
+        ? {
+            ...sessionResult,
+            problemIdentity: play.problemIdentity,
+            score: calculateParkingJamPlayScore({
+              difficulty,
+              elapsedMs: sessionResult.elapsedMs,
+              failedMoveCount: sessionResult.failedMoveCount,
+              undoCount: sessionResult.undoCount,
+              restartCount: sessionResult.restartCount,
+            }),
+          }
+        : null,
+    [difficulty, play.problemIdentity, sessionResult],
+  );
 
   return {
     difficulty,
     problemIdentity: play.problemIdentity,
     status: session.status,
+    progress: play.progress,
     startedAt: session.startedAt,
     completedAt: session.finishedAt,
     board: session.problem.board,
     state: session.state,
     selectedVehicleId: play.selectedVehicleId,
     operation: play.operation,
-    elapsedMs: getParkingJamSessionElapsedMs(session, now),
+    elapsedMs,
     moveAttemptCount: session.moveAttemptCount,
     successfulMoveCount: session.successfulMoveCount,
     failedMoveCount: session.failedMoveCount,
@@ -180,11 +230,13 @@ export function useParkingJamPlay(difficulty: ParkingJamDifficulty) {
     restartCount: session.restartCount,
     canUndo: canUndoParkingJamSession(session),
     canRestart: canRestartParkingJamSession(session),
+    result,
     selectVehicle,
     attemptDirection,
     undo,
     restart,
     replay,
     startNewProblem,
+    completeClearAnimation,
   };
 }
