@@ -2,12 +2,7 @@ import {
   getNanpureDifficultyLabel,
   parseNanpureDifficulty,
 } from "@/games/nanpure/difficulty";
-import {
-  getNanpurePlayRecordScore,
-  isNanpurePlayRecord,
-  nanpurePlayRecordDefinition,
-} from "@/games/nanpure/play-record";
-import type { PlayRecord } from "@/records/play-record";
+import { nanpurePlayRecordDefinition } from "@/games/nanpure/play-record";
 
 import { formatElapsedTime } from "./format-elapsed-time";
 
@@ -18,55 +13,30 @@ export const nanpurePlayRecordDisplay = {
     const difficulty = parseNanpureDifficulty(comparisonKey);
     return difficulty ? getNanpureDifficultyLabel(difficulty) : null;
   },
-  getSummary(record: PlayRecord) {
-    if (!isNanpurePlayRecord(record)) {
-      return null;
-    }
-
-    return {
-      primaryMetric: {
-        label: "スコア",
-        value: `${getNanpurePlayRecordScore(record)}点`,
-      },
-      detailMetrics: [
-        {
-          label: "時間",
-          value: formatElapsedTime(record.payload.performance.elapsedMs),
-        },
-        {
-          label: "ミス",
-          value: String(record.payload.performance.mistakeCount),
-        },
-        {
-          label: "待った",
-          value: String(record.payload.performance.undoCount),
-        },
-        {
-          label: "やり直し",
-          value: String(record.payload.performance.restartCount),
-        },
-      ],
-    };
-  },
-  personalBestMetrics: [
+  metrics: [
     {
       id: "play-score",
-      label: "ベストスコア",
+      label: "スコア",
+      historyLabel: "スコア",
       formatValue(value: number) {
         return `${value}点`;
       },
+      referenceValue: 100,
     },
     {
       id: "elapsed-ms",
-      label: "最速",
+      label: "クリア時間",
+      historyLabel: "時間",
       formatValue: formatElapsedTime,
     },
     {
       id: "mistake-count",
-      label: "最少ミス",
+      label: "ミス",
+      historyLabel: "ミス",
       formatValue(value: number) {
         return `${value}回`;
       },
+      referenceValue: 0,
     },
   ],
 };

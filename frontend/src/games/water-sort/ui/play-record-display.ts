@@ -2,19 +2,21 @@ import {
   getWaterSortDifficultyLabel,
   parseWaterSortDifficulty,
 } from "@/games/water-sort/difficulty";
-import {
-  getWaterSortPlayRecordCompletionMoveCount,
-  getWaterSortPlayRecordMoveDelta,
-  getWaterSortPlayRecordScore,
-  isWaterSortPlayRecord,
-  waterSortPlayRecordDefinition,
-} from "@/games/water-sort/play-record";
-import type { PlayRecord } from "@/records/play-record";
+import { waterSortPlayRecordDefinition } from "@/games/water-sort/play-record";
 
 import { formatWaterSortElapsedTime } from "./format-elapsed-time";
 
 function formatMoveDelta(moveDelta: number): string {
   return moveDelta === 0 ? "±0" : `+${moveDelta}`;
+}
+
+function formatTimeDelta(timeDeltaMs: number): string {
+  if (timeDeltaMs === 0) {
+    return "±00:00";
+  }
+
+  const sign = timeDeltaMs > 0 ? "+" : "-";
+  return `${sign}${formatWaterSortElapsedTime(Math.abs(timeDeltaMs))}`;
 }
 
 export const waterSortPlayRecordDisplay = {
@@ -24,74 +26,29 @@ export const waterSortPlayRecordDisplay = {
     const difficulty = parseWaterSortDifficulty(comparisonKey);
     return difficulty ? getWaterSortDifficultyLabel(difficulty) : null;
   },
-  getSummary(record: PlayRecord) {
-    if (!isWaterSortPlayRecord(record)) {
-      return null;
-    }
-
-    const score = getWaterSortPlayRecordScore(record);
-    const completionMoveCount =
-      getWaterSortPlayRecordCompletionMoveCount(record);
-    const moveDelta = getWaterSortPlayRecordMoveDelta(record);
-
-    return {
-      primaryMetric: {
-        label: "スコア",
-        value: score === null ? "再計算不可" : `${score}点`,
-      },
-      detailMetrics:
-        completionMoveCount === null || moveDelta === null
-          ? [
-              {
-                label: "時間",
-                value: formatWaterSortElapsedTime(
-                  record.payload.performance.elapsedMs,
-                ),
-              },
-              {
-                label: "総手数",
-                value: String(record.payload.performance.moveCount),
-              },
-              {
-                label: "最短",
-                value: String(record.payload.performance.optimalMoveCount),
-              },
-            ]
-          : [
-              {
-                label: "時間",
-                value: formatWaterSortElapsedTime(
-                  record.payload.performance.elapsedMs,
-                ),
-              },
-              {
-                label: "クリア手数",
-                value: String(completionMoveCount),
-              },
-              {
-                label: "最短との差",
-                value: formatMoveDelta(moveDelta),
-              },
-            ],
-    };
-  },
-  personalBestMetrics: [
+  metrics: [
     {
       id: "play-score",
-      label: "ベストスコア",
+      label: "スコア",
+      historyLabel: "スコア",
       formatValue(value: number) {
         return `${value}点`;
       },
+      referenceValue: 100,
     },
     {
-      id: "elapsed-ms",
-      label: "最速",
-      formatValue: formatWaterSortElapsedTime,
+      id: "time-delta-ms",
+      label: "基準時間との差",
+      historyLabel: "時間差",
+      formatValue: formatTimeDelta,
+      referenceValue: 0,
     },
     {
       id: "move-delta",
-      label: "最短との差",
+      label: "最短手数との差",
+      historyLabel: "手数差",
       formatValue: formatMoveDelta,
+      referenceValue: 0,
     },
   ],
 };

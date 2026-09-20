@@ -12,3 +12,14 @@ export type PlayRecordDefinition = {
   getComparisonKey: (record: PlayRecord) => string | null;
   personalBestMetrics: readonly PersonalBestMetricDefinition[];
 };
+
+export function getPlayRecordMetricValue(
+  record: PlayRecord,
+  definition: PlayRecordDefinition,
+  metricId: string,
+): number | null {
+  const metric = definition.personalBestMetrics.find(
+    (candidate) => candidate.id === metricId,
+  );
+  return metric?.getValue(record) ?? null;
+}

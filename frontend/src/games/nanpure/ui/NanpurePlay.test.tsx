@@ -281,7 +281,7 @@ describe("NanpurePlay", () => {
 
     const bestUpdate = screen.getByRole("region", { name: "自己ベスト更新" });
 
-    expect(bestUpdate.textContent).toContain("最速");
+    expect(bestUpdate.textContent).toContain("クリア時間");
     expect(bestUpdate.textContent).toContain("02:30");
     expect(bestUpdate.textContent).toContain("02:00");
     expect(onOpenRecords).toHaveBeenCalledOnce();

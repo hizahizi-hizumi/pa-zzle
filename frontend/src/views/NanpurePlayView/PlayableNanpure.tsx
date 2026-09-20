@@ -7,6 +7,7 @@ import {
   createNanpurePlayRecord,
   nanpurePlayRecordDefinition,
 } from "@/games/nanpure/play-record";
+import type { NanpureProblemIdentity } from "@/games/nanpure/problem/problem";
 import { NanpureDiagnostics } from "@/games/nanpure/ui/NanpureDiagnostics";
 import { NanpurePlay } from "@/games/nanpure/ui/NanpurePlay";
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
@@ -20,10 +21,14 @@ import { useNavigate } from "@/router";
 
 type PlayableNanpureProps = {
   difficulty: NanpureDifficulty;
+  initialProblemIdentity?: NanpureProblemIdentity;
 };
 
-export function PlayableNanpure({ difficulty }: PlayableNanpureProps) {
-  const play = useNanpurePlay(difficulty);
+export function PlayableNanpure({
+  difficulty,
+  initialProblemIdentity,
+}: PlayableNanpureProps) {
+  const play = useNanpurePlay(difficulty, initialProblemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>

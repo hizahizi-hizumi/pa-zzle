@@ -4,12 +4,14 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyRecords } from "@/records/ui/PlayRecordsScreen/EmptyRecords";
-import { PlayRecordRow } from "@/records/ui/PlayRecordsScreen/PlayRecordRow";
+import { PlayRecordsHistory } from "@/records/ui/PlayRecordsScreen/PlayRecordsHistory";
+import { PlayRecordsTrend } from "@/records/ui/PlayRecordsScreen/PlayRecordsTrend";
 import { getPersonalBests } from "../personal-best";
 import type { PlayRecord } from "../play-record";
 import {
-  getPersonalBestMetricDisplay,
+  getPlayRecordMetricDisplay,
   type PlayRecordDisplayCatalog,
   type PlayRecordDisplayDefinition,
 } from "./play-record-display";
@@ -18,12 +20,19 @@ type PlayRecordsScreenProps = {
   records: readonly PlayRecord[];
   displays: PlayRecordDisplayCatalog;
   emptyAction: ReactNode;
+  onReplay: (recordId: string) => void;
 };
 
 type ComparisonOption = {
   key: string;
   label: string;
 };
+
+type RecordsMode = "history" | "trend";
+
+function isRecordsMode(value: string): value is RecordsMode {
+  return value === "history" || value === "trend";
+}
 
 function getComparisonOptions(
   records: readonly PlayRecord[],
@@ -51,6 +60,7 @@ export function PlayRecordsScreen({
   records,
   displays,
   emptyAction,
+  onReplay,
 }: PlayRecordsScreenProps) {
   const sortedRecords = useMemo(
     () =>
@@ -69,6 +79,8 @@ export function PlayRecordsScreen({
   const [selectedComparisonKey, setSelectedComparisonKey] = useState<
     string | null
   >(null);
+  const [mode, setMode] = useState<RecordsMode>("history");
+  const [selectedMetricId, setSelectedMetricId] = useState<string | null>(null);
   const display =
     displays.find((item) => item.definition.gameId === selectedGameId) ??
     displays[0];
@@ -85,19 +97,32 @@ export function PlayRecordsScreen({
       definition.getComparisonKey(record) === effectiveComparisonKey,
   );
   const personalBests = getPersonalBests(selectedRecords, definition);
+  const effectiveMetricId =
+    selectedMetricId &&
+    display.metrics.some((metric) => metric.id === selectedMetricId)
+      ? selectedMetricId
+      : (display.metrics[0]?.id ?? "");
 
   function handleGameChange(event: ChangeEvent<HTMLSelectElement>) {
     setSelectedGameId(event.target.value);
     setSelectedComparisonKey(null);
+    setSelectedMetricId(null);
   }
 
   function handleComparisonChange(event: ChangeEvent<HTMLSelectElement>) {
     setSelectedComparisonKey(event.target.value);
   }
 
+  function handleModeChange(value: string) {
+    if (isRecordsMode(value)) {
+      setMode(value);
+    }
+  }
+
   return (
     <>
-      <div className="mt-4 flex flex-wrap items-center gap-2 border-b pb-3">
+      <header className="mt-4 flex min-w-0 items-center gap-1.5 border-b pb-3">
+        <h1 className="shrink-0 text-xl font-bold tracking-tight">記録</h1>
         <NativeSelect
           size="sm"
           aria-label="パズル"
@@ -128,7 +153,7 @@ export function PlayRecordsScreen({
             ))}
           </NativeSelect>
         )}
-      </div>
+      </header>
 
       {comparisonOptions.length === 0 ? (
         <EmptyRecords gameLabel={display.gameLabel} action={emptyAction} />
@@ -146,7 +171,7 @@ export function PlayRecordsScreen({
             </h2>
             <dl className="flex flex-wrap items-baseline gap-x-5 gap-y-2">
               {personalBests.flatMap((best) => {
-                const metricDisplay = getPersonalBestMetricDisplay(
+                const metricDisplay = getPlayRecordMetricDisplay(
                   display,
                   best.metricId,
                 );
@@ -171,26 +196,36 @@ export function PlayRecordsScreen({
             </dl>
           </section>
 
-          <section className="pt-4" aria-labelledby="play-history-heading">
-            <div className="flex items-baseline justify-between gap-4">
-              <h2 id="play-history-heading" className="text-sm font-semibold">
-                プレイ履歴
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                {selectedRecords.length}件
-              </p>
-            </div>
-            <ol className="mt-1 divide-y">
-              {selectedRecords.map((record) => (
-                <PlayRecordRow
-                  key={record.id}
-                  record={record}
+          <Tabs value={mode} onValueChange={handleModeChange}>
+            <section className="pt-3" aria-label="プレイ記録">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <TabsList variant="line">
+                  <TabsTrigger value="history">履歴</TabsTrigger>
+                  <TabsTrigger value="trend">推移</TabsTrigger>
+                </TabsList>
+                <p className="text-xs text-muted-foreground">
+                  {selectedRecords.length}件
+                </p>
+              </div>
+
+              <TabsContent value="history">
+                <PlayRecordsHistory
+                  records={selectedRecords}
                   display={display}
                   personalBests={personalBests}
+                  onReplay={onReplay}
                 />
-              ))}
-            </ol>
-          </section>
+              </TabsContent>
+              <TabsContent value="trend">
+                <PlayRecordsTrend
+                  records={selectedRecords}
+                  display={display}
+                  metricId={effectiveMetricId}
+                  onMetricChange={setSelectedMetricId}
+                />
+              </TabsContent>
+            </section>
+          </Tabs>
         </>
       )}
     </>

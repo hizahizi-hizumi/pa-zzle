@@ -531,7 +531,7 @@ describe("WaterSortPlay", () => {
 
     const bestUpdate = screen.getByRole("region", { name: "自己ベスト更新" });
 
-    expect(bestUpdate.textContent).toContain("ベストスコア");
+    expect(bestUpdate.textContent).toContain("スコア");
     expect(bestUpdate.textContent).toContain("92点");
     expect(bestUpdate.textContent).toContain("100点");
     expect(onOpenRecords).toHaveBeenCalledOnce();

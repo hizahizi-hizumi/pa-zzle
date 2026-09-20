@@ -10,10 +10,12 @@ export type Path =
   | `/puzzles/water-sort`
   | `/puzzles/water-sort/play/:difficulty`
   | `/records`
+  | `/records/replay/:recordId`
 
 export type Params = {
   '/puzzles/nanpure/play/:difficulty': { difficulty: string }
   '/puzzles/water-sort/play/:difficulty': { difficulty: string }
+  '/records/replay/:recordId': { recordId: string }
 }
 
 export type ModalPath = never

@@ -7,7 +7,10 @@ import {
   type WaterSortDifficulty,
 } from "./difficulty";
 import type { WaterSortProblemIdentity } from "./problem/problem";
-import { calculateWaterSortPlayScore } from "./score";
+import {
+  calculateWaterSortPlayScore,
+  calculateWaterSortSpeedFullScoreMs,
+} from "./score";
 
 const WATER_SORT_PLAY_RECORD_PAYLOAD_VERSION = 2;
 const WATER_SORT_GAME_ID = "water-sort";
@@ -231,6 +234,22 @@ export function getWaterSortPlayRecordScore(record: PlayRecord): number | null {
   }).total;
 }
 
+export function getWaterSortPlayRecordTimeDelta(
+  record: PlayRecord,
+): number | null {
+  if (!isWaterSortPlayRecord(record)) {
+    return null;
+  }
+
+  const { elapsedMs, optimalMoveCount } = record.payload.performance;
+  const speedFullScoreMs = calculateWaterSortSpeedFullScoreMs({
+    optimalMoveCount,
+    colorCount: record.payload.problemIdentity.conditions.colorCount,
+  });
+
+  return elapsedMs - speedFullScoreMs;
+}
+
 export function getWaterSortPlayRecordMoveDelta(
   record: PlayRecord,
 ): number | null {
@@ -257,13 +276,9 @@ export const waterSortPlayRecordDefinition: PlayRecordDefinition = {
       getValue: getWaterSortPlayRecordScore,
     },
     {
-      id: "elapsed-ms",
+      id: "time-delta-ms",
       direction: "lower",
-      getValue(record) {
-        return isWaterSortPlayRecord(record)
-          ? record.payload.performance.elapsedMs
-          : null;
-      },
+      getValue: getWaterSortPlayRecordTimeDelta,
     },
     {
       id: "move-delta",
