@@ -1,6 +1,6 @@
 import {
-  type InternalDiagnosticSnapshot,
   INTERNAL_DIAGNOSTIC_FORMAT_VERSION,
+  type InternalDiagnosticSnapshot,
 } from "@/games/diagnostics";
 import {
   type NanpureDifficulty,

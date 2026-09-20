@@ -96,7 +96,10 @@ export function InternalDiagnosticsDialog({
             value={`v${generatorVersion}`}
             mono
           />
-          <InternalDiagnosticRow label="生成条件" value={generationConditions} />
+          <InternalDiagnosticRow
+            label="生成条件"
+            value={generationConditions}
+          />
           <InternalDiagnosticRow
             label="生成試行"
             value={String(generationAttempt)}
