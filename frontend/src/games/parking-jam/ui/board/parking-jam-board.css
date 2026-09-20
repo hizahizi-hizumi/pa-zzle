@@ -51,30 +51,55 @@
   touch-action: none;
 }
 .parking-jam-board__surround {
-  fill: #30363a;
+  fill: #272d30;
+  stroke: #1f2427;
+  stroke-width: 3;
+  filter: drop-shadow(0 10px 10px rgb(0 0 0 / 0.24));
 }
 .parking-jam-board__lot {
   fill: url("#parking-jam-lot-gradient");
 }
-.parking-jam-board__grid-line {
+.parking-jam-board__asphalt-speck {
+  fill: rgb(255 255 255 / 0.075);
+}
+.parking-jam-board__parking-line {
   fill: none;
-  stroke: rgb(255 255 255 / 0.055);
-  stroke-width: 1;
+  stroke: rgb(239 236 217 / 0.34);
+  stroke-width: 3;
+  stroke-linecap: round;
 }
 .parking-jam-board__curb {
   fill: none;
-  stroke: #d7d4c8;
-  stroke-width: 13;
+  stroke: #dedbd0;
+  stroke-width: 14;
   vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 3px 1px rgb(0 0 0 / 0.3));
 }
 .parking-jam-board__opening {
-  fill: #30363a;
+  fill: #272d30;
+}
+.parking-jam-board__opening-guide {
+  fill: none;
+  stroke: rgb(246 238 187 / 0.52);
+  stroke-width: 3;
+  stroke-dasharray: 8 8;
+  stroke-linecap: round;
+  pointer-events: none;
 }
 .parking-jam-board__island {
-  fill: #75806f;
-  stroke: #a4ad9a;
+  fill: #c7c5b9;
+  stroke: #e1ded2;
   stroke-width: 5;
   filter: drop-shadow(0 5px 2px rgb(0 0 0 / 0.28));
+}
+.parking-jam-board__grass-base {
+  fill: #6f8068;
+}
+.parking-jam-board__grass-blade {
+  fill: none;
+  stroke: rgb(206 220 188 / 0.32);
+  stroke-width: 1.5;
+  stroke-linecap: round;
 }
 .parking-jam-car {
   cursor: grab;
