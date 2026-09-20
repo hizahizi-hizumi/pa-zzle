@@ -155,14 +155,35 @@ export function ParkingJamBoard({
           <stop offset="1" stopColor="#50585c" />
         </linearGradient>
         <linearGradient
-          id="parking-jam-car-gradient"
+          id="parking-jam-car-red"
           x1="0"
           y1="0"
           x2="1"
           y2="1"
         >
-          <stop offset="0" stopColor="#8ba2b0" />
-          <stop offset="1" stopColor="#637b8a" />
+          <stop offset="0" stopColor="#ff6b62" />
+          <stop offset="0.5" stopColor="#e84d45" />
+          <stop offset="1" stopColor="#b92f35" />
+        </linearGradient>
+        <linearGradient id="parking-jam-car-blue" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#55b8e8" />
+          <stop offset="0.5" stopColor="#268bc1" />
+          <stop offset="1" stopColor="#17618f" />
+        </linearGradient>
+        <linearGradient id="parking-jam-car-yellow" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#ffd967" />
+          <stop offset="0.5" stopColor="#f0b82e" />
+          <stop offset="1" stopColor="#c98a16" />
+        </linearGradient>
+        <linearGradient id="parking-jam-car-green" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#78d09a" />
+          <stop offset="0.5" stopColor="#45a66e" />
+          <stop offset="1" stopColor="#28734c" />
+        </linearGradient>
+        <linearGradient id="parking-jam-car-purple" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#b38ae4" />
+          <stop offset="0.5" stopColor="#835ec2" />
+          <stop offset="1" stopColor="#59408e" />
         </linearGradient>
         <linearGradient
           id="parking-jam-glass-gradient"
@@ -171,8 +192,9 @@ export function ParkingJamBoard({
           x2="0"
           y2="1"
         >
-          <stop offset="0" stopColor="#d2dee4" />
-          <stop offset="1" stopColor="#a8bcc7" />
+          <stop offset="0" stopColor="#eaf8ff" />
+          <stop offset="0.45" stopColor="#a9cddd" />
+          <stop offset="1" stopColor="#5f8294" />
         </linearGradient>
         <pattern
           id="parking-jam-grid"
@@ -246,6 +268,7 @@ export function ParkingJamBoard({
         const x = vehicle.column * CELL + 10;
         const y = vehicle.row * CELL + 10;
         const selected = selectedVehicleId === vehicle.id;
+        const colorIndex = board.vehicles.findIndex((item) => item.id === vehicle.id) % 5;
         const feedbackClass =
           targeted && operation
             ? ` parking-jam-car--${operation.type === "exited" ? "exit" : "blocked"}-${operation.direction}`
@@ -257,7 +280,7 @@ export function ParkingJamBoard({
             tabIndex={interactionDisabled || exiting ? -1 : 0}
             aria-label={getVehicleLabel(vehicle)}
             aria-pressed={selected}
-            className={`parking-jam-car${selected ? " parking-jam-car--selected" : ""}${feedbackClass}`}
+            className={`parking-jam-car parking-jam-car--color-${colorIndex}${selected ? " parking-jam-car--selected" : ""}${feedbackClass}`}
             onPointerDown={(event) => handlePointerDown(event, vehicle)}
             onPointerUp={(event) => handlePointerUp(event, vehicle)}
             onKeyDown={(event) => handleKeyDown(event, vehicle)}
@@ -270,6 +293,14 @@ export function ParkingJamBoard({
               height={vehicleHeight}
               rx="20"
               className="parking-jam-car__body"
+            />
+            <rect
+              x={x + 6}
+              y={y + 6}
+              width={vehicleWidth - 12}
+              height={vehicleHeight * 0.18}
+              rx="8"
+              className="parking-jam-car__highlight"
             />
             <rect
               x={x + (horizontal ? vehicleWidth * 0.3 : vehicleWidth * 0.2)}
@@ -287,6 +318,8 @@ export function ParkingJamBoard({
               }
               className="parking-jam-car__detail"
             />
+            <circle cx={horizontal ? x + 7 : x + vehicleWidth * 0.28} cy={horizontal ? y + vehicleHeight * 0.28 : y + 7} r="5" className="parking-jam-car__light" />
+            <circle cx={horizontal ? x + 7 : x + vehicleWidth * 0.72} cy={horizontal ? y + vehicleHeight * 0.72 : y + 7} r="5" className="parking-jam-car__light" />
             {horizontal ? (
               <>
                 <rect
