@@ -8,8 +8,6 @@ export const nanpureDifficulties = [
 
 export type NanpureDifficulty = (typeof nanpureDifficulties)[number]["id"];
 
-export const NANPURE_DIFFICULTY_MODEL_VERSION = "dependency-v1";
-
 export const NANPURE_DIFFICULTY_DEPENDENCY_THRESHOLDS = {
   hardMaximumMeanAvailablePlacementCount: 9.36,
   easyMinimumMeanAvailablePlacementCount: 14.6,
@@ -18,12 +16,10 @@ export const NANPURE_DIFFICULTY_DEPENDENCY_THRESHOLDS = {
 export type NanpureDifficultyAssessment =
   | {
       status: "rated";
-      modelVersion: typeof NANPURE_DIFFICULTY_MODEL_VERSION;
       difficulty: NanpureDifficulty;
     }
   | {
       status: "unsupported";
-      modelVersion: typeof NANPURE_DIFFICULTY_MODEL_VERSION;
     };
 
 export function parseNanpureDifficulty(
@@ -47,7 +43,6 @@ export function assessNanpureDifficulty(
   if (analysis.status === "unsupported") {
     return {
       status: "unsupported",
-      modelVersion: NANPURE_DIFFICULTY_MODEL_VERSION,
     };
   }
 
@@ -68,7 +63,6 @@ export function assessNanpureDifficulty(
 
   return {
     status: "rated",
-    modelVersion: NANPURE_DIFFICULTY_MODEL_VERSION,
     difficulty,
   };
 }
