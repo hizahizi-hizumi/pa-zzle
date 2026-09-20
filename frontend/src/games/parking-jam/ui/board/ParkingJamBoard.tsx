@@ -9,7 +9,6 @@ import type { ParkingJamOperation } from "@/games/parking-jam/play/use-parking-j
 import type {
   ParkingJamBoard as ParkingJamBoardDefinition,
   ParkingJamDirection,
-  ParkingJamFixedArea,
   ParkingJamState,
   ParkingJamVehicle,
   ParkingJamVehicleId,
@@ -85,7 +84,7 @@ type ParkingJamCarPalette = {
   accent: string;
 };
 
-type ParkingJamCarGlass = {
+type ParkingJamCarPanel = {
   x: number;
   y: number;
   width: number;
@@ -94,9 +93,9 @@ type ParkingJamCarGlass = {
 };
 
 type ParkingJamCarVisualSpec = {
-  frontGlass: ParkingJamCarGlass;
-  rearGlass: ParkingJamCarGlass;
-  roofPanel: ParkingJamCarGlass;
+  frontGlassPath: string;
+  rearGlassPath: string;
+  roofPanel: ParkingJamCarPanel;
   seamPaths: readonly string[];
 };
 
@@ -166,29 +165,6 @@ function getDirectionControls(vehicle: ParkingJamVehicle): DirectionControl[] {
   ];
 }
 
-type IslandShrub = {
-  cx: number;
-  cy: number;
-  radius: number;
-};
-
-function getIslandShrubs(area: ParkingJamFixedArea): IslandShrub[] {
-  const centerX = (area.column + area.width / 2) * PARKING_JAM_CELL;
-  const centerY = (area.row + area.height / 2) * PARKING_JAM_CELL;
-  const radius = Math.min(area.width, area.height) * PARKING_JAM_CELL * 0.11;
-  const spread = Math.max(area.width, area.height) * PARKING_JAM_CELL * 0.18;
-
-  return area.width >= area.height
-    ? [
-        { cx: centerX - spread, cy: centerY, radius },
-        { cx: centerX + spread, cy: centerY, radius },
-      ]
-    : [
-        { cx: centerX, cy: centerY - spread, radius },
-        { cx: centerX, cy: centerY + spread, radius },
-      ];
-}
-
 function getVehicleVisualType(
   vehicle: ParkingJamVehicle,
 ): ParkingJamVehicleVisualType {
@@ -208,100 +184,108 @@ function getVehicleVisualSpec(
   facingPositive: boolean,
 ): ParkingJamCarVisualSpec {
   const horizontal = vehicle.orientation === "horizontal";
-  const longBody = vehicle.length >= 3;
-  const frontInset = longBody ? 18 : 16;
-  const rearInset = longBody ? 16 : 14;
-  const frontGlassLength = longBody ? 22 : 24;
-  const rearGlassLength = longBody ? 18 : 16;
-  const roofStart = longBody ? 0.33 : 0.34;
-  const roofLength = longBody ? 0.34 : 0.28;
+  const longBody = getVehicleVisualType(vehicle) === "long";
+  const hoodLength = longBody ? 22 : 30;
+  const frontGlassDepth = longBody ? 23 : 25;
+  const rearDeckLength = longBody ? 15 : 24;
+  const rearGlassDepth = longBody ? 18 : 20;
+  const cabinInset = longBody ? 13 : 15;
+  const glassEdgeInset = longBody ? 20 : 22;
 
   if (horizontal) {
-    const frontGlassX = facingPositive
-      ? x + vehicleWidth - frontInset - frontGlassLength
-      : x + frontInset;
-    const rearGlassX = facingPositive
-      ? x + rearInset
-      : x + vehicleWidth - rearInset - rearGlassLength;
-    const roofPanelX = x + vehicleWidth * roofStart;
-    const roofPanelWidth = vehicleWidth * roofLength;
-    const frontSeamX = facingPositive
-      ? frontGlassX - 8
-      : frontGlassX + frontGlassLength + 8;
-    const rearSeamX = facingPositive
-      ? rearGlassX + rearGlassLength + 8
-      : rearGlassX - 8;
+    const start = x;
+    const end = x + vehicleWidth;
+    const crossStart = y;
+    const crossEnd = y + vehicleHeight;
+    const frontGlassFront = facingPositive
+      ? end - hoodLength
+      : start + hoodLength;
+    const frontGlassRear = facingPositive
+      ? frontGlassFront - frontGlassDepth
+      : frontGlassFront + frontGlassDepth;
+    const rearGlassRear = facingPositive
+      ? start + rearDeckLength
+      : end - rearDeckLength;
+    const rearGlassFront = facingPositive
+      ? rearGlassRear + rearGlassDepth
+      : rearGlassRear - rearGlassDepth;
+    const roofStart = Math.min(frontGlassRear, rearGlassFront);
+    const roofEnd = Math.max(frontGlassRear, rearGlassFront);
+
+    const frontGlassPath = facingPositive
+      ? `M ${frontGlassRear} ${crossStart + cabinInset} L ${frontGlassFront} ${crossStart + glassEdgeInset} L ${frontGlassFront} ${crossEnd - glassEdgeInset} L ${frontGlassRear} ${crossEnd - cabinInset} Z`
+      : `M ${frontGlassFront} ${crossStart + glassEdgeInset} L ${frontGlassRear} ${crossStart + cabinInset} L ${frontGlassRear} ${crossEnd - cabinInset} L ${frontGlassFront} ${crossEnd - glassEdgeInset} Z`;
+    const rearGlassPath = facingPositive
+      ? `M ${rearGlassRear} ${crossStart + glassEdgeInset} L ${rearGlassFront} ${crossStart + cabinInset} L ${rearGlassFront} ${crossEnd - cabinInset} L ${rearGlassRear} ${crossEnd - glassEdgeInset} Z`
+      : `M ${rearGlassFront} ${crossStart + cabinInset} L ${rearGlassRear} ${crossStart + glassEdgeInset} L ${rearGlassRear} ${crossEnd - glassEdgeInset} L ${rearGlassFront} ${crossEnd - cabinInset} Z`;
 
     return {
-      frontGlass: {
-        x: frontGlassX,
-        y: y + vehicleHeight * 0.18,
-        width: frontGlassLength,
-        height: vehicleHeight * 0.64,
-        rx: 8,
-      },
-      rearGlass: {
-        x: rearGlassX,
-        y: y + vehicleHeight * 0.24,
-        width: rearGlassLength,
-        height: vehicleHeight * 0.52,
-        rx: 7,
-      },
+      frontGlassPath,
+      rearGlassPath,
       roofPanel: {
-        x: roofPanelX,
-        y: y + vehicleHeight * 0.16,
-        width: roofPanelWidth,
-        height: vehicleHeight * 0.68,
-        rx: 10,
+        x: roofStart - 1,
+        y: y + cabinInset - 2,
+        width: roofEnd - roofStart + 2,
+        height: vehicleHeight - (cabinInset - 2) * 2,
+        rx: longBody ? 11 : 13,
       },
-      seamPaths: [
-        `M ${frontSeamX} ${y + 9} V ${y + vehicleHeight - 9}`,
-        `M ${rearSeamX} ${y + 11} V ${y + vehicleHeight - 11}`,
-      ],
+      seamPaths: facingPositive
+        ? [
+            `M ${end - hoodLength * 0.45} ${y + 10} V ${y + vehicleHeight - 10}`,
+            `M ${start + rearDeckLength * 0.5} ${y + 12} V ${y + vehicleHeight - 12}`,
+          ]
+        : [
+            `M ${start + hoodLength * 0.45} ${y + 10} V ${y + vehicleHeight - 10}`,
+            `M ${end - rearDeckLength * 0.5} ${y + 12} V ${y + vehicleHeight - 12}`,
+          ],
     };
   }
 
-  const frontGlassY = facingPositive
-    ? y + vehicleHeight - frontInset - frontGlassLength
-    : y + frontInset;
-  const rearGlassY = facingPositive
-    ? y + rearInset
-    : y + vehicleHeight - rearInset - rearGlassLength;
-  const roofPanelY = y + vehicleHeight * roofStart;
-  const roofPanelHeight = vehicleHeight * roofLength;
-  const frontSeamY = facingPositive
-    ? frontGlassY - 8
-    : frontGlassY + frontGlassLength + 8;
-  const rearSeamY = facingPositive
-    ? rearGlassY + rearGlassLength + 8
-    : rearGlassY - 8;
+  const start = y;
+  const end = y + vehicleHeight;
+  const crossStart = x;
+  const crossEnd = x + vehicleWidth;
+  const frontGlassFront = facingPositive
+    ? end - hoodLength
+    : start + hoodLength;
+  const frontGlassRear = facingPositive
+    ? frontGlassFront - frontGlassDepth
+    : frontGlassFront + frontGlassDepth;
+  const rearGlassRear = facingPositive
+    ? start + rearDeckLength
+    : end - rearDeckLength;
+  const rearGlassFront = facingPositive
+    ? rearGlassRear + rearGlassDepth
+    : rearGlassRear - rearGlassDepth;
+  const roofStart = Math.min(frontGlassRear, rearGlassFront);
+  const roofEnd = Math.max(frontGlassRear, rearGlassFront);
+
+  const frontGlassPath = facingPositive
+    ? `M ${crossStart + cabinInset} ${frontGlassRear} L ${crossStart + glassEdgeInset} ${frontGlassFront} L ${crossEnd - glassEdgeInset} ${frontGlassFront} L ${crossEnd - cabinInset} ${frontGlassRear} Z`
+    : `M ${crossStart + glassEdgeInset} ${frontGlassFront} L ${crossStart + cabinInset} ${frontGlassRear} L ${crossEnd - cabinInset} ${frontGlassRear} L ${crossEnd - glassEdgeInset} ${frontGlassFront} Z`;
+  const rearGlassPath = facingPositive
+    ? `M ${crossStart + glassEdgeInset} ${rearGlassRear} L ${crossStart + cabinInset} ${rearGlassFront} L ${crossEnd - cabinInset} ${rearGlassFront} L ${crossEnd - glassEdgeInset} ${rearGlassRear} Z`
+    : `M ${crossStart + cabinInset} ${rearGlassFront} L ${crossStart + glassEdgeInset} ${rearGlassRear} L ${crossEnd - glassEdgeInset} ${rearGlassRear} L ${crossEnd - cabinInset} ${rearGlassFront} Z`;
 
   return {
-    frontGlass: {
-      x: x + vehicleWidth * 0.18,
-      y: frontGlassY,
-      width: vehicleWidth * 0.64,
-      height: frontGlassLength,
-      rx: 8,
-    },
-    rearGlass: {
-      x: x + vehicleWidth * 0.24,
-      y: rearGlassY,
-      width: vehicleWidth * 0.52,
-      height: rearGlassLength,
-      rx: 7,
-    },
+    frontGlassPath,
+    rearGlassPath,
     roofPanel: {
-      x: x + vehicleWidth * 0.16,
-      y: roofPanelY,
-      width: vehicleWidth * 0.68,
-      height: roofPanelHeight,
-      rx: 10,
+      x: x + cabinInset - 2,
+      y: roofStart - 1,
+      width: vehicleWidth - (cabinInset - 2) * 2,
+      height: roofEnd - roofStart + 2,
+      rx: longBody ? 11 : 13,
     },
-    seamPaths: [
-      `M ${x + 9} ${frontSeamY} H ${x + vehicleWidth - 9}`,
-      `M ${x + 11} ${rearSeamY} H ${x + vehicleWidth - 11}`,
-    ],
+    seamPaths: facingPositive
+      ? [
+          `M ${x + 10} ${end - hoodLength * 0.45} H ${x + vehicleWidth - 10}`,
+          `M ${x + 12} ${start + rearDeckLength * 0.5} H ${x + vehicleWidth - 12}`,
+        ]
+      : [
+          `M ${x + 10} ${start + hoodLength * 0.45} H ${x + vehicleWidth - 10}`,
+          `M ${x + 12} ${end - rearDeckLength * 0.5} H ${x + vehicleWidth - 12}`,
+        ],
   };
 }
 
@@ -555,22 +539,6 @@ export function ParkingJamBoard({
             rx="3"
             className="parking-jam-board__island-green"
           />
-          {getIslandShrubs(area).map((shrub) => (
-            <g key={`shrub-${shrub.cx}-${shrub.cy}`}>
-              <circle
-                cx={shrub.cx + 3}
-                cy={shrub.cy + 4}
-                r={shrub.radius + 2}
-                className="parking-jam-board__shrub-shadow"
-              />
-              <circle
-                cx={shrub.cx}
-                cy={shrub.cy}
-                r={shrub.radius}
-                className="parking-jam-board__shrub"
-              />
-            </g>
-          ))}
         </g>
       ))}
       <g clipPath="url(#parking-jam-vehicle-space)">
@@ -671,20 +639,12 @@ export function ParkingJamBoard({
                 rx={visualSpec.roofPanel.rx}
                 className="parking-jam-car__roof-panel"
               />
-              <rect
-                x={visualSpec.frontGlass.x}
-                y={visualSpec.frontGlass.y}
-                width={visualSpec.frontGlass.width}
-                height={visualSpec.frontGlass.height}
-                rx={visualSpec.frontGlass.rx}
+              <path
+                d={visualSpec.frontGlassPath}
                 className="parking-jam-car__glass"
               />
-              <rect
-                x={visualSpec.rearGlass.x}
-                y={visualSpec.rearGlass.y}
-                width={visualSpec.rearGlass.width}
-                height={visualSpec.rearGlass.height}
-                rx={visualSpec.rearGlass.rx}
+              <path
+                d={visualSpec.rearGlassPath}
                 className="parking-jam-car__rear-glass"
               />
               {visualSpec.seamPaths.map((seamPath) => (
