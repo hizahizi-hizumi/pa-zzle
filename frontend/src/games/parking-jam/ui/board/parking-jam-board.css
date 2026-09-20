@@ -1,0 +1,112 @@
+@keyframes parking-jam-blocked-left {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  45% {
+    transform: translateX(-6px);
+  }
+}
+
+@keyframes parking-jam-blocked-right {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  45% {
+    transform: translateX(6px);
+  }
+}
+
+@keyframes parking-jam-blocked-up {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  45% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes parking-jam-blocked-down {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  45% {
+    transform: translateY(6px);
+  }
+}
+
+@keyframes parking-jam-exit-left {
+  to {
+    transform: translateX(-180%);
+    opacity: 0.15;
+  }
+}
+
+@keyframes parking-jam-exit-right {
+  to {
+    transform: translateX(180%);
+    opacity: 0.15;
+  }
+}
+
+@keyframes parking-jam-exit-up {
+  to {
+    transform: translateY(-180%);
+    opacity: 0.15;
+  }
+}
+
+@keyframes parking-jam-exit-down {
+  to {
+    transform: translateY(180%);
+    opacity: 0.15;
+  }
+}
+
+.parking-jam-vehicle--blocked-left {
+  animation: parking-jam-blocked-left 180ms ease-out;
+}
+
+.parking-jam-vehicle--blocked-right {
+  animation: parking-jam-blocked-right 180ms ease-out;
+}
+
+.parking-jam-vehicle--blocked-up {
+  animation: parking-jam-blocked-up 180ms ease-out;
+}
+
+.parking-jam-vehicle--blocked-down {
+  animation: parking-jam-blocked-down 180ms ease-out;
+}
+
+.parking-jam-vehicle--exit-left {
+  animation: parking-jam-exit-left 260ms ease-in forwards;
+}
+
+.parking-jam-vehicle--exit-right {
+  animation: parking-jam-exit-right 260ms ease-in forwards;
+}
+
+.parking-jam-vehicle--exit-up {
+  animation: parking-jam-exit-up 260ms ease-in forwards;
+}
+
+.parking-jam-vehicle--exit-down {
+  animation: parking-jam-exit-down 260ms ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .parking-jam-vehicle--blocked-left,
+  .parking-jam-vehicle--blocked-right,
+  .parking-jam-vehicle--blocked-up,
+  .parking-jam-vehicle--blocked-down,
+  .parking-jam-vehicle--exit-left,
+  .parking-jam-vehicle--exit-right,
+  .parking-jam-vehicle--exit-up,
+  .parking-jam-vehicle--exit-down {
+    animation-duration: 1ms;
+  }
+}
