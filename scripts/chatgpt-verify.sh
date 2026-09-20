@@ -57,12 +57,12 @@ trap cleanup EXIT
 
 expected_key="$(python3 -S "$repo_root/.github/actions/offline-dependencies/scripts/artifact_state.py" key --repo-root "$repo_root")"
 archive_digest="$(sha256sum "$archive" | awk '{print $1}')"
-dependency_cache_root="\${TMPDIR:-/tmp}/pa-zzle-offline-dependencies"
+dependency_cache_root="${TMPDIR:-/tmp}/pa-zzle-offline-dependencies"
 dependency_dir="$dependency_cache_root/$archive_digest"
 mkdir -p "$dependency_cache_root"
 
 if [[ ! -e "$dependency_dir" ]]; then
-  dependency_stage_dir="$(mktemp -d "$dependency_cache_root/.\${archive_digest}.XXXXXX")"
+  dependency_stage_dir="$(mktemp -d "$dependency_cache_root/.${archive_digest}.XXXXXX")"
   tar --zstd -xf "$archive" -C "$dependency_stage_dir"
   [[ -f "$dependency_stage_dir/manifest.env" ]] || fail "manifest.env not found in Artifact"
   [[ -d "$dependency_stage_dir/frontend/node_modules" ]] || fail "frontend node_modules not found in Artifact"
@@ -115,12 +115,12 @@ run_frontend_check test node_modules/.bin/vitest run --pool=vmForks
 run_frontend_check build node_modules/.bin/vite build --config vite.config.ts
 
 checks_failed=0
-for index in "\${!check_pids[@]}"; do
-  if ! wait "\${check_pids[$index]}"; then
+for index in "${!check_pids[@]}"; do
+  if ! wait "${check_pids[$index]}"; then
     checks_failed=1
   fi
 done
-for name in "\${check_names[@]}"; do
+for name in "${check_names[@]}"; do
   cat "$run_dir/$name.log"
 done
 (( checks_failed == 0 )) || fail "Frontend quality checks failed"
