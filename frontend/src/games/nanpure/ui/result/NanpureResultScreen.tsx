@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  ChevronDown,
   Home,
   Play,
   RotateCcw,
@@ -113,6 +114,7 @@ export function NanpureResultScreen({
             <CollapsibleTrigger asChild>
               <Button type="button" variant="ghost" size="sm">
                 スコアの内訳・採点基準
+                <ChevronDown />
               </Button>
             </CollapsibleTrigger>
           </div>
