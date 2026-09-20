@@ -27,7 +27,7 @@ type ParkingJamBoardProps = {
 };
 
 const CELL = 100;
-const MARGIN = 26;
+const MARGIN = 38;
 const SWIPE_THRESHOLD = 18;
 
 function getOpeningGeometry(
@@ -151,8 +151,9 @@ export function ParkingJamBoard({
           x2="0"
           y2="1"
         >
-          <stop offset="0" stopColor="#626b70" />
-          <stop offset="1" stopColor="#50585c" />
+          <stop offset="0" stopColor="#596267" />
+          <stop offset="0.55" stopColor="#4d565b" />
+          <stop offset="1" stopColor="#424a4e" />
         </linearGradient>
         <linearGradient id="parking-jam-car-red" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#ff6b62" />
@@ -191,15 +192,35 @@ export function ParkingJamBoard({
           <stop offset="1" stopColor="#5f8294" />
         </linearGradient>
         <pattern
+          id="parking-jam-asphalt"
+          width="32"
+          height="32"
+          patternUnits="userSpaceOnUse"
+        >
+          <circle cx="5" cy="8" r="1.2" className="parking-jam-board__asphalt-speck" />
+          <circle cx="22" cy="5" r="0.8" className="parking-jam-board__asphalt-speck" />
+          <circle cx="14" cy="23" r="1" className="parking-jam-board__asphalt-speck" />
+          <circle cx="29" cy="27" r="0.7" className="parking-jam-board__asphalt-speck" />
+        </pattern>
+        <pattern
           id="parking-jam-grid"
           width={CELL}
           height={CELL}
           patternUnits="userSpaceOnUse"
         >
           <path
-            d={`M ${CELL} 0 H 0 V ${CELL}`}
-            className="parking-jam-board__grid-line"
+            d={`M ${CELL} 16 V ${CELL - 16} M 16 ${CELL} H ${CELL - 16}`}
+            className="parking-jam-board__parking-line"
           />
+        </pattern>
+        <pattern
+          id="parking-jam-grass"
+          width="18"
+          height="18"
+          patternUnits="userSpaceOnUse"
+        >
+          <rect width="18" height="18" className="parking-jam-board__grass-base" />
+          <path d="M 2 15 L 6 9 M 9 18 L 11 11 M 14 14 L 17 8" className="parking-jam-board__grass-blade" />
         </pattern>
       </defs>
       <rect
@@ -215,6 +236,12 @@ export function ParkingJamBoard({
         height={height}
         rx="18"
         className="parking-jam-board__lot"
+      />
+      <rect
+        width={width}
+        height={height}
+        rx="18"
+        fill="url(#parking-jam-asphalt)"
       />
       <rect
         width={width}
@@ -240,6 +267,21 @@ export function ParkingJamBoard({
           />
         );
       })}
+      {board.roadOpenings.map((opening) => {
+        const geometry = getOpeningGeometry(opening, board);
+        const horizontal = opening.side === "up" || opening.side === "down";
+        return (
+          <path
+            key={`guide-${opening.side}-${opening.startOffset}-${opening.length}`}
+            d={
+              horizontal
+                ? `M ${geometry.x + geometry.width / 2} ${geometry.y + 5} V ${geometry.y + geometry.height - 5}`
+                : `M ${geometry.x + 5} ${geometry.y + geometry.height / 2} H ${geometry.x + geometry.width - 5}`
+            }
+            className="parking-jam-board__opening-guide"
+          />
+        );
+      })}
       {board.fixedAreas.map((area) => (
         <rect
           key={`${area.row}-${area.column}-${area.width}-${area.height}`}
@@ -249,6 +291,18 @@ export function ParkingJamBoard({
           height={area.height * CELL - 20}
           rx="14"
           className="parking-jam-board__island"
+        />
+      ))}
+
+      {board.fixedAreas.map((area) => (
+        <rect
+          key={`grass-${area.row}-${area.column}-${area.width}-${area.height}`}
+          x={area.column * CELL + 18}
+          y={area.row * CELL + 18}
+          width={area.width * CELL - 36}
+          height={area.height * CELL - 36}
+          rx="9"
+          fill="url(#parking-jam-grass)"
         />
       ))}
       {board.vehicles.map((vehicle) => {
