@@ -143,6 +143,49 @@ export function ParkingJamBoard({
       viewBox={`${-MARGIN} ${-MARGIN} ${width + MARGIN * 2} ${height + MARGIN * 2}`}
       className="parking-jam-board"
     >
+      <defs>
+        <linearGradient
+          id="parking-jam-lot-gradient"
+          x1="0"
+          y1="0"
+          x2="0"
+          y2="1"
+        >
+          <stop offset="0" stopColor="#626b70" />
+          <stop offset="1" stopColor="#50585c" />
+        </linearGradient>
+        <linearGradient
+          id="parking-jam-car-gradient"
+          x1="0"
+          y1="0"
+          x2="1"
+          y2="1"
+        >
+          <stop offset="0" stopColor="#8ba2b0" />
+          <stop offset="1" stopColor="#637b8a" />
+        </linearGradient>
+        <linearGradient
+          id="parking-jam-glass-gradient"
+          x1="0"
+          y1="0"
+          x2="0"
+          y2="1"
+        >
+          <stop offset="0" stopColor="#d2dee4" />
+          <stop offset="1" stopColor="#a8bcc7" />
+        </linearGradient>
+        <pattern
+          id="parking-jam-grid"
+          width={CELL}
+          height={CELL}
+          patternUnits="userSpaceOnUse"
+        >
+          <path
+            d={`M ${CELL} 0 H 0 V ${CELL}`}
+            className="parking-jam-board__grid-line"
+          />
+        </pattern>
+      </defs>
       <rect
         x={-MARGIN}
         y={-MARGIN}
@@ -156,6 +199,12 @@ export function ParkingJamBoard({
         height={height}
         rx="18"
         className="parking-jam-board__lot"
+      />
+      <rect
+        width={width}
+        height={height}
+        rx="18"
+        fill="url(#parking-jam-grid)"
       />
       <rect
         x="8"
@@ -238,6 +287,77 @@ export function ParkingJamBoard({
               }
               className="parking-jam-car__detail"
             />
+            {horizontal ? (
+              <>
+                <rect
+                  x={x + vehicleWidth * 0.16}
+                  y={y - 3}
+                  width={vehicleWidth * 0.18}
+                  height="7"
+                  rx="3.5"
+                  className="parking-jam-car__wheel"
+                />
+                <rect
+                  x={x + vehicleWidth * 0.66}
+                  y={y - 3}
+                  width={vehicleWidth * 0.18}
+                  height="7"
+                  rx="3.5"
+                  className="parking-jam-car__wheel"
+                />
+                <rect
+                  x={x + vehicleWidth * 0.16}
+                  y={y + vehicleHeight - 4}
+                  width={vehicleWidth * 0.18}
+                  height="7"
+                  rx="3.5"
+                  className="parking-jam-car__wheel"
+                />
+                <rect
+                  x={x + vehicleWidth * 0.66}
+                  y={y + vehicleHeight - 4}
+                  width={vehicleWidth * 0.18}
+                  height="7"
+                  rx="3.5"
+                  className="parking-jam-car__wheel"
+                />
+              </>
+            ) : (
+              <>
+                <rect
+                  x={x - 3}
+                  y={y + vehicleHeight * 0.16}
+                  width="7"
+                  height={vehicleHeight * 0.18}
+                  rx="3.5"
+                  className="parking-jam-car__wheel"
+                />
+                <rect
+                  x={x - 3}
+                  y={y + vehicleHeight * 0.66}
+                  width="7"
+                  height={vehicleHeight * 0.18}
+                  rx="3.5"
+                  className="parking-jam-car__wheel"
+                />
+                <rect
+                  x={x + vehicleWidth - 4}
+                  y={y + vehicleHeight * 0.16}
+                  width="7"
+                  height={vehicleHeight * 0.18}
+                  rx="3.5"
+                  className="parking-jam-car__wheel"
+                />
+                <rect
+                  x={x + vehicleWidth - 4}
+                  y={y + vehicleHeight * 0.66}
+                  width="7"
+                  height={vehicleHeight * 0.18}
+                  rx="3.5"
+                  className="parking-jam-car__wheel"
+                />
+              </>
+            )}
           </g>
         );
       })}
