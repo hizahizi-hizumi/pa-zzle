@@ -73,7 +73,7 @@ export NPM_CONFIG_REGISTRY=http://127.0.0.1:9
   cd "$repo_root/frontend"
   node_modules/.bin/biome check .
   TERM=dumb node_modules/.bin/tsc --noEmit --pretty false
-  node_modules/.bin/vitest run
+  node_modules/.bin/vitest run --pool=vmForks
   node_modules/.bin/vite build --config vite.config.ts
 )
 
