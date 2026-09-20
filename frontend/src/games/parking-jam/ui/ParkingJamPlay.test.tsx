@@ -24,7 +24,7 @@ function createProps(): ComponentProps<typeof ParkingJamPlay> {
       ],
     },
     state: { remainingVehicleIds: ["a", "b"] },
-    selectedVehicleId: "a",
+    selectedVehicleId: null,
     operation: null,
     elapsedMs: 65_000,
     failedMoveCount: 2,
@@ -46,64 +46,54 @@ function createProps(): ComponentProps<typeof ParkingJamPlay> {
 }
 
 describe("ParkingJamPlay", () => {
-  describe("横向きの車を選択している場合", () => {
-    let props: ComponentProps<typeof ParkingJamPlay>;
+  let props: ComponentProps<typeof ParkingJamPlay>;
 
-    beforeEach(() => {
-      props = createProps();
-      render(<ParkingJamPlay {...props} />);
-    });
-
-    test("車の近くに左右の出庫操作を提示すること", () => {
-      const left = screen.getByRole("button", { name: "左へ出庫" });
-      const right = screen.getByRole("button", { name: "右へ出庫" });
-
-      expect(left).toBeTruthy();
-      expect(right).toBeTruthy();
-      expect(screen.queryByRole("button", { name: "上へ出庫" })).toBeNull();
-      expect(screen.queryByRole("button", { name: "下へ出庫" })).toBeNull();
-    });
-
-    test("選んだ車と方向をプレイ責務へ通知すること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "右へ出庫" }));
-
-      expect(props.onMove).toHaveBeenCalledWith("a", "right");
-    });
-
-    test("待ったとやり直しを別の操作として通知すること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "待った" }));
-      fireEvent.click(screen.getByRole("button", { name: "やり直す" }));
-
-      expect(props.onUndo).toHaveBeenCalledOnce();
-      expect(props.onRestart).toHaveBeenCalledOnce();
-    });
+  beforeEach(() => {
+    props = createProps();
+    render(<ParkingJamPlay {...props} />);
   });
 
-  describe("車が選択されていない場合", () => {
-    beforeEach(() => {
-      render(<ParkingJamPlay {...createProps()} selectedVehicleId={null} />);
-    });
-
-    test("盤面外に操作説明や方向操作を常設しないこと", () => {
-      expect(screen.queryByText("車を選んでください")).toBeNull();
-      expect(screen.queryByRole("button", { name: "左へ出庫" })).toBeNull();
-    });
+  test("プレイ中に難易度を表示しないこと", () => {
+    expect(screen.queryByText("ふつう")).toBeNull();
   });
 
-  describe("クリア演出中の場合", () => {
-    beforeEach(() => {
-      render(
-        <ParkingJamPlay
-          {...createProps()}
-          status="cleared"
-          progress="clearing"
-          state={{ remainingVehicleIds: [] }}
-        />,
-      );
-    });
+  test("車をタップすると選択を通知すること", () => {
+    const vehicle = screen.getByRole("button", { name: "横向きの車 行2 列1" });
 
-    test("結果操作を先に表示しないこと", () => {
-      expect(screen.queryByRole("button", { name: "同じ問題" })).toBeNull();
-    });
+    fireEvent.pointerDown(vehicle, { pointerId: 1, clientX: 20, clientY: 20 });
+    fireEvent.pointerUp(vehicle, { pointerId: 1, clientX: 20, clientY: 20 });
+
+    expect(props.onSelectVehicle).toHaveBeenCalledWith("a");
+  });
+
+  test("車を進行軸へスワイプすると車と方向を通知すること", () => {
+    const vehicle = screen.getByRole("button", { name: "横向きの車 行2 列1" });
+
+    fireEvent.pointerDown(vehicle, { pointerId: 1, clientX: 20, clientY: 20 });
+    fireEvent.pointerUp(vehicle, { pointerId: 1, clientX: 70, clientY: 22 });
+
+    expect(props.onMove).toHaveBeenCalledWith("a", "right");
+  });
+
+  test("共通プレイヘッダーから盤面を戻せること", () => {
+    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
+    fireEvent.click(screen.getByRole("button", { name: "盤面を戻す" }));
+
+    expect(props.onRestart).toHaveBeenCalledOnce();
+  });
+});
+
+describe("クリア演出中の場合", () => {
+  test("結果操作を先に表示しないこと", () => {
+    render(
+      <ParkingJamPlay
+        {...createProps()}
+        status="cleared"
+        progress="clearing"
+        state={{ remainingVehicleIds: [] }}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "同じ問題" })).toBeNull();
   });
 });
