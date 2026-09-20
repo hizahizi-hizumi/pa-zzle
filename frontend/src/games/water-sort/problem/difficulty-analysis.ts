@@ -26,14 +26,23 @@ export type WaterSortRepresentativeChoiceRisk = {
   maximumDetourMoves: number;
 };
 
-export type WaterSortPlausibleChoiceSafety = {
+export type WaterSortPlausibleChoiceAnalysis = {
   sampledDecisionStateCount: number;
+  singleChoiceDecisionStateCount: number;
+  ambiguousDecisionStateCount: number;
   evaluatedChoiceCount: number;
   unresolvedChoiceCount: number;
+  optimalChoiceCount: number;
+  detourChoiceCount: number;
   deadEndChoiceCount: number;
+  detourDecisionStateCount: number;
   deadEndDecisionStateCount: number;
+  ambiguousDecisionStateRatio: number;
+  detourDecisionStateRatio: number;
   deadEndDecisionStateRatio: number;
+  detourChoiceRatio: number;
   deadEndChoiceRatio: number;
+  maximumDetourMoves: number;
   minimumSolvableChoiceRatio: number;
 };
 
@@ -46,7 +55,7 @@ export type WaterSortDifficultyAnalysis = {
   noEmptyBottleStateRatio: number;
   longestNoEmptyBottleRun: number;
   representativeChoiceRisk: WaterSortRepresentativeChoiceRisk;
-  plausibleChoiceSafety: WaterSortPlausibleChoiceSafety;
+  plausibleChoiceAnalysis: WaterSortPlausibleChoiceAnalysis;
 };
 
 export type WaterSortDifficultyAnalysisOptions = {
@@ -335,25 +344,38 @@ function selectEvenlySpacedDecisionStates(
   return selected;
 }
 
-function analyzePlausibleChoiceSafety(
+function analyzePlausibleChoices(
   solutionStates: readonly WaterSortState[],
   maximumSampledDecisionStates: number,
   maximumPlausibleChoicesPerState: number,
   maxExpandedStatesPerPlausibleChoice: number,
-): WaterSortPlausibleChoiceSafety {
+): WaterSortPlausibleChoiceAnalysis {
+  const shortestMoveCount = Math.max(0, solutionStates.length - 1);
   const decisionStates = findDecisionStates(solutionStates);
   const sampledDecisionStates = selectEvenlySpacedDecisionStates(
     decisionStates,
     maximumSampledDecisionStates,
   );
 
+  let singleChoiceDecisionStateCount = 0;
+  let ambiguousDecisionStateCount = 0;
   let evaluatedChoiceCount = 0;
   let unresolvedChoiceCount = 0;
+  let optimalChoiceCount = 0;
+  let detourChoiceCount = 0;
   let deadEndChoiceCount = 0;
+  let detourDecisionStateCount = 0;
   let deadEndDecisionStateCount = 0;
+  let maximumDetourMoves = 0;
   let minimumSolvableChoiceRatio = 1;
 
   for (const decisionState of sampledDecisionStates) {
+    if (decisionState.plausibleTransitions.length === 1) {
+      singleChoiceDecisionStateCount += 1;
+    } else {
+      ambiguousDecisionStateCount += 1;
+    }
+
     const nextSolutionState = solutionStates[decisionState.stateIndex + 1];
     const sampledTransitions = selectEvenlySpacedTransitions(
       decisionState.plausibleTransitions,
@@ -362,7 +384,9 @@ function analyzePlausibleChoiceSafety(
         ? createWaterSortStateKey(nextSolutionState)
         : undefined,
     );
+    const remainingMoveCount = shortestMoveCount - decisionState.stateIndex;
     let stateEvaluatedChoiceCount = 0;
+    let stateDetourChoiceCount = 0;
     let stateDeadEndChoiceCount = 0;
 
     for (const transition of sampledTransitions) {
@@ -379,9 +403,25 @@ function analyzePlausibleChoiceSafety(
       if (result.status === "unsolvable") {
         deadEndChoiceCount += 1;
         stateDeadEndChoiceCount += 1;
+        continue;
+      }
+
+      const detourMoves = 1 + result.moves.length - remainingMoveCount;
+      if (detourMoves < 0) {
+        throw new Error("Plausible choice analysis found a shorter path");
+      }
+      if (detourMoves === 0) {
+        optimalChoiceCount += 1;
+      } else {
+        detourChoiceCount += 1;
+        stateDetourChoiceCount += 1;
+        maximumDetourMoves = Math.max(maximumDetourMoves, detourMoves);
       }
     }
 
+    if (stateDetourChoiceCount > 0) {
+      detourDecisionStateCount += 1;
+    }
     if (stateDeadEndChoiceCount > 0) {
       deadEndDecisionStateCount += 1;
     }
@@ -398,18 +438,34 @@ function analyzePlausibleChoiceSafety(
 
   return {
     sampledDecisionStateCount: sampledDecisionStates.length,
+    singleChoiceDecisionStateCount,
+    ambiguousDecisionStateCount,
     evaluatedChoiceCount,
     unresolvedChoiceCount,
+    optimalChoiceCount,
+    detourChoiceCount,
     deadEndChoiceCount,
+    detourDecisionStateCount,
     deadEndDecisionStateCount,
+    ambiguousDecisionStateRatio:
+      sampledDecisionStates.length === 0
+        ? 0
+        : ambiguousDecisionStateCount / sampledDecisionStates.length,
+    detourDecisionStateRatio:
+      sampledDecisionStates.length === 0
+        ? 0
+        : detourDecisionStateCount / sampledDecisionStates.length,
     deadEndDecisionStateRatio:
       sampledDecisionStates.length === 0
         ? 0
         : deadEndDecisionStateCount / sampledDecisionStates.length,
+    detourChoiceRatio:
+      evaluatedChoiceCount === 0 ? 0 : detourChoiceCount / evaluatedChoiceCount,
     deadEndChoiceRatio:
       evaluatedChoiceCount === 0
         ? 0
         : deadEndChoiceCount / evaluatedChoiceCount,
+    maximumDetourMoves,
     minimumSolvableChoiceRatio:
       evaluatedChoiceCount === 0 ? 1 : minimumSolvableChoiceRatio,
   };
@@ -527,7 +583,7 @@ export function analyzeWaterSortDifficulty(
       maximumRiskChoices,
       maxExpandedStatesPerRiskChoice,
     ),
-    plausibleChoiceSafety: analyzePlausibleChoiceSafety(
+    plausibleChoiceAnalysis: analyzePlausibleChoices(
       solutionStates,
       maximumSampledDecisionStates,
       maximumPlausibleChoicesPerState,

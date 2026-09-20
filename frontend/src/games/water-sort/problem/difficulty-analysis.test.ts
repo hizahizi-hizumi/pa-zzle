@@ -93,7 +93,7 @@ describe("analyzeWaterSortDifficulty", () => {
     }
 
     const analysis = analyzeWaterSortDifficulty(constrainedState, solved.moves);
-    const safety = analysis.plausibleChoiceSafety;
+    const safety = analysis.plausibleChoiceAnalysis;
 
     expect(safety.sampledDecisionStateCount).toBe(5);
     expect(safety.unresolvedChoiceCount).toBe(0);
@@ -110,7 +110,7 @@ describe("analyzeWaterSortDifficulty", () => {
     });
 
     expect(
-      analysis.plausibleChoiceSafety.unresolvedChoiceCount,
+      analysis.plausibleChoiceAnalysis.unresolvedChoiceCount,
     ).toBeGreaterThan(0);
   });
 });
