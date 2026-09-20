@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
-  serializeNanpureDiagnosticSnapshot,
   type NanpureDiagnosticSnapshot,
+  serializeNanpureDiagnosticSnapshot,
 } from "@/games/nanpure/diagnostics";
 import { getNanpureDifficultyLabel } from "@/games/nanpure/difficulty";
 import { DiagnosticRow } from "@/games/nanpure/ui/NanpureDiagnostics/DiagnosticRow";

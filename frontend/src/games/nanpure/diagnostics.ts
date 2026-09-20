@@ -1,6 +1,6 @@
 import {
-  parseNanpureDifficulty,
   type NanpureDifficulty,
+  parseNanpureDifficulty,
 } from "@/games/nanpure/difficulty";
 import {
   NANPURE_MINIMUM_UNIQUE_CLUE_COUNT,

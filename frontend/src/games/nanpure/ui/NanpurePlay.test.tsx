@@ -283,15 +283,11 @@ describe("NanpurePlay", () => {
 });
 
 describe("診断導線が許可されたプレイ中の場合", () => {
-  let onOpenDiagnostics: ReturnType<typeof vi.fn>;
+  const onOpenDiagnostics = vi.fn<() => void>();
 
   beforeEach(() => {
-    onOpenDiagnostics = vi.fn();
     render(
-      <NanpurePlay
-        {...createProps()}
-        onOpenDiagnostics={onOpenDiagnostics}
-      />,
+      <NanpurePlay {...createProps()} onOpenDiagnostics={onOpenDiagnostics} />,
     );
   });
 
@@ -316,10 +312,9 @@ describe("診断導線が許可されていないプレイ中の場合", () => {
 });
 
 describe("診断導線が許可された結果表示の場合", () => {
-  let onOpenDiagnostics: ReturnType<typeof vi.fn>;
+  const onOpenDiagnostics = vi.fn<() => void>();
 
   beforeEach(() => {
-    onOpenDiagnostics = vi.fn();
     render(
       <NanpurePlay
         {...createProps()}
