@@ -1,9 +1,9 @@
 {
-  "requestId": "records-ui-20260920",
-  "targetSha": "103abff2f6bb882d0ceae30fd6348a5e8d007551",
+  "requestId": "interaction-ui-20260920",
+  "targetSha": "487dec71b22019be84596889c8571f129e40199f",
   "components": [
-    "alert",
-    "empty",
-    "native-select"
+    "dialog",
+    "dropdown-menu",
+    "collapsible"
   ]
 }
