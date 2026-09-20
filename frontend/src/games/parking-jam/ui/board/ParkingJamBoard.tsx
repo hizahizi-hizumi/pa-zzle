@@ -19,7 +19,10 @@ type ParkingJamBoardProps = {
   operation: ParkingJamOperation | null;
   interactionDisabled: boolean;
   onSelectVehicle: (vehicleId: ParkingJamVehicleId) => void;
-  onMove: (vehicleId: ParkingJamVehicleId, direction: ParkingJamDirection) => void;
+  onMove: (
+    vehicleId: ParkingJamVehicleId,
+    direction: ParkingJamDirection,
+  ) => void;
   onExitAnimationComplete?: () => void;
 };
 
@@ -27,21 +30,46 @@ const CELL = 100;
 const MARGIN = 26;
 const SWIPE_THRESHOLD = 18;
 
-function getOpeningGeometry(opening: ParkingJamRoadOpening, board: ParkingJamBoardDefinition) {
+function getOpeningGeometry(
+  opening: ParkingJamRoadOpening,
+  board: ParkingJamBoardDefinition,
+) {
   const start = opening.startOffset * CELL;
   const length = opening.length * CELL;
-  if (opening.side === "up") return { x: start, y: -MARGIN, width: length, height: MARGIN + 4 };
-  if (opening.side === "down") return { x: start, y: board.height * CELL - 4, width: length, height: MARGIN + 4 };
-  if (opening.side === "left") return { x: -MARGIN, y: start, width: MARGIN + 4, height: length };
-  return { x: board.width * CELL - 4, y: start, width: MARGIN + 4, height: length };
+  if (opening.side === "up")
+    return { x: start, y: -MARGIN, width: length, height: MARGIN + 4 };
+  if (opening.side === "down")
+    return {
+      x: start,
+      y: board.height * CELL - 4,
+      width: length,
+      height: MARGIN + 4,
+    };
+  if (opening.side === "left")
+    return { x: -MARGIN, y: start, width: MARGIN + 4, height: length };
+  return {
+    x: board.width * CELL - 4,
+    y: start,
+    width: MARGIN + 4,
+    height: length,
+  };
 }
 
-function getSwipeDirection(vehicle: ParkingJamVehicle, deltaX: number, deltaY: number): ParkingJamDirection | null {
+function getSwipeDirection(
+  vehicle: ParkingJamVehicle,
+  deltaX: number,
+  deltaY: number,
+): ParkingJamDirection | null {
   if (vehicle.orientation === "horizontal") {
-    if (Math.abs(deltaX) < SWIPE_THRESHOLD || Math.abs(deltaX) < Math.abs(deltaY)) return null;
+    if (
+      Math.abs(deltaX) < SWIPE_THRESHOLD ||
+      Math.abs(deltaX) < Math.abs(deltaY)
+    )
+      return null;
     return deltaX < 0 ? "left" : "right";
   }
-  if (Math.abs(deltaY) < SWIPE_THRESHOLD || Math.abs(deltaY) < Math.abs(deltaX)) return null;
+  if (Math.abs(deltaY) < SWIPE_THRESHOLD || Math.abs(deltaY) < Math.abs(deltaX))
+    return null;
   return deltaY < 0 ? "up" : "down";
 }
 
@@ -59,27 +87,48 @@ export function ParkingJamBoard({
   onMove,
   onExitAnimationComplete,
 }: ParkingJamBoardProps) {
-  const pointerStart = useRef<{ vehicleId: string; x: number; y: number } | null>(null);
+  const pointerStart = useRef<{
+    vehicleId: string;
+    x: number;
+    y: number;
+  } | null>(null);
   const remaining = new Set(state.remainingVehicleIds);
   const width = board.width * CELL;
   const height = board.height * CELL;
 
-  function handlePointerDown(event: PointerEvent<SVGGElement>, vehicle: ParkingJamVehicle) {
+  function handlePointerDown(
+    event: PointerEvent<SVGGElement>,
+    vehicle: ParkingJamVehicle,
+  ) {
     if (interactionDisabled) return;
-    pointerStart.current = { vehicleId: vehicle.id, x: event.clientX, y: event.clientY };
+    pointerStart.current = {
+      vehicleId: vehicle.id,
+      x: event.clientX,
+      y: event.clientY,
+    };
     event.currentTarget.setPointerCapture?.(event.pointerId);
   }
 
-  function handlePointerUp(event: PointerEvent<SVGGElement>, vehicle: ParkingJamVehicle) {
+  function handlePointerUp(
+    event: PointerEvent<SVGGElement>,
+    vehicle: ParkingJamVehicle,
+  ) {
     const start = pointerStart.current;
     pointerStart.current = null;
     if (!start || start.vehicleId !== vehicle.id || interactionDisabled) return;
-    const direction = getSwipeDirection(vehicle, event.clientX - start.x, event.clientY - start.y);
+    const direction = getSwipeDirection(
+      vehicle,
+      event.clientX - start.x,
+      event.clientY - start.y,
+    );
     if (direction) onMove(vehicle.id, direction);
     else onSelectVehicle(vehicle.id);
   }
 
-  function handleKeyDown(event: KeyboardEvent<SVGGElement>, vehicle: ParkingJamVehicle) {
+  function handleKeyDown(
+    event: KeyboardEvent<SVGGElement>,
+    vehicle: ParkingJamVehicle,
+  ) {
     if (interactionDisabled) return;
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
@@ -94,12 +143,37 @@ export function ParkingJamBoard({
       viewBox={`${-MARGIN} ${-MARGIN} ${width + MARGIN * 2} ${height + MARGIN * 2}`}
       className="parking-jam-board"
     >
-      <rect x={-MARGIN} y={-MARGIN} width={width + MARGIN * 2} height={height + MARGIN * 2} rx="30" className="parking-jam-board__surround" />
-      <rect width={width} height={height} rx="18" className="parking-jam-board__lot" />
-      <rect x="8" y="8" width={width - 16} height={height - 16} rx="13" className="parking-jam-board__curb" />
+      <rect
+        x={-MARGIN}
+        y={-MARGIN}
+        width={width + MARGIN * 2}
+        height={height + MARGIN * 2}
+        rx="30"
+        className="parking-jam-board__surround"
+      />
+      <rect
+        width={width}
+        height={height}
+        rx="18"
+        className="parking-jam-board__lot"
+      />
+      <rect
+        x="8"
+        y="8"
+        width={width - 16}
+        height={height - 16}
+        rx="13"
+        className="parking-jam-board__curb"
+      />
       {board.roadOpenings.map((opening) => {
         const geometry = getOpeningGeometry(opening, board);
-        return <rect key={`${opening.side}-${opening.startOffset}-${opening.length}`} {...geometry} className="parking-jam-board__opening" />;
+        return (
+          <rect
+            key={`${opening.side}-${opening.startOffset}-${opening.length}`}
+            {...geometry}
+            className="parking-jam-board__opening"
+          />
+        );
       })}
       {board.fixedAreas.map((area) => (
         <rect
@@ -123,9 +197,10 @@ export function ParkingJamBoard({
         const x = vehicle.column * CELL + 10;
         const y = vehicle.row * CELL + 10;
         const selected = selectedVehicleId === vehicle.id;
-        const feedbackClass = targeted && operation
-          ? ` parking-jam-car--${operation.type === "exited" ? "exit" : "blocked"}-${operation.direction}`
-          : "";
+        const feedbackClass =
+          targeted && operation
+            ? ` parking-jam-car--${operation.type === "exited" ? "exit" : "blocked"}-${operation.direction}`
+            : "";
         return (
           <g
             key={targeted ? `${vehicle.id}-${operation?.id}` : vehicle.id}
@@ -139,7 +214,14 @@ export function ParkingJamBoard({
             onKeyDown={(event) => handleKeyDown(event, vehicle)}
             onAnimationEnd={exiting ? onExitAnimationComplete : undefined}
           >
-            <rect x={x} y={y} width={vehicleWidth} height={vehicleHeight} rx="20" className="parking-jam-car__body" />
+            <rect
+              x={x}
+              y={y}
+              width={vehicleWidth}
+              height={vehicleHeight}
+              rx="20"
+              className="parking-jam-car__body"
+            />
             <rect
               x={x + (horizontal ? vehicleWidth * 0.3 : vehicleWidth * 0.2)}
               y={y + (horizontal ? vehicleHeight * 0.2 : vehicleHeight * 0.3)}
@@ -149,9 +231,11 @@ export function ParkingJamBoard({
               className="parking-jam-car__glass"
             />
             <path
-              d={horizontal
-                ? `M ${x + vehicleWidth * 0.18} ${y + 7} V ${y + vehicleHeight - 7} M ${x + vehicleWidth * 0.82} ${y + 7} V ${y + vehicleHeight - 7}`
-                : `M ${x + 7} ${y + vehicleHeight * 0.18} H ${x + vehicleWidth - 7} M ${x + 7} ${y + vehicleHeight * 0.82} H ${x + vehicleWidth - 7}`}
+              d={
+                horizontal
+                  ? `M ${x + vehicleWidth * 0.18} ${y + 7} V ${y + vehicleHeight - 7} M ${x + vehicleWidth * 0.82} ${y + 7} V ${y + vehicleHeight - 7}`
+                  : `M ${x + 7} ${y + vehicleHeight * 0.18} H ${x + vehicleWidth - 7} M ${x + 7} ${y + vehicleHeight * 0.82} H ${x + vehicleWidth - 7}`
+              }
               className="parking-jam-car__detail"
             />
           </g>
