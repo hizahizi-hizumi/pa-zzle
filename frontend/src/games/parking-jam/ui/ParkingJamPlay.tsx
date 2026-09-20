@@ -32,7 +32,10 @@ type ParkingJamPlayProps = {
   result: ParkingJamResult | null;
   recordOutcomeNotice: ReactNode;
   onSelectVehicle: (vehicleId: ParkingJamVehicleId) => void;
-  onMove: (vehicleId: ParkingJamVehicleId, direction: ParkingJamDirection) => void;
+  onMove: (
+    vehicleId: ParkingJamVehicleId,
+    direction: ParkingJamDirection,
+  ) => void;
   onUndo: () => void;
   onRestart: () => void;
   onReplay: () => void;
