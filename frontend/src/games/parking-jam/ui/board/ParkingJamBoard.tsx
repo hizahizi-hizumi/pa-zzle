@@ -27,7 +27,7 @@ type ParkingJamBoardProps = {
 };
 
 const CELL = 100;
-const MARGIN = 44;
+const MARGIN = 58;
 const SWIPE_THRESHOLD = 18;
 
 function getOpeningGeometry(
@@ -223,6 +223,16 @@ export function ParkingJamBoard({
         rx="18"
         fill="url(#parking-jam-asphalt)"
       />
+      {Array.from({ length: board.width + 1 }, (_, column) => ({
+        id: `column-${column}`,
+        x: column * CELL,
+      })).map(({ id, x }) => (
+        <path
+          key={id}
+          d={`M ${x} 18 V 64 M ${x} ${height - 18} V ${height - 64}`}
+          className="parking-jam-board__parking-line"
+        />
+      ))}
       <rect
         x="7"
         y="7"
@@ -236,6 +246,14 @@ export function ParkingJamBoard({
         return (
           <g key={`${opening.side}-${opening.startOffset}-${opening.length}`}>
             <rect {...geometry} className="parking-jam-board__exit-road" />
+            <path
+              d={
+                opening.side === "left" || opening.side === "right"
+                  ? `M ${geometry.x} ${geometry.y + 12} H ${geometry.x + geometry.width} M ${geometry.x} ${geometry.y + geometry.height - 12} H ${geometry.x + geometry.width}`
+                  : `M ${geometry.x + 12} ${geometry.y} V ${geometry.y + geometry.height} M ${geometry.x + geometry.width - 12} ${geometry.y} V ${geometry.y + geometry.height}`
+              }
+              className="parking-jam-board__road-edge"
+            />
           </g>
         );
       })}
@@ -304,7 +322,13 @@ export function ParkingJamBoard({
           <circle
             cx={(area.column + area.width / 2) * CELL}
             cy={(area.row + area.height / 2) * CELL}
-            r={Math.min(area.width, area.height) * CELL * 0.18}
+            r={Math.min(area.width, area.height) * CELL * 0.2}
+            className="parking-jam-board__shrub-shadow"
+          />
+          <circle
+            cx={(area.column + area.width / 2) * CELL - 4}
+            cy={(area.row + area.height / 2) * CELL - 5}
+            r={Math.min(area.width, area.height) * CELL * 0.17}
             className="parking-jam-board__shrub"
           />
         </g>
