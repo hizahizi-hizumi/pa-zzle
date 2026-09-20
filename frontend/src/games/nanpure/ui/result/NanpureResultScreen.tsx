@@ -58,7 +58,8 @@ export function NanpureResultScreen({
   onBackToHome,
   onOpenDiagnostics,
 }: NanpureResultScreenProps) {
-  const [detailsOpen, setDetailsOpen] = useState(false);\n  const resultLevel = getNanpureGameResultLevel(result.score.total);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const resultLevel = getNanpureGameResultLevel(result.score.total);
 
   return (
     <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-y-auto bg-background">
