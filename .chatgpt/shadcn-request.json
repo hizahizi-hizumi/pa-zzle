@@ -1,6 +1,6 @@
 {
-  "requestId": "records-chart-20260920",
-  "targetSha": "35d91fe686a1e8b3092934d4b0f9393f4b97e97f",
+  "requestId": "records-chart-tabs-cd5bcca-20260920",
+  "targetSha": "cd5bcca78449c978dee0859de0b6e4311955086c",
   "components": [
     "chart",
     "tabs"
