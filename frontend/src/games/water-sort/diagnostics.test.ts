@@ -1,30 +1,34 @@
+import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
 import { generateWaterSortProblem } from "@/games/water-sort/problem/generator";
 
 import {
   createWaterSortDiagnosticSnapshot,
   parseWaterSortDiagnosticSnapshot,
   restoreWaterSortProblemFromDiagnosticSnapshot,
-  serializeWaterSortDiagnosticSnapshot,
 } from "./diagnostics";
 
 describe("WaterSortDiagnosticSnapshot", () => {
-  test("コピー形式を復元して同じ初期問題を再現できること", () => {
-    const problem = generateWaterSortProblem({
-      seed: "diagnostic-reproduction-seed",
-      colorCount: 4,
-    });
-    const snapshot = createWaterSortDiagnosticSnapshot({
-      difficulty: "normal",
-      problemIdentity: {
-        generatorVersion: problem.identity.generatorVersion,
-        seed: problem.identity.seed,
-        conditions: problem.identity.conditions,
-        generationAttempt: problem.identity.generationAttempt,
-      },
-      buildRevision: "abcdef1234567890",
-    });
+  const problem = generateWaterSortProblem({
+    seed: "diagnostic-reproduction-seed",
+    colorCount: 4,
+  });
+  const snapshot = createWaterSortDiagnosticSnapshot({
+    difficulty: "normal",
+    problemIdentity: {
+      generatorVersion: problem.identity.generatorVersion,
+      seed: problem.identity.seed,
+      conditions: problem.identity.conditions,
+      generationAttempt: problem.identity.generationAttempt,
+    },
+    buildRevision: "abcdef1234567890",
+  });
+  const invalidSerialized = JSON.stringify({
+    formatVersion: 2,
+    game: "water-sort",
+  });
 
-    const serialized = serializeWaterSortDiagnosticSnapshot(snapshot);
+  test("コピー形式を復元して同じ初期問題を再現できること", () => {
+    const serialized = serializeInternalDiagnosticSnapshot(snapshot);
     const parsed = parseWaterSortDiagnosticSnapshot(serialized);
     const restored = restoreWaterSortProblemFromDiagnosticSnapshot(parsed);
 
@@ -35,13 +39,8 @@ describe("WaterSortDiagnosticSnapshot", () => {
   });
 
   test("診断形式ではないJSONを拒否すること", () => {
-    const serialized = JSON.stringify({
-      formatVersion: 2,
-      game: "water-sort",
-    });
-
     function act() {
-      return parseWaterSortDiagnosticSnapshot(serialized);
+      return parseWaterSortDiagnosticSnapshot(invalidSerialized);
     }
 
     expect(act).toThrow("Invalid water sort diagnostic snapshot");

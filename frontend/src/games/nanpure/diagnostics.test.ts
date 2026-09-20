@@ -1,10 +1,10 @@
+import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
 import { generateNanpureProblem } from "@/games/nanpure/problem/generator";
 
 import {
   createNanpureDiagnosticSnapshot,
   parseNanpureDiagnosticSnapshot,
   restoreNanpureProblemFromDiagnosticSnapshot,
-  serializeNanpureDiagnosticSnapshot,
 } from "./diagnostics";
 
 describe("NanpureDiagnosticSnapshot", () => {
@@ -28,7 +28,7 @@ describe("NanpureDiagnosticSnapshot", () => {
   });
 
   test("コピー形式を復元して同じ初期問題を再現できること", () => {
-    const serialized = serializeNanpureDiagnosticSnapshot(snapshot);
+    const serialized = serializeInternalDiagnosticSnapshot(snapshot);
     const parsed = parseNanpureDiagnosticSnapshot(serialized);
     const restored = restoreNanpureProblemFromDiagnosticSnapshot(parsed);
 

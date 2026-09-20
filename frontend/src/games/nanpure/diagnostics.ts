@@ -1,4 +1,8 @@
 import {
+  type InternalDiagnosticSnapshot,
+  INTERNAL_DIAGNOSTIC_FORMAT_VERSION,
+} from "@/games/diagnostics";
+import {
   type NanpureDifficulty,
   parseNanpureDifficulty,
 } from "@/games/nanpure/difficulty";
@@ -13,15 +17,11 @@ import {
 } from "@/games/nanpure/problem/problem";
 import { NANPURE_CELL_COUNT } from "@/games/nanpure/puzzle/board";
 
-export const NANPURE_DIAGNOSTIC_FORMAT_VERSION = 1;
-
-export type NanpureDiagnosticSnapshot = {
-  formatVersion: typeof NANPURE_DIAGNOSTIC_FORMAT_VERSION;
-  game: "nanpure";
-  difficulty: NanpureDifficulty;
-  problemIdentity: NanpureProblemIdentity;
-  buildRevision: string | null;
-};
+export type NanpureDiagnosticSnapshot = InternalDiagnosticSnapshot<
+  "nanpure",
+  NanpureDifficulty,
+  NanpureProblemIdentity
+>;
 
 export function createNanpureDiagnosticSnapshot({
   difficulty,
@@ -33,7 +33,7 @@ export function createNanpureDiagnosticSnapshot({
   buildRevision: string | null;
 }): NanpureDiagnosticSnapshot {
   return {
-    formatVersion: NANPURE_DIAGNOSTIC_FORMAT_VERSION,
+    formatVersion: INTERNAL_DIAGNOSTIC_FORMAT_VERSION,
     game: "nanpure",
     difficulty,
     problemIdentity: {
@@ -42,12 +42,6 @@ export function createNanpureDiagnosticSnapshot({
     },
     buildRevision,
   };
-}
-
-export function serializeNanpureDiagnosticSnapshot(
-  snapshot: NanpureDiagnosticSnapshot,
-): string {
-  return JSON.stringify(snapshot, null, 2);
 }
 
 export function parseNanpureDiagnosticSnapshot(
@@ -63,7 +57,7 @@ export function parseNanpureDiagnosticSnapshot(
       ? parseNanpureDifficulty(value.difficulty)
       : undefined;
   if (
-    value.formatVersion !== NANPURE_DIAGNOSTIC_FORMAT_VERSION ||
+    value.formatVersion !== INTERNAL_DIAGNOSTIC_FORMAT_VERSION ||
     value.game !== "nanpure" ||
     !difficulty ||
     !isProblemIdentity(value.problemIdentity) ||
@@ -73,7 +67,7 @@ export function parseNanpureDiagnosticSnapshot(
   }
 
   return {
-    formatVersion: NANPURE_DIAGNOSTIC_FORMAT_VERSION,
+    formatVersion: INTERNAL_DIAGNOSTIC_FORMAT_VERSION,
     game: "nanpure",
     difficulty,
     problemIdentity: value.problemIdentity,
