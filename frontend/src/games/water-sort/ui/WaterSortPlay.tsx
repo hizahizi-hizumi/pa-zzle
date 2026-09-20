@@ -1,8 +1,6 @@
-import { Undo2 } from "lucide-react";
 import { type ReactNode, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
-import { Button } from "@/components/ui/button";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import type {
   WaterSortOperation,
@@ -12,6 +10,7 @@ import type {
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
 import { DeadlockNotice } from "@/games/water-sort/ui/WaterSortPlay/DeadlockNotice";
+import { UndoButton } from "@/games/water-sort/ui/WaterSortPlay/UndoButton";
 import { WaterSortPlayHeader } from "@/games/water-sort/ui/WaterSortPlay/WaterSortPlayHeader";
 import { WaterSortResultScreen } from "@/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen";
 
@@ -119,17 +118,7 @@ export function WaterSortPlay({
           />
         ) : (
           <div className="flex h-14 items-center justify-center">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-lg"
-              className="size-12 rounded-full border bg-background shadow-sm"
-              aria-label="待った"
-              onClick={onUndo}
-              disabled={!canUndo}
-            >
-              <Undo2 className="size-5" />
-            </Button>
+            <UndoButton disabled={!canUndo} onUndo={onUndo} />
           </div>
         )}
       </footer>

@@ -131,9 +131,15 @@ describe("NanpurePlay", () => {
     const props = createProps();
     render(<NanpurePlay {...props} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
+    fireEvent.pointerDown(
+      screen.getByRole("button", { name: "その他の操作" }),
+      { button: 0, ctrlKey: false },
+    );
     fireEvent.click(screen.getByRole("menuitem", { name: "盤面を戻す" }));
-    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
+    fireEvent.pointerDown(
+      screen.getByRole("button", { name: "その他の操作" }),
+      { button: 0, ctrlKey: false },
+    );
     fireEvent.click(screen.getByRole("menuitem", { name: "リセット" }));
 
     expect(props.onRestart).toHaveBeenCalledOnce();
@@ -292,7 +298,10 @@ describe("診断導線が許可されたプレイ中の場合", () => {
   });
 
   test("その他の操作から検証情報を開けること", () => {
-    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
+    fireEvent.pointerDown(
+      screen.getByRole("button", { name: "その他の操作" }),
+      { button: 0, ctrlKey: false },
+    );
     fireEvent.click(screen.getByRole("menuitem", { name: "検証情報" }));
 
     expect(onOpenDiagnostics).toHaveBeenCalledOnce();
@@ -305,7 +314,10 @@ describe("診断導線が許可されていないプレイ中の場合", () => {
   });
 
   test("その他の操作へ検証情報を表示しないこと", () => {
-    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
+    fireEvent.pointerDown(
+      screen.getByRole("button", { name: "その他の操作" }),
+      { button: 0, ctrlKey: false },
+    );
 
     expect(screen.queryByRole("menuitem", { name: "検証情報" })).toBeNull();
   });

@@ -1,18 +1,25 @@
 import {
   BookOpen,
+  ChevronDown,
+  ChevronUp,
   Home,
   Play,
   RotateCcw,
   SlidersHorizontal,
   Wrench,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { GameResultConfetti } from "@/components/GameResultConfetti";
 import { GameResultIdentity } from "@/components/GameResultIdentity";
 import { GameResultScoreCard } from "@/components/GameResultScoreCard";
 import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import waterSortPictogramSvg from "@/games/water-sort/assets/pictogram.svg?raw";
 import {
   getWaterSortDifficultyLabel,
@@ -52,6 +59,7 @@ export function WaterSortResultScreen({
   onBackToHome,
   onOpenDiagnostics,
 }: WaterSortResultScreenProps) {
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const resultLevel = getWaterSortGameResultLevel(result.score.total);
 
   return (
@@ -111,35 +119,47 @@ export function WaterSortResultScreen({
           </div>
         </div>
 
-        <details className="mt-3 rounded-xl border px-3 py-2 text-sm text-muted-foreground">
-          <summary className="cursor-pointer select-none text-center text-xs font-medium text-foreground">
-            スコアの内訳・採点基準
-          </summary>
-          <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">
-            <DetailMetric
-              label="効率"
-              value={`${result.score.breakdown.efficiency} / ${WATER_SORT_SCORE_MAXIMUMS.efficiency}`}
-            />
-            <DetailMetric
-              label="速さ"
-              value={`${result.score.breakdown.speed} / ${WATER_SORT_SCORE_MAXIMUMS.speed}`}
-            />
-            <DetailMetric
-              label="正確性"
-              value={`${result.score.breakdown.accuracy} / ${WATER_SORT_SCORE_MAXIMUMS.accuracy}`}
-            />
-            <DetailMetric
-              label="基準時間"
-              value={formatScoreTime(result.speedFullScoreMs)}
-            />
-            <DetailMetric label="総手数" value={String(result.moveCount)} />
-            <DetailMetric label="待った" value={`${result.undoCount}回`} />
-            <DetailMetric label="やり直し" value={`${result.restartCount}回`} />
-          </dl>
-          <div className="mt-3 border-t pt-3">
-            <ScoreCriteria result={result} />
+        <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
+          <div className="mt-3 flex justify-center">
+            <CollapsibleTrigger asChild>
+              <Button type="button" variant="outline" size="sm">
+                {detailsOpen ? <ChevronUp /> : <ChevronDown />}
+                スコアの内訳・採点基準
+              </Button>
+            </CollapsibleTrigger>
           </div>
-        </details>
+          <CollapsibleContent>
+            <div className="mt-2 rounded-xl border px-3 py-3 text-sm text-muted-foreground">
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
+                <DetailMetric
+                  label="効率"
+                  value={`${result.score.breakdown.efficiency} / ${WATER_SORT_SCORE_MAXIMUMS.efficiency}`}
+                />
+                <DetailMetric
+                  label="速さ"
+                  value={`${result.score.breakdown.speed} / ${WATER_SORT_SCORE_MAXIMUMS.speed}`}
+                />
+                <DetailMetric
+                  label="正確性"
+                  value={`${result.score.breakdown.accuracy} / ${WATER_SORT_SCORE_MAXIMUMS.accuracy}`}
+                />
+                <DetailMetric
+                  label="基準時間"
+                  value={formatScoreTime(result.speedFullScoreMs)}
+                />
+                <DetailMetric label="総手数" value={String(result.moveCount)} />
+                <DetailMetric label="待った" value={`${result.undoCount}回`} />
+                <DetailMetric
+                  label="やり直し"
+                  value={`${result.restartCount}回`}
+                />
+              </dl>
+              <div className="mt-3 border-t pt-3">
+                <ScoreCriteria result={result} />
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
         {onOpenDiagnostics && (
           <div className="mt-1 flex justify-center">
             <Button
