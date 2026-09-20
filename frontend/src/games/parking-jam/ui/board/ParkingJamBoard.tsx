@@ -67,7 +67,7 @@ export function ParkingJamBoard({
   function handlePointerDown(event: PointerEvent<SVGGElement>, vehicle: ParkingJamVehicle) {
     if (interactionDisabled) return;
     pointerStart.current = { vehicleId: vehicle.id, x: event.clientX, y: event.clientY };
-    event.currentTarget.setPointerCapture(event.pointerId);
+    event.currentTarget.setPointerCapture?.(event.pointerId);
   }
 
   function handlePointerUp(event: PointerEvent<SVGGElement>, vehicle: ParkingJamVehicle) {
