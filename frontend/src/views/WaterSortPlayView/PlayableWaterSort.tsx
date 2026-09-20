@@ -7,6 +7,7 @@ import {
   createWaterSortPlayRecord,
   waterSortPlayRecordDefinition,
 } from "@/games/water-sort/play-record";
+import type { WaterSortProblemIdentity } from "@/games/water-sort/problem/problem";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 import { WaterSortDiagnostics } from "@/games/water-sort/ui/WaterSortDiagnostics";
 import { WaterSortPlay } from "@/games/water-sort/ui/WaterSortPlay";
@@ -20,10 +21,14 @@ import { useNavigate } from "@/router";
 
 type PlayableWaterSortProps = {
   difficulty: WaterSortDifficulty;
+  initialProblemIdentity?: WaterSortProblemIdentity;
 };
 
-export function PlayableWaterSort({ difficulty }: PlayableWaterSortProps) {
-  const play = useWaterSortPlay(difficulty);
+export function PlayableWaterSort({
+  difficulty,
+  initialProblemIdentity,
+}: PlayableWaterSortProps) {
+  const play = useWaterSortPlay(difficulty, initialProblemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>

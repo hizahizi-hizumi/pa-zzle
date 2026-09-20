@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
+import { restoreNanpureProblem } from "@/games/nanpure/problem/generator";
 import type { NanpureProblemIdentity } from "@/games/nanpure/problem/problem";
 import { generateNanpureProblemForDifficulty } from "@/games/nanpure/problem-selection";
 import type { NanpureDigit } from "@/games/nanpure/puzzle/board";
@@ -44,8 +45,11 @@ function createPlayState(
   difficulty: NanpureDifficulty,
   seed: ProblemSeed,
   startedAt: number,
+  initialProblemIdentity?: NanpureProblemIdentity,
 ): NanpurePlayState {
-  const problem = generateNanpureProblemForDifficulty(difficulty, seed);
+  const problem = initialProblemIdentity
+    ? restoreNanpureProblem(initialProblemIdentity)
+    : generateNanpureProblemForDifficulty(difficulty, seed);
 
   return {
     session: createNanpureSession(problem, startedAt),
@@ -56,9 +60,17 @@ function createPlayState(
   };
 }
 
-export function useNanpurePlay(difficulty: NanpureDifficulty) {
+export function useNanpurePlay(
+  difficulty: NanpureDifficulty,
+  initialProblemIdentity?: NanpureProblemIdentity,
+) {
   const [play, setPlay] = useState<NanpurePlayState>(() =>
-    createPlayState(difficulty, createProblemSeed(), Date.now()),
+    createPlayState(
+      difficulty,
+      initialProblemIdentity?.seed ?? createProblemSeed(),
+      Date.now(),
+      initialProblemIdentity,
+    ),
   );
   const [now, setNow] = useState(() => Date.now());
 

@@ -1,84 +1,56 @@
 import { createWaterSortPlayRecord } from "@/games/water-sort/play-record";
-import type { PlayRecord } from "@/records/play-record";
+import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 
 import { waterSortPlayRecordDisplay } from "./play-record-display";
 
-function createRecord() {
-  return createWaterSortPlayRecord({
-    difficulty: "normal",
-    problemIdentity: {
-      generatorVersion: "1",
-      seed: "water-sort-seed",
-      conditions: { colorCount: 6, capacity: 4, emptyBottleCount: 2 },
-      generationAttempt: 1,
-    },
-    startedAt: 1_000,
-    completedAt: 66_000,
-    result: {
-      elapsedMs: 65_000,
-      moveCount: 14,
-      completionMoveCount: 12,
-      undoCount: 2,
-      restartCount: 0,
-      optimalMoveCount: 10,
-    },
-  });
+const record = createWaterSortPlayRecord({
+  difficulty: "normal",
+  problemIdentity: {
+    generatorVersion: "1",
+    seed: "water-sort-seed",
+    conditions: { colorCount: 6, capacity: 4, emptyBottleCount: 2 },
+    generationAttempt: 1,
+  },
+  startedAt: 1_000,
+  completedAt: 66_000,
+  result: {
+    elapsedMs: 65_000,
+    moveCount: 14,
+    completionMoveCount: 12,
+    undoCount: 2,
+    restartCount: 0,
+    optimalMoveCount: 10,
+  },
+});
+
+function getFormattedMetric(metricId: string): string | null {
+  const metricDisplay = waterSortPlayRecordDisplay.metrics.find(
+    (metric) => metric.id === metricId,
+  );
+  const value = getPlayRecordMetricValue(
+    record,
+    waterSortPlayRecordDisplay.definition,
+    metricId,
+  );
+  return metricDisplay && value !== null
+    ? metricDisplay.formatValue(value)
+    : null;
 }
 
-test("履歴に現在のスコアとゲーム固有指標を表示すること", () => {
-  const record = createRecord();
+describe("waterSortPlayRecordDisplay", () => {
+  test("履歴と推移に共通の比較指標を表示できること", () => {
+    const score = getFormattedMetric("play-score");
+    const timeDelta = getFormattedMetric("time-delta-ms");
+    const moveDelta = getFormattedMetric("move-delta");
 
-  const summary = waterSortPlayRecordDisplay.getSummary(record);
-
-  expect(summary).toEqual({
-    primaryMetric: { label: "スコア", value: "87点" },
-    detailMetrics: [
-      { label: "時間", value: "01:05" },
-      { label: "クリア手数", value: "12" },
-      { label: "最短との差", value: "+2" },
-    ],
+    expect(score).toBe("87点");
+    expect(timeDelta).toBe("+00:01");
+    expect(moveDelta).toBe("+2");
   });
-});
 
-test("復元不能な旧記録は評価を推測せず保存済み事実を表示すること", () => {
-  const record: PlayRecord = {
-    id: "legacy-with-restart",
-    gameId: "water-sort",
-    startedAt: 1_000,
-    completedAt: 66_000,
-    payloadVersion: 1,
-    payload: {
-      difficulty: "normal",
-      problemIdentity: {
-        generatorVersion: "1",
-        seed: "legacy-seed",
-        conditions: { colorCount: 6, capacity: 4, emptyBottleCount: 2 },
-        generationAttempt: 1,
-      },
-      performance: {
-        elapsedMs: 65_000,
-        moveCount: 14,
-        undoCount: 2,
-        restartCount: 1,
-        optimalMoveCount: 10,
-      },
-    },
-  };
+  test("比較条件を利用者向けラベルへ変換すること", () => {
+    const label = waterSortPlayRecordDisplay.getComparisonLabel("normal");
 
-  const summary = waterSortPlayRecordDisplay.getSummary(record);
-
-  expect(summary).toEqual({
-    primaryMetric: { label: "スコア", value: "再計算不可" },
-    detailMetrics: [
-      { label: "時間", value: "01:05" },
-      { label: "総手数", value: "14" },
-      { label: "最短", value: "10" },
-    ],
+    expect(label).toBe("ふつう");
   });
-});
-
-test("比較条件を利用者向けラベルへ変換すること", () => {
-  const label = waterSortPlayRecordDisplay.getComparisonLabel("normal");
-
-  expect(label).toBe("ふつう");
 });

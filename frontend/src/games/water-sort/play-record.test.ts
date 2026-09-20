@@ -3,6 +3,7 @@ import {
   createWaterSortPlayRecord,
   getWaterSortPlayRecordCompletionMoveCount,
   getWaterSortPlayRecordScore,
+  getWaterSortPlayRecordTimeDelta,
   isWaterSortPlayRecord,
   waterSortPlayRecordDefinition,
 } from "./play-record";
@@ -53,6 +54,14 @@ test("保存した事実から現在のプレイ評価を導出すること", ()
   const score = getWaterSortPlayRecordScore(record);
 
   expect(score).toBe(87);
+});
+
+test("問題ごとの基準時間との差を比較指標として導出すること", () => {
+  const record = createRecord();
+
+  const timeDelta = getWaterSortPlayRecordTimeDelta(record);
+
+  expect(timeDelta).toBe(1_000);
 });
 
 test("同じ開始条件を自己ベストの比較単位として扱うこと", () => {

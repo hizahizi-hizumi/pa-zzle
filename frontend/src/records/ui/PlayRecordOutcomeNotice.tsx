@@ -4,7 +4,7 @@ import { GameResultSurface } from "@/components/GameResultSurface";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { PlayRecordSaveOutcome } from "../save-play-record";
 import {
-  getPersonalBestMetricDisplay,
+  getPlayRecordMetricDisplay,
   type PlayRecordDisplayDefinition,
 } from "./play-record-display";
 
@@ -53,6 +53,7 @@ function getImprovementLabel(
     case "play-score":
       return `+${improvementAmount}点`;
     case "elapsed-ms":
+    case "time-delta-ms":
       return formatElapsedImprovement(improvementAmount);
     case "mistake-count":
       return `${improvementAmount}回減`;
@@ -97,7 +98,7 @@ export function PlayRecordOutcomeNotice({
         </div>
         <dl className="mt-3 divide-y divide-amber-200/80 dark:divide-amber-900/70">
           {outcome.updates.flatMap((update) => {
-            const metricDisplay = getPersonalBestMetricDisplay(
+            const metricDisplay = getPlayRecordMetricDisplay(
               display,
               update.metricId,
             );

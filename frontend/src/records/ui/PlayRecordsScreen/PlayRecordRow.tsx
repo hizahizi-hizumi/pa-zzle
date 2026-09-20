@@ -1,74 +1,82 @@
+import { PlayIcon } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import {
   getPersonalBestMetricIdsForRecord,
   type PersonalBest,
 } from "@/records/personal-best";
 import type { PlayRecord } from "@/records/play-record";
+import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 import { formatRecordCompletedAt } from "@/records/ui/format";
-import {
-  getPersonalBestMetricDisplay,
-  type PlayRecordDisplayDefinition,
-} from "@/records/ui/play-record-display";
+import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
+import { getPlayRecordGridTemplateColumns } from "./record-grid";
 
 type PlayRecordRowProps = {
   record: PlayRecord;
   display: PlayRecordDisplayDefinition;
   personalBests: readonly PersonalBest[];
+  onReplay: (recordId: string) => void;
 };
 
 export function PlayRecordRow({
   record,
   display,
   personalBests,
+  onReplay,
 }: PlayRecordRowProps) {
-  const summary = display.getSummary(record);
-  if (!summary) {
-    return null;
-  }
-
   const bestMetricIds = getPersonalBestMetricIdsForRecord(
     record,
     personalBests,
     display.definition,
   );
-  const bestLabels = bestMetricIds.flatMap((metricId) => {
-    const metricDisplay = getPersonalBestMetricDisplay(display, metricId);
-    return metricDisplay ? [metricDisplay.label] : [];
-  });
 
   return (
-    <li className="py-3">
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 sm:flex-nowrap">
-        <p className="w-full shrink-0 text-xs text-muted-foreground sm:w-24">
-          {formatRecordCompletedAt(record.completedAt)}
-        </p>
-        <div className="flex min-w-24 items-baseline gap-1.5">
-          <span className="text-xs text-muted-foreground">
-            {summary.primaryMetric.label}
-          </span>
-          <span className="font-mono text-base font-semibold tabular-nums">
-            {summary.primaryMetric.value}
-          </span>
-        </div>
-        <dl className="flex flex-1 flex-wrap items-baseline gap-x-4 gap-y-1 text-xs">
-          {summary.detailMetrics.map((metric) => (
-            <div key={metric.label} className="flex items-baseline gap-1">
-              <dt className="text-muted-foreground">{metric.label}</dt>
-              <dd className="font-mono font-medium tabular-nums">
-                {metric.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
-        {bestLabels.length > 0 && (
+    <li
+      className="grid items-center gap-x-2 py-3"
+      style={{
+        gridTemplateColumns: getPlayRecordGridTemplateColumns(
+          display.metrics.length,
+        ),
+      }}
+    >
+      <p className="text-xs text-muted-foreground tabular-nums">
+        {formatRecordCompletedAt(record.completedAt)}
+      </p>
+      {display.metrics.map((metric, metricIndex) => {
+        const value = getPlayRecordMetricValue(
+          record,
+          display.definition,
+          metric.id,
+        );
+        const isBest = bestMetricIds.includes(metric.id);
+        const formattedValue = value === null ? "—" : metric.formatValue(value);
+
+        return (
           <span
-            className="shrink-0 text-xs font-medium"
-            aria-label={`自己ベスト: ${bestLabels.join("、")}`}
-            title={bestLabels.join("、")}
+            key={metric.id}
+            className={`min-w-0 text-right font-mono tabular-nums ${
+              metricIndex === 0 ? "text-sm" : "text-xs"
+            } ${isBest ? "font-bold text-foreground" : "font-medium"}`}
+            aria-label={
+              isBest && value !== null
+                ? `${metric.label} ${formattedValue} 自己ベスト`
+                : `${metric.label} ${formattedValue}`
+            }
           >
-            ベスト
+            {formattedValue}
           </span>
-        )}
-      </div>
+        );
+      })}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        aria-label="同じ問題をプレイ"
+        title="同じ問題をプレイ"
+        onClick={() => onReplay(record.id)}
+      >
+        <PlayIcon />
+      </Button>
     </li>
   );
 }

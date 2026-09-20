@@ -6,6 +6,7 @@ import {
   type WaterSortDifficulty,
 } from "@/games/water-sort/difficulty";
 import type { WaterSortDifficultyAnalysis } from "@/games/water-sort/problem/difficulty-analysis";
+import { restoreWaterSortProblem } from "@/games/water-sort/problem/generator";
 import type {
   WaterSortGeneratedProblem,
   WaterSortProblemIdentity,
@@ -82,8 +83,11 @@ function createPlayState(
   difficulty: WaterSortDifficulty,
   seed: ProblemSeed,
   startedAt: number,
+  initialProblemIdentity?: WaterSortProblemIdentity,
 ): WaterSortPlayState {
-  const generatedProblem = generateProblem(difficulty, seed);
+  const generatedProblem = initialProblemIdentity
+    ? restoreWaterSortProblem(initialProblemIdentity)
+    : generateProblem(difficulty, seed);
 
   return {
     session: createWaterSortSession(generatedProblem.problem, startedAt),
@@ -96,9 +100,17 @@ function createPlayState(
   };
 }
 
-export function useWaterSortPlay(difficulty: WaterSortDifficulty) {
+export function useWaterSortPlay(
+  difficulty: WaterSortDifficulty,
+  initialProblemIdentity?: WaterSortProblemIdentity,
+) {
   const [play, setPlay] = useState<WaterSortPlayState>(() =>
-    createPlayState(difficulty, createProblemSeed(), Date.now()),
+    createPlayState(
+      difficulty,
+      initialProblemIdentity?.seed ?? createProblemSeed(),
+      Date.now(),
+      initialProblemIdentity,
+    ),
   );
   const [now, setNow] = useState(() => Date.now());
   const nextOperationId = useRef(0);

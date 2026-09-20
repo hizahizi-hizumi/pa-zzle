@@ -1,28 +1,18 @@
-import type { PlayRecord } from "../play-record";
 import type { PlayRecordDefinition } from "../play-record-definition";
 
-export type PlayRecordDisplayMetric = {
-  label: string;
-  value: string;
-};
-
-export type PlayRecordSummary = {
-  primaryMetric: PlayRecordDisplayMetric;
-  detailMetrics: readonly PlayRecordDisplayMetric[];
-};
-
-export type PersonalBestMetricDisplay = {
+export type PlayRecordMetricDisplay = {
   id: string;
   label: string;
+  historyLabel: string;
   formatValue: (value: number) => string;
+  referenceValue?: number;
 };
 
 export type PlayRecordDisplayDefinition = {
   definition: PlayRecordDefinition;
   gameLabel: string;
   getComparisonLabel: (comparisonKey: string) => string | null;
-  getSummary: (record: PlayRecord) => PlayRecordSummary | null;
-  personalBestMetrics: readonly PersonalBestMetricDisplay[];
+  metrics: readonly PlayRecordMetricDisplay[];
 };
 
 export type PlayRecordDisplayCatalog = readonly [
@@ -30,9 +20,9 @@ export type PlayRecordDisplayCatalog = readonly [
   ...PlayRecordDisplayDefinition[],
 ];
 
-export function getPersonalBestMetricDisplay(
+export function getPlayRecordMetricDisplay(
   display: PlayRecordDisplayDefinition,
   metricId: string,
-): PersonalBestMetricDisplay | undefined {
-  return display.personalBestMetrics.find((metric) => metric.id === metricId);
+): PlayRecordMetricDisplay | undefined {
+  return display.metrics.find((metric) => metric.id === metricId);
 }
