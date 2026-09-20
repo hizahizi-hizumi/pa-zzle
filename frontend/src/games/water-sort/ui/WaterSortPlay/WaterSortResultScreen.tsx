@@ -1,7 +1,7 @@
 import {
   BookOpen,
   ChevronDown,
-  ChevronRight,
+  ChevronUp,
   Home,
   Play,
   RotateCcw,
@@ -122,9 +122,9 @@ export function WaterSortResultScreen({
         <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
           <div className="mt-3 flex justify-center">
             <CollapsibleTrigger asChild>
-              <Button type="button" variant="ghost" size="sm">
+              <Button type="button" variant="outline" size="sm">
+                {detailsOpen ? <ChevronUp /> : <ChevronDown />}
                 スコアの内訳・採点基準
-                {detailsOpen ? <ChevronDown /> : <ChevronRight />}
               </Button>
             </CollapsibleTrigger>
           </div>
