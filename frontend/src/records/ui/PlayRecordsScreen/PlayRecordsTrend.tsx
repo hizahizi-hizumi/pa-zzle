@@ -22,6 +22,7 @@ import type { PlayRecord } from "@/records/play-record";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 import { formatRecordCompletedAt } from "@/records/ui/format";
 import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
+import { getTrendValueAxis } from "./trend-value-axis";
 
 type PlayRecordsTrendProps = {
   records: readonly PlayRecord[];
@@ -51,24 +52,6 @@ function getTrendPoints(
       ? []
       : [{ recordId: record.id, completedAt: record.completedAt, value }];
   });
-}
-
-function getValueDomain(
-  points: readonly TrendPoint[],
-  referenceValue: number | undefined,
-): [number, number] {
-  const values = points.map((point) => point.value);
-  if (referenceValue !== undefined) {
-    values.push(referenceValue);
-  }
-
-  const dataMinimum = Math.min(...values);
-  const dataMaximum = Math.max(...values);
-  const span = dataMaximum - dataMinimum;
-  const padding =
-    span === 0 ? Math.max(Math.abs(dataMinimum) * 0.1, 1) : span * 0.1;
-
-  return [dataMinimum - padding, dataMaximum + padding];
 }
 
 export function PlayRecordsTrend({
@@ -104,7 +87,11 @@ export function PlayRecordsTrend({
       color: "var(--foreground)",
     },
   } satisfies ChartConfig;
-  const valueDomain = getValueDomain(points, metric.referenceValue);
+  const axisValues = points.map((point) => point.value);
+  if (metric.referenceValue !== undefined) {
+    axisValues.push(metric.referenceValue);
+  }
+  const valueAxis = getTrendValueAxis(axisValues, metric.axis);
 
   return (
     <div>
@@ -139,7 +126,8 @@ export function PlayRecordsTrend({
             tickFormatter={(value) => formatRecordCompletedAt(Number(value))}
           />
           <YAxis
-            domain={valueDomain}
+            domain={valueAxis.domain}
+            ticks={valueAxis.ticks}
             tickLine={false}
             axisLine={false}
             width={56}
