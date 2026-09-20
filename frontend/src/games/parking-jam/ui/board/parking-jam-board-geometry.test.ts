@@ -40,6 +40,20 @@ describe("getAccessRoadGeometry", () => {
   });
 });
 
+describe("getAccessRoadCenterLine", () => {
+  test("道路の中央標示を盤外だけに配置すること", () => {
+    const line = parkingJamBoardGeometry.getAccessRoadCenterLine(
+      opening,
+      board,
+    );
+
+    expect(line.x1).toBe(PARKING_JAM_CELL * 2);
+    expect(line.x2).toBe(PARKING_JAM_CELL * 2);
+    expect(line.y1).toBeGreaterThan(-PARKING_JAM_MARGIN);
+    expect(line.y2).toBeLessThan(0);
+  });
+});
+
 describe("getParkingBayLines", () => {
   test("駐車列だけを区切り道路開口には線を置かないこと", () => {
     const lines = parkingJamBoardGeometry.getParkingBayLines(board);
