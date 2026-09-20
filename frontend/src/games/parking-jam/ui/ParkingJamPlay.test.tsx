@@ -1,0 +1,148 @@
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import type { ComponentProps } from "react";
+
+import { ParkingJamPlay } from "./ParkingJamPlay";
+
+afterEach(cleanup);
+
+function createProps(): ComponentProps<typeof ParkingJamPlay> {
+  return {
+    difficulty: "normal",
+    status: "playing",
+    board: {
+      width: 5,
+      height: 5,
+      vehicles: [
+        {
+          id: "a",
+          row: 1,
+          column: 0,
+          orientation: "horizontal",
+          length: 2,
+        },
+        {
+          id: "b",
+          row: 0,
+          column: 3,
+          orientation: "vertical",
+          length: 2,
+        },
+      ],
+      obstacles: [],
+      exits: [
+        { side: "right", offset: 1 },
+        { side: "up", offset: 3 },
+      ],
+    },
+    state: { remainingVehicleIds: ["a", "b"] },
+    selectedVehicleId: "a",
+    operation: null,
+    elapsedMs: 65_000,
+    failedMoveCount: 2,
+    canUndo: true,
+    canRestart: true,
+    onSelectVehicle: vi.fn(),
+    onDirection: vi.fn(),
+    onUndo: vi.fn(),
+    onRestart: vi.fn(),
+    onReplay: vi.fn(),
+    onStartNewProblem: vi.fn(),
+  };
+}
+
+describe("ParkingJamPlay", () => {
+  describe("横向きの車を選択している場合", () => {
+    let props: ComponentProps<typeof ParkingJamPlay>;
+
+    beforeEach(() => {
+      props = createProps();
+      render(<ParkingJamPlay {...props} />);
+    });
+
+    test("左右の方向操作だけを提示すること", () => {
+      const left = screen.getByRole("button", { name: "左へ出庫" });
+      const right = screen.getByRole("button", { name: "右へ出庫" });
+
+      expect(left).toBeTruthy();
+      expect(right).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "上へ出庫" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "下へ出庫" })).toBeNull();
+    });
+
+    test("選んだ方向をプレイ責務へ通知すること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "右へ出庫" }));
+
+      expect(props.onDirection).toHaveBeenCalledWith("right");
+    });
+
+    test("待ったとやり直しを別の操作として通知すること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "待った" }));
+      fireEvent.click(screen.getByRole("button", { name: "やり直す" }));
+
+      expect(props.onUndo).toHaveBeenCalledOnce();
+      expect(props.onRestart).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("車が選択されていない場合", () => {
+    let props: ComponentProps<typeof ParkingJamPlay>;
+
+    beforeEach(() => {
+      props = { ...createProps(), selectedVehicleId: null };
+      render(<ParkingJamPlay {...props} />);
+    });
+
+    test("方向を先に選ばせず車の選択を促すこと", () => {
+      const prompt = screen.getByText("車を選んでください");
+
+      expect(prompt).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "左へ出庫" })).toBeNull();
+    });
+  });
+
+  describe("操作が成立しなかった場合", () => {
+    let props: ComponentProps<typeof ParkingJamPlay>;
+
+    beforeEach(() => {
+      props = {
+        ...createProps(),
+        operation: {
+          id: 1,
+          type: "blocked",
+          vehicleId: "a",
+          direction: "right",
+        },
+      };
+      render(<ParkingJamPlay {...props} />);
+    });
+
+    test("不成立を操作後のフィードバックとして返すこと", () => {
+      const feedback = screen.getByText("そこからは出せません");
+
+      expect(feedback).toBeTruthy();
+    });
+  });
+
+  describe("クリアした場合", () => {
+    let props: ComponentProps<typeof ParkingJamPlay>;
+
+    beforeEach(() => {
+      props = {
+        ...createProps(),
+        status: "cleared",
+        state: { remainingVehicleIds: [] },
+      };
+      render(<ParkingJamPlay {...props} />);
+    });
+
+    test("達成と次の行動を表示すること", () => {
+      const clear = screen.getByText("クリア");
+      const replay = screen.getByRole("button", { name: "同じ問題" });
+      const next = screen.getByRole("button", { name: "新しい問題" });
+
+      expect(clear).toBeTruthy();
+      expect(replay).toBeTruthy();
+      expect(next).toBeTruthy();
+    });
+  });
+});
