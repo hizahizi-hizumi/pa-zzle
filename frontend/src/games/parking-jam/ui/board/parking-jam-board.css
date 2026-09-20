@@ -47,15 +47,10 @@
   touch-action: none;
 }
 .parking-jam-board__surround {
-  fill: #d5d1c5;
-  stroke: #b9b5aa;
+  fill: #78836b;
+  stroke: #68745e;
   stroke-width: 3;
   filter: drop-shadow(0 10px 10px rgb(0 0 0 / 0.22));
-}
-.parking-jam-board__outside-paving {
-  fill: none;
-  stroke: rgb(255 255 255 / 0.28);
-  stroke-width: 4;
 }
 .parking-jam-board__lot {
   fill: url("#parking-jam-lot-gradient");
@@ -65,10 +60,10 @@
 }
 .parking-jam-board__curb {
   fill: none;
-  stroke: #dedbd0;
-  stroke-width: 14;
+  stroke: #c9c6bb;
+  stroke-width: 16;
   vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 4px 2px rgb(0 0 0 / 0.34));
+  filter: drop-shadow(0 5px 2px rgb(0 0 0 / 0.42));
 }
 .parking-jam-board__opening {
   fill: #d5d1c5;
@@ -78,14 +73,13 @@
 }
 .parking-jam-board__exit-mark {
   fill: none;
-  stroke: rgb(244 238 194 / 0.88);
-  stroke-width: 3;
-  stroke-dasharray: 7 8;
+  stroke: rgb(250 247 221 / 0.95);
+  stroke-width: 5;
   stroke-linecap: round;
   pointer-events: none;
 }
 .parking-jam-board__exit-arrow {
-  fill: rgb(244 238 194 / 0.9);
+  fill: rgb(250 247 221 / 0.98);
   stroke: none;
 }
 .parking-jam-board__island {

@@ -212,14 +212,6 @@ export function ParkingJamBoard({
         className="parking-jam-board__surround"
       />
       <rect
-        x={-MARGIN}
-        y={-MARGIN}
-        width={width + MARGIN * 2}
-        height={height + MARGIN * 2}
-        rx="24"
-        className="parking-jam-board__outside-paving"
-      />
-      <rect
         width={width}
         height={height}
         rx="18"
