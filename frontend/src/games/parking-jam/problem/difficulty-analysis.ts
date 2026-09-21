@@ -32,6 +32,7 @@ type ParkingJamOrderSpaceAnalysis = {
 };
 
 export type ParkingJamDifficultyFeatures = {
+  vehicleCount: number;
   dependencyDepth: number;
   initialLegalVehicleCount: number;
   initialLegalVehicleRatio: number;
@@ -480,6 +481,7 @@ export function analyzeParkingJamDifficulty(
   const vehicleCount = board.vehicles.length;
   const exitPathFeatures = calculateExitPathFeatures(board);
   const features: ParkingJamDifficultyFeatures = {
+    vehicleCount,
     dependencyDepth: solvabilityAnalysis.removalLayers.length,
     initialLegalVehicleCount: initialLegalVehicleIds.size,
     initialLegalVehicleRatio:

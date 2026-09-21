@@ -6,7 +6,10 @@ import {
   type ParkingJamDiagnosticSnapshot,
   serializeParkingJamDiagnosticSnapshot,
 } from "@/games/parking-jam/diagnostics";
-import { getParkingJamDifficultyLabel } from "@/games/parking-jam/difficulty";
+import {
+  getParkingJamDifficultyLabel,
+  PARKING_JAM_DIFFICULTY_MODEL_VERSION,
+} from "@/games/parking-jam/difficulty";
 import { DiagnosticRow } from "@/games/parking-jam/ui/ParkingJamDiagnostics/DiagnosticRow";
 
 type ParkingJamDiagnosticsProps = {
@@ -100,6 +103,11 @@ export function ParkingJamDiagnostics({
             <DiagnosticRow
               label="難易度"
               value={getParkingJamDifficultyLabel(snapshot.difficulty)}
+            />
+            <DiagnosticRow
+              label="判定モデル"
+              value={PARKING_JAM_DIFFICULTY_MODEL_VERSION}
+              mono
             />
             <DiagnosticRow
               label="seed"
@@ -199,6 +207,11 @@ export function ParkingJamDiagnostics({
             方向・視覚探索
           </h3>
           <dl className="mt-2 divide-y rounded-xl border bg-muted/25 px-4">
+            <DiagnosticRow
+              label="車両数"
+              value={String(features.vehicleCount)}
+              mono
+            />
             <DiagnosticRow
               label="退出方向"
               value={String(features.availableExitDirectionCount)}
