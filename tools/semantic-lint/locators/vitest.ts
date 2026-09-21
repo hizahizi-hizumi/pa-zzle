@@ -66,6 +66,11 @@ function locateCalls(options: {
 
   while ((match = pattern.exec(masked)) !== null) {
     const startOffset = match.index;
+
+    if (!isCallCandidate(masked, startOffset)) {
+      continue;
+    }
+
     const firstOpenParen = startOffset + match[0].lastIndexOf("(");
     const firstCloseParen = findMatchingParen(masked, firstOpenParen);
 
@@ -122,6 +127,28 @@ function locateCalls(options: {
   }
 
   return units;
+}
+
+function isCallCandidate(source: string, startOffset: number): boolean {
+  const previousCharacter = source[startOffset - 1];
+
+  if (previousCharacter === ".") {
+    return false;
+  }
+
+  let index = startOffset - 1;
+
+  while (index >= 0 && /\s/.test(source[index] ?? "")) {
+    index -= 1;
+  }
+
+  const end = index + 1;
+
+  while (index >= 0 && /[A-Za-z0-9_$]/.test(source[index] ?? "")) {
+    index -= 1;
+  }
+
+  return source.slice(index + 1, end) !== "function";
 }
 
 function findMatchingParen(source: string, openOffset: number): number | null {
