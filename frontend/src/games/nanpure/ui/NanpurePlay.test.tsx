@@ -61,7 +61,7 @@ describe("NanpurePlay", () => {
     const props = createProps();
     render(<NanpurePlay {...props} />);
     const digitInput = screen.getByRole("group", { name: "数字入力" });
-    const digit = within(digitInput).getByRole("button", { name: "5" });
+    const digit = within(digitInput).getByText("5");
 
     fireEvent.click(digit);
 
@@ -76,7 +76,7 @@ describe("NanpurePlay", () => {
     board[0] = 5;
     render(<NanpurePlay {...props} clues={clues} board={board} />);
     const digitInput = screen.getByRole("group", { name: "数字入力" });
-    const digit = within(digitInput).getByRole("button", { name: "5" });
+    const digit = within(digitInput).getByText("5");
 
     const disabled = digit.hasAttribute("disabled");
 
@@ -107,7 +107,7 @@ describe("NanpurePlay", () => {
     const props = createProps();
     render(<NanpurePlay {...props} completedDigits={[9]} />);
     const digitInput = screen.getByRole("group", { name: "数字入力" });
-    const digit = within(digitInput).getByRole("button", { name: "9" });
+    const digit = within(digitInput).getByText("9");
 
     const disabled = digit.hasAttribute("disabled");
 
@@ -118,7 +118,7 @@ describe("NanpurePlay", () => {
     const props = createProps();
     render(<NanpurePlay {...props} completedDigits={[]} />);
     const digitInput = screen.getByRole("group", { name: "数字入力" });
-    const digit = within(digitInput).getByRole("button", { name: "9" });
+    const digit = within(digitInput).getByText("9");
 
     const disabled = digit.hasAttribute("disabled");
 
@@ -194,9 +194,7 @@ describe("NanpurePlay", () => {
       screen.getByRole("button", { name: "消す" }).hasAttribute("disabled"),
     ).toBe(true);
     expect(
-      within(digitInput)
-        .getByRole("button", { name: "1" })
-        .hasAttribute("disabled"),
+      within(digitInput).getByText("1").hasAttribute("disabled"),
     ).toBe(true);
   });
 
