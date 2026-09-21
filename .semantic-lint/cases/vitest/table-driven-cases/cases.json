@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "ruleId": "vitest/table-driven-cases",
+  "cases": [
+    {
+      "name": "同じ期待動作を個別testで繰り返す",
+      "file": "violation.ts",
+      "expected": "violation"
+    },
+    {
+      "name": "入力違いをtest.eachで表現する",
+      "file": "compliant.ts",
+      "expected": "compliant"
+    }
+  ]
+}
