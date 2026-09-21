@@ -35,7 +35,7 @@ bun run --cwd tools/semantic-lint typecheck # semantic lintツールの型検査
 bun run --cwd tools/semantic-lint test # semantic lintツールの決定論的テスト
 ```
 
-Repository Snapshot と Offline Dependencies を使う ChatGPT 実行環境では、対象Snapshotと同じworkflow runの `repository-environment-<target>-<sha>.json` から依存アーティファクトを取得する。全品質検証ではそのアーカイブを `scripts/chatgpt-verify.sh` に渡す。画面確認などで Vite を直接使う場合は、依存アーティファクトには `frontend/node_modules` と `tools/semantic-lint/node_modules` を含める。画面確認などで Vite を直接使う場合は `frontend/node_modules` を配置して次を実行する。
+Repository Snapshot と Offline Dependencies を使う ChatGPT 実行環境では、対象Snapshotと同じworkflow runの `repository-environment-<target>-<sha>.json` から依存アーティファクトを取得する。全品質検証ではそのアーカイブを `scripts/chatgpt-verify.sh` に渡す。画面確認などで Vite を直接使う場合は、依存アーティファクトの `frontend/node_modules` を配置して利用する。ChatGPT環境ではsemantic lintを実行しない。画面確認などで Vite を直接使う場合は次を実行する。
 
 ```sh
 frontend/node_modules/.bin/vite --config frontend/vite.chatgpt.config.ts --host 127.0.0.1 --port 3000
