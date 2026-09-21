@@ -51,13 +51,17 @@ paths:
   - labelとフォーム部品の関連が契約なら `getByLabelText` を使う。
 - 画面に意味上の領域がある場合は、文書全体を探索せず、その領域を利用者から観測できるクエリで取得して `within` で探索範囲を限定する。
 
-避ける。
+#### NG
+
+roleというセマンティクスを検査しないテストで `getByRole` を使用。
 
 ```tsx
 const digit = screen.getByRole("button", { name: "5" });
 ```
 
-契約と意味領域に合わせる。
+#### OK
+
+契約、意味に合わせてクエリを使用。
 
 ```tsx
 const digitInput = screen.getByRole("group", { name: "数字入力" });
