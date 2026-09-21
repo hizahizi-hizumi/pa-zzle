@@ -1,112 +1,198 @@
-@keyframes parking-jam-blocked-left {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  45% {
-    transform: translateX(-6px);
+@keyframes pj-block-x-neg {
+  50% {
+    transform: translateX(-5px);
   }
 }
-
-@keyframes parking-jam-blocked-right {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  45% {
-    transform: translateX(6px);
+@keyframes pj-block-x-pos {
+  50% {
+    transform: translateX(5px);
   }
 }
-
-@keyframes parking-jam-blocked-up {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  45% {
-    transform: translateY(-6px);
+@keyframes pj-block-y-neg {
+  50% {
+    transform: translateY(-5px);
   }
 }
-
-@keyframes parking-jam-blocked-down {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  45% {
-    transform: translateY(6px);
+@keyframes pj-block-y-pos {
+  50% {
+    transform: translateY(5px);
   }
 }
-
-@keyframes parking-jam-exit-left {
+@keyframes pj-exit {
   to {
-    transform: translateX(-180%);
-    opacity: 0.15;
+    transform: translate(
+      var(--parking-jam-exit-x, 0),
+      var(--parking-jam-exit-y, 0)
+    );
   }
 }
 
-@keyframes parking-jam-exit-right {
-  to {
-    transform: translateX(180%);
-    opacity: 0.15;
-  }
+.parking-jam-board {
+  display: block;
+  width: min(100%, 34rem);
+  height: auto;
+  overflow: visible;
+  touch-action: none;
+  --parking-jam-car-body: #d46e67;
+  --parking-jam-car-roof: #ed948a;
+  --parking-jam-car-highlight: rgb(255 255 255 / 0.18);
+  --parking-jam-car-accent: #8d3934;
 }
-
-@keyframes parking-jam-exit-up {
-  to {
-    transform: translateY(-180%);
-    opacity: 0.15;
-  }
+.parking-jam-board__lot,
+.parking-jam-board__access-road {
+  fill: url("#parking-jam-lot-gradient");
 }
-
-@keyframes parking-jam-exit-down {
-  to {
-    transform: translateY(180%);
-    opacity: 0.15;
-  }
+.parking-jam-board__asphalt-speck {
+  fill: rgb(255 255 255 / 0.065);
 }
-
-.parking-jam-vehicle--blocked-left {
-  animation: parking-jam-blocked-left 180ms ease-out;
+.parking-jam-board__curb {
+  fill: none;
+  stroke: #d7d3c8;
+  stroke-width: 14;
+  stroke-linecap: round;
+  filter: drop-shadow(0 3px 0 #9f9a90) drop-shadow(0 5px 2px rgb(0 0 0 / 0.18));
+  pointer-events: none;
 }
-
-.parking-jam-vehicle--blocked-right {
-  animation: parking-jam-blocked-right 180ms ease-out;
+.parking-jam-board__road-marking {
+  stroke: rgb(241 239 218 / 0.58);
+  stroke-width: 4;
+  stroke-dasharray: 18 14;
+  stroke-linecap: round;
+  pointer-events: none;
 }
-
-.parking-jam-vehicle--blocked-up {
-  animation: parking-jam-blocked-up 180ms ease-out;
+.parking-jam-board__parking-bay {
+  stroke: rgb(239 238 220 / 0.56);
+  stroke-width: 3;
+  stroke-linecap: round;
+  pointer-events: none;
 }
-
-.parking-jam-vehicle--blocked-down {
-  animation: parking-jam-blocked-down 180ms ease-out;
+.parking-jam-board__island {
+  fill: #d2cec2;
+  stroke: #ada89d;
+  stroke-width: 4;
+  filter: drop-shadow(0 3px 0 #918c82) drop-shadow(0 5px 3px rgb(0 0 0 / 0.22));
 }
-
-.parking-jam-vehicle--exit-left {
-  animation: parking-jam-exit-left 260ms ease-in forwards;
+.parking-jam-board__island-soil {
+  fill: #796a55;
 }
-
-.parking-jam-vehicle--exit-right {
-  animation: parking-jam-exit-right 260ms ease-in forwards;
+.parking-jam-board__island-green {
+  fill: #718064;
+  opacity: 0.78;
 }
-
-.parking-jam-vehicle--exit-up {
-  animation: parking-jam-exit-up 260ms ease-in forwards;
+.parking-jam-car {
+  cursor: grab;
+  outline: none;
+  transform-box: fill-box;
+  transform-origin: center;
 }
-
-.parking-jam-vehicle--exit-down {
-  animation: parking-jam-exit-down 260ms ease-in forwards;
+.parking-jam-car:active {
+  cursor: grabbing;
 }
-
+.parking-jam-car__body {
+  fill: var(--parking-jam-car-body);
+  stroke: rgb(20 29 35 / 0.88);
+  stroke-width: 5;
+  filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.4));
+}
+.parking-jam-car__highlight {
+  fill: var(--parking-jam-car-highlight);
+  pointer-events: none;
+}
+.parking-jam-car__hood-panel {
+  fill: var(--parking-jam-car-roof);
+  opacity: 0.6;
+  pointer-events: none;
+}
+.parking-jam-car__roof-panel {
+  fill: var(--parking-jam-car-roof);
+  stroke: rgb(255 255 255 / 0.22);
+  stroke-width: 2;
+  pointer-events: none;
+}
+.parking-jam-car__front-light {
+  fill: #fff4c2;
+  stroke: rgb(255 255 255 / 0.6);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+.parking-jam-car__glass,
+.parking-jam-car__rear-glass {
+  fill: url("#parking-jam-glass-gradient");
+  stroke: #314f60;
+  stroke-width: 3;
+  pointer-events: none;
+}
+.parking-jam-car__rear-glass {
+  opacity: 0.9;
+}
+.parking-jam-car__detail {
+  fill: none;
+  stroke: var(--parking-jam-car-accent);
+  stroke-width: 4;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+.parking-jam-car--selected .parking-jam-car__body {
+  stroke: #fff;
+  stroke-width: 7;
+}
+.parking-jam-car:focus-visible .parking-jam-car__body {
+  stroke: #fff;
+  stroke-width: 7;
+}
+.parking-jam-car--blocked-left {
+  animation: pj-block-x-neg 160ms ease-out;
+}
+.parking-jam-car--blocked-right {
+  animation: pj-block-x-pos 160ms ease-out;
+}
+.parking-jam-car--blocked-up {
+  animation: pj-block-y-neg 160ms ease-out;
+}
+.parking-jam-car--blocked-down {
+  animation: pj-block-y-pos 160ms ease-out;
+}
+.parking-jam-car--exit-left,
+.parking-jam-car--exit-right,
+.parking-jam-car--exit-up,
+.parking-jam-car--exit-down {
+  animation: pj-exit 520ms cubic-bezier(0.25, 0.1, 0.45, 1) forwards;
+}
 @media (prefers-reduced-motion: reduce) {
-  .parking-jam-vehicle--blocked-left,
-  .parking-jam-vehicle--blocked-right,
-  .parking-jam-vehicle--blocked-up,
-  .parking-jam-vehicle--blocked-down,
-  .parking-jam-vehicle--exit-left,
-  .parking-jam-vehicle--exit-right,
-  .parking-jam-vehicle--exit-up,
-  .parking-jam-vehicle--exit-down {
+  [class*="parking-jam-car--blocked-"],
+  [class*="parking-jam-car--exit-"] {
     animation-duration: 1ms;
   }
+}
+.parking-jam-car__wheel {
+  fill: #161d21;
+  stroke: #303b40;
+  stroke-width: 1.5;
+}
+.parking-jam-direction-control {
+  cursor: pointer;
+  outline: none;
+}
+.parking-jam-direction-control__hit {
+  fill: transparent;
+  pointer-events: all;
+}
+.parking-jam-direction-control__surface {
+  fill: rgb(27 34 38 / 0.82);
+  stroke: rgb(255 255 255 / 0.92);
+  stroke-width: 3;
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.38));
+  pointer-events: none;
+}
+.parking-jam-direction-control__arrow {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+.parking-jam-direction-control:focus-visible
+  .parking-jam-direction-control__surface {
+  stroke-width: 6;
 }

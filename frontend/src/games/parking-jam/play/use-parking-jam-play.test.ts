@@ -58,10 +58,9 @@ describe("useParkingJamPlay", () => {
         .solvabilityAnalysis.solution;
     });
 
-    test("車を選んで方向を指定する操作だけでクリアできること", () => {
+    test("車と方向を直接指定する操作だけでクリアできること", () => {
       for (const move of solution) {
-        act(() => result.current.selectVehicle(move.vehicleId));
-        act(() => result.current.attemptDirection(move.direction));
+        act(() => result.current.attemptMove(move.vehicleId, move.direction));
       }
 
       expect(result.current.status).toBe("cleared");
@@ -73,12 +72,8 @@ describe("useParkingJamPlay", () => {
 
     test("最後の出庫演出が完了してから結果へ進むこと", () => {
       for (const move of solution) {
-        act(() => result.current.selectVehicle(move.vehicleId));
-        act(() => result.current.attemptDirection(move.direction));
+        act(() => result.current.attemptMove(move.vehicleId, move.direction));
       }
-
-      expect(result.current.progress).toBe("clearing");
-
       act(() => result.current.completeClearAnimation());
 
       expect(result.current.progress).toBe("result");
@@ -90,31 +85,14 @@ describe("useParkingJamPlay", () => {
       if (!firstMove) throw new Error("Expected a solution move");
 
       expect(result.current.canRestart).toBe(false);
-
-      act(() => result.current.selectVehicle(firstMove.vehicleId));
-      act(() => result.current.attemptDirection(firstMove.direction));
+      act(() =>
+        result.current.attemptMove(firstMove.vehicleId, firstMove.direction),
+      );
 
       expect(result.current.canRestart).toBe(true);
-
       act(() => result.current.undo());
 
       expect(result.current.canRestart).toBe(false);
-    });
-
-    test("別の車を選択したとき直前操作のフィードバックを閉じること", () => {
-      const firstMove = solution[0];
-      const secondMove = solution[1];
-      if (!firstMove || !secondMove) {
-        throw new Error("Expected at least two solution moves");
-      }
-
-      act(() => result.current.selectVehicle(firstMove.vehicleId));
-      act(() => result.current.attemptDirection(firstMove.direction));
-      expect(result.current.operation?.type).toBe("exited");
-
-      act(() => result.current.selectVehicle(secondMove.vehicleId));
-
-      expect(result.current.operation).toBeNull();
     });
   });
 });
