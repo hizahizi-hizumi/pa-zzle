@@ -8,6 +8,7 @@ export type Path =
   | `/puzzles/nanpure`
   | `/puzzles/nanpure/play/:difficulty`
   | `/puzzles/parking-jam`
+  | `/puzzles/parking-jam/calibration`
   | `/puzzles/parking-jam/play/:difficulty`
   | `/puzzles/water-sort`
   | `/puzzles/water-sort/play/:difficulty`

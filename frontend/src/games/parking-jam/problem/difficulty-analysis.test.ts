@@ -29,6 +29,11 @@ describe("analyzeParkingJamDifficulty", () => {
       expect(analysis.features.initialLegalVehicleCount).toBe(3);
       expect(analysis.features.legalOrderCount).toBe("6");
       expect(analysis.features.solutionOrderFreedom).toBe(1);
+      expect(analysis.features.reachableStateCount).toBe(8);
+      expect(analysis.features.forcedChoiceStateRatio).toBe(0);
+      expect(analysis.features.requiredPrecedenceCount).toBe(0);
+      expect(analysis.features.maximumRequiredPredecessorCount).toBe(0);
+      expect(analysis.features.averageNewlyUnlockedVehicleCount).toBe(0);
     });
   });
 
@@ -57,6 +62,15 @@ describe("analyzeParkingJamDifficulty", () => {
       expect(analysis.features.vehicleBlockingEdgeCount).toBeGreaterThan(0);
       expect(analysis.features.initialLegalVehicleRatio).toBeLessThan(1);
       expect(analysis.features.solutionOrderFreedom).toBeLessThan(1);
+      expect(analysis.features.reachableStateCount).toBe(4);
+      expect(analysis.features.minimumLegalVehicleRatio).toBeCloseTo(1 / 3);
+      expect(analysis.features.forcedChoiceStateRatio).toBe(1);
+      expect(analysis.features.requiredPrecedenceCount).toBe(3);
+      expect(analysis.features.maximumRequiredPredecessorCount).toBe(2);
+      expect(analysis.features.averageNewlyUnlockedVehicleCount).toBeCloseTo(
+        2 / 3,
+      );
+      expect(analysis.features.maximumNewlyUnlockedVehicleCount).toBe(1);
     });
   });
 });
