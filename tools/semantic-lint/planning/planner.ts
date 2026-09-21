@@ -3,6 +3,7 @@ import type {
   EvaluationTask,
   PlannedFile,
   Rule,
+  RuleStatus,
   SourceDocument,
   Subject,
 } from "../domain/model.ts";
@@ -15,13 +16,18 @@ export function buildEvaluationPlan(options: {
   rules: Rule[];
   scopes: ScopeRegistry;
   matchesPath: PathMatcher;
-  includeDraft?: boolean;
+  statuses?: readonly RuleStatus[];
 }): EvaluationPlan {
-  const { documents, rules, scopes, matchesPath, includeDraft = false } = options;
-  const executableRules = rules.filter(
-    (rule) =>
-      rule.status !== "disabled" &&
-      (includeDraft || rule.status === "active"),
+  const {
+    documents,
+    rules,
+    scopes,
+    matchesPath,
+    statuses = ["active"],
+  } = options;
+  const allowedStatuses = new Set(statuses);
+  const executableRules = rules.filter((rule) =>
+    allowedStatuses.has(rule.status),
   );
   const files: PlannedFile[] = [];
 
