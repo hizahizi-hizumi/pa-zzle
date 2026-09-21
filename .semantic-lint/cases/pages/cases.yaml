@@ -1,0 +1,13 @@
+version: 1
+ruleset: pages
+
+cases:
+  - rule: route-wiring-only
+    name: pageが画面実装を所有する
+    fixture: fixtures/violation.tsx
+    expected: violation
+
+  - rule: route-wiring-only
+    name: pageが専用Viewだけを公開する
+    fixture: fixtures/compliant.tsx
+    expected: compliant
