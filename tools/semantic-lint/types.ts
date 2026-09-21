@@ -23,14 +23,12 @@ export type LintConfig = {
 };
 
 export type RuleConfig = {
-  version: 1;
   id: string;
   title: string;
-  target: "file";
   severity: Severity;
   violationThreshold: number;
-  include: string[];
-  exclude: string[];
+  paths: string[];
+  excludePaths: string[];
   source: {
     path: string;
     section: string;
