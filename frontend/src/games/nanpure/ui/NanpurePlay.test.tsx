@@ -64,7 +64,7 @@ describe("空きマスを選択している場合", () => {
     props = createProps();
     render(<NanpurePlay {...props} />);
     const digitInput = screen.getByRole("group", { name: "数字入力" });
-    digit = within(digitInput).getByRole("button", { name: "5" });
+    digit = within(digitInput).getByText("5");
   });
 
   test("数字入力を通知すること", () => {
@@ -85,7 +85,7 @@ describe("初期ヒントを選択している場合", () => {
     board[0] = 5;
     render(<NanpurePlay {...props} clues={clues} board={board} />);
     const digitInput = screen.getByRole("group", { name: "数字入力" });
-    digit = within(digitInput).getByRole("button", { name: "5" });
+    digit = within(digitInput).getByText("5");
   });
 
   test("数字入力を無効にすること", () => {
@@ -145,7 +145,7 @@ describe("数字9を使い切っている場合", () => {
     const props = createProps();
     render(<NanpurePlay {...props} completedDigits={[9]} />);
     const digitInput = screen.getByRole("group", { name: "数字入力" });
-    digit = within(digitInput).getByRole("button", { name: "9" });
+    digit = within(digitInput).getByText("9");
   });
 
   test("数字9の入力を無効にすること", () => {
@@ -162,7 +162,7 @@ describe("数字9を使い切っていない場合", () => {
     const props = createProps();
     render(<NanpurePlay {...props} completedDigits={[]} />);
     const digitInput = screen.getByRole("group", { name: "数字入力" });
-    digit = within(digitInput).getByRole("button", { name: "9" });
+    digit = within(digitInput).getByText("9");
   });
 
   test("数字9の入力を有効にすること", () => {
@@ -228,7 +228,7 @@ describe("クリア演出中の場合", () => {
     const resultHeading = screen.queryByRole("heading", { name: "クリア" });
     const cells = within(board).getAllByRole("button", { name: /行.*列/ });
     const erase = screen.getByRole("button", { name: "消す" });
-    const firstDigit = within(digitInput).getByRole("button", { name: "1" });
+    const firstDigit = within(digitInput).getByText("1");
 
     expect(resultHeading).toBeNull();
     expect(cells).toHaveLength(81);
