@@ -6,5 +6,6 @@
     "apiKeyEnv": "TYPESAFE_API_KEY"
   },
   "rulesDir": ".semantic-lint/rules",
-  "concurrency": 2
+  "casesDir": ".semantic-lint/cases",
+  "concurrency": 8
 }
