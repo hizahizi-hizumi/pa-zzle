@@ -94,9 +94,10 @@ export function buildRequest(
     questions[questionId] = {
       type: "choice",
       instructions: [
-        `Evaluate only state.subjects.${subject.key}.`,
+        `Evaluate only state.subjects.${subject.key}.target.`,
+        `Its enclosing context is state.subjects.${subject.key}.context.`,
         "Use state.file as surrounding context when needed.",
-        "Do not classify another subject in the file.",
+        "Classify the target itself, not the enclosing context or another subject.",
         "",
         request.predicate.instruction,
       ].join("\n"),
@@ -109,11 +110,20 @@ export function buildRequest(
       key,
       {
         id: subject.id,
-        scope: subject.scope,
         path: subject.path,
-        range: subject.range,
-        ...(subject.symbol === undefined ? {} : { symbol: subject.symbol }),
-        source: subject.source,
+        context: {
+          scope: subject.contextScope,
+          range: subject.contextRange,
+          ...(subject.contextSymbol === undefined
+            ? {}
+            : { symbol: subject.contextSymbol }),
+        },
+        target: {
+          kind: subject.targetKind,
+          range: subject.range,
+          ...(subject.symbol === undefined ? {} : { symbol: subject.symbol }),
+          source: subject.source,
+        },
       },
     ]),
   );
