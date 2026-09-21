@@ -114,6 +114,7 @@ export type FileEvaluation = {
   path: string;
   model: string;
   durationMs: number;
+  requestCount: number;
   evaluations: RuleEvaluation[];
   usage: {
     inputTokens: number;
