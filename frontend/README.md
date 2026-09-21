@@ -49,7 +49,7 @@ bun run semantic-lint:typecheck
 
 ### Semantic lint
 
-通常の静的解析では表現しづらいプロジェクト固有の意味的規約を、Jevを使って検査する。rule定義はリポジトリルートの `.semantic-lint/rules/` を正本とし、CLIやprovider実装から分離する。ruleは1件1ファイルではなく、同じ適用対象と規約ソースを共有するruleset単位でまとめる。たとえばVitest規約は `.semantic-lint/rules/vitest.json` に `paths`、共通defaults、複数の `rules` を定義する。
+通常の静的解析では表現しづらいプロジェクト固有の意味的規約を、Jevを使って検査する。rule定義はリポジトリルートの `.semantic-lint/rules/` を正本とし、CLIやprovider実装から分離する。ruleは1件1ファイルではなく、同じ適用対象と規約ソースを共有するruleset単位でまとめる。たとえばVitest規約は `.semantic-lint/rules/vitest.json` に `paths`、共通defaults、複数の `rules` を定義する。各ruleは `scope` で診断単位を指定し、現在は `file`、`vitest:test`、`vitest:beforeEach`、`vitest:describe` を扱う。
 
 TypeSafe APIを利用するため、実行前にAPIキーを設定する。
 
@@ -70,13 +70,15 @@ bun run semantic-lint -- src/games/nanpure
 bun run semantic-lint -- src/games/nanpure/example.test.ts
 ```
 
+違反候補はまずファイル単位で判定し、`scope` が指定されたruleは該当するtest / beforeEach / describeへ追加評価して位置を絞り込む。位置を特定できた場合は `path:start-end` とsymbolを表示し、絞り込めない場合は従来どおりファイル単位の診断へフォールバックする。
+
 問題なし・対象外を含む全判定と確率を確認する場合は `--verbose` を指定する。
 
 ```sh
 bun run semantic-lint -- --verbose
 ```
 
-実行結果には総実行時間、ファイル単位の評価レイテンシのp50 / p95 / max、ファイル・判定スループットも表示する。並列数はリポジトリルートの `.semantic-lint/config.json` で変更できる。
+実行結果には総実行時間、ファイル単位の評価レイテンシのp50 / p95 / max、ファイル・判定スループットも表示する。違反箇所の追加評価を行った場合は評価リクエスト数にも反映する。並列数はリポジトリルートの `.semantic-lint/config.json` で変更できる。
 
 ruleのpredicateと閾値を校正するため、`.semantic-lint/cases/` に期待値付きのcaseを置く。case manifestもruleset単位とし、Vitestでは `.semantic-lint/cases/vitest/cases.json` から各fixtureを参照する。通常lintとは別に次のコマンドで評価する。
 
