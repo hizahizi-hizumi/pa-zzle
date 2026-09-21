@@ -1,5 +1,5 @@
-import { createRequire } from "node:module";
 import { extname } from "node:path";
+import ts from "@typescript/typescript6";
 
 import type {
   ScopeId,
@@ -8,47 +8,6 @@ import type {
   Subject,
 } from "../domain/model.ts";
 import { type ScopeRegistry, subjectId } from "./registry.ts";
-
-type Node = {
-  expression?: Node;
-  arguments?: Node[];
-  name?: Node;
-  text?: string;
-  kind?: number;
-  getStart(sourceFile?: Node): number;
-  getEnd(): number;
-  getText(sourceFile?: Node): string;
-};
-
-type SourceFile = Node & {
-  getLineAndCharacterOfPosition(position: number): {
-    line: number;
-    character: number;
-  };
-};
-
-type TypeScriptApi = {
-  ScriptTarget: { Latest: number };
-  ScriptKind: {
-    JS: number;
-    JSX: number;
-    TS: number;
-    TSX: number;
-  };
-  createSourceFile(
-    fileName: string,
-    sourceText: string,
-    languageVersion: number,
-    setParentNodes: boolean,
-    scriptKind: number,
-  ): SourceFile;
-  forEachChild(node: Node, visitor: (child: Node) => void): void;
-  isCallExpression(node: Node): boolean;
-  isIdentifier(node: Node): boolean;
-  isPropertyAccessExpression(node: Node): boolean;
-  isStringLiteralLike(node: Node): boolean;
-  isNoSubstitutionTemplateLiteral(node: Node): boolean;
-};
 
 type VitestScope =
   | "vitest.test"
@@ -62,18 +21,8 @@ type Candidate = {
   end: number;
 };
 
-export async function loadTypeScript(
-  baseDirectory: string,
-): Promise<TypeScriptApi> {
-  const modulePath = Bun.resolveSync("typescript", baseDirectory);
-  const require = createRequire(import.meta.url);
-
-  return require(modulePath) as TypeScriptApi;
-}
-
 export function registerVitestScopes(
   registry: ScopeRegistry,
-  ts: TypeScriptApi,
 ): void {
   const cache = new Map<string, Map<VitestScope, Subject[]>>();
 
@@ -87,7 +36,7 @@ export function registerVitestScopes(
       let byScope = cache.get(key);
 
       if (!byScope) {
-        byScope = extractAllVitestSubjects(document, ts);
+        byScope = extractAllVitestSubjects(document);
         cache.set(key, byScope);
       }
 
@@ -98,20 +47,19 @@ export function registerVitestScopes(
 
 function extractAllVitestSubjects(
   document: SourceDocument,
-  ts: TypeScriptApi,
 ): Map<VitestScope, Subject[]> {
   const sourceFile = ts.createSourceFile(
     document.path,
     document.source,
     ts.ScriptTarget.Latest,
     true,
-    scriptKind(document.path, ts),
+    scriptKind(document.path),
   );
   const candidates: Candidate[] = [];
 
-  function visit(node: Node): void {
+  function visit(node: ts.Node): void {
     if (ts.isCallExpression(node)) {
-      const candidate = classifyCall(node, sourceFile, ts);
+      const candidate = classifyCall(node, sourceFile);
 
       if (candidate) {
         candidates.push(candidate);
@@ -122,7 +70,9 @@ function extractAllVitestSubjects(
   }
 
   visit(sourceFile);
-  candidates.sort((left, right) => left.start - right.start || left.end - right.end);
+  candidates.sort(
+    (left, right) => left.start - right.start || left.end - right.end,
+  );
 
   const counts = new Map<VitestScope, number>();
   const byScope = new Map<VitestScope, Subject[]>();
@@ -147,21 +97,13 @@ function extractAllVitestSubjects(
 }
 
 function classifyCall(
-  node: Node,
-  sourceFile: SourceFile,
-  ts: TypeScriptApi,
+  node: ts.CallExpression,
+  sourceFile: ts.SourceFile,
 ): Candidate | null {
-  const argumentsList = node.arguments ?? [];
-  const expression = node.expression;
-
-  if (!expression) {
-    return null;
-  }
-
-  const rootName = calleeRootName(expression, ts);
+  const rootName = calleeRootName(node.expression);
 
   if (rootName === "beforeEach") {
-    if (!isDirectOrModifiedCall(expression, "beforeEach", ts)) {
+    if (!isDirectOrModifiedCall(node.expression, "beforeEach")) {
       return null;
     }
 
@@ -177,7 +119,7 @@ function classifyCall(
     return null;
   }
 
-  const title = literalTitle(argumentsList[0], ts);
+  const title = literalTitle(node.arguments[0]);
 
   if (title === null) {
     return null;
@@ -193,12 +135,14 @@ function classifyCall(
   };
 }
 
-function calleeRootName(expression: Node, ts: TypeScriptApi): string | null {
-  let current: Node | undefined = expression;
+function calleeRootName(
+  expression: ts.Expression,
+): string | null {
+  let current: ts.Expression = expression;
 
-  while (current) {
+  while (true) {
     if (ts.isIdentifier(current)) {
-      return current.text ?? null;
+      return current.text;
     }
 
     if (ts.isPropertyAccessExpression(current)) {
@@ -213,14 +157,11 @@ function calleeRootName(expression: Node, ts: TypeScriptApi): string | null {
 
     return null;
   }
-
-  return null;
 }
 
 function isDirectOrModifiedCall(
-  expression: Node,
+  expression: ts.Expression,
   name: string,
-  ts: TypeScriptApi,
 ): boolean {
   if (ts.isIdentifier(expression)) {
     return expression.text === name;
@@ -230,23 +171,23 @@ function isDirectOrModifiedCall(
     return false;
   }
 
-  return calleeRootName(expression, ts) === name;
+  return calleeRootName(expression) === name;
 }
 
-function literalTitle(node: Node | undefined, ts: TypeScriptApi): string | null {
+function literalTitle(node: ts.Expression | undefined): string | null {
   if (!node) {
     return null;
   }
 
   if (ts.isStringLiteralLike(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
-    return node.text ?? "";
+    return node.text;
   }
 
   return null;
 }
 
 function rangeOf(
-  sourceFile: SourceFile,
+  sourceFile: ts.SourceFile,
   start: number,
   end: number,
 ): SourceRange {
@@ -261,7 +202,7 @@ function rangeOf(
   };
 }
 
-function scriptKind(path: string, ts: TypeScriptApi): number {
+function scriptKind(path: string): ts.ScriptKind {
   switch (extname(path)) {
     case ".tsx":
       return ts.ScriptKind.TSX;
