@@ -97,12 +97,20 @@ function parseRuleSet(value: unknown, path: string): RuleConfig[] {
     (excludePaths !== undefined && !isStringArray(excludePaths)) ||
     typeof source !== "string" ||
     !isRecord(defaults) ||
-    !isSeverity(defaults.severity) ||
-    !isProbability(defaults.violationThreshold) ||
     !Array.isArray(rules) ||
     rules.length === 0
   ) {
     throw new Error(`rulesetの基本設定が不正です: ${path}`);
+  }
+
+  const defaultSeverity = defaults.severity;
+  const defaultViolationThreshold = defaults.violationThreshold;
+
+  if (
+    !isSeverity(defaultSeverity) ||
+    !isProbability(defaultViolationThreshold)
+  ) {
+    throw new Error(`rulesetのdefaultsが不正です: ${path}`);
   }
 
   const parsedRules = rules.map((rule, index) =>
@@ -115,8 +123,8 @@ function parseRuleSet(value: unknown, path: string): RuleConfig[] {
       excludePaths: excludePaths ?? [],
       source,
       defaults: {
-        severity: defaults.severity,
-        violationThreshold: defaults.violationThreshold,
+        severity: defaultSeverity,
+        violationThreshold: defaultViolationThreshold,
       },
     }),
   );
