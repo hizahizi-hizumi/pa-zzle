@@ -1,0 +1,39 @@
+version: 1
+id: game-ui
+
+paths:
+  - frontend/src/games/*/ui/**/*.{ts,tsx}
+
+source:
+  path: .claude/rules/game-structure.md
+
+defaults:
+  status: draft
+  severity: warning
+  violationThreshold: 0.90
+
+rules:
+  - id: presentation-responsibility
+    title: ゲームUIは表示とユーザー操作だけを所有する
+    scope: file
+    sourceSection: ゲーム実装の標準構造 > 依存方向
+    predicate:
+      instruction: |
+        Determine whether this game UI module owns presentation and user
+        interaction without implementing lower-level game responsibilities.
+      outcomes:
+        violation: |
+          The UI module implements problem generation, session mutation rules,
+          puzzle legality/state transitions, scoring policy, difficulty
+          classification, persistence rules, or other game logic that should be
+          owned below the UI layer.
+        compliant: |
+          The UI module renders game state, maps user interaction to operations
+          exposed by the play/use-case boundary, and owns visual representation
+          without reimplementing game rules.
+        not_applicable: |
+          The file is in the UI area but contains no game-specific behavior
+          relevant to this boundary.
+        insufficient_context: |
+          The available file does not provide enough context to distinguish
+          display mapping from reimplementation of game rules.
