@@ -41,3 +41,8 @@ jobs:
 
       - name: Verify repository quality
         run: ./scripts/verify.sh
+
+      - name: Run semantic lint
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint check
