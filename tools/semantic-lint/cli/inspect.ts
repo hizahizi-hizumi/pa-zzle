@@ -42,6 +42,7 @@ export async function runInspectCommand(args: string[]): Promise<number> {
   const [absolutePath] = await resolveRequestedPaths(
     projectRoot,
     [fileArg],
+    projectRoot,
   );
 
   if (!absolutePath) {
