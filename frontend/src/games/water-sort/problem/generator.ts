@@ -1,3 +1,7 @@
+import {
+  createProblemRandom,
+  shuffleProblemValues,
+} from "@/games/problem-random";
 import type { ProblemSeed } from "@/games/problem-seed";
 import {
   createWaterSortStateKey,
@@ -49,33 +53,11 @@ export type WaterSortGeneratorOptions = {
   acceptCandidate?: WaterSortProblemAcceptance;
 };
 
-function hashProblemSeed(seed: string): number {
-  let hash = 0x811c9dc5;
-  for (let index = 0; index < seed.length; index += 1) {
-    hash ^= seed.charCodeAt(index);
-    hash = Math.imul(hash, 0x01000193);
-  }
-
-  return hash >>> 0;
-}
-
-function createProblemSeededRandom(seed: string): () => number {
-  let state = hashProblemSeed(seed);
-
-  return () => {
-    state = (state + 0x6d2b79f5) >>> 0;
-    let value = state;
-    value = Math.imul(value ^ (value >>> 15), value | 1);
-    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
-    return ((value ^ (value >>> 14)) >>> 0) / 0x1_0000_0000;
-  };
-}
-
 function createGeneratorRandom(
   seed: ProblemSeed,
   colorCount: number,
 ): () => number {
-  return createProblemSeededRandom(
+  return createProblemRandom(
     [
       WATER_SORT_GENERATOR_VERSION,
       seed,
@@ -86,23 +68,6 @@ function createGeneratorRandom(
   );
 }
 
-function shuffle<T>(values: readonly T[], random: () => number): T[] {
-  const shuffled = [...values];
-
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(random() * (index + 1));
-    const value = shuffled[index];
-    const swapValue = shuffled[swapIndex];
-    if (value === undefined || swapValue === undefined) {
-      continue;
-    }
-    shuffled[index] = swapValue;
-    shuffled[swapIndex] = value;
-  }
-
-  return shuffled;
-}
-
 function createStandardCandidate(
   colorCount: number,
   random: () => number,
@@ -111,7 +76,7 @@ function createStandardCandidate(
     { length: colorCount * WATER_SORT_BOTTLE_CAPACITY },
     (_, index) => Math.floor(index / WATER_SORT_BOTTLE_CAPACITY),
   );
-  const shuffledUnits = shuffle(units, random);
+  const shuffledUnits = shuffleProblemValues(units, random);
   const bottles = Array.from({ length: colorCount }, (_, bottleIndex) =>
     shuffledUnits.slice(
       bottleIndex * WATER_SORT_BOTTLE_CAPACITY,
