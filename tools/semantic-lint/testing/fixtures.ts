@@ -37,14 +37,15 @@ export function sampleRule(overrides: Partial<Rule> = {}): Rule {
     status: "active",
     severity: "warning",
     violationThreshold: 0.9,
-    scope: "file",
+    context: "file",
+    target: "self",
     paths: ["frontend/**/*.test.ts"],
     source: {
       path: ".claude/rules/vitest.md",
       section: "テスト構造",
     },
     predicate: {
-      instruction: "Classify the subject.",
+      instruction: "Classify the target.",
       outcomes: {
         violation: "violates",
         compliant: "complies",
