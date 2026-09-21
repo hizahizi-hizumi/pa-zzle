@@ -193,9 +193,9 @@ describe("NanpurePlay", () => {
     expect(
       screen.getByRole("button", { name: "消す" }).hasAttribute("disabled"),
     ).toBe(true);
-    expect(
-      within(digitInput).getByText("1").hasAttribute("disabled"),
-    ).toBe(true);
+    expect(within(digitInput).getByText("1").hasAttribute("disabled")).toBe(
+      true,
+    );
   });
 
   test("クリア後に共通の結果階層で採点結果を表示すること", () => {
