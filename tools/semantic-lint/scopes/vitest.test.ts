@@ -1,13 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
 import { ScopeRegistry } from "./registry.ts";
-import { loadTypeScript, registerVitestScopes } from "./vitest.ts";
+import { registerVitestScopes } from "./vitest.ts";
 
 describe("Vitest scope adapter", () => {
-  test("ASTからtest / describe / beforeEachをrange付きで抽出する", async () => {
-    const ts = await loadTypeScript(process.cwd());
+  test("ASTからtest / describe / beforeEachをrange付きで抽出する", () => {
     const registry = new ScopeRegistry();
-    registerVitestScopes(registry, ts);
+    registerVitestScopes(registry);
     const document = {
       path: "frontend/example.test.ts",
       source: `describe("対象", () => {
@@ -46,10 +45,9 @@ describe("Vitest scope adapter", () => {
     expect(describes[0]?.range.startLine).toBe(1);
   });
 
-  test("comment・文字列・member methodのtestを誤認しない", async () => {
-    const ts = await loadTypeScript(process.cwd());
+  test("comment・文字列・member methodのtestを誤認しない", () => {
     const registry = new ScopeRegistry();
-    registerVitestScopes(registry, ts);
+    registerVitestScopes(registry);
     const document = {
       path: "frontend/example.test.ts",
       source: `// test("comment", () => {});
