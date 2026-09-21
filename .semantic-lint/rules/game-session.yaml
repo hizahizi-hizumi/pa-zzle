@@ -1,0 +1,41 @@
+version: 1
+id: game-session
+
+paths:
+  - frontend/src/games/*/session/**/*.{ts,tsx}
+
+source:
+  path: .claude/rules/game-structure.md
+
+defaults:
+  status: draft
+  severity: warning
+  violationThreshold: 0.90
+
+rules:
+  - id: play-facts-only
+    title: sessionは1プレイの状態・操作・経過事実だけを所有する
+    scope: file
+    sourceSection: ゲーム実装の標準構造 > 依存方向
+    predicate:
+      instruction: |
+        Determine whether this session module stays within the responsibility of
+        one play session: play state, operations, and elapsed facts.
+      outcomes:
+        violation: |
+          The session module owns responsibilities outside a single play
+          session, such as difficulty classification, scoring policy,
+          persistence, React/UI behavior, problem generation, diagnostics-only
+          data, or presentation concerns.
+        compliant: |
+          The session module depends on problem/puzzle contracts as needed and
+          exposes one-play state, operations, and facts such as elapsed time,
+          move counts, mistakes, or operation counts without owning downstream
+          evaluation or presentation policy.
+        not_applicable: |
+          The file is inside the session directory but does not participate in
+          session behavior or contracts.
+        insufficient_context: |
+          The available file does not provide enough context to determine
+          whether a dependency or calculation is a session fact or a downstream
+          policy.
