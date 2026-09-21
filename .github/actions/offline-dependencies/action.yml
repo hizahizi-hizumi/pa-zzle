@@ -1,5 +1,5 @@
 name: Offline Dependencies
-description: ChatGPTのオフライン開発に必要なBun runtimeとFrontend依存を生成します。
+description: ChatGPTのオフライン開発に必要なFrontendとsemantic lintの依存を生成します。
 
 inputs:
   repo-root:
