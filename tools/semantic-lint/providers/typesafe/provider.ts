@@ -227,9 +227,15 @@ function parseChoiceAnswer(
     throw new Error(`Choiceレスポンスが不正です: ${questionId}`);
   }
 
+  const probabilityRecord = value.probabilities;
+
+  if (!isRecord(probabilityRecord)) {
+    throw new Error(`Choice確率が不正です: ${questionId}`);
+  }
+
   const probabilities = Object.fromEntries(
     DECISIONS.map((decision) => {
-      const probability = value.probabilities[decision];
+      const probability = probabilityRecord[decision];
 
       if (!isProbability(probability)) {
         throw new Error(
