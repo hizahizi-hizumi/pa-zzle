@@ -6,10 +6,12 @@ import {
   DECISIONS,
   RULE_STATUSES,
   SEVERITIES,
+  TARGET_KINDS,
   type Decision,
   type Rule,
   type RuleStatus,
   type Severity,
+  type TargetKind,
 } from "../domain/model.ts";
 
 type RuleDefaults = {
@@ -141,7 +143,8 @@ function compileRule(options: {
     status,
     severity,
     violationThreshold,
-    scope,
+    context,
+    target,
     sourceSection,
     predicate,
   } = value;
@@ -149,8 +152,9 @@ function compileRule(options: {
   if (
     !isId(id) ||
     typeof title !== "string" ||
-    typeof scope !== "string" ||
-    scope.length === 0 ||
+    typeof context !== "string" ||
+    context.length === 0 ||
+    !isTargetKind(target) ||
     typeof sourceSection !== "string" ||
     !isRecord(predicate) ||
     typeof predicate.instruction !== "string" ||
@@ -199,7 +203,8 @@ function compileRule(options: {
     status: compiledStatus,
     severity: compiledSeverity,
     violationThreshold: compiledViolationThreshold,
-    scope,
+    context,
+    target,
     paths,
     source: {
       path: sourcePath,
@@ -267,5 +272,12 @@ function isSeverity(value: unknown): value is Severity {
   return (
     typeof value === "string" &&
     SEVERITIES.includes(value as Severity)
+  );
+}
+
+function isTargetKind(value: unknown): value is TargetKind {
+  return (
+    typeof value === "string" &&
+    TARGET_KINDS.includes(value as TargetKind)
   );
 }
