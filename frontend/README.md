@@ -49,55 +49,77 @@ bun run semantic-lint:typecheck
 
 ### Semantic lint
 
-通常の静的解析では表現しづらいプロジェクト固有の意味的規約を、Jevを使って検査する。rule定義はリポジトリルートの `.semantic-lint/rules/` を正本とし、CLIやprovider実装から分離する。ruleは1件1ファイルではなく、同じ適用対象と規約ソースを共有するruleset単位でまとめる。たとえばVitest規約は `.semantic-lint/rules/vitest.json` に `paths`、共通defaults、複数の `rules` を定義する。各ruleは `scope` で診断単位を指定し、現在は `file`、`vitest:test`、`vitest:beforeEach`、`vitest:describe` を扱う。
+通常の静的解析では表現しづらいプロジェクト固有の意味的規約を、bounded decision providerを使って検査する。設計判断は `docs/adr/ADR-0001-semantic-lint-architecture.md` を参照する。
 
-TypeSafe APIを利用するため、実行前にAPIキーを設定する。
+人間向け規約の正本は `.claude/rules/*.md` 等に置き、semantic lintのrulesetはその実行可能な解釈として `.semantic-lint/rules/*.yaml` に定義する。同じ適用対象と規約sourceを共有するruleは1 rulesetへまとめる。
+
+TypeSafe providerを使うコマンドではAPIキーが必要。
 
 ```sh
 export TYPESAFE_API_KEY="..."
 ```
 
-frontend全体を検査する。
+通常の検査は `check` を使う。active ruleだけを実行する。
 
 ```sh
-bun run semantic-lint
+bun run semantic-lint -- check
+bun run semantic-lint -- check src/games/nanpure
 ```
 
-対象を絞る場合はパスを指定する。
+校正中のdraft ruleも含める場合は `--include-draft` を指定する。
 
 ```sh
-bun run semantic-lint -- src/games/nanpure
-bun run semantic-lint -- src/games/nanpure/example.test.ts
+bun run semantic-lint -- check --include-draft
 ```
 
-違反候補はまずファイル単位で判定し、`scope` が指定されたruleは該当するtest / beforeEach / describeへ追加評価して位置を絞り込む。位置を特定できた場合は `path:start-end` とsymbolを表示し、絞り込めない場合は従来どおりファイル単位の診断へフォールバックする。
-
-問題なし・対象外を含む全判定と確率を確認する場合は `--verbose` を指定する。
+出力はcanonicalな `RunResult` から生成し、pretty / compact / JSONを選べる。
 
 ```sh
-bun run semantic-lint -- --verbose
+bun run semantic-lint -- check --format pretty
+bun run semantic-lint -- check --format compact
+bun run semantic-lint -- check --format json
 ```
 
-実行結果には総実行時間、ファイル単位の評価レイテンシのp50 / p95 / max、ファイル・判定スループットも表示する。違反箇所の追加評価を行った場合は評価リクエスト数にも反映する。並列数はリポジトリルートの `.semantic-lint/config.json` で変更できる。
-
-ruleのpredicateと閾値を校正するため、`.semantic-lint/cases/` に期待値付きのcaseを置く。case manifestもruleset単位とし、Vitestでは `.semantic-lint/cases/vitest/cases.json` から各fixtureを参照する。通常lintとは別に次のコマンドで評価する。
+Git等で作ったpath一覧を渡す場合は `--files-from` を使う。semantic lint本体はGitやPRへ依存しない。
 
 ```sh
-bun run semantic-lint:eval
+bun run semantic-lint -- check --files-from changed-files.txt
 ```
 
-同じcaseを反復して判定の揺れを確認する場合は `--repeat` を指定する。
+rule一覧と設定診断:
 
 ```sh
-bun run semantic-lint:eval -- --repeat 10
+bun run semantic-lint -- rules
+bun run semantic-lint -- rules vitest
+bun run semantic-lint -- doctor
 ```
 
-特定ruleだけを評価することもできる。
+ruleが意図どおり適用されない場合は `inspect` を使う。providerを呼ばずにcompiled rule、path match、ASTから抽出したsubject、EvaluationPlan、provider payloadまで確認できる。
 
 ```sh
-bun run semantic-lint:eval -- vitest/arrange-outside-test --repeat 10
+bun run semantic-lint -- inspect vitest/arrange-outside-test src/example.test.ts --plan-only
 ```
 
-校正結果にはChoice一致率、違反確率のmin / mean / max、違反閾値を跨いだ回数、入力トークン、総実行時間を表示する。
+`--plan-only` を外すと実際にproviderへ問い合わせ、raw responseと最終Diagnosticも確認する。Authorization headerやAPI keyはtraceへ出力しない。
 
-初期ruleは `vitest.md` のうち意味判定が必要な規約だけを対象とし、すべて `warning` として運用する。精度と閾値を確認した後に必要なruleだけ `error` へ昇格する。
+golden corpusによるrule校正:
+
+```sh
+bun run semantic-lint -- eval
+bun run semantic-lint -- eval vitest/arrange-outside-test --repeat 10
+```
+
+golden caseは `.semantic-lint/cases/<ruleset>/cases.yaml` とstableなfixtureで管理する。evalはcacheを使わず、Choice一致率、threshold一致率、違反確率のmin / mean / max、token usageを観測する。
+
+rule lifecycleは `draft / active / disabled`。新規ruleはdraftで追加し、golden corpusと実コードで校正してからactiveへ変更する。severityの `warning / error` とは独立して管理する。
+
+TypeScript / TSX / JavaScriptのVitest scopeはTypeScript ASTから決定論的に抽出する。modelへ行番号やsymbolを生成させず、ruleが指定した `file / vitest.test / vitest.beforeEach / vitest.describe` のsubjectを最初から評価する。file判定後にlocationを再判定する二段階方式は使わない。
+
+semantic lintツール自身の決定論的検証:
+
+```sh
+bun run semantic-lint:typecheck
+bun run semantic-lint:test
+```
+
+通常のverifyではschema/compiler、scope抽出、planner、engine、provider mapping、reporter等の決定論的テストだけを実行し、外部providerへの実リクエストは行わない。
