@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "format": "biome check --write .",
     "semantic-lint": "bun ../tools/semantic-lint/cli.ts",
-    "semantic-lint:typecheck": "tsc -p ../tools/semantic-lint/tsconfig.json"
+    "semantic-lint:typecheck": "tsc -p ../tools/semantic-lint/tsconfig.json",
+    "semantic-lint:eval": "bun ../tools/semantic-lint/eval.ts"
   },
   "dependencies": {
     "@generouted/react-router": "^1.20.2",
