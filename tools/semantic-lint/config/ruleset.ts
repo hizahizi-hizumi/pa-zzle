@@ -144,9 +144,6 @@ function compileRule(options: {
   if (
     !isId(id) ||
     typeof title !== "string" ||
-    (status !== undefined && !isRuleStatus(status)) ||
-    (severity !== undefined && !isSeverity(severity)) ||
-    (violationThreshold !== undefined && !isProbability(violationThreshold)) ||
     typeof scope !== "string" ||
     scope.length === 0 ||
     typeof sourceSection !== "string" ||
@@ -155,6 +152,19 @@ function compileRule(options: {
     !isRecord(predicate.outcomes)
   ) {
     throw new Error(`rule設定が不正です: ${origin} rules[${index}]`);
+  }
+
+  const compiledStatus = status ?? defaults.status;
+  const compiledSeverity = severity ?? defaults.severity;
+  const compiledViolationThreshold =
+    violationThreshold ?? defaults.violationThreshold;
+
+  if (
+    !isRuleStatus(compiledStatus) ||
+    !isSeverity(compiledSeverity) ||
+    !isProbability(compiledViolationThreshold)
+  ) {
+    throw new Error(`rule policyが不正です: ${origin} rules[${index}]`);
   }
 
   const outcomes = Object.fromEntries(
@@ -175,9 +185,9 @@ function compileRule(options: {
     id: `${rulesetId}/${id}`,
     rulesetId,
     title,
-    status: status ?? defaults.status,
-    severity: severity ?? defaults.severity,
-    violationThreshold: violationThreshold ?? defaults.violationThreshold,
+    status: compiledStatus,
+    severity: compiledSeverity,
+    violationThreshold: compiledViolationThreshold,
     scope,
     paths,
     source: {
