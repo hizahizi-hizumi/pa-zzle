@@ -1,3 +1,4 @@
+import { createRequire } from "node:module";
 import { extname } from "node:path";
 
 import type {
@@ -65,11 +66,9 @@ export async function loadTypeScript(
   baseDirectory: string,
 ): Promise<TypeScriptApi> {
   const modulePath = Bun.resolveSync("typescript", baseDirectory);
-  const module = await import(modulePath);
-  const candidate =
-    (module as { default?: unknown }).default ?? module;
+  const require = createRequire(import.meta.url);
 
-  return candidate as TypeScriptApi;
+  return require(modulePath) as TypeScriptApi;
 }
 
 export function registerVitestScopes(
