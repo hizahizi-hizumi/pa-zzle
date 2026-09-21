@@ -43,6 +43,18 @@ export async function runCheckCommand(args: string[]): Promise<number> {
     requestedPaths,
     statuses,
   });
+
+  if (
+    options.paths.length === 0 &&
+    options.filesFrom === undefined &&
+    rules.some((rule) => statuses.includes(rule.status)) &&
+    documents.length === 0
+  ) {
+    throw new Error(
+      "有効なruleはありますが、repository全体から対象ファイルを1件も検出できませんでした。ruleのpathsまたはsource discoveryを確認してください。",
+    );
+  }
+
   const scopes = await createDefaultScopeRegistry(projectRoot);
   const plan = buildEvaluationPlan({
     documents,
