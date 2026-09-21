@@ -78,4 +78,24 @@ bun run semantic-lint -- --verbose
 
 実行結果には総実行時間、ファイル単位の評価レイテンシのp50 / p95 / max、ファイル・判定スループットも表示する。並列数はリポジトリルートの `.semantic-lint/config.json` で変更できる。
 
+ruleのpredicateと閾値を校正するため、`.semantic-lint/cases/` に期待値付きのcaseを置く。通常lintとは別に次のコマンドで評価する。
+
+```sh
+bun run semantic-lint:eval
+```
+
+同じcaseを反復して判定の揺れを確認する場合は `--repeat` を指定する。
+
+```sh
+bun run semantic-lint:eval -- --repeat 10
+```
+
+特定ruleだけを評価することもできる。
+
+```sh
+bun run semantic-lint:eval -- vitest/arrange-outside-test --repeat 10
+```
+
+校正結果にはChoice一致率、違反確率のmin / mean / max、違反閾値を跨いだ回数、入力トークン、総実行時間を表示する。
+
 初期ruleは `vitest.md` のうち意味判定が必要な規約だけを対象とし、すべて `warning` として運用する。精度と閾値を確認した後に必要なruleだけ `error` へ昇格する。
