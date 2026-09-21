@@ -12,9 +12,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "biome check --write .",
-    "semantic-lint": "bun ../tools/semantic-lint/cli.ts",
+    "semantic-lint": "bun ../tools/semantic-lint/cli/main.ts",
     "semantic-lint:typecheck": "tsc -p ../tools/semantic-lint/tsconfig.json",
-    "semantic-lint:eval": "bun ../tools/semantic-lint/eval.ts",
+    "semantic-lint:eval": "bun ../tools/semantic-lint/cli/main.ts eval",
     "semantic-lint:test": "bun test ../tools/semantic-lint"
   },
   "dependencies": {
