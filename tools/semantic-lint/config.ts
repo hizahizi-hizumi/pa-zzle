@@ -57,12 +57,14 @@ export async function loadRules(
 ): Promise<RuleConfig[]> {
   const directory = resolve(projectRoot, rulesDir);
   const paths = await collectJsonFiles(directory);
-  const rules: RuleConfig[] = [];
-
-  for (const path of paths) {
-    const raw: unknown = await Bun.file(path).json();
-    rules.push(parseRule(raw, path));
-  }
+  const rules = (
+    await Promise.all(
+      paths.map(async (path) => {
+        const raw: unknown = await Bun.file(path).json();
+        return parseRuleSet(raw, path);
+      }),
+    )
+  ).flat();
 
   const ids = new Set<string>();
 
@@ -77,52 +79,112 @@ export async function loadRules(
   return rules.sort((left, right) => left.id.localeCompare(right.id));
 }
 
-function parseRule(value: unknown, path: string): RuleConfig {
+function parseRuleSet(value: unknown, path: string): RuleConfig[] {
   if (!isRecord(value) || value.version !== 1) {
-    throw new Error(`ruleのversionが不正です: ${path}`);
+    throw new Error(`rulesetのversionが不正です: ${path}`);
+  }
+
+  const { id, paths, excludePaths, source, defaults, rules } = value;
+
+  if (
+    typeof id !== "string" ||
+    id.length === 0 ||
+    id.includes("/") ||
+    !isStringArray(paths) ||
+    paths.length === 0 ||
+    (excludePaths !== undefined && !isStringArray(excludePaths)) ||
+    typeof source !== "string" ||
+    !isRecord(defaults) ||
+    !isSeverity(defaults.severity) ||
+    !isProbability(defaults.violationThreshold) ||
+    !Array.isArray(rules) ||
+    rules.length === 0
+  ) {
+    throw new Error(`rulesetの基本設定が不正です: ${path}`);
+  }
+
+  const parsedRules = rules.map((rule, index) =>
+    parseRule({
+      value: rule,
+      path,
+      index,
+      rulesetId: id,
+      paths,
+      excludePaths: excludePaths ?? [],
+      source,
+      defaults: {
+        severity: defaults.severity,
+        violationThreshold: defaults.violationThreshold,
+      },
+    }),
+  );
+
+  const localIds = new Set<string>();
+
+  for (const rule of parsedRules) {
+    const localId = rule.id.slice(id.length + 1);
+
+    if (localIds.has(localId)) {
+      throw new Error(`ruleset内でrule idが重複しています: ${rule.id}`);
+    }
+
+    localIds.add(localId);
+  }
+
+  return parsedRules;
+}
+
+function parseRule(options: {
+  value: unknown;
+  path: string;
+  index: number;
+  rulesetId: string;
+  paths: string[];
+  excludePaths: string[];
+  source: string;
+  defaults: {
+    severity: Severity;
+    violationThreshold: number;
+  };
+}): RuleConfig {
+  const {
+    value,
+    path,
+    index,
+    rulesetId,
+    paths,
+    excludePaths,
+    source,
+    defaults,
+  } = options;
+
+  if (!isRecord(value)) {
+    throw new Error(`ruleが不正です: ${path} rules[${index}]`);
   }
 
   const {
     id,
     title,
-    target,
-    severity,
-    violationThreshold,
-    include,
-    exclude,
-    source,
+    sourceSection,
+    severity: rawSeverity,
+    violationThreshold: rawViolationThreshold,
     question,
   } = value;
 
   if (
     typeof id !== "string" ||
+    id.length === 0 ||
+    id.includes("/") ||
     typeof title !== "string" ||
-    target !== "file" ||
-    !isSeverity(severity) ||
-    typeof violationThreshold !== "number" ||
-    violationThreshold < 0 ||
-    violationThreshold > 1 ||
-    !isStringArray(include) ||
-    include.length === 0 ||
-    !isStringArray(exclude)
-  ) {
-    throw new Error(`ruleの基本設定が不正です: ${path}`);
-  }
-
-  if (
-    !isRecord(source) ||
-    typeof source.path !== "string" ||
-    typeof source.section !== "string"
-  ) {
-    throw new Error(`ruleのsourceが不正です: ${path}`);
-  }
-
-  if (
+    typeof sourceSection !== "string" ||
+    (rawSeverity !== undefined && !isSeverity(rawSeverity)) ||
+    (rawViolationThreshold !== undefined &&
+      !isProbability(rawViolationThreshold)) ||
     !isRecord(question) ||
     typeof question.instructions !== "string" ||
     !isRecord(question.criteria)
   ) {
-    throw new Error(`ruleのquestionが不正です: ${path}`);
+    throw new Error(`ruleの設定が不正です: ${path} rules[${index}]`);
   }
 
   const criteriaRecord = question.criteria;
@@ -131,7 +193,9 @@ function parseRule(value: unknown, path: string): RuleConfig {
       const description = criteriaRecord[choice];
 
       if (typeof description !== "string") {
-        throw new Error(`criteria.${choice} がありません: ${path}`);
+        throw new Error(
+          `criteria.${choice} がありません: ${path} rules[${index}]`,
+        );
       }
 
       return [choice, description];
@@ -139,17 +203,16 @@ function parseRule(value: unknown, path: string): RuleConfig {
   ) as Record<DecisionChoice, string>;
 
   return {
-    version: 1,
-    id,
+    id: `${rulesetId}/${id}`,
     title,
-    target,
-    severity,
-    violationThreshold,
-    include,
-    exclude,
+    severity: rawSeverity ?? defaults.severity,
+    violationThreshold:
+      rawViolationThreshold ?? defaults.violationThreshold,
+    paths,
+    excludePaths,
     source: {
-      path: source.path,
-      section: source.section,
+      path: source,
+      section: sourceSection,
     },
     question: {
       instructions: question.instructions,
@@ -176,6 +239,10 @@ async function collectJsonFiles(directory: string): Promise<string[]> {
   }
 
   return paths.sort();
+}
+
+function isProbability(value: unknown): value is number {
+  return typeof value === "number" && value >= 0 && value <= 1;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
