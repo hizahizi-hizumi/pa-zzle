@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "id": "vitest/dom-query-contract",
+  "title": "DOMクエリは検証する契約に合わせて選ぶ",
+  "target": "file",
+  "severity": "warning",
+  "violationThreshold": 0.9,
+  "include": [
+    "frontend/**/*.test.{ts,tsx,mjs}"
+  ],
+  "exclude": [],
+  "source": {
+    "path": ".claude/rules/vitest.md",
+    "section": "テスト構造 > 基本原則"
+  },
+  "question": {
+    "instructions": "Classify whether DOM queries in this test file are chosen according to the user-observable contract each test intends to verify, rather than using getByRole mechanically as a default.",
+    "criteria": {
+      "violation": "One or more tests use a DOM query whose semantics do not match the contract being verified. In particular, getByRole is used mechanically when role semantics and accessible naming are not the contract, or another query such as getByText or getByLabelText would more directly express the intended observable contract.",
+      "compliant": "DOM queries express the contract under test: role and accessible name are used when role semantics are the contract, visible text is used when displayed wording is the contract, and label associations are used when the label-control relationship is the contract.",
+      "not_applicable": "The file contains no DOM queries whose choice can be evaluated under this rule.",
+      "insufficient_context": "The available source does not make the intended observable contract clear enough to determine whether the selected query is appropriate."
+    }
+  }
+}
