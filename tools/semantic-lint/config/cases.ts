@@ -14,6 +14,7 @@ export type GoldenCase = {
   fixturePath: string;
   expected: Decision;
   subjectSymbol?: string;
+  subjectSource?: string;
   origin?: {
     path: string;
     note?: string;
@@ -72,7 +73,7 @@ export function compileCaseManifest(
       );
     }
 
-    const subjectSymbol = compileSubjectSymbol(item.subject, origin, index);
+    const subjectSelector = compileSubjectSelector(item.subject, origin, index);
     const goldenCase: GoldenCase = {
       rulesetId,
       ruleId: `${rulesetId}/${item.rule}`,
@@ -81,8 +82,12 @@ export function compileCaseManifest(
       expected: item.expected,
     };
 
-    if (subjectSymbol !== undefined) {
-      goldenCase.subjectSymbol = subjectSymbol;
+    if (subjectSelector?.symbol !== undefined) {
+      goldenCase.subjectSymbol = subjectSelector.symbol;
+    }
+
+    if (subjectSelector?.source !== undefined) {
+      goldenCase.subjectSource = subjectSelector.source;
     }
 
     if (item.origin !== undefined) {
@@ -132,22 +137,38 @@ async function collectCaseManifests(directory: string): Promise<string[]> {
   return paths.sort();
 }
 
-function compileSubjectSymbol(
+function compileSubjectSelector(
   value: unknown,
   origin: string,
   index: number,
-): string | undefined {
+): { symbol?: string; source?: string } | undefined {
   if (value === undefined) {
     return undefined;
   }
 
-  if (!isRecord(value) || typeof value.symbol !== "string") {
+  if (!isRecord(value)) {
     throw new Error(
       `golden case subjectが不正です: ${origin} cases[${index}]`,
     );
   }
 
-  return value.symbol;
+  const symbol = value.symbol;
+  const source = value.source;
+
+  if (
+    (symbol !== undefined && typeof symbol !== "string") ||
+    (source !== undefined && typeof source !== "string") ||
+    (symbol === undefined && source === undefined)
+  ) {
+    throw new Error(
+      `golden case subjectが不正です: ${origin} cases[${index}]`,
+    );
+  }
+
+  return {
+    ...(typeof symbol === "string" ? { symbol } : {}),
+    ...(typeof source === "string" ? { source } : {}),
+  };
 }
 
 function isDecision(value: unknown): value is Decision {
