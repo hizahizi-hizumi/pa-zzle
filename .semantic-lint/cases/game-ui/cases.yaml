@@ -1,0 +1,13 @@
+version: 1
+ruleset: game-ui
+
+cases:
+  - rule: presentation-responsibility
+    name: UIが合法手判定を実装する
+    fixture: fixtures/violation.tsx
+    expected: violation
+
+  - rule: presentation-responsibility
+    name: UIが公開された操作を呼ぶ
+    fixture: fixtures/compliant.tsx
+    expected: compliant
