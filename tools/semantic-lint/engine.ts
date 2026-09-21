@@ -64,6 +64,7 @@ export async function evaluateSource(
   });
   let durationMs = performance.now() - startedAt;
   let requestCount = 1;
+  let providerDecisionCount = questionToRule.size;
   let inputTokens = response.usage.inputTokens;
   let outputTokens = response.usage.outputTokens;
 
@@ -88,6 +89,7 @@ export async function evaluateSource(
     );
     durationMs += localization.durationMs;
     requestCount += localization.requestCount;
+    providerDecisionCount += localization.decisionCount;
     inputTokens += localization.inputTokens;
     outputTokens += localization.outputTokens;
   }
@@ -97,6 +99,7 @@ export async function evaluateSource(
     model: response.model,
     durationMs,
     requestCount,
+    providerDecisionCount,
     evaluations,
     usage: {
       inputTokens,
@@ -126,6 +129,7 @@ async function localizeFindings(
   requestCount: number;
   inputTokens: number;
   outputTokens: number;
+  decisionCount: number;
 }> {
   const targets: LocalizationTarget[] = [];
 
@@ -143,6 +147,7 @@ async function localizeFindings(
   let requestCount = 0;
   let inputTokens = 0;
   let outputTokens = 0;
+  let decisionCount = 0;
 
   for (
     let offset = 0;
@@ -196,6 +201,7 @@ async function localizeFindings(
     });
     durationMs += performance.now() - startedAt;
     requestCount += 1;
+    decisionCount += batch.length;
     inputTokens += response.usage.inputTokens;
     outputTokens += response.usage.outputTokens;
 
@@ -225,6 +231,7 @@ async function localizeFindings(
     requestCount,
     inputTokens,
     outputTokens,
+    decisionCount,
   };
 }
 
