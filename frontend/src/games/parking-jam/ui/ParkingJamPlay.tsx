@@ -81,7 +81,6 @@ export function ParkingJamPlay({
         onOpenRecords={onOpenRecords}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
-        onOpenDiagnostics={onOpenDiagnostics}
       />
     );
   }
@@ -97,6 +96,7 @@ export function ParkingJamPlay({
         onStartNewProblem={onStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
+        onOpenDiagnostics={onOpenDiagnostics}
       />
       <main className="flex min-h-0 flex-1 items-start justify-center overflow-hidden px-3 pt-3 sm:items-center sm:px-6 sm:py-4">
         <ParkingJamBoard

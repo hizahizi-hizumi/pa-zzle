@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
-  serializeParkingJamDiagnosticSnapshot,
   type ParkingJamDiagnosticSnapshot,
+  serializeParkingJamDiagnosticSnapshot,
 } from "@/games/parking-jam/diagnostics";
 import { getParkingJamDifficultyLabel } from "@/games/parking-jam/difficulty";
 import { DiagnosticRow } from "@/games/parking-jam/ui/ParkingJamDiagnostics/DiagnosticRow";
@@ -95,9 +95,7 @@ export function ParkingJamDiagnostics({
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 sm:px-6">
-          <h3 className="text-xs font-semibold text-muted-foreground">
-            問題
-          </h3>
+          <h3 className="text-xs font-semibold text-muted-foreground">問題</h3>
           <dl className="mt-2 divide-y rounded-xl border bg-muted/25 px-4">
             <DiagnosticRow
               label="難易度"
@@ -129,7 +127,11 @@ export function ParkingJamDiagnostics({
             構造
           </h3>
           <dl className="mt-2 divide-y rounded-xl border bg-muted/25 px-4">
-            <DiagnosticRow label="依存深さ" value={String(features.dependencyDepth)} mono />
+            <DiagnosticRow
+              label="依存深さ"
+              value={String(features.dependencyDepth)}
+              mono
+            />
             <DiagnosticRow
               label="初期合法車"
               value={`${features.initialLegalVehicleCount} / ${formatRatio(features.initialLegalVehicleRatio)}`}

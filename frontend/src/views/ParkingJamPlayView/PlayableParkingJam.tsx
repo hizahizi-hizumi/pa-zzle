@@ -61,38 +61,38 @@ export function PlayableParkingJam({ difficulty }: PlayableParkingJamProps) {
   return (
     <>
       <ParkingJamPlay
-      difficulty={play.difficulty}
-      status={play.status}
-      progress={play.progress}
-      board={play.board}
-      state={play.state}
-      selectedVehicleId={play.selectedVehicleId}
-      operation={play.operation}
-      elapsedMs={play.elapsedMs}
-      failedMoveCount={play.failedMoveCount}
-      canUndo={play.canUndo}
-      canRestart={play.canRestart}
-      result={play.result}
-      recordOutcomeNotice={
-        <PlayRecordOutcomeNotice
-          outcome={recordOutcome}
-          display={parkingJamPlayRecordDisplay}
-        />
-      }
-      onSelectVehicle={play.selectVehicle}
-      onMove={play.attemptMove}
-      onUndo={play.undo}
-      onRestart={play.restart}
-      onReplay={play.replay}
-      onStartNewProblem={play.startNewProblem}
-      onOpenRecords={() => navigate("/records")}
-      onChangeDifficulty={() => navigate("/puzzles/parking-jam")}
-        onBackToHome={() => navigate("/")}
-        onClearAnimationComplete={play.completeClearAnimation}
-        onOpenDiagnostics={
-          diagnostics ? () => setDiagnosticsOpen(true) : undefined
+        difficulty={play.difficulty}
+        status={play.status}
+        progress={play.progress}
+        board={play.board}
+        state={play.state}
+        selectedVehicleId={play.selectedVehicleId}
+        operation={play.operation}
+        elapsedMs={play.elapsedMs}
+        failedMoveCount={play.failedMoveCount}
+        canUndo={play.canUndo}
+        canRestart={play.canRestart}
+        result={play.result}
+        recordOutcomeNotice={
+          <PlayRecordOutcomeNotice
+            outcome={recordOutcome}
+            display={parkingJamPlayRecordDisplay}
+          />
         }
-      />
+        onSelectVehicle={play.selectVehicle}
+        onMove={play.attemptMove}
+        onUndo={play.undo}
+        onRestart={play.restart}
+        onReplay={play.replay}
+        onStartNewProblem={play.startNewProblem}
+        onOpenRecords={() => navigate("/records")}
+        onChangeDifficulty={() => navigate("/puzzles/parking-jam")}
+          onBackToHome={() => navigate("/")}
+          onClearAnimationComplete={play.completeClearAnimation}
+          onOpenDiagnostics={
+            diagnostics ? () => setDiagnosticsOpen(true) : undefined
+          }
+        />
       {diagnostics && diagnosticsOpen ? (
         <ParkingJamDiagnostics
           snapshot={diagnostics}
