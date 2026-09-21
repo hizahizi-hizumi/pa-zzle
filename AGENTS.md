@@ -19,9 +19,13 @@ bun run --cwd frontend check # Biome のチェック
 bun run --cwd frontend typecheck # TypeScript の型検査
 bun run --cwd frontend test # Vitest の1回実行
 bun run --cwd frontend build # プロダクションビルド
-bun run --cwd frontend semantic-lint # frontendに適用される意味lint。TYPESAFE_API_KEYが必要
-bun run --cwd frontend semantic-lint:eval # semantic lint ruleの校正。TYPESAFE_API_KEYが必要
+bun run --cwd frontend semantic-lint -- check # activeな意味lint。TYPESAFE_API_KEYが必要
+bun run --cwd frontend semantic-lint -- check --include-draft # draft ruleも含めて意味lint
+bun run --cwd frontend semantic-lint -- eval # semantic lint ruleの校正。TYPESAFE_API_KEYが必要
+bun run --cwd frontend semantic-lint -- inspect <rule-id> <file> --plan-only # providerを呼ばず評価計画を確認
+bun run --cwd frontend semantic-lint -- doctor # rule / scope / source / provider設定を診断
 bun run --cwd frontend semantic-lint:typecheck # semantic lintツールの型検査
+bun run --cwd frontend semantic-lint:test # semantic lintツールの決定論的テスト
 ```
 
 Repository Snapshot と Offline Dependencies を使う ChatGPT 実行環境では、対象Snapshotと同じworkflow runの `repository-environment-<target>-<sha>.json` から依存アーティファクトを取得する。全品質検証ではそのアーカイブを `scripts/chatgpt-verify.sh` に渡す。画面確認などで Vite を直接使う場合は、依存アーティファクトの `frontend/node_modules` を配置して次を実行する。
