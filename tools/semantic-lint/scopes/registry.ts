@@ -3,53 +3,93 @@ import type {
   SourceDocument,
   SourceRange,
   Subject,
+  TargetKind,
 } from "../domain/model.ts";
 
-export type ScopeExtractor = (document: SourceDocument) => Subject[];
+export type ScopeExtractor = (
+  document: SourceDocument,
+  target: TargetKind,
+) => Subject[];
+
+type RegisteredScope = {
+  supportedTargets: ReadonlySet<TargetKind>;
+  extract: ScopeExtractor;
+};
 
 export class ScopeRegistry {
-  readonly #extractors = new Map<ScopeId, ScopeExtractor>();
+  readonly #scopes = new Map<ScopeId, RegisteredScope>();
 
   constructor() {
-    this.register("file", extractFileSubject);
+    this.register("file", ["self"], extractFileSubjects);
   }
 
-  register(scope: ScopeId, extractor: ScopeExtractor): void {
-    if (this.#extractors.has(scope)) {
+  register(
+    scope: ScopeId,
+    supportedTargets: readonly TargetKind[],
+    extractor: ScopeExtractor,
+  ): void {
+    if (this.#scopes.has(scope)) {
       throw new Error(`scopeが重複しています: ${scope}`);
     }
 
-    this.#extractors.set(scope, extractor);
+    this.#scopes.set(scope, {
+      supportedTargets: new Set(supportedTargets),
+      extract: extractor,
+    });
   }
 
   has(scope: ScopeId): boolean {
-    return this.#extractors.has(scope);
+    return this.#scopes.has(scope);
   }
 
-  extract(scope: ScopeId, document: SourceDocument): Subject[] {
-    const extractor = this.#extractors.get(scope);
+  supports(scope: ScopeId, target: TargetKind): boolean {
+    return this.#scopes.get(scope)?.supportedTargets.has(target) ?? false;
+  }
 
-    if (!extractor) {
-      throw new Error(`未登録のscopeです: ${scope}`);
+  extract(
+    scope: ScopeId,
+    target: TargetKind,
+    document: SourceDocument,
+  ): Subject[] {
+    const registered = this.#scopes.get(scope);
+
+    if (!registered) {
+      throw new Error(`未登録のcontextです: ${scope}`);
     }
 
-    return extractor(document);
+    if (!registered.supportedTargets.has(target)) {
+      throw new Error(`context ${scope} はtarget ${target}をサポートしていません。`);
+    }
+
+    return registered.extract(document, target);
   }
 
   ids(): string[] {
-    return [...this.#extractors.keys()].sort();
+    return [...this.#scopes.keys()].sort();
   }
 }
 
-function extractFileSubject(document: SourceDocument): Subject[] {
+function extractFileSubjects(
+  document: SourceDocument,
+  target: TargetKind,
+): Subject[] {
+  if (target !== "self") {
+    return [];
+  }
+
+  const range = fullRange(document.source);
+
   return [
     {
-      id: subjectId("file", document.path, 0),
-      scope: "file",
+      id: subjectId("file", "self", document.path, 0),
+      contextScope: "file",
+      targetKind: "self",
       path: document.path,
-      range: fullRange(document.source),
+      range,
       symbol: document.path,
       source: document.source,
+      contextRange: range,
+      contextSymbol: document.path,
     },
   ];
 }
@@ -65,6 +105,13 @@ function fullRange(source: string): SourceRange {
   };
 }
 
-export function subjectId(scope: ScopeId, path: string, index: number): string {
-  return `${scope}:${path}:${index}`;
+export function subjectId(
+  scope: ScopeId,
+  target: TargetKind,
+  path: string,
+  contextIndex: number,
+  targetIndex?: number,
+): string {
+  const suffix = targetIndex === undefined ? "" : `:${targetIndex}`;
+  return `${scope}:${target}:${path}:${contextIndex}${suffix}`;
 }
