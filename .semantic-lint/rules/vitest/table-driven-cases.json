@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "id": "vitest/table-driven-cases",
+  "title": "同じ期待動作の入力違いはtest.eachで表現する",
+  "target": "file",
+  "severity": "warning",
+  "violationThreshold": 0.9,
+  "include": [
+    "frontend/**/*.test.{ts,tsx,mjs}"
+  ],
+  "exclude": [],
+  "source": {
+    "path": ".claude/rules/vitest.md",
+    "section": "入力違いのケース"
+  },
+  "question": {
+    "instructions": "Classify whether repeated test cases in this file follow the project rule that cases verifying the same expected behavior with different inputs should use test.each.",
+    "criteria": {
+      "violation": "Two or more separate test cases repeat substantially the same Act and Assert structure and differ mainly in input values or expected values, so they should be represented with test.each.",
+      "compliant": "Repeated cases are already represented with test.each, or separate tests verify materially different behaviors that deserve independent test cases.",
+      "not_applicable": "The file has no repeated test cases representing the same behavior with different inputs or expected values.",
+      "insufficient_context": "The available source does not make it possible to determine whether superficially similar tests represent the same expected behavior."
+    }
+  }
+}
