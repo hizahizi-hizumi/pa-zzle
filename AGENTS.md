@@ -14,7 +14,7 @@
 ### Frontend
 
 ```sh
-bun run --cwd frontend dev # PC環境の開発サーバー赛動
+bun run --cwd frontend dev # PC環境の開発サーバー起動
 bun run --cwd frontend check # Biome のチェック
 bun run --cwd frontend typecheck # TypeScript の型検査
 bun run --cwd frontend test # Vitest の1回実行
@@ -29,7 +29,7 @@ Repository Snapshot と Offline Dependencies を使う ChatGPT 実行環境で�
 frontend/node_modules/.bin/vite --config frontend/vite.chatgpt.config.ts --host 127.0.0.1 --port 3000
 ```
 
-ChatGPT環境で画面確認する場合は、`docs/メモ/ChatGPT画面確認.md` の手項に従い、`scripts/chatgpt_playwright.py` を使って描画・操作・スクリーンショット・ブラウザエラーまで確認する。
+ChatGPT環境で画面確認する場合は、`docs/メモ/ChatGPT画面確認.md` の手順に従い、`scripts/chatgpt_playwright.py` を使って描画・操作・スクリーンショット・ブラウザエラーまで確認する。
 
 ### Backend
 
