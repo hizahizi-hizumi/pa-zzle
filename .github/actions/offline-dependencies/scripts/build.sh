@@ -39,20 +39,28 @@ actual_bun_version="$(bun --version)"
 }
 
 stage="$RUNNER_TEMP/offline-dependencies-stage"
-rm -rf "$stage" frontend/node_modules
-mkdir -p "$stage/frontend"
+rm -rf "$stage" frontend/node_modules tools/semantic-lint/node_modules
+mkdir -p "$stage/frontend" "$stage/tools/semantic-lint"
 
 (
   cd frontend
   bun install --frozen-lockfile
 )
 
-rm -rf frontend/node_modules/bun frontend/node_modules/@oven
-rm -f frontend/node_modules/.bin/bun frontend/node_modules/.bin/bunx
-find frontend/node_modules -mindepth 1 -maxdepth 2 -type d -name '*linux-x64-musl*' -prune -exec rm -rf {} +
-find frontend/node_modules -type l -lname '*linux-x64-musl*' -delete
+(
+  cd tools/semantic-lint
+  bun install --frozen-lockfile
+)
+
+for node_modules in frontend/node_modules tools/semantic-lint/node_modules; do
+  rm -rf "$node_modules/bun" "$node_modules/@oven"
+  rm -f "$node_modules/.bin/bun" "$node_modules/.bin/bunx"
+  find "$node_modules" -mindepth 1 -maxdepth 2 -type d -name '*linux-x64-musl*' -prune -exec rm -rf {} +
+  find "$node_modules" -type l -lname '*linux-x64-musl*' -delete
+done
 
 mv frontend/node_modules "$stage/frontend/node_modules"
+mv tools/semantic-lint/node_modules "$stage/tools/semantic-lint/node_modules"
 
 cat > "$stage/manifest.env" <<EOF_MANIFEST
 OFFLINE_DEPENDENCIES_SCHEMA=$OFFLINE_DEPENDENCIES_SCHEMA
