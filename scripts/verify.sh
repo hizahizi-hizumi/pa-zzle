@@ -20,6 +20,7 @@ run_check() {
 run_check "Frontend Biome" bun run --cwd frontend check
 run_check "Frontend TypeScript" bun run --cwd frontend typecheck
 run_check "Semantic lint TypeScript" bun run --cwd frontend semantic-lint:typecheck
+run_check "Semantic lint tests" bun run --cwd frontend semantic-lint:test
 run_check "Frontend Vitest" bun run --cwd frontend test
 run_check "Frontend build" bun run --cwd frontend build
 
