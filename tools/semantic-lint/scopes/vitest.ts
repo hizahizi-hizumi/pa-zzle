@@ -6,6 +6,7 @@ import type {
   SourceDocument,
   SourceRange,
   Subject,
+  TargetKind,
 } from "../domain/model.ts";
 import { type ScopeRegistry, subjectId } from "./registry.ts";
 
@@ -19,35 +20,43 @@ type Candidate = {
   symbol: string;
   start: number;
   end: number;
+  targets: {
+    start: number;
+    end: number;
+  }[];
 };
 
 export function registerVitestScopes(
   registry: ScopeRegistry,
 ): void {
-  const cache = new Map<string, Map<VitestScope, Subject[]>>();
+  const cache = new Map<string, Candidate[]>();
 
   for (const scope of [
     "vitest.test",
     "vitest.beforeEach",
     "vitest.describe",
   ] as const) {
-    registry.register(scope, (document) => {
+    registry.register(scope, ["self", "statement"], (document, target) => {
       const key = document.path + "\0" + document.source;
-      let byScope = cache.get(key);
+      let candidates = cache.get(key);
 
-      if (!byScope) {
-        byScope = extractAllVitestSubjects(document);
-        cache.set(key, byScope);
+      if (!candidates) {
+        candidates = extractAllVitestCandidates(document);
+        cache.set(key, candidates);
       }
 
-      return byScope.get(scope) ?? [];
+      return materializeSubjects(
+        document,
+        candidates.filter((candidate) => candidate.scope === scope),
+        target,
+      );
     });
   }
 }
 
-function extractAllVitestSubjects(
+function extractAllVitestCandidates(
   document: SourceDocument,
-): Map<VitestScope, Subject[]> {
+): Candidate[] {
   const sourceFile = ts.createSourceFile(
     document.path,
     document.source,
@@ -70,30 +79,64 @@ function extractAllVitestSubjects(
   }
 
   visit(sourceFile);
-  candidates.sort(
+  return candidates.sort(
     (left, right) => left.start - right.start || left.end - right.end,
   );
+}
 
-  const counts = new Map<VitestScope, number>();
-  const byScope = new Map<VitestScope, Subject[]>();
+function materializeSubjects(
+  document: SourceDocument,
+  candidates: Candidate[],
+  target: TargetKind,
+): Subject[] {
+  const sourceFile = ts.createSourceFile(
+    document.path,
+    document.source,
+    ts.ScriptTarget.Latest,
+    true,
+    scriptKind(document.path),
+  );
+  const subjects: Subject[] = [];
 
-  for (const candidate of candidates) {
-    const index = counts.get(candidate.scope) ?? 0;
-    counts.set(candidate.scope, index + 1);
-    const subjects = byScope.get(candidate.scope) ?? [];
+  for (const [contextIndex, candidate] of candidates.entries()) {
+    const contextRange = rangeOf(sourceFile, candidate.start, candidate.end);
 
-    subjects.push({
-      id: subjectId(candidate.scope, document.path, index),
-      scope: candidate.scope,
-      path: document.path,
-      range: rangeOf(sourceFile, candidate.start, candidate.end),
-      symbol: candidate.symbol,
-      source: document.source.slice(candidate.start, candidate.end),
-    });
-    byScope.set(candidate.scope, subjects);
+    if (target === "self") {
+      subjects.push({
+        id: subjectId(candidate.scope, target, document.path, contextIndex),
+        contextScope: candidate.scope,
+        targetKind: target,
+        path: document.path,
+        range: contextRange,
+        symbol: candidate.symbol,
+        source: document.source.slice(candidate.start, candidate.end),
+        contextRange,
+        contextSymbol: candidate.symbol,
+      });
+      continue;
+    }
+
+    for (const [targetIndex, statement] of candidate.targets.entries()) {
+      subjects.push({
+        id: subjectId(
+          candidate.scope,
+          target,
+          document.path,
+          contextIndex,
+          targetIndex,
+        ),
+        contextScope: candidate.scope,
+        targetKind: target,
+        path: document.path,
+        range: rangeOf(sourceFile, statement.start, statement.end),
+        source: document.source.slice(statement.start, statement.end),
+        contextRange,
+        contextSymbol: candidate.symbol,
+      });
+    }
   }
 
-  return byScope;
+  return subjects;
 }
 
 function classifyCall(
@@ -112,6 +155,7 @@ function classifyCall(
       symbol: "beforeEach",
       start: node.getStart(sourceFile),
       end: node.getEnd(),
+      targets: callbackTargets(node, sourceFile),
     };
   }
 
@@ -132,7 +176,38 @@ function classifyCall(
     symbol: `${kind}(${JSON.stringify(title)})`,
     start: node.getStart(sourceFile),
     end: node.getEnd(),
+    targets: callbackTargets(node, sourceFile),
   };
+}
+
+function callbackTargets(
+  node: ts.CallExpression,
+  sourceFile: ts.SourceFile,
+): { start: number; end: number }[] {
+  const callback = [...node.arguments]
+    .reverse()
+    .find(
+      (argument): argument is ts.ArrowFunction | ts.FunctionExpression =>
+        ts.isArrowFunction(argument) || ts.isFunctionExpression(argument),
+    );
+
+  if (!callback) {
+    return [];
+  }
+
+  if (ts.isBlock(callback.body)) {
+    return callback.body.statements.map((statement) => ({
+      start: statement.getStart(sourceFile),
+      end: statement.getEnd(),
+    }));
+  }
+
+  return [
+    {
+      start: callback.body.getStart(sourceFile),
+      end: callback.body.getEnd(),
+    },
+  ];
 }
 
 function calleeRootName(
