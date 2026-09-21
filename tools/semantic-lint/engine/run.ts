@@ -1,4 +1,7 @@
 import { buildDiagnostics } from "../diagnostics/build.ts";
+import {
+  buildDecisionBatches,
+} from "../planning/batches.ts";
 import type {
   DecisionBatch,
   DecisionBatchResult,
@@ -7,13 +10,12 @@ import type {
   Rule,
   RunResult,
   SemanticDecisionProvider,
-  Subject,
 } from "../domain/model.ts";
 
-type PlannedBatch = {
+type ExecutedBatch = {
   batch: DecisionBatch;
-  tasks: EvaluationPlan["files"][number]["tasks"];
-  subjectsById: Map<string, Subject>;
+  response: DecisionBatchResult;
+  latencyMs: number;
 };
 
 export async function runEvaluationPlan(options: {
@@ -35,26 +37,21 @@ export async function runEvaluationPlan(options: {
     throw new Error("concurrencyは1以上の整数で指定してください。");
   }
 
-  if (!Number.isInteger(maxDecisionsPerRequest) || maxDecisionsPerRequest < 1) {
-    throw new Error("maxDecisionsPerRequestは1以上の整数で指定してください。");
-  }
-
   const startedAt = performance.now();
-  const rulesById = new Map(rules.map((rule) => [rule.id, rule]));
-  const plannedBatches = createBatches(
+  const batches = buildDecisionBatches({
     plan,
-    rulesById,
+    rules,
     maxDecisionsPerRequest,
-  );
+  });
   const executed = await mapConcurrent(
-    plannedBatches,
+    batches,
     concurrency,
-    async (planned) => {
+    async (batch): Promise<ExecutedBatch> => {
       const providerStartedAt = performance.now();
-      const response = await provider.evaluate(planned.batch);
+      const response = await provider.evaluate(batch);
 
       return {
-        planned,
+        batch,
         response,
         latencyMs: performance.now() - providerStartedAt,
       };
@@ -67,16 +64,10 @@ export async function runEvaluationPlan(options: {
   let outputTokens = 0;
 
   for (const execution of executed) {
-    const { planned, response, latencyMs } = execution;
-    providerLatencies.push(latencyMs);
-    inputTokens += response.usage.inputTokens;
-    outputTokens += response.usage.outputTokens;
-
-    appendEvaluations({
-      evaluations,
-      planned,
-      response,
-    });
+    providerLatencies.push(execution.latencyMs);
+    inputTokens += execution.response.usage.inputTokens;
+    outputTokens += execution.response.usage.outputTokens;
+    appendEvaluations(evaluations, execution.batch, execution.response);
   }
 
   const { diagnostics, unknowns } = buildDiagnostics({
@@ -99,9 +90,9 @@ export async function runEvaluationPlan(options: {
         (sum, file) => sum + file.tasks.length,
         0,
       ),
-      providerRequests: plannedBatches.length,
-      providerDecisions: plannedBatches.reduce(
-        (sum, planned) => sum + planned.tasks.length,
+      providerRequests: batches.length,
+      providerDecisions: batches.reduce(
+        (sum, batch) => sum + batch.requests.length,
         0,
       ),
       diagnostics: diagnostics.length,
@@ -114,103 +105,37 @@ export async function runEvaluationPlan(options: {
   };
 }
 
-function createBatches(
-  plan: EvaluationPlan,
-  rulesById: Map<string, Rule>,
-  maxDecisionsPerRequest: number,
-): PlannedBatch[] {
-  const batches: PlannedBatch[] = [];
+function appendEvaluations(
+  evaluations: Evaluation[],
+  batch: DecisionBatch,
+  response: DecisionBatchResult,
+): void {
+  const subjectsById = new Map(
+    batch.subjects.map((subject) => [subject.id, subject]),
+  );
 
-  for (const file of plan.files) {
-    const subjectsById = new Map(
-      file.subjects.map((subject) => [subject.id, subject]),
-    );
-
-    for (
-      let offset = 0;
-      offset < file.tasks.length;
-      offset += maxDecisionsPerRequest
-    ) {
-      const tasks = file.tasks.slice(offset, offset + maxDecisionsPerRequest);
-      batches.push({
-        batch: createBatch(
-          file.path,
-          file.source,
-          file.subjects,
-          tasks,
-          rulesById,
-          offset / maxDecisionsPerRequest,
-        ),
-        tasks,
-        subjectsById,
-      });
-    }
-  }
-
-  return batches;
-}
-
-function appendEvaluations(options: {
-  evaluations: Evaluation[];
-  planned: PlannedBatch;
-  response: DecisionBatchResult;
-}): void {
-  const { evaluations, planned, response } = options;
-
-  for (const task of planned.tasks) {
-    const result = response.decisions[task.id];
-    const subject = planned.subjectsById.get(task.subjectId);
+  for (const request of batch.requests) {
+    const result = response.decisions[request.taskId];
+    const subject = subjectsById.get(request.subjectId);
 
     if (!result) {
-      throw new Error(`provider responseに判定がありません: ${task.id}`);
+      throw new Error(
+        `provider responseに判定がありません: ${request.taskId}`,
+      );
     }
 
     if (!subject) {
-      throw new Error(`planにsubjectがありません: ${task.subjectId}`);
+      throw new Error(`batchにsubjectがありません: ${request.subjectId}`);
     }
 
     evaluations.push({
-      taskId: task.id,
-      ruleId: task.ruleId,
+      taskId: request.taskId,
+      ruleId: request.ruleId,
       subject,
       result,
       provider: response.provider,
     });
   }
-}
-
-function createBatch(
-  path: string,
-  source: string,
-  subjects: Subject[],
-  tasks: EvaluationPlan["files"][number]["tasks"],
-  rulesById: Map<string, Rule>,
-  chunkIndex: number,
-): DecisionBatch {
-  const taskSubjectIds = new Set(tasks.map((task) => task.subjectId));
-  const batchSubjects = subjects.filter((subject) =>
-    taskSubjectIds.has(subject.id),
-  );
-
-  return {
-    id: `${path}#${chunkIndex}`,
-    file: { path, source },
-    subjects: batchSubjects,
-    requests: tasks.map((task) => {
-      const rule = rulesById.get(task.ruleId);
-
-      if (!rule) {
-        throw new Error(`planが未知のruleを参照しています: ${task.ruleId}`);
-      }
-
-      return {
-        taskId: task.id,
-        ruleId: rule.id,
-        subjectId: task.subjectId,
-        predicate: rule.predicate,
-      };
-    }),
-  };
 }
 
 async function mapConcurrent<T, R>(
