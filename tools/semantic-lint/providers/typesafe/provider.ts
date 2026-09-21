@@ -16,12 +16,18 @@ type FetchLike = (
   init?: RequestInit,
 ) => Promise<Response>;
 
+export type TypeSafeTrace = {
+  requestBody: unknown;
+  responseBody: unknown;
+};
+
 export function createTypeSafeProvider(
   config: SemanticLintConfig["provider"],
   options: {
     fetchImpl?: FetchLike;
     sleep?: (milliseconds: number) => Promise<void>;
     maxAttempts?: number;
+    onTrace?: (trace: TypeSafeTrace) => void;
   } = {},
 ): SemanticDecisionProvider {
   const apiKey = process.env[config.apiKeyEnv];
@@ -45,6 +51,10 @@ export function createTypeSafeProvider(
         maxAttempts,
       });
       const value: unknown = await response.json();
+      options.onTrace?.({
+        requestBody: body,
+        responseBody: value,
+      });
 
       return parseResponse(value, questionToTask);
     },
