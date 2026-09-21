@@ -181,7 +181,7 @@ function mean(values: number[]): number {
 }
 
 function percentage(value: number): string {
-  return String(Math.round(value * 100)) + "%";
+  return (value * 100).toFixed(1) + "%";
 }
 
 function duration(milliseconds: number): string {
