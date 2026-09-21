@@ -154,7 +154,7 @@ async function resolveCheckPaths(
   filesFrom: string | undefined,
 ): Promise<string[]> {
   const explicit = paths.length > 0
-    ? await resolveRequestedPaths(projectRoot, paths)
+    ? await resolveRequestedPaths(projectRoot, paths, projectRoot)
     : [];
 
   if (filesFrom === undefined) {
