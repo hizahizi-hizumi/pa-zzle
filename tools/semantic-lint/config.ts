@@ -3,9 +3,11 @@ import { resolve } from "node:path";
 
 import {
   DECISION_CHOICES,
+  RULE_SCOPES,
   type DecisionChoice,
   type LintConfig,
   type RuleConfig,
+  type RuleScope,
   type Severity,
 } from "./types.ts";
 
@@ -165,6 +167,7 @@ function parseRule(options: {
   const {
     id,
     title,
+    scope,
     sourceSection,
     severity: rawSeverity,
     violationThreshold: rawViolationThreshold,
@@ -176,6 +179,7 @@ function parseRule(options: {
     id.length === 0 ||
     id.includes("/") ||
     typeof title !== "string" ||
+    !isRuleScope(scope) ||
     typeof sourceSection !== "string" ||
     (rawSeverity !== undefined && !isSeverity(rawSeverity)) ||
     (rawViolationThreshold !== undefined &&
@@ -205,6 +209,7 @@ function parseRule(options: {
   return {
     id: `${rulesetId}/${id}`,
     title,
+    scope,
     severity: rawSeverity ?? defaults.severity,
     violationThreshold:
       rawViolationThreshold ?? defaults.violationThreshold,
@@ -251,6 +256,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function isRuleScope(value: unknown): value is RuleScope {
+  return (
+    typeof value === "string" &&
+    RULE_SCOPES.includes(value as RuleScope)
+  );
 }
 
 function isSeverity(value: unknown): value is Severity {
