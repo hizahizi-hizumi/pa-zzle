@@ -75,7 +75,7 @@ export function PlayRecordsTrend({
   const points = getTrendPoints(records, display, metric.id);
   if (points.length === 0) {
     return (
-      <p className="py-8 text-sm text-muted-foreground">
+      <p className="py-8 text-supporting text-muted-foreground">
         表示できる記録がありません。
       </p>
     );

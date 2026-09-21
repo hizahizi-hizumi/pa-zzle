@@ -121,7 +121,7 @@ export function PlayRecordsScreen({
 
   return (
     <>
-      <header className="mt-4 flex min-w-0 items-center gap-1.5 border-b pb-3">
+      <header className="mt-4 flex min-w-0 items-center gap-2 border-b-(length:--border-width-normal) pb-3">
         <h1 className="shrink-0 text-screen-title">記録</h1>
         <NativeSelect
           size="sm"
@@ -160,7 +160,7 @@ export function PlayRecordsScreen({
       ) : (
         <>
           <section
-            className="flex flex-wrap items-baseline gap-x-5 gap-y-2 border-b py-3"
+            className="flex flex-wrap items-baseline gap-x-6 gap-y-2 border-b-(length:--border-width-normal) py-3"
             aria-labelledby="personal-best-heading"
           >
             <h2
@@ -169,7 +169,7 @@ export function PlayRecordsScreen({
             >
               自己ベスト
             </h2>
-            <dl className="flex flex-wrap items-baseline gap-x-5 gap-y-2">
+            <dl className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
               {personalBests.flatMap((best) => {
                 const metricDisplay = getPlayRecordMetricDisplay(
                   display,
@@ -182,12 +182,12 @@ export function PlayRecordsScreen({
                 return [
                   <div
                     key={best.metricId}
-                    className="flex items-baseline gap-1.5"
+                    className="flex items-baseline gap-2"
                   >
                     <dt className="text-meta text-muted-foreground">
                       {metricDisplay.label}
                     </dt>
-                    <dd className="font-mono text-base font-semibold tabular-nums">
+                    <dd className="font-mono text-body font-semibold tabular-nums">
                       {metricDisplay.formatValue(best.value)}
                     </dd>
                   </div>,

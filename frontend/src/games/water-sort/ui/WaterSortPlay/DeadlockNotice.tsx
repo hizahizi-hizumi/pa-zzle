@@ -16,10 +16,10 @@ export function DeadlockNotice({
   return (
     <div
       role="status"
-      className="mx-auto max-w-md rounded-xl border bg-muted/50 px-3 py-2"
+      className="mx-auto max-w-md rounded-xl border-(length:--border-width-normal) bg-muted/50 px-3 py-2"
     >
       <div className="text-center">
-        <p className="text-sm font-semibold">手詰まり</p>
+        <p className="text-play-context">手詰まり</p>
       </div>
       <div className="mt-1 flex justify-center gap-1">
         <Button
