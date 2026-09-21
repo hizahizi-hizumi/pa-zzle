@@ -26,12 +26,13 @@ export async function findProjectRoot(start = process.cwd()): Promise<string> {
 export async function resolveRequestedPaths(
   projectRoot: string,
   paths: string[],
+  baseDirectory = process.cwd(),
 ): Promise<string[]> {
   const requested = paths.length > 0 ? paths : ["."];
   const resolvedPaths: string[] = [];
 
   for (const path of requested) {
-    const absolutePath = resolve(process.cwd(), path);
+    const absolutePath = resolve(baseDirectory, path);
 
     if (!isPathWithin(projectRoot, absolutePath)) {
       throw new Error(`リポジトリ外のパスは指定できません: ${path}`);
