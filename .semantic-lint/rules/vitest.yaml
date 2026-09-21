@@ -14,6 +14,7 @@ defaults:
 
 rules:
   - id: arrange-outside-test
+    status: active
     title: テスト本体にArrangeを置かない
     scope: vitest.test
     sourceSection: テスト構造 > Arrangeの分離方法
@@ -39,6 +40,7 @@ rules:
           behavior under test.
 
   - id: before-each-arrange-only
+    status: active
     title: beforeEachは事前準備だけを行う
     scope: vitest.beforeEach
     sourceSection: テスト構造 > Arrangeの分離方法
@@ -83,6 +85,7 @@ rules:
           asserted detail is an intended user-facing contract.
 
   - id: table-driven-cases
+    status: active
     title: 同じ期待動作の入力違いはtest.eachで表現する
     scope: vitest.describe
     sourceSection: 入力違いのケース
