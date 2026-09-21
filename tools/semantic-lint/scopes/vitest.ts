@@ -66,8 +66,10 @@ export async function loadTypeScript(
 ): Promise<TypeScriptApi> {
   const modulePath = Bun.resolveSync("typescript", baseDirectory);
   const module = await import(modulePath);
+  const candidate =
+    (module as { default?: unknown }).default ?? module;
 
-  return module as unknown as TypeScriptApi;
+  return candidate as TypeScriptApi;
 }
 
 export function registerVitestScopes(
