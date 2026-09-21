@@ -1,0 +1,39 @@
+version: 1
+id: pages
+
+paths:
+  - frontend/src/pages/**/*.tsx
+
+source:
+  path: .claude/rules/pages.md
+
+defaults:
+  status: draft
+  severity: warning
+  violationThreshold: 0.90
+
+rules:
+  - id: route-wiring-only
+    title: pageはルーティングとView接続だけを担う
+    scope: file
+    sourceSection: Pages
+    predicate:
+      instruction: |
+        Determine whether this route file is limited to router-facing wiring and
+        delegates rendered screen implementation to a dedicated View.
+      outcomes:
+        violation: |
+          The route file owns screen implementation or non-routing application
+          logic, such as hooks, stateful UI composition, reusable components,
+          helpers, constants, or domain behavior that does not need to live at
+          the router boundary.
+        compliant: |
+          The route file only represents the URL/router boundary, such as
+          exporting a dedicated View, redirecting, reading router-required
+          metadata, or performing other framework-required route wiring.
+        not_applicable: |
+          The file is a router-required special file that does not represent a
+          normal rendered UI route.
+        insufficient_context: |
+          The available file does not provide enough context to distinguish
+          router-required behavior from application implementation.
