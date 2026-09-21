@@ -1,5 +1,11 @@
 import type { FileEvaluation, RuleEvaluation, Severity } from "./types.ts";
 
+export type ReportOptions = {
+  verbose: boolean;
+  totalDurationMs: number;
+  concurrency: number;
+};
+
 export type ReportSummary = {
   files: number;
   decisions: number;
@@ -7,11 +13,18 @@ export type ReportSummary = {
   errors: number;
   insufficientContext: number;
   inputTokens: number;
+  evaluationRequests: number;
+  totalDurationMs: number;
+  p50LatencyMs: number;
+  p95LatencyMs: number;
+  maxLatencyMs: number;
+  filesPerSecond: number;
+  decisionsPerSecond: number;
 };
 
 export function printReport(
   results: FileEvaluation[],
-  verbose: boolean,
+  options: ReportOptions,
 ): ReportSummary {
   let warnings = 0;
   let errors = 0;
@@ -23,7 +36,7 @@ export function printReport(
 
     const visible = result.evaluations.filter(
       (evaluation) =>
-        verbose ||
+        options.verbose ||
         isFinding(evaluation) ||
         evaluation.answer.choice === "insufficient_context",
     );
@@ -56,19 +69,30 @@ export function printReport(
     console.log("");
   }
 
+  const decisions = results.reduce(
+    (sum, result) => sum + result.evaluations.length,
+    0,
+  );
+  const latencies = results.map((result) => result.durationMs);
+  const elapsedSeconds = options.totalDurationMs / 1_000;
+
   const summary: ReportSummary = {
     files: results.length,
-    decisions: results.reduce(
-      (sum, result) => sum + result.evaluations.length,
-      0,
-    ),
+    decisions,
     warnings,
     errors,
     insufficientContext,
     inputTokens,
+    evaluationRequests: results.length,
+    totalDurationMs: options.totalDurationMs,
+    p50LatencyMs: percentile(latencies, 50),
+    p95LatencyMs: percentile(latencies, 95),
+    maxLatencyMs: Math.max(...latencies),
+    filesPerSecond: elapsedSeconds > 0 ? results.length / elapsedSeconds : 0,
+    decisionsPerSecond: elapsedSeconds > 0 ? decisions / elapsedSeconds : 0,
   };
 
-  printSummary(summary);
+  printSummary(summary, options.concurrency);
   return summary;
 }
 
@@ -100,7 +124,7 @@ function printEvaluation(evaluation: RuleEvaluation): void {
   console.log(`    確信度: ${percentage(answer.confidence)}`);
 }
 
-function printSummary(summary: ReportSummary): void {
+function printSummary(summary: ReportSummary, concurrency: number): void {
   console.log("集計");
   console.log(`  ファイル: ${summary.files}`);
   console.log(`  判定数: ${summary.decisions}`);
@@ -108,6 +132,20 @@ function printSummary(summary: ReportSummary): void {
   console.log(`  エラー: ${summary.errors}`);
   console.log(`  文脈不足: ${summary.insufficientContext}`);
   console.log(`  入力トークン: ${summary.inputTokens}`);
+
+  console.log("\nパフォーマンス");
+  console.log(`  並列数: ${concurrency}`);
+  console.log(`  評価リクエスト: ${summary.evaluationRequests}`);
+  console.log(`  総実行時間: ${duration(summary.totalDurationMs)}`);
+  console.log(`  レイテンシ p50: ${duration(summary.p50LatencyMs)}`);
+  console.log(`  レイテンシ p95: ${duration(summary.p95LatencyMs)}`);
+  console.log(`  レイテンシ max: ${duration(summary.maxLatencyMs)}`);
+  console.log(
+    `  スループット: ${summary.filesPerSecond.toFixed(1)}ファイル/秒`,
+  );
+  console.log(
+    `  判定スループット: ${summary.decisionsPerSecond.toFixed(1)}判定/秒`,
+  );
 
   if (summary.warnings === 0 && summary.errors === 0) {
     console.log("\n規約違反候補は検出されませんでした。");
@@ -153,4 +191,23 @@ function choiceMark(choice: RuleEvaluation["answer"]["choice"]): string {
 
 function percentage(value: number): string {
   return `${Math.round(value * 100)}%`;
+}
+
+function duration(milliseconds: number): string {
+  if (milliseconds < 1_000) {
+    return `${Math.round(milliseconds)}ms`;
+  }
+
+  return `${(milliseconds / 1_000).toFixed(2)}秒`;
+}
+
+function percentile(values: number[], percentileValue: number): number {
+  if (values.length === 0) {
+    return 0;
+  }
+
+  const sorted = [...values].sort((left, right) => left - right);
+  const index = Math.ceil((percentileValue / 100) * sorted.length) - 1;
+
+  return sorted[Math.max(0, index)] ?? 0;
 }
