@@ -5,7 +5,8 @@ type GamePictogramProps = {
   variant?: "default" | "result";
 };
 
-const baseClassName = "block size-full [&>svg]:block [&>svg]:size-full";
+const baseClassName =
+  "block size-full font-sans [&>svg]:block [&>svg]:size-full";
 const defaultColorClassName =
   "[--game-pictogram-soft:var(--muted-foreground)] [--game-pictogram-strong:var(--foreground)]";
 const resultColorClassName =

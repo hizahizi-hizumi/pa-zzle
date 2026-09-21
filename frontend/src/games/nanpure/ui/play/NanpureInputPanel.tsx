@@ -74,7 +74,7 @@ export function NanpureInputPanel({
               key={digit}
               type="button"
               className={cn(
-                "h-14 min-w-0 rounded-lg px-0 text-[clamp(1.5rem,7vw,2.25rem)] tabular-nums transition-colors hover:bg-accent/60 focus-visible:bg-accent focus-visible:outline-none disabled:pointer-events-none disabled:text-muted-foreground/20",
+                "h-14 min-w-0 rounded-lg px-0 font-sans text-[clamp(1.5rem,7vw,2.25rem)] tabular-nums transition-colors hover:bg-accent/60 focus-visible:bg-accent focus-visible:outline-none disabled:pointer-events-none disabled:text-muted-foreground/20",
                 notesMode
                   ? "font-medium text-violet-400/75 dark:text-violet-400/70"
                   : "font-medium text-violet-600 dark:text-violet-300",
