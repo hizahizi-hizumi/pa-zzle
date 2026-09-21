@@ -21,6 +21,8 @@ INPUT_PATHS: Final = (
     ".github/actions/offline-dependencies/inputs.env",
     ".bun-version",
     "frontend/bun.lock",
+)
+OPTIONAL_INPUT_PATHS: Final = (
     "tools/semantic-lint/bun.lock",
 )
 MAX_ACTIVE_KEYS: Final = 3
@@ -34,7 +36,8 @@ ARTIFACT_PATTERN: Final = re.compile(rf"^{re.escape(ARTIFACT_PREFIX)}([0-9a-f]{{
 
 def compute_key(contents: dict[str, bytes]) -> str:
     digest = hashlib.sha256()
-    for path in INPUT_PATHS:
+    paths = INPUT_PATHS + tuple(path for path in OPTIONAL_INPUT_PATHS if path in contents)
+    for path in paths:
         digest.update(path.encode())
         digest.update(b"\0")
         digest.update(contents[path])
@@ -43,7 +46,12 @@ def compute_key(contents: dict[str, bytes]) -> str:
 
 
 def read_repository_inputs(repo_root: Path) -> dict[str, bytes]:
-    return {path: (repo_root / path).read_bytes() for path in INPUT_PATHS}
+    contents = {path: (repo_root / path).read_bytes() for path in INPUT_PATHS}
+    for path in OPTIONAL_INPUT_PATHS:
+        input_path = repo_root / path
+        if input_path.exists():
+            contents[path] = input_path.read_bytes()
+    return contents
 
 
 def compute_repository_key(repo_root: Path) -> str:
@@ -283,12 +291,14 @@ class GitHubClient:
 
     def ref_key(self, ref: str) -> str | None:
         contents: dict[str, bytes] = {}
-        for path in INPUT_PATHS:
+        for path in INPUT_PATHS + OPTIONAL_INPUT_PATHS:
             encoded_path = urllib.parse.quote(path, safe="/")
             encoded_ref = urllib.parse.quote(ref, safe="")
             try:
                 data = self._request_json(f"/repos/{self.repository}/contents/{encoded_path}?ref={encoded_ref}")
             except urllib.error.HTTPError as error:
+                if error.code == HTTP_NOT_FOUND and path in OPTIONAL_INPUT_PATHS:
+                    continue
                 if error.code == HTTP_NOT_FOUND:
                     return None
                 raise
