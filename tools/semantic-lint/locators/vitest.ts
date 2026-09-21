@@ -142,6 +142,10 @@ function isCallCandidate(source: string, startOffset: number): boolean {
     index -= 1;
   }
 
+  if (source[index] === ".") {
+    return false;
+  }
+
   const end = index + 1;
 
   while (index >= 0 && /[A-Za-z0-9_$]/.test(source[index] ?? "")) {
