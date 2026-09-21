@@ -7,11 +7,13 @@ export const DECISIONS = [
 
 export const RULE_STATUSES = ["draft", "active", "disabled"] as const;
 export const SEVERITIES = ["warning", "error"] as const;
+export const TARGET_KINDS = ["self", "statement"] as const;
 
 export type Decision = (typeof DECISIONS)[number];
 export type RuleStatus = (typeof RULE_STATUSES)[number];
 export type Severity = (typeof SEVERITIES)[number];
 export type ScopeId = string;
+export type TargetKind = (typeof TARGET_KINDS)[number];
 
 export type SourceRange = {
   startLine: number;
@@ -37,7 +39,8 @@ export type Rule = {
   status: RuleStatus;
   severity: Severity;
   violationThreshold: number;
-  scope: ScopeId;
+  context: ScopeId;
+  target: TargetKind;
   paths: string[];
   source: {
     path: string;
@@ -48,11 +51,14 @@ export type Rule = {
 
 export type Subject = {
   id: string;
-  scope: ScopeId;
+  contextScope: ScopeId;
+  targetKind: TargetKind;
   path: string;
   range: SourceRange;
   symbol?: string;
   source: string;
+  contextRange: SourceRange;
+  contextSymbol?: string;
 };
 
 export type EvaluationTask = {
@@ -127,6 +133,7 @@ export type Diagnostic = {
   path: string;
   range: SourceRange;
   symbol?: string;
+  contextSymbol?: string;
   probability: number;
   confidence: number;
   source: {
