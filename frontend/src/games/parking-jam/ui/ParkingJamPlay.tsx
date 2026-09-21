@@ -44,6 +44,7 @@ type ParkingJamPlayProps = {
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
   onClearAnimationComplete: () => void;
+  onOpenDiagnostics?: () => void;
 };
 
 export function ParkingJamPlay({
@@ -67,6 +68,7 @@ export function ParkingJamPlay({
   onChangeDifficulty,
   onBackToHome,
   onClearAnimationComplete,
+  onOpenDiagnostics,
 }: ParkingJamPlayProps) {
   if (progress === "result" && result) {
     return (
@@ -79,6 +81,7 @@ export function ParkingJamPlay({
         onOpenRecords={onOpenRecords}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
+        onOpenDiagnostics={onOpenDiagnostics}
       />
     );
   }

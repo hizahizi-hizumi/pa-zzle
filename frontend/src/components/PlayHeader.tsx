@@ -6,6 +6,7 @@ import {
   RefreshCw,
   RotateCcw,
   SlidersHorizontal,
+  Wrench,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -21,6 +22,7 @@ type PlayHeaderProps = {
   onStartNewProblem: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
+  onOpenDiagnostics?: () => void;
 };
 
 export function PlayHeader({
@@ -31,6 +33,7 @@ export function PlayHeader({
   onStartNewProblem,
   onChangeDifficulty,
   onBackToHome,
+  onOpenDiagnostics,
 }: PlayHeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -114,6 +117,16 @@ export function PlayHeader({
               <SlidersHorizontal />
               難易度変更
             </Button>
+            {onOpenDiagnostics ? (
+              <Button
+                variant="ghost"
+                className="justify-start"
+                onClick={() => runAndClose(onOpenDiagnostics)}
+              >
+                <Wrench />
+                検証情報
+              </Button>
+            ) : null}
             <Button
               variant="ghost"
               className="justify-start"

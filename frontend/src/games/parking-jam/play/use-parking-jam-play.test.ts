@@ -39,6 +39,9 @@ describe("useParkingJamPlay", () => {
       );
 
       expect(assessment).toMatchObject({ status: "rated", difficulty });
+      expect(result.current.difficultyAnalysis).toEqual(
+        generated.difficultyAnalysis,
+      );
     });
   });
 
