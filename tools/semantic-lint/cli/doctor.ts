@@ -15,8 +15,12 @@ export async function runDoctorCommand(args: string[]): Promise<number> {
   const sourceCache = new Map<string, string>();
 
   for (const rule of rules) {
-    if (!scopes.has(rule.scope)) {
-      errors.push(`${rule.id}: 未登録scope ${rule.scope}`);
+    if (!scopes.has(rule.context)) {
+      errors.push(`${rule.id}: 未登録context ${rule.context}`);
+    } else if (!scopes.supports(rule.context, rule.target)) {
+      errors.push(
+        `${rule.id}: context ${rule.context} はtarget ${rule.target}をサポートしていません`,
+      );
     }
 
     const sourcePath = resolve(projectRoot, rule.source.path);
@@ -48,7 +52,7 @@ export async function runDoctorCommand(args: string[]): Promise<number> {
   }
 
   console.log(`rules: ${rules.length}`);
-  console.log(`scopes: ${scopes.ids().join(", ")}`);
+  console.log(`contexts: ${scopes.ids().join(", ")}`);
   console.log(`errors: ${errors.length}`);
   console.log(`warnings: ${warnings.length}`);
 
