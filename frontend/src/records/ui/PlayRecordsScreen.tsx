@@ -122,7 +122,7 @@ export function PlayRecordsScreen({
   return (
     <>
       <header className="mt-4 flex min-w-0 items-center gap-1.5 border-b pb-3">
-        <h1 className="shrink-0 text-xl font-bold tracking-tight">記録</h1>
+        <h1 className="shrink-0 text-screen-title">記録</h1>
         <NativeSelect
           size="sm"
           aria-label="パズル"
@@ -165,7 +165,7 @@ export function PlayRecordsScreen({
           >
             <h2
               id="personal-best-heading"
-              className="text-xs font-medium text-muted-foreground"
+              className="text-meta font-medium text-muted-foreground"
             >
               自己ベスト
             </h2>
@@ -184,7 +184,7 @@ export function PlayRecordsScreen({
                     key={best.metricId}
                     className="flex items-baseline gap-1.5"
                   >
-                    <dt className="text-xs text-muted-foreground">
+                    <dt className="text-meta text-muted-foreground">
                       {metricDisplay.label}
                     </dt>
                     <dd className="font-mono text-base font-semibold tabular-nums">
@@ -203,7 +203,7 @@ export function PlayRecordsScreen({
                   <TabsTrigger value="history">履歴</TabsTrigger>
                   <TabsTrigger value="trend">推移</TabsTrigger>
                 </TabsList>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-meta text-muted-foreground">
                   {selectedRecords.length}件
                 </p>
               </div>

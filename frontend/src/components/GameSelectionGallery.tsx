@@ -29,7 +29,7 @@ export function GameSelectionGallery({
   return (
     <section className="grid min-h-[calc(100dvh-3rem-env(safe-area-inset-top))] grid-rows-[29.375rem_minmax(0,1fr)] bg-background sm:grid-rows-[minmax(0,1fr)_14.375rem]">
       <div className="relative min-h-0 bg-muted/30">
-        <h1 className="absolute inset-x-0 top-0 z-10 flex h-[4.5rem] items-center justify-center border-b bg-background text-3xl font-bold tracking-tight sm:h-20">
+        <h1 className="absolute inset-x-0 top-0 z-10 flex h-[4.5rem] items-center justify-center border-b bg-background text-screen-title sm:h-20">
           パズル選択
         </h1>
         <Link

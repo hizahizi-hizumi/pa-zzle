@@ -32,7 +32,7 @@ export function PlayActionButton({
       <span aria-hidden="true" className="[&>svg]:size-6">
         {icon}
       </span>
-      <span className="text-[11px] leading-none">{label}</span>
+      <span className="text-play-meta">{label}</span>
     </button>
   );
 }

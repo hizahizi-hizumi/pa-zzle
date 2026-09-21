@@ -167,7 +167,7 @@ export function PlayRecordsTrend({
       </ChartContainer>
 
       {metric.referenceValue !== undefined && (
-        <p className="mt-2 text-right text-[11px] text-muted-foreground">
+        <p className="mt-2 text-right text-meta text-muted-foreground">
           破線: 基準 {metric.formatValue(metric.referenceValue)}
         </p>
       )}

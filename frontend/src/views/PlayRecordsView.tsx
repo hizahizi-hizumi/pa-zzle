@@ -20,7 +20,7 @@ export function PlayRecordsView() {
     <section className="mx-auto w-full max-w-3xl">
       <Link
         to="/"
-        className="text-sm text-muted-foreground hover:text-foreground"
+        className="text-supporting text-muted-foreground hover:text-foreground"
       >
         ← パズル選択
       </Link>
