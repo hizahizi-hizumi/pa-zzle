@@ -76,4 +76,6 @@ bun run semantic-lint -- src/games/nanpure/example.test.ts
 bun run semantic-lint -- --verbose
 ```
 
+実行結果には総実行時間、ファイル単位の評価レイテンシのp50 / p95 / max、ファイル・判定スループットも表示する。並列数はリポジトリルートの `.semantic-lint/config.json` で変更できる。
+
 初期ruleは `vitest.md` のうち意味判定が必要な規約だけを対象とし、すべて `warning` として運用する。精度と閾値を確認した後に必要なruleだけ `error` へ昇格する。
