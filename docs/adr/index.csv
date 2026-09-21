@@ -1,1 +1,2 @@
 id,title,summary,status,date,path
+ADR-0001,Semantic lintを運用可能な判定基盤として設計する,PoCを捨ててruleset・scope・planner・provider・diagnosticを分離した運用可能なsemantic lintへ再設計する,proposed,2026-09-21,ADR-0001-semantic-lint-architecture.md
