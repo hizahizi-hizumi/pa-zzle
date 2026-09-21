@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "ruleId": "vitest/dom-observable-contract",
+  "cases": [
+    {
+      "name": "内部data属性だけを検証する",
+      "file": "violation.tsx",
+      "expected": "violation"
+    },
+    {
+      "name": "利用者に見える状態を検証する",
+      "file": "compliant.tsx",
+      "expected": "compliant"
+    }
+  ]
+}
