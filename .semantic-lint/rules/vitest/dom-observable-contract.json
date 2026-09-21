@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "id": "vitest/dom-observable-contract",
+  "title": "DOMテストは利用者から観測できる契約を優先する",
+  "target": "file",
+  "severity": "warning",
+  "violationThreshold": 0.9,
+  "include": [
+    "frontend/**/*.test.{ts,tsx,mjs}"
+  ],
+  "exclude": [],
+  "source": {
+    "path": ".claude/rules/vitest.md",
+    "section": "テスト構造 > 基本原則"
+  },
+  "question": {
+    "instructions": "Classify whether DOM-oriented tests in this file primarily verify user-observable contracts rather than incidental implementation details.",
+    "criteria": {
+      "violation": "One or more DOM tests primarily assert incidental implementation details even though the intended behavior could reasonably be verified through roles, accessible names, visible content, or observable results after user interaction.",
+      "compliant": "DOM tests primarily verify behavior through roles, accessible names, visible content, or results observable after user interaction.",
+      "not_applicable": "The file contains no DOM-oriented tests.",
+      "insufficient_context": "The available source is insufficient to determine whether an asserted detail is an intended user-facing contract or merely an implementation detail."
+    }
+  }
+}
