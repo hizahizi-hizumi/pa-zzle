@@ -5,7 +5,15 @@ export const DECISION_CHOICES = [
   "insufficient_context",
 ] as const;
 
+export const RULE_SCOPES = [
+  "file",
+  "vitest:test",
+  "vitest:beforeEach",
+  "vitest:describe",
+] as const;
+
 export type DecisionChoice = (typeof DECISION_CHOICES)[number];
+export type RuleScope = (typeof RULE_SCOPES)[number];
 export type Severity = "warning" | "error";
 
 export type TypeSafeProviderConfig = {
@@ -25,6 +33,7 @@ export type LintConfig = {
 export type RuleConfig = {
   id: string;
   title: string;
+  scope: RuleScope;
   severity: Severity;
   violationThreshold: number;
   paths: string[];
@@ -75,9 +84,30 @@ export interface DecisionProvider {
   evaluate(request: ProviderRequest): Promise<ProviderResponse>;
 }
 
+export type SourceRange = {
+  startLine: number;
+  endLine: number;
+};
+
+export type SemanticUnit = {
+  id: string;
+  kind: RuleScope;
+  symbol: string;
+  range: SourceRange;
+  source: string;
+};
+
+export type DiagnosticLocation = {
+  kind: RuleScope;
+  symbol: string;
+  range: SourceRange;
+  answer: ChoiceAnswer;
+};
+
 export type RuleEvaluation = {
   rule: RuleConfig;
   answer: ChoiceAnswer;
+  locations: DiagnosticLocation[];
 };
 
 export type FileEvaluation = {
