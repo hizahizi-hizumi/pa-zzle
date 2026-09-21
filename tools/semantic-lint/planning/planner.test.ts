@@ -84,7 +84,7 @@ describe("buildEvaluationPlan", () => {
       ],
       scopes,
       matchesPath: () => true,
-      includeDraft: true,
+      statuses: ["active", "draft"],
     });
 
     expect(plan.files[0]?.tasks).toHaveLength(1);
