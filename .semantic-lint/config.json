@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "provider": {
+    "kind": "typesafe",
+    "model": "jev-latest",
+    "apiKeyEnv": "TYPESAFE_API_KEY"
+  },
+  "rulesDir": ".semantic-lint/rules",
+  "concurrency": 2
+}
