@@ -16,7 +16,7 @@ export function NanpureDifficultyOption({
     <Link
       to="/puzzles/nanpure/play/:difficulty"
       params={{ difficulty }}
-      className="group block rounded-2xl focus-visible:outline-none"
+      className="group block rounded-xl focus-visible:outline-none"
     >
       <StartConditionOption label={label}>
         <NanpureDifficultyPreview difficulty={difficulty} />

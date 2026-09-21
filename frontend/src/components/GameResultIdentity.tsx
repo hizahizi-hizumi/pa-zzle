@@ -24,8 +24,8 @@ export function GameResultIdentity({
       </GameResultMark>
       <div className="min-w-0">
         <h1 className="sr-only">プレイ結果</h1>
-        <p className="truncate text-lg font-bold tracking-tight">{gameName}</p>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="truncate text-heading">{gameName}</p>
+        <p className="mt-1 text-supporting text-muted-foreground">
           難易度
           <span className="ml-2 font-medium text-foreground/75">
             {difficultyLabel}

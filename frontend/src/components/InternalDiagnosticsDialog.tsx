@@ -59,7 +59,7 @@ export function InternalDiagnosticsDialog({
         <DialogHeader>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+              <div className="flex items-center gap-2 text-meta font-medium text-muted-foreground">
                 <Wrench className="size-3.5" />
                 内部診断
               </div>
@@ -81,7 +81,7 @@ export function InternalDiagnosticsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <dl className="divide-y rounded-xl border bg-muted/25 px-4">
+        <dl className="divide-y-(length:--border-width-normal) rounded-xl border-(length:--border-width-normal) bg-muted/25 px-4">
           <InternalDiagnosticRow label="難易度" value={difficultyLabel} />
           <InternalDiagnosticRow label="seed" value={seed} mono breakAll />
           <InternalDiagnosticRow

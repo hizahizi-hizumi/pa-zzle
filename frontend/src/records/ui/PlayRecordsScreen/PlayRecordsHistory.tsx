@@ -21,7 +21,7 @@ export function PlayRecordsHistory({
   return (
     <div>
       <div
-        className="grid items-end gap-x-2 border-b pb-2 text-[11px] text-muted-foreground"
+        className="grid items-end gap-x-2 border-b-(length:--border-width-normal) pb-2 text-meta text-muted-foreground"
         style={{
           gridTemplateColumns: getPlayRecordGridTemplateColumns(
             display.metrics.length,

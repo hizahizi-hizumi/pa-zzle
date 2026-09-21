@@ -75,7 +75,7 @@ export function PlayRecordsTrend({
   const points = getTrendPoints(records, display, metric.id);
   if (points.length === 0) {
     return (
-      <p className="py-8 text-sm text-muted-foreground">
+      <p className="py-8 text-supporting text-muted-foreground">
         表示できる記録がありません。
       </p>
     );
@@ -167,7 +167,7 @@ export function PlayRecordsTrend({
       </ChartContainer>
 
       {metric.referenceValue !== undefined && (
-        <p className="mt-2 text-right text-[11px] text-muted-foreground">
+        <p className="mt-2 text-right text-meta text-muted-foreground">
           破線: 基準 {metric.formatValue(metric.referenceValue)}
         </p>
       )}

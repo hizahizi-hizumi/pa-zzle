@@ -4,6 +4,42 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --spacing: 0.25rem;
+  --border-width-normal: 1px;
+  --border-width-strong: 2px;
+  --layer-overlay: 50;
+  --duration-fast: 100ms;
+  --duration-normal: 150ms;
+  --duration-slow: 200ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --default-transition-duration: var(--duration-normal);
+  --default-transition-timing-function: var(--ease-standard);
+  --text-screen-title: 1.5rem;
+  --text-screen-title--line-height: 2rem;
+  --text-screen-title--letter-spacing: -0.02em;
+  --text-screen-title--font-weight: 700;
+  --text-heading: 1.125rem;
+  --text-heading--line-height: 1.75rem;
+  --text-heading--letter-spacing: -0.01em;
+  --text-heading--font-weight: 600;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem;
+  --text-body--font-weight: 400;
+  --text-supporting: 0.875rem;
+  --text-supporting--line-height: 1.25rem;
+  --text-supporting--font-weight: 400;
+  --text-meta: 0.75rem;
+  --text-meta--line-height: 1rem;
+  --text-meta--font-weight: 400;
+  --text-play-context: 0.875rem;
+  --text-play-context--line-height: 1.25rem;
+  --text-play-context--letter-spacing: -0.01em;
+  --text-play-context--font-weight: 600;
+  --text-play-meta: 0.75rem;
+  --text-play-meta--line-height: 1rem;
+  --text-play-meta--font-weight: 500;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -41,14 +77,14 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --shadow-raised: 0 1px 3px rgb(0 0 0 / 0.08);
 }
 
 :root {
-  --radius: 0.625rem;
   --brand: #cbd1d8;
   --brand-subtle: #eef1f4;
   --brand-strong: #aeb8c2;

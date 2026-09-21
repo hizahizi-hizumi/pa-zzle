@@ -33,7 +33,7 @@ export function GameResultMark({ level, children }: GameResultMarkProps) {
   return (
     <div
       ref={markRef}
-      className={`mx-auto flex size-20 items-center justify-center rounded-full shadow-sm ${style.markClassName}`}
+      className={`mx-auto flex size-20 items-center justify-center rounded-full shadow-raised ${style.markClassName}`}
       aria-hidden="true"
     >
       {children}
