@@ -182,4 +182,3 @@ export function WaterSortResultScreen({
     </section>
   );
 }
-
