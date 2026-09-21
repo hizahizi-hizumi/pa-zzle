@@ -207,10 +207,7 @@ async function localizeFindings(
         throw new Error(path + ": localizationの回答がありません。");
       }
 
-      if (
-        answer.probabilities.violation <
-        target.evaluation.rule.violationThreshold
-      ) {
+      if (answer.choice !== "violation") {
         continue;
       }
 
