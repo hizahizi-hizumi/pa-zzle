@@ -8,18 +8,24 @@ export function decisionResult(
   decision: Decision,
   violationProbability: number,
 ): DecisionResult {
-  const remaining = 1 - violationProbability;
+  const probabilities = {
+    violation: 0,
+    compliant: 0,
+    not_applicable: 0,
+    insufficient_context: 0,
+  };
+  probabilities.violation = violationProbability;
+
+  if (decision === "violation") {
+    probabilities.compliant = 1 - violationProbability;
+  } else {
+    probabilities[decision] = 1 - violationProbability;
+  }
 
   return {
     decision,
-    confidence: Math.max(violationProbability, remaining),
-    probabilities: {
-      violation: violationProbability,
-      compliant: decision === "compliant" ? remaining : 0,
-      not_applicable: decision === "not_applicable" ? remaining : 0,
-      insufficient_context:
-        decision === "insufficient_context" ? remaining : 0,
-    },
+    confidence: probabilities[decision],
+    probabilities,
   };
 }
 
