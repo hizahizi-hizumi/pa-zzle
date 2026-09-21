@@ -151,10 +151,13 @@ function selectCasePlan(
     );
   }
 
-  if (goldenCase.subjectSymbol === undefined) {
+  if (
+    goldenCase.subjectSymbol === undefined &&
+    goldenCase.subjectSource === undefined
+  ) {
     if (file.tasks.length !== 1) {
       throw new Error(
-        `fixtureの評価対象が${file.tasks.length}件あります。subject.symbolを指定してください: ${goldenCase.name}`,
+        `fixtureの評価対象が${file.tasks.length}件あります。subject.symbolまたはsubject.sourceを指定してください: ${goldenCase.name}`,
       );
     }
 
@@ -162,12 +165,16 @@ function selectCasePlan(
   }
 
   const subject = file.subjects.find(
-    (candidate) => candidate.symbol === goldenCase.subjectSymbol,
+    (candidate) =>
+      (goldenCase.subjectSymbol === undefined ||
+        candidate.symbol === goldenCase.subjectSymbol) &&
+      (goldenCase.subjectSource === undefined ||
+        candidate.source === goldenCase.subjectSource),
   );
 
   if (!subject) {
     throw new Error(
-      `fixtureにsubjectがありません: ${goldenCase.subjectSymbol}`,
+      `fixtureに指定したsubjectがありません: ${goldenCase.name}`,
     );
   }
 
@@ -175,7 +182,7 @@ function selectCasePlan(
 
   if (!task) {
     throw new Error(
-      `fixtureにsubjectのtaskがありません: ${goldenCase.subjectSymbol}`,
+      `fixtureにsubjectのtaskがありません: ${goldenCase.name}`,
     );
   }
 
