@@ -45,6 +45,28 @@ paths:
 - ActとAssertの間は空行で分離する。
 - 例外送出自体が期待動作なら、テスト対象を呼び出す関数をActで作り、Assertで `toThrow` を検証する。
 - DOMを検証する場合は、role・accessible name・表示内容・ユーザー操作後の観測結果など、利用者から観測できる契約を優先する。
+- DOMクエリは検証する契約に合わせて選び、`getByRole` を機械的な既定値として使わない。
+  - 要素のroleというセマンティクスと、その名前による識別が契約なら `getByRole` を使う。
+  - 表示文言が契約なら `getByText` を使う。
+  - labelとフォーム部品の関連が契約なら `getByLabelText` を使う。
+- 画面に意味上の領域がある場合は、文書全体を探索せず、その領域を利用者から観測できるクエリで取得して `within` で探索範囲を限定する。
+
+#### NG
+
+roleというセマンティクスを検査しないテストで `getByRole` を使用。
+
+```tsx
+const digit = screen.getByRole("button", { name: "5" });
+```
+
+#### OK
+
+契約、意味に合わせてクエリを使用。
+
+```tsx
+const digitInput = screen.getByRole("group", { name: "数字入力" });
+const digit = within(digitInput).getByText("5");
+```
 
 ### Arrangeの分離方法
 
