@@ -602,6 +602,19 @@ Jev APIを使うgolden corpus evalは通常のverifyから分離する。
 
 remote evalの揺れを通常CIのpass/failへ直接結びつけない。
 
+## package boundary
+
+semantic lintはfrontend packageの付属scriptではなく、`tools/semantic-lint` の独立Bun packageとして管理する。
+
+- runtime / dev dependencyは `tools/semantic-lint/package.json` と `bun.lock` が所有する。
+- frontend packageはsemantic lintの実装依存を持たない。
+- TypeScript AST adapterが使う互換Compiler APIもsemantic lint packageのruntime dependencyとする。
+- repository-wide verifyはpackageごとに依存をinstallしたうえで各packageの検証commandを呼ぶ。
+- Offline Dependenciesはfrontendとsemantic lintの依存を別々の `node_modules` としてmaterializeする。
+- CLIのsource pathは実行cwdではなくrepository rootを基準に解決する。
+
+この境界により、frontendのTypeScript versionやdependency topologyをsemantic lintのparser実装から切り離す。
+
 ## directory structure
 
 目標構成:
