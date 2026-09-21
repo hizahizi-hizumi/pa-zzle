@@ -30,6 +30,7 @@ export async function loadLintConfig(projectRoot: string): Promise<LintConfig> {
 
   if (
     typeof value.rulesDir !== "string" ||
+    typeof value.casesDir !== "string" ||
     typeof value.concurrency !== "number" ||
     !Number.isInteger(value.concurrency) ||
     value.concurrency < 1
@@ -45,6 +46,7 @@ export async function loadLintConfig(projectRoot: string): Promise<LintConfig> {
       apiKeyEnv: provider.apiKeyEnv,
     },
     rulesDir: value.rulesDir,
+    casesDir: value.casesDir,
     concurrency: value.concurrency,
   };
 }
