@@ -17,8 +17,9 @@ export type CalibrationCase = {
 
 type CaseManifest = {
   version: 1;
-  ruleId: string;
+  ruleset: string;
   cases: Array<{
+    rule: string;
     name?: string;
     file: string;
     expected: DecisionChoice;
@@ -38,15 +39,17 @@ export async function loadCalibrationCases(
   for (const manifestPath of manifestPaths) {
     const value: unknown = await Bun.file(manifestPath).json();
     const manifest = parseManifest(value, manifestPath);
-    const rule = rulesById.get(manifest.ruleId);
-
-    if (!rule) {
-      throw new Error(
-        "caseが存在しないruleを参照しています: " + manifest.ruleId,
-      );
-    }
 
     for (const definition of manifest.cases) {
+      const ruleId = manifest.ruleset + "/" + definition.rule;
+      const rule = rulesById.get(ruleId);
+
+      if (!rule) {
+        throw new Error(
+          "caseが存在しないruleを参照しています: " + ruleId,
+        );
+      }
+
       const absolutePath = resolve(dirname(manifestPath), definition.file);
 
       if (!isPathWithin(directory, absolutePath)) {
@@ -102,7 +105,9 @@ function parseManifest(value: unknown, path: string): CaseManifest {
   if (
     !isRecord(value) ||
     value.version !== 1 ||
-    typeof value.ruleId !== "string" ||
+    typeof value.ruleset !== "string" ||
+    value.ruleset.length === 0 ||
+    value.ruleset.includes("/") ||
     !Array.isArray(value.cases) ||
     value.cases.length === 0
   ) {
@@ -112,6 +117,9 @@ function parseManifest(value: unknown, path: string): CaseManifest {
   const cases = value.cases.map((definition, index) => {
     if (
       !isRecord(definition) ||
+      typeof definition.rule !== "string" ||
+      definition.rule.length === 0 ||
+      definition.rule.includes("/") ||
       (definition.name !== undefined && typeof definition.name !== "string") ||
       typeof definition.file !== "string" ||
       !isDecisionChoice(definition.expected)
@@ -122,6 +130,7 @@ function parseManifest(value: unknown, path: string): CaseManifest {
     }
 
     return {
+      rule: definition.rule,
       name: definition.name as string | undefined,
       file: definition.file,
       expected: definition.expected,
@@ -130,7 +139,7 @@ function parseManifest(value: unknown, path: string): CaseManifest {
 
   return {
     version: 1,
-    ruleId: value.ruleId,
+    ruleset: value.ruleset,
     cases,
   };
 }
