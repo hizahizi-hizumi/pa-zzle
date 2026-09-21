@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "ruleId": "vitest/before-each-arrange-only",
+  "cases": [
+    {
+      "name": "beforeEachで検証対象の操作まで実行する",
+      "file": "violation.ts",
+      "expected": "violation"
+    },
+    {
+      "name": "beforeEachでは初期状態だけを作る",
+      "file": "compliant.ts",
+      "expected": "compliant"
+    }
+  ]
+}
