@@ -10,34 +10,62 @@ import {
 } from "./problem/generator";
 import type { WaterSortGeneratedProblem } from "./problem/problem";
 
-const maximumAttemptsPerColorCount = 8;
+type WaterSortGenerationProfile = {
+  colorCount: number;
+  emptyBottleCount: number;
+};
+
+const maximumAttemptsPerProfile = 64;
 const maximumExpandedStatesPerCandidate = 100_000;
 
-const preferredColorCountsByDifficulty: Record<
+const generationProfilesByDifficulty: Record<
   WaterSortDifficulty,
-  readonly number[]
+  readonly WaterSortGenerationProfile[]
 > = {
-  easy: [4, 6],
-  normal: [8, 6, 10],
-  hard: [12, 10, 8],
+  "1": [
+    { colorCount: 4, emptyBottleCount: 2 },
+    { colorCount: 6, emptyBottleCount: 2 },
+  ],
+  "2": [
+    { colorCount: 4, emptyBottleCount: 2 },
+    { colorCount: 6, emptyBottleCount: 2 },
+  ],
+  "3": [
+    { colorCount: 4, emptyBottleCount: 1 },
+    { colorCount: 5, emptyBottleCount: 1 },
+  ],
+  "4": [
+    { colorCount: 4, emptyBottleCount: 1 },
+    { colorCount: 5, emptyBottleCount: 1 },
+    { colorCount: 6, emptyBottleCount: 1 },
+  ],
+  "5": [
+    { colorCount: 4, emptyBottleCount: 1 },
+    { colorCount: 5, emptyBottleCount: 1 },
+    { colorCount: 6, emptyBottleCount: 1 },
+  ],
 };
 
 export function generateWaterSortProblemForDifficulty(
   difficulty: WaterSortDifficulty,
   seed: ProblemSeed,
 ): WaterSortGeneratedProblem {
-  for (const colorCount of preferredColorCountsByDifficulty[difficulty]) {
+  for (const profile of generationProfilesByDifficulty[difficulty]) {
     try {
       return generateWaterSortProblem({
         seed,
-        colorCount,
-        maximumAttempts: maximumAttemptsPerColorCount,
+        ...profile,
+        maximumAttempts: maximumAttemptsPerProfile,
         solverOptions: {
           maxExpandedStates: maximumExpandedStatesPerCandidate,
         },
-        acceptCandidate: ({ difficultyAnalysis }) =>
-          assessWaterSortDifficulty(difficultyAnalysis).difficulty ===
-          difficulty,
+        acceptCandidate: ({ difficultyAnalysis }) => {
+          const assessment = assessWaterSortDifficulty(difficultyAnalysis);
+          return (
+            assessment.status === "classified" &&
+            assessment.difficulty === difficulty
+          );
+        },
       });
     } catch (error) {
       if (!(error instanceof WaterSortGenerationExhaustedError)) {
@@ -46,5 +74,5 @@ export function generateWaterSortProblemForDifficulty(
     }
   }
 
-  throw new Error(`Failed to generate a ${difficulty} water sort problem`);
+  throw new Error(`Failed to generate a level ${difficulty} water sort problem`);
 }

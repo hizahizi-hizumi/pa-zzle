@@ -44,6 +44,7 @@ export class WaterSortGenerationExhaustedError extends Error {
 export type WaterSortGeneratorOptions = {
   seed: ProblemSeed;
   colorCount: number;
+  emptyBottleCount?: number;
   maximumAttempts?: number;
   solverOptions?: WaterSortSolverOptions;
   acceptCandidate?: WaterSortProblemAcceptance;
@@ -74,6 +75,7 @@ function createProblemSeededRandom(seed: string): () => number {
 function createGeneratorRandom(
   seed: ProblemSeed,
   colorCount: number,
+  emptyBottleCount: number,
 ): () => number {
   return createProblemSeededRandom(
     [
@@ -81,7 +83,7 @@ function createGeneratorRandom(
       seed,
       colorCount,
       WATER_SORT_BOTTLE_CAPACITY,
-      WATER_SORT_EMPTY_BOTTLE_COUNT,
+      emptyBottleCount,
     ].join(":"),
   );
 }
@@ -105,6 +107,7 @@ function shuffle<T>(values: readonly T[], random: () => number): T[] {
 
 function createStandardCandidate(
   colorCount: number,
+  emptyBottleCount: number,
   random: () => number,
 ): WaterSortState {
   const units = Array.from(
@@ -121,7 +124,7 @@ function createStandardCandidate(
 
   return [
     ...bottles,
-    ...Array.from({ length: WATER_SORT_EMPTY_BOTTLE_COUNT }, () => []),
+    ...Array.from({ length: emptyBottleCount }, () => []),
   ];
 }
 
@@ -135,8 +138,17 @@ function validateColorCount(colorCount: number): void {
   }
 }
 
+function validateEmptyBottleCount(emptyBottleCount: number): void {
+  if (!Number.isInteger(emptyBottleCount) || emptyBottleCount < 1) {
+    throw new RangeError("emptyBottleCount must be a positive integer");
+  }
+}
+
 function validateGeneratorOptions(options: WaterSortGeneratorOptions): void {
   validateColorCount(options.colorCount);
+  validateEmptyBottleCount(
+    options.emptyBottleCount ?? WATER_SORT_EMPTY_BOTTLE_COUNT,
+  );
 
   const maximumAttempts = options.maximumAttempts ?? 100;
   if (!Number.isInteger(maximumAttempts) || maximumAttempts < 1) {
@@ -152,10 +164,8 @@ function validateProblemIdentity(identity: WaterSortProblemIdentity): void {
   }
 
   validateColorCount(identity.conditions.colorCount);
-  if (
-    identity.conditions.capacity !== WATER_SORT_BOTTLE_CAPACITY ||
-    identity.conditions.emptyBottleCount !== WATER_SORT_EMPTY_BOTTLE_COUNT
-  ) {
+  validateEmptyBottleCount(identity.conditions.emptyBottleCount);
+  if (identity.conditions.capacity !== WATER_SORT_BOTTLE_CAPACITY) {
     throw new Error("Unsupported water sort generation conditions");
   }
 
@@ -187,12 +197,14 @@ function findCandidateAtAttempt(
   const random = createGeneratorRandom(
     identity.seed,
     identity.conditions.colorCount,
+    identity.conditions.emptyBottleCount,
   );
   const seenStates = new Set<string>();
 
   for (let attempt = 1; attempt <= identity.generationAttempt; attempt += 1) {
     const initialState = createStandardCandidate(
       identity.conditions.colorCount,
+      identity.conditions.emptyBottleCount,
       random,
     );
     if (hasInitiallyCompletedBottle(initialState)) {
@@ -246,16 +258,26 @@ export function generateWaterSortProblem(
   validateGeneratorOptions(options);
 
   const maximumAttempts = options.maximumAttempts ?? 100;
+  const emptyBottleCount =
+    options.emptyBottleCount ?? WATER_SORT_EMPTY_BOTTLE_COUNT;
   const conditions: WaterSortGenerationConditions = {
     colorCount: options.colorCount,
     capacity: WATER_SORT_BOTTLE_CAPACITY,
-    emptyBottleCount: WATER_SORT_EMPTY_BOTTLE_COUNT,
+    emptyBottleCount,
   };
-  const random = createGeneratorRandom(options.seed, options.colorCount);
+  const random = createGeneratorRandom(
+    options.seed,
+    options.colorCount,
+    emptyBottleCount,
+  );
   const seenStates = new Set<string>();
 
   for (let attempt = 1; attempt <= maximumAttempts; attempt += 1) {
-    const initialState = createStandardCandidate(options.colorCount, random);
+    const initialState = createStandardCandidate(
+      options.colorCount,
+      emptyBottleCount,
+      random,
+    );
     if (hasInitiallyCompletedBottle(initialState)) {
       continue;
     }
