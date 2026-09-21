@@ -87,12 +87,12 @@ export function PlayableParkingJam({ difficulty }: PlayableParkingJamProps) {
         onStartNewProblem={play.startNewProblem}
         onOpenRecords={() => navigate("/records")}
         onChangeDifficulty={() => navigate("/puzzles/parking-jam")}
-          onBackToHome={() => navigate("/")}
-          onClearAnimationComplete={play.completeClearAnimation}
-          onOpenDiagnostics={
-            diagnostics ? () => setDiagnosticsOpen(true) : undefined
-          }
-        />
+        onBackToHome={() => navigate("/")}
+        onClearAnimationComplete={play.completeClearAnimation}
+        onOpenDiagnostics={
+          diagnostics ? () => setDiagnosticsOpen(true) : undefined
+        }
+      />
       {diagnostics && diagnosticsOpen ? (
         <ParkingJamDiagnostics
           snapshot={diagnostics}
