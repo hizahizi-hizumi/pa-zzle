@@ -43,6 +43,9 @@ export function buildDiagnostics(options: {
       ...(evaluation.subject.symbol === undefined
         ? {}
         : { symbol: evaluation.subject.symbol }),
+      ...(evaluation.subject.contextSymbol === undefined
+        ? {}
+        : { contextSymbol: evaluation.subject.contextSymbol }),
       probability: evaluation.result.probabilities.violation,
       confidence: evaluation.result.confidence,
       source: rule.source,
