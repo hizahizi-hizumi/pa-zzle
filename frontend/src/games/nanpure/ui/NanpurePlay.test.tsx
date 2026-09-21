@@ -363,7 +363,10 @@ describe("NanpurePlay", () => {
     beforeEach(() => {
       onOpenDiagnostics = vi.fn();
       render(
-        <NanpurePlay {...createProps()} onOpenDiagnostics={onOpenDiagnostics} />,
+        <NanpurePlay
+          {...createProps()}
+          onOpenDiagnostics={onOpenDiagnostics}
+        />,
       );
     });
 
