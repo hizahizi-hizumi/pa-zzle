@@ -1,0 +1,20 @@
+version: 1
+
+rulesDir: .semantic-lint/rules
+casesDir: .semantic-lint/cases
+
+excludePaths:
+  - "**/.env*"
+  - "**/*.pem"
+  - "**/*.key"
+  - "**/node_modules/**"
+  - "**/dist/**"
+
+execution:
+  concurrency: 8
+  maxDecisionsPerRequest: 64
+
+provider:
+  kind: typesafe
+  model: jev-latest
+  apiKeyEnv: TYPESAFE_API_KEY
