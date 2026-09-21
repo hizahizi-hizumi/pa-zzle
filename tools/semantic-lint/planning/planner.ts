@@ -42,20 +42,21 @@ export function buildEvaluationPlan(options: {
       continue;
     }
 
-    const subjectsByScope = new Map<string, Subject[]>();
+    const subjectsBySelection = new Map<string, Subject[]>();
     const subjects: Subject[] = [];
     const tasks: EvaluationTask[] = [];
 
     for (const rule of matchingRules.sort((a, b) => a.id.localeCompare(b.id))) {
-      let scopedSubjects = subjectsByScope.get(rule.scope);
+      const selectionKey = `${rule.context}\0${rule.target}`;
+      let selectedSubjects = subjectsBySelection.get(selectionKey);
 
-      if (!scopedSubjects) {
-        scopedSubjects = scopes.extract(rule.scope, document);
-        subjectsByScope.set(rule.scope, scopedSubjects);
-        subjects.push(...scopedSubjects);
+      if (!selectedSubjects) {
+        selectedSubjects = scopes.extract(rule.context, rule.target, document);
+        subjectsBySelection.set(selectionKey, selectedSubjects);
+        subjects.push(...selectedSubjects);
       }
 
-      for (const subject of scopedSubjects) {
+      for (const subject of selectedSubjects) {
         tasks.push({
           id: taskId(rule.id, subject.id),
           ruleId: rule.id,
