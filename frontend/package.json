@@ -14,7 +14,8 @@
     "format": "biome check --write .",
     "semantic-lint": "bun ../tools/semantic-lint/cli.ts",
     "semantic-lint:typecheck": "tsc -p ../tools/semantic-lint/tsconfig.json",
-    "semantic-lint:eval": "bun ../tools/semantic-lint/eval.ts"
+    "semantic-lint:eval": "bun ../tools/semantic-lint/eval.ts",
+    "semantic-lint:test": "bun test ../tools/semantic-lint"
   },
   "dependencies": {
     "@generouted/react-router": "^1.20.2",
