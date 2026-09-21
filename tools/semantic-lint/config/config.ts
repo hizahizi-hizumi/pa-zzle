@@ -25,19 +25,34 @@ export function compileConfig(
     throw new Error(`semantic lint configのversionが不正です: ${origin}`);
   }
 
-  const { rulesDir, casesDir, excludePaths, execution, provider } = value;
+  const rulesDir = value.rulesDir;
+  const casesDir = value.casesDir;
+  const excludePaths = value.excludePaths;
+  const execution = value.execution;
+  const provider = value.provider;
 
   if (
     typeof rulesDir !== "string" ||
     typeof casesDir !== "string" ||
     !isStringArray(excludePaths) ||
     !isRecord(execution) ||
-    !isPositiveInteger(execution.concurrency) ||
-    !isPositiveInteger(execution.maxDecisionsPerRequest) ||
-    !isRecord(provider) ||
-    provider.kind !== "typesafe" ||
-    typeof provider.model !== "string" ||
-    typeof provider.apiKeyEnv !== "string"
+    !isRecord(provider)
+  ) {
+    throw new Error(`semantic lint configが不正です: ${origin}`);
+  }
+
+  const concurrency = execution.concurrency;
+  const maxDecisionsPerRequest = execution.maxDecisionsPerRequest;
+  const providerKind = provider.kind;
+  const model = provider.model;
+  const apiKeyEnv = provider.apiKeyEnv;
+
+  if (
+    !isPositiveInteger(concurrency) ||
+    !isPositiveInteger(maxDecisionsPerRequest) ||
+    providerKind !== "typesafe" ||
+    typeof model !== "string" ||
+    typeof apiKeyEnv !== "string"
   ) {
     throw new Error(`semantic lint configが不正です: ${origin}`);
   }
@@ -48,13 +63,13 @@ export function compileConfig(
     casesDir,
     excludePaths,
     execution: {
-      concurrency: execution.concurrency,
-      maxDecisionsPerRequest: execution.maxDecisionsPerRequest,
+      concurrency,
+      maxDecisionsPerRequest,
     },
     provider: {
-      kind: "typesafe",
-      model: provider.model,
-      apiKeyEnv: provider.apiKeyEnv,
+      kind: providerKind,
+      model,
+      apiKeyEnv,
     },
   };
 }
