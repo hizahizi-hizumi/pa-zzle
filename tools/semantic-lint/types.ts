@@ -18,6 +18,7 @@ export type LintConfig = {
   version: 1;
   provider: TypeSafeProviderConfig;
   rulesDir: string;
+  casesDir: string;
   concurrency: number;
 };
 
