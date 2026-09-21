@@ -23,6 +23,25 @@ const baseAnalysis: WaterSortDifficultyAnalysis = {
     deadEndChoiceRatio: 0,
     maximumDetourMoves: 1,
   },
+  plausibleChoiceAnalysis: {
+    sampledDecisionStateCount: 5,
+    singleChoiceDecisionStateCount: 2,
+    ambiguousDecisionStateCount: 3,
+    evaluatedChoiceCount: 10,
+    unresolvedChoiceCount: 0,
+    optimalChoiceCount: 5,
+    detourChoiceCount: 5,
+    deadEndChoiceCount: 0,
+    detourDecisionStateCount: 3,
+    deadEndDecisionStateCount: 0,
+    ambiguousDecisionStateRatio: 0.6,
+    detourDecisionStateRatio: 0.6,
+    deadEndDecisionStateRatio: 0,
+    detourChoiceRatio: 0.5,
+    deadEndChoiceRatio: 0,
+    maximumDetourMoves: 1,
+    minimumSolvableChoiceRatio: 1,
+  },
 };
 
 describe("parseWaterSortDifficulty", () => {
