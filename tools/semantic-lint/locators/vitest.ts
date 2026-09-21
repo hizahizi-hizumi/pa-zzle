@@ -230,7 +230,7 @@ function lineNumberAt(lineStarts: number[], offset: number): number {
 }
 
 function maskNonCode(source: string): string {
-  const characters = [...source];
+  const characters = source.split("");
   let state:
     | "code"
     | "single"
