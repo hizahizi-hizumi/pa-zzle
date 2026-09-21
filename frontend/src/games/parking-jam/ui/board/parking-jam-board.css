@@ -98,6 +98,11 @@
   fill: var(--parking-jam-car-highlight);
   pointer-events: none;
 }
+.parking-jam-car__hood-panel {
+  fill: var(--parking-jam-car-roof);
+  opacity: 0.6;
+  pointer-events: none;
+}
 .parking-jam-car__roof-panel {
   fill: var(--parking-jam-car-roof);
   stroke: rgb(255 255 255 / 0.22);
