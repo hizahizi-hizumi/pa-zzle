@@ -21,7 +21,7 @@ fail() {
 archive="$(realpath "$1")"
 repo_root="$(realpath "${2:-.}")"
 [[ -f "$archive" ]] || fail "Artifact archive not found: $archive"
-[[ -f "$repo_root/.bun-version" && -f "$repo_root/frontend/bun.lock" && -f "$repo_root/tools/semantic-lint/bun.lock" ]] || fail "Repository Snapshot is incomplete: $repo_root"
+[[ -f "$repo_root/.bun-version" && -f "$repo_root/frontend/bun.lock" ]] || fail "Repository Snapshot is incomplete: $repo_root"
 
 # shellcheck disable=SC1091
 source "$repo_root/.github/actions/offline-dependencies/inputs.env"
@@ -48,9 +48,6 @@ cleanup() {
   if [[ -L "$repo_root/frontend/node_modules" ]]; then
     rm "$repo_root/frontend/node_modules"
   fi
-  if [[ -L "$repo_root/tools/semantic-lint/node_modules" ]]; then
-    rm "$repo_root/tools/semantic-lint/node_modules"
-  fi
   if [[ -n "$dependency_stage_dir" && -d "$dependency_stage_dir" ]]; then
     rm -rf "$dependency_stage_dir"
   fi
@@ -69,7 +66,6 @@ if [[ ! -e "$dependency_dir" ]]; then
   tar --zstd -xf "$archive" -C "$dependency_stage_dir"
   [[ -f "$dependency_stage_dir/manifest.env" ]] || fail "manifest.env not found in Artifact"
   [[ -d "$dependency_stage_dir/frontend/node_modules" ]] || fail "frontend node_modules not found in Artifact"
-  [[ -d "$dependency_stage_dir/tools/semantic-lint/node_modules" ]] || fail "semantic lint node_modules not found in Artifact"
 
   # shellcheck disable=SC1091
   source "$dependency_stage_dir/manifest.env"
@@ -86,7 +82,6 @@ fi
 
 [[ -f "$dependency_dir/manifest.env" ]] || fail "Cached manifest.env not found: $dependency_dir"
 [[ -d "$dependency_dir/frontend/node_modules" ]] || fail "Cached frontend node_modules not found: $dependency_dir"
-[[ -d "$dependency_dir/tools/semantic-lint/node_modules" ]] || fail "Cached semantic lint node_modules not found: $dependency_dir"
 
 # shellcheck disable=SC1091
 source "$dependency_dir/manifest.env"
@@ -96,37 +91,28 @@ source "$dependency_dir/manifest.env"
 if [[ -e "$repo_root/frontend/node_modules" || -L "$repo_root/frontend/node_modules" ]]; then
   fail "frontend/node_modules already exists: $repo_root/frontend/node_modules"
 fi
-if [[ -e "$repo_root/tools/semantic-lint/node_modules" || -L "$repo_root/tools/semantic-lint/node_modules" ]]; then
-  fail "tools/semantic-lint/node_modules already exists: $repo_root/tools/semantic-lint/node_modules"
-fi
 ln -s "$dependency_dir/frontend/node_modules" "$repo_root/frontend/node_modules"
-ln -s "$dependency_dir/tools/semantic-lint/node_modules" "$repo_root/tools/semantic-lint/node_modules"
 
 export npm_config_registry=http://127.0.0.1:9
 export NPM_CONFIG_REGISTRY=http://127.0.0.1:9
 
 check_names=()
 check_pids=()
-run_check_in_dir() {
+run_frontend_check() {
   local name="$1"
-  local directory="$2"
-  shift 2
+  shift
   (
-    cd "$repo_root/$directory"
+    cd "$repo_root/frontend"
     "$@"
   ) &
   check_names+=("$name")
   check_pids+=("$!")
 }
 
-run_check_in_dir biome frontend node_modules/.bin/biome check .
-run_check_in_dir typecheck frontend env TERM=dumb node_modules/.bin/tsc --noEmit --pretty false
-run_check_in_dir test frontend node_modules/.bin/vitest run --pool=vmForks
-run_check_in_dir build frontend node_modules/.bin/vite build --config vite.config.ts
-run_check_in_dir semantic-lint-typecheck tools/semantic-lint env TERM=dumb node_modules/.bin/tsc -p tsconfig.json --pretty false
-run_check_in_dir semantic-lint-test tools/semantic-lint bun test
-run_check_in_dir semantic-lint-doctor tools/semantic-lint bun run doctor
-run_check_in_dir semantic-lint-inspect tools/semantic-lint bun run inspect -- vitest/arrange-outside-test frontend/src/records/storage.test.ts --plan-only
+run_frontend_check biome node_modules/.bin/biome check .
+run_frontend_check typecheck env TERM=dumb node_modules/.bin/tsc --noEmit --pretty false
+run_frontend_check test node_modules/.bin/vitest run --pool=vmForks
+run_frontend_check build node_modules/.bin/vite build --config vite.config.ts
 
 failed_checks=()
 for index in "${!check_pids[@]}"; do
