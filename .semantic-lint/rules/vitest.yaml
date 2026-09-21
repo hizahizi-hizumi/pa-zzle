@@ -18,54 +18,59 @@ rules:
   - id: arrange-outside-test
     status: active
     title: テスト本体にArrangeを置かない
-    scope: vitest.test
+    context: vitest.test
+    target: statement
     sourceSection: テスト構造 > Arrangeの分離方法
     predicate:
       instruction: |
-        Determine whether this individual test keeps meaningful Arrange setup
-        outside the test body. Evaluate only the identified test subject while
-        using the surrounding file as context.
+        Determine whether the target statement performs meaningful Arrange work
+        that should live outside the enclosing test. Use the enclosing test and
+        full file only as context for interpreting the target statement.
       outcomes:
         violation: |
-          The test body performs meaningful Arrange work that should be prepared
-          outside it, such as constructing test data or initial state, creating
-          mocks or spies, or performing initial rendering. Values received from
-          test.each parameters are allowed. Assigning the result of the operation
-          under test is Act, not Arrange.
+          The target statement performs meaningful Arrange work such as
+          constructing test data or initial state, creating mocks or spies, or
+          performing initial rendering. Values received from test.each parameters
+          are allowed.
         compliant: |
-          The test body focuses on Act and Assert. Meaningful Arrange work is
-          prepared in an enclosing describe, beforeEach, or test.each case data.
+          The target statement is Act or Assert, or otherwise belongs naturally
+          in the test body rather than Arrange setup.
         not_applicable: |
-          This test requires no meaningful Arrange setup.
+          The target statement has no meaningful relationship to Arrange, Act,
+          or Assert for this rule.
         insufficient_context: |
-          The available file context is not enough to distinguish setup from the
-          behavior under test.
+          The enclosing test and file do not provide enough information to
+          determine whether the target statement is Arrange.
 
   - id: before-each-arrange-only
     status: active
     title: beforeEachは事前準備だけを行う
-    scope: vitest.beforeEach
+    context: vitest.beforeEach
+    target: statement
     sourceSection: テスト構造 > Arrangeの分離方法
     predicate:
       instruction: |
-        Determine whether this beforeEach performs Arrange only and does not
-        execute behavior that a test later verifies.
+        Determine whether the target statement inside beforeEach executes
+        behavior that a test later verifies instead of preparing initial state.
+        Use the enclosing beforeEach and full file only as context.
       outcomes:
         violation: |
-          This beforeEach executes an operation, user action, or behavior whose
-          result is subsequently verified by a test.
+          The target statement executes an operation, user action, or behavior
+          whose result is subsequently verified by a test.
         compliant: |
-          This beforeEach only prepares initial state, test data, mocks, spies,
+          The target statement prepares initial state, test data, mocks, spies,
           dependencies, or initial rendering.
         not_applicable: |
-          The subject is not relevant to this rule.
+          The target statement is not relevant to the Arrange-only responsibility
+          of beforeEach.
         insufficient_context: |
-          The available file context is not enough to determine whether a helper
-          performs setup or the behavior under test.
+          The enclosing hook and file do not provide enough information to
+          determine whether the target statement is setup or behavior under test.
 
   - id: dom-observable-contract
     title: DOMテストは利用者から観測できる契約を優先する
-    scope: vitest.test
+    context: vitest.test
+    target: self
     sourceSection: テスト構造 > 基本原則
     predicate:
       instruction: |
@@ -89,7 +94,8 @@ rules:
   - id: table-driven-cases
     status: active
     title: 同じ期待動作の入力違いはtest.eachで表現する
-    scope: vitest.describe
+    context: vitest.describe
+    target: self
     sourceSection: 入力違いのケース
     predicate:
       instruction: |
