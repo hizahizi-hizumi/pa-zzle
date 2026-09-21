@@ -22,10 +22,14 @@ async function main(): Promise<void> {
     const config = await loadLintConfig(projectRoot);
     const rules = await loadRules(projectRoot, config.rulesDir);
     const selectedRules = selectRules(rules, options.ruleIds);
-    const cases = await loadCalibrationCases(
+    const allCases = await loadCalibrationCases(
       projectRoot,
       config.casesDir,
-      selectedRules,
+      rules,
+    );
+    const selectedRuleIds = new Set(selectedRules.map((rule) => rule.id));
+    const cases = allCases.filter((calibrationCase) =>
+      selectedRuleIds.has(calibrationCase.rule.id),
     );
 
     if (cases.length === 0) {
