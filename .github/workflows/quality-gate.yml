@@ -35,5 +35,9 @@ jobs:
         working-directory: frontend
         run: bun install --frozen-lockfile
 
+      - name: Install semantic lint dependencies
+        working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+
       - name: Verify repository quality
         run: ./scripts/verify.sh
