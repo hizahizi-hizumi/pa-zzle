@@ -1,4 +1,9 @@
-import type { FileEvaluation, RuleEvaluation, Severity } from "./types.ts";
+import type {
+  DiagnosticLocation,
+  FileEvaluation,
+  RuleEvaluation,
+  Severity,
+} from "./types.ts";
 
 export type ReportOptions = {
   verbose: boolean;
@@ -41,21 +46,24 @@ export function printReport(
         evaluation.answer.choice === "insufficient_context",
     );
 
-    if (visible.length === 0) {
-      continue;
-    }
-
-    console.log(result.path);
-
     for (const evaluation of visible) {
       if (isFinding(evaluation)) {
+        const diagnosticCount = Math.max(1, evaluation.locations.length);
+
         if (evaluation.rule.severity === "error") {
-          errors += 1;
+          errors += diagnosticCount;
         } else {
-          warnings += 1;
+          warnings += diagnosticCount;
         }
 
-        printFinding(evaluation);
+        if (evaluation.locations.length > 0) {
+          for (const location of evaluation.locations) {
+            printLocalizedFinding(result.path, evaluation, location);
+          }
+        } else {
+          printFileFinding(result.path, evaluation);
+        }
+
         continue;
       }
 
@@ -63,10 +71,8 @@ export function printReport(
         insufficientContext += 1;
       }
 
-      printEvaluation(evaluation);
+      printEvaluation(result.path, evaluation);
     }
-
-    console.log("");
   }
 
   const decisions = results.reduce(
@@ -83,7 +89,10 @@ export function printReport(
     errors,
     insufficientContext,
     inputTokens,
-    evaluationRequests: results.length,
+    evaluationRequests: results.reduce(
+      (sum, result) => sum + result.requestCount,
+      0,
+    ),
     totalDurationMs: options.totalDurationMs,
     p50LatencyMs: percentile(latencies, 50),
     p95LatencyMs: percentile(latencies, 95),
@@ -96,9 +105,34 @@ export function printReport(
   return summary;
 }
 
-function printFinding(evaluation: RuleEvaluation): void {
+function printLocalizedFinding(
+  path: string,
+  evaluation: RuleEvaluation,
+  location: DiagnosticLocation,
+): void {
+  const { rule } = evaluation;
+  const { answer, range, symbol } = location;
+
+  console.log(path + ":" + range.startLine + "-" + range.endLine);
+  console.log(`  ${severityLabel(rule.severity)} ${rule.title}`);
+  console.log(`    symbol: ${symbol}`);
+  console.log(`    rule: ${rule.id}`);
+  console.log(
+    `    違反確率: ${percentage(answer.probabilities.violation)} ` +
+      `(閾値 ${percentage(rule.violationThreshold)})`,
+  );
+  console.log(`    確信度: ${percentage(answer.confidence)}`);
+  console.log(`    規約: ${rule.source.path} / ${rule.source.section}`);
+  console.log("");
+}
+
+function printFileFinding(
+  path: string,
+  evaluation: RuleEvaluation,
+): void {
   const { rule, answer } = evaluation;
 
+  console.log(path);
   console.log(`  ${severityLabel(rule.severity)} ${rule.title}`);
   console.log(`    rule: ${rule.id}`);
   console.log(
@@ -107,11 +141,13 @@ function printFinding(evaluation: RuleEvaluation): void {
   );
   console.log(`    確信度: ${percentage(answer.confidence)}`);
   console.log(`    規約: ${rule.source.path} / ${rule.source.section}`);
+  console.log("");
 }
 
-function printEvaluation(evaluation: RuleEvaluation): void {
+function printEvaluation(path: string, evaluation: RuleEvaluation): void {
   const { rule, answer } = evaluation;
 
+  console.log(path);
   console.log(`  ${choiceMark(answer.choice)} ${rule.title}`);
   console.log(`    rule: ${rule.id}`);
   console.log(`    判定: ${choiceLabel(answer.choice)}`);
@@ -122,6 +158,7 @@ function printEvaluation(evaluation: RuleEvaluation): void {
       `文脈不足 ${percentage(answer.probabilities.insufficient_context)}`,
   );
   console.log(`    確信度: ${percentage(answer.confidence)}`);
+  console.log("");
 }
 
 function printSummary(summary: ReportSummary, concurrency: number): void {
