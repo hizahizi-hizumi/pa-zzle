@@ -1,0 +1,6 @@
+test("保存状態を表示すること", () => {
+  render(<SaveStatus saved />);
+  const status = screen.getByRole("status");
+
+  expect(status).toHaveTextContent("保存しました");
+});
