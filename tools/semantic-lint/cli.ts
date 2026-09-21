@@ -11,6 +11,8 @@ type CliOptions = {
 };
 
 async function main(): Promise<void> {
+  const startedAt = performance.now();
+
   try {
     const options = parseArgs(process.argv.slice(2));
     const projectRoot = await findProjectRoot();
@@ -32,10 +34,15 @@ async function main(): Promise<void> {
       provider,
       config.concurrency,
     );
+    const totalDurationMs = performance.now() - startedAt;
 
     console.log("");
 
-    const summary = printReport(results, options.verbose);
+    const summary = printReport(results, {
+      verbose: options.verbose,
+      totalDurationMs,
+      concurrency: config.concurrency,
+    });
 
     if (summary.errors > 0) {
       process.exitCode = 1;
