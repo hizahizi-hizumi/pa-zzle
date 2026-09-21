@@ -20,6 +20,7 @@ bun run --cwd frontend typecheck # TypeScript の型検査
 bun run --cwd frontend test # Vitest の1回実行
 bun run --cwd frontend build # プロダクションビルド
 bun run --cwd frontend semantic-lint # frontendに適用される意味lint。TYPESAFE_API_KEYが必要
+bun run --cwd frontend semantic-lint:eval # semantic lint ruleの校正。TYPESAFE_API_KEYが必要
 bun run --cwd frontend semantic-lint:typecheck # semantic lintツールの型検査
 ```
 
