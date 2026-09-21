@@ -11,7 +11,7 @@ export async function discoverTargets(
   const targets = new Map<string, Map<string, RuleConfig>>();
 
   for (const rule of rules) {
-    for (const pattern of rule.include) {
+    for (const pattern of rule.paths) {
       const glob = new Bun.Glob(pattern);
 
       for await (const path of glob.scan({
@@ -31,7 +31,8 @@ export async function discoverTargets(
           continue;
         }
 
-        const targetRules = targets.get(projectPath) ?? new Map<string, RuleConfig>();
+        const targetRules =
+          targets.get(projectPath) ?? new Map<string, RuleConfig>();
         targetRules.set(rule.id, rule);
         targets.set(projectPath, targetRules);
       }
@@ -50,5 +51,5 @@ export async function discoverTargets(
 }
 
 function isExcluded(path: string, rule: RuleConfig): boolean {
-  return rule.exclude.some((pattern) => new Bun.Glob(pattern).match(path));
+  return rule.excludePaths.some((pattern) => new Bun.Glob(pattern).match(path));
 }
