@@ -1,0 +1,13 @@
+version: 1
+ruleset: game-problem
+
+cases:
+  - rule: playable-data-only
+    name: Problem契約に生成メタデータを含める
+    fixture: fixtures/violation.ts
+    expected: violation
+
+  - rule: playable-data-only
+    name: Problem契約をプレイデータだけにする
+    fixture: fixtures/compliant.ts
+    expected: compliant
