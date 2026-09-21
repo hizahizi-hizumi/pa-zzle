@@ -84,6 +84,7 @@ export type RuleEvaluation = {
 export type FileEvaluation = {
   path: string;
   model: string;
+  durationMs: number;
   evaluations: RuleEvaluation[];
   usage: {
     inputTokens: number;
