@@ -221,6 +221,7 @@ describe("useWaterSortPlay", () => {
       restartCount: 0,
       optimalMoveCount: result.current.optimalMoveCount,
       moveDelta: 0,
+      timeDeltaMs: expect.any(Number),
       backtrackMoveCount: 0,
       speedFullScoreMs: expect.any(Number),
       colorCount: result.current.problemIdentity.conditions.colorCount,

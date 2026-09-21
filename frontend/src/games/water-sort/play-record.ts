@@ -8,8 +8,9 @@ import {
 } from "./difficulty";
 import type { WaterSortProblemIdentity } from "./problem/problem";
 import {
+  calculateWaterSortMoveDelta,
   calculateWaterSortPlayScore,
-  calculateWaterSortSpeedFullScoreMs,
+  calculateWaterSortTimeDeltaMs,
 } from "./score";
 
 const WATER_SORT_PLAY_RECORD_PAYLOAD_VERSION = 2;
@@ -242,12 +243,11 @@ export function getWaterSortPlayRecordTimeDelta(
   }
 
   const { elapsedMs, optimalMoveCount } = record.payload.performance;
-  const speedFullScoreMs = calculateWaterSortSpeedFullScoreMs({
+  return calculateWaterSortTimeDeltaMs({
+    elapsedMs,
     optimalMoveCount,
     colorCount: record.payload.problemIdentity.conditions.colorCount,
   });
-
-  return elapsedMs - speedFullScoreMs;
 }
 
 export function getWaterSortPlayRecordMoveDelta(
@@ -258,9 +258,14 @@ export function getWaterSortPlayRecordMoveDelta(
   }
 
   const completionMoveCount = getCompletionMoveCount(record);
-  return completionMoveCount === null
-    ? null
-    : completionMoveCount - record.payload.performance.optimalMoveCount;
+  if (completionMoveCount === null) {
+    return null;
+  }
+
+  return calculateWaterSortMoveDelta({
+    completionMoveCount,
+    optimalMoveCount: record.payload.performance.optimalMoveCount,
+  });
 }
 
 export const waterSortPlayRecordDefinition: PlayRecordDefinition = {

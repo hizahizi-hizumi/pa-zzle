@@ -31,6 +31,10 @@ import {
   WATER_SORT_SCORE_MAXIMUMS,
 } from "@/games/water-sort/score";
 import { formatWaterSortElapsedTime } from "@/games/water-sort/ui/format-elapsed-time";
+import {
+  formatWaterSortMoveDelta,
+  formatWaterSortTimeDelta,
+} from "@/games/water-sort/ui/format-performance-delta";
 import { DetailMetric } from "@/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen/DetailMetric";
 import { formatScoreTime } from "@/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen/format-score-time";
 import { ResultMetric } from "@/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen/ResultMetric";
@@ -78,19 +82,16 @@ export function WaterSortResultScreen({
 
         {recordOutcomeNotice}
 
-        <dl className="mt-3 grid grid-cols-3 gap-2">
+        <dl className="mt-3 grid grid-cols-2 gap-2">
           <ResultMetric
             label="手数"
             value={String(result.completionMoveCount)}
-            detail={`最短 ${formatMoveDelta(result.moveDelta)}`}
+            detail={`最短 ${formatWaterSortMoveDelta(result.moveDelta)}`}
           />
           <ResultMetric
             label="時間"
             value={formatWaterSortElapsedTime(result.elapsedMs)}
-          />
-          <ResultMetric
-            label="手戻り"
-            value={String(result.backtrackMoveCount)}
+            detail={`基準 ${formatWaterSortTimeDelta(result.timeDeltaMs)}`}
           />
         </dl>
 
@@ -148,6 +149,10 @@ export function WaterSortResultScreen({
                   value={formatScoreTime(result.speedFullScoreMs)}
                 />
                 <DetailMetric label="総手数" value={String(result.moveCount)} />
+                <DetailMetric
+                  label="手戻り"
+                  value={`${result.backtrackMoveCount}手`}
+                />
                 <DetailMetric label="待った" value={`${result.undoCount}回`} />
                 <DetailMetric
                   label="やり直し"
@@ -176,8 +181,4 @@ export function WaterSortResultScreen({
       </div>
     </section>
   );
-}
-
-function formatMoveDelta(moveDelta: number): string {
-  return moveDelta === 0 ? "±0" : `+${moveDelta}`;
 }
