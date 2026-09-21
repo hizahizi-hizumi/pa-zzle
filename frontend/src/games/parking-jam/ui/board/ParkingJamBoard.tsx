@@ -95,6 +95,7 @@ type ParkingJamCarPanel = {
 type ParkingJamCarVisualSpec = {
   frontGlassPath: string;
   rearGlassPath: string;
+  hoodPanelPath: string | null;
   roofPanel: ParkingJamCarPanel;
   seamPaths: readonly string[];
 };
@@ -185,7 +186,7 @@ function getVehicleVisualSpec(
 ): ParkingJamCarVisualSpec {
   const horizontal = vehicle.orientation === "horizontal";
   const longBody = getVehicleVisualType(vehicle) === "long";
-  const hoodLength = longBody ? 22 : 52;
+  const hoodLength = longBody ? 22 : 46;
   const glassDepth = longBody ? 23 : 24;
   const rearDeckLength = longBody ? 15 : 24;
   const glassOuterEndInset = longBody ? 14 : 15;
@@ -218,10 +219,16 @@ function getVehicleVisualSpec(
     const rearGlassPath = facingPositive
       ? `M ${rearGlassRear} ${crossStart + glassOuterEndInset} L ${rearGlassFront} ${crossStart + glassInnerEndInset} L ${rearGlassFront} ${crossEnd - glassInnerEndInset} L ${rearGlassRear} ${crossEnd - glassOuterEndInset} Z`
       : `M ${rearGlassFront} ${crossStart + glassInnerEndInset} L ${rearGlassRear} ${crossStart + glassOuterEndInset} L ${rearGlassRear} ${crossEnd - glassOuterEndInset} L ${rearGlassFront} ${crossEnd - glassInnerEndInset} Z`;
+    const hoodPanelPath = longBody
+      ? null
+      : facingPositive
+        ? `M ${frontGlassFront + 4} ${y + 10} L ${end - 24} ${y + 13} L ${end - 24} ${y + vehicleHeight - 13} L ${frontGlassFront + 4} ${y + vehicleHeight - 10} Z`
+        : `M ${x + 24} ${y + 13} L ${frontGlassFront - 4} ${y + 10} L ${frontGlassFront - 4} ${y + vehicleHeight - 10} L ${x + 24} ${y + vehicleHeight - 13} Z`;
 
     return {
       frontGlassPath,
       rearGlassPath,
+      hoodPanelPath,
       roofPanel: {
         x: roofStart - 1,
         y: y + cabinInset - 2,
@@ -266,10 +273,16 @@ function getVehicleVisualSpec(
   const rearGlassPath = facingPositive
     ? `M ${crossStart + glassOuterEndInset} ${rearGlassRear} L ${crossStart + glassInnerEndInset} ${rearGlassFront} L ${crossEnd - glassInnerEndInset} ${rearGlassFront} L ${crossEnd - glassOuterEndInset} ${rearGlassRear} Z`
     : `M ${crossStart + glassInnerEndInset} ${rearGlassFront} L ${crossStart + glassOuterEndInset} ${rearGlassRear} L ${crossEnd - glassOuterEndInset} ${rearGlassRear} L ${crossEnd - glassInnerEndInset} ${rearGlassFront} Z`;
+  const hoodPanelPath = longBody
+    ? null
+    : facingPositive
+      ? `M ${x + 10} ${frontGlassFront + 4} L ${x + 13} ${end - 24} L ${x + vehicleWidth - 13} ${end - 24} L ${x + vehicleWidth - 10} ${frontGlassFront + 4} Z`
+      : `M ${x + 13} ${y + 24} L ${x + 10} ${frontGlassFront - 4} L ${x + vehicleWidth - 10} ${frontGlassFront - 4} L ${x + vehicleWidth - 13} ${y + 24} Z`;
 
   return {
     frontGlassPath,
     rearGlassPath,
+    hoodPanelPath,
     roofPanel: {
       x: x + cabinInset - 2,
       y: roofStart - 1,
@@ -631,6 +644,12 @@ export function ParkingJamBoard({
                 rx="8"
                 className="parking-jam-car__highlight"
               />
+              {visualSpec.hoodPanelPath ? (
+                <path
+                  d={visualSpec.hoodPanelPath}
+                  className="parking-jam-car__hood-panel"
+                />
+              ) : null}
               <rect
                 x={visualSpec.roofPanel.x}
                 y={visualSpec.roofPanel.y}
