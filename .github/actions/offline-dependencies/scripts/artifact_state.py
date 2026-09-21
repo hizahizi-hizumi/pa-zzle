@@ -21,6 +21,7 @@ INPUT_PATHS: Final = (
     ".github/actions/offline-dependencies/inputs.env",
     ".bun-version",
     "frontend/bun.lock",
+    "tools/semantic-lint/bun.lock",
 )
 MAX_ACTIVE_KEYS: Final = 3
 MAIN_RETENTION_DAYS: Final = 7
