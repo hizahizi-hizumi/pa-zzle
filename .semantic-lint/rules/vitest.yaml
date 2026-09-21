@@ -2,7 +2,9 @@ version: 1
 id: vitest
 
 paths:
-  - frontend/**/*.test.{ts,tsx,mjs}
+  - frontend/**/*.test.ts
+  - frontend/**/*.test.tsx
+  - frontend/**/*.test.mjs
 
 source:
   path: .claude/rules/vitest.md
