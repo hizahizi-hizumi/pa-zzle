@@ -11,11 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "format": "biome check --write .",
-    "semantic-lint": "bun ../tools/semantic-lint/cli/main.ts",
-    "semantic-lint:typecheck": "tsc -p ../tools/semantic-lint/tsconfig.json",
-    "semantic-lint:eval": "bun ../tools/semantic-lint/cli/main.ts eval",
-    "semantic-lint:test": "bun test ../tools/semantic-lint"
+    "format": "biome check --write ."
   },
   "dependencies": {
     "@generouted/react-router": "^1.20.2",
@@ -42,10 +38,9 @@
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.1.1",
     "jsdom": "^30.0.1",
-    "tailwindcss": "^4.3.3",
+    "tailwindcss": "^4.1.11",
     "vite": "^8.3.0",
-    "vitest": "^5.0.0",
-    "@typescript/typescript6": "6.0.2"
+    "vitest": "^5.0.0"
   },
   "peerDependencies": {
     "typescript": "^7"
