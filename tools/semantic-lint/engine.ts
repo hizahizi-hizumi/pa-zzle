@@ -35,6 +35,7 @@ async function evaluateTarget(
     ]),
   );
 
+  const startedAt = performance.now();
   const response = await provider.evaluate({
     state: {
       file: {
@@ -44,6 +45,7 @@ async function evaluateTarget(
     },
     questions,
   });
+  const durationMs = performance.now() - startedAt;
 
   const evaluations: RuleEvaluation[] = [];
 
@@ -60,6 +62,7 @@ async function evaluateTarget(
   return {
     path: target.path,
     model: response.model,
+    durationMs,
     evaluations,
     usage: response.usage,
   };
