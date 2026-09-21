@@ -52,8 +52,13 @@ export async function runCheckCommand(args: string[]): Promise<number> {
     statuses,
   });
 
-  if (plan.files.length === 0) {
-    const emptyResult = createEmptyRunResult();
+  const plannedEvaluations = plan.files.reduce(
+    (sum, file) => sum + file.tasks.length,
+    0,
+  );
+
+  if (plannedEvaluations === 0) {
+    const emptyResult = createEmptyRunResult(plan.files.length);
     process.stdout.write(renderRunResult(emptyResult, options.format));
     return 0;
   }
@@ -155,7 +160,7 @@ async function resolveCheckPaths(
   if (filesFrom === undefined) {
     return explicit.length > 0
       ? explicit
-      : resolveRequestedPaths(projectRoot, []);
+      : resolveRequestedPaths(projectRoot, ["."], projectRoot);
   }
 
   const fileList = await readFile(filesFrom, "utf8");
@@ -163,11 +168,14 @@ async function resolveCheckPaths(
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line.length > 0 && !line.startsWith("#"));
-  const fromFile = await resolveRequestedPaths(
-    projectRoot,
-    entries,
-    projectRoot,
-  );
+  const fromFile =
+    entries.length === 0
+      ? []
+      : await resolveRequestedPaths(
+          projectRoot,
+          entries,
+          projectRoot,
+        );
 
   return [...new Set([...explicit, ...fromFile])];
 }
@@ -191,14 +199,14 @@ function exitCodeForResult(
     : 0;
 }
 
-function createEmptyRunResult(): RunResult {
+function createEmptyRunResult(scannedFiles: number): RunResult {
   return {
     schemaVersion: 1,
     diagnostics: [],
     unknowns: [],
     evaluations: [],
     metrics: {
-      scannedFiles: 0,
+      scannedFiles,
       subjects: 0,
       plannedEvaluations: 0,
       providerRequests: 0,
