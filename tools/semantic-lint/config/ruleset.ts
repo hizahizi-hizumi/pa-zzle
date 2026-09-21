@@ -30,12 +30,17 @@ export function compileRuleset(value: unknown, origin: string): Rule[] {
     !isStringArray(paths) ||
     paths.length === 0 ||
     !isRecord(source) ||
-    typeof source.path !== "string" ||
     !isRecord(defaults) ||
     !Array.isArray(rules) ||
     rules.length === 0
   ) {
     throw new Error(`rulesetの基本設定が不正です: ${origin}`);
+  }
+
+  const sourcePath = source.path;
+
+  if (typeof sourcePath !== "string") {
+    throw new Error(`ruleset sourceが不正です: ${origin}`);
   }
 
   const compiledDefaults = compileDefaults(defaults, origin);
@@ -46,7 +51,7 @@ export function compileRuleset(value: unknown, origin: string): Rule[] {
       index,
       rulesetId: id,
       paths,
-      sourcePath: source.path,
+      sourcePath,
       defaults: compiledDefaults,
     }),
   );
@@ -167,9 +172,15 @@ function compileRule(options: {
     throw new Error(`rule policyが不正です: ${origin} rules[${index}]`);
   }
 
+  const outcomesRecord = predicate.outcomes;
+
+  if (!isRecord(outcomesRecord)) {
+    throw new Error(`predicate.outcomesが不正です: ${origin} rules[${index}]`);
+  }
+
   const outcomes = Object.fromEntries(
     DECISIONS.map((decision) => {
-      const description = predicate.outcomes[decision];
+      const description = outcomesRecord[decision];
 
       if (typeof description !== "string") {
         throw new Error(
