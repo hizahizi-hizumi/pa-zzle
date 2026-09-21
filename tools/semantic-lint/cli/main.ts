@@ -1,8 +1,14 @@
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { findProjectRoot } from "../config/project.ts";
 import { runCheckCommand } from "./check.ts";
 import { runDoctorCommand } from "./doctor.ts";
 import { runEvalCommand } from "./eval.ts";
 import { runInspectCommand } from "./inspect.ts";
 import { runRulesCommand } from "./rules.ts";
+
+const PROJECT_ENV_LOADED = "SEMANTIC_LINT_PROJECT_ENV_LOADED";
 
 async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
@@ -42,6 +48,42 @@ async function main(): Promise<void> {
   }
 }
 
+async function bootstrap(): Promise<void> {
+  if (process.env[PROJECT_ENV_LOADED] === "1") {
+    await main();
+    return;
+  }
+
+  const projectRoot = await findProjectRoot();
+  const envPath = resolve(projectRoot, ".env");
+
+  if (!(await Bun.file(envPath).exists())) {
+    await main();
+    return;
+  }
+
+  const child = Bun.spawn(
+    [
+      process.execPath,
+      `--env-file=${envPath}`,
+      fileURLToPath(import.meta.url),
+      ...process.argv.slice(2),
+    ],
+    {
+      cwd: process.cwd(),
+      env: {
+        ...process.env,
+        [PROJECT_ENV_LOADED]: "1",
+      },
+      stdin: "inherit",
+      stdout: "inherit",
+      stderr: "inherit",
+    },
+  );
+
+  process.exitCode = await child.exited;
+}
+
 function printHelp(): void {
   console.log(`semantic lint
 
@@ -61,4 +103,4 @@ check options:
 `);
 }
 
-await main();
+await bootstrap();
