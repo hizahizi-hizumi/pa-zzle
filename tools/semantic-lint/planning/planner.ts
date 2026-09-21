@@ -64,10 +64,6 @@ export function buildEvaluationPlan(options: {
       }
     }
 
-    if (tasks.length === 0) {
-      continue;
-    }
-
     files.push({
       path: document.path,
       source: document.source,
