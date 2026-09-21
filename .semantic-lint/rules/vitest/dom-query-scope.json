@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "id": "vitest/dom-query-scope",
+  "title": "意味上の領域があるDOMテストはwithinで探索範囲を限定する",
+  "target": "file",
+  "severity": "warning",
+  "violationThreshold": 0.9,
+  "include": [
+    "frontend/**/*.test.{ts,tsx,mjs}"
+  ],
+  "exclude": [],
+  "source": {
+    "path": ".claude/rules/vitest.md",
+    "section": "テスト構造 > 基本原則"
+  },
+  "question": {
+    "instructions": "Classify whether DOM tests scope their queries to a meaningful user-observable region with within when the screen contains a semantic region relevant to the assertion.",
+    "criteria": {
+      "violation": "A test searches the entire document for an element even though the UI has a meaningful user-observable region that should first be selected and then searched with within, making the tested contract unnecessarily ambiguous.",
+      "compliant": "When a meaningful region exists and matters to the contract, the test selects that region through a user-observable query and uses within to search inside it. Global queries are used only when scoping is unnecessary.",
+      "not_applicable": "The tested UI has no meaningful region relevant to the query, or the file contains no DOM test to which scoped querying applies.",
+      "insufficient_context": "The available source does not show enough of the rendered UI contract to determine whether a meaningful region exists for scoping."
+    }
+  }
+}
