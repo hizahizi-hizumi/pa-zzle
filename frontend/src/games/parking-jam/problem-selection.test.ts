@@ -2,37 +2,43 @@ import { assessParkingJamDifficulty } from "./difficulty";
 import { generateParkingJamProblemForDifficulty } from "./problem-selection";
 
 describe("generateParkingJamProblemForDifficulty", () => {
-  const difficulties = ["easy", "normal", "hard"] as const;
+  const difficultyCases = [
+    ["easy", 8],
+    ["normal", 12],
+    ["hard", 14],
+  ] as const;
 
-  test.each(difficulties)("%s と判定できる問題を生成すること", (difficulty) => {
-    const problem = generateParkingJamProblemForDifficulty(
-      difficulty,
-      `parking-jam-${difficulty}-selection`,
-    );
+  test.each(difficultyCases)(
+    "%s と判定できる規模の問題を生成すること",
+    (difficulty, expectedVehicleCount) => {
+      const problem = generateParkingJamProblemForDifficulty(
+        difficulty,
+        `parking-jam-${difficulty}-selection`,
+      );
+      const assessment = assessParkingJamDifficulty(problem.difficultyAnalysis);
 
-    const assessment = assessParkingJamDifficulty(problem.difficultyAnalysis);
-
-    expect(assessment).toMatchObject({
-      status: "rated",
-      difficulty,
-    });
-  });
-});
-
-describe("hard の代表seed群の場合", () => {
-  const seeds = Array.from(
-    { length: 10 },
-    (_, index) => `parking-jam-hard-supply-${index}`,
+      expect(assessment).toMatchObject({
+        status: "rated",
+        difficulty,
+      });
+      expect(problem.problem.board.vehicles).toHaveLength(expectedVehicleCount);
+    },
   );
 
-  test.each(seeds)("継続してhard問題を供給できること: %s", (seed) => {
-    const problem = generateParkingJamProblemForDifficulty("hard", seed);
+  describe.each(difficultyCases)("%s の代表seed群の場合", (difficulty) => {
+    const seeds = Array.from(
+      { length: 10 },
+      (_, index) => `parking-jam-${difficulty}-supply-${index}`,
+    );
 
-    const assessment = assessParkingJamDifficulty(problem.difficultyAnalysis);
+    test.each(seeds)("継続して指定難易度を供給できること: %s", (seed) => {
+      const problem = generateParkingJamProblemForDifficulty(difficulty, seed);
+      const assessment = assessParkingJamDifficulty(problem.difficultyAnalysis);
 
-    expect(assessment).toMatchObject({
-      status: "rated",
-      difficulty: "hard",
+      expect(assessment).toMatchObject({
+        status: "rated",
+        difficulty,
+      });
     });
   });
 });

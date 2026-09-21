@@ -6,9 +6,10 @@ import type { ParkingJamDifficultyAnalysis } from "./problem/difficulty-analysis
 
 describe("assessParkingJamDifficulty", () => {
   const baseFeatures: ParkingJamDifficultyAnalysis["features"] = {
-    dependencyDepth: 3,
+    vehicleCount: 12,
+    dependencyDepth: 2,
     initialLegalVehicleCount: 8,
-    initialLegalVehicleRatio: 8 / 14,
+    initialLegalVehicleRatio: 8 / 12,
     vehicleBlockingEdgeCount: 14,
     maximumVehicleBlockingOutDegree: 3,
     maximumVehicleBlockingInDegree: 3,
@@ -18,14 +19,14 @@ describe("assessParkingJamDifficulty", () => {
     legalOrderCount: "1000000",
     solutionOrderFreedom: 0.86,
     reachableStateCount: 128,
-    averageLegalVehicleRatio: 0.6,
-    minimumLegalVehicleRatio: 0.25,
-    forcedChoiceStateRatio: 0.1,
+    averageLegalVehicleRatio: 0.8,
+    minimumLegalVehicleRatio: 0.5,
+    forcedChoiceStateRatio: 0.01,
     averageLegalDirectionCount: 1.2,
     averageNewlyUnlockedVehicleCount: 0.5,
     maximumNewlyUnlockedVehicleCount: 3,
-    requiredPrecedenceCount: 12,
-    maximumRequiredPredecessorCount: 3,
+    requiredPrecedenceCount: 4,
+    maximumRequiredPredecessorCount: 2,
     vehicleCellOccupancyRatio: 0.5,
     longVehicleRatio: 0.25,
     roadOpeningCoverageRatio: 0.25,
@@ -37,29 +38,37 @@ describe("assessParkingJamDifficulty", () => {
       "easy",
       {
         ...baseFeatures,
+        vehicleCount: 8,
         dependencyDepth: 2,
-        initialLegalVehicleRatio: 0.8,
-        initialBlockedExitDirectionRatio: 0.45,
+        averageLegalVehicleRatio: 0.9,
+        requiredPrecedenceCount: 1,
+        maximumRequiredPredecessorCount: 1,
         solutionOrderFreedom: 0.93,
       },
     ],
     ["normal", baseFeatures],
     [
-      "hard",
+      "normal",
       {
         ...baseFeatures,
-        dependencyDepth: 5,
-        initialLegalVehicleRatio: 0.7,
-        solutionOrderFreedom: 0.84,
+        vehicleCount: 14,
+        averageLegalVehicleRatio: 0.9,
+        requiredPrecedenceCount: 1,
+        maximumRequiredPredecessorCount: 1,
+        solutionOrderFreedom: 0.94,
       },
     ],
     [
       "hard",
       {
         ...baseFeatures,
-        dependencyDepth: 3,
-        initialLegalVehicleRatio: 0.5,
-        solutionOrderFreedom: 0.74,
+        vehicleCount: 8,
+        dependencyDepth: 4,
+        averageLegalVehicleRatio: 0.65,
+        minimumLegalVehicleRatio: 0.25,
+        requiredPrecedenceCount: 9,
+        maximumRequiredPredecessorCount: 4,
+        solutionOrderFreedom: 0.72,
       },
     ],
   ] as const;
@@ -82,13 +91,22 @@ describe("assessParkingJamDifficulty", () => {
     },
   );
 
-  describe("解順自由度を厳密計測できない問題の場合", () => {
+  describe("解順空間を厳密計測できない問題の場合", () => {
     const analysis: ParkingJamDifficultyAnalysis = {
       status: "unsupported",
       features: {
         ...baseFeatures,
         legalOrderCount: null,
         solutionOrderFreedom: null,
+        reachableStateCount: null,
+        averageLegalVehicleRatio: null,
+        minimumLegalVehicleRatio: null,
+        forcedChoiceStateRatio: null,
+        averageLegalDirectionCount: null,
+        averageNewlyUnlockedVehicleCount: null,
+        maximumNewlyUnlockedVehicleCount: null,
+        requiredPrecedenceCount: null,
+        maximumRequiredPredecessorCount: null,
       },
     };
 

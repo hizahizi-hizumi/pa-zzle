@@ -9,16 +9,21 @@ export const parkingJamDifficulties = [
 export type ParkingJamDifficulty =
   (typeof parkingJamDifficulties)[number]["id"];
 
-export const PARKING_JAM_DIFFICULTY_MODEL_VERSION = "dependency-v1";
+export const PARKING_JAM_DIFFICULTY_MODEL_VERSION = "structural-load-v2";
 
 export const PARKING_JAM_DIFFICULTY_THRESHOLDS = {
+  easyMaximumVehicleCount: 10,
   easyMaximumDependencyDepth: 2,
-  easyMinimumInitialLegalVehicleRatio: 0.75,
-  easyMinimumSolutionOrderFreedom: 0.9,
-  hardDeepMinimumDependencyDepth: 4,
-  hardDeepMaximumSolutionOrderFreedom: 0.86,
-  hardConstrainedMaximumInitialLegalVehicleRatio: 0.6,
-  hardConstrainedMaximumSolutionOrderFreedom: 0.78,
+  easyMinimumAverageLegalVehicleRatio: 0.82,
+  easyMaximumRequiredPrecedenceCount: 2,
+  easyMaximumRequiredPredecessorCount: 1,
+  easyMinimumSolutionOrderFreedom: 0.87,
+  hardMinimumDependencyDepth: 3,
+  hardMaximumAverageLegalVehicleRatio: 0.75,
+  hardMaximumMinimumLegalVehicleRatio: 1 / 3,
+  hardMinimumRequiredPrecedenceCount: 8,
+  hardMinimumRequiredPredecessorCount: 3,
+  hardMaximumSolutionOrderFreedom: 0.82,
 } as const;
 
 export type ParkingJamDifficultyAssessment =
@@ -54,6 +59,10 @@ export function assessParkingJamDifficulty(
   const { features } = analysis;
   if (
     analysis.status === "unsupported" ||
+    features.averageLegalVehicleRatio === null ||
+    features.minimumLegalVehicleRatio === null ||
+    features.requiredPrecedenceCount === null ||
+    features.maximumRequiredPredecessorCount === null ||
     features.solutionOrderFreedom === null
   ) {
     return {
@@ -63,10 +72,16 @@ export function assessParkingJamDifficulty(
   }
 
   const isEasy =
+    features.vehicleCount <=
+      PARKING_JAM_DIFFICULTY_THRESHOLDS.easyMaximumVehicleCount &&
     features.dependencyDepth <=
       PARKING_JAM_DIFFICULTY_THRESHOLDS.easyMaximumDependencyDepth &&
-    features.initialLegalVehicleRatio >=
-      PARKING_JAM_DIFFICULTY_THRESHOLDS.easyMinimumInitialLegalVehicleRatio &&
+    features.averageLegalVehicleRatio >=
+      PARKING_JAM_DIFFICULTY_THRESHOLDS.easyMinimumAverageLegalVehicleRatio &&
+    features.requiredPrecedenceCount <=
+      PARKING_JAM_DIFFICULTY_THRESHOLDS.easyMaximumRequiredPrecedenceCount &&
+    features.maximumRequiredPredecessorCount <=
+      PARKING_JAM_DIFFICULTY_THRESHOLDS.easyMaximumRequiredPredecessorCount &&
     features.solutionOrderFreedom >=
       PARKING_JAM_DIFFICULTY_THRESHOLDS.easyMinimumSolutionOrderFreedom;
   if (isEasy) {
@@ -77,17 +92,20 @@ export function assessParkingJamDifficulty(
     };
   }
 
-  const hasDeepDependencies =
+  const isHard =
     features.dependencyDepth >=
-      PARKING_JAM_DIFFICULTY_THRESHOLDS.hardDeepMinimumDependencyDepth &&
+      PARKING_JAM_DIFFICULTY_THRESHOLDS.hardMinimumDependencyDepth &&
+    features.averageLegalVehicleRatio <=
+      PARKING_JAM_DIFFICULTY_THRESHOLDS.hardMaximumAverageLegalVehicleRatio &&
+    features.minimumLegalVehicleRatio <=
+      PARKING_JAM_DIFFICULTY_THRESHOLDS.hardMaximumMinimumLegalVehicleRatio &&
+    features.requiredPrecedenceCount >=
+      PARKING_JAM_DIFFICULTY_THRESHOLDS.hardMinimumRequiredPrecedenceCount &&
+    features.maximumRequiredPredecessorCount >=
+      PARKING_JAM_DIFFICULTY_THRESHOLDS.hardMinimumRequiredPredecessorCount &&
     features.solutionOrderFreedom <=
-      PARKING_JAM_DIFFICULTY_THRESHOLDS.hardDeepMaximumSolutionOrderFreedom;
-  const hasConstrainedOrder =
-    features.initialLegalVehicleRatio <=
-      PARKING_JAM_DIFFICULTY_THRESHOLDS.hardConstrainedMaximumInitialLegalVehicleRatio &&
-    features.solutionOrderFreedom <=
-      PARKING_JAM_DIFFICULTY_THRESHOLDS.hardConstrainedMaximumSolutionOrderFreedom;
-  if (hasDeepDependencies || hasConstrainedOrder) {
+      PARKING_JAM_DIFFICULTY_THRESHOLDS.hardMaximumSolutionOrderFreedom;
+  if (isHard) {
     return {
       status: "rated",
       modelVersion: PARKING_JAM_DIFFICULTY_MODEL_VERSION,

@@ -25,6 +25,7 @@ describe("analyzeParkingJamDifficulty", () => {
       const analysis = analyzeParkingJamDifficulty(board, solvability);
 
       expect(analysis.status).toBe("supported");
+      expect(analysis.features.vehicleCount).toBe(3);
       expect(analysis.features.dependencyDepth).toBe(1);
       expect(analysis.features.initialLegalVehicleCount).toBe(3);
       expect(analysis.features.legalOrderCount).toBe("6");
