@@ -6,21 +6,29 @@ cases:
     name: test内で入力データを作る
     fixture: fixtures/arrange-outside-test/violation.ts
     expected: violation
+    subject:
+      source: const values = [1, 2, 3];
 
   - rule: arrange-outside-test
     name: 入力データをdescribe側で用意する
     fixture: fixtures/arrange-outside-test/compliant.ts
     expected: compliant
+    subject:
+      source: const result = sum(values);
 
   - rule: before-each-arrange-only
     name: beforeEachで検証対象の操作まで実行する
     fixture: fixtures/before-each-arrange-only/violation.ts
     expected: violation
+    subject:
+      source: result = submitForm(form);
 
   - rule: before-each-arrange-only
     name: beforeEachでは初期状態だけを作る
     fixture: fixtures/before-each-arrange-only/compliant.ts
     expected: compliant
+    subject:
+      source: form = createForm();
 
   - rule: dom-observable-contract
     name: 内部data属性だけを検証する
