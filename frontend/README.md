@@ -44,4 +44,36 @@ bun run check
 bun run typecheck
 bun run test
 bun run build
+bun run semantic-lint:typecheck
 ```
+
+### Semantic lint
+
+通常の静的解析では表現しづらいプロジェクト固有の意味的規約を、Jevを使って検査する。rule定義はリポジトリルートの `.semantic-lint/rules/` を正本とし、CLIやprovider実装から分離する。
+
+TypeSafe APIを利用するため、実行前にAPIキーを設定する。
+
+```sh
+export TYPESAFE_API_KEY="..."
+```
+
+frontend全体を検査する。
+
+```sh
+bun run semantic-lint
+```
+
+対象を絞る場合はパスを指定する。
+
+```sh
+bun run semantic-lint -- src/games/nanpure
+bun run semantic-lint -- src/games/nanpure/example.test.ts
+```
+
+問題なし・対象外を含む全判定と確率を確認する場合は `--verbose` を指定する。
+
+```sh
+bun run semantic-lint -- --verbose
+```
+
+初期ruleは `vitest.md` のうち意味判定が必要な規約だけを対象とし、すべて `warning` として運用する。精度と閾値を確認した後に必要なruleだけ `error` へ昇格する。
