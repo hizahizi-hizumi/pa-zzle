@@ -9,6 +9,7 @@ type ParkingJamPlayHeaderProps = {
   onStartNewProblem: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
+  onOpenDiagnostics?: () => void;
 };
 
 export function ParkingJamPlayHeader({
@@ -19,6 +20,7 @@ export function ParkingJamPlayHeader({
   onStartNewProblem,
   onChangeDifficulty,
   onBackToHome,
+  onOpenDiagnostics,
 }: ParkingJamPlayHeaderProps) {
   return (
     <PlayHeader
@@ -32,6 +34,7 @@ export function ParkingJamPlayHeader({
       onStartNewProblem={onStartNewProblem}
       onChangeDifficulty={onChangeDifficulty}
       onBackToHome={onBackToHome}
+      onOpenDiagnostics={onOpenDiagnostics}
     />
   );
 }
