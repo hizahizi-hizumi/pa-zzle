@@ -13,7 +13,9 @@ export type ReportOptions = {
 
 export type ReportSummary = {
   files: number;
-  decisions: number;
+  lintDecisions: number;
+  localizationDecisions: number;
+  providerDecisions: number;
   warnings: number;
   errors: number;
   insufficientContext: number;
@@ -48,22 +50,13 @@ export function printReport(
 
     for (const evaluation of visible) {
       if (isFinding(evaluation)) {
-        const diagnosticCount = Math.max(1, evaluation.locations.length);
-
         if (evaluation.rule.severity === "error") {
-          errors += diagnosticCount;
+          errors += 1;
         } else {
-          warnings += diagnosticCount;
+          warnings += 1;
         }
 
-        if (evaluation.locations.length > 0) {
-          for (const location of evaluation.locations) {
-            printLocalizedFinding(result.path, evaluation, location);
-          }
-        } else {
-          printFileFinding(result.path, evaluation);
-        }
-
+        printFinding(result.path, evaluation);
         continue;
       }
 
@@ -75,16 +68,23 @@ export function printReport(
     }
   }
 
-  const decisions = results.reduce(
+  const lintDecisions = results.reduce(
     (sum, result) => sum + result.evaluations.length,
     0,
   );
+  const providerDecisions = results.reduce(
+    (sum, result) => sum + result.providerDecisionCount,
+    0,
+  );
+  const localizationDecisions = providerDecisions - lintDecisions;
   const latencies = results.map((result) => result.durationMs);
   const elapsedSeconds = options.totalDurationMs / 1_000;
 
   const summary: ReportSummary = {
     files: results.length,
-    decisions,
+    lintDecisions,
+    localizationDecisions,
+    providerDecisions,
     warnings,
     errors,
     insufficientContext,
@@ -98,50 +98,48 @@ export function printReport(
     p95LatencyMs: percentile(latencies, 95),
     maxLatencyMs: Math.max(...latencies),
     filesPerSecond: elapsedSeconds > 0 ? results.length / elapsedSeconds : 0,
-    decisionsPerSecond: elapsedSeconds > 0 ? decisions / elapsedSeconds : 0,
+    decisionsPerSecond:
+      elapsedSeconds > 0 ? providerDecisions / elapsedSeconds : 0,
   };
 
   printSummary(summary, options.concurrency);
   return summary;
 }
 
-function printLocalizedFinding(
-  path: string,
-  evaluation: RuleEvaluation,
-  location: DiagnosticLocation,
-): void {
-  const { rule } = evaluation;
-  const { answer, range, symbol } = location;
-
-  console.log(path + ":" + range.startLine + "-" + range.endLine);
-  console.log(`  ${severityLabel(rule.severity)} ${rule.title}`);
-  console.log(`    symbol: ${symbol}`);
-  console.log(`    rule: ${rule.id}`);
-  console.log(
-    `    違反確率: ${percentage(answer.probabilities.violation)} ` +
-      `(閾値 ${percentage(rule.violationThreshold)})`,
-  );
-  console.log(`    確信度: ${percentage(answer.confidence)}`);
-  console.log(`    規約: ${rule.source.path} / ${rule.source.section}`);
-  console.log("");
-}
-
-function printFileFinding(
-  path: string,
-  evaluation: RuleEvaluation,
-): void {
-  const { rule, answer } = evaluation;
+function printFinding(path: string, evaluation: RuleEvaluation): void {
+  const { rule, answer, locations } = evaluation;
 
   console.log(path);
   console.log(`  ${severityLabel(rule.severity)} ${rule.title}`);
   console.log(`    rule: ${rule.id}`);
   console.log(
-    `    違反確率: ${percentage(answer.probabilities.violation)} ` +
+    `    ファイル違反確率: ${percentage(answer.probabilities.violation)} ` +
       `(閾値 ${percentage(rule.violationThreshold)})`,
   );
-  console.log(`    確信度: ${percentage(answer.confidence)}`);
+  console.log(`    ファイル確信度: ${percentage(answer.confidence)}`);
   console.log(`    規約: ${rule.source.path} / ${rule.source.section}`);
+
+  if (locations.length > 0) {
+    console.log("    箇所:");
+
+    for (const location of locations) {
+      printLocation(location);
+    }
+  }
+
   console.log("");
+}
+
+function printLocation(location: DiagnosticLocation): void {
+  const { answer, range, symbol } = location;
+
+  console.log(
+    `      ${range.startLine}-${range.endLine} ${symbol}`,
+  );
+  console.log(
+    `        位置違反確率: ${percentage(answer.probabilities.violation)} / ` +
+      `確信度: ${percentage(answer.confidence)}`,
+  );
 }
 
 function printEvaluation(path: string, evaluation: RuleEvaluation): void {
@@ -164,7 +162,8 @@ function printEvaluation(path: string, evaluation: RuleEvaluation): void {
 function printSummary(summary: ReportSummary, concurrency: number): void {
   console.log("集計");
   console.log(`  ファイル: ${summary.files}`);
-  console.log(`  判定数: ${summary.decisions}`);
+  console.log(`  lint判定数: ${summary.lintDecisions}`);
+  console.log(`  位置判定数: ${summary.localizationDecisions}`);
   console.log(`  警告: ${summary.warnings}`);
   console.log(`  エラー: ${summary.errors}`);
   console.log(`  文脈不足: ${summary.insufficientContext}`);
@@ -173,6 +172,7 @@ function printSummary(summary: ReportSummary, concurrency: number): void {
   console.log("\nパフォーマンス");
   console.log(`  並列数: ${concurrency}`);
   console.log(`  評価リクエスト: ${summary.evaluationRequests}`);
+  console.log(`  プロバイダ判定数: ${summary.providerDecisions}`);
   console.log(`  総実行時間: ${duration(summary.totalDurationMs)}`);
   console.log(`  レイテンシ p50: ${duration(summary.p50LatencyMs)}`);
   console.log(`  レイテンシ p95: ${duration(summary.p95LatencyMs)}`);
