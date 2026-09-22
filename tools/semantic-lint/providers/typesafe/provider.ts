@@ -97,6 +97,8 @@ export function buildRequest(
         `The only classification target is state.subjects.${subject.key}.`,
         "Evaluate the criteria against that target itself.",
         "Use state.subjects.*.context as deterministic structural evidence when available.",
+        "When context.relation.sharedStructuralSignature is present, the parser has grouped the relation members because they share that structural signature.",
+        "context.relation.memberLiteralValues lists each member's literal values in source order; aligned differences are deterministic evidence about how the members vary.",
         "Use state.file only as surrounding evidence to understand the target, including its containment and semantic role.",
         "If the criteria describe a container, use its descendants or siblings as evidence about whether that container itself satisfies the criteria.",
         "A violation elsewhere in the file does not make the current target a violation.",

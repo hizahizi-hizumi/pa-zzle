@@ -44,11 +44,15 @@ describe("TypeSafe provider", () => {
         },
       },
     });
-    expect(
-      (body as { questions: { q0: { instructions: string } } }).questions.q0
-        .instructions,
-    ).toContain(
+    const instructions = (
+      body as { questions: { q0: { instructions: string } } }
+    ).questions.q0.instructions;
+
+    expect(instructions).toContain(
       "A violation elsewhere in the file does not make the current target a violation.",
+    );
+    expect(instructions).toContain(
+      "memberLiteralValues lists each member's literal values in source order",
     );
   });
 
