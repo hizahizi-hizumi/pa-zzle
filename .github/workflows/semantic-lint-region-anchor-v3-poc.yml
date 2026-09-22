@@ -1,0 +1,34 @@
+name: Semantic Lint Region Anchor PoC v3
+
+on:
+  push:
+    branches:
+      - experiment/semantic-lint-region-anchor-v3-20260922
+
+permissions:
+  contents: read
+
+jobs:
+  region-anchor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+
+      - name: Install semantic lint dependencies
+        working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+
+      - name: Plan Region Anchor PoC
+        run: bun run --cwd tools/semantic-lint poc -- region-anchor --plan-only
+
+      - name: Run Region Anchor PoC
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- region-anchor --repeat 3
