@@ -1,0 +1,64 @@
+name: Semantic Lint Target Family Vitest PoC
+
+on:
+  push:
+    branches:
+      - experiment/semantic-lint-target-family-vitest-20260923
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+
+      - name: Install semantic lint dependencies
+        working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+
+      - name: Show target family plan
+        run: >-
+          bun run --cwd tools/semantic-lint poc -- target-family
+          --benchmark .semantic-lint/poc/target-family/benchmark.yaml
+          --plan-only
+
+      - name: Run golden benchmark 10 times
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: >-
+          bun run --cwd tools/semantic-lint poc -- target-family
+          --benchmark .semantic-lint/poc/target-family/benchmark.yaml
+          --repeat 10
+
+  repository:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+
+      - name: Install semantic lint dependencies
+        working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+
+      - name: Run repository validation
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: >-
+          bun run --cwd tools/semantic-lint poc -- target-family
+          --benchmark .semantic-lint/poc/target-family/benchmark.yaml
+          --repository
