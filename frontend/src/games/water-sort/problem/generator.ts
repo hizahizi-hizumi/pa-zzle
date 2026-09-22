@@ -122,10 +122,7 @@ function createStandardCandidate(
     ),
   );
 
-  return [
-    ...bottles,
-    ...Array.from({ length: emptyBottleCount }, () => []),
-  ];
+  return [...bottles, ...Array.from({ length: emptyBottleCount }, () => [])];
 }
 
 function hasInitiallyCompletedBottle(state: WaterSortState): boolean {

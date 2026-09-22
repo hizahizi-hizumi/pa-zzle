@@ -30,6 +30,20 @@ export const waterSortDifficulties = [
 
 export type WaterSortDifficulty = (typeof waterSortDifficulties)[number]["id"];
 
+const legacyWaterSortDifficulties = [
+  { id: "easy", label: "かんたん" },
+  { id: "normal", label: "ふつう" },
+  { id: "hard", label: "むずかしい" },
+] as const;
+
+/** 5段階へ移行する前の記録だけが持つ難易度。現在の1〜5へ読み替えない。 */
+export type LegacyWaterSortDifficulty =
+  (typeof legacyWaterSortDifficulties)[number]["id"];
+
+export type WaterSortRecordedDifficulty =
+  | WaterSortDifficulty
+  | LegacyWaterSortDifficulty;
+
 export type WaterSortDifficultyAssessment =
   | {
       status: "classified";
@@ -53,12 +67,23 @@ export function parseWaterSortDifficulty(
     ?.id;
 }
 
+export function parseWaterSortRecordedDifficulty(
+  value: string | undefined,
+): WaterSortRecordedDifficulty | undefined {
+  return (
+    parseWaterSortDifficulty(value) ??
+    legacyWaterSortDifficulties.find((difficulty) => difficulty.id === value)
+      ?.id
+  );
+}
+
 export function getWaterSortDifficultyLabel(
-  difficulty: WaterSortDifficulty,
+  difficulty: WaterSortRecordedDifficulty,
 ): string {
   return (
-    waterSortDifficulties.find((option) => option.id === difficulty)?.label ??
-    difficulty
+    [...waterSortDifficulties, ...legacyWaterSortDifficulties].find(
+      (option) => option.id === difficulty,
+    )?.label ?? difficulty
   );
 }
 

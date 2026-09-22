@@ -74,5 +74,7 @@ export function generateWaterSortProblemForDifficulty(
     }
   }
 
-  throw new Error(`Failed to generate a level ${difficulty} water sort problem`);
+  throw new Error(
+    `Failed to generate a level ${difficulty} water sort problem`,
+  );
 }

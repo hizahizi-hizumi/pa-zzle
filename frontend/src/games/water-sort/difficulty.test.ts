@@ -20,10 +20,7 @@ function createAnalysis({
     plausibleChoiceAnalysis: {
       sampledDecisionStateCount,
       singleChoiceDecisionStateCount: 2,
-      ambiguousDecisionStateCount: Math.max(
-        0,
-        sampledDecisionStateCount - 2,
-      ),
+      ambiguousDecisionStateCount: Math.max(0, sampledDecisionStateCount - 2),
       evaluatedChoiceCount,
       unresolvedChoiceCount,
       optimalChoiceCount: evaluatedChoiceCount,

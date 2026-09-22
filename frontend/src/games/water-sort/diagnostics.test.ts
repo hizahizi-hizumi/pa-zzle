@@ -12,7 +12,7 @@ describe("WaterSortDiagnosticSnapshot", () => {
     colorCount: 4,
   });
   const snapshot = createWaterSortDiagnosticSnapshot({
-    difficulty: "normal",
+    difficulty: "3",
     problemIdentity: {
       generatorVersion: problem.identity.generatorVersion,
       seed: problem.identity.seed,

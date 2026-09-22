@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { isNanpurePlayRecord } from "@/games/nanpure/play-record";
+import { parseWaterSortDifficulty } from "@/games/water-sort/difficulty";
 import { isWaterSortPlayRecord } from "@/games/water-sort/play-record";
 import { readPlayRecords } from "@/records/storage";
 import { Link, useParams } from "@/router";
@@ -30,10 +31,14 @@ export function RecordedProblemReplayView() {
     );
   }
 
-  if (isWaterSortPlayRecord(record)) {
+  // 5段階へ移行する前の記録は、旧難易度を1〜5へ読み替えずに再プレイ対象外とする。
+  const waterSortDifficulty = isWaterSortPlayRecord(record)
+    ? parseWaterSortDifficulty(record.payload.difficulty)
+    : undefined;
+  if (isWaterSortPlayRecord(record) && waterSortDifficulty) {
     return (
       <PlayableWaterSort
-        difficulty={record.payload.difficulty}
+        difficulty={waterSortDifficulty}
         initialProblemIdentity={record.payload.problemIdentity}
       />
     );
