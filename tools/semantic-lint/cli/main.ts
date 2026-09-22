@@ -6,6 +6,7 @@ import { runCheckCommand } from "./check.ts";
 import { runDoctorCommand } from "./doctor.ts";
 import { runEvalCommand } from "./eval.ts";
 import { runInspectCommand } from "./inspect.ts";
+import { runPocCommand } from "./poc.ts";
 import { runRulesCommand } from "./rules.ts";
 
 const PROJECT_ENV_LOADED = "SEMANTIC_LINT_PROJECT_ENV_LOADED";
@@ -23,6 +24,9 @@ async function main(): Promise<void> {
         return;
       case "inspect":
         process.exitCode = await runInspectCommand(args);
+        return;
+      case "poc":
+        process.exitCode = await runPocCommand(args);
         return;
       case "rules":
         process.exitCode = await runRulesCommand(args);
@@ -91,6 +95,7 @@ function printHelp(): void {
   semantic-lint check [paths...] [options]
   semantic-lint eval [rule-id...] [--repeat N]
   semantic-lint inspect <rule-id> <file> [--plan-only]
+  semantic-lint poc selector-first [--plan-only] [--repeat N]
   semantic-lint rules [ruleset-or-rule]
   semantic-lint doctor
 
