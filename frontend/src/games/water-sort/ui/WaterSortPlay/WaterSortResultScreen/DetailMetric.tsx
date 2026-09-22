@@ -6,8 +6,8 @@ type DetailMetricProps = {
 export function DetailMetric({ label, value }: DetailMetricProps) {
   return (
     <div>
-      <dt className="text-xs">{label}</dt>
-      <dd className="mt-0.5 font-medium text-foreground">{value}</dd>
+      <dt className="text-meta">{label}</dt>
+      <dd className="mt-1 font-medium text-foreground">{value}</dd>
     </div>
   );
 }

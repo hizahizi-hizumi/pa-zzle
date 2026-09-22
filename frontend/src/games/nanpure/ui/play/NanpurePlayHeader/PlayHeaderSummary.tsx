@@ -15,10 +15,8 @@ export function PlayHeaderSummary({
 }: PlayHeaderSummaryProps) {
   return (
     <div className="min-w-0 text-center">
-      <h1 className="truncate text-sm font-semibold tracking-tight">
-        ナンプレ
-      </h1>
-      <div className="mt-1 flex items-center justify-center gap-2 text-[10px] leading-none text-muted-foreground">
+      <h1 className="truncate text-play-context">ナンプレ</h1>
+      <div className="mt-1 flex items-center justify-center gap-2 text-play-meta text-muted-foreground">
         <PlayMetric label="ミス" value={String(mistakeCount)} />
         <MetricSeparator />
         <PlayMetric label="時間" value={formatElapsedTime(elapsedMs)} />

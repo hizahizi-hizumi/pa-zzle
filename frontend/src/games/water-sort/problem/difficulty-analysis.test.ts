@@ -1,6 +1,6 @@
-import type { WaterSortState } from "../puzzle/state";
-import { analyzeWaterSortDifficulty } from "./difficulty-analysis";
-import { solveWaterSort } from "./generation/solver";
+import { analyzeWaterSortDifficulty } from "@/games/water-sort/problem/difficulty-analysis";
+import { solveWaterSort } from "@/games/water-sort/problem/generation/solver";
+import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 
 const guidedState: WaterSortState = [[0, 1, 0, 1], [1, 0, 1, 0], [], []];
 

@@ -1,5 +1,8 @@
-import { assessNanpureDifficulty, parseNanpureDifficulty } from "./difficulty";
-import type { NanpureDifficultyAnalysis } from "./problem/difficulty-analysis";
+import {
+  assessNanpureDifficulty,
+  parseNanpureDifficulty,
+} from "@/games/nanpure/difficulty";
+import type { NanpureDifficultyAnalysis } from "@/games/nanpure/problem/difficulty-analysis";
 
 function createDifficultyAnalysis(
   meanAvailablePlacementCount: number,

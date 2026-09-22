@@ -1,14 +1,14 @@
-import { applyWaterSortMove } from "../puzzle/rules";
+import { solveWaterSort } from "@/games/water-sort/problem/generation/solver";
+import { applyWaterSortMove } from "@/games/water-sort/puzzle/rules";
 import {
   createWaterSortStateKey,
   type WaterSortMove,
   type WaterSortState,
-} from "../puzzle/state";
+} from "@/games/water-sort/puzzle/state";
 import {
   listWaterSortDistinctTransitions,
   type WaterSortTransition,
-} from "../puzzle/transitions";
-import { solveWaterSort } from "./generation/solver";
+} from "@/games/water-sort/puzzle/transitions";
 
 export type WaterSortPlausibleChoiceAnalysis = {
   sampledDecisionStateCount: number;

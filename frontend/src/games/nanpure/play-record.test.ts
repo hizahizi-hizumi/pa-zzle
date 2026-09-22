@@ -2,7 +2,7 @@ import {
   createNanpurePlayRecord,
   getNanpurePlayRecordScore,
   nanpurePlayRecordDefinition,
-} from "./play-record";
+} from "@/games/nanpure/play-record";
 
 function createRecord() {
   return createNanpurePlayRecord({

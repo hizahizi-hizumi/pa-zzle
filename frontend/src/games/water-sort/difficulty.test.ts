@@ -1,8 +1,8 @@
 import {
   assessWaterSortDifficulty,
   parseWaterSortDifficulty,
-} from "./difficulty";
-import type { WaterSortDifficultyAnalysis } from "./problem/difficulty-analysis";
+} from "@/games/water-sort/difficulty";
+import type { WaterSortDifficultyAnalysis } from "@/games/water-sort/problem/difficulty-analysis";
 
 function createAnalysis({
   sampledDecisionStateCount = 5,

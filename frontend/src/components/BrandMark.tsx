@@ -24,6 +24,8 @@ export function BrandMark({
   tone = "default",
 }: BrandMarkProps) {
   return (
-    <span className={brandMarkClassNames[size][tone]}>パズル pa-zzle</span>
+    <span className={`font-brand ${brandMarkClassNames[size][tone]}`}>
+      パズル pa-zzle
+    </span>
   );
 }

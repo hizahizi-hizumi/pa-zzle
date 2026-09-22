@@ -2,7 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 
 import type { WaterSortDiagnosticSnapshot } from "@/games/water-sort/diagnostics";
 
-import { WaterSortDiagnostics } from "./WaterSortDiagnostics";
+import { WaterSortDiagnostics } from "@/games/water-sort/ui/WaterSortDiagnostics";
 
 const snapshot: WaterSortDiagnosticSnapshot = {
   formatVersion: 1,

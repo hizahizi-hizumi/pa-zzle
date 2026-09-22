@@ -84,7 +84,7 @@ export function NanpureCell({
       aria-invalid={conflict || mistake || undefined}
       disabled={disabled}
       className={cn(
-        "relative flex aspect-square min-h-0 items-center justify-center text-[clamp(1rem,5vw,2rem)] outline-none transition-colors focus-visible:bg-violet-200 dark:focus-visible:bg-violet-900/55",
+        "relative flex aspect-square min-h-0 items-center justify-center font-sans text-[clamp(1rem,5vw,2rem)] outline-none transition-colors focus-visible:bg-violet-200 dark:focus-visible:bg-violet-900/55",
         row !== NANPURE_SIZE - 1 && "border-b border-b-border",
         column !== NANPURE_SIZE - 1 && "border-r border-r-border",
         row % 3 === 2 &&

@@ -16,10 +16,10 @@ export function ScoreCriteria({ result }: ScoreCriteriaProps) {
   const speedZeroScoreMs = result.speedFullScoreMs * 2;
 
   return (
-    <dl className="mt-3 grid gap-3 text-xs">
+    <dl className="mt-3 grid gap-3 text-meta">
       <div>
         <dt className="font-semibold text-foreground">効率</dt>
-        <dd className="mt-0.5">
+        <dd className="mt-1">
           最短{result.optimalMoveCount}手で
           {WATER_SORT_SCORE_MAXIMUMS.efficiency}点。
           {efficiencyZeroMoveCount}手以上で0点、その間はクリア手数に応じて減点。
@@ -27,7 +27,7 @@ export function ScoreCriteria({ result }: ScoreCriteriaProps) {
       </div>
       <div>
         <dt className="font-semibold text-foreground">速さ</dt>
-        <dd className="mt-0.5">
+        <dd className="mt-1">
           基準時間{formatScoreTime(result.speedFullScoreMs)}以内で
           {WATER_SORT_SCORE_MAXIMUMS.speed}点。
           {formatScoreTime(speedZeroScoreMs)}
@@ -38,7 +38,7 @@ export function ScoreCriteria({ result }: ScoreCriteriaProps) {
       </div>
       <div>
         <dt className="font-semibold text-foreground">正確性</dt>
-        <dd className="mt-0.5">
+        <dd className="mt-1">
           手戻りなしで{WATER_SORT_SCORE_MAXIMUMS.accuracy}点。手戻り
           {result.optimalMoveCount}手以上で0点、その間は手戻り数に応じて減点。
         </dd>

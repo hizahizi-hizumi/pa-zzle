@@ -5,16 +5,16 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getPersonalBests } from "@/records/personal-best";
+import type { PlayRecord } from "@/records/play-record";
 import { EmptyRecords } from "@/records/ui/PlayRecordsScreen/EmptyRecords";
 import { PlayRecordsHistory } from "@/records/ui/PlayRecordsScreen/PlayRecordsHistory";
 import { PlayRecordsTrend } from "@/records/ui/PlayRecordsScreen/PlayRecordsTrend";
-import { getPersonalBests } from "../personal-best";
-import type { PlayRecord } from "../play-record";
 import {
   getPlayRecordMetricDisplay,
   type PlayRecordDisplayCatalog,
   type PlayRecordDisplayDefinition,
-} from "./play-record-display";
+} from "@/records/ui/play-record-display";
 
 type PlayRecordsScreenProps = {
   records: readonly PlayRecord[];
@@ -121,8 +121,8 @@ export function PlayRecordsScreen({
 
   return (
     <>
-      <header className="mt-4 flex min-w-0 items-center gap-1.5 border-b pb-3">
-        <h1 className="shrink-0 text-xl font-bold tracking-tight">記録</h1>
+      <header className="mt-4 flex min-w-0 items-center gap-2 border-b-(length:--border-width-normal) pb-3">
+        <h1 className="shrink-0 text-screen-title">記録</h1>
         <NativeSelect
           size="sm"
           aria-label="パズル"
@@ -160,16 +160,16 @@ export function PlayRecordsScreen({
       ) : (
         <>
           <section
-            className="flex flex-wrap items-baseline gap-x-5 gap-y-2 border-b py-3"
+            className="flex flex-wrap items-baseline gap-x-6 gap-y-2 border-b-(length:--border-width-normal) py-3"
             aria-labelledby="personal-best-heading"
           >
             <h2
               id="personal-best-heading"
-              className="text-xs font-medium text-muted-foreground"
+              className="text-meta font-medium text-muted-foreground"
             >
               自己ベスト
             </h2>
-            <dl className="flex flex-wrap items-baseline gap-x-5 gap-y-2">
+            <dl className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
               {personalBests.flatMap((best) => {
                 const metricDisplay = getPlayRecordMetricDisplay(
                   display,
@@ -182,12 +182,12 @@ export function PlayRecordsScreen({
                 return [
                   <div
                     key={best.metricId}
-                    className="flex items-baseline gap-1.5"
+                    className="flex items-baseline gap-2"
                   >
-                    <dt className="text-xs text-muted-foreground">
+                    <dt className="text-meta text-muted-foreground">
                       {metricDisplay.label}
                     </dt>
-                    <dd className="font-mono text-base font-semibold tabular-nums">
+                    <dd className="font-mono text-body font-semibold tabular-nums">
                       {metricDisplay.formatValue(best.value)}
                     </dd>
                   </div>,
@@ -203,7 +203,7 @@ export function PlayRecordsScreen({
                   <TabsTrigger value="history">履歴</TabsTrigger>
                   <TabsTrigger value="trend">推移</TabsTrigger>
                 </TabsList>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-meta text-muted-foreground">
                   {selectedRecords.length}件
                 </p>
               </div>

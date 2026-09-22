@@ -1,5 +1,5 @@
-import { assessWaterSortDifficulty } from "./difficulty";
-import { generateWaterSortProblemForDifficulty } from "./problem-selection";
+import { assessWaterSortDifficulty } from "@/games/water-sort/difficulty";
+import { generateWaterSortProblemForDifficulty } from "@/games/water-sort/problem-selection";
 
 describe("generateWaterSortProblemForDifficulty", () => {
   const cases = [

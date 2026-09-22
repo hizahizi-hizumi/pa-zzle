@@ -4,20 +4,10 @@ import {
 } from "@/games/water-sort/difficulty";
 import { waterSortPlayRecordDefinition } from "@/games/water-sort/play-record";
 
-import { formatWaterSortElapsedTime } from "./format-elapsed-time";
-
-function formatMoveDelta(moveDelta: number): string {
-  return moveDelta === 0 ? "±0" : `+${moveDelta}`;
-}
-
-function formatTimeDelta(timeDeltaMs: number): string {
-  if (timeDeltaMs === 0) {
-    return "±00:00";
-  }
-
-  const sign = timeDeltaMs > 0 ? "+" : "-";
-  return `${sign}${formatWaterSortElapsedTime(Math.abs(timeDeltaMs))}`;
-}
+import {
+  formatWaterSortMoveDelta,
+  formatWaterSortTimeDelta,
+} from "@/games/water-sort/ui/format-performance-delta";
 
 export const waterSortPlayRecordDisplay = {
   definition: waterSortPlayRecordDefinition,
@@ -41,7 +31,7 @@ export const waterSortPlayRecordDisplay = {
       id: "time-delta-ms",
       label: "基準時間との差",
       historyLabel: "時間差",
-      formatValue: formatTimeDelta,
+      formatValue: formatWaterSortTimeDelta,
       referenceValue: 0,
       axis: { kind: "duration-ms" as const },
     },
@@ -49,7 +39,7 @@ export const waterSortPlayRecordDisplay = {
       id: "move-delta",
       label: "最短手数との差",
       historyLabel: "手数差",
-      formatValue: formatMoveDelta,
+      formatValue: formatWaterSortMoveDelta,
       referenceValue: 0,
       axis: { kind: "integer" as const, minimum: 0 },
     },

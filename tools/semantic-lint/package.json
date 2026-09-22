@@ -1,0 +1,22 @@
+{
+  "name": "@pa-zzle/semantic-lint",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "bun cli/main.ts check",
+    "eval": "bun cli/main.ts eval",
+    "inspect": "bun cli/main.ts inspect",
+    "rules": "bun cli/main.ts rules",
+    "doctor": "bun cli/main.ts doctor",
+    "test": "bun test",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@typescript/typescript6": "6.0.2"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^7"
+  }
+}

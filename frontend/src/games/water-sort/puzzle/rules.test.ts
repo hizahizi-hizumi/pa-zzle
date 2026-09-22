@@ -2,13 +2,13 @@ import {
   applyWaterSortMove,
   getWaterSortPourAmount,
   listWaterSortLegalMoves,
-} from "./rules";
+} from "@/games/water-sort/puzzle/rules";
 import {
   createWaterSortStateKey,
   isStandardWaterSortInitialState,
   isWaterSortCleared,
   type WaterSortState,
-} from "./state";
+} from "@/games/water-sort/puzzle/state";
 
 describe("getWaterSortPourAmount", () => {
   test("最上段の連続した同色を空き容量までまとめて移せること", () => {

@@ -18,8 +18,8 @@ import {
   type WaterSortState,
 } from "@/games/water-sort/puzzle/state";
 import {
+  calculateWaterSortPerformanceComparison,
   calculateWaterSortPlayScore,
-  calculateWaterSortSpeedFullScoreMs,
   type WaterSortPlayScore,
 } from "@/games/water-sort/score";
 import {
@@ -56,6 +56,7 @@ export type WaterSortProgress = "playing" | "clearing" | "result";
 export type WaterSortResult = WaterSortSessionResult & {
   optimalMoveCount: number;
   moveDelta: number;
+  timeDeltaMs: number;
   backtrackMoveCount: number;
   speedFullScoreMs: number;
   colorCount: number;
@@ -281,7 +282,9 @@ export function useWaterSortPlay(
     }
 
     const colorCount = play.problemIdentity.conditions.colorCount;
-    const speedFullScoreMs = calculateWaterSortSpeedFullScoreMs({
+    const comparison = calculateWaterSortPerformanceComparison({
+      elapsedMs: sessionResult.elapsedMs,
+      completionMoveCount: sessionResult.completionMoveCount,
       optimalMoveCount,
       colorCount,
     });
@@ -289,10 +292,11 @@ export function useWaterSortPlay(
     return {
       ...sessionResult,
       optimalMoveCount,
-      moveDelta: sessionResult.completionMoveCount - optimalMoveCount,
+      moveDelta: comparison.moveDelta,
+      timeDeltaMs: comparison.timeDeltaMs,
       backtrackMoveCount:
         sessionResult.moveCount - sessionResult.completionMoveCount,
-      speedFullScoreMs,
+      speedFullScoreMs: comparison.speedFullScoreMs,
       colorCount,
       score: calculateWaterSortPlayScore({
         elapsedMs: sessionResult.elapsedMs,

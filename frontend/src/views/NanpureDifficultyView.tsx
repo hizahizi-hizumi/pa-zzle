@@ -8,11 +8,11 @@ export function NanpureDifficultyView() {
       <div className="space-y-2">
         <Link
           to="/"
-          className="text-sm text-muted-foreground hover:text-foreground"
+          className="text-supporting text-muted-foreground hover:text-foreground"
         >
           ← 戻る
         </Link>
-        <h1 className="text-3xl font-bold tracking-tight">ナンプレ</h1>
+        <h1 className="text-screen-title">ナンプレ</h1>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">

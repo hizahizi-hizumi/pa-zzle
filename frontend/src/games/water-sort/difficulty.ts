@@ -1,4 +1,4 @@
-import type { WaterSortDifficultyAnalysis } from "./problem/difficulty-analysis";
+import type { WaterSortDifficultyAnalysis } from "@/games/water-sort/problem/difficulty-analysis";
 
 export const waterSortDifficulties = [
   {

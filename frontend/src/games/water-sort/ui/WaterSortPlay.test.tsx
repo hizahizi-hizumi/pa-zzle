@@ -5,12 +5,10 @@ import {
   render,
   screen,
 } from "@testing-library/react";
-
+import type { WaterSortResult } from "@/games/water-sort/play/use-water-sort-play";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
+import { WaterSortPlay } from "@/games/water-sort/ui/WaterSortPlay";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
-
-import type { WaterSortResult } from "../play/use-water-sort-play";
-import { WaterSortPlay } from "./WaterSortPlay";
 
 afterEach(() => {
   cleanup();
@@ -54,6 +52,7 @@ function createResult(
     restartCount: 0,
     optimalMoveCount: 10,
     moveDelta: 2,
+    timeDeltaMs: 1_000,
     backtrackMoveCount: 2,
     speedFullScoreMs: 64_000,
     colorCount: 6,
@@ -337,13 +336,17 @@ describe("WaterSortPlay", () => {
     expect(screen.getByText("01:05")).toBeTruthy();
     expect(screen.getByText("手数")).toBeTruthy();
     expect(screen.getByText("12")).toBeTruthy();
+    expect(screen.getByText("最短 +2")).toBeTruthy();
+    expect(screen.getByText("基準 +00:01")).toBeTruthy();
+    expect(screen.queryByText("手戻り")).toBeNull();
     expect(screen.getByText("スコア")).toBeTruthy();
     expect(screen.getByText("87")).toBeTruthy();
     expect(screen.getByText("ナイスプレイ！")).toBeTruthy();
     expect(screen.getByText("パズル pa-zzle")).toBeTruthy();
     expect(screen.getByText("/ 100")).toBeTruthy();
     fireEvent.click(screen.getByText("スコアの内訳・採点基準"));
-    expect(screen.getByText(/最短\s*\+2/)).toBeTruthy();
+    expect(screen.getByText("手戻り")).toBeTruthy();
+    expect(screen.getByText("2手")).toBeTruthy();
     expect(screen.getByText("待った")).toBeTruthy();
     expect(screen.getAllByText("効率")).toHaveLength(2);
     expect(screen.getAllByText("速さ")).toHaveLength(2);
@@ -383,6 +386,7 @@ describe("WaterSortPlay", () => {
           undoCount: 0,
           optimalMoveCount: 10,
           moveDelta: 0,
+          timeDeltaMs: -22_000,
           backtrackMoveCount: 0,
           score: {
             total: 100,
@@ -416,6 +420,7 @@ describe("WaterSortPlay", () => {
       undoCount: 0,
       optimalMoveCount: 12,
       moveDelta: 0,
+      timeDeltaMs: -9_000,
       backtrackMoveCount: 0,
       speedFullScoreMs: 74_000,
       score: {
@@ -502,6 +507,7 @@ describe("WaterSortPlay", () => {
           undoCount: 0,
           optimalMoveCount: 10,
           moveDelta: 0,
+          timeDeltaMs: -9_000,
           backtrackMoveCount: 0,
           score: {
             total: 100,

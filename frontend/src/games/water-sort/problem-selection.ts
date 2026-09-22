@@ -3,12 +3,12 @@ import type { ProblemSeed } from "@/games/problem-seed";
 import {
   assessWaterSortDifficulty,
   type WaterSortDifficulty,
-} from "./difficulty";
+} from "@/games/water-sort/difficulty";
 import {
   generateWaterSortProblem,
   WaterSortGenerationExhaustedError,
-} from "./problem/generator";
-import type { WaterSortGeneratedProblem } from "./problem/problem";
+} from "@/games/water-sort/problem/generator";
+import type { WaterSortGeneratedProblem } from "@/games/water-sort/problem/problem";
 
 type WaterSortGenerationProfile = {
   colorCount: number;

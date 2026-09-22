@@ -1,9 +1,12 @@
 import {
+  calculateWaterSortMoveDelta,
+  calculateWaterSortPerformanceComparison,
   calculateWaterSortPlayScore,
   calculateWaterSortSpeedFullScoreMs,
+  calculateWaterSortTimeDeltaMs,
   getWaterSortGameResultLevel,
   WATER_SORT_SCORE_MAXIMUMS,
-} from "./score";
+} from "@/games/water-sort/score";
 
 describe("calculateWaterSortSpeedFullScoreMs", () => {
   test("初期把握時間と色数と最短手数から基準時間を算出すること", () => {
@@ -13,6 +16,46 @@ describe("calculateWaterSortSpeedFullScoreMs", () => {
     });
 
     expect(result).toBe(64_000);
+  });
+});
+
+describe("calculateWaterSortTimeDeltaMs", () => {
+  test("実時間と問題ごとの基準時間との差を算出すること", () => {
+    const result = calculateWaterSortTimeDeltaMs({
+      elapsedMs: 65_000,
+      colorCount: 6,
+      optimalMoveCount: 10,
+    });
+
+    expect(result).toBe(1_000);
+  });
+});
+
+describe("calculateWaterSortMoveDelta", () => {
+  test("クリア手数と最短手数との差を算出すること", () => {
+    const result = calculateWaterSortMoveDelta({
+      completionMoveCount: 12,
+      optimalMoveCount: 10,
+    });
+
+    expect(result).toBe(2);
+  });
+});
+
+describe("calculateWaterSortPerformanceComparison", () => {
+  test("結果と記録で共有する比較指標をまとめて算出すること", () => {
+    const result = calculateWaterSortPerformanceComparison({
+      elapsedMs: 65_000,
+      completionMoveCount: 12,
+      colorCount: 6,
+      optimalMoveCount: 10,
+    });
+
+    expect(result).toEqual({
+      speedFullScoreMs: 64_000,
+      timeDeltaMs: 1_000,
+      moveDelta: 2,
+    });
   });
 });
 

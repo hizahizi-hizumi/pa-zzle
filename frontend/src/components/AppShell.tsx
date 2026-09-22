@@ -17,7 +17,7 @@ export function AppShell({
   contentLayout = "contained",
 }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-muted/30 font-ui">
       <BrandIdentityHeader linkToHome size="regular" />
       <main className={mainClassNames[contentLayout]}>{children}</main>
     </div>
