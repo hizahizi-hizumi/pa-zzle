@@ -64,7 +64,13 @@ function adjacentStructuralGroups(
   let runStart = 0;
 
   while (runStart < statements.length) {
-    const signature = relationSignature(statements[runStart]);
+    const firstStatement = statements[runStart];
+
+    if (firstStatement === undefined) {
+      break;
+    }
+
+    const signature = relationSignature(firstStatement);
 
     if (signature === null) {
       runStart += 1;
@@ -73,10 +79,16 @@ function adjacentStructuralGroups(
 
     let runEnd = runStart + 1;
 
-    while (
-      runEnd < statements.length &&
-      relationSignature(statements[runEnd]) === signature
-    ) {
+    while (runEnd < statements.length) {
+      const statement = statements[runEnd];
+
+      if (
+        statement === undefined ||
+        relationSignature(statement) !== signature
+      ) {
+        break;
+      }
+
       runEnd += 1;
     }
 

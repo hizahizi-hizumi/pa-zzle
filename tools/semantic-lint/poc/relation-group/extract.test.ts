@@ -45,8 +45,8 @@ describe("extractRelationGroupCandidates", () => {
     const groups = extractRelationGroupCandidates({
       path: "example.ts",
       source: `register(() => {
-  process(first);
-  process(second);
+  process(1);
+  process(2);
 });
 `,
     });
@@ -58,8 +58,8 @@ describe("extractRelationGroupCandidates", () => {
         (anchor) => anchor.role === "enclosing-statement",
       )?.source,
     ).toBe(`register(() => {
-  process(first);
-  process(second);
+  process(1);
+  process(2);
 });`);
   });
 });
