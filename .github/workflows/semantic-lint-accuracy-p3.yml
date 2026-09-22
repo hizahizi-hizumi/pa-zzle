@@ -1,0 +1,31 @@
+name: Semantic Lint Accuracy P3
+
+on:
+  push:
+    branches:
+      - experiment/semantic-lint-accuracy-p3-20260922
+
+permissions:
+  contents: read
+
+jobs:
+  structured-context:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+
+      - name: Install semantic lint dependencies
+        working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+
+      - name: Run structured context experiment
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- candidate-anchor --repeat 10 --verbose
