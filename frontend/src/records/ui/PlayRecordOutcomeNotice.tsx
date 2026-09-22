@@ -96,7 +96,7 @@ export function PlayRecordOutcomeNotice({
           <p className="text-supporting font-bold">自己ベスト更新</p>
           <Sparkles className="size-4" />
         </div>
-        <dl className="mt-3 divide-y divide-amber-200/80 dark:divide-amber-900/70">
+        <dl className="mt-3 divide-y-(length:--border-width-normal) divide-amber-200/80 dark:divide-amber-900/70">
           {outcome.updates.flatMap((update) => {
             const metricDisplay = getPlayRecordMetricDisplay(
               display,

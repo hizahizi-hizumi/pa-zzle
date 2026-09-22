@@ -36,7 +36,7 @@ export function PlayRecordsHistory({
         ))}
         <span className="sr-only">操作</span>
       </div>
-      <ol className="divide-y">
+      <ol className="divide-y-(length:--border-width-normal)">
         {records.map((record) => (
           <PlayRecordRow
             key={record.id}
