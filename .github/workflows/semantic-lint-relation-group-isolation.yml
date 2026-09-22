@@ -22,25 +22,7 @@ jobs:
       - name: Install semantic lint dependencies
         working-directory: tools/semantic-lint
         run: bun install --frozen-lockfile
-      - name: Run calibrated relation benchmark
+      - name: Run final relation benchmark
         env:
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
-        run: bun run --cwd tools/semantic-lint poc -- relation-group-only --benchmark .semantic-lint/poc/relation-group/relation-target-few-shot-070.yaml --repeat 10 --verbose
-
-  repository:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version-file: .bun-version
-      - name: Install semantic lint dependencies
-        working-directory: tools/semantic-lint
-        run: bun install --frozen-lockfile
-      - name: Run calibrated relation repository validation
-        env:
-          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
-        run: bun run --cwd tools/semantic-lint poc -- relation-group-only --benchmark .semantic-lint/poc/relation-group/relation-target-few-shot-070.yaml --repository
+        run: bun run --cwd tools/semantic-lint poc -- relation-group-only --benchmark .semantic-lint/poc/relation-group/final.yaml --repeat 10
