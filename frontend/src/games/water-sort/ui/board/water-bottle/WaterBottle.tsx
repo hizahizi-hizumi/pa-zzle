@@ -2,8 +2,8 @@ import type { ReactNode } from "react";
 
 import type { WaterSortBottle } from "@/games/water-sort/puzzle/state";
 
-import { Bottle } from "./Bottle";
-import { Water } from "./Water";
+import { Bottle } from "@/games/water-sort/ui/board/water-bottle/Bottle";
+import { Water } from "@/games/water-sort/ui/board/water-bottle/Water";
 
 type WaterBottleProps = {
   contents: WaterSortBottle;

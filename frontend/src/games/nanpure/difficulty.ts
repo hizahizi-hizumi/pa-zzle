@@ -1,4 +1,4 @@
-import type { NanpureDifficultyAnalysis } from "./problem/difficulty-analysis";
+import type { NanpureDifficultyAnalysis } from "@/games/nanpure/problem/difficulty-analysis";
 
 export const nanpureDifficulties = [
   { id: "easy", label: "かんたん" },

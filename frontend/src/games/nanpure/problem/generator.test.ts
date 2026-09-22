@@ -1,5 +1,8 @@
-import { classifyNanpureSolutions } from "./generation/solver";
-import { generateNanpureProblem, restoreNanpureProblem } from "./generator";
+import { classifyNanpureSolutions } from "@/games/nanpure/problem/generation/solver";
+import {
+  generateNanpureProblem,
+  restoreNanpureProblem,
+} from "@/games/nanpure/problem/generator";
 
 describe("generateNanpureProblem", () => {
   test("同じseedと生成条件から同じ問題を再現すること", () => {

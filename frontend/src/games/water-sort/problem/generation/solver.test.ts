@@ -1,13 +1,13 @@
+import { solveWaterSort } from "@/games/water-sort/problem/generation/solver";
 import {
   applyWaterSortMove,
   listWaterSortLegalMoves,
-} from "../../puzzle/rules";
+} from "@/games/water-sort/puzzle/rules";
 import {
   createWaterSortStateKey,
   isWaterSortCleared,
   type WaterSortState,
-} from "../../puzzle/state";
-import { solveWaterSort } from "./solver";
+} from "@/games/water-sort/puzzle/state";
 
 function shortestDistanceByBreadthFirstSearch(
   initialState: WaterSortState,
