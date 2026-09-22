@@ -1,7 +1,3 @@
-import {
-  createProblemRandom,
-  shuffleProblemValues,
-} from "@/games/problem-random";
 import type { ProblemSeed } from "@/games/problem-seed";
 import {
   assessParkingJamDifficulty,
@@ -11,36 +7,33 @@ import {
   generateParkingJamProblem,
   ParkingJamGenerationExhaustedError,
 } from "./problem/generator";
-import type {
-  ParkingJamGeneratedProblem,
-  ParkingJamGenerationConditions,
-} from "./problem/problem";
+import type { ParkingJamGeneratedProblem } from "./problem/problem";
 
 const MAXIMUM_ATTEMPTS_PER_GENERATION_PROFILE = 20;
 
-type ParkingJamDifficultyGenerationProfile = ParkingJamGenerationConditions;
+type ParkingJamLegacyDifficultyGenerationProfile = {
+  roadOpeningCount: number;
+  roadOpeningSpan: number;
+  fixedAreaCount: number;
+  fixedAreaLength: number;
+  blockingPlacementProbability: number;
+};
 
-const DIFFICULTY_GENERATION_PROFILES: Record<
+const LEGACY_DIFFICULTY_GENERATION_PROFILES: Record<
   ParkingJamDifficulty,
-  readonly ParkingJamDifficultyGenerationProfile[]
+  readonly ParkingJamLegacyDifficultyGenerationProfile[]
 > = {
   easy: [
     {
-      width: 6,
-      height: 6,
-      vehicleCount: 8,
       roadOpeningCount: 4,
-      roadOpeningSpan: 3,
+      roadOpeningSpan: 4,
       fixedAreaCount: 0,
       fixedAreaLength: 1,
       blockingPlacementProbability: 0,
     },
     {
-      width: 6,
-      height: 6,
-      vehicleCount: 8,
       roadOpeningCount: 4,
-      roadOpeningSpan: 3,
+      roadOpeningSpan: 4,
       fixedAreaCount: 1,
       fixedAreaLength: 2,
       blockingPlacementProbability: 0,
@@ -48,9 +41,6 @@ const DIFFICULTY_GENERATION_PROFILES: Record<
   ],
   normal: [
     {
-      width: 8,
-      height: 8,
-      vehicleCount: 12,
       roadOpeningCount: 4,
       roadOpeningSpan: 3,
       fixedAreaCount: 0,
@@ -58,9 +48,6 @@ const DIFFICULTY_GENERATION_PROFILES: Record<
       blockingPlacementProbability: 0.5,
     },
     {
-      width: 8,
-      height: 8,
-      vehicleCount: 12,
       roadOpeningCount: 4,
       roadOpeningSpan: 3,
       fixedAreaCount: 1,
@@ -70,9 +57,6 @@ const DIFFICULTY_GENERATION_PROFILES: Record<
   ],
   hard: [
     {
-      width: 8,
-      height: 8,
-      vehicleCount: 14,
       roadOpeningCount: 4,
       roadOpeningSpan: 3,
       fixedAreaCount: 0,
@@ -80,38 +64,26 @@ const DIFFICULTY_GENERATION_PROFILES: Record<
       blockingPlacementProbability: 1,
     },
     {
-      width: 8,
-      height: 8,
-      vehicleCount: 14,
       roadOpeningCount: 4,
-      roadOpeningSpan: 3,
-      fixedAreaCount: 1,
-      fixedAreaLength: 2,
+      roadOpeningSpan: 2,
+      fixedAreaCount: 0,
+      fixedAreaLength: 1,
       blockingPlacementProbability: 1,
     },
   ],
 };
 
-function listGenerationProfiles(
-  difficulty: ParkingJamDifficulty,
-  seed: ProblemSeed,
-): ParkingJamDifficultyGenerationProfile[] {
-  return shuffleProblemValues(
-    DIFFICULTY_GENERATION_PROFILES[difficulty],
-    createProblemRandom(
-      `parking-jam-difficulty-profile-v2:${difficulty}:${seed}`,
-    ),
-  );
-}
-
 export function generateParkingJamProblemForDifficulty(
   difficulty: ParkingJamDifficulty,
   seed: ProblemSeed,
 ): ParkingJamGeneratedProblem {
-  for (const profile of listGenerationProfiles(difficulty, seed)) {
+  for (const profile of LEGACY_DIFFICULTY_GENERATION_PROFILES[difficulty]) {
     try {
       return generateParkingJamProblem({
         seed,
+        width: 8,
+        height: 8,
+        vehicleCount: 14,
         ...profile,
         maximumAttempts: MAXIMUM_ATTEMPTS_PER_GENERATION_PROFILE,
         acceptCandidate: ({ difficultyAnalysis }) => {
