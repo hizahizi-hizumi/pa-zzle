@@ -139,6 +139,9 @@ bun run --cwd tools/semantic-lint poc -- candidate-anchor --repeat 3
 # Candidate / AnchorごとのChoiceと確率を確認
 bun run --cwd tools/semantic-lint poc -- candidate-anchor --repeat 3 --verbose
 
+# PoC predicateを実リポジトリへ1回適用
+bun run --cwd tools/semantic-lint poc -- candidate-anchor --repository
+
 # 別benchmarkを同じ方式・設定で評価
 bun run --cwd tools/semantic-lint poc -- candidate-anchor \
   --benchmark .semantic-lint/poc/holdout/benchmark.yaml \

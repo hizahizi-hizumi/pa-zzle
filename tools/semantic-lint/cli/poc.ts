@@ -8,6 +8,10 @@ import { loadCandidateAnchorBenchmark } from "../poc/candidate-anchor/benchmark.
 import { extractCandidateAnchors } from "../poc/candidate-anchor/extract.ts";
 import { renderCandidateAnchorBenchmark } from "../poc/candidate-anchor/report.ts";
 import { runCandidateAnchorBenchmark } from "../poc/candidate-anchor/run.ts";
+import {
+  runCandidateAnchorRepository,
+  type CandidateAnchorRepositoryResult,
+} from "../poc/candidate-anchor/repository.ts";
 
 export async function runPocCommand(args: string[]): Promise<number> {
   const [strategy, ...strategyArgs] = args;
@@ -20,7 +24,7 @@ export async function runPocCommand(args: string[]): Promise<number> {
 }
 
 async function runCandidateAnchorPoc(args: string[]): Promise<number> {
-  const { planOnly, repeat, verbose, benchmarkPath } =
+  const { planOnly, repeat, verbose, benchmarkPath, repository } =
     parseCandidateAnchorOptions(args);
   const { projectRoot, config, rules } = await loadProjectContext();
   const benchmark = await loadCandidateAnchorBenchmark(
@@ -40,6 +44,23 @@ async function runCandidateAnchorPoc(args: string[]): Promise<number> {
   }
 
   const provider = createTypeSafeProvider(config.provider);
+
+  if (repository) {
+    if (repeat !== 1) {
+      throw new Error("--repositoryでは--repeat 1のみ指定できます。");
+    }
+
+    const result = await runCandidateAnchorRepository({
+      projectRoot,
+      benchmark,
+      projectRules: rules,
+      excludePaths: config.excludePaths,
+      provider,
+      maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
+    });
+    process.stdout.write(renderCandidateAnchorRepository(projectRoot, result));
+    return 0;
+  }
 
   for (let run = 1; run <= repeat; run += 1) {
     if (repeat > 1) {
@@ -62,11 +83,13 @@ function parseCandidateAnchorOptions(args: string[]): {
   repeat: number;
   verbose: boolean;
   benchmarkPath: string;
+  repository: boolean;
 } {
   let planOnly = false;
   let repeat = 1;
   let verbose = false;
   let benchmarkPath = ".semantic-lint/poc/benchmark.yaml";
+  let repository = false;
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
@@ -78,6 +101,11 @@ function parseCandidateAnchorOptions(args: string[]): {
 
     if (arg === "--verbose") {
       verbose = true;
+      continue;
+    }
+
+    if (arg === "--repository") {
+      repository = true;
       continue;
     }
 
@@ -108,7 +136,7 @@ function parseCandidateAnchorOptions(args: string[]): {
     throw new Error(`不明なcandidate-anchorオプションです: ${arg}`);
   }
 
-  return { planOnly, repeat, verbose, benchmarkPath };
+  return { planOnly, repeat, verbose, benchmarkPath, repository };
 }
 
 async function renderCandidateAnchorPlan(options: {
@@ -212,4 +240,42 @@ async function renderCandidateAnchorPlan(options: {
   );
 
   return lines.join("\n") + "\n";
+}
+
+
+function renderCandidateAnchorRepository(
+  projectRoot: string,
+  result: CandidateAnchorRepositoryResult,
+): string {
+  const lines = ["Candidate + Anchor repository validation", ""];
+
+  for (const rule of result.rules) {
+    lines.push(
+      `rule=${rule.ruleId} sourceRule=${rule.sourceRuleId}`,
+      `  files=${rule.files} findings=${rule.findings.length}`,
+      `  candidates=${rule.candidateCount} anchors=${rule.anchorCount}`,
+      `  classification=${rule.classificationDecisions} localization=${rule.localizationDecisions}`,
+      `  requests=${rule.providerRequests} inputTokens=${rule.inputTokens} outputTokens=${rule.outputTokens}`,
+    );
+
+    for (const finding of rule.findings) {
+      const path = finding.path.startsWith(projectRoot)
+        ? finding.path.slice(projectRoot.length + 1)
+        : finding.path;
+      lines.push(
+        `  ${path}:${finding.range.startLine}:${finding.range.startColumn}-${finding.range.endLine}:${finding.range.endColumn} ${finding.message}`,
+      );
+    }
+
+    lines.push("");
+  }
+
+  if (result.skippedRuleIds.length > 0) {
+    lines.push(
+      `skipped=${result.skippedRuleIds.join(",")}`,
+      "",
+    );
+  }
+
+  return lines.join("\n");
 }
