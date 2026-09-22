@@ -38,7 +38,7 @@ describe("runCandidateAnchorBenchmark", () => {
       startLine: 3,
       startColumn: 5,
       endLine: 3,
-      endColumn: 31,
+      endColumn: 30,
     });
     expect(result.metrics.localizationDecisions).toBeGreaterThan(0);
   });

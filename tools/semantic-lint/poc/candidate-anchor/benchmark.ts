@@ -87,9 +87,15 @@ function compileRule(
     throw new Error(`benchmark ruleが不正です: ${origin} rules[${index}]`);
   }
 
+  const outcomesRecord = predicate.outcomes;
+
+  if (!isRecord(outcomesRecord)) {
+    throw new Error(`benchmark predicate.outcomesが不正です: ${origin} rules[${index}]`);
+  }
+
   const outcomes = Object.fromEntries(
     DECISIONS.map((decision) => {
-      const description = predicate.outcomes[decision];
+      const description = outcomesRecord[decision];
 
       if (typeof description !== "string") {
         throw new Error(
