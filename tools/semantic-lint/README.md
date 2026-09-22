@@ -181,3 +181,32 @@ bun run --cwd tools/semantic-lint poc -- relation-group-only \
 ```
 
 この最終benchmarkはrelation target向けpredicate・few-shot境界例・relation専用thresholdをPoC内だけで校正したもの。本番rule YAMLや`check`経路は変更しない。
+
+### Target Family PoC
+
+2EをVitest全体へ広げて検証するため、PoC benchmarkだけに`targetFamily`を持たせ、ruleごとにparserが作る判定単位を切り替える。これはproduction rule APIではなく、target familyごとの性能・coverage・costを比較するための実験設定。
+
+```sh
+# 4つのVitest semantic ruleをfamily別に静的計測
+bun run --cwd tools/semantic-lint poc -- target-family \
+  --benchmark .semantic-lint/poc/target-family/benchmark.yaml \
+  --plan-only
+
+# golden corpusを反復評価
+bun run --cwd tools/semantic-lint poc -- target-family \
+  --benchmark .semantic-lint/poc/target-family/benchmark.yaml \
+  --repeat 10
+
+# 同じfamily設定を実repositoryへ適用
+bun run --cwd tools/semantic-lint poc -- target-family \
+  --benchmark .semantic-lint/poc/target-family/benchmark.yaml \
+  --repository
+```
+
+現在のfamilyは次の3種類。
+
+- `callback-statement`: callback直下の各statementを個別targetにする。Arrangeのように1つのcallback内で複数findingが必要なrule向け。
+- `callback-call`: callbackを持つcall全体をtargetにする。beforeEachやDOM testなどcall単位で意味を判定するrule向け。
+- `relation-group`: 同一container直下の構造が揃う兄弟statement群をrelation targetにする。
+
+benchmarkではfinding精度に加え、期待位置を候補Anchorとして生成できた割合を`targetCoverage`として出す。family生成で正解候補を落とした失敗と、Jev分類・位置特定の失敗を分離して評価する。

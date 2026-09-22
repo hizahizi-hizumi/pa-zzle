@@ -9,6 +9,7 @@ import { extractCandidateAnchors } from "../poc/candidate-anchor/extract.ts";
 import { renderCandidateAnchorBenchmark } from "../poc/candidate-anchor/report.ts";
 import {
   type CandidateExtractor,
+  type CandidateExtractorResolver,
   runCandidateAnchorBenchmark,
 } from "../poc/candidate-anchor/run.ts";
 import {
@@ -19,10 +20,12 @@ import {
   extractRelationAwareCandidates,
   extractRelationGroupCandidates,
 } from "../poc/relation-group/extract.ts";
+import { extractTargetFamilyCandidates } from "../poc/target-family/extract.ts";
 
 type PocStrategy = {
   title: string;
-  extractor: CandidateExtractor;
+  extractor?: CandidateExtractor;
+  extractorForRule?: CandidateExtractorResolver;
 };
 
 export async function runPocCommand(args: string[]): Promise<number> {
@@ -54,8 +57,23 @@ function strategyDefinition(strategy: string | undefined): PocStrategy {
     };
   }
 
+  if (strategy === "target-family") {
+    return {
+      title: "Target Family PoC",
+      extractorForRule: (rule) => {
+        const targetFamily = rule.targetFamily;
+
+        if (targetFamily === undefined) {
+          throw new Error(`target-familyが未指定です: ${rule.id}`);
+        }
+
+        return (document) => extractTargetFamilyCandidates(targetFamily, document);
+      },
+    };
+  }
+
   throw new Error(
-    "poc strategyはcandidate-anchor、relation-group、relation-group-onlyのいずれかを指定してください。",
+    "poc strategyはcandidate-anchor、relation-group、relation-group-only、target-familyのいずれかを指定してください。",
   );
 }
 
@@ -77,7 +95,12 @@ async function runCandidateAnchorPoc(
       rules,
       excludePaths: config.excludePaths,
       maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
-      extractCandidates: strategy.extractor,
+      ...(strategy.extractor === undefined
+        ? {}
+        : { extractCandidates: strategy.extractor }),
+      ...(strategy.extractorForRule === undefined
+        ? {}
+        : { extractCandidatesForRule: strategy.extractorForRule }),
       title: strategy.title,
     });
     process.stdout.write(output);
@@ -98,7 +121,12 @@ async function runCandidateAnchorPoc(
       excludePaths: config.excludePaths,
       provider,
       maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
-      extractCandidates: strategy.extractor,
+      ...(strategy.extractor === undefined
+        ? {}
+        : { extractCandidates: strategy.extractor }),
+      ...(strategy.extractorForRule === undefined
+        ? {}
+        : { extractCandidatesForRule: strategy.extractorForRule }),
     });
     process.stdout.write(
       renderCandidateAnchorRepository(projectRoot, result, strategy.title),
@@ -115,7 +143,12 @@ async function runCandidateAnchorPoc(
       benchmark,
       provider,
       maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
-      extractCandidates: strategy.extractor,
+      ...(strategy.extractor === undefined
+        ? {}
+        : { extractCandidates: strategy.extractor }),
+      ...(strategy.extractorForRule === undefined
+        ? {}
+        : { extractCandidatesForRule: strategy.extractorForRule }),
     });
     process.stdout.write(
       renderCandidateAnchorBenchmark(result, {
@@ -195,7 +228,8 @@ async function renderCandidateAnchorPlan(options: {
   rules: Awaited<ReturnType<typeof loadProjectContext>>["rules"];
   excludePaths: string[];
   maxDecisionsPerRequest: number;
-  extractCandidates: CandidateExtractor;
+  extractCandidates?: CandidateExtractor;
+  extractCandidatesForRule?: CandidateExtractorResolver;
   title: string;
 }): Promise<string> {
   const {
@@ -204,16 +238,26 @@ async function renderCandidateAnchorPlan(options: {
     rules,
     excludePaths,
     maxDecisionsPerRequest,
-    extractCandidates,
+    extractCandidates = extractCandidateAnchors,
+    extractCandidatesForRule,
     title,
   } = options;
   const lines = [`${title} plan`, "", "benchmark"];
   let benchmarkCandidates = 0;
   let benchmarkAnchors = 0;
 
+  const rulesById = new Map(benchmark.rules.map((rule) => [rule.id, rule]));
+
   for (const benchmarkCase of benchmark.cases) {
+    const rule = rulesById.get(benchmarkCase.ruleId);
+
+    if (!rule) {
+      throw new Error(`benchmark ruleがありません: ${benchmarkCase.ruleId}`);
+    }
+
     const source = await Bun.file(benchmarkCase.fixturePath).text();
-    const candidates = extractCandidates({
+    const extractor = extractCandidatesForRule?.(rule) ?? extractCandidates;
+    const candidates = extractor({
       path: benchmarkCase.fixturePath,
       source,
     });
@@ -234,68 +278,79 @@ async function renderCandidateAnchorPlan(options: {
     "repository",
   );
 
-  const arrangeRule = rules.find(
-    (rule) => rule.id === "vitest/arrange-outside-test",
-  );
-
-  if (!arrangeRule) {
-    throw new Error("vitest/arrange-outside-testがありません。");
-  }
-
-  const documents = await discoverSourceDocuments({
-    projectRoot,
-    rules: [arrangeRule],
-    excludePaths,
-    requestedPaths: [projectRoot],
-    statuses: [arrangeRule.status],
-  });
   const scopes = await createDefaultScopeRegistry(projectRoot);
-  let candidateCount = 0;
-  let anchorCount = 0;
-  let estimatedRequests = 0;
-  let currentScopeSubjects = 0;
-  let maxCandidates = 0;
-  let maxCandidatePath = "";
-  const kindCounts = new Map<string, number>();
 
-  for (const document of documents) {
-    const candidates = extractCandidates(document);
-    candidateCount += candidates.length;
-    anchorCount += candidates.reduce(
-      (total, candidate) => total + candidate.anchors.length,
-      0,
+  for (const benchmarkRule of benchmark.rules) {
+    const sourceRule = rules.find(
+      (rule) =>
+        rule.id === benchmarkRule.id ||
+        rule.id.endsWith(`/${benchmarkRule.id}`),
     );
-    estimatedRequests += Math.ceil(
-      candidates.length / maxDecisionsPerRequest,
-    );
-    currentScopeSubjects += scopes.extract(arrangeRule.scope, document).length;
 
-    if (candidates.length > maxCandidates) {
-      maxCandidates = candidates.length;
-      maxCandidatePath = document.path;
+    if (!sourceRule) {
+      lines.push(`  ${benchmarkRule.id}: source rule not found`);
+      continue;
     }
 
-    for (const candidate of candidates) {
-      kindCounts.set(candidate.kind, (kindCounts.get(candidate.kind) ?? 0) + 1);
+    const documents = await discoverSourceDocuments({
+      projectRoot,
+      rules: [sourceRule],
+      excludePaths,
+      requestedPaths: [projectRoot],
+      statuses: [sourceRule.status],
+    });
+    const extractor =
+      extractCandidatesForRule?.(benchmarkRule) ?? extractCandidates;
+    let candidateCount = 0;
+    let anchorCount = 0;
+    let estimatedRequests = 0;
+    let currentScopeSubjects = 0;
+    let maxCandidates = 0;
+    let maxCandidatePath = "";
+    const kindCounts = new Map<string, number>();
+
+    for (const document of documents) {
+      const candidates = extractor(document);
+      candidateCount += candidates.length;
+      anchorCount += candidates.reduce(
+        (total, candidate) => total + candidate.anchors.length,
+        0,
+      );
+      estimatedRequests += Math.ceil(
+        candidates.length / maxDecisionsPerRequest,
+      );
+      currentScopeSubjects += scopes.extract(sourceRule.scope, document).length;
+
+      if (candidates.length > maxCandidates) {
+        maxCandidates = candidates.length;
+        maxCandidatePath = document.path;
+      }
+
+      for (const candidate of candidates) {
+        kindCounts.set(
+          candidate.kind,
+          (kindCounts.get(candidate.kind) ?? 0) + 1,
+        );
+      }
     }
+
+    lines.push(
+      `  rule=${benchmarkRule.id}${benchmarkRule.targetFamily === undefined ? "" : ` targetFamily=${benchmarkRule.targetFamily}`}`,
+      `    files=${documents.length}`,
+      `    candidates=${candidateCount}`,
+      `    anchors=${anchorCount}`,
+      `    currentScopeSubjects=${currentScopeSubjects}`,
+      `    estimatedClassificationRequests=${estimatedRequests}`,
+      `    maxCandidatesPerFile=${maxCandidates} (${maxCandidatePath})`,
+      "    kinds:",
+      ...[...kindCounts.entries()]
+        .sort((left, right) => right[1] - left[1])
+        .map(([kind, count]) => `      ${kind}=${count}`),
+    );
   }
-
-  lines.push(
-    `  files=${documents.length}`,
-    `  candidates=${candidateCount}`,
-    `  anchors=${anchorCount}`,
-    `  currentScopeSubjects=${currentScopeSubjects}`,
-    `  estimatedClassificationRequests=${estimatedRequests}`,
-    `  maxCandidatesPerFile=${maxCandidates} (${maxCandidatePath})`,
-    "  kinds:",
-    ...[...kindCounts.entries()]
-      .sort((left, right) => right[1] - left[1])
-      .map(([kind, count]) => `    ${kind}=${count}`),
-  );
 
   return lines.join("\n") + "\n";
 }
-
 
 function renderCandidateAnchorRepository(
   projectRoot: string,
@@ -336,10 +391,7 @@ function renderCandidateAnchorRepository(
   }
 
   if (result.skippedRuleIds.length > 0) {
-    lines.push(
-      `skipped=${result.skippedRuleIds.join(",")}`,
-      "",
-    );
+    lines.push(`skipped=${result.skippedRuleIds.join(",")}`, "");
   }
 
   return lines.join("\n");

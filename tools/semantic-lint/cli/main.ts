@@ -98,6 +98,7 @@ function printHelp(): void {
   semantic-lint poc candidate-anchor [--plan-only] [--repeat N] [--verbose] [--repository] [--benchmark path]
   semantic-lint poc relation-group [--plan-only] [--repeat N] [--verbose] [--repository] [--benchmark path]
   semantic-lint poc relation-group-only [--plan-only] [--repeat N] [--verbose] [--repository] [--benchmark path]
+  semantic-lint poc target-family [--plan-only] [--repeat N] [--verbose] [--repository] [--benchmark path]
   semantic-lint rules [ruleset-or-rule]
   semantic-lint doctor
 

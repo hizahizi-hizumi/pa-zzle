@@ -8,11 +8,13 @@ import {
   type SourceRange,
 } from "../../domain/model.ts";
 import type { GoldenFindingExpectation } from "../../config/cases.ts";
+import type { TargetFamily } from "../target-family/extract.ts";
 
 export type BenchmarkRule = {
   id: string;
   title: string;
   violationThreshold: number;
+  targetFamily?: TargetFamily;
   predicate: Predicate;
 };
 
@@ -73,13 +75,14 @@ function compileRule(
     throw new Error(`benchmark ruleが不正です: ${origin} rules[${index}]`);
   }
 
-  const { id, title, violationThreshold, predicate } = value;
+  const { id, title, violationThreshold, targetFamily, predicate } = value;
 
   if (
     typeof id !== "string" ||
     id.length === 0 ||
     typeof title !== "string" ||
     !isProbability(violationThreshold) ||
+    !isTargetFamily(targetFamily) ||
     !isRecord(predicate) ||
     typeof predicate.instruction !== "string" ||
     !isRecord(predicate.outcomes)
@@ -111,6 +114,7 @@ function compileRule(
     id,
     title,
     violationThreshold,
+    ...(targetFamily === undefined ? {} : { targetFamily }),
     predicate: {
       instruction: predicate.instruction,
       outcomes,
@@ -202,4 +206,13 @@ function isPositiveInteger(value: unknown): value is number {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isTargetFamily(value: unknown): value is TargetFamily | undefined {
+  return (
+    value === undefined ||
+    value === "callback-statement" ||
+    value === "callback-call" ||
+    value === "relation-group"
+  );
 }

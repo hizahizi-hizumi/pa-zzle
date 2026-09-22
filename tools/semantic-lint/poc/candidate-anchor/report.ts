@@ -11,6 +11,7 @@ export function renderCandidateAnchorBenchmark(
       `${item.exact ? "PASS" : "FAIL"} ${item.name} [${item.ruleId}]`,
       `  candidates=${item.candidateCount} anchors=${item.anchorCount} classification=${item.classificationDecisions} localization=${item.localizationDecisions}`,
       `  findings expected=${item.expectedFindings} actual=${item.actualFindings} matched=${item.matchedFindings}`,
+      `  targetCoverage=${item.expectedFindings === 0 ? "n/a" : `${item.coveredExpectedFindings}/${item.expectedFindings}`}`,
       `  requests=${item.providerRequests} inputTokens=${item.inputTokens} outputTokens=${item.outputTokens}`,
     );
 
@@ -45,12 +46,17 @@ export function renderCandidateAnchorBenchmark(
     metrics.expectedFindings === 0
       ? 1
       : metrics.matchedFindings / metrics.expectedFindings;
+  const targetCoverage =
+    metrics.expectedFindings === 0
+      ? 1
+      : metrics.coveredExpectedFindings / metrics.expectedFindings;
 
   lines.push(
     "summary",
     `  exactCases=${metrics.exactCases}/${result.cases.length}`,
     `  findingPrecision=${percentage(precision)}`,
     `  findingRecall=${percentage(recall)}`,
+    `  targetCoverage=${percentage(targetCoverage)}`,
     `  candidates=${metrics.candidateCount} anchors=${metrics.anchorCount}`,
     `  classificationDecisions=${metrics.classificationDecisions} localizationDecisions=${metrics.localizationDecisions}`,
     `  providerRequests=${metrics.providerRequests}`,

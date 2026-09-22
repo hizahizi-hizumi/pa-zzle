@@ -55,8 +55,14 @@ export type StructuralRelationContext = {
   sharedStructuralSignature: string;
 };
 
+export type StructuralCallContext = {
+  callee: string;
+  callbackArgumentIndex: number;
+};
+
 export type SubjectContext = {
   enclosingCalls: string[];
+  call?: StructuralCallContext;
   relation?: StructuralRelationContext;
 };
 

@@ -23,6 +23,9 @@ import {
 } from "./extract.ts";
 
 export type CandidateExtractor = (document: SourceDocument) => Candidate[];
+export type CandidateExtractorResolver = (
+  rule: BenchmarkRule,
+) => CandidateExtractor;
 
 export type CandidateAnchorDecision = {
   stage: "classification" | "localization";
@@ -47,6 +50,7 @@ export type CandidateAnchorCaseResult = {
   expectedFindings: number;
   actualFindings: number;
   matchedFindings: number;
+  coveredExpectedFindings: number;
   exact: boolean;
   findings: Finding[];
   decisions: CandidateAnchorDecision[];
@@ -65,6 +69,7 @@ export type CandidateAnchorBenchmarkResult = {
     expectedFindings: number;
     actualFindings: number;
     matchedFindings: number;
+    coveredExpectedFindings: number;
     exactCases: number;
   };
 };
@@ -85,12 +90,14 @@ export async function runCandidateAnchorBenchmark(options: {
   provider: SemanticDecisionProvider;
   maxDecisionsPerRequest: number;
   extractCandidates?: CandidateExtractor;
+  extractCandidatesForRule?: CandidateExtractorResolver;
 }): Promise<CandidateAnchorBenchmarkResult> {
   const {
     benchmark,
     provider,
     maxDecisionsPerRequest,
     extractCandidates = extractCandidateAnchors,
+    extractCandidatesForRule,
   } = options;
   const rulesById = new Map(benchmark.rules.map((rule) => [rule.id, rule]));
   const results: CandidateAnchorCaseResult[] = [];
@@ -109,7 +116,8 @@ export async function runCandidateAnchorBenchmark(options: {
         rule,
         provider,
         maxDecisionsPerRequest,
-        extractCandidates,
+        extractCandidates:
+          extractCandidatesForRule?.(rule) ?? extractCandidates,
       }),
     );
   }
@@ -133,6 +141,10 @@ export async function runCandidateAnchorBenchmark(options: {
       expectedFindings: sum(results, (result) => result.expectedFindings),
       actualFindings: sum(results, (result) => result.actualFindings),
       matchedFindings: sum(results, (result) => result.matchedFindings),
+      coveredExpectedFindings: sum(
+        results,
+        (result) => result.coveredExpectedFindings,
+      ),
       exactCases: results.filter((result) => result.exact).length,
     },
   };
@@ -160,6 +172,17 @@ async function runCandidateAnchorCase(options: {
     source,
   } satisfies SourceDocument;
   const candidates = extractCandidates(document);
+  const expectedRanges = resolveExpectedFindingRanges(
+    source,
+    benchmarkCase.expectedFindings,
+  );
+  const coveredExpectedFindings = expectedRanges.filter((expectedRange) =>
+    candidates.some((candidate) =>
+      candidate.anchors.some((anchor) =>
+        rangesEqual(anchor.range, expectedRange),
+      ),
+    ),
+  ).length;
   const classification = await evaluateCandidates({
     document,
     candidates,
@@ -204,10 +227,6 @@ async function runCandidateAnchorCase(options: {
       ];
     }),
   );
-  const expectedRanges = resolveExpectedFindingRanges(
-    source,
-    benchmarkCase.expectedFindings,
-  );
   const comparison = compareFindingRanges(expectedRanges, findings);
 
   return {
@@ -228,6 +247,7 @@ async function runCandidateAnchorCase(options: {
     expectedFindings: expectedRanges.length,
     actualFindings: findings.length,
     matchedFindings: comparison.matched,
+    coveredExpectedFindings,
     exact: comparison.exact,
     findings,
     decisions: [...classification.decisions, ...localization.decisionDetails],
@@ -502,4 +522,16 @@ function dedupeFindings(findings: Finding[]): Finding[] {
 
 function sum<T>(values: T[], selector: (value: T) => number): number {
   return values.reduce((total, value) => total + selector(value), 0);
+}
+
+function rangesEqual(
+  left: Finding["range"],
+  right: Finding["range"],
+): boolean {
+  return (
+    left.startLine === right.startLine &&
+    left.startColumn === right.startColumn &&
+    left.endLine === right.endLine &&
+    left.endColumn === right.endColumn
+  );
 }

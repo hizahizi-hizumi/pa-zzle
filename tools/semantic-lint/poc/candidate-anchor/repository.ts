@@ -12,6 +12,7 @@ import type {
 } from "./benchmark.ts";
 import {
   type CandidateExtractor,
+  type CandidateExtractorResolver,
   runCandidateAnchorBenchmark,
 } from "./run.ts";
 
@@ -52,6 +53,7 @@ export async function runCandidateAnchorRepository(options: {
   provider: SemanticDecisionProvider;
   maxDecisionsPerRequest: number;
   extractCandidates?: CandidateExtractor;
+  extractCandidatesForRule?: CandidateExtractorResolver;
 }): Promise<CandidateAnchorRepositoryResult> {
   const {
     projectRoot,
@@ -61,6 +63,7 @@ export async function runCandidateAnchorRepository(options: {
     provider,
     maxDecisionsPerRequest,
     extractCandidates,
+    extractCandidatesForRule,
   } = options;
   const results: CandidateAnchorRepositoryRuleResult[] = [];
   const skippedRuleIds: string[] = [];
@@ -95,6 +98,7 @@ export async function runCandidateAnchorRepository(options: {
       provider,
       maxDecisionsPerRequest,
       extractCandidates,
+      extractCandidatesForRule,
     });
 
     const classificationCandidates = result.cases.flatMap((item) =>
