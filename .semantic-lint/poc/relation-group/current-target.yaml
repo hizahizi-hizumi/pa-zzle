@@ -1,0 +1,118 @@
+version: 1
+
+rules:
+  - id: table-driven-cases
+    title: 同じ期待動作の入力違いはtest.eachで表現する
+    violationThreshold: 0.90
+    predicate:
+      instruction: |
+        判定対象自身が、2つ以上の兄弟test / itを直接包含する最小のコンテナであり、
+        それらが同じ期待動作を入力値または期待値の違いだけで繰り返しているか判定する。
+        個々のtest / itやその内部処理は、このルールのviolationにしない。
+        周辺コードは、兄弟test間のAct・Assert・入力・期待値を比較するためだけに使う。
+      outcomes:
+        violation: |
+          判定対象自身が2つ以上の兄弟test / itを直接包含し、
+          各testのActとAssertが意味的に同じで、主な差分が入力値または期待値だけである。
+          1つのtest.eachへ統合しても検証する期待動作の意味が変わらない。
+        compliant: |
+          判定対象自身は2つ以上の兄弟test / itを直接包含するが、
+          前提条件・期待動作・Act・Assertに別testとして表現する意味のある差がある。
+          または既にtest.eachで表現されている。
+        not_applicable: |
+          判定対象自身が比較対象となる2つ以上の兄弟test / itを直接包含していない。
+          個々のtest / it、その内部のAct・Assert・変数宣言などを含む。
+        insufficient_context: |
+          兄弟testの内容を比較しても、同じ期待動作の入力違いか判断できない。
+
+cases:
+  - rule: table-driven-cases
+    name: 調整用の反復
+    fixture: ../fixtures/table-driven.ts
+    expectedFindings:
+      - text: |-
+          describe("parseNumber", () => {
+            test("1を変換できること", () => {
+              const result = parseNumber("1");
+
+              expect(result).toBe(1);
+            });
+
+            test("2を変換できること", () => {
+              const result = parseNumber("2");
+
+              expect(result).toBe(2);
+            });
+          });
+
+  - rule: table-driven-cases
+    name: 既存test.each
+    fixture: ../holdout/fixtures/table-existing-each.ts
+    expectedFindings: []
+
+  - rule: table-driven-cases
+    name: 異なる操作の兄弟test
+    fixture: ../holdout/fixtures/table-distinct-actions.tsx
+    expectedFindings: []
+
+  - rule: table-driven-cases
+    name: 効率の反復
+    fixture: ../holdout/fixtures/table-repeated-efficiency.ts
+    expectedFindings:
+      - text: |-
+          describe("calculateWaterSortPlayScore", () => {
+            test("クリア手数が最短手数の1.5倍なら効率を半分にすること", () => {
+              const score = calculateWaterSortPlayScore({
+                elapsedMs: 64_000,
+                moveCount: 15,
+                completionMoveCount: 15,
+                optimalMoveCount: 10,
+                colorCount: 6,
+              });
+
+              expect(score.breakdown.efficiency).toBe(20);
+            });
+
+            test("クリア手数が最短手数の2倍以上なら効率を0点にすること", () => {
+              const score = calculateWaterSortPlayScore({
+                elapsedMs: 64_000,
+                moveCount: 20,
+                completionMoveCount: 20,
+                optimalMoveCount: 10,
+                colorCount: 6,
+              });
+
+              expect(score.breakdown.efficiency).toBe(0);
+            });
+          });
+
+  - rule: table-driven-cases
+    name: 速さの反復
+    fixture: ../holdout/fixtures/table-repeated-speed.ts
+    expectedFindings:
+      - text: |-
+          describe("calculateWaterSortPlayScore", () => {
+            test("基準時間の1.5倍なら速さを半分にすること", () => {
+              const score = calculateWaterSortPlayScore({
+                elapsedMs: 96_000,
+                moveCount: 10,
+                completionMoveCount: 10,
+                optimalMoveCount: 10,
+                colorCount: 6,
+              });
+
+              expect(score.breakdown.speed).toBe(20);
+            });
+
+            test("基準時間の2倍以上なら速さを0点にすること", () => {
+              const score = calculateWaterSortPlayScore({
+                elapsedMs: 128_000,
+                moveCount: 10,
+                completionMoveCount: 10,
+                optimalMoveCount: 10,
+                colorCount: 6,
+              });
+
+              expect(score.breakdown.speed).toBe(0);
+            });
+          });
