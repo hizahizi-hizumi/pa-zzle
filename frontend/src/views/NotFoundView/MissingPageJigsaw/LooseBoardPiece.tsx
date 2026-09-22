@@ -36,10 +36,10 @@ export function LooseBoardPiece({
   const rotation = piece.isPlaced
     ? 0
     : piece.isDragging
-      ? -1
+      ? 0
       : startX < 130
-        ? -7
-        : 6;
+        ? -4
+        : 4;
 
   return (
     <button
@@ -75,47 +75,20 @@ export function LooseBoardPiece({
           <clipPath id={`loose-board-clip-${pieceX}-${pieceY}`}>
             <path d={piecePath} />
           </clipPath>
-          <filter
-            id={`loose-board-shadow-${pieceX}-${pieceY}`}
-            x="-40%"
-            y="-40%"
-            width="180%"
-            height="210%"
-          >
-            <feDropShadow
-              dx="0"
-              dy="7"
-              stdDeviation="6"
-              floodColor="rgb(15 23 42 / 0.22)"
-            />
-          </filter>
         </defs>
 
-        <g filter={`url(#loose-board-shadow-${pieceX}-${pieceY})`}>
-          <path
-            d={piecePath}
-            transform="translate(0 3)"
-            className="fill-muted-foreground opacity-40"
-          />
-          <path
-            d={piecePath}
-            className="fill-card stroke-border"
-            strokeWidth="1.1"
-          />
-          <g clipPath={`url(#loose-board-clip-${pieceX}-${pieceY})`}>
-            <g className="fill-foreground">
-              <path d={FOUR_GLYPH_PATH} transform={glyphTransform(0)} />
-              <path d={ZERO_GLYPH_PATH} transform={glyphTransform(1)} />
-              <path d={FOUR_GLYPH_PATH} transform={glyphTransform(2)} />
-            </g>
-            <path
-              d={piecePath}
-              transform="translate(0 1)"
-              fill="none"
-              stroke="rgb(255 255 255 / 0.7)"
-              strokeWidth="0.8"
-            />
-          </g>
+        <path
+          d={piecePath}
+          className="fill-card stroke-border"
+          strokeWidth="1"
+        />
+        <g
+          clipPath={`url(#loose-board-clip-${pieceX}-${pieceY})`}
+          className="fill-muted-foreground opacity-45"
+        >
+          <path d={FOUR_GLYPH_PATH} transform={glyphTransform(0)} />
+          <path d={ZERO_GLYPH_PATH} transform={glyphTransform(1)} />
+          <path d={FOUR_GLYPH_PATH} transform={glyphTransform(2)} />
         </g>
       </svg>
     </button>

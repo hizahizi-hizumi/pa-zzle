@@ -31,8 +31,8 @@ const verticalSeams: JigsawEdge[][] = [
 ];
 
 const missingCells = [
-  { row: 1, column: 2, startX: 88, startY: 304 },
-  { row: 3, column: 2, startX: 166, startY: 304 },
+  { row: 1, column: 2, startX: 92, startY: 304 },
+  { row: 3, column: 2, startX: 168, startY: 304 },
 ] as const;
 const missingKeys = new Set(missingCells.map(cellKey));
 
@@ -113,48 +113,6 @@ export function Board404Jigsaw() {
         className="absolute inset-x-0 top-0 w-full overflow-visible"
       >
         <defs>
-          <filter
-            id="board-404-shadow"
-            x="-20%"
-            y="-20%"
-            width="140%"
-            height="160%"
-          >
-            <feDropShadow
-              dx="0"
-              dy="7"
-              stdDeviation="7"
-              floodColor="rgb(15 23 42 / 0.14)"
-            />
-          </filter>
-          <filter
-            id="board-404-paper"
-            x="-10%"
-            y="-10%"
-            width="120%"
-            height="120%"
-          >
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.75"
-              numOctaves="2"
-              seed="29"
-              result="noise"
-            />
-            <feColorMatrix
-              in="noise"
-              type="matrix"
-              values="0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.52 0 0 0 0.055 0"
-              result="grain-color"
-            />
-            <feComposite
-              in="grain-color"
-              in2="SourceAlpha"
-              operator="in"
-              result="grain"
-            />
-            <feBlend in="SourceGraphic" in2="grain" mode="multiply" />
-          </filter>
           {boardPieces.map(function renderClip(piece) {
             return (
               <clipPath
@@ -167,57 +125,47 @@ export function Board404Jigsaw() {
           })}
         </defs>
 
-        <g filter="url(#board-404-shadow)">
-          <rect
-            x={BOARD_X}
-            y={BOARD_Y + 4}
-            width={BOARD_SIZE}
-            height={BOARD_SIZE}
-            className="fill-muted-foreground opacity-30"
-          />
+        <rect
+          x={BOARD_X}
+          y={BOARD_Y}
+          width={BOARD_SIZE}
+          height={BOARD_SIZE}
+          className="fill-muted/20"
+        />
 
-          {boardPieces.map(function renderPiece(piece) {
-            const clipId = `board-404-piece-${piece.row}-${piece.column}`;
-            return (
-              <g key={`piece-${piece.row}-${piece.column}`}>
-                <path
-                  d={piece.path}
-                  className="fill-card"
-                  filter="url(#board-404-paper)"
-                />
-                <g clipPath={`url(#${clipId})`} className="fill-foreground">
-                  <path d={FOUR_GLYPH_PATH} transform={glyphTransform(0)} />
-                  <path d={ZERO_GLYPH_PATH} transform={glyphTransform(1)} />
-                  <path d={FOUR_GLYPH_PATH} transform={glyphTransform(2)} />
-                </g>
-                <path
-                  d={piece.path}
-                  fill="none"
-                  className="stroke-border"
-                  strokeWidth="1.05"
-                />
-                <path
-                  d={piece.path}
-                  transform="translate(0 0.85)"
-                  fill="none"
-                  stroke="rgb(255 255 255 / 0.62)"
-                  strokeWidth="0.65"
-                />
+        {boardPieces.map(function renderPiece(piece) {
+          const clipId = `board-404-piece-${piece.row}-${piece.column}`;
+          return (
+            <g key={`piece-${piece.row}-${piece.column}`}>
+              <path d={piece.path} className="fill-card" />
+              <g
+                clipPath={`url(#${clipId})`}
+                className="fill-muted-foreground opacity-45"
+              >
+                <path d={FOUR_GLYPH_PATH} transform={glyphTransform(0)} />
+                <path d={ZERO_GLYPH_PATH} transform={glyphTransform(1)} />
+                <path d={FOUR_GLYPH_PATH} transform={glyphTransform(2)} />
               </g>
-            );
-          })}
-
-          {missingPieces.map(function renderHole(piece) {
-            return (
               <path
-                key={`hole-${piece.row}-${piece.column}`}
                 d={piece.path}
-                className="fill-background stroke-muted-foreground/35"
-                strokeWidth="1.3"
+                fill="none"
+                className="stroke-border"
+                strokeWidth="1"
               />
-            );
-          })}
-        </g>
+            </g>
+          );
+        })}
+
+        {missingPieces.map(function renderHole(piece) {
+          return (
+            <path
+              key={`hole-${piece.row}-${piece.column}`}
+              d={piece.path}
+              className="fill-background stroke-border"
+              strokeWidth="1"
+            />
+          );
+        })}
       </svg>
 
       {missingPieces.map(function renderLoosePiece(piece, index) {

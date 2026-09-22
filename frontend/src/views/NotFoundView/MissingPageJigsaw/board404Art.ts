@@ -9,11 +9,11 @@ export const FOUR_GLYPH_PATH =
 export const ZERO_GLYPH_PATH =
   "M942 748Q942 1028 889.5 1142.5Q837 1257 713 1257Q589 1257 536 1142.5Q483 1028 483 748Q483 465 536 349Q589 233 713 233Q836 233 889 349Q942 465 942 748ZM1327 745Q1327 374 1167 172.5Q1007 -29 713 -29Q418 -29 258 172.5Q98 374 98 745Q98 1117 258 1318.5Q418 1520 713 1520Q1007 1520 1167 1318.5Q1327 1117 1327 745Z";
 
-const glyphScaleX = 0.06;
-const glyphScaleY = -0.12;
-const glyphBaselineY = BOARD_Y + 222;
+const glyphScaleX = 0.045;
+const glyphScaleY = -0.09;
+const glyphBaselineY = BOARD_Y + 198;
 
 export function glyphTransform(index: number) {
-  const x = BOARD_X + 2 + index * 85;
+  const x = BOARD_X + 26 + index * 74;
   return `translate(${x} ${glyphBaselineY}) scale(${glyphScaleX} ${glyphScaleY})`;
 }
