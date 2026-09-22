@@ -3,7 +3,7 @@ version: 1
 rules:
   - id: arrange-outside-test
     title: テスト本体にArrangeを置かない
-    violationThreshold: 0.90
+    violationThreshold: 0.85
     predicate:
       instruction: |
         判定対象自身が、Vitestのtest / itコールバック内部に置かれたArrangeであり、
