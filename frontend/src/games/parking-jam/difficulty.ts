@@ -9,9 +9,11 @@ export const parkingJamDifficulties = [
 export type ParkingJamDifficulty =
   (typeof parkingJamDifficulties)[number]["id"];
 
-export const PARKING_JAM_DIFFICULTY_MODEL_VERSION = "dependency-v1";
+export const PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION = "dependency-v1";
 export const PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION =
   "cognitive-load-review-v1";
+export const PARKING_JAM_DIFFICULTY_MODEL_VERSION =
+  PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION;
 
 export const PARKING_JAM_DIFFICULTY_THRESHOLDS = {
   easyMaximumDependencyDepth: 2,
@@ -45,12 +47,12 @@ const reviewDifficultyThresholds = {
 export type ParkingJamDifficultyAssessment =
   | {
       status: "rated";
-      modelVersion: typeof PARKING_JAM_DIFFICULTY_MODEL_VERSION;
+      modelVersion: typeof PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION;
       difficulty: ParkingJamDifficulty;
     }
   | {
       status: "unsupported";
-      modelVersion: typeof PARKING_JAM_DIFFICULTY_MODEL_VERSION;
+      modelVersion: typeof PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION;
     };
 
 export type ParkingJamReviewDifficultyLoads = {
@@ -237,7 +239,7 @@ export function assessParkingJamDifficulty(
   ) {
     return {
       status: "unsupported",
-      modelVersion: PARKING_JAM_DIFFICULTY_MODEL_VERSION,
+      modelVersion: PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION,
     };
   }
 
@@ -251,7 +253,7 @@ export function assessParkingJamDifficulty(
   if (isEasy) {
     return {
       status: "rated",
-      modelVersion: PARKING_JAM_DIFFICULTY_MODEL_VERSION,
+      modelVersion: PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION,
       difficulty: "easy",
     };
   }
@@ -269,14 +271,14 @@ export function assessParkingJamDifficulty(
   if (hasDeepDependencies || hasConstrainedOrder) {
     return {
       status: "rated",
-      modelVersion: PARKING_JAM_DIFFICULTY_MODEL_VERSION,
+      modelVersion: PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION,
       difficulty: "hard",
     };
   }
 
   return {
     status: "rated",
-    modelVersion: PARKING_JAM_DIFFICULTY_MODEL_VERSION,
+    modelVersion: PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION,
     difficulty: "normal",
   };
 }
