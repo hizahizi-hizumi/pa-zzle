@@ -2,24 +2,26 @@ import { useLocation } from "react-router";
 
 import { Button } from "@/components/ui/button";
 import { Link } from "@/router";
-import {
-  MissingPageJigsaw,
-  type MissingPageJigsawVariant,
-} from "@/views/NotFoundView/MissingPageJigsaw";
+import { Board404Typography } from "@/views/NotFoundView/MissingPageJigsaw/Board404Typography";
+import { WholePageJigsaw404 } from "@/views/NotFoundView/MissingPageJigsaw/WholePageJigsaw404";
 
-function resolveJigsawVariant(search: string): MissingPageJigsawVariant {
-  return new URLSearchParams(search).get("variant") === "board"
-    ? "board"
-    : "classic";
+function resolveVariant(search: string) {
+  return new URLSearchParams(search).get("variant") === "page"
+    ? "page"
+    : "font-color";
 }
 
 export function NotFoundView() {
   const location = useLocation();
-  const jigsawVariant = resolveJigsawVariant(location.search);
+  const variant = resolveVariant(location.search);
+
+  if (variant === "page") {
+    return <WholePageJigsaw404 />;
+  }
 
   return (
     <section className="mx-auto flex max-w-xl flex-col items-center gap-8 py-8 text-center sm:gap-10 sm:py-12">
-      <MissingPageJigsaw variant={jigsawVariant} />
+      <Board404Typography />
 
       <h1 className="text-screen-title">ページが見つかりません</h1>
 
