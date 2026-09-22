@@ -1,0 +1,42 @@
+name: Semantic Lint Accuracy Few Shot
+
+on:
+  push:
+    branches:
+      - experiment/semantic-lint-accuracy-few-shot-20260922
+
+permissions:
+  contents: read
+
+jobs:
+  few-shot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+
+      - name: Install semantic lint dependencies
+        working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck semantic lint
+        run: bun run --cwd tools/semantic-lint typecheck
+
+      - name: Test semantic lint
+        run: bun run --cwd tools/semantic-lint test
+
+      - name: Run tuned benchmark with few-shot
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- candidate-anchor --benchmark .semantic-lint/poc/benchmark-few-shot.yaml --repeat 10
+
+      - name: Run holdout benchmark with few-shot
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- candidate-anchor --benchmark .semantic-lint/poc/holdout/benchmark-few-shot.yaml --repeat 10
