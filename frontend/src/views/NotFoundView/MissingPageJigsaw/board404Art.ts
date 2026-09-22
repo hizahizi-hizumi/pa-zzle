@@ -1,0 +1,19 @@
+export const BOARD_X = 30;
+export const BOARD_Y = 12;
+export const BOARD_CELL_SIZE = 52;
+export const BOARD_GRID_SIZE = 5;
+export const BOARD_SIZE = BOARD_CELL_SIZE * BOARD_GRID_SIZE;
+
+export const FOUR_GLYPH_PATH =
+  "M754 1176 332 551H754ZM690 1493H1118V551H1331V272H1118V0H754V272H92V602Z";
+export const ZERO_GLYPH_PATH =
+  "M942 748Q942 1028 889.5 1142.5Q837 1257 713 1257Q589 1257 536 1142.5Q483 1028 483 748Q483 465 536 349Q589 233 713 233Q836 233 889 349Q942 465 942 748ZM1327 745Q1327 374 1167 172.5Q1007 -29 713 -29Q418 -29 258 172.5Q98 374 98 745Q98 1117 258 1318.5Q418 1520 713 1520Q1007 1520 1167 1318.5Q1327 1117 1327 745Z";
+
+const glyphScaleX = 0.06;
+const glyphScaleY = -0.12;
+const glyphBaselineY = BOARD_Y + 222;
+
+export function glyphTransform(index: number) {
+  const x = BOARD_X + 2 + index * 85;
+  return `translate(${x} ${glyphBaselineY}) scale(${glyphScaleX} ${glyphScaleY})`;
+}

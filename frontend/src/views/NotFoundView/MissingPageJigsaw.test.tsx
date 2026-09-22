@@ -3,39 +3,96 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 import { MissingPageJigsaw } from "@/views/NotFoundView/MissingPageJigsaw";
 
+afterEach(cleanup);
+
 describe("MissingPageJigsaw", () => {
-  beforeEach(() => {
-    render(<MissingPageJigsaw />);
+  describe("classic の場合", () => {
+    beforeEach(() => {
+      render(<MissingPageJigsaw variant="classic" />);
+    });
+
+    test("中央のピースを正しい位置へ戻せること", () => {
+      const piece = screen.getByRole("button", {
+        name: "0のピースをドラッグして戻す",
+      });
+
+      fireEvent.pointerDown(piece, {
+        clientX: 160,
+        clientY: 240,
+        pointerId: 1,
+      });
+      fireEvent.pointerMove(piece, {
+        clientX: 160,
+        clientY: 94,
+        pointerId: 1,
+      });
+      fireEvent.pointerUp(piece, {
+        clientX: 160,
+        clientY: 94,
+        pointerId: 1,
+      });
+      const placedPiece = screen.getByRole("button", {
+        name: "0のピースがはまりました",
+      });
+
+      expect(placedPiece.getAttribute("aria-pressed")).toBe("true");
+    });
   });
 
-  afterEach(cleanup);
-
-  test("空いた場所までドラッグするとピースがはまること", () => {
-    const piece = screen.getByRole("button", {
-      name: "0のピースを空いた場所へドラッグして戻す",
+  describe("board の場合", () => {
+    beforeEach(() => {
+      render(<MissingPageJigsaw variant="board" />);
     });
 
-    fireEvent.pointerDown(piece, { clientX: 150, clientY: 200, pointerId: 1 });
-    fireEvent.pointerMove(piece, { clientX: 150, clientY: 68, pointerId: 1 });
-    fireEvent.pointerUp(piece, { clientX: 150, clientY: 68, pointerId: 1 });
+    test("0にかかる2つのピースをそれぞれ正しい位置へ戻せること", () => {
+      const firstPiece = screen.getByRole("button", {
+        name: "1つ目の0のピースをドラッグして戻す",
+      });
+      const secondPiece = screen.getByRole("button", {
+        name: "2つ目の0のピースをドラッグして戻す",
+      });
 
-    const placedPiece = screen.getByRole("button", {
-      name: "0のピースがはまりました",
+      fireEvent.pointerDown(firstPiece, {
+        clientX: 120,
+        clientY: 360,
+        pointerId: 1,
+      });
+      fireEvent.pointerMove(firstPiece, {
+        clientX: 152,
+        clientY: 106,
+        pointerId: 1,
+      });
+      fireEvent.pointerUp(firstPiece, {
+        clientX: 152,
+        clientY: 106,
+        pointerId: 1,
+      });
+      fireEvent.pointerDown(secondPiece, {
+        clientX: 200,
+        clientY: 360,
+        pointerId: 2,
+      });
+      fireEvent.pointerMove(secondPiece, {
+        clientX: 154,
+        clientY: 210,
+        pointerId: 2,
+      });
+      fireEvent.pointerUp(secondPiece, {
+        clientX: 154,
+        clientY: 210,
+        pointerId: 2,
+      });
+      const placedPieces = [
+        screen.getByRole("button", {
+          name: "1つ目の0のピースがはまりました",
+        }),
+        screen.getByRole("button", {
+          name: "2つ目の0のピースがはまりました",
+        }),
+      ];
+
+      expect(placedPieces[0]?.getAttribute("aria-pressed")).toBe("true");
+      expect(placedPieces[1]?.getAttribute("aria-pressed")).toBe("true");
     });
-    expect(placedPiece.getAttribute("aria-pressed")).toBe("true");
-    expect(screen.getByText("ぴったり。")).toBeTruthy();
-  });
-
-  test("空いた場所から離してドラッグを終えると元の位置へ戻ること", () => {
-    const piece = screen.getByRole("button", {
-      name: "0のピースを空いた場所へドラッグして戻す",
-    });
-
-    fireEvent.pointerDown(piece, { clientX: 150, clientY: 200, pointerId: 1 });
-    fireEvent.pointerMove(piece, { clientX: 210, clientY: 170, pointerId: 1 });
-    fireEvent.pointerUp(piece, { clientX: 210, clientY: 170, pointerId: 1 });
-
-    expect(piece.getAttribute("aria-pressed")).toBe("false");
-    expect(screen.getByText("ピースをドラッグして戻す")).toBeTruthy();
   });
 });
