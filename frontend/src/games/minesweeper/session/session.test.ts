@@ -2,6 +2,7 @@ import type { MinesweeperProblem } from "../problem/problem";
 import {
   chordMinesweeperSessionCell,
   createMinesweeperSession,
+  getMinesweeperSessionVisibleCells,
   revealMinesweeperSessionCell,
   toggleMinesweeperSessionFlag,
 } from "./session";
@@ -57,5 +58,23 @@ describe("MinesweeperSession operations", () => {
 
     expect(result.status).toBe("cleared");
     expect(result.finishedAt).toBe(300);
+  });
+
+  test("クリア後は未旗の地雷を結果として表示できること", () => {
+    const cleared = chordMinesweeperSessionCell(
+      toggleMinesweeperSessionFlag(initialSession, 0),
+      1,
+      300,
+    );
+    const unflaggedCleared = {
+      ...cleared,
+      puzzleState: {
+        ...cleared.puzzleState,
+        flaggedCellIndices: [],
+      },
+    };
+    const result = getMinesweeperSessionVisibleCells(unflaggedCleared);
+
+    expect(result[0]).toEqual({ state: "mine" });
   });
 });

@@ -49,6 +49,10 @@ export function MinesweeperBoard({
       return;
     }
 
+    if (cell.state === "mine" || cell.state === "exploded") {
+      return;
+    }
+
     if (mode === "flag") {
       onToggleFlag(cellIndex);
       return;
@@ -57,22 +61,32 @@ export function MinesweeperBoard({
     onRevealCell(cellIndex);
   }
 
+  function handleCellFlagPress(cellIndex: number): void {
+    const cell = cells[cellIndex];
+    if (cell?.state === "hidden" || cell?.state === "flagged") {
+      onToggleFlag(cellIndex);
+    }
+  }
+
   return (
     <div
       role="group"
       aria-label="マインスイーパー盤面"
-      className="grid w-full max-w-[25.5rem] overflow-hidden rounded-lg border border-border bg-border shadow-raised"
+      className="grid w-full max-w-[27rem] gap-px overflow-hidden rounded-lg bg-slate-300 p-px shadow-raised dark:bg-slate-600"
       style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
     >
-      {cells.map((cell, cellIndex) => (
-        <MinesweeperCell
-          key={getCellKey(columns, cellIndex)}
-          cellIndex={cellIndex}
-          view={cell}
-          disabled={disabled}
-          onPress={handleCellPress}
-        />
-      ))}
+      {cells.map(function renderCell(cell, cellIndex) {
+        return (
+          <MinesweeperCell
+            key={getCellKey(columns, cellIndex)}
+            cellIndex={cellIndex}
+            view={cell}
+            disabled={disabled}
+            onPress={handleCellPress}
+            onFlagPress={handleCellFlagPress}
+          />
+        );
+      })}
     </div>
   );
 }

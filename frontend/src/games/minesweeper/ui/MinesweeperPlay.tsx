@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
-import { Button } from "@/components/ui/button";
 import type {
   MinesweeperSessionStatus,
   MinesweeperVisibleCell,
@@ -10,6 +9,7 @@ import {
   MinesweeperBoard,
   type MinesweeperInputMode,
 } from "./board/MinesweeperBoard";
+import { MinesweeperInputModeControl } from "./MinesweeperPlay/MinesweeperInputModeControl";
 import { MinesweeperPlayHeader } from "./MinesweeperPlay/MinesweeperPlayHeader";
 import { MinesweeperStatusPanel } from "./MinesweeperPlay/MinesweeperStatusPanel";
 
@@ -42,6 +42,11 @@ export function MinesweeperPlay({
 }: MinesweeperPlayProps) {
   const [mode, setMode] = useState<MinesweeperInputMode>("reveal");
 
+  function handleReplay(): void {
+    setMode("reveal");
+    onReplay();
+  }
+
   return (
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
       <BrandIdentityHeader />
@@ -50,7 +55,7 @@ export function MinesweeperPlay({
         flagCount={flagCount}
         onBackToHome={onBackToHome}
       />
-      <main className="flex min-h-0 flex-1 items-center justify-center px-3 py-2 sm:px-6">
+      <main className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 px-2 py-3 sm:px-6">
         <MinesweeperBoard
           rows={rows}
           columns={columns}
@@ -61,32 +66,12 @@ export function MinesweeperPlay({
           onToggleFlag={onToggleFlag}
           onChordCell={onChordCell}
         />
+        {status === "playing" ? (
+          <MinesweeperInputModeControl mode={mode} onChange={setMode} />
+        ) : (
+          <MinesweeperStatusPanel status={status} onReplay={handleReplay} />
+        )}
       </main>
-      <footer className="grid shrink-0 gap-3 px-4 pb-4 pt-2">
-        <MinesweeperStatusPanel status={status} onReplay={onReplay} />
-        <div
-          role="group"
-          aria-label="操作モード"
-          className="mx-auto grid w-full max-w-64 grid-cols-2 gap-2"
-        >
-          <Button
-            variant={mode === "reveal" ? "secondary" : "outline"}
-            aria-pressed={mode === "reveal"}
-            onClick={() => setMode("reveal")}
-            disabled={status !== "playing"}
-          >
-            開示
-          </Button>
-          <Button
-            variant={mode === "flag" ? "secondary" : "outline"}
-            aria-pressed={mode === "flag"}
-            onClick={() => setMode("flag")}
-            disabled={status !== "playing"}
-          >
-            旗
-          </Button>
-        </div>
-      </footer>
     </section>
   );
 }

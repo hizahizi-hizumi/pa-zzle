@@ -6,6 +6,7 @@ import { getMinesweeperCellCount } from "../puzzle/board";
 import {
   getAdjacentMinesweeperMineCount,
   isMinesweeperCleared,
+  isMinesweeperMine,
 } from "../puzzle/rules";
 import type { MinesweeperPuzzleState } from "../puzzle/state";
 import {
@@ -20,6 +21,7 @@ export type MinesweeperVisibleCell =
   | { state: "hidden" }
   | { state: "flagged" }
   | { state: "revealed"; adjacentMineCount: number }
+  | { state: "mine" }
   | { state: "exploded" };
 
 export type MinesweeperSession = {
@@ -83,6 +85,12 @@ function getVisibleCell(
         cellIndex,
       ),
     };
+  }
+  if (
+    session.status === "cleared" &&
+    isMinesweeperMine(session.problem.board, cellIndex)
+  ) {
+    return { state: "mine" };
   }
   return { state: "hidden" };
 }
@@ -179,6 +187,8 @@ export function getMinesweeperSessionVisibleCells(
 ): MinesweeperVisibleCell[] {
   return Array.from(
     { length: getMinesweeperCellCount(session.problem.board) },
-    (_, cellIndex) => getVisibleCell(session, cellIndex),
+    function getVisibleCellAtIndex(_, cellIndex) {
+      return getVisibleCell(session, cellIndex);
+    },
   );
 }
