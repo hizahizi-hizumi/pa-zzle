@@ -4,6 +4,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 
 import { InternalDiagnosticsDialog } from "./InternalDiagnosticsDialog";
@@ -14,6 +15,7 @@ afterEach(() => {
 });
 
 describe("InternalDiagnosticsDialog", () => {
+  let dialog: HTMLElement;
   let onClose: () => void;
   let writeText: (text: string) => Promise<void>;
 
@@ -36,21 +38,26 @@ describe("InternalDiagnosticsDialog", () => {
         onClose={onClose}
       />,
     );
+    dialog = screen.getByRole("dialog");
   });
 
   test("診断情報を表示して再現用JSONをコピーできること", async () => {
-    fireEvent.click(screen.getByRole("button", { name: "再現用JSONをコピー" }));
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "再現用JSONをコピー" }),
+    );
 
     await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
     expect(writeText).toHaveBeenCalledWith('{"game":"test"}');
-    expect(screen.getByText("diagnostics-ui-seed")).toBeTruthy();
-    expect(screen.getByText("条件表示")).toBeTruthy();
-    expect(screen.getByText("abcdef1234567890")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "コピーしました" })).toBeTruthy();
+    expect(within(dialog).getByText("diagnostics-ui-seed")).toBeTruthy();
+    expect(within(dialog).getByText("条件表示")).toBeTruthy();
+    expect(within(dialog).getByText("abcdef1234567890")).toBeTruthy();
+    expect(
+      within(dialog).getByRole("button", { name: "コピーしました" }),
+    ).toBeTruthy();
   });
 
   test("閉じる操作を通知すること", () => {
-    fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "閉じる" }));
 
     expect(onClose).toHaveBeenCalledOnce();
   });

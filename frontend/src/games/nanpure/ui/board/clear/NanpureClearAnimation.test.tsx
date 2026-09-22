@@ -8,18 +8,23 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-test("動きを減らす設定ではクリア演出を待たずに完了通知すること", () => {
-  vi.stubGlobal(
-    "matchMedia",
-    vi.fn(() => ({ matches: true }) as MediaQueryList),
-  );
-  const onComplete = vi.fn();
+describe("動きを減らす設定の場合", () => {
+  let onComplete: () => void;
 
-  render(
-    <NanpureClearAnimation active onComplete={onComplete}>
-      <div>盤面</div>
-    </NanpureClearAnimation>,
-  );
+  beforeEach(() => {
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({ matches: true }) as MediaQueryList),
+    );
+    onComplete = vi.fn();
+    render(
+      <NanpureClearAnimation active onComplete={onComplete}>
+        <div>盤面</div>
+      </NanpureClearAnimation>,
+    );
+  });
 
-  expect(onComplete).toHaveBeenCalledOnce();
+  test("クリア演出を待たずに完了通知すること", () => {
+    expect(onComplete).toHaveBeenCalledOnce();
+  });
 });

@@ -59,6 +59,8 @@ const advancedProblemClues = boardFromRows([
 ]);
 
 describe("traceNanpureHumanSolve", () => {
+  const advancedClassification = classifyNanpureSolutions(advancedProblemClues);
+
   test("基礎手筋だけで解ける問題を最後まで解くこと", () => {
     const result = traceNanpureHumanSolve(basicProblemClues);
 
@@ -69,10 +71,9 @@ describe("traceNanpureHumanSolve", () => {
   });
 
   test("対応済み手筋で進めなくなった問題を推測せず停止すること", () => {
-    const classification = classifyNanpureSolutions(advancedProblemClues);
     const result = traceNanpureHumanSolve(advancedProblemClues);
 
-    expect(classification.status).toBe("unique");
+    expect(advancedClassification.status).toBe("unique");
     expect(result.status).toBe("stalled");
     expect(result.features.solvedWithSupportedTechniques).toBe(false);
     expect(result.board).not.toEqual(expectedSolution);
@@ -85,13 +86,20 @@ describe("traceNanpureHumanSolve", () => {
     expect(second).toEqual(first);
   });
 
-  test("解法元の盤面を変更しないこと", () => {
-    const board = [...basicProblemClues];
-    const before = [...board];
+  describe("解法元の盤面を渡した場合", () => {
+    let board: NanpureBoard;
+    let before: NanpureBoard;
 
-    traceNanpureHumanSolve(board);
+    beforeEach(() => {
+      board = [...basicProblemClues];
+      before = [...board];
+    });
 
-    expect(board).toEqual(before);
+    test("解法元の盤面を変更しないこと", () => {
+      traceNanpureHumanSolve(board);
+
+      expect(board).toEqual(before);
+    });
   });
 
   test("各手順に順序と候補変化を記録すること", () => {

@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 
 import { GameSelectionGallery } from "@/components/GameSelectionGallery";
@@ -26,38 +32,43 @@ function renderGallery() {
   );
 }
 
-test("最初のパズルをヒーローとして表示すること", () => {
-  renderGallery();
+describe("GameSelectionGallery", () => {
+  let puzzleList: HTMLElement;
 
-  const heroLink = screen.getByRole("link", {
-    name: "ウォーターソートを遊ぶ",
+  beforeEach(() => {
+    renderGallery();
+    puzzleList = screen.getByRole("navigation", { name: "パズル一覧" });
   });
 
-  expect(heroLink.getAttribute("href")).toBe("/puzzles/water-sort");
-  expect(heroLink.querySelector('svg[data-game="water-sort"]')).toBeTruthy();
-  expect(
-    screen
-      .getByRole("button", { name: "ウォーターソートを選択" })
-      .getAttribute("aria-pressed"),
-  ).toBe("true");
-});
+  test("最初のパズルをヒーローとして表示すること", () => {
+    const heroLink = screen.getByRole("link", {
+      name: "ウォーターソートを遊ぶ",
+    });
+    const waterSortButton = within(puzzleList).getByRole("button", {
+      name: "ウォーターソートを選択",
+    });
 
-test("候補を選ぶとヒーローを切り替えること", () => {
-  renderGallery();
-  const nanpureButton = screen.getByRole("button", { name: "ナンプレを選択" });
+    expect(heroLink.getAttribute("href")).toBe("/puzzles/water-sort");
+    expect(heroLink.querySelector('svg[data-game="water-sort"]')).toBeTruthy();
+    expect(waterSortButton.getAttribute("aria-pressed")).toBe("true");
+  });
 
-  fireEvent.click(nanpureButton);
+  test("候補を選ぶとヒーローを切り替えること", () => {
+    const nanpureButton = within(puzzleList).getByRole("button", {
+      name: "ナンプレを選択",
+    });
 
-  const heroLink = screen.getByRole("link", { name: "ナンプレを遊ぶ" });
-  expect(heroLink.getAttribute("href")).toBe("/puzzles/nanpure");
-  expect(heroLink.querySelector('svg[data-game="nanpure"]')).toBeTruthy();
-  expect(nanpureButton.getAttribute("aria-pressed")).toBe("true");
-});
+    fireEvent.click(nanpureButton);
+    const heroLink = screen.getByRole("link", { name: "ナンプレを遊ぶ" });
 
-test("記録画面への導線を表示すること", () => {
-  renderGallery();
+    expect(heroLink.getAttribute("href")).toBe("/puzzles/nanpure");
+    expect(heroLink.querySelector('svg[data-game="nanpure"]')).toBeTruthy();
+    expect(nanpureButton.getAttribute("aria-pressed")).toBe("true");
+  });
 
-  const recordsLink = screen.getByRole("link", { name: "記録" });
+  test("記録画面への導線を表示すること", () => {
+    const recordsLink = screen.getByRole("link", { name: "記録" });
 
-  expect(recordsLink.getAttribute("href")).toBe("/records");
+    expect(recordsLink.getAttribute("href")).toBe("/records");
+  });
 });

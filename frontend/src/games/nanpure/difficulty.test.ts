@@ -46,10 +46,10 @@ describe("parseNanpureDifficulty", () => {
 
 describe("assessNanpureDifficulty", () => {
   const cases = [
-    [14.6, "easy"],
-    [14.59, "normal"],
-    [9.37, "normal"],
-    [9.36, "hard"],
+    [createDifficultyAnalysis(14.6), "easy"],
+    [createDifficultyAnalysis(14.59), "normal"],
+    [createDifficultyAnalysis(9.37), "normal"],
+    [createDifficultyAnalysis(9.36), "hard"],
   ] as const;
   const unsupportedAnalysis: NanpureDifficultyAnalysis = {
     ...createDifficultyAnalysis(9),
@@ -57,9 +57,8 @@ describe("assessNanpureDifficulty", () => {
   };
 
   test.each(cases)(
-    "平均の次の一手候補数 %s を %s と分類すること",
-    (meanAvailablePlacementCount, difficulty) => {
-      const analysis = createDifficultyAnalysis(meanAvailablePlacementCount);
+    "入力解析 %s を %s と分類すること",
+    (analysis, difficulty) => {
       const result = assessNanpureDifficulty(analysis);
 
       expect(result).toMatchObject({ status: "rated", difficulty });

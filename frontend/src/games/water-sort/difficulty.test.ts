@@ -26,7 +26,10 @@ const baseAnalysis: WaterSortDifficultyAnalysis = {
 };
 
 describe("parseWaterSortDifficulty", () => {
-  test.each(["easy", "normal", "hard"] as const)(
+  const definedCases = ["easy", "normal", "hard"] as const;
+  const undefinedCases = [undefined, "", "impossible"] as const;
+
+  test.each(definedCases)(
     "%s を定義済みの難易度として受理すること",
     (input) => {
       const result = parseWaterSortDifficulty(input);
@@ -35,7 +38,7 @@ describe("parseWaterSortDifficulty", () => {
     },
   );
 
-  test.each([undefined, "", "impossible"])(
+  test.each(undefinedCases)(
     "%s を未定義の難易度として拒否すること",
     (input) => {
       const result = parseWaterSortDifficulty(input);
@@ -46,73 +49,70 @@ describe("parseWaterSortDifficulty", () => {
 });
 
 describe("assessWaterSortDifficulty", () => {
-  test("準備手数が少なく空き容量と誤手の代償に余裕がある問題を easy に分類すること", () => {
-    const analysis: WaterSortDifficultyAnalysis = {
-      ...baseAnalysis,
-      preparationMoveCount: 2,
-      averageEmptyBottlePressure: 0.6,
-    };
+  const easyAnalysis: WaterSortDifficultyAnalysis = {
+    ...baseAnalysis,
+    preparationMoveCount: 2,
+    averageEmptyBottlePressure: 0.6,
+  };
+  const hardAnalysis: WaterSortDifficultyAnalysis = {
+    ...baseAnalysis,
+    preparationMoveCount: 4,
+    averageEmptyBottlePressure: 0.82,
+    representativeChoiceRisk: {
+      ...baseAnalysis.representativeChoiceRisk,
+      optimalChoiceRatio: 0.5,
+      detourChoiceRatio: 0.25,
+      deadEndChoiceRatio: 0.25,
+    },
+  };
+  const longButForgivingAnalysis: WaterSortDifficultyAnalysis = {
+    ...baseAnalysis,
+    shortestMoveCount: 40,
+    minimumMergeMoveCount: 36,
+    preparationMoveCount: 4,
+    preparationMoveRatio: 0.1,
+    averageEmptyBottlePressure: 0.82,
+    representativeChoiceRisk: {
+      ...baseAnalysis.representativeChoiceRisk,
+      optimalChoiceRatio: 0.75,
+      detourChoiceRatio: 0.25,
+      deadEndChoiceRatio: 0,
+      maximumDetourMoves: 1,
+    },
+  };
+  const unresolvedAnalysis: WaterSortDifficultyAnalysis = {
+    ...baseAnalysis,
+    preparationMoveCount: 4,
+    averageEmptyBottlePressure: 0.9,
+    representativeChoiceRisk: {
+      ...baseAnalysis.representativeChoiceRisk,
+      unresolvedChoiceCount: 1,
+      optimalChoiceRatio: 0.5,
+      detourChoiceRatio: 0.25,
+      deadEndChoiceRatio: 0.25,
+    },
+  };
 
-    const assessment = assessWaterSortDifficulty(analysis);
+  test("準備手数が少なく空き容量と誤手の代償に余裕がある問題を easy に分類すること", () => {
+    const assessment = assessWaterSortDifficulty(easyAnalysis);
 
     expect(assessment.difficulty).toBe("easy");
   });
 
   test("準備負荷と空き容量圧力が高く危険な誤手を含む問題を hard に分類すること", () => {
-    const analysis: WaterSortDifficultyAnalysis = {
-      ...baseAnalysis,
-      preparationMoveCount: 4,
-      averageEmptyBottlePressure: 0.82,
-      representativeChoiceRisk: {
-        ...baseAnalysis.representativeChoiceRisk,
-        optimalChoiceRatio: 0.5,
-        detourChoiceRatio: 0.25,
-        deadEndChoiceRatio: 0.25,
-      },
-    };
-
-    const assessment = assessWaterSortDifficulty(analysis);
+    const assessment = assessWaterSortDifficulty(hardAnalysis);
 
     expect(assessment.difficulty).toBe("hard");
   });
 
   test("問題が長くても誤手の代償が小さい問題を hard に分類しないこと", () => {
-    const analysis: WaterSortDifficultyAnalysis = {
-      ...baseAnalysis,
-      shortestMoveCount: 40,
-      minimumMergeMoveCount: 36,
-      preparationMoveCount: 4,
-      preparationMoveRatio: 0.1,
-      averageEmptyBottlePressure: 0.82,
-      representativeChoiceRisk: {
-        ...baseAnalysis.representativeChoiceRisk,
-        optimalChoiceRatio: 0.75,
-        detourChoiceRatio: 0.25,
-        deadEndChoiceRatio: 0,
-        maximumDetourMoves: 1,
-      },
-    };
-
-    const assessment = assessWaterSortDifficulty(analysis);
+    const assessment = assessWaterSortDifficulty(longButForgivingAnalysis);
 
     expect(assessment.difficulty).toBe("normal");
   });
 
   test("誤手解析に未解決の選択肢が残る問題を境界の難易度へ断定しないこと", () => {
-    const analysis: WaterSortDifficultyAnalysis = {
-      ...baseAnalysis,
-      preparationMoveCount: 4,
-      averageEmptyBottlePressure: 0.9,
-      representativeChoiceRisk: {
-        ...baseAnalysis.representativeChoiceRisk,
-        unresolvedChoiceCount: 1,
-        optimalChoiceRatio: 0.5,
-        detourChoiceRatio: 0.25,
-        deadEndChoiceRatio: 0.25,
-      },
-    };
-
-    const assessment = assessWaterSortDifficulty(analysis);
+    const assessment = assessWaterSortDifficulty(unresolvedAnalysis);
 
     expect(assessment.difficulty).toBe("normal");
   });

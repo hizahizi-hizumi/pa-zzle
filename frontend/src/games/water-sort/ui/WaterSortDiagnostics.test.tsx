@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 
 import type { WaterSortDiagnosticSnapshot } from "@/games/water-sort/diagnostics";
 
@@ -24,13 +24,18 @@ const snapshot: WaterSortDiagnosticSnapshot = {
 afterEach(cleanup);
 
 describe("WaterSortDiagnostics", () => {
+  let dialog: HTMLElement;
+
   beforeEach(() => {
     render(<WaterSortDiagnostics snapshot={snapshot} onClose={vi.fn()} />);
+    dialog = screen.getByRole("dialog");
   });
 
   test("ウォーターソート固有の診断値を共通ダイアログへ表示すること", () => {
-    expect(screen.getByText("ふつう")).toBeTruthy();
-    expect(screen.getByText("diagnostics-ui-seed")).toBeTruthy();
-    expect(screen.getByText("色 5 / 容量 4 / 空 2")).toBeTruthy();
+    const diagnostics = within(dialog);
+
+    expect(diagnostics.getByText("ふつう")).toBeTruthy();
+    expect(diagnostics.getByText("diagnostics-ui-seed")).toBeTruthy();
+    expect(diagnostics.getByText("色 5 / 容量 4 / 空 2")).toBeTruthy();
   });
 });

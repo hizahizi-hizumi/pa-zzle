@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 
 import type { NanpureDiagnosticSnapshot } from "@/games/nanpure/diagnostics";
 
@@ -20,13 +20,18 @@ const snapshot: NanpureDiagnosticSnapshot = {
 afterEach(cleanup);
 
 describe("NanpureDiagnostics", () => {
+  let dialog: HTMLElement;
+
   beforeEach(() => {
     render(<NanpureDiagnostics snapshot={snapshot} onClose={vi.fn()} />);
+    dialog = screen.getByRole("dialog");
   });
 
   test("ナンプレ固有の診断値を共通ダイアログへ表示すること", () => {
-    expect(screen.getByText("ふつう")).toBeTruthy();
-    expect(screen.getByText("diagnostics-ui-seed")).toBeTruthy();
-    expect(screen.getByText("ヒント 32")).toBeTruthy();
+    const diagnostics = within(dialog);
+
+    expect(diagnostics.getByText("ふつう")).toBeTruthy();
+    expect(diagnostics.getByText("diagnostics-ui-seed")).toBeTruthy();
+    expect(diagnostics.getByText("ヒント 32")).toBeTruthy();
   });
 });

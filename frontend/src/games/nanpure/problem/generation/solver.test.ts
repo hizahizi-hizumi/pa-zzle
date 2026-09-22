@@ -35,6 +35,10 @@ const expectedSolution = boardFromRows([
 ]);
 
 describe("classifyNanpureSolutions", () => {
+  const unsolvableProblemClues = [...uniqueProblemClues];
+  unsolvableProblemClues[2] = 1;
+  const emptyBoard = Array.from({ length: 81 }, () => null);
+
   test("一意解の盤面から完成解を取得すること", () => {
     const result = classifyNanpureSolutions(uniqueProblemClues);
 
@@ -42,19 +46,14 @@ describe("classifyNanpureSolutions", () => {
   });
 
   test("一意解問題へ誤ったヒントを追加した盤面を解なしと判定すること", () => {
-    const unsolvable = [...uniqueProblemClues];
-    unsolvable[2] = 1;
-
-    const consistent = isNanpureBoardConsistent(unsolvable);
-    const result = classifyNanpureSolutions(unsolvable);
+    const consistent = isNanpureBoardConsistent(unsolvableProblemClues);
+    const result = classifyNanpureSolutions(unsolvableProblemClues);
 
     expect(consistent).toBe(true);
     expect(result).toEqual({ status: "unsolvable" });
   });
 
   test("空盤面を複数解と判定すること", () => {
-    const emptyBoard = Array.from({ length: 81 }, () => null);
-
     const result = classifyNanpureSolutions(emptyBoard);
 
     expect(result).toEqual({ status: "multiple" });
@@ -68,28 +67,42 @@ describe("findNanpureSolution", () => {
     expect(solution).toEqual(expectedSolution);
   });
 
-  test("探索元の盤面を変更しないこと", () => {
-    const board = [...uniqueProblemClues];
-    const before = [...board];
+  describe("探索元の盤面を渡した場合", () => {
+    let board: NanpureBoard;
+    let before: NanpureBoard;
 
-    findNanpureSolution(board);
+    beforeEach(() => {
+      board = [...uniqueProblemClues];
+      before = [...board];
+    });
 
-    expect(board).toEqual(before);
+    test("探索元の盤面を変更しないこと", () => {
+      findNanpureSolution(board);
+
+      expect(board).toEqual(before);
+    });
   });
 
-  test("空盤面から妥当な完成盤を構成できること", () => {
+  describe("空盤面から探索する場合", () => {
     const emptyBoard = Array.from({ length: 81 }, () => null);
     const randomValues = [0.1, 0.7, 0.3, 0.9];
-    let randomIndex = 0;
-    function random() {
-      const value = randomValues[randomIndex % randomValues.length]!;
-      randomIndex += 1;
-      return value;
-    }
+    let randomIndex: number;
+    let random: () => number;
 
-    const solution = findNanpureSolution(emptyBoard, { random });
-    const solved = solution ? isNanpureSolved(solution) : false;
+    beforeEach(() => {
+      randomIndex = 0;
+      random = () => {
+        const value = randomValues[randomIndex % randomValues.length]!;
+        randomIndex += 1;
+        return value;
+      };
+    });
 
-    expect(solved).toBe(true);
+    test("妥当な完成盤を構成できること", () => {
+      const solution = findNanpureSolution(emptyBoard, { random });
+      const solved = solution ? isNanpureSolved(solution) : false;
+
+      expect(solved).toBe(true);
+    });
   });
 });
