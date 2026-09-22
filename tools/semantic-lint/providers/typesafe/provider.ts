@@ -103,6 +103,11 @@ export function buildRequest(
             "Use state.file only as surrounding evidence to understand the target, including its containment and semantic role.",
           ];
 
+    const propagationInstruction =
+      batch.stateMode === "subjects-only"
+        ? "A violation elsewhere in the available context does not make the current target a violation."
+        : "A violation elsewhere in the file does not make the current target a violation.";
+
     questions[questionId] = {
       type: "choice",
       instructions: [
@@ -110,7 +115,7 @@ export function buildRequest(
         "Evaluate the criteria against that target itself.",
         ...contextInstructions,
         "If the criteria describe a container, use its descendants or siblings as evidence about whether that container itself satisfies the criteria.",
-        "A violation elsewhere in the available context does not make the current target a violation.",
+        propagationInstruction,
         "Do not transfer a violation from an ancestor, descendant, or sibling to the current target unless the criteria explicitly define the target container itself as the violation.",
         "",
         request.predicate.instruction,
