@@ -2,6 +2,7 @@ import type { CandidateAnchorBenchmarkResult } from "./run.ts";
 
 export function renderCandidateAnchorBenchmark(
   result: CandidateAnchorBenchmarkResult,
+  options: { verbose?: boolean } = {},
 ): string {
   const lines: string[] = ["Candidate + Anchor PoC", ""];
 
@@ -17,6 +18,17 @@ export function renderCandidateAnchorBenchmark(
       lines.push(
         `  actualRanges=${item.findings.map((finding) => formatRange(finding.range)).join(", ") || "none"}`,
       );
+    }
+
+    if (options.verbose) {
+      lines.push("  decisions:");
+
+      for (const decision of item.decisions) {
+        lines.push(
+          `    ${decision.stage} ${decision.symbol ?? decision.subjectId}: ${decision.decision} confidence=${percentage(decision.confidence)} violation=${percentage(decision.probabilities.violation)}`,
+          `      source=${JSON.stringify(decision.source)}`,
+        );
+      }
     }
 
     lines.push("");

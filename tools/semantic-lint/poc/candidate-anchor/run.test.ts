@@ -41,6 +41,20 @@ describe("runCandidateAnchorBenchmark", () => {
       endColumn: 30,
     });
     expect(result.metrics.localizationDecisions).toBeGreaterThan(0);
+    expect(result.cases[0]?.decisions).toContainEqual(
+      expect.objectContaining({
+        stage: "classification",
+        symbol: "variable(values)",
+        decision: "violation",
+      }),
+    );
+    expect(result.cases[0]?.decisions).toContainEqual(
+      expect.objectContaining({
+        stage: "localization",
+        symbol: "variable(values):statement",
+        decision: "violation",
+      }),
+    );
   });
 });
 

@@ -22,6 +22,16 @@ import {
   extractCandidateAnchors,
 } from "./extract.ts";
 
+export type CandidateAnchorDecision = {
+  stage: "classification" | "localization";
+  subjectId: string;
+  symbol?: string;
+  source: string;
+  decision: DecisionBatchResult["decisions"][string]["decision"];
+  confidence: number;
+  probabilities: DecisionBatchResult["decisions"][string]["probabilities"];
+};
+
 export type CandidateAnchorCaseResult = {
   name: string;
   ruleId: string;
@@ -37,6 +47,7 @@ export type CandidateAnchorCaseResult = {
   matchedFindings: number;
   exact: boolean;
   findings: Finding[];
+  decisions: CandidateAnchorDecision[];
 };
 
 export type CandidateAnchorBenchmarkResult = {
@@ -208,6 +219,7 @@ async function runCandidateAnchorCase(options: {
     matchedFindings: comparison.matched,
     exact: comparison.exact,
     findings,
+    decisions: [...classification.decisions, ...localization.decisionDetails],
   };
 }
 
@@ -220,11 +232,12 @@ async function evaluateCandidates(options: {
 }): Promise<{
   results: Map<string, EvaluatedSubject["result"]>;
   usage: BatchUsage;
+  decisions: CandidateAnchorDecision[];
 }> {
   const { document, candidates, rule, provider, maxDecisionsPerRequest } = options;
   const subjects = candidates.map((candidate) => candidateSubject(document, candidate));
 
-  return evaluateSubjects({
+  const evaluated = await evaluateSubjects({
     document,
     subjects,
     predicateForSubject: () => rule.predicate,
@@ -232,6 +245,11 @@ async function evaluateCandidates(options: {
     provider,
     maxDecisionsPerRequest,
   });
+
+  return {
+    ...evaluated,
+    decisions: decisionDetails("classification", subjects, evaluated.results),
+  };
 }
 
 async function localizeViolations(options: {
@@ -244,6 +262,7 @@ async function localizeViolations(options: {
   anchors: Map<string, CandidateAnchor>;
   decisions: number;
   usage: BatchUsage;
+  decisionDetails: CandidateAnchorDecision[];
 }> {
   const { document, candidates, rule, provider, maxDecisionsPerRequest } = options;
   const anchors = candidates.flatMap((candidate) =>
@@ -292,6 +311,7 @@ async function localizeViolations(options: {
     anchors: selected,
     decisions: subjects.length,
     usage: evaluated.usage,
+    decisionDetails: decisionDetails("localization", subjects, evaluated.results),
   };
 }
 
@@ -415,6 +435,32 @@ function localizationPredicate(
         "file、candidate、anchor候補を見てもprimary locationとして適切か判断できない。",
     },
   };
+}
+
+function decisionDetails(
+  stage: CandidateAnchorDecision["stage"],
+  subjects: Subject[],
+  results: Map<string, EvaluatedSubject["result"]>,
+): CandidateAnchorDecision[] {
+  return subjects.flatMap((subject) => {
+    const result = results.get(subject.id);
+
+    if (!result) {
+      return [];
+    }
+
+    return [
+      {
+        stage,
+        subjectId: subject.id,
+        ...(subject.symbol === undefined ? {} : { symbol: subject.symbol }),
+        source: subject.source,
+        decision: result.decision,
+        confidence: result.confidence,
+        probabilities: result.probabilities,
+      },
+    ];
+  });
 }
 
 function dedupeFindings(findings: Finding[]): Finding[] {

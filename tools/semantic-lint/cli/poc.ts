@@ -20,7 +20,7 @@ export async function runPocCommand(args: string[]): Promise<number> {
 }
 
 async function runCandidateAnchorPoc(args: string[]): Promise<number> {
-  const { planOnly, repeat } = parseCandidateAnchorOptions(args);
+  const { planOnly, repeat, verbose } = parseCandidateAnchorOptions(args);
   const { projectRoot, config, rules } = await loadProjectContext();
   const benchmark = await loadCandidateAnchorBenchmark(
     resolve(projectRoot, ".semantic-lint/poc/benchmark.yaml"),
@@ -50,7 +50,7 @@ async function runCandidateAnchorPoc(args: string[]): Promise<number> {
       provider,
       maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
     });
-    process.stdout.write(renderCandidateAnchorBenchmark(result));
+    process.stdout.write(renderCandidateAnchorBenchmark(result, { verbose }));
   }
 
   return 0;
@@ -59,15 +59,22 @@ async function runCandidateAnchorPoc(args: string[]): Promise<number> {
 function parseCandidateAnchorOptions(args: string[]): {
   planOnly: boolean;
   repeat: number;
+  verbose: boolean;
 } {
   let planOnly = false;
   let repeat = 1;
+  let verbose = false;
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
 
     if (arg === "--plan-only") {
       planOnly = true;
+      continue;
+    }
+
+    if (arg === "--verbose") {
+      verbose = true;
       continue;
     }
 
@@ -86,7 +93,7 @@ function parseCandidateAnchorOptions(args: string[]): {
     throw new Error(`不明なcandidate-anchorオプションです: ${arg}`);
   }
 
-  return { planOnly, repeat };
+  return { planOnly, repeat, verbose };
 }
 
 async function renderCandidateAnchorPlan(options: {
