@@ -10,13 +10,19 @@ import {
 } from "./board";
 
 describe("isNanpureDigit", () => {
-  test.each([1, 5, 9])("1〜9の整数を数字として受理すること: %s", (value) => {
-    const result = isNanpureDigit(value);
+  const acceptedCases = [1, 5, 9] as const;
+  const rejectedCases = [0, 10, 1.5, null, "1"] as const;
 
-    expect(result).toBe(true);
-  });
+  test.each(acceptedCases)(
+    "1〜9の整数を数字として受理すること: %s",
+    (value) => {
+      const result = isNanpureDigit(value);
 
-  test.each([0, 10, 1.5, null, "1"])(
+      expect(result).toBe(true);
+    },
+  );
+
+  test.each(rejectedCases)(
     "1〜9以外の値を数字として拒否すること: %s",
     (value) => {
       const result = isNanpureDigit(value);
@@ -26,28 +32,45 @@ describe("isNanpureDigit", () => {
   );
 });
 
-test("セル番号から行・列・ブロックを算出できること", () => {
+describe("セル位置", () => {
   const cellIndex = 50;
 
-  const row = getNanpureRowIndex(cellIndex);
-  const column = getNanpureColumnIndex(cellIndex);
-  const block = getNanpureBlockIndex(cellIndex);
+  test("セル番号から行・列・ブロックを算出できること", () => {
+    const row = getNanpureRowIndex(cellIndex);
+    const column = getNanpureColumnIndex(cellIndex);
+    const block = getNanpureBlockIndex(cellIndex);
 
-  expect({ row, column, block }).toEqual({ row: 5, column: 5, block: 4 });
+    expect({ row, column, block }).toEqual({ row: 5, column: 5, block: 4 });
+  });
 });
 
-test("同じ行・列・ブロックのマスを関連マスとして判定すること", () => {
-  expect(areNanpureCellsRelated(0, 8)).toBe(true);
-  expect(areNanpureCellsRelated(0, 72)).toBe(true);
-  expect(areNanpureCellsRelated(0, 20)).toBe(true);
-  expect(areNanpureCellsRelated(0, 40)).toBe(false);
+describe("areNanpureCellsRelated", () => {
+  const cases = [
+    [0, 8, true],
+    [0, 72, true],
+    [0, 20, true],
+    [0, 40, false],
+  ] as const;
+
+  test.each(cases)(
+    "2つのマスの行・列・ブロック関係を判定すること: %i, %i",
+    (first, second, expected) => {
+      const result = areNanpureCellsRelated(first, second);
+
+      expect(result).toBe(expected);
+    },
+  );
 });
 
-test("81マスではない盤面を拒否すること", () => {
-  const board = Array.from({ length: NANPURE_CELL_COUNT - 1 }, () => null);
-  function act() {
-    return assertNanpureBoard(board as NanpureBoard);
-  }
+describe("assertNanpureBoard", () => {
+  const invalidBoard = Array.from(
+    { length: NANPURE_CELL_COUNT - 1 },
+    () => null,
+  ) as NanpureBoard;
 
-  expect(act).toThrow("Nanpure board must contain 81 cells");
+  test("81マスではない盤面を拒否すること", () => {
+    const act = () => assertNanpureBoard(invalidBoard);
+
+    expect(act).toThrow("Nanpure board must contain 81 cells");
+  });
 });

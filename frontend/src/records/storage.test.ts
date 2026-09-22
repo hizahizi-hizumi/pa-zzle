@@ -30,46 +30,62 @@ function createRecord(id: string): PlayRecord {
   };
 }
 
-test("保存したプレイ記録を読み出せること", () => {
-  const storage = createMemoryStorage();
-  const record = createRecord("record-1");
+describe("メモリ保存領域を使う場合", () => {
+  let storage: PlayRecordStorage;
+  let record: PlayRecord;
 
-  const saveStatus = appendPlayRecord(record, storage);
-  const records = readPlayRecords(storage);
+  beforeEach(() => {
+    storage = createMemoryStorage();
+    record = createRecord("record-1");
+  });
 
-  expect(saveStatus).toBe("saved");
-  expect(records).toEqual([record]);
-});
+  test("保存したプレイ記録を読み出せること", () => {
+    const saveStatus = appendPlayRecord(record, storage);
+    const records = readPlayRecords(storage);
 
-test("同じプレイ記録を重複保存しないこと", () => {
-  const storage = createMemoryStorage();
-  const record = createRecord("record-1");
-  appendPlayRecord(record, storage);
+    expect(saveStatus).toBe("saved");
+    expect(records).toEqual([record]);
+  });
 
-  const saveStatus = appendPlayRecord(record, storage);
-  const records = readPlayRecords(storage);
-
-  expect(saveStatus).toBe("duplicate");
-  expect(records).toHaveLength(1);
-});
-
-test("壊れた保存値を履歴として扱わないこと", () => {
-  const storage = createMemoryStorage("not-json");
-
-  const records = readPlayRecords(storage);
-
-  expect(records).toEqual([]);
-});
-
-test("保存領域へアクセスできなくても画面用の読み出しを継続できること", () => {
-  const localStorage = vi
-    .spyOn(window, "localStorage", "get")
-    .mockImplementation(() => {
-      throw new DOMException("denied", "SecurityError");
+  describe("同じプレイ記録を保存済みの場合", () => {
+    beforeEach(() => {
+      appendPlayRecord(record, storage);
     });
 
-  const records = readPlayRecords();
+    test("重複保存しないこと", () => {
+      const saveStatus = appendPlayRecord(record, storage);
+      const records = readPlayRecords(storage);
 
-  expect(records).toEqual([]);
-  localStorage.mockRestore();
+      expect(saveStatus).toBe("duplicate");
+      expect(records).toHaveLength(1);
+    });
+  });
+});
+
+describe("readPlayRecords", () => {
+  const brokenStorage = createMemoryStorage("not-json");
+
+  test("壊れた保存値を履歴として扱わないこと", () => {
+    const records = readPlayRecords(brokenStorage);
+
+    expect(records).toEqual([]);
+  });
+
+  describe("ブラウザ保存領域へアクセスできない場合", () => {
+    beforeEach(() => {
+      vi.spyOn(window, "localStorage", "get").mockImplementation(() => {
+        throw new DOMException("denied", "SecurityError");
+      });
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    test("画面用の読み出しを継続できること", () => {
+      const records = readPlayRecords();
+
+      expect(records).toEqual([]);
+    });
+  });
 });

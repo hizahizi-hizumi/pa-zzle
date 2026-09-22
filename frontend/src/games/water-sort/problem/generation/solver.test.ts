@@ -45,40 +45,47 @@ function shortestDistanceByBreadthFirstSearch(
   return null;
 }
 
-const shortestPathSamples = [
-  {
-    state: [[0, 1, 0, 1], [1, 0, 1, 0], [], []] satisfies WaterSortState,
-  },
-  {
-    state: [[0, 0, 1, 1], [1, 1, 0, 0], [], []] satisfies WaterSortState,
-  },
-  {
-    state: [
-      [0, 1, 2, 0],
-      [1, 2, 0, 1],
-      [2, 0, 1, 2],
-      [],
-      [],
-    ] satisfies WaterSortState,
-  },
-] as const;
+const solveAndApplyState: WaterSortState = [[0, 1, 0, 1], [1, 0, 1, 0], [], []];
+const comparisonState: WaterSortState = [
+  [3, 3, 2, 1],
+  [2, 1, 0, 3],
+  [0, 1, 0, 2],
+  [2, 1, 0, 3],
+  [],
+  [],
+];
+const reorderedComparisonState: WaterSortState = [
+  [0, 1, 0, 2],
+  [2, 1, 0, 3],
+  [2, 1, 0, 3],
+  [],
+  [],
+  [3, 3, 2, 1],
+];
+const invalidLimitOptions = { maxExpandedStates: 0.5 } as const;
+const reachedLimitOptions = { maxExpandedStates: 0 } as const;
 
 describe("solveWaterSort", () => {
-  test.each(shortestPathSamples)(
+  const shortestPathCases = [
+    [[0, 1, 0, 1], [1, 0, 1, 0], [], []] satisfies WaterSortState,
+    [[0, 0, 1, 1], [1, 1, 0, 0], [], []] satisfies WaterSortState,
+    [[0, 1, 2, 0], [1, 2, 0, 1], [2, 0, 1, 2], [], []] satisfies WaterSortState,
+  ].map((state) => ({
+    state,
+    expectedMoveCount: shortestDistanceByBreadthFirstSearch(state),
+  }));
+  test.each(shortestPathCases)(
     "幅優先探索と同じ最短手数を返すこと: %#",
-    ({ state }) => {
-      const expected = shortestDistanceByBreadthFirstSearch(state);
-
+    ({ state, expectedMoveCount }) => {
       const result = solveWaterSort(state);
 
       expect(result.status).toBe("solved");
-      expect(result.moves).toHaveLength(expected ?? 0);
+      expect(result.moves).toHaveLength(expectedMoveCount ?? 0);
     },
   );
 
   test("返した手順を入力盤面へ適用するとクリアできること", () => {
-    const initialState: WaterSortState = [[0, 1, 0, 1], [1, 0, 1, 0], [], []];
-    const result = solveWaterSort(initialState);
+    const result = solveWaterSort(solveAndApplyState);
 
     const finalState = result.moves.reduce<WaterSortState>((state, move) => {
       const nextState = applyWaterSortMove(state, move);
@@ -86,32 +93,16 @@ describe("solveWaterSort", () => {
         throw new Error("solver returned an illegal move");
       }
       return nextState;
-    }, initialState);
+    }, solveAndApplyState);
+    const cleared = isWaterSortCleared(finalState);
 
     expect(result.status).toBe("solved");
-    expect(isWaterSortCleared(finalState)).toBe(true);
+    expect(cleared).toBe(true);
   });
 
   test("ボトルの表示順を変えても同じ問題特徴量を返すこと", () => {
-    const state: WaterSortState = [
-      [3, 3, 2, 1],
-      [2, 1, 0, 3],
-      [0, 1, 0, 2],
-      [2, 1, 0, 3],
-      [],
-      [],
-    ];
-    const reorderedState: WaterSortState = [
-      [0, 1, 0, 2],
-      [2, 1, 0, 3],
-      [2, 1, 0, 3],
-      [],
-      [],
-      [3, 3, 2, 1],
-    ];
-
-    const result = solveWaterSort(state);
-    const reorderedResult = solveWaterSort(reorderedState);
+    const result = solveWaterSort(comparisonState);
+    const reorderedResult = solveWaterSort(reorderedComparisonState);
 
     expect(result.status).toBe("solved");
     expect(reorderedResult.status).toBe("solved");
@@ -119,10 +110,7 @@ describe("solveWaterSort", () => {
   });
 
   test("探索上限に整数以外を指定したら拒否すること", () => {
-    const initialState: WaterSortState = [[0, 1, 0, 1], [1, 0, 1, 0], [], []];
-    function act() {
-      return solveWaterSort(initialState, { maxExpandedStates: 0.5 });
-    }
+    const act = () => solveWaterSort(solveAndApplyState, invalidLimitOptions);
 
     expect(act).toThrow(
       "maxExpandedStates must be a non-negative integer or Infinity",
@@ -130,9 +118,7 @@ describe("solveWaterSort", () => {
   });
 
   test("探索上限へ到達したことを解なしと区別して返すこと", () => {
-    const initialState: WaterSortState = [[0, 1, 0, 1], [1, 0, 1, 0], [], []];
-
-    const result = solveWaterSort(initialState, { maxExpandedStates: 0 });
+    const result = solveWaterSort(solveAndApplyState, reachedLimitOptions);
 
     expect(result.status).toBe("limit-reached");
   });

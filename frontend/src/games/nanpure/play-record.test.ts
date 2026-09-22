@@ -24,9 +24,9 @@ function createRecord() {
   });
 }
 
-test("完了プレイの事実だけを保存用記録へ写すこと", () => {
-  const record = createRecord();
+const record = createRecord();
 
+test("完了プレイの事実だけを保存用記録へ写すこと", () => {
   const payload = record.payload;
 
   expect(payload).toEqual({
@@ -48,16 +48,12 @@ test("完了プレイの事実だけを保存用記録へ写すこと", () => {
 });
 
 test("保存した事実から現在のプレイ評価を導出すること", () => {
-  const record = createRecord();
-
   const score = getNanpurePlayRecordScore(record);
 
   expect(score).toBe(91);
 });
 
 test("同じ開始条件を自己ベストの比較単位として扱うこと", () => {
-  const record = createRecord();
-
   const comparisonKey = nanpurePlayRecordDefinition.getComparisonKey(record);
 
   expect(comparisonKey).toBe("normal");

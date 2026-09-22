@@ -34,37 +34,45 @@ const definition: PlayRecordDefinition = {
   ],
 };
 
-test("最初のプレイを初記録として扱うこと", () => {
-  const record = createRecord("record-1", 80);
+describe("getPlayRecordSaveOutcome", () => {
+  const firstRecord = createRecord("record-1", 80);
+  const previousBest = createRecord("record-1", 80);
+  const improvedRecord = createRecord("record-2", 95);
+  const tiedPreviousBest = createRecord("record-1", 95);
+  const tiedRecord = createRecord("record-2", 95);
 
-  const outcome = getPlayRecordSaveOutcome([], record, definition);
+  test("最初のプレイを初記録として扱うこと", () => {
+    const outcome = getPlayRecordSaveOutcome([], firstRecord, definition);
 
-  expect(outcome).toEqual({ status: "first-record" });
-});
-
-test("既存ベストを上回った指標だけを更新として返すこと", () => {
-  const previous = [createRecord("record-1", 80)];
-  const current = createRecord("record-2", 95);
-
-  const outcome = getPlayRecordSaveOutcome(previous, current, definition);
-
-  expect(outcome).toEqual({
-    status: "updated",
-    updates: [
-      {
-        metricId: "value",
-        previousValue: 80,
-        currentValue: 95,
-      },
-    ],
+    expect(outcome).toEqual({ status: "first-record" });
   });
-});
 
-test("同率の自己ベストを更新扱いにしないこと", () => {
-  const previous = [createRecord("record-1", 95)];
-  const current = createRecord("record-2", 95);
+  test("既存ベストを上回った指標だけを更新として返すこと", () => {
+    const outcome = getPlayRecordSaveOutcome(
+      [previousBest],
+      improvedRecord,
+      definition,
+    );
 
-  const outcome = getPlayRecordSaveOutcome(previous, current, definition);
+    expect(outcome).toEqual({
+      status: "updated",
+      updates: [
+        {
+          metricId: "value",
+          previousValue: 80,
+          currentValue: 95,
+        },
+      ],
+    });
+  });
 
-  expect(outcome).toEqual({ status: "recorded" });
+  test("同率の自己ベストを更新扱いにしないこと", () => {
+    const outcome = getPlayRecordSaveOutcome(
+      [tiedPreviousBest],
+      tiedRecord,
+      definition,
+    );
+
+    expect(outcome).toEqual({ status: "recorded" });
+  });
 });

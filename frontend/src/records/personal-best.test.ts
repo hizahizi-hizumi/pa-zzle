@@ -34,9 +34,9 @@ const definition: PlayRecordDefinition = {
   ],
 };
 
-test("比較対象の履歴から自己ベストを導出できること", () => {
-  const records = [createRecord("record-1", 80), createRecord("record-2", 95)];
+const records = [createRecord("record-1", 80), createRecord("record-2", 95)];
 
+test("比較対象の履歴から自己ベストを導出できること", () => {
   const personalBests = getPersonalBests(records, definition);
 
   expect(personalBests).toEqual([

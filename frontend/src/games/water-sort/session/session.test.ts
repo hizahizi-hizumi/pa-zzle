@@ -9,6 +9,7 @@ import {
   getWaterSortSessionResult,
   restartWaterSortSession,
   undoWaterSortSession,
+  type WaterSortSession,
 } from "./session";
 
 const problem: WaterSortProblem = {
@@ -21,130 +22,177 @@ const solutionMoves: readonly WaterSortMove[] = [
   { sourceBottleIndex: 2, destinationBottleIndex: 1 },
 ];
 
-function applySolution(session: ReturnType<typeof createWaterSortSession>) {
+function requireFirstSolutionMove(): WaterSortMove {
+  const move = solutionMoves[0];
+  if (!move) {
+    throw new Error("test problem must have a solution move");
+  }
+  return move;
+}
+
+function requireAppliedMove(
+  session: WaterSortSession,
+  move: WaterSortMove,
+  now: number,
+): WaterSortSession {
+  const next = applyWaterSortSessionMove(session, move, now);
+  if (!next) {
+    throw new Error("test solution move must be legal");
+  }
+  return next;
+}
+
+function applySolution(session: WaterSortSession) {
   let current = session;
   for (const [index, move] of solutionMoves.entries()) {
-    const next = applyWaterSortSessionMove(current, move, 1_100 + index);
-    if (!next) {
-      throw new Error("test solution move must be legal");
-    }
-    current = next;
+    current = requireAppliedMove(current, move, 1_100 + index);
   }
   return current;
 }
 
 describe("applyWaterSortSessionMove", () => {
-  test("合法手を適用して盤面と手数を進めること", () => {
-    const session = createWaterSortSession(problem, 1_000);
-    const move = solutionMoves[0];
-    if (!move) {
-      throw new Error("test problem must have a solution move");
-    }
+  describe("合法手を適用する場合", () => {
+    let session: WaterSortSession;
+    let move: WaterSortMove;
 
-    const result = applyWaterSortSessionMove(session, move, 1_100);
+    beforeEach(() => {
+      session = createWaterSortSession(problem, 1_000);
+      move = requireFirstSolutionMove();
+    });
 
-    expect(result).not.toBeNull();
-    expect(result?.state).not.toEqual(problem.initialState);
-    expect(result?.moveCount).toBe(1);
-    expect(session.state).toEqual(problem.initialState);
+    test("盤面と手数を進めること", () => {
+      const result = applyWaterSortSessionMove(session, move, 1_100);
+
+      expect(result).not.toBeNull();
+      expect(result?.state).not.toEqual(problem.initialState);
+      expect(result?.moveCount).toBe(1);
+      expect(session.state).toEqual(problem.initialState);
+    });
   });
 
-  test("成立しない手ではセッションを変更しないこと", () => {
-    const session = createWaterSortSession(problem, 1_000);
+  describe("成立しない手を適用する場合", () => {
+    const illegalMove = {
+      sourceBottleIndex: 0,
+      destinationBottleIndex: 0,
+    } as const;
+    let session: WaterSortSession;
 
-    const result = applyWaterSortSessionMove(
-      session,
-      { sourceBottleIndex: 0, destinationBottleIndex: 0 },
-      1_100,
-    );
+    beforeEach(() => {
+      session = createWaterSortSession(problem, 1_000);
+    });
 
-    expect(result).toBeNull();
-    expect(session.state).toEqual(problem.initialState);
+    test("セッションを変更しないこと", () => {
+      const result = applyWaterSortSessionMove(session, illegalMove, 1_100);
+
+      expect(result).toBeNull();
+      expect(session.state).toEqual(problem.initialState);
+    });
   });
 });
 
 describe("undoWaterSortSession", () => {
-  test("盤面を一手戻しても成立済みの注水手数を減らさないこと", () => {
-    const initialSession = createWaterSortSession(problem, 1_000);
-    const move = solutionMoves[0];
-    if (!move) {
-      throw new Error("test problem must have a solution move");
-    }
-    const moved = applyWaterSortSessionMove(initialSession, move, 1_100);
-    if (!moved) {
-      throw new Error("test solution move must be legal");
-    }
+  describe("成立済みの注水履歴がある場合", () => {
+    let moved: WaterSortSession;
 
-    const result = undoWaterSortSession(moved);
+    beforeEach(() => {
+      const initialSession = createWaterSortSession(problem, 1_000);
+      moved = requireAppliedMove(
+        initialSession,
+        requireFirstSolutionMove(),
+        1_100,
+      );
+    });
 
-    expect(result.state).toEqual(problem.initialState);
-    expect(result.moveCount).toBe(1);
-    expect(result.undoCount).toBe(1);
-    expect(canUndoWaterSortSession(result)).toBe(false);
+    test("盤面を一手戻しても成立済みの注水手数を減らさないこと", () => {
+      const result = undoWaterSortSession(moved);
+      const canUndo = canUndoWaterSortSession(result);
+
+      expect(result.state).toEqual(problem.initialState);
+      expect(result.moveCount).toBe(1);
+      expect(result.undoCount).toBe(1);
+      expect(canUndo).toBe(false);
+    });
   });
 
-  test("戻せる履歴がなければ回数を変更しないこと", () => {
-    const session = createWaterSortSession(problem, 1_000);
+  describe("戻せる履歴がない場合", () => {
+    let session: WaterSortSession;
 
-    const result = undoWaterSortSession(session);
+    beforeEach(() => {
+      session = createWaterSortSession(problem, 1_000);
+    });
 
-    expect(result).toBe(session);
-    expect(result.undoCount).toBe(0);
+    test("回数を変更しないこと", () => {
+      const result = undoWaterSortSession(session);
+
+      expect(result).toBe(session);
+      expect(result.undoCount).toBe(0);
+    });
   });
 });
 
 describe("restartWaterSortSession", () => {
-  test("プレイ中は同じ計測を継続して初期盤面へ戻すこと", () => {
-    const initialSession = createWaterSortSession(problem, 1_000);
-    const move = solutionMoves[0];
-    if (!move) {
-      throw new Error("test problem must have a solution move");
-    }
-    const moved = applyWaterSortSessionMove(initialSession, move, 1_100);
-    if (!moved) {
-      throw new Error("test solution move must be legal");
-    }
+  describe("プレイ中に注水履歴がある場合", () => {
+    let moved: WaterSortSession;
 
-    const result = restartWaterSortSession(moved);
+    beforeEach(() => {
+      const initialSession = createWaterSortSession(problem, 1_000);
+      moved = requireAppliedMove(
+        initialSession,
+        requireFirstSolutionMove(),
+        1_100,
+      );
+    });
 
-    expect(result.state).toEqual(problem.initialState);
-    expect(result.startedAt).toBe(1_000);
-    expect(result.moveCount).toBe(1);
-    expect(result.restartCount).toBe(1);
-    expect(canUndoWaterSortSession(result)).toBe(false);
+    test("同じ計測を継続して初期盤面へ戻すこと", () => {
+      const result = restartWaterSortSession(moved);
+      const canUndo = canUndoWaterSortSession(result);
+
+      expect(result.state).toEqual(problem.initialState);
+      expect(result.startedAt).toBe(1_000);
+      expect(result.moveCount).toBe(1);
+      expect(result.restartCount).toBe(1);
+      expect(canUndo).toBe(false);
+    });
   });
 
-  test("クリア済みのセッションはやり直さないこと", () => {
-    const session = applySolution(createWaterSortSession(problem, 1_000));
+  describe("クリア済みの場合", () => {
+    let session: WaterSortSession;
 
-    const result = restartWaterSortSession(session);
+    beforeEach(() => {
+      session = applySolution(createWaterSortSession(problem, 1_000));
+    });
 
-    expect(result).toBe(session);
+    test("やり直さないこと", () => {
+      const result = restartWaterSortSession(session);
+
+      expect(result).toBe(session);
+    });
   });
 });
 
-test("Reactなしで操作・待った・やり直しを経て一局を完結できること", () => {
-  let session = createWaterSortSession(problem, 1_000);
-  const firstMove = solutionMoves[0];
-  if (!firstMove) {
-    throw new Error("test problem must have a solution move");
-  }
+describe("一局のプレイ", () => {
+  let session: WaterSortSession;
+  let firstMove: WaterSortMove;
 
-  const firstMoved = applyWaterSortSessionMove(session, firstMove, 1_100);
-  if (!firstMoved) {
-    throw new Error("test solution move must be legal");
-  }
-  session = undoWaterSortSession(firstMoved);
-  session = restartWaterSortSession(session);
-  session = applySolution(session);
-  const result = getWaterSortSessionResult(session, 9_999);
+  beforeEach(() => {
+    session = createWaterSortSession(problem, 1_000);
+    firstMove = requireFirstSolutionMove();
+  });
 
-  expect(session.status).toBe("cleared");
-  expect(result).toEqual({
-    elapsedMs: expect.any(Number),
-    moveCount: solutionMoves.length + 1,
-    completionMoveCount: solutionMoves.length,
-    undoCount: 1,
-    restartCount: 1,
+  test("Reactなしで操作・待った・やり直しを経て完結できること", () => {
+    const firstMoved = requireAppliedMove(session, firstMove, 1_100);
+    session = undoWaterSortSession(firstMoved);
+    session = restartWaterSortSession(session);
+    session = applySolution(session);
+    const result = getWaterSortSessionResult(session, 9_999);
+
+    expect(session.status).toBe("cleared");
+    expect(result).toEqual({
+      elapsedMs: expect.any(Number),
+      moveCount: solutionMoves.length + 1,
+      completionMoveCount: solutionMoves.length,
+      undoCount: 1,
+      restartCount: 1,
+    });
   });
 });

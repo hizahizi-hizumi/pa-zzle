@@ -38,6 +38,18 @@ const solution = boardFromRows([
   "345286179",
 ]);
 
+const conflictingBoard = boardFromRows([
+  "550000000",
+  "500000000",
+  "000000000",
+  "000000000",
+  "000000000",
+  "000000000",
+  "000000000",
+  "000000000",
+  "000000000",
+]);
+
 describe("getNanpureCandidates", () => {
   test("行・列・ブロックの制約から候補数字を算出すること", () => {
     const candidates = getNanpureCandidates(problemClues, 2);
@@ -52,21 +64,20 @@ describe("getNanpureCandidates", () => {
   });
 });
 
-test("競合する数字に関わる全てのマスを返すこと", () => {
-  const board = Array.from({ length: 81 }, () => null) as NanpureCell[];
-  board[0] = 5;
-  board[1] = 5;
-  board[9] = 5;
+describe("findNanpureConflictCellIndices", () => {
+  test("競合する数字に関わる全てのマスを返すこと", () => {
+    const conflicts = findNanpureConflictCellIndices(conflictingBoard);
 
-  const conflicts = findNanpureConflictCellIndices(board);
-
-  expect(conflicts).toEqual([0, 1, 9]);
+    expect(conflicts).toEqual([0, 1, 9]);
+  });
 });
 
-test("競合のない途中盤面を妥当と判定すること", () => {
-  const consistent = isNanpureBoardConsistent(problemClues);
+describe("isNanpureBoardConsistent", () => {
+  test("競合のない途中盤面を妥当と判定すること", () => {
+    const consistent = isNanpureBoardConsistent(problemClues);
 
-  expect(consistent).toBe(true);
+    expect(consistent).toBe(true);
+  });
 });
 
 describe("isNanpureSolved", () => {

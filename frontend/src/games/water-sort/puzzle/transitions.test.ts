@@ -2,9 +2,9 @@ import type { WaterSortState } from "./state";
 import { listWaterSortDistinctTransitions } from "./transitions";
 
 describe("listWaterSortDistinctTransitions", () => {
-  test("空ボトルの表示位置だけが異なる同値な次状態を一つにまとめること", () => {
-    const state: WaterSortState = [[0, 1], [1], [], []];
+  const state: WaterSortState = [[0, 1], [1], [], []];
 
+  test("空ボトルの表示位置だけが異なる同値な次状態を一つにまとめること", () => {
     const result = listWaterSortDistinctTransitions(state);
     const emptyDestinationTransitions = result.filter(
       ({ move }) =>
