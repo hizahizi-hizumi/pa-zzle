@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 
+import type { DecisionStateMode } from "../domain/model.ts";
 import { discoverSourceDocuments } from "../planning/discovery.ts";
 import { createTypeSafeProvider } from "../providers/typesafe/provider.ts";
 import { createDefaultScopeRegistry } from "../scopes/default.ts";
@@ -16,14 +17,23 @@ import {
 export async function runPocCommand(args: string[]): Promise<number> {
   const [strategy, ...strategyArgs] = args;
 
-  if (strategy !== "candidate-anchor") {
-    throw new Error("poc strategyはcandidate-anchorを指定してください。");
+  if (strategy === "candidate-anchor") {
+    return runCandidateAnchorPoc(strategyArgs, "full-file");
   }
 
-  return runCandidateAnchorPoc(strategyArgs);
+  if (strategy === "compact-state") {
+    return runCandidateAnchorPoc(strategyArgs, "subjects-only");
+  }
+
+  throw new Error(
+    "poc strategyはcandidate-anchorまたはcompact-stateを指定してください。",
+  );
 }
 
-async function runCandidateAnchorPoc(args: string[]): Promise<number> {
+async function runCandidateAnchorPoc(
+  args: string[],
+  stateMode: DecisionStateMode,
+): Promise<number> {
   const { planOnly, repeat, verbose, benchmarkPath, repository } =
     parseCandidateAnchorOptions(args);
   const { projectRoot, config, rules } = await loadProjectContext();
@@ -57,8 +67,11 @@ async function runCandidateAnchorPoc(args: string[]): Promise<number> {
       excludePaths: config.excludePaths,
       provider,
       maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
+      stateMode,
     });
-    process.stdout.write(renderCandidateAnchorRepository(projectRoot, result));
+    process.stdout.write(
+      renderCandidateAnchorRepository(projectRoot, result, stateMode),
+    );
     return 0;
   }
 
@@ -71,8 +84,17 @@ async function runCandidateAnchorPoc(args: string[]): Promise<number> {
       benchmark,
       provider,
       maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
+      stateMode,
     });
-    process.stdout.write(renderCandidateAnchorBenchmark(result, { verbose }));
+    process.stdout.write(
+      renderCandidateAnchorBenchmark(result, {
+        verbose,
+        title:
+          stateMode === "subjects-only"
+            ? "Compact Structural State PoC"
+            : "Candidate + Anchor PoC",
+      }),
+    );
   }
 
   return 0;
@@ -246,8 +268,14 @@ async function renderCandidateAnchorPlan(options: {
 function renderCandidateAnchorRepository(
   projectRoot: string,
   result: CandidateAnchorRepositoryResult,
+  stateMode: DecisionStateMode,
 ): string {
-  const lines = ["Candidate + Anchor repository validation", ""];
+  const lines = [
+    stateMode === "subjects-only"
+      ? "Compact Structural State repository validation"
+      : "Candidate + Anchor repository validation",
+    "",
+  ];
 
   for (const rule of result.rules) {
     lines.push(

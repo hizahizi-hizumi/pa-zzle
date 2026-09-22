@@ -142,6 +142,10 @@ bun run --cwd tools/semantic-lint poc -- candidate-anchor --repeat 3 --verbose
 # PoC predicateを実リポジトリへ1回適用
 bun run --cwd tools/semantic-lint poc -- candidate-anchor --repository
 
+# 2D: whole fileを送らずcompact structural stateだけで同じCandidate / Anchorを評価
+bun run --cwd tools/semantic-lint poc -- compact-state --repeat 3
+bun run --cwd tools/semantic-lint poc -- compact-state --repository
+
 # 別benchmarkを同じ方式・設定で評価
 bun run --cwd tools/semantic-lint poc -- candidate-anchor \
   --benchmark .semantic-lint/poc/holdout/benchmark.yaml \

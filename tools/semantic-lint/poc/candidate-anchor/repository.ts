@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 
 import type {
+  DecisionStateMode,
   Finding,
   Rule,
   SemanticDecisionProvider,
@@ -48,6 +49,7 @@ export async function runCandidateAnchorRepository(options: {
   excludePaths: string[];
   provider: SemanticDecisionProvider;
   maxDecisionsPerRequest: number;
+  stateMode?: DecisionStateMode;
 }): Promise<CandidateAnchorRepositoryResult> {
   const {
     projectRoot,
@@ -56,6 +58,7 @@ export async function runCandidateAnchorRepository(options: {
     excludePaths,
     provider,
     maxDecisionsPerRequest,
+    stateMode = "full-file",
   } = options;
   const results: CandidateAnchorRepositoryRuleResult[] = [];
   const skippedRuleIds: string[] = [];
@@ -89,6 +92,7 @@ export async function runCandidateAnchorRepository(options: {
       benchmark: repositoryBenchmark,
       provider,
       maxDecisionsPerRequest,
+      stateMode,
     });
 
     const classificationCandidates = result.cases.flatMap((item) =>

@@ -1,6 +1,7 @@
 import type {
   DecisionBatch,
   DecisionBatchResult,
+  DecisionStateMode,
   Finding,
   Predicate,
   SemanticDecisionProvider,
@@ -82,8 +83,14 @@ export async function runCandidateAnchorBenchmark(options: {
   benchmark: CandidateAnchorBenchmark;
   provider: SemanticDecisionProvider;
   maxDecisionsPerRequest: number;
+  stateMode?: DecisionStateMode;
 }): Promise<CandidateAnchorBenchmarkResult> {
-  const { benchmark, provider, maxDecisionsPerRequest } = options;
+  const {
+    benchmark,
+    provider,
+    maxDecisionsPerRequest,
+    stateMode = "full-file",
+  } = options;
   const rulesById = new Map(benchmark.rules.map((rule) => [rule.id, rule]));
   const results: CandidateAnchorCaseResult[] = [];
 
@@ -101,6 +108,7 @@ export async function runCandidateAnchorBenchmark(options: {
         rule,
         provider,
         maxDecisionsPerRequest,
+        stateMode,
       }),
     );
   }
@@ -135,6 +143,7 @@ async function runCandidateAnchorCase(options: {
   rule: BenchmarkRule;
   provider: SemanticDecisionProvider;
   maxDecisionsPerRequest: number;
+  stateMode: DecisionStateMode;
 }): Promise<CandidateAnchorCaseResult> {
   const {
     benchmarkCase,
@@ -142,6 +151,7 @@ async function runCandidateAnchorCase(options: {
     rule,
     provider,
     maxDecisionsPerRequest,
+    stateMode,
   } = options;
   const source = await Bun.file(benchmarkCase.fixturePath).text();
   const document = {
@@ -155,6 +165,7 @@ async function runCandidateAnchorCase(options: {
     rule,
     provider,
     maxDecisionsPerRequest,
+    stateMode,
   });
   const violations = candidates.filter((candidate) => {
     const result = classification.results.get(candidate.id);
@@ -169,6 +180,7 @@ async function runCandidateAnchorCase(options: {
     rule,
     provider,
     maxDecisionsPerRequest,
+    stateMode,
   });
   const findings = dedupeFindings(
     violations.flatMap((candidate) => {
@@ -229,13 +241,23 @@ async function evaluateCandidates(options: {
   rule: BenchmarkRule;
   provider: SemanticDecisionProvider;
   maxDecisionsPerRequest: number;
+  stateMode: DecisionStateMode;
 }): Promise<{
   results: Map<string, EvaluatedSubject["result"]>;
   usage: BatchUsage;
   decisions: CandidateAnchorDecision[];
 }> {
-  const { document, candidates, rule, provider, maxDecisionsPerRequest } = options;
-  const subjects = candidates.map((candidate) => candidateSubject(document, candidate));
+  const {
+    document,
+    candidates,
+    rule,
+    provider,
+    maxDecisionsPerRequest,
+    stateMode,
+  } = options;
+  const subjects = candidates.map((candidate) =>
+    candidateSubject(document, candidate, stateMode),
+  );
 
   const evaluated = await evaluateSubjects({
     document,
@@ -244,6 +266,7 @@ async function evaluateCandidates(options: {
     ruleId: `poc/${rule.id}`,
     provider,
     maxDecisionsPerRequest,
+    stateMode,
   });
 
   return {
@@ -258,18 +281,26 @@ async function localizeViolations(options: {
   rule: BenchmarkRule;
   provider: SemanticDecisionProvider;
   maxDecisionsPerRequest: number;
+  stateMode: DecisionStateMode;
 }): Promise<{
   anchors: Map<string, CandidateAnchor>;
   decisions: number;
   usage: BatchUsage;
   decisionDetails: CandidateAnchorDecision[];
 }> {
-  const { document, candidates, rule, provider, maxDecisionsPerRequest } = options;
+  const {
+    document,
+    candidates,
+    rule,
+    provider,
+    maxDecisionsPerRequest,
+    stateMode,
+  } = options;
   const anchors = candidates.flatMap((candidate) =>
     candidate.anchors.map((anchor) => ({ candidate, anchor })),
   );
   const subjects = anchors.map(({ candidate, anchor }) =>
-    anchorSubject(document, candidate, anchor),
+    anchorSubject(document, candidate, anchor, stateMode),
   );
   const candidatesByAnchorId = new Map(
     anchors.map(({ candidate, anchor }) => [anchor.id, candidate]),
@@ -289,6 +320,7 @@ async function localizeViolations(options: {
     ruleId: `poc/${rule.id}/location`,
     provider,
     maxDecisionsPerRequest,
+    stateMode,
   });
   const selected = new Map<string, CandidateAnchor>();
 
@@ -322,6 +354,7 @@ async function evaluateSubjects(options: {
   ruleId: string;
   provider: SemanticDecisionProvider;
   maxDecisionsPerRequest: number;
+  stateMode: DecisionStateMode;
 }): Promise<{
   results: Map<string, EvaluatedSubject["result"]>;
   usage: BatchUsage;
@@ -333,6 +366,7 @@ async function evaluateSubjects(options: {
     ruleId,
     provider,
     maxDecisionsPerRequest,
+    stateMode,
   } = options;
   const results = new Map<string, EvaluatedSubject["result"]>();
   const usage: BatchUsage = {
@@ -347,6 +381,7 @@ async function evaluateSubjects(options: {
       id: `${document.path}#${ruleId}#${offset / maxDecisionsPerRequest}`,
       file: document,
       subjects: batchSubjects,
+      stateMode,
       requests: batchSubjects.map((subject) => ({
         taskId: `${ruleId}::${subject.id}`,
         ruleId,
@@ -376,6 +411,7 @@ async function evaluateSubjects(options: {
 function candidateSubject(
   document: SourceDocument,
   candidate: Candidate,
+  stateMode: DecisionStateMode,
 ): Subject {
   return {
     id: candidate.id,
@@ -384,7 +420,10 @@ function candidateSubject(
     range: candidate.range,
     symbol: candidate.label,
     source: candidate.source,
-    context: candidate.context,
+    context:
+      stateMode === "subjects-only"
+        ? candidate.compactContext
+        : candidate.context,
   };
 }
 
@@ -392,6 +431,7 @@ function anchorSubject(
   document: SourceDocument,
   candidate: Candidate,
   anchor: CandidateAnchor,
+  stateMode: DecisionStateMode,
 ): Subject {
   return {
     id: anchor.id,
@@ -400,7 +440,10 @@ function anchorSubject(
     range: anchor.range,
     symbol: `${candidate.label}:${anchor.role}`,
     source: anchor.source,
-    context: candidate.context,
+    context:
+      stateMode === "subjects-only"
+        ? candidate.compactContext
+        : candidate.context,
   };
 }
 
@@ -434,7 +477,7 @@ function localizationPredicate(
       not_applicable:
         "現在anchorはこの違反のprimary locationとして関係しない。",
       insufficient_context:
-        "file、candidate、anchor候補を見てもprimary locationとして適切か判断できない。",
+        "利用可能なcontext、candidate、anchor候補を見てもprimary locationとして適切か判断できない。",
     },
   };
 }

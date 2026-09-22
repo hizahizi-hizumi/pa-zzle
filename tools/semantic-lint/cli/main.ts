@@ -96,6 +96,7 @@ function printHelp(): void {
   semantic-lint eval [rule-id...] [--repeat N]
   semantic-lint inspect <rule-id> <file> [--plan-only]
   semantic-lint poc candidate-anchor [--plan-only] [--repeat N] [--verbose] [--repository] [--benchmark path]
+  semantic-lint poc compact-state [--plan-only] [--repeat N] [--verbose] [--repository] [--benchmark path]
   semantic-lint rules [ruleset-or-rule]
   semantic-lint doctor
 
