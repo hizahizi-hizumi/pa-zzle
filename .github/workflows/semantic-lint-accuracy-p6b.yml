@@ -1,0 +1,37 @@
+name: Semantic Lint Accuracy P6b
+
+on:
+  push:
+    branches:
+      - experiment/semantic-lint-accuracy-p6b-20260922
+
+permissions:
+  contents: read
+
+jobs:
+  repository:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+
+      - name: Install semantic lint dependencies
+        working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck semantic lint
+        run: bun run --cwd tools/semantic-lint typecheck
+
+      - name: Test semantic lint
+        run: bun run --cwd tools/semantic-lint test
+
+      - name: Run repository validation
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- candidate-anchor --repository
