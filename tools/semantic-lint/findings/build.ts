@@ -1,18 +1,18 @@
 import type {
-  Diagnostic,
+  Finding,
   Evaluation,
   Rule,
 } from "../domain/model.ts";
 
-export function buildDiagnostics(options: {
+export function buildFindings(options: {
   evaluations: Evaluation[];
   rules: Rule[];
 }): {
-  diagnostics: Diagnostic[];
+  diagnostics: Finding[];
   unknowns: Evaluation[];
 } {
   const rulesById = new Map(options.rules.map((rule) => [rule.id, rule]));
-  const diagnostics: Diagnostic[] = [];
+  const diagnostics: Finding[] = [];
   const unknowns: Evaluation[] = [];
 
   for (const evaluation of options.evaluations) {
@@ -43,8 +43,6 @@ export function buildDiagnostics(options: {
       ...(evaluation.subject.symbol === undefined
         ? {}
         : { symbol: evaluation.subject.symbol }),
-      probability: evaluation.result.probabilities.violation,
-      confidence: evaluation.result.confidence,
       source: rule.source,
     });
   }
@@ -55,7 +53,7 @@ export function buildDiagnostics(options: {
   };
 }
 
-function compareDiagnostics(left: Diagnostic, right: Diagnostic): number {
+function compareDiagnostics(left: Finding, right: Finding): number {
   return (
     left.path.localeCompare(right.path) ||
     left.range.startLine - right.range.startLine ||

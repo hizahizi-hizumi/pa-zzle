@@ -1,4 +1,4 @@
-import type { Decision } from "../domain/model.ts";
+import type { Decision, SourceRange } from "../domain/model.ts";
 import type { GoldenCaseResult } from "./run.ts";
 
 export function renderGoldenCaseReport(
@@ -7,6 +7,8 @@ export function renderGoldenCaseReport(
   const lines: string[] = [];
   let exactMatches = 0;
   let thresholdMatches = 0;
+  let findingMatches = 0;
+  let findingComparedRuns = 0;
   let totalRuns = 0;
   let inputTokens = 0;
   let outputTokens = 0;
@@ -26,9 +28,17 @@ export function renderGoldenCaseReport(
         result.rule.violationThreshold,
       ),
     ).length;
+    const findingComparisons = result.runs.flatMap((run) =>
+      run.findingComparison === undefined ? [] : [run.findingComparison],
+    );
+    const exactFindingRuns = findingComparisons.filter(
+      (comparison) => comparison.exact,
+    ).length;
 
     exactMatches += exact;
     thresholdMatches += threshold;
+    findingMatches += exactFindingRuns;
+    findingComparedRuns += findingComparisons.length;
     totalRuns += result.runs.length;
     inputTokens += result.runs.reduce(
       (sum, run) => sum + run.inputTokens,
@@ -51,8 +61,28 @@ export function renderGoldenCaseReport(
       `    閾値判定一致: ${threshold}/${result.runs.length} (閾値 ${percentage(
         result.rule.violationThreshold,
       )})`,
-      "",
     );
+
+    if (findingComparisons.length > 0) {
+      lines.push(
+        `    指摘位置一致: ${exactFindingRuns}/${findingComparisons.length} (${percentage(
+          exactFindingRuns / findingComparisons.length,
+        )})`,
+      );
+
+      const firstMismatch = findingComparisons.find(
+        (comparison) => !comparison.exact,
+      );
+
+      if (firstMismatch) {
+        lines.push(
+          `    期待位置: ${formatRanges(firstMismatch.expectedRanges)}`,
+          `    実際位置: ${formatRanges(firstMismatch.actualRanges)}`,
+        );
+      }
+    }
+
+    lines.push("");
   }
 
   lines.push(
@@ -65,6 +95,17 @@ export function renderGoldenCaseReport(
     `  閾値判定一致: ${thresholdMatches}/${totalRuns} (${percentage(
       totalRuns === 0 ? 0 : thresholdMatches / totalRuns,
     )})`,
+  );
+
+  if (findingComparedRuns > 0) {
+    lines.push(
+      `  指摘位置一致: ${findingMatches}/${findingComparedRuns} (${percentage(
+        findingMatches / findingComparedRuns,
+      )})`,
+    );
+  }
+
+  lines.push(
     `  入力トークン: ${inputTokens}`,
     `  出力トークン: ${outputTokens}`,
   );
@@ -95,6 +136,21 @@ function decisionLabel(decision: Decision): string {
     case "insufficient_context":
       return "文脈不足";
   }
+}
+
+function formatRanges(ranges: SourceRange[]): string {
+  if (ranges.length === 0) {
+    return "なし";
+  }
+
+  return ranges.map(formatRange).join(", ");
+}
+
+function formatRange(range: SourceRange): string {
+  return (
+    `${range.startLine}:${range.startColumn}-` +
+    `${range.endLine}:${range.endColumn}`
+  );
 }
 
 function mean(values: number[]): number {

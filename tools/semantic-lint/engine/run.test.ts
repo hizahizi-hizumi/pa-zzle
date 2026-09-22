@@ -7,7 +7,7 @@ import { FakeDecisionProvider } from "../testing/fake-provider.ts";
 import { decisionResult, sampleRule } from "../testing/fixtures.ts";
 
 describe("runEvaluationPlan", () => {
-  test("thresholdを一度だけ適用してcanonical diagnosticを作る", async () => {
+  test("thresholdを一度だけ適用してcanonical findingを作る", async () => {
     const rule = sampleRule();
     const plan = buildEvaluationPlan({
       documents: [
@@ -41,7 +41,6 @@ describe("runEvaluationPlan", () => {
     expect(result.diagnostics[0]).toMatchObject({
       ruleId: "vitest/sample",
       path: "frontend/example.test.ts",
-      probability: 0.95,
       severity: "warning",
     });
     expect(result.metrics.plannedEvaluations).toBe(1);

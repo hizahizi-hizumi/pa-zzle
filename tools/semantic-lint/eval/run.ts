@@ -4,15 +4,23 @@ import type { GoldenCase } from "../config/cases.ts";
 import type {
   DecisionResult,
   EvaluationPlan,
+  Finding,
   Rule,
   SemanticDecisionProvider,
 } from "../domain/model.ts";
+import {
+  compareFindingRanges,
+  type FindingComparison,
+  resolveExpectedFindingRanges,
+} from "./findings.ts";
 import { runEvaluationPlan } from "../engine/run.ts";
 import { buildEvaluationPlan } from "../planning/planner.ts";
 import type { ScopeRegistry } from "../scopes/registry.ts";
 
 export type GoldenCaseRun = {
   result: DecisionResult;
+  findings: Finding[];
+  findingComparison?: FindingComparison;
   inputTokens: number;
   outputTokens: number;
   durationMs: number;
@@ -76,6 +84,10 @@ export async function runGoldenCases(options: {
         case: goldenCase,
         rule,
         plan: selectCasePlan(plan, goldenCase),
+        expectedFindingRanges:
+          goldenCase.expectedFindings === undefined
+            ? undefined
+            : resolveExpectedFindingRanges(source, goldenCase.expectedFindings),
       };
     }),
   );
@@ -112,6 +124,15 @@ export async function runGoldenCases(options: {
         runIndex,
         run: {
           result: evaluation.result,
+          findings: result.diagnostics,
+          ...(item.expectedFindingRanges === undefined
+            ? {}
+            : {
+                findingComparison: compareFindingRanges(
+                  item.expectedFindingRanges,
+                  result.diagnostics,
+                ),
+              }),
           inputTokens: result.metrics.inputTokens,
           outputTokens: result.metrics.outputTokens,
           durationMs: performance.now() - startedAt,

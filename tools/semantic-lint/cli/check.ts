@@ -71,7 +71,9 @@ export async function runCheckCommand(args: string[]): Promise<number> {
 
   if (plannedEvaluations === 0) {
     const emptyResult = createEmptyRunResult(plan.files.length);
-    process.stdout.write(renderRunResult(emptyResult, options.format));
+    process.stdout.write(
+      renderRunResult(emptyResult, options.format, { documents: plan.files }),
+    );
     return 0;
   }
 
@@ -84,7 +86,9 @@ export async function runCheckCommand(args: string[]): Promise<number> {
     maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
   });
 
-  process.stdout.write(renderRunResult(result, options.format));
+  process.stdout.write(
+    renderRunResult(result, options.format, { documents: plan.files }),
+  );
   return exitCodeForResult(result, options);
 }
 

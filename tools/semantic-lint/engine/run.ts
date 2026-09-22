@@ -1,4 +1,4 @@
-import { buildDiagnostics } from "../diagnostics/build.ts";
+import { buildFindings } from "../findings/build.ts";
 import {
   buildDecisionBatches,
 } from "../planning/batches.ts";
@@ -70,7 +70,7 @@ export async function runEvaluationPlan(options: {
     appendEvaluations(evaluations, execution.batch, execution.response);
   }
 
-  const { diagnostics, unknowns } = buildDiagnostics({
+  const { diagnostics, unknowns } = buildFindings({
     evaluations,
     rules,
   });

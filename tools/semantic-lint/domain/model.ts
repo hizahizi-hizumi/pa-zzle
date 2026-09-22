@@ -120,15 +120,13 @@ export type Evaluation = {
   provider: ProviderIdentity;
 };
 
-export type Diagnostic = {
+export type Finding = {
   ruleId: string;
   severity: Severity;
   message: string;
   path: string;
   range: SourceRange;
   symbol?: string;
-  probability: number;
-  confidence: number;
   source: {
     path: string;
     section: string;
@@ -151,7 +149,7 @@ export type RunMetrics = {
 
 export type RunResult = {
   schemaVersion: 1;
-  diagnostics: Diagnostic[];
+  diagnostics: Finding[];
   unknowns: Evaluation[];
   evaluations: Evaluation[];
   metrics: RunMetrics;

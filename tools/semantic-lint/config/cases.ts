@@ -5,7 +5,17 @@ import { YAML } from "bun";
 import {
   DECISIONS,
   type Decision,
+  type SourceRange,
 } from "../domain/model.ts";
+
+export type GoldenFindingExpectation =
+  | {
+      text: string;
+      occurrence: number;
+    }
+  | {
+      range: SourceRange;
+    };
 
 export type GoldenCase = {
   rulesetId: string;
@@ -13,6 +23,7 @@ export type GoldenCase = {
   name: string;
   fixturePath: string;
   expected: Decision;
+  expectedFindings?: GoldenFindingExpectation[];
   subjectSymbol?: string;
   origin?: {
     path: string;
@@ -73,6 +84,11 @@ export function compileCaseManifest(
     }
 
     const subjectSymbol = compileSubjectSymbol(item.subject, origin, index);
+    const expectedFindings = compileExpectedFindings(
+      item.expectedFindings,
+      origin,
+      index,
+    );
     const goldenCase: GoldenCase = {
       rulesetId,
       ruleId: `${rulesetId}/${item.rule}`,
@@ -80,6 +96,10 @@ export function compileCaseManifest(
       fixturePath: resolve(baseDirectory, item.fixture),
       expected: item.expected,
     };
+
+    if (expectedFindings !== undefined) {
+      goldenCase.expectedFindings = expectedFindings;
+    }
 
     if (subjectSymbol !== undefined) {
       goldenCase.subjectSymbol = subjectSymbol;
@@ -132,6 +152,68 @@ async function collectCaseManifests(directory: string): Promise<string[]> {
   return paths.sort();
 }
 
+function compileExpectedFindings(
+  value: unknown,
+  origin: string,
+  index: number,
+): GoldenFindingExpectation[] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (!Array.isArray(value)) {
+    throw new Error(
+      `golden case expectedFindingsが不正です: ${origin} cases[${index}]`,
+    );
+  }
+
+  return value.map((item, findingIndex) => {
+    if (!isRecord(item)) {
+      throw new Error(
+        `golden case expectedFindingsが不正です: ${origin} cases[${index}] expectedFindings[${findingIndex}]`,
+      );
+    }
+
+    const hasText = item.text !== undefined;
+    const hasRange = item.range !== undefined;
+
+    if (hasText === hasRange) {
+      throw new Error(
+        `golden case expectedFindingsはtextまたはrangeのどちらか一方を指定してください: ${origin} cases[${index}] expectedFindings[${findingIndex}]`,
+      );
+    }
+
+    if (hasText) {
+      if (typeof item.text !== "string" || item.text.length === 0) {
+        throw new Error(
+          `golden case expectedFindings.textが不正です: ${origin} cases[${index}] expectedFindings[${findingIndex}]`,
+        );
+      }
+
+      const occurrence = item.occurrence ?? 1;
+
+      if (!isPositiveInteger(occurrence)) {
+        throw new Error(
+          `golden case expectedFindings.occurrenceが不正です: ${origin} cases[${index}] expectedFindings[${findingIndex}]`,
+        );
+      }
+
+      return {
+        text: item.text,
+        occurrence,
+      };
+    }
+
+    if (isSourceRange(item.range)) {
+      return { range: item.range };
+    }
+
+    throw new Error(
+      `golden case expectedFindings.rangeが不正です: ${origin} cases[${index}] expectedFindings[${findingIndex}]`,
+    );
+  });
+}
+
 function compileSubjectSymbol(
   value: unknown,
   origin: string,
@@ -155,6 +237,32 @@ function isDecision(value: unknown): value is Decision {
     typeof value === "string" &&
     DECISIONS.includes(value as Decision)
   );
+}
+
+function isSourceRange(value: unknown): value is SourceRange {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  const { startLine, startColumn, endLine, endColumn } = value;
+
+  if (
+    !isPositiveInteger(startLine) ||
+    !isPositiveInteger(startColumn) ||
+    !isPositiveInteger(endLine) ||
+    !isPositiveInteger(endColumn)
+  ) {
+    return false;
+  }
+
+  return (
+    endLine > startLine ||
+    (endLine === startLine && endColumn >= startColumn)
+  );
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value > 0;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

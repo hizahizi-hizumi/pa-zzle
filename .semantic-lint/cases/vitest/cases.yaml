@@ -6,11 +6,14 @@ cases:
     name: test内で入力データを作る
     fixture: fixtures/arrange-outside-test/violation.ts
     expected: violation
+    expectedFindings:
+      - text: const values = [1, 2, 3];
 
   - rule: arrange-outside-test
     name: 入力データをdescribe側で用意する
     fixture: fixtures/arrange-outside-test/compliant.ts
     expected: compliant
+    expectedFindings: []
 
   - rule: before-each-arrange-only
     name: beforeEachで検証対象の操作まで実行する
@@ -21,6 +24,7 @@ cases:
     name: beforeEachでは初期状態だけを作る
     fixture: fixtures/before-each-arrange-only/compliant.ts
     expected: compliant
+    expectedFindings: []
 
   - rule: dom-observable-contract
     name: 内部data属性だけを検証する
@@ -31,6 +35,7 @@ cases:
     name: 利用者に見える状態を検証する
     fixture: fixtures/dom-observable-contract/compliant.tsx
     expected: compliant
+    expectedFindings: []
 
   - rule: table-driven-cases
     name: 同じ期待動作を個別testで繰り返す
@@ -41,3 +46,4 @@ cases:
     name: 入力違いをtest.eachで表現する
     fixture: fixtures/table-driven-cases/compliant.ts
     expected: compliant
+    expectedFindings: []

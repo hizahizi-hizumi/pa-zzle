@@ -59,7 +59,7 @@ ruleは対象pathとscopeを宣言する。scope adapterがsourceから判定対
 
 行範囲やsymbolはmodelに生成させない。Vitestのtest / beforeEach / describeはTypeScript ASTから抽出する。
 
-provider結果へruleのthresholdを1回だけ適用し、canonicalな `Diagnostic` を作る。pretty / compact / JSON出力はこのDiagnosticから生成する。
+provider結果へruleのthresholdを1回だけ適用し、canonicalな `Finding` を作る。pretty / compact / JSON出力はこのFindingから生成する。prettyではFinding同士をmergeせず、同一ruleの表示窓が重なる場合だけcode frameを共有する。
 
 rule lifecycleは次の3つ。
 
@@ -79,11 +79,32 @@ severityの `warning / error` はlifecycleとは別に管理する。
 2. 適用pathとsource documentを共有できる既存rulesetがあれば `.semantic-lint/rules/<ruleset>.yaml` にruleを追加する。共有できなければ新しいrulesetを作る。
 3. 新規ruleは `status: draft`、原則 `severity: warning` で開始する。
 4. ruleには `id`、`title`、`scope`、`sourceSection`、predicateの `instruction` と4 outcomesを定義する。
-5. `.semantic-lint/cases/<ruleset>/cases.yaml` とfixtureへ、少なくとも明確な `violation` と `compliant` を追加する。実運用で境界例が見つかったらgolden caseへ追加する。
+5. `.semantic-lint/cases/<ruleset>/cases.yaml` とfixtureへ、少なくとも明確な `violation` と `compliant` を追加する。指摘位置まで正解が明確なcaseでは `expectedFindings` も定義する。実運用で境界例が見つかったらgolden caseへ追加する。
 6. `doctor` と `inspect --plan-only` でpath / scope / subject / request planを確認する。
-7. `eval <rule-id> --repeat 10` でChoiceと違反確率の揺れを見る。
+7. `eval <rule-id> --repeat 10` でChoice・違反確率・定義済みcaseの指摘位置一致を見る。
 8. `check --include-draft` で実repositoryへ適用し、誤検知・見逃し・unknownを確認する。
 9. 十分に運用できると判断したら `status: active` へ変更する。thresholdは単一fixtureへ合わせず、golden corpusと実コードの両方を見て決める。
+
+
+Golden caseの `expectedFindings` は、fixture内の一意な文字列または明示的なrangeで期待位置を表す。文字列が複数回現れる場合は `occurrence` を指定する。
+
+```yaml
+expectedFindings:
+  - text: const values = [1, 2, 3];
+
+# 同じ文字列の2件目
+  - text: hoge
+    occurrence: 2
+
+# 必要な場合だけrangeを直接指定
+  - range:
+      startLine: 3
+      startColumn: 5
+      endLine: 3
+      endColumn: 30
+```
+
+`expectedFindings: []` はfindingが0件であることを期待する。未指定caseでは位置一致を評価しない。
 
 4 outcomesは固定。
 

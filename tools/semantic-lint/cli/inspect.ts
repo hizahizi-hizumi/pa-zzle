@@ -103,7 +103,7 @@ export async function runInspectCommand(args: string[]): Promise<number> {
     ),
   );
   console.log("\ndiagnostic");
-  process.stdout.write(renderPretty(result));
+  process.stdout.write(renderPretty(result, [{ path, source }]));
 
   return result.diagnostics.some(
     (diagnostic) => diagnostic.severity === "error",
