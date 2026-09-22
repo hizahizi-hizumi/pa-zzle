@@ -1,0 +1,40 @@
+name: Semantic Lint Compact State Repository
+
+on:
+  push:
+    branches:
+      - experiment/semantic-lint-compact-state-repository-20260922
+
+permissions:
+  contents: read
+
+jobs:
+  repository:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+
+      - name: Install semantic lint dependencies
+        working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+
+      - name: Reduce experiment batch size
+        run: |
+          sed -i 's/maxDecisionsPerRequest: 64/maxDecisionsPerRequest: 16/' .semantic-lint/config.yaml
+
+      - name: Run zero-shot repository validation
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- compact-state --benchmark .semantic-lint/poc/benchmark.yaml --repository
+
+      - name: Run few-shot repository validation
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- compact-state --benchmark .semantic-lint/poc/benchmark-few-shot.yaml --repository
