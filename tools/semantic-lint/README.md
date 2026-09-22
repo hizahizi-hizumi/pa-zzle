@@ -171,3 +171,13 @@ bun run --cwd tools/semantic-lint poc -- relation-group --repository
 ```
 
 `relation-group`は既存の単一Candidateを残したまま、ordered sibling statementsのgroup Candidateを追加する。groupには構文解析器由来のrelation情報と、group自身・包含container・直近の包含statementを位置候補として保持する。Vitest固有のrule IDやcall名による分岐は持たない。本番`check`経路とrule APIは変更しない。
+
+relation自体の成立性をatomic Candidateと分離して確認する場合は `relation-group-only` を使う。
+
+```sh
+bun run --cwd tools/semantic-lint poc -- relation-group-only \
+  --benchmark .semantic-lint/poc/relation-group/final.yaml \
+  --repeat 10
+```
+
+この最終benchmarkはrelation target向けpredicate・few-shot境界例・relation専用thresholdをPoC内だけで校正したもの。本番rule YAMLや`check`経路は変更しない。

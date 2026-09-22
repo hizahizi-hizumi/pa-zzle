@@ -15,7 +15,10 @@ import {
   runCandidateAnchorRepository,
   type CandidateAnchorRepositoryResult,
 } from "../poc/candidate-anchor/repository.ts";
-import { extractRelationAwareCandidates } from "../poc/relation-group/extract.ts";
+import {
+  extractRelationAwareCandidates,
+  extractRelationGroupCandidates,
+} from "../poc/relation-group/extract.ts";
 
 type PocStrategy = {
   title: string;
@@ -44,8 +47,15 @@ function strategyDefinition(strategy: string | undefined): PocStrategy {
     };
   }
 
+  if (strategy === "relation-group-only") {
+    return {
+      title: "Relation Group Only PoC",
+      extractor: extractRelationGroupCandidates,
+    };
+  }
+
   throw new Error(
-    "poc strategyはcandidate-anchorまたはrelation-groupを指定してください。",
+    "poc strategyはcandidate-anchor、relation-group、relation-group-onlyのいずれかを指定してください。",
   );
 }
 
