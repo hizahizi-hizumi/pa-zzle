@@ -1,0 +1,62 @@
+name: Semantic Lint Compact State PoC
+
+on:
+  push:
+    branches:
+      - experiment/semantic-lint-compact-state-20260922
+
+permissions:
+  contents: read
+
+jobs:
+  compact-state:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+
+      - name: Install semantic lint dependencies
+        working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck semantic lint
+        run: bun run --cwd tools/semantic-lint typecheck
+
+      - name: Test semantic lint
+        run: bun run --cwd tools/semantic-lint test
+
+      - name: Run zero-shot tuned benchmark
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- compact-state --benchmark .semantic-lint/poc/benchmark.yaml --repeat 10
+
+      - name: Run zero-shot holdout benchmark
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- compact-state --benchmark .semantic-lint/poc/holdout/benchmark.yaml --repeat 10
+
+      - name: Run few-shot tuned benchmark
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- compact-state --benchmark .semantic-lint/poc/benchmark-few-shot.yaml --repeat 10
+
+      - name: Run few-shot holdout benchmark
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- compact-state --benchmark .semantic-lint/poc/holdout/benchmark-few-shot.yaml --repeat 10
+
+      - name: Run zero-shot repository validation
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- compact-state --benchmark .semantic-lint/poc/benchmark.yaml --repository
+
+      - name: Run few-shot repository validation
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- compact-state --benchmark .semantic-lint/poc/benchmark-few-shot.yaml --repository
