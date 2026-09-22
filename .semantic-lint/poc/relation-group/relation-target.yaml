@@ -116,3 +116,8 @@ cases:
               expect(score.breakdown.speed).toBe(0);
             });
           });
+
+  - rule: table-driven-cases
+    name: 構造は同じだが異なる業務規則
+    fixture: fixtures/table-semantic-distinct.ts
+    expectedFindings: []
