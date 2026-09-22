@@ -9,7 +9,7 @@ export function UndoButton({ disabled, onUndo }: UndoButtonProps) {
   return (
     <button
       type="button"
-      className="inline-flex size-12 items-center justify-center rounded-full border bg-background shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+      className="inline-flex size-12 items-center justify-center rounded-full border-(length:--border-width-normal) bg-background shadow-raised transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
       aria-label="待った"
       onClick={onUndo}
       disabled={disabled}

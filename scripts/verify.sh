@@ -19,6 +19,10 @@ run_check() {
 
 run_check "Frontend Biome" bun run --cwd frontend check
 run_check "Frontend TypeScript" bun run --cwd frontend typecheck
+run_check "Semantic lint TypeScript" bun run --cwd tools/semantic-lint typecheck
+run_check "Semantic lint tests" bun run --cwd tools/semantic-lint test
+run_check "Semantic lint doctor" bun run --cwd tools/semantic-lint doctor
+run_check "Semantic lint inspect" bun run --cwd tools/semantic-lint inspect -- vitest/arrange-outside-test frontend/src/records/storage.test.ts --plan-only
 run_check "Frontend Vitest" bun run --cwd frontend test
 run_check "Frontend build" bun run --cwd frontend build
 

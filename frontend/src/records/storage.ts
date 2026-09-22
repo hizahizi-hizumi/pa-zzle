@@ -1,4 +1,4 @@
-import { isPlayRecord, type PlayRecord } from "./play-record";
+import { isPlayRecord, type PlayRecord } from "@/records/play-record";
 
 const PLAY_RECORDS_STORAGE_KEY = "pa-zzle.play-records.v1";
 

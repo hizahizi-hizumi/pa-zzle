@@ -1,16 +1,16 @@
-import type { PlayRecord } from "@/records/play-record";
-import { createPlayRecordId } from "@/records/play-record";
-import type { PlayRecordDefinition } from "@/records/play-record-definition";
-
 import {
   parseWaterSortDifficulty,
   type WaterSortDifficulty,
-} from "./difficulty";
-import type { WaterSortProblemIdentity } from "./problem/problem";
+} from "@/games/water-sort/difficulty";
+import type { WaterSortProblemIdentity } from "@/games/water-sort/problem/problem";
 import {
+  calculateWaterSortMoveDelta,
   calculateWaterSortPlayScore,
-  calculateWaterSortSpeedFullScoreMs,
-} from "./score";
+  calculateWaterSortTimeDeltaMs,
+} from "@/games/water-sort/score";
+import type { PlayRecord } from "@/records/play-record";
+import { createPlayRecordId } from "@/records/play-record";
+import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
 const WATER_SORT_PLAY_RECORD_PAYLOAD_VERSION = 2;
 const WATER_SORT_GAME_ID = "water-sort";
@@ -242,12 +242,11 @@ export function getWaterSortPlayRecordTimeDelta(
   }
 
   const { elapsedMs, optimalMoveCount } = record.payload.performance;
-  const speedFullScoreMs = calculateWaterSortSpeedFullScoreMs({
+  return calculateWaterSortTimeDeltaMs({
+    elapsedMs,
     optimalMoveCount,
     colorCount: record.payload.problemIdentity.conditions.colorCount,
   });
-
-  return elapsedMs - speedFullScoreMs;
 }
 
 export function getWaterSortPlayRecordMoveDelta(
@@ -258,9 +257,14 @@ export function getWaterSortPlayRecordMoveDelta(
   }
 
   const completionMoveCount = getCompletionMoveCount(record);
-  return completionMoveCount === null
-    ? null
-    : completionMoveCount - record.payload.performance.optimalMoveCount;
+  if (completionMoveCount === null) {
+    return null;
+  }
+
+  return calculateWaterSortMoveDelta({
+    completionMoveCount,
+    optimalMoveCount: record.payload.performance.optimalMoveCount,
+  });
 }
 
 export const waterSortPlayRecordDefinition: PlayRecordDefinition = {

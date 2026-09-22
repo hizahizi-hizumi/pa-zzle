@@ -1,11 +1,10 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
-
+import { useWaterSortPlay } from "@/games/water-sort/play/use-water-sort-play";
 import {
   applyWaterSortMove,
   listWaterSortLegalMoves,
 } from "@/games/water-sort/puzzle/rules";
 import type { WaterSortMove } from "@/games/water-sort/puzzle/state";
-import { useWaterSortPlay } from "./use-water-sort-play";
 
 vi.mock("@/games/water-sort/problem-selection", () => ({
   generateWaterSortProblemForDifficulty: (
@@ -240,6 +239,7 @@ describe("useWaterSortPlay", () => {
       restartCount: 0,
       optimalMoveCount: result.current.optimalMoveCount,
       moveDelta: 0,
+      timeDeltaMs: expect.any(Number),
       backtrackMoveCount: 0,
       speedFullScoreMs: expect.any(Number),
       colorCount: result.current.problemIdentity.conditions.colorCount,

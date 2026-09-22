@@ -1,11 +1,10 @@
 import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
-import { generateWaterSortProblem } from "@/games/water-sort/problem/generator";
-
 import {
   createWaterSortDiagnosticSnapshot,
   parseWaterSortDiagnosticSnapshot,
   restoreWaterSortProblemFromDiagnosticSnapshot,
-} from "./diagnostics";
+} from "@/games/water-sort/diagnostics";
+import { generateWaterSortProblem } from "@/games/water-sort/problem/generator";
 
 describe("WaterSortDiagnosticSnapshot", () => {
   const problem = generateWaterSortProblem({

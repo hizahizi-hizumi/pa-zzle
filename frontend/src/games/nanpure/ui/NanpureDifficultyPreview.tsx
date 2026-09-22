@@ -53,7 +53,7 @@ export function NanpureDifficultyPreview({
             <span
               key={id}
               className={cn(
-                "flex aspect-square items-center justify-center border-t border-l border-border/85 text-xs tabular-nums sm:text-sm",
+                "flex aspect-square items-center justify-center border-t border-l border-border/85 font-sans text-xs tabular-nums sm:text-sm",
                 row % 3 === 0 && "border-t-2 border-t-foreground/55",
                 column % 3 === 0 && "border-l-2 border-l-foreground/55",
                 cell !== "." && "font-semibold text-foreground/90",

@@ -1,26 +1,26 @@
 import type { ProblemSeed } from "@/games/problem-seed";
 import {
-  createWaterSortStateKey,
-  isCompleteWaterSortBottle,
-  WATER_SORT_BOTTLE_CAPACITY,
-  WATER_SORT_EMPTY_BOTTLE_COUNT,
-  type WaterSortState,
-} from "../puzzle/state";
-import {
   analyzeWaterSortDifficulty,
   type WaterSortDifficultyAnalysis,
-} from "./difficulty-analysis";
+} from "@/games/water-sort/problem/difficulty-analysis";
 import {
   solveWaterSort,
   type WaterSortSolveResult,
   type WaterSortSolverOptions,
-} from "./generation/solver";
+} from "@/games/water-sort/problem/generation/solver";
 import {
   WATER_SORT_GENERATOR_VERSION,
   type WaterSortGeneratedProblem,
   type WaterSortGenerationConditions,
   type WaterSortProblemIdentity,
-} from "./problem";
+} from "@/games/water-sort/problem/problem";
+import {
+  createWaterSortStateKey,
+  isCompleteWaterSortBottle,
+  WATER_SORT_BOTTLE_CAPACITY,
+  WATER_SORT_EMPTY_BOTTLE_COUNT,
+  type WaterSortState,
+} from "@/games/water-sort/puzzle/state";
 
 export type WaterSortGeneratedCandidate = {
   attempt: number;

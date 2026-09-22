@@ -1,8 +1,8 @@
-import type { NanpureBoard } from "../puzzle/board";
 import {
   type NanpureHumanSolveFeatures,
   traceNanpureHumanSolve,
-} from "./generation/human-solver";
+} from "@/games/nanpure/problem/generation/human-solver";
+import type { NanpureBoard } from "@/games/nanpure/puzzle/board";
 
 export type NanpureDifficultyAnalysis = {
   status: "supported" | "unsupported";

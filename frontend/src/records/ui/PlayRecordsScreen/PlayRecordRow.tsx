@@ -8,8 +8,8 @@ import {
 import type { PlayRecord } from "@/records/play-record";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 import { formatRecordCompletedAt } from "@/records/ui/format";
+import { getPlayRecordGridTemplateColumns } from "@/records/ui/PlayRecordsScreen/record-grid";
 import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
-import { getPlayRecordGridTemplateColumns } from "./record-grid";
 
 type PlayRecordRowProps = {
   record: PlayRecord;
@@ -39,7 +39,7 @@ export function PlayRecordRow({
         ),
       }}
     >
-      <p className="text-xs text-muted-foreground tabular-nums">
+      <p className="text-meta text-muted-foreground tabular-nums">
         {formatRecordCompletedAt(record.completedAt)}
       </p>
       {display.metrics.map((metric, metricIndex) => {
@@ -55,7 +55,7 @@ export function PlayRecordRow({
           <span
             key={metric.id}
             className={`min-w-0 text-right font-mono tabular-nums ${
-              metricIndex === 0 ? "text-sm" : "text-xs"
+              metricIndex === 0 ? "text-supporting" : "text-meta"
             } ${isBest ? "font-bold text-foreground" : "font-medium"}`}
             aria-label={
               isBest && value !== null

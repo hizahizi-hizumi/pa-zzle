@@ -21,8 +21,8 @@ import {
 import type { PlayRecord } from "@/records/play-record";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 import { formatRecordCompletedAt } from "@/records/ui/format";
+import { getTrendValueAxis } from "@/records/ui/PlayRecordsScreen/trend-value-axis";
 import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
-import { getTrendValueAxis } from "./trend-value-axis";
 
 type PlayRecordsTrendProps = {
   records: readonly PlayRecord[];
@@ -75,7 +75,7 @@ export function PlayRecordsTrend({
   const points = getTrendPoints(records, display, metric.id);
   if (points.length === 0) {
     return (
-      <p className="py-8 text-sm text-muted-foreground">
+      <p className="py-8 text-supporting text-muted-foreground">
         表示できる記録がありません。
       </p>
     );
@@ -167,7 +167,7 @@ export function PlayRecordsTrend({
       </ChartContainer>
 
       {metric.referenceValue !== undefined && (
-        <p className="mt-2 text-right text-[11px] text-muted-foreground">
+        <p className="mt-2 text-right text-meta text-muted-foreground">
           破線: 基準 {metric.formatValue(metric.referenceValue)}
         </p>
       )}

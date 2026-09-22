@@ -107,7 +107,7 @@ export function NanpurePlay({
     selectedCellIndex !== null && (notes[selectedCellIndex]?.length ?? 0) > 0;
 
   return (
-    <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
+    <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
       <BrandIdentityHeader />
       <NanpurePlayHeader
         elapsedMs={elapsedMs}

@@ -2,7 +2,7 @@ import {
   calculateNanpurePlayScore,
   getNanpureGameResultLevel,
   NANPURE_SPEED_FULL_SCORE_MS,
-} from "./score";
+} from "@/games/nanpure/score";
 
 describe("calculateNanpurePlayScore", () => {
   test("ミスも超過時間も待ったもやり直しもなければ100点になること", () => {

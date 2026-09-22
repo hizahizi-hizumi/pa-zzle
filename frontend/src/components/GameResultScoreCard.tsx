@@ -40,19 +40,19 @@ export function GameResultScoreCard({
         <div className="text-center">
           {style.message && (
             <p
-              className={`text-sm font-bold tracking-wide ${style.scoreClassName}`}
+              className={`text-supporting font-bold tracking-wide ${style.scoreClassName}`}
             >
               {style.message}
             </p>
           )}
-          <p className="mt-1 text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
+          <p className="mt-1 text-meta font-semibold tracking-[0.18em] text-muted-foreground uppercase">
             スコア
           </p>
           <p
             className={`mt-1 font-mono text-5xl font-bold tracking-tight tabular-nums ${style.scoreClassName}`}
           >
             {score}
-            <span className="ml-1 text-base font-medium text-muted-foreground">
+            <span className="ml-1 text-body font-medium text-muted-foreground">
               {" "}
               / 100
             </span>

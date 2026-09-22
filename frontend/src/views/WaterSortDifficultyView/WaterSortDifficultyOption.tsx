@@ -16,7 +16,7 @@ export function WaterSortDifficultyOption({
     <Link
       to="/puzzles/water-sort/play/:difficulty"
       params={{ difficulty }}
-      className="group block rounded-2xl focus-visible:outline-none"
+      className="group block rounded-xl focus-visible:outline-none"
     >
       <StartConditionOption label={label}>
         <WaterSortDifficultyPreview difficulty={difficulty} />
