@@ -1,7 +1,11 @@
 import { extname } from "node:path";
 import ts from "@typescript/typescript6";
 
-import type { SourceDocument, SourceRange } from "../../domain/model.ts";
+import type {
+  SourceDocument,
+  SourceRange,
+  SubjectContext,
+} from "../../domain/model.ts";
 
 export type CandidateAnchor = {
   id: string;
@@ -16,6 +20,7 @@ export type Candidate = {
   label: string;
   range: SourceRange;
   source: string;
+  context: SubjectContext;
   anchors: CandidateAnchor[];
 };
 
@@ -104,8 +109,28 @@ function candidateFromNode(
     label: candidateLabel(node, kind),
     range: rangeOf(sourceFile, start, end),
     source: source.slice(start, end),
+    context: structuralContext(node),
     anchors,
   };
+}
+
+function structuralContext(node: ts.Node): SubjectContext {
+  const enclosingCalls: string[] = [];
+  let current: ts.Node | undefined = node.parent;
+
+  while (current) {
+    if (ts.isCallExpression(current)) {
+      const name = calleeRootName(current.expression);
+
+      if (name !== null && !enclosingCalls.includes(name)) {
+        enclosingCalls.push(name);
+      }
+    }
+
+    current = current.parent;
+  }
+
+  return { enclosingCalls };
 }
 
 function anchorsForNode(

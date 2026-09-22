@@ -31,6 +31,9 @@ describe("TypeSafe provider", () => {
           s0: {
             id: "subject-1",
             scope: "file",
+            context: {
+              enclosingCalls: ["test", "describe"],
+            },
           },
         },
       },
@@ -180,6 +183,9 @@ function sampleBatch(ruleId: string): DecisionBatch {
         },
         symbol: "frontend/example.test.ts",
         source: "const value = 1;\n",
+        context: {
+          enclosingCalls: ["test", "describe"],
+        },
       },
     ],
     requests: [

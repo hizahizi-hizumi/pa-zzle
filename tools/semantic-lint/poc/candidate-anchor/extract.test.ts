@@ -12,6 +12,24 @@ describe("extractCandidateAnchors", () => {
     expect(labels).toEqual(["variable(hoge)", "variable(users)"]);
   });
 
+  test("包含するcallをnearest-firstで構造contextへ保持する", () => {
+    const nested = extractCandidateAnchors({
+      path: "example.test.ts",
+      source: `describe("target", () => {
+  test("動くこと", () => {
+    const value = createValue();
+    expect(value).toBeDefined();
+  });
+});
+`,
+    });
+    const value = nested.find((candidate) => candidate.label === "variable(value)");
+
+    expect(value?.context).toEqual({
+      enclosingCalls: ["test", "describe"],
+    });
+  });
+
   test("変数宣言からstatementとnameのanchorを抽出する", () => {
     const candidate = candidates[0];
 

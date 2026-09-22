@@ -46,6 +46,10 @@ export type Rule = {
   predicate: Predicate;
 };
 
+export type SubjectContext = {
+  enclosingCalls: string[];
+};
+
 export type Subject = {
   id: string;
   scope: ScopeId;
@@ -53,6 +57,7 @@ export type Subject = {
   range: SourceRange;
   symbol?: string;
   source: string;
+  context?: SubjectContext;
 };
 
 export type EvaluationTask = {

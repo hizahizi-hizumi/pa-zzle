@@ -384,6 +384,7 @@ function candidateSubject(
     range: candidate.range,
     symbol: candidate.label,
     source: candidate.source,
+    context: candidate.context,
   };
 }
 
@@ -399,6 +400,7 @@ function anchorSubject(
     range: anchor.range,
     symbol: `${candidate.label}:${anchor.role}`,
     source: anchor.source,
+    context: candidate.context,
   };
 }
 
