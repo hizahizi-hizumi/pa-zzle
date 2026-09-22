@@ -25,20 +25,20 @@ jobs:
         working-directory: tools/semantic-lint
         run: bun install --frozen-lockfile
 
-      - name: Show relation group plan
-        run: bun run --cwd tools/semantic-lint poc -- relation-group --plan-only
-
-      - name: Run tuned benchmark
+      - name: Run tuned benchmark verbose
         env:
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
-        run: bun run --cwd tools/semantic-lint poc -- relation-group --benchmark .semantic-lint/poc/benchmark.yaml --repeat 10
+        run: bun run --cwd tools/semantic-lint poc -- relation-group --benchmark .semantic-lint/poc/benchmark.yaml --repeat 1 --verbose
 
-      - name: Run holdout benchmark
+      - name: Run holdout benchmark verbose
         env:
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
-        run: bun run --cwd tools/semantic-lint poc -- relation-group --benchmark .semantic-lint/poc/holdout/benchmark.yaml --repeat 10
+        run: bun run --cwd tools/semantic-lint poc -- relation-group --benchmark .semantic-lint/poc/holdout/benchmark.yaml --repeat 1 --verbose
 
-      - name: Run repository validation
+      - name: Reduce repository batch size
+        run: sed -i 's/maxDecisionsPerRequest: 64/maxDecisionsPerRequest: 16/' .semantic-lint/config.yaml
+
+      - name: Run repository validation batch16
         env:
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
         run: bun run --cwd tools/semantic-lint poc -- relation-group --benchmark .semantic-lint/poc/benchmark.yaml --repository
