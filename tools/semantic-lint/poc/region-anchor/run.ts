@@ -139,9 +139,9 @@ async function runRegionAnchorCase(options: {
     provider,
     maxDecisionsPerRequest,
   });
-  const regionViolationProbability =
-    region.results.get("region:file")?.probabilities.violation ?? 0;
-  const regionPassed = regionViolationProbability >= rule.violationThreshold;
+  const regionResult = region.results.get("region:file");
+  const regionViolationProbability = regionResult?.probabilities.violation ?? 0;
+  const regionPassed = regionResult?.decision === "violation";
   const localization = regionPassed
     ? await localizeRegion({
         document,
@@ -271,14 +271,16 @@ async function localizeRegion(options: {
 
   for (const group of groups) {
     const best = group.anchors
-      .map((anchor) => ({
-        anchor,
-        probability:
-          evaluated.results.get(anchor.id)?.probabilities.violation ?? -1,
-      }))
+      .flatMap((anchor) => {
+        const result = evaluated.results.get(anchor.id);
+
+        return result?.decision === "violation"
+          ? [{ anchor, probability: result.probabilities.violation }]
+          : [];
+      })
       .sort((left, right) => right.probability - left.probability)[0];
 
-    if (best && best.probability >= rule.violationThreshold) {
+    if (best) {
       selected.set(group.id, best.anchor);
     }
   }
@@ -294,9 +296,10 @@ function regionPredicate(rule: BenchmarkRule): Predicate {
   return {
     instruction: [
       `Rule: ${rule.title}`,
-      rule.predicate.instruction,
-      "判定対象はstate.file全体である。",
-      "このfile内に上記ruleの具体的な違反が1件以上存在するかだけを判定する。",
+      "元ruleは個々のコード箇所を判定するための定義である。ここではfile全体を1つの判定対象とは解釈しない。",
+      `元ruleの判定指示: ${rule.predicate.instruction}`,
+      `違反条件: ${rule.predicate.outcomes.violation}`,
+      "state.file内を走査し、この違反条件を満たす具体的なコード箇所が1件以上存在するかだけを判定する。",
       "この段階では違反箇所を選ばない。",
     ].join("\n"),
     outcomes: {
@@ -323,7 +326,8 @@ function localizationPredicate(
   return {
     instruction: [
       `Rule: ${rule.title}`,
-      rule.predicate.instruction,
+      `元ruleの判定指示: ${rule.predicate.instruction}`,
+      `違反条件: ${rule.predicate.outcomes.violation}`,
       "state.fileにはこのruleの違反が1件以上存在すると既に判定されている。",
       `現在の構文グループ: ${group.label}`,
       `構文グループsource: ${JSON.stringify(group.source)}`,
