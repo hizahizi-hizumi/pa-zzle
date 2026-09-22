@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="マインスイーパー">
+  <g fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2">
+    <path d="M46 18v84M74 18v84M18 46h84M18 74h84"/>
+  </g>
+  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <path d="M54 29c0-4 3-7 8-7 4 0 7 3 7 6 0 4-3 6-7 9l-8 6h15" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <g transform="translate(32 88)">
+    <path d="M-6 9V-9" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M-5-8h12l-3 5 3 5H-5z" fill="var(--game-pictogram-soft)"/>
+  </g>
+  <g transform="translate(88 60)">
+    <circle r="6" fill="var(--game-pictogram-strong)"/>
+    <g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2" stroke-linecap="round">
+      <path d="M0-11v3M0 8v3M-11 0h3M8 0h3M-8-8l2 2M6 6l2 2M8-8L6-6M-6 6l-2 2"/>
+    </g>
+  </g>
+</svg>
