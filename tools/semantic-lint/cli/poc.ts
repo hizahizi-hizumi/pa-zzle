@@ -20,10 +20,11 @@ export async function runPocCommand(args: string[]): Promise<number> {
 }
 
 async function runCandidateAnchorPoc(args: string[]): Promise<number> {
-  const { planOnly, repeat, verbose } = parseCandidateAnchorOptions(args);
+  const { planOnly, repeat, verbose, benchmarkPath } =
+    parseCandidateAnchorOptions(args);
   const { projectRoot, config, rules } = await loadProjectContext();
   const benchmark = await loadCandidateAnchorBenchmark(
-    resolve(projectRoot, ".semantic-lint/poc/benchmark.yaml"),
+    resolve(projectRoot, benchmarkPath),
   );
 
   if (planOnly) {
@@ -60,10 +61,12 @@ function parseCandidateAnchorOptions(args: string[]): {
   planOnly: boolean;
   repeat: number;
   verbose: boolean;
+  benchmarkPath: string;
 } {
   let planOnly = false;
   let repeat = 1;
   let verbose = false;
+  let benchmarkPath = ".semantic-lint/poc/benchmark.yaml";
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
@@ -75,6 +78,18 @@ function parseCandidateAnchorOptions(args: string[]): {
 
     if (arg === "--verbose") {
       verbose = true;
+      continue;
+    }
+
+    if (arg === "--benchmark") {
+      const value = args[index + 1];
+
+      if (!value) {
+        throw new Error("--benchmarkにはbenchmark YAMLのpathを指定してください。");
+      }
+
+      benchmarkPath = value;
+      index += 1;
       continue;
     }
 
@@ -93,7 +108,7 @@ function parseCandidateAnchorOptions(args: string[]): {
     throw new Error(`不明なcandidate-anchorオプションです: ${arg}`);
   }
 
-  return { planOnly, repeat, verbose };
+  return { planOnly, repeat, verbose, benchmarkPath };
 }
 
 async function renderCandidateAnchorPlan(options: {

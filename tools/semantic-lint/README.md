@@ -138,6 +138,11 @@ bun run --cwd tools/semantic-lint poc -- candidate-anchor --repeat 3
 
 # Candidate / AnchorごとのChoiceと確率を確認
 bun run --cwd tools/semantic-lint poc -- candidate-anchor --repeat 3 --verbose
+
+# 別benchmarkを同じ方式・設定で評価
+bun run --cwd tools/semantic-lint poc -- candidate-anchor \
+  --benchmark .semantic-lint/poc/holdout/benchmark.yaml \
+  --repeat 10
 ```
 
 `candidate-anchor` PoCはASTから汎用Candidateと指摘可能なAnchorを抽出する。全Candidateを意味判定し、violationになったCandidateだけAnchorを追加判定する。結果は`.semantic-lint/poc/benchmark.yaml`の期待位置と比較する。本番ruleの`scope`や`check`挙動は変更しない。
