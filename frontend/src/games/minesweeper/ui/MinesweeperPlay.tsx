@@ -11,7 +11,7 @@ import {
 } from "./board/MinesweeperBoard";
 import { MinesweeperInputModeControl } from "./MinesweeperPlay/MinesweeperInputModeControl";
 import { MinesweeperPlayHeader } from "./MinesweeperPlay/MinesweeperPlayHeader";
-import { MinesweeperStatusPanel } from "./MinesweeperPlay/MinesweeperStatusPanel";
+import { MinesweeperPlayStatus } from "./MinesweeperPlay/MinesweeperPlayStatus";
 
 type MinesweeperPlayProps = {
   rows: number;
@@ -53,24 +53,27 @@ export function MinesweeperPlay({
       <MinesweeperPlayHeader
         mineCount={mineCount}
         flagCount={flagCount}
+        onReplay={handleReplay}
         onBackToHome={onBackToHome}
       />
-      <main className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 px-2 py-3 sm:px-6">
-        <MinesweeperBoard
-          rows={rows}
-          columns={columns}
-          cells={visibleCells}
-          mode={mode}
-          disabled={status !== "playing"}
-          onRevealCell={onRevealCell}
-          onToggleFlag={onToggleFlag}
-          onChordCell={onChordCell}
-        />
-        {status === "playing" ? (
-          <MinesweeperInputModeControl mode={mode} onChange={setMode} />
-        ) : (
-          <MinesweeperStatusPanel status={status} onReplay={handleReplay} />
-        )}
+      <main className="flex min-h-0 flex-1 items-center justify-center px-2 py-3 sm:px-6">
+        <div className="grid w-full max-w-[27rem] gap-3">
+          <MinesweeperBoard
+            rows={rows}
+            columns={columns}
+            cells={visibleCells}
+            mode={mode}
+            disabled={status !== "playing"}
+            onRevealCell={onRevealCell}
+            onToggleFlag={onToggleFlag}
+            onChordCell={onChordCell}
+          />
+          {status === "playing" ? (
+            <MinesweeperInputModeControl mode={mode} onChange={setMode} />
+          ) : (
+            <MinesweeperPlayStatus status={status} />
+          )}
+        </div>
       </main>
     </section>
   );

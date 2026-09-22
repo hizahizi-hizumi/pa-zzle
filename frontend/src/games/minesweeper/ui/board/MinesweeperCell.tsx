@@ -50,7 +50,7 @@ function getAccessibleName(
 
 function getCellClassName(view: MinesweeperVisibleCell): string {
   const base =
-    "flex aspect-square min-w-0 touch-manipulation select-none items-center justify-center font-sans text-[clamp(0.8rem,4vw,1.15rem)] font-bold leading-none outline-none transition-[background-color,box-shadow,transform] duration-fast focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.97] disabled:pointer-events-none";
+    "flex aspect-square min-w-0 touch-manipulation select-none items-center justify-center font-sans text-[clamp(0.8rem,4vw,1.15rem)] font-bold leading-none outline-none transition-colors duration-fast focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
 
   if (view.state === "exploded") {
     return `${base} bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300`;

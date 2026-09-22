@@ -1,16 +1,20 @@
 import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { PlayHeaderSummary } from "./MinesweeperPlayHeader/PlayHeaderSummary";
+import { PlayMenu } from "./MinesweeperPlayHeader/PlayMenu";
 
 type MinesweeperPlayHeaderProps = {
   mineCount: number;
   flagCount: number;
+  onReplay: () => void;
   onBackToHome: () => void;
 };
 
 export function MinesweeperPlayHeader({
   mineCount,
   flagCount,
+  onReplay,
   onBackToHome,
 }: MinesweeperPlayHeaderProps) {
   return (
@@ -22,13 +26,10 @@ export function MinesweeperPlayHeader({
         aria-label="ホームへ戻る"
         onClick={onBackToHome}
       >
-        <ArrowLeft aria-hidden />
+        <ArrowLeft />
       </Button>
-      <div className="flex h-10 items-center justify-center gap-4 text-play-meta text-muted-foreground tabular-nums">
-        <span>地雷 {mineCount}</span>
-        <span>旗 {flagCount}</span>
-      </div>
-      <span aria-hidden />
+      <PlayHeaderSummary mineCount={mineCount} flagCount={flagCount} />
+      <PlayMenu onReplay={onReplay} onBackToHome={onBackToHome} />
     </header>
   );
 }
