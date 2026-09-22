@@ -94,9 +94,12 @@ export function buildRequest(
     questions[questionId] = {
       type: "choice",
       instructions: [
-        `Evaluate only state.subjects.${subject.key}.`,
-        "Use state.file as surrounding context when needed.",
-        "Do not classify another subject in the file.",
+        `The only classification target is state.subjects.${subject.key}.`,
+        "Evaluate the criteria against that target itself.",
+        "Use state.file only as surrounding evidence to understand the target, including its containment and semantic role.",
+        "If the criteria describe a container, use its descendants or siblings as evidence about whether that container itself satisfies the criteria.",
+        "A violation elsewhere in the file does not make the current target a violation.",
+        "Do not transfer a violation from an ancestor, descendant, or sibling to the current target unless the criteria explicitly define the target container itself as the violation.",
         "",
         request.predicate.instruction,
       ].join("\n"),
