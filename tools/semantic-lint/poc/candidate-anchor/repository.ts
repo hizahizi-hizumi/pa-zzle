@@ -10,7 +10,10 @@ import type {
   BenchmarkRule,
   CandidateAnchorBenchmark,
 } from "./benchmark.ts";
-import { runCandidateAnchorBenchmark } from "./run.ts";
+import {
+  type CandidateExtractor,
+  runCandidateAnchorBenchmark,
+} from "./run.ts";
 
 export type RepositoryClassificationCandidate = {
   path: string;
@@ -48,6 +51,7 @@ export async function runCandidateAnchorRepository(options: {
   excludePaths: string[];
   provider: SemanticDecisionProvider;
   maxDecisionsPerRequest: number;
+  extractCandidates?: CandidateExtractor;
 }): Promise<CandidateAnchorRepositoryResult> {
   const {
     projectRoot,
@@ -56,6 +60,7 @@ export async function runCandidateAnchorRepository(options: {
     excludePaths,
     provider,
     maxDecisionsPerRequest,
+    extractCandidates,
   } = options;
   const results: CandidateAnchorRepositoryRuleResult[] = [];
   const skippedRuleIds: string[] = [];
@@ -89,6 +94,7 @@ export async function runCandidateAnchorRepository(options: {
       benchmark: repositoryBenchmark,
       provider,
       maxDecisionsPerRequest,
+      extractCandidates,
     });
 
     const classificationCandidates = result.cases.flatMap((item) =>

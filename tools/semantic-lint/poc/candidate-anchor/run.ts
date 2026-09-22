@@ -22,6 +22,8 @@ import {
   extractCandidateAnchors,
 } from "./extract.ts";
 
+export type CandidateExtractor = (document: SourceDocument) => Candidate[];
+
 export type CandidateAnchorDecision = {
   stage: "classification" | "localization";
   subjectId: string;
@@ -82,8 +84,14 @@ export async function runCandidateAnchorBenchmark(options: {
   benchmark: CandidateAnchorBenchmark;
   provider: SemanticDecisionProvider;
   maxDecisionsPerRequest: number;
+  extractCandidates?: CandidateExtractor;
 }): Promise<CandidateAnchorBenchmarkResult> {
-  const { benchmark, provider, maxDecisionsPerRequest } = options;
+  const {
+    benchmark,
+    provider,
+    maxDecisionsPerRequest,
+    extractCandidates = extractCandidateAnchors,
+  } = options;
   const rulesById = new Map(benchmark.rules.map((rule) => [rule.id, rule]));
   const results: CandidateAnchorCaseResult[] = [];
 
@@ -101,6 +109,7 @@ export async function runCandidateAnchorBenchmark(options: {
         rule,
         provider,
         maxDecisionsPerRequest,
+        extractCandidates,
       }),
     );
   }
@@ -135,6 +144,7 @@ async function runCandidateAnchorCase(options: {
   rule: BenchmarkRule;
   provider: SemanticDecisionProvider;
   maxDecisionsPerRequest: number;
+  extractCandidates: CandidateExtractor;
 }): Promise<CandidateAnchorCaseResult> {
   const {
     benchmarkCase,
@@ -142,13 +152,14 @@ async function runCandidateAnchorCase(options: {
     rule,
     provider,
     maxDecisionsPerRequest,
+    extractCandidates,
   } = options;
   const source = await Bun.file(benchmarkCase.fixturePath).text();
   const document = {
     path: benchmarkCase.fixturePath,
     source,
   } satisfies SourceDocument;
-  const candidates = extractCandidateAnchors(document);
+  const candidates = extractCandidates(document);
   const classification = await evaluateCandidates({
     document,
     candidates,

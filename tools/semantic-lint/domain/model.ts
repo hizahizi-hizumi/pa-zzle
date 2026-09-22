@@ -46,8 +46,15 @@ export type Rule = {
   predicate: Predicate;
 };
 
+export type StructuralRelationContext = {
+  kind: "siblings";
+  containerKind: string;
+  memberKinds: string[];
+};
+
 export type SubjectContext = {
   enclosingCalls: string[];
+  relation?: StructuralRelationContext;
 };
 
 export type Subject = {

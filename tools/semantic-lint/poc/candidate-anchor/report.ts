@@ -2,9 +2,9 @@ import type { CandidateAnchorBenchmarkResult } from "./run.ts";
 
 export function renderCandidateAnchorBenchmark(
   result: CandidateAnchorBenchmarkResult,
-  options: { verbose?: boolean } = {},
+  options: { verbose?: boolean; title?: string } = {},
 ): string {
-  const lines: string[] = ["Candidate + Anchor PoC", ""];
+  const lines: string[] = [options.title ?? "Candidate + Anchor PoC", ""];
 
   for (const item of result.cases) {
     lines.push(

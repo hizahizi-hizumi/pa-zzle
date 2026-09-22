@@ -149,3 +149,25 @@ bun run --cwd tools/semantic-lint poc -- candidate-anchor \
 ```
 
 `candidate-anchor` PoCはASTから汎用Candidateと指摘可能なAnchorを抽出する。全Candidateを意味判定し、violationになったCandidateだけAnchorを追加判定する。結果は`.semantic-lint/poc/benchmark.yaml`の期待位置と比較する。本番ruleの`scope`や`check`挙動は変更しない。
+
+### Relation Group PoC
+
+2Eでは、単一AST nodeだけではなく、同じ構文コンテナ直下に並ぶ複数statementの関係を1つの判定対象として追加する。rule設定は変更せず、relation/groupの抽出と位置候補は汎用エンジン側で構成する。
+
+```sh
+# Candidate + Anchorへrelation/group候補を追加した静的計画を確認
+bun run --cwd tools/semantic-lint poc -- relation-group --plan-only
+
+# 既存benchmarkを同じpredicate・thresholdで比較
+bun run --cwd tools/semantic-lint poc -- relation-group --repeat 3
+
+# 未使用holdoutを比較
+bun run --cwd tools/semantic-lint poc -- relation-group \
+  --benchmark .semantic-lint/poc/holdout/benchmark.yaml \
+  --repeat 10
+
+# 実repositoryへ1回適用
+bun run --cwd tools/semantic-lint poc -- relation-group --repository
+```
+
+`relation-group`は既存の単一Candidateを残したまま、ordered sibling statementsのgroup Candidateを追加する。groupには構文解析器由来のrelation情報と、group自身・包含container・直近の包含statementを位置候補として保持する。Vitest固有のrule IDやcall名による分岐は持たない。本番`check`経路とrule APIは変更しない。

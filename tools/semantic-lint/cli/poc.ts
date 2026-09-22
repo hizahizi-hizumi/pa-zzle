@@ -7,23 +7,52 @@ import { loadProjectContext } from "./context.ts";
 import { loadCandidateAnchorBenchmark } from "../poc/candidate-anchor/benchmark.ts";
 import { extractCandidateAnchors } from "../poc/candidate-anchor/extract.ts";
 import { renderCandidateAnchorBenchmark } from "../poc/candidate-anchor/report.ts";
-import { runCandidateAnchorBenchmark } from "../poc/candidate-anchor/run.ts";
+import {
+  type CandidateExtractor,
+  runCandidateAnchorBenchmark,
+} from "../poc/candidate-anchor/run.ts";
 import {
   runCandidateAnchorRepository,
   type CandidateAnchorRepositoryResult,
 } from "../poc/candidate-anchor/repository.ts";
+import { extractRelationAwareCandidates } from "../poc/relation-group/extract.ts";
+
+type PocStrategy = {
+  title: string;
+  extractor: CandidateExtractor;
+};
 
 export async function runPocCommand(args: string[]): Promise<number> {
   const [strategy, ...strategyArgs] = args;
+  const selected = strategyDefinition(strategy);
 
-  if (strategy !== "candidate-anchor") {
-    throw new Error("poc strategyはcandidate-anchorを指定してください。");
-  }
-
-  return runCandidateAnchorPoc(strategyArgs);
+  return runCandidateAnchorPoc(strategyArgs, selected);
 }
 
-async function runCandidateAnchorPoc(args: string[]): Promise<number> {
+function strategyDefinition(strategy: string | undefined): PocStrategy {
+  if (strategy === "candidate-anchor") {
+    return {
+      title: "Candidate + Anchor PoC",
+      extractor: extractCandidateAnchors,
+    };
+  }
+
+  if (strategy === "relation-group") {
+    return {
+      title: "Relation Group PoC",
+      extractor: extractRelationAwareCandidates,
+    };
+  }
+
+  throw new Error(
+    "poc strategyはcandidate-anchorまたはrelation-groupを指定してください。",
+  );
+}
+
+async function runCandidateAnchorPoc(
+  args: string[],
+  strategy: PocStrategy,
+): Promise<number> {
   const { planOnly, repeat, verbose, benchmarkPath, repository } =
     parseCandidateAnchorOptions(args);
   const { projectRoot, config, rules } = await loadProjectContext();
@@ -38,6 +67,8 @@ async function runCandidateAnchorPoc(args: string[]): Promise<number> {
       rules,
       excludePaths: config.excludePaths,
       maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
+      extractCandidates: strategy.extractor,
+      title: strategy.title,
     });
     process.stdout.write(output);
     return 0;
@@ -57,8 +88,11 @@ async function runCandidateAnchorPoc(args: string[]): Promise<number> {
       excludePaths: config.excludePaths,
       provider,
       maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
+      extractCandidates: strategy.extractor,
     });
-    process.stdout.write(renderCandidateAnchorRepository(projectRoot, result));
+    process.stdout.write(
+      renderCandidateAnchorRepository(projectRoot, result, strategy.title),
+    );
     return 0;
   }
 
@@ -71,8 +105,14 @@ async function runCandidateAnchorPoc(args: string[]): Promise<number> {
       benchmark,
       provider,
       maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
+      extractCandidates: strategy.extractor,
     });
-    process.stdout.write(renderCandidateAnchorBenchmark(result, { verbose }));
+    process.stdout.write(
+      renderCandidateAnchorBenchmark(result, {
+        verbose,
+        title: strategy.title,
+      }),
+    );
   }
 
   return 0;
@@ -145,6 +185,8 @@ async function renderCandidateAnchorPlan(options: {
   rules: Awaited<ReturnType<typeof loadProjectContext>>["rules"];
   excludePaths: string[];
   maxDecisionsPerRequest: number;
+  extractCandidates: CandidateExtractor;
+  title: string;
 }): Promise<string> {
   const {
     projectRoot,
@@ -152,14 +194,16 @@ async function renderCandidateAnchorPlan(options: {
     rules,
     excludePaths,
     maxDecisionsPerRequest,
+    extractCandidates,
+    title,
   } = options;
-  const lines = ["Candidate + Anchor PoC plan", "", "benchmark"];
+  const lines = [`${title} plan`, "", "benchmark"];
   let benchmarkCandidates = 0;
   let benchmarkAnchors = 0;
 
   for (const benchmarkCase of benchmark.cases) {
     const source = await Bun.file(benchmarkCase.fixturePath).text();
-    const candidates = extractCandidateAnchors({
+    const candidates = extractCandidates({
       path: benchmarkCase.fixturePath,
       source,
     });
@@ -205,7 +249,7 @@ async function renderCandidateAnchorPlan(options: {
   const kindCounts = new Map<string, number>();
 
   for (const document of documents) {
-    const candidates = extractCandidateAnchors(document);
+    const candidates = extractCandidates(document);
     candidateCount += candidates.length;
     anchorCount += candidates.reduce(
       (total, candidate) => total + candidate.anchors.length,
@@ -246,8 +290,9 @@ async function renderCandidateAnchorPlan(options: {
 function renderCandidateAnchorRepository(
   projectRoot: string,
   result: CandidateAnchorRepositoryResult,
+  title: string,
 ): string {
-  const lines = ["Candidate + Anchor repository validation", ""];
+  const lines = [`${title} repository validation`, ""];
 
   for (const rule of result.rules) {
     lines.push(
