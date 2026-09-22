@@ -124,3 +124,17 @@ GitHub ActionsのQuality Gateでは、tool自身のtypecheck / deterministic tes
 remote semantic lintはChatGPT用のoffline verificationでは実行しない。ChatGPT用Offline Dependenciesにもsemantic lintの `node_modules` は含めない。
 
 通常のruleはwarningから運用を始めるため、warningだけではQuality Gateを失敗させない。provider/config/internal errorはrun failureになる。
+
+## 検出方式PoC
+
+Candidate + Anchor方式は本番の`check`経路と分離して評価する。
+
+```sh
+# providerを呼ばず、benchmarkと実repositoryのcandidate数を確認
+bun run --cwd tools/semantic-lint poc -- candidate-anchor --plan-only
+
+# benchmark fixtureをJevで評価
+bun run --cwd tools/semantic-lint poc -- candidate-anchor --repeat 3
+```
+
+`candidate-anchor` PoCはASTから汎用Candidateと指摘可能なAnchorを抽出する。全Candidateを意味判定し、violationになったCandidateだけAnchorを追加判定する。結果は`.semantic-lint/poc/benchmark.yaml`の期待位置と比較する。本番ruleの`scope`や`check`挙動は変更しない。

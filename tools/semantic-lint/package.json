@@ -10,7 +10,8 @@
     "rules": "bun cli/main.ts rules",
     "doctor": "bun cli/main.ts doctor",
     "test": "bun test",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "poc": "bun cli/main.ts poc"
   },
   "dependencies": {
     "@typescript/typescript6": "6.0.2"
