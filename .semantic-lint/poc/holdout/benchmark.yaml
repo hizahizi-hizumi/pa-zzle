@@ -76,7 +76,8 @@ cases:
     name: 例外検証用入力だけをArrangeとして指す
     fixture: fixtures/arrange-invalid-board.ts
     expectedFindings:
-      - text: const board = Array.from({ length: NANPURE_CELL_COUNT - 1 }, () => null);
+      - text: |-
+          const board = Array.from({ length: NANPURE_CELL_COUNT - 1 }, () => null);
 
   - rule: table-driven-cases
     name: 既存test.eachを指さない
