@@ -72,7 +72,7 @@ export function MinesweeperBoard({
     <div
       role="group"
       aria-label="マインスイーパー盤面"
-      className="grid w-full gap-px border border-slate-300 bg-slate-300 dark:border-slate-600 dark:bg-slate-600"
+      className="grid w-full border-l border-t border-slate-300 dark:border-slate-600"
       style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
     >
       {cells.map(function renderCell(cell, cellIndex) {

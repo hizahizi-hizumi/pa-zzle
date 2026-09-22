@@ -13,11 +13,6 @@ import { MinesweeperInputModeControl } from "./MinesweeperPlay/MinesweeperInputM
 import { MinesweeperPlayHeader } from "./MinesweeperPlay/MinesweeperPlayHeader";
 import { MinesweeperPlayStatus } from "./MinesweeperPlay/MinesweeperPlayStatus";
 
-function getPixelAlignedPlayAreaWidth(columns: number): string {
-  const gridLineWidth = columns + 1;
-  return `calc(round(down, min(100%, 27rem) - ${gridLineWidth}px, ${columns}px) + ${gridLineWidth}px)`;
-}
-
 type MinesweeperPlayProps = {
   rows: number;
   columns: number;
@@ -62,10 +57,7 @@ export function MinesweeperPlay({
         onBackToHome={onBackToHome}
       />
       <main className="flex min-h-0 flex-1 items-center justify-center px-2 py-3 sm:px-6">
-        <div
-          className="grid gap-3"
-          style={{ width: getPixelAlignedPlayAreaWidth(columns) }}
-        >
+        <div className="grid w-full max-w-[27rem] gap-3">
           <MinesweeperBoard
             rows={rows}
             columns={columns}
