@@ -42,11 +42,11 @@ export function extractCallbackStatementCandidates(
       const callbacks = callbackArguments(node);
 
       for (const callback of callbacks) {
-        if (!ts.isBlock(callback.body)) {
+        if (!ts.isBlock(callback.node.body)) {
           continue;
         }
 
-        for (const statement of callback.body.statements) {
+        for (const statement of callback.node.body.statements) {
           candidates.push(
             statementCandidate(
               sourceFile,
