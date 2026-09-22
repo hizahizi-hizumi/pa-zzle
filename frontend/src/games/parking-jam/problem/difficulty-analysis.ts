@@ -21,9 +21,12 @@ type ParkingJamExitPath = {
 type ParkingJamOrderSpaceAnalysis = {
   legalOrderCount: bigint;
   reachableStateCount: number;
+  averageLegalVehicleCount: number;
   averageLegalVehicleRatio: number;
   minimumLegalVehicleRatio: number;
   forcedChoiceStateRatio: number;
+  maximumForcedChoiceChainLength: number;
+  averageMinimumBlockingVehicleCount: number;
   averageLegalDirectionCount: number;
   averageNewlyUnlockedVehicleCount: number;
   maximumNewlyUnlockedVehicleCount: number;
@@ -45,9 +48,12 @@ export type ParkingJamDifficultyFeatures = {
   legalOrderCount: string | null;
   solutionOrderFreedom: number | null;
   reachableStateCount: number | null;
+  averageLegalVehicleCount: number | null;
   averageLegalVehicleRatio: number | null;
   minimumLegalVehicleRatio: number | null;
   forcedChoiceStateRatio: number | null;
+  maximumForcedChoiceChainLength: number | null;
+  averageMinimumBlockingVehicleCount: number | null;
   averageLegalDirectionCount: number | null;
   averageNewlyUnlockedVehicleCount: number | null;
   maximumNewlyUnlockedVehicleCount: number | null;
@@ -217,25 +223,51 @@ function createExitPathsByVehicle(
   return result;
 }
 
-function listLegalVehicleOptions(
+type ParkingJamVehicleStateOption = {
+  vehicleIndex: number;
+  legalDirectionCount: number;
+  minimumBlockingVehicleCount: number | null;
+};
+
+function countMaskBits(mask: number): number {
+  let count = 0;
+  let remaining = mask;
+  while (remaining !== 0) {
+    remaining &= remaining - 1;
+    count += 1;
+  }
+  return count;
+}
+
+function listVehicleStateOptions(
   board: ParkingJamBoard,
   pathsByVehicle: ReadonlyMap<
     ParkingJamVehicleId,
     readonly ParkingJamExitPath[]
   >,
   remainingMask: number,
-): { vehicleIndex: number; legalDirectionCount: number }[] {
-  const options: { vehicleIndex: number; legalDirectionCount: number }[] = [];
+): ParkingJamVehicleStateOption[] {
+  const options: ParkingJamVehicleStateOption[] = [];
   for (let index = 0; index < board.vehicles.length; index += 1) {
     const vehicleBit = 1 << index;
     if ((remainingMask & vehicleBit) === 0) continue;
     const vehicle = board.vehicles[index];
     if (!vehicle) continue;
-    const legalDirectionCount = (pathsByVehicle.get(vehicle.id) ?? []).filter(
-      ({ blockerMask }) => (blockerMask & remainingMask) === 0,
+
+    const pathBlockingVehicleCounts = (
+      pathsByVehicle.get(vehicle.id) ?? []
+    ).map(({ blockerMask }) => countMaskBits(blockerMask & remainingMask));
+    const legalDirectionCount = pathBlockingVehicleCounts.filter(
+      (count) => count === 0,
     ).length;
-    if (legalDirectionCount > 0)
-      options.push({ vehicleIndex: index, legalDirectionCount });
+    options.push({
+      vehicleIndex: index,
+      legalDirectionCount,
+      minimumBlockingVehicleCount:
+        pathBlockingVehicleCounts.length === 0
+          ? null
+          : Math.min(...pathBlockingVehicleCounts),
+    });
   }
   return options;
 }
@@ -249,33 +281,42 @@ function analyzeLegalOrderSpace(
 
   const pathsByVehicle = createExitPathsByVehicle(board);
   const allVehiclesMask = (1 << board.vehicles.length) - 1;
-  const legalOptionsByMask = new Map<
+  const stateOptionsByMask = new Map<
     number,
-    ReturnType<typeof listLegalVehicleOptions>
+    ReturnType<typeof listVehicleStateOptions>
   >();
   const legalOrderCountByMask = new Map<number, bigint>([[0, 1n]]);
   const reachableMasks = new Set<number>();
   let nonterminalStateCount = 0;
+  let legalVehicleCountTotal = 0;
   let legalVehicleRatioTotal = 0;
   let minimumLegalVehicleRatio = 1;
   let decisionStateCount = 0;
   let forcedChoiceStateCount = 0;
+  let blockingVehicleCountTotal = 0;
+  let blockedCandidateObservationCount = 0;
   let legalDirectionCountTotal = 0;
   let legalVehicleObservationCount = 0;
   let newlyUnlockedVehicleCountTotal = 0;
   let removalTransitionCount = 0;
   let maximumNewlyUnlockedVehicleCount = 0;
 
-  function legalOptions(remainingMask: number) {
-    const cached = legalOptionsByMask.get(remainingMask);
+  function stateOptions(remainingMask: number) {
+    const cached = stateOptionsByMask.get(remainingMask);
     if (cached) return cached;
-    const options = listLegalVehicleOptions(
+    const options = listVehicleStateOptions(
       board,
       pathsByVehicle,
       remainingMask,
     );
-    legalOptionsByMask.set(remainingMask, options);
+    stateOptionsByMask.set(remainingMask, options);
     return options;
+  }
+
+  function legalOptions(remainingMask: number) {
+    return stateOptions(remainingMask).filter(
+      ({ legalDirectionCount }) => legalDirectionCount > 0,
+    );
   }
 
   function countOrders(remainingMask: number): bigint {
@@ -292,6 +333,7 @@ function analyzeLegalOrderSpace(
     if (actualRemainingVehicleCount > 0) {
       nonterminalStateCount += 1;
       const legalVehicleRatio = options.length / actualRemainingVehicleCount;
+      legalVehicleCountTotal += options.length;
       legalVehicleRatioTotal += legalVehicleRatio;
       minimumLegalVehicleRatio = Math.min(
         minimumLegalVehicleRatio,
@@ -300,6 +342,15 @@ function analyzeLegalOrderSpace(
       if (actualRemainingVehicleCount > 1) {
         decisionStateCount += 1;
         if (options.length === 1) forcedChoiceStateCount += 1;
+      }
+      const blockedCandidates = stateOptions(remainingMask).filter(
+        ({ legalDirectionCount, minimumBlockingVehicleCount }) =>
+          legalDirectionCount === 0 && minimumBlockingVehicleCount !== null,
+      );
+      for (const blockedCandidate of blockedCandidates) {
+        blockingVehicleCountTotal +=
+          blockedCandidate.minimumBlockingVehicleCount ?? 0;
+        blockedCandidateObservationCount += 1;
       }
       legalDirectionCountTotal += options.reduce(
         (total, option) => total + option.legalDirectionCount,
@@ -357,6 +408,34 @@ function analyzeLegalOrderSpace(
     }
   }
 
+  const forcedChoiceChainLengthByMask = new Map<number, number>();
+
+  function forcedChoiceChainLength(remainingMask: number): number {
+    const cached = forcedChoiceChainLengthByMask.get(remainingMask);
+    if (cached !== undefined) return cached;
+    const remainingVehicleCount = countMaskBits(remainingMask);
+    const options = legalOptions(remainingMask);
+    if (remainingVehicleCount <= 1 || options.length !== 1) {
+      forcedChoiceChainLengthByMask.set(remainingMask, 0);
+      return 0;
+    }
+
+    const option = options[0];
+    if (!option) return 0;
+    const childMask = remainingMask & ~(1 << option.vehicleIndex);
+    const length = 1 + forcedChoiceChainLength(childMask);
+    forcedChoiceChainLengthByMask.set(remainingMask, length);
+    return length;
+  }
+
+  let maximumForcedChoiceChainLength = 0;
+  for (const remainingMask of reachableMasks) {
+    maximumForcedChoiceChainLength = Math.max(
+      maximumForcedChoiceChainLength,
+      forcedChoiceChainLength(remainingMask),
+    );
+  }
+
   let requiredPrecedenceCount = 0;
   const requiredPredecessorCountByVehicle = Array.from(
     { length: board.vehicles.length },
@@ -387,6 +466,10 @@ function analyzeLegalOrderSpace(
   return {
     legalOrderCount,
     reachableStateCount: reachableMasks.size,
+    averageLegalVehicleCount:
+      nonterminalStateCount === 0
+        ? 0
+        : legalVehicleCountTotal / nonterminalStateCount,
     averageLegalVehicleRatio:
       nonterminalStateCount === 0
         ? 1
@@ -396,6 +479,11 @@ function analyzeLegalOrderSpace(
       decisionStateCount === 0
         ? 0
         : forcedChoiceStateCount / decisionStateCount,
+    maximumForcedChoiceChainLength,
+    averageMinimumBlockingVehicleCount:
+      blockedCandidateObservationCount === 0
+        ? 0
+        : blockingVehicleCountTotal / blockedCandidateObservationCount,
     averageLegalDirectionCount:
       legalVehicleObservationCount === 0
         ? 0
@@ -499,9 +587,14 @@ export function analyzeParkingJamDifficulty(
     legalOrderCount: legalOrderCount?.toString() ?? null,
     solutionOrderFreedom: calculateOrderFreedom(vehicleCount, legalOrderCount),
     reachableStateCount: orderSpace?.reachableStateCount ?? null,
+    averageLegalVehicleCount: orderSpace?.averageLegalVehicleCount ?? null,
     averageLegalVehicleRatio: orderSpace?.averageLegalVehicleRatio ?? null,
     minimumLegalVehicleRatio: orderSpace?.minimumLegalVehicleRatio ?? null,
     forcedChoiceStateRatio: orderSpace?.forcedChoiceStateRatio ?? null,
+    maximumForcedChoiceChainLength:
+      orderSpace?.maximumForcedChoiceChainLength ?? null,
+    averageMinimumBlockingVehicleCount:
+      orderSpace?.averageMinimumBlockingVehicleCount ?? null,
     averageLegalDirectionCount: orderSpace?.averageLegalDirectionCount ?? null,
     averageNewlyUnlockedVehicleCount:
       orderSpace?.averageNewlyUnlockedVehicleCount ?? null,
