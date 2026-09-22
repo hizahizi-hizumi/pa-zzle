@@ -12,6 +12,14 @@ import type {
 } from "./benchmark.ts";
 import { runCandidateAnchorBenchmark } from "./run.ts";
 
+export type RepositoryClassificationCandidate = {
+  path: string;
+  symbol?: string;
+  source: string;
+  decision: string;
+  violationProbability: number;
+};
+
 export type CandidateAnchorRepositoryRuleResult = {
   ruleId: string;
   sourceRuleId: string;
@@ -23,6 +31,8 @@ export type CandidateAnchorRepositoryRuleResult = {
   providerRequests: number;
   inputTokens: number;
   outputTokens: number;
+  classificationCounts: Record<string, number>;
+  topClassificationCandidates: RepositoryClassificationCandidate[];
   findings: Finding[];
 };
 
@@ -81,6 +91,27 @@ export async function runCandidateAnchorRepository(options: {
       maxDecisionsPerRequest,
     });
 
+    const classificationCandidates = result.cases.flatMap((item) =>
+      item.decisions
+        .filter((decision) => decision.stage === "classification")
+        .map((decision) => ({
+          path: item.name,
+          ...(decision.symbol === undefined ? {} : { symbol: decision.symbol }),
+          source: decision.source,
+          decision: decision.decision,
+          violationProbability: decision.probabilities.violation,
+        })),
+    );
+    const classificationCounts = Object.fromEntries(
+      ["violation", "compliant", "not_applicable", "insufficient_context"].map(
+        (decision) => [
+          decision,
+          classificationCandidates.filter((item) => item.decision === decision)
+            .length,
+        ],
+      ),
+    );
+
     results.push({
       ruleId: benchmarkRule.id,
       sourceRuleId: sourceRule.id,
@@ -92,6 +123,13 @@ export async function runCandidateAnchorRepository(options: {
       providerRequests: result.metrics.providerRequests,
       inputTokens: result.metrics.inputTokens,
       outputTokens: result.metrics.outputTokens,
+      classificationCounts,
+      topClassificationCandidates: classificationCandidates
+        .sort(
+          (left, right) =>
+            right.violationProbability - left.violationProbability,
+        )
+        .slice(0, 20),
       findings: result.cases.flatMap((item) => item.findings),
     });
   }

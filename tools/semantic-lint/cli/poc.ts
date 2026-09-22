@@ -256,7 +256,17 @@ function renderCandidateAnchorRepository(
       `  candidates=${rule.candidateCount} anchors=${rule.anchorCount}`,
       `  classification=${rule.classificationDecisions} localization=${rule.localizationDecisions}`,
       `  requests=${rule.providerRequests} inputTokens=${rule.inputTokens} outputTokens=${rule.outputTokens}`,
+      `  choices=${Object.entries(rule.classificationCounts)
+        .map(([decision, count]) => `${decision}:${count}`)
+        .join(",")}`,
+      "  topClassificationCandidates:",
     );
+
+    for (const candidate of rule.topClassificationCandidates) {
+      lines.push(
+        `    ${candidate.path} ${candidate.symbol ?? "unknown"} decision=${candidate.decision} violation=${(candidate.violationProbability * 100).toFixed(1)}% source=${JSON.stringify(candidate.source)}`,
+      );
+    }
 
     for (const finding of rule.findings) {
       const path = finding.path.startsWith(projectRoot)
