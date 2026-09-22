@@ -1,0 +1,213 @@
+version: 1
+
+rules:
+  - id: arrange-outside-test
+    title: テスト本体にArrangeを置かない
+    violationThreshold: 0.85
+    predicate:
+      instruction: |
+        判定対象自身が、Vitestのtest / itコールバック内部に置かれたArrangeであり、
+        規約上describe側のconstまたはbeforeEachへ移すべき処理か判定する。
+        周辺コードは、判定対象の包含関係と役割を判断するためだけに使う。
+        子孫・親・兄弟など別のコードに違反があることを理由に、判定対象をviolationにしない。
+
+        判定例:
+        - violation:
+          test("ユーザーを作成できること", () => {
+            const input = { name: "Alice" };
+            const result = createUser(input);
+            expect(result.name).toBe("Alice");
+          });
+          判定対象は `const input = { name: "Alice" };`。test内の不変入力なのでArrange違反。
+        - violation:
+          test("画面を表示できること", () => {
+            render(<Screen />);
+            expect(screen.getByRole("main")).toBeInTheDocument();
+          });
+          判定対象は `render(<Screen />);`。検証前の初期renderなのでArrange違反。
+        - compliant:
+          describe("createUser", () => {
+            const input = { name: "Alice" };
+            test("作成できること", () => {
+              const result = createUser(input);
+              expect(result.name).toBe("Alice");
+            });
+          });
+          判定対象はdescribe直下の `const input = ...`。Arrangeだが既に事前準備側なので違反ではない。
+        - compliant:
+          test("ユーザーを取得できること", () => {
+            const result = getUser();
+            expect(result.id).toBe("u1");
+          });
+          判定対象は `const result = getUser();`。検証対象を実行するActなので違反ではない。
+      outcomes:
+        violation: |
+          判定対象自身がtest / itコールバック内部のArrangeである。
+          不変の入力値・期待値・テストデータ、状態構築、mock・spy構築、初期renderなど、
+          describe側のconstまたはbeforeEachで準備すべき処理に該当する。
+        compliant: |
+          判定対象自身はActまたはAssertである。
+          またはArrangeであっても、既にdescribe側やbeforeEachに適切に置かれている。
+          test内で行うこと自体が検証対象の操作である処理もここに含む。
+        not_applicable: |
+          判定対象自身がArrange / Act / Assertとして評価する個別処理ではない。
+          test / describeなどのコンテナや、この規約の対象にならない宣言・構造を含む。
+        insufficient_context: |
+          周辺コードを見ても、判定対象の包含位置またはArrange / Act / Assert上の役割を判断できない。
+
+  - id: table-driven-cases
+    title: 同じ期待動作の入力違いはtest.eachで表現する
+    violationThreshold: 0.90
+    predicate:
+      instruction: |
+        判定対象自身が、2つ以上の兄弟test / itを直接包含する最小のコンテナであり、
+        それらが同じ期待動作を入力値または期待値の違いだけで繰り返しているか判定する。
+        個々のtest / itやその内部処理は、このルールのviolationにしない。
+        周辺コードは、兄弟test間のAct・Assert・入力・期待値を比較するためだけに使う。
+
+        判定例:
+        - violation:
+          describe("normalizeCode", () => {
+            test("小文字を正規化すること", () => {
+              const result = normalizeCode("abc");
+              expect(result).toBe("ABC");
+            });
+            test("別の小文字も正規化すること", () => {
+              const result = normalizeCode("xyz");
+              expect(result).toBe("XYZ");
+            });
+          });
+          判定対象はdescribe全体。同じActとAssertで主な差が入力値・期待値だけなので違反。
+        - compliant:
+          describe("loadUser", () => {
+            test("存在するユーザーを返すこと", () => {
+              const result = loadUser("u1");
+              expect(result.id).toBe("u1");
+            });
+            test("存在しないユーザーで例外になること", () => {
+              expect(() => loadUser("missing")).toThrow();
+            });
+          });
+          判定対象はdescribe全体。成功値と例外という異なる期待動作なので別testでよい。
+        - not_applicable:
+          test("値を変換すること", () => {
+            const result = convert("a");
+            expect(result).toBe("A");
+          });
+          判定対象は個々のtest。兄弟testを直接包含するコンテナではないため対象外。
+      outcomes:
+        violation: |
+          判定対象自身が2つ以上の兄弟test / itを直接包含し、
+          各testのActとAssertが意味的に同じで、主な差分が入力値または期待値だけである。
+          1つのtest.eachへ統合しても検証する期待動作の意味が変わらない。
+        compliant: |
+          判定対象自身は2つ以上の兄弟test / itを直接包含するが、
+          前提条件・期待動作・Act・Assertに別testとして表現する意味のある差がある。
+          または既にtest.eachで表現されている。
+        not_applicable: |
+          判定対象自身が比較対象となる2つ以上の兄弟test / itを直接包含していない。
+          個々のtest / it、その内部のAct・Assert・変数宣言などを含む。
+        insufficient_context: |
+          兄弟testの内容を比較しても、同じ期待動作の入力違いか判断できない。
+
+cases:
+  - rule: arrange-outside-test
+    name: GamePictogramの初期renderを指す
+    fixture: fixtures/arrange-inline-render.tsx
+    expectedFindings:
+      - text: const { container } = render(<GamePictogram svg={svg} />);
+
+  - rule: arrange-outside-test
+    name: Nanpure boardの入力値だけをArrangeとして指す
+    fixture: fixtures/arrange-input-vs-act.ts
+    expectedFindings:
+      - text: const cellIndex = 50;
+
+  - rule: arrange-outside-test
+    name: beforeEach内のmockとrenderを指さない
+    fixture: fixtures/arrange-before-each.tsx
+    expectedFindings: []
+
+  - rule: arrange-outside-test
+    name: test.each内の生成と評価をActとして扱う
+    fixture: fixtures/arrange-test-each.ts
+    expectedFindings: []
+
+  - rule: arrange-outside-test
+    name: 例外検証用入力だけをArrangeとして指す
+    fixture: fixtures/arrange-invalid-board.ts
+    expectedFindings:
+      - text: |-
+          const board = Array.from({ length: NANPURE_CELL_COUNT - 1 }, () => null);
+
+  - rule: table-driven-cases
+    name: 既存test.eachを指さない
+    fixture: fixtures/table-existing-each.ts
+    expectedFindings: []
+
+  - rule: table-driven-cases
+    name: 異なる操作を検証する兄弟testを指さない
+    fixture: fixtures/table-distinct-actions.tsx
+    expectedFindings: []
+
+  - rule: table-driven-cases
+    name: 効率の入力違いを繰り返す兄弟testを指す
+    fixture: fixtures/table-repeated-efficiency.ts
+    expectedFindings:
+      - text: |-
+          describe("calculateWaterSortPlayScore", () => {
+            test("クリア手数が最短手数の1.5倍なら効率を半分にすること", () => {
+              const score = calculateWaterSortPlayScore({
+                elapsedMs: 64_000,
+                moveCount: 15,
+                completionMoveCount: 15,
+                optimalMoveCount: 10,
+                colorCount: 6,
+              });
+
+              expect(score.breakdown.efficiency).toBe(20);
+            });
+
+            test("クリア手数が最短手数の2倍以上なら効率を0点にすること", () => {
+              const score = calculateWaterSortPlayScore({
+                elapsedMs: 64_000,
+                moveCount: 20,
+                completionMoveCount: 20,
+                optimalMoveCount: 10,
+                colorCount: 6,
+              });
+
+              expect(score.breakdown.efficiency).toBe(0);
+            });
+          });
+
+  - rule: table-driven-cases
+    name: 速さの入力違いを繰り返す兄弟testを指す
+    fixture: fixtures/table-repeated-speed.ts
+    expectedFindings:
+      - text: |-
+          describe("calculateWaterSortPlayScore", () => {
+            test("基準時間の1.5倍なら速さを半分にすること", () => {
+              const score = calculateWaterSortPlayScore({
+                elapsedMs: 96_000,
+                moveCount: 10,
+                completionMoveCount: 10,
+                optimalMoveCount: 10,
+                colorCount: 6,
+              });
+
+              expect(score.breakdown.speed).toBe(20);
+            });
+
+            test("基準時間の2倍以上なら速さを0点にすること", () => {
+              const score = calculateWaterSortPlayScore({
+                elapsedMs: 128_000,
+                moveCount: 10,
+                completionMoveCount: 10,
+                optimalMoveCount: 10,
+                colorCount: 6,
+              });
+
+              expect(score.breakdown.speed).toBe(0);
+            });
+          });
