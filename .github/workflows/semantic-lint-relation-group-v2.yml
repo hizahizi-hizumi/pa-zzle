@@ -1,0 +1,44 @@
+name: Semantic Lint Relation Group V2
+
+on:
+  push:
+    branches:
+      - experiment/semantic-lint-relation-group-v2-20260922
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+
+      - name: Install semantic lint dependencies
+        working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+
+      - name: Show relation group plan
+        run: bun run --cwd tools/semantic-lint poc -- relation-group --plan-only
+
+      - name: Run tuned benchmark
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- relation-group --benchmark .semantic-lint/poc/benchmark.yaml --repeat 10
+
+      - name: Run holdout benchmark
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- relation-group --benchmark .semantic-lint/poc/holdout/benchmark.yaml --repeat 10
+
+      - name: Run repository validation
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- relation-group --benchmark .semantic-lint/poc/benchmark.yaml --repository
