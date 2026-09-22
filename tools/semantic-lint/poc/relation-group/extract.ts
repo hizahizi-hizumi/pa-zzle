@@ -191,7 +191,13 @@ function relationContext(
   container: ts.Node,
   members: readonly ts.Statement[],
 ): SubjectContext {
-  const sharedStructuralSignature = relationSignature(members[0]);
+  const first = members[0];
+
+  if (first === undefined) {
+    throw new Error("relation groupには2件以上のmemberが必要です。");
+  }
+
+  const sharedStructuralSignature = relationSignature(first);
 
   if (sharedStructuralSignature === null) {
     throw new Error("relation groupの構造signatureを取得できません。");
