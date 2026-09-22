@@ -1,0 +1,78 @@
+import type { MinesweeperVisibleCell } from "../../session/session";
+import { MinesweeperCell } from "./MinesweeperCell";
+
+export type MinesweeperInputMode = "reveal" | "flag";
+
+type MinesweeperBoardProps = {
+  rows: number;
+  columns: number;
+  cells: readonly MinesweeperVisibleCell[];
+  mode: MinesweeperInputMode;
+  disabled: boolean;
+  onRevealCell: (cellIndex: number) => void;
+  onToggleFlag: (cellIndex: number) => void;
+  onChordCell: (cellIndex: number) => void;
+};
+
+function getCellKey(columns: number, cellIndex: number): string {
+  const row = Math.floor(cellIndex / columns);
+  const column = cellIndex % columns;
+  return `${row}:${column}`;
+}
+
+export function MinesweeperBoard({
+  rows,
+  columns,
+  cells,
+  mode,
+  disabled,
+  onRevealCell,
+  onToggleFlag,
+  onChordCell,
+}: MinesweeperBoardProps) {
+  if (cells.length !== rows * columns) {
+    throw new Error(
+      "Minesweeper visible cells must match the board dimensions",
+    );
+  }
+
+  function handleCellPress(cellIndex: number): void {
+    const cell = cells[cellIndex];
+    if (!cell) {
+      return;
+    }
+
+    if (cell.state === "revealed") {
+      if (mode === "reveal") {
+        onChordCell(cellIndex);
+      }
+      return;
+    }
+
+    if (mode === "flag") {
+      onToggleFlag(cellIndex);
+      return;
+    }
+
+    onRevealCell(cellIndex);
+  }
+
+  return (
+    <div
+      role="group"
+      aria-label="マインスイーパー盤面"
+      className="grid w-full max-w-[25.5rem] overflow-hidden rounded-lg border border-border bg-border shadow-raised"
+      style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+    >
+      {cells.map((cell, cellIndex) => (
+        <MinesweeperCell
+          key={getCellKey(columns, cellIndex)}
+          cellIndex={cellIndex}
+          view={cell}
+          disabled={disabled}
+          onPress={handleCellPress}
+        />
+      ))}
+    </div>
+  );
+}
