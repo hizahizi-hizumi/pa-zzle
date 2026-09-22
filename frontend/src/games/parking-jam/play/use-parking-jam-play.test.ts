@@ -1,7 +1,7 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 
 import {
-  assessParkingJamDifficulty,
+  assessParkingJamReviewDifficulty,
   type ParkingJamDifficulty,
 } from "@/games/parking-jam/difficulty";
 import { restoreParkingJamProblem } from "@/games/parking-jam/problem/generator";
@@ -34,7 +34,7 @@ describe("useParkingJamPlay", () => {
       const generated = restoreParkingJamProblem(
         result.current.problemIdentity,
       );
-      const assessment = assessParkingJamDifficulty(
+      const assessment = assessParkingJamReviewDifficulty(
         generated.difficultyAnalysis,
       );
 

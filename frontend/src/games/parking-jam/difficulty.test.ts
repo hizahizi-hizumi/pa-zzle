@@ -1,7 +1,7 @@
 import {
   assessParkingJamDifficulty,
   assessParkingJamReviewDifficulty,
-  PARKING_JAM_DIFFICULTY_MODEL_VERSION,
+  PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION,
   PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION,
 } from "./difficulty";
 import type { ParkingJamDifficultyAnalysis } from "./problem/difficulty-analysis";
@@ -111,7 +111,7 @@ describe("assessParkingJamDifficulty", () => {
 
       expect(assessment).toEqual({
         status: "rated",
-        modelVersion: PARKING_JAM_DIFFICULTY_MODEL_VERSION,
+        modelVersion: PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION,
         difficulty: expected,
       });
     },
@@ -132,7 +132,7 @@ describe("assessParkingJamDifficulty", () => {
 
       expect(assessment).toEqual({
         status: "unsupported",
-        modelVersion: PARKING_JAM_DIFFICULTY_MODEL_VERSION,
+        modelVersion: PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION,
       });
     });
   });
