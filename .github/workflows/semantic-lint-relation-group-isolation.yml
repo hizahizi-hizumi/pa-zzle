@@ -25,7 +25,7 @@ jobs:
         working-directory: tools/semantic-lint
         run: bun install --frozen-lockfile
 
-      - name: Inspect relation-target decisions
+      - name: Inspect relation-target few-shot decisions
         env:
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
-        run: bun run --cwd tools/semantic-lint poc -- relation-group-only --benchmark .semantic-lint/poc/relation-group/relation-target.yaml --repeat 10 --verbose
+        run: bun run --cwd tools/semantic-lint poc -- relation-group-only --benchmark .semantic-lint/poc/relation-group/relation-target-few-shot.yaml --repeat 10 --verbose

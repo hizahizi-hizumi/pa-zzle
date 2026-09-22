@@ -1,0 +1,146 @@
+version: 1
+
+rules:
+  - id: table-driven-cases
+    title: 同じ期待動作の入力違いはtest.eachで表現する
+    violationThreshold: 0.90
+    predicate:
+      instruction: |
+        判定対象自身が、同じ親の下に並ぶ兄弟test / it同士のrelationであり、
+        それらが同じ期待動作を入力値または期待値の違いだけで繰り返しているか判定する。
+        relationのsourceとcontextは比較対象の兄弟群を表す。
+        個々のtest / itやtest / it以外のrelationは、このルールのviolationにしない。
+        構造が同じであること自体は候補生成の根拠にすぎず、同じ期待動作である根拠にはしない。
+
+        判定例:
+        - violation:
+          test("abcを正規化すること", () => {
+            const result = normalizeCode("abc");
+            expect(result).toBe("ABC");
+          });
+          test("xyzを正規化すること", () => {
+            const result = normalizeCode("xyz");
+            expect(result).toBe("XYZ");
+          });
+          判定対象はこの2 testのrelation。同じ正規化という期待動作を入力・期待値だけ変えて繰り返している。
+        - compliant:
+          test("所有者は編集できること", () => {
+            const result = canEdit({ isOwner: true, isAdmin: false });
+            expect(result).toBe(true);
+          });
+          test("管理者は編集できること", () => {
+            const result = canEdit({ isOwner: false, isAdmin: true });
+            expect(result).toBe(true);
+          });
+          判定対象はこの2 testのrelation。構造は同じでも、所有者権限と管理者権限という別の業務規則を検証している。
+      outcomes:
+        violation: |
+          判定対象自身が兄弟test / it同士のrelationであり、
+          各testのActとAssertが意味的に同じで、主な差分が入力値または期待値だけである。
+          1つのtest.eachへ統合しても検証する期待動作の意味が変わらない。
+        compliant: |
+          判定対象自身は兄弟test / it同士のrelationだが、
+          前提条件・期待動作・Act・Assertに別testとして表現する意味のある差がある。
+          または既にtest.eachで表現されている。
+        not_applicable: |
+          判定対象自身がrelationではない、またはrelationの構成要素が兄弟test / itではない。
+          個々のtest / it、その内部処理、別種の兄弟relationなどを含む。
+        insufficient_context: |
+          兄弟testの内容を比較しても、同じ期待動作の入力違いか判断できない。
+
+cases:
+  - rule: table-driven-cases
+    name: 調整用の反復
+    fixture: ../fixtures/table-driven.ts
+    expectedFindings:
+      - text: |-
+          describe("parseNumber", () => {
+            test("1を変換できること", () => {
+              const result = parseNumber("1");
+
+              expect(result).toBe(1);
+            });
+
+            test("2を変換できること", () => {
+              const result = parseNumber("2");
+
+              expect(result).toBe(2);
+            });
+          });
+
+  - rule: table-driven-cases
+    name: 既存test.each
+    fixture: ../holdout/fixtures/table-existing-each.ts
+    expectedFindings: []
+
+  - rule: table-driven-cases
+    name: 異なる操作の兄弟test
+    fixture: ../holdout/fixtures/table-distinct-actions.tsx
+    expectedFindings: []
+
+  - rule: table-driven-cases
+    name: 効率の反復
+    fixture: ../holdout/fixtures/table-repeated-efficiency.ts
+    expectedFindings:
+      - text: |-
+          describe("calculateWaterSortPlayScore", () => {
+            test("クリア手数が最短手数の1.5倍なら効率を半分にすること", () => {
+              const score = calculateWaterSortPlayScore({
+                elapsedMs: 64_000,
+                moveCount: 15,
+                completionMoveCount: 15,
+                optimalMoveCount: 10,
+                colorCount: 6,
+              });
+
+              expect(score.breakdown.efficiency).toBe(20);
+            });
+
+            test("クリア手数が最短手数の2倍以上なら効率を0点にすること", () => {
+              const score = calculateWaterSortPlayScore({
+                elapsedMs: 64_000,
+                moveCount: 20,
+                completionMoveCount: 20,
+                optimalMoveCount: 10,
+                colorCount: 6,
+              });
+
+              expect(score.breakdown.efficiency).toBe(0);
+            });
+          });
+
+  - rule: table-driven-cases
+    name: 速さの反復
+    fixture: ../holdout/fixtures/table-repeated-speed.ts
+    expectedFindings:
+      - text: |-
+          describe("calculateWaterSortPlayScore", () => {
+            test("基準時間の1.5倍なら速さを半分にすること", () => {
+              const score = calculateWaterSortPlayScore({
+                elapsedMs: 96_000,
+                moveCount: 10,
+                completionMoveCount: 10,
+                optimalMoveCount: 10,
+                colorCount: 6,
+              });
+
+              expect(score.breakdown.speed).toBe(20);
+            });
+
+            test("基準時間の2倍以上なら速さを0点にすること", () => {
+              const score = calculateWaterSortPlayScore({
+                elapsedMs: 128_000,
+                moveCount: 10,
+                completionMoveCount: 10,
+                optimalMoveCount: 10,
+                colorCount: 6,
+              });
+
+              expect(score.breakdown.speed).toBe(0);
+            });
+          });
+
+  - rule: table-driven-cases
+    name: 構造は同じだが異なる業務規則
+    fixture: fixtures/table-semantic-distinct.ts
+    expectedFindings: []
