@@ -3,8 +3,8 @@
     <path d="M46 18v84M74 18v84M18 46h84M18 74h84"/>
   </g>
   <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
-  <g fill="var(--game-pictogram-strong)" font-size="19" font-weight="600" text-anchor="middle" dominant-baseline="central">
-    <text x="60" y="32">7</text>
-    <text x="88" y="88">4</text>
+  <g fill="var(--game-pictogram-strong)">
+    <path d="M142 0 412 607H54V713H546V627L276 0Z" transform="translate(54.3 38.773) scale(.019 -.019)"/>
+    <path d="M341 0V153H44V246L337 716H460V254H556V153H460V0ZM159 254H341V397Q341 414 342 440Q343 466 344 493Q345 520 346 541.5Q347 563 348 572H344Q336 552 324 530.5Q312 509 301 490Z" transform="translate(82.3 94.802) scale(.019 -.019)"/>
   </g>
 </svg>
