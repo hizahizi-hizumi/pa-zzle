@@ -22,6 +22,9 @@ describe("extractRelationGroupCandidates", () => {
     expect(functionBody?.context.relation?.memberKinds[0]).toBe(
       functionBody?.context.relation?.memberKinds[1],
     );
+    expect(functionBody?.context.relation?.sharedStructuralSignature).toContain(
+      "CallExpression",
+    );
     expect(functionBody?.source).toContain("const first = transform(1);");
     expect(functionBody?.source).toContain("const second = transform(2);");
     expect(functionBody?.source).not.toContain("return first + second;");
@@ -53,6 +56,13 @@ describe("extractRelationGroupCandidates", () => {
     const callbackBody = groups[0];
 
     expect(callbackBody?.context.enclosingCalls).toEqual(["register"]);
+    expect(callbackBody?.context.relation?.memberLabels).toEqual([
+      "call(process)",
+      "call(process)",
+    ]);
+    expect(callbackBody?.context.relation?.sharedStructuralSignature).toContain(
+      "identifier:process",
+    );
     expect(
       callbackBody?.anchors.find(
         (anchor) => anchor.role === "enclosing-statement",

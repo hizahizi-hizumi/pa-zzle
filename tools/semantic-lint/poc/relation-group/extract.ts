@@ -190,14 +190,37 @@ function relationContext(
   container: ts.Node,
   members: readonly ts.Statement[],
 ): SubjectContext {
+  const sharedStructuralSignature = relationSignature(members[0]);
+
+  if (sharedStructuralSignature === null) {
+    throw new Error("relation groupの構造signatureを取得できません。");
+  }
+
   return {
     enclosingCalls: enclosingCallNames(container),
     relation: {
       kind: "siblings",
       containerKind: ts.SyntaxKind[container.kind],
       memberKinds: members.map((member) => ts.SyntaxKind[member.kind]),
+      memberLabels: members.map(relationMemberLabel),
+      sharedStructuralSignature,
     },
   };
+}
+
+function relationMemberLabel(statement: ts.Statement): string {
+  if (
+    ts.isExpressionStatement(statement) &&
+    ts.isCallExpression(statement.expression)
+  ) {
+    const callee = calleeRootName(statement.expression.expression);
+
+    if (callee !== null) {
+      return `call(${callee})`;
+    }
+  }
+
+  return ts.SyntaxKind[statement.kind];
 }
 
 function relationAnchors(

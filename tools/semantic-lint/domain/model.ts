@@ -50,6 +50,8 @@ export type StructuralRelationContext = {
   kind: "siblings";
   containerKind: string;
   memberKinds: string[];
+  memberLabels: string[];
+  sharedStructuralSignature: string;
 };
 
 export type SubjectContext = {
