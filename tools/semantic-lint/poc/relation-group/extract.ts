@@ -181,12 +181,13 @@ function relationGroupCandidate(
     label: `siblings(${ts.SyntaxKind[container.kind]}:${members.length})`,
     range: rangeOf(sourceFile, start, end),
     source: source.slice(start, end),
-    context: relationContext(container, members),
+    context: relationContext(sourceFile, container, members),
     anchors: relationAnchors(sourceFile, source, container, members, index),
   };
 }
 
 function relationContext(
+  sourceFile: ts.SourceFile,
   container: ts.Node,
   members: readonly ts.Statement[],
 ): SubjectContext {
@@ -203,9 +204,38 @@ function relationContext(
       containerKind: ts.SyntaxKind[container.kind],
       memberKinds: members.map((member) => ts.SyntaxKind[member.kind]),
       memberLabels: members.map(relationMemberLabel),
+      memberLiteralValues: members.map((member) =>
+        literalValues(sourceFile, member),
+      ),
       sharedStructuralSignature,
     },
   };
+}
+
+function literalValues(
+  sourceFile: ts.SourceFile,
+  node: ts.Node,
+): string[] {
+  const values: string[] = [];
+
+  function visit(current: ts.Node): void {
+    if (
+      ts.isStringLiteralLike(current) ||
+      ts.isNumericLiteral(current) ||
+      current.kind === ts.SyntaxKind.TrueKeyword ||
+      current.kind === ts.SyntaxKind.FalseKeyword ||
+      current.kind === ts.SyntaxKind.NullKeyword
+    ) {
+      values.push(current.getText(sourceFile));
+      return;
+    }
+
+    ts.forEachChild(current, visit);
+  }
+
+  visit(node);
+
+  return values;
 }
 
 function relationMemberLabel(statement: ts.Statement): string {

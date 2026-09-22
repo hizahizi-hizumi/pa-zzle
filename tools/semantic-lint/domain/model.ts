@@ -51,6 +51,7 @@ export type StructuralRelationContext = {
   containerKind: string;
   memberKinds: string[];
   memberLabels: string[];
+  memberLiteralValues: string[][];
   sharedStructuralSignature: string;
 };
 

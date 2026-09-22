@@ -63,6 +63,10 @@ describe("extractRelationGroupCandidates", () => {
     expect(callbackBody?.context.relation?.sharedStructuralSignature).toContain(
       "identifier:process",
     );
+    expect(callbackBody?.context.relation?.memberLiteralValues).toEqual([
+      ["1"],
+      ["2"],
+    ]);
     expect(
       callbackBody?.anchors.find(
         (anchor) => anchor.role === "enclosing-statement",
