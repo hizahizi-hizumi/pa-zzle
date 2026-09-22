@@ -4,6 +4,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --font-ui: "Zen Kaku Gothic New", ui-sans-serif, system-ui, sans-serif;
+  --font-brand: "Zen Kaku Gothic New", ui-sans-serif, system-ui, sans-serif;
   --spacing: 0.25rem;
   --border-width-normal: 1px;
   --border-width-strong: 2px;
