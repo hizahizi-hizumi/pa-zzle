@@ -26,7 +26,8 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Reduce experiment batch size
-        run: sed -i 's/maxDecisionsPerRequest: 64/maxDecisionsPerRequest: 16/' .semantic-lint/config.yaml
+        run: |
+          sed -i 's/maxDecisionsPerRequest: 64/maxDecisionsPerRequest: 16/' .semantic-lint/config.yaml
 
       - name: Run zero-shot repository baseline
         env:
