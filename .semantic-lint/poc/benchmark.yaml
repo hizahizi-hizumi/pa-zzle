@@ -6,17 +6,24 @@ rules:
     violationThreshold: 0.90
     predicate:
       instruction: |
-        判定対象のコードがArrangeであり、test本体ではなく事前準備へ移すべきか判定する。
-        判定対象そのものを分類し、子孫や周辺コードに違反があるだけならviolationにしない。
+        判定対象自身が、Vitestのtest / itコールバック内部に置かれたArrangeであり、
+        規約上describe側のconstまたはbeforeEachへ移すべき処理か判定する。
+        周辺コードは、判定対象の包含関係と役割を判断するためだけに使う。
+        子孫・親・兄弟など別のコードに違反があることを理由に、判定対象をviolationにしない。
       outcomes:
         violation: |
-          テストデータ生成、状態構築、mock・spy構築、初期renderなどのArrangeである。
+          判定対象自身がtest / itコールバック内部のArrangeである。
+          不変の入力値・期待値・テストデータ、状態構築、mock・spy構築、初期renderなど、
+          describe側のconstまたはbeforeEachで準備すべき処理に該当する。
         compliant: |
-          Act、Assert、またはtest内に置くことが適切な処理である。
+          判定対象自身はActまたはAssertである。
+          またはArrangeであっても、既にdescribe側やbeforeEachに適切に置かれている。
+          test内で行うこと自体が検証対象の操作である処理もここに含む。
         not_applicable: |
-          このルールの対象ではない。
+          判定対象自身がArrange / Act / Assertとして評価する個別処理ではない。
+          test / describeなどのコンテナや、この規約の対象にならない宣言・構造を含む。
         insufficient_context: |
-          周辺コードを見てもArrangeかどうか判断できない。
+          周辺コードを見ても、判定対象の包含位置またはArrange / Act / Assert上の役割を判断できない。
 
   - id: meaningful-variable-name
     title: 変数名は保持する値や役割を表す
@@ -40,17 +47,24 @@ rules:
     violationThreshold: 0.90
     predicate:
       instruction: |
-        判定対象のコードが、同じ期待動作を入力違いで繰り返す複数testをまとめる構造か判定する。
-        判定対象そのものを分類し、子孫や周辺コードに違反があるだけならviolationにしない。
+        判定対象自身が、2つ以上の兄弟test / itを直接包含する最小のコンテナであり、
+        それらが同じ期待動作を入力値または期待値の違いだけで繰り返しているか判定する。
+        個々のtest / itやその内部処理は、このルールのviolationにしない。
+        周辺コードは、兄弟test間のAct・Assert・入力・期待値を比較するためだけに使う。
       outcomes:
         violation: |
-          2つ以上のtestがActとAssertをほぼ同じ形で繰り返し、主な差分が入力値または期待値である。
+          判定対象自身が2つ以上の兄弟test / itを直接包含し、
+          各testのActとAssertが意味的に同じで、主な差分が入力値または期待値だけである。
+          1つのtest.eachへ統合しても検証する期待動作の意味が変わらない。
         compliant: |
-          test.eachを使っている、または別testにする意味のある異なる期待動作を検証している。
+          判定対象自身は2つ以上の兄弟test / itを直接包含するが、
+          前提条件・期待動作・Act・Assertに別testとして表現する意味のある差がある。
+          または既にtest.eachで表現されている。
         not_applicable: |
-          判定対象に同じ期待動作の反復がない。
+          判定対象自身が比較対象となる2つ以上の兄弟test / itを直接包含していない。
+          個々のtest / it、その内部のAct・Assert・変数宣言などを含む。
         insufficient_context: |
-          周辺コードを見ても同じ期待動作か判断できない。
+          兄弟testの内容を比較しても、同じ期待動作の入力違いか判断できない。
 
 cases:
   - rule: arrange-outside-test
