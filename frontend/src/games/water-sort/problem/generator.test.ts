@@ -1,8 +1,11 @@
 import {
+  generateWaterSortProblem,
+  restoreWaterSortProblem,
+} from "@/games/water-sort/problem/generator";
+import {
   isCompleteWaterSortBottle,
   isStandardWaterSortInitialState,
-} from "../puzzle/state";
-import { generateWaterSortProblem, restoreWaterSortProblem } from "./generator";
+} from "@/games/water-sort/puzzle/state";
 
 describe("generateWaterSortProblem", () => {
   test("同じseedと生成条件から同じ問題と解析結果を再現すること", () => {

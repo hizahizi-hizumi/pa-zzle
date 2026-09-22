@@ -1,17 +1,16 @@
-import type { PlayRecord } from "@/records/play-record";
-import { createPlayRecordId } from "@/records/play-record";
-import type { PlayRecordDefinition } from "@/records/play-record-definition";
-
 import {
   parseWaterSortDifficulty,
   type WaterSortDifficulty,
-} from "./difficulty";
-import type { WaterSortProblemIdentity } from "./problem/problem";
+} from "@/games/water-sort/difficulty";
+import type { WaterSortProblemIdentity } from "@/games/water-sort/problem/problem";
 import {
   calculateWaterSortMoveDelta,
   calculateWaterSortPlayScore,
   calculateWaterSortTimeDeltaMs,
-} from "./score";
+} from "@/games/water-sort/score";
+import type { PlayRecord } from "@/records/play-record";
+import { createPlayRecordId } from "@/records/play-record";
+import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
 const WATER_SORT_PLAY_RECORD_PAYLOAD_VERSION = 2;
 const WATER_SORT_GAME_ID = "water-sort";

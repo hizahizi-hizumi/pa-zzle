@@ -4,7 +4,7 @@ import {
   createPourAnimation,
   groupPourAnimationsByDestination,
   interruptPourAnimationsForBottle,
-} from "./pour-animation";
+} from "@/games/water-sort/ui/board/pour/pour-animation";
 
 const rect = { left: 0, top: 0, width: 40, height: 120 };
 

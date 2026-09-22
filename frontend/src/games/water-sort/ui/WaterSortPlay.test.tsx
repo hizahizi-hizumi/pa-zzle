@@ -5,12 +5,10 @@ import {
   render,
   screen,
 } from "@testing-library/react";
-
+import type { WaterSortResult } from "@/games/water-sort/play/use-water-sort-play";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
+import { WaterSortPlay } from "@/games/water-sort/ui/WaterSortPlay";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
-
-import type { WaterSortResult } from "../play/use-water-sort-play";
-import { WaterSortPlay } from "./WaterSortPlay";
 
 afterEach(() => {
   cleanup();

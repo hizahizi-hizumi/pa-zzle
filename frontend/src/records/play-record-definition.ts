@@ -1,4 +1,4 @@
-import type { PlayRecord } from "./play-record";
+import type { PlayRecord } from "@/records/play-record";
 
 export type PersonalBestMetricDefinition = {
   id: string;

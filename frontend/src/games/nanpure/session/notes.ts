@@ -3,7 +3,7 @@ import {
   assertNanpureCellIndex,
   NANPURE_CELL_COUNT,
   type NanpureDigit,
-} from "../puzzle/board";
+} from "@/games/nanpure/puzzle/board";
 
 export type NanpureNotes = readonly (readonly NanpureDigit[])[];
 

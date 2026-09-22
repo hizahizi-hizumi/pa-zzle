@@ -7,7 +7,7 @@ import { waterSortPlayRecordDefinition } from "@/games/water-sort/play-record";
 import {
   formatWaterSortMoveDelta,
   formatWaterSortTimeDelta,
-} from "./format-performance-delta";
+} from "@/games/water-sort/ui/format-performance-delta";
 
 export const waterSortPlayRecordDisplay = {
   definition: waterSortPlayRecordDefinition,

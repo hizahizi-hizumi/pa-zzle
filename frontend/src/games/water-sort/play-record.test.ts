@@ -1,4 +1,3 @@
-import type { PlayRecord } from "@/records/play-record";
 import {
   createWaterSortPlayRecord,
   getWaterSortPlayRecordCompletionMoveCount,
@@ -6,7 +5,8 @@ import {
   getWaterSortPlayRecordTimeDelta,
   isWaterSortPlayRecord,
   waterSortPlayRecordDefinition,
-} from "./play-record";
+} from "@/games/water-sort/play-record";
+import type { PlayRecord } from "@/records/play-record";
 
 function createRecord() {
   return createWaterSortPlayRecord({

@@ -455,7 +455,12 @@
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
                   {
-                    "group": ["@/games/nanpure/problem/**","@/games/nanpure/session/**","@/games/nanpure/play/**","@/games/nanpure/ui/**"],
+                    "group": [
+                      "@/games/nanpure/problem/**",
+                      "@/games/nanpure/session/**",
+                      "@/games/nanpure/play/**",
+                      "@/games/nanpure/ui/**"
+                    ],
                     "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
                   }
                 ]
@@ -493,7 +498,11 @@
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
                   {
-                    "group": ["@/games/nanpure/session/**","@/games/nanpure/play/**","@/games/nanpure/ui/**"],
+                    "group": [
+                      "@/games/nanpure/session/**",
+                      "@/games/nanpure/play/**",
+                      "@/games/nanpure/ui/**"
+                    ],
                     "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
                   }
                 ]
@@ -531,7 +540,16 @@
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
                   {
-                    "group": ["@/games/nanpure/problem/generation/**","@/games/nanpure/difficulty","@/games/nanpure/score","@/games/nanpure/play/**","@/games/nanpure/ui/**","@/games/nanpure/play-record","@/records/**","react*"],
+                    "group": [
+                      "@/games/nanpure/problem/generation/**",
+                      "@/games/nanpure/difficulty",
+                      "@/games/nanpure/score",
+                      "@/games/nanpure/play/**",
+                      "@/games/nanpure/ui/**",
+                      "@/games/nanpure/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
                     "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
                   }
                 ]
@@ -569,7 +587,12 @@
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
                   {
-                    "group": ["@/games/nanpure/ui/**","@/games/nanpure/problem/generation/**","@/games/nanpure/play-record","@/games/nanpure/diagnostics"],
+                    "group": [
+                      "@/games/nanpure/ui/**",
+                      "@/games/nanpure/problem/generation/**",
+                      "@/games/nanpure/play-record",
+                      "@/games/nanpure/diagnostics"
+                    ],
                     "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
                   }
                 ]
@@ -644,7 +667,12 @@
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
                   {
-                    "group": ["@/games/water-sort/problem/**","@/games/water-sort/session/**","@/games/water-sort/play/**","@/games/water-sort/ui/**"],
+                    "group": [
+                      "@/games/water-sort/problem/**",
+                      "@/games/water-sort/session/**",
+                      "@/games/water-sort/play/**",
+                      "@/games/water-sort/ui/**"
+                    ],
                     "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
                   }
                 ]
@@ -682,7 +710,11 @@
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
                   {
-                    "group": ["@/games/water-sort/session/**","@/games/water-sort/play/**","@/games/water-sort/ui/**"],
+                    "group": [
+                      "@/games/water-sort/session/**",
+                      "@/games/water-sort/play/**",
+                      "@/games/water-sort/ui/**"
+                    ],
                     "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
                   }
                 ]
@@ -720,7 +752,16 @@
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
                   {
-                    "group": ["@/games/water-sort/problem/generation/**","@/games/water-sort/difficulty","@/games/water-sort/score","@/games/water-sort/play/**","@/games/water-sort/ui/**","@/games/water-sort/play-record","@/records/**","react*"],
+                    "group": [
+                      "@/games/water-sort/problem/generation/**",
+                      "@/games/water-sort/difficulty",
+                      "@/games/water-sort/score",
+                      "@/games/water-sort/play/**",
+                      "@/games/water-sort/ui/**",
+                      "@/games/water-sort/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
                     "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
                   }
                 ]
@@ -758,7 +799,12 @@
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
                   {
-                    "group": ["@/games/water-sort/ui/**","@/games/water-sort/problem/generation/**","@/games/water-sort/play-record","@/games/water-sort/diagnostics"],
+                    "group": [
+                      "@/games/water-sort/ui/**",
+                      "@/games/water-sort/problem/generation/**",
+                      "@/games/water-sort/play-record",
+                      "@/games/water-sort/diagnostics"
+                    ],
                     "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
                   }
                 ]
