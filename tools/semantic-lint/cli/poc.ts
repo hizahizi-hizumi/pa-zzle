@@ -7,6 +7,7 @@ import { loadRegionAnchorBenchmark } from "../poc/region-anchor/benchmark.ts";
 import { extractLocationGroups } from "../poc/region-anchor/extract.ts";
 import { renderRegionAnchorBenchmark } from "../poc/region-anchor/report.ts";
 import { runRegionAnchorBenchmark } from "../poc/region-anchor/run.ts";
+import { extractSemanticRegions } from "../poc/region-anchor/regions.ts";
 
 export async function runPocCommand(args: string[]): Promise<number> {
   const [strategy, ...strategyArgs] = args;
@@ -111,18 +112,25 @@ async function renderRegionAnchorPlan(options: {
   });
   let groups = 0;
   let anchors = 0;
+  let regions = 0;
+  let regionGateRequests = 0;
   let allPositiveLocalizationRequests = 0;
   let maxAnchors = 0;
   let maxAnchorPath = "";
 
   for (const document of documents) {
     const documentGroups = extractLocationGroups(document);
+    const documentRegions = extractSemanticRegions(document, documentGroups);
     const documentAnchors = documentGroups.reduce(
       (total, group) => total + group.anchors.length,
       0,
     );
     groups += documentGroups.length;
     anchors += documentAnchors;
+    regions += documentRegions.length;
+    regionGateRequests += Math.ceil(
+      documentRegions.length / options.maxDecisionsPerRequest,
+    );
     allPositiveLocalizationRequests += Math.ceil(
       documentAnchors / options.maxDecisionsPerRequest,
     );
@@ -137,11 +145,12 @@ async function renderRegionAnchorPlan(options: {
     "Region + Anchor PoC plan",
     "",
     `files=${documents.length}`,
+    `regions=${regions}`,
     `locationGroups=${groups}`,
     `anchors=${anchors}`,
-    `regionGateRequestsPerRule=${documents.length}`,
+    `regionGateRequestsPerRule=${regionGateRequests}`,
     `allPositiveLocalizationRequestsPerRule=${allPositiveLocalizationRequests}`,
-    `allPositiveTotalRequestsPerRule=${documents.length + allPositiveLocalizationRequests}`,
+    `allPositiveTotalRequestsPerRule=${regionGateRequests + allPositiveLocalizationRequests}`,
     `maxAnchorsPerFile=${maxAnchors} (${maxAnchorPath})`,
     "",
   ].join("\n");

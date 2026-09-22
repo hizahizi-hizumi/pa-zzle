@@ -24,7 +24,7 @@ describe("runRegionAnchorBenchmark", () => {
       maxDecisionsPerRequest: 64,
     });
 
-    expect(result.cases[0]?.regionPassed).toBe(true);
+    expect(result.cases[0]?.positiveRegions.length).toBeGreaterThan(0);
     expect(result.cases[0]?.exact).toBe(true);
     expect(result.cases[0]?.findings[0]?.range).toEqual({
       startLine: 3,
@@ -68,7 +68,7 @@ describe("runRegionAnchorBenchmark", () => {
       maxDecisionsPerRequest: 64,
     });
 
-    expect(result.cases[0]?.regionPassed).toBe(false);
+    expect(result.cases[0]?.positiveRegions).toEqual([]);
     expect(result.cases[0]?.localizationDecisions).toBe(0);
     expect(result.cases[0]?.actualFindings).toBe(0);
     expect(result.cases[0]?.exact).toBe(false);

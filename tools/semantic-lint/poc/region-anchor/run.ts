@@ -25,12 +25,16 @@ import {
   type LocationGroup,
   type RegionAnchor,
 } from "./extract.ts";
+import {
+  extractSemanticRegions,
+  type SemanticRegion,
+} from "./regions.ts";
 
 export type RegionAnchorCaseResult = {
   name: string;
   ruleId: string;
-  regionPassed: boolean;
-  regionViolationProbability: number;
+  positiveRegions: string[];
+  maxRegionViolationProbability: number;
   regionGateCorrect: boolean;
   locationGroups: number;
   anchors: number;
@@ -129,23 +133,26 @@ async function runRegionAnchorCase(options: {
     source,
   } satisfies SourceDocument;
   const groups = extractLocationGroups(document);
+  const regions = extractSemanticRegions(document, groups);
   const expectedRanges = resolveExpectedFindingRanges(
     source,
     benchmarkCase.expectedFindings,
   );
-  const region = await evaluateRegion({
+  const regionEvaluation = await evaluateRegions({
     document,
+    regions,
     rule,
     provider,
     maxDecisionsPerRequest,
   });
-  const regionResult = region.results.get("region:file");
-  const regionViolationProbability = regionResult?.probabilities.violation ?? 0;
-  const regionPassed = regionResult?.decision === "violation";
-  const localization = regionPassed
-    ? await localizeRegion({
+  const positiveRegions = regions.filter(
+    (region) =>
+      regionEvaluation.results.get(region.id)?.decision === "violation",
+  );
+  const localization = positiveRegions.length > 0
+    ? await localizeRegions({
         document,
-        groups,
+        regions: positiveRegions,
         rule,
         provider,
         maxDecisionsPerRequest,
@@ -179,24 +186,43 @@ async function runRegionAnchorCase(options: {
     }),
   );
   const comparison = compareFindingRanges(expectedRanges, findings);
-  const expectsViolation = expectedRanges.length > 0;
+  const regionCoveredFindings = countCoveredExpectedRanges(
+    expectedRanges,
+    positiveRegions,
+  );
+  const maxRegionViolationProbability = Math.max(
+    0,
+    ...regions.map(
+      (region) =>
+        regionEvaluation.results.get(region.id)?.probabilities.violation ?? 0,
+    ),
+  );
+  const regionGateCorrect =
+    expectedRanges.length === 0
+      ? positiveRegions.length === 0
+      : regionCoveredFindings === expectedRanges.length;
 
   return {
     name: benchmarkCase.name,
     ruleId: rule.id,
-    regionPassed,
-    regionViolationProbability,
-    regionGateCorrect: expectsViolation ? regionPassed : !regionPassed,
+    positiveRegions: positiveRegions.map(
+      (region) => `${region.kind}:${region.label}`,
+    ),
+    maxRegionViolationProbability,
+    regionGateCorrect,
     locationGroups: groups.length,
     anchors: groups.reduce((total, group) => total + group.anchors.length, 0),
-    regionDecisions: 1,
+    regionDecisions: regions.length,
     localizationDecisions: localization.decisions,
     providerRequests:
-      region.usage.providerRequests + localization.usage.providerRequests,
-    inputTokens: region.usage.inputTokens + localization.usage.inputTokens,
-    outputTokens: region.usage.outputTokens + localization.usage.outputTokens,
+      regionEvaluation.usage.providerRequests +
+      localization.usage.providerRequests,
+    inputTokens:
+      regionEvaluation.usage.inputTokens + localization.usage.inputTokens,
+    outputTokens:
+      regionEvaluation.usage.outputTokens + localization.usage.outputTokens,
     expectedFindings: expectedRanges.length,
-    regionCoveredFindings: regionPassed ? expectedRanges.length : 0,
+    regionCoveredFindings,
     actualFindings: findings.length,
     matchedFindings: comparison.matched,
     exact: comparison.exact,
@@ -204,35 +230,38 @@ async function runRegionAnchorCase(options: {
   };
 }
 
-async function evaluateRegion(options: {
+async function evaluateRegions(options: {
   document: SourceDocument;
+  regions: SemanticRegion[];
   rule: BenchmarkRule;
   provider: SemanticDecisionProvider;
   maxDecisionsPerRequest: number;
 }): Promise<Awaited<ReturnType<typeof evaluateSubjects>>> {
-  const { document, rule, provider, maxDecisionsPerRequest } = options;
-  const subject: Subject = {
-    id: "region:file",
-    scope: "region.file",
-    path: document.path,
-    range: fullFileRange(document.source),
-    symbol: "file",
-    source: document.source,
-  };
+  const { document, regions, rule, provider, maxDecisionsPerRequest } = options;
+  const subjects = regions.map((region) => regionSubject(document, region));
+  const regionsById = new Map(regions.map((region) => [region.id, region]));
 
   return evaluateSubjects({
     document,
-    subjects: [subject],
-    predicateForSubject: () => regionPredicate(rule),
+    subjects,
+    predicateForSubject: (subject) => {
+      const region = regionsById.get(subject.id);
+
+      if (!region) {
+        throw new Error(`semantic regionがありません: ${subject.id}`);
+      }
+
+      return regionPredicate(rule, region);
+    },
     ruleId: `poc/${rule.id}/region`,
     provider,
     maxDecisionsPerRequest,
   });
 }
 
-async function localizeRegion(options: {
+async function localizeRegions(options: {
   document: SourceDocument;
-  groups: LocationGroup[];
+  regions: SemanticRegion[];
   rule: BenchmarkRule;
   provider: SemanticDecisionProvider;
   maxDecisionsPerRequest: number;
@@ -241,27 +270,37 @@ async function localizeRegion(options: {
   decisions: number;
   usage: BatchUsage;
 }> {
-  const { document, groups, rule, provider, maxDecisionsPerRequest } = options;
-  const flattened = groups.flatMap((group) =>
-    group.anchors.map((anchor) => ({ group, anchor })),
+  const { document, regions, rule, provider, maxDecisionsPerRequest } = options;
+  const flattened = regions.flatMap((region) =>
+    region.groups.flatMap((group) =>
+      group.anchors.map((anchor) => ({ region, group, anchor })),
+    ),
   );
   const subjects = flattened.map(({ group, anchor }) =>
     anchorSubject(document, group, anchor),
   );
-  const groupByAnchorId = new Map(
-    flattened.map(({ group, anchor }) => [anchor.id, group]),
+  const contextByAnchorId = new Map(
+    flattened.map(({ region, group, anchor }) => [
+      anchor.id,
+      { region, group },
+    ]),
   );
   const evaluated = await evaluateSubjects({
     document,
     subjects,
     predicateForSubject: (subject) => {
-      const group = groupByAnchorId.get(subject.id);
+      const context = contextByAnchorId.get(subject.id);
 
-      if (!group) {
-        throw new Error(`anchorのlocation groupがありません: ${subject.id}`);
+      if (!context) {
+        throw new Error(`anchor contextがありません: ${subject.id}`);
       }
 
-      return localizationPredicate(rule, group, subject.id);
+      return localizationPredicate(
+        rule,
+        context.region,
+        context.group,
+        subject.id,
+      );
     },
     ruleId: `poc/${rule.id}/location`,
     provider,
@@ -269,7 +308,11 @@ async function localizeRegion(options: {
   });
   const selected = new Map<string, RegionAnchor>();
 
-  for (const group of groups) {
+  for (const { group } of flattened) {
+    if (selected.has(group.id)) {
+      continue;
+    }
+
     const best = group.anchors
       .flatMap((anchor) => {
         const result = evaluated.results.get(anchor.id);
@@ -292,27 +335,36 @@ async function localizeRegion(options: {
   };
 }
 
-function regionPredicate(rule: BenchmarkRule): Predicate {
+function regionPredicate(
+  rule: BenchmarkRule,
+  region: SemanticRegion,
+): Predicate {
   return {
     instruction: [
       `Rule: ${rule.title}`,
-      "元ruleは個々のコード箇所を判定するための定義である。ここではfile全体を1つの判定対象とは解釈しない。",
       `元ruleの判定指示: ${rule.predicate.instruction}`,
       `違反条件: ${rule.predicate.outcomes.violation}`,
-      "state.file内を走査し、この違反条件を満たす具体的なコード箇所が1件以上存在するかだけを判定する。",
+      `現在のregion: ${region.kind} (${region.label})`,
+      "判定対象はstate.subjects内の現在regionである。state.fileは周辺文脈としてだけ使う。",
+      "現在region内に違反条件を満たす具体的なコード箇所が1件以上存在するか判定する。",
+      "現在region外の違反だけを理由にviolationにしない。",
       "この段階では違反箇所を選ばない。",
     ].join("\n"),
     outcomes: {
-      violation: "file内にこのruleの違反が1件以上存在する。",
-      compliant: "ruleを適用できるコードはあるが、file内に違反は存在しない。",
-      not_applicable: "file内にこのruleを適用する意味のあるコードが存在しない。",
-      insufficient_context: "file全体を見ても違反の有無を判断できない。",
+      violation: "現在region内にこのruleの違反が1件以上存在する。",
+      compliant:
+        "ruleを適用できるコードはあるが、現在region内に違反は存在しない。",
+      not_applicable:
+        "現在region内にこのruleを適用する意味のあるコードが存在しない。",
+      insufficient_context:
+        "regionとfile周辺文脈を見ても違反の有無を判断できない。",
     },
   };
 }
 
 function localizationPredicate(
   rule: BenchmarkRule,
+  region: SemanticRegion,
   group: LocationGroup,
   currentAnchorId: string,
 ): Predicate {
@@ -326,26 +378,39 @@ function localizationPredicate(
   return {
     instruction: [
       `Rule: ${rule.title}`,
-      `元ruleの判定指示: ${rule.predicate.instruction}`,
       `違反条件: ${rule.predicate.outcomes.violation}`,
-      "state.fileにはこのruleの違反が1件以上存在すると既に判定されている。",
+      `positive region: ${region.kind} (${region.label})`,
       `現在の構文グループ: ${group.label}`,
       `構文グループsource: ${JSON.stringify(group.source)}`,
-      "以下のanchor候補のうち、先頭が*の現在anchorが、この構文グループに存在する具体的な違反のprimary diagnostic locationとして最適か判定する。",
-      "この構文グループ自体が違反でなければviolationにしない。",
-      "同じ違反について複数anchorをviolationにせず、その箇所を変更・移動・renameすることで直接解消できる最も具体的な構文範囲を選ぶ。",
+      "現在の構文グループがpositive region内の具体的な違反そのものか判定し、違反ならprimary diagnostic locationとして最適なanchorだけをviolationにする。",
+      "positive region内に別の違反があるだけで、現在の構文グループ自体が違反でなければviolationにしない。",
+      "同じ違反について複数anchorをviolationにしない。",
       anchors,
     ].join("\n"),
     outcomes: {
       violation:
-        "現在anchorが、この構文グループに存在する違反のprimary locationとして最も正確である。",
+        "現在anchorが、現在の構文グループに存在する違反のprimary locationとして最も正確である。",
       compliant:
-        "この構文グループはruleに関係するが違反ではない、または別anchorの方がprimary locationとして正確である。",
+        "現在の構文グループはruleに関係するが違反ではない、または別anchorの方がprimary locationとして正確である。",
       not_applicable:
         "現在anchorと構文グループは、このruleの具体的な違反箇所ではない。",
       insufficient_context:
-        "file全体とanchor候補を見てもprimary locationとして適切か判断できない。",
+        "regionとfile周辺文脈を見てもprimary locationとして適切か判断できない。",
     },
+  };
+}
+
+function regionSubject(
+  document: SourceDocument,
+  region: SemanticRegion,
+): Subject {
+  return {
+    id: region.id,
+    scope: `region.${region.kind}`,
+    path: document.path,
+    range: region.range,
+    symbol: region.label,
+    source: region.source,
   };
 }
 
@@ -364,33 +429,26 @@ function anchorSubject(
   };
 }
 
-function fullFileRange(source: string): SourceRange {
-  const lines = source.replaceAll("\r\n", "\n").split("\n");
-  const endLine = Math.max(1, lines.length);
-  const endColumn = (lines[endLine - 1] ?? "").length + 1;
+function countCoveredExpectedRanges(
+  expectedRanges: SourceRange[],
+  positiveRegions: SemanticRegion[],
+): number {
+  const available = new Set(
+    positiveRegions.flatMap((region) =>
+      region.groups.flatMap((group) =>
+        group.anchors.map((anchor) => rangeKey(anchor.range)),
+      ),
+    ),
+  );
 
-  return {
-    startLine: 1,
-    startColumn: 1,
-    endLine,
-    endColumn,
-  };
+  return expectedRanges.filter((range) => available.has(rangeKey(range))).length;
 }
 
 function dedupeFindings(findings: Finding[]): Finding[] {
   const byLocation = new Map<string, Finding>();
 
   for (const finding of findings) {
-    const range = finding.range;
-    const key = [
-      finding.ruleId,
-      finding.path,
-      range.startLine,
-      range.startColumn,
-      range.endLine,
-      range.endColumn,
-    ].join(":");
-
+    const key = `${finding.ruleId}:${finding.path}:${rangeKey(finding.range)}`;
     byLocation.set(key, finding);
   }
 
@@ -400,6 +458,15 @@ function dedupeFindings(findings: Finding[]): Finding[] {
       left.range.startLine - right.range.startLine ||
       left.range.startColumn - right.range.startColumn,
   );
+}
+
+function rangeKey(range: SourceRange): string {
+  return [
+    range.startLine,
+    range.startColumn,
+    range.endLine,
+    range.endColumn,
+  ].join(":");
 }
 
 function sum<T>(values: T[], selector: (value: T) => number): number {

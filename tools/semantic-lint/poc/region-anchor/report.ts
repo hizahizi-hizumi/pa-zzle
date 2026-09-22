@@ -9,7 +9,8 @@ export function renderRegionAnchorBenchmark(
   for (const item of result.cases) {
     lines.push(
       `${item.exact ? "PASS" : "FAIL"} ${item.name} [${item.ruleId}]`,
-      `  region=${item.regionPassed ? "violation" : "clear"} probability=${percentage(item.regionViolationProbability)} gateCorrect=${item.regionGateCorrect}`,
+      `  positiveRegions=${item.positiveRegions.length} maxProbability=${percentage(item.maxRegionViolationProbability)} gateCorrect=${item.regionGateCorrect}`,
+      `  regionCoverage=${item.regionCoveredFindings}/${item.expectedFindings}`,
       `  groups=${item.locationGroups} anchors=${item.anchors} regionDecisions=${item.regionDecisions} localization=${item.localizationDecisions}`,
       `  findings expected=${item.expectedFindings} actual=${item.actualFindings} matched=${item.matchedFindings}`,
       `  requests=${item.providerRequests} inputTokens=${item.inputTokens} outputTokens=${item.outputTokens}`,
@@ -17,6 +18,7 @@ export function renderRegionAnchorBenchmark(
 
     if (!item.exact) {
       lines.push(
+        `  positiveRegionKinds=${item.positiveRegions.join(", ") || "none"}`,
         `  actualRanges=${item.findings.map((finding) => formatRange(finding.range)).join(", ") || "none"}`,
       );
     }
