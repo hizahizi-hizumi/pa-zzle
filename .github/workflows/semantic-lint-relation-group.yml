@@ -36,7 +36,8 @@ jobs:
         run: bun run --cwd tools/semantic-lint poc -- relation-group --benchmark .semantic-lint/poc/holdout/benchmark.yaml --repeat 1 --verbose
 
       - name: Reduce repository batch size
-        run: sed -i 's/maxDecisionsPerRequest: 64/maxDecisionsPerRequest: 16/' .semantic-lint/config.yaml
+        run: |
+          sed -i 's/maxDecisionsPerRequest: 64/maxDecisionsPerRequest: 16/' .semantic-lint/config.yaml
 
       - name: Run repository validation batch16
         env:
