@@ -3,39 +3,54 @@ import { describe, expect, test } from "bun:test";
 import { extractRelationGroupCandidates } from "./extract.ts";
 
 describe("extractRelationGroupCandidates", () => {
-  test("同じ構文コンテナ直下のstatement群を汎用relationとして抽出する", () => {
+  test("リテラルだけが異なる同構造statementをrelationとして抽出する", () => {
     const groups = extractRelationGroupCandidates({
       path: "example.ts",
       source: `function calculate(value: number) {
-  const first = transform(value);
-  const second = transform(value + 1);
+  const first = transform(1);
+  const second = transform(2);
   return first + second;
 }
 `,
     });
     const functionBody = groups.find(
-      (group) => group.context.relation?.memberKinds.length === 3,
+      (group) => group.context.relation?.containerKind === "Block",
     );
 
     expect(functionBody?.context.relation?.kind).toBe("siblings");
-    expect(functionBody?.context.relation?.containerKind).toBe("Block");
-    expect(functionBody?.context.relation?.memberKinds).toHaveLength(3);
-    expect(functionBody?.source).toContain("const first = transform(value);");
-    expect(functionBody?.source).toContain("return first + second;");
+    expect(functionBody?.context.relation?.memberKinds).toHaveLength(2);
+    expect(functionBody?.context.relation?.memberKinds[0]).toBe(
+      functionBody?.context.relation?.memberKinds[1],
+    );
+    expect(functionBody?.source).toContain("const first = transform(1);");
+    expect(functionBody?.source).toContain("const second = transform(2);");
+    expect(functionBody?.source).not.toContain("return first + second;");
   });
 
-  test("groupの位置候補に汎用的な包含statementを保持する", () => {
+  test("異なるcallの隣接statementはgroupにしない", () => {
     const groups = extractRelationGroupCandidates({
       path: "example.ts",
       source: `register(() => {
-  stepOne();
-  stepTwo();
+  prepare();
+  execute();
+  verify();
 });
 `,
     });
-    const callbackBody = groups.find((group) =>
-      group.anchors.some((anchor) => anchor.role === "enclosing-statement"),
-    );
+
+    expect(groups).toHaveLength(0);
+  });
+
+  test("同じcallの隣接statementは包含statementを位置候補に持つ", () => {
+    const groups = extractRelationGroupCandidates({
+      path: "example.ts",
+      source: `register(() => {
+  process(first);
+  process(second);
+});
+`,
+    });
+    const callbackBody = groups[0];
 
     expect(callbackBody?.context.enclosingCalls).toEqual(["register"]);
     expect(
@@ -43,8 +58,8 @@ describe("extractRelationGroupCandidates", () => {
         (anchor) => anchor.role === "enclosing-statement",
       )?.source,
     ).toBe(`register(() => {
-  stepOne();
-  stepTwo();
+  process(first);
+  process(second);
 });`);
   });
 });

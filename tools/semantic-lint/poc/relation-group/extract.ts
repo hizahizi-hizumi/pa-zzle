@@ -1,21 +1,29 @@
 import { extname } from "node:path";
 import ts from "@typescript/typescript6";
 
-import type { SourceDocument, SourceRange, SubjectContext } from "../../domain/model.ts";
+import type {
+  SourceDocument,
+  SourceRange,
+  SubjectContext,
+} from "../../domain/model.ts";
 import {
   type Candidate,
   type CandidateAnchor,
   extractCandidateAnchors,
 } from "../candidate-anchor/extract.ts";
 
-export function extractRelationAwareCandidates(document: SourceDocument): Candidate[] {
+export function extractRelationAwareCandidates(
+  document: SourceDocument,
+): Candidate[] {
   return [
     ...extractCandidateAnchors(document),
     ...extractRelationGroupCandidates(document),
   ];
 }
 
-export function extractRelationGroupCandidates(document: SourceDocument): Candidate[] {
+export function extractRelationGroupCandidates(
+  document: SourceDocument,
+): Candidate[] {
   const sourceFile = ts.createSourceFile(
     document.path,
     document.source,
@@ -28,8 +36,8 @@ export function extractRelationGroupCandidates(document: SourceDocument): Candid
   function visit(node: ts.Node): void {
     const members = statementChildren(node);
 
-    if (members !== null && members.length >= 2) {
-      groups.push({ container: node, members });
+    if (members !== null) {
+      groups.push(...adjacentStructuralGroups(node, members));
     }
 
     ts.forEachChild(node, visit);
@@ -46,6 +54,96 @@ export function extractRelationGroupCandidates(document: SourceDocument): Candid
       index,
     ),
   );
+}
+
+function adjacentStructuralGroups(
+  container: ts.Node,
+  statements: readonly ts.Statement[],
+): Array<{ container: ts.Node; members: readonly ts.Statement[] }> {
+  const groups: Array<{ container: ts.Node; members: readonly ts.Statement[] }> = [];
+  let runStart = 0;
+
+  while (runStart < statements.length) {
+    const signature = relationSignature(statements[runStart]);
+
+    if (signature === null) {
+      runStart += 1;
+      continue;
+    }
+
+    let runEnd = runStart + 1;
+
+    while (
+      runEnd < statements.length &&
+      relationSignature(statements[runEnd]) === signature
+    ) {
+      runEnd += 1;
+    }
+
+    if (runEnd - runStart >= 2) {
+      groups.push({
+        container,
+        members: statements.slice(runStart, runEnd),
+      });
+    }
+
+    runStart = runEnd;
+  }
+
+  return groups;
+}
+
+function relationSignature(statement: ts.Statement): string | null {
+  if (ts.isExpressionStatement(statement)) {
+    return `expression:${structuralFingerprint(statement.expression)}`;
+  }
+
+  if (ts.isVariableStatement(statement)) {
+    return `variable:${statement.declarationList.declarations
+      .map((declaration) =>
+        declaration.initializer
+          ? structuralFingerprint(declaration.initializer)
+          : "uninitialized",
+      )
+      .join(",")}`;
+  }
+
+  if (ts.isReturnStatement(statement)) {
+    return `return:${
+      statement.expression
+        ? structuralFingerprint(statement.expression)
+        : "empty"
+    }`;
+  }
+
+  if (ts.isThrowStatement(statement)) {
+    return `throw:${structuralFingerprint(statement.expression)}`;
+  }
+
+  return null;
+}
+
+function structuralFingerprint(node: ts.Node): string {
+  if (
+    ts.isStringLiteralLike(node) ||
+    ts.isNumericLiteral(node) ||
+    node.kind === ts.SyntaxKind.TrueKeyword ||
+    node.kind === ts.SyntaxKind.FalseKeyword ||
+    node.kind === ts.SyntaxKind.NullKeyword
+  ) {
+    return "literal";
+  }
+
+  if (ts.isIdentifier(node)) {
+    return `identifier:${node.text}`;
+  }
+
+  const children: string[] = [];
+  ts.forEachChild(node, (child) => {
+    children.push(structuralFingerprint(child));
+  });
+
+  return `${ts.SyntaxKind[node.kind]}(${children.join(",")})`;
 }
 
 function relationGroupCandidate(
