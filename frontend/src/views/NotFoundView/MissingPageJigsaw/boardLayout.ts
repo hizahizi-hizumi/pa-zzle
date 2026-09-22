@@ -100,9 +100,7 @@ export function createPiecePath({
         ? "flat"
         : (horizontalSeams[row]?.[column] ?? "flat"),
     bottom:
-      row === rows - 1
-        ? "flat"
-        : (verticalSeams[row]?.[column] ?? "flat"),
+      row === rows - 1 ? "flat" : (verticalSeams[row]?.[column] ?? "flat"),
     left:
       column === 0
         ? "flat"
