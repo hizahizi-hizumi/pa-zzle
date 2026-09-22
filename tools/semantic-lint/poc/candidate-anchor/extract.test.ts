@@ -30,6 +30,36 @@ describe("extractCandidateAnchors", () => {
     });
   });
 
+  test("compact state向けにnode・capture・suite pathを保持する", () => {
+    const nested = extractCandidateAnchors({
+      path: "example.test.ts",
+      source: `describe("target", () => {
+  test("動くこと", () => {
+    const value = createValue();
+    expect(value).toBeDefined();
+  });
+});
+`,
+    });
+    const value = nested.find(
+      (candidate) => candidate.label === "variable(value)",
+    );
+
+    expect(value?.compactContext).toEqual({
+      enclosingCalls: ["test", "describe"],
+      nodeKind: "VariableDeclaration",
+      enclosingCallDetails: [
+        { callee: "test", label: "動くこと" },
+        { callee: "describe", label: "target" },
+      ],
+      captures: {
+        name: "value",
+        initializerKind: "CallExpression",
+        initializerCallee: "createValue",
+      },
+    });
+  });
+
   test("変数宣言からstatementとnameのanchorを抽出する", () => {
     const candidate = candidates[0];
 

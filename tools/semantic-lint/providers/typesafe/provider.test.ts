@@ -52,6 +52,36 @@ describe("TypeSafe provider", () => {
     );
   });
 
+  test("subjects-onlyではfull fileをJev stateへ送らない", () => {
+    const rule = sampleRule();
+    const batch = sampleBatch(rule.id);
+    batch.stateMode = "subjects-only";
+    batch.subjects[0] = {
+      ...batch.subjects[0]!,
+      context: {
+        enclosingCalls: ["test", "describe"],
+        nodeKind: "VariableDeclaration",
+        enclosingCallDetails: [
+          { callee: "test", label: "動くこと" },
+          { callee: "describe", label: "target" },
+        ],
+        captures: { name: "value", initializerKind: "NumericLiteral" },
+      },
+    };
+
+    const { body } = buildRequest("jev-latest", batch);
+    const typedBody = body as {
+      state: Record<string, unknown>;
+      questions: { q0: { instructions: string } };
+    };
+
+    expect(typedBody.state.file).toBeUndefined();
+    expect(typedBody.state.subjects).toBeDefined();
+    expect(typedBody.questions.q0.instructions).toContain(
+      "No full-file source is provided.",
+    );
+  });
+
   test("Jev responseをtask idへ戻す", async () => {
     process.env.TYPESAFE_API_KEY = "secret";
     const requests: RequestInit[] = [];

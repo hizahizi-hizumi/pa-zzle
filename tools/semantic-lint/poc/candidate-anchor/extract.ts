@@ -21,6 +21,7 @@ export type Candidate = {
   range: SourceRange;
   source: string;
   context: SubjectContext;
+  compactContext: SubjectContext;
   anchors: CandidateAnchor[];
 };
 
@@ -110,6 +111,7 @@ function candidateFromNode(
     range: rangeOf(sourceFile, start, end),
     source: source.slice(start, end),
     context: structuralContext(node),
+    compactContext: compactStructuralContext(node),
     anchors,
   };
 }
@@ -131,6 +133,126 @@ function structuralContext(node: ts.Node): SubjectContext {
   }
 
   return { enclosingCalls };
+}
+
+function compactStructuralContext(node: ts.Node): SubjectContext {
+  const enclosingCallDetails = enclosingCallsOf(node);
+  const captures = structuralCaptures(node);
+  const selfCall = callContextOfNode(node);
+
+  return {
+    enclosingCalls: enclosingCallDetails.map((call) => call.callee),
+    nodeKind: ts.SyntaxKind[node.kind],
+    ...(selfCall === null ? {} : { selfCall }),
+    ...(enclosingCallDetails.length === 0 ? {} : { enclosingCallDetails }),
+    ...(Object.keys(captures).length === 0 ? {} : { captures }),
+  };
+}
+
+function enclosingCallsOf(
+  node: ts.Node,
+): Array<{ callee: string; label?: string }> {
+  const calls: Array<{ callee: string; label?: string }> = [];
+  let current: ts.Node | undefined = node.parent;
+
+  while (current) {
+    if (ts.isCallExpression(current)) {
+      const call = callContext(current);
+
+      if (
+        call !== null &&
+        !calls.some(
+          (item) => item.callee === call.callee && item.label === call.label,
+        )
+      ) {
+        calls.push(call);
+      }
+    }
+
+    current = current.parent;
+  }
+
+  return calls;
+}
+
+function callContextOfNode(
+  node: ts.Node,
+): { callee: string; label?: string } | null {
+  if (ts.isExpressionStatement(node) && ts.isCallExpression(node.expression)) {
+    return callContext(node.expression);
+  }
+
+  return null;
+}
+
+function callContext(
+  call: ts.CallExpression,
+): { callee: string; label?: string } | null {
+  const callee = calleeRootName(call.expression);
+
+  if (callee === null) {
+    return null;
+  }
+
+  const label = stringLiteralText(call.arguments[0]);
+
+  return label === null ? { callee } : { callee, label };
+}
+
+function structuralCaptures(node: ts.Node): Record<string, string> {
+  const captures: Record<string, string> = {};
+
+  if (ts.isVariableDeclaration(node)) {
+    captures.name = node.name.getText();
+
+    if (node.initializer) {
+      captures.initializerKind = ts.SyntaxKind[node.initializer.kind];
+
+      if (ts.isCallExpression(node.initializer)) {
+        const callee = calleeRootName(node.initializer.expression);
+
+        if (callee !== null) {
+          captures.initializerCallee = callee;
+        }
+      }
+    }
+  } else if (
+    (ts.isFunctionDeclaration(node) ||
+      ts.isMethodDeclaration(node) ||
+      ts.isClassDeclaration(node) ||
+      ts.isPropertyDeclaration(node)) &&
+    node.name
+  ) {
+    captures.name = node.name.getText();
+  } else if (
+    ts.isExpressionStatement(node) &&
+    ts.isCallExpression(node.expression)
+  ) {
+    const callee = calleeRootName(node.expression.expression);
+
+    if (callee !== null) {
+      captures.callee = callee;
+    }
+  } else if (
+    (ts.isReturnStatement(node) || ts.isThrowStatement(node)) &&
+    node.expression &&
+    ts.isCallExpression(node.expression)
+  ) {
+    const callee = calleeRootName(node.expression.expression);
+
+    if (callee !== null) {
+      captures.expressionCallee = callee;
+    }
+  }
+
+  return captures;
+}
+
+function stringLiteralText(node: ts.Expression | undefined): string | null {
+  return node &&
+    (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node))
+    ? node.text
+    : null;
 }
 
 function anchorsForNode(

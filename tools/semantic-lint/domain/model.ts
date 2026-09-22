@@ -46,8 +46,17 @@ export type Rule = {
   predicate: Predicate;
 };
 
+export type StructuralCallContext = {
+  callee: string;
+  label?: string;
+};
+
 export type SubjectContext = {
   enclosingCalls: string[];
+  nodeKind?: string;
+  selfCall?: StructuralCallContext;
+  enclosingCallDetails?: StructuralCallContext[];
+  captures?: Record<string, string>;
 };
 
 export type Subject = {
@@ -84,11 +93,14 @@ export type DecisionRequest = {
   predicate: Predicate;
 };
 
+export type DecisionStateMode = "full-file" | "subjects-only";
+
 export type DecisionBatch = {
   id: string;
   file: SourceDocument;
   subjects: Subject[];
   requests: DecisionRequest[];
+  stateMode?: DecisionStateMode;
 };
 
 export type DecisionResult = {
