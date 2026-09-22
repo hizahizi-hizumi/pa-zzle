@@ -11,7 +11,7 @@ permissions:
 jobs:
   repository:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -24,6 +24,14 @@ jobs:
       - name: Install semantic lint dependencies
         working-directory: tools/semantic-lint
         run: bun install --frozen-lockfile
+
+      - name: Reduce experiment batch size
+        run: sed -i 's/maxDecisionsPerRequest: 64/maxDecisionsPerRequest: 16/' .semantic-lint/config.yaml
+
+      - name: Run zero-shot repository baseline
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- candidate-anchor --benchmark .semantic-lint/poc/benchmark.yaml --repository
 
       - name: Run repository validation with few-shot
         env:
