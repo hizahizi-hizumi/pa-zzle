@@ -1,0 +1,110 @@
+version: 1
+
+rules:
+  - id: arrange-outside-test
+    title: テスト本体にArrangeを置かない
+    violationThreshold: 0.90
+    predicate:
+      instruction: |
+        判定対象のコードがArrangeであり、test本体ではなく事前準備へ移すべきか判定する。
+        判定対象そのものを分類し、子孫や周辺コードに違反があるだけならviolationにしない。
+      outcomes:
+        violation: |
+          テストデータ生成、状態構築、mock・spy構築、初期renderなどのArrangeである。
+        compliant: |
+          Act、Assert、またはtest内に置くことが適切な処理である。
+        not_applicable: |
+          このルールの対象ではない。
+        insufficient_context: |
+          周辺コードを見てもArrangeかどうか判断できない。
+
+  - id: meaningful-variable-name
+    title: 変数名は保持する値や役割を表す
+    violationThreshold: 0.90
+    predicate:
+      instruction: |
+        判定対象の変数宣言について、変数名が保持する値や役割を具体的に表しているか判定する。
+        判定対象そのものを分類し、子孫や周辺コードに別の問題があるだけならviolationにしない。
+      outcomes:
+        violation: |
+          hoge、fuga、tmp、dataなど、周辺文脈と初期値を見ても保持する値や役割を具体的に表さない名前である。
+        compliant: |
+          変数名が保持する値や役割を十分に表している。
+        not_applicable: |
+          判定対象が変数宣言ではない、または命名規約の対象ではない。
+        insufficient_context: |
+          周辺コードを見ても名前が適切か判断できない。
+
+  - id: table-driven-cases
+    title: 同じ期待動作の入力違いはtest.eachで表現する
+    violationThreshold: 0.90
+    predicate:
+      instruction: |
+        判定対象のコードが、同じ期待動作を入力違いで繰り返す複数testをまとめる構造か判定する。
+        判定対象そのものを分類し、子孫や周辺コードに違反があるだけならviolationにしない。
+      outcomes:
+        violation: |
+          2つ以上のtestがActとAssertをほぼ同じ形で繰り返し、主な差分が入力値または期待値である。
+        compliant: |
+          test.eachを使っている、または別testにする意味のある異なる期待動作を検証している。
+        not_applicable: |
+          判定対象に同じ期待動作の反復がない。
+        insufficient_context: |
+          周辺コードを見ても同じ期待動作か判断できない。
+
+cases:
+  - rule: arrange-outside-test
+    name: Arrangeを1件だけ指す
+    fixture: fixtures/arrange-single.ts
+    expectedFindings:
+      - text: const values = [1, 2, 3];
+
+  - rule: arrange-outside-test
+    name: 連続するArrangeを別findingで指す
+    fixture: fixtures/arrange-three.ts
+    expectedFindings:
+      - text: const name = "Alice";
+      - text: const age = 20;
+      - text: const input = { name, age };
+
+  - rule: arrange-outside-test
+    name: test外のArrangeは指さない
+    fixture: fixtures/arrange-none.ts
+    expectedFindings: []
+
+  - rule: meaningful-variable-name
+    name: 命名違反はidentifierだけを指す
+    fixture: fixtures/name-single.ts
+    expectedFindings:
+      - text: hoge
+
+  - rule: meaningful-variable-name
+    name: 同じ行の複数identifierから違反名だけを指す
+    fixture: fixtures/name-same-line.ts
+    expectedFindings:
+      - text: hoge
+
+  - rule: arrange-outside-test
+    name: 親candidateへ違反を伝播させない
+    fixture: fixtures/arrange-nested-parent.ts
+    expectedFindings:
+      - text: const values = [1, 2, 3];
+
+  - rule: table-driven-cases
+    name: describe全体の反復を指す
+    fixture: fixtures/table-driven.ts
+    expectedFindings:
+      - text: |-
+          describe("parseNumber", () => {
+            test("1を変換できること", () => {
+              const result = parseNumber("1");
+
+              expect(result).toBe(1);
+            });
+
+            test("2を変換できること", () => {
+              const result = parseNumber("2");
+
+              expect(result).toBe(2);
+            });
+          });
