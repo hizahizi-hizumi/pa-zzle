@@ -32,16 +32,16 @@ jobs:
         include:
           - name: A-scope
             args: ""
+          - name: B-unit-locate-lines
+            args: "--rules-from vitest-unit --locate lines"
           - name: B-unit
             args: "--rules-from vitest-unit"
-          - name: B-unit-locate-judge
-            args: "--rules-from vitest-unit --locate judge"
           - name: B-unit-line
             args: "--rules-from vitest-unit-line"
           - name: B-unit-line-position
             args: "--rules-from vitest-unit-line --position on"
-          - name: B-unit-locate-judge-position
-            args: "--rules-from vitest-unit --locate judge --position on"
+          - name: B-unit-position
+            args: "--rules-from vitest-unit --position on"
     name: benchmark (${{ matrix.name }})
     steps:
       - uses: actions/checkout@v6
