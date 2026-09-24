@@ -46,6 +46,12 @@ bun run --cwd tools/semantic-lint inspect -- \
 # golden corpusで校正
 bun run --cwd tools/semantic-lint eval -- vitest/arrange-outside-test --repeat 10
 
+# 実repo goldenで現行方式を採点 (providerを呼ぶ)
+bun run --cwd tools/semantic-lint bench -- vitest/arrange-outside-test --repeat 3
+
+# 既存のRunResult JSONをgoldenで採点 (providerを呼ばない)
+bun run --cwd tools/semantic-lint bench -- --score <run-result.json>
+
 # 設定・source・scopeの整合性確認
 bun run --cwd tools/semantic-lint doctor
 
@@ -125,6 +131,35 @@ severityの `warning / error` はlifecycleとは別に管理する。
 新しいscopeが必要な場合だけ `tools/semantic-lint/scopes/` の実装を追加する。通常のrule追加でTypeScript実装を変更しない。
 
 ルール拡充は #323 で追跡する。
+
+## 実repo golden
+
+`.semantic-lint/golden/<ruleset>/<rule-id>.yaml` は、実repoのファイルに対して規約違反として指摘されるべき行範囲を記録する。判定方式に依存しない形式で、自作fixtureより優先して精度評価の基準にする。
+
+```yaml
+version: 1
+rule: vitest/arrange-outside-test
+baseCommit: <ラベルを確認したcommit>
+files:
+  - path: frontend/src/records/storage.test.ts
+    blob: <git hash-object の値>
+    findings:
+      - lines: [34, 34]
+  - path: frontend/src/games/problem-seed.test.ts
+    blob: <git hash-object の値>
+    findings: [] # 指摘なしが正解
+```
+
+- `blob` はラベルを付けた時点のファイル内容を固定する。working treeが変わっても `bench` はそのblobを `git cat-file` で読んで評価するため、Git履歴にblobが必要。
+- working treeとblobが異なるファイルは `doctor` と `bench` がwarningを出す。ラベルを見直してから `blob` と行範囲を更新する。
+- `bench` はgoldenの対象ファイルだけを、ruleのstatusに関係なく現行のrule定義とthresholdで評価する。ruleごとに別requestで実行するため、tokenはrule単位で集計される。
+
+`bench` の指標:
+
+- file: 指摘の有無だけを比較するprecision / recall。
+- 包含: findingが期待行範囲を含めば一致。test全体などsubject単位の指摘でも一致する。
+- 厳密: 開始行と終了行が `--line-tolerance` (既定1) 以内なら1対1で一致。
+- findingsの全run共通数とrunによる揺れ、provider request数、input / output tokens、threshold sweep。
 
 ## CI
 
