@@ -16,6 +16,7 @@ export type DecisionState = {
 export const WHOLE_FILE_SOURCE = "(= state.file.source)";
 
 const OMITTED_REF = "omitted";
+const CONTEXT_KEY_REF = "unit";
 
 type UnitNode = {
   unit: PlannedUnit;
@@ -156,6 +157,36 @@ export function subjectClosure(
   return units.filter((unit) => selected.has(unit.id)).map((unit) => unit.id);
 }
 
+/**
+ * unitの判定が依存する文脈をfile上に並べた文字列。判定cacheのkeyに使う。
+ *
+ * 対象unitとその本文、祖先、context宣言が指すunit、どのunitにも含まれない骨格を残し、
+ * それ以外のunitは位置だけを示す共通の目印にする。
+ */
+export function unitContextView(options: {
+  file: SourceDocument;
+  marker: string;
+  units: readonly PlannedUnit[];
+  target: PlannedUnit;
+}): string {
+  const { file, marker, units, target } = options;
+  const visible = new Set(subjectClosure(units, [target.id]));
+  const { roots } = buildTree(units);
+  const elided = renderMarker(marker, CONTEXT_KEY_REF);
+
+  const markerFor = (unit: PlannedUnit): string | undefined =>
+    visible.has(unit.id) || containsSpan(target.span, unit.span)
+      ? undefined
+      : elided;
+
+  return renderSpan(
+    file.source,
+    { start: 0, end: file.source.length },
+    roots,
+    markerFor,
+  );
+}
+
 function buildTree(units: readonly PlannedUnit[]): {
   roots: UnitNode[];
   nodes: Map<string, UnitNode>;
@@ -219,4 +250,8 @@ function subjectRef(key: string): string {
 
 function coversFile(unit: PlannedUnit, source: string): boolean {
   return unit.span.start === 0 && unit.span.end === source.length;
+}
+
+function containsSpan(outer: Span, inner: Span): boolean {
+  return outer.start <= inner.start && inner.end <= outer.end;
 }

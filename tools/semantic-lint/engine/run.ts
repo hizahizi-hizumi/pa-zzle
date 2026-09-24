@@ -4,6 +4,7 @@ import {
 } from "../cache/decision-cache.ts";
 import { DEFAULT_REQUEST_TOKEN_BUDGET } from "../config/config.ts";
 import { buildDiagnostics } from "../diagnostics/build.ts";
+import { unitContextView } from "../units/layout.ts";
 import {
   buildDecisionBatches,
 } from "../planning/batches.ts";
@@ -173,6 +174,7 @@ function lookupCache(options: {
       file.units.map((unit) => [unit.id, unit]),
     );
     const missTasks: EvaluationTask[] = [];
+    const contexts = new Map<string, string>();
 
     for (const task of file.tasks) {
       const rule = rulesById.get(task.ruleId);
@@ -186,12 +188,24 @@ function lookupCache(options: {
         throw new Error(`planにsubjectがありません: ${task.subjectId}`);
       }
 
+      let context = contexts.get(subject.id);
+
+      if (context === undefined) {
+        context = unitContextView({
+          file: { path: file.path, source: file.source },
+          marker: file.marker,
+          units: file.units,
+          target: subject,
+        });
+        contexts.set(subject.id, context);
+      }
+
       const key = decisionCacheKey({
         provider: provider.requestIdentity,
         unit: rule.unit,
         predicate: rule.predicate,
-        file: { path: file.path, source: file.source },
-        subject,
+        path: file.path,
+        context,
       });
       const cached = cache.get(key);
 

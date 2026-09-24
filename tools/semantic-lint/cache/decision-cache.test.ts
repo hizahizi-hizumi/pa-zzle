@@ -45,20 +45,6 @@ describe("decisionCacheKey", () => {
     ).toBe(decisionCacheKey(base));
   });
 
-  test("subject range（行番号）はkeyに含めない", () => {
-    const base = keyInput();
-
-    expect(
-      decisionCacheKey({
-        ...base,
-        subject: {
-          ...base.subject,
-          range: { startLine: 10, startColumn: 1, endLine: 12, endColumn: 2 },
-        },
-      }),
-    ).toBe(decisionCacheKey(base));
-  });
-
   test.each<[string, (input: DecisionCacheKeyInput) => DecisionCacheKeyInput]>([
     ["provider kind", (input) => ({ ...input, provider: { ...input.provider, kind: "other" } })],
     ["model", (input) => ({ ...input, provider: { ...input.provider, model: "jev-next" } })],
@@ -66,10 +52,8 @@ describe("decisionCacheKey", () => {
     ["unit", (input) => ({ ...input, unit: "test" })],
     ["instruction", (input) => ({ ...input, predicate: { ...input.predicate, instruction: "changed" } })],
     ["outcome", (input) => ({ ...input, predicate: { ...input.predicate, outcomes: { ...input.predicate.outcomes, compliant: "changed" } } })],
-    ["file path", (input) => ({ ...input, file: { ...input.file, path: "b.test.ts" } })],
-    ["file source", (input) => ({ ...input, file: { ...input.file, source: "changed" } })],
-    ["subject id", (input) => ({ ...input, subject: { ...input.subject, id: "file:a.test.ts:1" } })],
-    ["subject source", (input) => ({ ...input, subject: { ...input.subject, source: "changed" } })],
+    ["file path", (input) => ({ ...input, path: "b.test.ts" })],
+    ["unit context", (input) => ({ ...input, context: "changed" })],
   ])("%sが変わるとkeyが変わる", (_name, change) => {
     const base = keyInput();
 
@@ -176,14 +160,7 @@ function keyInput(): DecisionCacheKeyInput {
     provider: PROVIDER,
     unit: rule.unit,
     predicate: rule.predicate,
-    file: { path: "a.test.ts", source: "const value = 1;\n" },
-    subject: {
-      id: "file:a.test.ts:0",
-      unit: "file",
-      path: "a.test.ts",
-      range: { startLine: 1, startColumn: 1, endLine: 2, endColumn: 1 },
-      symbol: "a.test.ts",
-      source: "const value = 1;\n",
-    },
+    path: "a.test.ts",
+    context: "const value = 1;\n",
   };
 }

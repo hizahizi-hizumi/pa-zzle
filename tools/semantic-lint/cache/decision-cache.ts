@@ -8,33 +8,33 @@ import {
   type Predicate,
   type ProviderIdentity,
   type ProviderRequestIdentity,
-  type SourceDocument,
-  type Subject,
 } from "../domain/model.ts";
 
 /** repository root基準の判定キャッシュの保存先。 */
 export const DECISION_CACHE_PATH = ".semantic-lint/.cache/decisions.jsonl";
 
 /** key構成や保存形式を変えたときに更新する。 */
-const CACHE_FORMAT_VERSION = 1;
+const CACHE_FORMAT_VERSION = 2;
 const DEFAULT_RETENTION_DAYS = 30;
 const DEFAULT_MAX_ENTRIES = 50_000;
 const DAY_MS = 24 * 60 * 60 * 1_000;
 
 /**
- * providerへ送る1判定分の入力を決める要素。
+ * 1判定の答えを決める入力。
+ * unitの文脈は、unit本文・祖先・カタログのcontext宣言が指すunit・fileの骨格を並べたもので、
+ * 同じfileの無関係なunitの本文は含めない（`unitContextView`）。
  * threshold / severity / status / 行番号は判定後に使う値なので含めない。
  */
 export type DecisionCacheKeyInput = {
   provider: ProviderRequestIdentity;
   unit: string;
   predicate: Predicate;
-  file: SourceDocument;
-  subject: Subject;
+  path: string;
+  context: string;
 };
 
 export function decisionCacheKey(input: DecisionCacheKeyInput): string {
-  const { provider, unit, predicate, file, subject } = input;
+  const { provider, unit, predicate, path, context } = input;
   const hasher = new Bun.CryptoHasher("sha256");
 
   hasher.update(
@@ -46,15 +46,7 @@ export function decisionCacheKey(input: DecisionCacheKeyInput): string {
         predicate.instruction,
         DECISIONS.map((decision) => predicate.outcomes[decision]),
       ],
-      [file.path, file.source],
-      // rangeはfileとsubject idから決まるため含めない。
-      [
-        subject.id,
-        subject.unit,
-        subject.path,
-        subject.symbol ?? null,
-        subject.source,
-      ],
+      [path, context],
     ]),
   );
 

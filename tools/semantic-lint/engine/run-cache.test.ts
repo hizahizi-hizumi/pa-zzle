@@ -88,14 +88,13 @@ describe("runEvaluationPlanの判定cache", () => {
       [rule],
     );
 
-    expect(second.result.metrics.cache).toMatchObject({ hits: 2, misses: 2 });
+    expect(second.result.metrics.cache).toMatchObject({ hits: 3, misses: 1 });
     expect(requestedTaskIds(second.provider)).toEqual([
-      "vitest/sample::test:b.test.ts:0",
       "vitest/sample::test:b.test.ts:1",
     ]);
   });
 
-  test("subjectの一部だけ変えても文脈のfile全体が変わるため同じfileの全subjectがmissになる", async () => {
+  test("別unitの本文だけ変えた場合は変えたunitだけmissする", async () => {
     const rule = testRule();
     await run(planFor([document("a.test.ts", TWO_TESTS)], [rule]), [rule]);
 
@@ -107,7 +106,52 @@ describe("runEvaluationPlanの判定cache", () => {
       [rule],
     );
 
-    expect(second.result.metrics.cache).toMatchObject({ hits: 0, misses: 2 });
+    expect(second.result.metrics.cache).toMatchObject({ hits: 1, misses: 1 });
+    expect(requestedTaskIds(second.provider)).toEqual([
+      "vitest/sample::test:a.test.ts:1",
+    ]);
+  });
+
+  test("文脈に宣言したsetupや骨格が変わると依存するunitがmissする", async () => {
+    const rule = testRule();
+    const withSetup = `import { helper } from "./helper";
+
+describe("group", () => {
+  beforeEach(() => {
+    helper(1);
+  });
+
+  test("inside", () => {});
+});
+
+test("outside", () => {});
+`;
+    const rules = [rule, testRule({ id: "vitest/setup", unit: "setup" })];
+    await run(planFor([document("a.test.ts", withSetup)], rules), rules);
+
+    const setupChanged = await run(
+      planFor(
+        [document("a.test.ts", withSetup.replace("helper(1)", "helper(2)"))],
+        rules,
+      ),
+      rules,
+    );
+    const importChanged = await run(
+      planFor(
+        [document("a.test.ts", withSetup.replace("./helper", "./other"))],
+        rules,
+      ),
+      rules,
+    );
+
+    expect(requestedTaskIds(setupChanged.provider).sort()).toEqual([
+      "vitest/sample::test:a.test.ts:0",
+      "vitest/setup::setup:a.test.ts:0",
+    ]);
+    expect(importChanged.result.metrics.cache).toMatchObject({
+      hits: 0,
+      misses: 3,
+    });
   });
 
   test("rule文面を変えたruleのtaskだけmissし、同じbatchにはmiss分だけ入る", async () => {
