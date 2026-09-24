@@ -46,7 +46,7 @@ export function extractCallbackStatementCandidates(
           continue;
         }
 
-        for (const statement of callback.node.body.statements) {
+        for (const [statementIndex, statement] of callback.node.body.statements.entries()) {
           candidates.push(
             statementCandidate(
               sourceFile,
@@ -54,6 +54,8 @@ export function extractCallbackStatementCandidates(
               node,
               callback.argumentIndex,
               statement,
+              statementIndex,
+              callback.node.body.statements.length,
               candidates.length,
             ),
           );
@@ -115,6 +117,8 @@ function statementCandidate(
   call: ts.CallExpression,
   callbackArgumentIndex: number,
   statement: ts.Statement,
+  statementIndex: number,
+  statementCount: number,
   index: number,
 ): Candidate {
   const start = statement.getStart(sourceFile);
@@ -127,7 +131,10 @@ function statementCandidate(
     label: `statement(${callee})`,
     range: rangeOf(sourceFile, start, end),
     source: source.slice(start, end),
-    context: callContext(call, callbackArgumentIndex),
+    context: callContext(call, callbackArgumentIndex, {
+      statementIndex,
+      statementCount,
+    }),
     anchors: [anchor(sourceFile, source, statement, `callback-statement:${index}`)],
   };
 }
@@ -158,14 +165,29 @@ function callbackCallCandidate(
 function callContext(
   call: ts.CallExpression,
   callbackArgumentIndex: number,
+  statement?: { statementIndex: number; statementCount: number },
 ): SubjectContext {
+  const label = callLabel(call);
+
   return {
     enclosingCalls: enclosingCallNames(call),
     call: {
       callee: calleeName(call.expression),
       callbackArgumentIndex,
+      ...(label === null ? {} : { label }),
+      ...(statement ?? {}),
     },
   };
+}
+
+function callLabel(call: ts.CallExpression): string | null {
+  for (const argument of call.arguments) {
+    if (ts.isStringLiteralLike(argument)) {
+      return argument.text;
+    }
+  }
+
+  return null;
 }
 
 function enclosingCallNames(node: ts.Node): string[] {
