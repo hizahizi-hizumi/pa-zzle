@@ -24,16 +24,20 @@ const DEFAULT_MAX_ATTEMPTS = 3;
 export const TYPESAFE_REQUEST_FORMAT = "systemone-choice/4";
 
 /**
- * Jevの課金input tokenを見積もる係数。実測した請求から求めた近似値。
+ * Jevの課金input tokenを見積もる係数。golden benchmarkのrequestごとの実usageへの最小二乗fit。
  * - requestBase: 1 requestごとの固定分
- * - questionBase / optionBase: 質問1つ・選択肢1つの枠。文面は英単語1語を約1 tokenとして加える
- * - stateCharsPerToken: JSONにしたstateの文字数あたり
+ * - questionBase / optionBase: 質問1つ・選択肢1つの枠
+ * - tokensPerWord: 質問文と選択肢の英単語1語あたり
+ * - stateAsciiTokensPerChar / stateNonAsciiTokensPerChar: JSONにしたstateの1文字あたり。
+ *   コードのASCII文字は約4文字で1 token、日本語などの非ASCII文字は1文字で約2 tokenになる。
  */
 export const JEV_TOKEN_ESTIMATE = {
-  requestBase: 261,
+  requestBase: 316,
   questionBase: 8,
-  optionBase: 15,
-  stateCharsPerToken: 2.35,
+  optionBase: 25,
+  tokensPerWord: 1.13,
+  stateAsciiTokensPerChar: 0.25,
+  stateNonAsciiTokensPerChar: 1.86,
 } as const;
 
 type FetchLike = (
@@ -112,18 +116,18 @@ export function estimateTypeSafeRequest(
   batch: DecisionBatch,
 ): RequestEstimate {
   const { body } = buildRequest(model, batch);
-  const state = Math.ceil(
-    JSON.stringify(body.state).length / JEV_TOKEN_ESTIMATE.stateCharsPerToken,
-  );
-  const questions = Object.values(body.questions).map(
-    (question) =>
+  const state = estimateStateTokens(JSON.stringify(body.state));
+  const questions = Object.values(body.questions).map((question) =>
+    Math.ceil(
       JEV_TOKEN_ESTIMATE.questionBase +
-      countWords(question.instructions) +
-      Object.values(question.criteria).reduce(
-        (sum, description) =>
-          sum + JEV_TOKEN_ESTIMATE.optionBase + countWords(description),
-        0,
-      ),
+        JEV_TOKEN_ESTIMATE.optionBase *
+          Object.keys(question.criteria).length +
+        JEV_TOKEN_ESTIMATE.tokensPerWord *
+          [question.instructions, ...Object.values(question.criteria)].reduce(
+            (sum, text) => sum + countWords(text),
+            0,
+          ),
+    ),
   );
 
   return {
@@ -134,6 +138,24 @@ export function estimateTypeSafeRequest(
       state +
       questions.reduce((sum, tokens) => sum + tokens, 0),
   };
+}
+
+function estimateStateTokens(json: string): number {
+  let ascii = 0;
+  let nonAscii = 0;
+
+  for (const character of json) {
+    if ((character.codePointAt(0) ?? 0) <= 0x7f) {
+      ascii += 1;
+    } else {
+      nonAscii += 1;
+    }
+  }
+
+  return Math.ceil(
+    ascii * JEV_TOKEN_ESTIMATE.stateAsciiTokensPerChar +
+      nonAscii * JEV_TOKEN_ESTIMATE.stateNonAsciiTokensPerChar,
+  );
 }
 
 function countWords(text: string): number {
