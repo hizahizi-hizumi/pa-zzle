@@ -103,17 +103,23 @@ export function buildRequest(
     }
 
     questionToTask.set(questionId, request.taskId);
+    const regionInstructions =
+      subject.context?.regionId === undefined
+        ? []
+        : [
+            `Use state.regions.${subject.context.regionId} as the local surrounding region for this target.`,
+          ];
     const contextInstructions =
       batch.stateMode === "subjects-only"
         ? [
             "Use state.subjects.*.context as deterministic structural evidence.",
-            "When the current subject context has regionId, resolve it in state.regions and use that shared local region as surrounding evidence.",
+            ...regionInstructions,
             "No full-file source is provided. Judge from the current subject, its structural context, and the rule criteria.",
             "If required evidence is absent, choose insufficient_context instead of inferring unseen code.",
           ]
         : [
             "Use state.subjects.*.context as deterministic structural evidence when available.",
-            "When the current subject context has regionId, resolve it in state.regions and use that shared local region as surrounding evidence.",
+            ...regionInstructions,
             "Use state.file only as surrounding evidence to understand the target, including its containment and semantic role.",
           ];
     const propagationInstruction =
