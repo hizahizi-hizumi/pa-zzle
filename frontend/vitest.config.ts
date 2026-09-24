@@ -17,5 +17,11 @@ export default defineConfig({
     globals: true,
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
     passWithNoTests: true,
+    server: {
+      deps: {
+        // 外部化すると react-router が別インスタンスで読み込まれ、テスト側の Router コンテキストを参照できない。
+        inline: ["@generouted/react-router"],
+      },
+    },
   },
 });
