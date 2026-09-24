@@ -27,14 +27,14 @@ const DAY_MS = 24 * 60 * 60 * 1_000;
  */
 export type DecisionCacheKeyInput = {
   provider: ProviderRequestIdentity;
-  scope: string;
+  unit: string;
   predicate: Predicate;
   file: SourceDocument;
   subject: Subject;
 };
 
 export function decisionCacheKey(input: DecisionCacheKeyInput): string {
-  const { provider, scope, predicate, file, subject } = input;
+  const { provider, unit, predicate, file, subject } = input;
   const hasher = new Bun.CryptoHasher("sha256");
 
   hasher.update(
@@ -42,7 +42,7 @@ export function decisionCacheKey(input: DecisionCacheKeyInput): string {
       CACHE_FORMAT_VERSION,
       [provider.kind, provider.model, provider.requestFormat],
       [
-        scope,
+        unit,
         predicate.instruction,
         DECISIONS.map((decision) => predicate.outcomes[decision]),
       ],
@@ -50,7 +50,7 @@ export function decisionCacheKey(input: DecisionCacheKeyInput): string {
       // rangeはfileとsubject idから決まるため含めない。
       [
         subject.id,
-        subject.scope,
+        subject.unit,
         subject.path,
         subject.symbol ?? null,
         subject.source,

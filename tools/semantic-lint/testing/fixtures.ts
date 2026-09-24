@@ -3,6 +3,7 @@ import type {
   DecisionResult,
   Rule,
 } from "../domain/model.ts";
+import { UnitExtractor } from "../units/extract.ts";
 
 export function decisionResult(
   decision: Decision,
@@ -37,7 +38,7 @@ export function sampleRule(overrides: Partial<Rule> = {}): Rule {
     status: "active",
     severity: "warning",
     violationThreshold: 0.9,
-    scope: "file",
+    unit: "file",
     paths: ["frontend/**/*.test.ts"],
     source: {
       path: ".claude/rules/vitest.md",
@@ -54,4 +55,13 @@ export function sampleRule(overrides: Partial<Rule> = {}): Rule {
     },
     ...overrides,
   };
+}
+
+let sharedExtractor: Promise<UnitExtractor> | undefined;
+
+/** 同梱カタログのextractor。文法の読み込みをtest間で共有する。 */
+export function testExtractor(): Promise<UnitExtractor> {
+  sharedExtractor ??= UnitExtractor.create();
+
+  return sharedExtractor;
 }

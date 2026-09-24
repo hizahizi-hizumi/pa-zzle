@@ -22,7 +22,7 @@ export async function runRulesCommand(args: string[]): Promise<number> {
         rule.id,
         rule.status,
         rule.severity,
-        rule.scope,
+        rule.unit,
         `threshold=${rule.violationThreshold}`,
         `${rule.source.path}#${rule.source.section}`,
       ].join("\t"),

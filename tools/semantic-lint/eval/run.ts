@@ -9,7 +9,7 @@ import type {
 } from "../domain/model.ts";
 import { runEvaluationPlan } from "../engine/run.ts";
 import { buildEvaluationPlan } from "../planning/planner.ts";
-import type { ScopeRegistry } from "../scopes/registry.ts";
+import type { UnitExtractor } from "../units/extract.ts";
 
 export type GoldenCaseRun = {
   result: DecisionResult;
@@ -28,7 +28,7 @@ export async function runGoldenCases(options: {
   projectRoot: string;
   cases: GoldenCase[];
   rules: Rule[];
-  scopes: ScopeRegistry;
+  extractor: UnitExtractor;
   provider: SemanticDecisionProvider;
   repeat: number;
   concurrency: number;
@@ -38,7 +38,7 @@ export async function runGoldenCases(options: {
     projectRoot,
     cases,
     rules,
-    scopes,
+    extractor,
     provider,
     repeat,
     concurrency,
@@ -67,7 +67,7 @@ export async function runGoldenCases(options: {
       const plan = buildEvaluationPlan({
         documents: [{ path, source }],
         rules: [rule],
-        scopes,
+        extractor,
         matchesPath: () => true,
         statuses: [rule.status],
       });
@@ -161,7 +161,7 @@ function selectCasePlan(
     return plan;
   }
 
-  const subject = file.subjects.find(
+  const subject = file.units.find(
     (candidate) => candidate.symbol === goldenCase.subjectSymbol,
   );
 
@@ -183,7 +183,19 @@ function selectCasePlan(
     files: [
       {
         ...file,
-        subjects: [subject],
+        // 対象以外のunitは本文ごとfileの文脈として送る。
+        units: [
+          {
+            id: subject.id,
+            unit: subject.unit,
+            path: subject.path,
+            range: subject.range,
+            ...(subject.symbol === undefined ? {} : { symbol: subject.symbol }),
+            source: subject.source,
+            span: subject.span,
+            contextIds: [],
+          },
+        ],
         tasks: [task],
       },
     ],

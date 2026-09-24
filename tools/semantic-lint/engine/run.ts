@@ -13,9 +13,11 @@ import type {
   EvaluationPlan,
   EvaluationTask,
   PlannedFile,
+  PlannedUnit,
   Rule,
   RunResult,
   SemanticDecisionProvider,
+  Subject,
 } from "../domain/model.ts";
 
 type ExecutedBatch = {
@@ -119,7 +121,7 @@ export async function runEvaluationPlan(options: {
     metrics: {
       scannedFiles: plan.files.length,
       subjects: plan.files.reduce(
-        (sum, file) => sum + file.subjects.length,
+        (sum, file) => sum + file.units.length,
         0,
       ),
       plannedEvaluations: plan.files.reduce(
@@ -165,7 +167,7 @@ function lookupCache(options: {
 
   for (const file of plan.files) {
     const subjectsById = new Map(
-      file.subjects.map((subject) => [subject.id, subject]),
+      file.units.map((unit) => [unit.id, unit]),
     );
     const missTasks: EvaluationTask[] = [];
 
@@ -183,7 +185,7 @@ function lookupCache(options: {
 
       const key = decisionCacheKey({
         provider: provider.requestIdentity,
-        scope: rule.scope,
+        unit: rule.unit,
         predicate: rule.predicate,
         file: { path: file.path, source: file.source },
         subject,
@@ -194,7 +196,7 @@ function lookupCache(options: {
         cachedEvaluations.set(task.id, {
           taskId: task.id,
           ruleId: task.ruleId,
-          subject,
+          subject: publicSubject(subject),
           result: cached.result,
           provider: cached.provider,
         });
@@ -240,9 +242,7 @@ function appendEvaluations(
   batch: DecisionBatch,
   response: DecisionBatchResult,
 ): void {
-  const subjectsById = new Map(
-    batch.subjects.map((subject) => [subject.id, subject]),
-  );
+  const subjectsById = new Map(batch.units.map((unit) => [unit.id, unit]));
 
   for (const request of batch.requests) {
     const result = response.decisions[request.taskId];
@@ -261,11 +261,23 @@ function appendEvaluations(
     evaluations.set(request.taskId, {
       taskId: request.taskId,
       ruleId: request.ruleId,
-      subject,
+      subject: publicSubject(subject),
       result,
       provider: response.provider,
     });
   }
+}
+
+/** 実行結果に残すsubject。plan内部の入れ子・文脈の情報は含めない。 */
+function publicSubject(unit: PlannedUnit): Subject {
+  return {
+    id: unit.id,
+    unit: unit.unit,
+    path: unit.path,
+    range: unit.range,
+    ...(unit.symbol === undefined ? {} : { symbol: unit.symbol }),
+    source: unit.source,
+  };
 }
 
 async function mapConcurrent<T, R>(

@@ -10,13 +10,15 @@ import type {
   SourceDocument,
 } from "../domain/model.ts";
 import { buildEvaluationPlan } from "../planning/planner.ts";
-import { ScopeRegistry } from "../scopes/registry.ts";
-import { registerVitestScopes } from "../scopes/vitest.ts";
 import {
   FakeDecisionProvider,
   type FakeDecision,
 } from "../testing/fake-provider.ts";
-import { decisionResult, sampleRule } from "../testing/fixtures.ts";
+import {
+  decisionResult,
+  sampleRule,
+  testExtractor,
+} from "../testing/fixtures.ts";
 import { runEvaluationPlan } from "./run.ts";
 
 const TWO_TESTS = `test("1つ目こと", () => {
@@ -27,6 +29,8 @@ test("2つ目こと", () => {
   expect(two()).toBe(2);
 });
 `;
+
+const extractor = await testExtractor();
 
 let directory: string;
 let cachePath: string;
@@ -86,8 +90,8 @@ describe("runEvaluationPlanの判定cache", () => {
 
     expect(second.result.metrics.cache).toMatchObject({ hits: 2, misses: 2 });
     expect(requestedTaskIds(second.provider)).toEqual([
-      "vitest/sample::vitest.test:b.test.ts:0",
-      "vitest/sample::vitest.test:b.test.ts:1",
+      "vitest/sample::test:b.test.ts:0",
+      "vitest/sample::test:b.test.ts:1",
     ]);
   });
 
@@ -128,17 +132,17 @@ describe("runEvaluationPlanの判定cache", () => {
 
     expect(second.provider.requests).toHaveLength(1);
     expect(requestedTaskIds(second.provider)).toEqual([
-      "vitest/edited::vitest.test:a.test.ts:0",
-      "vitest/edited::vitest.test:a.test.ts:1",
+      "vitest/edited::test:a.test.ts:0",
+      "vitest/edited::test:a.test.ts:1",
     ]);
-    expect(second.provider.requests[0]?.subjects).toHaveLength(2);
+    expect(second.provider.requests[0]?.subjectIds).toHaveLength(2);
     expect(second.result.metrics.cache).toMatchObject({ hits: 2, misses: 2 });
     expect(second.result.evaluations.map((evaluation) => evaluation.taskId))
       .toEqual([
-        "vitest/edited::vitest.test:a.test.ts:0",
-        "vitest/edited::vitest.test:a.test.ts:1",
-        "vitest/stable::vitest.test:a.test.ts:0",
-        "vitest/stable::vitest.test:a.test.ts:1",
+        "vitest/edited::test:a.test.ts:0",
+        "vitest/edited::test:a.test.ts:1",
+        "vitest/stable::test:a.test.ts:0",
+        "vitest/stable::test:a.test.ts:1",
       ]);
   });
 
@@ -265,7 +269,7 @@ describe("runEvaluationPlanの判定cache", () => {
 
 function testRule(overrides: Partial<Rule> = {}): Rule {
   return sampleRule({
-    scope: "vitest.test",
+    unit: "test",
     paths: ["**/*.test.ts"],
     ...overrides,
   });
@@ -276,13 +280,10 @@ function document(path: string, source: string): SourceDocument {
 }
 
 function planFor(documents: SourceDocument[], rules: Rule[]): EvaluationPlan {
-  const scopes = new ScopeRegistry();
-  registerVitestScopes(scopes);
-
   return buildEvaluationPlan({
     documents,
     rules,
-    scopes,
+    extractor,
     matchesPath: () => true,
   });
 }

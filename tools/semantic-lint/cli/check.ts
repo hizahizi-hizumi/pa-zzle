@@ -13,7 +13,7 @@ import {
   renderRunResult,
   type OutputFormat,
 } from "../reporters/render.ts";
-import { createDefaultScopeRegistry } from "../scopes/default.ts";
+import { UnitExtractor } from "../units/extract.ts";
 import { loadProjectContext } from "./context.ts";
 import { closeDecisionCache, openDecisionCache } from "./decision-cache.ts";
 
@@ -29,7 +29,7 @@ type CheckOptions = {
 
 export async function runCheckCommand(args: string[]): Promise<number> {
   const options = parseCheckOptions(args);
-  const { projectRoot, config, rules } = await loadProjectContext();
+  const { projectRoot, config, catalog, rules } = await loadProjectContext();
   const statuses: RuleStatus[] = options.includeDraft
     ? ["active", "draft"]
     : ["active"];
@@ -57,11 +57,11 @@ export async function runCheckCommand(args: string[]): Promise<number> {
     );
   }
 
-  const scopes = await createDefaultScopeRegistry(projectRoot);
+  const extractor = await UnitExtractor.create(catalog);
   const plan = buildEvaluationPlan({
     documents,
     rules,
-    scopes,
+    extractor,
     matchesPath: bunGlobPathMatcher,
     statuses,
   });

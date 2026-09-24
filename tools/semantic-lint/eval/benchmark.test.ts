@@ -1,8 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import { ScopeRegistry } from "../scopes/registry.ts";
 import { FakeDecisionProvider } from "../testing/fake-provider.ts";
-import { decisionResult, sampleRule } from "../testing/fixtures.ts";
+import {
+  decisionResult,
+  sampleRule,
+  testExtractor,
+} from "../testing/fixtures.ts";
 import { runGoldenBenchmark } from "./benchmark.ts";
 import { buildBenchmarkReport, renderBenchmarkReport } from "./benchmark-report.ts";
 import type { GoldenSet, ResolvedGoldenFile } from "./golden.ts";
@@ -45,7 +48,7 @@ describe("runGoldenBenchmark", () => {
     const results = await runGoldenBenchmark({
       targets: [{ golden, files }],
       rules: [rule],
-      scopes: new ScopeRegistry(),
+      extractor: await testExtractor(),
       provider,
       repeat: 2,
       concurrency: 1,

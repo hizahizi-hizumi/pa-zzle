@@ -6,8 +6,10 @@ import {
   type DecisionCacheFileStatus,
 } from "../cache/decision-cache.ts";
 
+import type { Rule } from "../domain/model.ts";
 import { goldenFileStatus, loadGoldenSets } from "../eval/golden.ts";
-import { createDefaultScopeRegistry } from "../scopes/default.ts";
+import type { UnitCatalog } from "../units/catalog.ts";
+import { UnitExtractor } from "../units/extract.ts";
 import { loadProjectContext } from "./context.ts";
 
 export async function runDoctorCommand(args: string[]): Promise<number> {
@@ -15,16 +17,17 @@ export async function runDoctorCommand(args: string[]): Promise<number> {
     throw new Error("doctorに引数は指定できません。");
   }
 
-  const { projectRoot, config, rules } = await loadProjectContext();
-  const scopes = await createDefaultScopeRegistry(projectRoot);
+  const { projectRoot, config, catalog, rules } = await loadProjectContext();
+  // 全言語の文法を読み込み全queryをcompileして、カタログの誤りを検出する。
+  await UnitExtractor.create(catalog);
   const errors: string[] = [];
   const warnings: string[] = [];
   const sourceCache = new Map<string, string>();
 
   for (const rule of rules) {
-    if (!scopes.has(rule.scope)) {
-      errors.push(`${rule.id}: 未登録scope ${rule.scope}`);
-    }
+    warnings.push(
+      ...(await unsupportedLanguageWarnings(projectRoot, catalog, rule)),
+    );
 
     const sourcePath = resolve(projectRoot, rule.source.path);
     let source = sourceCache.get(sourcePath);
@@ -83,7 +86,7 @@ export async function runDoctorCommand(args: string[]): Promise<number> {
   }
 
   console.log(`rules: ${rules.length}`);
-  console.log(`scopes: ${scopes.ids().join(", ")}`);
+  console.log(`units: ${[...catalog.units.keys()].join(", ")}`);
   console.log(`cache: ${describeCache(projectRoot, cacheStatus)}`);
   console.log(`golden: ${goldenSets.length}`);
   console.log(`errors: ${errors.length}`);
@@ -98,6 +101,35 @@ export async function runDoctorCommand(args: string[]): Promise<number> {
   }
 
   return errors.length > 0 ? 2 : 0;
+}
+
+/** ruleの対象fileのうち、言語にunitの定義がなく判定対象を抽出できないものを数える。 */
+async function unsupportedLanguageWarnings(
+  projectRoot: string,
+  catalog: UnitCatalog,
+  rule: Rule,
+): Promise<string[]> {
+  const supported = new Set(catalog.languagesFor(rule.unit));
+  const unsupported = new Map<string, number>();
+
+  for (const pattern of rule.paths) {
+    for await (const path of new Bun.Glob(pattern).scan({
+      cwd: projectRoot,
+      onlyFiles: true,
+    })) {
+      const language = catalog.languageFor(path)?.id;
+
+      if (language === undefined || !supported.has(language)) {
+        const label = language ?? "未対応の拡張子";
+        unsupported.set(label, (unsupported.get(label) ?? 0) + 1);
+      }
+    }
+  }
+
+  return [...unsupported].map(
+    ([language, count]) =>
+      `${rule.id}: unit ${rule.unit} は ${language} に定義がないため、${count}件のfileから判定対象を抽出できません`,
+  );
 }
 
 function describeCache(

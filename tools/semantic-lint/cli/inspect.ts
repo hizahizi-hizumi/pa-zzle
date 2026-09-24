@@ -11,7 +11,7 @@ import {
   type TypeSafeTrace,
 } from "../providers/typesafe/provider.ts";
 import { renderPretty } from "../reporters/render.ts";
-import { createDefaultScopeRegistry } from "../scopes/default.ts";
+import { UnitExtractor } from "../units/extract.ts";
 import { resolveRequestedPaths } from "../config/project.ts";
 import { loadProjectContext } from "./context.ts";
 import { closeDecisionCache, openDecisionCache } from "./decision-cache.ts";
@@ -36,7 +36,7 @@ export async function runInspectCommand(args: string[]): Promise<number> {
     throw new Error("inspectのrule-idまたはfileがありません。");
   }
 
-  const { projectRoot, config, rules } = await loadProjectContext();
+  const { projectRoot, config, catalog, rules } = await loadProjectContext();
   const rule = rules.find((candidate) => candidate.id === ruleId);
 
   if (!rule) {
@@ -56,11 +56,11 @@ export async function runInspectCommand(args: string[]): Promise<number> {
   const path = relative(projectRoot, absolutePath).split(sep).join("/");
   const source = await Bun.file(absolutePath).text();
   const pathMatch = bunGlobPathMatcher(rule.paths, path);
-  const scopes = await createDefaultScopeRegistry(projectRoot);
+  const extractor = await UnitExtractor.create(catalog);
   const plan = buildEvaluationPlan({
     documents: [{ path, source }],
     rules: [rule],
-    scopes,
+    extractor,
     matchesPath: bunGlobPathMatcher,
     statuses: [rule.status],
   });

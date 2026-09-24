@@ -18,7 +18,7 @@ import {
   resolveGoldenFiles,
 } from "../eval/golden.ts";
 import { createTypeSafeProvider } from "../providers/typesafe/provider.ts";
-import { createDefaultScopeRegistry } from "../scopes/default.ts";
+import { UnitExtractor } from "../units/extract.ts";
 import { loadProjectContext } from "./context.ts";
 
 type BenchOptions = {
@@ -31,7 +31,7 @@ type BenchOptions = {
 
 export async function runBenchCommand(args: string[]): Promise<number> {
   const options = parseBenchOptions(args);
-  const { projectRoot, config, rules } = await loadProjectContext();
+  const { projectRoot, config, catalog, rules } = await loadProjectContext();
   const allSets = await loadGoldenSets(projectRoot, config.goldenDir);
   const missing = options.ruleIds.filter(
     (ruleId) => !allSets.some((set) => set.ruleId === ruleId),
@@ -61,7 +61,7 @@ export async function runBenchCommand(args: string[]): Promise<number> {
             })),
           ),
           rules,
-          scopes: await createDefaultScopeRegistry(projectRoot),
+          extractor: await UnitExtractor.create(catalog),
           provider: createTypeSafeProvider(config.provider),
           repeat: options.repeat,
           concurrency: config.execution.concurrency,

@@ -5,7 +5,7 @@ import type {
 } from "../domain/model.ts";
 import { runEvaluationPlan } from "../engine/run.ts";
 import { buildEvaluationPlan } from "../planning/planner.ts";
-import type { ScopeRegistry } from "../scopes/registry.ts";
+import type { UnitExtractor } from "../units/extract.ts";
 import type {
   GoldenFileStatus,
   GoldenSet,
@@ -35,7 +35,7 @@ export type BenchmarkRuleResult = {
 export async function runGoldenBenchmark(options: {
   targets: Array<{ golden: GoldenSet; files: ResolvedGoldenFile[] }>;
   rules: Rule[];
-  scopes: ScopeRegistry;
+  extractor: UnitExtractor;
   provider: SemanticDecisionProvider;
   repeat: number;
   concurrency: number;
@@ -44,7 +44,7 @@ export async function runGoldenBenchmark(options: {
   const {
     targets,
     rules,
-    scopes,
+    extractor,
     provider,
     repeat,
     concurrency,
@@ -62,7 +62,7 @@ export async function runGoldenBenchmark(options: {
     const plan = buildEvaluationPlan({
       documents: files.map((file) => ({ path: file.path, source: file.source })),
       rules: [rule],
-      scopes,
+      extractor,
       matchesPath: () => true,
       statuses: [rule.status],
     });

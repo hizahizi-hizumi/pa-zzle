@@ -2,26 +2,31 @@ import type {
   EvaluationPlan,
   EvaluationTask,
   PlannedFile,
+  PlannedUnit,
   Rule,
   RuleStatus,
   SourceDocument,
-  Subject,
 } from "../domain/model.ts";
-import type { ScopeRegistry } from "../scopes/registry.ts";
+import type { UnitExtractor } from "../units/extract.ts";
+import { LineIndex } from "../units/position.ts";
+import { linkUnits } from "../units/structure.ts";
 
 export type PathMatcher = (patterns: string[], path: string) => boolean;
+
+/** カタログに言語がないfileで使う目印。file unitだけを抽出するため通常は使われない。 */
+const DEFAULT_MARKER = "/* {ref} */";
 
 export function buildEvaluationPlan(options: {
   documents: SourceDocument[];
   rules: Rule[];
-  scopes: ScopeRegistry;
+  extractor: UnitExtractor;
   matchesPath: PathMatcher;
   statuses?: readonly RuleStatus[];
 }): EvaluationPlan {
   const {
     documents,
     rules,
-    scopes,
+    extractor,
     matchesPath,
     statuses = ["active"],
   } = options;
@@ -34,32 +39,31 @@ export function buildEvaluationPlan(options: {
   for (const document of [...documents].sort((a, b) =>
     a.path.localeCompare(b.path),
   )) {
-    const matchingRules = executableRules.filter((rule) =>
-      matchesPath(rule.paths, document.path),
-    );
+    const matchingRules = executableRules
+      .filter((rule) => matchesPath(rule.paths, document.path))
+      .sort((a, b) => a.id.localeCompare(b.id));
 
     if (matchingRules.length === 0) {
       continue;
     }
 
-    const subjectsByScope = new Map<string, Subject[]>();
-    const subjects: Subject[] = [];
+    const units = planUnits(
+      document,
+      [...new Set(matchingRules.map((rule) => rule.unit))],
+      extractor,
+    );
     const tasks: EvaluationTask[] = [];
 
-    for (const rule of matchingRules.sort((a, b) => a.id.localeCompare(b.id))) {
-      let scopedSubjects = subjectsByScope.get(rule.scope);
+    for (const rule of matchingRules) {
+      for (const unit of units) {
+        if (unit.unit !== rule.unit) {
+          continue;
+        }
 
-      if (!scopedSubjects) {
-        scopedSubjects = scopes.extract(rule.scope, document);
-        subjectsByScope.set(rule.scope, scopedSubjects);
-        subjects.push(...scopedSubjects);
-      }
-
-      for (const subject of scopedSubjects) {
         tasks.push({
-          id: taskId(rule.id, subject.id),
+          id: taskId(rule.id, unit.id),
           ruleId: rule.id,
-          subjectId: subject.id,
+          subjectId: unit.id,
         });
       }
     }
@@ -67,7 +71,9 @@ export function buildEvaluationPlan(options: {
     files.push({
       path: document.path,
       source: document.source,
-      subjects: dedupeSubjects(subjects),
+      marker:
+        extractor.catalog.languageFor(document.path)?.marker ?? DEFAULT_MARKER,
+      units,
       tasks,
     });
   }
@@ -75,20 +81,60 @@ export function buildEvaluationPlan(options: {
   return { files };
 }
 
+/** fileから指定unitを抽出し、出現順に入れ子と文脈を付けて並べる。 */
+export function planUnits(
+  document: SourceDocument,
+  unitNames: readonly string[],
+  extractor: UnitExtractor,
+): PlannedUnit[] {
+  const extracted = extractor.extract(document, unitNames);
+  const lines = new LineIndex(document.source);
+  const items = unitNames.flatMap((unit) =>
+    (extracted.get(unit) ?? []).map((item, index) => ({
+      id: subjectId(unit, document.path, index),
+      item,
+    })),
+  );
+  const links = linkUnits(
+    items.map(({ id, item }) => ({
+      id,
+      unit: item.unit,
+      span: { start: item.start, end: item.end },
+      scope: item.scope,
+    })),
+    extractor.catalog,
+  );
+
+  return items
+    .map(({ id, item }): PlannedUnit => {
+      const link = links.get(id);
+
+      return {
+        id,
+        unit: item.unit,
+        path: document.path,
+        range: lines.range(item),
+        ...(item.symbol === undefined ? {} : { symbol: item.symbol }),
+        source: document.source.slice(item.start, item.end),
+        span: { start: item.start, end: item.end },
+        ...(link?.parentId === undefined ? {} : { parentId: link.parentId }),
+        contextIds: link?.contextIds ?? [],
+      };
+    })
+    .sort(
+      (left, right) =>
+        left.span.start - right.span.start || right.span.end - left.span.end,
+    );
+}
+
 export function bunGlobPathMatcher(patterns: string[], path: string): boolean {
   return patterns.some((pattern) => new Bun.Glob(pattern).match(path));
 }
 
-function taskId(ruleId: string, subjectId: string): string {
-  return `${ruleId}::${subjectId}`;
+export function subjectId(unit: string, path: string, index: number): string {
+  return `${unit}:${path}:${index}`;
 }
 
-function dedupeSubjects(subjects: Subject[]): Subject[] {
-  const byId = new Map<string, Subject>();
-
-  for (const subject of subjects) {
-    byId.set(subject.id, subject);
-  }
-
-  return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id));
+function taskId(ruleId: string, subjectId: string): string {
+  return `${ruleId}::${subjectId}`;
 }

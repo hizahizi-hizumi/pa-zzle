@@ -26,9 +26,6 @@ export function buildDecisionBatches(options: {
     ) {
       const tasks = file.tasks.slice(offset, offset + maxDecisionsPerRequest);
       const subjectIds = new Set(tasks.map((task) => task.subjectId));
-      const subjects = file.subjects.filter((subject) =>
-        subjectIds.has(subject.id),
-      );
 
       batches.push({
         id: `${file.path}#${offset / maxDecisionsPerRequest}`,
@@ -36,7 +33,11 @@ export function buildDecisionBatches(options: {
           path: file.path,
           source: file.source,
         },
-        subjects,
+        marker: file.marker,
+        units: file.units,
+        subjectIds: file.units
+          .filter((unit) => subjectIds.has(unit.id))
+          .map((unit) => unit.id),
         requests: tasks.map((task) => {
           const rule = rulesById.get(task.ruleId);
 

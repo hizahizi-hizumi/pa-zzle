@@ -7,7 +7,7 @@ import {
   type QueryMatch,
 } from "web-tree-sitter";
 
-import type { SourceDocument } from "../domain/model.ts";
+import type { SourceDocument, Span } from "../domain/model.ts";
 import {
   DEFAULT_CATALOG_DIR,
   type LanguageDefinition,
@@ -15,12 +15,6 @@ import {
   type UnitCatalog,
   type UnitQueryDefinition,
 } from "./catalog.ts";
-
-/** sourceの位置。JavaScript文字列のindex（UTF-16 code unit）で表す。 */
-export type Span = {
-  start: number;
-  end: number;
-};
 
 export type ExtractedUnit = Span & {
   unit: string;
@@ -246,7 +240,7 @@ function renderSymbol(
 }
 
 /** 引用符で囲まれたリテラルなら、backslash escapeを解いた値を返す。 */
-export function decodeQuotedLiteral(text: string): string | undefined {
+function decodeQuotedLiteral(text: string): string | undefined {
   const quote = text[0];
 
   if (
@@ -303,3 +297,5 @@ function grammarPath(language: LanguageDefinition): string {
 
   return resolve(dirname(packageJson), language.grammar.wasm);
 }
+
+export const _private = { decodeQuotedLiteral };

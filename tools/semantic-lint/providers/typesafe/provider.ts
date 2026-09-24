@@ -14,7 +14,7 @@ const DEFAULT_MAX_ATTEMPTS = 3;
  * buildRequestが組み立てるprompt / request形式の版。
  * 判定キャッシュのkeyに含まれるため、送る内容を変えたら更新する。
  */
-export const TYPESAFE_REQUEST_FORMAT = "systemone-choice/1";
+export const TYPESAFE_REQUEST_FORMAT = "systemone-choice/2";
 
 type FetchLike = (
   input: string | URL | Request,
@@ -78,14 +78,17 @@ export function buildRequest(
   body: unknown;
   questionToTask: Map<string, string>;
 } {
+  const included = new Set(batch.subjectIds);
   const subjectsById = new Map(
-    batch.subjects.map((subject, index) => [
-      subject.id,
-      {
-        key: "s" + index,
-        subject,
-      },
-    ]),
+    batch.units
+      .filter((unit) => included.has(unit.id))
+      .map((subject, index) => [
+        subject.id,
+        {
+          key: "s" + index,
+          subject,
+        },
+      ]),
   );
   const questionToTask = new Map<string, string>();
   const questions: Record<string, unknown> = {};
@@ -119,7 +122,7 @@ export function buildRequest(
       key,
       {
         id: subject.id,
-        scope: subject.scope,
+        unit: subject.unit,
         path: subject.path,
         range: subject.range,
         ...(subject.symbol === undefined ? {} : { symbol: subject.symbol }),

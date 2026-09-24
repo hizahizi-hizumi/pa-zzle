@@ -1,74 +1,55 @@
 import { describe, expect, test } from "bun:test";
 
 import type { SourceDocument } from "../domain/model.ts";
-import { ScopeRegistry, subjectId } from "../scopes/registry.ts";
-import { sampleRule } from "../testing/fixtures.ts";
+import { sampleRule, testExtractor } from "../testing/fixtures.ts";
 import { buildEvaluationPlan } from "./planner.ts";
 
-describe("buildEvaluationPlan", () => {
-  test("active ruleだけを自然なsubject単位へ展開する", () => {
-    const document: SourceDocument = {
-      path: "frontend/example.test.ts",
-      source: "test('a', () => {});\ntest('b', () => {});\n",
-    };
-    const scopes = new ScopeRegistry();
-    scopes.register("vitest.test", (sourceDocument) => [
-      {
-        id: subjectId("vitest.test", sourceDocument.path, 0),
-        scope: "vitest.test",
-        path: sourceDocument.path,
-        range: {
-          startLine: 1,
-          startColumn: 1,
-          endLine: 1,
-          endColumn: 21,
-        },
-        symbol: 'test("a")',
-        source: "test('a', () => {});",
-      },
-      {
-        id: subjectId("vitest.test", sourceDocument.path, 1),
-        scope: "vitest.test",
-        path: sourceDocument.path,
-        range: {
-          startLine: 2,
-          startColumn: 1,
-          endLine: 2,
-          endColumn: 21,
-        },
-        symbol: 'test("b")',
-        source: "test('b', () => {});",
-      },
-    ]);
+const extractor = await testExtractor();
 
+const nestedTests: SourceDocument = {
+  path: "frontend/example.test.ts",
+  source: `describe("合計", () => {
+  beforeEach(() => {
+    reset();
+  });
+
+  test("a", () => {});
+
+  describe("入れ子", () => {
+    test("b", () => {});
+  });
+});
+
+test("c", () => {});
+`,
+};
+
+describe("buildEvaluationPlan", () => {
+  test("active ruleだけをunitごとのtaskへ展開する", () => {
     const plan = buildEvaluationPlan({
-      documents: [document],
+      documents: [nestedTests],
       rules: [
-        sampleRule({
-          id: "vitest/active",
-          scope: "vitest.test",
-          status: "active",
-        }),
-        sampleRule({
-          id: "vitest/draft",
-          scope: "vitest.test",
-          status: "draft",
-        }),
+        sampleRule({ id: "vitest/active", unit: "test", status: "active" }),
+        sampleRule({ id: "vitest/draft", unit: "test", status: "draft" }),
       ],
-      scopes,
+      extractor,
       matchesPath: () => true,
     });
 
     expect(plan.files).toHaveLength(1);
-    expect(plan.files[0]?.subjects).toHaveLength(2);
-    expect(plan.files[0]?.tasks.map((task) => task.ruleId)).toEqual([
-      "vitest/active",
-      "vitest/active",
+    expect(plan.files[0]?.units.map((unit) => unit.symbol)).toEqual([
+      'test("a")',
+      'test("b")',
+      'test("c")',
+    ]);
+    expect(plan.files[0]?.tasks.map((task) => task.id)).toEqual([
+      "vitest/active::test:frontend/example.test.ts:0",
+      "vitest/active::test:frontend/example.test.ts:1",
+      "vitest/active::test:frontend/example.test.ts:2",
     ]);
   });
 
   test("includeDraftでdraft ruleを明示実行できる", () => {
-    const scopes = new ScopeRegistry();
     const plan = buildEvaluationPlan({
       documents: [
         {
@@ -82,12 +63,46 @@ describe("buildEvaluationPlan", () => {
           status: "draft",
         }),
       ],
-      scopes,
+      extractor,
       matchesPath: () => true,
       statuses: ["active", "draft"],
     });
 
     expect(plan.files[0]?.tasks).toHaveLength(1);
     expect(plan.files[0]?.tasks[0]?.ruleId).toBe("vitest/draft");
+  });
+
+  test("複数ruleのunitを入れ子の親とカタログの文脈で結ぶ", () => {
+    const plan = buildEvaluationPlan({
+      documents: [nestedTests],
+      rules: [
+        sampleRule({ id: "vitest/test", unit: "test" }),
+        sampleRule({ id: "vitest/group", unit: "test-group" }),
+        sampleRule({ id: "vitest/setup", unit: "setup" }),
+      ],
+      extractor,
+      matchesPath: () => true,
+    });
+    const units = plan.files[0]?.units ?? [];
+    const bySymbol = new Map(units.map((unit) => [unit.symbol, unit]));
+    const idOf = (symbol: string) => bySymbol.get(symbol)?.id ?? "";
+
+    expect(units.map((unit) => unit.symbol)).toEqual([
+      'describe("合計")',
+      "beforeEach",
+      'test("a")',
+      'describe("入れ子")',
+      'test("b")',
+      'test("c")',
+    ]);
+    expect(bySymbol.get('test("b")')?.parentId).toBe(idOf('describe("入れ子")'));
+    expect(bySymbol.get('test("c")')?.parentId).toBeUndefined();
+    expect(bySymbol.get('test("b")')?.contextIds).toEqual([idOf("beforeEach")]);
+    expect(bySymbol.get('test("c")')?.contextIds).toEqual([]);
+    expect(bySymbol.get("beforeEach")?.contextIds).toEqual([
+      idOf('test("a")'),
+      idOf('test("b")'),
+    ]);
+    expect(plan.files[0]?.tasks).toHaveLength(6);
   });
 });

@@ -40,7 +40,7 @@ export type RuleBenchmarkReport = {
   ruleId: string;
   status: string;
   threshold: number;
-  scope: string;
+  unit: string;
   baseCommit: string;
   golden: {
     files: number;
@@ -132,7 +132,7 @@ function buildRuleReport(
     ruleId: rule.id,
     status: rule.status,
     threshold: rule.violationThreshold,
-    scope: rule.scope,
+    unit: rule.unit,
     baseCommit: golden.baseCommit,
     golden: {
       files: golden.files.length,
@@ -253,7 +253,7 @@ export function renderBenchmarkReport(report: BenchmarkReport): string {
   for (const rule of report.rules) {
     const runCount = rule.runs.length;
     lines.push(
-      `${rule.ruleId} [${rule.status}, scope ${rule.scope}, threshold ${rule.threshold.toFixed(2)}]`,
+      `${rule.ruleId} [${rule.status}, unit ${rule.unit}, threshold ${rule.threshold.toFixed(2)}]`,
       `  golden: ${rule.golden.files} files (指摘あり ${rule.golden.filesWithFindings} / 指摘なし ${rule.golden.filesWithoutFindings}), 期待finding ${rule.golden.expectedFindings}, base ${rule.baseCommit.slice(0, 12)}`,
     );
 

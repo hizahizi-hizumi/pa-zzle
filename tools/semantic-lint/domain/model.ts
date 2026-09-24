@@ -11,7 +11,8 @@ export const SEVERITIES = ["warning", "error"] as const;
 export type Decision = (typeof DECISIONS)[number];
 export type RuleStatus = (typeof RULE_STATUSES)[number];
 export type Severity = (typeof SEVERITIES)[number];
-export type ScopeId = string;
+/** ruleの `unit` に書く語彙。unitカタログ（`catalog/units.yaml`）で定義する。 */
+export type UnitName = string;
 
 export type SourceRange = {
   startLine: number;
@@ -37,7 +38,7 @@ export type Rule = {
   status: RuleStatus;
   severity: Severity;
   violationThreshold: number;
-  scope: ScopeId;
+  unit: UnitName;
   paths: string[];
   source: {
     path: string;
@@ -46,9 +47,10 @@ export type Rule = {
   predicate: Predicate;
 };
 
+/** 判定対象のunit。範囲とsymbolはカタログのqueryで決定論的に決め、modelには生成させない。 */
 export type Subject = {
   id: string;
-  scope: ScopeId;
+  unit: UnitName;
   path: string;
   range: SourceRange;
   symbol?: string;
@@ -61,10 +63,27 @@ export type EvaluationTask = {
   subjectId: string;
 };
 
+/** sourceの位置。JavaScript文字列のindex（UTF-16 code unit）で表す。 */
+export type Span = {
+  start: number;
+  end: number;
+};
+
+/** planに含めたunit。file内の入れ子関係と、カタログが宣言した文脈を持つ。 */
+export type PlannedUnit = Subject & {
+  span: Span;
+  /** このunitを囲む、同じfileのplanned unitのうち最も内側のもの。 */
+  parentId?: string;
+  /** カタログのcontext宣言で、このunitの判定文脈に含めるplanned unit。 */
+  contextIds: string[];
+};
+
 export type PlannedFile = {
   path: string;
   source: string;
-  subjects: Subject[];
+  /** 判定stateでunit本文を置き換える目印。`{ref}` に参照先が入る。 */
+  marker: string;
+  units: PlannedUnit[];
   tasks: EvaluationTask[];
 };
 
@@ -82,7 +101,11 @@ export type DecisionRequest = {
 export type DecisionBatch = {
   id: string;
   file: SourceDocument;
-  subjects: Subject[];
+  marker: string;
+  /** fileのplanned unit全体。stateに含めないunitは目印だけにする。 */
+  units: PlannedUnit[];
+  /** stateへ本文を含めるunit。判定対象と、その祖先・文脈のunit。 */
+  subjectIds: string[];
   requests: DecisionRequest[];
 };
 

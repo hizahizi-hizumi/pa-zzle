@@ -1,6 +1,8 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 
-import { UnitExtractor, decodeQuotedLiteral } from "./extract.ts";
+import { _private, UnitExtractor } from "./extract.ts";
+
+const { decodeQuotedLiteral } = _private;
 
 let extractor: UnitExtractor;
 

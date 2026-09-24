@@ -30,7 +30,7 @@ describe("TypeSafe provider", () => {
         subjects: {
           s0: {
             id: "subject-1",
-            scope: "file",
+            unit: "file",
           },
         },
       },
@@ -161,10 +161,12 @@ function sampleBatch(ruleId: string): DecisionBatch {
       path: "frontend/example.test.ts",
       source: "const value = 1;\n",
     },
-    subjects: [
+    marker: "/* {ref} */",
+    subjectIds: ["subject-1"],
+    units: [
       {
         id: "subject-1",
-        scope: "file",
+        unit: "file",
         path: "frontend/example.test.ts",
         range: {
           startLine: 1,
@@ -174,6 +176,8 @@ function sampleBatch(ruleId: string): DecisionBatch {
         },
         symbol: "frontend/example.test.ts",
         source: "const value = 1;\n",
+        span: { start: 0, end: 17 },
+        contextIds: [],
       },
     ],
     requests: [

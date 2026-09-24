@@ -1,10 +1,15 @@
 import { describe, expect, test } from "bun:test";
 
 import { runEvaluationPlan } from "./run.ts";
-import { ScopeRegistry } from "../scopes/registry.ts";
 import { buildEvaluationPlan } from "../planning/planner.ts";
 import { FakeDecisionProvider } from "../testing/fake-provider.ts";
-import { decisionResult, sampleRule } from "../testing/fixtures.ts";
+import {
+  decisionResult,
+  sampleRule,
+  testExtractor,
+} from "../testing/fixtures.ts";
+
+const extractor = await testExtractor();
 
 describe("runEvaluationPlan", () => {
   test("thresholdを一度だけ適用してcanonical diagnosticを作る", async () => {
@@ -17,7 +22,7 @@ describe("runEvaluationPlan", () => {
         },
       ],
       rules: [rule],
-      scopes: new ScopeRegistry(),
+      extractor,
       matchesPath: () => true,
     });
     const task = plan.files[0]?.tasks[0];
@@ -58,7 +63,7 @@ describe("runEvaluationPlan", () => {
         },
       ],
       rules: [rule],
-      scopes: new ScopeRegistry(),
+      extractor,
       matchesPath: () => true,
     });
     const task = plan.files[0]?.tasks[0];
@@ -88,7 +93,7 @@ describe("runEvaluationPlan", () => {
         },
       ],
       rules: [rule],
-      scopes: new ScopeRegistry(),
+      extractor,
       matchesPath: () => true,
     });
     const task = plan.files[0]?.tasks[0];

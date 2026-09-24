@@ -1,5 +1,4 @@
-import type { SourceRange } from "../domain/model.ts";
-import type { Span } from "./extract.ts";
+import type { SourceRange, Span } from "../domain/model.ts";
 
 /** 文字位置から1始まりの行・列へ変換する。列はUTF-16 code unit単位。 */
 export class LineIndex {

@@ -41,7 +41,7 @@ describe("decisionCacheKey", () => {
     });
 
     expect(
-      decisionCacheKey({ ...base, predicate: rule.predicate, scope: rule.scope }),
+      decisionCacheKey({ ...base, predicate: rule.predicate, unit: rule.unit }),
     ).toBe(decisionCacheKey(base));
   });
 
@@ -63,7 +63,7 @@ describe("decisionCacheKey", () => {
     ["provider kind", (input) => ({ ...input, provider: { ...input.provider, kind: "other" } })],
     ["model", (input) => ({ ...input, provider: { ...input.provider, model: "jev-next" } })],
     ["request format", (input) => ({ ...input, provider: { ...input.provider, requestFormat: "systemone-choice/2" } })],
-    ["scope", (input) => ({ ...input, scope: "test" })],
+    ["unit", (input) => ({ ...input, unit: "test" })],
     ["instruction", (input) => ({ ...input, predicate: { ...input.predicate, instruction: "changed" } })],
     ["outcome", (input) => ({ ...input, predicate: { ...input.predicate, outcomes: { ...input.predicate.outcomes, compliant: "changed" } } })],
     ["file path", (input) => ({ ...input, file: { ...input.file, path: "b.test.ts" } })],
@@ -97,7 +97,7 @@ describe("FileDecisionCache", () => {
     let now = Date.parse("2026-01-01T00:00:00Z");
     const clock = () => now;
     const used = decisionCacheKey(keyInput());
-    const unused = decisionCacheKey({ ...keyInput(), scope: "test" });
+    const unused = decisionCacheKey({ ...keyInput(), unit: "test" });
     const value = {
       result: decisionResult("compliant", 0),
       provider: { kind: "typesafe", model: "jev-1" },
@@ -124,8 +124,8 @@ describe("FileDecisionCache", () => {
   test("compactはmaxEntriesを超えた分を最終利用の古い順に削除する", async () => {
     let now = 0;
     const cache = await FileDecisionCache.open(cachePath, { now: () => now });
-    const keys = ["a", "b", "c"].map((scope) =>
-      decisionCacheKey({ ...keyInput(), scope }),
+    const keys = ["a", "b", "c"].map((unit) =>
+      decisionCacheKey({ ...keyInput(), unit }),
     );
 
     for (const key of keys) {
@@ -174,12 +174,12 @@ function keyInput(): DecisionCacheKeyInput {
 
   return {
     provider: PROVIDER,
-    scope: rule.scope,
+    unit: rule.unit,
     predicate: rule.predicate,
     file: { path: "a.test.ts", source: "const value = 1;\n" },
     subject: {
       id: "file:a.test.ts:0",
-      scope: "file",
+      unit: "file",
       path: "a.test.ts",
       range: { startLine: 1, startColumn: 1, endLine: 2, endColumn: 1 },
       symbol: "a.test.ts",

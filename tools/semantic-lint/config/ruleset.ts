@@ -12,13 +12,33 @@ import {
   type Severity,
 } from "../domain/model.ts";
 
+/** rule作者が書けるkey。scope・selector・contextなどの抽出方法はunitカタログが持つ。 */
+const RULE_KEYS = new Set([
+  "id",
+  "title",
+  "status",
+  "severity",
+  "violationThreshold",
+  "unit",
+  "sourceSection",
+  "predicate",
+]);
+
 type RuleDefaults = {
   status: RuleStatus;
   severity: Severity;
   violationThreshold: number;
 };
 
-export function compileRuleset(value: unknown, origin: string): Rule[] {
+/**
+ * rulesetを検証してruleへ展開する。
+ * `units` はunitカタログの語彙で、ruleの `unit` はこの中から選ぶ。
+ */
+export function compileRuleset(
+  value: unknown,
+  origin: string,
+  units: ReadonlySet<string>,
+): Rule[] {
   if (!isRecord(value) || value.version !== 1) {
     throw new Error(`rulesetのversionが不正です: ${origin}`);
   }
@@ -53,6 +73,7 @@ export function compileRuleset(value: unknown, origin: string): Rule[] {
       paths,
       sourcePath,
       defaults: compiledDefaults,
+      units,
     }),
   );
 
@@ -72,6 +93,7 @@ export function compileRuleset(value: unknown, origin: string): Rule[] {
 export async function loadRulesets(
   projectRoot: string,
   rulesDir: string,
+  units: ReadonlySet<string>,
 ): Promise<Rule[]> {
   const directory = resolve(projectRoot, rulesDir);
   const paths = await collectYamlFiles(directory);
@@ -80,7 +102,7 @@ export async function loadRulesets(
       paths.map(async (path) => {
         const text = await Bun.file(path).text();
         const parsed = YAML.parse(text);
-        return compileRuleset(parsed, path);
+        return compileRuleset(parsed, path, units);
       }),
     )
   ).flat();
@@ -120,6 +142,7 @@ function compileRule(options: {
   paths: string[];
   sourcePath: string;
   defaults: RuleDefaults;
+  units: ReadonlySet<string>;
 }): Rule {
   const {
     value,
@@ -129,10 +152,19 @@ function compileRule(options: {
     paths,
     sourcePath,
     defaults,
+    units,
   } = options;
 
   if (!isRecord(value)) {
     throw new Error(`ruleが不正です: ${origin} rules[${index}]`);
+  }
+
+  const unknownKeys = Object.keys(value).filter((key) => !RULE_KEYS.has(key));
+
+  if (unknownKeys.length > 0) {
+    throw new Error(
+      `ruleに書けないkeyがあります: ${unknownKeys.join(", ")} (${origin} rules[${index}])。判定対象は unit で指定してください。`,
+    );
   }
 
   const {
@@ -141,16 +173,20 @@ function compileRule(options: {
     status,
     severity,
     violationThreshold,
-    scope,
+    unit,
     sourceSection,
     predicate,
   } = value;
 
+  if (typeof unit !== "string" || !units.has(unit)) {
+    throw new Error(
+      `ruleのunitが未知です: ${String(unit)} (${origin} rules[${index}])。使えるunit: ${[...units].sort().join(", ")}`,
+    );
+  }
+
   if (
     !isId(id) ||
     typeof title !== "string" ||
-    typeof scope !== "string" ||
-    scope.length === 0 ||
     typeof sourceSection !== "string" ||
     !isRecord(predicate) ||
     typeof predicate.instruction !== "string" ||
@@ -199,7 +235,7 @@ function compileRule(options: {
     status: compiledStatus,
     severity: compiledSeverity,
     violationThreshold: compiledViolationThreshold,
-    scope,
+    unit,
     paths,
     source: {
       path: sourcePath,

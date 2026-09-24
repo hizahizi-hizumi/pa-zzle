@@ -18,7 +18,7 @@ rules:
   - id: arrange-outside-test
     status: active
     title: テスト本体にArrangeを置かない
-    scope: vitest.test
+    unit: test
     sourceSection: テスト構造 > Arrangeの分離方法
     predicate:
       instruction: |
@@ -44,7 +44,7 @@ rules:
   - id: before-each-arrange-only
     status: active
     title: beforeEachは事前準備だけを行う
-    scope: vitest.beforeEach
+    unit: setup
     sourceSection: テスト構造 > Arrangeの分離方法
     predicate:
       instruction: |
@@ -65,7 +65,7 @@ rules:
 
   - id: dom-observable-contract
     title: DOMテストは利用者から観測できる契約を優先する
-    scope: vitest.test
+    unit: test
     sourceSection: テスト構造 > 基本原則
     predicate:
       instruction: |
@@ -89,7 +89,7 @@ rules:
   - id: table-driven-cases
     status: active
     title: 同じ期待動作の入力違いはtest.eachで表現する
-    scope: vitest.describe
+    unit: test-group
     sourceSection: 入力違いのケース
     predicate:
       instruction: |

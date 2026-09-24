@@ -2,12 +2,12 @@ import { loadGoldenCases } from "../config/cases.ts";
 import { runGoldenCases } from "../eval/run.ts";
 import { renderGoldenCaseReport } from "../eval/report.ts";
 import { createTypeSafeProvider } from "../providers/typesafe/provider.ts";
-import { createDefaultScopeRegistry } from "../scopes/default.ts";
+import { UnitExtractor } from "../units/extract.ts";
 import { loadProjectContext } from "./context.ts";
 
 export async function runEvalCommand(args: string[]): Promise<number> {
   const { ruleIds, repeat } = parseEvalOptions(args);
-  const { projectRoot, config, rules } = await loadProjectContext();
+  const { projectRoot, config, catalog, rules } = await loadProjectContext();
   const allCases = await loadGoldenCases(projectRoot, config.casesDir);
   const selectedCases =
     ruleIds.length === 0
@@ -26,13 +26,13 @@ export async function runEvalCommand(args: string[]): Promise<number> {
     throw new Error("対象となるgolden caseがありません。");
   }
 
-  const scopes = await createDefaultScopeRegistry(projectRoot);
+  const extractor = await UnitExtractor.create(catalog);
   const provider = createTypeSafeProvider(config.provider);
   const results = await runGoldenCases({
     projectRoot,
     cases: selectedCases,
     rules,
-    scopes,
+    extractor,
     provider,
     repeat,
     concurrency: config.execution.concurrency,
