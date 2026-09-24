@@ -3,7 +3,12 @@ import { createMinesweeperDeductionState } from "./deduction-state";
 import { _private, traceMinesweeperHumanSolve } from "./human-solver";
 import { findMinesweeperCertainCells } from "./solver";
 
-const { findEasiestDiscoveries, forEachConnectedConstraintGroup } = _private;
+const {
+  countFewestDisjointConstraintsSummingTo,
+  findEasiestDiscoveries,
+  forEachConnectedConstraintGroup,
+  isNestedSumGroup,
+} = _private;
 
 /** `*` は未開示の地雷、`#` は未開示の安全マス、`.` は開示済みの安全マス。行は `/` で区切る。 */
 function problemFromPicture(picture: string): MinesweeperProblem {
@@ -115,6 +120,8 @@ describe("traceMinesweeperHumanSolve", () => {
         deductionLevel: 4,
         inferenceWidth: 3,
         discoveryCount: 1,
+        connectedGroupShape: "chain",
+        totalMineCountCombinationShape: null,
       });
     });
 
@@ -142,6 +149,8 @@ describe("traceMinesweeperHumanSolve", () => {
         inferenceWidth: null,
         totalMineCountUsage: "combination",
         safeCellCount: 5,
+        connectedGroupShape: null,
+        totalMineCountCombinationShape: "one-number",
       });
     });
   });
@@ -269,6 +278,72 @@ describe("forEachConnectedConstraintGroup", () => {
       expect(
         groups.sort((left, right) => left.join().localeCompare(right.join())),
       ).toEqual(expected);
+    },
+  );
+});
+
+describe("isNestedSumGroup", () => {
+  const cases = [
+    [
+      "2の未確定マスに2つの1が重ならずに収まる組",
+      [
+        { cellIndices: [0, 1, 2, 3], mineCount: 2 },
+        { cellIndices: [0, 1], mineCount: 1 },
+        { cellIndices: [2, 3], mineCount: 1 },
+      ],
+      true,
+    ],
+    [
+      "内側の2つの数字が未確定マスを共有する組",
+      [
+        { cellIndices: [0, 1, 2, 3], mineCount: 2 },
+        { cellIndices: [0, 1], mineCount: 1 },
+        { cellIndices: [1, 2], mineCount: 1 },
+      ],
+      false,
+    ],
+    [
+      "重なりを順にたどる組",
+      [
+        { cellIndices: [0, 1], mineCount: 1 },
+        { cellIndices: [1, 2, 3], mineCount: 1 },
+        { cellIndices: [3, 4], mineCount: 1 },
+      ],
+      false,
+    ],
+  ] as const;
+
+  test.each(cases)("%sを判定できること", (_name, constraints, expected) => {
+    const result = isNestedSumGroup(constraints);
+
+    expect(result).toBe(expected);
+  });
+});
+
+describe("countFewestDisjointConstraintsSummingTo", () => {
+  const constraints = [
+    { cellIndices: [0, 1], mineCount: 1 },
+    { cellIndices: [1, 2], mineCount: 1 },
+    { cellIndices: [3, 4], mineCount: 2 },
+    { cellIndices: [5, 6], mineCount: 1 },
+    { cellIndices: [7, 8], mineCount: 0 },
+  ];
+  const cases = [
+    ["総残り地雷数2を1つの数字で満たす", 2, 1],
+    ["総残り地雷数3を離れた2つの数字で満たす", 3, 2],
+    ["総残り地雷数4を離れた3つの数字で満たす", 4, 3],
+    ["未確定マスを共有しない組では届かない総残り地雷数5", 5, null],
+  ] as const;
+
+  test.each(cases)(
+    "%s最小の個数を返すこと",
+    (_name, targetMineCount, expected) => {
+      const result = countFewestDisjointConstraintsSummingTo(
+        constraints,
+        targetMineCount,
+      );
+
+      expect(result).toBe(expected);
     },
   );
 });

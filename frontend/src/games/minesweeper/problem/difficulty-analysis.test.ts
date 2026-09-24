@@ -1,6 +1,20 @@
-import { analyzeMinesweeperDifficulty } from "./difficulty-analysis";
-import { generateMinesweeperProblem } from "./generator";
+import {
+  analyzeMinesweeperDifficulty,
+  type MinesweeperHumanSolveFeatures,
+} from "./difficulty-analysis";
+import { minesweeperDifficultyReviewProblems } from "./difficulty-review-problems";
+import {
+  generateMinesweeperProblem,
+  restoreMinesweeperProblem,
+} from "./generator";
 import type { MinesweeperProblem } from "./problem";
+
+function restoreReviewProblem(seed: string): MinesweeperProblem {
+  const reviewProblem = minesweeperDifficultyReviewProblems.find(
+    (candidate) => candidate.identity.seed === seed,
+  )!;
+  return restoreMinesweeperProblem(reviewProblem.identity).problem;
+}
 
 type CellTransform = (
   row: number,
@@ -60,6 +74,8 @@ describe("analyzeMinesweeperDifficulty", () => {
         mineCount: 35,
         mineDensity: 35 / 192,
         initialRevealedCellCount: problem.initialRevealedCellIndices.length,
+        initialRevealedSafeCellRatio:
+          problem.initialRevealedCellIndices.length / (192 - 35),
         safeCellCountToReveal:
           192 - 35 - problem.initialRevealedCellIndices.length,
       });
@@ -140,6 +156,56 @@ describe("analyzeMinesweeperDifficulty", () => {
         }
       },
     );
+  });
+
+  describe("段階をまたいで同じ構造の推論を数える場合", () => {
+    const cases = (
+      [
+        [
+          "包含1回と総地雷数を1つの数字で突き合わせる終盤",
+          "ms-10x10-15-846",
+          {
+            containmentEquivalentRoundCount: 2,
+            overlapEquivalentRoundCount: 0,
+            multiNumberTotalMineCountRoundCount: 0,
+            chainedGroupRoundCount: 0,
+          },
+        ],
+        [
+          "離れた2つの数字の和を総地雷数と突き合わせる終盤",
+          "ms-10x10-15-819",
+          {
+            overlapEquivalentRoundCount: 1,
+            multiNumberTotalMineCountRoundCount: 0,
+            chainedGroupRoundCount: 0,
+          },
+        ],
+        [
+          "2の中に1が2つ収まる3つの数字",
+          "ms-10x10-21-311",
+          { overlapEquivalentRoundCount: 1, chainedGroupRoundCount: 0 },
+        ],
+        [
+          "離れた3つの数字を総地雷数と突き合わせる終盤",
+          "ms-10x10-18-342",
+          {
+            overlapEquivalentRoundCount: 0,
+            multiNumberTotalMineCountRoundCount: 1,
+            chainedGroupRoundCount: 0,
+          },
+        ],
+        ["3つの数字の連鎖", "ms-12x10-25-290", { chainedGroupRoundCount: 1 }],
+      ] satisfies [string, string, Partial<MinesweeperHumanSolveFeatures>][]
+    ).map(
+      ([name, seed, expected]) =>
+        [name, restoreReviewProblem(seed), expected] as const,
+    );
+
+    test.each(cases)("%sのラウンドを数えること", (_name, problem, expected) => {
+      const result = analyzeMinesweeperDifficulty(problem);
+
+      expect(result).toMatchObject({ status: "analyzed", features: expected });
+    });
   });
 
   describe("推測が必要な問題の場合", () => {

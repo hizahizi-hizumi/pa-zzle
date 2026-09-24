@@ -36,6 +36,26 @@ export const minesweeperDeductionLevels = [
 /** 総地雷数をどう使ったか。`trivial` は残り地雷数だけで全未確定マスが決まる場合。 */
 export type MinesweeperTotalMineCountUsage = "none" | "trivial" | "combination";
 
+/**
+ * 段階4の発見を作る制約の組み方。
+ * - `nested-sum`: 1つの数字の未確定マスの中に、残りの数字が未確定マスを共有せずに収まる（「2の中に1が2つ」）。
+ * - `chain`: それ以外の、重なりを順にたどる組み方。
+ */
+export type MinesweeperConnectedGroupShape = "nested-sum" | "chain";
+
+/**
+ * 段階5で総地雷数と突き合わせた数字の組み方。
+ * - `one-number`: 1つの数字の残り地雷数が総残り地雷数と一致する、または、その数字の外側の未確定マスが全て地雷になる。
+ * - `two-disjoint-numbers`: 未確定マスを共有しない2つの数字の残り地雷数の和が総残り地雷数と一致する。
+ * - `three-or-more-disjoint-numbers`: 未確定マスを共有しない3つ以上の数字の残り地雷数の和が総残り地雷数と一致する。
+ * - `component-combination`: 数字のまとまりごとに取りうる地雷数の組合せを突き合わせる必要がある。
+ */
+export type MinesweeperTotalMineCountCombinationShape =
+  | "one-number"
+  | "two-disjoint-numbers"
+  | "three-or-more-disjoint-numbers"
+  | "component-combination";
+
 export const MINESWEEPER_MAXIMUM_INFERENCE_WIDTH = 5;
 export const MINESWEEPER_MAXIMUM_LOCAL_SEARCH_NODE_COUNT = 1_000_000;
 
@@ -51,6 +71,8 @@ export type MinesweeperHumanSolverOptions = {
  * - `inferenceWidth`: 発見に使った制約の個数。総地雷数だけの発見しか無いラウンドでは `null`。
  * - `deductionLocationCount`: 確定マスを8近傍で連結したまとまりの数。
  * - `maximumDiscoveryRowSpan` / `maximumDiscoveryColumnSpan`: 発見に使った制約の未確定マス全体を囲む矩形の行数・列数の最大値。
+ * - `connectedGroupShape`: 段階4のラウンドだけで値を持つ。いずれかの発見が `nested-sum` ならそのラウンドは `nested-sum`。
+ * - `totalMineCountCombinationShape`: 段階5のラウンドだけで値を持つ。
  */
 export type MinesweeperHumanSolveRound = {
   deductionLevel: MinesweeperDeductionLevel;
@@ -64,6 +86,8 @@ export type MinesweeperHumanSolveRound = {
   frontierConstraintCount: number;
   maximumDiscoveryRowSpan: number | null;
   maximumDiscoveryColumnSpan: number | null;
+  connectedGroupShape: MinesweeperConnectedGroupShape | null;
+  totalMineCountCombinationShape: MinesweeperTotalMineCountCombinationShape | null;
 };
 
 export type MinesweeperHumanSolveResult =
@@ -543,6 +567,113 @@ function maximumOrNull(values: readonly number[]): number | null {
   return values.length > 0 ? Math.max(...values) : null;
 }
 
+function isNestedSumGroup(
+  constraints: readonly MinesweeperNumberConstraint[],
+): boolean {
+  return constraints.some((outer) => {
+    const outerCells = new Set(outer.cellIndices);
+    const innerCellIndices = constraints
+      .filter((constraint) => constraint !== outer)
+      .flatMap((constraint) => constraint.cellIndices);
+    const innersShareNoCell =
+      new Set(innerCellIndices).size === innerCellIndices.length;
+    return (
+      innersShareNoCell &&
+      innerCellIndices.every((cellIndex) => outerCells.has(cellIndex))
+    );
+  });
+}
+
+function classifyConnectedGroupShape(
+  constraintGroups: readonly (readonly MinesweeperNumberConstraint[])[],
+): MinesweeperConnectedGroupShape {
+  return constraintGroups.some(isNestedSumGroup) ? "nested-sum" : "chain";
+}
+
+/** 未確定マスを共有しない数字の組で、残り地雷数の和が `targetMineCount` になる最小の個数を返す。 */
+function countFewestDisjointConstraintsSummingTo(
+  constraints: readonly MinesweeperNumberConstraint[],
+  targetMineCount: number,
+): number | null {
+  const candidates = constraints.filter(
+    (constraint) => constraint.mineCount > 0,
+  );
+  const remainingMineCountSums = new Array<number>(candidates.length + 1).fill(
+    0,
+  );
+  for (let index = candidates.length - 1; index >= 0; index -= 1) {
+    remainingMineCountSums[index] =
+      candidates[index]!.mineCount + remainingMineCountSums[index + 1]!;
+  }
+  let fewestCount: number | null = null;
+
+  function search(
+    candidateIndex: number,
+    usedCells: ReadonlySet<number>,
+    mineCountSum: number,
+    constraintCount: number,
+  ): void {
+    if (fewestCount !== null && constraintCount >= fewestCount) {
+      return;
+    }
+    if (mineCountSum === targetMineCount) {
+      fewestCount = constraintCount;
+      return;
+    }
+    const reachableMineCountSum =
+      mineCountSum + remainingMineCountSums[candidateIndex]!;
+    if (reachableMineCountSum < targetMineCount) {
+      return;
+    }
+
+    const candidate = candidates[candidateIndex]!;
+    if (
+      mineCountSum + candidate.mineCount <= targetMineCount &&
+      candidate.cellIndices.every((cellIndex) => !usedCells.has(cellIndex))
+    ) {
+      search(
+        candidateIndex + 1,
+        new Set([...usedCells, ...candidate.cellIndices]),
+        mineCountSum + candidate.mineCount,
+        constraintCount + 1,
+      );
+    }
+    search(candidateIndex + 1, usedCells, mineCountSum, constraintCount);
+  }
+
+  search(0, new Set(), 0, 0);
+  return fewestCount;
+}
+
+function classifyTotalMineCountCombinationShape(
+  state: MinesweeperDeductionState,
+): MinesweeperTotalMineCountCombinationShape {
+  const constraints = collectMinesweeperNumberConstraints(state);
+  const remainingMineCount = countRemainingMinesweeperMines(state);
+  const undeterminedCellCount =
+    listUndeterminedMinesweeperCellIndices(state).length;
+  const isDecidedByOneNumber = constraints.some(
+    (constraint) =>
+      constraint.mineCount === remainingMineCount ||
+      undeterminedCellCount - constraint.cellIndices.length ===
+        remainingMineCount - constraint.mineCount,
+  );
+  if (isDecidedByOneNumber) {
+    return "one-number";
+  }
+
+  const disjointConstraintCount = countFewestDisjointConstraintsSummingTo(
+    constraints,
+    remainingMineCount,
+  );
+  if (disjointConstraintCount === null) {
+    return "component-combination";
+  }
+  return disjointConstraintCount === 2
+    ? "two-disjoint-numbers"
+    : "three-or-more-disjoint-numbers";
+}
+
 function recordRound(
   state: MinesweeperDeductionState,
   levelDiscoveries: LevelDiscoveries,
@@ -574,6 +705,14 @@ function recordRound(
     maximumDiscoveryColumnSpan: maximumOrNull(
       spans.map((span) => span.columnSpan),
     ),
+    connectedGroupShape:
+      levelDiscoveries.deductionLevel === 4
+        ? classifyConnectedGroupShape(constraintGroups)
+        : null,
+    totalMineCountCombinationShape:
+      levelDiscoveries.deductionLevel === 5
+        ? classifyTotalMineCountCombinationShape(state)
+        : null,
   };
 }
 
@@ -611,4 +750,6 @@ export function traceMinesweeperHumanSolve(
 export const _private = {
   findEasiestDiscoveries,
   forEachConnectedConstraintGroup,
+  isNestedSumGroup,
+  countFewestDisjointConstraintsSummingTo,
 };
