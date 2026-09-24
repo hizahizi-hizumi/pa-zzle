@@ -1,0 +1,26 @@
+# 実repoのテストコードに対する期待finding。
+# findingsは規約違反として指摘されるべき行範囲。空配列は「指摘なしが正解」のファイル。
+# ラベル粒度: beforeEach内で検証対象の操作を実行しているstatement。
+# 基準コミット時点のmainとその履歴には該当する違反が存在しないため、指摘なしファイルだけで構成する。
+version: 1
+rule: vitest/before-each-arrange-only
+baseCommit: 0d9813dee95ef8714301aa1d343b59d7462abede
+files:
+  - path: frontend/src/components/InternalDiagnosticsDialog.test.tsx
+    blob: e804c9eb046455ba59c86b4764a020d9b3b4a980
+    findings: []
+  - path: frontend/src/games/nanpure/ui/NanpureDiagnostics.test.tsx
+    blob: f2981e03512c0c4363fc2c5c2dfcb4bf4472e29a
+    findings: []
+  - path: frontend/src/games/water-sort/ui/WaterSortDiagnostics.test.tsx
+    blob: 00bb640e5c6badfb2a449a93ebabf12acd5e8c58
+    findings: []
+  - path: frontend/src/games/nanpure/play/use-nanpure-play.test.ts
+    blob: 8940bae1c9ebf277de52a209e20eff468de55930
+    findings: []
+  - path: frontend/src/games/nanpure/ui/NanpurePlay.test.tsx
+    blob: 776e7b048bdc33370750f97a321f4125a19bcb30
+    findings: []
+  - path: frontend/src/records/ui/PlayRecordsScreen.test.tsx
+    blob: 4bc20f5e6f038a425a6f507f7b65704f25c42696
+    findings: []
