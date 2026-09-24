@@ -33,7 +33,13 @@ export function BrandIdentityHeader({
 
   return (
     <header className={brandIdentityHeaderClassNames[size]}>
-      {linkToHome ? <Link to="/">{brandMark}</Link> : brandMark}
+      {linkToHome ? (
+        <Link to="/" className="flex">
+          {brandMark}
+        </Link>
+      ) : (
+        brandMark
+      )}
     </header>
   );
 }
