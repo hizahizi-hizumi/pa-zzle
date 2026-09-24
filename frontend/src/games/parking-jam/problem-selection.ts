@@ -1,93 +1,65 @@
+import {
+  createProblemRandom,
+  shuffleProblemValues,
+} from "@/games/problem-random";
 import type { ProblemSeed } from "@/games/problem-seed";
 import {
-  assessParkingJamDifficulty,
+  assessParkingJamReviewDifficulty,
   type ParkingJamDifficulty,
 } from "./difficulty";
+import { listParkingJamDifficultyCandidateConditions } from "./problem/generation/difficulty-candidate-space";
 import {
   generateParkingJamProblem,
   ParkingJamGenerationExhaustedError,
 } from "./problem/generator";
-import type { ParkingJamGeneratedProblem } from "./problem/problem";
+import type {
+  ParkingJamGeneratedProblem,
+  ParkingJamGenerationConditions,
+} from "./problem/problem";
 
-const MAXIMUM_ATTEMPTS_PER_GENERATION_PROFILE = 20;
+const MAXIMUM_REVIEW_SUPPLY_PROFILES = 72;
+const MAXIMUM_ATTEMPTS_PER_REVIEW_SUPPLY_PROFILE = 2;
 
-type ParkingJamLegacyDifficultyGenerationProfile = {
-  roadOpeningCount: number;
-  roadOpeningSpan: number;
-  fixedAreaCount: number;
-  fixedAreaLength: number;
-  blockingPlacementProbability: number;
-};
+export const PARKING_JAM_REVIEW_SUPPLY_VERSION = "candidate-space-v1";
 
-const LEGACY_DIFFICULTY_GENERATION_PROFILES: Record<
-  ParkingJamDifficulty,
-  readonly ParkingJamLegacyDifficultyGenerationProfile[]
-> = {
-  easy: [
-    {
-      roadOpeningCount: 4,
-      roadOpeningSpan: 4,
-      fixedAreaCount: 0,
-      fixedAreaLength: 1,
-      blockingPlacementProbability: 0,
-    },
-    {
-      roadOpeningCount: 4,
-      roadOpeningSpan: 4,
-      fixedAreaCount: 1,
-      fixedAreaLength: 2,
-      blockingPlacementProbability: 0,
-    },
-  ],
-  normal: [
-    {
-      roadOpeningCount: 4,
-      roadOpeningSpan: 3,
-      fixedAreaCount: 0,
-      fixedAreaLength: 1,
-      blockingPlacementProbability: 0.5,
-    },
-    {
-      roadOpeningCount: 4,
-      roadOpeningSpan: 3,
-      fixedAreaCount: 1,
-      fixedAreaLength: 2,
-      blockingPlacementProbability: 0.5,
-    },
-  ],
-  hard: [
-    {
-      roadOpeningCount: 4,
-      roadOpeningSpan: 3,
-      fixedAreaCount: 0,
-      fixedAreaLength: 1,
-      blockingPlacementProbability: 1,
-    },
-    {
-      roadOpeningCount: 4,
-      roadOpeningSpan: 2,
-      fixedAreaCount: 0,
-      fixedAreaLength: 1,
-      blockingPlacementProbability: 1,
-    },
-  ],
-};
+function hasReviewSupplyGenerationCapacity(
+  conditions: ParkingJamGenerationConditions,
+): boolean {
+  const minimumOccupiedCellCount =
+    conditions.vehicleCount * 2 +
+    conditions.fixedAreaCount * conditions.fixedAreaLength;
+  return (
+    minimumOccupiedCellCount * 3 <= conditions.width * conditions.height * 2
+  );
+}
+
+function listParkingJamReviewSupplyConditions(seed: ProblemSeed) {
+  const random = createProblemRandom(
+    `${PARKING_JAM_REVIEW_SUPPLY_VERSION}:${seed}`,
+  );
+  const supplyableConditions =
+    listParkingJamDifficultyCandidateConditions().filter(
+      hasReviewSupplyGenerationCapacity,
+    );
+  return shuffleProblemValues(supplyableConditions, random).slice(
+    0,
+    MAXIMUM_REVIEW_SUPPLY_PROFILES,
+  );
+}
 
 export function generateParkingJamProblemForDifficulty(
   difficulty: ParkingJamDifficulty,
   seed: ProblemSeed,
 ): ParkingJamGeneratedProblem {
-  for (const profile of LEGACY_DIFFICULTY_GENERATION_PROFILES[difficulty]) {
+  for (const conditions of listParkingJamReviewSupplyConditions(seed)) {
     try {
       return generateParkingJamProblem({
         seed,
-        width: 8,
-        height: 8,
-        vehicleCount: 14,
-        ...profile,
-        maximumAttempts: MAXIMUM_ATTEMPTS_PER_GENERATION_PROFILE,
+        ...conditions,
+        maximumAttempts: MAXIMUM_ATTEMPTS_PER_REVIEW_SUPPLY_PROFILE,
         acceptCandidate: ({ difficultyAnalysis }) => {
-          const assessment = assessParkingJamDifficulty(difficultyAnalysis);
+          const assessment =
+            assessParkingJamReviewDifficulty(difficultyAnalysis);
           return (
             assessment.status === "rated" &&
             assessment.difficulty === difficulty
@@ -99,5 +71,11 @@ export function generateParkingJamProblemForDifficulty(
     }
   }
 
-  throw new Error(`Failed to generate a ${difficulty} parking jam problem`);
+  throw new Error(
+    `Failed to generate a ${difficulty} parking jam review problem`,
+  );
 }
+
+export const _private = {
+  listParkingJamReviewSupplyConditions,
+};

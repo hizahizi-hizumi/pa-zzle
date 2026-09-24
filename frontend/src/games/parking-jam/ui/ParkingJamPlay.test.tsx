@@ -42,6 +42,7 @@ function createProps(): ComponentProps<typeof ParkingJamPlay> {
     onChangeDifficulty: vi.fn(),
     onBackToHome: vi.fn(),
     onClearAnimationComplete: vi.fn(),
+    onOpenDiagnostics: vi.fn(),
   };
 }
 
@@ -88,6 +89,13 @@ describe("ParkingJamPlay", () => {
     fireEvent.click(screen.getByRole("button", { name: "盤面を戻す" }));
 
     expect(props.onRestart).toHaveBeenCalledOnce();
+  });
+
+  test("内部診断が有効なとき検証情報を開けること", () => {
+    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
+    fireEvent.click(screen.getByRole("button", { name: "検証情報" }));
+
+    expect(props.onOpenDiagnostics).toHaveBeenCalledOnce();
   });
 });
 
