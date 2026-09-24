@@ -1,14 +1,107 @@
 name: Semantic Lint Target Context Benchmark
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - experiment/semantic-lint-target-family-vitest-20260924
 
 permissions:
   contents: read
 
 jobs:
-  disabled:
-    if: ${{ false }}
+  verify:
     runs-on: ubuntu-latest
     steps:
-      - run: echo disabled
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - name: Install semantic lint dependencies
+        working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+      - name: Typecheck
+        run: bun run --cwd tools/semantic-lint typecheck
+      - name: Test
+        run: bun run --cwd tools/semantic-lint test
+
+  table-subjects-batch64:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+      - name: Run table subjects-only batch64
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- target-family --benchmark .semantic-lint/poc/target-family/table-repository-golden.yaml --state-mode subjects-only --repeat 10
+
+  table-subjects-batch1:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+      - name: Run table subjects-only batch1
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- target-family --benchmark .semantic-lint/poc/target-family/table-repository-golden.yaml --state-mode subjects-only --max-decisions-per-request 1 --repeat 10
+
+  table-full-batch1:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+      - name: Run table full-file batch1
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- target-family --benchmark .semantic-lint/poc/target-family/table-repository-golden.yaml --state-mode full-file --max-decisions-per-request 1 --repeat 10
+
+  arrange-subjects-batch64:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+      - name: Run Arrange subjects-only batch64
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- target-family --benchmark .semantic-lint/poc/target-family/arrange-repository-golden.yaml --state-mode subjects-only --repeat 3
+
+  arrange-subjects-batch1:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+      - name: Run Arrange subjects-only batch1
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- target-family --benchmark .semantic-lint/poc/target-family/arrange-repository-golden.yaml --state-mode subjects-only --max-decisions-per-request 1 --repeat 1
