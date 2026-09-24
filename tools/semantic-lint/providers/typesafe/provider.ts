@@ -91,15 +91,30 @@ export function buildRequest(
     }
 
     questionToTask.set(questionId, request.taskId);
+    const contextInstructions =
+      batch.stateMode === "subjects-only"
+        ? [
+            "Use state.subjects.*.context as deterministic structural evidence.",
+            "No full-file source is provided. Judge from the current subject, its structural context, and the rule criteria.",
+            "If required evidence is absent, choose insufficient_context instead of inferring unseen code.",
+          ]
+        : [
+            "Use state.subjects.*.context as deterministic structural evidence when available.",
+            "Use state.file only as surrounding evidence to understand the target, including its containment and semantic role.",
+          ];
+    const propagationInstruction =
+      batch.stateMode === "subjects-only"
+        ? "A violation elsewhere in the available context does not make the current target a violation."
+        : "A violation elsewhere in the file does not make the current target a violation.";
+
     questions[questionId] = {
       type: "choice",
       instructions: [
         `The only classification target is state.subjects.${subject.key}.`,
         "Evaluate the criteria against that target itself.",
-        "Use state.subjects.*.context as deterministic structural evidence when available.",
-        "Use state.file only as surrounding evidence to understand the target, including its containment and semantic role.",
+        ...contextInstructions,
         "If the criteria describe a container, use its descendants or siblings as evidence about whether that container itself satisfies the criteria.",
-        "A violation elsewhere in the file does not make the current target a violation.",
+        propagationInstruction,
         "Do not transfer a violation from an ancestor, descendant, or sibling to the current target unless the criteria explicitly define the target container itself as the violation.",
         "",
         request.predicate.instruction,
@@ -122,14 +137,15 @@ export function buildRequest(
       },
     ]),
   );
+  const state =
+    batch.stateMode === "subjects-only"
+      ? { subjects }
+      : { file: batch.file, subjects };
 
   return {
     body: {
       model,
-      state: {
-        file: batch.file,
-        subjects,
-      },
+      state,
       questions,
     },
     questionToTask,
