@@ -64,17 +64,21 @@ export function createWaterSortStateKey(state: WaterSortState): string {
 export function isStandardWaterSortInitialState(
   state: WaterSortState,
   colorCount: number,
+  emptyBottleCount = WATER_SORT_EMPTY_BOTTLE_COUNT,
 ): boolean {
   if (!Number.isInteger(colorCount) || colorCount < 1) {
     return false;
   }
 
-  if (state.length !== colorCount + WATER_SORT_EMPTY_BOTTLE_COUNT) {
+  if (!Number.isInteger(emptyBottleCount) || emptyBottleCount < 1) {
     return false;
   }
 
-  const emptyBottleCount = countEmptyWaterSortBottles(state);
-  if (emptyBottleCount !== WATER_SORT_EMPTY_BOTTLE_COUNT) {
+  if (state.length !== colorCount + emptyBottleCount) {
+    return false;
+  }
+
+  if (countEmptyWaterSortBottles(state) !== emptyBottleCount) {
     return false;
   }
 

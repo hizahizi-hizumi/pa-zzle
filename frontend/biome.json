@@ -6,7 +6,8 @@
       "!node_modules",
       "!dist",
       "!src/router.ts",
-      "!src/components/ui"
+      "!src/components/ui",
+      "!src/games/water-sort/problem/problem-pool.json"
     ]
   },
   "formatter": {

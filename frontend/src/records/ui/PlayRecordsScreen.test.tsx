@@ -14,7 +14,7 @@ const playRecordDisplays = [
 
 const records = [
   createWaterSortPlayRecord({
-    difficulty: "normal",
+    difficulty: "3",
     problemIdentity: {
       generatorVersion: "1",
       seed: "water-1",
@@ -33,7 +33,7 @@ const records = [
     },
   }),
   createWaterSortPlayRecord({
-    difficulty: "normal",
+    difficulty: "3",
     problemIdentity: {
       generatorVersion: "1",
       seed: "water-2",

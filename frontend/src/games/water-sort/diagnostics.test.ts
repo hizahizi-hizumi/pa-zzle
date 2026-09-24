@@ -12,7 +12,7 @@ describe("WaterSortDiagnosticSnapshot", () => {
     colorCount: 4,
   });
   const snapshot = createWaterSortDiagnosticSnapshot({
-    difficulty: "normal",
+    difficulty: "3",
     problemIdentity: {
       generatorVersion: problem.identity.generatorVersion,
       seed: problem.identity.seed,
@@ -34,7 +34,6 @@ describe("WaterSortDiagnosticSnapshot", () => {
     expect(parsed).toEqual(snapshot);
     expect(restored.problem.initialState).toEqual(problem.problem.initialState);
     expect(restored.optimalMoveCount).toBe(problem.optimalMoveCount);
-    expect(restored.difficultyAnalysis).toEqual(problem.difficultyAnalysis);
   });
 
   test("診断形式ではないJSONを拒否すること", () => {
