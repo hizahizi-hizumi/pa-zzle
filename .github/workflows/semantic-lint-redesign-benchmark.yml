@@ -34,6 +34,8 @@ jobs:
             args: ""
           - name: B-unit
             args: "--rules-from vitest-unit"
+          - name: B-unit-locate-judge
+            args: "--rules-from vitest-unit --locate judge"
           - name: B-unit-line
             args: "--rules-from vitest-unit-line"
           - name: B-unit-nesting-all
@@ -55,7 +57,7 @@ jobs:
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
         run: |
           bun run --cwd tools/semantic-lint bench -- ${{ matrix.args }} --repeat 3 --format json \
-            > "$RUNNER_TEMP/semantic-lint-benchmark.json"
+            > "$RUNNER_TEMP/${{ matrix.name }}.json"
       - name: Render report
         working-directory: tools/semantic-lint
         run: |
@@ -65,4 +67,49 @@ jobs:
             process.stdout.write(renderBenchmarkReport(report));
           '
         env:
-          REPORT_PATH: ${{ runner.temp }}/semantic-lint-benchmark.json
+          REPORT_PATH: ${{ runner.temp }}/${{ matrix.name }}.json
+      - name: Summary
+        working-directory: tools/semantic-lint
+        run: |
+          bun -e '
+            import { renderBenchmarkSummary } from "./eval/benchmark-report.ts";
+            const report = await Bun.file(process.env.REPORT_PATH).json();
+            process.stdout.write(renderBenchmarkSummary(report));
+          '
+        env:
+          REPORT_PATH: ${{ runner.temp }}/${{ matrix.name }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-${{ matrix.name }}
+          path: ${{ runner.temp }}/${{ matrix.name }}.json
+
+  summary:
+    needs: benchmark
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: benchmark-*
+          path: ${{ runner.temp }}/reports
+          merge-multiple: true
+      - name: Summarize all variants
+        working-directory: tools/semantic-lint
+        run: |
+          bun -e '
+            import { readdir } from "node:fs/promises";
+            import { renderBenchmarkSummary } from "./eval/benchmark-report.ts";
+            const dir = process.env.REPORTS_DIR;
+            for (const name of (await readdir(dir)).sort()) {
+              const report = await Bun.file(`${dir}/${name}`).json();
+              process.stdout.write(`## ${name}\n` + renderBenchmarkSummary(report));
+            }
+          '
+        env:
+          REPORTS_DIR: ${{ runner.temp }}/reports
