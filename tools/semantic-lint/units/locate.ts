@@ -8,8 +8,9 @@ export const NONE_CHOICE = "NONE";
 /**
  * - lines: 位置特定の候補を行IDにする。複数行の文は行ごとの確率を合算する。
  * - statements: 位置特定の候補を文の先頭行IDにする。
+ * - judge: 違反単位の中の文ごとに、違反の一部かどうかを別々に判定する。
  */
-export const LOCATE_MODES = ["lines", "statements"] as const;
+export const LOCATE_MODES = ["lines", "statements", "judge"] as const;
 export type LocateMode = (typeof LOCATE_MODES)[number];
 
 /**
@@ -18,6 +19,8 @@ export type LocateMode = (typeof LOCATE_MODES)[number];
  */
 export const LOCATE_RELATIVE_SHARE = 0.3;
 export const LOCATE_MIN_SHARE = 0.1;
+/** judgeで文を違反の一部とみなす確率。 */
+export const STATEMENT_VIOLATION_PROBABILITY = 0.5;
 
 const CHOICE_TEXT_LENGTH = 160;
 
@@ -33,10 +36,79 @@ export type LocateWindow = {
   allowsNone: boolean;
 };
 
-export function locateWindows(
+/** 違反単位1つぶんの位置特定の質問。choiceはwindow、judgeは文ごとに1つ。 */
+export type LocateProbe =
+  | { kind: "choice"; window: LocateWindow }
+  | { kind: "statement"; target: LineSpan; text: string };
+
+export function locateProbes(
   unit: Unit,
   lines: readonly string[],
   mode: LocateMode,
+): LocateProbe[] {
+  if (mode !== "judge") {
+    return locateWindows(unit, lines, mode).map((window) => ({
+      kind: "choice",
+      window,
+    }));
+  }
+
+  return unit.locateTargets
+    .filter((target) =>
+      lines
+        .slice(target.startLine - 1, target.endLine)
+        .some((line) => isLocatableLine(line)),
+    )
+    .map((target) => ({
+      kind: "statement",
+      target,
+      text: lines.slice(target.startLine - 1, target.endLine).join("\n"),
+    }));
+}
+
+/** 回答から指摘する文を選ぶ。回答がない単位は単位全体を返す。 */
+export function selectFromProbes(
+  unit: Unit,
+  probes: readonly LocateProbe[],
+  answers: ReadonlyArray<LocateAnswer | undefined>,
+): LineSpan[] {
+  const statements = probes.flatMap((probe, index) =>
+    probe.kind === "statement"
+      ? [{ target: probe.target, answer: answers[index] }]
+      : [],
+  );
+
+  if (statements.length === 0) {
+    return selectLocations(
+      unit,
+      probes.flatMap((probe) => (probe.kind === "choice" ? [probe.window] : [])),
+      answers,
+    );
+  }
+
+  const scored = statements.map(({ target, answer }) => ({
+    target,
+    probability: answer?.probabilities.violation ?? 0,
+  }));
+  const selected = scored.filter(
+    (entry) => entry.probability >= STATEMENT_VIOLATION_PROBABILITY,
+  );
+
+  if (selected.length > 0) {
+    return selected.map((entry) => entry.target);
+  }
+
+  const best = scored.reduce((left, right) =>
+    right.probability > left.probability ? right : left,
+  );
+
+  return [best.target];
+}
+
+export function locateWindows(
+  unit: Unit,
+  lines: readonly string[],
+  mode: Exclude<LocateMode, "judge">,
 ): LocateWindow[] {
   const candidates = unit.locateTargets.flatMap((target) =>
     candidatesOf(target, lines, mode),
@@ -130,7 +202,7 @@ export function selectLocations(
 function candidatesOf(
   target: LineSpan,
   lines: readonly string[],
-  mode: LocateMode,
+  mode: Exclude<LocateMode, "judge">,
 ): LocateCandidate[] {
   const candidates: LocateCandidate[] = [];
 

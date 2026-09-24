@@ -3,9 +3,11 @@ import { describe, expect, test } from "bun:test";
 import { decisionCacheKey } from "./cache.ts";
 import { dedupeNestedFindings } from "./dedupe.ts";
 import {
+  locateProbes,
   locateWindows,
   MAX_CHOICES,
   NONE_CHOICE,
+  selectFromProbes,
   selectLocations,
   windowCriteria,
 } from "./locate.ts";
@@ -113,6 +115,40 @@ describe("selectLocations", () => {
 
   test("位置特定の候補がない単位は単位全体を指摘範囲にする", () => {
     expect(selectLocations(unitWith([]), [], [])).toEqual([unit.span]);
+  });
+});
+
+describe("judgeの位置特定", () => {
+  test("位置特定の候補になる文ごとに質問し、違反確率が半分以上の文をすべて選ぶ", () => {
+    const probes = locateProbes(unit, lines, "judge");
+
+    expect(probes.map((probe) => probe.kind)).toEqual([
+      "statement",
+      "statement",
+      "statement",
+    ]);
+    expect(
+      selectFromProbes(unit, probes, [
+        { choice: "violation", probabilities: { violation: 0.8 } },
+        { choice: "violation", probabilities: { violation: 0.6 } },
+        { choice: "compliant", probabilities: { violation: 0.1 } },
+      ]),
+    ).toEqual([
+      { startLine: 2, endLine: 2 },
+      { startLine: 5, endLine: 7 },
+    ]);
+  });
+
+  test("どの文も半分に届かなければ最も違反確率の高い文を選ぶ", () => {
+    const probes = locateProbes(unit, lines, "judge");
+
+    expect(
+      selectFromProbes(unit, probes, [
+        { choice: "compliant", probabilities: { violation: 0.2 } },
+        { choice: "compliant", probabilities: { violation: 0.1 } },
+        { choice: "compliant", probabilities: { violation: 0.4 } },
+      ]),
+    ).toEqual([{ startLine: 8, endLine: 8 }]);
   });
 });
 

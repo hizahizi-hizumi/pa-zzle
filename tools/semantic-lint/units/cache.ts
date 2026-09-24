@@ -19,6 +19,8 @@ export type DecisionCacheKeyInput = {
   target: string;
   context: readonly string[];
   criteria?: Record<string, string>;
+  /** 同じ単位の中で位置特定の対象にした文。 */
+  probe?: string;
 };
 
 export function decisionCacheKey(input: DecisionCacheKeyInput): string {
@@ -35,6 +37,7 @@ export function decisionCacheKey(input: DecisionCacheKeyInput): string {
       input.target,
       input.context,
       input.criteria === undefined ? null : sortedEntries(input.criteria),
+      input.probe ?? null,
     ]),
   );
 

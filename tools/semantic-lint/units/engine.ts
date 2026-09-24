@@ -21,8 +21,8 @@ import { type DecisionCache, decisionCacheKey } from "./cache.ts";
 import { dedupeNestedFindings } from "./dedupe.ts";
 import {
   type LocateMode,
-  locateWindows,
-  selectLocations,
+  locateProbes,
+  selectFromProbes,
 } from "./locate.ts";
 import {
   DEFAULT_UNIT_OPTIONS,
@@ -30,7 +30,7 @@ import {
   type UnitDocument,
   type UnitExtractionOptions,
 } from "./model.ts";
-import { buildUnitState, judgeQuestion, locateQuestion } from "./prompts.ts";
+import { buildUnitState, judgeQuestion, probeQuestion } from "./prompts.ts";
 import type { UnitRegistry } from "./registry.ts";
 import type { LineSpan } from "./syntax.ts";
 
@@ -217,7 +217,7 @@ export async function runUnitPlan(options: {
       })
       .map((task) => ({
         task,
-        windows: locateWindows(
+        probes: locateProbes(
           task.unit,
           file.document.source.split("\n"),
           engine.locateMode,
@@ -228,8 +228,8 @@ export async function runUnitPlan(options: {
   const located = await askAll({
     chunks: locateTargets.flatMap(({ document, targets }) =>
       chunk(
-        targets.flatMap(({ task, windows }) =>
-          windows.map((window, index) => ({
+        targets.flatMap(({ task, probes }) =>
+          probes.map((probe, index) => ({
             id: locateQuestionId(task.id, index),
             unit: task.unit,
             cacheKey: decisionCacheKey({
@@ -240,19 +240,22 @@ export async function runUnitPlan(options: {
               contextMode,
               target: task.unit.source,
               context: contextTexts(document, task.unit),
-              criteria: locateQuestion({
+              criteria: probeQuestion({
                 unit: task.unit,
                 unitKey: "",
                 predicate: task.rule.predicate,
-                window,
+                probe,
               }).criteria,
+              ...(probe.kind === "statement"
+                ? { probe: `${probe.target.startLine}-${probe.target.endLine}` }
+                : {}),
             }),
             build: (unitKey: string) =>
-              locateQuestion({
+              probeQuestion({
                 unit: task.unit,
                 unitKey,
                 predicate: task.rule.predicate,
-                window,
+                probe,
               }),
           })),
         ),
@@ -268,17 +271,17 @@ export async function runUnitPlan(options: {
   const locations = new Map<string, LineSpan[]>();
 
   for (const { targets } of locateTargets) {
-    for (const { task, windows } of targets) {
-      if (windows.length === 0) {
+    for (const { task, probes } of targets) {
+      if (probes.length === 0) {
         continue;
       }
 
       locations.set(
         task.id,
-        selectLocations(
+        selectFromProbes(
           task.unit,
-          windows,
-          windows.map((_, index) =>
+          probes,
+          probes.map((_, index) =>
             located.get(locateQuestionId(task.id, index)),
           ),
         ),

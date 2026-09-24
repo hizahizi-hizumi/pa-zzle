@@ -1,6 +1,6 @@
 import type { Predicate } from "../domain/model.ts";
 import type { ChoiceQuestion } from "../providers/choice.ts";
-import { type LocateWindow, windowCriteria } from "./locate.ts";
+import { type LocateProbe, type LocateWindow, windowCriteria } from "./locate.ts";
 import type { Unit, UnitDocument } from "./model.ts";
 
 /** 複数の質問が共有するstate。質問が参照する単位と文脈だけを含める。 */
@@ -84,4 +84,47 @@ export function locateQuestion(options: {
     ].join("\n"),
     criteria: windowCriteria(window),
   };
+}
+
+/** judgeの位置特定: 違反単位の中の1文が違反の一部かを問う。 */
+export function statementQuestion(options: {
+  unit: Unit;
+  unitKey: string;
+  predicate: Predicate;
+  probe: Extract<LocateProbe, { kind: "statement" }>;
+}): ChoiceQuestion {
+  const { unit, unitKey, predicate, probe } = options;
+
+  return {
+    instructions: [
+      `state.units.${unitKey} (lines ${unit.span.startLine}-${unit.span.endLine} of state.path) was judged to violate the rule below.`,
+      `Classification target: only the statement at lines ${probe.target.startLine}-${probe.target.endLine} inside it:`,
+      probe.text,
+      "",
+      "Decide whether this statement itself is part of the violation. Other statements of the unit are evidence only.",
+      "",
+      "Rule:",
+      predicate.instruction.trim(),
+      "",
+      "Violation:",
+      predicate.outcomes.violation.trim(),
+    ].join("\n"),
+    criteria: {
+      violation: "This statement is part of the violation described above.",
+      compliant: "This statement is not part of the violation.",
+    },
+  };
+}
+
+export function probeQuestion(options: {
+  unit: Unit;
+  unitKey: string;
+  predicate: Predicate;
+  probe: LocateProbe;
+}): ChoiceQuestion {
+  const { probe } = options;
+
+  return probe.kind === "choice"
+    ? locateQuestion({ ...options, window: probe.window })
+    : statementQuestion({ ...options, probe });
 }
