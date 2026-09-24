@@ -127,8 +127,8 @@ export function expandDecisionState(
 }
 
 /**
- * stateへ本文を載せるunit。判定対象と、その祖先・カタログのcontext宣言が指すunitを含める。
- * 祖先を含めることで、載せたunitが省略したunitの中に入らないようにする。
+ * stateへ本文を載せるunit。判定対象とその子孫・祖先、カタログのcontext宣言が指すunitを含める。
+ * 子孫は判定対象の本文の一部なので省略しない。祖先を含めることで、載せたunitが省略したunitの中に入らないようにする。
  */
 export function subjectClosure(
   units: readonly PlannedUnit[],
@@ -136,6 +136,16 @@ export function subjectClosure(
 ): string[] {
   const byId = new Map(units.map((unit) => [unit.id, unit]));
   const selected = new Set<string>();
+  const targets = [...targetIds]
+    .map((id) => byId.get(id))
+    .filter((unit): unit is PlannedUnit => unit !== undefined);
+
+  for (const unit of units) {
+    if (targets.some((target) => isDescendant(unit, target, byId))) {
+      selected.add(unit.id);
+    }
+  }
+
   const addWithAncestors = (id: string | undefined): void => {
     for (
       let unit = id === undefined ? undefined : byId.get(id);
@@ -146,7 +156,7 @@ export function subjectClosure(
     }
   };
 
-  for (const id of targetIds) {
+  for (const { id } of targets) {
     addWithAncestors(id);
 
     for (const contextId of byId.get(id)?.contextIds ?? []) {
@@ -155,6 +165,24 @@ export function subjectClosure(
   }
 
   return units.filter((unit) => selected.has(unit.id)).map((unit) => unit.id);
+}
+
+function isDescendant(
+  unit: PlannedUnit,
+  ancestor: PlannedUnit,
+  byId: ReadonlyMap<string, PlannedUnit>,
+): boolean {
+  for (
+    let parent = unit.parentId === undefined ? undefined : byId.get(unit.parentId);
+    parent;
+    parent = parent.parentId === undefined ? undefined : byId.get(parent.parentId)
+  ) {
+    if (parent.id === ancestor.id) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**

@@ -188,4 +188,23 @@ describe("subjectClosure", () => {
       'test("案内を表示すること")',
     ]);
   });
+
+  test("判定対象の子孫は本文の一部として含める", () => {
+    const { units } = plannedFile({ path: "a.test.tsx", source }, [
+      "test",
+      "test-group",
+      "setup",
+    ]);
+    const outer = units.find((unit) => unit.symbol === 'describe("空の場合")');
+
+    expect(
+      subjectClosure(units, [outer?.id ?? ""]).map(
+        (id) => units.find((unit) => unit.id === id)?.symbol,
+      ),
+    ).toEqual([
+      'describe("一覧")',
+      'describe("空の場合")',
+      'test("案内を表示すること")',
+    ]);
+  });
 });

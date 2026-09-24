@@ -21,7 +21,7 @@ const DEFAULT_MAX_ATTEMPTS = 3;
  * buildRequestが組み立てるprompt / request形式の版。
  * 判定キャッシュのkeyに含まれるため、送る内容を変えたら更新する。
  */
-export const TYPESAFE_REQUEST_FORMAT = "systemone-choice/3";
+export const TYPESAFE_REQUEST_FORMAT = "systemone-choice/4";
 
 /**
  * Jevの課金input tokenを見積もる係数。実測した請求から求めた近似値。
