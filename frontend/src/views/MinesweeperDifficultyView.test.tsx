@@ -1,0 +1,39 @@
+import { cleanup, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+
+import { MinesweeperDifficultyView } from "./MinesweeperDifficultyView";
+
+afterEach(cleanup);
+
+describe("MinesweeperDifficultyView", () => {
+  const difficultyCases = ["1", "2", "3", "4", "5"] as const;
+
+  beforeEach(() => {
+    render(
+      <MemoryRouter>
+        <MinesweeperDifficultyView />
+      </MemoryRouter>,
+    );
+  });
+
+  test.each(difficultyCases)(
+    "難易度 %s を選ぶとその難易度のプレイ画面へ進めること",
+    (difficulty) => {
+      const option = screen.getByRole("link", {
+        name: `難易度 ${difficulty}`,
+      });
+
+      const href = option.getAttribute("href");
+
+      expect(href).toBe(`/puzzles/minesweeper/play/${difficulty}`);
+    },
+  );
+
+  test("戻るリンクでホームへ戻れること", () => {
+    const backLink = screen.getByRole("link", { name: "← 戻る" });
+
+    const href = backLink.getAttribute("href");
+
+    expect(href).toBe("/");
+  });
+});

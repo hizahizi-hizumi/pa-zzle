@@ -24,6 +24,7 @@ type MinesweeperPlayProps = {
   onToggleFlag: (cellIndex: number) => void;
   onChordCell: (cellIndex: number) => void;
   onReplay: () => void;
+  onChangeDifficulty: () => void;
   onBackToHome: () => void;
 };
 
@@ -38,6 +39,7 @@ export function MinesweeperPlay({
   onToggleFlag,
   onChordCell,
   onReplay,
+  onChangeDifficulty,
   onBackToHome,
 }: MinesweeperPlayProps) {
   const [mode, setMode] = useState<MinesweeperInputMode>("reveal");
@@ -54,6 +56,7 @@ export function MinesweeperPlay({
         mineCount={mineCount}
         flagCount={flagCount}
         onReplay={handleReplay}
+        onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
       />
       <main className="flex min-h-0 flex-1 items-center justify-center px-2 py-3 sm:px-6">
