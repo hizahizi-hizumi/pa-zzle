@@ -1,17 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="マインスイーパー">
-  <g fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2">
-    <path d="M46 18v84M74 18v84M18 46h84M18 74h84"/>
+  <g fill="var(--game-pictogram-soft)">
+    <rect x="19" y="19" width="26" height="26"/>
+    <rect x="47" y="19" width="26" height="26"/>
+    <rect x="19" y="47" width="26" height="26"/>
+    <rect x="75" y="47" width="26" height="26"/>
+    <rect x="47" y="75" width="26" height="26"/>
   </g>
   <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
-  <path d="M54 29c0-4 3-7 8-7 4 0 7 3 7 6 0 4-3 6-7 9l-8 6h15" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-  <g transform="translate(32 88)">
-    <path d="M-6 9V-9" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2" stroke-linecap="round"/>
-    <path d="M-5-8h12l-3 5 3 5H-5z" fill="var(--game-pictogram-soft)"/>
+  <g fill="var(--game-pictogram-strong)" stroke="var(--game-pictogram-strong)" stroke-linejoin="round">
+    <path d="M28 52V69" fill="none" stroke-width="4" stroke-linecap="round"/>
+    <path d="M29.5 52H38.5L35 56L38.5 60H29.5Z" stroke-width="2"/>
   </g>
-  <g transform="translate(88 60)">
-    <circle r="6" fill="var(--game-pictogram-strong)"/>
-    <g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2" stroke-linecap="round">
-      <path d="M0-11v3M0 8v3M-11 0h3M8 0h3M-8-8l2 2M6 6l2 2M8-8L6-6M-6 6l-2 2"/>
-    </g>
+  <g fill="var(--game-pictogram-strong)">
+    <path d="M62 0V94L242 273Q287 318 322 357Q357 396 377 434Q397 472 397 514Q397 565 368.5 590.5Q340 616 294 616Q251 616 212.5 597.5Q174 579 133 545L63 629Q98 659 132.5 680Q167 701 208 712.5Q249 724 302 724Q371 724 421 699Q471 674 498 630Q525 586 525 526Q525 466 500 415Q475 364 433 317.5Q391 271 338 222L223 115V107H551V0Z" transform="translate(54.115 66.950) scale(0.0192 -0.0192)"/>
+  </g>
+  <g stroke="var(--game-pictogram-strong)" stroke-linecap="round">
+    <circle cx="85.5" cy="88.5" r="6.5" fill="var(--game-pictogram-strong)" stroke="none"/>
+    <path d="M89.5 84.5L92.5 81.5" fill="none" stroke-width="2"/>
   </g>
 </svg>
