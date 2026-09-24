@@ -11,8 +11,9 @@ rules:
   - id: arrange-outside-test
     title: テスト本体にArrangeを置かない
     unit: test
-    # golden benchmark (3 runs) のleave-one-file-out校正で選ばれたthresholdの中央値。
-    violationThreshold: 0.45
+    # golden benchmark (3 runs) のleave-one-file-out校正で全foldが選んだthreshold。
+    # 違反箇所の厳密P/R 0.91 / 0.86、unit単位の包含P/R 0.99 / 0.98。
+    violationThreshold: 0.35
     predicate:
       instruction: |
         Determine whether this individual test keeps meaningful Arrange setup
@@ -37,7 +38,7 @@ rules:
   - id: before-each-arrange-only
     title: beforeEachは事前準備だけを行う
     unit: setup
-    # goldenに違反例がなく校正できない。非違反の違反確率は最大約0.2。
+    # goldenに違反例がなく校正できない。非違反の違反確率は最大約0.6で、誤指摘は出ない。
     violationThreshold: 0.90
     predicate:
       instruction: |
@@ -59,6 +60,8 @@ rules:
   - id: dom-observable-contract
     title: DOMテストは利用者から観測できる契約を優先する
     unit: test
+    # goldenの違反（内部data属性やCSS selectorでの取得）を含むtestをunit単位で違反と
+    # 判定できず、どのthresholdでも一致しない。下げると誤指摘だけが増えるため高いまま。
     violationThreshold: 0.90
     predicate:
       instruction: |

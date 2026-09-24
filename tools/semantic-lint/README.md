@@ -217,7 +217,7 @@ rules:
     title: テスト本体にArrangeを置かない
     unit: test
     severity: warning # info / warning / error。省略時はwarning
-    violationThreshold: 0.45
+    violationThreshold: 0.35
     predicate:
       instruction: |
         Determine whether this individual test keeps meaningful Arrange setup
