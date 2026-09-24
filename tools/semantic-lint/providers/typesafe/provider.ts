@@ -10,6 +10,11 @@ import type { SemanticLintConfig } from "../../config/config.ts";
 
 const API_URL = "https://api.typesafe.ai/v1/systemone";
 const DEFAULT_MAX_ATTEMPTS = 3;
+/**
+ * buildRequestが組み立てるprompt / request形式の版。
+ * 判定キャッシュのkeyに含まれるため、送る内容を変えたら更新する。
+ */
+export const TYPESAFE_REQUEST_FORMAT = "systemone-choice/1";
 
 type FetchLike = (
   input: string | URL | Request,
@@ -41,6 +46,11 @@ export function createTypeSafeProvider(
   const maxAttempts = options.maxAttempts ?? DEFAULT_MAX_ATTEMPTS;
 
   return {
+    requestIdentity: {
+      kind: "typesafe",
+      model: config.model,
+      requestFormat: TYPESAFE_REQUEST_FORMAT,
+    },
     async evaluate(batch: DecisionBatch): Promise<DecisionBatchResult> {
       const { body, questionToTask } = buildRequest(config.model, batch);
       const response = await requestWithRetry({
