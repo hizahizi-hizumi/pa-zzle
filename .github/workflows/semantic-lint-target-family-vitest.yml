@@ -32,7 +32,121 @@ jobs:
           bun-version-file: .bun-version
       - working-directory: tools/semantic-lint
         run: bun install --frozen-lockfile
-      - name: Run Arrange with callback region
+      - name: Patch PoC to batch by local region
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("tools/semantic-lint/poc/candidate-anchor/run.ts")
+          source = path.read_text()
+          old = '''  for (let offset = 0; offset < subjects.length; offset += maxDecisionsPerRequest) {
+            const batchSubjects = subjects.slice(offset, offset + maxDecisionsPerRequest);
+            const batch: DecisionBatch = {
+              id: `${document.path}#${ruleId}#${offset / maxDecisionsPerRequest}`,
+              file: document,
+              subjects: batchSubjects,
+              ...(stateMode === undefined ? {} : { stateMode }),
+              requests: batchSubjects.map((subject) => ({
+                taskId: `${ruleId}::${subject.id}`,
+                ruleId,
+                subjectId: subject.id,
+                predicate: predicateForSubject(subject),
+              })),
+            };
+            const response = await provider.evaluate(batch);
+            usage.providerRequests += 1;
+            usage.inputTokens += response.usage.inputTokens;
+            usage.outputTokens += response.usage.outputTokens;
+
+            for (const subject of batchSubjects) {
+              const result = response.decisions[`${ruleId}::${subject.id}`];
+
+              if (!result) {
+                throw new Error(`provider resultがありません: ${subject.id}`);
+              }
+
+              results.set(subject.id, result);
+            }
+          }
+          '''
+          new = '''  let batchIndex = 0;
+
+          for (const subjectGroup of groupSubjectsByRegion(subjects)) {
+            for (
+              let offset = 0;
+              offset < subjectGroup.length;
+              offset += maxDecisionsPerRequest
+            ) {
+              const batchSubjects = subjectGroup.slice(
+                offset,
+                offset + maxDecisionsPerRequest,
+              );
+              const batch: DecisionBatch = {
+                id: `${document.path}#${ruleId}#${batchIndex}`,
+                file: document,
+                subjects: batchSubjects,
+                ...(stateMode === undefined ? {} : { stateMode }),
+                requests: batchSubjects.map((subject) => ({
+                  taskId: `${ruleId}::${subject.id}`,
+                  ruleId,
+                  subjectId: subject.id,
+                  predicate: predicateForSubject(subject),
+                })),
+              };
+              batchIndex += 1;
+              const response = await provider.evaluate(batch);
+              usage.providerRequests += 1;
+              usage.inputTokens += response.usage.inputTokens;
+              usage.outputTokens += response.usage.outputTokens;
+
+              for (const subject of batchSubjects) {
+                const result = response.decisions[`${ruleId}::${subject.id}`];
+
+                if (!result) {
+                  throw new Error(`provider resultがありません: ${subject.id}`);
+                }
+
+                results.set(subject.id, result);
+              }
+            }
+          }
+          '''
+          if old not in source:
+              raise SystemExit("evaluateSubjects batch loop not found")
+          source = source.replace(old, new, 1)
+          marker = '''function candidateSubject(
+          '''
+          helper = '''function groupSubjectsByRegion(subjects: Subject[]): Subject[][] {
+            const groups = new Map<string, Subject[]>();
+
+            for (const subject of subjects) {
+              const region = subject.context?.region;
+              const key =
+                region === undefined
+                  ? "without-region"
+                  : `region:${region.kind}\\u0000${region.source}`;
+              const group = groups.get(key);
+
+              if (group === undefined) {
+                groups.set(key, [subject]);
+              } else {
+                group.push(subject);
+              }
+            }
+
+            return [...groups.values()];
+          }
+
+          function candidateSubject(
+          '''
+          if marker not in source:
+              raise SystemExit("candidateSubject marker not found")
+          source = source.replace(marker, helper, 1)
+          path.write_text(source)
+          PY
+      - name: Verify region batching patch
+        run: bun run --cwd tools/semantic-lint typecheck
+      - name: Run Arrange with callback region batches
         env:
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
         run: bun run --cwd tools/semantic-lint poc -- target-family --benchmark .semantic-lint/poc/target-family/arrange-repository-golden.yaml --state-mode subjects-only --repeat 1
