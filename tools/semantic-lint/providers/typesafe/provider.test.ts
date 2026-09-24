@@ -128,7 +128,7 @@ describe("TypeSafe provider", () => {
       enclosingCalls: ["test", "describe"],
       regionId: "r0",
     });
-    expect(JSON.stringify(state).split(sharedRegion.source)).toHaveLength(2);
+    expect(Object.keys(state.regions)).toHaveLength(1);
     expect(
       (
         body as {
