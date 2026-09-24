@@ -39,6 +39,7 @@ export type ParkingJamDifficultyFeatures = {
   dependencyDepth: number;
   initialLegalVehicleCount: number;
   initialLegalVehicleRatio: number;
+  initialAverageMinimumBlockingVehicleCount: number;
   vehicleBlockingEdgeCount: number;
   maximumVehicleBlockingOutDegree: number;
   maximumVehicleBlockingInDegree: number;
@@ -109,6 +110,7 @@ function exitPathLength(
 function countVehicleBlockingEdges(board: ParkingJamBoard): {
   availableExitDirectionCount: number;
   initialBlockedExitDirectionCount: number;
+  initialAverageMinimumBlockingVehicleCount: number;
   vehicleBlockingEdgeCount: number;
   maximumVehicleBlockingOutDegree: number;
   maximumVehicleBlockingInDegree: number;
@@ -117,6 +119,7 @@ function countVehicleBlockingEdges(board: ParkingJamBoard): {
   let availableExitDirectionCount = 0;
   let initialBlockedExitDirectionCount = 0;
   let vehicleBlockingEdgeCount = 0;
+  const minimumBlockingVehicleCounts: number[] = [];
   const blockedVehicleIdsByBlocker = new Map<
     ParkingJamVehicleId,
     Set<ParkingJamVehicleId>
@@ -127,6 +130,7 @@ function countVehicleBlockingEdges(board: ParkingJamBoard): {
   >();
 
   for (const vehicle of board.vehicles) {
+    const blockingVehicleCounts: number[] = [];
     for (const direction of directions) {
       const blockers = listParkingJamMoveBlockers(board, state, {
         vehicleId: vehicle.id,
@@ -148,6 +152,7 @@ function countVehicleBlockingEdges(board: ParkingJamBoard): {
         (blocker) => blocker.kind === "vehicle",
       );
       if (vehicleBlockers.length > 0) initialBlockedExitDirectionCount += 1;
+      blockingVehicleCounts.push(vehicleBlockers.length);
       vehicleBlockingEdgeCount += vehicleBlockers.length;
       for (const blocker of vehicleBlockers) {
         const blockedVehicleIds =
@@ -161,11 +166,24 @@ function countVehicleBlockingEdges(board: ParkingJamBoard): {
         blockerIdsByBlockedVehicle.set(vehicle.id, blockerIds);
       }
     }
+    if (blockingVehicleCounts.length > 0) {
+      const minimumBlockingVehicleCount = Math.min(...blockingVehicleCounts);
+      if (minimumBlockingVehicleCount > 0) {
+        minimumBlockingVehicleCounts.push(minimumBlockingVehicleCount);
+      }
+    }
   }
 
   return {
     availableExitDirectionCount,
     initialBlockedExitDirectionCount,
+    initialAverageMinimumBlockingVehicleCount:
+      minimumBlockingVehicleCounts.length === 0
+        ? 0
+        : minimumBlockingVehicleCounts.reduce(
+            (total, count) => total + count,
+            0,
+          ) / minimumBlockingVehicleCounts.length,
     vehicleBlockingEdgeCount,
     maximumVehicleBlockingOutDegree: Math.max(
       0,
@@ -226,400 +244,4 @@ function createExitPathsByVehicle(
 type ParkingJamVehicleStateOption = {
   vehicleIndex: number;
   legalDirectionCount: number;
-  minimumBlockingVehicleCount: number | null;
-};
-
-function countMaskBits(mask: number): number {
-  let count = 0;
-  let remaining = mask;
-  while (remaining !== 0) {
-    remaining &= remaining - 1;
-    count += 1;
-  }
-  return count;
-}
-
-function listVehicleStateOptions(
-  board: ParkingJamBoard,
-  pathsByVehicle: ReadonlyMap<
-    ParkingJamVehicleId,
-    readonly ParkingJamExitPath[]
-  >,
-  remainingMask: number,
-): ParkingJamVehicleStateOption[] {
-  const options: ParkingJamVehicleStateOption[] = [];
-  for (let index = 0; index < board.vehicles.length; index += 1) {
-    const vehicleBit = 1 << index;
-    if ((remainingMask & vehicleBit) === 0) continue;
-    const vehicle = board.vehicles[index];
-    if (!vehicle) continue;
-
-    const pathBlockingVehicleCounts = (
-      pathsByVehicle.get(vehicle.id) ?? []
-    ).map(({ blockerMask }) => countMaskBits(blockerMask & remainingMask));
-    const legalDirectionCount = pathBlockingVehicleCounts.filter(
-      (count) => count === 0,
-    ).length;
-    options.push({
-      vehicleIndex: index,
-      legalDirectionCount,
-      minimumBlockingVehicleCount:
-        pathBlockingVehicleCounts.length === 0
-          ? null
-          : Math.min(...pathBlockingVehicleCounts),
-    });
-  }
-  return options;
-}
-
-function analyzeLegalOrderSpace(
-  board: ParkingJamBoard,
-): ParkingJamOrderSpaceAnalysis | null {
-  if (board.vehicles.length > PARKING_JAM_MAXIMUM_EXACT_ORDER_VEHICLE_COUNT) {
-    return null;
-  }
-
-  const pathsByVehicle = createExitPathsByVehicle(board);
-  const allVehiclesMask = (1 << board.vehicles.length) - 1;
-  const stateOptionsByMask = new Map<
-    number,
-    ReturnType<typeof listVehicleStateOptions>
-  >();
-  const legalOrderCountByMask = new Map<number, bigint>([[0, 1n]]);
-  const reachableMasks = new Set<number>();
-  let nonterminalStateCount = 0;
-  let legalVehicleCountTotal = 0;
-  let legalVehicleRatioTotal = 0;
-  let minimumLegalVehicleRatio = 1;
-  let decisionStateCount = 0;
-  let forcedChoiceStateCount = 0;
-  let blockingVehicleCountTotal = 0;
-  let blockedCandidateObservationCount = 0;
-  let legalDirectionCountTotal = 0;
-  let legalVehicleObservationCount = 0;
-  let newlyUnlockedVehicleCountTotal = 0;
-  let removalTransitionCount = 0;
-  let maximumNewlyUnlockedVehicleCount = 0;
-
-  function stateOptions(remainingMask: number) {
-    const cached = stateOptionsByMask.get(remainingMask);
-    if (cached) return cached;
-    const options = listVehicleStateOptions(
-      board,
-      pathsByVehicle,
-      remainingMask,
-    );
-    stateOptionsByMask.set(remainingMask, options);
-    return options;
-  }
-
-  function legalOptions(remainingMask: number) {
-    return stateOptions(remainingMask).filter(
-      ({ legalDirectionCount }) => legalDirectionCount > 0,
-    );
-  }
-
-  function countOrders(remainingMask: number): bigint {
-    const cachedCount = legalOrderCountByMask.get(remainingMask);
-    if (cachedCount !== undefined) return cachedCount;
-
-    reachableMasks.add(remainingMask);
-    const options = legalOptions(remainingMask);
-    const actualRemainingVehicleCount = board.vehicles.reduce(
-      (count, _vehicle, index) =>
-        count + Number((remainingMask & (1 << index)) !== 0),
-      0,
-    );
-    if (actualRemainingVehicleCount > 0) {
-      nonterminalStateCount += 1;
-      const legalVehicleRatio = options.length / actualRemainingVehicleCount;
-      legalVehicleCountTotal += options.length;
-      legalVehicleRatioTotal += legalVehicleRatio;
-      minimumLegalVehicleRatio = Math.min(
-        minimumLegalVehicleRatio,
-        legalVehicleRatio,
-      );
-      if (actualRemainingVehicleCount > 1) {
-        decisionStateCount += 1;
-        if (options.length === 1) forcedChoiceStateCount += 1;
-      }
-      const blockedCandidates = stateOptions(remainingMask).filter(
-        ({ legalDirectionCount, minimumBlockingVehicleCount }) =>
-          legalDirectionCount === 0 && minimumBlockingVehicleCount !== null,
-      );
-      for (const blockedCandidate of blockedCandidates) {
-        blockingVehicleCountTotal +=
-          blockedCandidate.minimumBlockingVehicleCount ?? 0;
-        blockedCandidateObservationCount += 1;
-      }
-      legalDirectionCountTotal += options.reduce(
-        (total, option) => total + option.legalDirectionCount,
-        0,
-      );
-      legalVehicleObservationCount += options.length;
-    }
-
-    let total = 0n;
-    const currentLegalVehicleMask = options.reduce(
-      (mask, option) => mask | (1 << option.vehicleIndex),
-      0,
-    );
-    for (const option of options) {
-      const childMask = remainingMask & ~(1 << option.vehicleIndex);
-      total += countOrders(childMask);
-      const childLegalVehicleMask = legalOptions(childMask).reduce(
-        (mask, childOption) => mask | (1 << childOption.vehicleIndex),
-        0,
-      );
-      const newlyUnlockedMask =
-        childLegalVehicleMask & ~currentLegalVehicleMask;
-      const newlyUnlockedVehicleCount = board.vehicles.reduce(
-        (count, _vehicle, index) =>
-          count + Number((newlyUnlockedMask & (1 << index)) !== 0),
-        0,
-      );
-      newlyUnlockedVehicleCountTotal += newlyUnlockedVehicleCount;
-      removalTransitionCount += 1;
-      maximumNewlyUnlockedVehicleCount = Math.max(
-        maximumNewlyUnlockedVehicleCount,
-        newlyUnlockedVehicleCount,
-      );
-    }
-
-    legalOrderCountByMask.set(remainingMask, total);
-    return total;
-  }
-
-  reachableMasks.add(0);
-  const legalOrderCount = countOrders(allVehiclesMask);
-  const canRemainAfterVehicleMask = Array.from(
-    { length: board.vehicles.length },
-    () => 0,
-  );
-  for (const remainingMask of reachableMasks) {
-    for (
-      let removedVehicleIndex = 0;
-      removedVehicleIndex < board.vehicles.length;
-      removedVehicleIndex += 1
-    ) {
-      if ((remainingMask & (1 << removedVehicleIndex)) !== 0) continue;
-      canRemainAfterVehicleMask[removedVehicleIndex] =
-        (canRemainAfterVehicleMask[removedVehicleIndex] ?? 0) | remainingMask;
-    }
-  }
-
-  const forcedChoiceChainLengthByMask = new Map<number, number>();
-
-  function forcedChoiceChainLength(remainingMask: number): number {
-    const cached = forcedChoiceChainLengthByMask.get(remainingMask);
-    if (cached !== undefined) return cached;
-    const remainingVehicleCount = countMaskBits(remainingMask);
-    const options = legalOptions(remainingMask);
-    if (remainingVehicleCount <= 1 || options.length !== 1) {
-      forcedChoiceChainLengthByMask.set(remainingMask, 0);
-      return 0;
-    }
-
-    const option = options[0];
-    if (!option) return 0;
-    const childMask = remainingMask & ~(1 << option.vehicleIndex);
-    const length = 1 + forcedChoiceChainLength(childMask);
-    forcedChoiceChainLengthByMask.set(remainingMask, length);
-    return length;
-  }
-
-  let maximumForcedChoiceChainLength = 0;
-  for (const remainingMask of reachableMasks) {
-    maximumForcedChoiceChainLength = Math.max(
-      maximumForcedChoiceChainLength,
-      forcedChoiceChainLength(remainingMask),
-    );
-  }
-
-  let requiredPrecedenceCount = 0;
-  const requiredPredecessorCountByVehicle = Array.from(
-    { length: board.vehicles.length },
-    () => 0,
-  );
-  for (
-    let predecessorIndex = 0;
-    predecessorIndex < board.vehicles.length;
-    predecessorIndex += 1
-  ) {
-    for (
-      let targetIndex = 0;
-      targetIndex < board.vehicles.length;
-      targetIndex += 1
-    ) {
-      if (predecessorIndex === targetIndex) continue;
-      const predecessorCanRemainAfterTarget =
-        ((canRemainAfterVehicleMask[targetIndex] ?? 0) &
-          (1 << predecessorIndex)) !==
-        0;
-      if (predecessorCanRemainAfterTarget) continue;
-      requiredPrecedenceCount += 1;
-      requiredPredecessorCountByVehicle[targetIndex] =
-        (requiredPredecessorCountByVehicle[targetIndex] ?? 0) + 1;
-    }
-  }
-
-  return {
-    legalOrderCount,
-    reachableStateCount: reachableMasks.size,
-    averageLegalVehicleCount:
-      nonterminalStateCount === 0
-        ? 0
-        : legalVehicleCountTotal / nonterminalStateCount,
-    averageLegalVehicleRatio:
-      nonterminalStateCount === 0
-        ? 1
-        : legalVehicleRatioTotal / nonterminalStateCount,
-    minimumLegalVehicleRatio,
-    forcedChoiceStateRatio:
-      decisionStateCount === 0
-        ? 0
-        : forcedChoiceStateCount / decisionStateCount,
-    maximumForcedChoiceChainLength,
-    averageMinimumBlockingVehicleCount:
-      blockedCandidateObservationCount === 0
-        ? 0
-        : blockingVehicleCountTotal / blockedCandidateObservationCount,
-    averageLegalDirectionCount:
-      legalVehicleObservationCount === 0
-        ? 0
-        : legalDirectionCountTotal / legalVehicleObservationCount,
-    averageNewlyUnlockedVehicleCount:
-      removalTransitionCount === 0
-        ? 0
-        : newlyUnlockedVehicleCountTotal / removalTransitionCount,
-    maximumNewlyUnlockedVehicleCount,
-    requiredPrecedenceCount,
-    maximumRequiredPredecessorCount: Math.max(
-      0,
-      ...requiredPredecessorCountByVehicle,
-    ),
-  };
-}
-
-function countLegalVehicleOrders(board: ParkingJamBoard): bigint | null {
-  return analyzeLegalOrderSpace(board)?.legalOrderCount ?? null;
-}
-
-function calculateOrderFreedom(
-  vehicleCount: number,
-  legalOrderCount: bigint | null,
-): number | null {
-  if (legalOrderCount === null) return null;
-  if (vehicleCount <= 1) return 1;
-  const maximumOrderCount = factorial(vehicleCount);
-  if (maximumOrderCount <= 1) return 1;
-  return Math.log(Number(legalOrderCount)) / Math.log(maximumOrderCount);
-}
-
-function calculateVehicleCellOccupancyRatio(board: ParkingJamBoard): number {
-  const boardCellCount = board.width * board.height;
-  if (boardCellCount === 0) return 0;
-  const vehicleCellCount = board.vehicles.reduce(
-    (count, vehicle) => count + listParkingJamVehicleCells(vehicle).length,
-    0,
-  );
-  return vehicleCellCount / boardCellCount;
-}
-
-function calculateRoadOpeningCoverageRatio(board: ParkingJamBoard): number {
-  const perimeterCellCount = 2 * board.width + 2 * board.height;
-  if (perimeterCellCount === 0) return 0;
-  const openingCellCount = board.roadOpenings.reduce(
-    (count, opening) => count + opening.length,
-    0,
-  );
-  return openingCellCount / perimeterCellCount;
-}
-
-function calculateExitPathFeatures(board: ParkingJamBoard): {
-  averageExitPathLength: number;
-  maximumExitPathLength: number;
-} {
-  const paths = [...createExitPathsByVehicle(board).values()].flat();
-  if (paths.length === 0) {
-    return { averageExitPathLength: 0, maximumExitPathLength: 0 };
-  }
-  const pathLengths = paths.map((path) => path.pathLength);
-  return {
-    averageExitPathLength:
-      pathLengths.reduce((total, length) => total + length, 0) /
-      pathLengths.length,
-    maximumExitPathLength: Math.max(...pathLengths),
-  };
-}
-
-export function analyzeParkingJamDifficulty(
-  board: ParkingJamBoard,
-  solvabilityAnalysis: {
-    removalLayers: readonly (readonly ParkingJamVehicleId[])[];
-  },
-): ParkingJamDifficultyAnalysis {
-  const state = createParkingJamInitialState(board);
-  const initialLegalVehicleIds = new Set(
-    listParkingJamLegalMoves(board, state).map((move) => move.vehicleId),
-  );
-  const blockers = countVehicleBlockingEdges(board);
-  const orderSpace = analyzeLegalOrderSpace(board);
-  const legalOrderCount = orderSpace?.legalOrderCount ?? null;
-  const vehicleCount = board.vehicles.length;
-  const exitPathFeatures = calculateExitPathFeatures(board);
-  const features: ParkingJamDifficultyFeatures = {
-    vehicleCount,
-    dependencyDepth: solvabilityAnalysis.removalLayers.length,
-    initialLegalVehicleCount: initialLegalVehicleIds.size,
-    initialLegalVehicleRatio:
-      vehicleCount === 0 ? 1 : initialLegalVehicleIds.size / vehicleCount,
-    vehicleBlockingEdgeCount: blockers.vehicleBlockingEdgeCount,
-    maximumVehicleBlockingOutDegree: blockers.maximumVehicleBlockingOutDegree,
-    maximumVehicleBlockingInDegree: blockers.maximumVehicleBlockingInDegree,
-    availableExitDirectionCount: blockers.availableExitDirectionCount,
-    initialBlockedExitDirectionCount: blockers.initialBlockedExitDirectionCount,
-    initialBlockedExitDirectionRatio:
-      blockers.availableExitDirectionCount === 0
-        ? 0
-        : blockers.initialBlockedExitDirectionCount /
-          blockers.availableExitDirectionCount,
-    legalOrderCount: legalOrderCount?.toString() ?? null,
-    solutionOrderFreedom: calculateOrderFreedom(vehicleCount, legalOrderCount),
-    reachableStateCount: orderSpace?.reachableStateCount ?? null,
-    averageLegalVehicleCount: orderSpace?.averageLegalVehicleCount ?? null,
-    averageLegalVehicleRatio: orderSpace?.averageLegalVehicleRatio ?? null,
-    minimumLegalVehicleRatio: orderSpace?.minimumLegalVehicleRatio ?? null,
-    forcedChoiceStateRatio: orderSpace?.forcedChoiceStateRatio ?? null,
-    maximumForcedChoiceChainLength:
-      orderSpace?.maximumForcedChoiceChainLength ?? null,
-    averageMinimumBlockingVehicleCount:
-      orderSpace?.averageMinimumBlockingVehicleCount ?? null,
-    averageLegalDirectionCount: orderSpace?.averageLegalDirectionCount ?? null,
-    averageNewlyUnlockedVehicleCount:
-      orderSpace?.averageNewlyUnlockedVehicleCount ?? null,
-    maximumNewlyUnlockedVehicleCount:
-      orderSpace?.maximumNewlyUnlockedVehicleCount ?? null,
-    requiredPrecedenceCount: orderSpace?.requiredPrecedenceCount ?? null,
-    maximumRequiredPredecessorCount:
-      orderSpace?.maximumRequiredPredecessorCount ?? null,
-    vehicleCellOccupancyRatio: calculateVehicleCellOccupancyRatio(board),
-    longVehicleRatio:
-      vehicleCount === 0
-        ? 0
-        : board.vehicles.filter((vehicle) => vehicle.length === 3).length /
-          vehicleCount,
-    roadOpeningCoverageRatio: calculateRoadOpeningCoverageRatio(board),
-    ...exitPathFeatures,
-  };
-
-  return {
-    status: orderSpace === null ? "unsupported" : "supported",
-    features,
-  };
-}
-
-export const _private = {
-  analyzeLegalOrderSpace,
-  countLegalVehicleOrders,
-};
+  minimumBl²È="25½ÁÑ¥½¸¤É•ÑÕÉ¸€Àì(€€€½¹ÍÐ¡¥±‘5…Í¬€ôÉ•µ…¥¹¥¹5…Í¬€˜ø Ä€ðð½ÁÑ¥½¸¹Ù•¡¥±•%¹‘•à¤ì(€€€½¹ÍÐ±•¹Ñ €ô€Ä€¬™½É•‘¡½¥•¡…¥¹1•¹Ñ ¡¡¥±‘5…Í¬¤ì(€€€™½É•‘¡½¥•¡…¥¹1•¹Ñ¡	å5…Í¬¹Í•Ð¡É•µ…¥¹¥¹5…Í¬°±•¹Ñ ¤ì(€€€É•ÑÕÉ¸±•¹Ñ ì(€ô((€±•Ðµ…á¥µÕµ½É•‘¡½¥•¡…¥¹1•¹Ñ €ô€Àì(€™½È€¡½¹ÍÐÉ•µ…¥¹¥¹5…Í¬½˜É•…¡…‰±•5…Í­Ì¤ì(€€€µ…á¥µÕµ½É•‘¡½¥•¡…¥¹1•¹Ñ €ô5…Ñ ¹µ…à (€€€€€µ…á¥µÕµ½É•‘¡½¥•¡…¥¹1•¹Ñ °(€€€€€™½É•‘¡½¥•¡…¥¹1•¹Ñ ¡É•µ…¥¹¥¹5…Í¬¤°(€€€€¤ì(€ô((€±•ÐÉ•ÅÕ¥É•‘AÉ••‘•¹•½Õ¹Ð€ô€Àì(€½¹ÍÐÉ•ÅÕ¥É•‘AÉ•‘••ÍÍ½É½Õ¹Ñ	åY•¡¥±”€ôÉÉ…ä¹™É½´ (€€€ì±•¹Ñ è‰½…É¹Ù•¡¥±•Ì¹±•¹Ñ ô°(€€€€ ¤€ôø€À°(€€¤ì(€™½È€ (€€€±•ÐÁÉ•‘••ÍÍ½É%¹‘•à€ô€Àì(€€€ÁÉ•‘••ÍÍ½É%¹‘•à€ð‰½…É¹Ù•¡¥±•Ì¹±•¹Ñ ì(€€€ÁÉ•‘••ÍÍ½É%¹‘•à€¬ô€Ä(€€¤ì(€€€™½È€ (€€€€€±•ÐÑ…É•Ñ%¹‘•à€ô€Àì(€€€€€Ñ…É•Ñ%¹‘•à€ð‰½…É¹Ù•¡¥±•Ì¹±•¹Ñ ì(€€€€€Ñ…É•Ñ%¹‘•à€¬ô€Ä(€€€€¤ì(€€€€€¥˜€¡ÁÉ•‘••ÍÍ½É%¹‘•à€ôôôÑ…É•Ñ%¹‘•à¤½¹Ñ¥¹Õ”ì(€€€€€½¹ÍÐÁÉ•‘••ÍÍ½É…¹I•µ…¥¹™Ñ•ÉQ…É•Ð€ô(€€€€€€€€ ¡…¹I•µ…¥¹™Ñ•ÉY•¡¥±•5…Í­mÑ…É•Ñ%¹‘•át€üü€À¤€˜(€€€€€€€€€€ Ä€ððÁÉ•‘••ÍÍ½É%¹‘•à¤¤€„ôô(€€€€€€€€Àì(€€€€€¥˜€¡ÁÉ•‘••ÍÍ½É…¹I•µ…¥¹™Ñ•ÉQ…É•Ð¤½¹Ñ¥¹Õ”ì(€€€€€É•ÅÕ¥É•‘AÉ••‘•¹•½Õ¹Ð€¬ô€Äì(€€€€€É•ÅÕ¥É•‘AÉ•‘••ÍÍ½É½Õ¹Ñ	åY•¡¥±•mÑ…É•Ñ%¹‘•át€ô(€€€€€€€€¡É•ÅÕ¥É•‘AÉ•‘••ÍÍ½É½Õ¹Ñ	åY•¡¥±•mÑ…É•Ñ%¹‘•át€üü€À¤€¬€Äì(€€€ô(€ô((€É•ÑÕÉ¸ì(€€€±•…±=É‘•É½Õ¹Ð°(€€€É•…¡…‰±•MÑ…Ñ•½Õ¹ÐèÉ•…¡…‰±•5…Í­Ì¹Í¥é”°(€€€…Ù•É…•1•…±Y•¡¥±•½Õ¹Ðè(€€€€€¹½¹Ñ•Éµ¥¹…±MÑ…Ñ•½Õ¹Ð€ôôô€À(€€€€€€€€ü€À(€€€€€€€€è±•…±Y•¡¥±•½Õ¹ÑQ½Ñ…°€¼¹½¹Ñ•Éµ¥¹…±MÑ…Ñ•½Õ¹Ð°(€€€…Ù•É…•1•…±Y•¡¥±•I…Ñ¥¼è(€€€€€¹½¹Ñ•Éµ¥¹…±MÑ…Ñ•½Õ¹Ð€ôôô€À(€€€€€€€€ü€Ä(€€€€€€€€è±•…±Y•¡¥±•I…Ñ¥½Q½Ñ…°€¼¹½¹Ñ•Éµ¥¹…±MÑ…Ñ•½Õ¹Ð°(€€€µ¥¹¥µÕµ1•…±Y•¡¥±•I…Ñ¥¼°(€€€™½É•‘¡½¥•MÑ…Ñ•I…Ñ¥¼è(€€€€€‘•¥Í¥½¹MÑ…Ñ•½Õ¹Ð€ôôô€À(€€€€€€€€ü€À(€€€€€€€€è™½É•‘¡½¥•MÑ…Ñ•½Õ¹Ð€¼‘•¥Í¥½¹MÑ…Ñ•½Õ¹Ð°(€€€µ…á¥µÕµ½É•‘¡½¥•¡…¥¹1•¹Ñ °(€€€…Ù•É…•5¥¹¥µÕµ	±½­¥¹Y•¡¥±•½Õ¹Ðè(€€€€€‰±½­•‘…¹‘¥‘…Ñ•=‰Í•ÉÙ…Ñ¥½¹½Õ¹Ð€ôôô€À(€€€€€€€€ü€À(€€€€€€€€è‰±½­¥¹Y•¡¥±•½Õ¹ÑQ½Ñ…°€¼‰±½­•‘…¹‘¥‘…Ñ•=‰Í•ÉÙ…Ñ¥½¹½Õ¹Ð°(€€€…Ù•É…•1•…±¥É•Ñ¥½¹½Õ¹Ðè(€€€€€±•…±Y•¡¥±•=‰Í•ÉÙ…Ñ¥½¹½Õ¹Ð€ôôô€À(€€€€€€€€ü€À(€€€€€€€€è±•…±¥É•Ñ¥½¹½Õ¹ÑQ½Ñ…°€¼±•…±Y•¡¥±•=‰Í•ÉÙ…Ñ¥½¹½Õ¹Ð°(€€€…Ù•É…•9•Ý±åU¹±½­•‘Y•¡¥±•½Õ¹Ðè(€€€€€É•µ½Ù…±QÉ…¹Í¥Ñ¥½¹½Õ¹Ð€ôôô€À(€€€€€€€€ü€À(€€€€€€€€è¹•Ý±åU¹±½­•‘Y•¡¥±•½Õ¹ÑQ½Ñ…°€¼É•µ½Ù…±QÉ…¹Í¥Ñ¥½¹½Õ¹Ð°(€€€µ…á¥µÕµ9•Ý±åU¹±½­•‘Y•¡¥±•½Õ¹Ð°(€€€É•ÅÕ¥É•‘AÉ••‘•¹•½Õ¹Ð°(€€€µ…á¥µÕµI•ÅÕ¥É•‘AÉ•‘••ÍÍ½É½Õ¹Ðè5…Ñ ¹µ…à (€€€€€€À°(€€€€€€¸¸¹É•ÅÕ¥É•‘AÉ•‘••ÍÍ½É½Õ¹Ñ	åY•¡¥±”°(€€€€¤°(€ôì)ô()™Õ¹Ñ¥½¸½Õ¹Ñ1•…±Y•¡¥±•=É‘•ÉÌ¡‰½…ÉèA…É­¥¹)…µ	½…É¤è‰¥¥¹Ðð¹Õ±°ì(€É•ÑÕÉ¸…¹…±åé•1•…±=É‘•ÉMÁ…”¡‰½…É¤ü¹±•…±=É‘•É½Õ¹Ð€üü¹Õ±°ì)ô()™Õ¹Ñ¥½¸…±Õ±…Ñ•=É‘•ÉÉ••‘½´ (€Ù•¡¥±•½Õ¹Ðè¹Õµ‰•È°(€±•…±=É‘•É½Õ¹Ðè‰¥¥¹Ðð¹Õ±°°(¤è¹Õµ‰•Èð¹Õ±°ì(€¥˜€¡±•…±=É‘•É½Õ¹Ð€ôôô¹Õ±°¤É•ÑÕÉ¸¹Õ±°ì(€¥˜€¡Ù•¡¥±•½Õ¹Ð€ðô€Ä¤É•ÑÕÉ¸€Äì(€½¹ÍÐµ…á¥µÕµ=É‘•É½Õ¹Ð€ô™…Ñ½É¥…°¡Ù•¡¥±•½Õ¹Ð¤ì(€¥˜€¡µ…á¥µÕµ=É‘•É½Õ¹Ð€ðô€Ä¤É•ÑÕÉ¸€Äì(€É•ÑÕÉ¸5…Ñ ¹±½œ¡9Õµ‰•È¡±•…±=É‘•É½Õ¹Ð¤¤€¼5…Ñ ¹±½œ¡µ…á¥µÕµ=É‘•É½Õ¹Ð¤ì)ô()™Õ¹Ñ¥½¸…±Õ±…Ñ•Y•¡¥±••±±=ÕÁ…¹åI…Ñ¥¼¡‰½…ÉèA…É­¥¹)…µ	½…É¤è¹Õµ‰•Èì(€½¹ÍÐ‰½…É‘•±±½Õ¹Ð€ô‰½…É¹Ý¥‘Ñ €¨‰½…É¹¡•¥¡Ðì(€¥˜€¡‰½…É‘•±±½Õ¹Ð€ôôô€À¤É•ÑÕÉ¸€Àì(€½¹ÍÐÙ•¡¥±••±±½Õ¹Ð€ô‰½…É¹Ù•¡¥±•Ì¹É•‘Õ” (€€€€¡½Õ¹Ð°Ù•¡¥±”¤€ôø½Õ¹Ð€¬±¥ÍÑA…É­¥¹)…µY•¡¥±••±±Ì¡Ù•¡¥±”¤¹±•¹Ñ °(€€€€À°(€€¤ì(€É•ÑÕÉ¸Ù•¡¥±••±±½Õ¹Ð€¼‰½…É‘•±±½Õ¹Ðì)ô()™Õ¹Ñ¥½¸…±Õ±…Ñ•I½…‘=Á•¹¥¹½Ù•É…•I…Ñ¥¼¡‰½…ÉèA…É­¥¹)…µ	½…É¤è¹Õµ‰•Èì(€½¹ÍÐÁ•É¥µ•Ñ•É•±±½Õ¹Ð€ô€È€¨‰½…É¹Ý¥‘Ñ €¬€È€¨‰½…É¹¡•¥¡Ðì(€¥˜€¡Á•É¥µ•Ñ•É•±±½Õ¹Ð€ôôô€À¤É•ÑÕÉ¸€Àì(€½¹ÍÐ½Á•¹¥¹•±±½Õ¹Ð€ô‰½…É¹É½…‘=Á•¹¥¹Ì¹É•‘Õ” (€€€€¡½Õ¹Ð°½Á•¹¥¹œ¤€ôø½Õ¹Ð€¬½Á•¹¥¹œ¹±•¹Ñ °(€€€€À°(€€¤ì(€É•ÑÕÉ¸½Á•¹¥¹•±±½Õ¹Ð€¼Á•É¥µ•Ñ•É•±±½Õ¹Ðì)ô()™Õ¹Ñ¥½¸…±Õ±…Ñ•á¥ÑA…Ñ¡•…ÑÕÉ•Ì¡‰½…ÉèA…É­¥¹)…µ	½…É¤èì(€…Ù•É…•á¥ÑA…Ñ¡1•¹Ñ è¹Õµ‰•Èì(€µ…á¥µÕµá¥ÑA…Ñ¡1•¹Ñ è¹Õµ‰•Èì)ôì(€½¹ÍÐÁ…Ñ¡Ì€ôl¸¸¹É•…Ñ•á¥ÑA…Ñ¡Í	åY•¡¥±”¡‰½…É¤¹Ù…±Õ•Ì ¥t¹™±…Ð ¤ì(€¥˜€¡Á…Ñ¡Ì¹±•¹Ñ €ôôô€À¤ì(€€€É•ÑÕÉ¸ì…Ù•É…•á¥ÑA…Ñ¡1•¹Ñ è€À°µ…á¥µÕµá¥ÑA…Ñ¡1•¹Ñ è€Àôì(€ô(€½¹ÍÐÁ…Ñ¡1•¹Ñ¡Ì€ôÁ…Ñ¡Ì¹µ…À ¡Á…Ñ ¤€ôøÁ…Ñ ¹Á…Ñ¡1•¹Ñ ¤ì(€É•ÑÕÉ¸ì(€€€…Ù•É…•á¥ÑA…Ñ¡1•¹Ñ è(€€€€€Á…Ñ¡1•¹Ñ¡Ì¹É•‘Õ” ¡Ñ½Ñ…°°±•¹Ñ ¤€ôøÑ½Ñ…°€¬±•¹Ñ °€À¤€¼(€€€€€Á…Ñ¡1•¹Ñ¡Ì¹±•¹Ñ °(€€€µ…á¥µÕµá¥ÑA…Ñ¡1•¹Ñ è5…Ñ ¹µ…à ¸¸¹Á…Ñ¡1•¹Ñ¡Ì¤°(€ôì)ô()•áÁ½ÉÐ™Õ¹Ñ¥½¸…¹…±åé•A…É­¥¹)…µ¥™™¥Õ±Ñä (€‰½…ÉèA…É­¥¹)…µ	½…É°(€Í½±Ù…‰¥±¥Ñå¹…±åÍ¥Ìèì(€€€É•µ½Ù…±1…å•ÉÌèÉ•…‘½¹±ä€¡É•…‘½¹±äA…É­¥¹)…µY•¡¥±•%‘mt¥mtì(€ô°(¤èA…É­¥¹)…µ¥™™¥Õ±Ñå¹…±åÍ¥Ìì(€½¹ÍÐÍÑ…Ñ”€ôÉ•…Ñ•A…É­¥¹)…µ%¹¥Ñ¥…±MÑ…Ñ”¡‰½…É¤ì(€½¹ÍÐ¥¹¥Ñ¥…±1•…±Y•¡¥±•%‘Ì€ô¹•ÜM•Ð (€€€±¥ÍÑA…É­¥¹)…µ1•…±5½Ù•Ì¡‰½…É°ÍÑ…Ñ”¤¹µ…À ¡µ½Ù”¤€ôøµ½Ù”¹Ù•¡¥±•%¤°(€€¤ì(€½¹ÍÐ‰±½­•ÉÌ€ô½Õ¹ÑY•¡¥±•	±½­¥¹‘•Ì¡‰½…É¤ì(€½¹ÍÐ½É‘•ÉMÁ…”€ô…¹…±åé•1•…±=É‘•ÉMÁ…”¡‰½…É¤ì(€½¹ÍÐ±•…±=É‘•É½Õ¹Ð€ô½É‘•ÉMÁ…”ü¹±•…±=É‘•É½Õ¹Ð€üü¹Õ±°ì(€½¹ÍÐÙ•¡¥±•½Õ¹Ð€ô‰½…É¹Ù•¡¥±•Ì¹±•¹Ñ ì(€½¹ÍÐ•á¥ÑA…Ñ¡•…ÑÕÉ•Ì€ô…±Õ±…Ñ•á¥ÑA…Ñ¡•…ÑÕÉ•Ì¡‰½…É¤ì(€½¹ÍÐ™•…ÑÕÉ•ÌèA…É­¥¹)…µ¥™™¥Õ±Ñå•…ÑÕÉ•Ì€ôì(€€€Ù•¡¥±•½Õ¹Ð°(€€€‘•Á•¹‘•¹å•ÁÑ èÍ½±Ù…‰¥±¥Ñå¹…±åÍ¥Ì¹É•µ½Ù…±1…å•ÉÌ¹±•¹Ñ °(€€€¥¹¥Ñ¥…±1•…±Y•¡¥±•½Õ¹Ðè¥¹¥Ñ¥…±1•…±Y•¡¥±•%‘Ì¹Í¥é”°(€€€¥¹¥Ñ¥…±1•…±Y•¡¥±•I…Ñ¥¼è(€€€€€Ù•¡¥±•½Õ¹Ð€ôôô€À€ü€Ä€è¥¹¥Ñ¥…±1•…±Y•¡¥±•%‘Ì¹Í¥é”€¼Ù•¡¥±•½Õ¹Ð°(€€€¥¹¥Ñ¥…±Ù•É…•5¥¹¥µÕµ	±½­¥¹Y•¡¥±•½Õ¹Ðè(€€€€€‰±½­•ÉÌ¹¥¹¥Ñ¥…±Ù•É…•5¥¹¥µÕµ	±½­¥¹Y•¡¥±•½Õ¹Ð°(€€€Ù•¡¥±•	±½­¥¹‘•½Õ¹Ðè‰±½­•ÉÌ¹Ù•¡¥±•	±½­¥¹‘•½Õ¹Ð°(€€€µ…á¥µÕµY•¡¥±•	±½­¥¹=ÕÑ•É•”è‰±½­•ÉÌ¹µ…á¥µÕµY•¡¥±•	±½­¥¹=ÕÑ•É•”°(€€€µ…á¥µÕµY•¡¥±•	±½­¥¹%¹•É•”è‰±½­•ÉÌ¹µ…á¥µÕµY•¡¥±•	±½­¥¹%¹•É•”°(€€€…Ù…¥±…‰±•á¥Ñ¥É•Ñ¥½¹½Õ¹Ðè‰±½­•ÉÌ¹…Ù…¥±…‰±•á¥Ñ¥É•Ñ¥½¹½Õ¹Ð°(€€€¥¹¥Ñ¥…±	±½­•‘á¥Ñ¥É•Ñ¥½¹½Õ¹Ðè‰±½­•ÉÌ¹¥¹¥Ñ¥…±	±½­•‘á¥Ñ¥É•Ñ¥½¹½Õ¹Ð°(€€€¥¹¥Ñ¥…±	±½­•‘á¥Ñ¥É•Ñ¥½¹I…Ñ¥¼è(€€€€€‰±½­•ÉÌ¹…Ù…¥±…‰±•á¥Ñ¥É•Ñ¥½¹½Õ¹Ð€ôôô€À(€€€€€€€€ü€À(€€€€€€€€è‰±½­•ÉÌ¹¥¹¥Ñ¥…±	±½­•‘á¥Ñ¥É•Ñ¥½¹½Õ¹Ð€¼(€€€€€€€€€‰±½­•ÉÌ¹…Ù…¥±…‰±•á¥Ñ¥É•Ñ¥½¹½Õ¹Ð°(€€€±•…±=É‘•É½Õ¹Ðè±•…±=É‘•É½Õ¹Ðü¹Ñ½MÑÉ¥¹œ ¤€üü¹Õ±°°(€€€Í½±ÕÑ¥½¹=É‘•ÉÉ••‘½´è…±Õ±…Ñ•=É‘•ÉÉ••‘½´¡Ù•¡¥±•½Õ¹Ð°±•…±=É‘•É½Õ¹Ð¤°(€€€É•…¡…‰±•MÑ…Ñ•½Õ¹Ðè½É‘•ÉMÁ…”ü¹É•…¡…‰±•MÑ…Ñ•½Õ¹Ð€üü¹Õ±°°(€€€…Ù•É…•1•…±Y•¡¥±•½Õ¹Ðè½É‘•ÉMÁ…”ü¹…Ù•É…•1•…±Y•¡¥±•½Õ¹Ð€üü¹Õ±°°(€€€…Ù•É…•1•…±Y•¡¥±•I…Ñ¥¼è½É‘•ÉMÁ…”ü¹…Ù•É…•1•…±Y•¡¥±•I…Ñ¥¼€üü¹Õ±°°(€€€µ¥¹¥µÕµ1•…±Y•¡¥±•I…Ñ¥¼è½É‘•ÉMÁ…”ü¹µ¥¹¥µÕµ1•…±Y•¡¥±•I…Ñ¥¼€üü¹Õ±°°(€€€™½É•‘¡½¥•MÑ…Ñ•I…Ñ¥¼è½É‘•ÉMÁ…”ü¹™½É•‘¡½¥•MÑ…Ñ•I…Ñ¥¼€üü¹Õ±°°(€€€µ…á¥µÕµ½É•‘¡½¥•¡…¥¹1•¹Ñ è(€€€€€½É‘•ÉMÁ…”ü¹µ…á¥µÕµ½É•‘¡½¥•¡…¥¹1•¹Ñ €üü¹Õ±°°(€€€…Ù•É…•5¥¹¥µÕµ	±½­¥¹Y•¡¥±•½Õ¹Ðè(€€€€€½É‘•ÉMÁ…”ü¹…Ù•É…•5¥¹¥µÕµ	±½­¥¹Y•¡¥±•½Õ¹Ð€üü¹Õ±°°(€€€…Ù•É…•1•…±¥É•Ñ¥½¹½Õ¹Ðè½É‘•ÉMÁ…”ü¹…Ù•É…•1•…±¥É•Ñ¥½¹½Õ¹Ð€üü¹Õ±°°(€€€…Ù•É…•9•Ý±åU¹±½­•‘Y•¡¥±•½Õ¹Ðè(€€€€€½É‘•ÉMÁ…”ü¹…Ù•É…•9•Ý±åU¹±½­•‘Y•¡¥±•½Õ¹Ð€üü¹Õ±°°(€€€µ…á¥µÕµ9•Ý±åU¹±½­•‘Y•¡¥±•½Õ¹Ðè(€€€€€½É‘•ÉMÁ…”ü¹µ…á¥µÕµ9•Ý±åU¹±½­•‘Y•¡¥±•½Õ¹Ð€üü¹Õ±°°(€€€É•ÅÕ¥É•‘AÉ••‘•¹•½Õ¹Ðè½É‘•ÉMÁ…”ü¹É•ÅÕ¥É•‘AÉ••‘•¹•½Õ¹Ð€üü¹Õ±°°(€€€µ…á¥µÕµI•ÅÕ¥É•‘AÉ•‘••ÍÍ½É½Õ¹Ðè(€€€€€½É‘•ÉMÁ…”ü¹µ…á¥µÕµI•ÅÕ¥É•‘AÉ•‘••ÍÍ½É½Õ¹Ð€üü¹Õ±°°(€€€Ù•¡¥±••±±=ÕÁ…¹åI…Ñ¥¼è…±Õ±…Ñ•Y•¡¥±••±±=ÕÁ…¹åI…Ñ¥¼¡‰½…É¤°(€€€±½¹Y•¡¥±•I…Ñ¥¼è(€€€€€Ù•¡¥±•½Õ¹Ð€ôôô€À(€€€€€€€€ü€À(€€€€€€€€è‰½…É¹Ù•¡¥±•Ì¹™¥±Ñ•È ¡Ù•¡¥±”¤€ôøÙ•¡¥±”¹±•¹Ñ €ôôô€Ì¤¹±•¹Ñ €¼(€€€€€€€€€Ù•¡¥±•½Õ¹Ð°(€€€É½…‘=Á•¹¥¹½Ù•É…•I…Ñ¥¼è…±Õ±…Ñ•I½…‘=Á•¹¥¹½Ù•É…•I…Ñ¥¼¡‰½…É¤°(€€€€¸¸¹•á¥ÑA…Ñ¡•…ÑÕÉ•Ì°(€ôì((€É•ÑÕÉ¸ì(€€€ÍÑ…ÑÕÌè½É‘•ÉMÁ…”€ôôô¹Õ±°€ü€‰Õ¹ÍÕÁÁ½ÉÑ•ˆ€è€‰ÍÕÁÁ½ÉÑ•ˆ°(€€€™•…ÑÕÉ•Ì°(€ôì)ô()•áÁ½ÉÐ½¹ÍÐ}ÁÉ¥Ù…Ñ”€ôì(€…¹…±åé•1•…±=É‘•ÉMÁ…”°(€½Õ¹Ñ1•…±Y•¡¥±•=É‘•ÉÌ°)ôì(

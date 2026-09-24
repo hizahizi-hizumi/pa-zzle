@@ -11,7 +11,7 @@ export type ParkingJamDifficulty =
 
 export const PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION = "dependency-v1";
 export const PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION =
-  "cognitive-load-review-v1";
+  "visual-local-load-review-v1";
 export const PARKING_JAM_DIFFICULTY_MODEL_VERSION =
   PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION;
 
@@ -25,23 +25,15 @@ export const PARKING_JAM_DIFFICULTY_THRESHOLDS = {
   hardConstrainedMaximumSolutionOrderFreedom: 0.78,
 } as const;
 
-const reviewLoadRanges = {
-  blockedVehicleRatio: { minimum: 0.1, maximum: 0.5 },
-  vehicleCellOccupancyRatio: { minimum: 0.3, maximum: 0.6 },
-  averageMinimumBlockingVehicleCount: { minimum: 1, maximum: 1.45 },
-  averageExitPathLength: { minimum: 1, maximum: 2.8 },
-  maximumVehicleBlockingDegree: { minimum: 1, maximum: 4 },
-  forcedChoiceChainRatio: { minimum: 0.125, maximum: 0.375 },
+const reviewFactorRanges = {
+  initialBlockedVehicleCount: { minimum: 2, maximum: 5 },
+  initialAverageMinimumBlockingVehicleCount: { minimum: 1, maximum: 1.5 },
+  averageExitPathLength: { minimum: 1.5, maximum: 2.5 },
 } as const;
 
 const reviewDifficultyThresholds = {
-  hardMinimumScore: 0.52,
-  hardMinimumHighLoadComponentCount: 2,
-  hardMaximumForcedChoiceChainRatio: 0.25,
-  easyMaximumScore: 0.3,
-  easyMinimumLowLoadComponentCount: 2,
-  highLoadComponentMinimum: 0.5,
-  lowLoadComponentMaximum: 0.3,
+  easyMaximumScore: 1 / 3,
+  hardMinimumScore: 2 / 3,
 } as const;
 
 export type ParkingJamDifficultyAssessment =
@@ -55,26 +47,19 @@ export type ParkingJamDifficultyAssessment =
       modelVersion: typeof PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION;
     };
 
-export type ParkingJamReviewDifficultyLoads = {
-  search: number;
-  path: number;
-  relation: number;
-  forcedChoiceChainRatio: number;
-  forcedChoicePenalty: number;
+export type ParkingJamReviewDifficultyFactors = {
+  initialBlockedVehicleCount: number;
+  initialAverageMinimumBlockingVehicleCount: number;
+  averageExitPathLength: number;
 };
 
-export type ParkingJamReviewDifficultyAssessment =
-  | {
-      status: "rated";
-      modelVersion: typeof PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION;
-      difficulty: ParkingJamDifficulty;
-      score: number;
-      loads: ParkingJamReviewDifficultyLoads;
-    }
-  | {
-      status: "unsupported";
-      modelVersion: typeof PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION;
-    };
+export type ParkingJamReviewDifficultyAssessment = {
+  status: "rated";
+  modelVersion: typeof PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION;
+  difficulty: ParkingJamDifficulty;
+  score: number;
+  factors: ParkingJamReviewDifficultyFactors;
+};
 
 export function parseParkingJamDifficulty(
   value: string | undefined,
@@ -92,7 +77,7 @@ export function getParkingJamDifficultyLabel(
   );
 }
 
-function normalizeReviewLoad(
+function normalizeReviewFactor(
   value: number,
   range: { minimum: number; maximum: number },
 ): number {
@@ -100,123 +85,55 @@ function normalizeReviewLoad(
   return Math.min(1, Math.max(0, normalized));
 }
 
-function calculateReviewDifficultyLoads(
+function calculateReviewDifficultyFactors(
   analysis: ParkingJamDifficultyAnalysis,
-): ParkingJamReviewDifficultyLoads | null {
+): ParkingJamReviewDifficultyFactors {
   const { features } = analysis;
-  if (
-    analysis.status === "unsupported" ||
-    features.averageLegalVehicleRatio === null ||
-    features.averageMinimumBlockingVehicleCount === null ||
-    features.maximumForcedChoiceChainLength === null
-  ) {
-    return null;
-  }
-
-  const blockedVehicleRatio = 1 - features.averageLegalVehicleRatio;
-  const search =
-    (normalizeReviewLoad(
-      blockedVehicleRatio,
-      reviewLoadRanges.blockedVehicleRatio,
-    ) +
-      normalizeReviewLoad(
-        features.vehicleCellOccupancyRatio,
-        reviewLoadRanges.vehicleCellOccupancyRatio,
-      )) /
-    2;
-  const path =
-    (normalizeReviewLoad(
-      features.averageMinimumBlockingVehicleCount,
-      reviewLoadRanges.averageMinimumBlockingVehicleCount,
-    ) +
-      normalizeReviewLoad(
-        features.averageExitPathLength,
-        reviewLoadRanges.averageExitPathLength,
-      )) /
-    2;
-  const relation =
-    (normalizeReviewLoad(
-      features.maximumVehicleBlockingInDegree,
-      reviewLoadRanges.maximumVehicleBlockingDegree,
-    ) +
-      normalizeReviewLoad(
-        features.maximumVehicleBlockingOutDegree,
-        reviewLoadRanges.maximumVehicleBlockingDegree,
-      )) /
-    2;
-  const forcedChoiceChainRatio =
-    features.maximumForcedChoiceChainLength /
-    Math.max(1, features.vehicleCount);
-  const forcedChoicePenalty = normalizeReviewLoad(
-    forcedChoiceChainRatio,
-    reviewLoadRanges.forcedChoiceChainRatio,
-  );
-
   return {
-    search,
-    path,
-    relation,
-    forcedChoiceChainRatio,
-    forcedChoicePenalty,
+    initialBlockedVehicleCount:
+      features.vehicleCount - features.initialLegalVehicleCount,
+    initialAverageMinimumBlockingVehicleCount:
+      features.initialAverageMinimumBlockingVehicleCount,
+    averageExitPathLength: features.averageExitPathLength,
   };
 }
 
 export function assessParkingJamReviewDifficulty(
   analysis: ParkingJamDifficultyAnalysis,
 ): ParkingJamReviewDifficultyAssessment {
-  const loads = calculateReviewDifficultyLoads(analysis);
-  if (!loads) {
-    return {
-      status: "unsupported",
-      modelVersion: PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION,
-    };
-  }
+  const factors = calculateReviewDifficultyFactors(analysis);
+  const score =
+    (normalizeReviewFactor(
+      factors.initialBlockedVehicleCount,
+      reviewFactorRanges.initialBlockedVehicleCount,
+    ) +
+      normalizeReviewFactor(
+        factors.initialAverageMinimumBlockingVehicleCount,
+        reviewFactorRanges.initialAverageMinimumBlockingVehicleCount,
+      ) +
+      normalizeReviewFactor(
+        factors.averageExitPathLength,
+        reviewFactorRanges.averageExitPathLength,
+      )) /
+    3;
 
-  const score = Math.min(
-    1,
-    Math.max(
-      0,
-      loads.search * 0.35 +
-        loads.path * 0.35 +
-        loads.relation * 0.3 -
-        loads.forcedChoicePenalty * 0.2,
-    ),
-  );
-  const loadComponents = [loads.search, loads.path, loads.relation];
-  const highLoadComponentCount = loadComponents.filter(
-    (load) => load >= reviewDifficultyThresholds.highLoadComponentMinimum,
-  ).length;
-  const lowLoadComponentCount = loadComponents.filter(
-    (load) => load <= reviewDifficultyThresholds.lowLoadComponentMaximum,
-  ).length;
-
-  const isHard =
-    score >= reviewDifficultyThresholds.hardMinimumScore &&
-    highLoadComponentCount >=
-      reviewDifficultyThresholds.hardMinimumHighLoadComponentCount &&
-    loads.forcedChoiceChainRatio <
-      reviewDifficultyThresholds.hardMaximumForcedChoiceChainRatio;
-  if (isHard) {
-    return {
-      status: "rated",
-      modelVersion: PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION,
-      difficulty: "hard",
-      score,
-      loads,
-    };
-  }
-
-  const isEasy =
-    score <= reviewDifficultyThresholds.easyMaximumScore &&
-    lowLoadComponentCount >=
-      reviewDifficultyThresholds.easyMinimumLowLoadComponentCount;
-  if (isEasy) {
+  if (score <= reviewDifficultyThresholds.easyMaximumScore) {
     return {
       status: "rated",
       modelVersion: PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION,
       difficulty: "easy",
       score,
-      loads,
+      factors,
+    };
+  }
+
+  if (score >= reviewDifficultyThresholds.hardMinimumScore) {
+    return {
+      status: "rated",
+      modelVersion: PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION,
+      difficulty: "hard",
+      score,
+      factors,
     };
   }
 
@@ -225,7 +142,7 @@ export function assessParkingJamReviewDifficulty(
     modelVersion: PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION,
     difficulty: "normal",
     score,
-    loads,
+    factors,
   };
 }
 
