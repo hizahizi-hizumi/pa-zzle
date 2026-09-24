@@ -45,6 +45,7 @@ describe("InternalDiagnosticsDialog", () => {
     expect(writeText).toHaveBeenCalledWith('{"game":"test"}');
     expect(screen.getByText("diagnostics-ui-seed")).toBeTruthy();
     expect(screen.getByText("条件表示")).toBeTruthy();
+    expect(screen.getByText("生成試行").nextSibling?.textContent).toBe("7");
     expect(screen.getByText("abcdef1234567890")).toBeTruthy();
     expect(screen.getByRole("button", { name: "コピーしました" })).toBeTruthy();
   });
@@ -59,5 +60,27 @@ describe("InternalDiagnosticsDialog", () => {
     fireEvent.keyDown(document, { key: "Escape" });
 
     expect(onClose).toHaveBeenCalledOnce();
+  });
+});
+
+describe("生成試行を渡さない場合", () => {
+  beforeEach(() => {
+    render(
+      <InternalDiagnosticsDialog
+        difficultyLabel="レベル 3"
+        seed="diagnostics-ui-seed"
+        generatorVersion="1"
+        generationConditions="条件表示"
+        buildRevision={null}
+        serializedSnapshot='{"game":"test"}'
+        onClose={vi.fn()}
+      />,
+    );
+  });
+
+  test("生成試行の行を表示しないこと", () => {
+    const generationAttempt = screen.queryByText("生成試行");
+
+    expect(generationAttempt).toBeNull();
   });
 });
