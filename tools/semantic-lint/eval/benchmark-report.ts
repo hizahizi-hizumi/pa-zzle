@@ -89,6 +89,13 @@ export type RuleBenchmarkReport = {
   calibration: Calibration | null;
   /** 判定分布 (run平均)。判定記録を持たない実行結果ではnull。 */
   decisions: Record<Decision, number> | null;
+  /** 判定対象ごとの各runの判定と違反確率。誤りの原因調査に使う。 */
+  subjects: SubjectDecisions[];
+};
+
+export type SubjectDecisions = FindingRange & {
+  decisions: Array<Decision | null>;
+  violationProbabilities: Array<number | null>;
 };
 
 /** request全体の見積もりと実usage。ruleへの按分をしない値。 */
@@ -295,7 +302,33 @@ function buildRuleReport(
           { lineTolerance },
         ),
     decisions: decisionDistribution(runs),
+    subjects: subjectDecisions(runs),
   };
+}
+
+function subjectDecisions(runs: BenchmarkRun[]): SubjectDecisions[] {
+  const bySubject = new Map<string, SubjectDecisions>();
+
+  for (const [index, run] of runs.entries()) {
+    for (const evaluation of run.evaluations ?? []) {
+      const key = `${evaluation.path}:${evaluation.range.startLine}-${evaluation.range.endLine}`;
+      const entry = bySubject.get(key) ?? {
+        path: evaluation.path,
+        startLine: evaluation.range.startLine,
+        endLine: evaluation.range.endLine,
+        decisions: runs.map(() => null),
+        violationProbabilities: runs.map(() => null),
+      };
+      entry.decisions[index] = evaluation.decision;
+      entry.violationProbabilities[index] = evaluation.violationProbability;
+      bySubject.set(key, entry);
+    }
+  }
+
+  return [...bySubject.values()].sort(
+    (left, right) =>
+      left.path.localeCompare(right.path) || left.startLine - right.startLine,
+  );
 }
 
 function decisionDistribution(
@@ -573,6 +606,28 @@ export function renderBenchmarkSummary(report: BenchmarkReport): string {
       ),
     });
   });
+
+  const decisionCode: Record<Decision, string> = {
+    violation: "V",
+    compliant: "C",
+    not_applicable: "N",
+    insufficient_context: "I",
+  };
+
+  for (const rule of report.rules) {
+    for (const subject of rule.subjects) {
+      lines.push(
+        JSON.stringify({
+          subject: rule.ruleId,
+          at: `${subject.path}:${subject.startLine}-${subject.endLine}`,
+          d: subject.decisions
+            .map((decision) => (decision === null ? "-" : decisionCode[decision]))
+            .join(""),
+          p: subject.violationProbabilities.map((value) => round(value, 2)),
+        }),
+      );
+    }
+  }
 
   if (report.usage) {
     const usage = report.usage;
