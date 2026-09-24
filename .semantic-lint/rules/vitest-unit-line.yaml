@@ -1,0 +1,110 @@
+# vitest-unit.yamlとunit割当だけを変えた比較用の定義。
+# 文単位で判定できる規約はline、describe間の比較が必要な規約はfileに割り当てる。
+version: 1
+id: vitest-unit-line
+
+paths:
+  - frontend/**/*.test.ts
+  - frontend/**/*.test.tsx
+  - frontend/**/*.test.mjs
+
+source:
+  path: .claude/rules/vitest.md
+
+defaults:
+  status: draft
+  severity: warning
+  violationThreshold: 0.5
+
+rules:
+  - id: arrange-outside-test
+    title: テスト本体にArrangeを置かない
+    unit: line
+    sourceSection: テスト構造 > Arrangeの分離方法
+    predicate:
+      instruction: |
+        Determine whether this statement in a test body is meaningful Arrange
+        work that should be prepared outside the test body. A test body is the
+        callback passed to an individual test.
+      outcomes:
+        violation: |
+          This statement in a test body performs meaningful Arrange work, such as
+          constructing test data or initial state, creating mocks or spies, or
+          performing initial rendering. Values received from test.each
+          parameters are allowed. Assigning the result of the operation under
+          test is Act, not Arrange.
+        compliant: |
+          This statement in a test body is Act or Assert work.
+        not_applicable: |
+          This statement is not directly in the body of an individual test.
+        insufficient_context: |
+          The available context is not enough to distinguish setup from the
+          behavior under test.
+
+  - id: before-each-arrange-only
+    title: beforeEachは事前準備だけを行う
+    unit: line
+    sourceSection: テスト構造 > Arrangeの分離方法
+    predicate:
+      instruction: |
+        Determine whether this statement in a beforeEach callback performs
+        Arrange only and does not execute behavior that a test later verifies.
+      outcomes:
+        violation: |
+          This statement in a beforeEach executes an operation, user action, or
+          behavior whose result is subsequently verified by a test.
+        compliant: |
+          This statement in a beforeEach only prepares initial state, test data,
+          mocks, spies, dependencies, or initial rendering.
+        not_applicable: |
+          This statement is not in a beforeEach callback.
+        insufficient_context: |
+          The available context is not enough to determine whether a helper
+          performs setup or the behavior under test.
+
+  - id: dom-observable-contract
+    title: DOMテストは利用者から観測できる契約を優先する
+    unit: line
+    sourceSection: テスト構造 > 基本原則
+    predicate:
+      instruction: |
+        Determine whether this statement in a DOM-oriented test verifies
+        user-observable contracts rather than incidental implementation details.
+      outcomes:
+        violation: |
+          This statement queries or asserts incidental implementation details
+          even though the intended behavior could reasonably be verified through
+          roles, accessible names, visible content, or observable results after
+          user interaction.
+        compliant: |
+          This statement queries or asserts behavior through roles, accessible
+          names, visible content, or results observable after user interaction.
+        not_applicable: |
+          This statement does not query or assert anything in a DOM-oriented
+          test.
+        insufficient_context: |
+          The available context is not enough to determine whether the asserted
+          detail is an intended user-facing contract.
+
+  - id: table-driven-cases
+    title: 同じ期待動作の入力違いはtest.eachで表現する
+    unit: file
+    sourceSection: 入力違いのケース
+    predicate:
+      instruction: |
+        Determine whether repeated test cases in a describe of this file verify
+        the same expected behavior with different inputs and therefore should
+        use test.each.
+      outcomes:
+        violation: |
+          Two or more separate test cases repeat substantially the same Act and
+          Assert structure and differ mainly in input or expected values.
+        compliant: |
+          Repeated cases already use test.each, or separate tests verify
+          materially different behaviors that deserve independent cases.
+        not_applicable: |
+          The file contains no repeated cases representing the same behavior
+          with different inputs or expected values.
+        insufficient_context: |
+          The available context is not enough to determine whether
+          superficially similar tests represent the same expected behavior.
