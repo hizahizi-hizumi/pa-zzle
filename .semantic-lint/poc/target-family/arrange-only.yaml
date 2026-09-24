@@ -1,0 +1,73 @@
+version: 1
+
+rules:
+  - id: arrange-outside-test
+    title: テスト本体にArrangeを置かない
+    targetFamily: callback-statement
+    violationThreshold: 0.85
+    predicate:
+      instruction: |
+        判定対象自身が、Vitestのtest / itコールバック直下の1つのstatementであり、
+        規約上describe側のconstまたはbeforeEachへ移すべきArrangeか判定する。
+        context.call.calleeとenclosingCallsはparser由来の包含情報として使う。
+        test / it以外のcallback直下のstatementはviolationにしない。
+      outcomes:
+        violation: |
+          判定対象自身がtest / itコールバック内部のArrangeである。
+          不変の入力値・期待値・テストデータ、状態構築、mock・spy構築、初期renderなど、
+          describe側のconstまたはbeforeEachで準備すべき処理に該当する。
+        compliant: |
+          判定対象自身はActまたはAssertである。
+          またはArrangeであっても、既にdescribe側やbeforeEachに適切に置かれている。
+          test内で行うこと自体が検証対象の操作である処理もここに含む。
+        not_applicable: |
+          判定対象がtest / itコールバック直下の個別処理ではない。
+        insufficient_context: |
+          周辺コードを見てもArrange / Act / Assert上の役割を判断できない。
+
+cases:
+  - rule: arrange-outside-test
+    name: Arrangeを1件だけ指す
+    fixture: ../fixtures/arrange-single.ts
+    expectedFindings:
+      - text: const values = [1, 2, 3];
+  - rule: arrange-outside-test
+    name: 連続するArrangeを別findingで指す
+    fixture: ../fixtures/arrange-three.ts
+    expectedFindings:
+      - text: const name = "Alice";
+      - text: const age = 20;
+      - text: const input = { name, age };
+  - rule: arrange-outside-test
+    name: test外のArrangeは指さない
+    fixture: ../fixtures/arrange-none.ts
+    expectedFindings: []
+  - rule: arrange-outside-test
+    name: 親targetへ違反を伝播させない
+    fixture: ../fixtures/arrange-nested-parent.ts
+    expectedFindings:
+      - text: const values = [1, 2, 3];
+  - rule: arrange-outside-test
+    name: GamePictogramの初期renderを指す
+    fixture: ../holdout/fixtures/arrange-inline-render.tsx
+    expectedFindings:
+      - text: const { container } = render(<GamePictogram svg={svg} />);
+  - rule: arrange-outside-test
+    name: Nanpure boardの入力値だけをArrangeとして指す
+    fixture: ../holdout/fixtures/arrange-input-vs-act.ts
+    expectedFindings:
+      - text: const cellIndex = 50;
+  - rule: arrange-outside-test
+    name: beforeEach内のmockとrenderを指さない
+    fixture: ../holdout/fixtures/arrange-before-each.tsx
+    expectedFindings: []
+  - rule: arrange-outside-test
+    name: test.each内の生成と評価をActとして扱う
+    fixture: ../holdout/fixtures/arrange-test-each.ts
+    expectedFindings: []
+  - rule: arrange-outside-test
+    name: 例外検証用入力だけをArrangeとして指す
+    fixture: ../holdout/fixtures/arrange-invalid-board.ts
+    expectedFindings:
+      - text: |-
+          const board = Array.from({ length: NANPURE_CELL_COUNT - 1 }, () => null);

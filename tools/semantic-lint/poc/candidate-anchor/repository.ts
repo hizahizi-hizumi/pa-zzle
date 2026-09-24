@@ -135,11 +135,12 @@ export async function runCandidateAnchorRepository(options: {
       outputTokens: result.metrics.outputTokens,
       classificationCounts,
       topClassificationCandidates: classificationCandidates
+        .filter((item) => item.decision === "violation")
         .sort(
           (left, right) =>
             right.violationProbability - left.violationProbability,
         )
-        .slice(0, 20),
+        .slice(0, 500),
       findings: result.cases.flatMap((item) => item.findings),
     });
   }
