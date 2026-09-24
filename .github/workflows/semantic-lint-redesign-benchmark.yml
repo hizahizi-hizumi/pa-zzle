@@ -1,0 +1,53 @@
+name: Semantic Lint Redesign Benchmark
+
+on:
+  push:
+    branches:
+      - claude/semantic-lint-progress-iofkaj
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+      - run: bun run --cwd tools/semantic-lint typecheck
+      - run: bun run --cwd tools/semantic-lint test
+      - run: bun run --cwd tools/semantic-lint doctor
+
+  baseline:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+      - name: Benchmark current rules against repository golden
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: |
+          bun run --cwd tools/semantic-lint bench -- --repeat 3 --format json \
+            > "$RUNNER_TEMP/semantic-lint-baseline.json"
+      - name: Render report
+        working-directory: tools/semantic-lint
+        run: |
+          bun -e '
+            import { renderBenchmarkReport } from "./eval/benchmark-report.ts";
+            const report = await Bun.file(process.env.REPORT_PATH).json();
+            process.stdout.write(renderBenchmarkReport(report));
+          '
+        env:
+          REPORT_PATH: ${{ runner.temp }}/semantic-lint-baseline.json
+      - name: Print JSON report
+        run: cat "$RUNNER_TEMP/semantic-lint-baseline.json"
