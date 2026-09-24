@@ -1,0 +1,58 @@
+version: 1
+rules:
+- id: table-driven-cases
+  title: 同じ期待動作の入力違いはtest.eachで表現する
+  targetFamily: relation-group
+  violationThreshold: 0.70
+  predicate:
+    instruction: |
+      判定対象自身が、同じ親の下に並ぶ兄弟test / it同士のrelationであり、
+      それらが同じ期待動作を入力値または期待値の違いだけで繰り返しているか判定する。
+      relationのsourceとcontextは比較対象の兄弟群を表す。
+      個々のtest / itやtest / it以外のrelationは、このルールのviolationにしない。
+      構造が同じであること自体は候補生成の根拠にすぎず、同じ期待動作である根拠にはしない。
+
+      判定例:
+      - violation:
+        test("abcを正規化すること", () => {
+          const result = normalizeCode("abc");
+          expect(result).toBe("ABC");
+        });
+        test("xyzを正規化すること", () => {
+          const result = normalizeCode("xyz");
+          expect(result).toBe("XYZ");
+        });
+        同じ正規化という期待動作を入力・期待値だけ変えて繰り返している。
+      - compliant:
+        test("所有者は編集できること", () => {
+          const result = canEdit({ isOwner: true, isAdmin: false });
+          expect(result).toBe(true);
+        });
+        test("管理者は編集できること", () => {
+          const result = canEdit({ isOwner: false, isAdmin: true });
+          expect(result).toBe(true);
+        });
+        構造は同じでも、所有者権限と管理者権限という別の業務規則を検証している。
+    outcomes:
+      violation: |
+        判定対象自身が兄弟test / it同士のrelationであり、各testのActとAssertが意味的に同じで、
+        主な差分が入力値または期待値だけである。test.eachへ統合しても期待動作の意味が変わらない。
+      compliant: |
+        判定対象自身は兄弟test / it同士のrelationだが、前提条件・期待動作・Act・Assertに
+        別testとして表現する意味のある差がある。または既にtest.eachで表現されている。
+      not_applicable: |
+        判定対象自身がrelationではない、またはrelationの構成要素が兄弟test / itではない。
+      insufficient_context: |
+        兄弟testの内容を比較しても、同じ期待動作の入力違いか判断できない。
+cases:
+- rule: table-driven-cases
+  name: 実repo water-sort scoreの3反復
+  fixture: ../../../frontend/src/games/water-sort/score.test.ts
+  expectedFindings:
+  - range: { startLine: 82, startColumn: 3, endLine: 104, endColumn: 6 }
+  - range: { startLine: 106, startColumn: 3, endLine: 128, endColumn: 6 }
+  - range: { startLine: 130, startColumn: 3, endLine: 152, endColumn: 6 }
+- rule: table-driven-cases
+  name: 構造は同じだが異なる業務規則
+  fixture: ../relation-group/fixtures/table-semantic-distinct.ts
+  expectedFindings: []
