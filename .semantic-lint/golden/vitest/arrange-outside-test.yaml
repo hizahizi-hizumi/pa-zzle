@@ -1,0 +1,144 @@
+# 実repoのテストコードに対する期待finding。
+# findingsは規約違反として指摘されるべき行範囲。空配列は「指摘なしが正解」のファイル。
+# ラベル粒度: test本体に置かれたArrangeのstatement単位。
+version: 1
+rule: vitest/arrange-outside-test
+baseCommit: 0d9813dee95ef8714301aa1d343b59d7462abede
+files:
+  - path: frontend/src/games/nanpure/play-record.test.ts
+    blob: a59fe2c92771cc3df2a73c7b041486da767328c3
+    findings:
+      - lines: [51, 51]
+      - lines: [59, 59]
+  - path: frontend/src/games/nanpure/problem/generation/solver.test.ts
+    blob: fed1fb52eb9dbae347e97a52d5b72ca931371392
+    findings:
+      - lines: [51, 51]
+      - lines: [52, 52]
+      - lines: [62, 62]
+      - lines: [78, 78]
+      - lines: [79, 79]
+      - lines: [87, 87]
+      - lines: [88, 88]
+      - lines: [89, 89]
+      - lines: [90, 94]
+  - path: frontend/src/games/nanpure/puzzle/rules.test.ts
+    blob: c973816d3d829e0ac1c8a498570866be24eca614
+    findings:
+      - lines: [56, 56]
+      - lines: [57, 57]
+      - lines: [58, 58]
+      - lines: [59, 59]
+  - path: frontend/src/games/water-sort/puzzle/rules.test.ts
+    blob: b5427157d8d1cc2fb06057b911e5e37b25d4d807
+    findings:
+      - lines: [15, 18]
+      - lines: [29, 29]
+      - lines: [42, 42]
+      - lines: [54, 54]
+      - lines: [67, 67]
+      - lines: [78, 78]
+      - lines: [99, 99]
+      - lines: [107, 107]
+      - lines: [117, 117]
+      - lines: [118, 118]
+      - lines: [129, 129]
+      - lines: [137, 137]
+  - path: frontend/src/games/water-sort/puzzle/deadlock.test.ts
+    blob: baf2347ad7e627bd06897f4e63ebdd47e5198116
+    findings:
+      - lines: [6, 6]
+      - lines: [14, 17]
+      - lines: [25, 25]
+      - lines: [26, 26]
+      - lines: [36, 36]
+      - lines: [44, 44]
+      - lines: [52, 52]
+  - path: frontend/src/records/storage.test.ts
+    blob: 68ea2d3c5365686e217fba4a263a8874601556ae
+    findings:
+      - lines: [34, 34]
+      - lines: [35, 35]
+      - lines: [45, 45]
+      - lines: [46, 46]
+      - lines: [47, 47]
+      - lines: [57, 57]
+      - lines: [65, 69]
+  - path: frontend/src/games/nanpure/ui/board/NanpureBoard.test.tsx
+    blob: 55d2fbc29c648896890a8b8c25974dbe651c1005
+    findings:
+      - lines: [19, 19]
+      - lines: [20, 20]
+      - lines: [21, 21]
+      - lines: [22, 22]
+      - lines: [23, 23]
+      - lines: [24, 24]
+      - lines: [26, 36]
+      - lines: [48, 48]
+      - lines: [49, 59]
+      - lines: [68, 68]
+      - lines: [69, 69]
+      - lines: [70, 70]
+      - lines: [71, 81]
+      - lines: [90, 90]
+      - lines: [91, 91]
+      - lines: [92, 102]
+  - path: frontend/src/games/water-sort/play/use-water-sort-play.test.ts
+    blob: 94717c7f0646e33fe3f42d00dd882c39b685e85e
+    findings:
+      - lines: [95, 95]
+      - lines: [96, 96]
+      - lines: [99, 99]
+      - lines: [110, 110]
+      - lines: [111, 111]
+      - lines: [114, 114]
+      - lines: [115, 115]
+      - lines: [116, 122]
+      - lines: [123, 127]
+      - lines: [139, 139]
+      - lines: [140, 140]
+      - lines: [141, 141]
+      - lines: [145, 145]
+      - lines: [155, 155]
+      - lines: [164, 164]
+      - lines: [165, 165]
+      - lines: [166, 166]
+      - lines: [167, 167]
+      - lines: [168, 168]
+      - lines: [169, 169]
+      - lines: [170, 170]
+      - lines: [173, 173]
+      - lines: [174, 174]
+      - lines: [188, 188]
+      - lines: [189, 189]
+      - lines: [190, 190]
+      - lines: [191, 191]
+      - lines: [194, 194]
+      - lines: [195, 195]
+      - lines: [196, 196]
+      - lines: [209, 209]
+      - lines: [237, 237]
+      - lines: [238, 238]
+      - lines: [239, 239]
+      - lines: [240, 240]
+  - path: frontend/src/components/InternalDiagnosticsDialog.test.tsx
+    blob: e804c9eb046455ba59c86b4764a020d9b3b4a980
+    findings: []
+  - path: frontend/src/games/nanpure/ui/NanpureDiagnostics.test.tsx
+    blob: f2981e03512c0c4363fc2c5c2dfcb4bf4472e29a
+    findings: []
+  - path: frontend/src/games/water-sort/ui/WaterSortDiagnostics.test.tsx
+    blob: 00bb640e5c6badfb2a449a93ebabf12acd5e8c58
+    findings: []
+  - path: frontend/src/games/nanpure/ui/NanpurePlay.test.tsx
+    blob: 776e7b048bdc33370750f97a321f4125a19bcb30
+    findings: []
+  - path: frontend/src/games/nanpure/problem-selection.test.ts
+    blob: cafb3501dfe45fa4871d25c1817b7685a87a4b4c
+    findings: []
+  - path: frontend/src/games/problem-seed.test.ts
+    blob: 641627febd0407ad16f0a44737f1b34d39ed4f97
+    findings: []
+  - path: frontend/src/records/ui/PlayRecordsScreen/trend-value-axis.test.ts
+    blob: 1668f20e88071d3994c21ec3101d5710eae96330
+    findings: []

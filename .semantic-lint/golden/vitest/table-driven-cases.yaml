@@ -1,0 +1,33 @@
+# 実repoのテストコードに対する期待finding。
+# findingsは規約違反として指摘されるべき行範囲。空配列は「指摘なしが正解」のファイル。
+# ラベル粒度: 同じ期待動作を入力違いで繰り返す兄弟testの組。
+version: 1
+rule: vitest/table-driven-cases
+baseCommit: 0d9813dee95ef8714301aa1d343b59d7462abede
+files:
+  - path: frontend/src/games/water-sort/score.test.ts
+    blob: 20ddb63f4c91d8318eb9c1a2de29fbed361af227
+    note: 効率・速さ・正確性それぞれの半分点と0点のtest組
+    findings:
+      - lines: [82, 104]
+      - lines: [106, 128]
+      - lines: [130, 152]
+  - path: frontend/src/games/nanpure/score.test.ts
+    blob: de82af27aa215c172a62000ca518d040dc504bae
+    note: 構造は似ているが評価軸ごとに別の採点規則を検証している
+    findings: []
+  - path: frontend/src/games/nanpure/puzzle/board.test.ts
+    blob: 8cb81913ab37f795f10d98eb6b1be73714085305
+    findings: []
+  - path: frontend/src/games/nanpure/problem-selection.test.ts
+    blob: cafb3501dfe45fa4871d25c1817b7685a87a4b4c
+    findings: []
+  - path: frontend/src/games/water-sort/problem-selection.test.ts
+    blob: 6fddcd3a4702dbc31ab9c1e241872753d57717ec
+    findings: []
+  - path: frontend/src/games/nanpure/play-record.test.ts
+    blob: a59fe2c92771cc3df2a73c7b041486da767328c3
+    findings: []
+  - path: frontend/src/records/storage.test.ts
+    blob: 68ea2d3c5365686e217fba4a263a8874601556ae
+    findings: []
