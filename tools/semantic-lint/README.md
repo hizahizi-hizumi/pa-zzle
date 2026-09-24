@@ -128,9 +128,9 @@ severityの `warning / error` はlifecycleとは別に管理する。
 
 ## CI
 
-GitHub ActionsのQuality Gateでは、tool自身のtypecheck / deterministic test / doctor / inspectに加えて、TypeSafe providerを使う通常の `check` も実行する。
+GitHub ActionsのQuality Gateでは、tool自身のtypecheck / deterministic test / doctor / inspectをPRとmainへのpushで実行する。TypeSafe providerを使う通常の `check` は、provider課金を抑えるためmainへのpushと手動実行（workflow_dispatch）でだけ実行し、PRでは実行しない。
 
-Quality Gateは `actions/cache/restore` で `semantic-lint-v1-` から始まる最新の判定cacheを復元してから `check` を実行し、`actions/cache/save` で実行ごとに新しいkey（`semantic-lint-v1-<run_id>-<run_attempt>`）として保存する。PRでは同じbranchとbase branchのcacheを復元できる。lintが失敗した実行でもcacheを保存し、中断前に得た判定を次回へ引き継ぐ。cache形式やkey構成を互換性なく変えたときはprefixの版を上げる。
+Quality Gateは `actions/cache/restore` で `semantic-lint-v1-` から始まる最新の判定cacheを復元してから `check` を実行し、`actions/cache/save` で実行ごとに新しいkey（`semantic-lint-v1-<run_id>-<run_attempt>`）として保存する。lintが失敗した実行でもcacheを保存し、中断前に得た判定を次回へ引き継ぐ。cache形式やkey構成を互換性なく変えたときはprefixの版を上げる。
 
 remote semantic lintはChatGPT用のoffline verificationでは実行しない。ChatGPT用Offline Dependenciesにもsemantic lintの `node_modules` は含めない。
 
