@@ -1,3 +1,4 @@
+import { ruleTargetLabel } from "../domain/model.ts";
 import { loadProjectContext } from "./context.ts";
 
 export async function runRulesCommand(args: string[]): Promise<number> {
@@ -22,7 +23,7 @@ export async function runRulesCommand(args: string[]): Promise<number> {
         rule.id,
         rule.status,
         rule.severity,
-        rule.scope,
+        ruleTargetLabel(rule),
         `threshold=${rule.violationThreshold}`,
         `${rule.source.path}#${rule.source.section}`,
       ].join("\t"),

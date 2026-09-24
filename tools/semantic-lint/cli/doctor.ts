@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 
 import { goldenFileStatus, loadGoldenSets } from "../eval/golden.ts";
 import { createDefaultScopeRegistry } from "../scopes/default.ts";
+import { createDefaultUnitRegistry } from "../units/registry.ts";
 import { loadProjectContext } from "./context.ts";
 
 export async function runDoctorCommand(args: string[]): Promise<number> {
@@ -11,13 +12,18 @@ export async function runDoctorCommand(args: string[]): Promise<number> {
 
   const { projectRoot, config, rules } = await loadProjectContext();
   const scopes = await createDefaultScopeRegistry(projectRoot);
+  const units = createDefaultUnitRegistry();
   const errors: string[] = [];
   const warnings: string[] = [];
   const sourceCache = new Map<string, string>();
 
   for (const rule of rules) {
-    if (!scopes.has(rule.scope)) {
+    if (rule.scope !== undefined && !scopes.has(rule.scope)) {
       errors.push(`${rule.id}: 未登録scope ${rule.scope}`);
+    }
+
+    if (rule.unit !== undefined && !units.has(rule.unit)) {
+      errors.push(`${rule.id}: 未登録unit ${rule.unit}`);
     }
 
     const sourcePath = resolve(projectRoot, rule.source.path);
@@ -68,6 +74,7 @@ export async function runDoctorCommand(args: string[]): Promise<number> {
 
   console.log(`rules: ${rules.length}`);
   console.log(`scopes: ${scopes.ids().join(", ")}`);
+  console.log(`units: ${units.ids().join(", ")}`);
   console.log(`golden: ${goldenSets.length}`);
   console.log(`errors: ${errors.length}`);
   console.log(`warnings: ${warnings.length}`);

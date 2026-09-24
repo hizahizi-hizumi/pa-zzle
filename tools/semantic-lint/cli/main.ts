@@ -95,6 +95,7 @@ function printHelp(): void {
   semantic-lint check [paths...] [options]
   semantic-lint eval [rule-id...] [--repeat N]
   semantic-lint bench [rule-id...] [--repeat N] [--line-tolerance N] [--format pretty|json]
+                      [--rules-from <ruleset>] [--nesting fold|all] [--context skeleton|file] [--locate lines|statements]
   semantic-lint bench [rule-id...] --score <run-result.json> [--score ...]
   semantic-lint inspect <rule-id> <file> [--plan-only]
   semantic-lint rules [ruleset-or-rule]
@@ -106,6 +107,7 @@ check options:
   --files-from <path>
   --fail-on error|warning
   --fail-on-unknown
+  --no-cache
 `);
 }
 

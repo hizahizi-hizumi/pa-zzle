@@ -7,6 +7,12 @@ import {
   type SemanticDecisionProvider,
 } from "../../domain/model.ts";
 import type { SemanticLintConfig } from "../../config/config.ts";
+import type {
+  ChoiceAnswer,
+  ChoiceProvider,
+  ChoiceRequest,
+  ChoiceResponse,
+} from "../choice.ts";
 
 const API_URL = "https://api.typesafe.ai/v1/systemone";
 const DEFAULT_MAX_ATTEMPTS = 3;
@@ -57,6 +63,120 @@ export function createTypeSafeProvider(
       });
 
       return parseResponse(value, questionToTask);
+    },
+  };
+}
+
+/** 任意の選択肢を扱うchoice provider。unit方式の判定と位置特定で使う。 */
+export function createTypeSafeChoiceProvider(
+  config: SemanticLintConfig["provider"],
+  options: {
+    fetchImpl?: FetchLike;
+    sleep?: (milliseconds: number) => Promise<void>;
+    maxAttempts?: number;
+    onTrace?: (trace: TypeSafeTrace) => void;
+  } = {},
+): ChoiceProvider {
+  const apiKey = process.env[config.apiKeyEnv];
+
+  if (!apiKey) {
+    throw new Error(`${config.apiKeyEnv} が設定されていません。`);
+  }
+
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const sleep = options.sleep ?? Bun.sleep;
+  const maxAttempts = options.maxAttempts ?? DEFAULT_MAX_ATTEMPTS;
+
+  return {
+    kind: "typesafe",
+    model: config.model,
+    async ask(request: ChoiceRequest): Promise<ChoiceResponse> {
+      const body = buildChoiceRequestBody(config.model, request);
+      const response = await requestWithRetry({
+        apiKey,
+        body,
+        fetchImpl,
+        sleep,
+        maxAttempts,
+      });
+      const value: unknown = await response.json();
+      options.onTrace?.({ requestBody: body, responseBody: value });
+
+      return parseChoiceResponse(value, request);
+    },
+  };
+}
+
+export function buildChoiceRequestBody(
+  model: string,
+  request: ChoiceRequest,
+): unknown {
+  return {
+    model,
+    state: request.state,
+    questions: Object.fromEntries(
+      Object.entries(request.questions).map(([id, question]) => [
+        id,
+        {
+          type: "choice",
+          instructions: question.instructions,
+          criteria: question.criteria,
+        },
+      ]),
+    ),
+  };
+}
+
+function parseChoiceResponse(
+  value: unknown,
+  request: ChoiceRequest,
+): ChoiceResponse {
+  if (
+    !isRecord(value) ||
+    typeof value.model !== "string" ||
+    !isRecord(value.answers)
+  ) {
+    throw new Error("TypeSafe APIレスポンスが不正です。");
+  }
+
+  const answers: Record<string, ChoiceAnswer> = {};
+
+  for (const [questionId, question] of Object.entries(request.questions)) {
+    const answer = value.answers[questionId];
+    const keys = Object.keys(question.criteria);
+
+    if (
+      !isRecord(answer) ||
+      answer.type !== "choice" ||
+      typeof answer.choice !== "string" ||
+      !keys.includes(answer.choice) ||
+      !isProbability(answer.confidence) ||
+      !isRecord(answer.probabilities)
+    ) {
+      throw new Error(`Choiceレスポンスが不正です: ${questionId}`);
+    }
+
+    const probabilityRecord = answer.probabilities;
+    answers[questionId] = {
+      choice: answer.choice,
+      confidence: answer.confidence,
+      probabilities: Object.fromEntries(
+        keys.map((key) => {
+          const probability = probabilityRecord[key];
+          return [key, isProbability(probability) ? probability : 0];
+        }),
+      ),
+    };
+  }
+
+  const usage = isRecord(value.usage) ? value.usage : {};
+
+  return {
+    model: value.model,
+    answers,
+    usage: {
+      inputTokens: numberOrZero(usage.input_tokens),
+      outputTokens: numberOrZero(usage.output_tokens),
     },
   };
 }

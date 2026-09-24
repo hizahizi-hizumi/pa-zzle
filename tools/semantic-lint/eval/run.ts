@@ -60,6 +60,12 @@ export async function runGoldenCases(options: {
         );
       }
 
+      if (rule.unit !== undefined) {
+        throw new Error(
+          `unit ruleのfixture評価には未対応です。benchで実repo goldenを評価してください: ${rule.id}`,
+        );
+      }
+
       const source = await Bun.file(goldenCase.fixturePath).text();
       const path = relative(projectRoot, goldenCase.fixturePath)
         .split(sep)

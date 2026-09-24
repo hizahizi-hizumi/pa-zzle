@@ -12,6 +12,7 @@ export type Decision = (typeof DECISIONS)[number];
 export type RuleStatus = (typeof RULE_STATUSES)[number];
 export type Severity = (typeof SEVERITIES)[number];
 export type ScopeId = string;
+export type UnitId = string;
 
 export type SourceRange = {
   startLine: number;
@@ -37,7 +38,12 @@ export type Rule = {
   status: RuleStatus;
   severity: Severity;
   violationThreshold: number;
-  scope: ScopeId;
+  /**
+   * 判定対象の決め方。scopeは対象言語・framework固有のsubject抽出、
+   * unitはrule非依存の汎用単位 (file / function / line)。どちらか一方だけを持つ。
+   */
+  scope?: ScopeId;
+  unit?: UnitId;
   paths: string[];
   source: {
     path: string;
@@ -118,6 +124,8 @@ export type Evaluation = {
   subject: Subject;
   result: DecisionResult;
   provider: ProviderIdentity;
+  /** unit方式で違反単位の中から特定した指摘範囲。 */
+  locations?: SourceRange[];
 };
 
 export type Diagnostic = {
@@ -147,6 +155,10 @@ export type RunMetrics = {
   outputTokens: number;
   totalDurationMs: number;
   providerLatencyMs: number[];
+  /** unit方式の内訳。 */
+  judgeRequests?: number;
+  locateRequests?: number;
+  cacheHits?: number;
 };
 
 export type RunResult = {
@@ -156,3 +168,8 @@ export type RunResult = {
   evaluations: Evaluation[];
   metrics: RunMetrics;
 };
+
+/** 人間向けに判定対象の決め方を表す。 */
+export function ruleTargetLabel(rule: Pick<Rule, "scope" | "unit">): string {
+  return rule.scope ?? `unit:${rule.unit ?? "?"}`;
+}

@@ -1,20 +1,23 @@
 import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 
 import { resolveRequestedPaths } from "../config/project.ts";
 import type { RuleStatus, RunResult } from "../domain/model.ts";
-import { runEvaluationPlan } from "../engine/run.ts";
+import { runRules } from "../engine/combined.ts";
 import { discoverSourceDocuments } from "../planning/discovery.ts";
+import { bunGlobPathMatcher } from "../planning/planner.ts";
 import {
-  buildEvaluationPlan,
-  bunGlobPathMatcher,
-} from "../planning/planner.ts";
-import { createTypeSafeProvider } from "../providers/typesafe/provider.ts";
+  createTypeSafeChoiceProvider,
+  createTypeSafeProvider,
+} from "../providers/typesafe/provider.ts";
 import {
   renderRunResult,
   type OutputFormat,
 } from "../reporters/render.ts";
 import { createDefaultScopeRegistry } from "../scopes/default.ts";
-import { loadProjectContext } from "./context.ts";
+import { FileDecisionCache } from "../units/cache.ts";
+import { createDefaultUnitRegistry } from "../units/registry.ts";
+import { DECISION_CACHE_PATH, loadProjectContext } from "./context.ts";
 
 type CheckOptions = {
   paths: string[];
@@ -23,6 +26,7 @@ type CheckOptions = {
   includeDraft: boolean;
   failOn: "error" | "warning";
   failOnUnknown: boolean;
+  cache: boolean;
 };
 
 export async function runCheckCommand(args: string[]): Promise<number> {
@@ -55,34 +59,26 @@ export async function runCheckCommand(args: string[]): Promise<number> {
     );
   }
 
-  const scopes = await createDefaultScopeRegistry(projectRoot);
-  const plan = buildEvaluationPlan({
+  const cache = options.cache
+    ? await FileDecisionCache.open(resolve(projectRoot, DECISION_CACHE_PATH))
+    : undefined;
+  const result = await runRules({
     documents,
     rules,
-    scopes,
-    matchesPath: bunGlobPathMatcher,
     statuses,
-  });
-
-  const plannedEvaluations = plan.files.reduce(
-    (sum, file) => sum + file.tasks.length,
-    0,
-  );
-
-  if (plannedEvaluations === 0) {
-    const emptyResult = createEmptyRunResult(plan.files.length);
-    process.stdout.write(renderRunResult(emptyResult, options.format));
-    return 0;
-  }
-
-  const provider = createTypeSafeProvider(config.provider);
-  const result = await runEvaluationPlan({
-    plan,
-    rules,
-    provider,
+    matchesPath: bunGlobPathMatcher,
+    scopes: await createDefaultScopeRegistry(projectRoot),
+    units: createDefaultUnitRegistry(),
+    decisionProvider: () => createTypeSafeProvider(config.provider),
+    choiceProvider: () => createTypeSafeChoiceProvider(config.provider),
     concurrency: config.execution.concurrency,
     maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
+    ...(cache === undefined ? {} : { cache }),
   });
+  result.metrics.scannedFiles = Math.max(
+    result.metrics.scannedFiles,
+    documents.length,
+  );
 
   process.stdout.write(renderRunResult(result, options.format));
   return exitCodeForResult(result, options);
@@ -95,6 +91,7 @@ function parseCheckOptions(args: string[]): CheckOptions {
   let includeDraft = false;
   let failOn: "error" | "warning" = "error";
   let failOnUnknown = false;
+  let cache = true;
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
@@ -139,6 +136,9 @@ function parseCheckOptions(args: string[]): CheckOptions {
       case "--fail-on-unknown":
         failOnUnknown = true;
         break;
+      case "--no-cache":
+        cache = false;
+        break;
       default:
         if (arg?.startsWith("-")) {
           throw new Error(`不明なcheckオプションです: ${arg}`);
@@ -157,6 +157,7 @@ function parseCheckOptions(args: string[]): CheckOptions {
     includeDraft,
     failOn,
     failOnUnknown,
+    cache,
   };
 }
 
@@ -209,26 +210,4 @@ function exitCodeForResult(
   )
     ? 1
     : 0;
-}
-
-function createEmptyRunResult(scannedFiles: number): RunResult {
-  return {
-    schemaVersion: 1,
-    diagnostics: [],
-    unknowns: [],
-    evaluations: [],
-    metrics: {
-      scannedFiles,
-      subjects: 0,
-      plannedEvaluations: 0,
-      providerRequests: 0,
-      providerDecisions: 0,
-      diagnostics: 0,
-      unknowns: 0,
-      inputTokens: 0,
-      outputTokens: 0,
-      totalDurationMs: 0,
-      providerLatencyMs: [],
-    },
-  };
 }

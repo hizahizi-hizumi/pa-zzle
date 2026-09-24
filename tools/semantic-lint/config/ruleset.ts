@@ -142,15 +142,16 @@ function compileRule(options: {
     severity,
     violationThreshold,
     scope,
+    unit,
     sourceSection,
     predicate,
   } = value;
 
+  const target = compileTarget(scope, unit, `${origin} rules[${index}]`);
+
   if (
     !isId(id) ||
     typeof title !== "string" ||
-    typeof scope !== "string" ||
-    scope.length === 0 ||
     typeof sourceSection !== "string" ||
     !isRecord(predicate) ||
     typeof predicate.instruction !== "string" ||
@@ -199,7 +200,7 @@ function compileRule(options: {
     status: compiledStatus,
     severity: compiledSeverity,
     violationThreshold: compiledViolationThreshold,
-    scope,
+    ...target,
     paths,
     source: {
       path: sourcePath,
@@ -210,6 +211,27 @@ function compileRule(options: {
       outcomes,
     },
   };
+}
+
+/** scopeとunitはどちらか一方だけを指定する。 */
+function compileTarget(
+  scope: unknown,
+  unit: unknown,
+  location: string,
+): { scope: string } | { unit: string } {
+  if (scope !== undefined && unit !== undefined) {
+    throw new Error(`scopeとunitは同時に指定できません: ${location}`);
+  }
+
+  if (typeof scope === "string" && scope.length > 0) {
+    return { scope };
+  }
+
+  if (typeof unit === "string" && unit.length > 0) {
+    return { unit };
+  }
+
+  throw new Error(`ruleにはscopeまたはunitが必要です: ${location}`);
 }
 
 async function collectYamlFiles(directory: string): Promise<string[]> {

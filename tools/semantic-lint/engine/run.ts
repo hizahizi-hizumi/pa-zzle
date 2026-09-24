@@ -138,7 +138,7 @@ function appendEvaluations(
   }
 }
 
-async function mapConcurrent<T, R>(
+export async function mapConcurrent<T, R>(
   values: T[],
   concurrency: number,
   mapper: (value: T) => Promise<R>,

@@ -26,8 +26,8 @@ export function buildEvaluationPlan(options: {
     statuses = ["active"],
   } = options;
   const allowedStatuses = new Set(statuses);
-  const executableRules = rules.filter((rule) =>
-    allowedStatuses.has(rule.status),
+  const executableRules = rules.filter(
+    (rule) => allowedStatuses.has(rule.status) && rule.scope !== undefined,
   );
   const files: PlannedFile[] = [];
 
@@ -47,11 +47,17 @@ export function buildEvaluationPlan(options: {
     const tasks: EvaluationTask[] = [];
 
     for (const rule of matchingRules.sort((a, b) => a.id.localeCompare(b.id))) {
-      let scopedSubjects = subjectsByScope.get(rule.scope);
+      const scope = rule.scope;
+
+      if (scope === undefined) {
+        continue;
+      }
+
+      let scopedSubjects = subjectsByScope.get(scope);
 
       if (!scopedSubjects) {
-        scopedSubjects = scopes.extract(rule.scope, document);
-        subjectsByScope.set(rule.scope, scopedSubjects);
+        scopedSubjects = scopes.extract(scope, document);
+        subjectsByScope.set(scope, scopedSubjects);
         subjects.push(...scopedSubjects);
       }
 

@@ -2,6 +2,9 @@ import { loadSemanticLintConfig } from "../config/config.ts";
 import { findProjectRoot } from "../config/project.ts";
 import { loadRulesets } from "../config/ruleset.ts";
 
+/** unit方式の判定キャッシュ。repository rootからの相対path。 */
+export const DECISION_CACHE_PATH = ".semantic-lint/.cache/decisions.json";
+
 export async function loadProjectContext() {
   const projectRoot = await findProjectRoot();
   const config = await loadSemanticLintConfig(projectRoot);

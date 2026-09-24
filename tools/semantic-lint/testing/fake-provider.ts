@@ -4,6 +4,13 @@ import type {
   DecisionResult,
   SemanticDecisionProvider,
 } from "../domain/model.ts";
+import type {
+  ChoiceAnswer,
+  ChoiceProvider,
+  ChoiceQuestion,
+  ChoiceRequest,
+  ChoiceResponse,
+} from "../providers/choice.ts";
 
 export type FakeDecision = DecisionResult | ((batch: DecisionBatch) => DecisionResult);
 
@@ -42,4 +49,56 @@ export class FakeDecisionProvider implements SemanticDecisionProvider {
       },
     };
   }
+}
+
+export type FakeChoice = (question: ChoiceQuestion) => ChoiceAnswer;
+
+/** 質問文とcriteriaだけから回答を決める決定論的なchoice provider。 */
+export class FakeChoiceProvider implements ChoiceProvider {
+  readonly kind = "fake";
+  readonly model = "deterministic";
+  readonly requests: ChoiceRequest[] = [];
+  readonly #answer: FakeChoice;
+
+  constructor(answer: FakeChoice) {
+    this.#answer = answer;
+  }
+
+  async ask(request: ChoiceRequest): Promise<ChoiceResponse> {
+    this.requests.push(request);
+
+    return {
+      model: this.model,
+      answers: Object.fromEntries(
+        Object.entries(request.questions).map(([id, question]) => [
+          id,
+          this.#answer(question),
+        ]),
+      ),
+      usage: { inputTokens: 10, outputTokens: 1 },
+    };
+  }
+}
+
+/** 1つの選択肢に確率を寄せた回答。残りは他の選択肢へ均等に配る。 */
+export function choiceAnswer(
+  question: ChoiceQuestion,
+  weights: Record<string, number>,
+): ChoiceAnswer {
+  const keys = Object.keys(question.criteria);
+  const assigned = Object.values(weights).reduce((sum, value) => sum + value, 0);
+  const others = keys.filter((key) => !(key in weights));
+  const rest = others.length === 0 ? 0 : (1 - assigned) / others.length;
+  const probabilities = Object.fromEntries(
+    keys.map((key) => [key, weights[key] ?? rest]),
+  );
+  const choice = keys.reduce((best, key) =>
+    (probabilities[key] ?? 0) > (probabilities[best] ?? 0) ? key : best,
+  );
+
+  return {
+    choice,
+    confidence: probabilities[choice] ?? 0,
+    probabilities,
+  };
 }

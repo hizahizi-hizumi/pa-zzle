@@ -130,4 +130,50 @@ rules:
       "predicate.outcomes.compliant",
     );
   });
+
+  test("unitだけを指定したruleをscopeなしで展開する", () => {
+    const rules = compileRuleset(targetRuleset("unit: function"), "unit.yaml");
+
+    expect(rules[0]?.unit).toBe("function");
+    expect(rules[0]?.scope).toBeUndefined();
+  });
+
+  test("scopeとunitの同時指定と、どちらもない指定を拒否する", () => {
+    expect(() =>
+      compileRuleset(
+        targetRuleset("scope: vitest.test\n    unit: function"),
+        "both.yaml",
+      ),
+    ).toThrow("scopeとunitは同時に指定できません");
+    expect(() => compileRuleset(targetRuleset(""), "none.yaml")).toThrow(
+      "scopeまたはunitが必要です",
+    );
+  });
 });
+
+function targetRuleset(target: string): unknown {
+  return YAML.parse(`
+version: 1
+id: sample
+paths:
+  - frontend/**/*.test.ts
+source:
+  path: .claude/rules/vitest.md
+defaults:
+  status: draft
+  severity: warning
+  violationThreshold: 0.5
+rules:
+  - id: rule
+    title: rule
+    ${target}
+    sourceSection: テスト構造
+    predicate:
+      instruction: Classify.
+      outcomes:
+        violation: v
+        compliant: c
+        not_applicable: n
+        insufficient_context: i
+`);
+}
