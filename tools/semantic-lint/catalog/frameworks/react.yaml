@@ -1,0 +1,45 @@
+# Reactの名前付きunit。
+#
+# component: 大文字で始まる名前の関数で、本体にJSXを含むもの。
+#   memo / forwardRef で包んだ関数も含む。unitは宣言全体。
+# hook: use + 大文字・数字で始まる名前の関数。unitは宣言全体。
+version: 1
+kind: framework
+name: react
+
+definitions:
+  - languages: [tsx, javascript]
+    units:
+      component:
+        symbol: "{name}"
+        contains: [jsx_element, jsx_self_closing_element]
+        query: |
+          (function_declaration
+            name: (identifier) @name
+            (#match? @name "^[A-Z]")) @unit
+          (lexical_declaration
+            (variable_declarator
+              name: (identifier) @name
+              value: [
+                (arrow_function)
+                (function_expression)
+                (call_expression
+                  function: [(identifier) (member_expression)] @wrapper
+                  arguments: (arguments [(arrow_function) (function_expression)])
+                  (#match? @wrapper "^(React\\.)?(memo|forwardRef)$"))
+              ])
+            (#match? @name "^[A-Z]")) @unit
+
+  - languages: [typescript, tsx, javascript]
+    units:
+      hook:
+        symbol: "{name}"
+        query: |
+          (function_declaration
+            name: (identifier) @name
+            (#match? @name "^use[A-Z0-9]")) @unit
+          (lexical_declaration
+            (variable_declarator
+              name: (identifier) @name
+              value: [(arrow_function) (function_expression)])
+            (#match? @name "^use[A-Z0-9]")) @unit

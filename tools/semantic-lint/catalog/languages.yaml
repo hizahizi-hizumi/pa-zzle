@@ -1,0 +1,32 @@
+# 抽出対象の言語。拡張子でファイルの言語を決め、tree-sitterのwasm文法で構文解析する。
+#
+# - extensions: この言語として扱う拡張子。1つの拡張子は1言語にだけ割り当てる。
+# - grammar: wasm文法を含むnpm packageと、package内のwasm file。
+# - scopes: 変数や前準備の有効範囲になる構文node。unitの文脈（scope: outer / inner）の判定に使う。
+# - marker: 判定stateでunit本文を置き換える目印。{ref} に参照先が入る。言語上コメントになる形にする。
+version: 1
+
+languages:
+  typescript:
+    extensions: [.ts, .mts, .cts]
+    grammar:
+      package: tree-sitter-typescript
+      wasm: tree-sitter-typescript.wasm
+    scopes: [program, statement_block, class_body]
+    marker: "/* {ref} */"
+
+  tsx:
+    extensions: [.tsx]
+    grammar:
+      package: tree-sitter-typescript
+      wasm: tree-sitter-tsx.wasm
+    scopes: [program, statement_block, class_body]
+    marker: "/* {ref} */"
+
+  javascript:
+    extensions: [.js, .mjs, .cjs, .jsx]
+    grammar:
+      package: tree-sitter-javascript
+      wasm: tree-sitter-javascript.wasm
+    scopes: [program, statement_block, class_body]
+    marker: "/* {ref} */"

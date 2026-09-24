@@ -1,0 +1,52 @@
+# ruleの `unit` に書ける語彙。rule作者はここにある名前だけを書く。
+#
+# level:
+# - file: ファイル全体。構文解析しないため、全言語・未知の言語でも使える。
+# - syntax: 言語構文だけで抽出する汎用unit。`syntax/*.yaml` に言語ごとのqueryを置く。
+# - framework: フレームワークの意味を持つ名前付きunit。`frameworks/*.yaml` に言語×フレームワークのqueryを置く。
+#
+# context: このunitを判定するとき、本文と囲むunitに加えて判定の文脈として扱う他のunit。
+# - scope: outer … 相手の属するscopeがこのunitを含む（例: testから見た、同じ/外側のdescribeにあるbeforeEach）
+# - scope: inner … このunitの属するscopeが相手を含む（例: beforeEachから見た、同じ/内側のdescribeにあるtest）
+# - scope: file … 同じファイルのすべて
+# 囲むunit（祖先）と、unitに含まれないimportなどのファイル骨格は常に文脈に含まれる。
+version: 1
+
+units:
+  file:
+    level: file
+    description: ファイル全体
+
+  function:
+    level: syntax
+    description: 関数（宣言・式・arrow function・method）
+
+  statement:
+    level: syntax
+    description: ブロック直下の文（入れ子の文はそれぞれ別のunit）
+
+  test:
+    level: framework
+    description: 1つのテストケース（test / it の呼び出し。test.each を含む）
+    context:
+      - unit: setup
+        scope: outer
+
+  test-group:
+    level: framework
+    description: テストのまとまり（describe の呼び出し。describe.each を含む）
+
+  setup:
+    level: framework
+    description: テストの前準備・後始末（beforeEach / beforeAll / afterEach / afterAll の呼び出し）
+    context:
+      - unit: test
+        scope: inner
+
+  component:
+    level: framework
+    description: Reactの関数コンポーネント（大文字で始まりJSXを返す関数）
+
+  hook:
+    level: framework
+    description: Reactのカスタムフック（use で始まる関数）
