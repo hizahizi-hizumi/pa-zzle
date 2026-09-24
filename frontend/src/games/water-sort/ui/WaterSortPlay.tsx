@@ -86,7 +86,7 @@ export function WaterSortPlay({
 
   return (
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
-      <BrandIdentityHeader content="symbol" />
+      <BrandIdentityHeader />
       <WaterSortPlayHeader
         elapsedMs={elapsedMs}
         moveCount={moveCount}
