@@ -2,6 +2,7 @@ import { BrandMark } from "@/components/BrandMark";
 import { Link } from "@/router";
 
 type BrandIdentityHeaderProps = {
+  content?: "symbol-and-name" | "symbol";
   linkToHome?: boolean;
   size?: "compact" | "regular";
 };
@@ -22,10 +23,13 @@ const brandMarkSize = {
 >;
 
 export function BrandIdentityHeader({
+  content = "symbol-and-name",
   linkToHome = false,
   size = "compact",
 }: BrandIdentityHeaderProps) {
-  const brandMark = <BrandMark size={brandMarkSize[size]} tone="inverse" />;
+  const brandMark = (
+    <BrandMark content={content} size={brandMarkSize[size]} tone="inverse" />
+  );
 
   return (
     <header className={brandIdentityHeaderClassNames[size]}>
