@@ -1,4 +1,6 @@
+import { ruleTargetLabel } from "../domain/model.ts";
 import type { BenchmarkRuleResult, BenchmarkRun } from "./benchmark.ts";
+import { type Calibration, calibrate } from "./calibrate.ts";
 import type { GoldenFileStatus } from "./golden.ts";
 import {
   type FindingRange,
@@ -22,6 +24,8 @@ export type RunReport = {
   strict: RunScore["strict"];
   findings: number;
   providerRequests: number | null;
+  judgeRequests: number | null;
+  locateRequests: number | null;
   inputTokens: number | null;
   outputTokens: number | null;
   durationMs: number | null;
@@ -33,6 +37,8 @@ export type ThresholdSweepRow = {
   fileRecall: Summary;
   containmentPrecision: Summary;
   containmentRecall: Summary;
+  strictPrecision: Summary;
+  strictRecall: Summary;
   findings: Summary;
 };
 
@@ -59,6 +65,8 @@ export type RuleBenchmarkReport = {
     strictRecall: Summary;
     findings: Summary;
     providerRequests: Summary;
+    judgeRequests: Summary;
+    locateRequests: Summary;
     inputTokens: Summary;
     outputTokens: Summary;
   };
@@ -73,11 +81,15 @@ export type RuleBenchmarkReport = {
   missedExpected: Array<FindingRange & { runs: number }>;
   falseFindings: Array<FindingRange & { runs: number }>;
   thresholdSweep: ThresholdSweepRow[] | null;
+  /** 判定記録からの閾値校正。判定記録を持たない実行結果ではnull。 */
+  calibration: Calibration | null;
 };
 
 export type BenchmarkReport = {
   schemaVersion: 1;
   lineTolerance: number;
+  /** 比較用に実行条件を記録する。 */
+  variant?: Record<string, string>;
   rules: RuleBenchmarkReport[];
 };
 
@@ -86,6 +98,7 @@ export function buildBenchmarkReport(
   options: {
     lineTolerance: number;
     sweepThresholds?: readonly number[];
+    variant?: Record<string, string>;
   },
 ): BenchmarkReport {
   const { lineTolerance, sweepThresholds = DEFAULT_SWEEP_THRESHOLDS } =
@@ -94,6 +107,7 @@ export function buildBenchmarkReport(
   return {
     schemaVersion: 1,
     lineTolerance,
+    ...(options.variant === undefined ? {} : { variant: options.variant }),
     rules: results.map((result) =>
       buildRuleReport(result, lineTolerance, sweepThresholds),
     ),
@@ -122,6 +136,8 @@ function buildRuleReport(
       strict: score.strict,
       findings: score.findings.length,
       providerRequests: run.providerRequests,
+      judgeRequests: run.judgeRequests ?? null,
+      locateRequests: run.locateRequests ?? null,
       inputTokens: run.inputTokens,
       outputTokens: run.outputTokens,
       durationMs: run.durationMs,
@@ -132,7 +148,7 @@ function buildRuleReport(
     ruleId: rule.id,
     status: rule.status,
     threshold: rule.violationThreshold,
-    scope: rule.scope,
+    scope: ruleTargetLabel(rule),
     baseCommit: golden.baseCommit,
     golden: {
       files: golden.files.length,
@@ -163,6 +179,8 @@ function buildRuleReport(
       strictRecall: summarize(scores.map((score) => score.strict.recall)),
       findings: summarize(scores.map((score) => score.findings.length)),
       providerRequests: summarize(runs.map((run) => run.providerRequests)),
+      judgeRequests: summarize(runs.map((run) => run.judgeRequests ?? null)),
+      locateRequests: summarize(runs.map((run) => run.locateRequests ?? null)),
       inputTokens: summarize(runs.map((run) => run.inputTokens)),
       outputTokens: summarize(runs.map((run) => run.outputTokens)),
     },
@@ -188,6 +206,13 @@ function buildRuleReport(
       lineTolerance,
       sweepThresholds,
     ),
+    calibration: runs.some((run) => run.evaluations === null)
+      ? null
+      : calibrate(
+          golden,
+          runs.map((run) => run.evaluations ?? []),
+          { lineTolerance },
+        ),
   };
 }
 
@@ -220,6 +245,8 @@ function buildThresholdSweep(
       containmentRecall: summarize(
         scores.map((score) => score.containment.recall),
       ),
+      strictPrecision: summarize(scores.map((score) => score.strict.precision)),
+      strictRecall: summarize(scores.map((score) => score.strict.recall)),
       findings: summarize(scores.map((score) => score.findings.length)),
     };
   });
@@ -250,6 +277,15 @@ function countAcrossRuns(
 export function renderBenchmarkReport(report: BenchmarkReport): string {
   const lines: string[] = [];
 
+  if (report.variant !== undefined) {
+    lines.push(
+      `variant: ${Object.entries(report.variant)
+        .map(([key, value]) => `${key}=${value}`)
+        .join(" ")}`,
+      "",
+    );
+  }
+
   for (const rule of report.rules) {
     const runCount = rule.runs.length;
     lines.push(
@@ -267,7 +303,11 @@ export function renderBenchmarkReport(report: BenchmarkReport): string {
       `  包含         P ${formatSummary(rule.summary.containmentPrecision)}  R ${formatSummary(rule.summary.containmentRecall)}`,
       `  厳密(±${report.lineTolerance}行)  P ${formatSummary(rule.summary.strictPrecision)}  R ${formatSummary(rule.summary.strictRecall)}`,
       `  findings     ${formatSummary(rule.summary.findings, 1)}  (全run共通 ${rule.stability.stable} / distinct ${rule.stability.distinct})`,
-      `  requests     ${formatSummary(rule.summary.providerRequests, 0)}`,
+      `  requests     ${formatSummary(rule.summary.providerRequests, 0)}${
+        rule.summary.judgeRequests.mean === null
+          ? ""
+          : `  (判定 ${formatSummary(rule.summary.judgeRequests, 0)} / 位置特定 ${formatSummary(rule.summary.locateRequests, 0)})`
+      }`,
       `  tokens       input ${formatSummary(rule.summary.inputTokens, 0)}  output ${formatSummary(rule.summary.outputTokens, 0)}`,
     );
 
@@ -312,9 +352,18 @@ export function renderBenchmarkReport(report: BenchmarkReport): string {
 
       for (const row of rule.thresholdSweep) {
         lines.push(
-          `    ${row.threshold.toFixed(2)}  file P ${formatMean(row.filePrecision)} R ${formatMean(row.fileRecall)} | 包含 P ${formatMean(row.containmentPrecision)} R ${formatMean(row.containmentRecall)} | findings ${formatMean(row.findings, 1)}`,
+          `    ${row.threshold.toFixed(2)}  file P ${formatMean(row.filePrecision)} R ${formatMean(row.fileRecall)} | 包含 P ${formatMean(row.containmentPrecision)} R ${formatMean(row.containmentRecall)} | 厳密 P ${formatMean(row.strictPrecision)} R ${formatMean(row.strictRecall)} | findings ${formatMean(row.findings, 1)}`,
         );
       }
+    }
+
+    if (rule.calibration) {
+      const calibration = rule.calibration;
+      const cv = calibration.crossValidation;
+      lines.push(
+        `  校正 (包含F1最大): 推奨 ${calibration.threshold.toFixed(2)}  F1 ${calibration.f1.toFixed(3)}  gap ${formatSigned(calibration.gap)}  headroom ${formatSigned(calibration.headroom)}  候補 違反${calibration.positives}/クリーン${calibration.cleans}  包含recall上限 ${formatRatio(calibration.recallCeiling)}`,
+        `  LOFO CV (${cv.folds} folds, 閾値 ${formatSummary(cv.thresholds, 2)}): 包含 P ${formatSummary(cv.containmentPrecision)} R ${formatSummary(cv.containmentRecall)} | 厳密 P ${formatSummary(cv.strictPrecision)} R ${formatSummary(cv.strictRecall)} | findings ${formatSummary(cv.findings, 1)}`,
+      );
     }
 
     lines.push("");
@@ -337,6 +386,14 @@ function formatMean(summary: Summary, digits = 2): string {
 
 function formatRatio(value: Ratio): string {
   return value === null ? "-" : value.toFixed(3);
+}
+
+function formatSigned(value: number | null): string {
+  if (value === null) {
+    return "-";
+  }
+
+  return (value >= 0 ? "+" : "") + value.toFixed(2);
 }
 
 function formatCount(value: number | null): string {

@@ -1,4 +1,5 @@
 import type { Decision, SourceRange } from "../domain/model.ts";
+import { dedupeNestedFindings } from "../units/dedupe.ts";
 import type { GoldenSet } from "./golden.ts";
 
 /** 評価方式に依存しない、採点対象の指摘範囲。 */
@@ -14,6 +15,10 @@ export type ScoredEvaluation = {
   range: Pick<SourceRange, "startLine" | "endLine">;
   decision: Decision;
   violationProbability: number;
+  /** 違反単位の中で特定した指摘範囲。ない場合はrangeを指摘範囲にする。 */
+  locations?: Array<Pick<SourceRange, "startLine" | "endLine">>;
+  /** 入れ子になりうる単位の判定。指摘の重複を最も内側だけに絞る。 */
+  nested?: boolean;
 };
 
 export type Ratio = number | null;
@@ -165,17 +170,26 @@ export function findingsAtThreshold(
   evaluations: readonly ScoredEvaluation[],
   threshold: number,
 ): FindingRange[] {
-  return evaluations
+  const findings = evaluations
     .filter(
       (evaluation) =>
         evaluation.decision === "violation" &&
         evaluation.violationProbability >= threshold,
     )
-    .map((evaluation) => ({
-      path: evaluation.path,
-      startLine: evaluation.range.startLine,
-      endLine: evaluation.range.endLine,
-    }));
+    .sort(
+      (left, right) => right.violationProbability - left.violationProbability,
+    )
+    .flatMap((evaluation) =>
+      (evaluation.locations ?? [evaluation.range]).map((range) => ({
+        path: evaluation.path,
+        startLine: range.startLine,
+        endLine: range.endLine,
+      })),
+    );
+
+  return evaluations.some((evaluation) => evaluation.nested)
+    ? dedupeNestedFindings(findings)
+    : findings;
 }
 
 export type Summary = {

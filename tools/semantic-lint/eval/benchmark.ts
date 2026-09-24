@@ -5,7 +5,15 @@ import type {
 } from "../domain/model.ts";
 import { runEvaluationPlan } from "../engine/run.ts";
 import { buildEvaluationPlan } from "../planning/planner.ts";
+import type { ChoiceProvider } from "../providers/choice.ts";
 import type { ScopeRegistry } from "../scopes/registry.ts";
+import {
+  buildUnitPlan,
+  isUnitRule,
+  runUnitPlan,
+  type UnitEngineOptions,
+} from "../units/engine.ts";
+import type { UnitRegistry } from "../units/registry.ts";
 import type {
   GoldenFileStatus,
   GoldenSet,
@@ -19,6 +27,9 @@ export type BenchmarkRun = {
   /** threshold sweepに使う判定記録。判定記録を持たない実行結果ではnull。 */
   evaluations: ScoredEvaluation[] | null;
   providerRequests: number | null;
+  /** unit方式の判定requestと位置特定requestの内訳。 */
+  judgeRequests?: number | null;
+  locateRequests?: number | null;
   inputTokens: number | null;
   outputTokens: number | null;
   durationMs: number | null;
@@ -31,12 +42,20 @@ export type BenchmarkRuleResult = {
   runs: BenchmarkRun[];
 };
 
-/** 現行方式のrule定義とthresholdでgolden対象ファイルを繰り返し評価する。 */
+/**
+ * rule定義とthresholdでgolden対象ファイルを繰り返し評価する。
+ * unit ruleはthreshold sweepのため、threshold未満のviolationも位置特定する。
+ */
 export async function runGoldenBenchmark(options: {
   targets: Array<{ golden: GoldenSet; files: ResolvedGoldenFile[] }>;
   rules: Rule[];
   scopes: ScopeRegistry;
   provider: SemanticDecisionProvider;
+  units?: UnitRegistry;
+  choiceProvider?: ChoiceProvider;
+  unitEngine?: Partial<UnitEngineOptions>;
+  /** goldenのrule id `<ruleset>/<id>` を `<rulesFrom>/<id>` のruleで評価する。 */
+  rulesFrom?: string;
   repeat: number;
   concurrency: number;
   maxDecisionsPerRequest: number;
@@ -58,24 +77,40 @@ export async function runGoldenBenchmark(options: {
   const results: BenchmarkRuleResult[] = [];
 
   for (const { golden, files } of targets) {
-    const rule = findRule(rules, golden);
-    const plan = buildEvaluationPlan({
-      documents: files.map((file) => ({ path: file.path, source: file.source })),
-      rules: [rule],
-      scopes,
-      matchesPath: () => true,
-      statuses: [rule.status],
-    });
+    const rule = findRule(rules, golden, options.rulesFrom);
+    const documents = files.map((file) => ({
+      path: file.path,
+      source: file.source,
+    }));
     const runs: BenchmarkRun[] = [];
 
     for (let index = 0; index < repeat; index += 1) {
-      const result = await runEvaluationPlan({
-        plan,
-        rules: [rule],
-        provider,
-        concurrency,
-        maxDecisionsPerRequest,
-      });
+      const result = isUnitRule(rule)
+        ? await runUnitRuleOnce({
+            rule,
+            documents,
+            units: options.units,
+            choiceProvider: options.choiceProvider,
+            engine: {
+              concurrency,
+              maxQuestionsPerRequest: maxDecisionsPerRequest,
+              ...options.unitEngine,
+              locateAllViolations: true,
+            },
+          })
+        : await runEvaluationPlan({
+            plan: buildEvaluationPlan({
+              documents,
+              rules: [rule],
+              scopes,
+              matchesPath: () => true,
+              statuses: [rule.status],
+            }),
+            rules: [rule],
+            provider,
+            concurrency,
+            maxDecisionsPerRequest,
+          });
       runs.push(benchmarkRunFromRunResult(result, rule.id));
     }
 
@@ -91,6 +126,33 @@ export async function runGoldenBenchmark(options: {
   }
 
   return results;
+}
+
+async function runUnitRuleOnce(options: {
+  rule: Rule;
+  documents: Array<{ path: string; source: string }>;
+  units: UnitRegistry | undefined;
+  choiceProvider: ChoiceProvider | undefined;
+  engine: Partial<UnitEngineOptions>;
+}): Promise<RunResult> {
+  const { rule, documents, units, choiceProvider, engine } = options;
+
+  if (!units || !choiceProvider) {
+    throw new Error(`unit ruleの評価にはunit registryとchoice providerが必要です: ${rule.id}`);
+  }
+
+  const plan = buildUnitPlan({
+    documents,
+    rules: [rule],
+    units,
+    matchesPath: () => true,
+    statuses: [rule.status],
+    ...(engine.unitOptions === undefined
+      ? {}
+      : { unitOptions: engine.unitOptions }),
+  });
+
+  return runUnitPlan({ plan, units, provider: choiceProvider, engine });
 }
 
 /**
@@ -127,20 +189,41 @@ export function benchmarkRunFromRunResult(
             },
             decision: evaluation.result.decision,
             violationProbability: evaluation.result.probabilities.violation,
+            ...(evaluation.locations === undefined
+              ? {}
+              : {
+                  locations: evaluation.locations.map((location) => ({
+                    startLine: location.startLine,
+                    endLine: location.endLine,
+                  })),
+                }),
+            ...(evaluation.subject.scope.startsWith("unit:")
+              ? { nested: true }
+              : {}),
           })),
     providerRequests: singleRule ? result.metrics.providerRequests : null,
+    judgeRequests: singleRule ? (result.metrics.judgeRequests ?? null) : null,
+    locateRequests: singleRule ? (result.metrics.locateRequests ?? null) : null,
     inputTokens: singleRule ? result.metrics.inputTokens : null,
     outputTokens: singleRule ? result.metrics.outputTokens : null,
     durationMs: singleRule ? result.metrics.totalDurationMs : null,
   };
 }
 
-export function findRule(rules: Rule[], golden: GoldenSet): Rule {
-  const rule = rules.find((candidate) => candidate.id === golden.ruleId);
+export function findRule(
+  rules: Rule[],
+  golden: GoldenSet,
+  rulesFrom?: string,
+): Rule {
+  const ruleId =
+    rulesFrom === undefined
+      ? golden.ruleId
+      : `${rulesFrom}/${golden.ruleId.slice(golden.ruleId.indexOf("/") + 1)}`;
+  const rule = rules.find((candidate) => candidate.id === ruleId);
 
   if (!rule) {
     throw new Error(
-      `goldenが未知のruleを参照しています: ${golden.ruleId} (${golden.origin})`,
+      `goldenに対応するruleがありません: ${ruleId} (${golden.origin})`,
     );
   }
 

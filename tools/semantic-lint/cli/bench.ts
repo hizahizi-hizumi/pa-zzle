@@ -17,8 +17,21 @@ import {
   loadGoldenSets,
   resolveGoldenFiles,
 } from "../eval/golden.ts";
-import { createTypeSafeProvider } from "../providers/typesafe/provider.ts";
+import {
+  createTypeSafeChoiceProvider,
+  createTypeSafeProvider,
+} from "../providers/typesafe/provider.ts";
 import { createDefaultScopeRegistry } from "../scopes/default.ts";
+import { DEFAULT_UNIT_ENGINE_OPTIONS } from "../units/engine.ts";
+import { LOCATE_MODES, type LocateMode } from "../units/locate.ts";
+import {
+  CONTEXT_MODES,
+  type ContextMode,
+  DEFAULT_UNIT_OPTIONS,
+  NESTING_STRATEGIES,
+  type NestingStrategy,
+} from "../units/model.ts";
+import { createDefaultUnitRegistry } from "../units/registry.ts";
 import { loadProjectContext } from "./context.ts";
 
 type BenchOptions = {
@@ -27,6 +40,10 @@ type BenchOptions = {
   lineTolerance: number;
   format: "pretty" | "json";
   scoreFiles: string[];
+  rulesFrom?: string;
+  nesting: NestingStrategy;
+  context: ContextMode;
+  locate: LocateMode;
 };
 
 export async function runBenchCommand(args: string[]): Promise<number> {
@@ -50,9 +67,23 @@ export async function runBenchCommand(args: string[]): Promise<number> {
     throw new Error(`goldenがありません: ${config.goldenDir}`);
   }
 
+  const unitEngine = {
+    unitOptions: {
+      ...DEFAULT_UNIT_OPTIONS,
+      nesting: options.nesting,
+      contextMode: options.context,
+    },
+    locateMode: options.locate,
+  };
   const results =
     options.scoreFiles.length > 0
-      ? await scoreRunResults(projectRoot, sets, rules, options.scoreFiles)
+      ? await scoreRunResults(
+          projectRoot,
+          sets,
+          rules,
+          options.scoreFiles,
+          options.rulesFrom,
+        )
       : await runGoldenBenchmark({
           targets: await Promise.all(
             sets.map(async (golden) => ({
@@ -63,12 +94,24 @@ export async function runBenchCommand(args: string[]): Promise<number> {
           rules,
           scopes: await createDefaultScopeRegistry(projectRoot),
           provider: createTypeSafeProvider(config.provider),
+          units: createDefaultUnitRegistry(),
+          choiceProvider: createTypeSafeChoiceProvider(config.provider),
+          unitEngine,
+          ...(options.rulesFrom === undefined
+            ? {}
+            : { rulesFrom: options.rulesFrom }),
           repeat: options.repeat,
           concurrency: config.execution.concurrency,
           maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
         });
   const report = buildBenchmarkReport(results, {
     lineTolerance: options.lineTolerance,
+    variant: {
+      rules: options.rulesFrom ?? "golden",
+      nesting: options.nesting,
+      context: options.context,
+      locate: options.locate,
+    },
   });
 
   process.stdout.write(
@@ -85,6 +128,7 @@ async function scoreRunResults(
   sets: GoldenSet[],
   rules: Awaited<ReturnType<typeof loadProjectContext>>["rules"],
   scoreFiles: string[],
+  rulesFrom: string | undefined,
 ): Promise<BenchmarkRuleResult[]> {
   const runResults = await Promise.all(
     scoreFiles.map(
@@ -96,7 +140,7 @@ async function scoreRunResults(
   return Promise.all(
     sets.map(async (golden) => ({
       golden,
-      rule: findRule(rules, golden),
+      rule: findRule(rules, golden, rulesFrom),
       fileStatuses: await Promise.all(
         golden.files.map(async (file) => ({
           path: file.path,
@@ -104,7 +148,10 @@ async function scoreRunResults(
         })),
       ),
       runs: runResults.map((result) =>
-        benchmarkRunFromRunResult(result, golden.ruleId),
+        benchmarkRunFromRunResult(
+          result,
+          findRule(rules, golden, rulesFrom).id,
+        ),
       ),
     })),
   );
@@ -117,6 +164,9 @@ function parseBenchOptions(args: string[]): BenchOptions {
     lineTolerance: 1,
     format: "pretty",
     scoreFiles: [],
+    nesting: DEFAULT_UNIT_OPTIONS.nesting,
+    context: DEFAULT_UNIT_OPTIONS.contextMode,
+    locate: DEFAULT_UNIT_ENGINE_OPTIONS.locateMode,
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -154,6 +204,26 @@ function parseBenchOptions(args: string[]): BenchOptions {
         options.format = value;
         index += 1;
         break;
+      case "--rules-from":
+        if (!value) {
+          throw new Error("--rules-fromにはruleset idを指定してください。");
+        }
+
+        options.rulesFrom = value;
+        index += 1;
+        break;
+      case "--nesting":
+        options.nesting = oneOf(NESTING_STRATEGIES, value, arg);
+        index += 1;
+        break;
+      case "--context":
+        options.context = oneOf(CONTEXT_MODES, value, arg);
+        index += 1;
+        break;
+      case "--locate":
+        options.locate = oneOf(LOCATE_MODES, value, arg);
+        index += 1;
+        break;
       case "--score":
         if (!value) {
           throw new Error("--scoreにはRunResult JSONのpathを指定してください。");
@@ -178,4 +248,16 @@ function parseBenchOptions(args: string[]): BenchOptions {
   }
 
   return options;
+}
+
+function oneOf<T extends string>(
+  values: readonly T[],
+  value: string | undefined,
+  option: string,
+): T {
+  if (value === undefined || !values.includes(value as T)) {
+    throw new Error(`${option}は${values.join(" / ")}を指定してください。`);
+  }
+
+  return value as T;
 }
