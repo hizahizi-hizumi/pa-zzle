@@ -135,7 +135,7 @@ describe("TypeSafe provider", () => {
           questions: { q0: { instructions: string } };
         }
       ).questions.q0.instructions,
-    ).toContain("resolve it in state.regions");
+    ).toContain("Use state.regions.r0 as the local surrounding region");
   });
 
   test("Jev responseをtask idへ戻す", async () => {
