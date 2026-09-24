@@ -9,7 +9,7 @@ rules:
       instruction: |
         判定対象自身が、Vitestのtest / itコールバック直下の1つのstatementであり、
         規約上describe側のconstまたはbeforeEachへ移すべきArrangeか判定する。
-        context.call.calleeとenclosingCallsはparser由来の包含情報として使う。
+        context.callはparser由来で、callee、test名などのlabel、statementの位置を表す。
         test / it以外のcallback直下のstatementはviolationにしない。
       outcomes:
         violation: |
@@ -54,15 +54,16 @@ rules:
       instruction: |
         判定対象自身がcallbackを持つcallである。
         context.call.calleeがtest / itのDOMテストである場合だけ、
-        主なAssertが利用者から観測できる契約ではなく偶発的な実装詳細を検証していないか判定する。
+        context.call.labelで示される期待動作と主なAssertを比較し、
+        利用者から観測できる契約ではなく偶発的な実装詳細を検証していないか判定する。
         内部class、data属性、DOM構造そのものを検証していても、同じ意図をrole、accessible name、
         表示内容、ユーザー操作後の観測結果で合理的に検証できない場合は直ちにviolationとしない。
       outcomes:
         violation: |
-          判定対象自身がDOM-oried testで、主なAssertが内部class、data属性、偶発的DOM構造などの
+          判定対象自身がDOM-oriented testで、主なAssertが内部class、data属性、偶発的DOM構造などの
           実装詳細に依存し、意図した振る舞いを利用者から観測できる契約で合理的に検証できる。
         compliant: |
-          判定対象自身がDOM-oried testで、role、accessible name、表示内容、
+          判定対象自身がDOM-oriented testで、role、accessible name、表示内容、
           ユーザー操作後の観測結果など意図した利用者契約を主に検証している。
         not_applicable: |
           判定対象自身がtest / itではない、またはDOM-oriented testではない。
@@ -75,7 +76,7 @@ rules:
     violationThreshold: 0.70
     predicate:
       instruction: |
-        判定対象自身が、同じ親の下に並ぶ兄弟test / it同士のrelationであ㒊、
+        判定対象自身が、同じ親の下に並ぶ兄弟test / it同士のrelationであり、
         それらが同じ期待動作を入力値または期待値の違いだけで繰り返しているか判定する。
         relationのsourceとcontextは比較対象の兄弟群を表す。
         個々のtest / itやtest / it以外のrelationは、このルールのviolationにしない。
@@ -226,3 +227,8 @@ cases:
     name: 構造は同じだが異なる業務規則
     fixture: ../relation-group/fixtures/table-semantic-distinct.ts
     expectedFindings: []
+  - rule: table-driven-cases
+    name: 実repoの正確性反復
+    fixture: ../../../frontend/src/games/water-sort/score.test.ts
+    expectedFindings:
+      - range: { startLine: 130, startColumn: 3, endLine: 152, endColumn: 6 }
