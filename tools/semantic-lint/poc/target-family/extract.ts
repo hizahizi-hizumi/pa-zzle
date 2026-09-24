@@ -53,6 +53,7 @@ export function extractCallbackStatementCandidates(
               document.source,
               node,
               callback.argumentIndex,
+              callback.node.body,
               statement,
               statementIndex,
               callback.node.body.statements.length,
@@ -116,6 +117,7 @@ function statementCandidate(
   source: string,
   call: ts.CallExpression,
   callbackArgumentIndex: number,
+  callbackBody: ts.Block,
   statement: ts.Statement,
   statementIndex: number,
   statementCount: number,
@@ -124,6 +126,8 @@ function statementCandidate(
   const start = statement.getStart(sourceFile);
   const end = statement.getEnd();
   const callee = calleeName(call.expression);
+  const regionStart = callbackBody.getStart(sourceFile);
+  const regionEnd = callbackBody.getEnd();
 
   return {
     id: `callback-statement:${index}`,
@@ -134,6 +138,7 @@ function statementCandidate(
     context: callContext(call, callbackArgumentIndex, {
       statementIndex,
       statementCount,
+      regionSource: source.slice(regionStart, regionEnd),
     }),
     anchors: [anchor(sourceFile, source, statement, `callback-statement:${index}`)],
   };
@@ -165,7 +170,11 @@ function callbackCallCandidate(
 function callContext(
   call: ts.CallExpression,
   callbackArgumentIndex: number,
-  statement?: { statementIndex: number; statementCount: number },
+  statement?: {
+    statementIndex: number;
+    statementCount: number;
+    regionSource: string;
+  },
 ): SubjectContext {
   const label = callLabel(call);
 
@@ -175,8 +184,21 @@ function callContext(
       callee: calleeName(call.expression),
       callbackArgumentIndex,
       ...(label === null ? {} : { label }),
-      ...(statement ?? {}),
+      ...(statement === undefined
+        ? {}
+        : {
+            statementIndex: statement.statementIndex,
+            statementCount: statement.statementCount,
+          }),
     },
+    ...(statement === undefined
+      ? {}
+      : {
+          region: {
+            kind: "callback-body",
+            source: statement.regionSource,
+          },
+        }),
   };
 }
 
