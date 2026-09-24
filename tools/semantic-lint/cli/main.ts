@@ -107,6 +107,7 @@ check options:
   --fail-on error|warning
   --fail-on-unknown
   --no-cache
+  --plan-only   providerを呼ばず、request数と推定input tokenだけを出す
 `);
 }
 

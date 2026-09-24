@@ -2,13 +2,21 @@ import { readFile } from "node:fs/promises";
 
 import { resolveRequestedPaths } from "../config/project.ts";
 import type { RuleStatus, RunResult } from "../domain/model.ts";
-import { runEvaluationPlan } from "../engine/run.ts";
+import { planRequests, runEvaluationPlan } from "../engine/run.ts";
+import {
+  renderRequestPlanSummary,
+  summarizeRequestPlan,
+} from "../planning/estimate.ts";
 import { discoverSourceDocuments } from "../planning/discovery.ts";
 import {
   buildEvaluationPlan,
   bunGlobPathMatcher,
 } from "../planning/planner.ts";
-import { createTypeSafeProvider } from "../providers/typesafe/provider.ts";
+import {
+  createTypeSafeProvider,
+  createTypeSafeRequestEstimator,
+  typeSafeRequestIdentity,
+} from "../providers/typesafe/provider.ts";
 import {
   renderRunResult,
   type OutputFormat,
@@ -25,6 +33,7 @@ type CheckOptions = {
   failOn: "error" | "warning";
   failOnUnknown: boolean;
   cache: boolean;
+  planOnly: boolean;
 };
 
 export async function runCheckCommand(args: string[]): Promise<number> {
@@ -71,6 +80,31 @@ export async function runCheckCommand(args: string[]): Promise<number> {
     0,
   );
 
+  if (options.planOnly) {
+    const cache = await openDecisionCache(projectRoot, options.cache);
+    const estimator = createTypeSafeRequestEstimator(config.provider);
+    const summary = summarizeRequestPlan({
+      plan,
+      planned: planRequests({
+        plan,
+        rules,
+        requestIdentity: typeSafeRequestIdentity(config.provider),
+        estimator,
+        budget: config.execution.requestTokenBudget,
+        ...(cache === undefined ? {} : { cache }),
+      }),
+      estimator,
+      rules: rules.filter((rule) => statuses.includes(rule.status)),
+      matchesPath: bunGlobPathMatcher,
+    });
+    process.stdout.write(
+      options.format === "json"
+        ? JSON.stringify(summary, null, 2) + "\n"
+        : renderRequestPlanSummary(summary),
+    );
+    return 0;
+  }
+
   if (plannedEvaluations === 0) {
     const emptyResult = createEmptyRunResult(plan.files.length, options.cache);
     process.stdout.write(renderRunResult(emptyResult, options.format));
@@ -101,6 +135,7 @@ function parseCheckOptions(args: string[]): CheckOptions {
   let failOn: "error" | "warning" = "error";
   let failOnUnknown = false;
   let cache = true;
+  let planOnly = false;
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
@@ -148,6 +183,9 @@ function parseCheckOptions(args: string[]): CheckOptions {
       case "--no-cache":
         cache = false;
         break;
+      case "--plan-only":
+        planOnly = true;
+        break;
       default:
         if (arg?.startsWith("-")) {
           throw new Error(`不明なcheckオプションです: ${arg}`);
@@ -167,6 +205,7 @@ function parseCheckOptions(args: string[]): CheckOptions {
     failOn,
     failOnUnknown,
     cache,
+    planOnly,
   };
 }
 

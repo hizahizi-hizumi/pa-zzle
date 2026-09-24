@@ -15,4 +15,8 @@ describe("check options", () => {
       paths: ["frontend"],
     });
   });
+
+  test("--plan-onlyでproviderを呼ばない計画だけを出す", () => {
+    expect(parseCheckOptions(["--plan-only"]).planOnly).toBe(true);
+  });
 });

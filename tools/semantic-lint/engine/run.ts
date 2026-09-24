@@ -16,6 +16,8 @@ import type {
   EvaluationTask,
   PlannedFile,
   PlannedUnit,
+  ProviderRequestIdentity,
+  RequestEstimator,
   RequestTokenBudget,
   Rule,
   RunResult,
@@ -51,18 +53,13 @@ export async function runEvaluationPlan(options: {
   }
 
   const startedAt = performance.now();
-  const { cachedEvaluations, cacheKeys, missPlan } = cache
-    ? lookupCache({ plan, rules, provider, cache })
-    : {
-        cachedEvaluations: new Map<string, Evaluation>(),
-        cacheKeys: new Map<string, string>(),
-        missPlan: plan,
-      };
-  const batches = buildDecisionBatches({
-    plan: missPlan,
+  const { cachedEvaluations, cacheKeys, batches } = planRequests({
+    plan,
     rules,
+    requestIdentity: provider.requestIdentity,
     estimator: provider,
     budget: requestTokenBudget,
+    ...(cache === undefined ? {} : { cache }),
   });
   const executed = await mapConcurrent(
     batches,
@@ -149,6 +146,37 @@ export async function runEvaluationPlan(options: {
   };
 }
 
+export type PlannedRequests = {
+  cachedEvaluations: Map<string, Evaluation>;
+  cacheKeys: Map<string, string>;
+  batches: DecisionBatch[];
+};
+
+/** cacheにhitしなかったtaskだけをrequestへまとめる。providerは呼ばない。 */
+export function planRequests(options: {
+  plan: EvaluationPlan;
+  rules: Rule[];
+  requestIdentity: ProviderRequestIdentity;
+  estimator: RequestEstimator;
+  budget: RequestTokenBudget;
+  cache?: DecisionCache;
+}): PlannedRequests {
+  const { plan, rules, requestIdentity, estimator, budget, cache } = options;
+  const { cachedEvaluations, cacheKeys, missPlan } = cache
+    ? lookupCache({ plan, rules, requestIdentity, cache })
+    : {
+        cachedEvaluations: new Map<string, Evaluation>(),
+        cacheKeys: new Map<string, string>(),
+        missPlan: plan,
+      };
+
+  return {
+    cachedEvaluations,
+    cacheKeys,
+    batches: buildDecisionBatches({ plan: missPlan, rules, estimator, budget }),
+  };
+}
+
 /**
  * taskごとにキャッシュを引き、missしたtaskだけを残したplanを作る。
  * batchはmiss分だけから組み立てるため、同じfileの一部だけmissしてもmiss分だけ送る。
@@ -156,14 +184,14 @@ export async function runEvaluationPlan(options: {
 function lookupCache(options: {
   plan: EvaluationPlan;
   rules: Rule[];
-  provider: SemanticDecisionProvider;
+  requestIdentity: ProviderRequestIdentity;
   cache: DecisionCache;
 }): {
   cachedEvaluations: Map<string, Evaluation>;
   cacheKeys: Map<string, string>;
   missPlan: EvaluationPlan;
 } {
-  const { plan, rules, provider, cache } = options;
+  const { plan, rules, requestIdentity, cache } = options;
   const rulesById = new Map(rules.map((rule) => [rule.id, rule]));
   const cachedEvaluations = new Map<string, Evaluation>();
   const cacheKeys = new Map<string, string>();
@@ -201,7 +229,7 @@ function lookupCache(options: {
       }
 
       const key = decisionCacheKey({
-        provider: provider.requestIdentity,
+        provider: requestIdentity,
         unit: rule.unit,
         predicate: rule.predicate,
         path: file.path,
