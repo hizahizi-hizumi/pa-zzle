@@ -11,10 +11,11 @@ type BrandLogoArtwork = {
   heightClassName: string;
 };
 
-// 小さいヘッダーでは2段組の下段が潰れるため、1行の版に切り替える
+// 小さいヘッダーでは2段組の下段が潰れるため、1行の版に切り替える。
+// SVGは重心が中央に来るよう余白を含むため、高さはシンボルを大26px・小16pxにする値
 const brandLogoArtworks = {
-  default: { svg: logoStackedSvg, heightClassName: "h-[1.625rem]" },
-  compact: { svg: logoInlineSvg, heightClassName: "h-4" },
+  default: { svg: logoStackedSvg, heightClassName: "h-[33.07px]" },
+  compact: { svg: logoInlineSvg, heightClassName: "h-[16.09px]" },
 } satisfies Record<BrandLogoProps["size"], BrandLogoArtwork>;
 
 export function BrandLogo({ size }: BrandLogoProps) {
