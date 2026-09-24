@@ -15,6 +15,7 @@ import {
 } from "../reporters/render.ts";
 import { createDefaultScopeRegistry } from "../scopes/default.ts";
 import { loadProjectContext } from "./context.ts";
+import { closeDecisionCache, openDecisionCache } from "./decision-cache.ts";
 
 type CheckOptions = {
   paths: string[];
@@ -23,6 +24,7 @@ type CheckOptions = {
   includeDraft: boolean;
   failOn: "error" | "warning";
   failOnUnknown: boolean;
+  cache: boolean;
 };
 
 export async function runCheckCommand(args: string[]): Promise<number> {
@@ -70,19 +72,22 @@ export async function runCheckCommand(args: string[]): Promise<number> {
   );
 
   if (plannedEvaluations === 0) {
-    const emptyResult = createEmptyRunResult(plan.files.length);
+    const emptyResult = createEmptyRunResult(plan.files.length, options.cache);
     process.stdout.write(renderRunResult(emptyResult, options.format));
     return 0;
   }
 
   const provider = createTypeSafeProvider(config.provider);
+  const cache = await openDecisionCache(projectRoot, options.cache);
   const result = await runEvaluationPlan({
     plan,
     rules,
     provider,
     concurrency: config.execution.concurrency,
     maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
+    ...(cache === undefined ? {} : { cache }),
   });
+  await closeDecisionCache(cache);
 
   process.stdout.write(renderRunResult(result, options.format));
   return exitCodeForResult(result, options);
@@ -95,6 +100,7 @@ function parseCheckOptions(args: string[]): CheckOptions {
   let includeDraft = false;
   let failOn: "error" | "warning" = "error";
   let failOnUnknown = false;
+  let cache = true;
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
@@ -139,6 +145,9 @@ function parseCheckOptions(args: string[]): CheckOptions {
       case "--fail-on-unknown":
         failOnUnknown = true;
         break;
+      case "--no-cache":
+        cache = false;
+        break;
       default:
         if (arg?.startsWith("-")) {
           throw new Error(`不明なcheckオプションです: ${arg}`);
@@ -157,6 +166,7 @@ function parseCheckOptions(args: string[]): CheckOptions {
     includeDraft,
     failOn,
     failOnUnknown,
+    cache,
   };
 }
 
@@ -211,7 +221,10 @@ function exitCodeForResult(
     : 0;
 }
 
-function createEmptyRunResult(scannedFiles: number): RunResult {
+function createEmptyRunResult(
+  scannedFiles: number,
+  cacheEnabled: boolean,
+): RunResult {
   return {
     schemaVersion: 1,
     diagnostics: [],
@@ -227,8 +240,15 @@ function createEmptyRunResult(scannedFiles: number): RunResult {
       unknowns: 0,
       inputTokens: 0,
       outputTokens: 0,
+      cache: {
+        enabled: cacheEnabled,
+        hits: 0,
+        misses: 0,
+      },
       totalDurationMs: 0,
       providerLatencyMs: [],
     },
   };
 }
+
+export const _private = { parseCheckOptions };

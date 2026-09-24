@@ -1,4 +1,5 @@
 import type {
+  CacheMetrics,
   Diagnostic,
   RunResult,
 } from "../domain/model.ts";
@@ -56,7 +57,8 @@ export function renderPretty(result: RunResult): string {
     `${result.unknowns.length} unknown`,
     "",
     `${result.metrics.scannedFiles} files, ${result.metrics.subjects} subjects, ${result.metrics.plannedEvaluations} evaluations`,
-    `${result.metrics.providerRequests} provider requests, ${result.metrics.inputTokens} input tokens, ${duration(result.metrics.totalDurationMs)}`,
+    `${result.metrics.providerRequests} provider requests, ${result.metrics.providerDecisions} decisions, ${result.metrics.inputTokens} input tokens, ${duration(result.metrics.totalDurationMs)}`,
+    cacheSummary(result.metrics.cache),
   );
 
   return lines.join("\n").trimEnd() + "\n";
@@ -95,6 +97,14 @@ function formatPrettyRange(diagnostic: Diagnostic): string {
     `${range.startLine}:${range.startColumn}-` +
     `${range.endLine}:${range.endColumn}`
   );
+}
+
+function cacheSummary(cache: CacheMetrics): string {
+  if (!cache.enabled) {
+    return "cache disabled";
+  }
+
+  return `cache ${cache.hits} hits, ${cache.misses} misses`;
 }
 
 function percentage(value: number): string {

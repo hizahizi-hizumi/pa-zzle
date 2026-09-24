@@ -14,15 +14,19 @@ import { renderPretty } from "../reporters/render.ts";
 import { createDefaultScopeRegistry } from "../scopes/default.ts";
 import { resolveRequestedPaths } from "../config/project.ts";
 import { loadProjectContext } from "./context.ts";
+import { closeDecisionCache, openDecisionCache } from "./decision-cache.ts";
 import { runEvaluationPlan } from "../engine/run.ts";
 
 export async function runInspectCommand(args: string[]): Promise<number> {
   const planOnly = args.includes("--plan-only");
-  const positional = args.filter((arg) => arg !== "--plan-only");
+  const useCache = !args.includes("--no-cache");
+  const positional = args.filter(
+    (arg) => arg !== "--plan-only" && arg !== "--no-cache",
+  );
 
   if (positional.length !== 2) {
     throw new Error(
-      "inspectは <rule-id> <file> [--plan-only] の形式で指定してください。",
+      "inspectは <rule-id> <file> [--plan-only] [--no-cache] の形式で指定してください。",
     );
   }
 
@@ -86,15 +90,25 @@ export async function runInspectCommand(args: string[]): Promise<number> {
   const provider = createTypeSafeProvider(config.provider, {
     onTrace: (trace) => traces.push(trace),
   });
+  const cache = await openDecisionCache(projectRoot, useCache);
   const result = await runEvaluationPlan({
     plan,
     rules: [rule],
     provider,
     concurrency: 1,
     maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
+    ...(cache === undefined ? {} : { cache }),
   });
+  await closeDecisionCache(cache);
 
   console.log("\nraw provider response");
+
+  if (result.metrics.cache.hits > 0) {
+    console.log(
+      `${result.metrics.cache.hits}件はcacheから再利用したため、providerへ送っていません。--no-cacheで再判定できます。`,
+    );
+  }
+
   console.log(
     JSON.stringify(
       traces.map((trace) => trace.responseBody),

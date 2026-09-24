@@ -156,8 +156,15 @@ export type RunMetrics = {
   unknowns: number;
   inputTokens: number;
   outputTokens: number;
+  cache: CacheMetrics;
   totalDurationMs: number;
   providerLatencyMs: number[];
+};
+
+export type CacheMetrics = {
+  enabled: boolean;
+  hits: number;
+  misses: number;
 };
 
 export type RunResult = {

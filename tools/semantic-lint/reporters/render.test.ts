@@ -14,6 +14,10 @@ describe("RunResult reporters", () => {
     expect(output).toContain('symbol=test("例こと")');
     expect(output).toContain("1 warning");
     expect(output).toContain("0 errors");
+    expect(output).toContain(
+      "1 provider requests, 1 decisions, 123 input tokens",
+    );
+    expect(output).toContain("cache 0 hits, 1 misses");
   });
 
   test("compactは1 diagnostic 1行にする", () => {
@@ -66,6 +70,11 @@ function sampleResult(): RunResult {
       unknowns: 0,
       inputTokens: 123,
       outputTokens: 0,
+      cache: {
+        enabled: true,
+        hits: 0,
+        misses: 1,
+      },
       totalDurationMs: 250,
       providerLatencyMs: [200],
     },
