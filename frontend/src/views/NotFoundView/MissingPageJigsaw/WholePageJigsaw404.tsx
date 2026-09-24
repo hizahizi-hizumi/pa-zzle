@@ -11,7 +11,7 @@ type ViewportSize = {
   width: number;
 };
 
-const loosePadding = 14;
+const loosePadding = 18;
 
 export function WholePageJigsaw404() {
   const containerRef = useRef<HTMLElement>(null);

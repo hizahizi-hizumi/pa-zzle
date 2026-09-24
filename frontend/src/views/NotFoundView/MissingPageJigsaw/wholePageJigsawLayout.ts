@@ -162,8 +162,8 @@ function seamFromHash(
     Math.imul(salt, 83492791);
   const unsignedHash = hash >>> 0;
   const centers = [0.43, 0.47, 0.52, 0.57] as const;
-  const depths = [0.17, 0.19, 0.21, 0.23] as const;
-  const widths = [0.25, 0.28, 0.31] as const;
+  const depths = [0.21, 0.23, 0.25, 0.27] as const;
+  const widths = [0.3, 0.34, 0.38] as const;
 
   return {
     center: centers[(unsignedHash >>> 2) % centers.length] ?? 0.5,
