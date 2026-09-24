@@ -1,27 +1,34 @@
-import { useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
+import type { FifteenPuzzleDifficulty } from "@/games/fifteen-puzzle/difficulty";
 import type {
   FifteenPuzzleOperation,
   FifteenPuzzleProgress,
+  FifteenPuzzleResult,
 } from "@/games/fifteen-puzzle/play/use-fifteen-puzzle-play";
 import type { FifteenPuzzleDirection } from "@/games/fifteen-puzzle/puzzle/rules";
 import type { FifteenPuzzleBoard as FifteenPuzzleBoardState } from "@/games/fifteen-puzzle/puzzle/state";
 import { FifteenPuzzleBoard } from "@/games/fifteen-puzzle/ui/board/FifteenPuzzleBoard";
-import { FifteenPuzzleClearedPanel } from "@/games/fifteen-puzzle/ui/FifteenPuzzlePlay/FifteenPuzzleClearedPanel";
 import { FifteenPuzzlePlayHeader } from "@/games/fifteen-puzzle/ui/FifteenPuzzlePlay/FifteenPuzzlePlayHeader";
+import { FifteenPuzzleResultScreen } from "@/games/fifteen-puzzle/ui/FifteenPuzzlePlay/FifteenPuzzleResultScreen";
 
 type FifteenPuzzlePlayProps = {
+  difficulty: FifteenPuzzleDifficulty;
+  status: "playing" | "cleared";
   progress: FifteenPuzzleProgress;
   board: FifteenPuzzleBoardState;
   elapsedMs: number;
   moveCount: number;
   operation: FifteenPuzzleOperation | null;
+  result: FifteenPuzzleResult | null;
+  recordOutcomeNotice: ReactNode;
   onSlideTile: (tileIndex: number) => void;
   onSlideByKeyboard: (direction: FifteenPuzzleDirection) => void;
   onRestart: () => void;
   onReplay: () => void;
   onStartNewProblem: () => void;
+  onOpenRecords: () => void;
   onClearingComplete: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
@@ -36,16 +43,21 @@ const directionByArrowKey: Readonly<Record<string, FifteenPuzzleDirection>> = {
 };
 
 export function FifteenPuzzlePlay({
+  difficulty,
+  status,
   progress,
   board,
   elapsedMs,
   moveCount,
   operation,
+  result,
+  recordOutcomeNotice,
   onSlideTile,
   onSlideByKeyboard,
   onRestart,
   onReplay,
   onStartNewProblem,
+  onOpenRecords,
   onClearingComplete,
   onChangeDifficulty,
   onBackToHome,
@@ -85,6 +97,22 @@ export function FifteenPuzzlePlay({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onSlideByKeyboard, progress]);
 
+  if (progress === "result" && status === "cleared" && result) {
+    return (
+      <FifteenPuzzleResultScreen
+        difficulty={difficulty}
+        result={result}
+        recordOutcomeNotice={recordOutcomeNotice}
+        onReplay={onReplay}
+        onStartNewProblem={onStartNewProblem}
+        onOpenRecords={onOpenRecords}
+        onChangeDifficulty={onChangeDifficulty}
+        onBackToHome={onBackToHome}
+        onOpenDiagnostics={onOpenDiagnostics}
+      />
+    );
+  }
+
   return (
     <section
       ref={playAreaRef}
@@ -111,12 +139,6 @@ export function FifteenPuzzlePlay({
             onSlideTile={onSlideTile}
             onClearingComplete={onClearingComplete}
           />
-          {progress === "result" && (
-            <FifteenPuzzleClearedPanel
-              onReplay={onReplay}
-              onStartNewProblem={onStartNewProblem}
-            />
-          )}
         </div>
       </main>
     </section>

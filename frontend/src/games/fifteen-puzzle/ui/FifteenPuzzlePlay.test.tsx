@@ -6,11 +6,26 @@ import {
   within,
 } from "@testing-library/react";
 
-import type { FifteenPuzzleProgress } from "@/games/fifteen-puzzle/play/use-fifteen-puzzle-play";
+import type {
+  FifteenPuzzleProgress,
+  FifteenPuzzleResult,
+} from "@/games/fifteen-puzzle/play/use-fifteen-puzzle-play";
 import { FifteenPuzzlePlay } from "@/games/fifteen-puzzle/ui/FifteenPuzzlePlay";
 
 const playingBoard = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 13, 14, 15];
 const solvedBoard = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0];
+const result: FifteenPuzzleResult = {
+  elapsedMs: 80_000,
+  moveCount: 42,
+  completionMoveCount: 34,
+  slideCount: 25,
+  restartCount: 1,
+  optimalMoveCount: 30,
+  moveDelta: 12,
+  timeDeltaMs: 10_000,
+  speedFullScoreMs: 70_000,
+  score: { total: 77, breakdown: { efficiency: 43, speed: 34 } },
+};
 
 afterEach(() => {
   cleanup();
@@ -23,6 +38,7 @@ describe("FifteenPuzzlePlay", () => {
     onRestart: vi.fn(),
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
+    onOpenRecords: vi.fn(),
     onClearingComplete: vi.fn(),
     onChangeDifficulty: vi.fn(),
     onBackToHome: vi.fn(),
@@ -34,11 +50,15 @@ describe("FifteenPuzzlePlay", () => {
   ) {
     render(
       <FifteenPuzzlePlay
+        difficulty="3"
+        status={progress === "playing" ? "playing" : "cleared"}
         progress={progress}
         board={board}
         elapsedMs={65_000}
         moveCount={7}
         operation={null}
+        result={progress === "playing" ? null : result}
+        recordOutcomeNotice={null}
         {...callbacks}
       />,
     );
@@ -71,10 +91,12 @@ describe("FifteenPuzzlePlay", () => {
       expect(callbacks.onSlideTile).toHaveBeenCalledWith(15);
     });
 
-    test("完成の表示を出さないこと", () => {
-      const result = screen.queryByRole("status");
+    test("結果画面を出さないこと", () => {
+      const resultHeading = screen.queryByRole("heading", {
+        name: "プレイ結果",
+      });
 
-      expect(result).toBeNull();
+      expect(resultHeading).toBeNull();
     });
 
     test("戻るボタンで難易度変更を通知すること", () => {
@@ -161,10 +183,12 @@ describe("FifteenPuzzlePlay", () => {
       expect(callbacks.onSlideByKeyboard).not.toHaveBeenCalled();
     });
 
-    test("完成の表示をまだ出さないこと", () => {
-      const result = screen.queryByRole("status");
+    test("結果画面をまだ出さないこと", () => {
+      const resultHeading = screen.queryByRole("heading", {
+        name: "プレイ結果",
+      });
 
-      expect(result).toBeNull();
+      expect(resultHeading).toBeNull();
     });
   });
 
@@ -173,28 +197,53 @@ describe("FifteenPuzzlePlay", () => {
       renderPlay("result", solvedBoard);
     });
 
-    test("完成を知らせること", () => {
-      const result = screen.getByRole("status");
+    test("スコアと手数・時間を基準との差つきで表示すること", () => {
+      const score = screen.getByText("77");
+      const moveCount = screen.getByText("手数").parentElement;
+      const elapsedTime = screen.getByText("時間").parentElement;
 
-      expect(result.textContent).toContain("完成！");
+      expect(score).toBeTruthy();
+      expect(moveCount?.textContent).toBe("手数42最短 +12");
+      expect(elapsedTime?.textContent).toBe("時間01:20基準 +00:10");
+    });
+
+    test("盤面を表示しないこと", () => {
+      const board = screen.queryByRole("group", { name: "盤面" });
+
+      expect(board).toBeNull();
     });
 
     const actionCases = [
-      ["同じ問題をもう一度", "onReplay"],
-      ["別の問題", "onStartNewProblem"],
+      ["プレイ！", "onStartNewProblem"],
+      ["同じ問題", "onReplay"],
+      ["記録を確認", "onOpenRecords"],
+      ["難易度変更", "onChangeDifficulty"],
+      ["ホーム", "onBackToHome"],
     ] as const;
 
     test.each(actionCases)(
       "%s ボタンで対応する操作を通知すること",
       (buttonName, callbackName) => {
-        fireEvent.click(
-          within(screen.getByRole("status")).getByRole("button", {
-            name: buttonName,
-          }),
-        );
+        fireEvent.click(screen.getByRole("button", { name: buttonName }));
 
         expect(callbacks[callbackName]).toHaveBeenCalledOnce();
       },
     );
+
+    test("スコアの内訳と採点基準を開けること", () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
+      );
+
+      const efficiency = screen.getByText("43 / 60");
+      const speed = screen.getByText("34 / 40");
+      const speedCriteria = screen.getByText(
+        /基準時間は10秒 \+ 最短30手 × 2秒/,
+      );
+
+      expect(efficiency).toBeTruthy();
+      expect(speed).toBeTruthy();
+      expect(speedCriteria).toBeTruthy();
+    });
   });
 });

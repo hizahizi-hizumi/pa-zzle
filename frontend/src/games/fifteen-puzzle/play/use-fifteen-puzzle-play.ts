@@ -14,8 +14,14 @@ import {
 } from "@/games/fifteen-puzzle/puzzle/rules";
 import type { FifteenPuzzleBoard } from "@/games/fifteen-puzzle/puzzle/state";
 import {
+  calculateFifteenPuzzlePerformanceComparison,
+  calculateFifteenPuzzlePlayScore,
+  type FifteenPuzzlePlayScore,
+} from "@/games/fifteen-puzzle/score";
+import {
   createFifteenPuzzleSession,
   type FifteenPuzzleSession,
+  type FifteenPuzzleSessionResult,
   getFifteenPuzzleSessionElapsedMs,
   getFifteenPuzzleSessionResult,
   restartFifteenPuzzleSession,
@@ -35,6 +41,14 @@ export type FifteenPuzzleOperation =
   | { id: number; type: "invalid"; tileIndex: number };
 
 export type FifteenPuzzleProgress = "playing" | "clearing" | "result";
+
+export type FifteenPuzzleResult = FifteenPuzzleSessionResult & {
+  optimalMoveCount: number;
+  moveDelta: number;
+  timeDeltaMs: number;
+  speedFullScoreMs: number;
+  score: FifteenPuzzlePlayScore;
+};
 
 type FifteenPuzzlePlayState = {
   session: FifteenPuzzleSession;
@@ -204,6 +218,31 @@ export function useFifteenPuzzlePlay(
     () => getFifteenPuzzleSessionResult(session, now),
     [now, session],
   );
+  const optimalMoveCount = play.optimalMoveCount;
+  const result = useMemo<FifteenPuzzleResult | null>(() => {
+    if (!sessionResult) {
+      return null;
+    }
+
+    const comparison = calculateFifteenPuzzlePerformanceComparison({
+      elapsedMs: sessionResult.elapsedMs,
+      moveCount: sessionResult.moveCount,
+      optimalMoveCount,
+    });
+
+    return {
+      ...sessionResult,
+      optimalMoveCount,
+      moveDelta: comparison.moveDelta,
+      timeDeltaMs: comparison.timeDeltaMs,
+      speedFullScoreMs: comparison.speedFullScoreMs,
+      score: calculateFifteenPuzzlePlayScore({
+        elapsedMs: sessionResult.elapsedMs,
+        moveCount: sessionResult.moveCount,
+        optimalMoveCount,
+      }),
+    };
+  }, [optimalMoveCount, sessionResult]);
 
   return {
     difficulty,
@@ -216,9 +255,9 @@ export function useFifteenPuzzlePlay(
     elapsedMs: getFifteenPuzzleSessionElapsedMs(session, now),
     moveCount: session.moveCount,
     restartCount: session.restartCount,
-    optimalMoveCount: play.optimalMoveCount,
+    optimalMoveCount,
     operation: play.operation,
-    sessionResult,
+    result,
     slideTile,
     slideByKeyboard,
     restart,

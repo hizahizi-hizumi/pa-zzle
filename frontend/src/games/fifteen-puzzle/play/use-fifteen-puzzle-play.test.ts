@@ -94,11 +94,15 @@ describe("useFifteenPuzzlePlay", () => {
     expect(result.current.board).toEqual(solvedBoard);
     expect(result.current.status).toBe("cleared");
     expect(result.current.progress).toBe("clearing");
-    expect(result.current.sessionResult).toMatchObject({
+    expect(result.current.result).toMatchObject({
       moveCount: 3,
       completionMoveCount: 3,
       slideCount: 1,
       restartCount: 0,
+      optimalMoveCount: 3,
+      moveDelta: 0,
+      speedFullScoreMs: 16_000,
+      score: { breakdown: { efficiency: 60 } },
     });
   });
 
