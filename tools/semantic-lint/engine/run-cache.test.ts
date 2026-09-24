@@ -237,6 +237,28 @@ test("outside", () => {});
     expect(second.result.diagnostics).toEqual([]);
   });
 
+  test("違反箇所の確率も判定と一緒に保存し、thresholdを下げたときは違反箇所だけを問う", async () => {
+    const strict = testRule({ violationThreshold: 0.9 });
+    const plan = planFor([document("a.test.ts", TWO_TESTS)], [strict]);
+    const located = { ...decisionResult("violation", 0.8), parts: [0.9] };
+    const first = await run(plan, [strict], { decision: located });
+
+    // threshold未満なので違反箇所は問わない。
+    expect(first.provider.requests).toHaveLength(1);
+
+    const lenient = testRule({ violationThreshold: 0.5 });
+    const second = await run(plan, [lenient], { decision: located });
+
+    expect(second.provider.requests).toHaveLength(1);
+    expect(second.provider.requests[0]?.requests.every((request) => request.locate)).toBe(true);
+    expect(second.result.diagnostics.map((diagnostic) => diagnostic.range.startLine)).toEqual([2, 6]);
+
+    const third = await run(plan, [lenient], { decision: located });
+
+    expect(third.provider.requests).toHaveLength(0);
+    expect(third.result.diagnostics).toEqual(second.result.diagnostics);
+  });
+
   test("壊れたcache entryはmissとして扱い、compactで取り除く", async () => {
     const rule = testRule();
     const plan = planFor([document("a.test.ts", TWO_TESTS)], [rule]);

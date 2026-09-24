@@ -60,6 +60,8 @@ export type EvaluationTask = {
   id: string;
   ruleId: string;
   subjectId: string;
+  /** 違反と判定済みのunitで、違反箇所（part）だけを問う2段目のtask。 */
+  locate?: boolean;
 };
 
 /** sourceの位置。JavaScript文字列のindex（UTF-16 code unit）で表す。 */
@@ -110,6 +112,8 @@ export type DecisionRequest = {
   ruleId: string;
   subjectId: string;
   predicate: Predicate;
+  /** trueならunitの判定ではなく、unitの各partが違反箇所かを問う。 */
+  locate?: boolean;
 };
 
 export type DecisionBatch = {
@@ -143,8 +147,8 @@ export type DecisionResult = {
   confidence: number;
   probabilities: Record<Decision, number>;
   /**
-   * unitが違反する場合に、各partがその違反箇所である確率。unitの `parts` と同じ順。
-   * partのないunitでは省略する。
+   * 各partが違反箇所である確率。unitの `parts` と同じ順。
+   * 違反と判定したunitについて2段目で問い、問うていないunitでは省略する。
    */
   parts?: number[];
 };
@@ -171,7 +175,10 @@ export type ProviderUsage = {
 
 export type DecisionBatchResult = {
   provider: ProviderIdentity;
+  /** unitの判定。`locate` でないrequestのtask idごと。 */
   decisions: Record<string, DecisionResult>;
+  /** 各partが違反箇所である確率。`locate` のrequestのtask idごとに、unitの `parts` と同じ順。 */
+  locations: Record<string, number[]>;
   usage: ProviderUsage;
 };
 

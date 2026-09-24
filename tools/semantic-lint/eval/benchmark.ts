@@ -184,6 +184,8 @@ export async function runGoldenBenchmark(options: {
       provider,
       concurrency,
       requestTokenBudget,
+      // thresholdを掃引するため、threshold未満の違反判定も違反箇所まで問う。
+      locateBelowThreshold: true,
       onResponse: (batch, response) => {
         requests.push(requestRecord(batch, provider, response.usage));
       },

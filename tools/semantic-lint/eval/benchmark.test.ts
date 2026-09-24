@@ -36,10 +36,13 @@ describe("runGoldenBenchmark", () => {
     status: "current",
   }));
 
-  test("draft ruleもgolden対象ファイルだけで繰り返し評価して採点する", async () => {
+  test("golden対象ファイルだけで繰り返し評価し、違反箇所で厳密一致を採点する", async () => {
     let cleanCalls = 0;
     const provider = new FakeDecisionProvider({
-      [`${rule.id}::file:violation.test.ts:0`]: decisionResult("violation", 0.95),
+      [`${rule.id}::file:violation.test.ts:0`]: {
+        ...decisionResult("violation", 0.95),
+        parts: [0.1, 0.9],
+      },
       [`${rule.id}::file:clean.test.ts:0`]: () => {
         cleanCalls += 1;
         return decisionResult("violation", cleanCalls === 1 ? 0.85 : 0.6);
@@ -65,11 +68,13 @@ describe("runGoldenBenchmark", () => {
     });
     const ruleReport = report.rules[0];
 
-    expect(provider.requests).toHaveLength(4);
+    // 1段目のunit判定2 request + 違反と判定した2 unitの違反箇所2 request を2回。
+    expect(provider.requests).toHaveLength(8);
+    expect(provider.requests.filter((batch) => batch.requests[0]?.locate)).toHaveLength(4);
     expect(ruleReport?.runs.map((run) => run.files.precision)).toEqual([0.5, 1]);
     expect(ruleReport?.summary.containmentRecall.mean).toBe(1);
-    expect(ruleReport?.summary.strictRecall.mean).toBe(0);
-    expect(ruleReport?.summary.providerRequests.mean).toBe(2);
+    expect(ruleReport?.summary.strictRecall.mean).toBe(1);
+    expect(ruleReport?.summary.providerRequests.mean).toBe(4);
     expect(ruleReport?.stability.unstable).toEqual([
       { path: "clean.test.ts", startLine: 1, endLine: 3, runs: 1 },
     ]);
@@ -117,18 +122,18 @@ describe("runGoldenBenchmark", () => {
     });
 
     expect(provider.requests.map((batch) => batch.requests.length)).toEqual([
-      2, 1,
+      2, 1, 1,
     ]);
     expect(result.plan.lineRules).toBe(3 * 3);
-    expect(report.rules.map((item) => item.summary.providerRequests.mean)).toEqual([2, 1]);
+    expect(report.rules.map((item) => item.summary.providerRequests.mean)).toEqual([3, 1]);
     // fakeのusageは質問1つ100 token。按分の合計はrequest全体の実usageに一致する。
     expect(
       report.rules.reduce(
         (sum, item) => sum + (item.summary.inputTokens.mean ?? 0),
         0,
       ),
-    ).toBe(300);
-    expect(report.usage?.inputTokens.mean).toBe(300);
+    ).toBe(400);
+    expect(report.usage?.inputTokens.mean).toBe(400);
     expect(report.usage?.actualToEstimate).not.toBeNull();
   });
 });

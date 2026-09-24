@@ -41,7 +41,9 @@ describe("runEvaluationPlan", () => {
       provider,
     });
 
-    expect(provider.requests).toHaveLength(1);
+    // unitの判定と、違反と判定したunitの違反箇所の判定の2 request。
+    expect(provider.requests).toHaveLength(2);
+    expect(provider.requests[1]?.requests[0]?.locate).toBe(true);
     expect(result.diagnostics).toHaveLength(1);
     expect(result.diagnostics[0]).toMatchObject({
       ruleId: "vitest/sample",
@@ -50,7 +52,7 @@ describe("runEvaluationPlan", () => {
       severity: "warning",
     });
     expect(result.metrics.plannedEvaluations).toBe(1);
-    expect(result.metrics.providerDecisions).toBe(1);
+    expect(result.metrics.providerDecisions).toBe(2);
   });
 
   test("threshold未満のviolationをdiagnosticにしない", async () => {

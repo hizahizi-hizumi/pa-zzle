@@ -41,6 +41,7 @@ export class FakeDecisionProvider implements SemanticDecisionProvider {
   async evaluate(batch: DecisionBatch): Promise<DecisionBatchResult> {
     this.requests.push(batch);
     const decisions: Record<string, DecisionResult> = {};
+    const locations: Record<string, number[]> = {};
 
     for (const request of batch.requests) {
       const fake = this.#decisions[request.taskId];
@@ -49,8 +50,14 @@ export class FakeDecisionProvider implements SemanticDecisionProvider {
         throw new Error(`fake decisionがありません: ${request.taskId}`);
       }
 
-      decisions[request.taskId] =
+      const { parts, ...result } =
         typeof fake === "function" ? fake(batch) : fake;
+
+      if (request.locate) {
+        locations[request.taskId] = parts ?? [];
+      } else {
+        decisions[request.taskId] = result;
+      }
     }
 
     return {
@@ -59,6 +66,7 @@ export class FakeDecisionProvider implements SemanticDecisionProvider {
         model: this.requestIdentity.model,
       },
       decisions,
+      locations,
       usage: {
         inputTokens: batch.requests.length * 100,
         outputTokens: batch.requests.length,

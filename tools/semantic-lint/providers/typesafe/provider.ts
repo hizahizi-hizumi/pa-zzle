@@ -26,7 +26,8 @@ export const TYPESAFE_REQUEST_FORMAT = "systemone-choice-parts/1";
 /**
  * Jevの課金input tokenを見積もる係数。golden benchmarkのrequestごとの実usageへの最小二乗fit。
  * - requestBase: 1 requestごとの固定分
- * - questionBase / optionBase: 質問1つ・選択肢1つの枠
+ * - questionBase / optionBase: choiceの質問1つ・選択肢1つの枠
+ * - noulBase: noulの質問1つの枠
  * - tokensPerWord: 質問文と選択肢の英単語1語あたり
  * - stateAsciiTokensPerChar / stateNonAsciiTokensPerChar: JSONにしたstateの1文字あたり。
  *   コードのASCII文字は約4文字で1 token、日本語などの非ASCII文字は1文字で約2 tokenになる。
@@ -34,6 +35,7 @@ export const TYPESAFE_REQUEST_FORMAT = "systemone-choice-parts/1";
 export const JEV_TOKEN_ESTIMATE = {
   requestBase: 316,
   questionBase: 8,
+  noulBase: 23,
   optionBase: 25,
   tokensPerWord: 1.13,
   stateAsciiTokensPerChar: 0.25,
@@ -149,7 +151,9 @@ function estimateQuestionTokens(question: Question): number {
   const criteria = question.type === "choice" ? Object.values(question.criteria) : [];
 
   return Math.ceil(
-    JEV_TOKEN_ESTIMATE.questionBase +
+    (question.type === "choice"
+      ? JEV_TOKEN_ESTIMATE.questionBase
+      : JEV_TOKEN_ESTIMATE.noulBase) +
       JEV_TOKEN_ESTIMATE.optionBase * criteria.length +
       JEV_TOKEN_ESTIMATE.tokensPerWord *
         [question.instructions, ...criteria].reduce(
@@ -214,11 +218,11 @@ export type TypeSafeState = DecisionState & {
 };
 
 /**
- * unitの判定（4択のchoice）と、同じrequestで違反箇所の候補（part）ごとの判定（noul）を組み立てる。
+ * requestを組み立てる。
  *
- * partの質問はunitの判定結果に依存しないため、全unitについて投機的に同じrequestへ入れる。
- * stateをfileあたり1回にするため、違反と判定されたunitだけを2回目のrequestで問うより安い。
- * partの質問が参照するruleの文面はstateに1回だけ載せる。
+ * - unitの判定: 4択のchoice。
+ * - `locate` のrequest: 違反と判定したunitの違反箇所の候補（part）ごとのnoul。
+ *   stateではそのunitのpartを目印で囲み、質問が参照するruleの文面はstateに1回だけ載せる。
  */
 export function buildRequest(
   model: string,
@@ -233,6 +237,7 @@ export function buildRequest(
 } {
   const unitsById = new Map(batch.units.map((unit) => [unit.id, unit]));
   const partUnitIds = batch.requests
+    .filter((request) => request.locate)
     .map((request) => request.subjectId)
     .filter((id) => (unitsById.get(id)?.parts.length ?? 0) > 0);
   const { state, keys, partKeys } = buildDecisionState({
@@ -254,18 +259,21 @@ export function buildRequest(
       );
     }
 
-    questionToTask.set(questionId, { taskId: request.taskId });
-    questions[questionId] = {
-      type: "choice",
-      instructions: [
-        `Evaluate only state.subjects.${subjectKey}, the code between its begin and end comments in state.file.source.`,
-        "Use state.file as surrounding context when needed.",
-        "Do not classify another subject in the file.",
-        "",
-        request.predicate.instruction,
-      ].join("\n"),
-      criteria: request.predicate.outcomes,
-    };
+    if (!request.locate) {
+      questionToTask.set(questionId, { taskId: request.taskId });
+      questions[questionId] = {
+        type: "choice",
+        instructions: [
+          `Evaluate only state.subjects.${subjectKey}, the code between its begin and end comments in state.file.source.`,
+          "Use state.file as surrounding context when needed.",
+          "Do not classify another subject in the file.",
+          "",
+          request.predicate.instruction,
+        ].join("\n"),
+        criteria: request.predicate.outcomes,
+      };
+      continue;
+    }
 
     const refs = partKeys.get(request.subjectId) ?? [];
 
@@ -374,7 +382,7 @@ function parseResponse(
   }
 
   const decisions: Record<string, DecisionResult> = {};
-  const parts = new Map<string, number[]>();
+  const locations: Record<string, number[]> = {};
 
   for (const [questionId, target] of questionToTask) {
     const answer = value.answers[questionId];
@@ -388,20 +396,8 @@ function parseResponse(
       continue;
     }
 
-    const probabilities = parts.get(target.taskId) ?? [];
+    const probabilities = (locations[target.taskId] ??= []);
     probabilities[target.part] = parseNoulAnswer(questionId, answer);
-    parts.set(target.taskId, probabilities);
-  }
-
-  for (const [taskId, probabilities] of parts) {
-    const decision = decisions[taskId];
-
-    if (decision) {
-      decision.parts = Array.from(
-        { length: probabilities.length },
-        (_, index) => probabilities[index] ?? 0,
-      );
-    }
   }
 
   const usage = isRecord(value.usage) ? value.usage : {};
@@ -412,6 +408,7 @@ function parseResponse(
       model: value.model,
     },
     decisions,
+    locations,
     usage: {
       inputTokens: numberOrZero(usage.input_tokens),
       outputTokens: numberOrZero(usage.output_tokens),

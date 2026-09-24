@@ -3,8 +3,10 @@ import type { PartKind, SourceRange } from "../domain/model.ts";
 /**
  * 違反と判定したunitで、partを違反箇所として指摘する確率の下限。
  * ruleごとには変えず、golden benchmarkで校正した値を全ruleに使う。
+ * partのnoulは違反箇所が複数あると1つ目以外を低めに答える傾向があり、
+ * arrange-outside-testの違反箇所の確率は0.15〜0.85、違反箇所でないpartは大半が0.2未満だった。
  */
-export const PART_VIOLATION_THRESHOLD = 0.5;
+export const PART_VIOLATION_THRESHOLD = 0.25;
 
 type LineRange = Pick<SourceRange, "startLine" | "endLine">;
 

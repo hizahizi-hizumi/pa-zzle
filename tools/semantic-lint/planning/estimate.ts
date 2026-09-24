@@ -77,6 +77,7 @@ export function renderRequestPlanSummary(summary: RequestPlanSummary): string {
     `requests: ${summary.requests} (最大 ${summary.largestRequest} tokens)`,
     `estimated input tokens: ${tokens.total} (state ${tokens.state}, questions ${tokens.questions}, request固定 ${tokens.requestBase})`,
     `per line × rule: ${perLineRule === null ? "-" : perLineRule.toFixed(2)} (${summary.lineRules} line-rules)`,
+    "違反箇所の特定（2段目）は1段目で違反と判定したunitだけを問うため、この見積もりに含めない。",
     "",
   ].join("\n");
 }

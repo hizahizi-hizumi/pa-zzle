@@ -45,7 +45,7 @@ describe("TypeSafe provider", () => {
     });
   });
 
-  test("違反箇所の候補をstateの目印で囲み、候補ごとのnoulを同じrequestで問う", () => {
+  test("locateのrequestでは違反箇所の候補をstateの目印で囲み、候補ごとにnoulで問う", () => {
     const rule = sampleRule();
     const batch = batchWithParts(rule.id);
     const { body, questionToTask } = buildRequest("jev-latest", batch);
@@ -65,9 +65,10 @@ describe("TypeSafe provider", () => {
         "Assume state.subjects.s0 violates state.rules.r0. Is part p1 one of the places where it does?",
     });
     expect(questionToTask.get("q0p1")).toEqual({ taskId: "task-1", part: 1 });
+    expect(body.questions.q0).toBeUndefined();
   });
 
-  test("partの回答をunitの判定へpartの順に付ける", async () => {
+  test("partの回答をtaskごとにpartの順で返す", async () => {
     process.env.TYPESAFE_API_KEY = "secret";
     const provider = createTypeSafeProvider(
       {
@@ -81,17 +82,6 @@ describe("TypeSafe provider", () => {
             JSON.stringify({
               model: "jev-2026-09",
               answers: {
-                q0: {
-                  type: "choice",
-                  choice: "violation",
-                  confidence: 0.9,
-                  probabilities: {
-                    violation: 0.9,
-                    compliant: 0.1,
-                    not_applicable: 0,
-                    insufficient_context: 0,
-                  },
-                },
                 q0p1: { type: "noul", noul: 0.2 },
                 q0p0: { type: "noul", noul: 0.8 },
               },
@@ -104,7 +94,8 @@ describe("TypeSafe provider", () => {
 
     const response = await provider.evaluate(batchWithParts("vitest/sample"));
 
-    expect(response.decisions["task-1"]?.parts).toEqual([0.8, 0.2]);
+    expect(response.locations["task-1"]).toEqual([0.8, 0.2]);
+    expect(response.decisions).toEqual({});
   });
 
   test("Jev responseをtask idへ戻す", async () => {
@@ -302,6 +293,7 @@ function batchWithParts(ruleId: string): DecisionBatch {
         ruleId: rule.id,
         subjectId: "subject-1",
         predicate: rule.predicate,
+        locate: true,
       },
     ],
   };

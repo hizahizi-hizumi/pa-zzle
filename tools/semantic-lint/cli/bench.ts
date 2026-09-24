@@ -137,7 +137,7 @@ function renderBenchmarkPlan(
 ): string {
   const total = requests.reduce((sum, record) => sum + record.estimate.total, 0);
   const lines = [
-    "benchmark request plan (providerは呼んでいません。tokenはJev課金係数による推定)",
+    "benchmark request plan (providerは呼んでいません。tokenはJev課金係数による推定。違反箇所を問う2段目は含めない)",
     `requests: ${requests.length}`,
     `estimated input tokens: ${total} (1 run)`,
     `per line × rule: ${lineRules === 0 ? "-" : (total / lineRules).toFixed(2)} (${lineRules} line-rules)`,
