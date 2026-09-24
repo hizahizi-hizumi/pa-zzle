@@ -2,7 +2,7 @@ import { BrandMark } from "@/components/BrandMark";
 import { Link } from "@/router";
 
 type BrandIdentityHeaderProps = {
-  content?: "symbol-and-name" | "symbol";
+  content?: "symbol-and-name" | "name";
   linkToHome?: boolean;
   size?: "compact" | "regular";
 };

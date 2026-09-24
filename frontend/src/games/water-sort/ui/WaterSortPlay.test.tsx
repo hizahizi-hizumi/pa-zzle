@@ -71,7 +71,6 @@ describe("WaterSortPlay", () => {
     const bottle = screen.getByRole("button", { name: "ボトル 1: 赤、青" });
     fireEvent.click(bottle);
     expect(screen.getByRole("img", { name: "pa-zzle" })).toBeTruthy();
-    expect(screen.queryByText("パズル pa-zzle")).toBeNull();
     expect(
       screen.getByRole("heading", { name: "ウォーターソート" }),
     ).toBeTruthy();
@@ -343,7 +342,7 @@ describe("WaterSortPlay", () => {
     expect(screen.getByText("スコア")).toBeTruthy();
     expect(screen.getByText("87")).toBeTruthy();
     expect(screen.getByText("ナイスプレイ！")).toBeTruthy();
-    expect(screen.getByText("パズル pa-zzle")).toBeTruthy();
+    expect(screen.getByRole("img", { name: "pa-zzle" })).toBeTruthy();
     expect(screen.getByText("/ 100")).toBeTruthy();
     fireEvent.click(screen.getByText("スコアの内訳・採点基準"));
     expect(screen.getByText("手戻り")).toBeTruthy();
