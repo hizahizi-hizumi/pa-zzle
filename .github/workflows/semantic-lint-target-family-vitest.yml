@@ -1,14 +1,46 @@
-name: Semantic Lint Target Context Benchmark
+name: Semantic Lint Repository Golden
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - experiment/semantic-lint-target-family-vitest-20260924
 
 permissions:
   contents: read
 
 jobs:
-  disabled:
-    if: ${{ false }}
+  arrange:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - run: echo disabled
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - name: Install semantic lint dependencies
+        working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+      - name: Run Arrange repository golden
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- target-family --benchmark .semantic-lint/poc/target-family/arrange-repository-golden.yaml --repeat 3
+
+  table:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - name: Install semantic lint dependencies
+        working-directory: tools/semantic-lint
+        run: bun install --frozen-lockfile
+      - name: Run table-driven repository golden
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: bun run --cwd tools/semantic-lint poc -- target-family --benchmark .semantic-lint/poc/target-family/table-repository-golden.yaml --repeat 10
