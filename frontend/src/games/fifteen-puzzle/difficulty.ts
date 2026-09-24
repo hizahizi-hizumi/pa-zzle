@@ -1,3 +1,5 @@
+import type { FifteenPuzzleDifficultyAnalysis } from "@/games/fifteen-puzzle/problem/difficulty-analysis";
+
 export const fifteenPuzzleDifficulties = [
   {
     id: "1",
@@ -42,5 +44,75 @@ export function getFifteenPuzzleDifficultyLabel(
   return (
     fifteenPuzzleDifficulties.find((option) => option.id === difficulty)
       ?.label ?? difficulty
+  );
+}
+
+/** 提供範囲の下限。これより短い問題は、干渉を解く計画がほとんど要らない。 */
+export const FIFTEEN_PUZZLE_MINIMUM_OPTIMAL_MOVE_COUNT = 8;
+
+type FifteenPuzzleDifficultyCriteria = {
+  /** 問題集を作るときに候補を生成する撹拌手数。分類には使わない。 */
+  scrambleLengths: readonly number[];
+  minimumDetourMoveCount: number;
+  maximumDetourMoveCount: number | null;
+};
+
+export const fifteenPuzzleDifficultyCriteria: Record<
+  FifteenPuzzleDifficulty,
+  FifteenPuzzleDifficultyCriteria
+> = {
+  "1": {
+    scrambleLengths: [15, 20, 25, 30],
+    minimumDetourMoveCount: 0,
+    maximumDetourMoveCount: 1,
+  },
+  "2": {
+    scrambleLengths: [20, 25, 30, 35],
+    minimumDetourMoveCount: 2,
+    maximumDetourMoveCount: 3,
+  },
+  "3": {
+    scrambleLengths: [30, 35, 40, 50],
+    minimumDetourMoveCount: 4,
+    maximumDetourMoveCount: 5,
+  },
+  "4": {
+    scrambleLengths: [40, 50, 60, 80],
+    minimumDetourMoveCount: 6,
+    maximumDetourMoveCount: 7,
+  },
+  "5": {
+    scrambleLengths: [60, 80, 100, 120],
+    minimumDetourMoveCount: 8,
+    maximumDetourMoveCount: null,
+  },
+};
+
+/**
+ * 遠回り手数（タイルを一時的にゴールから遠ざける必要がある手の数）でレベルを決める。
+ * 最短手数が分からない問題と、提供範囲の下限より短い問題は分類しない。
+ */
+export function assessFifteenPuzzleDifficulty(
+  analysis: FifteenPuzzleDifficultyAnalysis,
+): FifteenPuzzleDifficulty | null {
+  if (analysis.status !== "analyzed") {
+    return null;
+  }
+
+  const { optimalMoveCount, detourMoveCount } = analysis.features;
+  if (optimalMoveCount < FIFTEEN_PUZZLE_MINIMUM_OPTIMAL_MOVE_COUNT) {
+    return null;
+  }
+
+  return (
+    fifteenPuzzleDifficulties.find(({ id }) => {
+      const { minimumDetourMoveCount, maximumDetourMoveCount } =
+        fifteenPuzzleDifficultyCriteria[id];
+      return (
+        detourMoveCount >= minimumDetourMoveCount &&
+        (maximumDetourMoveCount === null ||
+          detourMoveCount <= maximumDetourMoveCount)
+      );
+    })?.id ?? null
   );
 }
