@@ -1,6 +1,7 @@
 # vitest.yamlと同じ規約を、rule非依存の汎用unitで判定する定義。
 # 作者が書くのはpaths / predicate / severity / unit (と識別用のid / title / sourceSection) だけ。
-# violationThresholdは `bench --rules-from vitest-unit` の校正値を採用する。
+# violationThresholdは `bench --rules-from vitest-unit` の校正値 (包含F1最大の中央値)。
+# 期待findingがない、またはF1が0のruleは校正の根拠がなく、既定の中央値のまま。
 version: 1
 id: vitest-unit
 
@@ -19,6 +20,7 @@ defaults:
 
 rules:
   - id: arrange-outside-test
+    violationThreshold: 0.4
     title: テスト本体にArrangeを置かない
     unit: function
     sourceSection: テスト構造 > Arrangeの分離方法
@@ -44,6 +46,7 @@ rules:
           behavior under test.
 
   - id: before-each-arrange-only
+    violationThreshold: 0.6
     title: beforeEachは事前準備だけを行う
     unit: function
     sourceSection: テスト構造 > Arrangeの分離方法
@@ -65,6 +68,7 @@ rules:
           performs setup or the behavior under test.
 
   - id: dom-observable-contract
+    violationThreshold: 0.6
     title: DOMテストは利用者から観測できる契約を優先する
     unit: function
     sourceSection: テスト構造 > 基本原則
@@ -90,6 +94,7 @@ rules:
           detail is an intended user-facing contract.
 
   - id: table-driven-cases
+    violationThreshold: 0.6
     title: 同じ期待動作の入力違いはtest.eachで表現する
     unit: function
     sourceSection: 入力違いのケース

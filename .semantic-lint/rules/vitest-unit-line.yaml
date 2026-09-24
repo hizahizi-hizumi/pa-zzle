@@ -1,5 +1,6 @@
 # vitest-unit.yamlとunit割当だけを変えた比較用の定義。
 # 文単位で判定できる規約はline、describe間の比較が必要な規約はfileに割り当てる。
+# violationThresholdは `bench --rules-from vitest-unit-line` の校正値 (包含F1最大の中央値)。
 version: 1
 id: vitest-unit-line
 
@@ -18,6 +19,7 @@ defaults:
 
 rules:
   - id: arrange-outside-test
+    violationThreshold: 0.45
     title: テスト本体にArrangeを置かない
     unit: line
     sourceSection: テスト構造 > Arrangeの分離方法
@@ -42,6 +44,7 @@ rules:
           behavior under test.
 
   - id: before-each-arrange-only
+    violationThreshold: 0.95
     title: beforeEachは事前準備だけを行う
     unit: line
     sourceSection: テスト構造 > Arrangeの分離方法
@@ -63,6 +66,7 @@ rules:
           performs setup or the behavior under test.
 
   - id: dom-observable-contract
+    violationThreshold: 0.9
     title: DOMテストは利用者から観測できる契約を優先する
     unit: line
     sourceSection: テスト構造 > 基本原則
@@ -87,6 +91,7 @@ rules:
           detail is an intended user-facing contract.
 
   - id: table-driven-cases
+    violationThreshold: 0.6
     title: 同じ期待動作の入力違いはtest.eachで表現する
     unit: file
     sourceSection: 入力違いのケース
