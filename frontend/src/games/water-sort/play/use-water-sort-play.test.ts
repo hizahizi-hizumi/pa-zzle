@@ -7,66 +7,18 @@ import {
 import type { WaterSortMove } from "@/games/water-sort/puzzle/state";
 
 vi.mock("@/games/water-sort/problem-selection", () => ({
-  generateWaterSortProblemForDifficulty: (
-    difficulty: "easy" | "normal" | "hard",
-    seed: string,
-  ) => {
-    const preparationMoveCount = difficulty === "easy" ? 1 : 3;
-    const averageEmptyBottlePressure = difficulty === "hard" ? 0.75 : 0.5;
-    const maximumDetourMoves = difficulty === "hard" ? 2 : 0;
-
-    return {
-      problem: {
-        initialState: [[0, 0, 0, 1], [1, 1, 1, 0], [], []],
-      },
-      identity: {
-        generatorVersion: "1",
-        seed,
-        conditions: { colorCount: 2, capacity: 4, emptyBottleCount: 2 },
-        generationAttempt: 1,
-      },
-      optimalMoveCount: 3,
-      difficultyAnalysis: {
-        shortestMoveCount: 3,
-        minimumMergeMoveCount: 2,
-        preparationMoveCount,
-        preparationMoveRatio: preparationMoveCount / 3,
-        averageEmptyBottlePressure,
-        noEmptyBottleStateRatio: 0,
-        longestNoEmptyBottleRun: 0,
-        representativeChoiceRisk: {
-          stateIndex: 0,
-          progressRatio: 0,
-          distinctChoiceCount: 1,
-          evaluatedChoiceCount: 1,
-          unresolvedChoiceCount: 0,
-          optimalChoiceRatio: difficulty === "hard" ? 0 : 1,
-          detourChoiceRatio: difficulty === "hard" ? 1 : 0,
-          deadEndChoiceRatio: 0,
-          maximumDetourMoves,
-        },
-        plausibleChoiceAnalysis: {
-          sampledDecisionStateCount: 1,
-          singleChoiceDecisionStateCount: 1,
-          ambiguousDecisionStateCount: 0,
-          evaluatedChoiceCount: 1,
-          unresolvedChoiceCount: 0,
-          optimalChoiceCount: 1,
-          detourChoiceCount: 0,
-          deadEndChoiceCount: 0,
-          detourDecisionStateCount: 0,
-          deadEndDecisionStateCount: 0,
-          ambiguousDecisionStateRatio: 0,
-          detourDecisionStateRatio: 0,
-          deadEndDecisionStateRatio: 0,
-          detourChoiceRatio: 0,
-          deadEndChoiceRatio: 0,
-          maximumDetourMoves: 0,
-          minimumSolvableChoiceRatio: 1,
-        },
-      },
-    };
-  },
+  selectWaterSortProblemForDifficulty: (_difficulty: string, seed: string) => ({
+    problem: {
+      initialState: [[0, 0, 0, 1], [1, 1, 1, 0], [], []],
+    },
+    identity: {
+      generatorVersion: "1",
+      seed,
+      conditions: { colorCount: 2, capacity: 4, emptyBottleCount: 2 },
+      generationAttempt: 1,
+    },
+    optimalMoveCount: 3,
+  }),
 }));
 
 const solutionMoves: readonly WaterSortMove[] = [
@@ -97,8 +49,8 @@ function solveCurrentProblem(result: { current: HookResult }) {
 }
 
 describe("useWaterSortPlay", () => {
-  test.each(["easy", "normal", "hard"] as const)(
-    "%s の特徴量条件を満たす実盤面と最短手数をプレイ開始時から保持すること",
+  test.each(["1", "2", "3", "4", "5"] as const)(
+    "難易度 %s の問題の実盤面と最短手数をプレイ開始時から保持すること",
     (difficulty) => {
       const { result } = renderHook(() => useWaterSortPlay(difficulty));
 
@@ -106,12 +58,11 @@ describe("useWaterSortPlay", () => {
         result.current.state.filter((bottle) => bottle.length === 0),
       ).toHaveLength(2);
       expect(result.current.optimalMoveCount).toBeGreaterThan(0);
-      expect(result.current.problemDifficulty.difficulty).toBe(difficulty);
     },
   );
 
   test("合法な注ぎ元と注ぎ先を順に選ぶとパズルの状態遷移を適用すること", () => {
-    const { result } = renderHook(() => useWaterSortPlay("easy"));
+    const { result } = renderHook(() => useWaterSortPlay("1"));
     const move = listWaterSortLegalMoves(result.current.state)[0];
     expect(move).toBeDefined();
     if (!move) return;
@@ -126,7 +77,7 @@ describe("useWaterSortPlay", () => {
   });
 
   test("パズルのルールが拒否する注ぎ先では盤面と手数を変更しないこと", () => {
-    const { result } = renderHook(() => useWaterSortPlay("easy"));
+    const { result } = renderHook(() => useWaterSortPlay("1"));
     const legalMove = listWaterSortLegalMoves(result.current.state)[0];
     expect(legalMove).toBeDefined();
     if (!legalMove) return;
@@ -155,7 +106,7 @@ describe("useWaterSortPlay", () => {
   });
 
   test("元に戻して盤面を復元しても成立済みの注水手数を減らさないこと", () => {
-    const { result } = renderHook(() => useWaterSortPlay("easy"));
+    const { result } = renderHook(() => useWaterSortPlay("1"));
     const initialState = result.current.state;
     const move = listWaterSortLegalMoves(initialState)[0];
     expect(move).toBeDefined();
@@ -171,7 +122,7 @@ describe("useWaterSortPlay", () => {
   });
 
   test("元に戻せる履歴がない操作は回数へ含めないこと", () => {
-    const { result } = renderHook(() => useWaterSortPlay("easy"));
+    const { result } = renderHook(() => useWaterSortPlay("1"));
 
     act(() => result.current.undo());
 
@@ -182,7 +133,7 @@ describe("useWaterSortPlay", () => {
   test("プレイ中のやり直しは同じ問題へ戻し手数と経過時間を累積すること", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-09-16T00:00:00Z"));
-    const { result } = renderHook(() => useWaterSortPlay("easy"));
+    const { result } = renderHook(() => useWaterSortPlay("1"));
     const initialState = result.current.state;
     const initialSeed = result.current.seed;
     const initialProblemIdentity = result.current.problemIdentity;
@@ -204,7 +155,7 @@ describe("useWaterSortPlay", () => {
   });
 
   test("新しい問題では別シードへ切り替えてプレイ成績を初期化すること", () => {
-    const { result } = renderHook(() => useWaterSortPlay("easy"));
+    const { result } = renderHook(() => useWaterSortPlay("1"));
     const initialSeed = result.current.seed;
     const initialProblemIdentity = result.current.problemIdentity;
     const move = listWaterSortLegalMoves(result.current.state)[0];
@@ -225,7 +176,7 @@ describe("useWaterSortPlay", () => {
   });
 
   test("盤面が完成すると最終注水待ちを経て結果表示へ進むこと", () => {
-    const { result } = renderHook(() => useWaterSortPlay("easy"));
+    const { result } = renderHook(() => useWaterSortPlay("1"));
 
     solveCurrentProblem(result);
 
@@ -253,7 +204,7 @@ describe("useWaterSortPlay", () => {
   });
 
   test("クリア後に同じ問題へ再挑戦すると同じシードで別プレイとして計測すること", () => {
-    const { result } = renderHook(() => useWaterSortPlay("easy"));
+    const { result } = renderHook(() => useWaterSortPlay("1"));
     const initialState = result.current.state;
     const initialSeed = result.current.seed;
     solveCurrentProblem(result);

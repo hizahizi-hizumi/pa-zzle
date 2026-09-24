@@ -17,7 +17,7 @@ afterEach(() => {
 });
 
 const baseProps = {
-  difficulty: "normal" as const,
+  difficulty: "3" as const,
   status: "playing" as const,
   progress: "playing" as const,
   state: [[0, 1], []] as const,

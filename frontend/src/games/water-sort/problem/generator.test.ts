@@ -1,6 +1,7 @@
 import {
   generateWaterSortProblem,
   restoreWaterSortProblem,
+  restoreWaterSortProblemWithOptimalMoveCount,
 } from "@/games/water-sort/problem/generator";
 import {
   isCompleteWaterSortBottle,
@@ -36,9 +37,41 @@ describe("generateWaterSortProblem", () => {
 
     expect(standard).toBe(true);
     expect(hasCompletedBottle).toBe(false);
-    expect(problem.difficultyAnalysis.shortestMoveCount).toBe(
+  });
+
+  test("空ボトル数を生成条件として変えても標準初期形と再現性を保つこと", () => {
+    const options = {
+      seed: "water-sort-one-empty-bottle",
+      colorCount: 4,
+      emptyBottleCount: 1,
+      maximumAttempts: 200,
+    } as const;
+
+    const problem = generateWaterSortProblem(options);
+    const restored = restoreWaterSortProblem(problem.identity);
+    const standard = isStandardWaterSortInitialState(
+      problem.problem.initialState,
+      problem.identity.conditions.colorCount,
+      problem.identity.conditions.emptyBottleCount,
+    );
+
+    expect(standard).toBe(true);
+    expect(problem.identity.conditions.emptyBottleCount).toBe(1);
+    expect(restored).toEqual(problem);
+  });
+
+  test("事前に確定した最短手数から solver を使わず同じ問題を復元すること", () => {
+    const problem = generateWaterSortProblem({
+      seed: "water-sort-restore-with-optimal-move-count",
+      colorCount: 4,
+    });
+
+    const restored = restoreWaterSortProblemWithOptimalMoveCount(
+      problem.identity,
       problem.optimalMoveCount,
     );
+
+    expect(restored).toEqual(problem);
   });
 
   test("生成器と独立した採用条件で候補を棄却できること", () => {

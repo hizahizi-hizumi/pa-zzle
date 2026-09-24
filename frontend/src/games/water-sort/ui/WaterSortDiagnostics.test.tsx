@@ -7,7 +7,7 @@ import { WaterSortDiagnostics } from "@/games/water-sort/ui/WaterSortDiagnostics
 const snapshot: WaterSortDiagnosticSnapshot = {
   formatVersion: 1,
   game: "water-sort",
-  difficulty: "normal",
+  difficulty: "3",
   problemIdentity: {
     generatorVersion: "1",
     seed: "diagnostics-ui-seed",
@@ -29,7 +29,7 @@ describe("WaterSortDiagnostics", () => {
   });
 
   test("ウォーターソート固有の診断値を共通ダイアログへ表示すること", () => {
-    expect(screen.getByText("ふつう")).toBeTruthy();
+    expect(screen.getByText("レベル 3")).toBeTruthy();
     expect(screen.getByText("diagnostics-ui-seed")).toBeTruthy();
     expect(screen.getByText("色 5 / 容量 4 / 空 2")).toBeTruthy();
   });
