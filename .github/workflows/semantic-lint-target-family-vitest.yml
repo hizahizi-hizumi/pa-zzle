@@ -39,37 +39,11 @@ jobs:
 
           path = Path("tools/semantic-lint/poc/candidate-anchor/run.ts")
           source = path.read_text()
-          old = '''  for (let offset = 0; offset < subjects.length; offset += maxDecisionsPerRequest) {
-            const batchSubjects = subjects.slice(offset, offset + maxDecisionsPerRequest);
-            const batch: DecisionBatch = {
-              id: `${document.path}#${ruleId}#${offset / maxDecisionsPerRequest}`,
-              file: document,
-              subjects: batchSubjects,
-              ...(stateMode === undefined ? {} : { stateMode }),
-              requests: batchSubjects.map((subject) => ({
-                taskId: `${ruleId}::${subject.id}`,
-                ruleId,
-                subjectId: subject.id,
-                predicate: predicateForSubject(subject),
-              })),
-            };
-            const response = await provider.evaluate(batch);
-            usage.providerRequests += 1;
-            usage.inputTokens += response.usage.inputTokens;
-            usage.outputTokens += response.usage.outputTokens;
-
-            for (const subject of batchSubjects) {
-              const result = response.decisions[`${ruleId}::${subject.id}`];
-
-              if (!result) {
-                throw new Error(`provider resultがありません: ${subject.id}`);
-              }
-
-              results.set(subject.id, result);
-            }
-          }
-          '''
-          new = '''  let batchIndex = 0;
+          start_marker = "  for (let offset = 0; offset < subjects.length; offset += maxDecisionsPerRequest) {"
+          end_marker = "\n\n  return { results, usage };"
+          start = source.index(start_marker)
+          end = source.index(end_marker, start)
+          replacement = '''  let batchIndex = 0;
 
           for (const subjectGroup of groupSubjectsByRegion(subjects)) {
             for (
@@ -109,13 +83,9 @@ jobs:
                 results.set(subject.id, result);
               }
             }
-          }
-          '''
-          if old not in source:
-              raise SystemExit("evaluateSubjects batch loop not found")
-          source = source.replace(old, new, 1)
-          marker = '''function candidateSubject(
-          '''
+          }'''
+          source = source[:start] + replacement + source[end:]
+          marker = "function candidateSubject(\n"
           helper = '''function groupSubjectsByRegion(subjects: Subject[]): Subject[][] {
             const groups = new Map<string, Subject[]>();
 
@@ -139,8 +109,6 @@ jobs:
 
           function candidateSubject(
           '''
-          if marker not in source:
-              raise SystemExit("candidateSubject marker not found")
           source = source.replace(marker, helper, 1)
           path.write_text(source)
           PY
