@@ -19,6 +19,13 @@ type Point = {
   y: number;
 };
 
+type LocalPoint = {
+  u: number;
+  v: number;
+};
+
+const degreesToRadians = Math.PI / 180;
+
 export function createWholePageJigsawPiecePath(
   x: number,
   y: number,
@@ -61,39 +68,163 @@ function drawSide(
     return;
   }
 
-  const halfWidth = seam.width / 2;
-  const start = seam.center - halfWidth;
-  const end = seam.center + halfWidth;
-  const depth = seam.depth * seam.direction;
-  const pStart = transform(side, x, y, size, start, 0);
-  const pEnd = transform(side, x, y, size, end, 0);
+  const headRadius = Math.min(seam.depth * 0.56, seam.width * 0.47);
+  const neckHalfWidth = headRadius * 0.22;
+  const circleCenterV = seam.depth - headRadius;
+  const neckStart = seam.center - neckHalfWidth;
+  const neckEnd = seam.center + neckHalfWidth;
+  const direction = seam.direction;
+  const circleStart = circlePoint(
+    seam.center,
+    circleCenterV,
+    headRadius,
+    220,
+    direction,
+  );
+  const circleEnd = circlePoint(
+    seam.center,
+    circleCenterV,
+    headRadius,
+    -40,
+    direction,
+  );
+  const pStart = transform(side, x, y, size, neckStart, 0);
 
   path.push(`L ${format(pStart.x)} ${format(pStart.y)}`);
 
   addCurve(path, side, x, y, size, [
-    [start + seam.width * 0.06, 0],
-    [start + seam.width * 0.08, depth * 0.2],
-    [start + seam.width * 0.22, depth * 0.22],
-  ]);
-  addCurve(path, side, x, y, size, [
-    [start + seam.width * 0.18, depth * 0.82],
-    [seam.center - seam.width * 0.12, depth],
-    [seam.center, depth],
-  ]);
-  addCurve(path, side, x, y, size, [
-    [seam.center + seam.width * 0.12, depth],
-    [end - seam.width * 0.18, depth * 0.82],
-    [end - seam.width * 0.22, depth * 0.22],
-  ]);
-  addCurve(path, side, x, y, size, [
-    [end - seam.width * 0.08, depth * 0.2],
-    [end - seam.width * 0.06, 0],
-    [end, 0],
+    [neckStart, seam.depth * 0.035 * direction],
+    [
+      circleStart.u + headRadius * 0.26,
+      circleStart.v - headRadius * 0.08 * direction,
+    ],
+    [circleStart.u, circleStart.v],
   ]);
 
-  path.push(`L ${format(pEnd.x)} ${format(pEnd.y)}`);
+  addCircularArc(
+    path,
+    side,
+    x,
+    y,
+    size,
+    seam.center,
+    circleCenterV,
+    headRadius,
+    220,
+    180,
+    direction,
+  );
+  addCircularArc(
+    path,
+    side,
+    x,
+    y,
+    size,
+    seam.center,
+    circleCenterV,
+    headRadius,
+    180,
+    90,
+    direction,
+  );
+  addCircularArc(
+    path,
+    side,
+    x,
+    y,
+    size,
+    seam.center,
+    circleCenterV,
+    headRadius,
+    90,
+    0,
+    direction,
+  );
+  addCircularArc(
+    path,
+    side,
+    x,
+    y,
+    size,
+    seam.center,
+    circleCenterV,
+    headRadius,
+    0,
+    -40,
+    direction,
+  );
+
+  addCurve(path, side, x, y, size, [
+    [
+      circleEnd.u - headRadius * 0.26,
+      circleEnd.v - headRadius * 0.08 * direction,
+    ],
+    [neckEnd, seam.depth * 0.035 * direction],
+    [neckEnd, 0],
+  ]);
+
   const sideEnd = transform(side, x, y, size, 1, 0);
   path.push(`L ${format(sideEnd.x)} ${format(sideEnd.y)}`);
+}
+
+function circlePoint(
+  centerU: number,
+  centerV: number,
+  radius: number,
+  angleDegrees: number,
+  direction: 1 | -1,
+): LocalPoint {
+  const angle = angleDegrees * degreesToRadians;
+  return {
+    u: centerU + Math.cos(angle) * radius,
+    v: (centerV + Math.sin(angle) * radius) * direction,
+  };
+}
+
+function addCircularArc(
+  path: string[],
+  side: Side,
+  x: number,
+  y: number,
+  size: number,
+  centerU: number,
+  centerV: number,
+  radius: number,
+  startDegrees: number,
+  endDegrees: number,
+  direction: 1 | -1,
+) {
+  const startAngle = startDegrees * degreesToRadians;
+  const endAngle = endDegrees * degreesToRadians;
+  const delta = endAngle - startAngle;
+  const controlScale = (4 / 3) * Math.tan(delta / 4) * radius;
+  const endPoint = circlePoint(centerU, centerV, radius, endDegrees, direction);
+  const control1: LocalPoint = {
+    u:
+      centerU +
+      Math.cos(startAngle) * radius -
+      Math.sin(startAngle) * controlScale,
+    v:
+      (centerV +
+        Math.sin(startAngle) * radius +
+        Math.cos(startAngle) * controlScale) *
+      direction,
+  };
+  const control2: LocalPoint = {
+    u:
+      centerU + Math.cos(endAngle) * radius + Math.sin(endAngle) * controlScale,
+    v:
+      (centerV +
+        Math.sin(endAngle) * radius -
+        Math.cos(endAngle) * controlScale) *
+      direction,
+  };
+
+  addCurve(path, side, x, y, size, [
+    [control1.u, control1.v],
+    [control2.u, control2.v],
+    [endPoint.u, endPoint.v],
+  ]);
 }
 
 function addCurve(
