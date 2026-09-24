@@ -4,6 +4,17 @@ import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 
 const initialState: WaterSortState = [[0, 1, 0, 1], [1, 0, 1, 0], [], []];
 
+const constrainedState: WaterSortState = [
+  [5, 0, 5, 4],
+  [2, 1, 4, 0],
+  [2, 5, 1, 3],
+  [3, 1, 4, 3],
+  [0, 3, 5, 2],
+  [2, 4, 1, 0],
+  [],
+  [],
+];
+
 function solveInitialState() {
   const solved = solveWaterSort(initialState);
   if (solved.status !== "solved") {
@@ -73,5 +84,33 @@ describe("analyzeWaterSortDifficulty", () => {
     expect(analysis.representativeChoiceRisk.evaluatedChoiceCount).toBe(1);
     expect(analysis.representativeChoiceRisk.unresolvedChoiceCount).toBe(0);
     expect(analysis.representativeChoiceRisk.optimalChoiceRatio).toBe(1);
+  });
+
+  test("複数局面の自然な選択肢から行き止まり選択を検出すること", () => {
+    const solved = solveWaterSort(constrainedState);
+    if (solved.status !== "solved") {
+      throw new Error("test state must be solvable");
+    }
+
+    const analysis = analyzeWaterSortDifficulty(constrainedState, solved.moves);
+    const safety = analysis.plausibleChoiceAnalysis;
+
+    expect(safety.sampledDecisionStateCount).toBe(5);
+    expect(safety.unresolvedChoiceCount).toBe(0);
+    expect(safety.deadEndDecisionStateCount).toBeGreaterThan(0);
+    expect(safety.deadEndChoiceCount).toBeGreaterThan(0);
+    expect(safety.minimumSolvableChoiceRatio).toBeLessThan(1);
+  });
+
+  test("自然な選択肢の可解性を判定できないとき未解決として残すこと", () => {
+    const solved = solveInitialState();
+
+    const analysis = analyzeWaterSortDifficulty(initialState, solved.moves, {
+      maxExpandedStatesPerPlausibleChoice: 0,
+    });
+
+    expect(
+      analysis.plausibleChoiceAnalysis.unresolvedChoiceCount,
+    ).toBeGreaterThan(0);
   });
 });
