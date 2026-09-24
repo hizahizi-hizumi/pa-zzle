@@ -10,6 +10,7 @@ import { FifteenPuzzleBoard } from "@/games/fifteen-puzzle/ui/board/FifteenPuzzl
 
 // 最下段だけが 1 マスずつずれた盤面
 const board = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 13, 14, 15];
+const solvedBoard = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0];
 
 afterEach(() => {
   cleanup();
@@ -17,42 +18,85 @@ afterEach(() => {
 
 describe("FifteenPuzzleBoard", () => {
   let onSlideTile: ReturnType<typeof vi.fn<(tileIndex: number) => void>>;
-  let boardGroup: HTMLElement;
+  let onClearingComplete: ReturnType<typeof vi.fn<() => void>>;
 
   beforeEach(() => {
     onSlideTile = vi.fn<(tileIndex: number) => void>();
-    render(
-      <FifteenPuzzleBoard
-        board={board}
-        interactionDisabled={false}
-        onSlideTile={onSlideTile}
-      />,
-    );
-    boardGroup = screen.getByRole("group", { name: "盤面" });
+    onClearingComplete = vi.fn<() => void>();
   });
 
-  test("空白を除く 15 枚のタイルを数字の名前を持つボタンとして表示すること", () => {
-    const result = within(boardGroup).getAllByRole("button");
+  describe("プレイ中の場合", () => {
+    let boardGroup: HTMLElement;
 
-    expect(result.map((tile) => tile.textContent)).toEqual(
-      Array.from({ length: 15 }, (_, index) => String(index + 1)),
+    beforeEach(() => {
+      render(
+        <FifteenPuzzleBoard
+          board={board}
+          operation={null}
+          interactionDisabled={false}
+          clearing={false}
+          onSlideTile={onSlideTile}
+          onClearingComplete={onClearingComplete}
+        />,
+      );
+      boardGroup = screen.getByRole("group", { name: "盤面" });
+    });
+
+    test("空白を除く 15 枚のタイルを数字の名前を持つボタンとして表示すること", () => {
+      const result = within(boardGroup).getAllByRole("button");
+
+      expect(result.map((tile) => tile.textContent)).toEqual(
+        Array.from({ length: 15 }, (_, index) => String(index + 1)),
+      );
+    });
+
+    const tapCases = [
+      ["13", 13],
+      ["15", 15],
+      ["1", 0],
+    ] as const;
+
+    test.each(tapCases)(
+      "タイル %s のタップでそのタイルのマスを通知すること",
+      (tileName, expectedTileIndex) => {
+        fireEvent.click(
+          within(boardGroup).getByRole("button", { name: tileName }),
+        );
+
+        expect(onSlideTile).toHaveBeenCalledWith(expectedTileIndex);
+      },
     );
   });
 
-  const tapCases = [
-    ["13", 13],
-    ["15", 15],
-    ["1", 0],
-  ] as const;
+  describe("完成した場合", () => {
+    let rerender: ReturnType<typeof render>["rerender"];
 
-  test.each(tapCases)(
-    "タイル %s のタップでそのタイルのマスを通知すること",
-    (tileName, expectedTileIndex) => {
-      fireEvent.click(
-        within(boardGroup).getByRole("button", { name: tileName }),
+    beforeEach(() => {
+      ({ rerender } = render(
+        <FifteenPuzzleBoard
+          board={solvedBoard}
+          operation={null}
+          interactionDisabled
+          clearing={false}
+          onSlideTile={onSlideTile}
+          onClearingComplete={onClearingComplete}
+        />,
+      ));
+    });
+
+    test("演出を再生できない環境ではすぐに完成演出の完了を通知すること", () => {
+      rerender(
+        <FifteenPuzzleBoard
+          board={solvedBoard}
+          operation={null}
+          interactionDisabled
+          clearing
+          onSlideTile={onSlideTile}
+          onClearingComplete={onClearingComplete}
+        />,
       );
 
-      expect(onSlideTile).toHaveBeenCalledWith(expectedTileIndex);
-    },
-  );
+      expect(onClearingComplete).toHaveBeenCalledOnce();
+    });
+  });
 });

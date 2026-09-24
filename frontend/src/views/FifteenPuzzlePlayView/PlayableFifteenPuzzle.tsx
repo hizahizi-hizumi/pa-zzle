@@ -15,13 +15,19 @@ export function PlayableFifteenPuzzle({
 
   return (
     <FifteenPuzzlePlay
-      status={play.status}
       progress={play.progress}
       board={play.board}
+      elapsedMs={play.elapsedMs}
       moveCount={play.moveCount}
+      operation={play.operation}
       onSlideTile={play.slideTile}
+      onSlideByKeyboard={play.slideByKeyboard}
+      onRestart={play.restart}
       onReplay={play.replay}
       onStartNewProblem={play.startNewProblem}
+      onClearingComplete={play.completeClearing}
+      // 難易度選択画面を追加するまではホームへ戻す。
+      onChangeDifficulty={() => navigate("/")}
       onBackToHome={() => navigate("/")}
     />
   );
