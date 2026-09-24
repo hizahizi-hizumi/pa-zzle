@@ -29,10 +29,13 @@ bun run --cwd tools/semantic-lint check -- --include-draft
 # 判定cacheを使わずにproviderへ送り直す
 bun run --cwd tools/semantic-lint check -- --no-cache
 
+# providerを呼ばず、request数と推定input tokenを確認 (API key不要)
+bun run --cwd tools/semantic-lint check -- --plan-only --include-draft
+
 # rule一覧
 bun run --cwd tools/semantic-lint rules
 
-# providerを呼ばず、rule / subject / request planを確認
+# providerを呼ばず、rule / unit / request payloadを確認
 bun run --cwd tools/semantic-lint inspect -- \
   vitest/arrange-outside-test \
   frontend/src/records/storage.test.ts \
@@ -52,7 +55,7 @@ bun run --cwd tools/semantic-lint bench -- vitest/arrange-outside-test --repeat 
 # 既存のRunResult JSONをgoldenで採点 (providerを呼ばない)
 bun run --cwd tools/semantic-lint bench -- --score <run-result.json>
 
-# 設定・source・scopeの整合性確認
+# 設定・source・unitカタログの整合性確認
 bun run --cwd tools/semantic-lint doctor
 
 # tool自身の決定論的検証
@@ -64,11 +67,57 @@ CLIのpath引数はrepository root基準で解決する。
 
 ## 仕組み
 
-ruleは対象pathとscopeを宣言する。scope adapterがsourceから判定対象の `Subject` を決定論的に抽出し、providerはそのsubjectがpredicateを満たすかだけを判定する。
-
-行範囲やsymbolはmodelに生成させない。Vitestのtest / beforeEach / describeはTypeScript ASTから抽出する。
+ruleは対象path（`paths`）と判定対象の単位（`unit`）を宣言する。unitカタログがsourceから判定対象の `Subject` を決定論的に抽出し、providerはそのsubjectがpredicateを満たすかだけを判定する。行範囲やsymbolはmodelに生成させない。
 
 provider結果へruleのthresholdを1回だけ適用し、canonicalな `Diagnostic` を作る。pretty / compact / JSON出力はこのDiagnosticから生成する。
+
+### unit語彙
+
+ruleの `unit` には意味の名前を書く。どの構文を抽出するかは、ファイルの拡張子から決まる言語とカタログの定義で決まる。
+
+| unit | 種類 | 抽出するもの |
+| --- | --- | --- |
+| `file` | file | ファイル全体。構文解析しないため全言語で使える |
+| `function` | 汎用 | 関数宣言・関数式・arrow function・method |
+| `statement` | 汎用 | ブロック直下の文（入れ子の文もそれぞれ1 unit） |
+| `test` | 名前付き | Vitestの `test` / `it` 呼び出し（`test.each(...)(...)`、`it.skip` などを含む）。第1引数が文字列リテラルのもの |
+| `test-group` | 名前付き | Vitestの `describe` 呼び出し（`describe.each` を含む） |
+| `setup` | 名前付き | Vitestの `beforeEach` / `beforeAll` / `afterEach` / `afterAll` 呼び出し |
+| `component` | 名前付き | Reactの関数コンポーネント（大文字で始まりJSXを含む関数。`memo` / `forwardRef` を含む）。TSX / JSXのみ |
+| `hook` | 名前付き | Reactのカスタムフック（`use` + 大文字・数字で始まる関数） |
+
+対応言語はTypeScript（`.ts` / `.mts` / `.cts`）、TSX（`.tsx`）、JavaScript（`.js` / `.mjs` / `.cjs` / `.jsx`）。
+
+### unitカタログ
+
+カタログは `tools/semantic-lint/catalog/` のデータで、rule作者は編集しない。構文解析はweb-tree-sitterとnpmのwasm文法（`tree-sitter-typescript` / `tree-sitter-javascript`）で行い、native buildに依存しない。
+
+- `units.yaml`: 語彙。unit名、level（`file` / `syntax` / `framework`）、判定時の文脈（`context`）。
+- `languages.yaml`: 言語ごとの拡張子、wasm文法、scopeになる構文node、unit本文を置き換える目印。
+- `syntax/*.yaml`: 汎用unitの言語ごとのtree-sitter query。
+- `frameworks/*.yaml`: 名前付きunitの「言語 × フレームワーク」のtree-sitter query。`@unit` captureがunitの範囲、`symbol` の `{capture}` が表示名になる（文字列リテラルは値をJSON文字列にする）。`contains` で子孫に特定nodeを含むものだけに絞れる。
+
+フレームワークへの対応や言語の追加は、TypeScript実装を変えずにこれらのデータを追加して行う。同じ言語で同じunitを複数のフレームワークが定義するとカタログの読み込みエラーになる。`doctor` は全文法の読み込みと全queryのcompileを行い、ruleの対象fileのうち言語にunit定義がないものを警告する。
+
+unitの文脈はカタログの `context` で宣言する。判定時は常に、unit本文・囲むunit（祖先）・どのunitにも含まれないファイルの骨格（importや補助関数など）を文脈にする。加えて `test` は、自分を含むscopeにある `setup`（同じ/外側の `describe` の `beforeEach` など）を、`setup` は自分のscope内の `test` を文脈にする。
+
+### request
+
+1ファイルに当たる全rule × 全unitを、token予算（`.semantic-lint/config.yaml` の `execution.requestTokenBudget`。既定はstate + 最長の質問1つで32,000、request全体で64,000）に収まる限り1 requestにまとめ、stateとrequest固定費をファイルあたり1回にする。予算を超える見積もりのときだけ、unitの出現順に分割する。見積もりはJevの課金係数（request固定約261、質問1つ約8、選択肢1つ約15 + 文面は英単語1語約1、stateはJSON約2.35文字/token）による近似。
+
+stateは次の形で、ファイルの各文字は `state.file.source` かいずれか1つのsubjectにだけ現れる。
+
+```json
+{
+  "file": { "path": "...", "source": "import ...\n\n/* state.subjects.s0 */;\n" },
+  "subjects": {
+    "s0": { "unit": "test-group", "symbol": "describe(\"...\")", "source": "describe(\"...\", () => {\n  /* state.subjects.s1 */;\n})" },
+    "s1": { "unit": "test", "symbol": "test(\"...\")", "source": "test(\"...\", () => { ... })" }
+  }
+}
+```
+
+判定対象のunitは目印（`/* state.subjects.sN */`）に置き換え、本文はsubjectsに1回だけ載せる。requestに判定対象の祖先と文脈のunitまでを載せ、それ以外のunit（cache hitしたunitや分割した別requestのunit）は `/* omitted */` にする。
 
 ## 判定cache
 
@@ -76,21 +125,23 @@ provider結果へruleのthresholdを1回だけ適用し、canonicalな `Diagnost
 
 保存するのはthreshold適用前のprovider判定（Choiceと4 outcomeの確率、confidence、応答したprovider / model）。thresholdは実行ごとにcacheから読んだ判定へ適用するため、thresholdやseverityを変えても再判定しない。
 
-cache keyはrule × subject単位で、providerへ送る1判定分の入力を決める次の要素のSHA-256とする。
+cache keyはrule × unit単位で、1判定の答えを決める次の要素のSHA-256とする。
 
 - provider種別、設定上のmodel、provider側のprompt / request組み立ての版（TypeSafeでは `TYPESAFE_REQUEST_FORMAT`）
-- ruleのscope、predicateの `instruction` と4 outcomesの文面
-- 文脈として送るfileのpathと全文
-- subjectのid / scope / path / symbol / source
+- ruleのunit、predicateの `instruction` と4 outcomesの文面
+- fileのpathと、unitの文脈: unit本文・祖先・カタログのcontext宣言が指すunit・ファイルの骨格を元の位置に並べ、それ以外のunitを共通の目印に置き換えたもの
 
-threshold、severity、status、rule id、行番号（subject range）はkeyに含めない。subject rangeはfile全文とsubject idから決まる。
+threshold、severity、status、rule id、行番号はkeyに含めない。
 
-providerへの送信はfileごとのbatchだが、hit / missはtaskごとに判定し、missしたtaskだけでbatchを組み立てる。現在は文脈としてfile全文を送るため、fileを1文字でも変えるとそのfileの全subjectがmissになる。変更のないfileと、rule文面を変えていないruleの判定は再利用する。
+同じファイルの別unitの本文だけを変えた場合、変えたunitだけがmissする。文脈に宣言したunit（testから見たsetupなど）や骨格（importや補助関数）を変えた場合は、それに依存するunitがmissする。unitの追加・削除や、そのファイルに適用するunitの種類の変更は骨格を変えるため、そのファイルの判定がmissする。
+
+providerへの送信はfileごとのbatchだが、hit / missはtaskごとに判定し、missしたtaskだけでbatchを組み立てる。
 
 新しい判定はprovider応答ごとに追記するため、途中で失敗した実行で得た判定も次回に使える。実行完了時にcacheを書き直し、重複を畳んで、最終利用から30日を過ぎたentryと50,000件を超えた古いentryを削除する。読めない行や形式の合わないentryは無視してmissとして扱い、次の書き直しで削除する。
 
 - `--no-cache`: cacheを読まず、書きもしない。
 - golden caseで判定の揺れを測る `eval` はcacheを使わない。
+- `check --plan-only` はcacheを照合したうえでproviderへ送るrequest数と推定input tokenを表示する（cacheは書き換えない）。`--no-cache` を付けると全件送る場合の見積もりになる。
 - `inspect` で全件hitした場合はprovider responseが空になる。provider応答を見たいときは `--no-cache` を付ける。
 - `doctor` はcache fileのentry数・サイズ・最終利用日時・読めない行数を表示する。
 - provider側のprompt / request組み立てを変えたら `TYPESAFE_REQUEST_FORMAT` を、key構成や保存形式を変えたら `cache/decision-cache.ts` の `CACHE_FORMAT_VERSION` を更新する。古いentryはmissになり、保持期間を過ぎると削除される。cacheを捨てたいときは `.semantic-lint/.cache/` を削除する。
@@ -114,12 +165,12 @@ severityの `warning / error` はlifecycleとは別に管理する。
 1. 対応する人間向け規約が `.claude/rules/*.md` に存在することを確認する。semantic rulesetを規約の正本にしない。
 2. 適用pathとsource documentを共有できる既存rulesetがあれば `.semantic-lint/rules/<ruleset>.yaml` にruleを追加する。共有できなければ新しいrulesetを作る。
 3. 新規ruleは `status: draft`、原則 `severity: warning` で開始する。
-4. ruleには `id`、`title`、`scope`、`sourceSection`、predicateの `instruction` と4 outcomesを定義する。
+4. ruleには `id`、`title`、`unit`、`sourceSection`、predicateの `instruction` と4 outcomesを定義する。`unit` は「unit語彙」の名前から選ぶ。scope・selector・AST node・文脈の取り方は書かない（書くと読み込みエラーになる）。
 5. `.semantic-lint/cases/<ruleset>/cases.yaml` とfixtureへ、少なくとも明確な `violation` と `compliant` を追加する。実運用で境界例が見つかったらgolden caseへ追加する。
-6. `doctor` と `inspect --plan-only` でpath / scope / subject / request planを確認する。
+6. `doctor` と `inspect --plan-only` でpath / unit / subject / request payloadを確認する。
 7. `eval <rule-id> --repeat 10` でChoiceと違反確率の揺れを見る。
 8. `check --include-draft` で実repositoryへ適用し、誤検知・見逃し・unknownを確認する。
-9. 十分に運用できると判断したら `status: active` へ変更する。thresholdは単一fixtureへ合わせず、golden corpusと実コードの両方を見て決める。
+9. 十分に運用できると判断したら `status: active` へ変更する。thresholdは単一fixtureへ合わせず、実repo goldenを `bench` で採点して校正した値を書く。
 
 4 outcomesは固定。
 
@@ -128,7 +179,26 @@ severityの `warning / error` はlifecycleとは別に管理する。
 - `not_applicable`: subjectにその規約を適用する意味がない。
 - `insufficient_context`: 与えたcontextだけでは判断できない。
 
-新しいscopeが必要な場合だけ `tools/semantic-lint/scopes/` の実装を追加する。通常のrule追加でTypeScript実装を変更しない。
+rule追加でTypeScript実装は変更しない。必要なunitが語彙にない場合は、`catalog/units.yaml` へ語彙を、`catalog/frameworks/` または `catalog/syntax/` へqueryを追加する。
+
+最小のrule例:
+
+```yaml
+rules:
+  - id: arrange-outside-test
+    title: テスト本体にArrangeを置かない
+    unit: test
+    sourceSection: テスト構造 > Arrangeの分離方法
+    predicate:
+      instruction: |
+        Determine whether this individual test keeps meaningful Arrange setup
+        outside the test body.
+      outcomes:
+        violation: ...
+        compliant: ...
+        not_applicable: ...
+        insufficient_context: ...
+```
 
 ルール拡充は #323 で追跡する。
 
@@ -165,7 +235,7 @@ files:
 
 GitHub ActionsのQuality Gateでは、tool自身のtypecheck / deterministic test / doctor / inspectをPRとmainへのpushで実行する。TypeSafe providerを使う通常の `check` は、provider課金を抑えるためmainへのpushと手動実行（workflow_dispatch）でだけ実行し、PRでは実行しない。
 
-Quality Gateは `actions/cache/restore` で `semantic-lint-v1-` から始まる最新の判定cacheを復元してから `check` を実行し、`actions/cache/save` で実行ごとに新しいkey（`semantic-lint-v1-<run_id>-<run_attempt>`）として保存する。lintが失敗した実行でもcacheを保存し、中断前に得た判定を次回へ引き継ぐ。cache形式やkey構成を互換性なく変えたときはprefixの版を上げる。
+Quality Gateは `actions/cache/restore` で `semantic-lint-v2-` から始まる最新の判定cacheを復元してから `check` を実行し、`actions/cache/save` で実行ごとに新しいkey（`semantic-lint-v2-<run_id>-<run_attempt>`）として保存する。lintが失敗した実行でもcacheを保存し、中断前に得た判定を次回へ引き継ぐ。cache形式やkey構成を互換性なく変えたときはprefixの版を上げる。
 
 remote semantic lintはChatGPT用のoffline verificationでは実行しない。ChatGPT用Offline Dependenciesにもsemantic lintの `node_modules` は含めない。
 
