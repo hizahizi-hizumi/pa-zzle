@@ -81,12 +81,20 @@ async function runCandidateAnchorPoc(
   args: string[],
   strategy: PocStrategy,
 ): Promise<number> {
-  const { planOnly, repeat, verbose, benchmarkPath, repository } =
-    parseCandidateAnchorOptions(args);
+  const {
+    planOnly,
+    repeat,
+    verbose,
+    benchmarkPath,
+    repository,
+    maxDecisionsPerRequest,
+  } = parseCandidateAnchorOptions(args);
   const { projectRoot, config, rules } = await loadProjectContext();
   const benchmark = await loadCandidateAnchorBenchmark(
     resolve(projectRoot, benchmarkPath),
   );
+  const decisionLimit =
+    maxDecisionsPerRequest ?? config.execution.maxDecisionsPerRequest;
 
   if (planOnly) {
     const output = await renderCandidateAnchorPlan({
@@ -94,7 +102,7 @@ async function runCandidateAnchorPoc(
       benchmark,
       rules,
       excludePaths: config.excludePaths,
-      maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
+      maxDecisionsPerRequest: decisionLimit,
       ...(strategy.extractor === undefined
         ? {}
         : { extractCandidates: strategy.extractor }),
@@ -120,7 +128,7 @@ async function runCandidateAnchorPoc(
       projectRules: rules,
       excludePaths: config.excludePaths,
       provider,
-      maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
+      maxDecisionsPerRequest: decisionLimit,
       ...(strategy.extractor === undefined
         ? {}
         : { extractCandidates: strategy.extractor }),
@@ -142,7 +150,7 @@ async function runCandidateAnchorPoc(
     const result = await runCandidateAnchorBenchmark({
       benchmark,
       provider,
-      maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
+      maxDecisionsPerRequest: decisionLimit,
       ...(strategy.extractor === undefined
         ? {}
         : { extractCandidates: strategy.extractor }),
@@ -167,12 +175,14 @@ function parseCandidateAnchorOptions(args: string[]): {
   verbose: boolean;
   benchmarkPath: string;
   repository: boolean;
+  maxDecisionsPerRequest?: number;
 } {
   let planOnly = false;
   let repeat = 1;
   let verbose = false;
   let benchmarkPath = ".semantic-lint/poc/benchmark.yaml";
   let repository = false;
+  let maxDecisionsPerRequest: number | undefined;
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
@@ -216,10 +226,29 @@ function parseCandidateAnchorOptions(args: string[]): {
       continue;
     }
 
+    if (arg === "--max-decisions-per-request") {
+      const value = Number(args[index + 1]);
+
+      if (!Number.isInteger(value) || value < 1 || value > 64) {
+        throw new Error("--max-decisions-per-requestには1〜64の整数を指定してください。");
+      }
+
+      maxDecisionsPerRequest = value;
+      index += 1;
+      continue;
+    }
+
     throw new Error(`不明なcandidate-anchorオプションです: ${arg}`);
   }
 
-  return { planOnly, repeat, verbose, benchmarkPath, repository };
+  return {
+    planOnly,
+    repeat,
+    verbose,
+    benchmarkPath,
+    repository,
+    ...(maxDecisionsPerRequest === undefined ? {} : { maxDecisionsPerRequest }),
+  };
 }
 
 async function renderCandidateAnchorPlan(options: {
