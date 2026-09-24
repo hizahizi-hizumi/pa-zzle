@@ -7,6 +7,7 @@ import {
   type SemanticDecisionProvider,
 } from "../../domain/model.ts";
 import type { SemanticLintConfig } from "../../config/config.ts";
+import { buildDecisionState } from "../../units/layout.ts";
 
 const API_URL = "https://api.typesafe.ai/v1/systemone";
 const DEFAULT_MAX_ATTEMPTS = 3;
@@ -14,7 +15,7 @@ const DEFAULT_MAX_ATTEMPTS = 3;
  * buildRequestが組み立てるprompt / request形式の版。
  * 判定キャッシュのkeyに含まれるため、送る内容を変えたら更新する。
  */
-export const TYPESAFE_REQUEST_FORMAT = "systemone-choice/2";
+export const TYPESAFE_REQUEST_FORMAT = "systemone-choice/3";
 
 type FetchLike = (
   input: string | URL | Request,
@@ -78,26 +79,15 @@ export function buildRequest(
   body: unknown;
   questionToTask: Map<string, string>;
 } {
-  const included = new Set(batch.subjectIds);
-  const subjectsById = new Map(
-    batch.units
-      .filter((unit) => included.has(unit.id))
-      .map((subject, index) => [
-        subject.id,
-        {
-          key: "s" + index,
-          subject,
-        },
-      ]),
-  );
+  const { state, keys } = buildDecisionState(batch);
   const questionToTask = new Map<string, string>();
   const questions: Record<string, unknown> = {};
 
   for (const [index, request] of batch.requests.entries()) {
     const questionId = "q" + index;
-    const subject = subjectsById.get(request.subjectId);
+    const subjectKey = keys.get(request.subjectId);
 
-    if (!subject) {
+    if (subjectKey === undefined) {
       throw new Error(
         `DecisionBatchにsubjectがありません: ${request.subjectId}`,
       );
@@ -107,7 +97,7 @@ export function buildRequest(
     questions[questionId] = {
       type: "choice",
       instructions: [
-        `Evaluate only state.subjects.${subject.key}.`,
+        `Evaluate only state.subjects.${subjectKey}.`,
         "Use state.file as surrounding context when needed.",
         "Do not classify another subject in the file.",
         "",
@@ -117,27 +107,10 @@ export function buildRequest(
     };
   }
 
-  const subjects = Object.fromEntries(
-    [...subjectsById.values()].map(({ key, subject }) => [
-      key,
-      {
-        id: subject.id,
-        unit: subject.unit,
-        path: subject.path,
-        range: subject.range,
-        ...(subject.symbol === undefined ? {} : { symbol: subject.symbol }),
-        source: subject.source,
-      },
-    ]),
-  );
-
   return {
     body: {
       model,
-      state: {
-        file: batch.file,
-        subjects,
-      },
+      state,
       questions,
     },
     questionToTask,

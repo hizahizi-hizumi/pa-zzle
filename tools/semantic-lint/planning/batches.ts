@@ -3,6 +3,7 @@ import type {
   EvaluationPlan,
   Rule,
 } from "../domain/model.ts";
+import { subjectClosure } from "../units/layout.ts";
 
 export function buildDecisionBatches(options: {
   plan: EvaluationPlan;
@@ -35,9 +36,7 @@ export function buildDecisionBatches(options: {
         },
         marker: file.marker,
         units: file.units,
-        subjectIds: file.units
-          .filter((unit) => subjectIds.has(unit.id))
-          .map((unit) => unit.id),
+        subjectIds: subjectClosure(file.units, subjectIds),
         requests: tasks.map((task) => {
           const rule = rulesById.get(task.ruleId);
 
