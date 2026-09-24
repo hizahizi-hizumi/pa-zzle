@@ -93,8 +93,8 @@ rules:
 
 | unit | 単位 | 指摘範囲 |
 | --- | --- | --- |
-| `file` | ファイル。400行を超えるとトップレベル文の境界で分割する | 違反単位内で行IDを選ばせ、その行を含む葉の文 |
-| `function` | 構文上の関数 (宣言・式・arrow・method・コールバック引数)。3行未満の関数は外側へ畳む | 違反単位内で行IDを選ばせ、その行を含む関数本体直下の文 |
+| `file` | ファイル。400行を超えるとトップレベル文の境界で分割する | 違反単位内の葉の文 |
+| `function` | 構文上の関数 (宣言・式・arrow・method・コールバック引数)。3行未満の関数は外側へ畳む | 違反単位内の関数本体直下の文 |
 | `line` | 他の文を含まない文 | 判定した文そのもの |
 
 - unitは構文だけで抽出し、関数名などframework固有の知識で分岐しない。unit語彙は `units/definitions.ts` の `UnitDefinition` (抽出器 + 文脈構築) として登録する。
@@ -102,10 +102,10 @@ rules:
 - 対象外の単位はmodelが `not_applicable` で捨てる前提で、predicateの `not_applicable` に「このruleが扱う種類のコードではない」場合を含める。
 - 同じファイル・同じunitに当たる複数ruleの質問は1 requestに相乗りする。
 - 入れ子の関数は外側・内側の両方を判定し、位置特定後に外側の指摘が内側の指摘を包含する場合は内側だけを残す。
-- 位置特定は `violationThreshold` 以上のviolation単位だけ、行IDのchoice (1質問255選択肢まで。空行・コメント行・記号だけの行は除く) で行う。複数行の文は行の確率を合算する。
+- 位置特定は `violationThreshold` 以上のviolation単位だけで行う。既定の `judge` は単位内の文ごとに「違反の一部か」を判定し、確率0.5以上の文を指摘する (なければ最も高い文)。`lines` / `statements` は行IDのchoice (1質問255選択肢まで。超えたらNONE付きwindowに分割。空行・コメント行・記号だけの行は除く) で1回選ばせ、複数行の文は行の確率を合算する。
 - 判定と位置特定の回答は `.semantic-lint/.cache/decisions.json` にキャッシュする。keyはrule文面・unit・文脈モード・対象と文脈のテキスト・modelで、thresholdは含めない。`check --no-cache` で無効にできる。
 
-`bench --rules-from <ruleset>` はgolden `<ruleset>/<id>` を別rulesetの同じidのruleで評価する。unit ruleはthreshold sweepのためthreshold未満のviolationも位置特定する。`--nesting fold|all`、`--context skeleton|file`、`--locate lines|statements` は比較実験用のengine設定でrule定義には書かない。
+`bench --rules-from <ruleset>` はgolden `<ruleset>/<id>` を別rulesetの同じidのruleで評価する。unit ruleはthreshold sweepのためthreshold未満のviolationも位置特定する。`--nesting fold|all`、`--context skeleton|file`、`--locate judge|lines|statements`、`--position on|off` (囲む関数・引数として渡される呼び出しを質問に添える) は比較実験用のengine設定でrule定義には書かない。
 
 ## Ruleを追加する
 

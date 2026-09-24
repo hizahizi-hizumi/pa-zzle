@@ -60,7 +60,7 @@ export type UnitEngineOptions = {
 
 export const DEFAULT_UNIT_ENGINE_OPTIONS: UnitEngineOptions = {
   unitOptions: DEFAULT_UNIT_OPTIONS,
-  locateMode: "lines",
+  locateMode: "judge",
   locateAllViolations: false,
   maxQuestionsPerRequest: 64,
   concurrency: 1,

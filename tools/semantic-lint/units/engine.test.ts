@@ -54,6 +54,7 @@ describe("runUnitPlan", () => {
       plan: plan(),
       units: createDefaultUnitRegistry(),
       provider,
+      engine: { locateMode: "lines" },
     });
 
     expect(result.metrics.judgeRequests).toBe(1);
@@ -84,6 +85,7 @@ describe("runUnitPlan", () => {
       plan: strictPlan,
       units: createDefaultUnitRegistry(),
       provider,
+      engine: { locateMode: "lines" },
     });
     const locateQuestions = provider.requests
       .slice(1)
@@ -101,6 +103,7 @@ describe("runUnitPlan", () => {
       units: createDefaultUnitRegistry(),
       provider: fakeProvider(),
       cache,
+      engine: { locateMode: "lines" },
     });
     const provider = fakeProvider();
     const cached = await runUnitPlan({
@@ -108,6 +111,7 @@ describe("runUnitPlan", () => {
       units: createDefaultUnitRegistry(),
       provider,
       cache,
+      engine: { locateMode: "lines" },
     });
 
     expect(provider.requests).toHaveLength(0);
