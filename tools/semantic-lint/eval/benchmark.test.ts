@@ -4,7 +4,11 @@ import { ScopeRegistry } from "../scopes/registry.ts";
 import { FakeDecisionProvider } from "../testing/fake-provider.ts";
 import { decisionResult, sampleRule } from "../testing/fixtures.ts";
 import { runGoldenBenchmark } from "./benchmark.ts";
-import { buildBenchmarkReport, renderBenchmarkReport } from "./benchmark-report.ts";
+import {
+  buildBenchmarkReport,
+  renderBenchmarkReport,
+  renderBenchmarkSummary,
+} from "./benchmark-report.ts";
 import type { GoldenSet, ResolvedGoldenFile } from "./golden.ts";
 
 describe("runGoldenBenchmark", () => {
@@ -68,6 +72,9 @@ describe("runGoldenBenchmark", () => {
     ).toBe(1);
     expect(renderBenchmarkReport(report)).toContain(
       "clean.test.ts:1-3 (1/2)",
+    );
+    expect(renderBenchmarkSummary(report).split("\n")[1]).toStartWith(
+      "sample\t-\tfile\t",
     );
   });
 });

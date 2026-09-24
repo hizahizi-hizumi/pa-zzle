@@ -1,4 +1,4 @@
-import { ruleTargetLabel } from "../domain/model.ts";
+import { DECISIONS, type Decision, ruleTargetLabel } from "../domain/model.ts";
 import type { BenchmarkRuleResult, BenchmarkRun } from "./benchmark.ts";
 import { type Calibration, calibrate } from "./calibrate.ts";
 import type { GoldenFileStatus } from "./golden.ts";
@@ -39,6 +39,9 @@ export type ThresholdSweepRow = {
   containmentRecall: Summary;
   strictPrecision: Summary;
   strictRecall: Summary;
+  /** 位置特定をせず判定単位の範囲を指摘にしたときの包含一致。判定そのものの精度を見る。 */
+  unitContainmentPrecision: Summary;
+  unitContainmentRecall: Summary;
   findings: Summary;
 };
 
@@ -83,6 +86,8 @@ export type RuleBenchmarkReport = {
   thresholdSweep: ThresholdSweepRow[] | null;
   /** 判定記録からの閾値校正。判定記録を持たない実行結果ではnull。 */
   calibration: Calibration | null;
+  /** 判定対象ごとの判定分布 (run平均)。判定記録を持たない実行結果ではnull。 */
+  decisions: Record<Decision, number> | null;
 };
 
 export type BenchmarkReport = {
@@ -206,6 +211,7 @@ function buildRuleReport(
       lineTolerance,
       sweepThresholds,
     ),
+    decisions: decisionDistribution(runs),
     calibration: runs.some((run) => run.evaluations === null)
       ? null
       : calibrate(
@@ -234,6 +240,16 @@ function buildThresholdSweep(
         { lineTolerance },
       ),
     );
+    const unitScores = runs.map((run) =>
+      scoreFindings(
+        golden,
+        findingsAtThreshold(
+          (run.evaluations ?? []).map(({ locations: _, ...evaluation }) => evaluation),
+          threshold,
+        ),
+        { lineTolerance },
+      ),
+    );
 
     return {
       threshold,
@@ -247,9 +263,37 @@ function buildThresholdSweep(
       ),
       strictPrecision: summarize(scores.map((score) => score.strict.precision)),
       strictRecall: summarize(scores.map((score) => score.strict.recall)),
+      unitContainmentPrecision: summarize(
+        unitScores.map((score) => score.containment.precision),
+      ),
+      unitContainmentRecall: summarize(
+        unitScores.map((score) => score.containment.recall),
+      ),
       findings: summarize(scores.map((score) => score.findings.length)),
     };
   });
+}
+
+function decisionDistribution(
+  runs: BenchmarkRun[],
+): Record<Decision, number> | null {
+  if (runs.length === 0 || runs.some((run) => run.evaluations === null)) {
+    return null;
+  }
+
+  return Object.fromEntries(
+    DECISIONS.map((decision) => [
+      decision,
+      runs.reduce(
+        (sum, run) =>
+          sum +
+          (run.evaluations ?? []).filter(
+            (evaluation) => evaluation.decision === decision,
+          ).length,
+        0,
+      ) / runs.length,
+    ]),
+  ) as Record<Decision, number>;
 }
 
 function countAcrossRuns(
@@ -311,6 +355,12 @@ export function renderBenchmarkReport(report: BenchmarkReport): string {
       `  tokens       input ${formatSummary(rule.summary.inputTokens, 0)}  output ${formatSummary(rule.summary.outputTokens, 0)}`,
     );
 
+    if (rule.decisions) {
+      lines.push(
+        `  判定分布     ${DECISIONS.map((decision) => `${decision} ${(rule.decisions?.[decision] ?? 0).toFixed(1)}`).join(" / ")}`,
+      );
+    }
+
     lines.push("  run別:");
 
     for (const [index, run] of rule.runs.entries()) {
@@ -370,6 +420,66 @@ export function renderBenchmarkReport(report: BenchmarkReport): string {
   }
 
   return lines.join("\n").trimEnd() + "\n";
+}
+
+/** 方式比較用に、ruleごとの主要指標を1行にまとめる。 */
+export function renderBenchmarkSummary(report: BenchmarkReport): string {
+  const variant =
+    report.variant === undefined
+      ? "-"
+      : Object.values(report.variant).join("/");
+  const lines = [
+    "rule\tvariant\ttarget\t推奨t\tCV t\tCV 包含P/R\tCV 厳密P/R\t@0.5 包含P/R 厳密P/R 単位包含P/R\t@0.7 同\t@0.9 同\treq(判定/位置)\ttoken in/out\tfindings(全run共通/distinct)\t判定分布 V/C/NA/IC",
+  ];
+
+  for (const rule of report.rules) {
+    const calibration = rule.calibration;
+    const cv = calibration?.crossValidation;
+    const at = (threshold: number): string => {
+      const row = rule.thresholdSweep?.find(
+        (candidate) => Math.abs(candidate.threshold - threshold) < 1e-9,
+      );
+
+      return row === undefined
+        ? "-"
+        : `${pair(row.containmentPrecision, row.containmentRecall)} ${pair(row.strictPrecision, row.strictRecall)} ${pair(row.unitContainmentPrecision, row.unitContainmentRecall)}`;
+    };
+
+    lines.push(
+      [
+        rule.ruleId.slice(rule.ruleId.indexOf("/") + 1),
+        variant,
+        rule.scope,
+        calibration ? calibration.threshold.toFixed(2) : "-",
+        cv ? formatRange(cv.thresholds) : "-",
+        cv ? pair(cv.containmentPrecision, cv.containmentRecall) : "-",
+        cv ? pair(cv.strictPrecision, cv.strictRecall) : "-",
+        at(0.5),
+        at(0.7),
+        at(0.9),
+        `${formatMean(rule.summary.providerRequests, 0)}(${formatMean(rule.summary.judgeRequests, 0)}/${formatMean(rule.summary.locateRequests, 0)})`,
+        `${formatMean(rule.summary.inputTokens, 0)}/${formatMean(rule.summary.outputTokens, 0)}`,
+        `${rule.stability.stable}/${rule.stability.distinct}`,
+        rule.decisions
+          ? DECISIONS.map((decision) =>
+              (rule.decisions?.[decision] ?? 0).toFixed(0),
+            ).join("/")
+          : "-",
+      ].join("\t"),
+    );
+  }
+
+  return lines.join("\n") + "\n";
+}
+
+function pair(precision: Summary, recall: Summary): string {
+  return `${formatMean(precision)}/${formatMean(recall)}`;
+}
+
+function formatRange(summary: Summary): string {
+  return summary.min === null || summary.max === null
+    ? "-"
+    : `${summary.min.toFixed(2)}-${summary.max.toFixed(2)}`;
 }
 
 function formatSummary(summary: Summary, digits = 3): string {
