@@ -38,12 +38,10 @@ jobs:
             args: "--rules-from vitest-unit --locate judge"
           - name: B-unit-line
             args: "--rules-from vitest-unit-line"
-          - name: B-unit-nesting-all
-            args: "--rules-from vitest-unit --nesting all"
-          - name: B-unit-locate-statements
-            args: "--rules-from vitest-unit --locate statements"
-          - name: B-unit-context-file
-            args: "--rules-from vitest-unit --context file"
+          - name: B-unit-line-position
+            args: "--rules-from vitest-unit-line --position on"
+          - name: B-unit-locate-judge-position
+            args: "--rules-from vitest-unit --locate judge --position on"
     name: benchmark (${{ matrix.name }})
     steps:
       - uses: actions/checkout@v6
