@@ -9,7 +9,7 @@ export function InvalidDifficulty() {
         <AlertTitle>この難易度は選べません</AlertTitle>
         <AlertDescription>
           <Button asChild>
-            <Link to="/">ホームへ戻る</Link>
+            <Link to="/puzzles/fifteen-puzzle">難易度選択へ戻る</Link>
           </Button>
         </AlertDescription>
       </Alert>

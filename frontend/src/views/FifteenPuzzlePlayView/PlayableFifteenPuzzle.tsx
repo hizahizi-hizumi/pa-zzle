@@ -26,6 +26,7 @@ export function PlayableFifteenPuzzle({
       onReplay={play.replay}
       onStartNewProblem={play.startNewProblem}
       onClearingComplete={play.completeClearing}
+      onChangeDifficulty={() => navigate("/puzzles/fifteen-puzzle")}
       onBackToHome={() => navigate("/")}
     />
   );

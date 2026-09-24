@@ -5,6 +5,7 @@ import { components, hooks, utils } from '@generouted/react-router/client'
 
 export type Path =
   | `/`
+  | `/puzzles/fifteen-puzzle`
   | `/puzzles/fifteen-puzzle/play/:difficulty`
   | `/puzzles/minesweeper`
   | `/puzzles/minesweeper/difficulty-review`
