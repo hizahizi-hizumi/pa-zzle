@@ -1,4 +1,7 @@
+import { BrandSymbol } from "@/components/BrandMark/BrandSymbol";
+
 type BrandMarkProps = {
+  content?: "symbol-and-name" | "symbol";
   size?: "default" | "compact";
   tone?: "default" | "inverse";
 };
@@ -20,12 +23,28 @@ const brandMarkClassNames = {
 >;
 
 export function BrandMark({
+  content = "symbol-and-name",
   size = "default",
   tone = "default",
 }: BrandMarkProps) {
+  if (content === "symbol") {
+    return (
+      <span
+        role="img"
+        aria-label="pa-zzle"
+        className={`inline-flex items-center ${brandMarkClassNames[size][tone]}`}
+      >
+        <BrandSymbol size={size} />
+      </span>
+    );
+  }
+
   return (
-    <span className={`font-brand ${brandMarkClassNames[size][tone]}`}>
-      パズル pa-zzle
+    <span
+      className={`font-brand inline-flex items-center gap-2 ${brandMarkClassNames[size][tone]}`}
+    >
+      <BrandSymbol size={size} />
+      <span>パズル pa-zzle</span>
     </span>
   );
 }

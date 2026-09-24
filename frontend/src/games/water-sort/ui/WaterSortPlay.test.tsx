@@ -70,7 +70,8 @@ describe("WaterSortPlay", () => {
     render(<WaterSortPlay {...baseProps} onSelectBottle={selectBottle} />);
     const bottle = screen.getByRole("button", { name: "ボトル 1: 赤、青" });
     fireEvent.click(bottle);
-    expect(screen.getByText("パズル pa-zzle")).toBeTruthy();
+    expect(screen.getByRole("img", { name: "pa-zzle" })).toBeTruthy();
+    expect(screen.queryByText("パズル pa-zzle")).toBeNull();
     expect(
       screen.getByRole("heading", { name: "ウォーターソート" }),
     ).toBeTruthy();
