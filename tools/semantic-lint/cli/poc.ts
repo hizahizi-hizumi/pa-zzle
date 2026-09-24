@@ -1,5 +1,7 @@
 import { resolve } from "node:path";
 
+import type { DecisionStateMode } from "../domain/model.ts";
+
 import { discoverSourceDocuments } from "../planning/discovery.ts";
 import { createTypeSafeProvider } from "../providers/typesafe/provider.ts";
 import { createDefaultScopeRegistry } from "../scopes/default.ts";
@@ -88,11 +90,19 @@ async function runCandidateAnchorPoc(
     benchmarkPath,
     repository,
     maxDecisionsPerRequest,
+    stateMode,
   } = parseCandidateAnchorOptions(args);
   const { projectRoot, config, rules } = await loadProjectContext();
-  const benchmark = await loadCandidateAnchorBenchmark(
+  const loadedBenchmark = await loadCandidateAnchorBenchmark(
     resolve(projectRoot, benchmarkPath),
   );
+  const benchmark =
+    stateMode === undefined
+      ? loadedBenchmark
+      : {
+          ...loadedBenchmark,
+          rules: loadedBenchmark.rules.map((rule) => ({ ...rule, stateMode })),
+        };
   const decisionLimit =
     maxDecisionsPerRequest ?? config.execution.maxDecisionsPerRequest;
 
@@ -176,6 +186,7 @@ function parseCandidateAnchorOptions(args: string[]): {
   benchmarkPath: string;
   repository: boolean;
   maxDecisionsPerRequest?: number;
+  stateMode?: DecisionStateMode;
 } {
   let planOnly = false;
   let repeat = 1;
@@ -183,6 +194,7 @@ function parseCandidateAnchorOptions(args: string[]): {
   let benchmarkPath = ".semantic-lint/poc/benchmark.yaml";
   let repository = false;
   let maxDecisionsPerRequest: number | undefined;
+  let stateMode: DecisionStateMode | undefined;
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
@@ -238,6 +250,18 @@ function parseCandidateAnchorOptions(args: string[]): {
       continue;
     }
 
+    if (arg === "--state-mode") {
+      const value = args[index + 1];
+
+      if (value !== "full-file" && value !== "subjects-only") {
+        throw new Error("--state-modeはfull-fileまたはsubjects-onlyを指定してください。");
+      }
+
+      stateMode = value;
+      index += 1;
+      continue;
+    }
+
     throw new Error(`不明なcandidate-anchorオプションです: ${arg}`);
   }
 
@@ -248,6 +272,7 @@ function parseCandidateAnchorOptions(args: string[]): {
     benchmarkPath,
     repository,
     ...(maxDecisionsPerRequest === undefined ? {} : { maxDecisionsPerRequest }),
+    ...(stateMode === undefined ? {} : { stateMode }),
   };
 }
 
