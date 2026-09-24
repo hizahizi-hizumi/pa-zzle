@@ -1,7 +1,6 @@
 import { BrandLogo } from "@/components/BrandMark/BrandLogo";
 
 type BrandMarkProps = {
-  content?: "symbol-and-name" | "name";
   size?: "default" | "compact";
   tone?: "default" | "inverse";
 };
@@ -12,7 +11,6 @@ const brandMarkToneClassNames = {
 } satisfies Record<NonNullable<BrandMarkProps["tone"]>, string>;
 
 export function BrandMark({
-  content = "symbol-and-name",
   size = "default",
   tone = "default",
 }: BrandMarkProps) {
@@ -22,7 +20,7 @@ export function BrandMark({
       aria-label="pa-zzle"
       className={`inline-flex items-center ${brandMarkToneClassNames[tone]}`}
     >
-      <BrandLogo content={content} size={size} />
+      <BrandLogo size={size} />
     </span>
   );
 }
