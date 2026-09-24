@@ -65,7 +65,7 @@ export async function runBenchCommand(args: string[]): Promise<number> {
           provider: createTypeSafeProvider(config.provider),
           repeat: options.repeat,
           concurrency: config.execution.concurrency,
-          maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
+          requestTokenBudget: config.execution.requestTokenBudget,
         });
   const report = buildBenchmarkReport(results, {
     lineTolerance: options.lineTolerance,

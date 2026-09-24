@@ -4,10 +4,16 @@ import {
   type DecisionBatch,
   type DecisionBatchResult,
   type DecisionResult,
+  type ProviderRequestIdentity,
+  type RequestEstimate,
+  type RequestEstimator,
   type SemanticDecisionProvider,
 } from "../../domain/model.ts";
 import type { SemanticLintConfig } from "../../config/config.ts";
-import { buildDecisionState } from "../../units/layout.ts";
+import {
+  buildDecisionState,
+  type DecisionState,
+} from "../../units/layout.ts";
 
 const API_URL = "https://api.typesafe.ai/v1/systemone";
 const DEFAULT_MAX_ATTEMPTS = 3;
@@ -16,6 +22,19 @@ const DEFAULT_MAX_ATTEMPTS = 3;
  * 判定キャッシュのkeyに含まれるため、送る内容を変えたら更新する。
  */
 export const TYPESAFE_REQUEST_FORMAT = "systemone-choice/3";
+
+/**
+ * Jevの課金input tokenを見積もる係数。実測した請求から求めた近似値。
+ * - requestBase: 1 requestごとの固定分
+ * - questionBase / optionBase: 質問1つ・選択肢1つの枠。文面は英単語1語を約1 tokenとして加える
+ * - stateCharsPerToken: JSONにしたstateの文字数あたり
+ */
+export const JEV_TOKEN_ESTIMATE = {
+  requestBase: 261,
+  questionBase: 8,
+  optionBase: 15,
+  stateCharsPerToken: 2.35,
+} as const;
 
 type FetchLike = (
   input: string | URL | Request,
@@ -47,11 +66,8 @@ export function createTypeSafeProvider(
   const maxAttempts = options.maxAttempts ?? DEFAULT_MAX_ATTEMPTS;
 
   return {
-    requestIdentity: {
-      kind: "typesafe",
-      model: config.model,
-      requestFormat: TYPESAFE_REQUEST_FORMAT,
-    },
+    requestIdentity: typeSafeRequestIdentity(config),
+    estimate: (batch) => estimateTypeSafeRequest(config.model, batch),
     async evaluate(batch: DecisionBatch): Promise<DecisionBatchResult> {
       const { body, questionToTask } = buildRequest(config.model, batch);
       const response = await requestWithRetry({
@@ -72,16 +88,78 @@ export function createTypeSafeProvider(
   };
 }
 
+export function typeSafeRequestIdentity(
+  config: SemanticLintConfig["provider"],
+): ProviderRequestIdentity {
+  return {
+    kind: "typesafe",
+    model: config.model,
+    requestFormat: TYPESAFE_REQUEST_FORMAT,
+  };
+}
+
+/** API keyなしで使える、TypeSafe requestのinput token見積もり。 */
+export function createTypeSafeRequestEstimator(
+  config: SemanticLintConfig["provider"],
+): RequestEstimator {
+  return {
+    estimate: (batch) => estimateTypeSafeRequest(config.model, batch),
+  };
+}
+
+export function estimateTypeSafeRequest(
+  model: string,
+  batch: DecisionBatch,
+): RequestEstimate {
+  const { body } = buildRequest(model, batch);
+  const state = Math.ceil(
+    JSON.stringify(body.state).length / JEV_TOKEN_ESTIMATE.stateCharsPerToken,
+  );
+  const questions = Object.values(body.questions).map(
+    (question) =>
+      JEV_TOKEN_ESTIMATE.questionBase +
+      countWords(question.instructions) +
+      Object.values(question.criteria).reduce(
+        (sum, description) =>
+          sum + JEV_TOKEN_ESTIMATE.optionBase + countWords(description),
+        0,
+      ),
+  );
+
+  return {
+    state,
+    questions,
+    total:
+      JEV_TOKEN_ESTIMATE.requestBase +
+      state +
+      questions.reduce((sum, tokens) => sum + tokens, 0),
+  };
+}
+
+function countWords(text: string): number {
+  return text.split(/\s+/).filter(Boolean).length;
+}
+
+type ChoiceQuestion = {
+  type: "choice";
+  instructions: string;
+  criteria: Record<Decision, string>;
+};
+
 export function buildRequest(
   model: string,
   batch: DecisionBatch,
 ): {
-  body: unknown;
+  body: {
+    model: string;
+    state: DecisionState;
+    questions: Record<string, ChoiceQuestion>;
+  };
   questionToTask: Map<string, string>;
 } {
   const { state, keys } = buildDecisionState(batch);
   const questionToTask = new Map<string, string>();
-  const questions: Record<string, unknown> = {};
+  const questions: Record<string, ChoiceQuestion> = {};
 
   for (const [index, request] of batch.requests.entries()) {
     const questionId = "q" + index;

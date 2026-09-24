@@ -13,7 +13,10 @@ excludePaths:
 
 execution:
   concurrency: 8
-  maxDecisionsPerRequest: 64
+  # 1ファイルの全rule × 全unitを、この上限に収まる限り1 requestにまとめる。
+  requestTokenBudget:
+    stateAndQuestion: 32000
+    total: 64000
 
 provider:
   kind: typesafe

@@ -2,6 +2,7 @@ import {
   decisionCacheKey,
   type DecisionCache,
 } from "../cache/decision-cache.ts";
+import { DEFAULT_REQUEST_TOKEN_BUDGET } from "../config/config.ts";
 import { buildDiagnostics } from "../diagnostics/build.ts";
 import {
   buildDecisionBatches,
@@ -14,6 +15,7 @@ import type {
   EvaluationTask,
   PlannedFile,
   PlannedUnit,
+  RequestTokenBudget,
   Rule,
   RunResult,
   SemanticDecisionProvider,
@@ -31,7 +33,7 @@ export async function runEvaluationPlan(options: {
   rules: Rule[];
   provider: SemanticDecisionProvider;
   concurrency?: number;
-  maxDecisionsPerRequest?: number;
+  requestTokenBudget?: RequestTokenBudget;
   cache?: DecisionCache;
 }): Promise<RunResult> {
   const {
@@ -39,7 +41,7 @@ export async function runEvaluationPlan(options: {
     rules,
     provider,
     concurrency = 1,
-    maxDecisionsPerRequest = 64,
+    requestTokenBudget = DEFAULT_REQUEST_TOKEN_BUDGET,
     cache,
   } = options;
 
@@ -58,7 +60,8 @@ export async function runEvaluationPlan(options: {
   const batches = buildDecisionBatches({
     plan: missPlan,
     rules,
-    maxDecisionsPerRequest,
+    estimator: provider,
+    budget: requestTokenBudget,
   });
   const executed = await mapConcurrent(
     batches,

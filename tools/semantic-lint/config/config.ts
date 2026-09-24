@@ -1,7 +1,15 @@
 import { resolve } from "node:path";
 import { YAML } from "bun";
 
+import type { RequestTokenBudget } from "../domain/model.ts";
+
 const DEFAULT_GOLDEN_DIR = ".semantic-lint/golden";
+
+/** Jevのrequest上限（state + 質問1つで32k、request全体で64k）。 */
+export const DEFAULT_REQUEST_TOKEN_BUDGET: RequestTokenBudget = {
+  stateAndQuestion: 32_000,
+  total: 64_000,
+};
 
 export type SemanticLintConfig = {
   version: 1;
@@ -11,7 +19,7 @@ export type SemanticLintConfig = {
   excludePaths: string[];
   execution: {
     concurrency: number;
-    maxDecisionsPerRequest: number;
+    requestTokenBudget: RequestTokenBudget;
   };
   provider: {
     kind: "typesafe";
@@ -46,15 +54,23 @@ export function compileConfig(
     throw new Error(`semantic lint configが不正です: ${origin}`);
   }
 
+  if (execution.maxDecisionsPerRequest !== undefined) {
+    throw new Error(
+      `execution.maxDecisionsPerRequestは廃止しました。requestはexecution.requestTokenBudgetで分割します: ${origin}`,
+    );
+  }
+
   const concurrency = execution.concurrency;
-  const maxDecisionsPerRequest = execution.maxDecisionsPerRequest;
+  const requestTokenBudget = compileRequestTokenBudget(
+    execution.requestTokenBudget,
+    origin,
+  );
   const providerKind = provider.kind;
   const model = provider.model;
   const apiKeyEnv = provider.apiKeyEnv;
 
   if (
     !isPositiveInteger(concurrency) ||
-    !isPositiveInteger(maxDecisionsPerRequest) ||
     providerKind !== "typesafe" ||
     typeof model !== "string" ||
     typeof apiKeyEnv !== "string"
@@ -70,7 +86,7 @@ export function compileConfig(
     excludePaths,
     execution: {
       concurrency,
-      maxDecisionsPerRequest,
+      requestTokenBudget,
     },
     provider: {
       kind: providerKind,
@@ -87,6 +103,29 @@ export async function loadSemanticLintConfig(
   const text = await Bun.file(path).text();
 
   return compileConfig(YAML.parse(text), path);
+}
+
+function compileRequestTokenBudget(
+  value: unknown,
+  origin: string,
+): RequestTokenBudget {
+  if (value === undefined) {
+    return DEFAULT_REQUEST_TOKEN_BUDGET;
+  }
+
+  if (
+    !isRecord(value) ||
+    !isPositiveInteger(value.stateAndQuestion) ||
+    !isPositiveInteger(value.total) ||
+    value.stateAndQuestion > value.total
+  ) {
+    throw new Error(`execution.requestTokenBudgetが不正です: ${origin}`);
+  }
+
+  return {
+    stateAndQuestion: value.stateAndQuestion,
+    total: value.total,
+  };
 }
 
 function isPositiveInteger(value: unknown): value is number {

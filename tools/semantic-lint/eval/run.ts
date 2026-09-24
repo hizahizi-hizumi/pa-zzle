@@ -4,6 +4,7 @@ import type { GoldenCase } from "../config/cases.ts";
 import type {
   DecisionResult,
   EvaluationPlan,
+  RequestTokenBudget,
   Rule,
   SemanticDecisionProvider,
 } from "../domain/model.ts";
@@ -32,7 +33,7 @@ export async function runGoldenCases(options: {
   provider: SemanticDecisionProvider;
   repeat: number;
   concurrency: number;
-  maxDecisionsPerRequest: number;
+  requestTokenBudget: RequestTokenBudget;
 }): Promise<GoldenCaseResult[]> {
   const {
     projectRoot,
@@ -42,7 +43,7 @@ export async function runGoldenCases(options: {
     provider,
     repeat,
     concurrency,
-    maxDecisionsPerRequest,
+    requestTokenBudget,
   } = options;
 
   if (!Number.isInteger(repeat) || repeat < 1) {
@@ -97,7 +98,7 @@ export async function runGoldenCases(options: {
         rules: [item.rule],
         provider,
         concurrency: 1,
-        maxDecisionsPerRequest,
+        requestTokenBudget,
       });
       const evaluation = result.evaluations[0];
 

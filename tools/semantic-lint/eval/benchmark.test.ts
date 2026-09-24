@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import { DEFAULT_REQUEST_TOKEN_BUDGET } from "../config/config.ts";
 import { FakeDecisionProvider } from "../testing/fake-provider.ts";
 import {
   decisionResult,
@@ -52,7 +53,7 @@ describe("runGoldenBenchmark", () => {
       provider,
       repeat: 2,
       concurrency: 1,
-      maxDecisionsPerRequest: 64,
+      requestTokenBudget: DEFAULT_REQUEST_TOKEN_BUDGET,
     });
     const report = buildBenchmarkReport(results, { lineTolerance: 0 });
     const ruleReport = report.rules[0];

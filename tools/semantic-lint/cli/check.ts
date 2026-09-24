@@ -84,7 +84,7 @@ export async function runCheckCommand(args: string[]): Promise<number> {
     rules,
     provider,
     concurrency: config.execution.concurrency,
-    maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
+    requestTokenBudget: config.execution.requestTokenBudget,
     ...(cache === undefined ? {} : { cache }),
   });
   await closeDecisionCache(cache);

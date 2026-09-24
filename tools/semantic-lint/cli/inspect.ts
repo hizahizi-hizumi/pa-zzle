@@ -8,6 +8,7 @@ import {
 import {
   buildRequest,
   createTypeSafeProvider,
+  createTypeSafeRequestEstimator,
   type TypeSafeTrace,
 } from "../providers/typesafe/provider.ts";
 import { renderPretty } from "../reporters/render.ts";
@@ -67,7 +68,8 @@ export async function runInspectCommand(args: string[]): Promise<number> {
   const batches = buildDecisionBatches({
     plan,
     rules: [rule],
-    maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
+    estimator: createTypeSafeRequestEstimator(config.provider),
+    budget: config.execution.requestTokenBudget,
   });
   const providerPayloads = batches.map(
     (batch) => buildRequest(config.provider.model, batch).body,
@@ -96,7 +98,7 @@ export async function runInspectCommand(args: string[]): Promise<number> {
     rules: [rule],
     provider,
     concurrency: 1,
-    maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
+    requestTokenBudget: config.execution.requestTokenBudget,
     ...(cache === undefined ? {} : { cache }),
   });
   await closeDecisionCache(cache);

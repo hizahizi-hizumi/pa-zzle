@@ -1,4 +1,5 @@
 import type {
+  RequestTokenBudget,
   Rule,
   RunResult,
   SemanticDecisionProvider,
@@ -39,7 +40,7 @@ export async function runGoldenBenchmark(options: {
   provider: SemanticDecisionProvider;
   repeat: number;
   concurrency: number;
-  maxDecisionsPerRequest: number;
+  requestTokenBudget: RequestTokenBudget;
 }): Promise<BenchmarkRuleResult[]> {
   const {
     targets,
@@ -48,7 +49,7 @@ export async function runGoldenBenchmark(options: {
     provider,
     repeat,
     concurrency,
-    maxDecisionsPerRequest,
+    requestTokenBudget,
   } = options;
 
   if (!Number.isInteger(repeat) || repeat < 1) {
@@ -74,7 +75,7 @@ export async function runGoldenBenchmark(options: {
         rules: [rule],
         provider,
         concurrency,
-        maxDecisionsPerRequest,
+        requestTokenBudget,
       });
       runs.push(benchmarkRunFromRunResult(result, rule.id));
     }

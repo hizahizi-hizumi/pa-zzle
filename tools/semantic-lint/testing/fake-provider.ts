@@ -3,8 +3,10 @@ import type {
   DecisionBatchResult,
   DecisionResult,
   ProviderRequestIdentity,
+  RequestEstimate,
   SemanticDecisionProvider,
 } from "../domain/model.ts";
+import { estimateTypeSafeRequest } from "../providers/typesafe/provider.ts";
 
 export type FakeDecision = DecisionResult | ((batch: DecisionBatch) => DecisionResult);
 
@@ -12,17 +14,28 @@ export class FakeDecisionProvider implements SemanticDecisionProvider {
   readonly requests: DecisionBatch[] = [];
   readonly requestIdentity: ProviderRequestIdentity;
   readonly #decisions: Record<string, FakeDecision>;
+  readonly #estimate: (batch: DecisionBatch) => RequestEstimate;
 
   constructor(
     decisions: Record<string, FakeDecision>,
-    options: { model?: string } = {},
+    options: {
+      model?: string;
+      estimate?: (batch: DecisionBatch) => RequestEstimate;
+    } = {},
   ) {
     this.#decisions = decisions;
+    this.#estimate =
+      options.estimate ??
+      ((batch) => estimateTypeSafeRequest("fake", batch));
     this.requestIdentity = {
       kind: "fake",
       model: options.model ?? "deterministic",
       requestFormat: "fake/1",
     };
+  }
+
+  estimate(batch: DecisionBatch): RequestEstimate {
+    return this.#estimate(batch);
   }
 
   async evaluate(batch: DecisionBatch): Promise<DecisionBatchResult> {

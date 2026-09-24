@@ -36,7 +36,7 @@ export async function runEvalCommand(args: string[]): Promise<number> {
     provider,
     repeat,
     concurrency: config.execution.concurrency,
-    maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
+    requestTokenBudget: config.execution.requestTokenBudget,
   });
 
   process.stdout.write(renderGoldenCaseReport(results));

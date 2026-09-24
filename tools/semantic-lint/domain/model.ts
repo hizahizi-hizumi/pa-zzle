@@ -109,6 +109,21 @@ export type DecisionBatch = {
   requests: DecisionRequest[];
 };
 
+/** providerへ送る前に見積もるrequestの大きさ（input token）。 */
+export type RequestEstimate = {
+  state: number;
+  questions: number[];
+  total: number;
+};
+
+/** 1 requestに収めるtokenの上限。 */
+export type RequestTokenBudget = {
+  /** state + 最も長い質問1つ。 */
+  stateAndQuestion: number;
+  /** request全体。 */
+  total: number;
+};
+
 export type DecisionResult = {
   decision: Decision;
   confidence: number;
@@ -141,7 +156,11 @@ export type DecisionBatchResult = {
   usage: ProviderUsage;
 };
 
-export interface SemanticDecisionProvider {
+export interface RequestEstimator {
+  estimate(batch: DecisionBatch): RequestEstimate;
+}
+
+export interface SemanticDecisionProvider extends RequestEstimator {
   readonly requestIdentity: ProviderRequestIdentity;
   evaluate(batch: DecisionBatch): Promise<DecisionBatchResult>;
 }
