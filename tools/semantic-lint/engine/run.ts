@@ -3,7 +3,7 @@ import {
   type DecisionCache,
 } from "../cache/decision-cache.ts";
 import { DEFAULT_REQUEST_TOKEN_BUDGET } from "../config/config.ts";
-import { buildDiagnostics } from "../diagnostics/build.ts";
+import { buildDiagnostics, isProblem } from "../diagnostics/build.ts";
 import { unitContextView } from "../units/layout.ts";
 import {
   buildDecisionBatches,
@@ -135,7 +135,7 @@ export async function runEvaluationPlan(options: {
       ),
       providerRequests: batches.length,
       providerDecisions,
-      diagnostics: diagnostics.length,
+      diagnostics: diagnostics.filter(isProblem).length,
       unknowns: unknowns.length,
       inputTokens,
       outputTokens,

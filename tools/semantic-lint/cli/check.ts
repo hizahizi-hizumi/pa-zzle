@@ -1,7 +1,8 @@
 import { readFile } from "node:fs/promises";
 
 import { resolveRequestedPaths } from "../config/project.ts";
-import type { RuleStatus, RunResult } from "../domain/model.ts";
+import type { RunResult } from "../domain/model.ts";
+import { failsRun } from "../diagnostics/build.ts";
 import { planRequests, runEvaluationPlan } from "../engine/run.ts";
 import {
   renderRequestPlanSummary,
@@ -29,7 +30,6 @@ type CheckOptions = {
   paths: string[];
   filesFrom?: string;
   format: OutputFormat;
-  includeDraft: boolean;
   failOn: "error" | "warning";
   failOnUnknown: boolean;
   cache: boolean;
@@ -39,9 +39,6 @@ type CheckOptions = {
 export async function runCheckCommand(args: string[]): Promise<number> {
   const options = parseCheckOptions(args);
   const { projectRoot, config, catalog, rules } = await loadProjectContext();
-  const statuses: RuleStatus[] = options.includeDraft
-    ? ["active", "draft"]
-    : ["active"];
   const requestedPaths = await resolveCheckPaths(
     projectRoot,
     options.paths,
@@ -52,13 +49,12 @@ export async function runCheckCommand(args: string[]): Promise<number> {
     rules,
     excludePaths: config.excludePaths,
     requestedPaths,
-    statuses,
   });
 
   if (
     options.paths.length === 0 &&
     options.filesFrom === undefined &&
-    rules.some((rule) => statuses.includes(rule.status)) &&
+    rules.length > 0 &&
     documents.length === 0
   ) {
     throw new Error(
@@ -72,7 +68,6 @@ export async function runCheckCommand(args: string[]): Promise<number> {
     rules,
     extractor,
     matchesPath: bunGlobPathMatcher,
-    statuses,
   });
 
   const plannedEvaluations = plan.files.reduce(
@@ -94,7 +89,7 @@ export async function runCheckCommand(args: string[]): Promise<number> {
         ...(cache === undefined ? {} : { cache }),
       }),
       estimator,
-      rules: rules.filter((rule) => statuses.includes(rule.status)),
+      rules,
       matchesPath: bunGlobPathMatcher,
     });
     process.stdout.write(
@@ -131,7 +126,6 @@ function parseCheckOptions(args: string[]): CheckOptions {
   const paths: string[] = [];
   let filesFrom: string | undefined;
   let format: OutputFormat = "pretty";
-  let includeDraft = false;
   let failOn: "error" | "warning" = "error";
   let failOnUnknown = false;
   let cache = true;
@@ -163,9 +157,6 @@ function parseCheckOptions(args: string[]): CheckOptions {
         index += 1;
         break;
       }
-      case "--include-draft":
-        includeDraft = true;
-        break;
       case "--fail-on": {
         const value = args[index + 1];
 
@@ -201,7 +192,6 @@ function parseCheckOptions(args: string[]): CheckOptions {
     paths,
     ...(filesFrom === undefined ? {} : { filesFrom }),
     format,
-    includeDraft,
     failOn,
     failOnUnknown,
     cache,
@@ -249,15 +239,7 @@ function exitCodeForResult(
     return 1;
   }
 
-  if (options.failOn === "warning") {
-    return result.diagnostics.length > 0 ? 1 : 0;
-  }
-
-  return result.diagnostics.some(
-    (diagnostic) => diagnostic.severity === "error",
-  )
-    ? 1
-    : 0;
+  return failsRun(result.diagnostics, options.failOn) ? 1 : 0;
 }
 
 function createEmptyRunResult(
@@ -290,4 +272,4 @@ function createEmptyRunResult(
   };
 }
 
-export const _private = { parseCheckOptions };
+export const _private = { parseCheckOptions, exitCodeForResult };

@@ -12,7 +12,7 @@ import { buildBenchmarkReport, renderBenchmarkReport } from "./benchmark-report.
 import type { GoldenSet, ResolvedGoldenFile } from "./golden.ts";
 
 describe("runGoldenBenchmark", () => {
-  const rule = sampleRule({ status: "draft", violationThreshold: 0.8 });
+  const rule = sampleRule({ violationThreshold: 0.8 });
   const golden: GoldenSet = {
     ruleId: rule.id,
     baseCommit: "a".repeat(40),
@@ -83,7 +83,7 @@ describe("runGoldenBenchmark", () => {
   });
 
   test("fileごとに、そのfileをgoldenに持つruleだけを1 requestへまとめ、usageをruleへ按分する", async () => {
-    const other = sampleRule({ id: "vitest/other", status: "active" });
+    const other = sampleRule({ id: "vitest/other" });
     const otherGolden: GoldenSet = {
       ...golden,
       ruleId: other.id,

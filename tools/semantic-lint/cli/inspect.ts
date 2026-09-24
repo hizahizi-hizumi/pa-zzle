@@ -16,6 +16,7 @@ import { UnitExtractor } from "../units/extract.ts";
 import { resolveRequestedPaths } from "../config/project.ts";
 import { loadProjectContext } from "./context.ts";
 import { closeDecisionCache, openDecisionCache } from "./decision-cache.ts";
+import { failsRun } from "../diagnostics/build.ts";
 import { runEvaluationPlan } from "../engine/run.ts";
 
 export async function runInspectCommand(args: string[]): Promise<number> {
@@ -63,7 +64,6 @@ export async function runInspectCommand(args: string[]): Promise<number> {
     rules: [rule],
     extractor,
     matchesPath: bunGlobPathMatcher,
-    statuses: [rule.status],
   });
   const batches = buildDecisionBatches({
     plan,
@@ -121,9 +121,5 @@ export async function runInspectCommand(args: string[]): Promise<number> {
   console.log("\ndiagnostic");
   process.stdout.write(renderPretty(result));
 
-  return result.diagnostics.some(
-    (diagnostic) => diagnostic.severity === "error",
-  )
-    ? 1
-    : 0;
+  return failsRun(result.diagnostics, "error") ? 1 : 0;
 }

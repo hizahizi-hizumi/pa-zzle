@@ -2,7 +2,28 @@ import type {
   Diagnostic,
   Evaluation,
   Rule,
+  Severity,
 } from "../domain/model.ts";
+
+/** 実行を失敗させる最も軽いseverity。infoは失敗させない。 */
+export type FailOn = Exclude<Severity, "info">;
+
+/** 問題として数える指摘か。infoは出力するが数えない。 */
+export function isProblem(diagnostic: Pick<Diagnostic, "severity">): boolean {
+  return diagnostic.severity !== "info";
+}
+
+/** `failOn` 以上のseverityの指摘があれば実行を失敗させる。 */
+export function failsRun(
+  diagnostics: ReadonlyArray<Pick<Diagnostic, "severity">>,
+  failOn: FailOn,
+): boolean {
+  return diagnostics.some((diagnostic) =>
+    failOn === "warning"
+      ? isProblem(diagnostic)
+      : diagnostic.severity === "error",
+  );
+}
 
 export function buildDiagnostics(options: {
   evaluations: Evaluation[];
@@ -45,7 +66,6 @@ export function buildDiagnostics(options: {
         : { symbol: evaluation.subject.symbol }),
       probability: evaluation.result.probabilities.violation,
       confidence: evaluation.result.confidence,
-      source: rule.source,
     });
   }
 

@@ -25,13 +25,10 @@ test("c", () => {});
 };
 
 describe("buildEvaluationPlan", () => {
-  test("active ruleだけをunitごとのtaskへ展開する", () => {
+  test("ruleをunitごとのtaskへ展開する", () => {
     const plan = buildEvaluationPlan({
       documents: [nestedTests],
-      rules: [
-        sampleRule({ id: "vitest/active", unit: "test", status: "active" }),
-        sampleRule({ id: "vitest/draft", unit: "test", status: "draft" }),
-      ],
+      rules: [sampleRule({ id: "vitest/active", unit: "test" })],
       extractor,
       matchesPath: () => true,
     });
@@ -47,29 +44,6 @@ describe("buildEvaluationPlan", () => {
       "vitest/active::test:frontend/example.test.ts:1",
       "vitest/active::test:frontend/example.test.ts:2",
     ]);
-  });
-
-  test("includeDraftでdraft ruleを明示実行できる", () => {
-    const plan = buildEvaluationPlan({
-      documents: [
-        {
-          path: "frontend/example.test.ts",
-          source: "const value = 1;\n",
-        },
-      ],
-      rules: [
-        sampleRule({
-          id: "vitest/draft",
-          status: "draft",
-        }),
-      ],
-      extractor,
-      matchesPath: () => true,
-      statuses: ["active", "draft"],
-    });
-
-    expect(plan.files[0]?.tasks).toHaveLength(1);
-    expect(plan.files[0]?.tasks[0]?.ruleId).toBe("vitest/draft");
   });
 
   test("複数ruleのunitを入れ子の親とカタログの文脈で結ぶ", () => {

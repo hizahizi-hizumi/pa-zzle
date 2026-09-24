@@ -102,7 +102,6 @@ function printHelp(): void {
 
 check options:
   --format pretty|compact|json
-  --include-draft
   --files-from <path>
   --fail-on error|warning
   --fail-on-unknown

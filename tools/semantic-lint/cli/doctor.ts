@@ -1,4 +1,4 @@
-import { relative, resolve } from "node:path";
+import { relative } from "node:path";
 
 import {
   decisionCachePath,
@@ -22,33 +22,11 @@ export async function runDoctorCommand(args: string[]): Promise<number> {
   await UnitExtractor.create(catalog);
   const errors: string[] = [];
   const warnings: string[] = [];
-  const sourceCache = new Map<string, string>();
 
   for (const rule of rules) {
     warnings.push(
       ...(await unsupportedLanguageWarnings(projectRoot, catalog, rule)),
     );
-
-    const sourcePath = resolve(projectRoot, rule.source.path);
-    let source = sourceCache.get(sourcePath);
-
-    if (source === undefined) {
-      const file = Bun.file(sourcePath);
-
-      if (!(await file.exists())) {
-        errors.push(`${rule.id}: 規約sourceが存在しません: ${rule.source.path}`);
-        continue;
-      }
-
-      source = await file.text();
-      sourceCache.set(sourcePath, source);
-    }
-
-    if (!hasHeadingPath(source, rule.source.section)) {
-      errors.push(
-        `${rule.id}: 規約sectionが見つかりません: ${rule.source.section}`,
-      );
-    }
   }
 
   const goldenSets = await loadGoldenSets(projectRoot, config.goldenDir);
@@ -160,28 +138,4 @@ function formatBytes(bytes: number): string {
   }
 
   return `${(bytes / 1_024 / 1_024).toFixed(1)} MiB`;
-}
-
-function hasHeadingPath(source: string, section: string): boolean {
-  const headings = source
-    .split(/\r?\n/)
-    .map((line) => /^#{1,6}\s+(.+?)\s*$/.exec(line)?.[1])
-    .filter((heading): heading is string => heading !== undefined);
-  const segments = section
-    .split(">")
-    .map((segment) => segment.trim())
-    .filter(Boolean);
-  let cursor = 0;
-
-  for (const segment of segments) {
-    const index = headings.indexOf(segment, cursor);
-
-    if (index === -1) {
-      return false;
-    }
-
-    cursor = index + 1;
-  }
-
-  return true;
 }

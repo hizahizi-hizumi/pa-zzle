@@ -4,7 +4,6 @@ import type {
   PlannedFile,
   PlannedUnit,
   Rule,
-  RuleStatus,
   SourceDocument,
 } from "../domain/model.ts";
 import type { UnitExtractor } from "../units/extract.ts";
@@ -21,25 +20,14 @@ export function buildEvaluationPlan(options: {
   rules: Rule[];
   extractor: UnitExtractor;
   matchesPath: PathMatcher;
-  statuses?: readonly RuleStatus[];
 }): EvaluationPlan {
-  const {
-    documents,
-    rules,
-    extractor,
-    matchesPath,
-    statuses = ["active"],
-  } = options;
-  const allowedStatuses = new Set(statuses);
-  const executableRules = rules.filter((rule) =>
-    allowedStatuses.has(rule.status),
-  );
+  const { documents, rules, extractor, matchesPath } = options;
   const files: PlannedFile[] = [];
 
   for (const document of [...documents].sort((a, b) =>
     a.path.localeCompare(b.path),
   )) {
-    const matchingRules = executableRules
+    const matchingRules = rules
       .filter((rule) => matchesPath(rule.paths, document.path))
       .sort((a, b) => a.id.localeCompare(b.id));
 

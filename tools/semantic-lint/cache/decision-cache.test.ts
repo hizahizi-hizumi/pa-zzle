@@ -32,12 +32,12 @@ afterEach(async () => {
 });
 
 describe("decisionCacheKey", () => {
-  test("providerへ送る入力が同じならthreshold / severity / statusが違っても同じkeyになる", () => {
+  test("providerへ送る入力が同じならthreshold / severity / titleが違っても同じkeyになる", () => {
     const base = keyInput();
     const rule = sampleRule({
       violationThreshold: 0.5,
       severity: "error",
-      status: "draft",
+      title: "other",
     });
 
     expect(

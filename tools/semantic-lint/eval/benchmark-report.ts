@@ -47,7 +47,6 @@ export type ThresholdSweepRow = {
 
 export type RuleBenchmarkReport = {
   ruleId: string;
-  status: string;
   threshold: number;
   unit: string;
   baseCommit: string;
@@ -232,7 +231,6 @@ function buildRuleReport(
 
   return {
     ruleId: rule.id,
-    status: rule.status,
     threshold: rule.violationThreshold,
     unit: rule.unit,
     baseCommit: golden.baseCommit,
@@ -417,7 +415,7 @@ export function renderBenchmarkReport(report: BenchmarkReport): string {
   for (const rule of report.rules) {
     const runCount = rule.runs.length;
     lines.push(
-      `${rule.ruleId} [${rule.status}, unit ${rule.unit}, threshold ${rule.threshold.toFixed(2)}]`,
+      `${rule.ruleId} [unit ${rule.unit}, threshold ${rule.threshold.toFixed(2)}]`,
       `  golden: ${rule.golden.files} files (指摘あり ${rule.golden.filesWithFindings} / 指摘なし ${rule.golden.filesWithoutFindings}), 期待finding ${rule.golden.expectedFindings}, base ${rule.baseCommit.slice(0, 12)}`,
     );
 

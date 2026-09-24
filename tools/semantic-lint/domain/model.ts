@@ -5,11 +5,15 @@ export const DECISIONS = [
   "insufficient_context",
 ] as const;
 
-export const RULE_STATUSES = ["draft", "active", "disabled"] as const;
-export const SEVERITIES = ["warning", "error"] as const;
+/**
+ * 指摘の重さ。
+ * - info: 出力するが、問題として数えず実行を失敗させない。
+ * - warning: 問題として数えるが、実行を失敗させない。
+ * - error: 問題として数え、実行を失敗させる。
+ */
+export const SEVERITIES = ["info", "warning", "error"] as const;
 
 export type Decision = (typeof DECISIONS)[number];
-export type RuleStatus = (typeof RULE_STATUSES)[number];
 export type Severity = (typeof SEVERITIES)[number];
 /** ruleの `unit` に書く語彙。unitカタログ（`catalog/units.yaml`）で定義する。 */
 export type UnitName = string;
@@ -35,15 +39,10 @@ export type Rule = {
   id: string;
   rulesetId: string;
   title: string;
-  status: RuleStatus;
   severity: Severity;
   violationThreshold: number;
   unit: UnitName;
   paths: string[];
-  source: {
-    path: string;
-    section: string;
-  };
   predicate: Predicate;
 };
 
@@ -182,10 +181,6 @@ export type Diagnostic = {
   symbol?: string;
   probability: number;
   confidence: number;
-  source: {
-    path: string;
-    section: string;
-  };
 };
 
 export type RunMetrics = {
@@ -194,6 +189,7 @@ export type RunMetrics = {
   plannedEvaluations: number;
   providerRequests: number;
   providerDecisions: number;
+  /** 問題として数える指摘（warning / error）の数。infoは含めない。 */
   diagnostics: number;
   unknowns: number;
   inputTokens: number;

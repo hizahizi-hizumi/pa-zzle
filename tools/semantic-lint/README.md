@@ -17,20 +17,17 @@ providerを使うコマンドでは `TYPESAFE_API_KEY` が必要。CLIはreposit
 ## Commands
 
 ```sh
-# active ruleを実行
+# 全ruleを実行
 bun run --cwd tools/semantic-lint check
 
 # directory / fileを限定
 bun run --cwd tools/semantic-lint check -- frontend/src/games/nanpure
 
-# draft ruleも含める
-bun run --cwd tools/semantic-lint check -- --include-draft
-
 # 判定cacheを使わずにproviderへ送り直す
 bun run --cwd tools/semantic-lint check -- --no-cache
 
 # providerを呼ばず、request数と推定input tokenを確認 (API key不要)
-bun run --cwd tools/semantic-lint check -- --plan-only --include-draft
+bun run --cwd tools/semantic-lint check -- --plan-only
 
 # rule一覧
 bun run --cwd tools/semantic-lint rules
@@ -58,7 +55,7 @@ bun run --cwd tools/semantic-lint bench -- --plan-only
 # 既存のRunResult JSONをgoldenで採点 (providerを呼ばない)
 bun run --cwd tools/semantic-lint bench -- --score <run-result.json>
 
-# 設定・source・unitカタログの整合性確認
+# 設定・golden・unitカタログの整合性確認
 bun run --cwd tools/semantic-lint doctor
 
 # tool自身の決定論的検証
@@ -138,7 +135,7 @@ cache keyはrule × unit単位で、1判定の答えを決める次の要素のS
 - ruleのunit、predicateの `instruction` と4 outcomesの文面
 - fileのpathと、unitの文脈: unit本文・祖先・カタログのcontext宣言が指すunit・ファイルの骨格を元の位置に並べ、それ以外のunitを共通の目印に置き換えたもの
 
-threshold、severity、status、rule id、行番号はkeyに含めない。
+threshold、severity、rule id、title、行番号はkeyに含めない。
 
 同じファイルの別unitの本文だけを変えた場合、変えたunitだけがmissする。文脈に宣言したunit（testから見たsetupなど）や骨格（importや補助関数）を変えた場合は、それに依存するunitがmissする。unitの追加・削除や、そのファイルに適用するunitの種類の変更は骨格を変えるため、そのファイルの判定がmissする。
 
@@ -155,29 +152,28 @@ providerへの送信はfileごとのbatchだが、hit / missはtaskごとに判�
 
 実行サマリにはcache hit / miss数、実際に送ったprovider request数・判定数、providerが返したinput token数を表示する。
 
-rule lifecycleは次の3つ。
-
-- `draft`: 明示的な `--include-draft`、`eval`、`inspect` で試す段階。
-- `active`: 通常の `check` 対象。
-- `disabled`: 定義は残すが実行しない。
-
-severityの `warning / error` はlifecycleとは別に管理する。
-
 ## Ruleを追加する
 
 静的lintで十分に判定できる規約はsemantic lintへ追加しない。文脈や意味の判断が必要な規約だけを対象にする。
 
+定義したruleは常に `check` で実行する（draft / activeのようなlifecycleはない）。指摘の重さはruleの `severity` で決める。
+
+| severity | 出力（pretty / compact / JSON） | 実行サマリの件数 | 実行の失敗 |
+| --- | --- | --- | --- |
+| `info` | する | 数えない | させない |
+| `warning`（省略時） | する | 数える | させない（`--fail-on warning` のときだけ失敗） |
+| `error` | する | 数える | させる（exit code 1） |
+
 追加手順:
 
 1. 対応する人間向け規約が `.claude/rules/*.md` に存在することを確認する。semantic rulesetを規約の正本にしない。
-2. 適用pathとsource documentを共有できる既存rulesetがあれば `.semantic-lint/rules/<ruleset>.yaml` にruleを追加する。共有できなければ新しいrulesetを作る。
-3. 新規ruleは `status: draft`、原則 `severity: warning` で開始する。
-4. ruleには `id`、`title`、`unit`、`sourceSection`、predicateの `instruction` と4 outcomesを定義する。`unit` は「unit語彙」の名前から選ぶ。scope・selector・AST node・文脈の取り方は書かない（書くと読み込みエラーになる）。
-5. `.semantic-lint/cases/<ruleset>/cases.yaml` とfixtureへ、少なくとも明確な `violation` と `compliant` を追加する。実運用で境界例が見つかったらgolden caseへ追加する。
-6. `doctor` と `inspect --plan-only` でpath / unit / subject / request payloadを確認する。
-7. `eval <rule-id> --repeat 10` でChoiceと違反確率の揺れを見る。
-8. `check --include-draft` で実repositoryへ適用し、誤検知・見逃し・unknownを確認する。
-9. 十分に運用できると判断したら `status: active` へ変更する。thresholdは単一fixtureへ合わせず、実repo goldenを `bench` で採点して校正した値を書く。
+2. 適用pathを共有できる既存rulesetがあれば `.semantic-lint/rules/<ruleset>.yaml` にruleを追加する。共有できなければ新しいrulesetを作る。rulesetに書けるのは `version`、`id`、対象の `paths`、`rules` だけ。対応する人間向け規約はrulesetの先頭のコメントに書く。
+3. ruleには `id`、`title`、`unit`、`violationThreshold`、predicateの `instruction` と4 outcomes、必要なら `severity` だけを書く。新規ruleは原則 `severity` を省略（warning）して始める。`unit` は「unit語彙」の名前から選ぶ。scope・selector・AST node・文脈の取り方・指摘位置の決め方は書かない（未知のkeyは読み込みエラーになる）。
+4. `.semantic-lint/cases/<ruleset>/cases.yaml` とfixtureへ、少なくとも明確な `violation` と `compliant` を追加する。実運用で境界例が見つかったらgolden caseへ追加する。
+5. `doctor` と `inspect --plan-only` でpath / unit / subject / request payloadを確認する。
+6. `eval <rule-id> --repeat 10` でChoiceと違反確率の揺れを見る。
+7. 実repo goldenを追加し、`bench` で採点して校正したthresholdを書く。thresholdは単一fixtureへ合わせない。
+8. `check` で実repositoryへ適用し、誤検知・見逃し・unknownを確認する。
 
 4 outcomesは固定。
 
@@ -191,11 +187,17 @@ rule追加でTypeScript実装は変更しない。必要なunitが語彙にな�
 最小のrule例:
 
 ```yaml
+# 人間向け規約の正本: .claude/rules/vitest.md
+version: 1
+id: vitest
+paths:
+  - frontend/**/*.test.ts
 rules:
   - id: arrange-outside-test
     title: テスト本体にArrangeを置かない
     unit: test
-    sourceSection: テスト構造 > Arrangeの分離方法
+    severity: warning # info / warning / error。省略時はwarning
+    violationThreshold: 0.45
     predicate:
       instruction: |
         Determine whether this individual test keeps meaningful Arrange setup
@@ -229,7 +231,7 @@ files:
 
 - `blob` はラベルを付けた時点のファイル内容を固定する。working treeが変わっても `bench` はそのblobを `git cat-file` で読んで評価するため、Git履歴にblobが必要。
 - working treeとblobが異なるファイルは `doctor` と `bench` がwarningを出す。ラベルを見直してから `blob` と行範囲を更新する。
-- `bench` はgoldenの対象ファイルだけを、ruleのstatusに関係なく現行のrule定義とthresholdで評価する。`check` と同じくfileごとに1 requestへまとめ、各fileではそのfileをgoldenに持つruleだけを判定する。
+- `bench` はgoldenの対象ファイルだけを、現行のrule定義とthresholdで評価する。`check` と同じくfileごとに1 requestへまとめ、各fileではそのfileをgoldenに持つruleだけを判定する。
 - ruleごとのinput tokenは、requestの実usageを見積もりの内訳（質問はそのrule、stateとrequest固定費は質問数の比）で按分した値。request全体の実測と推定の比は `usage` に出る。
 - `--plan-only` はproviderを呼ばずにbenchのrequest数と推定input tokenを出す。`--format summary` はruleごとの主要指標とrequestごとの推定・実usageをJSON 1行ずつ出す。
 
@@ -250,4 +252,4 @@ Quality Gateは `actions/cache/restore` で `semantic-lint-v2-` から始まる�
 
 remote semantic lintはChatGPT用のoffline verificationでは実行しない。ChatGPT用Offline Dependenciesにもsemantic lintの `node_modules` は含めない。
 
-通常のruleはwarningから運用を始めるため、warningだけではQuality Gateを失敗させない。provider/config/internal errorはrun failureになる。
+通常のruleはwarningから運用を始めるため、info / warningだけではQuality Gateを失敗させない。`severity: error` の指摘と、provider/config/internal errorはrun failureになる。

@@ -70,7 +70,6 @@ export async function runGoldenCases(options: {
         rules: [rule],
         extractor,
         matchesPath: () => true,
-        statuses: [rule.status],
       });
 
       return {

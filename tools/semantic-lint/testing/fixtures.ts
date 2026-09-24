@@ -35,15 +35,10 @@ export function sampleRule(overrides: Partial<Rule> = {}): Rule {
     id: "vitest/sample",
     rulesetId: "vitest",
     title: "sample",
-    status: "active",
     severity: "warning",
     violationThreshold: 0.9,
     unit: "file",
     paths: ["frontend/**/*.test.ts"],
-    source: {
-      path: ".claude/rules/vitest.md",
-      section: "テスト構造",
-    },
     predicate: {
       instruction: "Classify the subject.",
       outcomes: {

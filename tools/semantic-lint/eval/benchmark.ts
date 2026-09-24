@@ -118,7 +118,6 @@ export function planGoldenBenchmark(options: {
     rules: targetRules,
     extractor,
     matchesPath: () => true,
-    statuses: [...new Set(targetRules.map((rule) => rule.status))],
   });
   const plan: EvaluationPlan = {
     files: planned.files.map((file) => ({

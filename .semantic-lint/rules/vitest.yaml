@@ -1,3 +1,4 @@
+# 人間向け規約の正本: .claude/rules/vitest.md
 version: 1
 id: vitest
 
@@ -6,22 +7,12 @@ paths:
   - frontend/**/*.test.tsx
   - frontend/**/*.test.mjs
 
-source:
-  path: .claude/rules/vitest.md
-
-defaults:
-  status: draft
-  severity: warning
-  violationThreshold: 0.90
-
 rules:
   - id: arrange-outside-test
-    status: active
-    # golden benchmark (3 runs) のleave-one-file-out校正で選ばれたthresholdの中央値。
-    violationThreshold: 0.45
     title: テスト本体にArrangeを置かない
     unit: test
-    sourceSection: テスト構造 > Arrangeの分離方法
+    # golden benchmark (3 runs) のleave-one-file-out校正で選ばれたthresholdの中央値。
+    violationThreshold: 0.45
     predicate:
       instruction: |
         Determine whether this individual test keeps meaningful Arrange setup
@@ -44,11 +35,10 @@ rules:
           behavior under test.
 
   - id: before-each-arrange-only
-    status: active
-    # goldenに違反例がなく校正できないため既定値のまま。非違反の違反確率は最大約0.2。
     title: beforeEachは事前準備だけを行う
     unit: setup
-    sourceSection: テスト構造 > Arrangeの分離方法
+    # goldenに違反例がなく校正できない。非違反の違反確率は最大約0.2。
+    violationThreshold: 0.90
     predicate:
       instruction: |
         Determine whether this beforeEach performs Arrange only and does not
@@ -67,10 +57,9 @@ rules:
           performs setup or the behavior under test.
 
   - id: dom-observable-contract
-    # goldenの期待行とtest単位の判定が一致せず校正できないため既定値のまま。
     title: DOMテストは利用者から観測できる契約を優先する
     unit: test
-    sourceSection: テスト構造 > 基本原則
+    violationThreshold: 0.90
     predicate:
       instruction: |
         Determine whether this DOM-oriented test verifies user-observable
@@ -91,13 +80,11 @@ rules:
           asserted detail is an intended user-facing contract.
 
   - id: table-driven-cases
-    status: active
+    title: 同じ期待動作の入力違いはtest.eachで表現する
+    unit: test-group
     # golden benchmark (3 runs) のleave-one-file-out校正で選ばれたthresholdの中央値。
     # 違反例は1ファイルだけで、違反確率約0.75と非違反の最大約0.16の間にある。
     violationThreshold: 0.50
-    title: 同じ期待動作の入力違いはtest.eachで表現する
-    unit: test-group
-    sourceSection: 入力違いのケース
     predicate:
       instruction: |
         Determine whether repeated test cases in this describe verify the same

@@ -4,31 +4,24 @@ import { YAML } from "bun";
 
 import {
   DECISIONS,
-  RULE_STATUSES,
   SEVERITIES,
   type Decision,
   type Rule,
-  type RuleStatus,
   type Severity,
 } from "../domain/model.ts";
+
+/** rulesetに書けるkey。 */
+const RULESET_KEYS = new Set(["version", "id", "paths", "rules"]);
 
 /** rule作者が書けるkey。scope・selector・contextなどの抽出方法はunitカタログが持つ。 */
 const RULE_KEYS = new Set([
   "id",
   "title",
-  "status",
+  "unit",
   "severity",
   "violationThreshold",
-  "unit",
-  "sourceSection",
   "predicate",
 ]);
-
-type RuleDefaults = {
-  status: RuleStatus;
-  severity: Severity;
-  violationThreshold: number;
-};
 
 /**
  * rulesetを検証してruleへ展開する。
@@ -43,27 +36,26 @@ export function compileRuleset(
     throw new Error(`rulesetのversionが不正です: ${origin}`);
   }
 
-  const { id, paths, source, defaults, rules } = value;
+  const unknownKeys = Object.keys(value).filter((key) => !RULESET_KEYS.has(key));
+
+  if (unknownKeys.length > 0) {
+    throw new Error(
+      `rulesetに書けないkeyがあります: ${unknownKeys.join(", ")} (${origin})`,
+    );
+  }
+
+  const { id, paths, rules } = value;
 
   if (
     !isId(id) ||
     !isStringArray(paths) ||
     paths.length === 0 ||
-    !isRecord(source) ||
-    !isRecord(defaults) ||
     !Array.isArray(rules) ||
     rules.length === 0
   ) {
     throw new Error(`rulesetの基本設定が不正です: ${origin}`);
   }
 
-  const sourcePath = source.path;
-
-  if (typeof sourcePath !== "string") {
-    throw new Error(`ruleset sourceが不正です: ${origin}`);
-  }
-
-  const compiledDefaults = compileDefaults(defaults, origin);
   const compiled = rules.map((rule, index) =>
     compileRule({
       value: rule,
@@ -71,8 +63,6 @@ export function compileRuleset(
       index,
       rulesetId: id,
       paths,
-      sourcePath,
-      defaults: compiledDefaults,
       units,
     }),
   );
@@ -120,40 +110,15 @@ export async function loadRulesets(
   return rules.sort((left, right) => left.id.localeCompare(right.id));
 }
 
-function compileDefaults(value: Record<string, unknown>, origin: string): RuleDefaults {
-  const { status, severity, violationThreshold } = value;
-
-  if (
-    !isRuleStatus(status) ||
-    !isSeverity(severity) ||
-    !isProbability(violationThreshold)
-  ) {
-    throw new Error(`ruleset defaultsが不正です: ${origin}`);
-  }
-
-  return { status, severity, violationThreshold };
-}
-
 function compileRule(options: {
   value: unknown;
   origin: string;
   index: number;
   rulesetId: string;
   paths: string[];
-  sourcePath: string;
-  defaults: RuleDefaults;
   units: ReadonlySet<string>;
 }): Rule {
-  const {
-    value,
-    origin,
-    index,
-    rulesetId,
-    paths,
-    sourcePath,
-    defaults,
-    units,
-  } = options;
+  const { value, origin, index, rulesetId, paths, units } = options;
 
   if (!isRecord(value)) {
     throw new Error(`ruleが不正です: ${origin} rules[${index}]`);
@@ -163,18 +128,16 @@ function compileRule(options: {
 
   if (unknownKeys.length > 0) {
     throw new Error(
-      `ruleに書けないkeyがあります: ${unknownKeys.join(", ")} (${origin} rules[${index}])。判定対象は unit で指定してください。`,
+      `ruleに書けないkeyがあります: ${unknownKeys.join(", ")} (${origin} rules[${index}])。書けるkeyは ${[...RULE_KEYS].join(" / ")} です。`,
     );
   }
 
   const {
     id,
     title,
-    status,
-    severity,
+    severity = "warning",
     violationThreshold,
     unit,
-    sourceSection,
     predicate,
   } = value;
 
@@ -187,7 +150,6 @@ function compileRule(options: {
   if (
     !isId(id) ||
     typeof title !== "string" ||
-    typeof sourceSection !== "string" ||
     !isRecord(predicate) ||
     typeof predicate.instruction !== "string" ||
     !isRecord(predicate.outcomes)
@@ -195,25 +157,19 @@ function compileRule(options: {
     throw new Error(`rule設定が不正です: ${origin} rules[${index}]`);
   }
 
-  const compiledStatus = status ?? defaults.status;
-  const compiledSeverity = severity ?? defaults.severity;
-  const compiledViolationThreshold =
-    violationThreshold ?? defaults.violationThreshold;
+  if (!isSeverity(severity)) {
+    throw new Error(
+      `severityにはinfo / warning / errorを指定してください: ${origin} rules[${index}]`,
+    );
+  }
 
-  if (
-    !isRuleStatus(compiledStatus) ||
-    !isSeverity(compiledSeverity) ||
-    !isProbability(compiledViolationThreshold)
-  ) {
-    throw new Error(`rule policyが不正です: ${origin} rules[${index}]`);
+  if (!isProbability(violationThreshold)) {
+    throw new Error(
+      `violationThresholdには0〜1の数値を指定してください: ${origin} rules[${index}]`,
+    );
   }
 
   const outcomesRecord = predicate.outcomes;
-
-  if (!isRecord(outcomesRecord)) {
-    throw new Error(`predicate.outcomesが不正です: ${origin} rules[${index}]`);
-  }
-
   const outcomes = Object.fromEntries(
     DECISIONS.map((decision) => {
       const description = outcomesRecord[decision];
@@ -232,15 +188,10 @@ function compileRule(options: {
     id: `${rulesetId}/${id}`,
     rulesetId,
     title,
-    status: compiledStatus,
-    severity: compiledSeverity,
-    violationThreshold: compiledViolationThreshold,
+    severity,
+    violationThreshold,
     unit,
     paths,
-    source: {
-      path: sourcePath,
-      section: sourceSection,
-    },
     predicate: {
       instruction: predicate.instruction,
       outcomes,
@@ -292,16 +243,8 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
 
-function isRuleStatus(value: unknown): value is RuleStatus {
-  return (
-    typeof value === "string" &&
-    RULE_STATUSES.includes(value as RuleStatus)
-  );
-}
-
 function isSeverity(value: unknown): value is Severity {
   return (
-    typeof value === "string" &&
-    SEVERITIES.includes(value as Severity)
+    typeof value === "string" && SEVERITIES.includes(value as Severity)
   );
 }
