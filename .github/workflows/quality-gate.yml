@@ -48,9 +48,9 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: .semantic-lint/.cache
-          key: semantic-lint-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          key: semantic-lint-v2-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            semantic-lint-v1-
+            semantic-lint-v2-
 
       - name: Run semantic lint
         if: ${{ github.event_name != 'pull_request' }}
@@ -64,4 +64,4 @@ jobs:
         uses: actions/cache/save@v6
         with:
           path: .semantic-lint/.cache
-          key: semantic-lint-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          key: semantic-lint-v2-${{ github.run_id }}-${{ github.run_attempt }}
