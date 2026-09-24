@@ -69,13 +69,15 @@ describe("vitestの名前付きunit", () => {
     ).toEqual(['describe("合計")', 'describe("入れ子 %i")']);
   });
 
-  test("setupは前準備と後始末の呼び出しを抽出する", () => {
+  test("setupは前準備、teardownは後始末の呼び出しを抽出する", () => {
     expect(extract("a.test.ts", vitestSource, "setup")).toEqual([
-      { symbol: "afterEach", text: "afterEach(cleanup)" },
       {
         symbol: "beforeEach",
         text: "beforeEach(() => {\n    vi.useFakeTimers();\n  })",
       },
+    ]);
+    expect(extract("a.test.ts", vitestSource, "teardown")).toEqual([
+      { symbol: "afterEach", text: "afterEach(cleanup)" },
       { symbol: "afterAll", text: "afterAll(() => {})" },
     ]);
   });

@@ -47,6 +47,7 @@ describe("unitカタログ", () => {
       "hook",
       "setup",
       "statement",
+      "teardown",
       "test",
       "test-group",
     ]);

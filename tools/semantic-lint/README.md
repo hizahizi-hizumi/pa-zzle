@@ -85,7 +85,8 @@ ruleの `unit` には意味の名前を書く。どの構文を抽出するか�
 | `statement` | 汎用 | ブロック直下の文（入れ子の文もそれぞれ1 unit） |
 | `test` | 名前付き | Vitestの `test` / `it` 呼び出し（`test.each(...)(...)`、`it.skip` などを含む）。第1引数が文字列リテラルのもの |
 | `test-group` | 名前付き | Vitestの `describe` 呼び出し（`describe.each` を含む） |
-| `setup` | 名前付き | Vitestの `beforeEach` / `beforeAll` / `afterEach` / `afterAll` 呼び出し |
+| `setup` | 名前付き | Vitestの `beforeEach` / `beforeAll` 呼び出し |
+| `teardown` | 名前付き | Vitestの `afterEach` / `afterAll` 呼び出し |
 | `component` | 名前付き | Reactの関数コンポーネント（大文字で始まりJSXを含む関数。`memo` / `forwardRef` を含む）。TSX / JSXのみ |
 | `hook` | 名前付き | Reactのカスタムフック（`use` + 大文字・数字で始まる関数） |
 
@@ -102,7 +103,7 @@ ruleの `unit` には意味の名前を書く。どの構文を抽出するか�
 
 フレームワークへの対応や言語の追加は、TypeScript実装を変えずにこれらのデータを追加して行う。同じ言語で同じunitを複数のフレームワークが定義するとカタログの読み込みエラーになる。`doctor` は全文法の読み込みと全queryのcompileを行い、ruleの対象fileのうち言語にunit定義がないものを警告する。
 
-unitの文脈はカタログの `context` で宣言する。判定時は常に、unit本文・囲むunit（祖先）・どのunitにも含まれないファイルの骨格（importや補助関数など）を文脈にする。加えて `test` は、自分を含むscopeにある `setup`（同じ/外側の `describe` の `beforeEach` など）を、`setup` は自分のscope内の `test` を文脈にする。
+unitの文脈はカタログの `context` で宣言する。判定時は常に、unit本文・囲むunit（祖先）・どのunitにも含まれないファイルの骨格（importや補助関数など）を文脈にする。加えて `test` は、自分を含むscopeにある `setup`（同じ/外側の `describe` の `beforeEach` など）を、`setup` と `teardown` は自分のscope内の `test` を文脈にする。ruleが判定しない種類のunit（例えば `teardown` を使うruleがないときの `afterEach`）は抽出せず、ファイルの骨格としてそのまま文脈に残る。
 
 ### request
 

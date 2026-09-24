@@ -38,7 +38,14 @@ units:
 
   setup:
     level: framework
-    description: テストの前準備・後始末（beforeEach / beforeAll / afterEach / afterAll の呼び出し）
+    description: テストの前準備（beforeEach / beforeAll の呼び出し）
+    context:
+      - unit: test
+        scope: inner
+
+  teardown:
+    level: framework
+    description: テストの後始末（afterEach / afterAll の呼び出し）
     context:
       - unit: test
         scope: inner

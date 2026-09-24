@@ -35,4 +35,14 @@ definitions:
               (identifier) @hook
               (member_expression object: (identifier) @hook)
             ]
-            (#any-of? @hook "beforeEach" "beforeAll" "afterEach" "afterAll")) @unit
+            (#any-of? @hook "beforeEach" "beforeAll")) @unit
+
+      teardown:
+        symbol: "{hook}"
+        query: |
+          (call_expression
+            function: [
+              (identifier) @hook
+              (member_expression object: (identifier) @hook)
+            ]
+            (#any-of? @hook "afterEach" "afterAll")) @unit
