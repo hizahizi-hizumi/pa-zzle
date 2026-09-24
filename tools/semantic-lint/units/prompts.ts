@@ -47,6 +47,9 @@ export function judgeQuestion(options: {
   return {
     instructions: [
       `Classification target: state.units.${unitKey}, ${unitDescription}, at lines ${unit.span.startLine}-${unit.span.endLine} of state.path.`,
+      ...(unit.position === undefined
+        ? []
+        : [`Syntactic position of the target: ${unit.position}.`]),
       "Judge only this target. state.outline and the state.contexts listed in the target's context field are surrounding evidence. Other entries in state.units are not the target.",
       "Code nested inside the target is part of the target; nested functions are also judged separately as their own targets.",
       "Classify the target as a whole according to what the criteria describe. If the criteria concern a different kind of code than the target itself, choose not_applicable.",

@@ -44,6 +44,7 @@ type BenchOptions = {
   nesting: NestingStrategy;
   context: ContextMode;
   locate: LocateMode;
+  position: boolean;
 };
 
 export async function runBenchCommand(args: string[]): Promise<number> {
@@ -72,6 +73,7 @@ export async function runBenchCommand(args: string[]): Promise<number> {
       ...DEFAULT_UNIT_OPTIONS,
       nesting: options.nesting,
       contextMode: options.context,
+      syntacticPosition: options.position,
     },
     locateMode: options.locate,
   };
@@ -111,6 +113,7 @@ export async function runBenchCommand(args: string[]): Promise<number> {
       nesting: options.nesting,
       context: options.context,
       locate: options.locate,
+      position: options.position ? "on" : "off",
     },
   });
 
@@ -167,6 +170,7 @@ function parseBenchOptions(args: string[]): BenchOptions {
     nesting: DEFAULT_UNIT_OPTIONS.nesting,
     context: DEFAULT_UNIT_OPTIONS.contextMode,
     locate: DEFAULT_UNIT_ENGINE_OPTIONS.locateMode,
+    position: DEFAULT_UNIT_OPTIONS.syntacticPosition,
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -218,6 +222,10 @@ function parseBenchOptions(args: string[]): BenchOptions {
         break;
       case "--context":
         options.context = oneOf(CONTEXT_MODES, value, arg);
+        index += 1;
+        break;
+      case "--position":
+        options.position = oneOf(["on", "off"] as const, value, arg) === "on";
         index += 1;
         break;
       case "--locate":

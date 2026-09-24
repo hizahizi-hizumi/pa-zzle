@@ -121,6 +121,29 @@ describe("line unit", () => {
   });
 });
 
+describe("syntactic position", () => {
+  test("関数が渡される呼び出しと、文を直接囲む関数を構文だけで説明する", () => {
+    const options = { ...DEFAULT_UNIT_OPTIONS, syntacticPosition: true };
+    const functions = createDefaultUnitRegistry().build(
+      document,
+      ["function"],
+      options,
+    );
+    const lines = createDefaultUnitRegistry().build(document, ["line"], options);
+
+    expect(functions.units[0]?.position).toBeUndefined();
+    expect(functions.units[2]?.position).toBe(
+      'passed as an argument to the call starting at line 10: it("値を返すこと", () => {',
+    );
+    expect(
+      lines.units.find((unit) => unit.span.startLine === 11)?.position,
+    ).toStartWith("directly inside the function at lines 10-14");
+    expect(
+      lines.units.find((unit) => unit.span.startLine === 8)?.position,
+    ).toContain("call starting at line 7");
+  });
+});
+
 describe("file unit", () => {
   test("上限以下のファイルは1単位にし、葉の文を位置特定の展開先にする", () => {
     const built = createDefaultUnitRegistry().build(document, ["file"]);

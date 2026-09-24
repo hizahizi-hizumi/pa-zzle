@@ -15,6 +15,8 @@ export type FunctionNode = {
   span: LineSpan;
   /** 関数本体の直下にある文。式本体のarrowでは本体式を1つの文として扱う。 */
   bodyStatements: LineSpan[];
+  /** 関数が呼び出しの引数として渡されているとき、その呼び出しの開始行。 */
+  callStartLine?: number;
 };
 
 export type ParsedDocument = {
@@ -59,10 +61,14 @@ export function parseDocument(document: SourceDocument): ParsedDocument {
     });
 
     if (isFunctionLike(node)) {
+      const call = ts.isCallExpression(node.parent) ? node.parent : undefined;
       functions.push({
         node,
         span: spanOf(sourceFile, node),
         bodyStatements: bodyStatementsOf(sourceFile, node),
+        ...(call === undefined || !call.arguments.some((argument) => argument === node)
+          ? {}
+          : { callStartLine: spanOf(sourceFile, call).startLine }),
       });
     }
 

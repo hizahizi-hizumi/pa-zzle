@@ -43,6 +43,7 @@ export const functionUnit: UnitDefinition = {
           contexts,
           unitOptions: options,
         }),
+        ...positionOf(parsed, options, callPosition(parsed, fn)),
       };
     });
   },
@@ -89,6 +90,11 @@ export const lineUnit: UnitDefinition = {
         source: numberedLines(parsed.lines, statement),
         locateTargets: [],
         contextIds: enclosingContextIds(parsed, enclosing, contexts, options),
+        ...positionOf(
+          parsed,
+          options,
+          enclosingPosition(parsed, statement),
+        ),
       };
     });
   },
@@ -156,6 +162,52 @@ function enclosingContextIds(
   );
 
   return [...outer, own];
+}
+
+function positionOf(
+  parsed: ParsedDocument,
+  options: UnitExtractionOptions,
+  position: string | undefined,
+): { position?: string } {
+  return options.syntacticPosition && position !== undefined
+    ? { position }
+    : {};
+}
+
+function callPosition(
+  parsed: ParsedDocument,
+  fn: FunctionNode,
+): string | undefined {
+  if (fn.callStartLine === undefined) {
+    return undefined;
+  }
+
+  return `passed as an argument to the call starting at line ${fn.callStartLine}: ${lineText(parsed, fn.callStartLine)}`;
+}
+
+/** 文を直接囲む関数 (畳んだ関数も含む) と、その関数が渡される呼び出し。 */
+function enclosingPosition(
+  parsed: ParsedDocument,
+  statement: LineSpan,
+): string | undefined {
+  const innermost = parsed.functions
+    .filter((fn) => strictlyContains(fn.span, statement))
+    .at(-1);
+
+  if (innermost === undefined) {
+    return "at the top level of the file";
+  }
+
+  const call = callPosition(parsed, innermost);
+
+  return [
+    `directly inside the function at lines ${innermost.span.startLine}-${innermost.span.endLine} (first line: ${lineText(parsed, innermost.span.startLine)})`,
+    ...(call === undefined ? [] : [`that function is ${call}`]),
+  ].join("; ");
+}
+
+function lineText(parsed: ParsedDocument, line: number): string {
+  return (parsed.lines[line - 1] ?? "").trim();
 }
 
 function strictlyContains(outer: LineSpan, inner: LineSpan): boolean {

@@ -168,7 +168,7 @@ export async function runUnitPlan(options: {
             rule: task.rule.predicate,
             unit: task.unit.kind,
             contextMode,
-            target: task.unit.source,
+            target: cacheTarget(task.unit),
             context: contextTexts(file.document, task.unit),
           }),
           build: (unitKey: string) =>
@@ -238,7 +238,7 @@ export async function runUnitPlan(options: {
               rule: task.rule.predicate,
               unit: task.unit.kind,
               contextMode,
-              target: task.unit.source,
+              target: cacheTarget(task.unit),
               context: contextTexts(document, task.unit),
               criteria: probeQuestion({
                 unit: task.unit,
@@ -533,6 +533,12 @@ function contextTexts(document: UnitDocument, unit: Unit): string[] {
     document.outline,
     ...unit.contextIds.map((id) => byId.get(id)?.source ?? ""),
   ];
+}
+
+function cacheTarget(unit: Unit): string {
+  return unit.position === undefined
+    ? unit.source
+    : `${unit.source}\n@${unit.position}`;
 }
 
 function chunk<T>(values: readonly T[], size: number): T[][] {

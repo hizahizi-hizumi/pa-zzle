@@ -25,6 +25,8 @@ export type UnitExtractionOptions = {
   minFunctionLines: number;
   /** file unitを1単位にする最大行数。超えたらトップレベル文の境界で分割する。 */
   maxFileLines: number;
+  /** 単位が構文上どこにあるか (囲む関数・引数として渡される呼び出し) を質問に添える。 */
+  syntacticPosition: boolean;
 };
 
 export const DEFAULT_UNIT_OPTIONS: UnitExtractionOptions = {
@@ -32,6 +34,7 @@ export const DEFAULT_UNIT_OPTIONS: UnitExtractionOptions = {
   contextMode: "skeleton",
   minFunctionLines: 3,
   maxFileLines: 400,
+  syntacticPosition: false,
 };
 
 /** 判定単位。rule非依存に構文だけで抽出する。 */
@@ -50,6 +53,8 @@ export type Unit = {
   locateTargets: LineSpan[];
   /** state.contextsのid。外側から内側の順。 */
   contextIds: string[];
+  /** 構文上の位置の説明。 */
+  position?: string;
 };
 
 export type UnitContext = {
