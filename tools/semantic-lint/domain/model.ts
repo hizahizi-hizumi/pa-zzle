@@ -68,9 +68,24 @@ export type Span = {
   end: number;
 };
 
+/**
+ * unitの中で違反箇所の候補になる部分。構文だけで決め、ruleには依存しない。
+ * - statement: unit直下の文（入れ子のblockの中の文は含めない）
+ * - unit: unit直下の子unit（describeの中のtestなど）
+ */
+export type PartKind = "statement" | "unit";
+
+export type UnitPart = {
+  kind: PartKind;
+  span: Span;
+  range: SourceRange;
+};
+
 /** planに含めたunit。file内の入れ子関係と、カタログが宣言した文脈を持つ。 */
 export type PlannedUnit = Subject & {
   span: Span;
+  /** 違反箇所の候補。sourceの出現順。 */
+  parts: UnitPart[];
   /** このunitを囲む、同じfileのplanned unitのうち最も内側のもの。 */
   parentId?: string;
   /** カタログのcontext宣言で、このunitの判定文脈に含めるplanned unit。 */
@@ -127,6 +142,11 @@ export type DecisionResult = {
   decision: Decision;
   confidence: number;
   probabilities: Record<Decision, number>;
+  /**
+   * unitが違反する場合に、各partがその違反箇所である確率。unitの `parts` と同じ順。
+   * partのないunitでは省略する。
+   */
+  parts?: number[];
 };
 
 export type ProviderIdentity = {
@@ -164,23 +184,40 @@ export interface SemanticDecisionProvider extends RequestEstimator {
   evaluate(batch: DecisionBatch): Promise<DecisionBatchResult>;
 }
 
+/** 判定したunitのpartと、そのpartが違反箇所である確率。 */
+export type EvaluatedPart = {
+  kind: PartKind;
+  range: SourceRange;
+  probability: number;
+};
+
 export type Evaluation = {
   taskId: string;
   ruleId: string;
   subject: Subject;
   result: DecisionResult;
+  /** 違反箇所の候補と確率。partのないunitでは省略する。 */
+  parts?: EvaluatedPart[];
   provider: ProviderIdentity;
 };
 
+/**
+ * 指摘。`range` は違反箇所（unit直下の文・子unit）の範囲で、違反箇所を特定できない場合はunit全体。
+ * `subjectRange` / `symbol` は違反と判定したunit。
+ */
 export type Diagnostic = {
   ruleId: string;
   severity: Severity;
   message: string;
   path: string;
   range: SourceRange;
+  subjectRange: SourceRange;
   symbol?: string;
+  /** unitの違反確率。thresholdと比べる値。 */
   probability: number;
   confidence: number;
+  /** 違反箇所として選んだpartの確率。unit全体を指摘する場合は省略する。 */
+  partProbability?: number;
 };
 
 export type RunMetrics = {

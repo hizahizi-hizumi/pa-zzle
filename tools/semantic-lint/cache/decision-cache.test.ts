@@ -54,6 +54,7 @@ describe("decisionCacheKey", () => {
     ["outcome", (input) => ({ ...input, predicate: { ...input.predicate, outcomes: { ...input.predicate.outcomes, compliant: "changed" } } })],
     ["file path", (input) => ({ ...input, path: "b.test.ts" })],
     ["unit context", (input) => ({ ...input, context: "changed" })],
+    ["parts", (input) => ({ ...input, parts: [[0, 8], [9, 16]] })],
   ])("%sが変わるとkeyが変わる", (_name, change) => {
     const base = keyInput();
 
@@ -65,7 +66,7 @@ describe("FileDecisionCache", () => {
   test("追記した判定を別のinstanceから読める", async () => {
     const key = decisionCacheKey(keyInput());
     const value = {
-      result: decisionResult("violation", 0.9),
+      result: { ...decisionResult("violation", 0.9), parts: [0.7, 0.1] },
       provider: { kind: "typesafe", model: "jev-1" },
     };
     const writer = await FileDecisionCache.open(cachePath);
@@ -162,5 +163,6 @@ function keyInput(): DecisionCacheKeyInput {
     predicate: rule.predicate,
     path: "a.test.ts",
     context: "const value = 1;\n",
+    parts: [[0, 16]],
   };
 }

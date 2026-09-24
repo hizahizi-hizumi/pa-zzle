@@ -4,8 +4,10 @@ import {
   findingsAtThreshold,
   type ScoredEvaluation,
   scoreFindings,
+  scoreLocatedFindings,
   type Summary,
   summarize,
+  unitFindingsAtThreshold,
 } from "./score.ts";
 
 export const CALIBRATION_GRID: readonly number[] = Array.from(
@@ -15,7 +17,10 @@ export const CALIBRATION_GRID: readonly number[] = Array.from(
 
 export type ThresholdChoice = {
   threshold: number;
+  /** 違反箇所の厳密一致のF1。 */
   f1: number;
+  /** unit単位の包含一致のF1。 */
+  containmentF1: number;
 };
 
 export type CrossValidation = {
@@ -31,6 +36,7 @@ export type CrossValidation = {
 export type Calibration = {
   /** 全goldenで校正した推奨threshold。rule定義へ提案する値。 */
   threshold: number;
+  /** 推奨thresholdでの違反箇所の厳密一致のF1。 */
   f1: number;
   /** 違反群の最低scoreとクリーン群の最高scoreの差。負なら分離できていない。 */
   gap: number | null;
@@ -45,8 +51,8 @@ export type Calibration = {
 };
 
 /**
- * 包含一致のF1が最大になるthresholdを選ぶ。
- * 同じF1のthresholdが複数あれば、その中央を選んで両群から離す。
+ * 違反箇所の厳密一致のF1が最大になるthresholdを選ぶ。同点ならunit単位の包含一致のF1で比べる。
+ * それでも同じthresholdが複数あれば、その中央を選んで両群から離す。
  */
 export function chooseThreshold(
   golden: GoldenSet,
@@ -56,10 +62,16 @@ export function chooseThreshold(
   const grid = options.grid ?? CALIBRATION_GRID;
   const scored = grid.map((threshold) => ({
     threshold,
-    f1: pooledF1(golden, runs, threshold, options.lineTolerance),
+    ...pooledF1(golden, runs, threshold, options.lineTolerance),
   }));
   const best = Math.max(...scored.map((row) => row.f1));
-  const plateau = scored.filter((row) => row.f1 >= best - 1e-9);
+  const strictPlateau = scored.filter((row) => row.f1 >= best - 1e-9);
+  const bestContainment = Math.max(
+    ...strictPlateau.map((row) => row.containmentF1),
+  );
+  const plateau = strictPlateau.filter(
+    (row) => row.containmentF1 >= bestContainment - 1e-9,
+  );
   const middle = plateau[Math.floor((plateau.length - 1) / 2)];
 
   if (!middle) {
@@ -81,7 +93,7 @@ export function calibrate(
   const ceiling = summarize(
     runs.map(
       (evaluations) =>
-        scoreFindings(golden, findingsAtThreshold(evaluations, 0), {
+        scoreFindings(golden, unitFindingsAtThreshold(evaluations, 0), {
           lineTolerance: options.lineTolerance,
         }).containment.recall,
     ),
@@ -107,6 +119,7 @@ function leaveOneFileOut(
 ): CrossValidation {
   const thresholds: number[] = [];
   const pooled: FindingRange[][] = runs.map(() => []);
+  const pooledUnits: FindingRange[][] = runs.map(() => []);
 
   for (const heldOut of golden.files) {
     const calibrationSet = restrict(
@@ -124,17 +137,22 @@ function leaveOneFileOut(
     thresholds.push(threshold);
 
     runs.forEach((evaluations, index) => {
-      pooled[index]?.push(
-        ...findingsAtThreshold(
-          evaluations.filter((evaluation) => evaluation.path === heldOut.path),
-          threshold,
-        ),
+      const heldOutEvaluations = evaluations.filter(
+        (evaluation) => evaluation.path === heldOut.path,
+      );
+      pooled[index]?.push(...findingsAtThreshold(heldOutEvaluations, threshold));
+      pooledUnits[index]?.push(
+        ...unitFindingsAtThreshold(heldOutEvaluations, threshold),
       );
     });
   }
 
-  const scores = pooled.map((findings) =>
-    scoreFindings(golden, findings, { lineTolerance: options.lineTolerance }),
+  const scores = pooled.map((located, index) =>
+    scoreLocatedFindings(
+      golden,
+      { located, units: pooledUnits[index] ?? [] },
+      { lineTolerance: options.lineTolerance },
+    ),
   );
 
   return {
@@ -192,26 +210,49 @@ function pooledF1(
   runs: ReadonlyArray<readonly ScoredEvaluation[]>,
   threshold: number,
   lineTolerance: number,
-): number {
-  let expected = 0;
-  let matchedExpected = 0;
-  let findings = 0;
-  let matchedFindings = 0;
+): { f1: number; containmentF1: number } {
+  const strict = emptyCounts();
+  const containment = emptyCounts();
 
   for (const evaluations of runs) {
-    const score = scoreFindings(
+    const score = scoreLocatedFindings(
       golden,
-      findingsAtThreshold(evaluations, threshold),
+      {
+        located: findingsAtThreshold(evaluations, threshold),
+        units: unitFindingsAtThreshold(evaluations, threshold),
+      },
       { lineTolerance },
-    ).containment;
-    expected += score.expected;
-    matchedExpected += score.matchedExpected;
-    findings += score.findings;
-    matchedFindings += score.matchedFindings;
+    );
+    addCounts(strict, score.strict);
+    addCounts(containment, score.containment);
   }
 
-  const precision = findings === 0 ? 1 : matchedFindings / findings;
-  const recall = expected === 0 ? 1 : matchedExpected / expected;
+  return { f1: f1Of(strict), containmentF1: f1Of(containment) };
+}
+
+type MatchCounts = {
+  expected: number;
+  matchedExpected: number;
+  findings: number;
+  matchedFindings: number;
+};
+
+function emptyCounts(): MatchCounts {
+  return { expected: 0, matchedExpected: 0, findings: 0, matchedFindings: 0 };
+}
+
+function addCounts(total: MatchCounts, part: MatchCounts): void {
+  total.expected += part.expected;
+  total.matchedExpected += part.matchedExpected;
+  total.findings += part.findings;
+  total.matchedFindings += part.matchedFindings;
+}
+
+function f1Of(score: MatchCounts): number {
+  const precision =
+    score.findings === 0 ? 1 : score.matchedFindings / score.findings;
+  const recall =
+    score.expected === 0 ? 1 : score.matchedExpected / score.expected;
 
   return precision + recall === 0
     ? 0

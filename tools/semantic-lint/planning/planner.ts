@@ -8,7 +8,11 @@ import type {
 } from "../domain/model.ts";
 import type { UnitExtractor } from "../units/extract.ts";
 import { LineIndex } from "../units/position.ts";
+import { unitParts } from "../units/parts.ts";
 import { linkUnits } from "../units/structure.ts";
+
+/** 違反箇所の候補（part）に使う文のunit。カタログの語彙。 */
+const PART_STATEMENT_UNIT = "statement";
 
 export type PathMatcher = (patterns: string[], path: string) => boolean;
 
@@ -69,13 +73,15 @@ export function buildEvaluationPlan(options: {
   return { files };
 }
 
-/** fileから指定unitを抽出し、出現順に入れ子と文脈を付けて並べる。 */
+/** fileから指定unitを抽出し、出現順に入れ子・文脈・違反箇所の候補を付けて並べる。 */
 export function planUnits(
   document: SourceDocument,
   unitNames: readonly string[],
   extractor: UnitExtractor,
 ): PlannedUnit[] {
-  const extracted = extractor.extract(document, unitNames);
+  const extracted = extractor.extract(document, [
+    ...new Set([...unitNames, PART_STATEMENT_UNIT]),
+  ]);
   const lines = new LineIndex(document.source);
   const items = unitNames.flatMap((unit) =>
     (extracted.get(unit) ?? []).map((item, index) => ({
@@ -93,6 +99,19 @@ export function planUnits(
     extractor.catalog,
   );
 
+  const parts = unitParts(
+    items.map(({ id, item }) => {
+      const parentId = links.get(id)?.parentId;
+
+      return {
+        id,
+        span: { start: item.start, end: item.end },
+        ...(parentId === undefined ? {} : { parentId }),
+      };
+    }),
+    extracted.get(PART_STATEMENT_UNIT) ?? [],
+  );
+
   return items
     .map(({ id, item }): PlannedUnit => {
       const link = links.get(id);
@@ -105,6 +124,11 @@ export function planUnits(
         ...(item.symbol === undefined ? {} : { symbol: item.symbol }),
         source: document.source.slice(item.start, item.end),
         span: { start: item.start, end: item.end },
+        parts: (parts.get(id) ?? []).map(({ kind, start, end }) => ({
+          kind,
+          span: { start, end },
+          range: lines.range({ start, end }),
+        })),
         ...(link?.parentId === undefined ? {} : { parentId: link.parentId }),
         contextIds: link?.contextIds ?? [],
       };

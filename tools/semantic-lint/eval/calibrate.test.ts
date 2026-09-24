@@ -45,13 +45,36 @@ const runs: ScoredEvaluation[][] = [
 ];
 
 describe("chooseThreshold", () => {
-  test("包含F1が最大になるthresholdの中央を選ぶ", () => {
+  test("厳密F1が最大になるthresholdの中央を選ぶ", () => {
     const choice = chooseThreshold(golden, runs, {
       lineTolerance: 0,
       grid: [0.5, 0.56, 0.6, 0.64, 0.7],
     });
 
-    expect(choice).toEqual({ threshold: 0.6, f1: 1 });
+    expect(choice).toEqual({ threshold: 0.6, f1: 1, containmentF1: 1 });
+  });
+
+  test("厳密F1が同点なら包含F1で選ぶ", () => {
+    // unit全体は期待行を包含するが、違反箇所の特定が外れて厳密一致しない。
+    const located = runs.map((evaluations) =>
+      evaluations.map((item) => ({
+        ...item,
+        range: { startLine: item.range.startLine - 1, endLine: item.range.endLine + 1 },
+        parts: [
+          {
+            kind: "statement" as const,
+            range: { startLine: item.range.startLine + 1, endLine: item.range.endLine + 1 },
+            probability: 0.9,
+          },
+        ],
+      })),
+    );
+    const choice = chooseThreshold(golden, located, {
+      lineTolerance: 0,
+      grid: [0.5, 0.6, 0.7],
+    });
+
+    expect(choice).toEqual({ threshold: 0.6, f1: 0, containmentF1: 1 });
   });
 
   test("期待findingがない集合では誤指摘が出ないthresholdを選ぶ", () => {

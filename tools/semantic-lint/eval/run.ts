@@ -193,6 +193,8 @@ function selectCasePlan(
             ...(subject.symbol === undefined ? {} : { symbol: subject.symbol }),
             source: subject.source,
             span: subject.span,
+            // golden caseはunitの判定だけを評価するため、違反箇所の候補は問わない。
+            parts: [],
             contextIds: [],
           },
         ],

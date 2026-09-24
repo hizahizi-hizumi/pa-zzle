@@ -21,7 +21,10 @@ import type { FindingRange, ScoredEvaluation } from "./score.ts";
 
 /** 1回の実行を方式非依存に採点するための記録。 */
 export type BenchmarkRun = {
+  /** 違反箇所の指摘。厳密一致の採点に使う。 */
   findings: FindingRange[];
+  /** 違反と判定したunitの範囲。包含一致（unit単位）の採点に使う。 */
+  unitFindings: FindingRange[];
   /** threshold sweepに使う判定記録。判定記録を持たない実行結果ではnull。 */
   evaluations: ScoredEvaluation[] | null;
   /** このruleの判定を含んだrequestの数。 */
@@ -321,14 +324,27 @@ export function benchmarkRunFromRunResult(
     ownEvaluations.length > 0 &&
     ownEvaluations.length === result.evaluations.length;
 
-  return {
-    findings: result.diagnostics
-      .filter((diagnostic) => diagnostic.ruleId === ruleId)
-      .map((diagnostic) => ({
+  const ownDiagnostics = result.diagnostics.filter(
+    (diagnostic) => diagnostic.ruleId === ruleId,
+  );
+  const units = new Map(
+    ownDiagnostics.map((diagnostic) => [
+      `${diagnostic.path}:${diagnostic.subjectRange.startLine}-${diagnostic.subjectRange.endLine}`,
+      {
         path: diagnostic.path,
-        startLine: diagnostic.range.startLine,
-        endLine: diagnostic.range.endLine,
-      })),
+        startLine: diagnostic.subjectRange.startLine,
+        endLine: diagnostic.subjectRange.endLine,
+      },
+    ]),
+  );
+
+  return {
+    findings: ownDiagnostics.map((diagnostic) => ({
+      path: diagnostic.path,
+      startLine: diagnostic.range.startLine,
+      endLine: diagnostic.range.endLine,
+    })),
+    unitFindings: [...units.values()],
     evaluations:
       ownEvaluations.length === 0
         ? null
@@ -340,6 +356,18 @@ export function benchmarkRunFromRunResult(
             },
             decision: evaluation.result.decision,
             violationProbability: evaluation.result.probabilities.violation,
+            ...(evaluation.parts === undefined
+              ? {}
+              : {
+                  parts: evaluation.parts.map((part) => ({
+                    kind: part.kind,
+                    range: {
+                      startLine: part.range.startLine,
+                      endLine: part.range.endLine,
+                    },
+                    probability: part.probability,
+                  })),
+                }),
           })),
     providerRequests: singleRule ? result.metrics.providerRequests : null,
     inputTokens: singleRule ? result.metrics.inputTokens : null,

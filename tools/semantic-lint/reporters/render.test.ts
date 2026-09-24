@@ -80,6 +80,12 @@ function sampleResult(): RunResult {
           endLine: 8,
           endColumn: 3,
         },
+        subjectRange: {
+          startLine: 3,
+          startColumn: 1,
+          endLine: 8,
+          endColumn: 3,
+        },
         symbol: 'test("例こと")',
         probability: 0.96,
         confidence: 0.95,

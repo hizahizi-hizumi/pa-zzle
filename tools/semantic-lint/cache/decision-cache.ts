@@ -14,7 +14,7 @@ import {
 export const DECISION_CACHE_PATH = ".semantic-lint/.cache/decisions.jsonl";
 
 /** key構成や保存形式を変えたときに更新する。 */
-const CACHE_FORMAT_VERSION = 2;
+const CACHE_FORMAT_VERSION = 3;
 const DEFAULT_RETENTION_DAYS = 30;
 const DEFAULT_MAX_ENTRIES = 50_000;
 const DAY_MS = 24 * 60 * 60 * 1_000;
@@ -23,7 +23,8 @@ const DAY_MS = 24 * 60 * 60 * 1_000;
  * 1判定の答えを決める入力。
  * unitの文脈は、unit本文・祖先・カタログのcontext宣言が指すunit・fileの骨格を並べたもので、
  * 同じfileの無関係なunitの本文は含めない（`unitContextView`）。
- * threshold / severity / status / 行番号は判定後に使う値なので含めない。
+ * `parts` は違反箇所の候補のunit内の位置で、回答のpart確率の並びを決める。
+ * threshold / severity / 行番号は判定後に使う値なので含めない。
  */
 export type DecisionCacheKeyInput = {
   provider: ProviderRequestIdentity;
@@ -31,10 +32,11 @@ export type DecisionCacheKeyInput = {
   predicate: Predicate;
   path: string;
   context: string;
+  parts: Array<[number, number]>;
 };
 
 export function decisionCacheKey(input: DecisionCacheKeyInput): string {
-  const { provider, unit, predicate, path, context } = input;
+  const { provider, unit, predicate, path, context, parts } = input;
   const hasher = new Bun.CryptoHasher("sha256");
 
   hasher.update(
@@ -46,7 +48,7 @@ export function decisionCacheKey(input: DecisionCacheKeyInput): string {
         predicate.instruction,
         DECISIONS.map((decision) => predicate.outcomes[decision]),
       ],
-      [path, context],
+      [path, context, parts],
     ]),
   );
 
@@ -339,10 +341,20 @@ function parseDecisionResult(value: unknown): DecisionResult | undefined {
     probabilities[decision] = probability;
   }
 
+  const parts = value.parts;
+
+  if (
+    parts !== undefined &&
+    (!Array.isArray(parts) || !parts.every((part) => isProbability(part)))
+  ) {
+    return undefined;
+  }
+
   return {
     decision: value.decision,
     confidence: value.confidence,
     probabilities: probabilities as Record<Decision, number>,
+    ...(parts === undefined ? {} : { parts: parts as number[] }),
   };
 }
 

@@ -146,6 +146,59 @@ describe("buildDecisionState", () => {
   });
 });
 
+describe("buildDecisionState parts", () => {
+  test("判定対象のpartを目印で囲み、子unitのpartはunitの目印の外側を囲む", () => {
+    const { file, units } = plannedFile({ path: "a.test.tsx", source }, [
+      "test",
+      "test-group",
+      "setup",
+    ]);
+    const group = units.find((unit) => unit.symbol === 'describe("一覧")');
+    const setup = units.find((unit) => unit.unit === "setup");
+
+    if (!group || !setup) {
+      throw new Error("unitがありません。");
+    }
+
+    const { state, partKeys } = buildDecisionState({
+      file,
+      marker: MARKER,
+      units,
+      subjectIds: subjectClosure(units, [group.id, setup.id]),
+      partUnitIds: [group.id, setup.id],
+    });
+    const refs = [...partKeys.values()].flat();
+
+    expect(partKeys.get(group.id)).toEqual(["p0", "p1", "p2"]);
+    expect(partKeys.get(setup.id)).toEqual(["p3"]);
+    expect(state.file.source).toContain(
+      "/* p0 *//* state.subjects.s1 begin */beforeEach(() => {\n    /* p3 */render(<List />);/* /p3 */\n  })/* state.subjects.s1 end *//* /p0 */;",
+    );
+    expect(expandDecisionState(state, MARKER, refs).file).toBe(
+      source.replace('test("単独のtest", () => {})', "/* omitted */"),
+    );
+  });
+
+  test("sourceにある目印と同じ名前を避ける", () => {
+    const tricky = `test("a", () => {\n  /* p0 */ run();\n});\n`;
+    const { file, units } = plannedFile({ path: "a.test.ts", source: tricky }, [
+      "test",
+    ]);
+    const { state, partKeys } = buildDecisionState({
+      file,
+      marker: MARKER,
+      units,
+      subjectIds: units.map((unit) => unit.id),
+      partUnitIds: units.map((unit) => unit.id),
+    });
+
+    expect([...partKeys.values()].flat()).toEqual(["p1_0"]);
+    expect(
+      expandDecisionState(state, MARKER, ["p1_0"]).file,
+    ).toBe(tricky);
+  });
+});
+
 describe("subjectClosure", () => {
   test("判定対象に祖先とカタログのcontextが指すunitを加える", () => {
     const { units } = plannedFile({ path: "a.test.tsx", source }, [

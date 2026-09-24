@@ -11,6 +11,13 @@ export type DecisionState = {
   subjects: Record<string, StateSubject>;
 };
 
+/** sourceの位置に差し込む目印。 */
+type Insertion = {
+  offset: number;
+  edge: "begin" | "end";
+  text: string;
+};
+
 const OMITTED_REF = "omitted";
 const CONTEXT_KEY_REF = "unit";
 
@@ -24,18 +31,66 @@ type UnitNode = {
  *
  * 入れ子のunitも親の本文の中にそのまま現れるため、親の判定で子の本文を参照先から辿る必要がない。
  * `subjectIds` にないunitは本文を載せず、省略の目印だけを残す。
+ * `partUnitIds` のunitは、違反箇所の候補（part）を目印 `pN` と `/pN` で囲む。
  */
 export function buildDecisionState(options: {
   file: SourceDocument;
   marker: string;
   units: readonly PlannedUnit[];
   subjectIds: readonly string[];
-}): { state: DecisionState; keys: Map<string, string> } {
-  const { file, marker, units, subjectIds } = options;
+  partUnitIds?: readonly string[];
+}): {
+  state: DecisionState;
+  keys: Map<string, string>;
+  /** unitごとの、partの参照名（unitの `parts` と同じ順）。 */
+  partKeys: Map<string, string[]>;
+} {
+  const { file, marker, units, subjectIds, partUnitIds = [] } = options;
   const included = new Set(subjectIds);
   const keyPrefix = unusedKeyPrefix(file.source);
   const keys = new Map<string, string>();
   const subjects: Record<string, StateSubject> = {};
+  const partPrefix = unusedPartPrefix(file.source, marker);
+  const partKeys = new Map<string, string[]>();
+  const insertions: Insertion[] = [];
+  /** 子unitのpart。unitの目印の外側を囲む。 */
+  const unitParts = new Map<string, string[]>();
+  const spanKey = (span: Span): string => `${span.start}:${span.end}`;
+  const unitsBySpan = new Map(units.map((unit) => [spanKey(unit.span), unit]));
+  let partCount = 0;
+
+  for (const unit of units) {
+    if (!partUnitIds.includes(unit.id) || !included.has(unit.id)) {
+      continue;
+    }
+
+    const refs = unit.parts.map((part) => {
+      const ref = partPrefix + partCount;
+      partCount += 1;
+      const child =
+        part.kind === "unit" ? unitsBySpan.get(spanKey(part.span)) : undefined;
+
+      if (child) {
+        unitParts.set(child.id, [...(unitParts.get(child.id) ?? []), ref]);
+      } else {
+        insertions.push(
+          {
+            offset: part.span.start,
+            edge: "begin",
+            text: renderMarker(marker, ref),
+          },
+          {
+            offset: part.span.end,
+            edge: "end",
+            text: renderMarker(marker, "/" + ref),
+          },
+        );
+      }
+
+      return ref;
+    });
+    partKeys.set(unit.id, refs);
+  }
 
   for (const unit of units) {
     if (included.has(unit.id)) {
@@ -53,12 +108,19 @@ export function buildDecisionState(options: {
     keys.has(unit.id) ? undefined : renderMarker(marker, OMITTED_REF);
   const wrap = (unit: PlannedUnit, body: string): string => {
     const key = keys.get(unit.id);
-
-    return key === undefined
-      ? body
-      : renderMarker(marker, subjectBoundary(key, "begin")) +
+    const wrapped =
+      key === undefined
+        ? body
+        : renderMarker(marker, subjectBoundary(key, "begin")) +
           body +
           renderMarker(marker, subjectBoundary(key, "end"));
+    const refs = unitParts.get(unit.id) ?? [];
+
+    return refs.reduce(
+      (text, ref) =>
+        renderMarker(marker, ref) + text + renderMarker(marker, "/" + ref),
+      wrapped,
+    );
   };
 
   return {
@@ -71,11 +133,13 @@ export function buildDecisionState(options: {
           roots,
           markerFor,
           wrap,
+          insertions,
         ),
       },
       subjects,
     },
     keys,
+    partKeys,
   };
 }
 
@@ -83,11 +147,18 @@ export function buildDecisionState(options: {
 export function expandDecisionState(
   state: DecisionState,
   marker: string,
+  partRefs: readonly string[] = [],
 ): { file: string; subjects: Record<string, string> } {
-  const boundaries = Object.keys(state.subjects).flatMap((key) => [
-    renderMarker(marker, subjectBoundary(key, "begin")),
-    renderMarker(marker, subjectBoundary(key, "end")),
-  ]);
+  const boundaries = [
+    ...Object.keys(state.subjects).flatMap((key) => [
+      renderMarker(marker, subjectBoundary(key, "begin")),
+      renderMarker(marker, subjectBoundary(key, "end")),
+    ]),
+    ...partRefs.flatMap((ref) => [
+      renderMarker(marker, ref),
+      renderMarker(marker, "/" + ref),
+    ]),
+  ];
   const strip = (text: string): string =>
     boundaries.reduce((result, boundary) => result.split(boundary).join(""), text);
 
@@ -223,7 +294,7 @@ function buildTree(units: readonly PlannedUnit[]): {
 
 /**
  * spanのsourceを書き出す。目印を返す子unitは目印に置き換え、undefinedを返す子unitは中へ進んで
- * `wrap` で囲む。
+ * `wrap` で囲む。unitの外のsourceには `insertions` の目印を差し込む。
  */
 function renderSpan(
   source: string,
@@ -231,22 +302,65 @@ function renderSpan(
   children: readonly UnitNode[],
   markerFor: (unit: PlannedUnit) => string | undefined,
   wrap: (unit: PlannedUnit, body: string) => string = (_, body) => body,
+  insertions: readonly Insertion[] = [],
 ): string {
   let output = "";
   let cursor = span.start;
+  const sourceSlice = (start: number, end: number): string =>
+    sliceWithInsertions(source, start, end, insertions);
 
   for (const child of children) {
-    output += source.slice(cursor, child.unit.span.start);
+    output += sourceSlice(cursor, child.unit.span.start);
     output +=
       markerFor(child.unit) ??
       wrap(
         child.unit,
-        renderSpan(source, child.unit.span, child.children, markerFor, wrap),
+        renderSpan(
+          source,
+          child.unit.span,
+          child.children,
+          markerFor,
+          wrap,
+          insertions,
+        ),
       );
     cursor = child.unit.span.end;
   }
 
-  return output + source.slice(cursor, span.end);
+  return output + sourceSlice(cursor, span.end);
+}
+
+/**
+ * sourceの [start, end) を書き出し、範囲内の目印を差し込む。
+ * 開始の目印は start ≤ offset < end、終了の目印は start < offset ≤ end のものを扱い、
+ * 隣り合う範囲で同じ目印を二重に書かない。同じ位置では終了を先に書く。
+ */
+function sliceWithInsertions(
+  source: string,
+  start: number,
+  end: number,
+  insertions: readonly Insertion[],
+): string {
+  const inside = insertions
+    .filter((insertion) =>
+      insertion.edge === "begin"
+        ? start <= insertion.offset && insertion.offset < end
+        : start < insertion.offset && insertion.offset <= end,
+    )
+    .sort(
+      (left, right) =>
+        left.offset - right.offset ||
+        (left.edge === right.edge ? 0 : left.edge === "end" ? -1 : 1),
+    );
+  let output = "";
+  let cursor = start;
+
+  for (const insertion of inside) {
+    output += source.slice(cursor, insertion.offset) + insertion.text;
+    cursor = insertion.offset;
+  }
+
+  return output + source.slice(cursor, end);
 }
 
 /** 目印を本文へ戻すときに取り違えないよう、sourceに現れない参照名を選ぶ。 */
@@ -258,6 +372,25 @@ function unusedKeyPrefix(source: string): string {
       return prefix;
     }
   }
+}
+
+/** partの目印がsourceの既存のコメントと取り違えられないよう、sourceに現れない参照名を選ぶ。 */
+function unusedPartPrefix(source: string, marker: string): string {
+  for (let attempt = 0; ; attempt += 1) {
+    const prefix = attempt === 0 ? "p" : `p${attempt}_`;
+    const pattern = new RegExp(
+      escapeRegExp(marker)
+        .replace(escapeRegExp("{ref}"), `/?${escapeRegExp(prefix)}\\d`),
+    );
+
+    if (!pattern.test(source)) {
+      return prefix;
+    }
+  }
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function renderMarker(marker: string, ref: string): string {

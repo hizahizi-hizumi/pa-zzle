@@ -1,4 +1,5 @@
-import type { Decision, SourceRange } from "../domain/model.ts";
+import { locateViolation } from "../diagnostics/locate.ts";
+import type { Decision, PartKind, SourceRange } from "../domain/model.ts";
 import type { GoldenSet } from "./golden.ts";
 
 /** 評価方式に依存しない、採点対象の指摘範囲。 */
@@ -8,12 +9,17 @@ export type FindingRange = {
   endLine: number;
 };
 
+type LineRange = Pick<SourceRange, "startLine" | "endLine">;
+
 /** thresholdを変えて指摘を再構成するための判定記録。 */
 export type ScoredEvaluation = {
   path: string;
-  range: Pick<SourceRange, "startLine" | "endLine">;
+  /** 判定したunitの範囲。 */
+  range: LineRange;
   decision: Decision;
   violationProbability: number;
+  /** 違反箇所の候補と確率。partのないunitや記録のない実行結果では省略する。 */
+  parts?: Array<{ kind: PartKind; range: LineRange; probability: number }>;
 };
 
 export type Ratio = number | null;
@@ -48,6 +54,11 @@ export type RunScore = {
   files: FileScore;
   /** findingが期待行範囲を包含すれば一致とみなす。 */
   containment: RangeScore;
+  /**
+   * 違反箇所の指摘の包含一致。`scoreLocatedFindings` では `containment` がunit単位になり、
+   * こちらが違反箇所の指摘になる。`scoreFindings` では `containment` と同じ。
+   */
+  locatedContainment: RangeScore;
   /** 開始行と終了行がそれぞれ許容差以内なら1対1で一致とみなす。 */
   strict: RangeScore;
   findings: FindingRange[];
@@ -152,6 +163,7 @@ export function scoreFindings(
   return {
     files,
     containment,
+    locatedContainment: containment,
     strict,
     findings: scoped,
     missedExpected,
@@ -160,22 +172,66 @@ export function scoreFindings(
   };
 }
 
-/** 本番のdiagnostic生成と同じ条件でthreshold適用後の指摘を作る。 */
+/**
+ * 違反箇所の指摘（located）とunit単位の指摘を合わせて採点する。
+ * 包含一致はunit単位、厳密一致は違反箇所で採点し、違反箇所の包含一致も別に持つ。
+ */
+export function scoreLocatedFindings(
+  golden: GoldenSet,
+  findings: { located: readonly FindingRange[]; units: readonly FindingRange[] },
+  options: { lineTolerance: number },
+): RunScore {
+  const located = scoreFindings(golden, findings.located, options);
+  const units = scoreFindings(golden, findings.units, options);
+
+  return {
+    ...located,
+    containment: units.containment,
+    locatedContainment: located.containment,
+  };
+}
+
+/**
+ * 本番のdiagnostic生成と同じ条件でthreshold適用後の指摘を作る。
+ * 指摘範囲は違反箇所（part）で、特定できないunitはunit全体。
+ */
 export function findingsAtThreshold(
   evaluations: readonly ScoredEvaluation[],
   threshold: number,
+  partThreshold?: number,
 ): FindingRange[] {
-  return evaluations
-    .filter(
-      (evaluation) =>
-        evaluation.decision === "violation" &&
-        evaluation.violationProbability >= threshold,
-    )
-    .map((evaluation) => ({
-      path: evaluation.path,
-      startLine: evaluation.range.startLine,
-      endLine: evaluation.range.endLine,
-    }));
+  return violatingEvaluations(evaluations, threshold).flatMap((evaluation) =>
+    locateViolation(evaluation.range, evaluation.parts, partThreshold).map(
+      ({ range }) => ({
+        path: evaluation.path,
+        startLine: range.startLine,
+        endLine: range.endLine,
+      }),
+    ),
+  );
+}
+
+/** threshold適用後に違反と判定したunitの範囲。包含一致（unit単位）の採点に使う。 */
+export function unitFindingsAtThreshold(
+  evaluations: readonly ScoredEvaluation[],
+  threshold: number,
+): FindingRange[] {
+  return violatingEvaluations(evaluations, threshold).map((evaluation) => ({
+    path: evaluation.path,
+    startLine: evaluation.range.startLine,
+    endLine: evaluation.range.endLine,
+  }));
+}
+
+function violatingEvaluations(
+  evaluations: readonly ScoredEvaluation[],
+  threshold: number,
+): ScoredEvaluation[] {
+  return evaluations.filter(
+    (evaluation) =>
+      evaluation.decision === "violation" &&
+      evaluation.violationProbability >= threshold,
+  );
 }
 
 export type Summary = {

@@ -13,9 +13,10 @@ import {
   findingsAtThreshold,
   type Ratio,
   type RunScore,
-  scoreFindings,
+  scoreLocatedFindings,
   type Summary,
   summarize,
+  unitFindingsAtThreshold,
 } from "./score.ts";
 
 export const DEFAULT_SWEEP_THRESHOLDS = [
@@ -24,7 +25,10 @@ export const DEFAULT_SWEEP_THRESHOLDS = [
 
 export type RunReport = {
   files: RunScore["files"];
+  /** unit単位の包含一致。 */
   containment: RunScore["containment"];
+  /** 違反箇所の指摘の包含一致。 */
+  locatedContainment: RunScore["locatedContainment"];
   strict: RunScore["strict"];
   findings: number;
   providerRequests: number | null;
@@ -63,6 +67,8 @@ export type RuleBenchmarkReport = {
     fileRecall: Summary;
     containmentPrecision: Summary;
     containmentRecall: Summary;
+    locatedContainmentPrecision: Summary;
+    locatedContainmentRecall: Summary;
     strictPrecision: Summary;
     strictRecall: Summary;
     findings: Summary;
@@ -95,6 +101,13 @@ export type RuleBenchmarkReport = {
 export type SubjectDecisions = FindingRange & {
   decisions: Array<Decision | null>;
   violationProbabilities: Array<number | null>;
+  /** 違反箇所の候補ごとの、各runの確率。 */
+  parts: Array<{
+    kind: string;
+    startLine: number;
+    endLine: number;
+    probabilities: Array<number | null>;
+  }>;
 };
 
 /** request全体の見積もりと実usage。ruleへの按分をしない値。 */
@@ -207,7 +220,11 @@ function buildRuleReport(
 ): RuleBenchmarkReport {
   const { golden, rule, runs } = result;
   const scores = runs.map((run) =>
-    scoreFindings(golden, run.findings, { lineTolerance }),
+    scoreLocatedFindings(
+      golden,
+      { located: run.findings, units: run.unitFindings },
+      { lineTolerance },
+    ),
   );
   const runReports = runs.map((run, index): RunReport => {
     const score = scores[index];
@@ -219,6 +236,7 @@ function buildRuleReport(
     return {
       files: score.files,
       containment: score.containment,
+      locatedContainment: score.locatedContainment,
       strict: score.strict,
       findings: score.findings.length,
       providerRequests: run.providerRequests,
@@ -258,6 +276,12 @@ function buildRuleReport(
       ),
       containmentRecall: summarize(
         scores.map((score) => score.containment.recall),
+      ),
+      locatedContainmentPrecision: summarize(
+        scores.map((score) => score.locatedContainment.precision),
+      ),
+      locatedContainmentRecall: summarize(
+        scores.map((score) => score.locatedContainment.recall),
       ),
       strictPrecision: summarize(scores.map((score) => score.strict.precision)),
       strictRecall: summarize(scores.map((score) => score.strict.recall)),
@@ -316,9 +340,21 @@ function subjectDecisions(runs: BenchmarkRun[]): SubjectDecisions[] {
         endLine: evaluation.range.endLine,
         decisions: runs.map(() => null),
         violationProbabilities: runs.map(() => null),
+        parts: [],
       };
       entry.decisions[index] = evaluation.decision;
       entry.violationProbabilities[index] = evaluation.violationProbability;
+
+      for (const [partIndex, part] of (evaluation.parts ?? []).entries()) {
+        const row = (entry.parts[partIndex] ??= {
+          kind: part.kind,
+          startLine: part.range.startLine,
+          endLine: part.range.endLine,
+          probabilities: runs.map(() => null),
+        });
+        row.probabilities[index] = part.probability;
+      }
+
       bySubject.set(key, entry);
     }
   }
@@ -363,9 +399,12 @@ function buildThresholdSweep(
 
   return thresholds.map((threshold) => {
     const scores = runs.map((run) =>
-      scoreFindings(
+      scoreLocatedFindings(
         golden,
-        findingsAtThreshold(run.evaluations ?? [], threshold),
+        {
+          located: findingsAtThreshold(run.evaluations ?? [], threshold),
+          units: unitFindingsAtThreshold(run.evaluations ?? [], threshold),
+        },
         { lineTolerance },
       ),
     );
@@ -426,7 +465,8 @@ export function renderBenchmarkReport(report: BenchmarkReport): string {
     lines.push(
       `  runs: ${runCount}`,
       `  file         P ${formatSummary(rule.summary.filePrecision)}  R ${formatSummary(rule.summary.fileRecall)}`,
-      `  包含         P ${formatSummary(rule.summary.containmentPrecision)}  R ${formatSummary(rule.summary.containmentRecall)}`,
+      `  包含(unit)   P ${formatSummary(rule.summary.containmentPrecision)}  R ${formatSummary(rule.summary.containmentRecall)}`,
+      `  包含(箇所)   P ${formatSummary(rule.summary.locatedContainmentPrecision)}  R ${formatSummary(rule.summary.locatedContainmentRecall)}`,
       `  厳密(±${report.lineTolerance}行)  P ${formatSummary(rule.summary.strictPrecision)}  R ${formatSummary(rule.summary.strictRecall)}`,
       `  findings     ${formatSummary(rule.summary.findings, 1)}  (全run共通 ${rule.stability.stable} / distinct ${rule.stability.distinct})`,
       `  requests     ${formatSummary(rule.summary.providerRequests, 0)}`,
@@ -493,7 +533,7 @@ export function renderBenchmarkReport(report: BenchmarkReport): string {
       const calibration = rule.calibration;
       const cv = calibration.crossValidation;
       lines.push(
-        `  校正 (包含F1最大): 推奨 ${calibration.threshold.toFixed(2)}  F1 ${calibration.f1.toFixed(3)}  gap ${formatSigned(calibration.gap)}  headroom ${formatSigned(calibration.headroom)}  候補 違反${calibration.positives}/クリーン${calibration.cleans}  包含recall上限 ${formatRatio(calibration.recallCeiling)}`,
+        `  校正 (厳密F1最大、同点は包含F1): 推奨 ${calibration.threshold.toFixed(2)}  F1 ${calibration.f1.toFixed(3)}  gap ${formatSigned(calibration.gap)}  headroom ${formatSigned(calibration.headroom)}  候補 違反${calibration.positives}/クリーン${calibration.cleans}  包含recall上限 ${formatRatio(calibration.recallCeiling)}`,
         `  LOFO CV (${cv.folds} folds, 閾値 ${formatSummary(cv.thresholds, 2)}): 包含 P ${formatSummary(cv.containmentPrecision)} R ${formatSummary(cv.containmentRecall)} | 厳密 P ${formatSummary(cv.strictPrecision)} R ${formatSummary(cv.strictRecall)} | findings ${formatSummary(cv.findings, 1)}`,
       );
     }
@@ -546,6 +586,10 @@ export function renderBenchmarkSummary(report: BenchmarkReport): string {
       containment: [
         round(rule.summary.containmentPrecision.mean),
         round(rule.summary.containmentRecall.mean),
+      ],
+      locatedContainment: [
+        round(rule.summary.locatedContainmentPrecision.mean),
+        round(rule.summary.locatedContainmentRecall.mean),
       ],
       strict: [
         round(rule.summary.strictPrecision.mean),
@@ -622,6 +666,16 @@ export function renderBenchmarkSummary(report: BenchmarkReport): string {
             .map((decision) => (decision === null ? "-" : decisionCode[decision]))
             .join(""),
           p: subject.violationProbabilities.map((value) => round(value, 2)),
+          ...(subject.parts.length === 0
+            ? {}
+            : {
+                parts: subject.parts.map((part) => [
+                  part.kind === "unit" ? "u" : "s",
+                  part.startLine,
+                  part.endLine,
+                  part.probabilities.map((value) => round(value, 2)),
+                ]),
+              }),
         }),
       );
     }

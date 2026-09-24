@@ -20,7 +20,7 @@ describe("TypeSafe provider", () => {
     const batch = sampleBatch(rule.id);
     const { body, questionToTask } = buildRequest("jev-latest", batch);
 
-    expect(questionToTask.get("q0")).toBe("task-1");
+    expect(questionToTask.get("q0")).toEqual({ taskId: "task-1" });
     expect(body).toMatchObject({
       model: "jev-latest",
       state: {
@@ -43,6 +43,68 @@ describe("TypeSafe provider", () => {
         },
       },
     });
+  });
+
+  test("違反箇所の候補をstateの目印で囲み、候補ごとのnoulを同じrequestで問う", () => {
+    const rule = sampleRule();
+    const batch = batchWithParts(rule.id);
+    const { body, questionToTask } = buildRequest("jev-latest", batch);
+
+    expect(body.state.file.source).toBe(
+      '/* state.subjects.s0 begin */test("a", () => {\n  /* p0 */const value = 1;/* /p0 */\n  /* p1 */expect(value).toBe(1);/* /p1 */\n})/* state.subjects.s0 end */;\n',
+    );
+    expect(body.state.rules).toEqual({
+      r0: {
+        instruction: rule.predicate.instruction,
+        violation: rule.predicate.outcomes.violation,
+      },
+    });
+    expect(body.questions.q0p1).toEqual({
+      type: "noul",
+      instructions:
+        "Assume state.subjects.s0 violates state.rules.r0. Is part p1 one of the places where it does?",
+    });
+    expect(questionToTask.get("q0p1")).toEqual({ taskId: "task-1", part: 1 });
+  });
+
+  test("partの回答をunitの判定へpartの順に付ける", async () => {
+    process.env.TYPESAFE_API_KEY = "secret";
+    const provider = createTypeSafeProvider(
+      {
+        kind: "typesafe",
+        model: "jev-latest",
+        apiKeyEnv: "TYPESAFE_API_KEY",
+      },
+      {
+        fetchImpl: async () =>
+          new Response(
+            JSON.stringify({
+              model: "jev-2026-09",
+              answers: {
+                q0: {
+                  type: "choice",
+                  choice: "violation",
+                  confidence: 0.9,
+                  probabilities: {
+                    violation: 0.9,
+                    compliant: 0.1,
+                    not_applicable: 0,
+                    insufficient_context: 0,
+                  },
+                },
+                q0p1: { type: "noul", noul: 0.2 },
+                q0p0: { type: "noul", noul: 0.8 },
+              },
+              usage: { input_tokens: 10, output_tokens: 0 },
+            }),
+            { status: 200 },
+          ),
+      },
+    );
+
+    const response = await provider.evaluate(batchWithParts("vitest/sample"));
+
+    expect(response.decisions["task-1"]?.parts).toEqual([0.8, 0.2]);
   });
 
   test("Jev responseをtask idへ戻す", async () => {
@@ -179,6 +241,58 @@ function sampleBatch(ruleId: string): DecisionBatch {
         symbol: "frontend/example.test.ts",
         source: "const value = 1;\n",
         span: { start: 0, end: 17 },
+        parts: [],
+        contextIds: [],
+      },
+    ],
+    requests: [
+      {
+        taskId: "task-1",
+        ruleId: rule.id,
+        subjectId: "subject-1",
+        predicate: rule.predicate,
+      },
+    ],
+  };
+}
+
+function batchWithParts(ruleId: string): DecisionBatch {
+  const rule = sampleRule({ id: ruleId, unit: "test" });
+  const source = 'test("a", () => {\n  const value = 1;\n  expect(value).toBe(1);\n});\n';
+  const statement = (text: string) => {
+    const start = source.indexOf(text);
+    const line = source.slice(0, start).split("\n").length;
+
+    return {
+      kind: "statement" as const,
+      span: { start, end: start + text.length },
+      range: {
+        startLine: line,
+        startColumn: 3,
+        endLine: line,
+        endColumn: 3 + text.length,
+      },
+    };
+  };
+
+  return {
+    id: "batch-1",
+    file: { path: "frontend/example.test.ts", source },
+    marker: "/* {ref} */",
+    subjectIds: ["subject-1"],
+    units: [
+      {
+        id: "subject-1",
+        unit: "test",
+        path: "frontend/example.test.ts",
+        range: { startLine: 1, startColumn: 1, endLine: 4, endColumn: 3 },
+        symbol: 'test("a")',
+        source: source.slice(0, source.indexOf(";\n}") + 4),
+        span: { start: 0, end: source.lastIndexOf(")") + 1 },
+        parts: [
+          statement("const value = 1;"),
+          statement("expect(value).toBe(1);"),
+        ],
         contextIds: [],
       },
     ],

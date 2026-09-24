@@ -114,4 +114,48 @@ describe("runEvaluationPlan", () => {
     expect(result.unknowns).toHaveLength(1);
     expect(result.metrics.unknowns).toBe(1);
   });
+
+  test("違反と判定したunitは、選ばれたpartの範囲を指摘する", async () => {
+    const rule = sampleRule({ unit: "test", violationThreshold: 0.5 });
+    const plan = buildEvaluationPlan({
+      documents: [
+        {
+          path: "frontend/example.test.ts",
+          source: `test("a", () => {
+  const values = [1, 2, 3];
+
+  expect(sum(values)).toBe(6);
+});
+`,
+        },
+      ],
+      rules: [rule],
+      extractor,
+      matchesPath: () => true,
+    });
+    const task = plan.files[0]?.tasks[0];
+
+    if (!task) {
+      throw new Error("test plan is empty");
+    }
+
+    const result = await runEvaluationPlan({
+      plan,
+      rules: [rule],
+      provider: new FakeDecisionProvider({
+        [task.id]: { ...decisionResult("violation", 0.8), parts: [0.9, 0.1] },
+      }),
+    });
+
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]).toMatchObject({
+      range: { startLine: 2, endLine: 2 },
+      subjectRange: { startLine: 1, endLine: 5 },
+      probability: 0.8,
+      partProbability: 0.9,
+    });
+    expect(result.evaluations[0]?.parts?.map((part) => part.probability)).toEqual(
+      [0.9, 0.1],
+    );
+  });
 });

@@ -79,4 +79,61 @@ describe("buildEvaluationPlan", () => {
     ]);
     expect(plan.files[0]?.tasks).toHaveLength(6);
   });
+
+  test("unit直下の文と直下の子unitを違反箇所の候補にする", () => {
+    const document: SourceDocument = {
+      path: "frontend/parts.test.ts",
+      source: `describe("合計", () => {
+  const values = [1, 2];
+
+  beforeEach(() => {
+    reset();
+  });
+
+  test("a", () => {
+    const input = build(() => {
+      return 1;
+    });
+
+    if (input) {
+      run(input);
+    }
+    expect(sum(values)).toBe(3);
+  });
+});
+`,
+    };
+    const plan = buildEvaluationPlan({
+      documents: [document],
+      rules: [
+        sampleRule({ id: "vitest/test", unit: "test" }),
+        sampleRule({ id: "vitest/group", unit: "test-group" }),
+        sampleRule({ id: "vitest/setup", unit: "setup" }),
+      ],
+      extractor,
+      matchesPath: () => true,
+    });
+    const units = plan.files[0]?.units ?? [];
+    const partsOf = (symbol: string) =>
+      units
+        .find((unit) => unit.symbol === symbol)
+        ?.parts.map((part) => [
+          part.kind,
+          part.range.startLine,
+          part.range.endLine,
+        ]);
+
+    expect(partsOf('describe("合計")')).toEqual([
+      ["statement", 2, 2],
+      ["unit", 4, 6],
+      ["unit", 8, 17],
+    ]);
+    // 入れ子のblockやcallbackの中の文は候補にしない。
+    expect(partsOf('test("a")')).toEqual([
+      ["statement", 9, 11],
+      ["statement", 13, 15],
+      ["statement", 16, 16],
+    ]);
+    expect(partsOf("beforeEach")).toEqual([["statement", 5, 5]]);
+  });
 });

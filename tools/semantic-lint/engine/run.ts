@@ -11,11 +11,13 @@ import {
 import type {
   DecisionBatch,
   DecisionBatchResult,
+  DecisionResult,
   Evaluation,
   EvaluationPlan,
   EvaluationTask,
   PlannedFile,
   PlannedUnit,
+  ProviderIdentity,
   ProviderRequestIdentity,
   RequestEstimator,
   RequestTokenBudget,
@@ -238,17 +240,20 @@ function lookupCache(options: {
         predicate: rule.predicate,
         path: file.path,
         context,
+        parts: subject.parts.map(
+          (part): [number, number] => [
+            part.span.start - subject.span.start,
+            part.span.end - subject.span.start,
+          ],
+        ),
       });
       const cached = cache.get(key);
 
       if (cached) {
-        cachedEvaluations.set(task.id, {
-          taskId: task.id,
-          ruleId: task.ruleId,
-          subject: publicSubject(subject),
-          result: cached.result,
-          provider: cached.provider,
-        });
+        cachedEvaluations.set(
+          task.id,
+          createEvaluation(task, subject, cached.result, cached.provider),
+        );
         continue;
       }
 
@@ -307,14 +312,42 @@ function appendEvaluations(
       throw new Error(`batchにsubjectがありません: ${request.subjectId}`);
     }
 
-    evaluations.set(request.taskId, {
-      taskId: request.taskId,
-      ruleId: request.ruleId,
-      subject: publicSubject(subject),
-      result,
-      provider: response.provider,
-    });
+    evaluations.set(
+      request.taskId,
+      createEvaluation(
+        { id: request.taskId, ruleId: request.ruleId },
+        subject,
+        result,
+        response.provider,
+      ),
+    );
   }
+}
+
+function createEvaluation(
+  task: Pick<EvaluationTask, "id" | "ruleId">,
+  unit: PlannedUnit,
+  result: DecisionResult,
+  provider: ProviderIdentity,
+): Evaluation {
+  const parts = result.parts;
+
+  return {
+    taskId: task.id,
+    ruleId: task.ruleId,
+    subject: publicSubject(unit),
+    result,
+    ...(parts === undefined || parts.length !== unit.parts.length
+      ? {}
+      : {
+          parts: unit.parts.map((part, index) => ({
+            kind: part.kind,
+            range: part.range,
+            probability: parts[index] ?? 0,
+          })),
+        }),
+    provider,
+  };
 }
 
 /** 実行結果に残すsubject。plan内部の入れ子・文脈の情報は含めない。 */

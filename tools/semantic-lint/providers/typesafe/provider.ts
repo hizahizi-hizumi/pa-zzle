@@ -21,7 +21,7 @@ const DEFAULT_MAX_ATTEMPTS = 3;
  * buildRequestが組み立てるprompt / request形式の版。
  * 判定キャッシュのkeyに含まれるため、送る内容を変えたら更新する。
  */
-export const TYPESAFE_REQUEST_FORMAT = "systemone-choice/5";
+export const TYPESAFE_REQUEST_FORMAT = "systemone-choice-parts/1";
 
 /**
  * Jevの課金input tokenを見積もる係数。golden benchmarkのrequestごとの実usageへの最小二乗fit。
@@ -115,20 +115,25 @@ export function estimateTypeSafeRequest(
   model: string,
   batch: DecisionBatch,
 ): RequestEstimate {
-  const { body } = buildRequest(model, batch);
+  const { body, questionToTask } = buildRequest(model, batch);
   const state = estimateStateTokens(JSON.stringify(body.state));
-  const questions = Object.values(body.questions).map((question) =>
-    Math.ceil(
-      JEV_TOKEN_ESTIMATE.questionBase +
-        JEV_TOKEN_ESTIMATE.optionBase *
-          Object.keys(question.criteria).length +
-        JEV_TOKEN_ESTIMATE.tokensPerWord *
-          [question.instructions, ...Object.values(question.criteria)].reduce(
-            (sum, text) => sum + countWords(text),
-            0,
-          ),
-    ),
+  const taskIndex = new Map(
+    batch.requests.map((request, index) => [request.taskId, index]),
   );
+  const questions = batch.requests.map(() => 0);
+
+  // partの質問は、そのpartを問うtaskの質問に含めて数える。
+  for (const [questionId, question] of Object.entries(body.questions)) {
+    const target = questionToTask.get(questionId);
+    const index =
+      target === undefined ? undefined : taskIndex.get(target.taskId);
+
+    if (index === undefined) {
+      continue;
+    }
+
+    questions[index] = (questions[index] ?? 0) + estimateQuestionTokens(question);
+  }
 
   return {
     state,
@@ -138,6 +143,20 @@ export function estimateTypeSafeRequest(
       state +
       questions.reduce((sum, tokens) => sum + tokens, 0),
   };
+}
+
+function estimateQuestionTokens(question: Question): number {
+  const criteria = question.type === "choice" ? Object.values(question.criteria) : [];
+
+  return Math.ceil(
+    JEV_TOKEN_ESTIMATE.questionBase +
+      JEV_TOKEN_ESTIMATE.optionBase * criteria.length +
+      JEV_TOKEN_ESTIMATE.tokensPerWord *
+        [question.instructions, ...criteria].reduce(
+          (sum, text) => sum + countWords(text),
+          0,
+        ),
+  );
 }
 
 function estimateStateTokens(json: string): number {
@@ -165,23 +184,65 @@ function countWords(text: string): number {
 type ChoiceQuestion = {
   type: "choice";
   instructions: string;
-  criteria: Record<Decision, string>;
+  criteria: Record<string, string>;
 };
 
+/** yes / noの質問。回答はyesの確率。 */
+type NoulQuestion = {
+  type: "noul";
+  instructions: string;
+};
+
+type Question = ChoiceQuestion | NoulQuestion;
+
+/** 質問の回答先。partはunitの `parts` の位置。 */
+type QuestionTarget = {
+  taskId: string;
+  part?: number;
+};
+
+/** 違反箇所の候補を問うときに参照するruleの文面。 */
+type StateRule = {
+  instruction: string;
+  violation: string;
+};
+
+export type TypeSafeState = DecisionState & {
+  /** partの目印の説明。partを問う質問があるときだけ載せる。 */
+  parts?: string;
+  rules?: Record<string, StateRule>;
+};
+
+/**
+ * unitの判定（4択のchoice）と、同じrequestで違反箇所の候補（part）ごとの判定（noul）を組み立てる。
+ *
+ * partの質問はunitの判定結果に依存しないため、全unitについて投機的に同じrequestへ入れる。
+ * stateをfileあたり1回にするため、違反と判定されたunitだけを2回目のrequestで問うより安い。
+ * partの質問が参照するruleの文面はstateに1回だけ載せる。
+ */
 export function buildRequest(
   model: string,
   batch: DecisionBatch,
 ): {
   body: {
     model: string;
-    state: DecisionState;
-    questions: Record<string, ChoiceQuestion>;
+    state: TypeSafeState;
+    questions: Record<string, Question>;
   };
-  questionToTask: Map<string, string>;
+  questionToTask: Map<string, QuestionTarget>;
 } {
-  const { state, keys } = buildDecisionState(batch);
-  const questionToTask = new Map<string, string>();
-  const questions: Record<string, ChoiceQuestion> = {};
+  const unitsById = new Map(batch.units.map((unit) => [unit.id, unit]));
+  const partUnitIds = batch.requests
+    .map((request) => request.subjectId)
+    .filter((id) => (unitsById.get(id)?.parts.length ?? 0) > 0);
+  const { state, keys, partKeys } = buildDecisionState({
+    ...batch,
+    partUnitIds,
+  });
+  const questionToTask = new Map<string, QuestionTarget>();
+  const questions: Record<string, Question> = {};
+  const rules: Record<string, StateRule> = {};
+  const ruleKeys = new Map<string, string>();
 
   for (const [index, request] of batch.requests.entries()) {
     const questionId = "q" + index;
@@ -193,7 +254,7 @@ export function buildRequest(
       );
     }
 
-    questionToTask.set(questionId, request.taskId);
+    questionToTask.set(questionId, { taskId: request.taskId });
     questions[questionId] = {
       type: "choice",
       instructions: [
@@ -205,16 +266,56 @@ export function buildRequest(
       ].join("\n"),
       criteria: request.predicate.outcomes,
     };
+
+    const refs = partKeys.get(request.subjectId) ?? [];
+
+    if (refs.length === 0) {
+      continue;
+    }
+
+    let ruleKey = ruleKeys.get(request.ruleId);
+
+    if (ruleKey === undefined) {
+      ruleKey = "r" + ruleKeys.size;
+      ruleKeys.set(request.ruleId, ruleKey);
+      rules[ruleKey] = {
+        instruction: request.predicate.instruction,
+        violation: request.predicate.outcomes.violation,
+      };
+    }
+
+    for (const [part, ref] of refs.entries()) {
+      const partQuestionId = `${questionId}p${part}`;
+      questionToTask.set(partQuestionId, { taskId: request.taskId, part });
+      questions[partQuestionId] = {
+        type: "noul",
+        instructions: `Assume state.subjects.${subjectKey} violates state.rules.${ruleKey}. Is part ${ref} one of the places where it does?`,
+      };
+    }
   }
+
+  const partMarkers = [renderPartMarker(batch.marker, "pN"), renderPartMarker(batch.marker, "/pN")];
 
   return {
     body: {
       model,
-      state,
+      state: {
+        ...state,
+        ...(ruleKeys.size === 0
+          ? {}
+          : {
+              parts: `In state.file.source, ${partMarkers[0]} and ${partMarkers[1]} enclose part pN of the subject that contains them.`,
+              rules,
+            }),
+      },
       questions,
     },
     questionToTask,
   };
+}
+
+function renderPartMarker(marker: string, ref: string): string {
+  return marker.replace("{ref}", ref);
 }
 
 async function requestWithRetry(options: {
@@ -262,7 +363,7 @@ async function requestWithRetry(options: {
 
 function parseResponse(
   value: unknown,
-  questionToTask: Map<string, string>,
+  questionToTask: Map<string, QuestionTarget>,
 ): DecisionBatchResult {
   if (
     !isRecord(value) ||
@@ -273,15 +374,34 @@ function parseResponse(
   }
 
   const decisions: Record<string, DecisionResult> = {};
+  const parts = new Map<string, number[]>();
 
-  for (const [questionId, taskId] of questionToTask) {
+  for (const [questionId, target] of questionToTask) {
     const answer = value.answers[questionId];
 
     if (answer === undefined) {
       throw new Error(`TypeSafe API回答がありません: ${questionId}`);
     }
 
-    decisions[taskId] = parseChoiceAnswer(questionId, answer);
+    if (target.part === undefined) {
+      decisions[target.taskId] = parseChoiceAnswer(questionId, answer);
+      continue;
+    }
+
+    const probabilities = parts.get(target.taskId) ?? [];
+    probabilities[target.part] = parseNoulAnswer(questionId, answer);
+    parts.set(target.taskId, probabilities);
+  }
+
+  for (const [taskId, probabilities] of parts) {
+    const decision = decisions[taskId];
+
+    if (decision) {
+      decision.parts = Array.from(
+        { length: probabilities.length },
+        (_, index) => probabilities[index] ?? 0,
+      );
+    }
   }
 
   const usage = isRecord(value.usage) ? value.usage : {};
@@ -338,6 +458,14 @@ function parseChoiceAnswer(
     confidence: value.confidence,
     probabilities,
   };
+}
+
+function parseNoulAnswer(questionId: string, value: unknown): number {
+  if (!isRecord(value) || value.type !== "noul" || !isProbability(value.noul)) {
+    throw new Error(`Noulレスポンスが不正です: ${questionId}`);
+  }
+
+  return value.noul;
 }
 
 function isDecision(value: unknown): value is Decision {

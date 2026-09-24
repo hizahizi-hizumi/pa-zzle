@@ -33,11 +33,23 @@ export function renderPretty(result: RunResult): string {
         `  ${range.padEnd(16)} ${diagnostic.severity.padEnd(7)} ${diagnostic.message}`,
         `  ${"".padEnd(16)} ${diagnostic.ruleId}  violation=${percentage(
           diagnostic.probability,
-        )} confidence=${percentage(diagnostic.confidence)}`,
+        )}${
+          diagnostic.partProbability === undefined
+            ? ""
+            : ` location=${percentage(diagnostic.partProbability)}`
+        } confidence=${percentage(diagnostic.confidence)}`,
       );
 
       if (diagnostic.symbol) {
-        lines.push(`  ${"".padEnd(16)} symbol=${diagnostic.symbol}`);
+        const subject = diagnostic.subjectRange;
+        const located =
+          subject.startLine !== diagnostic.range.startLine ||
+          subject.endLine !== diagnostic.range.endLine;
+        lines.push(
+          `  ${"".padEnd(16)} symbol=${diagnostic.symbol}${
+            located ? ` (${subject.startLine}-${subject.endLine}行)` : ""
+          }`,
+        );
       }
 
       lines.push("");

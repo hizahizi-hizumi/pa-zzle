@@ -4,6 +4,7 @@ import type {
   Rule,
   Severity,
 } from "../domain/model.ts";
+import { locateViolation } from "./locate.ts";
 
 /** 実行を失敗させる最も軽いseverity。infoは失敗させない。 */
 export type FailOn = Exclude<Severity, "info">;
@@ -55,18 +56,27 @@ export function buildDiagnostics(options: {
       continue;
     }
 
-    diagnostics.push({
-      ruleId: rule.id,
-      severity: rule.severity,
-      message: rule.title,
-      path: evaluation.subject.path,
-      range: evaluation.subject.range,
-      ...(evaluation.subject.symbol === undefined
-        ? {}
-        : { symbol: evaluation.subject.symbol }),
-      probability: evaluation.result.probabilities.violation,
-      confidence: evaluation.result.confidence,
-    });
+    for (const located of locateViolation(
+      evaluation.subject.range,
+      evaluation.parts,
+    )) {
+      diagnostics.push({
+        ruleId: rule.id,
+        severity: rule.severity,
+        message: rule.title,
+        path: evaluation.subject.path,
+        range: located.range,
+        subjectRange: evaluation.subject.range,
+        ...(evaluation.subject.symbol === undefined
+          ? {}
+          : { symbol: evaluation.subject.symbol }),
+        probability: evaluation.result.probabilities.violation,
+        confidence: evaluation.result.confidence,
+        ...(located.probability === undefined
+          ? {}
+          : { partProbability: located.probability }),
+      });
+    }
   }
 
   return {
