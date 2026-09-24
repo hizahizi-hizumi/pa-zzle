@@ -1,6 +1,7 @@
 import type {
   DecisionBatch,
   DecisionBatchResult,
+  DecisionStateMode,
   Finding,
   Predicate,
   SemanticDecisionProvider,
@@ -189,6 +190,7 @@ async function runCandidateAnchorCase(options: {
     rule,
     provider,
     maxDecisionsPerRequest,
+    stateMode: rule.stateMode,
   });
   const violations = candidates.filter((candidate) => {
     const result = classification.results.get(candidate.id);
@@ -203,6 +205,7 @@ async function runCandidateAnchorCase(options: {
     rule,
     provider,
     maxDecisionsPerRequest,
+    stateMode: rule.stateMode,
   });
   const findings = dedupeFindings(
     violations.flatMap((candidate) => {
@@ -260,12 +263,20 @@ async function evaluateCandidates(options: {
   rule: BenchmarkRule;
   provider: SemanticDecisionProvider;
   maxDecisionsPerRequest: number;
+  stateMode?: DecisionStateMode;
 }): Promise<{
   results: Map<string, EvaluatedSubject["result"]>;
   usage: BatchUsage;
   decisions: CandidateAnchorDecision[];
 }> {
-  const { document, candidates, rule, provider, maxDecisionsPerRequest } = options;
+  const {
+    document,
+    candidates,
+    rule,
+    provider,
+    maxDecisionsPerRequest,
+    stateMode,
+  } = options;
   const subjects = candidates.map((candidate) => candidateSubject(document, candidate));
 
   const evaluated = await evaluateSubjects({
@@ -275,6 +286,7 @@ async function evaluateCandidates(options: {
     ruleId: `poc/${rule.id}`,
     provider,
     maxDecisionsPerRequest,
+    stateMode,
   });
 
   return {
@@ -289,13 +301,21 @@ async function localizeViolations(options: {
   rule: BenchmarkRule;
   provider: SemanticDecisionProvider;
   maxDecisionsPerRequest: number;
+  stateMode?: DecisionStateMode;
 }): Promise<{
   anchors: Map<string, CandidateAnchor>;
   decisions: number;
   usage: BatchUsage;
   decisionDetails: CandidateAnchorDecision[];
 }> {
-  const { document, candidates, rule, provider, maxDecisionsPerRequest } = options;
+  const {
+    document,
+    candidates,
+    rule,
+    provider,
+    maxDecisionsPerRequest,
+    stateMode,
+  } = options;
   const anchors = candidates.flatMap((candidate) =>
     candidate.anchors.map((anchor) => ({ candidate, anchor })),
   );
@@ -320,6 +340,7 @@ async function localizeViolations(options: {
     ruleId: `poc/${rule.id}/location`,
     provider,
     maxDecisionsPerRequest,
+    stateMode,
   });
   const selected = new Map<string, CandidateAnchor>();
 
@@ -353,6 +374,7 @@ async function evaluateSubjects(options: {
   ruleId: string;
   provider: SemanticDecisionProvider;
   maxDecisionsPerRequest: number;
+  stateMode?: DecisionStateMode;
 }): Promise<{
   results: Map<string, EvaluatedSubject["result"]>;
   usage: BatchUsage;
@@ -364,6 +386,7 @@ async function evaluateSubjects(options: {
     ruleId,
     provider,
     maxDecisionsPerRequest,
+    stateMode,
   } = options;
   const results = new Map<string, EvaluatedSubject["result"]>();
   const usage: BatchUsage = {
@@ -378,6 +401,7 @@ async function evaluateSubjects(options: {
       id: `${document.path}#${ruleId}#${offset / maxDecisionsPerRequest}`,
       file: document,
       subjects: batchSubjects,
+      ...(stateMode === undefined ? {} : { stateMode }),
       requests: batchSubjects.map((subject) => ({
         taskId: `${ruleId}::${subject.id}`,
         ruleId,
