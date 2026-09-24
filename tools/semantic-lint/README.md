@@ -75,6 +75,38 @@ rule lifecycleは次の3つ。
 
 severityの `warning / error` はlifecycleとは別に管理する。
 
+## unit rule
+
+ruleは `scope` の代わりに汎用の `unit` を指定できる。作者が書くのはpaths / predicate / severity / unit (と識別用のid / title / sourceSection) だけで、subject抽出・文脈・位置特定はrule非依存のengineが決める。
+
+```yaml
+rules:
+  - id: arrange-outside-test
+    title: テスト本体にArrangeを置かない
+    unit: function
+    sourceSection: テスト構造 > Arrangeの分離方法
+    predicate:
+      instruction: |
+        Determine whether this test body keeps meaningful Arrange setup outside it.
+      outcomes: { violation: ..., compliant: ..., not_applicable: ..., insufficient_context: ... }
+```
+
+| unit | 単位 | 指摘範囲 |
+| --- | --- | --- |
+| `file` | ファイル。400行を超えるとトップレベル文の境界で分割する | 違反単位内で行IDを選ばせ、その行を含む葉の文 |
+| `function` | 構文上の関数 (宣言・式・arrow・method・コールバック引数)。3行未満の関数は外側へ畳む | 違反単位内で行IDを選ばせ、その行を含む関数本体直下の文 |
+| `line` | 他の文を含まない文 | 判定した文そのもの |
+
+- unitは構文だけで抽出し、関数名などframework固有の知識で分岐しない。unit語彙は `units/definitions.ts` の `UnitDefinition` (抽出器 + 文脈構築) として登録する。
+- 文脈は単位本体 + ファイル概要 (import全文とトップレベル文の先頭行) + 外側の関数を入れ子の本文を畳んだ形。ファイル全文は渡さない。
+- 対象外の単位はmodelが `not_applicable` で捨てる前提で、predicateの `not_applicable` に「このruleが扱う種類のコードではない」場合を含める。
+- 同じファイル・同じunitに当たる複数ruleの質問は1 requestに相乗りする。
+- 入れ子の関数は外側・内側の両方を判定し、位置特定後に外側の指摘が内側の指摘を包含する場合は内側だけを残す。
+- 位置特定は `violationThreshold` 以上のviolation単位だけ、行IDのchoice (1質問255選択肢まで。空行・コメント行・記号だけの行は除く) で行う。複数行の文は行の確率を合算する。
+- 判定と位置特定の回答は `.semantic-lint/.cache/decisions.json` にキャッシュする。keyはrule文面・unit・文脈モード・対象と文脈のテキスト・modelで、thresholdは含めない。`check --no-cache` で無効にできる。
+
+`bench --rules-from <ruleset>` はgolden `<ruleset>/<id>` を別rulesetの同じidのruleで評価する。unit ruleはthreshold sweepのためthreshold未満のviolationも位置特定する。`--nesting fold|all`、`--context skeleton|file`、`--locate lines|statements` は比較実験用のengine設定でrule定義には書かない。
+
 ## Ruleを追加する
 
 静的lintで十分に判定できる規約はsemantic lintへ追加しない。文脈や意味の判断が必要な規約だけを対象にする。
@@ -130,6 +162,7 @@ files:
 - 包含: findingが期待行範囲を含めば一致。test全体などsubject単位の指摘でも一致する。
 - 厳密: 開始行と終了行が `--line-tolerance` (既定1) 以内なら1対1で一致。
 - findingsの全run共通数とrunによる揺れ、provider request数、input / output tokens、threshold sweep。
+- 校正: 包含F1が最大になるthresholdの中央を推奨値とし、違反候補とクリーン候補のscoreから gap (違反群の最低 − クリーン群の最高) と headroom (推奨値 − クリーン群の最高) を出す。過学習を見るため、1ファイルを外して校正し外したファイルで採点するleave-one-file-outの結果も出す。
 
 ## CI
 
