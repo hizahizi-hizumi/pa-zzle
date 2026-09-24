@@ -14,7 +14,9 @@
     "format": "biome check --write .",
     "analyze:minesweeper": "bun scripts/analyze-minesweeper-corpus.ts",
     "analyze:minesweeper-supply": "bun scripts/analyze-minesweeper-difficulty-supply.ts",
-    "generate:water-sort-pool": "bun scripts/generate-water-sort-problem-pool.ts"
+    "generate:water-sort-pool": "bun scripts/generate-water-sort-problem-pool.ts",
+    "generate:fifteen-puzzle-pool": "bun scripts/generate-fifteen-puzzle-problem-pool.ts",
+    "analyze:fifteen-puzzle": "bun scripts/analyze-fifteen-puzzle-corpus.ts"
   },
   "dependencies": {
     "@fontsource/zen-kaku-gothic-new": "5.3.0",

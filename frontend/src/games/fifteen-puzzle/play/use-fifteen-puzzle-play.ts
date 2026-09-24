@@ -6,7 +6,10 @@ import type {
   FifteenPuzzleGeneratedProblem,
   FifteenPuzzleProblemIdentity,
 } from "@/games/fifteen-puzzle/problem/problem";
-import { selectFifteenPuzzleProblemForDifficulty } from "@/games/fifteen-puzzle/problem-selection";
+import {
+  restoreFifteenPuzzlePooledProblem,
+  selectFifteenPuzzleProblemForDifficulty,
+} from "@/games/fifteen-puzzle/problem-selection";
 import {
   type FifteenPuzzleDirection,
   type FifteenPuzzleSlide,
@@ -52,10 +55,10 @@ function createPlayState(
   initialProblemIdentity?: FifteenPuzzleProblemIdentity,
 ): FifteenPuzzlePlayState {
   const generatedProblem: FifteenPuzzleGeneratedProblem = initialProblemIdentity
-    ? {
+    ? (restoreFifteenPuzzlePooledProblem(initialProblemIdentity) ?? {
         ...restoreFifteenPuzzleProblem(initialProblemIdentity),
         optimalMoveCount: null,
-      }
+      })
     : selectFifteenPuzzleProblemForDifficulty(difficulty, seed);
 
   return {

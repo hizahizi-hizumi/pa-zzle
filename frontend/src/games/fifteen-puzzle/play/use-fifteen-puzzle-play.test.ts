@@ -3,9 +3,16 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { useFifteenPuzzlePlay } from "@/games/fifteen-puzzle/play/use-fifteen-puzzle-play";
 import { generateFifteenPuzzleBoard } from "@/games/fifteen-puzzle/problem/generator";
 import type { FifteenPuzzleProblemIdentity } from "@/games/fifteen-puzzle/problem/problem";
+import {
+  listFifteenPuzzlePoolEntries,
+  toFifteenPuzzlePooledProblem,
+} from "@/games/fifteen-puzzle/problem/problem-pool";
 
 // 最下段だけが 1 マスずつずれた盤面。右下のタイルをタップすると 3 枚まとめて滑って完成する。
-vi.mock("@/games/fifteen-puzzle/problem-selection", () => ({
+vi.mock("@/games/fifteen-puzzle/problem-selection", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("@/games/fifteen-puzzle/problem-selection")
+  >()),
   selectFifteenPuzzleProblemForDifficulty: (
     _difficulty: string,
     seed: string,
@@ -145,7 +152,7 @@ describe("useFifteenPuzzlePlay", () => {
     expect(result.current.moveCount).toBe(0);
   });
 
-  describe("問題識別情報を渡した場合", () => {
+  describe("問題集に無い問題識別情報を渡した場合", () => {
     const identity: FifteenPuzzleProblemIdentity = {
       generatorVersion: "1",
       seed: "replay-seed",
@@ -163,5 +170,22 @@ describe("useFifteenPuzzlePlay", () => {
       expect(restored.result.current.problemIdentity).toEqual(identity);
       expect(restored.result.current.optimalMoveCount).toBeNull();
     });
+  });
+
+  describe("問題集にある問題識別情報を渡した場合", () => {
+    const pooledEntries = listFifteenPuzzlePoolEntries("4").slice(0, 1);
+    const pooledProblems = pooledEntries.map(
+      (entry) => [entry[0], toFifteenPuzzlePooledProblem(entry)] as const,
+    );
+
+    test.each(pooledProblems)(
+      "問題集の最短手数を持って始めること: %s",
+      (_seed, { identity, optimalMoveCount }) => {
+        const restored = renderHook(() => useFifteenPuzzlePlay("4", identity));
+
+        expect(restored.result.current.problemIdentity).toEqual(identity);
+        expect(restored.result.current.optimalMoveCount).toBe(optimalMoveCount);
+      },
+    );
   });
 });

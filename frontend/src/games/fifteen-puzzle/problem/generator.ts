@@ -105,3 +105,14 @@ export function restoreFifteenPuzzleProblem(
     identity,
   };
 }
+
+export function restoreFifteenPuzzleProblemWithOptimalMoveCount(
+  identity: FifteenPuzzleProblemIdentity,
+  optimalMoveCount: number,
+): FifteenPuzzleGeneratedProblem {
+  if (!Number.isInteger(optimalMoveCount) || optimalMoveCount < 1) {
+    throw new RangeError("optimalMoveCount must be a positive integer");
+  }
+
+  return { ...restoreFifteenPuzzleProblem(identity), optimalMoveCount };
+}
