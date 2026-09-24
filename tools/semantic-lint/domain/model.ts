@@ -63,9 +63,15 @@ export type StructuralCallContext = {
   statementCount?: number;
 };
 
+export type StructuralRegionContext = {
+  kind: string;
+  source: string;
+};
+
 export type SubjectContext = {
   enclosingCalls: string[];
   call?: StructuralCallContext;
+  region?: StructuralRegionContext;
   relation?: StructuralRelationContext;
 };
 
