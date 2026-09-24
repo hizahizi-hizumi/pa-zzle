@@ -48,7 +48,7 @@ describe("waterSortPlayRecordDisplay", () => {
   });
 
   test.each([
-    ["3", "難易度 3"],
+    ["3", "レベル 3"],
     ["normal", "ふつう"],
   ])("比較条件 %s を利用者向けラベル %s へ変換すること", (key, expected) => {
     const label = waterSortPlayRecordDisplay.getComparisonLabel(key);

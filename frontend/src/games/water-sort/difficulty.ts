@@ -3,27 +3,27 @@ import type { WaterSortGenerationConditions } from "@/games/water-sort/problem/p
 export const waterSortDifficulties = [
   {
     id: "1",
-    label: "難易度 1",
+    label: "レベル 1",
     description: "同じ色をまとめていけば解けます",
   },
   {
     id: "2",
-    label: "難易度 2",
+    label: "レベル 2",
     description: "何も考えずに進めると、ときどき詰みます",
   },
   {
     id: "3",
-    label: "難易度 3",
+    label: "レベル 3",
     description: "空きボトルの使い方を考えないと詰みます",
   },
   {
     id: "4",
-    label: "難易度 4",
+    label: "レベル 4",
     description: "何度か先を読む必要があります",
   },
   {
     id: "5",
-    label: "難易度 5",
+    label: "レベル 5",
     description: "先を読まずに進めると、ほぼ確実に詰みます",
   },
 ] as const;

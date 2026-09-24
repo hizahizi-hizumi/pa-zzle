@@ -29,7 +29,7 @@ describe("WaterSortDiagnostics", () => {
   });
 
   test("ウォーターソート固有の診断値を共通ダイアログへ表示すること", () => {
-    expect(screen.getByText("難易度 3")).toBeTruthy();
+    expect(screen.getByText("レベル 3")).toBeTruthy();
     expect(screen.getByText("diagnostics-ui-seed")).toBeTruthy();
     expect(screen.getByText("色 5 / 容量 4 / 空 2")).toBeTruthy();
   });
