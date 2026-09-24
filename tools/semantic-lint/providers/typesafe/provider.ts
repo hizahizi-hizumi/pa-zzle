@@ -1,3 +1,4 @@
+import type { SemanticLintConfig } from "../../config/config.ts";
 import {
   DECISIONS,
   type Decision,
@@ -5,8 +6,8 @@ import {
   type DecisionBatchResult,
   type DecisionResult,
   type SemanticDecisionProvider,
+  type SubjectContext,
 } from "../../domain/model.ts";
-import type { SemanticLintConfig } from "../../config/config.ts";
 
 const API_URL = "https://api.typesafe.ai/v1/systemone";
 const DEFAULT_MAX_ATTEMPTS = 3;
@@ -19,6 +20,14 @@ type FetchLike = (
 export type TypeSafeTrace = {
   requestBody: unknown;
   responseBody: unknown;
+};
+
+type SerializedSubjectContext = Omit<SubjectContext, "region"> & {
+  regionId?: string;
+};
+
+type SerializedRegion = NonNullable<SubjectContext["region"]> & {
+  id: string;
 };
 
 export function createTypeSafeProvider(
@@ -68,12 +77,15 @@ export function buildRequest(
   body: unknown;
   questionToTask: Map<string, string>;
 } {
+  const regionIds = new Map<string, string>();
+  const regions: Record<string, SerializedRegion> = {};
   const subjectsById = new Map(
     batch.subjects.map((subject, index) => [
       subject.id,
       {
         key: "s" + index,
         subject,
+        context: serializeSubjectContext(subject.context, regionIds, regions),
       },
     ]),
   );
@@ -95,11 +107,13 @@ export function buildRequest(
       batch.stateMode === "subjects-only"
         ? [
             "Use state.subjects.*.context as deterministic structural evidence.",
+            "When the current subject context has regionId, resolve it in state.regions and use that shared local region as surrounding evidence.",
             "No full-file source is provided. Judge from the current subject, its structural context, and the rule criteria.",
             "If required evidence is absent, choose insufficient_context instead of inferring unseen code.",
           ]
         : [
             "Use state.subjects.*.context as deterministic structural evidence when available.",
+            "When the current subject context has regionId, resolve it in state.regions and use that shared local region as surrounding evidence.",
             "Use state.file only as surrounding evidence to understand the target, including its containment and semantic role.",
           ];
     const propagationInstruction =
@@ -124,7 +138,7 @@ export function buildRequest(
   }
 
   const subjects = Object.fromEntries(
-    [...subjectsById.values()].map(({ key, subject }) => [
+    [...subjectsById.values()].map(({ key, subject, context }) => [
       key,
       {
         id: subject.id,
@@ -133,14 +147,18 @@ export function buildRequest(
         range: subject.range,
         ...(subject.symbol === undefined ? {} : { symbol: subject.symbol }),
         source: subject.source,
-        ...(subject.context === undefined ? {} : { context: subject.context }),
+        ...(context === undefined ? {} : { context }),
       },
     ]),
   );
+  const sharedState = {
+    subjects,
+    ...(Object.keys(regions).length === 0 ? {} : { regions }),
+  };
   const state =
     batch.stateMode === "subjects-only"
-      ? { subjects }
-      : { file: batch.file, subjects };
+      ? sharedState
+      : { file: batch.file, ...sharedState };
 
   return {
     body: {
@@ -149,6 +167,36 @@ export function buildRequest(
       questions,
     },
     questionToTask,
+  };
+}
+
+function serializeSubjectContext(
+  context: SubjectContext | undefined,
+  regionIds: Map<string, string>,
+  regions: Record<string, SerializedRegion>,
+): SerializedSubjectContext | undefined {
+  if (context === undefined) {
+    return undefined;
+  }
+
+  const { region, ...structuralContext } = context;
+
+  if (region === undefined) {
+    return structuralContext;
+  }
+
+  const regionKey = `${region.kind}\u0000${region.source}`;
+  let regionId = regionIds.get(regionKey);
+
+  if (regionId === undefined) {
+    regionId = `r${regionIds.size}`;
+    regionIds.set(regionKey, regionId);
+    regions[regionId] = { id: regionId, ...region };
+  }
+
+  return {
+    ...structuralContext,
+    regionId,
   };
 }
 

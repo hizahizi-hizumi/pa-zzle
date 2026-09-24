@@ -52,6 +52,92 @@ describe("TypeSafe provider", () => {
     );
   });
 
+  test("同じ局所regionをstateへ一度だけ共有する", () => {
+    const rule = sampleRule();
+    const batch = sampleBatch(rule.id);
+    const first = batch.subjects[0];
+
+    if (first === undefined) {
+      throw new Error("sample subjectがありません。");
+    }
+
+    const sharedRegion = {
+      kind: "callback-body",
+      source: "{\n  const input = createInput();\n  run(input);\n}",
+    };
+    batch.stateMode = "subjects-only";
+    batch.subjects = [
+      {
+        ...first,
+        id: "subject-1",
+        context: {
+          enclosingCalls: ["test", "describe"],
+          region: sharedRegion,
+        },
+      },
+      {
+        ...first,
+        id: "subject-2",
+        source: "run(input);",
+        context: {
+          enclosingCalls: ["test", "describe"],
+          region: sharedRegion,
+        },
+      },
+    ];
+    batch.requests = [
+      {
+        taskId: "task-1",
+        ruleId: rule.id,
+        subjectId: "subject-1",
+        predicate: rule.predicate,
+      },
+      {
+        taskId: "task-2",
+        ruleId: rule.id,
+        subjectId: "subject-2",
+        predicate: rule.predicate,
+      },
+    ];
+
+    const { body } = buildRequest("jev-latest", batch);
+    const state = (
+      body as {
+        state: {
+          regions: Record<string, { id: string; kind: string; source: string }>;
+          subjects: Record<
+            string,
+            { context: { enclosingCalls: string[]; regionId: string } }
+          >;
+        };
+      }
+    ).state;
+
+    expect(state.regions).toEqual({
+      r0: {
+        id: "r0",
+        kind: "callback-body",
+        source: sharedRegion.source,
+      },
+    });
+    expect(state.subjects.s0?.context).toEqual({
+      enclosingCalls: ["test", "describe"],
+      regionId: "r0",
+    });
+    expect(state.subjects.s1?.context).toEqual({
+      enclosingCalls: ["test", "describe"],
+      regionId: "r0",
+    });
+    expect(JSON.stringify(state).split(sharedRegion.source)).toHaveLength(2);
+    expect(
+      (
+        body as {
+          questions: { q0: { instructions: string } };
+        }
+      ).questions.q0.instructions,
+    ).toContain("resolve it in state.regions");
+  });
+
   test("Jev responseをtask idへ戻す", async () => {
     process.env.TYPESAFE_API_KEY = "secret";
     const requests: RequestInit[] = [];
