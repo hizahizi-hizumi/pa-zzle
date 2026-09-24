@@ -6,6 +6,7 @@ import {
   type DecisionCacheFileStatus,
 } from "../cache/decision-cache.ts";
 
+import { goldenFileStatus, loadGoldenSets } from "../eval/golden.ts";
 import { createDefaultScopeRegistry } from "../scopes/default.ts";
 import { loadProjectContext } from "./context.ts";
 
@@ -47,6 +48,24 @@ export async function runDoctorCommand(args: string[]): Promise<number> {
     }
   }
 
+  const goldenSets = await loadGoldenSets(projectRoot, config.goldenDir);
+
+  for (const golden of goldenSets) {
+    if (!rules.some((rule) => rule.id === golden.ruleId)) {
+      errors.push(`golden: 未知のruleです: ${golden.ruleId}`);
+    }
+
+    for (const file of golden.files) {
+      const status = await goldenFileStatus(projectRoot, file);
+
+      if (status !== "current") {
+        warnings.push(
+          `${golden.ruleId}: goldenのblobとworking treeが異なります (${status}): ${file.path}`,
+        );
+      }
+    }
+  }
+
   if (!process.env[config.provider.apiKeyEnv]) {
     warnings.push(
       `provider環境変数が未設定です: ${config.provider.apiKeyEnv}`,
@@ -66,6 +85,7 @@ export async function runDoctorCommand(args: string[]): Promise<number> {
   console.log(`rules: ${rules.length}`);
   console.log(`scopes: ${scopes.ids().join(", ")}`);
   console.log(`cache: ${describeCache(projectRoot, cacheStatus)}`);
+  console.log(`golden: ${goldenSets.length}`);
   console.log(`errors: ${errors.length}`);
   console.log(`warnings: ${warnings.length}`);
 

@@ -1,10 +1,13 @@
 import { resolve } from "node:path";
 import { YAML } from "bun";
 
+const DEFAULT_GOLDEN_DIR = ".semantic-lint/golden";
+
 export type SemanticLintConfig = {
   version: 1;
   rulesDir: string;
   casesDir: string;
+  goldenDir: string;
   excludePaths: string[];
   execution: {
     concurrency: number;
@@ -27,6 +30,7 @@ export function compileConfig(
 
   const rulesDir = value.rulesDir;
   const casesDir = value.casesDir;
+  const goldenDir = value.goldenDir ?? DEFAULT_GOLDEN_DIR;
   const excludePaths = value.excludePaths;
   const execution = value.execution;
   const provider = value.provider;
@@ -34,6 +38,7 @@ export function compileConfig(
   if (
     typeof rulesDir !== "string" ||
     typeof casesDir !== "string" ||
+    typeof goldenDir !== "string" ||
     !isStringArray(excludePaths) ||
     !isRecord(execution) ||
     !isRecord(provider)
@@ -61,6 +66,7 @@ export function compileConfig(
     version: 1,
     rulesDir,
     casesDir,
+    goldenDir,
     excludePaths,
     execution: {
       concurrency,

@@ -24,6 +24,7 @@ provider:
       version: 1,
       rulesDir: ".semantic-lint/rules",
       casesDir: ".semantic-lint/cases",
+      goldenDir: ".semantic-lint/golden",
       excludePaths: ["**/.env*"],
       execution: {
         concurrency: 8,
