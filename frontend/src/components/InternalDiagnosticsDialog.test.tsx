@@ -63,24 +63,26 @@ describe("InternalDiagnosticsDialog", () => {
   });
 });
 
-describe("生成試行を渡さない場合", () => {
-  beforeEach(() => {
-    render(
-      <InternalDiagnosticsDialog
-        difficultyLabel="レベル 3"
-        seed="diagnostics-ui-seed"
-        generatorVersion="1"
-        generationConditions="条件表示"
-        buildRevision={null}
-        serializedSnapshot='{"game":"test"}'
-        onClose={vi.fn()}
-      />,
-    );
-  });
+describe("InternalDiagnosticsDialog", () => {
+  describe("生成試行を渡さない場合", () => {
+    beforeEach(() => {
+      render(
+        <InternalDiagnosticsDialog
+          difficultyLabel="レベル 3"
+          seed="diagnostics-ui-seed"
+          generatorVersion="1"
+          generationConditions="条件表示"
+          buildRevision={null}
+          serializedSnapshot='{"game":"test"}'
+          onClose={vi.fn()}
+        />,
+      );
+    });
 
-  test("生成試行の行を表示しないこと", () => {
-    const generationAttempt = screen.queryByText("生成試行");
+    test("生成試行の行を表示しないこと", () => {
+      const generationAttempt = screen.queryByText("生成試行");
 
-    expect(generationAttempt).toBeNull();
+      expect(generationAttempt).toBeNull();
+    });
   });
 });
