@@ -21,7 +21,7 @@ const DEFAULT_MAX_ATTEMPTS = 3;
  * buildRequestが組み立てるprompt / request形式の版。
  * 判定キャッシュのkeyに含まれるため、送る内容を変えたら更新する。
  */
-export const TYPESAFE_REQUEST_FORMAT = "systemone-choice/4";
+export const TYPESAFE_REQUEST_FORMAT = "systemone-choice/5";
 
 /**
  * Jevの課金input tokenを見積もる係数。golden benchmarkのrequestごとの実usageへの最小二乗fit。
@@ -197,7 +197,7 @@ export function buildRequest(
     questions[questionId] = {
       type: "choice",
       instructions: [
-        `Evaluate only state.subjects.${subjectKey}.`,
+        `Evaluate only state.subjects.${subjectKey}, the code between its begin and end comments in state.file.source.`,
         "Use state.file as surrounding context when needed.",
         "Do not classify another subject in the file.",
         "",

@@ -42,7 +42,7 @@ function plannedFile(
 }
 
 describe("buildDecisionState", () => {
-  test("unit本文をstateに1回だけ載せ、目印を戻すと元のfileとunitに一致する", () => {
+  test("fileを元の並びで1回だけ載せ、unitを開始・終了の目印で囲む", () => {
     const { file, units } = plannedFile({ path: "a.test.tsx", source }, [
       "test",
       "test-group",
@@ -55,38 +55,16 @@ describe("buildDecisionState", () => {
       subjectIds: units.map((unit) => unit.id),
     });
     const expanded = expandDecisionState(state, MARKER);
-    const markerChars = Object.keys(state.subjects).reduce(
-      (sum, key) => sum + `/* state.subjects.${key} */`.length,
-      0,
-    );
-    const stateChars =
-      state.file.source.length +
-      Object.values(state.subjects).reduce(
-        (sum, subject) => sum + subject.source.length,
-        0,
-      );
 
     expect(expanded.file).toBe(source);
     expect(Object.values(expanded.subjects)).toEqual(
       units.map((unit) => unit.source),
     );
-    expect(stateChars - markerChars).toBe(source.length);
-    expect(state.file.source).toBe(`import { render } from "@testing-library/react";
-
-/* state.subjects.s0 */;
-
-/* state.subjects.s5 */;
-`);
+    expect(state.file.source).toContain(`/* state.subjects.s0 begin */describe("一覧", () => {
+  /* state.subjects.s1 begin */beforeEach(() => {`);
     expect(state.subjects.s0).toEqual({
       unit: "test-group",
       symbol: 'describe("一覧")',
-      source: `describe("一覧", () => {
-  /* state.subjects.s1 */;
-
-  /* state.subjects.s2 */;
-
-  /* state.subjects.s3 */;
-})`,
     });
   });
 
@@ -130,7 +108,7 @@ describe("buildDecisionState", () => {
     expect(expandDecisionState(state, MARKER).file).toBe(tricky);
   });
 
-  test("リポジトリの全testファイルで骨格化しても情報を失わない", async () => {
+  test("リポジトリの全testファイルで目印を付けても情報を失わない", async () => {
     const projectRoot = resolve(import.meta.dir, "../../..");
     const child = Bun.spawn(
       ["git", "ls-files", "*.test.ts", "*.test.tsx"],

@@ -2,7 +2,6 @@ import { afterEach, describe, expect, test } from "bun:test";
 
 import type { DecisionBatch } from "../../domain/model.ts";
 import { sampleRule } from "../../testing/fixtures.ts";
-import { WHOLE_FILE_SOURCE } from "../../units/layout.ts";
 import { buildRequest, createTypeSafeProvider } from "./provider.ts";
 
 const originalApiKey = process.env.TYPESAFE_API_KEY;
@@ -27,13 +26,13 @@ describe("TypeSafe provider", () => {
       state: {
         file: {
           path: "frontend/example.test.ts",
-          source: "const value = 1;\n",
+          source:
+            "/* state.subjects.s0 begin */const value = 1;\n/* state.subjects.s0 end */",
         },
         subjects: {
           s0: {
             unit: "file",
             symbol: "frontend/example.test.ts",
-            source: WHOLE_FILE_SOURCE,
           },
         },
       },

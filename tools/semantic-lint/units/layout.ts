@@ -1,19 +1,15 @@
 import type { PlannedUnit, SourceDocument, Span } from "../domain/model.ts";
 
-/** 判定stateに1回だけ載せるunit。入れ子のunitは目印に置き換えてある。 */
+/** 判定対象のunit。本文はstate.file.sourceの中で開始・終了の目印に囲まれている。 */
 export type StateSubject = {
   unit: string;
   symbol?: string;
-  source: string;
 };
 
 export type DecisionState = {
   file: SourceDocument;
   subjects: Record<string, StateSubject>;
 };
-
-/** file全体を覆うunitのsource。file全体はstate.fileに載せるため参照だけにする。 */
-export const WHOLE_FILE_SOURCE = "(= state.file.source)";
 
 const OMITTED_REF = "omitted";
 const CONTEXT_KEY_REF = "unit";
@@ -24,9 +20,9 @@ type UnitNode = {
 };
 
 /**
- * fileを骨格とunit本文に分けた判定stateを作る。
+ * fileを元の並びのまま1回だけ載せ、stateへ含めるunitを開始・終了の目印で囲んだ判定stateを作る。
  *
- * fileの各文字はstate.file.sourceかいずれか1つのsubjectのsourceにだけ現れる。
+ * 入れ子のunitも親の本文の中にそのまま現れるため、親の判定で子の本文を参照先から辿る必要がない。
  * `subjectIds` にないunitは本文を載せず、省略の目印だけを残す。
  */
 export function buildDecisionState(options: {
@@ -39,43 +35,31 @@ export function buildDecisionState(options: {
   const included = new Set(subjectIds);
   const keyPrefix = unusedKeyPrefix(file.source);
   const keys = new Map<string, string>();
+  const subjects: Record<string, StateSubject> = {};
 
   for (const unit of units) {
     if (included.has(unit.id)) {
-      keys.set(unit.id, keyPrefix + keys.size);
+      const key = keyPrefix + keys.size;
+      keys.set(unit.id, key);
+      subjects[key] = {
+        unit: unit.unit,
+        ...(unit.symbol === undefined ? {} : { symbol: unit.symbol }),
+      };
     }
   }
 
-  const markerFor = (unit: PlannedUnit): string | undefined => {
-    if (coversFile(unit, file.source)) {
-      return undefined;
-    }
-
+  const { roots } = buildTree(units);
+  const markerFor = (unit: PlannedUnit): string | undefined =>
+    keys.has(unit.id) ? undefined : renderMarker(marker, OMITTED_REF);
+  const wrap = (unit: PlannedUnit, body: string): string => {
     const key = keys.get(unit.id);
 
-    return renderMarker(
-      marker,
-      key === undefined ? OMITTED_REF : subjectRef(key),
-    );
+    return key === undefined
+      ? body
+      : renderMarker(marker, subjectBoundary(key, "begin")) +
+          body +
+          renderMarker(marker, subjectBoundary(key, "end"));
   };
-  const { roots, nodes } = buildTree(units);
-  const subjects: Record<string, StateSubject> = {};
-
-  for (const [id, key] of keys) {
-    const node = nodes.get(id);
-
-    if (!node) {
-      continue;
-    }
-
-    subjects[key] = {
-      unit: node.unit.unit,
-      ...(node.unit.symbol === undefined ? {} : { symbol: node.unit.symbol }),
-      source: coversFile(node.unit, file.source)
-        ? WHOLE_FILE_SOURCE
-        : renderSpan(file.source, node.unit.span, node.children, markerFor),
-    };
-  }
 
   return {
     state: {
@@ -86,6 +70,7 @@ export function buildDecisionState(options: {
           { start: 0, end: file.source.length },
           roots,
           markerFor,
+          wrap,
         ),
       },
       subjects,
@@ -94,34 +79,34 @@ export function buildDecisionState(options: {
   };
 }
 
-/** 判定stateの目印を本文へ戻す。省略したunitは目印のまま残る。 */
+/** 判定stateから、目印を除いたfileと各subjectの本文を取り出す。省略したunitは目印のまま残る。 */
 export function expandDecisionState(
   state: DecisionState,
   marker: string,
 ): { file: string; subjects: Record<string, string> } {
-  const expand = (text: string, seen: ReadonlySet<string>): string =>
-    Object.entries(state.subjects).reduce((result, [key, subject]) => {
-      const target = renderMarker(marker, subjectRef(key));
-
-      if (!result.includes(target) || seen.has(key)) {
-        return result;
-      }
-
-      return result
-        .split(target)
-        .join(expand(subject.source, new Set([...seen, key])));
-    }, text);
-  const file = expand(state.file.source, new Set());
+  const boundaries = Object.keys(state.subjects).flatMap((key) => [
+    renderMarker(marker, subjectBoundary(key, "begin")),
+    renderMarker(marker, subjectBoundary(key, "end")),
+  ]);
+  const strip = (text: string): string =>
+    boundaries.reduce((result, boundary) => result.split(boundary).join(""), text);
 
   return {
-    file,
+    file: strip(state.file.source),
     subjects: Object.fromEntries(
-      Object.entries(state.subjects).map(([key, subject]) => [
-        key,
-        subject.source === WHOLE_FILE_SOURCE
-          ? file
-          : expand(subject.source, new Set([key])),
-      ]),
+      Object.keys(state.subjects).map((key) => {
+        const begin = renderMarker(marker, subjectBoundary(key, "begin"));
+        const end = renderMarker(marker, subjectBoundary(key, "end"));
+        const from = state.file.source.indexOf(begin);
+        const to = state.file.source.indexOf(end);
+
+        return [
+          key,
+          from < 0 || to < 0
+            ? ""
+            : strip(state.file.source.slice(from + begin.length, to)),
+        ];
+      }),
     ),
   };
 }
@@ -236,12 +221,16 @@ function buildTree(units: readonly PlannedUnit[]): {
   return { roots, nodes };
 }
 
-/** spanのsourceを、子unitを目印に置き換えて書き出す。目印がundefinedの子unitは中へ進む。 */
+/**
+ * spanのsourceを書き出す。目印を返す子unitは目印に置き換え、undefinedを返す子unitは中へ進んで
+ * `wrap` で囲む。
+ */
 function renderSpan(
   source: string,
   span: Span,
   children: readonly UnitNode[],
   markerFor: (unit: PlannedUnit) => string | undefined,
+  wrap: (unit: PlannedUnit, body: string) => string = (_, body) => body,
 ): string {
   let output = "";
   let cursor = span.start;
@@ -250,7 +239,10 @@ function renderSpan(
     output += source.slice(cursor, child.unit.span.start);
     output +=
       markerFor(child.unit) ??
-      renderSpan(source, child.unit.span, child.children, markerFor);
+      wrap(
+        child.unit,
+        renderSpan(source, child.unit.span, child.children, markerFor, wrap),
+      );
     cursor = child.unit.span.end;
   }
 
@@ -276,8 +268,8 @@ function subjectRef(key: string): string {
   return `state.subjects.${key}`;
 }
 
-function coversFile(unit: PlannedUnit, source: string): boolean {
-  return unit.span.start === 0 && unit.span.end === source.length;
+function subjectBoundary(key: string, edge: "begin" | "end"): string {
+  return `${subjectRef(key)} ${edge}`;
 }
 
 function containsSpan(outer: Span, inner: Span): boolean {
