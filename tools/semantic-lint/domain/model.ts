@@ -58,6 +58,9 @@ export type StructuralRelationContext = {
 export type StructuralCallContext = {
   callee: string;
   callbackArgumentIndex: number;
+  label?: string;
+  statementIndex?: number;
+  statementCount?: number;
 };
 
 export type SubjectContext = {
