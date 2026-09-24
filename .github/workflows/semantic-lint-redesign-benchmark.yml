@@ -39,6 +39,8 @@ jobs:
         run: |
           bun run --cwd tools/semantic-lint bench -- --repeat 3 --format json \
             > "$RUNNER_TEMP/semantic-lint-baseline.json"
+      - name: Print compact JSON report
+        run: jq -c . "$RUNNER_TEMP/semantic-lint-baseline.json"
       - name: Render report
         working-directory: tools/semantic-lint
         run: |
@@ -49,5 +51,3 @@ jobs:
           '
         env:
           REPORT_PATH: ${{ runner.temp }}/semantic-lint-baseline.json
-      - name: Print JSON report
-        run: cat "$RUNNER_TEMP/semantic-lint-baseline.json"
