@@ -103,11 +103,14 @@ export type DecisionRequest = {
   predicate: Predicate;
 };
 
+export type DecisionStateMode = "full-file" | "subjects-only";
+
 export type DecisionBatch = {
   id: string;
   file: SourceDocument;
   subjects: Subject[];
   requests: DecisionRequest[];
+  stateMode?: DecisionStateMode;
 };
 
 export type DecisionResult = {
