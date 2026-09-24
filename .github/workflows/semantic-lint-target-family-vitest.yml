@@ -114,23 +114,7 @@ jobs:
           PY
       - name: Verify region batching patch
         run: bun run --cwd tools/semantic-lint typecheck
-      - name: Run Arrange with callback region batches
+      - name: Inspect Arrange region-batch decisions
         env:
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
-        run: bun run --cwd tools/semantic-lint poc -- target-family --benchmark .semantic-lint/poc/target-family/arrange-repository-golden.yaml --state-mode subjects-only --repeat 1
-
-  focused-all-rules:
-    needs: verify
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v6
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version-file: .bun-version
-      - working-directory: tools/semantic-lint
-        run: bun install --frozen-lockfile
-      - name: Run all target families with local context
-        env:
-          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
-        run: bun run --cwd tools/semantic-lint poc -- target-family --benchmark .semantic-lint/poc/target-family/benchmark.yaml --state-mode subjects-only --repeat 10
+        run: bun run --cwd tools/semantic-lint poc -- target-family --benchmark .semantic-lint/poc/target-family/arrange-repository-golden.yaml --state-mode subjects-only --repeat 1 --verbose
