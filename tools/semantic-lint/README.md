@@ -71,6 +71,25 @@ ruleは対象path（`paths`）と判定対象の単位（`unit`）を宣言す�
 
 provider結果へruleのthresholdを1回だけ適用し、canonicalな `Diagnostic` を作る。pretty / compact / JSON出力はこのDiagnosticから生成する。
 
+### 違反箇所の特定
+
+指摘範囲はunit全体ではなく、unitの中で違反している箇所にする（例えばtest本体のArrangeなら `const values = [1, 2, 3];` の文）。判定は2段で、rule作者は何も書かない。
+
+1. unitを違反と判定する（4択のchoice。ruleの `violationThreshold` と比べる）。
+2. 違反と判定したunitの中の候補（part）ごとに、そこが違反箇所かを判定する（yes / noの確率を返すnoul）。
+
+partは構文だけで決める。unit直下の文（カタログの `statement` queryで抽出した文のうち、unitとの間に別の文を挟まないもの）と、unit直下の子unit（describeの中のtestやbeforeEachなど）で、子unitを含む文はその子unitに置き換える。ruleやrule IDで分岐せず、行番号もmodelに生成させない。
+
+2段目は、1段目で違反と判定したunit（`check` ではthreshold以上のもの）だけを、fileごとの別requestで問う。stateにはそのunitと祖先・文脈のunitだけを載せ、partを `/* pN */` と `/* /pN */` の目印で囲む。partの質問が参照するruleの文面（`instruction` と `violation`）は `state.rules` に1回だけ載せる。partの質問を1段目へ投機的に全unit分入れる方式は、golden対象では2段に分けるのとほぼ同じtoken数だが、違反の少ない通常のrepository全体では1段目だけの約1.5倍になるため採らない。
+
+違反と判定したunitでは、確率が0.25以上（`diagnostics/locate.ts` の `PART_VIOLATION_THRESHOLD`。golden benchmarkで全rule共通に校正した値で、ruleには書かない）のpartを指摘する。
+
+- 文は1つずつ別の指摘にする。
+- 連続して選ばれた子unitは1つの範囲に結合する（同じ期待動作を繰り返す兄弟testの組など、兄弟の関係そのものが違反になる規約のため）。
+- どのpartも選ばれない、またはpartがないunitはunit全体を指摘する（unit自体が違反の場合）。
+
+Diagnosticの `range` は違反箇所、`subjectRange` / `symbol` は違反と判定したunit、`probability` はunitの違反確率、`partProbability` は選んだpartの確率。
+
 ### unit語彙
 
 ruleの `unit` には意味の名前を書く。どの構文を抽出するかは、ファイルの拡張子から決まる言語とカタログの定義で決まる。
@@ -104,7 +123,7 @@ unitの文脈はカタログの `context` で宣言する。判定時は常に�
 
 ### request
 
-1ファイルに当たる全rule × 全unitを、token予算（`.semantic-lint/config.yaml` の `execution.requestTokenBudget`。既定はstate + 最長の質問1つで32,000、request全体で64,000）に収まる限り1 requestにまとめ、stateとrequest固定費をファイルあたり1回にする。予算を超える見積もりのときだけ、unitの出現順に分割する。見積もりはJevの課金係数（request固定約316、質問1つ約8、選択肢1つ約25、質問文と選択肢の英単語1語約1.13、stateはJSONのASCII文字約4文字/token・非ASCII文字1文字約1.86 token）による近似。golden benchmarkの実usageに対し、requestごとに±5%程度、合計で±1%程度に収まる（`bench` の `usage` で確認できる）。
+1ファイルに当たる全rule × 全unitを、token予算（`.semantic-lint/config.yaml` の `execution.requestTokenBudget`。既定はstate + 最長の質問1つで32,000、request全体で64,000）に収まる限り1 requestにまとめ、stateとrequest固定費をファイルあたり1回にする。予算を超える見積もりのときだけ、unitの出現順に分割する。見積もりはJevの課金係数（request固定約316、choiceの質問1つ約8、noulの質問1つ約23、選択肢1つ約25、質問文と選択肢の英単語1語約1.13、stateはJSONのASCII文字約4文字/token・非ASCII文字1文字約1.86 token）による近似。golden benchmarkの実usageに対し、requestごとに±5%程度、合計で±1%程度に収まる（`bench` の `usage` で確認できる）。
 
 stateは次の形で、ファイルは元の並びのまま1回だけ載せ、各文字は `state.file.source` に1回だけ現れる。
 
@@ -121,19 +140,20 @@ stateは次の形で、ファイルは元の並びのまま1回だけ載せ、�
 }
 ```
 
-判定対象のunitは開始・終了の目印（`/* state.subjects.sN begin */` / `/* state.subjects.sN end */`）で囲み、質問はその範囲だけを評価させる。入れ子のunitも親の本文の中にそのまま現れるため、describeを判定するときに中のtestを参照先から辿る必要がない。requestには判定対象とその子孫・祖先、文脈のunitまでを載せ、それ以外のunit（cache hitしたunitや分割した別requestのunit）は `/* omitted */` にする。
+判定対象のunitは開始・終了の目印（`/* state.subjects.sN begin */` / `/* state.subjects.sN end */`）で囲み、質問はその範囲だけを評価させる。partの目印と `state.rules` は「違反箇所の特定」を参照。入れ子のunitも親の本文の中にそのまま現れるため、describeを判定するときに中のtestを参照先から辿る必要がない。requestには判定対象とその子孫・祖先、文脈のunitまでを載せ、それ以外のunit（cache hitしたunitや分割した別requestのunit）は `/* omitted */` にする。
 
 ## 判定cache
 
 `check` と `inspect` は、providerの判定結果をrepository rootの `.semantic-lint/.cache/decisions.jsonl` に保存し、providerへ送る内容が同じ判定を再利用する。`.semantic-lint/.cache/` はGit管理しない。
 
-保存するのはthreshold適用前のprovider判定（Choiceと4 outcomeの確率、confidence、応答したprovider / model）。thresholdは実行ごとにcacheから読んだ判定へ適用するため、thresholdやseverityを変えても再判定しない。
+保存するのはthreshold適用前のprovider判定（Choiceと4 outcomeの確率、confidence、応答したprovider / model）と、2段目で問うたpartごとの確率。partの確率は判定と同じentryへ足して保存するため、thresholdを下げて新たに違反になったunitは2段目だけを問う。thresholdは実行ごとにcacheから読んだ判定へ適用するため、thresholdやseverityを変えても再判定しない。
 
 cache keyはrule × unit単位で、1判定の答えを決める次の要素のSHA-256とする。
 
 - provider種別、設定上のmodel、provider側のprompt / request組み立ての版（TypeSafeでは `TYPESAFE_REQUEST_FORMAT`）
 - ruleのunit、predicateの `instruction` と4 outcomesの文面
 - fileのpathと、unitの文脈: unit本文・祖先・カタログのcontext宣言が指すunit・ファイルの骨格を元の位置に並べ、それ以外のunitを共通の目印に置き換えたもの
+- unitの中のpartの位置（partの確率の並びを決めるため）
 
 threshold、severity、rule id、title、行番号はkeyに含めない。
 
@@ -145,7 +165,7 @@ providerへの送信はfileごとのbatchだが、hit / missはtaskごとに判�
 
 - `--no-cache`: cacheを読まず、書きもしない。
 - golden caseで判定の揺れを測る `eval` はcacheを使わない。
-- `check --plan-only` はcacheを照合したうえでproviderへ送るrequest数と推定input tokenを表示する（cacheは書き換えない）。`--no-cache` を付けると全件送る場合の見積もりになる。
+- `check --plan-only` はcacheを照合したうえでproviderへ送るrequest数と推定input tokenを表示する（cacheは書き換えない）。2段目は1段目の結果で決まるため含めない。`--no-cache` を付けると全件送る場合の見積もりになる。
 - `inspect` で全件hitした場合はprovider responseが空になる。provider応答を見たいときは `--no-cache` を付ける。
 - `doctor` はcache fileのentry数・サイズ・最終利用日時・読めない行数を表示する。
 - provider側のprompt / request組み立てを変えたら `TYPESAFE_REQUEST_FORMAT` を、key構成や保存形式を変えたら `cache/decision-cache.ts` の `CACHE_FORMAT_VERSION` を更新する。古いentryはmissになり、保持期間を過ぎると削除される。cacheを捨てたいときは `.semantic-lint/.cache/` を削除する。
@@ -231,18 +251,19 @@ files:
 
 - `blob` はラベルを付けた時点のファイル内容を固定する。working treeが変わっても `bench` はそのblobを `git cat-file` で読んで評価するため、Git履歴にblobが必要。
 - working treeとblobが異なるファイルは `doctor` と `bench` がwarningを出す。ラベルを見直してから `blob` と行範囲を更新する。
-- `bench` はgoldenの対象ファイルだけを、現行のrule定義とthresholdで評価する。`check` と同じくfileごとに1 requestへまとめ、各fileではそのfileをgoldenに持つruleだけを判定する。
+- `bench` はgoldenの対象ファイルだけを、現行のrule定義とthresholdで評価する。thresholdを掃引するため、2段目はthreshold未満も含めて違反と判定した全unitについて問う（`check` より2段目のrequestが少し多い）。`check` と同じくfileごとに1 requestへまとめ、各fileではそのfileをgoldenに持つruleだけを判定する。
 - ruleごとのinput tokenは、requestの実usageを見積もりの内訳（質問はそのrule、stateとrequest固定費は質問数の比）で按分した値。request全体の実測と推定の比は `usage` に出る。
 - `--plan-only` はproviderを呼ばずにbenchのrequest数と推定input tokenを出す。`--format summary` はruleごとの主要指標とrequestごとの推定・実usageをJSON 1行ずつ出す。
 
 `bench` の指標:
 
 - file: 指摘の有無だけを比較するprecision / recall。
-- 包含: findingが期待行範囲を含めば一致。test全体などsubject単位の指摘でも一致する。
-- 厳密: 開始行と終了行が `--line-tolerance` (既定1) 以内なら1対1で一致。
+- 包含(unit): 違反と判定したunitの範囲が期待行範囲を含めば一致。1段目の判定だけの精度。
+- 包含(箇所): 違反箇所の指摘が期待行範囲を含めば一致。
+- 厳密: 違反箇所の指摘の開始行と終了行が `--line-tolerance` (既定1) 以内なら1対1で一致。`check` の出力と同じ指摘で採点する。
 - findingsの全run共通数とrunによる揺れ、判定分布、provider request数、input / output tokens、threshold sweep。
-- 校正: 包含一致のF1が最大になるthreshold（同点なら中央）を推奨値として出す。gapは違反候補の最低scoreとクリーン候補の最高scoreの差、headroomは推奨値から最高クリーンscoreまでの距離。
-- LOFO CV: 1ファイルを外して校正したthresholdでそのファイルを採点し、全ファイルを合わせた包含 / 厳密P/R。ruleのthresholdは全体の推奨値ではなく、CVで性能を確認したうえで決める。
+- 校正: 厳密一致のF1が最大になるthreshold（同点なら包含(unit)のF1、それでも同点なら中央）を推奨値として出す。gapは違反候補の最低scoreとクリーン候補の最高scoreの差、headroomは推奨値から最高クリーンscoreまでの距離。
+- LOFO CV: 1ファイルを外して校正したthresholdでそのファイルを採点し、全ファイルを合わせた包含(unit) / 厳密P/R。ruleのthresholdは全体の推奨値ではなく、CVで性能を確認したうえで決める。
 
 ## CI
 
