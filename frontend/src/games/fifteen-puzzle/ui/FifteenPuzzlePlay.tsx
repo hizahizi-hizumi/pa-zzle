@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import type {
@@ -51,6 +51,8 @@ export function FifteenPuzzlePlay({
   onBackToHome,
   onOpenDiagnostics,
 }: FifteenPuzzlePlayProps) {
+  const playAreaRef = useRef<HTMLElement>(null);
+
   useEffect(() => {
     if (progress !== "playing") {
       return;
@@ -58,9 +60,14 @@ export function FifteenPuzzlePlay({
 
     function handleKeyDown(event: KeyboardEvent) {
       const direction = directionByArrowKey[event.key];
-      // メニューなど、矢印キーを自分で扱う部品の操作は盤面へ流さない。
+      // メニューやダイアログはプレイ画面の外へ描画される。そこでの操作や、矢印キーを自分で扱う部品の操作は盤面へ流さない。
+      const { target } = event;
+      const targetsPlayArea =
+        target === document.body ||
+        (target instanceof Node && playAreaRef.current?.contains(target));
       if (
         !direction ||
+        !targetsPlayArea ||
         event.defaultPrevented ||
         event.altKey ||
         event.ctrlKey ||
@@ -79,7 +86,10 @@ export function FifteenPuzzlePlay({
   }, [onSlideByKeyboard, progress]);
 
   return (
-    <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
+    <section
+      ref={playAreaRef}
+      className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]"
+    >
       <BrandIdentityHeader />
       <FifteenPuzzlePlayHeader
         elapsedMs={elapsedMs}

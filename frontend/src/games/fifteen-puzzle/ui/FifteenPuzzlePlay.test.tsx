@@ -127,14 +127,14 @@ describe("FifteenPuzzlePlay", () => {
     test.each(arrowKeyCases)(
       "%s キーで押した方向へのスライドを通知すること",
       (key, direction) => {
-        fireEvent.keyDown(window, { key });
+        fireEvent.keyDown(document.body, { key });
 
         expect(callbacks.onSlideByKeyboard).toHaveBeenCalledWith(direction);
       },
     );
 
     test("修飾キー付きの矢印キーは盤面へ流さないこと", () => {
-      fireEvent.keyDown(window, { key: "ArrowLeft", altKey: true });
+      fireEvent.keyDown(document.body, { key: "ArrowLeft", altKey: true });
 
       expect(callbacks.onSlideByKeyboard).not.toHaveBeenCalled();
     });
@@ -156,7 +156,7 @@ describe("FifteenPuzzlePlay", () => {
     });
 
     test("矢印キーを盤面へ流さないこと", () => {
-      fireEvent.keyDown(window, { key: "ArrowLeft" });
+      fireEvent.keyDown(document.body, { key: "ArrowLeft" });
 
       expect(callbacks.onSlideByKeyboard).not.toHaveBeenCalled();
     });
