@@ -4,6 +4,7 @@ import { YAML } from "bun";
 import {
   DECISIONS,
   type Decision,
+  type DecisionStateMode,
   type Predicate,
   type SourceRange,
 } from "../../domain/model.ts";
@@ -15,6 +16,7 @@ export type BenchmarkRule = {
   title: string;
   violationThreshold: number;
   targetFamily?: TargetFamily;
+  stateMode?: DecisionStateMode;
   predicate: Predicate;
 };
 
@@ -75,7 +77,14 @@ function compileRule(
     throw new Error(`benchmark ruleが不正です: ${origin} rules[${index}]`);
   }
 
-  const { id, title, violationThreshold, targetFamily, predicate } = value;
+  const {
+    id,
+    title,
+    violationThreshold,
+    targetFamily,
+    stateMode,
+    predicate,
+  } = value;
 
   if (
     typeof id !== "string" ||
@@ -83,6 +92,7 @@ function compileRule(
     typeof title !== "string" ||
     !isProbability(violationThreshold) ||
     !isTargetFamily(targetFamily) ||
+    !isStateMode(stateMode) ||
     !isRecord(predicate) ||
     typeof predicate.instruction !== "string" ||
     !isRecord(predicate.outcomes)
@@ -115,6 +125,7 @@ function compileRule(
     title,
     violationThreshold,
     ...(targetFamily === undefined ? {} : { targetFamily }),
+    ...(stateMode === undefined ? {} : { stateMode }),
     predicate: {
       instruction: predicate.instruction,
       outcomes,
@@ -215,4 +226,8 @@ function isTargetFamily(value: unknown): value is TargetFamily | undefined {
     value === "callback-call" ||
     value === "relation-group"
   );
+}
+
+function isStateMode(value: unknown): value is DecisionStateMode | undefined {
+  return value === undefined || value === "full-file" || value === "subjects-only";
 }
