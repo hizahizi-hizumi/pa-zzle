@@ -24,6 +24,13 @@ describe("target family extractors", () => {
       "test",
       "describe",
     ]);
+    expect(testStatements[0]?.context.call).toEqual({
+      callee: "test",
+      callbackArgumentIndex: 1,
+      label: "合計",
+      statementIndex: 0,
+      statementCount: 3,
+    });
   });
 
   test("callbackを持つcall全体を汎用targetとして抽出する", () => {
@@ -41,6 +48,11 @@ describe("target family extractors", () => {
     expect(candidates[1]?.context.call).toEqual({
       callee: "beforeEach",
       callbackArgumentIndex: 0,
+    });
+    expect(candidates[2]?.context.call).toEqual({
+      callee: "test",
+      callbackArgumentIndex: 1,
+      label: "送信",
     });
   });
 });
