@@ -94,7 +94,7 @@ function printHelp(): void {
 使い方:
   semantic-lint check [paths...] [options]
   semantic-lint eval [rule-id...] [--repeat N]
-  semantic-lint bench [rule-id...] [--repeat N] [--line-tolerance N] [--format pretty|json]
+  semantic-lint bench [rule-id...] [--repeat N] [--line-tolerance N] [--format pretty|json|summary] [--plan-only]
   semantic-lint bench [rule-id...] --score <run-result.json> [--score ...]
   semantic-lint inspect <rule-id> <file> [--plan-only] [--no-cache]
   semantic-lint rules [ruleset-or-rule]

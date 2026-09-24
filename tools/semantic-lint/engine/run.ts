@@ -38,6 +38,8 @@ export async function runEvaluationPlan(options: {
   concurrency?: number;
   requestTokenBudget?: RequestTokenBudget;
   cache?: DecisionCache;
+  /** provider応答ごとに呼ぶ。requestの見積もりと実usageの比較などに使う。 */
+  onResponse?: (batch: DecisionBatch, response: DecisionBatchResult) => void;
 }): Promise<RunResult> {
   const {
     plan,
@@ -46,6 +48,7 @@ export async function runEvaluationPlan(options: {
     concurrency = 1,
     requestTokenBudget = DEFAULT_REQUEST_TOKEN_BUDGET,
     cache,
+    onResponse,
   } = options;
 
   if (!Number.isInteger(concurrency) || concurrency < 1) {
@@ -68,6 +71,7 @@ export async function runEvaluationPlan(options: {
       const providerStartedAt = performance.now();
       const response = await provider.evaluate(batch);
       const latencyMs = performance.now() - providerStartedAt;
+      onResponse?.(batch, response);
 
       if (cache) {
         await storeDecisions(cache, cacheKeys, batch, response);

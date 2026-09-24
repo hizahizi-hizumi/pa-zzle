@@ -5,11 +5,14 @@ import {
   type BenchmarkRuleResult,
   benchmarkRunFromRunResult,
   findRule,
+  planGoldenBenchmark,
+  ruleShare,
   runGoldenBenchmark,
 } from "../eval/benchmark.ts";
 import {
   buildBenchmarkReport,
   renderBenchmarkReport,
+  renderBenchmarkSummary,
 } from "../eval/benchmark-report.ts";
 import {
   type GoldenSet,
@@ -17,7 +20,10 @@ import {
   loadGoldenSets,
   resolveGoldenFiles,
 } from "../eval/golden.ts";
-import { createTypeSafeProvider } from "../providers/typesafe/provider.ts";
+import {
+  createTypeSafeProvider,
+  createTypeSafeRequestEstimator,
+} from "../providers/typesafe/provider.ts";
 import { UnitExtractor } from "../units/extract.ts";
 import { loadProjectContext } from "./context.ts";
 
@@ -25,8 +31,9 @@ type BenchOptions = {
   ruleIds: string[];
   repeat: number;
   lineTolerance: number;
-  format: "pretty" | "json";
+  format: "pretty" | "json" | "summary";
   scoreFiles: string[];
+  planOnly: boolean;
 };
 
 export async function runBenchCommand(args: string[]): Promise<number> {
@@ -50,33 +57,105 @@ export async function runBenchCommand(args: string[]): Promise<number> {
     throw new Error(`goldenがありません: ${config.goldenDir}`);
   }
 
-  const results =
-    options.scoreFiles.length > 0
-      ? await scoreRunResults(projectRoot, sets, rules, options.scoreFiles)
-      : await runGoldenBenchmark({
-          targets: await Promise.all(
-            sets.map(async (golden) => ({
-              golden,
-              files: await resolveGoldenFiles(projectRoot, golden),
-            })),
-          ),
-          rules,
-          extractor: await UnitExtractor.create(catalog),
-          provider: createTypeSafeProvider(config.provider),
-          repeat: options.repeat,
-          concurrency: config.execution.concurrency,
-          requestTokenBudget: config.execution.requestTokenBudget,
-        });
-  const report = buildBenchmarkReport(results, {
+  if (options.scoreFiles.length > 0) {
+    const report = buildBenchmarkReport(
+      await scoreRunResults(projectRoot, sets, rules, options.scoreFiles),
+      { lineTolerance: options.lineTolerance },
+    );
+    writeReport(report, options.format);
+    return 0;
+  }
+
+  const targets = await Promise.all(
+    sets.map(async (golden) => ({
+      golden,
+      files: await resolveGoldenFiles(projectRoot, golden),
+    })),
+  );
+  const linesByRule = new Map(
+    targets.map(({ golden, files }) => [
+      golden.ruleId,
+      files.reduce((sum, file) => sum + file.source.split("\n").length, 0),
+    ]),
+  );
+  const extractor = await UnitExtractor.create(catalog);
+
+  if (options.planOnly) {
+    const planned = planGoldenBenchmark({
+      targets,
+      rules,
+      extractor,
+      estimator: createTypeSafeRequestEstimator(config.provider),
+      requestTokenBudget: config.execution.requestTokenBudget,
+    });
+    process.stdout.write(
+      renderBenchmarkPlan(planned.requests, planned.lineRules, linesByRule),
+    );
+    return 0;
+  }
+
+  const result = await runGoldenBenchmark({
+    targets,
+    rules,
+    extractor,
+    provider: createTypeSafeProvider(config.provider),
+    repeat: options.repeat,
+    concurrency: config.execution.concurrency,
+    requestTokenBudget: config.execution.requestTokenBudget,
+  });
+  const report = buildBenchmarkReport(result.rules, {
     lineTolerance: options.lineTolerance,
+    linesByRule,
+    usage: {
+      lineRules: result.plan.lineRules,
+      planned: result.plan.requests,
+      runRequests: result.runRequests,
+    },
   });
 
-  process.stdout.write(
-    options.format === "json"
-      ? JSON.stringify(report, null, 2) + "\n"
-      : renderBenchmarkReport(report),
-  );
+  writeReport(report, options.format);
   return 0;
+}
+
+function writeReport(
+  report: ReturnType<typeof buildBenchmarkReport>,
+  format: BenchOptions["format"],
+): void {
+  process.stdout.write(
+    format === "json"
+      ? JSON.stringify(report, null, 2) + "\n"
+      : format === "summary"
+        ? renderBenchmarkSummary(report)
+        : renderBenchmarkReport(report),
+  );
+}
+
+function renderBenchmarkPlan(
+  requests: ReturnType<typeof planGoldenBenchmark>["requests"],
+  lineRules: number,
+  linesByRule: ReadonlyMap<string, number>,
+): string {
+  const total = requests.reduce((sum, record) => sum + record.estimate.total, 0);
+  const lines = [
+    "benchmark request plan (providerは呼んでいません。tokenはJev課金係数による推定)",
+    `requests: ${requests.length}`,
+    `estimated input tokens: ${total} (1 run)`,
+    `per line × rule: ${lineRules === 0 ? "-" : (total / lineRules).toFixed(2)} (${lineRules} line-rules)`,
+  ];
+
+  for (const [ruleId, ruleLines] of linesByRule) {
+    const estimated = requests.reduce(
+      (sum, record) => sum + record.estimate.total * ruleShare(record, ruleId),
+      0,
+    );
+    const count = requests.filter((record) => ruleShare(record, ruleId) > 0)
+      .length;
+    lines.push(
+      `  ${ruleId}: requests ${count}, 推定input ${Math.round(estimated)} (${ruleLines === 0 ? "-" : (estimated / ruleLines).toFixed(2)} / 行)`,
+    );
+  }
+
+  return lines.join("\n") + "\n";
 }
 
 /** 既存のRunResult JSONを1ファイル1runとして採点する。providerは呼ばない。 */
@@ -117,6 +196,7 @@ function parseBenchOptions(args: string[]): BenchOptions {
     lineTolerance: 1,
     format: "pretty",
     scoreFiles: [],
+    planOnly: false,
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -146,9 +226,12 @@ function parseBenchOptions(args: string[]): BenchOptions {
         index += 1;
         break;
       }
+      case "--plan-only":
+        options.planOnly = true;
+        break;
       case "--format":
-        if (value !== "pretty" && value !== "json") {
-          throw new Error("--formatはpretty / jsonを指定してください。");
+        if (value !== "pretty" && value !== "json" && value !== "summary") {
+          throw new Error("--formatはpretty / json / summaryを指定してください。");
         }
 
         options.format = value;
@@ -175,6 +258,10 @@ function parseBenchOptions(args: string[]): BenchOptions {
 
   if (options.scoreFiles.length > 0 && options.repeat !== 1) {
     throw new Error("--scoreと--repeatは同時に指定できません。");
+  }
+
+  if (options.scoreFiles.length > 0 && options.planOnly) {
+    throw new Error("--scoreと--plan-onlyは同時に指定できません。");
   }
 
   return options;

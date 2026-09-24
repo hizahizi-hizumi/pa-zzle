@@ -1,4 +1,10 @@
-import type { BenchmarkRuleResult, BenchmarkRun } from "./benchmark.ts";
+import { DECISIONS, type Decision } from "../domain/model.ts";
+import type {
+  BenchmarkRequestRecord,
+  BenchmarkRuleResult,
+  BenchmarkRun,
+} from "./benchmark.ts";
+import { type Calibration, calibrate } from "./calibrate.ts";
 import type { GoldenFileStatus } from "./golden.ts";
 import {
   type FindingRange,
@@ -24,6 +30,7 @@ export type RunReport = {
   providerRequests: number | null;
   inputTokens: number | null;
   outputTokens: number | null;
+  estimatedInputTokens: number | null;
   durationMs: number | null;
 };
 
@@ -33,6 +40,8 @@ export type ThresholdSweepRow = {
   fileRecall: Summary;
   containmentPrecision: Summary;
   containmentRecall: Summary;
+  strictPrecision: Summary;
+  strictRecall: Summary;
   findings: Summary;
 };
 
@@ -61,7 +70,10 @@ export type RuleBenchmarkReport = {
     providerRequests: Summary;
     inputTokens: Summary;
     outputTokens: Summary;
+    estimatedInputTokens: Summary;
   };
+  /** golden対象ファイルの行数の合計。1行1ruleあたりtokenの分母。 */
+  lines: number | null;
   stability: FindingStability;
   byFile: Array<{
     path: string;
@@ -73,12 +85,38 @@ export type RuleBenchmarkReport = {
   missedExpected: Array<FindingRange & { runs: number }>;
   falseFindings: Array<FindingRange & { runs: number }>;
   thresholdSweep: ThresholdSweepRow[] | null;
+  /** 判定記録からの閾値校正。判定記録を持たない実行結果ではnull。 */
+  calibration: Calibration | null;
+  /** 判定分布 (run平均)。判定記録を持たない実行結果ではnull。 */
+  decisions: Record<Decision, number> | null;
+};
+
+/** request全体の見積もりと実usage。ruleへの按分をしない値。 */
+export type UsageReport = {
+  /** 対象fileの行数 × そのfileをgoldenに持つrule数の合計。 */
+  lineRules: number;
+  plannedRequests: number;
+  estimatedInputTokens: number;
+  runs: Array<{
+    requests: number;
+    inputTokens: number;
+    outputTokens: number;
+    estimatedInputTokens: number;
+  }>;
+  inputTokens: Summary;
+  inputTokensPerLineRule: Summary;
+  estimatedInputTokensPerLineRule: number | null;
+  /** 実input token / 推定input token (全run合計)。 */
+  actualToEstimate: number | null;
+  /** runごとのrequest記録。 */
+  requests: BenchmarkRequestRecord[][];
 };
 
 export type BenchmarkReport = {
   schemaVersion: 1;
   lineTolerance: number;
   rules: RuleBenchmarkReport[];
+  usage: UsageReport | null;
 };
 
 export function buildBenchmarkReport(
@@ -86,6 +124,13 @@ export function buildBenchmarkReport(
   options: {
     lineTolerance: number;
     sweepThresholds?: readonly number[];
+    usage?: {
+      lineRules: number;
+      planned: readonly BenchmarkRequestRecord[];
+      runRequests: BenchmarkRequestRecord[][];
+    };
+    /** ruleごとのgolden対象ファイルの行数。 */
+    linesByRule?: ReadonlyMap<string, number>;
   },
 ): BenchmarkReport {
   const { lineTolerance, sweepThresholds = DEFAULT_SWEEP_THRESHOLDS } =
@@ -95,15 +140,64 @@ export function buildBenchmarkReport(
     schemaVersion: 1,
     lineTolerance,
     rules: results.map((result) =>
-      buildRuleReport(result, lineTolerance, sweepThresholds),
+      buildRuleReport(
+        result,
+        lineTolerance,
+        sweepThresholds,
+        options.linesByRule?.get(result.golden.ruleId) ?? null,
+      ),
     ),
+    usage:
+      options.usage === undefined ? null : buildUsageReport(options.usage),
   };
+}
+
+function buildUsageReport(usage: {
+  lineRules: number;
+  planned: readonly BenchmarkRequestRecord[];
+  runRequests: BenchmarkRequestRecord[][];
+}): UsageReport {
+  const runs = usage.runRequests.map((records) => ({
+    requests: records.length,
+    inputTokens: sumOf(records, (record) => record.inputTokens ?? 0),
+    outputTokens: sumOf(records, (record) => record.outputTokens ?? 0),
+    estimatedInputTokens: sumOf(records, (record) => record.estimate.total),
+  }));
+  const estimatedInputTokens = sumOf(
+    usage.planned,
+    (record) => record.estimate.total,
+  );
+  const actual = sumOf(runs, (run) => run.inputTokens);
+  const estimated = sumOf(runs, (run) => run.estimatedInputTokens);
+
+  return {
+    lineRules: usage.lineRules,
+    plannedRequests: usage.planned.length,
+    estimatedInputTokens,
+    runs,
+    inputTokens: summarize(runs.map((run) => run.inputTokens)),
+    inputTokensPerLineRule: summarize(
+      runs.map((run) =>
+        usage.lineRules === 0 ? null : run.inputTokens / usage.lineRules,
+      ),
+    ),
+    estimatedInputTokensPerLineRule:
+      usage.lineRules === 0 ? null : estimatedInputTokens / usage.lineRules,
+    actualToEstimate:
+      runs.length === 0 || estimated === 0 ? null : actual / estimated,
+    requests: usage.runRequests,
+  };
+}
+
+function sumOf<T>(values: readonly T[], pick: (value: T) => number): number {
+  return values.reduce((sum, value) => sum + pick(value), 0);
 }
 
 function buildRuleReport(
   result: BenchmarkRuleResult,
   lineTolerance: number,
   sweepThresholds: readonly number[],
+  lines: number | null,
 ): RuleBenchmarkReport {
   const { golden, rule, runs } = result;
   const scores = runs.map((run) =>
@@ -124,6 +218,7 @@ function buildRuleReport(
       providerRequests: run.providerRequests,
       inputTokens: run.inputTokens,
       outputTokens: run.outputTokens,
+      estimatedInputTokens: run.estimatedInputTokens ?? null,
       durationMs: run.durationMs,
     };
   });
@@ -165,7 +260,11 @@ function buildRuleReport(
       providerRequests: summarize(runs.map((run) => run.providerRequests)),
       inputTokens: summarize(runs.map((run) => run.inputTokens)),
       outputTokens: summarize(runs.map((run) => run.outputTokens)),
+      estimatedInputTokens: summarize(
+        runs.map((run) => run.estimatedInputTokens ?? null),
+      ),
     },
+    lines,
     stability: findingStability(scores.map((score) => score.findings)),
     byFile: golden.files.map((file) => {
       const rows = scores.map((score) =>
@@ -188,7 +287,37 @@ function buildRuleReport(
       lineTolerance,
       sweepThresholds,
     ),
+    calibration: runs.some((run) => run.evaluations === null)
+      ? null
+      : calibrate(
+          golden,
+          runs.map((run) => run.evaluations ?? []),
+          { lineTolerance },
+        ),
+    decisions: decisionDistribution(runs),
   };
+}
+
+function decisionDistribution(
+  runs: BenchmarkRun[],
+): Record<Decision, number> | null {
+  if (runs.length === 0 || runs.some((run) => run.evaluations === null)) {
+    return null;
+  }
+
+  return Object.fromEntries(
+    DECISIONS.map((decision) => [
+      decision,
+      runs.reduce(
+        (sum, run) =>
+          sum +
+          (run.evaluations ?? []).filter(
+            (evaluation) => evaluation.decision === decision,
+          ).length,
+        0,
+      ) / runs.length,
+    ]),
+  ) as Record<Decision, number>;
 }
 
 function buildThresholdSweep(
@@ -220,6 +349,8 @@ function buildThresholdSweep(
       containmentRecall: summarize(
         scores.map((score) => score.containment.recall),
       ),
+      strictPrecision: summarize(scores.map((score) => score.strict.precision)),
+      strictRecall: summarize(scores.map((score) => score.strict.recall)),
       findings: summarize(scores.map((score) => score.findings.length)),
     };
   });
@@ -268,8 +399,18 @@ export function renderBenchmarkReport(report: BenchmarkReport): string {
       `  厳密(±${report.lineTolerance}行)  P ${formatSummary(rule.summary.strictPrecision)}  R ${formatSummary(rule.summary.strictRecall)}`,
       `  findings     ${formatSummary(rule.summary.findings, 1)}  (全run共通 ${rule.stability.stable} / distinct ${rule.stability.distinct})`,
       `  requests     ${formatSummary(rule.summary.providerRequests, 0)}`,
-      `  tokens       input ${formatSummary(rule.summary.inputTokens, 0)}  output ${formatSummary(rule.summary.outputTokens, 0)}`,
+      `  tokens       input ${formatSummary(rule.summary.inputTokens, 0)}  output ${formatSummary(rule.summary.outputTokens, 0)}  推定input ${formatSummary(rule.summary.estimatedInputTokens, 0)}${
+        rule.lines === null || rule.summary.inputTokens.mean === null
+          ? ""
+          : `  (${(rule.summary.inputTokens.mean / rule.lines).toFixed(2)} / 行)`
+      }`,
     );
+
+    if (rule.decisions) {
+      lines.push(
+        `  判定分布     ${DECISIONS.map((decision) => `${decision} ${(rule.decisions?.[decision] ?? 0).toFixed(1)}`).join(" / ")}`,
+      );
+    }
 
     lines.push("  run別:");
 
@@ -312,15 +453,169 @@ export function renderBenchmarkReport(report: BenchmarkReport): string {
 
       for (const row of rule.thresholdSweep) {
         lines.push(
-          `    ${row.threshold.toFixed(2)}  file P ${formatMean(row.filePrecision)} R ${formatMean(row.fileRecall)} | 包含 P ${formatMean(row.containmentPrecision)} R ${formatMean(row.containmentRecall)} | findings ${formatMean(row.findings, 1)}`,
+          `    ${row.threshold.toFixed(2)}  file P ${formatMean(row.filePrecision)} R ${formatMean(row.fileRecall)} | 包含 P ${formatMean(row.containmentPrecision)} R ${formatMean(row.containmentRecall)} | 厳密 P ${formatMean(row.strictPrecision)} R ${formatMean(row.strictRecall)} | findings ${formatMean(row.findings, 1)}`,
         );
       }
+    }
+
+    if (rule.calibration) {
+      const calibration = rule.calibration;
+      const cv = calibration.crossValidation;
+      lines.push(
+        `  校正 (包含F1最大): 推奨 ${calibration.threshold.toFixed(2)}  F1 ${calibration.f1.toFixed(3)}  gap ${formatSigned(calibration.gap)}  headroom ${formatSigned(calibration.headroom)}  候補 違反${calibration.positives}/クリーン${calibration.cleans}  包含recall上限 ${formatRatio(calibration.recallCeiling)}`,
+        `  LOFO CV (${cv.folds} folds, 閾値 ${formatSummary(cv.thresholds, 2)}): 包含 P ${formatSummary(cv.containmentPrecision)} R ${formatSummary(cv.containmentRecall)} | 厳密 P ${formatSummary(cv.strictPrecision)} R ${formatSummary(cv.strictRecall)} | findings ${formatSummary(cv.findings, 1)}`,
+      );
     }
 
     lines.push("");
   }
 
+  if (report.usage) {
+    const usage = report.usage;
+    lines.push(
+      "usage (request全体。ruleへの按分なし)",
+      `  requests     ${usage.plannedRequests}  line-rules ${usage.lineRules}`,
+      `  input        実測 ${formatSummary(usage.inputTokens, 0)}  推定 ${usage.estimatedInputTokens}  実測/推定 ${formatRatio(usage.actualToEstimate)}`,
+      `  per line×rule 実測 ${formatSummary(usage.inputTokensPerLineRule, 2)}  推定 ${usage.estimatedInputTokensPerLineRule === null ? "-" : usage.estimatedInputTokensPerLineRule.toFixed(2)}`,
+    );
+  }
+
   return lines.join("\n").trimEnd() + "\n";
+}
+
+/** Actionsのログで比較できるよう、ruleごとの主要指標とusageをJSON 1行ずつにする。 */
+export function renderBenchmarkSummary(report: BenchmarkReport): string {
+  const round = (value: number | null | undefined, digits = 3) =>
+    value === null || value === undefined
+      ? null
+      : Math.round(value * 10 ** digits) / 10 ** digits;
+  const at = (rule: RuleBenchmarkReport, threshold: number) => {
+    const row = rule.thresholdSweep?.find(
+      (candidate) => Math.abs(candidate.threshold - threshold) < 1e-9,
+    );
+
+    return row === undefined
+      ? null
+      : [
+          round(row.containmentPrecision.mean),
+          round(row.containmentRecall.mean),
+          round(row.strictPrecision.mean),
+          round(row.strictRecall.mean),
+        ];
+  };
+  const lines = report.rules.map((rule) => {
+    const calibration = rule.calibration;
+    const cv = calibration?.crossValidation;
+
+    return JSON.stringify({
+      rule: rule.ruleId,
+      unit: rule.unit,
+      threshold: rule.threshold,
+      runs: rule.runs.length,
+      containment: [
+        round(rule.summary.containmentPrecision.mean),
+        round(rule.summary.containmentRecall.mean),
+      ],
+      strict: [
+        round(rule.summary.strictPrecision.mean),
+        round(rule.summary.strictRecall.mean),
+      ],
+      file: [
+        round(rule.summary.filePrecision.mean),
+        round(rule.summary.fileRecall.mean),
+      ],
+      recommended: calibration ? calibration.threshold : null,
+      f1: round(calibration?.f1),
+      gap: round(calibration?.gap, 2),
+      headroom: round(calibration?.headroom, 2),
+      candidates: calibration
+        ? [calibration.positives, calibration.cleans]
+        : null,
+      recallCeiling: round(calibration?.recallCeiling),
+      cv: cv
+        ? {
+            thresholds: [round(cv.thresholds.min, 2), round(cv.thresholds.max, 2)],
+            containment: [
+              round(cv.containmentPrecision.mean),
+              round(cv.containmentRecall.mean),
+            ],
+            strict: [
+              round(cv.strictPrecision.mean),
+              round(cv.strictRecall.mean),
+            ],
+          }
+        : null,
+      sweep: Object.fromEntries(
+        (rule.thresholdSweep ?? []).map((row) => [
+          row.threshold.toFixed(2),
+          at(rule, row.threshold),
+        ]),
+      ),
+      findings: [rule.stability.stable, rule.stability.distinct],
+      decisions: rule.decisions
+        ? DECISIONS.map((decision) => round(rule.decisions?.[decision], 1))
+        : null,
+      requests: round(rule.summary.providerRequests.mean, 1),
+      inputTokens: round(rule.summary.inputTokens.mean, 0),
+      estimatedInputTokens: round(rule.summary.estimatedInputTokens.mean, 0),
+      outputTokens: round(rule.summary.outputTokens.mean, 0),
+      tokensPerLine:
+        rule.lines === null || rule.summary.inputTokens.mean === null
+          ? null
+          : round(rule.summary.inputTokens.mean / rule.lines, 2),
+      falseFindings: rule.falseFindings.map(
+        (finding) =>
+          `${finding.path}:${finding.startLine}-${finding.endLine}(${finding.runs})`,
+      ),
+      missed: rule.missedExpected.map(
+        (finding) =>
+          `${finding.path}:${finding.startLine}-${finding.endLine}(${finding.runs})`,
+      ),
+    });
+  });
+
+  if (report.usage) {
+    const usage = report.usage;
+    lines.push(
+      JSON.stringify({
+        usage: {
+          lineRules: usage.lineRules,
+          plannedRequests: usage.plannedRequests,
+          estimated: usage.estimatedInputTokens,
+          actual: usage.runs.map((run) => run.inputTokens),
+          output: usage.runs.map((run) => run.outputTokens),
+          actualToEstimate: round(usage.actualToEstimate),
+          perLineRule: round(usage.inputTokensPerLineRule.mean, 2),
+          estimatedPerLineRule: round(usage.estimatedInputTokensPerLineRule, 2),
+        },
+      }),
+    );
+
+    // 推定係数の検証用に、requestごとの内訳と実usageを1行ずつ出す。
+    for (const [run, records] of usage.requests.entries()) {
+      for (const record of records) {
+        lines.push(
+          JSON.stringify({
+            request: run,
+            path: record.path,
+            q: record.questions,
+            qEst: record.questionEstimates,
+            chars: record.stateChars,
+            nonAscii: record.stateNonAsciiChars,
+            est: record.estimate,
+            in: record.inputTokens,
+            out: record.outputTokens,
+          }),
+        );
+      }
+    }
+  }
+
+  return lines.join("\n") + "\n";
+}
+
+function formatSigned(value: number | null): string {
+  return value === null ? "-" : (value >= 0 ? "+" : "") + value.toFixed(2);
 }
 
 function formatSummary(summary: Summary, digits = 3): string {

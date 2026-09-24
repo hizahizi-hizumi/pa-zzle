@@ -52,6 +52,9 @@ bun run --cwd tools/semantic-lint eval -- vitest/arrange-outside-test --repeat 1
 # 実repo goldenで現行方式を採点 (providerを呼ぶ)
 bun run --cwd tools/semantic-lint bench -- vitest/arrange-outside-test --repeat 3
 
+# benchのrequest数と推定input tokenだけを確認 (providerを呼ばない)
+bun run --cwd tools/semantic-lint bench -- --plan-only
+
 # 既存のRunResult JSONをgoldenで採点 (providerを呼ばない)
 bun run --cwd tools/semantic-lint bench -- --score <run-result.json>
 
@@ -222,14 +225,18 @@ files:
 
 - `blob` はラベルを付けた時点のファイル内容を固定する。working treeが変わっても `bench` はそのblobを `git cat-file` で読んで評価するため、Git履歴にblobが必要。
 - working treeとblobが異なるファイルは `doctor` と `bench` がwarningを出す。ラベルを見直してから `blob` と行範囲を更新する。
-- `bench` はgoldenの対象ファイルだけを、ruleのstatusに関係なく現行のrule定義とthresholdで評価する。ruleごとに別requestで実行するため、tokenはrule単位で集計される。
+- `bench` はgoldenの対象ファイルだけを、ruleのstatusに関係なく現行のrule定義とthresholdで評価する。`check` と同じくfileごとに1 requestへまとめ、各fileではそのfileをgoldenに持つruleだけを判定する。
+- ruleごとのinput tokenは、requestの実usageを見積もりの内訳（質問はそのrule、stateとrequest固定費は質問数の比）で按分した値。request全体の実測と推定の比は `usage` に出る。
+- `--plan-only` はproviderを呼ばずにbenchのrequest数と推定input tokenを出す。`--format summary` はruleごとの主要指標とrequestごとの推定・実usageをJSON 1行ずつ出す。
 
 `bench` の指標:
 
 - file: 指摘の有無だけを比較するprecision / recall。
 - 包含: findingが期待行範囲を含めば一致。test全体などsubject単位の指摘でも一致する。
 - 厳密: 開始行と終了行が `--line-tolerance` (既定1) 以内なら1対1で一致。
-- findingsの全run共通数とrunによる揺れ、provider request数、input / output tokens、threshold sweep。
+- findingsの全run共通数とrunによる揺れ、判定分布、provider request数、input / output tokens、threshold sweep。
+- 校正: 包含一致のF1が最大になるthreshold（同点なら中央）を推奨値として出す。gapは違反候補の最低scoreとクリーン候補の最高scoreの差、headroomは推奨値から最高クリーンscoreまでの距離。
+- LOFO CV: 1ファイルを外して校正したthresholdでそのファイルを採点し、全ファイルを合わせた包含 / 厳密P/R。ruleのthresholdは全体の推奨値ではなく、CVで性能を確認したうえで決める。
 
 ## CI
 
