@@ -17,7 +17,7 @@ const games = [
   {
     name: "マインスイーパー",
     pictogramSvg: minesweeperPictogramSvg,
-    to: "/puzzles/minesweeper/play",
+    to: "/puzzles/minesweeper",
   },
 ] as const;
 

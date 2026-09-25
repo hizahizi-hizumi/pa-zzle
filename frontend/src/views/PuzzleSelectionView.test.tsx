@@ -14,7 +14,7 @@ describe("PuzzleSelectionView", () => {
     );
   });
 
-  test("マインスイーパーを選択してプレイ画面へ進めること", () => {
+  test("マインスイーパーを選択して難易度選択へ進めること", () => {
     const minesweeperButton = screen.getByRole("button", {
       name: "マインスイーパーを選択",
     });
@@ -24,7 +24,7 @@ describe("PuzzleSelectionView", () => {
     const heroLink = screen.getByRole("link", {
       name: "マインスイーパーを遊ぶ",
     });
-    expect(heroLink.getAttribute("href")).toBe("/puzzles/minesweeper/play");
+    expect(heroLink.getAttribute("href")).toBe("/puzzles/minesweeper");
     expect(minesweeperButton.getAttribute("aria-pressed")).toBe("true");
   });
 });

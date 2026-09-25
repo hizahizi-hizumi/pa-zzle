@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 
-import { minesweeperReviewProblem } from "@/games/minesweeper/problem/review-problem";
+import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
+import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
 import {
   chordMinesweeperSessionCell,
   createMinesweeperSession,
@@ -10,9 +11,12 @@ import {
   toggleMinesweeperSessionFlag,
 } from "@/games/minesweeper/session/session";
 
-export function useMinesweeperPlay() {
+export function useMinesweeperPlay(difficulty: MinesweeperDifficulty) {
   const [session, setSession] = useState(() =>
-    createMinesweeperSession(minesweeperReviewProblem, Date.now()),
+    createMinesweeperSession(
+      selectMinesweeperProblemForDifficulty(difficulty),
+      Date.now(),
+    ),
   );
 
   const revealCell = useCallback((cellIndex: number) => {

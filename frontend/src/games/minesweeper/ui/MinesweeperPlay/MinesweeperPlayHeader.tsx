@@ -8,6 +8,7 @@ type MinesweeperPlayHeaderProps = {
   mineCount: number;
   flagCount: number;
   onReplay: () => void;
+  onChangeDifficulty: () => void;
   onBackToHome: () => void;
 };
 
@@ -15,6 +16,7 @@ export function MinesweeperPlayHeader({
   mineCount,
   flagCount,
   onReplay,
+  onChangeDifficulty,
   onBackToHome,
 }: MinesweeperPlayHeaderProps) {
   return (
@@ -23,13 +25,17 @@ export function MinesweeperPlayHeader({
         type="button"
         variant="ghost"
         size="icon-lg"
-        aria-label="ホームへ戻る"
-        onClick={onBackToHome}
+        aria-label="難易度選択へ戻る"
+        onClick={onChangeDifficulty}
       >
         <ArrowLeft />
       </Button>
       <PlayHeaderSummary mineCount={mineCount} flagCount={flagCount} />
-      <PlayMenu onReplay={onReplay} onBackToHome={onBackToHome} />
+      <PlayMenu
+        onReplay={onReplay}
+        onChangeDifficulty={onChangeDifficulty}
+        onBackToHome={onBackToHome}
+      />
     </header>
   );
 }
