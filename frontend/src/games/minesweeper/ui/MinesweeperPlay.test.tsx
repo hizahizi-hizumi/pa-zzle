@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import type { ComponentProps } from "react";
 
 import type { MinesweeperVisibleCell } from "../session/session";
 import { MinesweeperPlay } from "./MinesweeperPlay";
@@ -36,6 +37,7 @@ describe("MinesweeperPlay", () => {
       onBackToHome = vi.fn();
       render(
         <MinesweeperPlay
+          difficulty="1"
           rows={2}
           columns={2}
           mineCount={1}
@@ -44,6 +46,8 @@ describe("MinesweeperPlay", () => {
           elapsedMs={0}
           visibleCells={visibleCells}
           status="playing"
+          progress="playing"
+          result={null}
           onRevealCell={onRevealCell}
           onToggleFlag={onToggleFlag}
           onChordCell={vi.fn()}
@@ -51,6 +55,7 @@ describe("MinesweeperPlay", () => {
           onStartNewProblem={onStartNewProblem}
           onChangeDifficulty={onChangeDifficulty}
           onBackToHome={onBackToHome}
+          onClearAnimationComplete={vi.fn()}
         />,
       );
     });
@@ -157,6 +162,7 @@ describe("MinesweeperPlay", () => {
       onOpenDiagnostics = vi.fn();
       render(
         <MinesweeperPlay
+          difficulty="1"
           rows={2}
           columns={2}
           mineCount={1}
@@ -170,6 +176,8 @@ describe("MinesweeperPlay", () => {
             { state: "hidden" },
           ]}
           status="playing"
+          progress="playing"
+          result={null}
           onRevealCell={vi.fn()}
           onToggleFlag={vi.fn()}
           onChordCell={vi.fn()}
@@ -177,6 +185,7 @@ describe("MinesweeperPlay", () => {
           onStartNewProblem={vi.fn()}
           onChangeDifficulty={vi.fn()}
           onBackToHome={vi.fn()}
+          onClearAnimationComplete={vi.fn()}
           onOpenDiagnostics={onOpenDiagnostics}
         />,
       );
@@ -205,6 +214,7 @@ describe("MinesweeperPlay", () => {
       onToggleFlag = vi.fn();
       render(
         <MinesweeperPlay
+          difficulty="1"
           rows={2}
           columns={2}
           mineCount={1}
@@ -213,6 +223,8 @@ describe("MinesweeperPlay", () => {
           elapsedMs={65_000}
           visibleCells={visibleCells}
           status="playing"
+          progress="playing"
+          result={null}
           onRevealCell={onRevealCell}
           onToggleFlag={onToggleFlag}
           onChordCell={vi.fn()}
@@ -220,6 +232,7 @@ describe("MinesweeperPlay", () => {
           onStartNewProblem={vi.fn()}
           onChangeDifficulty={vi.fn()}
           onBackToHome={vi.fn()}
+          onClearAnimationComplete={vi.fn()}
         />,
       );
     });
@@ -250,34 +263,35 @@ describe("MinesweeperPlay", () => {
     });
   });
 
-  describe("クリア後の場合", () => {
+  describe("クリア演出中の場合", () => {
     const visibleCells: readonly MinesweeperVisibleCell[] = [
       { state: "mine" },
       { state: "revealed", adjacentMineCount: 1 },
       { state: "revealed", adjacentMineCount: 1 },
       { state: "revealed", adjacentMineCount: 1 },
     ];
+    let onRevealCell: (cellIndex: number) => void;
 
     beforeEach(() => {
+      onRevealCell = vi.fn();
       render(
         <MinesweeperPlay
-          rows={2}
-          columns={2}
-          mineCount={1}
-          flagCount={0}
-          mistakeCount={0}
-          elapsedMs={0}
+          {...createResultProps()}
           visibleCells={visibleCells}
-          status="cleared"
-          onRevealCell={vi.fn()}
-          onToggleFlag={vi.fn()}
-          onChordCell={vi.fn()}
-          onReplay={vi.fn()}
-          onStartNewProblem={vi.fn()}
-          onChangeDifficulty={vi.fn()}
-          onBackToHome={vi.fn()}
+          progress="clearing"
+          onRevealCell={onRevealCell}
         />,
       );
+    });
+
+    test("最終盤面を見せて結果画面への遷移を待つこと", () => {
+      const resultHeading = screen.queryByRole("heading", {
+        name: "プレイ結果",
+      });
+      const mine = screen.getByRole("button", { name: "マス 1 地雷" });
+
+      expect(resultHeading).toBeNull();
+      expect(mine).toBeTruthy();
     });
 
     test("旗モード切替を表示しないこと", () => {
@@ -286,10 +300,143 @@ describe("MinesweeperPlay", () => {
       expect(toggle).toBeNull();
     });
 
-    test("クリアを表示すること", () => {
-      const status = screen.queryByText("クリア");
+    test("盤面の操作を通知しないこと", () => {
+      fireEvent.click(screen.getByRole("button", { name: /マス 2/ }));
 
-      expect(status).not.toBeNull();
+      expect(onRevealCell).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("採点結果を表示している場合", () => {
+    let onReplay: () => void;
+    let onStartNewProblem: () => void;
+    let onChangeDifficulty: () => void;
+    let onBackToHome: () => void;
+
+    beforeEach(() => {
+      onReplay = vi.fn();
+      onStartNewProblem = vi.fn();
+      onChangeDifficulty = vi.fn();
+      onBackToHome = vi.fn();
+      render(
+        <MinesweeperPlay
+          {...createResultProps()}
+          onReplay={onReplay}
+          onStartNewProblem={onStartNewProblem}
+          onChangeDifficulty={onChangeDifficulty}
+          onBackToHome={onBackToHome}
+        />,
+      );
+    });
+
+    test("共通の結果階層で採点結果と主要成績を表示すること", () => {
+      const heading = screen.getByRole("heading", { name: "プレイ結果" });
+      const pictogram = document.querySelector(
+        'svg[aria-label="マインスイーパー"]',
+      );
+      const difficulty = screen.getByText("難易度 1");
+      const score = screen.getByText("77");
+      const timeMetric = screen.getByText("時間").parentElement;
+      const mistakeMetric = screen.getByText("ミス").parentElement;
+
+      expect(heading).toBeTruthy();
+      expect(pictogram).toBeTruthy();
+      expect(difficulty).toBeTruthy();
+      expect(score).toBeTruthy();
+      expect(timeMetric?.textContent).toBe("時間00:25基準 +00:04");
+      expect(mistakeMetric?.textContent).toBe("ミス1");
+    });
+
+    test("スコアの内訳と採点基準を開けること", () => {
+      fireEvent.click(screen.getByText("スコアの内訳・採点基準"));
+
+      expect(screen.getByText("45 / 60")).toBeTruthy();
+      expect(screen.getByText("32 / 40")).toBeTruthy();
+      expect(screen.getByText(/踏んだ地雷1つにつき15点減点/)).toBeTruthy();
+      expect(
+        screen.getByText(/5秒 \+ 開く操作の最小2回 × 2秒 \+ 地雷3個 × 4秒/),
+      ).toBeTruthy();
+    });
+
+    test.each([
+      ["プレイ！", "onStartNewProblem"],
+      ["同じ問題", "onReplay"],
+      ["難易度変更", "onChangeDifficulty"],
+      ["ホーム", "onBackToHome"],
+    ] as const)("%sで対応する次の行動を通知すること", (name, handler) => {
+      const handlers = {
+        onStartNewProblem,
+        onReplay,
+        onChangeDifficulty,
+        onBackToHome,
+      };
+
+      fireEvent.click(screen.getByRole("button", { name }));
+
+      expect(handlers[handler]).toHaveBeenCalledOnce();
+    });
+
+    test("検証情報を開く操作を渡さなければ結果画面に検証情報を出さないこと", () => {
+      const diagnostics = screen.queryByRole("button", { name: "検証情報" });
+
+      expect(diagnostics).toBeNull();
+    });
+  });
+
+  describe("検証情報を開く操作を渡した結果表示の場合", () => {
+    let onOpenDiagnostics: () => void;
+
+    beforeEach(() => {
+      onOpenDiagnostics = vi.fn();
+      render(
+        <MinesweeperPlay
+          {...createResultProps()}
+          onOpenDiagnostics={onOpenDiagnostics}
+        />,
+      );
+    });
+
+    test("結果画面から検証情報を開けること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "検証情報" }));
+
+      expect(onOpenDiagnostics).toHaveBeenCalledOnce();
     });
   });
 });
+
+function createResultProps(): ComponentProps<typeof MinesweeperPlay> {
+  return {
+    difficulty: "1",
+    rows: 2,
+    columns: 2,
+    mineCount: 1,
+    flagCount: 0,
+    mistakeCount: 1,
+    elapsedMs: 25_000,
+    visibleCells: [
+      { state: "steppedMine" },
+      { state: "revealed", adjacentMineCount: 1 },
+      { state: "revealed", adjacentMineCount: 1 },
+      { state: "revealed", adjacentMineCount: 1 },
+    ],
+    status: "cleared",
+    progress: "result",
+    result: {
+      elapsedMs: 25_000,
+      mistakeCount: 1,
+      minimumOpenCount: 2,
+      mineCount: 3,
+      speedFullScoreMs: 21_000,
+      timeDeltaMs: 4_000,
+      score: { total: 77, breakdown: { accuracy: 45, speed: 32 } },
+    },
+    onRevealCell: vi.fn(),
+    onToggleFlag: vi.fn(),
+    onChordCell: vi.fn(),
+    onReplay: vi.fn(),
+    onStartNewProblem: vi.fn(),
+    onChangeDifficulty: vi.fn(),
+    onBackToHome: vi.fn(),
+    onClearAnimationComplete: vi.fn(),
+  };
+}

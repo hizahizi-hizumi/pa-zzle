@@ -35,6 +35,7 @@ export function PlayableMinesweeper({
   return (
     <>
       <MinesweeperPlay
+        difficulty={play.difficulty}
         rows={play.rows}
         columns={play.columns}
         mineCount={play.mineCount}
@@ -43,6 +44,8 @@ export function PlayableMinesweeper({
         elapsedMs={play.elapsedMs}
         visibleCells={play.visibleCells}
         status={play.status}
+        progress={play.progress}
+        result={play.result}
         onRevealCell={play.revealCell}
         onToggleFlag={play.toggleFlag}
         onChordCell={play.chordCell}
@@ -50,6 +53,7 @@ export function PlayableMinesweeper({
         onStartNewProblem={play.startNewProblem}
         onChangeDifficulty={() => navigate("/puzzles/minesweeper")}
         onBackToHome={() => navigate("/")}
+        onClearAnimationComplete={play.completeClearAnimation}
         onOpenDiagnostics={
           diagnostics ? () => setDiagnosticsOpen(true) : undefined
         }
