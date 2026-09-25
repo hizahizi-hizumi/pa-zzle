@@ -327,7 +327,10 @@
                     "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
                   },
                   {
-                    "group": ["@/games/water-sort/**"],
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/water-sort/**"
+                    ],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   }
                 ]
@@ -357,7 +360,37 @@
                     "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
                   },
                   {
-                    "group": ["@/games/nanpure/**"],
+                    "group": ["@/games/minesweeper/**", "@/games/nanpure/**"],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/minesweeper/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": ["@/games/nanpure/**", "@/games/water-sort/**"],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   }
                 ]
