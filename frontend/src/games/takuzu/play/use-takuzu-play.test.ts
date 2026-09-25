@@ -37,11 +37,11 @@ describe("useTakuzuPlay", () => {
   });
 
   test("固定問題の 8×8 盤面でプレイを始めること", () => {
-    const { size, cells, status, difficulty } = result.current;
+    const { size, cells, progress, difficulty } = result.current;
 
     expect(size).toBe(8);
     expect(cells).toHaveLength(64);
-    expect(status).toBe("playing");
+    expect(progress).toBe("playing");
     expect(difficulty).toBe("3");
   });
 
@@ -49,6 +49,12 @@ describe("useTakuzuPlay", () => {
     act(() => result.current.cycleCell(firstEmptyCellIndex, "forward"));
 
     expect(result.current.cells[firstEmptyCellIndex]?.cell).toBe("a");
+  });
+
+  test("空きマスへタイルを直接置けること", () => {
+    act(() => result.current.placeCell(firstEmptyCellIndex, "b"));
+
+    expect(result.current.cells[firstEmptyCellIndex]?.cell).toBe("b");
   });
 
   describe("空きマスへタイルを置いた場合", () => {
@@ -68,10 +74,10 @@ describe("useTakuzuPlay", () => {
       pressAll(result, solvingPresses);
     });
 
-    test("クリアしてプレイ事実を返すこと", () => {
-      const { status, sessionResult } = result.current;
+    test("完成演出へ進みプレイ事実を返すこと", () => {
+      const { progress, sessionResult } = result.current;
 
-      expect(status).toBe("cleared");
+      expect(progress).toBe("clearing");
       expect(sessionResult).toMatchObject({
         correctionCount: 0,
         restartCount: 0,
@@ -79,10 +85,16 @@ describe("useTakuzuPlay", () => {
       });
     });
 
+    test("完成演出を終えると完成の表示へ進むこと", () => {
+      act(() => result.current.completeClearing());
+
+      expect(result.current.progress).toBe("result");
+    });
+
     test("同じ問題をもう一度始めると初期配置のプレイ中へ戻ること", () => {
       act(() => result.current.replay());
 
-      expect(result.current.status).toBe("playing");
+      expect(result.current.progress).toBe("playing");
       expect(result.current.cells[firstEmptyCellIndex]?.cell).toBeNull();
       expect(result.current.sessionResult).toBeNull();
     });

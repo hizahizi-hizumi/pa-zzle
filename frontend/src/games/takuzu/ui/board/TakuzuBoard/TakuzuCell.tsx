@@ -1,22 +1,39 @@
 import {
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
+  type Ref,
   useRef,
 } from "react";
 
 import { getTakuzuCellPosition } from "@/games/takuzu/puzzle/board";
-import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import type { TakuzuCellView } from "@/games/takuzu/session/session";
+import { TakuzuTile } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuCell/TakuzuTile";
 
 type TakuzuCellProps = {
   size: number;
   cellIndex: number;
   view: TakuzuCellView;
   disabled: boolean;
-  onCycle: (cellIndex: number, direction: TakuzuCycleDirection) => void;
+  focusable: boolean;
+  buttonRef: Ref<HTMLButtonElement>;
+  onPress: (cellIndex: number) => void;
+  onPressBackward: (cellIndex: number) => void;
+  onFocus: (cellIndex: number) => void;
 };
 
 const tileNameByCell = { a: "A", b: "B" } as const;
+
+/**
+ * ルール違反のマスの印。縁の実線と、タイルの上に重ねる斜線で示し、色だけに頼らない。
+ * 行・列がすべて埋まっていても違反の範囲が読めるよう、斜線はタイルより前に置く。
+ * 共通の `error` 色ではなく、盤面の中だけで使うゲーム固有の色にする。
+ */
+const violationMarkClassName =
+  "rounded-[inherit] bg-[repeating-linear-gradient(135deg,rgb(244_63_94/0.55)_0_2px,transparent_2px_7px)] shadow-[inset_0_0_0_2px_var(--color-rose-500)] dark:bg-[repeating-linear-gradient(135deg,rgb(251_113_133/0.5)_0_2px,transparent_2px_7px)] dark:shadow-[inset_0_0_0_2px_var(--color-rose-400)]";
+
+// 巡回で B へ進む途中の A が一瞬だけ違反になっても印がちらつかないよう、印は少し遅れて出す。消すときは待たない。
+const violationMarkTimingClassName =
+  "opacity-0 transition-opacity duration-0 group-data-violated:opacity-100 group-data-violated:delay-[240ms] group-data-violated:duration-normal motion-reduce:group-data-violated:duration-0";
 
 function getAccessibleName(
   size: number,
@@ -32,24 +49,17 @@ function getAccessibleName(
   return [`${row + 1}行${column + 1}列`, content, ...qualifiers].join(" ");
 }
 
-function getTileClassName(view: TakuzuCellView): string {
-  if (view.cell === "a") {
-    return "size-[78%] rounded-md bg-sky-700 dark:bg-sky-400";
-  }
-  if (view.cell === "b") {
-    return "size-[78%] rounded-full border-4 border-amber-500 bg-amber-100 dark:border-amber-300 dark:bg-amber-50";
-  }
-  return "size-0";
-}
-
 export function TakuzuCell({
   size,
   cellIndex,
   view,
   disabled,
-  onCycle,
+  focusable,
+  buttonRef,
+  onPress,
+  onPressBackward,
+  onFocus,
 }: TakuzuCellProps) {
-  const interactive = !disabled && !view.given;
   const lastPointerTypeRef = useRef<string | null>(null);
 
   function handlePointerDown(
@@ -61,30 +71,33 @@ export function TakuzuCell({
   function handleContextMenu(event: ReactMouseEvent<HTMLButtonElement>): void {
     event.preventDefault();
     // タッチの長押しでも contextmenu が届く環境があるため、逆方向の巡回はマウスの右クリックに限る。
-    const fromTouch = lastPointerTypeRef.current === "touch";
-    if (interactive && !fromTouch) {
-      onCycle(cellIndex, "backward");
+    if (!disabled && lastPointerTypeRef.current !== "touch") {
+      onPressBackward(cellIndex);
     }
   }
 
   return (
     <button
+      ref={buttonRef}
       type="button"
       aria-label={getAccessibleName(size, cellIndex, view)}
-      disabled={!interactive}
-      onClick={() => onCycle(cellIndex, "forward")}
+      aria-disabled={view.given || undefined}
+      disabled={disabled}
+      tabIndex={focusable ? 0 : -1}
+      onClick={() => onPress(cellIndex)}
       onContextMenu={handleContextMenu}
       onPointerDown={handlePointerDown}
+      onFocus={() => onFocus(cellIndex)}
       data-violated={view.violated || undefined}
-      className="relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center rounded-sm bg-slate-200 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default data-violated:outline-2 data-violated:outline-rose-500 data-violated:outline-dashed data-violated:-outline-offset-2 dark:bg-slate-800"
+      className="group relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center rounded-[10%] bg-slate-200 shadow-[inset_0_1px_2px_rgb(15_23_42/0.14)] transition-transform duration-fast focus-visible:z-10 focus-visible:outline-3 focus-visible:outline-offset-1 focus-visible:outline-ring disabled:cursor-default enabled:not-aria-disabled:active:scale-[0.94] enabled:not-aria-disabled:hover:bg-slate-300/80 motion-reduce:transition-none motion-reduce:enabled:not-aria-disabled:active:scale-100 dark:bg-slate-800 dark:shadow-[inset_0_1px_2px_rgb(0_0_0/0.5)] dark:enabled:not-aria-disabled:hover:bg-slate-700/80"
     >
-      <span aria-hidden="true" className={getTileClassName(view)} />
-      {view.given ? (
-        <span
-          aria-hidden="true"
-          className="absolute top-1 left-1 size-1.5 rounded-full bg-slate-500 dark:bg-slate-400"
-        />
+      {view.cell !== null ? (
+        <TakuzuTile key={view.cell} tile={view.cell} given={view.given} />
       ) : null}
+      <span
+        aria-hidden="true"
+        className={`pointer-events-none absolute inset-0 ${violationMarkTimingClassName} ${violationMarkClassName}`}
+      />
     </button>
   );
 }

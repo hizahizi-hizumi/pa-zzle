@@ -16,11 +16,13 @@ export function PlayableTakuzu({ difficulty }: PlayableTakuzuProps) {
       difficulty={play.difficulty}
       size={play.size}
       cells={play.cells}
-      status={play.status}
+      progress={play.progress}
       elapsedMs={play.elapsedMs}
       onCycleCell={play.cycleCell}
+      onPlaceCell={play.placeCell}
       onRestart={play.restart}
       onReplay={play.replay}
+      onClearingComplete={play.completeClearing}
       onBackToHome={() => navigate("/")}
     />
   );
