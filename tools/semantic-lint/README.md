@@ -67,7 +67,7 @@ CLIのpath引数はrepository root基準で解決する。
 
 ## 仕組み
 
-ruleは対象path（`paths`）と判定対象の単位（`unit`）を宣言する。unitカタログがsourceから判定対象の `Subject` を決定論的に抽出し、providerはそのsubjectがruleの `instruction` に違反するかだけを判定する。行範囲やsymbolはmodelに生成させない。
+ruleは対象path（`paths`。rulesetの `exclude` に一致するpathを除く）と判定対象の単位（`unit`）を宣言する。unitカタログがsourceから判定対象の `Subject` を決定論的に抽出し、providerはそのsubjectがruleの `instruction` に違反するかだけを判定する。行範囲やsymbolはmodelに生成させない。
 
 provider結果へruleのthresholdを1回だけ適用し、canonicalな `Diagnostic` を作る。pretty / compact / JSON出力はこのDiagnosticから生成する。
 
@@ -226,7 +226,7 @@ providerへの送信はfileごとのbatchだが、hit / missはtaskごとに判�
 追加手順:
 
 1. 対応する人間向け規約が `.claude/rules/*.md` に存在することを確認する。semantic rulesetを規約の正本にしない。
-2. 適用pathを共有できる既存rulesetがあれば `.semantic-lint/rules/<ruleset>.yaml` にruleを追加する。共有できなければ新しいrulesetを作る。rulesetに書けるのは `version`、`id`、対象の `paths`、`rules` だけ。対応する人間向け規約はrulesetの先頭のコメントに書く。
+2. 適用pathを共有できる既存rulesetがあれば `.semantic-lint/rules/<ruleset>.yaml` にruleを追加する。共有できなければ新しいrulesetを作る。rulesetに書けるのは `version`、`id`、対象の `paths`、除外する `exclude`、`rules` だけ。対応する人間向け規約はrulesetの先頭のコメントに書く。
 3. ruleには `id`、`title`、`unit`、`violationThreshold`、`instruction`、必要なら `severity` だけを書く。新規ruleは原則 `severity` を省略（warning）して始める。`unit` は「unit語彙」の名前から選ぶ。scope・selector・AST node・文脈の取り方・指摘位置の決め方は書かない（未知のkeyは読み込みエラーになる）。
 4. `.semantic-lint/cases/<ruleset>/cases.yaml` とfixtureへ、少なくとも明確な `violation` と `no_violation` を追加する。実運用で境界例が見つかったらgolden caseへ追加する。
 5. `doctor` と `inspect --plan-only` でpath / unit / subject / request payloadを確認する。
@@ -244,6 +244,8 @@ rule追加でTypeScript実装は変更しない。必要なunitが語彙にな�
 
 人間向け規約に正本がなく本番へ入れないが、判定方式の評価に使うruleは、`.semantic-lint/config.yaml` の `evalRulesDir`（既定の設定では `.semantic-lint/eval-rules/`）に置く。`bench` と `doctor` だけが読み、`check` / `inspect` では実行しない。goldenは通常どおり `.semantic-lint/golden/` に置く。
 
+`paths` と `exclude` はrepository root基準のglobで、`exclude` はそのrulesetの全ruleに適用する。人間向け規約が適用除外を定めているpath（shadcn/uiの上流コードなど）や生成物は `exclude` に書く。全rulesetで対象にしないpath（`node_modules` や秘密情報など）は `.semantic-lint/config.yaml` の `excludePaths` に書く。
+
 最小のrule例:
 
 ```yaml
@@ -252,6 +254,8 @@ version: 1
 id: vitest
 paths:
   - frontend/**/*.test.ts
+exclude: # 省略可
+  - frontend/src/components/ui/**
 rules:
   - id: arrange-outside-test
     title: テスト本体にArrangeを置かない

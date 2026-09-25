@@ -38,6 +38,7 @@ export function sampleRule(overrides: Partial<Rule> = {}): Rule {
     violationThreshold: 0.9,
     unit: "file",
     paths: ["frontend/**/*.test.ts"],
+    exclude: [],
     instruction: "The subject must satisfy the sample rule.",
     ...overrides,
   };

@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 
 import type { Rule, SourceDocument } from "../domain/model.ts";
 import { isPathWithin } from "../config/project.ts";
+import { matchesAnyGlob } from "./planner.ts";
 
 export async function discoverSourceDocuments(options: {
   projectRoot: string;
@@ -24,7 +25,8 @@ export async function discoverSourceDocuments(options: {
         const projectPath = matchedPath.replaceAll("\\", "/");
 
         if (
-          isExcluded(projectPath, excludePaths) ||
+          matchesAnyGlob(excludePaths, projectPath) ||
+          matchesAnyGlob(rule.exclude, projectPath) ||
           !isRequested(
             resolve(projectRoot, projectPath),
             requestedPaths,
@@ -44,10 +46,6 @@ export async function discoverSourceDocuments(options: {
       source: await Bun.file(resolve(projectRoot, path)).text(),
     })),
   );
-}
-
-function isExcluded(path: string, patterns: string[]): boolean {
-  return patterns.some((pattern) => new Bun.Glob(pattern).match(path));
 }
 
 function isRequested(

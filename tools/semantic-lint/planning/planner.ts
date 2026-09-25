@@ -14,7 +14,11 @@ import { linkUnits } from "../units/structure.ts";
 /** 違反箇所の候補（part）に使う文のunit。カタログの語彙。 */
 const PART_STATEMENT_UNIT = "statement";
 
-export type PathMatcher = (patterns: string[], path: string) => boolean;
+/** ruleの対象pathか。`paths` のどれかに一致し、`exclude` のどれにも一致しないもの。 */
+export type PathMatcher = (
+  rule: Pick<Rule, "paths" | "exclude">,
+  path: string,
+) => boolean;
 
 /** カタログに言語がないfileで使う目印。file unitだけを抽出するため通常は使われない。 */
 const DEFAULT_MARKER = "/* {ref} */";
@@ -32,7 +36,7 @@ export function buildEvaluationPlan(options: {
     a.path.localeCompare(b.path),
   )) {
     const matchingRules = rules
-      .filter((rule) => matchesPath(rule.paths, document.path))
+      .filter((rule) => matchesPath(rule, document.path))
       .sort((a, b) => a.id.localeCompare(b.id));
 
     if (matchingRules.length === 0) {
@@ -146,7 +150,14 @@ export function planUnits(
     );
 }
 
-export function bunGlobPathMatcher(patterns: string[], path: string): boolean {
+export function bunGlobPathMatcher(
+  rule: Pick<Rule, "paths" | "exclude">,
+  path: string,
+): boolean {
+  return matchesAnyGlob(rule.paths, path) && !matchesAnyGlob(rule.exclude, path);
+}
+
+export function matchesAnyGlob(patterns: readonly string[], path: string): boolean {
   return patterns.some((pattern) => new Bun.Glob(pattern).match(path));
 }
 

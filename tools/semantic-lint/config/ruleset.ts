@@ -5,7 +5,7 @@ import { YAML } from "bun";
 import { SEVERITIES, type Rule, type Severity } from "../domain/model.ts";
 
 /** rulesetに書けるkey。 */
-const RULESET_KEYS = new Set(["version", "id", "paths", "rules"]);
+const RULESET_KEYS = new Set(["version", "id", "paths", "exclude", "rules"]);
 
 /**
  * rule作者が書けるkey。scope・selector・contextなどの抽出方法はunitカタログが持ち、
@@ -41,12 +41,13 @@ export function compileRuleset(
     );
   }
 
-  const { id, paths, rules } = value;
+  const { id, paths, exclude = [], rules } = value;
 
   if (
     !isId(id) ||
     !isStringArray(paths) ||
     paths.length === 0 ||
+    !isStringArray(exclude) ||
     !Array.isArray(rules) ||
     rules.length === 0
   ) {
@@ -60,6 +61,7 @@ export function compileRuleset(
       index,
       rulesetId: id,
       paths,
+      exclude,
       units,
     }),
   );
@@ -113,9 +115,10 @@ function compileRule(options: {
   index: number;
   rulesetId: string;
   paths: string[];
+  exclude: string[];
   units: ReadonlySet<string>;
 }): Rule {
-  const { value, origin, index, rulesetId, paths, units } = options;
+  const { value, origin, index, rulesetId, paths, exclude, units } = options;
 
   if (!isRecord(value)) {
     throw new Error(`ruleが不正です: ${origin} rules[${index}]`);
@@ -173,6 +176,7 @@ function compileRule(options: {
     violationThreshold,
     unit,
     paths,
+    exclude,
     instruction,
   };
 }

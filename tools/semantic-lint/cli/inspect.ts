@@ -57,7 +57,7 @@ export async function runInspectCommand(args: string[]): Promise<number> {
 
   const path = relative(projectRoot, absolutePath).split(sep).join("/");
   const source = await Bun.file(absolutePath).text();
-  const pathMatch = bunGlobPathMatcher(rule.paths, path);
+  const pathMatch = bunGlobPathMatcher(rule, path);
   const extractor = await UnitExtractor.create(catalog);
   const plan = buildEvaluationPlan({
     documents: [{ path, source }],

@@ -8,6 +8,7 @@ import {
 
 import type { Rule } from "../domain/model.ts";
 import { goldenFileStatus, loadGoldenSets } from "../eval/golden.ts";
+import { matchesAnyGlob } from "../planning/planner.ts";
 import type { UnitCatalog } from "../units/catalog.ts";
 import { UnitExtractor } from "../units/extract.ts";
 import { loadEvalRules, loadProjectContext } from "./context.ts";
@@ -27,7 +28,12 @@ export async function runDoctorCommand(args: string[]): Promise<number> {
 
   for (const rule of [...rules, ...evalRules]) {
     warnings.push(
-      ...(await unsupportedLanguageWarnings(projectRoot, catalog, rule)),
+      ...(await unsupportedLanguageWarnings(
+        projectRoot,
+        catalog,
+        rule,
+        config.excludePaths,
+      )),
     );
   }
 
@@ -89,6 +95,7 @@ async function unsupportedLanguageWarnings(
   projectRoot: string,
   catalog: UnitCatalog,
   rule: Rule,
+  excludePaths: readonly string[],
 ): Promise<string[]> {
   const supported = new Set(catalog.languagesFor(rule.unit));
   const unsupported = new Map<string, number>();
@@ -98,6 +105,13 @@ async function unsupportedLanguageWarnings(
       cwd: projectRoot,
       onlyFiles: true,
     })) {
+      if (
+        matchesAnyGlob(excludePaths, path) ||
+        matchesAnyGlob(rule.exclude, path)
+      ) {
+        continue;
+      }
+
       const language = catalog.languageFor(path)?.id;
 
       if (language === undefined || !supported.has(language)) {
