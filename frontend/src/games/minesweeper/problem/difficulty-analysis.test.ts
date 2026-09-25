@@ -1,6 +1,6 @@
-import { analyzeMinesweeperDifficulty } from "./difficulty-analysis";
-import { generateMinesweeperProblem } from "./generator";
-import type { MinesweeperProblem } from "./problem";
+import { analyzeMinesweeperDifficulty } from "@/games/minesweeper/problem/difficulty-analysis";
+import { generateMinesweeperProblem } from "@/games/minesweeper/problem/generator";
+import type { MinesweeperProblem } from "@/games/minesweeper/problem/problem";
 
 type CellTransform = (
   row: number,

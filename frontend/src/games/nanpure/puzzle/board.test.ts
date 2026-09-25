@@ -7,7 +7,7 @@ import {
   isNanpureDigit,
   NANPURE_CELL_COUNT,
   type NanpureBoard,
-} from "./board";
+} from "@/games/nanpure/puzzle/board";
 
 describe("isNanpureDigit", () => {
   test.each([1, 5, 9])("1〜9の整数を数字として受理すること: %s", (value) => {

@@ -1,9 +1,9 @@
-import type { MinesweeperProblem } from "../problem";
+import type { MinesweeperProblem } from "@/games/minesweeper/problem/problem";
 import {
   createMinesweeperConstraintSystem,
   enumerateMinesweeperConstraintSolutions,
   type MinesweeperConstraintSystem,
-} from "./constraint-search";
+} from "@/games/minesweeper/problem/generation/constraint-search";
 import {
   applyMinesweeperDeduction,
   collectMinesweeperNumberConstraints,
@@ -15,7 +15,7 @@ import {
   type MinesweeperDeduction,
   type MinesweeperDeductionState,
   type MinesweeperNumberConstraint,
-} from "./deduction-state";
+} from "@/games/minesweeper/problem/generation/deduction-state";
 
 export const MINESWEEPER_SOLVER_MAXIMUM_NODE_COUNT = 2_000_000;
 

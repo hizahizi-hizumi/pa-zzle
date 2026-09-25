@@ -1,17 +1,15 @@
 import type { ProblemSeed } from "@/games/problem-seed";
 import type {
   WATER_SORT_BOTTLE_CAPACITY,
-  WATER_SORT_EMPTY_BOTTLE_COUNT,
   WaterSortState,
-} from "../puzzle/state";
-import type { WaterSortDifficultyAnalysis } from "./difficulty-analysis";
+} from "@/games/water-sort/puzzle/state";
 
 export const WATER_SORT_GENERATOR_VERSION = "1";
 
 export type WaterSortGenerationConditions = {
   colorCount: number;
   capacity: typeof WATER_SORT_BOTTLE_CAPACITY;
-  emptyBottleCount: typeof WATER_SORT_EMPTY_BOTTLE_COUNT;
+  emptyBottleCount: number;
 };
 
 export type WaterSortProblem = {
@@ -29,5 +27,4 @@ export type WaterSortGeneratedProblem = {
   problem: WaterSortProblem;
   identity: WaterSortProblemIdentity;
   optimalMoveCount: number;
-  difficultyAnalysis: WaterSortDifficultyAnalysis;
 };

@@ -1,10 +1,13 @@
-import type { WaterSortProblem } from "../problem/problem";
-import { applyWaterSortMove, listWaterSortLegalMoves } from "../puzzle/rules";
+import type { WaterSortProblem } from "@/games/water-sort/problem/problem";
+import {
+  applyWaterSortMove,
+  listWaterSortLegalMoves,
+} from "@/games/water-sort/puzzle/rules";
 import {
   isWaterSortCleared,
   type WaterSortMove,
   type WaterSortState,
-} from "../puzzle/state";
+} from "@/games/water-sort/puzzle/state";
 
 export type WaterSortSessionStatus = "playing" | "cleared";
 

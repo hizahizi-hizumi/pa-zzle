@@ -1,9 +1,12 @@
-import { applyWaterSortMove, listWaterSortLegalMoves } from "./rules";
+import {
+  applyWaterSortMove,
+  listWaterSortLegalMoves,
+} from "@/games/water-sort/puzzle/rules";
 import {
   createWaterSortStateKey,
   type WaterSortMove,
   type WaterSortState,
-} from "./state";
+} from "@/games/water-sort/puzzle/state";
 
 export type WaterSortTransition = {
   state: WaterSortState;

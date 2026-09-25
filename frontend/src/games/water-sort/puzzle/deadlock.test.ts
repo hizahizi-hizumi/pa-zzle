@@ -1,5 +1,5 @@
-import { classifyWaterSortDeadlock } from "./deadlock";
-import type { WaterSortState } from "./state";
+import { classifyWaterSortDeadlock } from "@/games/water-sort/puzzle/deadlock";
+import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 
 describe("classifyWaterSortDeadlock", () => {
   test("異なる盤面へ進めない未クリア状態を手詰まりと判定すること", () => {

@@ -1,7 +1,7 @@
-import type { MinesweeperProblem } from "../problem";
-import { createMinesweeperDeductionState } from "./deduction-state";
-import { _private, traceMinesweeperHumanSolve } from "./human-solver";
-import { findMinesweeperCertainCells } from "./solver";
+import type { MinesweeperProblem } from "@/games/minesweeper/problem/problem";
+import { createMinesweeperDeductionState } from "@/games/minesweeper/problem/generation/deduction-state";
+import { _private, traceMinesweeperHumanSolve } from "@/games/minesweeper/problem/generation/human-solver";
+import { findMinesweeperCertainCells } from "@/games/minesweeper/problem/generation/solver";
 
 const { findEasiestDiscoveries, forEachConnectedConstraintGroup } = _private;
 

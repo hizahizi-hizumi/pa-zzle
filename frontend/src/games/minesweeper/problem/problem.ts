@@ -3,8 +3,8 @@ import {
   assertMinesweeperBoard,
   assertMinesweeperCellIndex,
   type MinesweeperBoard,
-} from "../puzzle/board";
-import { isMinesweeperMine } from "../puzzle/rules";
+} from "@/games/minesweeper/puzzle/board";
+import { isMinesweeperMine } from "@/games/minesweeper/puzzle/rules";
 
 export const MINESWEEPER_GENERATOR_VERSION = "1";
 

@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "biome check --write .",
-    "analyze:minesweeper": "bun scripts/analyze-minesweeper-corpus.ts"
+    "analyze:minesweeper": "bun scripts/analyze-minesweeper-corpus.ts",
+    "generate:water-sort-pool": "bun scripts/generate-water-sort-problem-pool.ts"
   },
   "dependencies": {
     "@fontsource/zen-kaku-gothic-new": "5.3.0",

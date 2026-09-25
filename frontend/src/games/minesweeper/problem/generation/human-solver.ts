@@ -1,8 +1,8 @@
-import type { MinesweeperProblem } from "../problem";
+import type { MinesweeperProblem } from "@/games/minesweeper/problem/problem";
 import {
   createMinesweeperConstraintSystem,
   enumerateMinesweeperConstraintSolutions,
-} from "./constraint-search";
+} from "@/games/minesweeper/problem/generation/constraint-search";
 import {
   applyMinesweeperDeduction,
   collectMinesweeperNumberConstraints,
@@ -14,11 +14,11 @@ import {
   type MinesweeperDeduction,
   type MinesweeperDeductionState,
   type MinesweeperNumberConstraint,
-} from "./deduction-state";
+} from "@/games/minesweeper/problem/generation/deduction-state";
 import {
   findMinesweeperCertainCells,
   type MinesweeperSolverOptions,
-} from "./solver";
+} from "@/games/minesweeper/problem/generation/solver";
 
 /**
  * 人間向け推論の段階。小さいほど易しい。

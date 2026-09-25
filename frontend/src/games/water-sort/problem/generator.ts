@@ -1,31 +1,29 @@
-import type { ProblemSeed } from "@/games/problem-seed";
+import {
+  createProblemSeededRandom,
+  type ProblemSeed,
+} from "@/games/problem-seed";
+import {
+  solveWaterSort,
+  type WaterSortSolverOptions,
+} from "@/games/water-sort/problem/generation/solver";
+import {
+  WATER_SORT_GENERATOR_VERSION,
+  type WaterSortGeneratedProblem,
+  type WaterSortGenerationConditions,
+  type WaterSortProblemIdentity,
+} from "@/games/water-sort/problem/problem";
 import {
   createWaterSortStateKey,
   isCompleteWaterSortBottle,
   WATER_SORT_BOTTLE_CAPACITY,
   WATER_SORT_EMPTY_BOTTLE_COUNT,
   type WaterSortState,
-} from "../puzzle/state";
-import {
-  analyzeWaterSortDifficulty,
-  type WaterSortDifficultyAnalysis,
-} from "./difficulty-analysis";
-import {
-  solveWaterSort,
-  type WaterSortSolveResult,
-  type WaterSortSolverOptions,
-} from "./generation/solver";
-import {
-  WATER_SORT_GENERATOR_VERSION,
-  type WaterSortGeneratedProblem,
-  type WaterSortGenerationConditions,
-  type WaterSortProblemIdentity,
-} from "./problem";
+} from "@/games/water-sort/puzzle/state";
 
 export type WaterSortGeneratedCandidate = {
   attempt: number;
   initialState: WaterSortState;
-  difficultyAnalysis: WaterSortDifficultyAnalysis;
+  optimalMoveCount: number;
 };
 
 export type WaterSortProblemAcceptance = (
@@ -44,36 +42,16 @@ export class WaterSortGenerationExhaustedError extends Error {
 export type WaterSortGeneratorOptions = {
   seed: ProblemSeed;
   colorCount: number;
+  emptyBottleCount?: number;
   maximumAttempts?: number;
   solverOptions?: WaterSortSolverOptions;
   acceptCandidate?: WaterSortProblemAcceptance;
 };
 
-function hashProblemSeed(seed: string): number {
-  let hash = 0x811c9dc5;
-  for (let index = 0; index < seed.length; index += 1) {
-    hash ^= seed.charCodeAt(index);
-    hash = Math.imul(hash, 0x01000193);
-  }
-
-  return hash >>> 0;
-}
-
-function createProblemSeededRandom(seed: string): () => number {
-  let state = hashProblemSeed(seed);
-
-  return () => {
-    state = (state + 0x6d2b79f5) >>> 0;
-    let value = state;
-    value = Math.imul(value ^ (value >>> 15), value | 1);
-    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
-    return ((value ^ (value >>> 14)) >>> 0) / 0x1_0000_0000;
-  };
-}
-
 function createGeneratorRandom(
   seed: ProblemSeed,
   colorCount: number,
+  emptyBottleCount: number,
 ): () => number {
   return createProblemSeededRandom(
     [
@@ -81,7 +59,7 @@ function createGeneratorRandom(
       seed,
       colorCount,
       WATER_SORT_BOTTLE_CAPACITY,
-      WATER_SORT_EMPTY_BOTTLE_COUNT,
+      emptyBottleCount,
     ].join(":"),
   );
 }
@@ -105,6 +83,7 @@ function shuffle<T>(values: readonly T[], random: () => number): T[] {
 
 function createStandardCandidate(
   colorCount: number,
+  emptyBottleCount: number,
   random: () => number,
 ): WaterSortState {
   const units = Array.from(
@@ -119,10 +98,7 @@ function createStandardCandidate(
     ),
   );
 
-  return [
-    ...bottles,
-    ...Array.from({ length: WATER_SORT_EMPTY_BOTTLE_COUNT }, () => []),
-  ];
+  return [...bottles, ...Array.from({ length: emptyBottleCount }, () => [])];
 }
 
 function hasInitiallyCompletedBottle(state: WaterSortState): boolean {
@@ -135,8 +111,17 @@ function validateColorCount(colorCount: number): void {
   }
 }
 
+function validateEmptyBottleCount(emptyBottleCount: number): void {
+  if (!Number.isInteger(emptyBottleCount) || emptyBottleCount < 1) {
+    throw new RangeError("emptyBottleCount must be a positive integer");
+  }
+}
+
 function validateGeneratorOptions(options: WaterSortGeneratorOptions): void {
   validateColorCount(options.colorCount);
+  validateEmptyBottleCount(
+    options.emptyBottleCount ?? WATER_SORT_EMPTY_BOTTLE_COUNT,
+  );
 
   const maximumAttempts = options.maximumAttempts ?? 100;
   if (!Number.isInteger(maximumAttempts) || maximumAttempts < 1) {
@@ -152,10 +137,8 @@ function validateProblemIdentity(identity: WaterSortProblemIdentity): void {
   }
 
   validateColorCount(identity.conditions.colorCount);
-  if (
-    identity.conditions.capacity !== WATER_SORT_BOTTLE_CAPACITY ||
-    identity.conditions.emptyBottleCount !== WATER_SORT_EMPTY_BOTTLE_COUNT
-  ) {
+  validateEmptyBottleCount(identity.conditions.emptyBottleCount);
+  if (identity.conditions.capacity !== WATER_SORT_BOTTLE_CAPACITY) {
     throw new Error("Unsupported water sort generation conditions");
   }
 
@@ -170,14 +153,12 @@ function validateProblemIdentity(identity: WaterSortProblemIdentity): void {
 function createProblem(
   identity: WaterSortProblemIdentity,
   initialState: WaterSortState,
-  solveResult: WaterSortSolveResult,
-  difficultyAnalysis: WaterSortDifficultyAnalysis,
+  optimalMoveCount: number,
 ): WaterSortGeneratedProblem {
   return {
     problem: { initialState },
     identity,
-    optimalMoveCount: solveResult.moves.length,
-    difficultyAnalysis,
+    optimalMoveCount,
   };
 }
 
@@ -187,12 +168,14 @@ function findCandidateAtAttempt(
   const random = createGeneratorRandom(
     identity.seed,
     identity.conditions.colorCount,
+    identity.conditions.emptyBottleCount,
   );
   const seenStates = new Set<string>();
 
   for (let attempt = 1; attempt <= identity.generationAttempt; attempt += 1) {
     const initialState = createStandardCandidate(
       identity.conditions.colorCount,
+      identity.conditions.emptyBottleCount,
       random,
     );
     if (hasInitiallyCompletedBottle(initialState)) {
@@ -232,12 +215,23 @@ export function restoreWaterSortProblem(
     );
   }
 
-  const difficultyAnalysis = analyzeWaterSortDifficulty(
-    initialState,
-    solveResult.moves,
-  );
+  return createProblem(identity, initialState, solveResult.moves.length);
+}
 
-  return createProblem(identity, initialState, solveResult, difficultyAnalysis);
+export function restoreWaterSortProblemWithOptimalMoveCount(
+  identity: WaterSortProblemIdentity,
+  optimalMoveCount: number,
+): WaterSortGeneratedProblem {
+  validateProblemIdentity(identity);
+  if (!Number.isInteger(optimalMoveCount) || optimalMoveCount < 1) {
+    throw new RangeError("optimalMoveCount must be a positive integer");
+  }
+
+  return createProblem(
+    identity,
+    findCandidateAtAttempt(identity),
+    optimalMoveCount,
+  );
 }
 
 export function generateWaterSortProblem(
@@ -246,16 +240,26 @@ export function generateWaterSortProblem(
   validateGeneratorOptions(options);
 
   const maximumAttempts = options.maximumAttempts ?? 100;
+  const emptyBottleCount =
+    options.emptyBottleCount ?? WATER_SORT_EMPTY_BOTTLE_COUNT;
   const conditions: WaterSortGenerationConditions = {
     colorCount: options.colorCount,
     capacity: WATER_SORT_BOTTLE_CAPACITY,
-    emptyBottleCount: WATER_SORT_EMPTY_BOTTLE_COUNT,
+    emptyBottleCount,
   };
-  const random = createGeneratorRandom(options.seed, options.colorCount);
+  const random = createGeneratorRandom(
+    options.seed,
+    options.colorCount,
+    emptyBottleCount,
+  );
   const seenStates = new Set<string>();
 
   for (let attempt = 1; attempt <= maximumAttempts; attempt += 1) {
-    const initialState = createStandardCandidate(options.colorCount, random);
+    const initialState = createStandardCandidate(
+      options.colorCount,
+      emptyBottleCount,
+      random,
+    );
     if (hasInitiallyCompletedBottle(initialState)) {
       continue;
     }
@@ -271,16 +275,11 @@ export function generateWaterSortProblem(
       continue;
     }
 
-    const difficultyAnalysis = analyzeWaterSortDifficulty(
-      initialState,
-      solveResult.moves,
-    );
-    const candidate = {
-      attempt,
-      initialState,
-      difficultyAnalysis,
-    };
-    if (options.acceptCandidate && !options.acceptCandidate(candidate)) {
+    const optimalMoveCount = solveResult.moves.length;
+    if (
+      options.acceptCandidate &&
+      !options.acceptCandidate({ attempt, initialState, optimalMoveCount })
+    ) {
       continue;
     }
 
@@ -292,8 +291,7 @@ export function generateWaterSortProblem(
         generationAttempt: attempt,
       },
       initialState,
-      solveResult,
-      difficultyAnalysis,
+      optimalMoveCount,
     );
   }
 

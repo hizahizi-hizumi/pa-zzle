@@ -1,4 +1,4 @@
-import { parseMinesweeperDifficulty } from "./difficulty";
+import { parseMinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 
 describe("parseMinesweeperDifficulty", () => {
   const definedCases = ["1", "2", "3", "4", "5"] as const;

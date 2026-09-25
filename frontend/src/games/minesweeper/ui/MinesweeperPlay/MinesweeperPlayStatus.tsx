@@ -1,4 +1,4 @@
-import type { MinesweeperSessionStatus } from "../../session/session";
+import type { MinesweeperSessionStatus } from "@/games/minesweeper/session/session";
 
 type MinesweeperPlayStatusProps = {
   status: Exclude<MinesweeperSessionStatus, "playing">;

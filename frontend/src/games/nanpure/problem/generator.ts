@@ -1,23 +1,23 @@
-import type { ProblemSeed } from "@/games/problem-seed";
-import {
-  NANPURE_CELL_COUNT,
-  type NanpureBoard,
-  type NanpureSolution,
-} from "../puzzle/board";
 import {
   analyzeNanpureDifficulty,
   type NanpureDifficultyAnalysis,
-} from "./difficulty-analysis";
+} from "@/games/nanpure/problem/difficulty-analysis";
 import {
   classifyNanpureSolutions,
   findNanpureSolution,
-} from "./generation/solver";
+} from "@/games/nanpure/problem/generation/solver";
 import {
   NANPURE_GENERATOR_VERSION,
   type NanpureGeneratedProblem,
   type NanpureProblem,
   type NanpureProblemIdentity,
-} from "./problem";
+} from "@/games/nanpure/problem/problem";
+import {
+  NANPURE_CELL_COUNT,
+  type NanpureBoard,
+  type NanpureSolution,
+} from "@/games/nanpure/puzzle/board";
+import type { ProblemSeed } from "@/games/problem-seed";
 
 export const NANPURE_MINIMUM_UNIQUE_CLUE_COUNT = 17;
 
