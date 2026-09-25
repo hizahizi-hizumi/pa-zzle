@@ -9,8 +9,9 @@ import {
   listTakuzuViolatedCellIndices,
 } from "@/games/takuzu/puzzle/rules";
 import {
-  cycleTakuzuCell,
+  getNextTakuzuCell,
   isTakuzuGivenCell,
+  placeTakuzuCell,
   type TakuzuCycleDirection,
 } from "@/games/takuzu/puzzle/transitions";
 
@@ -91,21 +92,22 @@ export function createTakuzuSession(
   };
 }
 
-export function cycleTakuzuSessionCell(
+/** マスの中身を直接置き換える。固定マスや、すでに同じ中身のマスへの入力は記録しない。 */
+export function placeTakuzuSessionCell(
   session: TakuzuSession,
   cellIndex: number,
-  direction: TakuzuCycleDirection,
+  cell: TakuzuCell,
   operatedAt: number,
 ): TakuzuSession {
   if (session.status !== "playing") {
     return session;
   }
 
-  const board = cycleTakuzuCell(
+  const board = placeTakuzuCell(
     session.problem.givens,
     session.board,
     cellIndex,
-    direction,
+    cell,
   );
   if (board === session.board) {
     return session;
@@ -132,6 +134,25 @@ export function cycleTakuzuSessionCell(
     status: "cleared",
     finishedAt: operatedAt,
   };
+}
+
+export function cycleTakuzuSessionCell(
+  session: TakuzuSession,
+  cellIndex: number,
+  direction: TakuzuCycleDirection,
+  operatedAt: number,
+): TakuzuSession {
+  const cell = session.board.cells[cellIndex];
+  if (cell === undefined) {
+    return session;
+  }
+
+  return placeTakuzuSessionCell(
+    session,
+    cellIndex,
+    getNextTakuzuCell(cell, direction),
+    operatedAt,
+  );
 }
 
 /**
