@@ -1,5 +1,5 @@
-import type { WaterSortState } from "./state";
-import { listWaterSortDistinctTransitions } from "./transitions";
+import type { WaterSortState } from "@/games/water-sort/puzzle/state";
+import { listWaterSortDistinctTransitions } from "@/games/water-sort/puzzle/transitions";
 
 describe("listWaterSortDistinctTransitions", () => {
   test("空ボトルの表示位置だけが異なる同値な次状態を一つにまとめること", () => {

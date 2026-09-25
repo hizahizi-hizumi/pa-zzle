@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
-import type { PlayRecord } from "../play-record";
-import type { PlayRecordDefinition } from "../play-record-definition";
-import type { PlayRecordSaveOutcome } from "../save-play-record";
-import { savePlayRecord } from "../save-play-record";
+import type { PlayRecord } from "@/records/play-record";
+import type { PlayRecordDefinition } from "@/records/play-record-definition";
+import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
+import { savePlayRecord } from "@/records/save-play-record";
 
 type SavedRecordOutcome = {
   recordId: string;

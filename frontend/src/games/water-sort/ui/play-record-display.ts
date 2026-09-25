@@ -1,19 +1,19 @@
 import {
   getWaterSortDifficultyLabel,
-  parseWaterSortDifficulty,
+  parseWaterSortRecordedDifficulty,
 } from "@/games/water-sort/difficulty";
 import { waterSortPlayRecordDefinition } from "@/games/water-sort/play-record";
 
 import {
   formatWaterSortMoveDelta,
   formatWaterSortTimeDelta,
-} from "./format-performance-delta";
+} from "@/games/water-sort/ui/format-performance-delta";
 
 export const waterSortPlayRecordDisplay = {
   definition: waterSortPlayRecordDefinition,
   gameLabel: "ウォーターソート",
   getComparisonLabel(comparisonKey: string) {
-    const difficulty = parseWaterSortDifficulty(comparisonKey);
+    const difficulty = parseWaterSortRecordedDifficulty(comparisonKey);
     return difficulty ? getWaterSortDifficultyLabel(difficulty) : null;
   },
   metrics: [

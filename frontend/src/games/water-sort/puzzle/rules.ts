@@ -3,7 +3,7 @@ import {
   type WaterSortBottle,
   type WaterSortMove,
   type WaterSortState,
-} from "./state";
+} from "@/games/water-sort/puzzle/state";
 
 function topColor(bottle: WaterSortBottle): number | undefined {
   return bottle.at(-1);

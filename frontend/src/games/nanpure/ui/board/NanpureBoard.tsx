@@ -5,7 +5,7 @@ import {
 } from "@/games/nanpure/puzzle/board";
 import type { NanpureNotes } from "@/games/nanpure/session/session";
 
-import { NanpureCell } from "./NanpureCell";
+import { NanpureCell } from "@/games/nanpure/ui/board/NanpureCell";
 
 const NANPURE_CELL_INDICES = Array.from(
   { length: NANPURE_SIZE * NANPURE_SIZE },

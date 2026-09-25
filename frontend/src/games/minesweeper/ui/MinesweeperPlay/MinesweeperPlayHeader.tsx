@@ -1,8 +1,8 @@
 import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { PlayHeaderSummary } from "./MinesweeperPlayHeader/PlayHeaderSummary";
-import { PlayMenu } from "./MinesweeperPlayHeader/PlayMenu";
+import { PlayHeaderSummary } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperPlayHeader/PlayHeaderSummary";
+import { PlayMenu } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperPlayHeader/PlayMenu";
 
 type MinesweeperPlayHeaderProps = {
   mineCount: number;

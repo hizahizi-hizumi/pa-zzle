@@ -13,7 +13,7 @@ import {
   createPourAnimation,
   interruptPourAnimationsForBottle,
   type PourAnimation,
-} from "./pour-animation";
+} from "@/games/water-sort/ui/board/pour/pour-animation";
 
 type UsePourAnimationsOptions = {
   operation: WaterSortOperation | null;

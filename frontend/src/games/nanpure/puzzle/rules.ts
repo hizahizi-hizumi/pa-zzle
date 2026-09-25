@@ -9,7 +9,7 @@ import {
   NANPURE_SIZE,
   type NanpureBoard,
   type NanpureDigit,
-} from "./board";
+} from "@/games/nanpure/puzzle/board";
 
 function collectUnitConflicts(
   board: NanpureBoard,

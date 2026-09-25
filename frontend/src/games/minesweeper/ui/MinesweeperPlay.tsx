@@ -4,14 +4,14 @@ import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import type {
   MinesweeperSessionStatus,
   MinesweeperVisibleCell,
-} from "../session/session";
+} from "@/games/minesweeper/session/session";
 import {
   MinesweeperBoard,
   type MinesweeperInputMode,
-} from "./board/MinesweeperBoard";
-import { MinesweeperInputModeControl } from "./MinesweeperPlay/MinesweeperInputModeControl";
-import { MinesweeperPlayHeader } from "./MinesweeperPlay/MinesweeperPlayHeader";
-import { MinesweeperPlayStatus } from "./MinesweeperPlay/MinesweeperPlayStatus";
+} from "@/games/minesweeper/ui/board/MinesweeperBoard";
+import { MinesweeperInputModeControl } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperInputModeControl";
+import { MinesweeperPlayHeader } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperPlayHeader";
+import { MinesweeperPlayStatus } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperPlayStatus";
 
 type MinesweeperPlayProps = {
   rows: number;
