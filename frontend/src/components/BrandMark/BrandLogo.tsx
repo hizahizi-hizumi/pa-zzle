@@ -14,8 +14,8 @@ type BrandLogoArtwork = {
 // 小さいヘッダーでは2段組の下段が潰れるため、1行の版に切り替える。
 // SVGは重心が中央に来るよう余白を含む。シンボルの高さがヘッダー高さの約39%（大48px中18.9px・小28px中11px）になる値
 const brandLogoArtworks = {
-  default: { svg: logoStackedSvg, heightClassName: "h-6" },
-  compact: { svg: logoInlineSvg, heightClassName: "h-[11.08px]" },
+  default: { svg: logoStackedSvg, heightClassName: "h-[23.48px]" },
+  compact: { svg: logoInlineSvg, heightClassName: "h-[11.06px]" },
 } satisfies Record<BrandLogoProps["size"], BrandLogoArtwork>;
 
 export function BrandLogo({ size }: BrandLogoProps) {
