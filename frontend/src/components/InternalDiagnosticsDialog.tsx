@@ -17,7 +17,8 @@ type InternalDiagnosticsDialogProps = {
   seed: string;
   generatorVersion: string;
   generationConditions: string;
-  generationAttempt: number;
+  /** 生成を試し直す回数を持たないゲーム（事前生成した問題集から選ぶなど）では省略する。 */
+  generationAttempt?: number;
   buildRevision: string | null;
   serializedSnapshot: string;
   onClose: () => void;
@@ -93,11 +94,13 @@ export function InternalDiagnosticsDialog({
             label="生成条件"
             value={generationConditions}
           />
-          <InternalDiagnosticRow
-            label="生成試行"
-            value={String(generationAttempt)}
-            mono
-          />
+          {generationAttempt !== undefined && (
+            <InternalDiagnosticRow
+              label="生成試行"
+              value={String(generationAttempt)}
+              mono
+            />
+          )}
           <InternalDiagnosticRow
             label="ビルド"
             value={buildRevision ?? "取得なし"}
