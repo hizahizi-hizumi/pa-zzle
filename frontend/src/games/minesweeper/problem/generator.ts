@@ -1,13 +1,4 @@
 import {
-  createProblemSeededRandom,
-  type ProblemSeed,
-} from "@/games/problem-seed";
-import {
-  getMinesweeperNeighborCellIndices,
-  type MinesweeperBoard,
-} from "@/games/minesweeper/puzzle/board";
-import { collectMinesweeperRevealCellIndices } from "@/games/minesweeper/puzzle/rules";
-import {
   analyzeMinesweeperDifficulty,
   type MinesweeperDifficultyAnalysis,
 } from "@/games/minesweeper/problem/difficulty-analysis";
@@ -18,6 +9,15 @@ import {
   type MinesweeperProblem,
   type MinesweeperProblemIdentity,
 } from "@/games/minesweeper/problem/problem";
+import {
+  getMinesweeperNeighborCellIndices,
+  type MinesweeperBoard,
+} from "@/games/minesweeper/puzzle/board";
+import { collectMinesweeperRevealCellIndices } from "@/games/minesweeper/puzzle/rules";
+import {
+  createProblemSeededRandom,
+  type ProblemSeed,
+} from "@/games/problem-seed";
 
 export const MINESWEEPER_MINIMUM_BOARD_LENGTH = 5;
 export const MINESWEEPER_MAXIMUM_BOARD_ROWS = 16;
