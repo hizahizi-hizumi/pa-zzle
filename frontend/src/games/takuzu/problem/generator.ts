@@ -1,7 +1,4 @@
-import {
-  createProblemSeededRandom,
-  type ProblemSeed,
-} from "@/games/problem-seed";
+import { createProblemSeededRandom } from "@/games/problem-seed";
 import {
   analyzeTakuzuDifficulty,
   type TakuzuDifficultyAnalysis,
@@ -15,27 +12,15 @@ import {
   countTakuzuSolutions,
   findRandomTakuzuSolution,
 } from "@/games/takuzu/problem/generation/solver";
-import type { TakuzuProblem } from "@/games/takuzu/problem/problem";
+import {
+  TAKUZU_BOARD_SIZE,
+  TAKUZU_GENERATOR_VERSION,
+  type TakuzuIdentifiedProblem,
+  type TakuzuProblemIdentity,
+} from "@/games/takuzu/problem/problem";
 import type { TakuzuBoard, TakuzuCell } from "@/games/takuzu/puzzle/board";
 
-export const TAKUZU_BOARD_SIZE = 8;
-
-/**
- * 問題を作る条件。同じ条件からは同じ問題を作る。
- * - `removalTechniqueLimit`: 初期配置を減らすとき、解き切れることを保つのに使ってよい最も深い手筋。
- *   `null` なら手筋で解き切れることは保たず、一意解であることだけを保つ（評価可能範囲の外の問題も作る）。
- *   生成された問題の難易度はこの値で決めず、できた問題を分析して決める。
- * - `extraGivenCount`: 減らし切った初期配置へ、解から戻すマスの数。初期配置が多めの問題を作るのに使う。
- */
-export type TakuzuGenerationConditions = {
-  seed: ProblemSeed;
-  removalTechniqueLimit: TakuzuTechnique | null;
-  extraGivenCount: number;
-};
-
-export type TakuzuGeneratedProblem = {
-  problem: TakuzuProblem;
-  conditions: TakuzuGenerationConditions;
+export type TakuzuGeneratedProblem = TakuzuIdentifiedProblem & {
   difficultyAnalysis: TakuzuDifficultyAnalysis;
 };
 
@@ -111,16 +96,36 @@ function restoreGivens(
   return { size: givens.size, cells };
 }
 
+function validateIdentity(identity: TakuzuProblemIdentity): void {
+  if (identity.generatorVersion !== TAKUZU_GENERATOR_VERSION) {
+    throw new Error(
+      `Unsupported Takuzu generator version: ${identity.generatorVersion}`,
+    );
+  }
+  if (identity.conditions.size !== TAKUZU_BOARD_SIZE) {
+    throw new RangeError(
+      `Unsupported Takuzu board size: ${identity.conditions.size}`,
+    );
+  }
+  const { extraGivenCount } = identity.conditions;
+  if (!Number.isInteger(extraGivenCount) || extraGivenCount < 0) {
+    throw new RangeError("extraGivenCount must be a non-negative integer");
+  }
+}
+
 /**
- * 8×8 の完成盤を作り、初期配置を減らして問題にする。
- * 難易度分析で分類するためのコーパス作成用で、難易度を指定して作る機能は持たない。
+ * identity の seed から 8×8 の完成盤を作り、初期配置を減らして問題にし、難易度を分析する。
+ * 同じ identity からは同じ問題を作る。難易度を指定して作る機能は持たず、
+ * 問題集の生成スクリプトが、できた問題を分類して各難易度へ振り分ける。
  */
 export function generateTakuzuProblem(
-  conditions: TakuzuGenerationConditions,
+  identity: TakuzuProblemIdentity,
 ): TakuzuGeneratedProblem {
-  const random = createProblemSeededRandom(`takuzu:${conditions.seed}`);
+  validateIdentity(identity);
+  const { seed, conditions } = identity;
+  const random = createProblemSeededRandom(`takuzu:${seed}`);
   const solution = findRandomTakuzuSolution(
-    createEmptyBoard(TAKUZU_BOARD_SIZE),
+    createEmptyBoard(conditions.size),
     random,
   );
   if (solution === null) {
@@ -141,7 +146,7 @@ export function generateTakuzuProblem(
   };
   return {
     problem,
-    conditions,
+    identity,
     difficultyAnalysis: analyzeTakuzuDifficulty(problem),
   };
 }
