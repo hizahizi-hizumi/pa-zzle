@@ -1,0 +1,22 @@
+# 期待finding: 導出できる値のstate宣言と同期のuseEffect、ユーザー操作をstate経由でeffectへ迂回させるuseEffectの文。
+# 正本: .claude/rules/react-hooks.md（state / effect）。実repoに違反が見つからないため、違反例はfixtures/の最小fixtureで補う。
+# records/hooks/use-save-play-record.ts（記録の変化をeffectで監視して保存する）は判断が割れるため対象にしない。
+version: 1
+rule: react-hooks/hook-state-and-effect
+baseCommit: 28d17e476a9dbdc39c0f9cecad46ee4d0ad2114a
+files:
+  - path: .semantic-lint/golden/react-hooks/fixtures/use-submit-answer.ts
+    blob: d072ff229dfcafd493e205ba4fce0b7bc5b45e26
+    findings:
+      - lines: [6, 10]
+  - path: .semantic-lint/golden/react-hooks/fixtures/use-cleared-records.ts
+    blob: 55a8b9c5cc1976a65b858980f7b38b35614151fc
+    findings:
+      - lines: [9, 11]
+      - lines: [13, 15]
+  - path: frontend/src/games/nanpure/play/use-nanpure-play.ts
+    blob: e73a5aa09aeff2f00bd6194594e3889ba1bdd484
+    findings: []
+  - path: frontend/src/games/water-sort/ui/board/pour/use-pour-animations.ts
+    blob: df2880df77ea7a74c2b748f7b1689cbfb931fd91
+    findings: []
