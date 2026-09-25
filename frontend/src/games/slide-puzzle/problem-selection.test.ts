@@ -110,11 +110,24 @@ describe("restoreSlidePuzzlePooledProblem", () => {
   const pooledProblems = listSlidePuzzlePoolEntries("3")
     .slice(0, 3)
     .map((entry) => [entry[0], toSlidePuzzlePooledProblem(entry)] as const);
-  const unknownIdentity: SlidePuzzleProblemIdentity = {
-    generatorVersion: "1",
-    seed: "not-in-pool",
-    conditions: { size: 4, scrambleLength: 30 },
-  };
+  const unmatchedIdentities: readonly [string, SlidePuzzleProblemIdentity][] = [
+    [
+      "問題集に無い seed",
+      {
+        generatorVersion: "1",
+        seed: "not-in-pool",
+        conditions: { size: 4, scrambleLength: 30 },
+      },
+    ],
+    [
+      "seed と撹拌手数は問題集の項目と同じで盤面サイズだけが違う",
+      {
+        generatorVersion: "1",
+        seed: "sp4-20-8",
+        conditions: { size: 5, scrambleLength: 20 },
+      },
+    ],
+  ];
 
   test.each(pooledProblems)(
     "問題集にある識別情報から盤面と最短手数を復元すること: %s",
@@ -134,9 +147,12 @@ describe("restoreSlidePuzzlePooledProblem", () => {
     },
   );
 
-  test("問題集に無い識別情報では null を返すこと", () => {
-    const result = restoreSlidePuzzlePooledProblem(unknownIdentity);
+  test.each(unmatchedIdentities)(
+    "問題集の項目と一致しない識別情報では null を返すこと: %s",
+    (_, identity) => {
+      const result = restoreSlidePuzzlePooledProblem(identity);
 
-    expect(result).toBeNull();
-  });
+      expect(result).toBeNull();
+    },
+  );
 });
