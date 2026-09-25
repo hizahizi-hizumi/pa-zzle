@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import {
   getMinesweeperCellCount,
@@ -13,28 +15,31 @@ import {
   MinesweeperCellFace,
 } from "@/games/minesweeper/ui/board/MinesweeperCellFace";
 
-const BOARD_SIZE = 5;
+// 3行の盤面の上段・下段に地雷を置き、中段の開示済みマスで隣接地雷数を見せる。
+// "*"が地雷。上のレベルは下のレベルの地雷をすべて含み、列と地雷を増やして中段の数字を大きくする。
+const previewMineLayouts = {
+  "1": ["*...", "....", "...*"],
+  "2": ["*....", ".....", ".*.*."],
+  "3": ["*.*..*", "......", ".*.*.."],
+  "4": ["*.*.**.", ".......", ".***..."],
+  "5": ["***.**..", "........", ".***.*.."],
+} satisfies Record<MinesweeperDifficulty, readonly string[]>;
 
-// 5×5盤面の外周に地雷を置き、内側の開示済みマスで隣接地雷数を見せる。
-// "*"が地雷。上の難易度は下の難易度の地雷をすべて含む。
-const mineLayouts = {
-  "1": "..*......*.....*.........",
-  "2": "..*..*...*.....*.....*...",
-  "3": ".**..*...*.....*...*.*...",
-  "4": ".**..*...**....*...*.*.*.",
-  "5": ".***.*...**....*...***.*.",
-} satisfies Record<MinesweeperDifficulty, string>;
+// 最大8列でも枠線込みでプレビュー枠の幅128pxに収まるマスの大きさ。grid-cols / auto-rows の15pxと対応する。
+// 全レベル共通で中段を開示し、考える余地として中段の最後の1マスだけ未開示に残す。
+const REVEALED_ROW = 1;
 
-// 全難易度で共通の開示範囲。"o"が開示済み、それ以外は未開示。
-const revealedArea = [".....", ".ooo.", ".ooo.", ".oo..", "....."].join("");
-
-function toPreviewBoard(layout: string): MinesweeperBoard {
-  const mineCellIndices = Array.from(layout).flatMap(
+function toPreviewBoard(layout: readonly string[]): MinesweeperBoard {
+  const mineCellIndices = Array.from(layout.join("")).flatMap(
     function toMineCellIndex(mark, cellIndex) {
       return mark === "*" ? [cellIndex] : [];
     },
   );
-  return { rows: BOARD_SIZE, columns: BOARD_SIZE, mineCellIndices };
+  return {
+    rows: layout.length,
+    columns: layout[0]?.length ?? 0,
+    mineCellIndices,
+  };
 }
 
 function toPreviewCell(
@@ -44,7 +49,9 @@ function toPreviewCell(
   if (isMinesweeperMine(board, cellIndex)) {
     return { state: "mine" };
   }
-  if (revealedArea[cellIndex] !== "o") {
+  const row = Math.floor(cellIndex / board.columns);
+  const column = cellIndex % board.columns;
+  if (row !== REVEALED_ROW || column === board.columns - 1) {
     return { state: "hidden" };
   }
   return {
@@ -53,10 +60,16 @@ function toPreviewCell(
   };
 }
 
-function getCellKey(cellIndex: number): string {
-  const row = Math.floor(cellIndex / BOARD_SIZE);
-  const column = cellIndex % BOARD_SIZE;
-  return `${row}-${column}`;
+function createPreviewCells(
+  difficulty: MinesweeperDifficulty,
+): MinesweeperVisibleCell[] {
+  const board = toPreviewBoard(previewMineLayouts[difficulty]);
+  return Array.from(
+    { length: getMinesweeperCellCount(board) },
+    function toCell(_, cellIndex) {
+      return toPreviewCell(board, cellIndex);
+    },
+  );
 }
 
 type MinesweeperDifficultyPreviewProps = {
@@ -66,29 +79,33 @@ type MinesweeperDifficultyPreviewProps = {
 export function MinesweeperDifficultyPreview({
   difficulty,
 }: MinesweeperDifficultyPreviewProps) {
-  const board = toPreviewBoard(mineLayouts[difficulty]);
-  const cells = Array.from(
-    { length: getMinesweeperCellCount(board) },
-    function toCell(_, cellIndex) {
-      return toPreviewCell(board, cellIndex);
-    },
-  );
+  const columns = previewMineLayouts[difficulty][0]?.length ?? 0;
+  const cells = createPreviewCells(difficulty);
 
   return (
     <span
       aria-hidden="true"
-      className="grid size-[81px] shrink-0 grid-cols-5 border-t border-l border-slate-300 lg:size-[106px] dark:border-slate-600"
+      className="flex h-12 w-32 shrink-0 items-center lg:justify-center"
     >
-      {cells.map(function renderCell(cell, cellIndex) {
-        return (
-          <span
-            key={getCellKey(cellIndex)}
-            className={getMinesweeperCellFaceClassName(cell, "preview")}
-          >
-            <MinesweeperCellFace view={cell} size="preview" />
-          </span>
-        );
-      })}
+      <span
+        className="grid auto-rows-[15px] grid-cols-[repeat(var(--preview-columns),15px)] border-t border-l border-slate-300 dark:border-slate-600"
+        style={{ "--preview-columns": columns } as CSSProperties}
+      >
+        {cells.map(function renderCell(cell, cellIndex) {
+          const row = Math.floor(cellIndex / columns);
+          const column = cellIndex % columns;
+          return (
+            <span
+              key={`${row}-${column}`}
+              className={getMinesweeperCellFaceClassName(cell, "preview")}
+            >
+              <MinesweeperCellFace view={cell} size="preview" />
+            </span>
+          );
+        })}
+      </span>
     </span>
   );
 }
+
+export const _private = { previewMineLayouts, createPreviewCells };

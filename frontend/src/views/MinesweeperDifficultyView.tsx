@@ -4,7 +4,7 @@ import { MinesweeperDifficultyOption } from "@/views/MinesweeperDifficultyView/M
 
 export function MinesweeperDifficultyView() {
   return (
-    <section className="space-y-8">
+    <section className="space-y-6 sm:space-y-8">
       <div className="space-y-2">
         <Link
           to="/"
@@ -15,7 +15,7 @@ export function MinesweeperDifficultyView() {
         <h1 className="text-screen-title">マインスイーパー</h1>
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-5 lg:gap-4">
+      <div className="grid gap-2 sm:gap-4 lg:grid-cols-5">
         {minesweeperDifficulties.map((difficulty) => (
           <MinesweeperDifficultyOption
             key={difficulty.id}

@@ -18,7 +18,7 @@ const NUMBER_CLASS_NAMES = [
 
 const SIZE_CLASS_NAMES = {
   board: "text-[clamp(0.8rem,4vw,1.15rem)]",
-  preview: "text-[11px] tabular-nums lg:text-sm",
+  preview: "text-[11px] tabular-nums",
 } satisfies Record<MinesweeperCellFaceSize, string>;
 
 const MINE_ICON_CLASS_NAMES = {

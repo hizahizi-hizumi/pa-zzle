@@ -155,7 +155,7 @@ describe("PlayRecordsScreen", () => {
       name: "開始条件",
     });
 
-    expect(comparisonSelect.textContent).toContain("難易度 3");
+    expect(comparisonSelect.textContent).toContain("レベル 3");
     expect(screen.getAllByText("75点").length).toBeGreaterThan(0);
     expect(screen.getAllByText("+00:31").length).toBeGreaterThan(0);
     expect(screen.getAllByText("1回").length).toBeGreaterThan(0);
