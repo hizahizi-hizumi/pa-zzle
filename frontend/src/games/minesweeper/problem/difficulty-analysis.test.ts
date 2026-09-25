@@ -2,18 +2,29 @@ import {
   analyzeMinesweeperDifficulty,
   type MinesweeperHumanSolveFeatures,
 } from "./difficulty-analysis";
-import { minesweeperDifficultyReviewProblems } from "./difficulty-review-problems";
 import {
   generateMinesweeperProblem,
   restoreMinesweeperProblem,
 } from "./generator";
 import type { MinesweeperProblem } from "./problem";
 
-function restoreReviewProblem(seed: string): MinesweeperProblem {
-  const reviewProblem = minesweeperDifficultyReviewProblems.find(
-    (candidate) => candidate.identity.seed === seed,
-  )!;
-  return restoreMinesweeperProblem(reviewProblem.identity).problem;
+/** 問題集合の分析で使った `ms-<rows>x<columns>-<mines>-<index>` 形式の seed から問題を復元する。 */
+function restoreCorpusProblem(seed: string): MinesweeperProblem {
+  const [rows, columns, mineCount] = /^ms-(\d+)x(\d+)-(\d+)-\d+$/
+    .exec(seed)!
+    .slice(1)
+    .map(Number);
+  return restoreMinesweeperProblem({
+    generatorVersion: "1",
+    seed,
+    conditions: {
+      rows: rows!,
+      columns: columns!,
+      mineCount: mineCount!,
+      startCellPlacement: "random",
+    },
+    generationAttempt: 1,
+  }).problem;
 }
 
 type CellTransform = (
@@ -198,7 +209,7 @@ describe("analyzeMinesweeperDifficulty", () => {
       ] satisfies [string, string, Partial<MinesweeperHumanSolveFeatures>][]
     ).map(
       ([name, seed, expected]) =>
-        [name, restoreReviewProblem(seed), expected] as const,
+        [name, restoreCorpusProblem(seed), expected] as const,
     );
 
     test.each(cases)("%sのラウンドを数えること", (_name, problem, expected) => {
