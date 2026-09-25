@@ -64,10 +64,13 @@ describe("MinesweeperPlay", () => {
     });
 
     test("ブランドの1行組の下にゲーム名を表示すること", () => {
-      expect(screen.getByRole("img", { name: "pa-zzle" })).toBeTruthy();
-      expect(
-        screen.getByRole("heading", { name: "マインスイーパー" }),
-      ).toBeTruthy();
+      const brand = screen.getByRole("img", { name: "pa-zzle" });
+      const gameName = screen.getByRole("heading", {
+        name: "マインスイーパー",
+      });
+
+      expect(brand).toBeTruthy();
+      expect(gameName).toBeTruthy();
     });
 
     test("左上の戻る操作で難易度選択への移動を通知すること", () => {
@@ -347,6 +350,7 @@ describe("MinesweeperPlay", () => {
     });
 
     test("共通の結果階層で採点結果と主要成績を表示すること", () => {
+      const brand = screen.getByRole("img", { name: "pa-zzle" });
       const heading = screen.getByRole("heading", { name: "プレイ結果" });
       const pictogram = document.querySelector(
         'svg[aria-label="マインスイーパー"]',
@@ -356,7 +360,7 @@ describe("MinesweeperPlay", () => {
       const timeMetric = screen.getByText("時間").parentElement;
       const mistakeMetric = screen.getByText("ミス").parentElement;
 
-      expect(screen.getByRole("img", { name: "pa-zzle" })).toBeTruthy();
+      expect(brand).toBeTruthy();
       expect(heading).toBeTruthy();
       expect(pictogram).toBeTruthy();
       expect(difficulty).toBeTruthy();
