@@ -40,6 +40,15 @@ const corpusScrambleLengthsByBoardSize: Record<
   4: [10, 15, 20, 25, 30, 35, 40, 50, 60, 80, 100, 120, 160, 200, 300],
   5: [20, 30, 40, 50, 60, 70, 80],
 };
+// 順位相関を見る最短手数の帯（下端、幅 10 手）。3×3 は最短 31 手まで、5×5 は撹拌 80 手以下で 70 手前後までになる。
+const correlationBandLowsByBoardSize: Record<
+  SlidePuzzleBoardSize,
+  readonly number[]
+> = {
+  3: [10, 20],
+  4: [20, 30, 40, 50],
+  5: [20, 30, 40, 50, 60],
+};
 // 5×5 の 1 問あたりの探索上限。上限に達した候補は評価不能として数える。
 const fiveByFiveNodeLimit = 200_000_000;
 const greedyTrialCount = 50;
@@ -223,11 +232,89 @@ function analyzeCorpus(
   return samples;
 }
 
+function printLevelReport(
+  corpusScrambleLengths: readonly number[],
+  provided: readonly Sample[],
+) {
+  console.log("## レベルごとの最短手数・マンハッタン距離（候補全体）\n");
+  printTable(
+    [
+      "レベル",
+      "問題数",
+      "最短 （最小 / 25% / 中央 / 75% / 最大）",
+      "マンハッタン （最小 / 25% / 中央 / 75% / 最大）",
+    ],
+    slidePuzzleDifficulties.map(({ id }) => {
+      const group = provided.filter((sample) => levelOf(sample) === id);
+      return [
+        id,
+        String(group.length),
+        summarize(group.map((sample) => sample.optimalMoveCount)),
+        summarize(group.map((sample) => sample.manhattanDistance)),
+      ];
+    }),
+  );
+
+  console.log("## 撹拌手数ごとのレベル 5 の最短手数（候補全体）\n");
+  printTable(
+    ["撹拌手数", "問題数", "最短 （最小 / 25% / 中央 / 75% / 最大）"],
+    corpusScrambleLengths.flatMap((scrambleLength) => {
+      const optimalMoveCounts = provided
+        .filter(
+          (sample) =>
+            sample.scrambleLength === scrambleLength && levelOf(sample) === "5",
+        )
+        .map((sample) => sample.optimalMoveCount);
+      return optimalMoveCounts.length === 0
+        ? []
+        : [
+            [
+              String(scrambleLength),
+              String(optimalMoveCounts.length),
+              summarize(optimalMoveCounts),
+            ],
+          ];
+    }),
+  );
+
+  const levelCounts = slidePuzzleDifficulties.map(
+    ({ id }) => provided.filter((sample) => levelOf(sample) === id).length,
+  );
+  const byLength = [...provided].sort(
+    (left, right) => left.optimalMoveCount - right.optimalMoveCount,
+  );
+  const lengthLevel = new Map<Sample, number>();
+  let offset = 0;
+  for (const [levelIndex, count] of levelCounts.entries()) {
+    for (const sample of byLength.slice(offset, offset + count)) {
+      lengthLevel.set(sample, levelIndex + 1);
+    }
+    offset += count;
+  }
+  const differences = provided.map((sample) =>
+    Math.abs((lengthLevel.get(sample) ?? 0) - Number(levelOf(sample))),
+  );
+  console.log("## 最短手数だけで同じ問題数に分けた場合との比較\n");
+  printTable(
+    ["レベル差 0", "差 1", "差 2 以上"],
+    [
+      [
+        String(differences.filter((difference) => difference === 0).length),
+        String(differences.filter((difference) => difference === 1).length),
+        String(differences.filter((difference) => difference >= 2).length),
+      ],
+    ],
+  );
+}
+
 function printCorpusReport(
   boardSize: SlidePuzzleBoardSize,
   samples: readonly Sample[],
 ) {
   const corpusScrambleLengths = corpusScrambleLengthsByBoardSize[boardSize];
+  // レベルの基準と提供範囲の下限は、まだ 4×4 の問題集にだけ定めている。
+  // 3×3・5×5 は同じ下限で候補を絞って比べ、レベルごとの集計は出さない。
+  const reportsLevels = boardSize === 4;
   console.log("## 撹拌手数ごと\n");
   printTable(
     [
@@ -279,7 +366,9 @@ function printCorpusReport(
       "最短手数",
       "問題数",
       "遠回り （最小 / 25% / 中央 / 75% / 最大）",
-      ...slidePuzzleDifficulties.map(({ label }) => label),
+      ...(reportsLevels
+        ? slidePuzzleDifficulties.map(({ label }) => label)
+        : []),
     ],
     bands.map((band) => {
       const group = provided.filter(
@@ -289,53 +378,18 @@ function printCorpusReport(
         `${Math.max(band, SLIDE_PUZZLE_MINIMUM_OPTIMAL_MOVE_COUNT)}〜${band + 4}`,
         String(group.length),
         summarize(group.map((sample) => sample.detourMoveCount)),
-        ...slidePuzzleDifficulties.map(({ id }) =>
-          String(group.filter((sample) => levelOf(sample) === id).length),
-        ),
+        ...(reportsLevels
+          ? slidePuzzleDifficulties.map(({ id }) =>
+              String(group.filter((sample) => levelOf(sample) === id).length),
+            )
+          : []),
       ];
     }),
   );
 
-  console.log("## レベルごとの最短手数・マンハッタン距離（候補全体）\n");
-  printTable(
-    [
-      "レベル",
-      "問題数",
-      "最短 （最小 / 25% / 中央 / 75% / 最大）",
-      "マンハッタン （最小 / 25% / 中央 / 75% / 最大）",
-    ],
-    slidePuzzleDifficulties.map(({ id }) => {
-      const group = provided.filter((sample) => levelOf(sample) === id);
-      return [
-        id,
-        String(group.length),
-        summarize(group.map((sample) => sample.optimalMoveCount)),
-        summarize(group.map((sample) => sample.manhattanDistance)),
-      ];
-    }),
-  );
-
-  console.log("## 撹拌手数ごとのレベル 5 の最短手数（候補全体）\n");
-  printTable(
-    ["撹拌手数", "問題数", "最短 （最小 / 25% / 中央 / 75% / 最大）"],
-    corpusScrambleLengths.flatMap((scrambleLength) => {
-      const optimalMoveCounts = provided
-        .filter(
-          (sample) =>
-            sample.scrambleLength === scrambleLength && levelOf(sample) === "5",
-        )
-        .map((sample) => sample.optimalMoveCount);
-      return optimalMoveCounts.length === 0
-        ? []
-        : [
-            [
-              String(scrambleLength),
-              String(optimalMoveCounts.length),
-              summarize(optimalMoveCounts),
-            ],
-          ];
-    }),
-  );
+  if (reportsLevels) {
+    printLevelReport(corpusScrambleLengths, provided);
+  }
 
   console.log("## 順位相関（Spearman）\n");
   function pick(
@@ -355,7 +409,7 @@ function printCorpusReport(
     ],
     [
       ["全体", provided] as const,
-      ...[20, 30, 40, 50].map(
+      ...correlationBandLowsByBoardSize[boardSize].map(
         (low) =>
           [
             `最短 ${low}〜${low + 9}`,
@@ -386,35 +440,6 @@ function printCorpusReport(
         pick("misplacedTileCount", group),
       ),
     ]),
-  );
-
-  const levelCounts = slidePuzzleDifficulties.map(
-    ({ id }) => provided.filter((sample) => levelOf(sample) === id).length,
-  );
-  const byLength = [...provided].sort(
-    (left, right) => left.optimalMoveCount - right.optimalMoveCount,
-  );
-  const lengthLevel = new Map<Sample, number>();
-  let offset = 0;
-  for (const [levelIndex, count] of levelCounts.entries()) {
-    for (const sample of byLength.slice(offset, offset + count)) {
-      lengthLevel.set(sample, levelIndex + 1);
-    }
-    offset += count;
-  }
-  const differences = provided.map((sample) =>
-    Math.abs((lengthLevel.get(sample) ?? 0) - Number(levelOf(sample))),
-  );
-  console.log("## 最短手数だけで同じ問題数に分けた場合との比較\n");
-  printTable(
-    ["レベル差 0", "差 1", "差 2 以上"],
-    [
-      [
-        String(differences.filter((difference) => difference === 0).length),
-        String(differences.filter((difference) => difference === 1).length),
-        String(differences.filter((difference) => difference >= 2).length),
-      ],
-    ],
   );
 
   console.log(
