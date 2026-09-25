@@ -44,24 +44,22 @@ describe("solveFifteenPuzzleOptimally", () => {
     ["short-4", 12],
     ["short-5", 14],
   ] as const;
-  const shortScrambleCases = shortScrambles.map(
-    ([seed, scrambleLength]) =>
-      [
-        seed,
-        scrambleLength,
-        generateFifteenPuzzleBoard(seed, { size: 4, scrambleLength }),
-      ] as const,
-  );
+  const shortScrambleCases = shortScrambles.map(([seed, scrambleLength]) => {
+    const board = generateFifteenPuzzleBoard(seed, { size: 4, scrambleLength });
+    return [
+      seed,
+      scrambleLength,
+      board,
+      shortestDistanceByBreadthFirstSearch(board),
+    ] as const;
+  });
 
   test.each(shortScrambleCases)(
     "幅優先探索と同じ最短手数を返すこと: %s を %i 手撹拌",
-    (_seed, _scrambleLength, board) => {
+    (_seed, _scrambleLength, board, optimalMoveCount) => {
       const result = solveFifteenPuzzleOptimally(board);
 
-      expect(result).toMatchObject({
-        status: "solved",
-        optimalMoveCount: shortestDistanceByBreadthFirstSearch(board),
-      });
+      expect(result).toMatchObject({ status: "solved", optimalMoveCount });
     },
   );
 

@@ -10,6 +10,7 @@ import { generateFifteenPuzzleBoard } from "@/games/fifteen-puzzle/problem/gener
 describe("createFifteenPuzzlePatternDatabaseHeuristic", () => {
   // テストでは小さな集合だけを使い、構築を一瞬で終わらせる。
   const database = buildFifteenPuzzlePatternDatabase([[1, 2], [5, 6], [3]]);
+  const heuristic = createFifteenPuzzlePatternDatabaseHeuristic(database);
   const boards = [
     ["pdb-1", 18],
     ["pdb-2", 24],
@@ -28,9 +29,7 @@ describe("createFifteenPuzzlePatternDatabaseHeuristic", () => {
   test.each(cases)(
     "線形衝突の下界と同じ最短手数を求めること: %s",
     (_seed, board, optimalMoveCount) => {
-      const result = solveFifteenPuzzleOptimally(board, {
-        heuristic: createFifteenPuzzlePatternDatabaseHeuristic(database),
-      });
+      const result = solveFifteenPuzzleOptimally(board, { heuristic });
 
       expect(result).toMatchObject({ status: "solved", optimalMoveCount });
     },
@@ -39,9 +38,7 @@ describe("createFifteenPuzzlePatternDatabaseHeuristic", () => {
   test.each(cases)(
     "盤面全体の下界が最短手数を超えないこと: %s",
     (_seed, board, optimalMoveCount) => {
-      const estimate = createFifteenPuzzlePatternDatabaseHeuristic(
-        database,
-      ).reset(Uint8Array.from(board));
+      const estimate = heuristic.reset(Uint8Array.from(board));
 
       expect(estimate).toBeLessThanOrEqual(optimalMoveCount ?? 0);
     },
