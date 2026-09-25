@@ -125,6 +125,52 @@ describe("useMinesweeperPlay", () => {
       });
     });
 
+    describe("地雷を1つ踏んでから残りの安全なマスをすべて開いた場合", () => {
+      const hiddenSafeCellIndices = Array.from(
+        { length: problem.board.rows * problem.board.columns },
+        (_, cellIndex) => cellIndex,
+      ).filter(
+        (cellIndex) =>
+          !problem.board.mineCellIndices.includes(cellIndex) &&
+          !initialRevealedCellIndices.includes(cellIndex),
+      );
+
+      beforeEach(() => {
+        act(() => hook.result.current.revealCell(hiddenMineCellIndex));
+        for (const cellIndex of hiddenSafeCellIndices) {
+          act(() => hook.result.current.revealCell(cellIndex));
+        }
+      });
+
+      test("最終盤面を見せる段階を経て結果表示へ進めること", () => {
+        const clearing = hook.result.current;
+
+        act(() => hook.result.current.completeClearAnimation());
+
+        expect(clearing.status).toBe("cleared");
+        expect(clearing.progress).toBe("clearing");
+        expect(hook.result.current.progress).toBe("result");
+      });
+
+      test("ミスを反映した評価を結果として返すこと", () => {
+        const { result, mineCount } = hook.result.current;
+
+        expect(result?.mistakeCount).toBe(1);
+        expect(result?.mineCount).toBe(mineCount);
+        expect(result?.score.breakdown.accuracy).toBe(45);
+        expect(result?.timeDeltaMs).toBe(
+          (result?.elapsedMs ?? 0) - (result?.speedFullScoreMs ?? 0),
+        );
+      });
+
+      test("リセットでプレイ中へ戻ること", () => {
+        act(() => hook.result.current.replay());
+
+        expect(hook.result.current.progress).toBe("playing");
+        expect(hook.result.current.result).toBeNull();
+      });
+    });
+
     test("別の問題で同じ難易度の異なる問題を始めること", () => {
       act(() => hook.result.current.startNewProblem());
 
