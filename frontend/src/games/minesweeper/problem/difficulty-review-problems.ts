@@ -1,8 +1,8 @@
-import type { MinesweeperDifficulty } from "../difficulty";
+import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import {
   MINESWEEPER_GENERATOR_VERSION,
   type MinesweeperProblemIdentity,
-} from "./problem";
+} from "@/games/minesweeper/problem/problem";
 
 /**
  * 難易度ごとの盤面範囲と推論の条件を人が遊んで比べるための問題群。

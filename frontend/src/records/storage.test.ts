@@ -1,9 +1,9 @@
-import type { PlayRecord } from "./play-record";
+import type { PlayRecord } from "@/records/play-record";
 import {
   appendPlayRecord,
   type PlayRecordStorage,
   readPlayRecords,
-} from "./storage";
+} from "@/records/storage";
 
 function createMemoryStorage(
   initialValue: string | null = null,

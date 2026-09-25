@@ -1,10 +1,10 @@
-import type { ProblemSeed } from "@/games/problem-seed";
 import {
   assertMinesweeperBoard,
   assertMinesweeperCellIndex,
   type MinesweeperBoard,
-} from "../puzzle/board";
-import { isMinesweeperMine } from "../puzzle/rules";
+} from "@/games/minesweeper/puzzle/board";
+import { isMinesweeperMine } from "@/games/minesweeper/puzzle/rules";
+import type { ProblemSeed } from "@/games/problem-seed";
 
 export const MINESWEEPER_GENERATOR_VERSION = "1";
 

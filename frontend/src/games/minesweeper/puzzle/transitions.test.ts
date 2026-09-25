@@ -1,10 +1,10 @@
-import type { MinesweeperBoard } from "./board";
-import type { MinesweeperPuzzleState } from "./state";
+import type { MinesweeperBoard } from "@/games/minesweeper/puzzle/board";
+import type { MinesweeperPuzzleState } from "@/games/minesweeper/puzzle/state";
 import {
   chordMinesweeperCell,
   revealMinesweeperCell,
   toggleMinesweeperFlag,
-} from "./transitions";
+} from "@/games/minesweeper/puzzle/transitions";
 
 describe("revealMinesweeperCell", () => {
   const board: MinesweeperBoard = {

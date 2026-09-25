@@ -1,11 +1,13 @@
+import {
+  type NanpureDifficulty,
+  parseNanpureDifficulty,
+} from "@/games/nanpure/difficulty";
+import type { NanpureProblemIdentity } from "@/games/nanpure/problem/problem";
+import { calculateNanpurePlayScore } from "@/games/nanpure/score";
+import type { NanpureSessionResult } from "@/games/nanpure/session/session";
 import type { PlayRecord } from "@/records/play-record";
 import { createPlayRecordId } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
-
-import { type NanpureDifficulty, parseNanpureDifficulty } from "./difficulty";
-import type { NanpureProblemIdentity } from "./problem/problem";
-import { calculateNanpurePlayScore } from "./score";
-import type { NanpureSessionResult } from "./session/session";
 
 const NANPURE_PLAY_RECORD_PAYLOAD_VERSION = 1;
 const NANPURE_GAME_ID = "nanpure";

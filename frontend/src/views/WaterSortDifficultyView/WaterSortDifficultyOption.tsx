@@ -18,7 +18,7 @@ export function WaterSortDifficultyOption({
       params={{ difficulty }}
       className="group block rounded-xl focus-visible:outline-none"
     >
-      <StartConditionOption label={label}>
+      <StartConditionOption label={label} density="compact">
         <WaterSortDifficultyPreview difficulty={difficulty} />
       </StartConditionOption>
     </Link>

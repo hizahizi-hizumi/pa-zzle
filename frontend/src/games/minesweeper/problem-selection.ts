@@ -1,13 +1,13 @@
 import { hashProblemSeed, type ProblemSeed } from "@/games/problem-seed";
-import type { MinesweeperDifficulty } from "./difficulty";
+import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import {
   type MinesweeperRestoredProblem,
   restoreMinesweeperProblemWithoutAnalysis,
-} from "./problem/generator";
+} from "@/games/minesweeper/problem/generator";
 import {
   listMinesweeperPoolEntries,
   toMinesweeperPoolIdentity,
-} from "./problem/problem-pool";
+} from "@/games/minesweeper/problem/problem-pool";
 
 /**
  * 難易度の問題集から seed で1問を選んで復元する。

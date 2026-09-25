@@ -1,7 +1,7 @@
 // @vitest-environment node
 
-import type { WaterSortProblem } from "../problem/problem";
-import type { WaterSortMove } from "../puzzle/state";
+import type { WaterSortProblem } from "@/games/water-sort/problem/problem";
+import type { WaterSortMove } from "@/games/water-sort/puzzle/state";
 import {
   applyWaterSortSessionMove,
   canUndoWaterSortSession,
@@ -9,7 +9,7 @@ import {
   getWaterSortSessionResult,
   restartWaterSortSession,
   undoWaterSortSession,
-} from "./session";
+} from "@/games/water-sort/session/session";
 
 const problem: WaterSortProblem = {
   initialState: [[0, 0, 0, 1], [1, 1, 1, 0], [], []],

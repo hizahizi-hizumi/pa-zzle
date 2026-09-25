@@ -1,12 +1,12 @@
 import type {
   MinesweeperDifficulty,
   MinesweeperDifficultyBoardCondition,
-} from "../difficulty";
+} from "@/games/minesweeper/difficulty";
 import {
   MINESWEEPER_GENERATOR_VERSION,
   type MinesweeperProblemIdentity,
-} from "./problem";
-import problemPoolJson from "./problem-pool.json";
+} from "@/games/minesweeper/problem/problem";
+import problemPoolJson from "@/games/minesweeper/problem/problem-pool.json";
 
 /**
  * 事前生成した問題集の1問。

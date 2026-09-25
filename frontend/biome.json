@@ -7,7 +7,8 @@
       "!dist",
       "!src/router.ts",
       "!src/components/ui",
-      "!src/games/minesweeper/problem/problem-pool.json"
+      "!src/games/minesweeper/problem/problem-pool.json",
+      "!src/games/water-sort/problem/problem-pool.json"
     ]
   },
   "formatter": {
@@ -38,14 +39,44 @@
         "noImportantStyles": "off"
       },
       "style": {
-        "noNonNullAssertion": "off"
+        "noNonNullAssertion": "off",
+        "noDefaultExport": "error"
       },
       "correctness": {
-        "noUnusedFunctionParameters": "off"
+        "noUnusedFunctionParameters": "off",
+        "noNestedComponentDefinitions": "error"
+      },
+      "nursery": {
+        "useReactFunctionComponentDefinition": {
+          "level": "error",
+          "options": {
+            "namedComponents": "functionDeclaration"
+          }
+        }
       }
     }
   },
   "overrides": [
+    {
+      "includes": ["src/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
     {
       "includes": ["src/pages/**/*.{ts,tsx}"],
       "linter": {
@@ -55,6 +86,10 @@
               "level": "error",
               "options": {
                 "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
                   {
                     "group": [
                       "@/components/**",
@@ -81,6 +116,10 @@
               "options": {
                 "patterns": [
                   {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
                     "group": ["@/pages/**"],
                     "message": "[dependency/views-boundary] View は画面合成境界であり pages へ逆依存しない。"
                   }
@@ -100,6 +139,10 @@
               "level": "error",
               "options": {
                 "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
                   {
                     "group": [
                       "@/games/*/**",
@@ -125,6 +168,10 @@
               "level": "error",
               "options": {
                 "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
                   {
                     "group": [
                       "@/app/**",
@@ -153,6 +200,10 @@
               "options": {
                 "patterns": [
                   {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
                     "group": ["@/records/**", "@/views/**", "@/pages/**"],
                     "message": "[dependency/legacy-components-boundary] 共有コンポーネントは記録・画面合成・pages へ逆依存しない。"
                   }
@@ -172,6 +223,10 @@
               "level": "error",
               "options": {
                 "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
                   {
                     "group": [
                       "@/app/**",
@@ -201,6 +256,10 @@
               "level": "error",
               "options": {
                 "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
                   {
                     "group": [
                       "@/components/**",
@@ -234,6 +293,10 @@
               "options": {
                 "patterns": [
                   {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
                     "group": [
                       "@/components/**",
                       "@/games/*/**",
@@ -263,6 +326,10 @@
               "options": {
                 "patterns": [
                   {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
                     "group": [
                       "@/components/**",
                       "@/games/*/**",
@@ -290,6 +357,10 @@
               "options": {
                 "patterns": [
                   {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
                     "group": [
                       "@/games/*/**",
                       "@/views/**",
@@ -308,7 +379,24 @@
       }
     },
     {
-      "includes": ["src/games/nanpure/**/*.{ts,tsx}"],
+      "includes": [
+        "src/pages/**/*.{ts,tsx}",
+        "vite*.config.ts",
+        "vitest.config.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noDefaultExport": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/nanpure/**/*.{ts,tsx}",
+        "src/games/nanpure/*.{ts,tsx}"
+      ],
       "linter": {
         "rules": {
           "style": {
@@ -316,6 +404,10 @@
               "level": "error",
               "options": {
                 "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
                   {
                     "group": [
                       "@/records/hooks/**",
@@ -338,7 +430,7 @@
       }
     },
     {
-      "includes": ["src/games/water-sort/**/*.{ts,tsx}"],
+      "includes": ["src/games/nanpure/puzzle/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
           "style": {
@@ -346,6 +438,188 @@
               "level": "error",
               "options": {
                 "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": ["@/games/water-sort/**"],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/nanpure/problem/**",
+                      "@/games/nanpure/session/**",
+                      "@/games/nanpure/play/**",
+                      "@/games/nanpure/ui/**"
+                    ],
+                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/nanpure/problem/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": ["@/games/water-sort/**"],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/nanpure/session/**",
+                      "@/games/nanpure/play/**",
+                      "@/games/nanpure/ui/**"
+                    ],
+                    "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/nanpure/session/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": ["@/games/water-sort/**"],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/nanpure/problem/generation/**",
+                      "@/games/nanpure/difficulty",
+                      "@/games/nanpure/score",
+                      "@/games/nanpure/play/**",
+                      "@/games/nanpure/ui/**",
+                      "@/games/nanpure/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/nanpure/play/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": ["@/games/water-sort/**"],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/nanpure/ui/**",
+                      "@/games/nanpure/problem/generation/**",
+                      "@/games/nanpure/play-record",
+                      "@/games/nanpure/diagnostics"
+                    ],
+                    "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/water-sort/**/*.{ts,tsx}",
+        "src/games/water-sort/*.{ts,tsx}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
                   {
                     "group": [
                       "@/records/hooks/**",
@@ -368,11 +642,208 @@
       }
     },
     {
+      "includes": ["src/games/water-sort/puzzle/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": ["@/games/nanpure/**"],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/water-sort/problem/**",
+                      "@/games/water-sort/session/**",
+                      "@/games/water-sort/play/**",
+                      "@/games/water-sort/ui/**"
+                    ],
+                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/water-sort/problem/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": ["@/games/nanpure/**"],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/water-sort/session/**",
+                      "@/games/water-sort/play/**",
+                      "@/games/water-sort/ui/**"
+                    ],
+                    "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/water-sort/session/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": ["@/games/nanpure/**"],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/water-sort/problem/generation/**",
+                      "@/games/water-sort/difficulty",
+                      "@/games/water-sort/score",
+                      "@/games/water-sort/play/**",
+                      "@/games/water-sort/ui/**",
+                      "@/games/water-sort/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/water-sort/play/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": ["@/games/nanpure/**"],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/water-sort/ui/**",
+                      "@/games/water-sort/problem/generation/**",
+                      "@/games/water-sort/play-record",
+                      "@/games/water-sort/diagnostics"
+                    ],
+                    "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/**/*.test.{ts,tsx,mjs}"],
       "linter": {
         "rules": {
           "style": {
-            "noRestrictedImports": "off"
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": ["bun", "bun:*"],
+                    "message": "[test-runtime/bun-import] テストは bun:test / Bun 固有モジュールへ依存しない。"
+                  }
+                ]
+              }
+            },
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": {
+                  "Bun": "テストは Bun グローバルへ依存しない。"
+                }
+              }
+            }
           }
         }
       }

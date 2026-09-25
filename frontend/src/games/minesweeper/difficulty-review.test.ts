@@ -3,8 +3,8 @@ import {
   assessMinesweeperDifficultyReviewProblems,
   formatMinesweeperProblemIdentitySearch,
   restoreMinesweeperProblemFromSearch,
-} from "./difficulty-review";
-import type { MinesweeperProblemIdentity } from "./problem/problem";
+} from "@/games/minesweeper/difficulty-review";
+import type { MinesweeperProblemIdentity } from "@/games/minesweeper/problem/problem";
 
 const { parseMinesweeperProblemIdentitySearch } = _private;
 

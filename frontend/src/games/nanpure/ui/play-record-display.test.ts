@@ -1,7 +1,6 @@
 import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
+import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
-
-import { nanpurePlayRecordDisplay } from "./play-record-display";
 
 const record = createNanpurePlayRecord({
   difficulty: "normal",

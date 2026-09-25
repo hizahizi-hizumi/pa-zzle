@@ -3,16 +3,16 @@ import {
   isInMinesweeperDifficultyBoardRange,
   type MinesweeperDifficulty,
   minesweeperDifficulties,
-} from "./difficulty";
+} from "@/games/minesweeper/difficulty";
 import {
   restoreMinesweeperProblem,
   restoreMinesweeperProblemWithoutAnalysis,
-} from "./problem/generator";
+} from "@/games/minesweeper/problem/generator";
 import {
   listMinesweeperPoolEntries,
   toMinesweeperPoolIdentity,
-} from "./problem/problem-pool";
-import { selectMinesweeperProblemForDifficulty } from "./problem-selection";
+} from "@/games/minesweeper/problem/problem-pool";
+import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
 
 const difficulties = minesweeperDifficulties.map(({ id }) => id);
 

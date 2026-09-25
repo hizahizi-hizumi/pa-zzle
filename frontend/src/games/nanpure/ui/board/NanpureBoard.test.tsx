@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { NanpureBoard as NanpureBoardState } from "@/games/nanpure/puzzle/board";
 import type { NanpureNotes } from "@/games/nanpure/session/session";
 
-import { NanpureBoard } from "./NanpureBoard";
+import { NanpureBoard } from "@/games/nanpure/ui/board/NanpureBoard";
 
 afterEach(cleanup);
 
