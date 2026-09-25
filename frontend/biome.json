@@ -421,7 +421,8 @@
                   {
                     "group": [
                       "@/games/minesweeper/**",
-                      "@/games/water-sort/**"
+                      "@/games/water-sort/**",
+                      "@/games/takuzu/**"
                     ],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   }
@@ -456,7 +457,7 @@
                     "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
                   },
                   {
-                    "group": ["@/games/water-sort/**"],
+                    "group": ["@/games/water-sort/**", "@/games/takuzu/**"],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
                   {
@@ -499,7 +500,7 @@
                     "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
                   },
                   {
-                    "group": ["@/games/water-sort/**"],
+                    "group": ["@/games/water-sort/**", "@/games/takuzu/**"],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
                   {
@@ -541,7 +542,7 @@
                     "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
                   },
                   {
-                    "group": ["@/games/water-sort/**"],
+                    "group": ["@/games/water-sort/**", "@/games/takuzu/**"],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
                   {
@@ -588,7 +589,7 @@
                     "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
                   },
                   {
-                    "group": ["@/games/water-sort/**"],
+                    "group": ["@/games/water-sort/**", "@/games/takuzu/**"],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
                   {
@@ -634,7 +635,11 @@
                     "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
                   },
                   {
-                    "group": ["@/games/minesweeper/**", "@/games/nanpure/**"],
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/takuzu/**"
+                    ],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   }
                 ]
@@ -664,7 +669,11 @@
                     "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
                   },
                   {
-                    "group": ["@/games/nanpure/**", "@/games/water-sort/**"],
+                    "group": [
+                      "@/games/nanpure/**",
+                      "@/games/water-sort/**",
+                      "@/games/takuzu/**"
+                    ],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   }
                 ]
@@ -698,7 +707,7 @@
                     "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
                   },
                   {
-                    "group": ["@/games/nanpure/**"],
+                    "group": ["@/games/nanpure/**", "@/games/takuzu/**"],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
                   {
@@ -741,7 +750,7 @@
                     "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
                   },
                   {
-                    "group": ["@/games/nanpure/**"],
+                    "group": ["@/games/nanpure/**", "@/games/takuzu/**"],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
                   {
@@ -783,7 +792,7 @@
                     "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
                   },
                   {
-                    "group": ["@/games/nanpure/**"],
+                    "group": ["@/games/nanpure/**", "@/games/takuzu/**"],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
                   {
@@ -830,7 +839,7 @@
                     "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
                   },
                   {
-                    "group": ["@/games/nanpure/**"],
+                    "group": ["@/games/nanpure/**", "@/games/takuzu/**"],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
                   {
@@ -839,6 +848,238 @@
                       "@/games/water-sort/problem/generation/**",
                       "@/games/water-sort/play-record",
                       "@/games/water-sort/diagnostics"
+                    ],
+                    "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/games/takuzu/**/*.{ts,tsx}",
+        "src/games/takuzu/*.{ts,tsx}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/takuzu/puzzle/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/takuzu/problem/**",
+                      "@/games/takuzu/session/**",
+                      "@/games/takuzu/play/**",
+                      "@/games/takuzu/ui/**"
+                    ],
+                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/takuzu/problem/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/takuzu/session/**",
+                      "@/games/takuzu/play/**",
+                      "@/games/takuzu/ui/**"
+                    ],
+                    "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/takuzu/session/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/takuzu/problem/generation/**",
+                      "@/games/takuzu/difficulty",
+                      "@/games/takuzu/score",
+                      "@/games/takuzu/play/**",
+                      "@/games/takuzu/ui/**",
+                      "@/games/takuzu/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/takuzu/play/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/takuzu/ui/**",
+                      "@/games/takuzu/problem/generation/**",
+                      "@/games/takuzu/play-record",
+                      "@/games/takuzu/diagnostics"
                     ],
                     "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
                   }
