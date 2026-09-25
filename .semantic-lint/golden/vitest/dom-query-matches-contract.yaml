@@ -1,0 +1,24 @@
+# 期待finding: 検証する契約に合わないDOMクエリを使っている文。
+# 正本: .claude/rules/vitest.md（DOMクエリは契約に合わせて選び、getByRoleを機械的な既定値にしない）。
+# 実repoでは判断が割れる例（NanpureBoard.test.tsxのセルのaccessible name、data属性のquerySelector）を含むファイルを除き、違反例はfixtureで補う。
+version: 1
+rule: vitest/dom-query-matches-contract
+baseCommit: 28d17e476a9dbdc39c0f9cecad46ee4d0ad2114a
+files:
+  - path: .semantic-lint/golden/vitest/fixtures/CouponForm.test.tsx
+    blob: 58794316723b7157394fdb5b9df738432f47a17e
+    findings:
+      - lines: [17, 17]
+      - lines: [23, 23]
+  - path: frontend/src/components/InternalDiagnosticsDialog.test.tsx
+    blob: e804c9eb046455ba59c86b4764a020d9b3b4a980
+    findings: []
+  - path: frontend/src/games/nanpure/ui/NanpureDiagnostics.test.tsx
+    blob: f2981e03512c0c4363fc2c5c2dfcb4bf4472e29a
+    findings: []
+  - path: frontend/src/records/storage.test.ts
+    blob: 68ea2d3c5365686e217fba4a263a8874601556ae
+    findings: []
+  - path: frontend/src/games/nanpure/puzzle/board.test.ts
+    blob: 8cb81913ab37f795f10d98eb6b1be73714085305
+    findings: []

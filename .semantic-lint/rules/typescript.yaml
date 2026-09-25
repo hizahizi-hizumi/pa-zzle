@@ -1,0 +1,33 @@
+# 人間向け規約の正本: .claude/rules/typescript.md（ロジックとUI）
+# 評価段階の視覚表現をロジック側に置かない規約（.claude/rules/game-structure.md のプレイ評価）も同じ観点で判定する。
+# ロジックの判定なので、UI（ui/）とテストを対象にしない。
+version: 1
+id: typescript
+
+paths:
+  - frontend/src/games/**/*.ts
+  - frontend/src/records/**/*.ts
+exclude:
+  - frontend/src/components/ui/**
+  - "**/ui/**"
+  - "**/*.test.ts"
+
+rules:
+  - id: logic-returns-meaningful-values
+    title: ロジックは意味を保った値を返し、表示表現を混ぜない
+    unit: file
+    # golden benchmark (3 runs) のleave-one-file-outで全foldが選んだthreshold。0.50〜0.95で厳密P/R 1.00 / 1.00（違反例はfixtureだけ）。
+    violationThreshold: 0.60
+    instruction: |
+      Logic decides what holds and returns values that keep their meaning; how
+      to show them to users belongs to UI. Judge by what the code decides, not
+      by whether it is a string.
+      Violation: logic returns or stores a user-facing presentation instead of
+      the meaningful value, such as a formatted value like "92点" or "3分12秒",
+      a sentence or label shown to users, or the color, wording, or effect of
+      an evaluation level.
+      Not a violation: meaningful values such as numbers, identifiers, union
+      members, booleans, and structured facts; strings that are identifiers,
+      keys, or serialized data; error messages for developers; a difficulty
+      label and its classification policy defined in difficulty.ts, which own
+      them.

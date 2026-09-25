@@ -1,11 +1,16 @@
 # 実repoのテストコードに対する期待finding。
 # findingsは規約違反として指摘されるべき行範囲。空配列は「指摘なしが正解」のファイル。
 # ラベル粒度: beforeEach内で検証対象の操作を実行しているstatement。
-# 基準コミット時点のmainとその履歴には該当する違反が存在しないため、指摘なしファイルだけで構成する。
+# 基準コミット時点のmainとその履歴には該当する違反が存在しないため、違反例はfixtures/の最小fixtureで補う。
 version: 1
 rule: vitest/before-each-arrange-only
 baseCommit: 0d9813dee95ef8714301aa1d343b59d7462abede
 files:
+  - path: .semantic-lint/golden/vitest/fixtures/submit-form.test.ts
+    blob: d8139a3e39190bff865602f14348754c4d4097e8
+    note: submitFormはbeforeEachで検証対象の操作まで実行している。resetFormはbeforeEachで初期状態だけを作る
+    findings:
+      - lines: [17, 17]
   - path: frontend/src/components/InternalDiagnosticsDialog.test.tsx
     blob: e804c9eb046455ba59c86b4764a020d9b3b4a980
     findings: []

@@ -42,7 +42,7 @@ export function summarizeRequestPlan(options: {
     plan.files.map(
       (file) =>
         countLines(file.source) *
-        rules.filter((rule) => matchesPath(rule.paths, file.path)).length,
+        rules.filter((rule) => matchesPath(rule, file.path)).length,
     ),
   );
 

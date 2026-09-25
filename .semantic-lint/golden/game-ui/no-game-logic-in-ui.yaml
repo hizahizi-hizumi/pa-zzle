@@ -1,0 +1,29 @@
+# 期待finding: ゲームのロジック（評価段階の決定、session更新、採点規則）を実装しているトップレベルの文。
+# 正本: .claude/rules/game-structure.md（ui/ の責務、プレイ評価、依存方向）。実repoに違反が見つからないため、違反例はfixtures/の最小fixtureで補う。
+version: 1
+rule: game-ui/no-game-logic-in-ui
+baseCommit: 28d17e476a9dbdc39c0f9cecad46ee4d0ad2114a
+files:
+  - path: .semantic-lint/golden/game-ui/fixtures/games/demo/ui/DemoResultScreen.tsx
+    blob: b6929e000c59a5bccbbcd6f078d6dce3b0e6898a
+    findings:
+      - lines: [8, 25]
+  - path: .semantic-lint/golden/game-ui/fixtures/games/demo/ui/DemoBoard.tsx
+    blob: 530ffa8a611c601b6fe43234553e7e8ae8a9359e
+    findings:
+      - lines: [8, 37]
+  - path: frontend/src/games/nanpure/ui/result/NanpureResultScreen.tsx
+    blob: e77cf2164a3d5816a977e040610bdc640909445e
+    findings: []
+  - path: frontend/src/games/nanpure/ui/play-record-display.ts
+    blob: 42cc51c50f5b694f8335fff5810f8a5707bc6c30
+    findings: []
+  - path: frontend/src/games/water-sort/ui/format-performance-delta.ts
+    blob: 68b6e58e45d9bf4f02e8ca5b118b5b5b9964db16
+    findings: []
+  - path: frontend/src/games/water-sort/ui/WaterSortPlay/UndoButton.tsx
+    blob: d66ac3cee6e963033e32a97e2dc21ee3894fd1d3
+    findings: []
+  - path: frontend/src/games/nanpure/ui/board/NanpureBoard.tsx
+    blob: 18e91bf69368f3abe77abeb633d644e2649c57d7
+    findings: []

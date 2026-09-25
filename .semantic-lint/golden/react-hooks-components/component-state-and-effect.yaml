@@ -1,0 +1,31 @@
+# 期待finding: 導出できる値のstate宣言と、それを同期するuseEffectの文。
+# 正本: .claude/rules/react-hooks.md（state / effect）。実repoに違反が見つからないため、違反例はfixtures/の最小fixtureで補う。
+version: 1
+rule: react-hooks-components/component-state-and-effect
+baseCommit: 28d17e476a9dbdc39c0f9cecad46ee4d0ad2114a
+files:
+  - path: .semantic-lint/golden/react-hooks-components/fixtures/ScoreSummary.tsx
+    blob: 65f79ba4d7b00bf1f9dd3bee571ffdb78409e205
+    findings:
+      - lines: [8, 8]
+      - lines: [10, 12]
+  - path: .semantic-lint/golden/react-hooks-components/fixtures/PlayerNameField.tsx
+    blob: ba3e98d554f7735f932c8904603d3e4213dac85a
+    findings:
+      - lines: [9, 9]
+      - lines: [11, 13]
+  - path: frontend/src/components/GameResultMark.tsx
+    blob: cca165f608e49135822b8978d79fcbc890178001
+    findings: []
+  - path: frontend/src/components/GameResultScoreCard.tsx
+    blob: c3728170f902cbaf27085147edc9da15772fd6cc
+    findings: []
+  - path: frontend/src/components/GameSelectionGallery.tsx
+    blob: ea8c60cdc9ab1374f5f0b94c8ea1303b734cab46
+    findings: []
+  - path: frontend/src/games/nanpure/ui/board/clear/NanpureClearAnimation.tsx
+    blob: 912f052c0c6b9c04b01d6fa93d95c87b60c7f052
+    findings: []
+  - path: frontend/src/components/InternalDiagnosticsDialog.tsx
+    blob: c39d994d3e36d031ee08614debf5c5d6d99a1fe5
+    findings: []

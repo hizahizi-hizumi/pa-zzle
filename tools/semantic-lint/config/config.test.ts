@@ -8,7 +8,6 @@ describe("compileConfig", () => {
     const value = YAML.parse(`
 version: 1
 rulesDir: .semantic-lint/rules
-casesDir: .semantic-lint/cases
 excludePaths:
   - "**/.env*"
 execution:
@@ -25,7 +24,6 @@ provider:
     expect(compileConfig(value)).toEqual({
       version: 1,
       rulesDir: ".semantic-lint/rules",
-      casesDir: ".semantic-lint/cases",
       goldenDir: ".semantic-lint/golden",
       excludePaths: ["**/.env*"],
       execution: {
@@ -45,7 +43,6 @@ provider:
       compileConfig({
         version: 1,
         rulesDir: ".semantic-lint/rules",
-        casesDir: ".semantic-lint/cases",
         excludePaths: [],
         execution: {
           concurrency: 0,
@@ -64,7 +61,6 @@ provider:
       compileConfig({
         version: 1,
         rulesDir: ".semantic-lint/rules",
-        casesDir: ".semantic-lint/cases",
         excludePaths: [],
         execution: {
           concurrency: 8,

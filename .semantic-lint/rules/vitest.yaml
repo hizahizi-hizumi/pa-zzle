@@ -81,3 +81,126 @@ rules:
       Not a violation: 時 inside another word such as 時間, 時計, 時刻, 時点,
       or 同時; a condition written without 場合 or 時, such as with とき or
       なら, which is outside this rule.
+
+  - id: test-title-describes-behavior
+    title: テスト名は具体的な期待動作を散文で書き、識別子は実際の表記を保つ
+    unit: test-title
+    # golden benchmark (3 runs) のleave-one-file-outで全foldが選んだthreshold。
+    # 実repoの違反なしテスト名に誤指摘はなく包含・厳密P 1.00、R 0.50（識別子の言い換えと機械識別子の言い換えのfixtureを取りこぼす）。
+    violationThreshold: 0.60
+    instruction: |
+      A test case name must be Japanese prose that states a concrete expected
+      behavior, so that a reader can tell what is expected and, for test.each,
+      which case failed. Identifiers keep their code notation.
+      Violation: the name is not prose, such as a bare identifier, a code
+      fragment, or a label like 正常系 or ケース1; the name is too vague to
+      tell the expected behavior, such as 正しく動くこと or 期待どおりであること;
+      a test.each name does not describe the condition or case content, so a
+      failing case cannot be told apart; a helper, variable, or parameter that
+      the test code refers to is paraphrased in prose instead of written as
+      its identifier; a machine identifier or literal that the test verifies,
+      such as a CLI option, enum value, ID, or path, is paraphrased instead of
+      kept as written.
+      Not a violation: describing domain concepts in Japanese prose even when
+      the code models them with identifiers; a name that includes the actual
+      notation of values; whether the name ends with こと or contains 場合 or
+      時, which other rules check.
+
+  - id: describe-title
+    title: describeの名前は条件か対象の識別子で、モジュール名を繰り返さない
+    unit: test-group-title
+    # golden benchmark (3 runs) のleave-one-file-outで全foldが選んだthreshold。厳密P 1.00 / R 0.43。
+    # モジュール名と同名のコンポーネント・フックのdescribeをモジュール名の繰り返しと判定しない（ラベル上は違反）。
+    # ファイル名とモジュール名の対応をinstructionに明記すると誤指摘が増えたため（P 0.80）、この文面にする。
+    violationThreshold: 0.60
+    instruction: |
+      A describe name must be either a condition written as <condition>の場合,
+      or the name of the function, method, class, or component under test
+      written exactly as its code identifier. The test file itself represents
+      the module under test, so a describe must not merely repeat the module
+      name.
+      Violation: a describe that groups cases by a condition but is not
+      written as <condition>の場合; a describe for a target whose name
+      paraphrases or translates the target instead of using its identifier,
+      such as 合計 for sum; a describe whose name is the module name of the
+      test file (the file name without .test and its extension, including a
+      component or hook named after the module, such as useFoo in
+      use-foo.test.ts or Foo in Foo.test.tsx).
+      Not a violation: a condition written as <condition>の場合, including a
+      describe.each name with a placeholder; an identifier of a function,
+      method, class, type, or component defined in the module that differs
+      from the module name.
+
+  - id: act-assert-separation
+    title: ActとAssertを分離し、テスト対象の実行をexpectに埋め込まない
+    unit: test
+    # goldenでは誤指摘がないが、repository全体の実行で正しく分離したtest（trend-value-axis.test.tsのActとAssert）を
+    # 指摘したため、精度を確かめるまでinfoにする。
+    severity: info
+    # golden benchmark (3 runs) のleave-one-file-outで選ばれたthresholdは0.60〜0.75。厳密P 1.00 / R 0.83（Assertの後に再びActを行うtestを取りこぼす）。
+    violationThreshold: 0.60
+    instruction: |
+      A test must keep Arrange, Act, and Assert as clearly separated phases.
+      Act runs the code under test explicitly and stores its return value or
+      observed result in a variable, and Assert verifies it afterwards.
+      Violation: expect(...) directly wraps a call to the code under test,
+      such as expect(parse(input)).toBe(1); Act and Assert alternate, such as
+      running the code under test again after an assertion.
+      Not a violation: expect wrapping a query or helper that only reads an
+      observed result, such as screen.getByRole(...), a spy, or a property of
+      the stored result; expect(act).toThrow() where act is a function created
+      in Act; awaiting a user event and then asserting once; Arrange inside
+      the test body, which another rule checks.
+
+  - id: dom-query-matches-contract
+    title: DOMクエリは検証する契約に合わせて選ぶ
+    unit: test
+    # golden benchmark (3 runs) のleave-one-file-outで選ばれたthresholdの平均0.48（0.45〜0.60）。厳密P 1.00 / R 0.50
+    # （labelとの関連が契約のフォーム部品をgetByTextで辿る例を取りこぼす）。
+    violationThreshold: 0.50
+    instruction: |
+      DOM queries must be chosen to match the contract the test verifies;
+      getByRole must not be a mechanical default. Use getByRole when the
+      element's role and its name identify it as the contract, getByText when
+      the displayed text is the contract, and getByLabelText when the
+      association between a label and a form control is the contract.
+      Violation: getByRole, queryByRole, findByRole, or their All variants
+      find an element whose role semantics the test does not rely on, only to
+      reach displayed text or content, such as getByRole("button", { name:
+      "5" }) to find a digit shown on screen; a query that does not match the
+      contract, such as getByText for a form control identified by its label.
+      Not a violation: getByRole for an element the user operates or
+      identifies by its role, such as a button to click, a dialog, or a
+      heading; tests without DOM queries.
+
+  - id: immutable-data-as-const
+    title: 不変のテストデータはbeforeEachで作り直さずdescribeのconstにする
+    unit: setup
+    # golden benchmark (3 runs) のleave-one-file-outで全foldが選んだthreshold。厳密P/R 1.00 / 1.00（違反例はfixtureだけ）。
+    violationThreshold: 0.60
+    instruction: |
+      Immutable input values, expected values, and test data must be defined
+      as const in the describe scope, not rebuilt in beforeEach or beforeAll.
+      Violation: the hook creates or assigns values that neither the tests
+      nor the code under test modify, such as fixed inputs, expected results,
+      or plain data objects, only to share them with tests.
+      Not a violation: preparing state that must be recreated for each test,
+      such as mutable objects, mocks, spies, timers, storage, or rendering.
+
+  - id: per-test-state-in-before-each
+    title: テストごとに作り直す状態はdescribeのconstで共有せずbeforeEachで準備する
+    unit: test-group
+    # golden benchmark (3 runs) のleave-one-file-outで全foldが選んだthreshold。厳密P/R 1.00 / 1.00（違反例はfixtureだけ）。
+    violationThreshold: 0.60
+    instruction: |
+      State, mocks, spies, and rendering that must be recreated for each test
+      must be prepared in beforeEach, not shared as a const in the describe
+      scope. Judge only declarations made directly in this describe's
+      callback, not those in nested describes, tests, or hooks.
+      Violation: such a declaration holds a value shared by several tests
+      that must be recreated per test, such as a mutable object that the
+      tests or the code under test change, a mock or spy function, or a
+      rendered result.
+      Not a violation: immutable inputs, expected values, and test data;
+      functions and helpers; a let declared in the describe and assigned in
+      beforeEach; a describe without such declarations.

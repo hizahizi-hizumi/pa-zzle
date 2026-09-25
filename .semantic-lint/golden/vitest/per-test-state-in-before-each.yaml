@@ -1,0 +1,34 @@
+# 期待finding: テストごとに作り直すべき状態・モックをdescribeスコープのconstで共有している宣言文。
+# 正本: .claude/rules/vitest.md（テストごとに作り直す状態・モック・スパイ・描画はbeforeEachで準備する）。
+# 実repoに違反がないため、違反例はfixtures/の最小fixtureで補う。
+version: 1
+rule: vitest/per-test-state-in-before-each
+baseCommit: 28d17e476a9dbdc39c0f9cecad46ee4d0ad2114a
+files:
+  - path: .semantic-lint/golden/vitest/fixtures/cart.test.ts
+    blob: 017d681d935ed2bbf1478bcd3c2887890291b950
+    findings:
+      - lines: [13, 13]
+      - lines: [14, 14]
+  - path: .semantic-lint/golden/vitest/fixtures/stopwatch.test.ts
+    blob: 4335987086f6bdb8e80b0dcddf5e16fd23d8bc1c
+    findings:
+      - lines: [6, 6]
+  - path: frontend/src/games/nanpure/play/use-nanpure-play.test.ts
+    blob: 8940bae1c9ebf277de52a209e20eff468de55930
+    findings: []
+  - path: frontend/src/components/InternalDiagnosticsDialog.test.tsx
+    blob: e804c9eb046455ba59c86b4764a020d9b3b4a980
+    findings: []
+  - path: .semantic-lint/golden/vitest/fixtures/CouponForm.test.tsx
+    blob: 58794316723b7157394fdb5b9df738432f47a17e
+    findings: []
+  - path: frontend/src/games/nanpure/puzzle/board.test.ts
+    blob: 8cb81913ab37f795f10d98eb6b1be73714085305
+    findings: []
+  - path: frontend/src/games/nanpure/puzzle/rules.test.ts
+    blob: c973816d3d829e0ac1c8a498570866be24eca614
+    findings: []
+  - path: frontend/src/games/nanpure/ui/NanpureDiagnostics.test.tsx
+    blob: f2981e03512c0c4363fc2c5c2dfcb4bf4472e29a
+    findings: []

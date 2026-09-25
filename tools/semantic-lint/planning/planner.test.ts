@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import type { PlannedUnit, Rule, SourceDocument } from "../domain/model.ts";
 import { sampleRule, testExtractor } from "../testing/fixtures.ts";
-import { buildEvaluationPlan } from "./planner.ts";
+import { buildEvaluationPlan, bunGlobPathMatcher } from "./planner.ts";
 
 const extractor = await testExtractor();
 
@@ -206,6 +206,39 @@ describe("buildEvaluationPlan", () => {
         report: { startLine: 5, startColumn: 11, endLine: 5, endColumn: 16 },
         parts: 0,
       },
+    ]);
+  });
+});
+
+describe("bunGlobPathMatcher", () => {
+  const rule = {
+    paths: ["frontend/src/**/*.tsx"],
+    exclude: ["frontend/src/components/ui/**"],
+  };
+
+  test.each([
+    ["pathsに一致しexcludeに一致しないpath", "frontend/src/views/HomeView.tsx", true],
+    ["excludeに一致するpath", "frontend/src/components/ui/button.tsx", false],
+    ["pathsに一致しないpath", "frontend/src/games/score.ts", false],
+  ])("%sの対象判定を%sにする", (_, path, expected) => {
+    const result = bunGlobPathMatcher(rule, path);
+
+    expect(result).toBe(expected);
+  });
+
+  test("excludeに一致するfileのtaskを作らない", () => {
+    const plan = buildEvaluationPlan({
+      documents: [
+        { path: "frontend/src/views/HomeView.tsx", source: "" },
+        { path: "frontend/src/components/ui/button.tsx", source: "" },
+      ],
+      rules: [sampleRule({ id: "react/sample", ...rule })],
+      extractor,
+      matchesPath: bunGlobPathMatcher,
+    });
+
+    expect(plan.files.map((file) => file.path)).toEqual([
+      "frontend/src/views/HomeView.tsx",
     ]);
   });
 });

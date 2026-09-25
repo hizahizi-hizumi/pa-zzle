@@ -1,0 +1,27 @@
+# 期待finding: Viewの中でゲーム・ドメインの計算や保存・評価の規則を実装している文。
+# 正本: .claude/rules/views.md（所有しないもの）。実repoに違反が見つからないため、違反例はfixtures/の最小fixtureで補う。
+version: 1
+rule: views/no-domain-logic-in-view
+baseCommit: 28d17e476a9dbdc39c0f9cecad46ee4d0ad2114a
+files:
+  - path: .semantic-lint/golden/views/fixtures/views/DemoPlayView.tsx
+    blob: b5222c03f4f2c7e505f1a63297abea8449ad479b
+    findings:
+      - lines: [9, 12]
+      - lines: [13, 15]
+      - lines: [17, 21]
+  - path: frontend/src/views/NanpurePlayView/PlayableNanpure.tsx
+    blob: 88fa3ea5d6f1c055c386c93d721021bce3e932c5
+    findings: []
+  - path: frontend/src/views/RecordedProblemReplayView.tsx
+    blob: cd5847600b9252c2f2b982eba2490f64375b77e2
+    findings: []
+  - path: frontend/src/views/NanpurePlayView.tsx
+    blob: eb7205c3fdcac08853f8297acb8fb9aee88583a9
+    findings: []
+  - path: frontend/src/views/PlayRecordsView.tsx
+    blob: 0b84102571558575ac083f5f1a4ea5c97916f4a8
+    findings: []
+  - path: frontend/src/views/WaterSortDifficultyView.tsx
+    blob: 3a07de36ea3c3843db8633ea9338ffad754a8f1d
+    findings: []

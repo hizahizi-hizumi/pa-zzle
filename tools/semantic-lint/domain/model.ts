@@ -39,6 +39,8 @@ export type Rule = {
   violationThreshold: number;
   unit: UnitName;
   paths: string[];
+  /** `paths` に一致しても対象にしないpathのglob。rulesetの `exclude` をruleへ展開したもの。 */
+  exclude: string[];
   /** 何を違反とみなし、何は違反ではないかを述べる判定基準。 */
   instruction: string;
 };

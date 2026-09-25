@@ -3,7 +3,6 @@ version: 1
 rulesDir: .semantic-lint/rules
 # 評価専用のruleset。bench / doctorだけが読み、checkでは実行しない。
 evalRulesDir: .semantic-lint/eval-rules
-casesDir: .semantic-lint/cases
 goldenDir: .semantic-lint/golden
 
 excludePaths:
@@ -22,5 +21,7 @@ execution:
 
 provider:
   kind: typesafe
-  model: jev-latest
+  # 別名 (jev-latest) ではなく版で固定する。判定cacheのkeyとruleのthresholdはこの版を前提にするため、
+  # 上げるときはbenchで全ruleを測り直し、必要ならthresholdを再校正する。
+  model: jev-1.13.0
   apiKeyEnv: TYPESAFE_API_KEY

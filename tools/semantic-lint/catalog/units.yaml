@@ -52,6 +52,33 @@ units:
       - unit: hook
         scope: inner
 
+  # コメントの意味は周囲のコードとの関係で決まるため、同じscope以下のunitを文脈にする。
+  comment:
+    level: syntax
+    description: コメント（行コメント・ブロックコメント。文書コメントは含めない）
+    report: comment
+    context: &comment-context
+      - unit: test
+        scope: inner
+      - unit: test-group
+        scope: inner
+      - unit: setup
+        scope: inner
+      - unit: teardown
+        scope: inner
+      - unit: function
+        scope: inner
+      - unit: component
+        scope: inner
+      - unit: hook
+        scope: inner
+
+  doc-comment:
+    level: syntax
+    description: 文書コメント（/** */ で始まるJSDoc形式のコメント）
+    report: comment
+    context: *comment-context
+
   test:
     level: framework
     description: 1つのテストケース（test / it の呼び出し。test.each を含む）
@@ -67,6 +94,11 @@ units:
   test-group:
     level: framework
     description: テストのまとまり（describe の呼び出し。describe.each を含む）
+
+  test-group-title:
+    level: framework
+    description: テストのまとまりの名前（describe の第1引数の文字列）
+    report: title
 
   setup:
     level: framework

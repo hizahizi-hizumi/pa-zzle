@@ -1,0 +1,30 @@
+# 人間向け規約の正本: .claude/rules/react-hooks.md（state / effect）
+# カスタムフックを判定する。コンポーネントは同じ判定基準を react-hooks-components ruleset で判定する。
+version: 1
+id: react-hooks
+
+paths:
+  - frontend/src/**/*.ts
+  - frontend/src/**/*.tsx
+exclude:
+  - frontend/src/components/ui/**
+
+rules:
+  - id: hook-state-and-effect
+    title: カスタムフックで導出できる値をstateにせず、effectはReact外部との同期に使う
+    unit: hook
+    # golden benchmark (3 runs) のleave-one-file-outで選ばれたthresholdの平均0.56（0.55〜0.60）。
+    # 包含P/R 1.00 / 1.00、厳密P 0.50（違反のフック内で関連するstate宣言や戻り値の文も指摘する）。
+    violationThreshold: 0.55
+    instruction: |
+      State holds only values that cannot be derived during render, and
+      useEffect is only for synchronizing with systems outside React.
+      Violation: a state that holds a value computable during render from
+      props or other state; copying a prop into state and keeping it in sync
+      with useEffect; a useEffect whose work stays within props, state, and
+      render, such as computing or setting derived state; a useEffect that
+      watches state changed by a user action to run that action's work,
+      which belongs in the event handler.
+      Not a violation: a prop used only as the explicit initial value of
+      state; useEffect that connects to browser APIs, timers, subscriptions,
+      storage, animation, or the document.

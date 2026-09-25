@@ -1,0 +1,29 @@
+# 期待finding: CSSクラスや具体的なスタイル値を公開APIにしているコンポーネント全体。
+# 正本: .claude/rules/component-styling.md。components/ui（shadcn/ui）は正本とrulesetで適用除外。
+version: 1
+rule: component-styling/appearance-api
+baseCommit: 28d17e476a9dbdc39c0f9cecad46ee4d0ad2114a
+files:
+  - path: .semantic-lint/golden/component-styling/fixtures/ScoreBadge.tsx
+    blob: 96b12a02b8a837a3cc2415ae63169c717124d044
+    findings:
+      - lines: [7, 13]
+  - path: .semantic-lint/golden/component-styling/fixtures/ResultTag.tsx
+    blob: 7d669dcace570c60a72520bd19d21a6631f89d11
+    findings:
+      - lines: [6, 8]
+  - path: frontend/src/components/StartConditionOption.tsx
+    blob: 556a1d072e6799a7021c881fb445b873d3ed2381
+    findings: []
+  - path: frontend/src/components/GameResultSurface.tsx
+    blob: dd60981af0b55b3c42f13e92ff03407624202430
+    findings: []
+  - path: frontend/src/components/GameResultMark.tsx
+    blob: cca165f608e49135822b8978d79fcbc890178001
+    findings: []
+  - path: frontend/src/games/water-sort/ui/WaterSortPlay/UndoButton.tsx
+    blob: d66ac3cee6e963033e32a97e2dc21ee3894fd1d3
+    findings: []
+  - path: frontend/src/records/ui/PlayRecordsScreen/PlayRecordRow.tsx
+    blob: eeecef2ab6b59cf41e0060d4e0016dff9bab6430
+    findings: []

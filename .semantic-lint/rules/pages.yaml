@@ -1,0 +1,24 @@
+# 人間向け規約の正本: .claude/rules/pages.md
+version: 1
+id: pages
+
+paths:
+  - frontend/src/pages/**/_*.tsx
+
+rules:
+  - id: router-files-connect-only
+    title: ルーターの特殊ファイルにはルーターとの接続に必要な処理だけを置く
+    unit: file
+    # golden benchmark (3 runs) のleave-one-file-outで全foldが選んだthreshold。包含P/R 1.00 / 1.00。
+    # 違反の関数に加えて関係するimport文も指摘するため、厳密P 0.42。
+    violationThreshold: 0.60
+    instruction: |
+      Special files and exports that the router requires, such as _app.tsx
+      or _404.tsx, must contain only what is needed to connect with the
+      router.
+      Violation: the file implements screen content, domain logic, or other
+      processing that is not needed to connect with the router, such as
+      fetching or computing display data, managing screen state, or defining
+      components beyond the export the router requires.
+      Not a violation: rendering the router outlet inside the application
+      shell; passing router state that the shell needs; re-exporting a View.

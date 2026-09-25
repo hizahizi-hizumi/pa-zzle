@@ -1,0 +1,42 @@
+# 期待finding: 違反として指摘されるべきテスト名の文字列の位置（lines と columns。columnsは両端を含む列）。
+# 正本: .claude/rules/vitest.md のテストケース命名規則（具体的な期待動作の散文、識別子のコード表記、機械識別子の表記、test.eachのケース名）。
+# 実repoに違反が見つからないため、違反例はfixtures/の最小fixtureで補う。「こと」の終わりや「場合」「時」は別のruleで扱うため対象にしない。
+version: 1
+rule: vitest/test-title-describes-behavior
+baseCommit: 28d17e476a9dbdc39c0f9cecad46ee4d0ad2114a
+files:
+  - path: .semantic-lint/golden/vitest/fixtures/cart.test.ts
+    blob: 017d681d935ed2bbf1478bcd3c2887890291b950
+    findings:
+      - lines: [22, 22]
+        columns: [8, 23]
+      - lines: [41, 41]
+        columns: [8, 16]
+      - lines: [45, 45]
+        columns: [25, 32]
+      - lines: [65, 65]
+        columns: [8, 26]
+  - path: .semantic-lint/golden/vitest/fixtures/CouponForm.test.tsx
+    blob: 58794316723b7157394fdb5b9df738432f47a17e
+    findings: []
+  - path: .semantic-lint/golden/vitest/fixtures/stopwatch.test.ts
+    blob: 4335987086f6bdb8e80b0dcddf5e16fd23d8bc1c
+    findings: []
+  - path: frontend/src/games/nanpure/puzzle/board.test.ts
+    blob: 8cb81913ab37f795f10d98eb6b1be73714085305
+    findings: []
+  - path: frontend/src/games/nanpure/puzzle/rules.test.ts
+    blob: c973816d3d829e0ac1c8a498570866be24eca614
+    findings: []
+  - path: frontend/src/components/InternalDiagnosticsDialog.test.tsx
+    blob: e804c9eb046455ba59c86b4764a020d9b3b4a980
+    findings: []
+  - path: frontend/src/games/nanpure/ui/board/NanpureBoard.test.tsx
+    blob: 55d2fbc29c648896890a8b8c25974dbe651c1005
+    findings: []
+  - path: frontend/src/games/nanpure/play/use-nanpure-play.test.ts
+    blob: 8940bae1c9ebf277de52a209e20eff468de55930
+    findings: []
+  - path: frontend/src/records/storage.test.ts
+    blob: 68ea2d3c5365686e217fba4a263a8874601556ae
+    findings: []

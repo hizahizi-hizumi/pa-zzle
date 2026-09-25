@@ -1,0 +1,40 @@
+# 期待finding: 標準位置の責務に属さない処理・情報を持つトップレベルの文。
+# 正本: .claude/rules/game-structure.md（原則必須の責務・問題契約・難易度・プレイ評価）。実repoに違反が見つからないため、違反例はfixtures/の最小fixtureで補う。
+# water-sort/difficulty.ts（生成条件のprofileを持つ）は難易度の分類方針に含まれるか判断が割れるため対象にしない。
+version: 1
+rule: game-structure/position-responsibility
+baseCommit: 28d17e476a9dbdc39c0f9cecad46ee4d0ad2114a
+files:
+  - path: .semantic-lint/golden/game-structure/fixtures/games/demo/session/session.ts
+    blob: b5aa1419e6c9daf0631156c5f52619c9d953117b
+    findings:
+      - lines: [8, 13]
+      - lines: [19, 32]
+  - path: .semantic-lint/golden/game-structure/fixtures/games/demo/problem/problem.ts
+    blob: 4650f46cac8cfa5895780e8dc9ad7ff6f03df56d
+    findings:
+      - lines: [3, 8]
+  - path: frontend/src/games/nanpure/problem/problem.ts
+    blob: 335c3f100c66e86ed10b693eed351b9da7885c7d
+    findings: []
+  - path: frontend/src/games/water-sort/problem/problem.ts
+    blob: c4a1fb1f90cb0428fb70a726750e763ad6ae3920
+    findings: []
+  - path: frontend/src/games/water-sort/session/session.ts
+    blob: 0eb1c2fe681376cdee0fa21fa068ce151e4cc385
+    findings: []
+  - path: frontend/src/games/nanpure/difficulty.ts
+    blob: b9162adc0ed30dbcb94e29e0109fc563733d17ea
+    findings: []
+  - path: frontend/src/games/nanpure/problem/difficulty-analysis.ts
+    blob: e792d015e0d24138cf579ed5827b4f5a3762f0f7
+    findings: []
+  - path: frontend/src/games/nanpure/problem-selection.ts
+    blob: 508f9cf7fa158bc5218ceabbaff3700fe73ca108
+    findings: []
+  - path: frontend/src/games/water-sort/problem-selection.ts
+    blob: daf194f9bc7cabbcc60fd35aca92ff3fdaa6937d
+    findings: []
+  - path: frontend/src/games/water-sort/puzzle/transitions.ts
+    blob: 795b77662a7b7123455f4968073876291efa6773
+    findings: []

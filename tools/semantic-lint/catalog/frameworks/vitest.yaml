@@ -37,6 +37,15 @@ definitions:
             (#match? @callee "^describe\\b")
             (#not-match? @title "^`([^\\\\]|\\\\[\\s\\S])*?\\$\\{")) @unit
 
+      # describeの名前の文字列そのもの。unitと指摘位置は同じ範囲。
+      test-group-title:
+        query: |
+          (call_expression
+            function: [(identifier) (member_expression) (call_expression)] @callee
+            arguments: (arguments . [(string) (template_string)] @title @unit)
+            (#match? @callee "^describe\\b")
+            (#not-match? @title "^`([^\\\\]|\\\\[\\s\\S])*?\\$\\{"))
+
       setup:
         symbol: "{hook}"
         query: |

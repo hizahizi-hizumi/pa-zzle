@@ -1,0 +1,48 @@
+# 期待finding: 違反として指摘されるべきdescribeの名前の文字列の位置（lines と columns）。
+# 正本: .claude/rules/vitest.md（条件は「<条件>の場合」、対象名は対象コードの識別子、モジュール名だけを繰り返すdescribeを作らない）。
+# テストファイル名（.testと拡張子を除く）と同じ名前のdescribeは、コンポーネント名・フック名であってもモジュール名の繰り返しとして違反にする。
+version: 1
+rule: vitest/describe-title
+baseCommit: 28d17e476a9dbdc39c0f9cecad46ee4d0ad2114a
+files:
+  - path: .semantic-lint/golden/vitest/fixtures/cart.test.ts
+    blob: 017d681d935ed2bbf1478bcd3c2887890291b950
+    findings:
+      - lines: [12, 12]
+        columns: [10, 15]
+      - lines: [29, 29]
+        columns: [10, 15]
+      - lines: [52, 52]
+        columns: [10, 20]
+  - path: .semantic-lint/golden/vitest/fixtures/CouponForm.test.tsx
+    blob: 58794316723b7157394fdb5b9df738432f47a17e
+    findings: []
+  - path: .semantic-lint/golden/vitest/fixtures/stopwatch.test.ts
+    blob: 4335987086f6bdb8e80b0dcddf5e16fd23d8bc1c
+    findings: []
+  - path: frontend/src/components/InternalDiagnosticsDialog.test.tsx
+    blob: e804c9eb046455ba59c86b4764a020d9b3b4a980
+    findings:
+      - lines: [16, 16]
+        columns: [10, 36]
+  - path: frontend/src/games/nanpure/ui/board/NanpureBoard.test.tsx
+    blob: 55d2fbc29c648896890a8b8c25974dbe651c1005
+    findings:
+      - lines: [17, 17]
+        columns: [10, 23]
+  - path: frontend/src/games/nanpure/play/use-nanpure-play.test.ts
+    blob: 8940bae1c9ebf277de52a209e20eff468de55930
+    findings:
+      - lines: [19, 19]
+        columns: [10, 25]
+  - path: frontend/src/games/nanpure/ui/NanpureDiagnostics.test.tsx
+    blob: f2981e03512c0c4363fc2c5c2dfcb4bf4472e29a
+    findings:
+      - lines: [22, 22]
+        columns: [10, 29]
+  - path: frontend/src/games/nanpure/puzzle/board.test.ts
+    blob: 8cb81913ab37f795f10d98eb6b1be73714085305
+    findings: []
+  - path: frontend/src/games/nanpure/puzzle/rules.test.ts
+    blob: c973816d3d829e0ac1c8a498570866be24eca614
+    findings: []

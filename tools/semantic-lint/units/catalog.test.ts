@@ -41,7 +41,9 @@ describe("unitカタログ", () => {
     const catalog = await loadUnitCatalog();
 
     expect([...catalog.units.keys()].sort()).toEqual([
+      "comment",
       "component",
+      "doc-comment",
       "file",
       "function",
       "hook",
@@ -50,6 +52,7 @@ describe("unitカタログ", () => {
       "teardown",
       "test",
       "test-group",
+      "test-group-title",
       "test-title",
       "variable",
     ]);

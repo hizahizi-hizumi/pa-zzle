@@ -1,0 +1,32 @@
+# 人間向け規約の正本: .claude/rules/typescript-react.md（props）
+version: 1
+id: typescript-react
+
+paths:
+  - frontend/src/**/*.tsx
+exclude:
+  - frontend/src/components/ui/**
+
+rules:
+  - id: props-contract
+    title: propsはコンポーネントが必要とする値と操作の意味を明示する
+    unit: component
+    # golden benchmark (3 runs) のleave-one-file-outで全foldが選んだthreshold。包含・厳密P 1.00 / R 0.67
+    # （DOMイベント名のコールバックpropsを取りこぼす。例をinstructionに足しても変わらない）。
+    violationThreshold: 0.60
+    instruction: |
+      A component's props must state the values and operations the component
+      needs, in terms of what happens in the component.
+      Violation: the whole props contract is delegated to a hook's return type
+      or a type owned by another responsibility, such as
+      Props = ReturnType<typeof usePlay>; a callback prop whose name does not
+      state the meaning of the operation or event in the child, such as a
+      name after the DOM event or element that triggers it, such as
+      onItemClick or onInputChange, or after what the parent does with it,
+      such as onSetState; exposing the parent's general-purpose state update
+      means, such as a dispatch, a reducer action sender, or a patch updater,
+      instead of only the operations the child needs.
+      Not a violation: props whose fields are declared for the component;
+      reusing a domain type as the type of one field; callbacks like
+      onSelect or onChange(value) that express the child's operation;
+      components without props.

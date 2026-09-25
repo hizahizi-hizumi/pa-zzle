@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "check": "bun cli/main.ts check",
-    "eval": "bun cli/main.ts eval",
     "bench": "bun cli/main.ts bench",
     "inspect": "bun cli/main.ts inspect",
     "rules": "bun cli/main.ts rules",

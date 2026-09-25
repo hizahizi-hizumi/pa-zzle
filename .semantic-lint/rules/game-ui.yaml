@@ -1,0 +1,29 @@
+# 人間向け規約の正本: .claude/rules/game-structure.md（原則必須の責務の ui/、プレイ評価、依存方向の ui/）
+version: 1
+id: game-ui
+
+paths:
+  - frontend/src/games/*/ui/**/*.ts
+  - frontend/src/games/*/ui/**/*.tsx
+exclude:
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+
+rules:
+  - id: no-game-logic-in-ui
+    title: ゲームのUIは問題生成・session更新・採点規則・評価段階の決定を実装しない
+    unit: file
+    # golden benchmark (3 runs) のleave-one-file-outで選ばれたthresholdの平均0.51（0.50〜0.55）。厳密P/R 1.00 / 1.00（違反例はfixtureだけ）。
+    violationThreshold: 0.50
+    instruction: |
+      The game's ui/ handles game-specific display and user interaction. It
+      depends on play/ and read-only contracts, and must not implement game
+      logic.
+      Violation: the file implements problem generation, updates the session
+      state itself, implements scoring rules, or decides a semantic
+      evaluation level, such as praise tiers, from a score; those belong to
+      problem/, session/, and score.ts.
+      Not a violation: calling play/ operations; formatting values for
+      display; choosing colors, wording, and effects for an evaluation level
+      that the game side decided; UI state such as selection, animation, and
+      dialogs.

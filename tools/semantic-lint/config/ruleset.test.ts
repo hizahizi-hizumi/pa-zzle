@@ -54,9 +54,29 @@ rules:
         violationThreshold: 0.9,
         unit: "test",
         paths: ["frontend/**/*.test.ts"],
+        exclude: [],
         instruction: "Classify the subject.\n",
       },
     ]);
+  });
+
+  test("rulesetのexcludeをruleへ展開する", () => {
+    const [rule] = compileRuleset(
+      rulesetWith({}, { exclude: ["frontend/src/components/ui/**"] }),
+      "vitest.yaml",
+      UNITS,
+    );
+
+    expect(rule?.exclude).toEqual(["frontend/src/components/ui/**"]);
+  });
+
+  test.each([
+    ["文字列", "frontend/src/components/ui/**"],
+    ["文字列でない要素", [1]],
+  ])("excludeが%sのrulesetを拒否する", (_, exclude) => {
+    expect(() =>
+      compileRuleset(rulesetWith({}, { exclude }), "vitest.yaml", UNITS),
+    ).toThrow("rulesetの基本設定が不正です");
   });
 
   test.each(["info", "warning", "error"])("severity: %sを指定できる", (severity) => {
