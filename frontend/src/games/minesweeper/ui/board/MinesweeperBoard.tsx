@@ -1,5 +1,5 @@
-import type { MinesweeperVisibleCell } from "../../session/session";
-import { MinesweeperCell } from "./MinesweeperCell";
+import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
+import { MinesweeperCell } from "@/games/minesweeper/ui/board/MinesweeperCell";
 
 export type MinesweeperInputMode = "reveal" | "flag";
 

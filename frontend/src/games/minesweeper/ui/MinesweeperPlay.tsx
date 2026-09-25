@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import type {
   MinesweeperSessionStatus,
   MinesweeperVisibleCell,
-} from "../session/session";
+} from "@/games/minesweeper/session/session";
 import {
   MinesweeperBoard,
   type MinesweeperInputMode,
-} from "./board/MinesweeperBoard";
-import { MinesweeperPlayHeader } from "./MinesweeperPlay/MinesweeperPlayHeader";
-import { MinesweeperStatusPanel } from "./MinesweeperPlay/MinesweeperStatusPanel";
+} from "@/games/minesweeper/ui/board/MinesweeperBoard";
+import { MinesweeperPlayHeader } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperPlayHeader";
+import { MinesweeperStatusPanel } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperStatusPanel";
 
 type MinesweeperPlayProps = {
   rows: number;
