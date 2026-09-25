@@ -69,6 +69,26 @@ describe("vitestの名前付きunit", () => {
     ).toEqual(['describe("合計")', 'describe("入れ子 %i")']);
   });
 
+  test("test-group-titleはdescribeの名前の文字列を抽出し、その範囲を指摘位置にする", () => {
+    const items =
+      extractor
+        .extract({ path: "a.test.ts", source: vitestSource }, ["test-group-title"])
+        .get("test-group-title") ?? [];
+
+    expect(
+      items.map((item) => ({
+        text: vitestSource.slice(item.start, item.end),
+        report: item.report,
+      })),
+    ).toEqual(
+      ['"合計"', '"入れ子 %i"'].map((text) => {
+        const start = vitestSource.indexOf(text);
+
+        return { text, report: { start, end: start + text.length } };
+      }),
+    );
+  });
+
   test("setupは前準備、teardownは後始末の呼び出しを抽出する", () => {
     expect(extract("a.test.ts", vitestSource, "setup")).toEqual([
       {
@@ -169,6 +189,48 @@ export function outer(value: number) {
         "return inner();",
         "return 0;",
       ],
+    );
+  });
+});
+
+describe("コメントのunit", () => {
+  const source = `/// <reference types="vite/client" />
+/** 合計を返す。 */
+export function sum(values: number[]): number {
+  // 空配列は0とみなす
+  return values.reduce((total, value) => total + value, 0); /* 末尾 */
+}
+/**/
+`;
+
+  test.each([
+    ["ts", "a.ts"],
+    ["tsx", "a.tsx"],
+    ["js", "a.js"],
+  ])("commentは%sの行・ブロックコメントを抽出し、文書コメントと指令を含めない", (_, path) => {
+    const jsSource = source.replace(": number[]): number", ")");
+    const input = path === "a.js" ? jsSource : source;
+
+    expect(extract(path, input, "comment").map((item) => item.text)).toEqual([
+      "// 空配列は0とみなす",
+      "/* 末尾 */",
+      "/**/",
+    ]);
+  });
+
+  test("doc-commentは /** で始まる文書コメントだけを抽出する", () => {
+    expect(extract("a.ts", source, "doc-comment").map((item) => item.text)).toEqual(
+      ["/** 合計を返す。 */"],
+    );
+  });
+
+  test("コメントのunitはコメント全体を指摘位置にする", () => {
+    const items =
+      extractor.extract({ path: "a.ts", source }, ["comment"]).get("comment") ??
+      [];
+
+    expect(items.map((item) => item.report)).toEqual(
+      items.map((item) => ({ start: item.start, end: item.end })),
     );
   });
 });

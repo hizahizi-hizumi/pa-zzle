@@ -87,7 +87,7 @@ unitの判定は、次の3択のchoiceで問う。選択肢の説明は全rule�
 
 指摘範囲はunit全体ではなく、unitの中で違反している箇所にする（例えばtest本体のArrangeなら `const values = [1, 2, 3];` の文）。rule作者は何も書かない。
 
-カタログがunitの指摘位置（`report`）を宣言しているunit（`variable` / `test-title`）は、位置を構文で静的に決める（「指摘位置を宣言したunit」を参照）。それ以外のunitは次の2段で判定する。
+カタログがunitの指摘位置（`report`）を宣言しているunit（`variable` / `test-title` / `test-group-title` / `comment` / `doc-comment`）は、位置を構文で静的に決める（「指摘位置を宣言したunit」を参照）。それ以外のunitは次の2段で判定する。
 
 1. unitを違反と判定する（「判定の質問」の3択のchoice。violationの確率をruleの `violationThreshold` と比べる）。
 2. 違反と判定したunitの中の候補（part）ごとに、そこが違反箇所かを判定する（yes / noの確率を返すnoul）。
@@ -124,7 +124,7 @@ variable:
 
 - 判定は `@unit` の範囲（変数なら初期値を含む宣言）で1段だけ行い、違反なら `@name` の範囲を指摘する。Diagnosticの `range` はその範囲（列を含む）、`subjectRange` は判定したunit。
 - 2段目の違反箇所は問わず、partを持たない。他のunitのpartや子unitにもならないため、`variable` を判定するruleを追加しても、同じfileの `test` などのpartは変わらない。
-- 囲むコードの一部として扱い、判定対象でないときは目印を付けずに本文を残す（`/* omitted */` にしない）。そのため、testだけを判定するrequestのstateとcache keyは、`variable` / `test-title` のunitがあってもなくても同じ。
+- 囲むコードの一部として扱い、判定対象でないときは目印を付けずに本文を残す（`/* omitted */` にしない）。そのため、testだけを判定するrequestのstateとcache keyは、`variable` / `test-title` / `comment` などのunitがあってもなくても同じ。
 - `report` のcaptureを持たないqueryはカタログの読み込みエラーになる。
 
 ### unit語彙
@@ -139,6 +139,9 @@ ruleの `unit` には意味の名前を書く。どの構文を抽出するか�
 | `variable` | 汎用・指摘位置あり | 変数宣言子（`const` / `let` / `var`。for文の初期化を含む）。名前が1つの識別子のものだけで、分割代入は含めない。指摘位置は宣言した名前。文脈は同じscope以下の `test` / `test-group` / `setup` / `teardown` / `function` / `component` / `hook` |
 | `test` | 名前付き | Vitestの `test` / `it` 呼び出し（`test.each(...)(...)`、`it.skip` などを含む）。第1引数が文字列リテラルのもの |
 | `test-title` | 名前付き・指摘位置あり | `test` のケース名の文字列（第1引数）。unitと指摘位置は同じ範囲。`describe` の名前は含まない |
+| `test-group-title` | 名前付き・指摘位置あり | `describe` の名前の文字列（第1引数）。unitと指摘位置は同じ範囲 |
+| `comment` | 汎用・指摘位置あり | 行コメントとブロックコメント。unitと指摘位置は同じ範囲。文書コメント（`/** */`）とtriple-slash指令（`/// <reference ... />`）は含めない。文脈は同じscope以下の `test` / `test-group` / `setup` / `teardown` / `function` / `component` / `hook` |
+| `doc-comment` | 汎用・指摘位置あり | 文書コメント（`/**` で始まるJSDoc形式のコメント）。範囲と文脈は `comment` と同じ |
 | `test-group` | 名前付き | Vitestの `describe` 呼び出し（`describe.each` を含む） |
 | `setup` | 名前付き | Vitestの `beforeEach` / `beforeAll` 呼び出し |
 | `teardown` | 名前付き | Vitestの `afterEach` / `afterAll` 呼び出し |
@@ -196,7 +199,7 @@ cache keyはrule × unit単位で、1判定の答えを決める次の要素のS
 
 threshold、severity、rule id、title、行番号はkeyに含めない。
 
-同じファイルの別unitの本文だけを変えた場合、変えたunitだけがmissする。指摘位置を宣言したunit（`variable` / `test-title`）は骨格の一部なので、変数宣言を変えると同じfileの `variable` の判定と、その宣言を含むunit・骨格に依存するunitがmissする。文脈に宣言したunit（testから見たsetupなど）や骨格（importや補助関数）を変えた場合は、それに依存するunitがmissする。unitの追加・削除や、そのファイルに適用するunitの種類の変更は骨格を変えるため、そのファイルの判定がmissする。
+同じファイルの別unitの本文だけを変えた場合、変えたunitだけがmissする。指摘位置を宣言したunit（`variable` / `test-title` / `comment` など）は骨格の一部なので、変数宣言を変えると同じfileの `variable` の判定と、その宣言を含むunit・骨格に依存するunitがmissする。文脈に宣言したunit（testから見たsetupなど）や骨格（importや補助関数）を変えた場合は、それに依存するunitがmissする。unitの追加・削除や、そのファイルに適用するunitの種類の変更は骨格を変えるため、そのファイルの判定がmissする。
 
 providerへの送信はfileごとのbatchだが、hit / missはtaskごとに判定し、missしたtaskだけでbatchを組み立てる。
 

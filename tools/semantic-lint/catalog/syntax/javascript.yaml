@@ -18,6 +18,21 @@ definitions:
             value: [(arrow_function) (function_expression) (generator_function)] @unit)
           [(arrow_function) (function_expression) (generator_function)] @unit
 
+      # 行コメントとブロックコメント。文書コメント（/** */）はdoc-comment、
+      # triple-slash指令（/// <reference ... />）はコメントではなく指令なので含めない。
+      # 本文が指摘位置そのものなので、判定stateで本文を繰り返さないようsymbolは付けない。
+      comment:
+        query: |
+          ((comment) @comment @unit
+            (#not-match? @comment "^/\\*\\*[^/]")
+            (#not-match? @comment "^///\\s*<"))
+
+      # 文書コメント（/** */）。空のブロックコメント /**/ は含めない。
+      doc-comment:
+        query: |
+          ((comment) @comment @unit
+            (#match? @comment "^/\\*\\*[^/]"))
+
       # 分割代入（{ a, b } / [a, b]）は名前が複数になるため対象にしない。
       variable:
         symbol: "{name}"
