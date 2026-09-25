@@ -2,11 +2,15 @@ import {
   assertTakuzuProblem,
   type TakuzuProblem,
 } from "@/games/takuzu/problem/problem";
-import type { TakuzuBoard, TakuzuCell } from "@/games/takuzu/puzzle/board";
+import {
+  listTakuzuLines,
+  type TakuzuBoard,
+  type TakuzuCell,
+  type TakuzuLine,
+} from "@/games/takuzu/puzzle/board";
 import {
   findTakuzuRuleViolations,
   isTakuzuSolved,
-  listTakuzuViolatedCellIndices,
 } from "@/games/takuzu/puzzle/rules";
 import {
   getNextTakuzuCell,
@@ -64,7 +68,14 @@ export type TakuzuSessionResult = {
 export type TakuzuCellView = {
   cell: TakuzuCell;
   given: boolean;
-  violated: boolean;
+  /** 同じタイルが3つ以上続く並びに入っている。3連続の違反はマスごとに示す。 */
+  inViolatingRun: boolean;
+};
+
+/** 個数超過・重複の違反がある行・列。行・列全体の違反なので、マスではなく行・列ごとに示す。 */
+export type TakuzuLineViolationView = TakuzuLine & {
+  overfilled: boolean;
+  duplicated: boolean;
 };
 
 function isCorrection(
@@ -275,15 +286,42 @@ export function getTakuzuSessionCellViews(
   session: TakuzuSession,
 ): TakuzuCellView[] {
   const { board, problem } = session;
-  const violatedCellIndices = new Set(
-    listTakuzuViolatedCellIndices(board.size, findTakuzuRuleViolations(board)),
+  const runCellIndices = new Set(
+    findTakuzuRuleViolations(board).runCellIndices,
   );
 
   return board.cells.map(function createCellView(cell, cellIndex) {
     return {
       cell,
       given: isTakuzuGivenCell(problem.givens, cellIndex),
-      violated: violatedCellIndices.has(cellIndex),
+      inViolatingRun: runCellIndices.has(cellIndex),
     };
   });
+}
+
+function isSameLine(left: TakuzuLine, right: TakuzuLine): boolean {
+  return left.axis === right.axis && left.index === right.index;
+}
+
+/** 行（上から）、列（左から）の順に並べる。 */
+export function getTakuzuSessionLineViolations(
+  session: TakuzuSession,
+): TakuzuLineViolationView[] {
+  const { overfilledLines, duplicateLines } = findTakuzuRuleViolations(
+    session.board,
+  );
+
+  return listTakuzuLines(session.board.size).flatMap(
+    function createLineViolation(line) {
+      const overfilled = overfilledLines.some((other) =>
+        isSameLine(line, other),
+      );
+      const duplicated = duplicateLines.some((other) =>
+        isSameLine(line, other),
+      );
+      return overfilled || duplicated
+        ? [{ ...line, overfilled, duplicated }]
+        : [];
+    },
+  );
 }

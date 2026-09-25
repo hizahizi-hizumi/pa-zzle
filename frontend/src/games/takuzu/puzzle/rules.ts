@@ -107,20 +107,6 @@ export function hasTakuzuRuleViolation(
   );
 }
 
-/** 違反に関係するマス。個数超過と重複は、その行・列のマスすべてを含める。 */
-export function listTakuzuViolatedCellIndices(
-  size: number,
-  violations: TakuzuRuleViolations,
-): number[] {
-  const lineCellIndices = [
-    ...violations.overfilledLines,
-    ...violations.duplicateLines,
-  ].flatMap((line) => getTakuzuLineCellIndices(size, line));
-  return [...new Set([...violations.runCellIndices, ...lineCellIndices])].sort(
-    (left, right) => left - right,
-  );
-}
-
 /**
  * 全マスが埋まり、ルール違反が無い。
  * 各行・各列が半分を超えずに全マス埋まっていれば、2種類のタイルはちょうど半分ずつになる。

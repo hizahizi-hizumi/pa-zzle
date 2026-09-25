@@ -1,59 +1,102 @@
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
-import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
+import type { TakuzuProgress } from "@/games/takuzu/play/use-takuzu-play";
+import type { TakuzuCell } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import type {
   TakuzuCellView,
-  TakuzuSessionStatus,
+  TakuzuLineViolationView,
 } from "@/games/takuzu/session/session";
+import { TakuzuClearAnimation } from "@/games/takuzu/ui/board/clear/TakuzuClearAnimation";
 import { TakuzuBoard } from "@/games/takuzu/ui/board/TakuzuBoard";
 import { TakuzuClearedPanel } from "@/games/takuzu/ui/TakuzuPlay/TakuzuClearedPanel";
 import { TakuzuPlayHeader } from "@/games/takuzu/ui/TakuzuPlay/TakuzuPlayHeader";
+import { UndoButton } from "@/games/takuzu/ui/TakuzuPlay/UndoButton";
 
 type TakuzuPlayProps = {
-  difficulty: TakuzuDifficulty;
   size: number;
   cells: readonly TakuzuCellView[];
-  status: TakuzuSessionStatus;
+  lineViolations: readonly TakuzuLineViolationView[];
+  progress: TakuzuProgress;
+  correctionCount: number;
+  undoCount: number;
+  canUndo: boolean;
   elapsedMs: number;
   onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
+  onPlaceCell: (cellIndex: number, cell: TakuzuCell) => void;
+  onUndo: () => void;
   onRestart: () => void;
   onReplay: () => void;
+  onClearAnimationComplete: () => void;
+  onStartNewProblem?: () => void;
+  onChangeDifficulty?: () => void;
   onBackToHome: () => void;
+  onOpenDiagnostics?: () => void;
 };
 
 export function TakuzuPlay({
-  difficulty,
   size,
   cells,
-  status,
+  lineViolations,
+  progress,
+  correctionCount,
+  undoCount,
+  canUndo,
   elapsedMs,
   onCycleCell,
+  onPlaceCell,
+  onUndo,
   onRestart,
   onReplay,
+  onClearAnimationComplete,
+  onStartNewProblem,
+  onChangeDifficulty,
   onBackToHome,
+  onOpenDiagnostics,
 }: TakuzuPlayProps) {
   return (
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
       <BrandIdentityHeader />
       <TakuzuPlayHeader
-        difficulty={difficulty}
+        correctionCount={correctionCount}
         elapsedMs={elapsedMs}
-        canRestart={status === "playing"}
+        undoCount={undoCount}
         onRestart={onRestart}
+        onReplay={onReplay}
+        onStartNewProblem={onStartNewProblem}
+        onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
+        onOpenDiagnostics={onOpenDiagnostics}
       />
-      <main className="flex min-h-0 flex-1 items-center justify-center px-3 py-2 sm:px-6">
-        <TakuzuBoard
-          size={size}
-          cells={cells}
-          disabled={status !== "playing"}
-          onCycleCell={onCycleCell}
-        />
+      <main className="flex min-h-0 flex-1 items-center justify-center py-2 [container-type:size] sm:px-3">
+        <div className="relative aspect-square w-[min(100cqw,100cqh,42rem)]">
+          <TakuzuClearAnimation
+            active={progress === "clearing"}
+            onComplete={onClearAnimationComplete}
+          >
+            <TakuzuBoard
+              size={size}
+              cells={cells}
+              lineViolations={lineViolations}
+              disabled={progress !== "playing"}
+              onCycleCell={onCycleCell}
+              onPlaceCell={onPlaceCell}
+            />
+          </TakuzuClearAnimation>
+          {progress === "result" && (
+            <TakuzuClearedPanel
+              onReplay={onReplay}
+              onStartNewProblem={onStartNewProblem}
+            />
+          )}
+        </div>
       </main>
-      <footer className="grid h-28 shrink-0 items-center px-4 pb-2">
-        {status === "cleared" ? (
-          <TakuzuClearedPanel onReplay={onReplay} />
-        ) : null}
+      <footer className="grid h-28 shrink-0 items-end px-4 pb-2">
+        <div className="flex h-14 items-center justify-center">
+          <UndoButton
+            disabled={progress !== "playing" || !canUndo}
+            onUndo={onUndo}
+          />
+        </div>
       </footer>
     </section>
   );

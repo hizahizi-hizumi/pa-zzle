@@ -6,14 +6,15 @@ import {
   within,
 } from "@testing-library/react";
 
+import type { TakuzuProgress } from "@/games/takuzu/play/use-takuzu-play";
 import type { TakuzuCellView } from "@/games/takuzu/session/session";
 import { TakuzuPlay } from "@/games/takuzu/ui/TakuzuPlay";
 
 const cells: TakuzuCellView[] = [
-  { cell: "a", given: true, violated: false },
-  { cell: "b", given: false, violated: false },
-  { cell: "b", given: false, violated: false },
-  { cell: "a", given: false, violated: false },
+  { cell: "a", given: true, inViolatingRun: false },
+  { cell: "b", given: false, inViolatingRun: false },
+  { cell: "b", given: false, inViolatingRun: false },
+  { cell: "a", given: false, inViolatingRun: false },
 ];
 
 afterEach(() => {
@@ -23,10 +24,36 @@ afterEach(() => {
 describe("TakuzuPlay", () => {
   const callbacks = {
     onCycleCell: vi.fn(),
+    onPlaceCell: vi.fn(),
+    onUndo: vi.fn(),
     onRestart: vi.fn(),
     onReplay: vi.fn(),
+    onClearAnimationComplete: vi.fn(),
     onBackToHome: vi.fn(),
   };
+
+  function renderPlay(progress: TakuzuProgress, canUndo = true) {
+    render(
+      <TakuzuPlay
+        size={2}
+        cells={cells}
+        lineViolations={[]}
+        progress={progress}
+        correctionCount={3}
+        undoCount={4}
+        canUndo={canUndo}
+        elapsedMs={65_000}
+        {...callbacks}
+      />,
+    );
+  }
+
+  function openMenu() {
+    fireEvent.pointerDown(
+      screen.getByRole("button", { name: "その他の操作" }),
+      { button: 0, ctrlKey: false },
+    );
+  }
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -34,32 +61,73 @@ describe("TakuzuPlay", () => {
 
   describe("プレイ中の場合", () => {
     beforeEach(() => {
-      render(
-        <TakuzuPlay
-          difficulty="2"
-          size={2}
-          cells={cells}
-          status="playing"
-          elapsedMs={65_000}
-          {...callbacks}
-        />,
-      );
+      renderPlay("playing");
     });
 
-    test("表示名と難易度と経過時間を表示すること", () => {
+    test("表示名と置き直しの回数と経過時間を表示すること", () => {
       const heading = screen.getByRole("heading", { name: "バイナリパズル" });
-      const difficulty = screen.getByText("レベル 2");
+      const correctionLabel = screen.getByText("置き直し");
+      const correctionCount = screen.getByText("3");
       const elapsedTime = screen.getByText("01:05");
 
       expect(heading).toBeTruthy();
-      expect(difficulty).toBeTruthy();
+      expect(correctionLabel).toBeTruthy();
+      expect(correctionCount).toBeTruthy();
       expect(elapsedTime).toBeTruthy();
     });
 
-    test("盤面を戻すボタンで盤面を戻す操作を通知すること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "盤面を戻す" }));
+    test("待ったの回数を表示すること", () => {
+      const header = screen.getByRole("heading", {
+        name: "バイナリパズル",
+      }).parentElement;
+      const undoLabel = within(header as HTMLElement).getByText("待った");
+      const undoCount = within(header as HTMLElement).getByText("4");
 
-      expect(callbacks.onRestart).toHaveBeenCalledOnce();
+      expect(undoLabel).toBeTruthy();
+      expect(undoCount).toBeTruthy();
+    });
+
+    test("待ったボタンで待ったを通知すること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "待った" }));
+
+      expect(callbacks.onUndo).toHaveBeenCalledOnce();
+    });
+
+    test("戻るボタンでホームへの移動を通知すること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "ホームへ戻る" }));
+
+      expect(callbacks.onBackToHome).toHaveBeenCalledOnce();
+    });
+
+    describe("メニューを開いた場合", () => {
+      beforeEach(() => {
+        openMenu();
+      });
+
+      const menuCases = [
+        ["盤面を戻す", "onRestart"],
+        ["リセット", "onReplay"],
+        ["ホーム", "onBackToHome"],
+      ] as const;
+
+      test.each(menuCases)(
+        "%s で対応する操作を通知すること",
+        (itemName, callbackName) => {
+          fireEvent.click(screen.getByRole("menuitem", { name: itemName }));
+
+          expect(callbacks[callbackName]).toHaveBeenCalledOnce();
+        },
+      );
+
+      describe("つなぎ先を渡していない場合", () => {
+        const unconnectedMenuItems = ["別の問題", "難易度変更", "検証情報"];
+
+        test.each(unconnectedMenuItems)("%s を表示しないこと", (itemName) => {
+          const result = screen.queryByRole("menuitem", { name: itemName });
+
+          expect(result).toBeNull();
+        });
+      });
     });
 
     test("完成の表示を出さないこと", () => {
@@ -69,24 +137,21 @@ describe("TakuzuPlay", () => {
     });
   });
 
-  describe("完成した場合", () => {
+  describe("待ったで戻せる操作がない場合", () => {
     beforeEach(() => {
-      render(
-        <TakuzuPlay
-          difficulty="2"
-          size={2}
-          cells={cells}
-          status="cleared"
-          elapsedMs={65_000}
-          {...callbacks}
-        />,
-      );
+      renderPlay("playing", false);
     });
 
-    test("完成を知らせること", () => {
-      const result = screen.getByRole("status");
+    test("待ったボタンを押せないこと", () => {
+      const result = screen.getByRole("button", { name: "待った" });
 
-      expect(result.textContent).toContain("完成！");
+      expect((result as HTMLButtonElement).disabled).toBe(true);
+    });
+  });
+
+  describe("完成演出中の場合", () => {
+    beforeEach(() => {
+      renderPlay("clearing");
     });
 
     test("盤面のマスを操作できないこと", () => {
@@ -99,9 +164,35 @@ describe("TakuzuPlay", () => {
       expect(result).toBe(true);
     });
 
+    test("待ったできないこと", () => {
+      const result = screen.getByRole("button", { name: "待った" });
+
+      expect((result as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    test("完成の表示をまだ出さないこと", () => {
+      const result = screen.queryByRole("status");
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("完成演出が終わった場合", () => {
+    beforeEach(() => {
+      renderPlay("result");
+    });
+
+    test("完成を知らせること", () => {
+      const result = screen.getByRole("status");
+
+      expect(result.textContent).toContain("完成！");
+    });
+
     test("同じ問題をもう一度ボタンで再プレイを通知すること", () => {
       fireEvent.click(
-        screen.getByRole("button", { name: "同じ問題をもう一度" }),
+        within(screen.getByRole("status")).getByRole("button", {
+          name: "同じ問題をもう一度",
+        }),
       );
 
       expect(callbacks.onReplay).toHaveBeenCalledOnce();

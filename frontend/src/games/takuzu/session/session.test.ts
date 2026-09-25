@@ -6,6 +6,7 @@ import {
   cycleTakuzuSessionCell,
   getTakuzuSessionCellViews,
   getTakuzuSessionCorrectionCount,
+  getTakuzuSessionLineViolations,
   getTakuzuSessionResult,
   placeTakuzuSessionCell,
   replayTakuzuSession,
@@ -302,15 +303,56 @@ describe("getTakuzuSessionResult", () => {
 describe("getTakuzuSessionCellViews", () => {
   const session = pressCells(createTakuzuSession(problem, 100), [1, 2], 200);
 
-  test("固定マスとルール違反のマスを示すこと", () => {
+  test("固定マスと3連続のマスを示すこと", () => {
     const result = getTakuzuSessionCellViews(session);
 
     expect(result.slice(0, 4)).toEqual([
-      { cell: "a", given: true, violated: true },
-      { cell: "a", given: false, violated: true },
-      { cell: "a", given: false, violated: true },
-      { cell: "b", given: true, violated: true },
+      { cell: "a", given: true, inViolatingRun: true },
+      { cell: "a", given: false, inViolatingRun: true },
+      { cell: "a", given: false, inViolatingRun: true },
+      { cell: "b", given: true, inViolatingRun: false },
     ]);
-    expect(result[4]).toEqual({ cell: null, given: false, violated: false });
+    expect(result[4]).toEqual({
+      cell: null,
+      given: false,
+      inViolatingRun: false,
+    });
+  });
+});
+
+describe("getTakuzuSessionLineViolations", () => {
+  const session = createTakuzuSession(problem, 100);
+
+  describe("行に同じタイルが半数を超えた場合", () => {
+    const overfilled = pressCells(session, [1, 2], 200);
+
+    test("その行を個数超過として示すこと", () => {
+      const result = getTakuzuSessionLineViolations(overfilled);
+
+      expect(result).toEqual([
+        { axis: "row", index: 0, overfilled: true, duplicated: false },
+      ]);
+    });
+  });
+
+  describe("埋まった列どうしが同じ並びになった場合", () => {
+    const duplicated = pressCells(session, [4, 8, 8, 1, 5, 9, 9, 13, 13], 200);
+
+    test("両方の列を重複として示すこと", () => {
+      const result = getTakuzuSessionLineViolations(duplicated);
+
+      expect(result).toEqual([
+        { axis: "column", index: 0, overfilled: false, duplicated: true },
+        { axis: "column", index: 1, overfilled: false, duplicated: true },
+      ]);
+    });
+  });
+
+  describe("違反の無い盤面の場合", () => {
+    test("何も示さないこと", () => {
+      const result = getTakuzuSessionLineViolations(session);
+
+      expect(result).toEqual([]);
+    });
   });
 });
