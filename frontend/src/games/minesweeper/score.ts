@@ -1,8 +1,8 @@
 import type { GameResultLevel } from "@/games/result";
 
 export const MINESWEEPER_SCORE_MAXIMUMS = {
-  accuracy: 70,
-  speed: 30,
+  accuracy: 60,
+  speed: 40,
 } as const;
 
 /**

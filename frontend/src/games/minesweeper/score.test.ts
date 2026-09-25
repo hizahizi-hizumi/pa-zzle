@@ -46,9 +46,9 @@ describe("calculateMinesweeperPlayScore", () => {
   });
 
   test.each([
-    { ratio: 0.5, speed: 30 },
-    { ratio: 1, speed: 30 },
-    { ratio: 1.5, speed: 15 },
+    { ratio: 0.5, speed: 40 },
+    { ratio: 1, speed: 40 },
+    { ratio: 1.5, speed: 20 },
     { ratio: 2, speed: 0 },
     { ratio: 3, speed: 0 },
   ])(
@@ -65,9 +65,9 @@ describe("calculateMinesweeperPlayScore", () => {
   );
 
   test.each([
-    { mistakeCount: 0, accuracy: 70 },
-    { mistakeCount: 1, accuracy: 55 },
-    { mistakeCount: 2, accuracy: 40 },
+    { mistakeCount: 0, accuracy: 60 },
+    { mistakeCount: 1, accuracy: 45 },
+    { mistakeCount: 2, accuracy: 30 },
     { mistakeCount: 5, accuracy: 0 },
   ])(
     "踏んだ地雷 $mistakeCount 個では正確性を $accuracy 点とすること",
