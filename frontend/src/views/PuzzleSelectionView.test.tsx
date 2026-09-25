@@ -27,4 +27,18 @@ describe("PuzzleSelectionView", () => {
     expect(heroLink.getAttribute("href")).toBe("/puzzles/minesweeper");
     expect(minesweeperButton.getAttribute("aria-pressed")).toBe("true");
   });
+
+  test("バイナリパズルを選択してバイナリパズルの入口へ進めること", () => {
+    const takuzuButton = screen.getByRole("button", {
+      name: "バイナリパズルを選択",
+    });
+
+    fireEvent.click(takuzuButton);
+
+    const heroLink = screen.getByRole("link", {
+      name: "バイナリパズルを遊ぶ",
+    });
+    expect(heroLink.getAttribute("href")).toBe("/puzzles/takuzu");
+    expect(takuzuButton.getAttribute("aria-pressed")).toBe("true");
+  });
 });

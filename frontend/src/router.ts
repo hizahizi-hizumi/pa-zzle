@@ -13,6 +13,7 @@ export type Path =
   | `/puzzles/parking-jam/play/:difficulty`
   | `/puzzles/slide-puzzle`
   | `/puzzles/slide-puzzle/play/:difficulty`
+  | `/puzzles/takuzu`
   | `/puzzles/takuzu/play/:difficulty`
   | `/puzzles/water-sort`
   | `/puzzles/water-sort/play/:difficulty`

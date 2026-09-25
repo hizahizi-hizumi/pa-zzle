@@ -3,6 +3,7 @@ import minesweeperPictogramSvg from "@/games/minesweeper/assets/pictogram.svg?ra
 import nanpurePictogramSvg from "@/games/nanpure/assets/pictogram.svg?raw";
 import parkingJamPictogramSvg from "@/games/parking-jam/assets/pictogram.svg?raw";
 import slidePuzzlePictogramSvg from "@/games/slide-puzzle/assets/pictogram.svg?raw";
+import takuzuPictogramSvg from "@/games/takuzu/assets/pictogram.svg?raw";
 import waterSortPictogramSvg from "@/games/water-sort/assets/pictogram.svg?raw";
 
 const games = [
@@ -30,6 +31,11 @@ const games = [
     name: "スライドパズル",
     pictogramSvg: slidePuzzlePictogramSvg,
     to: "/puzzles/slide-puzzle",
+  },
+  {
+    name: "バイナリパズル",
+    pictogramSvg: takuzuPictogramSvg,
+    to: "/puzzles/takuzu",
   },
 ] as const;
 
