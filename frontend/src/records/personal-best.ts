@@ -1,8 +1,8 @@
-import type { PlayRecord } from "./play-record";
+import type { PlayRecord } from "@/records/play-record";
 import type {
   PersonalBestMetricDefinition,
   PlayRecordDefinition,
-} from "./play-record-definition";
+} from "@/records/play-record-definition";
 
 export type PersonalBest = {
   metricId: string;

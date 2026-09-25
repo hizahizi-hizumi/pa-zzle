@@ -1,17 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
-import {
-  assessWaterSortDifficulty,
-  type WaterSortDifficulty,
-} from "@/games/water-sort/difficulty";
-import type { WaterSortDifficultyAnalysis } from "@/games/water-sort/problem/difficulty-analysis";
+import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import { restoreWaterSortProblem } from "@/games/water-sort/problem/generator";
 import type {
   WaterSortGeneratedProblem,
   WaterSortProblemIdentity,
 } from "@/games/water-sort/problem/problem";
-import { generateWaterSortProblemForDifficulty } from "@/games/water-sort/problem-selection";
+import { selectWaterSortProblemForDifficulty } from "@/games/water-sort/problem-selection";
 import { classifyWaterSortDeadlock } from "@/games/water-sort/puzzle/deadlock";
 import {
   isCompleteWaterSortBottle,
@@ -68,7 +64,6 @@ type WaterSortPlayState = {
   sourceBottleIndex: number | null;
   problemIdentity: WaterSortProblemIdentity;
   optimalMoveCount: number;
-  difficultyAnalysis: WaterSortDifficultyAnalysis;
   progress: WaterSortProgress;
   operation: WaterSortOperation | null;
 };
@@ -77,7 +72,7 @@ function generateProblem(
   difficulty: WaterSortDifficulty,
   seed: ProblemSeed,
 ): WaterSortGeneratedProblem {
-  return generateWaterSortProblemForDifficulty(difficulty, seed);
+  return selectWaterSortProblemForDifficulty(difficulty, seed);
 }
 
 function createPlayState(
@@ -94,7 +89,6 @@ function createPlayState(
     session: createWaterSortSession(generatedProblem.problem, startedAt),
     problemIdentity: generatedProblem.identity,
     optimalMoveCount: generatedProblem.optimalMoveCount,
-    difficultyAnalysis: generatedProblem.difficultyAnalysis,
     sourceBottleIndex: null,
     progress: "playing",
     operation: null,
@@ -271,7 +265,6 @@ export function useWaterSortPlay(
       classifyWaterSortDeadlock(session.state) === "deadlocked",
     [play.progress, session.state],
   );
-  const problemDifficulty = assessWaterSortDifficulty(play.difficultyAnalysis);
   const sessionResult = useMemo(
     () => getWaterSortSessionResult(session, now),
     [now, session],
@@ -328,7 +321,6 @@ export function useWaterSortPlay(
     undoCount: session.undoCount,
     restartCount: session.restartCount,
     optimalMoveCount,
-    problemDifficulty,
     canUndo: play.progress === "playing" && canUndoWaterSortSession(session),
     isDeadlocked,
     sourceBottleIndex: play.sourceBottleIndex,

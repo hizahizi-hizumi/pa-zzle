@@ -1,6 +1,6 @@
-import { getPersonalBests } from "./personal-best";
-import type { PlayRecord } from "./play-record";
-import type { PlayRecordDefinition } from "./play-record-definition";
+import { getPersonalBests } from "@/records/personal-best";
+import type { PlayRecord } from "@/records/play-record";
+import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
 function createRecord(id: string, value: number): PlayRecord {
   return {

@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 
-import { MinesweeperPlayView } from "./MinesweeperPlayView";
+import { MinesweeperPlayView } from "@/views/MinesweeperPlayView";
 
 afterEach(cleanup);
 

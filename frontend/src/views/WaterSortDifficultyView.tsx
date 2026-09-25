@@ -4,7 +4,7 @@ import { WaterSortDifficultyOption } from "@/views/WaterSortDifficultyView/Water
 
 export function WaterSortDifficultyView() {
   return (
-    <section className="space-y-8">
+    <section className="space-y-6 sm:space-y-8">
       <div className="space-y-2">
         <Link
           to="/"
@@ -15,7 +15,7 @@ export function WaterSortDifficultyView() {
         <h1 className="text-screen-title">ウォーターソート</h1>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-2 sm:gap-4 lg:grid-cols-5">
         {waterSortDifficulties.map((difficulty) => (
           <WaterSortDifficultyOption
             key={difficulty.id}

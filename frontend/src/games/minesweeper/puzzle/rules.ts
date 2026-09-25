@@ -4,8 +4,8 @@ import {
   getMinesweeperCellCount,
   getMinesweeperNeighborCellIndices,
   type MinesweeperBoard,
-} from "./board";
-import type { MinesweeperPuzzleState } from "./state";
+} from "@/games/minesweeper/puzzle/board";
+import type { MinesweeperPuzzleState } from "@/games/minesweeper/puzzle/state";
 
 export function isMinesweeperMine(
   board: MinesweeperBoard,

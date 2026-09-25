@@ -8,8 +8,8 @@ import {
 import type { PlayRecord } from "@/records/play-record";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 import { formatRecordCompletedAt } from "@/records/ui/format";
+import { getPlayRecordGridTemplateColumns } from "@/records/ui/PlayRecordsScreen/record-grid";
 import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
-import { getPlayRecordGridTemplateColumns } from "./record-grid";
 
 type PlayRecordRowProps = {
   record: PlayRecord;
