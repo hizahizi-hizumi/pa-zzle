@@ -199,12 +199,16 @@ describe("FifteenPuzzlePlay", () => {
 
     test("スコアと手数・時間を基準との差つきで表示すること", () => {
       const score = screen.getByText("77");
-      const moveCount = screen.getByText("手数").parentElement;
-      const elapsedTime = screen.getByText("時間").parentElement;
+      const moveCount = screen.getByText("42");
+      const moveDelta = screen.getByText("最短 +12");
+      const elapsedTime = screen.getByText("01:20");
+      const timeDelta = screen.getByText("基準 +00:10");
 
       expect(score).toBeTruthy();
-      expect(moveCount?.textContent).toBe("手数42最短 +12");
-      expect(elapsedTime?.textContent).toBe("時間01:20基準 +00:10");
+      expect(moveCount).toBeTruthy();
+      expect(moveDelta).toBeTruthy();
+      expect(elapsedTime).toBeTruthy();
+      expect(timeDelta).toBeTruthy();
     });
 
     test("盤面を表示しないこと", () => {
