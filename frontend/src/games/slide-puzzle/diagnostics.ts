@@ -3,6 +3,7 @@ import {
   type InternalDiagnosticSnapshot,
 } from "@/games/diagnostics";
 import {
+  isSlidePuzzleProblemIdentityOfDifficulty,
   parseSlidePuzzleDifficulty,
   type SlidePuzzleDifficulty,
 } from "@/games/slide-puzzle/difficulty";
@@ -57,6 +58,10 @@ function parseSlidePuzzleDiagnosticSnapshot(
     value.game !== "slide-puzzle" ||
     !difficulty ||
     !isSlidePuzzleProblemIdentity(value.problemIdentity) ||
+    !isSlidePuzzleProblemIdentityOfDifficulty(
+      value.problemIdentity,
+      difficulty,
+    ) ||
     !(typeof value.buildRevision === "string" || value.buildRevision === null)
   ) {
     throw new TypeError("Invalid slide puzzle diagnostic snapshot");

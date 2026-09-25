@@ -28,6 +28,7 @@ describe("SlidePuzzleDiagnosticSnapshot", () => {
       ...snapshot,
       problemIdentity: { ...snapshot.problemIdentity, generatorVersion: "2" },
     }),
+    JSON.stringify({ ...snapshot, difficulty: "1" }),
   ];
 
   test("コピー形式を復元して同じ初期盤面と最短手数を再現できること", () => {

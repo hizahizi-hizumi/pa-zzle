@@ -93,6 +93,10 @@ describe("isSlidePuzzlePlayRecord", () => {
       },
     ],
     [
+      "難易度と違う盤面サイズ",
+      { ...record, payload: { ...record.payload, difficulty: "5" } },
+    ],
+    [
       "総手数より多い完成時手数",
       {
         ...record,

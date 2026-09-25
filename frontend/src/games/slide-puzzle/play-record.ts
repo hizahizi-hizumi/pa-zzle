@@ -1,4 +1,5 @@
 import {
+  isSlidePuzzleProblemIdentityOfDifficulty,
   parseSlidePuzzleDifficulty,
   type SlidePuzzleDifficulty,
 } from "@/games/slide-puzzle/difficulty";
@@ -92,10 +93,17 @@ export function isSlidePuzzlePlayRecord(
   }
 
   const { difficulty, problemIdentity, performance } = record.payload;
+  const parsedDifficulty =
+    typeof difficulty === "string"
+      ? parseSlidePuzzleDifficulty(difficulty)
+      : undefined;
   return (
-    typeof difficulty === "string" &&
-    parseSlidePuzzleDifficulty(difficulty) !== undefined &&
+    parsedDifficulty !== undefined &&
     isSlidePuzzleProblemIdentity(problemIdentity) &&
+    isSlidePuzzleProblemIdentityOfDifficulty(
+      problemIdentity,
+      parsedDifficulty,
+    ) &&
     isSlidePuzzlePerformance(performance)
   );
 }
