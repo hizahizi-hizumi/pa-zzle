@@ -16,7 +16,9 @@ rules:
   - id: comment-explains-why
     title: コメントはコードで表せない理由や制約に限り、処理の説明や履歴を書かない
     unit: comment
-    violationThreshold: 0.5
+    # golden benchmark (2 runs) の推奨値。不変条件や期待値の理由を述べるコメントも0.8前後で違反と判定するため高くする。
+    # 0.90で包含P/R 1.00 / 1.00、厳密P/R 0.80 / 0.80。
+    violationThreshold: 0.90
     instruction: |
       What the code does and how it does it must be expressed by the code
       itself. A comment carries only what the code cannot reasonably express:
@@ -41,7 +43,8 @@ rules:
   - id: doc-comment-no-duplication
     title: 文書コメントはシグネチャ・型・実装手順を重複して説明しない
     unit: doc-comment
-    violationThreshold: 0.5
+    # golden benchmark (2 runs) のleave-one-file-outで全foldが選んだthreshold。厳密P/R 1.00 / 1.00（違反例はfixtureだけ）。
+    violationThreshold: 0.60
     instruction: |
       A documentation comment may describe the purpose, contract, and usage
       constraints that users of the API need, but must not repeat its

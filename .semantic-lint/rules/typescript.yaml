@@ -16,7 +16,8 @@ rules:
   - id: logic-returns-meaningful-values
     title: ロジックは意味を保った値を返し、表示表現を混ぜない
     unit: file
-    violationThreshold: 0.5
+    # golden benchmark (2 runs) のleave-one-file-outで全foldが選んだthreshold。0.50〜0.95で厳密P/R 1.00 / 1.00（違反例はfixtureだけ）。
+    violationThreshold: 0.60
     instruction: |
       Logic decides what holds and returns values that keep their meaning; how
       to show them to users belongs to UI. Judge by what the code decides, not

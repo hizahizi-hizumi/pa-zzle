@@ -13,7 +13,8 @@ rules:
   - id: no-game-logic-in-ui
     title: ゲームのUIは問題生成・session更新・採点規則・評価段階の決定を実装しない
     unit: file
-    violationThreshold: 0.5
+    # golden benchmark (2 runs) のleave-one-file-outで選ばれたthresholdの平均0.51（0.50〜0.55）。厳密P/R 1.00 / 1.00（違反例はfixtureだけ）。
+    violationThreshold: 0.50
     instruction: |
       The game's ui/ handles game-specific display and user interaction. It
       depends on play/ and read-only contracts, and must not implement game

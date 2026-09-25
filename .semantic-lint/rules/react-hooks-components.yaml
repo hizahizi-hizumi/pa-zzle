@@ -13,7 +13,8 @@ rules:
   - id: component-state-and-effect
     title: コンポーネントで導出できる値をstateにせず、effectはReact外部との同期に使う
     unit: component
-    violationThreshold: 0.5
+    # golden benchmark (2 runs) のleave-one-file-outで全foldが選んだthreshold。包含P/R 1.00 / 1.00、厳密P 0.90 / R 1.00。
+    violationThreshold: 0.60
     instruction: |
       State holds only values that cannot be derived during render, and
       useEffect is only for synchronizing with systems outside React.
