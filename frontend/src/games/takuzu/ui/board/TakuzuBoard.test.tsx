@@ -71,6 +71,17 @@ describe("TakuzuBoard", () => {
       expect(onCycleCell).toHaveBeenCalledWith(2, "backward");
     });
 
+    test("タッチの長押しでは逆方向の巡回を通知しないこと", () => {
+      const cell = within(board).getByRole("button", {
+        name: "2行1列 B ルール違反",
+      });
+
+      fireEvent.pointerDown(cell, { pointerType: "touch" });
+      fireEvent.contextMenu(cell);
+
+      expect(onCycleCell).not.toHaveBeenCalled();
+    });
+
     test("固定マスを押しても通知しないこと", () => {
       fireEvent.click(
         within(board).getByRole("button", { name: "1行1列 A 固定" }),

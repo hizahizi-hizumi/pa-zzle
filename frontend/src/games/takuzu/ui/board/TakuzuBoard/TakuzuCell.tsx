@@ -1,4 +1,8 @@
-import type { MouseEvent as ReactMouseEvent } from "react";
+import {
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+  useRef,
+} from "react";
 
 import { getTakuzuCellPosition } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
@@ -46,10 +50,19 @@ export function TakuzuCell({
   onCycle,
 }: TakuzuCellProps) {
   const interactive = !disabled && !view.given;
+  const lastPointerTypeRef = useRef<string | null>(null);
+
+  function handlePointerDown(
+    event: ReactPointerEvent<HTMLButtonElement>,
+  ): void {
+    lastPointerTypeRef.current = event.pointerType;
+  }
 
   function handleContextMenu(event: ReactMouseEvent<HTMLButtonElement>): void {
     event.preventDefault();
-    if (interactive) {
+    // タッチの長押しでも contextmenu が届く環境があるため、逆方向の巡回はマウスの右クリックに限る。
+    const fromTouch = lastPointerTypeRef.current === "touch";
+    if (interactive && !fromTouch) {
       onCycle(cellIndex, "backward");
     }
   }
@@ -61,6 +74,7 @@ export function TakuzuCell({
       disabled={!interactive}
       onClick={() => onCycle(cellIndex, "forward")}
       onContextMenu={handleContextMenu}
+      onPointerDown={handlePointerDown}
       data-violated={view.violated || undefined}
       className="relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center rounded-sm bg-slate-200 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default data-violated:outline-2 data-violated:outline-rose-500 data-violated:outline-dashed data-violated:-outline-offset-2 dark:bg-slate-800"
     >
