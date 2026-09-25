@@ -1,0 +1,24 @@
+# 人間向け規約の正本: .claude/rules/views.md（所有しないもの）
+version: 1
+id: views
+
+paths:
+  - frontend/src/views/**/*.tsx
+
+rules:
+  - id: no-domain-logic-in-view
+    title: Viewはゲーム・ドメインや独立した機能の規則を実装しない
+    unit: component
+    violationThreshold: 0.5
+    instruction: |
+      A View connects the responsibilities that make up a screen and must not
+      implement game or domain logic, or rules specific to an independent
+      feature such as saving or evaluation.
+      Violation: the View itself computes game or domain results, such as
+      scores, evaluation levels, difficulty classification, or puzzle rules,
+      or implements feature rules such as which records to save or how to
+      compare them.
+      Not a violation: reading URL parameters and router state; calling the
+      owning module to validate or convert them; wiring hooks, use cases,
+      navigation, and values between responsibilities; screen-specific
+      state, layout, and UI composition.

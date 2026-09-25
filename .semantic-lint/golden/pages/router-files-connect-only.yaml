@@ -1,0 +1,16 @@
+# 期待finding: ルーターとの接続に不要な処理を含むトップレベルの文。
+# 正本: .claude/rules/pages.md。実repoの _app.tsx（pathnameからAppShellのレイアウトを渡す）はルーター状態の接続として違反にしない。
+version: 1
+rule: pages/router-files-connect-only
+baseCommit: 28d17e476a9dbdc39c0f9cecad46ee4d0ad2114a
+files:
+  - path: .semantic-lint/golden/pages/fixtures/pages/_app.tsx
+    blob: 208cbe6393a9f85a12f38ec36c41adb496540655
+    findings:
+      - lines: [6, 17]
+  - path: .semantic-lint/golden/pages/fixtures/pages/_404.tsx
+    blob: c66e68f5a14429a1eb45290789ab6016acdd36e4
+    findings: []
+  - path: frontend/src/pages/_app.tsx
+    blob: f33fc6eb86ca2884f29fed9e74e8daf4e3b6c648
+    findings: []
