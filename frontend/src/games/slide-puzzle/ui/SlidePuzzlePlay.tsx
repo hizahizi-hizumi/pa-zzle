@@ -23,6 +23,7 @@ type SlidePuzzlePlayProps = {
   onReplay: () => void;
   onStartNewProblem: () => void;
   onClearingComplete: () => void;
+  onChangeDifficulty: () => void;
   onBackToHome: () => void;
 };
 
@@ -45,6 +46,7 @@ export function SlidePuzzlePlay({
   onReplay,
   onStartNewProblem,
   onClearingComplete,
+  onChangeDifficulty,
   onBackToHome,
 }: SlidePuzzlePlayProps) {
   const playAreaRef = useRef<HTMLElement>(null);
@@ -93,6 +95,7 @@ export function SlidePuzzlePlay({
         onRestart={onRestart}
         onReplay={onReplay}
         onStartNewProblem={onStartNewProblem}
+        onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
       />
       <main className="flex min-h-0 flex-1 items-center justify-center px-3 pt-2 pb-6 [container-type:size] sm:px-6 sm:pb-8">

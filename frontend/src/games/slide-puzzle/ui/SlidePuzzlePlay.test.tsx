@@ -24,6 +24,7 @@ describe("SlidePuzzlePlay", () => {
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
     onClearingComplete: vi.fn(),
+    onChangeDifficulty: vi.fn(),
     onBackToHome: vi.fn(),
   };
 
@@ -73,16 +74,17 @@ describe("SlidePuzzlePlay", () => {
       expect(result).toBeNull();
     });
 
-    test("戻るボタンでホームへの移動を通知すること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "ホームへ戻る" }));
+    test("戻るボタンで難易度変更を通知すること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
 
-      expect(callbacks.onBackToHome).toHaveBeenCalledOnce();
+      expect(callbacks.onChangeDifficulty).toHaveBeenCalledOnce();
     });
 
     const menuCases = [
       ["盤面を戻す", "onRestart"],
       ["リセット", "onReplay"],
       ["別の問題", "onStartNewProblem"],
+      ["難易度変更", "onChangeDifficulty"],
       ["ホーム", "onBackToHome"],
     ] as const;
 

@@ -1,4 +1,11 @@
-import { Home, MoreHorizontal, Play, RefreshCw, RotateCcw } from "lucide-react";
+import {
+  Home,
+  MoreHorizontal,
+  Play,
+  RefreshCw,
+  RotateCcw,
+  SlidersHorizontal,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +19,7 @@ type PlayMenuProps = {
   onRestart: () => void;
   onReplay: () => void;
   onStartNewProblem: () => void;
+  onChangeDifficulty: () => void;
   onBackToHome: () => void;
 };
 
@@ -19,6 +27,7 @@ export function PlayMenu({
   onRestart,
   onReplay,
   onStartNewProblem,
+  onChangeDifficulty,
   onBackToHome,
 }: PlayMenuProps) {
   return (
@@ -45,6 +54,10 @@ export function PlayMenu({
         <DropdownMenuItem onSelect={onStartNewProblem}>
           <Play />
           別の問題
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={onChangeDifficulty}>
+          <SlidersHorizontal />
+          難易度変更
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={onBackToHome}>
           <Home />
