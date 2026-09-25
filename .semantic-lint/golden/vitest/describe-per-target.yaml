@@ -1,0 +1,38 @@
+# 期待finding: 対象名のdescribeでまとめられていない、同じ対象を検証するtest（fileのトップレベルの文）。
+# 正本: .claude/rules/vitest.md（同じ関数・コンポーネントを複数ケースで検証する場合は describe("<対象名>") でまとめる）。
+# ファイルがモジュール名の単一の対象だけを検証する場合は、モジュール名を繰り返すdescribeを作らない規約と合わせて違反にしない。
+version: 1
+rule: vitest/describe-per-target
+baseCommit: 28d17e476a9dbdc39c0f9cecad46ee4d0ad2114a
+files:
+  - path: frontend/src/records/storage.test.ts
+    blob: 68ea2d3c5365686e217fba4a263a8874601556ae
+    findings:
+      - lines: [33, 42]
+      - lines: [44, 54]
+      - lines: [56, 62]
+      - lines: [64, 75]
+  - path: frontend/src/games/nanpure/puzzle/board.test.ts
+    blob: 8cb81913ab37f795f10d98eb6b1be73714085305
+    findings: []
+  - path: frontend/src/games/nanpure/puzzle/rules.test.ts
+    blob: c973816d3d829e0ac1c8a498570866be24eca614
+    findings: []
+  - path: frontend/src/components/InternalDiagnosticsDialog.test.tsx
+    blob: e804c9eb046455ba59c86b4764a020d9b3b4a980
+    findings: []
+  - path: frontend/src/games/nanpure/play/use-nanpure-play.test.ts
+    blob: 8940bae1c9ebf277de52a209e20eff468de55930
+    findings: []
+  - path: frontend/src/games/nanpure/ui/board/NanpureBoard.test.tsx
+    blob: 55d2fbc29c648896890a8b8c25974dbe651c1005
+    findings: []
+  - path: frontend/src/components/GameSelectionGallery.test.tsx
+    blob: a4705b3664141e44a91033c9c73752cb9559703d
+    findings: []
+  - path: .semantic-lint/golden/vitest/fixtures/stopwatch.test.ts
+    blob: 4335987086f6bdb8e80b0dcddf5e16fd23d8bc1c
+    findings: []
+  - path: .semantic-lint/golden/vitest/fixtures/CouponForm.test.tsx
+    blob: 58794316723b7157394fdb5b9df738432f47a17e
+    findings: []

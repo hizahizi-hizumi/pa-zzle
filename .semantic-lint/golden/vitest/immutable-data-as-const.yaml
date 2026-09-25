@@ -1,0 +1,29 @@
+# 期待finding: beforeEachで不変のテストデータを作り直している文。
+# 正本: .claude/rules/vitest.md（不変の入力値・期待値・テストデータはdescribeスコープのconstにする）。
+# 実repoに違反がないため、違反例はfixtures/の最小fixtureで補う。
+version: 1
+rule: vitest/immutable-data-as-const
+baseCommit: 28d17e476a9dbdc39c0f9cecad46ee4d0ad2114a
+files:
+  - path: .semantic-lint/golden/vitest/fixtures/cart.test.ts
+    blob: 017d681d935ed2bbf1478bcd3c2887890291b950
+    findings:
+      - lines: [34, 37]
+      - lines: [38, 38]
+  - path: .semantic-lint/golden/vitest/fixtures/stopwatch.test.ts
+    blob: 4335987086f6bdb8e80b0dcddf5e16fd23d8bc1c
+    findings:
+      - lines: [30, 30]
+      - lines: [31, 31]
+  - path: frontend/src/components/InternalDiagnosticsDialog.test.tsx
+    blob: e804c9eb046455ba59c86b4764a020d9b3b4a980
+    findings: []
+  - path: frontend/src/games/nanpure/play/use-nanpure-play.test.ts
+    blob: 8940bae1c9ebf277de52a209e20eff468de55930
+    findings: []
+  - path: .semantic-lint/golden/vitest/fixtures/CouponForm.test.tsx
+    blob: 58794316723b7157394fdb5b9df738432f47a17e
+    findings: []
+  - path: frontend/src/games/nanpure/ui/NanpureDiagnostics.test.tsx
+    blob: f2981e03512c0c4363fc2c5c2dfcb4bf4472e29a
+    findings: []
