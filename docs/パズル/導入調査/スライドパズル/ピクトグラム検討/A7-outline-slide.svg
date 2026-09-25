@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="15パズル">
+  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="#0a0a0a" stroke-width="4"/>
+  <path fill="none" stroke="#737373" stroke-width="2" d="M25 25H38V38H25ZM44 25H57V38H44ZM63 25H76V38H63ZM82 25H95V38H82ZM25 44H38V57H25ZM44 44H57V57H44ZM63 44H76V57H63ZM82 44H95V57H82ZM25 63H38V76H25ZM44 63H57V76H44ZM63 63H76V76H63ZM82 63H95V76H82ZM25 82H38V95H25ZM44 82H57V95H44Z"/>
+  <path fill="#0a0a0a" d="M71.5 81H86.5V96H71.5Z"/>
+</svg>
