@@ -84,19 +84,21 @@ describe("FifteenPuzzleBoard", () => {
       ));
     });
 
-    test("演出を再生できない環境ではすぐに完成演出の完了を通知すること", () => {
-      rerender(
-        <FifteenPuzzleBoard
-          board={solvedBoard}
-          operation={null}
-          interactionDisabled
-          clearing
-          onSlideTile={onSlideTile}
-          onClearingComplete={onClearingComplete}
-        />,
-      );
+    describe("演出を再生できない環境の場合", () => {
+      test("完成演出に入るとすぐに完成演出の完了を通知すること", () => {
+        rerender(
+          <FifteenPuzzleBoard
+            board={solvedBoard}
+            operation={null}
+            interactionDisabled
+            clearing
+            onSlideTile={onSlideTile}
+            onClearingComplete={onClearingComplete}
+          />,
+        );
 
-      expect(onClearingComplete).toHaveBeenCalledOnce();
+        expect(onClearingComplete).toHaveBeenCalledOnce();
+      });
     });
   });
 });
