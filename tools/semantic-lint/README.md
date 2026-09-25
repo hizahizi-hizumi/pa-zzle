@@ -43,10 +43,7 @@ bun run --cwd tools/semantic-lint inspect -- \
   vitest/arrange-outside-test \
   frontend/src/records/storage.test.ts
 
-# golden corpusで校正
-bun run --cwd tools/semantic-lint eval -- vitest/arrange-outside-test --repeat 10
-
-# 実repo goldenで現行方式を採点 (providerを呼ぶ)
+# goldenで現行のrule定義とthresholdを採点・校正 (providerを呼ぶ。cacheは使わない)
 bun run --cwd tools/semantic-lint bench -- vitest/arrange-outside-test --repeat 3
 
 # benchのrequest数と推定input tokenだけを確認 (providerを呼ばない)
@@ -55,7 +52,7 @@ bun run --cwd tools/semantic-lint bench -- --plan-only
 # 既存のRunResult JSONをgoldenで採点 (providerを呼ばない)
 bun run --cwd tools/semantic-lint bench -- --score <run-result.json>
 
-# 設定・golden・unitカタログの整合性確認
+# 設定・ruleset・unitカタログ・golden・cache・provider設定の整合性確認
 bun run --cwd tools/semantic-lint doctor
 
 # tool自身の決定論的検証
@@ -192,7 +189,7 @@ stateは次の形で、ファイルは元の並びのまま1回だけ載せ、�
 
 cache keyはrule × unit単位で、1判定の答えを決める次の要素のSHA-256とする。
 
-- provider種別、設定上のmodel、provider側のprompt / request組み立ての版（TypeSafeでは `TYPESAFE_REQUEST_FORMAT`）
+- provider種別、設定上のmodel（「provider model」を参照）、provider側のprompt / request組み立ての版（TypeSafeでは `TYPESAFE_REQUEST_FORMAT`）
 - ruleのunitと `instruction` の文面
 - fileのpathと、unitの文脈: unit本文・祖先・カタログのcontext宣言が指すunit・ファイルの骨格を元の位置に並べ、それ以外のunitを共通の目印に置き換えたもの
 - unitの中のpartの位置（partの確率の並びを決めるため）
@@ -206,7 +203,7 @@ providerへの送信はfileごとのbatchだが、hit / missはtaskごとに判�
 新しい判定はprovider応答ごとに追記するため、途中で失敗した実行で得た判定も次回に使える。実行完了時にcacheを書き直し、重複を畳んで、最終利用から30日を過ぎたentryと50,000件を超えた古いentryを削除する。読めない行や形式の合わないentryは無視してmissとして扱い、次の書き直しで削除する。
 
 - `--no-cache`: cacheを読まず、書きもしない。
-- golden caseで判定の揺れを測る `eval` はcacheを使わない。
+- 判定の精度と揺れを測る `bench` はcacheを読まず、書きもしない。
 - `check --plan-only` はcacheを照合したうえでproviderへ送るrequest数と推定input tokenを表示する（cacheは書き換えない）。2段目は1段目の結果で決まるため含めない。`--no-cache` を付けると全件送る場合の見積もりになる。
 - `inspect` で全件hitした場合はprovider responseが空になる。provider応答を見たいときは `--no-cache` を付ける。
 - `doctor` はcache fileのentry数・サイズ・最終利用日時・読めない行数を表示する。
@@ -218,7 +215,7 @@ providerへの送信はfileごとのbatchだが、hit / missはtaskごとに判�
 
 静的lintで十分に判定できる規約はsemantic lintへ追加しない。文脈や意味の判断が必要な規約だけを対象にする。
 
-定義したruleは常に `check` で実行する（draft / activeのようなlifecycleはない）。指摘の重さはruleの `severity` で決める。
+定義したruleは常に `check` で実行する。指摘の重さはruleの `severity` で決める。
 
 | severity | 出力（pretty / compact / JSON） | 実行サマリの件数 | 実行の失敗 |
 | --- | --- | --- | --- |
@@ -230,12 +227,11 @@ providerへの送信はfileごとのbatchだが、hit / missはtaskごとに判�
 
 1. 対応する人間向け規約が `.claude/rules/*.md` に存在することを確認する。semantic rulesetを規約の正本にしない。
 2. 適用pathを共有できる既存rulesetがあれば `.semantic-lint/rules/<ruleset>.yaml` にruleを追加する。共有できなければ新しいrulesetを作る。rulesetに書けるのは `version`、`id`、対象の `paths`、除外する `exclude`、`rules` だけ。対応する人間向け規約はrulesetの先頭のコメントに書く。
-3. ruleには `id`、`title`、`unit`、`violationThreshold`、`instruction`、必要なら `severity` だけを書く。新規ruleは原則 `severity` を省略（warning）して始める。`unit` は「unit語彙」の名前から選ぶ。scope・selector・AST node・文脈の取り方・指摘位置の決め方は書かない（未知のkeyは読み込みエラーになる）。
-4. `.semantic-lint/cases/<ruleset>/cases.yaml` とfixtureへ、少なくとも明確な `violation` と `no_violation` を追加する。実運用で境界例が見つかったらgolden caseへ追加する。
+3. ruleには `id`、`title`、`unit`、`violationThreshold`、`instruction`、必要なら `severity` だけを書く。新規ruleは原則 `severity` を省略（warning）して始める。`unit` は「unit語彙」の名前から選ぶ。構文の選び方・文脈の取り方・指摘位置の決め方は書かない（未知のkeyは読み込みエラーになる）。
+4. `.semantic-lint/golden/<ruleset>/<rule-id>.yaml` に実repo goldenを追加する（「実repo golden」を参照）。違反ありと違反なしのファイルを必ず含め、実repoに違反が少なければ最小fixtureで違反例を補う。実運用で境界例が見つかったらgoldenへ追加する。
 5. `doctor` と `inspect --plan-only` でpath / unit / subject / request payloadを確認する。
-6. `eval <rule-id> --repeat 10` でChoiceと違反確率の揺れを見る。
-7. 実repo goldenを追加し、`bench` で採点して校正したthresholdを書く。thresholdは単一fixtureへ合わせない。
-8. `check` で実repositoryへ適用し、誤検知・見逃し・unknownを確認する。
+6. `bench <rule-id> --repeat 3` で採点し、校正したthresholdを書く。判定の揺れはrunによる揺れで確認する。thresholdは単一fixtureへ合わせない。
+7. `check` で実repositoryへ適用し、誤検知・見逃し・unknownを確認する。
 
 `instruction` にはruleの判定基準を英語で書く。先頭に規約を1文で述べ、続けて `Violation:` に違反とみなすもの、`Not a violation:` に紛らわしいが違反ではないもの（許可する書き方、ruleが当てはまらないsubjectなど）を簡潔に書く。判定の選択肢と説明は全ruleで共通のため、ruleには書かない（「判定の質問」を参照）。
 
@@ -296,7 +292,7 @@ rulesetは適用pathを共有する単位で分ける。1つの規約ファイ�
 
 ## 実repo golden
 
-`.semantic-lint/golden/<ruleset>/<rule-id>.yaml` は、実repoのファイルに対して規約違反として指摘されるべき行範囲を記録する。判定方式に依存しない形式で、自作fixtureより優先して精度評価の基準にする。
+`.semantic-lint/golden/<ruleset>/<rule-id>.yaml` は、実repoのファイルに対して規約違反として指摘されるべき行範囲を記録する。判定方式に依存しない形式で、ruleの精度評価とthreshold校正は `bench` でこのgoldenだけを基準に行う。
 
 ```yaml
 version: 1
@@ -320,7 +316,7 @@ files:
         columns: [9, 12] # const data = ... の data
 ```
 
-- 実repoに違反が少ないruleは、`.semantic-lint/golden/<ruleset>/fixtures/` の最小fixtureで違反例を補い、実repoの違反なしファイルを必ず含めてprecisionを測る。
+- 実repoに違反が少ないruleは、`.semantic-lint/golden/<ruleset>/fixtures/` の最小fixtureで違反例を補い、実repoの違反なしファイルを必ず含めてprecisionを測る。fixtureもGit履歴のblobから読むため、コミットしてから `bench` を実行する。
 
 - `blob` はラベルを付けた時点のファイル内容を固定する。working treeが変わっても `bench` はそのblobを `git cat-file` で読んで評価するため、Git履歴にblobが必要。
 - working treeとblobが異なるファイルは `doctor` と `bench` がwarningを出す。ラベルを見直してから `blob` と行範囲を更新する。
@@ -338,6 +334,15 @@ files:
 - findingsの全run共通数とrunによる揺れ、判定分布、provider request数、input / output tokens、threshold sweep。
 - 校正: 厳密一致のF1が最大になるthreshold（同点なら包含(unit)のF1、それでも同点なら中央）を推奨値として出す。gapは違反候補の最低scoreとクリーン候補の最高scoreの差、headroomは推奨値から最高クリーンscoreまでの距離。
 - LOFO CV: 1ファイルを外して校正したthresholdでそのファイルを採点し、全ファイルを合わせた包含(unit) / 厳密P/R。ruleのthresholdは全体の推奨値ではなく、CVで性能を確認したうえで決める。
+
+## provider model
+
+`.semantic-lint/config.yaml` の `provider.model` は、別名（`jev-latest` / `jev-preview`）ではなく版で固定する（現在は `jev-1.13.0`）。別名はTypeSafe側の更新で指すmodelが変わるが、判定cacheのkeyは設定上のmodel名で作るため、別名のままでは旧modelの判定を使い続け、goldenで校正したthresholdの前提も黙って崩れる。
+
+- TypeSafeの `GET /v1/models` は別名だけを列挙する。版のIDは、応答の `model`（実際に応答したmodel）で確認でき、その値をそのまま `provider.model` に指定できる。
+- 判定cacheのentryには応答したmodelも保存するが、keyには含めない。
+- 版を上げるときは、新しい版を `provider.model` に書き、`bench --repeat 3` で全ruleを測り直して、必要ならthresholdを再校正する。modelはcache keyに含まれるため、旧版の判定は自動でmissになり、保持期間を過ぎると削除される。
+- 現在のthresholdは、固定前に `jev-latest` で測定した結果で校正している。benchは応答したmodelを記録しないため、測定時に `jev-latest` が `jev-1.13.0` を指していたかは確かめていない。版を固定したことで精度が変わっている可能性がある。
 
 ## CI
 
