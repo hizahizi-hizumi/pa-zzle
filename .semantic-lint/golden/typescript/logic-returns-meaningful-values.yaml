@@ -1,0 +1,39 @@
+# 期待finding: 表示表現を含む結果を返す・持つトップレベルの文（型と関数）。
+# 正本: .claude/rules/typescript.md（ロジックとUI）と .claude/rules/game-structure.md（評価段階の視覚表現はUIが担当）。
+# 実repoに違反が見つからないため、違反例はfixtures/の最小fixtureで補う。
+# water-sort/difficulty.ts の難易度の説明文は、difficulty.tsが所有する難易度ラベルに含まれるか判断が割れるため対象にしない。
+version: 1
+rule: typescript/logic-returns-meaningful-values
+baseCommit: 28d17e476a9dbdc39c0f9cecad46ee4d0ad2114a
+files:
+  - path: .semantic-lint/golden/typescript/fixtures/games/demo/score.ts
+    blob: 5ce84754b783ff8f2e8729586aba635b722f1722
+    findings:
+      - lines: [6, 10]
+      - lines: [12, 20]
+  - path: .semantic-lint/golden/typescript/fixtures/games/demo/personal-best.ts
+    blob: 3819df7c162802e09c8a06591d8e6d916a4df044
+    findings:
+      - lines: [1, 5]
+      - lines: [7, 20]
+  - path: frontend/src/games/nanpure/score.ts
+    blob: b91e88a9ac72865feae75a994969263d808756f7
+    findings: []
+  - path: frontend/src/games/water-sort/score.ts
+    blob: d7ee51836ad8fe2e169be4836ae1cdc0864a5400
+    findings: []
+  - path: frontend/src/records/personal-best.ts
+    blob: 20e050478573dc2ad05b9eb25af01aa641b8374d
+    findings: []
+  - path: frontend/src/records/save-play-record.ts
+    blob: e4c07a6c88788140d7ce1a2f99962e972a226a8b
+    findings: []
+  - path: frontend/src/games/nanpure/difficulty.ts
+    blob: b9162adc0ed30dbcb94e29e0109fc563733d17ea
+    findings: []
+  - path: frontend/src/games/nanpure/session/session.ts
+    blob: 8dc1cae86f2da27b0e75daff2184e280c699e410
+    findings: []
+  - path: frontend/src/games/nanpure/play-record.ts
+    blob: 26dfcd6c9951a3daa2672495d9633aa25f53e243
+    findings: []
