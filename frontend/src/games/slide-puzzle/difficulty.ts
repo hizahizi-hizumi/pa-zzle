@@ -1,4 +1,5 @@
 import type { SlidePuzzleDifficultyAnalysis } from "@/games/slide-puzzle/problem/difficulty-analysis";
+import type { SlidePuzzleProblemIdentity } from "@/games/slide-puzzle/problem/problem";
 import type { SlidePuzzleBoardSize } from "@/games/slide-puzzle/puzzle/state";
 
 export const slidePuzzleDifficulties = [
@@ -144,5 +145,16 @@ export function assessSlidePuzzleDifficulty(
           detourMoveCount <= criteria.maximumDetourMoveCount)
       );
     })?.id ?? null
+  );
+}
+
+/** 記録・診断から読み戻した問題が、そのレベルで遊ぶ盤面サイズで作られているかを確かめる。 */
+export function isSlidePuzzleProblemIdentityOfDifficulty(
+  identity: SlidePuzzleProblemIdentity,
+  difficulty: SlidePuzzleDifficulty,
+): boolean {
+  return (
+    identity.conditions.size ===
+    slidePuzzleDifficultyCriteria[difficulty].boardSize
   );
 }
