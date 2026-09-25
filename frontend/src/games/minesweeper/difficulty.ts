@@ -22,6 +22,15 @@ export function parseMinesweeperDifficulty(
     ?.id;
 }
 
+export function getMinesweeperDifficultyLabel(
+  difficulty: MinesweeperDifficulty,
+): string {
+  return (
+    minesweeperDifficulties.find((option) => option.id === difficulty)?.label ??
+    difficulty
+  );
+}
+
 export type MinesweeperBoardSize = { rows: number; columns: number };
 
 /** 地雷密度の範囲。浮動小数の誤差を避けるため百分率の整数で持ち、両端を含む。 */

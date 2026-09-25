@@ -23,8 +23,10 @@ type MinesweeperPlayProps = {
   onToggleFlag: (cellIndex: number) => void;
   onChordCell: (cellIndex: number) => void;
   onReplay: () => void;
+  onStartNewProblem: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
+  onOpenDiagnostics?: () => void;
 };
 
 export function MinesweeperPlay({
@@ -38,14 +40,21 @@ export function MinesweeperPlay({
   onToggleFlag,
   onChordCell,
   onReplay,
+  onStartNewProblem,
   onChangeDifficulty,
   onBackToHome,
+  onOpenDiagnostics,
 }: MinesweeperPlayProps) {
   const [mode, setMode] = useState<MinesweeperInputMode>("reveal");
 
   function handleReplay(): void {
     setMode("reveal");
     onReplay();
+  }
+
+  function handleStartNewProblem(): void {
+    setMode("reveal");
+    onStartNewProblem();
   }
 
   return (
@@ -58,8 +67,10 @@ export function MinesweeperPlay({
         showsInputModeToggle={status === "playing"}
         onInputModeChange={setMode}
         onReplay={handleReplay}
+        onStartNewProblem={handleStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
+        onOpenDiagnostics={onOpenDiagnostics}
       />
       <main className="flex min-h-0 flex-1 items-center justify-center px-2 py-3 sm:px-6">
         <div className="grid w-full max-w-[27rem] gap-3">

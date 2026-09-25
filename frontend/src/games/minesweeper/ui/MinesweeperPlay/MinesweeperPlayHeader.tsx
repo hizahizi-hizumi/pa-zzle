@@ -13,8 +13,10 @@ type MinesweeperPlayHeaderProps = {
   showsInputModeToggle: boolean;
   onInputModeChange: (mode: MinesweeperInputMode) => void;
   onReplay: () => void;
+  onStartNewProblem: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
+  onOpenDiagnostics?: () => void;
 };
 
 export function MinesweeperPlayHeader({
@@ -24,8 +26,10 @@ export function MinesweeperPlayHeader({
   showsInputModeToggle,
   onInputModeChange,
   onReplay,
+  onStartNewProblem,
   onChangeDifficulty,
   onBackToHome,
+  onOpenDiagnostics,
 }: MinesweeperPlayHeaderProps) {
   return (
     <header className="grid h-[4.5rem] shrink-0 grid-cols-[5.25rem_minmax(0,1fr)_5.25rem] items-start bg-background px-3 pt-2">
@@ -45,8 +49,10 @@ export function MinesweeperPlayHeader({
         ) : null}
         <PlayMenu
           onReplay={onReplay}
+          onStartNewProblem={onStartNewProblem}
           onChangeDifficulty={onChangeDifficulty}
           onBackToHome={onBackToHome}
+          onOpenDiagnostics={onOpenDiagnostics}
         />
       </div>
     </header>

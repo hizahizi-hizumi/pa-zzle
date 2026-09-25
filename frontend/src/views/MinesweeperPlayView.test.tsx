@@ -1,9 +1,21 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 
 import { MinesweeperPlayView } from "@/views/MinesweeperPlayView";
 
-afterEach(cleanup);
+const internalDiagnostics = vi.hoisted(() => ({ available: false }));
+
+vi.mock("@/lib/internal-diagnostics", () => ({
+  get internalDiagnosticsAvailable() {
+    return internalDiagnostics.available;
+  },
+  buildRevision: null,
+}));
+
+afterEach(() => {
+  cleanup();
+  internalDiagnostics.available = false;
+});
 
 function renderAt(path: string): void {
   render(
@@ -45,6 +57,21 @@ describe("MinesweeperPlayView", () => {
 
       expect(message).toBeTruthy();
       expect(backLink.getAttribute("href")).toBe("/puzzles/minesweeper");
+    });
+  });
+
+  describe("内部診断を使えない環境の場合", () => {
+    beforeEach(() => {
+      renderAt("/puzzles/minesweeper/play/1");
+    });
+
+    test("メニューに検証情報を出さないこと", () => {
+      fireEvent.pointerDown(
+        screen.getByRole("button", { name: "その他の操作" }),
+        { button: 0, ctrlKey: false },
+      );
+
+      expect(screen.queryByRole("menuitem", { name: "検証情報" })).toBeNull();
     });
   });
 });
