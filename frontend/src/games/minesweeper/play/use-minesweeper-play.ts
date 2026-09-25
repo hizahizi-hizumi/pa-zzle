@@ -1,6 +1,4 @@
 import { useCallback, useState } from "react";
-
-import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import {
   type MinesweeperRestoredProblem,
@@ -17,6 +15,7 @@ import {
   revealMinesweeperSessionCell,
   toggleMinesweeperSessionFlag,
 } from "@/games/minesweeper/session/session";
+import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
 
 type MinesweeperPlayState = {
   seed: ProblemSeed;

@@ -6,12 +6,12 @@ import {
 } from "@testing-library/react";
 
 import { isInMinesweeperDifficultyBoardRange } from "@/games/minesweeper/difficulty";
+import { useMinesweeperPlay } from "@/games/minesweeper/play/use-minesweeper-play";
 import { restoreMinesweeperProblemWithoutAnalysis } from "@/games/minesweeper/problem/generator";
 import {
   listMinesweeperPoolEntries,
   toMinesweeperPoolIdentity,
 } from "@/games/minesweeper/problem/problem-pool";
-import { useMinesweeperPlay } from "@/games/minesweeper/play/use-minesweeper-play";
 
 afterEach(cleanup);
 
