@@ -73,10 +73,10 @@ rules:
     # 0.80で指摘位置の厳密P/R 0.90 / 0.86。残る誤指摘は「〜中は」「ときは」など、場合・時を含まない条件の表現。
     violationThreshold: 0.80
     instruction: |
-      A test case name must not contain the word 場合 or the word 時.
-      Conditions belong in an enclosing describe name, and the test case name
-      states only the expected behavior.
+      A test case name must not contain the word 場合 or the word 時, because
+      conditions belong in an enclosing describe name.
       Violation: the name contains 場合, or 時 as its own word meaning when,
       such as 手詰まり時, 通常時, 開始時, or した時.
       Not a violation: 時 inside another word such as 時間, 時計, 時刻, 時点,
-      or 同時; とき or なら, which are outside this rule.
+      or 同時; a condition written without 場合 or 時, such as with とき or
+      なら, which is outside this rule.
