@@ -1,4 +1,3 @@
-import { takuzuFixedProblem } from "@/games/takuzu/problem/fixed-problem";
 import {
   _private,
   type TakuzuTechnique,
@@ -6,6 +5,11 @@ import {
   traceTakuzuHumanSolve,
 } from "@/games/takuzu/problem/generation/human-solver";
 import { generateTakuzuProblem } from "@/games/takuzu/problem/generator";
+import { createTakuzuProblemIdentity } from "@/games/takuzu/problem/problem";
+import {
+  listTakuzuPoolEntries,
+  toTakuzuPooledProblem,
+} from "@/games/takuzu/problem/problem-pool";
 import { parseTakuzuBoard } from "@/games/takuzu/puzzle/board";
 
 const {
@@ -128,16 +132,19 @@ describe("findLineReading", () => {
 });
 
 describe("traceTakuzuHumanSolve", () => {
+  // 難易度2 の問題は、個数の完成（B）が要り、隣接・挟み（A）だけでは解き切れない。
+  const { problem } = toTakuzuPooledProblem(listTakuzuPoolEntries("2")[0]!);
+
   describe("手筋で解き切れる問題", () => {
     test("解と同じ盤面まで埋めること", () => {
-      const result = traceTakuzuHumanSolve(takuzuFixedProblem.givens);
+      const result = traceTakuzuHumanSolve(problem.givens);
 
       expect(result.status).toBe("solved");
-      expect(result.board).toEqual(takuzuFixedProblem.solution);
+      expect(result.board).toEqual(problem.solution);
     });
 
     test("各ラウンドで、その局面で確定できる最も浅い手筋を使うこと", () => {
-      const result = traceTakuzuHumanSolve(takuzuFixedProblem.givens);
+      const result = traceTakuzuHumanSolve(problem.givens);
 
       expect(result.rounds[0]?.technique).toBe("adjacency");
     });
@@ -147,7 +154,7 @@ describe("traceTakuzuHumanSolve", () => {
     const techniques: readonly TakuzuTechnique[] = ["adjacency"];
 
     test("許した手筋で確定できなくなった所で止まること", () => {
-      const result = traceTakuzuHumanSolve(takuzuFixedProblem.givens, {
+      const result = traceTakuzuHumanSolve(problem.givens, {
         techniques,
       });
 
@@ -171,11 +178,8 @@ describe("traceTakuzuHumanSolve", () => {
   describe("手筋の上限を変えて作った問題", () => {
     const problems = takuzuTechniques.map(
       (technique) =>
-        generateTakuzuProblem({
-          seed: `human-solver-test-${technique}`,
-          removalTechniqueLimit: technique,
-          extraGivenCount: 0,
-        }).problem,
+        generateTakuzuProblem(createTakuzuProblemIdentity(technique, 0, 0))
+          .problem,
     );
 
     test.each(problems)(

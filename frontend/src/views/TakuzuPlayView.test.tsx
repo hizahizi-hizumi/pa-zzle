@@ -1,4 +1,10 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 
 import { TakuzuPlayView } from "@/views/TakuzuPlayView";
@@ -33,6 +39,21 @@ describe("TakuzuPlayView", () => {
 
       expect(cells).toHaveLength(64);
       expect(screen.queryByText("この難易度は選べません")).toBeNull();
+    });
+
+    describe("メニューを開いた場合", () => {
+      beforeEach(() => {
+        fireEvent.pointerDown(
+          screen.getByRole("button", { name: "その他の操作" }),
+          { button: 0, ctrlKey: false },
+        );
+      });
+
+      test("別の問題を選べること", () => {
+        const result = screen.queryByRole("menuitem", { name: "別の問題" });
+
+        expect(result).not.toBeNull();
+      });
     });
   });
 
