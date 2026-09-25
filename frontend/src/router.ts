@@ -9,6 +9,7 @@ export type Path =
   | `/puzzles/minesweeper/play/:difficulty`
   | `/puzzles/nanpure`
   | `/puzzles/nanpure/play/:difficulty`
+  | `/puzzles/takuzu`
   | `/puzzles/takuzu/play/:difficulty`
   | `/puzzles/water-sort`
   | `/puzzles/water-sort/play/:difficulty`
