@@ -1,67 +1,158 @@
 // @vitest-environment node
 
-import { slidePuzzleDifficulties } from "@/games/slide-puzzle/difficulty";
-import { selectSlidePuzzleProblemForDifficulty } from "@/games/slide-puzzle/problem-selection";
+import {
+  assessSlidePuzzleDifficulty,
+  slidePuzzleDifficulties,
+  slidePuzzleDifficultyCriteria,
+} from "@/games/slide-puzzle/difficulty";
+import { analyzeSlidePuzzleDifficulty } from "@/games/slide-puzzle/problem/difficulty-analysis";
+import { solveSlidePuzzleOptimally } from "@/games/slide-puzzle/problem/generation/solver";
+import { generateSlidePuzzleBoard } from "@/games/slide-puzzle/problem/generator";
+import type { SlidePuzzleProblemIdentity } from "@/games/slide-puzzle/problem/problem";
+import {
+  listSlidePuzzlePoolEntries,
+  toSlidePuzzlePooledProblem,
+} from "@/games/slide-puzzle/problem/problem-pool";
+import {
+  restoreSlidePuzzlePooledProblem,
+  selectSlidePuzzleProblemForDifficulty,
+} from "@/games/slide-puzzle/problem-selection";
 import { isSolvableSlidePuzzleBoard } from "@/games/slide-puzzle/puzzle/rules";
-import { calculateSlidePuzzleManhattanDistance } from "@/games/slide-puzzle/puzzle/state";
 
-describe("selectSlidePuzzleProblemForDifficulty", () => {
-  const difficulties = slidePuzzleDifficulties.map(({ id }) => id);
+const difficulties = slidePuzzleDifficulties.map(({ id }) => id);
+
+describe("問題集", () => {
+  test.each(difficulties)(
+    "レベル %s の全問題が可解で、保存した最短手数からそのレベルと判定されること",
+    (difficulty) => {
+      const levels = listSlidePuzzlePoolEntries(difficulty).map((entry) => {
+        const { identity, optimalMoveCount } =
+          toSlidePuzzlePooledProblem(entry);
+        const board = generateSlidePuzzleBoard(
+          identity.seed,
+          identity.conditions,
+        );
+        return isSolvableSlidePuzzleBoard(board)
+          ? assessSlidePuzzleDifficulty(
+              analyzeSlidePuzzleDifficulty(board, optimalMoveCount),
+            )
+          : null;
+      });
+
+      expect(levels.length).toBeGreaterThanOrEqual(100);
+      expect(new Set(levels)).toEqual(new Set([difficulty]));
+    },
+  );
 
   test.each(difficulties)(
-    "レベル %s でマンハッタン距離が 8 以上の可解な問題を返すこと",
+    "レベル %s の全問題がそのレベルの盤面サイズで作られていること",
     (difficulty) => {
-      const result = selectSlidePuzzleProblemForDifficulty(
-        difficulty,
-        "selection-seed",
+      const boardSizes = listSlidePuzzlePoolEntries(difficulty).map(
+        ([, boardSize]) => boardSize,
       );
 
-      expect(
-        calculateSlidePuzzleManhattanDistance(result.problem.initialBoard),
-      ).toBeGreaterThanOrEqual(8);
-      expect(isSolvableSlidePuzzleBoard(result.problem.initialBoard)).toBe(
-        true,
+      expect(new Set(boardSizes)).toEqual(
+        new Set([slidePuzzleDifficultyCriteria[difficulty].boardSize]),
       );
     },
   );
 
-  const boardSizeCases = [
-    ["1", 3],
-    ["2", 4],
-    ["4", 4],
-    ["5", 5],
-  ] as const;
+  // 最短手数の保存値を solver で確かめる。重い盤面はテストで解かず、3×3 と 4×4 の短い問題だけを見る。
+  const shortCases = [
+    ...listSlidePuzzlePoolEntries("1").slice(0, 10),
+    ...[...listSlidePuzzlePoolEntries("2")]
+      .sort((left, right) => left[3] - right[3])
+      .slice(0, 5),
+  ].map(
+    ([seed, size, scrambleLength, optimalMoveCount]) =>
+      [
+        seed,
+        generateSlidePuzzleBoard(seed, { size, scrambleLength }),
+        optimalMoveCount,
+      ] as const,
+  );
 
-  test.each(boardSizeCases)(
-    "レベル %s では一辺 %i の盤面の問題を返すこと",
-    (difficulty, boardSize) => {
-      const result = selectSlidePuzzleProblemForDifficulty(
+  test.each(shortCases)(
+    "%s は保存した最短手数を solver で再現できること",
+    (_seed, board, optimalMoveCount) => {
+      const result = solveSlidePuzzleOptimally(board);
+
+      expect(result).toMatchObject({ status: "solved", optimalMoveCount });
+    },
+  );
+});
+
+describe("selectSlidePuzzleProblemForDifficulty", () => {
+  test.each(difficulties)(
+    "レベル %s の問題集から同じ seed で同じ問題を選ぶこと",
+    (difficulty) => {
+      const first = selectSlidePuzzleProblemForDifficulty(difficulty, "seed-a");
+      const second = selectSlidePuzzleProblemForDifficulty(
         difficulty,
-        "size-seed",
+        "seed-a",
       );
 
-      expect(result.identity.conditions.size).toBe(boardSize);
-      expect(result.problem.initialBoard).toHaveLength(boardSize * boardSize);
+      expect(second).toEqual(first);
+      expect(
+        listSlidePuzzlePoolEntries(difficulty).some(
+          ([seed, boardSize, scrambleLength, optimalMoveCount]) =>
+            seed === first.identity.seed &&
+            boardSize === first.identity.conditions.size &&
+            scrambleLength === first.identity.conditions.scrambleLength &&
+            optimalMoveCount === first.optimalMoveCount,
+        ),
+      ).toBe(true);
+    },
+  );
+});
+
+describe("restoreSlidePuzzlePooledProblem", () => {
+  const pooledProblems = listSlidePuzzlePoolEntries("3")
+    .slice(0, 3)
+    .map((entry) => [entry[0], toSlidePuzzlePooledProblem(entry)] as const);
+  const unmatchedIdentities: readonly [string, SlidePuzzleProblemIdentity][] = [
+    [
+      "問題集に無い seed",
+      {
+        generatorVersion: "1",
+        seed: "not-in-pool",
+        conditions: { size: 4, scrambleLength: 30 },
+      },
+    ],
+    [
+      "seed と撹拌手数は問題集の項目と同じで盤面サイズだけが違う",
+      {
+        generatorVersion: "1",
+        seed: "sp4-20-8",
+        conditions: { size: 5, scrambleLength: 20 },
+      },
+    ],
+  ];
+
+  test.each(pooledProblems)(
+    "問題集にある識別情報から盤面と最短手数を復元すること: %s",
+    (_seed, { identity, optimalMoveCount }) => {
+      const result = restoreSlidePuzzlePooledProblem(identity);
+
+      expect(result).toEqual({
+        problem: {
+          initialBoard: generateSlidePuzzleBoard(
+            identity.seed,
+            identity.conditions,
+          ),
+        },
+        identity,
+        optimalMoveCount,
+      });
     },
   );
 
-  test("同じ難易度と seed から同じ問題を返すこと", () => {
-    const first = selectSlidePuzzleProblemForDifficulty("3", "same-seed");
-    const second = selectSlidePuzzleProblemForDifficulty("3", "same-seed");
+  test.each(unmatchedIdentities)(
+    "問題集の項目と一致しない識別情報では null を返すこと: %s",
+    (_, identity) => {
+      const result = restoreSlidePuzzlePooledProblem(identity);
 
-    expect(second).toEqual(first);
-  });
-
-  describe("最初に生成した盤面のマンハッタン距離が 8 未満の場合", () => {
-    const seed = "s30";
-
-    test("seed を変えて生成し直した盤面を返すこと", () => {
-      const result = selectSlidePuzzleProblemForDifficulty("1", seed);
-
-      expect(result.identity.seed).toBe(`${seed}-1`);
-      expect(
-        calculateSlidePuzzleManhattanDistance(result.problem.initialBoard),
-      ).toBeGreaterThanOrEqual(8);
-    });
-  });
+      expect(result).toBeNull();
+    },
+  );
 });

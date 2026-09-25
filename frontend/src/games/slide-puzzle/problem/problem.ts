@@ -25,4 +25,6 @@ export type SlidePuzzleProblemIdentity = {
 export type SlidePuzzleGeneratedProblem = {
   problem: SlidePuzzleProblem;
   identity: SlidePuzzleProblemIdentity;
+  /** 問題集に保存した最短手数。 */
+  optimalMoveCount: number;
 };
