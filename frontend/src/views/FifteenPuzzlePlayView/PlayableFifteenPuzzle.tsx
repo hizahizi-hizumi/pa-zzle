@@ -26,8 +26,6 @@ export function PlayableFifteenPuzzle({
       onReplay={play.replay}
       onStartNewProblem={play.startNewProblem}
       onClearingComplete={play.completeClearing}
-      // 難易度選択画面を追加するまではホームへ戻す。
-      onChangeDifficulty={() => navigate("/")}
       onBackToHome={() => navigate("/")}
     />
   );

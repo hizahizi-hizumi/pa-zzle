@@ -21,7 +21,7 @@ type PlayMenuProps = {
   onRestart: () => void;
   onReplay: () => void;
   onStartNewProblem: () => void;
-  onChangeDifficulty: () => void;
+  onChangeDifficulty?: () => void;
   onBackToHome: () => void;
   onOpenDiagnostics?: () => void;
 };
@@ -59,10 +59,12 @@ export function PlayMenu({
           <Play />
           別の問題
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={onChangeDifficulty}>
-          <SlidersHorizontal />
-          難易度変更
-        </DropdownMenuItem>
+        {onChangeDifficulty && (
+          <DropdownMenuItem onSelect={onChangeDifficulty}>
+            <SlidersHorizontal />
+            難易度変更
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onSelect={onBackToHome}>
           <Home />
           ホーム

@@ -10,7 +10,7 @@ type FifteenPuzzlePlayHeaderProps = {
   onRestart: () => void;
   onReplay: () => void;
   onStartNewProblem: () => void;
-  onChangeDifficulty: () => void;
+  onChangeDifficulty?: () => void;
   onBackToHome: () => void;
   onOpenDiagnostics?: () => void;
 };
@@ -31,8 +31,8 @@ export function FifteenPuzzlePlayHeader({
         type="button"
         variant="ghost"
         size="icon-lg"
-        aria-label="難易度選択へ戻る"
-        onClick={onChangeDifficulty}
+        aria-label="ホームへ戻る"
+        onClick={onBackToHome}
       >
         <ArrowLeft />
       </Button>
