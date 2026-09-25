@@ -363,20 +363,35 @@ function probabilityOfGreater(
   return score / (lower.length * upper.length);
 }
 
+type AucGrouping = {
+  label: string;
+  groupKey: (record: FlatRecord) => string;
+};
+
+/** 同じ生成条件（手筋の上限・戻す数）の中で比べる。 */
+const withinConditionGrouping: AucGrouping = {
+  label: "同条件内",
+  groupKey: (record) => `${record.removalLimit}:${record.extraGivenCount}`,
+};
+
+/** 空きマスの数がちょうど同じ問題の中で比べる。規模をそろえてもレベルの差が残るかを見る。 */
+const sameEmptyCellCountGrouping: AucGrouping = {
+  label: "同じ空きマス数",
+  groupKey: (record) => String(record.emptyCellCount),
+};
+
 /**
- * 同じ生成条件の中で隣り合う2レベルから1問ずつ取ったとき、上位レベルの値のほうが大きい確率。
- * 各レベルに10問以上ある条件だけを使い、少ないほうの問題数で重み付けして平均する。
+ * 同じグループの中で隣り合う2レベルから1問ずつ取ったとき、上位レベルの値のほうが大きい確率。
+ * 各レベルに10問以上あるグループだけを使い、少ないほうの問題数で重み付けして平均する。
  */
-function withinConditionAuc(
+function groupedAuc(
   records: readonly FlatRecord[],
+  grouping: AucGrouping,
   column: string,
   lowerLevel: string,
   upperLevel: string,
 ): number | null {
-  const groups = Map.groupBy(
-    records,
-    (record) => `${record.removalLimit}:${record.extraGivenCount}`,
-  );
+  const groups = Map.groupBy(records, grouping.groupKey);
   let weightedSum = 0;
   let totalWeight = 0;
   for (const group of groups.values()) {
@@ -398,6 +413,13 @@ function withinConditionAuc(
   return totalWeight > 0 ? weightedSum / totalWeight : null;
 }
 
+const aucColumns = [
+  "emptyCellCount",
+  "roundCount",
+  "singleSourceRoundCount",
+  "meanSourceCount",
+] as const;
+
 function printAdjacentLevelAuc(records: readonly FlatRecord[]): void {
   const pairs = [
     ["1", "2"],
@@ -405,22 +427,119 @@ function printAdjacentLevelAuc(records: readonly FlatRecord[]): void {
     ["3", "4"],
     ["4", "5"],
   ] as const;
-  console.log("\n## 同条件内 AUC（隣り合うレベルで上位の値が大きい確率）");
+  for (const grouping of [
+    withinConditionGrouping,
+    sameEmptyCellCountGrouping,
+  ]) {
+    console.log(
+      `\n## ${grouping.label} AUC（隣り合うレベルで上位の値が大きい確率。meanSourceCount は小さいほど見つけにくい）`,
+    );
+    console.log(
+      ["column", ...pairs.map(([lower, upper]) => `${lower}→${upper}`)].join(
+        "\t",
+      ),
+    );
+    for (const column of aucColumns) {
+      const values = pairs.map(([lower, upper]) =>
+        formatNumber(groupedAuc(records, grouping, column, lower, upper)),
+      );
+      console.log([column, ...values].join("\t"));
+    }
+  }
+}
+
+/**
+ * 難易度4 と 5 の分け方の候補。どの案も、D 以上が要る問題（分類上 4 か 5）だけを分け直す。
+ * P1 が `difficulty.ts` の現在の分類。
+ */
+const difficulty5Plans = [
+  {
+    id: "P1",
+    description: "E、または重複の回避が2局面以上",
+    isDifficulty5: (record: FlatRecord) =>
+      Number(record["general-lineRoundCount"]) > 0 ||
+      Number(record.duplicateAvoidanceRoundCount) >= 2,
+  },
+  {
+    id: "P2",
+    description: "E、または深い読みが2ラウンド以上続く",
+    isDifficulty5: (record: FlatRecord) =>
+      Number(record["general-lineRoundCount"]) > 0 ||
+      Number(record.longestLineReadingStreak) >= 2,
+  },
+  {
+    id: "P3",
+    description: "E だけ",
+    isDifficulty5: (record: FlatRecord) =>
+      Number(record["general-lineRoundCount"]) > 0,
+  },
+  {
+    id: "P6",
+    description: "P1 または P2",
+    isDifficulty5: (record: FlatRecord) =>
+      Number(record["general-lineRoundCount"]) > 0 ||
+      Number(record.duplicateAvoidanceRoundCount) >= 2 ||
+      Number(record.longestLineReadingStreak) >= 2,
+  },
+  {
+    id: "P7",
+    description:
+      "E、または（重複の回避が2局面以上 かつ 深い読みが2ラウンド以上続く）",
+    isDifficulty5: (record: FlatRecord) =>
+      Number(record["general-lineRoundCount"]) > 0 ||
+      (Number(record.duplicateAvoidanceRoundCount) >= 2 &&
+        Number(record.longestLineReadingStreak) >= 2),
+  },
+] as const;
+
+function maximumShareByCondition(
+  records: readonly FlatRecord[],
+  level: string,
+): number {
+  const groups = Map.groupBy(records, withinConditionGrouping.groupKey);
+  return Math.max(
+    ...[...groups.values()].map(
+      (group) =>
+        group.filter((record) => record.level === level).length / group.length,
+    ),
+  );
+}
+
+function printDifficulty5PlanComparison(records: readonly FlatRecord[]): void {
   console.log(
-    ["column", ...pairs.map(([lower, upper]) => `${lower}→${upper}`)].join(
+    "\n## 難易度5 の条件の比較（4 / 5 の問題数、4→5 同条件内 AUC、最も出やすい条件での割合 4 / 5）",
+  );
+  console.log(
+    ["plan", "count 4/5", ...aucColumns, "max share 4/5", "description"].join(
       "\t",
     ),
   );
-  for (const column of [
-    "emptyCellCount",
-    "roundCount",
-    "singleSourceRoundCount",
-    "meanSourceCount",
-  ]) {
-    const values = pairs.map(([lower, upper]) =>
-      formatNumber(withinConditionAuc(records, column, lower, upper)),
+  for (const plan of difficulty5Plans) {
+    const relabeled = records.map((record) =>
+      record.level === "4" || record.level === "5"
+        ? { ...record, level: plan.isDifficulty5(record) ? "5" : "4" }
+        : record,
     );
-    console.log([column, ...values].join("\t"));
+    const counts = ["4", "5"].map(
+      (level) => relabeled.filter((record) => record.level === level).length,
+    );
+    const aucs = aucColumns.map((column) =>
+      formatNumber(
+        groupedAuc(relabeled, withinConditionGrouping, column, "4", "5"),
+      ),
+    );
+    const shares = ["4", "5"].map((level) =>
+      formatNumber(maximumShareByCondition(relabeled, level)),
+    );
+    console.log(
+      [
+        plan.id,
+        counts.join(" / "),
+        ...aucs,
+        shares.join(" / "),
+        plan.description,
+      ].join("\t"),
+    );
   }
 }
 
@@ -526,6 +645,7 @@ async function runMain(): Promise<void> {
   printFeaturesByLevel(flatRecords);
   printScaleCorrelations(flatRecords);
   printAdjacentLevelAuc(flatRecords);
+  printDifficulty5PlanComparison(flatRecords);
   printGenerationTimes(flatRecords);
 }
 
