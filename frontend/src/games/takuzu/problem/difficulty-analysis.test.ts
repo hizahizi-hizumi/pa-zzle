@@ -2,9 +2,12 @@ import {
   _private,
   analyzeTakuzuDifficulty,
 } from "@/games/takuzu/problem/difficulty-analysis";
-import { takuzuFixedProblem } from "@/games/takuzu/problem/fixed-problem";
 import type { TakuzuHumanSolveRound } from "@/games/takuzu/problem/generation/human-solver";
 import type { TakuzuProblem } from "@/games/takuzu/problem/problem";
+import {
+  listTakuzuPoolEntries,
+  toTakuzuPooledProblem,
+} from "@/games/takuzu/problem/problem-pool";
 import { parseTakuzuBoard } from "@/games/takuzu/puzzle/board";
 
 const { findLongestStreak } = _private;
@@ -18,19 +21,24 @@ function createProblemFromGivensOnly(rows: readonly string[]): TakuzuProblem {
 
 describe("analyzeTakuzuDifficulty", () => {
   describe("手筋で解き切れる一意解の問題", () => {
+    const { problem } = toTakuzuPooledProblem(listTakuzuPoolEntries("3")[0]!);
+    const givenCount = problem.givens.cells.filter(
+      (cell) => cell !== null,
+    ).length;
+
     test("規模と手筋の特徴を返すこと", () => {
-      const result = analyzeTakuzuDifficulty(takuzuFixedProblem);
+      const result = analyzeTakuzuDifficulty(problem);
 
       expect(result.status).toBe("analyzed");
       expect(result.scale).toEqual({
         cellCount: 64,
-        givenCount: 20,
-        emptyCellCount: 44,
+        givenCount,
+        emptyCellCount: 64 - givenCount,
       });
     });
 
     test("ラウンド数を手筋ごとの回数の合計と一致させること", () => {
-      const result = analyzeTakuzuDifficulty(takuzuFixedProblem);
+      const result = analyzeTakuzuDifficulty(problem);
 
       const features = result.status === "analyzed" ? result.features : null;
       const totalByTechnique = Object.values(
