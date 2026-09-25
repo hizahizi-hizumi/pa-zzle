@@ -5,6 +5,13 @@ import { MinesweeperPlay } from "./MinesweeperPlay";
 
 afterEach(cleanup);
 
+function openPlayMenu(): void {
+  fireEvent.pointerDown(screen.getByRole("button", { name: "その他の操作" }), {
+    button: 0,
+    ctrlKey: false,
+  });
+}
+
 describe("MinesweeperPlay", () => {
   describe("プレイ中の場合", () => {
     const visibleCells: readonly MinesweeperVisibleCell[] = [
@@ -15,12 +22,16 @@ describe("MinesweeperPlay", () => {
     ];
     let onToggleFlag: (cellIndex: number) => void;
     let onRevealCell: (cellIndex: number) => void;
+    let onReplay: () => void;
+    let onStartNewProblem: () => void;
     let onChangeDifficulty: () => void;
     let onBackToHome: () => void;
 
     beforeEach(() => {
       onToggleFlag = vi.fn();
       onRevealCell = vi.fn();
+      onReplay = vi.fn();
+      onStartNewProblem = vi.fn();
       onChangeDifficulty = vi.fn();
       onBackToHome = vi.fn();
       render(
@@ -34,7 +45,8 @@ describe("MinesweeperPlay", () => {
           onRevealCell={onRevealCell}
           onToggleFlag={onToggleFlag}
           onChordCell={vi.fn()}
-          onReplay={vi.fn()}
+          onReplay={onReplay}
+          onStartNewProblem={onStartNewProblem}
           onChangeDifficulty={onChangeDifficulty}
           onBackToHome={onBackToHome}
         />,
@@ -57,6 +69,31 @@ describe("MinesweeperPlay", () => {
 
       expect(onChangeDifficulty).toHaveBeenCalledOnce();
       expect(onBackToHome).not.toHaveBeenCalled();
+    });
+
+    test("メニューのリセットで同じ問題のやり直しを通知すること", () => {
+      openPlayMenu();
+      fireEvent.click(screen.getByRole("menuitem", { name: "リセット" }));
+
+      expect(onReplay).toHaveBeenCalledOnce();
+      expect(onStartNewProblem).not.toHaveBeenCalled();
+    });
+
+    test("メニューの別の問題で新しい問題の開始を通知すること", () => {
+      openPlayMenu();
+      fireEvent.click(screen.getByRole("menuitem", { name: "別の問題" }));
+
+      expect(onStartNewProblem).toHaveBeenCalledOnce();
+      expect(onReplay).not.toHaveBeenCalled();
+    });
+
+    describe("検証情報を開く操作を渡さない場合", () => {
+      test("メニューに検証情報を出さないこと", () => {
+        openPlayMenu();
+
+        const item = screen.queryByRole("menuitem", { name: "検証情報" });
+        expect(item).toBeNull();
+      });
     });
 
     test("ヘッダーの旗モード切替が初期状態で押されていないこと", () => {
@@ -111,6 +148,44 @@ describe("MinesweeperPlay", () => {
     });
   });
 
+  describe("検証情報を開く操作を渡した場合", () => {
+    let onOpenDiagnostics: () => void;
+
+    beforeEach(() => {
+      onOpenDiagnostics = vi.fn();
+      render(
+        <MinesweeperPlay
+          rows={2}
+          columns={2}
+          mineCount={1}
+          flagCount={0}
+          visibleCells={[
+            { state: "hidden" },
+            { state: "revealed", adjacentMineCount: 1 },
+            { state: "hidden" },
+            { state: "hidden" },
+          ]}
+          status="playing"
+          onRevealCell={vi.fn()}
+          onToggleFlag={vi.fn()}
+          onChordCell={vi.fn()}
+          onReplay={vi.fn()}
+          onStartNewProblem={vi.fn()}
+          onChangeDifficulty={vi.fn()}
+          onBackToHome={vi.fn()}
+          onOpenDiagnostics={onOpenDiagnostics}
+        />,
+      );
+    });
+
+    test("メニューの検証情報で検証情報を開く操作を通知すること", () => {
+      openPlayMenu();
+      fireEvent.click(screen.getByRole("menuitem", { name: "検証情報" }));
+
+      expect(onOpenDiagnostics).toHaveBeenCalledOnce();
+    });
+  });
+
   describe("終了後の場合", () => {
     const visibleCells: readonly MinesweeperVisibleCell[] = [
       { state: "exploded" },
@@ -132,6 +207,7 @@ describe("MinesweeperPlay", () => {
           onToggleFlag={vi.fn()}
           onChordCell={vi.fn()}
           onReplay={vi.fn()}
+          onStartNewProblem={vi.fn()}
           onChangeDifficulty={vi.fn()}
           onBackToHome={vi.fn()}
         />,

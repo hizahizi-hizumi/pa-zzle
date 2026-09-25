@@ -1,8 +1,10 @@
 import {
   Home,
   MoreHorizontal,
+  Play,
   RefreshCw,
   SlidersHorizontal,
+  Wrench,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -10,19 +12,24 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 type PlayMenuProps = {
   onReplay: () => void;
+  onStartNewProblem: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
+  onOpenDiagnostics?: () => void;
 };
 
 export function PlayMenu({
   onReplay,
+  onStartNewProblem,
   onChangeDifficulty,
   onBackToHome,
+  onOpenDiagnostics,
 }: PlayMenuProps) {
   return (
     <DropdownMenu>
@@ -41,6 +48,10 @@ export function PlayMenu({
           <RefreshCw />
           リセット
         </DropdownMenuItem>
+        <DropdownMenuItem onSelect={onStartNewProblem}>
+          <Play />
+          別の問題
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={onChangeDifficulty}>
           <SlidersHorizontal />
           難易度変更
@@ -49,6 +60,15 @@ export function PlayMenu({
           <Home />
           ホーム
         </DropdownMenuItem>
+        {onOpenDiagnostics && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={onOpenDiagnostics}>
+              <Wrench />
+              検証情報
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
