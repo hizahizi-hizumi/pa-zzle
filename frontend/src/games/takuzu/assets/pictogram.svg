@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="バイナリパズル">
+  <path fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" d="M46 18v84M74 18v84M18 60h84"/>
+  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <g fill="var(--game-pictogram-strong)"><rect x="23.5" y="30.5" width="17" height="17" rx="3"/><rect x="51.5" y="30.5" width="17" height="17" rx="3"/><rect x="79.5" y="72.5" width="17" height="17" rx="3"/></g>
+  <g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"><circle cx="88" cy="39" r="8.5"/><circle cx="32" cy="81" r="8.5"/><circle cx="60" cy="81" r="8.5"/></g>
+</svg>
