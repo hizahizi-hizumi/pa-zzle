@@ -8,6 +8,7 @@ import type { SlidePuzzleBoardSize } from "@/games/slide-puzzle/puzzle/state";
 
 export type SlidePuzzleProblemPoolEntry = readonly [
   seed: string,
+  boardSize: SlidePuzzleBoardSize,
   scrambleLength: number,
   optimalMoveCount: number,
 ];
@@ -23,11 +24,10 @@ type SlidePuzzlePooledProblem = {
 };
 
 const problemPool = problemPoolJson as unknown as SlidePuzzleProblemPool;
-/** 問題集の問題はすべてこの盤面サイズで作っている。 */
-const POOLED_BOARD_SIZE: SlidePuzzleBoardSize = 4;
 
 export function toSlidePuzzlePooledProblem([
   seed,
+  boardSize,
   scrambleLength,
   optimalMoveCount,
 ]: SlidePuzzleProblemPoolEntry): SlidePuzzlePooledProblem {
@@ -35,7 +35,7 @@ export function toSlidePuzzlePooledProblem([
     identity: {
       generatorVersion: SLIDE_PUZZLE_GENERATOR_VERSION,
       seed,
-      conditions: { size: POOLED_BOARD_SIZE, scrambleLength },
+      conditions: { size: boardSize, scrambleLength },
     },
     optimalMoveCount,
   };
@@ -51,21 +51,19 @@ export function listSlidePuzzlePoolEntries(
 export function findSlidePuzzlePooledOptimalMoveCount(
   identity: SlidePuzzleProblemIdentity,
 ): number | null {
-  if (
-    identity.generatorVersion !== problemPool.generatorVersion ||
-    identity.conditions.size !== POOLED_BOARD_SIZE
-  ) {
+  if (identity.generatorVersion !== problemPool.generatorVersion) {
     return null;
   }
 
   for (const entries of Object.values(problemPool.levels)) {
     const entry = entries.find(
-      ([seed, scrambleLength]) =>
+      ([seed, boardSize, scrambleLength]) =>
         seed === identity.seed &&
+        boardSize === identity.conditions.size &&
         scrambleLength === identity.conditions.scrambleLength,
     );
     if (entry) {
-      return entry[2];
+      return entry[3];
     }
   }
   return null;

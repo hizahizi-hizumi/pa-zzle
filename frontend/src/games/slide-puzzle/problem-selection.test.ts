@@ -3,6 +3,7 @@
 import {
   assessSlidePuzzleDifficulty,
   slidePuzzleDifficulties,
+  slidePuzzleDifficultyCriteria,
 } from "@/games/slide-puzzle/difficulty";
 import { analyzeSlidePuzzleDifficulty } from "@/games/slide-puzzle/problem/difficulty-analysis";
 import { solveSlidePuzzleOptimally } from "@/games/slide-puzzle/problem/generation/solver";
@@ -43,20 +44,36 @@ describe("問題集", () => {
     },
   );
 
-  // 最短手数の保存値を solver で確かめる。重い盤面はテストで解かず、短い問題だけを見る。
-  const shortCases = listSlidePuzzlePoolEntries("1")
-    .slice(0, 10)
-    .map(
-      ([seed, scrambleLength, optimalMoveCount]) =>
-        [
-          seed,
-          generateSlidePuzzleBoard(seed, { size: 4, scrambleLength }),
-          optimalMoveCount,
-        ] as const,
-    );
+  test.each(difficulties)(
+    "レベル %s の全問題がそのレベルの盤面サイズで作られていること",
+    (difficulty) => {
+      const boardSizes = listSlidePuzzlePoolEntries(difficulty).map(
+        ([, boardSize]) => boardSize,
+      );
+
+      expect(new Set(boardSizes)).toEqual(
+        new Set([slidePuzzleDifficultyCriteria[difficulty].boardSize]),
+      );
+    },
+  );
+
+  // 最短手数の保存値を solver で確かめる。重い盤面はテストで解かず、3×3 と 4×4 の短い問題だけを見る。
+  const shortCases = [
+    ...listSlidePuzzlePoolEntries("1").slice(0, 10),
+    ...[...listSlidePuzzlePoolEntries("2")]
+      .sort((left, right) => left[3] - right[3])
+      .slice(0, 5),
+  ].map(
+    ([seed, size, scrambleLength, optimalMoveCount]) =>
+      [
+        seed,
+        generateSlidePuzzleBoard(seed, { size, scrambleLength }),
+        optimalMoveCount,
+      ] as const,
+  );
 
   test.each(shortCases)(
-    "レベル 1 の %s は保存した最短手数を solver で再現できること",
+    "%s は保存した最短手数を solver で再現できること",
     (_seed, board, optimalMoveCount) => {
       const result = solveSlidePuzzleOptimally(board);
 
@@ -78,8 +95,9 @@ describe("selectSlidePuzzleProblemForDifficulty", () => {
       expect(second).toEqual(first);
       expect(
         listSlidePuzzlePoolEntries(difficulty).some(
-          ([seed, scrambleLength, optimalMoveCount]) =>
+          ([seed, boardSize, scrambleLength, optimalMoveCount]) =>
             seed === first.identity.seed &&
+            boardSize === first.identity.conditions.size &&
             scrambleLength === first.identity.conditions.scrambleLength &&
             optimalMoveCount === first.optimalMoveCount,
         ),
