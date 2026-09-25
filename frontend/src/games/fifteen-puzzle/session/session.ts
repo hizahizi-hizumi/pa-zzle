@@ -8,7 +8,7 @@ import {
   isFifteenPuzzleSolved,
 } from "@/games/fifteen-puzzle/puzzle/state";
 
-export type FifteenPuzzleSessionStatus = "playing" | "cleared";
+type FifteenPuzzleSessionStatus = "playing" | "cleared";
 
 export type FifteenPuzzleSession = {
   status: FifteenPuzzleSessionStatus;
