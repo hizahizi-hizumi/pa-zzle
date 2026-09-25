@@ -1,0 +1,52 @@
+# 人間向け規約の正本: .claude/rules/self-documenting-code.md
+# 正本のpathsのうち、コメントのunitを抽出できるTypeScript / TSXを対象にする。
+# 生成物（Generoutedのrouter.ts）、上流の形状を維持するshadcn/ui、semantic lintのfixtureは対象にしない。
+version: 1
+id: self-documenting-code
+
+paths:
+  - "**/*.ts"
+  - "**/*.tsx"
+exclude:
+  - frontend/src/router.ts
+  - frontend/src/components/ui/**
+  - .semantic-lint/**
+
+rules:
+  - id: comment-explains-why
+    title: コメントはコードで表せない理由や制約に限り、処理の説明や履歴を書かない
+    unit: comment
+    violationThreshold: 0.5
+    instruction: |
+      What the code does and how it does it must be expressed by the code
+      itself. A comment carries only what the code cannot reasonably express:
+      why an implementation, constraint, or exception handling is needed;
+      non-local constraints or quirks from external systems or
+      specifications; invariants or assumptions that types and structure
+      cannot express; deliberate non-obvious trade-offs, workarounds, or
+      compatibility reasons; or a high-level summary needed to read truly
+      complex code. Comments stay short, local, and in the present tense.
+      Violation: explaining what the code does or how, when names, types,
+      structure, or control flow could express it; restating the code,
+      narrating processing steps, or a heading that labels a section of
+      code; operational procedures, change history, or comparisons with past
+      implementations; a long comment that explains far more than the code
+      next to it.
+      Not a violation: a reason for code that looks removable or could be
+      simplified; a lint suppression or tool directive with its reason; text
+      that is part of test input data.
+
+  - id: doc-comment-no-duplication
+    title: 文書コメントはシグネチャ・型・実装手順を重複して説明しない
+    unit: doc-comment
+    violationThreshold: 0.5
+    instruction: |
+      A documentation comment may describe the purpose, contract, and usage
+      constraints that users of the API need, but must not repeat its
+      signature, types, or implementation steps.
+      Violation: the comment only restates the name, parameters, return
+      value, or types that the declaration already shows, or narrates the
+      implementation steps.
+      Not a violation: purpose, meaning of values, preconditions,
+      guarantees, units, edge-case behavior, or usage constraints that the
+      declaration does not show.

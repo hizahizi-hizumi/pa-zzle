@@ -1,0 +1,35 @@
+# 期待finding: 違反として指摘されるべきコメントの位置（lines と columns）。
+# 正本: .claude/rules/self-documenting-code.md（何を・どうしているかの説明、逐語的な言い換え・手順のナレーション・見出し、運用手順・変更履歴、長いコメント）。
+# 実repoでは理由・制約・指令のコメントを違反なしとし、判断が割れる「何をしているか」寄りのコメントを含むファイルは対象にしない。違反例はfixtureで補う。
+version: 1
+rule: self-documenting-code/comment-explains-why
+baseCommit: 28d17e476a9dbdc39c0f9cecad46ee4d0ad2114a
+files:
+  - path: .semantic-lint/golden/self-documenting-code/fixtures/inventory.ts
+    blob: 57b31309c8d7e0d1f759b2a92d81d350dfc86cd8
+    findings:
+      - lines: [6, 11]
+        columns: [1, 3]
+      - lines: [21, 21]
+        columns: [3, 20]
+      - lines: [23, 23]
+        columns: [3, 18]
+      - lines: [28, 28]
+        columns: [3, 22]
+      - lines: [29, 29]
+        columns: [3, 45]
+  - path: frontend/src/games/water-sort/puzzle/deadlock.ts
+    blob: 236cae3d05aaad567d8cd7c4fe9c6a0f61c5470e
+    findings: []
+  - path: frontend/src/pages/_app.tsx
+    blob: f33fc6eb86ca2884f29fed9e74e8daf4e3b6c648
+    findings: []
+  - path: frontend/src/games/water-sort/session/session.test.ts
+    blob: 9ed2976c64d85d807c7a7f41c1b1482b6c7c9b44
+    findings: []
+  - path: tools/semantic-lint/eval/calibrate.test.ts
+    blob: b8a7baf9289a715ec712d0137148c124fe4db23e
+    findings: []
+  - path: tools/semantic-lint/cache/decision-cache.ts
+    blob: 312d5ab0e31ff51b06fb32642d232d8f88131fed
+    findings: []

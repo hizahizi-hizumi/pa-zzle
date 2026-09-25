@@ -1,0 +1,23 @@
+# 期待finding: 違反として指摘されるべき文書コメントの位置（lines と columns）。
+# 正本: .claude/rules/self-documenting-code.md（公開APIの文書でシグネチャ・型・実装手順を重複して説明しない）。違反例はfixtureで補う。
+version: 1
+rule: self-documenting-code/doc-comment-no-duplication
+baseCommit: 28d17e476a9dbdc39c0f9cecad46ee4d0ad2114a
+files:
+  - path: .semantic-lint/golden/self-documenting-code/fixtures/inventory.ts
+    blob: 57b31309c8d7e0d1f759b2a92d81d350dfc86cd8
+    findings:
+      - lines: [14, 19]
+        columns: [1, 3]
+  - path: tools/semantic-lint/diagnostics/build.ts
+    blob: dc67c4ef072fbe0b2d440bed9221b8e577fe6af4
+    findings: []
+  - path: tools/semantic-lint/units/position.ts
+    blob: 80a517ec987bb9f0a6fdb32a2b4602e307661c2a
+    findings: []
+  - path: tools/semantic-lint/cli/decision-cache.ts
+    blob: 13edb9f9c3a217176c3853d5938f795e5c5dc9b3
+    findings: []
+  - path: tools/semantic-lint/cache/decision-cache.ts
+    blob: 312d5ab0e31ff51b06fb32642d232d8f88131fed
+    findings: []
