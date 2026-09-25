@@ -1,7 +1,3 @@
-import type { PlayRecord } from "@/records/play-record";
-import { createPlayRecordId } from "@/records/play-record";
-import type { PlayRecordDefinition } from "@/records/play-record-definition";
-
 import {
   type MinesweeperDifficulty,
   parseMinesweeperDifficulty,
@@ -15,6 +11,9 @@ import {
   calculateMinesweeperTimeDeltaMs,
 } from "@/games/minesweeper/score";
 import type { MinesweeperSessionResult } from "@/games/minesweeper/session/session";
+import type { PlayRecord } from "@/records/play-record";
+import { createPlayRecordId } from "@/records/play-record";
+import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
 const MINESWEEPER_PLAY_RECORD_PAYLOAD_VERSION = 1;
 const MINESWEEPER_GAME_ID = "minesweeper";

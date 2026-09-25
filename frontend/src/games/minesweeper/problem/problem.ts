@@ -1,4 +1,3 @@
-import type { ProblemSeed } from "@/games/problem-seed";
 import {
   assertMinesweeperBoard,
   assertMinesweeperCellIndex,
@@ -10,6 +9,7 @@ import {
   getAdjacentMinesweeperMineCount,
   isMinesweeperMine,
 } from "@/games/minesweeper/puzzle/rules";
+import type { ProblemSeed } from "@/games/problem-seed";
 
 export const MINESWEEPER_GENERATOR_VERSION = "1";
 
