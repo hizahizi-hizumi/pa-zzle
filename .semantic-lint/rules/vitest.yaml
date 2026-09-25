@@ -126,22 +126,6 @@ rules:
       method, class, type, or component defined in the module that differs
       from the module name.
 
-  - id: describe-per-target
-    title: 同じ対象を検証する複数のケースは対象名のdescribeでまとめる
-    unit: file
-    violationThreshold: 0.5
-    instruction: |
-      When several test cases verify the same function, method, or component,
-      they must be grouped in a describe named after that target.
-      Violation: two or more test cases that verify the same target are not
-      inside a describe for that target, such as top-level tests or tests
-      spread across unrelated describes.
-      Not a violation: a target verified by only one test case; tests already
-      grouped in a describe for their target or in a condition describe inside
-      it; a file whose tests all verify the module's single main target named
-      after the module, because the file itself represents it and a describe
-      repeating the module name is not wanted.
-
   - id: act-assert-separation
     title: ActとAssertを分離し、テスト対象の実行をexpectに埋め込まない
     unit: test
