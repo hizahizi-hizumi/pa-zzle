@@ -5,9 +5,12 @@ import {
   getSlidePuzzleRow,
   SLIDE_PUZZLE_BLANK,
   type SlidePuzzleBoard,
+  type SlidePuzzleBoardSize,
 } from "@/games/slide-puzzle/puzzle/state";
 
 export type SlidePuzzleDifficultyFeatures = {
+  /** 盤面の一辺のマス数。盤面の把握と読みの深さを強めるレバーとして難易度に使う。 */
+  boardSize: SlidePuzzleBoardSize;
   /** タイル 1 枚の移動を 1 手とした最短手数。作業量の対照。 */
   optimalMoveCount: number;
   /** 各タイルを他と無関係に運べた場合の手数。盤面から見える距離。 */
@@ -99,6 +102,7 @@ export function analyzeSlidePuzzleDifficulty(
   return {
     status: "analyzed",
     features: {
+      boardSize: getSlidePuzzleBoardSize(board),
       optimalMoveCount,
       manhattanDistance,
       detourMoveCount: (optimalMoveCount - manhattanDistance) / 2,

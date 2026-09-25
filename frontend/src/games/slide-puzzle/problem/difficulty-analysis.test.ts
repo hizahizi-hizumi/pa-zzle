@@ -15,6 +15,7 @@ describe("analyzeSlidePuzzleDifficulty", () => {
     expect(result).toEqual({
       status: "analyzed",
       features: {
+        boardSize: 4,
         optimalMoveCount: 28,
         manhattanDistance: 4,
         detourMoveCount: 12,
@@ -31,6 +32,7 @@ describe("analyzeSlidePuzzleDifficulty", () => {
       [2, 1, 3, 4, 5, 6, 8, 7, 0],
       22,
       {
+        boardSize: 3,
         optimalMoveCount: 22,
         manhattanDistance: 4,
         detourMoveCount: 9,
@@ -46,6 +48,7 @@ describe("analyzeSlidePuzzleDifficulty", () => {
       ],
       1,
       {
+        boardSize: 5,
         optimalMoveCount: 1,
         manhattanDistance: 1,
         detourMoveCount: 0,
