@@ -20,7 +20,7 @@ import {
   type ProblemSeed,
 } from "@/games/problem-seed";
 
-export type FifteenPuzzleRestoredProblem = Pick<
+type FifteenPuzzleRestoredProblem = Pick<
   FifteenPuzzleGeneratedProblem,
   "problem" | "identity"
 >;
