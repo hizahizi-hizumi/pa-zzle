@@ -1,4 +1,3 @@
-import { getMinesweeperCellCount } from "@/games/minesweeper/puzzle/board";
 import {
   type MinesweeperDeductionLevel,
   type MinesweeperHumanSolveRound,
@@ -8,6 +7,7 @@ import {
   traceMinesweeperHumanSolve,
 } from "@/games/minesweeper/problem/generation/human-solver";
 import type { MinesweeperProblem } from "@/games/minesweeper/problem/problem";
+import { getMinesweeperCellCount } from "@/games/minesweeper/puzzle/board";
 
 /** 難易度特徴と比べるための盤面規模の指標。 */
 export type MinesweeperScaleMetrics = {

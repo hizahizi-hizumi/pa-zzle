@@ -1,4 +1,3 @@
-import type { MinesweeperProblem } from "@/games/minesweeper/problem/problem";
 import {
   createMinesweeperConstraintSystem,
   enumerateMinesweeperConstraintSolutions,
@@ -16,6 +15,7 @@ import {
   type MinesweeperDeductionState,
   type MinesweeperNumberConstraint,
 } from "@/games/minesweeper/problem/generation/deduction-state";
+import type { MinesweeperProblem } from "@/games/minesweeper/problem/problem";
 
 export const MINESWEEPER_SOLVER_MAXIMUM_NODE_COUNT = 2_000_000;
 

@@ -1,4 +1,3 @@
-import type { MinesweeperProblem } from "@/games/minesweeper/problem/problem";
 import {
   createMinesweeperConstraintSystem,
   enumerateMinesweeperConstraintSolutions,
@@ -19,6 +18,7 @@ import {
   findMinesweeperCertainCells,
   type MinesweeperSolverOptions,
 } from "@/games/minesweeper/problem/generation/solver";
+import type { MinesweeperProblem } from "@/games/minesweeper/problem/problem";
 
 /**
  * 人間向け推論の段階。小さいほど易しい。

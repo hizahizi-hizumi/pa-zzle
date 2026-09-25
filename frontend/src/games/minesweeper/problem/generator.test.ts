@@ -1,10 +1,10 @@
-import { getMinesweeperNeighborCellIndices } from "@/games/minesweeper/puzzle/board";
 import {
   generateMinesweeperProblem,
   MinesweeperGenerationExhaustedError,
   restoreMinesweeperProblem,
 } from "@/games/minesweeper/problem/generator";
 import type { MinesweeperGenerationConditions } from "@/games/minesweeper/problem/problem";
+import { getMinesweeperNeighborCellIndices } from "@/games/minesweeper/puzzle/board";
 
 describe("generateMinesweeperProblem", () => {
   const conditions: MinesweeperGenerationConditions = {
