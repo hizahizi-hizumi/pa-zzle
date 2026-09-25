@@ -11,7 +11,10 @@ import {
   buildFifteenPuzzlePatternDatabase,
   createFifteenPuzzlePatternDatabaseHeuristic,
 } from "@/games/fifteen-puzzle/problem/generation/pattern-database";
-import { solveFifteenPuzzleOptimally } from "@/games/fifteen-puzzle/problem/generation/solver";
+import {
+  type FifteenPuzzleHeuristic,
+  solveFifteenPuzzleOptimally,
+} from "@/games/fifteen-puzzle/problem/generation/solver";
 import { generateFifteenPuzzleBoard } from "@/games/fifteen-puzzle/problem/generator";
 import {
   listFifteenPuzzlePoolEntries,
@@ -157,10 +160,10 @@ function printTable(headers: readonly string[], rows: readonly string[][]) {
   console.log("");
 }
 
-function analyzeCorpus(perScramble: number): Sample[] {
-  const heuristic = createFifteenPuzzlePatternDatabaseHeuristic(
-    buildFifteenPuzzlePatternDatabase(),
-  );
+function analyzeCorpus(
+  perScramble: number,
+  heuristic: FifteenPuzzleHeuristic,
+): Sample[] {
   const samples: Sample[] = [];
   let unsupportedCount = 0;
   for (const scrambleLength of corpusScrambleLengths) {
@@ -281,6 +284,28 @@ function printCorpusReport(samples: readonly Sample[]) {
         summarize(group.map((sample) => sample.optimalMoveCount)),
         summarize(group.map((sample) => sample.manhattanDistance)),
       ];
+    }),
+  );
+
+  console.log("## 撹拌手数ごとのレベル 5 の最短手数（候補全体）\n");
+  printTable(
+    ["撹拌手数", "問題数", "最短 （最小 / 25% / 中央 / 75% / 最大）"],
+    corpusScrambleLengths.flatMap((scrambleLength) => {
+      const optimalMoveCounts = provided
+        .filter(
+          (sample) =>
+            sample.scrambleLength === scrambleLength && levelOf(sample) === "5",
+        )
+        .map((sample) => sample.optimalMoveCount);
+      return optimalMoveCounts.length === 0
+        ? []
+        : [
+            [
+              String(scrambleLength),
+              String(optimalMoveCounts.length),
+              summarize(optimalMoveCounts),
+            ],
+          ];
     }),
   );
 
@@ -520,7 +545,35 @@ function printPoolReport() {
   }
 }
 
+// 1 行目の 2 組を入れ替えただけの盤面。ランダムウォークの候補には現れにくい、見た目の散らかりと遠回り手数が離れた例として出す。
+const swappedFirstRowBoard: FifteenPuzzleBoard = [
+  2, 1, 4, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0,
+];
+
+function printHandmadeBoardReport(heuristic: FifteenPuzzleHeuristic) {
+  const solved = solveFifteenPuzzleOptimally(swappedFirstRowBoard, {
+    heuristic,
+  });
+  const analysis = analyzeFifteenPuzzleDifficulty(
+    swappedFirstRowBoard,
+    solved.status === "solved" ? solved.optimalMoveCount : null,
+  );
+  if (analysis.status !== "analyzed") {
+    throw new Error("Handmade board is not analyzable");
+  }
+
+  const features = analysis.features;
+  console.log(
+    `## 問題集の外（参考）: 1 行目の 2 組を入れ替えた盤面（最短 ${features.optimalMoveCount} / マンハッタン ${features.manhattanDistance} / 遠回り ${features.detourMoveCount} / 正位置外 ${features.misplacedTileCount} / 線形衝突対 ${features.linearConflictPairCount}）\n`,
+  );
+  console.log(`\`\`\`text\n${formatBoard(swappedFirstRowBoard)}\n\`\`\`\n`);
+}
+
 if (!Bun.argv.includes("--pool-only")) {
-  printCorpusReport(analyzeCorpus(readOption("per-scramble", 300)));
+  const heuristic = createFifteenPuzzlePatternDatabaseHeuristic(
+    buildFifteenPuzzlePatternDatabase(),
+  );
+  printCorpusReport(analyzeCorpus(readOption("per-scramble", 300), heuristic));
+  printHandmadeBoardReport(heuristic);
 }
 printPoolReport();
