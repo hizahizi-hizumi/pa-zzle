@@ -19,13 +19,13 @@ export type FifteenPuzzleHeuristic = {
   update(cells: Uint8Array, tile: number, from: number, to: number): number;
 };
 
-export type FifteenPuzzleSolveOptions = {
+type FifteenPuzzleSolveOptions = {
   /** 展開するノード数の上限。超えたら `limit-exceeded` を返す。 */
   nodeLimit?: number;
   heuristic?: FifteenPuzzleHeuristic;
 };
 
-export type FifteenPuzzleSolveResult =
+type FifteenPuzzleSolveResult =
   | {
       status: "solved";
       optimalMoveCount: number;
@@ -173,7 +173,7 @@ function columnKey(cells: Uint8Array, column: number): number {
  * 同じ行・列にゴールがあり、ゴールの前後が逆になっているタイルは、
  * 少なくとも一方が行・列の外へ一度出る必要がある。
  */
-export function createFifteenPuzzleManhattanLinearConflictHeuristic(): FifteenPuzzleHeuristic {
+function createFifteenPuzzleManhattanLinearConflictHeuristic(): FifteenPuzzleHeuristic {
   const tables = getLineConflictTables();
   const rowConflicts = new Uint8Array(FIFTEEN_PUZZLE_SIZE);
   const columnConflicts = new Uint8Array(FIFTEEN_PUZZLE_SIZE);
@@ -336,3 +336,7 @@ export function solveFifteenPuzzleOptimally(
     throw error;
   }
 }
+
+export const _private = {
+  createFifteenPuzzleManhattanLinearConflictHeuristic,
+};

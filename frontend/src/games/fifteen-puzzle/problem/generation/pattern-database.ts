@@ -13,14 +13,14 @@ const UNVISITED = 0xff;
  * 各集合について、集合内のタイルの移動だけを数えた最短手数を全配置で求めておく。
  * 集合が互いに素なので、値の和も許容的な下界になる。
  */
-export type FifteenPuzzlePatternDatabase = {
+type FifteenPuzzlePatternDatabase = {
   patterns: readonly (readonly number[])[];
   /** 集合内タイルのマス index を 16 進の桁として並べた位置で引く最短手数。 */
   distances: readonly Uint8Array[];
 };
 
 /** 目安: 5 枚ずつ 3 集合。1 集合あたり数秒で作れ、1 MB 程度に収まる。 */
-export const FIFTEEN_PUZZLE_DEFAULT_PATTERNS: readonly (readonly number[])[] = [
+const FIFTEEN_PUZZLE_DEFAULT_PATTERNS: readonly (readonly number[])[] = [
   [1, 2, 3, 5, 6],
   [4, 7, 8, 11, 12],
   [9, 10, 13, 14, 15],
