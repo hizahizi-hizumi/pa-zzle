@@ -2,12 +2,16 @@ import { useState } from "react";
 
 import { isMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
 import { isNanpurePlayRecord } from "@/games/nanpure/play-record";
+import { parseSlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
+import { isSlidePuzzlePlayRecord } from "@/games/slide-puzzle/play-record";
+import { restoreSlidePuzzlePooledProblem } from "@/games/slide-puzzle/problem-selection";
 import { parseWaterSortDifficulty } from "@/games/water-sort/difficulty";
 import { isWaterSortPlayRecord } from "@/games/water-sort/play-record";
 import { readPlayRecords } from "@/records/storage";
 import { Link, useParams } from "@/router";
 import { PlayableMinesweeper } from "@/views/MinesweeperPlayView/PlayableMinesweeper";
 import { PlayableNanpure } from "@/views/NanpurePlayView/PlayableNanpure";
+import { PlayableSlidePuzzle } from "@/views/SlidePuzzlePlayView/PlayableSlidePuzzle";
 import { PlayableWaterSort } from "@/views/WaterSortPlayView/PlayableWaterSort";
 
 export function RecordedProblemReplayView() {
@@ -59,6 +63,22 @@ export function RecordedProblemReplayView() {
       <PlayableMinesweeper
         difficulty={record.payload.difficulty}
         initialProblemIdentity={record.payload.problemIdentity}
+      />
+    );
+  }
+
+  const slidePuzzleDifficulty = isSlidePuzzlePlayRecord(record)
+    ? parseSlidePuzzleDifficulty(record.payload.difficulty)
+    : undefined;
+  // 評価の基準になる最短手数は問題集にしか無いので、問題集に無い問題は再プレイできない。
+  const slidePuzzleInitialProblem = isSlidePuzzlePlayRecord(record)
+    ? restoreSlidePuzzlePooledProblem(record.payload.problemIdentity)
+    : null;
+  if (slidePuzzleDifficulty && slidePuzzleInitialProblem) {
+    return (
+      <PlayableSlidePuzzle
+        difficulty={slidePuzzleDifficulty}
+        initialProblem={slidePuzzleInitialProblem}
       />
     );
   }

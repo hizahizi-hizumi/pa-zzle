@@ -12,6 +12,7 @@ type SlidePuzzlePlayHeaderProps = {
   onStartNewProblem: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
+  onOpenDiagnostics?: () => void;
 };
 
 export function SlidePuzzlePlayHeader({
@@ -22,6 +23,7 @@ export function SlidePuzzlePlayHeader({
   onStartNewProblem,
   onChangeDifficulty,
   onBackToHome,
+  onOpenDiagnostics,
 }: SlidePuzzlePlayHeaderProps) {
   return (
     <header className="grid h-[4.5rem] shrink-0 grid-cols-[3rem_minmax(0,1fr)_3rem] items-start bg-background px-3 pt-2">
@@ -41,6 +43,7 @@ export function SlidePuzzlePlayHeader({
         onStartNewProblem={onStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
+        onOpenDiagnostics={onOpenDiagnostics}
       />
     </header>
   );
