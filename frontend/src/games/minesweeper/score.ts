@@ -7,8 +7,7 @@ export const MINESWEEPER_SCORE_MAXIMUMS = {
 
 /**
  * 地雷を1つ踏むごとの正確性の減点。
- * 速さの満点より大きくし、踏んだ地雷の少ないプレイが速さによらず常に上回るようにする。
- * 推測で開いて時間を縮めても、1回踏めば縮めた時間で得られる点を必ず上回って失う。
+ * 1つでも踏めば速さによらず great に届かず、踏んだ後も解き切る価値は残る重さにする。
  */
 export const MINESWEEPER_MISTAKE_PENALTY = 15;
 
