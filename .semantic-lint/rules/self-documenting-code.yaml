@@ -33,8 +33,10 @@ rules:
       implementations; a long comment that explains far more than the code
       next to it.
       Not a violation: a reason for code that looks removable or could be
-      simplified; a lint suppression or tool directive with its reason; text
-      that is part of test input data.
+      simplified; a statement of an invariant, a precondition, or why a
+      branch or an expected value in a test holds, which the code cannot
+      show by itself; a lint suppression or tool directive with its reason;
+      text that is part of test input data.
 
   - id: doc-comment-no-duplication
     title: 文書コメントはシグネチャ・型・実装手順を重複して説明しない
