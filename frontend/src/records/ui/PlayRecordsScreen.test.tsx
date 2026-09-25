@@ -6,8 +6,8 @@ import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display
 import { createWaterSortPlayRecord } from "@/games/water-sort/play-record";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 
-import { PlayRecordsScreen } from "./PlayRecordsScreen";
-import type { PlayRecordDisplayCatalog } from "./play-record-display";
+import { PlayRecordsScreen } from "@/records/ui/PlayRecordsScreen";
+import type { PlayRecordDisplayCatalog } from "@/records/ui/play-record-display";
 
 const playRecordDisplays = [
   waterSortPlayRecordDisplay,
@@ -17,7 +17,7 @@ const playRecordDisplays = [
 
 const records = [
   createWaterSortPlayRecord({
-    difficulty: "normal",
+    difficulty: "3",
     problemIdentity: {
       generatorVersion: "1",
       seed: "water-1",
@@ -36,7 +36,7 @@ const records = [
     },
   }),
   createWaterSortPlayRecord({
-    difficulty: "normal",
+    difficulty: "3",
     problemIdentity: {
       generatorVersion: "1",
       seed: "water-2",

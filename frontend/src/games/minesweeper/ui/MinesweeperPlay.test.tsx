@@ -2,9 +2,9 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
-import type { MinesweeperVisibleCell } from "../session/session";
-import { MinesweeperPlay } from "./MinesweeperPlay";
-import { minesweeperPlayRecordDisplay } from "./play-record-display";
+import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
+import { MinesweeperPlay } from "@/games/minesweeper/ui/MinesweeperPlay";
+import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
 
 afterEach(cleanup);
 

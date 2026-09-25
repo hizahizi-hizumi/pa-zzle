@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { getTrendValueAxis } from "./trend-value-axis";
+import { getTrendValueAxis } from "@/records/ui/PlayRecordsScreen/trend-value-axis";
 
 describe("getTrendValueAxis", () => {
   const integerScoreAxis = {

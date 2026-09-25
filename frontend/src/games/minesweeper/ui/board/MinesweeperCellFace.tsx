@@ -1,6 +1,6 @@
 import { Bomb, Flag } from "lucide-react";
 
-import type { MinesweeperVisibleCell } from "../../session/session";
+import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
 
 export type MinesweeperCellFaceSize = "board" | "preview";
 

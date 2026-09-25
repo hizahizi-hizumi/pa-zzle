@@ -2,7 +2,7 @@ import {
   applyMinesweeperDeduction,
   collectMinesweeperNumberConstraints,
   createMinesweeperDeductionState,
-} from "./deduction-state";
+} from "@/games/minesweeper/problem/generation/deduction-state";
 
 describe("collectMinesweeperNumberConstraints", () => {
   describe("既知地雷に隣接する数字がある場合", () => {

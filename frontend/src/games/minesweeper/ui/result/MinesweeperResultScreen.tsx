@@ -20,21 +20,21 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import minesweeperPictogramSvg from "../../assets/pictogram.svg?raw";
+import minesweeperPictogramSvg from "@/games/minesweeper/assets/pictogram.svg?raw";
 import {
   getMinesweeperDifficultyLabel,
   type MinesweeperDifficulty,
-} from "../../difficulty";
-import type { MinesweeperResult } from "../../play/use-minesweeper-play";
+} from "@/games/minesweeper/difficulty";
+import type { MinesweeperResult } from "@/games/minesweeper/play/use-minesweeper-play";
 import {
   getMinesweeperGameResultLevel,
   MINESWEEPER_SCORE_MAXIMUMS,
-} from "../../score";
-import { formatElapsedTime } from "../format-elapsed-time";
-import { formatMinesweeperTimeDelta } from "../format-performance-delta";
-import { DetailMetric } from "./MinesweeperResultScreen/DetailMetric";
-import { ResultMetric } from "./MinesweeperResultScreen/ResultMetric";
-import { ScoreCriteria } from "./MinesweeperResultScreen/ScoreCriteria";
+} from "@/games/minesweeper/score";
+import { formatElapsedTime } from "@/games/minesweeper/ui/format-elapsed-time";
+import { formatMinesweeperTimeDelta } from "@/games/minesweeper/ui/format-performance-delta";
+import { DetailMetric } from "@/games/minesweeper/ui/result/MinesweeperResultScreen/DetailMetric";
+import { ResultMetric } from "@/games/minesweeper/ui/result/MinesweeperResultScreen/ResultMetric";
+import { ScoreCriteria } from "@/games/minesweeper/ui/result/MinesweeperResultScreen/ScoreCriteria";
 
 type MinesweeperResultScreenProps = {
   difficulty: MinesweeperDifficulty;

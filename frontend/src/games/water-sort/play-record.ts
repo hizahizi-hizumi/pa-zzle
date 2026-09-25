@@ -1,17 +1,17 @@
-import type { PlayRecord } from "@/records/play-record";
-import { createPlayRecordId } from "@/records/play-record";
-import type { PlayRecordDefinition } from "@/records/play-record-definition";
-
 import {
-  parseWaterSortDifficulty,
+  parseWaterSortRecordedDifficulty,
   type WaterSortDifficulty,
-} from "./difficulty";
-import type { WaterSortProblemIdentity } from "./problem/problem";
+  type WaterSortRecordedDifficulty,
+} from "@/games/water-sort/difficulty";
+import type { WaterSortProblemIdentity } from "@/games/water-sort/problem/problem";
 import {
   calculateWaterSortMoveDelta,
   calculateWaterSortPlayScore,
   calculateWaterSortTimeDeltaMs,
-} from "./score";
+} from "@/games/water-sort/score";
+import type { PlayRecord } from "@/records/play-record";
+import { createPlayRecordId } from "@/records/play-record";
+import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
 const WATER_SORT_PLAY_RECORD_PAYLOAD_VERSION = 2;
 const WATER_SORT_GAME_ID = "water-sort";
@@ -29,13 +29,13 @@ type WaterSortPlayPerformance = WaterSortPlayPerformanceV1 & {
 };
 
 type WaterSortPlayRecordPayloadV1 = {
-  difficulty: WaterSortDifficulty;
+  difficulty: WaterSortRecordedDifficulty;
   problemIdentity: WaterSortProblemIdentity;
   performance: WaterSortPlayPerformanceV1;
 };
 
 type WaterSortPlayRecordPayload = {
-  difficulty: WaterSortDifficulty;
+  difficulty: WaterSortRecordedDifficulty;
   problemIdentity: WaterSortProblemIdentity;
   performance: WaterSortPlayPerformance;
 };
@@ -88,7 +88,7 @@ function isWaterSortProblemIdentity(
     typeof conditions === "object" &&
     isPositiveInteger(conditions.colorCount) &&
     conditions.capacity === 4 &&
-    conditions.emptyBottleCount === 2 &&
+    isPositiveInteger(conditions.emptyBottleCount) &&
     isPositiveInteger(identity.generationAttempt)
   );
 }
@@ -130,7 +130,7 @@ function hasValidPayloadBase(
   payload: Partial<WaterSortPlayRecordPayloadV1>,
 ): boolean {
   return (
-    parseWaterSortDifficulty(payload.difficulty) !== undefined &&
+    parseWaterSortRecordedDifficulty(payload.difficulty) !== undefined &&
     isWaterSortProblemIdentity(payload.problemIdentity)
   );
 }

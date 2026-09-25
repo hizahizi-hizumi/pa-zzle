@@ -1,20 +1,19 @@
-import type { PlayRecord } from "@/records/play-record";
-import { createPlayRecordId } from "@/records/play-record";
-import type { PlayRecordDefinition } from "@/records/play-record-definition";
-
 import {
   type MinesweeperDifficulty,
   parseMinesweeperDifficulty,
-} from "./difficulty";
+} from "@/games/minesweeper/difficulty";
 import {
   MINESWEEPER_GENERATOR_VERSION,
   type MinesweeperProblemIdentity,
-} from "./problem/problem";
+} from "@/games/minesweeper/problem/problem";
 import {
   calculateMinesweeperPlayScore,
   calculateMinesweeperTimeDeltaMs,
-} from "./score";
-import type { MinesweeperSessionResult } from "./session/session";
+} from "@/games/minesweeper/score";
+import type { MinesweeperSessionResult } from "@/games/minesweeper/session/session";
+import type { PlayRecord } from "@/records/play-record";
+import { createPlayRecordId } from "@/records/play-record";
+import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
 const MINESWEEPER_PLAY_RECORD_PAYLOAD_VERSION = 1;
 const MINESWEEPER_GAME_ID = "minesweeper";

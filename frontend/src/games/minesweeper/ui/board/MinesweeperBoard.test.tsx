@@ -3,8 +3,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { vi } from "vitest";
 
-import type { MinesweeperVisibleCell } from "../../session/session";
-import { MinesweeperBoard } from "./MinesweeperBoard";
+import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
+import { MinesweeperBoard } from "@/games/minesweeper/ui/board/MinesweeperBoard";
 
 describe("MinesweeperBoard", () => {
   const cells: readonly MinesweeperVisibleCell[] = [

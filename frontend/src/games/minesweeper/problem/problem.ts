@@ -1,15 +1,15 @@
-import type { ProblemSeed } from "@/games/problem-seed";
 import {
   assertMinesweeperBoard,
   assertMinesweeperCellIndex,
   getMinesweeperCellCount,
   type MinesweeperBoard,
-} from "../puzzle/board";
+} from "@/games/minesweeper/puzzle/board";
 import {
   collectMinesweeperRevealCellIndices,
   getAdjacentMinesweeperMineCount,
   isMinesweeperMine,
-} from "../puzzle/rules";
+} from "@/games/minesweeper/puzzle/rules";
+import type { ProblemSeed } from "@/games/problem-seed";
 
 export const MINESWEEPER_GENERATOR_VERSION = "1";
 

@@ -1,12 +1,12 @@
-import type { MinesweeperResult } from "../../../play/use-minesweeper-play";
+import type { MinesweeperResult } from "@/games/minesweeper/play/use-minesweeper-play";
 import {
   MINESWEEPER_MISTAKE_PENALTY,
   MINESWEEPER_SCORE_MAXIMUMS,
   MINESWEEPER_SPEED_INITIAL_RECOGNITION_MS,
   MINESWEEPER_SPEED_PER_MINE_MS,
   MINESWEEPER_SPEED_PER_MINIMUM_OPEN_MS,
-} from "../../../score";
-import { formatElapsedTime } from "../../format-elapsed-time";
+} from "@/games/minesweeper/score";
+import { formatElapsedTime } from "@/games/minesweeper/ui/format-elapsed-time";
 
 type ScoreCriteriaProps = {
   result: MinesweeperResult;

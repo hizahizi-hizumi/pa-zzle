@@ -1,19 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-
-import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
-import type { MinesweeperDifficulty } from "../difficulty";
+import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import {
   type MinesweeperRestoredProblem,
   restoreMinesweeperProblemWithoutAnalysis,
-} from "../problem/generator";
-import type { MinesweeperProblemIdentity } from "../problem/problem";
-import { selectMinesweeperProblemForDifficulty } from "../problem-selection";
+} from "@/games/minesweeper/problem/generator";
+import type { MinesweeperProblemIdentity } from "@/games/minesweeper/problem/problem";
+import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
 import {
   calculateMinesweeperPlayScore,
   calculateMinesweeperSpeedFullScoreMs,
   calculateMinesweeperTimeDeltaMs,
   type MinesweeperPlayScore,
-} from "../score";
+} from "@/games/minesweeper/score";
 import {
   chordMinesweeperSessionCell,
   createMinesweeperSession,
@@ -25,7 +23,8 @@ import {
   replayMinesweeperSession,
   revealMinesweeperSessionCell,
   toggleMinesweeperSessionFlag,
-} from "../session/session";
+} from "@/games/minesweeper/session/session";
+import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
 
 /** クリア後は最終操作の結果を見せる `clearing` を経て `result` へ進む。 */
 export type MinesweeperProgress = "playing" | "clearing" | "result";

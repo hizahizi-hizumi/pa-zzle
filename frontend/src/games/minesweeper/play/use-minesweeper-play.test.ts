@@ -5,13 +5,13 @@ import {
   renderHook,
 } from "@testing-library/react";
 
-import { isInMinesweeperDifficultyBoardRange } from "../difficulty";
-import { restoreMinesweeperProblemWithoutAnalysis } from "../problem/generator";
+import { isInMinesweeperDifficultyBoardRange } from "@/games/minesweeper/difficulty";
+import { useMinesweeperPlay } from "@/games/minesweeper/play/use-minesweeper-play";
+import { restoreMinesweeperProblemWithoutAnalysis } from "@/games/minesweeper/problem/generator";
 import {
   listMinesweeperPoolEntries,
   toMinesweeperPoolIdentity,
-} from "../problem/problem-pool";
-import { useMinesweeperPlay } from "./use-minesweeper-play";
+} from "@/games/minesweeper/problem/problem-pool";
 
 afterEach(cleanup);
 

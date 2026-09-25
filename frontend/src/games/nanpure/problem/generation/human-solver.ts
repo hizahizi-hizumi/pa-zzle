@@ -6,8 +6,11 @@ import {
   NANPURE_CELL_COUNT,
   type NanpureBoard,
   type NanpureDigit,
-} from "../../puzzle/board";
-import { getNanpureCandidates, isNanpureSolved } from "../../puzzle/rules";
+} from "@/games/nanpure/puzzle/board";
+import {
+  getNanpureCandidates,
+  isNanpureSolved,
+} from "@/games/nanpure/puzzle/rules";
 
 export type NanpureHumanTechnique = "naked-single" | "hidden-single";
 

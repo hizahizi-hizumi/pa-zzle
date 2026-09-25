@@ -1,11 +1,11 @@
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { useRef } from "react";
 
-import type { MinesweeperVisibleCell } from "../../session/session";
+import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
 import {
   getMinesweeperCellFaceClassName,
   MinesweeperCellFace,
-} from "./MinesweeperCellFace";
+} from "@/games/minesweeper/ui/board/MinesweeperCellFace";
 
 const LONG_PRESS_DELAY_MS = 450;
 

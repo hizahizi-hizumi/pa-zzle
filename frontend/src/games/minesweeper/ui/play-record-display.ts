@@ -1,9 +1,9 @@
 import {
   getMinesweeperDifficultyLabel,
   parseMinesweeperDifficulty,
-} from "../difficulty";
-import { minesweeperPlayRecordDefinition } from "../play-record";
-import { formatMinesweeperTimeDelta } from "./format-performance-delta";
+} from "@/games/minesweeper/difficulty";
+import { minesweeperPlayRecordDefinition } from "@/games/minesweeper/play-record";
+import { formatMinesweeperTimeDelta } from "@/games/minesweeper/ui/format-performance-delta";
 
 export const minesweeperPlayRecordDisplay = {
   definition: minesweeperPlayRecordDefinition,

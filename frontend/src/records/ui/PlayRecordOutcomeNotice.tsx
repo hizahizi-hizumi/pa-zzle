@@ -2,11 +2,11 @@ import { Sparkles, Trophy } from "lucide-react";
 
 import { GameResultSurface } from "@/components/GameResultSurface";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import type { PlayRecordSaveOutcome } from "../save-play-record";
+import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
 import {
   getPlayRecordMetricDisplay,
   type PlayRecordDisplayDefinition,
-} from "./play-record-display";
+} from "@/records/ui/play-record-display";
 
 type PlayRecordOutcomeNoticeProps = {
   outcome: PlayRecordSaveOutcome | null;

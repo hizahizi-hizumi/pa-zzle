@@ -1,22 +1,22 @@
 import { type ReactNode, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
-import type { MinesweeperDifficulty } from "../difficulty";
+import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import type {
   MinesweeperProgress,
   MinesweeperResult,
-} from "../play/use-minesweeper-play";
+} from "@/games/minesweeper/play/use-minesweeper-play";
 import type {
   MinesweeperSessionStatus,
   MinesweeperVisibleCell,
-} from "../session/session";
-import { MinesweeperClearAnimation } from "./board/clear/MinesweeperClearAnimation";
+} from "@/games/minesweeper/session/session";
+import { MinesweeperClearAnimation } from "@/games/minesweeper/ui/board/clear/MinesweeperClearAnimation";
 import {
   MinesweeperBoard,
   type MinesweeperInputMode,
-} from "./board/MinesweeperBoard";
-import { MinesweeperPlayHeader } from "./MinesweeperPlay/MinesweeperPlayHeader";
-import { MinesweeperResultScreen } from "./result/MinesweeperResultScreen";
+} from "@/games/minesweeper/ui/board/MinesweeperBoard";
+import { MinesweeperPlayHeader } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperPlayHeader";
+import { MinesweeperResultScreen } from "@/games/minesweeper/ui/result/MinesweeperResultScreen";
 
 type MinesweeperPlayProps = {
   difficulty: MinesweeperDifficulty;

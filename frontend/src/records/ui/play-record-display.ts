@@ -1,4 +1,4 @@
-import type { PlayRecordDefinition } from "../play-record-definition";
+import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
 type PlayRecordMetricAxisBounds = {
   minimum?: number;
