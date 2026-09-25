@@ -1,31 +1,38 @@
+import { formatElapsedTime } from "../../format-elapsed-time";
+import { MetricSeparator } from "./PlayHeaderSummary/MetricSeparator";
+import { PlayMetric } from "./PlayHeaderSummary/PlayMetric";
+
 type PlayHeaderSummaryProps = {
   mineCount: number;
   flagCount: number;
+  mistakeCount: number;
+  elapsedMs: number;
 };
 
+// 4項目が1行に収まらない幅では、盤面の情報（地雷・旗）とプレイの経過（ミス・時間）の2行に分ける。
 export function PlayHeaderSummary({
   mineCount,
   flagCount,
+  mistakeCount,
+  elapsedMs,
 }: PlayHeaderSummaryProps) {
   return (
-    <div className="min-w-0 text-center">
+    <div className="@container min-w-0 text-center">
       <h1 className="truncate text-play-context">マインスイーパー</h1>
-      <div className="mt-1 flex items-center justify-center gap-2 text-play-meta text-muted-foreground">
-        <span className="flex items-baseline gap-1 whitespace-nowrap">
-          <span>地雷</span>
-          <span className="font-mono font-medium tabular-nums text-foreground/80">
-            {mineCount}
-          </span>
+      <div className="mt-1 flex flex-col items-center text-play-meta text-muted-foreground @[16.5rem]:flex-row @[16.5rem]:justify-center @[16.5rem]:gap-2">
+        <div className="flex items-center justify-center gap-2">
+          <PlayMetric label="地雷" value={String(mineCount)} />
+          <MetricSeparator />
+          <PlayMetric label="旗" value={String(flagCount)} />
+        </div>
+        <span className="hidden @[16.5rem]:inline">
+          <MetricSeparator />
         </span>
-        <span aria-hidden="true" className="text-border">
-          ·
-        </span>
-        <span className="flex items-baseline gap-1 whitespace-nowrap">
-          <span>旗</span>
-          <span className="font-mono font-medium tabular-nums text-foreground/80">
-            {flagCount}
-          </span>
-        </span>
+        <div className="flex items-center justify-center gap-2">
+          <PlayMetric label="ミス" value={String(mistakeCount)} />
+          <MetricSeparator />
+          <PlayMetric label="時間" value={formatElapsedTime(elapsedMs)} />
+        </div>
       </div>
     </div>
   );

@@ -40,6 +40,8 @@ describe("MinesweeperPlay", () => {
           columns={2}
           mineCount={1}
           flagCount={0}
+          mistakeCount={0}
+          elapsedMs={0}
           visibleCells={visibleCells}
           status="playing"
           onRevealCell={onRevealCell}
@@ -159,6 +161,8 @@ describe("MinesweeperPlay", () => {
           columns={2}
           mineCount={1}
           flagCount={0}
+          mistakeCount={0}
+          elapsedMs={0}
           visibleCells={[
             { state: "hidden" },
             { state: "revealed", adjacentMineCount: 1 },
@@ -205,6 +209,8 @@ describe("MinesweeperPlay", () => {
           columns={2}
           mineCount={1}
           flagCount={0}
+          mistakeCount={1}
+          elapsedMs={65_000}
           visibleCells={visibleCells}
           status="playing"
           onRevealCell={onRevealCell}
@@ -216,6 +222,14 @@ describe("MinesweeperPlay", () => {
           onBackToHome={vi.fn()}
         />,
       );
+    });
+
+    test("ヘッダーにミス数と経過時間を表示すること", () => {
+      const mistakeMetric = screen.getByText("ミス").parentElement;
+      const timeMetric = screen.getByText("時間").parentElement;
+
+      expect(mistakeMetric?.textContent).toBe("ミス1");
+      expect(timeMetric?.textContent).toBe("時間01:05");
     });
 
     test("踏んだ地雷を押しても開示も旗操作も通知しないこと", () => {
@@ -251,6 +265,8 @@ describe("MinesweeperPlay", () => {
           columns={2}
           mineCount={1}
           flagCount={0}
+          mistakeCount={0}
+          elapsedMs={0}
           visibleCells={visibleCells}
           status="cleared"
           onRevealCell={vi.fn()}
