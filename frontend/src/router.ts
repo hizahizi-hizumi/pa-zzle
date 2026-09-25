@@ -9,6 +9,7 @@ export type Path =
   | `/puzzles/minesweeper/play/:difficulty`
   | `/puzzles/nanpure`
   | `/puzzles/nanpure/play/:difficulty`
+  | `/puzzles/takuzu/play/:difficulty`
   | `/puzzles/water-sort`
   | `/puzzles/water-sort/play/:difficulty`
   | `/records`
@@ -17,6 +18,7 @@ export type Path =
 export type Params = {
   '/puzzles/minesweeper/play/:difficulty': { difficulty: string }
   '/puzzles/nanpure/play/:difficulty': { difficulty: string }
+  '/puzzles/takuzu/play/:difficulty': { difficulty: string }
   '/puzzles/water-sort/play/:difficulty': { difficulty: string }
   '/records/replay/:recordId': { recordId: string }
 }
