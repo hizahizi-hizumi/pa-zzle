@@ -17,10 +17,13 @@ import {
   encodeTakuzuPoolProblem,
   getTakuzuRemovalTechniqueLimitCode,
   listTakuzuPoolEntries,
+  type TakuzuPooledProblem,
   type TakuzuProblemPoolEntry,
+  toTakuzuPooledProblem,
   toTakuzuPoolIdentity,
 } from "@/games/takuzu/problem/problem-pool";
 import { selectTakuzuProblemForDifficulty } from "@/games/takuzu/problem-selection";
+import { calculateTakuzuSpeedFullScoreMs } from "@/games/takuzu/score";
 
 const defaultPerLevel = 500;
 
@@ -35,7 +38,7 @@ Options:
   --jobs <n>       並列ワーカー数 (default: 4)
   --block <n>      生成条件ごとに一度に増やす候補数 (default: 100)
   --budget <n>     生成条件ごとに調べる候補数の上限 (default: 20000)
-  --verify         生成せず、同梱の問題集の全問を再生成→分析→分類し、同型の重複・JSON の大きさ・選択時間を測る`;
+  --verify         生成せず、同梱の問題集の全問を再生成→分析→分類し、作業の量・同型の重複・基準時間の分布・JSON の大きさ・選択時間を確かめる`;
 
 const outputPath = new URL(
   "../src/games/takuzu/problem/problem-pool.json",
@@ -84,6 +87,7 @@ function conditionsOf(
 
 type CandidateSummary = {
   roundCount: number;
+  lineReadingRoundCount: number;
   meanSourceCount: number;
   singleSourceRoundCount: number;
   duplicateAvoidanceRoundCount: number;
@@ -196,6 +200,7 @@ function evaluateCandidate(condition: Condition, index: number): Candidate {
     encodedProblem: encodeTakuzuPoolProblem(problem),
     summary: features && {
       roundCount: features.roundCount,
+      lineReadingRoundCount: features.lineReadingRoundCount,
       meanSourceCount: features.meanSourceCount ?? 0,
       singleSourceRoundCount: features.singleSourceRoundCount,
       duplicateAvoidanceRoundCount: features.duplicateAvoidanceRoundCount,
@@ -385,6 +390,17 @@ function formatPoolJson(
   return `{\n  "generatorVersion": ${JSON.stringify(TAKUZU_GENERATOR_VERSION)},\n  "levels": {\n${lines.join("\n")}\n  }\n}\n`;
 }
 
+/** 速さの基準時間（秒）の分布。問題集の作業の量から、プレイ時と同じ式で求める。 */
+function describeSpeedFullScore(
+  pooledProblems: readonly TakuzuPooledProblem[],
+): string {
+  return `  速さの基準時間（秒）: ${describeDistribution(
+    pooledProblems.map(
+      ({ workload }) => calculateTakuzuSpeedFullScoreMs(workload) / 1000,
+    ),
+  )}`;
+}
+
 function describeSize(json: string): string {
   return `JSON ${json.length} bytes, gzip ${gzipSync(json).length} bytes`;
 }
@@ -474,6 +490,8 @@ async function runMain(): Promise<void> {
       condition.extraGivenCount,
       candidate.index,
       candidate.encodedProblem,
+      candidate.summary!.roundCount,
+      candidate.summary!.lineReadingRoundCount,
     ]);
 
     const examined = levelStates[difficulty].flatMap((state) =>
@@ -507,6 +525,9 @@ async function runMain(): Promise<void> {
       `  場所が1か所しかない局面の数: ${describeDistribution(summaries.map((summary) => summary.singleSourceRoundCount))}`,
       `  重複の回避が要った局面の数: ${formatCounts(summaries.map((summary) => summary.duplicateAvoidanceRoundCount))}`,
       `  E が要った問題: ${summaries.filter((summary) => summary.generalLineRoundCount > 0).length}`,
+      describeSpeedFullScore(
+        levels[difficulty].map((entry) => toTakuzuPooledProblem(entry)),
+      ),
     );
   }
 
@@ -543,6 +564,12 @@ function runVerifyWorker(args: readonly string[]): void {
       if (difficultyAnalysis.status !== "analyzed") {
         fail(`一意解で論理的に解き切れない (${difficultyAnalysis.status})`);
         return;
+      }
+      const { roundCount, lineReadingRoundCount } = difficultyAnalysis.features;
+      if (entry[4] !== roundCount || entry[5] !== lineReadingRoundCount) {
+        fail(
+          `作業の量が分析と違う (局面 ${entry[4]}/${roundCount}, 行・列を読む局面 ${entry[5]}/${lineReadingRoundCount})`,
+        );
       }
       const assessment = assessTakuzuDifficulty(difficultyAnalysis);
       if (
@@ -627,6 +654,11 @@ async function runVerify(): Promise<void> {
   for (const failure of failures) {
     console.log(
       `  難易度 ${failure.difficulty} の ${failure.index}番: ${failure.reason}`,
+    );
+  }
+  for (const { id: difficulty } of takuzuDifficulties) {
+    console.log(
+      `難易度 ${difficulty}${describeSpeedFullScore(levels[difficulty].map((entry) => toTakuzuPooledProblem(entry)))}`,
     );
   }
   console.log(describeSize(formatPoolJson(levels)));
