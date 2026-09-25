@@ -4,6 +4,7 @@ import {
   traceTakuzuHumanSolve,
 } from "@/games/takuzu/problem/generation/human-solver";
 import { generateTakuzuProblem } from "@/games/takuzu/problem/generator";
+import { createTakuzuProblemIdentity } from "@/games/takuzu/problem/problem";
 import {
   type TakuzuTechnique,
   takuzuTechniques,
@@ -239,11 +240,8 @@ describe("traceTakuzuHumanSolve", () => {
       (technique) =>
         [
           technique,
-          generateTakuzuProblem({
-            seed: `human-solver-test-${technique}`,
-            removalTechniqueLimit: technique,
-            extraGivenCount: 0,
-          }).problem,
+          generateTakuzuProblem(createTakuzuProblemIdentity(technique, 0, 0))
+            .problem,
         ] as const,
     );
 

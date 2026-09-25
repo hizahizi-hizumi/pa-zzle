@@ -6,6 +6,7 @@ import {
 } from "@/games/takuzu/difficulty";
 import type { TakuzuDifficultyAnalysis } from "@/games/takuzu/problem/difficulty-analysis";
 import { generateTakuzuProblem } from "@/games/takuzu/problem/generator";
+import { createTakuzuProblemIdentity } from "@/games/takuzu/problem/problem";
 import {
   type TakuzuTechnique,
   takuzuTechniques,
@@ -98,23 +99,15 @@ function formatBoard(board: TakuzuBoard): string {
   ).join("/");
 }
 
-function createSeed({
-  removalLimit,
-  extraGivenCount,
-  index,
-}: CorpusTask): string {
-  return `tk-${removalLimit}-${extraGivenCount}-${index}`;
-}
-
 function analyzeTask(task: CorpusTask): CorpusRecord {
-  const seed = createSeed(task);
+  const identity = createTakuzuProblemIdentity(
+    task.removalLimit === uniquenessOnly ? null : task.removalLimit,
+    task.extraGivenCount,
+    task.index,
+  );
+  const { seed } = identity;
   const startedAt = performance.now();
-  const generated = generateTakuzuProblem({
-    seed,
-    removalTechniqueLimit:
-      task.removalLimit === uniquenessOnly ? null : task.removalLimit,
-    extraGivenCount: task.extraGivenCount,
-  });
+  const generated = generateTakuzuProblem(identity);
   return {
     seed,
     removalLimit: task.removalLimit,
