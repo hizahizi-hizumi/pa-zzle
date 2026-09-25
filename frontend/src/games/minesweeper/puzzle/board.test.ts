@@ -2,7 +2,7 @@ import {
   getMinesweeperCellCount,
   getMinesweeperNeighborCellIndices,
   type MinesweeperBoard,
-} from "./board";
+} from "@/games/minesweeper/puzzle/board";
 
 describe("getMinesweeperCellCount", () => {
   const board: MinesweeperBoard = {

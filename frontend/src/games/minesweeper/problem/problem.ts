@@ -4,12 +4,12 @@ import {
   assertMinesweeperCellIndex,
   getMinesweeperCellCount,
   type MinesweeperBoard,
-} from "../puzzle/board";
+} from "@/games/minesweeper/puzzle/board";
 import {
   collectMinesweeperRevealCellIndices,
   getAdjacentMinesweeperMineCount,
   isMinesweeperMine,
-} from "../puzzle/rules";
+} from "@/games/minesweeper/puzzle/rules";
 
 export const MINESWEEPER_GENERATOR_VERSION = "1";
 

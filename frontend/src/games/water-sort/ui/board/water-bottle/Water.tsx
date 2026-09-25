@@ -1,6 +1,6 @@
 import type { WaterSortBottle } from "@/games/water-sort/puzzle/state";
 
-import { getWaterColorView } from "./get-water-color-view";
+import { getWaterColorView } from "@/games/water-sort/ui/board/water-bottle/get-water-color-view";
 
 const bottleSlots = [0, 1, 2, 3] as const;
 

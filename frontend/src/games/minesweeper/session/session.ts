@@ -2,19 +2,19 @@ import {
   assertMinesweeperProblem,
   countMinesweeperMinimumOpenCount,
   type MinesweeperProblem,
-} from "../problem/problem";
-import { getMinesweeperCellCount } from "../puzzle/board";
+} from "@/games/minesweeper/problem/problem";
+import { getMinesweeperCellCount } from "@/games/minesweeper/puzzle/board";
 import {
   getAdjacentMinesweeperMineCount,
   isMinesweeperCleared,
   isMinesweeperMine,
-} from "../puzzle/rules";
-import type { MinesweeperPuzzleState } from "../puzzle/state";
+} from "@/games/minesweeper/puzzle/rules";
+import type { MinesweeperPuzzleState } from "@/games/minesweeper/puzzle/state";
 import {
   chordMinesweeperCell,
   revealMinesweeperCell,
   toggleMinesweeperFlag,
-} from "../puzzle/transitions";
+} from "@/games/minesweeper/puzzle/transitions";
 
 export type MinesweeperSessionStatus = "playing" | "cleared";
 

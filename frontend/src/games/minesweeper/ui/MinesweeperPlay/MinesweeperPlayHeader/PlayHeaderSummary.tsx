@@ -1,6 +1,6 @@
-import { formatElapsedTime } from "../../format-elapsed-time";
-import { MetricSeparator } from "./PlayHeaderSummary/MetricSeparator";
-import { PlayMetric } from "./PlayHeaderSummary/PlayMetric";
+import { formatElapsedTime } from "@/games/minesweeper/ui/format-elapsed-time";
+import { MetricSeparator } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperPlayHeader/PlayHeaderSummary/MetricSeparator";
+import { PlayMetric } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperPlayHeader/PlayHeaderSummary/PlayMetric";
 
 type PlayHeaderSummaryProps = {
   mineCount: number;

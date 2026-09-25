@@ -1,10 +1,10 @@
-import type { MinesweeperProblem } from "../problem";
-import { createMinesweeperDeductionState } from "./deduction-state";
+import { createMinesweeperDeductionState } from "@/games/minesweeper/problem/generation/deduction-state";
 import {
   _private,
   findMinesweeperCertainCells,
   solveMinesweeperLogically,
-} from "./solver";
+} from "@/games/minesweeper/problem/generation/solver";
+import type { MinesweeperProblem } from "@/games/minesweeper/problem/problem";
 
 const { splitConstraintComponents, selectMineCountsConsistentWithTotal } =
   _private;

@@ -5,8 +5,8 @@ import {
   getMinesweeperPlayRecordTimeDelta,
   isMinesweeperPlayRecord,
   minesweeperPlayRecordDefinition,
-} from "./play-record";
-import { calculateMinesweeperPlayScore } from "./score";
+} from "@/games/minesweeper/play-record";
+import { calculateMinesweeperPlayScore } from "@/games/minesweeper/score";
 
 function createRecord() {
   return createMinesweeperPlayRecord({

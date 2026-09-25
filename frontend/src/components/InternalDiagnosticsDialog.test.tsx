@@ -6,7 +6,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 
-import { InternalDiagnosticsDialog } from "./InternalDiagnosticsDialog";
+import { InternalDiagnosticsDialog } from "@/components/InternalDiagnosticsDialog";
 
 afterEach(() => {
   cleanup();

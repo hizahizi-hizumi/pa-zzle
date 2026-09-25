@@ -1,4 +1,4 @@
-import type { MinesweeperProblem } from "../problem/problem";
+import type { MinesweeperProblem } from "@/games/minesweeper/problem/problem";
 import {
   chordMinesweeperSessionCell,
   createMinesweeperSession,
@@ -7,7 +7,7 @@ import {
   getMinesweeperSessionVisibleCells,
   revealMinesweeperSessionCell,
   toggleMinesweeperSessionFlag,
-} from "./session";
+} from "@/games/minesweeper/session/session";
 
 describe("createMinesweeperSession", () => {
   const problem: MinesweeperProblem = {

@@ -1,8 +1,8 @@
-import { restoreMinesweeperProblemWithoutAnalysis } from "./generator";
+import { restoreMinesweeperProblemWithoutAnalysis } from "@/games/minesweeper/problem/generator";
 import {
   countMinesweeperMinimumOpenCount,
   type MinesweeperProblem,
-} from "./problem";
+} from "@/games/minesweeper/problem/problem";
 
 describe("countMinesweeperMinimumOpenCount", () => {
   // 0 1 * 1 0

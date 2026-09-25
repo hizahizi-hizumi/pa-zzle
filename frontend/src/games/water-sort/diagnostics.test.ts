@@ -1,11 +1,10 @@
 import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
-import { generateWaterSortProblem } from "@/games/water-sort/problem/generator";
-
 import {
   createWaterSortDiagnosticSnapshot,
   parseWaterSortDiagnosticSnapshot,
   restoreWaterSortProblemFromDiagnosticSnapshot,
-} from "./diagnostics";
+} from "@/games/water-sort/diagnostics";
+import { generateWaterSortProblem } from "@/games/water-sort/problem/generator";
 
 describe("WaterSortDiagnosticSnapshot", () => {
   const problem = generateWaterSortProblem({
@@ -13,7 +12,7 @@ describe("WaterSortDiagnosticSnapshot", () => {
     colorCount: 4,
   });
   const snapshot = createWaterSortDiagnosticSnapshot({
-    difficulty: "normal",
+    difficulty: "3",
     problemIdentity: {
       generatorVersion: problem.identity.generatorVersion,
       seed: problem.identity.seed,
@@ -35,7 +34,6 @@ describe("WaterSortDiagnosticSnapshot", () => {
     expect(parsed).toEqual(snapshot);
     expect(restored.problem.initialState).toEqual(problem.problem.initialState);
     expect(restored.optimalMoveCount).toBe(problem.optimalMoveCount);
-    expect(restored.difficultyAnalysis).toEqual(problem.difficultyAnalysis);
   });
 
   test("診断形式ではないJSONを拒否すること", () => {

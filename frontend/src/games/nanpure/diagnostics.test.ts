@@ -1,11 +1,10 @@
 import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
-import { generateNanpureProblem } from "@/games/nanpure/problem/generator";
-
 import {
   createNanpureDiagnosticSnapshot,
   parseNanpureDiagnosticSnapshot,
   restoreNanpureProblemFromDiagnosticSnapshot,
-} from "./diagnostics";
+} from "@/games/nanpure/diagnostics";
+import { generateNanpureProblem } from "@/games/nanpure/problem/generator";
 
 describe("NanpureDiagnosticSnapshot", () => {
   const problem = generateNanpureProblem({

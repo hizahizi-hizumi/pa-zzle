@@ -1,10 +1,10 @@
 import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import type { MinesweeperInputMode } from "../board/MinesweeperBoard";
-import { InputModeToggle } from "./MinesweeperPlayHeader/InputModeToggle";
-import { PlayHeaderSummary } from "./MinesweeperPlayHeader/PlayHeaderSummary";
-import { PlayMenu } from "./MinesweeperPlayHeader/PlayMenu";
+import type { MinesweeperInputMode } from "@/games/minesweeper/ui/board/MinesweeperBoard";
+import { InputModeToggle } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperPlayHeader/InputModeToggle";
+import { PlayHeaderSummary } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperPlayHeader/PlayHeaderSummary";
+import { PlayMenu } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperPlayHeader/PlayMenu";
 
 type MinesweeperPlayHeaderProps = {
   mineCount: number;

@@ -3,26 +3,17 @@ import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import { WaterBottle } from "@/games/water-sort/ui/board/water-bottle/WaterBottle";
 
 const difficultyPreviewStates = {
-  easy: [
-    [1, 0, 0, 3],
-    [3, 2, 1, 3],
-    [2, 2, 1, 0],
-    [2, 3, 1, 0],
-  ],
-  normal: [
-    [2, 4, 4, 1],
-    [0, 3, 4, 0],
-    [2, 1, 3, 3],
-    [4, 1, 2, 1],
-    [0, 3, 2, 0],
-  ],
-  hard: [
-    [2, 2, 0, 1],
-    [0, 3, 1, 5],
-    [3, 4, 1, 4],
-    [2, 5, 0, 4],
-    [0, 1, 5, 5],
-    [2, 4, 3, 3],
+  "1": [[0, 1, 2, 1], [2, 0, 1, 0], [1, 2, 0, 2], []],
+  "2": [[0, 2, 0, 1], [1, 0, 2, 1], [2, 1, 2, 0], [], []],
+  "3": [[0, 1, 2, 3], [3, 2, 1, 0], [2, 0, 3, 1], [1, 3, 0, 2], []],
+  "4": [[0, 1, 2, 3], [2, 3, 0, 1], [3, 0, 1, 2], [1, 2, 3, 0], [], []],
+  "5": [
+    [0, 1, 2, 3],
+    [4, 2, 0, 1],
+    [3, 4, 1, 2],
+    [1, 0, 4, 3],
+    [2, 3, 4, 0],
+    [],
   ],
 } satisfies Record<WaterSortDifficulty, WaterSortState>;
 
@@ -33,21 +24,19 @@ type WaterSortDifficultyPreviewProps = {
 export function WaterSortDifficultyPreview({
   difficulty,
 }: WaterSortDifficultyPreviewProps) {
-  const previewState = difficultyPreviewStates[difficulty];
+  const bottles = difficultyPreviewStates[difficulty].map(
+    (contents, position) => ({ id: `${difficulty}-${position}`, contents }),
+  );
 
   return (
-    <span
-      aria-hidden="true"
-      className="flex h-16 items-end justify-center gap-2 sm:h-24 sm:gap-2.5"
-    >
-      {previewState.map((contents) => (
-        <span
-          key={[difficulty, ...contents].join("-")}
-          className="relative h-full aspect-[0.36]"
-        >
-          <WaterBottle contents={contents} />
-        </span>
-      ))}
+    <span aria-hidden="true" className="relative h-12 w-32 shrink-0">
+      <span className="absolute top-0 left-0 flex h-24 w-64 origin-top-left scale-50 items-end gap-2 lg:justify-center">
+        {bottles.map(({ id, contents }) => (
+          <span key={id} className="relative h-full aspect-[0.36]">
+            <WaterBottle contents={contents} />
+          </span>
+        ))}
+      </span>
     </span>
   );
 }

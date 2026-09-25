@@ -3,12 +3,12 @@ import {
   createMinesweeperDiagnosticSnapshot,
   parseMinesweeperDiagnosticSnapshot,
   restoreMinesweeperProblemFromDiagnosticSnapshot,
-} from "./diagnostics";
-import { restoreMinesweeperProblemWithoutAnalysis } from "./problem/generator";
+} from "@/games/minesweeper/diagnostics";
+import { restoreMinesweeperProblemWithoutAnalysis } from "@/games/minesweeper/problem/generator";
 import {
   listMinesweeperPoolEntries,
   toMinesweeperPoolIdentity,
-} from "./problem/problem-pool";
+} from "@/games/minesweeper/problem/problem-pool";
 
 describe("MinesweeperDiagnosticSnapshot", () => {
   const identity = toMinesweeperPoolIdentity(

@@ -4,7 +4,7 @@ import {
   calculateMinesweeperTimeDeltaMs,
   getMinesweeperGameResultLevel,
   MINESWEEPER_SCORE_MAXIMUMS,
-} from "./score";
+} from "@/games/minesweeper/score";
 
 const workload = { minimumOpenCount: 10, mineCount: 10 };
 const speedFullScoreMs = 65_000;
