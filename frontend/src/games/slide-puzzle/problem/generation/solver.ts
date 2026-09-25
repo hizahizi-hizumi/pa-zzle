@@ -1,5 +1,6 @@
 import { isSolvableSlidePuzzleBoard } from "@/games/slide-puzzle/puzzle/rules";
 import {
+  getSlidePuzzleBoardSize,
   getSlidePuzzleColumn,
   getSlidePuzzleRow,
   isSlidePuzzleSolved,
@@ -8,14 +9,12 @@ import {
   type SlidePuzzleBoardSize,
 } from "@/games/slide-puzzle/puzzle/state";
 
-/** 近傍表と線形衝突の表は 4×4 の盤面だけで作る。 */
-const BOARD_SIZE: SlidePuzzleBoardSize = 4;
-const CELL_COUNT = BOARD_SIZE * BOARD_SIZE;
-
 /**
  * IDA* が使う許容的な下界。探索中は盤面を書き換えながら差分で更新する。
  */
 export type SlidePuzzleHeuristic = {
+  /** 下界を求められる盤面の一辺のマス数。 */
+  boardSize: SlidePuzzleBoardSize;
   /** 盤面全体から下界を求め、差分更新の内部状態を作り直す。 */
   reset(cells: Uint8Array): number;
   /** `cells` は移動後の盤面。`tile` が `from` から `to` へ動いた後の下界を返す。 */
@@ -36,50 +35,32 @@ type SlidePuzzleSolveResult =
     }
   | { status: "limit-exceeded"; expandedNodeCount: number };
 
-const LINE_CELL_KEY_BASE = CELL_COUNT;
-const LINE_KEY_COUNT = LINE_CELL_KEY_BASE ** BOARD_SIZE;
+/** 探索で繰り返し引く、盤面サイズごとの表。 */
+type SolverTables = {
+  cellCount: number;
+  neighborCells: readonly (readonly number[])[];
+  /** `tile * cellCount + cellIndex` で引く、タイルのゴールまでの距離。 */
+  tileDistances: Uint8Array;
+  goalRowOfTile: Int8Array;
+  goalColumnOfTile: Int8Array;
+  /** 行（列）の中のタイルを、その行（列）の中のゴール順 + 1（ゴールが外なら 0）の桁として並べた値で引く線形衝突。 */
+  lineConflicts: Uint8Array;
+};
 
-const neighborCells: readonly (readonly number[])[] = Array.from(
-  { length: CELL_COUNT },
-  (_, cellIndex) => {
-    const row = getSlidePuzzleRow(cellIndex, BOARD_SIZE);
-    const column = getSlidePuzzleColumn(cellIndex, BOARD_SIZE);
+function createNeighborCells(
+  boardSize: SlidePuzzleBoardSize,
+): readonly (readonly number[])[] {
+  return Array.from({ length: boardSize * boardSize }, (_, cellIndex) => {
+    const row = getSlidePuzzleRow(cellIndex, boardSize);
+    const column = getSlidePuzzleColumn(cellIndex, boardSize);
     return [
-      row > 0 ? cellIndex - BOARD_SIZE : null,
-      row < BOARD_SIZE - 1 ? cellIndex + BOARD_SIZE : null,
+      row > 0 ? cellIndex - boardSize : null,
+      row < boardSize - 1 ? cellIndex + boardSize : null,
       column > 0 ? cellIndex - 1 : null,
-      column < BOARD_SIZE - 1 ? cellIndex + 1 : null,
+      column < boardSize - 1 ? cellIndex + 1 : null,
     ].filter((neighbor) => neighbor !== null);
-  },
-);
-
-function goalCellOf(tile: number): number {
-  return tile - 1;
+  });
 }
-
-function tileDistance(tile: number, cellIndex: number): number {
-  const goalCell = goalCellOf(tile);
-  return (
-    Math.abs(
-      getSlidePuzzleRow(cellIndex, BOARD_SIZE) -
-        getSlidePuzzleRow(goalCell, BOARD_SIZE),
-    ) +
-    Math.abs(
-      getSlidePuzzleColumn(cellIndex, BOARD_SIZE) -
-        getSlidePuzzleColumn(goalCell, BOARD_SIZE),
-    )
-  );
-}
-
-const tileDistanceTable = Uint8Array.from(
-  { length: CELL_COUNT * CELL_COUNT },
-  (_, key) => {
-    const tile = Math.floor(key / CELL_COUNT);
-    return tile === SLIDE_PUZZLE_BLANK
-      ? 0
-      : tileDistance(tile, key % CELL_COUNT);
-  },
-);
 
 function lengthOfLongestIncreasingSubsequence(values: readonly number[]) {
   const lengths = values.map(() => 1);
@@ -100,79 +81,78 @@ function lengthOfLongestIncreasingSubsequence(values: readonly number[]) {
  * 行（または列）の中にゴールがあるタイルのうち、順序を正すために列（行）外へ
  * 一度退避させる必要がある枚数 × 2。退避したタイルは最低 2 手余計に動く。
  */
-function lineConflictOf(
-  tiles: readonly number[],
-  isRow: boolean,
-  line: number,
-) {
-  const goalOrders = tiles.flatMap((tile) => {
-    if (tile === SLIDE_PUZZLE_BLANK) {
-      return [];
-    }
-    const goalCell = goalCellOf(tile);
-    const goalLine = isRow
-      ? getSlidePuzzleRow(goalCell, BOARD_SIZE)
-      : getSlidePuzzleColumn(goalCell, BOARD_SIZE);
-    if (goalLine !== line) {
-      return [];
-    }
-    return [
-      isRow
-        ? getSlidePuzzleColumn(goalCell, BOARD_SIZE)
-        : getSlidePuzzleRow(goalCell, BOARD_SIZE),
-    ];
-  });
-  return (
-    2 * (goalOrders.length - lengthOfLongestIncreasingSubsequence(goalOrders))
-  );
-}
-
-function createLineConflictTable(isRow: boolean, line: number): Uint8Array {
-  const table = new Uint8Array(LINE_KEY_COUNT);
-  for (let key = 0; key < LINE_KEY_COUNT; key += 1) {
-    const tiles: number[] = [];
+function createLineConflictTable(boardSize: SlidePuzzleBoardSize): Uint8Array {
+  const digitBase = boardSize + 1;
+  const table = new Uint8Array(digitBase ** boardSize);
+  for (let key = 0; key < table.length; key += 1) {
+    const goalOrders: number[] = [];
     let rest = key;
-    for (let offset = 0; offset < BOARD_SIZE; offset += 1) {
-      tiles.push(rest % LINE_CELL_KEY_BASE);
-      rest = Math.floor(rest / LINE_CELL_KEY_BASE);
+    for (let offset = 0; offset < boardSize; offset += 1) {
+      const digit = rest % digitBase;
+      if (digit > 0) {
+        goalOrders.push(digit - 1);
+      }
+      rest = Math.floor(rest / digitBase);
     }
-    table[key] = lineConflictOf(tiles, isRow, line);
+    table[key] =
+      2 *
+      (goalOrders.length - lengthOfLongestIncreasingSubsequence(goalOrders));
   }
   return table;
 }
 
-let lineConflictTables: {
-  rows: readonly Uint8Array[];
-  columns: readonly Uint8Array[];
-} | null = null;
+function createSolverTables(boardSize: SlidePuzzleBoardSize): SolverTables {
+  const cellCount = boardSize * boardSize;
+  const goalRowOfTile = new Int8Array(cellCount).fill(-1);
+  const goalColumnOfTile = new Int8Array(cellCount).fill(-1);
+  for (let tile = 1; tile < cellCount; tile += 1) {
+    goalRowOfTile[tile] = getSlidePuzzleRow(tile - 1, boardSize);
+    goalColumnOfTile[tile] = getSlidePuzzleColumn(tile - 1, boardSize);
+  }
+  const tileDistances = Uint8Array.from(
+    { length: cellCount * cellCount },
+    (_, key) => {
+      const tile = Math.floor(key / cellCount);
+      const cellIndex = key % cellCount;
+      return tile === SLIDE_PUZZLE_BLANK
+        ? 0
+        : Math.abs(
+            getSlidePuzzleRow(cellIndex, boardSize) -
+              (goalRowOfTile[tile] ?? 0),
+          ) +
+            Math.abs(
+              getSlidePuzzleColumn(cellIndex, boardSize) -
+                (goalColumnOfTile[tile] ?? 0),
+            );
+    },
+  );
 
-function getLineConflictTables() {
-  lineConflictTables ??= {
-    rows: Array.from({ length: BOARD_SIZE }, (_, row) =>
-      createLineConflictTable(true, row),
-    ),
-    columns: Array.from({ length: BOARD_SIZE }, (_, column) =>
-      createLineConflictTable(false, column),
-    ),
+  return {
+    cellCount,
+    neighborCells: createNeighborCells(boardSize),
+    tileDistances,
+    goalRowOfTile,
+    goalColumnOfTile,
+    lineConflicts: createLineConflictTable(boardSize),
   };
-  return lineConflictTables;
 }
 
-function rowKey(cells: Uint8Array, row: number): number {
-  const start = row * BOARD_SIZE;
-  let key = 0;
-  for (let offset = BOARD_SIZE - 1; offset >= 0; offset -= 1) {
-    key = key * LINE_CELL_KEY_BASE + (cells[start + offset] ?? 0);
+const solverTablesByBoardSize = new Map<SlidePuzzleBoardSize, SolverTables>();
+
+function getSolverTables(boardSize: SlidePuzzleBoardSize): SolverTables {
+  let tables = solverTablesByBoardSize.get(boardSize);
+  if (!tables) {
+    tables = createSolverTables(boardSize);
+    solverTablesByBoardSize.set(boardSize, tables);
   }
-  return key;
+  return tables;
 }
 
-function columnKey(cells: Uint8Array, column: number): number {
-  let key = 0;
-  for (let offset = BOARD_SIZE - 1; offset >= 0; offset -= 1) {
-    key = key * LINE_CELL_KEY_BASE + (cells[offset * BOARD_SIZE + column] ?? 0);
-  }
-  return key;
+/** 各マスから空白が 1 手で動けるマス。生成・検証の探索で共有する。 */
+export function getSlidePuzzleNeighborCells(
+  boardSize: SlidePuzzleBoardSize,
+): readonly (readonly number[])[] {
+  return getSolverTables(boardSize).neighborCells;
 }
 
 /**
@@ -180,52 +160,84 @@ function columnKey(cells: Uint8Array, column: number): number {
  * 同じ行・列にゴールがあり、ゴールの前後が逆になっているタイルは、
  * 少なくとも一方が行・列の外へ一度出る必要がある。
  */
-function createSlidePuzzleManhattanLinearConflictHeuristic(): SlidePuzzleHeuristic {
-  const tables = getLineConflictTables();
-  const rowConflicts = new Uint8Array(BOARD_SIZE);
-  const columnConflicts = new Uint8Array(BOARD_SIZE);
+function createSlidePuzzleManhattanLinearConflictHeuristic(
+  boardSize: SlidePuzzleBoardSize,
+): SlidePuzzleHeuristic {
+  const {
+    cellCount,
+    tileDistances,
+    goalRowOfTile,
+    goalColumnOfTile,
+    lineConflicts,
+  } = getSolverTables(boardSize);
+  const digitBase = boardSize + 1;
+  const rowConflicts = new Uint8Array(boardSize);
+  const columnConflicts = new Uint8Array(boardSize);
   let manhattanDistance = 0;
   let conflictTotal = 0;
 
+  function rowConflictOf(cells: Uint8Array, row: number): number {
+    let key = 0;
+    for (let offset = boardSize - 1; offset >= 0; offset -= 1) {
+      const tile = cells[row * boardSize + offset] ?? SLIDE_PUZZLE_BLANK;
+      key *= digitBase;
+      if (tile !== SLIDE_PUZZLE_BLANK && goalRowOfTile[tile] === row) {
+        key += (goalColumnOfTile[tile] ?? 0) + 1;
+      }
+    }
+    return lineConflicts[key] ?? 0;
+  }
+
+  function columnConflictOf(cells: Uint8Array, column: number): number {
+    let key = 0;
+    for (let offset = boardSize - 1; offset >= 0; offset -= 1) {
+      const tile = cells[offset * boardSize + column] ?? SLIDE_PUZZLE_BLANK;
+      key *= digitBase;
+      if (tile !== SLIDE_PUZZLE_BLANK && goalColumnOfTile[tile] === column) {
+        key += (goalRowOfTile[tile] ?? 0) + 1;
+      }
+    }
+    return lineConflicts[key] ?? 0;
+  }
+
   return {
+    boardSize,
     reset(cells) {
       manhattanDistance = 0;
       for (let cellIndex = 0; cellIndex < cells.length; cellIndex += 1) {
         manhattanDistance +=
-          tileDistanceTable[(cells[cellIndex] ?? 0) * CELL_COUNT + cellIndex] ??
-          0;
+          tileDistances[(cells[cellIndex] ?? 0) * cellCount + cellIndex] ?? 0;
       }
       conflictTotal = 0;
-      for (let line = 0; line < BOARD_SIZE; line += 1) {
-        rowConflicts[line] = tables.rows[line]?.[rowKey(cells, line)] ?? 0;
-        columnConflicts[line] =
-          tables.columns[line]?.[columnKey(cells, line)] ?? 0;
+      for (let line = 0; line < boardSize; line += 1) {
+        rowConflicts[line] = rowConflictOf(cells, line);
+        columnConflicts[line] = columnConflictOf(cells, line);
         conflictTotal +=
           (rowConflicts[line] ?? 0) + (columnConflicts[line] ?? 0);
       }
       return manhattanDistance + conflictTotal;
     },
     update(cells, tile, from, to) {
-      const tileOffset = tile * CELL_COUNT;
+      const tileOffset = tile * cellCount;
       manhattanDistance +=
-        (tileDistanceTable[tileOffset + to] ?? 0) -
-        (tileDistanceTable[tileOffset + from] ?? 0);
+        (tileDistances[tileOffset + to] ?? 0) -
+        (tileDistances[tileOffset + from] ?? 0);
 
-      const fromRow = getSlidePuzzleRow(from, BOARD_SIZE);
-      const toRow = getSlidePuzzleRow(to, BOARD_SIZE);
+      const fromRow = getSlidePuzzleRow(from, boardSize);
+      const toRow = getSlidePuzzleRow(to, boardSize);
       if (fromRow === toRow) {
         // 横に動いたタイルは、行の中の順序を変えず、列だけを移る。
         for (const column of [
-          getSlidePuzzleColumn(from, BOARD_SIZE),
-          getSlidePuzzleColumn(to, BOARD_SIZE),
+          getSlidePuzzleColumn(from, boardSize),
+          getSlidePuzzleColumn(to, boardSize),
         ]) {
-          const next = tables.columns[column]?.[columnKey(cells, column)] ?? 0;
+          const next = columnConflictOf(cells, column);
           conflictTotal += next - (columnConflicts[column] ?? 0);
           columnConflicts[column] = next;
         }
       } else {
         for (const row of [fromRow, toRow]) {
-          const next = tables.rows[row]?.[rowKey(cells, row)] ?? 0;
+          const next = rowConflictOf(cells, row);
           conflictTotal += next - (rowConflicts[row] ?? 0);
           rowConflicts[row] = next;
         }
@@ -254,9 +266,6 @@ export function solveSlidePuzzleOptimally(
   board: SlidePuzzleBoard,
   options: SlidePuzzleSolveOptions = {},
 ): SlidePuzzleSolveResult {
-  if (board.length !== CELL_COUNT) {
-    throw new RangeError("Slide puzzle solver supports only 4×4 boards");
-  }
   if (!isSolvableSlidePuzzleBoard(board)) {
     throw new RangeError("Slide puzzle board must be solvable");
   }
@@ -267,8 +276,14 @@ export function solveSlidePuzzleOptimally(
   ) {
     throw new RangeError("nodeLimit must be a positive integer");
   }
+  const boardSize = getSlidePuzzleBoardSize(board);
   const heuristic =
-    options.heuristic ?? createSlidePuzzleManhattanLinearConflictHeuristic();
+    options.heuristic ??
+    createSlidePuzzleManhattanLinearConflictHeuristic(boardSize);
+  if (heuristic.boardSize !== boardSize) {
+    throw new RangeError("heuristic must be built for the same board size");
+  }
+  const { neighborCells } = getSolverTables(boardSize);
   const cells = Uint8Array.from(board);
   let blankCell = cells.indexOf(SLIDE_PUZZLE_BLANK);
   let expandedNodeCount = 0;
