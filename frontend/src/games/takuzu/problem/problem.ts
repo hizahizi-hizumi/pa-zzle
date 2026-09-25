@@ -100,3 +100,69 @@ export function assertTakuzuProblem(problem: TakuzuProblem): void {
     throw new Error("Takuzu givens must agree with the solution");
   }
 }
+
+// 生成器（解法器）をプレイ時の読み込みに含めないよう、手筋の名前だけをここで持つ。
+const removalTechniqueLimits = {
+  adjacency: true,
+  "count-completion": true,
+  "single-remaining": true,
+  "duplicate-avoidance": true,
+  "general-line": true,
+} as const satisfies Record<TakuzuTechnique, true>;
+
+function isRemovalTechniqueLimit(
+  value: unknown,
+): value is TakuzuTechnique | null {
+  return (
+    value === null ||
+    (typeof value === "string" && Object.hasOwn(removalTechniqueLimits, value))
+  );
+}
+
+function isRecordObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
+/** 記録など外部から読み戻した値が、現在の生成器で扱える識別情報かを確かめる。 */
+export function isTakuzuProblemIdentity(
+  value: unknown,
+): value is TakuzuProblemIdentity {
+  if (!isRecordObject(value) || !isRecordObject(value.conditions)) {
+    return false;
+  }
+
+  const { size, removalTechniqueLimit, extraGivenCount } = value.conditions;
+  return (
+    value.generatorVersion === TAKUZU_GENERATOR_VERSION &&
+    typeof value.seed === "string" &&
+    value.seed.length > 0 &&
+    size === TAKUZU_BOARD_SIZE &&
+    isRemovalTechniqueLimit(removalTechniqueLimit) &&
+    isNonNegativeInteger(extraGivenCount)
+  );
+}
+
+/** 記録など外部から読み戻した値が、8×8 の問題で成り立つ作業の量かを確かめる。 */
+export function isTakuzuSolveWorkload(
+  value: unknown,
+): value is TakuzuSolveWorkload {
+  if (!isRecordObject(value)) {
+    return false;
+  }
+
+  const { emptyCellCount, roundCount, lineReadingRoundCount } = value;
+  return (
+    isNonNegativeInteger(emptyCellCount) &&
+    emptyCellCount > 0 &&
+    emptyCellCount <= TAKUZU_BOARD_SIZE * TAKUZU_BOARD_SIZE &&
+    isNonNegativeInteger(roundCount) &&
+    roundCount > 0 &&
+    roundCount <= emptyCellCount &&
+    isNonNegativeInteger(lineReadingRoundCount) &&
+    lineReadingRoundCount <= roundCount
+  );
+}
