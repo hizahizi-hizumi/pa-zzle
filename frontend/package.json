@@ -15,7 +15,9 @@
     "analyze:minesweeper": "bun scripts/analyze-minesweeper-corpus.ts",
     "analyze:minesweeper-supply": "bun scripts/analyze-minesweeper-difficulty-supply.ts",
     "generate:minesweeper-pool": "bun scripts/generate-minesweeper-problem-pool.ts",
-    "generate:water-sort-pool": "bun scripts/generate-water-sort-problem-pool.ts"
+    "generate:water-sort-pool": "bun scripts/generate-water-sort-problem-pool.ts",
+    "generate:slide-puzzle-pool": "bun scripts/generate-slide-puzzle-problem-pool.ts",
+    "analyze:slide-puzzle": "bun scripts/analyze-slide-puzzle-corpus.ts"
   },
   "dependencies": {
     "@fontsource/zen-kaku-gothic-new": "5.3.0",
