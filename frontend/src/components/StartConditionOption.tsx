@@ -6,12 +6,14 @@ import { cn } from "@/lib/utils";
 type StartConditionOptionProps = {
   label: string;
   children: ReactNode;
-  density?: "regular" | "compact";
+  density?: "regular" | "comfortable" | "compact";
 };
 
 const layoutClassNames = {
   regular:
     "h-44 flex-col justify-center gap-4 px-8 py-4 sm:h-60 sm:gap-6 sm:py-8",
+  comfortable:
+    "flex-row justify-start gap-6 px-4 py-3 lg:h-60 lg:flex-col lg:justify-center lg:px-8 lg:py-8",
   compact:
     "h-16 flex-row justify-start gap-4 px-4 lg:h-60 lg:flex-col lg:justify-center lg:gap-6 lg:py-8",
 } satisfies Record<NonNullable<StartConditionOptionProps["density"]>, string>;
@@ -33,7 +35,7 @@ export function StartConditionOption({
       <ChevronRight
         className={cn(
           "absolute right-4 size-5 text-muted-foreground transition-transform duration-(--duration-fast) ease-standard group-hover:translate-x-0.5",
-          density === "compact" && "lg:hidden",
+          density !== "regular" && "lg:hidden",
         )}
         aria-hidden="true"
       />

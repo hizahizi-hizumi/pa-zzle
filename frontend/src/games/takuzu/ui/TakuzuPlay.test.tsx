@@ -112,6 +112,47 @@ describe("TakuzuPlay", () => {
     });
   });
 
+  describe("難易度変更と検証情報のつなぎ先を渡した場合", () => {
+    const onChangeDifficulty = vi.fn();
+    const onOpenDiagnostics = vi.fn();
+
+    beforeEach(() => {
+      render(
+        <TakuzuPlay
+          difficulty="2"
+          size={2}
+          cells={cells}
+          progress="playing"
+          elapsedMs={0}
+          {...callbacks}
+          onChangeDifficulty={onChangeDifficulty}
+          onOpenDiagnostics={onOpenDiagnostics}
+        />,
+      );
+    });
+
+    test("戻るボタンで難易度選択への移動を通知すること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
+
+      expect(onChangeDifficulty).toHaveBeenCalledOnce();
+      expect(callbacks.onBackToHome).not.toHaveBeenCalled();
+    });
+
+    test("メニューの難易度変更で難易度選択への移動を通知すること", () => {
+      openMenu();
+      fireEvent.click(screen.getByRole("menuitem", { name: "難易度変更" }));
+
+      expect(onChangeDifficulty).toHaveBeenCalledOnce();
+    });
+
+    test("メニューの検証情報で検証情報を開く操作を通知すること", () => {
+      openMenu();
+      fireEvent.click(screen.getByRole("menuitem", { name: "検証情報" }));
+
+      expect(onOpenDiagnostics).toHaveBeenCalledOnce();
+    });
+  });
+
   describe("完成演出中の場合", () => {
     beforeEach(() => {
       renderPlay("clearing");
