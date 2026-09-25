@@ -3,6 +3,9 @@ import { createMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
 import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
 import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
+import { createTakuzuPlayRecord } from "@/games/takuzu/play-record";
+import { createTakuzuProblemIdentity } from "@/games/takuzu/problem/problem";
+import { takuzuPlayRecordDisplay } from "@/games/takuzu/ui/play-record-display";
 import { createWaterSortPlayRecord } from "@/games/water-sort/play-record";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 
@@ -13,6 +16,7 @@ const playRecordDisplays = [
   waterSortPlayRecordDisplay,
   nanpurePlayRecordDisplay,
   minesweeperPlayRecordDisplay,
+  takuzuPlayRecordDisplay,
 ] as const satisfies PlayRecordDisplayCatalog;
 
 const records = [
@@ -88,6 +92,20 @@ const records = [
     completedAt: 160_000,
     result: { elapsedMs: 150_000, mistakeCount: 1, minimumOpenCount: 25 },
   }),
+  // 基準時間 10 + 46×2 + 18×3 + 2×10 = 176秒を 220秒で、置き直し1回で解いた記録。
+  createTakuzuPlayRecord({
+    difficulty: "4",
+    problemIdentity: createTakuzuProblemIdentity("duplicate-avoidance", 2, 160),
+    workload: { emptyCellCount: 46, roundCount: 18, lineReadingRoundCount: 2 },
+    startedAt: 10_000,
+    completedAt: 230_000,
+    result: {
+      elapsedMs: 220_000,
+      correctionCount: 1,
+      restartCount: 0,
+      inputCount: 70,
+    },
+  }),
 ];
 
 describe("PlayRecordsScreen", () => {
@@ -158,6 +176,21 @@ describe("PlayRecordsScreen", () => {
     expect(comparisonSelect.textContent).toContain("難易度 3");
     expect(screen.getAllByText("75点").length).toBeGreaterThan(0);
     expect(screen.getAllByText("+00:31").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("1回").length).toBeGreaterThan(0);
+    expect(screen.getByText("1件")).toBeTruthy();
+  });
+
+  test("バイナリパズルでは難易度ごとにスコア・基準時間との差・置き直しを比較すること", () => {
+    const gameSelect = screen.getByRole("combobox", { name: "パズル" });
+    fireEvent.change(gameSelect, { target: { value: "takuzu" } });
+    const comparisonSelect = screen.getByRole("combobox", {
+      name: "開始条件",
+    });
+
+    expect(comparisonSelect.textContent).toContain("難易度 4");
+    expect(screen.getAllByText("85点").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("+00:44").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("置き直し").length).toBeGreaterThan(0);
     expect(screen.getAllByText("1回").length).toBeGreaterThan(0);
     expect(screen.getByText("1件")).toBeTruthy();
   });
