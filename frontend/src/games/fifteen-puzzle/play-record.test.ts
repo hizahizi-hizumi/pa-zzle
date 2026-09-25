@@ -1,12 +1,16 @@
 import {
+  _private,
   createFifteenPuzzlePlayRecord,
   fifteenPuzzlePlayRecordDefinition,
-  getFifteenPuzzlePlayRecordMoveDelta,
-  getFifteenPuzzlePlayRecordScore,
-  getFifteenPuzzlePlayRecordTimeDelta,
   isFifteenPuzzlePlayRecord,
 } from "@/games/fifteen-puzzle/play-record";
 import type { PlayRecord } from "@/records/play-record";
+
+const {
+  getFifteenPuzzlePlayRecordMoveDelta,
+  getFifteenPuzzlePlayRecordScore,
+  getFifteenPuzzlePlayRecordTimeDelta,
+} = _private;
 
 const record = createFifteenPuzzlePlayRecord({
   difficulty: "3",

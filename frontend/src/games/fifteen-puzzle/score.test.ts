@@ -1,12 +1,14 @@
 import {
+  _private,
   calculateFifteenPuzzleMoveDelta,
   calculateFifteenPuzzlePerformanceComparison,
   calculateFifteenPuzzlePlayScore,
-  calculateFifteenPuzzleSpeedFullScoreMs,
   calculateFifteenPuzzleTimeDeltaMs,
   FIFTEEN_PUZZLE_SCORE_MAXIMUMS,
   getFifteenPuzzleGameResultLevel,
 } from "@/games/fifteen-puzzle/score";
+
+const { calculateFifteenPuzzleSpeedFullScoreMs } = _private;
 
 // 最短 30 手（レベル 3 の中央値）の問題。基準時間は 10 秒 + 30 手 × 2 秒 = 70 秒。
 const optimalMoveCount = 30;

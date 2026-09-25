@@ -40,7 +40,7 @@ export function createFifteenPuzzleDiagnosticSnapshot({
   };
 }
 
-export function parseFifteenPuzzleDiagnosticSnapshot(
+function parseFifteenPuzzleDiagnosticSnapshot(
   serialized: string,
 ): FifteenPuzzleDiagnosticSnapshot {
   const value: unknown = JSON.parse(serialized);
@@ -72,7 +72,7 @@ export function parseFifteenPuzzleDiagnosticSnapshot(
 }
 
 /** 評価の基準になる最短手数は問題集にしか無いので、問題集に無い識別情報では `null` を返す。 */
-export function restoreFifteenPuzzleProblemFromDiagnosticSnapshot(
+function restoreFifteenPuzzleProblemFromDiagnosticSnapshot(
   snapshot: FifteenPuzzleDiagnosticSnapshot,
 ): FifteenPuzzleGeneratedProblem | null {
   return restoreFifteenPuzzlePooledProblem(snapshot.problemIdentity);
@@ -81,3 +81,8 @@ export function restoreFifteenPuzzleProblemFromDiagnosticSnapshot(
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
+
+export const _private = {
+  parseFifteenPuzzleDiagnosticSnapshot,
+  restoreFifteenPuzzleProblemFromDiagnosticSnapshot,
+};

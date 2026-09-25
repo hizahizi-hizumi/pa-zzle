@@ -1,10 +1,14 @@
 import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
 import {
+  _private,
   createFifteenPuzzleDiagnosticSnapshot,
-  parseFifteenPuzzleDiagnosticSnapshot,
-  restoreFifteenPuzzleProblemFromDiagnosticSnapshot,
 } from "@/games/fifteen-puzzle/diagnostics";
 import { selectFifteenPuzzleProblemForDifficulty } from "@/games/fifteen-puzzle/problem-selection";
+
+const {
+  parseFifteenPuzzleDiagnosticSnapshot,
+  restoreFifteenPuzzleProblemFromDiagnosticSnapshot,
+} = _private;
 
 describe("FifteenPuzzleDiagnosticSnapshot", () => {
   const problem = selectFifteenPuzzleProblemForDifficulty(

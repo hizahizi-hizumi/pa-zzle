@@ -33,7 +33,7 @@ type FifteenPuzzleMoveDeltaInput = {
 type FifteenPuzzlePlayScoreInput = FifteenPuzzleTimeDeltaInput &
   FifteenPuzzleMoveDeltaInput;
 
-export type FifteenPuzzlePerformanceComparison = {
+type FifteenPuzzlePerformanceComparison = {
   speedFullScoreMs: number;
   timeDeltaMs: number;
   moveDelta: number;
@@ -47,7 +47,7 @@ function calculateLinearScore(maximum: number, ratio: number): number {
   return Math.round(maximum * clampUnit(ratio));
 }
 
-export function calculateFifteenPuzzleSpeedFullScoreMs({
+function calculateFifteenPuzzleSpeedFullScoreMs({
   optimalMoveCount,
 }: FifteenPuzzleSpeedFullScoreInput): number {
   return (
@@ -144,3 +144,5 @@ export function getFifteenPuzzleGameResultLevel(
   }
   return "clear";
 }
+
+export const _private = { calculateFifteenPuzzleSpeedFullScoreMs };

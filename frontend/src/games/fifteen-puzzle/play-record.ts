@@ -35,7 +35,7 @@ type FifteenPuzzlePlayRecordPayload = {
   performance: FifteenPuzzlePlayPerformance;
 };
 
-export type FifteenPuzzlePlayRecord = PlayRecord & {
+type FifteenPuzzlePlayRecord = PlayRecord & {
   gameId: typeof FIFTEEN_PUZZLE_GAME_ID;
   payloadVersion: typeof FIFTEEN_PUZZLE_PLAY_RECORD_PAYLOAD_VERSION;
   payload: FifteenPuzzlePlayRecordPayload;
@@ -136,9 +136,7 @@ export function createFifteenPuzzlePlayRecord({
   };
 }
 
-export function getFifteenPuzzlePlayRecordScore(
-  record: PlayRecord,
-): number | null {
+function getFifteenPuzzlePlayRecordScore(record: PlayRecord): number | null {
   if (!isFifteenPuzzlePlayRecord(record)) {
     return null;
   }
@@ -151,7 +149,7 @@ export function getFifteenPuzzlePlayRecordScore(
   }).total;
 }
 
-export function getFifteenPuzzlePlayRecordTimeDelta(
+function getFifteenPuzzlePlayRecordTimeDelta(
   record: PlayRecord,
 ): number | null {
   if (!isFifteenPuzzlePlayRecord(record)) {
@@ -162,7 +160,7 @@ export function getFifteenPuzzlePlayRecordTimeDelta(
   return calculateFifteenPuzzleTimeDeltaMs({ elapsedMs, optimalMoveCount });
 }
 
-export function getFifteenPuzzlePlayRecordMoveDelta(
+function getFifteenPuzzlePlayRecordMoveDelta(
   record: PlayRecord,
 ): number | null {
   if (!isFifteenPuzzlePlayRecord(record)) {
@@ -196,4 +194,10 @@ export const fifteenPuzzlePlayRecordDefinition: PlayRecordDefinition = {
       getValue: getFifteenPuzzlePlayRecordMoveDelta,
     },
   ],
+};
+
+export const _private = {
+  getFifteenPuzzlePlayRecordScore,
+  getFifteenPuzzlePlayRecordTimeDelta,
+  getFifteenPuzzlePlayRecordMoveDelta,
 };
