@@ -11,9 +11,9 @@ rules:
   - id: arrange-outside-test
     title: テスト本体にArrangeを置かない
     unit: test
-    # golden benchmark (3 runs) のleave-one-file-out校正で全foldが選んだthreshold。
-    # 違反箇所の厳密P/R 0.91 / 0.86、unit単位の包含P/R 0.99 / 0.98。
-    violationThreshold: 0.35
+    # golden benchmark (3 runs) の校正の推奨値で、leave-one-file-outで選ばれたthresholdの平均0.66（0.65〜0.85）。
+    # 違反と非違反の確率は両端に分かれ、0.35〜0.60の違反箇所の厳密P/R 0.96 / 0.93、0.70で0.97 / 0.90。
+    violationThreshold: 0.65
     instruction: |
       A test body must not perform meaningful Arrange work. Such setup belongs
       in an enclosing describe, beforeEach, or test.each case data.
@@ -26,7 +26,7 @@ rules:
   - id: before-each-arrange-only
     title: beforeEachは事前準備だけを行う
     unit: setup
-    # goldenに違反例がなく校正できない。非違反の違反確率は最大約0.6で、誤指摘は出ない。
+    # goldenに違反例がなく校正できない。非違反の違反確率は最大約0.25で、誤指摘は出ない。
     violationThreshold: 0.90
     instruction: |
       A beforeEach must perform Arrange only.
@@ -39,8 +39,9 @@ rules:
     title: DOMテストは利用者から観測できる契約を優先する
     unit: test
     # goldenの違反（内部data属性やCSS selectorでの取得）を含むtestをunit単位で違反と
-    # 判定できず、どのthresholdでも一致しない。下げると誤指摘だけが増えるため高いまま。
-    violationThreshold: 0.90
+    # 判定できず、どのthresholdでも一致しない。非違反の違反確率は最大約0.91のため、
+    # 誤指摘が出ない0.95にする。
+    violationThreshold: 0.95
     instruction: |
       A DOM-oriented test must verify user-observable contracts rather than
       incidental implementation details.
@@ -69,9 +70,9 @@ rules:
   - id: no-condition-in-test-title
     title: テスト名に「場合」「時」を含めない
     unit: test-title
-    # golden benchmark (3 runs) の推奨値。leave-one-file-outで選ばれたthresholdは0.50〜0.90（平均0.76）。
-    # 0.80で指摘位置の厳密P/R 0.90 / 0.86。残る誤指摘は「〜中は」「ときは」など、場合・時を含まない条件の表現。
-    violationThreshold: 0.80
+    # golden benchmark (3 runs) の推奨値。leave-one-file-outで選ばれたthresholdは0.55〜0.95（平均0.85）。
+    # 0.90で指摘位置の厳密P/R 0.90 / 0.86。残る誤指摘は「〜中に」「ときは」など、場合・時を含まない条件の表現。
+    violationThreshold: 0.90
     instruction: |
       A test case name must not contain the word 場合 or the word 時, because
       conditions belong in an enclosing describe name.
