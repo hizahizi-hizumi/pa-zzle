@@ -1,8 +1,7 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 
 import { useFifteenPuzzlePlay } from "@/games/fifteen-puzzle/play/use-fifteen-puzzle-play";
-import { generateFifteenPuzzleBoard } from "@/games/fifteen-puzzle/problem/generator";
-import type { FifteenPuzzleProblemIdentity } from "@/games/fifteen-puzzle/problem/problem";
+import { restoreFifteenPuzzleProblemWithOptimalMoveCount } from "@/games/fifteen-puzzle/problem/generator";
 import {
   listFifteenPuzzlePoolEntries,
   toFifteenPuzzlePooledProblem,
@@ -25,7 +24,7 @@ vi.mock("@/games/fifteen-puzzle/problem-selection", async (importOriginal) => ({
       seed,
       conditions: { size: 4, scrambleLength: 3 },
     },
-    optimalMoveCount: null,
+    optimalMoveCount: 3,
   }),
 }));
 
@@ -152,39 +151,36 @@ describe("useFifteenPuzzlePlay", () => {
     expect(result.current.moveCount).toBe(0);
   });
 
-  describe("問題集に無い問題識別情報を渡した場合", () => {
-    const identity: FifteenPuzzleProblemIdentity = {
-      generatorVersion: "1",
-      seed: "replay-seed",
-      conditions: { size: 4, scrambleLength: 30 },
-    };
-    const expectedBoard = generateFifteenPuzzleBoard(
-      identity.seed,
-      identity.conditions,
-    );
-
-    test("識別情報と同じ初期盤面から始めること", () => {
-      const restored = renderHook(() => useFifteenPuzzlePlay("2", identity));
-
-      expect(restored.result.current.board).toEqual(expectedBoard);
-      expect(restored.result.current.problemIdentity).toEqual(identity);
-      expect(restored.result.current.optimalMoveCount).toBeNull();
-    });
-  });
-
-  describe("問題集にある問題識別情報を渡した場合", () => {
+  describe("最初の問題を渡した場合", () => {
     const pooledEntries = listFifteenPuzzlePoolEntries("4").slice(0, 1);
-    const pooledProblems = pooledEntries.map(
-      (entry) => [entry[0], toFifteenPuzzlePooledProblem(entry)] as const,
-    );
+    const initialProblems = pooledEntries.map((entry) => {
+      const { identity, optimalMoveCount } =
+        toFifteenPuzzlePooledProblem(entry);
+      return [
+        entry[0],
+        restoreFifteenPuzzleProblemWithOptimalMoveCount(
+          identity,
+          optimalMoveCount,
+        ),
+      ] as const;
+    });
 
-    test.each(pooledProblems)(
-      "問題集の最短手数を持って始めること: %s",
-      (_seed, { identity, optimalMoveCount }) => {
-        const restored = renderHook(() => useFifteenPuzzlePlay("4", identity));
+    test.each(initialProblems)(
+      "渡した問題の初期盤面と最短手数で始めること: %s",
+      (_seed, initialProblem) => {
+        const restored = renderHook(() =>
+          useFifteenPuzzlePlay("4", initialProblem),
+        );
 
-        expect(restored.result.current.problemIdentity).toEqual(identity);
-        expect(restored.result.current.optimalMoveCount).toBe(optimalMoveCount);
+        expect(restored.result.current.board).toEqual(
+          initialProblem.problem.initialBoard,
+        );
+        expect(restored.result.current.problemIdentity).toEqual(
+          initialProblem.identity,
+        );
+        expect(restored.result.current.optimalMoveCount).toBe(
+          initialProblem.optimalMoveCount,
+        );
       },
     );
   });

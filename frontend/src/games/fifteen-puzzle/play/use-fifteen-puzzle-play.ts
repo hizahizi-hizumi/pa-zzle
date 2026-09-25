@@ -1,15 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { FifteenPuzzleDifficulty } from "@/games/fifteen-puzzle/difficulty";
-import { restoreFifteenPuzzleProblem } from "@/games/fifteen-puzzle/problem/generator";
 import type {
   FifteenPuzzleGeneratedProblem,
   FifteenPuzzleProblemIdentity,
 } from "@/games/fifteen-puzzle/problem/problem";
-import {
-  restoreFifteenPuzzlePooledProblem,
-  selectFifteenPuzzleProblemForDifficulty,
-} from "@/games/fifteen-puzzle/problem-selection";
+import { selectFifteenPuzzleProblemForDifficulty } from "@/games/fifteen-puzzle/problem-selection";
 import {
   type FifteenPuzzleDirection,
   type FifteenPuzzleSlide,
@@ -43,7 +39,7 @@ export type FifteenPuzzleProgress = "playing" | "clearing" | "result";
 type FifteenPuzzlePlayState = {
   session: FifteenPuzzleSession;
   problemIdentity: FifteenPuzzleProblemIdentity;
-  optimalMoveCount: number | null;
+  optimalMoveCount: number;
   progress: FifteenPuzzleProgress;
   operation: FifteenPuzzleOperation | null;
 };
@@ -52,14 +48,10 @@ function createPlayState(
   difficulty: FifteenPuzzleDifficulty,
   seed: ProblemSeed,
   startedAt: number,
-  initialProblemIdentity?: FifteenPuzzleProblemIdentity,
+  initialProblem?: FifteenPuzzleGeneratedProblem,
 ): FifteenPuzzlePlayState {
-  const generatedProblem: FifteenPuzzleGeneratedProblem = initialProblemIdentity
-    ? (restoreFifteenPuzzlePooledProblem(initialProblemIdentity) ?? {
-        ...restoreFifteenPuzzleProblem(initialProblemIdentity),
-        optimalMoveCount: null,
-      })
-    : selectFifteenPuzzleProblemForDifficulty(difficulty, seed);
+  const generatedProblem =
+    initialProblem ?? selectFifteenPuzzleProblemForDifficulty(difficulty, seed);
 
   return {
     session: createFifteenPuzzleSession(generatedProblem.problem, startedAt),
@@ -108,16 +100,17 @@ function slideTileInPlay(
   };
 }
 
+/** `initialProblem` は、記録からの再プレイで最初に遊ぶ問題。 */
 export function useFifteenPuzzlePlay(
   difficulty: FifteenPuzzleDifficulty,
-  initialProblemIdentity?: FifteenPuzzleProblemIdentity,
+  initialProblem?: FifteenPuzzleGeneratedProblem,
 ) {
   const [play, setPlay] = useState<FifteenPuzzlePlayState>(() =>
     createPlayState(
       difficulty,
-      initialProblemIdentity?.seed ?? createProblemSeed(),
+      initialProblem?.identity.seed ?? createProblemSeed(),
       Date.now(),
-      initialProblemIdentity,
+      initialProblem,
     ),
   );
   const [now, setNow] = useState(() => Date.now());
