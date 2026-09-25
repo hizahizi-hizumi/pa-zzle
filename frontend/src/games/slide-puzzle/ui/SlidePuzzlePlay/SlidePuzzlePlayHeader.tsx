@@ -1,14 +1,24 @@
 import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { PlayHeaderSummary } from "@/games/slide-puzzle/ui/SlidePuzzlePlay/SlidePuzzlePlayHeader/PlayHeaderSummary";
+import { PlayMenu } from "@/games/slide-puzzle/ui/SlidePuzzlePlay/SlidePuzzlePlayHeader/PlayMenu";
 
 type SlidePuzzlePlayHeaderProps = {
+  elapsedMs: number;
   moveCount: number;
+  onRestart: () => void;
+  onReplay: () => void;
+  onStartNewProblem: () => void;
   onBackToHome: () => void;
 };
 
 export function SlidePuzzlePlayHeader({
+  elapsedMs,
   moveCount,
+  onRestart,
+  onReplay,
+  onStartNewProblem,
   onBackToHome,
 }: SlidePuzzlePlayHeaderProps) {
   return (
@@ -22,15 +32,13 @@ export function SlidePuzzlePlayHeader({
       >
         <ArrowLeft />
       </Button>
-      <div className="flex min-w-0 flex-col items-center gap-0.5 pt-1 text-center">
-        <h1 className="truncate text-play-context">スライドパズル</h1>
-        <p className="flex items-baseline gap-1 whitespace-nowrap text-play-meta text-muted-foreground">
-          <span>手数</span>
-          <span className="font-mono font-medium tabular-nums text-foreground/80">
-            {moveCount}
-          </span>
-        </p>
-      </div>
+      <PlayHeaderSummary elapsedMs={elapsedMs} moveCount={moveCount} />
+      <PlayMenu
+        onRestart={onRestart}
+        onReplay={onReplay}
+        onStartNewProblem={onStartNewProblem}
+        onBackToHome={onBackToHome}
+      />
     </header>
   );
 }
