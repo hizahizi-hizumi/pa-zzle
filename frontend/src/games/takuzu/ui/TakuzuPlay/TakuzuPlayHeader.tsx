@@ -10,8 +10,8 @@ type TakuzuPlayHeaderProps = {
   elapsedMs: number;
   onRestart: () => void;
   onReplay: () => void;
-  onStartNewProblem?: () => void;
-  onChangeDifficulty?: () => void;
+  onStartNewProblem: () => void;
+  onChangeDifficulty: () => void;
   onBackToHome: () => void;
   onOpenDiagnostics?: () => void;
 };
@@ -32,8 +32,8 @@ export function TakuzuPlayHeader({
         type="button"
         variant="ghost"
         size="icon-lg"
-        aria-label={onChangeDifficulty ? "難易度選択へ戻る" : "ホームへ戻る"}
-        onClick={onChangeDifficulty ?? onBackToHome}
+        aria-label="難易度選択へ戻る"
+        onClick={onChangeDifficulty}
       >
         <ArrowLeft />
       </Button>

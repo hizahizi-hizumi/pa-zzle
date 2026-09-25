@@ -1,12 +1,17 @@
+import type { ReactNode } from "react";
+
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
-import type { TakuzuProgress } from "@/games/takuzu/play/use-takuzu-play";
+import type {
+  TakuzuProgress,
+  TakuzuResult,
+} from "@/games/takuzu/play/use-takuzu-play";
 import type { TakuzuCell } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import type { TakuzuCellView } from "@/games/takuzu/session/session";
 import { TakuzuBoard } from "@/games/takuzu/ui/board/TakuzuBoard";
-import { TakuzuClearedPanel } from "@/games/takuzu/ui/TakuzuPlay/TakuzuClearedPanel";
 import { TakuzuPlayHeader } from "@/games/takuzu/ui/TakuzuPlay/TakuzuPlayHeader";
+import { TakuzuResultScreen } from "@/games/takuzu/ui/TakuzuPlay/TakuzuResultScreen";
 
 type TakuzuPlayProps = {
   difficulty: TakuzuDifficulty;
@@ -14,13 +19,16 @@ type TakuzuPlayProps = {
   cells: readonly TakuzuCellView[];
   progress: TakuzuProgress;
   elapsedMs: number;
+  result: TakuzuResult | null;
+  recordOutcomeNotice: ReactNode;
   onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
   onPlaceCell: (cellIndex: number, cell: TakuzuCell) => void;
   onRestart: () => void;
   onReplay: () => void;
   onClearingComplete: () => void;
-  onStartNewProblem?: () => void;
-  onChangeDifficulty?: () => void;
+  onStartNewProblem: () => void;
+  onOpenRecords: () => void;
+  onChangeDifficulty: () => void;
   onBackToHome: () => void;
   onOpenDiagnostics?: () => void;
 };
@@ -31,16 +39,35 @@ export function TakuzuPlay({
   cells,
   progress,
   elapsedMs,
+  result,
+  recordOutcomeNotice,
   onCycleCell,
   onPlaceCell,
   onRestart,
   onReplay,
   onClearingComplete,
   onStartNewProblem,
+  onOpenRecords,
   onChangeDifficulty,
   onBackToHome,
   onOpenDiagnostics,
 }: TakuzuPlayProps) {
+  if (progress === "result" && result) {
+    return (
+      <TakuzuResultScreen
+        difficulty={difficulty}
+        result={result}
+        recordOutcomeNotice={recordOutcomeNotice}
+        onReplay={onReplay}
+        onStartNewProblem={onStartNewProblem}
+        onOpenRecords={onOpenRecords}
+        onChangeDifficulty={onChangeDifficulty}
+        onBackToHome={onBackToHome}
+        onOpenDiagnostics={onOpenDiagnostics}
+      />
+    );
+  }
+
   return (
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
       <BrandIdentityHeader />
@@ -65,12 +92,6 @@ export function TakuzuPlay({
             onPlaceCell={onPlaceCell}
             onClearingComplete={onClearingComplete}
           />
-          {progress === "result" && (
-            <TakuzuClearedPanel
-              onReplay={onReplay}
-              onStartNewProblem={onStartNewProblem}
-            />
-          )}
         </div>
       </main>
     </section>
