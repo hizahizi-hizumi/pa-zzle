@@ -344,14 +344,14 @@ describe("MinesweeperPlay", () => {
       const pictogram = document.querySelector(
         'svg[aria-label="マインスイーパー"]',
       );
-      const difficulty = screen.getByText("難易度 1");
+      const difficulty = screen.getByText("難易度").textContent;
       const score = screen.getByText("77");
       const timeMetric = screen.getByText("時間").parentElement;
       const mistakeMetric = screen.getByText("ミス").parentElement;
 
       expect(heading).toBeTruthy();
       expect(pictogram).toBeTruthy();
-      expect(difficulty).toBeTruthy();
+      expect(difficulty).toBe("難易度1");
       expect(score).toBeTruthy();
       expect(timeMetric?.textContent).toBe("時間00:25基準 +00:04");
       expect(mistakeMetric?.textContent).toBe("ミス1");

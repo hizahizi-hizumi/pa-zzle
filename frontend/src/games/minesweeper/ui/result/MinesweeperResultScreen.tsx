@@ -21,10 +21,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import minesweeperPictogramSvg from "@/games/minesweeper/assets/pictogram.svg?raw";
-import {
-  getMinesweeperDifficultyLabel,
-  type MinesweeperDifficulty,
-} from "@/games/minesweeper/difficulty";
+import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import type { MinesweeperResult } from "@/games/minesweeper/play/use-minesweeper-play";
 import {
   getMinesweeperGameResultLevel,
@@ -69,7 +66,8 @@ export function MinesweeperResultScreen({
       <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-4 py-3 pb-[max(calc(var(--spacing)*4),env(safe-area-inset-bottom))]">
         <GameResultIdentity
           gameName="マインスイーパー"
-          difficultyLabel={getMinesweeperDifficultyLabel(difficulty)}
+          // 見出し側が「難易度」を添えるので、「難易度 1」のラベルではなく段階の数だけを渡す。
+          difficultyLabel={difficulty}
           pictogramSvg={minesweeperPictogramSvg}
           level={resultLevel}
         />
