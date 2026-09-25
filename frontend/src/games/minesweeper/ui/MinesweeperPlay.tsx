@@ -17,6 +17,8 @@ type MinesweeperPlayProps = {
   columns: number;
   mineCount: number;
   flagCount: number;
+  mistakeCount: number;
+  elapsedMs: number;
   visibleCells: readonly MinesweeperVisibleCell[];
   status: MinesweeperSessionStatus;
   onRevealCell: (cellIndex: number) => void;
@@ -34,6 +36,8 @@ export function MinesweeperPlay({
   columns,
   mineCount,
   flagCount,
+  mistakeCount,
+  elapsedMs,
   visibleCells,
   status,
   onRevealCell,
@@ -63,6 +67,8 @@ export function MinesweeperPlay({
       <MinesweeperPlayHeader
         mineCount={mineCount}
         flagCount={flagCount}
+        mistakeCount={mistakeCount}
+        elapsedMs={elapsedMs}
         inputMode={mode}
         showsInputModeToggle={status === "playing"}
         onInputModeChange={setMode}
@@ -84,9 +90,7 @@ export function MinesweeperPlay({
             onToggleFlag={onToggleFlag}
             onChordCell={onChordCell}
           />
-          {status !== "playing" ? (
-            <MinesweeperPlayStatus status={status} />
-          ) : null}
+          {status === "cleared" ? <MinesweeperPlayStatus /> : null}
         </div>
       </main>
     </section>

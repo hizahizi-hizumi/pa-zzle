@@ -39,6 +39,8 @@ export function PlayableMinesweeper({
         columns={play.columns}
         mineCount={play.mineCount}
         flagCount={play.flagCount}
+        mistakeCount={play.mistakeCount}
+        elapsedMs={play.elapsedMs}
         visibleCells={play.visibleCells}
         status={play.status}
         onRevealCell={play.revealCell}

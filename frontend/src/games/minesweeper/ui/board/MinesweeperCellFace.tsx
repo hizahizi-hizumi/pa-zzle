@@ -27,8 +27,9 @@ const MINE_ICON_CLASS_NAMES = {
 } satisfies Record<MinesweeperCellFaceSize, string>;
 
 function getStateClassName(view: MinesweeperVisibleCell): string {
-  if (view.state === "exploded") {
-    return "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300";
+  // 踏んだ地雷はプレイを止めないミスとして、盤面の中で見分けられる程度の控えめな色にする。
+  if (view.state === "steppedMine") {
+    return "bg-rose-100 text-rose-700 dark:bg-rose-950/45 dark:text-rose-300";
   }
   if (view.state === "revealed") {
     return `bg-background ${NUMBER_CLASS_NAMES[view.adjacentMineCount] ?? ""}`;
@@ -59,7 +60,7 @@ export function MinesweeperCellFace({ view, size }: MinesweeperCellFaceProps) {
   if (view.state === "flagged") {
     return <Flag className="size-[52%] fill-current" aria-hidden />;
   }
-  if (view.state === "mine" || view.state === "exploded") {
+  if (view.state === "mine" || view.state === "steppedMine") {
     return <Bomb className={MINE_ICON_CLASS_NAMES[size]} aria-hidden />;
   }
   if (view.state === "revealed" && view.adjacentMineCount > 0) {

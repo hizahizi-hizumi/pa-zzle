@@ -9,6 +9,8 @@ import { PlayMenu } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperPlay
 type MinesweeperPlayHeaderProps = {
   mineCount: number;
   flagCount: number;
+  mistakeCount: number;
+  elapsedMs: number;
   inputMode: MinesweeperInputMode;
   showsInputModeToggle: boolean;
   onInputModeChange: (mode: MinesweeperInputMode) => void;
@@ -22,6 +24,8 @@ type MinesweeperPlayHeaderProps = {
 export function MinesweeperPlayHeader({
   mineCount,
   flagCount,
+  mistakeCount,
+  elapsedMs,
   inputMode,
   showsInputModeToggle,
   onInputModeChange,
@@ -42,7 +46,12 @@ export function MinesweeperPlayHeader({
       >
         <ArrowLeft />
       </Button>
-      <PlayHeaderSummary mineCount={mineCount} flagCount={flagCount} />
+      <PlayHeaderSummary
+        mineCount={mineCount}
+        flagCount={flagCount}
+        mistakeCount={mistakeCount}
+        elapsedMs={elapsedMs}
+      />
       <div className="flex justify-end gap-1">
         {showsInputModeToggle ? (
           <InputModeToggle mode={inputMode} onChange={onInputModeChange} />

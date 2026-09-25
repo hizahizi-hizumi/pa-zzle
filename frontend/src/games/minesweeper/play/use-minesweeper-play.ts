@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import {
   type MinesweeperRestoredProblem,
@@ -9,6 +9,7 @@ import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/probl
 import {
   chordMinesweeperSessionCell,
   createMinesweeperSession,
+  getMinesweeperSessionElapsedMs,
   getMinesweeperSessionVisibleCells,
   type MinesweeperSession,
   replayMinesweeperSession,
@@ -89,9 +90,22 @@ export function useMinesweeperPlay(
   const [play, setPlay] = useState(() =>
     createInitialPlayState(difficulty, initialProblemIdentity, Date.now()),
   );
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (play.session.status !== "playing") {
+      return;
+    }
+
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 1_000);
+
+    return () => window.clearInterval(timer);
+  }, [play.session.status]);
 
   const revealCell = useCallback((cellIndex: number) => {
     const revealedAt = Date.now();
+    setNow(revealedAt);
     setPlay((current) => ({
       ...current,
       session: revealMinesweeperSessionCell(
@@ -111,6 +125,7 @@ export function useMinesweeperPlay(
 
   const chordCell = useCallback((cellIndex: number) => {
     const chordedAt = Date.now();
+    setNow(chordedAt);
     setPlay((current) => ({
       ...current,
       session: chordMinesweeperSessionCell(
@@ -123,6 +138,7 @@ export function useMinesweeperPlay(
 
   const replay = useCallback(() => {
     const startedAt = Date.now();
+    setNow(startedAt);
     setPlay((current) => ({
       ...current,
       session: replayMinesweeperSession(current.session, startedAt),
@@ -131,6 +147,7 @@ export function useMinesweeperPlay(
 
   const startNewProblem = useCallback(() => {
     const startedAt = Date.now();
+    setNow(startedAt);
     setPlay((current) =>
       createNewProblemPlayState(difficulty, current.problemIdentity, startedAt),
     );
@@ -146,6 +163,8 @@ export function useMinesweeperPlay(
     columns: session.problem.board.columns,
     mineCount: session.problem.board.mineCellIndices.length,
     flagCount: session.puzzleState.flaggedCellIndices.length,
+    mistakeCount: session.mistakeCount,
+    elapsedMs: getMinesweeperSessionElapsedMs(session, now),
     visibleCells: getMinesweeperSessionVisibleCells(session),
     status: session.status,
     revealCell,

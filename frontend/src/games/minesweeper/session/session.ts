@@ -1,5 +1,6 @@
 import {
   assertMinesweeperProblem,
+  countMinesweeperMinimumOpenCount,
   type MinesweeperProblem,
 } from "@/games/minesweeper/problem/problem";
 import { getMinesweeperCellCount } from "@/games/minesweeper/puzzle/board";
@@ -15,14 +16,14 @@ import {
   toggleMinesweeperFlag,
 } from "@/games/minesweeper/puzzle/transitions";
 
-export type MinesweeperSessionStatus = "playing" | "cleared" | "failed";
+export type MinesweeperSessionStatus = "playing" | "cleared";
 
 export type MinesweeperVisibleCell =
   | { state: "hidden" }
   | { state: "flagged" }
   | { state: "revealed"; adjacentMineCount: number }
   | { state: "mine" }
-  | { state: "exploded" };
+  | { state: "steppedMine" };
 
 export type MinesweeperSession = {
   status: MinesweeperSessionStatus;
@@ -30,21 +31,25 @@ export type MinesweeperSession = {
   puzzleState: MinesweeperPuzzleState;
   startedAt: number;
   finishedAt: number | null;
+  // 踏んだ地雷の数。1回の操作で複数の地雷を踏んだ場合は、その数だけ数える。
+  mistakeCount: number;
+};
+
+/** クリアしたプレイで記録する事実。評価は保存した事実から導出するため、評価値は持たない。 */
+export type MinesweeperSessionResult = {
+  elapsedMs: number;
+  mistakeCount: number;
+  // 問題の初期開示状態から安全なマスをすべて開くのに要る、開く操作の最小回数。速さの基準時間に使う。
+  minimumOpenCount: number;
 };
 
 function getSessionStatus(
   problem: MinesweeperProblem,
   puzzleState: MinesweeperPuzzleState,
 ): MinesweeperSessionStatus {
-  if (puzzleState.explodedCellIndex !== null) {
-    return "failed";
-  }
-
-  if (isMinesweeperCleared(problem.board, puzzleState)) {
-    return "cleared";
-  }
-
-  return "playing";
+  return isMinesweeperCleared(problem.board, puzzleState)
+    ? "cleared"
+    : "playing";
 }
 
 function applyPuzzleState(
@@ -58,11 +63,16 @@ function applyPuzzleState(
 
   const status = getSessionStatus(session.problem, puzzleState);
 
+  const steppedMineCount =
+    puzzleState.steppedMineCellIndices.length -
+    session.puzzleState.steppedMineCellIndices.length;
+
   return {
     ...session,
     status,
     puzzleState,
     finishedAt: status === "playing" ? null : operatedAt,
+    mistakeCount: session.mistakeCount + steppedMineCount,
   };
 }
 
@@ -71,8 +81,8 @@ function getVisibleCell(
   cellIndex: number,
 ): MinesweeperVisibleCell {
   const { puzzleState } = session;
-  if (puzzleState.explodedCellIndex === cellIndex) {
-    return { state: "exploded" };
+  if (puzzleState.steppedMineCellIndices.includes(cellIndex)) {
+    return { state: "steppedMine" };
   }
   if (puzzleState.flaggedCellIndices.includes(cellIndex)) {
     return { state: "flagged" };
@@ -106,7 +116,7 @@ export function createMinesweeperSession(
       (left, right) => left - right,
     ),
     flaggedCellIndices: [],
-    explodedCellIndex: null,
+    steppedMineCellIndices: [],
   };
 
   const status = getSessionStatus(problem, puzzleState);
@@ -117,6 +127,7 @@ export function createMinesweeperSession(
     puzzleState,
     startedAt,
     finishedAt: status === "playing" ? null : startedAt,
+    mistakeCount: 0,
   };
 }
 
@@ -180,6 +191,28 @@ export function replayMinesweeperSession(
   startedAt: number,
 ): MinesweeperSession {
   return createMinesweeperSession(session.problem, startedAt);
+}
+
+export function getMinesweeperSessionElapsedMs(
+  session: MinesweeperSession,
+  now: number,
+): number {
+  return Math.max(0, (session.finishedAt ?? now) - session.startedAt);
+}
+
+export function getMinesweeperSessionResult(
+  session: MinesweeperSession,
+  now: number,
+): MinesweeperSessionResult | null {
+  if (session.status !== "cleared") {
+    return null;
+  }
+
+  return {
+    elapsedMs: getMinesweeperSessionElapsedMs(session, now),
+    mistakeCount: session.mistakeCount,
+    minimumOpenCount: countMinesweeperMinimumOpenCount(session.problem),
+  };
 }
 
 export function getMinesweeperSessionVisibleCells(
