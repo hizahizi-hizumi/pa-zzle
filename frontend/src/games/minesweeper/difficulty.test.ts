@@ -12,9 +12,12 @@ import type {
   MinesweeperHumanSolveFeatures,
   MinesweeperScaleMetrics,
 } from "./problem/difficulty-analysis";
-import { minesweeperDifficultyReviewProblems } from "./problem/difficulty-review-problems";
 import { restoreMinesweeperProblem } from "./problem/generator";
 import type { MinesweeperProblemIdentity } from "./problem/problem";
+import {
+  listMinesweeperPoolEntries,
+  toMinesweeperPoolIdentity,
+} from "./problem/problem-pool";
 
 type AnalyzedProblem = {
   analysis: MinesweeperDifficultyAnalysis;
@@ -218,10 +221,13 @@ describe("isInMinesweeperDifficultyBoardRange", () => {
 
 describe("assessMinesweeperDifficulty", () => {
   describe("推論で決まる難易度の盤面範囲に入る問題の場合", () => {
-    const cases = minesweeperDifficultyReviewProblems.map(
-      ({ difficulty, identity }) =>
-        [identity.seed, analyzeIdentity(identity), difficulty] as const,
-    );
+    const cases = minesweeperDifficulties.map(({ id: difficulty }) => {
+      const identity = toMinesweeperPoolIdentity(
+        difficulty,
+        listMinesweeperPoolEntries(difficulty)[0]!,
+      );
+      return [identity.seed, analyzeIdentity(identity), difficulty] as const;
+    });
 
     test.each(cases)(
       "%s を難易度 %s に分類すること",
