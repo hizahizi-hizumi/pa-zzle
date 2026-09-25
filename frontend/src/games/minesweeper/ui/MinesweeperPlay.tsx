@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
-import { Button } from "@/components/ui/button";
 import type {
   MinesweeperSessionStatus,
   MinesweeperVisibleCell,
@@ -10,8 +9,9 @@ import {
   MinesweeperBoard,
   type MinesweeperInputMode,
 } from "@/games/minesweeper/ui/board/MinesweeperBoard";
+import { MinesweeperInputModeControl } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperInputModeControl";
 import { MinesweeperPlayHeader } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperPlayHeader";
-import { MinesweeperStatusPanel } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperStatusPanel";
+import { MinesweeperPlayStatus } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperPlayStatus";
 
 type MinesweeperPlayProps = {
   rows: number;
@@ -42,51 +42,39 @@ export function MinesweeperPlay({
 }: MinesweeperPlayProps) {
   const [mode, setMode] = useState<MinesweeperInputMode>("reveal");
 
+  function handleReplay(): void {
+    setMode("reveal");
+    onReplay();
+  }
+
   return (
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
       <BrandIdentityHeader />
       <MinesweeperPlayHeader
         mineCount={mineCount}
         flagCount={flagCount}
+        onReplay={handleReplay}
         onBackToHome={onBackToHome}
       />
-      <main className="flex min-h-0 flex-1 items-center justify-center px-3 py-2 sm:px-6">
-        <MinesweeperBoard
-          rows={rows}
-          columns={columns}
-          cells={visibleCells}
-          mode={mode}
-          disabled={status !== "playing"}
-          onRevealCell={onRevealCell}
-          onToggleFlag={onToggleFlag}
-          onChordCell={onChordCell}
-        />
-      </main>
-      <footer className="grid shrink-0 gap-3 px-4 pb-4 pt-2">
-        <MinesweeperStatusPanel status={status} onReplay={onReplay} />
-        <div
-          role="group"
-          aria-label="操作モード"
-          className="mx-auto grid w-full max-w-64 grid-cols-2 gap-2"
-        >
-          <Button
-            variant={mode === "reveal" ? "secondary" : "outline"}
-            aria-pressed={mode === "reveal"}
-            onClick={() => setMode("reveal")}
+      <main className="flex min-h-0 flex-1 items-center justify-center px-2 py-3 sm:px-6">
+        <div className="grid w-full max-w-[27rem] gap-3">
+          <MinesweeperBoard
+            rows={rows}
+            columns={columns}
+            cells={visibleCells}
+            mode={mode}
             disabled={status !== "playing"}
-          >
-            開示
-          </Button>
-          <Button
-            variant={mode === "flag" ? "secondary" : "outline"}
-            aria-pressed={mode === "flag"}
-            onClick={() => setMode("flag")}
-            disabled={status !== "playing"}
-          >
-            旗
-          </Button>
+            onRevealCell={onRevealCell}
+            onToggleFlag={onToggleFlag}
+            onChordCell={onChordCell}
+          />
+          {status === "playing" ? (
+            <MinesweeperInputModeControl mode={mode} onChange={setMode} />
+          ) : (
+            <MinesweeperPlayStatus status={status} />
+          )}
         </div>
-      </footer>
+      </main>
     </section>
   );
 }
