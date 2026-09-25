@@ -40,7 +40,7 @@ function getAccessibleName(
 }
 
 function getCellClassName(view: MinesweeperVisibleCell): string {
-  const faceClassName = getMinesweeperCellFaceClassName(view);
+  const faceClassName = getMinesweeperCellFaceClassName(view, "board");
   const interactionClassName =
     "min-w-0 touch-manipulation select-none outline-none transition-colors duration-fast focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
 
@@ -115,7 +115,7 @@ export function MinesweeperCell({
       onPointerLeave={handlePointerEnd}
       className={getCellClassName(view)}
     >
-      <MinesweeperCellFace view={view} />
+      <MinesweeperCellFace view={view} size="board" />
     </button>
   );
 }
