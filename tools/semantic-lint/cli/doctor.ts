@@ -10,20 +10,22 @@ import type { Rule } from "../domain/model.ts";
 import { goldenFileStatus, loadGoldenSets } from "../eval/golden.ts";
 import type { UnitCatalog } from "../units/catalog.ts";
 import { UnitExtractor } from "../units/extract.ts";
-import { loadProjectContext } from "./context.ts";
+import { loadEvalRules, loadProjectContext } from "./context.ts";
 
 export async function runDoctorCommand(args: string[]): Promise<number> {
   if (args.length > 0) {
     throw new Error("doctorに引数は指定できません。");
   }
 
-  const { projectRoot, config, catalog, rules } = await loadProjectContext();
+  const context = await loadProjectContext();
+  const { projectRoot, config, catalog, rules } = context;
+  const evalRules = await loadEvalRules(context);
   // 全言語の文法を読み込み全queryをcompileして、カタログの誤りを検出する。
   await UnitExtractor.create(catalog);
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  for (const rule of rules) {
+  for (const rule of [...rules, ...evalRules]) {
     warnings.push(
       ...(await unsupportedLanguageWarnings(projectRoot, catalog, rule)),
     );
@@ -32,7 +34,7 @@ export async function runDoctorCommand(args: string[]): Promise<number> {
   const goldenSets = await loadGoldenSets(projectRoot, config.goldenDir);
 
   for (const golden of goldenSets) {
-    if (!rules.some((rule) => rule.id === golden.ruleId)) {
+    if (![...rules, ...evalRules].some((rule) => rule.id === golden.ruleId)) {
       errors.push(`golden: 未知のruleです: ${golden.ruleId}`);
     }
 
@@ -64,6 +66,7 @@ export async function runDoctorCommand(args: string[]): Promise<number> {
   }
 
   console.log(`rules: ${rules.length}`);
+  console.log(`eval rules: ${evalRules.length}`);
   console.log(`units: ${[...catalog.units.keys()].join(", ")}`);
   console.log(`cache: ${describeCache(projectRoot, cacheStatus)}`);
   console.log(`golden: ${goldenSets.length}`);

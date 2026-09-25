@@ -14,6 +14,11 @@ export const DEFAULT_REQUEST_TOKEN_BUDGET: RequestTokenBudget = {
 export type SemanticLintConfig = {
   version: 1;
   rulesDir: string;
+  /**
+   * 評価専用のruleset。`bench` と `doctor` だけが読み、`check` / `inspect` では実行しない。
+   * 人間向け規約に正本がなく本番rulesetへ入れない、判定方式の評価用のruleを置く。
+   */
+  evalRulesDir?: string;
   casesDir: string;
   goldenDir: string;
   excludePaths: string[];
@@ -37,6 +42,7 @@ export function compileConfig(
   }
 
   const rulesDir = value.rulesDir;
+  const evalRulesDir = value.evalRulesDir;
   const casesDir = value.casesDir;
   const goldenDir = value.goldenDir ?? DEFAULT_GOLDEN_DIR;
   const excludePaths = value.excludePaths;
@@ -45,6 +51,7 @@ export function compileConfig(
 
   if (
     typeof rulesDir !== "string" ||
+    (evalRulesDir !== undefined && typeof evalRulesDir !== "string") ||
     typeof casesDir !== "string" ||
     typeof goldenDir !== "string" ||
     !isStringArray(excludePaths) ||
@@ -81,6 +88,7 @@ export function compileConfig(
   return {
     version: 1,
     rulesDir,
+    ...(evalRulesDir === undefined ? {} : { evalRulesDir }),
     casesDir,
     goldenDir,
     excludePaths,

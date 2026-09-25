@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 
-import type { RunResult } from "../domain/model.ts";
+import type { Rule, RunResult } from "../domain/model.ts";
 import {
   type BenchmarkRuleResult,
   benchmarkRunFromRunResult,
@@ -25,7 +25,7 @@ import {
   createTypeSafeRequestEstimator,
 } from "../providers/typesafe/provider.ts";
 import { UnitExtractor } from "../units/extract.ts";
-import { loadProjectContext } from "./context.ts";
+import { loadEvalRules, loadProjectContext } from "./context.ts";
 
 type BenchOptions = {
   ruleIds: string[];
@@ -38,7 +38,10 @@ type BenchOptions = {
 
 export async function runBenchCommand(args: string[]): Promise<number> {
   const options = parseBenchOptions(args);
-  const { projectRoot, config, catalog, rules } = await loadProjectContext();
+  const context = await loadProjectContext();
+  const { projectRoot, config, catalog } = context;
+  // 評価専用rulesetのruleもgoldenで採点する。
+  const rules = [...context.rules, ...(await loadEvalRules(context))];
   const allSets = await loadGoldenSets(projectRoot, config.goldenDir);
   const missing = options.ruleIds.filter(
     (ruleId) => !allSets.some((set) => set.ruleId === ruleId),
@@ -162,7 +165,7 @@ function renderBenchmarkPlan(
 async function scoreRunResults(
   projectRoot: string,
   sets: GoldenSet[],
-  rules: Awaited<ReturnType<typeof loadProjectContext>>["rules"],
+  rules: Rule[],
   scoreFiles: string[],
 ): Promise<BenchmarkRuleResult[]> {
   const runResults = await Promise.all(
