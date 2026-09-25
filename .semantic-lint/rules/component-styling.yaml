@@ -1,0 +1,25 @@
+# 人間向け規約の正本: .claude/rules/component-styling.md
+version: 1
+id: component-styling
+
+paths:
+  - frontend/src/**/*.tsx
+
+rules:
+  - id: appearance-api
+    title: 外観の差分は意味を表す公開APIで表し、CSSクラスやスタイル値を公開しない
+    unit: component
+    violationThreshold: 0.5
+    instruction: |
+      A component's public API expresses meaningful appearance differences
+      with props that state their meaning, such as variant, size, or a
+      dedicated semantic prop, and does not leak CSS classes or concrete style
+      values to its users.
+      Violation: a prop that accepts CSS classes or style values for
+      appearance, such as className, style, a color class, or a pixel size;
+      a prop whose values are concrete styles, such as color: "red" or
+      "bg-red-500", where the difference has a meaning like selected or
+      danger.
+      Not a violation: props that express meaning, such as variant, size,
+      tone, selected, or level; passing classes to DOM elements inside the
+      component; components without appearance props.
