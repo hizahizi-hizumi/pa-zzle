@@ -61,13 +61,13 @@ test("難易度を自己ベストの比較単位として扱うこと", () => {
   expect(comparisonKey).toBe("3");
 });
 
-test("保存用記録を15パズルの記録として認めること", () => {
-  const recognized = isFifteenPuzzlePlayRecord(record);
-
-  expect(recognized).toBe(true);
-});
-
 describe("isFifteenPuzzlePlayRecord", () => {
+  test("保存用記録を15パズルの記録として認めること", () => {
+    const recognized = isFifteenPuzzlePlayRecord(record);
+
+    expect(recognized).toBe(true);
+  });
+
   const invalidRecords: [string, PlayRecord][] = [
     ["別のゲーム", { ...record, gameId: "water-sort" }],
     ["未知の payload 版", { ...record, payloadVersion: 2 }],

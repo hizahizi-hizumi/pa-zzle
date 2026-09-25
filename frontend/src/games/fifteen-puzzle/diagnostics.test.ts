@@ -32,7 +32,9 @@ describe("FifteenPuzzleDiagnosticSnapshot", () => {
     const restored = restoreFifteenPuzzleProblemFromDiagnosticSnapshot(parsed);
 
     expect(parsed).toEqual(snapshot);
-    expect(restored?.problem.initialBoard).toEqual(problem.problem.initialBoard);
+    expect(restored?.problem.initialBoard).toEqual(
+      problem.problem.initialBoard,
+    );
     expect(restored?.optimalMoveCount).toBe(problem.optimalMoveCount);
   });
 
