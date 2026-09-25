@@ -60,7 +60,7 @@ export function FifteenPuzzlePlay({
 
     function handleKeyDown(event: KeyboardEvent) {
       const direction = directionByArrowKey[event.key];
-      // メニューやダイアログはプレイ画面の外へ描画される。そこでの操作や、矢印キーを自分で扱う部品の操作は盤面へ流さない。
+      // メニューはプレイ画面の外へ描画される。そこでの操作や、矢印キーを自分で扱う部品の操作は盤面へ流さない。
       const { target } = event;
       const targetsPlayArea =
         target === document.body ||
