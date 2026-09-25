@@ -2,7 +2,6 @@ import {
   INTERNAL_DIAGNOSTIC_FORMAT_VERSION,
   type InternalDiagnosticSnapshot,
 } from "@/games/diagnostics";
-import type { ProblemSeed } from "@/games/problem-seed";
 import {
   type MinesweeperDifficulty,
   parseMinesweeperDifficulty,
@@ -16,8 +15,6 @@ import {
   type MinesweeperProblemIdentity,
   type MinesweeperStartCellPlacement,
 } from "./problem/problem";
-import { findMinesweeperPoolIdentity } from "./problem/problem-pool";
-import { selectMinesweeperProblemForDifficulty } from "./problem-selection";
 
 export type MinesweeperDiagnosticSnapshot = InternalDiagnosticSnapshot<
   "minesweeper",
@@ -86,20 +83,6 @@ export function restoreMinesweeperProblemFromDiagnosticSnapshot(
   snapshot: MinesweeperDiagnosticSnapshot,
 ): MinesweeperRestoredProblem {
   return restoreMinesweeperProblemWithoutAnalysis(snapshot.problemIdentity);
-}
-
-/**
- * 検証情報の seed から、再現する問題の再現用情報を決める。
- * その難易度の問題集にある seed ならその問題を、それ以外は選択用の seed として問題集から選んだ問題を返す。
- */
-export function resolveMinesweeperDiagnosticProblemIdentity(
-  difficulty: MinesweeperDifficulty,
-  seed: ProblemSeed,
-): MinesweeperProblemIdentity {
-  return (
-    findMinesweeperPoolIdentity(difficulty, seed) ??
-    selectMinesweeperProblemForDifficulty(difficulty, seed).identity
-  );
 }
 
 function isPositiveInteger(value: unknown): boolean {

@@ -69,19 +69,3 @@ export function listMinesweeperPoolEntries(
 ): readonly MinesweeperProblemPoolEntry[] {
   return problemPool.levels[difficulty];
 }
-
-/** 問題集の seed から、その難易度の問題集に含まれる問題の再現用情報を探す。 */
-export function findMinesweeperPoolIdentity(
-  difficulty: MinesweeperDifficulty,
-  seed: string,
-): MinesweeperProblemIdentity | undefined {
-  const entry = listMinesweeperPoolEntries(difficulty).find(
-    ([rows, columns, mineCount, candidateIndex]) =>
-      createMinesweeperPoolSeed(
-        difficulty,
-        { rows, columns, mineCount },
-        candidateIndex,
-      ) === seed,
-  );
-  return entry ? toMinesweeperPoolIdentity(difficulty, entry) : undefined;
-}
