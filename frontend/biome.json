@@ -8,7 +8,7 @@
       "!src/router.ts",
       "!src/components/ui",
       "!src/games/water-sort/problem/problem-pool.json",
-      "!src/games/fifteen-puzzle/problem/problem-pool.json"
+      "!src/games/slide-puzzle/problem/problem-pool.json"
     ]
   },
   "formatter": {
@@ -421,7 +421,7 @@
                   {
                     "group": [
                       "@/games/water-sort/**",
-                      "@/games/fifteen-puzzle/**"
+                      "@/games/slide-puzzle/**"
                     ],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   }
@@ -458,7 +458,7 @@
                   {
                     "group": [
                       "@/games/water-sort/**",
-                      "@/games/fifteen-puzzle/**"
+                      "@/games/slide-puzzle/**"
                     ],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
@@ -504,7 +504,7 @@
                   {
                     "group": [
                       "@/games/water-sort/**",
-                      "@/games/fifteen-puzzle/**"
+                      "@/games/slide-puzzle/**"
                     ],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
@@ -549,7 +549,7 @@
                   {
                     "group": [
                       "@/games/water-sort/**",
-                      "@/games/fifteen-puzzle/**"
+                      "@/games/slide-puzzle/**"
                     ],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
@@ -599,7 +599,7 @@
                   {
                     "group": [
                       "@/games/water-sort/**",
-                      "@/games/fifteen-puzzle/**"
+                      "@/games/slide-puzzle/**"
                     ],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
@@ -646,10 +646,7 @@
                     "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
                   },
                   {
-                    "group": [
-                      "@/games/nanpure/**",
-                      "@/games/fifteen-puzzle/**"
-                    ],
+                    "group": ["@/games/nanpure/**", "@/games/slide-puzzle/**"],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   }
                 ]
@@ -683,10 +680,7 @@
                     "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
                   },
                   {
-                    "group": [
-                      "@/games/nanpure/**",
-                      "@/games/fifteen-puzzle/**"
-                    ],
+                    "group": ["@/games/nanpure/**", "@/games/slide-puzzle/**"],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
                   {
@@ -729,10 +723,7 @@
                     "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
                   },
                   {
-                    "group": [
-                      "@/games/nanpure/**",
-                      "@/games/fifteen-puzzle/**"
-                    ],
+                    "group": ["@/games/nanpure/**", "@/games/slide-puzzle/**"],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
                   {
@@ -774,10 +765,7 @@
                     "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
                   },
                   {
-                    "group": [
-                      "@/games/nanpure/**",
-                      "@/games/fifteen-puzzle/**"
-                    ],
+                    "group": ["@/games/nanpure/**", "@/games/slide-puzzle/**"],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
                   {
@@ -824,10 +812,7 @@
                     "message": "[dependency/concrete-game-boundary] concrete game は記録UI・画面合成・pages・router へ逆依存しない。"
                   },
                   {
-                    "group": [
-                      "@/games/nanpure/**",
-                      "@/games/fifteen-puzzle/**"
-                    ],
+                    "group": ["@/games/nanpure/**", "@/games/slide-puzzle/**"],
                     "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
                   },
                   {
@@ -848,8 +833,8 @@
     },
     {
       "includes": [
-        "src/games/fifteen-puzzle/**/*.{ts,tsx}",
-        "src/games/fifteen-puzzle/*.{ts,tsx}"
+        "src/games/slide-puzzle/**/*.{ts,tsx}",
+        "src/games/slide-puzzle/*.{ts,tsx}"
       ],
       "linter": {
         "rules": {
@@ -884,7 +869,7 @@
       }
     },
     {
-      "includes": ["src/games/fifteen-puzzle/puzzle/**/*.{ts,tsx}"],
+      "includes": ["src/games/slide-puzzle/puzzle/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
           "style": {
@@ -912,10 +897,10 @@
                   },
                   {
                     "group": [
-                      "@/games/fifteen-puzzle/problem/**",
-                      "@/games/fifteen-puzzle/session/**",
-                      "@/games/fifteen-puzzle/play/**",
-                      "@/games/fifteen-puzzle/ui/**"
+                      "@/games/slide-puzzle/problem/**",
+                      "@/games/slide-puzzle/session/**",
+                      "@/games/slide-puzzle/play/**",
+                      "@/games/slide-puzzle/ui/**"
                     ],
                     "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
                   }
@@ -927,7 +912,7 @@
       }
     },
     {
-      "includes": ["src/games/fifteen-puzzle/problem/**/*.{ts,tsx}"],
+      "includes": ["src/games/slide-puzzle/problem/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
           "style": {
@@ -955,9 +940,9 @@
                   },
                   {
                     "group": [
-                      "@/games/fifteen-puzzle/session/**",
-                      "@/games/fifteen-puzzle/play/**",
-                      "@/games/fifteen-puzzle/ui/**"
+                      "@/games/slide-puzzle/session/**",
+                      "@/games/slide-puzzle/play/**",
+                      "@/games/slide-puzzle/ui/**"
                     ],
                     "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
                   }
@@ -969,7 +954,7 @@
       }
     },
     {
-      "includes": ["src/games/fifteen-puzzle/session/**/*.{ts,tsx}"],
+      "includes": ["src/games/slide-puzzle/session/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
           "style": {
@@ -997,12 +982,12 @@
                   },
                   {
                     "group": [
-                      "@/games/fifteen-puzzle/problem/generation/**",
-                      "@/games/fifteen-puzzle/difficulty",
-                      "@/games/fifteen-puzzle/score",
-                      "@/games/fifteen-puzzle/play/**",
-                      "@/games/fifteen-puzzle/ui/**",
-                      "@/games/fifteen-puzzle/play-record",
+                      "@/games/slide-puzzle/problem/generation/**",
+                      "@/games/slide-puzzle/difficulty",
+                      "@/games/slide-puzzle/score",
+                      "@/games/slide-puzzle/play/**",
+                      "@/games/slide-puzzle/ui/**",
+                      "@/games/slide-puzzle/play-record",
                       "@/records/**",
                       "react*"
                     ],
@@ -1016,7 +1001,7 @@
       }
     },
     {
-      "includes": ["src/games/fifteen-puzzle/play/**/*.{ts,tsx}"],
+      "includes": ["src/games/slide-puzzle/play/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
           "style": {
@@ -1044,10 +1029,10 @@
                   },
                   {
                     "group": [
-                      "@/games/fifteen-puzzle/ui/**",
-                      "@/games/fifteen-puzzle/problem/generation/**",
-                      "@/games/fifteen-puzzle/play-record",
-                      "@/games/fifteen-puzzle/diagnostics"
+                      "@/games/slide-puzzle/ui/**",
+                      "@/games/slide-puzzle/problem/generation/**",
+                      "@/games/slide-puzzle/play-record",
+                      "@/games/slide-puzzle/diagnostics"
                     ],
                     "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
                   }

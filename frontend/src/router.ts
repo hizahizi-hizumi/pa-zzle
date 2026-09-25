@@ -5,23 +5,23 @@ import { components, hooks, utils } from '@generouted/react-router/client'
 
 export type Path =
   | `/`
-  | `/puzzles/fifteen-puzzle`
-  | `/puzzles/fifteen-puzzle/play/:difficulty`
   | `/puzzles/minesweeper`
   | `/puzzles/minesweeper/difficulty-review`
   | `/puzzles/minesweeper/difficulty-review/play`
   | `/puzzles/minesweeper/play/:difficulty`
   | `/puzzles/nanpure`
   | `/puzzles/nanpure/play/:difficulty`
+  | `/puzzles/slide-puzzle`
+  | `/puzzles/slide-puzzle/play/:difficulty`
   | `/puzzles/water-sort`
   | `/puzzles/water-sort/play/:difficulty`
   | `/records`
   | `/records/replay/:recordId`
 
 export type Params = {
-  '/puzzles/fifteen-puzzle/play/:difficulty': { difficulty: string }
   '/puzzles/minesweeper/play/:difficulty': { difficulty: string }
   '/puzzles/nanpure/play/:difficulty': { difficulty: string }
+  '/puzzles/slide-puzzle/play/:difficulty': { difficulty: string }
   '/puzzles/water-sort/play/:difficulty': { difficulty: string }
   '/records/replay/:recordId': { recordId: string }
 }

@@ -1,15 +1,14 @@
 import { useState } from "react";
-
-import { parseFifteenPuzzleDifficulty } from "@/games/fifteen-puzzle/difficulty";
-import { isFifteenPuzzlePlayRecord } from "@/games/fifteen-puzzle/play-record";
-import { restoreFifteenPuzzlePooledProblem } from "@/games/fifteen-puzzle/problem-selection";
 import { isNanpurePlayRecord } from "@/games/nanpure/play-record";
+import { parseSlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
+import { isSlidePuzzlePlayRecord } from "@/games/slide-puzzle/play-record";
+import { restoreSlidePuzzlePooledProblem } from "@/games/slide-puzzle/problem-selection";
 import { parseWaterSortDifficulty } from "@/games/water-sort/difficulty";
 import { isWaterSortPlayRecord } from "@/games/water-sort/play-record";
 import { readPlayRecords } from "@/records/storage";
 import { Link, useParams } from "@/router";
-import { PlayableFifteenPuzzle } from "@/views/FifteenPuzzlePlayView/PlayableFifteenPuzzle";
 import { PlayableNanpure } from "@/views/NanpurePlayView/PlayableNanpure";
+import { PlayableSlidePuzzle } from "@/views/SlidePuzzlePlayView/PlayableSlidePuzzle";
 import { PlayableWaterSort } from "@/views/WaterSortPlayView/PlayableWaterSort";
 
 export function RecordedProblemReplayView() {
@@ -56,18 +55,18 @@ export function RecordedProblemReplayView() {
     );
   }
 
-  const fifteenPuzzleDifficulty = isFifteenPuzzlePlayRecord(record)
-    ? parseFifteenPuzzleDifficulty(record.payload.difficulty)
+  const slidePuzzleDifficulty = isSlidePuzzlePlayRecord(record)
+    ? parseSlidePuzzleDifficulty(record.payload.difficulty)
     : undefined;
   // 評価の基準になる最短手数は問題集にしか無いので、問題集に無い問題は再プレイできない。
-  const fifteenPuzzleInitialProblem = isFifteenPuzzlePlayRecord(record)
-    ? restoreFifteenPuzzlePooledProblem(record.payload.problemIdentity)
+  const slidePuzzleInitialProblem = isSlidePuzzlePlayRecord(record)
+    ? restoreSlidePuzzlePooledProblem(record.payload.problemIdentity)
     : null;
-  if (fifteenPuzzleDifficulty && fifteenPuzzleInitialProblem) {
+  if (slidePuzzleDifficulty && slidePuzzleInitialProblem) {
     return (
-      <PlayableFifteenPuzzle
-        difficulty={fifteenPuzzleDifficulty}
-        initialProblem={fifteenPuzzleInitialProblem}
+      <PlayableSlidePuzzle
+        difficulty={slidePuzzleDifficulty}
+        initialProblem={slidePuzzleInitialProblem}
       />
     );
   }
