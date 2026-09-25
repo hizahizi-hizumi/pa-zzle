@@ -12,10 +12,7 @@ import {
   type WaterSortGeneratedProblem,
   type WaterSortProblemIdentity,
 } from "@/games/water-sort/problem/problem";
-import {
-  WATER_SORT_BOTTLE_CAPACITY,
-  WATER_SORT_EMPTY_BOTTLE_COUNT,
-} from "@/games/water-sort/puzzle/state";
+import { WATER_SORT_BOTTLE_CAPACITY } from "@/games/water-sort/puzzle/state";
 
 export type WaterSortDiagnosticSnapshot = InternalDiagnosticSnapshot<
   "water-sort",
@@ -92,7 +89,8 @@ function isProblemIdentity(value: unknown): value is WaterSortProblemIdentity {
     Number.isInteger(value.conditions.colorCount) &&
     Number(value.conditions.colorCount) > 0 &&
     value.conditions.capacity === WATER_SORT_BOTTLE_CAPACITY &&
-    value.conditions.emptyBottleCount === WATER_SORT_EMPTY_BOTTLE_COUNT &&
+    Number.isInteger(value.conditions.emptyBottleCount) &&
+    Number(value.conditions.emptyBottleCount) > 0 &&
     Number.isInteger(value.generationAttempt) &&
     Number(value.generationAttempt) > 0
   );

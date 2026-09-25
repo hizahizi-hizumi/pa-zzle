@@ -2,13 +2,13 @@ import {
   assertMinesweeperCellIndex,
   getMinesweeperNeighborCellIndices,
   type MinesweeperBoard,
-} from "./board";
+} from "@/games/minesweeper/puzzle/board";
 import {
   collectMinesweeperRevealCellIndices,
   getAdjacentMinesweeperMineCount,
   isMinesweeperMine,
-} from "./rules";
-import type { MinesweeperPuzzleState } from "./state";
+} from "@/games/minesweeper/puzzle/rules";
+import type { MinesweeperPuzzleState } from "@/games/minesweeper/puzzle/state";
 
 function mergeCellIndices(
   currentCellIndices: readonly number[],

@@ -1,12 +1,12 @@
 import {
   analyzeMinesweeperDifficulty,
   type MinesweeperHumanSolveFeatures,
-} from "./difficulty-analysis";
+} from "@/games/minesweeper/problem/difficulty-analysis";
 import {
   generateMinesweeperProblem,
   restoreMinesweeperProblem,
-} from "./generator";
-import type { MinesweeperProblem } from "./problem";
+} from "@/games/minesweeper/problem/generator";
+import type { MinesweeperProblem } from "@/games/minesweeper/problem/problem";
 
 /** 問題集合の分析で使った `ms-<rows>x<columns>-<mines>-<index>` 形式の seed から問題を復元する。 */
 function restoreCorpusProblem(seed: string): MinesweeperProblem {

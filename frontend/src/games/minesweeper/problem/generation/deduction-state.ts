@@ -1,10 +1,10 @@
+import type { MinesweeperProblem } from "@/games/minesweeper/problem/problem";
 import {
   getMinesweeperCellCount,
   getMinesweeperNeighborCellIndices,
   type MinesweeperBoard,
-} from "../../puzzle/board";
-import { collectMinesweeperRevealCellIndices } from "../../puzzle/rules";
-import type { MinesweeperProblem } from "../problem";
+} from "@/games/minesweeper/puzzle/board";
+import { collectMinesweeperRevealCellIndices } from "@/games/minesweeper/puzzle/rules";
 
 /**
  * 推論に使える可視情報で表した局面。

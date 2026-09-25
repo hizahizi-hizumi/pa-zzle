@@ -1,4 +1,4 @@
-import { formatElapsedTime } from "./format-elapsed-time";
+import { formatElapsedTime } from "@/games/minesweeper/ui/format-elapsed-time";
 
 export function formatMinesweeperTimeDelta(timeDeltaMs: number): string {
   if (timeDeltaMs === 0) {

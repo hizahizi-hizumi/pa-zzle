@@ -1,8 +1,8 @@
-import type { MinesweeperBoard } from "./board";
+import type { MinesweeperBoard } from "@/games/minesweeper/puzzle/board";
 import {
   collectMinesweeperRevealCellIndices,
   getAdjacentMinesweeperMineCount,
-} from "./rules";
+} from "@/games/minesweeper/puzzle/rules";
 
 describe("getAdjacentMinesweeperMineCount", () => {
   const board: MinesweeperBoard = {

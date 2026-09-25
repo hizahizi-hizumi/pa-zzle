@@ -4,10 +4,10 @@ import {
   assessNanpureDifficulty,
   type NanpureDifficulty,
 } from "@/games/nanpure/difficulty";
+import { useNanpurePlay } from "@/games/nanpure/play/use-nanpure-play";
 import { analyzeNanpureDifficulty } from "@/games/nanpure/problem/difficulty-analysis";
 import { restoreNanpureProblem } from "@/games/nanpure/problem/generator";
 import * as problemSeed from "@/games/problem-seed";
-import { useNanpurePlay } from "./use-nanpure-play";
 
 afterEach(() => {
   cleanup();

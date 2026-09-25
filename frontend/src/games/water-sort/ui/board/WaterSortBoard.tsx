@@ -1,10 +1,10 @@
 import { useLayoutEffect, useRef } from "react";
 import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
-import { PourAnimationLayer } from "./pour/PourAnimationLayer";
-import { usePourAnimations } from "./pour/use-pour-animations";
-import { getWaterColorView } from "./water-bottle/get-water-color-view";
-import { WaterBottle } from "./water-bottle/WaterBottle";
+import { PourAnimationLayer } from "@/games/water-sort/ui/board/pour/PourAnimationLayer";
+import { usePourAnimations } from "@/games/water-sort/ui/board/pour/use-pour-animations";
+import { getWaterColorView } from "@/games/water-sort/ui/board/water-bottle/get-water-color-view";
+import { WaterBottle } from "@/games/water-sort/ui/board/water-bottle/WaterBottle";
 
 type WaterSortBoardProps = {
   state: WaterSortState;

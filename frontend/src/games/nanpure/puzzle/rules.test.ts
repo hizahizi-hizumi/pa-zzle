@@ -1,10 +1,10 @@
-import type { NanpureBoard, NanpureCell } from "./board";
+import type { NanpureBoard, NanpureCell } from "@/games/nanpure/puzzle/board";
 import {
   findNanpureConflictCellIndices,
   getNanpureCandidates,
   isNanpureBoardConsistent,
   isNanpureSolved,
-} from "./rules";
+} from "@/games/nanpure/puzzle/rules";
 
 function boardFromRows(rows: readonly string[]): NanpureBoard {
   return rows.flatMap((row) =>

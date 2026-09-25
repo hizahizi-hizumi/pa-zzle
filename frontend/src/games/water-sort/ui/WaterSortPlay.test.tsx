@@ -5,12 +5,10 @@ import {
   render,
   screen,
 } from "@testing-library/react";
-
+import type { WaterSortResult } from "@/games/water-sort/play/use-water-sort-play";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
+import { WaterSortPlay } from "@/games/water-sort/ui/WaterSortPlay";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
-
-import type { WaterSortResult } from "../play/use-water-sort-play";
-import { WaterSortPlay } from "./WaterSortPlay";
 
 afterEach(() => {
   cleanup();
@@ -19,7 +17,7 @@ afterEach(() => {
 });
 
 const baseProps = {
-  difficulty: "normal" as const,
+  difficulty: "3" as const,
   status: "playing" as const,
   progress: "playing" as const,
   state: [[0, 1], []] as const,
@@ -72,7 +70,7 @@ describe("WaterSortPlay", () => {
     render(<WaterSortPlay {...baseProps} onSelectBottle={selectBottle} />);
     const bottle = screen.getByRole("button", { name: "ボトル 1: 赤、青" });
     fireEvent.click(bottle);
-    expect(screen.getByText("パズル pa-zzle")).toBeTruthy();
+    expect(screen.getByRole("img", { name: "pa-zzle" })).toBeTruthy();
     expect(
       screen.getByRole("heading", { name: "ウォーターソート" }),
     ).toBeTruthy();
@@ -344,7 +342,7 @@ describe("WaterSortPlay", () => {
     expect(screen.getByText("スコア")).toBeTruthy();
     expect(screen.getByText("87")).toBeTruthy();
     expect(screen.getByText("ナイスプレイ！")).toBeTruthy();
-    expect(screen.getByText("パズル pa-zzle")).toBeTruthy();
+    expect(screen.getByRole("img", { name: "pa-zzle" })).toBeTruthy();
     expect(screen.getByText("/ 100")).toBeTruthy();
     fireEvent.click(screen.getByText("スコアの内訳・採点基準"));
     expect(screen.getByText("手戻り")).toBeTruthy();

@@ -5,16 +5,16 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getPersonalBests } from "@/records/personal-best";
+import type { PlayRecord } from "@/records/play-record";
 import { EmptyRecords } from "@/records/ui/PlayRecordsScreen/EmptyRecords";
 import { PlayRecordsHistory } from "@/records/ui/PlayRecordsScreen/PlayRecordsHistory";
 import { PlayRecordsTrend } from "@/records/ui/PlayRecordsScreen/PlayRecordsTrend";
-import { getPersonalBests } from "../personal-best";
-import type { PlayRecord } from "../play-record";
 import {
   getPlayRecordMetricDisplay,
   type PlayRecordDisplayCatalog,
   type PlayRecordDisplayDefinition,
-} from "./play-record-display";
+} from "@/records/ui/play-record-display";
 
 type PlayRecordsScreenProps = {
   records: readonly PlayRecord[];

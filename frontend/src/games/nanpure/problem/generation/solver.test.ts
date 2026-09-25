@@ -1,6 +1,12 @@
-import type { NanpureBoard, NanpureCell } from "../../puzzle/board";
-import { isNanpureBoardConsistent, isNanpureSolved } from "../../puzzle/rules";
-import { classifyNanpureSolutions, findNanpureSolution } from "./solver";
+import {
+  classifyNanpureSolutions,
+  findNanpureSolution,
+} from "@/games/nanpure/problem/generation/solver";
+import type { NanpureBoard, NanpureCell } from "@/games/nanpure/puzzle/board";
+import {
+  isNanpureBoardConsistent,
+  isNanpureSolved,
+} from "@/games/nanpure/puzzle/rules";
 
 function boardFromRows(rows: readonly string[]): NanpureBoard {
   return rows.flatMap((row) =>
