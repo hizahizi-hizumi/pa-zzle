@@ -275,6 +275,25 @@ rules:
 
 ルール拡充は #323 で追跡する。
 
+### ruleset一覧
+
+rulesetは適用pathを共有する単位で分ける。1つの規約ファイルの項目でも、pathが違えば別のrulesetにする（ruleに書けるunitは1つなので、同じ判定基準をコンポーネントとフックで分けることもある）。各ruleがどの規約文を判定するかは、rulesetの先頭のコメントとruleの `instruction` を参照する。
+
+| ruleset | 正本 | paths（exclude） | rule |
+| --- | --- | --- | --- |
+| `vitest` | `vitest.md` | `frontend/**/*.test.{ts,tsx,mjs}` | テスト本体のArrange、beforeEach、DOMの契約、test.each、テスト名の「場合」「時」、テスト名の散文と識別子の表記、describe名、Act / Assertの分離、DOMクエリの選び方、不変データのconst、テストごとの状態のbeforeEach |
+| `typescript` | `typescript.md`、`game-structure.md` | `frontend/src/{games,records}/**/*.ts`（`ui/`、テスト、`components/ui/`） | ロジックが表示表現を返さない |
+| `typescript-react` | `typescript-react.md` | `frontend/src/**/*.tsx`（`components/ui/`） | propsの契約 |
+| `react-hooks` / `react-hooks-components` | `react-hooks.md` | `frontend/src/**/*.{ts,tsx}` / `frontend/src/**/*.tsx`（`components/ui/`） | stateとeffect（フック / コンポーネント） |
+| `component-styling` | `component-styling.md` | `frontend/src/**/*.tsx` | 外観の公開API |
+| `views` | `views.md` | `frontend/src/views/**/*.tsx` | Viewがドメインや機能の規則を実装しない |
+| `pages` | `pages.md` | `frontend/src/pages/**/_*.tsx` | ルーターの特殊ファイルは接続だけ |
+| `game-structure` | `game-structure.md` | ゲームの標準位置（`ui/` 以外） | 標準位置の責務 |
+| `game-ui` | `game-structure.md` | `frontend/src/games/*/ui/**` | ゲームのUIがゲームのロジックを実装しない |
+| `self-documenting-code` | `self-documenting-code.md` | `**/*.{ts,tsx}`（生成物の `frontend/src/router.ts`、`components/ui/`、`.semantic-lint/`） | コメントの内容、文書コメントの重複 |
+
+`self-documenting-code` の正本はPython・shell・SQL・TOML・YAMLも対象にするが、`comment` / `doc-comment` のqueryがTypeScript / TSX / JavaScriptにしかないため、rulesetはTypeScript / TSXだけを対象にする。
+
 ## 実repo golden
 
 `.semantic-lint/golden/<ruleset>/<rule-id>.yaml` は、実repoのファイルに対して規約違反として指摘されるべき行範囲を記録する。判定方式に依存しない形式で、自作fixtureより優先して精度評価の基準にする。
