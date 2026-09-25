@@ -9,7 +9,7 @@ type TakuzuTileProps = {
  * A は濃い青の角丸の四角、B は明るい黄の円。明度・形・色相のどれか1つだけでも見分けられるようにする。
  * ダークでも A を B より暗く保ち、明度の関係を入れ替えない。
  */
-const tileClassNames = {
+export const takuzuTileClassNames = {
   a: "rounded-[12%] bg-blue-700 shadow-[inset_0_-2px_0_rgb(0_0_0/0.25)] dark:bg-blue-500",
   b: "rounded-full bg-amber-300 shadow-[inset_0_0_0_2px_var(--color-amber-600)] dark:bg-amber-200 dark:shadow-[inset_0_0_0_2px_var(--color-amber-400)]",
 } satisfies Record<TakuzuTileValue, string>;
@@ -27,7 +27,7 @@ export function TakuzuTile({ tile, given }: TakuzuTileProps) {
   return (
     <span
       aria-hidden="true"
-      className={`flex size-[86%] items-center justify-center ${tileClassNames[tile]} ${given ? "" : placedTileClassName}`}
+      className={`flex size-[86%] items-center justify-center ${takuzuTileClassNames[tile]} ${given ? "" : placedTileClassName}`}
     >
       {given ? (
         <span
