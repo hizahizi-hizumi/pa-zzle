@@ -1,8 +1,8 @@
 import type { SlidePuzzleResult } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import {
   SLIDE_PUZZLE_SCORE_MAXIMUMS,
-  SLIDE_PUZZLE_SPEED_INITIAL_RECOGNITION_MS,
   SLIDE_PUZZLE_SPEED_PER_OPTIMAL_MOVE_MS,
+  slidePuzzleSpeedInitialRecognitionMsByBoardSize,
 } from "@/games/slide-puzzle/score";
 import { formatScoreTime } from "@/games/slide-puzzle/ui/SlidePuzzlePlay/SlidePuzzleResultScreen/format-score-time";
 
@@ -33,7 +33,7 @@ export function ScoreCriteria({ result }: ScoreCriteriaProps) {
           {SLIDE_PUZZLE_SCORE_MAXIMUMS.speed}点。
           {formatScoreTime(speedZeroScoreMs)}
           以上で0点、その間は時間に応じて減点。基準時間は
-          {`${SLIDE_PUZZLE_SPEED_INITIAL_RECOGNITION_MS / 1000}秒 + 最短${result.optimalMoveCount}手 × ${SLIDE_PUZZLE_SPEED_PER_OPTIMAL_MOVE_MS / 1000}秒`}
+          {`盤面把握${slidePuzzleSpeedInitialRecognitionMsByBoardSize[result.boardSize] / 1000}秒 + 最短${result.optimalMoveCount}手 × ${SLIDE_PUZZLE_SPEED_PER_OPTIMAL_MOVE_MS / 1000}秒`}
           。
         </dd>
       </div>

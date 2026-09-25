@@ -20,6 +20,7 @@ const result: SlidePuzzleResult = {
   completionMoveCount: 34,
   slideCount: 25,
   restartCount: 1,
+  boardSize: 4,
   optimalMoveCount: 30,
   moveDelta: 12,
   timeDeltaMs: 10_000,
@@ -239,7 +240,7 @@ describe("SlidePuzzlePlay", () => {
       const efficiency = screen.getByText("43 / 60");
       const speed = screen.getByText("34 / 40");
       const speedCriteria = screen.getByText(
-        /基準時間は10秒 \+ 最短30手 × 2秒/,
+        /基準時間は盤面把握10秒 \+ 最短30手 × 2秒/,
       );
 
       expect(efficiency).toBeTruthy();

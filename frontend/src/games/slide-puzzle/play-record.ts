@@ -145,6 +145,7 @@ function getSlidePuzzlePlayRecordScore(record: PlayRecord): number | null {
   return calculateSlidePuzzlePlayScore({
     elapsedMs,
     moveCount,
+    boardSize: record.payload.problemIdentity.conditions.size,
     optimalMoveCount,
   }).total;
 }
@@ -155,7 +156,11 @@ function getSlidePuzzlePlayRecordTimeDelta(record: PlayRecord): number | null {
   }
 
   const { elapsedMs, optimalMoveCount } = record.payload.performance;
-  return calculateSlidePuzzleTimeDeltaMs({ elapsedMs, optimalMoveCount });
+  return calculateSlidePuzzleTimeDeltaMs({
+    elapsedMs,
+    boardSize: record.payload.problemIdentity.conditions.size,
+    optimalMoveCount,
+  });
 }
 
 function getSlidePuzzlePlayRecordMoveDelta(record: PlayRecord): number | null {

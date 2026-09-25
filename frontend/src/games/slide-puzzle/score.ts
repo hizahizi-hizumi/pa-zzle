@@ -1,11 +1,24 @@
 import type { GameResultLevel } from "@/games/result";
+import type { SlidePuzzleBoardSize } from "@/games/slide-puzzle/puzzle/state";
 
 export const SLIDE_PUZZLE_SCORE_MAXIMUMS = {
   efficiency: 60,
   speed: 40,
 } as const;
 
-export const SLIDE_PUZZLE_SPEED_INITIAL_RECOGNITION_MS = 10_000;
+/**
+ * 基準時間のうち盤面把握にあてる時間。盤面が大きいほど把握に掛かるとみなし、
+ * タイル数にほぼ比例させる（1 タイルあたり約 0.6 秒）。実プレイで校正する前の仮値。
+ */
+export const slidePuzzleSpeedInitialRecognitionMsByBoardSize: Record<
+  SlidePuzzleBoardSize,
+  number
+> = {
+  3: 5_000,
+  4: 10_000,
+  5: 15_000,
+};
+/** 基準時間のうち最短 1 手あたりの時間。盤面サイズによらず共通の仮値。 */
 export const SLIDE_PUZZLE_SPEED_PER_OPTIMAL_MOVE_MS = 2_000;
 
 export type SlidePuzzlePlayScore = {
@@ -17,6 +30,7 @@ export type SlidePuzzlePlayScore = {
 };
 
 type SlidePuzzleSpeedFullScoreInput = {
+  boardSize: SlidePuzzleBoardSize;
   optimalMoveCount: number;
 };
 
@@ -48,19 +62,24 @@ function calculateLinearScore(maximum: number, ratio: number): number {
 }
 
 function calculateSlidePuzzleSpeedFullScoreMs({
+  boardSize,
   optimalMoveCount,
 }: SlidePuzzleSpeedFullScoreInput): number {
   return (
-    SLIDE_PUZZLE_SPEED_INITIAL_RECOGNITION_MS +
+    slidePuzzleSpeedInitialRecognitionMsByBoardSize[boardSize] +
     Math.max(0, optimalMoveCount) * SLIDE_PUZZLE_SPEED_PER_OPTIMAL_MOVE_MS
   );
 }
 
 export function calculateSlidePuzzleTimeDeltaMs({
   elapsedMs,
+  boardSize,
   optimalMoveCount,
 }: SlidePuzzleTimeDeltaInput): number {
-  return elapsedMs - calculateSlidePuzzleSpeedFullScoreMs({ optimalMoveCount });
+  return (
+    elapsedMs -
+    calculateSlidePuzzleSpeedFullScoreMs({ boardSize, optimalMoveCount })
+  );
 }
 
 export function calculateSlidePuzzleMoveDelta({
@@ -73,9 +92,11 @@ export function calculateSlidePuzzleMoveDelta({
 export function calculateSlidePuzzlePerformanceComparison({
   elapsedMs,
   moveCount,
+  boardSize,
   optimalMoveCount,
 }: SlidePuzzlePlayScoreInput): SlidePuzzlePerformanceComparison {
   const speedFullScoreMs = calculateSlidePuzzleSpeedFullScoreMs({
+    boardSize,
     optimalMoveCount,
   });
 
@@ -83,6 +104,7 @@ export function calculateSlidePuzzlePerformanceComparison({
     speedFullScoreMs,
     timeDeltaMs: calculateSlidePuzzleTimeDeltaMs({
       elapsedMs,
+      boardSize,
       optimalMoveCount,
     }),
     moveDelta: calculateSlidePuzzleMoveDelta({
@@ -100,9 +122,11 @@ export function calculateSlidePuzzlePerformanceComparison({
 export function calculateSlidePuzzlePlayScore({
   elapsedMs,
   moveCount,
+  boardSize,
   optimalMoveCount,
 }: SlidePuzzlePlayScoreInput): SlidePuzzlePlayScore {
   const comparison = calculateSlidePuzzlePerformanceComparison({
+    boardSize,
     elapsedMs,
     moveCount,
     optimalMoveCount,

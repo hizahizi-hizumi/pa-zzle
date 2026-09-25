@@ -10,22 +10,45 @@ import {
 
 const { calculateSlidePuzzleSpeedFullScoreMs } = _private;
 
-// 最短 30 手（レベル 3 の中央値）の問題。基準時間は 10 秒 + 30 手 × 2 秒 = 70 秒。
+// 4×4 で最短 30 手（レベル 3 の中央値）の問題。基準時間は 10 秒 + 30 手 × 2 秒 = 70 秒。
+const boardSize = 4;
 const optimalMoveCount = 30;
 const speedFullScoreMs = 70_000;
 
 describe("calculateSlidePuzzleSpeedFullScoreMs", () => {
   test("盤面把握の時間と最短手数から基準時間を算出すること", () => {
-    const result = calculateSlidePuzzleSpeedFullScoreMs({ optimalMoveCount });
+    const result = calculateSlidePuzzleSpeedFullScoreMs({
+      boardSize,
+      optimalMoveCount,
+    });
 
     expect(result).toBe(speedFullScoreMs);
   });
+
+  const cases = [
+    [3, 20, 45_000],
+    [4, 20, 50_000],
+    [5, 20, 55_000],
+  ] as const;
+
+  test.each(cases)(
+    "一辺 %i・最短 %i 手の問題では盤面把握の時間を盤面サイズで変えて %i ミリ秒にすること",
+    (sizedBoardSize, sizedOptimalMoveCount, expected) => {
+      const result = calculateSlidePuzzleSpeedFullScoreMs({
+        boardSize: sizedBoardSize,
+        optimalMoveCount: sizedOptimalMoveCount,
+      });
+
+      expect(result).toBe(expected);
+    },
+  );
 });
 
 describe("calculateSlidePuzzleTimeDeltaMs", () => {
   test("経過時間と基準時間との差を算出すること", () => {
     const result = calculateSlidePuzzleTimeDeltaMs({
       elapsedMs: 65_000,
+      boardSize,
       optimalMoveCount,
     });
 
@@ -49,6 +72,7 @@ describe("calculateSlidePuzzlePerformanceComparison", () => {
     const result = calculateSlidePuzzlePerformanceComparison({
       elapsedMs: 80_000,
       moveCount: 42,
+      boardSize,
       optimalMoveCount,
     });
 
@@ -65,6 +89,7 @@ describe("calculateSlidePuzzlePlayScore", () => {
     const score = calculateSlidePuzzlePlayScore({
       elapsedMs: speedFullScoreMs,
       moveCount: optimalMoveCount,
+      boardSize,
       optimalMoveCount,
     });
 
@@ -89,6 +114,7 @@ describe("calculateSlidePuzzlePlayScore", () => {
       const score = calculateSlidePuzzlePlayScore({
         elapsedMs: speedFullScoreMs,
         moveCount,
+        boardSize,
         optimalMoveCount,
       });
 
@@ -108,6 +134,7 @@ describe("calculateSlidePuzzlePlayScore", () => {
       const score = calculateSlidePuzzlePlayScore({
         elapsedMs,
         moveCount: optimalMoveCount,
+        boardSize,
         optimalMoveCount,
       });
 
@@ -119,6 +146,7 @@ describe("calculateSlidePuzzlePlayScore", () => {
     const score = calculateSlidePuzzlePlayScore({
       elapsedMs: 80_000,
       moveCount: 42,
+      boardSize,
       optimalMoveCount,
     });
 
@@ -163,8 +191,11 @@ describe("calculateSlidePuzzlePlayScore", () => {
       const ranked = plays
         .map((play) => ({
           name: play.name,
-          total: calculateSlidePuzzlePlayScore({ ...play, optimalMoveCount })
-            .total,
+          total: calculateSlidePuzzlePlayScore({
+            ...play,
+            boardSize,
+            optimalMoveCount,
+          }).total,
         }))
         .sort((left, right) => right.total - left.total)
         .map((play) => play.name);
