@@ -83,7 +83,10 @@ export function calculateFifteenPuzzlePerformanceComparison({
 
   return {
     speedFullScoreMs,
-    timeDeltaMs: elapsedMs - speedFullScoreMs,
+    timeDeltaMs: calculateFifteenPuzzleTimeDeltaMs({
+      elapsedMs,
+      optimalMoveCount,
+    }),
     moveDelta: calculateFifteenPuzzleMoveDelta({
       moveCount,
       optimalMoveCount,
