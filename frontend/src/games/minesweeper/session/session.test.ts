@@ -3,6 +3,7 @@ import {
   chordMinesweeperSessionCell,
   createMinesweeperSession,
   getMinesweeperSessionElapsedMs,
+  getMinesweeperSessionResult,
   getMinesweeperSessionVisibleCells,
   revealMinesweeperSessionCell,
   toggleMinesweeperSessionFlag,
@@ -150,5 +151,34 @@ describe("getMinesweeperSessionElapsedMs", () => {
     );
 
     expect(getMinesweeperSessionElapsedMs(cleared, 9_000)).toBe(2_000);
+  });
+});
+
+describe("getMinesweeperSessionResult", () => {
+  // 0 1 * 1 0
+  const problem: MinesweeperProblem = {
+    board: { rows: 1, columns: 5, mineCellIndices: [2] },
+    initialRevealedCellIndices: [0, 1],
+  };
+
+  test("クリア前は結果を返さないこと", () => {
+    const session = createMinesweeperSession(problem, 1_000);
+
+    expect(getMinesweeperSessionResult(session, 5_000)).toBeNull();
+  });
+
+  test("クリアしたプレイの経過時間・ミス数・開く操作の最小回数を返すこと", () => {
+    const stepped = revealMinesweeperSessionCell(
+      createMinesweeperSession(problem, 1_000),
+      2,
+      2_000,
+    );
+    const cleared = revealMinesweeperSessionCell(stepped, 4, 4_000);
+
+    expect(getMinesweeperSessionResult(cleared, 9_000)).toEqual({
+      elapsedMs: 3_000,
+      mistakeCount: 1,
+      minimumOpenCount: 1,
+    });
   });
 });

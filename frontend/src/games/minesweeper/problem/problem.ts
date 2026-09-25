@@ -2,9 +2,14 @@ import type { ProblemSeed } from "@/games/problem-seed";
 import {
   assertMinesweeperBoard,
   assertMinesweeperCellIndex,
+  getMinesweeperCellCount,
   type MinesweeperBoard,
 } from "../puzzle/board";
-import { isMinesweeperMine } from "../puzzle/rules";
+import {
+  collectMinesweeperRevealCellIndices,
+  getAdjacentMinesweeperMineCount,
+  isMinesweeperMine,
+} from "../puzzle/rules";
 
 export const MINESWEEPER_GENERATOR_VERSION = "1";
 
@@ -47,4 +52,43 @@ export function assertMinesweeperProblem(problem: MinesweeperProblem): void {
     }
     initialRevealedCells.add(cellIndex);
   }
+}
+
+/**
+ * 初期開示状態から、旗もまとめて開く操作も使わずに安全なマスをすべて開くのに要る、開く操作の最小回数。
+ * 未開示の0のマスは連鎖で開く範囲ごとに1回、どの連鎖にも含まれない数字のマスは1マスごとに1回と数える（いわゆる 3BV）。
+ */
+export function countMinesweeperMinimumOpenCount(
+  problem: MinesweeperProblem,
+): number {
+  const { board } = problem;
+  const revealed = new Set(problem.initialRevealedCellIndices);
+  const safeCellIndices = Array.from(
+    { length: getMinesweeperCellCount(board) },
+    (_, cellIndex) => cellIndex,
+  ).filter((cellIndex) => !isMinesweeperMine(board, cellIndex));
+  let openCount = 0;
+
+  for (const cellIndex of safeCellIndices) {
+    if (
+      revealed.has(cellIndex) ||
+      getAdjacentMinesweeperMineCount(board, cellIndex) !== 0
+    ) {
+      continue;
+    }
+    openCount += 1;
+    for (const openedCellIndex of collectMinesweeperRevealCellIndices(board, [
+      cellIndex,
+    ])) {
+      revealed.add(openedCellIndex);
+    }
+  }
+
+  for (const cellIndex of safeCellIndices) {
+    if (!revealed.has(cellIndex)) {
+      openCount += 1;
+    }
+  }
+
+  return openCount;
 }
