@@ -4,6 +4,7 @@ import {
   decodeTakuzuPoolProblem,
   encodeTakuzuPoolProblem,
   getTakuzuRemovalTechniqueLimitCode,
+  toTakuzuPooledProblem,
   toTakuzuPoolIdentity,
 } from "@/games/takuzu/problem/problem-pool";
 
@@ -46,7 +47,7 @@ describe("decodeTakuzuPoolProblem", () => {
 
 describe("toTakuzuPoolIdentity", () => {
   test("手筋の上限の1文字表記・戻す数・候補番号から identity を作ること", () => {
-    const identity = toTakuzuPoolIdentity(["D", 2, 160, "0".repeat(32)]);
+    const identity = toTakuzuPoolIdentity(["D", 2, 160, "0".repeat(32), 18, 2]);
 
     expect(identity).toEqual(
       createTakuzuProblemIdentity("duplicate-avoidance", 2, 160),
@@ -68,5 +69,32 @@ describe("getTakuzuRemovalTechniqueLimitCode", () => {
     const code = getTakuzuRemovalTechniqueLimitCode(technique);
 
     expect(code).toBe(expected);
+  });
+});
+
+describe("toTakuzuPooledProblem", () => {
+  test("問題集の作業の量と、初期配置から数えた空きマスの数を伴うこと", () => {
+    const { problem } = generateTakuzuProblem(
+      createTakuzuProblemIdentity("count-completion", 2, 0),
+    );
+    const emptyCellCount = problem.givens.cells.filter(
+      (cell) => cell === null,
+    ).length;
+
+    const pooled = toTakuzuPooledProblem([
+      "B",
+      2,
+      0,
+      encodeTakuzuPoolProblem(problem),
+      12,
+      0,
+    ]);
+
+    expect(pooled.problem).toEqual(problem);
+    expect(pooled.workload).toEqual({
+      emptyCellCount,
+      roundCount: 12,
+      lineReadingRoundCount: 0,
+    });
   });
 });

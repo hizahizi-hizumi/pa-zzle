@@ -1,23 +1,22 @@
 import { hashProblemSeed, type ProblemSeed } from "@/games/problem-seed";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
-import type {
-  TakuzuIdentifiedProblem,
-  TakuzuProblemIdentity,
-} from "@/games/takuzu/problem/problem";
+import type { TakuzuProblemIdentity } from "@/games/takuzu/problem/problem";
 import {
   findTakuzuPoolEntry,
   listTakuzuPoolEntries,
+  type TakuzuPooledProblem,
   toTakuzuPooledProblem,
 } from "@/games/takuzu/problem/problem-pool";
 
 /**
  * 難易度の問題集から seed で1問を選ぶ。
- * 問題集は生成時に難易度を判定済みで解も持つため、プレイ時には生成・解探索・難易度分析を走らせない。
+ * 問題集は生成時に難易度を判定済みで、解と基準時間に使う作業の量も持つため、
+ * プレイ時には生成・解探索・難易度分析を走らせない。
  */
 export function selectTakuzuProblemForDifficulty(
   difficulty: TakuzuDifficulty,
   seed: ProblemSeed,
-): TakuzuIdentifiedProblem {
+): TakuzuPooledProblem {
   const entries = listTakuzuPoolEntries(difficulty);
   const entry = entries[hashProblemSeed(seed) % entries.length];
   if (!entry) {
@@ -32,7 +31,7 @@ export function selectTakuzuProblemForDifficulty(
  */
 export function restoreTakuzuProblem(
   identity: TakuzuProblemIdentity,
-): TakuzuIdentifiedProblem | null {
+): TakuzuPooledProblem | null {
   const entry = findTakuzuPoolEntry(identity);
   return entry ? toTakuzuPooledProblem(entry) : null;
 }
