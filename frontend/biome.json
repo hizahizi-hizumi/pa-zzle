@@ -6,7 +6,8 @@
       "!node_modules",
       "!dist",
       "!src/router.ts",
-      "!src/components/ui"
+      "!src/components/ui",
+      "!src/games/minesweeper/problem/problem-pool.json"
     ]
   },
   "formatter": {
