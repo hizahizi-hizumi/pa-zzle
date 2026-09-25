@@ -12,7 +12,7 @@ export type FifteenPuzzleProblemPoolEntry = readonly [
   optimalMoveCount: number,
 ];
 
-export type FifteenPuzzleProblemPool = {
+type FifteenPuzzleProblemPool = {
   generatorVersion: typeof FIFTEEN_PUZZLE_GENERATOR_VERSION;
   levels: Record<
     FifteenPuzzleDifficulty,
@@ -20,7 +20,7 @@ export type FifteenPuzzleProblemPool = {
   >;
 };
 
-export type FifteenPuzzlePooledProblem = {
+type FifteenPuzzlePooledProblem = {
   identity: FifteenPuzzleProblemIdentity;
   optimalMoveCount: number;
 };
