@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
@@ -30,11 +30,13 @@ type MinesweeperPlayProps = {
   status: MinesweeperSessionStatus;
   progress: MinesweeperProgress;
   result: MinesweeperResult | null;
+  recordOutcomeNotice: ReactNode;
   onRevealCell: (cellIndex: number) => void;
   onToggleFlag: (cellIndex: number) => void;
   onChordCell: (cellIndex: number) => void;
   onReplay: () => void;
   onStartNewProblem: () => void;
+  onOpenRecords: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
   onClearAnimationComplete: () => void;
@@ -53,11 +55,13 @@ export function MinesweeperPlay({
   status,
   progress,
   result,
+  recordOutcomeNotice,
   onRevealCell,
   onToggleFlag,
   onChordCell,
   onReplay,
   onStartNewProblem,
+  onOpenRecords,
   onChangeDifficulty,
   onBackToHome,
   onClearAnimationComplete,
@@ -80,8 +84,10 @@ export function MinesweeperPlay({
       <MinesweeperResultScreen
         difficulty={difficulty}
         result={result}
+        recordOutcomeNotice={recordOutcomeNotice}
         onReplay={handleReplay}
         onStartNewProblem={handleStartNewProblem}
+        onOpenRecords={onOpenRecords}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
         onOpenDiagnostics={onOpenDiagnostics}
