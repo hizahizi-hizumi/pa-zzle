@@ -285,8 +285,12 @@ function printCorpusReport(samples: readonly Sample[]) {
   );
 
   console.log("## 順位相関（Spearman）\n");
-  const pick = (key: keyof FifteenPuzzleDifficultyFeatures, group = provided) =>
-    group.map((sample) => sample[key]);
+  function pick(
+    key: keyof FifteenPuzzleDifficultyFeatures,
+    group: readonly Sample[] = provided,
+  ) {
+    return group.map((sample) => sample[key]);
+  }
   printTable(
     [
       "対象",
@@ -440,10 +444,7 @@ function printPoolReport() {
   const all = levels.flatMap(({ id, samples }) =>
     samples.map((sample) => ({ ...sample, level: id })),
   );
-  const describe = (
-    title: string,
-    sample: (typeof all)[number] | undefined,
-  ) => {
+  function describe(title: string, sample: (typeof all)[number] | undefined) {
     if (!sample) {
       return;
     }
@@ -451,7 +452,7 @@ function printPoolReport() {
       `### ${title}: レベル ${sample.level} ${sample.seed}（最短 ${sample.optimalMoveCount} / マンハッタン ${sample.manhattanDistance} / 遠回り ${sample.detourMoveCount} / 正位置外 ${sample.misplacedTileCount} / 線形衝突対 ${sample.linearConflictPairCount}）\n`,
     );
     console.log(`\`\`\`text\n${formatBoard(sample.board)}\n\`\`\`\n`);
-  };
+  }
   for (const { id, samples } of levels) {
     const detour = quantile(
       samples.map((sample) => sample.detourMoveCount),

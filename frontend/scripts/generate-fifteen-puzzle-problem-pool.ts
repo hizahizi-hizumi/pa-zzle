@@ -74,10 +74,14 @@ function runMain() {
       ),
     ),
   ].sort((left, right) => left - right);
-  const needOf = (level: FifteenPuzzleDifficulty) =>
-    Math.ceil(
-      perLevel / fifteenPuzzleDifficultyCriteria[level].scrambleLengths.length,
-    ) + duplicateAllowance;
+  function needOf(level: FifteenPuzzleDifficulty) {
+    return (
+      Math.ceil(
+        perLevel /
+          fifteenPuzzleDifficultyCriteria[level].scrambleLengths.length,
+      ) + duplicateAllowance
+    );
+  }
 
   const candidatesByProfile = new Map<string, Candidate[]>();
   for (const scrambleLength of scrambleLengths) {
