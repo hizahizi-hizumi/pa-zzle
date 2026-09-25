@@ -20,7 +20,7 @@ export type FifteenPuzzleHeuristic = {
 };
 
 type FifteenPuzzleSolveOptions = {
-  /** 展開するノード数の上限。超えたら `limit-exceeded` を返す。 */
+  /** 展開するノード数の上限。正の整数で、超えたら `limit-exceeded` を返す。省略すると上限なし。 */
   nodeLimit?: number;
   heuristic?: FifteenPuzzleHeuristic;
 };
@@ -252,6 +252,12 @@ export function solveFifteenPuzzleOptimally(
     throw new RangeError("Fifteen puzzle board must be solvable");
   }
   const nodeLimit = options.nodeLimit ?? Number.POSITIVE_INFINITY;
+  if (
+    nodeLimit !== Number.POSITIVE_INFINITY &&
+    !(Number.isInteger(nodeLimit) && nodeLimit > 0)
+  ) {
+    throw new RangeError("nodeLimit must be a positive integer");
+  }
   const heuristic =
     options.heuristic ?? createFifteenPuzzleManhattanLinearConflictHeuristic();
   const cells = Uint8Array.from(board);

@@ -86,6 +86,18 @@ describe("solveFifteenPuzzleOptimally", () => {
     expect(result).toEqual({ status: "limit-exceeded", expandedNodeCount: 2 });
   });
 
+  const invalidNodeLimits = [0, -1, 1.5, Number.NaN];
+
+  test.each(invalidNodeLimits)(
+    "正の整数でない展開ノード数の上限を拒否すること: %s",
+    (nodeLimit) => {
+      const act = () =>
+        solveFifteenPuzzleOptimally(scrambledBoard, { nodeLimit });
+
+      expect(act).toThrow(RangeError);
+    },
+  );
+
   const unsolvableBoard: FifteenPuzzleBoard = [
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 14, 0,
   ];
