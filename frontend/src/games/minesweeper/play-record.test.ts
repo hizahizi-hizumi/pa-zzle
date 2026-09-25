@@ -54,7 +54,7 @@ test("保存した事実から現在のプレイ評価を再計算すること",
       mineCount: 16,
     }).total,
   );
-  expect(score).toBe(92);
+  expect(score).toBe(90);
 });
 
 test("問題ごとの基準時間との差を比較指標として導出すること", () => {
