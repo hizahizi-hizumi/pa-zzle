@@ -24,6 +24,7 @@ export function PlayableTakuzu({ difficulty }: PlayableTakuzuProps) {
       onReplay={play.replay}
       onStartNewProblem={play.startNewProblem}
       onClearingComplete={play.completeClearing}
+      onChangeDifficulty={() => navigate("/puzzles/takuzu")}
       onBackToHome={() => navigate("/")}
     />
   );
