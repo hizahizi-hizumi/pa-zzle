@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="バイナリパズル">
+  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <g fill="var(--game-pictogram-strong)"><circle cx="90" cy="30" r="7.5"/><circle cx="50" cy="50" r="7.5"/><circle cx="30" cy="70" r="7.5"/><circle cx="50" cy="70" r="7.5"/><circle cx="30" cy="90" r="7.5"/><circle cx="70" cy="90" r="7.5"/></g>
+  <g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"><circle cx="30" cy="30" r="6.5"/><circle cx="50" cy="30" r="6.5"/><circle cx="70" cy="50" r="6.5"/><circle cx="70" cy="70" r="6.5"/><circle cx="90" cy="90" r="6.5"/></g>
+</svg>
