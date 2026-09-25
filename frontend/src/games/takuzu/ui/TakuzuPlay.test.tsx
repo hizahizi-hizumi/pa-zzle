@@ -48,9 +48,12 @@ describe("TakuzuPlay", () => {
 
     test("表示名と難易度と経過時間を表示すること", () => {
       const heading = screen.getByRole("heading", { name: "バイナリパズル" });
-      const summary = heading.nextElementSibling;
+      const difficulty = screen.getByText("難易度 2");
+      const elapsedTime = screen.getByText("01:05");
 
-      expect(summary?.textContent).toBe("難易度 2·経過時間01:05");
+      expect(heading).toBeTruthy();
+      expect(difficulty).toBeTruthy();
+      expect(elapsedTime).toBeTruthy();
     });
 
     test("やり直すボタンでやり直しを通知すること", () => {

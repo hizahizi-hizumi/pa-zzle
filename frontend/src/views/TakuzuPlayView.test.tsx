@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 
 import { TakuzuPlayView } from "@/views/TakuzuPlayView";
@@ -27,9 +27,11 @@ describe("TakuzuPlayView", () => {
     });
 
     test("8×8 の盤面を持つプレイ画面を表示すること", () => {
-      const board = screen.getByRole("group", { name: "盤面" });
+      const cells = within(
+        screen.getByRole("group", { name: "盤面" }),
+      ).getAllByRole("button");
 
-      expect(board.querySelectorAll("button")).toHaveLength(64);
+      expect(cells).toHaveLength(64);
       expect(screen.queryByText("この難易度は選べません")).toBeNull();
     });
   });
