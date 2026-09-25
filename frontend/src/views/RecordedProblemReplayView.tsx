@@ -1,9 +1,11 @@
 import { useState } from "react";
 
+import { isMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
 import { isNanpurePlayRecord } from "@/games/nanpure/play-record";
 import { isWaterSortPlayRecord } from "@/games/water-sort/play-record";
 import { readPlayRecords } from "@/records/storage";
 import { Link, useParams } from "@/router";
+import { PlayableMinesweeper } from "@/views/MinesweeperPlayView/PlayableMinesweeper";
 import { PlayableNanpure } from "@/views/NanpurePlayView/PlayableNanpure";
 import { PlayableWaterSort } from "@/views/WaterSortPlayView/PlayableWaterSort";
 
@@ -42,6 +44,15 @@ export function RecordedProblemReplayView() {
   if (isNanpurePlayRecord(record)) {
     return (
       <PlayableNanpure
+        difficulty={record.payload.difficulty}
+        initialProblemIdentity={record.payload.problemIdentity}
+      />
+    );
+  }
+
+  if (isMinesweeperPlayRecord(record)) {
+    return (
+      <PlayableMinesweeper
         difficulty={record.payload.difficulty}
         initialProblemIdentity={record.payload.problemIdentity}
       />

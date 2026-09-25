@@ -1,4 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { createMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
+import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
 import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
 import { createWaterSortPlayRecord } from "@/games/water-sort/play-record";
@@ -10,6 +12,7 @@ import type { PlayRecordDisplayCatalog } from "./play-record-display";
 const playRecordDisplays = [
   waterSortPlayRecordDisplay,
   nanpurePlayRecordDisplay,
+  minesweeperPlayRecordDisplay,
 ] as const satisfies PlayRecordDisplayCatalog;
 
 const records = [
@@ -68,6 +71,23 @@ const records = [
       restartCount: 0,
     },
   }),
+  createMinesweeperPlayRecord({
+    difficulty: "3",
+    problemIdentity: {
+      generatorVersion: "1",
+      seed: "minesweeper-1",
+      conditions: {
+        rows: 10,
+        columns: 10,
+        mineCount: 16,
+        startCellPlacement: "random",
+      },
+      generationAttempt: 1,
+    },
+    startedAt: 10_000,
+    completedAt: 160_000,
+    result: { elapsedMs: 150_000, mistakeCount: 1, minimumOpenCount: 25 },
+  }),
 ];
 
 describe("PlayRecordsScreen", () => {
@@ -125,6 +145,20 @@ describe("PlayRecordsScreen", () => {
 
     expect(screen.getAllByText("01:30").length).toBeGreaterThan(0);
     expect(screen.getAllByText("ミス").length).toBeGreaterThan(0);
+    expect(screen.getByText("1件")).toBeTruthy();
+  });
+
+  test("マインスイーパーでは難易度ごとに評価点・基準時間との差・ミスを比較すること", () => {
+    const gameSelect = screen.getByRole("combobox", { name: "パズル" });
+    fireEvent.change(gameSelect, { target: { value: "minesweeper" } });
+    const comparisonSelect = screen.getByRole("combobox", {
+      name: "開始条件",
+    });
+
+    expect(comparisonSelect.textContent).toContain("難易度 3");
+    expect(screen.getAllByText("75点").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("+00:31").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("1回").length).toBeGreaterThan(0);
     expect(screen.getByText("1件")).toBeTruthy();
   });
 });
