@@ -1,6 +1,8 @@
 version: 1
 
 rulesDir: .semantic-lint/rules
+# 評価専用のruleset。bench / doctorだけが読み、checkでは実行しない。
+evalRulesDir: .semantic-lint/eval-rules
 casesDir: .semantic-lint/cases
 goldenDir: .semantic-lint/golden
 

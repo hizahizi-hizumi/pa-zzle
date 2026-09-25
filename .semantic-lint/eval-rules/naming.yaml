@@ -1,0 +1,33 @@
+# 評価専用ruleset。bench / doctorだけが読み、checkでは実行しない。
+# 人間向け規約（.claude/rules/*.md）に変数名の付け方の規約がないため、本番rulesetへ入れない。
+# 最も近いのは .claude/rules/self-documenting-code.md の「実装が何をしているかは名前などコード自身で
+# 表現する」だが、コメントとコードの役割分担の原則で、変数名を判定する規約ではない。
+# 文より細かい指摘位置（変数宣言のunitを判定し、宣言した名前を指摘する）の評価に使う。
+version: 1
+id: naming
+
+paths:
+  - frontend/**/*.ts
+  - frontend/**/*.tsx
+
+rules:
+  - id: meaningful-variable-name
+    title: 変数名は保持する値や役割を表す
+    unit: variable
+    violationThreshold: 0.50
+    predicate:
+      instruction: |
+        Determine whether the name of this variable declaration describes the
+        value it holds or its role, given its initializer and usage.
+      outcomes:
+        violation: |
+          The name does not describe the value or role: a placeholder such as
+          hoge, a vague name such as tmp, data, or val, or a meaningless single
+          letter.
+        compliant: |
+          The name describes the value or role in context. A conventional short
+          name in a narrow scope, such as a loop index, is compliant.
+        not_applicable: |
+          The subject is not a variable declaration.
+        insufficient_context: |
+          The context is not enough to tell what the variable holds.
