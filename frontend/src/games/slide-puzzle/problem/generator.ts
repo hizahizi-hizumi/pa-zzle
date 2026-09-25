@@ -20,6 +20,11 @@ import {
   type SlidePuzzleBoard,
 } from "@/games/slide-puzzle/puzzle/state";
 
+type SlidePuzzleRestoredProblem = Pick<
+  SlidePuzzleGeneratedProblem,
+  "problem" | "identity"
+>;
+
 function validateGenerationConditions(
   conditions: SlidePuzzleGenerationConditions,
 ): void {
@@ -83,7 +88,7 @@ export function generateSlidePuzzleBoard(
 
 export function restoreSlidePuzzleProblem(
   identity: SlidePuzzleProblemIdentity,
-): SlidePuzzleGeneratedProblem {
+): SlidePuzzleRestoredProblem {
   if (identity.generatorVersion !== SLIDE_PUZZLE_GENERATOR_VERSION) {
     throw new Error(
       `Unsupported slide puzzle generator version: ${identity.generatorVersion}`,
@@ -99,4 +104,15 @@ export function restoreSlidePuzzleProblem(
     },
     identity,
   };
+}
+
+export function restoreSlidePuzzleProblemWithOptimalMoveCount(
+  identity: SlidePuzzleProblemIdentity,
+  optimalMoveCount: number,
+): SlidePuzzleGeneratedProblem {
+  if (!Number.isInteger(optimalMoveCount) || optimalMoveCount < 1) {
+    throw new RangeError("optimalMoveCount must be a positive integer");
+  }
+
+  return { ...restoreSlidePuzzleProblem(identity), optimalMoveCount };
 }
