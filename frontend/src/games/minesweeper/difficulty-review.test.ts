@@ -9,11 +9,28 @@ import type { MinesweeperProblemIdentity } from "./problem/problem";
 const { parseMinesweeperProblemIdentitySearch } = _private;
 
 describe("assessMinesweeperDifficultyReviewProblems", () => {
-  test("全ての確認用問題を推測なしで解ける問題として判定すること", () => {
-    const entries = assessMinesweeperDifficultyReviewProblems();
+  const entries = assessMinesweeperDifficultyReviewProblems();
 
-    const statuses = new Set(entries.map((entry) => entry.assessment.status));
-    expect([...statuses].sort()).toEqual(["classified", "out-of-range"]);
+  test("難易度ごとに3問ずつ並べること", () => {
+    const counts = Object.groupBy(entries, (entry) => entry.difficulty);
+
+    expect(
+      Object.fromEntries(
+        Object.entries(counts).map(([difficulty, group]) => [
+          difficulty,
+          group?.length,
+        ]),
+      ),
+    ).toEqual({ 1: 3, 2: 3, 3: 3, 4: 3, 5: 3 });
+  });
+
+  test("全ての確認用問題を載せている難易度に分類すること", () => {
+    for (const entry of entries) {
+      expect(entry.assessment).toEqual({
+        status: "classified",
+        difficulty: entry.difficulty,
+      });
+    }
   });
 });
 

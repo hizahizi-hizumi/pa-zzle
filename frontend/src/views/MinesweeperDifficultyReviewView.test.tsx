@@ -6,7 +6,13 @@ import { MinesweeperDifficultyReviewView } from "./MinesweeperDifficultyReviewVi
 afterEach(cleanup);
 
 describe("MinesweeperDifficultyReviewView", () => {
-  const groupNames = ["代表（難易度1〜5）", "境界", "異常"] as const;
+  const difficultyNames = [
+    "難易度 1",
+    "難易度 2",
+    "難易度 3",
+    "難易度 4",
+    "難易度 5",
+  ] as const;
 
   beforeEach(() => {
     render(
@@ -16,35 +22,25 @@ describe("MinesweeperDifficultyReviewView", () => {
     );
   });
 
-  test.each(groupNames)("%sの問題を一覧に並べること", (groupName) => {
-    const group = screen.getByRole("region", { name: groupName });
+  test.each(difficultyNames)("%sの問題を3問並べること", (difficultyName) => {
+    const group = screen.getByRole("region", { name: difficultyName });
 
     const rows = within(group).getAllByRole("link");
 
-    expect(rows.length).toBeGreaterThan(0);
+    expect(rows).toHaveLength(3);
   });
 
-  test("問題ごとに判定結果とプレイへの導線を表示すること", () => {
-    const representatives = screen.getByRole("region", {
-      name: "代表（難易度1〜5）",
-    });
+  test("問題ごとに盤面・必要な推論とプレイへの導線を表示すること", () => {
+    const difficulty1 = screen.getByRole("region", { name: "難易度 1" });
 
-    const firstRow = within(representatives).getAllByRole("link")[0]!;
+    const firstRow = within(difficulty1).getAllByRole("link")[0]!;
 
-    expect(within(firstRow).getByText("難易度 1")).toBeTruthy();
-    expect(within(firstRow).getByText("10×10・地雷15")).toBeTruthy();
+    expect(within(firstRow).getByText("9×9・地雷10")).toBeTruthy();
+    expect(
+      within(firstRow).getByText("数字1つを読むだけで最後まで進める"),
+    ).toBeTruthy();
     expect(firstRow.getAttribute("href")).toBe(
-      "/puzzles/minesweeper/difficulty-review/play?seed=ms-10x10-15-125&rows=10&columns=10&mines=15&start=random&attempt=1",
+      "/puzzles/minesweeper/difficulty-review/play?seed=ms-review-1-9x9-1&rows=9&columns=9&mines=10&start=random&attempt=1",
     );
-  });
-
-  test("提供範囲外の問題を判定結果として表示すること", () => {
-    const boundaries = screen.getByRole("region", { name: "境界" });
-
-    const outOfRangeLabels = within(boundaries).getAllByText(
-      "提供範囲外（軽すぎ）",
-    );
-
-    expect(outOfRangeLabels).toHaveLength(2);
   });
 });

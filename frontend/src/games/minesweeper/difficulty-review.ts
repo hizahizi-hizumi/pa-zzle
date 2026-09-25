@@ -2,6 +2,7 @@ import {
   assessMinesweeperDifficulty,
   type MinesweeperDifficultyAssessment,
 } from "./difficulty";
+import type { MinesweeperHumanSolveFeatures } from "./problem/difficulty-analysis";
 import {
   type MinesweeperDifficultyReviewProblem,
   minesweeperDifficultyReviewProblems,
@@ -17,16 +18,23 @@ import {
 export type MinesweeperDifficultyReviewEntry =
   MinesweeperDifficultyReviewProblem & {
     assessment: MinesweeperDifficultyAssessment;
+    /** 解き切るのに要った推論の特徴。推論モデルで解き切れなかった問題では `undefined`。 */
+    features: MinesweeperHumanSolveFeatures | undefined;
   };
 
-/** 確認用の問題を復元し、現在の難易度分類で判定した結果を添えて返す。 */
+/** 確認用の問題を復元し、現在の難易度判定の結果と推論の特徴を添えて返す。 */
 export function assessMinesweeperDifficultyReviewProblems(): MinesweeperDifficultyReviewEntry[] {
-  return minesweeperDifficultyReviewProblems.map((reviewProblem) => ({
-    ...reviewProblem,
-    assessment: assessMinesweeperDifficulty(
-      restoreMinesweeperProblem(reviewProblem.identity).difficultyAnalysis,
-    ),
-  }));
+  return minesweeperDifficultyReviewProblems.map((reviewProblem) => {
+    const { rows, columns } = reviewProblem.identity.conditions;
+    const analysis = restoreMinesweeperProblem(
+      reviewProblem.identity,
+    ).difficultyAnalysis;
+    return {
+      ...reviewProblem,
+      assessment: assessMinesweeperDifficulty(analysis, { rows, columns }),
+      features: analysis.status === "analyzed" ? analysis.features : undefined,
+    };
+  });
 }
 
 const identitySearchKeys = {
