@@ -1,0 +1,36 @@
+# 実repoのテストコードに対する期待finding。
+# findingsは規約違反として指摘されるべき行範囲。空配列は「指摘なしが正解」のファイル。
+# ラベル粒度: 利用者から観測できない実装詳細を検証しているassertion / query。
+version: 1
+rule: vitest/dom-observable-contract
+baseCommit: 0d9813dee95ef8714301aa1d343b59d7462abede
+files:
+  - path: frontend/src/components/GameSelectionGallery.test.tsx
+    blob: a4705b3664141e44a91033c9c73752cb9559703d
+    note: pictogramを内部data属性で特定している。aria-pressedの検証はARIA状態として指摘対象にしない
+    findings:
+      - lines: [37, 37]
+      - lines: [53, 53]
+  - path: frontend/src/games/nanpure/ui/NanpurePlay.test.tsx
+    blob: 776e7b048bdc33370750f97a321f4125a19bcb30
+    note: accessible nameを持つpictogramをrole経由ではなくCSS selectorで取得している
+    findings:
+      - lines: [273, 273]
+  - path: frontend/src/components/InternalDiagnosticsDialog.test.tsx
+    blob: e804c9eb046455ba59c86b4764a020d9b3b4a980
+    findings: []
+  - path: frontend/src/games/nanpure/ui/NanpureDiagnostics.test.tsx
+    blob: f2981e03512c0c4363fc2c5c2dfcb4bf4472e29a
+    findings: []
+  - path: frontend/src/games/water-sort/ui/WaterSortDiagnostics.test.tsx
+    blob: 00bb640e5c6badfb2a449a93ebabf12acd5e8c58
+    findings: []
+  - path: frontend/src/records/ui/PlayRecordsScreen.test.tsx
+    blob: 4bc20f5e6f038a425a6f507f7b65704f25c42696
+    findings: []
+  - path: frontend/src/games/nanpure/ui/board/clear/NanpureClearAnimation.test.tsx
+    blob: fefd89bb3161890024c52a408a81307c1c82312a
+    findings: []
+  - path: frontend/src/games/water-sort/puzzle/rules.test.ts
+    blob: b5427157d8d1cc2fb06057b911e5e37b25d4d807
+    findings: []

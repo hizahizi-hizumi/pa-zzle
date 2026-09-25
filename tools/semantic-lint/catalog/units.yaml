@@ -1,0 +1,91 @@
+# ruleの `unit` に書ける語彙。rule作者はここにある名前だけを書く。
+#
+# level:
+# - file: ファイル全体。構文解析しないため、全言語・未知の言語でも使える。
+# - syntax: 言語構文だけで抽出する汎用unit。`syntax/*.yaml` に言語ごとのqueryを置く。
+# - framework: フレームワークの意味を持つ名前付きunit。`frameworks/*.yaml` に言語×フレームワークのqueryを置く。
+#
+# context: このunitを判定するとき、本文と囲むunitに加えて判定の文脈として扱う他のunit。
+# - scope: outer … 相手の属するscopeがこのunitを含む（例: testから見た、同じ/外側のdescribeにあるbeforeEach）
+# - scope: inner … このunitの属するscopeが相手を含む（例: beforeEachから見た、同じ/内側のdescribeにあるtest）
+# - scope: file … 同じファイルのすべて
+# 囲むunit（祖先）と、unitに含まれないimportなどのファイル骨格は常に文脈に含まれる。
+#
+# report: 指摘位置にするquery capture名。各言語のqueryはこのcaptureを持つ。
+# 宣言したunitは、判定はunit全体（変数宣言なら初期値を含む宣言）で行い、違反をこのcaptureの範囲
+# （変数名の識別子など）に指摘する。違反箇所をproviderに選ばせず、他のunitの違反箇所の候補にもならない。
+# 囲むコードの一部として、判定対象でないときも本文を省略しない。
+# 省略したunitは、違反と判定したunitの中の文・子unitから違反箇所を特定する。
+version: 1
+
+units:
+  file:
+    level: file
+    description: ファイル全体
+
+  function:
+    level: syntax
+    description: 関数（宣言・式・arrow function・method）
+
+  statement:
+    level: syntax
+    description: ブロック直下の文（入れ子の文はそれぞれ別のunit）
+
+  variable:
+    level: syntax
+    description: 変数宣言（名前が1つの識別子の宣言子ごと。初期値を含む）
+    report: name
+    # 名前の意味は使われ方で決まるため、同じscope以下で名前を使いうるunitを文脈にする。
+    context:
+      - unit: test
+        scope: inner
+      - unit: test-group
+        scope: inner
+      - unit: setup
+        scope: inner
+      - unit: teardown
+        scope: inner
+      - unit: function
+        scope: inner
+      - unit: component
+        scope: inner
+      - unit: hook
+        scope: inner
+
+  test:
+    level: framework
+    description: 1つのテストケース（test / it の呼び出し。test.each を含む）
+    context:
+      - unit: setup
+        scope: outer
+
+  test-title:
+    level: framework
+    description: テストケース名（test / it の第1引数の文字列。describe の名前は含まない）
+    report: title
+
+  test-group:
+    level: framework
+    description: テストのまとまり（describe の呼び出し。describe.each を含む）
+
+  setup:
+    level: framework
+    description: テストの前準備（beforeEach / beforeAll の呼び出し）
+    context:
+      - unit: test
+        scope: inner
+
+  teardown:
+    level: framework
+    description: テストの後始末（afterEach / afterAll の呼び出し）
+    context:
+      - unit: test
+        scope: inner
+
+  component:
+    level: framework
+    description: Reactの関数コンポーネント（大文字で始まりJSXを返す関数）
+
+  hook:
+    level: framework
+    description: Reactのカスタムフック（use で始まる関数）

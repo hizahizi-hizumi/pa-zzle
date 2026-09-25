@@ -8,13 +8,15 @@ import {
 import {
   buildRequest,
   createTypeSafeProvider,
+  createTypeSafeRequestEstimator,
   type TypeSafeTrace,
 } from "../providers/typesafe/provider.ts";
 import { renderPretty } from "../reporters/render.ts";
-import { createDefaultScopeRegistry } from "../scopes/default.ts";
+import { UnitExtractor } from "../units/extract.ts";
 import { resolveRequestedPaths } from "../config/project.ts";
 import { loadProjectContext } from "./context.ts";
 import { closeDecisionCache, openDecisionCache } from "./decision-cache.ts";
+import { failsRun } from "../diagnostics/build.ts";
 import { runEvaluationPlan } from "../engine/run.ts";
 
 export async function runInspectCommand(args: string[]): Promise<number> {
@@ -36,7 +38,7 @@ export async function runInspectCommand(args: string[]): Promise<number> {
     throw new Error("inspectのrule-idまたはfileがありません。");
   }
 
-  const { projectRoot, config, rules } = await loadProjectContext();
+  const { projectRoot, config, catalog, rules } = await loadProjectContext();
   const rule = rules.find((candidate) => candidate.id === ruleId);
 
   if (!rule) {
@@ -56,18 +58,18 @@ export async function runInspectCommand(args: string[]): Promise<number> {
   const path = relative(projectRoot, absolutePath).split(sep).join("/");
   const source = await Bun.file(absolutePath).text();
   const pathMatch = bunGlobPathMatcher(rule.paths, path);
-  const scopes = await createDefaultScopeRegistry(projectRoot);
+  const extractor = await UnitExtractor.create(catalog);
   const plan = buildEvaluationPlan({
     documents: [{ path, source }],
     rules: [rule],
-    scopes,
+    extractor,
     matchesPath: bunGlobPathMatcher,
-    statuses: [rule.status],
   });
   const batches = buildDecisionBatches({
     plan,
     rules: [rule],
-    maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
+    estimator: createTypeSafeRequestEstimator(config.provider),
+    budget: config.execution.requestTokenBudget,
   });
   const providerPayloads = batches.map(
     (batch) => buildRequest(config.provider.model, batch).body,
@@ -96,7 +98,7 @@ export async function runInspectCommand(args: string[]): Promise<number> {
     rules: [rule],
     provider,
     concurrency: 1,
-    maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
+    requestTokenBudget: config.execution.requestTokenBudget,
     ...(cache === undefined ? {} : { cache }),
   });
   await closeDecisionCache(cache);
@@ -119,9 +121,5 @@ export async function runInspectCommand(args: string[]): Promise<number> {
   console.log("\ndiagnostic");
   process.stdout.write(renderPretty(result));
 
-  return result.diagnostics.some(
-    (diagnostic) => diagnostic.severity === "error",
-  )
-    ? 1
-    : 0;
+  return failsRun(result.diagnostics, "error") ? 1 : 0;
 }

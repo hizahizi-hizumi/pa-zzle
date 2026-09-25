@@ -10,13 +10,15 @@ import type {
   SourceDocument,
 } from "../domain/model.ts";
 import { buildEvaluationPlan } from "../planning/planner.ts";
-import { ScopeRegistry } from "../scopes/registry.ts";
-import { registerVitestScopes } from "../scopes/vitest.ts";
 import {
   FakeDecisionProvider,
   type FakeDecision,
 } from "../testing/fake-provider.ts";
-import { decisionResult, sampleRule } from "../testing/fixtures.ts";
+import {
+  decisionResult,
+  sampleRule,
+  testExtractor,
+} from "../testing/fixtures.ts";
 import { runEvaluationPlan } from "./run.ts";
 
 const TWO_TESTS = `test("1つ目こと", () => {
@@ -27,6 +29,8 @@ test("2つ目こと", () => {
   expect(two()).toBe(2);
 });
 `;
+
+const extractor = await testExtractor();
 
 let directory: string;
 let cachePath: string;
@@ -84,14 +88,13 @@ describe("runEvaluationPlanの判定cache", () => {
       [rule],
     );
 
-    expect(second.result.metrics.cache).toMatchObject({ hits: 2, misses: 2 });
+    expect(second.result.metrics.cache).toMatchObject({ hits: 3, misses: 1 });
     expect(requestedTaskIds(second.provider)).toEqual([
-      "vitest/sample::vitest.test:b.test.ts:0",
-      "vitest/sample::vitest.test:b.test.ts:1",
+      "vitest/sample::test:b.test.ts:1",
     ]);
   });
 
-  test("subjectの一部だけ変えても文脈のfile全体が変わるため同じfileの全subjectがmissになる", async () => {
+  test("別unitの本文だけ変えた場合は変えたunitだけmissする", async () => {
     const rule = testRule();
     await run(planFor([document("a.test.ts", TWO_TESTS)], [rule]), [rule]);
 
@@ -103,7 +106,52 @@ describe("runEvaluationPlanの判定cache", () => {
       [rule],
     );
 
-    expect(second.result.metrics.cache).toMatchObject({ hits: 0, misses: 2 });
+    expect(second.result.metrics.cache).toMatchObject({ hits: 1, misses: 1 });
+    expect(requestedTaskIds(second.provider)).toEqual([
+      "vitest/sample::test:a.test.ts:1",
+    ]);
+  });
+
+  test("文脈に宣言したsetupや骨格が変わると依存するunitがmissする", async () => {
+    const rule = testRule();
+    const withSetup = `import { helper } from "./helper";
+
+describe("group", () => {
+  beforeEach(() => {
+    helper(1);
+  });
+
+  test("inside", () => {});
+});
+
+test("outside", () => {});
+`;
+    const rules = [rule, testRule({ id: "vitest/setup", unit: "setup" })];
+    await run(planFor([document("a.test.ts", withSetup)], rules), rules);
+
+    const setupChanged = await run(
+      planFor(
+        [document("a.test.ts", withSetup.replace("helper(1)", "helper(2)"))],
+        rules,
+      ),
+      rules,
+    );
+    const importChanged = await run(
+      planFor(
+        [document("a.test.ts", withSetup.replace("./helper", "./other"))],
+        rules,
+      ),
+      rules,
+    );
+
+    expect(requestedTaskIds(setupChanged.provider).sort()).toEqual([
+      "vitest/sample::test:a.test.ts:0",
+      "vitest/setup::setup:a.test.ts:0",
+    ]);
+    expect(importChanged.result.metrics.cache).toMatchObject({
+      hits: 0,
+      misses: 3,
+    });
   });
 
   test("rule文面を変えたruleのtaskだけmissし、同じbatchにはmiss分だけ入る", async () => {
@@ -116,10 +164,7 @@ describe("runEvaluationPlanの判定cache", () => {
 
     const reworded = testRule({
       id: "vitest/edited",
-      predicate: {
-        ...edited.predicate,
-        instruction: "Classify the subject strictly.",
-      },
+      instruction: "The subject must satisfy the rule strictly.",
     });
     const second = await run(
       planFor([document("a.test.ts", TWO_TESTS)], [stable, reworded]),
@@ -128,34 +173,18 @@ describe("runEvaluationPlanの判定cache", () => {
 
     expect(second.provider.requests).toHaveLength(1);
     expect(requestedTaskIds(second.provider)).toEqual([
-      "vitest/edited::vitest.test:a.test.ts:0",
-      "vitest/edited::vitest.test:a.test.ts:1",
+      "vitest/edited::test:a.test.ts:0",
+      "vitest/edited::test:a.test.ts:1",
     ]);
-    expect(second.provider.requests[0]?.subjects).toHaveLength(2);
+    expect(second.provider.requests[0]?.subjectIds).toHaveLength(2);
     expect(second.result.metrics.cache).toMatchObject({ hits: 2, misses: 2 });
     expect(second.result.evaluations.map((evaluation) => evaluation.taskId))
       .toEqual([
-        "vitest/edited::vitest.test:a.test.ts:0",
-        "vitest/edited::vitest.test:a.test.ts:1",
-        "vitest/stable::vitest.test:a.test.ts:0",
-        "vitest/stable::vitest.test:a.test.ts:1",
+        "vitest/edited::test:a.test.ts:0",
+        "vitest/edited::test:a.test.ts:1",
+        "vitest/stable::test:a.test.ts:0",
+        "vitest/stable::test:a.test.ts:1",
       ]);
-  });
-
-  test("outcome文面を変えるとmissする", async () => {
-    const rule = testRule();
-    const plan = planFor([document("a.test.ts", TWO_TESTS)], [rule]);
-    await run(plan, [rule]);
-
-    const edited = testRule({
-      predicate: {
-        ...rule.predicate,
-        outcomes: { ...rule.predicate.outcomes, violation: "clearly violates" },
-      },
-    });
-    const second = await run(plan, [edited]);
-
-    expect(second.result.metrics.cache).toMatchObject({ hits: 0, misses: 2 });
   });
 
   test("modelが変わるとmissする", async () => {
@@ -178,7 +207,7 @@ describe("runEvaluationPlanの判定cache", () => {
 
     const stricter = testRule({ violationThreshold: 0.99, severity: "error" });
     const second = await run(plan, [stricter], {
-      decision: decisionResult("compliant", 0),
+      decision: decisionResult("no_violation", 0),
     });
 
     expect(first.result.diagnostics).toHaveLength(2);
@@ -187,6 +216,28 @@ describe("runEvaluationPlanの判定cache", () => {
     expect(second.result.evaluations.map((evaluation) => evaluation.result))
       .toEqual(first.result.evaluations.map((evaluation) => evaluation.result));
     expect(second.result.diagnostics).toEqual([]);
+  });
+
+  test("違反箇所の確率も判定と一緒に保存し、thresholdを下げたときは違反箇所だけを問う", async () => {
+    const strict = testRule({ violationThreshold: 0.9 });
+    const plan = planFor([document("a.test.ts", TWO_TESTS)], [strict]);
+    const located = { ...decisionResult("violation", 0.8), parts: [0.9] };
+    const first = await run(plan, [strict], { decision: located });
+
+    // threshold未満なので違反箇所は問わない。
+    expect(first.provider.requests).toHaveLength(1);
+
+    const lenient = testRule({ violationThreshold: 0.5 });
+    const second = await run(plan, [lenient], { decision: located });
+
+    expect(second.provider.requests).toHaveLength(1);
+    expect(second.provider.requests[0]?.requests.every((request) => request.locate)).toBe(true);
+    expect(second.result.diagnostics.map((diagnostic) => diagnostic.range.startLine)).toEqual([2, 6]);
+
+    const third = await run(plan, [lenient], { decision: located });
+
+    expect(third.provider.requests).toHaveLength(0);
+    expect(third.result.diagnostics).toEqual(second.result.diagnostics);
   });
 
   test("壊れたcache entryはmissとして扱い、compactで取り除く", async () => {
@@ -231,7 +282,7 @@ describe("runEvaluationPlanの判定cache", () => {
         ? () => {
             throw new Error("provider unavailable");
           }
-        : decisionResult("compliant", 0),
+        : decisionResult("no_violation", 0),
     );
 
     await expect(
@@ -248,7 +299,7 @@ describe("runEvaluationPlanの判定cache", () => {
     const plan = planFor([document("a.test.ts", TWO_TESTS)], [rule]);
 
     for (let index = 0; index < 2; index += 1) {
-      const provider = fakeProvider(plan, () => decisionResult("compliant", 0));
+      const provider = fakeProvider(plan, () => decisionResult("no_violation", 0));
       const result = await runEvaluationPlan({ plan, rules: [rule], provider });
 
       expect(provider.requests).toHaveLength(1);
@@ -265,7 +316,7 @@ describe("runEvaluationPlanの判定cache", () => {
 
 function testRule(overrides: Partial<Rule> = {}): Rule {
   return sampleRule({
-    scope: "vitest.test",
+    unit: "test",
     paths: ["**/*.test.ts"],
     ...overrides,
   });
@@ -276,13 +327,10 @@ function document(path: string, source: string): SourceDocument {
 }
 
 function planFor(documents: SourceDocument[], rules: Rule[]): EvaluationPlan {
-  const scopes = new ScopeRegistry();
-  registerVitestScopes(scopes);
-
   return buildEvaluationPlan({
     documents,
     rules,
-    scopes,
+    extractor,
     matchesPath: () => true,
   });
 }
@@ -309,7 +357,7 @@ async function run(
     decision?: FakeDecision;
   } = {},
 ) {
-  const decision = options.decision ?? decisionResult("compliant", 0.1);
+  const decision = options.decision ?? decisionResult("no_violation", 0.1);
   const provider = fakeProvider(
     plan,
     () => decision,

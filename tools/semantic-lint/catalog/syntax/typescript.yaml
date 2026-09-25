@@ -1,0 +1,148 @@
+# TypeScript / TSXの汎用unit。言語構文だけで抽出する。
+# statementはブロック（program / statement_block / switch節）直下の文だけを対象にし、
+# if文の波括弧なし本体やfor文の初期化式は囲む文の一部として扱う。
+version: 1
+kind: syntax
+name: typescript
+definitions:
+  - languages: [typescript, tsx]
+    units:
+      function:
+        symbol: "{name}"
+        query: |
+          (function_declaration name: (_) @name) @unit
+          (generator_function_declaration name: (_) @name) @unit
+          (method_definition name: (_) @name) @unit
+          (variable_declarator
+            name: (identifier) @name
+            value: [(arrow_function) (function_expression) (generator_function)] @unit)
+          [(arrow_function) (function_expression) (generator_function)] @unit
+
+      # 分割代入（{ a, b } / [a, b]）は名前が複数になるため対象にしない。
+      variable:
+        symbol: "{name}"
+        query: |
+          (variable_declarator name: (identifier) @name) @unit
+
+      statement:
+        query: |
+          (program
+            [
+              (expression_statement)
+              (lexical_declaration)
+              (variable_declaration)
+              (function_declaration)
+              (generator_function_declaration)
+              (class_declaration)
+              (if_statement)
+              (for_statement)
+              (for_in_statement)
+              (while_statement)
+              (do_statement)
+              (try_statement)
+              (return_statement)
+              (throw_statement)
+              (break_statement)
+              (continue_statement)
+              (switch_statement)
+              (labeled_statement)
+              (import_statement)
+              (export_statement)
+              (debugger_statement)
+              (abstract_class_declaration)
+              (type_alias_declaration)
+              (interface_declaration)
+              (enum_declaration)
+              (ambient_declaration)
+              (module)
+            ] @unit)
+          (statement_block
+            [
+              (expression_statement)
+              (lexical_declaration)
+              (variable_declaration)
+              (function_declaration)
+              (generator_function_declaration)
+              (class_declaration)
+              (if_statement)
+              (for_statement)
+              (for_in_statement)
+              (while_statement)
+              (do_statement)
+              (try_statement)
+              (return_statement)
+              (throw_statement)
+              (break_statement)
+              (continue_statement)
+              (switch_statement)
+              (labeled_statement)
+              (import_statement)
+              (export_statement)
+              (debugger_statement)
+              (abstract_class_declaration)
+              (type_alias_declaration)
+              (interface_declaration)
+              (enum_declaration)
+              (ambient_declaration)
+              (module)
+            ] @unit)
+          (switch_case
+            body: [
+              (expression_statement)
+              (lexical_declaration)
+              (variable_declaration)
+              (function_declaration)
+              (generator_function_declaration)
+              (class_declaration)
+              (if_statement)
+              (for_statement)
+              (for_in_statement)
+              (while_statement)
+              (do_statement)
+              (try_statement)
+              (return_statement)
+              (throw_statement)
+              (break_statement)
+              (continue_statement)
+              (switch_statement)
+              (labeled_statement)
+              (import_statement)
+              (export_statement)
+              (debugger_statement)
+              (abstract_class_declaration)
+              (type_alias_declaration)
+              (interface_declaration)
+              (enum_declaration)
+              (ambient_declaration)
+              (module)
+            ] @unit)
+          (switch_default
+            body: [
+              (expression_statement)
+              (lexical_declaration)
+              (variable_declaration)
+              (function_declaration)
+              (generator_function_declaration)
+              (class_declaration)
+              (if_statement)
+              (for_statement)
+              (for_in_statement)
+              (while_statement)
+              (do_statement)
+              (try_statement)
+              (return_statement)
+              (throw_statement)
+              (break_statement)
+              (continue_statement)
+              (switch_statement)
+              (labeled_statement)
+              (import_statement)
+              (export_statement)
+              (debugger_statement)
+              (abstract_class_declaration)
+              (type_alias_declaration)
+              (interface_declaration)
+              (enum_declaration)
+              (ambient_declaration)
+              (module)
+            ] @unit)

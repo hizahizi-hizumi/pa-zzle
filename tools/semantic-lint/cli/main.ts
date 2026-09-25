@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { findProjectRoot } from "../config/project.ts";
+import { runBenchCommand } from "./bench.ts";
 import { runCheckCommand } from "./check.ts";
 import { runDoctorCommand } from "./doctor.ts";
 import { runEvalCommand } from "./eval.ts";
@@ -20,6 +21,9 @@ async function main(): Promise<void> {
         return;
       case "eval":
         process.exitCode = await runEvalCommand(args);
+        return;
+      case "bench":
+        process.exitCode = await runBenchCommand(args);
         return;
       case "inspect":
         process.exitCode = await runInspectCommand(args);
@@ -90,17 +94,19 @@ function printHelp(): void {
 使い方:
   semantic-lint check [paths...] [options]
   semantic-lint eval [rule-id...] [--repeat N]
+  semantic-lint bench [rule-id...] [--repeat N] [--line-tolerance N] [--format pretty|json|summary] [--plan-only]
+  semantic-lint bench [rule-id...] --score <run-result.json> [--score ...]
   semantic-lint inspect <rule-id> <file> [--plan-only] [--no-cache]
   semantic-lint rules [ruleset-or-rule]
   semantic-lint doctor
 
 check options:
   --format pretty|compact|json
-  --include-draft
   --files-from <path>
   --fail-on error|warning
   --fail-on-unknown
   --no-cache
+  --plan-only   providerを呼ばず、request数と推定input tokenだけを出す
 `);
 }
 

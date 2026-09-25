@@ -4,12 +4,13 @@ import type { GoldenCase } from "../config/cases.ts";
 import type {
   DecisionResult,
   EvaluationPlan,
+  RequestTokenBudget,
   Rule,
   SemanticDecisionProvider,
 } from "../domain/model.ts";
 import { runEvaluationPlan } from "../engine/run.ts";
 import { buildEvaluationPlan } from "../planning/planner.ts";
-import type { ScopeRegistry } from "../scopes/registry.ts";
+import type { UnitExtractor } from "../units/extract.ts";
 
 export type GoldenCaseRun = {
   result: DecisionResult;
@@ -28,21 +29,21 @@ export async function runGoldenCases(options: {
   projectRoot: string;
   cases: GoldenCase[];
   rules: Rule[];
-  scopes: ScopeRegistry;
+  extractor: UnitExtractor;
   provider: SemanticDecisionProvider;
   repeat: number;
   concurrency: number;
-  maxDecisionsPerRequest: number;
+  requestTokenBudget: RequestTokenBudget;
 }): Promise<GoldenCaseResult[]> {
   const {
     projectRoot,
     cases,
     rules,
-    scopes,
+    extractor,
     provider,
     repeat,
     concurrency,
-    maxDecisionsPerRequest,
+    requestTokenBudget,
   } = options;
 
   if (!Number.isInteger(repeat) || repeat < 1) {
@@ -67,9 +68,8 @@ export async function runGoldenCases(options: {
       const plan = buildEvaluationPlan({
         documents: [{ path, source }],
         rules: [rule],
-        scopes,
+        extractor,
         matchesPath: () => true,
-        statuses: [rule.status],
       });
 
       return {
@@ -97,7 +97,7 @@ export async function runGoldenCases(options: {
         rules: [item.rule],
         provider,
         concurrency: 1,
-        maxDecisionsPerRequest,
+        requestTokenBudget,
       });
       const evaluation = result.evaluations[0];
 
@@ -161,7 +161,7 @@ function selectCasePlan(
     return plan;
   }
 
-  const subject = file.subjects.find(
+  const subject = file.units.find(
     (candidate) => candidate.symbol === goldenCase.subjectSymbol,
   );
 
@@ -183,7 +183,21 @@ function selectCasePlan(
     files: [
       {
         ...file,
-        subjects: [subject],
+        // 対象以外のunitは本文ごとfileの文脈として送る。
+        units: [
+          {
+            id: subject.id,
+            unit: subject.unit,
+            path: subject.path,
+            range: subject.range,
+            ...(subject.symbol === undefined ? {} : { symbol: subject.symbol }),
+            source: subject.source,
+            span: subject.span,
+            // golden caseはunitの判定だけを評価するため、違反箇所の候補は問わない。
+            parts: [],
+            contextIds: [],
+          },
+        ],
         tasks: [task],
       },
     ],

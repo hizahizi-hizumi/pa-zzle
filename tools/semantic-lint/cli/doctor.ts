@@ -1,4 +1,4 @@
-import { relative, resolve } from "node:path";
+import { relative } from "node:path";
 
 import {
   decisionCachePath,
@@ -6,44 +6,46 @@ import {
   type DecisionCacheFileStatus,
 } from "../cache/decision-cache.ts";
 
-import { createDefaultScopeRegistry } from "../scopes/default.ts";
-import { loadProjectContext } from "./context.ts";
+import type { Rule } from "../domain/model.ts";
+import { goldenFileStatus, loadGoldenSets } from "../eval/golden.ts";
+import type { UnitCatalog } from "../units/catalog.ts";
+import { UnitExtractor } from "../units/extract.ts";
+import { loadEvalRules, loadProjectContext } from "./context.ts";
 
 export async function runDoctorCommand(args: string[]): Promise<number> {
   if (args.length > 0) {
     throw new Error("doctorに引数は指定できません。");
   }
 
-  const { projectRoot, config, rules } = await loadProjectContext();
-  const scopes = await createDefaultScopeRegistry(projectRoot);
+  const context = await loadProjectContext();
+  const { projectRoot, config, catalog, rules } = context;
+  const evalRules = await loadEvalRules(context);
+  // 全言語の文法を読み込み全queryをcompileして、カタログの誤りを検出する。
+  await UnitExtractor.create(catalog);
   const errors: string[] = [];
   const warnings: string[] = [];
-  const sourceCache = new Map<string, string>();
 
-  for (const rule of rules) {
-    if (!scopes.has(rule.scope)) {
-      errors.push(`${rule.id}: 未登録scope ${rule.scope}`);
+  for (const rule of [...rules, ...evalRules]) {
+    warnings.push(
+      ...(await unsupportedLanguageWarnings(projectRoot, catalog, rule)),
+    );
+  }
+
+  const goldenSets = await loadGoldenSets(projectRoot, config.goldenDir);
+
+  for (const golden of goldenSets) {
+    if (![...rules, ...evalRules].some((rule) => rule.id === golden.ruleId)) {
+      errors.push(`golden: 未知のruleです: ${golden.ruleId}`);
     }
 
-    const sourcePath = resolve(projectRoot, rule.source.path);
-    let source = sourceCache.get(sourcePath);
+    for (const file of golden.files) {
+      const status = await goldenFileStatus(projectRoot, file);
 
-    if (source === undefined) {
-      const file = Bun.file(sourcePath);
-
-      if (!(await file.exists())) {
-        errors.push(`${rule.id}: 規約sourceが存在しません: ${rule.source.path}`);
-        continue;
+      if (status !== "current") {
+        warnings.push(
+          `${golden.ruleId}: goldenのblobとworking treeが異なります (${status}): ${file.path}`,
+        );
       }
-
-      source = await file.text();
-      sourceCache.set(sourcePath, source);
-    }
-
-    if (!hasHeadingPath(source, rule.source.section)) {
-      errors.push(
-        `${rule.id}: 規約sectionが見つかりません: ${rule.source.section}`,
-      );
     }
   }
 
@@ -64,8 +66,10 @@ export async function runDoctorCommand(args: string[]): Promise<number> {
   }
 
   console.log(`rules: ${rules.length}`);
-  console.log(`scopes: ${scopes.ids().join(", ")}`);
+  console.log(`eval rules: ${evalRules.length}`);
+  console.log(`units: ${[...catalog.units.keys()].join(", ")}`);
   console.log(`cache: ${describeCache(projectRoot, cacheStatus)}`);
+  console.log(`golden: ${goldenSets.length}`);
   console.log(`errors: ${errors.length}`);
   console.log(`warnings: ${warnings.length}`);
 
@@ -78,6 +82,35 @@ export async function runDoctorCommand(args: string[]): Promise<number> {
   }
 
   return errors.length > 0 ? 2 : 0;
+}
+
+/** ruleの対象fileのうち、言語にunitの定義がなく判定対象を抽出できないものを数える。 */
+async function unsupportedLanguageWarnings(
+  projectRoot: string,
+  catalog: UnitCatalog,
+  rule: Rule,
+): Promise<string[]> {
+  const supported = new Set(catalog.languagesFor(rule.unit));
+  const unsupported = new Map<string, number>();
+
+  for (const pattern of rule.paths) {
+    for await (const path of new Bun.Glob(pattern).scan({
+      cwd: projectRoot,
+      onlyFiles: true,
+    })) {
+      const language = catalog.languageFor(path)?.id;
+
+      if (language === undefined || !supported.has(language)) {
+        const label = language ?? "未対応の拡張子";
+        unsupported.set(label, (unsupported.get(label) ?? 0) + 1);
+      }
+    }
+  }
+
+  return [...unsupported].map(
+    ([language, count]) =>
+      `${rule.id}: unit ${rule.unit} は ${language} に定義がないため、${count}件のfileから判定対象を抽出できません`,
+  );
 }
 
 function describeCache(
@@ -108,28 +141,4 @@ function formatBytes(bytes: number): string {
   }
 
   return `${(bytes / 1_024 / 1_024).toFixed(1)} MiB`;
-}
-
-function hasHeadingPath(source: string, section: string): boolean {
-  const headings = source
-    .split(/\r?\n/)
-    .map((line) => /^#{1,6}\s+(.+?)\s*$/.exec(line)?.[1])
-    .filter((heading): heading is string => heading !== undefined);
-  const segments = section
-    .split(">")
-    .map((segment) => segment.trim())
-    .filter(Boolean);
-  let cursor = 0;
-
-  for (const segment of segments) {
-    const index = headings.indexOf(segment, cursor);
-
-    if (index === -1) {
-      return false;
-    }
-
-    cursor = index + 1;
-  }
-
-  return true;
 }

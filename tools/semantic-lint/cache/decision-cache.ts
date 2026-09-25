@@ -5,56 +5,45 @@ import {
   DECISIONS,
   type Decision,
   type DecisionResult,
-  type Predicate,
   type ProviderIdentity,
   type ProviderRequestIdentity,
-  type SourceDocument,
-  type Subject,
 } from "../domain/model.ts";
 
 /** repository root基準の判定キャッシュの保存先。 */
 export const DECISION_CACHE_PATH = ".semantic-lint/.cache/decisions.jsonl";
 
 /** key構成や保存形式を変えたときに更新する。 */
-const CACHE_FORMAT_VERSION = 1;
+const CACHE_FORMAT_VERSION = 4;
 const DEFAULT_RETENTION_DAYS = 30;
 const DEFAULT_MAX_ENTRIES = 50_000;
 const DAY_MS = 24 * 60 * 60 * 1_000;
 
 /**
- * providerへ送る1判定分の入力を決める要素。
- * threshold / severity / status / 行番号は判定後に使う値なので含めない。
+ * 1判定の答えを決める入力。
+ * unitの文脈は、unit本文・祖先・カタログのcontext宣言が指すunit・fileの骨格を並べたもので、
+ * 同じfileの無関係なunitの本文は含めない（`unitContextView`）。
+ * `parts` は違反箇所の候補のunit内の位置で、回答のpart確率の並びを決める。
+ * threshold / severity / 行番号は判定後に使う値なので含めない。
  */
 export type DecisionCacheKeyInput = {
   provider: ProviderRequestIdentity;
-  scope: string;
-  predicate: Predicate;
-  file: SourceDocument;
-  subject: Subject;
+  unit: string;
+  instruction: string;
+  path: string;
+  context: string;
+  parts: Array<[number, number]>;
 };
 
 export function decisionCacheKey(input: DecisionCacheKeyInput): string {
-  const { provider, scope, predicate, file, subject } = input;
+  const { provider, unit, instruction, path, context, parts } = input;
   const hasher = new Bun.CryptoHasher("sha256");
 
   hasher.update(
     JSON.stringify([
       CACHE_FORMAT_VERSION,
       [provider.kind, provider.model, provider.requestFormat],
-      [
-        scope,
-        predicate.instruction,
-        DECISIONS.map((decision) => predicate.outcomes[decision]),
-      ],
-      [file.path, file.source],
-      // rangeはfileとsubject idから決まるため含めない。
-      [
-        subject.id,
-        subject.scope,
-        subject.path,
-        subject.symbol ?? null,
-        subject.source,
-      ],
+      [unit, instruction],
+      [path, context, parts],
     ]),
   );
 
@@ -347,10 +336,20 @@ function parseDecisionResult(value: unknown): DecisionResult | undefined {
     probabilities[decision] = probability;
   }
 
+  const parts = value.parts;
+
+  if (
+    parts !== undefined &&
+    (!Array.isArray(parts) || !parts.every((part) => isProbability(part)))
+  ) {
+    return undefined;
+  }
+
   return {
     decision: value.decision,
     confidence: value.confidence,
     probabilities: probabilities as Record<Decision, number>,
+    ...(parts === undefined ? {} : { parts: parts as number[] }),
   };
 }
 

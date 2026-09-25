@@ -1,0 +1,49 @@
+# 評価専用rule（.semantic-lint/eval-rules/naming.yaml）の期待finding。
+# findingsは違反として指摘されるべき変数名の位置（lines と columns。columnsは両端を含む列）。
+# 実repoに違反がほぼないため、違反例はfixtures/の最小fixtureで補い、実repoの違反なしファイルでprecisionを測る。
+# ラベル粒度: 宣言した名前の識別子。
+version: 1
+rule: naming/meaningful-variable-name
+baseCommit: 8f5b620e7b14bd3208d2ab8d02b5342b7e6ff205
+files:
+  - path: .semantic-lint/golden/naming/fixtures/name-single.ts
+    blob: adc84df8e8493c73b413c9391e798d8e12efe27e
+    findings:
+      - lines: [1, 1]
+        columns: [7, 10]
+  - path: .semantic-lint/golden/naming/fixtures/name-same-line.ts
+    blob: ffa29cf97dd82b4fd4b3abe518ef17e721d2ed65
+    findings:
+      - lines: [1, 1]
+        columns: [7, 10]
+  - path: .semantic-lint/golden/naming/fixtures/recent-score-summary.ts
+    blob: ef92afb2a8545b5b8457cfa8bfc6966667e4f98e
+    findings:
+      - lines: [4, 4]
+        columns: [9, 12]
+      - lines: [6, 6]
+        columns: [7, 9]
+      - lines: [12, 12]
+        columns: [9, 9]
+  - path: .semantic-lint/golden/naming/fixtures/ScoreBadge.tsx
+    blob: 364eeaeda77769afac5832d33dccdce3b1883574
+    findings:
+      - lines: [6, 6]
+        columns: [9, 12]
+      - lines: [8, 8]
+        columns: [9, 11]
+  - path: frontend/src/games/nanpure/score.ts
+    blob: b91e88a9ac72865feae75a994969263d808756f7
+    findings: []
+  - path: frontend/src/games/water-sort/puzzle/rules.ts
+    blob: 2e0a8a0e59d969a41a9b89c977c5392160bab84a
+    findings: []
+  - path: frontend/src/games/water-sort/ui/board/pour/PourAnimationLayer/animation-view.ts
+    blob: bb019d613145adebb3921c0af925c29e9374510c
+    findings: []
+  - path: frontend/src/games/nanpure/ui/NanpureDifficultyPreview.tsx
+    blob: c49596767b1af32171ad4cf82ec98500851d4242
+    findings: []
+  - path: frontend/src/records/ui/PlayRecordsScreen/trend-value-axis.test.ts
+    blob: 1668f20e88071d3994c21ec3101d5710eae96330
+    findings: []

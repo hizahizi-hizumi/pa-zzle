@@ -1,19 +1,28 @@
 import { readFile } from "node:fs/promises";
 
 import { resolveRequestedPaths } from "../config/project.ts";
-import type { RuleStatus, RunResult } from "../domain/model.ts";
-import { runEvaluationPlan } from "../engine/run.ts";
+import type { RunResult } from "../domain/model.ts";
+import { failsRun } from "../diagnostics/build.ts";
+import { planRequests, runEvaluationPlan } from "../engine/run.ts";
+import {
+  renderRequestPlanSummary,
+  summarizeRequestPlan,
+} from "../planning/estimate.ts";
 import { discoverSourceDocuments } from "../planning/discovery.ts";
 import {
   buildEvaluationPlan,
   bunGlobPathMatcher,
 } from "../planning/planner.ts";
-import { createTypeSafeProvider } from "../providers/typesafe/provider.ts";
+import {
+  createTypeSafeProvider,
+  createTypeSafeRequestEstimator,
+  typeSafeRequestIdentity,
+} from "../providers/typesafe/provider.ts";
 import {
   renderRunResult,
   type OutputFormat,
 } from "../reporters/render.ts";
-import { createDefaultScopeRegistry } from "../scopes/default.ts";
+import { UnitExtractor } from "../units/extract.ts";
 import { loadProjectContext } from "./context.ts";
 import { closeDecisionCache, openDecisionCache } from "./decision-cache.ts";
 
@@ -21,18 +30,15 @@ type CheckOptions = {
   paths: string[];
   filesFrom?: string;
   format: OutputFormat;
-  includeDraft: boolean;
   failOn: "error" | "warning";
   failOnUnknown: boolean;
   cache: boolean;
+  planOnly: boolean;
 };
 
 export async function runCheckCommand(args: string[]): Promise<number> {
   const options = parseCheckOptions(args);
-  const { projectRoot, config, rules } = await loadProjectContext();
-  const statuses: RuleStatus[] = options.includeDraft
-    ? ["active", "draft"]
-    : ["active"];
+  const { projectRoot, config, catalog, rules } = await loadProjectContext();
   const requestedPaths = await resolveCheckPaths(
     projectRoot,
     options.paths,
@@ -43,13 +49,12 @@ export async function runCheckCommand(args: string[]): Promise<number> {
     rules,
     excludePaths: config.excludePaths,
     requestedPaths,
-    statuses,
   });
 
   if (
     options.paths.length === 0 &&
     options.filesFrom === undefined &&
-    rules.some((rule) => statuses.includes(rule.status)) &&
+    rules.length > 0 &&
     documents.length === 0
   ) {
     throw new Error(
@@ -57,19 +62,43 @@ export async function runCheckCommand(args: string[]): Promise<number> {
     );
   }
 
-  const scopes = await createDefaultScopeRegistry(projectRoot);
+  const extractor = await UnitExtractor.create(catalog);
   const plan = buildEvaluationPlan({
     documents,
     rules,
-    scopes,
+    extractor,
     matchesPath: bunGlobPathMatcher,
-    statuses,
   });
 
   const plannedEvaluations = plan.files.reduce(
     (sum, file) => sum + file.tasks.length,
     0,
   );
+
+  if (options.planOnly) {
+    const cache = await openDecisionCache(projectRoot, options.cache);
+    const estimator = createTypeSafeRequestEstimator(config.provider);
+    const summary = summarizeRequestPlan({
+      plan,
+      planned: planRequests({
+        plan,
+        rules,
+        requestIdentity: typeSafeRequestIdentity(config.provider),
+        estimator,
+        budget: config.execution.requestTokenBudget,
+        ...(cache === undefined ? {} : { cache }),
+      }),
+      estimator,
+      rules,
+      matchesPath: bunGlobPathMatcher,
+    });
+    process.stdout.write(
+      options.format === "json"
+        ? JSON.stringify(summary, null, 2) + "\n"
+        : renderRequestPlanSummary(summary),
+    );
+    return 0;
+  }
 
   if (plannedEvaluations === 0) {
     const emptyResult = createEmptyRunResult(plan.files.length, options.cache);
@@ -84,7 +113,7 @@ export async function runCheckCommand(args: string[]): Promise<number> {
     rules,
     provider,
     concurrency: config.execution.concurrency,
-    maxDecisionsPerRequest: config.execution.maxDecisionsPerRequest,
+    requestTokenBudget: config.execution.requestTokenBudget,
     ...(cache === undefined ? {} : { cache }),
   });
   await closeDecisionCache(cache);
@@ -97,10 +126,10 @@ function parseCheckOptions(args: string[]): CheckOptions {
   const paths: string[] = [];
   let filesFrom: string | undefined;
   let format: OutputFormat = "pretty";
-  let includeDraft = false;
   let failOn: "error" | "warning" = "error";
   let failOnUnknown = false;
   let cache = true;
+  let planOnly = false;
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
@@ -128,9 +157,6 @@ function parseCheckOptions(args: string[]): CheckOptions {
         index += 1;
         break;
       }
-      case "--include-draft":
-        includeDraft = true;
-        break;
       case "--fail-on": {
         const value = args[index + 1];
 
@@ -148,6 +174,9 @@ function parseCheckOptions(args: string[]): CheckOptions {
       case "--no-cache":
         cache = false;
         break;
+      case "--plan-only":
+        planOnly = true;
+        break;
       default:
         if (arg?.startsWith("-")) {
           throw new Error(`不明なcheckオプションです: ${arg}`);
@@ -163,10 +192,10 @@ function parseCheckOptions(args: string[]): CheckOptions {
     paths,
     ...(filesFrom === undefined ? {} : { filesFrom }),
     format,
-    includeDraft,
     failOn,
     failOnUnknown,
     cache,
+    planOnly,
   };
 }
 
@@ -210,15 +239,7 @@ function exitCodeForResult(
     return 1;
   }
 
-  if (options.failOn === "warning") {
-    return result.diagnostics.length > 0 ? 1 : 0;
-  }
-
-  return result.diagnostics.some(
-    (diagnostic) => diagnostic.severity === "error",
-  )
-    ? 1
-    : 0;
+  return failsRun(result.diagnostics, options.failOn) ? 1 : 0;
 }
 
 function createEmptyRunResult(
@@ -251,4 +272,4 @@ function createEmptyRunResult(
   };
 }
 
-export const _private = { parseCheckOptions };
+export const _private = { parseCheckOptions, exitCodeForResult };

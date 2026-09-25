@@ -1,10 +1,6 @@
 import { resolve } from "node:path";
 
-import type {
-  Rule,
-  RuleStatus,
-  SourceDocument,
-} from "../domain/model.ts";
+import type { Rule, SourceDocument } from "../domain/model.ts";
 import { isPathWithin } from "../config/project.ts";
 
 export async function discoverSourceDocuments(options: {
@@ -12,23 +8,11 @@ export async function discoverSourceDocuments(options: {
   rules: Rule[];
   excludePaths: string[];
   requestedPaths: string[];
-  statuses?: readonly RuleStatus[];
 }): Promise<SourceDocument[]> {
-  const {
-    projectRoot,
-    rules,
-    excludePaths,
-    requestedPaths,
-    statuses = ["active"],
-  } = options;
-  const allowedStatuses = new Set(statuses);
+  const { projectRoot, rules, excludePaths, requestedPaths } = options;
   const paths = new Set<string>();
 
   for (const rule of rules) {
-    if (!allowedStatuses.has(rule.status)) {
-      continue;
-    }
-
     for (const pattern of rule.paths) {
       const glob = new Bun.Glob(pattern);
 

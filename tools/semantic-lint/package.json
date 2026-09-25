@@ -6,6 +6,7 @@
   "scripts": {
     "check": "bun cli/main.ts check",
     "eval": "bun cli/main.ts eval",
+    "bench": "bun cli/main.ts bench",
     "inspect": "bun cli/main.ts inspect",
     "rules": "bun cli/main.ts rules",
     "doctor": "bun cli/main.ts doctor",
@@ -13,7 +14,9 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@typescript/typescript6": "6.0.2"
+    "tree-sitter-javascript": "0.25.0",
+    "tree-sitter-typescript": "0.23.2",
+    "web-tree-sitter": "0.26.13"
   },
   "devDependencies": {
     "@types/bun": "latest",

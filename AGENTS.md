@@ -25,8 +25,8 @@ bun run --cwd frontend build # プロダクションビルド
 ### Semantic lint
 
 ```sh
-bun run --cwd tools/semantic-lint check # activeな意味lint。TYPESAFE_API_KEYが必要
-bun run --cwd tools/semantic-lint check -- --include-draft # draft ruleも含めて意味lint
+bun run --cwd tools/semantic-lint check # 意味lint。TYPESAFE_API_KEYが必要
+bun run --cwd tools/semantic-lint check -- --plan-only # providerを呼ばずrequest数と推定tokenを確認
 bun run --cwd tools/semantic-lint eval # semantic lint ruleの校正。TYPESAFE_API_KEYが必要
 bun run --cwd tools/semantic-lint inspect -- <rule-id> <file> --plan-only # providerを呼ばず評価計画を確認
 bun run --cwd tools/semantic-lint rules # rule一覧

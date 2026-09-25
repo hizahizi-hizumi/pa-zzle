@@ -20,11 +20,10 @@ export async function runRulesCommand(args: string[]): Promise<number> {
     console.log(
       [
         rule.id,
-        rule.status,
         rule.severity,
-        rule.scope,
+        rule.unit,
         `threshold=${rule.violationThreshold}`,
-        `${rule.source.path}#${rule.source.section}`,
+        rule.title,
       ].join("\t"),
     );
   }

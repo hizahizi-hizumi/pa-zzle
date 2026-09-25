@@ -13,7 +13,9 @@ excludePaths:
   - "**/.env*"
 execution:
   concurrency: 8
-  maxDecisionsPerRequest: 64
+  requestTokenBudget:
+    stateAndQuestion: 32000
+    total: 64000
 provider:
   kind: typesafe
   model: jev-latest
@@ -24,10 +26,11 @@ provider:
       version: 1,
       rulesDir: ".semantic-lint/rules",
       casesDir: ".semantic-lint/cases",
+      goldenDir: ".semantic-lint/golden",
       excludePaths: ["**/.env*"],
       execution: {
         concurrency: 8,
-        maxDecisionsPerRequest: 64,
+        requestTokenBudget: { stateAndQuestion: 32_000, total: 64_000 },
       },
       provider: {
         kind: "typesafe",
@@ -46,7 +49,6 @@ provider:
         excludePaths: [],
         execution: {
           concurrency: 0,
-          maxDecisionsPerRequest: 64,
         },
         provider: {
           kind: "typesafe",
@@ -55,5 +57,25 @@ provider:
         },
       }),
     ).toThrow("semantic lint configが不正");
+  });
+
+  test("廃止したmaxDecisionsPerRequestを拒否する", () => {
+    expect(() =>
+      compileConfig({
+        version: 1,
+        rulesDir: ".semantic-lint/rules",
+        casesDir: ".semantic-lint/cases",
+        excludePaths: [],
+        execution: {
+          concurrency: 8,
+          maxDecisionsPerRequest: 64,
+        },
+        provider: {
+          kind: "typesafe",
+          model: "jev-latest",
+          apiKeyEnv: "TYPESAFE_API_KEY",
+        },
+      }),
+    ).toThrow("requestTokenBudget");
   });
 });

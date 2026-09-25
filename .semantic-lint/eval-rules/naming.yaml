@@ -1,0 +1,26 @@
+# 評価専用ruleset。bench / doctorだけが読み、checkでは実行しない。
+# 人間向け規約（.claude/rules/*.md）に変数名の付け方の規約がないため、本番rulesetへ入れない。
+# 最も近いのは .claude/rules/self-documenting-code.md の「実装が何をしているかは名前などコード自身で
+# 表現する」だが、コメントとコードの役割分担の原則で、変数名を判定する規約ではない。
+# 文より細かい指摘位置（変数宣言のunitを判定し、宣言した名前を指摘する）の評価に使う。
+version: 1
+id: naming
+
+paths:
+  - frontend/**/*.ts
+  - frontend/**/*.tsx
+
+rules:
+  - id: meaningful-variable-name
+    title: 変数名は保持する値や役割を表す
+    unit: variable
+    # golden benchmark (3 runs) のleave-one-file-out校正で全foldが選んだthreshold。
+    # 0.50〜0.95のどれでも指摘位置の厳密P/R 1.00 / 1.00（違反7件、実repoの違反なし変数62件）。
+    violationThreshold: 0.60
+    instruction: |
+      A variable name must describe the value it holds or its role, given its
+      initializer and usage.
+      Violation: a placeholder such as hoge, a vague name such as tmp, data,
+      or val, or a meaningless single letter.
+      Not a violation: a name that describes the value or role in context; a
+      conventional short name in a narrow scope, such as a loop index.

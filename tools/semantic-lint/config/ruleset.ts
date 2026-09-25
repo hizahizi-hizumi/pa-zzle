@@ -2,48 +2,57 @@ import { readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { YAML } from "bun";
 
-import {
-  DECISIONS,
-  RULE_STATUSES,
-  SEVERITIES,
-  type Decision,
-  type Rule,
-  type RuleStatus,
-  type Severity,
-} from "../domain/model.ts";
+import { SEVERITIES, type Rule, type Severity } from "../domain/model.ts";
 
-type RuleDefaults = {
-  status: RuleStatus;
-  severity: Severity;
-  violationThreshold: number;
-};
+/** rulesetに書けるkey。 */
+const RULESET_KEYS = new Set(["version", "id", "paths", "rules"]);
 
-export function compileRuleset(value: unknown, origin: string): Rule[] {
+/**
+ * rule作者が書けるkey。scope・selector・contextなどの抽出方法はunitカタログが持ち、
+ * 判定の選択肢（違反 / 違反ではない / 判断できない）とその説明はエンジンが持つ。
+ */
+const RULE_KEYS = new Set([
+  "id",
+  "title",
+  "unit",
+  "severity",
+  "violationThreshold",
+  "instruction",
+]);
+
+/**
+ * rulesetを検証してruleへ展開する。
+ * `units` はunitカタログの語彙で、ruleの `unit` はこの中から選ぶ。
+ */
+export function compileRuleset(
+  value: unknown,
+  origin: string,
+  units: ReadonlySet<string>,
+): Rule[] {
   if (!isRecord(value) || value.version !== 1) {
     throw new Error(`rulesetのversionが不正です: ${origin}`);
   }
 
-  const { id, paths, source, defaults, rules } = value;
+  const unknownKeys = Object.keys(value).filter((key) => !RULESET_KEYS.has(key));
+
+  if (unknownKeys.length > 0) {
+    throw new Error(
+      `rulesetに書けないkeyがあります: ${unknownKeys.join(", ")} (${origin})`,
+    );
+  }
+
+  const { id, paths, rules } = value;
 
   if (
     !isId(id) ||
     !isStringArray(paths) ||
     paths.length === 0 ||
-    !isRecord(source) ||
-    !isRecord(defaults) ||
     !Array.isArray(rules) ||
     rules.length === 0
   ) {
     throw new Error(`rulesetの基本設定が不正です: ${origin}`);
   }
 
-  const sourcePath = source.path;
-
-  if (typeof sourcePath !== "string") {
-    throw new Error(`ruleset sourceが不正です: ${origin}`);
-  }
-
-  const compiledDefaults = compileDefaults(defaults, origin);
   const compiled = rules.map((rule, index) =>
     compileRule({
       value: rule,
@@ -51,8 +60,7 @@ export function compileRuleset(value: unknown, origin: string): Rule[] {
       index,
       rulesetId: id,
       paths,
-      sourcePath,
-      defaults: compiledDefaults,
+      units,
     }),
   );
 
@@ -72,6 +80,7 @@ export function compileRuleset(value: unknown, origin: string): Rule[] {
 export async function loadRulesets(
   projectRoot: string,
   rulesDir: string,
+  units: ReadonlySet<string>,
 ): Promise<Rule[]> {
   const directory = resolve(projectRoot, rulesDir);
   const paths = await collectYamlFiles(directory);
@@ -80,7 +89,7 @@ export async function loadRulesets(
       paths.map(async (path) => {
         const text = await Bun.file(path).text();
         const parsed = YAML.parse(text);
-        return compileRuleset(parsed, path);
+        return compileRuleset(parsed, path, units);
       }),
     )
   ).flat();
@@ -98,117 +107,73 @@ export async function loadRulesets(
   return rules.sort((left, right) => left.id.localeCompare(right.id));
 }
 
-function compileDefaults(value: Record<string, unknown>, origin: string): RuleDefaults {
-  const { status, severity, violationThreshold } = value;
-
-  if (
-    !isRuleStatus(status) ||
-    !isSeverity(severity) ||
-    !isProbability(violationThreshold)
-  ) {
-    throw new Error(`ruleset defaultsが不正です: ${origin}`);
-  }
-
-  return { status, severity, violationThreshold };
-}
-
 function compileRule(options: {
   value: unknown;
   origin: string;
   index: number;
   rulesetId: string;
   paths: string[];
-  sourcePath: string;
-  defaults: RuleDefaults;
+  units: ReadonlySet<string>;
 }): Rule {
-  const {
-    value,
-    origin,
-    index,
-    rulesetId,
-    paths,
-    sourcePath,
-    defaults,
-  } = options;
+  const { value, origin, index, rulesetId, paths, units } = options;
 
   if (!isRecord(value)) {
     throw new Error(`ruleが不正です: ${origin} rules[${index}]`);
   }
 
+  const unknownKeys = Object.keys(value).filter((key) => !RULE_KEYS.has(key));
+
+  if (unknownKeys.length > 0) {
+    throw new Error(
+      `ruleに書けないkeyがあります: ${unknownKeys.join(", ")} (${origin} rules[${index}])。書けるkeyは ${[...RULE_KEYS].join(" / ")} です。`,
+    );
+  }
+
   const {
     id,
     title,
-    status,
-    severity,
+    severity = "warning",
     violationThreshold,
-    scope,
-    sourceSection,
-    predicate,
+    unit,
+    instruction,
   } = value;
+
+  if (typeof unit !== "string" || !units.has(unit)) {
+    throw new Error(
+      `ruleのunitが未知です: ${String(unit)} (${origin} rules[${index}])。使えるunit: ${[...units].sort().join(", ")}`,
+    );
+  }
 
   if (
     !isId(id) ||
     typeof title !== "string" ||
-    typeof scope !== "string" ||
-    scope.length === 0 ||
-    typeof sourceSection !== "string" ||
-    !isRecord(predicate) ||
-    typeof predicate.instruction !== "string" ||
-    !isRecord(predicate.outcomes)
+    typeof instruction !== "string" ||
+    instruction.trim().length === 0
   ) {
     throw new Error(`rule設定が不正です: ${origin} rules[${index}]`);
   }
 
-  const compiledStatus = status ?? defaults.status;
-  const compiledSeverity = severity ?? defaults.severity;
-  const compiledViolationThreshold =
-    violationThreshold ?? defaults.violationThreshold;
-
-  if (
-    !isRuleStatus(compiledStatus) ||
-    !isSeverity(compiledSeverity) ||
-    !isProbability(compiledViolationThreshold)
-  ) {
-    throw new Error(`rule policyが不正です: ${origin} rules[${index}]`);
+  if (!isSeverity(severity)) {
+    throw new Error(
+      `severityにはinfo / warning / errorを指定してください: ${origin} rules[${index}]`,
+    );
   }
 
-  const outcomesRecord = predicate.outcomes;
-
-  if (!isRecord(outcomesRecord)) {
-    throw new Error(`predicate.outcomesが不正です: ${origin} rules[${index}]`);
+  if (!isProbability(violationThreshold)) {
+    throw new Error(
+      `violationThresholdには0〜1の数値を指定してください: ${origin} rules[${index}]`,
+    );
   }
-
-  const outcomes = Object.fromEntries(
-    DECISIONS.map((decision) => {
-      const description = outcomesRecord[decision];
-
-      if (typeof description !== "string") {
-        throw new Error(
-          `predicate.outcomes.${decision} がありません: ${origin} rules[${index}]`,
-        );
-      }
-
-      return [decision, description];
-    }),
-  ) as Record<Decision, string>;
 
   return {
     id: `${rulesetId}/${id}`,
     rulesetId,
     title,
-    status: compiledStatus,
-    severity: compiledSeverity,
-    violationThreshold: compiledViolationThreshold,
-    scope,
+    severity,
+    violationThreshold,
+    unit,
     paths,
-    source: {
-      path: sourcePath,
-      section: sourceSection,
-    },
-    predicate: {
-      instruction: predicate.instruction,
-      outcomes,
-    },
+    instruction,
   };
 }
 
@@ -256,16 +221,8 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
 
-function isRuleStatus(value: unknown): value is RuleStatus {
-  return (
-    typeof value === "string" &&
-    RULE_STATUSES.includes(value as RuleStatus)
-  );
-}
-
 function isSeverity(value: unknown): value is Severity {
   return (
-    typeof value === "string" &&
-    SEVERITIES.includes(value as Severity)
+    typeof value === "string" && SEVERITIES.includes(value as Severity)
   );
 }

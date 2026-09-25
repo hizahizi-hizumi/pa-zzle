@@ -1,0 +1,58 @@
+# Vitestの名前付きunit。
+#
+# test / describe は、呼び出し元の名前が test / it / describe で始まり（test.each(...) や
+# it.skip などの修飾を含む）、第1引数が文字列リテラルまたは置換を含まないテンプレートリテラルの呼び出し。
+# test.each([...])("title", fn) では外側の呼び出し全体を1つのunitにする。
+version: 1
+kind: framework
+name: vitest
+definitions:
+  - languages: [typescript, tsx, javascript]
+    units:
+      test:
+        symbol: "test({title})"
+        query: |
+          (call_expression
+            function: [(identifier) (member_expression) (call_expression)] @callee
+            arguments: (arguments . [(string) (template_string)] @title)
+            (#match? @callee "^(test|it)\\b")
+            (#not-match? @title "^`([^\\\\]|\\\\[\\s\\S])*?\\$\\{")) @unit
+
+      # testのケース名の文字列そのもの。unitと指摘位置は同じ範囲。
+      # 本文が名前そのものなので、判定stateで名前を繰り返さないようsymbolは付けない。
+      test-title:
+        query: |
+          (call_expression
+            function: [(identifier) (member_expression) (call_expression)] @callee
+            arguments: (arguments . [(string) (template_string)] @title @unit)
+            (#match? @callee "^(test|it)\\b")
+            (#not-match? @title "^`([^\\\\]|\\\\[\\s\\S])*?\\$\\{"))
+
+      test-group:
+        symbol: "describe({title})"
+        query: |
+          (call_expression
+            function: [(identifier) (member_expression) (call_expression)] @callee
+            arguments: (arguments . [(string) (template_string)] @title)
+            (#match? @callee "^describe\\b")
+            (#not-match? @title "^`([^\\\\]|\\\\[\\s\\S])*?\\$\\{")) @unit
+
+      setup:
+        symbol: "{hook}"
+        query: |
+          (call_expression
+            function: [
+              (identifier) @hook
+              (member_expression object: (identifier) @hook)
+            ]
+            (#any-of? @hook "beforeEach" "beforeAll")) @unit
+
+      teardown:
+        symbol: "{hook}"
+        query: |
+          (call_expression
+            function: [
+              (identifier) @hook
+              (member_expression object: (identifier) @hook)
+            ]
+            (#any-of? @hook "afterEach" "afterAll")) @unit
