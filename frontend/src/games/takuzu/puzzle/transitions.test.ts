@@ -1,7 +1,7 @@
 import { parseTakuzuBoard } from "@/games/takuzu/puzzle/board";
 import {
-  cycleTakuzuCell,
   getNextTakuzuCell,
+  placeTakuzuCell,
 } from "@/games/takuzu/puzzle/transitions";
 
 describe("getNextTakuzuCell", () => {
@@ -24,25 +24,38 @@ describe("getNextTakuzuCell", () => {
   );
 });
 
-describe("cycleTakuzuCell", () => {
+describe("placeTakuzuCell", () => {
   const givens = parseTakuzuBoard(["A...", "....", "....", "...."]);
+  const board = parseTakuzuBoard(["AB..", "....", "....", "...."]);
 
-  test("空きマスを次のタイルへ変えること", () => {
-    const result = cycleTakuzuCell(givens, givens, 1, "forward");
+  const placementCases = [
+    ["空きマスへ A", 2, "a"],
+    ["空きマスへ B", 2, "b"],
+    ["B のマスへ A", 1, "a"],
+    ["B のマスを空き", 1, null],
+  ] as const;
 
-    expect(result.cells[1]).toBe("a");
-    expect(givens.cells[1]).toBeNull();
-  });
+  test.each(placementCases)(
+    "%s を直接置くこと",
+    (_caseName, cellIndex, cell) => {
+      const result = placeTakuzuCell(givens, board, cellIndex, cell);
 
-  test("固定マスを変えずに同じ盤面を返すこと", () => {
-    const result = cycleTakuzuCell(givens, givens, 0, "forward");
+      expect(result.cells[cellIndex]).toBe(cell);
+    },
+  );
 
-    expect(result).toBe(givens);
-  });
+  const unchangedCases = [
+    ["固定マス", 0, "b"],
+    ["同じ中身のマス", 1, "b"],
+    ["盤面外のマス", 16, "a"],
+  ] as const;
 
-  test("盤面外のマスを変えずに同じ盤面を返すこと", () => {
-    const result = cycleTakuzuCell(givens, givens, 16, "forward");
+  test.each(unchangedCases)(
+    "%s は変えずに同じ盤面を返すこと",
+    (_caseName, cellIndex, cell) => {
+      const result = placeTakuzuCell(givens, board, cellIndex, cell);
 
-    expect(result).toBe(givens);
-  });
+      expect(result).toBe(board);
+    },
+  );
 });
