@@ -2,8 +2,8 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 
 import type { SlidePuzzleOperation } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import {
+  getSlidePuzzleBoardSize,
   SLIDE_PUZZLE_BLANK,
-  SLIDE_PUZZLE_CELL_COUNT,
   type SlidePuzzleBoard as SlidePuzzleBoardState,
 } from "@/games/slide-puzzle/puzzle/state";
 import { SlidePuzzleTile } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard/SlidePuzzleTile";
@@ -32,6 +32,8 @@ export function SlidePuzzleBoard({
   onClearingComplete,
 }: SlidePuzzleBoardProps) {
   const tileFaceRefs = useRef(new Map<number, HTMLSpanElement>());
+  const boardSize = getSlidePuzzleBoardSize(board);
+  const tileCount = board.length - 1;
   const tiles = board
     .map((tile, cellIndex) => ({ tile, cellIndex }))
     .filter(({ tile }) => tile !== SLIDE_PUZZLE_BLANK)
@@ -53,12 +55,11 @@ export function SlidePuzzleBoard({
       return;
     }
 
-    const facesInTileOrder = Array.from(
-      { length: SLIDE_PUZZLE_CELL_COUNT - 1 },
-      (_, index) => tileFaceRefs.current.get(index + 1),
+    const facesInTileOrder = Array.from({ length: tileCount }, (_, index) =>
+      tileFaceRefs.current.get(index + 1),
     );
     return animateClear(facesInTileOrder, onClearingComplete);
-  }, [clearing, onClearingComplete]);
+  }, [clearing, onClearingComplete, tileCount]);
 
   return (
     <div
@@ -72,6 +73,7 @@ export function SlidePuzzleBoard({
             key={tile}
             tile={tile}
             cellIndex={cellIndex}
+            boardSize={boardSize}
             disabled={interactionDisabled}
             // 盤面を戻す・別の問題などの置き換えでは、タイル同士が交差して滑らないよう即座に並べ替える。
             slideAnimated={operation !== null}

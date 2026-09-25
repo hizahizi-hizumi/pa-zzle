@@ -68,6 +68,52 @@ describe("SlidePuzzleBoard", () => {
     );
   });
 
+  describe.each([
+    ["3×3", [1, 2, 3, 4, 5, 6, 7, 0, 8], "8", 8],
+    [
+      "5×5",
+      [
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+        21, 22, 23, 0, 24,
+      ],
+      "24",
+      24,
+    ],
+  ] as const)(
+    "%s の盤面の場合",
+    (_, sizedBoard, lastTileName, lastTileIndex) => {
+      let boardGroup: HTMLElement;
+
+      beforeEach(() => {
+        render(
+          <SlidePuzzleBoard
+            board={sizedBoard}
+            operation={null}
+            interactionDisabled={false}
+            clearing={false}
+            onSlideTile={onSlideTile}
+            onClearingComplete={onClearingComplete}
+          />,
+        );
+        boardGroup = screen.getByRole("group", { name: "盤面" });
+      });
+
+      test("空白を除くすべてのタイルを表示すること", () => {
+        const result = within(boardGroup).getAllByRole("button");
+
+        expect(result).toHaveLength(sizedBoard.length - 1);
+      });
+
+      test("右下のタイルのタップでそのタイルのマスを通知すること", () => {
+        fireEvent.click(
+          within(boardGroup).getByRole("button", { name: lastTileName }),
+        );
+
+        expect(onSlideTile).toHaveBeenCalledWith(lastTileIndex);
+      });
+    },
+  );
+
   describe("完成した場合", () => {
     let rerender: ReturnType<typeof render>["rerender"];
 
