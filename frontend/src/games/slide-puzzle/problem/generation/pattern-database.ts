@@ -7,7 +7,9 @@ import type { SlidePuzzleBoardSize } from "@/games/slide-puzzle/puzzle/state";
 const UNVISITED = 0xff;
 /**
  * 構築中は、集合内タイルと空白の位置を状態とする（マス数）^(枚数 + 1) バイトの表を一時確保する。
- * 5 枚で 4×4 は 16 MB、5×5 は 244 MB。6 枚では 4×4 でも 256 MB、5×5 は 6 GB になるので、5 枚までに限る。
+ * 5 枚で 4×4 は 16 MB、5×5 は 244 MB。幅優先探索の 2 本のキューも伸びるので、5×5 の 5 枚の集合を
+ * 作るときのプロセスのメモリは約 500 MB になる（実測）。6 枚では状態表だけで 4×4 でも 256 MB、
+ * 5×5 は 6 GB になるので、5 枚までに限る。
  */
 const MAXIMUM_PATTERN_SIZE = 5;
 
