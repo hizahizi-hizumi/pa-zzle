@@ -75,7 +75,8 @@ function isFifteenPuzzlePerformance(
     isPositiveInteger(value.slideCount) &&
     value.slideCount <= value.moveCount &&
     isNonNegativeInteger(value.restartCount) &&
-    isPositiveInteger(value.optimalMoveCount)
+    isPositiveInteger(value.optimalMoveCount) &&
+    value.optimalMoveCount <= value.completionMoveCount
   );
 }
 

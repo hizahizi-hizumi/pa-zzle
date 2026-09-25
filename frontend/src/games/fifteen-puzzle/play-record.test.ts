@@ -102,6 +102,19 @@ describe("isFifteenPuzzlePlayRecord", () => {
       },
     ],
     [
+      "完成時手数より多い最短手数",
+      {
+        ...record,
+        payload: {
+          ...record.payload,
+          performance: {
+            ...record.payload.performance,
+            optimalMoveCount: 35,
+          },
+        },
+      },
+    ],
+    [
       "最短手数の欠落",
       {
         ...record,
