@@ -2,7 +2,7 @@ import type {
   MinesweeperDifficultyAnalysis,
   MinesweeperHumanSolveFeatures,
   MinesweeperScaleMetrics,
-} from "./problem/difficulty-analysis";
+} from "@/games/minesweeper/problem/difficulty-analysis";
 
 export const minesweeperDifficulties = [
   { id: "1", label: "難易度 1" },

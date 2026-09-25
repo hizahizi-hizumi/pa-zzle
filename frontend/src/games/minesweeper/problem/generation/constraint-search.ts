@@ -1,4 +1,4 @@
-import type { MinesweeperNumberConstraint } from "./deduction-state";
+import type { MinesweeperNumberConstraint } from "@/games/minesweeper/problem/generation/deduction-state";
 
 /**
  * 数字制約の同時充足を列挙するための探索表現。

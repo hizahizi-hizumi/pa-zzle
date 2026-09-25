@@ -1,14 +1,14 @@
 import {
   isBetterPersonalBestValue,
   type PersonalBestUpdate,
-} from "./personal-best";
-import type { PlayRecord } from "./play-record";
-import type { PlayRecordDefinition } from "./play-record-definition";
+} from "@/records/personal-best";
+import type { PlayRecord } from "@/records/play-record";
+import type { PlayRecordDefinition } from "@/records/play-record-definition";
 import {
   appendPlayRecord,
   type PlayRecordStorage,
   readPlayRecords,
-} from "./storage";
+} from "@/records/storage";
 
 export type PlayRecordSaveOutcome =
   | { status: "first-record" }

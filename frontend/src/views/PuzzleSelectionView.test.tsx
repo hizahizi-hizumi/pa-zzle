@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 
-import { PuzzleSelectionView } from "./PuzzleSelectionView";
+import { PuzzleSelectionView } from "@/views/PuzzleSelectionView";
 
 afterEach(cleanup);
 

@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
-import type { MinesweeperVisibleCell } from "../session/session";
-import { MinesweeperPlay } from "./MinesweeperPlay";
+import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
+import { MinesweeperPlay } from "@/games/minesweeper/ui/MinesweeperPlay";
 
 afterEach(cleanup);
 

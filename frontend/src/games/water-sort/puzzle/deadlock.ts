@@ -2,8 +2,8 @@ import {
   createWaterSortStateKey,
   isWaterSortCleared,
   type WaterSortState,
-} from "./state";
-import { listWaterSortDistinctTransitions } from "./transitions";
+} from "@/games/water-sort/puzzle/state";
+import { listWaterSortDistinctTransitions } from "@/games/water-sort/puzzle/transitions";
 
 export type WaterSortDeadlockStatus = "playable" | "deadlocked" | "unknown";
 

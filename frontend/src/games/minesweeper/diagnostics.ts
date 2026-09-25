@@ -5,16 +5,16 @@ import {
 import {
   type MinesweeperDifficulty,
   parseMinesweeperDifficulty,
-} from "./difficulty";
+} from "@/games/minesweeper/difficulty";
 import {
   type MinesweeperRestoredProblem,
   restoreMinesweeperProblemWithoutAnalysis,
-} from "./problem/generator";
+} from "@/games/minesweeper/problem/generator";
 import {
   MINESWEEPER_GENERATOR_VERSION,
   type MinesweeperProblemIdentity,
   type MinesweeperStartCellPlacement,
-} from "./problem/problem";
+} from "@/games/minesweeper/problem/problem";
 
 export type MinesweeperDiagnosticSnapshot = InternalDiagnosticSnapshot<
   "minesweeper",

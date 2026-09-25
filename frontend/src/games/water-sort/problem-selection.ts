@@ -1,50 +1,25 @@
-import type { ProblemSeed } from "@/games/problem-seed";
-
+import { hashProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
+import { restoreWaterSortProblemWithOptimalMoveCount } from "@/games/water-sort/problem/generator";
+import type { WaterSortGeneratedProblem } from "@/games/water-sort/problem/problem";
 import {
-  assessWaterSortDifficulty,
-  type WaterSortDifficulty,
-} from "./difficulty";
-import {
-  generateWaterSortProblem,
-  WaterSortGenerationExhaustedError,
-} from "./problem/generator";
-import type { WaterSortGeneratedProblem } from "./problem/problem";
+  listWaterSortPoolEntries,
+  toWaterSortPooledProblem,
+} from "@/games/water-sort/problem/problem-pool";
 
-const maximumAttemptsPerColorCount = 8;
-const maximumExpandedStatesPerCandidate = 100_000;
-
-const preferredColorCountsByDifficulty: Record<
-  WaterSortDifficulty,
-  readonly number[]
-> = {
-  easy: [4, 6],
-  normal: [8, 6, 10],
-  hard: [12, 10, 8],
-};
-
-export function generateWaterSortProblemForDifficulty(
+export function selectWaterSortProblemForDifficulty(
   difficulty: WaterSortDifficulty,
   seed: ProblemSeed,
 ): WaterSortGeneratedProblem {
-  for (const colorCount of preferredColorCountsByDifficulty[difficulty]) {
-    try {
-      return generateWaterSortProblem({
-        seed,
-        colorCount,
-        maximumAttempts: maximumAttemptsPerColorCount,
-        solverOptions: {
-          maxExpandedStates: maximumExpandedStatesPerCandidate,
-        },
-        acceptCandidate: ({ difficultyAnalysis }) =>
-          assessWaterSortDifficulty(difficultyAnalysis).difficulty ===
-          difficulty,
-      });
-    } catch (error) {
-      if (!(error instanceof WaterSortGenerationExhaustedError)) {
-        throw error;
-      }
-    }
+  const entries = listWaterSortPoolEntries(difficulty);
+  const entry = entries[hashProblemSeed(seed) % entries.length];
+  if (!entry) {
+    throw new Error(`No level ${difficulty} water sort problem is available`);
   }
 
-  throw new Error(`Failed to generate a ${difficulty} water sort problem`);
+  const { identity, optimalMoveCount } = toWaterSortPooledProblem(entry);
+  return restoreWaterSortProblemWithOptimalMoveCount(
+    identity,
+    optimalMoveCount,
+  );
 }

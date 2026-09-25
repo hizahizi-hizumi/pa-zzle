@@ -3,7 +3,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-import { MinesweeperCell } from "./MinesweeperCell";
+import { MinesweeperCell } from "@/games/minesweeper/ui/board/MinesweeperCell";
 
 describe("MinesweeperCell", () => {
   const onPress = vi.fn<(cellIndex: number) => void>();

@@ -1,23 +1,23 @@
 import {
-  createProblemSeededRandom,
-  type ProblemSeed,
-} from "@/games/problem-seed";
-import {
-  getMinesweeperNeighborCellIndices,
-  type MinesweeperBoard,
-} from "../puzzle/board";
-import { collectMinesweeperRevealCellIndices } from "../puzzle/rules";
-import {
   analyzeMinesweeperDifficulty,
   type MinesweeperDifficultyAnalysis,
-} from "./difficulty-analysis";
-import type { MinesweeperHumanSolverOptions } from "./generation/human-solver";
+} from "@/games/minesweeper/problem/difficulty-analysis";
+import type { MinesweeperHumanSolverOptions } from "@/games/minesweeper/problem/generation/human-solver";
 import {
   MINESWEEPER_GENERATOR_VERSION,
   type MinesweeperGenerationConditions,
   type MinesweeperProblem,
   type MinesweeperProblemIdentity,
-} from "./problem";
+} from "@/games/minesweeper/problem/problem";
+import {
+  getMinesweeperNeighborCellIndices,
+  type MinesweeperBoard,
+} from "@/games/minesweeper/puzzle/board";
+import { collectMinesweeperRevealCellIndices } from "@/games/minesweeper/puzzle/rules";
+import {
+  createProblemSeededRandom,
+  type ProblemSeed,
+} from "@/games/problem-seed";
 
 export const MINESWEEPER_MINIMUM_BOARD_LENGTH = 5;
 export const MINESWEEPER_MAXIMUM_BOARD_ROWS = 16;
