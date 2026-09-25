@@ -1,8 +1,10 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 
+import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import type { MinesweeperVisibleCell } from "../session/session";
 import { MinesweeperPlay } from "./MinesweeperPlay";
+import { minesweeperPlayRecordDisplay } from "./play-record-display";
 
 afterEach(cleanup);
 
@@ -48,11 +50,13 @@ describe("MinesweeperPlay", () => {
           status="playing"
           progress="playing"
           result={null}
+          recordOutcomeNotice={null}
           onRevealCell={onRevealCell}
           onToggleFlag={onToggleFlag}
           onChordCell={vi.fn()}
           onReplay={onReplay}
           onStartNewProblem={onStartNewProblem}
+          onOpenRecords={vi.fn()}
           onChangeDifficulty={onChangeDifficulty}
           onBackToHome={onBackToHome}
           onClearAnimationComplete={vi.fn()}
@@ -178,11 +182,13 @@ describe("MinesweeperPlay", () => {
           status="playing"
           progress="playing"
           result={null}
+          recordOutcomeNotice={null}
           onRevealCell={vi.fn()}
           onToggleFlag={vi.fn()}
           onChordCell={vi.fn()}
           onReplay={vi.fn()}
           onStartNewProblem={vi.fn()}
+          onOpenRecords={vi.fn()}
           onChangeDifficulty={vi.fn()}
           onBackToHome={vi.fn()}
           onClearAnimationComplete={vi.fn()}
@@ -225,11 +231,13 @@ describe("MinesweeperPlay", () => {
           status="playing"
           progress="playing"
           result={null}
+          recordOutcomeNotice={null}
           onRevealCell={onRevealCell}
           onToggleFlag={onToggleFlag}
           onChordCell={vi.fn()}
           onReplay={vi.fn()}
           onStartNewProblem={vi.fn()}
+          onOpenRecords={vi.fn()}
           onChangeDifficulty={vi.fn()}
           onBackToHome={vi.fn()}
           onClearAnimationComplete={vi.fn()}
@@ -310,12 +318,14 @@ describe("MinesweeperPlay", () => {
   describe("採点結果を表示している場合", () => {
     let onReplay: () => void;
     let onStartNewProblem: () => void;
+    let onOpenRecords: () => void;
     let onChangeDifficulty: () => void;
     let onBackToHome: () => void;
 
     beforeEach(() => {
       onReplay = vi.fn();
       onStartNewProblem = vi.fn();
+      onOpenRecords = vi.fn();
       onChangeDifficulty = vi.fn();
       onBackToHome = vi.fn();
       render(
@@ -323,6 +333,7 @@ describe("MinesweeperPlay", () => {
           {...createResultProps()}
           onReplay={onReplay}
           onStartNewProblem={onStartNewProblem}
+          onOpenRecords={onOpenRecords}
           onChangeDifficulty={onChangeDifficulty}
           onBackToHome={onBackToHome}
         />,
@@ -361,12 +372,14 @@ describe("MinesweeperPlay", () => {
     test.each([
       ["プレイ！", "onStartNewProblem"],
       ["同じ問題", "onReplay"],
+      ["記録を確認", "onOpenRecords"],
       ["難易度変更", "onChangeDifficulty"],
       ["ホーム", "onBackToHome"],
     ] as const)("%sで対応する次の行動を通知すること", (name, handler) => {
       const handlers = {
         onStartNewProblem,
         onReplay,
+        onOpenRecords,
         onChangeDifficulty,
         onBackToHome,
       };
@@ -380,6 +393,40 @@ describe("MinesweeperPlay", () => {
       const diagnostics = screen.queryByRole("button", { name: "検証情報" });
 
       expect(diagnostics).toBeNull();
+    });
+  });
+
+  describe("自己ベスト更新がある結果表示の場合", () => {
+    beforeEach(() => {
+      render(
+        <MinesweeperPlay
+          {...createResultProps()}
+          recordOutcomeNotice={
+            <PlayRecordOutcomeNotice
+              outcome={{
+                status: "updated",
+                updates: [
+                  {
+                    metricId: "time-delta-ms",
+                    previousValue: 9_000,
+                    currentValue: 4_000,
+                  },
+                ],
+              }}
+              display={minesweeperPlayRecordDisplay}
+            />
+          }
+        />,
+      );
+    });
+
+    test("採点結果に続けて更新した指標と前後の値を表示すること", () => {
+      const bestUpdate = screen.getByRole("region", { name: "自己ベスト更新" });
+
+      expect(bestUpdate.textContent).toContain("基準時間との差");
+      expect(bestUpdate.textContent).toContain("+00:09");
+      expect(bestUpdate.textContent).toContain("+00:04");
+      expect(bestUpdate.textContent).toContain("5秒短縮");
     });
   });
 
@@ -430,11 +477,13 @@ function createResultProps(): ComponentProps<typeof MinesweeperPlay> {
       timeDeltaMs: 4_000,
       score: { total: 77, breakdown: { accuracy: 45, speed: 32 } },
     },
+    recordOutcomeNotice: null,
     onRevealCell: vi.fn(),
     onToggleFlag: vi.fn(),
     onChordCell: vi.fn(),
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
+    onOpenRecords: vi.fn(),
     onChangeDifficulty: vi.fn(),
     onBackToHome: vi.fn(),
     onClearAnimationComplete: vi.fn(),

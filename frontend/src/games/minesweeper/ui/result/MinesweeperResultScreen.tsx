@@ -1,4 +1,5 @@
 import {
+  BookOpen,
   ChevronDown,
   ChevronUp,
   Home,
@@ -7,7 +8,7 @@ import {
   SlidersHorizontal,
   Wrench,
 } from "lucide-react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { GameResultConfetti } from "@/components/GameResultConfetti";
@@ -38,8 +39,10 @@ import { ScoreCriteria } from "./MinesweeperResultScreen/ScoreCriteria";
 type MinesweeperResultScreenProps = {
   difficulty: MinesweeperDifficulty;
   result: MinesweeperResult;
+  recordOutcomeNotice: ReactNode;
   onReplay: () => void;
   onStartNewProblem: () => void;
+  onOpenRecords: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
   onOpenDiagnostics?: () => void;
@@ -48,8 +51,10 @@ type MinesweeperResultScreenProps = {
 export function MinesweeperResultScreen({
   difficulty,
   result,
+  recordOutcomeNotice,
   onReplay,
   onStartNewProblem,
+  onOpenRecords,
   onChangeDifficulty,
   onBackToHome,
   onOpenDiagnostics,
@@ -71,6 +76,8 @@ export function MinesweeperResultScreen({
 
         <GameResultScoreCard score={result.score.total} level={resultLevel} />
 
+        {recordOutcomeNotice}
+
         <dl className="mt-3 grid grid-cols-2 gap-2">
           <ResultMetric
             label="時間"
@@ -85,10 +92,14 @@ export function MinesweeperResultScreen({
             <Play />
             プレイ！
           </Button>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <Button variant="outline" onClick={onReplay}>
               <RotateCcw />
               同じ問題
+            </Button>
+            <Button variant="outline" onClick={onOpenRecords}>
+              <BookOpen />
+              記録を確認
             </Button>
             <Button variant="outline" onClick={onChangeDifficulty}>
               <SlidersHorizontal />
