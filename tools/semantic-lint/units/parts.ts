@@ -2,7 +2,13 @@ import type { PartKind, Span } from "../domain/model.ts";
 
 export type PartSpan = Span & { kind: PartKind };
 
-type LinkedSpan = { id: string; span: Span; parentId?: string };
+type LinkedSpan = {
+  id: string;
+  span: Span;
+  parentId?: string;
+  /** カタログが指摘位置を宣言したunit。 */
+  reported?: boolean;
+};
 
 /**
  * unitごとに違反箇所の候補（part）を決める。
@@ -10,6 +16,9 @@ type LinkedSpan = { id: string; span: Span; parentId?: string };
  * partはunit直下の文（ブロックの中で、unitとの間に別の文を挟まない文）と、unit直下の子unit。
  * 子unitを含む文はその子unitに置き換える（`test(...);` の文ではなくtest unitをpartにする）。
  * 文はカタログの `statement` unitのqueryで抽出したものを使い、言語やruleで分岐しない。
+ *
+ * 指摘位置を宣言したunit（変数宣言など）は違反箇所を問わないためpartを持たず、
+ * 他のunitのpartや子unitとしても扱わない（その中の子unitは、宣言していない最も近い祖先の子とする）。
  */
 export function unitParts(
   units: readonly LinkedSpan[],
@@ -19,9 +28,26 @@ export function unitParts(
     (left, right) => left.start - right.start || right.end - left.end,
   );
   const result = new Map<string, PartSpan[]>();
+  const byId = new Map(units.map((unit) => [unit.id, unit]));
+  const partParent = (unit: LinkedSpan): string | undefined => {
+    let parentId = unit.parentId;
+
+    while (parentId !== undefined && byId.get(parentId)?.reported) {
+      parentId = byId.get(parentId)?.parentId;
+    }
+
+    return parentId;
+  };
 
   for (const unit of units) {
-    const children = units.filter((other) => other.parentId === unit.id);
+    if (unit.reported) {
+      result.set(unit.id, []);
+      continue;
+    }
+
+    const children = units.filter(
+      (other) => !other.reported && partParent(other) === unit.id,
+    );
     const inner = sortedStatements.filter(
       (statement) =>
         contains(unit.span, statement) && !sameSpan(unit.span, statement),

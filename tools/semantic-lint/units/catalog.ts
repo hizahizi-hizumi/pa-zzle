@@ -25,6 +25,13 @@ export type UnitVocabularyEntry = {
   level: UnitLevel;
   description: string;
   context: UnitContextDeclaration[];
+  /**
+   * 指摘位置にするquery capture名（例: 変数宣言の名前の `name`）。
+   * 宣言したunitは、判定はunit全体で行い、違反の指摘はこのcaptureの範囲にする。
+   * 違反箇所を2段目で問わず、他のunitの違反箇所の候補にもならない。
+   * 省略したunitは、unitの中の文・子unitから違反箇所を特定する。
+   */
+  report?: string;
 };
 
 export type LanguageDefinition = {
@@ -115,6 +122,15 @@ export class UnitCatalog {
       if (!this.languages.has(definition.language)) {
         throw new Error(
           `${definition.origin} が未知の言語を参照しています: ${definition.language}`,
+        );
+      }
+
+      if (
+        unit.report !== undefined &&
+        !new RegExp(`@${unit.report}\\b`).test(definition.query)
+      ) {
+        throw new Error(
+          `${definition.origin} の ${definition.unit} のqueryに指摘位置の @${unit.report} captureがありません: ${definition.language}`,
         );
       }
 
@@ -215,10 +231,22 @@ export function compileVocabulary(
       throw new Error(`unit contextが不正です: ${origin} units.${name}`);
     }
 
+    const report = entry.report;
+
+    if (
+      report !== undefined &&
+      (typeof report !== "string" ||
+        !/^[a-zA-Z_]\w*$/.test(report) ||
+        entry.level === "file")
+    ) {
+      throw new Error(`unit reportが不正です: ${origin} units.${name}`);
+    }
+
     return {
       name,
       level: entry.level,
       description: entry.description,
+      ...(report === undefined ? {} : { report }),
       context: context.map((item, index) => {
         if (
           !isRecord(item) ||

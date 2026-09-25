@@ -56,10 +56,13 @@ export function buildDiagnostics(options: {
       continue;
     }
 
-    for (const located of locateViolation(
-      evaluation.subject.range,
-      evaluation.parts,
-    )) {
+    // 指摘位置を宣言したunitはその位置、それ以外は違反箇所の候補から選んだ範囲を指摘する。
+    const locatedRanges =
+      evaluation.subject.reportRange === undefined
+        ? locateViolation(evaluation.subject.range, evaluation.parts)
+        : [{ range: evaluation.subject.reportRange }];
+
+    for (const located of locatedRanges) {
       diagnostics.push({
         ruleId: rule.id,
         severity: rule.severity,

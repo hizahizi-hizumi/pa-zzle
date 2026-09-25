@@ -107,6 +107,7 @@ export function planUnits(
         id,
         span: { start: item.start, end: item.end },
         ...(parentId === undefined ? {} : { parentId }),
+        ...(item.report === undefined ? {} : { reported: true }),
       };
     }),
     extracted.get(PART_STATEMENT_UNIT) ?? [],
@@ -123,6 +124,12 @@ export function planUnits(
         range: lines.range(item),
         ...(item.symbol === undefined ? {} : { symbol: item.symbol }),
         source: document.source.slice(item.start, item.end),
+        ...(item.report === undefined
+          ? {}
+          : {
+              reportRange: lines.range(item.report),
+              reportSpan: { start: item.report.start, end: item.report.end },
+            }),
         span: { start: item.start, end: item.end },
         parts: (parts.get(id) ?? []).map(({ kind, start, end }) => ({
           kind,

@@ -54,6 +54,11 @@ export type Subject = {
   range: SourceRange;
   symbol?: string;
   source: string;
+  /**
+   * カタログがunitの指摘位置を宣言している場合の、その範囲（変数宣言の名前など）。
+   * 違反の指摘はこの範囲にし、unitの中の違反箇所は問わない。
+   */
+  reportRange?: SourceRange;
 };
 
 export type EvaluationTask = {
@@ -86,7 +91,9 @@ export type UnitPart = {
 /** planに含めたunit。file内の入れ子関係と、カタログが宣言した文脈を持つ。 */
 export type PlannedUnit = Subject & {
   span: Span;
-  /** 違反箇所の候補。sourceの出現順。 */
+  /** `reportRange` のsource上の位置。 */
+  reportSpan?: Span;
+  /** 違反箇所の候補。sourceの出現順。指摘位置を宣言したunitでは空。 */
   parts: UnitPart[];
   /** このunitを囲む、同じfileのplanned unitのうち最も内側のもの。 */
   parentId?: string;
@@ -209,7 +216,8 @@ export type Evaluation = {
 };
 
 /**
- * 指摘。`range` は違反箇所（unit直下の文・子unit）の範囲で、違反箇所を特定できない場合はunit全体。
+ * 指摘。`range` は違反箇所の範囲。指摘位置を宣言したunitではその位置（変数名など）、
+ * それ以外ではunit直下の文・子unitで、違反箇所を特定できない場合はunit全体。
  * `subjectRange` / `symbol` は違反と判定したunit。
  */
 export type Diagnostic = {

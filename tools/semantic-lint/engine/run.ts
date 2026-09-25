@@ -413,6 +413,7 @@ function publicSubject(unit: PlannedUnit): Subject {
     range: unit.range,
     ...(unit.symbol === undefined ? {} : { symbol: unit.symbol }),
     source: unit.source,
+    ...(unit.reportRange === undefined ? {} : { reportRange: unit.reportRange }),
   };
 }
 

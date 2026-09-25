@@ -92,6 +92,52 @@ describe("buildDecisionState", () => {
     expect(state.file.source).toContain('describe("空の場合", () => {');
   });
 
+  test("指摘位置を宣言したunitは判定対象でなければ目印を付けずに本文を残す", () => {
+    const withVariables = `const items = [1];
+
+test("単独のtest", () => {
+  const total = sum(items);
+});
+
+test("別のtest", () => {});
+`;
+    const stateFor = (units: readonly string[], symbols: readonly string[]) => {
+      const planned = plannedFile(
+        { path: "a.test.ts", source: withVariables },
+        units,
+      );
+      const targets = planned.units
+        .filter((unit) => symbols.includes(unit.symbol ?? ""))
+        .map((unit) => unit.id);
+
+      return buildDecisionState({
+        file: planned.file,
+        marker: MARKER,
+        units: planned.units,
+        subjectIds: subjectClosure(planned.units, targets),
+      }).state;
+    };
+    const testOnly = stateFor(["test"], ['test("単独のtest")']);
+
+    // 変数宣言・テスト名のunitが増えても、testだけを判定するstateは変わらない。
+    expect(
+      stateFor(["test", "variable", "test-title"], ['test("単独のtest")']),
+    ).toEqual(testOnly);
+    expect(testOnly.file.source).toContain("const items = [1];");
+    expect(testOnly.file.source).toContain("const total = sum(items);");
+
+    const variable = stateFor(["test", "variable"], ["total"]);
+
+    expect(Object.values(variable.subjects)).toEqual([
+      { unit: "test", symbol: 'test("単独のtest")' },
+      { unit: "variable", symbol: "total" },
+    ]);
+    expect(variable.file.source).toContain("const items = [1];");
+    expect(variable.file.source).toContain(
+      "const /* state.subjects.s1 begin */total = sum(items)/* state.subjects.s1 end */;",
+    );
+  });
+
   test("sourceに目印と同じ文字列があっても取り違えずに戻せる", () => {
     const tricky = 'const note = "/* state.subjects.s0 */";\n\ntest("a", () => {});\n';
     const { file, units } = plannedFile({ path: "a.test.ts", source: tricky }, [

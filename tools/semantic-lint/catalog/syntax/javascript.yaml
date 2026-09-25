@@ -18,6 +18,12 @@ definitions:
             value: [(arrow_function) (function_expression) (generator_function)] @unit)
           [(arrow_function) (function_expression) (generator_function)] @unit
 
+      # 分割代入（{ a, b } / [a, b]）は名前が複数になるため対象にしない。
+      variable:
+        symbol: "{name}"
+        query: |
+          (variable_declarator name: (identifier) @name) @unit
+
       statement:
         query: |
           (program

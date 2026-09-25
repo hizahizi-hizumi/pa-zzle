@@ -50,6 +50,8 @@ describe("unitカタログ", () => {
       "teardown",
       "test",
       "test-group",
+      "test-title",
+      "variable",
     ]);
 
     for (const unit of catalog.units.keys()) {
@@ -100,6 +102,26 @@ describe("unitカタログ", () => {
           ],
         }),
     ).toThrow("定義が重複しています");
+  });
+
+  test("指摘位置のcaptureを持たないqueryはエラーにする", () => {
+    expect(
+      () =>
+        new UnitCatalog({
+          units: [
+            ...vocabulary,
+            {
+              name: "variable",
+              level: "syntax",
+              description: "variable",
+              context: [],
+              report: "name",
+            },
+          ],
+          languages,
+          definitions: queryFile("syntax", "typescript", "variable"),
+        }),
+    ).toThrow("@name");
   });
 
   test("@unit captureのないqueryはエラーにする", () => {

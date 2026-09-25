@@ -30,7 +30,8 @@ type UnitNode = {
  * fileを元の並びのまま1回だけ載せ、stateへ含めるunitを開始・終了の目印で囲んだ判定stateを作る。
  *
  * 入れ子のunitも親の本文の中にそのまま現れるため、親の判定で子の本文を参照先から辿る必要がない。
- * `subjectIds` にないunitは本文を載せず、省略の目印だけを残す。
+ * `subjectIds` にないunitは本文を載せず、省略の目印だけを残す。ただし指摘位置を宣言したunit
+ * （変数宣言・テスト名など）は囲むコードの一部なので、`subjectIds` になくても目印を付けずに本文を残す。
  * `partUnitIds` のunitは、違反箇所の候補（part）を目印 `pN` と `/pN` で囲む。
  */
 export function buildDecisionState(options: {
@@ -105,7 +106,9 @@ export function buildDecisionState(options: {
 
   const { roots } = buildTree(units);
   const markerFor = (unit: PlannedUnit): string | undefined =>
-    keys.has(unit.id) ? undefined : renderMarker(marker, OMITTED_REF);
+    keys.has(unit.id) || hasReport(unit)
+      ? undefined
+      : renderMarker(marker, OMITTED_REF);
   const wrap = (unit: PlannedUnit, body: string): string => {
     const key = keys.get(unit.id);
     const wrapped =
@@ -185,6 +188,7 @@ export function expandDecisionState(
 /**
  * stateへ本文を載せるunit。判定対象とその子孫・祖先、カタログのcontext宣言が指すunitを含める。
  * 子孫は判定対象の本文の一部なので省略しない。祖先を含めることで、載せたunitが省略したunitの中に入らないようにする。
+ * 指摘位置を宣言した子孫は目印なしで本文に残るため、判定対象でなければ含めない。
  */
 export function subjectClosure(
   units: readonly PlannedUnit[],
@@ -197,7 +201,10 @@ export function subjectClosure(
     .filter((unit): unit is PlannedUnit => unit !== undefined);
 
   for (const unit of units) {
-    if (targets.some((target) => isDescendant(unit, target, byId))) {
+    if (
+      !hasReport(unit) &&
+      targets.some((target) => isDescendant(unit, target, byId))
+    ) {
       selected.add(unit.id);
     }
   }
@@ -245,7 +252,7 @@ function isDescendant(
  * unitの判定が依存する文脈をfile上に並べた文字列。判定cacheのkeyに使う。
  *
  * 対象unitとその本文、祖先、context宣言が指すunit、どのunitにも含まれない骨格を残し、
- * それ以外のunitは位置だけを示す共通の目印にする。
+ * それ以外のunitは位置だけを示す共通の目印にする。指摘位置を宣言したunitは骨格の一部として残す。
  */
 export function unitContextView(options: {
   file: SourceDocument;
@@ -259,7 +266,9 @@ export function unitContextView(options: {
   const elided = renderMarker(marker, CONTEXT_KEY_REF);
 
   const markerFor = (unit: PlannedUnit): string | undefined =>
-    visible.has(unit.id) || containsSpan(target.span, unit.span)
+    visible.has(unit.id) ||
+    hasReport(unit) ||
+    containsSpan(target.span, unit.span)
       ? undefined
       : elided;
 
@@ -403,6 +412,11 @@ function subjectRef(key: string): string {
 
 function subjectBoundary(key: string, edge: "begin" | "end"): string {
   return `${subjectRef(key)} ${edge}`;
+}
+
+/** 指摘位置を宣言したunit。囲むコードの一部として、判定対象でなくても本文を省略しない。 */
+function hasReport(unit: PlannedUnit): boolean {
+  return unit.reportSpan !== undefined;
 }
 
 function containsSpan(outer: Span, inner: Span): boolean {

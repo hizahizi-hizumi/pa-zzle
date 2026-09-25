@@ -21,6 +21,8 @@ export type ExtractedUnit = Span & {
   symbol?: string;
   /** unitを直接囲むscope（言語定義の `scopes` のnode）。file直下ならfile全体。 */
   scope: Span;
+  /** カタログがunitの指摘位置（`report`）を宣言していれば、そのcaptureの範囲。 */
+  report?: Span;
 };
 
 let parserInitialization: Promise<void> | undefined;
@@ -138,6 +140,7 @@ export class UnitExtractor {
           collectUnits({
             unit,
             definition,
+            report: this.catalog.unit(unit).report,
             language,
             matches: query.matches(tree.rootNode),
             whole,
@@ -155,11 +158,12 @@ export class UnitExtractor {
 function collectUnits(options: {
   unit: string;
   definition: UnitQueryDefinition;
+  report: string | undefined;
   language: LanguageDefinition;
   matches: QueryMatch[];
   whole: Span;
 }): ExtractedUnit[] {
-  const { unit, definition, language, matches, whole } = options;
+  const { unit, definition, report, language, matches, whole } = options;
   const bySpan = new Map<string, ExtractedUnit>();
   const scopeTypes = new Set(language.scopes);
 
@@ -174,6 +178,16 @@ function collectUnits(options: {
       definition.contains.length > 0 &&
       node.descendantsOfType(definition.contains).length === 0
     ) {
+      continue;
+    }
+
+    const reportNode =
+      report === undefined
+        ? undefined
+        : match.captures.find((capture) => capture.name === report)?.node;
+
+    // 指摘位置を宣言したunitは、その位置を決められる一致だけを抽出する。
+    if (report !== undefined && !reportNode) {
       continue;
     }
 
@@ -192,6 +206,9 @@ function collectUnits(options: {
       end: node.endIndex,
       ...(symbol === undefined ? {} : { symbol }),
       scope: enclosingScope(node, scopeTypes) ?? whole,
+      ...(reportNode === undefined
+        ? {}
+        : { report: { start: reportNode.startIndex, end: reportNode.endIndex } }),
     });
   }
 

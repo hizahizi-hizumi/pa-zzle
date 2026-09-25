@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import type { SourceDocument } from "../domain/model.ts";
+import type { PlannedUnit, Rule, SourceDocument } from "../domain/model.ts";
 import { sampleRule, testExtractor } from "../testing/fixtures.ts";
 import { buildEvaluationPlan } from "./planner.ts";
 
@@ -135,5 +135,77 @@ describe("buildEvaluationPlan", () => {
       ["statement", 16, 16],
     ]);
     expect(partsOf("beforeEach")).toEqual([["statement", 5, 5]]);
+  });
+
+  test("指摘位置を宣言したunitはその位置を持ち、partを持たず他のunitのpartにもならない", () => {
+    const document: SourceDocument = {
+      path: "frontend/report.test.ts",
+      source: `describe("合計", () => {
+  const values = [1, 2];
+
+  test("空の場合に0を返すこと", () => {
+    const input = build(values);
+
+    expect(sum(input)).toBe(0);
+  });
+});
+`,
+    };
+    const rules = [
+      sampleRule({ id: "vitest/test", unit: "test" }),
+      sampleRule({ id: "vitest/group", unit: "test-group" }),
+    ];
+    const partsOf = (units: PlannedUnit[], symbol: string) =>
+      units
+        .find((unit) => unit.symbol === symbol)
+        ?.parts.map((part) => [part.kind, part.range.startLine, part.range.endLine]);
+    const plan = (extra: Rule[]) =>
+      buildEvaluationPlan({
+        documents: [document],
+        rules: [...rules, ...extra],
+        extractor,
+        matchesPath: () => true,
+      }).files[0]?.units ?? [];
+    const withoutReported = plan([]);
+    const withReported = plan([
+      sampleRule({ id: "naming/variable", unit: "variable" }),
+      sampleRule({ id: "vitest/title", unit: "test-title" }),
+    ]);
+
+    for (const symbol of ['describe("合計")', 'test("空の場合に0を返すこと")']) {
+      expect(partsOf(withReported, symbol)).toEqual(
+        partsOf(withoutReported, symbol),
+      );
+    }
+
+    const reported = withReported
+      .filter((unit) => unit.reportRange !== undefined)
+      .map((unit) => ({
+        unit: unit.unit,
+        symbol: unit.symbol,
+        report: unit.reportRange,
+        parts: unit.parts.length,
+      }));
+
+    expect(reported).toEqual([
+      {
+        unit: "variable",
+        symbol: "values",
+        report: { startLine: 2, startColumn: 9, endLine: 2, endColumn: 15 },
+        parts: 0,
+      },
+      {
+        unit: "test-title",
+        symbol: undefined,
+        report: { startLine: 4, startColumn: 8, endLine: 4, endColumn: 21 },
+        parts: 0,
+      },
+      {
+        unit: "variable",
+        symbol: "input",
+        report: { startLine: 5, startColumn: 11, endLine: 5, endColumn: 16 },
+        parts: 0,
+      },
+    ]);
   });
 });

@@ -18,6 +18,16 @@ definitions:
             (#match? @callee "^(test|it)\\b")
             (#not-match? @title "^`([^\\\\]|\\\\[\\s\\S])*?\\$\\{")) @unit
 
+      # testのケース名の文字列そのもの。unitと指摘位置は同じ範囲。
+      # 本文が名前そのものなので、判定stateで名前を繰り返さないようsymbolは付けない。
+      test-title:
+        query: |
+          (call_expression
+            function: [(identifier) (member_expression) (call_expression)] @callee
+            arguments: (arguments . [(string) (template_string)] @title @unit)
+            (#match? @callee "^(test|it)\\b")
+            (#not-match? @title "^`([^\\\\]|\\\\[\\s\\S])*?\\$\\{"))
+
       test-group:
         symbol: "describe({title})"
         query: |

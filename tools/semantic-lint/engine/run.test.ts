@@ -160,4 +160,40 @@ describe("runEvaluationPlan", () => {
       [0.9, 0.1],
     );
   });
+
+  test("指摘位置を宣言したunitは違反箇所を問わず、その位置を指摘する", async () => {
+    const rule = sampleRule({ unit: "variable", violationThreshold: 0.5 });
+    const plan = buildEvaluationPlan({
+      documents: [
+        {
+          path: "frontend/example.ts",
+          source: "const hoge = getUser(), users = getUsers();\n",
+        },
+      ],
+      rules: [rule],
+      extractor,
+      matchesPath: () => true,
+    });
+    const [hoge, users] = plan.files[0]?.tasks ?? [];
+
+    if (!hoge || !users) {
+      throw new Error("test plan is empty");
+    }
+
+    const provider = new FakeDecisionProvider({
+      [hoge.id]: decisionResult("violation", 0.8),
+      [users.id]: decisionResult("compliant", 0.1),
+    });
+    const result = await runEvaluationPlan({ plan, rules: [rule], provider });
+
+    expect(provider.requests).toHaveLength(1);
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]).toMatchObject({
+      range: { startLine: 1, startColumn: 7, endLine: 1, endColumn: 11 },
+      subjectRange: { startLine: 1, startColumn: 7, endLine: 1, endColumn: 23 },
+      symbol: "hoge",
+    });
+    expect(result.diagnostics[0]?.partProbability).toBeUndefined();
+  });
 });
+
