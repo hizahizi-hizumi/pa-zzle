@@ -6,6 +6,7 @@ import {
   getTakuzuSessionCellViews,
   getTakuzuSessionCorrectionCount,
   getTakuzuSessionResult,
+  placeTakuzuSessionCell,
   restartTakuzuSession,
   type TakuzuSession,
 } from "@/games/takuzu/session/session";
@@ -86,6 +87,42 @@ describe("cycleTakuzuSessionCell", () => {
       const result = cycleTakuzuSessionCell(cleared, 1, "forward", 6_000);
 
       expect(result).toBe(cleared);
+    });
+  });
+});
+
+describe("placeTakuzuSessionCell", () => {
+  const session = createTakuzuSession(problem, 100);
+
+  test("空きマスへ B を直接置いて入力回数を数えること", () => {
+    const result = placeTakuzuSessionCell(session, 1, "b", 200);
+
+    expect(result.board.cells[1]).toBe("b");
+    expect(result.inputCount).toBe(1);
+  });
+
+  test("すでに同じ中身のマスへの入力を記録しないこと", () => {
+    const result = placeTakuzuSessionCell(session, 1, null, 200);
+
+    expect(result).toBe(session);
+  });
+
+  describe("置いたマスへ戻って直接置き換えた場合", () => {
+    const placed = [
+      [1, "a"],
+      [2, "b"],
+      [1, "b"],
+    ] as const;
+    const replaced = placed.reduce(
+      (current, [cellIndex, cell]) =>
+        placeTakuzuSessionCell(current, cellIndex, cell, 200),
+      session,
+    );
+
+    test("置き直しを1回と数えること", () => {
+      const result = getTakuzuSessionCorrectionCount(replaced);
+
+      expect(result).toBe(1);
     });
   });
 });
