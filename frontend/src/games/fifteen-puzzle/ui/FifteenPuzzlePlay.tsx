@@ -23,7 +23,7 @@ type FifteenPuzzlePlayProps = {
   onReplay: () => void;
   onStartNewProblem: () => void;
   onClearingComplete: () => void;
-  onChangeDifficulty?: () => void;
+  onChangeDifficulty: () => void;
   onBackToHome: () => void;
   onOpenDiagnostics?: () => void;
 };
