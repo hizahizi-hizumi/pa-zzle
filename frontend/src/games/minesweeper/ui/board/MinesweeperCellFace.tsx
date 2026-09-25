@@ -2,8 +2,6 @@ import { Bomb, Flag } from "lucide-react";
 
 import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
 
-export type MinesweeperCellFaceSize = "board" | "preview";
-
 const NUMBER_CLASS_NAMES = [
   "",
   "text-blue-600 dark:text-blue-400",
@@ -15,16 +13,6 @@ const NUMBER_CLASS_NAMES = [
   "text-neutral-900 dark:text-neutral-100",
   "text-neutral-500 dark:text-neutral-400",
 ] as const;
-
-const SIZE_CLASS_NAMES = {
-  board: "text-[clamp(0.8rem,4vw,1.15rem)]",
-  preview: "text-[11px] tabular-nums lg:text-sm",
-} satisfies Record<MinesweeperCellFaceSize, string>;
-
-const MINE_ICON_CLASS_NAMES = {
-  board: "size-[50%]",
-  preview: "size-[60%]",
-} satisfies Record<MinesweeperCellFaceSize, string>;
 
 function getStateClassName(view: MinesweeperVisibleCell): string {
   // 踏んだ地雷はプレイを止めないミスとして、盤面の中で見分けられる程度の控えめな色にする。
@@ -46,22 +34,20 @@ function getStateClassName(view: MinesweeperVisibleCell): string {
 // マスの外枠要素に付ける見た目。操作に関わる見た目は外枠要素の側で足す。
 export function getMinesweeperCellFaceClassName(
   view: MinesweeperVisibleCell,
-  size: MinesweeperCellFaceSize,
 ): string {
-  return `flex aspect-square items-center justify-center border-b border-r border-slate-300 font-sans font-bold leading-none dark:border-slate-600 ${SIZE_CLASS_NAMES[size]} ${getStateClassName(view)}`;
+  return `flex aspect-square items-center justify-center border-b border-r border-slate-300 font-sans font-bold leading-none dark:border-slate-600 text-[clamp(0.8rem,4vw,1.15rem)] ${getStateClassName(view)}`;
 }
 
 type MinesweeperCellFaceProps = {
   view: MinesweeperVisibleCell;
-  size: MinesweeperCellFaceSize;
 };
 
-export function MinesweeperCellFace({ view, size }: MinesweeperCellFaceProps) {
+export function MinesweeperCellFace({ view }: MinesweeperCellFaceProps) {
   if (view.state === "flagged") {
     return <Flag className="size-[52%] fill-current" aria-hidden />;
   }
   if (view.state === "mine" || view.state === "steppedMine") {
-    return <Bomb className={MINE_ICON_CLASS_NAMES[size]} aria-hidden />;
+    return <Bomb className="size-[50%]" aria-hidden />;
   }
   if (view.state === "revealed" && view.adjacentMineCount > 0) {
     return view.adjacentMineCount;

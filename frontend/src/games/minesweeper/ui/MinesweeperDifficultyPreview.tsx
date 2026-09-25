@@ -1,62 +1,37 @@
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
-import {
-  getMinesweeperCellCount,
-  type MinesweeperBoard,
-} from "@/games/minesweeper/puzzle/board";
-import {
-  getAdjacentMinesweeperMineCount,
-  isMinesweeperMine,
-} from "@/games/minesweeper/puzzle/rules";
-import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
-import {
-  getMinesweeperCellFaceClassName,
-  MinesweeperCellFace,
-} from "@/games/minesweeper/ui/board/MinesweeperCellFace";
 
-const BOARD_SIZE = 5;
+// 実際の盤面を縮めた見本。"*"が地雷。
+// レベルが上がるほど盤面を大きく、地雷の割合をそのレベルの地雷密度の範囲で高くする。
+const previewMineLayouts = {
+  "1": ["....", "..*.", "*...", "...."],
+  "2": ["...*", ".*..", "....", "..*.", "...."],
+  "3": [".*...", "....*", "*....", "...*.", "....."],
+  "4": ["..*..", "*...*", ".....", ".*...", "....*", "....."],
+  "5": [".*..*.", "...*..", "*.....", "..*..*", "......", ".*...."],
+} satisfies Record<MinesweeperDifficulty, readonly string[]>;
 
-// 5×5盤面の外周に地雷を置き、内側の開示済みマスで隣接地雷数を見せる。
-// "*"が地雷。上の難易度は下の難易度の地雷をすべて含む。
-const mineLayouts = {
-  "1": "..*......*.....*.........",
-  "2": "..*..*...*.....*.....*...",
-  "3": ".**..*...*.....*...*.*...",
-  "4": ".**..*...**....*...*.*.*.",
-  "5": ".***.*...**....*...***.*.",
-} satisfies Record<MinesweeperDifficulty, string>;
+// 最大の6行でプレビュー枠の高さ48pxに収まる、1マスあたりの間隔。
+const CELL_PITCH_PX = 8;
+const CELL_SIZE_PX = 7;
+const MINE_RADIUS_PX = 2;
 
-// 全難易度で共通の開示範囲。"o"が開示済み、それ以外は未開示。
-const revealedArea = [".....", ".ooo.", ".ooo.", ".oo..", "....."].join("");
+type PreviewCell = { key: string; x: number; y: number; isMine: boolean };
 
-function toPreviewBoard(layout: string): MinesweeperBoard {
-  const mineCellIndices = Array.from(layout).flatMap(
-    function toMineCellIndex(mark, cellIndex) {
-      return mark === "*" ? [cellIndex] : [];
-    },
-  );
-  return { rows: BOARD_SIZE, columns: BOARD_SIZE, mineCellIndices };
+function toPreviewCells(layout: readonly string[]): PreviewCell[] {
+  return layout.flatMap(function toRowCells(rowMarks, row) {
+    return Array.from(rowMarks, function toCell(mark, column) {
+      return {
+        key: `${row}-${column}`,
+        x: column * CELL_PITCH_PX,
+        y: row * CELL_PITCH_PX,
+        isMine: mark === "*",
+      };
+    });
+  });
 }
 
-function toPreviewCell(
-  board: MinesweeperBoard,
-  cellIndex: number,
-): MinesweeperVisibleCell {
-  if (isMinesweeperMine(board, cellIndex)) {
-    return { state: "mine" };
-  }
-  if (revealedArea[cellIndex] !== "o") {
-    return { state: "hidden" };
-  }
-  return {
-    state: "revealed",
-    adjacentMineCount: getAdjacentMinesweeperMineCount(board, cellIndex),
-  };
-}
-
-function getCellKey(cellIndex: number): string {
-  const row = Math.floor(cellIndex / BOARD_SIZE);
-  const column = cellIndex % BOARD_SIZE;
-  return `${row}-${column}`;
+function toPixelLength(cellCount: number): number {
+  return cellCount * CELL_PITCH_PX - (CELL_PITCH_PX - CELL_SIZE_PX);
 }
 
 type MinesweeperDifficultyPreviewProps = {
@@ -66,29 +41,47 @@ type MinesweeperDifficultyPreviewProps = {
 export function MinesweeperDifficultyPreview({
   difficulty,
 }: MinesweeperDifficultyPreviewProps) {
-  const board = toPreviewBoard(mineLayouts[difficulty]);
-  const cells = Array.from(
-    { length: getMinesweeperCellCount(board) },
-    function toCell(_, cellIndex) {
-      return toPreviewCell(board, cellIndex);
-    },
-  );
+  const layout = previewMineLayouts[difficulty];
+  const width = toPixelLength(layout[0]?.length ?? 0);
+  const height = toPixelLength(layout.length);
+  const cells = toPreviewCells(layout);
 
   return (
     <span
       aria-hidden="true"
-      className="grid size-[81px] shrink-0 grid-cols-5 border-t border-l border-slate-300 lg:size-[106px] dark:border-slate-600"
+      className="flex h-12 w-32 shrink-0 items-center lg:justify-center"
     >
-      {cells.map(function renderCell(cell, cellIndex) {
-        return (
-          <span
-            key={getCellKey(cellIndex)}
-            className={getMinesweeperCellFaceClassName(cell, "preview")}
-          >
-            <MinesweeperCellFace view={cell} size="preview" />
-          </span>
-        );
-      })}
+      <svg
+        width={width}
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        className="block"
+      >
+        {cells.map(function renderCell({ key, x, y, isMine }) {
+          return (
+            <g key={key}>
+              <rect
+                x={x}
+                y={y}
+                width={CELL_SIZE_PX}
+                height={CELL_SIZE_PX}
+                rx={1}
+                className="fill-slate-300 dark:fill-slate-700"
+              />
+              {isMine ? (
+                <circle
+                  cx={x + CELL_SIZE_PX / 2}
+                  cy={y + CELL_SIZE_PX / 2}
+                  r={MINE_RADIUS_PX}
+                  className="fill-slate-800 dark:fill-slate-200"
+                />
+              ) : null}
+            </g>
+          );
+        })}
+      </svg>
     </span>
   );
 }
+
+export const _private = { previewMineLayouts };
