@@ -58,6 +58,64 @@ test("保存した事実から現在のプレイ評価と比較指標を導出�
   expect(moveDelta).toBe(12);
 });
 
+describe("getSlidePuzzlePlayRecordTimeDelta", () => {
+  const sizedRecords = [
+    [
+      "3×3（盤面把握 5 秒）",
+      createSlidePuzzlePlayRecord({
+        difficulty: "1",
+        problemIdentity: {
+          generatorVersion: "1",
+          seed: "sp3-20-0",
+          conditions: { size: 3, scrambleLength: 20 },
+        },
+        startedAt: 1_000,
+        completedAt: 51_000,
+        result: {
+          elapsedMs: 50_000,
+          moveCount: 20,
+          completionMoveCount: 20,
+          slideCount: 20,
+          restartCount: 0,
+          optimalMoveCount: 20,
+        },
+      }),
+      5_000,
+    ],
+    [
+      "5×5（盤面把握 15 秒）",
+      createSlidePuzzlePlayRecord({
+        difficulty: "5",
+        problemIdentity: {
+          generatorVersion: "1",
+          seed: "sp5-40-1",
+          conditions: { size: 5, scrambleLength: 40 },
+        },
+        startedAt: 1_000,
+        completedAt: 101_000,
+        result: {
+          elapsedMs: 100_000,
+          moveCount: 40,
+          completionMoveCount: 40,
+          slideCount: 40,
+          restartCount: 0,
+          optimalMoveCount: 40,
+        },
+      }),
+      5_000,
+    ],
+  ] as const;
+
+  test.each(sizedRecords)(
+    "記録の盤面サイズの盤面把握の時間を含む基準時間との差を導出すること: %s",
+    (_, sizedRecord, expected) => {
+      const timeDelta = getSlidePuzzlePlayRecordTimeDelta(sizedRecord);
+
+      expect(timeDelta).toBe(expected);
+    },
+  );
+});
+
 test("難易度を自己ベストの比較単位として扱うこと", () => {
   const comparisonKey =
     slidePuzzlePlayRecordDefinition.getComparisonKey(record);
