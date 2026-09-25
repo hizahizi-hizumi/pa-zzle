@@ -2,6 +2,7 @@ import type { MinesweeperProblem } from "../problem/problem";
 import {
   chordMinesweeperSessionCell,
   createMinesweeperSession,
+  getMinesweeperSessionElapsedMs,
   getMinesweeperSessionVisibleCells,
   revealMinesweeperSessionCell,
   toggleMinesweeperSessionFlag,
@@ -23,6 +24,7 @@ describe("createMinesweeperSession", () => {
     expect(result.status).toBe("playing");
     expect(result.puzzleState.revealedCellIndices).toEqual([1]);
     expect(result.startedAt).toBe(100);
+    expect(result.mistakeCount).toBe(0);
   });
 });
 
@@ -44,12 +46,57 @@ describe("MinesweeperSession operations", () => {
     expect(result).toBe(flagged);
   });
 
-  test("地雷を開示すると失敗を確定すること", () => {
+  test("地雷を開示してもプレイを続け、ミスとして数えること", () => {
     const result = revealMinesweeperSessionCell(initialSession, 0, 200);
 
-    expect(result.status).toBe("failed");
-    expect(result.finishedAt).toBe(200);
-    expect(result.puzzleState.explodedCellIndex).toBe(0);
+    expect(result.status).toBe("playing");
+    expect(result.finishedAt).toBeNull();
+    expect(result.mistakeCount).toBe(1);
+    expect(getMinesweeperSessionVisibleCells(result)[0]).toEqual({
+      state: "steppedMine",
+    });
+  });
+
+  test("踏んだ地雷以外の地雷配置を示さないこと", () => {
+    const twoMineSession = createMinesweeperSession(
+      {
+        board: { rows: 2, columns: 3, mineCellIndices: [0, 2] },
+        initialRevealedCellIndices: [1],
+      },
+      100,
+    );
+    const result = revealMinesweeperSessionCell(twoMineSession, 0, 200);
+
+    expect(getMinesweeperSessionVisibleCells(result)[2]).toEqual({
+      state: "hidden",
+    });
+  });
+
+  test("地雷を踏んだ後も全安全マスを開けばクリアすること", () => {
+    const stepped = revealMinesweeperSessionCell(initialSession, 0, 200);
+    const result = chordMinesweeperSessionCell(stepped, 1, 300);
+
+    expect(result.status).toBe("cleared");
+    expect(result.finishedAt).toBe(300);
+    expect(result.mistakeCount).toBe(1);
+  });
+
+  test("chordで複数の地雷を踏むと踏んだ数だけミスを数えること", () => {
+    const twoMineSession = createMinesweeperSession(
+      {
+        board: { rows: 2, columns: 3, mineCellIndices: [0, 2] },
+        initialRevealedCellIndices: [1],
+      },
+      100,
+    );
+    const flagged = toggleMinesweeperSessionFlag(
+      toggleMinesweeperSessionFlag(twoMineSession, 3),
+      5,
+    );
+    const result = chordMinesweeperSessionCell(flagged, 1, 200);
+
+    expect(result.mistakeCount).toBe(2);
+    expect(result.status).toBe("playing");
   });
 
   test("正しい旗からchordして全安全マスを開くとクリアすること", () => {
@@ -76,5 +123,32 @@ describe("MinesweeperSession operations", () => {
     const result = getMinesweeperSessionVisibleCells(unflaggedCleared);
 
     expect(result[0]).toEqual({ state: "mine" });
+  });
+});
+
+describe("getMinesweeperSessionElapsedMs", () => {
+  const problem: MinesweeperProblem = {
+    board: {
+      rows: 2,
+      columns: 3,
+      mineCellIndices: [0],
+    },
+    initialRevealedCellIndices: [1],
+  };
+
+  test("プレイ中は現在時刻までの経過時間を返すこと", () => {
+    const session = createMinesweeperSession(problem, 1_000);
+
+    expect(getMinesweeperSessionElapsedMs(session, 4_500)).toBe(3_500);
+  });
+
+  test("クリア後はクリア時点で経過時間を止めること", () => {
+    const cleared = chordMinesweeperSessionCell(
+      toggleMinesweeperSessionFlag(createMinesweeperSession(problem, 1_000), 0),
+      1,
+      3_000,
+    );
+
+    expect(getMinesweeperSessionElapsedMs(cleared, 9_000)).toBe(2_000);
   });
 });

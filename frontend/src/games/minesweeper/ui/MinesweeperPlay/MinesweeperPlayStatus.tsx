@@ -1,13 +1,7 @@
-import type { MinesweeperSessionStatus } from "../../session/session";
-
-type MinesweeperPlayStatusProps = {
-  status: Exclude<MinesweeperSessionStatus, "playing">;
-};
-
-export function MinesweeperPlayStatus({ status }: MinesweeperPlayStatusProps) {
+export function MinesweeperPlayStatus() {
   return (
     <p className="flex h-10 items-center justify-center text-play-context">
-      {status === "cleared" ? "クリア" : "ゲームオーバー"}
+      クリア
     </p>
   );
 }

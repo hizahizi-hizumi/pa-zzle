@@ -84,9 +84,7 @@ export function MinesweeperPlay({
             onToggleFlag={onToggleFlag}
             onChordCell={onChordCell}
           />
-          {status !== "playing" ? (
-            <MinesweeperPlayStatus status={status} />
-          ) : null}
+          {status === "cleared" ? <MinesweeperPlayStatus /> : null}
         </div>
       </main>
     </section>

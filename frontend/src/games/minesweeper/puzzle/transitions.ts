@@ -19,28 +19,29 @@ function mergeCellIndices(
   );
 }
 
-export function revealMinesweeperCell(
-  board: MinesweeperBoard,
+function isOpenableCell(
   state: MinesweeperPuzzleState,
   cellIndex: number,
+): boolean {
+  return (
+    !state.revealedCellIndices.includes(cellIndex) &&
+    !state.flaggedCellIndices.includes(cellIndex) &&
+    !state.steppedMineCellIndices.includes(cellIndex)
+  );
+}
+
+// 指定したマスをまとめて開く。地雷のマスは踏んだ地雷として残し、安全なマスは連鎖開示する。
+function openMinesweeperCells(
+  board: MinesweeperBoard,
+  state: MinesweeperPuzzleState,
+  cellIndices: readonly number[],
 ): MinesweeperPuzzleState {
-  assertMinesweeperCellIndex(board, cellIndex);
-
-  if (
-    state.explodedCellIndex !== null ||
-    state.revealedCellIndices.includes(cellIndex) ||
-    state.flaggedCellIndices.includes(cellIndex)
-  ) {
-    return state;
-  }
-
-  if (isMinesweeperMine(board, cellIndex)) {
-    return { ...state, explodedCellIndex: cellIndex };
-  }
-
+  const steppedMineCellIndices = cellIndices.filter((cellIndex) =>
+    isMinesweeperMine(board, cellIndex),
+  );
   const revealedCellIndices = collectMinesweeperRevealCellIndices(
     board,
-    [cellIndex],
+    cellIndices.filter((cellIndex) => !isMinesweeperMine(board, cellIndex)),
     state.flaggedCellIndices,
   );
 
@@ -50,7 +51,25 @@ export function revealMinesweeperCell(
       state.revealedCellIndices,
       revealedCellIndices,
     ),
+    steppedMineCellIndices: mergeCellIndices(
+      state.steppedMineCellIndices,
+      steppedMineCellIndices,
+    ),
   };
+}
+
+export function revealMinesweeperCell(
+  board: MinesweeperBoard,
+  state: MinesweeperPuzzleState,
+  cellIndex: number,
+): MinesweeperPuzzleState {
+  assertMinesweeperCellIndex(board, cellIndex);
+
+  if (!isOpenableCell(state, cellIndex)) {
+    return state;
+  }
+
+  return openMinesweeperCells(board, state, [cellIndex]);
 }
 
 export function toggleMinesweeperFlag(
@@ -61,8 +80,8 @@ export function toggleMinesweeperFlag(
   assertMinesweeperCellIndex(board, cellIndex);
 
   if (
-    state.explodedCellIndex !== null ||
-    state.revealedCellIndices.includes(cellIndex)
+    state.revealedCellIndices.includes(cellIndex) ||
+    state.steppedMineCellIndices.includes(cellIndex)
   ) {
     return state;
   }
@@ -84,6 +103,10 @@ export function toggleMinesweeperFlag(
   };
 }
 
+/**
+ * 開いた数字のマスの周囲で、旗と踏んだ地雷の合計が数字と一致していれば、
+ * 残りの未開示マスをまとめて開く。旗が誤っていれば、周囲の地雷をすべて踏む。
+ */
 export function chordMinesweeperCell(
   board: MinesweeperBoard,
   state: MinesweeperPuzzleState,
@@ -91,10 +114,7 @@ export function chordMinesweeperCell(
 ): MinesweeperPuzzleState {
   assertMinesweeperCellIndex(board, cellIndex);
 
-  if (
-    state.explodedCellIndex !== null ||
-    !state.revealedCellIndices.includes(cellIndex)
-  ) {
+  if (!state.revealedCellIndices.includes(cellIndex)) {
     return state;
   }
 
@@ -104,36 +124,21 @@ export function chordMinesweeperCell(
   }
 
   const neighbors = getMinesweeperNeighborCellIndices(board, cellIndex);
-  const flaggedCount = neighbors.filter((neighborCellIndex) =>
-    state.flaggedCellIndices.includes(neighborCellIndex),
+  const markedMineCount = neighbors.filter(
+    (neighborCellIndex) =>
+      state.flaggedCellIndices.includes(neighborCellIndex) ||
+      state.steppedMineCellIndices.includes(neighborCellIndex),
   ).length;
-  if (flaggedCount !== mineCount) {
+  if (markedMineCount !== mineCount) {
     return state;
   }
 
-  const hiddenUnflaggedNeighbors = neighbors.filter(
-    (neighborCellIndex) =>
-      !state.revealedCellIndices.includes(neighborCellIndex) &&
-      !state.flaggedCellIndices.includes(neighborCellIndex),
+  const openableNeighbors = neighbors.filter((neighborCellIndex) =>
+    isOpenableCell(state, neighborCellIndex),
   );
-  const explodedCellIndex = hiddenUnflaggedNeighbors.find((neighborCellIndex) =>
-    isMinesweeperMine(board, neighborCellIndex),
-  );
-  if (explodedCellIndex !== undefined) {
-    return { ...state, explodedCellIndex };
+  if (openableNeighbors.length === 0) {
+    return state;
   }
 
-  const revealedCellIndices = collectMinesweeperRevealCellIndices(
-    board,
-    hiddenUnflaggedNeighbors,
-    state.flaggedCellIndices,
-  );
-
-  return {
-    ...state,
-    revealedCellIndices: mergeCellIndices(
-      state.revealedCellIndices,
-      revealedCellIndices,
-    ),
-  };
+  return openMinesweeperCells(board, state, openableNeighbors);
 }

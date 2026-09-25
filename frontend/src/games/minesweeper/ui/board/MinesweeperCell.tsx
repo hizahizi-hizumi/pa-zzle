@@ -33,7 +33,7 @@ function getAccessibleName(
   if (view.state === "mine") {
     return `${position} 地雷`;
   }
-  if (view.state === "exploded") {
+  if (view.state === "steppedMine") {
     return `${position} 踏んだ地雷`;
   }
   return `${position} 未開示`;

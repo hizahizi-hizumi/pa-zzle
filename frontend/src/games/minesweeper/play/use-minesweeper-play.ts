@@ -147,6 +147,7 @@ export function useMinesweeperPlay(
     columns: session.problem.board.columns,
     mineCount: session.problem.board.mineCellIndices.length,
     flagCount: session.puzzleState.flaggedCellIndices.length,
+    mistakeCount: session.mistakeCount,
     visibleCells: getMinesweeperSessionVisibleCells(session),
     status: session.status,
     revealCell,

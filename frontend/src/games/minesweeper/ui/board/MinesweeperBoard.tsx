@@ -49,7 +49,7 @@ export function MinesweeperBoard({
       return;
     }
 
-    if (cell.state === "mine" || cell.state === "exploded") {
+    if (cell.state === "mine" || cell.state === "steppedMine") {
       return;
     }
 

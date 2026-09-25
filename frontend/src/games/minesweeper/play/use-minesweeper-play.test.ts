@@ -65,6 +65,7 @@ describe("useMinesweeperPlay", () => {
         !problem.board.mineCellIndices.includes(cellIndex) &&
         !initialRevealedCellIndices.includes(cellIndex),
     )!;
+    const hiddenMineCellIndex = problem.board.mineCellIndices[0]!;
     let hook: MinesweeperPlayHook;
 
     beforeEach(() => {
@@ -99,6 +100,28 @@ describe("useMinesweeperPlay", () => {
         expect(play.problemIdentity).toEqual(identity);
         expect(play.visibleCells).toEqual(initialVisibleCells);
         expect(play.status).toBe("playing");
+      });
+    });
+
+    describe("地雷を踏んだ後の場合", () => {
+      beforeEach(() => {
+        act(() => hook.result.current.revealCell(hiddenMineCellIndex));
+      });
+
+      test("プレイを続けてミスを数えること", () => {
+        const play = hook.result.current;
+
+        expect(play.status).toBe("playing");
+        expect(play.mistakeCount).toBe(1);
+        expect(play.visibleCells[hiddenMineCellIndex]).toEqual({
+          state: "steppedMine",
+        });
+      });
+
+      test("リセットでミスを数え直すこと", () => {
+        act(() => hook.result.current.replay());
+
+        expect(hook.result.current.mistakeCount).toBe(0);
       });
     });
 

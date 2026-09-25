@@ -186,12 +186,62 @@ describe("MinesweeperPlay", () => {
     });
   });
 
-  describe("終了後の場合", () => {
+  describe("地雷を踏んだ後の場合", () => {
     const visibleCells: readonly MinesweeperVisibleCell[] = [
-      { state: "exploded" },
+      { state: "steppedMine" },
       { state: "revealed", adjacentMineCount: 1 },
       { state: "hidden" },
       { state: "hidden" },
+    ];
+    let onRevealCell: (cellIndex: number) => void;
+    let onToggleFlag: (cellIndex: number) => void;
+
+    beforeEach(() => {
+      onRevealCell = vi.fn();
+      onToggleFlag = vi.fn();
+      render(
+        <MinesweeperPlay
+          rows={2}
+          columns={2}
+          mineCount={1}
+          flagCount={0}
+          visibleCells={visibleCells}
+          status="playing"
+          onRevealCell={onRevealCell}
+          onToggleFlag={onToggleFlag}
+          onChordCell={vi.fn()}
+          onReplay={vi.fn()}
+          onStartNewProblem={vi.fn()}
+          onChangeDifficulty={vi.fn()}
+          onBackToHome={vi.fn()}
+        />,
+      );
+    });
+
+    test("踏んだ地雷を押しても開示も旗操作も通知しないこと", () => {
+      const steppedMine = screen.getByRole("button", {
+        name: "マス 1 踏んだ地雷",
+      });
+      fireEvent.click(steppedMine);
+      fireEvent.contextMenu(steppedMine);
+
+      expect(onRevealCell).not.toHaveBeenCalled();
+      expect(onToggleFlag).not.toHaveBeenCalled();
+    });
+
+    test("プレイを続けられること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "マス 3 未開示" }));
+
+      expect(onRevealCell).toHaveBeenCalledWith(2);
+    });
+  });
+
+  describe("クリア後の場合", () => {
+    const visibleCells: readonly MinesweeperVisibleCell[] = [
+      { state: "mine" },
+      { state: "revealed", adjacentMineCount: 1 },
+      { state: "revealed", adjacentMineCount: 1 },
+      { state: "revealed", adjacentMineCount: 1 },
     ];
 
     beforeEach(() => {
@@ -202,7 +252,7 @@ describe("MinesweeperPlay", () => {
           mineCount={1}
           flagCount={0}
           visibleCells={visibleCells}
-          status="failed"
+          status="cleared"
           onRevealCell={vi.fn()}
           onToggleFlag={vi.fn()}
           onChordCell={vi.fn()}
@@ -220,8 +270,8 @@ describe("MinesweeperPlay", () => {
       expect(toggle).toBeNull();
     });
 
-    test("終了状態を表示すること", () => {
-      const status = screen.queryByText("ゲームオーバー");
+    test("クリアを表示すること", () => {
+      const status = screen.queryByText("クリア");
 
       expect(status).not.toBeNull();
     });
