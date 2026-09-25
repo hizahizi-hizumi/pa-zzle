@@ -2,8 +2,10 @@ import { takuzuFixedProblem } from "@/games/takuzu/problem/fixed-problem";
 import {
   _private,
   type TakuzuTechnique,
+  takuzuTechniques,
   traceTakuzuHumanSolve,
 } from "@/games/takuzu/problem/generation/human-solver";
+import { generateTakuzuProblem } from "@/games/takuzu/problem/generator";
 import { parseTakuzuBoard } from "@/games/takuzu/puzzle/board";
 
 const {
@@ -164,5 +166,31 @@ describe("traceTakuzuHumanSolve", () => {
 
       expect(result.status).toBe("contradiction");
     });
+  });
+
+  describe("手筋の上限を変えて作った問題", () => {
+    const problems = takuzuTechniques.map(
+      (technique) =>
+        generateTakuzuProblem({
+          seed: `human-solver-test-${technique}`,
+          removalTechniqueLimit: technique,
+          extraGivenCount: 0,
+        }).problem,
+    );
+
+    test.each(problems)(
+      "どのラウンドの確定も解と一致すること: %#",
+      (problem) => {
+        const result = traceTakuzuHumanSolve(problem.givens);
+
+        const deductions = result.rounds.flatMap((round) => round.deductions);
+        expect(
+          deductions.every(
+            ({ cellIndex, tile }) => problem.solution.cells[cellIndex] === tile,
+          ),
+        ).toBe(true);
+        expect(result.status).toBe("solved");
+      },
+    );
   });
 });
