@@ -1,6 +1,5 @@
 # 期待finding: CSSクラスや具体的なスタイル値を公開APIにしているコンポーネント全体。
-# 正本: .claude/rules/component-styling.md。正本はshadcn/ui（components/ui）を適用除外にしていないため、
-# classNameを受け付けるcomponents/ui/button.tsxのButtonも文面どおり違反にする。
+# 正本: .claude/rules/component-styling.md。components/ui（shadcn/ui）は正本とrulesetで適用除外。
 version: 1
 rule: component-styling/appearance-api
 baseCommit: 28d17e476a9dbdc39c0f9cecad46ee4d0ad2114a
@@ -13,10 +12,6 @@ files:
     blob: 7d669dcace570c60a72520bd19d21a6631f89d11
     findings:
       - lines: [6, 8]
-  - path: frontend/src/components/ui/button.tsx
-    blob: c6f2d89e2e2063c72282e00897f664eef90beaa2
-    findings:
-      - lines: [39, 58]
   - path: frontend/src/components/StartConditionOption.tsx
     blob: 556a1d072e6799a7021c881fb445b873d3ed2381
     findings: []

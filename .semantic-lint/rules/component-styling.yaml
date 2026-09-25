@@ -5,6 +5,9 @@ id: component-styling
 paths:
   - frontend/src/**/*.tsx
 
+exclude:
+  - frontend/src/components/ui/**
+
 rules:
   - id: appearance-api
     title: 外観の差分は意味を表す公開APIで表し、CSSクラスやスタイル値を公開しない
