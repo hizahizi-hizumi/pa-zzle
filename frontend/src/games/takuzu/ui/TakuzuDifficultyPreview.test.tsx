@@ -18,7 +18,7 @@ afterEach(cleanup);
 
 const difficultyIds = takuzuDifficulties.map((difficulty) => difficulty.id);
 
-// 各難易度の分類条件を初めて満たす読み（difficulty.ts）。
+// 各難易度で初めて要る読み。難易度5 はこの読み（D）が2つの局面で要ることで決まるが、図では2か所の見比べを1つの局面にまとめて描く。
 const expectedTechniques = {
   "1": "adjacency",
   "2": "count-completion",
@@ -42,55 +42,60 @@ function readMoment(difficulty: TakuzuDifficulty) {
 }
 
 describe("TakuzuDifficultyPreview", () => {
-  test.each(difficultyIds)(
-    "難易度 %s でも盤面を 8×8 で描くこと",
-    (difficulty) => {
+  describe.each(difficultyIds)("難易度 %s の場合", (difficulty) => {
+    let preview: Element | null;
+
+    beforeEach(() => {
       const { container } = render(
         <TakuzuDifficultyPreview difficulty={difficulty} />,
       );
+      preview = container.firstElementChild;
+    });
 
-      const cells = container.firstElementChild?.children;
+    test("盤面を 8×8 で描くこと", () => {
+      const cells = preview?.children;
 
       expect(cells).toHaveLength(64);
-    },
-  );
+    });
 
-  test.each(difficultyIds)(
-    "難易度 %s で決まるマスを読む範囲の中に示すこと",
-    (difficulty) => {
-      const { container } = render(
-        <TakuzuDifficultyPreview difficulty={difficulty} />,
+    test("決まるマスを読む範囲の中に示すこと", () => {
+      const deducedCells = Array.from(
+        preview?.querySelectorAll("[data-deduced]") ?? [],
       );
-
-      const deducedCells = container.querySelectorAll("[data-deduced]");
-      const outsideReadingArea = Array.from(deducedCells).filter(
+      const outsideReadingArea = deducedCells.filter(
         (tile) => !tile.parentElement?.hasAttribute("data-reading-area"),
       );
 
       expect(deducedCells.length).toBeGreaterThan(0);
       expect(outsideReadingArea).toHaveLength(0);
-    },
-  );
+    });
+  });
 
-  test.each(difficultyIds)(
-    "難易度 %s の局面は、その難易度を決める読みで示したマスがちょうど決まること",
-    (difficulty) => {
-      const { givens, deductions } = readMoment(difficulty);
+  describe("takuzuDifficultyPreviewMoments", () => {
+    const momentCases = difficultyIds.map(
+      (difficulty) => [difficulty, readMoment(difficulty)] as const,
+    );
+    const duplicateAvoidanceGivens = [
+      readMoment("4").givens,
+      readMoment("5").givens,
+    ];
 
-      const [firstRound] = traceTakuzuHumanSolve(givens).rounds;
+    test.each(momentCases)(
+      "難易度 %s の局面は、人間向け解法器の最初のラウンドがその難易度で初めて要る読みになり、示したマスがちょうど決まること",
+      (difficulty, { givens, deductions }) => {
+        const [firstRound] = traceTakuzuHumanSolve(givens).rounds;
 
-      expect(firstRound?.technique).toBe(expectedTechniques[difficulty]);
-      expect(firstRound?.deductions).toEqual(deductions);
-    },
-  );
-
-  test("難易度 5 は完成した行・列との見比べを難易度 4 より多くの場所で要すること", () => {
-    const sourceCounts = (["4", "5"] as const).map(
-      (difficulty) =>
-        traceTakuzuHumanSolve(readMoment(difficulty).givens).rounds[0]
-          ?.sourceCount,
+        expect(firstRound?.technique).toBe(expectedTechniques[difficulty]);
+        expect(firstRound?.deductions).toEqual(deductions);
+      },
     );
 
-    expect(sourceCounts).toEqual([1, 2]);
+    test("難易度 5 の局面は完成した行・列との見比べを難易度 4 より多くの場所で要すること", () => {
+      const sourceCounts = duplicateAvoidanceGivens.map(
+        (givens) => traceTakuzuHumanSolve(givens).rounds[0]?.sourceCount,
+      );
+
+      expect(sourceCounts).toEqual([1, 2]);
+    });
   });
 });
