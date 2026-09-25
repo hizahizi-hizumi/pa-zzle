@@ -6,6 +6,8 @@ import { components, hooks, utils } from '@generouted/react-router/client'
 export type Path =
   | `/`
   | `/puzzles/minesweeper`
+  | `/puzzles/minesweeper/difficulty-review`
+  | `/puzzles/minesweeper/difficulty-review/play`
   | `/puzzles/minesweeper/play/:difficulty`
   | `/puzzles/nanpure`
   | `/puzzles/nanpure/play/:difficulty`

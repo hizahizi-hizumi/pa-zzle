@@ -13,6 +13,7 @@
     "test:watch": "vitest",
     "format": "biome check --write .",
     "analyze:minesweeper": "bun scripts/analyze-minesweeper-corpus.ts",
+    "analyze:minesweeper-supply": "bun scripts/analyze-minesweeper-difficulty-supply.ts",
     "generate:water-sort-pool": "bun scripts/generate-water-sort-problem-pool.ts"
   },
   "dependencies": {
