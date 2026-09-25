@@ -10,7 +10,7 @@ export const MINESWEEPER_SCORE_MAXIMUMS = {
  * 速さの満点より大きくし、踏んだ地雷の少ないプレイが速さによらず常に上回るようにする。
  * 推測で開いて時間を縮めても、1回踏めば縮めた時間で得られる点を必ず上回って失う。
  */
-export const MINESWEEPER_MISTAKE_PENALTY = 35;
+export const MINESWEEPER_MISTAKE_PENALTY = 15;
 
 export const MINESWEEPER_SPEED_INITIAL_RECOGNITION_MS = 5_000;
 export const MINESWEEPER_SPEED_PER_MINIMUM_OPEN_MS = 2_000;

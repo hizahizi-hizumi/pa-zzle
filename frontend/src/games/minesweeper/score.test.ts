@@ -3,7 +3,6 @@ import {
   calculateMinesweeperSpeedFullScoreMs,
   calculateMinesweeperTimeDeltaMs,
   getMinesweeperGameResultLevel,
-  MINESWEEPER_MISTAKE_PENALTY,
   MINESWEEPER_SCORE_MAXIMUMS,
 } from "./score";
 
@@ -67,8 +66,8 @@ describe("calculateMinesweeperPlayScore", () => {
 
   test.each([
     { mistakeCount: 0, accuracy: 70 },
-    { mistakeCount: 1, accuracy: 35 },
-    { mistakeCount: 2, accuracy: 0 },
+    { mistakeCount: 1, accuracy: 55 },
+    { mistakeCount: 2, accuracy: 40 },
     { mistakeCount: 5, accuracy: 0 },
   ])(
     "踏んだ地雷 $mistakeCount 個では正確性を $accuracy 点とすること",
@@ -83,24 +82,15 @@ describe("calculateMinesweeperPlayScore", () => {
     },
   );
 
-  test("地雷を1つ踏むと速さの満点を上回って失うこと", () => {
-    expect(MINESWEEPER_MISTAKE_PENALTY).toBeGreaterThan(
-      MINESWEEPER_SCORE_MAXIMUMS.speed,
-    );
-
+  test("地雷を1つでも踏むと速さによらず great に届かないこと", () => {
     const fastWithMistake = calculateMinesweeperPlayScore({
       ...workload,
       elapsedMs: 1_000,
       mistakeCount: 1,
     });
-    const slowWithoutMistake = calculateMinesweeperPlayScore({
-      ...workload,
-      elapsedMs: speedFullScoreMs * 10,
-      mistakeCount: 0,
-    });
 
-    expect(fastWithMistake.total).toBeLessThan(slowWithoutMistake.total);
-    expect(getMinesweeperGameResultLevel(fastWithMistake.total)).toBe("clear");
+    expect(fastWithMistake.total).toBe(85);
+    expect(getMinesweeperGameResultLevel(fastWithMistake.total)).toBe("good");
   });
 
   test("ミスが多く遅いプレイでも0点を下回らないこと", () => {
