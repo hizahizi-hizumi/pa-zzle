@@ -2,12 +2,15 @@ import { useState } from "react";
 
 import { isMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
 import { isNanpurePlayRecord } from "@/games/nanpure/play-record";
+import { isTakuzuPlayRecord } from "@/games/takuzu/play-record";
+import { restoreTakuzuProblem } from "@/games/takuzu/problem-selection";
 import { parseWaterSortDifficulty } from "@/games/water-sort/difficulty";
 import { isWaterSortPlayRecord } from "@/games/water-sort/play-record";
 import { readPlayRecords } from "@/records/storage";
 import { Link, useParams } from "@/router";
 import { PlayableMinesweeper } from "@/views/MinesweeperPlayView/PlayableMinesweeper";
 import { PlayableNanpure } from "@/views/NanpurePlayView/PlayableNanpure";
+import { PlayableTakuzu } from "@/views/TakuzuPlayView/PlayableTakuzu";
 import { PlayableWaterSort } from "@/views/WaterSortPlayView/PlayableWaterSort";
 
 export function RecordedProblemReplayView() {
@@ -59,6 +62,19 @@ export function RecordedProblemReplayView() {
       <PlayableMinesweeper
         difficulty={record.payload.difficulty}
         initialProblemIdentity={record.payload.problemIdentity}
+      />
+    );
+  }
+
+  // 問題は問題集にしか無いので、問題集から引けない identity の記録は再プレイできない。
+  const takuzuInitialProblem = isTakuzuPlayRecord(record)
+    ? restoreTakuzuProblem(record.payload.problemIdentity)
+    : null;
+  if (isTakuzuPlayRecord(record) && takuzuInitialProblem) {
+    return (
+      <PlayableTakuzu
+        difficulty={record.payload.difficulty}
+        initialProblem={takuzuInitialProblem}
       />
     );
   }

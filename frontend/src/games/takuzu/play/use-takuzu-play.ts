@@ -1,14 +1,21 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import type {
-  TakuzuIdentifiedProblem,
   TakuzuProblemIdentity,
+  TakuzuSolveWorkload,
 } from "@/games/takuzu/problem/problem";
+import type { TakuzuPooledProblem } from "@/games/takuzu/problem/problem-pool";
 import { selectTakuzuProblemForDifficulty } from "@/games/takuzu/problem-selection";
 import type { TakuzuCell } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
+import {
+  calculateTakuzuPlayScore,
+  calculateTakuzuSpeedFullScoreMs,
+  calculateTakuzuTimeDeltaMs,
+  type TakuzuPlayScore,
+} from "@/games/takuzu/score";
 import {
   createTakuzuSession,
   cycleTakuzuSessionCell,
@@ -18,6 +25,7 @@ import {
   placeTakuzuSessionCell,
   restartTakuzuSession,
   type TakuzuSession,
+  type TakuzuSessionResult,
 } from "@/games/takuzu/session/session";
 
 /**
@@ -26,9 +34,18 @@ import {
  */
 export type TakuzuProgress = "playing" | "clearing" | "result";
 
+/** クリアしたプレイの事実と、それを遊んだ問題の作業の量から導いた評価。 */
+export type TakuzuResult = TakuzuSessionResult & {
+  workload: TakuzuSolveWorkload;
+  speedFullScoreMs: number;
+  timeDeltaMs: number;
+  score: TakuzuPlayScore;
+};
+
 type TakuzuPlayState = {
   seed: ProblemSeed;
   problemIdentity: TakuzuProblemIdentity;
+  workload: TakuzuSolveWorkload;
   session: TakuzuSession;
   progress: TakuzuProgress;
 };
@@ -40,12 +57,13 @@ const maximumNewProblemSelectionAttempts = 8;
 
 function createPlayState(
   seed: ProblemSeed,
-  { problem, identity }: TakuzuIdentifiedProblem,
+  { problem, identity, workload }: TakuzuPooledProblem,
   startedAt: number,
 ): TakuzuPlayState {
   return {
     seed,
     problemIdentity: identity,
+    workload,
     session: createTakuzuSession(problem, startedAt),
     progress: "playing",
   };
@@ -54,7 +72,16 @@ function createPlayState(
 function startTakuzuPlay(
   difficulty: TakuzuDifficulty,
   startedAt: number,
+  initialProblem: TakuzuPooledProblem | undefined,
 ): TakuzuPlayState {
+  if (initialProblem) {
+    return createPlayState(
+      initialProblem.identity.seed,
+      initialProblem,
+      startedAt,
+    );
+  }
+
   const seed = createProblemSeed();
   return createPlayState(
     seed,
@@ -97,16 +124,36 @@ function applySessionInput(
   };
 }
 
+function createTakuzuResult(
+  sessionResult: TakuzuSessionResult,
+  workload: TakuzuSolveWorkload,
+): TakuzuResult {
+  return {
+    ...sessionResult,
+    workload,
+    speedFullScoreMs: calculateTakuzuSpeedFullScoreMs(workload),
+    timeDeltaMs: calculateTakuzuTimeDeltaMs({
+      elapsedMs: sessionResult.elapsedMs,
+      workload,
+    }),
+    score: calculateTakuzuPlayScore({ ...sessionResult, workload }),
+  };
+}
+
 /**
  * 難易度の問題集から seed で選んだ問題を遊ぶ。
+ * `initialProblem` を渡すと、記録から復元したその問題で始める。
  * リセットは同じ問題を始めから、別の問題は新しい seed で選び直す。
  */
-export function useTakuzuPlay(difficulty: TakuzuDifficulty) {
+export function useTakuzuPlay(
+  difficulty: TakuzuDifficulty,
+  initialProblem?: TakuzuPooledProblem,
+) {
   const [play, setPlay] = useState(() =>
-    startTakuzuPlay(difficulty, Date.now()),
+    startTakuzuPlay(difficulty, Date.now(), initialProblem),
   );
   const [now, setNow] = useState(() => Date.now());
-  const { session, progress } = play;
+  const { session, progress, workload } = play;
 
   useEffect(() => {
     if (session.status !== "playing") {
@@ -184,15 +231,23 @@ export function useTakuzuPlay(difficulty: TakuzuDifficulty) {
     );
   }, []);
 
+  const result = useMemo(() => {
+    const sessionResult = getTakuzuSessionResult(session);
+    return sessionResult ? createTakuzuResult(sessionResult, workload) : null;
+  }, [session, workload]);
+
   return {
     difficulty,
     seed: play.seed,
     problemIdentity: play.problemIdentity,
+    workload,
+    startedAt: session.startedAt,
+    completedAt: session.finishedAt,
     size: session.board.size,
     cells: getTakuzuSessionCellViews(session),
     progress,
     elapsedMs: getTakuzuSessionElapsedMs(session, now),
-    sessionResult: getTakuzuSessionResult(session),
+    result,
     cycleCell,
     placeCell,
     restart,
