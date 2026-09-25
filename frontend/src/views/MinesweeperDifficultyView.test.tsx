@@ -17,10 +17,10 @@ describe("MinesweeperDifficultyView", () => {
   });
 
   test.each(difficultyCases)(
-    "難易度 %s を選ぶとその難易度のプレイ画面へ進めること",
+    "レベル %s を選ぶとそのレベルのプレイ画面へ進めること",
     (difficulty) => {
       const option = screen.getByRole("link", {
-        name: `難易度 ${difficulty}`,
+        name: `レベル ${difficulty}`,
       });
 
       const href = option.getAttribute("href");

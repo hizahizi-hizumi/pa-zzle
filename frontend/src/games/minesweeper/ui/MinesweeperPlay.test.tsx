@@ -344,7 +344,7 @@ describe("MinesweeperPlay", () => {
       const pictogram = document.querySelector(
         'svg[aria-label="マインスイーパー"]',
       );
-      const difficulty = screen.getByText("難易度 1");
+      const difficulty = screen.getByText("レベル 1");
       const score = screen.getByText("77");
       const timeMetric = screen.getByText("時間").parentElement;
       const mistakeMetric = screen.getByText("ミス").parentElement;

@@ -5,11 +5,11 @@ import type {
 } from "@/games/minesweeper/problem/difficulty-analysis";
 
 export const minesweeperDifficulties = [
-  { id: "1", label: "難易度 1" },
-  { id: "2", label: "難易度 2" },
-  { id: "3", label: "難易度 3" },
-  { id: "4", label: "難易度 4" },
-  { id: "5", label: "難易度 5" },
+  { id: "1", label: "レベル 1" },
+  { id: "2", label: "レベル 2" },
+  { id: "3", label: "レベル 3" },
+  { id: "4", label: "レベル 4" },
+  { id: "5", label: "レベル 5" },
 ] as const;
 
 export type MinesweeperDifficulty =
