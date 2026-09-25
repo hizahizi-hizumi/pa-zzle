@@ -42,6 +42,11 @@ export function assertTakuzuBoard(board: TakuzuBoard): void {
  * 固定問題やテストで盤面を読みやすく書くための記法。
  */
 export function parseTakuzuBoard(rows: readonly string[]): TakuzuBoard {
+  const isSquare = rows.every((row) => row.length === rows.length);
+  if (!isSquare) {
+    throw new RangeError("Takuzu board rows must match the board size");
+  }
+
   const cells = rows.flatMap(function parseRow(row) {
     return Array.from(row, function parseCell(notation) {
       if (!isTakuzuCellNotation(notation)) {

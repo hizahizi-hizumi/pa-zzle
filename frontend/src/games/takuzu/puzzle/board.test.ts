@@ -7,6 +7,7 @@ describe("parseTakuzuBoard", () => {
   const rows = ["A.", "B."];
   const unknownNotationRows = ["A0", "B."];
   const oddSizeRows = ["A.B", "B.A", "..."];
+  const unevenRows = ["A.B", "B"];
 
   test("記法の A・B・. をタイルと空きマスへ読み替えること", () => {
     const result = parseTakuzuBoard(rows);
@@ -22,6 +23,12 @@ describe("parseTakuzuBoard", () => {
 
   test("一辺が奇数の盤面を拒否すること", () => {
     const act = () => parseTakuzuBoard(oddSizeRows);
+
+    expect(act).toThrow(RangeError);
+  });
+
+  test("行の長さが一辺と違う盤面を拒否すること", () => {
+    const act = () => parseTakuzuBoard(unevenRows);
 
     expect(act).toThrow(RangeError);
   });
