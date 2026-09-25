@@ -2,6 +2,7 @@ import type {
   DecisionBatch,
   DecisionBatchResult,
   DecisionResult,
+  ProviderRequestIdentity,
   SemanticDecisionProvider,
 } from "../domain/model.ts";
 
@@ -9,10 +10,19 @@ export type FakeDecision = DecisionResult | ((batch: DecisionBatch) => DecisionR
 
 export class FakeDecisionProvider implements SemanticDecisionProvider {
   readonly requests: DecisionBatch[] = [];
+  readonly requestIdentity: ProviderRequestIdentity;
   readonly #decisions: Record<string, FakeDecision>;
 
-  constructor(decisions: Record<string, FakeDecision>) {
+  constructor(
+    decisions: Record<string, FakeDecision>,
+    options: { model?: string } = {},
+  ) {
     this.#decisions = decisions;
+    this.requestIdentity = {
+      kind: "fake",
+      model: options.model ?? "deterministic",
+      requestFormat: "fake/1",
+    };
   }
 
   async evaluate(batch: DecisionBatch): Promise<DecisionBatchResult> {
@@ -32,13 +42,13 @@ export class FakeDecisionProvider implements SemanticDecisionProvider {
 
     return {
       provider: {
-        kind: "fake",
-        model: "deterministic",
+        kind: this.requestIdentity.kind,
+        model: this.requestIdentity.model,
       },
       decisions,
       usage: {
-        inputTokens: 0,
-        outputTokens: 0,
+        inputTokens: batch.requests.length * 100,
+        outputTokens: batch.requests.length,
       },
     };
   }

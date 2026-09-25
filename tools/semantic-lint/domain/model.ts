@@ -97,6 +97,16 @@ export type ProviderIdentity = {
   model: string;
 };
 
+/**
+ * providerへ送るrequestを決める識別情報。requestより前に確定している値だけを持つ。
+ * requestFormatはprovider側のprompt / request組み立てを変えたときに更新する。
+ */
+export type ProviderRequestIdentity = {
+  kind: string;
+  model: string;
+  requestFormat: string;
+};
+
 export type ProviderUsage = {
   inputTokens: number;
   outputTokens: number;
@@ -109,6 +119,7 @@ export type DecisionBatchResult = {
 };
 
 export interface SemanticDecisionProvider {
+  readonly requestIdentity: ProviderRequestIdentity;
   evaluate(batch: DecisionBatch): Promise<DecisionBatchResult>;
 }
 
@@ -145,8 +156,15 @@ export type RunMetrics = {
   unknowns: number;
   inputTokens: number;
   outputTokens: number;
+  cache: CacheMetrics;
   totalDurationMs: number;
   providerLatencyMs: number[];
+};
+
+export type CacheMetrics = {
+  enabled: boolean;
+  hits: number;
+  misses: number;
 };
 
 export type RunResult = {

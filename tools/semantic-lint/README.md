@@ -26,6 +26,9 @@ bun run --cwd tools/semantic-lint check -- frontend/src/games/nanpure
 # draft ruleも含める
 bun run --cwd tools/semantic-lint check -- --include-draft
 
+# 判定cacheを使わずにproviderへ送り直す
+bun run --cwd tools/semantic-lint check -- --no-cache
+
 # rule一覧
 bun run --cwd tools/semantic-lint rules
 
@@ -60,6 +63,33 @@ ruleは対象pathとscopeを宣言する。scope adapterがsourceから判定対
 行範囲やsymbolはmodelに生成させない。Vitestのtest / beforeEach / describeはTypeScript ASTから抽出する。
 
 provider結果へruleのthresholdを1回だけ適用し、canonicalな `Diagnostic` を作る。pretty / compact / JSON出力はこのDiagnosticから生成する。
+
+## 判定cache
+
+`check` と `inspect` は、providerの判定結果をrepository rootの `.semantic-lint/.cache/decisions.jsonl` に保存し、providerへ送る内容が同じ判定を再利用する。`.semantic-lint/.cache/` はGit管理しない。
+
+保存するのはthreshold適用前のprovider判定（Choiceと4 outcomeの確率、confidence、応答したprovider / model）。thresholdは実行ごとにcacheから読んだ判定へ適用するため、thresholdやseverityを変えても再判定しない。
+
+cache keyはrule × subject単位で、providerへ送る1判定分の入力を決める次の要素のSHA-256とする。
+
+- provider種別、設定上のmodel、provider側のprompt / request組み立ての版（TypeSafeでは `TYPESAFE_REQUEST_FORMAT`）
+- ruleのscope、predicateの `instruction` と4 outcomesの文面
+- 文脈として送るfileのpathと全文
+- subjectのid / scope / path / symbol / source
+
+threshold、severity、status、rule id、行番号（subject range）はkeyに含めない。subject rangeはfile全文とsubject idから決まる。
+
+providerへの送信はfileごとのbatchだが、hit / missはtaskごとに判定し、missしたtaskだけでbatchを組み立てる。現在は文脈としてfile全文を送るため、fileを1文字でも変えるとそのfileの全subjectがmissになる。変更のないfileと、rule文面を変えていないruleの判定は再利用する。
+
+新しい判定はprovider応答ごとに追記するため、途中で失敗した実行で得た判定も次回に使える。実行完了時にcacheを書き直し、重複を畳んで、最終利用から30日を過ぎたentryと50,000件を超えた古いentryを削除する。読めない行や形式の合わないentryは無視してmissとして扱い、次の書き直しで削除する。
+
+- `--no-cache`: cacheを読まず、書きもしない。
+- golden caseで判定の揺れを測る `eval` はcacheを使わない。
+- `inspect` で全件hitした場合はprovider responseが空になる。provider応答を見たいときは `--no-cache` を付ける。
+- `doctor` はcache fileのentry数・サイズ・最終利用日時・読めない行数を表示する。
+- provider側のprompt / request組み立てを変えたら `TYPESAFE_REQUEST_FORMAT` を、key構成や保存形式を変えたら `cache/decision-cache.ts` の `CACHE_FORMAT_VERSION` を更新する。古いentryはmissになり、保持期間を過ぎると削除される。cacheを捨てたいときは `.semantic-lint/.cache/` を削除する。
+
+実行サマリにはcache hit / miss数、実際に送ったprovider request数・判定数、providerが返したinput token数を表示する。
 
 rule lifecycleは次の3つ。
 
@@ -98,7 +128,9 @@ severityの `warning / error` はlifecycleとは別に管理する。
 
 ## CI
 
-GitHub ActionsのQuality Gateでは、tool自身のtypecheck / deterministic test / doctor / inspectに加えて、TypeSafe providerを使う通常の `check` も実行する。
+GitHub ActionsのQuality Gateでは、tool自身のtypecheck / deterministic test / doctor / inspectをPRとmainへのpushで実行する。TypeSafe providerを使う通常の `check` は、provider課金を抑えるためmainへのpushと手動実行（workflow_dispatch）でだけ実行し、PRでは実行しない。
+
+Quality Gateは `actions/cache/restore` で `semantic-lint-v1-` から始まる最新の判定cacheを復元してから `check` を実行し、`actions/cache/save` で実行ごとに新しいkey（`semantic-lint-v1-<run_id>-<run_attempt>`）として保存する。lintが失敗した実行でもcacheを保存し、中断前に得た判定を次回へ引き継ぐ。cache形式やkey構成を互換性なく変えたときはprefixの版を上げる。
 
 remote semantic lintはChatGPT用のoffline verificationでは実行しない。ChatGPT用Offline Dependenciesにもsemantic lintの `node_modules` は含めない。
 

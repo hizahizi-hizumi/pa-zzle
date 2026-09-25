@@ -90,7 +90,7 @@ function printHelp(): void {
 使い方:
   semantic-lint check [paths...] [options]
   semantic-lint eval [rule-id...] [--repeat N]
-  semantic-lint inspect <rule-id> <file> [--plan-only]
+  semantic-lint inspect <rule-id> <file> [--plan-only] [--no-cache]
   semantic-lint rules [ruleset-or-rule]
   semantic-lint doctor
 
@@ -100,6 +100,7 @@ check options:
   --files-from <path>
   --fail-on error|warning
   --fail-on-unknown
+  --no-cache
 `);
 }
 

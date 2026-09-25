@@ -1,4 +1,10 @@
-import { resolve } from "node:path";
+import { relative, resolve } from "node:path";
+
+import {
+  decisionCachePath,
+  inspectDecisionCacheFile,
+  type DecisionCacheFileStatus,
+} from "../cache/decision-cache.ts";
 
 import { createDefaultScopeRegistry } from "../scopes/default.ts";
 import { loadProjectContext } from "./context.ts";
@@ -47,8 +53,19 @@ export async function runDoctorCommand(args: string[]): Promise<number> {
     );
   }
 
+  const cacheStatus = await inspectDecisionCacheFile(
+    decisionCachePath(projectRoot),
+  );
+
+  if (cacheStatus.invalidLines > 0) {
+    warnings.push(
+      `判定cacheに読めない行があります（missとして扱い、次回実行時に削除します）: ${cacheStatus.invalidLines}行`,
+    );
+  }
+
   console.log(`rules: ${rules.length}`);
   console.log(`scopes: ${scopes.ids().join(", ")}`);
+  console.log(`cache: ${describeCache(projectRoot, cacheStatus)}`);
   console.log(`errors: ${errors.length}`);
   console.log(`warnings: ${warnings.length}`);
 
@@ -61,6 +78,36 @@ export async function runDoctorCommand(args: string[]): Promise<number> {
   }
 
   return errors.length > 0 ? 2 : 0;
+}
+
+function describeCache(
+  projectRoot: string,
+  status: DecisionCacheFileStatus,
+): string {
+  const path = relative(projectRoot, status.path);
+
+  if (!status.exists) {
+    return `${path} (未作成)`;
+  }
+
+  const usedRange =
+    status.oldestUsedAt && status.newestUsedAt
+      ? `, 最終利用 ${status.oldestUsedAt.toISOString()} 〜 ${status.newestUsedAt.toISOString()}`
+      : "";
+
+  return `${path} (${status.entries} entries, ${formatBytes(status.bytes)}${usedRange})`;
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1_024) {
+    return `${bytes} B`;
+  }
+
+  if (bytes < 1_024 * 1_024) {
+    return `${(bytes / 1_024).toFixed(1)} KiB`;
+  }
+
+  return `${(bytes / 1_024 / 1_024).toFixed(1)} MiB`;
 }
 
 function hasHeadingPath(source: string, section: string): boolean {

@@ -42,7 +42,26 @@ jobs:
       - name: Verify repository quality
         run: ./scripts/verify.sh
 
+      # semantic lintはprovider課金を抑えるため、mainへのpushと手動実行でだけ動かす。
+      - name: Restore semantic lint cache
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: actions/cache/restore@v6
+        with:
+          path: .semantic-lint/.cache
+          key: semantic-lint-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            semantic-lint-v1-
+
       - name: Run semantic lint
+        if: ${{ github.event_name != 'pull_request' }}
         env:
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
         run: bun run --cwd tools/semantic-lint check
+
+      # provider応答ごとに追記した判定を、lintが失敗した実行でも次回へ引き継ぐ。
+      - name: Save semantic lint cache
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        uses: actions/cache/save@v6
+        with:
+          path: .semantic-lint/.cache
+          key: semantic-lint-v1-${{ github.run_id }}-${{ github.run_attempt }}
