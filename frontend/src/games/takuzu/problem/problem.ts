@@ -41,6 +41,18 @@ export type TakuzuProblemIdentity = {
   conditions: TakuzuGenerationConditions;
 };
 
+/**
+ * 問題を解き切るのに要る作業の量。速さの基準時間を問題ごとに決めるのに使い、難易度の判定には使わない。
+ * - `emptyCellCount`: 空きマスの数。置くタイルの数。
+ * - `roundCount`: 人間向け解法器が解き切るまでの局面の数。次に確定できるマスを探し直す回数を表す。
+ * - `lineReadingRoundCount`: そのうち、行・列全体を読む手筋（C 残り1個・D 重複の回避・E 一般の行候補）が要った局面の数。
+ */
+export type TakuzuSolveWorkload = {
+  emptyCellCount: number;
+  roundCount: number;
+  lineReadingRoundCount: number;
+};
+
 /** 問題と、それを再現するための情報。難易度分析を伴わない。 */
 export type TakuzuIdentifiedProblem = {
   problem: TakuzuProblem;
