@@ -1,5 +1,4 @@
-// 暫定版: 難易度ごとの仮の撹拌手数でその場生成する。
-// 難易度分析と問題集を用意した段階で、問題集からの選択へ置き換える。
+// 難易度分析が無いため、撹拌手数を仮の難易度としてその場で生成する。
 import type { FifteenPuzzleDifficulty } from "@/games/fifteen-puzzle/difficulty";
 import { restoreFifteenPuzzleProblem } from "@/games/fifteen-puzzle/problem/generator";
 import {

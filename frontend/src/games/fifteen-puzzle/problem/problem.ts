@@ -25,6 +25,6 @@ export type FifteenPuzzleProblemIdentity = {
 export type FifteenPuzzleGeneratedProblem = {
   problem: FifteenPuzzleProblem;
   identity: FifteenPuzzleProblemIdentity;
-  /** 事前生成した問題集から引く。問題集に無い問題では不明。 */
+  /** 最短手数が分かっている問題だけが持つ。 */
   optimalMoveCount: number | null;
 };
