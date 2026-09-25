@@ -8,6 +8,7 @@ import {
   type TakuzuIdentifiedProblem,
   type TakuzuProblem,
   type TakuzuProblemIdentity,
+  type TakuzuSolveWorkload,
 } from "@/games/takuzu/problem/problem";
 import problemPoolJson from "@/games/takuzu/problem/problem-pool.json";
 import type { TakuzuCell, TakuzuTile } from "@/games/takuzu/puzzle/board";
@@ -29,13 +30,22 @@ export type TakuzuRemovalTechniqueLimitCode =
  * - 生成条件（手筋の上限・戻す数）と候補番号から `createTakuzuProblemIdentity` で identity を再構成する。
  * - `encodedProblem` は解と初期配置を16進で並べた32文字（`encodeTakuzuPoolProblem`）。
  *   実行時に生成器・解探索を呼ばずに問題を復元するため、生成結果そのものを持つ。
+ * - `roundCount` / `lineReadingRoundCount` は生成時の分析結果（`TakuzuSolveWorkload`）。
+ *   速さの基準時間に使う。プレイ時に解法器を動かさずに済むよう、問題集に持たせる。
  */
 export type TakuzuProblemPoolEntry = readonly [
   removalTechniqueLimitCode: TakuzuRemovalTechniqueLimitCode,
   extraGivenCount: number,
   candidateIndex: number,
   encodedProblem: string,
+  roundCount: number,
+  lineReadingRoundCount: number,
 ];
+
+/** 問題集から復元した1問。問題を解き切る作業の量を伴う。 */
+export type TakuzuPooledProblem = TakuzuIdentifiedProblem & {
+  workload: TakuzuSolveWorkload;
+};
 
 export type TakuzuProblemPool = {
   generatorVersion: typeof TAKUZU_GENERATOR_VERSION;
@@ -138,10 +148,18 @@ export function toTakuzuPoolIdentity([
 
 export function toTakuzuPooledProblem(
   entry: TakuzuProblemPoolEntry,
-): TakuzuIdentifiedProblem {
+): TakuzuPooledProblem {
+  const [, , , encodedProblem, roundCount, lineReadingRoundCount] = entry;
+  const problem = decodeTakuzuPoolProblem(encodedProblem);
   return {
-    problem: decodeTakuzuPoolProblem(entry[3]),
+    problem,
     identity: toTakuzuPoolIdentity(entry),
+    workload: {
+      emptyCellCount: problem.givens.cells.filter((cell) => cell === null)
+        .length,
+      roundCount,
+      lineReadingRoundCount,
+    },
   };
 }
 
