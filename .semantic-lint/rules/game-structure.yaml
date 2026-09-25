@@ -1,0 +1,52 @@
+# 人間向け規約の正本: .claude/rules/game-structure.md（原則必須の責務・問題契約・難易度・プレイ評価）
+# 標準位置のうちUI（ui/）以外のファイルを対象にする。ui/ は game-ui ruleset で判定する。
+version: 1
+id: game-structure
+
+paths:
+  - frontend/src/games/*/puzzle/**/*.ts
+  - frontend/src/games/*/problem/problem.ts
+  - frontend/src/games/*/problem/difficulty-analysis.ts
+  - frontend/src/games/*/session/**/*.ts
+  - frontend/src/games/*/play/**/*.ts
+  - frontend/src/games/*/difficulty.ts
+  - frontend/src/games/*/score.ts
+  - frontend/src/games/*/problem-selection.ts
+  - frontend/src/games/*/play-record.ts
+exclude:
+  - "**/*.test.ts"
+
+rules:
+  - id: position-responsibility
+    title: ゲームの標準位置には定義された責務だけを置く
+    unit: file
+    violationThreshold: 0.5
+    instruction: |
+      Each standard position under frontend/src/games/<game>/ holds only its
+      defined responsibility. Determine the position from the file path.
+      puzzle/: puzzle state, rules, legal moves, and state transitions.
+      problem/problem.ts: the data contract for playing one problem;
+      <Game>Problem holds only what is needed to play it, and reproduction
+      information such as seed, generator version, generation conditions, and
+      attempt counts is separated into <Game>ProblemIdentity.
+      problem/difficulty-analysis.ts: derives the features of a problem used
+      for difficulty, without classifying them.
+      session/: the state, operations, and elapsed facts of one play of one
+      problem; it returns facts such as elapsed time, moves, mistakes, and
+      operation counts, and does not compute evaluations or scores.
+      play/: combines problem supply, session, and evaluation to give the UI
+      play state and operations.
+      difficulty.ts: difficulty labels and the policy that classifies problem
+      features into them.
+      score.ts: derives the game's evaluation from the facts of a completed
+      play, including evaluation levels decided from the score.
+      problem-selection.ts: selects a problem that matches the start
+      conditions from the problem supply and difficulty.ts.
+      play-record.ts: connects the game's completion facts to the shared
+      records feature.
+      Violation: the file implements a responsibility of another position,
+      such as computing a score or evaluation in session/, classification
+      thresholds in difficulty-analysis.ts, feature analysis in
+      difficulty.ts, or reproduction information inside <Game>Problem.
+      Not a violation: helpers and types that serve the position's own
+      responsibility; calling other positions through their functions.
