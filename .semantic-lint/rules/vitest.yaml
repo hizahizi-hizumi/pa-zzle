@@ -110,7 +110,9 @@ rules:
   - id: no-condition-in-test-title
     title: テスト名に「場合」「時」を含めない
     unit: test-title
-    violationThreshold: 0.50
+    # golden benchmark (3 runs) の推奨値。leave-one-file-outで選ばれたthresholdは0.50〜0.90（平均0.76）。
+    # 0.80で指摘位置の厳密P/R 0.90 / 0.86。残る誤指摘は「〜中は」「ときは」など、場合・時を含まない条件の表現。
+    violationThreshold: 0.80
     predicate:
       instruction: |
         Determine whether this test case name contains the word 場合 or the

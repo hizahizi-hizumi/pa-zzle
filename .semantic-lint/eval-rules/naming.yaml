@@ -14,7 +14,9 @@ rules:
   - id: meaningful-variable-name
     title: 変数名は保持する値や役割を表す
     unit: variable
-    violationThreshold: 0.50
+    # golden benchmark (3 runs) のleave-one-file-out校正で全foldが選んだthreshold。
+    # 0.50〜0.95のどれでも指摘位置の厳密P/R 1.00 / 1.00（違反7件、実repoの違反なし変数62件）。
+    violationThreshold: 0.60
     predicate:
       instruction: |
         Determine whether the name of this variable declaration describes the
