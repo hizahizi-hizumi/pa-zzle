@@ -85,7 +85,7 @@ rules:
   - id: test-title-describes-behavior
     title: テスト名は具体的な期待動作を散文で書き、識別子は実際の表記を保つ
     unit: test-title
-    # golden benchmark (2 runs) のleave-one-file-outで全foldが選んだthreshold。
+    # golden benchmark (3 runs) のleave-one-file-outで全foldが選んだthreshold。
     # 実repoの違反なしテスト名に誤指摘はなく包含・厳密P 1.00、R 0.50（識別子の言い換えと機械識別子の言い換えのfixtureを取りこぼす）。
     violationThreshold: 0.60
     instruction: |
@@ -109,7 +109,7 @@ rules:
   - id: describe-title
     title: describeの名前は条件か対象の識別子で、モジュール名を繰り返さない
     unit: test-group-title
-    # golden benchmark (2 runs) のleave-one-file-outで全foldが選んだthreshold。厳密P 1.00 / R 0.43。
+    # golden benchmark (3 runs) のleave-one-file-outで全foldが選んだthreshold。厳密P 1.00 / R 0.43。
     # モジュール名と同名のコンポーネント・フックのdescribeをモジュール名の繰り返しと判定しない（ラベル上は違反）。
     # ファイル名とモジュール名の対応をinstructionに明記すると誤指摘が増えたため（P 0.80）、この文面にする。
     violationThreshold: 0.60
@@ -134,7 +134,10 @@ rules:
   - id: act-assert-separation
     title: ActとAssertを分離し、テスト対象の実行をexpectに埋め込まない
     unit: test
-    # golden benchmark (2 runs) のleave-one-file-outで全foldが選んだthreshold。厳密P 1.00 / R 0.83（Assertの後に再びActを行うtestを取りこぼす）。
+    # goldenでは誤指摘がないが、repository全体の実行で正しく分離したtest（trend-value-axis.test.tsのActとAssert）を
+    # 指摘したため、精度を確かめるまでinfoにする。
+    severity: info
+    # golden benchmark (3 runs) のleave-one-file-outで選ばれたthresholdは0.60〜0.75。厳密P 1.00 / R 0.83（Assertの後に再びActを行うtestを取りこぼす）。
     violationThreshold: 0.60
     instruction: |
       A test must keep Arrange, Act, and Assert as clearly separated phases.
@@ -152,7 +155,7 @@ rules:
   - id: dom-query-matches-contract
     title: DOMクエリは検証する契約に合わせて選ぶ
     unit: test
-    # golden benchmark (2 runs) のleave-one-file-outで選ばれたthresholdの平均0.48（0.45〜0.60）。厳密P 1.00 / R 0.50
+    # golden benchmark (3 runs) のleave-one-file-outで選ばれたthresholdの平均0.48（0.45〜0.60）。厳密P 1.00 / R 0.50
     # （labelとの関連が契約のフォーム部品をgetByTextで辿る例を取りこぼす）。
     violationThreshold: 0.50
     instruction: |
@@ -173,7 +176,7 @@ rules:
   - id: immutable-data-as-const
     title: 不変のテストデータはbeforeEachで作り直さずdescribeのconstにする
     unit: setup
-    # golden benchmark (2 runs) のleave-one-file-outで全foldが選んだthreshold。厳密P/R 1.00 / 1.00（違反例はfixtureだけ）。
+    # golden benchmark (3 runs) のleave-one-file-outで全foldが選んだthreshold。厳密P/R 1.00 / 1.00（違反例はfixtureだけ）。
     violationThreshold: 0.60
     instruction: |
       Immutable input values, expected values, and test data must be defined
@@ -187,7 +190,7 @@ rules:
   - id: per-test-state-in-before-each
     title: テストごとに作り直す状態はdescribeのconstで共有せずbeforeEachで準備する
     unit: test-group
-    # golden benchmark (2 runs) のleave-one-file-outで全foldが選んだthreshold。厳密P/R 1.00 / 1.00（違反例はfixtureだけ）。
+    # golden benchmark (3 runs) のleave-one-file-outで全foldが選んだthreshold。厳密P/R 1.00 / 1.00（違反例はfixtureだけ）。
     violationThreshold: 0.60
     instruction: |
       State, mocks, spies, and rendering that must be recreated for each test

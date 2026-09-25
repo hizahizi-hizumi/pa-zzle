@@ -13,7 +13,7 @@ rules:
   - id: hook-state-and-effect
     title: カスタムフックで導出できる値をstateにせず、effectはReact外部との同期に使う
     unit: hook
-    # golden benchmark (2 runs) のleave-one-file-outで選ばれたthresholdの平均0.56（0.55〜0.60）。
+    # golden benchmark (3 runs) のleave-one-file-outで選ばれたthresholdの平均0.56（0.55〜0.60）。
     # 包含P/R 1.00 / 1.00、厳密P 0.50（違反のフック内で関連するstate宣言や戻り値の文も指摘する）。
     violationThreshold: 0.55
     instruction: |

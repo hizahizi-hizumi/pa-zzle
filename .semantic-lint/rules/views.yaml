@@ -9,7 +9,7 @@ rules:
   - id: no-domain-logic-in-view
     title: Viewはゲーム・ドメインや独立した機能の規則を実装しない
     unit: component
-    # golden benchmark (2 runs) のleave-one-file-outで全foldが選んだthreshold。厳密P/R 1.00 / 1.00（違反例はfixtureだけ）。
+    # golden benchmark (3 runs) のleave-one-file-outで全foldが選んだthreshold。厳密P/R 1.00 / 1.00（違反例はfixtureだけ）。
     violationThreshold: 0.60
     instruction: |
       A View connects the responsibilities that make up a screen and must not

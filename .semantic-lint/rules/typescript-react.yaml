@@ -11,7 +11,7 @@ rules:
   - id: props-contract
     title: propsはコンポーネントが必要とする値と操作の意味を明示する
     unit: component
-    # golden benchmark (2 runs) のleave-one-file-outで全foldが選んだthreshold。包含・厳密P 1.00 / R 0.67
+    # golden benchmark (3 runs) のleave-one-file-outで全foldが選んだthreshold。包含・厳密P 1.00 / R 0.67
     # （DOMイベント名のコールバックpropsを取りこぼす。例をinstructionに足しても変わらない）。
     violationThreshold: 0.60
     instruction: |
