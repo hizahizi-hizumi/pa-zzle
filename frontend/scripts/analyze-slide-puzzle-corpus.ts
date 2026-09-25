@@ -8,14 +8,11 @@ import {
   analyzeSlidePuzzleDifficulty,
   type SlidePuzzleDifficultyFeatures,
 } from "@/games/slide-puzzle/problem/difficulty-analysis";
+import { buildSlidePuzzleAllStateDistances } from "@/games/slide-puzzle/problem/generation/all-state-distances";
 import {
-  buildSlidePuzzlePatternDatabase,
-  createSlidePuzzlePatternDatabaseHeuristic,
-} from "@/games/slide-puzzle/problem/generation/pattern-database";
-import {
-  type SlidePuzzleHeuristic,
-  solveSlidePuzzleOptimally,
-} from "@/games/slide-puzzle/problem/generation/solver";
+  createSlidePuzzleOptimalMoveCounter,
+  type SlidePuzzleOptimalMoveCounter,
+} from "@/games/slide-puzzle/problem/generation/optimal-move-count";
 import { generateSlidePuzzleBoard } from "@/games/slide-puzzle/problem/generator";
 import {
   listSlidePuzzlePoolEntries,
@@ -29,15 +26,22 @@ import {
 import {
   calculateSlidePuzzleManhattanDistance,
   getSlidePuzzleBoardSize,
+  isSlidePuzzleBoardSize,
   type SlidePuzzleBoard,
   type SlidePuzzleBoardSize,
 } from "@/games/slide-puzzle/puzzle/state";
 
-// 問題集の候補と同じ seed（fp<撹拌手数>-<連番>）で、撹拌手数ごとに先頭から分析する。
-const corpusScrambleLengths = [
-  10, 15, 20, 25, 30, 35, 40, 50, 60, 80, 100, 120, 160, 200, 300,
-];
-const corpusBoardSize: SlidePuzzleBoardSize = 4;
+// 5×5 は撹拌 80 手を超えると最短手数を求められない候補が増える（難易度再設計調査 §4.3）。
+const corpusScrambleLengthsByBoardSize: Record<
+  SlidePuzzleBoardSize,
+  readonly number[]
+> = {
+  3: [10, 15, 20, 25, 30, 40, 60, 100],
+  4: [10, 15, 20, 25, 30, 35, 40, 50, 60, 80, 100, 120, 160, 200, 300],
+  5: [20, 30, 40, 50, 60, 70, 80],
+};
+// 5×5 の 1 問あたりの探索上限。上限に達した候補は評価不能として数える。
+const fiveByFiveNodeLimit = 200_000_000;
 const greedyTrialCount = 50;
 
 type Sample = SlidePuzzleDifficultyFeatures & {
@@ -46,6 +50,26 @@ type Sample = SlidePuzzleDifficultyFeatures & {
   board: SlidePuzzleBoard;
   solveMs: number;
 };
+
+function readBoardSize(): SlidePuzzleBoardSize {
+  const index = Bun.argv.indexOf("--size");
+  const value = index >= 0 ? Number(Bun.argv[index + 1]) : 4;
+  if (!isSlidePuzzleBoardSize(value)) {
+    throw new RangeError("--size must be 3, 4 or 5");
+  }
+  return value;
+}
+
+/** 4×4 は問題集の候補と同じ seed（fp<撹拌手数>-<連番>）を使う。 */
+function corpusSeedOf(
+  boardSize: SlidePuzzleBoardSize,
+  scrambleLength: number,
+  index: number,
+): string {
+  return boardSize === 4
+    ? `fp${scrambleLength}-${index}`
+    : `sp${boardSize}-${scrambleLength}-${index}`;
+}
 
 function readOption(name: string, fallback: number): number {
   const index = Bun.argv.indexOf(`--${name}`);
@@ -164,25 +188,23 @@ function printTable(headers: readonly string[], rows: readonly string[][]) {
 }
 
 function analyzeCorpus(
+  boardSize: SlidePuzzleBoardSize,
   perScramble: number,
-  heuristic: SlidePuzzleHeuristic,
+  countOptimalMoves: SlidePuzzleOptimalMoveCounter,
 ): Sample[] {
   const samples: Sample[] = [];
   let unsupportedCount = 0;
-  for (const scrambleLength of corpusScrambleLengths) {
+  for (const scrambleLength of corpusScrambleLengthsByBoardSize[boardSize]) {
     for (let index = 0; index < perScramble; index += 1) {
-      const seed = `fp${scrambleLength}-${index}`;
+      const seed = corpusSeedOf(boardSize, scrambleLength, index);
       const board = generateSlidePuzzleBoard(seed, {
-        size: corpusBoardSize,
+        size: boardSize,
         scrambleLength,
       });
       const startedAt = performance.now();
-      const solved = solveSlidePuzzleOptimally(board, { heuristic });
+      const optimalMoveCount = countOptimalMoves(board);
       const solveMs = performance.now() - startedAt;
-      const analysis = analyzeSlidePuzzleDifficulty(
-        board,
-        solved.status === "solved" ? solved.optimalMoveCount : null,
-      );
+      const analysis = analyzeSlidePuzzleDifficulty(board, optimalMoveCount);
       if (analysis.status === "analyzed") {
         samples.push({
           ...analysis.features,
@@ -201,7 +223,11 @@ function analyzeCorpus(
   return samples;
 }
 
-function printCorpusReport(samples: readonly Sample[]) {
+function printCorpusReport(
+  boardSize: SlidePuzzleBoardSize,
+  samples: readonly Sample[],
+) {
+  const corpusScrambleLengths = corpusScrambleLengthsByBoardSize[boardSize];
   console.log("## 撹拌手数ごと\n");
   printTable(
     [
@@ -551,13 +577,12 @@ const swappedFirstRowBoard: SlidePuzzleBoard = [
   2, 1, 4, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0,
 ];
 
-function printHandmadeBoardReport(heuristic: SlidePuzzleHeuristic) {
-  const solved = solveSlidePuzzleOptimally(swappedFirstRowBoard, {
-    heuristic,
-  });
+function printHandmadeBoardReport(
+  countOptimalMoves: SlidePuzzleOptimalMoveCounter,
+) {
   const analysis = analyzeSlidePuzzleDifficulty(
     swappedFirstRowBoard,
-    solved.status === "solved" ? solved.optimalMoveCount : null,
+    countOptimalMoves(swappedFirstRowBoard),
   );
   if (analysis.status !== "analyzed") {
     throw new Error("Handmade board is not analyzable");
@@ -570,11 +595,38 @@ function printHandmadeBoardReport(heuristic: SlidePuzzleHeuristic) {
   console.log(`\`\`\`text\n${formatBoard(swappedFirstRowBoard)}\n\`\`\`\n`);
 }
 
-if (!Bun.argv.includes("--pool-only")) {
-  const heuristic = createSlidePuzzlePatternDatabaseHeuristic(
-    buildSlidePuzzlePatternDatabase(corpusBoardSize),
+/** 3×3 は全配置を幅優先探索でたどれるので、候補に頼らない最短手数の分布も出す。 */
+function printAllStateReport() {
+  const { countsByDistance } = buildSlidePuzzleAllStateDistances();
+  console.log("## 3×3 の全配置の最短手数\n");
+  printTable(
+    ["最短手数", "配置数"],
+    countsByDistance.map((count, distance) => [
+      String(distance),
+      String(count),
+    ]),
   );
-  printCorpusReport(analyzeCorpus(readOption("per-scramble", 300), heuristic));
-  printHandmadeBoardReport(heuristic);
+}
+
+if (!Bun.argv.includes("--pool-only")) {
+  const boardSize = readBoardSize();
+  const countOptimalMoves = createSlidePuzzleOptimalMoveCounter(boardSize, {
+    nodeLimit: boardSize === 5 ? fiveByFiveNodeLimit : undefined,
+  });
+  console.log(`# 盤面 ${boardSize}×${boardSize}\n`);
+  if (boardSize === 3) {
+    printAllStateReport();
+  }
+  printCorpusReport(
+    boardSize,
+    analyzeCorpus(
+      boardSize,
+      readOption("per-scramble", 300),
+      countOptimalMoves,
+    ),
+  );
+  if (boardSize === 4) {
+    printHandmadeBoardReport(countOptimalMoves);
+  }
 }
 printPoolReport();
