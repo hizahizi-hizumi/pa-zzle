@@ -63,6 +63,13 @@ describe("MinesweeperPlay", () => {
       );
     });
 
+    test("ブランドの1行組の下にゲーム名を表示すること", () => {
+      expect(screen.getByRole("img", { name: "pa-zzle" })).toBeTruthy();
+      expect(
+        screen.getByRole("heading", { name: "マインスイーパー" }),
+      ).toBeTruthy();
+    });
+
     test("左上の戻る操作で難易度選択への移動を通知すること", () => {
       fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
 
@@ -349,6 +356,7 @@ describe("MinesweeperPlay", () => {
       const timeMetric = screen.getByText("時間").parentElement;
       const mistakeMetric = screen.getByText("ミス").parentElement;
 
+      expect(screen.getByRole("img", { name: "pa-zzle" })).toBeTruthy();
       expect(heading).toBeTruthy();
       expect(pictogram).toBeTruthy();
       expect(difficulty).toBeTruthy();
