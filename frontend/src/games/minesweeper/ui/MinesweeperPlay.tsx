@@ -9,7 +9,6 @@ import {
   MinesweeperBoard,
   type MinesweeperInputMode,
 } from "@/games/minesweeper/ui/board/MinesweeperBoard";
-import { MinesweeperInputModeControl } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperInputModeControl";
 import { MinesweeperPlayHeader } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperPlayHeader";
 import { MinesweeperPlayStatus } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperPlayStatus";
 
@@ -55,6 +54,9 @@ export function MinesweeperPlay({
       <MinesweeperPlayHeader
         mineCount={mineCount}
         flagCount={flagCount}
+        inputMode={mode}
+        showsInputModeToggle={status === "playing"}
+        onInputModeChange={setMode}
         onReplay={handleReplay}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
@@ -71,11 +73,9 @@ export function MinesweeperPlay({
             onToggleFlag={onToggleFlag}
             onChordCell={onChordCell}
           />
-          {status === "playing" ? (
-            <MinesweeperInputModeControl mode={mode} onChange={setMode} />
-          ) : (
+          {status !== "playing" ? (
             <MinesweeperPlayStatus status={status} />
-          )}
+          ) : null}
         </div>
       </main>
     </section>
