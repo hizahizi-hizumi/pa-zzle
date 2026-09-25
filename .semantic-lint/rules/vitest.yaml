@@ -106,3 +106,25 @@ rules:
         insufficient_context: |
           The available file context is not enough to determine whether
           superficially similar tests represent the same expected behavior.
+
+  - id: no-condition-in-test-title
+    title: テスト名に「場合」「時」を含めない
+    unit: test-title
+    violationThreshold: 0.50
+    predicate:
+      instruction: |
+        Determine whether this test case name contains the word 場合 or the
+        word 時. Conditions belong in an enclosing describe name, and the test
+        case name states only the expected behavior.
+      outcomes:
+        violation: |
+          The name contains 場合, or 時 as its own word meaning when, such as
+          手詰まり時, 通常時, 開始時, or した時.
+        compliant: |
+          Neither appears as such a word. 時 inside another word such as 時間,
+          時計, 時刻, 時点, or 同時 does not count, and とき or なら are outside
+          this rule.
+        not_applicable: |
+          The subject is not a test case name.
+        insufficient_context: |
+          The name cannot be read.

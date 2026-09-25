@@ -1,0 +1,50 @@
+# 実repoのテストコードに対する期待finding。
+# findingsは違反として指摘されるべきテスト名の文字列の位置（lines と columns。columnsは両端を含む列）。
+# 実repoの違反が少ないため、違反例はfixtures/の最小fixtureで補う。
+# ラベル粒度: test / it の第1引数の文字列。describeの名前は対象外。
+# 規約の文面どおり「場合」「時」を対象にし、時間・時計・時刻などの語の一部や「とき」「なら」は違反にしない。
+version: 1
+rule: vitest/no-condition-in-test-title
+baseCommit: 8f5b620e7b14bd3208d2ab8d02b5342b7e6ff205
+files:
+  - path: .semantic-lint/golden/vitest/fixtures/submit-answer.test.ts
+    blob: 0ebf38d5cfb99173f135bcb5213cd2084f757fb5
+    findings:
+      - lines: [9, 9]
+        columns: [8, 25]
+      - lines: [15, 15]
+        columns: [8, 22]
+      - lines: [21, 21]
+        columns: [8, 28]
+      - lines: [60, 60]
+        columns: [8, 25]
+  - path: frontend/src/games/water-sort/ui/WaterSortPlay.test.tsx
+    blob: 377f29ec48469a6c008d113fd43a3e0831b982da
+    findings:
+      - lines: [105, 105]
+        columns: [8, 40]
+      - lines: [240, 240]
+        columns: [8, 34]
+  - path: frontend/src/games/water-sort/play/use-water-sort-play.test.ts
+    blob: 94717c7f0646e33fe3f42d00dd882c39b685e85e
+    findings:
+      - lines: [82, 82]
+        columns: [5, 42]
+        note: 開始時は「〜時」の形。時期を表すだけで条件ではないとも読め、判断が割れうる
+  - path: frontend/src/games/nanpure/session/session.test.ts
+    blob: 1b386049318ca8dd99fe9e2962a8eec2cca2b23f
+    note: 「クリア時点」の時点は時を含む別の語として違反にしない。判断が割れうる
+    findings: []
+  - path: frontend/src/records/ui/PlayRecordsScreen/trend-value-axis.test.ts
+    blob: 1668f20e88071d3994c21ec3101d5710eae96330
+    note: 時間・時計は単語の一部。「ときは」は規約の対象外
+    findings: []
+  - path: frontend/src/games/water-sort/score.test.ts
+    blob: 20ddb63f4c91d8318eb9c1a2de29fbed361af227
+    findings: []
+  - path: frontend/src/games/nanpure/score.test.ts
+    blob: de82af27aa215c172a62000ca518d040dc504bae
+    findings: []
+  - path: frontend/src/games/water-sort/play-record.test.ts
+    blob: 966293726aad86a2d05d6f2836ec872291164f68
+    findings: []

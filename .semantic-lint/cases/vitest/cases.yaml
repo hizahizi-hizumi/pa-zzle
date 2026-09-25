@@ -41,3 +41,13 @@ cases:
     name: 入力違いをtest.eachで表現する
     fixture: fixtures/table-driven-cases/compliant.ts
     expected: compliant
+
+  - rule: no-condition-in-test-title
+    name: テスト名に条件の「場合」を書く
+    fixture: fixtures/no-condition-in-test-title/violation.ts
+    expected: violation
+
+  - rule: no-condition-in-test-title
+    name: 条件をdescribeに置き、テスト名は「時刻」だけを含む
+    fixture: fixtures/no-condition-in-test-title/compliant.ts
+    expected: compliant
