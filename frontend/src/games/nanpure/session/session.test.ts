@@ -1,6 +1,6 @@
-import type { NanpureProblem } from "../problem/problem";
-import type { NanpureCell } from "../puzzle/board";
-import { findNanpureConflictCellIndices } from "../puzzle/rules";
+import type { NanpureProblem } from "@/games/nanpure/problem/problem";
+import type { NanpureCell } from "@/games/nanpure/puzzle/board";
+import { findNanpureConflictCellIndices } from "@/games/nanpure/puzzle/rules";
 import {
   canUndoNanpureSession,
   clearNanpureCell,
@@ -13,7 +13,7 @@ import {
   restartNanpureSession,
   toggleNanpureNote,
   undoNanpureSession,
-} from "./session";
+} from "@/games/nanpure/session/session";
 
 function boardFromRows(rows: readonly string[]): NanpureCell[] {
   return rows.flatMap((row) =>

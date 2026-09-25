@@ -21,8 +21,8 @@ import {
 import type { PlayRecord } from "@/records/play-record";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 import { formatRecordCompletedAt } from "@/records/ui/format";
+import { getTrendValueAxis } from "@/records/ui/PlayRecordsScreen/trend-value-axis";
 import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
-import { getTrendValueAxis } from "./trend-value-axis";
 
 type PlayRecordsTrendProps = {
   records: readonly PlayRecord[];

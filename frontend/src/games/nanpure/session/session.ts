@@ -1,21 +1,24 @@
-import { assertNanpureProblem, type NanpureProblem } from "../problem/problem";
+import {
+  assertNanpureProblem,
+  type NanpureProblem,
+} from "@/games/nanpure/problem/problem";
 import {
   assertNanpureCellIndex,
   NANPURE_DIGITS,
   NANPURE_SIZE,
   type NanpureBoard,
   type NanpureDigit,
-} from "../puzzle/board";
-import { isNanpureSolved } from "../puzzle/rules";
+} from "@/games/nanpure/puzzle/board";
+import { isNanpureSolved } from "@/games/nanpure/puzzle/rules";
 import {
   clearNanpureCellNotes,
   clearNanpureNotesForCorrectEntry,
   createEmptyNanpureNotes,
   type NanpureNotes,
   toggleNanpureNoteDigit,
-} from "./notes";
+} from "@/games/nanpure/session/notes";
 
-export type { NanpureNotes } from "./notes";
+export type { NanpureNotes } from "@/games/nanpure/session/notes";
 
 export type NanpureSessionStatus = "playing" | "cleared";
 

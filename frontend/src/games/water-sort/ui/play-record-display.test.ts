@@ -1,10 +1,9 @@
 import { createWaterSortPlayRecord } from "@/games/water-sort/play-record";
+import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 
-import { waterSortPlayRecordDisplay } from "./play-record-display";
-
 const record = createWaterSortPlayRecord({
-  difficulty: "normal",
+  difficulty: "3",
   problemIdentity: {
     generatorVersion: "1",
     seed: "water-sort-seed",
@@ -48,9 +47,12 @@ describe("waterSortPlayRecordDisplay", () => {
     expect(moveDelta).toBe("+2");
   });
 
-  test("比較条件を利用者向けラベルへ変換すること", () => {
-    const label = waterSortPlayRecordDisplay.getComparisonLabel("normal");
+  test.each([
+    ["3", "レベル 3"],
+    ["normal", "ふつう"],
+  ])("比較条件 %s を利用者向けラベル %s へ変換すること", (key, expected) => {
+    const label = waterSortPlayRecordDisplay.getComparisonLabel(key);
 
-    expect(label).toBe("ふつう");
+    expect(label).toBe(expected);
   });
 });

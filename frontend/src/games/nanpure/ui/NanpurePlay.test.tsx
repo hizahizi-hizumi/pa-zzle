@@ -6,11 +6,9 @@ import {
   within,
 } from "@testing-library/react";
 import type { ComponentProps } from "react";
-
+import { NanpurePlay } from "@/games/nanpure/ui/NanpurePlay";
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
-
-import { NanpurePlay } from "./NanpurePlay";
 
 afterEach(cleanup);
 

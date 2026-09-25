@@ -1,6 +1,6 @@
-import { assessNanpureDifficulty } from "./difficulty";
-import { classifyNanpureSolutions } from "./problem/generation/solver";
-import { generateNanpureProblemForDifficulty } from "./problem-selection";
+import { assessNanpureDifficulty } from "@/games/nanpure/difficulty";
+import { classifyNanpureSolutions } from "@/games/nanpure/problem/generation/solver";
+import { generateNanpureProblemForDifficulty } from "@/games/nanpure/problem-selection";
 
 describe("generateNanpureProblemForDifficulty", () => {
   const cases = [
