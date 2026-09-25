@@ -6,6 +6,38 @@ import {
 } from "@/games/fifteen-puzzle/problem/generation/pattern-database";
 import { solveFifteenPuzzleOptimally } from "@/games/fifteen-puzzle/problem/generation/solver";
 import { generateFifteenPuzzleBoard } from "@/games/fifteen-puzzle/problem/generator";
+import {
+  applyFifteenPuzzleSlide,
+  getFifteenPuzzleSlide,
+  listFifteenPuzzleSingleMoves,
+} from "@/games/fifteen-puzzle/puzzle/rules";
+import {
+  createSolvedFifteenPuzzleBoard,
+  type FifteenPuzzleBoard,
+} from "@/games/fifteen-puzzle/puzzle/state";
+
+function listBoardsWithinDistanceFromSolved(
+  maxDistance: number,
+): readonly (readonly [FifteenPuzzleBoard, number])[] {
+  const solvedBoard = createSolvedFifteenPuzzleBoard();
+  const visited = new Set([solvedBoard.join(",")]);
+  const entries: (readonly [FifteenPuzzleBoard, number])[] = [[solvedBoard, 0]];
+  for (const [board, distance] of entries) {
+    if (distance === maxDistance) {
+      continue;
+    }
+    for (const tileIndex of listFifteenPuzzleSingleMoves(board)) {
+      const slide = getFifteenPuzzleSlide(board, tileIndex);
+      const nextBoard = slide ? applyFifteenPuzzleSlide(board, slide) : board;
+      const key = nextBoard.join(",");
+      if (!visited.has(key)) {
+        visited.add(key);
+        entries.push([nextBoard, distance + 1]);
+      }
+    }
+  }
+  return entries;
+}
 
 describe("createFifteenPuzzlePatternDatabaseHeuristic", () => {
   // テストでは小さな集合だけを使い、構築を一瞬で終わらせる。
@@ -43,6 +75,26 @@ describe("createFifteenPuzzlePatternDatabaseHeuristic", () => {
       expect(estimate).toBeLessThanOrEqual(optimalMoveCount ?? 0);
     },
   );
+
+  describe("3 枚ずつの集合の場合", () => {
+    const threeTileHeuristic = createFifteenPuzzlePatternDatabaseHeuristic(
+      buildFifteenPuzzlePatternDatabase([
+        [1, 2, 3],
+        [5, 6, 9],
+        [4, 7, 8],
+      ]),
+    );
+    const boardsWithinDistance = listBoardsWithinDistanceFromSolved(12);
+
+    test("完成盤面から 12 手以内の全盤面で、下界が完成までの最短手数を超えないこと", () => {
+      const overestimated = boardsWithinDistance.filter(
+        ([board, distance]) =>
+          threeTileHeuristic.reset(Uint8Array.from(board)) > distance,
+      );
+
+      expect(overestimated).toEqual([]);
+    });
+  });
 });
 
 describe("buildFifteenPuzzlePatternDatabase", () => {
