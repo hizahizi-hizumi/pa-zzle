@@ -73,7 +73,9 @@ provider結果へruleのthresholdを1回だけ適用し、canonicalな `Diagnost
 
 ### 違反箇所の特定
 
-指摘範囲はunit全体ではなく、unitの中で違反している箇所にする（例えばtest本体のArrangeなら `const values = [1, 2, 3];` の文）。判定は2段で、rule作者は何も書かない。
+指摘範囲はunit全体ではなく、unitの中で違反している箇所にする（例えばtest本体のArrangeなら `const values = [1, 2, 3];` の文）。rule作者は何も書かない。
+
+カタログがunitの指摘位置（`report`）を宣言しているunit（`variable` / `test-title`）は、位置を構文で静的に決める（「指摘位置を宣言したunit」を参照）。それ以外のunitは次の2段で判定する。
 
 1. unitを違反と判定する（4択のchoice。ruleの `violationThreshold` と比べる）。
 2. 違反と判定したunitの中の候補（part）ごとに、そこが違反箇所かを判定する（yes / noの確率を返すnoul）。
@@ -90,6 +92,29 @@ partは構文だけで決める。unit直下の文（カタログの `statement`
 
 Diagnosticの `range` は違反箇所、`subjectRange` / `symbol` は違反と判定したunit、`probability` はunitの違反確率、`partProbability` は選んだpartの確率。
 
+### 指摘位置を宣言したunit
+
+文より細かい位置（変数名・テスト名の文字列など）への指摘は、modelに位置を選ばせず、カタログのデータで決める。`units.yaml` のunitに `report: <capture名>` を書き、各言語のqueryにそのcaptureを持たせる。
+
+```yaml
+# catalog/units.yaml
+variable:
+  level: syntax
+  description: 変数宣言（名前が1つの識別子の宣言子ごと。初期値を含む）
+  report: name
+
+# catalog/syntax/typescript.yaml
+variable:
+  symbol: "{name}"
+  query: |
+    (variable_declarator name: (identifier) @name) @unit
+```
+
+- 判定は `@unit` の範囲（変数なら初期値を含む宣言）で1段だけ行い、違反なら `@name` の範囲を指摘する。Diagnosticの `range` はその範囲（列を含む）、`subjectRange` は判定したunit。
+- 2段目の違反箇所は問わず、partを持たない。他のunitのpartや子unitにもならないため、`variable` を判定するruleを追加しても、同じfileの `test` などのpartは変わらない。
+- 囲むコードの一部として扱い、判定対象でないときは目印を付けずに本文を残す（`/* omitted */` にしない）。そのため、testだけを判定するrequestのstateとcache keyは、`variable` / `test-title` のunitがあってもなくても同じ。
+- `report` のcaptureを持たないqueryはカタログの読み込みエラーになる。
+
 ### unit語彙
 
 ruleの `unit` には意味の名前を書く。どの構文を抽出するかは、ファイルの拡張子から決まる言語とカタログの定義で決まる。
@@ -99,7 +124,9 @@ ruleの `unit` には意味の名前を書く。どの構文を抽出するか�
 | `file` | file | ファイル全体。構文解析しないため全言語で使える |
 | `function` | 汎用 | 関数宣言・関数式・arrow function・method |
 | `statement` | 汎用 | ブロック直下の文（入れ子の文もそれぞれ1 unit） |
+| `variable` | 汎用・指摘位置あり | 変数宣言子（`const` / `let` / `var`。for文の初期化を含む）。名前が1つの識別子のものだけで、分割代入は含めない。指摘位置は宣言した名前。文脈は同じscope以下の `test` / `test-group` / `setup` / `teardown` / `function` / `component` / `hook` |
 | `test` | 名前付き | Vitestの `test` / `it` 呼び出し（`test.each(...)(...)`、`it.skip` などを含む）。第1引数が文字列リテラルのもの |
+| `test-title` | 名前付き・指摘位置あり | `test` のケース名の文字列（第1引数）。unitと指摘位置は同じ範囲。`describe` の名前は含まない |
 | `test-group` | 名前付き | Vitestの `describe` 呼び出し（`describe.each` を含む） |
 | `setup` | 名前付き | Vitestの `beforeEach` / `beforeAll` 呼び出し |
 | `teardown` | 名前付き | Vitestの `afterEach` / `afterAll` 呼び出し |
@@ -112,7 +139,7 @@ ruleの `unit` には意味の名前を書く。どの構文を抽出するか�
 
 カタログは `tools/semantic-lint/catalog/` のデータで、rule作者は編集しない。構文解析はweb-tree-sitterとnpmのwasm文法（`tree-sitter-typescript` / `tree-sitter-javascript`）で行い、native buildに依存しない。
 
-- `units.yaml`: 語彙。unit名、level（`file` / `syntax` / `framework`）、判定時の文脈（`context`）。
+- `units.yaml`: 語彙。unit名、level（`file` / `syntax` / `framework`）、判定時の文脈（`context`）、指摘位置（`report`）。
 - `languages.yaml`: 言語ごとの拡張子、wasm文法、scopeになる構文node、unit本文を置き換える目印。
 - `syntax/*.yaml`: 汎用unitの言語ごとのtree-sitter query。
 - `frameworks/*.yaml`: 名前付きunitの「言語 × フレームワーク」のtree-sitter query。`@unit` captureがunitの範囲、`symbol` の `{capture}` が表示名になる（文字列リテラルは値をJSON文字列にする）。`contains` で子孫に特定nodeを含むものだけに絞れる。
@@ -157,7 +184,7 @@ cache keyはrule × unit単位で、1判定の答えを決める次の要素のS
 
 threshold、severity、rule id、title、行番号はkeyに含めない。
 
-同じファイルの別unitの本文だけを変えた場合、変えたunitだけがmissする。文脈に宣言したunit（testから見たsetupなど）や骨格（importや補助関数）を変えた場合は、それに依存するunitがmissする。unitの追加・削除や、そのファイルに適用するunitの種類の変更は骨格を変えるため、そのファイルの判定がmissする。
+同じファイルの別unitの本文だけを変えた場合、変えたunitだけがmissする。指摘位置を宣言したunit（`variable` / `test-title`）は骨格の一部なので、変数宣言を変えると同じfileの `variable` の判定と、その宣言を含むunit・骨格に依存するunitがmissする。文脈に宣言したunit（testから見たsetupなど）や骨格（importや補助関数）を変えた場合は、それに依存するunitがmissする。unitの追加・削除や、そのファイルに適用するunitの種類の変更は骨格を変えるため、そのファイルの判定がmissする。
 
 providerへの送信はfileごとのbatchだが、hit / missはtaskごとに判定し、missしたtaskだけでbatchを組み立てる。
 
@@ -202,7 +229,13 @@ providerへの送信はfileごとのbatchだが、hit / missはtaskごとに判�
 - `not_applicable`: subjectにその規約を適用する意味がない。
 - `insufficient_context`: 与えたcontextだけでは判断できない。
 
-rule追加でTypeScript実装は変更しない。必要なunitが語彙にない場合は、`catalog/units.yaml` へ語彙を、`catalog/frameworks/` または `catalog/syntax/` へqueryを追加する。
+rule追加でTypeScript実装は変更しない。必要なunitが語彙にない場合は、`catalog/units.yaml` へ語彙を、`catalog/frameworks/` または `catalog/syntax/` へqueryを追加する。変数名・引数・属性・文字列・コメントなど文より細かい位置を指摘するruleは、その位置を `report` で宣言したunitを使う（なければ語彙とqueryを追加する）。ruleには `unit: variable` のように書くだけで、位置の決め方は書かない。
+
+`variable` のように数の多いunitは質問数がそのまま増える（1 unitあたり推定約250〜350 input token）。追加前に `check --plan-only --no-cache` でrepository全体の推定tokenを確認する。
+
+### 評価専用のruleset
+
+人間向け規約に正本がなく本番へ入れないが、判定方式の評価に使うruleは、`.semantic-lint/config.yaml` の `evalRulesDir`（既定の設定では `.semantic-lint/eval-rules/`）に置く。`bench` と `doctor` だけが読み、`check` / `inspect` では実行しない。goldenは通常どおり `.semantic-lint/golden/` に置く。
 
 最小のrule例:
 
@@ -249,6 +282,16 @@ files:
     findings: [] # 指摘なしが正解
 ```
 
+指摘位置を宣言したunitのruleでは、同じ行の別の名前と区別するため `columns: [開始列, 終了列]`（1始まり、両端を含む）も書く。
+
+```yaml
+    findings:
+      - lines: [4, 4]
+        columns: [9, 12] # const data = ... の data
+```
+
+- 実repoに違反が少ないruleは、`.semantic-lint/golden/<ruleset>/fixtures/` の最小fixtureで違反例を補い、実repoの違反なしファイルを必ず含めてprecisionを測る。
+
 - `blob` はラベルを付けた時点のファイル内容を固定する。working treeが変わっても `bench` はそのblobを `git cat-file` で読んで評価するため、Git履歴にblobが必要。
 - working treeとblobが異なるファイルは `doctor` と `bench` がwarningを出す。ラベルを見直してから `blob` と行範囲を更新する。
 - `bench` はgoldenの対象ファイルだけを、現行のrule定義とthresholdで評価する。thresholdを掃引するため、2段目はthreshold未満も含めて違反と判定した全unitについて問う（`check` より2段目のrequestが少し多い）。`check` と同じくfileごとに1 requestへまとめ、各fileではそのfileをgoldenに持つruleだけを判定する。
@@ -260,7 +303,8 @@ files:
 - file: 指摘の有無だけを比較するprecision / recall。
 - 包含(unit): 違反と判定したunitの範囲が期待行範囲を含めば一致。1段目の判定だけの精度。
 - 包含(箇所): 違反箇所の指摘が期待行範囲を含めば一致。
-- 厳密: 違反箇所の指摘の開始行と終了行が `--line-tolerance` (既定1) 以内なら1対1で一致。`check` の出力と同じ指摘で採点する。
+- 厳密: 違反箇所の指摘の開始行と終了行が `--line-tolerance` (既定1) 以内なら1対1で一致。期待範囲が `columns` を持つときは行と列の完全一致だけを一致とする。`check` の出力と同じ指摘で採点する。
+- 包含は、両方が列を持つときは列まで比べ、どちらかが列を持たなければ行だけで比べる。
 - findingsの全run共通数とrunによる揺れ、判定分布、provider request数、input / output tokens、threshold sweep。
 - 校正: 厳密一致のF1が最大になるthreshold（同点なら包含(unit)のF1、それでも同点なら中央）を推奨値として出す。gapは違反候補の最低scoreとクリーン候補の最高scoreの差、headroomは推奨値から最高クリーンscoreまでの距離。
 - LOFO CV: 1ファイルを外して校正したthresholdでそのファイルを採点し、全ファイルを合わせた包含(unit) / 厳密P/R。ruleのthresholdは全体の推奨値ではなく、CVで性能を確認したうえで決める。
