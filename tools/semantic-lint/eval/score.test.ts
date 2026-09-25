@@ -36,6 +36,37 @@ const golden: GoldenSet = {
 };
 
 describe("scoreFindings", () => {
+  test("期待範囲が列を持つときは、同じ行の別の位置の指摘と区別する", () => {
+    const named: GoldenSet = {
+      ...golden,
+      files: [
+        {
+          path: "a.ts",
+          blob: "1".repeat(40),
+          findings: [{ startLine: 1, endLine: 1, startColumn: 7, endColumn: 11 }],
+        },
+      ],
+    };
+    const score = scoreFindings(
+      named,
+      [
+        { path: "a.ts", startLine: 1, endLine: 1, startColumn: 7, endColumn: 11 },
+        { path: "a.ts", startLine: 1, endLine: 1, startColumn: 25, endColumn: 30 },
+      ],
+      { lineTolerance: 1 },
+    );
+
+    expect(score.strict).toMatchObject({
+      matchedExpected: 1,
+      findings: 2,
+      matchedFindings: 1,
+    });
+    expect(score.containment).toMatchObject({ matchedFindings: 1 });
+    expect(score.falseFindings).toEqual([
+      { path: "a.ts", startLine: 1, endLine: 1, startColumn: 25, endColumn: 30 },
+    ]);
+  });
+
   test("期待行を包含するsubject全体の指摘を包含一致として数える", () => {
     const score = scoreFindings(
       golden,

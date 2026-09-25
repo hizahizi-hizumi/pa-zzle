@@ -54,6 +54,28 @@ describe("compileGoldenSet", () => {
     });
   });
 
+  test("列は両端を含む範囲として読み、終了列は範囲の直後にする", () => {
+    const golden = compileGoldenSet(
+      {
+        version: 1,
+        rule: "naming/sample",
+        baseCommit: "a".repeat(40),
+        files: [
+          {
+            path: "frontend/a.ts",
+            blob: "b".repeat(40),
+            findings: [{ lines: [1, 1], columns: [7, 10] }],
+          },
+        ],
+      },
+      "golden.yaml",
+    );
+
+    expect(golden.files[0]?.findings).toEqual([
+      { startLine: 1, endLine: 1, startColumn: 7, endColumn: 11 },
+    ]);
+  });
+
   test("開始行が終了行より後の範囲を拒否する", () => {
     expect(() =>
       compileGoldenSet(

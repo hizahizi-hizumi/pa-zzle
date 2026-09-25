@@ -5,6 +5,12 @@ import { YAML } from "bun";
 export type GoldenFinding = {
   startLine: number;
   endLine: number;
+  /**
+   * 開始行での開始列と、終了行での終了列（1始まり、終了は範囲の直後の列）。
+   * 変数名など文より細かい指摘位置を表すときだけ書き、省略すると行単位で採点する。
+   */
+  startColumn?: number;
+  endColumn?: number;
   note?: string;
 };
 
@@ -127,6 +133,8 @@ function compileGoldenFinding(value: unknown, location: string): GoldenFinding {
     !isRecord(value) ||
     !Array.isArray(value.lines) ||
     value.lines.length !== 2 ||
+    (value.columns !== undefined &&
+      (!Array.isArray(value.columns) || value.columns.length !== 2)) ||
     !isOptionalString(value.note)
   ) {
     throw new Error(`golden findingが不正です: ${location}`);
@@ -142,9 +150,26 @@ function compileGoldenFinding(value: unknown, location: string): GoldenFinding {
     throw new Error(`golden findingの行範囲が不正です: ${location}`);
   }
 
+  // columnsは [開始列, 終了列] で、終了列は範囲の最後の文字の列（両端を含む）。
+  const [startColumn, lastColumn] = Array.isArray(value.columns)
+    ? value.columns
+    : [undefined, undefined];
+
+  if (
+    value.columns !== undefined &&
+    (!isPositiveInteger(startColumn) ||
+      !isPositiveInteger(lastColumn) ||
+      (startLine === endLine && startColumn > lastColumn))
+  ) {
+    throw new Error(`golden findingの列範囲が不正です: ${location}`);
+  }
+
   return {
     startLine,
     endLine,
+    ...(isPositiveInteger(startColumn) && isPositiveInteger(lastColumn)
+      ? { startColumn, endColumn: lastColumn + 1 }
+      : {}),
     ...(value.note === undefined ? {} : { note: value.note }),
   };
 }

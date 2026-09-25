@@ -6,6 +6,7 @@ import type {
   Rule,
   RunResult,
   SemanticDecisionProvider,
+  SourceRange,
 } from "../domain/model.ts";
 import { runEvaluationPlan } from "../engine/run.ts";
 import { buildDecisionBatches } from "../planning/batches.ts";
@@ -17,7 +18,12 @@ import type {
   GoldenSet,
   ResolvedGoldenFile,
 } from "./golden.ts";
-import type { FindingRange, ScoredEvaluation } from "./score.ts";
+import {
+  type FindingRange,
+  findingRange,
+  formatRange,
+  type ScoredEvaluation,
+} from "./score.ts";
 
 /** 1回の実行を方式非依存に採点するための記録。 */
 export type BenchmarkRun = {
@@ -329,33 +335,50 @@ export function benchmarkRunFromRunResult(
   const ownDiagnostics = result.diagnostics.filter(
     (diagnostic) => diagnostic.ruleId === ruleId,
   );
+  // 指摘位置を宣言したunitの指摘は、同じ行の別の名前と区別するため列まで採点する。
+  const reportedSubjects = new Set(
+    ownEvaluations
+      .filter((evaluation) => evaluation.subject.reportRange !== undefined)
+      .map((evaluation) =>
+        formatRange(findingRange(evaluation.subject.path, evaluation.subject.range)),
+      ),
+  );
+  const scoredRange = (path: string, subject: SourceRange, range: SourceRange) =>
+    reportedSubjects.has(formatRange(findingRange(path, subject)))
+      ? findingRange(path, range)
+      : { path, startLine: range.startLine, endLine: range.endLine };
   const units = new Map(
-    ownDiagnostics.map((diagnostic) => [
-      `${diagnostic.path}:${diagnostic.subjectRange.startLine}-${diagnostic.subjectRange.endLine}`,
-      {
-        path: diagnostic.path,
-        startLine: diagnostic.subjectRange.startLine,
-        endLine: diagnostic.subjectRange.endLine,
-      },
-    ]),
+    ownDiagnostics.map((diagnostic) => {
+      const range = scoredRange(
+        diagnostic.path,
+        diagnostic.subjectRange,
+        diagnostic.subjectRange,
+      );
+
+      return [formatRange(range), range];
+    }),
   );
 
   return {
-    findings: ownDiagnostics.map((diagnostic) => ({
-      path: diagnostic.path,
-      startLine: diagnostic.range.startLine,
-      endLine: diagnostic.range.endLine,
-    })),
+    findings: ownDiagnostics.map((diagnostic) =>
+      scoredRange(diagnostic.path, diagnostic.subjectRange, diagnostic.range),
+    ),
     unitFindings: [...units.values()],
     evaluations:
       ownEvaluations.length === 0
         ? null
         : ownEvaluations.map((evaluation) => ({
             path: evaluation.subject.path,
-            range: {
-              startLine: evaluation.subject.range.startLine,
-              endLine: evaluation.subject.range.endLine,
-            },
+            range:
+              evaluation.subject.reportRange === undefined
+                ? {
+                    startLine: evaluation.subject.range.startLine,
+                    endLine: evaluation.subject.range.endLine,
+                  }
+                : evaluation.subject.range,
+            ...(evaluation.subject.reportRange === undefined
+              ? {}
+              : { report: evaluation.subject.reportRange }),
             decision: evaluation.result.decision,
             violationProbability: evaluation.result.probabilities.violation,
             ...(evaluation.parts === undefined

@@ -1,6 +1,8 @@
 import type { GoldenSet } from "./golden.ts";
 import {
+  containsRange,
   type FindingRange,
+  findingRange,
   findingsAtThreshold,
   type ScoredEvaluation,
   scoreFindings,
@@ -176,7 +178,7 @@ function candidateScores(
   runs: ReadonlyArray<readonly ScoredEvaluation[]>,
 ): { positives: number[]; cleans: number[] } {
   const expected = golden.files.flatMap((file) =>
-    file.findings.map((finding) => ({ path: file.path, ...finding })),
+    file.findings.map((finding) => findingRange(file.path, finding)),
   );
   const goldenPaths = new Set(golden.files.map((file) => file.path));
   const positives: number[] = [];
@@ -191,13 +193,8 @@ function candidateScores(
         continue;
       }
 
-      const { range } = evaluation;
-      const hit = expected.some(
-        (finding) =>
-          finding.path === evaluation.path &&
-          range.startLine <= finding.startLine &&
-          range.endLine >= finding.endLine,
-      );
+      const unit = findingRange(evaluation.path, evaluation.range);
+      const hit = expected.some((finding) => containsRange(unit, finding));
       (hit ? positives : cleans).push(evaluation.violationProbability);
     }
   }

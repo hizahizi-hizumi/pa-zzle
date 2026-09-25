@@ -7,7 +7,10 @@ import type {
 import { type Calibration, calibrate } from "./calibrate.ts";
 import type { GoldenFileStatus } from "./golden.ts";
 import {
+  compareRanges,
   type FindingRange,
+  findingRange,
+  formatRange,
   type FindingStability,
   findingStability,
   findingsAtThreshold,
@@ -333,11 +336,10 @@ function subjectDecisions(runs: BenchmarkRun[]): SubjectDecisions[] {
 
   for (const [index, run] of runs.entries()) {
     for (const evaluation of run.evaluations ?? []) {
-      const key = `${evaluation.path}:${evaluation.range.startLine}-${evaluation.range.endLine}`;
+      const range = findingRange(evaluation.path, evaluation.range);
+      const key = formatRange(range);
       const entry = bySubject.get(key) ?? {
-        path: evaluation.path,
-        startLine: evaluation.range.startLine,
-        endLine: evaluation.range.endLine,
+        ...range,
         decisions: runs.map(() => null),
         violationProbabilities: runs.map(() => null),
         parts: [],
@@ -359,10 +361,7 @@ function subjectDecisions(runs: BenchmarkRun[]): SubjectDecisions[] {
     }
   }
 
-  return [...bySubject.values()].sort(
-    (left, right) =>
-      left.path.localeCompare(right.path) || left.startLine - right.startLine,
-  );
+  return [...bySubject.values()].sort(compareRanges);
 }
 
 function decisionDistribution(
@@ -433,19 +432,14 @@ function countAcrossRuns(
 
   for (const ranges of runs) {
     for (const range of ranges) {
-      const key = `${range.path}:${range.startLine}-${range.endLine}`;
+      const key = formatRange(range);
       const entry = counts.get(key) ?? { ...range, runs: 0 };
       entry.runs += 1;
       counts.set(key, entry);
     }
   }
 
-  return [...counts.values()].sort(
-    (left, right) =>
-      left.path.localeCompare(right.path) ||
-      left.startLine - right.startLine ||
-      left.endLine - right.endLine,
-  );
+  return [...counts.values()].sort(compareRanges);
 }
 
 export function renderBenchmarkReport(report: BenchmarkReport): string {
@@ -504,7 +498,7 @@ export function renderBenchmarkReport(report: BenchmarkReport): string {
 
       for (const finding of rule.falseFindings) {
         lines.push(
-          `    ${finding.path}:${finding.startLine}-${finding.endLine} (${finding.runs}/${runCount})`,
+          `    ${formatRange(finding)} (${finding.runs}/${runCount})`,
         );
       }
     }
@@ -514,7 +508,7 @@ export function renderBenchmarkReport(report: BenchmarkReport): string {
 
       for (const finding of rule.stability.unstable) {
         lines.push(
-          `    ${finding.path}:${finding.startLine}-${finding.endLine} (${finding.runs}/${runCount})`,
+          `    ${formatRange(finding)} (${finding.runs}/${runCount})`,
         );
       }
     }
@@ -640,11 +634,11 @@ export function renderBenchmarkSummary(report: BenchmarkReport): string {
           : round(rule.summary.inputTokens.mean / rule.lines, 2),
       falseFindings: rule.falseFindings.map(
         (finding) =>
-          `${finding.path}:${finding.startLine}-${finding.endLine}(${finding.runs})`,
+          `${formatRange(finding)}(${finding.runs})`,
       ),
       missed: rule.missedExpected.map(
         (finding) =>
-          `${finding.path}:${finding.startLine}-${finding.endLine}(${finding.runs})`,
+          `${formatRange(finding)}(${finding.runs})`,
       ),
     });
   });
@@ -661,7 +655,7 @@ export function renderBenchmarkSummary(report: BenchmarkReport): string {
       lines.push(
         JSON.stringify({
           subject: rule.ruleId,
-          at: `${subject.path}:${subject.startLine}-${subject.endLine}`,
+          at: formatRange(subject),
           d: subject.decisions
             .map((decision) => (decision === null ? "-" : decisionCode[decision]))
             .join(""),

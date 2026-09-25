@@ -2,20 +2,29 @@ import { locateViolation } from "../diagnostics/locate.ts";
 import type { Decision, PartKind, SourceRange } from "../domain/model.ts";
 import type { GoldenSet } from "./golden.ts";
 
-/** 評価方式に依存しない、採点対象の指摘範囲。 */
+/**
+ * 評価方式に依存しない、採点対象の指摘範囲。
+ * 列（1始まり、終了は範囲の直後）は変数名など文より細かい位置を表すときだけ持つ。
+ */
 export type FindingRange = {
   path: string;
   startLine: number;
   endLine: number;
+  startColumn?: number;
+  endColumn?: number;
 };
 
 type LineRange = Pick<SourceRange, "startLine" | "endLine">;
+/** 行範囲と、あれば列。 */
+type ScoredRange = LineRange & Partial<Pick<SourceRange, "startColumn" | "endColumn">>;
 
 /** thresholdを変えて指摘を再構成するための判定記録。 */
 export type ScoredEvaluation = {
   path: string;
-  /** 判定したunitの範囲。 */
-  range: LineRange;
+  /** 判定したunitの範囲。指摘位置を宣言したunitでは列も持つ。 */
+  range: ScoredRange;
+  /** カタログが宣言したunitの指摘位置。違反の指摘はこの範囲になる。 */
+  report?: ScoredRange;
   decision: Decision;
   violationProbability: number;
   /** 違反箇所の候補と確率。partのないunitや記録のない実行結果では省略する。 */
@@ -81,7 +90,7 @@ export function scoreFindings(
   const goldenPaths = new Set(golden.files.map((file) => file.path));
   const scoped = findings
     .filter((finding) => goldenPaths.has(finding.path))
-    .map(({ path, startLine, endLine }) => ({ path, startLine, endLine }))
+    .map((finding) => findingRange(finding.path, finding))
     .sort(compareRanges);
   const files: FileScore = {
     truePositives: 0,
@@ -98,11 +107,9 @@ export function scoreFindings(
   const byFile: FileBreakdown[] = [];
 
   for (const file of golden.files) {
-    const expected = file.findings.map((finding) => ({
-      path: file.path,
-      startLine: finding.startLine,
-      endLine: finding.endLine,
-    }));
+    const expected = file.findings.map((finding) =>
+      findingRange(file.path, finding),
+    );
     const actual = scoped.filter((finding) => finding.path === file.path);
     const expectsFinding = expected.length > 0;
     const hasFinding = actual.length > 0;
@@ -118,10 +125,10 @@ export function scoreFindings(
     }
 
     const covered = expected.filter((range) =>
-      actual.some((finding) => contains(finding, range)),
+      actual.some((finding) => containsRange(finding, range)),
     );
     const correct = actual.filter((finding) =>
-      expected.some((range) => contains(finding, range)),
+      expected.some((range) => containsRange(finding, range)),
     );
 
     containment.expected += expected.length;
@@ -201,13 +208,11 @@ export function findingsAtThreshold(
   partThreshold?: number,
 ): FindingRange[] {
   return violatingEvaluations(evaluations, threshold).flatMap((evaluation) =>
-    locateViolation(evaluation.range, evaluation.parts, partThreshold).map(
-      ({ range }) => ({
-        path: evaluation.path,
-        startLine: range.startLine,
-        endLine: range.endLine,
-      }),
-    ),
+    evaluation.report === undefined
+      ? locateViolation(evaluation.range, evaluation.parts, partThreshold).map(
+          ({ range }) => findingRange(evaluation.path, range),
+        )
+      : [findingRange(evaluation.path, evaluation.report)],
   );
 }
 
@@ -216,11 +221,9 @@ export function unitFindingsAtThreshold(
   evaluations: readonly ScoredEvaluation[],
   threshold: number,
 ): FindingRange[] {
-  return violatingEvaluations(evaluations, threshold).map((evaluation) => ({
-    path: evaluation.path,
-    startLine: evaluation.range.startLine,
-    endLine: evaluation.range.endLine,
-  }));
+  return violatingEvaluations(evaluations, threshold).map((evaluation) =>
+    findingRange(evaluation.path, evaluation.range),
+  );
 }
 
 function violatingEvaluations(
@@ -306,12 +309,60 @@ export function findingStability(
   };
 }
 
-function contains(outer: FindingRange, inner: FindingRange): boolean {
+/** 行範囲と、あれば列からFindingRangeを作る。 */
+export function findingRange(path: string, range: ScoredRange): FindingRange {
+  return {
+    path,
+    startLine: range.startLine,
+    endLine: range.endLine,
+    ...(range.startColumn === undefined || range.endColumn === undefined
+      ? {}
+      : { startColumn: range.startColumn, endColumn: range.endColumn }),
+  };
+}
+
+/**
+ * `outer` が `inner` を包含するか。両方が列を持つときは列まで比べ、
+ * どちらかが列を持たなければ行だけで比べる。
+ */
+export function containsRange(
+  outer: FindingRange,
+  inner: FindingRange,
+): boolean {
+  if (outer.path !== inner.path) {
+    return false;
+  }
+
+  if (!hasColumns(outer) || !hasColumns(inner)) {
+    return outer.startLine <= inner.startLine && outer.endLine >= inner.endLine;
+  }
+
   return (
-    outer.path === inner.path &&
-    outer.startLine <= inner.startLine &&
-    outer.endLine >= inner.endLine
+    comparePosition(outer.startLine, outer.startColumn, inner.startLine, inner.startColumn) <= 0 &&
+    comparePosition(outer.endLine, outer.endColumn, inner.endLine, inner.endColumn) >= 0
   );
+}
+
+/** 指摘範囲の表示。列があれば `行:列-行:列`。 */
+export function formatRange(range: FindingRange): string {
+  return hasColumns(range)
+    ? `${range.path}:${range.startLine}:${range.startColumn}-${range.endLine}:${range.endColumn}`
+    : `${range.path}:${range.startLine}-${range.endLine}`;
+}
+
+function hasColumns(
+  range: FindingRange,
+): range is FindingRange & { startColumn: number; endColumn: number } {
+  return range.startColumn !== undefined && range.endColumn !== undefined;
+}
+
+function comparePosition(
+  leftLine: number,
+  leftColumn: number,
+  rightLine: number,
+  rightColumn: number,
+): number {
+  return leftLine - rightLine || leftColumn - rightColumn;
 }
 
 function matchStrictly(
@@ -326,6 +377,17 @@ function matchStrictly(
     for (const [actualIndex, finding] of actual.entries()) {
       const startDelta = Math.abs(finding.startLine - range.startLine);
       const endDelta = Math.abs(finding.endLine - range.endLine);
+
+      // 期待範囲が列を持つ（文より細かい位置の）ときは、行と列が一致した指摘だけを一致とする。
+      if (
+        hasColumns(range) &&
+        (startDelta !== 0 ||
+          endDelta !== 0 ||
+          finding.startColumn !== range.startColumn ||
+          finding.endColumn !== range.endColumn)
+      ) {
+        continue;
+      }
 
       if (startDelta <= tolerance && endDelta <= tolerance) {
         candidates.push({
@@ -380,13 +442,15 @@ function ratio(numerator: number, denominator: number): Ratio {
 }
 
 function rangeKey(range: FindingRange): string {
-  return `${range.path}:${range.startLine}-${range.endLine}`;
+  return formatRange(range);
 }
 
-function compareRanges(left: FindingRange, right: FindingRange): number {
+export function compareRanges(left: FindingRange, right: FindingRange): number {
   return (
     left.path.localeCompare(right.path) ||
     left.startLine - right.startLine ||
-    left.endLine - right.endLine
+    (left.startColumn ?? 0) - (right.startColumn ?? 0) ||
+    left.endLine - right.endLine ||
+    (left.endColumn ?? 0) - (right.endColumn ?? 0)
   );
 }
