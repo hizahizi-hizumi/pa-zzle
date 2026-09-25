@@ -7,8 +7,8 @@ import {
   type FifteenPuzzleGeneratedProblem,
 } from "@/games/fifteen-puzzle/problem/problem";
 import {
+  calculateFifteenPuzzleManhattanDistance,
   FIFTEEN_PUZZLE_SIZE,
-  isFifteenPuzzleSolved,
 } from "@/games/fifteen-puzzle/puzzle/state";
 import type { ProblemSeed } from "@/games/problem-seed";
 
@@ -20,6 +20,8 @@ const provisionalScrambleLengths: Record<FifteenPuzzleDifficulty, number> = {
   "5": 150,
 };
 
+// 最短手数はマンハッタン距離以上なので、この距離以上の盤面は最短 8 手未満の自明な問題にならない。
+const MINIMUM_MANHATTAN_DISTANCE = 8;
 const MAXIMUM_ATTEMPTS = 10;
 
 export function selectFifteenPuzzleProblemForDifficulty(
@@ -35,7 +37,10 @@ export function selectFifteenPuzzleProblemForDifficulty(
         scrambleLength: provisionalScrambleLengths[difficulty],
       },
     });
-    if (!isFifteenPuzzleSolved(problem.initialBoard)) {
+    if (
+      calculateFifteenPuzzleManhattanDistance(problem.initialBoard) >=
+      MINIMUM_MANHATTAN_DISTANCE
+    ) {
       return { problem, identity, optimalMoveCount: null };
     }
   }

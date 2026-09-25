@@ -3,20 +3,22 @@
 import { fifteenPuzzleDifficulties } from "@/games/fifteen-puzzle/difficulty";
 import { selectFifteenPuzzleProblemForDifficulty } from "@/games/fifteen-puzzle/problem-selection";
 import { isSolvableFifteenPuzzleBoard } from "@/games/fifteen-puzzle/puzzle/rules";
-import { isFifteenPuzzleSolved } from "@/games/fifteen-puzzle/puzzle/state";
+import { calculateFifteenPuzzleManhattanDistance } from "@/games/fifteen-puzzle/puzzle/state";
 
 describe("selectFifteenPuzzleProblemForDifficulty", () => {
   const difficulties = fifteenPuzzleDifficulties.map(({ id }) => id);
 
   test.each(difficulties)(
-    "レベル %s で未完成かつ可解な問題を返すこと",
+    "レベル %s でマンハッタン距離が 8 以上の可解な問題を返すこと",
     (difficulty) => {
       const result = selectFifteenPuzzleProblemForDifficulty(
         difficulty,
         "selection-seed",
       );
 
-      expect(isFifteenPuzzleSolved(result.problem.initialBoard)).toBe(false);
+      expect(
+        calculateFifteenPuzzleManhattanDistance(result.problem.initialBoard),
+      ).toBeGreaterThanOrEqual(8);
       expect(isSolvableFifteenPuzzleBoard(result.problem.initialBoard)).toBe(
         true,
       );
@@ -28,5 +30,18 @@ describe("selectFifteenPuzzleProblemForDifficulty", () => {
     const second = selectFifteenPuzzleProblemForDifficulty("3", "same-seed");
 
     expect(second).toEqual(first);
+  });
+
+  describe("最初に生成した盤面のマンハッタン距離が 8 未満の場合", () => {
+    const seed = "s235";
+
+    test("seed を変えて生成し直した盤面を返すこと", () => {
+      const result = selectFifteenPuzzleProblemForDifficulty("1", seed);
+
+      expect(result.identity.seed).toBe(`${seed}-1`);
+      expect(
+        calculateFifteenPuzzleManhattanDistance(result.problem.initialBoard),
+      ).toBeGreaterThanOrEqual(8);
+    });
   });
 });
