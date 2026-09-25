@@ -21,7 +21,7 @@ const givenMarkClassNames = {
 
 // 置いたタイルだけを小さく膨らませて出す。固定タイルは最初から盤面にあるので動かさない。
 const placedTileClassName =
-  "animate-in fade-in-0 zoom-in-75 duration-fast motion-reduce:animate-none";
+  "animate-in fade-in-0 zoom-in-75 duration-(--duration-fast) motion-reduce:animate-none";
 
 export function TakuzuTile({ tile, given }: TakuzuTileProps) {
   return (

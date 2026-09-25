@@ -33,7 +33,7 @@ const violationMarkClassName =
 
 // 巡回で B へ進む途中の A が一瞬だけ違反になっても印がちらつかないよう、印は少し遅れて出す。消すときは待たない。
 const violationMarkTimingClassName =
-  "opacity-0 transition-opacity duration-0 group-data-violated:opacity-100 group-data-violated:delay-[240ms] group-data-violated:duration-normal motion-reduce:group-data-violated:duration-0";
+  "opacity-0 transition-opacity duration-0 group-data-violated:opacity-100 group-data-violated:delay-[240ms] group-data-violated:duration-(--duration-normal) motion-reduce:group-data-violated:duration-0";
 
 function getAccessibleName(
   size: number,
@@ -89,7 +89,7 @@ export function TakuzuCell({
       onPointerDown={handlePointerDown}
       onFocus={() => onFocus(cellIndex)}
       data-violated={view.violated || undefined}
-      className="group relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center rounded-[10%] bg-slate-200 shadow-[inset_0_1px_2px_rgb(15_23_42/0.14)] transition-transform duration-fast focus-visible:z-10 focus-visible:outline-3 focus-visible:outline-offset-1 focus-visible:outline-ring disabled:cursor-default enabled:not-aria-disabled:active:scale-[0.94] enabled:not-aria-disabled:hover:bg-slate-300/80 motion-reduce:transition-none motion-reduce:enabled:not-aria-disabled:active:scale-100 dark:bg-slate-800 dark:shadow-[inset_0_1px_2px_rgb(0_0_0/0.5)] dark:enabled:not-aria-disabled:hover:bg-slate-700/80"
+      className="group relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center rounded-[10%] bg-slate-200 shadow-[inset_0_1px_2px_rgb(15_23_42/0.14)] transition-transform duration-(--duration-fast) focus-visible:z-10 focus-visible:outline-3 focus-visible:outline-offset-1 focus-visible:outline-ring disabled:cursor-default enabled:not-aria-disabled:active:scale-[0.94] enabled:not-aria-disabled:hover:bg-slate-300/80 motion-reduce:transition-none motion-reduce:enabled:not-aria-disabled:active:scale-100 dark:bg-slate-800 dark:shadow-[inset_0_1px_2px_rgb(0_0_0/0.5)] dark:enabled:not-aria-disabled:hover:bg-slate-700/80"
     >
       {view.cell !== null ? (
         <TakuzuTile key={view.cell} tile={view.cell} given={view.given} />

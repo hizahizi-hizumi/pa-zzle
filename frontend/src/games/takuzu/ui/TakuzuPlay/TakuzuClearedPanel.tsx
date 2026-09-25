@@ -13,7 +13,7 @@ export function TakuzuClearedPanel({
   return (
     <div
       role="status"
-      className="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-[2.5%] bg-background/80 p-4 animate-in fade-in duration-slow motion-reduce:animate-none"
+      className="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-[2.5%] bg-background/80 p-4 animate-in fade-in duration-(--duration-slow) motion-reduce:animate-none"
     >
       <strong className="text-screen-title">完成！</strong>
       <div className="flex flex-wrap justify-center gap-2">
