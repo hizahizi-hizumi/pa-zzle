@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-
-import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import {
   type MinesweeperRestoredProblem,
@@ -26,6 +24,7 @@ import {
   revealMinesweeperSessionCell,
   toggleMinesweeperSessionFlag,
 } from "@/games/minesweeper/session/session";
+import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
 
 /** クリア後は最終操作の結果を見せる `clearing` を経て `result` へ進む。 */
 export type MinesweeperProgress = "playing" | "clearing" | "result";
