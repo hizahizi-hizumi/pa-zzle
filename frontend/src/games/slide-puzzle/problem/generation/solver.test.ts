@@ -42,7 +42,7 @@ function shortestDistanceByBreadthFirstSearch(
 function listBoardsWithinDistanceFromSolved(
   maxDistance: number,
 ): readonly (readonly [SlidePuzzleBoard, number])[] {
-  const solvedBoard = createSolvedSlidePuzzleBoard();
+  const solvedBoard = createSolvedSlidePuzzleBoard(4);
   const visited = new Set([solvedBoard.join(",")]);
   const entries: (readonly [SlidePuzzleBoard, number])[] = [[solvedBoard, 0]];
   for (const [board, distance] of entries) {
@@ -89,7 +89,7 @@ describe("solveSlidePuzzleOptimally", () => {
     },
   );
 
-  const solvedBoard = createSolvedSlidePuzzleBoard();
+  const solvedBoard = createSolvedSlidePuzzleBoard(4);
 
   test("完成盤面の最短手数を 0 とすること", () => {
     const result = solveSlidePuzzleOptimally(solvedBoard);

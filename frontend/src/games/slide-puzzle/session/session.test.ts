@@ -138,3 +138,28 @@ describe("getSlidePuzzleSessionResult", () => {
     expect(result).toBeNull();
   });
 });
+
+describe.each([
+  ["3×3", [1, 2, 3, 4, 5, 6, 0, 7, 8], 8, 2],
+  [
+    "5×5",
+    [
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 0,
+      21, 22, 23, 24,
+    ],
+    24,
+    4,
+  ],
+] as const)(
+  "%s の問題の場合",
+  (_, initialBoard, lastTileIndex, movedTileCount) => {
+    const session = createSlidePuzzleSession({ initialBoard }, 1_000);
+
+    test("最下段を一括スライドで揃えると動いた枚数を手数にして完成すること", () => {
+      const result = slideSlidePuzzleSessionTile(session, lastTileIndex, 1_500);
+
+      expect(result?.status).toBe("cleared");
+      expect(result?.moveCount).toBe(movedTileCount);
+    });
+  },
+);

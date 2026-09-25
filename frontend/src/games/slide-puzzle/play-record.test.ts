@@ -80,14 +80,14 @@ describe("isSlidePuzzlePlayRecord", () => {
       { ...record, payload: { ...record.payload, difficulty: "6" } },
     ],
     [
-      "別の盤面サイズ",
+      "遊べない盤面サイズ",
       {
         ...record,
         payload: {
           ...record.payload,
           problemIdentity: {
             ...record.payload.problemIdentity,
-            conditions: { size: 5, scrambleLength: 30 },
+            conditions: { size: 6, scrambleLength: 30 },
           },
         },
       },

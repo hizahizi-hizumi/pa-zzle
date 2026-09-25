@@ -1,12 +1,12 @@
 import {
   findSlidePuzzleBlankIndex,
+  getSlidePuzzleBoardSize,
   getSlidePuzzleColumn,
   getSlidePuzzleRow,
   isStandardSlidePuzzleBoard,
   SLIDE_PUZZLE_BLANK,
-  SLIDE_PUZZLE_CELL_COUNT,
-  SLIDE_PUZZLE_SIZE,
   type SlidePuzzleBoard,
+  type SlidePuzzleBoardSize,
 } from "@/games/slide-puzzle/puzzle/state";
 
 /** タイルが動く向き。 */
@@ -18,30 +18,55 @@ export type SlidePuzzleSlide = {
   movedTileIndices: readonly number[];
 };
 
-const cellOffsetByDirection: Record<SlidePuzzleDirection, number> = {
-  up: -SLIDE_PUZZLE_SIZE,
-  down: SLIDE_PUZZLE_SIZE,
-  left: -1,
-  right: 1,
-};
+const slideDirections: readonly SlidePuzzleDirection[] = [
+  "up",
+  "down",
+  "left",
+  "right",
+];
 
-function isSlidePuzzleCellIndex(cellIndex: number): boolean {
+/** タイルが動く向きへ 1 マス進んだときのマス index の差。 */
+function getCellOffset(
+  direction: SlidePuzzleDirection,
+  boardSize: SlidePuzzleBoardSize,
+): number {
+  switch (direction) {
+    case "up":
+      return -boardSize;
+    case "down":
+      return boardSize;
+    case "left":
+      return -1;
+    case "right":
+      return 1;
+  }
+}
+
+function isSlidePuzzleCellIndex(
+  cellIndex: number,
+  board: SlidePuzzleBoard,
+): boolean {
   return (
-    Number.isInteger(cellIndex) &&
-    cellIndex >= 0 &&
-    cellIndex < SLIDE_PUZZLE_CELL_COUNT
+    Number.isInteger(cellIndex) && cellIndex >= 0 && cellIndex < board.length
   );
 }
 
 function getSlideDirection(
   tileIndex: number,
   blankIndex: number,
+  boardSize: SlidePuzzleBoardSize,
 ): SlidePuzzleDirection | null {
-  if (getSlidePuzzleRow(tileIndex) === getSlidePuzzleRow(blankIndex)) {
+  if (
+    getSlidePuzzleRow(tileIndex, boardSize) ===
+    getSlidePuzzleRow(blankIndex, boardSize)
+  ) {
     return tileIndex < blankIndex ? "right" : "left";
   }
 
-  if (getSlidePuzzleColumn(tileIndex) === getSlidePuzzleColumn(blankIndex)) {
+  if (
+    getSlidePuzzleColumn(tileIndex, boardSize) ===
+    getSlidePuzzleColumn(blankIndex, boardSize)
+  ) {
     return tileIndex < blankIndex ? "down" : "up";
   }
 
@@ -56,7 +81,7 @@ export function getSlidePuzzleSlide(
   board: SlidePuzzleBoard,
   tileIndex: number,
 ): SlidePuzzleSlide | null {
-  if (!isSlidePuzzleCellIndex(tileIndex)) {
+  if (!isSlidePuzzleCellIndex(tileIndex, board)) {
     return null;
   }
 
@@ -65,12 +90,13 @@ export function getSlidePuzzleSlide(
     return null;
   }
 
-  const direction = getSlideDirection(tileIndex, blankIndex);
+  const boardSize = getSlidePuzzleBoardSize(board);
+  const direction = getSlideDirection(tileIndex, blankIndex, boardSize);
   if (!direction) {
     return null;
   }
 
-  const step = -cellOffsetByDirection[direction];
+  const step = -getCellOffset(direction, boardSize);
   const movedTileIndices: number[] = [];
   for (
     let cellIndex = blankIndex + step;
@@ -101,13 +127,14 @@ export function applySlidePuzzleSlide(
 /** 空白に隣接し、1 枚だけで滑らせられるタイルのマス index。 */
 export function listSlidePuzzleSingleMoves(board: SlidePuzzleBoard): number[] {
   const blankIndex = findSlidePuzzleBlankIndex(board);
+  const boardSize = getSlidePuzzleBoardSize(board);
 
-  return Object.values(cellOffsetByDirection)
-    .map((offset) => blankIndex + offset)
+  return slideDirections
+    .map((direction) => blankIndex + getCellOffset(direction, boardSize))
     .filter(
       (cellIndex) =>
-        isSlidePuzzleCellIndex(cellIndex) &&
-        getSlideDirection(cellIndex, blankIndex) !== null,
+        isSlidePuzzleCellIndex(cellIndex, board) &&
+        getSlideDirection(cellIndex, blankIndex, boardSize) !== null,
     );
 }
 
@@ -117,15 +144,17 @@ export function getSlidePuzzleKeyboardSlide(
   direction: SlidePuzzleDirection,
 ): SlidePuzzleSlide | null {
   const tileIndex =
-    findSlidePuzzleBlankIndex(board) - cellOffsetByDirection[direction];
+    findSlidePuzzleBlankIndex(board) -
+    getCellOffset(direction, getSlidePuzzleBoardSize(board));
   const slide = getSlidePuzzleSlide(board, tileIndex);
 
   return slide?.direction === direction ? slide : null;
 }
 
 /**
- * 幅が偶数の盤面では、空白を除いたタイル列の転倒数と、空白が下から何行目にあるかの和が
- * 奇数のときに限って完成盤面へ到達できる。
+ * 空白を除いたタイル列の転倒数で判定する。幅が奇数の盤面では転倒数が偶数のとき、
+ * 幅が偶数の盤面では転倒数と空白が下から何行目にあるかの和が奇数のときに限って、
+ * 完成盤面へ到達できる。
  */
 export function isSolvableSlidePuzzleBoard(board: SlidePuzzleBoard): boolean {
   if (!isStandardSlidePuzzleBoard(board)) {
@@ -142,8 +171,13 @@ export function isSolvableSlidePuzzleBoard(board: SlidePuzzleBoard): boolean {
     }
   }
 
+  const boardSize = getSlidePuzzleBoardSize(board);
+  if (boardSize % 2 === 1) {
+    return inversionCount % 2 === 0;
+  }
+
   const blankRowFromBottom =
-    SLIDE_PUZZLE_SIZE - getSlidePuzzleRow(findSlidePuzzleBlankIndex(board));
+    boardSize - getSlidePuzzleRow(findSlidePuzzleBlankIndex(board), boardSize);
 
   return (inversionCount + blankRowFromBottom) % 2 === 1;
 }

@@ -4,7 +4,7 @@ import {
   type SlidePuzzleProblemIdentity,
 } from "@/games/slide-puzzle/problem/problem";
 import problemPoolJson from "@/games/slide-puzzle/problem/problem-pool.json";
-import { SLIDE_PUZZLE_SIZE } from "@/games/slide-puzzle/puzzle/state";
+import type { SlidePuzzleBoardSize } from "@/games/slide-puzzle/puzzle/state";
 
 export type SlidePuzzleProblemPoolEntry = readonly [
   seed: string,
@@ -23,6 +23,8 @@ type SlidePuzzlePooledProblem = {
 };
 
 const problemPool = problemPoolJson as unknown as SlidePuzzleProblemPool;
+/** 問題集の問題はすべてこの盤面サイズで作っている。 */
+const POOLED_BOARD_SIZE: SlidePuzzleBoardSize = 4;
 
 export function toSlidePuzzlePooledProblem([
   seed,
@@ -33,7 +35,7 @@ export function toSlidePuzzlePooledProblem([
     identity: {
       generatorVersion: SLIDE_PUZZLE_GENERATOR_VERSION,
       seed,
-      conditions: { size: SLIDE_PUZZLE_SIZE, scrambleLength },
+      conditions: { size: POOLED_BOARD_SIZE, scrambleLength },
     },
     optimalMoveCount,
   };
@@ -51,7 +53,7 @@ export function findSlidePuzzlePooledOptimalMoveCount(
 ): number | null {
   if (
     identity.generatorVersion !== problemPool.generatorVersion ||
-    identity.conditions.size !== SLIDE_PUZZLE_SIZE
+    identity.conditions.size !== POOLED_BOARD_SIZE
   ) {
     return null;
   }

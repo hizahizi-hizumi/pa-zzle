@@ -14,7 +14,7 @@ import { solveSlidePuzzleOptimally } from "@/games/slide-puzzle/problem/generati
 import { generateSlidePuzzleBoard } from "@/games/slide-puzzle/problem/generator";
 import { SLIDE_PUZZLE_GENERATOR_VERSION } from "@/games/slide-puzzle/problem/problem";
 import type { SlidePuzzleProblemPoolEntry } from "@/games/slide-puzzle/problem/problem-pool";
-import { SLIDE_PUZZLE_SIZE } from "@/games/slide-puzzle/puzzle/state";
+import type { SlidePuzzleBoardSize } from "@/games/slide-puzzle/puzzle/state";
 
 const outputPath = new URL(
   "../src/games/slide-puzzle/problem/problem-pool.json",
@@ -22,6 +22,7 @@ const outputPath = new URL(
 );
 // 一様ランダムに近い盤面でも数秒で解ける。上限は評価不能を実質的に出さない大きさにする。
 const nodeLimit = 500_000_000;
+const poolBoardSize: SlidePuzzleBoardSize = 4;
 // 別の seed から同じ盤面が出て除いた分を補うための余裕。
 const duplicateAllowance = 5;
 
@@ -101,7 +102,7 @@ function runMain() {
       }
       const seed = `fp${scrambleLength}-${index}`;
       const board = generateSlidePuzzleBoard(seed, {
-        size: SLIDE_PUZZLE_SIZE,
+        size: poolBoardSize,
         scrambleLength,
       });
       const solved = solveSlidePuzzleOptimally(board, {

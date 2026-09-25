@@ -2,9 +2,12 @@ import type { SlidePuzzleHeuristic } from "@/games/slide-puzzle/problem/generati
 import {
   getSlidePuzzleColumn,
   getSlidePuzzleRow,
-  SLIDE_PUZZLE_CELL_COUNT,
-  SLIDE_PUZZLE_SIZE,
+  type SlidePuzzleBoardSize,
 } from "@/games/slide-puzzle/puzzle/state";
+
+/** パターンデータベースは 4×4 の盤面だけで作る。 */
+const BOARD_SIZE: SlidePuzzleBoardSize = 4;
+const CELL_COUNT = BOARD_SIZE * BOARD_SIZE;
 
 const UNVISITED = 0xff;
 /**
@@ -32,21 +35,21 @@ const SLIDE_PUZZLE_DEFAULT_PATTERNS: readonly (readonly number[])[] = [
 ];
 
 const neighborCells: readonly (readonly number[])[] = Array.from(
-  { length: SLIDE_PUZZLE_CELL_COUNT },
+  { length: CELL_COUNT },
   (_, cellIndex) => {
-    const row = getSlidePuzzleRow(cellIndex);
-    const column = getSlidePuzzleColumn(cellIndex);
+    const row = getSlidePuzzleRow(cellIndex, BOARD_SIZE);
+    const column = getSlidePuzzleColumn(cellIndex, BOARD_SIZE);
     return [
-      row > 0 ? cellIndex - SLIDE_PUZZLE_SIZE : null,
-      row < SLIDE_PUZZLE_SIZE - 1 ? cellIndex + SLIDE_PUZZLE_SIZE : null,
+      row > 0 ? cellIndex - BOARD_SIZE : null,
+      row < BOARD_SIZE - 1 ? cellIndex + BOARD_SIZE : null,
       column > 0 ? cellIndex - 1 : null,
-      column < SLIDE_PUZZLE_SIZE - 1 ? cellIndex + 1 : null,
+      column < BOARD_SIZE - 1 ? cellIndex + 1 : null,
     ].filter((neighbor) => neighbor !== null);
   },
 );
 
 function readDigit(key: number, digit: number): number {
-  return Math.floor(key / SLIDE_PUZZLE_CELL_COUNT ** digit) % 16;
+  return Math.floor(key / CELL_COUNT ** digit) % 16;
 }
 
 /**
@@ -56,14 +59,14 @@ function readDigit(key: number, digit: number): number {
 function buildPatternDistances(pattern: readonly number[]): Uint8Array {
   const tileCount = pattern.length;
   const blankDigit = tileCount;
-  const stateCount = SLIDE_PUZZLE_CELL_COUNT ** (tileCount + 1);
+  const stateCount = CELL_COUNT ** (tileCount + 1);
   const stateDistances = new Uint8Array(stateCount).fill(UNVISITED);
-  const patternDistances = new Uint8Array(
-    SLIDE_PUZZLE_CELL_COUNT ** tileCount,
-  ).fill(UNVISITED);
+  const patternDistances = new Uint8Array(CELL_COUNT ** tileCount).fill(
+    UNVISITED,
+  );
   const digitWeights = Array.from(
     { length: tileCount + 1 },
-    (_, digit) => SLIDE_PUZZLE_CELL_COUNT ** digit,
+    (_, digit) => CELL_COUNT ** digit,
   );
 
   const goalKey =
@@ -71,7 +74,7 @@ function buildPatternDistances(pattern: readonly number[]): Uint8Array {
       (key, tile, digit) => key + (tile - 1) * (digitWeights[digit] ?? 0),
       0,
     ) +
-    (SLIDE_PUZZLE_CELL_COUNT - 1) * (digitWeights[blankDigit] ?? 0);
+    (CELL_COUNT - 1) * (digitWeights[blankDigit] ?? 0);
 
   let current = new Int32Array(1024);
   let currentLength = 0;
@@ -99,7 +102,7 @@ function buildPatternDistances(pattern: readonly number[]): Uint8Array {
 
   stateDistances[goalKey] = 0;
   pushTo("current", goalKey);
-  const tileByCell = new Int8Array(SLIDE_PUZZLE_CELL_COUNT);
+  const tileByCell = new Int8Array(CELL_COUNT);
   for (let distance = 0; currentLength > 0; distance += 1) {
     for (let index = 0; index < currentLength; index += 1) {
       const key = current[index] ?? 0;
@@ -150,8 +153,7 @@ export function buildSlidePuzzlePatternDatabase(
   if (
     new Set(tiles).size !== tiles.length ||
     tiles.some(
-      (tile) =>
-        !Number.isInteger(tile) || tile < 1 || tile >= SLIDE_PUZZLE_CELL_COUNT,
+      (tile) => !Number.isInteger(tile) || tile < 1 || tile >= CELL_COUNT,
     )
   ) {
     throw new RangeError("Patterns must be disjoint sets of tiles 1〜15");
@@ -168,12 +170,12 @@ export function buildSlidePuzzlePatternDatabase(
 export function createSlidePuzzlePatternDatabaseHeuristic(
   database: SlidePuzzlePatternDatabase,
 ): SlidePuzzleHeuristic {
-  const patternOfTile = new Int8Array(SLIDE_PUZZLE_CELL_COUNT).fill(-1);
-  const digitWeightOfTile = new Int32Array(SLIDE_PUZZLE_CELL_COUNT);
+  const patternOfTile = new Int8Array(CELL_COUNT).fill(-1);
+  const digitWeightOfTile = new Int32Array(CELL_COUNT);
   for (const [patternIndex, pattern] of database.patterns.entries()) {
     for (const [digit, tile] of pattern.entries()) {
       patternOfTile[tile] = patternIndex;
-      digitWeightOfTile[tile] = SLIDE_PUZZLE_CELL_COUNT ** digit;
+      digitWeightOfTile[tile] = CELL_COUNT ** digit;
     }
   }
   const patternKeys = new Int32Array(database.patterns.length);

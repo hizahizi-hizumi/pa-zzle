@@ -28,14 +28,16 @@ import {
 } from "@/games/slide-puzzle/puzzle/rules";
 import {
   calculateSlidePuzzleManhattanDistance,
-  SLIDE_PUZZLE_SIZE,
+  getSlidePuzzleBoardSize,
   type SlidePuzzleBoard,
+  type SlidePuzzleBoardSize,
 } from "@/games/slide-puzzle/puzzle/state";
 
 // 問題集の候補と同じ seed（fp<撹拌手数>-<連番>）で、撹拌手数ごとに先頭から分析する。
 const corpusScrambleLengths = [
   10, 15, 20, 25, 30, 35, 40, 50, 60, 80, 100, 120, 160, 200, 300,
 ];
+const corpusBoardSize: SlidePuzzleBoardSize = 4;
 const greedyTrialCount = 50;
 
 type Sample = SlidePuzzleDifficultyFeatures & {
@@ -143,9 +145,10 @@ function levelOf(sample: SlidePuzzleDifficultyFeatures) {
 }
 
 function formatBoard(board: SlidePuzzleBoard): string {
-  return Array.from({ length: SLIDE_PUZZLE_SIZE }, (_, row) =>
+  const boardSize = getSlidePuzzleBoardSize(board);
+  return Array.from({ length: boardSize }, (_, row) =>
     board
-      .slice(row * SLIDE_PUZZLE_SIZE, (row + 1) * SLIDE_PUZZLE_SIZE)
+      .slice(row * boardSize, (row + 1) * boardSize)
       .map((tile) => (tile === 0 ? " ." : String(tile).padStart(2)))
       .join(" "),
   ).join("\n");
@@ -170,7 +173,7 @@ function analyzeCorpus(
     for (let index = 0; index < perScramble; index += 1) {
       const seed = `fp${scrambleLength}-${index}`;
       const board = generateSlidePuzzleBoard(seed, {
-        size: SLIDE_PUZZLE_SIZE,
+        size: corpusBoardSize,
         scrambleLength,
       });
       const startedAt = performance.now();

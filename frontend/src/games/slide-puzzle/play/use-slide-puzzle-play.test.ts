@@ -155,6 +155,54 @@ describe("useSlidePuzzlePlay", () => {
     expect(result.current.moveCount).toBe(0);
   });
 
+  describe.each([
+    ["3×3", 3, [1, 2, 3, 4, 5, 6, 0, 7, 8], [1, 2, 3, 4, 5, 6, 7, 0, 8]],
+    [
+      "5×5",
+      5,
+      [
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+        0, 21, 22, 23, 24,
+      ],
+      [
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+        21, 0, 22, 23, 24,
+      ],
+    ],
+  ] as const)(
+    "%s の問題を渡した場合",
+    (_, size, sizedInitialBoard, boardAfterLeftKey) => {
+      let sized: HookResult;
+
+      beforeEach(() => {
+        ({ result: sized } = renderHook(() =>
+          useSlidePuzzlePlay("1", {
+            problem: { initialBoard: sizedInitialBoard },
+            identity: {
+              generatorVersion: "1",
+              seed: `sized-${size}`,
+              conditions: { size, scrambleLength: size - 1 },
+            },
+            optimalMoveCount: size - 1,
+          }),
+        ));
+      });
+
+      test("矢印キーの方向へ空白の隣のタイルを 1 枚滑らせること", () => {
+        act(() => sized.current.slideByKeyboard("left"));
+
+        expect(sized.current.board).toEqual(boardAfterLeftKey);
+      });
+
+      test("最下段を一括スライドで揃えると完成演出へ進むこと", () => {
+        act(() => sized.current.slideTile(sizedInitialBoard.length - 1));
+
+        expect(sized.current.progress).toBe("clearing");
+        expect(sized.current.result?.moveCount).toBe(size - 1);
+      });
+    },
+  );
+
   describe("最初の問題を渡した場合", () => {
     const pooledEntries = listSlidePuzzlePoolEntries("4").slice(0, 1);
     const initialProblems = pooledEntries.map((entry) => {

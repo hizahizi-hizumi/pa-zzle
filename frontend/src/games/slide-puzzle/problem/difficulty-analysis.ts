@@ -1,5 +1,6 @@
 import {
   calculateSlidePuzzleManhattanDistance,
+  getSlidePuzzleBoardSize,
   getSlidePuzzleColumn,
   getSlidePuzzleRow,
   SLIDE_PUZZLE_BLANK,
@@ -33,6 +34,7 @@ function countMisplacedTiles(board: SlidePuzzleBoard): number {
 }
 
 function countLinearConflictPairs(board: SlidePuzzleBoard): number {
+  const boardSize = getSlidePuzzleBoardSize(board);
   let pairCount = 0;
   for (const [cellIndex, tile] of board.entries()) {
     if (tile === SLIDE_PUZZLE_BLANK) {
@@ -50,14 +52,19 @@ function countLinearConflictPairs(board: SlidePuzzleBoard): number {
       }
       const laterGoalIndex = laterTile - 1;
       const sharesGoalRow =
-        getSlidePuzzleRow(cellIndex) === getSlidePuzzleRow(laterIndex) &&
-        getSlidePuzzleRow(goalIndex) === getSlidePuzzleRow(cellIndex) &&
-        getSlidePuzzleRow(laterGoalIndex) === getSlidePuzzleRow(cellIndex);
+        getSlidePuzzleRow(cellIndex, boardSize) ===
+          getSlidePuzzleRow(laterIndex, boardSize) &&
+        getSlidePuzzleRow(goalIndex, boardSize) ===
+          getSlidePuzzleRow(cellIndex, boardSize) &&
+        getSlidePuzzleRow(laterGoalIndex, boardSize) ===
+          getSlidePuzzleRow(cellIndex, boardSize);
       const sharesGoalColumn =
-        getSlidePuzzleColumn(cellIndex) === getSlidePuzzleColumn(laterIndex) &&
-        getSlidePuzzleColumn(goalIndex) === getSlidePuzzleColumn(cellIndex) &&
-        getSlidePuzzleColumn(laterGoalIndex) ===
-          getSlidePuzzleColumn(cellIndex);
+        getSlidePuzzleColumn(cellIndex, boardSize) ===
+          getSlidePuzzleColumn(laterIndex, boardSize) &&
+        getSlidePuzzleColumn(goalIndex, boardSize) ===
+          getSlidePuzzleColumn(cellIndex, boardSize) &&
+        getSlidePuzzleColumn(laterGoalIndex, boardSize) ===
+          getSlidePuzzleColumn(cellIndex, boardSize);
       if ((sharesGoalRow || sharesGoalColumn) && goalIndex > laterGoalIndex) {
         pairCount += 1;
       }

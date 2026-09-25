@@ -1,13 +1,14 @@
 import type { ProblemSeed } from "@/games/problem-seed";
 import {
-  SLIDE_PUZZLE_SIZE,
+  isSlidePuzzleBoardSize,
   type SlidePuzzleBoard,
+  type SlidePuzzleBoardSize,
 } from "@/games/slide-puzzle/puzzle/state";
 
 export const SLIDE_PUZZLE_GENERATOR_VERSION = "1";
 
 export type SlidePuzzleGenerationConditions = {
-  size: typeof SLIDE_PUZZLE_SIZE;
+  size: SlidePuzzleBoardSize;
   /** 完成盤面から打つランダムな合法手の数。 */
   scrambleLength: number;
 };
@@ -41,7 +42,7 @@ export function isSlidePuzzleProblemIdentity(
   return (
     value.generatorVersion === SLIDE_PUZZLE_GENERATOR_VERSION &&
     typeof value.seed === "string" &&
-    value.conditions.size === SLIDE_PUZZLE_SIZE &&
+    isSlidePuzzleBoardSize(value.conditions.size) &&
     typeof scrambleLength === "number" &&
     Number.isInteger(scrambleLength) &&
     scrambleLength > 0

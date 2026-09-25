@@ -26,21 +26,23 @@ describe("generateSlidePuzzleBoard", () => {
   });
 
   const solvableCases = [
-    ["seed-1", 15],
-    ["seed-2", 35],
-    ["seed-3", 60],
-    ["seed-4", 150],
-    ["seed-5", 301],
+    ["seed-1", 4, 15],
+    ["seed-2", 4, 35],
+    ["seed-3", 4, 60],
+    ["seed-4", 4, 150],
+    ["seed-5", 4, 301],
+    ["seed-6", 3, 30],
+    ["seed-7", 3, 101],
+    ["seed-8", 5, 40],
+    ["seed-9", 5, 120],
   ] as const;
 
   test.each(solvableCases)(
-    "生成した盤面は完成盤面へ到達できること: %s を %i 手撹拌",
-    (seed, scrambleLength) => {
-      const result = generateSlidePuzzleBoard(seed, {
-        size: 4,
-        scrambleLength,
-      });
+    "生成した盤面は完成盤面へ到達できること: %s の一辺 %i の盤面を %i 手撹拌",
+    (seed, size, scrambleLength) => {
+      const result = generateSlidePuzzleBoard(seed, { size, scrambleLength });
 
+      expect(result).toHaveLength(size * size);
       expect(isSolvableSlidePuzzleBoard(result)).toBe(true);
     },
   );
@@ -57,7 +59,7 @@ describe("generateSlidePuzzleBoard", () => {
   const invalidConditions = [
     ["撹拌手数が 0", { size: 4, scrambleLength: 0 }],
     ["撹拌手数が整数ではない", { size: 4, scrambleLength: 1.5 }],
-    ["盤面サイズが 4 ではない", { size: 3, scrambleLength: 10 }],
+    ["盤面サイズが 3〜5 ではない", { size: 6, scrambleLength: 10 }],
   ] as const;
 
   test.each(invalidConditions)(

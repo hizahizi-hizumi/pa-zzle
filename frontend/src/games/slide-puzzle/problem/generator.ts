@@ -16,7 +16,7 @@ import {
 import {
   createSolvedSlidePuzzleBoard,
   findSlidePuzzleBlankIndex,
-  SLIDE_PUZZLE_SIZE,
+  isSlidePuzzleBoardSize,
   type SlidePuzzleBoard,
 } from "@/games/slide-puzzle/puzzle/state";
 
@@ -28,7 +28,7 @@ type SlidePuzzleRestoredProblem = Pick<
 function validateGenerationConditions(
   conditions: SlidePuzzleGenerationConditions,
 ): void {
-  if (conditions.size !== SLIDE_PUZZLE_SIZE) {
+  if (!isSlidePuzzleBoardSize(conditions.size)) {
     throw new Error("Unsupported slide puzzle generation conditions");
   }
 
@@ -65,7 +65,7 @@ export function generateSlidePuzzleBoard(
   validateGenerationConditions(conditions);
 
   const random = createGeneratorRandom(seed, conditions);
-  let board = createSolvedSlidePuzzleBoard();
+  let board = createSolvedSlidePuzzleBoard(conditions.size);
   let previousBlankIndex: number | null = null;
 
   for (let step = 0; step < conditions.scrambleLength; step += 1) {
