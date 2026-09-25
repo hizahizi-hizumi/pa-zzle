@@ -59,4 +59,12 @@ describe("buildFifteenPuzzlePatternDatabase", () => {
 
     expect(act).toThrow(RangeError);
   });
+
+  const oversizedPatterns = [[1, 2, 3, 4, 5, 6]];
+
+  test("6 枚以上の集合を拒否すること", () => {
+    const act = () => buildFifteenPuzzlePatternDatabase(oversizedPatterns);
+
+    expect(act).toThrow(RangeError);
+  });
 });

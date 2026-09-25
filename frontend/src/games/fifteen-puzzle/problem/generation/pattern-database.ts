@@ -7,6 +7,11 @@ import {
 } from "@/games/fifteen-puzzle/puzzle/state";
 
 const UNVISITED = 0xff;
+/**
+ * 構築中は、集合内タイルと空白の位置を状態とする 16^(枚数 + 1) バイトの表を一時確保する。
+ * 5 枚で 16 MB、6 枚では 256 MB になるので、5 枚までに限る。
+ */
+const MAXIMUM_PATTERN_SIZE = 5;
 
 /**
  * 互いに素なタイル集合ごとの加算的パターンデータベース（Korf & Felner 2002）。
@@ -19,7 +24,7 @@ type FifteenPuzzlePatternDatabase = {
   distances: readonly Uint8Array[];
 };
 
-/** 目安: 5 枚ずつ 3 集合。1 集合あたり数秒で作れ、1 MB 程度に収まる。 */
+/** 5 枚ずつ 3 集合。1 集合あたり数秒で作れ、最終的な表は 1 集合 1 MB（16^5 バイト）になる。 */
 const FIFTEEN_PUZZLE_DEFAULT_PATTERNS: readonly (readonly number[])[] = [
   [1, 2, 3, 5, 6],
   [4, 7, 8, 11, 12],
@@ -152,6 +157,11 @@ export function buildFifteenPuzzlePatternDatabase(
     )
   ) {
     throw new RangeError("Patterns must be disjoint sets of tiles 1〜15");
+  }
+  if (patterns.some((pattern) => pattern.length > MAXIMUM_PATTERN_SIZE)) {
+    throw new RangeError(
+      `Each pattern must have at most ${MAXIMUM_PATTERN_SIZE} tiles`,
+    );
   }
 
   return { patterns, distances: patterns.map(buildPatternDistances) };
