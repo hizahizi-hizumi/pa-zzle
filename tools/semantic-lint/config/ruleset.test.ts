@@ -19,15 +19,7 @@ function rulesetWith(
         title: "sample",
         unit: "test",
         violationThreshold: 0.9,
-        predicate: {
-          instruction: "classify",
-          outcomes: {
-            violation: "v",
-            compliant: "c",
-            not_applicable: "n",
-            insufficient_context: "i",
-          },
-        },
+        instruction: "classify",
         ...rule,
       },
     ],
@@ -47,14 +39,8 @@ rules:
     title: テスト本体にArrangeを置かない
     unit: test
     violationThreshold: 0.9
-    predicate:
-      instruction: |
-        Classify the subject.
-      outcomes:
-        violation: violation
-        compliant: compliant
-        not_applicable: not applicable
-        insufficient_context: insufficient context
+    instruction: |
+      Classify the subject.
 `);
 
     const rules = compileRuleset(value, "vitest.yaml", UNITS);
@@ -68,15 +54,7 @@ rules:
         violationThreshold: 0.9,
         unit: "test",
         paths: ["frontend/**/*.test.ts"],
-        predicate: {
-          instruction: "Classify the subject.\n",
-          outcomes: {
-            violation: "violation",
-            compliant: "compliant",
-            not_applicable: "not applicable",
-            insufficient_context: "insufficient context",
-          },
-        },
+        instruction: "Classify the subject.\n",
       },
     ]);
   });
@@ -91,14 +69,13 @@ rules:
     expect(rule?.severity).toBe(severity);
   });
 
-  test("outcomeが欠けているruleを拒否する", () => {
-    const value = rulesetWith({
-      predicate: { instruction: "classify", outcomes: { violation: "v" } },
-    });
-
-    expect(() => compileRuleset(value, "vitest.yaml", UNITS)).toThrow(
-      "predicate.outcomes.compliant",
-    );
+  test.each([
+    ["instructionなし", { instruction: undefined }],
+    ["空のinstruction", { instruction: "  \n" }],
+  ])("%sのruleを拒否する", (_, override) => {
+    expect(() =>
+      compileRuleset(rulesetWith(override), "vitest.yaml", UNITS),
+    ).toThrow("rule設定が不正です");
   });
 
   test.each([
@@ -128,6 +105,16 @@ rules:
       "廃止したsourceSection",
       { sourceSection: "テスト構造" },
       "ruleに書けないkeyがあります: sourceSection",
+    ],
+    [
+      "廃止したoutcomes",
+      { outcomes: { violation: "v" } },
+      "ruleに書けないkeyがあります: outcomes",
+    ],
+    [
+      "廃止したpredicate",
+      { instruction: undefined, predicate: { instruction: "classify", outcomes: { violation: "v" } } },
+      "ruleに書けないkeyがあります: predicate",
     ],
     [
       "抽出方法の指定",

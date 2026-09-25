@@ -14,48 +14,26 @@ rules:
     # golden benchmark (3 runs) のleave-one-file-out校正で全foldが選んだthreshold。
     # 違反箇所の厳密P/R 0.91 / 0.86、unit単位の包含P/R 0.99 / 0.98。
     violationThreshold: 0.35
-    predicate:
-      instruction: |
-        Determine whether this individual test keeps meaningful Arrange setup
-        outside the test body. Evaluate only the identified test subject while
-        using the surrounding file as context.
-      outcomes:
-        violation: |
-          The test body performs meaningful Arrange work that should be prepared
-          outside it, such as constructing test data or initial state, creating
-          mocks or spies, or performing initial rendering. Values received from
-          test.each parameters are allowed. Assigning the result of the operation
-          under test is Act, not Arrange.
-        compliant: |
-          The test body focuses on Act and Assert. Meaningful Arrange work is
-          prepared in an enclosing describe, beforeEach, or test.each case data.
-        not_applicable: |
-          This test requires no meaningful Arrange setup.
-        insufficient_context: |
-          The available file context is not enough to distinguish setup from the
-          behavior under test.
+    instruction: |
+      A test body must not perform meaningful Arrange work. Such setup belongs
+      in an enclosing describe, beforeEach, or test.each case data.
+      Violation: the test body constructs test data or initial state, creates
+      mocks or spies, or performs initial rendering.
+      Not a violation: using values received from test.each parameters;
+      assigning the result of the operation under test, which is Act; a test
+      that needs no meaningful Arrange.
 
   - id: before-each-arrange-only
     title: beforeEachは事前準備だけを行う
     unit: setup
     # goldenに違反例がなく校正できない。非違反の違反確率は最大約0.6で、誤指摘は出ない。
     violationThreshold: 0.90
-    predicate:
-      instruction: |
-        Determine whether this beforeEach performs Arrange only and does not
-        execute behavior that a test later verifies.
-      outcomes:
-        violation: |
-          This beforeEach executes an operation, user action, or behavior whose
-          result is subsequently verified by a test.
-        compliant: |
-          This beforeEach only prepares initial state, test data, mocks, spies,
-          dependencies, or initial rendering.
-        not_applicable: |
-          The subject is not relevant to this rule.
-        insufficient_context: |
-          The available file context is not enough to determine whether a helper
-          performs setup or the behavior under test.
+    instruction: |
+      A beforeEach must perform Arrange only.
+      Violation: it executes an operation, user action, or behavior whose
+      result a test later verifies.
+      Not a violation: it only prepares initial state, test data, mocks, spies,
+      dependencies, or initial rendering.
 
   - id: dom-observable-contract
     title: DOMテストは利用者から観測できる契約を優先する
@@ -63,24 +41,15 @@ rules:
     # goldenの違反（内部data属性やCSS selectorでの取得）を含むtestをunit単位で違反と
     # 判定できず、どのthresholdでも一致しない。下げると誤指摘だけが増えるため高いまま。
     violationThreshold: 0.90
-    predicate:
-      instruction: |
-        Determine whether this DOM-oriented test verifies user-observable
-        contracts rather than incidental implementation details.
-      outcomes:
-        violation: |
-          The test primarily asserts incidental implementation details even
-          though the intended behavior could reasonably be verified through
-          roles, accessible names, visible content, or observable results after
-          user interaction.
-        compliant: |
-          The test primarily verifies behavior through roles, accessible names,
-          visible content, or results observable after user interaction.
-        not_applicable: |
-          This test is not DOM-oriented.
-        insufficient_context: |
-          The available file context is not enough to determine whether the
-          asserted detail is an intended user-facing contract.
+    instruction: |
+      A DOM-oriented test must verify user-observable contracts rather than
+      incidental implementation details.
+      Violation: the test primarily asserts incidental implementation details
+      even though the intended behavior could reasonably be verified through
+      roles, accessible names, visible content, or observable results after
+      user interaction.
+      Not a violation: the test primarily verifies behavior through those
+      means; the test is not DOM-oriented.
 
   - id: table-driven-cases
     title: 同じ期待動作の入力違いはtest.eachで表現する
@@ -88,24 +57,14 @@ rules:
     # golden benchmark (3 runs) のleave-one-file-out校正で選ばれたthresholdの中央値。
     # 違反例は1ファイルだけで、違反確率約0.75と非違反の最大約0.16の間にある。
     violationThreshold: 0.50
-    predicate:
-      instruction: |
-        Determine whether repeated test cases in this describe verify the same
-        expected behavior with different inputs and therefore should use
-        test.each.
-      outcomes:
-        violation: |
-          Two or more separate test cases repeat substantially the same Act and
-          Assert structure and differ mainly in input or expected values.
-        compliant: |
-          Repeated cases already use test.each, or separate tests verify
-          materially different behaviors that deserve independent cases.
-        not_applicable: |
-          The describe contains no repeated cases representing the same behavior
-          with different inputs or expected values.
-        insufficient_context: |
-          The available file context is not enough to determine whether
-          superficially similar tests represent the same expected behavior.
+    instruction: |
+      Repeated test cases in a describe that verify the same expected behavior
+      with different inputs must use test.each.
+      Violation: two or more separate test cases repeat substantially the same
+      Act and Assert structure and differ mainly in input or expected values.
+      Not a violation: repeated cases already use test.each; separate tests
+      verify materially different behaviors that deserve independent cases;
+      the describe has no such repeated cases.
 
   - id: no-condition-in-test-title
     title: テスト名に「場合」「時」を含めない
@@ -113,20 +72,11 @@ rules:
     # golden benchmark (3 runs) の推奨値。leave-one-file-outで選ばれたthresholdは0.50〜0.90（平均0.76）。
     # 0.80で指摘位置の厳密P/R 0.90 / 0.86。残る誤指摘は「〜中は」「ときは」など、場合・時を含まない条件の表現。
     violationThreshold: 0.80
-    predicate:
-      instruction: |
-        Determine whether this test case name contains the word 場合 or the
-        word 時. Conditions belong in an enclosing describe name, and the test
-        case name states only the expected behavior.
-      outcomes:
-        violation: |
-          The name contains 場合, or 時 as its own word meaning when, such as
-          手詰まり時, 通常時, 開始時, or した時.
-        compliant: |
-          Neither appears as such a word. 時 inside another word such as 時間,
-          時計, 時刻, 時点, or 同時 does not count, and とき or なら are outside
-          this rule.
-        not_applicable: |
-          The subject is not a test case name.
-        insufficient_context: |
-          The name cannot be read.
+    instruction: |
+      A test case name must not contain the word 場合 or the word 時.
+      Conditions belong in an enclosing describe name, and the test case name
+      states only the expected behavior.
+      Violation: the name contains 場合, or 時 as its own word meaning when,
+      such as 手詰まり時, 通常時, 開始時, or した時.
+      Not a violation: 時 inside another word such as 時間, 時計, 時刻, 時点,
+      or 同時; とき or なら, which are outside this rule.

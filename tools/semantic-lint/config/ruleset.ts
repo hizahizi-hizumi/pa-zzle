@@ -2,25 +2,22 @@ import { readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { YAML } from "bun";
 
-import {
-  DECISIONS,
-  SEVERITIES,
-  type Decision,
-  type Rule,
-  type Severity,
-} from "../domain/model.ts";
+import { SEVERITIES, type Rule, type Severity } from "../domain/model.ts";
 
 /** rulesetに書けるkey。 */
 const RULESET_KEYS = new Set(["version", "id", "paths", "rules"]);
 
-/** rule作者が書けるkey。scope・selector・contextなどの抽出方法はunitカタログが持つ。 */
+/**
+ * rule作者が書けるkey。scope・selector・contextなどの抽出方法はunitカタログが持ち、
+ * 判定の選択肢（違反 / 違反ではない / 判断できない）とその説明はエンジンが持つ。
+ */
 const RULE_KEYS = new Set([
   "id",
   "title",
   "unit",
   "severity",
   "violationThreshold",
-  "predicate",
+  "instruction",
 ]);
 
 /**
@@ -138,7 +135,7 @@ function compileRule(options: {
     severity = "warning",
     violationThreshold,
     unit,
-    predicate,
+    instruction,
   } = value;
 
   if (typeof unit !== "string" || !units.has(unit)) {
@@ -150,9 +147,8 @@ function compileRule(options: {
   if (
     !isId(id) ||
     typeof title !== "string" ||
-    !isRecord(predicate) ||
-    typeof predicate.instruction !== "string" ||
-    !isRecord(predicate.outcomes)
+    typeof instruction !== "string" ||
+    instruction.trim().length === 0
   ) {
     throw new Error(`rule設定が不正です: ${origin} rules[${index}]`);
   }
@@ -169,21 +165,6 @@ function compileRule(options: {
     );
   }
 
-  const outcomesRecord = predicate.outcomes;
-  const outcomes = Object.fromEntries(
-    DECISIONS.map((decision) => {
-      const description = outcomesRecord[decision];
-
-      if (typeof description !== "string") {
-        throw new Error(
-          `predicate.outcomes.${decision} がありません: ${origin} rules[${index}]`,
-        );
-      }
-
-      return [decision, description];
-    }),
-  ) as Record<Decision, string>;
-
   return {
     id: `${rulesetId}/${id}`,
     rulesetId,
@@ -192,10 +173,7 @@ function compileRule(options: {
     violationThreshold,
     unit,
     paths,
-    predicate: {
-      instruction: predicate.instruction,
-      outcomes,
-    },
+    instruction,
   };
 }
 

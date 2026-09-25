@@ -5,7 +5,6 @@ import {
   DECISIONS,
   type Decision,
   type DecisionResult,
-  type Predicate,
   type ProviderIdentity,
   type ProviderRequestIdentity,
 } from "../domain/model.ts";
@@ -14,7 +13,7 @@ import {
 export const DECISION_CACHE_PATH = ".semantic-lint/.cache/decisions.jsonl";
 
 /** key構成や保存形式を変えたときに更新する。 */
-const CACHE_FORMAT_VERSION = 3;
+const CACHE_FORMAT_VERSION = 4;
 const DEFAULT_RETENTION_DAYS = 30;
 const DEFAULT_MAX_ENTRIES = 50_000;
 const DAY_MS = 24 * 60 * 60 * 1_000;
@@ -29,25 +28,21 @@ const DAY_MS = 24 * 60 * 60 * 1_000;
 export type DecisionCacheKeyInput = {
   provider: ProviderRequestIdentity;
   unit: string;
-  predicate: Predicate;
+  instruction: string;
   path: string;
   context: string;
   parts: Array<[number, number]>;
 };
 
 export function decisionCacheKey(input: DecisionCacheKeyInput): string {
-  const { provider, unit, predicate, path, context, parts } = input;
+  const { provider, unit, instruction, path, context, parts } = input;
   const hasher = new Bun.CryptoHasher("sha256");
 
   hasher.update(
     JSON.stringify([
       CACHE_FORMAT_VERSION,
       [provider.kind, provider.model, provider.requestFormat],
-      [
-        unit,
-        predicate.instruction,
-        DECISIONS.map((decision) => predicate.outcomes[decision]),
-      ],
+      [unit, instruction],
       [path, context, parts],
     ]),
   );

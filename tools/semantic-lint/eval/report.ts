@@ -88,12 +88,10 @@ function decisionLabel(decision: Decision): string {
   switch (decision) {
     case "violation":
       return "違反";
-    case "compliant":
-      return "問題なし";
-    case "not_applicable":
-      return "対象外";
-    case "insufficient_context":
-      return "文脈不足";
+    case "no_violation":
+      return "違反ではない";
+    case "cannot_judge":
+      return "判断できない";
   }
 }
 

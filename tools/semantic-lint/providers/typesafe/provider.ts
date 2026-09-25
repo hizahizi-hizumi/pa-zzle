@@ -21,7 +21,17 @@ const DEFAULT_MAX_ATTEMPTS = 3;
  * buildRequestが組み立てるprompt / request形式の版。
  * 判定キャッシュのkeyに含まれるため、送る内容を変えたら更新する。
  */
-export const TYPESAFE_REQUEST_FORMAT = "systemone-choice-parts/1";
+export const TYPESAFE_REQUEST_FORMAT = "systemone-verdict-parts/1";
+
+/**
+ * unitの判定の選択肢の説明。全ruleで共通にし、ruleごとの判定基準は質問文のruleに書く。
+ * 選択肢は質問ごとに送るため、短く保つ。
+ */
+export const DECISION_CRITERIA: Record<Decision, string> = {
+  violation: "The subject violates the rule.",
+  no_violation: "The subject does not violate the rule.",
+  cannot_judge: "The given code is not enough to judge.",
+};
 
 /**
  * Jevの課金input tokenを見積もる係数。golden benchmarkのrequestごとの実usageへの最小二乗fit。
@@ -205,22 +215,17 @@ type QuestionTarget = {
   part?: number;
 };
 
-/** 違反箇所の候補を問うときに参照するruleの文面。 */
-type StateRule = {
-  instruction: string;
-  violation: string;
-};
-
 export type TypeSafeState = DecisionState & {
   /** partの目印の説明。partを問う質問があるときだけ載せる。 */
   parts?: string;
-  rules?: Record<string, StateRule>;
+  /** 違反箇所の候補を問う質問が参照するruleの `instruction`。 */
+  rules?: Record<string, string>;
 };
 
 /**
  * requestを組み立てる。
  *
- * - unitの判定: 4択のchoice。
+ * - unitの判定: 違反 / 違反ではない / 判断できないの3択のchoice。選択肢の説明は全rule共通。
  * - `locate` のrequest: 違反と判定したunitの違反箇所の候補（part）ごとのnoul。
  *   stateではそのunitのpartを目印で囲み、質問が参照するruleの文面はstateに1回だけ載せる。
  */
@@ -246,7 +251,7 @@ export function buildRequest(
   });
   const questionToTask = new Map<string, QuestionTarget>();
   const questions: Record<string, Question> = {};
-  const rules: Record<string, StateRule> = {};
+  const rules: Record<string, string> = {};
   const ruleKeys = new Map<string, string>();
 
   for (const [index, request] of batch.requests.entries()) {
@@ -264,13 +269,11 @@ export function buildRequest(
       questions[questionId] = {
         type: "choice",
         instructions: [
-          `Evaluate only state.subjects.${subjectKey}, the code between its begin and end comments in state.file.source.`,
-          "Use state.file as surrounding context when needed.",
-          "Do not classify another subject in the file.",
+          `Judge only state.subjects.${subjectKey}, marked by its begin and end comments in state.file.source, against the rule. The rest of state.file is context.`,
           "",
-          request.predicate.instruction,
+          `Rule: ${request.instruction.trim()}`,
         ].join("\n"),
-        criteria: request.predicate.outcomes,
+        criteria: DECISION_CRITERIA,
       };
       continue;
     }
@@ -286,10 +289,7 @@ export function buildRequest(
     if (ruleKey === undefined) {
       ruleKey = "r" + ruleKeys.size;
       ruleKeys.set(request.ruleId, ruleKey);
-      rules[ruleKey] = {
-        instruction: request.predicate.instruction,
-        violation: request.predicate.outcomes.violation,
-      };
+      rules[ruleKey] = request.instruction;
     }
 
     for (const [part, ref] of refs.entries()) {

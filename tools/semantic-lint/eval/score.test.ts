@@ -170,7 +170,7 @@ describe("findingsAtThreshold", () => {
         {
           path: "a.test.ts",
           range: { startLine: 5, endLine: 6 },
-          decision: "compliant",
+          decision: "no_violation",
           violationProbability: 0.95,
         },
       ],

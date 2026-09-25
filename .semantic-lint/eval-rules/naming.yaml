@@ -17,19 +17,10 @@ rules:
     # golden benchmark (3 runs) のleave-one-file-out校正で全foldが選んだthreshold。
     # 0.50〜0.95のどれでも指摘位置の厳密P/R 1.00 / 1.00（違反7件、実repoの違反なし変数62件）。
     violationThreshold: 0.60
-    predicate:
-      instruction: |
-        Determine whether the name of this variable declaration describes the
-        value it holds or its role, given its initializer and usage.
-      outcomes:
-        violation: |
-          The name does not describe the value or role: a placeholder such as
-          hoge, a vague name such as tmp, data, or val, or a meaningless single
-          letter.
-        compliant: |
-          The name describes the value or role in context. A conventional short
-          name in a narrow scope, such as a loop index, is compliant.
-        not_applicable: |
-          The subject is not a variable declaration.
-        insufficient_context: |
-          The context is not enough to tell what the variable holds.
+    instruction: |
+      A variable name must describe the value it holds or its role, given its
+      initializer and usage.
+      Violation: a placeholder such as hoge, a vague name such as tmp, data,
+      or val, or a meaningless single letter.
+      Not a violation: a name that describes the value or role in context; a
+      conventional short name in a narrow scope, such as a loop index.

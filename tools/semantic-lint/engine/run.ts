@@ -324,7 +324,7 @@ function lookupCache(options: {
       const key = decisionCacheKey({
         provider: requestIdentity,
         unit: rule.unit,
-        predicate: rule.predicate,
+        instruction: rule.instruction,
         path: file.path,
         context,
         parts: subject.parts.map(

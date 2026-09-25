@@ -645,9 +645,8 @@ export function renderBenchmarkSummary(report: BenchmarkReport): string {
 
   const decisionCode: Record<Decision, string> = {
     violation: "V",
-    compliant: "C",
-    not_applicable: "N",
-    insufficient_context: "I",
+    no_violation: "N",
+    cannot_judge: "U",
   };
 
   for (const rule of report.rules) {

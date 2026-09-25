@@ -1,9 +1,10 @@
-export const DECISIONS = [
-  "violation",
-  "compliant",
-  "not_applicable",
-  "insufficient_context",
-] as const;
+/**
+ * unitの判定の選択肢。全ruleで共通で、rule作者は選択肢を書かない。
+ * - violation: ruleに違反している
+ * - no_violation: 違反していない（ruleが当てはまらない場合を含む）
+ * - cannot_judge: 与えた文脈では判断できない
+ */
+export const DECISIONS = ["violation", "no_violation", "cannot_judge"] as const;
 
 /**
  * 指摘の重さ。
@@ -30,11 +31,6 @@ export type SourceDocument = {
   source: string;
 };
 
-export type Predicate = {
-  instruction: string;
-  outcomes: Record<Decision, string>;
-};
-
 export type Rule = {
   id: string;
   rulesetId: string;
@@ -43,7 +39,8 @@ export type Rule = {
   violationThreshold: number;
   unit: UnitName;
   paths: string[];
-  predicate: Predicate;
+  /** 何を違反とみなし、何は違反ではないかを述べる判定基準。 */
+  instruction: string;
 };
 
 /** 判定対象のunit。範囲とsymbolはカタログのqueryで決定論的に決め、modelには生成させない。 */
@@ -118,7 +115,7 @@ export type DecisionRequest = {
   taskId: string;
   ruleId: string;
   subjectId: string;
-  predicate: Predicate;
+  instruction: string;
   /** trueならunitの判定ではなく、unitの各partが違反箇所かを問う。 */
   locate?: boolean;
 };

@@ -67,9 +67,21 @@ CLIのpath引数はrepository root基準で解決する。
 
 ## 仕組み
 
-ruleは対象path（`paths`）と判定対象の単位（`unit`）を宣言する。unitカタログがsourceから判定対象の `Subject` を決定論的に抽出し、providerはそのsubjectがpredicateを満たすかだけを判定する。行範囲やsymbolはmodelに生成させない。
+ruleは対象path（`paths`）と判定対象の単位（`unit`）を宣言する。unitカタログがsourceから判定対象の `Subject` を決定論的に抽出し、providerはそのsubjectがruleの `instruction` に違反するかだけを判定する。行範囲やsymbolはmodelに生成させない。
 
 provider結果へruleのthresholdを1回だけ適用し、canonicalな `Diagnostic` を作る。pretty / compact / JSON出力はこのDiagnosticから生成する。
+
+### 判定の質問
+
+unitの判定は、次の3択のchoiceで問う。選択肢の説明は全ruleで共通の固定文（`providers/typesafe/provider.ts` の `DECISION_CRITERIA`）で、ruleごとの判定基準は質問文に載せるruleの `instruction` だけが持つ。選択肢は質問ごとに送るため、説明文を短く保ち、質問あたりのtokenを抑える。
+
+| 選択肢 | 説明文 | 扱い |
+| --- | --- | --- |
+| `violation` | The subject violates the rule. | この確率をthresholdと比べ、以上なら指摘する |
+| `no_violation` | The subject does not violate the rule. | 指摘しない。ruleが当てはまらないsubjectも含む |
+| `cannot_judge` | The given code is not enough to judge. | 指摘せず、unknownとして実行サマリに数える |
+
+質問文は「`state.subjects.sN` だけをruleで判定し、`state.file` の残りは文脈とする」という1文と、`Rule:` に続くruleの `instruction` からなる。
 
 ### 違反箇所の特定
 
@@ -77,12 +89,12 @@ provider結果へruleのthresholdを1回だけ適用し、canonicalな `Diagnost
 
 カタログがunitの指摘位置（`report`）を宣言しているunit（`variable` / `test-title`）は、位置を構文で静的に決める（「指摘位置を宣言したunit」を参照）。それ以外のunitは次の2段で判定する。
 
-1. unitを違反と判定する（4択のchoice。ruleの `violationThreshold` と比べる）。
+1. unitを違反と判定する（「判定の質問」の3択のchoice。violationの確率をruleの `violationThreshold` と比べる）。
 2. 違反と判定したunitの中の候補（part）ごとに、そこが違反箇所かを判定する（yes / noの確率を返すnoul）。
 
 partは構文だけで決める。unit直下の文（カタログの `statement` queryで抽出した文のうち、unitとの間に別の文を挟まないもの）と、unit直下の子unit（describeの中のtestやbeforeEachなど）で、子unitを含む文はその子unitに置き換える。ruleやrule IDで分岐せず、行番号もmodelに生成させない。
 
-2段目は、1段目で違反と判定したunit（`check` ではthreshold以上のもの）だけを、fileごとの別requestで問う。stateにはそのunitと祖先・文脈のunitだけを載せ、partを `/* pN */` と `/* /pN */` の目印で囲む。partの質問が参照するruleの文面（`instruction` と `violation`）は `state.rules` に1回だけ載せる。partの質問を1段目へ投機的に全unit分入れる方式は、golden対象では2段に分けるのとほぼ同じtoken数だが、違反の少ない通常のrepository全体では1段目だけの約1.5倍になるため採らない。
+2段目は、1段目で違反と判定したunit（`check` ではthreshold以上のもの）だけを、fileごとの別requestで問う。stateにはそのunitと祖先・文脈のunitだけを載せ、partを `/* pN */` と `/* /pN */` の目印で囲む。partの質問が参照するruleの `instruction` は `state.rules` に1回だけ載せる。partの質問を1段目へ投機的に全unit分入れる方式は、golden対象では2段に分けるのとほぼ同じtoken数だが、違反の少ない通常のrepository全体では1段目だけの約1.5倍になるため採らない。
 
 違反と判定したunitでは、確率が0.25以上（`diagnostics/locate.ts` の `PART_VIOLATION_THRESHOLD`。golden benchmarkで全rule共通に校正した値で、ruleには書かない）のpartを指摘する。
 
@@ -167,18 +179,18 @@ stateは次の形で、ファイルは元の並びのまま1回だけ載せ、�
 }
 ```
 
-判定対象のunitは開始・終了の目印（`/* state.subjects.sN begin */` / `/* state.subjects.sN end */`）で囲み、質問はその範囲だけを評価させる。partの目印と `state.rules` は「違反箇所の特定」を参照。入れ子のunitも親の本文の中にそのまま現れるため、describeを判定するときに中のtestを参照先から辿る必要がない。requestには判定対象とその子孫・祖先、文脈のunitまでを載せ、それ以外のunit（cache hitしたunitや分割した別requestのunit）は `/* omitted */` にする。
+判定対象のunitは開始・終了の目印（`/* state.subjects.sN begin */` / `/* state.subjects.sN end */`）で囲み、質問はその範囲だけを判定させる。partの目印と `state.rules` は「違反箇所の特定」を参照。入れ子のunitも親の本文の中にそのまま現れるため、describeを判定するときに中のtestを参照先から辿る必要がない。requestには判定対象とその子孫・祖先、文脈のunitまでを載せ、それ以外のunit（cache hitしたunitや分割した別requestのunit）は `/* omitted */` にする。
 
 ## 判定cache
 
 `check` と `inspect` は、providerの判定結果をrepository rootの `.semantic-lint/.cache/decisions.jsonl` に保存し、providerへ送る内容が同じ判定を再利用する。`.semantic-lint/.cache/` はGit管理しない。
 
-保存するのはthreshold適用前のprovider判定（Choiceと4 outcomeの確率、confidence、応答したprovider / model）と、2段目で問うたpartごとの確率。partの確率は判定と同じentryへ足して保存するため、thresholdを下げて新たに違反になったunitは2段目だけを問う。thresholdは実行ごとにcacheから読んだ判定へ適用するため、thresholdやseverityを変えても再判定しない。
+保存するのはthreshold適用前のprovider判定（Choiceと3択それぞれの確率、confidence、応答したprovider / model）と、2段目で問うたpartごとの確率。partの確率は判定と同じentryへ足して保存するため、thresholdを下げて新たに違反になったunitは2段目だけを問う。thresholdは実行ごとにcacheから読んだ判定へ適用するため、thresholdやseverityを変えても再判定しない。
 
 cache keyはrule × unit単位で、1判定の答えを決める次の要素のSHA-256とする。
 
 - provider種別、設定上のmodel、provider側のprompt / request組み立ての版（TypeSafeでは `TYPESAFE_REQUEST_FORMAT`）
-- ruleのunit、predicateの `instruction` と4 outcomesの文面
+- ruleのunitと `instruction` の文面
 - fileのpathと、unitの文脈: unit本文・祖先・カタログのcontext宣言が指すunit・ファイルの骨格を元の位置に並べ、それ以外のunitを共通の目印に置き換えたもの
 - unitの中のpartの位置（partの確率の並びを決めるため）
 
@@ -215,19 +227,14 @@ providerへの送信はfileごとのbatchだが、hit / missはtaskごとに判�
 
 1. 対応する人間向け規約が `.claude/rules/*.md` に存在することを確認する。semantic rulesetを規約の正本にしない。
 2. 適用pathを共有できる既存rulesetがあれば `.semantic-lint/rules/<ruleset>.yaml` にruleを追加する。共有できなければ新しいrulesetを作る。rulesetに書けるのは `version`、`id`、対象の `paths`、`rules` だけ。対応する人間向け規約はrulesetの先頭のコメントに書く。
-3. ruleには `id`、`title`、`unit`、`violationThreshold`、predicateの `instruction` と4 outcomes、必要なら `severity` だけを書く。新規ruleは原則 `severity` を省略（warning）して始める。`unit` は「unit語彙」の名前から選ぶ。scope・selector・AST node・文脈の取り方・指摘位置の決め方は書かない（未知のkeyは読み込みエラーになる）。
-4. `.semantic-lint/cases/<ruleset>/cases.yaml` とfixtureへ、少なくとも明確な `violation` と `compliant` を追加する。実運用で境界例が見つかったらgolden caseへ追加する。
+3. ruleには `id`、`title`、`unit`、`violationThreshold`、`instruction`、必要なら `severity` だけを書く。新規ruleは原則 `severity` を省略（warning）して始める。`unit` は「unit語彙」の名前から選ぶ。scope・selector・AST node・文脈の取り方・指摘位置の決め方は書かない（未知のkeyは読み込みエラーになる）。
+4. `.semantic-lint/cases/<ruleset>/cases.yaml` とfixtureへ、少なくとも明確な `violation` と `no_violation` を追加する。実運用で境界例が見つかったらgolden caseへ追加する。
 5. `doctor` と `inspect --plan-only` でpath / unit / subject / request payloadを確認する。
 6. `eval <rule-id> --repeat 10` でChoiceと違反確率の揺れを見る。
 7. 実repo goldenを追加し、`bench` で採点して校正したthresholdを書く。thresholdは単一fixtureへ合わせない。
 8. `check` で実repositoryへ適用し、誤検知・見逃し・unknownを確認する。
 
-4 outcomesは固定。
-
-- `violation`: 規約違反。
-- `compliant`: 規約に適合。
-- `not_applicable`: subjectにその規約を適用する意味がない。
-- `insufficient_context`: 与えたcontextだけでは判断できない。
+`instruction` にはruleの判定基準を英語で書く。先頭に規約を1文で述べ、続けて `Violation:` に違反とみなすもの、`Not a violation:` に紛らわしいが違反ではないもの（許可する書き方、ruleが当てはまらないsubjectなど）を簡潔に書く。判定の選択肢と説明は全ruleで共通のため、ruleには書かない（「判定の質問」を参照）。
 
 rule追加でTypeScript実装は変更しない。必要なunitが語彙にない場合は、`catalog/units.yaml` へ語彙を、`catalog/frameworks/` または `catalog/syntax/` へqueryを追加する。変数名・引数・属性・文字列・コメントなど文より細かい位置を指摘するruleは、その位置を `report` で宣言したunitを使う（なければ語彙とqueryを追加する）。ruleには `unit: variable` のように書くだけで、位置の決め方は書かない。
 
@@ -251,15 +258,12 @@ rules:
     unit: test
     severity: warning # info / warning / error。省略時はwarning
     violationThreshold: 0.35
-    predicate:
-      instruction: |
-        Determine whether this individual test keeps meaningful Arrange setup
-        outside the test body.
-      outcomes:
-        violation: ...
-        compliant: ...
-        not_applicable: ...
-        insufficient_context: ...
+    instruction: |
+      A test body must not perform meaningful Arrange work. Such setup belongs
+      in an enclosing describe, beforeEach, or test.each case data.
+      Violation: the test body constructs test data or initial state, creates
+      mocks or spies, or performs initial rendering.
+      Not a violation: using values received from test.each parameters; ...
 ```
 
 ルール拡充は #323 で追跡する。

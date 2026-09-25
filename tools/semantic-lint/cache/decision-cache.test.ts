@@ -41,7 +41,7 @@ describe("decisionCacheKey", () => {
     });
 
     expect(
-      decisionCacheKey({ ...base, predicate: rule.predicate, unit: rule.unit }),
+      decisionCacheKey({ ...base, instruction: rule.instruction, unit: rule.unit }),
     ).toBe(decisionCacheKey(base));
   });
 
@@ -50,8 +50,7 @@ describe("decisionCacheKey", () => {
     ["model", (input) => ({ ...input, provider: { ...input.provider, model: "jev-next" } })],
     ["request format", (input) => ({ ...input, provider: { ...input.provider, requestFormat: "systemone-choice/2" } })],
     ["unit", (input) => ({ ...input, unit: "test" })],
-    ["instruction", (input) => ({ ...input, predicate: { ...input.predicate, instruction: "changed" } })],
-    ["outcome", (input) => ({ ...input, predicate: { ...input.predicate, outcomes: { ...input.predicate.outcomes, compliant: "changed" } } })],
+    ["instruction", (input) => ({ ...input, instruction: "changed" })],
     ["file path", (input) => ({ ...input, path: "b.test.ts" })],
     ["unit context", (input) => ({ ...input, context: "changed" })],
     ["parts", (input) => ({ ...input, parts: [[0, 8], [9, 16]] })],
@@ -84,7 +83,7 @@ describe("FileDecisionCache", () => {
     const used = decisionCacheKey(keyInput());
     const unused = decisionCacheKey({ ...keyInput(), unit: "test" });
     const value = {
-      result: decisionResult("compliant", 0),
+      result: decisionResult("no_violation", 0),
       provider: { kind: "typesafe", model: "jev-1" },
     };
     const first = await FileDecisionCache.open(cachePath, { now: clock });
@@ -116,7 +115,7 @@ describe("FileDecisionCache", () => {
     for (const key of keys) {
       now += 1_000;
       await cache.put(key, {
-        result: decisionResult("compliant", 0),
+        result: decisionResult("no_violation", 0),
         provider: { kind: "typesafe", model: "jev-1" },
       });
     }
@@ -130,6 +129,37 @@ describe("FileDecisionCache", () => {
     expect(reopened.get(keys[0] ?? "")).toBeUndefined();
   });
 
+  test("判定の選択肢が現在と異なるentryは読めない行として扱う", async () => {
+    const key = decisionCacheKey(keyInput());
+    await Bun.write(
+      cachePath,
+      JSON.stringify({
+        key,
+        createdAt: "2026-01-01T00:00:00.000Z",
+        usedAt: "2026-01-01T00:00:00.000Z",
+        provider: { kind: "typesafe", model: "jev-1" },
+        result: {
+          decision: "compliant",
+          confidence: 0.9,
+          probabilities: {
+            violation: 0.1,
+            compliant: 0.9,
+            not_applicable: 0,
+            insufficient_context: 0,
+          },
+        },
+      }) + "\n",
+    );
+
+    const cache = await FileDecisionCache.open(cachePath);
+
+    expect(cache.get(key)).toBeUndefined();
+    expect(await inspectDecisionCacheFile(cachePath)).toMatchObject({
+      entries: 0,
+      invalidLines: 1,
+    });
+  });
+
   test("状態確認は未作成・entry数・読めない行を返す", async () => {
     expect(await inspectDecisionCacheFile(cachePath)).toMatchObject({
       exists: false,
@@ -138,7 +168,7 @@ describe("FileDecisionCache", () => {
 
     const cache = await FileDecisionCache.open(cachePath);
     await cache.put(decisionCacheKey(keyInput()), {
-      result: decisionResult("compliant", 0),
+      result: decisionResult("no_violation", 0),
       provider: { kind: "typesafe", model: "jev-1" },
     });
     await Bun.write(
@@ -160,7 +190,7 @@ function keyInput(): DecisionCacheKeyInput {
   return {
     provider: PROVIDER,
     unit: rule.unit,
-    predicate: rule.predicate,
+    instruction: rule.instruction,
     path: "a.test.ts",
     context: "const value = 1;\n",
     parts: [[0, 16]],

@@ -85,7 +85,7 @@ describe("runEvaluationPlan", () => {
     expect(result.diagnostics).toEqual([]);
   });
 
-  test("insufficient_contextをunknownとして保持する", async () => {
+  test("cannot_judgeをunknownとして保持する", async () => {
     const rule = sampleRule();
     const plan = buildEvaluationPlan({
       documents: [
@@ -108,7 +108,7 @@ describe("runEvaluationPlan", () => {
       plan,
       rules: [rule],
       provider: new FakeDecisionProvider({
-        [task.id]: decisionResult("insufficient_context", 0.05),
+        [task.id]: decisionResult("cannot_judge", 0.05),
       }),
     });
 
@@ -182,7 +182,7 @@ describe("runEvaluationPlan", () => {
 
     const provider = new FakeDecisionProvider({
       [hoge.id]: decisionResult("violation", 0.8),
-      [users.id]: decisionResult("compliant", 0.1),
+      [users.id]: decisionResult("no_violation", 0.1),
     });
     const result = await runEvaluationPlan({ plan, rules: [rule], provider });
 

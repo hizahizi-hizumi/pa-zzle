@@ -107,7 +107,7 @@ function createBatch(
         taskId: task.id,
         ruleId: rule.id,
         subjectId: task.subjectId,
-        predicate: rule.predicate,
+        instruction: rule.instruction,
         ...(task.locate ? { locate: true } : {}),
       };
     }),

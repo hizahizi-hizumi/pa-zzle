@@ -96,8 +96,8 @@ describe("runGoldenBenchmark", () => {
     };
     const provider = new FakeDecisionProvider({
       [`${rule.id}::file:violation.test.ts:0`]: decisionResult("violation", 0.95),
-      [`${rule.id}::file:clean.test.ts:0`]: decisionResult("compliant", 0.1),
-      [`${other.id}::file:clean.test.ts:0`]: decisionResult("compliant", 0.1),
+      [`${rule.id}::file:clean.test.ts:0`]: decisionResult("no_violation", 0.1),
+      [`${other.id}::file:clean.test.ts:0`]: decisionResult("no_violation", 0.1),
     });
 
     const result = await runGoldenBenchmark({

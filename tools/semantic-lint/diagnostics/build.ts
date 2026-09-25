@@ -44,7 +44,7 @@ export function buildDiagnostics(options: {
       throw new Error(`evaluationが未知のruleを参照しています: ${evaluation.ruleId}`);
     }
 
-    if (evaluation.result.decision === "insufficient_context") {
+    if (evaluation.result.decision === "cannot_judge") {
       unknowns.push(evaluation);
       continue;
     }

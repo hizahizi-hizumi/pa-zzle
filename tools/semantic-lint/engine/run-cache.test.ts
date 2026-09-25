@@ -164,10 +164,7 @@ test("outside", () => {});
 
     const reworded = testRule({
       id: "vitest/edited",
-      predicate: {
-        ...edited.predicate,
-        instruction: "Classify the subject strictly.",
-      },
+      instruction: "The subject must satisfy the rule strictly.",
     });
     const second = await run(
       planFor([document("a.test.ts", TWO_TESTS)], [stable, reworded]),
@@ -190,22 +187,6 @@ test("outside", () => {});
       ]);
   });
 
-  test("outcome文面を変えるとmissする", async () => {
-    const rule = testRule();
-    const plan = planFor([document("a.test.ts", TWO_TESTS)], [rule]);
-    await run(plan, [rule]);
-
-    const edited = testRule({
-      predicate: {
-        ...rule.predicate,
-        outcomes: { ...rule.predicate.outcomes, violation: "clearly violates" },
-      },
-    });
-    const second = await run(plan, [edited]);
-
-    expect(second.result.metrics.cache).toMatchObject({ hits: 0, misses: 2 });
-  });
-
   test("modelが変わるとmissする", async () => {
     const rule = testRule();
     const plan = planFor([document("a.test.ts", TWO_TESTS)], [rule]);
@@ -226,7 +207,7 @@ test("outside", () => {});
 
     const stricter = testRule({ violationThreshold: 0.99, severity: "error" });
     const second = await run(plan, [stricter], {
-      decision: decisionResult("compliant", 0),
+      decision: decisionResult("no_violation", 0),
     });
 
     expect(first.result.diagnostics).toHaveLength(2);
@@ -301,7 +282,7 @@ test("outside", () => {});
         ? () => {
             throw new Error("provider unavailable");
           }
-        : decisionResult("compliant", 0),
+        : decisionResult("no_violation", 0),
     );
 
     await expect(
@@ -318,7 +299,7 @@ test("outside", () => {});
     const plan = planFor([document("a.test.ts", TWO_TESTS)], [rule]);
 
     for (let index = 0; index < 2; index += 1) {
-      const provider = fakeProvider(plan, () => decisionResult("compliant", 0));
+      const provider = fakeProvider(plan, () => decisionResult("no_violation", 0));
       const result = await runEvaluationPlan({ plan, rules: [rule], provider });
 
       expect(provider.requests).toHaveLength(1);
@@ -376,7 +357,7 @@ async function run(
     decision?: FakeDecision;
   } = {},
 ) {
-  const decision = options.decision ?? decisionResult("compliant", 0.1);
+  const decision = options.decision ?? decisionResult("no_violation", 0.1);
   const provider = fakeProvider(
     plan,
     () => decision,

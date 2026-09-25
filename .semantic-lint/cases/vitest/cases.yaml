@@ -10,7 +10,7 @@ cases:
   - rule: arrange-outside-test
     name: 入力データをdescribe側で用意する
     fixture: fixtures/arrange-outside-test/compliant.ts
-    expected: compliant
+    expected: no_violation
 
   - rule: before-each-arrange-only
     name: beforeEachで検証対象の操作まで実行する
@@ -20,7 +20,7 @@ cases:
   - rule: before-each-arrange-only
     name: beforeEachでは初期状態だけを作る
     fixture: fixtures/before-each-arrange-only/compliant.ts
-    expected: compliant
+    expected: no_violation
 
   - rule: dom-observable-contract
     name: 内部data属性だけを検証する
@@ -30,7 +30,7 @@ cases:
   - rule: dom-observable-contract
     name: 利用者に見える状態を検証する
     fixture: fixtures/dom-observable-contract/compliant.tsx
-    expected: compliant
+    expected: no_violation
 
   - rule: table-driven-cases
     name: 同じ期待動作を個別testで繰り返す
@@ -40,7 +40,7 @@ cases:
   - rule: table-driven-cases
     name: 入力違いをtest.eachで表現する
     fixture: fixtures/table-driven-cases/compliant.ts
-    expected: compliant
+    expected: no_violation
 
   - rule: no-condition-in-test-title
     name: テスト名に条件の「場合」を書く
@@ -50,4 +50,4 @@ cases:
   - rule: no-condition-in-test-title
     name: 条件をdescribeに置き、テスト名は「時刻」だけを含む
     fixture: fixtures/no-condition-in-test-title/compliant.ts
-    expected: compliant
+    expected: no_violation

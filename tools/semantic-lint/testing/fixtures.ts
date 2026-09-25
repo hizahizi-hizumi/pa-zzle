@@ -11,14 +11,13 @@ export function decisionResult(
 ): DecisionResult {
   const probabilities = {
     violation: 0,
-    compliant: 0,
-    not_applicable: 0,
-    insufficient_context: 0,
+    no_violation: 0,
+    cannot_judge: 0,
   };
   probabilities.violation = violationProbability;
 
   if (decision === "violation") {
-    probabilities.compliant = 1 - violationProbability;
+    probabilities.no_violation = 1 - violationProbability;
   } else {
     probabilities[decision] = 1 - violationProbability;
   }
@@ -39,15 +38,7 @@ export function sampleRule(overrides: Partial<Rule> = {}): Rule {
     violationThreshold: 0.9,
     unit: "file",
     paths: ["frontend/**/*.test.ts"],
-    predicate: {
-      instruction: "Classify the subject.",
-      outcomes: {
-        violation: "violates",
-        compliant: "complies",
-        not_applicable: "not applicable",
-        insufficient_context: "insufficient context",
-      },
-    },
+    instruction: "The subject must satisfy the sample rule.",
     ...overrides,
   };
 }
