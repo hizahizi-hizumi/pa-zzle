@@ -62,7 +62,7 @@ function runMain() {
   const budget = readOption("budget", 5000);
   const startedAt = performance.now();
   const heuristic = createSlidePuzzlePatternDatabaseHeuristic(
-    buildSlidePuzzlePatternDatabase(),
+    buildSlidePuzzlePatternDatabase(poolBoardSize),
   );
   console.error(
     `pattern database: ${Math.round(performance.now() - startedAt)}ms`,

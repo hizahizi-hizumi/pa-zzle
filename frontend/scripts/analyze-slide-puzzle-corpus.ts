@@ -572,7 +572,7 @@ function printHandmadeBoardReport(heuristic: SlidePuzzleHeuristic) {
 
 if (!Bun.argv.includes("--pool-only")) {
   const heuristic = createSlidePuzzlePatternDatabaseHeuristic(
-    buildSlidePuzzlePatternDatabase(),
+    buildSlidePuzzlePatternDatabase(corpusBoardSize),
   );
   printCorpusReport(analyzeCorpus(readOption("per-scramble", 300), heuristic));
   printHandmadeBoardReport(heuristic);
