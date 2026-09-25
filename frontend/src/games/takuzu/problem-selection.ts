@@ -1,6 +1,9 @@
 import { hashProblemSeed, type ProblemSeed } from "@/games/problem-seed";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
-import type { TakuzuProblemIdentity } from "@/games/takuzu/problem/problem";
+import {
+  isTakuzuProblemIdentity,
+  type TakuzuRecordedProblemIdentity,
+} from "@/games/takuzu/problem/problem";
 import {
   findTakuzuPoolEntry,
   listTakuzuPoolEntries,
@@ -27,11 +30,13 @@ export function selectTakuzuProblemForDifficulty(
 
 /**
  * 記録に残した identity から同じ問題を復元する。
- * 問題集に無い identity（生成器の版が変わった後の古い記録など）は再プレイできないので `null` を返す。
+ * 問題集に無い identity（生成器の版が今と違う記録など）は再プレイできないので `null` を返す。
  */
 export function restoreTakuzuProblem(
-  identity: TakuzuProblemIdentity,
+  identity: TakuzuRecordedProblemIdentity,
 ): TakuzuPooledProblem | null {
-  const entry = findTakuzuPoolEntry(identity);
+  const entry = isTakuzuProblemIdentity(identity)
+    ? findTakuzuPoolEntry(identity)
+    : null;
   return entry ? toTakuzuPooledProblem(entry) : null;
 }

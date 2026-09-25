@@ -56,6 +56,17 @@ export type TakuzuSolveWorkload = {
   lineReadingRoundCount: number;
 };
 
+/**
+ * 記録に残した問題の識別情報。
+ * 生成器の版が今と違う記録も評価し続けられるよう、版と生成条件の形は今の生成器に限らない。
+ * 今の生成器で扱えるかは `isTakuzuProblemIdentity` で確かめる。
+ */
+export type TakuzuRecordedProblemIdentity = {
+  generatorVersion: string;
+  seed: ProblemSeed;
+  conditions: Readonly<Record<string, unknown>>;
+};
+
 /** 問題と、それを再現するための情報。難易度分析を伴わない。 */
 export type TakuzuIdentifiedProblem = {
   problem: TakuzuProblem;
@@ -136,5 +147,49 @@ export function isTakuzuProblemIdentity(
     size === TAKUZU_BOARD_SIZE &&
     isRemovalTechniqueLimit(removalTechniqueLimit) &&
     isNonNegativeInteger(extraGivenCount)
+  );
+}
+
+/**
+ * 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。
+ * 今の生成器の版なら、今の生成器で扱える識別情報であることまで確かめる。
+ */
+export function isTakuzuRecordedProblemIdentity(
+  value: unknown,
+): value is TakuzuRecordedProblemIdentity {
+  if (!isRecordObject(value) || !isRecordObject(value.conditions)) {
+    return false;
+  }
+
+  const { generatorVersion, seed } = value;
+  if (generatorVersion === TAKUZU_GENERATOR_VERSION) {
+    return isTakuzuProblemIdentity(value);
+  }
+  return (
+    typeof generatorVersion === "string" &&
+    generatorVersion.length > 0 &&
+    typeof seed === "string" &&
+    seed.length > 0
+  );
+}
+
+/** 記録など外部から読み戻した値が、8×8 の問題で成り立つ作業の量かを確かめる。 */
+export function isTakuzuSolveWorkload(
+  value: unknown,
+): value is TakuzuSolveWorkload {
+  if (!isRecordObject(value)) {
+    return false;
+  }
+
+  const { emptyCellCount, roundCount, lineReadingRoundCount } = value;
+  return (
+    isNonNegativeInteger(emptyCellCount) &&
+    emptyCellCount > 0 &&
+    emptyCellCount <= TAKUZU_BOARD_SIZE * TAKUZU_BOARD_SIZE &&
+    isNonNegativeInteger(roundCount) &&
+    roundCount > 0 &&
+    roundCount <= emptyCellCount &&
+    isNonNegativeInteger(lineReadingRoundCount) &&
+    lineReadingRoundCount <= roundCount
   );
 }

@@ -9,7 +9,7 @@ import {
   assertTakuzuProblem,
   TAKUZU_GENERATOR_VERSION,
   type TakuzuProblem,
-  type TakuzuProblemIdentity,
+  type TakuzuRecordedProblemIdentity,
 } from "@/games/takuzu/problem/problem";
 import {
   listTakuzuPoolEntries,
@@ -186,26 +186,21 @@ describe("restoreTakuzuProblem", () => {
     expect(restored).toEqual(selected);
   });
 
-  const unknownIdentities: readonly [string, TakuzuProblemIdentity][] = [
+  const unknownIdentities: readonly [string, TakuzuRecordedProblemIdentity][] =
     [
-      "生成器の版が違う",
-      {
-        ...selected.identity,
-        generatorVersion: "0" as TakuzuProblemIdentity["generatorVersion"],
-      },
-    ],
-    ["問題集に無い seed", { ...selected.identity, seed: "tk-unknown" }],
-    [
-      "生成条件が違う",
-      {
-        ...selected.identity,
-        conditions: {
-          ...selected.identity.conditions,
-          extraGivenCount: selected.identity.conditions.extraGivenCount + 1,
+      ["生成器の版が今と違う", { ...selected.identity, generatorVersion: "0" }],
+      ["問題集に無い seed", { ...selected.identity, seed: "tk-unknown" }],
+      [
+        "生成条件が違う",
+        {
+          ...selected.identity,
+          conditions: {
+            ...selected.identity.conditions,
+            extraGivenCount: selected.identity.conditions.extraGivenCount + 1,
+          },
         },
-      },
-    ],
-  ];
+      ],
+    ];
 
   test.each(unknownIdentities)(
     "%s identity は復元できないこと",
