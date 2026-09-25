@@ -1,5 +1,5 @@
-import type { NanpureBoard, NanpureCell } from "../puzzle/board";
-import { analyzeNanpureDifficulty } from "./difficulty-analysis";
+import { analyzeNanpureDifficulty } from "@/games/nanpure/problem/difficulty-analysis";
+import type { NanpureBoard, NanpureCell } from "@/games/nanpure/puzzle/board";
 
 function boardFromString(value: string): NanpureBoard {
   return [...value].map<NanpureCell>((cell) =>

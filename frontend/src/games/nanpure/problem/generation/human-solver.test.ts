@@ -1,6 +1,6 @@
-import type { NanpureBoard, NanpureCell } from "../../puzzle/board";
-import { traceNanpureHumanSolve } from "./human-solver";
-import { classifyNanpureSolutions } from "./solver";
+import { traceNanpureHumanSolve } from "@/games/nanpure/problem/generation/human-solver";
+import { classifyNanpureSolutions } from "@/games/nanpure/problem/generation/solver";
+import type { NanpureBoard, NanpureCell } from "@/games/nanpure/puzzle/board";
 
 function boardFromRows(rows: readonly string[]): NanpureBoard {
   return rows.flatMap((row) =>

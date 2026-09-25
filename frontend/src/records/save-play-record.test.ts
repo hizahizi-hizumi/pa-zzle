@@ -1,6 +1,6 @@
-import type { PlayRecord } from "./play-record";
-import type { PlayRecordDefinition } from "./play-record-definition";
-import { getPlayRecordSaveOutcome } from "./save-play-record";
+import type { PlayRecord } from "@/records/play-record";
+import type { PlayRecordDefinition } from "@/records/play-record-definition";
+import { getPlayRecordSaveOutcome } from "@/records/save-play-record";
 
 function createRecord(id: string, value: number): PlayRecord {
   return {

@@ -2,7 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 
 import type { NanpureDiagnosticSnapshot } from "@/games/nanpure/diagnostics";
 
-import { NanpureDiagnostics } from "./NanpureDiagnostics";
+import { NanpureDiagnostics } from "@/games/nanpure/ui/NanpureDiagnostics";
 
 const snapshot: NanpureDiagnosticSnapshot = {
   formatVersion: 1,
