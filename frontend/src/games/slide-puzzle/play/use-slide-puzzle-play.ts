@@ -1,7 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
-import type { SlidePuzzleProblemIdentity } from "@/games/slide-puzzle/problem/problem";
+import type {
+  SlidePuzzleGeneratedProblem,
+  SlidePuzzleProblemIdentity,
+} from "@/games/slide-puzzle/problem/problem";
 import { selectSlidePuzzleProblemForDifficulty } from "@/games/slide-puzzle/problem-selection";
 import {
   getSlidePuzzleKeyboardSlide,
@@ -9,12 +12,22 @@ import {
   type SlidePuzzleDirection,
   type SlidePuzzleSlide,
 } from "@/games/slide-puzzle/puzzle/rules";
-import type { SlidePuzzleBoard } from "@/games/slide-puzzle/puzzle/state";
+import type {
+  SlidePuzzleBoard,
+  SlidePuzzleBoardSize,
+} from "@/games/slide-puzzle/puzzle/state";
+import {
+  calculateSlidePuzzlePerformanceComparison,
+  calculateSlidePuzzlePlayScore,
+  type SlidePuzzlePlayScore,
+} from "@/games/slide-puzzle/score";
 import {
   createSlidePuzzleSession,
   getSlidePuzzleSessionElapsedMs,
+  getSlidePuzzleSessionResult,
   restartSlidePuzzleSession,
   type SlidePuzzleSession,
+  type SlidePuzzleSessionResult,
   slideSlidePuzzleSessionTile,
 } from "@/games/slide-puzzle/session/session";
 
@@ -31,9 +44,19 @@ export type SlidePuzzleOperation =
 
 export type SlidePuzzleProgress = "playing" | "clearing" | "result";
 
+export type SlidePuzzleResult = SlidePuzzleSessionResult & {
+  boardSize: SlidePuzzleBoardSize;
+  optimalMoveCount: number;
+  moveDelta: number;
+  timeDeltaMs: number;
+  speedFullScoreMs: number;
+  score: SlidePuzzlePlayScore;
+};
+
 type SlidePuzzlePlayState = {
   session: SlidePuzzleSession;
   problemIdentity: SlidePuzzleProblemIdentity;
+  optimalMoveCount: number;
   progress: SlidePuzzleProgress;
   operation: SlidePuzzleOperation | null;
 };
@@ -42,15 +65,15 @@ function createPlayState(
   difficulty: SlidePuzzleDifficulty,
   seed: ProblemSeed,
   startedAt: number,
+  initialProblem?: SlidePuzzleGeneratedProblem,
 ): SlidePuzzlePlayState {
-  const generatedProblem = selectSlidePuzzleProblemForDifficulty(
-    difficulty,
-    seed,
-  );
+  const generatedProblem =
+    initialProblem ?? selectSlidePuzzleProblemForDifficulty(difficulty, seed);
 
   return {
     session: createSlidePuzzleSession(generatedProblem.problem, startedAt),
     problemIdentity: generatedProblem.identity,
+    optimalMoveCount: generatedProblem.optimalMoveCount,
     progress: "playing",
     operation: null,
   };
@@ -94,9 +117,18 @@ function slideTileInPlay(
   };
 }
 
-export function useSlidePuzzlePlay(difficulty: SlidePuzzleDifficulty) {
+/** `initialProblem` は、記録からの再プレイで最初に遊ぶ問題。 */
+export function useSlidePuzzlePlay(
+  difficulty: SlidePuzzleDifficulty,
+  initialProblem?: SlidePuzzleGeneratedProblem,
+) {
   const [play, setPlay] = useState<SlidePuzzlePlayState>(() =>
-    createPlayState(difficulty, createProblemSeed(), Date.now()),
+    createPlayState(
+      difficulty,
+      initialProblem?.identity.seed ?? createProblemSeed(),
+      Date.now(),
+      initialProblem,
+    ),
   );
   const [now, setNow] = useState(() => Date.now());
   const nextOperationId = useRef(0);
@@ -185,6 +217,39 @@ export function useSlidePuzzlePlay(difficulty: SlidePuzzleDifficulty) {
   }, []);
 
   const { session } = play;
+  const sessionResult = useMemo(
+    () => getSlidePuzzleSessionResult(session, now),
+    [now, session],
+  );
+  const optimalMoveCount = play.optimalMoveCount;
+  const boardSize = play.problemIdentity.conditions.size;
+  const result = useMemo<SlidePuzzleResult | null>(() => {
+    if (!sessionResult) {
+      return null;
+    }
+
+    const comparison = calculateSlidePuzzlePerformanceComparison({
+      elapsedMs: sessionResult.elapsedMs,
+      moveCount: sessionResult.moveCount,
+      boardSize,
+      optimalMoveCount,
+    });
+
+    return {
+      ...sessionResult,
+      boardSize,
+      optimalMoveCount,
+      moveDelta: comparison.moveDelta,
+      timeDeltaMs: comparison.timeDeltaMs,
+      speedFullScoreMs: comparison.speedFullScoreMs,
+      score: calculateSlidePuzzlePlayScore({
+        elapsedMs: sessionResult.elapsedMs,
+        moveCount: sessionResult.moveCount,
+        boardSize,
+        optimalMoveCount,
+      }),
+    };
+  }, [boardSize, optimalMoveCount, sessionResult]);
 
   return {
     difficulty,
@@ -197,7 +262,9 @@ export function useSlidePuzzlePlay(difficulty: SlidePuzzleDifficulty) {
     elapsedMs: getSlidePuzzleSessionElapsedMs(session, now),
     moveCount: session.moveCount,
     restartCount: session.restartCount,
+    optimalMoveCount,
     operation: play.operation,
+    result,
     slideTile,
     slideByKeyboard,
     restart,
