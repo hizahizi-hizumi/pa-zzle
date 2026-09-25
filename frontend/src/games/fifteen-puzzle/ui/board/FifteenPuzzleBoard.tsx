@@ -64,7 +64,7 @@ export function FifteenPuzzleBoard({
     <div
       role="group"
       aria-label="盤面"
-      className="@container size-full rounded-xl bg-muted p-[1.5cqw]"
+      className="@container size-full rounded-xl bg-muted p-[1%]"
     >
       <div className="relative size-full">
         {tiles.map(({ tile, cellIndex }) => (
