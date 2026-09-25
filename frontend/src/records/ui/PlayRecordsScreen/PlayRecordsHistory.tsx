@@ -1,9 +1,8 @@
 import type { PersonalBest } from "@/records/personal-best";
 import type { PlayRecord } from "@/records/play-record";
+import { PlayRecordRow } from "@/records/ui/PlayRecordsScreen/PlayRecordRow";
+import { getPlayRecordGridTemplateColumns } from "@/records/ui/PlayRecordsScreen/record-grid";
 import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
-
-import { PlayRecordRow } from "./PlayRecordRow";
-import { getPlayRecordGridTemplateColumns } from "./record-grid";
 
 type PlayRecordsHistoryProps = {
   records: readonly PlayRecord[];

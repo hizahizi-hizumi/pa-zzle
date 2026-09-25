@@ -1,6 +1,6 @@
 import { cleanup, render } from "@testing-library/react";
 
-import { NanpureClearAnimation } from "./NanpureClearAnimation";
+import { NanpureClearAnimation } from "@/games/nanpure/ui/board/clear/NanpureClearAnimation";
 
 afterEach(() => {
   cleanup();

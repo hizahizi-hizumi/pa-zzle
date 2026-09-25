@@ -1,33 +1,47 @@
-import type { WaterSortDifficultyAnalysis } from "./problem/difficulty-analysis";
+import type { WaterSortGenerationConditions } from "@/games/water-sort/problem/problem";
 
 export const waterSortDifficulties = [
   {
-    id: "easy",
-    label: "かんたん",
+    id: "1",
+    label: "レベル 1",
+    description: "同じ色をまとめていけば解けます",
   },
   {
-    id: "normal",
-    label: "ふつう",
+    id: "2",
+    label: "レベル 2",
+    description: "何も考えずに進めると、ときどき詰みます",
   },
   {
-    id: "hard",
-    label: "むずかしい",
+    id: "3",
+    label: "レベル 3",
+    description: "空きボトルの使い方を考えないと詰みます",
+  },
+  {
+    id: "4",
+    label: "レベル 4",
+    description: "何度か先を読む必要があります",
+  },
+  {
+    id: "5",
+    label: "レベル 5",
+    description: "先を読まずに進めると、ほぼ確実に詰みます",
   },
 ] as const;
 
 export type WaterSortDifficulty = (typeof waterSortDifficulties)[number]["id"];
 
-export type WaterSortDifficultyAssessment = {
-  difficulty: WaterSortDifficulty;
-};
+const legacyWaterSortDifficulties = [
+  { id: "easy", label: "かんたん" },
+  { id: "normal", label: "ふつう" },
+  { id: "hard", label: "むずかしい" },
+] as const;
 
-const easyMaximumPreparationMoves = 2;
-const easyMaximumEmptyBottlePressure = 0.65;
-const hardMinimumPreparationMoves = 3;
-const hardMinimumEmptyBottlePressure = 0.75;
-const hardMinimumDeadEndChoiceRatio = 0.125;
-const hardMinimumRiskyChoiceRatio = 0.75;
-const hardMinimumDetourMoves = 2;
+export type LegacyWaterSortDifficulty =
+  (typeof legacyWaterSortDifficulties)[number]["id"];
+
+export type WaterSortRecordedDifficulty =
+  | WaterSortDifficulty
+  | LegacyWaterSortDifficulty;
 
 export function parseWaterSortDifficulty(
   value: string | undefined,
@@ -36,44 +50,128 @@ export function parseWaterSortDifficulty(
     ?.id;
 }
 
-export function getWaterSortDifficultyLabel(
-  difficulty: WaterSortDifficulty,
-): string {
+export function parseWaterSortRecordedDifficulty(
+  value: string | undefined,
+): WaterSortRecordedDifficulty | undefined {
   return (
-    waterSortDifficulties.find((option) => option.id === difficulty)?.label ??
-    difficulty
+    parseWaterSortDifficulty(value) ??
+    legacyWaterSortDifficulties.find((difficulty) => difficulty.id === value)
+      ?.id
   );
 }
 
-export function assessWaterSortDifficulty(
-  analysis: WaterSortDifficultyAnalysis,
-): WaterSortDifficultyAssessment {
-  const risk = analysis.representativeChoiceRisk;
-  const hasResolvedChoiceRisk = risk.unresolvedChoiceCount === 0;
-  const riskyChoiceRatio = risk.detourChoiceRatio + risk.deadEndChoiceRatio;
+export function getWaterSortDifficultyLabel(
+  difficulty: WaterSortRecordedDifficulty,
+): string {
+  return (
+    [...waterSortDifficulties, ...legacyWaterSortDifficulties].find(
+      (option) => option.id === difficulty,
+    )?.label ?? difficulty
+  );
+}
 
-  const isEasy =
-    hasResolvedChoiceRisk &&
-    analysis.preparationMoveCount <= easyMaximumPreparationMoves &&
-    analysis.averageEmptyBottlePressure <= easyMaximumEmptyBottlePressure &&
-    risk.deadEndChoiceRatio === 0 &&
-    risk.maximumDetourMoves <= 1;
-  if (isEasy) {
-    return { difficulty: "easy" };
-  }
+type WaterSortGenerationProfile = Pick<
+  WaterSortGenerationConditions,
+  "colorCount" | "emptyBottleCount"
+>;
 
-  const hasMeaningfulWrongChoicePenalty =
-    risk.deadEndChoiceRatio >= hardMinimumDeadEndChoiceRatio ||
-    risk.maximumDetourMoves >= hardMinimumDetourMoves ||
-    riskyChoiceRatio >= hardMinimumRiskyChoiceRatio;
-  const isHard =
-    hasResolvedChoiceRisk &&
-    analysis.preparationMoveCount >= hardMinimumPreparationMoves &&
-    analysis.averageEmptyBottlePressure >= hardMinimumEmptyBottlePressure &&
-    hasMeaningfulWrongChoicePenalty;
-  if (isHard) {
-    return { difficulty: "hard" };
-  }
+type WaterSortDifficultyCriteria = {
+  generationProfiles: readonly WaterSortGenerationProfile[];
+  minimumExclusiveStuckRate: number | null;
+  maximumInclusiveStuckRate: number | null;
+};
 
-  return { difficulty: "normal" };
+function createProfiles(
+  minimumColorCount: number,
+  maximumColorCount: number,
+  emptyBottleCount: number,
+): WaterSortGenerationProfile[] {
+  return Array.from(
+    { length: maximumColorCount - minimumColorCount + 1 },
+    (_, index) => ({
+      colorCount: minimumColorCount + index,
+      emptyBottleCount,
+    }),
+  );
+}
+
+export const waterSortDifficultyCriteria: Record<
+  WaterSortDifficulty,
+  WaterSortDifficultyCriteria
+> = {
+  "1": {
+    generationProfiles: createProfiles(4, 6, 2),
+    minimumExclusiveStuckRate: null,
+    maximumInclusiveStuckRate: 0.05,
+  },
+  "2": {
+    generationProfiles: createProfiles(5, 8, 2),
+    minimumExclusiveStuckRate: 0.05,
+    maximumInclusiveStuckRate: 0.35,
+  },
+  "3": {
+    generationProfiles: [
+      ...createProfiles(6, 9, 2),
+      ...createProfiles(4, 5, 1),
+    ],
+    minimumExclusiveStuckRate: 0.35,
+    maximumInclusiveStuckRate: 0.7,
+  },
+  "4": {
+    generationProfiles: [
+      ...createProfiles(8, 11, 2),
+      ...createProfiles(4, 6, 1),
+    ],
+    minimumExclusiveStuckRate: 0.7,
+    maximumInclusiveStuckRate: 0.9,
+  },
+  "5": {
+    generationProfiles: [
+      ...createProfiles(10, 12, 2),
+      ...createProfiles(5, 7, 1),
+    ],
+    minimumExclusiveStuckRate: 0.9,
+    maximumInclusiveStuckRate: null,
+  },
+};
+
+function hasGenerationProfile(
+  criteria: WaterSortDifficultyCriteria,
+  conditions: WaterSortGenerationProfile,
+): boolean {
+  return criteria.generationProfiles.some(
+    (profile) =>
+      profile.colorCount === conditions.colorCount &&
+      profile.emptyBottleCount === conditions.emptyBottleCount,
+  );
+}
+
+function isWithinStuckRate(
+  criteria: WaterSortDifficultyCriteria,
+  stuckRate: number,
+): boolean {
+  return (
+    (criteria.minimumExclusiveStuckRate === null ||
+      stuckRate > criteria.minimumExclusiveStuckRate) &&
+    (criteria.maximumInclusiveStuckRate === null ||
+      stuckRate <= criteria.maximumInclusiveStuckRate)
+  );
+}
+
+export function assessWaterSortDifficulty({
+  conditions,
+  stuckRate,
+}: {
+  conditions: WaterSortGenerationProfile;
+  stuckRate: number;
+}): WaterSortDifficulty | null {
+  return (
+    waterSortDifficulties.find(({ id }) => {
+      const criteria = waterSortDifficultyCriteria[id];
+      return (
+        hasGenerationProfile(criteria, conditions) &&
+        isWithinStuckRate(criteria, stuckRate)
+      );
+    })?.id ?? null
+  );
 }

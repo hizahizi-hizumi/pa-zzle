@@ -1,11 +1,11 @@
-import type { ProblemSeed } from "@/games/problem-seed";
+import type { NanpureDifficultyAnalysis } from "@/games/nanpure/problem/difficulty-analysis";
 import {
   assertNanpureBoard,
   type NanpureBoard,
   type NanpureSolution,
-} from "../puzzle/board";
-import { isNanpureSolved } from "../puzzle/rules";
-import type { NanpureDifficultyAnalysis } from "./difficulty-analysis";
+} from "@/games/nanpure/puzzle/board";
+import { isNanpureSolved } from "@/games/nanpure/puzzle/rules";
+import type { ProblemSeed } from "@/games/problem-seed";
 
 export const NANPURE_GENERATOR_VERSION = "1";
 

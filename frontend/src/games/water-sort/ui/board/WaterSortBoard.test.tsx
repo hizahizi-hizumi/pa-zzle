@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
-import { WaterSortBoard } from "./WaterSortBoard";
+import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
 
 function installPendingAnimations() {
   const cancelAnimations: Array<ReturnType<typeof vi.fn>> = [];

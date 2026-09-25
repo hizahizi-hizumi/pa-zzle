@@ -1,4 +1,4 @@
-import { formatWaterSortElapsedTime } from "./format-elapsed-time";
+import { formatWaterSortElapsedTime } from "@/games/water-sort/ui/format-elapsed-time";
 
 export function formatWaterSortMoveDelta(moveDelta: number): string {
   return moveDelta === 0 ? "±0" : `${moveDelta > 0 ? "+" : ""}${moveDelta}`;
