@@ -1,4 +1,4 @@
-import type { MinesweeperProblem } from "./problem";
+import type { MinesweeperProblem } from "@/games/minesweeper/problem/problem";
 
 export const minesweeperReviewProblem: MinesweeperProblem = {
   board: {

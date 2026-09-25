@@ -4,7 +4,7 @@ import {
 } from "@/games/nanpure/difficulty";
 import { nanpurePlayRecordDefinition } from "@/games/nanpure/play-record";
 
-import { formatElapsedTime } from "./format-elapsed-time";
+import { formatElapsedTime } from "@/games/nanpure/ui/format-elapsed-time";
 
 export const nanpurePlayRecordDisplay = {
   definition: nanpurePlayRecordDefinition,

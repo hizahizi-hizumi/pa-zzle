@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 
-import type { MinesweeperProblem } from "../problem/problem";
+import type { MinesweeperProblem } from "@/games/minesweeper/problem/problem";
 import {
   chordMinesweeperSessionCell,
   createMinesweeperSession,
@@ -8,7 +8,7 @@ import {
   replayMinesweeperSession,
   revealMinesweeperSessionCell,
   toggleMinesweeperSessionFlag,
-} from "../session/session";
+} from "@/games/minesweeper/session/session";
 
 export function useMinesweeperProblemPlay(problem: MinesweeperProblem) {
   const [session, setSession] = useState(() =>

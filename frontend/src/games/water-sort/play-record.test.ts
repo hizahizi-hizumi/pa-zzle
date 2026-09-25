@@ -1,4 +1,3 @@
-import type { PlayRecord } from "@/records/play-record";
 import {
   createWaterSortPlayRecord,
   getWaterSortPlayRecordCompletionMoveCount,
@@ -6,11 +5,12 @@ import {
   getWaterSortPlayRecordTimeDelta,
   isWaterSortPlayRecord,
   waterSortPlayRecordDefinition,
-} from "./play-record";
+} from "@/games/water-sort/play-record";
+import type { PlayRecord } from "@/records/play-record";
 
 function createRecord() {
   return createWaterSortPlayRecord({
-    difficulty: "normal",
+    difficulty: "3",
     problemIdentity: {
       generatorVersion: "1",
       seed: "water-sort-seed",
@@ -69,7 +69,7 @@ test("同じ開始条件を自己ベストの比較単位として扱うこと",
 
   const comparisonKey = waterSortPlayRecordDefinition.getComparisonKey(record);
 
-  expect(comparisonKey).toBe("normal");
+  expect(comparisonKey).toBe("3");
 });
 
 test("やり直しのない旧記録は待った回数からクリア手数を復元して再評価すること", () => {

@@ -1,19 +1,19 @@
 import {
   assessMinesweeperDifficulty,
   type MinesweeperDifficultyAssessment,
-} from "./difficulty";
-import type { MinesweeperHumanSolveFeatures } from "./problem/difficulty-analysis";
+} from "@/games/minesweeper/difficulty";
+import type { MinesweeperHumanSolveFeatures } from "@/games/minesweeper/problem/difficulty-analysis";
 import {
   type MinesweeperDifficultyReviewProblem,
   minesweeperDifficultyReviewProblems,
-} from "./problem/difficulty-review-problems";
-import { restoreMinesweeperProblem } from "./problem/generator";
+} from "@/games/minesweeper/problem/difficulty-review-problems";
+import { restoreMinesweeperProblem } from "@/games/minesweeper/problem/generator";
 import {
   MINESWEEPER_GENERATOR_VERSION,
   type MinesweeperProblem,
   type MinesweeperProblemIdentity,
   type MinesweeperStartCellPlacement,
-} from "./problem/problem";
+} from "@/games/minesweeper/problem/problem";
 
 export type MinesweeperDifficultyReviewEntry =
   MinesweeperDifficultyReviewProblem & {

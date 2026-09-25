@@ -1,7 +1,7 @@
 import { Flag, Pointer } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import type { MinesweeperInputMode } from "../../board/MinesweeperBoard";
+import type { MinesweeperInputMode } from "@/games/minesweeper/ui/board/MinesweeperBoard";
 
 type InputModeToggleProps = {
   mode: MinesweeperInputMode;
