@@ -14,7 +14,10 @@ import {
   type MinesweeperBoard,
 } from "@/games/minesweeper/puzzle/board";
 import { collectMinesweeperRevealCellIndices } from "@/games/minesweeper/puzzle/rules";
-import type { ProblemSeed } from "@/games/problem-seed";
+import {
+  createProblemSeededRandom,
+  type ProblemSeed,
+} from "@/games/problem-seed";
 
 export const MINESWEEPER_MINIMUM_BOARD_LENGTH = 5;
 export const MINESWEEPER_MAXIMUM_BOARD_ROWS = 16;
@@ -23,9 +26,13 @@ export const MINESWEEPER_MAXIMUM_BOARD_COLUMNS = 12;
 // 開始マスの位置によらず同じ地雷数を置けるよう、開始の3×3が盤面に収まる場合の9マスを常に空けておく。
 const START_AREA_CELL_COUNT = 9;
 
-export type MinesweeperGeneratedProblem = {
+/** 再現用情報から復元した問題。難易度分析を伴わない。 */
+export type MinesweeperRestoredProblem = {
   problem: MinesweeperProblem;
   identity: MinesweeperProblemIdentity;
+};
+
+export type MinesweeperGeneratedProblem = MinesweeperRestoredProblem & {
   difficultyAnalysis: MinesweeperDifficultyAnalysis;
 };
 
@@ -54,28 +61,6 @@ export class MinesweeperGenerationExhaustedError extends Error {
     );
     this.name = "MinesweeperGenerationExhaustedError";
   }
-}
-
-function hashProblemSeed(seed: string): number {
-  let hash = 0x811c9dc5;
-  for (let index = 0; index < seed.length; index += 1) {
-    hash ^= seed.charCodeAt(index);
-    hash = Math.imul(hash, 0x01000193);
-  }
-
-  return hash >>> 0;
-}
-
-function createProblemSeededRandom(seed: string): () => number {
-  let state = hashProblemSeed(seed);
-
-  return function nextRandom() {
-    state = (state + 0x6d2b79f5) >>> 0;
-    let value = state;
-    value = Math.imul(value ^ (value >>> 15), value | 1);
-    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
-    return ((value ^ (value >>> 14)) >>> 0) / 0x1_0000_0000;
-  };
 }
 
 function createGeneratorRandom(
@@ -227,17 +212,26 @@ function findCandidateAtAttempt(
   return problem;
 }
 
+/** 再現用情報から盤面だけを復元する。難易度分析を走らせないため、分類済みの問題を遊ぶときに使う。 */
+export function restoreMinesweeperProblemWithoutAnalysis(
+  identity: MinesweeperProblemIdentity,
+): MinesweeperRestoredProblem {
+  validateProblemIdentity(identity);
+
+  return { problem: findCandidateAtAttempt(identity), identity };
+}
+
 export function restoreMinesweeperProblem(
   identity: MinesweeperProblemIdentity,
   analysisOptions: MinesweeperHumanSolverOptions = {},
 ): MinesweeperGeneratedProblem {
-  validateProblemIdentity(identity);
-
-  const problem = findCandidateAtAttempt(identity);
+  const restored = restoreMinesweeperProblemWithoutAnalysis(identity);
   return {
-    problem,
-    identity,
-    difficultyAnalysis: analyzeMinesweeperDifficulty(problem, analysisOptions),
+    ...restored,
+    difficultyAnalysis: analyzeMinesweeperDifficulty(
+      restored.problem,
+      analysisOptions,
+    ),
   };
 }
 

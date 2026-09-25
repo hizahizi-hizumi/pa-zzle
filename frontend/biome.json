@@ -7,6 +7,7 @@
       "!dist",
       "!src/router.ts",
       "!src/components/ui",
+      "!src/games/minesweeper/problem/problem-pool.json",
       "!src/games/water-sort/problem/problem-pool.json"
     ]
   },
