@@ -4,7 +4,7 @@ import {
   PARKING_JAM_CELL,
   PARKING_JAM_MARGIN,
   parkingJamBoardGeometry,
-} from "./parking-jam-board-geometry";
+} from "@/games/parking-jam/ui/board/parking-jam-board-geometry";
 
 const opening = { side: "up", startOffset: 1, length: 2 } as const;
 
