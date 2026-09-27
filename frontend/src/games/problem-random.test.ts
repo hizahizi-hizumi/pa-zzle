@@ -1,4 +1,7 @@
-import { createProblemRandom, shuffleProblemValues } from "./problem-random";
+import {
+  createProblemRandom,
+  shuffleProblemValues,
+} from "@/games/problem-random";
 
 describe("createProblemRandom", () => {
   const source = "same-source";
