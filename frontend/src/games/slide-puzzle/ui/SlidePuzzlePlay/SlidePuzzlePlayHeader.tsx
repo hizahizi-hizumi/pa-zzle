@@ -10,6 +10,7 @@ type SlidePuzzlePlayHeaderProps = {
   onRestart: () => void;
   onReplay: () => void;
   onStartNewProblem: () => void;
+  onChangeDifficulty: () => void;
   onBackToHome: () => void;
 };
 
@@ -19,6 +20,7 @@ export function SlidePuzzlePlayHeader({
   onRestart,
   onReplay,
   onStartNewProblem,
+  onChangeDifficulty,
   onBackToHome,
 }: SlidePuzzlePlayHeaderProps) {
   return (
@@ -27,8 +29,8 @@ export function SlidePuzzlePlayHeader({
         type="button"
         variant="ghost"
         size="icon-lg"
-        aria-label="ホームへ戻る"
-        onClick={onBackToHome}
+        aria-label="難易度選択へ戻る"
+        onClick={onChangeDifficulty}
       >
         <ArrowLeft />
       </Button>
@@ -37,6 +39,7 @@ export function SlidePuzzlePlayHeader({
         onRestart={onRestart}
         onReplay={onReplay}
         onStartNewProblem={onStartNewProblem}
+        onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
       />
     </header>

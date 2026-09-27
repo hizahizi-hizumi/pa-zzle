@@ -24,6 +24,7 @@ export function PlayableSlidePuzzle({ difficulty }: PlayableSlidePuzzleProps) {
       onReplay={play.replay}
       onStartNewProblem={play.startNewProblem}
       onClearingComplete={play.completeClearing}
+      onChangeDifficulty={() => navigate("/puzzles/slide-puzzle")}
       onBackToHome={() => navigate("/")}
     />
   );
