@@ -436,16 +436,35 @@ function validateIdentity(identity: ParkingJamProblemIdentity): void {
   validateMaximumAttempts(identity.generationAttempt);
 }
 
-export function restoreParkingJamProblem(
-  identity: ParkingJamProblemIdentity,
-): ParkingJamGeneratedProblem {
+function restoreBoard(identity: ParkingJamProblemIdentity): ParkingJamBoard {
   validateIdentity(identity);
   const board = candidateAtAttempt(identity);
   if (!board)
     throw new Error(
       "Parking jam problem identity does not reference a valid problem",
     );
-  return createGeneratedProblem(identity, board);
+  return board;
+}
+
+export function restoreParkingJamProblem(
+  identity: ParkingJamProblemIdentity,
+): ParkingJamGeneratedProblem {
+  return createGeneratedProblem(identity, restoreBoard(identity));
+}
+
+export type ParkingJamRestoredProblem = Pick<
+  ParkingJamGeneratedProblem,
+  "problem" | "identity"
+>;
+
+/**
+ * identity から盤面だけを復元する。可解性と難易度の解析は生成時に済んでいるため、
+ * 問題集から選んだ問題や記録の問題を遊ぶときはこちらを使い、プレイ時に重い解析を走らせない。
+ */
+export function restoreParkingJamProblemWithoutAnalysis(
+  identity: ParkingJamProblemIdentity,
+): ParkingJamRestoredProblem {
+  return { problem: { board: restoreBoard(identity) }, identity };
 }
 
 export function generateParkingJamProblem(

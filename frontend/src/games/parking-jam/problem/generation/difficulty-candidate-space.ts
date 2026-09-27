@@ -242,6 +242,28 @@ export function listParkingJamDifficultyCandidateConditions(): ParkingJamGenerat
   return conditions;
 }
 
+/** 車をすべて長さ2として数えた最低車セル数と固定物セル数が、盤面の3分の2以下に収まる（生成余白がある）。 */
+function hasGenerationCapacity(
+  conditions: ParkingJamGenerationConditions,
+): boolean {
+  const minimumOccupiedCellCount =
+    conditions.vehicleCount * 2 +
+    conditions.fixedAreaCount * conditions.fixedAreaLength;
+  return (
+    minimumOccupiedCellCount * 3 <= conditions.width * conditions.height * 2
+  );
+}
+
+/**
+ * 問題集の候補を作る生成条件。難易度に依らない候補空間から、生成余白のない条件だけを全難易度共通で除く。
+ * 要求難易度で条件を絞ると、深い依存が作られやすい大盤面に偏るため絞らない。
+ */
+export function listParkingJamProblemPoolCandidateConditions(): ParkingJamGenerationConditions[] {
+  return listParkingJamDifficultyCandidateConditions().filter(
+    hasGenerationCapacity,
+  );
+}
+
 export function generateParkingJamDifficultyCandidate(
   seed: ProblemSeed,
   conditions: ParkingJamGenerationConditions,

@@ -1,84 +1,140 @@
-import { assessParkingJamDifficulty } from "@/games/parking-jam/difficulty";
 import {
-  _private,
-  generateParkingJamProblemForDifficulty,
-} from "@/games/parking-jam/problem-selection";
+  assessParkingJamDifficulty,
+  PARKING_JAM_DIFFICULTY_MODEL_VERSION,
+  type ParkingJamDifficulty,
+  parkingJamDifficulties,
+} from "@/games/parking-jam/difficulty";
+import {
+  restoreParkingJamProblem,
+  restoreParkingJamProblemWithoutAnalysis,
+} from "@/games/parking-jam/problem/generator";
+import {
+  getParkingJamProblemPoolDifficultyModelVersion,
+  listParkingJamPoolEntries,
+  toParkingJamPoolIdentity,
+} from "@/games/parking-jam/problem/problem-pool";
+import { selectParkingJamProblemForDifficulty } from "@/games/parking-jam/problem-selection";
 
-const { listParkingJamSupplyConditions } = _private;
+const difficulties = parkingJamDifficulties.map(({ id }) => id);
 
-describe("generateParkingJamProblemForDifficulty", () => {
-  const supplyCases = [
-    { difficulty: "easy", seed: "parking-jam-r3-review-supply-easy-0" },
-    { difficulty: "easy", seed: "parking-jam-r3-review-supply-easy-1" },
-    { difficulty: "easy", seed: "parking-jam-r3-review-supply-easy-2" },
-    { difficulty: "normal", seed: "parking-jam-r3-review-supply-normal-0" },
-    { difficulty: "normal", seed: "parking-jam-r3-review-supply-normal-1" },
-    { difficulty: "normal", seed: "parking-jam-r3-review-supply-normal-2" },
-    { difficulty: "hard", seed: "parking-jam-r3-review-supply-hard-0" },
-    { difficulty: "hard", seed: "parking-jam-r3-review-supply-hard-1" },
-    { difficulty: "hard", seed: "parking-jam-r3-review-supply-hard-2" },
-  ] as const;
+// 全問の分析は1スレッドで数十秒かかるため、テストでは等間隔に抜き出した問題だけを分析する。
+// 全問の検証は `bun run generate:parking-jam-pool -- --verify` で行う。
+const sampledEntryCountPerDifficulty = 20;
 
-  test.each(supplyCases)(
-    "$difficulty の問題を $seed から供給すること",
-    ({ difficulty, seed }) => {
-      const problem = generateParkingJamProblemForDifficulty(difficulty, seed);
-      const assessment = assessParkingJamDifficulty(problem.difficultyAnalysis);
+function listPoolIdentities(difficulty: ParkingJamDifficulty) {
+  return listParkingJamPoolEntries(difficulty).map((entry) =>
+    toParkingJamPoolIdentity(entry),
+  );
+}
 
-      expect(assessment).toMatchObject({
-        difficulty,
-      });
+function sampleEvenly<T>(values: readonly T[], count: number): T[] {
+  const step = Math.max(1, Math.floor(values.length / count));
+  return values.filter((_, index) => index % step === 0);
+}
+
+describe("問題集", () => {
+  test("現在の難易度判定モデルで分類した問題集であること", () => {
+    const modelVersion = getParkingJamProblemPoolDifficultyModelVersion();
+
+    expect(modelVersion).toBe(PARKING_JAM_DIFFICULTY_MODEL_VERSION);
+  });
+
+  test.each(difficulties)("レベル %s に1000問あること", (difficulty) => {
+    const entries = listParkingJamPoolEntries(difficulty);
+
+    expect(entries).toHaveLength(1000);
+  });
+
+  test("全レベルを通して同じ identity の問題を含まないこと", () => {
+    const identityKeys = difficulties.flatMap((difficulty) =>
+      listPoolIdentities(difficulty).map((identity) =>
+        JSON.stringify(identity),
+      ),
+    );
+
+    expect(new Set(identityKeys).size).toBe(identityKeys.length);
+  });
+
+  test.each(difficulties)(
+    "レベル %s から抜き出した問題が分析でそのレベルに分類されること",
+    (difficulty) => {
+      const assessments = sampleEvenly(
+        listPoolIdentities(difficulty),
+        sampledEntryCountPerDifficulty,
+      ).map((identity) =>
+        assessParkingJamDifficulty(
+          restoreParkingJamProblem(identity).difficultyAnalysis,
+        ),
+      );
+
+      expect(assessments.length).toBeGreaterThanOrEqual(
+        sampledEntryCountPerDifficulty,
+      );
+      expect(
+        new Set(
+          assessments.map((assessment) =>
+            assessment.status === "classified"
+              ? assessment.difficulty
+              : assessment.status,
+          ),
+        ),
+      ).toEqual(new Set([difficulty]));
+    },
+  );
+});
+
+describe("selectParkingJamProblemForDifficulty", () => {
+  const seeds = Array.from({ length: 10 }, (_, index) => `seed-${index}`);
+
+  test.each(difficulties)(
+    "レベル %s で同じseedから同じ問題を選ぶこと",
+    (difficulty) => {
+      const first = selectParkingJamProblemForDifficulty(difficulty, "seed-a");
+      const second = selectParkingJamProblemForDifficulty(difficulty, "seed-a");
+
+      expect(second).toEqual(first);
     },
   );
 
-  test("同じseedから同じ問題を再現すること", () => {
-    const seed = "parking-jam-r3-review-supply-reproducible";
-
-    const first = generateParkingJamProblemForDifficulty("hard", seed);
-    const second = generateParkingJamProblemForDifficulty("hard", seed);
-
-    expect(first).toEqual(second);
-  });
-});
-
-describe("listParkingJamSupplyConditions", () => {
-  const seed = "parking-jam-r3-review-supply-order";
-
-  test("難易度に依存しない候補条件を決定論的に並べること", () => {
-    const first = listParkingJamSupplyConditions(seed);
-    const second = listParkingJamSupplyConditions(seed);
-
-    expect(first).toEqual(second);
-    expect(first).toHaveLength(72);
-    expect(first.every((conditions) => !("difficulty" in conditions))).toBe(
-      true,
-    );
-  });
-
-  test("盤面規模と車両数の複数条件を候補に残すこと", () => {
-    const conditions = listParkingJamSupplyConditions(seed);
-    const boardSizes = new Set(
-      conditions.map(({ width, height }) => `${width}x${height}`),
-    );
-    const vehicleCounts = new Set(
-      conditions.map(({ vehicleCount }) => vehicleCount),
-    );
-
-    expect(boardSizes).toEqual(new Set(["6x6", "6x8", "8x8"]));
-    expect(vehicleCounts).toEqual(new Set([8, 11, 14]));
-  });
-
-  test("最低占有セルだけで盤面の3分の2を超える条件を供給探索から外すこと", () => {
-    const conditions = listParkingJamSupplyConditions(seed);
-    const overCapacity = conditions.some((condition) => {
-      const minimumOccupiedCellCount =
-        condition.vehicleCount * 2 +
-        condition.fixedAreaCount * condition.fixedAreaLength;
-      return (
-        minimumOccupiedCellCount * 3 > condition.width * condition.height * 2
+  test.each(difficulties)(
+    "レベル %s で異なるseedから問題集の複数の問題を選ぶこと",
+    (difficulty) => {
+      const poolIdentityKeys = new Set(
+        listPoolIdentities(difficulty).map((identity) =>
+          JSON.stringify(identity),
+        ),
       );
+
+      const selected = seeds.map((seed) =>
+        selectParkingJamProblemForDifficulty(difficulty, seed),
+      );
+
+      expect(
+        selected.every(({ identity }) =>
+          poolIdentityKeys.has(JSON.stringify(identity)),
+        ),
+      ).toBe(true);
+      expect(
+        new Set(selected.map(({ identity }) => JSON.stringify(identity))).size,
+      ).toBeGreaterThan(1);
+    },
+  );
+
+  describe("選んだ問題の場合", () => {
+    const selected = selectParkingJamProblemForDifficulty("3", "seed-a");
+
+    test("identity から復元した盤面を遊ぶこと", () => {
+      const restored = restoreParkingJamProblemWithoutAnalysis(
+        selected.identity,
+      );
+
+      expect(selected.problem).toEqual(restored.problem);
     });
 
-    expect(overCapacity).toBe(false);
+    test("可解性と難易度の解析を含めないこと", () => {
+      const properties = Object.keys(selected);
+
+      expect(properties).toEqual(["problem", "identity"]);
+    });
   });
 });
