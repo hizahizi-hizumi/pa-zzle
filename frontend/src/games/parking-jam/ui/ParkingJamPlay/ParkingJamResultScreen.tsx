@@ -52,7 +52,7 @@ export function ParkingJamResultScreen({
   const resultLevel = getParkingJamGameResultLevel(result.score.total);
 
   return (
-    <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-y-auto bg-background">
+    <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-y-auto bg-background">
       <BrandIdentityHeader />
       <GameResultConfetti level={resultLevel} />
       <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-4 py-3 pb-[max(0.875rem,env(safe-area-inset-bottom))]">

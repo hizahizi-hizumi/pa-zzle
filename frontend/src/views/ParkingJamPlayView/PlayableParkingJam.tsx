@@ -70,6 +70,7 @@ export function PlayableParkingJam({ difficulty }: PlayableParkingJamProps) {
         operation={play.operation}
         elapsedMs={play.elapsedMs}
         failedMoveCount={play.failedMoveCount}
+        undoCount={play.undoCount}
         canUndo={play.canUndo}
         canRestart={play.canRestart}
         result={play.result}

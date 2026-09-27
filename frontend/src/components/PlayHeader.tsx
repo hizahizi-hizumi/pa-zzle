@@ -3,7 +3,6 @@ import {
   Home,
   MoreHorizontal,
   Play,
-  RefreshCw,
   RotateCcw,
   SlidersHorizontal,
   Wrench,
@@ -17,8 +16,8 @@ export type PlayHeaderMetric = { label: string; value: string };
 type PlayHeaderProps = {
   title: string;
   metrics: readonly PlayHeaderMetric[];
+  canRestart: boolean;
   onRestart: () => void;
-  onReplay: () => void;
   onStartNewProblem: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
@@ -28,8 +27,8 @@ type PlayHeaderProps = {
 export function PlayHeader({
   title,
   metrics,
+  canRestart,
   onRestart,
-  onReplay,
   onStartNewProblem,
   onChangeDifficulty,
   onBackToHome,
@@ -54,16 +53,20 @@ export function PlayHeader({
         <ArrowLeft />
       </Button>
       <div className="min-w-0 text-center">
-        <h1 className="truncate text-sm font-semibold tracking-tight">
-          {title}
-        </h1>
-        <div className="mt-1 flex items-center justify-center gap-2 text-[10px] leading-none text-muted-foreground">
+        <h1 className="truncate text-play-context">{title}</h1>
+        <div className="mt-1 flex items-center justify-center gap-2 text-play-meta text-muted-foreground">
           {metrics.map((metric, index) => (
             <span key={metric.label} className="contents">
-              {index > 0 ? <span aria-hidden="true">·</span> : null}
-              <span>
-                <span className="sr-only">{metric.label} </span>
-                <span className="tabular-nums">{metric.value}</span>
+              {index > 0 ? (
+                <span aria-hidden="true" className="text-border">
+                  ·
+                </span>
+              ) : null}
+              <span className="flex items-baseline gap-1 whitespace-nowrap">
+                <span>{metric.label}</span>
+                <span className="font-mono font-medium tabular-nums text-foreground/80">
+                  {metric.value}
+                </span>
               </span>
             </span>
           ))}
@@ -88,18 +91,11 @@ export function PlayHeader({
             <Button
               variant="ghost"
               className="justify-start"
+              disabled={!canRestart}
               onClick={() => runAndClose(onRestart)}
             >
               <RotateCcw />
               盤面を戻す
-            </Button>
-            <Button
-              variant="ghost"
-              className="justify-start"
-              onClick={() => runAndClose(onReplay)}
-            >
-              <RefreshCw />
-              リセット
             </Button>
             <Button
               variant="ghost"
