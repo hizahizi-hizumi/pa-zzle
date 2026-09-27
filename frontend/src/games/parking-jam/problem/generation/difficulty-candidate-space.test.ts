@@ -1,11 +1,11 @@
-import type { ParkingJamGenerationConditions } from "../problem";
 import {
   generateParkingJamDifficultyCandidate,
   listParkingJamDifficultyCandidateConditions,
   PARKING_JAM_DIFFICULTY_CANDIDATE_AXES,
   PARKING_JAM_DIFFICULTY_CROSS_AXIS_CASES,
   type ParkingJamDifficultyCandidateAxis,
-} from "./difficulty-candidate-space";
+} from "@/games/parking-jam/problem/generation/difficulty-candidate-space";
+import type { ParkingJamGenerationConditions } from "@/games/parking-jam/problem/problem";
 
 const conditionKeys = [
   "width",

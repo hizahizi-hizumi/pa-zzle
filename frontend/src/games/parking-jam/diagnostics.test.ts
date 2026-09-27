@@ -1,8 +1,8 @@
 import {
   createParkingJamDiagnosticSnapshot,
   serializeParkingJamDiagnosticSnapshot,
-} from "./diagnostics";
-import { generateParkingJamProblemForDifficulty } from "./problem-selection";
+} from "@/games/parking-jam/diagnostics";
+import { generateParkingJamProblemForDifficulty } from "@/games/parking-jam/problem-selection";
 
 describe("parking jam diagnostics", () => {
   test("問題identityと難易度特徴を同じsnapshotへ保持すること", () => {
