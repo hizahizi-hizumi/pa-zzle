@@ -1,47 +1,42 @@
-// 難易度分析が無いため、レベルごとの盤面サイズと撹拌手数を仮の難易度としてその場で生成する。
-import type { ProblemSeed } from "@/games/problem-seed";
+import { hashProblemSeed, type ProblemSeed } from "@/games/problem-seed";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
-import { restoreSlidePuzzleProblem } from "@/games/slide-puzzle/problem/generator";
-import {
-  SLIDE_PUZZLE_GENERATOR_VERSION,
-  type SlidePuzzleGeneratedProblem,
-  type SlidePuzzleGenerationConditions,
+import { restoreSlidePuzzleProblemWithOptimalMoveCount } from "@/games/slide-puzzle/problem/generator";
+import type {
+  SlidePuzzleGeneratedProblem,
+  SlidePuzzleProblemIdentity,
 } from "@/games/slide-puzzle/problem/problem";
-import { calculateSlidePuzzleManhattanDistance } from "@/games/slide-puzzle/puzzle/state";
-
-const provisionalConditions: Record<
-  SlidePuzzleDifficulty,
-  SlidePuzzleGenerationConditions
-> = {
-  "1": { size: 3, scrambleLength: 30 },
-  "2": { size: 4, scrambleLength: 25 },
-  "3": { size: 4, scrambleLength: 35 },
-  "4": { size: 4, scrambleLength: 60 },
-  "5": { size: 5, scrambleLength: 60 },
-};
-
-// 最短手数はマンハッタン距離以上なので、この距離以上の盤面は最短 8 手未満の自明な問題にならない。
-const MINIMUM_MANHATTAN_DISTANCE = 8;
-const MAXIMUM_ATTEMPTS = 10;
+import {
+  findSlidePuzzlePooledOptimalMoveCount,
+  listSlidePuzzlePoolEntries,
+  toSlidePuzzlePooledProblem,
+} from "@/games/slide-puzzle/problem/problem-pool";
 
 export function selectSlidePuzzleProblemForDifficulty(
   difficulty: SlidePuzzleDifficulty,
   seed: ProblemSeed,
 ): SlidePuzzleGeneratedProblem {
-  for (let attempt = 0; attempt < MAXIMUM_ATTEMPTS; attempt += 1) {
-    const generatedProblem = restoreSlidePuzzleProblem({
-      generatorVersion: SLIDE_PUZZLE_GENERATOR_VERSION,
-      seed: attempt === 0 ? seed : `${seed}-${attempt}`,
-      conditions: provisionalConditions[difficulty],
-    });
-    if (
-      calculateSlidePuzzleManhattanDistance(
-        generatedProblem.problem.initialBoard,
-      ) >= MINIMUM_MANHATTAN_DISTANCE
-    ) {
-      return generatedProblem;
-    }
+  const entries = listSlidePuzzlePoolEntries(difficulty);
+  const entry = entries[hashProblemSeed(seed) % entries.length];
+  if (!entry) {
+    throw new Error(`No level ${difficulty} slide puzzle problem is available`);
   }
 
-  throw new Error(`No level ${difficulty} slide puzzle problem is available`);
+  const { identity, optimalMoveCount } = toSlidePuzzlePooledProblem(entry);
+  return restoreSlidePuzzleProblemWithOptimalMoveCount(
+    identity,
+    optimalMoveCount,
+  );
+}
+
+/**
+ * 記録・診断の識別情報から、問題集の最短手数付きで問題を復元する。
+ * 問題集に無い識別情報では最短手数を決められないので `null` を返す。
+ */
+export function restoreSlidePuzzlePooledProblem(
+  identity: SlidePuzzleProblemIdentity,
+): SlidePuzzleGeneratedProblem | null {
+  const optimalMoveCount = findSlidePuzzlePooledOptimalMoveCount(identity);
+  return optimalMoveCount === null
+    ? null
+    : restoreSlidePuzzleProblemWithOptimalMoveCount(identity, optimalMoveCount);
 }

@@ -1,3 +1,6 @@
+import type { SlidePuzzleDifficultyAnalysis } from "@/games/slide-puzzle/problem/difficulty-analysis";
+import type { SlidePuzzleBoardSize } from "@/games/slide-puzzle/puzzle/state";
+
 export const slidePuzzleDifficulties = [
   {
     id: "1",
@@ -18,13 +21,14 @@ export const slidePuzzleDifficulties = [
   {
     id: "4",
     label: "レベル 4",
-    description: "何枚ものタイルの退避と送り込みを組み合わせて計画します",
+    description:
+      "盤面がさらに広がり、外側から順に小さな盤面へ落とし込みながら、道をふさぐタイルを回り込ませます",
   },
   {
     id: "5",
     label: "レベル 5",
     description:
-      "広い盤面を見渡し、外側から順に小さな盤面へ落とし込みながら、入り組んだ手順を読みます",
+      "何枚ものタイルの退避と送り込みを組み合わせ、入り組んだ手順を読みます",
   },
 ] as const;
 
@@ -44,5 +48,102 @@ export function getSlidePuzzleDifficultyLabel(
   return (
     slidePuzzleDifficulties.find((option) => option.id === difficulty)?.label ??
     difficulty
+  );
+}
+
+/**
+ * 盤面サイズごとの提供範囲の下限（最短手数）。無作為に「近づける手」を選び続けるだけで
+ * 5% 以上完成してしまう層を外す（難易度再設計調査 §6.2）。
+ */
+export const slidePuzzleMinimumOptimalMoveCountByBoardSize: Record<
+  SlidePuzzleBoardSize,
+  number
+> = {
+  3: 12,
+  4: 16,
+  5: 24,
+};
+
+type SlidePuzzleDifficultyCriteria = {
+  /**
+   * 盤面が大きいほど、盤面の把握・読みの深さ・大きい盤面を小さい盤面へ落とし込む過程の負荷が
+   * 強まるとみなす（人間の判断による仮決定。実プレイで検証する）。
+   */
+  boardSize: SlidePuzzleBoardSize;
+  minimumDetourMoveCount: number;
+  maximumDetourMoveCount: number | null;
+  /** 問題集を作るときに候補を生成する撹拌手数。分類には使わない。 */
+  scrambleLengths: readonly number[];
+};
+
+/**
+ * 盤面を大きくする境目（1→2、3→4）では遠回り手数の帯をそろえ、同じ盤面の中（2→3、4→5）では遠回り手数を上げる。
+ * どの境目でも、盤面サイズと遠回り手数のどちらも下げない。
+ */
+export const slidePuzzleDifficultyCriteria: Record<
+  SlidePuzzleDifficulty,
+  SlidePuzzleDifficultyCriteria
+> = {
+  "1": {
+    boardSize: 3,
+    minimumDetourMoveCount: 0,
+    maximumDetourMoveCount: 3,
+    scrambleLengths: [20, 30, 40, 60],
+  },
+  "2": {
+    boardSize: 4,
+    minimumDetourMoveCount: 2,
+    maximumDetourMoveCount: 3,
+    scrambleLengths: [20, 25, 30, 35],
+  },
+  "3": {
+    boardSize: 4,
+    minimumDetourMoveCount: 4,
+    maximumDetourMoveCount: null,
+    scrambleLengths: [30, 40, 60, 80],
+  },
+  "4": {
+    boardSize: 5,
+    minimumDetourMoveCount: 5,
+    maximumDetourMoveCount: 7,
+    scrambleLengths: [40, 50, 60, 70],
+  },
+  "5": {
+    boardSize: 5,
+    minimumDetourMoveCount: 8,
+    maximumDetourMoveCount: null,
+    scrambleLengths: [60, 70, 80],
+  },
+};
+
+/**
+ * 盤面サイズと遠回り手数（タイルを一時的にゴールから遠ざける必要がある手の数）の組でレベルを決める。
+ * 最短手数が分からない問題、盤面サイズごとの提供範囲の下限より短い問題、
+ * どのレベルの組にも入らない問題は分類しない。
+ */
+export function assessSlidePuzzleDifficulty(
+  analysis: SlidePuzzleDifficultyAnalysis,
+): SlidePuzzleDifficulty | null {
+  if (analysis.status !== "analyzed") {
+    return null;
+  }
+
+  const { boardSize, optimalMoveCount, detourMoveCount } = analysis.features;
+  if (
+    optimalMoveCount < slidePuzzleMinimumOptimalMoveCountByBoardSize[boardSize]
+  ) {
+    return null;
+  }
+
+  return (
+    slidePuzzleDifficulties.find(({ id }) => {
+      const criteria = slidePuzzleDifficultyCriteria[id];
+      return (
+        criteria.boardSize === boardSize &&
+        detourMoveCount >= criteria.minimumDetourMoveCount &&
+        (criteria.maximumDetourMoveCount === null ||
+          detourMoveCount <= criteria.maximumDetourMoveCount)
+      );
+    })?.id ?? null
   );
 }
