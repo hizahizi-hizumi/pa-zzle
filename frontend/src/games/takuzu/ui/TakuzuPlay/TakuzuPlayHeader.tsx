@@ -13,6 +13,7 @@ type TakuzuPlayHeaderProps = {
   onStartNewProblem?: () => void;
   onChangeDifficulty?: () => void;
   onBackToHome: () => void;
+  onOpenHowToPlay: () => void;
   onOpenDiagnostics?: () => void;
 };
 
@@ -25,6 +26,7 @@ export function TakuzuPlayHeader({
   onStartNewProblem,
   onChangeDifficulty,
   onBackToHome,
+  onOpenHowToPlay,
   onOpenDiagnostics,
 }: TakuzuPlayHeaderProps) {
   return (
@@ -49,6 +51,7 @@ export function TakuzuPlayHeader({
         onStartNewProblem={onStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
+        onOpenHowToPlay={onOpenHowToPlay}
         onOpenDiagnostics={onOpenDiagnostics}
       />
     </header>

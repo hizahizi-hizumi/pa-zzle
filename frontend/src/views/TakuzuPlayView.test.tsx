@@ -1,10 +1,16 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 
+import { writeTakuzuHowToPlaySeen } from "@/games/takuzu/ui/how-to-play-seen";
 import { TakuzuPlayView } from "@/views/TakuzuPlayView";
+
+beforeEach(() => {
+  writeTakuzuHowToPlaySeen();
+});
 
 afterEach(() => {
   cleanup();
+  window.localStorage.clear();
 });
 
 function renderAt(path: string): void {

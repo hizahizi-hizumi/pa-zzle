@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import type { TakuzuProgress } from "@/games/takuzu/play/use-takuzu-play";
 import type { TakuzuCell } from "@/games/takuzu/puzzle/board";
@@ -8,6 +10,8 @@ import type {
 } from "@/games/takuzu/session/session";
 import { TakuzuClearAnimation } from "@/games/takuzu/ui/board/clear/TakuzuClearAnimation";
 import { TakuzuBoard } from "@/games/takuzu/ui/board/TakuzuBoard";
+import { readTakuzuHowToPlaySeen } from "@/games/takuzu/ui/how-to-play-seen";
+import { TakuzuHowToPlayDialog } from "@/games/takuzu/ui/TakuzuHowToPlayDialog";
 import { TakuzuClearedPanel } from "@/games/takuzu/ui/TakuzuPlay/TakuzuClearedPanel";
 import { TakuzuPlayHeader } from "@/games/takuzu/ui/TakuzuPlay/TakuzuPlayHeader";
 import { UndoButton } from "@/games/takuzu/ui/TakuzuPlay/UndoButton";
@@ -53,6 +57,19 @@ export function TakuzuPlay({
   onBackToHome,
   onOpenDiagnostics,
 }: TakuzuPlayProps) {
+  // 初めて遊ぶときだけ、盤面より先に遊び方を開く（intro）。
+  const [howToPlay, setHowToPlay] = useState<"closed" | "intro" | "open">(() =>
+    readTakuzuHowToPlaySeen() ? "closed" : "intro",
+  );
+
+  function closeHowToPlay() {
+    // 初めての遊び方を読んでいた時間はプレイ時間に含めないよう、閉じたところから測り直す。
+    if (howToPlay === "intro") {
+      onReplay();
+    }
+    setHowToPlay("closed");
+  }
+
   return (
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
       <BrandIdentityHeader />
@@ -65,7 +82,12 @@ export function TakuzuPlay({
         onStartNewProblem={onStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
+        onOpenHowToPlay={() => setHowToPlay("open")}
         onOpenDiagnostics={onOpenDiagnostics}
+      />
+      <TakuzuHowToPlayDialog
+        open={howToPlay !== "closed"}
+        onClose={closeHowToPlay}
       />
       <main className="flex min-h-0 flex-1 items-center justify-center py-2 [container-type:size] sm:px-3">
         <div className="relative aspect-square w-[min(100cqw,100cqh,42rem)]">

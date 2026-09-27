@@ -1,4 +1,5 @@
 import {
+  CircleHelp,
   Home,
   MoreHorizontal,
   Play,
@@ -23,6 +24,7 @@ type PlayMenuProps = {
   onStartNewProblem?: () => void;
   onChangeDifficulty?: () => void;
   onBackToHome: () => void;
+  onOpenHowToPlay: () => void;
   onOpenDiagnostics?: () => void;
 };
 
@@ -32,6 +34,7 @@ export function PlayMenu({
   onStartNewProblem,
   onChangeDifficulty,
   onBackToHome,
+  onOpenHowToPlay,
   onOpenDiagnostics,
 }: PlayMenuProps) {
   return (
@@ -70,6 +73,11 @@ export function PlayMenu({
         <DropdownMenuItem onSelect={onBackToHome}>
           <Home />
           ホーム
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={onOpenHowToPlay}>
+          <CircleHelp />
+          遊び方
         </DropdownMenuItem>
         {onOpenDiagnostics && (
           <>

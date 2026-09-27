@@ -8,6 +8,10 @@ import {
 
 import type { TakuzuProgress } from "@/games/takuzu/play/use-takuzu-play";
 import type { TakuzuCellView } from "@/games/takuzu/session/session";
+import {
+  readTakuzuHowToPlaySeen,
+  writeTakuzuHowToPlaySeen,
+} from "@/games/takuzu/ui/how-to-play-seen";
 import { TakuzuPlay } from "@/games/takuzu/ui/TakuzuPlay";
 
 const cells: TakuzuCellView[] = [
@@ -19,6 +23,7 @@ const cells: TakuzuCellView[] = [
 
 afterEach(() => {
   cleanup();
+  window.localStorage.clear();
 });
 
 describe("TakuzuPlay", () => {
@@ -57,6 +62,34 @@ describe("TakuzuPlay", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    writeTakuzuHowToPlaySeen();
+  });
+
+  describe("初めて遊ぶ場合", () => {
+    beforeEach(() => {
+      window.localStorage.clear();
+      renderPlay("playing");
+    });
+
+    test("遊び方を開くこと", () => {
+      const dialog = screen.getByRole("dialog", { name: "遊び方" });
+
+      expect(dialog).toBeTruthy();
+    });
+
+    describe("遊び方を閉じた場合", () => {
+      beforeEach(() => {
+        fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+      });
+
+      test("読んでいた時間を除くため、同じ問題を測り直す操作を通知すること", () => {
+        expect(callbacks.onReplay).toHaveBeenCalledOnce();
+      });
+
+      test("次からは自動で開かないよう記録すること", () => {
+        expect(readTakuzuHowToPlaySeen()).toBe(true);
+      });
+    });
   });
 
   describe("プレイ中の場合", () => {
@@ -99,6 +132,12 @@ describe("TakuzuPlay", () => {
       expect(callbacks.onBackToHome).toHaveBeenCalledOnce();
     });
 
+    test("遊び方を自動では開かないこと", () => {
+      const dialog = screen.queryByRole("dialog", { name: "遊び方" });
+
+      expect(dialog).toBeNull();
+    });
+
     describe("メニューを開いた場合", () => {
       beforeEach(() => {
         openMenu();
@@ -118,6 +157,24 @@ describe("TakuzuPlay", () => {
           expect(callbacks[callbackName]).toHaveBeenCalledOnce();
         },
       );
+
+      describe("遊び方を選んだ場合", () => {
+        beforeEach(() => {
+          fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+        });
+
+        test("遊び方を開くこと", () => {
+          const dialog = screen.getByRole("dialog", { name: "遊び方" });
+
+          expect(dialog).toBeTruthy();
+        });
+
+        test("閉じてもプレイを測り直さないこと", () => {
+          fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+
+          expect(callbacks.onReplay).not.toHaveBeenCalled();
+        });
+      });
 
       describe("つなぎ先を渡していない場合", () => {
         const unconnectedMenuItems = ["別の問題", "難易度変更", "検証情報"];
