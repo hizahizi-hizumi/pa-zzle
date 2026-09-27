@@ -1,13 +1,13 @@
-import type { ProblemSeed } from "@/games/problem-seed";
 import {
   assessParkingJamDifficulty,
   type ParkingJamDifficulty,
-} from "./difficulty";
+} from "@/games/parking-jam/difficulty";
 import {
   generateParkingJamProblem,
   ParkingJamGenerationExhaustedError,
-} from "./problem/generator";
-import type { ParkingJamGeneratedProblem } from "./problem/problem";
+} from "@/games/parking-jam/problem/generator";
+import type { ParkingJamGeneratedProblem } from "@/games/parking-jam/problem/problem";
+import type { ProblemSeed } from "@/games/problem-seed";
 
 const MAXIMUM_ATTEMPTS_PER_GENERATION_PROFILE = 12;
 

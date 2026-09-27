@@ -3,11 +3,11 @@ import {
   type ParkingJamBoard,
   type ParkingJamDirection,
   type ParkingJamVehicleId,
-} from "../puzzle/board";
+} from "@/games/parking-jam/puzzle/board";
 import {
   listParkingJamLegalMoves,
   listParkingJamMoveBlockers,
-} from "../puzzle/rules";
+} from "@/games/parking-jam/puzzle/rules";
 export const PARKING_JAM_MAXIMUM_EXACT_ORDER_VEHICLE_COUNT = 16;
 
 type ParkingJamExitPath = {

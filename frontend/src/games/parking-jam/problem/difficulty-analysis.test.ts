@@ -1,6 +1,9 @@
-import type { ParkingJamBoard } from "../puzzle/board";
-import { _private, analyzeParkingJamDifficulty } from "./difficulty-analysis";
-import { analyzeParkingJamSolvability } from "./generation/solvability";
+import {
+  _private,
+  analyzeParkingJamDifficulty,
+} from "@/games/parking-jam/problem/difficulty-analysis";
+import { analyzeParkingJamSolvability } from "@/games/parking-jam/problem/generation/solvability";
+import type { ParkingJamBoard } from "@/games/parking-jam/puzzle/board";
 
 describe("analyzeParkingJamDifficulty", () => {
   describe("全車を最初から任意順で出庫できる盤面の場合", () => {

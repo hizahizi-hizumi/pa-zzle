@@ -1,5 +1,5 @@
-import { assessParkingJamDifficulty } from "./difficulty";
-import { generateParkingJamProblemForDifficulty } from "./problem-selection";
+import { assessParkingJamDifficulty } from "@/games/parking-jam/difficulty";
+import { generateParkingJamProblemForDifficulty } from "@/games/parking-jam/problem-selection";
 
 describe("generateParkingJamProblemForDifficulty", () => {
   const difficulties = ["easy", "normal", "hard"] as const;

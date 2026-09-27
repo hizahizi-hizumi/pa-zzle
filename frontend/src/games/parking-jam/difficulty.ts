@@ -1,4 +1,4 @@
-import type { ParkingJamDifficultyAnalysis } from "./problem/difficulty-analysis";
+import type { ParkingJamDifficultyAnalysis } from "@/games/parking-jam/problem/difficulty-analysis";
 
 export const parkingJamDifficulties = [
   { id: "easy", label: "かんたん" },

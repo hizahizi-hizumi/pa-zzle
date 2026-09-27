@@ -1,8 +1,8 @@
 import {
   assessParkingJamDifficulty,
   PARKING_JAM_DIFFICULTY_MODEL_VERSION,
-} from "./difficulty";
-import type { ParkingJamDifficultyAnalysis } from "./problem/difficulty-analysis";
+} from "@/games/parking-jam/difficulty";
+import type { ParkingJamDifficultyAnalysis } from "@/games/parking-jam/problem/difficulty-analysis";
 
 describe("assessParkingJamDifficulty", () => {
   const baseFeatures: ParkingJamDifficultyAnalysis["features"] = {
