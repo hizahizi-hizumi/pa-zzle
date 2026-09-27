@@ -55,157 +55,179 @@ afterEach(() => {
 });
 
 describe("useTakuzuPlay", () => {
-  let result: HookResult;
+  describe("難易度だけを渡した場合", () => {
+    let result: HookResult;
 
-  beforeEach(() => {
-    vi.mocked(createProblemSeed).mockReturnValueOnce(initialSeed);
-    ({ result } = renderHook(() => useTakuzuPlay(difficulty)));
-  });
-
-  test("seed で問題集から選んだ問題の 8×8 盤面でプレイを始めること", () => {
-    const { size, cells, progress, problemIdentity, workload } = result.current;
-
-    expect(size).toBe(8);
-    expect(cells.map(({ cell }) => cell)).toEqual(initial.problem.givens.cells);
-    expect(progress).toBe("playing");
-    expect(result.current.difficulty).toBe(difficulty);
-    expect(problemIdentity).toEqual(initial.identity);
-    expect(workload).toEqual(initial.workload);
-  });
-
-  test("空きマスを押すとタイルを置くこと", () => {
-    act(() => result.current.cycleCell(firstEmptyCellIndex, "forward"));
-
-    expect(result.current.cells[firstEmptyCellIndex]?.cell).toBe("a");
-  });
-
-  test("空きマスへタイルを直接置けること", () => {
-    act(() => result.current.placeCell(firstEmptyCellIndex, "b"));
-
-    expect(result.current.cells[firstEmptyCellIndex]?.cell).toBe("b");
-  });
-
-  describe("空きマスへタイルを置いた場合", () => {
     beforeEach(() => {
+      vi.mocked(createProblemSeed).mockReturnValueOnce(initialSeed);
+      ({ result } = renderHook(() => useTakuzuPlay(difficulty)));
+    });
+
+    test("seed で問題集から選んだ問題の 8×8 盤面でプレイを始めること", () => {
+      const { size, cells, progress, problemIdentity, workload } =
+        result.current;
+
+      expect(size).toBe(8);
+      expect(cells.map(({ cell }) => cell)).toEqual(
+        initial.problem.givens.cells,
+      );
+      expect(progress).toBe("playing");
+      expect(result.current.difficulty).toBe(difficulty);
+      expect(problemIdentity).toEqual(initial.identity);
+      expect(workload).toEqual(initial.workload);
+    });
+
+    test("空きマスを押すとタイルを置くこと", () => {
       act(() => result.current.cycleCell(firstEmptyCellIndex, "forward"));
+
+      expect(result.current.cells[firstEmptyCellIndex]?.cell).toBe("a");
     });
 
-    test("待ったで置いたタイルを取り消して待った回数を数えること", () => {
-      act(() => result.current.undo());
+    test("空きマスへタイルを直接置けること", () => {
+      act(() => result.current.placeCell(firstEmptyCellIndex, "b"));
 
-      expect(result.current.cells[firstEmptyCellIndex]?.cell).toBeNull();
-      expect(result.current.undoCount).toBe(1);
-      expect(result.current.canUndo).toBe(false);
+      expect(result.current.cells[firstEmptyCellIndex]?.cell).toBe("b");
     });
 
-    test("盤面を戻すと初期配置へ戻すこと", () => {
-      act(() => result.current.restart());
-
-      expect(result.current.cells[firstEmptyCellIndex]?.cell).toBeNull();
-    });
-
-    test("別のマスへ移ってから戻って変えると置き直しを数えること", () => {
-      pressAll(result, [secondEmptyCellIndex, firstEmptyCellIndex]);
-
-      expect(result.current.correctionCount).toBe(1);
-    });
-
-    test("リセットで同じ問題を初期配置から始めること", () => {
-      act(() => result.current.replay());
-
-      expect(listCells(result)).toEqual(initial.problem.givens.cells);
-      expect(result.current.problemIdentity).toEqual(initial.identity);
-    });
-  });
-
-  describe("全マスを解のとおりに置いた場合", () => {
-    const solvingPresses = listSolvingPresses(initial.problem);
-
-    beforeEach(() => {
-      pressAll(result, solvingPresses);
-    });
-
-    test("完成演出へ進みプレイ事実を返すこと", () => {
-      const { progress, result: playResult } = result.current;
-
-      expect(progress).toBe("clearing");
-      expect(playResult).toMatchObject({
-        correctionCount: 0,
-        restartCount: 0,
-        undoCount: 0,
-        inputCount: solvingPresses.length,
-      });
-    });
-
-    test("遊んだ問題の作業の量から基準時間と評価を求めること", () => {
-      const playResult = result.current.result;
-
-      expect(playResult?.workload).toEqual(initial.workload);
-      expect(playResult?.speedFullScoreMs).toBe(
-        calculateTakuzuSpeedFullScoreMs(initial.workload),
-      );
-      expect(playResult?.speedZeroScoreMs).toBe(
-        calculateTakuzuSpeedZeroScoreMs(initial.workload),
-      );
-      expect(playResult?.timeDeltaMs).toBe(
-        (playResult?.elapsedMs ?? 0) - (playResult?.speedFullScoreMs ?? 0),
-      );
-      expect(playResult?.score).toEqual({
-        total: 100,
-        breakdown: { accuracy: 60, speed: 40 },
-      });
-    });
-
-    test("記録に使う開始と完成の時刻を返すこと", () => {
-      const { startedAt, completedAt } = result.current;
-
-      expect(completedAt).not.toBeNull();
-      expect(completedAt ?? 0).toBeGreaterThanOrEqual(startedAt);
-    });
-
-    test("完成演出を終えると完成の表示へ進むこと", () => {
-      act(() => result.current.completeClearAnimation());
-
-      expect(result.current.progress).toBe("result");
-    });
-
-    test("同じ問題をもう一度始めると初期配置のプレイ中へ戻ること", () => {
-      act(() => result.current.replay());
-
-      expect(result.current.progress).toBe("playing");
-      expect(result.current.cells[firstEmptyCellIndex]?.cell).toBeNull();
-      expect(result.current.result).toBeNull();
-      expect(result.current.problemIdentity).toEqual(initial.identity);
-    });
-
-    describe("新しい seed が別の問題を指す場合", () => {
+    describe("空きマスへタイルを置いた場合", () => {
       beforeEach(() => {
-        vi.mocked(createProblemSeed).mockReturnValueOnce(otherSeed);
+        act(() => result.current.cycleCell(firstEmptyCellIndex, "forward"));
       });
 
-      test("別の問題でその問題をプレイ中から始めること", () => {
-        act(() => result.current.startNewProblem());
+      test("待ったで置いたタイルを取り消して待った回数を数えること", () => {
+        act(() => result.current.undo());
+
+        expect(result.current.cells[firstEmptyCellIndex]?.cell).toBeNull();
+        expect(result.current.undoCount).toBe(1);
+        expect(result.current.canUndo).toBe(false);
+      });
+
+      test("盤面を戻すと初期配置へ戻すこと", () => {
+        act(() => result.current.restart());
+
+        expect(result.current.cells[firstEmptyCellIndex]?.cell).toBeNull();
+      });
+
+      test("別のマスへ移ってから戻って変えると置き直しを数えること", () => {
+        pressAll(result, [secondEmptyCellIndex, firstEmptyCellIndex]);
+
+        expect(result.current.correctionCount).toBe(1);
+      });
+
+      test("リセットで同じ問題を初期配置から始めること", () => {
+        act(() => result.current.replay());
+
+        expect(listCells(result)).toEqual(initial.problem.givens.cells);
+        expect(result.current.problemIdentity).toEqual(initial.identity);
+      });
+    });
+
+    describe("全マスを解のとおりに置いた場合", () => {
+      const solvingPresses = listSolvingPresses(initial.problem);
+
+      beforeEach(() => {
+        pressAll(result, solvingPresses);
+      });
+
+      test("完成演出へ進みプレイ事実を返すこと", () => {
+        const { progress, result: playResult } = result.current;
+
+        expect(progress).toBe("clearing");
+        expect(playResult).toMatchObject({
+          correctionCount: 0,
+          restartCount: 0,
+          undoCount: 0,
+          inputCount: solvingPresses.length,
+        });
+      });
+
+      test("遊んだ問題の作業の量から基準時間と評価を求めること", () => {
+        const playResult = result.current.result;
+
+        expect(playResult?.workload).toEqual(initial.workload);
+        expect(playResult?.speedFullScoreMs).toBe(
+          calculateTakuzuSpeedFullScoreMs(initial.workload),
+        );
+        expect(playResult?.speedZeroScoreMs).toBe(
+          calculateTakuzuSpeedZeroScoreMs(initial.workload),
+        );
+        expect(playResult?.timeDeltaMs).toBe(
+          (playResult?.elapsedMs ?? 0) - (playResult?.speedFullScoreMs ?? 0),
+        );
+        expect(playResult?.score).toEqual({
+          total: 100,
+          breakdown: { accuracy: 60, speed: 40 },
+        });
+      });
+
+      test("記録に使う開始と完成の時刻を返すこと", () => {
+        const { startedAt, completedAt } = result.current;
+
+        expect(completedAt).not.toBeNull();
+        expect(completedAt ?? 0).toBeGreaterThanOrEqual(startedAt);
+      });
+
+      test("完成演出を終えると完成の表示へ進むこと", () => {
+        act(() => result.current.completeClearAnimation());
+
+        expect(result.current.progress).toBe("result");
+      });
+
+      test("同じ問題をもう一度始めると初期配置のプレイ中へ戻ること", () => {
+        act(() => result.current.replay());
 
         expect(result.current.progress).toBe("playing");
+        expect(result.current.cells[firstEmptyCellIndex]?.cell).toBeNull();
         expect(result.current.result).toBeNull();
+        expect(result.current.problemIdentity).toEqual(initial.identity);
+      });
+
+      describe("新しい seed が別の問題を指す場合", () => {
+        beforeEach(() => {
+          vi.mocked(createProblemSeed).mockReturnValueOnce(otherSeed);
+        });
+
+        test("別の問題でその問題をプレイ中から始めること", () => {
+          act(() => result.current.startNewProblem());
+
+          expect(result.current.progress).toBe("playing");
+          expect(result.current.result).toBeNull();
+          expect(result.current.problemIdentity).toEqual(other.identity);
+          expect(listCells(result)).toEqual(other.problem.givens.cells);
+        });
+      });
+    });
+
+    describe("最初の新しい seed が今と同じ問題を指す場合", () => {
+      beforeEach(() => {
+        vi.mocked(createProblemSeed)
+          .mockReturnValueOnce(initialSeed)
+          .mockReturnValueOnce(otherSeed);
+      });
+
+      test("別の問題で seed を引き直して別の問題を始めること", () => {
+        act(() => result.current.startNewProblem());
+
+        expect(other.identity).not.toEqual(initial.identity);
         expect(result.current.problemIdentity).toEqual(other.identity);
-        expect(listCells(result)).toEqual(other.problem.givens.cells);
       });
     });
   });
 
-  describe("最初の新しい seed が今と同じ問題を指す場合", () => {
+  describe("記録から復元した問題を渡した場合", () => {
+    let result: HookResult;
+
     beforeEach(() => {
-      vi.mocked(createProblemSeed)
-        .mockReturnValueOnce(initialSeed)
-        .mockReturnValueOnce(otherSeed);
+      ({ result } = renderHook(() => useTakuzuPlay(difficulty, other)));
     });
 
-    test("別の問題で seed を引き直して別の問題を始めること", () => {
-      act(() => result.current.startNewProblem());
+    test("seed を引かずにその問題でプレイを始めること", () => {
+      const { problemIdentity, workload } = result.current;
 
-      expect(other.identity).not.toEqual(initial.identity);
-      expect(result.current.problemIdentity).toEqual(other.identity);
+      expect(createProblemSeed).not.toHaveBeenCalled();
+      expect(problemIdentity).toEqual(other.identity);
+      expect(workload).toEqual(other.workload);
+      expect(listCells(result)).toEqual(other.problem.givens.cells);
     });
   });
 });

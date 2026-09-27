@@ -7,6 +7,7 @@ import {
   createTakuzuPlayRecord,
   takuzuPlayRecordDefinition,
 } from "@/games/takuzu/play-record";
+import type { TakuzuPooledProblem } from "@/games/takuzu/problem/problem-pool";
 import { takuzuPlayRecordDisplay } from "@/games/takuzu/ui/play-record-display";
 import { TakuzuDiagnostics } from "@/games/takuzu/ui/TakuzuDiagnostics";
 import { TakuzuPlay } from "@/games/takuzu/ui/TakuzuPlay";
@@ -20,10 +21,14 @@ import { useNavigate } from "@/router";
 
 type PlayableTakuzuProps = {
   difficulty: TakuzuDifficulty;
+  initialProblem?: TakuzuPooledProblem;
 };
 
-export function PlayableTakuzu({ difficulty }: PlayableTakuzuProps) {
-  const play = useTakuzuPlay(difficulty);
+export function PlayableTakuzu({
+  difficulty,
+  initialProblem,
+}: PlayableTakuzuProps) {
+  const play = useTakuzuPlay(difficulty, initialProblem);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>

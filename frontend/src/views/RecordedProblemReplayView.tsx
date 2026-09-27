@@ -7,6 +7,8 @@ import { isParkingJamPlayRecord } from "@/games/parking-jam/play-record";
 import { parseSlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import { isSlidePuzzlePlayRecord } from "@/games/slide-puzzle/play-record";
 import { restoreSlidePuzzlePooledProblem } from "@/games/slide-puzzle/problem-selection";
+import { isTakuzuPlayRecord } from "@/games/takuzu/play-record";
+import { restoreTakuzuProblem } from "@/games/takuzu/problem-selection";
 import { parseWaterSortDifficulty } from "@/games/water-sort/difficulty";
 import { isWaterSortPlayRecord } from "@/games/water-sort/play-record";
 import { readPlayRecords } from "@/records/storage";
@@ -15,6 +17,7 @@ import { PlayableMinesweeper } from "@/views/MinesweeperPlayView/PlayableMineswe
 import { PlayableNanpure } from "@/views/NanpurePlayView/PlayableNanpure";
 import { PlayableParkingJam } from "@/views/ParkingJamPlayView/PlayableParkingJam";
 import { PlayableSlidePuzzle } from "@/views/SlidePuzzlePlayView/PlayableSlidePuzzle";
+import { PlayableTakuzu } from "@/views/TakuzuPlayView/PlayableTakuzu";
 import { PlayableWaterSort } from "@/views/WaterSortPlayView/PlayableWaterSort";
 
 export function RecordedProblemReplayView() {
@@ -101,11 +104,28 @@ export function RecordedProblemReplayView() {
     );
   }
 
+  const takuzuInitialProblem = isTakuzuPlayRecord(record)
+    ? restoreTakuzuProblem(record.payload.problemIdentity)
+    : null;
+  if (isTakuzuPlayRecord(record) && takuzuInitialProblem) {
+    return (
+      <PlayableTakuzu
+        difficulty={record.payload.difficulty}
+        initialProblem={takuzuInitialProblem}
+      />
+    );
+  }
+
+  // バイナリパズルは問題を問題集にしか持たないので、問題集から引けない記録は再プレイできない。
+  const unavailableReason = isTakuzuPlayRecord(record)
+    ? "この記録の問題は、現在の問題集にありません。"
+    : "現在のバージョンでは、このゲームの問題復元に対応していません。";
+
   return (
     <section className="mx-auto w-full max-w-3xl py-8 text-center">
       <h1 className="text-heading">この記録は再プレイできません</h1>
       <p className="mt-2 text-supporting text-muted-foreground">
-        現在のバージョンでは、このゲームの問題復元に対応していません。
+        {unavailableReason}
       </p>
       <Link
         to="/records"

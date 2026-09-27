@@ -76,7 +76,12 @@ function createPlayState(
 function createInitialPlayState(
   difficulty: TakuzuDifficulty,
   startedAt: number,
+  initialProblem: TakuzuPooledProblem | undefined,
 ): TakuzuPlayState {
+  if (initialProblem) {
+    return createPlayState(initialProblem, startedAt);
+  }
+
   return createPlayState(
     selectTakuzuProblemForDifficulty(difficulty, createProblemSeed()),
     startedAt,
@@ -140,12 +145,17 @@ function createTakuzuResult(
 
 /**
  * 難易度の問題集から選んだ問題を遊ぶ。
+ * `initialProblem` を渡すと、記録から復元したその問題で始める。
+ * 問題集から引けない記録を再プレイできないものとして呼び出し側で扱えるよう、identity ではなく引いた問題を受け取る。
  * `undo` は直前の盤面操作を1つ取り消し（待った）、`restart` は同じプレイのまま盤面を戻し、`replay` は同じ問題を新しいプレイとして始める（リセット）。
  * `startNewProblem` は問題集から別の問題を選び直す。
  */
-export function useTakuzuPlay(difficulty: TakuzuDifficulty) {
+export function useTakuzuPlay(
+  difficulty: TakuzuDifficulty,
+  initialProblem?: TakuzuPooledProblem,
+) {
   const [play, setPlay] = useState(() =>
-    createInitialPlayState(difficulty, Date.now()),
+    createInitialPlayState(difficulty, Date.now(), initialProblem),
   );
   const [now, setNow] = useState(() => Date.now());
   const { session, progress, workload } = play;
