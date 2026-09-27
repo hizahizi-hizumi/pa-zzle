@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
-import type { TakuzuProgress } from "@/games/takuzu/play/use-takuzu-play";
+import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
+import type {
+  TakuzuProgress,
+  TakuzuResult,
+} from "@/games/takuzu/play/use-takuzu-play";
 import type { TakuzuCell } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import type {
@@ -11,12 +15,13 @@ import type {
 import { TakuzuClearAnimation } from "@/games/takuzu/ui/board/clear/TakuzuClearAnimation";
 import { TakuzuBoard } from "@/games/takuzu/ui/board/TakuzuBoard";
 import { readTakuzuHowToPlaySeen } from "@/games/takuzu/ui/how-to-play-seen";
+import { TakuzuResultScreen } from "@/games/takuzu/ui/result/TakuzuResultScreen";
 import { TakuzuHowToPlayDialog } from "@/games/takuzu/ui/TakuzuHowToPlayDialog";
-import { TakuzuClearedPanel } from "@/games/takuzu/ui/TakuzuPlay/TakuzuClearedPanel";
 import { TakuzuPlayHeader } from "@/games/takuzu/ui/TakuzuPlay/TakuzuPlayHeader";
 import { UndoButton } from "@/games/takuzu/ui/TakuzuPlay/UndoButton";
 
 type TakuzuPlayProps = {
+  difficulty: TakuzuDifficulty;
   size: number;
   cells: readonly TakuzuCellView[];
   lineViolations: readonly TakuzuLineViolationView[];
@@ -25,19 +30,23 @@ type TakuzuPlayProps = {
   undoCount: number;
   canUndo: boolean;
   elapsedMs: number;
+  result: TakuzuResult | null;
+  recordOutcomeNotice: ReactNode;
   onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
   onPlaceCell: (cellIndex: number, cell: TakuzuCell) => void;
   onUndo: () => void;
   onRestart: () => void;
   onReplay: () => void;
   onClearAnimationComplete: () => void;
-  onStartNewProblem?: () => void;
-  onChangeDifficulty?: () => void;
+  onStartNewProblem: () => void;
+  onOpenRecords: () => void;
+  onChangeDifficulty: () => void;
   onBackToHome: () => void;
   onOpenDiagnostics?: () => void;
 };
 
 export function TakuzuPlay({
+  difficulty,
   size,
   cells,
   lineViolations,
@@ -46,6 +55,8 @@ export function TakuzuPlay({
   undoCount,
   canUndo,
   elapsedMs,
+  result,
+  recordOutcomeNotice,
   onCycleCell,
   onPlaceCell,
   onUndo,
@@ -53,6 +64,7 @@ export function TakuzuPlay({
   onReplay,
   onClearAnimationComplete,
   onStartNewProblem,
+  onOpenRecords,
   onChangeDifficulty,
   onBackToHome,
   onOpenDiagnostics,
@@ -68,6 +80,22 @@ export function TakuzuPlay({
       onReplay();
     }
     setHowToPlay("closed");
+  }
+
+  if (progress === "result" && result) {
+    return (
+      <TakuzuResultScreen
+        difficulty={difficulty}
+        result={result}
+        recordOutcomeNotice={recordOutcomeNotice}
+        onReplay={onReplay}
+        onStartNewProblem={onStartNewProblem}
+        onOpenRecords={onOpenRecords}
+        onChangeDifficulty={onChangeDifficulty}
+        onBackToHome={onBackToHome}
+        onOpenDiagnostics={onOpenDiagnostics}
+      />
+    );
   }
 
   return (
@@ -104,12 +132,6 @@ export function TakuzuPlay({
               onPlaceCell={onPlaceCell}
             />
           </TakuzuClearAnimation>
-          {progress === "result" && (
-            <TakuzuClearedPanel
-              onReplay={onReplay}
-              onStartNewProblem={onStartNewProblem}
-            />
-          )}
         </div>
       </main>
       <footer className="grid h-28 shrink-0 items-end px-4 pb-2">

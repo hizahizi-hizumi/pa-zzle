@@ -4,6 +4,7 @@ import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
 import { parkingJamPlayRecordDisplay } from "@/games/parking-jam/ui/play-record-display";
 import { slidePuzzlePlayRecordDisplay } from "@/games/slide-puzzle/ui/play-record-display";
+import { takuzuPlayRecordDisplay } from "@/games/takuzu/ui/play-record-display";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 import { readPlayRecords } from "@/records/storage";
 import { PlayRecordsScreen } from "@/records/ui/PlayRecordsScreen";
@@ -16,6 +17,7 @@ const playRecordDisplays = [
   minesweeperPlayRecordDisplay,
   parkingJamPlayRecordDisplay,
   slidePuzzlePlayRecordDisplay,
+  takuzuPlayRecordDisplay,
 ] as const satisfies PlayRecordDisplayCatalog;
 
 export function PlayRecordsView() {
