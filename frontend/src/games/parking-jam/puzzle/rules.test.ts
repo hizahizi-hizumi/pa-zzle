@@ -1,9 +1,12 @@
-import { createParkingJamInitialState, type ParkingJamBoard } from "./board";
+import {
+  createParkingJamInitialState,
+  type ParkingJamBoard,
+} from "@/games/parking-jam/puzzle/board";
 import {
   applyParkingJamMove,
   listParkingJamLegalMoves,
   listParkingJamMoveBlockers,
-} from "./rules";
+} from "@/games/parking-jam/puzzle/rules";
 
 describe("listParkingJamMoveBlockers", () => {
   const board: ParkingJamBoard = {

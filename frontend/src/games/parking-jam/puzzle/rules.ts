@@ -6,8 +6,8 @@ import type {
   ParkingJamState,
   ParkingJamVehicle,
   ParkingJamVehicleId,
-} from "./board";
-import { listParkingJamVehicleCells } from "./board";
+} from "@/games/parking-jam/puzzle/board";
+import { listParkingJamVehicleCells } from "@/games/parking-jam/puzzle/board";
 
 export type ParkingJamMoveBlocker =
   | { kind: "invalid-direction" }

@@ -1,5 +1,5 @@
-import type { ParkingJamBoard } from "../../puzzle/board";
-import { analyzeParkingJamSolvability } from "./solvability";
+import { analyzeParkingJamSolvability } from "@/games/parking-jam/problem/generation/solvability";
+import type { ParkingJamBoard } from "@/games/parking-jam/puzzle/board";
 
 describe("analyzeParkingJamSolvability", () => {
   describe("遮断関係を順に解消できる盤面の場合", () => {

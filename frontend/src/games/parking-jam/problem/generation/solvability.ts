@@ -1,10 +1,10 @@
+import type { ParkingJamSolvabilityAnalysis } from "@/games/parking-jam/problem/problem";
 import {
   createParkingJamInitialState,
   type ParkingJamBoard,
   type ParkingJamMove,
-} from "../../puzzle/board";
-import { listParkingJamLegalMoves } from "../../puzzle/rules";
-import type { ParkingJamSolvabilityAnalysis } from "../problem";
+} from "@/games/parking-jam/puzzle/board";
+import { listParkingJamLegalMoves } from "@/games/parking-jam/puzzle/rules";
 
 export function analyzeParkingJamSolvability(
   board: ParkingJamBoard,

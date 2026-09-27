@@ -1,9 +1,11 @@
+import { analyzeParkingJamSolvability } from "@/games/parking-jam/problem/generation/solvability";
 import {
-  createProblemRandom,
-  type ProblemRandom,
-  shuffleProblemValues,
-} from "@/games/problem-random";
-import type { ProblemSeed } from "@/games/problem-seed";
+  PARKING_JAM_GENERATOR_VERSION,
+  type ParkingJamGeneratedProblem,
+  type ParkingJamGenerationConditions,
+  type ParkingJamProblemIdentity,
+  type ParkingJamSolvabilityAnalysis,
+} from "@/games/parking-jam/problem/problem";
 import {
   createParkingJamInitialState,
   listParkingJamVehicleCells,
@@ -15,16 +17,14 @@ import {
   type ParkingJamOrientation,
   type ParkingJamVehicle,
   validateParkingJamBoard,
-} from "../puzzle/board";
-import { listParkingJamLegalMoves } from "../puzzle/rules";
-import { analyzeParkingJamSolvability } from "./generation/solvability";
+} from "@/games/parking-jam/puzzle/board";
+import { listParkingJamLegalMoves } from "@/games/parking-jam/puzzle/rules";
 import {
-  PARKING_JAM_GENERATOR_VERSION,
-  type ParkingJamGeneratedProblem,
-  type ParkingJamGenerationConditions,
-  type ParkingJamProblemIdentity,
-  type ParkingJamSolvabilityAnalysis,
-} from "./problem";
+  createProblemRandom,
+  type ProblemRandom,
+  shuffleProblemValues,
+} from "@/games/problem-random";
+import type { ProblemSeed } from "@/games/problem-seed";
 
 export type ParkingJamGeneratedCandidate = {
   attempt: number;

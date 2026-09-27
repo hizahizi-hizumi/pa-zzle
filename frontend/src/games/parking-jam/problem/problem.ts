@@ -1,9 +1,9 @@
-import type { ProblemSeed } from "@/games/problem-seed";
 import type {
   ParkingJamBoard,
   ParkingJamMove,
   ParkingJamVehicleId,
-} from "../puzzle/board";
+} from "@/games/parking-jam/puzzle/board";
+import type { ProblemSeed } from "@/games/problem-seed";
 
 export const PARKING_JAM_GENERATOR_VERSION = "1";
 

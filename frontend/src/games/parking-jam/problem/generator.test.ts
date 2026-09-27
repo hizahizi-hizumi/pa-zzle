@@ -1,8 +1,8 @@
-import { validateParkingJamBoard } from "../puzzle/board";
 import {
   generateParkingJamProblem,
   restoreParkingJamProblem,
-} from "./generator";
+} from "@/games/parking-jam/problem/generator";
+import { validateParkingJamBoard } from "@/games/parking-jam/puzzle/board";
 
 describe("generateParkingJamProblem", () => {
   const options = {
