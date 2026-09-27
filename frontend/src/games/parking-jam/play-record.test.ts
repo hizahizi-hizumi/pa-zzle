@@ -26,8 +26,8 @@ const problemIdentity = {
 
 const performance = {
   elapsedMs: 90_000,
-  moveAttemptCount: 15,
-  successfulMoveCount: 14,
+  moveAttemptCount: 16,
+  successfulMoveCount: 15,
   failedMoveCount: 1,
   undoCount: 1,
   restartCount: 0,
@@ -62,7 +62,7 @@ describe("createParkingJamPlayRecord", () => {
 
 describe("isParkingJamPlayRecord", () => {
   const recognizedCases = [
-    ["現在の形式", record],
+    ["待ったで戻した車を再び出庫した現在の形式", record],
     ["難易度モデル版と採点版を持たない payloadVersion 2", legacyRecord],
   ] as const;
 
@@ -83,6 +83,20 @@ describe("isParkingJamPlayRecord", () => {
         payload: {
           ...record.payload,
           performance: { ...performance, moveAttemptCount: 99 },
+        },
+      },
+    ],
+    [
+      "全車の出庫に満たない",
+      {
+        ...record,
+        payload: {
+          ...record.payload,
+          performance: {
+            ...performance,
+            moveAttemptCount: 14,
+            successfulMoveCount: 13,
+          },
         },
       },
     ],

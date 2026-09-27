@@ -146,7 +146,8 @@ function hasValidPayloadBase<
     parseParkingJamDifficulty(payload.difficulty) !== undefined &&
     isParkingJamProblemIdentity(payload.problemIdentity) &&
     isParkingJamPerformance(payload.performance) &&
-    payload.performance.successfulMoveCount ===
+    // 待った・やり直しで戻した車も再び出庫するため、成功出庫数は車両数以上になる。
+    payload.performance.successfulMoveCount >=
       payload.problemIdentity.conditions.vehicleCount
   );
 }

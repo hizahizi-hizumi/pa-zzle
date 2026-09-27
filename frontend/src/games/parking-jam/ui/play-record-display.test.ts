@@ -24,8 +24,8 @@ const record = createParkingJamPlayRecord({
   completedAt: 121_000,
   result: {
     elapsedMs: 120_000,
-    moveAttemptCount: 16,
-    successfulMoveCount: 14,
+    moveAttemptCount: 17,
+    successfulMoveCount: 15,
     failedMoveCount: 2,
     undoCount: 1,
     restartCount: 0,
