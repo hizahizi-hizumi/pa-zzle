@@ -1,35 +1,42 @@
-import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import {
-  getSlidePuzzleBoardSize,
-  SLIDE_PUZZLE_BLANK,
-  type SlidePuzzleBoard,
-  type SlidePuzzleBoardSize,
-} from "@/games/slide-puzzle/puzzle/state";
+  type SlidePuzzleDifficulty,
+  slidePuzzleDifficultyCriteria,
+} from "@/games/slide-puzzle/difficulty";
+import type { SlidePuzzleBoardSize } from "@/games/slide-puzzle/puzzle/state";
 
-// 各レベルの問題集にある実際の盤面から、上のレベルほど正しい位置を外れたタイルが多いものを選んだ。
-// 盤面は各レベルで実際に遊ぶ大きさにし、正しい位置を外れたタイルの枚数は 7 / 9 / 11 / 13 / 15 枚にそろえた。
-// 1: sp3-20-0 / 2: sp4-20-8 / 3: sp4-30-16 / 4: sp4-40-4 / 5: sp5-40-1
-const previewBoards = {
-  "1": [8, 4, 0, 5, 3, 1, 7, 6, 2],
-  "2": [1, 2, 3, 4, 5, 0, 6, 8, 14, 13, 7, 10, 9, 12, 11, 15],
-  "3": [0, 6, 3, 4, 2, 14, 7, 8, 1, 13, 9, 10, 5, 12, 11, 15],
-  "4": [0, 1, 4, 8, 5, 7, 3, 15, 13, 10, 12, 11, 9, 2, 6, 14],
-  "5": [
-    1, 2, 3, 9, 4, 6, 12, 7, 14, 8, 11, 13, 18, 5, 20, 21, 0, 16, 19, 10, 17,
-    22, 23, 24, 15,
+type PreviewRows = readonly [readonly number[], readonly number[]];
+
+// 実際の開始盤面ではなく、難易度の違いを抽象化した表現。盤面の上2行を、そのレベルで遊ぶ盤面の幅で切り出す。
+// 同じ盤面サイズの2段を説明文なしで見分けられるように、下の段（2・4）だけ1行目を揃えて描く。
+// 崩した行には正しい位置のタイルを置かず、空きマスも含めない。
+const previewRows = {
+  "1": [
+    [8, 7, 4],
+    [2, 6, 5],
   ],
-} satisfies Record<SlidePuzzleDifficulty, SlidePuzzleBoard>;
+  "2": [
+    [1, 2, 3, 4],
+    [8, 11, 5, 6],
+  ],
+  "3": [
+    [10, 4, 13, 9],
+    [6, 7, 5, 15],
+  ],
+  "4": [
+    [1, 2, 3, 4, 5],
+    [15, 14, 6, 22, 24],
+  ],
+  "5": [
+    [3, 12, 1, 21, 6],
+    [2, 24, 14, 10, 9],
+  ],
+} satisfies Record<SlidePuzzleDifficulty, PreviewRows>;
 
-/** タイルの間隔と余白は盤面サイズによらず同じにし、数字はタイル幅に対して 4×4 と同じ割合にする。 */
-const gridClassByBoardSize: Record<SlidePuzzleBoardSize, string> = {
-  3: "grid-cols-3 grid-rows-3",
-  4: "grid-cols-4 grid-rows-4",
-  5: "grid-cols-5 grid-rows-5",
-};
-const tileNumberClassByBoardSize: Record<SlidePuzzleBoardSize, string> = {
-  3: "text-[15.2cqw]",
-  4: "text-[11cqw]",
-  5: "text-[8.5cqw]",
+/** タイルの大きさをどのレベルでもそろえるため、高さを固定して列数ぶん横に伸ばす。 */
+const gridClassByColumnCount: Record<SlidePuzzleBoardSize, string> = {
+  3: "grid-cols-3 aspect-3/2",
+  4: "grid-cols-4 aspect-2/1",
+  5: "grid-cols-5 aspect-5/2",
 };
 
 type SlidePuzzleDifficultyPreviewProps = {
@@ -39,29 +46,26 @@ type SlidePuzzleDifficultyPreviewProps = {
 export function SlidePuzzleDifficultyPreview({
   difficulty,
 }: SlidePuzzleDifficultyPreviewProps) {
-  const board = previewBoards[difficulty];
-  const boardSize = getSlidePuzzleBoardSize(board);
+  const columnCount = slidePuzzleDifficultyCriteria[difficulty].boardSize;
+  const tiles = previewRows[difficulty].flat();
 
   return (
     <span
       aria-hidden="true"
-      className="@container block size-14 shrink-0 rounded-md bg-muted lg:size-28"
+      className="flex h-14 w-36 shrink-0 items-start lg:h-28 lg:w-full lg:items-center lg:justify-center"
     >
+      {/* 下側の角を丸めず、盤面が下へ続く切り出しに見せる。 */}
       <span
-        className={`grid size-full ${gridClassByBoardSize[boardSize]} gap-[3cqw] p-[4cqw]`}
+        className={`grid h-12 ${gridClassByColumnCount[columnCount]} gap-[3px] rounded-t-md bg-muted px-[3px] pt-[3px] lg:h-[68px] lg:gap-1 lg:px-1 lg:pt-1`}
       >
-        {board.map((tile) =>
-          tile === SLIDE_PUZZLE_BLANK ? (
-            <span key="blank" />
-          ) : (
-            <span
-              key={tile}
-              className={`flex items-center justify-center rounded-[3cqw] border border-border bg-card font-sans ${tileNumberClassByBoardSize[boardSize]} leading-none font-semibold text-card-foreground tabular-nums`}
-            >
-              {tile}
-            </span>
-          ),
-        )}
+        {tiles.map((tile) => (
+          <span
+            key={tile}
+            className="flex items-center justify-center rounded-[3px] border border-border bg-card font-sans text-[11px] leading-none font-semibold text-card-foreground tabular-nums lg:rounded-md lg:text-sm"
+          >
+            {tile}
+          </span>
+        ))}
       </span>
     </span>
   );
