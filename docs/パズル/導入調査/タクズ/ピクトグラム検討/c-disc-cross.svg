@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="バイナリパズル">
+  <path fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" d="M31.5 50.5V69.5M50.5 31.5H69.5M50.5 50.5V69.5M50.5 50.5H69.5M69.5 50.5V69.5M50.5 69.5H69.5M88.5 50.5V69.5M50.5 88.5H69.5"/>
+  <path fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linejoin="round" d="M50.5 12.5H69.5V50.5H107.5V69.5H69.5V107.5H50.5V69.5H12.5V50.5H50.5Z"/>
+  <g fill="var(--game-pictogram-strong)"><circle cx="22" cy="60" r="6.5"/><circle cx="41" cy="60" r="6.5"/><circle cx="60" cy="41" r="6.5"/><circle cx="60" cy="79" r="6.5"/></g>
+  <g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"><circle cx="79" cy="60" r="5.5"/><circle cx="60" cy="98" r="5.5"/></g>
+  <rect x="54" y="54" width="12" height="12" rx="0" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="2"/>
+</svg>
