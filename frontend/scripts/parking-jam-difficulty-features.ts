@@ -7,6 +7,8 @@ import {
   assessParkingJamDifficulty,
   PARKING_JAM_DIFFICULTY_MODEL_VERSION,
 } from "@/games/parking-jam/difficulty";
+import { analyzeParkingJamDifficulty } from "@/games/parking-jam/problem/difficulty-analysis";
+import { analyzeParkingJamSolvability } from "@/games/parking-jam/problem/generation/solvability";
 import type { ParkingJamGeneratedProblem } from "@/games/parking-jam/problem/problem";
 import {
   createParkingJamInitialState,
@@ -162,6 +164,7 @@ export type ParkingJamStudyFeatures = {
   cellCount: number;
   vehicleCount: number;
   occupancy: number;
+  fixedAreaCount: number;
   fixedAreaCellCount: number;
   roadOpeningCellCount: number;
   // 現行 visual-local-load-v1
@@ -190,6 +193,22 @@ export type ParkingJamStudyFeatures = {
   /** 塞いでいる車までの距離（空きセル数）の平均と、2セル以上離れた遮断の数。 */
   averageBlockerGap: number;
   farBlockerCount: number;
+  // 読み違いの誘発（車両数で割った割合。車が多いだけでは増えない）
+  /** 開口のない方向が1車線ずれた開口に接し、固定物にも塞がれない車の割合。 */
+  nearMissRatio: number;
+  /** 開口のない方向の進路が初期盤面で空いている（出られそうに見える縁石）車の割合。 */
+  clearWallRatio: number;
+  /** 両方向に開口があり、初期盤面で片方だけ塞がれている車の割合。 */
+  directionChoiceRatio: number;
+  /** 塞がれた車のうち、最も塞がれ方の少ない方向で最初の遮断車が2セル以上先にある車の割合。 */
+  farBlockedRatio: number;
+  /** 1車線ずれの開口・方向判断・遠い遮断のいずれかに当たる車の割合（読み違いを誘う車）。出られそうな縁石は含めない。 */
+  misreadVehicleRatio: number;
+  // 視覚探索
+  /** 初期に出せる車のうち、出口まで2セル以上ある（縁に接していない）車の割合。 */
+  hiddenLegalRatio: number;
+  /** 同じ向きの車が隣の車線で横に並んでいる車の割合（車線の取り違えを誘う並走）。 */
+  sideBySideRatio: number;
   // 状態空間（一様ランダムに合法車を選ぶプレイでの期待値）
   /** 手番ごとの「残りの車から順に見て合法車に当たるまでに見る台数」の平均。 */
   meanScanCost: number;
@@ -287,6 +306,62 @@ export function analyzeParkingJamStudyFeatures(
     for (const direction of vehicleGeometry.available)
       for (const blocker of direction.blockers) gaps.push(blocker.gap);
   }
+
+  const misreadFlags = geometry.map((vehicleGeometry) => {
+    const nearMiss = vehicleGeometry.directions.some(
+      (direction) => direction.nearMissOpening && !direction.fixedBlocked,
+    );
+    const clearWall = vehicleGeometry.directions.some(
+      (direction) =>
+        !direction.hasOpening &&
+        !direction.fixedBlocked &&
+        direction.blockers.length === 0 &&
+        direction.pathLength > 0,
+    );
+    const counts = vehicleGeometry.available.map(
+      (direction) => direction.blockers.length,
+    );
+    const directionChoice =
+      vehicleGeometry.available.length === 2 &&
+      counts.filter((count) => count === 0).length === 1;
+    const blocked = counts.length > 0 && Math.min(...counts) > 0;
+    const leastBlocked = [...vehicleGeometry.available].sort(
+      (left, right) => left.blockers.length - right.blockers.length,
+    )[0];
+    const farBlocked = blocked && (leastBlocked?.blockers[0]?.gap ?? 0) >= 2;
+    return { nearMiss, clearWall, directionChoice, blocked, farBlocked };
+  });
+  const blockedVehicleCount = misreadFlags.filter(
+    (flag) => flag.blocked,
+  ).length;
+  function ratioOf(
+    predicate: (flag: (typeof misreadFlags)[number]) => boolean,
+  ): number {
+    return n === 0 ? 0 : misreadFlags.filter(predicate).length / n;
+  }
+  const initialLegalGeometry = geometry.filter(
+    (_vehicleGeometry, index) => (initialLegal & (1 << index)) !== 0,
+  );
+  const hiddenLegalCount = initialLegalGeometry.filter((vehicleGeometry) =>
+    vehicleGeometry.available
+      .filter((direction) => direction.blockers.length === 0)
+      .every((direction) => direction.pathLength >= 2),
+  ).length;
+  const sideBySideCount = board.vehicles.filter((vehicle) =>
+    board.vehicles.some((other) => {
+      if (other === vehicle || other.orientation !== vehicle.orientation)
+        return false;
+      const [laneOffset, start, otherLane, otherStart] =
+        vehicle.orientation === "horizontal"
+          ? [vehicle.row, vehicle.column, other.row, other.column]
+          : [vehicle.column, vehicle.row, other.column, other.row];
+      return (
+        Math.abs(laneOffset - otherLane) === 1 &&
+        start < otherStart + other.length &&
+        otherStart < start + vehicle.length
+      );
+    }),
+  ).length;
 
   // 到達状態と一様ランダムプレイ
   const probability = new Map<number, number>([[full, 1]]);
@@ -400,6 +475,7 @@ export function analyzeParkingJamStudyFeatures(
     cellCount: board.width * board.height,
     vehicleCount: n,
     occupancy: vehicleCellCount / (board.width * board.height),
+    fixedAreaCount: board.fixedAreas.length,
     fixedAreaCellCount,
     roadOpeningCellCount: board.roadOpenings.reduce(
       (total, opening) => total + opening.length,
@@ -424,6 +500,22 @@ export function analyzeParkingJamStudyFeatures(
         ? 0
         : gaps.reduce((total, gap) => total + gap, 0) / gaps.length,
     farBlockerCount: gaps.filter((gap) => gap >= 2).length,
+    nearMissRatio: ratioOf((flag) => flag.nearMiss),
+    clearWallRatio: ratioOf((flag) => flag.clearWall),
+    directionChoiceRatio: ratioOf((flag) => flag.directionChoice),
+    farBlockedRatio:
+      blockedVehicleCount === 0
+        ? 0
+        : misreadFlags.filter((flag) => flag.farBlocked).length /
+          blockedVehicleCount,
+    misreadVehicleRatio: ratioOf(
+      (flag) => flag.nearMiss || flag.directionChoice || flag.farBlocked,
+    ),
+    hiddenLegalRatio:
+      initialLegalGeometry.length === 0
+        ? 0
+        : hiddenLegalCount / initialLegalGeometry.length,
+    sideBySideRatio: n === 0 ? 0 : sideBySideCount / n,
     meanScanCost: meanScanCostTotal / n,
     meanLegalRatio: meanLegalRatioTotal / n,
     expectedForcedSteps,
@@ -439,6 +531,35 @@ export function analyzeParkingJamStudyFeatures(
     orderFreedom: n <= 1 ? 1 : Math.log(orders) / logFactorial,
     reachableStateCount: reachable.length + 1,
   };
+}
+
+/** 生成器を通さない盤面（プレビュー配置、開口を変換した盤面）の特徴を求める。 */
+export function analyzeParkingJamBoardStudyFeatures(
+  board: ParkingJamBoard,
+): ParkingJamStudyFeatures {
+  const solvabilityAnalysis = analyzeParkingJamSolvability(board);
+  if (solvabilityAnalysis.status !== "solvable")
+    throw new Error("Parking jam study board is unsolvable");
+  return analyzeParkingJamStudyFeatures({
+    problem: { board },
+    identity: {
+      generatorVersion: "2",
+      seed: "study-board",
+      conditions: {
+        width: board.width,
+        height: board.height,
+        vehicleCount: board.vehicles.length,
+        roadOpeningCount: board.roadOpenings.length,
+        roadOpeningSpan: 1,
+        fixedAreaCount: board.fixedAreas.length,
+        fixedAreaLength: 1,
+        blockingPlacementProbability: 0,
+      },
+      generationAttempt: 1,
+    },
+    solvabilityAnalysis,
+    difficultyAnalysis: analyzeParkingJamDifficulty(board, solvabilityAnalysis),
+  });
 }
 
 /** 盤面をテキスト図にする。外周の `=` は道路開口、`#` は縁石、`X` は固定領域。車は英字1字（横=小文字、縦=大文字）。 */

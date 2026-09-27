@@ -3,9 +3,7 @@
  * 本番の生成器・ルール・判定をそのまま使い、本番挙動は変えない。
  */
 import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
-import { analyzeParkingJamDifficulty } from "@/games/parking-jam/problem/difficulty-analysis";
 import { listParkingJamDifficultyCandidateConditions } from "@/games/parking-jam/problem/generation/difficulty-candidate-space";
-import { analyzeParkingJamSolvability } from "@/games/parking-jam/problem/generation/solvability";
 import {
   generateParkingJamProblem,
   ParkingJamGenerationExhaustedError,
@@ -18,6 +16,7 @@ import {
 } from "@/games/parking-jam/problem/problem";
 import {
   type ParkingJamBoard,
+  type ParkingJamRoadOpening,
   type ParkingJamVehicle,
   validateParkingJamBoard,
 } from "@/games/parking-jam/puzzle/board";
@@ -26,15 +25,23 @@ import {
   shuffleProblemValues,
 } from "@/games/problem-random";
 import {
+  analyzeParkingJamBoardStudyFeatures,
   analyzeParkingJamStudyFeatures,
   type ParkingJamStudyFeatures,
   renderParkingJamBoard,
 } from "./parking-jam-difficulty-features";
 import {
+  addDecoyOpenings,
+  removeUnusedOpenings,
+} from "./parking-jam-difficulty-openings";
+import {
+  dependencyLeverOf,
   findStudyPlan,
   formatStudyAssessment,
+  misreadLeverOf,
   type StudyAssessment,
   type StudyPlan,
+  scaleLeverOf,
   studyPlans,
 } from "./parking-jam-difficulty-plans";
 
@@ -43,7 +50,7 @@ const usage = `Usage: bun scripts/analyze-parking-jam-difficulty.ts <command> [o
 Commands:
   corpus    候補条件ごとに固定 seed で問題を生成し、特徴を JSONL へ書く
             --out <file> --seeds <n> (default 20) --shard <i> --shards <k>
-            --space current|extended (default current) --attempts <n> (default 2)
+            --space current|extended|fixed (default current) --attempts <n> (default 2)
   report    corpus の JSONL を読み、分布・相関・分類案の比較を出力する
             --in <file>[,<file>...]
   supply    現行供給（candidate-space-v1 と同じ候補順・試行数）で、分類案の各レベルを要求したときの
@@ -71,6 +78,34 @@ function readInteger(name: string, fallback: number): number {
  * 現行 216 条件の外側で、依存の深い問題が現れやすいかを確かめる拡張候補。
  * 16台（道路開口4）と、道路開口2（5〜11台）を固定領域なしで振る。
  */
+/**
+ * 固定物（植栽島）の量を現行候補空間（0〜1個）より広く振る候補。
+ * 固定物2〜3個（長さ2）を、6×8・8×8、8・11台、開口3〜4×幅2〜3、遮断バイアス0.5・1で振る。
+ */
+function listFixedAreaConditions(): ParkingJamGenerationConditions[] {
+  const conditions: ParkingJamGenerationConditions[] = [];
+  for (const [width, height] of [
+    [6, 8],
+    [8, 8],
+  ] as const)
+    for (const vehicleCount of [8, 11])
+      for (const roadOpeningCount of [3, 4])
+        for (const roadOpeningSpan of [2, 3])
+          for (const fixedAreaCount of [2, 3])
+            for (const blockingPlacementProbability of [0.5, 1])
+              conditions.push({
+                width,
+                height,
+                vehicleCount,
+                roadOpeningCount,
+                roadOpeningSpan,
+                fixedAreaCount,
+                fixedAreaLength: 2,
+                blockingPlacementProbability,
+              });
+  return conditions;
+}
+
 function listExtendedConditions(): ParkingJamGenerationConditions[] {
   const conditions: ParkingJamGenerationConditions[] = [];
   const sizes = [
@@ -107,6 +142,9 @@ type CorpusRecord = {
   space: string;
   milliseconds: number;
   features: ParkingJamStudyFeatures | null;
+  /** 開口を変換した盤面など、identity から復元できない盤面の場合だけ持つ。 */
+  board?: ParkingJamBoard;
+  variant?: string;
 };
 
 type AnalyzedRecord = CorpusRecord & {
@@ -125,7 +163,9 @@ function runCorpus(): void {
   const conditions =
     space === "extended"
       ? listExtendedConditions()
-      : listParkingJamDifficultyCandidateConditions();
+      : space === "fixed"
+        ? listFixedAreaConditions()
+        : listParkingJamDifficultyCandidateConditions();
   writeFileSync(out, "");
   let taskIndex = 0;
   for (let seedIndex = 0; seedIndex < seeds; seedIndex += 1) {
@@ -335,7 +375,22 @@ const reportedFeatureNames = [
   "orderFreedom",
 ] as const satisfies readonly (keyof ParkingJamStudyFeatures)[];
 
-const planLevels = ["too-light", "1", "2", "3", "4", "5", "too-heavy"] as const;
+const planLevels = [
+  "too-light",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "too-heavy",
+  "unplaced",
+] as const;
+
+function boardOf(record: AnalyzedRecord): ParkingJamBoard {
+  return (
+    record.board ?? restoreParkingJamProblem(record.identity).problem.board
+  );
+}
 
 function printFeatureOverview(records: readonly AnalyzedRecord[]): void {
   console.log("\n## 特徴の分布（中央値 (四分位, 最小–最大)）\n");
@@ -497,10 +552,10 @@ function printPlanDetail(
 ): void {
   console.log(`\n## 案${plan.id}: ${plan.summary}\n`);
   console.log(
-    "| レベル | 件数 | 車両数 8/11/14 | 盤面 6x6/6x8/8x8 | 段数 | 最少先行台数の最大 | 初期遮断車数 | 2台以上に塞がれた車 | 平均合法車率 | 手がかりのない探索局面 | 1車線ずれの開口に接する車 | 2セル以上先の遮断 | v1 easy/normal/hard |",
+    "| レベル | 件数 | 車両数 8/11/14 | 盤面 6x6/6x8/8x8 | 固定物あり | 規模レバー 1/2/3 | 段数 | 最少先行台数の最大 | 初期遮断車数 | 平均合法車率 | 読み違いを誘う車 | 1車線ずれの開口 | 方向判断 | 遠い遮断 | v1 easy/normal/hard |",
   );
   console.log(
-    "| --- | ---: | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+    "| --- | ---: | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
   );
   for (const level of planLevels) {
     const group = records.filter(
@@ -510,8 +565,11 @@ function printPlanDetail(
     function share(predicate: (record: AnalyzedRecord) => boolean): string {
       return percent(group.filter(predicate).length, group.length);
     }
+    function values(name: keyof ParkingJamStudyFeatures): number[] {
+      return group.map((record) => Number(record.features[name]));
+    }
     console.log(
-      `| ${level} | ${group.length} | ${[8, 11, 14].map((count) => share((record) => record.features.vehicleCount === count)).join(" / ")} | ${["6x6", "6x8", "8x8"].map((size) => share((record) => boardSizeOf(record.features) === size)).join(" / ")} | ${quartiles(group.map((record) => record.features.depth))} | ${quartiles(group.map((record) => record.features.maximumPrerequisiteCount))} | ${quartiles(group.map((record) => record.features.initialBlockedCount))} | ${median(group.map((record) => record.features.multiBlockedCount))} | ${quartiles(group.map((record) => record.features.meanLegalRatio))} | ${median(group.map((record) => record.features.expectedUncuedScarceSteps))} | ${median(group.map((record) => record.features.nearMissVehicleCount))} | ${median(group.map((record) => record.features.farBlockerCount))} | ${["easy", "normal", "hard"].map((label) => group.filter((record) => record.features.v1Difficulty.endsWith(`:${label}`)).length).join(" / ")} |`,
+      `| ${level} | ${group.length} | ${[8, 11, 14].map((count) => share((record) => record.features.vehicleCount === count)).join(" / ")} | ${["6x6", "6x8", "8x8"].map((size) => share((record) => boardSizeOf(record.features) === size)).join(" / ")} | ${share((record) => record.features.fixedAreaCount > 0)} | ${[1, 2, 3].map((grade) => share((record) => scaleLeverOf(record.features) === grade)).join(" / ")} | ${quartiles(values("depth"))} | ${quartiles(values("maximumPrerequisiteCount"))} | ${quartiles(values("initialBlockedCount"))} | ${quartiles(values("meanLegalRatio"))} | ${quartiles(values("misreadVehicleRatio"))} | ${median(values("nearMissRatio"))} | ${median(values("directionChoiceRatio"))} | ${median(values("farBlockedRatio"))} | ${["easy", "normal", "hard"].map((label) => group.filter((record) => record.features.v1Difficulty.endsWith(`:${label}`)).length).join(" / ")} |`,
     );
   }
 }
@@ -571,11 +629,275 @@ function printV1Correspondence(
   }
 }
 
+const leverFeatureNames = [
+  "depth",
+  "maximumPrerequisiteCount",
+  "initialBlockedCount",
+  "meanLegalRatio",
+  "misreadVehicleRatio",
+  "nearMissRatio",
+  "directionChoiceRatio",
+  "farBlockedRatio",
+  "clearWallRatio",
+  "hiddenLegalRatio",
+  "sideBySideRatio",
+  "vehicleCount",
+  "cellCount",
+  "occupancy",
+  "fixedAreaCellCount",
+] as const satisfies readonly (keyof ParkingJamStudyFeatures)[];
+
+function printLeverCrossTable(
+  records: readonly AnalyzedRecord[],
+  rowLabel: string,
+  rowLever: (features: ParkingJamStudyFeatures) => number,
+  columnLabel: string,
+  columnLever: (features: ParkingJamStudyFeatures) => number,
+): void {
+  console.log(
+    `\n### ${rowLabel}レバー × ${columnLabel}レバー（件数と行内の割合）\n`,
+  );
+  console.log(`| ${rowLabel} \\ ${columnLabel} | 1 | 2 | 3 |`);
+  console.log("| --- | ---: | ---: | ---: |");
+  for (const rowGrade of [1, 2, 3]) {
+    const row = records.filter(
+      (record) => rowLever(record.features) === rowGrade,
+    );
+    console.log(
+      `| ${rowGrade} | ${[1, 2, 3]
+        .map((columnGrade) => {
+          const count = row.filter(
+            (record) => columnLever(record.features) === columnGrade,
+          ).length;
+          return `${count}（${percent(count, row.length)}）`;
+        })
+        .join(" | ")} |`,
+    );
+  }
+}
+
+function printLeverIndependence(records: readonly AnalyzedRecord[]): void {
+  console.log("\n## レバーの独立性\n");
+  console.log("### レバー特徴同士・規模との順位相関（Spearman）\n");
+  console.log(`| | ${leverFeatureNames.join(" | ")} |`);
+  console.log(`| --- |${leverFeatureNames.map(() => " ---: |").join("")}`);
+  for (const rowName of leverFeatureNames) {
+    const row = records.map((record) => record.features[rowName]);
+    console.log(
+      `| ${rowName} | ${leverFeatureNames
+        .map((columnName) =>
+          spearman(
+            row,
+            records.map((record) => record.features[columnName]),
+          ).toFixed(2),
+        )
+        .join(" | ")} |`,
+    );
+  }
+
+  const inRange = records.filter(
+    (record) =>
+      record.features.depth >= 2 &&
+      record.features.initialBlockedCount >= 2 &&
+      record.features.depth <= 6,
+  );
+  console.log(
+    `\n### 依存レバー × 読み違いレバー（提供範囲内 ${inRange.length}問、件数と割合）\n`,
+  );
+  console.log("| 依存 \\ 読み違い | 1（<1/4） | 2（1/4〜1/2） | 3（≥1/2） |");
+  console.log("| --- | ---: | ---: | ---: |");
+  for (const dependency of [1, 2, 3] as const) {
+    const row = inRange.filter(
+      (record) => dependencyLeverOf(record.features) === dependency,
+    );
+    console.log(
+      `| ${dependency} | ${[1, 2, 3]
+        .map((misread) => {
+          const count = row.filter(
+            (record) => misreadLeverOf(record.features) === misread,
+          ).length;
+          return `${count}（${percent(count, row.length)}）`;
+        })
+        .join(" | ")} |`,
+    );
+  }
+
+  printLeverCrossTable(
+    inRange,
+    "規模",
+    scaleLeverOf,
+    "依存",
+    dependencyLeverOf,
+  );
+  printLeverCrossTable(
+    inRange,
+    "規模",
+    scaleLeverOf,
+    "読み違い",
+    misreadLeverOf,
+  );
+  console.log(
+    "\n### 規模レバー別の依存・読み違い特徴（中央値 (四分位, 最小–最大)）\n",
+  );
+  console.log(
+    "| 規模 | 件数 | 段数 | 最少先行 | 初期遮断 | 平均合法車率 | 読み違いを誘う車 |",
+  );
+  console.log("| ---: | ---: | --- | --- | --- | --- | --- |");
+  for (const grade of [1, 2, 3]) {
+    const group = inRange.filter(
+      (record) => scaleLeverOf(record.features) === grade,
+    );
+    console.log(
+      `| ${grade} | ${group.length} | ${quartiles(group.map((r) => r.features.depth))} | ${quartiles(group.map((r) => r.features.maximumPrerequisiteCount))} | ${quartiles(group.map((r) => r.features.initialBlockedCount))} | ${quartiles(group.map((r) => r.features.meanLegalRatio))} | ${quartiles(group.map((r) => r.features.misreadVehicleRatio))} |`,
+    );
+  }
+  console.log(
+    "\n### 同じ依存段数の中での読み違い特徴の分布（中央値 (四分位, 最小–最大)）\n",
+  );
+  console.log(
+    "| 段数 | 件数 | 読み違いを誘う車 | 1車線ずれの開口 | 方向判断 | 遠い遮断 |",
+  );
+  console.log("| ---: | ---: | --- | --- | --- | --- |");
+  for (const depth of [2, 3, 4, 5]) {
+    const group = inRange.filter((record) =>
+      depth === 5
+        ? record.features.depth >= 5
+        : record.features.depth === depth,
+    );
+    console.log(
+      `| ${depth === 5 ? "5〜6" : depth} | ${group.length} | ${quartiles(group.map((r) => r.features.misreadVehicleRatio))} | ${quartiles(group.map((r) => r.features.nearMissRatio))} | ${quartiles(group.map((r) => r.features.directionChoiceRatio))} | ${quartiles(group.map((r) => r.features.farBlockedRatio))} |`,
+    );
+  }
+
+  console.log("\n### 生成条件ごとの読み違い特徴（平均）\n");
+  console.log(
+    "| 生成条件 | 値 | 件数 | 読み違いを誘う車 | 1車線ずれの開口 | 方向判断 | 遠い遮断 | 段数 |",
+  );
+  console.log("| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |");
+  const knobs = [
+    ["道路開口数", (c: ParkingJamGenerationConditions) => c.roadOpeningCount],
+    ["開口幅", (c: ParkingJamGenerationConditions) => c.roadOpeningSpan],
+    ["固定物数", (c: ParkingJamGenerationConditions) => c.fixedAreaCount],
+    [
+      "遮断バイアス",
+      (c: ParkingJamGenerationConditions) => c.blockingPlacementProbability,
+    ],
+    ["車両数", (c: ParkingJamGenerationConditions) => c.vehicleCount],
+    ["マス数", (c: ParkingJamGenerationConditions) => c.width * c.height],
+  ] as const;
+  for (const [label, knob] of knobs) {
+    const values = [...new Set(inRange.map((r) => knob(r.conditions)))].sort(
+      (left, right) => left - right,
+    );
+    for (const value of values) {
+      const group = inRange.filter((r) => knob(r.conditions) === value);
+      function mean(name: keyof ParkingJamStudyFeatures): string {
+        return (
+          group.reduce((total, r) => total + Number(r.features[name]), 0) /
+          group.length
+        ).toFixed(2);
+      }
+      console.log(
+        `| ${label} | ${value} | ${group.length} | ${mean("misreadVehicleRatio")} | ${mean("nearMissRatio")} | ${mean("directionChoiceRatio")} | ${mean("farBlockedRatio")} | ${mean("depth")} |`,
+      );
+    }
+  }
+}
+
+function printVariantEffect(records: readonly AnalyzedRecord[]): void {
+  const baseByIdentity = new Map(
+    records
+      .filter((record) => !record.variant)
+      .map((record) => [JSON.stringify(record.identity), record]),
+  );
+  for (const variant of ["decoy", "trimmed"]) {
+    const variants = records.filter((record) => record.variant === variant);
+    if (variants.length === 0) continue;
+    const pairs = variants.flatMap((record) => {
+      const base = baseByIdentity.get(JSON.stringify(record.identity));
+      return base ? [{ base, record }] : [];
+    });
+    const sameDependency = pairs.filter(
+      ({ base, record }) =>
+        dependencySignature(base.features) ===
+        dependencySignature(record.features),
+    ).length;
+    console.log(
+      `\n### 開口変換「${variant}」: ${pairs.length}問（依存特徴が元と同一 ${sameDependency}問）\n`,
+    );
+    console.log("| 読み違いレバー 元 \\ 変換後 | 1 | 2 | 3 |");
+    console.log("| --- | ---: | ---: | ---: |");
+    for (const from of [1, 2, 3]) {
+      const row = pairs.filter(
+        ({ base }) => misreadLeverOf(base.features) === from,
+      );
+      console.log(
+        `| ${from} | ${[1, 2, 3]
+          .map(
+            (to) =>
+              row.filter(({ record }) => misreadLeverOf(record.features) === to)
+                .length,
+          )
+          .join(" | ")} |`,
+      );
+    }
+    console.log(
+      `\n読み違いを誘う車の割合の変化: ${quartiles(pairs.map(({ base, record }) => record.features.misreadVehicleRatio - base.features.misreadVehicleRatio))}`,
+    );
+  }
+}
+
+/**
+ * 開口変換を供給に使う場合の収率。元の問題か、その開口変換（decoy / trimmed）のどれかが
+ * そのレベルに当たれば、その候補からそのレベルの問題を1問作れるとみなす。
+ */
+function printTransformYield(
+  records: readonly AnalyzedRecord[],
+  candidateCount: number,
+): void {
+  const byIdentity = new Map<string, AnalyzedRecord[]>();
+  for (const record of records) {
+    const key = JSON.stringify(record.identity);
+    byIdentity.set(key, [...(byIdentity.get(key) ?? []), record]);
+  }
+  const transformedCount = [...byIdentity.values()].filter((group) =>
+    group.some((record) => record.variant),
+  ).length;
+  if (transformedCount === 0) return;
+  console.log(
+    `\n## 開口変換を使う場合の収率（候補 ${candidateCount}、変換を試した問題 ${transformedCount}）\n`,
+  );
+  console.log("| 案 | 1 | 2 | 3 | 4 | 5 |");
+  console.log("| --- | ---: | ---: | ---: | ---: | ---: |");
+  for (const plan of studyPlans.filter((candidate) =>
+    ["M1", "M3", "T1", "T3", "T1s"].includes(candidate.id),
+  )) {
+    const counts = ["1", "2", "3", "4", "5"].map((level) => {
+      const withoutTransform = [...byIdentity.values()].filter((group) =>
+        group.some(
+          (record) =>
+            !record.variant &&
+            formatStudyAssessment(plan.classify(record.features)) === level,
+        ),
+      ).length;
+      const withTransform = [...byIdentity.values()].filter((group) =>
+        group.some(
+          (record) =>
+            formatStudyAssessment(plan.classify(record.features)) === level,
+        ),
+      ).length;
+      return `${percent(withoutTransform, candidateCount)} → ${percent(withTransform, candidateCount)}`;
+    });
+    console.log(`| ${plan.id} | ${counts.join(" | ")} |`);
+  }
+}
+
 function runReport(): void {
   const input = readOption("in");
   if (!input) throw new Error(usage);
   const records = readRecords(input);
-  const analyzed = records.filter(isAnalyzed);
+  const allAnalyzed = records.filter(isAnalyzed);
+  const analyzed = allAnalyzed.filter((record) => !record.variant);
   const milliseconds = sortedNumbers(
     records.map((record) => record.milliseconds),
   );
@@ -583,9 +905,18 @@ function runReport(): void {
     `# 問題集合: ${records.length} 候補, 生成成功 ${analyzed.length} (${percent(analyzed.length, records.length)}), 候補1つあたりの時間 p50 ${quantileOf(milliseconds, 0.5).toFixed(0)}ms / p95 ${quantileOf(milliseconds, 0.95).toFixed(0)}ms（生成＋本番分析＋調査用分析）`,
   );
   printFeatureOverview(analyzed);
-  printPlanComparison(analyzed, records.length);
+  printLeverIndependence(analyzed);
+  printVariantEffect(allAnalyzed);
+  printPlanComparison(
+    analyzed,
+    records.filter((record) => !record.variant).length,
+  );
+  printTransformYield(
+    allAnalyzed,
+    records.filter((record) => !record.variant).length,
+  );
   for (const plan of studyPlans) printPlanDetail(analyzed, plan);
-  const recommended = findStudyPlan("D");
+  const recommended = findStudyPlan("T3");
   for (const plan of studyPlans)
     if (plan !== recommended) printCrossTable(analyzed, recommended, plan);
   printV1Correspondence(analyzed, recommended);
@@ -706,7 +1037,7 @@ function supplyOnce(
 }
 
 function runSupply(): void {
-  const plan = findStudyPlan(readOption("plan") ?? "D");
+  const plan = findStudyPlan(readOption("plan") ?? "T3");
   const seeds = readInteger("seeds", 40);
   const profiles = readInteger("profiles", 72);
   const attempts = Math.max(1, readInteger("attempts", 2));
@@ -758,21 +1089,33 @@ type PickedProblem = {
 
 function describe(features: ParkingJamStudyFeatures): string {
   return [
-    `${features.width}x${features.height}`,
-    `${features.vehicleCount}台`,
-    `段数${features.depth}（${features.layerSizes.join("/")}）`,
-    `最少先行${features.maximumPrerequisiteCount}`,
-    `初期遮断${features.initialBlockedCount}`,
-    `二重遮断${features.multiBlockedCount}`,
+    `規模${scaleLeverOf(features)}: ${features.width}x${features.height}・${features.vehicleCount}台・固定物${features.fixedAreaCount}`,
+    `依存${dependencyLeverOf(features)}: 段数${features.depth}（${features.layerSizes.join("/")}）・先行${features.maximumPrerequisiteCount}・初期遮断${features.initialBlockedCount}`,
+    `読み違い${misreadLeverOf(features)}: ${(features.misreadVehicleRatio * 100).toFixed(0)}%（ずれ開口${(features.nearMissRatio * 100).toFixed(0)}%・方向判断${(features.directionChoiceRatio * 100).toFixed(0)}%・遠い遮断${(features.farBlockedRatio * 100).toFixed(0)}%）`,
     `平均合法率${features.meanLegalRatio.toFixed(2)}`,
-    `探索局面${features.expectedUncuedScarceSteps.toFixed(2)}`,
-    `ずれ開口${features.nearMissVehicleCount}`,
     `v1 ${features.v1Difficulty.split(":")[1]}(${features.v1Score.toFixed(2)})`,
   ].join(" · ");
 }
 
+function identityLine(record: AnalyzedRecord): string {
+  const identity = `identity: \`${JSON.stringify(record.identity)}\``;
+  return record.variant
+    ? `${identity}（この問題を開口変換「${record.variant}」した盤面。開口: \`${JSON.stringify(record.board?.roadOpenings)}\`）`
+    : identity;
+}
+
 function levelOf(plan: StudyPlan, record: AnalyzedRecord): string {
   return formatStudyAssessment(plan.classify(record.features));
+}
+
+function dependencySignature(features: ParkingJamStudyFeatures): string {
+  return JSON.stringify([
+    features.depth,
+    features.layerSizes,
+    features.maximumPrerequisiteCount,
+    features.initialBlockedCount,
+    features.meanLegalRatio.toFixed(6),
+  ]);
 }
 
 function pickProblems(
@@ -781,162 +1124,246 @@ function pickProblems(
 ): PickedProblem[] {
   const picked: PickedProblem[] = [];
   const used = new Set<AnalyzedRecord>();
+  const baseRecords = records.filter((record) => !record.variant);
   function take(
     kind: string,
     note: string,
     candidates: readonly AnalyzedRecord[],
     score: (record: AnalyzedRecord) => number,
     count = 1,
-  ): void {
+  ): AnalyzedRecord[] {
     const ordered = [...candidates]
       .filter((record) => !used.has(record))
       .sort((left, right) => score(left) - score(right));
     const sizes = new Set<string>();
-    let takenCount = 0;
+    const taken: AnalyzedRecord[] = [];
     for (const record of ordered) {
-      if (takenCount >= count) break;
+      if (taken.length >= count) break;
       const size = boardSizeOf(record.features);
       if (count > 1 && sizes.has(size) && ordered.length > count * 3) continue;
       sizes.add(size);
       used.add(record);
       picked.push({ kind, note, record });
-      takenCount += 1;
+      taken.push(record);
     }
+    return taken;
   }
   function inLevel(level: string): AnalyzedRecord[] {
-    return records.filter((record) => levelOf(plan, record) === level);
+    return baseRecords.filter((record) => levelOf(plan, record) === level);
+  }
+  function leverDistance(
+    record: AnalyzedRecord,
+    target: { misread: number; legal: number; blocked: number },
+  ): number {
+    return (
+      Math.abs(record.features.misreadVehicleRatio - target.misread) * 10 +
+      Math.abs(record.features.meanLegalRatio - target.legal) * 10 +
+      Math.abs(record.features.initialBlockedCount - target.blocked)
+    );
   }
 
   for (const level of ["1", "2", "3", "4", "5"]) {
     const group = inLevel(level);
-    const centers = {
+    const target = {
+      misread: Number(median(group.map((r) => r.features.misreadVehicleRatio))),
       legal: Number(median(group.map((r) => r.features.meanLegalRatio))),
       blocked: Number(median(group.map((r) => r.features.initialBlockedCount))),
-      prerequisite: Number(
-        median(group.map((r) => r.features.maximumPrerequisiteCount)),
-      ),
     };
     take(
       `代表 ${level}`,
       "レベル内の中央値に近い",
       group,
-      (record) =>
-        Math.abs(record.features.meanLegalRatio - centers.legal) * 10 +
-        Math.abs(record.features.initialBlockedCount - centers.blocked) +
-        Math.abs(
-          record.features.maximumPrerequisiteCount - centers.prerequisite,
-        ),
+      (record) => leverDistance(record, target),
       2,
     );
   }
+
+  // 読み違いだけが違う対: 同じ依存（段数・段ごとの車数・先行台数）で、読み違いが弱い／強い
+  for (const dependency of [1, 2, 3] as const) {
+    const pool = baseRecords.filter(
+      (r) =>
+        dependencyLeverOf(r.features) === dependency &&
+        !levelOf(plan, r).startsWith("too"),
+    );
+    const bySignature = new Map<string, AnalyzedRecord[]>();
+    for (const record of pool) {
+      const key = JSON.stringify([
+        record.features.depth,
+        record.features.maximumPrerequisiteCount,
+        record.features.initialBlockedCount,
+        record.features.vehicleCount,
+        record.features.cellCount,
+        record.features.fixedAreaCount,
+      ]);
+      bySignature.set(key, [...(bySignature.get(key) ?? []), record]);
+    }
+    const pair = [...bySignature.values()]
+      .map((group) => {
+        const low = group.filter((r) => misreadLeverOf(r.features) === 1);
+        const high = group.filter((r) => misreadLeverOf(r.features) === 3);
+        return { low, high, size: Math.min(low.length, high.length) };
+      })
+      .filter((entry) => entry.size > 0)
+      .sort((left, right) => right.size - left.size)[0];
+    if (!pair) continue;
+    take(
+      `対A${dependency} 読み違い弱`,
+      `依存${dependency}で読み違いだけが弱い（段数・先行台数・初期遮断・盤面・車両数・固定物数が同じ相手あり）`,
+      pair.low,
+      (r) => r.features.misreadVehicleRatio,
+    );
+    take(
+      `対A${dependency} 読み違い強`,
+      `依存${dependency}で読み違いだけが強い`,
+      pair.high,
+      (r) => -r.features.misreadVehicleRatio,
+    );
+  }
+
+  // 依存だけが違う対: 読み違い割合と車両数・盤面がほぼ同じで、依存が弱い／強い
+  for (const misread of [1, 2, 3] as const) {
+    const pool = baseRecords.filter(
+      (r) =>
+        misreadLeverOf(r.features) === misread &&
+        !levelOf(plan, r).startsWith("too"),
+    );
+    const low = pool.filter((r) => dependencyLeverOf(r.features) === 1);
+    const high = pool.filter((r) => dependencyLeverOf(r.features) === 3);
+    const [lowPick] = take(
+      `対B${misread} 依存弱`,
+      `読み違い${misread}で依存だけが弱い`,
+      low.filter((r) => r.features.vehicleCount === 8),
+      (r) =>
+        Math.abs(
+          r.features.misreadVehicleRatio -
+            (misread === 1 ? 0.13 : misread === 2 ? 0.38 : 0.63),
+        ),
+    );
+    if (!lowPick) continue;
+    take(
+      `対B${misread} 依存強`,
+      `読み違い${misread}で依存だけが強い（盤面・車両数・読み違い割合を相手に揃える）`,
+      high.filter(
+        (r) =>
+          r.features.vehicleCount === lowPick.features.vehicleCount &&
+          boardSizeOf(r.features) === boardSizeOf(lowPick.features),
+      ),
+      (r) =>
+        Math.abs(
+          r.features.misreadVehicleRatio - lowPick.features.misreadVehicleRatio,
+        ),
+    );
+  }
+
+  // 同じ盤面の開口変換: 依存は完全に同じで、使われない開口だけが違う
+  const variants = records.filter((record) => record.variant === "decoy");
+  const decoyPair = variants
+    .map((variant) => ({
+      variant,
+      base: baseRecords.find(
+        (record) =>
+          JSON.stringify(record.identity) === JSON.stringify(variant.identity),
+      ),
+    }))
+    .filter(
+      (entry) =>
+        entry.base &&
+        misreadLeverOf(entry.base.features) === 1 &&
+        misreadLeverOf(entry.variant.features) >= 2 &&
+        dependencyLeverOf(entry.variant.features) === 2 &&
+        !used.has(entry.base),
+    )[0];
+  if (decoyPair?.base) {
+    take("変換対 元", "開口変換の元の盤面", [decoyPair.base], () => 0);
+    take(
+      "変換対 開口追加",
+      "同じ盤面に、どの車も使わない開口を隣の車線へ足しただけ（依存は同一）",
+      [decoyPair.variant],
+      () => 0,
+    );
+  }
+
+  // 規模だけが違う対: 依存・読み違いのレバーと段数が同じで、読む範囲が狭い／広い
+  const scalePool = baseRecords.filter(
+    (r) =>
+      levelOf(plan, r) === "3" &&
+      dependencyLeverOf(r.features) === 2 &&
+      misreadLeverOf(r.features) === 2,
+  );
+  const [smallScale] = take(
+    "対S 規模小",
+    "レベル3で読む範囲だけが狭い（6x6・8台）",
+    scalePool.filter(
+      (r) => r.features.cellCount === 36 && r.features.vehicleCount === 8,
+    ),
+    (r) => Math.abs(r.features.misreadVehicleRatio - 0.33),
+  );
+  if (smallScale)
+    take(
+      "対S 規模大",
+      "レベル3で読む範囲だけが広い（8x8・14台、段数・初期遮断・読み違い割合を相手に揃える）",
+      scalePool.filter(
+        (r) =>
+          r.features.cellCount === 64 &&
+          r.features.vehicleCount >= 11 &&
+          r.features.depth === smallScale.features.depth,
+      ),
+      (r) =>
+        Math.abs(
+          r.features.misreadVehicleRatio -
+            smallScale.features.misreadVehicleRatio,
+        ) *
+          10 +
+        Math.abs(
+          r.features.initialBlockedCount -
+            smallScale.features.initialBlockedCount,
+        ) -
+        r.features.vehicleCount / 100,
+    );
 
   take(
     "境界 範囲外/1",
     "軽すぎ側: 塞がれた車が1台だけ",
     inLevel("too-light").filter((r) => r.features.depth === 2),
-    (r) => -r.features.vehicleCount,
+    (r) => -r.features.misreadVehicleRatio,
   );
   take(
-    "境界 1/2",
-    "1の上端: 1台待ちだけだが初期遮断が多い",
-    inLevel("1"),
-    (r) => -r.features.initialBlockedCount,
-  );
-  take(
-    "境界 1/2",
-    "2の下端: 2台に塞がれた車が1台だけ",
-    inLevel("2").filter((r) => r.features.multiBlockedCount === 1),
-    (r) => r.features.initialBlockedCount,
-  );
-  take(
-    "境界 2/3",
-    "2の上端: 平均合法率が低い",
-    inLevel("2"),
-    (r) => r.features.meanLegalRatio,
-  );
-  take(
-    "境界 2/3",
-    "3の下端: 3段目の車が1台だけで合法率が高い",
-    inLevel("3").filter((r) => r.features.deepVehicleCount === 1),
-    (r) => -r.features.meanLegalRatio,
-  );
-  take(
-    "境界 3/4",
-    "3の上端: 枝分かれが大きい",
-    inLevel("3"),
-    (r) => -r.features.maximumPrerequisiteCount,
-  );
-  take(
-    "境界 3/4",
-    "4の下端: 合法率が高い",
-    inLevel("4"),
-    (r) => -r.features.meanLegalRatio,
-  );
-  take(
-    "境界 4/5",
-    "4の上端: 合法率が低い",
-    inLevel("4"),
-    (r) => r.features.meanLegalRatio,
-  );
-  take(
-    "境界 4/5",
-    "5の下端: 合法率が高い",
-    inLevel("5"),
-    (r) => -r.features.meanLegalRatio,
-  );
-  take(
-    "境界 5/範囲外",
-    "重すぎ側: 段数7以上",
-    inLevel("too-heavy"),
-    (r) => -r.features.depth,
-  );
-  take(
-    "異常 小さいのに高い",
-    "6x6・8台で4以上",
-    records.filter(
+    "組合せ外 依存強・読み違い弱",
+    "深い依存だが読み違いを誘う車がほとんどない（この案では提供しない）",
+    baseRecords.filter(
       (r) =>
-        r.features.cellCount === 36 &&
-        r.features.vehicleCount === 8 &&
-        Number(levelOf(plan, r)) >= 4,
+        levelOf(plan, r) === "unplaced" &&
+        dependencyLeverOf(r.features) === 3 &&
+        misreadLeverOf(r.features) === 1,
     ),
     (r) => -r.features.depth,
   );
   take(
-    "異常 大きいのに低い",
-    "8x8・14台で1",
-    records.filter(
+    "組合せ外 依存弱・読み違い強",
+    "依存は浅いが読み違いを誘う車が半分以上（この案では提供しない）",
+    baseRecords.filter(
       (r) =>
-        r.features.cellCount === 64 &&
-        r.features.vehicleCount === 14 &&
-        levelOf(plan, r) === "1",
+        levelOf(plan, r) === "unplaced" &&
+        dependencyLeverOf(r.features) === 1 &&
+        misreadLeverOf(r.features) === 3,
     ),
-    (r) => -r.features.initialBlockedCount,
+    (r) => -r.features.misreadVehicleRatio,
   );
   take(
-    "異常 v1 hard なのに低い",
-    "局所負荷は高いが段数2",
-    records.filter(
-      (r) =>
-        r.features.v1Difficulty.endsWith(":hard") &&
-        ["1", "2"].includes(levelOf(plan, r)),
+    "異常 規模が小さいのに高い",
+    "レベル5で読む範囲が最も小さい（6x8・8台）",
+    inLevel("5").filter(
+      (r) => r.features.cellCount === 48 && r.features.vehicleCount === 8,
     ),
-    (r) => -r.features.v1Score,
+    (r) => -r.features.misreadVehicleRatio,
   );
   take(
-    "異常 v1 easy なのに高い",
-    "局所負荷は低いが段数4以上",
-    records.filter(
-      (r) =>
-        r.features.v1Difficulty.endsWith(":easy") &&
-        Number(levelOf(plan, r)) >= 4,
+    "異常 規模が大きいのに低い",
+    "8x8・14台でレベル3（規模3が入る最も低いレベル）",
+    inLevel("3").filter(
+      (r) => r.features.cellCount === 64 && r.features.vehicleCount === 14,
     ),
-    (r) => r.features.v1Score,
-  );
-  take(
-    "異常 見誤りを誘う開口が多い",
-    "1車線ずれの開口に接する車が多い低レベル",
-    records.filter((r) => ["1", "2"].includes(levelOf(plan, r))),
-    (r) => -r.features.nearMissVehicleCount,
+    (r) => r.features.depth,
   );
   return picked;
 }
@@ -945,11 +1372,10 @@ function printPicked(picked: readonly PickedProblem[], plan: StudyPlan): void {
   console.log(`# 案${plan.id} の代表・境界・異常問題\n`);
   for (const { kind, note, record } of picked) {
     console.log(`## ${kind}（${levelOf(plan, record)}）: ${note}\n`);
-    console.log(`- identity: \`${JSON.stringify(record.identity)}\``);
+    console.log(`- ${identityLine(record)}`);
     console.log(`- ${describe(record.features)}\n`);
-    const generated = restoreParkingJamProblem(record.identity);
     console.log("```text");
-    console.log(renderParkingJamBoard(generated.problem.board));
+    console.log(renderParkingJamBoard(boardOf(record)));
     console.log("```\n");
   }
 
@@ -958,11 +1384,10 @@ function printPicked(picked: readonly PickedProblem[], plan: StudyPlan): void {
   console.log("# 伏せ字の遊び比べリスト\n");
   blind.forEach((entry, index) => {
     const code = `P${String(index + 1).padStart(2, "0")}`;
-    const generated = restoreParkingJamProblem(entry.record.identity);
     console.log(`## ${code}\n`);
-    console.log(`- identity: \`${JSON.stringify(entry.record.identity)}\`\n`);
+    console.log(`- ${identityLine(entry.record)}\n`);
     console.log("```text");
-    console.log(renderParkingJamBoard(generated.problem.board));
+    console.log(renderParkingJamBoard(boardOf(entry.record)));
     console.log("```\n");
   });
   console.log("# 答え合わせ表\n");
@@ -979,7 +1404,7 @@ function printPicked(picked: readonly PickedProblem[], plan: StudyPlan): void {
 function runPick(): void {
   const input = readOption("in");
   if (!input) throw new Error(usage);
-  const plan = findStudyPlan(readOption("plan") ?? "D");
+  const plan = findStudyPlan(readOption("plan") ?? "T3");
   const records = readRecords(input).filter(isAnalyzed);
   printPicked(pickProblems(records, plan), plan);
 }
@@ -987,7 +1412,7 @@ function runPick(): void {
 function runShow(): void {
   const input = readOption("in");
   if (!input) throw new Error(usage);
-  const plan = findStudyPlan(readOption("plan") ?? "D");
+  const plan = findStudyPlan(readOption("plan") ?? "T3");
   const identities = readFileSync(input, "utf8")
     .split("\n")
     .filter((line) => line.trim().length > 0)
@@ -1005,30 +1430,64 @@ function runShow(): void {
 
 // ---- preview ----
 
-/**
- * 難易度選択プレビューの5段階配置案（4行7列、右の上2行・上の中央2列・左の下2行が開口）。
- * 形式は本番 `ParkingJamDifficultyPreview` の `previewVehicleLayouts` と同じで、同じ英小文字のマスが1台。
- */
-const previewLayoutProposal = {
-  width: 7,
-  height: 4,
-  roadOpenings: [
-    { side: "right", startOffset: 0, length: 2 },
-    { side: "up", startOffset: 2, length: 2 },
-    { side: "left", startOffset: 2, length: 2 },
-  ],
-  layouts: [
-    [".......", "aac....", "..c..bb", "......."],
-    [".......", "aac.dd.", "..c..bb", "......."],
-    [".ee....", "aac.dd.", "..c..bb", "......."],
-    [".ee....", "aacfdd.", "..cf.bb", "...f..."],
-    [".ee..gg", "aacfdd.", "..cf.bb", "...f..."],
-  ],
-} as const;
+type PreviewLevelProposal = {
+  layout: readonly string[];
+  roadOpenings: readonly ParkingJamRoadOpening[];
+};
 
-function toLayoutBoard(layout: readonly string[]): ParkingJamBoard {
+/**
+ * 難易度選択プレビューの5段階配置案（4行7列）。形式は本番 `ParkingJamDifficultyPreview` の
+ * `previewVehicleLayouts` と同じで、同じ英小文字のマスが1台。上のレベルは下のレベルの車と開口をすべて残し、
+ * 依存を深める車か、読み違いを誘う開口（どの車も使わない、隣の車線の開口）を足す。
+ */
+const baseRoadOpenings: readonly ParkingJamRoadOpening[] = [
+  { side: "right", startOffset: 0, length: 3 },
+  { side: "up", startOffset: 3, length: 3 },
+];
+const nearMissBelowColumnOpening: ParkingJamRoadOpening = {
+  side: "down",
+  startOffset: 2,
+  length: 1,
+};
+const nearMissBesideRowOpening: ParkingJamRoadOpening = {
+  side: "left",
+  startOffset: 0,
+  length: 1,
+};
+const previewLevelProposals: readonly PreviewLevelProposal[] = [
+  {
+    layout: [".......", "aa.b...", "cc.b...", "......."],
+    roadOpenings: baseRoadOpenings,
+  },
+  {
+    layout: [".......", "aa.b...", "cc.b...", "......."],
+    roadOpenings: [...baseRoadOpenings, nearMissBelowColumnOpening],
+  },
+  {
+    layout: ["..dd...", "aa.b...", "cc.b...", "......."],
+    roadOpenings: [...baseRoadOpenings, nearMissBelowColumnOpening],
+  },
+  {
+    layout: ["..dd...", "aa.b...", "cc.b...", "......."],
+    roadOpenings: [
+      ...baseRoadOpenings,
+      nearMissBelowColumnOpening,
+      nearMissBesideRowOpening,
+    ],
+  },
+  {
+    layout: ["eeddff.", "aa.b...", "cc.b...", "......."],
+    roadOpenings: [
+      ...baseRoadOpenings,
+      nearMissBelowColumnOpening,
+      nearMissBesideRowOpening,
+    ],
+  },
+];
+
+function toLayoutBoard(proposal: PreviewLevelProposal): ParkingJamBoard {
   const cellsById = new Map<string, { row: number; column: number }[]>();
-  layout.forEach((marks, row) => {
+  proposal.layout.forEach((marks, row) => {
     Array.from(marks).forEach((mark, column) => {
       if (mark === ".") return;
       cellsById.set(mark, [...(cellsById.get(mark) ?? []), { row, column }]);
@@ -1049,51 +1508,76 @@ function toLayoutBoard(layout: readonly string[]): ParkingJamBoard {
     };
   });
   return {
-    width: previewLayoutProposal.width,
-    height: previewLayoutProposal.height,
+    width: proposal.layout[0]?.length ?? 0,
+    height: proposal.layout.length,
     vehicles,
     fixedAreas: [],
-    roadOpenings: previewLayoutProposal.roadOpenings,
+    roadOpenings: proposal.roadOpenings,
   };
 }
 
 function runPreview(): void {
-  const plan = findStudyPlan(readOption("plan") ?? "D+");
-  previewLayoutProposal.layouts.forEach((layout, index) => {
-    const board = toLayoutBoard(layout);
+  const plan = findStudyPlan(readOption("plan") ?? "T3");
+  previewLevelProposals.forEach((proposal, index) => {
+    const board = toLayoutBoard(proposal);
     validateParkingJamBoard(board);
-    const solvabilityAnalysis = analyzeParkingJamSolvability(board);
-    if (solvabilityAnalysis.status !== "solvable")
-      throw new Error(`Preview level ${index + 1} is unsolvable`);
-    const features = analyzeParkingJamStudyFeatures({
-      problem: { board },
-      identity: {
-        generatorVersion: PARKING_JAM_GENERATOR_VERSION,
-        seed: `preview-${index + 1}`,
-        conditions: {
-          width: board.width,
-          height: board.height,
-          vehicleCount: board.vehicles.length,
-          roadOpeningCount: board.roadOpenings.length,
-          roadOpeningSpan: 2,
-          fixedAreaCount: 0,
-          fixedAreaLength: 1,
-          blockingPlacementProbability: 0,
-        },
-        generationAttempt: 1,
-      },
-      solvabilityAnalysis,
-      difficultyAnalysis: analyzeParkingJamDifficulty(
-        board,
-        solvabilityAnalysis,
-      ),
-    });
+    const features = analyzeParkingJamBoardStudyFeatures(board);
     console.log(
-      `レベル${index + 1}（案${plan.id}=${formatStudyAssessment(plan.classify(features))}）`,
+      `レベル${index + 1}（案${plan.id}=${formatStudyAssessment(plan.classify(features))}、規模レバー${scaleLeverOf(features)}）`,
     );
     console.log(renderParkingJamBoard(board));
     console.log(`${describe(features)}\n`);
   });
+}
+
+// ---- decoy ----
+
+function runDecoy(): void {
+  const input = readOption("in");
+  const out = readOption("out");
+  if (!input || !out) throw new Error(usage);
+  const seedLimit = readInteger("seed-limit", 20);
+  writeFileSync(out, "");
+  for (const record of readRecords(input).filter(isAnalyzed)) {
+    if (record.variant) continue;
+    const seedIndex = Number(record.seed.split("-").at(-1));
+    if (seedIndex >= seedLimit) continue;
+    const board = restoreParkingJamProblem(record.identity).problem.board;
+    const variants = [
+      {
+        variant: "decoy",
+        board: addDecoyOpenings(
+          board,
+          2,
+          record.conditions.roadOpeningSpan,
+          createProblemRandom(`pj5-decoy:${JSON.stringify(record.identity)}`),
+        ),
+      },
+      { variant: "trimmed", board: removeUnusedOpenings(board) },
+    ];
+    for (const { variant, board: variantBoard } of variants) {
+      if (
+        JSON.stringify(variantBoard.roadOpenings) ===
+        JSON.stringify(board.roadOpenings)
+      )
+        continue;
+      validateParkingJamBoard(variantBoard);
+      const startedAt = performance.now();
+      const features = analyzeParkingJamBoardStudyFeatures(variantBoard);
+      if (
+        dependencySignature(features) !== dependencySignature(record.features)
+      )
+        throw new Error(`Opening transform changed dependency: ${record.seed}`);
+      const variantRecord: CorpusRecord = {
+        ...record,
+        milliseconds: performance.now() - startedAt,
+        features,
+        board: variantBoard,
+        variant,
+      };
+      appendFileSync(out, `${JSON.stringify(variantRecord)}\n`);
+    }
+  }
 }
 
 const commands: Record<string, () => void> = {
@@ -1103,6 +1587,7 @@ const commands: Record<string, () => void> = {
   pick: runPick,
   show: runShow,
   preview: runPreview,
+  decoy: runDecoy,
 };
 const command = commands[Bun.argv[2] ?? ""];
 if (command) command();
