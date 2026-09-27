@@ -1,8 +1,10 @@
 import { cleanup, render } from "@testing-library/react";
 
 import {
-  assessParkingJamDifficulty,
+  calculateParkingJamChallengeLevers,
+  type ParkingJamDifficulty,
   parkingJamDifficulties,
+  parkingJamLevelLevers,
 } from "@/games/parking-jam/difficulty";
 import { analyzeParkingJamDifficulty } from "@/games/parking-jam/problem/difficulty-analysis";
 import { analyzeParkingJamSolvability } from "@/games/parking-jam/problem/generation/solvability";
@@ -19,39 +21,72 @@ afterEach(cleanup);
 const difficulties = parkingJamDifficulties.map(function toId({ id }) {
   return id;
 });
-const adjacentDifficulties = [
-  ["easy", "normal"],
-  ["normal", "hard"],
-] as const;
+const adjacentDifficulties = difficulties
+  .slice(1)
+  .map(function toAdjacentPair(higher, index) {
+    return [difficulties[index] as ParkingJamDifficulty, higher] as const;
+  });
 
-function assessPreviewBoard(difficulty: (typeof difficulties)[number]) {
+function analyzePreviewBoard(difficulty: ParkingJamDifficulty) {
   const board = createPreviewBoard(difficulty);
-  const solvability = analyzeParkingJamSolvability(board);
-  return assessParkingJamDifficulty(
-    analyzeParkingJamDifficulty(board, solvability),
+  return analyzeParkingJamDifficulty(
+    board,
+    analyzeParkingJamSolvability(board),
   );
+}
+
+function calculatePreviewLevers(difficulty: ParkingJamDifficulty) {
+  const levers = calculateParkingJamChallengeLevers(
+    analyzePreviewBoard(difficulty).features,
+  );
+  if (!levers) throw new Error("Expected preview levers");
+  return levers;
 }
 
 describe("createPreviewBoard", () => {
   test.each(difficulties)(
-    "%s の駐車場が盤面の検証を通り全車を出庫できること",
+    "レベル %s の駐車場が盤面の検証を通り全車を出庫できること",
     (difficulty) => {
       const board = createPreviewBoard(difficulty);
 
-      expect(() => validateParkingJamBoard(board)).not.toThrow();
-      expect(analyzeParkingJamSolvability(board).status).toBe("solvable");
+      const validate = () => validateParkingJamBoard(board);
+      const solvability = analyzeParkingJamSolvability(board);
+
+      expect(validate).not.toThrow();
+      expect(solvability.status).toBe("solvable");
     },
   );
 
   test.each(difficulties)(
-    "%s の駐車場が宣言した難易度に判定されること",
+    "レベル %s の駐車場が出す順序を読む挑戦を持つこと",
     (difficulty) => {
-      expect(assessPreviewBoard(difficulty).difficulty).toBe(difficulty);
+      const { features } = analyzePreviewBoard(difficulty);
+
+      const initialBlockedVehicleCount =
+        features.vehicleCount - features.initialLegalVehicleCount;
+
+      expect(features.dependencyDepth).toBeGreaterThanOrEqual(2);
+      expect(initialBlockedVehicleCount).toBeGreaterThanOrEqual(2);
+    },
+  );
+
+  test.each(difficulties)(
+    "レベル %s の駐車場の依存と読み違いのレバーがそのレベルの組合せに一致すること",
+    (difficulty) => {
+      const levers = calculatePreviewLevers(difficulty);
+
+      expect({
+        dependency: levers.dependency,
+        misread: levers.misread,
+      }).toEqual({
+        dependency: parkingJamLevelLevers[difficulty].dependency,
+        misread: parkingJamLevelLevers[difficulty].misread,
+      });
     },
   );
 
   test.each(adjacentDifficulties)(
-    "%s と %s で駐車場の大きさと道路開口が同じこと",
+    "レベル %s とレベル %s で駐車場の大きさが同じこと",
     (lower, higher) => {
       const lowerBoard = createPreviewBoard(lower);
       const higherBoard = createPreviewBoard(higher);
@@ -60,57 +95,54 @@ describe("createPreviewBoard", () => {
         lowerBoard.width,
         lowerBoard.height,
       ]);
-      expect(higherBoard.roadOpenings).toEqual(lowerBoard.roadOpenings);
     },
   );
 
   test.each(adjacentDifficulties)(
-    "%s の車をすべて同じ位置のまま %s が含むこと",
+    "レベル %s の車と道路開口をすべて同じ位置のままレベル %s が含むこと",
     (lower, higher) => {
-      const lowerVehicles = createPreviewBoard(lower).vehicles;
-      const higherVehicles = createPreviewBoard(higher).vehicles;
+      const lowerBoard = createPreviewBoard(lower);
+      const higherBoard = createPreviewBoard(higher);
 
-      expect(higherVehicles).toEqual(
-        expect.arrayContaining([...lowerVehicles]),
+      expect(higherBoard.vehicles).toEqual(
+        expect.arrayContaining([...lowerBoard.vehicles]),
       );
-      expect(higherVehicles.length).toBeGreaterThan(lowerVehicles.length);
+      expect(higherBoard.roadOpenings).toEqual(
+        expect.arrayContaining([...lowerBoard.roadOpenings]),
+      );
     },
   );
 
   test.each(adjacentDifficulties)(
-    "%s より %s で難易度要因がどれも減らず少なくとも1つ増えること",
+    "レベル %s よりレベル %s で依存と読み違いのレバーがどちらも弱まらず片方だけ強まること",
     (lower, higher) => {
-      const lowerFactors = Object.values(assessPreviewBoard(lower).factors);
-      const higherFactors = Object.values(assessPreviewBoard(higher).factors);
+      const lowerLevers = calculatePreviewLevers(lower);
+      const higherLevers = calculatePreviewLevers(higher);
 
-      lowerFactors.forEach(function expectNotDecreased(lowerValue, index) {
-        expect(higherFactors[index]).toBeGreaterThanOrEqual(lowerValue);
-      });
-      expect(
-        higherFactors.some(function isIncreased(higherValue, index) {
-          return higherValue > (lowerFactors[index] ?? higherValue);
-        }),
-      ).toBe(true);
+      const increases = [
+        higherLevers.dependency - lowerLevers.dependency,
+        higherLevers.misread - lowerLevers.misread,
+      ];
+
+      expect(increases.every((increase) => increase >= 0)).toBe(true);
+      expect(increases.filter((increase) => increase > 0)).toHaveLength(1);
     },
   );
-
-  test("easy では全車がそのまま出られ、hard には2台以上に塞がれた車があること", () => {
-    const easy = assessPreviewBoard("easy").factors;
-    const hard = assessPreviewBoard("hard").factors;
-
-    expect(easy.initialBlockedVehicleCount).toBe(0);
-    expect(hard.initialAverageMinimumBlockingVehicleCount).toBeGreaterThan(1);
-  });
 });
 
 describe("ParkingJamDifficultyPreview", () => {
-  test.each(difficulties)("%s の駐車場の全車を描画すること", (difficulty) => {
-    const { container } = render(
-      <ParkingJamDifficultyPreview difficulty={difficulty} />,
-    );
+  test.each(difficulties)(
+    "レベル %s の駐車場の全車を描画すること",
+    (difficulty) => {
+      const { container } = render(
+        <ParkingJamDifficultyPreview difficulty={difficulty} />,
+      );
 
-    expect(container.querySelectorAll(".parking-jam-car__body")).toHaveLength(
-      createPreviewBoard(difficulty).vehicles.length,
-    );
-  });
+      const carBodies = container.querySelectorAll(".parking-jam-car__body");
+
+      expect(carBodies).toHaveLength(
+        createPreviewBoard(difficulty).vehicles.length,
+      );
+    },
+  );
 });

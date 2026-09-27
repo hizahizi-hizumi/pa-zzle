@@ -13,10 +13,6 @@ import { GameResultIdentity } from "@/components/GameResultIdentity";
 import { GameResultScoreCard } from "@/components/GameResultScoreCard";
 import { Button } from "@/components/ui/button";
 import parkingJamPictogramSvg from "@/games/parking-jam/assets/pictogram.svg?raw";
-import {
-  getParkingJamDifficultyLabel,
-  type ParkingJamDifficulty,
-} from "@/games/parking-jam/difficulty";
 import type { ParkingJamResult } from "@/games/parking-jam/play/use-parking-jam-play";
 import {
   getParkingJamGameResultLevel,
@@ -28,7 +24,7 @@ import {
 import { formatParkingJamElapsedTime } from "@/games/parking-jam/ui/format-elapsed-time";
 
 type ParkingJamResultScreenProps = {
-  difficulty: ParkingJamDifficulty;
+  difficultyLabel: string;
   result: ParkingJamResult;
   recordOutcomeNotice: ReactNode;
   onReplay: () => void;
@@ -39,7 +35,7 @@ type ParkingJamResultScreenProps = {
 };
 
 export function ParkingJamResultScreen({
-  difficulty,
+  difficultyLabel,
   result,
   recordOutcomeNotice,
   onReplay,
@@ -57,7 +53,7 @@ export function ParkingJamResultScreen({
       <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-4 py-3 pb-[max(0.875rem,env(safe-area-inset-bottom))]">
         <GameResultIdentity
           gameName="パーキングジャム"
-          difficultyLabel={getParkingJamDifficultyLabel(difficulty)}
+          difficultyLabel={difficultyLabel}
           pictogramSvg={parkingJamPictogramSvg}
           level={resultLevel}
         />

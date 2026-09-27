@@ -1,12 +1,16 @@
 import { useMemo, useState } from "react";
 
 import { createParkingJamDiagnosticSnapshot } from "@/games/parking-jam/diagnostics";
-import type { ParkingJamDifficulty } from "@/games/parking-jam/difficulty";
+import {
+  getParkingJamDifficultyLabel,
+  type ParkingJamDifficulty,
+} from "@/games/parking-jam/difficulty";
 import { useParkingJamPlay } from "@/games/parking-jam/play/use-parking-jam-play";
 import {
   createParkingJamPlayRecord,
   parkingJamPlayRecordDefinition,
 } from "@/games/parking-jam/play-record";
+import type { ParkingJamProblemIdentity } from "@/games/parking-jam/problem/problem";
 import { ParkingJamDiagnostics } from "@/games/parking-jam/ui/ParkingJamDiagnostics";
 import { ParkingJamPlay } from "@/games/parking-jam/ui/ParkingJamPlay";
 import { parkingJamPlayRecordDisplay } from "@/games/parking-jam/ui/play-record-display";
@@ -18,16 +22,35 @@ import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
 
-type PlayableParkingJamProps = {
-  difficulty: ParkingJamDifficulty;
+/**
+ * 最初に遊ぶ問題を identity で指定する。
+ * - `replay`: 記録の問題を、その記録の難易度として遊び直す。記録は通常どおり保存する。
+ * - `blind-comparison`: 人間の遊び比べ用に指定した問題。難易度を伏せ、記録を保存しない。
+ */
+type ParkingJamInitialProblem = {
+  identity: ParkingJamProblemIdentity;
+  purpose: "replay" | "blind-comparison";
 };
 
-export function PlayableParkingJam({ difficulty }: PlayableParkingJamProps) {
-  const play = useParkingJamPlay(difficulty);
+type PlayableParkingJamProps = {
+  difficulty: ParkingJamDifficulty;
+  initialProblem?: ParkingJamInitialProblem;
+};
+
+const BLIND_COMPARISON_DIFFICULTY_LABEL = "問題指定";
+
+export function PlayableParkingJam({
+  difficulty,
+  initialProblem,
+}: PlayableParkingJamProps) {
+  const play = useParkingJamPlay(difficulty, initialProblem?.identity);
   const navigate = useNavigate();
+  const isBlindComparison =
+    initialProblem?.purpose === "blind-comparison" &&
+    play.problemSource === "given";
   const playRecord = useMemo(
     () =>
-      play.result && play.completedAt !== null
+      !isBlindComparison && play.result && play.completedAt !== null
         ? createParkingJamPlayRecord({
             difficulty,
             problemIdentity: play.problemIdentity,
@@ -39,6 +62,7 @@ export function PlayableParkingJam({ difficulty }: PlayableParkingJamProps) {
         : null,
     [
       difficulty,
+      isBlindComparison,
       play.completedAt,
       play.problemIdentity,
       play.result,
@@ -50,19 +74,26 @@ export function PlayableParkingJam({ difficulty }: PlayableParkingJamProps) {
     parkingJamPlayRecordDefinition,
   );
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
-  const diagnostics = internalDiagnosticsAvailable
-    ? createParkingJamDiagnosticSnapshot({
-        difficulty: play.difficulty,
-        problemIdentity: play.problemIdentity,
-        difficultyAnalysis: play.difficultyAnalysis,
-        buildRevision,
-      })
-    : null;
+  const diagnostics = useMemo(
+    () =>
+      internalDiagnosticsAvailable && diagnosticsOpen
+        ? createParkingJamDiagnosticSnapshot({
+            difficulty,
+            problemIdentity: play.problemIdentity,
+            buildRevision,
+          })
+        : null,
+    [difficulty, diagnosticsOpen, play.problemIdentity],
+  );
 
   return (
     <>
       <ParkingJamPlay
-        difficulty={play.difficulty}
+        difficultyLabel={
+          isBlindComparison
+            ? BLIND_COMPARISON_DIFFICULTY_LABEL
+            : getParkingJamDifficultyLabel(difficulty)
+        }
         status={play.status}
         progress={play.progress}
         board={play.board}
@@ -92,10 +123,12 @@ export function PlayableParkingJam({ difficulty }: PlayableParkingJamProps) {
         onBackToHome={() => navigate("/")}
         onClearAnimationComplete={play.completeClearAnimation}
         onOpenDiagnostics={
-          diagnostics ? () => setDiagnosticsOpen(true) : undefined
+          internalDiagnosticsAvailable
+            ? () => setDiagnosticsOpen(true)
+            : undefined
         }
       />
-      {diagnostics && diagnosticsOpen ? (
+      {diagnostics ? (
         <ParkingJamDiagnostics
           snapshot={diagnostics}
           onClose={() => setDiagnosticsOpen(false)}

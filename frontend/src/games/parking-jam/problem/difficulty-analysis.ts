@@ -1,11 +1,14 @@
 import {
   createParkingJamInitialState,
+  listParkingJamFixedAreaCells,
   listParkingJamVehicleCells,
   type ParkingJamBoard,
   type ParkingJamDirection,
+  type ParkingJamVehicle,
   type ParkingJamVehicleId,
 } from "@/games/parking-jam/puzzle/board";
 import {
+  listParkingJamExitPathCells,
   listParkingJamLegalMoves,
   listParkingJamMoveBlockers,
 } from "@/games/parking-jam/puzzle/rules";
@@ -32,10 +35,13 @@ type ParkingJamOrderSpaceAnalysis = {
   maximumNewlyUnlockedVehicleCount: number;
   requiredPrecedenceCount: number;
   maximumRequiredPredecessorCount: number;
+  maximumPrerequisiteVehicleCount: number;
 };
 
 export type ParkingJamDifficultyFeatures = {
   vehicleCount: number;
+  boardCellCount: number;
+  fixedAreaCount: number;
   dependencyDepth: number;
   initialLegalVehicleCount: number;
   initialLegalVehicleRatio: number;
@@ -60,6 +66,19 @@ export type ParkingJamDifficultyFeatures = {
   maximumNewlyUnlockedVehicleCount: number | null;
   requiredPrecedenceCount: number | null;
   maximumRequiredPredecessorCount: number | null;
+  /**
+   * 各車について、その車が出庫できるようになる到達状態のうち既に出庫した車が最も少ないものの台数。
+   * その全車での最大値（最も奥に埋もれた車を出すまでに、最少で先に出す台数）。
+   */
+  maximumPrerequisiteVehicleCount: number | null;
+  /** 開口のない側が、同じ辺で1車線ずれた開口に接している車（固定物に塞がれない側だけ数える）。 */
+  adjacentLaneOpeningVehicleCount: number;
+  /** 両側に開口があり、初期盤面で片側だけが車に塞がれている車。 */
+  directionChoiceVehicleCount: number;
+  /** 初期盤面で塞がれていて、最も塞がれ方の少ない進路で最初の遮断車が2マス以上先にある車。 */
+  farBlockedVehicleCount: number;
+  /** 上の3種のいずれかに当たる、出られそうに見えて不成立になる操作を誘う車。 */
+  misreadInducingVehicleCount: number;
   vehicleCellOccupancyRatio: number;
   longVehicleRatio: number;
   roadOpeningCoverageRatio: number;
@@ -454,6 +473,22 @@ function analyzeLegalOrderSpace(
     );
   }
 
+  const minimumPrerequisiteCountByVehicle = Array.from(
+    { length: board.vehicles.length },
+    () => board.vehicles.length,
+  );
+  for (const remainingMask of reachableMasks) {
+    const removedVehicleCount =
+      board.vehicles.length - countMaskBits(remainingMask);
+    for (const option of legalOptions(remainingMask)) {
+      minimumPrerequisiteCountByVehicle[option.vehicleIndex] = Math.min(
+        minimumPrerequisiteCountByVehicle[option.vehicleIndex] ??
+          board.vehicles.length,
+        removedVehicleCount,
+      );
+    }
+  }
+
   let requiredPrecedenceCount = 0;
   const requiredPredecessorCountByVehicle = Array.from(
     { length: board.vehicles.length },
@@ -516,6 +551,10 @@ function analyzeLegalOrderSpace(
       0,
       ...requiredPredecessorCountByVehicle,
     ),
+    maximumPrerequisiteVehicleCount: Math.max(
+      0,
+      ...minimumPrerequisiteCountByVehicle,
+    ),
   };
 }
 
@@ -571,6 +610,147 @@ function calculateExitPathFeatures(board: ParkingJamBoard): {
   };
 }
 
+type ParkingJamExitLane = {
+  hasRoadOpening: boolean;
+  /** 開口はないが、同じ辺の隣の車線に開口がある。 */
+  hasAdjacentLaneOpening: boolean;
+  isFixedAreaBlocked: boolean;
+  blockingVehicleCount: number;
+  /** 最も近い遮断車までのマス数。遮断車がなければ null。 */
+  nearestBlockingVehicleGap: number | null;
+};
+
+const laneDirectionsByOrientation = {
+  horizontal: ["left", "right"],
+  vertical: ["up", "down"],
+} as const satisfies Record<
+  ParkingJamVehicle["orientation"],
+  readonly ParkingJamDirection[]
+>;
+
+function toCellKey(cell: { row: number; column: number }): string {
+  return `${cell.row}:${cell.column}`;
+}
+
+function hasRoadOpeningAt(
+  board: ParkingJamBoard,
+  side: ParkingJamDirection,
+  offset: number,
+): boolean {
+  return board.roadOpenings.some(
+    (opening) =>
+      opening.side === side &&
+      opening.startOffset <= offset &&
+      offset < opening.startOffset + opening.length,
+  );
+}
+
+function describeExitLanes(
+  board: ParkingJamBoard,
+  vehicle: ParkingJamVehicle,
+  vehicleIdByCell: ReadonlyMap<string, ParkingJamVehicleId>,
+  fixedAreaCellKeys: ReadonlySet<string>,
+): ParkingJamExitLane[] {
+  const laneOffset =
+    vehicle.orientation === "horizontal" ? vehicle.row : vehicle.column;
+  return laneDirectionsByOrientation[vehicle.orientation].map((direction) => {
+    const blockingVehicleIds = new Set<ParkingJamVehicleId>();
+    let nearestBlockingVehicleGap: number | null = null;
+    let isFixedAreaBlocked = false;
+    for (const [gap, cell] of listParkingJamExitPathCells(
+      board,
+      vehicle,
+      direction,
+    ).entries()) {
+      const key = toCellKey(cell);
+      if (fixedAreaCellKeys.has(key)) isFixedAreaBlocked = true;
+      const blockingVehicleId = vehicleIdByCell.get(key);
+      if (blockingVehicleId === undefined) continue;
+      blockingVehicleIds.add(blockingVehicleId);
+      nearestBlockingVehicleGap ??= gap;
+    }
+    const hasRoadOpening = hasRoadOpeningAt(board, direction, laneOffset);
+    return {
+      hasRoadOpening,
+      hasAdjacentLaneOpening:
+        !hasRoadOpening &&
+        (hasRoadOpeningAt(board, direction, laneOffset - 1) ||
+          hasRoadOpeningAt(board, direction, laneOffset + 1)),
+      isFixedAreaBlocked,
+      blockingVehicleCount: blockingVehicleIds.size,
+      nearestBlockingVehicleGap,
+    };
+  });
+}
+
+const FAR_BLOCKING_VEHICLE_MINIMUM_GAP = 2;
+
+/**
+ * 初期盤面で、出られそうに見えて不成立になる操作を誘う車を数える。
+ * 車線・開口・遮断車の位置関係だけから決まり、解順や状態空間には依らない。
+ */
+function countMisreadInducingVehicles(board: ParkingJamBoard): {
+  adjacentLaneOpeningVehicleCount: number;
+  directionChoiceVehicleCount: number;
+  farBlockedVehicleCount: number;
+  misreadInducingVehicleCount: number;
+} {
+  const vehicleIdByCell = new Map<string, ParkingJamVehicleId>();
+  for (const vehicle of board.vehicles) {
+    for (const cell of listParkingJamVehicleCells(vehicle)) {
+      vehicleIdByCell.set(toCellKey(cell), vehicle.id);
+    }
+  }
+  const fixedAreaCellKeys = new Set(
+    board.fixedAreas.flatMap(listParkingJamFixedAreaCells).map(toCellKey),
+  );
+  const counts = {
+    adjacentLaneOpeningVehicleCount: 0,
+    directionChoiceVehicleCount: 0,
+    farBlockedVehicleCount: 0,
+    misreadInducingVehicleCount: 0,
+  };
+
+  for (const vehicle of board.vehicles) {
+    const lanes = describeExitLanes(
+      board,
+      vehicle,
+      vehicleIdByCell,
+      fixedAreaCellKeys,
+    );
+    const hasAdjacentLaneOpening = lanes.some(
+      (lane) => lane.hasAdjacentLaneOpening && !lane.isFixedAreaBlocked,
+    );
+    const exitLanes = lanes.filter(
+      (lane) => lane.hasRoadOpening && !lane.isFixedAreaBlocked,
+    );
+    const isDirectionChoice =
+      exitLanes.length === 2 &&
+      exitLanes.filter((lane) => lane.blockingVehicleCount === 0).length === 1;
+    const leastBlockedLane = exitLanes.reduce<ParkingJamExitLane | null>(
+      (least, lane) =>
+        least === null || lane.blockingVehicleCount < least.blockingVehicleCount
+          ? lane
+          : least,
+      null,
+    );
+    const isFarBlocked =
+      leastBlockedLane !== null &&
+      leastBlockedLane.blockingVehicleCount > 0 &&
+      (leastBlockedLane.nearestBlockingVehicleGap ?? 0) >=
+        FAR_BLOCKING_VEHICLE_MINIMUM_GAP;
+
+    counts.adjacentLaneOpeningVehicleCount += Number(hasAdjacentLaneOpening);
+    counts.directionChoiceVehicleCount += Number(isDirectionChoice);
+    counts.farBlockedVehicleCount += Number(isFarBlocked);
+    counts.misreadInducingVehicleCount += Number(
+      hasAdjacentLaneOpening || isDirectionChoice || isFarBlocked,
+    );
+  }
+
+  return counts;
+}
+
 export function analyzeParkingJamDifficulty(
   board: ParkingJamBoard,
   solvabilityAnalysis: {
@@ -588,6 +768,8 @@ export function analyzeParkingJamDifficulty(
   const exitPathFeatures = calculateExitPathFeatures(board);
   const features: ParkingJamDifficultyFeatures = {
     vehicleCount,
+    boardCellCount: board.width * board.height,
+    fixedAreaCount: board.fixedAreas.length,
     dependencyDepth: solvabilityAnalysis.removalLayers.length,
     initialLegalVehicleCount: initialLegalVehicleIds.size,
     initialLegalVehicleRatio:
@@ -623,6 +805,9 @@ export function analyzeParkingJamDifficulty(
     requiredPrecedenceCount: orderSpace?.requiredPrecedenceCount ?? null,
     maximumRequiredPredecessorCount:
       orderSpace?.maximumRequiredPredecessorCount ?? null,
+    maximumPrerequisiteVehicleCount:
+      orderSpace?.maximumPrerequisiteVehicleCount ?? null,
+    ...countMisreadInducingVehicles(board),
     vehicleCellOccupancyRatio: calculateVehicleCellOccupancyRatio(board),
     longVehicleRatio:
       vehicleCount === 0

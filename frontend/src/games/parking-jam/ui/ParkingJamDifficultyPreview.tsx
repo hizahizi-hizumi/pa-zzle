@@ -13,21 +13,63 @@ import { useParkingJamBoardPaint } from "@/games/parking-jam/ui/board/parking-ja
 
 import "@/games/parking-jam/ui/board/parking-jam-board.css";
 
-// 全難易度で同じ3行7列の駐車場に、右（上2行）と上（中央2列）の道路開口を置く。
-// 英小文字1字が1台の車で、同じ文字のマスが車の占める範囲になる。
-// 上のレベルは下のレベルの車をすべて同じ位置に残したまま、その出口側を塞ぐ車を足す。
-// easy は全車がそのまま出られ、normal は1台に塞がれた車が増え、
-// hard は2台以上に塞がれた車と出口から遠い車が加わる。
-const previewRoadOpenings: readonly ParkingJamRoadOpening[] = [
-  { side: "right", startOffset: 0, length: 2 },
-  { side: "up", startOffset: 2, length: 2 },
-];
+// 全レベルで同じ4行7列の駐車場を使う。英小文字1字が1台の車で、同じ文字のマスが車の占める範囲になる。
+// 上のレベルは下のレベルの車と道路開口をすべて同じ位置に残し、判定に効くレバーを1つずつ強める。
+// 依存を強めるときは塞いでいる車の出口側を塞ぐ車を足し、読み違いを強めるときは、どの車の出庫にも
+// 使われない隣の車線に開口を足して、出られそうに見えて出られない車を作る。
+// 規模のレバーはこの大きさの図では表せないため、全レベルで同じ小さな駐車場のままにする。
+type PreviewLevelLayout = {
+  vehicles: readonly string[];
+  roadOpenings: readonly ParkingJamRoadOpening[];
+};
 
-const previewVehicleLayouts = {
-  easy: [".......", "..abcc.", "..ab..."],
-  normal: ["ddee...", "..abcc.", "..ab..."],
-  hard: ["ddeeff.", "ggabcc.", "..ab..."],
-} satisfies Record<ParkingJamDifficulty, readonly string[]>;
+const baseRoadOpenings: readonly ParkingJamRoadOpening[] = [
+  { side: "right", startOffset: 0, length: 3 },
+  { side: "up", startOffset: 3, length: 3 },
+];
+// 縦の b の下側の隣の列にある開口。b が下へ出られそうに見える。
+const openingBesideVerticalVehicle: ParkingJamRoadOpening = {
+  side: "down",
+  startOffset: 2,
+  length: 1,
+};
+// 横の a の左側の隣の行にある開口。a が左へ出られそうに見える。
+const openingBesideHorizontalVehicle: ParkingJamRoadOpening = {
+  side: "left",
+  startOffset: 0,
+  length: 1,
+};
+
+const previewLevelLayouts = {
+  "1": {
+    vehicles: [".......", "aa.b...", "cc.b...", "......."],
+    roadOpenings: baseRoadOpenings,
+  },
+  "2": {
+    vehicles: [".......", "aa.b...", "cc.b...", "......."],
+    roadOpenings: [...baseRoadOpenings, openingBesideVerticalVehicle],
+  },
+  "3": {
+    vehicles: ["..dd...", "aa.b...", "cc.b...", "......."],
+    roadOpenings: [...baseRoadOpenings, openingBesideVerticalVehicle],
+  },
+  "4": {
+    vehicles: ["..dd...", "aa.b...", "cc.b...", "......."],
+    roadOpenings: [
+      ...baseRoadOpenings,
+      openingBesideVerticalVehicle,
+      openingBesideHorizontalVehicle,
+    ],
+  },
+  "5": {
+    vehicles: ["eeddff.", "aa.b...", "cc.b...", "......."],
+    roadOpenings: [
+      ...baseRoadOpenings,
+      openingBesideVerticalVehicle,
+      openingBesideHorizontalVehicle,
+    ],
+  },
+} as const satisfies Record<ParkingJamDifficulty, PreviewLevelLayout>;
 
 // 開口のある辺は道路が外へ続いて見える幅を、ない辺は縁石が収まる幅だけを残す。
 const PREVIEW_ROAD_MARGIN = 50;
@@ -59,9 +101,9 @@ function toPreviewVehicle(
   };
 }
 
-function toPreviewBoard(layout: readonly string[]): ParkingJamBoard {
+function toPreviewBoard(layout: PreviewLevelLayout): ParkingJamBoard {
   const cellsByVehicleId = new Map<string, PreviewCell[]>();
-  layout.forEach(function collectRowCells(rowMarks, row) {
+  layout.vehicles.forEach(function collectRowCells(rowMarks, row) {
     Array.from(rowMarks).forEach(function collectCell(mark, column) {
       if (mark === ".") return;
       const cells = cellsByVehicleId.get(mark) ?? [];
@@ -71,18 +113,18 @@ function toPreviewBoard(layout: readonly string[]): ParkingJamBoard {
   });
 
   return {
-    width: layout[0]?.length ?? 0,
-    height: layout.length,
+    width: layout.vehicles[0]?.length ?? 0,
+    height: layout.vehicles.length,
     vehicles: [...cellsByVehicleId].map(function toVehicle([id, cells]) {
       return toPreviewVehicle(id, cells);
     }),
     fixedAreas: [],
-    roadOpenings: previewRoadOpenings,
+    roadOpenings: layout.roadOpenings,
   };
 }
 
 function createPreviewBoard(difficulty: ParkingJamDifficulty): ParkingJamBoard {
-  return toPreviewBoard(previewVehicleLayouts[difficulty]);
+  return toPreviewBoard(previewLevelLayouts[difficulty]);
 }
 
 function getPreviewMargin(board: ParkingJamBoard, side: ParkingJamSide) {
@@ -133,4 +175,4 @@ export function ParkingJamDifficultyPreview({
   );
 }
 
-export const _private = { previewVehicleLayouts, createPreviewBoard };
+export const _private = { createPreviewBoard };

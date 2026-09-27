@@ -42,7 +42,8 @@ function openingContainsOffset(
   );
 }
 
-function pathCells(
+/** 車が向きに沿って出庫するときに通るマスを、車に近い順に返す。 */
+export function listParkingJamExitPathCells(
   board: ParkingJamBoard,
   vehicle: ParkingJamVehicle,
   direction: ParkingJamDirection,
@@ -92,7 +93,7 @@ export function listParkingJamMoveBlockers(
   );
   if (!hasRoadOpening) return [{ kind: "wall" }];
 
-  const path = pathCells(board, vehicle, move.direction);
+  const path = listParkingJamExitPathCells(board, vehicle, move.direction);
   const blockers: ParkingJamMoveBlocker[] = [];
   for (const area of board.fixedAreas) {
     const blockingCell = listParkingJamFixedAreaCells(area).find((cell) =>

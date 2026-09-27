@@ -3,7 +3,7 @@ import { parkingJamPlayRecordDisplay } from "@/games/parking-jam/ui/play-record-
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 
 const record = createParkingJamPlayRecord({
-  difficulty: "hard",
+  difficulty: "5",
   problemIdentity: {
     generatorVersion: "2",
     seed: "display-seed",
@@ -47,11 +47,21 @@ function getFormattedMetric(metricId: string): string | null {
 }
 
 describe("parkingJamPlayRecordDisplay", () => {
-  test("難易度を開始条件ラベルへ変換すること", () => {
-    const label = parkingJamPlayRecordDisplay.getComparisonLabel("hard");
+  const comparisonLabelCases = [
+    ["5", "レベル 5"],
+    ["hard", "むずかしい"],
+    ["unknown", null],
+  ] as const;
 
-    expect(label).toBe("むずかしい");
-  });
+  test.each(comparisonLabelCases)(
+    "難易度を開始条件ラベルへ変換し旧3段階は旧ラベルのまま表示すること: %s",
+    (comparisonKey, expected) => {
+      const label =
+        parkingJamPlayRecordDisplay.getComparisonLabel(comparisonKey);
+
+      expect(label).toBe(expected);
+    },
+  );
 
   test("履歴と推移に共通の比較指標を表示できること", () => {
     const score = getFormattedMetric("play-score");

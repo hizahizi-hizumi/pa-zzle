@@ -7,7 +7,7 @@ afterEach(cleanup);
 
 function createProps(): ComponentProps<typeof ParkingJamPlay> {
   return {
-    difficulty: "normal",
+    difficultyLabel: "レベル 3",
     status: "playing",
     progress: "playing",
     board: {
@@ -56,7 +56,7 @@ describe("ParkingJamPlay", () => {
   });
 
   test("プレイ中に難易度を表示しないこと", () => {
-    expect(screen.queryByText("ふつう")).toBeNull();
+    expect(screen.queryByText("レベル 3")).toBeNull();
   });
 
   test("車をタップすると選択を通知すること", () => {

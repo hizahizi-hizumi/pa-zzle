@@ -2,12 +2,15 @@ import { useState } from "react";
 
 import { isMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
 import { isNanpurePlayRecord } from "@/games/nanpure/play-record";
+import { parseParkingJamDifficulty } from "@/games/parking-jam/difficulty";
+import { isParkingJamPlayRecord } from "@/games/parking-jam/play-record";
 import { parseWaterSortDifficulty } from "@/games/water-sort/difficulty";
 import { isWaterSortPlayRecord } from "@/games/water-sort/play-record";
 import { readPlayRecords } from "@/records/storage";
 import { Link, useParams } from "@/router";
 import { PlayableMinesweeper } from "@/views/MinesweeperPlayView/PlayableMinesweeper";
 import { PlayableNanpure } from "@/views/NanpurePlayView/PlayableNanpure";
+import { PlayableParkingJam } from "@/views/ParkingJamPlayView/PlayableParkingJam";
 import { PlayableWaterSort } from "@/views/WaterSortPlayView/PlayableWaterSort";
 
 export function RecordedProblemReplayView() {
@@ -41,6 +44,21 @@ export function RecordedProblemReplayView() {
       <PlayableWaterSort
         difficulty={waterSortDifficulty}
         initialProblemIdentity={record.payload.problemIdentity}
+      />
+    );
+  }
+
+  const parkingJamDifficulty = isParkingJamPlayRecord(record)
+    ? parseParkingJamDifficulty(record.payload.difficulty)
+    : undefined;
+  if (isParkingJamPlayRecord(record) && parkingJamDifficulty) {
+    return (
+      <PlayableParkingJam
+        difficulty={parkingJamDifficulty}
+        initialProblem={{
+          identity: record.payload.problemIdentity,
+          purpose: "replay",
+        }}
       />
     );
   }

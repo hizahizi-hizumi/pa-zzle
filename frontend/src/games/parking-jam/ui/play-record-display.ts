@@ -1,6 +1,6 @@
 import {
   getParkingJamDifficultyLabel,
-  parseParkingJamDifficulty,
+  parseParkingJamRecordedDifficulty,
 } from "@/games/parking-jam/difficulty";
 import { parkingJamPlayRecordDefinition } from "@/games/parking-jam/play-record";
 import { formatParkingJamElapsedTime } from "@/games/parking-jam/ui/format-elapsed-time";
@@ -9,7 +9,7 @@ export const parkingJamPlayRecordDisplay = {
   definition: parkingJamPlayRecordDefinition,
   gameLabel: "パーキングジャム",
   getComparisonLabel(comparisonKey: string) {
-    const difficulty = parseParkingJamDifficulty(comparisonKey);
+    const difficulty = parseParkingJamRecordedDifficulty(comparisonKey);
     return difficulty ? getParkingJamDifficultyLabel(difficulty) : null;
   },
   metrics: [

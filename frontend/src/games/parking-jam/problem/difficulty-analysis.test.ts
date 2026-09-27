@@ -44,6 +44,9 @@ describe("analyzeParkingJamDifficulty", () => {
       expect(analysis.features.requiredPrecedenceCount).toBe(0);
       expect(analysis.features.maximumRequiredPredecessorCount).toBe(0);
       expect(analysis.features.averageNewlyUnlockedVehicleCount).toBe(0);
+      expect(analysis.features.maximumPrerequisiteVehicleCount).toBe(0);
+      expect(analysis.features.boardCellCount).toBe(25);
+      expect(analysis.features.fixedAreaCount).toBe(0);
     });
   });
 
@@ -89,8 +92,96 @@ describe("analyzeParkingJamDifficulty", () => {
         2 / 3,
       );
       expect(analysis.features.maximumNewlyUnlockedVehicleCount).toBe(1);
+      expect(analysis.features.maximumPrerequisiteVehicleCount).toBe(2);
     });
   });
+});
+
+describe("analyzeParkingJamDifficulty", () => {
+  const misreadCases = [
+    [
+      "開口のない側が隣の車線の開口に接する車",
+      {
+        width: 4,
+        height: 4,
+        vehicles: [
+          { id: "a", row: 1, column: 0, orientation: "horizontal", length: 2 },
+        ],
+        fixedAreas: [],
+        roadOpenings: [
+          { side: "left", startOffset: 1, length: 1 },
+          { side: "right", startOffset: 0, length: 1 },
+        ],
+      },
+      {
+        adjacentLaneOpeningVehicleCount: 1,
+        directionChoiceVehicleCount: 0,
+        farBlockedVehicleCount: 0,
+        misreadInducingVehicleCount: 1,
+      },
+    ],
+    [
+      "両側に開口があり片側だけ塞がれた車",
+      {
+        width: 5,
+        height: 4,
+        vehicles: [
+          { id: "b", row: 1, column: 2, orientation: "vertical", length: 2 },
+          { id: "c", row: 0, column: 1, orientation: "horizontal", length: 2 },
+        ],
+        fixedAreas: [],
+        roadOpenings: [
+          { side: "up", startOffset: 2, length: 1 },
+          { side: "down", startOffset: 2, length: 1 },
+          { side: "left", startOffset: 0, length: 1 },
+        ],
+      },
+      {
+        adjacentLaneOpeningVehicleCount: 0,
+        directionChoiceVehicleCount: 1,
+        farBlockedVehicleCount: 0,
+        misreadInducingVehicleCount: 1,
+      },
+    ],
+    [
+      "最初の遮断車が2マス以上先にある車",
+      {
+        width: 5,
+        height: 3,
+        vehicles: [
+          { id: "d", row: 1, column: 0, orientation: "horizontal", length: 2 },
+          { id: "e", row: 0, column: 4, orientation: "vertical", length: 2 },
+        ],
+        fixedAreas: [],
+        roadOpenings: [
+          { side: "right", startOffset: 1, length: 1 },
+          { side: "up", startOffset: 4, length: 1 },
+        ],
+      },
+      {
+        adjacentLaneOpeningVehicleCount: 0,
+        directionChoiceVehicleCount: 0,
+        farBlockedVehicleCount: 1,
+        misreadInducingVehicleCount: 1,
+      },
+    ],
+  ] as const satisfies readonly (readonly [
+    string,
+    ParkingJamBoard,
+    Record<string, number>,
+  ])[];
+
+  test.each(misreadCases)(
+    "読み違いを誘う車を種類ごとに数え合計も求めること: %s",
+    (_label, board, expected) => {
+      const analysis = analyzeParkingJamDifficulty(
+        board,
+        analyzeParkingJamSolvability(board),
+      );
+
+      expect(analysis.features).toMatchObject(expected);
+    },
+  );
 });
 
 describe("_private.countLegalVehicleOrders", () => {

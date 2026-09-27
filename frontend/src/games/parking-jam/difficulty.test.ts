@@ -1,250 +1,368 @@
 import {
   assessParkingJamDifficulty,
-  PARKING_JAM_DIFFICULTY_MODEL_VERSION,
+  calculateParkingJamChallengeLevers,
+  getParkingJamDifficultyLabel,
+  type ParkingJamDifficulty,
+  parkingJamDifficulties,
+  parkingJamLevelLevers,
+  parseParkingJamDifficulty,
+  parseParkingJamRecordedDifficulty,
 } from "@/games/parking-jam/difficulty";
-import type { ParkingJamDifficultyAnalysis } from "@/games/parking-jam/problem/difficulty-analysis";
-import { generateParkingJamDifficultyCandidate } from "@/games/parking-jam/problem/generation/difficulty-candidate-space";
+import type {
+  ParkingJamDifficultyAnalysis,
+  ParkingJamDifficultyFeatures,
+} from "@/games/parking-jam/problem/difficulty-analysis";
 
-const baseFeatures: ParkingJamDifficultyAnalysis["features"] = {
-  vehicleCount: 14,
-  dependencyDepth: 3,
-  initialLegalVehicleCount: 8,
-  initialLegalVehicleRatio: 8 / 14,
-  initialAverageMinimumBlockingVehicleCount: 1.2,
-  vehicleBlockingEdgeCount: 14,
-  maximumVehicleBlockingOutDegree: 3,
-  maximumVehicleBlockingInDegree: 3,
-  availableExitDirectionCount: 20,
-  initialBlockedExitDirectionCount: 11,
-  initialBlockedExitDirectionRatio: 0.55,
-  legalOrderCount: "1000000",
+// 8×8・8台・固定物なしで、段数2・重なりなし・読み違いを誘う車なし（全レバー1）。
+const baseFeatures: ParkingJamDifficultyFeatures = {
+  vehicleCount: 8,
+  boardCellCount: 64,
+  fixedAreaCount: 0,
+  dependencyDepth: 2,
+  initialLegalVehicleCount: 5,
+  initialLegalVehicleRatio: 5 / 8,
+  initialAverageMinimumBlockingVehicleCount: 1,
+  vehicleBlockingEdgeCount: 3,
+  maximumVehicleBlockingOutDegree: 2,
+  maximumVehicleBlockingInDegree: 1,
+  availableExitDirectionCount: 10,
+  initialBlockedExitDirectionCount: 3,
+  initialBlockedExitDirectionRatio: 0.3,
+  legalOrderCount: "10000",
   solutionOrderFreedom: 0.86,
   reachableStateCount: 128,
   averageLegalVehicleCount: 4.2,
-  averageLegalVehicleRatio: 0.6,
-  minimumLegalVehicleRatio: 0.25,
+  averageLegalVehicleRatio: 0.8,
+  minimumLegalVehicleRatio: 0.5,
   forcedChoiceStateRatio: 0.1,
-  maximumForcedChoiceChainLength: 2,
-  averageMinimumBlockingVehicleCount: 1.2,
+  maximumForcedChoiceChainLength: 1,
+  averageMinimumBlockingVehicleCount: 1,
   averageLegalDirectionCount: 1.2,
   averageNewlyUnlockedVehicleCount: 0.5,
-  maximumNewlyUnlockedVehicleCount: 3,
-  requiredPrecedenceCount: 12,
-  maximumRequiredPredecessorCount: 3,
-  vehicleCellOccupancyRatio: 0.5,
+  maximumNewlyUnlockedVehicleCount: 2,
+  requiredPrecedenceCount: 3,
+  maximumRequiredPredecessorCount: 1,
+  maximumPrerequisiteVehicleCount: 1,
+  adjacentLaneOpeningVehicleCount: 0,
+  directionChoiceVehicleCount: 0,
+  farBlockedVehicleCount: 0,
+  misreadInducingVehicleCount: 0,
+  vehicleCellOccupancyRatio: 0.3,
   longVehicleRatio: 0.25,
   roadOpeningCoverageRatio: 0.25,
-  averageExitPathLength: 3,
-  maximumExitPathLength: 6,
+  averageExitPathLength: 2,
+  maximumExitPathLength: 5,
 };
 
-const smallHardAnalysis = generateParkingJamDifficultyCandidate(
-  "small-hard-11-1",
-  {
-    width: 6,
-    height: 6,
-    vehicleCount: 11,
-    roadOpeningCount: 4,
-    roadOpeningSpan: 3,
-    fixedAreaCount: 0,
-    fixedAreaLength: 1,
-    blockingPlacementProbability: 1,
-  },
-).difficultyAnalysis;
+function toAnalysis(
+  features: Partial<ParkingJamDifficultyFeatures>,
+): ParkingJamDifficultyAnalysis {
+  return { status: "supported", features: { ...baseFeatures, ...features } };
+}
 
-const sameConditionEasyAnalysis = generateParkingJamDifficultyCandidate(
-  "parking-jam-r3-cross-fixed-area-simplify-0",
-  {
-    width: 8,
-    height: 8,
-    vehicleCount: 11,
-    roadOpeningCount: 4,
-    roadOpeningSpan: 3,
-    fixedAreaCount: 0,
-    fixedAreaLength: 1,
-    blockingPlacementProbability: 0.5,
-  },
-).difficultyAnalysis;
+describe("parseParkingJamDifficulty", () => {
+  const cases = [
+    ["1", "1"],
+    ["5", "5"],
+    ["6", undefined],
+    ["easy", undefined],
+    [undefined, undefined],
+  ] as const;
 
-const sameConditionHardAnalysis = generateParkingJamDifficultyCandidate(
-  "parking-jam-r3-cross-fixed-area-simplify-1",
-  {
-    width: 8,
-    height: 8,
-    vehicleCount: 11,
-    roadOpeningCount: 4,
-    roadOpeningSpan: 3,
-    fixedAreaCount: 0,
-    fixedAreaLength: 1,
-    blockingPlacementProbability: 0.5,
-  },
-).difficultyAnalysis;
+  test.each(cases)(
+    "URL の難易度をレベル1〜5だけに変換すること: %s",
+    (value, expected) => {
+      const difficulty = parseParkingJamDifficulty(value);
+
+      expect(difficulty).toBe(expected);
+    },
+  );
+});
+
+describe("parseParkingJamRecordedDifficulty", () => {
+  const cases = [
+    ["3", "3"],
+    ["hard", "hard"],
+    ["expert", undefined],
+  ] as const;
+
+  test.each(cases)(
+    "記録の難易度をレベルと旧3段階の両方で読むこと: %s",
+    (value, expected) => {
+      const difficulty = parseParkingJamRecordedDifficulty(value);
+
+      expect(difficulty).toBe(expected);
+    },
+  );
+});
+
+describe("getParkingJamDifficultyLabel", () => {
+  const cases = [
+    ["1", "レベル 1"],
+    ["5", "レベル 5"],
+    ["easy", "かんたん"],
+  ] as const;
+
+  test.each(cases)(
+    "レベルと旧3段階の表示名を返すこと: %s",
+    (difficulty, expected) => {
+      const label = getParkingJamDifficultyLabel(difficulty);
+
+      expect(label).toBe(expected);
+    },
+  );
+});
+
+describe("calculateParkingJamChallengeLevers", () => {
+  const dependencyCases = [
+    ["段数2で重なりなし", { dependencyDepth: 2 }, 1],
+    [
+      "段数2で2台以上を先に出す車がある",
+      { dependencyDepth: 2, maximumPrerequisiteVehicleCount: 2 },
+      2,
+    ],
+    [
+      "段数3の一本道",
+      { dependencyDepth: 3, maximumPrerequisiteVehicleCount: 2 },
+      2,
+    ],
+    [
+      "段数3で枝分かれ1",
+      { dependencyDepth: 3, maximumPrerequisiteVehicleCount: 3 },
+      2,
+    ],
+    [
+      "段数3で枝分かれ2",
+      { dependencyDepth: 3, maximumPrerequisiteVehicleCount: 4 },
+      3,
+    ],
+    ["段数4", { dependencyDepth: 4, maximumPrerequisiteVehicleCount: 3 }, 3],
+  ] as const;
+
+  test.each(dependencyCases)(
+    "依存の段数と重なりから依存レバーを決めること: %s",
+    (_label, features, expected) => {
+      const levers = calculateParkingJamChallengeLevers({
+        ...baseFeatures,
+        ...features,
+      });
+
+      expect(levers?.dependency).toBe(expected);
+    },
+  );
+
+  const misreadCases = [
+    ["8台中1台", 1, 1],
+    ["8台中2台（4台に1台）", 2, 2],
+    ["8台中3台", 3, 2],
+    ["8台中4台（2台に1台）", 4, 3],
+  ] as const;
+
+  test.each(misreadCases)(
+    "読み違いを誘う車の割合から読み違いレバーを決めること: %s",
+    (_label, misreadInducingVehicleCount, expected) => {
+      const levers = calculateParkingJamChallengeLevers({
+        ...baseFeatures,
+        misreadInducingVehicleCount,
+      });
+
+      expect(levers?.misread).toBe(expected);
+    },
+  );
+
+  const scaleCases = [
+    ["6×6・14台（狭いが多い）", { boardCellCount: 36, vehicleCount: 14 }, 1],
+    ["8×8・8台（広いが少ない）", { boardCellCount: 64, vehicleCount: 8 }, 1],
+    ["6×8・11台", { boardCellCount: 48, vehicleCount: 11 }, 2],
+    [
+      "8×8・11台と固定物1",
+      { boardCellCount: 64, vehicleCount: 11, fixedAreaCount: 1 },
+      3,
+    ],
+  ] as const;
+
+  test.each(scaleCases)(
+    "盤面の広さと読む対象の数の弱い方で規模レバーを決めること: %s",
+    (_label, features, expected) => {
+      const levers = calculateParkingJamChallengeLevers({
+        ...baseFeatures,
+        ...features,
+      });
+
+      expect(levers?.scale).toBe(expected);
+    },
+  );
+
+  describe("状態空間を解析できない問題の場合", () => {
+    const features = {
+      ...baseFeatures,
+      maximumPrerequisiteVehicleCount: null,
+    };
+
+    test("レバーを求めないこと", () => {
+      const levers = calculateParkingJamChallengeLevers(features);
+
+      expect(levers).toBeNull();
+    });
+  });
+});
+
+describe("parkingJamLevelLevers", () => {
+  const adjacentLevels = parkingJamDifficulties
+    .slice(1)
+    .map(({ id }, index) => [
+      parkingJamDifficulties[index]?.id as ParkingJamDifficulty,
+      id,
+    ]);
+
+  test.each(adjacentLevels)(
+    "レベル %s よりレベル %s でどのレバーも弱まらず依存か読み違いの一方だけが強まること",
+    (lower, higher) => {
+      const lowerLevers = parkingJamLevelLevers[lower];
+      const higherLevers = parkingJamLevelLevers[higher];
+
+      const increases = [
+        higherLevers.dependency - lowerLevers.dependency,
+        higherLevers.misread - lowerLevers.misread,
+      ];
+
+      expect(increases.every((increase) => increase >= 0)).toBe(true);
+      expect(increases.filter((increase) => increase > 0)).toHaveLength(1);
+      expect(higherLevers.scale.minimum).toBeGreaterThanOrEqual(
+        lowerLevers.scale.minimum,
+      );
+      expect(higherLevers.scale.maximum).toBeGreaterThanOrEqual(
+        lowerLevers.scale.maximum,
+      );
+    },
+  );
+
+  test("規模レバー2の問題がどのレベルにも入れること", () => {
+    const levelsAcceptingScale2 = parkingJamDifficulties.filter(
+      ({ id }) =>
+        parkingJamLevelLevers[id].scale.minimum <= 2 &&
+        parkingJamLevelLevers[id].scale.maximum >= 2,
+    );
+
+    expect(levelsAcceptingScale2).toHaveLength(5);
+  });
+});
 
 describe("assessParkingJamDifficulty", () => {
-  const ratedCases = [
+  const classifiedCases = [
+    ["1", {}],
+    ["2", { misreadInducingVehicleCount: 2 }],
     [
-      "easy",
+      "3",
       {
-        ...baseFeatures,
-        initialLegalVehicleCount: 12,
-        initialAverageMinimumBlockingVehicleCount: 1,
-        averageExitPathLength: 1.5,
+        dependencyDepth: 3,
+        maximumPrerequisiteVehicleCount: 2,
+        misreadInducingVehicleCount: 2,
       },
     ],
     [
-      "normal",
+      "4",
       {
-        ...baseFeatures,
-        initialLegalVehicleCount: 11,
-        initialAverageMinimumBlockingVehicleCount: 1.25,
-        averageExitPathLength: 2,
+        dependencyDepth: 3,
+        maximumPrerequisiteVehicleCount: 2,
+        misreadInducingVehicleCount: 6,
+        boardCellCount: 48,
+        vehicleCount: 11,
+        initialLegalVehicleCount: 7,
       },
     ],
     [
-      "hard",
+      "5",
       {
-        ...baseFeatures,
-        initialLegalVehicleCount: 9,
-        initialAverageMinimumBlockingVehicleCount: 1.5,
-        averageExitPathLength: 2.5,
+        dependencyDepth: 4,
+        maximumPrerequisiteVehicleCount: 5,
+        misreadInducingVehicleCount: 6,
+        vehicleCount: 11,
+        initialLegalVehicleCount: 7,
       },
     ],
   ] as const;
 
-  test.each(ratedCases)(
-    "初期盤面の視覚探索と局所進路の負荷に対応する難易度へ分類すること: %s",
+  test.each(classifiedCases)(
+    "レバーの組合せがちょうど当たるレベルへ分類すること: レベル %s",
     (expected, features) => {
-      const analysis: ParkingJamDifficultyAnalysis = {
-        status: "supported",
-        features,
-      };
-
-      const assessment = assessParkingJamDifficulty(analysis);
+      const assessment = assessParkingJamDifficulty(toAnalysis(features));
 
       expect(assessment).toMatchObject({
-        modelVersion: PARKING_JAM_DIFFICULTY_MODEL_VERSION,
+        status: "classified",
         difficulty: expected,
       });
     },
   );
 
-  test("3特徴を等しい重みで難易度スコアへ変換すること", () => {
-    const analysis: ParkingJamDifficultyAnalysis = {
-      status: "supported",
-      features: {
-        ...baseFeatures,
-        initialLegalVehicleCount: 11,
-        initialAverageMinimumBlockingVehicleCount: 1.25,
-        averageExitPathLength: 2,
+  const outOfRangeCases = [
+    ["全車がすぐ出せる", { dependencyDepth: 1 }, "too-light"],
+    ["塞がれた車が1台だけ", { initialLegalVehicleCount: 7 }, "too-light"],
+    [
+      "段数7以上",
+      { dependencyDepth: 7, maximumPrerequisiteVehicleCount: 6 },
+      "too-heavy",
+    ],
+    [
+      "深い依存で読み違いを誘う車がない",
+      { dependencyDepth: 4, maximumPrerequisiteVehicleCount: 5 },
+      "unlisted-levers",
+    ],
+    [
+      "浅い依存で読み違いを誘う車が半分以上",
+      { misreadInducingVehicleCount: 4 },
+      "unlisted-levers",
+    ],
+    [
+      "レベル5のレバーで規模が小さい",
+      {
+        dependencyDepth: 4,
+        maximumPrerequisiteVehicleCount: 5,
+        misreadInducingVehicleCount: 4,
       },
-    };
+      "unlisted-levers",
+    ],
+  ] as const;
 
-    const assessment = assessParkingJamDifficulty(analysis);
+  test.each(outOfRangeCases)(
+    "提供範囲外の問題をレベルへ押し込まないこと: %s",
+    (_label, features, reason) => {
+      const assessment = assessParkingJamDifficulty(toAnalysis(features));
 
-    expect(assessment).toMatchObject({
-      modelVersion: PARKING_JAM_DIFFICULTY_MODEL_VERSION,
-      difficulty: "normal",
-      factors: {
-        initialBlockedVehicleCount: 3,
-        initialAverageMinimumBlockingVehicleCount: 1.25,
-        averageExitPathLength: 2,
-      },
-    });
-    expect(assessment.score).toBeCloseTo(4 / 9);
-  });
+      expect(assessment).toMatchObject({ status: "out-of-range", reason });
+    },
+  );
 
-  test("小さい問題をhardかつ大きい問題をeasyに分類できること", () => {
-    const smallAssessment = assessParkingJamDifficulty(smallHardAnalysis);
-    const largeAssessment = assessParkingJamDifficulty(
-      sameConditionEasyAnalysis,
-    );
-
-    expect(smallAssessment).toMatchObject({
-      difficulty: "hard",
-    });
-    expect(largeAssessment).toMatchObject({
-      difficulty: "easy",
-    });
-  });
-
-  test("同じ生成条件から異なる難易度を分類できること", () => {
-    const easyAssessment = assessParkingJamDifficulty(
-      sameConditionEasyAnalysis,
-    );
-    const hardAssessment = assessParkingJamDifficulty(
-      sameConditionHardAnalysis,
-    );
-
-    expect(easyAssessment).toMatchObject({
-      difficulty: "easy",
-    });
-    expect(hardAssessment).toMatchObject({
-      difficulty: "hard",
-    });
-  });
-
-  test("判定対象外の状態空間特徴が変わっても難易度を変えないこと", () => {
-    const features = {
-      ...baseFeatures,
-      initialLegalVehicleCount: 11,
-      initialAverageMinimumBlockingVehicleCount: 1.25,
-      averageExitPathLength: 2,
-    };
-    const first: ParkingJamDifficultyAnalysis = {
-      status: "supported",
-      features: {
-        ...features,
-        maximumVehicleBlockingInDegree: 1,
-        maximumVehicleBlockingOutDegree: 1,
-        maximumForcedChoiceChainLength: 1,
-      },
-    };
-    const second: ParkingJamDifficultyAnalysis = {
-      status: "supported",
-      features: {
-        ...features,
-        maximumVehicleBlockingInDegree: 6,
-        maximumVehicleBlockingOutDegree: 6,
-        maximumForcedChoiceChainLength: 10,
-      },
-    };
-
-    const firstAssessment = assessParkingJamDifficulty(first);
-    const secondAssessment = assessParkingJamDifficulty(second);
-
-    expect(firstAssessment).toEqual(secondAssessment);
-  });
-
-  test("全状態解析を使えない問題も初期盤面特徴から評価すること", () => {
+  describe("状態空間を解析できない問題の場合", () => {
     const analysis: ParkingJamDifficultyAnalysis = {
       status: "unsupported",
-      features: {
-        ...baseFeatures,
-        initialLegalVehicleCount: 11,
-        initialAverageMinimumBlockingVehicleCount: 1.25,
-        averageExitPathLength: 2,
-        legalOrderCount: null,
-        solutionOrderFreedom: null,
-        reachableStateCount: null,
-        averageLegalVehicleCount: null,
-        averageLegalVehicleRatio: null,
-        minimumLegalVehicleRatio: null,
-        forcedChoiceStateRatio: null,
-        maximumForcedChoiceChainLength: null,
-        averageMinimumBlockingVehicleCount: null,
-        averageLegalDirectionCount: null,
-        averageNewlyUnlockedVehicleCount: null,
-        maximumNewlyUnlockedVehicleCount: null,
-        requiredPrecedenceCount: null,
-        maximumRequiredPredecessorCount: null,
-      },
+      features: { ...baseFeatures, maximumPrerequisiteVehicleCount: null },
     };
 
-    const assessment = assessParkingJamDifficulty(analysis);
+    test("評価不能として提供しないこと", () => {
+      const assessment = assessParkingJamDifficulty(analysis);
 
-    expect(assessment).toMatchObject({
-      difficulty: "normal",
-      modelVersion: PARKING_JAM_DIFFICULTY_MODEL_VERSION,
+      expect(assessment).toEqual({ status: "unsupported" });
+    });
+  });
+
+  describe("判定に使わない状態空間特徴だけが違う場合", () => {
+    const first = toAnalysis({
+      maximumVehicleBlockingInDegree: 1,
+      maximumForcedChoiceChainLength: 1,
+      averageLegalVehicleRatio: 0.9,
+    });
+    const second = toAnalysis({
+      maximumVehicleBlockingInDegree: 6,
+      maximumForcedChoiceChainLength: 10,
+      averageLegalVehicleRatio: 0.4,
+    });
+
+    test("同じ判定になること", () => {
+      const firstAssessment = assessParkingJamDifficulty(first);
+      const secondAssessment = assessParkingJamDifficulty(second);
+
+      expect(firstAssessment).toEqual(secondAssessment);
     });
   });
 });

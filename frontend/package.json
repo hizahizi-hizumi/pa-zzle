@@ -14,7 +14,9 @@
     "format": "biome check --write .",
     "analyze:minesweeper": "bun scripts/analyze-minesweeper-corpus.ts",
     "analyze:minesweeper-supply": "bun scripts/analyze-minesweeper-difficulty-supply.ts",
+    "analyze:parking-jam-difficulty": "bun scripts/analyze-parking-jam-difficulty.ts",
     "generate:minesweeper-pool": "bun scripts/generate-minesweeper-problem-pool.ts",
+    "generate:parking-jam-pool": "bun scripts/generate-parking-jam-problem-pool.ts",
     "generate:water-sort-pool": "bun scripts/generate-water-sort-problem-pool.ts"
   },
   "dependencies": {
