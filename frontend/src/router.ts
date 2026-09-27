@@ -11,6 +11,7 @@ export type Path =
   | `/puzzles/nanpure/play/:difficulty`
   | `/puzzles/parking-jam`
   | `/puzzles/parking-jam/play/:difficulty`
+  | `/puzzles/slide-puzzle/play/:difficulty`
   | `/puzzles/water-sort`
   | `/puzzles/water-sort/play/:difficulty`
   | `/records`
@@ -20,6 +21,7 @@ export type Params = {
   '/puzzles/minesweeper/play/:difficulty': { difficulty: string }
   '/puzzles/nanpure/play/:difficulty': { difficulty: string }
   '/puzzles/parking-jam/play/:difficulty': { difficulty: string }
+  '/puzzles/slide-puzzle/play/:difficulty': { difficulty: string }
   '/puzzles/water-sort/play/:difficulty': { difficulty: string }
   '/records/replay/:recordId': { recordId: string }
 }
