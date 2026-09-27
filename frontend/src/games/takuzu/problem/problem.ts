@@ -1,5 +1,8 @@
 import type { ProblemSeed } from "@/games/problem-seed";
-import type { TakuzuTechnique } from "@/games/takuzu/problem/technique";
+import {
+  type TakuzuTechnique,
+  takuzuTechniques,
+} from "@/games/takuzu/problem/technique";
 import {
   assertTakuzuBoard,
   type TakuzuBoard,
@@ -87,4 +90,39 @@ export function assertTakuzuProblem(problem: TakuzuProblem): void {
   if (contradictsSolution) {
     throw new Error("Takuzu givens must agree with the solution");
   }
+}
+
+function isRecordObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
+function isRemovalTechniqueLimit(
+  value: unknown,
+): value is TakuzuTechnique | null {
+  return (
+    value === null || takuzuTechniques.some((technique) => technique === value)
+  );
+}
+
+/** 記録など外部から読み戻した値が、現在の生成器で扱える識別情報かを確かめる。 */
+export function isTakuzuProblemIdentity(
+  value: unknown,
+): value is TakuzuProblemIdentity {
+  if (!isRecordObject(value) || !isRecordObject(value.conditions)) {
+    return false;
+  }
+
+  const { size, removalTechniqueLimit, extraGivenCount } = value.conditions;
+  return (
+    value.generatorVersion === TAKUZU_GENERATOR_VERSION &&
+    typeof value.seed === "string" &&
+    value.seed.length > 0 &&
+    size === TAKUZU_BOARD_SIZE &&
+    isRemovalTechniqueLimit(removalTechniqueLimit) &&
+    isNonNegativeInteger(extraGivenCount)
+  );
 }
