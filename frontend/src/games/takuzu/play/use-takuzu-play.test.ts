@@ -4,6 +4,10 @@ import { createProblemSeed } from "@/games/problem-seed";
 import { useTakuzuPlay } from "@/games/takuzu/play/use-takuzu-play";
 import type { TakuzuProblem } from "@/games/takuzu/problem/problem";
 import { selectTakuzuProblemForDifficulty } from "@/games/takuzu/problem-selection";
+import {
+  calculateTakuzuSpeedFullScoreMs,
+  calculateTakuzuSpeedZeroScoreMs,
+} from "@/games/takuzu/score";
 
 vi.mock("@/games/problem-seed", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/games/problem-seed")>()),
@@ -59,13 +63,14 @@ describe("useTakuzuPlay", () => {
   });
 
   test("seed で問題集から選んだ問題の 8×8 盤面でプレイを始めること", () => {
-    const { size, cells, progress, problemIdentity } = result.current;
+    const { size, cells, progress, problemIdentity, workload } = result.current;
 
     expect(size).toBe(8);
     expect(cells.map(({ cell }) => cell)).toEqual(initial.problem.givens.cells);
     expect(progress).toBe("playing");
     expect(result.current.difficulty).toBe(difficulty);
     expect(problemIdentity).toEqual(initial.identity);
+    expect(workload).toEqual(initial.workload);
   });
 
   test("空きマスを押すとタイルを置くこと", () => {
@@ -121,15 +126,41 @@ describe("useTakuzuPlay", () => {
     });
 
     test("完成演出へ進みプレイ事実を返すこと", () => {
-      const { progress, sessionResult } = result.current;
+      const { progress, result: playResult } = result.current;
 
       expect(progress).toBe("clearing");
-      expect(sessionResult).toMatchObject({
+      expect(playResult).toMatchObject({
         correctionCount: 0,
         restartCount: 0,
         undoCount: 0,
         inputCount: solvingPresses.length,
       });
+    });
+
+    test("遊んだ問題の作業の量から基準時間と評価を求めること", () => {
+      const playResult = result.current.result;
+
+      expect(playResult?.workload).toEqual(initial.workload);
+      expect(playResult?.speedFullScoreMs).toBe(
+        calculateTakuzuSpeedFullScoreMs(initial.workload),
+      );
+      expect(playResult?.speedZeroScoreMs).toBe(
+        calculateTakuzuSpeedZeroScoreMs(initial.workload),
+      );
+      expect(playResult?.timeDeltaMs).toBe(
+        (playResult?.elapsedMs ?? 0) - (playResult?.speedFullScoreMs ?? 0),
+      );
+      expect(playResult?.score).toEqual({
+        total: 100,
+        breakdown: { accuracy: 60, speed: 40 },
+      });
+    });
+
+    test("記録に使う開始と完成の時刻を返すこと", () => {
+      const { startedAt, completedAt } = result.current;
+
+      expect(completedAt).not.toBeNull();
+      expect(completedAt ?? 0).toBeGreaterThanOrEqual(startedAt);
     });
 
     test("完成演出を終えると完成の表示へ進むこと", () => {
@@ -143,7 +174,7 @@ describe("useTakuzuPlay", () => {
 
       expect(result.current.progress).toBe("playing");
       expect(result.current.cells[firstEmptyCellIndex]?.cell).toBeNull();
-      expect(result.current.sessionResult).toBeNull();
+      expect(result.current.result).toBeNull();
       expect(result.current.problemIdentity).toEqual(initial.identity);
     });
 
@@ -156,7 +187,7 @@ describe("useTakuzuPlay", () => {
         act(() => result.current.startNewProblem());
 
         expect(result.current.progress).toBe("playing");
-        expect(result.current.sessionResult).toBeNull();
+        expect(result.current.result).toBeNull();
         expect(result.current.problemIdentity).toEqual(other.identity);
         expect(listCells(result)).toEqual(other.problem.givens.cells);
       });
