@@ -23,7 +23,6 @@ import {
   PARKING_JAM_FAILED_MOVE_PENALTY,
   PARKING_JAM_RESTART_PENALTY,
   PARKING_JAM_SCORE_MAXIMUMS,
-  PARKING_JAM_SPEED_FULL_SCORE_MS,
   PARKING_JAM_UNDO_PENALTY,
 } from "@/games/parking-jam/score";
 import { formatParkingJamElapsedTime } from "@/games/parking-jam/ui/format-elapsed-time";
@@ -152,10 +151,7 @@ export function ParkingJamResultScreen({
               {PARKING_JAM_FAILED_MOVE_PENALTY}点
             </p>
             <p>
-              速さ:{" "}
-              {formatParkingJamElapsedTime(
-                PARKING_JAM_SPEED_FULL_SCORE_MS[difficulty],
-              )}
+              速さ: {formatParkingJamElapsedTime(result.speedFullScoreMs)}
               まで満点、2倍の時間で0点
             </p>
             <p>

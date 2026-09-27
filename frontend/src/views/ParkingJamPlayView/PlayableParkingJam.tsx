@@ -31,6 +31,7 @@ export function PlayableParkingJam({ difficulty }: PlayableParkingJamProps) {
         ? createParkingJamPlayRecord({
             difficulty,
             problemIdentity: play.problemIdentity,
+            speedReference: play.result.speedReference,
             startedAt: play.startedAt,
             completedAt: play.completedAt,
             result: play.result,

@@ -1,21 +1,48 @@
 import {
+  PARKING_JAM_DIFFICULTY_MODEL_VERSION,
   type ParkingJamDifficulty,
   parseParkingJamDifficulty,
 } from "@/games/parking-jam/difficulty";
 import type { ParkingJamProblemIdentity } from "@/games/parking-jam/problem/problem";
-import { calculateParkingJamPlayScore } from "@/games/parking-jam/score";
+import {
+  calculateParkingJamPlayScore,
+  calculateParkingJamSpeedFullScoreMs,
+  PARKING_JAM_LEGACY_SPEED_FULL_SCORE_MS,
+  PARKING_JAM_SCORE_MODEL_VERSION,
+  type ParkingJamSpeedReference,
+} from "@/games/parking-jam/score";
 import type { ParkingJamSessionResult } from "@/games/parking-jam/session/session";
 import type { PlayRecord } from "@/records/play-record";
 import { createPlayRecordId } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
-const PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION = 2;
+const PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION = 3;
 const PARKING_JAM_GAME_ID = "parking-jam";
 
-type ParkingJamPlayRecordPayload = {
+type ParkingJamProblemFacts = {
+  initialBlockedVehicleCount: number;
+};
+
+// payloadVersion 2 は play-quality-v1 で採点し、難易度モデル版・採点版を持たない。
+type ParkingJamPlayRecordPayloadV2 = {
   difficulty: ParkingJamDifficulty;
   problemIdentity: ParkingJamProblemIdentity;
   performance: ParkingJamSessionResult;
+};
+
+type ParkingJamPlayRecordPayload = {
+  difficulty: ParkingJamDifficulty;
+  difficultyModelVersion: string;
+  scoreModelVersion: typeof PARKING_JAM_SCORE_MODEL_VERSION;
+  problemIdentity: ParkingJamProblemIdentity;
+  problemFacts: ParkingJamProblemFacts;
+  performance: ParkingJamSessionResult;
+};
+
+type ParkingJamPlayRecordV2 = PlayRecord & {
+  gameId: typeof PARKING_JAM_GAME_ID;
+  payloadVersion: 2;
+  payload: ParkingJamPlayRecordPayloadV2;
 };
 
 export type ParkingJamPlayRecord = PlayRecord & {
@@ -24,9 +51,14 @@ export type ParkingJamPlayRecord = PlayRecord & {
   payload: ParkingJamPlayRecordPayload;
 };
 
+type RecognizedParkingJamPlayRecord =
+  | ParkingJamPlayRecordV2
+  | ParkingJamPlayRecord;
+
 type CreateParkingJamPlayRecordInput = {
   difficulty: ParkingJamDifficulty;
   problemIdentity: ParkingJamProblemIdentity;
+  speedReference: ParkingJamSpeedReference;
   startedAt: number;
   completedAt: number;
   result: ParkingJamSessionResult;
@@ -94,12 +126,36 @@ function isParkingJamPerformance(
   );
 }
 
+function isParkingJamProblemFacts(
+  value: unknown,
+  vehicleCount: number,
+): value is ParkingJamProblemFacts {
+  if (!value || typeof value !== "object") return false;
+
+  const facts = value as Partial<ParkingJamProblemFacts>;
+  return (
+    isNonNegativeInteger(facts.initialBlockedVehicleCount) &&
+    facts.initialBlockedVehicleCount < vehicleCount
+  );
+}
+
+function hasValidPayloadBase<
+  Payload extends Partial<ParkingJamPlayRecordPayloadV2>,
+>(payload: Payload): payload is Payload & ParkingJamPlayRecordPayloadV2 {
+  return (
+    parseParkingJamDifficulty(payload.difficulty) !== undefined &&
+    isParkingJamProblemIdentity(payload.problemIdentity) &&
+    isParkingJamPerformance(payload.performance) &&
+    payload.performance.successfulMoveCount ===
+      payload.problemIdentity.conditions.vehicleCount
+  );
+}
+
 export function isParkingJamPlayRecord(
   record: PlayRecord,
-): record is ParkingJamPlayRecord {
+): record is RecognizedParkingJamPlayRecord {
   if (
     record.gameId !== PARKING_JAM_GAME_ID ||
-    record.payloadVersion !== PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION ||
     !record.payload ||
     typeof record.payload !== "object"
   ) {
@@ -107,23 +163,26 @@ export function isParkingJamPlayRecord(
   }
 
   const payload = record.payload as Partial<ParkingJamPlayRecordPayload>;
-  if (
-    parseParkingJamDifficulty(payload.difficulty) === undefined ||
-    !isParkingJamProblemIdentity(payload.problemIdentity) ||
-    !isParkingJamPerformance(payload.performance)
-  ) {
-    return false;
-  }
+  if (!hasValidPayloadBase(payload)) return false;
+
+  if (record.payloadVersion === 2) return true;
 
   return (
-    payload.performance.successfulMoveCount ===
-    payload.problemIdentity.conditions.vehicleCount
+    record.payloadVersion === PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION &&
+    typeof payload.difficultyModelVersion === "string" &&
+    payload.difficultyModelVersion.length > 0 &&
+    payload.scoreModelVersion === PARKING_JAM_SCORE_MODEL_VERSION &&
+    isParkingJamProblemFacts(
+      payload.problemFacts,
+      payload.problemIdentity.conditions.vehicleCount,
+    )
   );
 }
 
 export function createParkingJamPlayRecord({
   difficulty,
   problemIdentity,
+  speedReference,
   startedAt,
   completedAt,
   result,
@@ -142,9 +201,14 @@ export function createParkingJamPlayRecord({
     payloadVersion: PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION,
     payload: {
       difficulty,
+      difficultyModelVersion: PARKING_JAM_DIFFICULTY_MODEL_VERSION,
+      scoreModelVersion: PARKING_JAM_SCORE_MODEL_VERSION,
       problemIdentity: {
         ...problemIdentity,
         conditions: { ...problemIdentity.conditions },
+      },
+      problemFacts: {
+        initialBlockedVehicleCount: speedReference.initialBlockedVehicleCount,
       },
       performance: {
         elapsedMs: result.elapsedMs,
@@ -158,12 +222,24 @@ export function createParkingJamPlayRecord({
   };
 }
 
+function getSpeedFullScoreMs(record: RecognizedParkingJamPlayRecord): number {
+  if (record.payloadVersion === 2) {
+    return PARKING_JAM_LEGACY_SPEED_FULL_SCORE_MS[record.payload.difficulty];
+  }
+
+  return calculateParkingJamSpeedFullScoreMs({
+    vehicleCount: record.payload.problemIdentity.conditions.vehicleCount,
+    initialBlockedVehicleCount:
+      record.payload.problemFacts.initialBlockedVehicleCount,
+  });
+}
+
 export function getParkingJamPlayRecordScore(
-  record: ParkingJamPlayRecord,
+  record: RecognizedParkingJamPlayRecord,
 ): number {
-  const { difficulty, performance } = record.payload;
+  const { performance } = record.payload;
   return calculateParkingJamPlayScore({
-    difficulty,
+    speedFullScoreMs: getSpeedFullScoreMs(record),
     elapsedMs: performance.elapsedMs,
     failedMoveCount: performance.failedMoveCount,
     undoCount: performance.undoCount,
