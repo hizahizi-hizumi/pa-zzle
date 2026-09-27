@@ -2,7 +2,7 @@ import {
   listParkingJamFixedAreaCells,
   type ParkingJamBoard,
   validateParkingJamBoard,
-} from "./board";
+} from "@/games/parking-jam/puzzle/board";
 
 describe("listParkingJamFixedAreaCells", () => {
   const area = { row: 1, column: 2, width: 2, height: 2 } as const;
