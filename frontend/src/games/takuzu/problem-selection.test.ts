@@ -9,7 +9,7 @@ import {
   assertTakuzuProblem,
   TAKUZU_GENERATOR_VERSION,
   type TakuzuProblem,
-  type TakuzuProblemIdentity,
+  type TakuzuRecordedProblemIdentity,
 } from "@/games/takuzu/problem/problem";
 import {
   listTakuzuPoolEntries,
@@ -93,6 +93,32 @@ describe("問題集", () => {
   );
 
   test.each(difficulties)(
+    "難易度 %s から抜き出した問題の作業の量が、分析の結果と一致すること",
+    (difficulty) => {
+      const sampled = sampleEvenly(
+        listPooledProblems(difficulty),
+        analyzedEntryCountPerDifficulty,
+      );
+
+      const analyzedWorkloads = sampled.map(({ problem }) => {
+        const analysis = analyzeTakuzuDifficulty(problem);
+        if (analysis.status !== "analyzed") {
+          return null;
+        }
+        return {
+          emptyCellCount: analysis.scale.emptyCellCount,
+          roundCount: analysis.features.roundCount,
+          lineReadingRoundCount: analysis.features.lineReadingRoundCount,
+        };
+      });
+
+      expect(analyzedWorkloads).toEqual(
+        sampled.map(({ workload }) => workload),
+      );
+    },
+  );
+
+  test.each(difficulties)(
     "難易度 %s から抜き出した問題を、identity から生成し直せること",
     (difficulty) => {
       const sampled = sampleEvenly(
@@ -138,10 +164,14 @@ describe("selectTakuzuProblemForDifficulty", () => {
     },
   );
 
-  test("選んだ結果に難易度分析を含めないこと", () => {
+  test("選んだ結果に難易度分析を含めず、基準時間に使う作業の量だけを伴うこと", () => {
     const selected = selectTakuzuProblemForDifficulty("1", "seed-a");
 
-    expect(Object.keys(selected).sort()).toEqual(["identity", "problem"]);
+    expect(Object.keys(selected).sort()).toEqual([
+      "identity",
+      "problem",
+      "workload",
+    ]);
   });
 });
 
@@ -156,26 +186,21 @@ describe("restoreTakuzuProblem", () => {
     expect(restored).toEqual(selected);
   });
 
-  const unknownIdentities: readonly [string, TakuzuProblemIdentity][] = [
+  const unknownIdentities: readonly [string, TakuzuRecordedProblemIdentity][] =
     [
-      "生成器の版が違う",
-      {
-        ...selected.identity,
-        generatorVersion: "0" as TakuzuProblemIdentity["generatorVersion"],
-      },
-    ],
-    ["問題集に無い seed", { ...selected.identity, seed: "tk-unknown" }],
-    [
-      "生成条件が違う",
-      {
-        ...selected.identity,
-        conditions: {
-          ...selected.identity.conditions,
-          extraGivenCount: selected.identity.conditions.extraGivenCount + 1,
+      ["生成器の版が今と違う", { ...selected.identity, generatorVersion: "0" }],
+      ["問題集に無い seed", { ...selected.identity, seed: "tk-unknown" }],
+      [
+        "生成条件が違う",
+        {
+          ...selected.identity,
+          conditions: {
+            ...selected.identity.conditions,
+            extraGivenCount: selected.identity.conditions.extraGivenCount + 1,
+          },
         },
-      },
-    ],
-  ];
+      ],
+    ];
 
   test.each(unknownIdentities)(
     "%s identity は復元できないこと",
