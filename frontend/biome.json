@@ -10,7 +10,8 @@
       "!src/games/minesweeper/problem/problem-pool.json",
       "!src/games/parking-jam/problem/problem-pool.json",
       "!src/games/water-sort/problem/problem-pool.json",
-      "!src/games/slide-puzzle/problem/problem-pool.json"
+      "!src/games/slide-puzzle/problem/problem-pool.json",
+      "!src/games/takuzu/problem/problem-pool.json"
     ]
   },
   "formatter": {
