@@ -66,10 +66,10 @@ describe("assessSlidePuzzleDifficulty", () => {
     [4, 16, 2, "2"],
     [4, 30, 3, "2"],
     [4, 30, 4, "3"],
-    [4, 30, 5, "3"],
-    [4, 30, 6, "4"],
-    [4, 60, 12, "4"],
-    [5, 24, 6, "5"],
+    [4, 60, 12, "3"],
+    [5, 24, 5, "4"],
+    [5, 40, 7, "4"],
+    [5, 40, 8, "5"],
     [5, 70, 14, "5"],
   ] as const;
 
@@ -90,7 +90,7 @@ describe("assessSlidePuzzleDifficulty", () => {
     ["5×5 で最短 24 手より短い問題", createAnalysis(5, 23, 6)],
     ["3×3 で遠回りが 4 手以上の問題", createAnalysis(3, 24, 4)],
     ["4×4 で遠回りが 2 手より少ない問題", createAnalysis(4, 30, 1)],
-    ["5×5 で遠回りが 6 手より少ない問題", createAnalysis(5, 40, 5)],
+    ["5×5 で遠回りが 5 手より少ない問題", createAnalysis(5, 40, 4)],
     ["最短手数が分からない問題", { status: "unsupported" } as const],
   ] as const;
 

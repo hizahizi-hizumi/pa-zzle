@@ -21,13 +21,14 @@ export const slidePuzzleDifficulties = [
   {
     id: "4",
     label: "レベル 4",
-    description: "何枚ものタイルの退避と送り込みを組み合わせて計画します",
+    description:
+      "盤面がさらに広がり、外側から順に小さな盤面へ落とし込みながら、道をふさぐタイルを回り込ませます",
   },
   {
     id: "5",
     label: "レベル 5",
     description:
-      "広い盤面を見渡し、外側から順に小さな盤面へ落とし込みながら、入り組んだ手順を読みます",
+      "何枚ものタイルの退避と送り込みを組み合わせ、入り組んだ手順を読みます",
   },
 ] as const;
 
@@ -76,7 +77,7 @@ type SlidePuzzleDifficultyCriteria = {
 };
 
 /**
- * 盤面を大きくする境目（1→2、4→5）では遠回り手数の帯をそろえ、同じ盤面の中（2→3→4）では遠回り手数を上げる。
+ * 盤面を大きくする境目（1→2、3→4）では遠回り手数の帯をそろえ、同じ盤面の中（2→3、4→5）では遠回り手数を上げる。
  * どの境目でも、盤面サイズと遠回り手数のどちらも下げない。
  */
 export const slidePuzzleDifficultyCriteria: Record<
@@ -98,20 +99,20 @@ export const slidePuzzleDifficultyCriteria: Record<
   "3": {
     boardSize: 4,
     minimumDetourMoveCount: 4,
-    maximumDetourMoveCount: 5,
-    scrambleLengths: [30, 35, 40, 50],
+    maximumDetourMoveCount: null,
+    scrambleLengths: [30, 40, 60, 80],
   },
   "4": {
-    boardSize: 4,
-    minimumDetourMoveCount: 6,
-    maximumDetourMoveCount: null,
-    scrambleLengths: [40, 60, 80, 120],
+    boardSize: 5,
+    minimumDetourMoveCount: 5,
+    maximumDetourMoveCount: 7,
+    scrambleLengths: [40, 50, 60, 70],
   },
   "5": {
     boardSize: 5,
-    minimumDetourMoveCount: 6,
+    minimumDetourMoveCount: 8,
     maximumDetourMoveCount: null,
-    scrambleLengths: [40, 50, 60, 70, 80],
+    scrambleLengths: [60, 70, 80],
   },
 };
 

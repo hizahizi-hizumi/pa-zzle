@@ -540,7 +540,7 @@ function printPoolReport() {
         .map((sample) => ({ ...sample, level: id }))[0],
     );
   }
-  // 同じ盤面サイズの中で隣り合うレベルの境界（4×4 の 2|3、3|4）。
+  // 同じ盤面サイズの中で隣り合うレベルの境界（4×4 の 2|3、5×5 の 4|5）。
   const sameSizeBoundaries = slidePuzzleDifficulties.flatMap(
     ({ id }, index) => {
       const lower = slidePuzzleDifficultyCriteria[id];
