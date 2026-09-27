@@ -1,7 +1,7 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 
 import {
-  assessParkingJamReviewDifficulty,
+  assessParkingJamDifficulty,
   type ParkingJamDifficulty,
 } from "@/games/parking-jam/difficulty";
 import { useParkingJamPlay } from "@/games/parking-jam/play/use-parking-jam-play";
@@ -34,11 +34,11 @@ describe("useParkingJamPlay", () => {
       const generated = restoreParkingJamProblem(
         result.current.problemIdentity,
       );
-      const assessment = assessParkingJamReviewDifficulty(
+      const assessment = assessParkingJamDifficulty(
         generated.difficultyAnalysis,
       );
 
-      expect(assessment).toMatchObject({ status: "rated", difficulty });
+      expect(assessment).toMatchObject({ difficulty });
       expect(result.current.difficultyAnalysis).toEqual(
         generated.difficultyAnalysis,
       );

@@ -1,8 +1,6 @@
 import {
   assessParkingJamDifficulty,
-  assessParkingJamReviewDifficulty,
-  PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION,
-  PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION,
+  PARKING_JAM_DIFFICULTY_MODEL_VERSION,
 } from "@/games/parking-jam/difficulty";
 import type { ParkingJamDifficultyAnalysis } from "@/games/parking-jam/problem/difficulty-analysis";
 import { generateParkingJamDifficultyCandidate } from "@/games/parking-jam/problem/generation/difficulty-candidate-space";
@@ -88,78 +86,6 @@ describe("assessParkingJamDifficulty", () => {
       "easy",
       {
         ...baseFeatures,
-        dependencyDepth: 2,
-        initialLegalVehicleRatio: 0.8,
-        initialBlockedExitDirectionRatio: 0.45,
-        solutionOrderFreedom: 0.93,
-      },
-    ],
-    ["normal", baseFeatures],
-    [
-      "hard",
-      {
-        ...baseFeatures,
-        dependencyDepth: 5,
-        initialLegalVehicleRatio: 0.7,
-        solutionOrderFreedom: 0.84,
-      },
-    ],
-    [
-      "hard",
-      {
-        ...baseFeatures,
-        dependencyDepth: 3,
-        initialLegalVehicleRatio: 0.5,
-        solutionOrderFreedom: 0.74,
-      },
-    ],
-  ] as const;
-
-  test.each(ratedCases)(
-    "特徴量に対応する難易度へ分類すること: %s",
-    (expected, features) => {
-      const analysis: ParkingJamDifficultyAnalysis = {
-        status: "supported",
-        features,
-      };
-
-      const assessment = assessParkingJamDifficulty(analysis);
-
-      expect(assessment).toEqual({
-        status: "rated",
-        modelVersion: PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION,
-        difficulty: expected,
-      });
-    },
-  );
-
-  describe("解順自由度を厳密計測できない問題の場合", () => {
-    const analysis: ParkingJamDifficultyAnalysis = {
-      status: "unsupported",
-      features: {
-        ...baseFeatures,
-        legalOrderCount: null,
-        solutionOrderFreedom: null,
-      },
-    };
-
-    test("評価不能として返すこと", () => {
-      const assessment = assessParkingJamDifficulty(analysis);
-
-      expect(assessment).toEqual({
-        status: "unsupported",
-        modelVersion: PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION,
-      });
-    });
-  });
-});
-
-describe("assessParkingJamReviewDifficulty", () => {
-  const ratedCases = [
-    [
-      "easy",
-      {
-        ...baseFeatures,
         initialLegalVehicleCount: 12,
         initialAverageMinimumBlockingVehicleCount: 1,
         averageExitPathLength: 1.5,
@@ -193,11 +119,10 @@ describe("assessParkingJamReviewDifficulty", () => {
         features,
       };
 
-      const assessment = assessParkingJamReviewDifficulty(analysis);
+      const assessment = assessParkingJamDifficulty(analysis);
 
       expect(assessment).toMatchObject({
-        status: "rated",
-        modelVersion: PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION,
+        modelVersion: PARKING_JAM_DIFFICULTY_MODEL_VERSION,
         difficulty: expected,
       });
     },
@@ -214,11 +139,10 @@ describe("assessParkingJamReviewDifficulty", () => {
       },
     };
 
-    const assessment = assessParkingJamReviewDifficulty(analysis);
+    const assessment = assessParkingJamDifficulty(analysis);
 
     expect(assessment).toMatchObject({
-      status: "rated",
-      modelVersion: PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION,
+      modelVersion: PARKING_JAM_DIFFICULTY_MODEL_VERSION,
       difficulty: "normal",
       factors: {
         initialBlockedVehicleCount: 3,
@@ -230,35 +154,31 @@ describe("assessParkingJamReviewDifficulty", () => {
   });
 
   test("小さい問題をhardかつ大きい問題をeasyに分類できること", () => {
-    const smallAssessment = assessParkingJamReviewDifficulty(smallHardAnalysis);
-    const largeAssessment = assessParkingJamReviewDifficulty(
+    const smallAssessment = assessParkingJamDifficulty(smallHardAnalysis);
+    const largeAssessment = assessParkingJamDifficulty(
       sameConditionEasyAnalysis,
     );
 
     expect(smallAssessment).toMatchObject({
-      status: "rated",
       difficulty: "hard",
     });
     expect(largeAssessment).toMatchObject({
-      status: "rated",
       difficulty: "easy",
     });
   });
 
   test("同じ生成条件から異なる難易度を分類できること", () => {
-    const easyAssessment = assessParkingJamReviewDifficulty(
+    const easyAssessment = assessParkingJamDifficulty(
       sameConditionEasyAnalysis,
     );
-    const hardAssessment = assessParkingJamReviewDifficulty(
+    const hardAssessment = assessParkingJamDifficulty(
       sameConditionHardAnalysis,
     );
 
     expect(easyAssessment).toMatchObject({
-      status: "rated",
       difficulty: "easy",
     });
     expect(hardAssessment).toMatchObject({
-      status: "rated",
       difficulty: "hard",
     });
   });
@@ -289,8 +209,8 @@ describe("assessParkingJamReviewDifficulty", () => {
       },
     };
 
-    const firstAssessment = assessParkingJamReviewDifficulty(first);
-    const secondAssessment = assessParkingJamReviewDifficulty(second);
+    const firstAssessment = assessParkingJamDifficulty(first);
+    const secondAssessment = assessParkingJamDifficulty(second);
 
     expect(firstAssessment).toEqual(secondAssessment);
   });
@@ -320,12 +240,11 @@ describe("assessParkingJamReviewDifficulty", () => {
       },
     };
 
-    const assessment = assessParkingJamReviewDifficulty(analysis);
+    const assessment = assessParkingJamDifficulty(analysis);
 
     expect(assessment).toMatchObject({
-      status: "rated",
       difficulty: "normal",
-      modelVersion: PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION,
+      modelVersion: PARKING_JAM_DIFFICULTY_MODEL_VERSION,
     });
   });
 });

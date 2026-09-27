@@ -1,5 +1,5 @@
 import {
-  assessParkingJamReviewDifficulty,
+  assessParkingJamDifficulty,
   type ParkingJamDifficulty,
 } from "@/games/parking-jam/difficulty";
 import { listParkingJamDifficultyCandidateConditions } from "@/games/parking-jam/problem/generation/difficulty-candidate-space";
@@ -17,12 +17,12 @@ import {
 } from "@/games/problem-random";
 import type { ProblemSeed } from "@/games/problem-seed";
 
-const MAXIMUM_REVIEW_SUPPLY_PROFILES = 72;
-const MAXIMUM_ATTEMPTS_PER_REVIEW_SUPPLY_PROFILE = 2;
+const MAXIMUM_SUPPLY_PROFILES = 72;
+const MAXIMUM_ATTEMPTS_PER_SUPPLY_PROFILE = 2;
 
-export const PARKING_JAM_REVIEW_SUPPLY_VERSION = "candidate-space-v1";
+export const PARKING_JAM_SUPPLY_VERSION = "candidate-space-v1";
 
-function hasReviewSupplyGenerationCapacity(
+function hasSupplyGenerationCapacity(
   conditions: ParkingJamGenerationConditions,
 ): boolean {
   const minimumOccupiedCellCount =
@@ -33,17 +33,15 @@ function hasReviewSupplyGenerationCapacity(
   );
 }
 
-function listParkingJamReviewSupplyConditions(seed: ProblemSeed) {
-  const random = createProblemRandom(
-    `${PARKING_JAM_REVIEW_SUPPLY_VERSION}:${seed}`,
-  );
+function listParkingJamSupplyConditions(seed: ProblemSeed) {
+  const random = createProblemRandom(`${PARKING_JAM_SUPPLY_VERSION}:${seed}`);
   const supplyableConditions =
     listParkingJamDifficultyCandidateConditions().filter(
-      hasReviewSupplyGenerationCapacity,
+      hasSupplyGenerationCapacity,
     );
   return shuffleProblemValues(supplyableConditions, random).slice(
     0,
-    MAXIMUM_REVIEW_SUPPLY_PROFILES,
+    MAXIMUM_SUPPLY_PROFILES,
   );
 }
 
@@ -51,19 +49,15 @@ export function generateParkingJamProblemForDifficulty(
   difficulty: ParkingJamDifficulty,
   seed: ProblemSeed,
 ): ParkingJamGeneratedProblem {
-  for (const conditions of listParkingJamReviewSupplyConditions(seed)) {
+  for (const conditions of listParkingJamSupplyConditions(seed)) {
     try {
       return generateParkingJamProblem({
         seed,
         ...conditions,
-        maximumAttempts: MAXIMUM_ATTEMPTS_PER_REVIEW_SUPPLY_PROFILE,
+        maximumAttempts: MAXIMUM_ATTEMPTS_PER_SUPPLY_PROFILE,
         acceptCandidate: ({ difficultyAnalysis }) => {
-          const assessment =
-            assessParkingJamReviewDifficulty(difficultyAnalysis);
-          return (
-            assessment.status === "rated" &&
-            assessment.difficulty === difficulty
-          );
+          const assessment = assessParkingJamDifficulty(difficultyAnalysis);
+          return assessment.difficulty === difficulty;
         },
       });
     } catch (error) {
@@ -71,11 +65,9 @@ export function generateParkingJamProblemForDifficulty(
     }
   }
 
-  throw new Error(
-    `Failed to generate a ${difficulty} parking jam review problem`,
-  );
+  throw new Error(`Failed to generate a ${difficulty} parking jam problem`);
 }
 
 export const _private = {
-  listParkingJamReviewSupplyConditions,
+  listParkingJamSupplyConditions,
 };
