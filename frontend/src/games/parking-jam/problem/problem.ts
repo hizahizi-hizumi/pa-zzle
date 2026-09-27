@@ -6,14 +6,16 @@ import type {
 } from "@/games/parking-jam/puzzle/board";
 import type { ProblemSeed } from "@/games/problem-seed";
 
-export const PARKING_JAM_GENERATOR_VERSION = "1";
+export const PARKING_JAM_GENERATOR_VERSION = "2";
 
 export type ParkingJamGenerationConditions = {
   width: number;
   height: number;
   vehicleCount: number;
-  obstacleCount: number;
-  exitProbability: number;
+  roadOpeningCount: number;
+  roadOpeningSpan: number;
+  fixedAreaCount: number;
+  fixedAreaLength: number;
   blockingPlacementProbability: number;
 };
 

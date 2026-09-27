@@ -10,10 +10,10 @@ describe("analyzeParkingJamSolvability", () => {
         { id: "a", row: 2, column: 0, orientation: "horizontal", length: 2 },
         { id: "b", row: 1, column: 2, orientation: "vertical", length: 2 },
       ],
-      obstacles: [],
-      exits: [
-        { side: "right", offset: 2 },
-        { side: "up", offset: 2 },
+      fixedAreas: [],
+      roadOpenings: [
+        { side: "right", startOffset: 2, length: 1 },
+        { side: "up", startOffset: 2, length: 1 },
       ],
     };
 
@@ -37,13 +37,13 @@ describe("analyzeParkingJamSolvability", () => {
         { id: "a", row: 1, column: 1, orientation: "horizontal", length: 2 },
         { id: "b", row: 1, column: 3, orientation: "horizontal", length: 2 },
       ],
-      obstacles: [
-        { row: 1, column: 0 },
-        { row: 1, column: 5 },
+      fixedAreas: [
+        { row: 1, column: 0, width: 1, height: 1 },
+        { row: 1, column: 5, width: 1, height: 1 },
       ],
-      exits: [
-        { side: "right", offset: 1 },
-        { side: "left", offset: 1 },
+      roadOpenings: [
+        { side: "right", startOffset: 1, length: 1 },
+        { side: "left", startOffset: 1, length: 1 },
       ],
     };
 

@@ -30,10 +30,10 @@ const problem: ParkingJamProblem = {
         length: 2,
       },
     ],
-    obstacles: [],
-    exits: [
-      { side: "right", offset: 1 },
-      { side: "up", offset: 3 },
+    fixedAreas: [],
+    roadOpenings: [
+      { side: "right", startOffset: 1, length: 1 },
+      { side: "up", startOffset: 3, length: 1 },
     ],
   },
 };

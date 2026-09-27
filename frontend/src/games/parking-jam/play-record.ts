@@ -9,7 +9,7 @@ import type { PlayRecord } from "@/records/play-record";
 import { createPlayRecordId } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
-const PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION = 1;
+const PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION = 2;
 const PARKING_JAM_GAME_ID = "parking-jam";
 
 type ParkingJamPlayRecordPayload = {
@@ -57,18 +57,17 @@ function isParkingJamProblemIdentity(
   const identity = value as Partial<ParkingJamProblemIdentity>;
   const conditions = identity.conditions;
   return (
-    identity.generatorVersion === "1" &&
+    identity.generatorVersion === "2" &&
     typeof identity.seed === "string" &&
     !!conditions &&
     typeof conditions === "object" &&
     isPositiveInteger(conditions.width) &&
     isPositiveInteger(conditions.height) &&
     isPositiveInteger(conditions.vehicleCount) &&
-    isNonNegativeInteger(conditions.obstacleCount) &&
-    typeof conditions.exitProbability === "number" &&
-    Number.isFinite(conditions.exitProbability) &&
-    conditions.exitProbability > 0 &&
-    conditions.exitProbability <= 1 &&
+    isPositiveInteger(conditions.roadOpeningCount) &&
+    isPositiveInteger(conditions.roadOpeningSpan) &&
+    isNonNegativeInteger(conditions.fixedAreaCount) &&
+    isPositiveInteger(conditions.fixedAreaLength) &&
     isFiniteUnitInterval(conditions.blockingPlacementProbability) &&
     isPositiveInteger(identity.generationAttempt)
   );
