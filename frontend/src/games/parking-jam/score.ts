@@ -1,5 +1,5 @@
+import type { ParkingJamDifficulty } from "@/games/parking-jam/difficulty";
 import type { GameResultLevel } from "@/games/result";
-import type { ParkingJamDifficulty } from "./difficulty";
 
 export const PARKING_JAM_SCORE_MODEL_VERSION = "play-quality-v1";
 

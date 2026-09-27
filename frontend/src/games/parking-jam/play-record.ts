@@ -1,14 +1,13 @@
-import type { PlayRecord } from "@/records/play-record";
-import { createPlayRecordId } from "@/records/play-record";
-import type { PlayRecordDefinition } from "@/records/play-record-definition";
-
 import {
   type ParkingJamDifficulty,
   parseParkingJamDifficulty,
-} from "./difficulty";
-import type { ParkingJamProblemIdentity } from "./problem/problem";
-import { calculateParkingJamPlayScore } from "./score";
-import type { ParkingJamSessionResult } from "./session/session";
+} from "@/games/parking-jam/difficulty";
+import type { ParkingJamProblemIdentity } from "@/games/parking-jam/problem/problem";
+import { calculateParkingJamPlayScore } from "@/games/parking-jam/score";
+import type { ParkingJamSessionResult } from "@/games/parking-jam/session/session";
+import type { PlayRecord } from "@/records/play-record";
+import { createPlayRecordId } from "@/records/play-record";
+import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
 const PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION = 1;
 const PARKING_JAM_GAME_ID = "parking-jam";

@@ -4,7 +4,7 @@ import {
   PARKING_JAM_SCORE_MAXIMUMS,
   PARKING_JAM_SPEED_FULL_SCORE_MS,
   type ParkingJamPlayScoreInput,
-} from "./score";
+} from "@/games/parking-jam/score";
 
 describe("calculateParkingJamPlayScore", () => {
   const perfectInput: ParkingJamPlayScoreInput = {

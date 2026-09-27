@@ -1,10 +1,10 @@
-import type { PlayRecord } from "@/records/play-record";
 import {
   createParkingJamPlayRecord,
   getParkingJamPlayRecordScore,
   isParkingJamPlayRecord,
   parkingJamPlayRecordDefinition,
-} from "./play-record";
+} from "@/games/parking-jam/play-record";
+import type { PlayRecord } from "@/records/play-record";
 
 const record = createParkingJamPlayRecord({
   difficulty: "normal",
