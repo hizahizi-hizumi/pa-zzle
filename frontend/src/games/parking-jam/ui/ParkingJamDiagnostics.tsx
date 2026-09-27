@@ -8,7 +8,7 @@ import {
 } from "@/games/parking-jam/diagnostics";
 import {
   getParkingJamDifficultyLabel,
-  PARKING_JAM_DIFFICULTY_MODEL_VERSION,
+  type ParkingJamDifficultyAssessment,
 } from "@/games/parking-jam/difficulty";
 import { DiagnosticRow } from "@/games/parking-jam/ui/ParkingJamDiagnostics/DiagnosticRow";
 
@@ -27,6 +27,29 @@ function formatDecimal(value: number | null): string {
 
 function formatInteger(value: number | null): string {
   return value === null ? "取得なし" : String(value);
+}
+
+const outOfRangeReasonLabels = {
+  "too-light": "提供範囲外（軽すぎ）",
+  "too-heavy": "提供範囲外（重すぎ）",
+  "unlisted-levers": "提供範囲外（組合せ外）",
+} as const;
+
+function formatAssessment(assessment: ParkingJamDifficultyAssessment): string {
+  switch (assessment.status) {
+    case "classified":
+      return getParkingJamDifficultyLabel(assessment.difficulty);
+    case "out-of-range":
+      return outOfRangeReasonLabels[assessment.reason];
+    case "unsupported":
+      return "評価不能";
+  }
+}
+
+function formatLevers(assessment: ParkingJamDifficultyAssessment): string {
+  if (!("levers" in assessment)) return "取得なし";
+  const { dependency, misread, scale } = assessment.levers;
+  return `依存 ${dependency} / 読み違い ${misread} / 規模 ${scale}`;
 }
 
 export function ParkingJamDiagnostics({
@@ -101,12 +124,21 @@ export function ParkingJamDiagnostics({
           <h3 className="text-xs font-semibold text-muted-foreground">問題</h3>
           <dl className="mt-2 divide-y rounded-xl border bg-muted/25 px-4">
             <DiagnosticRow
-              label="難易度"
+              label="選択中の難易度"
               value={getParkingJamDifficultyLabel(snapshot.difficulty)}
             />
             <DiagnosticRow
               label="判定モデル"
-              value={PARKING_JAM_DIFFICULTY_MODEL_VERSION}
+              value={snapshot.difficultyModelVersion}
+              mono
+            />
+            <DiagnosticRow
+              label="判定"
+              value={formatAssessment(snapshot.difficultyAssessment)}
+            />
+            <DiagnosticRow
+              label="レバー"
+              value={formatLevers(snapshot.difficultyAssessment)}
               mono
             />
             <DiagnosticRow
@@ -138,6 +170,11 @@ export function ParkingJamDiagnostics({
             <DiagnosticRow
               label="依存深さ"
               value={String(features.dependencyDepth)}
+              mono
+            />
+            <DiagnosticRow
+              label="最少先行台数の最大"
+              value={formatInteger(features.maximumPrerequisiteVehicleCount)}
               mono
             />
             <DiagnosticRow
@@ -210,6 +247,11 @@ export function ParkingJamDiagnostics({
             <DiagnosticRow
               label="車両数"
               value={String(features.vehicleCount)}
+              mono
+            />
+            <DiagnosticRow
+              label="読み違いを誘う車"
+              value={`${features.misreadInducingVehicleCount}（ずれ開口 ${features.adjacentLaneOpeningVehicleCount} / 方向判断 ${features.directionChoiceVehicleCount} / 遠い遮断 ${features.farBlockedVehicleCount}）`}
               mono
             />
             <DiagnosticRow
