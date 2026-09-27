@@ -3,6 +3,7 @@ import {
   _private,
   traceTakuzuHumanSolve,
 } from "@/games/takuzu/problem/generation/human-solver";
+import { generateTakuzuProblem } from "@/games/takuzu/problem/generator";
 import {
   type TakuzuTechnique,
   takuzuTechniques,
@@ -231,5 +232,34 @@ describe("traceTakuzuHumanSolve", () => {
 
       expect(result.status).toBe("contradiction");
     });
+  });
+
+  describe("手筋の上限を変えて作った問題", () => {
+    const cases = takuzuTechniques.map(
+      (technique) =>
+        [
+          technique,
+          generateTakuzuProblem({
+            seed: `human-solver-test-${technique}`,
+            removalTechniqueLimit: technique,
+            extraGivenCount: 0,
+          }).problem,
+        ] as const,
+    );
+
+    test.each(cases)(
+      "上限 %s で作った問題で、どのラウンドの確定も解と一致すること",
+      (_, problem) => {
+        const result = traceTakuzuHumanSolve(problem.givens);
+
+        const deductions = result.rounds.flatMap((round) => round.deductions);
+        expect(
+          deductions.every(
+            ({ cellIndex, tile }) => problem.solution.cells[cellIndex] === tile,
+          ),
+        ).toBe(true);
+        expect(result.status).toBe("solved");
+      },
+    );
   });
 });
