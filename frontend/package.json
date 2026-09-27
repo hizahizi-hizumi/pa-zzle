@@ -18,6 +18,7 @@
     "analyze:takuzu": "bun scripts/analyze-takuzu-corpus.ts",
     "generate:minesweeper-pool": "bun scripts/generate-minesweeper-problem-pool.ts",
     "generate:parking-jam-pool": "bun scripts/generate-parking-jam-problem-pool.ts",
+    "generate:takuzu-pool": "bun scripts/generate-takuzu-problem-pool.ts",
     "generate:water-sort-pool": "bun scripts/generate-water-sort-problem-pool.ts",
     "generate:slide-puzzle-pool": "bun scripts/generate-slide-puzzle-problem-pool.ts",
     "analyze:slide-puzzle": "bun scripts/analyze-slide-puzzle-corpus.ts"

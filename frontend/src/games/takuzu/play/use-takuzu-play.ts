@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { createProblemSeed } from "@/games/problem-seed";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
-import { takuzuFixedProblem } from "@/games/takuzu/problem/fixed-problem";
+import type {
+  TakuzuIdentifiedProblem,
+  TakuzuProblemIdentity,
+} from "@/games/takuzu/problem/problem";
+import { selectTakuzuProblemForDifficulty } from "@/games/takuzu/problem-selection";
 import type { TakuzuCell } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import {
@@ -27,17 +32,58 @@ import {
 export type TakuzuProgress = "playing" | "clearing" | "result";
 
 type TakuzuPlayState = {
+  problemIdentity: TakuzuProblemIdentity;
   session: TakuzuSession;
   progress: TakuzuProgress;
 };
 
 const elapsedTimeTickMs = 1_000;
 
-function createInitialPlayState(startedAt: number): TakuzuPlayState {
+// 問題集が小さい場合でも「別の問題」で同じ問題に戻らないよう、選び直す回数の上限。
+const maximumNewProblemSelectionAttempts = 8;
+
+function createPlayState(
+  { problem, identity }: TakuzuIdentifiedProblem,
+  startedAt: number,
+): TakuzuPlayState {
   return {
-    session: createTakuzuSession(takuzuFixedProblem, startedAt),
+    problemIdentity: identity,
+    session: createTakuzuSession(problem, startedAt),
     progress: "playing",
   };
+}
+
+function createInitialPlayState(
+  difficulty: TakuzuDifficulty,
+  startedAt: number,
+): TakuzuPlayState {
+  return createPlayState(
+    selectTakuzuProblemForDifficulty(difficulty, createProblemSeed()),
+    startedAt,
+  );
+}
+
+function createNewProblemPlayState(
+  difficulty: TakuzuDifficulty,
+  currentProblemIdentity: TakuzuProblemIdentity,
+  startedAt: number,
+): TakuzuPlayState {
+  let selected = selectTakuzuProblemForDifficulty(
+    difficulty,
+    createProblemSeed(),
+  );
+  for (
+    let attempt = 1;
+    attempt < maximumNewProblemSelectionAttempts &&
+    selected.identity.seed === currentProblemIdentity.seed;
+    attempt += 1
+  ) {
+    selected = selectTakuzuProblemForDifficulty(
+      difficulty,
+      createProblemSeed(),
+    );
+  }
+  return createPlayState(selected, startedAt);
 }
 
 function applySession(
@@ -49,18 +95,21 @@ function applySession(
   }
 
   return {
+    ...current,
     session,
     progress: session.status === "cleared" ? "clearing" : current.progress,
   };
 }
 
 /**
- * 難易度のプレイを始める。
- * 問題集から出題できるようになるまでは、どの難易度でも固定問題を出題する。
+ * 難易度の問題集から選んだ問題を遊ぶ。
  * `undo` は直前の盤面操作を1つ取り消し（待った）、`restart` は同じプレイのまま盤面を戻し、`replay` は同じ問題を新しいプレイとして始める（リセット）。
+ * `startNewProblem` は問題集から別の問題を選び直す。
  */
 export function useTakuzuPlay(difficulty: TakuzuDifficulty) {
-  const [play, setPlay] = useState(() => createInitialPlayState(Date.now()));
+  const [play, setPlay] = useState(() =>
+    createInitialPlayState(difficulty, Date.now()),
+  );
   const [now, setNow] = useState(() => Date.now());
   const { session, progress } = play;
 
@@ -124,10 +173,19 @@ export function useTakuzuPlay(difficulty: TakuzuDifficulty) {
     const startedAt = Date.now();
     setNow(startedAt);
     setPlay((current) => ({
+      ...current,
       session: replayTakuzuSession(current.session, startedAt),
       progress: "playing",
     }));
   }, []);
+
+  const startNewProblem = useCallback(() => {
+    const startedAt = Date.now();
+    setNow(startedAt);
+    setPlay((current) =>
+      createNewProblemPlayState(difficulty, current.problemIdentity, startedAt),
+    );
+  }, [difficulty]);
 
   const completeClearAnimation = useCallback(() => {
     setPlay((current) =>
@@ -145,6 +203,7 @@ export function useTakuzuPlay(difficulty: TakuzuDifficulty) {
 
   return {
     difficulty,
+    problemIdentity: play.problemIdentity,
     size: session.board.size,
     cells,
     lineViolations,
@@ -159,6 +218,7 @@ export function useTakuzuPlay(difficulty: TakuzuDifficulty) {
     undo,
     restart,
     replay,
+    startNewProblem,
     completeClearAnimation,
   };
 }

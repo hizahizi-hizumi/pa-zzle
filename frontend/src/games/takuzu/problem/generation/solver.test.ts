@@ -1,19 +1,24 @@
 import { createProblemSeededRandom } from "@/games/problem-seed";
-import { takuzuFixedProblem } from "@/games/takuzu/problem/fixed-problem";
 import {
   countTakuzuSolutions,
   findRandomTakuzuSolution,
 } from "@/games/takuzu/problem/generation/solver";
+import {
+  listTakuzuPoolEntries,
+  toTakuzuPooledProblem,
+} from "@/games/takuzu/problem/problem-pool";
 import { parseTakuzuBoard } from "@/games/takuzu/puzzle/board";
 import { isTakuzuSolved } from "@/games/takuzu/puzzle/rules";
 
 describe("countTakuzuSolutions", () => {
   describe("一意解の問題", () => {
+    const { problem } = toTakuzuPooledProblem(listTakuzuPoolEntries("3")[0]!);
+
     test("解を1つと数え、その解を返すこと", () => {
-      const result = countTakuzuSolutions(takuzuFixedProblem.givens);
+      const result = countTakuzuSolutions(problem.givens);
 
       expect(result.solutionCount).toBe(1);
-      expect(result.firstSolution).toEqual(takuzuFixedProblem.solution);
+      expect(result.firstSolution).toEqual(problem.solution);
     });
   });
 
