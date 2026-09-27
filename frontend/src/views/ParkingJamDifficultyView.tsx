@@ -4,18 +4,18 @@ import { ParkingJamDifficultyOption } from "@/views/ParkingJamDifficultyView/Par
 
 export function ParkingJamDifficultyView() {
   return (
-    <section className="space-y-8">
+    <section className="space-y-6 sm:space-y-8">
       <div className="space-y-2">
         <Link
           to="/"
-          className="text-sm text-muted-foreground hover:text-foreground"
+          className="text-supporting text-muted-foreground hover:text-foreground"
         >
           ← 戻る
         </Link>
-        <h1 className="text-3xl font-bold tracking-tight">パーキングジャム</h1>
+        <h1 className="text-screen-title">パーキングジャム</h1>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-2 sm:gap-4 lg:grid-cols-3">
         {parkingJamDifficulties.map((difficulty) => (
           <ParkingJamDifficultyOption
             key={difficulty.id}
