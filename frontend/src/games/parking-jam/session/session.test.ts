@@ -1,4 +1,4 @@
-import type { ParkingJamProblem } from "../problem/problem";
+import type { ParkingJamProblem } from "@/games/parking-jam/problem/problem";
 import {
   attemptParkingJamSessionMove,
   canRestartParkingJamSession,
@@ -8,7 +8,7 @@ import {
   type ParkingJamSession,
   restartParkingJamSession,
   undoParkingJamSession,
-} from "./session";
+} from "@/games/parking-jam/session/session";
 
 const problem: ParkingJamProblem = {
   board: {

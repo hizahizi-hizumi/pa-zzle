@@ -1,15 +1,15 @@
-import type { ParkingJamProblem } from "../problem/problem";
+import type { ParkingJamProblem } from "@/games/parking-jam/problem/problem";
 import {
   createParkingJamInitialState,
   isParkingJamCleared,
   type ParkingJamMove,
   type ParkingJamState,
-} from "../puzzle/board";
+} from "@/games/parking-jam/puzzle/board";
 import {
   applyParkingJamMove,
   listParkingJamMoveBlockers,
   type ParkingJamMoveBlocker,
-} from "../puzzle/rules";
+} from "@/games/parking-jam/puzzle/rules";
 
 export type ParkingJamSessionStatus = "playing" | "cleared";
 

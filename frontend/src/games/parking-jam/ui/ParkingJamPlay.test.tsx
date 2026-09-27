@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 
-import { ParkingJamPlay } from "./ParkingJamPlay";
+import { ParkingJamPlay } from "@/games/parking-jam/ui/ParkingJamPlay";
 
 afterEach(cleanup);
 

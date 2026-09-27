@@ -4,9 +4,9 @@ import {
   assessParkingJamDifficulty,
   type ParkingJamDifficulty,
 } from "@/games/parking-jam/difficulty";
+import { useParkingJamPlay } from "@/games/parking-jam/play/use-parking-jam-play";
 import { restoreParkingJamProblem } from "@/games/parking-jam/problem/generator";
 import * as problemSeed from "@/games/problem-seed";
-import { useParkingJamPlay } from "./use-parking-jam-play";
 
 afterEach(() => {
   cleanup();

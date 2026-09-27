@@ -5,7 +5,7 @@ import type {
   ParkingJamVehicle as ParkingJamVehicleDefinition,
 } from "@/games/parking-jam/puzzle/board";
 
-import "./parking-jam-board.css";
+import "@/games/parking-jam/ui/board/parking-jam-board.css";
 
 type ParkingJamVehicleProps = {
   vehicle: ParkingJamVehicleDefinition;

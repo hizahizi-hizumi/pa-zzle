@@ -10,7 +10,7 @@ import type {
 } from "@/games/parking-jam/puzzle/board";
 import { ParkingJamVehicle } from "@/games/parking-jam/ui/board/ParkingJamVehicle";
 
-import "./parking-jam-board.css";
+import "@/games/parking-jam/ui/board/parking-jam-board.css";
 
 type ParkingJamBoardProps = {
   board: ParkingJamBoardDefinition;
