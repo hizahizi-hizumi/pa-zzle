@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { ParkingJamDifficulty } from "@/games/parking-jam/difficulty";
+import type { ParkingJamDifficultyAnalysis } from "@/games/parking-jam/problem/difficulty-analysis";
 import type { ParkingJamProblemIdentity } from "@/games/parking-jam/problem/problem";
 import { generateParkingJamProblemForDifficulty } from "@/games/parking-jam/problem-selection";
 import type {
@@ -42,6 +43,7 @@ export type ParkingJamResult = ParkingJamSessionResult & {
 type ParkingJamPlayState = {
   session: ParkingJamSession;
   problemIdentity: ParkingJamProblemIdentity;
+  difficultyAnalysis: ParkingJamDifficultyAnalysis;
   selectedVehicleId: ParkingJamVehicleId | null;
   operation: ParkingJamOperation | null;
   progress: ParkingJamProgress;
@@ -57,6 +59,7 @@ function createPlayState(
   return {
     session: createParkingJamSession(generated.problem, startedAt),
     problemIdentity: generated.identity,
+    difficultyAnalysis: generated.difficultyAnalysis,
     selectedVehicleId: null,
     operation: null,
     progress: "playing",
@@ -218,6 +221,7 @@ export function useParkingJamPlay(difficulty: ParkingJamDifficulty) {
   return {
     difficulty,
     problemIdentity: play.problemIdentity,
+    difficultyAnalysis: play.difficultyAnalysis,
     status: session.status,
     progress: play.progress,
     startedAt: session.startedAt,

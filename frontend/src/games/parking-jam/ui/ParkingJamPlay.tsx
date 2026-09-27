@@ -44,6 +44,7 @@ type ParkingJamPlayProps = {
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
   onClearAnimationComplete: () => void;
+  onOpenDiagnostics?: () => void;
 };
 
 export function ParkingJamPlay({
@@ -67,6 +68,7 @@ export function ParkingJamPlay({
   onChangeDifficulty,
   onBackToHome,
   onClearAnimationComplete,
+  onOpenDiagnostics,
 }: ParkingJamPlayProps) {
   if (progress === "result" && result) {
     return (
@@ -94,6 +96,7 @@ export function ParkingJamPlay({
         onStartNewProblem={onStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
+        onOpenDiagnostics={onOpenDiagnostics}
       />
       <main className="flex min-h-0 flex-1 items-start justify-center overflow-hidden px-3 pt-3 sm:items-center sm:px-6 sm:py-4">
         <ParkingJamBoard
