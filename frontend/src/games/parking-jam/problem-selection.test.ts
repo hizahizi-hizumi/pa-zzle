@@ -1,10 +1,10 @@
-import { assessParkingJamReviewDifficulty } from "@/games/parking-jam/difficulty";
+import { assessParkingJamDifficulty } from "@/games/parking-jam/difficulty";
 import {
   _private,
   generateParkingJamProblemForDifficulty,
 } from "@/games/parking-jam/problem-selection";
 
-const { listParkingJamReviewSupplyConditions } = _private;
+const { listParkingJamSupplyConditions } = _private;
 
 describe("generateParkingJamProblemForDifficulty", () => {
   const supplyCases = [
@@ -20,15 +20,12 @@ describe("generateParkingJamProblemForDifficulty", () => {
   ] as const;
 
   test.each(supplyCases)(
-    "$difficulty のレビュー候補を $seed から供給すること",
+    "$difficulty の問題を $seed から供給すること",
     ({ difficulty, seed }) => {
       const problem = generateParkingJamProblemForDifficulty(difficulty, seed);
-      const assessment = assessParkingJamReviewDifficulty(
-        problem.difficultyAnalysis,
-      );
+      const assessment = assessParkingJamDifficulty(problem.difficultyAnalysis);
 
       expect(assessment).toMatchObject({
-        status: "rated",
         difficulty,
       });
     },
@@ -44,12 +41,12 @@ describe("generateParkingJamProblemForDifficulty", () => {
   });
 });
 
-describe("listParkingJamReviewSupplyConditions", () => {
+describe("listParkingJamSupplyConditions", () => {
   const seed = "parking-jam-r3-review-supply-order";
 
   test("難易度に依存しない候補条件を決定論的に並べること", () => {
-    const first = listParkingJamReviewSupplyConditions(seed);
-    const second = listParkingJamReviewSupplyConditions(seed);
+    const first = listParkingJamSupplyConditions(seed);
+    const second = listParkingJamSupplyConditions(seed);
 
     expect(first).toEqual(second);
     expect(first).toHaveLength(72);
@@ -59,7 +56,7 @@ describe("listParkingJamReviewSupplyConditions", () => {
   });
 
   test("盤面規模と車両数の複数条件を候補に残すこと", () => {
-    const conditions = listParkingJamReviewSupplyConditions(seed);
+    const conditions = listParkingJamSupplyConditions(seed);
     const boardSizes = new Set(
       conditions.map(({ width, height }) => `${width}x${height}`),
     );
@@ -72,7 +69,7 @@ describe("listParkingJamReviewSupplyConditions", () => {
   });
 
   test("最低占有セルだけで盤面の3分の2を超える条件を供給探索から外すこと", () => {
-    const conditions = listParkingJamReviewSupplyConditions(seed);
+    const conditions = listParkingJamSupplyConditions(seed);
     const overCapacity = conditions.some((condition) => {
       const minimumOccupiedCellCount =
         condition.vehicleCount * 2 +

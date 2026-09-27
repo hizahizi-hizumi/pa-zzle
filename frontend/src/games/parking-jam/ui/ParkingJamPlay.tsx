@@ -16,6 +16,7 @@ import type {
 import { ParkingJamBoard } from "@/games/parking-jam/ui/board/ParkingJamBoard";
 import { ParkingJamPlayHeader } from "@/games/parking-jam/ui/ParkingJamPlay/ParkingJamPlayHeader";
 import { ParkingJamResultScreen } from "@/games/parking-jam/ui/ParkingJamPlay/ParkingJamResultScreen";
+import { UndoButton } from "@/games/parking-jam/ui/ParkingJamPlay/UndoButton";
 
 type ParkingJamPlayProps = {
   difficulty: ParkingJamDifficulty;
@@ -27,6 +28,7 @@ type ParkingJamPlayProps = {
   operation: ParkingJamOperation | null;
   elapsedMs: number;
   failedMoveCount: number;
+  undoCount: number;
   canUndo: boolean;
   canRestart: boolean;
   result: ParkingJamResult | null;
@@ -57,10 +59,14 @@ export function ParkingJamPlay({
   operation,
   elapsedMs,
   failedMoveCount,
+  undoCount,
+  canUndo,
+  canRestart,
   result,
   recordOutcomeNotice,
   onSelectVehicle,
   onMove,
+  onUndo,
   onRestart,
   onReplay,
   onStartNewProblem,
@@ -86,19 +92,20 @@ export function ParkingJamPlay({
   }
 
   return (
-    <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
+    <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
       <BrandIdentityHeader />
       <ParkingJamPlayHeader
         elapsedMs={elapsedMs}
         failedMoveCount={failedMoveCount}
+        undoCount={undoCount}
+        canRestart={canRestart}
         onRestart={onRestart}
-        onReplay={onReplay}
         onStartNewProblem={onStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
         onOpenDiagnostics={onOpenDiagnostics}
       />
-      <main className="flex min-h-0 flex-1 items-start justify-center overflow-hidden px-3 pt-3 sm:items-center sm:px-6 sm:py-4">
+      <main className="flex min-h-0 flex-1 items-center justify-center overflow-hidden px-3 py-2 sm:px-6">
         <ParkingJamBoard
           board={board}
           state={state}
@@ -110,6 +117,12 @@ export function ParkingJamPlay({
           onExitAnimationComplete={onClearAnimationComplete}
         />
       </main>
+      <footer className="flex h-20 shrink-0 items-center justify-center">
+        <UndoButton
+          disabled={!canUndo || status !== "playing"}
+          onUndo={onUndo}
+        />
+      </footer>
     </section>
   );
 }

@@ -16,9 +16,9 @@ export function ParkingJamDifficultyOption({
     <Link
       to="/puzzles/parking-jam/play/:difficulty"
       params={{ difficulty }}
-      className="group block rounded-2xl focus-visible:outline-none"
+      className="group block rounded-xl focus-visible:outline-none"
     >
-      <StartConditionOption label={label}>
+      <StartConditionOption label={label} density="compact">
         <ParkingJamDifficultyPreview difficulty={difficulty} />
       </StartConditionOption>
     </Link>

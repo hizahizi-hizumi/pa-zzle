@@ -23,7 +23,6 @@ import {
   PARKING_JAM_FAILED_MOVE_PENALTY,
   PARKING_JAM_RESTART_PENALTY,
   PARKING_JAM_SCORE_MAXIMUMS,
-  PARKING_JAM_SPEED_FULL_SCORE_MS,
   PARKING_JAM_UNDO_PENALTY,
 } from "@/games/parking-jam/score";
 import { formatParkingJamElapsedTime } from "@/games/parking-jam/ui/format-elapsed-time";
@@ -52,7 +51,7 @@ export function ParkingJamResultScreen({
   const resultLevel = getParkingJamGameResultLevel(result.score.total);
 
   return (
-    <section className="fixed inset-0 z-50 flex min-h-svh flex-col overflow-y-auto bg-background">
+    <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-y-auto bg-background">
       <BrandIdentityHeader />
       <GameResultConfetti level={resultLevel} />
       <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-4 py-3 pb-[max(0.875rem,env(safe-area-inset-bottom))]">
@@ -152,10 +151,7 @@ export function ParkingJamResultScreen({
               {PARKING_JAM_FAILED_MOVE_PENALTY}点
             </p>
             <p>
-              速さ:{" "}
-              {formatParkingJamElapsedTime(
-                PARKING_JAM_SPEED_FULL_SCORE_MS[difficulty],
-              )}
+              速さ: {formatParkingJamElapsedTime(result.speedFullScoreMs)}
               まで満点、2倍の時間で0点
             </p>
             <p>

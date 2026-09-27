@@ -31,6 +31,7 @@ export function PlayableParkingJam({ difficulty }: PlayableParkingJamProps) {
         ? createParkingJamPlayRecord({
             difficulty,
             problemIdentity: play.problemIdentity,
+            speedReference: play.result.speedReference,
             startedAt: play.startedAt,
             completedAt: play.completedAt,
             result: play.result,
@@ -70,6 +71,7 @@ export function PlayableParkingJam({ difficulty }: PlayableParkingJamProps) {
         operation={play.operation}
         elapsedMs={play.elapsedMs}
         failedMoveCount={play.failedMoveCount}
+        undoCount={play.undoCount}
         canUndo={play.canUndo}
         canRestart={play.canRestart}
         result={play.result}

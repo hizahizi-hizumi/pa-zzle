@@ -1,15 +1,33 @@
 import {
   calculateParkingJamPlayScore,
+  calculateParkingJamSpeedFullScoreMs,
   getParkingJamGameResultLevel,
   PARKING_JAM_SCORE_MAXIMUMS,
-  PARKING_JAM_SPEED_FULL_SCORE_MS,
   type ParkingJamPlayScoreInput,
 } from "@/games/parking-jam/score";
 
+describe("calculateParkingJamSpeedFullScoreMs", () => {
+  const cases = [
+    [{ vehicleCount: 8, initialBlockedVehicleCount: 2 }, 35_000],
+    [{ vehicleCount: 11, initialBlockedVehicleCount: 5 }, 53_000],
+    [{ vehicleCount: 14, initialBlockedVehicleCount: 8 }, 71_000],
+  ] as const;
+
+  test.each(cases)(
+    "盤面把握と車両数と初期に塞がれた車の数から基準時間を求めること: %o",
+    (reference, expected) => {
+      const speedFullScoreMs = calculateParkingJamSpeedFullScoreMs(reference);
+
+      expect(speedFullScoreMs).toBe(expected);
+    },
+  );
+});
+
 describe("calculateParkingJamPlayScore", () => {
+  const speedFullScoreMs = 50_000;
   const perfectInput: ParkingJamPlayScoreInput = {
-    difficulty: "normal",
-    elapsedMs: PARKING_JAM_SPEED_FULL_SCORE_MS.normal,
+    speedFullScoreMs,
+    elapsedMs: speedFullScoreMs,
     failedMoveCount: 0,
     undoCount: 0,
     restartCount: 0,
@@ -47,28 +65,28 @@ describe("calculateParkingJamPlayScore", () => {
       [
         {
           ...perfectInput,
-          elapsedMs: PARKING_JAM_SPEED_FULL_SCORE_MS.normal * 1.25,
+          elapsedMs: speedFullScoreMs * 1.25,
         },
         30,
       ],
       [
         {
           ...perfectInput,
-          elapsedMs: PARKING_JAM_SPEED_FULL_SCORE_MS.normal * 1.5,
+          elapsedMs: speedFullScoreMs * 1.5,
         },
         20,
       ],
       [
         {
           ...perfectInput,
-          elapsedMs: PARKING_JAM_SPEED_FULL_SCORE_MS.normal * 2,
+          elapsedMs: speedFullScoreMs * 2,
         },
         0,
       ],
       [
         {
           ...perfectInput,
-          elapsedMs: PARKING_JAM_SPEED_FULL_SCORE_MS.normal * 3,
+          elapsedMs: speedFullScoreMs * 3,
         },
         0,
       ],
@@ -87,32 +105,11 @@ describe("calculateParkingJamPlayScore", () => {
     );
   });
 
-  describe("難易度が異なる場合", () => {
+  describe("基準時間が異なる問題の場合", () => {
     const cases = [
-      [
-        {
-          ...perfectInput,
-          difficulty: "easy",
-          elapsedMs: PARKING_JAM_SPEED_FULL_SCORE_MS.easy * 1.5,
-        },
-        20,
-      ],
-      [
-        {
-          ...perfectInput,
-          difficulty: "normal",
-          elapsedMs: PARKING_JAM_SPEED_FULL_SCORE_MS.normal * 1.5,
-        },
-        20,
-      ],
-      [
-        {
-          ...perfectInput,
-          difficulty: "hard",
-          elapsedMs: PARKING_JAM_SPEED_FULL_SCORE_MS.hard * 1.5,
-        },
-        20,
-      ],
+      [{ ...perfectInput, speedFullScoreMs: 35_000, elapsedMs: 52_500 }, 20],
+      [{ ...perfectInput, speedFullScoreMs: 53_000, elapsedMs: 79_500 }, 20],
+      [{ ...perfectInput, speedFullScoreMs: 71_000, elapsedMs: 106_500 }, 20],
     ] as const satisfies readonly (readonly [
       ParkingJamPlayScoreInput,
       number,
@@ -146,7 +143,7 @@ describe("calculateParkingJamPlayScore", () => {
   describe("大きな減点が発生した場合", () => {
     const input: ParkingJamPlayScoreInput = {
       ...perfectInput,
-      elapsedMs: PARKING_JAM_SPEED_FULL_SCORE_MS.normal * 3,
+      elapsedMs: speedFullScoreMs * 3,
       failedMoveCount: 100,
       undoCount: 100,
       restartCount: 100,

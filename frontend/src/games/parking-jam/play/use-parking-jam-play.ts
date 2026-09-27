@@ -10,7 +10,9 @@ import type {
 } from "@/games/parking-jam/puzzle/board";
 import {
   calculateParkingJamPlayScore,
+  calculateParkingJamSpeedFullScoreMs,
   type ParkingJamPlayScore,
+  type ParkingJamSpeedReference,
 } from "@/games/parking-jam/score";
 import {
   attemptParkingJamSessionMove,
@@ -37,6 +39,8 @@ export type ParkingJamProgress = "playing" | "clearing" | "result";
 
 export type ParkingJamResult = ParkingJamSessionResult & {
   problemIdentity: ParkingJamProblemIdentity;
+  speedReference: ParkingJamSpeedReference;
+  speedFullScoreMs: number;
   score: ParkingJamPlayScore;
 };
 
@@ -48,6 +52,16 @@ type ParkingJamPlayState = {
   operation: ParkingJamOperation | null;
   progress: ParkingJamProgress;
 };
+
+function getSpeedReference(
+  analysis: ParkingJamDifficultyAnalysis,
+): ParkingJamSpeedReference {
+  const { vehicleCount, initialLegalVehicleCount } = analysis.features;
+  return {
+    vehicleCount,
+    initialBlockedVehicleCount: vehicleCount - initialLegalVehicleCount,
+  };
+}
 
 function createPlayState(
   difficulty: ParkingJamDifficulty,
@@ -167,7 +181,12 @@ export function useParkingJamPlay(difficulty: ParkingJamDifficulty) {
     });
   }, []);
 
+  // 不成立・待った・やり直しの計数を捨てて同じ問題を始め直すと採点を回避できるため、
+  // 同じ問題の新しいプレイはクリア後だけ始められる。プレイ中は restart を使う。
+  const canReplay = play.session.status === "cleared";
   const replay = useCallback(() => {
+    if (!canReplay) return;
+
     const startedAt = Date.now();
     setNow(startedAt);
     setPlay((current) => ({
@@ -177,7 +196,7 @@ export function useParkingJamPlay(difficulty: ParkingJamDifficulty) {
       operation: null,
       progress: "playing",
     }));
-  }, []);
+  }, [canReplay]);
 
   const startNewProblem = useCallback(() => {
     const startedAt = Date.now();
@@ -200,23 +219,26 @@ export function useParkingJamPlay(difficulty: ParkingJamDifficulty) {
     () => getParkingJamSessionResult(session, now),
     [now, session],
   );
-  const result = useMemo<ParkingJamResult | null>(
-    () =>
-      sessionResult
-        ? {
-            ...sessionResult,
-            problemIdentity: play.problemIdentity,
-            score: calculateParkingJamPlayScore({
-              difficulty,
-              elapsedMs: sessionResult.elapsedMs,
-              failedMoveCount: sessionResult.failedMoveCount,
-              undoCount: sessionResult.undoCount,
-              restartCount: sessionResult.restartCount,
-            }),
-          }
-        : null,
-    [difficulty, play.problemIdentity, sessionResult],
-  );
+  const result = useMemo<ParkingJamResult | null>(() => {
+    if (!sessionResult) return null;
+
+    const speedReference = getSpeedReference(play.difficultyAnalysis);
+    const speedFullScoreMs =
+      calculateParkingJamSpeedFullScoreMs(speedReference);
+    return {
+      ...sessionResult,
+      problemIdentity: play.problemIdentity,
+      speedReference,
+      speedFullScoreMs,
+      score: calculateParkingJamPlayScore({
+        speedFullScoreMs,
+        elapsedMs: sessionResult.elapsedMs,
+        failedMoveCount: sessionResult.failedMoveCount,
+        undoCount: sessionResult.undoCount,
+        restartCount: sessionResult.restartCount,
+      }),
+    };
+  }, [play.difficultyAnalysis, play.problemIdentity, sessionResult]);
 
   return {
     difficulty,

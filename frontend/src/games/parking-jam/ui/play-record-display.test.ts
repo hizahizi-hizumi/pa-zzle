@@ -19,12 +19,13 @@ const record = createParkingJamPlayRecord({
     },
     generationAttempt: 3,
   },
+  speedReference: { vehicleCount: 14, initialBlockedVehicleCount: 8 },
   startedAt: 1_000,
   completedAt: 121_000,
   result: {
     elapsedMs: 120_000,
-    moveAttemptCount: 16,
-    successfulMoveCount: 14,
+    moveAttemptCount: 17,
+    successfulMoveCount: 15,
     failedMoveCount: 2,
     undoCount: 1,
     restartCount: 0,
@@ -57,7 +58,7 @@ describe("parkingJamPlayRecordDisplay", () => {
     const elapsed = getFormattedMetric("elapsed-ms");
     const failedMoves = getFormattedMetric("failed-move-count");
 
-    expect(score).toBe("88点");
+    expect(score).toBe("60点");
     expect(elapsed).toBe("02:00");
     expect(failedMoves).toBe("2回");
   });

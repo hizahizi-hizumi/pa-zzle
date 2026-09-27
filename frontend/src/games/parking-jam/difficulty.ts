@@ -9,56 +9,30 @@ export const parkingJamDifficulties = [
 export type ParkingJamDifficulty =
   (typeof parkingJamDifficulties)[number]["id"];
 
-export const PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION = "dependency-v1";
-export const PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION =
-  "visual-local-load-review-v1";
-export const PARKING_JAM_DIFFICULTY_MODEL_VERSION =
-  PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION;
+export const PARKING_JAM_DIFFICULTY_MODEL_VERSION = "visual-local-load-v1";
 
-export const PARKING_JAM_DIFFICULTY_THRESHOLDS = {
-  easyMaximumDependencyDepth: 2,
-  easyMinimumInitialLegalVehicleRatio: 0.75,
-  easyMinimumSolutionOrderFreedom: 0.9,
-  hardDeepMinimumDependencyDepth: 4,
-  hardDeepMaximumSolutionOrderFreedom: 0.86,
-  hardConstrainedMaximumInitialLegalVehicleRatio: 0.6,
-  hardConstrainedMaximumSolutionOrderFreedom: 0.78,
-} as const;
-
-const reviewFactorRanges = {
+const difficultyFactorRanges = {
   initialBlockedVehicleCount: { minimum: 2, maximum: 5 },
   initialAverageMinimumBlockingVehicleCount: { minimum: 1, maximum: 1.5 },
   averageExitPathLength: { minimum: 1.5, maximum: 2.5 },
 } as const;
 
-const reviewDifficultyThresholds = {
+const difficultyScoreThresholds = {
   easyMaximumScore: 1 / 3,
   hardMinimumScore: 2 / 3,
 } as const;
 
-export type ParkingJamDifficultyAssessment =
-  | {
-      status: "rated";
-      modelVersion: typeof PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION;
-      difficulty: ParkingJamDifficulty;
-    }
-  | {
-      status: "unsupported";
-      modelVersion: typeof PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION;
-    };
-
-export type ParkingJamReviewDifficultyFactors = {
+export type ParkingJamDifficultyFactors = {
   initialBlockedVehicleCount: number;
   initialAverageMinimumBlockingVehicleCount: number;
   averageExitPathLength: number;
 };
 
-export type ParkingJamReviewDifficultyAssessment = {
-  status: "rated";
-  modelVersion: typeof PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION;
+export type ParkingJamDifficultyAssessment = {
+  modelVersion: typeof PARKING_JAM_DIFFICULTY_MODEL_VERSION;
   difficulty: ParkingJamDifficulty;
   score: number;
-  factors: ParkingJamReviewDifficultyFactors;
+  factors: ParkingJamDifficultyFactors;
 };
 
 export function parseParkingJamDifficulty(
@@ -77,7 +51,7 @@ export function getParkingJamDifficultyLabel(
   );
 }
 
-function normalizeReviewFactor(
+function normalizeDifficultyFactor(
   value: number,
   range: { minimum: number; maximum: number },
 ): number {
@@ -85,9 +59,9 @@ function normalizeReviewFactor(
   return Math.min(1, Math.max(0, normalized));
 }
 
-function calculateReviewDifficultyFactors(
+export function calculateParkingJamDifficultyFactors(
   analysis: ParkingJamDifficultyAnalysis,
-): ParkingJamReviewDifficultyFactors {
+): ParkingJamDifficultyFactors {
   const { features } = analysis;
   return {
     initialBlockedVehicleCount:
@@ -98,104 +72,35 @@ function calculateReviewDifficultyFactors(
   };
 }
 
-export function assessParkingJamReviewDifficulty(
-  analysis: ParkingJamDifficultyAnalysis,
-): ParkingJamReviewDifficultyAssessment {
-  const factors = calculateReviewDifficultyFactors(analysis);
-  const score =
-    (normalizeReviewFactor(
-      factors.initialBlockedVehicleCount,
-      reviewFactorRanges.initialBlockedVehicleCount,
-    ) +
-      normalizeReviewFactor(
-        factors.initialAverageMinimumBlockingVehicleCount,
-        reviewFactorRanges.initialAverageMinimumBlockingVehicleCount,
-      ) +
-      normalizeReviewFactor(
-        factors.averageExitPathLength,
-        reviewFactorRanges.averageExitPathLength,
-      )) /
-    3;
-
-  if (score <= reviewDifficultyThresholds.easyMaximumScore) {
-    return {
-      status: "rated",
-      modelVersion: PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION,
-      difficulty: "easy",
-      score,
-      factors,
-    };
-  }
-
-  if (score >= reviewDifficultyThresholds.hardMinimumScore) {
-    return {
-      status: "rated",
-      modelVersion: PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION,
-      difficulty: "hard",
-      score,
-      factors,
-    };
-  }
-
-  return {
-    status: "rated",
-    modelVersion: PARKING_JAM_REVIEW_DIFFICULTY_MODEL_VERSION,
-    difficulty: "normal",
-    score,
-    factors,
-  };
+function classifyDifficultyScore(score: number): ParkingJamDifficulty {
+  if (score <= difficultyScoreThresholds.easyMaximumScore) return "easy";
+  if (score >= difficultyScoreThresholds.hardMinimumScore) return "hard";
+  return "normal";
 }
 
 export function assessParkingJamDifficulty(
   analysis: ParkingJamDifficultyAnalysis,
 ): ParkingJamDifficultyAssessment {
-  const { features } = analysis;
-  if (
-    analysis.status === "unsupported" ||
-    features.solutionOrderFreedom === null
-  ) {
-    return {
-      status: "unsupported",
-      modelVersion: PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION,
-    };
-  }
-
-  const isEasy =
-    features.dependencyDepth <=
-      PARKING_JAM_DIFFICULTY_THRESHOLDS.easyMaximumDependencyDepth &&
-    features.initialLegalVehicleRatio >=
-      PARKING_JAM_DIFFICULTY_THRESHOLDS.easyMinimumInitialLegalVehicleRatio &&
-    features.solutionOrderFreedom >=
-      PARKING_JAM_DIFFICULTY_THRESHOLDS.easyMinimumSolutionOrderFreedom;
-  if (isEasy) {
-    return {
-      status: "rated",
-      modelVersion: PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION,
-      difficulty: "easy",
-    };
-  }
-
-  const hasDeepDependencies =
-    features.dependencyDepth >=
-      PARKING_JAM_DIFFICULTY_THRESHOLDS.hardDeepMinimumDependencyDepth &&
-    features.solutionOrderFreedom <=
-      PARKING_JAM_DIFFICULTY_THRESHOLDS.hardDeepMaximumSolutionOrderFreedom;
-  const hasConstrainedOrder =
-    features.initialLegalVehicleRatio <=
-      PARKING_JAM_DIFFICULTY_THRESHOLDS.hardConstrainedMaximumInitialLegalVehicleRatio &&
-    features.solutionOrderFreedom <=
-      PARKING_JAM_DIFFICULTY_THRESHOLDS.hardConstrainedMaximumSolutionOrderFreedom;
-  if (hasDeepDependencies || hasConstrainedOrder) {
-    return {
-      status: "rated",
-      modelVersion: PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION,
-      difficulty: "hard",
-    };
-  }
+  const factors = calculateParkingJamDifficultyFactors(analysis);
+  const score =
+    (normalizeDifficultyFactor(
+      factors.initialBlockedVehicleCount,
+      difficultyFactorRanges.initialBlockedVehicleCount,
+    ) +
+      normalizeDifficultyFactor(
+        factors.initialAverageMinimumBlockingVehicleCount,
+        difficultyFactorRanges.initialAverageMinimumBlockingVehicleCount,
+      ) +
+      normalizeDifficultyFactor(
+        factors.averageExitPathLength,
+        difficultyFactorRanges.averageExitPathLength,
+      )) /
+    3;
 
   return {
-    status: "rated",
-    modelVersion: PARKING_JAM_LEGACY_DIFFICULTY_MODEL_VERSION,
-    difficulty: "normal",
+    modelVersion: PARKING_JAM_DIFFICULTY_MODEL_VERSION,
+    difficulty: classifyDifficultyScore(score),
+    score,
+    factors,
   };
 }

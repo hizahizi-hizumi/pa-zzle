@@ -28,6 +28,7 @@ function createProps(): ComponentProps<typeof ParkingJamPlay> {
     operation: null,
     elapsedMs: 65_000,
     failedMoveCount: 2,
+    undoCount: 1,
     canUndo: true,
     canRestart: true,
     result: null,
@@ -89,6 +90,12 @@ describe("ParkingJamPlay", () => {
     fireEvent.click(screen.getByRole("button", { name: "盤面を戻す" }));
 
     expect(props.onRestart).toHaveBeenCalledOnce();
+  });
+
+  test("盤面下の待ったから直前の出庫を戻せること", () => {
+    fireEvent.click(screen.getByRole("button", { name: "待った" }));
+
+    expect(props.onUndo).toHaveBeenCalledOnce();
   });
 
   test("内部診断が有効なとき検証情報を開けること", () => {

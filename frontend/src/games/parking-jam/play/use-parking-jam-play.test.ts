@@ -1,7 +1,7 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 
 import {
-  assessParkingJamReviewDifficulty,
+  assessParkingJamDifficulty,
   type ParkingJamDifficulty,
 } from "@/games/parking-jam/difficulty";
 import { useParkingJamPlay } from "@/games/parking-jam/play/use-parking-jam-play";
@@ -34,11 +34,11 @@ describe("useParkingJamPlay", () => {
       const generated = restoreParkingJamProblem(
         result.current.problemIdentity,
       );
-      const assessment = assessParkingJamReviewDifficulty(
+      const assessment = assessParkingJamDifficulty(
         generated.difficultyAnalysis,
       );
 
-      expect(assessment).toMatchObject({ status: "rated", difficulty });
+      expect(assessment).toMatchObject({ difficulty });
       expect(result.current.difficultyAnalysis).toEqual(
         generated.difficultyAnalysis,
       );
@@ -81,6 +81,20 @@ describe("useParkingJamPlay", () => {
 
       expect(result.current.progress).toBe("result");
       expect(result.current.result?.score.total).toBeGreaterThanOrEqual(0);
+    });
+
+    test("クリア前は同じ問題の新しいプレイを始めず計数を保つこと", () => {
+      const firstMove = solution[0];
+      if (!firstMove) throw new Error("Expected a solution move");
+      act(() =>
+        result.current.attemptMove(firstMove.vehicleId, firstMove.direction),
+      );
+      act(() => result.current.undo());
+
+      act(() => result.current.replay());
+
+      expect(result.current.undoCount).toBe(1);
+      expect(result.current.moveAttemptCount).toBe(1);
     });
 
     test("盤面が進んだときだけやり直し可能になること", () => {
