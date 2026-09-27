@@ -1,13 +1,19 @@
 /**
  * パーキングジャム難易度5段階の設計調査（Issue #405）で使う分析用の特徴量。
- * 本番の判定（`visual-local-load-v1`）には使わない。本番の盤面・ルール・難易度分析の関数を
- * そのまま使い、盤面の幾何と単調削除の状態空間から、挑戦の候補特徴を観測する。
+ * 本番の盤面・ルール・難易度分析の関数をそのまま使い、盤面の幾何と単調削除の状態空間から、
+ * 挑戦の候補特徴を観測する。本番の判定（`challenge-levers-v1`）が使う特徴は本番の分析結果から取り、
+ * ここでは本番が使わない調査用の特徴だけを求める。
  */
 import {
   assessParkingJamDifficulty,
-  PARKING_JAM_DIFFICULTY_MODEL_VERSION,
+  calculateParkingJamChallengeLevers,
+  type ParkingJamChallengeLevers,
+  type ParkingJamDifficultyAssessment,
 } from "@/games/parking-jam/difficulty";
-import { analyzeParkingJamDifficulty } from "@/games/parking-jam/problem/difficulty-analysis";
+import {
+  analyzeParkingJamDifficulty,
+  type ParkingJamDifficultyAnalysis,
+} from "@/games/parking-jam/problem/difficulty-analysis";
 import { analyzeParkingJamSolvability } from "@/games/parking-jam/problem/generation/solvability";
 import type { ParkingJamGeneratedProblem } from "@/games/parking-jam/problem/problem";
 import {
@@ -157,7 +163,48 @@ function popcount(mask: number): number {
   return count;
 }
 
+const visualLocalLoadV1FactorRanges = {
+  initialBlockedVehicleCount: { minimum: 2, maximum: 5 },
+  initialAverageMinimumBlockingVehicleCount: { minimum: 1, maximum: 1.5 },
+  averageExitPathLength: { minimum: 1.5, maximum: 2.5 },
+} as const;
+
+/**
+ * 3段階時代の判定 `visual-local-load-v1` のスコアと区分。本番からは削除済みで、
+ * 調査の比較（案V、18.5 の対応表）のためだけにここで再現する。
+ */
+function assessVisualLocalLoadV1({ features }: ParkingJamDifficultyAnalysis): {
+  score: number;
+  difficulty: "easy" | "normal" | "hard";
+} {
+  const factors = {
+    initialBlockedVehicleCount:
+      features.vehicleCount - features.initialLegalVehicleCount,
+    initialAverageMinimumBlockingVehicleCount:
+      features.initialAverageMinimumBlockingVehicleCount,
+    averageExitPathLength: features.averageExitPathLength,
+  };
+  const score =
+    (Object.keys(visualLocalLoadV1FactorRanges) as (keyof typeof factors)[])
+      .map((name) => {
+        const { minimum, maximum } = visualLocalLoadV1FactorRanges[name];
+        return Math.min(
+          1,
+          Math.max(0, (factors[name] - minimum) / (maximum - minimum)),
+        );
+      })
+      .reduce((total, value) => total + value, 0) / 3;
+  return {
+    score,
+    difficulty: score <= 1 / 3 ? "easy" : score >= 2 / 3 ? "hard" : "normal",
+  };
+}
+
 export type ParkingJamStudyFeatures = {
+  // 本番の判定（challenge-levers-v1）
+  /** 本番の3レバー。状態空間を解析できない問題では null。 */
+  levers: ParkingJamChallengeLevers | null;
+  assessment: ParkingJamDifficultyAssessment;
   // 規模（対照指標）
   width: number;
   height: number;
@@ -240,7 +287,7 @@ export function analyzeParkingJamStudyFeatures(
 ): ParkingJamStudyFeatures {
   const board = generated.problem.board;
   const analysis = generated.difficultyAnalysis;
-  const assessment = assessParkingJamDifficulty(analysis);
+  const v1 = assessVisualLocalLoadV1(analysis);
   const n = board.vehicles.length;
   const full = (1 << n) - 1;
   const geometry = describeVehicleGeometry(board);
@@ -307,37 +354,22 @@ export function analyzeParkingJamStudyFeatures(
       for (const blocker of direction.blockers) gaps.push(blocker.gap);
   }
 
-  const misreadFlags = geometry.map((vehicleGeometry) => {
-    const nearMiss = vehicleGeometry.directions.some(
-      (direction) => direction.nearMissOpening && !direction.fixedBlocked,
-    );
-    const clearWall = vehicleGeometry.directions.some(
+  // 読み違いレバーの3種は本番の分析結果を使い、本番が使わない「出られそうな縁石」だけをここで数える。
+  const clearWallCount = geometry.filter((vehicleGeometry) =>
+    vehicleGeometry.directions.some(
       (direction) =>
         !direction.hasOpening &&
         !direction.fixedBlocked &&
         direction.blockers.length === 0 &&
         direction.pathLength > 0,
-    );
-    const counts = vehicleGeometry.available.map(
-      (direction) => direction.blockers.length,
-    );
-    const directionChoice =
-      vehicleGeometry.available.length === 2 &&
-      counts.filter((count) => count === 0).length === 1;
-    const blocked = counts.length > 0 && Math.min(...counts) > 0;
-    const leastBlocked = [...vehicleGeometry.available].sort(
-      (left, right) => left.blockers.length - right.blockers.length,
-    )[0];
-    const farBlocked = blocked && (leastBlocked?.blockers[0]?.gap ?? 0) >= 2;
-    return { nearMiss, clearWall, directionChoice, blocked, farBlocked };
-  });
-  const blockedVehicleCount = misreadFlags.filter(
-    (flag) => flag.blocked,
+    ),
   ).length;
-  function ratioOf(
-    predicate: (flag: (typeof misreadFlags)[number]) => boolean,
-  ): number {
-    return n === 0 ? 0 : misreadFlags.filter(predicate).length / n;
+  const productionFeatures = analysis.features;
+  const initialBlockedVehicleCount =
+    productionFeatures.vehicleCount -
+    productionFeatures.initialLegalVehicleCount;
+  function ratioOf(count: number): number {
+    return n === 0 ? 0 : count / n;
   }
   const initialLegalGeometry = geometry.filter(
     (_vehicleGeometry, index) => (initialLegal & (1 << index)) !== 0,
@@ -470,6 +502,8 @@ export function analyzeParkingJamStudyFeatures(
   );
 
   return {
+    levers: calculateParkingJamChallengeLevers(analysis.features),
+    assessment: assessParkingJamDifficulty(analysis),
     width: board.width,
     height: board.height,
     cellCount: board.width * board.height,
@@ -481,12 +515,14 @@ export function analyzeParkingJamStudyFeatures(
       (total, opening) => total + opening.length,
       0,
     ),
-    v1Score: assessment.score,
-    v1Difficulty: `${PARKING_JAM_DIFFICULTY_MODEL_VERSION}:${assessment.difficulty}`,
-    initialBlockedCount: assessment.factors.initialBlockedVehicleCount,
+    v1Score: v1.score,
+    v1Difficulty: `visual-local-load-v1:${v1.difficulty}`,
+    initialBlockedCount:
+      analysis.features.vehicleCount -
+      analysis.features.initialLegalVehicleCount,
     initialAverageMinimumBlocking:
-      assessment.factors.initialAverageMinimumBlockingVehicleCount,
-    averageExitPathLength: assessment.factors.averageExitPathLength,
+      analysis.features.initialAverageMinimumBlockingVehicleCount,
+    averageExitPathLength: analysis.features.averageExitPathLength,
     depth: layerSizes.length,
     layerSizes,
     deepVehicleCount: layerOf.filter((layer) => layer >= 3).length,
@@ -500,16 +536,18 @@ export function analyzeParkingJamStudyFeatures(
         ? 0
         : gaps.reduce((total, gap) => total + gap, 0) / gaps.length,
     farBlockerCount: gaps.filter((gap) => gap >= 2).length,
-    nearMissRatio: ratioOf((flag) => flag.nearMiss),
-    clearWallRatio: ratioOf((flag) => flag.clearWall),
-    directionChoiceRatio: ratioOf((flag) => flag.directionChoice),
+    nearMissRatio: ratioOf(productionFeatures.adjacentLaneOpeningVehicleCount),
+    clearWallRatio: ratioOf(clearWallCount),
+    directionChoiceRatio: ratioOf(
+      productionFeatures.directionChoiceVehicleCount,
+    ),
     farBlockedRatio:
-      blockedVehicleCount === 0
+      initialBlockedVehicleCount === 0
         ? 0
-        : misreadFlags.filter((flag) => flag.farBlocked).length /
-          blockedVehicleCount,
+        : productionFeatures.farBlockedVehicleCount /
+          initialBlockedVehicleCount,
     misreadVehicleRatio: ratioOf(
-      (flag) => flag.nearMiss || flag.directionChoice || flag.farBlocked,
+      productionFeatures.misreadInducingVehicleCount,
     ),
     hiddenLegalRatio:
       initialLegalGeometry.length === 0
@@ -523,7 +561,9 @@ export function analyzeParkingJamStudyFeatures(
     cuedStepRatio: n <= 1 ? 0 : cuedTotal / (n - 1),
     expectedUncuedScarceSteps,
     minimumLegalRatio,
-    maximumPrerequisiteCount: Math.max(0, ...minimumPrerequisite),
+    maximumPrerequisiteCount:
+      productionFeatures.maximumPrerequisiteVehicleCount ??
+      Math.max(0, ...minimumPrerequisite),
     buriedVehicleCount: minimumPrerequisite.filter((count) => count >= 2)
       .length,
     maximumForcedChainLength:

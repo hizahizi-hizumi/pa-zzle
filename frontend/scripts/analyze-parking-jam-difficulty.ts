@@ -16,8 +16,6 @@ import {
 } from "@/games/parking-jam/problem/problem";
 import {
   type ParkingJamBoard,
-  type ParkingJamRoadOpening,
-  type ParkingJamVehicle,
   validateParkingJamBoard,
 } from "@/games/parking-jam/puzzle/board";
 import {
@@ -1428,108 +1426,6 @@ function runShow(): void {
   }
 }
 
-// ---- preview ----
-
-type PreviewLevelProposal = {
-  layout: readonly string[];
-  roadOpenings: readonly ParkingJamRoadOpening[];
-};
-
-/**
- * 難易度選択プレビューの5段階配置案（4行7列）。形式は本番 `ParkingJamDifficultyPreview` の
- * `previewVehicleLayouts` と同じで、同じ英小文字のマスが1台。上のレベルは下のレベルの車と開口をすべて残し、
- * 依存を深める車か、読み違いを誘う開口（どの車も使わない、隣の車線の開口）を足す。
- */
-const baseRoadOpenings: readonly ParkingJamRoadOpening[] = [
-  { side: "right", startOffset: 0, length: 3 },
-  { side: "up", startOffset: 3, length: 3 },
-];
-const nearMissBelowColumnOpening: ParkingJamRoadOpening = {
-  side: "down",
-  startOffset: 2,
-  length: 1,
-};
-const nearMissBesideRowOpening: ParkingJamRoadOpening = {
-  side: "left",
-  startOffset: 0,
-  length: 1,
-};
-const previewLevelProposals: readonly PreviewLevelProposal[] = [
-  {
-    layout: [".......", "aa.b...", "cc.b...", "......."],
-    roadOpenings: baseRoadOpenings,
-  },
-  {
-    layout: [".......", "aa.b...", "cc.b...", "......."],
-    roadOpenings: [...baseRoadOpenings, nearMissBelowColumnOpening],
-  },
-  {
-    layout: ["..dd...", "aa.b...", "cc.b...", "......."],
-    roadOpenings: [...baseRoadOpenings, nearMissBelowColumnOpening],
-  },
-  {
-    layout: ["..dd...", "aa.b...", "cc.b...", "......."],
-    roadOpenings: [
-      ...baseRoadOpenings,
-      nearMissBelowColumnOpening,
-      nearMissBesideRowOpening,
-    ],
-  },
-  {
-    layout: ["eeddff.", "aa.b...", "cc.b...", "......."],
-    roadOpenings: [
-      ...baseRoadOpenings,
-      nearMissBelowColumnOpening,
-      nearMissBesideRowOpening,
-    ],
-  },
-];
-
-function toLayoutBoard(proposal: PreviewLevelProposal): ParkingJamBoard {
-  const cellsById = new Map<string, { row: number; column: number }[]>();
-  proposal.layout.forEach((marks, row) => {
-    Array.from(marks).forEach((mark, column) => {
-      if (mark === ".") return;
-      cellsById.set(mark, [...(cellsById.get(mark) ?? []), { row, column }]);
-    });
-  });
-  const vehicles = [...cellsById].map(([id, cells]): ParkingJamVehicle => {
-    const length = cells.length;
-    if (length !== 2 && length !== 3)
-      throw new RangeError(`Invalid preview vehicle: ${id}`);
-    return {
-      id,
-      row: Math.min(...cells.map((cell) => cell.row)),
-      column: Math.min(...cells.map((cell) => cell.column)),
-      orientation: cells.every((cell) => cell.row === cells[0]?.row)
-        ? "horizontal"
-        : "vertical",
-      length,
-    };
-  });
-  return {
-    width: proposal.layout[0]?.length ?? 0,
-    height: proposal.layout.length,
-    vehicles,
-    fixedAreas: [],
-    roadOpenings: proposal.roadOpenings,
-  };
-}
-
-function runPreview(): void {
-  const plan = findStudyPlan(readOption("plan") ?? "T3");
-  previewLevelProposals.forEach((proposal, index) => {
-    const board = toLayoutBoard(proposal);
-    validateParkingJamBoard(board);
-    const features = analyzeParkingJamBoardStudyFeatures(board);
-    console.log(
-      `レベル${index + 1}（案${plan.id}=${formatStudyAssessment(plan.classify(features))}、規模レバー${scaleLeverOf(features)}）`,
-    );
-    console.log(renderParkingJamBoard(board));
-    console.log(`${describe(features)}\n`);
-  });
-}
-
 // ---- decoy ----
 
 function runDecoy(): void {
@@ -1586,7 +1482,6 @@ const commands: Record<string, () => void> = {
   supply: runSupply,
   pick: runPick,
   show: runShow,
-  preview: runPreview,
   decoy: runDecoy,
 };
 const command = commands[Bun.argv[2] ?? ""];

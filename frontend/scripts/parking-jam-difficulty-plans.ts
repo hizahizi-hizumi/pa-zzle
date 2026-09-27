@@ -1,7 +1,9 @@
 /**
- * パーキングジャム難易度5段階の分類案（Issue #405 の設計調査用）。本番の判定には使わない。
- * 各案は上から順に判定し、最初に当てはまったレベルにする。
+ * パーキングジャム難易度5段階の分類案（Issue #405 の設計調査用）。
+ * 採用した案 T3 は本番の判定（`challenge-levers-v1`）そのもので、ほかの案は比較用に残す。
+ * レバーの強さは本番の `calculateParkingJamChallengeLevers` の値を使う。
  */
+import type { ParkingJamLeverStrength } from "@/games/parking-jam/difficulty";
 import type { ParkingJamStudyFeatures } from "./parking-jam-difficulty-features";
 
 export type StudyAssessment =
@@ -9,7 +11,9 @@ export type StudyAssessment =
   | { status: "too-light" }
   | { status: "too-heavy" }
   /** 提供範囲内だが、レバーの組合せがどのレベルの条件にも当たらない。 */
-  | { status: "unplaced" };
+  | { status: "unplaced" }
+  /** 状態空間を解析できず評価できない。 */
+  | { status: "unsupported" };
 
 export type StudyPlan = {
   id: string;
@@ -111,41 +115,47 @@ function classifyLocalLoadScore(
   return level(1);
 }
 
-/**
- * 依存レバーの強さ。1: 塞いでいる車はすぐ出せる（段数2、重なりなし）。
- * 2: 2台に塞がれた車がある、または塞いでいる車がさらに塞がれている（段数2の重なり、段数3で枝分かれ≤1）。
- * 3: 3段以上さかのぼる、または2段の待ちが枝分かれする（段数4〜6、段数3で枝分かれ≥2）。
- */
+function leversOf(features: ParkingJamStudyFeatures) {
+  if (!features.levers) throw new Error("Study features have no levers");
+  return features.levers;
+}
+
+/** 依存レバーの強さ（本番の値）。 */
 export function dependencyLeverOf(
   features: ParkingJamStudyFeatures,
-): 1 | 2 | 3 {
-  const branching = features.maximumPrerequisiteCount - (features.depth - 1);
-  if (features.depth >= 4 || (features.depth === 3 && branching >= 2)) return 3;
-  if (features.depth === 3 || features.maximumPrerequisiteCount >= 2) return 2;
-  return 1;
+): ParkingJamLeverStrength {
+  return leversOf(features).dependency;
 }
 
-/**
- * 読み違いレバーの強さ。車両数で割った「読み違いを誘う車」の割合で、4台に1台未満を1、
- * 2台に1台未満を2、それ以上を3とする。境界は分布の分位ではなく割合の読みやすさで置いた仮の値。
- */
-export function misreadLeverOf(features: ParkingJamStudyFeatures): 1 | 2 | 3 {
-  if (features.misreadVehicleRatio >= 1 / 2) return 3;
-  if (features.misreadVehicleRatio >= 1 / 4) return 2;
-  return 1;
+/** 読み違いレバーの強さ（本番の値）。 */
+export function misreadLeverOf(
+  features: ParkingJamStudyFeatures,
+): ParkingJamLeverStrength {
+  return leversOf(features).misread;
 }
 
-/**
- * 規模レバー（視覚探索・読む範囲）の強さ。盤面の広さと、読む対象（車と固定物）の数の弱い方で決める。
- * 広いだけ・多いだけでは上がらず、広くて多いときだけ3になる。
- * 広さ: 36マス以下=1、48マス以下=2、それより広い=3。読む対象: 車両数+固定物数が8以下=1、11以下=2、それより多い=3。
- */
-export function scaleLeverOf(features: ParkingJamStudyFeatures): 1 | 2 | 3 {
-  const areaGrade =
-    features.cellCount <= 36 ? 1 : features.cellCount <= 48 ? 2 : 3;
-  const elementCount = features.vehicleCount + features.fixedAreaCount;
-  const elementGrade = elementCount <= 8 ? 1 : elementCount <= 11 ? 2 : 3;
-  return Math.min(areaGrade, elementGrade) as 1 | 2 | 3;
+/** 規模レバーの強さ（本番の値）。 */
+export function scaleLeverOf(
+  features: ParkingJamStudyFeatures,
+): ParkingJamLeverStrength {
+  return leversOf(features).scale;
+}
+
+/** 本番の判定結果を調査用の分類結果へ写す。 */
+function classifyByProduction(
+  features: ParkingJamStudyFeatures,
+): StudyAssessment {
+  const { assessment } = features;
+  switch (assessment.status) {
+    case "classified":
+      return level(Number(assessment.difficulty) as 1 | 2 | 3 | 4 | 5);
+    case "out-of-range":
+      return assessment.reason === "unlisted-levers"
+        ? { status: "unplaced" }
+        : { status: assessment.reason };
+    case "unsupported":
+      return { status: "unsupported" };
+  }
 }
 
 type LeverStep = {
@@ -220,14 +230,6 @@ const misreadFirstStepsWithScale = [
   { dependency: 3, misread: 3, scale: [2, 3] },
 ] as const;
 
-const alternatingStepsWithScale = [
-  { dependency: 1, misread: 1, scale: [1, 2] },
-  { dependency: 1, misread: 2, scale: [1, 2] },
-  { dependency: 2, misread: 2, scale: [1, 3] },
-  { dependency: 2, misread: 3, scale: [2, 3] },
-  { dependency: 3, misread: 3, scale: [2, 3] },
-] as const;
-
 const scaleStrictSteps = [
   { dependency: 1, misread: 1, scale: [1, 1] },
   { dependency: 1, misread: 2, scale: [1, 2] },
@@ -245,8 +247,9 @@ export const studyPlans: readonly StudyPlan[] = [
   },
   {
     id: "T3",
-    summary: "依存と読み違いは M3 の交互の階段、規模は T1 と同じ範囲",
-    classify: classifyByLeverSteps(alternatingStepsWithScale, true),
+    summary:
+      "採用（本番 challenge-levers-v1）: 依存と読み違いは M3 の交互の階段、規模は T1 と同じ範囲",
+    classify: classifyByProduction,
   },
   {
     id: "T1s",
