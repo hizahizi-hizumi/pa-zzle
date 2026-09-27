@@ -22,19 +22,23 @@ export function isTakuzuGivenCell(
   return (givens.cells[cellIndex] ?? null) !== null;
 }
 
-/** 固定マスや盤面外のマスは変えず、同じ盤面をそのまま返す。 */
-export function cycleTakuzuCell(
+/** 固定マスや盤面外のマス、すでに同じ中身のマスは変えず、同じ盤面をそのまま返す。 */
+export function placeTakuzuCell(
   givens: TakuzuBoard,
   board: TakuzuBoard,
   cellIndex: number,
-  direction: TakuzuCycleDirection,
+  cell: TakuzuCell,
 ): TakuzuBoard {
-  const cell = board.cells[cellIndex];
-  if (cell === undefined || isTakuzuGivenCell(givens, cellIndex)) {
+  const currentCell = board.cells[cellIndex];
+  if (
+    currentCell === undefined ||
+    currentCell === cell ||
+    isTakuzuGivenCell(givens, cellIndex)
+  ) {
     return board;
   }
 
   const cells = [...board.cells];
-  cells[cellIndex] = getNextTakuzuCell(cell, direction);
+  cells[cellIndex] = cell;
   return { ...board, cells };
 }

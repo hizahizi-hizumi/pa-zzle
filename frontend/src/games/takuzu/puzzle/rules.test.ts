@@ -2,7 +2,6 @@ import { parseTakuzuBoard } from "@/games/takuzu/puzzle/board";
 import {
   findTakuzuRuleViolations,
   isTakuzuSolved,
-  listTakuzuViolatedCellIndices,
 } from "@/games/takuzu/puzzle/rules";
 
 const solvedBoard = parseTakuzuBoard(["AABB", "BBAA", "ABAB", "BABA"]);
@@ -86,17 +85,6 @@ describe("findTakuzuRuleViolations", () => {
 
       expect(result.duplicateLines).toEqual([]);
     });
-  });
-});
-
-describe("listTakuzuViolatedCellIndices", () => {
-  const board = parseTakuzuBoard(["AAA.", "....", "....", "...."]);
-  const violations = findTakuzuRuleViolations(board);
-
-  test("3連続のマスと個数を超えた行のマスを重複なく返すこと", () => {
-    const result = listTakuzuViolatedCellIndices(board.size, violations);
-
-    expect(result).toEqual([0, 1, 2, 3]);
   });
 });
 

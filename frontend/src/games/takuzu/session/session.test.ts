@@ -6,7 +6,9 @@ import {
   cycleTakuzuSessionCell,
   getTakuzuSessionCellViews,
   getTakuzuSessionCorrectionCount,
+  getTakuzuSessionLineViolations,
   getTakuzuSessionResult,
+  placeTakuzuSessionCell,
   replayTakuzuSession,
   restartTakuzuSession,
   type TakuzuSession,
@@ -92,6 +94,42 @@ describe("cycleTakuzuSessionCell", () => {
       const result = cycleTakuzuSessionCell(cleared, 1, "forward", 6_000);
 
       expect(result).toBe(cleared);
+    });
+  });
+});
+
+describe("placeTakuzuSessionCell", () => {
+  const session = createTakuzuSession(problem, 100);
+
+  test("空きマスへ B を直接置いて入力回数を数えること", () => {
+    const result = placeTakuzuSessionCell(session, 1, "b", 200);
+
+    expect(result.board.cells[1]).toBe("b");
+    expect(result.inputCount).toBe(1);
+  });
+
+  test("すでに同じ中身のマスへの入力を記録しないこと", () => {
+    const result = placeTakuzuSessionCell(session, 1, null, 200);
+
+    expect(result).toBe(session);
+  });
+
+  describe("置いたマスへ戻って直接置き換えた場合", () => {
+    const placed = [
+      [1, "a"],
+      [2, "b"],
+      [1, "b"],
+    ] as const;
+    const replaced = placed.reduce(
+      (current, [cellIndex, cell]) =>
+        placeTakuzuSessionCell(current, cellIndex, cell, 200),
+      session,
+    );
+
+    test("置き直しを1回と数えること", () => {
+      const result = getTakuzuSessionCorrectionCount(replaced);
+
+      expect(result).toBe(1);
     });
   });
 });
@@ -265,15 +303,56 @@ describe("getTakuzuSessionResult", () => {
 describe("getTakuzuSessionCellViews", () => {
   const session = pressCells(createTakuzuSession(problem, 100), [1, 2], 200);
 
-  test("固定マスとルール違反のマスを示すこと", () => {
+  test("固定マスと3連続のマスを示すこと", () => {
     const result = getTakuzuSessionCellViews(session);
 
     expect(result.slice(0, 4)).toEqual([
-      { cell: "a", given: true, violated: true },
-      { cell: "a", given: false, violated: true },
-      { cell: "a", given: false, violated: true },
-      { cell: "b", given: true, violated: true },
+      { cell: "a", given: true, inViolatingRun: true },
+      { cell: "a", given: false, inViolatingRun: true },
+      { cell: "a", given: false, inViolatingRun: true },
+      { cell: "b", given: true, inViolatingRun: false },
     ]);
-    expect(result[4]).toEqual({ cell: null, given: false, violated: false });
+    expect(result[4]).toEqual({
+      cell: null,
+      given: false,
+      inViolatingRun: false,
+    });
+  });
+});
+
+describe("getTakuzuSessionLineViolations", () => {
+  const session = createTakuzuSession(problem, 100);
+
+  describe("行に同じタイルが半数を超えた場合", () => {
+    const overfilled = pressCells(session, [1, 2], 200);
+
+    test("その行を個数超過として示すこと", () => {
+      const result = getTakuzuSessionLineViolations(overfilled);
+
+      expect(result).toEqual([
+        { axis: "row", index: 0, overfilled: true, duplicated: false },
+      ]);
+    });
+  });
+
+  describe("埋まった列どうしが同じ並びになった場合", () => {
+    const duplicated = pressCells(session, [4, 8, 8, 1, 5, 9, 9, 13, 13], 200);
+
+    test("両方の列を重複として示すこと", () => {
+      const result = getTakuzuSessionLineViolations(duplicated);
+
+      expect(result).toEqual([
+        { axis: "column", index: 0, overfilled: false, duplicated: true },
+        { axis: "column", index: 1, overfilled: false, duplicated: true },
+      ]);
+    });
+  });
+
+  describe("違反の無い盤面の場合", () => {
+    test("何も示さないこと", () => {
+      const result = getTakuzuSessionLineViolations(session);
+
+      expect(result).toEqual([]);
+    });
   });
 });
