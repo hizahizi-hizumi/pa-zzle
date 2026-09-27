@@ -38,10 +38,6 @@
   --parking-jam-car-highlight: rgb(255 255 255 / 0.18);
   --parking-jam-car-accent: #8d3934;
 }
-.parking-jam-board__lot,
-.parking-jam-board__access-road {
-  fill: url("#parking-jam-lot-gradient");
-}
 .parking-jam-board__asphalt-speck {
   fill: rgb(255 255 255 / 0.065);
 }
@@ -117,7 +113,6 @@
 }
 .parking-jam-car__glass,
 .parking-jam-car__rear-glass {
-  fill: url("#parking-jam-glass-gradient");
   stroke: #314f60;
   stroke-width: 3;
   pointer-events: none;
