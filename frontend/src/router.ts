@@ -13,6 +13,7 @@ export type Path =
   | `/puzzles/parking-jam/play/:difficulty`
   | `/puzzles/slide-puzzle`
   | `/puzzles/slide-puzzle/play/:difficulty`
+  | `/puzzles/takuzu/play/:difficulty`
   | `/puzzles/water-sort`
   | `/puzzles/water-sort/play/:difficulty`
   | `/records`
@@ -23,6 +24,7 @@ export type Params = {
   '/puzzles/nanpure/play/:difficulty': { difficulty: string }
   '/puzzles/parking-jam/play/:difficulty': { difficulty: string }
   '/puzzles/slide-puzzle/play/:difficulty': { difficulty: string }
+  '/puzzles/takuzu/play/:difficulty': { difficulty: string }
   '/puzzles/water-sort/play/:difficulty': { difficulty: string }
   '/records/replay/:recordId': { recordId: string }
 }
