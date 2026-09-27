@@ -1,10 +1,13 @@
-import { takuzuFixedProblem } from "@/games/takuzu/problem/fixed-problem";
 import {
   _private,
   traceTakuzuHumanSolve,
 } from "@/games/takuzu/problem/generation/human-solver";
 import { generateTakuzuProblem } from "@/games/takuzu/problem/generator";
 import { createTakuzuProblemIdentity } from "@/games/takuzu/problem/problem";
+import {
+  listTakuzuPoolEntries,
+  toTakuzuPooledProblem,
+} from "@/games/takuzu/problem/problem-pool";
 import {
   type TakuzuTechnique,
   takuzuTechniques,
@@ -172,12 +175,15 @@ describe('findTechnique["general-line"]', () => {
 });
 
 describe("traceTakuzuHumanSolve", () => {
+  // レベル2 の問題は、個数の完成（B）が要り、隣接・挟み（A）だけでは解き切れない。
+  const { problem } = toTakuzuPooledProblem(listTakuzuPoolEntries("2")[0]!);
+
   describe("手筋で解き切れる問題", () => {
     test("解と同じ盤面まで埋めること", () => {
-      const result = traceTakuzuHumanSolve(takuzuFixedProblem.givens);
+      const result = traceTakuzuHumanSolve(problem.givens);
 
       expect(result.status).toBe("solved");
-      expect(result.board).toEqual(takuzuFixedProblem.solution);
+      expect(result.board).toEqual(problem.solution);
     });
   });
 
@@ -214,7 +220,7 @@ describe("traceTakuzuHumanSolve", () => {
     const techniques: readonly TakuzuTechnique[] = ["adjacency"];
 
     test("許した手筋で確定できなくなった所で止まること", () => {
-      const result = traceTakuzuHumanSolve(takuzuFixedProblem.givens, {
+      const result = traceTakuzuHumanSolve(problem.givens, {
         techniques,
       });
 

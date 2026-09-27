@@ -26,6 +26,7 @@ export function PlayableTakuzu({ difficulty }: PlayableTakuzuProps) {
       onUndo={play.undo}
       onRestart={play.restart}
       onReplay={play.replay}
+      onStartNewProblem={play.startNewProblem}
       onClearAnimationComplete={play.completeClearAnimation}
       onBackToHome={() => navigate("/")}
     />
