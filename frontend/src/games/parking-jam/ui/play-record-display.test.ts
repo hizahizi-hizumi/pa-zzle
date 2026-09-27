@@ -1,4 +1,5 @@
 import { createParkingJamPlayRecord } from "@/games/parking-jam/play-record";
+import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 import { parkingJamPlayRecordDisplay } from "./play-record-display";
 
 const record = createParkingJamPlayRecord({
@@ -28,6 +29,20 @@ const record = createParkingJamPlayRecord({
   },
 });
 
+function getFormattedMetric(metricId: string): string | null {
+  const metricDisplay = parkingJamPlayRecordDisplay.metrics.find(
+    (metric) => metric.id === metricId,
+  );
+  const value = getPlayRecordMetricValue(
+    record,
+    parkingJamPlayRecordDisplay.definition,
+    metricId,
+  );
+  return metricDisplay && value !== null
+    ? metricDisplay.formatValue(value)
+    : null;
+}
+
 describe("parkingJamPlayRecordDisplay", () => {
   test("難易度を開始条件ラベルへ変換すること", () => {
     const label = parkingJamPlayRecordDisplay.getComparisonLabel("hard");
@@ -35,17 +50,13 @@ describe("parkingJamPlayRecordDisplay", () => {
     expect(label).toBe("むずかしい");
   });
 
-  test("記録一覧向けに評価点と主要成績を表示すること", () => {
-    const summary = parkingJamPlayRecordDisplay.getSummary(record);
+  test("履歴と推移に共通の比較指標を表示できること", () => {
+    const score = getFormattedMetric("play-score");
+    const elapsed = getFormattedMetric("elapsed-ms");
+    const failedMoves = getFormattedMetric("failed-move-count");
 
-    expect(summary).toEqual({
-      primaryMetric: { label: "スコア", value: "88点" },
-      detailMetrics: [
-        { label: "時間", value: "02:00" },
-        { label: "ミス", value: "2" },
-        { label: "待った", value: "1" },
-        { label: "やり直し", value: "0" },
-      ],
-    });
+    expect(score).toBe("88点");
+    expect(elapsed).toBe("02:00");
+    expect(failedMoves).toBe("2回");
   });
 });

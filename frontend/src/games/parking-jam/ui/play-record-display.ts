@@ -2,13 +2,8 @@ import {
   getParkingJamDifficultyLabel,
   parseParkingJamDifficulty,
 } from "@/games/parking-jam/difficulty";
-import {
-  getParkingJamPlayRecordScore,
-  isParkingJamPlayRecord,
-  parkingJamPlayRecordDefinition,
-} from "@/games/parking-jam/play-record";
+import { parkingJamPlayRecordDefinition } from "@/games/parking-jam/play-record";
 import { formatParkingJamElapsedTime } from "@/games/parking-jam/ui/format-elapsed-time";
-import type { PlayRecord } from "@/records/play-record";
 
 export const parkingJamPlayRecordDisplay = {
   definition: parkingJamPlayRecordDefinition,
@@ -17,55 +12,33 @@ export const parkingJamPlayRecordDisplay = {
     const difficulty = parseParkingJamDifficulty(comparisonKey);
     return difficulty ? getParkingJamDifficultyLabel(difficulty) : null;
   },
-  getSummary(record: PlayRecord) {
-    if (!isParkingJamPlayRecord(record)) return null;
-
-    return {
-      primaryMetric: {
-        label: "スコア",
-        value: `${getParkingJamPlayRecordScore(record)}点`,
-      },
-      detailMetrics: [
-        {
-          label: "時間",
-          value: formatParkingJamElapsedTime(
-            record.payload.performance.elapsedMs,
-          ),
-        },
-        {
-          label: "ミス",
-          value: String(record.payload.performance.failedMoveCount),
-        },
-        {
-          label: "待った",
-          value: String(record.payload.performance.undoCount),
-        },
-        {
-          label: "やり直し",
-          value: String(record.payload.performance.restartCount),
-        },
-      ],
-    };
-  },
-  personalBestMetrics: [
+  metrics: [
     {
       id: "play-score",
-      label: "ベストスコア",
+      label: "スコア",
+      historyLabel: "スコア",
       formatValue(value: number) {
         return `${value}点`;
       },
+      referenceValue: 100,
+      axis: { kind: "integer" as const, minimum: 0, maximum: 100 },
     },
     {
       id: "elapsed-ms",
-      label: "最速",
+      label: "クリア時間",
+      historyLabel: "時間",
       formatValue: formatParkingJamElapsedTime,
+      axis: { kind: "duration-ms" as const, minimum: 0 },
     },
     {
       id: "failed-move-count",
-      label: "最少ミス",
+      label: "ミス",
+      historyLabel: "ミス",
       formatValue(value: number) {
         return `${value}回`;
       },
+      referenceValue: 0,
+      axis: { kind: "integer" as const, minimum: 0 },
     },
   ],
 };
