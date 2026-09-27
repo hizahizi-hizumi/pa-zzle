@@ -65,9 +65,24 @@ describe("useParkingJamPlay", () => {
       }
 
       expect(result.current.status).toBe("cleared");
+      expect(result.current.progress).toBe("clearing");
       expect(result.current.state.remainingVehicleIds).toEqual([]);
       expect(result.current.successfulMoveCount).toBe(solution.length);
       expect(result.current.failedMoveCount).toBe(0);
+    });
+
+    test("最後の出庫演出が完了してから結果へ進むこと", () => {
+      for (const move of solution) {
+        act(() => result.current.selectVehicle(move.vehicleId));
+        act(() => result.current.attemptDirection(move.direction));
+      }
+
+      expect(result.current.progress).toBe("clearing");
+
+      act(() => result.current.completeClearAnimation());
+
+      expect(result.current.progress).toBe("result");
+      expect(result.current.result?.score.total).toBeGreaterThanOrEqual(0);
     });
 
     test("盤面が進んだときだけやり直し可能になること", () => {

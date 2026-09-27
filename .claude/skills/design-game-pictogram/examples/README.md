@@ -4,7 +4,7 @@
 
 - `frontend/src/games/water-sort/assets/pictogram.svg`: 容器 + 水量差を最小構成で表現する例。プロダクションで利用する SVG 自体を正本とする
 - `nanpure.svg`: 3×3格子 + 数字を、外枠 / 格子 / 記号の視覚階層を付けて表現する例
-- `parking-jam.svg`: 車両 + 出口 + 詰まりを、一定の余白と車幅で単純化して表現する例
+- `frontend/src/games/parking-jam/assets/pictogram.svg`: 車両 + 出口 + 詰まりを、一定の余白と車幅で単純化して表現する例。プロダクションで利用する SVG 自体を正本とする
 
 完成見本の配置場所は `examples/` に限定しない。プロダクションで同じ形状を利用する場合はプロダクション側の SVG を正本とし、Skill 側へ複製しない。
 
