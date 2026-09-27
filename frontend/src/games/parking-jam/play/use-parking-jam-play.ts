@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { ParkingJamDifficulty } from "@/games/parking-jam/difficulty";
-import type { ParkingJamDifficultyAnalysis } from "@/games/parking-jam/problem/difficulty-analysis";
+import { restoreParkingJamProblemWithoutAnalysis } from "@/games/parking-jam/problem/generator";
 import type { ParkingJamProblemIdentity } from "@/games/parking-jam/problem/problem";
-import { generateParkingJamProblemForDifficulty } from "@/games/parking-jam/problem-selection";
-import type {
-  ParkingJamDirection,
-  ParkingJamVehicleId,
+import { selectParkingJamProblemForDifficulty } from "@/games/parking-jam/problem-selection";
+import {
+  createParkingJamInitialState,
+  type ParkingJamBoard,
+  type ParkingJamDirection,
+  type ParkingJamVehicleId,
 } from "@/games/parking-jam/puzzle/board";
+import { listParkingJamLegalMoves } from "@/games/parking-jam/puzzle/rules";
 import {
   calculateParkingJamPlayScore,
   calculateParkingJamSpeedFullScoreMs,
@@ -37,6 +40,9 @@ export type ParkingJamOperation = {
 
 export type ParkingJamProgress = "playing" | "clearing" | "result";
 
+/** 遊んでいる問題の出どころ。`given` は開始時に identity で指定された問題（記録の再プレイなど）。 */
+export type ParkingJamProblemSource = "pool" | "given";
+
 export type ParkingJamResult = ParkingJamSessionResult & {
   problemIdentity: ParkingJamProblemIdentity;
   speedReference: ParkingJamSpeedReference;
@@ -47,19 +53,23 @@ export type ParkingJamResult = ParkingJamSessionResult & {
 type ParkingJamPlayState = {
   session: ParkingJamSession;
   problemIdentity: ParkingJamProblemIdentity;
-  difficultyAnalysis: ParkingJamDifficultyAnalysis;
+  problemSource: ParkingJamProblemSource;
+  speedReference: ParkingJamSpeedReference;
   selectedVehicleId: ParkingJamVehicleId | null;
   operation: ParkingJamOperation | null;
   progress: ParkingJamProgress;
 };
 
-function getSpeedReference(
-  analysis: ParkingJamDifficultyAnalysis,
-): ParkingJamSpeedReference {
-  const { vehicleCount, initialLegalVehicleCount } = analysis.features;
+function getSpeedReference(board: ParkingJamBoard): ParkingJamSpeedReference {
+  const initialLegalVehicleIds = new Set(
+    listParkingJamLegalMoves(board, createParkingJamInitialState(board)).map(
+      (move) => move.vehicleId,
+    ),
+  );
   return {
-    vehicleCount,
-    initialBlockedVehicleCount: vehicleCount - initialLegalVehicleCount,
+    vehicleCount: board.vehicles.length,
+    initialBlockedVehicleCount:
+      board.vehicles.length - initialLegalVehicleIds.size,
   };
 }
 
@@ -67,22 +77,34 @@ function createPlayState(
   difficulty: ParkingJamDifficulty,
   seed: ProblemSeed,
   startedAt: number,
+  initialProblemIdentity?: ParkingJamProblemIdentity,
 ): ParkingJamPlayState {
-  const generated = generateParkingJamProblemForDifficulty(difficulty, seed);
+  const restored = initialProblemIdentity
+    ? restoreParkingJamProblemWithoutAnalysis(initialProblemIdentity)
+    : selectParkingJamProblemForDifficulty(difficulty, seed);
 
   return {
-    session: createParkingJamSession(generated.problem, startedAt),
-    problemIdentity: generated.identity,
-    difficultyAnalysis: generated.difficultyAnalysis,
+    session: createParkingJamSession(restored.problem, startedAt),
+    problemIdentity: restored.identity,
+    problemSource: initialProblemIdentity ? "given" : "pool",
+    speedReference: getSpeedReference(restored.problem.board),
     selectedVehicleId: null,
     operation: null,
     progress: "playing",
   };
 }
 
-export function useParkingJamPlay(difficulty: ParkingJamDifficulty) {
+export function useParkingJamPlay(
+  difficulty: ParkingJamDifficulty,
+  initialProblemIdentity?: ParkingJamProblemIdentity,
+) {
   const [play, setPlay] = useState<ParkingJamPlayState>(() =>
-    createPlayState(difficulty, createProblemSeed(), Date.now()),
+    createPlayState(
+      difficulty,
+      createProblemSeed(),
+      Date.now(),
+      initialProblemIdentity,
+    ),
   );
   const [now, setNow] = useState(() => Date.now());
   const nextOperationId = useRef(0);
@@ -222,7 +244,7 @@ export function useParkingJamPlay(difficulty: ParkingJamDifficulty) {
   const result = useMemo<ParkingJamResult | null>(() => {
     if (!sessionResult) return null;
 
-    const speedReference = getSpeedReference(play.difficultyAnalysis);
+    const speedReference = play.speedReference;
     const speedFullScoreMs =
       calculateParkingJamSpeedFullScoreMs(speedReference);
     return {
@@ -238,12 +260,12 @@ export function useParkingJamPlay(difficulty: ParkingJamDifficulty) {
         restartCount: sessionResult.restartCount,
       }),
     };
-  }, [play.difficultyAnalysis, play.problemIdentity, sessionResult]);
+  }, [play.speedReference, play.problemIdentity, sessionResult]);
 
   return {
     difficulty,
     problemIdentity: play.problemIdentity,
-    difficultyAnalysis: play.difficultyAnalysis,
+    problemSource: play.problemSource,
     status: session.status,
     progress: play.progress,
     startedAt: session.startedAt,

@@ -1,6 +1,8 @@
 import {
+  type LegacyParkingJamDifficulty,
   PARKING_JAM_DIFFICULTY_MODEL_VERSION,
   type ParkingJamDifficulty,
+  parseLegacyParkingJamDifficulty,
   parseParkingJamDifficulty,
 } from "@/games/parking-jam/difficulty";
 import type { ParkingJamProblemIdentity } from "@/games/parking-jam/problem/problem";
@@ -16,7 +18,7 @@ import type { PlayRecord } from "@/records/play-record";
 import { createPlayRecordId } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
-const PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION = 3;
+const PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION = 4;
 const PARKING_JAM_GAME_ID = "parking-jam";
 
 type ParkingJamProblemFacts = {
@@ -24,25 +26,36 @@ type ParkingJamProblemFacts = {
 };
 
 // payloadVersion 2 は play-quality-v1 で採点し、難易度モデル版・採点版を持たない。
+// payloadVersion 2・3 は3段階（easy / normal / hard）の難易度で、レベル1〜5へ読み替えず旧区分のまま扱う。
 type ParkingJamPlayRecordPayloadV2 = {
-  difficulty: ParkingJamDifficulty;
+  difficulty: LegacyParkingJamDifficulty;
   problemIdentity: ParkingJamProblemIdentity;
   performance: ParkingJamSessionResult;
 };
 
-type ParkingJamPlayRecordPayload = {
-  difficulty: ParkingJamDifficulty;
+type ParkingJamPlayRecordPayloadV3 = ParkingJamPlayRecordPayloadV2 & {
   difficultyModelVersion: string;
   scoreModelVersion: typeof PARKING_JAM_SCORE_MODEL_VERSION;
-  problemIdentity: ParkingJamProblemIdentity;
   problemFacts: ParkingJamProblemFacts;
-  performance: ParkingJamSessionResult;
+};
+
+type ParkingJamPlayRecordPayload = Omit<
+  ParkingJamPlayRecordPayloadV3,
+  "difficulty"
+> & {
+  difficulty: ParkingJamDifficulty;
 };
 
 type ParkingJamPlayRecordV2 = PlayRecord & {
   gameId: typeof PARKING_JAM_GAME_ID;
   payloadVersion: 2;
   payload: ParkingJamPlayRecordPayloadV2;
+};
+
+type ParkingJamPlayRecordV3 = PlayRecord & {
+  gameId: typeof PARKING_JAM_GAME_ID;
+  payloadVersion: 3;
+  payload: ParkingJamPlayRecordPayloadV3;
 };
 
 export type ParkingJamPlayRecord = PlayRecord & {
@@ -53,6 +66,7 @@ export type ParkingJamPlayRecord = PlayRecord & {
 
 type RecognizedParkingJamPlayRecord =
   | ParkingJamPlayRecordV2
+  | ParkingJamPlayRecordV3
   | ParkingJamPlayRecord;
 
 type CreateParkingJamPlayRecordInput = {
@@ -139,11 +153,15 @@ function isParkingJamProblemFacts(
   );
 }
 
+type ParkingJamPlayRecordPayloadBase = Omit<
+  ParkingJamPlayRecordPayloadV2,
+  "difficulty"
+>;
+
 function hasValidPayloadBase<
-  Payload extends Partial<ParkingJamPlayRecordPayloadV2>,
->(payload: Payload): payload is Payload & ParkingJamPlayRecordPayloadV2 {
+  Payload extends Partial<ParkingJamPlayRecordPayloadBase>,
+>(payload: Payload): payload is Payload & ParkingJamPlayRecordPayloadBase {
   return (
-    parseParkingJamDifficulty(payload.difficulty) !== undefined &&
     isParkingJamProblemIdentity(payload.problemIdentity) &&
     isParkingJamPerformance(payload.performance) &&
     // 待った・やり直しで戻した車も再び出庫するため、成功出庫数は車両数以上になる。
@@ -163,13 +181,22 @@ export function isParkingJamPlayRecord(
     return false;
   }
 
-  const payload = record.payload as Partial<ParkingJamPlayRecordPayload>;
+  const payload = record.payload as Partial<ParkingJamPlayRecordPayloadV3> &
+    Partial<Pick<ParkingJamPlayRecordPayload, "difficulty">>;
   if (!hasValidPayloadBase(payload)) return false;
+
+  const isLegacyDifficultyRecord =
+    record.payloadVersion === 2 || record.payloadVersion === 3;
+  const hasExpectedDifficulty = isLegacyDifficultyRecord
+    ? parseLegacyParkingJamDifficulty(payload.difficulty) !== undefined
+    : parseParkingJamDifficulty(payload.difficulty) !== undefined;
+  if (!hasExpectedDifficulty) return false;
 
   if (record.payloadVersion === 2) return true;
 
   return (
-    record.payloadVersion === PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION &&
+    (record.payloadVersion === 3 ||
+      record.payloadVersion === PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION) &&
     typeof payload.difficultyModelVersion === "string" &&
     payload.difficultyModelVersion.length > 0 &&
     payload.scoreModelVersion === PARKING_JAM_SCORE_MODEL_VERSION &&

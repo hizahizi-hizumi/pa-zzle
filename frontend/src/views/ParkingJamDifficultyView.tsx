@@ -15,7 +15,7 @@ export function ParkingJamDifficultyView() {
         <h1 className="text-screen-title">パーキングジャム</h1>
       </div>
 
-      <div className="grid gap-2 sm:gap-4 lg:grid-cols-3">
+      <div className="grid gap-2 sm:gap-4 lg:grid-cols-5">
         {parkingJamDifficulties.map((difficulty) => (
           <ParkingJamDifficultyOption
             key={difficulty.id}

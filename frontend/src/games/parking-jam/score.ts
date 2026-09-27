@@ -1,4 +1,4 @@
-import type { ParkingJamDifficulty } from "@/games/parking-jam/difficulty";
+import type { LegacyParkingJamDifficulty } from "@/games/parking-jam/difficulty";
 import type { GameResultLevel } from "@/games/result";
 
 export const PARKING_JAM_SCORE_MODEL_VERSION = "play-quality-v2";
@@ -20,7 +20,7 @@ export const PARKING_JAM_SPEED_PER_INITIALLY_BLOCKED_VEHICLE_MS = 3_000;
 // play-quality-v1 は8×8・14台固定の問題に対して難易度ごとの基準時間を使っていた。
 // v1 時代の記録を当時の意味で再計算するためだけに残す。
 export const PARKING_JAM_LEGACY_SPEED_FULL_SCORE_MS: Record<
-  ParkingJamDifficulty,
+  LegacyParkingJamDifficulty,
   number
 > = {
   easy: 60_000,

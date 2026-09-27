@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
-import type { ParkingJamDifficulty } from "@/games/parking-jam/difficulty";
 import type {
   ParkingJamOperation,
   ParkingJamProgress,
@@ -19,7 +18,8 @@ import { ParkingJamResultScreen } from "@/games/parking-jam/ui/ParkingJamPlay/Pa
 import { UndoButton } from "@/games/parking-jam/ui/ParkingJamPlay/UndoButton";
 
 type ParkingJamPlayProps = {
-  difficulty: ParkingJamDifficulty;
+  /** 結果画面に出す難易度の表示名。 */
+  difficultyLabel: string;
   status: "playing" | "cleared";
   progress: ParkingJamProgress;
   board: ParkingJamBoardDefinition;
@@ -50,7 +50,7 @@ type ParkingJamPlayProps = {
 };
 
 export function ParkingJamPlay({
-  difficulty,
+  difficultyLabel,
   status,
   progress,
   board,
@@ -79,7 +79,7 @@ export function ParkingJamPlay({
   if (progress === "result" && result) {
     return (
       <ParkingJamResultScreen
-        difficulty={difficulty}
+        difficultyLabel={difficultyLabel}
         result={result}
         recordOutcomeNotice={recordOutcomeNotice}
         onReplay={onReplay}

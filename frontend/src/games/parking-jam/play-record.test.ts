@@ -34,7 +34,7 @@ const performance = {
 };
 
 const record = createParkingJamPlayRecord({
-  difficulty: "normal",
+  difficulty: "3",
   problemIdentity,
   speedReference: { vehicleCount: 14, initialBlockedVehicleCount: 6 },
   startedAt: 1_000,
@@ -50,6 +50,24 @@ const legacyRecord: PlayRecord = {
   payloadVersion: 2,
   payload: { difficulty: "normal", problemIdentity, performance },
 };
+const legacyPayload = { difficulty: "normal", problemIdentity, performance };
+
+const threeLevelPayload = {
+  difficulty: "hard",
+  difficultyModelVersion: "visual-local-load-v1",
+  scoreModelVersion: PARKING_JAM_SCORE_MODEL_VERSION,
+  problemIdentity,
+  problemFacts: { initialBlockedVehicleCount: 6 },
+  performance,
+};
+const threeLevelRecord: PlayRecord = {
+  id: "parking-jam-three-level",
+  gameId: "parking-jam",
+  startedAt: 1_000,
+  completedAt: 91_000,
+  payloadVersion: 3,
+  payload: threeLevelPayload,
+};
 
 describe("createParkingJamPlayRecord", () => {
   test("問題を分類した難易度モデル版と採点版を保存すること", () => {
@@ -58,12 +76,20 @@ describe("createParkingJamPlayRecord", () => {
     expect(difficultyModelVersion).toBe(PARKING_JAM_DIFFICULTY_MODEL_VERSION);
     expect(scoreModelVersion).toBe(PARKING_JAM_SCORE_MODEL_VERSION);
   });
+
+  test("レベル1〜5の難易度を payloadVersion 4 で保存すること", () => {
+    const { payloadVersion, payload } = record;
+
+    expect(payloadVersion).toBe(4);
+    expect(payload.difficulty).toBe("3");
+  });
 });
 
 describe("isParkingJamPlayRecord", () => {
   const recognizedCases = [
     ["待ったで戻した車を再び出庫した現在の形式", record],
     ["難易度モデル版と採点版を持たない payloadVersion 2", legacyRecord],
+    ["3段階の難易度で分類した payloadVersion 3", threeLevelRecord],
   ] as const;
 
   test.each(recognizedCases)(
@@ -108,6 +134,21 @@ describe("isParkingJamPlayRecord", () => {
       },
     ],
     [
+      "payloadVersion 4 なのに3段階の難易度",
+      { ...record, payload: { ...record.payload, difficulty: "normal" } },
+    ],
+    [
+      "payloadVersion 3 なのにレベルの難易度",
+      {
+        ...threeLevelRecord,
+        payload: { ...threeLevelPayload, difficulty: "3" },
+      },
+    ],
+    [
+      "payloadVersion 2 なのにレベルの難易度",
+      { ...legacyRecord, payload: { ...legacyPayload, difficulty: "1" } },
+    ],
+    [
       "初期に塞がれた車が車両数以上",
       {
         ...record,
@@ -137,6 +178,11 @@ describe("getParkingJamPlayRecordScore", () => {
       legacyRecord,
       93,
     ],
+    [
+      "payloadVersion 3 は現在と同じ問題ごとの基準時間65秒で採点する",
+      threeLevelRecord,
+      78,
+    ],
   ] as const;
 
   test.each(cases)(
@@ -154,12 +200,21 @@ describe("getParkingJamPlayRecordScore", () => {
 });
 
 describe("parkingJamPlayRecordDefinition", () => {
-  test("難易度ごとに比較すること", () => {
-    const comparisonKey =
-      parkingJamPlayRecordDefinition.getComparisonKey(record);
+  const comparisonCases = [
+    ["レベル1〜5の記録はレベル", record, "3"],
+    ["3段階の記録は旧区分", threeLevelRecord, "hard"],
+    ["payloadVersion 2 の記録は旧区分", legacyRecord, "normal"],
+  ] as const;
 
-    expect(comparisonKey).toBe("normal");
-  });
+  test.each(comparisonCases)(
+    "難易度ごとに比較し旧3段階を新レベルと混ぜないこと: %s",
+    (_label, candidate, expected) => {
+      const comparisonKey =
+        parkingJamPlayRecordDefinition.getComparisonKey(candidate);
+
+      expect(comparisonKey).toBe(expected);
+    },
+  );
 
   test("スコア・時間・不成立操作数を自己ベスト指標にすること", () => {
     const metricIds = parkingJamPlayRecordDefinition.personalBestMetrics.map(
