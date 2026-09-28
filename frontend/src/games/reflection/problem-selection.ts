@@ -1,41 +1,52 @@
-import type { ProblemSeed } from "@/games/problem-seed";
+import { hashProblemSeed, type ProblemSeed } from "@/games/problem-seed";
 import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
 import {
-  generateReflectionProblem,
-  type ReflectionGeneratedProblem,
-} from "@/games/reflection/problem/generator";
-import {
-  REFLECTION_GENERATOR_VERSION,
-  type ReflectionGenerationConditions,
+  isReflectionProblemIdentity,
+  type ReflectionRecordedProblemIdentity,
 } from "@/games/reflection/problem/problem";
+import {
+  findReflectionPooledProblem,
+  findReflectionPooledProblemByReference,
+  listReflectionPoolEntries,
+  type ReflectionPooledProblem,
+  type ReflectionProblemPoolReference,
+  toReflectionPooledProblem,
+} from "@/games/reflection/problem/problem-pool";
 
 /**
- * 問題集ができるまでの仮の生成条件。生成した問題を分析しないので、レベルの難しさは保証しない。
- * 値は、組み合わせ定義（`reflectionLevelCombinations`）の規模の範囲のうち、分析スクリプトの問題集合でそのレベルに分類された割合が
- * 最も高い盤面サイズとピース数（レベル1: 56%、2: 41%、3: 62%、4: 81%、5: 25%）。
- */
-const provisionalConditionsByDifficulty = {
-  "1": { size: 5, pieceCount: 2 },
-  "2": { size: 5, pieceCount: 3 },
-  "3": { size: 5, pieceCount: 5 },
-  "4": { size: 7, pieceCount: 9 },
-  "5": { size: 7, pieceCount: 12 },
-} as const satisfies Record<
-  ReflectionDifficulty,
-  ReflectionGenerationConditions
->;
-
-/**
- * 難易度の仮の生成条件で、seed から問題を作る。
- * 問題集から出題できるようになったら、問題集からの選択に置き換える。
+ * 難易度の問題集から seed で1問を選ぶ。
+ * 問題集は生成時に難易度を判定済みで、解と基準時間に使う作業の量も持つため、
+ * プレイ時には生成・解探索・難易度分析を走らせない。
  */
 export function selectReflectionProblemForDifficulty(
   difficulty: ReflectionDifficulty,
   seed: ProblemSeed,
-): ReflectionGeneratedProblem {
-  return generateReflectionProblem({
-    generatorVersion: REFLECTION_GENERATOR_VERSION,
-    seed,
-    conditions: { ...provisionalConditionsByDifficulty[difficulty] },
-  });
+): ReflectionPooledProblem {
+  const entries = listReflectionPoolEntries(difficulty);
+  if (entries.length === 0) {
+    throw new Error(`No level ${difficulty} Reflection problem is available`);
+  }
+  return toReflectionPooledProblem(
+    difficulty,
+    hashProblemSeed(seed) % entries.length,
+  );
+}
+
+/**
+ * 記録に残した identity から同じ問題を復元する。
+ * 問題集に無い identity（生成器の版が今と違う記録など）は再プレイできないので `null` を返す。
+ */
+export function restoreReflectionProblem(
+  identity: ReflectionRecordedProblemIdentity,
+): ReflectionPooledProblem | null {
+  return isReflectionProblemIdentity(identity)
+    ? findReflectionPooledProblem(identity)
+    : null;
+}
+
+/** 問題集の版と問題番号から同じ問題を復元する。問題集の版が今と違えば `null` を返す。 */
+export function restoreReflectionPoolProblem(
+  reference: ReflectionProblemPoolReference,
+): ReflectionPooledProblem | null {
+  return findReflectionPooledProblemByReference(reference);
 }
