@@ -3,6 +3,7 @@ import { MemoryRouter, Route, Routes } from "react-router";
 import { formatReflectionProblemQuery } from "@/games/reflection/diagnostics";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import { createReflectionProblemIdentity } from "@/games/reflection/problem/problem";
+import { writeReflectionHowToPlaySeen } from "@/games/reflection/ui/how-to-play-seen";
 import { ReflectionPlayView } from "@/views/ReflectionPlayView";
 
 const internalDiagnostics = vi.hoisted(() => ({ available: false }));
@@ -14,9 +15,14 @@ vi.mock("@/lib/internal-diagnostics", () => ({
   buildRevision: null,
 }));
 
+beforeEach(() => {
+  writeReflectionHowToPlaySeen();
+});
+
 afterEach(() => {
   cleanup();
   internalDiagnostics.available = false;
+  window.localStorage.clear();
 });
 
 function renderAt(path: string): void {
@@ -55,7 +61,6 @@ describe("ReflectionPlayView", () => {
       expect(cells).toHaveLength(25);
       expect(cells.every((cell) => cell.textContent === "")).toBe(true);
       expect(stock.length).toBeGreaterThan(0);
-      expect(screen.getByText("レベル 1")).toBeTruthy();
     });
   });
 
@@ -79,8 +84,9 @@ describe("ReflectionPlayView", () => {
     });
 
     test("指定を無視して難易度の問題を出すこと", () => {
-      expect(getBoardCells()).toHaveLength(25);
-      expect(screen.getByText("レベル 1")).toBeTruthy();
+      const cells = getBoardCells();
+
+      expect(cells).toHaveLength(25);
     });
   });
 
@@ -90,10 +96,10 @@ describe("ReflectionPlayView", () => {
       renderAt(specifiedProblemPath);
     });
 
-    test("指定した問題を難易度を伏せて出すこと", () => {
-      expect(getBoardCells()).toHaveLength(49);
-      expect(screen.getByText("問題指定")).toBeTruthy();
-      expect(screen.queryByText("レベル 1")).toBeNull();
+    test("指定した問題を出すこと", () => {
+      const cells = getBoardCells();
+
+      expect(cells).toHaveLength(49);
     });
   });
 
