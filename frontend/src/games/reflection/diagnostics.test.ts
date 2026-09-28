@@ -22,7 +22,7 @@ describe("parseReflectionProblemQuery", () => {
   );
   const invalidCases = [
     ["seed の欠けたクエリ", "size=5&pieces=3"],
-    ["扱わない盤面サイズ", "seed=a&size=8&pieces=3"],
+    ["扱わない盤面サイズ", "seed=a&size=10&pieces=3"],
     ["盤面に収まらないピース数", "seed=a&size=5&pieces=25"],
     ["数でないピース数", "seed=a&size=5&pieces=three"],
     ["今と違う生成器の版", "generator=0&seed=a&size=5&pieces=3"],
@@ -63,6 +63,14 @@ describe("parseReflectionProblemQuery", () => {
     const result = parseReflectionProblemQuery(poolParamsWithoutVersion);
 
     expect(result).toEqual(pooled.identity);
+  });
+
+  test("5段階の出題に無い 9×9 のサンプルも identity で開けること", () => {
+    const result = parseReflectionProblemQuery(
+      new URLSearchParams("seed=rf-9-12-3&size=9&pieces=12"),
+    );
+
+    expect(result).toEqual(createReflectionProblemIdentity(9, 12, 3));
   });
 
   test.each(invalidCases)(
@@ -121,7 +129,7 @@ describe("ReflectionDiagnosticSnapshot", () => {
         ...snapshot,
         problemIdentity: {
           ...snapshot.problemIdentity,
-          conditions: { ...snapshot.problemIdentity.conditions, size: 8 },
+          conditions: { ...snapshot.problemIdentity.conditions, size: 10 },
         },
       },
     ],
@@ -149,6 +157,24 @@ describe("ReflectionDiagnosticSnapshot", () => {
       difficulty: "4",
       reasoningLevel: 4,
     });
+  });
+
+  test("5段階の出題に無い大きさのサンプルは分析せず、コピー形式から読み戻せること", () => {
+    const sample = createReflectionDiagnosticSnapshot({
+      difficulty: "3",
+      problemIdentity: createReflectionProblemIdentity(8, 12, 6),
+      buildRevision: null,
+    });
+
+    const parsed = parseReflectionDiagnosticSnapshot(
+      serializeInternalDiagnosticSnapshot(sample),
+    );
+
+    expect(sample.difficultyAssessment).toEqual({
+      status: "not-analyzed",
+      reason: "sample-board-size",
+    });
+    expect(parsed).toEqual(sample);
   });
 
   test("問題集に無い identity では問題集の番号を持たないこと", () => {

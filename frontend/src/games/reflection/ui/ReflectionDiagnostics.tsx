@@ -3,11 +3,11 @@ import {
   InternalDiagnosticsDialog,
 } from "@/components/InternalDiagnosticsDialog";
 import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
-import type { ReflectionDiagnosticSnapshot } from "@/games/reflection/diagnostics";
-import {
-  getReflectionDifficultyLabel,
-  type ReflectionDifficultyAssessment,
-} from "@/games/reflection/difficulty";
+import type {
+  ReflectionDiagnosticAssessment,
+  ReflectionDiagnosticSnapshot,
+} from "@/games/reflection/diagnostics";
+import { getReflectionDifficultyLabel } from "@/games/reflection/difficulty";
 import type { ReflectionGenerationConditions } from "@/games/reflection/problem/problem";
 import type { ReflectionProblemPoolReference } from "@/games/reflection/problem/problem-pool";
 
@@ -31,7 +31,7 @@ function formatProblemPool(
     : "問題集に無い";
 }
 
-function formatAssessment(assessment: ReflectionDifficultyAssessment): string {
+function formatAssessment(assessment: ReflectionDiagnosticAssessment): string {
   switch (assessment.status) {
     case "classified":
       return getReflectionDifficultyLabel(assessment.difficulty);
@@ -41,11 +41,13 @@ function formatAssessment(assessment: ReflectionDifficultyAssessment): string {
       return "評価不能";
     case "invalid":
       return "問題として不成立";
+    case "not-analyzed":
+      return "分析しない（通常の出題に無い大きさのサンプル）";
   }
 }
 
 function formatHighestReasoningLevel(
-  assessment: ReflectionDifficultyAssessment,
+  assessment: ReflectionDiagnosticAssessment,
 ): string {
   return "reasoningLevel" in assessment
     ? `L${assessment.reasoningLevel}`

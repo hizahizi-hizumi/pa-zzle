@@ -80,7 +80,7 @@ describe("isReflectionProblemIdentity", () => {
     ["条件が無い", { ...identity, conditions: undefined }],
     [
       "盤面の大きさが対象外",
-      { ...identity, conditions: { ...identity.conditions, size: 8 } },
+      { ...identity, conditions: { ...identity.conditions, size: 10 } },
     ],
     [
       "ピース数が0",

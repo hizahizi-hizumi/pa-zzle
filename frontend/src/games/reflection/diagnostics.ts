@@ -7,6 +7,8 @@ import {
   parseReflectionDifficulty,
   type ReflectionDifficulty,
   type ReflectionDifficultyAssessment,
+  reflectionDifficulties,
+  reflectionLevelCombinations,
 } from "@/games/reflection/difficulty";
 import { analyzeReflectionDifficulty } from "@/games/reflection/problem/difficulty-analysis";
 import { generateReflectionProblem } from "@/games/reflection/problem/generator";
@@ -30,6 +32,7 @@ import {
 // - 問題集の番号: ?pool=1&problem=4-17（`pool` は省略でき、省略時は今の問題集の版）
 // - 生成器の identity: ?generator=2&seed=rf-7-10-3&size=7&pieces=10（`generator` は省略でき、省略時は今の生成器の版）
 // 問題集の番号は問題集を作り直すと別の問題を指すので、記録や資料に残すときは identity の形を使う。
+// identity の形では、5段階の出題に使わない 8×8・9×9 の盤面もサンプルとして開ける（スコアは出さず、記録もしない）。
 const poolQueryKeys = ["pool", "problem"] as const;
 const identityQueryKeys = ["generator", "seed", "size", "pieces"] as const;
 
@@ -117,8 +120,23 @@ export function parseReflectionProblemQuery(
 }
 
 /**
+ * 5段階の出題に使う盤面サイズより大きい盤面（診断で開く 8×8・9×9 のサンプル）は分析しない。
+ * 分類はどのレベルにも当たらず、分析に1分を超える問題もあって検証情報を開くたびに画面が止まるため。
+ */
+export type ReflectionDiagnosticAssessment =
+  | ReflectionDifficultyAssessment
+  | { status: "not-analyzed"; reason: "sample-board-size" };
+
+const providedBoardSizeMaximum = Math.max(
+  ...reflectionDifficulties.map(
+    ({ id }) => reflectionLevelCombinations[id].boardSize.maximum,
+  ),
+);
+
+/**
  * - `problemPool`: 問題集の版と番号。問題集に無い identity（URL で指定した問題）では `null`。
  * - `difficultyAssessment`: 遊んでいる問題を分析し直した分類と最高推論レベル。問題集の判定と食い違っていないかの照合に使う。
+ *   5段階の出題に使わない大きさの盤面では分析せず `not-analyzed` にする。
  */
 export type ReflectionDiagnosticSnapshot = InternalDiagnosticSnapshot<
   "reflection",
@@ -126,7 +144,7 @@ export type ReflectionDiagnosticSnapshot = InternalDiagnosticSnapshot<
   ReflectionProblemIdentity
 > & {
   problemPool: ReflectionProblemPoolReference | null;
-  difficultyAssessment: ReflectionDifficultyAssessment;
+  difficultyAssessment: ReflectionDiagnosticAssessment;
 };
 
 /**
@@ -143,8 +161,15 @@ export function createReflectionDiagnosticSnapshot({
   buildRevision: string | null;
 }): ReflectionDiagnosticSnapshot {
   const pooled = findReflectionPooledProblem(problemIdentity);
-  const problem =
-    pooled?.problem ?? generateReflectionProblem(problemIdentity).problem;
+  const difficultyAssessment: ReflectionDiagnosticAssessment =
+    problemIdentity.conditions.size > providedBoardSizeMaximum
+      ? { status: "not-analyzed", reason: "sample-board-size" }
+      : assessReflectionDifficulty(
+          analyzeReflectionDifficulty(
+            pooled?.problem ??
+              generateReflectionProblem(problemIdentity).problem,
+          ),
+        );
 
   return {
     formatVersion: INTERNAL_DIAGNOSTIC_FORMAT_VERSION,
@@ -155,9 +180,7 @@ export function createReflectionDiagnosticSnapshot({
       conditions: { ...problemIdentity.conditions },
     },
     problemPool: pooled ? { ...pooled.poolReference } : null,
-    difficultyAssessment: assessReflectionDifficulty(
-      analyzeReflectionDifficulty(problem),
-    ),
+    difficultyAssessment,
     buildRevision,
   };
 }
@@ -167,6 +190,7 @@ const assessmentStatuses = new Set<unknown>([
   "out-of-range",
   "unsupported",
   "invalid",
+  "not-analyzed",
 ]);
 
 function isProblemPoolReference(
@@ -181,7 +205,7 @@ function isProblemPoolReference(
 
 function isDifficultyAssessment(
   value: unknown,
-): value is ReflectionDifficultyAssessment {
+): value is ReflectionDiagnosticAssessment {
   return isRecord(value) && assessmentStatuses.has(value.status);
 }
 

@@ -335,7 +335,7 @@ describe("ReflectionPlayView", () => {
   describe("内部診断を使えるビルドで復元できない問題を指定した場合", () => {
     beforeEach(() => {
       internalDiagnostics.available = true;
-      renderAt("/puzzles/reflection/play/1?seed=abc&size=8&pieces=3");
+      renderAt("/puzzles/reflection/play/1?seed=abc&size=10&pieces=3");
     });
 
     test("指定を復元できないことを示し難易度選択へ戻る導線を出すこと", () => {

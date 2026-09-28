@@ -46,6 +46,39 @@ describe("ReflectionDiagnostics", () => {
     });
   });
 
+  describe("5段階の出題に無い大きさのサンプルを指定した場合", () => {
+    beforeEach(() => {
+      render(
+        <ReflectionDiagnostics
+          snapshot={{
+            ...snapshot,
+            problemIdentity: {
+              generatorVersion: "2",
+              seed: "rf-9-12-3",
+              conditions: { size: 9, pieceCount: 12 },
+            },
+            problemPool: null,
+            difficultyAssessment: {
+              status: "not-analyzed",
+              reason: "sample-board-size",
+            },
+          }}
+          onClose={vi.fn()}
+        />,
+      );
+    });
+
+    test("分析しないことを表示すること", () => {
+      const values = ["問題集", "分類", "最高推論"].map(getRowValue);
+
+      expect(values).toEqual([
+        "問題集に無い",
+        "分析しない（通常の出題に無い大きさのサンプル）",
+        "取得なし",
+      ]);
+    });
+  });
+
   describe("問題集に無く、提供範囲外の問題を指定した場合", () => {
     beforeEach(() => {
       render(
