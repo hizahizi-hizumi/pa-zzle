@@ -8,14 +8,17 @@ import { computeReflectionClues } from "@/games/reflection/puzzle/laser";
 import {
   canRestartReflectionSession,
   canUndoReflectionSession,
+  clearReflectionSessionSelection,
   createReflectionSession,
   getReflectionSessionElapsedMs,
   getReflectionSessionResult,
   getReflectionSessionStock,
   type ReflectionSession,
+  removeReflectionSessionPiece,
   replayReflectionSession,
   restartReflectionSession,
   tapReflectionSessionCell,
+  tapReflectionSessionClue,
   tapReflectionSessionStock,
   undoReflectionSession,
 } from "@/games/reflection/session/session";
@@ -284,6 +287,7 @@ describe("getReflectionSessionResult", () => {
       relocationCount: 1,
       restartCount: 0,
       undoCount: 0,
+      laserCheckCount: 0,
       inputCount: 6,
     });
   });
@@ -358,5 +362,100 @@ describe("getReflectionSessionElapsedMs", () => {
     const elapsedMs = getReflectionSessionElapsedMs(initial, 4_000);
 
     expect(elapsedMs).toBe(3_000);
+  });
+});
+
+describe("tapReflectionSessionClue", () => {
+  const topLeft = { side: "top", index: 0 } as const;
+  const leftTop = { side: "left", index: 0 } as const;
+  const checking = tapReflectionSessionClue(slashAtCenter, topLeft);
+
+  test("押した位置の光路を表示し、光路を確かめた回数を数えること", () => {
+    const next = tapReflectionSessionClue(slashAtCenter, topLeft);
+
+    expect(next.laserEntry).toEqual(topLeft);
+    expect(next.laserCheckCount).toBe(1);
+    expect(next.board).toBe(slashAtCenter.board);
+    expect(next.inputCount).toBe(slashAtCenter.inputCount);
+  });
+
+  test("別の位置を押すと、その位置の光路へ切り替えて数えること", () => {
+    const next = tapReflectionSessionClue(checking, leftTop);
+
+    expect(next.laserEntry).toEqual(leftTop);
+    expect(next.laserCheckCount).toBe(2);
+  });
+
+  test("表示中の位置をもう一度押すと、数えずに閉じること", () => {
+    const next = tapReflectionSessionClue(checking, topLeft);
+
+    expect(next.laserEntry).toBeNull();
+    expect(next.laserCheckCount).toBe(1);
+  });
+
+  describe("光路を表示したまま盤面が変わる場合", () => {
+    const cases = [
+      ["置く", placeFromStock(checking, "black-hole", 1)],
+      ["待った", undoReflectionSession(checking)],
+      ["盤面を戻す", restartReflectionSession(checking)],
+    ] as const;
+
+    test.each(cases)("光路を閉じること: %s", (_, next) => {
+      const { laserEntry, laserCheckCount } = next;
+
+      expect(laserEntry).toBeNull();
+      expect(laserCheckCount).toBe(1);
+    });
+  });
+
+  describe("ストックの種類を選んでいる場合", () => {
+    const selecting = tapReflectionSessionStock(initial, "slash", startedAt);
+
+    test("選択を保つこと", () => {
+      const next = tapReflectionSessionClue(selecting, topLeft);
+
+      expect(next.selection).toEqual({ type: "stock", piece: "slash" });
+    });
+  });
+});
+
+describe("removeReflectionSessionPiece", () => {
+  const selectingPlaced = tapReflectionSessionCell(slashAtCenter, 4, startedAt);
+
+  test("マスのピースをストックへ戻し、置き直しに数えること", () => {
+    const next = removeReflectionSessionPiece(slashAtCenter, 4, startedAt);
+
+    expect(next.board.cells[4]).toBeNull();
+    expect(next.relocationCount).toBe(1);
+    expect(canUndoReflectionSession(next)).toBe(true);
+  });
+
+  test("選んでいた盤面のピースの選択を解除すること", () => {
+    const next = removeReflectionSessionPiece(selectingPlaced, 4, startedAt);
+
+    expect(next.selection).toBeNull();
+  });
+
+  test("空きマスでは何もしないこと", () => {
+    const next = removeReflectionSessionPiece(slashAtCenter, 0, startedAt);
+
+    expect(next).toBe(slashAtCenter);
+  });
+});
+
+describe("clearReflectionSessionSelection", () => {
+  const selecting = tapReflectionSessionStock(initial, "slash", startedAt);
+
+  test("選択を解除し、操作として数えること", () => {
+    const next = clearReflectionSessionSelection(selecting);
+
+    expect(next.selection).toBeNull();
+    expect(next.inputCount).toBe(selecting.inputCount + 1);
+  });
+
+  test("何も選んでいなければ何もしないこと", () => {
+    const next = clearReflectionSessionSelection(initial);
+
+    expect(next).toBe(initial);
   });
 });

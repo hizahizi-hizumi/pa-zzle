@@ -12,6 +12,10 @@ import {
   type ReflectionPiece,
   reflectionPieces,
 } from "@/games/reflection/puzzle/board";
+import {
+  isSameReflectionEntry,
+  type ReflectionEntry,
+} from "@/games/reflection/puzzle/laser";
 import { isReflectionSolved } from "@/games/reflection/puzzle/rules";
 
 export type ReflectionSessionStatus = "playing" | "cleared";
@@ -43,6 +47,12 @@ export type ReflectionSession = {
   restartCount: number;
   /** 待ったで盤面操作を取り消した回数。 */
   undoCount: number;
+  /**
+   * 光路を表示している外周の位置。表示するのは今の盤面での光路で、盤面が変わると閉じる。
+   */
+  laserEntry: ReflectionEntry | null;
+  /** 外周ヒントを押して光路を表示した回数。 */
+  laserCheckCount: number;
   /** 待ったで戻せる盤面の履歴。古い順。盤面を戻すと空にする。 */
   history: readonly ReflectionBoard[];
 };
@@ -53,6 +63,7 @@ export type ReflectionSessionResult = {
   relocationCount: number;
   restartCount: number;
   undoCount: number;
+  laserCheckCount: number;
   inputCount: number;
 };
 
@@ -73,6 +84,8 @@ export function createReflectionSession(
     relocationCount: 0,
     restartCount: 0,
     undoCount: 0,
+    laserEntry: null,
+    laserCheckCount: 0,
     history: [],
   };
 }
@@ -125,6 +138,7 @@ function withCell(
 /**
  * 盤面を変える操作を反映する。変える前の盤面を待ったの履歴へ積み、揃えばクリアにする。
  * `relocated` は、置いてあったピースを動かし直した操作か。
+ * 表示中の光路は変える前の盤面のものなので閉じる。確かめ直すには外周ヒントを押し直す。
  */
 function applyBoardChange(
   session: ReflectionSession,
@@ -139,6 +153,7 @@ function applyBoardChange(
     selection,
     inputCount: session.inputCount + 1,
     relocationCount: session.relocationCount + (relocated ? 1 : 0),
+    laserEntry: null,
     history: [...session.history, session.board],
   };
 
@@ -247,6 +262,60 @@ export function tapReflectionSessionCell(
 }
 
 /**
+ * 盤面のマスのピースをストックへ戻す（キーボードの Delete / Backspace）。
+ * 盤面のピースを選んでからストックを押すのと同じく、置き直しに数える。空きマスでは何もしない。
+ */
+export function removeReflectionSessionPiece(
+  session: ReflectionSession,
+  cellIndex: number,
+  operatedAt: number,
+): ReflectionSession {
+  if (session.status !== "playing") return session;
+
+  const cell = session.board.cells[cellIndex];
+  if (cell === undefined || cell === null) return session;
+
+  const { selection } = session;
+  return applyBoardChange(
+    session,
+    withCell(session.board, cellIndex, null),
+    selection?.type === "cell" ? null : selection,
+    true,
+    operatedAt,
+  );
+}
+
+/** 選択を解除する（キーボードの Escape）。 */
+export function clearReflectionSessionSelection(
+  session: ReflectionSession,
+): ReflectionSession {
+  if (session.status !== "playing") return session;
+
+  return changeSelection(session, null);
+}
+
+/**
+ * 外周ヒントを押す。その位置から入れた光の、今の盤面での光路を表示し、光路を確かめた回数を数える。
+ * 表示中の位置をもう一度押すと閉じる（数えない）。盤面と選択は変えない。
+ */
+export function tapReflectionSessionClue(
+  session: ReflectionSession,
+  entry: ReflectionEntry,
+): ReflectionSession {
+  if (session.status !== "playing") return session;
+
+  if (session.laserEntry && isSameReflectionEntry(session.laserEntry, entry)) {
+    return { ...session, laserEntry: null };
+  }
+
+  return {
+    ...session,
+    laserEntry: entry,
+    laserCheckCount: session.laserCheckCount + 1,
+  };
+}
+
+/**
  * 直前の盤面操作を1つ取り消す（待った）。
  * 取り消すと一度置いたピースが動くので、置き直しとして1回数える。置き直しの回数は操作前へ戻さない。
  */
@@ -262,6 +331,7 @@ export function undoReflectionSession(
     ...session,
     board: previous,
     selection: null,
+    laserEntry: null,
     history: session.history.slice(0, -1),
     undoCount: session.undoCount + 1,
     relocationCount: session.relocationCount + 1,
@@ -285,6 +355,7 @@ export function restartReflectionSession(
     ...session,
     board: createEmptyReflectionBoard(session.problem.size),
     selection: null,
+    laserEntry: null,
     history: [],
     restartCount: session.restartCount + 1,
   };
@@ -326,6 +397,7 @@ export function getReflectionSessionResult(
     relocationCount: session.relocationCount,
     restartCount: session.restartCount,
     undoCount: session.undoCount,
+    laserCheckCount: session.laserCheckCount,
     inputCount: session.inputCount,
   };
 }
