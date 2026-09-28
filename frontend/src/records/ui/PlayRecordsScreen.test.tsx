@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { createMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
 import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
 import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
+import { createNanpureProblemIdentity } from "@/games/nanpure/problem/problem";
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
 import { createTakuzuPlayRecord } from "@/games/takuzu/play-record";
 import { createTakuzuProblemIdentity } from "@/games/takuzu/problem/problem";
@@ -58,14 +59,32 @@ const records = [
       optimalMoveCount: 10,
     },
   }),
-  createNanpurePlayRecord({
-    difficulty: "easy",
-    problemIdentity: {
-      generatorVersion: "1",
-      seed: "nanpure-1",
-      conditions: { clueCount: 36 },
-      generationAttempt: 1,
+  // 3段階の難易度で記録したナンプレのプレイ。レベルの記録とは別の開始条件として比べる。
+  {
+    id: "nanpure-three-level",
+    gameId: "nanpure",
+    startedAt: 1_000,
+    completedAt: 2_000,
+    payloadVersion: 1,
+    payload: {
+      difficulty: "easy",
+      problemIdentity: {
+        generatorVersion: "1",
+        seed: "nanpure-0",
+        conditions: { clueCount: 36 },
+        generationAttempt: 1,
+      },
+      performance: {
+        elapsedMs: 60_000,
+        mistakeCount: 0,
+        undoCount: 0,
+        restartCount: 0,
+      },
     },
+  },
+  createNanpurePlayRecord({
+    difficulty: "2",
+    problemIdentity: createNanpureProblemIdentity("naked-single", 41),
     startedAt: 5_000,
     completedAt: 95_000,
     result: {
@@ -164,6 +183,20 @@ describe("PlayRecordsScreen", () => {
 
     expect(screen.getAllByText("01:30").length).toBeGreaterThan(0);
     expect(screen.getAllByText("ミス").length).toBeGreaterThan(0);
+    expect(screen.getByText("1件")).toBeTruthy();
+  });
+
+  test("ナンプレの3段階の記録をレベルと混ぜず旧区分の開始条件として選べること", () => {
+    const gameSelect = screen.getByRole("combobox", { name: "パズル" });
+    fireEvent.change(gameSelect, { target: { value: "nanpure" } });
+    const comparisonSelect = screen.getByRole("combobox", {
+      name: "開始条件",
+    });
+    fireEvent.change(comparisonSelect, { target: { value: "easy" } });
+
+    expect(comparisonSelect.textContent).toContain("レベル 2");
+    expect(comparisonSelect.textContent).toContain("かんたん");
+    expect(screen.getAllByText("01:00").length).toBeGreaterThan(0);
     expect(screen.getByText("1件")).toBeTruthy();
   });
 

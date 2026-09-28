@@ -22,7 +22,7 @@ function emptyNotes() {
 
 function createProps(): ComponentProps<typeof NanpurePlay> {
   return {
-    difficulty: "normal",
+    difficulty: "3",
     status: "playing",
     progress: "playing",
     clues: emptyBoard(),
@@ -200,10 +200,9 @@ describe("NanpurePlay", () => {
         breakdown: { accuracy: 40, speed: 40, stability: 20 },
       },
       problemIdentity: {
-        generatorVersion: "1" as const,
-        seed: "test-seed",
-        conditions: { clueCount: 32 },
-        generationAttempt: 1,
+        generatorVersion: "2" as const,
+        seed: "np-locked-candidates-740",
+        conditions: { removalTechniqueLimit: "locked-candidates" as const },
       },
     };
     let board: HTMLElement;
@@ -257,10 +256,11 @@ describe("NanpurePlay", () => {
               breakdown: { accuracy: 30, speed: 40, stability: 9 },
             },
             problemIdentity: {
-              generatorVersion: "1",
-              seed: "test-seed",
-              conditions: { clueCount: 32 },
-              generationAttempt: 1,
+              generatorVersion: "2",
+              seed: "np-locked-candidates-740",
+              conditions: {
+                removalTechniqueLimit: "locked-candidates" as const,
+              },
             },
           }}
           onStartNewProblem={onStartNewProblem}
@@ -318,10 +318,11 @@ describe("NanpurePlay", () => {
               breakdown: { accuracy: 40, speed: 40, stability: 20 },
             },
             problemIdentity: {
-              generatorVersion: "1",
-              seed: "test-seed",
-              conditions: { clueCount: 32 },
-              generationAttempt: 1,
+              generatorVersion: "2",
+              seed: "np-locked-candidates-740",
+              conditions: {
+                removalTechniqueLimit: "locked-candidates" as const,
+              },
             },
           }}
           recordOutcomeNotice={
@@ -414,10 +415,11 @@ describe("NanpurePlay", () => {
               breakdown: { accuracy: 40, speed: 40, stability: 20 },
             },
             problemIdentity: {
-              generatorVersion: "1",
-              seed: "test-seed",
-              conditions: { clueCount: 32 },
-              generationAttempt: 1,
+              generatorVersion: "2",
+              seed: "np-locked-candidates-740",
+              conditions: {
+                removalTechniqueLimit: "locked-candidates" as const,
+              },
             },
           }}
           onOpenDiagnostics={onOpenDiagnostics}

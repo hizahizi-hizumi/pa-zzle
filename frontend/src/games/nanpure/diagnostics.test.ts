@@ -4,42 +4,64 @@ import {
   parseNanpureDiagnosticSnapshot,
   restoreNanpureProblemFromDiagnosticSnapshot,
 } from "@/games/nanpure/diagnostics";
-import { generateNanpureLegacyProblem } from "@/games/nanpure/legacy/generator";
+import { createNanpureProblemIdentity } from "@/games/nanpure/problem/problem";
+import { selectNanpureProblemForDifficulty } from "@/games/nanpure/problem-selection";
 
 describe("NanpureDiagnosticSnapshot", () => {
-  const problem = generateNanpureLegacyProblem({
-    seed: "diagnostic-reproduction-seed",
-    clueCount: 32,
-  });
+  const selected = selectNanpureProblemForDifficulty("5", "diagnostic-seed");
   const snapshot = createNanpureDiagnosticSnapshot({
-    difficulty: "normal",
-    problemIdentity: {
-      generatorVersion: problem.identity.generatorVersion,
-      seed: problem.identity.seed,
-      conditions: problem.identity.conditions,
-      generationAttempt: problem.identity.generationAttempt,
-    },
+    difficulty: "5",
+    problemIdentity: selected.identity,
     buildRevision: "abcdef1234567890",
   });
-  const invalidSerialized = JSON.stringify({
-    formatVersion: 2,
-    game: "nanpure",
-  });
 
-  test("コピー形式を復元して同じ初期問題を再現できること", () => {
+  test("コピー形式を復元して同じ問題を再現できること", () => {
     const serialized = serializeInternalDiagnosticSnapshot(snapshot);
     const parsed = parseNanpureDiagnosticSnapshot(serialized);
     const restored = restoreNanpureProblemFromDiagnosticSnapshot(parsed);
 
     expect(parsed).toEqual(snapshot);
-    expect(restored.clues).toEqual(problem.clues);
-    expect(restored.solution).toEqual(problem.solution);
-    expect(restored.difficultyAnalysis).toEqual(problem.difficultyAnalysis);
+    expect(restored?.problem).toEqual(selected.problem);
   });
 
-  test("診断形式ではないJSONを拒否すること", () => {
+  describe("問題集に無い identity の場合", () => {
+    const missing = createNanpureDiagnosticSnapshot({
+      difficulty: "1",
+      problemIdentity: createNanpureProblemIdentity(
+        "hidden-single-block",
+        999_999,
+      ),
+      buildRevision: null,
+    });
+
+    test("復元できないこと", () => {
+      const restored = restoreNanpureProblemFromDiagnosticSnapshot(missing);
+
+      expect(restored).toBeNull();
+    });
+  });
+
+  const invalidCases = [
+    ["形式の版が違う", { ...snapshot, formatVersion: 2 }],
+    ["別のゲーム", { ...snapshot, game: "takuzu" }],
+    ["3段階の難易度", { ...snapshot, difficulty: "normal" }],
+    [
+      "3段階の生成器の identity",
+      {
+        ...snapshot,
+        problemIdentity: {
+          generatorVersion: "1",
+          seed: "diagnostic-seed",
+          conditions: { clueCount: 32 },
+          generationAttempt: 1,
+        },
+      },
+    ],
+  ] as const;
+
+  test.each(invalidCases)("%s JSON を拒否すること", (_, value) => {
     function act() {
-      return parseNanpureDiagnosticSnapshot(invalidSerialized);
+      return parseNanpureDiagnosticSnapshot(JSON.stringify(value));
     }
 
     expect(act).toThrow("Invalid Nanpure diagnostic snapshot");

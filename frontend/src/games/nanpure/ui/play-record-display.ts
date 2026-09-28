@@ -1,7 +1,7 @@
 import {
-  getNanpureLegacyDifficultyLabel,
-  parseNanpureLegacyDifficulty,
-} from "@/games/nanpure/legacy/difficulty";
+  getNanpureDifficultyLabel,
+  parseNanpureRecordedDifficulty,
+} from "@/games/nanpure/difficulty";
 import { nanpurePlayRecordDefinition } from "@/games/nanpure/play-record";
 
 import { formatElapsedTime } from "@/games/nanpure/ui/format-elapsed-time";
@@ -10,8 +10,8 @@ export const nanpurePlayRecordDisplay = {
   definition: nanpurePlayRecordDefinition,
   gameLabel: "ナンプレ",
   getComparisonLabel(comparisonKey: string) {
-    const difficulty = parseNanpureLegacyDifficulty(comparisonKey);
-    return difficulty ? getNanpureLegacyDifficultyLabel(difficulty) : null;
+    const difficulty = parseNanpureRecordedDifficulty(comparisonKey);
+    return difficulty ? getNanpureDifficultyLabel(difficulty) : null;
   },
   metrics: [
     {

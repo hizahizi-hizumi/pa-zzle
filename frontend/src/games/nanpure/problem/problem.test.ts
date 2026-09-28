@@ -1,6 +1,7 @@
 import {
   createNanpureProblemIdentity,
   isNanpureProblemIdentity,
+  isNanpureRecordedProblemIdentity,
   NANPURE_GENERATOR_VERSION,
 } from "@/games/nanpure/problem/problem";
 
@@ -43,6 +44,36 @@ describe("isNanpureProblemIdentity", () => {
 
   test.each(cases)("%s を %s と判定すること", (_, value, expected) => {
     const result = isNanpureProblemIdentity(value);
+
+    expect(result).toBe(expected);
+  });
+});
+
+describe("isNanpureRecordedProblemIdentity", () => {
+  const valid = createNanpureProblemIdentity("naked-pair", 1);
+  const cases = [
+    ["今の生成器の identity", valid, true],
+    [
+      "3段階の生成器の identity",
+      {
+        generatorVersion: "1",
+        seed: "nanpure-seed",
+        conditions: { clueCount: 32 },
+        generationAttempt: 1,
+      },
+      true,
+    ],
+    [
+      "今の版で手筋の上限が知らない名前",
+      { ...valid, conditions: { removalTechniqueLimit: "chain" } },
+      false,
+    ],
+    ["生成条件が無い", { generatorVersion: "1", seed: "nanpure-seed" }, false],
+    ["seed が空", { ...valid, generatorVersion: "1", seed: "" }, false],
+  ] as const;
+
+  test.each(cases)("%s を %s と判定すること", (_, value, expected) => {
+    const result = isNanpureRecordedProblemIdentity(value);
 
     expect(result).toBe(expected);
   });

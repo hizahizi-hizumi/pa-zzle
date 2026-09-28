@@ -14,18 +14,46 @@ export const nanpureDifficulties = [
 
 export type NanpureDifficulty = (typeof nanpureDifficulties)[number]["id"];
 
+// 3段階（dependency-v1）時代の記録を、旧区分のまま読み込み表示するためだけに残す。
+const legacyNanpureDifficulties = [
+  { id: "easy", label: "かんたん" },
+  { id: "normal", label: "ふつう" },
+  { id: "hard", label: "むずかしい" },
+] as const;
+
+export type LegacyNanpureDifficulty =
+  (typeof legacyNanpureDifficulties)[number]["id"];
+
+export type NanpureRecordedDifficulty =
+  | NanpureDifficulty
+  | LegacyNanpureDifficulty;
+
 export function parseNanpureDifficulty(
   value: string | undefined,
 ): NanpureDifficulty | undefined {
   return nanpureDifficulties.find((difficulty) => difficulty.id === value)?.id;
 }
 
+export function parseLegacyNanpureDifficulty(
+  value: string | undefined,
+): LegacyNanpureDifficulty | undefined {
+  return legacyNanpureDifficulties.find((difficulty) => difficulty.id === value)
+    ?.id;
+}
+
+export function parseNanpureRecordedDifficulty(
+  value: string | undefined,
+): NanpureRecordedDifficulty | undefined {
+  return parseNanpureDifficulty(value) ?? parseLegacyNanpureDifficulty(value);
+}
+
 export function getNanpureDifficultyLabel(
-  difficulty: NanpureDifficulty,
+  difficulty: NanpureRecordedDifficulty,
 ): string {
   return (
-    nanpureDifficulties.find((option) => option.id === difficulty)?.label ??
-    difficulty
+    [...nanpureDifficulties, ...legacyNanpureDifficulties].find(
+      (option) => option.id === difficulty,
+    )?.label ?? difficulty
   );
 }
 

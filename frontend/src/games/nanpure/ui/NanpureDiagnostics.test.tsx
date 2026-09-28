@@ -7,12 +7,11 @@ import { NanpureDiagnostics } from "@/games/nanpure/ui/NanpureDiagnostics";
 const snapshot: NanpureDiagnosticSnapshot = {
   formatVersion: 1,
   game: "nanpure",
-  difficulty: "normal",
+  difficulty: "3",
   problemIdentity: {
-    generatorVersion: "1",
-    seed: "diagnostics-ui-seed",
-    conditions: { clueCount: 32 },
-    generationAttempt: 7,
+    generatorVersion: "2",
+    seed: "np-locked-candidates-740",
+    conditions: { removalTechniqueLimit: "locked-candidates" },
   },
   buildRevision: "abcdef1234567890",
 };
@@ -25,8 +24,8 @@ describe("NanpureDiagnostics", () => {
   });
 
   test("ナンプレ固有の診断値を共通ダイアログへ表示すること", () => {
-    expect(screen.getByText("ふつう")).toBeTruthy();
-    expect(screen.getByText("diagnostics-ui-seed")).toBeTruthy();
-    expect(screen.getByText("ヒント 32")).toBeTruthy();
+    expect(screen.getByText("レベル 3")).toBeTruthy();
+    expect(screen.getByText("np-locked-candidates-740")).toBeTruthy();
+    expect(screen.getByText("上限 locked-candidates")).toBeTruthy();
   });
 });

@@ -3,24 +3,20 @@ import {
   type InternalDiagnosticSnapshot,
 } from "@/games/diagnostics";
 import {
-  type NanpureLegacyDifficulty,
-  parseNanpureLegacyDifficulty,
-} from "@/games/nanpure/legacy/difficulty";
+  type NanpureDifficulty,
+  parseNanpureDifficulty,
+} from "@/games/nanpure/difficulty";
 import {
-  NANPURE_MINIMUM_UNIQUE_CLUE_COUNT,
-  restoreNanpureLegacyProblem,
-} from "@/games/nanpure/legacy/generator";
-import {
-  NANPURE_LEGACY_GENERATOR_VERSION,
-  type NanpureLegacyGeneratedProblem,
-  type NanpureLegacyProblemIdentity,
-} from "@/games/nanpure/legacy/problem";
-import { NANPURE_CELL_COUNT } from "@/games/nanpure/puzzle/board";
+  isNanpureProblemIdentity,
+  type NanpureIdentifiedProblem,
+  type NanpureProblemIdentity,
+} from "@/games/nanpure/problem/problem";
+import { restoreNanpureProblem } from "@/games/nanpure/problem-selection";
 
 export type NanpureDiagnosticSnapshot = InternalDiagnosticSnapshot<
   "nanpure",
-  NanpureLegacyDifficulty,
-  NanpureLegacyProblemIdentity
+  NanpureDifficulty,
+  NanpureProblemIdentity
 >;
 
 export function createNanpureDiagnosticSnapshot({
@@ -28,8 +24,8 @@ export function createNanpureDiagnosticSnapshot({
   problemIdentity,
   buildRevision,
 }: {
-  difficulty: NanpureLegacyDifficulty;
-  problemIdentity: NanpureLegacyProblemIdentity;
+  difficulty: NanpureDifficulty;
+  problemIdentity: NanpureProblemIdentity;
   buildRevision: string | null;
 }): NanpureDiagnosticSnapshot {
   return {
@@ -54,13 +50,13 @@ export function parseNanpureDiagnosticSnapshot(
 
   const difficulty =
     typeof value.difficulty === "string"
-      ? parseNanpureLegacyDifficulty(value.difficulty)
+      ? parseNanpureDifficulty(value.difficulty)
       : undefined;
   if (
     value.formatVersion !== INTERNAL_DIAGNOSTIC_FORMAT_VERSION ||
     value.game !== "nanpure" ||
     !difficulty ||
-    !isProblemIdentity(value.problemIdentity) ||
+    !isNanpureProblemIdentity(value.problemIdentity) ||
     !(typeof value.buildRevision === "string" || value.buildRevision === null)
   ) {
     throw new TypeError("Invalid Nanpure diagnostic snapshot");
@@ -75,30 +71,11 @@ export function parseNanpureDiagnosticSnapshot(
   };
 }
 
+/** 問題集に無い identity は復元できないので `null` を返す。 */
 export function restoreNanpureProblemFromDiagnosticSnapshot(
   snapshot: NanpureDiagnosticSnapshot,
-): NanpureLegacyGeneratedProblem {
-  return restoreNanpureLegacyProblem(snapshot.problemIdentity);
-}
-
-function isProblemIdentity(
-  value: unknown,
-): value is NanpureLegacyProblemIdentity {
-  if (!isRecord(value) || !isRecord(value.conditions)) {
-    return false;
-  }
-
-  const clueCount = Number(value.conditions.clueCount);
-
-  return (
-    value.generatorVersion === NANPURE_LEGACY_GENERATOR_VERSION &&
-    typeof value.seed === "string" &&
-    Number.isInteger(value.conditions.clueCount) &&
-    clueCount >= NANPURE_MINIMUM_UNIQUE_CLUE_COUNT &&
-    clueCount <= NANPURE_CELL_COUNT &&
-    Number.isInteger(value.generationAttempt) &&
-    Number(value.generationAttempt) > 0
-  );
+): NanpureIdentifiedProblem | null {
+  return restoreNanpureProblem(snapshot.problemIdentity);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

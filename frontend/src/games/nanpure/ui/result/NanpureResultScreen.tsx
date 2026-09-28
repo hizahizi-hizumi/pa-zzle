@@ -22,9 +22,9 @@ import {
 } from "@/components/ui/collapsible";
 import nanpurePictogramSvg from "@/games/nanpure/assets/pictogram.svg?raw";
 import {
-  getNanpureLegacyDifficultyLabel,
-  type NanpureLegacyDifficulty,
-} from "@/games/nanpure/legacy/difficulty";
+  getNanpureDifficultyLabel,
+  type NanpureDifficulty,
+} from "@/games/nanpure/difficulty";
 import type { NanpureResult } from "@/games/nanpure/play/use-nanpure-play";
 import {
   getNanpureGameResultLevel,
@@ -36,7 +36,7 @@ import { ResultMetric } from "@/games/nanpure/ui/result/NanpureResultScreen/Resu
 import { ScoreCriteria } from "@/games/nanpure/ui/result/NanpureResultScreen/ScoreCriteria";
 
 type NanpureResultScreenProps = {
-  difficulty: NanpureLegacyDifficulty;
+  difficulty: NanpureDifficulty;
   result: NanpureResult;
   recordOutcomeNotice: ReactNode;
   onReplay: () => void;
@@ -68,7 +68,7 @@ export function NanpureResultScreen({
       <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-4 py-3 pb-[max(calc(var(--spacing)*4),env(safe-area-inset-bottom))]">
         <GameResultIdentity
           gameName="ナンプレ"
-          difficultyLabel={getNanpureLegacyDifficultyLabel(difficulty)}
+          difficultyLabel={getNanpureDifficultyLabel(difficulty)}
           pictogramSvg={nanpurePictogramSvg}
           level={resultLevel}
         />

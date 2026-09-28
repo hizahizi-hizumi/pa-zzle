@@ -4,6 +4,7 @@ import {
   getNanpureDifficultyLabel,
   type NanpureDifficulty,
   parseNanpureDifficulty,
+  parseNanpureRecordedDifficulty,
 } from "@/games/nanpure/difficulty";
 import type {
   NanpureDifficultyAnalysis,
@@ -68,12 +69,37 @@ describe("parseNanpureDifficulty", () => {
   });
 });
 
-describe("getNanpureDifficultyLabel", () => {
-  test("難易度をレベルの表記で返すこと", () => {
-    const result = getNanpureDifficultyLabel("3");
+describe("parseNanpureRecordedDifficulty", () => {
+  const cases = [
+    ["3", "3"],
+    ["hard", "hard"],
+    ["expert", undefined],
+  ] as const;
 
-    expect(result).toBe("レベル 3");
-  });
+  test.each(cases)(
+    "記録の難易度をレベルと旧3段階の両方で読むこと: %s",
+    (value, expected) => {
+      const result = parseNanpureRecordedDifficulty(value);
+
+      expect(result).toBe(expected);
+    },
+  );
+});
+
+describe("getNanpureDifficultyLabel", () => {
+  const cases = [
+    ["3", "レベル 3"],
+    ["normal", "ふつう"],
+  ] as const;
+
+  test.each(cases)(
+    "レベルと旧3段階の表示名を返すこと: %s",
+    (difficulty, expected) => {
+      const result = getNanpureDifficultyLabel(difficulty);
+
+      expect(result).toBe(expected);
+    },
+  );
 });
 
 describe("classifyNanpureChallengeDifficulty", () => {

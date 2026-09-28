@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
-import type { NanpureLegacyDifficulty } from "@/games/nanpure/legacy/difficulty";
+import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import type {
   NanpureProgress,
   NanpureResult,
@@ -18,7 +18,7 @@ import { NanpurePlayHeader } from "@/games/nanpure/ui/play/NanpurePlayHeader";
 import { NanpureResultScreen } from "@/games/nanpure/ui/result/NanpureResultScreen";
 
 type NanpurePlayProps = {
-  difficulty: NanpureLegacyDifficulty;
+  difficulty: NanpureDifficulty;
   status: "playing" | "cleared";
   progress: NanpureProgress;
   clues: NanpureBoardState;

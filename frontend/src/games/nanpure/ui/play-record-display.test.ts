@@ -1,15 +1,11 @@
 import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
+import { createNanpureProblemIdentity } from "@/games/nanpure/problem/problem";
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 
 const record = createNanpurePlayRecord({
-  difficulty: "normal",
-  problemIdentity: {
-    generatorVersion: "1",
-    seed: "nanpure-seed",
-    conditions: { clueCount: 32 },
-    generationAttempt: 1,
-  },
+  difficulty: "2",
+  problemIdentity: createNanpureProblemIdentity("naked-single", 41),
   startedAt: 1_000,
   completedAt: 121_000,
   result: {
@@ -45,9 +41,21 @@ describe("nanpurePlayRecordDisplay", () => {
     expect(mistakes).toBe("1回");
   });
 
-  test("比較条件を利用者向けラベルへ変換すること", () => {
-    const label = nanpurePlayRecordDisplay.getComparisonLabel("normal");
+  describe("getComparisonLabel", () => {
+    const cases = [
+      ["2", "レベル 2"],
+      ["normal", "ふつう"],
+      ["unknown", null],
+    ] as const;
 
-    expect(label).toBe("ふつう");
+    test.each(cases)(
+      "比較条件を利用者向けラベルへ変換すること: %s",
+      (comparisonKey, expected) => {
+        const label =
+          nanpurePlayRecordDisplay.getComparisonLabel(comparisonKey);
+
+        expect(label).toBe(expected);
+      },
+    );
   });
 });

@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
 
 import { createNanpureDiagnosticSnapshot } from "@/games/nanpure/diagnostics";
-import type { NanpureLegacyDifficulty } from "@/games/nanpure/legacy/difficulty";
-import type { NanpureLegacyProblemIdentity } from "@/games/nanpure/legacy/problem";
+import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import { useNanpurePlay } from "@/games/nanpure/play/use-nanpure-play";
 import {
   createNanpurePlayRecord,
   nanpurePlayRecordDefinition,
 } from "@/games/nanpure/play-record";
+import type { NanpureIdentifiedProblem } from "@/games/nanpure/problem/problem";
 import { NanpureDiagnostics } from "@/games/nanpure/ui/NanpureDiagnostics";
 import { NanpurePlay } from "@/games/nanpure/ui/NanpurePlay";
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
@@ -20,15 +20,15 @@ import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
 
 type PlayableNanpureProps = {
-  difficulty: NanpureLegacyDifficulty;
-  initialProblemIdentity?: NanpureLegacyProblemIdentity;
+  difficulty: NanpureDifficulty;
+  initialProblem?: NanpureIdentifiedProblem;
 };
 
 export function PlayableNanpure({
   difficulty,
-  initialProblemIdentity,
+  initialProblem,
 }: PlayableNanpureProps) {
-  const play = useNanpurePlay(difficulty, initialProblemIdentity);
+  const play = useNanpurePlay(difficulty, initialProblem);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>

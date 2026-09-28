@@ -36,7 +36,7 @@ export function assertNanpureProblem(problem: NanpureProblem): void {
   }
 }
 
-/** 生成手順を変えて同じ identity から別の問題ができるようになったら上げる。版 "1" はヒント数を指定する3段階の生成器（legacy）。 */
+/** 生成手順を変えて同じ identity から別の問題ができるようになったら上げる。版 "1" はヒント数を指定した3段階の生成器で、その記録の問題は復元できない。 */
 export const NANPURE_GENERATOR_VERSION = "2";
 
 /**
@@ -54,6 +54,17 @@ export type NanpureProblemIdentity = {
   generatorVersion: typeof NANPURE_GENERATOR_VERSION;
   seed: ProblemSeed;
   conditions: NanpureGenerationConditions;
+};
+
+/**
+ * 記録に残した問題の識別情報。
+ * 生成器の版が今と違う記録（3段階の生成器の版 "1" など）も読み込めるよう、版と生成条件の形は今の生成器に限らない。
+ * 今の生成器で扱えるかは `isNanpureProblemIdentity` で確かめる。
+ */
+export type NanpureRecordedProblemIdentity = {
+  generatorVersion: string;
+  seed: ProblemSeed;
+  conditions: Readonly<Record<string, unknown>>;
 };
 
 /** 問題と、それを再現するための情報。難易度分析を伴わない。 */
@@ -97,5 +108,28 @@ export function isNanpureProblemIdentity(
       nanpureTechniques.some(
         (technique) => technique === removalTechniqueLimit,
       ))
+  );
+}
+
+/**
+ * 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。
+ * 今の生成器の版なら、今の生成器で扱える識別情報であることまで確かめる。
+ */
+export function isNanpureRecordedProblemIdentity(
+  value: unknown,
+): value is NanpureRecordedProblemIdentity {
+  if (!isRecordObject(value) || !isRecordObject(value.conditions)) {
+    return false;
+  }
+
+  const { generatorVersion, seed } = value;
+  if (generatorVersion === NANPURE_GENERATOR_VERSION) {
+    return isNanpureProblemIdentity(value);
+  }
+  return (
+    typeof generatorVersion === "string" &&
+    generatorVersion.length > 0 &&
+    typeof seed === "string" &&
+    seed.length > 0
   );
 }
