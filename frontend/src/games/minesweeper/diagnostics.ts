@@ -11,9 +11,8 @@ import {
   restoreMinesweeperProblemWithoutAnalysis,
 } from "@/games/minesweeper/problem/generator";
 import {
-  MINESWEEPER_GENERATOR_VERSION,
+  isMinesweeperProblemIdentity,
   type MinesweeperProblemIdentity,
-  type MinesweeperStartCellPlacement,
 } from "@/games/minesweeper/problem/problem";
 
 export type MinesweeperDiagnosticSnapshot = InternalDiagnosticSnapshot<
@@ -21,11 +20,6 @@ export type MinesweeperDiagnosticSnapshot = InternalDiagnosticSnapshot<
   MinesweeperDifficulty,
   MinesweeperProblemIdentity
 >;
-
-const startCellPlacements: readonly MinesweeperStartCellPlacement[] = [
-  "random",
-  "center",
-];
 
 export function createMinesweeperDiagnosticSnapshot({
   difficulty,
@@ -64,7 +58,7 @@ export function parseMinesweeperDiagnosticSnapshot(
     value.formatVersion !== INTERNAL_DIAGNOSTIC_FORMAT_VERSION ||
     value.game !== "minesweeper" ||
     !difficulty ||
-    !isProblemIdentity(value.problemIdentity) ||
+    !isMinesweeperProblemIdentity(value.problemIdentity) ||
     !(typeof value.buildRevision === "string" || value.buildRevision === null)
   ) {
     throw new TypeError("Invalid minesweeper diagnostic snapshot");
@@ -83,30 +77,6 @@ export function restoreMinesweeperProblemFromDiagnosticSnapshot(
   snapshot: MinesweeperDiagnosticSnapshot,
 ): MinesweeperRestoredProblem {
   return restoreMinesweeperProblemWithoutAnalysis(snapshot.problemIdentity);
-}
-
-function isPositiveInteger(value: unknown): boolean {
-  return Number.isInteger(value) && Number(value) > 0;
-}
-
-function isProblemIdentity(
-  value: unknown,
-): value is MinesweeperProblemIdentity {
-  if (!isRecord(value) || !isRecord(value.conditions)) {
-    return false;
-  }
-
-  return (
-    value.generatorVersion === MINESWEEPER_GENERATOR_VERSION &&
-    typeof value.seed === "string" &&
-    isPositiveInteger(value.conditions.rows) &&
-    isPositiveInteger(value.conditions.columns) &&
-    isPositiveInteger(value.conditions.mineCount) &&
-    startCellPlacements.includes(
-      value.conditions.startCellPlacement as MinesweeperStartCellPlacement,
-    ) &&
-    isPositiveInteger(value.generationAttempt)
-  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

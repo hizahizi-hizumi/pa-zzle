@@ -38,6 +38,32 @@ export type MinesweeperProblemIdentity = {
   generationAttempt: number;
 };
 
+const startCellPlacements: readonly MinesweeperStartCellPlacement[] = [
+  "random",
+  "center",
+];
+
+/** 記録・診断など外部から読み戻した値が、現在の生成器で復元できる識別情報かを確かめる。 */
+export function isMinesweeperProblemIdentity(
+  value: unknown,
+): value is MinesweeperProblemIdentity {
+  if (!isRecordObject(value) || !isRecordObject(value.conditions)) {
+    return false;
+  }
+
+  return (
+    value.generatorVersion === MINESWEEPER_GENERATOR_VERSION &&
+    typeof value.seed === "string" &&
+    isPositiveInteger(value.conditions.rows) &&
+    isPositiveInteger(value.conditions.columns) &&
+    isPositiveInteger(value.conditions.mineCount) &&
+    startCellPlacements.includes(
+      value.conditions.startCellPlacement as MinesweeperStartCellPlacement,
+    ) &&
+    isPositiveInteger(value.generationAttempt)
+  );
+}
+
 export function assertMinesweeperProblem(problem: MinesweeperProblem): void {
   assertMinesweeperBoard(problem.board);
 
@@ -91,4 +117,12 @@ export function countMinesweeperMinimumOpenCount(
   }
 
   return openCount;
+}
+
+function isRecordObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value > 0;
 }
