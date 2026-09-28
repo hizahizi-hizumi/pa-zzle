@@ -34,6 +34,8 @@ import { cn } from "@/lib/utils";
 type ReflectionBoardProps = {
   board: ReflectionBoardState;
   clues: readonly ReflectionClue[];
+  /** 外周ヒントごとに、今の配置での光が一致しているか。並びは `clues` と同じ。 */
+  clueMatches: readonly boolean[];
   selection: ReflectionSelection | null;
   laser: ReflectionLaserView | null;
   progress: ReflectionProgress;
@@ -115,11 +117,13 @@ function hasModifierKey(event: ReactKeyboardEvent): boolean {
 
 /**
  * 盤面と、その四辺を囲む外周ヒント。外周ヒントを押した位置の光路を、ピースの下に重ねて描く。
+ * 今の配置での光が一致している外周ヒントは、地の色で示す。
  * 盤面が揃うと全光路を描き、完成演出を終えたら `onClearAnimationComplete` を呼ぶ。
  */
 export function ReflectionBoard({
   board,
   clues,
+  clueMatches,
   selection,
   laser,
   progress,
@@ -257,7 +261,7 @@ export function ReflectionBoard({
             selected={
               laser !== null && isSameReflectionEntry(laser.entry, entry)
             }
-            lit={!playing}
+            matched={clueMatches[clueIndex] ?? false}
             disabled={!playing}
             focusable={focusKey === focusableKey}
             focusKey={focusKey}

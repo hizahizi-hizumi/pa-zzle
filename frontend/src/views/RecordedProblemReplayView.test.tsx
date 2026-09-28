@@ -351,9 +351,9 @@ describe("RecordedProblemReplayView", () => {
           screen.getByRole("group", { name: `${REFLECTION_DISPLAY_NAME}盤面` }),
         ).getAllByRole("button");
         const clueDistances = screen
-          .getAllByRole("button", { name: /マス$/ })
+          .getAllByRole("button", { name: /\d+マス( 一致)?$/ })
           .map((button) =>
-            Number(button.getAttribute("aria-label")?.match(/(\d+)マス$/)?.[1]),
+            Number(button.getAttribute("aria-label")?.match(/(\d+)マス/)?.[1]),
           )
           .sort((a, b) => a - b);
         const expectedDistances = (pooled?.problem.clues ?? [])

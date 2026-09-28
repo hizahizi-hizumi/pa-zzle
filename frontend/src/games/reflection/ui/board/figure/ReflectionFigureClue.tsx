@@ -4,7 +4,10 @@ import type {
 } from "@/games/reflection/puzzle/laser";
 import { getReflectionClueCenter } from "@/games/reflection/ui/board/board-geometry";
 import { renderReflectionOutcomeShape } from "@/games/reflection/ui/board/ReflectionOutcomeMark";
-import { reflectionToneClassNames } from "@/games/reflection/ui/reflection-tone";
+import {
+  reflectionOutcomeToneClassNames,
+  reflectionToneClassNames,
+} from "@/games/reflection/ui/reflection-tone";
 import { cn } from "@/lib/utils";
 
 type ReflectionFigureClueProps = {
@@ -20,7 +23,7 @@ const MARK_SIZE = 0.36;
 /** 結果の形は 12×12 の座標で描かれている。 */
 const MARK_SCALE = MARK_SIZE / 12;
 
-/** 図の外周ヒント。盤面の外周ヒントと同じく、数字の下に結果の形を置く。 */
+/** 図の外周ヒント。盤面の外周ヒントと同じく、数字の下に結果の形を結果の色で置く。 */
 export function ReflectionFigureClue({
   size,
   entry,
@@ -47,9 +50,7 @@ export function ReflectionFigureClue({
       </text>
       <g
         transform={`translate(${center.x - MARK_SIZE / 2} ${center.y + 0.08}) scale(${MARK_SCALE})`}
-        className={
-          lit ? reflectionToneClassNames.laserText : "text-muted-foreground"
-        }
+        className={reflectionOutcomeToneClassNames[clue.outcome]}
         fill="none"
         stroke="currentColor"
         strokeWidth={1.6}

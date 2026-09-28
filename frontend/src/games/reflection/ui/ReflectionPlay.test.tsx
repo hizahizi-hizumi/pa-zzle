@@ -12,6 +12,7 @@ import type { ReflectionResult } from "@/games/reflection/play/use-reflection-pl
 import {
   countReflectionBoardPieces,
   createEmptyReflectionBoard,
+  createEmptyReflectionInventory,
   parseReflectionBoard,
 } from "@/games/reflection/puzzle/board";
 import {
@@ -186,7 +187,9 @@ describe("ReflectionPlay", () => {
     });
 
     test("外周ヒントを押すとその位置を知らせること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "左2行 退出 3マス" }));
+      fireEvent.click(
+        screen.getByRole("button", { name: "左2行 退出 3マス 一致" }),
+      );
 
       expect(callbacks.onTapClue).toHaveBeenCalledWith(leftMiddle);
     });
@@ -306,6 +309,58 @@ describe("ReflectionPlay", () => {
     });
   });
 
+  describe("外周ヒントの一致", () => {
+    const matchedName = / 一致$/;
+    const emptyStock = createEmptyReflectionInventory();
+
+    test("今の配置での光が一致している外周ヒントだけを一致として示すこと", () => {
+      renderPlay({ board: emptyBoard });
+
+      // 空の盤面では、目標が「まっすぐ3マス抜ける」中央の4本だけが一致する。
+      const matched = screen
+        .getAllByRole("button", { name: matchedName })
+        .map((button) => button.getAttribute("aria-label"));
+      expect(matched).toEqual([
+        "上2列 退出 3マス 一致",
+        "右2行 退出 3マス 一致",
+        "下2列 退出 3マス 一致",
+        "左2行 退出 3マス 一致",
+      ]);
+    });
+
+    test("置いたピースで光が変わると一致を外すこと", () => {
+      renderPlay({ board: placedBoard });
+
+      expect(
+        screen.queryAllByRole("button", { name: matchedName }),
+      ).toHaveLength(0);
+      expect(
+        screen.getByRole("button", { name: "左2行 退出 3マス" }),
+      ).toBeTruthy();
+    });
+
+    test("手持ちを置き切っても揃わないとき、合っていない外周ヒントの本数を知らせること", () => {
+      renderPlay({
+        board: parseReflectionBoard(["/..", "...", ".@."]),
+        stock: emptyStock,
+      });
+
+      expect(
+        screen.getByText(
+          (_, element) =>
+            element?.tagName === "SPAN" &&
+            element.textContent === "合っていない外周ヒントが6本あります",
+        ),
+      ).toBeTruthy();
+    });
+
+    test("手持ちが残っている間は、合っていない外周ヒントの本数を出さないこと", () => {
+      renderPlay({ board: parseReflectionBoard(["/..", "...", "..."]) });
+
+      expect(screen.queryByText(/合っていない外周ヒント/)).toBeNull();
+    });
+  });
+
   describe("光路を表示している場合", () => {
     beforeEach(() => {
       renderPlay({
@@ -317,11 +372,9 @@ describe("ReflectionPlay", () => {
       });
     });
 
-    test("今の盤面での結果と通ったマスの数を出すこと", () => {
-      const status = screen.getByText("左2行の光").parentElement;
-
-      expect(status?.textContent).toContain("吸収");
-      expect(status?.textContent).toContain("2マス");
+    test("光路の行き先や通ったマスの数を文字で出さないこと", () => {
+      expect(screen.queryByText(/の光/)).toBeNull();
+      expect(screen.queryByText("吸収")).toBeNull();
     });
 
     test("表示中の外周ヒントを押されている状態にすること", () => {

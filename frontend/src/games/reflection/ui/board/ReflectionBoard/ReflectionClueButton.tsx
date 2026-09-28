@@ -8,7 +8,10 @@ import { getReflectionClueGridPosition } from "@/games/reflection/ui/board/board
 import { ReflectionOutcomeMark } from "@/games/reflection/ui/board/ReflectionOutcomeMark";
 import { formatReflectionEntry } from "@/games/reflection/ui/format-entry";
 import { reflectionOutcomeLabels } from "@/games/reflection/ui/outcome-label";
-import { reflectionToneClassNames } from "@/games/reflection/ui/reflection-tone";
+import {
+  reflectionOutcomeToneClassNames,
+  reflectionToneClassNames,
+} from "@/games/reflection/ui/reflection-tone";
 import { cn } from "@/lib/utils";
 
 type ReflectionClueButtonProps = {
@@ -17,8 +20,8 @@ type ReflectionClueButtonProps = {
   clue: ReflectionClue;
   /** この位置の光路を表示している。 */
   selected: boolean;
-  /** 盤面が揃い、全光路を表示している。 */
-  lit: boolean;
+  /** 今の配置での光が、この外周ヒントの行き先・マスの数と一致している。 */
+  matched: boolean;
   disabled: boolean;
   focusable: boolean;
   focusKey: string;
@@ -32,7 +35,7 @@ export function ReflectionClueButton({
   entry,
   clue,
   selected,
-  lit,
+  matched,
   disabled,
   focusable,
   focusKey,
@@ -50,7 +53,7 @@ export function ReflectionClueButton({
     <button
       ref={buttonRef}
       type="button"
-      aria-label={`${formatReflectionEntry(entry)} ${reflectionOutcomeLabels[clue.outcome]} ${clue.distance}マス`}
+      aria-label={`${formatReflectionEntry(entry)} ${reflectionOutcomeLabels[clue.outcome]} ${clue.distance}マス${matched ? " 一致" : ""}`}
       aria-pressed={selected}
       disabled={disabled}
       tabIndex={focusable ? 0 : -1}
@@ -59,20 +62,24 @@ export function ReflectionClueButton({
       style={{ gridRow: row, gridColumn: column }}
       className={cn(
         "relative flex min-h-0 min-w-0 touch-manipulation select-none flex-col items-center justify-center gap-[calc(var(--reflection-unit)*0.04)] rounded-sm leading-none text-foreground outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent",
-        selected && reflectionToneClassNames.laserSurface,
-        (selected || lit) && reflectionToneClassNames.laserLabel,
+        selected && reflectionToneClassNames.laserRing,
+        matched
+          ? cn(
+              reflectionToneClassNames.clueMatchSurface,
+              reflectionToneClassNames.clueMatchLabel,
+            )
+          : selected &&
+              cn(
+                reflectionToneClassNames.laserSurface,
+                reflectionToneClassNames.laserLabel,
+              ),
       )}
     >
       <span className="font-semibold tabular-nums text-[length:clamp(0.8125rem,calc(var(--reflection-unit)*0.4),1.375rem)]">
         {clue.distance}
       </span>
       <span
-        className={cn(
-          "flex",
-          selected || lit
-            ? reflectionToneClassNames.laserText
-            : "text-muted-foreground",
-        )}
+        className={cn("flex", reflectionOutcomeToneClassNames[clue.outcome])}
       >
         <ReflectionOutcomeMark outcome={clue.outcome} size="clue" />
       </span>

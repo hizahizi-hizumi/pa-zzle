@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import type { ReflectionLaserPathMode } from "@/games/reflection/laser-path-mode";
@@ -7,15 +7,17 @@ import type {
   ReflectionProgress,
   ReflectionResult,
 } from "@/games/reflection/play/use-reflection-play";
-import type {
-  ReflectionBoard as ReflectionBoardState,
-  ReflectionInventory,
-  ReflectionPiece,
+import {
+  getReflectionInventoryPieceCount,
+  type ReflectionBoard as ReflectionBoardState,
+  type ReflectionInventory,
+  type ReflectionPiece,
 } from "@/games/reflection/puzzle/board";
 import type {
   ReflectionClue,
   ReflectionEntry,
 } from "@/games/reflection/puzzle/laser";
+import { listReflectionClueMatches } from "@/games/reflection/puzzle/rules";
 import type {
   ReflectionSelection,
   ReflectionSessionResult,
@@ -23,7 +25,7 @@ import type {
 import { ReflectionBoard } from "@/games/reflection/ui/board/ReflectionBoard";
 import { readReflectionHowToPlaySeen } from "@/games/reflection/ui/how-to-play-seen";
 import { ReflectionHowToPlayDialog } from "@/games/reflection/ui/ReflectionHowToPlayDialog";
-import { ReflectionLaserStatus } from "@/games/reflection/ui/ReflectionPlay/ReflectionLaserStatus";
+import { ReflectionClueMatchStatus } from "@/games/reflection/ui/ReflectionPlay/ReflectionClueMatchStatus";
 import { ReflectionPlayHeader } from "@/games/reflection/ui/ReflectionPlay/ReflectionPlayHeader";
 import {
   listReflectionStockPieces,
@@ -113,6 +115,15 @@ export function ReflectionPlay({
     readReflectionHowToPlaySeen() ? "closed" : "intro",
   );
   const playing = progress === "playing";
+  const clueMatches = useMemo(
+    () => listReflectionClueMatches(board, clues),
+    [board, clues],
+  );
+  // 手持ちを置き切っても揃っていないときだけ、合っていない外周ヒントの本数を知らせる。
+  const unmatchedClueCount =
+    playing && getReflectionInventoryPieceCount(stock) === 0
+      ? clueMatches.filter((matched) => !matched).length
+      : 0;
   const playAreaRef = useRef<HTMLElement>(null);
 
   function closeHowToPlay() {
@@ -213,6 +224,7 @@ export function ReflectionPlay({
           <ReflectionBoard
             board={board}
             clues={clues}
+            clueMatches={clueMatches}
             selection={selection}
             laser={laser}
             progress={progress}
@@ -224,7 +236,7 @@ export function ReflectionPlay({
         </div>
       </main>
       <footer className="grid shrink-0 gap-2 px-3 pb-2">
-        <ReflectionLaserStatus laser={laser} />
+        <ReflectionClueMatchStatus unmatchedClueCount={unmatchedClueCount} />
         <ReflectionStock
           inventory={inventory}
           stock={stock}

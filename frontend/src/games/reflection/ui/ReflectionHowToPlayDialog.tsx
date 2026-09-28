@@ -14,10 +14,17 @@ import {
   type ReflectionLaserPathMode,
 } from "@/games/reflection/laser-path-mode";
 import type { ReflectionPiece } from "@/games/reflection/puzzle/board";
+import type { ReflectionClue } from "@/games/reflection/puzzle/laser";
+import { ReflectionOutcomeMark } from "@/games/reflection/ui/board/ReflectionOutcomeMark";
 import { ReflectionPieceIcon } from "@/games/reflection/ui/board/ReflectionPieceIcon";
 import { writeReflectionHowToPlaySeen } from "@/games/reflection/ui/how-to-play-seen";
 import { reflectionOutcomeLabels } from "@/games/reflection/ui/outcome-label";
 import { HowToPlayFigure } from "@/games/reflection/ui/ReflectionHowToPlayDialog/HowToPlayFigure";
+import {
+  reflectionOutcomeToneClassNames,
+  reflectionToneClassNames,
+} from "@/games/reflection/ui/reflection-tone";
+import { cn } from "@/lib/utils";
 
 type ReflectionHowToPlayDialogProps = {
   open: boolean;
@@ -52,8 +59,42 @@ const pieceGroups: readonly {
 
 const leftMiddle = { side: "left", index: 1 } as const;
 
+const matchExampleClue: ReflectionClue = { outcome: "exit", distance: 3 };
+
+/** 盤面の外周ヒントと同じ並び（数字の下に結果の形）で、一致しているときの地の色を見せる見本。 */
+function ClueMatchExample({ matched }: { matched: boolean }) {
+  return (
+    <span
+      className={cn(
+        "flex size-10 flex-col items-center justify-center gap-0.5 rounded-sm leading-none",
+        matched
+          ? cn(
+              reflectionToneClassNames.clueMatchSurface,
+              reflectionToneClassNames.clueMatchLabel,
+            )
+          : "border border-border text-foreground",
+      )}
+    >
+      <span className="font-semibold tabular-nums">
+        {matchExampleClue.distance}
+      </span>
+      <span
+        className={cn(
+          "flex",
+          reflectionOutcomeToneClassNames[matchExampleClue.outcome],
+        )}
+      >
+        <ReflectionOutcomeMark
+          outcome={matchExampleClue.outcome}
+          size="inline"
+        />
+      </span>
+    </span>
+  );
+}
+
 /**
- * ルールと操作を、盤面と同じ形の小さな図と短い一文で示す。
+ * ルールと操作を、盤面と同じ形・色の小さな図と短い一文で示す。
  * 光路表示の説明は光路表示の扱いに合わせる。一度閉じたら、初めて遊ぶときの自動表示をしないよう記録する。
  */
 export function ReflectionHowToPlayDialog({
@@ -97,7 +138,9 @@ export function ReflectionHowToPlayDialog({
 
         <ol className="space-y-5 text-supporting">
           <li className="space-y-2">
-            <p>数字は、そこから入れた光が通るマスの数。記号は光の行き先。</p>
+            <p>
+              数字は、そこから入れた光が通るマスの数。記号と色は光の行き先。
+            </p>
             <div className="flex justify-between gap-2">
               {outcomeFigures.map(({ outcome, rows }) => (
                 <figure
@@ -139,9 +182,28 @@ export function ReflectionHowToPlayDialog({
               ストックでピースを選び、マスを押して置く。置いたピースを押して選ぶと、別のマスへ移す・入れ替える・ストックへ戻すができる。
             </p>
           </li>
+          <li className="space-y-2">
+            <p>
+              置くたびに、今の配置で光が数字と記号のとおりに進む外周ヒントは、地が緑になる。すべて緑になれば完成。
+            </p>
+            <div className="flex items-center gap-4">
+              <figure className="flex items-center gap-2">
+                <ClueMatchExample matched={false} />
+                <figcaption className="text-meta text-muted-foreground">
+                  まだ合っていない
+                </figcaption>
+              </figure>
+              <figure className="flex items-center gap-2">
+                <ClueMatchExample matched />
+                <figcaption className="text-meta text-muted-foreground">
+                  合っている
+                </figcaption>
+              </figure>
+            </div>
+          </li>
           <li>
             <p>
-              外周の数字を押すと、今の配置での光の道筋を表示する。
+              外周の数字を押すと、今の配置での光の道筋を線で表示する。合わない理由を探すときに使う。
               {describedAsAssist ? "（補助。使った回数は記録に残る）" : null}
             </p>
           </li>

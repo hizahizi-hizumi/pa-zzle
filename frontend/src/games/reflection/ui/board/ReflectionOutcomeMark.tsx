@@ -1,7 +1,10 @@
 import type { ReflectionOutcome } from "@/games/reflection/puzzle/laser";
 import { cn } from "@/lib/utils";
 
-/** `clue` は外周ヒントの中で盤面の大きさに合わせる。`inline` は文中、`figure` は遊び方の図。色は周りの文字色を使う。 */
+/**
+ * `clue` は外周ヒントの中で盤面の大きさに合わせる。`inline` は文中、`figure` は遊び方の図。
+ * 色は周りの文字色を使う。結果の色（`reflectionOutcomeToneClassNames`）は使う側が与える。
+ */
 type ReflectionOutcomeMarkSize = "clue" | "inline" | "figure";
 
 type ReflectionOutcomeMarkProps = {
@@ -16,7 +19,7 @@ const sizeClassNames = {
 } as const satisfies Record<ReflectionOutcomeMarkSize, string>;
 
 /**
- * 外周ヒントの結果の形。色を見なくても、退出は斜めの矢印、反射は折り返す矢印、吸収は塗りの点で見分ける。
+ * 外周ヒントの結果の形。結果ごとに色も付けるが、色を見なくても、退出は斜めの矢印、反射は折り返す矢印、吸収は塗りの点で見分ける。
  * 辺によって向きを変えず、遊び方の説明と同じ形で読めるようにする。
  */
 export function ReflectionOutcomeMark({

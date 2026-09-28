@@ -57,7 +57,6 @@ export function ReflectionCell({
         row !== size - 1 && "border-b border-b-border",
         column !== size - 1 && "border-r border-r-border",
         selected && reflectionToneClassNames.selectionSurface,
-        selected && reflectionToneClassNames.selectionText,
       )}
     >
       {cell !== null ? (

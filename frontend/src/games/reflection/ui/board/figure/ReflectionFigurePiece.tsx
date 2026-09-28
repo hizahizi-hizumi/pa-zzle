@@ -8,6 +8,7 @@ import {
   REFLECTION_PIECE_STROKE_WIDTH,
   renderReflectionPieceShape,
 } from "@/games/reflection/ui/board/ReflectionPieceIcon";
+import { reflectionPieceToneClassNames } from "@/games/reflection/ui/reflection-tone";
 
 type ReflectionFigurePieceProps = {
   size: number;
@@ -46,7 +47,7 @@ export function ReflectionFigurePiece({
         {renderReflectionPieceShape(piece, REFLECTION_PIECE_HALO_WIDTH)}
       </g>
       <g
-        className="text-foreground"
+        className={reflectionPieceToneClassNames[piece]}
         stroke="currentColor"
         strokeWidth={REFLECTION_PIECE_STROKE_WIDTH}
       >

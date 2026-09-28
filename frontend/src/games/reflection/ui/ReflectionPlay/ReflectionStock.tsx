@@ -76,7 +76,6 @@ export function ReflectionStock({
             className={cn(
               "relative flex h-11 min-w-0 max-w-16 flex-1 touch-manipulation select-none items-center justify-center rounded-md border-(length:--border-width-normal) bg-background text-foreground shadow-raised outline-none transition-[background-color,color,opacity] duration-(--duration-fast) focus-visible:ring-2 focus-visible:ring-ring enabled:hover:bg-accent/60 enabled:active:bg-accent disabled:opacity-40 disabled:shadow-none",
               selected && reflectionToneClassNames.selectionSurface,
-              selected && reflectionToneClassNames.selectionText,
               returning && "border-dashed",
             )}
           >
