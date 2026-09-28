@@ -6,15 +6,30 @@ import {
   within,
 } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
-import { formatReflectionProblemQuery } from "@/games/reflection/diagnostics";
+import {
+  formatReflectionPoolProblemQuery,
+  formatReflectionProblemQuery,
+} from "@/games/reflection/diagnostics";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import { generateReflectionProblem } from "@/games/reflection/problem/generator";
 import { createReflectionProblemIdentity } from "@/games/reflection/problem/problem";
+import {
+  restoreReflectionPoolProblem,
+  selectReflectionProblemForDifficulty,
+} from "@/games/reflection/problem-selection";
+import type { ReflectionBoard } from "@/games/reflection/puzzle/board";
 import { writeReflectionHowToPlaySeen } from "@/games/reflection/ui/how-to-play-seen";
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
+import { readPlayRecords } from "@/records/storage";
 import { ReflectionPlayView } from "@/views/ReflectionPlayView";
 
 const internalDiagnostics = vi.hoisted(() => ({ available: false }));
+const problemSeed = "reflection-play-view";
+
+vi.mock("@/games/problem-seed", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/games/problem-seed")>()),
+  createProblemSeed: () => problemSeed,
+}));
 
 vi.mock("@/lib/internal-diagnostics", () => ({
   get internalDiagnosticsAvailable() {
@@ -42,6 +57,7 @@ function renderAt(path: string): void {
           element={<ReflectionPlayView />}
         />
         <Route path="/puzzles/reflection" element={<p>難易度選択画面</p>} />
+        <Route path="/records" element={<p>記録画面</p>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -60,14 +76,14 @@ function getBoardCells(): HTMLElement[] {
   ).getAllByRole("button");
 }
 
-const specifiedProblemIdentity = createReflectionProblemIdentity(7, 10, 0);
+// 問題集に無い（7×7・3ピースは提供範囲外の）問題。
+const specifiedProblemIdentity = createReflectionProblemIdentity(7, 3, 0);
 const specifiedProblemPath = `/puzzles/reflection/play/1?${formatReflectionProblemQuery(specifiedProblemIdentity)}`;
+const poolProblemReference = { poolVersion: "1", problemId: "2-1" };
+const poolProblemPath = `/puzzles/reflection/play/1?${formatReflectionPoolProblemQuery(poolProblemReference)}`;
 
-/** 指定した問題の解どおりに、ストックの種類を選んでからマスを押して置く。 */
-function solveSpecifiedProblem(): void {
-  const { solution } = generateReflectionProblem(
-    specifiedProblemIdentity,
-  ).problem;
+/** 解どおりに、ストックの種類を選んでからマスを押して置く。 */
+function solve(solution: ReflectionBoard): void {
   const stock = screen.getByRole("group", { name: "ストック" });
   const cells = getBoardCells();
   solution.cells.forEach((piece, cellIndex) => {
@@ -119,6 +135,64 @@ describe("ReflectionPlayView", () => {
       const item = screen.queryByRole("menuitem", { name: "検証情報" });
 
       expect(item).toBeNull();
+    });
+  });
+
+  describe("通常の出題を解き終えた場合", () => {
+    const selected = selectReflectionProblemForDifficulty("1", problemSeed);
+
+    beforeEach(() => {
+      renderAt("/puzzles/reflection/play/1");
+      solve(selected.problem.solution);
+    });
+
+    test("結果画面で難易度とスコアを示すこと", () => {
+      const resultScreen = within(
+        screen.getByRole("region", { name: "プレイ結果" }),
+      );
+
+      expect(resultScreen.getByText("レベル 1")).toBeTruthy();
+      expect(resultScreen.getByRole("region", { name: "スコア" })).toBeTruthy();
+    });
+
+    test("遊んだ問題と作業の量とプレイの事実を記録へ保存すること", () => {
+      const records = readPlayRecords();
+
+      expect(records).toHaveLength(1);
+      expect(records[0]).toMatchObject({
+        gameId: "reflection",
+        payload: {
+          difficulty: "1",
+          problemIdentity: selected.identity,
+          workload: selected.workload,
+          performance: { relocationCount: 0, restartCount: 0, undoCount: 0 },
+        },
+      });
+    });
+
+    test("記録を確認で記録画面へ移ること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "記録を確認" }));
+
+      expect(screen.getByText("記録画面")).toBeTruthy();
+    });
+
+    test("難易度変更で難易度選択画面へ移ること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "難易度変更" }));
+
+      expect(screen.getByText("難易度選択画面")).toBeTruthy();
+    });
+
+    describe("同じ問題をもう一度解いた場合", () => {
+      beforeEach(() => {
+        fireEvent.click(screen.getByRole("button", { name: "同じ問題" }));
+        solve(selected.problem.solution);
+      });
+
+      test("もう1件の記録として保存すること", () => {
+        const records = readPlayRecords();
+
+        expect(records).toHaveLength(2);
+      });
     });
   });
 
@@ -177,12 +251,81 @@ describe("ReflectionPlayView", () => {
       expect(cells).toHaveLength(49);
     });
 
-    test("解き終えた表示で難易度を伏せること", () => {
-      solveSpecifiedProblem();
-      const status = screen.getByRole("status");
+    describe("解き終えた場合", () => {
+      beforeEach(() => {
+        solve(
+          generateReflectionProblem(specifiedProblemIdentity).problem.solution,
+        );
+      });
 
-      expect(within(status).getByText("問題指定")).toBeTruthy();
-      expect(within(status).queryByText("レベル 1")).toBeNull();
+      test("結果で難易度を伏せること", () => {
+        const resultScreen = within(
+          screen.getByRole("region", { name: "プレイ結果" }),
+        );
+
+        expect(resultScreen.getByText("問題指定")).toBeTruthy();
+        expect(resultScreen.queryByText("レベル 1")).toBeNull();
+      });
+
+      test("問題集に無い問題なのでスコアを出さないこと", () => {
+        const reason = screen.getByText(
+          "問題集に無い問題のため、スコアは出しません。",
+        );
+
+        expect(reason).toBeTruthy();
+      });
+
+      test("記録を保存しないこと", () => {
+        const records = readPlayRecords();
+
+        expect(records).toEqual([]);
+      });
+    });
+  });
+
+  describe("内部診断を使えるビルドで問題集の問題を指定して解いた場合", () => {
+    beforeEach(() => {
+      internalDiagnostics.available = true;
+      renderAt(poolProblemPath);
+      solve(
+        restoreReflectionPoolProblem(poolProblemReference)?.problem
+          .solution as ReflectionBoard,
+      );
+    });
+
+    test("難易度を伏せてスコアを出すこと", () => {
+      const resultScreen = within(
+        screen.getByRole("region", { name: "プレイ結果" }),
+      );
+
+      expect(resultScreen.getByText("問題指定")).toBeTruthy();
+      expect(resultScreen.getByRole("region", { name: "スコア" })).toBeTruthy();
+    });
+
+    test("記録を保存しないこと", () => {
+      const records = readPlayRecords();
+
+      expect(records).toEqual([]);
+    });
+
+    describe("結果画面から別の問題を解いた場合", () => {
+      beforeEach(() => {
+        fireEvent.click(screen.getByRole("button", { name: "プレイ！" }));
+        solve(
+          selectReflectionProblemForDifficulty("1", problemSeed).problem
+            .solution,
+        );
+      });
+
+      test("URL の難易度として結果を出し、記録を保存すること", () => {
+        const resultScreen = within(
+          screen.getByRole("region", { name: "プレイ結果" }),
+        );
+        const records = readPlayRecords();
+
+        expect(resultScreen.getByText("レベル 1")).toBeTruthy();
+        expect(records).toHaveLength(1);
+      });
     });
   });
 

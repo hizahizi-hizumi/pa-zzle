@@ -8,6 +8,7 @@ import {
 import type { ComponentProps } from "react";
 
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
+import type { ReflectionResult } from "@/games/reflection/play/use-reflection-play";
 import {
   countReflectionBoardPieces,
   createEmptyReflectionBoard,
@@ -18,6 +19,13 @@ import {
   traceReflectionLaser,
 } from "@/games/reflection/puzzle/laser";
 import {
+  calculateReflectionPlayScore,
+  calculateReflectionSpeedFullScoreMs,
+  calculateReflectionSpeedZeroScoreMs,
+  calculateReflectionTimeDeltaMs,
+} from "@/games/reflection/score";
+import type { ReflectionSessionResult } from "@/games/reflection/session/session";
+import {
   readReflectionHowToPlaySeen,
   writeReflectionHowToPlaySeen,
 } from "@/games/reflection/ui/how-to-play-seen";
@@ -26,6 +34,45 @@ import { ReflectionPlay } from "@/games/reflection/ui/ReflectionPlay";
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
+});
+
+function createResult(performance: ReflectionSessionResult): ReflectionResult {
+  // 基準時間 28 × 0.5 + 8 × 6 + 3 × 8 + min(12, 10) × 15 = 236秒（03:56）、0点になる時間 07:52。
+  const workload = {
+    pieceCount: 8,
+    clueCount: 28,
+    propagationRoundCount: 3,
+    assumptionTestCount: 12,
+  };
+  return {
+    ...performance,
+    workload,
+    speedFullScoreMs: calculateReflectionSpeedFullScoreMs(workload),
+    speedZeroScoreMs: calculateReflectionSpeedZeroScoreMs(workload),
+    timeDeltaMs: calculateReflectionTimeDeltaMs({
+      elapsedMs: performance.elapsedMs,
+      workload,
+    }),
+    score: calculateReflectionPlayScore({ ...performance, workload }),
+  };
+}
+
+// 置き直し2回・盤面戻し1回で正確性 35点、24秒超過で速さ 36点。
+const performance = {
+  elapsedMs: 260_000,
+  relocationCount: 2,
+  restartCount: 1,
+  undoCount: 1,
+  laserCheckCount: 4,
+  inputCount: 20,
+};
+const result = createResult(performance);
+const perfectResult = createResult({
+  ...performance,
+  elapsedMs: 221_000,
+  relocationCount: 0,
+  restartCount: 0,
+  undoCount: 0,
 });
 
 describe("ReflectionPlay", () => {
@@ -47,6 +94,7 @@ describe("ReflectionPlay", () => {
     onReplay: vi.fn(),
     onClearAnimationComplete: vi.fn(),
     onStartNewProblem: vi.fn(),
+    onOpenRecords: vi.fn(),
     onChangeDifficulty: vi.fn(),
     onBackToHome: vi.fn(),
   };
@@ -66,6 +114,9 @@ describe("ReflectionPlay", () => {
     elapsedMs: 65_000,
     canUndo: true,
     canRestart: false,
+    sessionResult: null,
+    result: null,
+    recordOutcomeNotice: null,
     ...callbacks,
   };
 
@@ -280,19 +331,246 @@ describe("ReflectionPlay", () => {
     });
   });
 
-  describe("完成演出を終えた場合", () => {
+  describe("完成演出中の場合", () => {
     beforeEach(() => {
-      renderPlay({ board: solution, progress: "result", canUndo: false });
+      renderPlay({
+        board: solution,
+        progress: "clearing",
+        canUndo: false,
+        sessionResult: performance,
+        result,
+      });
     });
 
-    test("完成を示し、次の行動を出すこと", () => {
-      const status = screen.getByRole("status");
+    test("揃った盤面を覆わずに見せ、結果画面をまだ出さないこと", () => {
+      const board = getBoardGroup();
+      const resultScreen = screen.queryByRole("region", { name: "プレイ結果" });
 
-      expect(within(status).getByText("完成！")).toBeTruthy();
-      expect(within(status).getByText("レベル 1")).toBeTruthy();
-      expect(
-        within(status).getByRole("button", { name: "別の問題" }),
-      ).toBeTruthy();
+      expect(board).toBeTruthy();
+      expect(resultScreen).toBeNull();
+    });
+  });
+
+  describe("完成演出を終えた場合", () => {
+    function renderResult(
+      props: Partial<ComponentProps<typeof ReflectionPlay>> = {},
+    ) {
+      renderPlay({
+        board: solution,
+        progress: "result",
+        canUndo: false,
+        sessionResult: performance,
+        result,
+        ...props,
+      });
+    }
+
+    describe("問題集の問題を解いた場合", () => {
+      beforeEach(() => {
+        renderResult();
+      });
+
+      test("共通の結果階層でゲーム名・難易度・スコアを表示すること", () => {
+        const heading = screen.getByRole("heading", { name: "プレイ結果" });
+        const pictogram = document.querySelector(
+          `svg[aria-label="${REFLECTION_DISPLAY_NAME}"]`,
+        );
+        const gameName = screen.getByText(REFLECTION_DISPLAY_NAME);
+        const difficulty = screen.getByText("レベル 1");
+        const score = within(screen.getByRole("region", { name: "スコア" }));
+
+        expect(heading).toBeTruthy();
+        expect(pictogram).toBeTruthy();
+        expect(gameName).toBeTruthy();
+        expect(difficulty).toBeTruthy();
+        expect(score.getByText("71")).toBeTruthy();
+      });
+
+      test("時間と基準時間との差・置き直し・待ったを主な成績として表示すること", () => {
+        const terms = screen
+          .getAllByRole("term")
+          .map((term) => term.textContent);
+        const definitions = screen
+          .getAllByRole("definition")
+          .map((definition) => definition.textContent);
+
+        expect(terms).toEqual(["時間", "置き直し", "待った"]);
+        expect(definitions).toEqual(["04:20", "基準 +00:24", "2", "1"]);
+      });
+
+      test("結果画面へフォーカスを移すこと", () => {
+        const focused = document.activeElement;
+
+        expect(focused).toBe(
+          screen.getByRole("region", { name: "プレイ結果" }),
+        );
+      });
+
+      test("盤面を表示しないこと", () => {
+        const board = screen.queryByRole("group", {
+          name: `${REFLECTION_DISPLAY_NAME}盤面`,
+        });
+
+        expect(board).toBeNull();
+      });
+
+      const actionCases = [
+        ["プレイ！", "onStartNewProblem"],
+        ["同じ問題", "onReplay"],
+        ["記録を確認", "onOpenRecords"],
+        ["難易度変更", "onChangeDifficulty"],
+        ["ホーム", "onBackToHome"],
+      ] as const;
+
+      test.each(actionCases)(
+        "%s ボタンで対応する操作を通知すること",
+        (buttonName, callbackName) => {
+          fireEvent.click(screen.getByRole("button", { name: buttonName }));
+
+          expect(callbacks[callbackName]).toHaveBeenCalledOnce();
+        },
+      );
+
+      test("検証情報のつなぎ先を渡していなければ検証情報ボタンを出さないこと", () => {
+        const button = screen.queryByRole("button", { name: "検証情報" });
+
+        expect(button).toBeNull();
+      });
+
+      describe("スコアの内訳を開いた場合", () => {
+        beforeEach(() => {
+          fireEvent.click(
+            screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
+          );
+        });
+
+        test("観点ごとの点数・盤面戻し・光路の確認・基準時間・作業の量を内訳に表示すること", () => {
+          const terms = screen
+            .getAllByRole("term")
+            .map((term) => term.textContent);
+          const definitions = screen
+            .getAllByRole("definition")
+            .map((definition) => definition.textContent);
+
+          expect(terms).toEqual(
+            expect.arrayContaining([
+              "正確性",
+              "速さ",
+              "盤面戻し",
+              "光路の確認",
+              "基準時間",
+              "ピース",
+              "外周ヒント",
+              "照らし直す局面",
+              "仮に置いて確かめる",
+            ]),
+          );
+          expect(definitions).toEqual(
+            expect.arrayContaining([
+              "35 / 60",
+              "36 / 40",
+              "1回",
+              "4回",
+              "03:56",
+              "8個",
+              "28本",
+              "3回",
+              "12回",
+            ]),
+          );
+        });
+
+        test("基準時間を問題の作業の量から求める式と0点になる時間を表示すること", () => {
+          const criteria = screen.getByText(/基準時間は/);
+
+          expect(criteria.textContent).toBe(
+            "基準時間03:56以内で40点、07:52以上で0点、その間は時間に応じて減点。基準時間は外周ヒント28本 × 0.5秒 + ピース8個 × 6秒 + 照らし直す局面3回 × 8秒 + 仮に置いて確かめる10回 × 15秒。局面と仮に置く回数は、この問題を外周ヒントから読んで解くときに要る回数です（仮に置く回数は10回まで数えます）。",
+          );
+        });
+
+        test("置き直しと盤面戻しの減点と数え方を表示すること", () => {
+          const criteria = screen.getByText(/置き直し1回につき/);
+
+          expect(criteria.textContent).toBe(
+            "置き直し1回につき5点、盤面戻し1回につき15点を減点（満点60点）。置き直しは、置いたピースを別のマスへ移す・入れ替える・ストックへ戻す・別の種類で置き換えた回数と、待ったの回数です。盤面戻しは、メニューの「盤面を戻す」を使った回数です。光路を確かめた回数は点に入りません。",
+          );
+        });
+      });
+    });
+
+    describe("光路表示を通常の操作として扱う場合", () => {
+      beforeEach(() => {
+        renderResult({ laserPathMode: "normal" });
+        fireEvent.click(
+          screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
+        );
+      });
+
+      test("光路を確かめた回数を出さないこと", () => {
+        const term = screen.queryByText("光路の確認");
+
+        expect(term).toBeNull();
+      });
+    });
+
+    describe("100点で解いた場合", () => {
+      beforeEach(() => {
+        renderResult({ sessionResult: perfectResult, result: perfectResult });
+      });
+
+      test("最高段階として称えること", () => {
+        const message = screen.getByText("パーフェクト！");
+
+        expect(message).toBeTruthy();
+      });
+
+      test("基準時間より速かった差を負の時間で表示すること", () => {
+        const timeDelta = screen.getByText("基準 -00:15");
+
+        expect(timeDelta).toBeTruthy();
+      });
+    });
+
+    describe("評価できない問題を解いた場合", () => {
+      beforeEach(() => {
+        renderResult({ difficultyLabel: "問題指定", result: null });
+      });
+
+      test("スコアを出さない理由と、プレイの事実を表示すること", () => {
+        const reason = screen.getByText(
+          "問題集に無い問題のため、スコアは出しません。",
+        );
+        const score = screen.queryByRole("region", { name: "スコア" });
+        const definitions = screen
+          .getAllByRole("definition")
+          .map((definition) => definition.textContent);
+
+        expect(reason).toBeTruthy();
+        expect(score).toBeNull();
+        expect(definitions).toEqual(["04:20", "2", "1"]);
+      });
+
+      test("スコアの内訳を出さないこと", () => {
+        const button = screen.queryByRole("button", {
+          name: "スコアの内訳・採点基準",
+        });
+
+        expect(button).toBeNull();
+      });
+    });
+
+    describe("検証情報のつなぎ先を渡した場合", () => {
+      const onOpenDiagnostics = vi.fn();
+
+      beforeEach(() => {
+        renderResult({ onOpenDiagnostics });
+      });
+
+      test("検証情報ボタンで検証情報を開く操作を通知すること", () => {
+        fireEvent.click(screen.getByRole("button", { name: "検証情報" }));
+
+        expect(onOpenDiagnostics).toHaveBeenCalledOnce();
+      });
     });
   });
 });

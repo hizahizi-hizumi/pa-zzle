@@ -17,11 +17,17 @@ describe("ReflectionClearLight", () => {
   });
 
   describe("動きを減らす設定の場合", () => {
+    const animate = vi.fn();
+
     beforeEach(() => {
+      vi.useFakeTimers();
+      animate.mockClear();
       vi.stubGlobal(
         "matchMedia",
         vi.fn(() => ({ matches: true }) as MediaQueryList),
       );
+      // jsdom の SVG 要素には animate が無いので、動かせる環境として足す。
+      Element.prototype.animate = animate;
       render(
         <svg aria-label="光路">
           <ReflectionClearLight board={board} active onComplete={onComplete} />
@@ -29,10 +35,23 @@ describe("ReflectionClearLight", () => {
       );
     });
 
-    test("光路を伸ばさずに完了を通知すること", () => {
-      const called = onComplete.mock.calls.length;
+    afterEach(() => {
+      vi.useRealTimers();
+      Reflect.deleteProperty(Element.prototype, "animate");
+    });
 
-      expect(called).toBe(1);
+    test("光路を伸ばさないこと", () => {
+      const animated = animate.mock.calls.length;
+
+      expect(animated).toBe(0);
+    });
+
+    test("全光路を見せる間を置いてから完了を通知すること", () => {
+      const calledAtOnce = onComplete.mock.calls.length;
+      vi.runAllTimers();
+      const calledLater = onComplete.mock.calls.length;
+
+      expect([calledAtOnce, calledLater]).toEqual([0, 1]);
     });
   });
 
