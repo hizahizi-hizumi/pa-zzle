@@ -190,6 +190,14 @@ export function ReflectionResultScreen({
                     label="仮に置いて確かめる"
                     value={`${result.workload.assumptionTestCount}回`}
                   />
+                  <DetailMetric
+                    label="試し置き"
+                    value={
+                      result.workload.trialMoveCount === null
+                        ? "試し置きでは解けない"
+                        : `${result.workload.trialMoveCount}手`
+                    }
+                  />
                 </dl>
                 <div className="mt-4">
                   <ScoreCriteria result={result} />

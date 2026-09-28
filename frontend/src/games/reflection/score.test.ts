@@ -7,22 +7,24 @@ import {
   getReflectionGameResultLevel,
 } from "@/games/reflection/score";
 
-// レベル1 の代表 rf-5-2-86 と、レベル5 の代表 rf-7-11-76 の作業の量。
+// 2ピースの軽い問題と、照らし直しが多く仮に置く回数が上限を超える重い問題の作業の量。どちらも試し置きでは解き切れない。
 const lightWorkload: ReflectionSolveWorkload = {
   pieceCount: 2,
   clueCount: 20,
   propagationRoundCount: 0,
   assumptionTestCount: 0,
+  trialMoveCount: null,
 };
 const heavyWorkload: ReflectionSolveWorkload = {
   pieceCount: 11,
   clueCount: 28,
   propagationRoundCount: 14,
   assumptionTestCount: 40,
+  trialMoveCount: null,
 };
 
-const lightFullScoreMs = 22_000;
-const heavyFullScoreMs = 342_000;
+const lightFullScoreMs = 24_000;
+const heavyFullScoreMs = 353_000;
 
 function scoreAtRatio(
   elapsedRatio: number,
@@ -45,13 +47,34 @@ describe("calculateReflectionSpeedFullScoreMs", () => {
   ] as const;
 
   test.each(cases)(
-    "%s で、外周ヒント1本0.5秒・ピース1個6秒・照らし直し1回8秒・仮に置く1回15秒（10回まで）を足すこと",
+    "%s で、外周ヒント1本0.5秒・ピース1個7秒・照らし直し1回8秒・仮に置く1回15秒（10回まで）を足すこと",
     (_, workload, expected) => {
       const speedFullScoreMs = calculateReflectionSpeedFullScoreMs(workload);
 
       expect(speedFullScoreMs).toBe(expected);
     },
   );
+
+  describe("試し置きで解き切れる問題", () => {
+    test("試し置きの方が速ければ、読む時間と試し置きの時間の中間にすること", () => {
+      // 読む 24秒、試し置き 外周ヒント20本 × 0.5秒 + 2手 × 5秒 = 20秒。
+      const speedFullScoreMs = calculateReflectionSpeedFullScoreMs({
+        ...lightWorkload,
+        trialMoveCount: 2,
+      });
+
+      expect(speedFullScoreMs).toBe(22_000);
+    });
+
+    test("試し置きの方が遅ければ、読む時間にすること", () => {
+      const speedFullScoreMs = calculateReflectionSpeedFullScoreMs({
+        ...heavyWorkload,
+        trialMoveCount: 200,
+      });
+
+      expect(speedFullScoreMs).toBe(heavyFullScoreMs);
+    });
+  });
 
   describe("仮に置いた回数だけが上限の前後で違う場合", () => {
     const atLimit = { ...heavyWorkload, assumptionTestCount: 10 };

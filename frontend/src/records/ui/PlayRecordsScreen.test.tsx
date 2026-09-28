@@ -130,7 +130,7 @@ const records = [
       inputCount: 70,
     },
   }),
-  // 基準時間 28×0.5 + 8×6 + 3×8 = 86秒を 110秒で、置き直し1回で解いた記録。
+  // 基準時間 28×0.5 + 8×7 + 3×8 = 94秒を 110秒で、置き直し1回で解いた記録。
   createReflectionPlayRecord({
     difficulty: "4",
     problemIdentity: createReflectionProblemIdentity(7, 8, 0),
@@ -139,6 +139,7 @@ const records = [
       clueCount: 28,
       propagationRoundCount: 3,
       assumptionTestCount: 0,
+      trialMoveCount: null,
     },
     startedAt: 10_000,
     completedAt: 120_000,
@@ -262,8 +263,8 @@ describe("PlayRecordsScreen", () => {
 
     expect(gameSelect.textContent).toContain("リフレクション");
     expect(comparisonSelect.textContent).toContain("レベル 4");
-    expect(screen.getAllByText("86点").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("+00:24").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("91点").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("+00:16").length).toBeGreaterThan(0);
     expect(screen.getByText("1件")).toBeTruthy();
   });
 });
