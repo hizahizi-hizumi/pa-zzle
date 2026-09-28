@@ -1,3 +1,11 @@
+import {
+  INTERNAL_DIAGNOSTIC_FORMAT_VERSION,
+  type InternalDiagnosticSnapshot,
+} from "@/games/diagnostics";
+import {
+  parseReflectionDifficulty,
+  type ReflectionDifficulty,
+} from "@/games/reflection/difficulty";
 import { generateReflectionProblem } from "@/games/reflection/problem/generator";
 import {
   isReflectionProblemIdentity,
@@ -6,9 +14,13 @@ import {
 } from "@/games/reflection/problem/problem";
 import {
   getReflectionProblemPoolVersion,
+  type ReflectionPooledProblem,
   type ReflectionProblemPoolReference,
 } from "@/games/reflection/problem/problem-pool";
-import { restoreReflectionPoolProblem } from "@/games/reflection/problem-selection";
+import {
+  restoreReflectionPoolProblem,
+  restoreReflectionProblem,
+} from "@/games/reflection/problem-selection";
 
 // 内部診断が有効なビルドで、特定の問題を遊ぶための URL クエリ。2通りの指定を受け付ける。
 // - 問題集の番号: ?pool=1&problem=4-17（`pool` は省略でき、省略時は今の問題集の版）
@@ -98,4 +110,77 @@ export function parseReflectionProblemQuery(
   return hasPoolQuery
     ? parsePoolProblemQuery(params)
     : parseIdentityQuery(params);
+}
+
+export type ReflectionDiagnosticSnapshot = InternalDiagnosticSnapshot<
+  "reflection",
+  ReflectionDifficulty,
+  ReflectionProblemIdentity
+>;
+
+/** 検証情報としてコピーする値。問題の再現に要る identity と、出題した難易度・ビルドを持つ。 */
+export function createReflectionDiagnosticSnapshot({
+  difficulty,
+  problemIdentity,
+  buildRevision,
+}: {
+  difficulty: ReflectionDifficulty;
+  problemIdentity: ReflectionProblemIdentity;
+  buildRevision: string | null;
+}): ReflectionDiagnosticSnapshot {
+  return {
+    formatVersion: INTERNAL_DIAGNOSTIC_FORMAT_VERSION,
+    game: "reflection",
+    difficulty,
+    problemIdentity: {
+      ...problemIdentity,
+      conditions: { ...problemIdentity.conditions },
+    },
+    buildRevision,
+  };
+}
+
+export function parseReflectionDiagnosticSnapshot(
+  serialized: string,
+): ReflectionDiagnosticSnapshot {
+  const value: unknown = JSON.parse(serialized);
+  if (!isRecord(value)) {
+    throw new TypeError("Reflection diagnostic snapshot must be an object");
+  }
+
+  const difficulty =
+    typeof value.difficulty === "string"
+      ? parseReflectionDifficulty(value.difficulty)
+      : undefined;
+  if (
+    value.formatVersion !== INTERNAL_DIAGNOSTIC_FORMAT_VERSION ||
+    value.game !== "reflection" ||
+    !difficulty ||
+    !isReflectionProblemIdentity(value.problemIdentity) ||
+    !(typeof value.buildRevision === "string" || value.buildRevision === null)
+  ) {
+    throw new TypeError("Invalid Reflection diagnostic snapshot");
+  }
+
+  return {
+    formatVersion: INTERNAL_DIAGNOSTIC_FORMAT_VERSION,
+    game: "reflection",
+    difficulty,
+    problemIdentity: value.problemIdentity,
+    buildRevision: value.buildRevision,
+  };
+}
+
+/**
+ * 問題集に無い identity は `null` を返す。
+ * 問題集に無い問題（URL で identity を指定した問題）は、同じ identity を URL クエリで指定すれば生成器で開ける。
+ */
+export function restoreReflectionProblemFromDiagnosticSnapshot(
+  snapshot: ReflectionDiagnosticSnapshot,
+): ReflectionPooledProblem | null {
+  return restoreReflectionProblem(snapshot.problemIdentity);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

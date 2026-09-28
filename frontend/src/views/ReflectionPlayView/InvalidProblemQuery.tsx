@@ -9,10 +9,10 @@ export function InvalidProblemQuery() {
         generator・seed・size・pieces）を確かめてください。
       </p>
       <Link
-        to="/"
+        to="/puzzles/reflection"
         className="inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground outline-none hover:bg-primary/90 focus-visible:ring-4 focus-visible:ring-ring/30"
       >
-        ホームへ戻る
+        難易度選択へ戻る
       </Link>
     </section>
   );

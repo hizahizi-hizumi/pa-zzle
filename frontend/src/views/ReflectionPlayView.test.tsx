@@ -41,9 +41,17 @@ function renderAt(path: string): void {
           path="/puzzles/reflection/play/:difficulty"
           element={<ReflectionPlayView />}
         />
+        <Route path="/puzzles/reflection" element={<p>難易度選択画面</p>} />
       </Routes>
     </MemoryRouter>,
   );
+}
+
+function openMenu(): void {
+  fireEvent.pointerDown(screen.getByRole("button", { name: "その他の操作" }), {
+    button: 0,
+    ctrlKey: false,
+  });
 }
 
 function getBoardCells(): HTMLElement[] {
@@ -91,6 +99,44 @@ describe("ReflectionPlayView", () => {
       expect(cells.every((cell) => cell.textContent === "")).toBe(true);
       expect(stock.length).toBeGreaterThan(0);
     });
+
+    test("戻るボタンで難易度選択画面へ移ること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
+
+      expect(screen.getByText("難易度選択画面")).toBeTruthy();
+    });
+
+    test("メニューの難易度変更で難易度選択画面へ移ること", () => {
+      openMenu();
+      fireEvent.click(screen.getByRole("menuitem", { name: "難易度変更" }));
+
+      expect(screen.getByText("難易度選択画面")).toBeTruthy();
+    });
+
+    test("内部診断を使えないビルドではメニューに検証情報を出さないこと", () => {
+      openMenu();
+
+      const item = screen.queryByRole("menuitem", { name: "検証情報" });
+
+      expect(item).toBeNull();
+    });
+  });
+
+  describe("内部診断を使えるビルドの場合", () => {
+    beforeEach(() => {
+      internalDiagnostics.available = true;
+      renderAt("/puzzles/reflection/play/3");
+      openMenu();
+    });
+
+    test("メニューの検証情報から出題中の問題の検証情報を開けること", () => {
+      fireEvent.click(screen.getByRole("menuitem", { name: "検証情報" }));
+
+      const dialog = screen.getByRole("dialog", { name: "検証情報" });
+
+      expect(within(dialog).getByText("レベル 3")).toBeTruthy();
+      expect(within(dialog).getByText(/^rf-/)).toBeTruthy();
+    });
   });
 
   describe("未定義の難易度の場合", () => {
@@ -98,12 +144,12 @@ describe("ReflectionPlayView", () => {
       renderAt("/puzzles/reflection/play/9");
     });
 
-    test("選べない難易度であることを示しホームへ戻る導線を出すこと", () => {
+    test("選べない難易度であることを示し難易度選択へ戻る導線を出すこと", () => {
       const message = screen.getByText("この難易度は選べません");
-      const backLink = screen.getByRole("link", { name: "ホームへ戻る" });
+      const backLink = screen.getByRole("link", { name: "難易度選択へ戻る" });
 
       expect(message).toBeTruthy();
-      expect(backLink.getAttribute("href")).toBe("/");
+      expect(backLink.getAttribute("href")).toBe("/puzzles/reflection");
     });
   });
 
@@ -146,10 +192,12 @@ describe("ReflectionPlayView", () => {
       renderAt("/puzzles/reflection/play/1?seed=abc&size=8&pieces=3");
     });
 
-    test("指定を復元できないことを示すこと", () => {
+    test("指定を復元できないことを示し難易度選択へ戻る導線を出すこと", () => {
       const message = screen.getByText("指定された問題を復元できません");
+      const backLink = screen.getByRole("link", { name: "難易度選択へ戻る" });
 
       expect(message).toBeTruthy();
+      expect(backLink.getAttribute("href")).toBe("/puzzles/reflection");
     });
   });
 });
