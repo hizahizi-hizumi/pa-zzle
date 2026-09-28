@@ -20,8 +20,10 @@ import {
  * - `1` 単一ヒント: 1本の外周ヒントだけで、必ず通るマスのピース（または空き）が1つに決まる。
  * - `2` 直接整合性: マスとピースの候補を1つ固定し、全外周ヒントへ直接照らすと成り立たない候補を除く。
  * - `3` 制約伝播: 2の除外で候補が減った盤面へ、もう一度2を繰り返して決める。
- * - `4` 在庫: 手持ちの残り数と置ける場所の数を合わせ、光路の制約と行き来して決める。
+ * - `4` 在庫: 手持ちの残り数と置ける場所の数を合わせ、光路の制約と行き来して決める。1本の光路に使えるピースも残り数までに限る。
  * - `5` 仮定と矛盾: 候補を1つ仮に置き、2〜4を進めた先で矛盾が出る候補を除く。
+ *
+ * どのレベルでも、光路は通るマスごとに1つのピース（または空き）を決めた並びとして扱い、同じマスを2回通るなら同じピースとみなす。
  */
 export const reflectionReasoningLevels = [1, 2, 3, 4, 5] as const;
 
@@ -81,8 +83,8 @@ type SolverClue = {
  * - `transitions`: 状態とマスの番号から決まる遷移。吸収なら `absorbed`、盤面の外へ出るなら `-(2 + 出た外周位置の並び順)`、
  *   盤面の中へ進むなら次の状態。
  * - `required`: マスの番号ごとの必要数。空きマスも含む。
- * - `reached` / `viable` / `layers`: ヒント1本を調べるときの作業領域。距離と状態の組で引く。
- * - `clueAnalysisCache`: ヒントごとの、調べた結果と、そのとき光が届いたマスの候補。
+ * - `reached` / `viable` / `layers`: ヒント1本の光路を探す前に、届く状態と終われる状態を距離ごとに求める作業領域。
+ *   距離と状態の組で引く。
  */
 type SolverContext = {
   cellCount: number;
@@ -93,11 +95,6 @@ type SolverContext = {
   reached: Uint8Array;
   viable: Uint8Array;
   layers: Int32Array;
-  visitMarks: Int32Array;
-  visitGeneration: number;
-  frontier: Int32Array;
-  nextFrontier: Int32Array;
-  clueAnalysisCache: CachedClueAnalysis[][];
 };
 
 type NarrowResult = { feasible: boolean; domains: Domains };
@@ -202,11 +199,6 @@ function createContext({
     reached: new Uint8Array(layerCount * stateCount),
     viable: new Uint8Array(layerCount * stateCount),
     layers: new Int32Array(layerCount * stateCount),
-    visitMarks: new Int32Array(stateCount),
-    visitGeneration: 0,
-    frontier: new Int32Array(stateCount),
-    nextFrontier: new Int32Array(stateCount),
-    clueAnalysisCache: solverClues.map(() => []),
   };
 }
 
@@ -238,43 +230,6 @@ function continuesInside(
 ): LaserState {
   return transition >= 0 && depth < clue.distance ? transition : -1;
 }
-
-/**
- * 1本のヒントを満たす光路（距離ごとの状態の並び）の集まりを調べた結果。
- * 同じマスを別の距離で通るときに別の番号を使う並びも光路として数えるので、実際の配置より緩い（正しい候補は落とさない）。
- * - `usedCodes`: マスごとの、どれかの光路でそのマスに使われる番号。どの光路も通らないマスは0。
- * - `mustCells`: どの光路も必ず通るマス。
- * - `firstPathDepth` / `lastPathDepth`: マスごとの、光路がそのマスを通り得る最初と最後の距離。通らなければ0。
- *   両者が違うマスは、1本の光路が2回以上通り得る。
- * - `pathStates`: どれかの光路に乗る状態。距離と状態の組で引く。
- * - `pathLayers` / `pathLayerOffsets`: 光路に乗る状態を距離ごとに並べたもの。距離 `depth` の区間は
- *   `pathLayerOffsets[depth]` から `pathLayerOffsets[depth + 1]` の手前まで。
- * - `forcedFeasibility`: マスを番号に固定したときに光路が残るかを、たどり直した結果（キーは `cellIndex * 8 + code`）。
- *   結果は光が届き得るマスの候補だけで決まるので、同じ `ClueAnalysis` を使い回す間は変わらない。
- */
-type ClueAnalysis = {
-  feasible: boolean;
-  usedCodes: Uint8Array;
-  mustCells: Uint8Array;
-  firstPathDepth: Int32Array;
-  lastPathDepth: Int32Array;
-  pathStates: Uint8Array;
-  pathLayers: Int32Array;
-  pathLayerOffsets: Int32Array;
-  forcedFeasibility: Map<number, boolean>;
-};
-
-/**
- * ヒント1本を調べるときに読むのは、光が届き得るマスの候補だけなので、それらが同じなら結果も同じ。
- * 仮定を1つずつ試すと、仮に置いたマスへ光が届かないヒントは同じ候補で何度も調べ直すことになるため、結果を使い回す。
- */
-type CachedClueAnalysis = {
-  readCells: Int32Array;
-  readDomains: Uint8Array;
-  analysis: ClueAnalysis;
-};
-
-const MAXIMUM_CACHED_ANALYSES_PER_CLUE = 8;
 
 /** ヒントの入口から前向きに、距離ごとに光が届き得る状態を `layers` の距離 `depth` の区間へ並べ、距離ごとの個数を返す。 */
 function listReachedStates(
@@ -314,7 +269,10 @@ function listReachedStates(
   return layerSizes;
 }
 
-/** 後ろ向きに、ヒントどおりに終われる状態へ印を付ける。 */
+/**
+ * 後ろ向きに、ヒントどおりに終われる状態へ印を付ける。同じマスを2回通るときに別のピースとして扱う並びも含むので、
+ * 光路を探すときの枝刈りにだけ使う（印の無い状態からは、どう置いてもヒントどおりに終われない）。
+ */
 function markViableStates(
   context: SolverContext,
   domains: Domains,
@@ -346,301 +304,169 @@ function markViableStates(
   }
 }
 
-function listReadCells(
-  context: SolverContext,
-  clue: SolverClue,
-  layerSizes: readonly number[],
-): Int32Array {
-  const { stateCount, layers } = context;
-  const isRead = new Uint8Array(context.cellCount);
-  const cells: number[] = [];
-  for (let depth = 1; depth <= clue.distance; depth += 1) {
-    for (let order = 0; order < layerSizes[depth]!; order += 1) {
-      const cellIndex = layers[depth * stateCount + order]! >> 2;
-      if (isRead[cellIndex] === 0) {
-        isRead[cellIndex] = 1;
-        cells.push(cellIndex);
-      }
-    }
-  }
-  return Int32Array.from(cells);
-}
+/**
+ * 1本のヒントを満たす光路をすべて並べた結果。光路は、通るマスごとに1つのピース（または空き）を決めた並びで、
+ * 同じマスを2回通るなら同じピースとして扱う。
+ * - `usable`: 光路を並べ切れた。並べ切れないほど多いヒントは、人間もまだ使えないとみなし、候補を絞らない。
+ * - `feasible`: ヒントを満たす光路が1つ以上ある。
+ * - `usedCodes`: マスごとの、どれかの光路でそのマスに使われる番号。どの光路も通らないマスは0。
+ * - `mustCells`: どの光路も必ず通るマス。
+ */
+type ClueAnalysis =
+  | { usable: false }
+  | {
+      usable: true;
+      feasible: boolean;
+      usedCodes: Uint8Array;
+      mustCells: Uint8Array;
+    };
 
-function findCachedAnalysis(
-  cache: readonly CachedClueAnalysis[],
-  domains: Domains,
-): ClueAnalysis | null {
-  const cached = cache.find(({ readCells, readDomains }) =>
-    readCells.every(
-      (cellIndex, order) => domains[cellIndex] === readDomains[order],
-    ),
-  );
-  return cached?.analysis ?? null;
-}
+/**
+ * ヒント1本の光路を並べるときの探索量の上限。置き場所の決まっていないマスが多いうちは長いヒントの光路が膨大になるため。
+ * 上限を10倍にしても、分析スクリプトの問題集合（3,300問）で最高推論レベルが変わるのは8問で、どれも1段浅くなるだけ。
+ */
+const MAXIMUM_PATH_SEARCH_STEPS_PER_CLUE = 20_000;
 
+/**
+ * - `remainingByCode`: 番号ごとの、まだ置き場所の決まっていないマスへ使える残り数。指定すると、1本の光路が
+ *   置き場所の決まっていないマスへ使う数をこの残り数までに限る（手持ちの残り数と光路を行き来する推論）。
+ */
 function analyzeClue(
   context: SolverContext,
   domains: Domains,
   clue: SolverClue,
+  remainingByCode: readonly number[] | null,
 ): ClueAnalysis {
-  const cache = context.clueAnalysisCache[clue.entryOrder]!;
-  const cached = findCachedAnalysis(cache, domains);
-  if (cached !== null) {
-    return cached;
-  }
-  const layerSizes = listReachedStates(context, domains, clue);
-  const readCells = listReadCells(context, clue, layerSizes);
-  const analysis = analyzeReachedClue(context, domains, clue, layerSizes);
-  if (cache.length >= MAXIMUM_CACHED_ANALYSES_PER_CLUE) {
-    cache.shift();
-  }
-  cache.push({
-    readCells,
-    readDomains: Uint8Array.from(readCells, (cellIndex) => domains[cellIndex]!),
-    analysis,
-  });
-  return analysis;
-}
-
-function analyzeReachedClue(
-  context: SolverContext,
-  domains: Domains,
-  clue: SolverClue,
-  layerSizes: readonly number[],
-): ClueAnalysis {
-  const { cellCount, stateCount, viable, transitions } = context;
+  const { cellCount, stateCount, transitions, viable } = context;
+  markViableStates(
+    context,
+    domains,
+    clue,
+    listReachedStates(context, domains, clue),
+  );
   const usedCodes = new Uint8Array(cellCount);
   const mustCells = new Uint8Array(cellCount);
-  const firstPathDepth = new Int32Array(cellCount);
-  const lastPathDepth = new Int32Array(cellCount);
-  const pathStates = new Uint8Array((clue.distance + 2) * stateCount);
-  const pathLayers: number[] = [];
-  const pathLayerOffsets = new Int32Array(clue.distance + 2);
-  const infeasible = {
-    feasible: false,
-    usedCodes,
-    mustCells,
-    firstPathDepth,
-    lastPathDepth,
-    pathStates,
-    pathLayers: new Int32Array(0),
-    pathLayerOffsets,
-    forcedFeasibility: new Map<number, boolean>(),
-  };
-  markViableStates(context, domains, clue, layerSizes);
   if (viable[stateCount + clue.startState] === 0) {
-    return infeasible;
+    return { usable: true, feasible: false, usedCodes, mustCells };
   }
 
-  const wordCount = Math.ceil(cellCount / 32);
-  function withCell(cells: Uint32Array, cellIndex: number): Uint32Array {
-    const copied = cells.slice();
-    copied[cellIndex >> 5]! |= 1 << (cellIndex & 31);
-    return copied;
-  }
+  const pathCodes = new Int8Array(cellCount).fill(-1);
+  const pathVisitCounts = new Uint8Array(cellCount);
+  const pathCells: number[] = [];
+  const pathCodeCounts = new Array<number>(codeCount).fill(0);
+  let mustCellList: number[] | null = null;
+  let searchSteps = 0;
 
-  let prefixMustCellsByState = new Map<LaserState, Uint32Array>([
-    [
-      clue.startState,
-      withCell(new Uint32Array(wordCount), clue.startState >> 2),
-    ],
-  ]);
-  let completeMust: Uint32Array | null = null;
-  for (let depth = 1; depth <= clue.distance; depth += 1) {
-    const nextPrefixMustCellsByState = new Map<LaserState, Uint32Array>();
-    const nextOffset = (depth + 1) * stateCount;
-    pathLayerOffsets[depth] = pathLayers.length;
-    for (const [state, must] of prefixMustCellsByState) {
-      pathStates[depth * stateCount + state] = 1;
-      pathLayers.push(state);
-      const cellIndex = state >> 2;
-      if (firstPathDepth[cellIndex] === 0) {
-        firstPathDepth[cellIndex] = depth;
-      }
-      lastPathDepth[cellIndex] = depth;
-      const domain = domains[cellIndex]!;
-      for (let code = 0; code < codeCount; code += 1) {
-        if ((domain & (1 << code)) === 0) {
-          continue;
-        }
-        const transition = transitions[state * codeCount + code]!;
-        if (endsAsClue(clue, transition, depth)) {
-          usedCodes[cellIndex]! |= 1 << code;
-          if (completeMust === null) {
-            completeMust = must.slice();
-          } else {
-            for (let word = 0; word < wordCount; word += 1) {
-              completeMust[word]! &= must[word]!;
-            }
-          }
-          continue;
-        }
-        const next = continuesInside(clue, transition, depth);
-        if (next < 0 || viable[nextOffset + next] === 0) {
-          continue;
-        }
-        usedCodes[cellIndex]! |= 1 << code;
-        const nextMust = withCell(must, next >> 2);
-        const existing = nextPrefixMustCellsByState.get(next);
-        if (existing === undefined) {
-          nextPrefixMustCellsByState.set(next, nextMust);
-        } else {
-          for (let word = 0; word < wordCount; word += 1) {
-            existing[word]! &= nextMust[word]!;
-          }
-        }
-      }
+  function recordPath(): void {
+    for (const cellIndex of pathCells) {
+      usedCodes[cellIndex]! |= 1 << pathCodes[cellIndex]!;
     }
-    prefixMustCellsByState = nextPrefixMustCellsByState;
+    mustCellList =
+      mustCellList === null
+        ? [...new Set(pathCells)]
+        : mustCellList.filter((cellIndex) => pathVisitCounts[cellIndex]! > 0);
   }
-  pathLayerOffsets[clue.distance + 1] = pathLayers.length;
-  if (completeMust === null) {
-    return infeasible;
-  }
-  for (let cellIndex = 0; cellIndex < cellCount; cellIndex += 1) {
-    mustCells[cellIndex] =
-      (completeMust[cellIndex >> 5]! >>> (cellIndex & 31)) & 1;
-  }
-  return {
-    feasible: true,
-    usedCodes,
-    mustCells,
-    firstPathDepth,
-    lastPathDepth,
-    pathStates,
-    pathLayers: Int32Array.from(pathLayers),
-    pathLayerOffsets,
-    forcedFeasibility: new Map(),
-  };
-}
 
-/**
- * マス `forcedCell` を何度通っても番号 `forcedCode` として扱ったとき、ヒントを満たす光路があるか。
- * そのような光路は固定しないときの光路でもあるので、光路に乗る状態だけをたどる。
- * そのマスを初めて通り得る距離より前の状態へは、そのマスを通らずに届く。最後に通り得る距離より後の状態からは、
- * そのマスを通らずに終われる。そのため、その間の距離だけをたどる。
- */
-function isFeasibleWithForcedCode(
-  context: SolverContext,
-  domains: Domains,
-  clue: SolverClue,
-  analysis: ClueAnalysis,
-  forcedCell: number,
-  forcedCode: number,
-): boolean {
-  const { transitions, visitMarks, stateCount } = context;
-  const { pathStates, pathLayers, pathLayerOffsets } = analysis;
-  const firstDepth = analysis.firstPathDepth[forcedCell]!;
-  const lastDepth = analysis.lastPathDepth[forcedCell]!;
-  let frontier = context.frontier;
-  let nextFrontier = context.nextFrontier;
-  let frontierSize = 0;
-  for (
-    let order = pathLayerOffsets[firstDepth]!;
-    order < pathLayerOffsets[firstDepth + 1]!;
-    order += 1
-  ) {
-    frontier[frontierSize] = pathLayers[order]!;
-    frontierSize += 1;
-  }
-  for (let depth = firstDepth; depth <= lastDepth; depth += 1) {
-    context.visitGeneration += 1;
-    const generation = context.visitGeneration;
-    const nextOffset = (depth + 1) * stateCount;
-    let nextSize = 0;
-    for (let order = 0; order < frontierSize; order += 1) {
-      const state = frontier[order]!;
-      const cellIndex = state >> 2;
-      const domain =
-        cellIndex === forcedCell
-          ? domains[cellIndex]! & (1 << forcedCode)
-          : domains[cellIndex]!;
-      for (let code = 0; code < codeCount; code += 1) {
-        if ((domain & (1 << code)) === 0) {
-          continue;
-        }
-        const transition = transitions[state * codeCount + code]!;
-        if (endsAsClue(clue, transition, depth)) {
-          return true;
-        }
-        const next = continuesInside(clue, transition, depth);
-        if (
-          next >= 0 &&
-          pathStates[nextOffset + next] === 1 &&
-          visitMarks[next] !== generation
-        ) {
-          visitMarks[next] = generation;
-          nextFrontier[nextSize] = next;
-          nextSize += 1;
-        }
-      }
-    }
-    if (nextSize === 0) {
+  /** 探索量の上限に達したら `false`。 */
+  function extendPath(depth: number, state: LaserState): boolean {
+    searchSteps += 1;
+    if (searchSteps > MAXIMUM_PATH_SEARCH_STEPS_PER_CLUE) {
       return false;
     }
-    [frontier, nextFrontier] = [nextFrontier, frontier];
-    frontierSize = nextSize;
+    const cellIndex = state >> 2;
+    const visitedCode = pathCodes[cellIndex]!;
+    const isFirstVisit = visitedCode < 0;
+    const countsTowardRemaining =
+      isFirstVisit &&
+      remainingByCode !== null &&
+      !isSingleton(domains[cellIndex]!);
+    const candidates = isFirstVisit ? domains[cellIndex]! : 1 << visitedCode;
+    const nextOffset = (depth + 1) * stateCount;
+    for (let code = 0; code < codeCount; code += 1) {
+      if ((candidates & (1 << code)) === 0) {
+        continue;
+      }
+      if (
+        countsTowardRemaining &&
+        pathCodeCounts[code]! >= remainingByCode[code]!
+      ) {
+        continue;
+      }
+      const transition = transitions[state * codeCount + code]!;
+      const ends = endsAsClue(clue, transition, depth);
+      const next = continuesInside(clue, transition, depth);
+      if (!ends && (next < 0 || viable[nextOffset + next] === 0)) {
+        continue;
+      }
+      pathCodes[cellIndex] = code;
+      pathVisitCounts[cellIndex]! += 1;
+      pathCells.push(cellIndex);
+      if (countsTowardRemaining) {
+        pathCodeCounts[code]! += 1;
+      }
+      let completed = true;
+      if (ends) {
+        recordPath();
+      } else {
+        completed = extendPath(depth + 1, next);
+      }
+      if (countsTowardRemaining) {
+        pathCodeCounts[code]! -= 1;
+      }
+      pathCells.pop();
+      pathVisitCounts[cellIndex]! -= 1;
+      if (isFirstVisit) {
+        pathCodes[cellIndex] = -1;
+      }
+      if (!completed) {
+        return false;
+      }
+    }
+    return true;
   }
-  return frontierSize > 0;
+
+  if (!extendPath(1, clue.startState)) {
+    return { usable: false };
+  }
+  if (mustCellList === null) {
+    return { usable: true, feasible: false, usedCodes, mustCells };
+  }
+  for (const cellIndex of mustCellList as readonly number[]) {
+    mustCells[cellIndex] = 1;
+  }
+  return { usable: true, feasible: true, usedCodes, mustCells };
 }
 
-/**
- * マスを番号に固定してもヒントを満たせるか。光路の集まりから決まる場合はたどり直さない。
- * - どの光路も通らないマスなら、固定しても光路は残る。
- * - どの光路もそのマスでその番号を使わないなら、そのマスを通らない光路があるときだけ満たせる。
- * - どの光路もそのマスでその番号だけを使うなら、固定しても光路は残る。
- * - そのマスでその番号を使う光路があり、どの光路もそのマスを1回しか通らないなら、その光路が残る。
- */
+/** マスを番号に固定してもヒントを満たせるか。そのマスを通らない光路か、そのマスでその番号を使う光路があれば満たせる。 */
 function isConsistentWithClue(
-  context: SolverContext,
-  domains: Domains,
-  clue: SolverClue,
   analysis: ClueAnalysis,
   cellIndex: number,
   code: number,
 ): boolean {
-  const used = analysis.usedCodes[cellIndex]!;
-  const bit = 1 << code;
-  if (used === 0 || used === bit) {
-    return true;
-  }
-  if ((used & bit) === 0) {
-    return analysis.mustCells[cellIndex] === 0;
-  }
-  if (
-    analysis.firstPathDepth[cellIndex] === analysis.lastPathDepth[cellIndex]
-  ) {
-    return true;
-  }
-  const key = cellIndex * 8 + code;
-  const known = analysis.forcedFeasibility.get(key);
-  if (known !== undefined) {
-    return known;
-  }
-  const feasible = isFeasibleWithForcedCode(
-    context,
-    domains,
-    clue,
-    analysis,
-    cellIndex,
-    code,
+  return (
+    !analysis.usable ||
+    analysis.mustCells[cellIndex] === 0 ||
+    (analysis.usedCodes[cellIndex]! & (1 << code)) !== 0
   );
-  analysis.forcedFeasibility.set(key, feasible);
-  return feasible;
 }
 
 /**
  * 直接整合性（レベル2の1回分）。各マスの各候補を固定したとき、全ヒントのどれかが満たせなくなる候補を除く。
  * 全マスを呼び出し時の候補に照らしてから、まとめて更新する。
+ * `limitsPathsByRemaining` を指定すると、光路が使えるピースを手持ちの残り数までに限る（レベル4以降）。
  */
 function applyCandidateConsistency(
   context: SolverContext,
   domains: Domains,
+  limitsPathsByRemaining = false,
 ): NarrowResult {
+  const remainingByCode = limitsPathsByRemaining
+    ? countRemainingCodes(context, domains)
+    : null;
   const analyses: ClueAnalysis[] = [];
   for (const clue of context.clues) {
-    const analysis = analyzeClue(context, domains, clue);
-    if (!analysis.feasible) {
+    const analysis = analyzeClue(context, domains, clue, remainingByCode);
+    if (analysis.usable && !analysis.feasible) {
       return { feasible: false, domains };
     }
     analyses.push(analysis);
@@ -650,20 +476,12 @@ function applyCandidateConsistency(
     const domain = domains[cellIndex]!;
     let consistentDomain = 0;
     for (let code = 0; code < codeCount; code += 1) {
-      if ((domain & (1 << code)) === 0) {
-        continue;
-      }
-      const consistent = context.clues.every((clue, order) =>
-        isConsistentWithClue(
-          context,
-          domains,
-          clue,
-          analyses[order]!,
-          cellIndex,
-          code,
-        ),
-      );
-      if (consistent) {
+      if (
+        (domain & (1 << code)) !== 0 &&
+        analyses.every((analysis) =>
+          isConsistentWithClue(analysis, cellIndex, code),
+        )
+      ) {
         consistentDomain |= 1 << code;
       }
     }
@@ -683,6 +501,15 @@ function countFixedCodes(domains: Domains): number[] {
     }
   }
   return fixed;
+}
+
+/** 番号ごとの、置き場所の決まっていないマスへまだ使える数。 */
+function countRemainingCodes(
+  context: SolverContext,
+  domains: Domains,
+): number[] {
+  const fixed = countFixedCodes(domains);
+  return context.required.map((count, code) => count - fixed[code]!);
 }
 
 function listPossibleCells(domains: Domains, code: number): number[] {
@@ -769,7 +596,7 @@ function propagateWithoutAssumption(
   let rounds = 0;
   while (true) {
     const before = domains;
-    const consistency = applyCandidateConsistency(context, domains);
+    const consistency = applyCandidateConsistency(context, domains, true);
     if (!consistency.feasible) {
       return { feasible: false, domains: consistency.domains, rounds };
     }
@@ -823,7 +650,10 @@ function applySingleClueDeduction(
 ): NarrowResult {
   const forced = new Map<number, number>();
   for (const clue of context.clues) {
-    const analysis = analyzeClue(context, domains, clue);
+    const analysis = analyzeClue(context, domains, clue, null);
+    if (!analysis.usable) {
+      continue;
+    }
     if (!analysis.feasible) {
       return { feasible: false, domains };
     }
@@ -1044,8 +874,9 @@ const levelSolvers = [
 /**
  * 外周ヒントと手持ちから、人間の推論をレベル1から順に使って置き場所を決めていく。
  * 浅いレベルで決まり切ればそこで止め、決まり切らなければ次のレベルの推論を加える。
- * 仮定の順はマスの並び順・番号順に固定しているので、同じ入力には同じ結果を返す。
- * 研究用 Python（`scripts/research/reflection_difficulty_experiment.py` の `analyze_problem`）と同じ手順。
+ * 仮定の順はマスの並び順・番号順、光路の探索量の上限は歩数で固定しているので、同じ入力には同じ結果を返す。
+ * レベルの手順は研究用 Python（`scripts/research/reflection_difficulty_experiment.py` の `analyze_problem`）と同じ。
+ * 光路の扱いは Python より厳密で（同じマスを別のピースとして通る並びと、残り数を超える並びを除く）、推論レベルは浅く出る。
  */
 export function traceReflectionHumanSolve(
   input: ReflectionHumanSolveInput,

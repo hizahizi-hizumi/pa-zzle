@@ -65,7 +65,7 @@ function traceWithObservation(
 
 describe("traceReflectionHumanSolve", () => {
   describe("推論レベルごとの代表問題", () => {
-    // 難易度文書の代表問題（生成器の版 2 の seed）。値は研究用 Python と一致することを確かめたもの。
+    // 難易度文書の代表問題（生成器の版 2 の seed）。
     const cases: readonly [
       string,
       ReflectionBoard,
@@ -94,12 +94,12 @@ describe("traceReflectionHumanSolve", () => {
         },
       ],
       [
-        "照らし合わせを繰り返して連鎖的に決まる問題（rf-5-4-44）",
-        parseReflectionBoard([".....", ".....", "...|o", ".@=..", "....."]),
+        "照らし合わせを繰り返して連鎖的に決まる問題（rf-5-3-0）",
+        parseReflectionBoard([".....", "...\\.", ".....", "/.|..", "....."]),
         {
           highestLevel: 3,
-          fixedPieceCountByLevel: [1, 0, 3, 0, 0],
-          propagationRoundCount: 3,
+          fixedPieceCountByLevel: [0, 0, 3, 0, 0],
+          propagationRoundCount: 6,
           assumptionTestCount: 0,
           assumptionEliminationCount: 0,
         },
@@ -109,20 +109,31 @@ describe("traceReflectionHumanSolve", () => {
         parseReflectionBoard(["..oo.", ".....", ".....", "...|.", "..o=."]),
         {
           highestLevel: 4,
-          fixedPieceCountByLevel: [0, 1, 3, 1, 0],
+          fixedPieceCountByLevel: [0, 4, 0, 1, 0],
+          propagationRoundCount: 2,
+          assumptionTestCount: 0,
+          assumptionEliminationCount: 0,
+        },
+      ],
+      [
+        "残り1個では届かない光路を除いて決まる問題（rf-5-2-87）",
+        parseReflectionBoard([".....", "...\\\\", ".....", ".....", "....."]),
+        {
+          highestLevel: 4,
+          fixedPieceCountByLevel: [1, 0, 0, 1, 0],
           propagationRoundCount: 4,
           assumptionTestCount: 0,
           assumptionEliminationCount: 0,
         },
       ],
       [
-        "仮に置いた先の矛盾で候補を除いて決まる問題（rf-5-5-9）",
-        parseReflectionBoard([".\\/./", ".....", "...|.", ".=...", "....."]),
+        "仮に置いた先の矛盾で候補を除いて決まる問題（rf-5-7-36）",
+        parseReflectionBoard(["/\\|..", "/....", ".=...", "/|...", "....."]),
         {
           highestLevel: 5,
-          fixedPieceCountByLevel: [0, 0, 0, 0, 5],
-          propagationRoundCount: 7,
-          assumptionTestCount: 2,
+          fixedPieceCountByLevel: [1, 0, 0, 0, 6],
+          propagationRoundCount: 9,
+          assumptionTestCount: 1,
           assumptionEliminationCount: 1,
         },
       ],
@@ -160,6 +171,7 @@ describe("traceReflectionHumanSolve", () => {
       [5, 8],
       [6, 5],
       [6, 8],
+      [7, 10],
     ];
     const problems = conditions.flatMap(([size, pieceCount]) =>
       Array.from(

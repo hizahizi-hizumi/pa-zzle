@@ -1,5 +1,7 @@
-import type { ReflectionDifficultyAnalysis } from "@/games/reflection/problem/difficulty-analysis";
-import type { ReflectionReasoningLevel } from "@/games/reflection/problem/generation/human-solver";
+import type {
+  ReflectionDifficultyAnalysis,
+  ReflectionReasoningFeatures,
+} from "@/games/reflection/problem/difficulty-analysis";
 import {
   type ReflectionBoardSize,
   type ReflectionGenerationConditions,
@@ -33,6 +35,8 @@ export function getReflectionDifficultyLabel(
   );
 }
 
+type ReflectionReasoningLevel = ReflectionReasoningFeatures["highestLevel"];
+
 /** 両端を含む範囲。 */
 type InclusiveRange<T extends number> = { minimum: T; maximum: T };
 
@@ -49,7 +53,7 @@ export type ReflectionLevelCombination = {
 
 /**
  * 各レベルの組み合わせ。推論レベルを1段ずつ上げ、規模の範囲は両端とも下げない。隣のレベルとは規模の範囲が重なる。
- * 7×7・12ピースは分析時間の裾が長く（1問で80秒台）評価不能も出たため、ピース数の上限を11にしている。
+ * レベル5のピース数は、推論レベル5が1割前後以上出る10〜12にしている（9以下では数%）。12は分析スクリプトで測った上限。
  * 境界は人間の実プレイで確かめる前の暫定値。
  */
 export const reflectionLevelCombinations = {
@@ -76,7 +80,7 @@ export const reflectionLevelCombinations = {
   "5": {
     reasoningLevel: 5,
     boardSize: { minimum: 6, maximum: 7 },
-    pieceCount: { minimum: 8, maximum: 11 },
+    pieceCount: { minimum: 10, maximum: 12 },
   },
 } as const satisfies Record<ReflectionDifficulty, ReflectionLevelCombination>;
 

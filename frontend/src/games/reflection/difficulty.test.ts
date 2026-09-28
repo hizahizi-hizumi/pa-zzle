@@ -10,12 +10,12 @@ import {
 } from "@/games/reflection/difficulty";
 import type {
   ReflectionDifficultyAnalysis,
+  ReflectionReasoningFeatures,
   ReflectionScaleMetrics,
 } from "@/games/reflection/problem/difficulty-analysis";
-import type { ReflectionReasoningLevel } from "@/games/reflection/problem/generation/human-solver";
 
 function toAnalysis(
-  highestLevel: ReflectionReasoningLevel,
+  highestLevel: ReflectionReasoningFeatures["highestLevel"],
   size: number,
   pieceCount: number,
 ): ReflectionDifficultyAnalysis {
