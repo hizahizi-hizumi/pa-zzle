@@ -20,7 +20,7 @@ import { createPlayRecordId, type PlayRecord } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
 const REFLECTION_GAME_ID = "reflection";
-const REFLECTION_PLAY_RECORD_PAYLOAD_VERSION = 1;
+const REFLECTION_PLAY_RECORD_PAYLOAD_VERSION = 2;
 
 /**
  * - `problemIdentity`: 再プレイで問題集から同じ問題を引くのに使う。問題集の版と番号は問題集を作り直すと変わるので保存せず、必要なら identity の seed から引く。
@@ -141,6 +141,7 @@ export function createReflectionPlayRecord({
         clueCount: workload.clueCount,
         propagationRoundCount: workload.propagationRoundCount,
         assumptionTestCount: workload.assumptionTestCount,
+        trialMoveCount: workload.trialMoveCount,
       },
       performance: {
         elapsedMs: result.elapsedMs,

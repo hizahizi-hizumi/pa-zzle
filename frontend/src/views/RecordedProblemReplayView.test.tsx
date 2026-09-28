@@ -307,7 +307,7 @@ describe("RecordedProblemReplayView", () => {
 
   describe("リフレクションの記録の場合", () => {
     const pooled = restoreReflectionPoolProblem({
-      poolVersion: "1",
+      poolVersion: "2",
       problemId: "3-1",
     });
     const reflectionPerformance = {
@@ -330,6 +330,7 @@ describe("RecordedProblemReplayView", () => {
           clueCount: problemIdentity.conditions.size * 4,
           propagationRoundCount: 2,
           assumptionTestCount: 0,
+          trialMoveCount: null,
         },
         startedAt: 1_000,
         completedAt: 91_000,

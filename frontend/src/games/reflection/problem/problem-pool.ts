@@ -30,7 +30,7 @@ import { computeReflectionClues } from "@/games/reflection/puzzle/laser";
  * - `candidateIndex` と `encodedSolution` から得る盤面サイズ・ピース数で、`createReflectionProblemIdentity` の identity を再構成する。
  * - `encodedSolution` は解の各マスを `ReflectionCellCode`（`0` が空き、`1`〜`6` がピース）の1桁で行優先に並べた文字列。
  *   手持ちと外周ヒントは解から求まるので持たない。実行時に生成器・解探索を呼ばずに問題を復元するため、生成結果そのものを持つ。
- * - `propagationRoundCount` / `assumptionTestCount` は生成時の分析結果（`ReflectionSolveWorkload`）。
+ * - `propagationRoundCount` / `assumptionTestCount` / `trialMoveCount` は生成時の分析結果（`ReflectionSolveWorkload`）。
  *   速さの基準時間に使う。プレイ時に解法器を動かさずに済むよう、問題集に持たせる。
  */
 export type ReflectionProblemPoolEntry = readonly [
@@ -38,6 +38,7 @@ export type ReflectionProblemPoolEntry = readonly [
   encodedSolution: string,
   propagationRoundCount: number,
   assumptionTestCount: number,
+  trialMoveCount: number | null,
 ];
 
 /**
@@ -155,6 +156,7 @@ export function restoreReflectionPoolEntry(
     encodedSolution,
     propagationRoundCount,
     assumptionTestCount,
+    trialMoveCount,
   ]: ReflectionProblemPoolEntry,
   poolReference: ReflectionProblemPoolReference,
 ): ReflectionPooledProblem {
@@ -169,6 +171,7 @@ export function restoreReflectionPoolEntry(
       clueCount: problem.clues.length,
       propagationRoundCount,
       assumptionTestCount,
+      trialMoveCount,
     },
   };
 }

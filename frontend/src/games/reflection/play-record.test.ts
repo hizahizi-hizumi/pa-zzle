@@ -10,12 +10,13 @@ import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 
 const problemIdentity = createReflectionProblemIdentity(6, 11, 3);
 
-// 基準時間は 24×0.5 + 11×6 + 15×8 + 8×15 = 318秒。
+// 試し置きでは解き切れない問題。基準時間は 24×0.5 + 11×7 + 15×8 + 8×15 = 329秒。
 const workload = {
   pieceCount: 11,
   clueCount: 24,
   propagationRoundCount: 15,
   assumptionTestCount: 8,
+  trialMoveCount: null,
 };
 
 const performance = {
@@ -53,12 +54,12 @@ describe("createReflectionPlayRecord", () => {
     expect({ id, gameId, payloadVersion }).toEqual({
       id: "reflection:1000:401000:rf-6-11-3",
       gameId: "reflection",
-      payloadVersion: 1,
+      payloadVersion: 2,
     });
     expect(payload).toEqual({
       difficulty: "5",
       problemIdentity: {
-        generatorVersion: "2",
+        generatorVersion: "3",
         seed: "rf-6-11-3",
         conditions: { size: 6, pieceCount: 11 },
       },
@@ -75,7 +76,7 @@ describe("getReflectionPlayRecordScore", () => {
   test("保存した事実から現在のプレイ評価を導出すること", () => {
     const score = getReflectionPlayRecordScore(record);
 
-    expect(score).toBe(87);
+    expect(score).toBe(89);
   });
 });
 
@@ -83,7 +84,7 @@ describe("getReflectionPlayRecordTimeDelta", () => {
   test("保存した作業の量から基準時間との差を導出すること", () => {
     const timeDeltaMs = getReflectionPlayRecordTimeDelta(record);
 
-    expect(timeDeltaMs).toBe(82_000);
+    expect(timeDeltaMs).toBe(71_000);
   });
 });
 
@@ -108,7 +109,7 @@ describe("isReflectionPlayRecord", () => {
 
   const invalidCases = [
     ["別のゲームの記録", { ...record, gameId: "takuzu" }],
-    ["未知の payload の版", { ...record, payloadVersion: 2 }],
+    ["未知の payload の版", { ...record, payloadVersion: 3 }],
     ["未知の難易度", withPayload({ difficulty: "6" })],
     [
       "生成器の版が無い identity",
@@ -215,7 +216,7 @@ describe("reflectionPlayRecordDefinition", () => {
       ),
     );
 
-    expect(values).toEqual([87, 82_000]);
+    expect(values).toEqual([89, 71_000]);
   });
 
   describe("生成器の版が今と違う記録の場合", () => {
@@ -230,7 +231,7 @@ describe("reflectionPlayRecordDefinition", () => {
         ),
       );
 
-      expect(values).toEqual([87, 82_000]);
+      expect(values).toEqual([89, 71_000]);
     });
   });
 });

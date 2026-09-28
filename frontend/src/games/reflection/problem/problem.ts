@@ -26,8 +26,7 @@ export type ReflectionProblem = {
 };
 
 /**
- * 生成器が扱う盤面サイズ。5段階の出題（問題集）で使うのは 5〜7 だけで（`reflectionLevelCombinations`）、
- * 8〜11 は内部診断の問題指定で開いて試すサンプル用。
+ * 生成器が扱う盤面サイズ。どのレベルでどの大きさを出すかは `reflectionLevelCombinations` が決める。
  */
 export const reflectionBoardSizes = [5, 6, 7, 8, 9, 10, 11] as const;
 
@@ -71,12 +70,14 @@ export type ReflectionIdentifiedProblem = {
  * - `pieceCount` / `clueCount`: 置くピースの数と、読む外周ヒントの本数。
  * - `propagationRoundCount`: 人間向け解法器で、全外周ヒントへ照らし直して候補が変わった回数。
  * - `assumptionTestCount`: 人間向け解法器で、候補を仮に置いて確かめた回数（推論レベル5 でだけ増える）。
+ * - `trialMoveCount`: 一致表示を見ながら1本ずつ満たす試し置きで解き切った手数。解き切れない問題は `null`。
  */
 export type ReflectionSolveWorkload = {
   pieceCount: number;
   clueCount: number;
   propagationRoundCount: number;
   assumptionTestCount: number;
+  trialMoveCount: number | null;
 };
 
 /**
@@ -174,9 +175,15 @@ export function isReflectionSolveWorkload(
     return false;
   }
 
-  const { pieceCount, clueCount, propagationRoundCount, assumptionTestCount } =
-    value;
+  const {
+    pieceCount,
+    clueCount,
+    propagationRoundCount,
+    assumptionTestCount,
+    trialMoveCount,
+  } = value;
   if (
+    !(trialMoveCount === null || isNonNegativeInteger(trialMoveCount)) ||
     !isNonNegativeInteger(pieceCount) ||
     !isNonNegativeInteger(clueCount) ||
     !isNonNegativeInteger(propagationRoundCount) ||

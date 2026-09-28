@@ -62,6 +62,7 @@ describe("toReflectionPoolIdentity", () => {
       "1000002000003000004050006",
       0,
       0,
+      null,
     ]);
 
     expect(identity).toEqual(createReflectionProblemIdentity(5, 6, 12));
@@ -73,11 +74,11 @@ describe("restoreReflectionPoolEntry", () => {
   const generated = generateReflectionProblem(
     createReflectionProblemIdentity(6, 8, 3),
   );
-  const reference = { poolVersion: "1", problemId: "4-9" };
+  const reference = { poolVersion: "2", problemId: "4-9" };
 
   test("解から手持ちと外周ヒントを求めた問題と、問題集の作業の量を伴うこと", () => {
     const pooled = restoreReflectionPoolEntry(
-      [3, encodeReflectionPoolSolution(generated.problem.solution), 7, 0],
+      [3, encodeReflectionPoolSolution(generated.problem.solution), 7, 0, 11],
       reference,
     );
 
@@ -90,6 +91,7 @@ describe("restoreReflectionPoolEntry", () => {
         clueCount: 24,
         propagationRoundCount: 7,
         assumptionTestCount: 0,
+        trialMoveCount: 11,
       },
     });
   });
