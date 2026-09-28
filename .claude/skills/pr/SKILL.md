@@ -88,8 +88,8 @@ PR_BODY
 `baseBranch=main` の場合だけ、PR作成後にGitHub上の競合状態を確認する。
 
 - コンフリクトしていなければ `main` を取り込まない。
-- コンフリクトしている場合だけ最新 `origin/main` を取得し、作業ブランチへ merge commit で取り込んで競合を解消し、pushする。
-- rebase、squash、force pushで追従しない。
+- コンフリクトしている場合だけ最新 `origin/main` を取得し、作業ブランチを `origin/main` へ rebase して競合を解消し、`git push --force-with-lease` でpushする。
+- merge commit、squashで追従しない。`--force-with-lease` を伴わない force push はしない。
 
 作業途中では `main` を取り込まない。
 

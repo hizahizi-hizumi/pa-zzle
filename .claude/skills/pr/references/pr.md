@@ -60,7 +60,7 @@
 - PRはオープンで作成し、ドラフトにしない。
 - PRのマージ方式はmerge commitとし、squash merge / rebase mergeは使わない。
 - 作業中に`main`を取り込まない。
-- 作業完了時に`main`とコンフリクトしている場合だけ、最新`main`をmerge commitで取り込む。
+- 作業完了時に`main`とコンフリクトしている場合だけ、最新`main`へrebaseする。コンフリクトしていなければrebaseしない。
 
 ## 禁止事項
 
