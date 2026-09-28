@@ -3,7 +3,8 @@ import type { ReflectionOutcome } from "@/games/reflection/puzzle/laser";
 
 /**
  * リフレクション固有の色。共通UIの意味色（`primary`・`ring`・`success` など）は流用しない。
- * - `selection`: 選んでいるピース・ストックの種類・戻し先。無彩色にして、ピースや外周ヒントの結果の色と取り違えないようにする。
+ * - `selection`: 選んでいるピース・ストックの種類。無彩色にして、ピースや外周ヒントの結果の色と取り違えないようにする。
+ * - `returnTarget`: 盤面のピースを選んでいる間の戻し先（ストック）。枠で囲まず、地の色の差だけで示す。
  * - `laser`: 光路と、光路を表示している外周ヒント。線や記号は `laserText`、外周ヒントの数字は
  *   白地でも文字として読める濃さの `laserLabel`、外周ヒントの枠は `laserRing` を使う。
  * - `laserBadge`: 光路を表示している外周ヒントに添える、今の光の通るマスの数と結果の札。
@@ -16,7 +17,7 @@ import type { ReflectionOutcome } from "@/games/reflection/puzzle/laser";
 export const reflectionToneClassNames = {
   selectionText: "text-foreground",
   selectionSurface: "bg-foreground/10 ring-2 ring-foreground ring-inset",
-  selectionBorder: "border-foreground",
+  returnTargetSurface: "bg-foreground/7",
   laserText: "text-orange-600 dark:text-amber-400",
   laserLabel: "text-orange-700 dark:text-amber-400",
   laserSurface: "bg-orange-500/15 dark:bg-amber-400/15",

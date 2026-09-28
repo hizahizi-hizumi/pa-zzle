@@ -120,8 +120,11 @@ export function ReflectionPlay({
     [board, clues],
   );
   // 手持ちを置き切っても揃っていないときだけ、合っていない外周ヒントの本数を知らせる。
+  // 盤面のピースを選んでいる間は、同じ位置にストックの「ここへ戻す」を出すので知らせない。
   const unmatchedClueCount =
-    playing && getReflectionInventoryPieceCount(stock) === 0
+    playing &&
+    selection?.type !== "cell" &&
+    getReflectionInventoryPieceCount(stock) === 0
       ? clueMatches.filter((matched) => !matched).length
       : 0;
   const playAreaRef = useRef<HTMLElement>(null);

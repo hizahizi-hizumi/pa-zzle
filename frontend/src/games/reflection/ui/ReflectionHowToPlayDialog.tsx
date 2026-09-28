@@ -66,7 +66,7 @@ function ClueMatchExample({ matched }: { matched: boolean }) {
   return (
     <span
       className={cn(
-        "flex size-10 flex-col items-center justify-center gap-0.5 rounded-sm border border-border leading-none text-foreground",
+        "flex size-10 flex-col items-center justify-center gap-0.5 leading-none text-foreground",
         matched && reflectionToneClassNames.clueMatchSurface,
       )}
     >

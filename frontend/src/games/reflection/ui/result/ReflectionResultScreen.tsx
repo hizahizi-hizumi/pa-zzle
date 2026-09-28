@@ -102,7 +102,7 @@ export function ReflectionResultScreen({
         {result ? (
           <GameResultScoreCard score={result.score.total} level={resultLevel} />
         ) : (
-          <p className="mt-3 rounded-xl bg-muted/55 px-3 py-3 text-center text-supporting text-muted-foreground">
+          <p className="mt-3 bg-muted/55 px-3 py-3 text-center text-supporting text-muted-foreground">
             問題集に無い問題のため、スコアは出しません。
           </p>
         )}
@@ -162,7 +162,7 @@ export function ReflectionResultScreen({
               </CollapsibleTrigger>
             </div>
             <CollapsibleContent>
-              <div className="mt-2 rounded-xl border-(length:--border-width-normal) px-3 py-3 text-supporting text-muted-foreground">
+              <div className="mt-2 bg-muted/55 px-3 py-3 text-supporting text-muted-foreground">
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
                   <DetailMetric
                     label="正確性"
@@ -203,7 +203,7 @@ export function ReflectionResultScreen({
                     value={`${result.workload.assumptionTestCount}回`}
                   />
                 </dl>
-                <div className="mt-3 border-t-(length:--border-width-normal) pt-3">
+                <div className="mt-4">
                   <ScoreCriteria result={result} />
                 </div>
               </div>

@@ -85,7 +85,7 @@ export function ReflectionClueButton({
       onFocus={() => onFocus(focusKey)}
       style={{ gridRow: row, gridColumn: column }}
       className={cn(
-        "relative flex min-h-0 min-w-0 touch-manipulation select-none flex-col items-center justify-center gap-[calc(var(--reflection-unit)*0.04)] rounded-sm leading-none text-foreground outline-none focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent",
+        "relative flex min-h-0 min-w-0 touch-manipulation select-none flex-col items-center justify-center gap-[calc(var(--reflection-unit)*0.04)] leading-none text-foreground outline-none focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent",
         selected && reflectionToneClassNames.laserRing,
         laserExit && reflectionToneClassNames.laserExit,
         matched
@@ -114,7 +114,7 @@ export function ReflectionClueButton({
           aria-hidden="true"
           data-laser-badge=""
           className={cn(
-            "pointer-events-none absolute z-20 flex items-center gap-[0.125em] rounded-full px-[0.4em] py-[0.1em] font-semibold tabular-nums leading-none shadow-raised text-[length:clamp(0.625rem,calc(var(--reflection-unit)*0.3),0.875rem)]",
+            "pointer-events-none absolute z-20 flex items-center gap-[0.125em] px-[0.4em] py-[0.1em] font-semibold tabular-nums leading-none text-[length:clamp(0.625rem,calc(var(--reflection-unit)*0.3),0.875rem)]",
             laserBadgePositionClassNames[entry.side],
             reflectionToneClassNames.laserBadge,
           )}

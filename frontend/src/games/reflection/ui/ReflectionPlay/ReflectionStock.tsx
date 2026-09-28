@@ -27,8 +27,8 @@ export function listReflectionStockPieces(
 }
 
 /**
- * 手持ちのピース。
- * 盤面のピースを選んでいる間は、ストック全体を戻し先として枠で囲み、どの種類を押してもそのピースを戻す。
+ * 手持ちのピース。種類ごとのボタンを枠も影も付けずに平らに並べ、選んでいる種類だけを選択の地と枠で示す。
+ * 盤面のピースを選んでいる間は、ストック全体を戻し先として地の色で示し、どの種類を押してもそのピースを戻す。
  */
 export function ReflectionStock({
   inventory,
@@ -45,15 +45,15 @@ export function ReflectionStock({
       role="group"
       aria-label={returning ? "ストック（押すとストックへ戻す）" : "ストック"}
       className={cn(
-        "relative mx-auto flex w-full max-w-md justify-center gap-1 rounded-lg sm:gap-1.5 border-(length:--border-width-strong) border-dashed border-transparent p-1 transition-colors duration-(--duration-normal)",
-        returning && reflectionToneClassNames.selectionBorder,
+        "relative mx-auto flex w-full max-w-md justify-center gap-1 p-1 transition-colors duration-(--duration-normal) sm:gap-1.5",
+        returning && reflectionToneClassNames.returnTargetSurface,
       )}
     >
       {returning ? (
         <span
           aria-hidden="true"
           className={cn(
-            "pointer-events-none absolute -top-2 left-1/2 z-10 flex h-4 -translate-x-1/2 items-center gap-1 whitespace-nowrap bg-background px-2 text-play-meta",
+            "pointer-events-none absolute bottom-full left-1/2 flex h-4 -translate-x-1/2 items-center gap-1 whitespace-nowrap text-play-meta",
             reflectionToneClassNames.selectionText,
           )}
         >
@@ -74,9 +74,8 @@ export function ReflectionStock({
             disabled={disabled || (!returning && remaining === 0)}
             onClick={() => onTapStock(piece)}
             className={cn(
-              "relative flex h-11 min-w-0 max-w-16 flex-1 touch-manipulation select-none items-center justify-center rounded-md border-(length:--border-width-normal) bg-background text-foreground shadow-raised outline-none transition-[background-color,color,opacity] duration-(--duration-fast) focus-visible:ring-2 focus-visible:ring-ring enabled:hover:bg-accent/60 enabled:active:bg-accent disabled:opacity-40 disabled:shadow-none",
+              "relative flex h-11 min-w-0 max-w-16 flex-1 touch-manipulation select-none items-center justify-center text-foreground outline-none transition-[background-color,color,opacity] duration-(--duration-fast) focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset enabled:hover:bg-accent/60 enabled:active:bg-accent disabled:opacity-40",
               selected && reflectionToneClassNames.selectionSurface,
-              returning && "border-dashed",
             )}
           >
             <ReflectionPieceIcon piece={piece} size="stock" />
