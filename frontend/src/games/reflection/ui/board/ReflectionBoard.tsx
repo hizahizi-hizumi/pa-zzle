@@ -223,7 +223,9 @@ export function ReflectionBoard({
       <div
         role="group"
         aria-label={`${REFLECTION_DISPLAY_NAME}盤面`}
-        className="grid border-2 border-foreground/55 bg-background"
+        // 外枠は outline で盤面の外側に描く。border にするとマスが枠の内側に詰められ、
+        // 外周ヒントと光路の座標（grid の列をそのまま等分した位置）からマスの中心がずれる。
+        className="grid bg-background outline-2 outline-foreground/55 outline-solid"
         style={{
           ...getReflectionBoardGridArea(size),
           gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,
