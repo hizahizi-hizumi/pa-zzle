@@ -375,6 +375,7 @@
                     "group": [
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
@@ -417,6 +418,7 @@
                     "group": [
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
@@ -458,6 +460,7 @@
                     "group": [
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
@@ -508,6 +511,7 @@
                     "group": [
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
@@ -557,6 +561,7 @@
                     "group": [
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
@@ -611,6 +616,7 @@
                     "group": [
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
@@ -661,6 +667,7 @@
                     "group": [
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
@@ -703,6 +710,7 @@
                     "group": [
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
@@ -744,6 +752,7 @@
                     "group": [
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
@@ -794,6 +803,7 @@
                     "group": [
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
@@ -843,6 +853,7 @@
                     "group": [
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
@@ -897,6 +908,7 @@
                     "group": [
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
@@ -947,6 +959,7 @@
                     "group": [
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
@@ -989,6 +1002,7 @@
                     "group": [
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
@@ -1030,6 +1044,7 @@
                     "group": [
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
@@ -1080,6 +1095,7 @@
                     "group": [
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
@@ -1129,6 +1145,7 @@
                     "group": [
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
@@ -1183,6 +1200,7 @@
                     "group": [
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
@@ -1195,6 +1213,298 @@
                       "@/games/parking-jam/problem/generation/**",
                       "@/games/parking-jam/play-record",
                       "@/games/parking-jam/diagnostics"
+                    ],
+                    "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/reflection/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/reflection/ui/play-record-display.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "!@/records/ui/play-record-display",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/reflection/puzzle/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/reflection/problem/**",
+                      "@/games/reflection/session/**",
+                      "@/games/reflection/play/**",
+                      "@/games/reflection/ui/**"
+                    ],
+                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/reflection/problem/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/reflection/session/**",
+                      "@/games/reflection/play/**",
+                      "@/games/reflection/ui/**"
+                    ],
+                    "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/reflection/session/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/reflection/problem/generation/**",
+                      "@/games/reflection/difficulty",
+                      "@/games/reflection/score",
+                      "@/games/reflection/play/**",
+                      "@/games/reflection/ui/**",
+                      "@/games/reflection/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/reflection/play/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/reflection/ui/**",
+                      "@/games/reflection/problem/generation/**",
+                      "@/games/reflection/play-record",
+                      "@/games/reflection/diagnostics"
                     ],
                     "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
                   }
@@ -1234,6 +1544,7 @@
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
                     ],
@@ -1276,6 +1587,7 @@
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
                     ],
@@ -1317,6 +1629,7 @@
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
                     ],
@@ -1367,6 +1680,7 @@
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
                     ],
@@ -1416,6 +1730,7 @@
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
                     ],
@@ -1470,6 +1785,7 @@
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/takuzu/**",
                       "@/games/water-sort/**"
                     ],
@@ -1520,6 +1836,7 @@
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/water-sort/**"
                     ],
@@ -1562,6 +1879,7 @@
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/water-sort/**"
                     ],
@@ -1603,6 +1921,7 @@
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/water-sort/**"
                     ],
@@ -1653,6 +1972,7 @@
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/water-sort/**"
                     ],
@@ -1702,6 +2022,7 @@
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/water-sort/**"
                     ],
@@ -1756,6 +2077,7 @@
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/water-sort/**"
                     ],
@@ -1806,6 +2128,7 @@
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**"
                     ],
@@ -1848,6 +2171,7 @@
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**"
                     ],
@@ -1889,6 +2213,7 @@
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**"
                     ],
@@ -1939,6 +2264,7 @@
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**"
                     ],
@@ -1988,6 +2314,7 @@
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**"
                     ],
@@ -2042,6 +2369,7 @@
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
+                      "@/games/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/games/takuzu/**"
                     ],
@@ -2110,6 +2438,8 @@
                       "@/game-catalog/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/game-catalog/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/game-catalog/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/game-catalog/slide-puzzle/**",
                       "@/games/takuzu/**",
@@ -2149,6 +2479,8 @@
                       "@/game-catalog/minesweeper/**",
                       "@/games/parking-jam/**",
                       "@/game-catalog/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/game-catalog/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/game-catalog/slide-puzzle/**",
                       "@/games/takuzu/**",
@@ -2188,6 +2520,49 @@
                       "@/game-catalog/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/game-catalog/nanpure/**",
+                      "@/games/reflection/**",
+                      "@/game-catalog/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/game-catalog/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/game-catalog/takuzu/**",
+                      "@/games/water-sort/**",
+                      "@/game-catalog/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/game-catalog/reflection/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": ["@/views/**", "@/pages/**"],
+                    "message": "[dependency/game-catalog-boundary] ゲームカタログは画面合成・pages へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/game-catalog/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/game-catalog/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/game-catalog/parking-jam/**",
                       "@/games/slide-puzzle/**",
                       "@/game-catalog/slide-puzzle/**",
                       "@/games/takuzu/**",
@@ -2229,6 +2604,8 @@
                       "@/game-catalog/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/game-catalog/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/game-catalog/reflection/**",
                       "@/games/takuzu/**",
                       "@/game-catalog/takuzu/**",
                       "@/games/water-sort/**",
@@ -2268,6 +2645,8 @@
                       "@/game-catalog/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/game-catalog/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/game-catalog/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/game-catalog/slide-puzzle/**",
                       "@/games/water-sort/**",
@@ -2307,6 +2686,8 @@
                       "@/game-catalog/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/game-catalog/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/game-catalog/reflection/**",
                       "@/games/slide-puzzle/**",
                       "@/game-catalog/slide-puzzle/**",
                       "@/games/takuzu/**",
