@@ -1,105 +1,31 @@
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
-import { NANPURE_SIZE } from "@/games/nanpure/puzzle/board";
+import { cn } from "@/lib/utils";
 
-/**
- * 各レベルで初めて要る読みを、9×9 の盤面のどこを読むかとして描いたもの。数字は小さすぎて読めないので描かない。
- * `.` は読まないマス、`-` は読む範囲、`#` は読みの手がかりになるマス、`*` はその読みで数字が決まる・候補が消えるマス。
- *
- * 1: 1つのブロックの中で、数字の置き場所を探す。
- * 2: 1マスから見える行・列・ブロックをまとめて読み、入る数字を決める。
- * 3: ブロックの中で候補が1本の行に並ぶ（手がかり）ので、その行のブロックの外から候補を消す。
- * 4: 行の中の2マスの組（手がかり）から、同じ行の他のマスの候補を消す。
- * 5: 離れた3マスの候補のつながり（手がかり）から、両端から見えるマスの候補を消す。
- */
-const previewAreas = {
-  "1": [
-    ".........",
-    ".........",
-    ".........",
-    "...--*...",
-    "...---...",
-    "...---...",
-    ".........",
-    ".........",
-    ".........",
-  ],
-  "2": [
-    "....-....",
-    "....-....",
-    "....-....",
-    "...---...",
-    "----*----",
-    "...---...",
-    "....-....",
-    "....-....",
-    "....-....",
-  ],
-  "3": [
-    ".........",
-    ".........",
-    ".........",
-    "---......",
-    "#-#---*--",
-    "---......",
-    ".........",
-    ".........",
-    ".........",
-  ],
-  "4": [
-    ".........",
-    ".........",
-    ".........",
-    ".........",
-    "-#-*-#-*-",
-    ".........",
-    ".........",
-    ".........",
-    ".........",
-  ],
-  "5": [
-    ".........",
-    "..#...*..",
-    "..-......",
-    "..-......",
-    "..#---#..",
-    ".........",
-    ".........",
-    ".........",
-    ".........",
-  ],
+// 9×9 盤面の中段3行・2〜8列目を切り出した図。数字の密度で挑戦の強さを抽象的に見せる。
+// 実際の問題のヒント数ではなく、レベルの順序を見せるための抽象表現とする。
+const previewSolution = ["4536872", "2645193", "1327954"] as const;
+
+// `#` はヒント、`+` は記入済みの数字、`.` は空き。上のレベルのヒントは下のレベルのヒントにすべて含まれる。
+const previewLayouts = {
+  "1": ["##+#.##", ".##.#.#", "#.##.#+"],
+  "2": ["##+..##", ".##.#..", "#.##.#+"],
+  "3": [".#+..##", ".##.#..", "#.#..#+"],
+  "4": [".#+...#", ".#..#..", "#.#..#+"],
+  "5": [".#+...#", "....#..", "#....#+"],
 } satisfies Record<NanpureDifficulty, readonly string[]>;
 
-type PreviewCellRole = "outside" | "read" | "clue" | "effect";
+const PREVIEW_COLUMNS = previewSolution[0].length;
+// 切り出した列のうち、3×3 ブロックの左端になる列。
+const BLOCK_START_COLUMNS = new Set([2, 5]);
 
-const cellRoleByMark: Readonly<Record<string, PreviewCellRole>> = {
-  ".": "outside",
-  "-": "read",
-  "#": "clue",
-  "*": "effect",
-};
-
-// 決まる・候補が消えるマスは、バイナリパズルの難易度の図と同じ淡い黄色にする。盤面の誤りの赤や選択の色と取り違えないため。
-const cellClassNames = {
-  outside: "bg-background",
-  read: "bg-foreground/15",
-  clue: "bg-foreground/55",
-  effect: "bg-amber-300 dark:bg-amber-300/60",
-} satisfies Record<PreviewCellRole, string>;
-
-const BLOCK_SIZE = 3;
-const blockIndices = Array.from(
-  { length: BLOCK_SIZE * BLOCK_SIZE },
-  (_, index) => index,
+const cellPositions = previewSolution.flatMap((row, rowIndex) =>
+  Array.from(row, (digit, column) => ({
+    id: `cell-${rowIndex}-${column}`,
+    row: rowIndex,
+    column,
+    digit,
+  })),
 );
-
-function getCellRole(
-  difficulty: NanpureDifficulty,
-  row: number,
-  column: number,
-): PreviewCellRole {
-  const mark = previewAreas[difficulty][row]?.[column] ?? ".";
-  return cellRoleByMark[mark] ?? "outside";
-}
 
 type NanpureDifficultyPreviewProps = {
   difficulty: NanpureDifficulty;
@@ -108,32 +34,31 @@ type NanpureDifficultyPreviewProps = {
 export function NanpureDifficultyPreview({
   difficulty,
 }: NanpureDifficultyPreviewProps) {
+  const layout = previewLayouts[difficulty];
+
   return (
     <span
       aria-hidden="true"
-      className="flex shrink-0 items-center justify-center"
+      className="flex h-14 w-32 shrink-0 items-center lg:justify-center"
     >
-      <span className="grid grid-cols-3 gap-0.5 border border-foreground/55 bg-foreground/55">
-        {blockIndices.map(function renderBlock(blockIndex) {
-          const blockRow = Math.floor(blockIndex / BLOCK_SIZE) * BLOCK_SIZE;
-          const blockColumn = (blockIndex % BLOCK_SIZE) * BLOCK_SIZE;
+      <span className="grid grid-cols-[repeat(7,18px)] auto-rows-[18px] border-t-2 border-r border-b-2 border-t-foreground/55 border-r-border/85 border-b-foreground/55 bg-background">
+        {cellPositions.map(({ id, row, column, digit }) => {
+          const mark = layout[row]![column]!;
+
           return (
             <span
-              key={blockIndex}
-              className="grid grid-cols-[repeat(3,5px)] auto-rows-[5px] gap-px bg-border"
+              key={id}
+              className={cn(
+                "flex items-center justify-center border-t border-l border-border/85 font-sans text-[11px] tabular-nums",
+                row === 0 && "border-t-0",
+                BLOCK_START_COLUMNS.has(column) &&
+                  "border-l-2 border-l-foreground/55",
+                mark === "#" && "font-semibold text-foreground/90",
+                mark === "+" &&
+                  "font-medium text-violet-500 dark:text-violet-300",
+              )}
             >
-              {blockIndices.map(function renderCell(cellIndex) {
-                const row = blockRow + Math.floor(cellIndex / BLOCK_SIZE);
-                const column = blockColumn + (cellIndex % BLOCK_SIZE);
-                return (
-                  <span
-                    key={row * NANPURE_SIZE + column}
-                    className={
-                      cellClassNames[getCellRole(difficulty, row, column)]
-                    }
-                  />
-                );
-              })}
+              {mark === "." ? "" : digit}
             </span>
           );
         })}
@@ -141,3 +66,5 @@ export function NanpureDifficultyPreview({
     </span>
   );
 }
+
+export const _private = { previewLayouts, PREVIEW_COLUMNS };

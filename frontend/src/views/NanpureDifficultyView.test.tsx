@@ -26,7 +26,7 @@ describe("NanpureDifficultyView", () => {
     "レベル %s を選ぶとその難易度のプレイ画面へ進めること",
     (difficulty) => {
       const option = screen.getByRole("link", {
-        name: new RegExp(`^レベル ${difficulty}\\D`),
+        name: `レベル ${difficulty}`,
       });
 
       const href = option.getAttribute("href");
