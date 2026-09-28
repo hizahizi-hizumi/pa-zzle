@@ -3,7 +3,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
 import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
 import { generateReflectionProblem } from "@/games/reflection/problem/generator";
-import type { ReflectionProblemIdentity } from "@/games/reflection/problem/problem";
+import type {
+  ReflectionProblemIdentity,
+  ReflectionSolveWorkload,
+} from "@/games/reflection/problem/problem";
+import type {
+  ReflectionPooledProblem,
+  ReflectionProblemPoolReference,
+} from "@/games/reflection/problem/problem-pool";
 import {
   restoreReflectionProblem,
   selectReflectionProblemForDifficulty,
@@ -15,6 +22,13 @@ import {
   traceReflectionLaser,
 } from "@/games/reflection/puzzle/laser";
 import {
+  calculateReflectionPlayScore,
+  calculateReflectionSpeedFullScoreMs,
+  calculateReflectionSpeedZeroScoreMs,
+  calculateReflectionTimeDeltaMs,
+  type ReflectionPlayScore,
+} from "@/games/reflection/score";
+import {
   canRestartReflectionSession,
   canUndoReflectionSession,
   clearReflectionSessionSelection,
@@ -23,6 +37,7 @@ import {
   getReflectionSessionResult,
   getReflectionSessionStock,
   type ReflectionSession,
+  type ReflectionSessionResult,
   removeReflectionSessionPiece,
   replayReflectionSession,
   restartReflectionSession,
@@ -49,12 +64,42 @@ export type ReflectionProblemSource = "selected" | "given";
  */
 export type ReflectionProgress = "playing" | "clearing" | "result";
 
+/** クリアしたプレイの事実と、それを遊んだ問題の作業の量から導いた評価。 */
+export type ReflectionResult = ReflectionSessionResult & {
+  workload: ReflectionSolveWorkload;
+  speedFullScoreMs: number;
+  speedZeroScoreMs: number;
+  timeDeltaMs: number;
+  score: ReflectionPlayScore;
+};
+
+/**
+ * - `workload` / `poolReference`: 問題集から出した問題の作業の量と、問題集の中の位置。
+ *   問題集に無い identity を指定して生成した問題（内部診断）では `null` で、評価できない。
+ */
 type ReflectionPlayState = {
   session: ReflectionSession;
   progress: ReflectionProgress;
   problemIdentity: ReflectionProblemIdentity;
   problemSource: ReflectionProblemSource;
+  workload: ReflectionSolveWorkload | null;
+  poolReference: ReflectionProblemPoolReference | null;
 };
+
+function createPooledPlayState(
+  { problem, identity, workload, poolReference }: ReflectionPooledProblem,
+  problemSource: ReflectionProblemSource,
+  startedAt: number,
+): ReflectionPlayState {
+  return {
+    session: createReflectionSession(problem, startedAt),
+    progress: "playing",
+    problemIdentity: identity,
+    problemSource,
+    workload,
+    poolReference,
+  };
+}
 
 function createPlayState(
   difficulty: ReflectionDifficulty,
@@ -62,17 +107,45 @@ function createPlayState(
   startedAt: number,
   initialProblemIdentity?: ReflectionProblemIdentity,
 ): ReflectionPlayState {
-  // 問題集に無い identity も診断のために遊べるよう、生成器で作り直す。
-  const generated = initialProblemIdentity
-    ? (restoreReflectionProblem(initialProblemIdentity) ??
-      generateReflectionProblem(initialProblemIdentity))
-    : selectReflectionProblemForDifficulty(difficulty, seed);
+  if (!initialProblemIdentity) {
+    return createPooledPlayState(
+      selectReflectionProblemForDifficulty(difficulty, seed),
+      "selected",
+      startedAt,
+    );
+  }
 
+  const pooled = restoreReflectionProblem(initialProblemIdentity);
+  if (pooled) {
+    return createPooledPlayState(pooled, "given", startedAt);
+  }
+
+  // 問題集に無い identity も診断のために遊べるよう、生成器で作り直す。作業の量が無いので評価はしない。
+  const generated = generateReflectionProblem(initialProblemIdentity);
   return {
     session: createReflectionSession(generated.problem, startedAt),
     progress: "playing",
     problemIdentity: generated.identity,
-    problemSource: initialProblemIdentity ? "given" : "selected",
+    problemSource: "given",
+    workload: null,
+    poolReference: null,
+  };
+}
+
+function createReflectionResult(
+  sessionResult: ReflectionSessionResult,
+  workload: ReflectionSolveWorkload,
+): ReflectionResult {
+  return {
+    ...sessionResult,
+    workload,
+    speedFullScoreMs: calculateReflectionSpeedFullScoreMs(workload),
+    speedZeroScoreMs: calculateReflectionSpeedZeroScoreMs(workload),
+    timeDeltaMs: calculateReflectionTimeDeltaMs({
+      elapsedMs: sessionResult.elapsedMs,
+      workload,
+    }),
+    score: calculateReflectionPlayScore({ ...sessionResult, workload }),
   };
 }
 
@@ -81,6 +154,7 @@ function createPlayState(
  * `undo` は直前の盤面操作を1つ取り消し（待った）、`restart` は同じプレイのまま全ピースをストックへ戻し（盤面を戻す）、
  * `replay` は同じ問題を新しいプレイとして始め（やり直す）、`startNewProblem` は同じ難易度の別の問題を始める。
  * `tapClue` は外周ヒントの光路を表示し、盤面が揃うと `progress` が `clearing` になる。
+ * クリアすると `result` に評価を返す。問題集に無い問題を指定したときは作業の量が無いので `result` は `null` のまま。
  */
 export function useReflectionPlay(
   difficulty: ReflectionDifficulty,
@@ -202,6 +276,18 @@ export function useReflectionPlay(
   }, [difficulty]);
 
   const stock = useMemo(() => getReflectionSessionStock(session), [session]);
+  const sessionResult = useMemo(
+    () => getReflectionSessionResult(session),
+    [session],
+  );
+  const { workload } = play;
+  const result = useMemo(
+    () =>
+      sessionResult && workload
+        ? createReflectionResult(sessionResult, workload)
+        : null,
+    [sessionResult, workload],
+  );
   const laser = useMemo<ReflectionLaserView | null>(() => {
     const entry = session.laserEntry;
     return entry
@@ -213,6 +299,8 @@ export function useReflectionPlay(
     difficulty,
     problemIdentity: play.problemIdentity,
     problemSource: play.problemSource,
+    workload,
+    poolReference: play.poolReference,
     status: session.status,
     progress,
     board: session.board,
@@ -226,7 +314,10 @@ export function useReflectionPlay(
     elapsedMs: getReflectionSessionElapsedMs(session, now),
     canUndo: canUndoReflectionSession(session),
     canRestart: canRestartReflectionSession(session),
-    sessionResult: getReflectionSessionResult(session),
+    startedAt: session.startedAt,
+    completedAt: session.finishedAt,
+    sessionResult,
+    result,
     tapStock,
     tapCell,
     tapClue,
