@@ -23,16 +23,22 @@ import { reflectionToneClassNames } from "@/games/reflection/ui/reflection-tone"
  * 難易度プレビューは、盤面の中ほどの2行を切り出した「帯」を、1本の光が鏡で上下に折れながら横切る模式図である。実際の問題ではない。
  *
  * - 帯の幅: そのレベルで遊ぶ盤面サイズの上限（`reflectionLevelCombinations`）。マスの大きさはどのレベルでもそろえる。
- * - 光: 帯の上の行へ左の外周から1本だけ入れる。左から1列ずつ、上下に並べた鏡の組をレベルの数だけ置き、
- *   光は組ごとに2回折れて段を下りる・上る。折れる回数（たどる光路の長さ）で、読みの深さを表す。
+ * - 光: 帯の上の行へ左の外周から1本だけ入れる。左から1列ずつ、上下に並べた鏡の組を置き、光は組ごとに2回折れて段を下りる・上る。
+ *   組の数はレベルが上がるほど増え（ピースはそのレベルのピース数の範囲に入る）、折れる回数（たどる光路の長さ）で読みの深さを表す。
  *   上のレベルは下のレベルの鏡をすべて同じマスに含み、光路は下のレベルの光路の続きになる。
  * - 色は光路とピース（斜め鏡）の2色だけにし、外周ヒントの数字・結果の形は描かない。
  */
 const previewStrip = {
   rowCount: 2,
-  /** 鏡の組を置く列。組は上下のマスに同じ向きの斜め鏡を置き、1組目は右下がり、2組目は右上がりと交互にする。 */
-  pairColumns: [1, 2, 3, 4, 5],
-} as const;
+  /** 鏡の組を置く最初の列。組は左から1列ずつ、上下のマスに同じ向きの斜め鏡を置き、1組目は右下がり、2組目は右上がりと交互にする。 */
+  firstPairColumn: 1,
+  /** レベルごとの鏡の組の数。ピース数（組の数 × 2）はそのレベルのピース数の範囲に入れる。 */
+  pairCounts: { "1": 1, "2": 2, "3": 3, "4": 5, "5": 8 },
+} as const satisfies {
+  rowCount: number;
+  firstPairColumn: number;
+  pairCounts: Record<ReflectionDifficulty, number>;
+};
 
 /** 図の上下と左右で、帯・入口の点・出口の矢印の外に残す余白（マス単位）。 */
 const STRIP_PADDING = 0.08;
@@ -48,16 +54,20 @@ type PreviewStrip = {
 };
 
 function createPreviewStrip(difficulty: ReflectionDifficulty): PreviewStrip {
-  const level = Number(difficulty);
   const size = reflectionLevelCombinations[difficulty].boardSize.maximum;
   const firstRow = Math.floor((size - previewStrip.rowCount) / 2);
   const cells = [...createEmptyReflectionBoard(size).cells];
-  previewStrip.pairColumns.slice(0, level).forEach((column, pairIndex) => {
+  for (
+    let pairIndex = 0;
+    pairIndex < previewStrip.pairCounts[difficulty];
+    pairIndex++
+  ) {
+    const column = previewStrip.firstPairColumn + pairIndex;
     const piece = pairIndex % 2 === 0 ? "backslash" : "slash";
     for (let row = firstRow; row < firstRow + previewStrip.rowCount; row++) {
       cells[row * size + column] = piece;
     }
-  });
+  }
   const board = { size, cells };
   const entry = { side: "left", index: firstRow } as const;
   return { board, firstRow, entry, trace: traceReflectionLaser(board, entry) };
@@ -80,7 +90,8 @@ export function ReflectionDifficultyPreview({
   return (
     <span
       aria-hidden="true"
-      className="flex h-14 w-36 shrink-0 items-center [--preview-unit:17px] lg:h-28 lg:w-full lg:justify-center lg:[--preview-unit:20px]"
+      // 320px 幅では選択肢のラベルが折り返さないよう、マスを小さくして図の幅を抑える。
+      className="flex h-14 w-36 shrink-0 items-center [--preview-unit:12px] min-[360px]:w-44 min-[360px]:[--preview-unit:15px] lg:h-28 lg:w-full lg:justify-center lg:[--preview-unit:12px]"
     >
       {/* マスの大きさをどのレベルでもそろえるため、図の幅を帯の列の数に比例させる。 */}
       <svg

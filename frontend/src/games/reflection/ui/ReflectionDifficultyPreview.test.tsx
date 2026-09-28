@@ -74,11 +74,11 @@ describe("createPreviewStrip", () => {
   );
 
   test.each(difficultyIds)(
-    "レベル %s の光は、帯の中だけを通ってレベルの数の2倍折れ、右の外周から出ること",
+    "レベル %s の光は、帯の中だけを通って鏡の組の数の2倍折れ、右の外周から出ること",
     (difficulty) => {
       const { trace, stripPath, turnCount } = readStrip(difficulty);
 
-      expect(turnCount).toBe(Number(difficulty) * 2);
+      expect(turnCount).toBe(previewStrip.pairCounts[difficulty] * 2);
       expect(
         stripPath.every((cell) => {
           const row = Number(cell.split(":")[0]);
