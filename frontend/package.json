@@ -18,6 +18,7 @@
     "analyze:parking-jam-difficulty": "bun scripts/analyze-parking-jam-difficulty.ts",
     "analyze:takuzu": "bun scripts/analyze-takuzu-corpus.ts",
     "generate:minesweeper-pool": "bun scripts/generate-minesweeper-problem-pool.ts",
+    "generate:nanpure-pool": "bun scripts/generate-nanpure-problem-pool.ts",
     "generate:parking-jam-pool": "bun scripts/generate-parking-jam-problem-pool.ts",
     "generate:takuzu-pool": "bun scripts/generate-takuzu-problem-pool.ts",
     "generate:water-sort-pool": "bun scripts/generate-water-sort-problem-pool.ts",
