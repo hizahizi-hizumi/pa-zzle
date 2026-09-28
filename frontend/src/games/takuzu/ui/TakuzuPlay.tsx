@@ -1,6 +1,7 @@
 import { type ReactNode, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
+import { UndoButton } from "@/components/UndoButton";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import type {
   TakuzuProgress,
@@ -18,7 +19,6 @@ import { readTakuzuHowToPlaySeen } from "@/games/takuzu/ui/how-to-play-seen";
 import { TakuzuResultScreen } from "@/games/takuzu/ui/result/TakuzuResultScreen";
 import { TakuzuHowToPlayDialog } from "@/games/takuzu/ui/TakuzuHowToPlayDialog";
 import { TakuzuPlayHeader } from "@/games/takuzu/ui/TakuzuPlay/TakuzuPlayHeader";
-import { UndoButton } from "@/games/takuzu/ui/TakuzuPlay/UndoButton";
 
 type TakuzuPlayProps = {
   difficulty: TakuzuDifficulty;
