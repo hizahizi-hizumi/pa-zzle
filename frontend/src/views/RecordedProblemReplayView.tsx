@@ -1,7 +1,9 @@
 import { useState } from "react";
 
 import { isMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
+import { parseNanpureDifficulty } from "@/games/nanpure/difficulty";
 import { isNanpurePlayRecord } from "@/games/nanpure/play-record";
+import { restoreNanpureProblem } from "@/games/nanpure/problem-selection";
 import { parseParkingJamDifficulty } from "@/games/parking-jam/difficulty";
 import { isParkingJamPlayRecord } from "@/games/parking-jam/play-record";
 import { parseSlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
@@ -70,11 +72,18 @@ export function RecordedProblemReplayView() {
     );
   }
 
-  if (isNanpurePlayRecord(record)) {
+  // 3段階の難易度で遊んだ記録の問題は問題集に無く、レベルへ読み替えもしないので再プレイできない。
+  const nanpureDifficulty = isNanpurePlayRecord(record)
+    ? parseNanpureDifficulty(record.payload.difficulty)
+    : undefined;
+  const nanpureInitialProblem = isNanpurePlayRecord(record)
+    ? restoreNanpureProblem(record.payload.problemIdentity)
+    : null;
+  if (nanpureDifficulty && nanpureInitialProblem) {
     return (
       <PlayableNanpure
-        difficulty={record.payload.difficulty}
-        initialProblemIdentity={record.payload.problemIdentity}
+        difficulty={nanpureDifficulty}
+        initialProblem={nanpureInitialProblem}
       />
     );
   }
@@ -116,10 +125,11 @@ export function RecordedProblemReplayView() {
     );
   }
 
-  // バイナリパズルは問題を問題集にしか持たないので、問題集から引けない記録は再プレイできない。
-  const unavailableReason = isTakuzuPlayRecord(record)
-    ? "この記録の問題は、現在の問題集にありません。"
-    : "現在のバージョンでは、このゲームの問題復元に対応していません。";
+  // バイナリパズルとナンプレは問題を問題集にしか持たないので、問題集から引けない記録は再プレイできない。
+  const unavailableReason =
+    isTakuzuPlayRecord(record) || isNanpurePlayRecord(record)
+      ? "この記録の問題は、現在の問題集にありません。"
+      : "現在のバージョンでは、このゲームの問題復元に対応していません。";
 
   return (
     <section className="mx-auto w-full max-w-3xl py-8 text-center">

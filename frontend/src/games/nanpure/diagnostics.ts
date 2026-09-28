@@ -7,15 +7,11 @@ import {
   parseNanpureDifficulty,
 } from "@/games/nanpure/difficulty";
 import {
-  NANPURE_MINIMUM_UNIQUE_CLUE_COUNT,
-  restoreNanpureProblem,
-} from "@/games/nanpure/problem/generator";
-import {
-  NANPURE_GENERATOR_VERSION,
-  type NanpureGeneratedProblem,
+  isNanpureProblemIdentity,
+  type NanpureIdentifiedProblem,
   type NanpureProblemIdentity,
 } from "@/games/nanpure/problem/problem";
-import { NANPURE_CELL_COUNT } from "@/games/nanpure/puzzle/board";
+import { restoreNanpureProblem } from "@/games/nanpure/problem-selection";
 
 export type NanpureDiagnosticSnapshot = InternalDiagnosticSnapshot<
   "nanpure",
@@ -60,7 +56,7 @@ export function parseNanpureDiagnosticSnapshot(
     value.formatVersion !== INTERNAL_DIAGNOSTIC_FORMAT_VERSION ||
     value.game !== "nanpure" ||
     !difficulty ||
-    !isProblemIdentity(value.problemIdentity) ||
+    !isNanpureProblemIdentity(value.problemIdentity) ||
     !(typeof value.buildRevision === "string" || value.buildRevision === null)
   ) {
     throw new TypeError("Invalid Nanpure diagnostic snapshot");
@@ -75,28 +71,11 @@ export function parseNanpureDiagnosticSnapshot(
   };
 }
 
+/** 問題集に無い identity は復元できないので `null` を返す。 */
 export function restoreNanpureProblemFromDiagnosticSnapshot(
   snapshot: NanpureDiagnosticSnapshot,
-): NanpureGeneratedProblem {
+): NanpureIdentifiedProblem | null {
   return restoreNanpureProblem(snapshot.problemIdentity);
-}
-
-function isProblemIdentity(value: unknown): value is NanpureProblemIdentity {
-  if (!isRecord(value) || !isRecord(value.conditions)) {
-    return false;
-  }
-
-  const clueCount = Number(value.conditions.clueCount);
-
-  return (
-    value.generatorVersion === NANPURE_GENERATOR_VERSION &&
-    typeof value.seed === "string" &&
-    Number.isInteger(value.conditions.clueCount) &&
-    clueCount >= NANPURE_MINIMUM_UNIQUE_CLUE_COUNT &&
-    clueCount <= NANPURE_CELL_COUNT &&
-    Number.isInteger(value.generationAttempt) &&
-    Number(value.generationAttempt) > 0
-  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

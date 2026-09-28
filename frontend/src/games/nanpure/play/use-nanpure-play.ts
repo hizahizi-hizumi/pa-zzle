@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
-import { restoreNanpureProblem } from "@/games/nanpure/problem/generator";
-import type { NanpureProblemIdentity } from "@/games/nanpure/problem/problem";
-import { generateNanpureProblemForDifficulty } from "@/games/nanpure/problem-selection";
+import type {
+  NanpureIdentifiedProblem,
+  NanpureProblemIdentity,
+} from "@/games/nanpure/problem/problem";
+import { selectNanpureProblemForDifficulty } from "@/games/nanpure/problem-selection";
 import type { NanpureDigit } from "@/games/nanpure/puzzle/board";
 import { findNanpureConflictCellIndices } from "@/games/nanpure/puzzle/rules";
 import {
@@ -24,7 +26,7 @@ import {
   toggleNanpureNote,
   undoNanpureSession,
 } from "@/games/nanpure/session/session";
-import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import { createProblemSeed } from "@/games/problem-seed";
 
 export type NanpureProgress = "playing" | "clearing" | "result";
 
@@ -41,35 +43,58 @@ type NanpurePlayState = {
   progress: NanpureProgress;
 };
 
-function createPlayState(
-  difficulty: NanpureDifficulty,
-  seed: ProblemSeed,
-  startedAt: number,
-  initialProblemIdentity?: NanpureProblemIdentity,
-): NanpurePlayState {
-  const problem = initialProblemIdentity
-    ? restoreNanpureProblem(initialProblemIdentity)
-    : generateNanpureProblemForDifficulty(difficulty, seed);
+// 問題集が小さい場合でも「別の問題」で同じ問題に戻らないよう、選び直す回数の上限。
+const maximumNewProblemSelectionAttempts = 8;
 
+function createPlayState(
+  { problem, identity }: NanpureIdentifiedProblem,
+  startedAt: number,
+): NanpurePlayState {
   return {
     session: createNanpureSession(problem, startedAt),
-    problemIdentity: problem.identity,
+    problemIdentity: identity,
     selectedCellIndex: null,
     notesMode: false,
     progress: "playing",
   };
 }
 
+function createNewProblemPlayState(
+  difficulty: NanpureDifficulty,
+  currentProblemIdentity: NanpureProblemIdentity,
+  startedAt: number,
+): NanpurePlayState {
+  let selected = selectNanpureProblemForDifficulty(
+    difficulty,
+    createProblemSeed(),
+  );
+  for (
+    let attempt = 1;
+    attempt < maximumNewProblemSelectionAttempts &&
+    selected.identity.seed === currentProblemIdentity.seed;
+    attempt += 1
+  ) {
+    selected = selectNanpureProblemForDifficulty(
+      difficulty,
+      createProblemSeed(),
+    );
+  }
+  return createPlayState(selected, startedAt);
+}
+
+/**
+ * `initialProblem` を渡すと、その問題で始める（記録からの再プレイ）。渡さなければ難易度の問題集から選ぶ。
+ * `startNewProblem` は問題集から別の問題を選び直す。
+ */
 export function useNanpurePlay(
   difficulty: NanpureDifficulty,
-  initialProblemIdentity?: NanpureProblemIdentity,
+  initialProblem?: NanpureIdentifiedProblem,
 ) {
   const [play, setPlay] = useState<NanpurePlayState>(() =>
     createPlayState(
-      difficulty,
-      initialProblemIdentity?.seed ?? createProblemSeed(),
+      initialProblem ??
+        selectNanpureProblemForDifficulty(difficulty, createProblemSeed()),
       Date.now(),
-      initialProblemIdentity,
     ),
   );
   const [now, setNow] = useState(() => Date.now());
@@ -161,7 +186,9 @@ export function useNanpurePlay(
   const startNewProblem = useCallback(() => {
     const startedAt = Date.now();
     setNow(startedAt);
-    setPlay(createPlayState(difficulty, createProblemSeed(), startedAt));
+    setPlay((current) =>
+      createNewProblemPlayState(difficulty, current.problemIdentity, startedAt),
+    );
   }, [difficulty]);
 
   const completeClearAnimation = useCallback(() => {

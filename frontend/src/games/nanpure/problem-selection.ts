@@ -1,49 +1,40 @@
+import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import {
-  assessNanpureDifficulty,
-  type NanpureDifficulty,
-} from "@/games/nanpure/difficulty";
+  isNanpureProblemIdentity,
+  type NanpureIdentifiedProblem,
+} from "@/games/nanpure/problem/problem";
 import {
-  generateNanpureProblem,
-  NanpureGenerationExhaustedError,
-} from "@/games/nanpure/problem/generator";
-import type { NanpureGeneratedProblem } from "@/games/nanpure/problem/problem";
-import type { ProblemSeed } from "@/games/problem-seed";
+  findNanpurePoolEntry,
+  listNanpurePoolEntries,
+  toNanpurePooledProblem,
+} from "@/games/nanpure/problem/problem-pool";
+import { hashProblemSeed, type ProblemSeed } from "@/games/problem-seed";
 
-const MAXIMUM_ATTEMPTS_PER_CLUE_COUNT = 12;
-
-const PREFERRED_CLUE_COUNTS_BY_DIFFICULTY: Record<
-  NanpureDifficulty,
-  readonly number[]
-> = {
-  easy: [40, 36, 32],
-  normal: [32, 36, 28, 40],
-  hard: [28, 24, 32],
-};
-
-export function generateNanpureProblemForDifficulty(
+/**
+ * 難易度の問題集から seed で1問を選ぶ。
+ * 問題集は生成時に難易度を判定済みで解も持つため、プレイ時には生成・解探索・難易度分析を走らせない。
+ */
+export function selectNanpureProblemForDifficulty(
   difficulty: NanpureDifficulty,
   seed: ProblemSeed,
-): NanpureGeneratedProblem {
-  for (const clueCount of PREFERRED_CLUE_COUNTS_BY_DIFFICULTY[difficulty]) {
-    try {
-      return generateNanpureProblem({
-        seed,
-        clueCount,
-        maximumAttempts: MAXIMUM_ATTEMPTS_PER_CLUE_COUNT,
-        acceptCandidate: ({ difficultyAnalysis }) => {
-          const assessment = assessNanpureDifficulty(difficultyAnalysis);
-          return (
-            assessment.status === "rated" &&
-            assessment.difficulty === difficulty
-          );
-        },
-      });
-    } catch (error) {
-      if (!(error instanceof NanpureGenerationExhaustedError)) {
-        throw error;
-      }
-    }
+): NanpureIdentifiedProblem {
+  const entries = listNanpurePoolEntries(difficulty);
+  const entry = entries[hashProblemSeed(seed) % entries.length];
+  if (!entry) {
+    throw new Error(`No level ${difficulty} Nanpure problem is available`);
   }
+  return toNanpurePooledProblem(entry);
+}
 
-  throw new Error(`Failed to generate a ${difficulty} Nanpure problem`);
+/**
+ * 記録に残した identity から同じ問題を復元する。
+ * 問題集に無い identity（生成器の版が今と違う記録など）は再プレイできないので `null` を返す。
+ */
+export function restoreNanpureProblem(
+  identity: unknown,
+): NanpureIdentifiedProblem | null {
+  const entry = isNanpureProblemIdentity(identity)
+    ? findNanpurePoolEntry(identity)
+    : null;
+  return entry ? toNanpurePooledProblem(entry) : null;
 }

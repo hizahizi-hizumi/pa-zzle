@@ -1,10 +1,14 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 
+import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
+import { createNanpureProblemIdentity } from "@/games/nanpure/problem/problem";
+import { restoreNanpureProblem } from "@/games/nanpure/problem-selection";
 import { createTakuzuPlayRecord } from "@/games/takuzu/play-record";
 import { createTakuzuProblemIdentity } from "@/games/takuzu/problem/problem";
 import { restoreTakuzuProblem } from "@/games/takuzu/problem-selection";
 import { writeTakuzuHowToPlaySeen } from "@/games/takuzu/ui/how-to-play-seen";
+import type { PlayRecord } from "@/records/play-record";
 import { writePlayRecords } from "@/records/storage";
 import { RecordedProblemReplayView } from "@/views/RecordedProblemReplayView";
 
@@ -132,4 +136,84 @@ describe("RecordedProblemReplayView", () => {
       });
     },
   );
+
+  describe("問題集にあるナンプレの記録の場合", () => {
+    const record = createNanpurePlayRecord({
+      difficulty: "3",
+      problemIdentity: createNanpureProblemIdentity("locked-candidates", 740),
+      startedAt: 1_000,
+      completedAt: 601_000,
+      result: {
+        elapsedMs: 600_000,
+        mistakeCount: 0,
+        undoCount: 0,
+        restartCount: 0,
+      },
+    });
+    const expectedClueLabels =
+      restoreNanpureProblem(
+        record.payload.problemIdentity,
+      )?.problem.clues.flatMap((digit, cellIndex) =>
+        digit === null
+          ? []
+          : [
+              `${Math.floor(cellIndex / 9) + 1}行${(cellIndex % 9) + 1}列、${digit}、初期ヒント`,
+            ],
+      ) ?? [];
+
+    beforeEach(() => {
+      writePlayRecords([record]);
+      renderReplay(record.id);
+    });
+
+    test("記録と同じ問題のヒントからプレイを始めること", () => {
+      const clueLabels = screen
+        .getAllByRole("button", { name: /初期ヒント$/ })
+        .map((cell) => cell.getAttribute("aria-label"));
+
+      expect(clueLabels).toEqual(expectedClueLabels);
+    });
+  });
+
+  describe("3段階の難易度で遊んだナンプレの記録の場合", () => {
+    const record: PlayRecord = {
+      id: "nanpure-three-level",
+      gameId: "nanpure",
+      startedAt: 1_000,
+      completedAt: 121_000,
+      payloadVersion: 1,
+      payload: {
+        difficulty: "normal",
+        problemIdentity: {
+          generatorVersion: "1",
+          seed: "nanpure-seed",
+          conditions: { clueCount: 32 },
+          generationAttempt: 1,
+        },
+        performance: {
+          elapsedMs: 120_000,
+          mistakeCount: 0,
+          undoCount: 0,
+          restartCount: 0,
+        },
+      },
+    };
+
+    beforeEach(() => {
+      writePlayRecords([record]);
+      renderReplay(record.id);
+    });
+
+    test("問題集に問題が無いため再プレイできないことを示すこと", () => {
+      const heading = screen.getByRole("heading", {
+        name: "この記録は再プレイできません",
+      });
+      const reason = screen.getByText(
+        "この記録の問題は、現在の問題集にありません。",
+      );
+
+      expect(heading).toBeTruthy();
+      expect(reason).toBeTruthy();
+    });
+  });
 });

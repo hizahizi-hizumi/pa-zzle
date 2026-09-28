@@ -18,7 +18,7 @@ export function NanpureDifficultyOption({
       params={{ difficulty }}
       className="group block rounded-xl focus-visible:outline-none"
     >
-      <StartConditionOption label={label}>
+      <StartConditionOption label={label} density="compact">
         <NanpureDifficultyPreview difficulty={difficulty} />
       </StartConditionOption>
     </Link>

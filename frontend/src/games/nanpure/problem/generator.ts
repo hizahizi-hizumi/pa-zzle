@@ -2,210 +2,105 @@ import {
   analyzeNanpureDifficulty,
   type NanpureDifficultyAnalysis,
 } from "@/games/nanpure/problem/difficulty-analysis";
+import { traceNanpureHumanSolve } from "@/games/nanpure/problem/generation/human-solver";
 import {
   classifyNanpureSolutions,
   findNanpureSolution,
 } from "@/games/nanpure/problem/generation/solver";
 import {
   NANPURE_GENERATOR_VERSION,
-  type NanpureGeneratedProblem,
-  type NanpureProblem,
+  type NanpureIdentifiedProblem,
   type NanpureProblemIdentity,
 } from "@/games/nanpure/problem/problem";
 import {
+  listNanpureTechniquesUpTo,
+  type NanpureTechnique,
+} from "@/games/nanpure/problem/technique";
+import {
   NANPURE_CELL_COUNT,
   type NanpureBoard,
+  type NanpureCell,
   type NanpureSolution,
 } from "@/games/nanpure/puzzle/board";
-import {
-  createProblemRandom,
-  shuffleProblemValues,
-} from "@/games/problem-random";
-import type { ProblemSeed } from "@/games/problem-seed";
+import { shuffleProblemValues } from "@/games/problem-random";
+import { createProblemSeededRandom } from "@/games/problem-seed";
 
-export const NANPURE_MINIMUM_UNIQUE_CLUE_COUNT = 17;
-
-export type NanpureGeneratedCandidate = NanpureProblem & {
-  attempt: number;
+export type NanpureGeneratedProblem = NanpureIdentifiedProblem & {
   difficultyAnalysis: NanpureDifficultyAnalysis;
 };
 
-export type NanpureProblemAcceptance = (
-  candidate: NanpureGeneratedCandidate,
-) => boolean;
+type CluesAcceptance = (clues: NanpureBoard) => boolean;
 
-export type NanpureGeneratorOptions = {
-  seed: ProblemSeed;
-  clueCount: number;
-  maximumAttempts?: number;
-  acceptCandidate?: NanpureProblemAcceptance;
-};
-
-export class NanpureGenerationExhaustedError extends Error {
-  constructor(maximumAttempts: number, clueCount: number) {
-    super(
-      `Failed to generate a ${clueCount}-clue Nanpure problem within ${maximumAttempts} attempts`,
-    );
-    this.name = "NanpureGenerationExhaustedError";
+/** 手筋はどれも健全なので、上限までの手筋で解き切れるヒントは一意解になる。 */
+function createCluesAcceptance(
+  removalTechniqueLimit: NanpureTechnique | null,
+): CluesAcceptance {
+  if (removalTechniqueLimit === null) {
+    return function isUnique(clues) {
+      return classifyNanpureSolutions(clues).status === "unique";
+    };
   }
+  const techniques = listNanpureTechniquesUpTo(removalTechniqueLimit);
+  return function isSolvableByTechniques(clues) {
+    return traceNanpureHumanSolve(clues, { techniques }).status === "solved";
+  };
 }
 
-function createGeneratorRandom(
-  seed: ProblemSeed,
-  clueCount: number,
-): () => number {
-  return createProblemRandom(
-    [NANPURE_GENERATOR_VERSION, seed, clueCount].join(":"),
+/** 解の全マスをヒントとして始め、乱数で決まる順にマスを1つずつ消す。消すと条件を満たさなくなるマスは残す。 */
+function removeClues(
+  solution: NanpureSolution,
+  acceptsClues: CluesAcceptance,
+  random: () => number,
+): NanpureBoard {
+  const clues: NanpureCell[] = [...solution];
+  const removalOrder = shuffleProblemValues(
+    Array.from({ length: NANPURE_CELL_COUNT }, (_, cellIndex) => cellIndex),
+    random,
   );
-}
-
-function validateClueCount(clueCount: number): void {
-  if (
-    !Number.isInteger(clueCount) ||
-    clueCount < NANPURE_MINIMUM_UNIQUE_CLUE_COUNT ||
-    clueCount > NANPURE_CELL_COUNT
-  ) {
-    throw new RangeError(
-      `clueCount must be an integer between ${NANPURE_MINIMUM_UNIQUE_CLUE_COUNT} and ${NANPURE_CELL_COUNT}`,
-    );
+  for (const cellIndex of removalOrder) {
+    const digit = clues[cellIndex] ?? null;
+    clues[cellIndex] = null;
+    if (!acceptsClues(clues)) {
+      clues[cellIndex] = digit;
+    }
   }
+  return clues;
 }
 
-function validateMaximumAttempts(maximumAttempts: number): void {
-  if (!Number.isInteger(maximumAttempts) || maximumAttempts < 1) {
-    throw new RangeError("maximumAttempts must be a positive integer");
-  }
-}
-
-function validateProblemIdentity(identity: NanpureProblemIdentity): void {
+function validateIdentity(identity: NanpureProblemIdentity): void {
   if (identity.generatorVersion !== NANPURE_GENERATOR_VERSION) {
     throw new Error(
       `Unsupported Nanpure generator version: ${identity.generatorVersion}`,
     );
   }
-
-  validateClueCount(identity.conditions.clueCount);
-  validateMaximumAttempts(identity.generationAttempt);
 }
 
-function createEmptyBoard(): NanpureBoard {
-  return Array.from({ length: NANPURE_CELL_COUNT }, () => null);
-}
-
-function createProblemCandidate(
-  clueCount: number,
-  random: () => number,
-): NanpureProblem | null {
-  const solution = findNanpureSolution(createEmptyBoard(), { random });
-  if (!solution) {
-    return null;
+/**
+ * identity の seed から完成盤を作り、ヒントを減らして問題にし、難易度を分析する。
+ * 同じ identity からは同じ問題を作る。難易度を指定して作る機能は持たず、
+ * 問題集の生成スクリプトが、できた問題を分類して各難易度へ振り分ける。
+ */
+export function generateNanpureProblem(
+  identity: NanpureProblemIdentity,
+): NanpureGeneratedProblem {
+  validateIdentity(identity);
+  const random = createProblemSeededRandom(`nanpure:${identity.seed}`);
+  const solution = findNanpureSolution(
+    Array.from({ length: NANPURE_CELL_COUNT }, () => null),
+    { random },
+  );
+  if (solution === null) {
+    throw new Error("An empty Nanpure board must have a solution");
   }
-
-  const clues = [...solution] as Array<NanpureSolution[number] | null>;
-  const removalOrder = shuffleProblemValues(
-    Array.from({ length: NANPURE_CELL_COUNT }, (_, index) => index),
+  const clues = removeClues(
+    solution,
+    createCluesAcceptance(identity.conditions.removalTechniqueLimit),
     random,
   );
-  let remainingClues = NANPURE_CELL_COUNT;
-
-  for (const cellIndex of removalOrder) {
-    if (remainingClues <= clueCount) {
-      break;
-    }
-
-    const digit = clues[cellIndex];
-    if (digit === null || digit === undefined) {
-      continue;
-    }
-
-    clues[cellIndex] = null;
-    const classification = classifyNanpureSolutions(clues);
-    if (classification.status === "unique") {
-      remainingClues -= 1;
-    } else {
-      clues[cellIndex] = digit;
-    }
-  }
-
-  if (remainingClues !== clueCount) {
-    return null;
-  }
-
-  return { clues, solution };
-}
-
-function candidateAtAttempt(
-  identity: NanpureProblemIdentity,
-): NanpureProblem | null {
-  const random = createGeneratorRandom(
-    identity.seed,
-    identity.conditions.clueCount,
-  );
-  let candidate: NanpureProblem | null = null;
-
-  for (let attempt = 1; attempt <= identity.generationAttempt; attempt += 1) {
-    candidate = createProblemCandidate(identity.conditions.clueCount, random);
-  }
-
-  return candidate;
-}
-
-export function restoreNanpureProblem(
-  identity: NanpureProblemIdentity,
-): NanpureGeneratedProblem {
-  validateProblemIdentity(identity);
-
-  const problem = candidateAtAttempt(identity);
-  if (!problem) {
-    throw new Error(
-      "Nanpure problem identity does not reference a valid problem",
-    );
-  }
-
+  const problem = { clues, solution };
   return {
-    ...problem,
+    problem,
     identity,
-    difficultyAnalysis: analyzeNanpureDifficulty(problem.clues),
+    difficultyAnalysis: analyzeNanpureDifficulty(clues),
   };
-}
-
-export function generateNanpureProblem(
-  options: NanpureGeneratorOptions,
-): NanpureGeneratedProblem {
-  validateClueCount(options.clueCount);
-
-  const maximumAttempts = options.maximumAttempts ?? 100;
-  validateMaximumAttempts(maximumAttempts);
-
-  const random = createGeneratorRandom(options.seed, options.clueCount);
-
-  for (let attempt = 1; attempt <= maximumAttempts; attempt += 1) {
-    const problem = createProblemCandidate(options.clueCount, random);
-    if (!problem) {
-      continue;
-    }
-
-    const difficultyAnalysis = analyzeNanpureDifficulty(problem.clues);
-    const candidate: NanpureGeneratedCandidate = {
-      ...problem,
-      attempt,
-      difficultyAnalysis,
-    };
-    if (options.acceptCandidate && !options.acceptCandidate(candidate)) {
-      continue;
-    }
-
-    return {
-      ...problem,
-      identity: {
-        generatorVersion: NANPURE_GENERATOR_VERSION,
-        seed: options.seed,
-        conditions: { clueCount: options.clueCount },
-        generationAttempt: attempt,
-      },
-      difficultyAnalysis,
-    };
-  }
-
-  throw new NanpureGenerationExhaustedError(maximumAttempts, options.clueCount);
 }

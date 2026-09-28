@@ -13,5 +13,5 @@ export function NanpurePlayView() {
     return <InvalidDifficulty />;
   }
 
-  return <PlayableNanpure difficulty={difficulty} />;
+  return <PlayableNanpure key={difficulty} difficulty={difficulty} />;
 }

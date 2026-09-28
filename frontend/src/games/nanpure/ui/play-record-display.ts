@@ -1,6 +1,6 @@
 import {
   getNanpureDifficultyLabel,
-  parseNanpureDifficulty,
+  parseNanpureRecordedDifficulty,
 } from "@/games/nanpure/difficulty";
 import { nanpurePlayRecordDefinition } from "@/games/nanpure/play-record";
 
@@ -10,7 +10,7 @@ export const nanpurePlayRecordDisplay = {
   definition: nanpurePlayRecordDefinition,
   gameLabel: "ナンプレ",
   getComparisonLabel(comparisonKey: string) {
-    const difficulty = parseNanpureDifficulty(comparisonKey);
+    const difficulty = parseNanpureRecordedDifficulty(comparisonKey);
     return difficulty ? getNanpureDifficultyLabel(difficulty) : null;
   },
   metrics: [

@@ -1,31 +1,31 @@
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import { cn } from "@/lib/utils";
 
-const NANPURE_SIZE = 9;
+// 9×9 盤面の中段3行・2〜8列目を切り出した図。数字の密度で挑戦の強さを抽象的に見せる。
+// 実際の問題のヒント数ではなく、レベルの順序を見せるための抽象表現とする。
+const previewSolution = ["4536872", "2645193", "1327954"] as const;
 
-const cellPositions = Array.from(
-  { length: NANPURE_SIZE * NANPURE_SIZE },
-  (_, cellIndex) => ({
-    id: `cell-${Math.floor(cellIndex / NANPURE_SIZE)}-${cellIndex % NANPURE_SIZE}`,
-    cellIndex,
-  }),
+// `#` はヒント、`+` は記入済みの数字、`.` は空き。上のレベルのヒントは下のレベルのヒントにすべて含まれる。
+const previewLayouts = {
+  "1": ["##+#.##", ".##.#.#", "#.##.#+"],
+  "2": ["##+..##", ".##.#..", "#.##.#+"],
+  "3": [".#+..##", ".##.#..", "#.#..#+"],
+  "4": [".#+...#", ".#..#..", "#.#..#+"],
+  "5": [".#+...#", "....#..", "#....#+"],
+} satisfies Record<NanpureDifficulty, readonly string[]>;
+
+const PREVIEW_COLUMNS = previewSolution[0].length;
+// 切り出した列のうち、3×3 ブロックの左端になる列。
+const BLOCK_START_COLUMNS = new Set([2, 5]);
+
+const cellPositions = previewSolution.flatMap((row, rowIndex) =>
+  Array.from(row, (digit, column) => ({
+    id: `cell-${rowIndex}-${column}`,
+    row: rowIndex,
+    column,
+    digit,
+  })),
 );
-
-const representativePuzzles = {
-  easy: "......812.143..59...5216...4..567.8.8....346.1.7.4..2.7.....95.5.1.8.64.6....4.7.",
-  normal:
-    ".1...6..9.....7...3..59.1.65312.897....1...32..473...1..5...39.9.....2..7....36.8",
-  hard: "56.....2.3.......91..23.5..6..4.83....5.......913..6.2...91.83..8.6...4.....4...5",
-} satisfies Record<NanpureDifficulty, string>;
-
-const previewEntries: Record<
-  NanpureDifficulty,
-  Readonly<Record<number, string>>
-> = {
-  easy: { 3: "4", 25: "3", 40: "2" },
-  normal: { 3: "3", 25: "8", 40: "4" },
-  hard: { 3: "7", 25: "6", 40: "2" },
-};
 
 type NanpureDifficultyPreviewProps = {
   difficulty: NanpureDifficulty;
@@ -34,34 +34,31 @@ type NanpureDifficultyPreviewProps = {
 export function NanpureDifficultyPreview({
   difficulty,
 }: NanpureDifficultyPreviewProps) {
-  const cells = [...representativePuzzles[difficulty]];
-  const entries = previewEntries[difficulty];
+  const layout = previewLayouts[difficulty];
 
   return (
     <span
       aria-hidden="true"
-      className="block size-[100px] overflow-hidden sm:size-[120px]"
+      className="flex h-14 w-32 shrink-0 items-center lg:justify-center"
     >
-      <span className="grid aspect-square w-[180px] -translate-x-[60px] grid-cols-9 bg-background sm:w-[216px] sm:-translate-x-[72px]">
-        {cellPositions.map(({ id, cellIndex }) => {
-          const cell = cells[cellIndex]!;
-          const entry = entries[cellIndex];
-          const row = Math.floor(cellIndex / NANPURE_SIZE);
-          const column = cellIndex % NANPURE_SIZE;
+      <span className="grid grid-cols-[repeat(7,18px)] auto-rows-[18px] border-t-2 border-r border-b-2 border-t-foreground/55 border-r-border/85 border-b-foreground/55 bg-background">
+        {cellPositions.map(({ id, row, column, digit }) => {
+          const mark = layout[row]![column]!;
 
           return (
             <span
               key={id}
               className={cn(
-                "flex aspect-square items-center justify-center border-t border-l border-border/85 font-sans text-xs tabular-nums sm:text-sm",
-                row % 3 === 0 && "border-t-2 border-t-foreground/55",
-                column % 3 === 0 && "border-l-2 border-l-foreground/55",
-                cell !== "." && "font-semibold text-foreground/90",
-                entry !== undefined &&
+                "flex items-center justify-center border-t border-l border-border/85 font-sans text-[11px] tabular-nums",
+                row === 0 && "border-t-0",
+                BLOCK_START_COLUMNS.has(column) &&
+                  "border-l-2 border-l-foreground/55",
+                mark === "#" && "font-semibold text-foreground/90",
+                mark === "+" &&
                   "font-medium text-violet-500 dark:text-violet-300",
               )}
             >
-              {cell === "." ? entry : cell}
+              {mark === "." ? "" : digit}
             </span>
           );
         })}
@@ -69,3 +66,5 @@ export function NanpureDifficultyPreview({
     </span>
   );
 }
+
+export const _private = { previewLayouts, PREVIEW_COLUMNS };
