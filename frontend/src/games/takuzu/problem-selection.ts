@@ -1,4 +1,5 @@
-import { hashProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import type { ProblemSeed } from "@/games/problem-seed";
+import { selectProblemPoolEntry } from "@/games/problem-selection";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import {
   isTakuzuProblemIdentity,
@@ -20,11 +21,11 @@ export function selectTakuzuProblemForDifficulty(
   difficulty: TakuzuDifficulty,
   seed: ProblemSeed,
 ): TakuzuPooledProblem {
-  const entries = listTakuzuPoolEntries(difficulty);
-  const entry = entries[hashProblemSeed(seed) % entries.length];
-  if (!entry) {
-    throw new Error(`No level ${difficulty} Takuzu problem is available`);
-  }
+  const entry = selectProblemPoolEntry(
+    listTakuzuPoolEntries(difficulty),
+    seed,
+    `level ${difficulty} Takuzu`,
+  );
   return toTakuzuPooledProblem(entry);
 }
 

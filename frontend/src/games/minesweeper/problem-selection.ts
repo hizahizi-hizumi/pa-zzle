@@ -7,7 +7,8 @@ import {
   listMinesweeperPoolEntries,
   toMinesweeperPoolIdentity,
 } from "@/games/minesweeper/problem/problem-pool";
-import { hashProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import type { ProblemSeed } from "@/games/problem-seed";
+import { selectProblemPoolEntry } from "@/games/problem-selection";
 
 /**
  * 難易度の問題集から seed で1問を選んで復元する。
@@ -17,11 +18,11 @@ export function selectMinesweeperProblemForDifficulty(
   difficulty: MinesweeperDifficulty,
   seed: ProblemSeed,
 ): MinesweeperRestoredProblem {
-  const entries = listMinesweeperPoolEntries(difficulty);
-  const entry = entries[hashProblemSeed(seed) % entries.length];
-  if (!entry) {
-    throw new Error(`No level ${difficulty} minesweeper problem is available`);
-  }
+  const entry = selectProblemPoolEntry(
+    listMinesweeperPoolEntries(difficulty),
+    seed,
+    `level ${difficulty} minesweeper`,
+  );
 
   return restoreMinesweeperProblemWithoutAnalysis(
     toMinesweeperPoolIdentity(difficulty, entry),
