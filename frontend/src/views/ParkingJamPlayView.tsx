@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router";
 
+import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
 import {
   hasParkingJamProblemQuery,
   parseParkingJamProblemQuery,
@@ -8,8 +9,6 @@ import {
 import { parseParkingJamDifficulty } from "@/games/parking-jam/difficulty";
 import { internalDiagnosticsAvailable } from "@/lib/internal-diagnostics";
 import { useParams } from "@/router";
-import { InvalidDifficulty } from "@/views/ParkingJamPlayView/InvalidDifficulty";
-import { InvalidProblemQuery } from "@/views/ParkingJamPlayView/InvalidProblemQuery";
 import { PlayableParkingJam } from "@/views/ParkingJamPlayView/PlayableParkingJam";
 
 export function ParkingJamPlayView() {
@@ -25,9 +24,22 @@ export function ParkingJamPlayView() {
   );
   const difficulty = parseParkingJamDifficulty(difficultyParam);
 
-  if (!difficulty) return <InvalidDifficulty />;
+  if (!difficulty) {
+    return (
+      <PlayUnavailableNotice
+        title="この難易度は選べません"
+        backTo="/puzzles/parking-jam"
+      />
+    );
+  }
   if (specifiedProblem && !specifiedProblem.identity) {
-    return <InvalidProblemQuery />;
+    return (
+      <PlayUnavailableNotice
+        title="指定された問題を復元できません"
+        description="URL の問題指定（seed・生成条件・生成試行）を確かめてください。"
+        backTo="/puzzles/parking-jam"
+      />
+    );
   }
 
   return (
