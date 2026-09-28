@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router";
-
+import { PlayableReflection } from "@/game-catalog/reflection/PlayableReflection";
 import {
   hasReflectionProblemQuery,
   parseReflectionProblemQuery,
@@ -10,7 +10,6 @@ import { internalDiagnosticsAvailable } from "@/lib/internal-diagnostics";
 import { useParams } from "@/router";
 import { InvalidDifficulty } from "@/views/ReflectionPlayView/InvalidDifficulty";
 import { InvalidProblemQuery } from "@/views/ReflectionPlayView/InvalidProblemQuery";
-import { PlayableReflection } from "@/views/ReflectionPlayView/PlayableReflection";
 
 export function ReflectionPlayView() {
   const { difficulty: difficultyParam } = useParams(

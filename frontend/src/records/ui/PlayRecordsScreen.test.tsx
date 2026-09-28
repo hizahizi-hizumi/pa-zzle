@@ -4,6 +4,9 @@ import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record
 import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
 import { createNanpureProblemIdentity } from "@/games/nanpure/problem/problem";
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
+import { createReflectionPlayRecord } from "@/games/reflection/play-record";
+import { createReflectionProblemIdentity } from "@/games/reflection/problem/problem";
+import { reflectionPlayRecordDisplay } from "@/games/reflection/ui/play-record-display";
 import { createTakuzuPlayRecord } from "@/games/takuzu/play-record";
 import { createTakuzuProblemIdentity } from "@/games/takuzu/problem/problem";
 import { takuzuPlayRecordDisplay } from "@/games/takuzu/ui/play-record-display";
@@ -18,6 +21,7 @@ const playRecordGames = [
   { name: "ナンプレ", playRecordDisplay: nanpurePlayRecordDisplay },
   { name: "マインスイーパー", playRecordDisplay: minesweeperPlayRecordDisplay },
   { name: "バイナリパズル", playRecordDisplay: takuzuPlayRecordDisplay },
+  { name: "リフレクション", playRecordDisplay: reflectionPlayRecordDisplay },
 ] as const satisfies PlayRecordGameCatalog;
 
 const records = [
@@ -126,6 +130,27 @@ const records = [
       inputCount: 70,
     },
   }),
+  // 基準時間 28×0.5 + 8×6 + 3×8 = 86秒を 110秒で、置き直し1回で解いた記録。
+  createReflectionPlayRecord({
+    difficulty: "4",
+    problemIdentity: createReflectionProblemIdentity(7, 8, 0),
+    workload: {
+      pieceCount: 8,
+      clueCount: 28,
+      propagationRoundCount: 3,
+      assumptionTestCount: 0,
+    },
+    startedAt: 10_000,
+    completedAt: 120_000,
+    result: {
+      elapsedMs: 110_000,
+      relocationCount: 1,
+      restartCount: 0,
+      undoCount: 0,
+      laserCheckCount: 2,
+      inputCount: 12,
+    },
+  }),
 ];
 
 describe("PlayRecordsScreen", () => {
@@ -224,6 +249,22 @@ describe("PlayRecordsScreen", () => {
     expect(comparisonSelect.textContent).toContain("レベル 4");
     expect(screen.getAllByText("85点").length).toBeGreaterThan(0);
     expect(screen.getAllByText("+00:44").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("置き直し").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("1回").length).toBeGreaterThan(0);
+    expect(screen.getByText("1件")).toBeTruthy();
+  });
+
+  test("リフレクションでは難易度ごとにスコア・基準時間との差・置き直しを比較すること", () => {
+    const gameSelect = screen.getByRole("combobox", { name: "パズル" });
+    fireEvent.change(gameSelect, { target: { value: "reflection" } });
+    const comparisonSelect = screen.getByRole("combobox", {
+      name: "開始条件",
+    });
+
+    expect(gameSelect.textContent).toContain("リフレクション");
+    expect(comparisonSelect.textContent).toContain("レベル 4");
+    expect(screen.getAllByText("84点").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("+00:24").length).toBeGreaterThan(0);
     expect(screen.getAllByText("置き直し").length).toBeGreaterThan(0);
     expect(screen.getAllByText("1回").length).toBeGreaterThan(0);
     expect(screen.getByText("1件")).toBeTruthy();
