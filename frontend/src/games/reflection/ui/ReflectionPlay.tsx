@@ -1,4 +1,4 @@
-import { type KeyboardEvent as ReactKeyboardEvent, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import type { ReflectionLaserPathMode } from "@/games/reflection/laser-path-mode";
@@ -96,6 +96,7 @@ export function ReflectionPlay({
     readReflectionHowToPlaySeen() ? "closed" : "intro",
   );
   const playing = progress === "playing";
+  const playAreaRef = useRef<HTMLElement>(null);
 
   function closeHowToPlay() {
     // 初めての遊び方を読んでいた時間はプレイ時間に含めないよう、閉じたところから測り直す。
@@ -105,39 +106,52 @@ export function ReflectionPlay({
     setHowToPlay("closed");
   }
 
-  function handleKeyDown(event: ReactKeyboardEvent<HTMLElement>): void {
-    // メニューやダイアログは別の場所へ描かれるが、React のイベントはここまで届くため、画面の中の操作に限る。
-    if (
-      !playing ||
-      event.altKey ||
-      event.ctrlKey ||
-      event.metaKey ||
-      !(event.target instanceof Node) ||
-      !event.currentTarget.contains(event.target)
-    ) {
-      return;
+  // 数字キーと Esc は盤面のどこにフォーカスがあっても効かせる。クリックでボタンへフォーカスが移らないブラウザや、
+  // 開いた直後のようにフォーカスが body にある場合も受けるため、window で受ける。
+  useEffect(() => {
+    if (!playing) return;
+
+    function handleKeyDown(event: KeyboardEvent): void {
+      // メニューやダイアログはプレイ画面の外へ描かれる。そこでの操作は盤面へ流さない。
+      const { target } = event;
+      const targetsPlayArea =
+        target === document.body ||
+        (target instanceof Node && playAreaRef.current?.contains(target));
+      if (
+        !targetsPlayArea ||
+        event.defaultPrevented ||
+        event.repeat ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey
+      ) {
+        return;
+      }
+
+      if (event.key === "Escape") {
+        onClearSelection();
+        return;
+      }
+
+      const stockIndex = getStockKeyIndex(event.key);
+      const piece =
+        stockIndex === null
+          ? undefined
+          : listReflectionStockPieces(inventory)[stockIndex];
+      if (piece) {
+        event.preventDefault();
+        onTapStock(piece);
+      }
     }
 
-    if (event.key === "Escape") {
-      onClearSelection();
-      return;
-    }
-
-    const stockIndex = getStockKeyIndex(event.key);
-    const piece =
-      stockIndex === null
-        ? undefined
-        : listReflectionStockPieces(inventory)[stockIndex];
-    if (piece) {
-      event.preventDefault();
-      onTapStock(piece);
-    }
-  }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [playing, inventory, onClearSelection, onTapStock]);
 
   return (
     <section
+      ref={playAreaRef}
       className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]"
-      onKeyDown={handleKeyDown}
     >
       <BrandIdentityHeader />
       <ReflectionPlayHeader

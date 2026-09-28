@@ -1,9 +1,17 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { formatReflectionProblemQuery } from "@/games/reflection/diagnostics";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
+import { generateReflectionProblem } from "@/games/reflection/problem/generator";
 import { createReflectionProblemIdentity } from "@/games/reflection/problem/problem";
 import { writeReflectionHowToPlaySeen } from "@/games/reflection/ui/how-to-play-seen";
+import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
 import { ReflectionPlayView } from "@/views/ReflectionPlayView";
 
 const internalDiagnostics = vi.hoisted(() => ({ available: false }));
@@ -44,7 +52,28 @@ function getBoardCells(): HTMLElement[] {
   ).getAllByRole("button");
 }
 
-const specifiedProblemPath = `/puzzles/reflection/play/1?${formatReflectionProblemQuery(createReflectionProblemIdentity(7, 10, 0))}`;
+const specifiedProblemIdentity = createReflectionProblemIdentity(7, 10, 0);
+const specifiedProblemPath = `/puzzles/reflection/play/1?${formatReflectionProblemQuery(specifiedProblemIdentity)}`;
+
+/** 指定した問題の解どおりに、ストックの種類を選んでからマスを押して置く。 */
+function solveSpecifiedProblem(): void {
+  const { solution } = generateReflectionProblem(
+    specifiedProblemIdentity,
+  ).problem;
+  const stock = screen.getByRole("group", { name: "ストック" });
+  const cells = getBoardCells();
+  solution.cells.forEach((piece, cellIndex) => {
+    if (piece === null) return;
+    const stockButton = within(stock).getByRole("button", {
+      name: new RegExp(`^${reflectionPieceLabels[piece]} `),
+    });
+    // 置いた後も同じ種類が残っていれば選択が続くので、選ばれていない時だけ押す。
+    if (stockButton.getAttribute("aria-pressed") !== "true") {
+      fireEvent.click(stockButton);
+    }
+    fireEvent.click(cells[cellIndex] as HTMLElement);
+  });
+}
 
 describe("ReflectionPlayView", () => {
   describe("定義済みの難易度の場合", () => {
@@ -100,6 +129,14 @@ describe("ReflectionPlayView", () => {
       const cells = getBoardCells();
 
       expect(cells).toHaveLength(49);
+    });
+
+    test("解き終えた表示で難易度を伏せること", () => {
+      solveSpecifiedProblem();
+      const status = screen.getByRole("status");
+
+      expect(within(status).getByText("問題指定")).toBeTruthy();
+      expect(within(status).queryByText("レベル 1")).toBeNull();
     });
   });
 

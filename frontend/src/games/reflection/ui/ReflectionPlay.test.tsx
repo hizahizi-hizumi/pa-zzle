@@ -139,12 +139,28 @@ describe("ReflectionPlay", () => {
       expect(callbacks.onTapClue).toHaveBeenCalledWith(leftMiddle);
     });
 
-    test("数字キーでストックの種類を並び順に選ぶこと", () => {
-      const firstCell = within(getBoardGroup()).getAllByRole("button")[0];
+    test.each([
+      ["盤面のマス", () => within(getBoardGroup()).getAllByRole("button")[0]],
+      ["body", () => document.body],
+    ])(
+      "数字キーでストックの種類を並び順に選ぶこと: フォーカスが%s",
+      (_, getTarget) => {
+        fireEvent.keyDown(getTarget() as HTMLElement, { key: "2" });
 
-      fireEvent.keyDown(firstCell as HTMLElement, { key: "2" });
+        expect(callbacks.onTapStock).toHaveBeenCalledWith("black-hole");
+      },
+    );
 
-      expect(callbacks.onTapStock).toHaveBeenCalledWith("black-hole");
+    test("メニューを開いている間は数字キーで選ばないこと", () => {
+      fireEvent.pointerDown(
+        screen.getByRole("button", { name: "その他の操作" }),
+        { button: 0, ctrlKey: false },
+      );
+      const menu = screen.getByRole("menu");
+
+      fireEvent.keyDown(menu, { key: "1" });
+
+      expect(callbacks.onTapStock).not.toHaveBeenCalled();
     });
 
     test("Escape で選択の解除を求めること", () => {

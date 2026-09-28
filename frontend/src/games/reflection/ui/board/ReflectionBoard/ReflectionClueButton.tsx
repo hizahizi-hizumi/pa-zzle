@@ -60,14 +60,19 @@ export function ReflectionClueButton({
       className={cn(
         "relative flex min-h-0 min-w-0 touch-manipulation select-none flex-col items-center justify-center gap-[calc(var(--reflection-unit)*0.04)] rounded-sm leading-none text-foreground outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent",
         selected && reflectionToneClassNames.laserSurface,
-        (selected || lit) && reflectionToneClassNames.laserText,
+        (selected || lit) && reflectionToneClassNames.laserLabel,
       )}
     >
       <span className="font-semibold tabular-nums text-[length:clamp(0.8125rem,calc(var(--reflection-unit)*0.4),1.375rem)]">
         {clue.distance}
       </span>
       <span
-        className={cn("flex", !(selected || lit) && "text-muted-foreground")}
+        className={cn(
+          "flex",
+          selected || lit
+            ? reflectionToneClassNames.laserText
+            : "text-muted-foreground",
+        )}
       >
         <ReflectionOutcomeMark outcome={clue.outcome} size="clue" />
       </span>
