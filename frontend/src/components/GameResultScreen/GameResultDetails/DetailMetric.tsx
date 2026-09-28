@@ -1,7 +1,9 @@
-type DetailMetricProps = {
+export type GameResultDetailMetric = {
   label: string;
   value: string;
 };
+
+type DetailMetricProps = GameResultDetailMetric;
 
 export function DetailMetric({ label, value }: DetailMetricProps) {
   return (
