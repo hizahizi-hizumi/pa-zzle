@@ -109,7 +109,7 @@ export function ReflectionResultScreen({
 
         {recordOutcomeNotice}
 
-        <dl className="mt-3 grid grid-cols-3 gap-2">
+        <dl className="mt-3 grid grid-cols-2 gap-2">
           <ResultMetric
             label="時間"
             value={formatElapsedTime(performance.elapsedMs)}
@@ -123,7 +123,6 @@ export function ReflectionResultScreen({
             label="置き直し"
             value={String(performance.relocationCount)}
           />
-          <ResultMetric label="待った" value={String(performance.undoCount)} />
         </dl>
 
         <div className="mt-4 grid gap-3">

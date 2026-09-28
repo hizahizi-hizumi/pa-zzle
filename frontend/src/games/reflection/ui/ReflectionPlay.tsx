@@ -31,7 +31,6 @@ import {
   listReflectionStockPieces,
   ReflectionStock,
 } from "@/games/reflection/ui/ReflectionPlay/ReflectionStock";
-import { UndoButton } from "@/games/reflection/ui/ReflectionPlay/UndoButton";
 import { ReflectionResultScreen } from "@/games/reflection/ui/result/ReflectionResultScreen";
 
 type ReflectionPlayProps = {
@@ -46,9 +45,7 @@ type ReflectionPlayProps = {
   selection: ReflectionSelection | null;
   laser: ReflectionLaserView | null;
   relocationCount: number;
-  undoCount: number;
   elapsedMs: number;
-  canUndo: boolean;
   canRestart: boolean;
   /** クリアしたプレイの事実。クリアするまでは `null`。 */
   sessionResult: ReflectionSessionResult | null;
@@ -60,7 +57,6 @@ type ReflectionPlayProps = {
   onTapClue: (entry: ReflectionEntry) => void;
   onRemovePiece: (cellIndex: number) => void;
   onClearSelection: () => void;
-  onUndo: () => void;
   onRestart: () => void;
   onReplay: () => void;
   onClearAnimationComplete: () => void;
@@ -88,9 +84,7 @@ export function ReflectionPlay({
   selection,
   laser,
   relocationCount,
-  undoCount,
   elapsedMs,
-  canUndo,
   canRestart,
   sessionResult,
   result,
@@ -100,7 +94,6 @@ export function ReflectionPlay({
   onTapClue,
   onRemovePiece,
   onClearSelection,
-  onUndo,
   onRestart,
   onReplay,
   onClearAnimationComplete,
@@ -207,7 +200,6 @@ export function ReflectionPlay({
       <ReflectionPlayHeader
         relocationCount={relocationCount}
         elapsedMs={elapsedMs}
-        undoCount={undoCount}
         canRestart={canRestart}
         onRestart={onRestart}
         onReplay={onReplay}
@@ -247,9 +239,6 @@ export function ReflectionPlay({
           disabled={!playing}
           onTapStock={onTapStock}
         />
-        <div className="flex h-12 items-center justify-center">
-          <UndoButton disabled={!playing || !canUndo} onUndo={onUndo} />
-        </div>
       </footer>
     </section>
   );

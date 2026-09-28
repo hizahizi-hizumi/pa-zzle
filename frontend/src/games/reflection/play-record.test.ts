@@ -22,7 +22,6 @@ const performance = {
   elapsedMs: 400_000,
   relocationCount: 2,
   restartCount: 0,
-  undoCount: 1,
   laserCheckCount: 12,
   inputCount: 30,
 };
@@ -102,15 +101,8 @@ describe("isReflectionPlayRecord", () => {
       }),
     ],
     [
-      "待ったで取り消した分だけ入力回数より置き直しが多い記録",
-      withPayload({
-        performance: {
-          ...performance,
-          relocationCount: 31,
-          undoCount: 1,
-          inputCount: 30,
-        },
-      }),
+      "評価に使わない undoCount を持つ以前の記録",
+      withPayload({ performance: { ...performance, undoCount: 1 } }),
     ],
   ] as const;
 
@@ -165,12 +157,8 @@ describe("isReflectionPlayRecord", () => {
       withPayload({ performance: { ...performance, relocationCount: 1.5 } }),
     ],
     [
-      "入力回数と待った回数の合計より多い置き直し回数",
-      withPayload({ performance: { ...performance, relocationCount: 32 } }),
-    ],
-    [
-      "入力回数より多い待った回数",
-      withPayload({ performance: { ...performance, undoCount: 31 } }),
+      "入力回数より多い置き直し回数",
+      withPayload({ performance: { ...performance, relocationCount: 31 } }),
     ],
     [
       "光路を確かめた回数が無い記録",

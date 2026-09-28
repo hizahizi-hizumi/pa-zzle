@@ -51,7 +51,7 @@ export function ScoreCriteria({ result }: ScoreCriteriaProps) {
       <div>
         <dt className="font-semibold text-foreground">正確性</dt>
         <dd className="mt-1">
-          {`置き直し1回につき${REFLECTION_RELOCATION_PENALTY}点、盤面戻し1回につき${REFLECTION_RESTART_PENALTY}点を減点（満点${REFLECTION_SCORE_MAXIMUMS.accuracy}点）。置き直しは、置いたピースを別のマスへ移す・入れ替える・ストックへ戻す・別の種類で置き換えた回数と、待ったの回数です。盤面戻しは、メニューの「盤面を戻す」を使った回数です。光路を確かめた回数は点に入りません。`}
+          {`置き直し1回につき${REFLECTION_RELOCATION_PENALTY}点、盤面戻し1回につき${REFLECTION_RESTART_PENALTY}点を減点（満点${REFLECTION_SCORE_MAXIMUMS.accuracy}点）。置き直しは、置いたピースを別のマスへ移す・入れ替える・ストックへ戻す・別の種類で置き換えた回数です。盤面戻しは、メニューの「盤面を戻す」を使った回数です。光路を確かめた回数は点に入りません。`}
         </dd>
       </div>
       <div>

@@ -146,7 +146,6 @@ const records = [
       elapsedMs: 110_000,
       relocationCount: 1,
       restartCount: 0,
-      undoCount: 0,
       laserCheckCount: 2,
       inputCount: 12,
     },

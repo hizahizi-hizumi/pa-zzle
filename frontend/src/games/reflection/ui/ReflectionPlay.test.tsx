@@ -64,7 +64,6 @@ const performance = {
   elapsedMs: 260_000,
   relocationCount: 2,
   restartCount: 1,
-  undoCount: 1,
   laserCheckCount: 4,
   inputCount: 20,
 };
@@ -74,7 +73,6 @@ const perfectResult = createResult({
   elapsedMs: 221_000,
   relocationCount: 0,
   restartCount: 0,
-  undoCount: 0,
 });
 
 describe("ReflectionPlay", () => {
@@ -91,7 +89,6 @@ describe("ReflectionPlay", () => {
     onTapClue: vi.fn(),
     onRemovePiece: vi.fn(),
     onClearSelection: vi.fn(),
-    onUndo: vi.fn(),
     onRestart: vi.fn(),
     onReplay: vi.fn(),
     onClearAnimationComplete: vi.fn(),
@@ -112,9 +109,7 @@ describe("ReflectionPlay", () => {
     selection: null,
     laser: null,
     relocationCount: 3,
-    undoCount: 1,
     elapsedMs: 65_000,
-    canUndo: true,
     canRestart: false,
     sessionResult: null,
     result: null,
@@ -177,14 +172,14 @@ describe("ReflectionPlay", () => {
       renderPlay({});
     });
 
-    test("置き直し・時間・待ったをヘッダーに出すこと", () => {
+    test("置き直しと時間をヘッダーに出すこと", () => {
       const header = screen
         .getByRole("heading", { name: REFLECTION_DISPLAY_NAME })
         .closest("header") as HTMLElement;
 
       expect(within(header).getByText("置き直し")).toBeTruthy();
       expect(within(header).getByText("01:05")).toBeTruthy();
-      expect(within(header).getByText("待った")).toBeTruthy();
+      expect(within(header).queryByText("待った")).toBeNull();
     });
 
     test("外周ヒントを押すとその位置を知らせること", () => {
@@ -400,7 +395,6 @@ describe("ReflectionPlay", () => {
       renderPlay({
         board: solution,
         progress: "clearing",
-        canUndo: false,
         sessionResult: performance,
         result,
       });
@@ -422,7 +416,6 @@ describe("ReflectionPlay", () => {
       renderPlay({
         board: solution,
         progress: "result",
-        canUndo: false,
         sessionResult: performance,
         result,
         ...props,
@@ -450,7 +443,7 @@ describe("ReflectionPlay", () => {
         expect(score.getByText("71")).toBeTruthy();
       });
 
-      test("時間と基準時間との差・置き直し・待ったを主な成績として表示すること", () => {
+      test("時間と基準時間との差・置き直しを主な成績として表示すること", () => {
         const terms = screen
           .getAllByRole("term")
           .map((term) => term.textContent);
@@ -458,8 +451,8 @@ describe("ReflectionPlay", () => {
           .getAllByRole("definition")
           .map((definition) => definition.textContent);
 
-        expect(terms).toEqual(["時間", "置き直し", "待った"]);
-        expect(definitions).toEqual(["04:20", "基準 +00:24", "2", "1"]);
+        expect(terms).toEqual(["時間", "置き直し"]);
+        expect(definitions).toEqual(["04:20", "基準 +00:24", "2"]);
       });
 
       test("結果画面へフォーカスを移すこと", () => {
@@ -556,7 +549,7 @@ describe("ReflectionPlay", () => {
           const criteria = screen.getByText(/置き直し1回につき/);
 
           expect(criteria.textContent).toBe(
-            "置き直し1回につき5点、盤面戻し1回につき15点を減点（満点60点）。置き直しは、置いたピースを別のマスへ移す・入れ替える・ストックへ戻す・別の種類で置き換えた回数と、待ったの回数です。盤面戻しは、メニューの「盤面を戻す」を使った回数です。光路を確かめた回数は点に入りません。",
+            "置き直し1回につき5点、盤面戻し1回につき15点を減点（満点60点）。置き直しは、置いたピースを別のマスへ移す・入れ替える・ストックへ戻す・別の種類で置き換えた回数です。盤面戻しは、メニューの「盤面を戻す」を使った回数です。光路を確かめた回数は点に入りません。",
           );
         });
       });
@@ -611,7 +604,7 @@ describe("ReflectionPlay", () => {
 
         expect(reason).toBeTruthy();
         expect(score).toBeNull();
-        expect(definitions).toEqual(["04:20", "2", "1"]);
+        expect(definitions).toEqual(["04:20", "2"]);
       });
 
       test("スコアの内訳を出さないこと", () => {

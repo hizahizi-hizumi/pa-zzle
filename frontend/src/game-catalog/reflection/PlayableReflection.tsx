@@ -106,9 +106,7 @@ export function PlayableReflection({
         selection={play.selection}
         laser={play.laser}
         relocationCount={play.relocationCount}
-        undoCount={play.undoCount}
         elapsedMs={play.elapsedMs}
-        canUndo={play.canUndo}
         canRestart={play.canRestart}
         sessionResult={play.sessionResult}
         result={play.result}
@@ -123,7 +121,6 @@ export function PlayableReflection({
         onTapClue={play.tapClue}
         onRemovePiece={play.removePiece}
         onClearSelection={play.clearSelection}
-        onUndo={play.undo}
         onRestart={play.restart}
         onReplay={play.replay}
         onClearAnimationComplete={play.completeClearAnimation}

@@ -12,7 +12,6 @@ export const REFLECTION_SCORE_MAXIMUMS = {
 
 /**
  * 置き直し1回ごとの正確性の減点（仮置き）。
- * 置き直しには待ったで取り消した操作も含むので、待ったは別に減点しない。
  * 置き直し2回までは great に残り、5回以上は速さによらず good に届かない重さにする。
  */
 export const REFLECTION_RELOCATION_PENALTY = 5;
@@ -107,7 +106,7 @@ export function calculateReflectionTimeDeltaMs({
 
 /**
  * - 正確性: 置き直しの回数と盤面を戻した回数に応じて減点する。解答との照合は使わない。
- *   待った・光路を確かめた回数・入力回数は評価に使わない（待ったで取り消した操作は置き直しに数えてある）。
+ *   光路を確かめた回数・入力回数は評価に使わない。
  * - 速さ: 基準時間以内で満点、超過に応じて線形に減らし、0点になる時間（基準時間の2倍）で0点とする。
  */
 export function calculateReflectionPlayScore({

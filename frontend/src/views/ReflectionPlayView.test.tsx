@@ -165,7 +165,7 @@ describe("ReflectionPlayView", () => {
           difficulty: "1",
           problemIdentity: selected.identity,
           workload: selected.workload,
-          performance: { relocationCount: 0, restartCount: 0, undoCount: 0 },
+          performance: { relocationCount: 0, restartCount: 0 },
         },
       });
     });

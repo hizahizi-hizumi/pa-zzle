@@ -27,7 +27,7 @@ const REFLECTION_PLAY_RECORD_PAYLOAD_VERSION = 1;
  *   生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
  * - `workload`: 遊んだ問題を解き切る作業の量。問題集から問題を引けない記録でも基準時間を求め直せるよう、問題の事実として残す。
  * - `performance`: そのプレイで起きた事実。評価点・評価段階・基準時間との差は保存せず、現在の評価規則で導出する。
- *   待った・光路を確かめた回数・入力回数は評価に使わないが、評価規則を見直すときの材料として残す。
+ *   光路を確かめた回数・入力回数は評価に使わないが、評価規則を見直すときの材料として残す。
  */
 type ReflectionPlayRecordPayload = {
   difficulty: ReflectionDifficulty;
@@ -60,8 +60,8 @@ function isNonNegativeInteger(value: unknown): value is number {
 }
 
 /**
- * 待ったは取り消す盤面操作を1回の入力として伴うので、入力回数を超えない。
- * 置き直しは盤面を変える入力か待ったのどちらかで起きるので、その合計を超えない。
+ * 置き直しは盤面を変える入力で起きるので、入力回数を超えない。
+ * 以前の記録にある `undoCount` のような評価に使わない項目は、読み込みで無視する。
  */
 function isReflectionPerformance(
   value: unknown,
@@ -73,11 +73,9 @@ function isReflectionPerformance(
     value.elapsedMs >= 0 &&
     isNonNegativeInteger(value.relocationCount) &&
     isNonNegativeInteger(value.restartCount) &&
-    isNonNegativeInteger(value.undoCount) &&
     isNonNegativeInteger(value.laserCheckCount) &&
     isNonNegativeInteger(value.inputCount) &&
-    value.undoCount <= value.inputCount &&
-    value.relocationCount <= value.inputCount + value.undoCount
+    value.relocationCount <= value.inputCount
   );
 }
 
@@ -148,7 +146,6 @@ export function createReflectionPlayRecord({
         elapsedMs: result.elapsedMs,
         relocationCount: result.relocationCount,
         restartCount: result.restartCount,
-        undoCount: result.undoCount,
         laserCheckCount: result.laserCheckCount,
         inputCount: result.inputCount,
       },
