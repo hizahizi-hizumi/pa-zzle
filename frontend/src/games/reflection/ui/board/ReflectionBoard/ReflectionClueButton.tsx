@@ -44,8 +44,20 @@ const outsideLaserCountClassNames = {
   bottom: "top-full pt-[0.1em]",
 } as const satisfies Partial<Record<ReflectionSide, string>>;
 
+/** 結果の形の行の高さ。`ReflectionOutcomeMark` の `clue` と同じ。 */
 const MARK_ROW_HEIGHT =
-  "h-[clamp(0.625rem,calc(var(--reflection-unit)*0.28),1rem)]";
+  "h-[min(max(calc(var(--reflection-unit)*0.26),0.4375rem),calc(var(--reflection-unit)*0.3),1rem)]";
+
+/**
+ * 一致の地の位置。隣の外周ヒントと並ぶ向きには外周ヒントの幅の1割ずつ内側へ寄せ、隣の緑と帯としてつながらないようにする。
+ * 隣の無い向き（上下の辺では縦、左右の辺では横）は帯より少し外まで広げ、数字と結果の形が地の内側に余白を持って収まるようにする。
+ */
+const clueMatchSurfaceInsetClassNames = {
+  top: "inset-x-[10%] -inset-y-[5%]",
+  bottom: "inset-x-[10%] -inset-y-[5%]",
+  left: "inset-y-[10%] -inset-x-[5%]",
+  right: "inset-y-[10%] -inset-x-[5%]",
+} as const satisfies Record<ReflectionSide, string>;
 
 export function ReflectionClueButton({
   size,
@@ -90,13 +102,14 @@ export function ReflectionClueButton({
       onClick={() => onTap(entry)}
       onFocus={() => onFocus(focusKey)}
       style={{ gridRow: row, gridColumn: column }}
-      className="group relative flex min-h-0 min-w-0 touch-manipulation select-none flex-col items-center justify-center gap-[calc(var(--reflection-unit)*0.04)] leading-none text-foreground outline-none focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent"
+      className="group relative flex min-h-0 min-w-0 touch-manipulation select-none flex-col items-center justify-center gap-[calc(var(--reflection-unit)*0.05)] leading-none text-foreground outline-none focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent"
     >
       {matched ? (
         <span
           aria-hidden="true"
           className={cn(
-            "pointer-events-none absolute inset-[10%]",
+            "pointer-events-none absolute",
+            clueMatchSurfaceInsetClassNames[entry.side],
             reflectionToneClassNames.clueMatchSurface,
             reflectionToneClassNames.clueMatchSurfaceInteractive,
           )}
@@ -104,7 +117,9 @@ export function ReflectionClueButton({
       ) : null}
       <span
         className={cn(
-          "relative font-semibold tabular-nums text-[length:clamp(0.8125rem,calc(var(--reflection-unit)*0.4),1.375rem)]",
+          // 行の高さを数字の字面に近い 0.8 にして、上下の余白で地からはみ出して見えないようにする。
+          // 読める大きさの下限（0.625rem）は、盤面が小さいときも一致の地に収まる比率（マスの0.45）を超えない。
+          "relative font-semibold tabular-nums leading-[0.8] text-[length:min(max(calc(var(--reflection-unit)*0.4),0.625rem),calc(var(--reflection-unit)*0.45),1.375rem)]",
           matched && reflectionToneClassNames.clueMatchLabel,
         )}
       >

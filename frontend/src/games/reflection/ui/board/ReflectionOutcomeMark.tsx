@@ -13,7 +13,7 @@ type ReflectionOutcomeMarkProps = {
 };
 
 const sizeClassNames = {
-  clue: "size-[clamp(0.625rem,calc(var(--reflection-unit)*0.28),1rem)]",
+  clue: "size-[min(max(calc(var(--reflection-unit)*0.26),0.4375rem),calc(var(--reflection-unit)*0.3),1rem)]",
   inline: "size-3",
   figure: "size-3.5",
 } as const satisfies Record<ReflectionOutcomeMarkSize, string>;
