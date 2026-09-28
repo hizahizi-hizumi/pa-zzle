@@ -1,16 +1,16 @@
 import { useMemo, useState } from "react";
 
-import { createWaterSortDiagnosticSnapshot } from "@/games/water-sort/diagnostics";
-import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
-import { useWaterSortPlay } from "@/games/water-sort/play/use-water-sort-play";
+import { createMinesweeperDiagnosticSnapshot } from "@/games/minesweeper/diagnostics";
+import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
+import { useMinesweeperPlay } from "@/games/minesweeper/play/use-minesweeper-play";
 import {
-  createWaterSortPlayRecord,
-  waterSortPlayRecordDefinition,
-} from "@/games/water-sort/play-record";
-import type { WaterSortProblemIdentity } from "@/games/water-sort/problem/problem";
-import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
-import { WaterSortDiagnostics } from "@/games/water-sort/ui/WaterSortDiagnostics";
-import { WaterSortPlay } from "@/games/water-sort/ui/WaterSortPlay";
+  createMinesweeperPlayRecord,
+  minesweeperPlayRecordDefinition,
+} from "@/games/minesweeper/play-record";
+import type { MinesweeperRestoredProblem } from "@/games/minesweeper/problem/generator";
+import { MinesweeperDiagnostics } from "@/games/minesweeper/ui/MinesweeperDiagnostics";
+import { MinesweeperPlay } from "@/games/minesweeper/ui/MinesweeperPlay";
+import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
 import {
   buildRevision,
   internalDiagnosticsAvailable,
@@ -19,21 +19,21 @@ import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
 
-type PlayableWaterSortProps = {
-  difficulty: WaterSortDifficulty;
-  initialProblemIdentity?: WaterSortProblemIdentity;
+type PlayableMinesweeperProps = {
+  difficulty: MinesweeperDifficulty;
+  initialProblem?: MinesweeperRestoredProblem;
 };
 
-export function PlayableWaterSort({
+export function PlayableMinesweeper({
   difficulty,
-  initialProblemIdentity,
-}: PlayableWaterSortProps) {
-  const play = useWaterSortPlay(difficulty, initialProblemIdentity);
+  initialProblem,
+}: PlayableMinesweeperProps) {
+  const play = useMinesweeperPlay(difficulty, initialProblem);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>
       play.result && play.completedAt !== null
-        ? createWaterSortPlayRecord({
+        ? createMinesweeperPlayRecord({
             difficulty,
             problemIdentity: play.problemIdentity,
             startedAt: play.startedAt,
@@ -51,11 +51,11 @@ export function PlayableWaterSort({
   );
   const recordOutcome = useSavePlayRecord(
     playRecord,
-    waterSortPlayRecordDefinition,
+    minesweeperPlayRecordDefinition,
   );
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const diagnostics = internalDiagnosticsAvailable
-    ? createWaterSortDiagnosticSnapshot({
+    ? createMinesweeperDiagnosticSnapshot({
         difficulty: play.difficulty,
         problemIdentity: play.problemIdentity,
         buildRevision,
@@ -64,40 +64,39 @@ export function PlayableWaterSort({
 
   return (
     <>
-      <WaterSortPlay
+      <MinesweeperPlay
         difficulty={play.difficulty}
+        rows={play.rows}
+        columns={play.columns}
+        mineCount={play.mineCount}
+        flagCount={play.flagCount}
+        mistakeCount={play.mistakeCount}
+        elapsedMs={play.elapsedMs}
+        visibleCells={play.visibleCells}
         status={play.status}
         progress={play.progress}
-        state={play.state}
-        elapsedMs={play.elapsedMs}
-        moveCount={play.moveCount}
-        undoCount={play.undoCount}
-        canUndo={play.canUndo}
-        isDeadlocked={play.isDeadlocked}
-        sourceBottleIndex={play.sourceBottleIndex}
-        operation={play.operation}
         result={play.result}
         recordOutcomeNotice={
           <PlayRecordOutcomeNotice
             outcome={recordOutcome}
-            display={waterSortPlayRecordDisplay}
+            display={minesweeperPlayRecordDisplay}
           />
         }
-        onSelectBottle={play.selectBottle}
-        onUndo={play.undo}
-        onRestart={play.restart}
+        onRevealCell={play.revealCell}
+        onToggleFlag={play.toggleFlag}
+        onChordCell={play.chordCell}
         onReplay={play.replay}
         onStartNewProblem={play.startNewProblem}
         onOpenRecords={() => navigate("/records")}
-        onClearingPourComplete={play.completeClearingPour}
-        onChangeDifficulty={() => navigate("/puzzles/water-sort")}
+        onChangeDifficulty={() => navigate("/puzzles/minesweeper")}
         onBackToHome={() => navigate("/")}
+        onClearAnimationComplete={play.completeClearAnimation}
         onOpenDiagnostics={
           diagnostics ? () => setDiagnosticsOpen(true) : undefined
         }
       />
       {diagnostics && diagnosticsOpen && (
-        <WaterSortDiagnostics
+        <MinesweeperDiagnostics
           snapshot={diagnostics}
           onClose={() => setDiagnosticsOpen(false)}
         />

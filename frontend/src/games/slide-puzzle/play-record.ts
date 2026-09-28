@@ -180,7 +180,12 @@ function getSlidePuzzlePlayRecordMoveDelta(record: PlayRecord): number | null {
   return calculateSlidePuzzleMoveDelta({ moveCount, optimalMoveCount });
 }
 
-export const slidePuzzlePlayRecordDefinition: PlayRecordDefinition = {
+export type SlidePuzzlePlayRecordMetricId =
+  | "play-score"
+  | "time-delta-ms"
+  | "move-delta";
+
+export const slidePuzzlePlayRecordDefinition = {
   gameId: SLIDE_PUZZLE_GAME_ID,
   isRecord: isSlidePuzzlePlayRecord,
   getComparisonKey(record) {
@@ -203,7 +208,7 @@ export const slidePuzzlePlayRecordDefinition: PlayRecordDefinition = {
       getValue: getSlidePuzzlePlayRecordMoveDelta,
     },
   ],
-};
+} satisfies PlayRecordDefinition<SlidePuzzlePlayRecordMetricId>;
 
 export const _private = {
   getSlidePuzzlePlayRecordScore,

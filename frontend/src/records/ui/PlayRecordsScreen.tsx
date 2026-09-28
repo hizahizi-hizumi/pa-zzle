@@ -12,13 +12,13 @@ import { PlayRecordsHistory } from "@/records/ui/PlayRecordsScreen/PlayRecordsHi
 import { PlayRecordsTrend } from "@/records/ui/PlayRecordsScreen/PlayRecordsTrend";
 import {
   getPlayRecordMetricDisplay,
-  type PlayRecordDisplayCatalog,
   type PlayRecordDisplayDefinition,
+  type PlayRecordGameCatalog,
 } from "@/records/ui/play-record-display";
 
 type PlayRecordsScreenProps = {
   records: readonly PlayRecord[];
-  displays: PlayRecordDisplayCatalog;
+  games: PlayRecordGameCatalog;
   emptyAction: ReactNode;
   onReplay: (recordId: string) => void;
 };
@@ -58,7 +58,7 @@ function getComparisonOptions(
 
 export function PlayRecordsScreen({
   records,
-  displays,
+  games,
   emptyAction,
   onReplay,
 }: PlayRecordsScreenProps) {
@@ -68,22 +68,26 @@ export function PlayRecordsScreen({
     [records],
   );
   const newestRecord = sortedRecords.find((record) =>
-    displays.some((display) => display.definition.isRecord(record)),
+    games.some((game) => game.playRecordDisplay.definition.isRecord(record)),
   );
-  const newestDisplay = newestRecord
-    ? displays.find((display) => display.definition.isRecord(newestRecord))
+  const newestGame = newestRecord
+    ? games.find((game) =>
+        game.playRecordDisplay.definition.isRecord(newestRecord),
+      )
     : undefined;
   const [selectedGameId, setSelectedGameId] = useState(
-    newestDisplay?.definition.gameId ?? displays[0].definition.gameId,
+    (newestGame ?? games[0]).playRecordDisplay.definition.gameId,
   );
   const [selectedComparisonKey, setSelectedComparisonKey] = useState<
     string | null
   >(null);
   const [mode, setMode] = useState<RecordsMode>("history");
   const [selectedMetricId, setSelectedMetricId] = useState<string | null>(null);
-  const display =
-    displays.find((item) => item.definition.gameId === selectedGameId) ??
-    displays[0];
+  const game =
+    games.find(
+      (item) => item.playRecordDisplay.definition.gameId === selectedGameId,
+    ) ?? games[0];
+  const display = game.playRecordDisplay;
   const { definition } = display;
   const comparisonOptions = getComparisonOptions(sortedRecords, display);
   const effectiveComparisonKey =
@@ -129,12 +133,12 @@ export function PlayRecordsScreen({
           value={definition.gameId}
           onChange={handleGameChange}
         >
-          {displays.map((option) => (
+          {games.map((option) => (
             <NativeSelectOption
-              key={option.definition.gameId}
-              value={option.definition.gameId}
+              key={option.playRecordDisplay.definition.gameId}
+              value={option.playRecordDisplay.definition.gameId}
             >
-              {option.gameLabel}
+              {option.name}
             </NativeSelectOption>
           ))}
         </NativeSelect>
@@ -156,7 +160,7 @@ export function PlayRecordsScreen({
       </header>
 
       {comparisonOptions.length === 0 ? (
-        <EmptyRecords gameLabel={display.gameLabel} action={emptyAction} />
+        <EmptyRecords gameLabel={game.name} action={emptyAction} />
       ) : (
         <>
           <section

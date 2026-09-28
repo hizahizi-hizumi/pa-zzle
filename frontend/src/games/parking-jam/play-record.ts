@@ -275,7 +275,12 @@ export function getParkingJamPlayRecordScore(
   }).total;
 }
 
-export const parkingJamPlayRecordDefinition: PlayRecordDefinition = {
+export type ParkingJamPlayRecordMetricId =
+  | "play-score"
+  | "elapsed-ms"
+  | "failed-move-count";
+
+export const parkingJamPlayRecordDefinition = {
   gameId: PARKING_JAM_GAME_ID,
   isRecord: isParkingJamPlayRecord,
   getComparisonKey(record) {
@@ -310,4 +315,4 @@ export const parkingJamPlayRecordDefinition: PlayRecordDefinition = {
       },
     },
   ],
-};
+} satisfies PlayRecordDefinition<ParkingJamPlayRecordMetricId>;

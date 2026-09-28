@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
-import { restoreWaterSortProblem } from "@/games/water-sort/problem/generator";
 import type {
   WaterSortGeneratedProblem,
   WaterSortProblemIdentity,
@@ -79,11 +78,9 @@ function createPlayState(
   difficulty: WaterSortDifficulty,
   seed: ProblemSeed,
   startedAt: number,
-  initialProblemIdentity?: WaterSortProblemIdentity,
+  initialProblem?: WaterSortGeneratedProblem,
 ): WaterSortPlayState {
-  const generatedProblem = initialProblemIdentity
-    ? restoreWaterSortProblem(initialProblemIdentity)
-    : generateProblem(difficulty, seed);
+  const generatedProblem = initialProblem ?? generateProblem(difficulty, seed);
 
   return {
     session: createWaterSortSession(generatedProblem.problem, startedAt),
@@ -95,16 +92,17 @@ function createPlayState(
   };
 }
 
+/** `initialProblem` を渡すと、記録から復元したその問題で始める。 */
 export function useWaterSortPlay(
   difficulty: WaterSortDifficulty,
-  initialProblemIdentity?: WaterSortProblemIdentity,
+  initialProblem?: WaterSortGeneratedProblem,
 ) {
   const [play, setPlay] = useState<WaterSortPlayState>(() =>
     createPlayState(
       difficulty,
-      initialProblemIdentity?.seed ?? createProblemSeed(),
+      createProblemSeed(),
       Date.now(),
-      initialProblemIdentity,
+      initialProblem,
     ),
   );
   const [now, setNow] = useState(() => Date.now());

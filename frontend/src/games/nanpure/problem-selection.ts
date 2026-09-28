@@ -2,6 +2,7 @@ import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import {
   isNanpureProblemIdentity,
   type NanpureIdentifiedProblem,
+  type NanpureRecordedProblemIdentity,
 } from "@/games/nanpure/problem/problem";
 import {
   findNanpurePoolEntry,
@@ -31,7 +32,7 @@ export function selectNanpureProblemForDifficulty(
  * 問題集に無い identity（生成器の版が今と違う記録など）は再プレイできないので `null` を返す。
  */
 export function restoreNanpureProblem(
-  identity: unknown,
+  identity: NanpureRecordedProblemIdentity,
 ): NanpureIdentifiedProblem | null {
   const entry = isNanpureProblemIdentity(identity)
     ? findNanpurePoolEntry(identity)

@@ -246,7 +246,12 @@ export function getWaterSortPlayRecordMoveDelta(
   });
 }
 
-export const waterSortPlayRecordDefinition: PlayRecordDefinition = {
+export type WaterSortPlayRecordMetricId =
+  | "play-score"
+  | "time-delta-ms"
+  | "move-delta";
+
+export const waterSortPlayRecordDefinition = {
   gameId: WATER_SORT_GAME_ID,
   isRecord: isWaterSortPlayRecord,
   getComparisonKey(record) {
@@ -269,4 +274,4 @@ export const waterSortPlayRecordDefinition: PlayRecordDefinition = {
       getValue: getWaterSortPlayRecordMoveDelta,
     },
   ],
-};
+} satisfies PlayRecordDefinition<WaterSortPlayRecordMetricId>;
