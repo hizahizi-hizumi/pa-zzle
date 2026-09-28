@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 
+import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import { PuzzleSelectionView } from "@/views/PuzzleSelectionView";
 
 vi.mock("@/lib/internal-diagnostics", () => ({
@@ -44,5 +45,19 @@ describe("PuzzleSelectionView", () => {
     const heroLink = screen.getByRole("link", { name: `${name}を遊ぶ` });
     expect(heroLink.getAttribute("href")).toBe(entryPath);
     expect(selectButton.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  test("リフレクションを選択してリフレクションの入口へ進めること", () => {
+    const reflectionButton = screen.getByRole("button", {
+      name: `${REFLECTION_DISPLAY_NAME}を選択`,
+    });
+
+    fireEvent.click(reflectionButton);
+
+    const heroLink = screen.getByRole("link", {
+      name: `${REFLECTION_DISPLAY_NAME}を遊ぶ`,
+    });
+    expect(heroLink.getAttribute("href")).toBe("/puzzles/reflection");
+    expect(reflectionButton.getAttribute("aria-pressed")).toBe("true");
   });
 });

@@ -11,6 +11,7 @@ export type Path =
   | `/puzzles/nanpure/play/:difficulty`
   | `/puzzles/parking-jam`
   | `/puzzles/parking-jam/play/:difficulty`
+  | `/puzzles/reflection`
   | `/puzzles/reflection/play/:difficulty`
   | `/puzzles/slide-puzzle`
   | `/puzzles/slide-puzzle/play/:difficulty`
