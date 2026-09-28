@@ -89,4 +89,35 @@ describe("InternalDiagnosticsDialog", () => {
       expect(generationAttempt).toBeNull();
     });
   });
+
+  describe("ゲーム固有の診断値のまとまりを渡す場合", () => {
+    beforeEach(() => {
+      render(
+        <InternalDiagnosticsDialog
+          difficultyLabel="ふつう"
+          seed="diagnostics-ui-seed"
+          generatorVersion="1"
+          generationConditions="条件表示"
+          buildRevision={null}
+          sections={[
+            {
+              title: "構造",
+              items: [{ label: "依存深さ", value: "4", mono: true }],
+            },
+          ]}
+          serializedSnapshot='{"game":"test"}'
+          onClose={vi.fn()}
+        />,
+      );
+    });
+
+    test("再現情報とゲーム固有の値を見出し付きのまとまりで表示すること", () => {
+      const headings = screen
+        .getAllByRole("heading", { level: 3 })
+        .map((heading) => heading.textContent);
+
+      expect(headings).toEqual(["問題", "構造"]);
+      expect(screen.getByText("依存深さ").nextSibling?.textContent).toBe("4");
+    });
+  });
 });
