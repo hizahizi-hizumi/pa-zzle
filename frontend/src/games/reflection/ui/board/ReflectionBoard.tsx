@@ -264,6 +264,16 @@ export function ReflectionBoard({
               laser !== null && isSameReflectionEntry(laser.entry, entry)
             }
             matched={clueMatches[clueIndex] ?? false}
+            laserResult={
+              laser !== null && isSameReflectionEntry(laser.entry, entry)
+                ? laser.trace
+                : null
+            }
+            laserExit={
+              laser?.trace.exit != null &&
+              !isSameReflectionEntry(laser.entry, laser.trace.exit) &&
+              isSameReflectionEntry(laser.trace.exit, entry)
+            }
             disabled={!playing}
             focusable={focusKey === focusableKey}
             focusKey={focusKey}

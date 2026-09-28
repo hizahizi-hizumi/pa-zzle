@@ -6,8 +6,11 @@ import type { ReflectionOutcome } from "@/games/reflection/puzzle/laser";
  * - `selection`: 選んでいるピース・ストックの種類・戻し先。無彩色にして、ピースや外周ヒントの結果の色と取り違えないようにする。
  * - `laser`: 光路と、光路を表示している外周ヒント。線や記号は `laserText`、外周ヒントの数字は
  *   白地でも文字として読める濃さの `laserLabel`、外周ヒントの枠は `laserRing` を使う。
- * - `clueMatch`: 今の配置での光が外周ヒントの数字・行き先と一致している外周ヒントの数字。
- *   地は塗らず数字の色だけを変え、置くたびに面が点いたり消えたりして盤面の周りが騒がしくならないようにする。
+ * - `laserBadge`: 光路を表示している外周ヒントに添える、今の光の通るマスの数と結果の札。
+ * - `laserExit`: 表示中の光が出た先の外周ヒントの破線の枠。
+ * - `clueMatch`: 今の配置での光が外周ヒントの数字・行き先と一致している外周ヒントの地と数字。
+ *   控えめな緑の地にし、一致の切り替えでは地と数字の色だけを瞬時に変える（大きさ・位置・枠・太さは変えない）。
+ *   押せる外周ヒントに付けるので、ホバー・押下・フォーカスでも一致の色を保つ。
  *   ゲームの中の状態を示す色で、アプリ共通の `success`（クリア・完了）とは分ける。
  */
 export const reflectionToneClassNames = {
@@ -18,12 +21,18 @@ export const reflectionToneClassNames = {
   laserLabel: "text-orange-700 dark:text-amber-400",
   laserSurface: "bg-orange-500/15 dark:bg-amber-400/15",
   laserRing: "ring-2 ring-orange-600 ring-inset dark:ring-amber-400",
-  clueMatchLabel: "text-emerald-700 dark:text-emerald-400",
+  laserBadge:
+    "bg-orange-700 text-white dark:bg-amber-400 dark:text-neutral-950",
+  laserExit:
+    "outline-2 outline-dashed -outline-offset-2 outline-orange-600 dark:outline-amber-400",
+  clueMatchSurface:
+    "bg-emerald-100 focus-visible:bg-emerald-200 enabled:hover:bg-emerald-200 enabled:active:bg-emerald-200 dark:bg-emerald-950 dark:focus-visible:bg-emerald-900 dark:enabled:hover:bg-emerald-900 dark:enabled:active:bg-emerald-900",
+  clueMatchLabel: "text-emerald-900 dark:text-emerald-200",
 } as const;
 
 /**
  * 外周ヒントの結果の色。形（斜めの矢印・折り返す矢印・塗りの点）と組にして使い、色だけで区別させない。
- * 盤面の地の上で、図形として 3:1 以上の濃さにする。
+ * 盤面の地・一致の地のどちらの上でも、図形として 3:1 以上の濃さにする。
  */
 export const reflectionOutcomeToneClassNames = {
   exit: "text-blue-600 dark:text-blue-400",

@@ -30,6 +30,7 @@ import {
   readReflectionHowToPlaySeen,
   writeReflectionHowToPlaySeen,
 } from "@/games/reflection/ui/how-to-play-seen";
+import { reflectionOutcomeLabels } from "@/games/reflection/ui/outcome-label";
 import { ReflectionPlay } from "@/games/reflection/ui/ReflectionPlay";
 
 afterEach(() => {
@@ -381,6 +382,16 @@ describe("ReflectionPlay", () => {
       const clue = screen.getByRole("button", { name: "左2行 退出 3マス" });
 
       expect(clue.getAttribute("aria-pressed")).toBe("true");
+    });
+
+    test("表示中の外周ヒントに、今の光が通るマスの数と行き先を添えること", () => {
+      const trace = traceReflectionLaser(placedBoard, leftMiddle);
+      const clue = screen.getByRole("button", { name: "左2行 退出 3マス" });
+
+      expect(clue.getAttribute("aria-description")).toBe(
+        `今の光 ${reflectionOutcomeLabels[trace.outcome]} ${trace.distance}マス`,
+      );
+      expect(clue.textContent).toContain(String(trace.distance));
     });
   });
 
