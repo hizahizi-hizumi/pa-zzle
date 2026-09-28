@@ -52,14 +52,12 @@ export function PlayableReflection({
     play.problemSource === "given";
   const playRecord = useMemo(
     () =>
-      !isBlindComparison &&
-      play.result &&
-      play.workload &&
-      play.completedAt !== null
+      // 評価（`result`）は作業の量がある問題集の問題でだけ得られるので、評価できたプレイだけを記録する。
+      !isBlindComparison && play.result && play.completedAt !== null
         ? createReflectionPlayRecord({
             difficulty,
             problemIdentity: play.problemIdentity,
-            workload: play.workload,
+            workload: play.result.workload,
             startedAt: play.startedAt,
             completedAt: play.completedAt,
             result: play.result,
@@ -72,7 +70,6 @@ export function PlayableReflection({
       play.problemIdentity,
       play.result,
       play.startedAt,
-      play.workload,
     ],
   );
   const recordOutcome = useSavePlayRecord(
