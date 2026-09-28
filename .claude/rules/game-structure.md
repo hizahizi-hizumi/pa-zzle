@@ -64,7 +64,7 @@ frontend/src/games/
 
 ## 難易度
 
-- 問題の特徴を求める処理と、その特徴を `easy` / `normal` / `hard` 等へ分類するゲーム方針を分離する。
+- 問題の特徴を求める処理と、その特徴を `1`〜`5` のレベル等へ分類するゲーム方針を分離する。
 - 特徴の解析は `problem/difficulty-analysis.ts`、分類方針は `difficulty.ts` が所有する。
 - `problem-selection.ts` が問題供給と `difficulty.ts` を組み合わせて、要求難易度に合う問題を選ぶ。
 
