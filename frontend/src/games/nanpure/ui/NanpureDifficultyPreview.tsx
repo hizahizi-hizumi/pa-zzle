@@ -1,4 +1,4 @@
-import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
+import type { NanpureLegacyDifficulty } from "@/games/nanpure/legacy/difficulty";
 import { cn } from "@/lib/utils";
 
 const NANPURE_SIZE = 9;
@@ -16,10 +16,10 @@ const representativePuzzles = {
   normal:
     ".1...6..9.....7...3..59.1.65312.897....1...32..473...1..5...39.9.....2..7....36.8",
   hard: "56.....2.3.......91..23.5..6..4.83....5.......913..6.2...91.83..8.6...4.....4...5",
-} satisfies Record<NanpureDifficulty, string>;
+} satisfies Record<NanpureLegacyDifficulty, string>;
 
 const previewEntries: Record<
-  NanpureDifficulty,
+  NanpureLegacyDifficulty,
   Readonly<Record<number, string>>
 > = {
   easy: { 3: "4", 25: "3", 40: "2" },
@@ -28,7 +28,7 @@ const previewEntries: Record<
 };
 
 type NanpureDifficultyPreviewProps = {
-  difficulty: NanpureDifficulty;
+  difficulty: NanpureLegacyDifficulty;
 };
 
 export function NanpureDifficultyPreview({

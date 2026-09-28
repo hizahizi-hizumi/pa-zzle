@@ -1,4 +1,4 @@
-import { nanpureDifficulties } from "@/games/nanpure/difficulty";
+import { nanpureLegacyDifficulties } from "@/games/nanpure/legacy/difficulty";
 import { Link } from "@/router";
 import { NanpureDifficultyOption } from "@/views/NanpureDifficultyView/NanpureDifficultyOption";
 
@@ -16,7 +16,7 @@ export function NanpureDifficultyView() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        {nanpureDifficulties.map((difficulty) => (
+        {nanpureLegacyDifficulties.map((difficulty) => (
           <NanpureDifficultyOption
             key={difficulty.id}
             difficulty={difficulty.id}

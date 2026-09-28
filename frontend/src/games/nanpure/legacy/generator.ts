@@ -1,17 +1,17 @@
 import {
-  analyzeNanpureDifficulty,
-  type NanpureDifficultyAnalysis,
-} from "@/games/nanpure/problem/difficulty-analysis";
+  analyzeNanpureLegacyDifficulty,
+  type NanpureLegacyDifficultyAnalysis,
+} from "@/games/nanpure/legacy/difficulty-analysis";
+import {
+  NANPURE_LEGACY_GENERATOR_VERSION,
+  type NanpureLegacyGeneratedProblem,
+  type NanpureLegacyProblemIdentity,
+} from "@/games/nanpure/legacy/problem";
 import {
   classifyNanpureSolutions,
   findNanpureSolution,
 } from "@/games/nanpure/problem/generation/solver";
-import {
-  NANPURE_GENERATOR_VERSION,
-  type NanpureGeneratedProblem,
-  type NanpureProblem,
-  type NanpureProblemIdentity,
-} from "@/games/nanpure/problem/problem";
+import type { NanpureProblem } from "@/games/nanpure/problem/problem";
 import {
   NANPURE_CELL_COUNT,
   type NanpureBoard,
@@ -25,28 +25,28 @@ import type { ProblemSeed } from "@/games/problem-seed";
 
 export const NANPURE_MINIMUM_UNIQUE_CLUE_COUNT = 17;
 
-export type NanpureGeneratedCandidate = NanpureProblem & {
+export type NanpureLegacyGeneratedCandidate = NanpureProblem & {
   attempt: number;
-  difficultyAnalysis: NanpureDifficultyAnalysis;
+  difficultyAnalysis: NanpureLegacyDifficultyAnalysis;
 };
 
-export type NanpureProblemAcceptance = (
-  candidate: NanpureGeneratedCandidate,
+export type NanpureLegacyProblemAcceptance = (
+  candidate: NanpureLegacyGeneratedCandidate,
 ) => boolean;
 
-export type NanpureGeneratorOptions = {
+export type NanpureLegacyGeneratorOptions = {
   seed: ProblemSeed;
   clueCount: number;
   maximumAttempts?: number;
-  acceptCandidate?: NanpureProblemAcceptance;
+  acceptCandidate?: NanpureLegacyProblemAcceptance;
 };
 
-export class NanpureGenerationExhaustedError extends Error {
+export class NanpureLegacyGenerationExhaustedError extends Error {
   constructor(maximumAttempts: number, clueCount: number) {
     super(
       `Failed to generate a ${clueCount}-clue Nanpure problem within ${maximumAttempts} attempts`,
     );
-    this.name = "NanpureGenerationExhaustedError";
+    this.name = "NanpureLegacyGenerationExhaustedError";
   }
 }
 
@@ -55,7 +55,7 @@ function createGeneratorRandom(
   clueCount: number,
 ): () => number {
   return createProblemRandom(
-    [NANPURE_GENERATOR_VERSION, seed, clueCount].join(":"),
+    [NANPURE_LEGACY_GENERATOR_VERSION, seed, clueCount].join(":"),
   );
 }
 
@@ -77,8 +77,8 @@ function validateMaximumAttempts(maximumAttempts: number): void {
   }
 }
 
-function validateProblemIdentity(identity: NanpureProblemIdentity): void {
-  if (identity.generatorVersion !== NANPURE_GENERATOR_VERSION) {
+function validateProblemIdentity(identity: NanpureLegacyProblemIdentity): void {
+  if (identity.generatorVersion !== NANPURE_LEGACY_GENERATOR_VERSION) {
     throw new Error(
       `Unsupported Nanpure generator version: ${identity.generatorVersion}`,
     );
@@ -135,7 +135,7 @@ function createProblemCandidate(
 }
 
 function candidateAtAttempt(
-  identity: NanpureProblemIdentity,
+  identity: NanpureLegacyProblemIdentity,
 ): NanpureProblem | null {
   const random = createGeneratorRandom(
     identity.seed,
@@ -150,9 +150,9 @@ function candidateAtAttempt(
   return candidate;
 }
 
-export function restoreNanpureProblem(
-  identity: NanpureProblemIdentity,
-): NanpureGeneratedProblem {
+export function restoreNanpureLegacyProblem(
+  identity: NanpureLegacyProblemIdentity,
+): NanpureLegacyGeneratedProblem {
   validateProblemIdentity(identity);
 
   const problem = candidateAtAttempt(identity);
@@ -165,13 +165,13 @@ export function restoreNanpureProblem(
   return {
     ...problem,
     identity,
-    difficultyAnalysis: analyzeNanpureDifficulty(problem.clues),
+    difficultyAnalysis: analyzeNanpureLegacyDifficulty(problem.clues),
   };
 }
 
-export function generateNanpureProblem(
-  options: NanpureGeneratorOptions,
-): NanpureGeneratedProblem {
+export function generateNanpureLegacyProblem(
+  options: NanpureLegacyGeneratorOptions,
+): NanpureLegacyGeneratedProblem {
   validateClueCount(options.clueCount);
 
   const maximumAttempts = options.maximumAttempts ?? 100;
@@ -185,8 +185,8 @@ export function generateNanpureProblem(
       continue;
     }
 
-    const difficultyAnalysis = analyzeNanpureDifficulty(problem.clues);
-    const candidate: NanpureGeneratedCandidate = {
+    const difficultyAnalysis = analyzeNanpureLegacyDifficulty(problem.clues);
+    const candidate: NanpureLegacyGeneratedCandidate = {
       ...problem,
       attempt,
       difficultyAnalysis,
@@ -198,7 +198,7 @@ export function generateNanpureProblem(
     return {
       ...problem,
       identity: {
-        generatorVersion: NANPURE_GENERATOR_VERSION,
+        generatorVersion: NANPURE_LEGACY_GENERATOR_VERSION,
         seed: options.seed,
         conditions: { clueCount: options.clueCount },
         generationAttempt: attempt,
@@ -207,5 +207,8 @@ export function generateNanpureProblem(
     };
   }
 
-  throw new NanpureGenerationExhaustedError(maximumAttempts, options.clueCount);
+  throw new NanpureLegacyGenerationExhaustedError(
+    maximumAttempts,
+    options.clueCount,
+  );
 }

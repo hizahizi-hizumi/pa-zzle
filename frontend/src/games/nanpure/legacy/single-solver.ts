@@ -12,7 +12,7 @@ import {
   isNanpureSolved,
 } from "@/games/nanpure/puzzle/rules";
 
-export type NanpureHumanTechnique = "naked-single" | "hidden-single";
+export type NanpureLegacySingleTechnique = "naked-single" | "hidden-single";
 
 export type NanpureUnit = {
   kind: "row" | "column" | "block";
@@ -34,7 +34,7 @@ type NanpureHumanSolveStepBase = {
   availablePlacementCount: number;
 };
 
-export type NanpureHumanSolveStep =
+export type NanpureLegacySingleSolveStep =
   | (NanpureHumanSolveStepBase & {
       technique: "naked-single";
     })
@@ -51,19 +51,19 @@ export type NanpureDependencyFeatures = {
   singleOptionStepCount: number;
 };
 
-export type NanpureHumanSolveFeatures = {
+export type NanpureLegacySingleSolveFeatures = {
   stepCount: number;
-  usedTechniques: readonly NanpureHumanTechnique[];
-  techniqueCounts: Readonly<Record<NanpureHumanTechnique, number>>;
+  usedTechniques: readonly NanpureLegacySingleTechnique[];
+  techniqueCounts: Readonly<Record<NanpureLegacySingleTechnique, number>>;
   solvedWithSupportedTechniques: boolean;
   dependency: NanpureDependencyFeatures;
 };
 
-export type NanpureHumanSolveResult = {
+export type NanpureLegacySingleSolveResult = {
   status: "solved" | "stalled";
   board: NanpureBoard;
-  steps: readonly NanpureHumanSolveStep[];
-  features: NanpureHumanSolveFeatures;
+  steps: readonly NanpureLegacySingleSolveStep[];
+  features: NanpureLegacySingleSolveFeatures;
 };
 
 type CandidateState = readonly (readonly NanpureDigit[])[];
@@ -227,7 +227,7 @@ function createStep(
   order: number,
   candidatesBefore: CandidateState,
   candidatesAfter: CandidateState,
-): NanpureHumanSolveStep {
+): NanpureLegacySingleSolveStep {
   const base = {
     order,
     cellIndex: placement.cellIndex,
@@ -250,7 +250,7 @@ function createStep(
 }
 
 function summarizeDependency(
-  steps: readonly NanpureHumanSolveStep[],
+  steps: readonly NanpureLegacySingleSolveStep[],
 ): NanpureDependencyFeatures {
   const observedSteps = steps.slice(0, NANPURE_DEPENDENCY_WINDOW_STEP_COUNT);
   if (observedSteps.length === 0) {
@@ -274,14 +274,14 @@ function summarizeDependency(
 }
 
 function summarizeSteps(
-  steps: readonly NanpureHumanSolveStep[],
+  steps: readonly NanpureLegacySingleSolveStep[],
   solvedWithSupportedTechniques: boolean,
-): NanpureHumanSolveFeatures {
-  const techniqueCounts: Record<NanpureHumanTechnique, number> = {
+): NanpureLegacySingleSolveFeatures {
+  const techniqueCounts: Record<NanpureLegacySingleTechnique, number> = {
     "naked-single": 0,
     "hidden-single": 0,
   };
-  const usedTechniques: NanpureHumanTechnique[] = [];
+  const usedTechniques: NanpureLegacySingleTechnique[] = [];
 
   for (const step of steps) {
     if (techniqueCounts[step.technique] === 0) {
@@ -299,13 +299,13 @@ function summarizeSteps(
   };
 }
 
-export function traceNanpureHumanSolve(
+export function traceNanpureLegacySingleSolve(
   initialBoard: NanpureBoard,
-): NanpureHumanSolveResult {
+): NanpureLegacySingleSolveResult {
   assertNanpureBoard(initialBoard);
 
   const board = [...initialBoard];
-  const steps: NanpureHumanSolveStep[] = [];
+  const steps: NanpureLegacySingleSolveStep[] = [];
 
   while (!isNanpureSolved(board)) {
     const candidatesBefore = getCandidateState(board);

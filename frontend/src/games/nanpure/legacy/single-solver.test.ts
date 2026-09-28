@@ -1,4 +1,4 @@
-import { traceNanpureHumanSolve } from "@/games/nanpure/problem/generation/human-solver";
+import { traceNanpureLegacySingleSolve } from "@/games/nanpure/legacy/single-solver";
 import { classifyNanpureSolutions } from "@/games/nanpure/problem/generation/solver";
 import type { NanpureBoard, NanpureCell } from "@/games/nanpure/puzzle/board";
 
@@ -58,9 +58,9 @@ const advancedProblemClues = boardFromRows([
   "007000300",
 ]);
 
-describe("traceNanpureHumanSolve", () => {
+describe("traceNanpureLegacySingleSolve", () => {
   test("基礎手筋だけで解ける問題を最後まで解くこと", () => {
-    const result = traceNanpureHumanSolve(basicProblemClues);
+    const result = traceNanpureLegacySingleSolve(basicProblemClues);
 
     expect(result.status).toBe("solved");
     expect(result.board).toEqual(expectedSolution);
@@ -70,7 +70,7 @@ describe("traceNanpureHumanSolve", () => {
 
   test("対応済み手筋で進めなくなった問題を推測せず停止すること", () => {
     const classification = classifyNanpureSolutions(advancedProblemClues);
-    const result = traceNanpureHumanSolve(advancedProblemClues);
+    const result = traceNanpureLegacySingleSolve(advancedProblemClues);
 
     expect(classification.status).toBe("unique");
     expect(result.status).toBe("stalled");
@@ -79,8 +79,8 @@ describe("traceNanpureHumanSolve", () => {
   });
 
   test("同じ盤面から同じ解法トレースを再現すること", () => {
-    const first = traceNanpureHumanSolve(basicProblemClues);
-    const second = traceNanpureHumanSolve(basicProblemClues);
+    const first = traceNanpureLegacySingleSolve(basicProblemClues);
+    const second = traceNanpureLegacySingleSolve(basicProblemClues);
 
     expect(second).toEqual(first);
   });
@@ -89,13 +89,13 @@ describe("traceNanpureHumanSolve", () => {
     const board = [...basicProblemClues];
     const before = [...board];
 
-    traceNanpureHumanSolve(board);
+    traceNanpureLegacySingleSolve(board);
 
     expect(board).toEqual(before);
   });
 
   test("各手順に順序と候補変化を記録すること", () => {
-    const result = traceNanpureHumanSolve(basicProblemClues);
+    const result = traceNanpureLegacySingleSolve(basicProblemClues);
     const firstStep = result.steps[0]!;
 
     expect(firstStep.order).toBe(1);
@@ -110,7 +110,7 @@ describe("traceNanpureHumanSolve", () => {
   });
 
   test("手筋ごとの使用回数を特徴量として集計すること", () => {
-    const result = traceNanpureHumanSolve(basicProblemClues);
+    const result = traceNanpureLegacySingleSolve(basicProblemClues);
     const countedSteps =
       result.features.techniqueCounts["naked-single"] +
       result.features.techniqueCounts["hidden-single"];
@@ -124,7 +124,7 @@ describe("traceNanpureHumanSolve", () => {
   });
 
   test("Hidden Singleの成立単位と候補位置を記録すること", () => {
-    const result = traceNanpureHumanSolve(hiddenSingleProblemClues);
+    const result = traceNanpureLegacySingleSolve(hiddenSingleProblemClues);
     const firstStep = result.steps[0];
 
     expect(firstStep).toMatchObject({
@@ -139,7 +139,7 @@ describe("traceNanpureHumanSolve", () => {
   });
 
   test("解法序盤の次の一手候補数を依存構造の特徴量として集計すること", () => {
-    const result = traceNanpureHumanSolve(basicProblemClues);
+    const result = traceNanpureLegacySingleSolve(basicProblemClues);
     const observedSteps = result.steps.slice(0, 25);
     const availablePlacementCounts = observedSteps.map(
       (step) => step.availablePlacementCount,

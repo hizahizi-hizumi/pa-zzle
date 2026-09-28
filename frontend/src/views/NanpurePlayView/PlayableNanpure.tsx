@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
 
 import { createNanpureDiagnosticSnapshot } from "@/games/nanpure/diagnostics";
-import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
+import type { NanpureLegacyDifficulty } from "@/games/nanpure/legacy/difficulty";
+import type { NanpureLegacyProblemIdentity } from "@/games/nanpure/legacy/problem";
 import { useNanpurePlay } from "@/games/nanpure/play/use-nanpure-play";
 import {
   createNanpurePlayRecord,
   nanpurePlayRecordDefinition,
 } from "@/games/nanpure/play-record";
-import type { NanpureProblemIdentity } from "@/games/nanpure/problem/problem";
 import { NanpureDiagnostics } from "@/games/nanpure/ui/NanpureDiagnostics";
 import { NanpurePlay } from "@/games/nanpure/ui/NanpurePlay";
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
@@ -20,8 +20,8 @@ import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
 
 type PlayableNanpureProps = {
-  difficulty: NanpureDifficulty;
-  initialProblemIdentity?: NanpureProblemIdentity;
+  difficulty: NanpureLegacyDifficulty;
+  initialProblemIdentity?: NanpureLegacyProblemIdentity;
 };
 
 export function PlayableNanpure({

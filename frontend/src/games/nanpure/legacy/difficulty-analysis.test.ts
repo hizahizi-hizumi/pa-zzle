@@ -1,4 +1,4 @@
-import { analyzeNanpureDifficulty } from "@/games/nanpure/problem/difficulty-analysis";
+import { analyzeNanpureLegacyDifficulty } from "@/games/nanpure/legacy/difficulty-analysis";
 import type { NanpureBoard, NanpureCell } from "@/games/nanpure/puzzle/board";
 
 function boardFromString(value: string): NanpureBoard {
@@ -7,7 +7,7 @@ function boardFromString(value: string): NanpureBoard {
   );
 }
 
-describe("analyzeNanpureDifficulty", () => {
+describe("analyzeNanpureLegacyDifficulty", () => {
   const supportedProblemClues = boardFromString(
     "......812.143..59...5216...4..567.8.8....346.1.7.4..2.7.....95.5.1.8.64.6....4.7.",
   );
@@ -16,14 +16,14 @@ describe("analyzeNanpureDifficulty", () => {
   );
 
   test("対応手筋で解き切れる問題の特徴を解析すること", () => {
-    const result = analyzeNanpureDifficulty(supportedProblemClues);
+    const result = analyzeNanpureLegacyDifficulty(supportedProblemClues);
 
     expect(result.status).toBe("supported");
     expect(result.features.dependency.observedStepCount).toBeGreaterThan(0);
   });
 
   test("対応手筋で解き切れない問題を未対応として返すこと", () => {
-    const result = analyzeNanpureDifficulty(unsupportedProblemClues);
+    const result = analyzeNanpureLegacyDifficulty(unsupportedProblemClues);
 
     expect(result.status).toBe("unsupported");
   });

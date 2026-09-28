@@ -1,12 +1,12 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 
 import {
-  assessNanpureDifficulty,
-  type NanpureDifficulty,
-} from "@/games/nanpure/difficulty";
+  assessNanpureLegacyDifficulty,
+  type NanpureLegacyDifficulty,
+} from "@/games/nanpure/legacy/difficulty";
+import { analyzeNanpureLegacyDifficulty } from "@/games/nanpure/legacy/difficulty-analysis";
+import { restoreNanpureLegacyProblem } from "@/games/nanpure/legacy/generator";
 import { useNanpurePlay } from "@/games/nanpure/play/use-nanpure-play";
-import { analyzeNanpureDifficulty } from "@/games/nanpure/problem/difficulty-analysis";
-import { restoreNanpureProblem } from "@/games/nanpure/problem/generator";
 import * as problemSeed from "@/games/problem-seed";
 
 afterEach(() => {
@@ -32,8 +32,8 @@ describe("useNanpurePlay", () => {
     });
 
     test("対応する難易度の問題でプレイを開始すること", () => {
-      const rating = assessNanpureDifficulty(
-        analyzeNanpureDifficulty(result.current.clues),
+      const rating = assessNanpureLegacyDifficulty(
+        analyzeNanpureLegacyDifficulty(result.current.clues),
       );
 
       expect(rating).toMatchObject({ status: "rated", difficulty });
@@ -41,18 +41,18 @@ describe("useNanpurePlay", () => {
   });
 
   describe("新しい問題を開始する場合", () => {
-    const initialProps: { difficulty: NanpureDifficulty } = {
+    const initialProps: { difficulty: NanpureLegacyDifficulty } = {
       difficulty: "easy",
     };
     let result: { current: HookResult };
-    let rerender: (props: { difficulty: NanpureDifficulty }) => void;
+    let rerender: (props: { difficulty: NanpureLegacyDifficulty }) => void;
 
     beforeEach(() => {
       vi.spyOn(problemSeed, "createProblemSeed")
         .mockReturnValueOnce("nanpure-selection-easy")
         .mockReturnValueOnce("nanpure-selection-hard");
       ({ result, rerender } = renderHook(
-        ({ difficulty }: { difficulty: NanpureDifficulty }) =>
+        ({ difficulty }: { difficulty: NanpureLegacyDifficulty }) =>
           useNanpurePlay(difficulty),
         { initialProps },
       ));
@@ -61,8 +61,8 @@ describe("useNanpurePlay", () => {
     test("現在選択中の難易度を問題生成へ反映すること", () => {
       rerender({ difficulty: "hard" });
       act(() => result.current.startNewProblem());
-      const rating = assessNanpureDifficulty(
-        analyzeNanpureDifficulty(result.current.clues),
+      const rating = assessNanpureLegacyDifficulty(
+        analyzeNanpureLegacyDifficulty(result.current.clues),
       );
 
       expect(rating).toMatchObject({ status: "rated", difficulty: "hard" });
@@ -71,14 +71,16 @@ describe("useNanpurePlay", () => {
 
   describe("盤面を完成させる場合", () => {
     let result: { current: HookResult };
-    let solution: ReturnType<typeof restoreNanpureProblem>["solution"];
+    let solution: ReturnType<typeof restoreNanpureLegacyProblem>["solution"];
 
     beforeEach(() => {
       vi.spyOn(problemSeed, "createProblemSeed").mockReturnValue(
         "nanpure-selection-normal",
       );
       ({ result } = renderHook(() => useNanpurePlay("normal")));
-      solution = restoreNanpureProblem(result.current.problemIdentity).solution;
+      solution = restoreNanpureLegacyProblem(
+        result.current.problemIdentity,
+      ).solution;
     });
 
     test("完成状態を見せてから結果表示へ進めること", () => {

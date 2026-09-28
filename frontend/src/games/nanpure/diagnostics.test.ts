@@ -4,10 +4,10 @@ import {
   parseNanpureDiagnosticSnapshot,
   restoreNanpureProblemFromDiagnosticSnapshot,
 } from "@/games/nanpure/diagnostics";
-import { generateNanpureProblem } from "@/games/nanpure/problem/generator";
+import { generateNanpureLegacyProblem } from "@/games/nanpure/legacy/generator";
 
 describe("NanpureDiagnosticSnapshot", () => {
-  const problem = generateNanpureProblem({
+  const problem = generateNanpureLegacyProblem({
     seed: "diagnostic-reproduction-seed",
     clueCount: 32,
   });

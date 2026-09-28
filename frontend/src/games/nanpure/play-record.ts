@@ -1,8 +1,8 @@
 import {
-  type NanpureDifficulty,
-  parseNanpureDifficulty,
-} from "@/games/nanpure/difficulty";
-import type { NanpureProblemIdentity } from "@/games/nanpure/problem/problem";
+  type NanpureLegacyDifficulty,
+  parseNanpureLegacyDifficulty,
+} from "@/games/nanpure/legacy/difficulty";
+import type { NanpureLegacyProblemIdentity } from "@/games/nanpure/legacy/problem";
 import { calculateNanpurePlayScore } from "@/games/nanpure/score";
 import type { NanpureSessionResult } from "@/games/nanpure/session/session";
 import type { PlayRecord } from "@/records/play-record";
@@ -13,8 +13,8 @@ const NANPURE_PLAY_RECORD_PAYLOAD_VERSION = 1;
 const NANPURE_GAME_ID = "nanpure";
 
 type NanpurePlayRecordPayload = {
-  difficulty: NanpureDifficulty;
-  problemIdentity: NanpureProblemIdentity;
+  difficulty: NanpureLegacyDifficulty;
+  problemIdentity: NanpureLegacyProblemIdentity;
   performance: NanpureSessionResult;
 };
 
@@ -25,8 +25,8 @@ export type NanpurePlayRecord = PlayRecord & {
 };
 
 type CreateNanpurePlayRecordInput = {
-  difficulty: NanpureDifficulty;
-  problemIdentity: NanpureProblemIdentity;
+  difficulty: NanpureLegacyDifficulty;
+  problemIdentity: NanpureLegacyProblemIdentity;
   startedAt: number;
   completedAt: number;
   result: NanpureSessionResult;
@@ -42,12 +42,12 @@ function isPositiveInteger(value: unknown): value is number {
 
 function isNanpureProblemIdentity(
   value: unknown,
-): value is NanpureProblemIdentity {
+): value is NanpureLegacyProblemIdentity {
   if (!value || typeof value !== "object") {
     return false;
   }
 
-  const identity = value as Partial<NanpureProblemIdentity>;
+  const identity = value as Partial<NanpureLegacyProblemIdentity>;
   return (
     identity.generatorVersion === "1" &&
     typeof identity.seed === "string" &&
@@ -88,7 +88,7 @@ export function isNanpurePlayRecord(
 
   const payload = record.payload as Partial<NanpurePlayRecordPayload>;
   return (
-    parseNanpureDifficulty(payload.difficulty) !== undefined &&
+    parseNanpureLegacyDifficulty(payload.difficulty) !== undefined &&
     isNanpureProblemIdentity(payload.problemIdentity) &&
     isNanpurePerformance(payload.performance)
   );

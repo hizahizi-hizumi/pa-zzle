@@ -1,10 +1,10 @@
 import { StartConditionOption } from "@/components/StartConditionOption";
-import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
+import type { NanpureLegacyDifficulty } from "@/games/nanpure/legacy/difficulty";
 import { NanpureDifficultyPreview } from "@/games/nanpure/ui/NanpureDifficultyPreview";
 import { Link } from "@/router";
 
 type NanpureDifficultyOptionProps = {
-  difficulty: NanpureDifficulty;
+  difficulty: NanpureLegacyDifficulty;
   label: string;
 };
 

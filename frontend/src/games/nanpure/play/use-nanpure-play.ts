@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
-import { restoreNanpureProblem } from "@/games/nanpure/problem/generator";
-import type { NanpureProblemIdentity } from "@/games/nanpure/problem/problem";
-import { generateNanpureProblemForDifficulty } from "@/games/nanpure/problem-selection";
+import type { NanpureLegacyDifficulty } from "@/games/nanpure/legacy/difficulty";
+import { restoreNanpureLegacyProblem } from "@/games/nanpure/legacy/generator";
+import type { NanpureLegacyProblemIdentity } from "@/games/nanpure/legacy/problem";
+import { generateNanpureLegacyProblemForDifficulty } from "@/games/nanpure/legacy/problem-selection";
 import type { NanpureDigit } from "@/games/nanpure/puzzle/board";
 import { findNanpureConflictCellIndices } from "@/games/nanpure/puzzle/rules";
 import {
@@ -29,27 +29,27 @@ import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
 export type NanpureProgress = "playing" | "clearing" | "result";
 
 export type NanpureResult = NanpureSessionResult & {
-  problemIdentity: NanpureProblemIdentity;
+  problemIdentity: NanpureLegacyProblemIdentity;
   score: NanpurePlayScore;
 };
 
 type NanpurePlayState = {
   session: NanpureSession;
-  problemIdentity: NanpureProblemIdentity;
+  problemIdentity: NanpureLegacyProblemIdentity;
   selectedCellIndex: number | null;
   notesMode: boolean;
   progress: NanpureProgress;
 };
 
 function createPlayState(
-  difficulty: NanpureDifficulty,
+  difficulty: NanpureLegacyDifficulty,
   seed: ProblemSeed,
   startedAt: number,
-  initialProblemIdentity?: NanpureProblemIdentity,
+  initialProblemIdentity?: NanpureLegacyProblemIdentity,
 ): NanpurePlayState {
   const problem = initialProblemIdentity
-    ? restoreNanpureProblem(initialProblemIdentity)
-    : generateNanpureProblemForDifficulty(difficulty, seed);
+    ? restoreNanpureLegacyProblem(initialProblemIdentity)
+    : generateNanpureLegacyProblemForDifficulty(difficulty, seed);
 
   return {
     session: createNanpureSession(problem, startedAt),
@@ -61,8 +61,8 @@ function createPlayState(
 }
 
 export function useNanpurePlay(
-  difficulty: NanpureDifficulty,
-  initialProblemIdentity?: NanpureProblemIdentity,
+  difficulty: NanpureLegacyDifficulty,
+  initialProblemIdentity?: NanpureLegacyProblemIdentity,
 ) {
   const [play, setPlay] = useState<NanpurePlayState>(() =>
     createPlayState(

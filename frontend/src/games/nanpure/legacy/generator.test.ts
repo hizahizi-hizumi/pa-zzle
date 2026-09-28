@@ -1,24 +1,24 @@
-import { classifyNanpureSolutions } from "@/games/nanpure/problem/generation/solver";
 import {
-  generateNanpureProblem,
-  restoreNanpureProblem,
-} from "@/games/nanpure/problem/generator";
+  generateNanpureLegacyProblem,
+  restoreNanpureLegacyProblem,
+} from "@/games/nanpure/legacy/generator";
+import { classifyNanpureSolutions } from "@/games/nanpure/problem/generation/solver";
 
-describe("generateNanpureProblem", () => {
+describe("generateNanpureLegacyProblem", () => {
   test("同じseedと生成条件から同じ問題を再現すること", () => {
     const options = {
       seed: "nanpure-reproducible-seed",
       clueCount: 32,
     } as const;
 
-    const first = generateNanpureProblem(options);
-    const second = generateNanpureProblem(options);
+    const first = generateNanpureLegacyProblem(options);
+    const second = generateNanpureLegacyProblem(options);
 
     expect(second).toEqual(first);
   });
 
   test("指定したヒント数の一意解問題を生成すること", () => {
-    const problem = generateNanpureProblem({
+    const problem = generateNanpureLegacyProblem({
       seed: "nanpure-unique-problem",
       clueCount: 32,
     });
@@ -38,11 +38,11 @@ describe("generateNanpureProblem", () => {
   });
 
   test("異なるseedから異なる問題を生成すること", () => {
-    const first = generateNanpureProblem({
+    const first = generateNanpureLegacyProblem({
       seed: "nanpure-seed-a",
       clueCount: 32,
     });
-    const second = generateNanpureProblem({
+    const second = generateNanpureLegacyProblem({
       seed: "nanpure-seed-b",
       clueCount: 32,
     });
@@ -51,13 +51,13 @@ describe("generateNanpureProblem", () => {
   });
 
   test("保存した問題識別情報から同じ問題を復元すること", () => {
-    const problem = generateNanpureProblem({
+    const problem = generateNanpureLegacyProblem({
       seed: "attempt-0",
       clueCount: 24,
       maximumAttempts: 20,
     });
 
-    const restored = restoreNanpureProblem(problem.identity);
+    const restored = restoreNanpureLegacyProblem(problem.identity);
 
     expect(problem.identity.generationAttempt).toBe(2);
     expect(restored).toEqual(problem);
@@ -65,7 +65,7 @@ describe("generateNanpureProblem", () => {
 
   test("不正なヒント数を拒否すること", () => {
     function act() {
-      return generateNanpureProblem({
+      return generateNanpureLegacyProblem({
         seed: "nanpure-invalid-clues",
         clueCount: 16,
       });

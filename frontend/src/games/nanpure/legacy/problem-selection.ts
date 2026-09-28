@@ -1,18 +1,18 @@
 import {
-  assessNanpureDifficulty,
-  type NanpureDifficulty,
-} from "@/games/nanpure/difficulty";
+  assessNanpureLegacyDifficulty,
+  type NanpureLegacyDifficulty,
+} from "@/games/nanpure/legacy/difficulty";
 import {
-  generateNanpureProblem,
-  NanpureGenerationExhaustedError,
-} from "@/games/nanpure/problem/generator";
-import type { NanpureGeneratedProblem } from "@/games/nanpure/problem/problem";
+  generateNanpureLegacyProblem,
+  NanpureLegacyGenerationExhaustedError,
+} from "@/games/nanpure/legacy/generator";
+import type { NanpureLegacyGeneratedProblem } from "@/games/nanpure/legacy/problem";
 import type { ProblemSeed } from "@/games/problem-seed";
 
 const MAXIMUM_ATTEMPTS_PER_CLUE_COUNT = 12;
 
 const PREFERRED_CLUE_COUNTS_BY_DIFFICULTY: Record<
-  NanpureDifficulty,
+  NanpureLegacyDifficulty,
   readonly number[]
 > = {
   easy: [40, 36, 32],
@@ -20,18 +20,18 @@ const PREFERRED_CLUE_COUNTS_BY_DIFFICULTY: Record<
   hard: [28, 24, 32],
 };
 
-export function generateNanpureProblemForDifficulty(
-  difficulty: NanpureDifficulty,
+export function generateNanpureLegacyProblemForDifficulty(
+  difficulty: NanpureLegacyDifficulty,
   seed: ProblemSeed,
-): NanpureGeneratedProblem {
+): NanpureLegacyGeneratedProblem {
   for (const clueCount of PREFERRED_CLUE_COUNTS_BY_DIFFICULTY[difficulty]) {
     try {
-      return generateNanpureProblem({
+      return generateNanpureLegacyProblem({
         seed,
         clueCount,
         maximumAttempts: MAXIMUM_ATTEMPTS_PER_CLUE_COUNT,
         acceptCandidate: ({ difficultyAnalysis }) => {
-          const assessment = assessNanpureDifficulty(difficultyAnalysis);
+          const assessment = assessNanpureLegacyDifficulty(difficultyAnalysis);
           return (
             assessment.status === "rated" &&
             assessment.difficulty === difficulty
@@ -39,7 +39,7 @@ export function generateNanpureProblemForDifficulty(
         },
       });
     } catch (error) {
-      if (!(error instanceof NanpureGenerationExhaustedError)) {
+      if (!(error instanceof NanpureLegacyGenerationExhaustedError)) {
         throw error;
       }
     }

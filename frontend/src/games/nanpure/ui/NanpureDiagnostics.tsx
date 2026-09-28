@@ -1,7 +1,7 @@
 import { InternalDiagnosticsDialog } from "@/components/InternalDiagnosticsDialog";
 import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
 import type { NanpureDiagnosticSnapshot } from "@/games/nanpure/diagnostics";
-import { getNanpureDifficultyLabel } from "@/games/nanpure/difficulty";
+import { getNanpureLegacyDifficultyLabel } from "@/games/nanpure/legacy/difficulty";
 
 type NanpureDiagnosticsProps = {
   snapshot: NanpureDiagnosticSnapshot;
@@ -14,7 +14,7 @@ export function NanpureDiagnostics({
 }: NanpureDiagnosticsProps) {
   return (
     <InternalDiagnosticsDialog
-      difficultyLabel={getNanpureDifficultyLabel(snapshot.difficulty)}
+      difficultyLabel={getNanpureLegacyDifficultyLabel(snapshot.difficulty)}
       seed={snapshot.problemIdentity.seed}
       generatorVersion={snapshot.problemIdentity.generatorVersion}
       generationConditions={`ヒント ${snapshot.problemIdentity.conditions.clueCount}`}
