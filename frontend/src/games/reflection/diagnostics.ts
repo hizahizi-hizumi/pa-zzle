@@ -6,7 +6,7 @@ import {
 } from "@/games/reflection/problem/problem";
 
 // 内部診断が有効なビルドで、特定の問題を遊ぶための URL クエリ。
-// 例: ?generator=1&seed=rf-7-10-3&size=7&pieces=10
+// 例: ?generator=2&seed=rf-7-10-3&size=7&pieces=10
 // `generator` は省略でき、省略時は今の生成器の版とみなす。
 const problemQueryKeys = ["generator", "seed", "size", "pieces"] as const;
 

@@ -30,7 +30,7 @@ export const reflectionBoardSizes = [5, 6, 7] as const;
 export type ReflectionBoardSize = (typeof reflectionBoardSizes)[number];
 
 /** 生成手順を変えて同じ identity から別の問題ができるようになったら上げる。 */
-export const REFLECTION_GENERATOR_VERSION = "1";
+export const REFLECTION_GENERATOR_VERSION = "2";
 
 /** 問題を作る条件。`pieceCount` は手持ちのピースの総数。 */
 export type ReflectionGenerationConditions = {

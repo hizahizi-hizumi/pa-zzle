@@ -7,7 +7,10 @@ import {
   createReflectionProblemIdentity,
   type ReflectionProblemIdentity,
 } from "@/games/reflection/problem/problem";
-import { getReflectionInventoryPieceCount } from "@/games/reflection/puzzle/board";
+import {
+  getReflectionInventoryPieceCount,
+  reflectionPieces,
+} from "@/games/reflection/puzzle/board";
 
 describe("generateReflectionProblem", () => {
   const identity = createReflectionProblemIdentity(7, 10, 0);
@@ -56,17 +59,16 @@ describe("generateReflectionProblem", () => {
     expect(other.problem).not.toEqual(first.problem);
   });
 
-  describe("基本の鏡の数より少ないピース数", () => {
-    const smallIdentity = createReflectionProblemIdentity(5, 2, 0);
+  test("ピースが少ない問題でも、手持ちの種類を特定の組み合わせに固定しないこと", () => {
+    const usedPieces = new Set(
+      Array.from({ length: 20 }, (_, index) =>
+        generateReflectionProblem(createReflectionProblemIdentity(5, 2, index)),
+      ).flatMap(({ problem }) =>
+        reflectionPieces.filter((piece) => problem.inventory[piece] > 0),
+      ),
+    );
 
-    test("斜め鏡2種だけの問題を作ること", () => {
-      const result = generateReflectionProblem(smallIdentity);
-
-      expect(result.problem.inventory).toMatchObject({
-        slash: 1,
-        backslash: 1,
-      });
-    });
+    expect(usedPieces.size).toBe(reflectionPieces.length);
   });
 
   const invalidIdentities: readonly [string, ReflectionProblemIdentity][] = [
