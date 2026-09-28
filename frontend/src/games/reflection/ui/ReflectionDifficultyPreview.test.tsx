@@ -11,10 +11,6 @@ import {
   getReflectionInventoryPieceCount,
 } from "@/games/reflection/puzzle/board";
 import {
-  isSameReflectionEntry,
-  type ReflectionEntry,
-} from "@/games/reflection/puzzle/laser";
-import {
   _private,
   ReflectionDifficultyPreview,
 } from "@/games/reflection/ui/ReflectionDifficultyPreview";
@@ -22,38 +18,36 @@ import {
 const { previewStrip, createPreviewStrip } = _private;
 
 const difficultyIds = reflectionDifficulties.map(({ id }) => id);
-const STRIP_ROW_COUNT = previewStrip.pieces.length;
 
 afterEach(cleanup);
 
 function readStrip(difficulty: ReflectionDifficulty) {
   const strip = createPreviewStrip(difficulty);
-  const { board, firstRow } = strip;
+  const { board, firstRow, trace } = strip;
+  function toStripCell(cellIndex: number) {
+    const { row, column } = getReflectionCellPosition(board.size, cellIndex);
+    return { row: row - firstRow, column };
+  }
+  /** 帯の中の位置（帯の行・列）ごとのピース。盤面の大きさが変わっても同じマスとして比べる。 */
+  const piecesByStripCell = Object.fromEntries(
+    board.cells.flatMap(function toEntry(cell, cellIndex) {
+      if (cell === null) return [];
+      const { row, column } = toStripCell(cellIndex);
+      return [[`${row}:${column}`, cell] as const];
+    }),
+  );
+  /** 光が通るマスを、帯の中の位置として順に並べたもの。 */
+  const stripPath = trace.path.map(({ cellIndex }) => {
+    const { row, column } = toStripCell(cellIndex);
+    return `${row}:${column}`;
+  });
+  const turnCount = trace.path.filter(
+    (step) => step.leaving !== step.entering,
+  ).length;
   const pieceCount = getReflectionInventoryPieceCount(
     countReflectionBoardPieces(board),
   );
-  /** 帯の中の位置（帯の行・列）ごとのピース。盤面の大きさが変わっても同じマスとして比べる。 */
-  const piecesByStripCell = new Map(
-    board.cells.flatMap(function toStripCell(cell, cellIndex) {
-      if (cell === null) return [];
-      const { row, column } = getReflectionCellPosition(board.size, cellIndex);
-      return [[`${row - firstRow}:${column}`, cell] as const];
-    }),
-  );
-  return { ...strip, pieceCount, piecesByStripCell };
-}
-
-/** 帯の中の位置として読んだ光路の入口。 */
-function toStripEntry(
-  { entry }: { entry: ReflectionEntry },
-  firstRow: number,
-): string {
-  return `${entry.side}:${entry.index - firstRow}`;
-}
-
-function isInStrip(size: number, firstRow: number, cellIndex: number) {
-  const { row } = getReflectionCellPosition(size, cellIndex);
-  return firstRow <= row && row < firstRow + STRIP_ROW_COUNT;
+  return { ...strip, pieceCount, piecesByStripCell, stripPath, turnCount };
 }
 
 describe("createPreviewStrip", () => {
@@ -80,18 +74,38 @@ describe("createPreviewStrip", () => {
   );
 
   test.each(difficultyIds)(
-    "レベル %s の帯は、推論レベルと同じ本数の光路を点けること",
+    "レベル %s の光は、帯の中だけを通ってレベルの数の2倍折れ、右の外周から出ること",
     (difficulty) => {
-      const { lights } = readStrip(difficulty);
+      const { trace, stripPath, turnCount } = readStrip(difficulty);
 
-      expect(lights).toHaveLength(
-        reflectionLevelCombinations[difficulty].reasoningLevel,
-      );
+      expect(turnCount).toBe(Number(difficulty) * 2);
+      expect(
+        stripPath.every((cell) => {
+          const row = Number(cell.split(":")[0]);
+          return row >= 0 && row < previewStrip.rowCount;
+        }),
+      ).toBe(true);
+      expect(trace.outcome).toBe("exit");
+      expect(trace.exit?.side).toBe("right");
+    },
+  );
+
+  test.each(difficultyIds)(
+    "レベル %s のピースには、どれも光が当たること",
+    (difficulty) => {
+      const { board, trace } = readStrip(difficulty);
+      const litCells = new Set(trace.path.map(({ cellIndex }) => cellIndex));
+
+      expect(
+        board.cells.every(
+          (cell, cellIndex) => cell === null || litCells.has(cellIndex),
+        ),
+      ).toBe(true);
     },
   );
 
   test.each(adjacentLevels)(
-    "レベル %s の帯のピースと点いた光路の入口を、レベル %s の帯がすべて同じ位置に含み、盤面を狭めずピースと光路を増やすこと",
+    "レベル %s の帯のピースを、レベル %s の帯がすべて同じ位置に含み、盤面を狭めずに光路をその先へ延ばすこと",
     (lower, upper) => {
       const lowerStrip = readStrip(lower);
       const upperStrip = readStrip(upper);
@@ -99,125 +113,34 @@ describe("createPreviewStrip", () => {
       expect(upperStrip.board.size).toBeGreaterThanOrEqual(
         lowerStrip.board.size,
       );
-      expect(upperStrip.pieceCount).toBeGreaterThan(lowerStrip.pieceCount);
-      expect(upperStrip.lights.length).toBeGreaterThan(
-        lowerStrip.lights.length,
+      expect(upperStrip.piecesByStripCell).toMatchObject(
+        lowerStrip.piecesByStripCell,
       );
-      expect(Object.fromEntries(upperStrip.piecesByStripCell)).toMatchObject(
-        Object.fromEntries(lowerStrip.piecesByStripCell),
+      expect(Object.keys(upperStrip.piecesByStripCell).length).toBeGreaterThan(
+        Object.keys(lowerStrip.piecesByStripCell).length,
       );
-      expect(
-        upperStrip.lights.map((light) =>
-          toStripEntry(light, upperStrip.firstRow),
-        ),
-      ).toEqual(
-        expect.arrayContaining(
-          lowerStrip.lights.map((light) =>
-            toStripEntry(light, lowerStrip.firstRow),
-          ),
-        ),
+      expect(upperStrip.turnCount).toBeGreaterThan(lowerStrip.turnCount);
+      // 下のレベルで最後に折れたマスまでは、上のレベルでも同じ道筋を通る。
+      const lowerLastTurn = lowerStrip.trace.path.findLastIndex(
+        (step) => step.leaving !== step.entering,
+      );
+      expect(upperStrip.stripPath.slice(0, lowerLastTurn + 1)).toEqual(
+        lowerStrip.stripPath.slice(0, lowerLastTurn + 1),
       );
     },
   );
-
-  describe.each(difficultyIds)("レベル %s の点いた光路", (difficulty) => {
-    const { board, firstRow, lights } = readStrip(difficulty);
-
-    test("帯の中だけを通り、左右の外周から出るか吸収されること", () => {
-      const leavesStrip = lights.some(
-        ({ trace }) =>
-          trace.path.some(
-            ({ cellIndex }) => !isInStrip(board.size, firstRow, cellIndex),
-          ) ||
-          (trace.exit !== null &&
-            (trace.exit.side === "top" || trace.exit.side === "bottom")),
-      );
-
-      expect(leavesStrip).toBe(false);
-    });
-
-    test("どれもピースに当たり、帯のピースすべてにどれかが当たること", () => {
-      const touchedCellIndices = lights.map(
-        ({ trace }) =>
-          new Set(
-            trace.path
-              .map(({ cellIndex }) => cellIndex)
-              .filter((cellIndex) => board.cells[cellIndex] !== null),
-          ),
-      );
-      const pieceCellIndices = board.cells.flatMap((cell, cellIndex) =>
-        cell === null ? [] : [cellIndex],
-      );
-
-      expect(touchedCellIndices.every((cells) => cells.size > 0)).toBe(true);
-      expect(
-        pieceCellIndices.every((cellIndex) =>
-          touchedCellIndices.some((cells) => cells.has(cellIndex)),
-        ),
-      ).toBe(true);
-    });
-
-    test("別々の光路で、同じ光路の両端を2本と数えないこと", () => {
-      const endsOfOtherLights = lights.flatMap(({ trace }, index) =>
-        trace.outcome === "exit" && trace.exit
-          ? [{ exit: trace.exit, index }]
-          : [],
-      );
-
-      const counted = lights.some(({ entry }, index) =>
-        endsOfOtherLights.some(
-          (end) =>
-            end.index !== index && isSameReflectionEntry(end.exit, entry),
-        ),
-      );
-
-      expect(counted).toBe(false);
-    });
-
-    test("同じマスを通る光路どうしでつながり、照らし合わせて読む1つのまとまりになること", () => {
-      const cellSets = lights.map(
-        ({ trace }) => new Set(trace.path.map(({ cellIndex }) => cellIndex)),
-      );
-      const connected = new Set([0]);
-      let grown = true;
-      while (grown) {
-        grown = false;
-        cellSets.forEach((cells, index) => {
-          if (connected.has(index)) return;
-          const meets = [...connected].some((other) =>
-            [...cells].some((cellIndex) => cellSets[other]?.has(cellIndex)),
-          );
-          if (meets) {
-            connected.add(index);
-            grown = true;
-          }
-        });
-      }
-
-      expect(connected.size).toBe(lights.length);
-    });
-  });
-
-  test("最上位のレベルでは、退出・反射・吸収のすべての結末を見せること", () => {
-    const { lights } = readStrip("5");
-
-    const outcomes = new Set(lights.map(({ trace }) => trace.outcome));
-
-    expect([...outcomes].sort()).toEqual(["absorb", "exit", "reflect"]);
-  });
 });
 
 describe("ReflectionDifficultyPreview", () => {
   test.each(difficultyIds)(
-    "レベル %s では点いた光路の数だけ光の線を描くこと",
+    "レベル %s では光の線を1本だけ描き、外周ヒントの数字を描かないこと",
     (difficulty) => {
       const { container } = render(
         <ReflectionDifficultyPreview difficulty={difficulty} />,
       );
 
-      const lines = container.querySelectorAll("[data-laser-line]");
-
-      expect(lines).toHaveLength(Number(difficulty));
+      expect(container.querySelectorAll("[data-laser-line]")).toHaveLength(1);
+      expect(container.querySelectorAll("text")).toHaveLength(0);
     },
   );
 });

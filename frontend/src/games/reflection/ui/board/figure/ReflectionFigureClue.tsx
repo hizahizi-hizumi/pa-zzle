@@ -4,18 +4,12 @@ import type {
 } from "@/games/reflection/puzzle/laser";
 import { getReflectionClueCenter } from "@/games/reflection/ui/board/board-geometry";
 import { renderReflectionOutcomeShape } from "@/games/reflection/ui/board/ReflectionOutcomeMark";
-import {
-  reflectionOutcomeToneClassNames,
-  reflectionToneClassNames,
-} from "@/games/reflection/ui/reflection-tone";
-import { cn } from "@/lib/utils";
+import { reflectionOutcomeToneClassNames } from "@/games/reflection/ui/reflection-tone";
 
 type ReflectionFigureClueProps = {
   size: number;
   entry: ReflectionEntry;
   clue: ReflectionClue;
-  /** 光路を表示している外周ヒントとして、盤面と同じ光路の色で描く。 */
-  lit?: boolean;
 };
 
 const NUMBER_FONT_SIZE = 0.6;
@@ -28,7 +22,6 @@ export function ReflectionFigureClue({
   size,
   entry,
   clue,
-  lit = false,
 }: ReflectionFigureClueProps) {
   const center = getReflectionClueCenter(size, entry);
 
@@ -38,12 +31,7 @@ export function ReflectionFigureClue({
         x={center.x}
         y={center.y - 0.02}
         textAnchor="middle"
-        className={cn(
-          "font-semibold",
-          lit
-            ? cn(reflectionToneClassNames.laserLabel, "fill-current")
-            : "fill-foreground",
-        )}
+        className="fill-foreground font-semibold"
         fontSize={NUMBER_FONT_SIZE}
       >
         {clue.distance}
