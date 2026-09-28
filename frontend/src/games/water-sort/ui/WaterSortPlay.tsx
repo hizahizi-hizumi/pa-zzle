@@ -1,6 +1,7 @@
 import { type ReactNode, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
+import { PlayHeader } from "@/components/PlayHeader";
 import { UndoButton } from "@/components/UndoButton";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import type {
@@ -10,8 +11,8 @@ import type {
 } from "@/games/water-sort/play/use-water-sort-play";
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
+import { formatWaterSortElapsedTime } from "@/games/water-sort/ui/format-elapsed-time";
 import { DeadlockNotice } from "@/games/water-sort/ui/WaterSortPlay/DeadlockNotice";
-import { WaterSortPlayHeader } from "@/games/water-sort/ui/WaterSortPlay/WaterSortPlayHeader";
 import { WaterSortResultScreen } from "@/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen";
 
 type WaterSortPlayProps = {
@@ -87,10 +88,15 @@ export function WaterSortPlay({
   return (
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
       <BrandIdentityHeader />
-      <WaterSortPlayHeader
-        elapsedMs={elapsedMs}
-        moveCount={moveCount}
-        undoCount={undoCount}
+      <PlayHeader
+        title="ウォーターソート"
+        metricGroups={[
+          [
+            { label: "手数", value: String(moveCount) },
+            { label: "時間", value: formatWaterSortElapsedTime(elapsedMs) },
+            { label: "待った", value: String(undoCount) },
+          ],
+        ]}
         onRestart={onRestart}
         onReplay={onReplay}
         onStartNewProblem={onStartNewProblem}

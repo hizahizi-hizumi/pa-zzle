@@ -1,48 +1,69 @@
+import { ArrowLeft } from "lucide-react";
+import type { ReactNode } from "react";
+
 import {
-  ArrowLeft,
-  Home,
-  MoreHorizontal,
-  Play,
-  RotateCcw,
-  SlidersHorizontal,
-  Wrench,
-} from "lucide-react";
-import { useState } from "react";
-
+  type PlayHeaderMetricGroup,
+  PlayHeaderSummary,
+} from "@/components/PlayHeader/PlayHeaderSummary";
+import { PlayMenu } from "@/components/PlayHeader/PlayMenu";
 import { Button } from "@/components/ui/button";
-
-export type PlayHeaderMetric = { label: string; value: string };
 
 type PlayHeaderProps = {
   title: string;
-  metrics: readonly PlayHeaderMetric[];
-  canRestart: boolean;
-  onRestart: () => void;
+  /** 1群なら常に1行に並べる。複数群なら、1行に収まらない幅で群ごとに行を分ける。 */
+  metricGroups: readonly PlayHeaderMetricGroup[];
+  /**
+   * メニューの手前に置くゲーム固有の操作。
+   * 渡すと、`null` で一時的に隠す間も見出しが動かないよう、両端の幅を広げて確保する。
+   */
+  trailingAction?: ReactNode;
+  /** 省略するとメニューに「盤面を戻す」を出さない。 */
+  onRestart?: () => void;
+  canRestart?: boolean;
+  /** 省略するとメニューに「リセット」を出さない。 */
+  onReplay?: () => void;
   onStartNewProblem: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
+  onOpenHowToPlay?: () => void;
   onOpenDiagnostics?: () => void;
 };
 
 export function PlayHeader({
   title,
-  metrics,
-  canRestart,
+  metricGroups,
+  trailingAction,
   onRestart,
+  canRestart = true,
+  onReplay,
   onStartNewProblem,
   onChangeDifficulty,
   onBackToHome,
+  onOpenHowToPlay,
   onOpenDiagnostics,
 }: PlayHeaderProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  function runAndClose(action: () => void) {
-    setIsOpen(false);
-    action();
-  }
+  const hasTrailingAction = trailingAction !== undefined;
+  const menu = (
+    <PlayMenu
+      onRestart={onRestart}
+      canRestart={canRestart}
+      onReplay={onReplay}
+      onStartNewProblem={onStartNewProblem}
+      onChangeDifficulty={onChangeDifficulty}
+      onBackToHome={onBackToHome}
+      onOpenHowToPlay={onOpenHowToPlay}
+      onOpenDiagnostics={onOpenDiagnostics}
+    />
+  );
 
   return (
-    <header className="grid h-[4.5rem] shrink-0 grid-cols-[3rem_minmax(0,1fr)_3rem] items-start bg-background px-3 pt-1.5">
+    <header
+      className={
+        hasTrailingAction
+          ? "grid h-[4.5rem] shrink-0 grid-cols-[5.25rem_minmax(0,1fr)_5.25rem] items-start bg-background px-3 pt-2"
+          : "grid h-[4.5rem] shrink-0 grid-cols-[3rem_minmax(0,1fr)_3rem] items-start bg-background px-3 pt-2"
+      }
+    >
       <Button
         type="button"
         variant="ghost"
@@ -52,88 +73,15 @@ export function PlayHeader({
       >
         <ArrowLeft />
       </Button>
-      <div className="min-w-0 text-center">
-        <h1 className="truncate text-play-context">{title}</h1>
-        <div className="mt-1 flex items-center justify-center gap-2 text-play-meta text-muted-foreground">
-          {metrics.map((metric, index) => (
-            <span key={metric.label} className="contents">
-              {index > 0 ? (
-                <span aria-hidden="true" className="text-border">
-                  ·
-                </span>
-              ) : null}
-              <span className="flex items-baseline gap-1 whitespace-nowrap">
-                <span>{metric.label}</span>
-                <span className="font-mono font-medium tabular-nums text-foreground/80">
-                  {metric.value}
-                </span>
-              </span>
-            </span>
-          ))}
+      <PlayHeaderSummary title={title} metricGroups={metricGroups} />
+      {hasTrailingAction ? (
+        <div className="flex justify-end gap-1">
+          {trailingAction}
+          {menu}
         </div>
-      </div>
-      <div className="relative">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-lg"
-          aria-label="その他の操作"
-          aria-expanded={isOpen}
-          onClick={() => setIsOpen((current) => !current)}
-        >
-          <MoreHorizontal />
-        </Button>
-        {isOpen ? (
-          <div
-            role="menu"
-            className="absolute top-11 right-0 z-40 grid w-44 gap-1 rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-lg"
-          >
-            <Button
-              variant="ghost"
-              className="justify-start"
-              disabled={!canRestart}
-              onClick={() => runAndClose(onRestart)}
-            >
-              <RotateCcw />
-              盤面を戻す
-            </Button>
-            <Button
-              variant="ghost"
-              className="justify-start"
-              onClick={() => runAndClose(onStartNewProblem)}
-            >
-              <Play />
-              別の問題
-            </Button>
-            <Button
-              variant="ghost"
-              className="justify-start"
-              onClick={() => runAndClose(onChangeDifficulty)}
-            >
-              <SlidersHorizontal />
-              難易度変更
-            </Button>
-            {onOpenDiagnostics ? (
-              <Button
-                variant="ghost"
-                className="justify-start"
-                onClick={() => runAndClose(onOpenDiagnostics)}
-              >
-                <Wrench />
-                検証情報
-              </Button>
-            ) : null}
-            <Button
-              variant="ghost"
-              className="justify-start"
-              onClick={() => runAndClose(onBackToHome)}
-            >
-              <Home />
-              ホーム
-            </Button>
-          </div>
-        ) : null}
-      </div>
+      ) : (
+        menu
+      )}
     </header>
   );
 }

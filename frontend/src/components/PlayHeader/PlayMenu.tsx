@@ -1,4 +1,5 @@
 import {
+  CircleHelp,
   Home,
   MoreHorizontal,
   Play,
@@ -18,20 +19,24 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 type PlayMenuProps = {
-  onRestart: () => void;
-  onReplay: () => void;
+  onRestart?: () => void;
+  canRestart: boolean;
+  onReplay?: () => void;
   onStartNewProblem: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
+  onOpenHowToPlay?: () => void;
   onOpenDiagnostics?: () => void;
 };
 
 export function PlayMenu({
   onRestart,
+  canRestart,
   onReplay,
   onStartNewProblem,
   onChangeDifficulty,
   onBackToHome,
+  onOpenHowToPlay,
   onOpenDiagnostics,
 }: PlayMenuProps) {
   return (
@@ -47,14 +52,18 @@ export function PlayMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={onRestart}>
-          <RotateCcw />
-          盤面を戻す
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={onReplay}>
-          <RefreshCw />
-          リセット
-        </DropdownMenuItem>
+        {onRestart && (
+          <DropdownMenuItem disabled={!canRestart} onSelect={onRestart}>
+            <RotateCcw />
+            盤面を戻す
+          </DropdownMenuItem>
+        )}
+        {onReplay && (
+          <DropdownMenuItem onSelect={onReplay}>
+            <RefreshCw />
+            リセット
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onSelect={onStartNewProblem}>
           <Play />
           別の問題
@@ -67,6 +76,15 @@ export function PlayMenu({
           <Home />
           ホーム
         </DropdownMenuItem>
+        {onOpenHowToPlay && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={onOpenHowToPlay}>
+              <CircleHelp />
+              遊び方
+            </DropdownMenuItem>
+          </>
+        )}
         {onOpenDiagnostics && (
           <>
             <DropdownMenuSeparator />
