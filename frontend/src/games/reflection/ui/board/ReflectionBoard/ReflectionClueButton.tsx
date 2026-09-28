@@ -55,27 +55,27 @@ export function ReflectionClueButton({
       type="button"
       aria-label={`${formatReflectionEntry(entry)} ${reflectionOutcomeLabels[clue.outcome]} ${clue.distance}マス${matched ? " 一致" : ""}`}
       aria-pressed={selected}
+      data-matched={matched}
       disabled={disabled}
       tabIndex={focusable ? 0 : -1}
       onClick={() => onTap(entry)}
       onFocus={() => onFocus(focusKey)}
       style={{ gridRow: row, gridColumn: column }}
       className={cn(
-        "relative flex min-h-0 min-w-0 touch-manipulation select-none flex-col items-center justify-center gap-[calc(var(--reflection-unit)*0.04)] rounded-sm leading-none text-foreground outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent",
+        "relative flex min-h-0 min-w-0 touch-manipulation select-none flex-col items-center justify-center gap-[calc(var(--reflection-unit)*0.04)] rounded-sm leading-none text-foreground outline-none focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent",
         selected && reflectionToneClassNames.laserRing,
-        matched
-          ? cn(
-              reflectionToneClassNames.clueMatchSurface,
-              reflectionToneClassNames.clueMatchLabel,
-            )
-          : selected &&
-              cn(
-                reflectionToneClassNames.laserSurface,
-                reflectionToneClassNames.laserLabel,
-              ),
+        selected && !matched && reflectionToneClassNames.laserSurface,
       )}
     >
-      <span className="font-semibold tabular-nums text-[length:clamp(0.8125rem,calc(var(--reflection-unit)*0.4),1.375rem)]">
+      {/* 一致の切り替えでは数字の色だけを瞬時に変え、形・太さ・地は変えない（寸法も位置も動かさない）。 */}
+      <span
+        className={cn(
+          "font-semibold tabular-nums text-[length:clamp(0.8125rem,calc(var(--reflection-unit)*0.4),1.375rem)]",
+          matched
+            ? reflectionToneClassNames.clueMatchLabel
+            : selected && reflectionToneClassNames.laserLabel,
+        )}
+      >
         {clue.distance}
       </span>
       <span

@@ -61,21 +61,16 @@ const leftMiddle = { side: "left", index: 1 } as const;
 
 const matchExampleClue: ReflectionClue = { outcome: "exit", distance: 3 };
 
-/** 盤面の外周ヒントと同じ並び（数字の下に結果の形）で、一致しているときの地の色を見せる見本。 */
+/** 盤面の外周ヒントと同じ並び（数字の下に結果の形）で、一致しているときの数字の色を見せる見本。 */
 function ClueMatchExample({ matched }: { matched: boolean }) {
   return (
-    <span
-      className={cn(
-        "flex size-10 flex-col items-center justify-center gap-0.5 rounded-sm leading-none",
-        matched
-          ? cn(
-              reflectionToneClassNames.clueMatchSurface,
-              reflectionToneClassNames.clueMatchLabel,
-            )
-          : "border border-border text-foreground",
-      )}
-    >
-      <span className="font-semibold tabular-nums">
+    <span className="flex size-10 flex-col items-center justify-center gap-0.5 rounded-sm border border-border leading-none text-foreground">
+      <span
+        className={cn(
+          "font-semibold tabular-nums",
+          matched && reflectionToneClassNames.clueMatchLabel,
+        )}
+      >
         {matchExampleClue.distance}
       </span>
       <span
@@ -184,7 +179,7 @@ export function ReflectionHowToPlayDialog({
           </li>
           <li className="space-y-2">
             <p>
-              置くたびに、今の配置で光が数字と記号のとおりに進む外周ヒントは、地が緑になる。すべて緑になれば完成。
+              置くたびに、今の配置で光が数字と記号のとおりに進む外周ヒントは、数字が緑になる。すべて緑になれば完成。
             </p>
             <div className="flex items-center gap-4">
               <figure className="flex items-center gap-2">
