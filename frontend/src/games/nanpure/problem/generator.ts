@@ -22,8 +22,10 @@ import {
   type NanpureCell,
   type NanpureSolution,
 } from "@/games/nanpure/puzzle/board";
-import { shuffleProblemValues } from "@/games/problem-random";
-import { createProblemSeededRandom } from "@/games/problem-seed";
+import {
+  createProblemSeededRandom,
+  shuffleProblemValues,
+} from "@/games/problem-seed";
 
 export type NanpureGeneratedProblem = NanpureIdentifiedProblem & {
   difficultyAnalysis: NanpureDifficultyAnalysis;

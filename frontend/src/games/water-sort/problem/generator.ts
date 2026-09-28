@@ -1,7 +1,7 @@
-import { shuffleProblemValues } from "@/games/problem-random";
 import {
   createProblemSeededRandom,
   type ProblemSeed,
+  shuffleProblemValues,
 } from "@/games/problem-seed";
 import {
   solveWaterSort,

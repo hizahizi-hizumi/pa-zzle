@@ -9,8 +9,7 @@ import type {
   ParkingJamRoadOpening,
   ParkingJamSide,
 } from "@/games/parking-jam/puzzle/board";
-import type { ProblemRandom } from "@/games/problem-random";
-import { shuffleProblemValues } from "@/games/problem-random";
+import { type ProblemRandom, shuffleProblemValues } from "@/games/problem-seed";
 
 const sides: readonly ParkingJamSide[] = ["up", "right", "down", "left"];
 
