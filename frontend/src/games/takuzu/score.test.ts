@@ -1,10 +1,10 @@
+import { getGameResultLevel } from "@/games/result";
 import type { TakuzuSolveWorkload } from "@/games/takuzu/problem/problem";
 import {
   calculateTakuzuPlayScore,
   calculateTakuzuSpeedFullScoreMs,
   calculateTakuzuSpeedZeroScoreMs,
   calculateTakuzuTimeDeltaMs,
-  getTakuzuGameResultLevel,
 } from "@/games/takuzu/score";
 
 // レベル 1 と レベル 5 の問題集の中央値に近い作業の量。
@@ -221,7 +221,7 @@ describe("代表的なプレイ例", () => {
   ] as const;
 
   test.each(levelCases)("%s プレイを %s にすること", (_, play, level) => {
-    const resultLevel = getTakuzuGameResultLevel(scorePlay(play));
+    const resultLevel = getGameResultLevel(scorePlay(play));
 
     expect(resultLevel).toBe(level);
   });
@@ -274,23 +274,5 @@ describe("代表的なプレイ例", () => {
       expect(scores).toEqual([...scores].sort((left, right) => right - left));
       expect(new Set(scores).size).toBe(scores.length);
     });
-  });
-});
-
-describe("getTakuzuGameResultLevel", () => {
-  const cases = [
-    [100, "perfect"],
-    [99, "great"],
-    [90, "great"],
-    [89, "good"],
-    [80, "good"],
-    [79, "clear"],
-    [0, "clear"],
-  ] as const;
-
-  test.each(cases)("%i 点を %s にすること", (score, level) => {
-    const resultLevel = getTakuzuGameResultLevel(score);
-
-    expect(resultLevel).toBe(level);
   });
 });

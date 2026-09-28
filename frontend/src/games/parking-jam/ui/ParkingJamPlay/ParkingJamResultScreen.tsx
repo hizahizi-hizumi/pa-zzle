@@ -15,13 +15,13 @@ import { Button } from "@/components/ui/button";
 import parkingJamPictogramSvg from "@/games/parking-jam/assets/pictogram.svg?raw";
 import type { ParkingJamResult } from "@/games/parking-jam/play/use-parking-jam-play";
 import {
-  getParkingJamGameResultLevel,
   PARKING_JAM_FAILED_MOVE_PENALTY,
   PARKING_JAM_RESTART_PENALTY,
   PARKING_JAM_SCORE_MAXIMUMS,
   PARKING_JAM_UNDO_PENALTY,
 } from "@/games/parking-jam/score";
 import { formatParkingJamElapsedTime } from "@/games/parking-jam/ui/format-elapsed-time";
+import { getGameResultLevel } from "@/games/result";
 
 type ParkingJamResultScreenProps = {
   difficultyLabel: string;
@@ -44,7 +44,7 @@ export function ParkingJamResultScreen({
   onChangeDifficulty,
   onBackToHome,
 }: ParkingJamResultScreenProps) {
-  const resultLevel = getParkingJamGameResultLevel(result.score.total);
+  const resultLevel = getGameResultLevel(result.score.total);
 
   return (
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-y-auto bg-background">

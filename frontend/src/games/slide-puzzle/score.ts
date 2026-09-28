@@ -1,4 +1,3 @@
-import type { GameResultLevel } from "@/games/result";
 import type { SlidePuzzleBoardSize } from "@/games/slide-puzzle/puzzle/state";
 
 export const SLIDE_PUZZLE_SCORE_MAXIMUMS = {
@@ -150,19 +149,6 @@ export function calculateSlidePuzzlePlayScore({
     total: efficiency + speed,
     breakdown: { efficiency, speed },
   };
-}
-
-export function getSlidePuzzleGameResultLevel(score: number): GameResultLevel {
-  if (score >= 100) {
-    return "perfect";
-  }
-  if (score >= 90) {
-    return "great";
-  }
-  if (score >= 80) {
-    return "good";
-  }
-  return "clear";
 }
 
 export const _private = { calculateSlidePuzzleSpeedFullScoreMs };

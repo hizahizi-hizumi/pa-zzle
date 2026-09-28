@@ -26,14 +26,12 @@ import {
   type NanpureDifficulty,
 } from "@/games/nanpure/difficulty";
 import type { NanpureResult } from "@/games/nanpure/play/use-nanpure-play";
-import {
-  getNanpureGameResultLevel,
-  NANPURE_SCORE_MAXIMUMS,
-} from "@/games/nanpure/score";
+import { NANPURE_SCORE_MAXIMUMS } from "@/games/nanpure/score";
 import { formatElapsedTime } from "@/games/nanpure/ui/format-elapsed-time";
 import { DetailMetric } from "@/games/nanpure/ui/result/NanpureResultScreen/DetailMetric";
 import { ResultMetric } from "@/games/nanpure/ui/result/NanpureResultScreen/ResultMetric";
 import { ScoreCriteria } from "@/games/nanpure/ui/result/NanpureResultScreen/ScoreCriteria";
+import { getGameResultLevel } from "@/games/result";
 
 type NanpureResultScreenProps = {
   difficulty: NanpureDifficulty;
@@ -59,7 +57,7 @@ export function NanpureResultScreen({
   onOpenDiagnostics,
 }: NanpureResultScreenProps) {
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const resultLevel = getNanpureGameResultLevel(result.score.total);
+  const resultLevel = getGameResultLevel(result.score.total);
 
   return (
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-y-auto bg-background">
