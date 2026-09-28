@@ -5,13 +5,12 @@ import type { ReflectionOutcome } from "@/games/reflection/puzzle/laser";
  * リフレクション固有の色。共通UIの意味色（`primary`・`ring`・`success` など）は流用しない。
  * - `selection`: 選んでいるピース・ストックの種類。無彩色にして、ピースや外周ヒントの結果の色と取り違えないようにする。
  * - `returnTarget`: 盤面のピースを選んでいる間の戻し先（ストック）。枠で囲まず、地の色の差だけで示す。
- * - `laser`: 光路と、光路を表示している外周ヒント。線や記号は `laserText`、外周ヒントの数字は
- *   白地でも文字として読める濃さの `laserLabel`、外周ヒントの枠は `laserRing` を使う。
- * - `laserBadge`: 光路を表示している外周ヒントに添える、今の光の通るマスの数と結果の札。
- * - `laserExit`: 表示中の光が出た先の外周ヒントの破線の枠。
+ * - `laser`: 光路と、光路を表示している外周ヒント。線や記号は `laserText`、外周ヒントに添える今の光の通るマスの数は、
+ *   白地でも文字として読める濃さの `laserLabel` を使う。外周ヒントには枠や地を足さない。
  * - `clueMatch`: 今の配置での光が外周ヒントの数字・行き先と一致している外周ヒントの地と数字。
- *   控えめな緑の地にし、一致の切り替えでは地と数字の色だけを瞬時に変える（大きさ・位置・枠・太さは変えない）。
- *   押せる外周ヒントに付けるので、ホバー・押下・フォーカスでも一致の色を保つ。
+ *   外周ヒントの内側に余白を残した控えめな緑の地にし、隣り合う一致の地が帯としてつながらないようにする。
+ *   一致の切り替えでは地と数字の色だけを瞬時に変える（大きさ・位置・枠・太さは変えない）。
+ *   押せる外周ヒントでは、ホバー・押下・フォーカスで一致の地を一段濃くする（`clueMatchSurfaceInteractive`、外周ヒントのボタンを `group` にする）。
  *   ゲームの中の状態を示す色で、アプリ共通の `success`（クリア・完了）とは分ける。
  */
 export const reflectionToneClassNames = {
@@ -20,14 +19,9 @@ export const reflectionToneClassNames = {
   returnTargetSurface: "bg-foreground/7",
   laserText: "text-orange-600 dark:text-amber-400",
   laserLabel: "text-orange-700 dark:text-amber-400",
-  laserSurface: "bg-orange-500/15 dark:bg-amber-400/15",
-  laserRing: "ring-2 ring-orange-600 ring-inset dark:ring-amber-400",
-  laserBadge:
-    "bg-orange-700 text-white dark:bg-amber-400 dark:text-neutral-950",
-  laserExit:
-    "outline-2 outline-dashed -outline-offset-2 outline-orange-600 dark:outline-amber-400",
-  clueMatchSurface:
-    "bg-emerald-100 focus-visible:bg-emerald-200 enabled:hover:bg-emerald-200 enabled:active:bg-emerald-200 dark:bg-emerald-950 dark:focus-visible:bg-emerald-900 dark:enabled:hover:bg-emerald-900 dark:enabled:active:bg-emerald-900",
+  clueMatchSurface: "bg-emerald-100 dark:bg-emerald-950",
+  clueMatchSurfaceInteractive:
+    "group-focus-visible:bg-emerald-200 group-enabled:group-hover:bg-emerald-200 group-enabled:group-active:bg-emerald-200 dark:group-focus-visible:bg-emerald-900 dark:group-enabled:group-hover:bg-emerald-900 dark:group-enabled:group-active:bg-emerald-900",
   clueMatchLabel: "text-emerald-900 dark:text-emerald-200",
 } as const;
 

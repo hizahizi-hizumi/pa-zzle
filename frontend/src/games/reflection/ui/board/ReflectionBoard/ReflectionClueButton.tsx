@@ -25,8 +25,6 @@ type ReflectionClueButtonProps = {
   matched: boolean;
   /** 光路を表示しているとき、今の配置での光の結果（通るマスの数と行き先）。 */
   laserResult: ReflectionClue | null;
-  /** 表示中の光が、この外周ヒントの位置から出た（入った位置と違うときだけ）。 */
-  laserExit: boolean;
   disabled: boolean;
   focusable: boolean;
   focusKey: string;
@@ -36,15 +34,18 @@ type ReflectionClueButtonProps = {
 };
 
 /**
- * 今の光の札の位置。上下の辺は盤面の外側へはみ出させ、左右の辺は画面の端で切れないよう外周ヒントの上へ出す。
- * どちらも光路の入口（外周ヒントの盤面側の縁）を隠さない。
+ * 今の光の通るマスの数の置き方。目標の数字と並んで1つの数に読まれないよう、目標の数字の横には置かない。
+ * - 上下の辺: 盤面の外側の余白へ出す。
+ * - 左右の辺: 外側は画面の端、上下は隣の外周ヒントで余白が無いので、結果の形の行を今のマスの数に置き換える。
+ *   今の行き先は盤面の光路の線と矢印で分かる。
  */
-const laserBadgePositionClassNames = {
-  top: "bottom-full left-1/2 -translate-x-1/2 translate-y-1/3",
-  bottom: "top-full left-1/2 -translate-x-1/2 -translate-y-1/3",
-  left: "bottom-full left-1/2 -translate-x-1/2 translate-y-1/3",
-  right: "bottom-full left-1/2 -translate-x-1/2 translate-y-1/3",
-} as const satisfies Record<ReflectionSide, string>;
+const outsideLaserCountClassNames = {
+  top: "bottom-full pb-[0.1em]",
+  bottom: "top-full pt-[0.1em]",
+} as const satisfies Partial<Record<ReflectionSide, string>>;
+
+const MARK_ROW_HEIGHT =
+  "h-[clamp(0.625rem,calc(var(--reflection-unit)*0.28),1rem)]";
 
 export function ReflectionClueButton({
   size,
@@ -53,7 +54,6 @@ export function ReflectionClueButton({
   selected,
   matched,
   laserResult,
-  laserExit,
   disabled,
   focusable,
   focusKey,
@@ -62,6 +62,12 @@ export function ReflectionClueButton({
   onFocus,
 }: ReflectionClueButtonProps) {
   const { row, column } = getReflectionClueGridPosition(size, entry);
+  // 一致しているときは緑の地で目標と同じと分かるので、今のマスの数は出さない。
+  const laserCount = laserResult && !matched ? laserResult.distance : null;
+  const outsideCountClassName =
+    entry.side === "top" || entry.side === "bottom"
+      ? outsideLaserCountClassNames[entry.side]
+      : null;
   const buttonRef = useCallback(
     (element: HTMLButtonElement | null) => onElementChange(focusKey, element),
     [focusKey, onElementChange],
@@ -84,43 +90,59 @@ export function ReflectionClueButton({
       onClick={() => onTap(entry)}
       onFocus={() => onFocus(focusKey)}
       style={{ gridRow: row, gridColumn: column }}
-      className={cn(
-        "relative flex min-h-0 min-w-0 touch-manipulation select-none flex-col items-center justify-center gap-[calc(var(--reflection-unit)*0.04)] leading-none text-foreground outline-none focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent",
-        selected && reflectionToneClassNames.laserRing,
-        laserExit && reflectionToneClassNames.laserExit,
-        matched
-          ? reflectionToneClassNames.clueMatchSurface
-          : selected && reflectionToneClassNames.laserSurface,
-      )}
+      className="group relative flex min-h-0 min-w-0 touch-manipulation select-none flex-col items-center justify-center gap-[calc(var(--reflection-unit)*0.04)] leading-none text-foreground outline-none focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent"
     >
-      {/* 一致の切り替えでは地と数字の色だけを瞬時に変え、形・太さ・枠は変えない（寸法も位置も動かさない）。 */}
+      {matched ? (
+        <span
+          aria-hidden="true"
+          className={cn(
+            "pointer-events-none absolute inset-[10%]",
+            reflectionToneClassNames.clueMatchSurface,
+            reflectionToneClassNames.clueMatchSurfaceInteractive,
+          )}
+        />
+      ) : null}
       <span
         className={cn(
-          "font-semibold tabular-nums text-[length:clamp(0.8125rem,calc(var(--reflection-unit)*0.4),1.375rem)]",
-          matched
-            ? reflectionToneClassNames.clueMatchLabel
-            : selected && reflectionToneClassNames.laserLabel,
+          "relative font-semibold tabular-nums text-[length:clamp(0.8125rem,calc(var(--reflection-unit)*0.4),1.375rem)]",
+          matched && reflectionToneClassNames.clueMatchLabel,
         )}
       >
         {clue.distance}
       </span>
-      <span
-        className={cn("flex", reflectionOutcomeToneClassNames[clue.outcome])}
-      >
-        <ReflectionOutcomeMark outcome={clue.outcome} size="clue" />
-      </span>
-      {laserResult ? (
+      {laserCount !== null && outsideCountClassName === null ? (
         <span
           aria-hidden="true"
-          data-laser-badge=""
+          data-laser-count=""
           className={cn(
-            "pointer-events-none absolute z-20 flex items-center gap-[0.125em] px-[0.4em] py-[0.1em] font-semibold tabular-nums leading-none text-[length:clamp(0.625rem,calc(var(--reflection-unit)*0.3),0.875rem)]",
-            laserBadgePositionClassNames[entry.side],
-            reflectionToneClassNames.laserBadge,
+            "relative flex items-center font-semibold tabular-nums text-[length:clamp(0.625rem,calc(var(--reflection-unit)*0.3),1rem)]",
+            MARK_ROW_HEIGHT,
+            reflectionToneClassNames.laserLabel,
           )}
         >
-          {laserResult.distance}
-          <ReflectionOutcomeMark outcome={laserResult.outcome} size="badge" />
+          {laserCount}
+        </span>
+      ) : (
+        <span
+          className={cn(
+            "relative flex",
+            reflectionOutcomeToneClassNames[clue.outcome],
+          )}
+        >
+          <ReflectionOutcomeMark outcome={clue.outcome} size="clue" />
+        </span>
+      )}
+      {laserCount !== null && outsideCountClassName !== null ? (
+        <span
+          aria-hidden="true"
+          data-laser-count=""
+          className={cn(
+            "pointer-events-none absolute left-1/2 z-20 -translate-x-1/2 font-semibold tabular-nums leading-none text-[length:clamp(0.6875rem,calc(var(--reflection-unit)*0.32),0.9375rem)]",
+            outsideCountClassName,
+            reflectionToneClassNames.laserLabel,
+          )}
+        >
+          {laserCount}
         </span>
       ) : null}
     </button>

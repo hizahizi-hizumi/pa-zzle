@@ -377,7 +377,7 @@ describe("ReflectionPlay", () => {
       expect(clue.getAttribute("aria-pressed")).toBe("true");
     });
 
-    test("表示中の外周ヒントに、今の光が通るマスの数と行き先を添えること", () => {
+    test("表示中の外周ヒントに、今の光の行き先とマスの数を説明し、マスの数を表示すること", () => {
       const trace = traceReflectionLaser(placedBoard, leftMiddle);
       const clue = screen.getByRole("button", { name: "左2行 退出 3マス" });
 

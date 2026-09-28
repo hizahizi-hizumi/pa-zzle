@@ -269,11 +269,6 @@ export function ReflectionBoard({
                 ? laser.trace
                 : null
             }
-            laserExit={
-              laser?.trace.exit != null &&
-              !isSameReflectionEntry(laser.entry, laser.trace.exit) &&
-              isSameReflectionEntry(laser.trace.exit, entry)
-            }
             disabled={!playing}
             focusable={focusKey === focusableKey}
             focusKey={focusKey}

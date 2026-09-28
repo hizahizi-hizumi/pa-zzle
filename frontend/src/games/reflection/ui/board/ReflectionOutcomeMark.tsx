@@ -2,10 +2,10 @@ import type { ReflectionOutcome } from "@/games/reflection/puzzle/laser";
 import { cn } from "@/lib/utils";
 
 /**
- * `clue` は外周ヒントの中で盤面の大きさに合わせる。`inline` は文中、`figure` は遊び方の図、`badge` は光路の札（文字の大きさに合わせる）。
+ * `clue` は外周ヒントの中で盤面の大きさに合わせる。`inline` は文中、`figure` は遊び方の図。
  * 色は周りの文字色を使う。結果の色（`reflectionOutcomeToneClassNames`）は使う側が与える。
  */
-type ReflectionOutcomeMarkSize = "clue" | "inline" | "figure" | "badge";
+type ReflectionOutcomeMarkSize = "clue" | "inline" | "figure";
 
 type ReflectionOutcomeMarkProps = {
   outcome: ReflectionOutcome;
@@ -16,7 +16,6 @@ const sizeClassNames = {
   clue: "size-[clamp(0.625rem,calc(var(--reflection-unit)*0.28),1rem)]",
   inline: "size-3",
   figure: "size-3.5",
-  badge: "size-[0.9em]",
 } as const satisfies Record<ReflectionOutcomeMarkSize, string>;
 
 /**
