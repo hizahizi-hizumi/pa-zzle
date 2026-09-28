@@ -154,6 +154,50 @@ export function isReflectionProblemIdentity(
   );
 }
 
+function isNonNegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
+/**
+ * 記録から読み戻した値が、作業の量として読めるかを確かめる。
+ * 外周ヒントは一辺ごとに盤面の一辺と同じ本数あるので4の倍数で、ピースは少なくとも1つ置き、空きマスを1つは残す。
+ * 生成器の版が今と違う記録も読めるよう、盤面サイズは今の生成器の範囲に限らない。
+ */
+export function isReflectionSolveWorkload(
+  value: unknown,
+): value is ReflectionSolveWorkload {
+  if (!isRecordObject(value)) {
+    return false;
+  }
+
+  const { pieceCount, clueCount, propagationRoundCount, assumptionTestCount } =
+    value;
+  if (
+    !isNonNegativeInteger(pieceCount) ||
+    !isNonNegativeInteger(clueCount) ||
+    !isNonNegativeInteger(propagationRoundCount) ||
+    !isNonNegativeInteger(assumptionTestCount) ||
+    clueCount === 0 ||
+    clueCount % 4 !== 0
+  ) {
+    return false;
+  }
+
+  const size = clueCount / 4;
+  return pieceCount >= 1 && pieceCount < size * size;
+}
+
+/** 作業の量が、識別情報の生成条件（盤面サイズとピース数）と食い違わないか。 */
+export function isReflectionWorkloadOfIdentity(
+  workload: ReflectionSolveWorkload,
+  identity: ReflectionProblemIdentity,
+): boolean {
+  return (
+    workload.pieceCount === identity.conditions.pieceCount &&
+    workload.clueCount === identity.conditions.size * 4
+  );
+}
+
 /**
  * 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。
  * 今の生成器の版なら、今の生成器で扱える識別情報であることまで確かめる。
