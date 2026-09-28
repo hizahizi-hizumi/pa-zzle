@@ -4,7 +4,10 @@ import {
   shuffleProblemValues,
 } from "@/games/problem-seed";
 import { doAllReflectionPiecesInfluenceClues } from "@/games/reflection/problem/generation/piece-influence";
-import { countReflectionSolutions } from "@/games/reflection/problem/generation/solver";
+import {
+  countReflectionSolutions,
+  REFLECTION_UNIQUENESS_SEARCH_STEP_LIMIT,
+} from "@/games/reflection/problem/generation/solver";
 import { getReflectionSymmetryKey } from "@/games/reflection/problem/generation/symmetry";
 import {
   isReflectionBoardSize,
@@ -30,12 +33,6 @@ export type ReflectionGeneratedProblem = ReflectionIdentifiedProblem & {
   symmetryKey: string;
   generationAttemptCount: number;
 };
-
-/**
- * 1候補あたりの一意性判定の探索量の上限。7×7・12ピースまでの候補は5千節点以内で判定が終わるので、十分な余裕を持たせている。
- * 上限に達した候補は一意とみなさず捨てる。
- */
-const REFLECTION_UNIQUENESS_SEARCH_STEP_LIMIT = 200_000;
 
 const MAXIMUM_GENERATION_ATTEMPTS = 100;
 
