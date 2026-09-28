@@ -75,7 +75,7 @@ describe("getReflectionPlayRecordScore", () => {
   test("保存した事実から現在のプレイ評価を導出すること", () => {
     const score = getReflectionPlayRecordScore(record);
 
-    expect(score).toBe(80);
+    expect(score).toBe(87);
   });
 });
 
@@ -186,7 +186,7 @@ describe("isReflectionPlayRecord", () => {
 });
 
 describe("reflectionPlayRecordDefinition", () => {
-  const metricIds = ["play-score", "time-delta-ms", "relocation-count"];
+  const metricIds = ["play-score", "time-delta-ms"];
 
   test("難易度を自己ベストの比較単位として扱うこと", () => {
     const comparisonKey =
@@ -195,7 +195,7 @@ describe("reflectionPlayRecordDefinition", () => {
     expect(comparisonKey).toBe("5");
   });
 
-  test("自己ベストを評価点は高いほど、基準時間との差と置き直し回数は小さいほど良いとして比べること", () => {
+  test("自己ベストを評価点は高いほど、基準時間との差は小さいほど良いとして比べ、点に入らない置き直し回数は比べないこと", () => {
     const directions = reflectionPlayRecordDefinition.personalBestMetrics.map(
       ({ id, direction }) => [id, direction],
     );
@@ -203,7 +203,6 @@ describe("reflectionPlayRecordDefinition", () => {
     expect(directions).toEqual([
       ["play-score", "higher"],
       ["time-delta-ms", "lower"],
-      ["relocation-count", "lower"],
     ]);
   });
 
@@ -216,7 +215,7 @@ describe("reflectionPlayRecordDefinition", () => {
       ),
     );
 
-    expect(values).toEqual([80, 82_000, 2]);
+    expect(values).toEqual([87, 82_000]);
   });
 
   describe("生成器の版が今と違う記録の場合", () => {
@@ -231,7 +230,7 @@ describe("reflectionPlayRecordDefinition", () => {
         ),
       );
 
-      expect(values).toEqual([80, 82_000, 2]);
+      expect(values).toEqual([87, 82_000]);
     });
   });
 });

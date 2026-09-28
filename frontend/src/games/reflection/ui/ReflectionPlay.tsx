@@ -44,7 +44,6 @@ type ReflectionPlayProps = {
   stock: ReflectionInventory;
   selection: ReflectionSelection | null;
   laser: ReflectionLaserView | null;
-  relocationCount: number;
   elapsedMs: number;
   canRestart: boolean;
   /** クリアしたプレイの事実。クリアするまでは `null`。 */
@@ -83,7 +82,6 @@ export function ReflectionPlay({
   stock,
   selection,
   laser,
-  relocationCount,
   elapsedMs,
   canRestart,
   sessionResult,
@@ -198,7 +196,6 @@ export function ReflectionPlay({
     >
       <BrandIdentityHeader />
       <ReflectionPlayHeader
-        relocationCount={relocationCount}
         elapsedMs={elapsedMs}
         canRestart={canRestart}
         onRestart={onRestart}

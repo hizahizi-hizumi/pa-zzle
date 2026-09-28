@@ -253,7 +253,7 @@ describe("PlayRecordsScreen", () => {
     expect(screen.getByText("1件")).toBeTruthy();
   });
 
-  test("リフレクションでは難易度ごとにスコア・基準時間との差・置き直しを比較すること", () => {
+  test("リフレクションでは難易度ごとにスコア・基準時間との差を比較すること", () => {
     const gameSelect = screen.getByRole("combobox", { name: "パズル" });
     fireEvent.change(gameSelect, { target: { value: "reflection" } });
     const comparisonSelect = screen.getByRole("combobox", {
@@ -262,10 +262,8 @@ describe("PlayRecordsScreen", () => {
 
     expect(gameSelect.textContent).toContain("リフレクション");
     expect(comparisonSelect.textContent).toContain("レベル 4");
-    expect(screen.getAllByText("84点").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("86点").length).toBeGreaterThan(0);
     expect(screen.getAllByText("+00:24").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("置き直し").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("1回").length).toBeGreaterThan(0);
     expect(screen.getByText("1件")).toBeTruthy();
   });
 });

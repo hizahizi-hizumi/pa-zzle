@@ -1,8 +1,6 @@
 import type { ReflectionResult } from "@/games/reflection/play/use-reflection-play";
 import {
-  REFLECTION_RELOCATION_PENALTY,
-  REFLECTION_RESTART_PENALTY,
-  REFLECTION_SCORE_MAXIMUMS,
+  REFLECTION_SCORE_MAXIMUM,
   REFLECTION_SPEED_ASSUMPTION_TEST_LIMIT,
   REFLECTION_SPEED_PER_ASSUMPTION_TEST_MS,
   REFLECTION_SPEED_PER_CLUE_MS,
@@ -49,20 +47,20 @@ export function ScoreCriteria({ result }: ScoreCriteriaProps) {
   return (
     <dl className="grid gap-3 text-meta">
       <div>
-        <dt className="font-semibold text-foreground">正確性</dt>
+        <dt className="font-semibold text-foreground">速さ</dt>
         <dd className="mt-1">
-          {`置き直し1回につき${REFLECTION_RELOCATION_PENALTY}点、盤面戻し1回につき${REFLECTION_RESTART_PENALTY}点を減点（満点${REFLECTION_SCORE_MAXIMUMS.accuracy}点）。置き直しは、置いたピースを別のマスへ移す・入れ替える・ストックへ戻す・別の種類で置き換えた回数です。盤面戻しは、メニューの「盤面を戻す」を使った回数です。光路を確かめた回数は点に入りません。`}
+          {`基準時間${formatElapsedTime(speedFullScoreMs)}以内で${REFLECTION_SCORE_MAXIMUM}点、${formatElapsedTime(speedZeroScoreMs)}以上で0点、その間は時間に応じて減点。基準時間は${formatSpeedFullScoreFormula(workload)}。局面と仮に置く回数は、この問題を外周ヒントから読んで解くときに要る回数です（仮に置く回数は${REFLECTION_SPEED_ASSUMPTION_TEST_LIMIT}回まで数えます）。`}
         </dd>
       </div>
       <div>
-        <dt className="font-semibold text-foreground">速さ</dt>
+        <dt className="font-semibold text-foreground">点に入らないもの</dt>
         <dd className="mt-1">
-          {`基準時間${formatElapsedTime(speedFullScoreMs)}以内で${REFLECTION_SCORE_MAXIMUMS.speed}点、${formatElapsedTime(speedZeroScoreMs)}以上で0点、その間は時間に応じて減点。基準時間は${formatSpeedFullScoreFormula(workload)}。局面と仮に置く回数は、この問題を外周ヒントから読んで解くときに要る回数です（仮に置く回数は${REFLECTION_SPEED_ASSUMPTION_TEST_LIMIT}回まで数えます）。`}
+          置き直し・盤面戻し・光路を確かめた回数は点に入りません。置いて確かめ、動かして直しても減点しません。
         </dd>
       </div>
       <div>
         <dt className="sr-only">丸め</dt>
-        <dd>速さは1点単位に四捨五入し、各項目は0点を下限とします。</dd>
+        <dd>1点単位に四捨五入します。</dd>
       </div>
     </dl>
   );

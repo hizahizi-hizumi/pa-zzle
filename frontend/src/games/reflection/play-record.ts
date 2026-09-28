@@ -27,7 +27,7 @@ const REFLECTION_PLAY_RECORD_PAYLOAD_VERSION = 1;
  *   生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
  * - `workload`: 遊んだ問題を解き切る作業の量。問題集から問題を引けない記録でも基準時間を求め直せるよう、問題の事実として残す。
  * - `performance`: そのプレイで起きた事実。評価点・評価段階・基準時間との差は保存せず、現在の評価規則で導出する。
- *   光路を確かめた回数・入力回数は評価に使わないが、評価規則を見直すときの材料として残す。
+ *   置き直し・盤面を戻した回数・光路を確かめた回数・入力回数は評価に使わないが、結果・記録画面に出し、評価規則を見直すときの材料として残す。
  */
 type ReflectionPlayRecordPayload = {
   difficulty: ReflectionDifficulty;
@@ -161,7 +161,10 @@ export function getReflectionPlayRecordScore(
   }
 
   const { workload, performance } = record.payload;
-  return calculateReflectionPlayScore({ ...performance, workload }).total;
+  return calculateReflectionPlayScore({
+    elapsedMs: performance.elapsedMs,
+    workload,
+  });
 }
 
 export function getReflectionPlayRecordTimeDelta(
@@ -194,15 +197,6 @@ export const reflectionPlayRecordDefinition: PlayRecordDefinition = {
       id: "time-delta-ms",
       direction: "lower",
       getValue: getReflectionPlayRecordTimeDelta,
-    },
-    {
-      id: "relocation-count",
-      direction: "lower",
-      getValue(record) {
-        return isReflectionPlayRecord(record)
-          ? record.payload.performance.relocationCount
-          : null;
-      },
     },
   ],
 };

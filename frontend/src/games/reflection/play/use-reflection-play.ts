@@ -26,7 +26,6 @@ import {
   calculateReflectionSpeedFullScoreMs,
   calculateReflectionSpeedZeroScoreMs,
   calculateReflectionTimeDeltaMs,
-  type ReflectionPlayScore,
 } from "@/games/reflection/score";
 import {
   canRestartReflectionSession,
@@ -68,7 +67,7 @@ export type ReflectionResult = ReflectionSessionResult & {
   speedFullScoreMs: number;
   speedZeroScoreMs: number;
   timeDeltaMs: number;
-  score: ReflectionPlayScore;
+  score: number;
 };
 
 /**
@@ -143,7 +142,10 @@ function createReflectionResult(
       elapsedMs: sessionResult.elapsedMs,
       workload,
     }),
-    score: calculateReflectionPlayScore({ ...sessionResult, workload }),
+    score: calculateReflectionPlayScore({
+      elapsedMs: sessionResult.elapsedMs,
+      workload,
+    }),
   };
 }
 
@@ -303,7 +305,6 @@ export function useReflectionPlay(
     stock,
     selection: session.selection,
     laser,
-    relocationCount: session.relocationCount,
     elapsedMs: getReflectionSessionElapsedMs(session, now),
     canRestart: canRestartReflectionSession(session),
     startedAt: session.startedAt,

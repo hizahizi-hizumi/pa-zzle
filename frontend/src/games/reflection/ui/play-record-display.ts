@@ -32,15 +32,5 @@ export const reflectionPlayRecordDisplay = {
       referenceValue: 0,
       axis: { kind: "duration-ms" as const },
     },
-    {
-      id: "relocation-count",
-      label: "置き直し",
-      historyLabel: "置き直し",
-      formatValue(value: number) {
-        return `${value}回`;
-      },
-      referenceValue: 0,
-      axis: { kind: "integer" as const, minimum: 0 },
-    },
   ],
 };

@@ -105,7 +105,6 @@ export function PlayableReflection({
         stock={play.stock}
         selection={play.selection}
         laser={play.laser}
-        relocationCount={play.relocationCount}
         elapsedMs={play.elapsedMs}
         canRestart={play.canRestart}
         sessionResult={play.sessionResult}

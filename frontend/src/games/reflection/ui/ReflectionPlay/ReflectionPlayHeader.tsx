@@ -5,7 +5,6 @@ import { PlayHeaderSummary } from "@/games/reflection/ui/ReflectionPlay/Reflecti
 import { PlayMenu } from "@/games/reflection/ui/ReflectionPlay/ReflectionPlayHeader/PlayMenu";
 
 type ReflectionPlayHeaderProps = {
-  relocationCount: number;
   elapsedMs: number;
   canRestart: boolean;
   onRestart: () => void;
@@ -18,7 +17,6 @@ type ReflectionPlayHeaderProps = {
 };
 
 export function ReflectionPlayHeader({
-  relocationCount,
   elapsedMs,
   canRestart,
   onRestart,
@@ -40,10 +38,7 @@ export function ReflectionPlayHeader({
       >
         <ArrowLeft />
       </Button>
-      <PlayHeaderSummary
-        relocationCount={relocationCount}
-        elapsedMs={elapsedMs}
-      />
+      <PlayHeaderSummary elapsedMs={elapsedMs} />
       <PlayMenu
         canRestart={canRestart}
         onRestart={onRestart}

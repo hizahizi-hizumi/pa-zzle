@@ -39,7 +39,7 @@ afterEach(() => {
 });
 
 function createResult(performance: ReflectionSessionResult): ReflectionResult {
-  // 基準時間 28 × 0.5 + 8 × 6 + 3 × 8 + min(12, 10) × 15 = 236秒（03:56）、0点になる時間 07:52。
+  // 基準時間 28 × 0.5 + 8 × 6 + 3 × 8 + min(12, 10) × 15 = 236秒（03:56）、0点になる時間 11:48。
   const workload = {
     pieceCount: 8,
     clueCount: 28,
@@ -55,11 +55,14 @@ function createResult(performance: ReflectionSessionResult): ReflectionResult {
       elapsedMs: performance.elapsedMs,
       workload,
     }),
-    score: calculateReflectionPlayScore({ ...performance, workload }),
+    score: calculateReflectionPlayScore({
+      elapsedMs: performance.elapsedMs,
+      workload,
+    }),
   };
 }
 
-// 置き直し2回・盤面戻し1回で正確性 35点、24秒超過で速さ 36点。
+// 24秒超過で95点。置き直し2回・盤面戻し1回は点に入らない。
 const performance = {
   elapsedMs: 260_000,
   relocationCount: 2,
@@ -68,12 +71,8 @@ const performance = {
   inputCount: 20,
 };
 const result = createResult(performance);
-const perfectResult = createResult({
-  ...performance,
-  elapsedMs: 221_000,
-  relocationCount: 0,
-  restartCount: 0,
-});
+// 基準時間以内なら、置き直しや盤面戻しがあっても100点。
+const perfectResult = createResult({ ...performance, elapsedMs: 221_000 });
 
 describe("ReflectionPlay", () => {
   const solution = parseReflectionBoard(["/..", "...", "..@"]);
@@ -108,7 +107,6 @@ describe("ReflectionPlay", () => {
     stock: inventory,
     selection: null,
     laser: null,
-    relocationCount: 3,
     elapsedMs: 65_000,
     canRestart: false,
     sessionResult: null,
@@ -172,13 +170,13 @@ describe("ReflectionPlay", () => {
       renderPlay({});
     });
 
-    test("置き直しと時間をヘッダーに出すこと", () => {
+    test("時間だけをヘッダーに出し、置き直しと待ったを出さないこと", () => {
       const header = screen
         .getByRole("heading", { name: REFLECTION_DISPLAY_NAME })
         .closest("header") as HTMLElement;
 
-      expect(within(header).getByText("置き直し")).toBeTruthy();
       expect(within(header).getByText("01:05")).toBeTruthy();
+      expect(within(header).queryByText("置き直し")).toBeNull();
       expect(within(header).queryByText("待った")).toBeNull();
     });
 
@@ -440,7 +438,7 @@ describe("ReflectionPlay", () => {
         expect(pictogram).toBeTruthy();
         expect(gameName).toBeTruthy();
         expect(difficulty).toBeTruthy();
-        expect(score.getByText("71")).toBeTruthy();
+        expect(score.getByText("95")).toBeTruthy();
       });
 
       test("時間と基準時間との差・置き直しを主な成績として表示すること", () => {
@@ -501,7 +499,7 @@ describe("ReflectionPlay", () => {
           );
         });
 
-        test("観点ごとの点数・盤面戻し・光路の確認・基準時間・作業の量を内訳に表示すること", () => {
+        test("盤面戻し・光路の確認・基準時間・作業の量を内訳に表示すること", () => {
           const terms = screen
             .getAllByRole("term")
             .map((term) => term.textContent);
@@ -511,8 +509,6 @@ describe("ReflectionPlay", () => {
 
           expect(terms).toEqual(
             expect.arrayContaining([
-              "正確性",
-              "速さ",
               "盤面戻し",
               "光路の確認",
               "基準時間",
@@ -524,8 +520,6 @@ describe("ReflectionPlay", () => {
           );
           expect(definitions).toEqual(
             expect.arrayContaining([
-              "35 / 60",
-              "36 / 40",
               "1回",
               "4回",
               "03:56",
@@ -541,15 +535,15 @@ describe("ReflectionPlay", () => {
           const criteria = screen.getByText(/基準時間は/);
 
           expect(criteria.textContent).toBe(
-            "基準時間03:56以内で40点、07:52以上で0点、その間は時間に応じて減点。基準時間は外周ヒント28本 × 0.5秒 + ピース8個 × 6秒 + 照らし直す局面3回 × 8秒 + 仮に置いて確かめる10回 × 15秒。局面と仮に置く回数は、この問題を外周ヒントから読んで解くときに要る回数です（仮に置く回数は10回まで数えます）。",
+            "基準時間03:56以内で100点、11:48以上で0点、その間は時間に応じて減点。基準時間は外周ヒント28本 × 0.5秒 + ピース8個 × 6秒 + 照らし直す局面3回 × 8秒 + 仮に置いて確かめる10回 × 15秒。局面と仮に置く回数は、この問題を外周ヒントから読んで解くときに要る回数です（仮に置く回数は10回まで数えます）。",
           );
         });
 
-        test("置き直しと盤面戻しの減点と数え方を表示すること", () => {
-          const criteria = screen.getByText(/置き直し1回につき/);
+        test("置き直し・盤面戻し・光路の確認を減点しないことを表示すること", () => {
+          const criteria = screen.getByText(/点に入りません/);
 
           expect(criteria.textContent).toBe(
-            "置き直し1回につき5点、盤面戻し1回につき15点を減点（満点60点）。置き直しは、置いたピースを別のマスへ移す・入れ替える・ストックへ戻す・別の種類で置き換えた回数です。盤面戻しは、メニューの「盤面を戻す」を使った回数です。光路を確かめた回数は点に入りません。",
+            "置き直し・盤面戻し・光路を確かめた回数は点に入りません。置いて確かめ、動かして直しても減点しません。",
           );
         });
       });

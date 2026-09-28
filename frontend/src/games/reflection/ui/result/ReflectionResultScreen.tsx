@@ -27,10 +27,7 @@ import {
   type ReflectionLaserPathMode,
 } from "@/games/reflection/laser-path-mode";
 import type { ReflectionResult } from "@/games/reflection/play/use-reflection-play";
-import {
-  getReflectionGameResultLevel,
-  REFLECTION_SCORE_MAXIMUMS,
-} from "@/games/reflection/score";
+import { getReflectionGameResultLevel } from "@/games/reflection/score";
 import type { ReflectionSessionResult } from "@/games/reflection/session/session";
 import { formatElapsedTime } from "@/games/reflection/ui/format-elapsed-time";
 import { formatReflectionTimeDelta } from "@/games/reflection/ui/format-performance-delta";
@@ -70,7 +67,7 @@ export function ReflectionResultScreen({
 }: ReflectionResultScreenProps) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const resultLevel = result
-    ? getReflectionGameResultLevel(result.score.total)
+    ? getReflectionGameResultLevel(result.score)
     : "clear";
   const { showsCheckCountInResult } =
     getReflectionLaserPathPolicy(laserPathMode);
@@ -100,7 +97,7 @@ export function ReflectionResultScreen({
         />
 
         {result ? (
-          <GameResultScoreCard score={result.score.total} level={resultLevel} />
+          <GameResultScoreCard score={result.score} level={resultLevel} />
         ) : (
           <p className="mt-3 bg-muted/55 px-3 py-3 text-center text-supporting text-muted-foreground">
             問題集に無い問題のため、スコアは出しません。
@@ -163,14 +160,6 @@ export function ReflectionResultScreen({
             <CollapsibleContent>
               <div className="mt-2 bg-muted/55 px-3 py-3 text-supporting text-muted-foreground">
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
-                  <DetailMetric
-                    label="正確性"
-                    value={`${result.score.breakdown.accuracy} / ${REFLECTION_SCORE_MAXIMUMS.accuracy}`}
-                  />
-                  <DetailMetric
-                    label="速さ"
-                    value={`${result.score.breakdown.speed} / ${REFLECTION_SCORE_MAXIMUMS.speed}`}
-                  />
                   <DetailMetric
                     label="盤面戻し"
                     value={`${result.restartCount}回`}
