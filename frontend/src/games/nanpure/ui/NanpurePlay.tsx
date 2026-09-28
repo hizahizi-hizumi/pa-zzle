@@ -14,9 +14,9 @@ import type {
 import type { NanpureNotes } from "@/games/nanpure/session/session";
 import { NanpureClearAnimation } from "@/games/nanpure/ui/board/clear/NanpureClearAnimation";
 import { NanpureBoard } from "@/games/nanpure/ui/board/NanpureBoard";
-import { formatElapsedTime } from "@/games/nanpure/ui/format-elapsed-time";
 import { NanpureInputPanel } from "@/games/nanpure/ui/play/NanpureInputPanel";
 import { NanpureResultScreen } from "@/games/nanpure/ui/result/NanpureResultScreen";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type NanpurePlayProps = {
   difficulty: NanpureDifficulty;

@@ -5,9 +5,9 @@ import {
 import { waterSortPlayRecordDefinition } from "@/games/water-sort/play-record";
 
 import {
-  formatWaterSortMoveDelta,
-  formatWaterSortTimeDelta,
-} from "@/games/water-sort/ui/format-performance-delta";
+  formatCountDelta,
+  formatElapsedTimeDelta,
+} from "@/lib/format-performance-delta";
 
 export const waterSortPlayRecordDisplay = {
   definition: waterSortPlayRecordDefinition,
@@ -31,7 +31,7 @@ export const waterSortPlayRecordDisplay = {
       id: "time-delta-ms",
       label: "基準時間との差",
       historyLabel: "時間差",
-      formatValue: formatWaterSortTimeDelta,
+      formatValue: formatElapsedTimeDelta,
       referenceValue: 0,
       axis: { kind: "duration-ms" as const },
     },
@@ -39,7 +39,7 @@ export const waterSortPlayRecordDisplay = {
       id: "move-delta",
       label: "最短手数との差",
       historyLabel: "手数差",
-      formatValue: formatWaterSortMoveDelta,
+      formatValue: formatCountDelta,
       referenceValue: 0,
       axis: { kind: "integer" as const, minimum: 0 },
     },

@@ -27,11 +27,11 @@ import {
 } from "@/games/nanpure/difficulty";
 import type { NanpureResult } from "@/games/nanpure/play/use-nanpure-play";
 import { NANPURE_SCORE_MAXIMUMS } from "@/games/nanpure/score";
-import { formatElapsedTime } from "@/games/nanpure/ui/format-elapsed-time";
 import { DetailMetric } from "@/games/nanpure/ui/result/NanpureResultScreen/DetailMetric";
 import { ResultMetric } from "@/games/nanpure/ui/result/NanpureResultScreen/ResultMetric";
 import { ScoreCriteria } from "@/games/nanpure/ui/result/NanpureResultScreen/ScoreCriteria";
 import { getGameResultLevel } from "@/games/result";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type NanpureResultScreenProps = {
   difficulty: NanpureDifficulty;

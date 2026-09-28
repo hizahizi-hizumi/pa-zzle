@@ -28,15 +28,17 @@ import {
 } from "@/games/slide-puzzle/difficulty";
 import type { SlidePuzzleResult } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import { SLIDE_PUZZLE_SCORE_MAXIMUMS } from "@/games/slide-puzzle/score";
-import { formatSlidePuzzleElapsedTime } from "@/games/slide-puzzle/ui/format-elapsed-time";
-import {
-  formatSlidePuzzleMoveDelta,
-  formatSlidePuzzleTimeDelta,
-} from "@/games/slide-puzzle/ui/format-performance-delta";
 import { DetailMetric } from "@/games/slide-puzzle/ui/SlidePuzzlePlay/SlidePuzzleResultScreen/DetailMetric";
-import { formatScoreTime } from "@/games/slide-puzzle/ui/SlidePuzzlePlay/SlidePuzzleResultScreen/format-score-time";
 import { ResultMetric } from "@/games/slide-puzzle/ui/SlidePuzzlePlay/SlidePuzzleResultScreen/ResultMetric";
 import { ScoreCriteria } from "@/games/slide-puzzle/ui/SlidePuzzlePlay/SlidePuzzleResultScreen/ScoreCriteria";
+import {
+  formatElapsedTime,
+  formatElapsedTimeWithTenths,
+} from "@/lib/format-elapsed-time";
+import {
+  formatCountDelta,
+  formatElapsedTimeDelta,
+} from "@/lib/format-performance-delta";
 
 type SlidePuzzleResultScreenProps = {
   difficulty: SlidePuzzleDifficulty;
@@ -84,12 +86,12 @@ export function SlidePuzzleResultScreen({
           <ResultMetric
             label="手数"
             value={String(result.moveCount)}
-            detail={`最短 ${formatSlidePuzzleMoveDelta(result.moveDelta)}`}
+            detail={`最短 ${formatCountDelta(result.moveDelta)}`}
           />
           <ResultMetric
             label="時間"
-            value={formatSlidePuzzleElapsedTime(result.elapsedMs)}
-            detail={`基準 ${formatSlidePuzzleTimeDelta(result.timeDeltaMs)}`}
+            value={formatElapsedTime(result.elapsedMs)}
+            detail={`基準 ${formatElapsedTimeDelta(result.timeDeltaMs)}`}
           />
         </dl>
 
@@ -144,7 +146,7 @@ export function SlidePuzzleResultScreen({
                 />
                 <DetailMetric
                   label="基準時間"
-                  value={formatScoreTime(result.speedFullScoreMs)}
+                  value={formatElapsedTimeWithTenths(result.speedFullScoreMs)}
                 />
                 <DetailMetric
                   label="完成時の手数"

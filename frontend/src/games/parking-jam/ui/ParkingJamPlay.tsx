@@ -15,8 +15,8 @@ import type {
   ParkingJamVehicleId,
 } from "@/games/parking-jam/puzzle/board";
 import { ParkingJamBoard } from "@/games/parking-jam/ui/board/ParkingJamBoard";
-import { formatParkingJamElapsedTime } from "@/games/parking-jam/ui/format-elapsed-time";
 import { ParkingJamResultScreen } from "@/games/parking-jam/ui/ParkingJamPlay/ParkingJamResultScreen";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type ParkingJamPlayProps = {
   /** 結果画面に出す難易度の表示名。 */
@@ -100,7 +100,7 @@ export function ParkingJamPlay({
         metricGroups={[
           [
             { label: "ミス", value: String(failedMoveCount) },
-            { label: "時間", value: formatParkingJamElapsedTime(elapsedMs) },
+            { label: "時間", value: formatElapsedTime(elapsedMs) },
             { label: "待った", value: String(undoCount) },
           ],
         ]}
