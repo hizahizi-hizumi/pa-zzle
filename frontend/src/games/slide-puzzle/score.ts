@@ -1,3 +1,4 @@
+import { calculateLinearScore } from "@/games/score";
 import type { SlidePuzzleBoardSize } from "@/games/slide-puzzle/puzzle/state";
 
 export const SLIDE_PUZZLE_SCORE_MAXIMUMS = {
@@ -51,14 +52,6 @@ type SlidePuzzlePerformanceComparison = {
   timeDeltaMs: number;
   moveDelta: number;
 };
-
-function clampUnit(value: number): number {
-  return Math.min(1, Math.max(0, value));
-}
-
-function calculateLinearScore(maximum: number, ratio: number): number {
-  return Math.round(maximum * clampUnit(ratio));
-}
 
 function calculateSlidePuzzleSpeedFullScoreMs({
   boardSize,

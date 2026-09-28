@@ -1,3 +1,4 @@
+import { subtractWithFloor } from "@/games/score";
 export const NANPURE_SCORE_MAXIMUMS = {
   accuracy: 40,
   speed: 40,
@@ -26,10 +27,6 @@ type NanpurePlayScoreInput = {
   undoCount: number;
   restartCount: number;
 };
-
-function subtractWithFloor(maximum: number, penalty: number): number {
-  return Math.max(0, maximum - penalty);
-}
 
 export function calculateNanpurePlayScore({
   elapsedMs,
