@@ -27,9 +27,9 @@ export type ReflectionProblem = {
 
 /**
  * 生成器が扱う盤面サイズ。5段階の出題（問題集）で使うのは 5〜7 だけで（`reflectionLevelCombinations`）、
- * 8・9 は内部診断の問題指定で開いて試すサンプル用。
+ * 8〜11 は内部診断の問題指定で開いて試すサンプル用。
  */
-export const reflectionBoardSizes = [5, 6, 7, 8, 9] as const;
+export const reflectionBoardSizes = [5, 6, 7, 8, 9, 10, 11] as const;
 
 export type ReflectionBoardSize = (typeof reflectionBoardSizes)[number];
 

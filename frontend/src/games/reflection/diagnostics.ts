@@ -32,7 +32,7 @@ import {
 // - 問題集の番号: ?pool=1&problem=4-17（`pool` は省略でき、省略時は今の問題集の版）
 // - 生成器の identity: ?generator=2&seed=rf-7-10-3&size=7&pieces=10（`generator` は省略でき、省略時は今の生成器の版）
 // 問題集の番号は問題集を作り直すと別の問題を指すので、記録や資料に残すときは identity の形を使う。
-// identity の形では、5段階の出題に使わない 8×8・9×9 の盤面もサンプルとして開ける（スコアは出さず、記録もしない）。
+// identity の形では、5段階の出題に使わない 8×8〜11×11 の盤面もサンプルとして開ける（スコアは出さず、記録もしない）。
 const poolQueryKeys = ["pool", "problem"] as const;
 const identityQueryKeys = ["generator", "seed", "size", "pieces"] as const;
 
@@ -120,7 +120,7 @@ export function parseReflectionProblemQuery(
 }
 
 /**
- * 5段階の出題に使う盤面サイズより大きい盤面（診断で開く 8×8・9×9 のサンプル）は分析しない。
+ * 5段階の出題に使う盤面サイズより大きい盤面（診断で開く 8×8〜11×11 のサンプル）は分析しない。
  * 分類はどのレベルにも当たらず、分析に1分を超える問題もあって検証情報を開くたびに画面が止まるため。
  */
 export type ReflectionDiagnosticAssessment =

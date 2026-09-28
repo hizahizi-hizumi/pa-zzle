@@ -129,7 +129,7 @@ describe("isReflectionPlayRecord", () => {
       withPayload({
         problemIdentity: {
           ...problemIdentity,
-          conditions: { size: 10, pieceCount: 11 },
+          conditions: { size: 12, pieceCount: 11 },
         },
       }),
     ],

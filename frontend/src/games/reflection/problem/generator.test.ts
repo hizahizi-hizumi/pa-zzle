@@ -98,7 +98,7 @@ describe("generateReflectionProblem", () => {
       {
         ...identity,
         conditions: {
-          size: 10 as ReflectionProblemIdentity["conditions"]["size"],
+          size: 12 as ReflectionProblemIdentity["conditions"]["size"],
           pieceCount: 10,
         },
       },

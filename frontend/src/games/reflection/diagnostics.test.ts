@@ -22,7 +22,7 @@ describe("parseReflectionProblemQuery", () => {
   );
   const invalidCases = [
     ["seed の欠けたクエリ", "size=5&pieces=3"],
-    ["扱わない盤面サイズ", "seed=a&size=10&pieces=3"],
+    ["扱わない盤面サイズ", "seed=a&size=12&pieces=3"],
     ["盤面に収まらないピース数", "seed=a&size=5&pieces=25"],
     ["数でないピース数", "seed=a&size=5&pieces=three"],
     ["今と違う生成器の版", "generator=0&seed=a&size=5&pieces=3"],
@@ -65,13 +65,23 @@ describe("parseReflectionProblemQuery", () => {
     expect(result).toEqual(pooled.identity);
   });
 
-  test("5段階の出題に無い 9×9 のサンプルも identity で開けること", () => {
-    const result = parseReflectionProblemQuery(
-      new URLSearchParams("seed=rf-9-12-3&size=9&pieces=12"),
-    );
+  test.each([
+    [9, 12, 3],
+    [11, 24, 8],
+  ] as const)(
+    "5段階の出題に無い盤面サイズ %i のサンプルも identity で開けること",
+    (size, pieces, index) => {
+      const result = parseReflectionProblemQuery(
+        new URLSearchParams(
+          `seed=rf-${size}-${pieces}-${index}&size=${size}&pieces=${pieces}`,
+        ),
+      );
 
-    expect(result).toEqual(createReflectionProblemIdentity(9, 12, 3));
-  });
+      expect(result).toEqual(
+        createReflectionProblemIdentity(size, pieces, index),
+      );
+    },
+  );
 
   test.each(invalidCases)(
     "読めないクエリに null を返すこと: %s",
@@ -129,7 +139,7 @@ describe("ReflectionDiagnosticSnapshot", () => {
         ...snapshot,
         problemIdentity: {
           ...snapshot.problemIdentity,
-          conditions: { ...snapshot.problemIdentity.conditions, size: 10 },
+          conditions: { ...snapshot.problemIdentity.conditions, size: 12 },
         },
       },
     ],
