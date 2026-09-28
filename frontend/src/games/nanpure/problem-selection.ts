@@ -9,7 +9,8 @@ import {
   listNanpurePoolEntries,
   toNanpurePooledProblem,
 } from "@/games/nanpure/problem/problem-pool";
-import { hashProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import type { ProblemSeed } from "@/games/problem-seed";
+import { selectProblemPoolEntry } from "@/games/problem-selection";
 
 /**
  * 難易度の問題集から seed で1問を選ぶ。
@@ -19,11 +20,11 @@ export function selectNanpureProblemForDifficulty(
   difficulty: NanpureDifficulty,
   seed: ProblemSeed,
 ): NanpureIdentifiedProblem {
-  const entries = listNanpurePoolEntries(difficulty);
-  const entry = entries[hashProblemSeed(seed) % entries.length];
-  if (!entry) {
-    throw new Error(`No level ${difficulty} Nanpure problem is available`);
-  }
+  const entry = selectProblemPoolEntry(
+    listNanpurePoolEntries(difficulty),
+    seed,
+    `level ${difficulty} Nanpure`,
+  );
   return toNanpurePooledProblem(entry);
 }
 
