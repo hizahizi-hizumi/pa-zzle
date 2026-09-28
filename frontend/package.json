@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "biome check --write .",
+    "generate:dependency-rules": "bun scripts/generate-dependency-rules.ts",
     "analyze:minesweeper": "bun scripts/analyze-minesweeper-corpus.ts",
     "analyze:minesweeper-supply": "bun scripts/analyze-minesweeper-difficulty-supply.ts",
     "analyze:nanpure": "bun scripts/analyze-nanpure-corpus.ts",
