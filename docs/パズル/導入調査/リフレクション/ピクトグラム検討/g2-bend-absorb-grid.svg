@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="リフレクション">
+  <g transform="translate(3 0)">
+    <path d="M40 20V100M20 40H100M60 20V100M20 60H100M80 20V100M20 80H100" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2"/>
+    <rect x="20" y="20" width="80" height="80" rx="2" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2"/>
+    <path d="M8 50L34.34 50M40 55.66L40 84.34M45.66 90L70 90" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="8" cy="50" r="5" fill="var(--game-pictogram-strong)"/>
+    <path d="M30 40L50 60" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M30 80L50 100" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="80" cy="90" r="9" fill="var(--game-pictogram-strong)"/>
+  </g>
+</svg>
