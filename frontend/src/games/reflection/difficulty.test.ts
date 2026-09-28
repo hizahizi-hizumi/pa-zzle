@@ -12,12 +12,21 @@ import type {
   ReflectionDifficultyAnalysis,
   ReflectionReasoningFeatures,
   ReflectionScaleMetrics,
+  ReflectionTrialFeatures,
 } from "@/games/reflection/problem/difficulty-analysis";
+
+/** 試し置きで解き切れない問題。どのレベルの試し置きの条件も満たす。 */
+const trialUnsolved: ReflectionTrialFeatures = {
+  solved: false,
+  moveCount: 240,
+  retryCount: 180,
+};
 
 function toAnalysis(
   highestLevel: ReflectionReasoningFeatures["highestLevel"],
   size: number,
   pieceCount: number,
+  trial: ReflectionTrialFeatures = trialUnsolved,
 ): ReflectionDifficultyAnalysis {
   return {
     status: "analyzed",
@@ -35,20 +44,17 @@ function toAnalysis(
       assumptionTestCount: 0,
       assumptionEliminationCount: 0,
     },
+    trial,
   };
 }
 
 const difficultyIds = reflectionDifficulties.map(({ id }) => id);
 
 const combinationCases = difficultyIds.map(
-  (difficulty) =>
-    [
-      difficulty,
-      reflectionLevelCombinations[difficulty],
-    ] as const satisfies readonly [
-      ReflectionDifficulty,
-      ReflectionLevelCombination,
-    ],
+  (difficulty): readonly [ReflectionDifficulty, ReflectionLevelCombination] => [
+    difficulty,
+    reflectionLevelCombinations[difficulty],
+  ],
 );
 
 describe("reflectionLevelCombinations", () => {
@@ -89,6 +95,21 @@ describe("reflectionLevelCombinations", () => {
       expect(narrowed).toEqual([]);
     },
   );
+
+  test.each(adjacentPairs)(
+    "レベル %s で、上のレベルの試し置きのやり直しの下限が下のレベルより小さくならないこと",
+    (_, lower, upper) => {
+      expect(upper.minimumTrialRetryCount ?? 0).toBeGreaterThanOrEqual(
+        lower.minimumTrialRetryCount ?? 0,
+      );
+    },
+  );
+
+  test("レベル5 は、試し置きで押し切れない問題に限ること", () => {
+    expect(
+      reflectionLevelCombinations["5"].minimumTrialRetryCount,
+    ).toBeGreaterThan(0);
+  });
 
   test.each(adjacentPairs)(
     "レベル %s が同じ盤面サイズ・ピース数を共有し、規模だけでレベルが決まらないこと",
@@ -167,6 +188,43 @@ describe("assessReflectionDifficulty", () => {
     );
   });
 
+  describe("推論と規模はレベル5の範囲で、試し置きで押し切れる問題", () => {
+    const { reasoningLevel, boardSize, pieceCount, minimumTrialRetryCount } =
+      reflectionLevelCombinations["5"];
+    const cases = [
+      ["やり直しが下限より1回少なく解き切れる", minimumTrialRetryCount - 1],
+      ["やり直しなしで解き切れる", 0],
+    ] as const;
+
+    test.each(cases)("%s問題を提供範囲外とすること", (_, retryCount) => {
+      const result = assessReflectionDifficulty(
+        toAnalysis(reasoningLevel, boardSize.maximum, pieceCount.maximum, {
+          solved: true,
+          moveCount: pieceCount.maximum + retryCount,
+          retryCount,
+        }),
+      );
+
+      expect(result).toEqual({
+        status: "out-of-range",
+        reason: "unlisted-combination",
+        reasoningLevel,
+      });
+    });
+
+    test("やり直しが下限ちょうどで解き切れる問題をレベル5に分類すること", () => {
+      const result = assessReflectionDifficulty(
+        toAnalysis(reasoningLevel, boardSize.maximum, pieceCount.maximum, {
+          solved: true,
+          moveCount: pieceCount.maximum + minimumTrialRetryCount,
+          retryCount: minimumTrialRetryCount,
+        }),
+      );
+
+      expect(result).toMatchObject({ status: "classified", difficulty: "5" });
+    });
+  });
+
   describe("規模はレベル5の範囲だが推論が浅い問題", () => {
     const { boardSize, pieceCount } = reflectionLevelCombinations["5"];
     const analysis = toAnalysis(3, boardSize.maximum, pieceCount.maximum);
@@ -189,7 +247,12 @@ describe("assessReflectionDifficulty", () => {
     const cases = [
       [
         "評価不能な問題を unsupported",
-        { status: "unsupported", scale, unresolvedCellCount: 4 },
+        {
+          status: "unsupported",
+          reason: "unresolved",
+          scale,
+          unresolvedCellCount: 4,
+        },
         { status: "unsupported" },
       ],
       [

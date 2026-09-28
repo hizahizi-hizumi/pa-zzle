@@ -69,7 +69,7 @@ describe("parseReflectionProblemQuery", () => {
     [9, 12, 3],
     [11, 24, 8],
   ] as const)(
-    "5段階の出題に無い盤面サイズ %i のサンプルも identity で開けること",
+    "問題集に無い盤面サイズ %i の問題も identity で開けること",
     (size, pieces, index) => {
       const result = parseReflectionProblemQuery(
         new URLSearchParams(
@@ -159,7 +159,7 @@ describe("ReflectionDiagnosticSnapshot", () => {
     expect(problemPool).toEqual(selected.poolReference);
   });
 
-  test("分析し直した分類と最高推論レベルが問題集のレベルと一致すること", () => {
+  test("問題集の問題は、問題集のレベルとそのレベルの推論レベルを分類として持つこと", () => {
     const { difficultyAssessment } = snapshot;
 
     expect(difficultyAssessment).toEqual({
@@ -169,7 +169,7 @@ describe("ReflectionDiagnosticSnapshot", () => {
     });
   });
 
-  test("5段階の出題に無い大きさのサンプルは分析せず、コピー形式から読み戻せること", () => {
+  test("問題集に無い 8×8 以上の盤面は分析せず、コピー形式から読み戻せること", () => {
     const sample = createReflectionDiagnosticSnapshot({
       difficulty: "3",
       problemIdentity: createReflectionProblemIdentity(8, 12, 6),
@@ -182,9 +182,15 @@ describe("ReflectionDiagnosticSnapshot", () => {
 
     expect(sample.difficultyAssessment).toEqual({
       status: "not-analyzed",
-      reason: "sample-board-size",
+      reason: "large-board",
     });
     expect(parsed).toEqual(sample);
+  });
+
+  test("問題集に無い 7×7 以下の identity は分析し直して分類すること", () => {
+    const { difficultyAssessment } = missing;
+
+    expect(difficultyAssessment.status).not.toBe("not-analyzed");
   });
 
   test("問題集に無い identity では問題集の番号を持たないこと", () => {

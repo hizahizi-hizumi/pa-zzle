@@ -42,7 +42,7 @@ function formatAssessment(assessment: ReflectionDiagnosticAssessment): string {
     case "invalid":
       return "問題として不成立";
     case "not-analyzed":
-      return "分析しない（通常の出題に無い大きさのサンプル）";
+      return "分析しない（問題集に無い 8×8 以上の盤面）";
   }
 }
 

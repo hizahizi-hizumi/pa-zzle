@@ -7,7 +7,6 @@ import {
   parseReflectionDifficulty,
   type ReflectionDifficulty,
   type ReflectionDifficultyAssessment,
-  reflectionDifficulties,
   reflectionLevelCombinations,
 } from "@/games/reflection/difficulty";
 import { analyzeReflectionDifficulty } from "@/games/reflection/problem/difficulty-analysis";
@@ -32,7 +31,7 @@ import {
 // - 問題集の番号: ?pool=1&problem=4-17（`pool` は省略でき、省略時は今の問題集の版）
 // - 生成器の identity: ?generator=2&seed=rf-7-10-3&size=7&pieces=10（`generator` は省略でき、省略時は今の生成器の版）
 // 問題集の番号は問題集を作り直すと別の問題を指すので、記録や資料に残すときは identity の形を使う。
-// identity の形では、5段階の出題に使わない 8×8〜11×11 の盤面もサンプルとして開ける（スコアは出さず、記録もしない）。
+// identity の形では、問題集に無い問題も開ける（スコアは出さず、記録もしない）。
 const poolQueryKeys = ["pool", "problem"] as const;
 const identityQueryKeys = ["generator", "seed", "size", "pieces"] as const;
 
@@ -120,23 +119,40 @@ export function parseReflectionProblemQuery(
 }
 
 /**
- * 5段階の出題に使う盤面サイズより大きい盤面（診断で開く 8×8〜11×11 のサンプル）は分析しない。
- * 分類はどのレベルにも当たらず、分析に1分を超える問題もあって検証情報を開くたびに画面が止まるため。
+ * 問題集に無い問題を検証情報で分析し直すのは、この大きさの盤面まで。8×8 以上は分析に1分を超える問題もあり、
+ * 検証情報を開くたびに画面が止まるため分析しない（`not-analyzed`）。
  */
+const analyzedBoardSizeMaximum = 7;
+
 export type ReflectionDiagnosticAssessment =
   | ReflectionDifficultyAssessment
-  | { status: "not-analyzed"; reason: "sample-board-size" };
+  | { status: "not-analyzed"; reason: "large-board" };
 
-const providedBoardSizeMaximum = Math.max(
-  ...reflectionDifficulties.map(
-    ({ id }) => reflectionLevelCombinations[id].boardSize.maximum,
-  ),
-);
+/**
+ * 問題集の問題は、生成時に分析してそのレベルに分類されたもの（`generate:reflection-pool -- --verify` で全問を確かめる）なので、
+ * 問題集のレベルと、そのレベルの推論レベルを分類として返す。
+ */
+function assessPooledProblem(
+  pooled: ReflectionPooledProblem,
+): ReflectionDifficultyAssessment {
+  const difficulty = pooled.poolReference.problemId.split("-")[0];
+  const parsed = parseReflectionDifficulty(difficulty);
+  if (parsed === undefined) {
+    throw new Error(
+      `Invalid Reflection pool problem id: ${pooled.poolReference.problemId}`,
+    );
+  }
+  return {
+    status: "classified",
+    difficulty: parsed,
+    reasoningLevel: reflectionLevelCombinations[parsed].reasoningLevel,
+  };
+}
 
 /**
  * - `problemPool`: 問題集の版と番号。問題集に無い identity（URL で指定した問題）では `null`。
- * - `difficultyAssessment`: 遊んでいる問題を分析し直した分類と最高推論レベル。問題集の判定と食い違っていないかの照合に使う。
- *   5段階の出題に使わない大きさの盤面では分析せず `not-analyzed` にする。
+ * - `difficultyAssessment`: 分類と最高推論レベル。問題集の問題は問題集のレベル、問題集に無い問題は分析し直した結果。
+ *   問題集に無い 8×8 以上の盤面は分析せず `not-analyzed` にする。
  */
 export type ReflectionDiagnosticSnapshot = InternalDiagnosticSnapshot<
   "reflection",
@@ -149,7 +165,7 @@ export type ReflectionDiagnosticSnapshot = InternalDiagnosticSnapshot<
 
 /**
  * 検証情報としてコピーする値。問題の再現に要る identity と、出題した難易度・ビルド、問題集の位置と分類を持つ。
- * 遊んでいる問題を分析し直すので、プレイ中には呼ばず検証情報を開いたときだけ呼ぶ。
+ * 問題集に無い問題は分析し直すので、プレイ中には呼ばず検証情報を開いたときだけ呼ぶ。
  */
 export function createReflectionDiagnosticSnapshot({
   difficulty,
@@ -161,13 +177,13 @@ export function createReflectionDiagnosticSnapshot({
   buildRevision: string | null;
 }): ReflectionDiagnosticSnapshot {
   const pooled = findReflectionPooledProblem(problemIdentity);
-  const difficultyAssessment: ReflectionDiagnosticAssessment =
-    problemIdentity.conditions.size > providedBoardSizeMaximum
-      ? { status: "not-analyzed", reason: "sample-board-size" }
+  const difficultyAssessment: ReflectionDiagnosticAssessment = pooled
+    ? assessPooledProblem(pooled)
+    : problemIdentity.conditions.size > analyzedBoardSizeMaximum
+      ? { status: "not-analyzed", reason: "large-board" }
       : assessReflectionDifficulty(
           analyzeReflectionDifficulty(
-            pooled?.problem ??
-              generateReflectionProblem(problemIdentity).problem,
+            generateReflectionProblem(problemIdentity).problem,
           ),
         );
 

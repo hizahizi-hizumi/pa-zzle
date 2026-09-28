@@ -1,6 +1,7 @@
 import type {
   ReflectionDifficultyAnalysis,
   ReflectionReasoningFeatures,
+  ReflectionTrialFeatures,
 } from "@/games/reflection/problem/difficulty-analysis";
 import {
   type ReflectionBoardSize,
@@ -43,17 +44,22 @@ type InclusiveRange<T extends number> = { minimum: T; maximum: T };
 /**
  * 1つのレベルが求める組み合わせ。
  * - `reasoningLevel`: 置き場所を決め切るのに要る最も深い推論レベル。レベルの挑戦の中身を決める。
- * - `boardSize` / `pieceCount`: 読む範囲（外周ヒント 4n 本）と置く対象の数。単独でレベルを決めないよう、隣のレベルと重なる範囲で許す。
+ * - `boardSize` / `pieceCount`: 読む範囲（外周ヒント 4n 本と光路の長さ）と置く対象の数。単独でレベルを決めない。
+ * - `minimumTrialRetryCount`: 一致表示を見ながら1本ずつ満たす試し置きで、少なくともこの回数は一致を崩したり
+ *   置き方を変えたりしないと解けないこと（試し置きで解き切れない問題も満たす）。一致表示があっても、外周ヒント同士の
+ *   干渉で試し置きだけでは押し切れない問題に限る。省略したレベルでは問わない。
  */
 export type ReflectionLevelCombination = {
   reasoningLevel: ReflectionReasoningLevel;
   boardSize: InclusiveRange<ReflectionBoardSize>;
   pieceCount: InclusiveRange<number>;
+  minimumTrialRetryCount?: number;
 };
 
 /**
- * 各レベルの組み合わせ。推論レベルを1段ずつ上げ、規模の範囲は両端とも下げない。隣のレベルとは規模の範囲が重なる。
- * レベル5のピース数は、推論レベル5が1割前後以上出る10〜12にしている（9以下では数%）。12は分析スクリプトで測った上限。
+ * 各レベルの組み合わせ。推論レベルを1段ずつ上げ、規模の範囲と試し置きのやり直しの下限は両端とも下げない。
+ * 隣のレベルとは規模の範囲が重なり、重なった規模では推論レベルと試し置きのやり直しでレベルが分かれる。
+ * レベル4・5 は、一致表示を見ながら1本ずつ満たす試し置きでは押し切れない（外周ヒント同士が干渉する）問題に限る。
  * 境界は人間の実プレイで確かめる前の暫定値。
  */
 export const reflectionLevelCombinations = {
@@ -69,18 +75,20 @@ export const reflectionLevelCombinations = {
   },
   "3": {
     reasoningLevel: 3,
-    boardSize: { minimum: 5, maximum: 6 },
-    pieceCount: { minimum: 4, maximum: 7 },
+    boardSize: { minimum: 6, maximum: 7 },
+    pieceCount: { minimum: 4, maximum: 8 },
   },
   "4": {
     reasoningLevel: 4,
-    boardSize: { minimum: 6, maximum: 7 },
-    pieceCount: { minimum: 6, maximum: 10 },
+    boardSize: { minimum: 7, maximum: 9 },
+    pieceCount: { minimum: 8, maximum: 16 },
+    minimumTrialRetryCount: 3,
   },
   "5": {
     reasoningLevel: 5,
-    boardSize: { minimum: 6, maximum: 7 },
-    pieceCount: { minimum: 10, maximum: 12 },
+    boardSize: { minimum: 9, maximum: 11 },
+    pieceCount: { minimum: 16, maximum: 18 },
+    minimumTrialRetryCount: 15,
   },
 } as const satisfies Record<ReflectionDifficulty, ReflectionLevelCombination>;
 
@@ -112,16 +120,29 @@ function isInRange(
   return minimum <= value && value <= maximum;
 }
 
+function resistsTrial(
+  trial: ReflectionTrialFeatures,
+  minimumTrialRetryCount: number | undefined,
+): boolean {
+  return (
+    minimumTrialRetryCount === undefined ||
+    !trial.solved ||
+    trial.retryCount >= minimumTrialRetryCount
+  );
+}
+
 function matchesLevelCombination(
   reasoningLevel: ReflectionReasoningLevel,
   size: number,
   pieceCount: number,
+  trial: ReflectionTrialFeatures,
   combination: ReflectionLevelCombination,
 ): boolean {
   return (
     combination.reasoningLevel === reasoningLevel &&
     isInRange(size, combination.boardSize) &&
-    isInRange(pieceCount, combination.pieceCount)
+    isInRange(pieceCount, combination.pieceCount) &&
+    resistsTrial(trial, combination.minimumTrialRetryCount)
   );
 }
 
@@ -141,6 +162,7 @@ export function assessReflectionDifficulty(
           highestLevel,
           size,
           pieceCount,
+          analysis.trial,
           reflectionLevelCombinations[id],
         ),
       )?.id;

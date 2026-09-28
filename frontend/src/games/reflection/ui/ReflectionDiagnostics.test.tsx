@@ -8,11 +8,11 @@ const snapshot: ReflectionDiagnosticSnapshot = {
   game: "reflection",
   difficulty: "4",
   problemIdentity: {
-    generatorVersion: "2",
+    generatorVersion: "3",
     seed: "rf-7-8-0",
     conditions: { size: 7, pieceCount: 8 },
   },
-  problemPool: { poolVersion: "1", problemId: "4-17" },
+  problemPool: { poolVersion: "2", problemId: "4-17" },
   difficultyAssessment: {
     status: "classified",
     difficulty: "4",
@@ -42,25 +42,25 @@ describe("ReflectionDiagnostics", () => {
     test("問題集の版と番号・分類・最高推論レベルを表示すること", () => {
       const values = ["問題集", "分類", "最高推論"].map(getRowValue);
 
-      expect(values).toEqual(["v1 / 4-17", "レベル 4", "L4"]);
+      expect(values).toEqual(["v2 / 4-17", "レベル 4", "L4"]);
     });
   });
 
-  describe("5段階の出題に無い大きさのサンプルを指定した場合", () => {
+  describe("問題集に無い 8×8 以上の盤面を指定した場合", () => {
     beforeEach(() => {
       render(
         <ReflectionDiagnostics
           snapshot={{
             ...snapshot,
             problemIdentity: {
-              generatorVersion: "2",
+              generatorVersion: "3",
               seed: "rf-9-12-3",
               conditions: { size: 9, pieceCount: 12 },
             },
             problemPool: null,
             difficultyAssessment: {
               status: "not-analyzed",
-              reason: "sample-board-size",
+              reason: "large-board",
             },
           }}
           onClose={vi.fn()}
@@ -73,7 +73,7 @@ describe("ReflectionDiagnostics", () => {
 
       expect(values).toEqual([
         "問題集に無い",
-        "分析しない（通常の出題に無い大きさのサンプル）",
+        "分析しない（問題集に無い 8×8 以上の盤面）",
         "取得なし",
       ]);
     });
