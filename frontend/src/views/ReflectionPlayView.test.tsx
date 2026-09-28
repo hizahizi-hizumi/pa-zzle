@@ -208,8 +208,11 @@ describe("ReflectionPlayView", () => {
 
       const dialog = screen.getByRole("dialog", { name: "検証情報" });
 
-      expect(within(dialog).getByText("レベル 3")).toBeTruthy();
+      // 出題した難易度と、分析し直した分類。
+      expect(within(dialog).getAllByText("レベル 3")).toHaveLength(2);
       expect(within(dialog).getByText(/^rf-/)).toBeTruthy();
+      expect(within(dialog).getByText(/^v1 \/ 3-\d+$/)).toBeTruthy();
+      expect(within(dialog).getByText("L3")).toBeTruthy();
     });
   });
 

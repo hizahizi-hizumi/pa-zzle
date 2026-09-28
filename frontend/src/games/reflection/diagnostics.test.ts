@@ -111,6 +111,11 @@ describe("ReflectionDiagnosticSnapshot", () => {
     ["別のゲーム", { ...snapshot, game: "takuzu" }],
     ["未定義の難易度", { ...snapshot, difficulty: "9" }],
     [
+      "問題集の番号が欠けた",
+      { ...snapshot, problemPool: { poolVersion: "1" } },
+    ],
+    ["分類が欠けた", { ...snapshot, difficultyAssessment: undefined }],
+    [
       "扱わない盤面サイズ",
       {
         ...snapshot,
@@ -128,6 +133,28 @@ describe("ReflectionDiagnosticSnapshot", () => {
 
     expect(parsed).toEqual(snapshot);
     expect(restored?.problem).toEqual(selected.problem);
+  });
+
+  test("出題した問題の問題集の版と番号を持つこと", () => {
+    const { problemPool } = snapshot;
+
+    expect(problemPool).toEqual(selected.poolReference);
+  });
+
+  test("分析し直した分類と最高推論レベルが問題集のレベルと一致すること", () => {
+    const { difficultyAssessment } = snapshot;
+
+    expect(difficultyAssessment).toEqual({
+      status: "classified",
+      difficulty: "4",
+      reasoningLevel: 4,
+    });
+  });
+
+  test("問題集に無い identity では問題集の番号を持たないこと", () => {
+    const { problemPool } = missing;
+
+    expect(problemPool).toBeNull();
   });
 
   test("問題集に無い identity は復元できないこと", () => {

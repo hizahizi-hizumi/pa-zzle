@@ -3,9 +3,12 @@ import {
   type InternalDiagnosticSnapshot,
 } from "@/games/diagnostics";
 import {
+  assessReflectionDifficulty,
   parseReflectionDifficulty,
   type ReflectionDifficulty,
+  type ReflectionDifficultyAssessment,
 } from "@/games/reflection/difficulty";
+import { analyzeReflectionDifficulty } from "@/games/reflection/problem/difficulty-analysis";
 import { generateReflectionProblem } from "@/games/reflection/problem/generator";
 import {
   isReflectionProblemIdentity,
@@ -13,6 +16,7 @@ import {
   type ReflectionProblemIdentity,
 } from "@/games/reflection/problem/problem";
 import {
+  findReflectionPooledProblem,
   getReflectionProblemPoolVersion,
   type ReflectionPooledProblem,
   type ReflectionProblemPoolReference,
@@ -112,13 +116,23 @@ export function parseReflectionProblemQuery(
     : parseIdentityQuery(params);
 }
 
+/**
+ * - `problemPool`: 問題集の版と番号。問題集に無い identity（URL で指定した問題）では `null`。
+ * - `difficultyAssessment`: 遊んでいる問題を分析し直した分類と最高推論レベル。問題集の判定と食い違っていないかの照合に使う。
+ */
 export type ReflectionDiagnosticSnapshot = InternalDiagnosticSnapshot<
   "reflection",
   ReflectionDifficulty,
   ReflectionProblemIdentity
->;
+> & {
+  problemPool: ReflectionProblemPoolReference | null;
+  difficultyAssessment: ReflectionDifficultyAssessment;
+};
 
-/** 検証情報としてコピーする値。問題の再現に要る identity と、出題した難易度・ビルドを持つ。 */
+/**
+ * 検証情報としてコピーする値。問題の再現に要る identity と、出題した難易度・ビルド、問題集の位置と分類を持つ。
+ * 遊んでいる問題を分析し直すので、プレイ中には呼ばず検証情報を開いたときだけ呼ぶ。
+ */
 export function createReflectionDiagnosticSnapshot({
   difficulty,
   problemIdentity,
@@ -128,6 +142,10 @@ export function createReflectionDiagnosticSnapshot({
   problemIdentity: ReflectionProblemIdentity;
   buildRevision: string | null;
 }): ReflectionDiagnosticSnapshot {
+  const pooled = findReflectionPooledProblem(problemIdentity);
+  const problem =
+    pooled?.problem ?? generateReflectionProblem(problemIdentity).problem;
+
   return {
     formatVersion: INTERNAL_DIAGNOSTIC_FORMAT_VERSION,
     game: "reflection",
@@ -136,8 +154,35 @@ export function createReflectionDiagnosticSnapshot({
       ...problemIdentity,
       conditions: { ...problemIdentity.conditions },
     },
+    problemPool: pooled ? { ...pooled.poolReference } : null,
+    difficultyAssessment: assessReflectionDifficulty(
+      analyzeReflectionDifficulty(problem),
+    ),
     buildRevision,
   };
+}
+
+const assessmentStatuses = new Set<unknown>([
+  "classified",
+  "out-of-range",
+  "unsupported",
+  "invalid",
+]);
+
+function isProblemPoolReference(
+  value: unknown,
+): value is ReflectionProblemPoolReference {
+  return (
+    isRecord(value) &&
+    typeof value.poolVersion === "string" &&
+    typeof value.problemId === "string"
+  );
+}
+
+function isDifficultyAssessment(
+  value: unknown,
+): value is ReflectionDifficultyAssessment {
+  return isRecord(value) && assessmentStatuses.has(value.status);
 }
 
 export function parseReflectionDiagnosticSnapshot(
@@ -157,6 +202,10 @@ export function parseReflectionDiagnosticSnapshot(
     value.game !== "reflection" ||
     !difficulty ||
     !isReflectionProblemIdentity(value.problemIdentity) ||
+    !(
+      value.problemPool === null || isProblemPoolReference(value.problemPool)
+    ) ||
+    !isDifficultyAssessment(value.difficultyAssessment) ||
     !(typeof value.buildRevision === "string" || value.buildRevision === null)
   ) {
     throw new TypeError("Invalid Reflection diagnostic snapshot");
@@ -167,6 +216,8 @@ export function parseReflectionDiagnosticSnapshot(
     game: "reflection",
     difficulty,
     problemIdentity: value.problemIdentity,
+    problemPool: value.problemPool,
+    difficultyAssessment: value.difficultyAssessment,
     buildRevision: value.buildRevision,
   };
 }
