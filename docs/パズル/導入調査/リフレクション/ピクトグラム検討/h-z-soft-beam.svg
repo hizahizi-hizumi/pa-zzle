@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="リフレクション">
+  <path d="M18 80L18 18L102 18L102 24M102 40L102 102L18 102L18 96" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M6 88L54.34 88M60 82.34L60 37.66M65.66 32L105 32" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="6" cy="88" r="5" fill="var(--game-pictogram-soft)"/>
+  <path d="M116 32L104 40L104 24Z" fill="var(--game-pictogram-soft)" stroke="var(--game-pictogram-soft)" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M47 101L73 75" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M47 45L73 19" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round"/>
+</svg>

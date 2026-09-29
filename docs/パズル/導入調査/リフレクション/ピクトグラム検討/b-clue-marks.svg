@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="リフレクション">
+  <path d="M50 30V90M30 50H90M70 30V90M30 70H90" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2"/>
+  <rect x="30" y="30" width="60" height="60" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <path d="M35 24L45 14M38.5 14H45V20.5" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M104 45V39.5A3 3 0 0 0 98 39.5V44M95.5 41.5L98 45L100.5 41.5" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="40" cy="101" r="3.5" fill="var(--game-pictogram-soft)"/>
+  <path d="M14 45L24 35M17.5 35H24V41.5" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M63 24V18.5A3 3 0 0 0 57 18.5V23M54.5 20.5L57 24L59.5 20.5" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M96 65L106 55M99.5 55H106V61.5" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M63 106V100.5A3 3 0 0 0 57 100.5V105M54.5 102.5L57 106L59.5 102.5" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="19" cy="60" r="3.5" fill="var(--game-pictogram-soft)"/>
+  <circle cx="80" cy="19" r="3.5" fill="var(--game-pictogram-soft)"/>
+  <circle cx="101" cy="80" r="3.5" fill="var(--game-pictogram-soft)"/>
+  <path d="M75 106L85 96M78.5 96H85V102.5" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M22 85V79.5A3 3 0 0 0 16 79.5V84M13.5 81.5L16 85L18.5 81.5" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
