@@ -1,4 +1,5 @@
 import type { LegacyParkingJamDifficulty } from "@/games/parking-jam/difficulty";
+import { calculateLinearScore, subtractWithFloor } from "@/games/score";
 
 export const PARKING_JAM_SCORE_MODEL_VERSION = "play-quality-v2";
 
@@ -48,18 +49,6 @@ export type ParkingJamPlayScoreInput = {
   undoCount: number;
   restartCount: number;
 };
-
-function clampUnit(value: number): number {
-  return Math.min(1, Math.max(0, value));
-}
-
-function calculateLinearScore(maximum: number, ratio: number): number {
-  return Math.round(maximum * clampUnit(ratio));
-}
-
-function subtractWithFloor(maximum: number, penalty: number): number {
-  return Math.max(0, maximum - penalty);
-}
 
 export function calculateParkingJamSpeedFullScoreMs({
   vehicleCount,
