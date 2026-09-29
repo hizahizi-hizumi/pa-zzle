@@ -4,9 +4,9 @@ import {
 } from "@/games/slide-puzzle/difficulty";
 import { slidePuzzlePlayRecordDefinition } from "@/games/slide-puzzle/play-record";
 import {
-  formatSlidePuzzleMoveDelta,
-  formatSlidePuzzleTimeDelta,
-} from "@/games/slide-puzzle/ui/format-performance-delta";
+  formatCountDelta,
+  formatElapsedTimeDelta,
+} from "@/lib/format-performance-delta";
 
 export const slidePuzzlePlayRecordDisplay = {
   definition: slidePuzzlePlayRecordDefinition,
@@ -30,7 +30,7 @@ export const slidePuzzlePlayRecordDisplay = {
       id: "time-delta-ms",
       label: "基準時間との差",
       historyLabel: "時間差",
-      formatValue: formatSlidePuzzleTimeDelta,
+      formatValue: formatElapsedTimeDelta,
       referenceValue: 0,
       axis: { kind: "duration-ms" as const },
     },
@@ -38,7 +38,7 @@ export const slidePuzzlePlayRecordDisplay = {
       id: "move-delta",
       label: "最短手数との差",
       historyLabel: "手数差",
-      formatValue: formatSlidePuzzleMoveDelta,
+      formatValue: formatCountDelta,
       referenceValue: 0,
       axis: { kind: "integer" as const, minimum: 0 },
     },
