@@ -3,9 +3,23 @@ import { MemoryRouter } from "react-router";
 
 import { PuzzleSelectionView } from "@/views/PuzzleSelectionView";
 
+vi.mock("@/lib/internal-diagnostics", () => ({
+  internalDiagnosticsAvailable: false,
+  buildRevision: null,
+}));
+
 afterEach(cleanup);
 
 describe("PuzzleSelectionView", () => {
+  const games = [
+    ["ウォーターソート", "/puzzles/water-sort"],
+    ["ナンプレ", "/puzzles/nanpure"],
+    ["マインスイーパー", "/puzzles/minesweeper"],
+    ["パーキングジャム", "/puzzles/parking-jam"],
+    ["スライドパズル", "/puzzles/slide-puzzle"],
+    ["バイナリパズル", "/puzzles/takuzu"],
+  ] as const;
+
   beforeEach(() => {
     render(
       <MemoryRouter>
@@ -14,31 +28,21 @@ describe("PuzzleSelectionView", () => {
     );
   });
 
-  test("マインスイーパーを選択して難易度選択へ進めること", () => {
-    const minesweeperButton = screen.getByRole("button", {
-      name: "マインスイーパーを選択",
-    });
+  test("パズルを決まった順に並べること", () => {
+    const selectButtons = screen.getAllByRole("button", { name: /を選択$/ });
 
-    fireEvent.click(minesweeperButton);
-
-    const heroLink = screen.getByRole("link", {
-      name: "マインスイーパーを遊ぶ",
-    });
-    expect(heroLink.getAttribute("href")).toBe("/puzzles/minesweeper");
-    expect(minesweeperButton.getAttribute("aria-pressed")).toBe("true");
+    expect(
+      selectButtons.map((button) => button.getAttribute("aria-label")),
+    ).toEqual(games.map(([name]) => `${name}を選択`));
   });
 
-  test("バイナリパズルを選択してバイナリパズルの入口へ進めること", () => {
-    const takuzuButton = screen.getByRole("button", {
-      name: "バイナリパズルを選択",
-    });
+  test.each(games)("%sを選択してその入口へ進めること", (name, entryPath) => {
+    const selectButton = screen.getByRole("button", { name: `${name}を選択` });
 
-    fireEvent.click(takuzuButton);
+    fireEvent.click(selectButton);
 
-    const heroLink = screen.getByRole("link", {
-      name: "バイナリパズルを遊ぶ",
-    });
-    expect(heroLink.getAttribute("href")).toBe("/puzzles/takuzu");
-    expect(takuzuButton.getAttribute("aria-pressed")).toBe("true");
+    const heroLink = screen.getByRole("link", { name: `${name}を遊ぶ` });
+    expect(heroLink.getAttribute("href")).toBe(entryPath);
+    expect(selectButton.getAttribute("aria-pressed")).toBe("true");
   });
 });
