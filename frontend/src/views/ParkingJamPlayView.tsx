@@ -9,6 +9,7 @@ import {
 } from "@/games/parking-jam/diagnostics";
 import { parseParkingJamDifficulty } from "@/games/parking-jam/difficulty";
 import { restoreParkingJamProblemWithoutAnalysis } from "@/games/parking-jam/problem/generator";
+import { restoreProblemOrNull } from "@/games/problem-restoration";
 import { internalDiagnosticsAvailable } from "@/lib/internal-diagnostics";
 import { useParams } from "@/router";
 
@@ -16,7 +17,9 @@ function restoreSpecifiedProblem(searchParams: URLSearchParams) {
   const identity = parseParkingJamProblemQuery(searchParams);
   return {
     restored: identity
-      ? restoreParkingJamProblemWithoutAnalysis(identity)
+      ? restoreProblemOrNull(() =>
+          restoreParkingJamProblemWithoutAnalysis(identity),
+        )
       : null,
   };
 }
