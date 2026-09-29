@@ -20,16 +20,14 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { getGameResultLevel } from "@/games/result";
 import slidePuzzlePictogramSvg from "@/games/slide-puzzle/assets/pictogram.svg?raw";
 import {
   getSlidePuzzleDifficultyLabel,
   type SlidePuzzleDifficulty,
 } from "@/games/slide-puzzle/difficulty";
 import type { SlidePuzzleResult } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
-import {
-  getSlidePuzzleGameResultLevel,
-  SLIDE_PUZZLE_SCORE_MAXIMUMS,
-} from "@/games/slide-puzzle/score";
+import { SLIDE_PUZZLE_SCORE_MAXIMUMS } from "@/games/slide-puzzle/score";
 import { formatSlidePuzzleElapsedTime } from "@/games/slide-puzzle/ui/format-elapsed-time";
 import {
   formatSlidePuzzleMoveDelta,
@@ -64,7 +62,7 @@ export function SlidePuzzleResultScreen({
   onOpenDiagnostics,
 }: SlidePuzzleResultScreenProps) {
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const resultLevel = getSlidePuzzleGameResultLevel(result.score.total);
+  const resultLevel = getGameResultLevel(result.score.total);
 
   return (
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-y-auto bg-background">

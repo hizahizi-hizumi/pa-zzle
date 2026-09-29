@@ -4,7 +4,6 @@ import {
   calculateWaterSortPlayScore,
   calculateWaterSortSpeedFullScoreMs,
   calculateWaterSortTimeDeltaMs,
-  getWaterSortGameResultLevel,
   WATER_SORT_SCORE_MAXIMUMS,
 } from "@/games/water-sort/score";
 
@@ -168,18 +167,5 @@ describe("calculateWaterSortPlayScore", () => {
         accuracy: 16,
       },
     });
-  });
-});
-
-describe("getWaterSortGameResultLevel", () => {
-  test.each([
-    [100, "perfect"],
-    [90, "great"],
-    [80, "good"],
-    [79, "clear"],
-  ] as const)("評価点 %i を %s 段階として扱うこと", (score, expected) => {
-    const level = getWaterSortGameResultLevel(score);
-
-    expect(level).toBe(expected);
   });
 });

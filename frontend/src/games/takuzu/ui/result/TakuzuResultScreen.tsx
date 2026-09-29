@@ -20,16 +20,14 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { getGameResultLevel } from "@/games/result";
 import takuzuPictogramSvg from "@/games/takuzu/assets/pictogram.svg?raw";
 import {
   getTakuzuDifficultyLabel,
   type TakuzuDifficulty,
 } from "@/games/takuzu/difficulty";
 import type { TakuzuResult } from "@/games/takuzu/play/use-takuzu-play";
-import {
-  getTakuzuGameResultLevel,
-  TAKUZU_SCORE_MAXIMUMS,
-} from "@/games/takuzu/score";
+import { TAKUZU_SCORE_MAXIMUMS } from "@/games/takuzu/score";
 import { formatElapsedTime } from "@/games/takuzu/ui/format-elapsed-time";
 import { formatTakuzuTimeDelta } from "@/games/takuzu/ui/format-performance-delta";
 import { DetailMetric } from "@/games/takuzu/ui/result/TakuzuResultScreen/DetailMetric";
@@ -60,7 +58,7 @@ export function TakuzuResultScreen({
   onOpenDiagnostics,
 }: TakuzuResultScreenProps) {
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const resultLevel = getTakuzuGameResultLevel(result.score.total);
+  const resultLevel = getGameResultLevel(result.score.total);
   const screenRef = useRef<HTMLElement>(null);
 
   // 最後のマスを置くと盤面が操作できなくなり、そのマスにあったフォーカスが失われる。

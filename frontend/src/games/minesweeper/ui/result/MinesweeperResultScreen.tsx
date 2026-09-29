@@ -26,15 +26,13 @@ import {
   type MinesweeperDifficulty,
 } from "@/games/minesweeper/difficulty";
 import type { MinesweeperResult } from "@/games/minesweeper/play/use-minesweeper-play";
-import {
-  getMinesweeperGameResultLevel,
-  MINESWEEPER_SCORE_MAXIMUMS,
-} from "@/games/minesweeper/score";
+import { MINESWEEPER_SCORE_MAXIMUMS } from "@/games/minesweeper/score";
 import { formatElapsedTime } from "@/games/minesweeper/ui/format-elapsed-time";
 import { formatMinesweeperTimeDelta } from "@/games/minesweeper/ui/format-performance-delta";
 import { DetailMetric } from "@/games/minesweeper/ui/result/MinesweeperResultScreen/DetailMetric";
 import { ResultMetric } from "@/games/minesweeper/ui/result/MinesweeperResultScreen/ResultMetric";
 import { ScoreCriteria } from "@/games/minesweeper/ui/result/MinesweeperResultScreen/ScoreCriteria";
+import { getGameResultLevel } from "@/games/result";
 
 type MinesweeperResultScreenProps = {
   difficulty: MinesweeperDifficulty;
@@ -60,7 +58,7 @@ export function MinesweeperResultScreen({
   onOpenDiagnostics,
 }: MinesweeperResultScreenProps) {
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const resultLevel = getMinesweeperGameResultLevel(result.score.total);
+  const resultLevel = getGameResultLevel(result.score.total);
 
   return (
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-y-auto bg-background">

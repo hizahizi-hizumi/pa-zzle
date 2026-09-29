@@ -2,9 +2,9 @@ import {
   calculateMinesweeperPlayScore,
   calculateMinesweeperSpeedFullScoreMs,
   calculateMinesweeperTimeDeltaMs,
-  getMinesweeperGameResultLevel,
   MINESWEEPER_SCORE_MAXIMUMS,
 } from "@/games/minesweeper/score";
+import { getGameResultLevel } from "@/games/result";
 
 const workload = { minimumOpenCount: 10, mineCount: 10 };
 const speedFullScoreMs = 65_000;
@@ -90,7 +90,7 @@ describe("calculateMinesweeperPlayScore", () => {
     });
 
     expect(fastWithMistake.total).toBe(85);
-    expect(getMinesweeperGameResultLevel(fastWithMistake.total)).toBe("good");
+    expect(getGameResultLevel(fastWithMistake.total)).toBe("good");
   });
 
   test("ミスが多く遅いプレイでも0点を下回らないこと", () => {
@@ -101,19 +101,5 @@ describe("calculateMinesweeperPlayScore", () => {
     });
 
     expect(result).toEqual({ total: 0, breakdown: { accuracy: 0, speed: 0 } });
-  });
-});
-
-describe("getMinesweeperGameResultLevel", () => {
-  test.each([
-    { score: 100, level: "perfect" },
-    { score: 99, level: "great" },
-    { score: 90, level: "great" },
-    { score: 89, level: "good" },
-    { score: 80, level: "good" },
-    { score: 79, level: "clear" },
-    { score: 0, level: "clear" },
-  ])("$score 点を $level とすること", ({ score, level }) => {
-    expect(getMinesweeperGameResultLevel(score)).toBe(level);
   });
 });
