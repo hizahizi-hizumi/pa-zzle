@@ -3,7 +3,7 @@ import type {
   ReflectionLaserTrace,
 } from "@/games/reflection/puzzle/laser";
 import {
-  getReflectionClueAnchor,
+  getReflectionLaserEnd,
   getReflectionLaserPoints,
   getReflectionOutwardVector,
   type ReflectionPoint,
@@ -18,9 +18,12 @@ type ReflectionLaserPathProps = {
 };
 
 const LASER_WIDTH = 0.075;
-const ENTRY_DOT_RADIUS = 0.09;
-const ARROW_LENGTH = 0.26;
-const ARROW_HALF_WIDTH = 0.15;
+/** 入口の印（光路に直交する短い太線）の半分の長さと太さ。 */
+const ENTRY_MARK_HALF_LENGTH = 0.2;
+const ENTRY_MARK_WIDTH = 0.1;
+/** 出口の矢印。盤面との隙間（マスの0.2）に収まる大きさにする。 */
+const ARROW_LENGTH = 0.17;
+const ARROW_HALF_WIDTH = 0.11;
 
 function formatPoints(points: readonly ReflectionPoint[]): string {
   return points.map(({ x, y }) => `${x},${y}`).join(" ");
@@ -38,9 +41,32 @@ function getArrowPoints(
   ]);
 }
 
+/** 入口の印。光路の端から太さの半分だけ盤面側へ寄せ、外周ヒント（一致の地）に重ねない。 */
+function getEntryMarkPoints(
+  end: ReflectionPoint,
+  { dx, dy }: { dx: number; dy: number },
+): string {
+  const center = {
+    x: end.x - (dx * ENTRY_MARK_WIDTH) / 2,
+    y: end.y - (dy * ENTRY_MARK_WIDTH) / 2,
+  };
+  return formatPoints([
+    {
+      x: center.x - dy * ENTRY_MARK_HALF_LENGTH,
+      y: center.y + dx * ENTRY_MARK_HALF_LENGTH,
+    },
+    {
+      x: center.x + dy * ENTRY_MARK_HALF_LENGTH,
+      y: center.y - dx * ENTRY_MARK_HALF_LENGTH,
+    },
+  ]);
+}
+
 /**
- * 1本の光路。入った位置に点、外へ出た位置に外向きの矢印を置く。反射は入った位置の矢印だけになる。
- * 座標はマス1辺を1とする図の単位。
+ * 1本の光路。座標はマス1辺を1とする図の単位。
+ * 両端は外周ヒントの縁ではなく、外周ヒントと盤面の間の隙間に置き、外周ヒント（一致の地）に重ねない。
+ * 入った位置（押した外周ヒントの前）に光路と直交する短い太線、外へ出た位置に外向きの矢印を置き、向きを示す。
+ * 反射は入った位置へ戻って出るので矢印だけ、吸収は入口の印だけになる。
  */
 export function ReflectionLaserPath({
   size,
@@ -49,7 +75,6 @@ export function ReflectionLaserPath({
   clearStep,
 }: ReflectionLaserPathProps) {
   const points = getReflectionLaserPoints(size, entry, trace);
-  const start = getReflectionClueAnchor(size, entry);
   const { exit } = trace;
 
   return (
@@ -65,18 +90,23 @@ export function ReflectionLaserPath({
         strokeLinejoin="round"
       />
       {trace.outcome === "reflect" ? null : (
-        <circle
-          cx={start.x}
-          cy={start.y}
-          r={ENTRY_DOT_RADIUS}
-          fill="currentColor"
+        <polyline
+          data-laser-entry=""
+          points={getEntryMarkPoints(
+            getReflectionLaserEnd(size, entry),
+            getReflectionOutwardVector(entry.side),
+          )}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={ENTRY_MARK_WIDTH}
+          strokeLinecap="round"
         />
       )}
       {exit ? (
         <polygon
           data-laser-arrow=""
           points={getArrowPoints(
-            getReflectionClueAnchor(size, exit),
+            getReflectionLaserEnd(size, exit),
             getReflectionOutwardVector(exit.side),
           )}
           fill="currentColor"
