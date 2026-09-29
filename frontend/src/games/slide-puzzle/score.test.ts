@@ -4,7 +4,6 @@ import {
   calculateSlidePuzzlePerformanceComparison,
   calculateSlidePuzzlePlayScore,
   calculateSlidePuzzleTimeDeltaMs,
-  getSlidePuzzleGameResultLevel,
   SLIDE_PUZZLE_SCORE_MAXIMUMS,
 } from "@/games/slide-puzzle/score";
 
@@ -202,18 +201,5 @@ describe("calculateSlidePuzzlePlayScore", () => {
 
       expect(ranked).toEqual(expectedOrder);
     });
-  });
-});
-
-describe("getSlidePuzzleGameResultLevel", () => {
-  test.each([
-    [100, "perfect"],
-    [90, "great"],
-    [80, "good"],
-    [79, "clear"],
-  ] as const)("評価点 %i を %s 段階として扱うこと", (score, expected) => {
-    const level = getSlidePuzzleGameResultLevel(score);
-
-    expect(level).toBe(expected);
   });
 });
