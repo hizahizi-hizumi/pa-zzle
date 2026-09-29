@@ -135,66 +135,6 @@
       }
     },
     {
-      "includes": ["src/app/**/*.{ts,tsx}"],
-      "linter": {
-        "rules": {
-          "style": {
-            "noRestrictedImports": {
-              "level": "error",
-              "options": {
-                "patterns": [
-                  {
-                    "group": ["./**", "../**"],
-                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
-                  },
-                  {
-                    "group": [
-                      "@/games/*/**",
-                      "@/records/**",
-                      "@/views/**",
-                      "@/pages/**"
-                    ],
-                    "message": "[dependency/app-boundary] app はアプリ全体の責務だけを持ち、具体ゲーム・記録・画面合成へ依存しない。"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "includes": ["src/ui/**/*.{ts,tsx}"],
-      "linter": {
-        "rules": {
-          "style": {
-            "noRestrictedImports": {
-              "level": "error",
-              "options": {
-                "patterns": [
-                  {
-                    "group": ["./**", "../**"],
-                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
-                  },
-                  {
-                    "group": [
-                      "@/app/**",
-                      "@/games/**",
-                      "@/records/**",
-                      "@/views/**",
-                      "@/pages/**",
-                      "@/router"
-                    ],
-                    "message": "[dependency/ui-boundary] UI 基盤はアプリ固有の責務・ルーティングへ依存しない。"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "includes": ["src/components/**/*.{ts,tsx}", "!src/components/ui"],
       "linter": {
         "rules": {
@@ -233,7 +173,6 @@
                   },
                   {
                     "group": [
-                      "@/app/**",
                       "@/components/**",
                       "@/games/**",
                       "@/records/**",
