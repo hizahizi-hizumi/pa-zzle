@@ -19,9 +19,9 @@ import {
   validateParkingJamBoard,
 } from "@/games/parking-jam/puzzle/board";
 import {
-  createProblemRandom,
+  createProblemSeededRandom,
   shuffleProblemValues,
-} from "@/games/problem-random";
+} from "@/games/problem-seed";
 import {
   analyzeParkingJamBoardStudyFeatures,
   analyzeParkingJamStudyFeatures,
@@ -960,7 +960,9 @@ function listSupplyConditions(
   space: string,
   profiles: number,
 ): ParkingJamGenerationConditions[] {
-  const random = createProblemRandom(`${PRODUCTION_SUPPLY_VERSION}:${seed}`);
+  const random = createProblemSeededRandom(
+    `${PRODUCTION_SUPPLY_VERSION}:${seed}`,
+  );
   const candidates = listParkingJamDifficultyCandidateConditions()
     .filter(hasSupplyGenerationCapacity)
     .filter(
@@ -1377,7 +1379,7 @@ function printPicked(picked: readonly PickedProblem[], plan: StudyPlan): void {
     console.log("```\n");
   }
 
-  const random = createProblemRandom(`pj5-blind-${plan.id}`);
+  const random = createProblemSeededRandom(`pj5-blind-${plan.id}`);
   const blind = shuffleProblemValues(picked, random);
   console.log("# 伏せ字の遊び比べリスト\n");
   blind.forEach((entry, index) => {
@@ -1446,7 +1448,9 @@ function runDecoy(): void {
           board,
           2,
           record.conditions.roadOpeningSpan,
-          createProblemRandom(`pj5-decoy:${JSON.stringify(record.identity)}`),
+          createProblemSeededRandom(
+            `pj5-decoy:${JSON.stringify(record.identity)}`,
+          ),
         ),
       },
       { variant: "trimmed", board: removeUnusedOpenings(board) },
