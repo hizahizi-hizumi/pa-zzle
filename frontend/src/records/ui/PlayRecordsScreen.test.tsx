@@ -130,15 +130,15 @@ const records = [
       inputCount: 70,
     },
   }),
-  // 基準時間 28×0.5 + 8×7 + 3×8 = 94秒を 110秒で、置き直し1回で解いた記録。
+  // 基準時間 28×0.5 + 12×3.5 + 8×1.25 + 8×3.5 = 94秒を 110秒で、置き直し1回で解いた記録。
   createReflectionPlayRecord({
     difficulty: "4",
-    problemIdentity: createReflectionProblemIdentity(7, 8, 0),
+    problemIdentity: createReflectionProblemIdentity(7, 12, 0),
     workload: {
-      pieceCount: 8,
+      pieceCount: 12,
       clueCount: 28,
-      propagationRoundCount: 3,
-      assumptionTestCount: 0,
+      propagationRoundCount: 8,
+      assumptionTestCount: 8,
       trialMoveCount: null,
     },
     startedAt: 10_000,
