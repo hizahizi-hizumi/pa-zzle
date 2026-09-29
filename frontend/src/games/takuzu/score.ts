@@ -1,4 +1,3 @@
-import type { GameResultLevel } from "@/games/result";
 import type { TakuzuSolveWorkload } from "@/games/takuzu/problem/problem";
 
 /**
@@ -127,17 +126,4 @@ export function calculateTakuzuPlayScore({
     total: accuracy + speed,
     breakdown: { accuracy, speed },
   };
-}
-
-export function getTakuzuGameResultLevel(score: number): GameResultLevel {
-  if (score >= 100) {
-    return "perfect";
-  }
-  if (score >= 90) {
-    return "great";
-  }
-  if (score >= 80) {
-    return "good";
-  }
-  return "clear";
 }
