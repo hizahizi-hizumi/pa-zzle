@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { ParkingJamDifficulty } from "@/games/parking-jam/difficulty";
-import { restoreParkingJamProblemWithoutAnalysis } from "@/games/parking-jam/problem/generator";
+import type { ParkingJamRestoredProblem } from "@/games/parking-jam/problem/generator";
 import type { ParkingJamProblemIdentity } from "@/games/parking-jam/problem/problem";
 import { selectParkingJamProblemForDifficulty } from "@/games/parking-jam/problem-selection";
 import {
@@ -77,16 +77,15 @@ function createPlayState(
   difficulty: ParkingJamDifficulty,
   seed: ProblemSeed,
   startedAt: number,
-  initialProblemIdentity?: ParkingJamProblemIdentity,
+  initialProblem?: ParkingJamRestoredProblem,
 ): ParkingJamPlayState {
-  const restored = initialProblemIdentity
-    ? restoreParkingJamProblemWithoutAnalysis(initialProblemIdentity)
-    : selectParkingJamProblemForDifficulty(difficulty, seed);
+  const restored =
+    initialProblem ?? selectParkingJamProblemForDifficulty(difficulty, seed);
 
   return {
     session: createParkingJamSession(restored.problem, startedAt),
     problemIdentity: restored.identity,
-    problemSource: initialProblemIdentity ? "given" : "pool",
+    problemSource: initialProblem ? "given" : "pool",
     speedReference: getSpeedReference(restored.problem.board),
     selectedVehicleId: null,
     operation: null,
@@ -94,16 +93,17 @@ function createPlayState(
   };
 }
 
+/** `initialProblem` を渡すと、指定された問題で始める。 */
 export function useParkingJamPlay(
   difficulty: ParkingJamDifficulty,
-  initialProblemIdentity?: ParkingJamProblemIdentity,
+  initialProblem?: ParkingJamRestoredProblem,
 ) {
   const [play, setPlay] = useState<ParkingJamPlayState>(() =>
     createPlayState(
       difficulty,
       createProblemSeed(),
       Date.now(),
-      initialProblemIdentity,
+      initialProblem,
     ),
   );
   const [now, setNow] = useState(() => Date.now());

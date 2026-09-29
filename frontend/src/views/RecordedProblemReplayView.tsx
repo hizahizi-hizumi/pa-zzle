@@ -12,6 +12,7 @@ import { isNanpurePlayRecord } from "@/games/nanpure/play-record";
 import { restoreNanpureProblem } from "@/games/nanpure/problem-selection";
 import { parseParkingJamDifficulty } from "@/games/parking-jam/difficulty";
 import { isParkingJamPlayRecord } from "@/games/parking-jam/play-record";
+import { restoreParkingJamProblemWithoutAnalysis } from "@/games/parking-jam/problem/generator";
 import { parseSlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import { isSlidePuzzlePlayRecord } from "@/games/slide-puzzle/play-record";
 import { restoreSlidePuzzlePooledProblem } from "@/games/slide-puzzle/problem-selection";
@@ -66,7 +67,9 @@ export function RecordedProblemReplayView() {
       <PlayableParkingJam
         difficulty={parkingJamDifficulty}
         initialProblem={{
-          identity: record.payload.problemIdentity,
+          restored: restoreParkingJamProblemWithoutAnalysis(
+            record.payload.problemIdentity,
+          ),
           purpose: "replay",
         }}
       />
