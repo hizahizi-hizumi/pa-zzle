@@ -22,11 +22,11 @@ import {
 } from "@/games/parking-jam/puzzle/board";
 import { listParkingJamLegalMoves } from "@/games/parking-jam/puzzle/rules";
 import {
-  createProblemRandom,
+  createProblemSeededRandom,
   type ProblemRandom,
+  type ProblemSeed,
   shuffleProblemValues,
-} from "@/games/problem-random";
-import type { ProblemSeed } from "@/games/problem-seed";
+} from "@/games/problem-seed";
 
 export type ParkingJamGeneratedCandidate = {
   attempt: number;
@@ -129,7 +129,7 @@ function createGeneratorRandom(
   seed: ProblemSeed,
   conditions: ParkingJamGenerationConditions,
 ): ProblemRandom {
-  return createProblemRandom(
+  return createProblemSeededRandom(
     [
       PARKING_JAM_GENERATOR_VERSION,
       seed,
