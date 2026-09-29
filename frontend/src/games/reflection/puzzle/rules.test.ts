@@ -84,4 +84,32 @@ describe("listReflectionClueMatches", () => {
       true,
     ]);
   });
+  test("退出の数と種類が同じでも、出た先の外周ヒントの目標が違えば一致としないこと", () => {
+    // 目標（右下に /）: 上0 退出3（下0へ）、左2 退出5、右2 退出1。
+    // 左下に / を置くと、上0 の光は3マスで左2から出る。数と種類は目標の「退出3」と同じだが、左2 の目標は「退出5」なので
+    // 正解の光路ではない。下0 も同じく3マスで右2から出るが、右2 の目標は「退出1」。
+    const exitClues = computeReflectionClues(
+      parseReflectionBoard(["...", "...", "../"]),
+    );
+    const board = parseReflectionBoard(["...", "...", "/.."]);
+
+    const matches = listReflectionClueMatches(board, exitClues);
+
+    expect(computeReflectionClues(board)[0]).toEqual(exitClues[0]);
+    expect(computeReflectionClues(board)[6]).toEqual(exitClues[6]);
+    expect(matches).toEqual([
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+    ]);
+  });
 });

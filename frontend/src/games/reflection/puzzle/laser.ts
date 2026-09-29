@@ -140,6 +140,14 @@ export function listReflectionEntries(size: number): ReflectionEntry[] {
   });
 }
 
+/** 外周位置の、`listReflectionEntries` の並びでの番号。 */
+export function getReflectionEntryIndex(
+  size: number,
+  { side, index }: ReflectionEntry,
+): number {
+  return reflectionSides.indexOf(side) * size + index;
+}
+
 /**
  * 外周の1か所から光を入れ、出るか吸収されるまで追う。
  * 各ピースの遷移は向きの入れ替えなので、外周から入った光は必ず外へ出るか吸収され、盤面内で回り続けない。

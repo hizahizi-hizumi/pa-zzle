@@ -28,7 +28,7 @@ function countMoveKinds({
 }
 
 describe("traceReflectionTrialSolve", () => {
-  // 生成器の版 2 の問題集にあった問題の解。
+  // 生成器の版 2 の問題集にあった問題の解（2つ目は小さく作った盤面）。
   const cases: readonly [string, ReflectionBoard, ReflectionTrialSolveTrace][] =
     [
       [
@@ -46,17 +46,17 @@ describe("traceReflectionTrialSolve", () => {
         },
       ],
       [
-        "1本を満たすと別の1本の一致が崩れる問題",
-        parseReflectionBoard(["\\....", "=....", ".....", ".....", "....."]),
+        "1本を満たすと別の一致が崩れ、回り道もして解き切る問題",
+        parseReflectionBoard(["o=...", ".....", ".....", ".....", "....."]),
         {
           status: "solved",
-          moveCount: 2,
-          cleanFixCount: 1,
+          moveCount: 6,
+          cleanFixCount: 3,
           breakingFixCount: 1,
-          brokenMatchCount: 1,
+          brokenMatchCount: 2,
           advanceCount: 0,
-          detourCount: 0,
-          retryCount: 1,
+          detourCount: 2,
+          retryCount: 3,
         },
       ],
       [
@@ -71,13 +71,13 @@ describe("traceReflectionTrialSolve", () => {
         ]),
         {
           status: "solved",
-          moveCount: 70,
-          cleanFixCount: 9,
-          breakingFixCount: 48,
-          brokenMatchCount: 96,
-          advanceCount: 13,
+          moveCount: 11,
+          cleanFixCount: 8,
+          breakingFixCount: 2,
+          brokenMatchCount: 4,
+          advanceCount: 1,
           detourCount: 0,
-          retryCount: 48,
+          retryCount: 2,
         },
       ],
       [
@@ -93,11 +93,11 @@ describe("traceReflectionTrialSolve", () => {
         {
           status: "move-limit-reached",
           moveCount: 240,
-          cleanFixCount: 33,
-          breakingFixCount: 121,
-          brokenMatchCount: 221,
-          advanceCount: 23,
-          detourCount: 63,
+          cleanFixCount: 36,
+          breakingFixCount: 118,
+          brokenMatchCount: 242,
+          advanceCount: 20,
+          detourCount: 66,
           retryCount: 184,
         },
       ],

@@ -6,6 +6,7 @@ import {
 } from "@/games/reflection/problem/generation/cell-code";
 import type { ReflectionInventory } from "@/games/reflection/puzzle/board";
 import {
+  getReflectionEntryIndex,
   getReflectionEntryState,
   getReflectionExitEntry,
   getReflectionLeavingDirection,
@@ -17,6 +18,7 @@ import {
   type ReflectionOutcome,
   stepReflectionPosition,
 } from "@/games/reflection/puzzle/laser";
+import { isReflectionClueMatch } from "@/games/reflection/puzzle/rules";
 
 export type ReflectionTrialSolveInput = {
   size: number;
@@ -49,6 +51,8 @@ type TraceResult = {
   outcome: ReflectionOutcome;
   distance: number;
   cells: readonly number[];
+  /** 光が出た外周位置の番号。吸収では `null`。 */
+  exitIndex: number | null;
 };
 
 /** 盤面の変更。`cellIndex` のマスを `code` にする。移動は2つの変更（移す先に置き、元を空ける）で表す。 */
@@ -94,7 +98,12 @@ function traceLaser(
       direction,
     );
     if (leaving === null) {
-      return { outcome: "absorb", distance: visited.length, cells: visited };
+      return {
+        outcome: "absorb",
+        distance: visited.length,
+        cells: visited,
+        exitIndex: null,
+      };
     }
     ({ row, column } = stepReflectionPosition(row, column, leaving));
     const exit = getReflectionExitEntry(size, row, column);
@@ -103,6 +112,7 @@ function traceLaser(
         outcome: isSameReflectionEntry(exit, entry) ? "reflect" : "exit",
         distance: visited.length,
         cells: visited,
+        exitIndex: getReflectionEntryIndex(size, exit),
       };
     }
     direction = leaving as ReflectionDirection;
@@ -111,7 +121,7 @@ function traceLaser(
 }
 
 /**
- * 一致表示を見ながら試し置きで解く、推論をしない単純な戦略。難易度分析で「1本ずつ満たしていく試し置きで押し切れるか」を測る。
+ * 一致表示（`isReflectionClueMatch`）を見ながら試し置きで解く、推論をしない単純な戦略。難易度分析で「1本ずつ満たしていく試し置きで押し切れるか」を測る。
  *
  * 1. 一致していない外周ヒントのうち距離の短い順（同じなら外周の並び順）に1本を狙う。全て一致してピースが残っていれば、置き場所を探す。
  * 2. 狙った外周ヒントの今の光が通るマス（通る順）だけを動かす。空きマスには手持ちの各種類を置き（手持ちが無ければ光路の外の
@@ -144,8 +154,7 @@ export function traceReflectionTrialSolve({
   const allCells = Array.from({ length: cellCount }, (_, index) => index);
 
   function matchesClue(trace: TraceResult, index: number): boolean {
-    const clue = clues[index]!;
-    return trace.outcome === clue.outcome && trace.distance === clue.distance;
+    return isReflectionClueMatch(clues, index, trace, trace.exitIndex);
   }
 
   let traces = entries.map((entry) => traceLaser(size, cells, entry));
