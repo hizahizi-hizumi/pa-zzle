@@ -1,3 +1,4 @@
+import { calculateLinearScore, subtractWithFloor } from "@/games/score";
 export const MINESWEEPER_SCORE_MAXIMUMS = {
   accuracy: 60,
   speed: 40,
@@ -30,10 +31,6 @@ type MinesweeperPlayScoreInput = MinesweeperSpeedFullScoreInput & {
   elapsedMs: number;
   mistakeCount: number;
 };
-
-function clampUnit(value: number): number {
-  return Math.min(1, Math.max(0, value));
-}
 
 /**
  * 問題ごとの速さ満点基準時間。
@@ -68,10 +65,9 @@ export function calculateMinesweeperPlayScore({
   minimumOpenCount,
   mineCount,
 }: MinesweeperPlayScoreInput): MinesweeperPlayScore {
-  const accuracy = Math.max(
-    0,
-    MINESWEEPER_SCORE_MAXIMUMS.accuracy -
-      mistakeCount * MINESWEEPER_MISTAKE_PENALTY,
+  const accuracy = subtractWithFloor(
+    MINESWEEPER_SCORE_MAXIMUMS.accuracy,
+    mistakeCount * MINESWEEPER_MISTAKE_PENALTY,
   );
 
   const speedFullScoreMs = calculateMinesweeperSpeedFullScoreMs({
@@ -79,9 +75,9 @@ export function calculateMinesweeperPlayScore({
     mineCount,
   });
   const overtimeMs = Math.max(0, elapsedMs - speedFullScoreMs);
-  const speed = Math.round(
-    MINESWEEPER_SCORE_MAXIMUMS.speed *
-      clampUnit(1 - overtimeMs / speedFullScoreMs),
+  const speed = calculateLinearScore(
+    MINESWEEPER_SCORE_MAXIMUMS.speed,
+    1 - overtimeMs / speedFullScoreMs,
   );
 
   return {
