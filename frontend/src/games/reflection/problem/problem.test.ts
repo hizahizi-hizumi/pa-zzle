@@ -31,7 +31,7 @@ describe("createReflectionProblemIdentity", () => {
     const result = createReflectionProblemIdentity(7, 10, 3);
 
     expect(result).toEqual({
-      generatorVersion: "1",
+      generatorVersion: "2",
       seed: "rf-7-10-3",
       conditions: { size: 7, pieceCount: 10 },
     });
@@ -75,7 +75,7 @@ describe("assertReflectionProblem", () => {
 describe("isReflectionProblemIdentity", () => {
   const identity = createReflectionProblemIdentity(6, 8, 0);
   const invalidCases = [
-    ["生成器の版が違う", { ...identity, generatorVersion: "2" }],
+    ["生成器の版が違う", { ...identity, generatorVersion: "1" }],
     ["seed が空", { ...identity, seed: "" }],
     ["条件が無い", { ...identity, conditions: undefined }],
     [

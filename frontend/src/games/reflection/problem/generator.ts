@@ -39,25 +39,18 @@ const REFLECTION_UNIQUENESS_SEARCH_STEP_LIMIT = 200_000;
 
 const MAXIMUM_GENERATION_ATTEMPTS = 100;
 
-/** 手持ちに必ず含める基本の鏡。ピース数がこれより少なければ先頭から含める。 */
-const guaranteedPieces = [
-  "slash",
-  "backslash",
-  "vertical-double",
-  "horizontal-double",
-] as const satisfies readonly ReflectionPiece[];
-
+/**
+ * 手持ちの各ピースを6種から等確率で選ぶ。同じ種類が重なってもよい。
+ * 特定の種類を必ず含めると、ピースが少ない問題で種類の組み合わせが偏り、1本のヒントで決まる問題がほとんど出なくなる。
+ */
 function sampleInventoryPieces(
   pieceCount: number,
   random: ProblemRandom,
 ): ReflectionPiece[] {
-  const pieces: ReflectionPiece[] = guaranteedPieces.slice(0, pieceCount);
-  while (pieces.length < pieceCount) {
-    pieces.push(
-      reflectionPieces[Math.floor(random() * reflectionPieces.length)]!,
-    );
-  }
-  return shuffleProblemValues(pieces, random);
+  return Array.from(
+    { length: pieceCount },
+    () => reflectionPieces[Math.floor(random() * reflectionPieces.length)]!,
+  );
 }
 
 function placePiecesRandomly(

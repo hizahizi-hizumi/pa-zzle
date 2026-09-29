@@ -10,15 +10,16 @@ import {
 } from "@/games/reflection/problem/problem";
 
 /**
- * 問題集ができるまでの仮の生成条件。難易度分析をしていないので、レベルの難しさは保証しない。
- * 値は組み合わせモデルの規模の範囲（盤面サイズ・ピース数）から1つずつ選んだもの。
+ * 問題集ができるまでの仮の生成条件。生成した問題を分析しないので、レベルの難しさは保証しない。
+ * 値は、組み合わせ定義（`reflectionLevelCombinations`）の規模の範囲のうち、分析スクリプトの問題集合でそのレベルに分類された割合が
+ * 最も高い盤面サイズとピース数（レベル1: 56%、2: 41%、3: 62%、4: 81%、5: 25%）。
  */
 const provisionalConditionsByDifficulty = {
-  "1": { size: 5, pieceCount: 3 },
-  "2": { size: 5, pieceCount: 4 },
-  "3": { size: 6, pieceCount: 6 },
-  "4": { size: 6, pieceCount: 8 },
-  "5": { size: 7, pieceCount: 10 },
+  "1": { size: 5, pieceCount: 2 },
+  "2": { size: 5, pieceCount: 3 },
+  "3": { size: 5, pieceCount: 5 },
+  "4": { size: 7, pieceCount: 9 },
+  "5": { size: 7, pieceCount: 12 },
 } as const satisfies Record<
   ReflectionDifficulty,
   ReflectionGenerationConditions
