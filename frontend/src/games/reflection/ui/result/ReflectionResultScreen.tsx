@@ -27,11 +27,11 @@ import {
   type ReflectionLaserPathMode,
 } from "@/games/reflection/laser-path-mode";
 import type { ReflectionResult } from "@/games/reflection/play/use-reflection-play";
-import { getReflectionGameResultLevel } from "@/games/reflection/score";
 import type { ReflectionSessionResult } from "@/games/reflection/session/session";
 import { DetailMetric } from "@/games/reflection/ui/result/ReflectionResultScreen/DetailMetric";
 import { ResultMetric } from "@/games/reflection/ui/result/ReflectionResultScreen/ResultMetric";
 import { ScoreCriteria } from "@/games/reflection/ui/result/ReflectionResultScreen/ScoreCriteria";
+import { getGameResultLevel } from "@/games/result";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 import { formatElapsedTimeDelta } from "@/lib/format-performance-delta";
 
@@ -66,9 +66,7 @@ export function ReflectionResultScreen({
   onOpenDiagnostics,
 }: ReflectionResultScreenProps) {
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const resultLevel = result
-    ? getReflectionGameResultLevel(result.score)
-    : "clear";
+  const resultLevel = result ? getGameResultLevel(result.score) : "clear";
   const { showsCheckCountInResult } =
     getReflectionLaserPathPolicy(laserPathMode);
   const screenRef = useRef<HTMLElement>(null);

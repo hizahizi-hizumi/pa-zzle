@@ -1,5 +1,5 @@
 import type { ReflectionSolveWorkload } from "@/games/reflection/problem/problem";
-import type { GameResultLevel } from "@/games/result";
+import { calculateLinearScore } from "@/games/score";
 
 /**
  * 解き切る速さを称える。問題ごとの基準時間と比べた速さだけで100点満点にする。
@@ -37,10 +37,6 @@ type ReflectionPlayScoreInput = {
   elapsedMs: number;
   workload: ReflectionSolveWorkload;
 };
-
-function clampUnit(value: number): number {
-  return Math.min(1, Math.max(0, value));
-}
 
 /** 読んで解く時間。外周ヒントを読む時間に、置くピースの数、照らし直す回数、仮に置いて確かめる回数（上限あり）に応じた時間を足す。 */
 export function calculateReflectionReadingMs({
@@ -116,21 +112,8 @@ export function calculateReflectionPlayScore({
   const speedFullScoreMs = calculateReflectionSpeedFullScoreMs(workload);
   const speedZeroScoreMs = calculateReflectionSpeedZeroScoreMs(workload);
   const overtimeMs = Math.max(0, elapsedMs - speedFullScoreMs);
-  return Math.round(
-    REFLECTION_SCORE_MAXIMUM *
-      clampUnit(1 - overtimeMs / (speedZeroScoreMs - speedFullScoreMs)),
+  return calculateLinearScore(
+    REFLECTION_SCORE_MAXIMUM,
+    1 - overtimeMs / (speedZeroScoreMs - speedFullScoreMs),
   );
-}
-
-export function getReflectionGameResultLevel(score: number): GameResultLevel {
-  if (score >= 100) {
-    return "perfect";
-  }
-  if (score >= 90) {
-    return "great";
-  }
-  if (score >= 80) {
-    return "good";
-  }
-  return "clear";
 }

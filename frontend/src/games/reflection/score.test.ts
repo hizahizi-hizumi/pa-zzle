@@ -4,8 +4,8 @@ import {
   calculateReflectionSpeedFullScoreMs,
   calculateReflectionSpeedZeroScoreMs,
   calculateReflectionTimeDeltaMs,
-  getReflectionGameResultLevel,
 } from "@/games/reflection/score";
+import { getGameResultLevel } from "@/games/result";
 
 // 2ピースの軽い問題と、照らし直しが多く仮に置く回数が上限を超える重い問題の作業の量。どちらも試し置きでは解き切れない。
 const lightWorkload: ReflectionSolveWorkload = {
@@ -169,7 +169,7 @@ describe("代表的なプレイ例", () => {
   ] as const;
 
   test.each(levelCases)("%s のプレイを %s にすること", (_, ratio, level) => {
-    const resultLevel = getReflectionGameResultLevel(scoreAtRatio(ratio));
+    const resultLevel = getGameResultLevel(scoreAtRatio(ratio));
 
     expect(resultLevel).toBe(level);
   });
@@ -183,23 +183,5 @@ describe("代表的なプレイ例", () => {
       expect(scores).toEqual([...scores].sort((left, right) => right - left));
       expect(new Set(scores).size).toBe(scores.length);
     });
-  });
-});
-
-describe("getReflectionGameResultLevel", () => {
-  const cases = [
-    [100, "perfect"],
-    [99, "great"],
-    [90, "great"],
-    [89, "good"],
-    [80, "good"],
-    [79, "clear"],
-    [0, "clear"],
-  ] as const;
-
-  test.each(cases)("%i 点を %s にすること", (score, level) => {
-    const resultLevel = getReflectionGameResultLevel(score);
-
-    expect(resultLevel).toBe(level);
   });
 });
