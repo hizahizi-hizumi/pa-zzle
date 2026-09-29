@@ -1,3 +1,4 @@
+import { calculateLinearScore } from "@/games/score";
 export const WATER_SORT_SCORE_MAXIMUMS = {
   efficiency: 40,
   speed: 40,
@@ -49,14 +50,6 @@ export type WaterSortPerformanceComparison = {
   timeDeltaMs: number;
   moveDelta: number;
 };
-
-function clampUnit(value: number): number {
-  return Math.min(1, Math.max(0, value));
-}
-
-function calculateLinearScore(maximum: number, ratio: number): number {
-  return Math.round(maximum * clampUnit(ratio));
-}
 
 export function calculateWaterSortSpeedFullScoreMs({
   optimalMoveCount,
