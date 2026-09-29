@@ -8,7 +8,6 @@ import { createPlayRecordDisplay } from "@/records/ui/play-record-display";
 
 export const parkingJamPlayRecordDisplay = createPlayRecordDisplay({
   definition: parkingJamPlayRecordDefinition,
-  gameLabel: "パーキングジャム",
   getComparisonLabel(comparisonKey: string) {
     const difficulty = parseParkingJamRecordedDifficulty(comparisonKey);
     return difficulty ? getParkingJamDifficultyLabel(difficulty) : null;

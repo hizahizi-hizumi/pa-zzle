@@ -11,14 +11,14 @@ import { createWaterSortPlayRecord } from "@/games/water-sort/play-record";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 
 import { PlayRecordsScreen } from "@/records/ui/PlayRecordsScreen";
-import type { PlayRecordDisplayCatalog } from "@/records/ui/play-record-display";
+import type { PlayRecordGameCatalog } from "@/records/ui/play-record-display";
 
-const playRecordDisplays = [
-  waterSortPlayRecordDisplay,
-  nanpurePlayRecordDisplay,
-  minesweeperPlayRecordDisplay,
-  takuzuPlayRecordDisplay,
-] as const satisfies PlayRecordDisplayCatalog;
+const playRecordGames = [
+  { name: "ウォーターソート", playRecordDisplay: waterSortPlayRecordDisplay },
+  { name: "ナンプレ", playRecordDisplay: nanpurePlayRecordDisplay },
+  { name: "マインスイーパー", playRecordDisplay: minesweeperPlayRecordDisplay },
+  { name: "バイナリパズル", playRecordDisplay: takuzuPlayRecordDisplay },
+] as const satisfies PlayRecordGameCatalog;
 
 const records = [
   createWaterSortPlayRecord({
@@ -133,7 +133,7 @@ describe("PlayRecordsScreen", () => {
     render(
       <PlayRecordsScreen
         records={records}
-        displays={playRecordDisplays}
+        games={playRecordGames}
         emptyAction={<a href="/">パズルを選ぶ</a>}
         onReplay={() => {}}
       />,

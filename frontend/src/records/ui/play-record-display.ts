@@ -24,7 +24,6 @@ type PlayRecordMetricPresentation = Omit<PlayRecordMetricDisplay, "id">;
 
 export type PlayRecordDisplayDefinition = {
   definition: PlayRecordDefinition;
-  gameLabel: string;
   getComparisonLabel: (comparisonKey: string) => string | null;
   metrics: readonly PlayRecordMetricDisplay[];
 };
@@ -37,9 +36,15 @@ type PlayRecordDisplaySource<Definition extends PlayRecordDefinition> = Omit<
   metrics: Record<PlayRecordMetricId<Definition>, PlayRecordMetricPresentation>;
 };
 
-export type PlayRecordDisplayCatalog = readonly [
-  PlayRecordDisplayDefinition,
-  ...PlayRecordDisplayDefinition[],
+/** 記録画面で選べる1つのゲーム。 */
+export type PlayRecordGame = {
+  name: string;
+  playRecordDisplay: PlayRecordDisplayDefinition;
+};
+
+export type PlayRecordGameCatalog = readonly [
+  PlayRecordGame,
+  ...PlayRecordGame[],
 ];
 
 /**

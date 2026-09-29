@@ -9,7 +9,6 @@ import { createPlayRecordDisplay } from "@/records/ui/play-record-display";
 
 export const nanpurePlayRecordDisplay = createPlayRecordDisplay({
   definition: nanpurePlayRecordDefinition,
-  gameLabel: "ナンプレ",
   getComparisonLabel(comparisonKey: string) {
     const difficulty = parseNanpureRecordedDifficulty(comparisonKey);
     return difficulty ? getNanpureDifficultyLabel(difficulty) : null;

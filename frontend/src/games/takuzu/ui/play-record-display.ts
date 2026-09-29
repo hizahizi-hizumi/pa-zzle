@@ -8,7 +8,6 @@ import { createPlayRecordDisplay } from "@/records/ui/play-record-display";
 
 export const takuzuPlayRecordDisplay = createPlayRecordDisplay({
   definition: takuzuPlayRecordDefinition,
-  gameLabel: "バイナリパズル",
   getComparisonLabel(comparisonKey: string) {
     const difficulty = parseTakuzuDifficulty(comparisonKey);
     return difficulty ? getTakuzuDifficultyLabel(difficulty) : null;

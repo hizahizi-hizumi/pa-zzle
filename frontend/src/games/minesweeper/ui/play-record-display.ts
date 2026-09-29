@@ -8,7 +8,6 @@ import { createPlayRecordDisplay } from "@/records/ui/play-record-display";
 
 export const minesweeperPlayRecordDisplay = createPlayRecordDisplay({
   definition: minesweeperPlayRecordDefinition,
-  gameLabel: "マインスイーパー",
   getComparisonLabel(comparisonKey: string) {
     const difficulty = parseMinesweeperDifficulty(comparisonKey);
     return difficulty ? getMinesweeperDifficultyLabel(difficulty) : null;
