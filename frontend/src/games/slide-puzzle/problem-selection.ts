@@ -1,4 +1,5 @@
-import { hashProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import type { ProblemSeed } from "@/games/problem-seed";
+import { selectProblemPoolEntry } from "@/games/problem-selection";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import { restoreSlidePuzzleProblemWithOptimalMoveCount } from "@/games/slide-puzzle/problem/generator";
 import type {
@@ -15,11 +16,11 @@ export function selectSlidePuzzleProblemForDifficulty(
   difficulty: SlidePuzzleDifficulty,
   seed: ProblemSeed,
 ): SlidePuzzleGeneratedProblem {
-  const entries = listSlidePuzzlePoolEntries(difficulty);
-  const entry = entries[hashProblemSeed(seed) % entries.length];
-  if (!entry) {
-    throw new Error(`No level ${difficulty} slide puzzle problem is available`);
-  }
+  const entry = selectProblemPoolEntry(
+    listSlidePuzzlePoolEntries(difficulty),
+    seed,
+    `level ${difficulty} slide puzzle`,
+  );
 
   const { identity, optimalMoveCount } = toSlidePuzzlePooledProblem(entry);
   return restoreSlidePuzzleProblemWithOptimalMoveCount(
