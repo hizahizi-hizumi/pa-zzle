@@ -16,6 +16,7 @@ type ParkingJamResultScreenProps = {
   onOpenRecords: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
+  onOpenDiagnostics?: () => void;
 };
 
 export function ParkingJamResultScreen({
@@ -27,6 +28,7 @@ export function ParkingJamResultScreen({
   onOpenRecords,
   onChangeDifficulty,
   onBackToHome,
+  onOpenDiagnostics,
 }: ParkingJamResultScreenProps) {
   return (
     <GameResultScreen
@@ -61,6 +63,7 @@ export function ParkingJamResultScreen({
       onOpenRecords={onOpenRecords}
       onChangeDifficulty={onChangeDifficulty}
       onBackToHome={onBackToHome}
+      onOpenDiagnostics={onOpenDiagnostics}
     />
   );
 }
