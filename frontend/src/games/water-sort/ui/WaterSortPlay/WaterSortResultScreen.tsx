@@ -28,15 +28,17 @@ import {
 } from "@/games/water-sort/difficulty";
 import type { WaterSortResult } from "@/games/water-sort/play/use-water-sort-play";
 import { WATER_SORT_SCORE_MAXIMUMS } from "@/games/water-sort/score";
-import { formatWaterSortElapsedTime } from "@/games/water-sort/ui/format-elapsed-time";
-import {
-  formatWaterSortMoveDelta,
-  formatWaterSortTimeDelta,
-} from "@/games/water-sort/ui/format-performance-delta";
 import { DetailMetric } from "@/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen/DetailMetric";
-import { formatScoreTime } from "@/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen/format-score-time";
 import { ResultMetric } from "@/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen/ResultMetric";
 import { ScoreCriteria } from "@/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen/ScoreCriteria";
+import {
+  formatElapsedTime,
+  formatElapsedTimeWithTenths,
+} from "@/lib/format-elapsed-time";
+import {
+  formatCountDelta,
+  formatElapsedTimeDelta,
+} from "@/lib/format-performance-delta";
 
 type WaterSortResultScreenProps = {
   difficulty: WaterSortDifficulty;
@@ -84,12 +86,12 @@ export function WaterSortResultScreen({
           <ResultMetric
             label="手数"
             value={String(result.completionMoveCount)}
-            detail={`最短 ${formatWaterSortMoveDelta(result.moveDelta)}`}
+            detail={`最短 ${formatCountDelta(result.moveDelta)}`}
           />
           <ResultMetric
             label="時間"
-            value={formatWaterSortElapsedTime(result.elapsedMs)}
-            detail={`基準 ${formatWaterSortTimeDelta(result.timeDeltaMs)}`}
+            value={formatElapsedTime(result.elapsedMs)}
+            detail={`基準 ${formatElapsedTimeDelta(result.timeDeltaMs)}`}
           />
         </dl>
 
@@ -144,7 +146,7 @@ export function WaterSortResultScreen({
                 />
                 <DetailMetric
                   label="基準時間"
-                  value={formatScoreTime(result.speedFullScoreMs)}
+                  value={formatElapsedTimeWithTenths(result.speedFullScoreMs)}
                 />
                 <DetailMetric label="総手数" value={String(result.moveCount)} />
                 <DetailMetric
