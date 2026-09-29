@@ -44,6 +44,7 @@ export function ParkingJamPlayView() {
 
   return (
     <PlayableParkingJam
+      key={difficulty}
       difficulty={difficulty}
       initialProblem={
         specifiedProblem?.identity
