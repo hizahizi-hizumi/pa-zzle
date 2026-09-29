@@ -59,6 +59,20 @@ describe("generateReflectionProblem", () => {
     expect(other.problem).not.toEqual(first.problem);
   });
 
+  test("診断で開くサンプル用の 9×9 でも、一意解で全ピースが外周ヒントに影響する問題を作ること", () => {
+    const { problem } = generateReflectionProblem(
+      createReflectionProblemIdentity(9, 12, 3),
+    );
+
+    const solutionSearch = countReflectionSolutions(problem);
+
+    expect(() => assertReflectionProblem(problem)).not.toThrow();
+    expect(problem.size).toBe(9);
+    expect(solutionSearch.status).toBe("complete");
+    expect(solutionSearch.solutionCount).toBe(1);
+    expect(doAllReflectionPiecesInfluenceClues(problem.solution)).toBe(true);
+  });
+
   test("ピースが少ない問題でも、手持ちの種類を特定の組み合わせに固定しないこと", () => {
     const usedPieces = new Set(
       Array.from({ length: 20 }, (_, index) =>
@@ -84,7 +98,7 @@ describe("generateReflectionProblem", () => {
       {
         ...identity,
         conditions: {
-          size: 8 as ReflectionProblemIdentity["conditions"]["size"],
+          size: 12 as ReflectionProblemIdentity["conditions"]["size"],
           pieceCount: 10,
         },
       },

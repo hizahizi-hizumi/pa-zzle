@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import type { ReflectionPiece } from "@/games/reflection/puzzle/board";
+import { reflectionPieceToneClassNames } from "@/games/reflection/ui/reflection-tone";
 import { cn } from "@/lib/utils";
 
 /** `cell` は盤面のマス、`stock` はストックのボタン、`figure` は遊び方の図。 */
@@ -80,6 +81,7 @@ export function ReflectionPieceIcon({
       className={cn(
         "shrink-0 overflow-visible",
         sizeClassNames[size],
+        reflectionPieceToneClassNames[piece],
         appearing && appearingClassName,
       )}
       fill="none"

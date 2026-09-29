@@ -26,11 +26,9 @@ import {
   calculateReflectionSpeedFullScoreMs,
   calculateReflectionSpeedZeroScoreMs,
   calculateReflectionTimeDeltaMs,
-  type ReflectionPlayScore,
 } from "@/games/reflection/score";
 import {
   canRestartReflectionSession,
-  canUndoReflectionSession,
   clearReflectionSessionSelection,
   createReflectionSession,
   getReflectionSessionElapsedMs,
@@ -44,7 +42,6 @@ import {
   tapReflectionSessionCell,
   tapReflectionSessionClue,
   tapReflectionSessionStock,
-  undoReflectionSession,
 } from "@/games/reflection/session/session";
 
 const elapsedTimeTickMs = 1_000;
@@ -70,7 +67,7 @@ export type ReflectionResult = ReflectionSessionResult & {
   speedFullScoreMs: number;
   speedZeroScoreMs: number;
   timeDeltaMs: number;
-  score: ReflectionPlayScore;
+  score: number;
 };
 
 /**
@@ -145,13 +142,16 @@ function createReflectionResult(
       elapsedMs: sessionResult.elapsedMs,
       workload,
     }),
-    score: calculateReflectionPlayScore({ ...sessionResult, workload }),
+    score: calculateReflectionPlayScore({
+      elapsedMs: sessionResult.elapsedMs,
+      workload,
+    }),
   };
 }
 
 /**
  * 難易度のプレイを始める。`initialProblemIdentity` を渡すと、最初の1問だけその問題を出す。
- * `undo` は直前の盤面操作を1つ取り消し（待った）、`restart` は同じプレイのまま全ピースをストックへ戻し（盤面を戻す）、
+ * `restart` は同じプレイのまま全ピースをストックへ戻し（盤面を戻す）、
  * `replay` は同じ問題を新しいプレイとして始め（やり直す）、`startNewProblem` は同じ難易度の別の問題を始める。
  * `tapClue` は外周ヒントの光路を表示し、盤面が揃うと `progress` が `clearing` になる。
  * クリアすると `result` に評価を返す。問題集に無い問題を指定したときは作業の量が無いので `result` は `null` のまま。
@@ -243,10 +243,6 @@ export function useReflectionPlay(
     updateSession(clearReflectionSessionSelection);
   }, [updateSession]);
 
-  const undo = useCallback(() => {
-    updateSession(undoReflectionSession);
-  }, [updateSession]);
-
   const restart = useCallback(() => {
     updateSession(restartReflectionSession);
   }, [updateSession]);
@@ -309,10 +305,7 @@ export function useReflectionPlay(
     stock,
     selection: session.selection,
     laser,
-    relocationCount: session.relocationCount,
-    undoCount: session.undoCount,
     elapsedMs: getReflectionSessionElapsedMs(session, now),
-    canUndo: canUndoReflectionSession(session),
     canRestart: canRestartReflectionSession(session),
     startedAt: session.startedAt,
     completedAt: session.finishedAt,
@@ -323,7 +316,6 @@ export function useReflectionPlay(
     tapClue,
     removePiece,
     clearSelection,
-    undo,
     restart,
     replay,
     completeClearAnimation,

@@ -2,8 +2,12 @@ import {
   type ReflectionCellCode,
   reflectionCellCodes,
   reflectionCellsByCode,
+  toReflectionCellCode,
 } from "@/games/reflection/problem/generation/cell-code";
-import type { ReflectionInventory } from "@/games/reflection/puzzle/board";
+import type {
+  ReflectionBoard,
+  ReflectionInventory,
+} from "@/games/reflection/puzzle/board";
 import {
   getReflectionEntryState,
   getReflectionExitEntry,
@@ -39,6 +43,7 @@ export type ReflectionHumanSolveInput = {
 /**
  * - `solved`: 推論レベル1〜5のどこかで、手持ちの全ピースの置き場所が決まった。`highestLevel` はそこまでに使った最も深いレベル。
  * - `unresolved`: 5まで使っても置き場所が決まらないマスが残った（評価不能）。
+ * - `assumption-limit-reached`: レベル5で候補を仮に置いて試す回数が上限に達し、まだ決まらないマスが残った（評価不能）。
  * - `contradiction`: 外周ヒントと手持ちに合う配置が無い。
  *
  * - `fixedPieceCountByLevel`: 各レベルの推論で新しく置き場所が決まったピースの数。添字0がレベル1。
@@ -47,7 +52,11 @@ export type ReflectionHumanSolveInput = {
  * - `unresolvedCellCount`: まだピースが入り得るのに決まらないマスの数。`contradiction` では全マス数。
  */
 export type ReflectionHumanSolveTrace = {
-  status: "solved" | "unresolved" | "contradiction";
+  status:
+    | "solved"
+    | "unresolved"
+    | "assumption-limit-reached"
+    | "contradiction";
   highestLevel: ReflectionReasoningLevel | null;
   fixedPieceCountByLevel: readonly [number, number, number, number, number];
   propagationRoundCount: number;
@@ -62,6 +71,11 @@ export type ReflectionHumanSolveTrace = {
  */
 export type ReflectionHumanSolveOptions = {
   observeDomains?: (domains: Readonly<Uint8Array>) => void;
+  /**
+   * 手持ちと外周ヒントに合う配置（問題の解）。推論は解を候補から落とさないので、解と同じピースを仮に置く試しは矛盾しない。
+   * 渡すとその試しの伝播を省く（試した回数には数える）。結果は渡さないときと同じで、仮定を試す推論レベル5の分析が速くなる。
+   */
+  knownSolution?: ReflectionBoard;
 };
 
 /** マスごとの、まだ置ける可能性のあるマスの番号の集合（ビット）。 */
@@ -85,6 +99,7 @@ type SolverClue = {
  * - `required`: マスの番号ごとの必要数。空きマスも含む。
  * - `reached` / `viable` / `layers`: ヒント1本の光路を探す前に、届く状態と終われる状態を距離ごとに求める作業領域。
  *   距離と状態の組で引く。
+ * - `clueAnalysisRecords`: ヒントごと（外周位置の並び順）の解析結果の控え。
  */
 type SolverContext = {
   cellCount: number;
@@ -95,6 +110,8 @@ type SolverContext = {
   reached: Uint8Array;
   viable: Uint8Array;
   layers: Int32Array;
+  clueAnalysisRecords: ClueAnalysisRecord[][];
+  knownSolutionCodes: Uint8Array | null;
 };
 
 type NarrowResult = { feasible: boolean; domains: Domains };
@@ -160,11 +177,10 @@ function getTransitionTable(size: number): Int16Array {
   return table;
 }
 
-function createContext({
-  size,
-  inventory,
-  clues,
-}: ReflectionHumanSolveInput): SolverContext {
+function createContext(
+  { size, inventory, clues }: ReflectionHumanSolveInput,
+  knownSolution: ReflectionBoard | undefined,
+): SolverContext {
   const entries = listReflectionEntries(size);
   if (clues.length !== entries.length) {
     throw new RangeError("Reflection clues must cover every entry");
@@ -199,6 +215,11 @@ function createContext({
     reached: new Uint8Array(layerCount * stateCount),
     viable: new Uint8Array(layerCount * stateCount),
     layers: new Int32Array(layerCount * stateCount),
+    clueAnalysisRecords: solverClues.map(() => []),
+    knownSolutionCodes:
+      knownSolution === undefined
+        ? null
+        : Uint8Array.from(knownSolution.cells, toReflectionCellCode),
   };
 }
 
@@ -328,6 +349,53 @@ type ClueAnalysis =
 const MAXIMUM_PATH_SEARCH_STEPS_PER_CLUE = 20_000;
 
 /**
+ * ヒント1本の解析結果の控え。候補は推論が進むほど絞られる一方なので、控えた時の候補の部分集合で、光路の探索が
+ * たどり得る状態（前向きに届き、後ろ向きにヒントどおり終われる状態）のマスの候補が同じなら、探索は同じ道筋をたどり、
+ * 探索量の上限に達するかどうかも含めて同じ結果になる。
+ * 残り数は、探索中に通した判定（光路の使う数 < 残り数）がすべて通り、止めた判定がすべて止まる範囲（控えた時以下で、
+ * 通した判定の最大の数より大きい）なら同じ結果になる。
+ */
+type ClueAnalysisRecord = {
+  domains: Domains;
+  traversableCells: readonly number[];
+  remainingByCode: readonly number[] | null;
+  largestPassedCountByCode: Int32Array;
+  analysis: ClueAnalysis;
+};
+
+/** ヒント1本ごとに控えておく解析結果の数。仮定を試す間は、仮定を置く前の候補での控えが繰り返し使える。 */
+const CLUE_ANALYSIS_RECORDS_PER_CLUE = 8;
+
+function canReuseClueAnalysis(
+  record: ClueAnalysisRecord,
+  domains: Domains,
+  remainingByCode: readonly number[] | null,
+): boolean {
+  if ((record.remainingByCode === null) !== (remainingByCode === null)) {
+    return false;
+  }
+  if (record.remainingByCode !== null && remainingByCode !== null) {
+    for (let code = 0; code < codeCount; code += 1) {
+      const remaining = remainingByCode[code]!;
+      if (
+        remaining > record.remainingByCode[code]! ||
+        record.largestPassedCountByCode[code]! >= remaining
+      ) {
+        return false;
+      }
+    }
+  }
+  for (const [cellIndex, domain] of domains.entries()) {
+    if ((domain & ~record.domains[cellIndex]!) !== 0) {
+      return false;
+    }
+  }
+  return record.traversableCells.every(
+    (cellIndex) => domains[cellIndex] === record.domains[cellIndex],
+  );
+}
+
+/**
  * - `remainingByCode`: 番号ごとの、まだ置き場所の決まっていないマスへ使える残り数。指定すると、1本の光路が
  *   置き場所の決まっていないマスへ使う数をこの残り数までに限る（手持ちの残り数と光路を行き来する推論）。
  */
@@ -337,34 +405,90 @@ function analyzeClue(
   clue: SolverClue,
   remainingByCode: readonly number[] | null,
 ): ClueAnalysis {
-  const { cellCount, stateCount, transitions, viable } = context;
-  markViableStates(
-    context,
-    domains,
-    clue,
-    listReachedStates(context, domains, clue),
+  const records = context.clueAnalysisRecords[clue.entryOrder]!;
+  const reusable = records.find((record) =>
+    canReuseClueAnalysis(record, domains, remainingByCode),
   );
+  if (reusable !== undefined) {
+    return reusable.analysis;
+  }
+  const record = searchCluePaths(context, domains, clue, remainingByCode);
+  records.unshift(record);
+  if (records.length > CLUE_ANALYSIS_RECORDS_PER_CLUE) {
+    records.pop();
+  }
+  return record.analysis;
+}
+
+/** 後ろ向きの印が付いた（光路の探索がたどり得る）状態のマス。 */
+function listTraversableCells(
+  context: SolverContext,
+  clue: SolverClue,
+  layerSizes: readonly number[],
+): number[] {
+  const { stateCount, layers, viable } = context;
+  const isListed = new Uint8Array(context.cellCount);
+  const cells: number[] = [];
+  for (let depth = 1; depth <= clue.distance; depth += 1) {
+    for (let order = 0; order < layerSizes[depth]!; order += 1) {
+      const state = layers[depth * stateCount + order]!;
+      const cellIndex = state >> 2;
+      if (
+        viable[depth * stateCount + state] === 1 &&
+        isListed[cellIndex] === 0
+      ) {
+        isListed[cellIndex] = 1;
+        cells.push(cellIndex);
+      }
+    }
+  }
+  return cells;
+}
+
+function searchCluePaths(
+  context: SolverContext,
+  domains: Domains,
+  clue: SolverClue,
+  remainingByCode: readonly number[] | null,
+): ClueAnalysisRecord {
+  const { cellCount, stateCount, transitions, viable } = context;
+  const layerSizes = listReachedStates(context, domains, clue);
+  markViableStates(context, domains, clue, layerSizes);
+  const largestPassedCountByCode = new Int32Array(codeCount).fill(-1);
+  function toRecord(analysis: ClueAnalysis): ClueAnalysisRecord {
+    return {
+      domains,
+      traversableCells: listTraversableCells(context, clue, layerSizes),
+      remainingByCode,
+      largestPassedCountByCode,
+      analysis,
+    };
+  }
   const usedCodes = new Uint8Array(cellCount);
   const mustCells = new Uint8Array(cellCount);
   if (viable[stateCount + clue.startState] === 0) {
-    return { usable: true, feasible: false, usedCodes, mustCells };
+    return toRecord({ usable: true, feasible: false, usedCodes, mustCells });
   }
 
   const pathCodes = new Int8Array(cellCount).fill(-1);
   const pathVisitCounts = new Uint8Array(cellCount);
   const pathCells: number[] = [];
   const pathCodeCounts = new Array<number>(codeCount).fill(0);
-  let mustCellList: number[] | null = null;
+  /** 見つけた光路の数と、マスごとの、そのマスを通った光路の数。全光路が通るマスが必ず通るマス。 */
+  let pathCount = 0;
+  const pathCountByCell = new Int32Array(cellCount);
+  const lastPathByCell = new Int32Array(cellCount);
   let searchSteps = 0;
 
   function recordPath(): void {
+    pathCount += 1;
     for (const cellIndex of pathCells) {
       usedCodes[cellIndex]! |= 1 << pathCodes[cellIndex]!;
+      if (lastPathByCell[cellIndex] !== pathCount) {
+        lastPathByCell[cellIndex] = pathCount;
+        pathCountByCell[cellIndex]! += 1;
+      }
     }
-    mustCellList =
-      mustCellList === null
-        ? [...new Set(pathCells)]
-        : mustCellList.filter((cellIndex) => pathVisitCounts[cellIndex]! > 0);
   }
 
   /** 探索量の上限に達したら `false`。 */
@@ -386,11 +510,14 @@ function analyzeClue(
       if ((candidates & (1 << code)) === 0) {
         continue;
       }
-      if (
-        countsTowardRemaining &&
-        pathCodeCounts[code]! >= remainingByCode[code]!
-      ) {
-        continue;
+      if (countsTowardRemaining) {
+        if (pathCodeCounts[code]! >= remainingByCode[code]!) {
+          continue;
+        }
+        largestPassedCountByCode[code] = Math.max(
+          largestPassedCountByCode[code]!,
+          pathCodeCounts[code]!,
+        );
       }
       const transition = transitions[state * codeCount + code]!;
       const ends = endsAsClue(clue, transition, depth);
@@ -426,15 +553,17 @@ function analyzeClue(
   }
 
   if (!extendPath(1, clue.startState)) {
-    return { usable: false };
+    return toRecord({ usable: false });
   }
-  if (mustCellList === null) {
-    return { usable: true, feasible: false, usedCodes, mustCells };
+  if (pathCount === 0) {
+    return toRecord({ usable: true, feasible: false, usedCodes, mustCells });
   }
-  for (const cellIndex of mustCellList as readonly number[]) {
-    mustCells[cellIndex] = 1;
+  for (let cellIndex = 0; cellIndex < cellCount; cellIndex += 1) {
+    if (pathCountByCell[cellIndex] === pathCount) {
+      mustCells[cellIndex] = 1;
+    }
   }
-  return { usable: true, feasible: true, usedCodes, mustCells };
+  return toRecord({ usable: true, feasible: true, usedCodes, mustCells });
 }
 
 /** マスを番号に固定してもヒントを満たせるか。そのマスを通らない光路か、そのマスでその番号を使う光路があれば満たせる。 */
@@ -674,11 +803,19 @@ function applySingleClueDeduction(
   return { feasible: true, domains: updated };
 }
 
-/** 仮定と矛盾で除ける最初の候補（マスの並び順・番号順）を除く。除ける候補が無ければ `null`。 */
+/**
+ * 1問の分析で候補を仮に置いて試す回数の上限。これを超えても決まらない問題は、仮定の帰結を読む推論として人間の挑戦を
+ * 見積もれないので評価不能にする。分析の時間の上限を回数で決めておく役も持つ。
+ */
+const MAXIMUM_ASSUMPTION_TESTS = 1000;
+
+type AssumptionCounter = { tests: number; limitReached: boolean };
+
+/** 仮定と矛盾で除ける最初の候補（マスの並び順・番号順）を除く。除ける候補が無いか、試す回数の上限に達したら `null`。 */
 function eliminateFirstContradictingAssumption(
   context: SolverContext,
   domains: Domains,
-  counter: { tests: number },
+  counter: AssumptionCounter,
 ): Domains | null {
   for (let cellIndex = 0; cellIndex < context.cellCount; cellIndex += 1) {
     const domain = domains[cellIndex]!;
@@ -689,7 +826,14 @@ function eliminateFirstContradictingAssumption(
       if ((domain & (1 << code)) === 0) {
         continue;
       }
+      if (counter.tests >= MAXIMUM_ASSUMPTION_TESTS) {
+        counter.limitReached = true;
+        return null;
+      }
       counter.tests += 1;
+      if (context.knownSolutionCodes?.[cellIndex] === code) {
+        continue;
+      }
       const assumed = domains.slice();
       assumed[cellIndex] = 1 << code;
       if (!propagateWithoutAssumption(context, assumed).feasible) {
@@ -707,7 +851,7 @@ class HumanSolveProgress {
     0, 0, 0, 0, 0,
   ];
   propagationRoundCount = 0;
-  readonly assumptions = { tests: 0 };
+  readonly assumptions: AssumptionCounter = { tests: 0, limitReached: false };
   assumptionEliminationCount = 0;
   private fixedBeforeLevel = 0;
   domains: Domains;
@@ -747,7 +891,7 @@ class HumanSolveProgress {
     const unresolvedCellCount =
       status === "contradiction"
         ? this.context.cellCount
-        : status === "unresolved"
+        : status !== "solved"
           ? countUnresolvedCells(this.domains)
           : 0;
     return {
@@ -880,9 +1024,9 @@ const levelSolvers = [
  */
 export function traceReflectionHumanSolve(
   input: ReflectionHumanSolveInput,
-  { observeDomains }: ReflectionHumanSolveOptions = {},
+  { observeDomains, knownSolution }: ReflectionHumanSolveOptions = {},
 ): ReflectionHumanSolveTrace {
-  const context = createContext(input);
+  const context = createContext(input, knownSolution);
   const allowed = context.required.reduce(
     (mask, count, code) =>
       code === 0 || count > 0 ? mask | (1 << code) : mask,
@@ -902,5 +1046,10 @@ export function traceReflectionHumanSolve(
       return progress.finish("solved", reflectionReasoningLevels[order]!);
     }
   }
-  return progress.finish("unresolved", null);
+  return progress.finish(
+    progress.assumptions.limitReached
+      ? "assumption-limit-reached"
+      : "unresolved",
+    null,
+  );
 }

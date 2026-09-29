@@ -34,6 +34,8 @@ import { cn } from "@/lib/utils";
 type ReflectionBoardProps = {
   board: ReflectionBoardState;
   clues: readonly ReflectionClue[];
+  /** 外周ヒントごとに、今の配置での光が一致しているか。並びは `clues` と同じ。 */
+  clueMatches: readonly boolean[];
   selection: ReflectionSelection | null;
   laser: ReflectionLaserView | null;
   progress: ReflectionProgress;
@@ -115,11 +117,13 @@ function hasModifierKey(event: ReactKeyboardEvent): boolean {
 
 /**
  * 盤面と、その四辺を囲む外周ヒント。外周ヒントを押した位置の光路を、ピースの下に重ねて描く。
+ * 今の配置での光が一致している外周ヒントは、地の色で示す。
  * 盤面が揃うと全光路を描き、完成演出を終えたら `onClearAnimationComplete` を呼ぶ。
  */
 export function ReflectionBoard({
   board,
   clues,
+  clueMatches,
   selection,
   laser,
   progress,
@@ -189,7 +193,18 @@ export function ReflectionBoard({
       onKeyDown={handleKeyDown}
     >
       {/*
-        光路は盤面の地より上、マスのピースより下に描く。position を持つ要素は文書順に重なるので、
+        盤面の外枠。outline で盤面の外側に描く。border にするとマスが枠の内側に詰められ、
+        外周ヒントと光路の座標（grid の列をそのまま等分した位置）からマスの中心がずれる。
+        position の無い要素の outline は position を持つ要素（光路の図）より後に描かれるので、
+        盤面の要素ではなく、光路の図より前に置いた relative の要素に描き、光路が枠の上を通るようにする。
+      */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none relative outline-2 outline-foreground/55 outline-solid"
+        style={getReflectionBoardGridArea(size)}
+      />
+      {/*
+        光路は盤面の地と外枠より上、マスのピースより下に描く。position を持つ要素は文書順に重なるので、
         この図を盤面より先に置くと、盤面の地（position なし）の上・マス（relative）の下になる。
         ピースは背景色の縁で光路を切るので、光路がピースの形を隠さない。
       */}
@@ -219,7 +234,8 @@ export function ReflectionBoard({
       <div
         role="group"
         aria-label={`${REFLECTION_DISPLAY_NAME}盤面`}
-        className="grid border-2 border-foreground/55 bg-background"
+        // 外枠は光路の図より前の要素に描く（上のコメント）。
+        className="grid bg-background"
         style={{
           ...getReflectionBoardGridArea(size),
           gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,
@@ -257,7 +273,12 @@ export function ReflectionBoard({
             selected={
               laser !== null && isSameReflectionEntry(laser.entry, entry)
             }
-            lit={!playing}
+            matched={clueMatches[clueIndex] ?? false}
+            laserResult={
+              laser !== null && isSameReflectionEntry(laser.entry, entry)
+                ? laser.trace
+                : null
+            }
             disabled={!playing}
             focusable={focusKey === focusableKey}
             focusKey={focusKey}

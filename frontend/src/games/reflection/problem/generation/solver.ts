@@ -48,8 +48,8 @@ export type ReflectionSolutionSearchInput = {
 
 /**
  * - `solutionLimit`: この数の解が見つかったら打ち切る。
- * - `searchStepLimit`: 探索の節点数の上限。時間ではなく節点数で打ち切るのは、同じ入力に同じ結果を返し、
- *   生成器が identity から同じ問題を再現できるようにするため。
+ * - `searchStepLimit`: 探索量の上限。探索の節点と、ヒント1本の光路をたどった1マスをそれぞれ1と数える。
+ *   時間ではなく探索量で打ち切るのは、同じ入力に同じ結果を返し、生成器が identity から同じ問題を再現できるようにするため。
  */
 export type ReflectionSolutionSearchOptions = {
   solutionLimit?: 1 | 2;
@@ -107,20 +107,51 @@ type AssignmentState = {
 
 class SearchLimitReached extends Error {}
 
+const domainValueCount = 1 << reflectionCellCodes.length;
+
+/** 候補の集合（ビット）ごとの、含まれる番号を昇順に並べたもの。探索の内側で配列を作らないよう先に求めておく。 */
+const codesByDomain: readonly (readonly ReflectionCellCode[])[] = Array.from(
+  { length: domainValueCount },
+  (_, domain) =>
+    reflectionCellCodes.filter((code) => (domain & (1 << code)) !== 0),
+);
+
 function isSingleton(domain: number): boolean {
   return (domain & (domain - 1)) === 0;
 }
 
-function toDomainsKey(domains: Domains): string {
-  return String.fromCharCode(...domains);
-}
-
-function listDomainCodes(domain: number): ReflectionCellCode[] {
-  return reflectionCellCodes.filter((code) => (domain & (1 << code)) !== 0);
+function listDomainCodes(domain: number): readonly ReflectionCellCode[] {
+  return codesByDomain[domain] ?? [];
 }
 
 function singletonCode(domain: number): ReflectionCellCode {
   return (31 - Math.clz32(domain)) as ReflectionCellCode;
+}
+
+/**
+ * 番号ごとの、候補が1つに決まったマスの数（`fixed`）と、置く可能性のあるマスの数（`possible`）。
+ * 手持ちの個数と比べて、光路で絞った候補がまだ手持ちを置き切れるかを確かめる。
+ */
+type CodeCounts = { fixed: Int32Array; possible: Int32Array };
+
+function addDomainToCounts(counts: CodeCounts, domain: number, sign: 1 | -1) {
+  for (const code of listDomainCodes(domain)) {
+    counts.possible[code]! += sign;
+  }
+  if (domain !== 0 && isSingleton(domain)) {
+    counts.fixed[singletonCode(domain)]! += sign;
+  }
+}
+
+function countDomainCodes(domains: Domains): CodeCounts {
+  const counts = {
+    fixed: new Int32Array(reflectionCellCodes.length),
+    possible: new Int32Array(reflectionCellCodes.length),
+  };
+  for (const domain of domains) {
+    addDomainToCounts(counts, domain, 1);
+  }
+  return counts;
 }
 
 function toCodeCounts(size: number, inventory: ReflectionInventory): number[] {
@@ -225,27 +256,85 @@ class ReflectionSolutionSearch {
       return;
     }
 
-    const seenDomainKeys = new Set<string>();
     for (const nextDomains of this.listCluePathDomains(domains, clue)) {
-      const key = toDomainsKey(nextDomains);
-      if (seenDomainKeys.has(key)) {
-        continue;
-      }
-      seenDomainKeys.add(key);
-      if (this.isInventoryFeasible(nextDomains)) {
-        this.search(clueIndex + 1, nextDomains);
-      }
+      this.search(clueIndex + 1, nextDomains);
       if (this.hasEnoughSolutions()) {
         return;
       }
     }
   }
 
-  /** ヒント1本を満たす光路ごとに、光路上のマスをその遷移を起こすピースへ絞った候補を返す。 */
+  /**
+   * ヒント1本を満たす光路ごとに、光路上のマスをその遷移を起こすピースへ絞った候補を返す。
+   * 光路が違っても絞った結果が同じ候補は1つにまとめ、手持ちを置き切れない候補は除く。並びは光路を見つけた順。
+   * 絞った結果は元の候補と光路上のマスでだけ違うので、同じかどうかも手持ちの判定も、変わったマスだけで行う。
+   */
   private listCluePathDomains(domains: Domains, clue: SearchClue): Domains[] {
-    const { size } = this;
+    const search = this;
+    const { size, counts } = this;
+    const mustLeaveBoard = clue.outcome !== "absorb";
     const working = domains.slice();
+    const parentCounts = countDomainCodes(domains);
+    const childCounts: CodeCounts = {
+      fixed: new Int32Array(parentCounts.fixed.length),
+      possible: new Int32Array(parentCounts.possible.length),
+    };
     const results: Domains[] = [];
+    const seenKeys = new Set<string>();
+    const touchedCells: number[] = [];
+    const isChanged = new Uint8Array(domains.length);
+    const changedCells: number[] = [];
+
+    function collectChangedCells(): void {
+      changedCells.length = 0;
+      for (const cellIndex of touchedCells) {
+        if (
+          isChanged[cellIndex] === 0 &&
+          working[cellIndex] !== domains[cellIndex]
+        ) {
+          isChanged[cellIndex] = 1;
+          changedCells.push(cellIndex);
+        }
+      }
+      for (const cellIndex of changedCells) {
+        isChanged[cellIndex] = 0;
+      }
+      changedCells.sort((left, right) => left - right);
+    }
+
+    function toChangeKey(): string {
+      let key = "";
+      for (const cellIndex of changedCells) {
+        key += String.fromCharCode(cellIndex, working[cellIndex] ?? 0);
+      }
+      return key;
+    }
+
+    function fitsInventory(): boolean {
+      childCounts.fixed.set(parentCounts.fixed);
+      childCounts.possible.set(parentCounts.possible);
+      for (const cellIndex of changedCells) {
+        addDomainToCounts(childCounts, domains[cellIndex] ?? 0, -1);
+        addDomainToCounts(childCounts, working[cellIndex] ?? 0, 1);
+      }
+      return counts.every(
+        (count, code) =>
+          (childCounts.fixed[code] ?? 0) <= count &&
+          count <= (childCounts.possible[code] ?? 0),
+      );
+    }
+
+    function recordResult(): void {
+      collectChangedCells();
+      const key = toChangeKey();
+      if (seenKeys.has(key)) {
+        return;
+      }
+      seenKeys.add(key);
+      if (fitsInventory()) {
+        results.push(working.slice());
+      }
+    }
 
     function visit(
       row: number,
@@ -253,6 +342,7 @@ class ReflectionSolutionSearch {
       entering: ReflectionDirection,
       distance: number,
     ): void {
+      search.countStep();
       const cellIndex = row * size + column;
       const currentDomain = working[cellIndex] ?? 0;
       const reachesTarget = distance === clue.distance;
@@ -261,6 +351,7 @@ class ReflectionSolutionSearch {
           ? absorbingSlots
           : leavingSlots;
 
+      touchedCells.push(cellIndex);
       for (const slot of slots) {
         const allowed =
           currentDomain & (transitionMasks[entering]?.[slot] ?? 0);
@@ -269,7 +360,7 @@ class ReflectionSolutionSearch {
         }
         working[cellIndex] = allowed;
         if (slot === absorbSlot) {
-          results.push(working.slice());
+          recordResult();
         } else {
           const next = stepReflectionPosition(row, column, slot);
           const exit = getReflectionExitEntry(size, next.row, next.column);
@@ -278,38 +369,26 @@ class ReflectionSolutionSearch {
               ? "reflect"
               : "exit";
             if (reachesTarget && outcome === clue.outcome) {
-              results.push(working.slice());
+              recordResult();
             }
-          } else if (distance < clue.distance) {
+          } else if (
+            distance < clue.distance &&
+            (!mustLeaveBoard ||
+              distance +
+                countMinimumCellsToLeave(size, next.row, next.column) <=
+                clue.distance)
+          ) {
             visit(next.row, next.column, slot, distance + 1);
           }
         }
         working[cellIndex] = currentDomain;
       }
+      touchedCells.pop();
     }
 
     const start = getReflectionEntryState(size, clue.entry);
     visit(start.row, start.column, start.direction, 1);
     return results;
-  }
-
-  private isInventoryFeasible(domains: Domains): boolean {
-    const fixedCounts = reflectionCellCodes.map(() => 0);
-    const possibleCounts = reflectionCellCodes.map(() => 0);
-    for (const domain of domains) {
-      for (const code of listDomainCodes(domain)) {
-        possibleCounts[code] = (possibleCounts[code] ?? 0) + 1;
-      }
-      if (isSingleton(domain)) {
-        const code = singletonCode(domain);
-        fixedCounts[code] = (fixedCounts[code] ?? 0) + 1;
-      }
-    }
-    return reflectionCellCodes.every(
-      (code) =>
-        (fixedCounts[code] ?? 0) <= (this.counts[code] ?? 0) &&
-        (this.counts[code] ?? 0) <= (possibleCounts[code] ?? 0),
-    );
   }
 
   /** 候補が1つに決まったマスはそのまま置き、残りのマスへ手持ちの残りを割り当てる。 */
@@ -392,12 +471,26 @@ class ReflectionSolutionSearch {
   }
 }
 
+/** そのマスから盤面の外へ出るまでに、少なくとも通るマスの数（そのマスを含む）。 */
+function countMinimumCellsToLeave(
+  size: number,
+  row: number,
+  column: number,
+): number {
+  return Math.min(row, column, size - 1 - row, size - 1 - column) + 1;
+}
+
 function countAvailableCodes(
   domain: number,
   remaining: readonly number[],
 ): number {
-  return listDomainCodes(domain).filter((code) => (remaining[code] ?? 0) > 0)
-    .length;
+  let count = 0;
+  for (const code of listDomainCodes(domain)) {
+    if ((remaining[code] ?? 0) > 0) {
+      count += 1;
+    }
+  }
+  return count;
 }
 
 function findMostConstrainedOffset(
@@ -422,20 +515,23 @@ function canFillRemaining(
   domains: Domains,
   remaining: readonly number[],
 ): boolean {
+  const room = new Array<number>(reflectionCellCodes.length).fill(0);
+  for (const cellIndex of cells) {
+    for (const code of listDomainCodes(domains[cellIndex] ?? 0)) {
+      room[code]! += 1;
+    }
+  }
   return reflectionCellCodes.every(function hasRoom(code) {
     const count = remaining[code] ?? 0;
-    if (count < 0) {
-      return false;
-    }
-    if (count === 0) {
-      return true;
-    }
-    const room = cells.filter(
-      (cellIndex) => ((domains[cellIndex] ?? 0) & (1 << code)) !== 0,
-    ).length;
-    return room >= count;
+    return count >= 0 && (count === 0 || (room[code] ?? 0) >= count);
   });
 }
+
+/**
+ * 一意性の確認に使う探索量の上限。生成器と難易度分析で同じ値を使い、上限に達した候補は一意とみなさない。
+ * 11×11・20ピースでも、上限に達する候補は生成器が作り直せる程度に少ない。
+ */
+export const REFLECTION_UNIQUENESS_SEARCH_STEP_LIMIT = 4_000_000;
 
 /** 手持ちのピースをすべて使い、全外周ヒントを満たす配置を数える。 */
 export function countReflectionSolutions(

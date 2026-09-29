@@ -24,6 +24,7 @@ const usage = `Usage: bun run analyze:reflection -- --output <path-prefix> [opti
 Options:
   --sizes <n,...>        盤面の一辺 (default: 5,6,7)
   --pieces <n,...>       ピース数 (default: 2,3,4,5,6,7,8,9,10,11,12)
+  --conditions <spec>    盤面ごとにピース数を分けて指定する。例: "5:2-7;8:6,8,10"（指定すると --sizes / --pieces は使わない）
   --seeds <n>            条件ごとの seed 数 (default: 60)
   --jobs <n>             並列ワーカー数 (default: 1)
   --output <path-prefix> <path-prefix>.jsonl と <path-prefix>.csv へ出力する`;
@@ -118,9 +119,16 @@ function analyzeTask({ size, pieceCount, index }: CorpusTask): CorpusRecord {
 }
 
 function describeReasoning(analysis: ReflectionDifficultyAnalysis): string {
-  return analysis.status === "analyzed"
-    ? `L${analysis.features.highestLevel}`
-    : analysis.status;
+  switch (analysis.status) {
+    case "analyzed":
+      return `L${analysis.features.highestLevel}`;
+    case "unsupported":
+      return analysis.reason === "assumption-limit-reached"
+        ? "unsupported"
+        : "unresolved";
+    case "invalid":
+      return analysis.status;
+  }
 }
 
 function describeAssessment(
@@ -157,6 +165,9 @@ function flattenRecord(record: CorpusRecord): FlatRecord {
       flat[`fixedPieceCountL${order + 1}`] = count;
     }
     Object.assign(flat, features);
+    flat.trialSolved = analysis.trial.solved ? 1 : 0;
+    flat.trialMoveCount = analysis.trial.moveCount;
+    flat.trialRetryCount = analysis.trial.retryCount;
   }
   return { ...flat, solution: record.solution };
 }
@@ -249,6 +260,7 @@ function summarizeTimes(values: readonly number[]): string {
   return `${formatNumber(quantile(sorted, 0.5))} / ${formatNumber(quantile(sorted, 0.9))} / ${formatNumber(quantile(sorted, 0.99))} / ${formatNumber(sorted.at(-1)!)}`;
 }
 
+/** `unsupported` は仮定を試す回数の上限、`unresolved` は仮定を試し尽くしても決まらない評価不能。 */
 const reasoningOrder = [
   "L1",
   "L2",
@@ -256,6 +268,7 @@ const reasoningOrder = [
   "L4",
   "L5",
   "unsupported",
+  "unresolved",
   "invalid",
 ] as const;
 const levelOrder = [
@@ -334,6 +347,9 @@ const featureColumns = [
   "assumptionTestCount",
   "assumptionEliminationCount",
   "fixedPieceCountL1",
+  "trialSolved",
+  "trialMoveCount",
+  "trialRetryCount",
 ] as const;
 
 function printFeaturesByLevel(records: readonly FlatRecord[]): void {
@@ -454,23 +470,50 @@ function printTimesBySize(records: readonly FlatRecord[]): void {
   }
 }
 
-function createTasks(): CorpusTask[] {
-  const sizes = readIntegerList("sizes", "5,6,7").map((size) => {
-    if (!isReflectionBoardSize(size)) {
-      throw new RangeError(`Unsupported board size: ${size}`);
-    }
-    return size;
-  });
-  const pieceCounts = readIntegerList("pieces", "2,3,4,5,6,7,8,9,10,11,12");
-  const seedCount = readPositiveInteger("seeds", 60);
-  return sizes.flatMap((size) =>
-    pieceCounts.flatMap((pieceCount) =>
-      Array.from({ length: seedCount }, (_, index) => ({
+function toBoardSize(size: number): ReflectionBoardSize {
+  if (!isReflectionBoardSize(size)) {
+    throw new RangeError(`Unsupported board size: ${size}`);
+  }
+  return size;
+}
+
+/** `--conditions` の `"5:2-7;8:6,8,10"` を、盤面サイズとピース数の組へ読む。 */
+function parseConditions(
+  spec: string,
+): { size: ReflectionBoardSize; pieceCount: number }[] {
+  return spec.split(";").flatMap((part) => {
+    const [sizeText, piecesText] = part.split(":");
+    const size = toBoardSize(Number(sizeText));
+    return (piecesText ?? "").split(",").flatMap((range) => {
+      const [from, to = from] = range.split("-").map(Number);
+      if (!Number.isInteger(from) || !Number.isInteger(to)) {
+        throw new RangeError(`Invalid --conditions value: ${part}`);
+      }
+      return Array.from({ length: to! - from! + 1 }, (_, offset) => ({
         size,
-        pieceCount,
-        index,
-      })),
-    ),
+        pieceCount: from! + offset,
+      }));
+    });
+  });
+}
+
+function createTasks(): CorpusTask[] {
+  const conditionSpec = readOption("conditions");
+  const conditions =
+    conditionSpec === undefined
+      ? readIntegerList("sizes", "5,6,7").flatMap((size) =>
+          readIntegerList("pieces", "2,3,4,5,6,7,8,9,10,11,12").map(
+            (pieceCount) => ({ size: toBoardSize(size), pieceCount }),
+          ),
+        )
+      : parseConditions(conditionSpec);
+  const seedCount = readPositiveInteger("seeds", 60);
+  return conditions.flatMap(({ size, pieceCount }) =>
+    Array.from({ length: seedCount }, (_, index) => ({
+      size,
+      pieceCount,
+      index,
+    })),
   );
 }
 

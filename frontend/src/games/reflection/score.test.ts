@@ -7,39 +7,33 @@ import {
   getReflectionGameResultLevel,
 } from "@/games/reflection/score";
 
-// レベル1 の代表 rf-5-2-86 と、レベル5 の代表 rf-7-11-76 の作業の量。
+// 2ピースの軽い問題と、照らし直しが多く仮に置く回数が上限を超える重い問題の作業の量。どちらも試し置きでは解き切れない。
 const lightWorkload: ReflectionSolveWorkload = {
   pieceCount: 2,
   clueCount: 20,
   propagationRoundCount: 0,
   assumptionTestCount: 0,
+  trialMoveCount: null,
 };
 const heavyWorkload: ReflectionSolveWorkload = {
   pieceCount: 11,
   clueCount: 28,
   propagationRoundCount: 14,
   assumptionTestCount: 40,
+  trialMoveCount: null,
 };
 
-const lightFullScoreMs = 22_000;
-const heavyFullScoreMs = 342_000;
+const lightFullScoreMs = 17_000;
+const heavyFullScoreMs = 105_000;
 
-type PlayExample = {
-  elapsedRatio: number;
-  relocationCount: number;
-  restartCount: number;
-};
-
-function scorePlay(
-  { elapsedRatio, relocationCount, restartCount }: PlayExample,
+function scoreAtRatio(
+  elapsedRatio: number,
   workload: ReflectionSolveWorkload = lightWorkload,
 ): number {
   return calculateReflectionPlayScore({
     elapsedMs: calculateReflectionSpeedFullScoreMs(workload) * elapsedRatio,
-    relocationCount,
-    restartCount,
     workload,
-  }).total;
+  });
 }
 
 describe("calculateReflectionSpeedFullScoreMs", () => {
@@ -53,13 +47,34 @@ describe("calculateReflectionSpeedFullScoreMs", () => {
   ] as const;
 
   test.each(cases)(
-    "%s で、外周ヒント1本0.5秒・ピース1個6秒・照らし直し1回8秒・仮に置く1回15秒（10回まで）を足すこと",
+    "%s で、外周ヒント1本0.5秒・ピース1個3.5秒・照らし直し1回1.25秒・仮に置く1回3.5秒（10回まで）を足すこと",
     (_, workload, expected) => {
       const speedFullScoreMs = calculateReflectionSpeedFullScoreMs(workload);
 
       expect(speedFullScoreMs).toBe(expected);
     },
   );
+
+  describe("試し置きで解き切れる問題", () => {
+    test("試し置きの方が速ければ、読む時間と試し置きの時間の中間にすること", () => {
+      // 読む 17秒、試し置き 外周ヒント20本 × 0.5秒 + 1手 × 5秒 = 15秒。
+      const speedFullScoreMs = calculateReflectionSpeedFullScoreMs({
+        ...lightWorkload,
+        trialMoveCount: 1,
+      });
+
+      expect(speedFullScoreMs).toBe(16_000);
+    });
+
+    test("試し置きの方が遅ければ、読む時間にすること", () => {
+      const speedFullScoreMs = calculateReflectionSpeedFullScoreMs({
+        ...heavyWorkload,
+        trialMoveCount: 200,
+      });
+
+      expect(speedFullScoreMs).toBe(heavyFullScoreMs);
+    });
+  });
 
   describe("仮に置いた回数だけが上限の前後で違う場合", () => {
     const atLimit = { ...heavyWorkload, assumptionTestCount: 10 };
@@ -86,10 +101,10 @@ describe("calculateReflectionSpeedFullScoreMs", () => {
 });
 
 describe("calculateReflectionSpeedZeroScoreMs", () => {
-  test("基準時間の2倍を返すこと", () => {
+  test("基準時間の3倍を返すこと", () => {
     const speedZeroScoreMs = calculateReflectionSpeedZeroScoreMs(lightWorkload);
 
-    expect(speedZeroScoreMs).toBe(lightFullScoreMs * 2);
+    expect(speedZeroScoreMs).toBe(lightFullScoreMs * 3);
   });
 });
 
@@ -113,71 +128,31 @@ describe("calculateReflectionTimeDeltaMs", () => {
 });
 
 describe("calculateReflectionPlayScore", () => {
-  describe("置き直しも盤面を戻すこともなく基準時間内に解いた場合", () => {
-    const play = {
-      elapsedMs: lightFullScoreMs,
-      relocationCount: 0,
-      restartCount: 0,
-      workload: lightWorkload,
-    };
-
-    test("正確性60点と速さ40点の満点にすること", () => {
-      const score = calculateReflectionPlayScore(play);
-
-      expect(score).toEqual({
-        total: 100,
-        breakdown: { accuracy: 60, speed: 40 },
-      });
-    });
-  });
-
-  const accuracyCases = [
-    ["置き直し3回・盤面を戻した回数1回", 3, 1, 30],
-    ["置き直し10回・盤面を戻した回数2回", 10, 2, 0],
-  ] as const;
-
-  test.each(accuracyCases)(
-    "%s で、置き直し1回につき5点・盤面を戻した1回につき15点を0点を下限に減点すること",
-    (_, relocationCount, restartCount, expected) => {
-      const score = calculateReflectionPlayScore({
-        elapsedMs: lightFullScoreMs,
-        relocationCount,
-        restartCount,
-        workload: lightWorkload,
-      });
-
-      expect(score.breakdown.accuracy).toBe(expected);
-    },
-  );
-
   const speedCases = [
-    [0.5, 40],
-    [1.25, 30],
-    [1.5, 20],
-    [2, 0],
+    [0.5, 100],
+    [1, 100],
+    [1.2, 90],
+    [1.4, 80],
+    [2, 50],
     [3, 0],
+    [4, 0],
   ] as const;
 
   test.each(speedCases)(
-    "基準時間の %s 倍で解いたプレイの速さを %s 点にすること",
+    "基準時間の %s 倍で解いたプレイを %s 点にすること",
     (elapsedRatio, expected) => {
-      const score = calculateReflectionPlayScore({
-        elapsedMs: lightFullScoreMs * elapsedRatio,
-        relocationCount: 0,
-        restartCount: 0,
-        workload: lightWorkload,
-      });
+      const score = scoreAtRatio(elapsedRatio);
 
-      expect(score.breakdown.speed).toBe(expected);
+      expect(score).toBe(expected);
     },
   );
 
   describe("基準時間に対して同じ割合で解いた場合", () => {
-    const play = { elapsedRatio: 1.3, relocationCount: 0, restartCount: 0 };
+    const elapsedRatio = 1.3;
 
     test("作業の量が違う問題でも同じ点にすること", () => {
-      const heavyScore = scorePlay(play, heavyWorkload);
-      const lightScore = scorePlay(play, lightWorkload);
+      const heavyScore = scoreAtRatio(elapsedRatio, heavyWorkload);
+      const lightScore = scoreAtRatio(elapsedRatio, lightWorkload);
 
       expect(heavyScore).toBe(lightScore);
     });
@@ -185,91 +160,25 @@ describe("calculateReflectionPlayScore", () => {
 });
 
 describe("代表的なプレイ例", () => {
-  const plays = {
-    fastClean: { elapsedRatio: 0.8, relocationCount: 0, restartCount: 0 },
-    slightlySlowClean: {
-      elapsedRatio: 1.2,
-      relocationCount: 0,
-      restartCount: 0,
-    },
-    slowClean: { elapsedRatio: 1.4, relocationCount: 0, restartCount: 0 },
-    verySlowClean: { elapsedRatio: 2.5, relocationCount: 0, restartCount: 0 },
-    oneMisplacement: { elapsedRatio: 0.9, relocationCount: 1, restartCount: 0 },
-    twoRelocations: { elapsedRatio: 1, relocationCount: 2, restartCount: 0 },
-    threeRelocations: { elapsedRatio: 1, relocationCount: 3, restartCount: 0 },
-    fastGuessing: { elapsedRatio: 0.6, relocationCount: 6, restartCount: 0 },
-    heavyGuessing: { elapsedRatio: 1.5, relocationCount: 10, restartCount: 0 },
-    cleanRestart: { elapsedRatio: 1, relocationCount: 0, restartCount: 1 },
-    restartAfterStuck: {
-      elapsedRatio: 1.5,
-      relocationCount: 1,
-      restartCount: 1,
-    },
-  } satisfies Record<string, PlayExample>;
-
   const levelCases = [
-    ["速く、置き直しなし", plays.fastClean, "perfect"],
-    ["少し遅いが、置き直しなし", plays.slightlySlowClean, "great"],
-    ["置き間違いを1回直した", plays.oneMisplacement, "great"],
-    ["置き直し2回", plays.twoRelocations, "great"],
-    ["遅いが、置き直しなし", plays.slowClean, "good"],
-    ["置き直し3回", plays.threeRelocations, "good"],
-    ["置き直しなしで、盤面を1回戻した", plays.cleanRestart, "good"],
-    ["速いが、試し置きで6回置き直した", plays.fastGuessing, "clear"],
-    ["とても遅い", plays.verySlowClean, "clear"],
-    ["行き詰まって盤面を戻した", plays.restartAfterStuck, "clear"],
+    ["基準時間より速い", 0.8, "perfect"],
+    ["基準時間ちょうど", 1, "perfect"],
+    ["基準時間の1.2倍", 1.2, "great"],
+    ["基準時間の1.4倍", 1.4, "good"],
+    ["基準時間の1.5倍", 1.5, "clear"],
   ] as const;
 
-  test.each(levelCases)("%s プレイを %s にすること", (_, play, level) => {
-    const resultLevel = getReflectionGameResultLevel(scorePlay(play));
+  test.each(levelCases)("%s のプレイを %s にすること", (_, ratio, level) => {
+    const resultLevel = getReflectionGameResultLevel(scoreAtRatio(ratio));
 
     expect(resultLevel).toBe(level);
   });
 
-  const higherCases = [
-    [
-      "置き直しなしで少し遅い",
-      plays.slightlySlowClean,
-      "速いが試し置きで何回も置き直した",
-      plays.fastGuessing,
-    ],
-    [
-      "置き直しなしで遅い",
-      plays.slowClean,
-      "速いが試し置きで何回も置き直した",
-      plays.fastGuessing,
-    ],
-    [
-      "とても遅くても置き直しなしで解き切った",
-      plays.verySlowClean,
-      "試し置きを重ねた",
-      plays.heavyGuessing,
-    ],
-    [
-      "置き直しなしで盤面を戻さずに解いた",
-      { elapsedRatio: 1.5, relocationCount: 0, restartCount: 0 },
-      "同じ時間で盤面を戻した",
-      { elapsedRatio: 1.5, relocationCount: 0, restartCount: 1 },
-    ],
-  ] as const;
+  describe("速さの割合だけが違う場合", () => {
+    const ratios = [1, 1.1, 1.3, 1.6, 2, 2.5];
 
-  test.each(higherCases)(
-    "%s プレイを、%s プレイより高く評価すること",
-    (_, higherPlay, __, lowerPlay) => {
-      const higherScore = scorePlay(higherPlay);
-      const lowerScore = scorePlay(lowerPlay);
-
-      expect(higherScore).toBeGreaterThan(lowerScore);
-    },
-  );
-
-  describe("同じ速さで置き直しの回数だけが違う場合", () => {
-    const relocationCounts = [0, 1, 2, 3, 6, 12];
-
-    test("置き直しが多いほど評価を下げること", () => {
-      const scores = relocationCounts.map((relocationCount) =>
-        scorePlay({ elapsedRatio: 1, relocationCount, restartCount: 0 }),
-      );
+    test("遅いほど評価を下げること", () => {
+      const scores = ratios.map((ratio) => scoreAtRatio(ratio));
 
       expect(scores).toEqual([...scores].sort((left, right) => right - left));
       expect(new Set(scores).size).toBe(scores.length);

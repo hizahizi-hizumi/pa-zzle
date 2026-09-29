@@ -6,7 +6,15 @@ import {
 } from "@/games/reflection/puzzle/board";
 import { ReflectionPieceIcon } from "@/games/reflection/ui/board/ReflectionPieceIcon";
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
-import { reflectionToneClassNames } from "@/games/reflection/ui/reflection-tone";
+import { reflectionPieceToneClassNames } from "@/games/reflection/ui/reflection-tone";
+
+/**
+ * 選んだピースのマスの四隅に置く鉤形の印。ピースの色（`currentColor`）で描き、マスの地や枠は変えない。
+ * 線幅は2px、各辺の長さはマスの28%。
+ */
+const SELECTION_CORNERS =
+  "linear-gradient(currentColor,currentColor) top left/28% 2px no-repeat,linear-gradient(currentColor,currentColor) top left/2px 28% no-repeat,linear-gradient(currentColor,currentColor) top right/28% 2px no-repeat,linear-gradient(currentColor,currentColor) top right/2px 28% no-repeat,linear-gradient(currentColor,currentColor) bottom left/28% 2px no-repeat,linear-gradient(currentColor,currentColor) bottom left/2px 28% no-repeat,linear-gradient(currentColor,currentColor) bottom right/28% 2px no-repeat,linear-gradient(currentColor,currentColor) bottom right/2px 28% no-repeat";
+
 import { cn } from "@/lib/utils";
 
 type ReflectionCellProps = {
@@ -20,6 +28,17 @@ type ReflectionCellProps = {
   onTap: (cellIndex: number) => void;
   onFocus: (key: string) => void;
   focusKey: string;
+};
+
+/**
+ * マスの罫線。border にするとピースを置く領域が1px欠けて中心が光路からずれるので、
+ * 大きさを変えない内側の影で描く（選択の ring とは重ねて描ける）。
+ */
+const gridLineClassNames: Record<string, string> = {
+  rightbottom: "shadow-[inset_-1px_-1px_0_0_var(--color-border)]",
+  right: "shadow-[inset_-1px_0_0_0_var(--color-border)]",
+  bottom: "shadow-[inset_0_-1px_0_0_var(--color-border)]",
+  "": "",
 };
 
 export function ReflectionCell({
@@ -54,12 +73,22 @@ export function ReflectionCell({
       onFocus={() => onFocus(focusKey)}
       className={cn(
         "relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center text-foreground outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent",
-        row !== size - 1 && "border-b border-b-border",
-        column !== size - 1 && "border-r border-r-border",
-        selected && reflectionToneClassNames.selectionSurface,
-        selected && reflectionToneClassNames.selectionText,
+        gridLineClassNames[
+          `${column !== size - 1 ? "right" : ""}${row !== size - 1 ? "bottom" : ""}`
+        ],
       )}
     >
+      {selected && cell !== null ? (
+        <span
+          aria-hidden="true"
+          className={cn(
+            "pointer-events-none absolute inset-[10%]",
+            reflectionPieceToneClassNames[cell],
+          )}
+          data-selection-mark=""
+          style={{ background: SELECTION_CORNERS }}
+        />
+      ) : null}
       {cell !== null ? (
         <ReflectionPieceIcon key={cell} piece={cell} size="cell" appearing />
       ) : null}

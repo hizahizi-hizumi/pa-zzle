@@ -22,7 +22,7 @@ describe("parseReflectionProblemQuery", () => {
   );
   const invalidCases = [
     ["seed の欠けたクエリ", "size=5&pieces=3"],
-    ["扱わない盤面サイズ", "seed=a&size=8&pieces=3"],
+    ["扱わない盤面サイズ", "seed=a&size=12&pieces=3"],
     ["盤面に収まらないピース数", "seed=a&size=5&pieces=25"],
     ["数でないピース数", "seed=a&size=5&pieces=three"],
     ["今と違う生成器の版", "generator=0&seed=a&size=5&pieces=3"],
@@ -64,6 +64,24 @@ describe("parseReflectionProblemQuery", () => {
 
     expect(result).toEqual(pooled.identity);
   });
+
+  test.each([
+    [9, 12, 3],
+    [11, 24, 8],
+  ] as const)(
+    "問題集に無い盤面サイズ %i の問題も identity で開けること",
+    (size, pieces, index) => {
+      const result = parseReflectionProblemQuery(
+        new URLSearchParams(
+          `seed=rf-${size}-${pieces}-${index}&size=${size}&pieces=${pieces}`,
+        ),
+      );
+
+      expect(result).toEqual(
+        createReflectionProblemIdentity(size, pieces, index),
+      );
+    },
+  );
 
   test.each(invalidCases)(
     "読めないクエリに null を返すこと: %s",
@@ -111,12 +129,17 @@ describe("ReflectionDiagnosticSnapshot", () => {
     ["別のゲーム", { ...snapshot, game: "takuzu" }],
     ["未定義の難易度", { ...snapshot, difficulty: "9" }],
     [
+      "問題集の番号が欠けた",
+      { ...snapshot, problemPool: { poolVersion: "1" } },
+    ],
+    ["分類が欠けた", { ...snapshot, difficultyAssessment: undefined }],
+    [
       "扱わない盤面サイズ",
       {
         ...snapshot,
         problemIdentity: {
           ...snapshot.problemIdentity,
-          conditions: { ...snapshot.problemIdentity.conditions, size: 8 },
+          conditions: { ...snapshot.problemIdentity.conditions, size: 12 },
         },
       },
     ],
@@ -128,6 +151,52 @@ describe("ReflectionDiagnosticSnapshot", () => {
 
     expect(parsed).toEqual(snapshot);
     expect(restored?.problem).toEqual(selected.problem);
+  });
+
+  test("出題した問題の問題集の版と番号を持つこと", () => {
+    const { problemPool } = snapshot;
+
+    expect(problemPool).toEqual(selected.poolReference);
+  });
+
+  test("問題集の問題は、問題集のレベルとそのレベルの推論レベルを分類として持つこと", () => {
+    const { difficultyAssessment } = snapshot;
+
+    expect(difficultyAssessment).toEqual({
+      status: "classified",
+      difficulty: "4",
+      reasoningLevel: 4,
+    });
+  });
+
+  test("問題集に無い 8×8 以上の盤面は分析せず、コピー形式から読み戻せること", () => {
+    const sample = createReflectionDiagnosticSnapshot({
+      difficulty: "3",
+      problemIdentity: createReflectionProblemIdentity(8, 12, 6),
+      buildRevision: null,
+    });
+
+    const parsed = parseReflectionDiagnosticSnapshot(
+      serializeInternalDiagnosticSnapshot(sample),
+    );
+
+    expect(sample.difficultyAssessment).toEqual({
+      status: "not-analyzed",
+      reason: "large-board",
+    });
+    expect(parsed).toEqual(sample);
+  });
+
+  test("問題集に無い 7×7 以下の identity は分析し直して分類すること", () => {
+    const { difficultyAssessment } = missing;
+
+    expect(difficultyAssessment.status).not.toBe("not-analyzed");
+  });
+
+  test("問題集に無い identity では問題集の番号を持たないこと", () => {
+    const { problemPool } = missing;
+
+    expect(problemPool).toBeNull();
   });
 
   test("問題集に無い identity は復元できないこと", () => {

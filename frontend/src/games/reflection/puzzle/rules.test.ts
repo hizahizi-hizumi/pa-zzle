@@ -3,7 +3,10 @@ import {
   parseReflectionBoard,
 } from "@/games/reflection/puzzle/board";
 import { computeReflectionClues } from "@/games/reflection/puzzle/laser";
-import { isReflectionSolved } from "@/games/reflection/puzzle/rules";
+import {
+  isReflectionSolved,
+  listReflectionClueMatches,
+} from "@/games/reflection/puzzle/rules";
 
 describe("isReflectionSolved", () => {
   const solution = parseReflectionBoard(["...", "./.", "..@"]);
@@ -22,5 +25,91 @@ describe("isReflectionSolved", () => {
     const result = isReflectionSolved(parseReflectionBoard(rows), target);
 
     expect(result).toBe(expected);
+  });
+});
+
+describe("listReflectionClueMatches", () => {
+  // 外周ヒントの並びは 上0-2・右0-2・下0-2・左0-2。
+  // 目標: 上 退出1・退出3・吸収3 / 右 退出5・退出3・吸収1 / 下 退出5・退出3・吸収1 / 左 退出1・退出3・吸収3
+  const solution = parseReflectionBoard(["/..", "...", "..@"]);
+  const clues = computeReflectionClues(solution);
+
+  test("正解配置では全外周ヒントが一致すること", () => {
+    const matches = listReflectionClueMatches(solution, clues);
+
+    expect(matches).toEqual(Array(12).fill(true));
+  });
+
+  test("空の盤面では、まっすぐ抜ける光と同じ外周ヒントだけが一致すること", () => {
+    const matches = listReflectionClueMatches(
+      parseReflectionBoard(["...", "...", "..."]),
+      clues,
+    );
+
+    expect(matches).toEqual([
+      false,
+      true,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      false,
+    ]);
+  });
+
+  test("行き先が同じでも通るマスの数が違う外周ヒントは一致としないこと", () => {
+    // ブラックホールだけを置くと、上0は「退出3」になり、目標の「退出1」と数が合わない。
+    const matches = listReflectionClueMatches(
+      parseReflectionBoard(["...", "...", "..@"]),
+      clues,
+    );
+
+    expect(matches).toEqual([
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+    ]);
+  });
+  test("退出の数と種類が同じでも、出た先の外周ヒントの目標が違えば一致としないこと", () => {
+    // 目標（右下に /）: 上0 退出3（下0へ）、左2 退出5、右2 退出1。
+    // 左下に / を置くと、上0 の光は3マスで左2から出る。数と種類は目標の「退出3」と同じだが、左2 の目標は「退出5」なので
+    // 正解の光路ではない。下0 も同じく3マスで右2から出るが、右2 の目標は「退出1」。
+    const exitClues = computeReflectionClues(
+      parseReflectionBoard(["...", "...", "../"]),
+    );
+    const board = parseReflectionBoard(["...", "...", "/.."]);
+
+    const matches = listReflectionClueMatches(board, exitClues);
+
+    expect(computeReflectionClues(board)[0]).toEqual(exitClues[0]);
+    expect(computeReflectionClues(board)[6]).toEqual(exitClues[6]);
+    expect(matches).toEqual([
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+    ]);
   });
 });

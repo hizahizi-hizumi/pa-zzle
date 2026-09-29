@@ -11,13 +11,18 @@ describe("getReflectionLaserPoints", () => {
   const entry = { side: "left", index: 1 } as const;
   const trace = traceReflectionLaser(board, entry);
 
-  test("入った外周・曲がるマスの中心・出た外周を結ぶこと", () => {
+  test("入った外周の端・曲がるマスの中心・出た外周の端を結び、端は外周ヒントの縁から盤面との隙間へ寄せること", () => {
     const points = getReflectionLaserPoints(board.size, entry, trace);
 
-    expect(points).toEqual([
-      { x: 0.8, y: 2.5 },
+    expect(
+      points.map(({ x, y }) => ({
+        x: Number(x.toFixed(6)),
+        y: Number(y.toFixed(6)),
+      })),
+    ).toEqual([
+      { x: 0.85, y: 2.5 },
       { x: 2.5, y: 2.5 },
-      { x: 2.5, y: 0.8 },
+      { x: 2.5, y: 0.85 },
     ]);
   });
 });

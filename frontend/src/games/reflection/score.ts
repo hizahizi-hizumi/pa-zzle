@@ -2,73 +2,48 @@ import type { ReflectionSolveWorkload } from "@/games/reflection/problem/problem
 import type { GameResultLevel } from "@/games/result";
 
 /**
- * 外周ヒントから置き場所を確定させてから置き、置いたピースを動かし直さずに解き切ることを最も称え、その上で速さを称える。
- * 配点・減点幅・基準時間の係数はすべて仮置きで、実プレイで校正する（`リフレクション成績評価.md`）。
+ * 解き切る速さを称える。問題ごとの基準時間と比べた速さだけで100点満点にする。
+ * 置き直し・盤面を戻した回数・光路を確かめた回数は減点しない。一致表示を見ながら置いて確かめ、動かして直すことが
+ * このゲームの中心の操作で、それを減点すると遊び方そのもの（押し間違いも含む）を罰するため。
+ * 基準時間の係数は人間の実測（レベル5 の問題を熟練者が読んで3分8秒、同じ人のレベル5 の記録6件）で水準を合わせた暫定値で、
+ * 0点になる倍率は仮置き。
+ * どちらも実プレイを重ねて校正する（`リフレクション成績評価.md` §15）。
  */
-export const REFLECTION_SCORE_MAXIMUMS = {
-  accuracy: 60,
-  speed: 40,
-} as const;
+export const REFLECTION_SCORE_MAXIMUM = 100;
 
-/**
- * 置き直し1回ごとの正確性の減点（仮置き）。
- * 置き直しには待ったで取り消した操作も含むので、待ったは別に減点しない。
- * 置き直し2回までは great に残り、5回以上は速さによらず good に届かない重さにする。
- */
-export const REFLECTION_RELOCATION_PENALTY = 5;
-
-/**
- * 盤面を戻した1回ごとの正確性の減点（仮置き）。
- * 盤面を戻してストックへ戻ったピースは置き直しに数えないので、試し置きの跡をまとめて消せる分を含めて重くする。
- * 1回戻せば、ほかが完璧でも最高で good とする。
- */
-export const REFLECTION_RESTART_PENALTY = 15;
-
-/** 基準時間の係数（仮置き）。外周ヒント1本ごとの盤面把握の時間。 */
+/** 基準時間の係数（暫定）。外周ヒント1本ごとの盤面把握の時間。 */
 export const REFLECTION_SPEED_PER_CLUE_MS = 500;
-/** 基準時間の係数（仮置き）。置くピース1個ごとの時間。 */
-export const REFLECTION_SPEED_PER_PIECE_MS = 6_000;
-/** 基準時間の係数（仮置き）。全外周ヒントへ照らし直す1回ごとの時間。 */
-export const REFLECTION_SPEED_PER_PROPAGATION_ROUND_MS = 8_000;
-/** 基準時間の係数（仮置き）。候補を仮に置いて確かめる1回ごとの時間。 */
-export const REFLECTION_SPEED_PER_ASSUMPTION_TEST_MS = 15_000;
+/** 基準時間の係数（暫定）。置くピース1個ごとの時間。 */
+export const REFLECTION_SPEED_PER_PIECE_MS = 3_500;
+/** 基準時間の係数（暫定）。全外周ヒントへ照らし直す1回ごとの時間。 */
+export const REFLECTION_SPEED_PER_PROPAGATION_ROUND_MS = 1_250;
+/** 基準時間の係数（暫定）。候補を仮に置いて確かめる1回ごとの時間。 */
+export const REFLECTION_SPEED_PER_ASSUMPTION_TEST_MS = 3_500;
 /**
  * 基準時間に数える、仮に置いて確かめた回数の上限（仮置き）。
  * 解法器は候補を端から順に試すので、回数の裾が長い（問題集の最大776回）。人間は見込みの高い候補から試すとみなし、上限で打ち切る。
  */
 export const REFLECTION_SPEED_ASSUMPTION_TEST_LIMIT = 10;
+/** 基準時間の係数（暫定）。一致表示を見ながら1本ずつ満たす試し置きの1手（ピースを選んで置き、一致を見る）ごとの時間。 */
+export const REFLECTION_SPEED_PER_TRIAL_MOVE_MS = 5_000;
 
-/** 速さが0点になる時間の、基準時間に対する倍率（仮置き）。 */
-export const REFLECTION_SPEED_ZERO_SCORE_RATIO = 2;
+/**
+ * 0点になる時間の、基準時間に対する倍率（仮置き）。
+ * 基準時間の1.2倍以内で great、1.4倍以内で good に残る傾きにする。
+ */
+export const REFLECTION_SPEED_ZERO_SCORE_RATIO = 3;
 
-export type ReflectionPlayScore = {
-  total: number;
-  breakdown: {
-    accuracy: number;
-    speed: number;
-  };
-};
-
-type ReflectionTimeDeltaInput = {
+type ReflectionPlayScoreInput = {
   elapsedMs: number;
   workload: ReflectionSolveWorkload;
-};
-
-type ReflectionPlayScoreInput = ReflectionTimeDeltaInput & {
-  relocationCount: number;
-  restartCount: number;
 };
 
 function clampUnit(value: number): number {
   return Math.min(1, Math.max(0, value));
 }
 
-/**
- * 問題ごとの速さ満点の基準時間。
- * 外周ヒントを読む時間に、置くピースの数、全外周ヒントへ照らし直す回数、候補を仮に置いて確かめる回数（上限あり）に応じた時間を足す。
- * 問題を解き切る作業の量だけから決め、難易度そのものは使わない。
- */
-export function calculateReflectionSpeedFullScoreMs({
+/** 読んで解く時間。外周ヒントを読む時間に、置くピースの数、照らし直す回数、仮に置いて確かめる回数（上限あり）に応じた時間を足す。 */
+export function calculateReflectionReadingMs({
   pieceCount,
   clueCount,
   propagationRoundCount,
@@ -87,7 +62,33 @@ export function calculateReflectionSpeedFullScoreMs({
   );
 }
 
-/** 速さが0点になる時間。基準時間から、ここまで超過に応じて線形に減らす。 */
+/** 一致表示を見ながら試し置きで解く時間。試し置きで解き切れない問題は `Infinity`。 */
+export function calculateReflectionTrialMs({
+  clueCount,
+  trialMoveCount,
+}: ReflectionSolveWorkload): number {
+  return trialMoveCount === null
+    ? Infinity
+    : Math.max(0, clueCount) * REFLECTION_SPEED_PER_CLUE_MS +
+        Math.max(0, trialMoveCount) * REFLECTION_SPEED_PER_TRIAL_MOVE_MS;
+}
+
+/**
+ * 問題ごとの速さ満点の基準時間。読んで解く時間と、「読むのと試し置きの速い方」の時間との中間にする。
+ * 一致表示があると、外周ヒント同士が干渉しない問題は試し置きの方が速く解けるので、その分だけ基準を縮める。
+ * 読んで解く人が不利になりすぎないよう、試し置きの時間そのものまでは縮めない。
+ * 問題を解き切る作業の量だけから決め、難易度そのものは使わない。
+ */
+export function calculateReflectionSpeedFullScoreMs(
+  workload: ReflectionSolveWorkload,
+): number {
+  const readingMs = calculateReflectionReadingMs(workload);
+  return (
+    (readingMs + Math.min(readingMs, calculateReflectionTrialMs(workload))) / 2
+  );
+}
+
+/** 0点になる時間。基準時間から、ここまで超過に応じて線形に減らす。 */
 export function calculateReflectionSpeedZeroScoreMs(
   workload: ReflectionSolveWorkload,
 ): number {
@@ -101,40 +102,24 @@ export function calculateReflectionSpeedZeroScoreMs(
 export function calculateReflectionTimeDeltaMs({
   elapsedMs,
   workload,
-}: ReflectionTimeDeltaInput): number {
+}: ReflectionPlayScoreInput): number {
   return elapsedMs - calculateReflectionSpeedFullScoreMs(workload);
 }
 
 /**
- * - 正確性: 置き直しの回数と盤面を戻した回数に応じて減点する。解答との照合は使わない。
- *   待った・光路を確かめた回数・入力回数は評価に使わない（待ったで取り消した操作は置き直しに数えてある）。
- * - 速さ: 基準時間以内で満点、超過に応じて線形に減らし、0点になる時間（基準時間の2倍）で0点とする。
+ * 基準時間以内で満点、超過に応じて線形に減らし、0点になる時間（基準時間の3倍）で0点とする。1点単位に四捨五入する。
  */
 export function calculateReflectionPlayScore({
   elapsedMs,
-  relocationCount,
-  restartCount,
   workload,
-}: ReflectionPlayScoreInput): ReflectionPlayScore {
-  const accuracy = Math.max(
-    0,
-    REFLECTION_SCORE_MAXIMUMS.accuracy -
-      relocationCount * REFLECTION_RELOCATION_PENALTY -
-      restartCount * REFLECTION_RESTART_PENALTY,
-  );
-
+}: ReflectionPlayScoreInput): number {
   const speedFullScoreMs = calculateReflectionSpeedFullScoreMs(workload);
   const speedZeroScoreMs = calculateReflectionSpeedZeroScoreMs(workload);
   const overtimeMs = Math.max(0, elapsedMs - speedFullScoreMs);
-  const speed = Math.round(
-    REFLECTION_SCORE_MAXIMUMS.speed *
+  return Math.round(
+    REFLECTION_SCORE_MAXIMUM *
       clampUnit(1 - overtimeMs / (speedZeroScoreMs - speedFullScoreMs)),
   );
-
-  return {
-    total: accuracy + speed,
-    breakdown: { accuracy, speed },
-  };
 }
 
 export function getReflectionGameResultLevel(score: number): GameResultLevel {

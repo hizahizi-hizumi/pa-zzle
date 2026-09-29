@@ -40,21 +40,17 @@ export type ReflectionSession = {
   inputCount: number;
   /**
    * 一度盤面に置いたピースを動かし直した回数。
-   * 別のマスへ移す・入れ替える・ストックへ戻す・別の種類で上書きされる・待ったで取り消される、をそれぞれ1回と数える。
+   * 別のマスへ移す・入れ替える・ストックへ戻す・別の種類で上書きされる、をそれぞれ1回と数える。
    */
   relocationCount: number;
   /** 盤面を戻した回数。 */
   restartCount: number;
-  /** 待ったで盤面操作を取り消した回数。 */
-  undoCount: number;
   /**
    * 光路を表示している外周の位置。表示するのは今の盤面での光路で、盤面が変わると閉じる。
    */
   laserEntry: ReflectionEntry | null;
   /** 外周ヒントを押して光路を表示した回数。 */
   laserCheckCount: number;
-  /** 待ったで戻せる盤面の履歴。古い順。盤面を戻すと空にする。 */
-  history: readonly ReflectionBoard[];
 };
 
 /** 評価に使うプレイ事実。採点はしない。 */
@@ -62,7 +58,6 @@ export type ReflectionSessionResult = {
   elapsedMs: number;
   relocationCount: number;
   restartCount: number;
-  undoCount: number;
   laserCheckCount: number;
   inputCount: number;
 };
@@ -83,10 +78,8 @@ export function createReflectionSession(
     inputCount: 0,
     relocationCount: 0,
     restartCount: 0,
-    undoCount: 0,
     laserEntry: null,
     laserCheckCount: 0,
-    history: [],
   };
 }
 
@@ -136,7 +129,7 @@ function withCell(
 }
 
 /**
- * 盤面を変える操作を反映する。変える前の盤面を待ったの履歴へ積み、揃えばクリアにする。
+ * 盤面を変える操作を反映する。揃えばクリアにする。
  * `relocated` は、置いてあったピースを動かし直した操作か。
  * 表示中の光路は変える前の盤面のものなので閉じる。確かめ直すには外周ヒントを押し直す。
  */
@@ -154,7 +147,6 @@ function applyBoardChange(
     inputCount: session.inputCount + 1,
     relocationCount: session.relocationCount + (relocated ? 1 : 0),
     laserEntry: null,
-    history: [...session.history, session.board],
   };
 
   if (!isReflectionSolved(board, session.problem)) return next;
@@ -179,7 +171,8 @@ function selectionAfterPlacing(
 
 /**
  * ストックを押す。`piece` は押したピースの種類。
- * - 盤面のピースを選んでいれば、そのピースをストックへ戻す（どの種類を押しても同じ）。
+ * - 盤面のピースを選んでいれば、同じ種類ならそのピースをストックへ戻し、別の種類（残りがあるもの）ならその種類に置き換える
+ *   （選んでいたピースはストックへ戻る）。どちらも置き直しに数え、選択を解除する。残りが無い別の種類では何もしない。
  * - そうでなければ、その種類を選ぶ。選んでいる種類をもう一度押すと選択を解除する。残りが無い種類は選べない。
  */
 export function tapReflectionSessionStock(
@@ -191,9 +184,20 @@ export function tapReflectionSessionStock(
 
   const { selection } = session;
   if (selection?.type === "cell") {
+    const selectedCell = session.board.cells[selection.cellIndex] ?? null;
+    if (
+      selectedCell !== piece &&
+      getReflectionSessionStock(session)[piece] <= 0
+    ) {
+      return session;
+    }
     return applyBoardChange(
       session,
-      withCell(session.board, selection.cellIndex, null),
+      withCell(
+        session.board,
+        selection.cellIndex,
+        selectedCell === piece ? null : piece,
+      ),
       null,
       true,
       operatedAt,
@@ -210,7 +214,8 @@ export function tapReflectionSessionStock(
 
 /**
  * 盤面のマスを押す。
- * - ストックの種類を選んでいれば、空きマスへ置く。別の種類のピースがあるマスでは、そのピースをストックへ戻して置き直す。
+ * - ストックの種類を選んでいれば、空きマスへ置く。ピースのあるマスでは置き換えず、そのピースを選ぶ（選択を切り替える）。
+ *   置き換えは、盤面のピースを選んでからストックの種類を押して行う。
  * - 盤面のピースを選んでいれば、空きマスへ移す、または別の種類のピースと入れ替える。同じマスを押すと選択を解除する。
  * - 何も選んでいなければ、ピースのあるマスを選ぶ。
  */
@@ -226,14 +231,16 @@ export function tapReflectionSessionCell(
   if (tappedCell === undefined) return session;
 
   if (selection?.type === "stock") {
-    if (tappedCell === selection.piece) return session;
+    if (tappedCell !== null) {
+      return changeSelection(session, { type: "cell", cellIndex });
+    }
 
     const nextBoard = withCell(board, cellIndex, selection.piece);
     return applyBoardChange(
       session,
       nextBoard,
       selectionAfterPlacing(session, nextBoard, selection.piece),
-      tappedCell !== null,
+      false,
       operatedAt,
     );
   }
@@ -316,35 +323,8 @@ export function tapReflectionSessionClue(
 }
 
 /**
- * 直前の盤面操作を1つ取り消す（待った）。
- * 取り消すと一度置いたピースが動くので、置き直しとして1回数える。置き直しの回数は操作前へ戻さない。
- */
-export function undoReflectionSession(
-  session: ReflectionSession,
-): ReflectionSession {
-  if (session.status !== "playing") return session;
-
-  const previous = session.history.at(-1);
-  if (!previous) return session;
-
-  return {
-    ...session,
-    board: previous,
-    selection: null,
-    laserEntry: null,
-    history: session.history.slice(0, -1),
-    undoCount: session.undoCount + 1,
-    relocationCount: session.relocationCount + 1,
-  };
-}
-
-export function canUndoReflectionSession(session: ReflectionSession): boolean {
-  return session.status === "playing" && session.history.length > 0;
-}
-
-/**
  * 同じプレイのまま、全ピースをストックへ戻す（盤面を戻す）。経過時間と記録は引き継ぐ。
- * 戻したピースは置き直しに数えない。盤面を戻す前の操作は待ったで戻せない。
+ * 戻したピースは置き直しに数えない。
  */
 export function restartReflectionSession(
   session: ReflectionSession,
@@ -356,7 +336,6 @@ export function restartReflectionSession(
     board: createEmptyReflectionBoard(session.problem.size),
     selection: null,
     laserEntry: null,
-    history: [],
     restartCount: session.restartCount + 1,
   };
 }
@@ -396,7 +375,6 @@ export function getReflectionSessionResult(
     elapsedMs: getReflectionSessionElapsedMs(session, session.finishedAt),
     relocationCount: session.relocationCount,
     restartCount: session.restartCount,
-    undoCount: session.undoCount,
     laserCheckCount: session.laserCheckCount,
     inputCount: session.inputCount,
   };

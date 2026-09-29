@@ -31,7 +31,7 @@ describe("createReflectionProblemIdentity", () => {
     const result = createReflectionProblemIdentity(7, 10, 3);
 
     expect(result).toEqual({
-      generatorVersion: "2",
+      generatorVersion: "3",
       seed: "rf-7-10-3",
       conditions: { size: 7, pieceCount: 10 },
     });
@@ -80,7 +80,7 @@ describe("isReflectionProblemIdentity", () => {
     ["条件が無い", { ...identity, conditions: undefined }],
     [
       "盤面の大きさが対象外",
-      { ...identity, conditions: { ...identity.conditions, size: 8 } },
+      { ...identity, conditions: { ...identity.conditions, size: 12 } },
     ],
     [
       "ピース数が0",

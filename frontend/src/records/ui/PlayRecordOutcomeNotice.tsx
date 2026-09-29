@@ -58,6 +58,7 @@ function getImprovementLabel(
     case "mistake-count":
     case "failed-move-count":
     case "correction-count":
+    case "relocation-count":
       return `${improvementAmount}回減`;
     case "move-delta":
       return `${improvementAmount}手改善`;

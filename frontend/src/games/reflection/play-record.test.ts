@@ -10,19 +10,19 @@ import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 
 const problemIdentity = createReflectionProblemIdentity(6, 11, 3);
 
-// 基準時間は 24×0.5 + 11×6 + 15×8 + 8×15 = 318秒。
+// 試し置きでは解き切れない問題。基準時間は 24×0.5 + 11×3.5 + 15×1.25 + 8×3.5 = 97.25秒。
 const workload = {
   pieceCount: 11,
   clueCount: 24,
   propagationRoundCount: 15,
   assumptionTestCount: 8,
+  trialMoveCount: null,
 };
 
 const performance = {
-  elapsedMs: 400_000,
+  elapsedMs: 119_000,
   relocationCount: 2,
   restartCount: 0,
-  undoCount: 1,
   laserCheckCount: 12,
   inputCount: 30,
 };
@@ -32,7 +32,7 @@ const record = createReflectionPlayRecord({
   problemIdentity,
   workload,
   startedAt: 1_000,
-  completedAt: 401_000,
+  completedAt: 120_000,
   result: performance,
 });
 
@@ -52,14 +52,14 @@ describe("createReflectionPlayRecord", () => {
     const { id, gameId, payloadVersion, payload } = record;
 
     expect({ id, gameId, payloadVersion }).toEqual({
-      id: "reflection:1000:401000:rf-6-11-3",
+      id: "reflection:1000:120000:rf-6-11-3",
       gameId: "reflection",
-      payloadVersion: 1,
+      payloadVersion: 2,
     });
     expect(payload).toEqual({
       difficulty: "5",
       problemIdentity: {
-        generatorVersion: "2",
+        generatorVersion: "3",
         seed: "rf-6-11-3",
         conditions: { size: 6, pieceCount: 11 },
       },
@@ -76,7 +76,7 @@ describe("getReflectionPlayRecordScore", () => {
   test("保存した事実から現在のプレイ評価を導出すること", () => {
     const score = getReflectionPlayRecordScore(record);
 
-    expect(score).toBe(80);
+    expect(score).toBe(89);
   });
 });
 
@@ -84,7 +84,7 @@ describe("getReflectionPlayRecordTimeDelta", () => {
   test("保存した作業の量から基準時間との差を導出すること", () => {
     const timeDeltaMs = getReflectionPlayRecordTimeDelta(record);
 
-    expect(timeDeltaMs).toBe(82_000);
+    expect(timeDeltaMs).toBe(21_750);
   });
 });
 
@@ -102,21 +102,14 @@ describe("isReflectionPlayRecord", () => {
       }),
     ],
     [
-      "待ったで取り消した分だけ入力回数より置き直しが多い記録",
-      withPayload({
-        performance: {
-          ...performance,
-          relocationCount: 31,
-          undoCount: 1,
-          inputCount: 30,
-        },
-      }),
+      "評価に使わない undoCount を持つ以前の記録",
+      withPayload({ performance: { ...performance, undoCount: 1 } }),
     ],
   ] as const;
 
   const invalidCases = [
     ["別のゲームの記録", { ...record, gameId: "takuzu" }],
-    ["未知の payload の版", { ...record, payloadVersion: 2 }],
+    ["未知の payload の版", { ...record, payloadVersion: 3 }],
     ["未知の難易度", withPayload({ difficulty: "6" })],
     [
       "生成器の版が無い identity",
@@ -129,7 +122,7 @@ describe("isReflectionPlayRecord", () => {
       withPayload({
         problemIdentity: {
           ...problemIdentity,
-          conditions: { size: 8, pieceCount: 11 },
+          conditions: { size: 12, pieceCount: 11 },
         },
       }),
     ],
@@ -165,12 +158,8 @@ describe("isReflectionPlayRecord", () => {
       withPayload({ performance: { ...performance, relocationCount: 1.5 } }),
     ],
     [
-      "入力回数と待った回数の合計より多い置き直し回数",
-      withPayload({ performance: { ...performance, relocationCount: 32 } }),
-    ],
-    [
-      "入力回数より多い待った回数",
-      withPayload({ performance: { ...performance, undoCount: 31 } }),
+      "入力回数より多い置き直し回数",
+      withPayload({ performance: { ...performance, relocationCount: 31 } }),
     ],
     [
       "光路を確かめた回数が無い記録",
@@ -198,7 +187,7 @@ describe("isReflectionPlayRecord", () => {
 });
 
 describe("reflectionPlayRecordDefinition", () => {
-  const metricIds = ["play-score", "time-delta-ms", "relocation-count"];
+  const metricIds = ["play-score", "time-delta-ms"];
 
   test("難易度を自己ベストの比較単位として扱うこと", () => {
     const comparisonKey =
@@ -207,7 +196,7 @@ describe("reflectionPlayRecordDefinition", () => {
     expect(comparisonKey).toBe("5");
   });
 
-  test("自己ベストを評価点は高いほど、基準時間との差と置き直し回数は小さいほど良いとして比べること", () => {
+  test("自己ベストを評価点は高いほど、基準時間との差は小さいほど良いとして比べ、点に入らない置き直し回数は比べないこと", () => {
     const directions = reflectionPlayRecordDefinition.personalBestMetrics.map(
       ({ id, direction }) => [id, direction],
     );
@@ -215,7 +204,6 @@ describe("reflectionPlayRecordDefinition", () => {
     expect(directions).toEqual([
       ["play-score", "higher"],
       ["time-delta-ms", "lower"],
-      ["relocation-count", "lower"],
     ]);
   });
 
@@ -228,7 +216,7 @@ describe("reflectionPlayRecordDefinition", () => {
       ),
     );
 
-    expect(values).toEqual([80, 82_000, 2]);
+    expect(values).toEqual([89, 21_750]);
   });
 
   describe("生成器の版が今と違う記録の場合", () => {
@@ -243,7 +231,7 @@ describe("reflectionPlayRecordDefinition", () => {
         ),
       );
 
-      expect(values).toEqual([80, 82_000, 2]);
+      expect(values).toEqual([89, 21_750]);
     });
   });
 });

@@ -1,5 +1,3 @@
-import { CornerLeftDown } from "lucide-react";
-
 import {
   type ReflectionInventory,
   type ReflectionPiece,
@@ -8,13 +6,15 @@ import {
 import type { ReflectionSelection } from "@/games/reflection/session/session";
 import { ReflectionPieceIcon } from "@/games/reflection/ui/board/ReflectionPieceIcon";
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
-import { reflectionToneClassNames } from "@/games/reflection/ui/reflection-tone";
+import { reflectionPieceBarClassNames } from "@/games/reflection/ui/reflection-tone";
 import { cn } from "@/lib/utils";
 
 type ReflectionStockProps = {
   inventory: ReflectionInventory;
   stock: ReflectionInventory;
   selection: ReflectionSelection | null;
+  /** 盤面で選んでいるマスのピース。盤面のピースを選んでいないときは `null`。 */
+  selectedCell: ReflectionPiece | null;
   disabled: boolean;
   onTapStock: (piece: ReflectionPiece) => void;
 };
@@ -27,40 +27,32 @@ export function listReflectionStockPieces(
 }
 
 /**
- * 手持ちのピース。
- * 盤面のピースを選んでいる間は、ストック全体を戻し先として枠で囲み、どの種類を押してもそのピースを戻す。
+ * 手持ちのピース。種類ごとのボタンを枠も影も付けずに平らに並べ、選んでいる種類だけを選択の地と枠で示す。
+ * 盤面のピースを選んでいる間は、そのピースと同じ種類の下に薄い線を引いて戻し先を示す（押すと戻す。別の種類を押すと置き換える）。
  */
 export function ReflectionStock({
   inventory,
   stock,
   selection,
+  selectedCell,
   disabled,
   onTapStock,
 }: ReflectionStockProps) {
   const returning = !disabled && selection?.type === "cell";
+  // 盤面のピースを選んでいる間、そのピースと同じ種類（押すと戻す）と、残りのある種類（押すと置き換える）を押せる。
+  const selectedCellPiece = returning ? selectedCell : null;
   const pieces = listReflectionStockPieces(inventory);
 
   return (
     <div
       role="group"
-      aria-label={returning ? "ストック（押すとストックへ戻す）" : "ストック"}
-      className={cn(
-        "relative mx-auto flex w-full max-w-md justify-center gap-1 rounded-lg sm:gap-1.5 border-(length:--border-width-strong) border-dashed border-transparent p-1 transition-colors duration-(--duration-normal)",
-        returning && reflectionToneClassNames.selectionBorder,
-      )}
+      aria-label={
+        returning
+          ? "ストック（同じ種類を押すと戻す・別の種類を押すと置き換える）"
+          : "ストック"
+      }
+      className="relative mx-auto flex w-full max-w-md justify-center gap-1 p-1 sm:gap-1.5"
     >
-      {returning ? (
-        <span
-          aria-hidden="true"
-          className={cn(
-            "pointer-events-none absolute -top-2 left-1/2 z-10 flex h-4 -translate-x-1/2 items-center gap-1 whitespace-nowrap bg-background px-2 text-play-meta",
-            reflectionToneClassNames.selectionText,
-          )}
-        >
-          <CornerLeftDown className="size-3" />
-          ここへ戻す
-        </span>
-      ) : null}
       {pieces.map(function renderPiece(piece) {
         const remaining = stock[piece];
         const selected =
@@ -71,15 +63,27 @@ export function ReflectionStock({
             type="button"
             aria-label={`${reflectionPieceLabels[piece]} 残り${remaining}`}
             aria-pressed={selected}
-            disabled={disabled || (!returning && remaining === 0)}
+            disabled={
+              disabled || (remaining === 0 && piece !== selectedCellPiece)
+            }
             onClick={() => onTapStock(piece)}
             className={cn(
-              "relative flex h-11 min-w-0 max-w-16 flex-1 touch-manipulation select-none items-center justify-center rounded-md border-(length:--border-width-normal) bg-background text-foreground shadow-raised outline-none transition-[background-color,color,opacity] duration-(--duration-fast) focus-visible:ring-2 focus-visible:ring-ring enabled:hover:bg-accent/60 enabled:active:bg-accent disabled:opacity-40 disabled:shadow-none",
-              selected && reflectionToneClassNames.selectionSurface,
-              selected && reflectionToneClassNames.selectionText,
-              returning && "border-dashed",
+              "relative flex h-11 min-w-0 max-w-16 flex-1 touch-manipulation select-none items-center justify-center text-foreground outline-none transition-[background-color,color,opacity] duration-(--duration-fast) focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset enabled:hover:bg-accent/60 enabled:active:bg-accent disabled:opacity-40",
             )}
           >
+            {selected || piece === selectedCellPiece ? (
+              <span
+                aria-hidden="true"
+                data-selection-mark={selected ? "" : undefined}
+                data-return-target={selected ? undefined : ""}
+                className={cn(
+                  "pointer-events-none absolute inset-x-[25%] bottom-0 h-[3px]",
+                  reflectionPieceBarClassNames[piece],
+                  // 戻し先は選択の線を薄くした印にする。押すと盤面で選んだピースがこの種類へ戻る。
+                  !selected && "opacity-35",
+                )}
+              />
+            ) : null}
             <ReflectionPieceIcon piece={piece} size="stock" />
             <span className="absolute right-1 bottom-0.5 font-mono text-[0.6875rem] leading-none font-semibold tabular-nums text-muted-foreground">
               {remaining}

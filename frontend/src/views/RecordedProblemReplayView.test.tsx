@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 
 import { createMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
@@ -8,6 +8,11 @@ import { createNanpureProblemIdentity } from "@/games/nanpure/problem/problem";
 import { restoreNanpureProblem } from "@/games/nanpure/problem-selection";
 import { createParkingJamPlayRecord } from "@/games/parking-jam/play-record";
 import { selectParkingJamProblemForDifficulty } from "@/games/parking-jam/problem-selection";
+import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
+import { createReflectionPlayRecord } from "@/games/reflection/play-record";
+import { createReflectionProblemIdentity } from "@/games/reflection/problem/problem";
+import { restoreReflectionPoolProblem } from "@/games/reflection/problem-selection";
+import { writeReflectionHowToPlaySeen } from "@/games/reflection/ui/how-to-play-seen";
 import { createSlidePuzzlePlayRecord } from "@/games/slide-puzzle/play-record";
 import { selectSlidePuzzleProblemForDifficulty } from "@/games/slide-puzzle/problem-selection";
 import { createTakuzuPlayRecord } from "@/games/takuzu/play-record";
@@ -168,6 +173,7 @@ function renderReplay(recordId: string): void {
 
 beforeEach(() => {
   writeTakuzuHowToPlaySeen();
+  writeReflectionHowToPlaySeen();
 });
 
 afterEach(() => {
@@ -296,6 +302,88 @@ describe("RecordedProblemReplayView", () => {
       });
 
       expect(heading).toBeTruthy();
+    });
+  });
+
+  describe("リフレクションの記録の場合", () => {
+    const pooled = restoreReflectionPoolProblem({
+      poolVersion: "3",
+      problemId: "3-1",
+    });
+    const reflectionPerformance = {
+      elapsedMs: 90_000,
+      relocationCount: 1,
+      restartCount: 0,
+      undoCount: 0,
+      laserCheckCount: 3,
+      inputCount: 10,
+    };
+
+    function createRecord(
+      problemIdentity: ReturnType<typeof createReflectionProblemIdentity>,
+    ) {
+      return createReflectionPlayRecord({
+        difficulty: "3",
+        problemIdentity,
+        workload: {
+          pieceCount: problemIdentity.conditions.pieceCount,
+          clueCount: problemIdentity.conditions.size * 4,
+          propagationRoundCount: 2,
+          assumptionTestCount: 0,
+          trialMoveCount: null,
+        },
+        startedAt: 1_000,
+        completedAt: 91_000,
+        result: reflectionPerformance,
+      });
+    }
+
+    describe("問題集にある問題の場合", () => {
+      beforeEach(() => {
+        const record = createRecord(
+          pooled?.identity ?? createReflectionProblemIdentity(5, 4, 0),
+        );
+        writePlayRecords([record]);
+        renderReplay(record.id);
+      });
+
+      test("記録と同じ問題の盤面と外周ヒントでプレイを始めること", () => {
+        const cells = within(
+          screen.getByRole("group", { name: `${REFLECTION_DISPLAY_NAME}盤面` }),
+        ).getAllByRole("button");
+        const clueDistances = screen
+          .getAllByRole("button", { name: /\d+マス( 一致)?$/ })
+          .map((button) =>
+            Number(button.getAttribute("aria-label")?.match(/(\d+)マス/)?.[1]),
+          )
+          .sort((a, b) => a - b);
+        const expectedDistances = (pooled?.problem.clues ?? [])
+          .map((clue) => clue.distance)
+          .sort((a, b) => a - b);
+
+        expect(cells).toHaveLength((pooled?.problem.size ?? 0) ** 2);
+        expect(clueDistances).toEqual(expectedDistances);
+      });
+    });
+
+    describe("問題集に無い問題の場合", () => {
+      beforeEach(() => {
+        const record = createRecord(createReflectionProblemIdentity(7, 3, 0));
+        writePlayRecords([record]);
+        renderReplay(record.id);
+      });
+
+      test("問題集に問題が無いため再プレイできないことを示すこと", () => {
+        const heading = screen.getByRole("heading", {
+          name: "この記録は再プレイできません",
+        });
+        const reason = screen.getByText(
+          "この記録の問題は、現在の問題集にありません。",
+        );
+
+        expect(heading).toBeTruthy();
+        expect(reason).toBeTruthy();
+      });
     });
   });
 });

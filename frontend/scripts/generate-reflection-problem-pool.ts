@@ -4,16 +4,20 @@ import {
   assessReflectionDifficulty,
   listReflectionGenerationConditions,
   type ReflectionDifficulty,
+  type ReflectionLevelCombination,
   reflectionDifficulties,
+  reflectionLevelCombinations,
 } from "@/games/reflection/difficulty";
 import { analyzeReflectionDifficulty } from "@/games/reflection/problem/difficulty-analysis";
 import { getReflectionSymmetryKey } from "@/games/reflection/problem/generation/symmetry";
+import { traceReflectionTrialSolve } from "@/games/reflection/problem/generation/trial-solver";
 import { generateReflectionProblem } from "@/games/reflection/problem/generator";
 import {
   createReflectionProblemIdentity,
   REFLECTION_GENERATOR_VERSION,
   type ReflectionBoardSize,
   type ReflectionGenerationConditions,
+  type ReflectionProblem,
 } from "@/games/reflection/problem/problem";
 import {
   decodeReflectionPoolSolution,
@@ -28,13 +32,23 @@ import {
 import { selectReflectionProblemForDifficulty } from "@/games/reflection/problem-selection";
 import { reflectionPieces } from "@/games/reflection/puzzle/board";
 
-const defaultPerLevel = 500;
+/**
+ * レベルごとの問題数。レベル4・5 は 8×8〜11×11 の盤面で1候補の生成と分析に数秒〜数十秒かかり、事前生成が4並列で
+ * 数時間に収まるよう少なくしている。
+ */
+const defaultPerLevel = {
+  "1": 500,
+  "2": 500,
+  "3": 500,
+  "4": 300,
+  "5": 300,
+} as const satisfies Record<ReflectionDifficulty, number>;
 
 /**
  * 問題集の版。問題の並び（問題番号 `<レベル>-<番号>` が指す問題）が変わる作り直しをしたら上げる。
  * 生成器の版（`REFLECTION_GENERATOR_VERSION`）が上がったときも並びは変わるので上げる。
  */
-const poolVersion = "1";
+const poolVersion = "3";
 
 const usage = `Usage: bun run generate:reflection-pool -- [options]
 
@@ -43,10 +57,11 @@ const usage = `Usage: bun run generate:reflection-pool -- [options]
 除きながら生成条件を巡回して問題集へ採る。
 
 Options:
-  --per-level <n>  レベルごとの問題数 (default: ${defaultPerLevel})
+  --per-level <n>  全レベル共通の問題数 (default: レベル1〜5で ${Object.values(defaultPerLevel).join(" / ")})
   --jobs <n>       並列ワーカー数 (default: 4)
   --block <n>      生成条件ごとに一度に増やす候補数 (default: 100)
   --budget <n>     生成条件ごとに調べる候補数の上限 (default: 20000)
+  --details <path> 採った問題ごとの分析結果（推論の経過・試し置き・生成＋分析時間）を JSONL で書く。基準時間の検討に使う
   --verify         生成せず、同梱の問題集の全問を再生成→一意性確認→分析→分類し、作業の量・同型の重複・JSON の大きさ・選択時間を確かめる`;
 
 const outputPath = new URL(
@@ -64,7 +79,8 @@ type CandidateOutcome =
   | "L4"
   | "L5"
   | "unsupported"
-  | "invalid";
+  | "invalid"
+  | "trial-solvable";
 
 type Candidate = {
   index: number;
@@ -77,6 +93,11 @@ type Candidate = {
   pieceKindCount: number;
   propagationRoundCount: number;
   assumptionTestCount: number;
+  assumptionEliminationCount: number;
+  fixedPieceCountByLevel: readonly number[];
+  trialSolved: boolean;
+  trialMoveCount: number;
+  trialRetryCount: number;
 };
 
 type ConditionState = {
@@ -105,6 +126,31 @@ function conditionKeyOf({
   return `${size}×${size}/${pieceCount}`;
 }
 
+/**
+ * その生成条件を規模の範囲に含むレベルが、どれも試し置きのやり直しの下限を持つなら、その下限の最小値。
+ * 試し置きでそれより少ないやり直しで解ける候補はどのレベルにも分類されないので、重い推論の分析を省ける。
+ */
+function findTrialPrefilter(
+  condition: ReflectionGenerationConditions,
+): number | null {
+  const minimums = reflectionDifficulties
+    .map(
+      ({ id }): ReflectionLevelCombination => reflectionLevelCombinations[id],
+    )
+    .filter(
+      ({ boardSize, pieceCount }) =>
+        boardSize.minimum <= condition.size &&
+        condition.size <= boardSize.maximum &&
+        pieceCount.minimum <= condition.pieceCount &&
+        condition.pieceCount <= pieceCount.maximum,
+    )
+    .map((combination) => combination.minimumTrialRetryCount);
+  return minimums.length > 0 &&
+    minimums.every((minimum) => minimum !== undefined)
+    ? Math.min(...minimums)
+    : null;
+}
+
 function evaluateCandidate(
   condition: ReflectionGenerationConditions,
   index: number,
@@ -117,6 +163,28 @@ function evaluateCandidate(
       index,
     ),
   );
+  const trialPrefilter = findTrialPrefilter(condition);
+  if (trialPrefilter !== null) {
+    const trial = traceReflectionTrialSolve(problem);
+    if (trial.status === "solved" && trial.retryCount < trialPrefilter) {
+      return {
+        index,
+        milliseconds: performance.now() - startedAt,
+        outcome: "trial-solvable",
+        difficulty: null,
+        symmetryKey,
+        encodedSolution: encodeReflectionPoolSolution(problem.solution),
+        pieceKindCount: 0,
+        propagationRoundCount: 0,
+        assumptionTestCount: 0,
+        assumptionEliminationCount: 0,
+        fixedPieceCountByLevel: [],
+        trialSolved: true,
+        trialMoveCount: trial.moveCount,
+        trialRetryCount: trial.retryCount,
+      };
+    }
+  }
   const analysis = analyzeReflectionDifficulty(problem);
   const assessment = assessReflectionDifficulty(analysis);
   const features = analysis.status === "analyzed" ? analysis.features : null;
@@ -135,6 +203,13 @@ function evaluateCandidate(
     pieceKindCount: analysis.scale.pieceKindCount,
     propagationRoundCount: features?.propagationRoundCount ?? 0,
     assumptionTestCount: features?.assumptionTestCount ?? 0,
+    assumptionEliminationCount: features?.assumptionEliminationCount ?? 0,
+    fixedPieceCountByLevel: features?.fixedPieceCountByLevel ?? [],
+    trialSolved: analysis.status === "analyzed" && analysis.trial.solved,
+    trialMoveCount:
+      analysis.status === "analyzed" ? analysis.trial.moveCount : 0,
+    trialRetryCount:
+      analysis.status === "analyzed" ? analysis.trial.retryCount : 0,
   };
 }
 
@@ -328,11 +403,44 @@ function formatPoolJson(
   return `{\n  "poolVersion": ${JSON.stringify(poolVersion)},\n  "generatorVersion": ${JSON.stringify(REFLECTION_GENERATOR_VERSION)},\n  "levels": {\n${lines.join("\n")}\n  }\n}\n`;
 }
 
+function formatDetails(
+  results: ReadonlyMap<ReflectionDifficulty, LevelSelection>,
+): string {
+  const lines = reflectionDifficulties.flatMap(({ id: difficulty }) =>
+    results
+      .get(difficulty)!
+      .selected.map(({ condition, candidate }, entryIndex) =>
+        JSON.stringify({
+          problemId: formatReflectionPoolProblemId(difficulty, entryIndex),
+          seed: createReflectionProblemIdentity(
+            condition.size,
+            condition.pieceCount,
+            candidate.index,
+          ).seed,
+          ...condition,
+          ...candidate,
+        }),
+      ),
+  );
+  return `${lines.join("\n")}\n`;
+}
+
 function describeSize(json: string): string {
   return `JSON ${json.length} bytes, gzip ${gzipSync(json).length} bytes`;
 }
 
-/** 問題集の1レベルの内訳（盤面×ピース数、ピースの種類の数、作業の量）。 */
+/** 一致表示を見ながら1本ずつ満たす試し置き（`traceReflectionTrialSolve`）で解き切れた割合と、やり直しの回数・手数。 */
+function describeTrial(problems: readonly ReflectionProblem[]): string[] {
+  const traces = problems.map((problem) => traceReflectionTrialSolve(problem));
+  const solvedCount = traces.filter(({ status }) => status === "solved").length;
+  return [
+    `  試し置きで解き切れた: ${solvedCount} / ${traces.length}`,
+    `  試し置きのやり直し: ${describeDistribution(traces.map(({ retryCount }) => retryCount))}`,
+    `  試し置きの手数: ${describeDistribution(traces.map(({ moveCount }) => moveCount))}`,
+  ];
+}
+
+/** 問題集の1レベルの内訳（盤面×ピース数、ピースの種類の数、作業の量、試し置き）。 */
 function describeLevelEntries(
   difficulty: ReflectionDifficulty,
   entries: readonly ReflectionProblemPoolEntry[],
@@ -348,11 +456,17 @@ function describeLevelEntries(
     `  ピースの種類の数: ${formatCounts(pooled.map(({ problem }) => reflectionPieces.filter((piece) => problem.inventory[piece] > 0).length))}`,
     `  全外周ヒントへ照らし直した回数: ${describeDistribution(pooled.map(({ workload }) => workload.propagationRoundCount))}`,
     `  仮に置いて確かめた回数: ${describeDistribution(pooled.map(({ workload }) => workload.assumptionTestCount))}`,
+    ...describeTrial(pooled.map(({ problem }) => problem)),
   ];
 }
 
 async function runMain(): Promise<void> {
-  const perLevel = readPositiveInteger("per-level", defaultPerLevel);
+  const commonPerLevel = readOption("per-level");
+  function perLevelOf(difficulty: ReflectionDifficulty): number {
+    return commonPerLevel === undefined
+      ? defaultPerLevel[difficulty]
+      : readPositiveInteger("per-level", 0);
+  }
   const jobs = readPositiveInteger("jobs", 4);
   const block = readPositiveInteger("block", 100);
   const budget = readPositiveInteger("budget", 20_000);
@@ -408,7 +522,7 @@ async function runMain(): Promise<void> {
       const selection = selectLevel(
         difficulty,
         levelStates[difficulty],
-        perLevel,
+        perLevelOf(difficulty),
         budget,
       );
       if (selection) {
@@ -438,6 +552,7 @@ async function runMain(): Promise<void> {
         candidate.encodedSolution,
         candidate.propagationRoundCount,
         candidate.assumptionTestCount,
+        candidate.trialSolved ? candidate.trialMoveCount : null,
       ]);
   }
 
@@ -468,6 +583,10 @@ async function runMain(): Promise<void> {
 
   const json = formatPoolJson(levels);
   writeFileSync(outputPath, json);
+  const detailsPath = readOption("details");
+  if (detailsPath !== undefined) {
+    writeFileSync(detailsPath, formatDetails(results));
+  }
   console.log(report.join("\n"));
   console.log(
     `\n全体: ${wallSeconds.toFixed(1)}s (wall, jobs=${jobs}) / ${describeSize(json)}`,
@@ -505,12 +624,16 @@ function runVerifyWorker(args: readonly string[]): void {
         return;
       }
       const { propagationRoundCount, assumptionTestCount } = analysis.features;
+      const trialMoveCount = analysis.trial.solved
+        ? analysis.trial.moveCount
+        : null;
       if (
         pooled.workload.propagationRoundCount !== propagationRoundCount ||
-        pooled.workload.assumptionTestCount !== assumptionTestCount
+        pooled.workload.assumptionTestCount !== assumptionTestCount ||
+        pooled.workload.trialMoveCount !== trialMoveCount
       ) {
         fail(
-          `作業の量が分析と違う (照らし直し ${pooled.workload.propagationRoundCount}/${propagationRoundCount}, 仮置き ${pooled.workload.assumptionTestCount}/${assumptionTestCount})`,
+          `作業の量が分析と違う (照らし直し ${pooled.workload.propagationRoundCount}/${propagationRoundCount}, 仮置き ${pooled.workload.assumptionTestCount}/${assumptionTestCount}, 試し置き ${pooled.workload.trialMoveCount}/${trialMoveCount})`,
         );
       }
       const assessment = assessReflectionDifficulty(analysis);

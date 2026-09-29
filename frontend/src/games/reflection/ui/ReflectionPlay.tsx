@@ -1,35 +1,40 @@
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import type { ReflectionLaserPathMode } from "@/games/reflection/laser-path-mode";
 import type {
   ReflectionLaserView,
   ReflectionProgress,
+  ReflectionResult,
 } from "@/games/reflection/play/use-reflection-play";
-import type {
-  ReflectionBoard as ReflectionBoardState,
-  ReflectionInventory,
-  ReflectionPiece,
+import {
+  getReflectionInventoryPieceCount,
+  type ReflectionBoard as ReflectionBoardState,
+  type ReflectionInventory,
+  type ReflectionPiece,
 } from "@/games/reflection/puzzle/board";
 import type {
   ReflectionClue,
   ReflectionEntry,
 } from "@/games/reflection/puzzle/laser";
-import type { ReflectionSelection } from "@/games/reflection/session/session";
+import { listReflectionClueMatches } from "@/games/reflection/puzzle/rules";
+import type {
+  ReflectionSelection,
+  ReflectionSessionResult,
+} from "@/games/reflection/session/session";
 import { ReflectionBoard } from "@/games/reflection/ui/board/ReflectionBoard";
 import { readReflectionHowToPlaySeen } from "@/games/reflection/ui/how-to-play-seen";
 import { ReflectionHowToPlayDialog } from "@/games/reflection/ui/ReflectionHowToPlayDialog";
-import { ReflectionClearedPanel } from "@/games/reflection/ui/ReflectionPlay/ReflectionClearedPanel";
-import { ReflectionLaserStatus } from "@/games/reflection/ui/ReflectionPlay/ReflectionLaserStatus";
+import { ReflectionClueMatchStatus } from "@/games/reflection/ui/ReflectionPlay/ReflectionClueMatchStatus";
 import { ReflectionPlayHeader } from "@/games/reflection/ui/ReflectionPlay/ReflectionPlayHeader";
 import {
   listReflectionStockPieces,
   ReflectionStock,
 } from "@/games/reflection/ui/ReflectionPlay/ReflectionStock";
-import { UndoButton } from "@/games/reflection/ui/ReflectionPlay/UndoButton";
+import { ReflectionResultScreen } from "@/games/reflection/ui/result/ReflectionResultScreen";
 
 type ReflectionPlayProps = {
-  /** 結果に出す難易度の表示名。 */
+  /** 結果に出す難易度の表示名。問題を指定したプレイでは難易度を伏せた名前を渡す。 */
   difficultyLabel: string;
   laserPathMode: ReflectionLaserPathMode;
   progress: ReflectionProgress;
@@ -39,21 +44,23 @@ type ReflectionPlayProps = {
   stock: ReflectionInventory;
   selection: ReflectionSelection | null;
   laser: ReflectionLaserView | null;
-  relocationCount: number;
-  undoCount: number;
   elapsedMs: number;
-  canUndo: boolean;
   canRestart: boolean;
+  /** クリアしたプレイの事実。クリアするまでは `null`。 */
+  sessionResult: ReflectionSessionResult | null;
+  /** クリアしたプレイの評価。問題集に無い問題を指定したプレイでは `null`。 */
+  result: ReflectionResult | null;
+  recordOutcomeNotice: ReactNode;
   onTapCell: (cellIndex: number) => void;
   onTapStock: (piece: ReflectionPiece) => void;
   onTapClue: (entry: ReflectionEntry) => void;
   onRemovePiece: (cellIndex: number) => void;
   onClearSelection: () => void;
-  onUndo: () => void;
   onRestart: () => void;
   onReplay: () => void;
   onClearAnimationComplete: () => void;
   onStartNewProblem: () => void;
+  onOpenRecords: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
   /** 内部診断が有効なときだけ渡し、メニューに検証情報を出す。 */
@@ -75,21 +82,21 @@ export function ReflectionPlay({
   stock,
   selection,
   laser,
-  relocationCount,
-  undoCount,
   elapsedMs,
-  canUndo,
   canRestart,
+  sessionResult,
+  result,
+  recordOutcomeNotice,
   onTapCell,
   onTapStock,
   onTapClue,
   onRemovePiece,
   onClearSelection,
-  onUndo,
   onRestart,
   onReplay,
   onClearAnimationComplete,
   onStartNewProblem,
+  onOpenRecords,
   onChangeDifficulty,
   onBackToHome,
   onOpenDiagnostics,
@@ -99,6 +106,15 @@ export function ReflectionPlay({
     readReflectionHowToPlaySeen() ? "closed" : "intro",
   );
   const playing = progress === "playing";
+  const clueMatches = useMemo(
+    () => listReflectionClueMatches(board, clues),
+    [board, clues],
+  );
+  // 手持ちを置き切っても揃っていないときだけ、合っていない外周ヒントの本数を知らせる。
+  const unmatchedClueCount =
+    playing && getReflectionInventoryPieceCount(stock) === 0
+      ? clueMatches.filter((matched) => !matched).length
+      : 0;
   const playAreaRef = useRef<HTMLElement>(null);
 
   function closeHowToPlay() {
@@ -151,6 +167,25 @@ export function ReflectionPlay({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [playing, inventory, onClearSelection, onTapStock]);
 
+  // 完成演出の間は揃った盤面と全光路をそのまま見せ、演出を終えてから結果画面に切り替える。
+  if (progress === "result" && sessionResult) {
+    return (
+      <ReflectionResultScreen
+        difficultyLabel={difficultyLabel}
+        laserPathMode={laserPathMode}
+        performance={sessionResult}
+        result={result}
+        recordOutcomeNotice={recordOutcomeNotice}
+        onReplay={onReplay}
+        onStartNewProblem={onStartNewProblem}
+        onOpenRecords={onOpenRecords}
+        onChangeDifficulty={onChangeDifficulty}
+        onBackToHome={onBackToHome}
+        onOpenDiagnostics={onOpenDiagnostics}
+      />
+    );
+  }
+
   return (
     <section
       ref={playAreaRef}
@@ -158,9 +193,7 @@ export function ReflectionPlay({
     >
       <BrandIdentityHeader />
       <ReflectionPlayHeader
-        relocationCount={relocationCount}
         elapsedMs={elapsedMs}
-        undoCount={undoCount}
         canRestart={canRestart}
         onRestart={onRestart}
         onReplay={onReplay}
@@ -180,6 +213,7 @@ export function ReflectionPlay({
           <ReflectionBoard
             board={board}
             clues={clues}
+            clueMatches={clueMatches}
             selection={selection}
             laser={laser}
             progress={progress}
@@ -188,27 +222,22 @@ export function ReflectionPlay({
             onRemovePiece={onRemovePiece}
             onClearAnimationComplete={onClearAnimationComplete}
           />
-          {progress === "result" && (
-            <ReflectionClearedPanel
-              difficultyLabel={difficultyLabel}
-              onReplay={onReplay}
-              onStartNewProblem={onStartNewProblem}
-            />
-          )}
         </div>
       </main>
       <footer className="grid shrink-0 gap-2 px-3 pb-2">
-        <ReflectionLaserStatus laser={laser} />
+        <ReflectionClueMatchStatus unmatchedClueCount={unmatchedClueCount} />
         <ReflectionStock
           inventory={inventory}
           stock={stock}
           selection={selection}
+          selectedCell={
+            selection?.type === "cell"
+              ? (board.cells[selection.cellIndex] ?? null)
+              : null
+          }
           disabled={!playing}
           onTapStock={onTapStock}
         />
-        <div className="flex h-12 items-center justify-center">
-          <UndoButton disabled={!playing || !canUndo} onUndo={onUndo} />
-        </div>
       </footer>
     </section>
   );

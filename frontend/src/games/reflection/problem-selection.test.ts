@@ -1,10 +1,13 @@
 import {
   assessReflectionDifficulty,
   type ReflectionDifficulty,
+  type ReflectionLevelCombination,
   reflectionDifficulties,
+  reflectionLevelCombinations,
 } from "@/games/reflection/difficulty";
 import { analyzeReflectionDifficulty } from "@/games/reflection/problem/difficulty-analysis";
 import { getReflectionSymmetryKey } from "@/games/reflection/problem/generation/symmetry";
+import { traceReflectionTrialSolve } from "@/games/reflection/problem/generation/trial-solver";
 import { generateReflectionProblem } from "@/games/reflection/problem/generator";
 import {
   REFLECTION_GENERATOR_VERSION,
@@ -19,12 +22,23 @@ import {
   restoreReflectionProblem,
   selectReflectionProblemForDifficulty,
 } from "@/games/reflection/problem-selection";
+import {
+  isReflectionSolved,
+  listReflectionClueMatches,
+} from "@/games/reflection/puzzle/rules";
 
 const difficulties = reflectionDifficulties.map(({ id }) => id);
 
-// 全問の一意性確認・分析・再生成には数十秒かかるため、テストでは等間隔に抜き出した問題だけを確かめる。
+// 全問の一意性確認・分析・再生成には数十分かかるため、テストでは等間隔に抜き出した問題だけを確かめる。
+// 人間向け解法器の分析はレベル5 の 9×9〜11×11 で1問数秒〜数十秒かかるので、レベル1〜4 だけで行う。
 // 全問の検証は `bun run generate:reflection-pool -- --verify` で行う。
-const analyzedEntryCountPerDifficulty = 20;
+const analyzedEntryCountByDifficulty = {
+  "1": 20,
+  "2": 20,
+  "3": 20,
+  "4": 4,
+} as const satisfies Partial<Record<ReflectionDifficulty, number>>;
+const trialCheckedEntryCountPerDifficulty = 20;
 const regeneratedEntryCountPerDifficulty = 4;
 
 function listPooledProblems(difficulty: ReflectionDifficulty) {
@@ -62,12 +76,12 @@ describe("問題集", () => {
     expect(new Set(seeds).size).toBe(pooled.length);
   });
 
-  test.each(difficulties)(
-    "レベル %s から抜き出した問題が、分析でそのレベルに分類され、作業の量が分析の結果と一致すること",
-    (difficulty) => {
+  test.each(Object.entries(analyzedEntryCountByDifficulty))(
+    "レベル %s から抜き出した %i 問が、分析でそのレベルに分類され、作業の量が分析の結果と一致すること",
+    (difficulty, count) => {
       const sampled = sampleEvenly(
-        listPooledProblems(difficulty),
-        analyzedEntryCountPerDifficulty,
+        listPooledProblems(difficulty as ReflectionDifficulty),
+        count,
       );
 
       const analyses = sampled.map(({ problem }) =>
@@ -90,6 +104,9 @@ describe("問題集", () => {
             ? {
                 propagationRoundCount: analysis.features.propagationRoundCount,
                 assumptionTestCount: analysis.features.assumptionTestCount,
+                trialMoveCount: analysis.trial.solved
+                  ? analysis.trial.moveCount
+                  : null,
               }
             : null,
         ),
@@ -97,7 +114,61 @@ describe("問題集", () => {
         sampled.map(({ workload }) => ({
           propagationRoundCount: workload.propagationRoundCount,
           assumptionTestCount: workload.assumptionTestCount,
+          trialMoveCount: workload.trialMoveCount,
         })),
+      );
+    },
+    60_000,
+  );
+
+  test.each(difficulties)(
+    "レベル %s から抜き出した問題が、試し置きの手数を作業の量に持ち、そのレベルの試し置きの下限を満たすこと",
+    (difficulty) => {
+      const sampled = sampleEvenly(
+        listPooledProblems(difficulty),
+        trialCheckedEntryCountPerDifficulty,
+      );
+      const { minimumTrialRetryCount = 0 }: ReflectionLevelCombination =
+        reflectionLevelCombinations[difficulty];
+
+      const traces = sampled.map(({ problem }) =>
+        traceReflectionTrialSolve(problem),
+      );
+
+      expect(
+        traces.map((trace) =>
+          trace.status === "solved" ? trace.moveCount : null,
+        ),
+      ).toEqual(sampled.map(({ workload }) => workload.trialMoveCount));
+      expect(
+        traces.every(
+          (trace) =>
+            trace.status !== "solved" ||
+            trace.retryCount >= minimumTrialRetryCount,
+        ),
+      ).toBe(true);
+    },
+    60_000,
+  );
+
+  test.each(difficulties)(
+    "レベル %s から抜き出した問題の正解配置では、全外周ヒントが一致してクリアになること",
+    (difficulty) => {
+      const sampled = sampleEvenly(
+        listPooledProblems(difficulty),
+        trialCheckedEntryCountPerDifficulty,
+      );
+
+      const results = sampled.map(({ problem }) => ({
+        allMatched: listReflectionClueMatches(
+          problem.solution,
+          problem.clues,
+        ).every(Boolean),
+        solved: isReflectionSolved(problem.solution, problem),
+      }));
+
+      expect(results).toEqual(
+        sampled.map(() => ({ allMatched: true, solved: true })),
       );
     },
   );

@@ -204,6 +204,23 @@ describe("traceReflectionHumanSolve", () => {
       },
     );
 
+    test.each(cases)(
+      "rf-%s で、解を渡しても渡さないときと同じ経過を返すこと",
+      (_, problem) => {
+        const withoutSolution = traceWithObservation(problem);
+        const observedDomains: Readonly<Uint8Array>[] = [];
+        const trace = traceReflectionHumanSolve(problem, {
+          knownSolution: problem.solution,
+          observeDomains(domains) {
+            observedDomains.push(domains);
+          },
+        });
+
+        expect(trace).toEqual(withoutSolution.trace);
+        expect(observedDomains).toEqual(withoutSolution.observedDomains);
+      },
+    );
+
     const repeatedProblem = problems.at(-1)!;
 
     test("同じ入力には同じ結果を返すこと", () => {

@@ -23,7 +23,7 @@ describe("analyzeReflectionDifficulty", () => {
       parseReflectionBoard([".....", ".....", "o...o", "=....", "....."]),
     );
 
-    test("規模と推論の特徴を返すこと", () => {
+    test("規模と推論と試し置きの特徴を返すこと", () => {
       const result = analyzeReflectionDifficulty(problem);
 
       expect(result).toEqual({
@@ -42,6 +42,7 @@ describe("analyzeReflectionDifficulty", () => {
           assumptionTestCount: 0,
           assumptionEliminationCount: 0,
         },
+        trial: { solved: true, moveCount: 3, retryCount: 0 },
       });
     });
   });
