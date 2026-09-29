@@ -3,7 +3,7 @@ import {
   parseMinesweeperDifficulty,
 } from "@/games/minesweeper/difficulty";
 import {
-  MINESWEEPER_GENERATOR_VERSION,
+  isMinesweeperProblemIdentity,
   type MinesweeperProblemIdentity,
 } from "@/games/minesweeper/problem/problem";
 import {
@@ -40,33 +40,6 @@ type CreateMinesweeperPlayRecordInput = {
 
 function isNonNegativeInteger(value: unknown): value is number {
   return typeof value === "number" && Number.isInteger(value) && value >= 0;
-}
-
-function isPositiveInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value > 0;
-}
-
-function isMinesweeperProblemIdentity(
-  value: unknown,
-): value is MinesweeperProblemIdentity {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const identity = value as Partial<MinesweeperProblemIdentity>;
-  const conditions = identity.conditions;
-  return (
-    identity.generatorVersion === MINESWEEPER_GENERATOR_VERSION &&
-    typeof identity.seed === "string" &&
-    !!conditions &&
-    typeof conditions === "object" &&
-    isPositiveInteger(conditions.rows) &&
-    isPositiveInteger(conditions.columns) &&
-    isPositiveInteger(conditions.mineCount) &&
-    (conditions.startCellPlacement === "random" ||
-      conditions.startCellPlacement === "center") &&
-    isPositiveInteger(identity.generationAttempt)
-  );
 }
 
 function isMinesweeperPerformance(
