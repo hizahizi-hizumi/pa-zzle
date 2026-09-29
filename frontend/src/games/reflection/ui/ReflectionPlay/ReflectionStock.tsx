@@ -1,5 +1,3 @@
-import { CornerLeftDown } from "lucide-react";
-
 import {
   type ReflectionInventory,
   type ReflectionPiece,
@@ -8,10 +6,7 @@ import {
 import type { ReflectionSelection } from "@/games/reflection/session/session";
 import { ReflectionPieceIcon } from "@/games/reflection/ui/board/ReflectionPieceIcon";
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
-import {
-  reflectionPieceBarClassNames,
-  reflectionToneClassNames,
-} from "@/games/reflection/ui/reflection-tone";
+import { reflectionPieceBarClassNames } from "@/games/reflection/ui/reflection-tone";
 import { cn } from "@/lib/utils";
 
 type ReflectionStockProps = {
@@ -33,7 +28,7 @@ export function listReflectionStockPieces(
 
 /**
  * 手持ちのピース。種類ごとのボタンを枠も影も付けずに平らに並べ、選んでいる種類だけを選択の地と枠で示す。
- * 盤面のピースを選んでいる間は、ストック全体を戻し先として地の色で示し、どの種類を押してもそのピースを戻す。
+ * 盤面のピースを選んでいる間は、そのピースと同じ種類の下に薄い線を引いて戻し先を示す（押すと戻す。別の種類を押すと置き換える）。
  */
 export function ReflectionStock({
   inventory,
@@ -51,24 +46,13 @@ export function ReflectionStock({
   return (
     <div
       role="group"
-      aria-label={returning ? "ストック（押すとストックへ戻す）" : "ストック"}
-      className={cn(
-        "relative mx-auto flex w-full max-w-md justify-center gap-1 p-1 transition-colors duration-(--duration-normal) sm:gap-1.5",
-        returning && reflectionToneClassNames.returnTargetSurface,
-      )}
+      aria-label={
+        returning
+          ? "ストック（同じ種類を押すと戻す・別の種類を押すと置き換える）"
+          : "ストック"
+      }
+      className="relative mx-auto flex w-full max-w-md justify-center gap-1 p-1 sm:gap-1.5"
     >
-      {returning ? (
-        <span
-          aria-hidden="true"
-          className={cn(
-            "pointer-events-none absolute bottom-full left-1/2 flex h-4 -translate-x-1/2 items-center gap-1 whitespace-nowrap text-play-meta",
-            "text-foreground",
-          )}
-        >
-          <CornerLeftDown className="size-3" />
-          ここへ戻す
-        </span>
-      ) : null}
       {pieces.map(function renderPiece(piece) {
         const remaining = stock[piece];
         const selected =
@@ -87,13 +71,16 @@ export function ReflectionStock({
               "relative flex h-11 min-w-0 max-w-16 flex-1 touch-manipulation select-none items-center justify-center text-foreground outline-none transition-[background-color,color,opacity] duration-(--duration-fast) focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset enabled:hover:bg-accent/60 enabled:active:bg-accent disabled:opacity-40",
             )}
           >
-            {selected ? (
+            {selected || piece === selectedCellPiece ? (
               <span
                 aria-hidden="true"
-                data-selection-mark=""
+                data-selection-mark={selected ? "" : undefined}
+                data-return-target={selected ? undefined : ""}
                 className={cn(
                   "pointer-events-none absolute inset-x-[25%] bottom-0 h-[3px]",
                   reflectionPieceBarClassNames[piece],
+                  // 戻し先は選択の線を薄くした印にする。押すと盤面で選んだピースがこの種類へ戻る。
+                  !selected && "opacity-35",
                 )}
               />
             ) : null}

@@ -281,16 +281,19 @@ describe("ReflectionPlay", () => {
       });
     });
 
-    test("ストックを戻し先として示し、残りが無い種類も押せること", () => {
+    test("同じ種類のストックだけを戻し先として示し、残りが無くても押せること", () => {
       const stock = screen.getByRole("group", {
-        name: "ストック（押すとストックへ戻す）",
+        name: "ストック（同じ種類を押すと戻す・別の種類を押すと置き換える）",
       });
       const blackHole = within(stock).getByRole("button", {
         name: "ブラックホール 残り0",
       });
+      const returnTargets = stock.querySelectorAll("[data-return-target]");
 
-      expect(screen.getByText("ここへ戻す")).toBeTruthy();
       expect(blackHole.hasAttribute("disabled")).toBe(false);
+      expect(returnTargets).toHaveLength(1);
+      expect(blackHole.contains(returnTargets[0] ?? null)).toBe(true);
+      expect(screen.queryByText("ここへ戻す")).toBeNull();
     });
 
     test("Delete でフォーカス中のマスのピースを戻すこと", () => {

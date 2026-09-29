@@ -5,7 +5,7 @@ import type { ReflectionOutcome } from "@/games/reflection/puzzle/laser";
  * リフレクション固有の色。共通UIの意味色（`primary`・`ring`・`success` など）は流用しない。
  * - 選んでいるピース・ストックの種類は、地や枠を変えず、ピースの色の印で示す（盤面のマスは四隅の鉤形、ストックは下の短い線。
  *   `reflectionPieceBarClassNames`）。2026-09-29 の人間判断で、無彩色の地と太枠をやめた。
- * - `returnTarget`: 盤面のピースを選んでいる間の戻し先（ストック）。枠で囲まず、地の色の差だけで示す。
+ * - 盤面のピースを選んでいる間の戻し先（同じ種類のストック）は、ストックの選択の線を薄くした印で示す（文字や帯は出さない）。
  * - `laser`: 光路と、光路を表示している外周ヒント。線や記号は `laserText`、外周ヒントに添える今の光の通るマスの数は、
  *   白地でも文字として読める濃さの `laserLabel` を使う。外周ヒントには枠や地を足さない。
  * - `clueMatch`: 今の配置での光が外周ヒントの数字・行き先と一致している外周ヒントの地と数字。
@@ -15,7 +15,6 @@ import type { ReflectionOutcome } from "@/games/reflection/puzzle/laser";
  *   ゲームの中の状態を示す色で、アプリ共通の `success`（クリア・完了）とは分ける。
  */
 export const reflectionToneClassNames = {
-  returnTargetSurface: "bg-foreground/7",
   laserText: "text-orange-600 dark:text-amber-400",
   laserLabel: "text-orange-700 dark:text-amber-400",
   clueMatchSurface: "bg-emerald-100 dark:bg-emerald-950",
