@@ -1,3 +1,4 @@
+import { calculateLinearScore, subtractWithFloor } from "@/games/score";
 import type { TakuzuSolveWorkload } from "@/games/takuzu/problem/problem";
 
 /**
@@ -56,10 +57,6 @@ type TakuzuPlayScoreInput = TakuzuTimeDeltaInput & {
   undoCount: number;
 };
 
-function clampUnit(value: number): number {
-  return Math.min(1, Math.max(0, value));
-}
-
 /**
  * 問題ごとの速さ満点の基準時間。
  * 盤面把握の時間に、タイルを置く数、次の一手を探し直す局面の数、行・列全体を読む局面の数に応じた時間を足す。
@@ -106,20 +103,19 @@ export function calculateTakuzuPlayScore({
   undoCount,
   workload,
 }: TakuzuPlayScoreInput): TakuzuPlayScore {
-  const accuracy = Math.max(
-    0,
-    TAKUZU_SCORE_MAXIMUMS.accuracy -
-      correctionCount * TAKUZU_CORRECTION_PENALTY -
-      restartCount * TAKUZU_RESTART_PENALTY -
+  const accuracy = subtractWithFloor(
+    TAKUZU_SCORE_MAXIMUMS.accuracy,
+    correctionCount * TAKUZU_CORRECTION_PENALTY +
+      restartCount * TAKUZU_RESTART_PENALTY +
       undoCount * TAKUZU_UNDO_PENALTY,
   );
 
   const speedFullScoreMs = calculateTakuzuSpeedFullScoreMs(workload);
   const speedZeroScoreMs = calculateTakuzuSpeedZeroScoreMs(workload);
   const overtimeMs = Math.max(0, elapsedMs - speedFullScoreMs);
-  const speed = Math.round(
-    TAKUZU_SCORE_MAXIMUMS.speed *
-      clampUnit(1 - overtimeMs / (speedZeroScoreMs - speedFullScoreMs)),
+  const speed = calculateLinearScore(
+    TAKUZU_SCORE_MAXIMUMS.speed,
+    1 - overtimeMs / (speedZeroScoreMs - speedFullScoreMs),
   );
 
   return {
