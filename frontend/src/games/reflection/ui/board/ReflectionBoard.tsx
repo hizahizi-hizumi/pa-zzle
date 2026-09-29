@@ -193,7 +193,18 @@ export function ReflectionBoard({
       onKeyDown={handleKeyDown}
     >
       {/*
-        光路は盤面の地より上、マスのピースより下に描く。position を持つ要素は文書順に重なるので、
+        盤面の外枠。outline で盤面の外側に描く。border にするとマスが枠の内側に詰められ、
+        外周ヒントと光路の座標（grid の列をそのまま等分した位置）からマスの中心がずれる。
+        position の無い要素の outline は position を持つ要素（光路の図）より後に描かれるので、
+        盤面の要素ではなく、光路の図より前に置いた relative の要素に描き、光路が枠の上を通るようにする。
+      */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none relative outline-2 outline-foreground/55 outline-solid"
+        style={getReflectionBoardGridArea(size)}
+      />
+      {/*
+        光路は盤面の地と外枠より上、マスのピースより下に描く。position を持つ要素は文書順に重なるので、
         この図を盤面より先に置くと、盤面の地（position なし）の上・マス（relative）の下になる。
         ピースは背景色の縁で光路を切るので、光路がピースの形を隠さない。
       */}
@@ -223,9 +234,8 @@ export function ReflectionBoard({
       <div
         role="group"
         aria-label={`${REFLECTION_DISPLAY_NAME}盤面`}
-        // 外枠は outline で盤面の外側に描く。border にするとマスが枠の内側に詰められ、
-        // 外周ヒントと光路の座標（grid の列をそのまま等分した位置）からマスの中心がずれる。
-        className="grid bg-background outline-2 outline-foreground/55 outline-solid"
+        // 外枠は光路の図より前の要素に描く（上のコメント）。
+        className="grid bg-background"
         style={{
           ...getReflectionBoardGridArea(size),
           gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,
