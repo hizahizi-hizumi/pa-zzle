@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
-import {
-  type MinesweeperRestoredProblem,
-  restoreMinesweeperProblemWithoutAnalysis,
-} from "@/games/minesweeper/problem/generator";
+import type { MinesweeperRestoredProblem } from "@/games/minesweeper/problem/generator";
 import type { MinesweeperProblemIdentity } from "@/games/minesweeper/problem/problem";
 import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
 import {
@@ -84,13 +81,13 @@ function createPlayState(
 
 function createInitialPlayState(
   difficulty: MinesweeperDifficulty,
-  initialProblemIdentity: MinesweeperProblemIdentity | undefined,
+  initialProblem: MinesweeperRestoredProblem | undefined,
   startedAt: number,
 ): MinesweeperPlayState {
-  if (initialProblemIdentity) {
+  if (initialProblem) {
     return createPlayState(
-      initialProblemIdentity.seed,
-      restoreMinesweeperProblemWithoutAnalysis(initialProblemIdentity),
+      initialProblem.identity.seed,
+      initialProblem,
       startedAt,
     );
   }
@@ -124,14 +121,14 @@ function createNewProblemPlayState(
 
 /**
  * 難易度の問題集から seed で選んだ問題を遊ぶ。
- * `initialProblemIdentity` を渡すと、その問題を再現して始める。
+ * `initialProblem` を渡すと、記録から復元したその問題で始める。
  */
 export function useMinesweeperPlay(
   difficulty: MinesweeperDifficulty,
-  initialProblemIdentity?: MinesweeperProblemIdentity,
+  initialProblem?: MinesweeperRestoredProblem,
 ) {
   const [play, setPlay] = useState(() =>
-    createInitialPlayState(difficulty, initialProblemIdentity, Date.now()),
+    createInitialPlayState(difficulty, initialProblem, Date.now()),
   );
   const [now, setNow] = useState(() => Date.now());
 

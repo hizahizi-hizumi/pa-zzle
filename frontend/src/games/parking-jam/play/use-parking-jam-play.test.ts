@@ -48,7 +48,7 @@ describe("useParkingJamPlay", () => {
     });
   });
 
-  describe("開始時に問題 identity を指定する場合", () => {
+  describe("開始時に問題を指定する場合", () => {
     const given = selectParkingJamProblemForDifficulty("5", "given-problem");
     let result: { current: HookResult };
 
@@ -56,7 +56,7 @@ describe("useParkingJamPlay", () => {
       vi.spyOn(problemSeed, "createProblemSeed").mockReturnValue(
         "parking-jam-level-1-selection",
       );
-      ({ result } = renderHook(() => useParkingJamPlay("1", given.identity)));
+      ({ result } = renderHook(() => useParkingJamPlay("1", given)));
     });
 
     test("指定した問題でプレイを開始すること", () => {
