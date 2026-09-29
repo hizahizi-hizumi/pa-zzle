@@ -9,7 +9,6 @@ import {
 import { parseParkingJamDifficulty } from "@/games/parking-jam/difficulty";
 import { internalDiagnosticsAvailable } from "@/lib/internal-diagnostics";
 import { useParams } from "@/router";
-import { InvalidDifficulty } from "@/views/ParkingJamPlayView/InvalidDifficulty";
 import { PlayableParkingJam } from "@/views/ParkingJamPlayView/PlayableParkingJam";
 
 export function ParkingJamPlayView() {
@@ -25,7 +24,14 @@ export function ParkingJamPlayView() {
   );
   const difficulty = parseParkingJamDifficulty(difficultyParam);
 
-  if (!difficulty) return <InvalidDifficulty />;
+  if (!difficulty) {
+    return (
+      <PlayUnavailableNotice
+        title="この難易度は選べません"
+        backTo="/puzzles/parking-jam"
+      />
+    );
+  }
   if (specifiedProblem && !specifiedProblem.identity) {
     return (
       <PlayUnavailableNotice
