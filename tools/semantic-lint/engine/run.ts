@@ -198,10 +198,6 @@ export async function runEvaluationPlan(options: {
   };
 }
 
-/**
- * providerへ1 requestを送る。失敗したときは、どのrequestかを特定できるよう
- * batchと推定input tokenをメッセージへ加え、元のエラーを `cause` に持たせて投げ直す。
- */
 async function evaluateBatch(
   provider: SemanticDecisionProvider,
   batch: DecisionBatch,

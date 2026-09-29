@@ -15,8 +15,8 @@ excludePaths:
 execution:
   concurrency: 8
   # 1ファイルの全rule × 全unitを、この上限に収まる限り1 requestにまとめる。
-  # providerの入力上限は公開されておらず、推定55,600 tokensのrequestは通り、推定64,000付近は
-  # max_tokens_exceededで拒否される。推定は±5%程度ずれるため、totalは既定より小さくして余裕を取る。
+  # providerの入力上限は非公開で、推定64,000 tokens付近のrequestはmax_tokens_exceededで拒否される。
+  # 推定は±5%程度ずれるため、totalは上限より余裕を取る。
   requestTokenBudget:
     stateAndQuestion: 32000
     total: 52000
