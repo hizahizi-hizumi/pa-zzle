@@ -1,8 +1,11 @@
-type ResultMetricProps = {
+export type GameResultMetric = {
   label: string;
   value: string;
+  /** 値を読むための補足。基準との差など。 */
   detail?: string;
 };
+
+type ResultMetricProps = GameResultMetric;
 
 export function ResultMetric({ label, value, detail }: ResultMetricProps) {
   return (
