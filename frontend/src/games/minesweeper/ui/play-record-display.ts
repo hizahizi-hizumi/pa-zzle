@@ -3,7 +3,7 @@ import {
   parseMinesweeperDifficulty,
 } from "@/games/minesweeper/difficulty";
 import { minesweeperPlayRecordDefinition } from "@/games/minesweeper/play-record";
-import { formatMinesweeperTimeDelta } from "@/games/minesweeper/ui/format-performance-delta";
+import { formatElapsedTimeDelta } from "@/lib/format-performance-delta";
 
 export const minesweeperPlayRecordDisplay = {
   definition: minesweeperPlayRecordDefinition,
@@ -27,7 +27,7 @@ export const minesweeperPlayRecordDisplay = {
       id: "time-delta-ms",
       label: "基準時間との差",
       historyLabel: "時間差",
-      formatValue: formatMinesweeperTimeDelta,
+      formatValue: formatElapsedTimeDelta,
       referenceValue: 0,
       axis: { kind: "duration-ms" as const },
     },
