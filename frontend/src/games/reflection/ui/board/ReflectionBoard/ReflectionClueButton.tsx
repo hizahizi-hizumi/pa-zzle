@@ -80,6 +80,7 @@ export function ReflectionClueButton({
     entry.side === "top" || entry.side === "bottom"
       ? outsideLaserCountClassNames[entry.side]
       : null;
+  const insideLaserCount = outsideCountClassName === null ? laserCount : null;
   const buttonRef = useCallback(
     (element: HTMLButtonElement | null) => onElementChange(focusKey, element),
     [focusKey, onElementChange],
@@ -104,17 +105,21 @@ export function ReflectionClueButton({
       style={{ gridRow: row, gridColumn: column }}
       className="group relative flex min-h-0 min-w-0 touch-manipulation select-none flex-col items-center justify-center gap-[calc(var(--reflection-unit)*0.05)] leading-none text-foreground outline-none focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent"
     >
-      {matched ? (
-        <span
-          aria-hidden="true"
-          className={cn(
-            "pointer-events-none absolute",
-            clueMatchSurfaceInsetClassNames[entry.side],
-            reflectionToneClassNames.clueMatchSurface,
-            reflectionToneClassNames.clueMatchSurfaceInteractive,
-          )}
-        />
-      ) : null}
+      {/*
+        一致の地・数字・結果の形の行は、一致や光路の表示が変わっても要素を出し入れせず、色と見え方だけを切り替える。
+        要素の出し入れで行の組み方が変わると、ブラウザによっては記号の位置が動いて見えるため。
+      */}
+      <span
+        aria-hidden="true"
+        data-clue-match-surface=""
+        className={cn(
+          "pointer-events-none absolute",
+          clueMatchSurfaceInsetClassNames[entry.side],
+          reflectionToneClassNames.clueMatchSurface,
+          reflectionToneClassNames.clueMatchSurfaceInteractive,
+          !matched && "invisible",
+        )}
+      />
       <span
         className={cn(
           // 行の高さを数字の字面に近い 0.8 にして、上下の余白で地からはみ出して見えないようにする。
@@ -125,28 +130,34 @@ export function ReflectionClueButton({
       >
         {clue.distance}
       </span>
-      {laserCount !== null && outsideCountClassName === null ? (
-        <span
-          aria-hidden="true"
-          data-laser-count=""
-          className={cn(
-            "relative flex items-center font-semibold tabular-nums text-[length:clamp(0.625rem,calc(var(--reflection-unit)*0.3),1rem)]",
-            MARK_ROW_HEIGHT,
-            reflectionToneClassNames.laserLabel,
-          )}
-        >
-          {laserCount}
-        </span>
-      ) : (
+      <span
+        className={cn(
+          "relative flex items-center justify-center",
+          MARK_ROW_HEIGHT,
+        )}
+      >
         <span
           className={cn(
-            "relative flex",
+            "flex",
             reflectionOutcomeToneClassNames[clue.outcome],
+            insideLaserCount !== null && "invisible",
           )}
         >
           <ReflectionOutcomeMark outcome={clue.outcome} size="clue" />
         </span>
-      )}
+        {insideLaserCount !== null ? (
+          <span
+            aria-hidden="true"
+            data-laser-count=""
+            className={cn(
+              "absolute inset-0 flex items-center justify-center font-semibold tabular-nums leading-none text-[length:clamp(0.625rem,calc(var(--reflection-unit)*0.3),1rem)]",
+              reflectionToneClassNames.laserLabel,
+            )}
+          >
+            {insideLaserCount}
+          </span>
+        ) : null}
+      </span>
       {laserCount !== null && outsideCountClassName !== null ? (
         <span
           aria-hidden="true"
