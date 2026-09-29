@@ -173,7 +173,12 @@ export function getTakuzuPlayRecordTimeDelta(
   });
 }
 
-export const takuzuPlayRecordDefinition: PlayRecordDefinition = {
+export type TakuzuPlayRecordMetricId =
+  | "play-score"
+  | "time-delta-ms"
+  | "correction-count";
+
+export const takuzuPlayRecordDefinition = {
   gameId: TAKUZU_GAME_ID,
   isRecord: isTakuzuPlayRecord,
   getComparisonKey(record) {
@@ -200,4 +205,4 @@ export const takuzuPlayRecordDefinition: PlayRecordDefinition = {
       },
     },
   ],
-};
+} satisfies PlayRecordDefinition<TakuzuPlayRecordMetricId>;

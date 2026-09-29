@@ -147,7 +147,12 @@ export function getNanpurePlayRecordScore(
   return calculateNanpurePlayScore(record.payload.performance).total;
 }
 
-export const nanpurePlayRecordDefinition: PlayRecordDefinition = {
+export type NanpurePlayRecordMetricId =
+  | "play-score"
+  | "elapsed-ms"
+  | "mistake-count";
+
+export const nanpurePlayRecordDefinition = {
   gameId: NANPURE_GAME_ID,
   isRecord: isNanpurePlayRecord,
   getComparisonKey(record) {
@@ -182,4 +187,4 @@ export const nanpurePlayRecordDefinition: PlayRecordDefinition = {
       },
     },
   ],
-};
+} satisfies PlayRecordDefinition<NanpurePlayRecordMetricId>;

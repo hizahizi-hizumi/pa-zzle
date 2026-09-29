@@ -141,7 +141,12 @@ export function getMinesweeperPlayRecordTimeDelta(
   });
 }
 
-export const minesweeperPlayRecordDefinition: PlayRecordDefinition = {
+export type MinesweeperPlayRecordMetricId =
+  | "play-score"
+  | "time-delta-ms"
+  | "mistake-count";
+
+export const minesweeperPlayRecordDefinition = {
   gameId: MINESWEEPER_GAME_ID,
   isRecord: isMinesweeperPlayRecord,
   getComparisonKey(record) {
@@ -168,4 +173,4 @@ export const minesweeperPlayRecordDefinition: PlayRecordDefinition = {
       },
     },
   ],
-};
+} satisfies PlayRecordDefinition<MinesweeperPlayRecordMetricId>;
