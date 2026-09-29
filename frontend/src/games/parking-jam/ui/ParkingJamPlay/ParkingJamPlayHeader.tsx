@@ -27,10 +27,12 @@ export function ParkingJamPlayHeader({
   return (
     <PlayHeader
       title="パーキングジャム"
-      metrics={[
-        { label: "ミス", value: String(failedMoveCount) },
-        { label: "時間", value: formatParkingJamElapsedTime(elapsedMs) },
-        { label: "待った", value: String(undoCount) },
+      metricGroups={[
+        [
+          { label: "ミス", value: String(failedMoveCount) },
+          { label: "時間", value: formatParkingJamElapsedTime(elapsedMs) },
+          { label: "待った", value: String(undoCount) },
+        ],
       ]}
       canRestart={canRestart}
       onRestart={onRestart}
