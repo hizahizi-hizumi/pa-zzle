@@ -7,6 +7,7 @@ import {
   minesweeperDifficulties,
 } from "@/games/minesweeper/difficulty";
 import { generateMinesweeperProblem } from "@/games/minesweeper/problem/generator";
+import { hashProblemSeed } from "@/games/problem-seed";
 
 const usage = `Usage: bun run analyze:minesweeper-supply -- [options]
 
@@ -72,12 +73,7 @@ function createTasks(): SupplyTask[] {
 
 /** 候補番号から決定的に [0, 1) の値を作る。 */
 function hashToUnit(text: string): number {
-  let hash = 0x811c9dc5;
-  for (let index = 0; index < text.length; index += 1) {
-    hash ^= text.charCodeAt(index);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return (hash >>> 0) / 0x1_0000_0000;
+  return hashProblemSeed(text) / 0x1_0000_0000;
 }
 
 /** 盤面サイズを一様に選び、そのサイズで密度範囲に入る地雷数を一様に選ぶ。 */
