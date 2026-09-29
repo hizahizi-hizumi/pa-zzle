@@ -164,6 +164,8 @@ unitの文脈はカタログの `context` で宣言する。判定時は常に�
 
 1ファイルに当たる全rule × 全unitを、token予算（`.semantic-lint/config.yaml` の `execution.requestTokenBudget`。既定はstate + 最長の質問1つで32,000、request全体で64,000）に収まる限り1 requestにまとめ、stateとrequest固定費をファイルあたり1回にする。予算を超える見積もりのときだけ、unitの出現順に分割する。見積もりはJevの課金係数（request固定約316、choiceの質問1つ約8、noulの質問1つ約23、選択肢1つ約25、質問文と選択肢の英単語1語約1.13、stateはJSONのASCII文字約4文字/token・非ASCII文字1文字約1.86 token）による近似。golden benchmarkの実usageに対し、requestごとに±5%程度、合計で±1%程度に収まる（`bench` の `usage` で確認できる）。
 
+providerの入力上限は公開されておらず、request全体の推定が64,000に近いとTypeSafeは `max_tokens_exceeded` で拒否する。このrepositoryの `.semantic-lint/config.yaml` は、推定誤差を見込んでrequest全体を既定より小さい52,000にしている。`check -- --plan-only` の `requests` 行で最大requestの推定を確認できる。provider requestが失敗したときは、エラーにbatch id・file・推定input token（全体、state、質問の合計と判定数）を添え、どのrequestが失敗したかを示す。
+
 stateは次の形で、ファイルは元の並びのまま1回だけ載せ、各文字は `state.file.source` に1回だけ現れる。
 
 ```json

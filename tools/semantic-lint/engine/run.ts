@@ -94,7 +94,7 @@ export async function runEvaluationPlan(options: {
   const execute = (requests: DecisionBatch[]) =>
     mapConcurrent(requests, concurrency, async (batch) => {
       const providerStartedAt = performance.now();
-      const response = await provider.evaluate(batch);
+      const response = await evaluateBatch(provider, batch);
       providerLatencies.push(performance.now() - providerStartedAt);
       inputTokens += response.usage.inputTokens;
       outputTokens += response.usage.outputTokens;
@@ -196,6 +196,25 @@ export async function runEvaluationPlan(options: {
       providerLatencyMs: providerLatencies,
     },
   };
+}
+
+async function evaluateBatch(
+  provider: SemanticDecisionProvider,
+  batch: DecisionBatch,
+): Promise<DecisionBatchResult> {
+  try {
+    return await provider.evaluate(batch);
+  } catch (error) {
+    const estimate = provider.estimate(batch);
+    const questions = estimate.questions.reduce((sum, value) => sum + value, 0);
+
+    throw new Error(
+      `provider requestに失敗しました (batch ${batch.id}, file ${batch.file.path}, 推定input ${estimate.total} tokens: state ${estimate.state}, questions ${questions} (${estimate.questions.length}判定)): ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+      { cause: error },
+    );
+  }
 }
 
 /** provider応答をtaskごとの判定へ反映し、更新したtask idを返す。 */
