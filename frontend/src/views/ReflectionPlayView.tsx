@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router";
+
+import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
 import { PlayableReflection } from "@/game-catalog/reflection/PlayableReflection";
 import {
   hasReflectionProblemQuery,
@@ -8,8 +10,6 @@ import {
 import { parseReflectionDifficulty } from "@/games/reflection/difficulty";
 import { internalDiagnosticsAvailable } from "@/lib/internal-diagnostics";
 import { useParams } from "@/router";
-import { InvalidDifficulty } from "@/views/ReflectionPlayView/InvalidDifficulty";
-import { InvalidProblemQuery } from "@/views/ReflectionPlayView/InvalidProblemQuery";
 
 export function ReflectionPlayView() {
   const { difficulty: difficultyParam } = useParams(
@@ -24,9 +24,22 @@ export function ReflectionPlayView() {
   );
   const difficulty = parseReflectionDifficulty(difficultyParam);
 
-  if (!difficulty) return <InvalidDifficulty />;
+  if (!difficulty) {
+    return (
+      <PlayUnavailableNotice
+        title="この難易度は選べません"
+        backTo="/puzzles/reflection"
+      />
+    );
+  }
   if (specifiedProblem && !specifiedProblem.identity) {
-    return <InvalidProblemQuery />;
+    return (
+      <PlayUnavailableNotice
+        title="指定された問題を復元できません"
+        description="URL の問題指定（pool・problem、または generator・seed・size・pieces）を確かめてください。"
+        backTo="/puzzles/reflection"
+      />
+    );
   }
 
   return (
