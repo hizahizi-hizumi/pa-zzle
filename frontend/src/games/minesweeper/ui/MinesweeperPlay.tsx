@@ -1,6 +1,7 @@
 import { type ReactNode, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
+import { PlayHeader } from "@/components/PlayHeader";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import type {
   MinesweeperProgress,
@@ -15,7 +16,8 @@ import {
   MinesweeperBoard,
   type MinesweeperInputMode,
 } from "@/games/minesweeper/ui/board/MinesweeperBoard";
-import { MinesweeperPlayHeader } from "@/games/minesweeper/ui/MinesweeperPlay/MinesweeperPlayHeader";
+import { formatElapsedTime } from "@/games/minesweeper/ui/format-elapsed-time";
+import { InputModeToggle } from "@/games/minesweeper/ui/MinesweeperPlay/InputModeToggle";
 import { MinesweeperResultScreen } from "@/games/minesweeper/ui/result/MinesweeperResultScreen";
 
 type MinesweeperPlayProps = {
@@ -100,14 +102,23 @@ export function MinesweeperPlay({
   return (
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
       <BrandIdentityHeader />
-      <MinesweeperPlayHeader
-        mineCount={mineCount}
-        flagCount={flagCount}
-        mistakeCount={mistakeCount}
-        elapsedMs={elapsedMs}
-        inputMode={mode}
-        showsInputModeToggle={interactionEnabled}
-        onInputModeChange={setMode}
+      <PlayHeader
+        title="マインスイーパー"
+        metricGroups={[
+          [
+            { label: "地雷", value: String(mineCount) },
+            { label: "旗", value: String(flagCount) },
+          ],
+          [
+            { label: "ミス", value: String(mistakeCount) },
+            { label: "時間", value: formatElapsedTime(elapsedMs) },
+          ],
+        ]}
+        trailingAction={
+          interactionEnabled ? (
+            <InputModeToggle mode={mode} onChange={setMode} />
+          ) : null
+        }
         onReplay={handleReplay}
         onStartNewProblem={handleStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}

@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useRef } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
+import { PlayHeader } from "@/components/PlayHeader";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import type {
   SlidePuzzleOperation,
@@ -10,7 +11,7 @@ import type {
 import type { SlidePuzzleDirection } from "@/games/slide-puzzle/puzzle/rules";
 import type { SlidePuzzleBoard as SlidePuzzleBoardState } from "@/games/slide-puzzle/puzzle/state";
 import { SlidePuzzleBoard } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard";
-import { SlidePuzzlePlayHeader } from "@/games/slide-puzzle/ui/SlidePuzzlePlay/SlidePuzzlePlayHeader";
+import { formatSlidePuzzleElapsedTime } from "@/games/slide-puzzle/ui/format-elapsed-time";
 import { SlidePuzzleResultScreen } from "@/games/slide-puzzle/ui/SlidePuzzlePlay/SlidePuzzleResultScreen";
 
 type SlidePuzzlePlayProps = {
@@ -119,9 +120,14 @@ export function SlidePuzzlePlay({
       className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]"
     >
       <BrandIdentityHeader />
-      <SlidePuzzlePlayHeader
-        elapsedMs={elapsedMs}
-        moveCount={moveCount}
+      <PlayHeader
+        title="スライドパズル"
+        metricGroups={[
+          [
+            { label: "手数", value: String(moveCount) },
+            { label: "時間", value: formatSlidePuzzleElapsedTime(elapsedMs) },
+          ],
+        ]}
         onRestart={onRestart}
         onReplay={onReplay}
         onStartNewProblem={onStartNewProblem}

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
+import { PlayHeader } from "@/components/PlayHeader";
 import { UndoButton } from "@/components/UndoButton";
 import type {
   ParkingJamOperation,
@@ -14,7 +15,7 @@ import type {
   ParkingJamVehicleId,
 } from "@/games/parking-jam/puzzle/board";
 import { ParkingJamBoard } from "@/games/parking-jam/ui/board/ParkingJamBoard";
-import { ParkingJamPlayHeader } from "@/games/parking-jam/ui/ParkingJamPlay/ParkingJamPlayHeader";
+import { formatParkingJamElapsedTime } from "@/games/parking-jam/ui/format-elapsed-time";
 import { ParkingJamResultScreen } from "@/games/parking-jam/ui/ParkingJamPlay/ParkingJamResultScreen";
 
 type ParkingJamPlayProps = {
@@ -94,10 +95,15 @@ export function ParkingJamPlay({
   return (
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
       <BrandIdentityHeader />
-      <ParkingJamPlayHeader
-        elapsedMs={elapsedMs}
-        failedMoveCount={failedMoveCount}
-        undoCount={undoCount}
+      <PlayHeader
+        title="パーキングジャム"
+        metricGroups={[
+          [
+            { label: "ミス", value: String(failedMoveCount) },
+            { label: "時間", value: formatParkingJamElapsedTime(elapsedMs) },
+            { label: "待った", value: String(undoCount) },
+          ],
+        ]}
         canRestart={canRestart}
         onRestart={onRestart}
         onStartNewProblem={onStartNewProblem}

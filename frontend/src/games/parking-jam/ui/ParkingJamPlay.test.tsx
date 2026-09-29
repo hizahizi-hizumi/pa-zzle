@@ -5,6 +5,13 @@ import { ParkingJamPlay } from "@/games/parking-jam/ui/ParkingJamPlay";
 
 afterEach(cleanup);
 
+function openPlayMenu(): void {
+  fireEvent.pointerDown(screen.getByRole("button", { name: "その他の操作" }), {
+    button: 0,
+    ctrlKey: false,
+  });
+}
+
 function createProps(): ComponentProps<typeof ParkingJamPlay> {
   return {
     difficultyLabel: "レベル 3",
@@ -85,11 +92,19 @@ describe("ParkingJamPlay", () => {
     expect(props.onMove).toHaveBeenCalledWith("a", "right");
   });
 
-  test("共通プレイヘッダーから盤面を戻せること", () => {
-    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
-    fireEvent.click(screen.getByRole("button", { name: "盤面を戻す" }));
+  test("メニューから盤面を戻せること", () => {
+    openPlayMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "盤面を戻す" }));
 
     expect(props.onRestart).toHaveBeenCalledOnce();
+  });
+
+  test("メニューにリセットを出さないこと", () => {
+    openPlayMenu();
+
+    const replayItem = screen.queryByRole("menuitem", { name: "リセット" });
+
+    expect(replayItem).toBeNull();
   });
 
   test("盤面下の待ったから直前の出庫を戻せること", () => {
@@ -99,8 +114,8 @@ describe("ParkingJamPlay", () => {
   });
 
   test("内部診断が有効なとき検証情報を開けること", () => {
-    fireEvent.click(screen.getByRole("button", { name: "その他の操作" }));
-    fireEvent.click(screen.getByRole("button", { name: "検証情報" }));
+    openPlayMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "検証情報" }));
 
     expect(props.onOpenDiagnostics).toHaveBeenCalledOnce();
   });
@@ -143,5 +158,19 @@ describe("クリア演出中の場合", () => {
     );
 
     expect(screen.queryByRole("button", { name: "同じ問題" })).toBeNull();
+  });
+});
+
+describe("盤面を戻せない場合", () => {
+  beforeEach(() => {
+    render(<ParkingJamPlay {...createProps()} canRestart={false} />);
+  });
+
+  test("メニューの盤面を戻すを押せない状態で示すこと", () => {
+    openPlayMenu();
+
+    const restartItem = screen.getByRole("menuitem", { name: "盤面を戻す" });
+
+    expect(restartItem.getAttribute("aria-disabled")).toBe("true");
   });
 });

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
+import { PlayHeader } from "@/components/PlayHeader";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import type {
   NanpureProgress,
@@ -13,8 +14,8 @@ import type {
 import type { NanpureNotes } from "@/games/nanpure/session/session";
 import { NanpureClearAnimation } from "@/games/nanpure/ui/board/clear/NanpureClearAnimation";
 import { NanpureBoard } from "@/games/nanpure/ui/board/NanpureBoard";
+import { formatElapsedTime } from "@/games/nanpure/ui/format-elapsed-time";
 import { NanpureInputPanel } from "@/games/nanpure/ui/play/NanpureInputPanel";
-import { NanpurePlayHeader } from "@/games/nanpure/ui/play/NanpurePlayHeader";
 import { NanpureResultScreen } from "@/games/nanpure/ui/result/NanpureResultScreen";
 
 type NanpurePlayProps = {
@@ -109,10 +110,15 @@ export function NanpurePlay({
   return (
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
       <BrandIdentityHeader />
-      <NanpurePlayHeader
-        elapsedMs={elapsedMs}
-        mistakeCount={mistakeCount}
-        undoCount={undoCount}
+      <PlayHeader
+        title="ナンプレ"
+        metricGroups={[
+          [
+            { label: "ミス", value: String(mistakeCount) },
+            { label: "時間", value: formatElapsedTime(elapsedMs) },
+            { label: "待った", value: String(undoCount) },
+          ],
+        ]}
         onRestart={onRestart}
         onReplay={onReplay}
         onStartNewProblem={onStartNewProblem}

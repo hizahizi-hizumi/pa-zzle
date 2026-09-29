@@ -1,6 +1,7 @@
 import { type ReactNode, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
+import { PlayHeader } from "@/components/PlayHeader";
 import { UndoButton } from "@/components/UndoButton";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import type {
@@ -15,10 +16,10 @@ import type {
 } from "@/games/takuzu/session/session";
 import { TakuzuClearAnimation } from "@/games/takuzu/ui/board/clear/TakuzuClearAnimation";
 import { TakuzuBoard } from "@/games/takuzu/ui/board/TakuzuBoard";
+import { formatElapsedTime } from "@/games/takuzu/ui/format-elapsed-time";
 import { readTakuzuHowToPlaySeen } from "@/games/takuzu/ui/how-to-play-seen";
 import { TakuzuResultScreen } from "@/games/takuzu/ui/result/TakuzuResultScreen";
 import { TakuzuHowToPlayDialog } from "@/games/takuzu/ui/TakuzuHowToPlayDialog";
-import { TakuzuPlayHeader } from "@/games/takuzu/ui/TakuzuPlay/TakuzuPlayHeader";
 
 type TakuzuPlayProps = {
   difficulty: TakuzuDifficulty;
@@ -101,10 +102,20 @@ export function TakuzuPlay({
   return (
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
       <BrandIdentityHeader />
-      <TakuzuPlayHeader
-        correctionCount={correctionCount}
-        elapsedMs={elapsedMs}
-        undoCount={undoCount}
+      {/* 置き直しと待ったは2桁分の幅を取っておき、10回目で計測値の並びが横へ動かないようにする。 */}
+      <PlayHeader
+        title="バイナリパズル"
+        metricGroups={[
+          [
+            {
+              label: "置き直し",
+              value: String(correctionCount),
+              reservedDigits: 2,
+            },
+            { label: "時間", value: formatElapsedTime(elapsedMs) },
+          ],
+          [{ label: "待った", value: String(undoCount), reservedDigits: 2 }],
+        ]}
         onRestart={onRestart}
         onReplay={onReplay}
         onStartNewProblem={onStartNewProblem}
