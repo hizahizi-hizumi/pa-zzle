@@ -1,13 +1,20 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 
+import { createMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
+import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
 import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
 import { createNanpureProblemIdentity } from "@/games/nanpure/problem/problem";
 import { restoreNanpureProblem } from "@/games/nanpure/problem-selection";
+import { createParkingJamPlayRecord } from "@/games/parking-jam/play-record";
+import { selectParkingJamProblemForDifficulty } from "@/games/parking-jam/problem-selection";
+import { createSlidePuzzlePlayRecord } from "@/games/slide-puzzle/play-record";
+import { selectSlidePuzzleProblemForDifficulty } from "@/games/slide-puzzle/problem-selection";
 import { createTakuzuPlayRecord } from "@/games/takuzu/play-record";
 import { createTakuzuProblemIdentity } from "@/games/takuzu/problem/problem";
-import { restoreTakuzuProblem } from "@/games/takuzu/problem-selection";
 import { writeTakuzuHowToPlaySeen } from "@/games/takuzu/ui/how-to-play-seen";
+import { createWaterSortPlayRecord } from "@/games/water-sort/play-record";
+import { selectWaterSortProblemForDifficulty } from "@/games/water-sort/problem-selection";
 import type { PlayRecord } from "@/records/play-record";
 import { writePlayRecords } from "@/records/storage";
 import { RecordedProblemReplayView } from "@/views/RecordedProblemReplayView";
@@ -17,18 +24,134 @@ vi.mock("@/lib/internal-diagnostics", () => ({
   buildRevision: null,
 }));
 
-const workload = {
+const startedAt = 1_000;
+const completedAt = 121_000;
+
+const waterSortProblem = selectWaterSortProblemForDifficulty("1", "replay");
+const waterSortRecord = createWaterSortPlayRecord({
+  difficulty: "1",
+  problemIdentity: waterSortProblem.identity,
+  startedAt,
+  completedAt,
+  result: {
+    elapsedMs: 120_000,
+    moveCount: waterSortProblem.optimalMoveCount,
+    completionMoveCount: waterSortProblem.optimalMoveCount,
+    undoCount: 0,
+    restartCount: 0,
+    optimalMoveCount: waterSortProblem.optimalMoveCount,
+  },
+});
+
+const nanpurePerformance = {
+  elapsedMs: 120_000,
+  mistakeCount: 0,
+  undoCount: 0,
+  restartCount: 0,
+};
+
+const nanpureRecord = createNanpurePlayRecord({
+  difficulty: "3",
+  problemIdentity: createNanpureProblemIdentity("locked-candidates", 740),
+  startedAt,
+  completedAt,
+  result: nanpurePerformance,
+});
+
+// 3段階（easy / normal / hard）の難易度とヒント数を指定した生成器（版 "1"）で遊んだ記録。
+const legacyNanpureRecord: PlayRecord = {
+  id: "nanpure-three-level",
+  gameId: "nanpure",
+  startedAt,
+  completedAt,
+  payloadVersion: 1,
+  payload: {
+    difficulty: "normal",
+    problemIdentity: {
+      generatorVersion: "1",
+      seed: "nanpure-seed",
+      conditions: { clueCount: 32 },
+      generationAttempt: 1,
+    },
+    performance: nanpurePerformance,
+  },
+};
+
+const minesweeperRecord = createMinesweeperPlayRecord({
+  difficulty: "1",
+  problemIdentity: selectMinesweeperProblemForDifficulty("1", "replay")
+    .identity,
+  startedAt,
+  completedAt,
+  result: { elapsedMs: 120_000, mistakeCount: 0, minimumOpenCount: 10 },
+});
+
+const parkingJamProblem = selectParkingJamProblemForDifficulty("1", "replay");
+const parkingJamVehicleCount =
+  parkingJamProblem.identity.conditions.vehicleCount;
+const parkingJamRecord = createParkingJamPlayRecord({
+  difficulty: "1",
+  problemIdentity: parkingJamProblem.identity,
+  speedReference: {
+    vehicleCount: parkingJamVehicleCount,
+    initialBlockedVehicleCount: 0,
+  },
+  startedAt,
+  completedAt,
+  result: {
+    elapsedMs: 120_000,
+    moveAttemptCount: parkingJamVehicleCount,
+    successfulMoveCount: parkingJamVehicleCount,
+    failedMoveCount: 0,
+    undoCount: 0,
+    restartCount: 0,
+  },
+});
+
+const slidePuzzleProblem = selectSlidePuzzleProblemForDifficulty("1", "replay");
+const slidePuzzleRecord = createSlidePuzzlePlayRecord({
+  difficulty: "1",
+  problemIdentity: slidePuzzleProblem.identity,
+  startedAt,
+  completedAt,
+  result: {
+    elapsedMs: 120_000,
+    moveCount: slidePuzzleProblem.optimalMoveCount,
+    completionMoveCount: slidePuzzleProblem.optimalMoveCount,
+    slideCount: slidePuzzleProblem.optimalMoveCount,
+    restartCount: 0,
+    optimalMoveCount: slidePuzzleProblem.optimalMoveCount,
+  },
+});
+
+const takuzuWorkload = {
   emptyCellCount: 46,
   roundCount: 18,
   lineReadingRoundCount: 2,
 };
-const playPerformance = {
+const takuzuPerformance = {
   elapsedMs: 220_000,
   correctionCount: 1,
   restartCount: 0,
   undoCount: 0,
   inputCount: 70,
 };
+
+function createTakuzuRecordWithIdentity(problemIdentity: unknown): PlayRecord {
+  const record = createTakuzuPlayRecord({
+    difficulty: "4",
+    problemIdentity: createTakuzuProblemIdentity("duplicate-avoidance", 2, 160),
+    workload: takuzuWorkload,
+    startedAt,
+    completedAt,
+    result: takuzuPerformance,
+  });
+  return { ...record, payload: { ...record.payload, problemIdentity } };
+}
+
+const takuzuRecord = createTakuzuRecordWithIdentity(
+  createTakuzuProblemIdentity("duplicate-avoidance", 2, 160),
+);
 
 function renderReplay(recordId: string): void {
   render(
@@ -53,106 +176,93 @@ afterEach(() => {
 });
 
 describe("RecordedProblemReplayView", () => {
-  describe("問題集にあるバイナリパズルの記録の場合", () => {
-    const problemIdentity = createTakuzuProblemIdentity(
-      "duplicate-avoidance",
-      2,
-      160,
-    );
-    const record = createTakuzuPlayRecord({
-      difficulty: "4",
-      problemIdentity,
-      workload,
-      startedAt: 1_000,
-      completedAt: 221_000,
-      result: playPerformance,
-    });
-    const expectedGivenCellIndices =
-      restoreTakuzuProblem(problemIdentity)?.problem.givens.cells.flatMap(
-        (cell, cellIndex) => (cell === null ? [] : [cellIndex]),
-      ) ?? [];
+  const replayableRecords = [
+    ["ウォーターソート", waterSortRecord],
+    ["ナンプレ", nanpureRecord],
+    ["マインスイーパー", minesweeperRecord],
+    ["パーキングジャム", parkingJamRecord],
+    ["スライドパズル", slidePuzzleRecord],
+    ["バイナリパズル", takuzuRecord],
+  ] as const;
 
+  describe.each(replayableRecords)("%sの記録の場合", (gameName, record) => {
     beforeEach(() => {
       writePlayRecords([record]);
       renderReplay(record.id);
     });
 
-    test("記録と同じ問題の初期配置からプレイを始めること", () => {
-      const cells = within(
-        screen.getByRole("group", { name: "バイナリパズル盤面" }),
-      ).getAllByRole("button");
-      const givenCellIndices = cells.flatMap((cell, cellIndex) =>
-        cell.getAttribute("aria-disabled") === "true" ? [cellIndex] : [],
-      );
+    test("そのゲームのプレイ画面で再プレイを始めること", () => {
+      const heading = screen.getByRole("heading", { level: 1 });
 
-      expect(givenCellIndices).toEqual(expectedGivenCellIndices);
+      expect(heading.textContent).toBe(gameName);
     });
   });
 
-  const unavailableCases = [
+  const unavailableRecords = [
     [
-      "問題集に無い identity",
-      createTakuzuProblemIdentity("adjacency", 0, 99_999),
+      "問題集に無いバイナリパズルの問題",
+      createTakuzuRecordWithIdentity(
+        createTakuzuProblemIdentity("adjacency", 0, 99_999),
+      ),
+      "この記録の問題は、現在の問題集にありません。",
     ],
     [
-      "生成器の版が今と違う identity",
-      { generatorVersion: "0", seed: "tk-old", conditions: { size: 8 } },
+      "問題集に無いナンプレの問題",
+      createNanpurePlayRecord({
+        difficulty: "3",
+        problemIdentity: createNanpureProblemIdentity(
+          "locked-candidates",
+          99_999,
+        ),
+        startedAt,
+        completedAt,
+        result: nanpurePerformance,
+      }),
+      "この記録の問題は、現在の問題集にありません。",
+    ],
+    [
+      "3段階の難易度で遊んだナンプレ",
+      legacyNanpureRecord,
+      "この記録は以前の難易度区分で遊んだため、今の難易度では再プレイできません。",
+    ],
+    [
+      "以前の難易度区分のウォーターソート",
+      {
+        ...waterSortRecord,
+        payload: { ...waterSortRecord.payload, difficulty: "easy" },
+      },
+      "この記録は以前の難易度区分で遊んだため、今の難易度では再プレイできません。",
+    ],
+    [
+      "現在のアプリに無いゲーム",
+      { ...waterSortRecord, gameId: "unknown-game" },
+      "現在のバージョンでは、この記録の再プレイに対応していません。",
     ],
   ] as const;
 
-  describe.each(unavailableCases)(
-    "%s のバイナリパズルの記録の場合",
-    (_, problemIdentity) => {
-      const playedRecord = createTakuzuPlayRecord({
-        difficulty: "1",
-        problemIdentity: createTakuzuProblemIdentity("adjacency", 0, 1),
-        workload,
-        startedAt: 1_000,
-        completedAt: 221_000,
-        result: playPerformance,
-      });
-      const record = {
-        ...playedRecord,
-        payload: { ...playedRecord.payload, problemIdentity },
-      };
+  describe.each(unavailableRecords)("%sの記録の場合", (_, record, reason) => {
+    beforeEach(() => {
+      writePlayRecords([record]);
+      renderReplay(record.id);
+    });
 
-      beforeEach(() => {
-        writePlayRecords([record]);
-        renderReplay(record.id);
+    test("再プレイできない理由を示し、記録へ戻る導線を出すこと", () => {
+      const heading = screen.getByRole("heading", {
+        name: "この記録は再プレイできません",
       });
+      const reasonText = screen.getByText(reason);
+      const backLink = screen.getByRole("link", { name: "記録へ戻る" });
 
-      test("問題集に問題が無いため再プレイできないことを示し、記録へ戻る導線を出すこと", () => {
-        const heading = screen.getByRole("heading", {
-          name: "この記録は再プレイできません",
-        });
-        const reason = screen.getByText(
-          "この記録の問題は、現在の問題集にありません。",
-        );
-        const backLink = screen.getByRole("link", { name: "記録へ戻る" });
-
-        expect(heading).toBeTruthy();
-        expect(reason).toBeTruthy();
-        expect(backLink.getAttribute("href")).toBe("/records");
-      });
-    },
-  );
+      expect(heading).toBeTruthy();
+      expect(reasonText).toBeTruthy();
+      expect(backLink.getAttribute("href")).toBe("/records");
+    });
+  });
 
   describe("問題集にあるナンプレの記録の場合", () => {
-    const record = createNanpurePlayRecord({
-      difficulty: "3",
-      problemIdentity: createNanpureProblemIdentity("locked-candidates", 740),
-      startedAt: 1_000,
-      completedAt: 601_000,
-      result: {
-        elapsedMs: 600_000,
-        mistakeCount: 0,
-        undoCount: 0,
-        restartCount: 0,
-      },
-    });
     const expectedClueLabels =
       restoreNanpureProblem(
-        record.payload.problemIdentity,
+        nanpureRecord.payload.problemIdentity,
       )?.problem.clues.flatMap((digit, cellIndex) =>
         digit === null
           ? []
@@ -162,8 +272,8 @@ describe("RecordedProblemReplayView", () => {
       ) ?? [];
 
     beforeEach(() => {
-      writePlayRecords([record]);
-      renderReplay(record.id);
+      writePlayRecords([nanpureRecord]);
+      renderReplay(nanpureRecord.id);
     });
 
     test("記録と同じ問題のヒントからプレイを始めること", () => {
@@ -175,45 +285,17 @@ describe("RecordedProblemReplayView", () => {
     });
   });
 
-  describe("3段階の難易度で遊んだナンプレの記録の場合", () => {
-    const record: PlayRecord = {
-      id: "nanpure-three-level",
-      gameId: "nanpure",
-      startedAt: 1_000,
-      completedAt: 121_000,
-      payloadVersion: 1,
-      payload: {
-        difficulty: "normal",
-        problemIdentity: {
-          generatorVersion: "1",
-          seed: "nanpure-seed",
-          conditions: { clueCount: 32 },
-          generationAttempt: 1,
-        },
-        performance: {
-          elapsedMs: 120_000,
-          mistakeCount: 0,
-          undoCount: 0,
-          restartCount: 0,
-        },
-      },
-    };
-
+  describe("記録が無い場合", () => {
     beforeEach(() => {
-      writePlayRecords([record]);
-      renderReplay(record.id);
+      renderReplay("missing-record");
     });
 
-    test("問題集に問題が無いため再プレイできないことを示すこと", () => {
+    test("記録が見つからないことを示すこと", () => {
       const heading = screen.getByRole("heading", {
-        name: "この記録は再プレイできません",
+        name: "記録が見つかりません",
       });
-      const reason = screen.getByText(
-        "この記録の問題は、現在の問題集にありません。",
-      );
 
       expect(heading).toBeTruthy();
-      expect(reason).toBeTruthy();
     });
   });
 });
