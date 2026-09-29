@@ -1,6 +1,8 @@
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
+import { PlayHeader } from "@/components/PlayHeader";
+import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import type { ReflectionLaserPathMode } from "@/games/reflection/laser-path-mode";
 import type {
   ReflectionLaserView,
@@ -26,12 +28,12 @@ import { ReflectionBoard } from "@/games/reflection/ui/board/ReflectionBoard";
 import { readReflectionHowToPlaySeen } from "@/games/reflection/ui/how-to-play-seen";
 import { ReflectionHowToPlayDialog } from "@/games/reflection/ui/ReflectionHowToPlayDialog";
 import { ReflectionClueMatchStatus } from "@/games/reflection/ui/ReflectionPlay/ReflectionClueMatchStatus";
-import { ReflectionPlayHeader } from "@/games/reflection/ui/ReflectionPlay/ReflectionPlayHeader";
 import {
   listReflectionStockPieces,
   ReflectionStock,
 } from "@/games/reflection/ui/ReflectionPlay/ReflectionStock";
 import { ReflectionResultScreen } from "@/games/reflection/ui/result/ReflectionResultScreen";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type ReflectionPlayProps = {
   /** 結果に出す難易度の表示名。問題を指定したプレイでは難易度を伏せた名前を渡す。 */
@@ -192,8 +194,12 @@ export function ReflectionPlay({
       className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]"
     >
       <BrandIdentityHeader />
-      <ReflectionPlayHeader
-        elapsedMs={elapsedMs}
+      {/* 置き直しは点に入らないので、プレイ中は時間だけを示す。置き直しの回数は結果と記録に出す。 */}
+      <PlayHeader
+        title={REFLECTION_DISPLAY_NAME}
+        metricGroups={[
+          [{ label: "時間", value: formatElapsedTime(elapsedMs) }],
+        ]}
         canRestart={canRestart}
         onRestart={onRestart}
         onReplay={onReplay}
