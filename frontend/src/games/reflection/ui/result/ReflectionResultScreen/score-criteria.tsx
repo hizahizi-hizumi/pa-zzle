@@ -12,10 +12,6 @@ import {
 } from "@/games/reflection/score";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
-type ScoreCriteriaProps = {
-  result: ReflectionResult;
-};
-
 function formatSeconds(milliseconds: number): string {
   return `${milliseconds / 1_000}秒`;
 }
@@ -58,27 +54,24 @@ function formatSpeedFullScoreRule(
   return `${reading}と、${trial}の中間です`;
 }
 
-export function ScoreCriteria({ result }: ScoreCriteriaProps) {
+export function getReflectionScoreCriteria(result: ReflectionResult) {
   const { workload, speedFullScoreMs, speedZeroScoreMs } = result;
 
-  return (
-    <dl className="grid gap-3 text-meta">
-      <div>
-        <dt className="font-semibold text-foreground">速さ</dt>
-        <dd className="mt-1">
-          {`基準時間${formatElapsedTime(speedFullScoreMs)}以内で${REFLECTION_SCORE_MAXIMUM}点、${formatElapsedTime(speedZeroScoreMs)}以上で0点、その間は時間に応じて減点。基準時間は${formatSpeedFullScoreRule(workload)}。局面と仮に置く回数は、この問題を外周ヒントから読んで解くときに要る回数です（仮に置く回数は${REFLECTION_SPEED_ASSUMPTION_TEST_LIMIT}回まで数えます）。`}
-        </dd>
-      </div>
-      <div>
-        <dt className="font-semibold text-foreground">点に入らないもの</dt>
-        <dd className="mt-1">
-          置き直し・盤面戻し・光路を確かめた回数は点に入りません。置いて確かめ、動かして直しても減点しません。
-        </dd>
-      </div>
-      <div>
-        <dt className="sr-only">丸め</dt>
-        <dd>1点単位に四捨五入します。</dd>
-      </div>
-    </dl>
-  );
+  return {
+    items: [
+      {
+        label: "速さ",
+        description: `基準時間${formatElapsedTime(speedFullScoreMs)}以内で${REFLECTION_SCORE_MAXIMUM}点、${formatElapsedTime(speedZeroScoreMs)}以上で0点、その間は時間に応じて減点。基準時間は${formatSpeedFullScoreRule(workload)}。局面と仮に置く回数は、この問題を外周ヒントから読んで解くときに要る回数です（仮に置く回数は${REFLECTION_SPEED_ASSUMPTION_TEST_LIMIT}回まで数えます）。`,
+      },
+      {
+        label: "点に入らないもの",
+        description:
+          "置き直し・盤面戻し・光路を確かめた回数は点に入りません。置いて確かめ、動かして直しても減点しません。",
+      },
+    ],
+    note: {
+      label: "丸め",
+      description: "1点単位に四捨五入します。",
+    },
+  };
 }
