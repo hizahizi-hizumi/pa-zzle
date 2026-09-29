@@ -11,7 +11,6 @@ import { createPlayRecordDisplay } from "@/records/ui/play-record-display";
 
 export const slidePuzzlePlayRecordDisplay = createPlayRecordDisplay({
   definition: slidePuzzlePlayRecordDefinition,
-  gameLabel: "スライドパズル",
   getComparisonLabel(comparisonKey: string) {
     const difficulty = parseSlidePuzzleDifficulty(comparisonKey);
     return difficulty ? getSlidePuzzleDifficultyLabel(difficulty) : null;

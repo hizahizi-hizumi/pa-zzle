@@ -1,5 +1,10 @@
 import { useState } from "react";
-
+import { PlayableMinesweeper } from "@/game-catalog/minesweeper/PlayableMinesweeper";
+import { PlayableNanpure } from "@/game-catalog/nanpure/PlayableNanpure";
+import { PlayableParkingJam } from "@/game-catalog/parking-jam/PlayableParkingJam";
+import { PlayableSlidePuzzle } from "@/game-catalog/slide-puzzle/PlayableSlidePuzzle";
+import { PlayableTakuzu } from "@/game-catalog/takuzu/PlayableTakuzu";
+import { PlayableWaterSort } from "@/game-catalog/water-sort/PlayableWaterSort";
 import { isMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
 import { parseNanpureDifficulty } from "@/games/nanpure/difficulty";
 import { isNanpurePlayRecord } from "@/games/nanpure/play-record";
@@ -15,12 +20,6 @@ import { parseWaterSortDifficulty } from "@/games/water-sort/difficulty";
 import { isWaterSortPlayRecord } from "@/games/water-sort/play-record";
 import { readPlayRecords } from "@/records/storage";
 import { Link, useParams } from "@/router";
-import { PlayableMinesweeper } from "@/views/MinesweeperPlayView/PlayableMinesweeper";
-import { PlayableNanpure } from "@/views/NanpurePlayView/PlayableNanpure";
-import { PlayableParkingJam } from "@/views/ParkingJamPlayView/PlayableParkingJam";
-import { PlayableSlidePuzzle } from "@/views/SlidePuzzlePlayView/PlayableSlidePuzzle";
-import { PlayableTakuzu } from "@/views/TakuzuPlayView/PlayableTakuzu";
-import { PlayableWaterSort } from "@/views/WaterSortPlayView/PlayableWaterSort";
 
 export function RecordedProblemReplayView() {
   const { recordId } = useParams("/records/replay/:recordId");

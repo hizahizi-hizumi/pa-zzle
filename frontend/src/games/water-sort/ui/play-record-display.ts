@@ -11,7 +11,6 @@ import { createPlayRecordDisplay } from "@/records/ui/play-record-display";
 
 export const waterSortPlayRecordDisplay = createPlayRecordDisplay({
   definition: waterSortPlayRecordDefinition,
-  gameLabel: "ウォーターソート",
   getComparisonLabel(comparisonKey: string) {
     const difficulty = parseWaterSortRecordedDifficulty(comparisonKey);
     return difficulty ? getWaterSortDifficultyLabel(difficulty) : null;

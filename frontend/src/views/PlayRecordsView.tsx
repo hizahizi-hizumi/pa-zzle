@@ -1,24 +1,9 @@
 import { useState } from "react";
 
-import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
-import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
-import { parkingJamPlayRecordDisplay } from "@/games/parking-jam/ui/play-record-display";
-import { slidePuzzlePlayRecordDisplay } from "@/games/slide-puzzle/ui/play-record-display";
-import { takuzuPlayRecordDisplay } from "@/games/takuzu/ui/play-record-display";
-import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
+import { gameCatalog } from "@/game-catalog/game-catalog";
 import { readPlayRecords } from "@/records/storage";
 import { PlayRecordsScreen } from "@/records/ui/PlayRecordsScreen";
-import type { PlayRecordDisplayCatalog } from "@/records/ui/play-record-display";
 import { Link, useNavigate } from "@/router";
-
-const playRecordDisplays = [
-  waterSortPlayRecordDisplay,
-  nanpurePlayRecordDisplay,
-  minesweeperPlayRecordDisplay,
-  parkingJamPlayRecordDisplay,
-  slidePuzzlePlayRecordDisplay,
-  takuzuPlayRecordDisplay,
-] as const satisfies PlayRecordDisplayCatalog;
 
 export function PlayRecordsView() {
   const [records] = useState(() => readPlayRecords());
@@ -34,7 +19,7 @@ export function PlayRecordsView() {
       </Link>
       <PlayRecordsScreen
         records={records}
-        displays={playRecordDisplays}
+        games={gameCatalog}
         emptyAction={<Link to="/">パズルを選ぶ</Link>}
         onReplay={(recordId) =>
           navigate("/records/replay/:recordId", { params: { recordId } })

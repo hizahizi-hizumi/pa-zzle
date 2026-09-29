@@ -1,7 +1,7 @@
 import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
+import { PlayableMinesweeper } from "@/game-catalog/minesweeper/PlayableMinesweeper";
 import { parseMinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import { useParams } from "@/router";
-import { PlayableMinesweeper } from "@/views/MinesweeperPlayView/PlayableMinesweeper";
 
 export function MinesweeperPlayView() {
   const { difficulty: difficultyParam } = useParams(

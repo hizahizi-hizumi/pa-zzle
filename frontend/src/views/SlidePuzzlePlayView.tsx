@@ -1,7 +1,7 @@
 import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
+import { PlayableSlidePuzzle } from "@/game-catalog/slide-puzzle/PlayableSlidePuzzle";
 import { parseSlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import { useParams } from "@/router";
-import { PlayableSlidePuzzle } from "@/views/SlidePuzzlePlayView/PlayableSlidePuzzle";
 
 export function SlidePuzzlePlayView() {
   const { difficulty: difficultyParam } = useParams(
