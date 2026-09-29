@@ -7,7 +7,8 @@ import {
   listParkingJamPoolEntries,
   toParkingJamPoolIdentity,
 } from "@/games/parking-jam/problem/problem-pool";
-import { hashProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import type { ProblemSeed } from "@/games/problem-seed";
+import { selectProblemPoolEntry } from "@/games/problem-selection";
 
 /**
  * 難易度の問題集から seed で1問を選んで復元する。
@@ -17,11 +18,11 @@ export function selectParkingJamProblemForDifficulty(
   difficulty: ParkingJamDifficulty,
   seed: ProblemSeed,
 ): ParkingJamRestoredProblem {
-  const entries = listParkingJamPoolEntries(difficulty);
-  const entry = entries[hashProblemSeed(seed) % entries.length];
-  if (!entry) {
-    throw new Error(`No level ${difficulty} parking jam problem is available`);
-  }
+  const entry = selectProblemPoolEntry(
+    listParkingJamPoolEntries(difficulty),
+    seed,
+    `level ${difficulty} parking jam`,
+  );
 
   return restoreParkingJamProblemWithoutAnalysis(
     toParkingJamPoolIdentity(entry),
