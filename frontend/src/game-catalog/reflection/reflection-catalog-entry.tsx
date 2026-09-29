@@ -19,7 +19,10 @@ import type { PlayRecord } from "@/records/play-record";
 
 type ReflectionReplayStart = {
   difficulty: ReflectionDifficulty;
-  identity: ReflectionProblemIdentity;
+  initialProblem: {
+    identity: ReflectionProblemIdentity;
+    purpose: "replay";
+  };
 };
 
 function resolveReflectionReplayStart(
@@ -39,7 +42,7 @@ function resolveReflectionReplayStart(
     status: "available",
     start: {
       difficulty: record.payload.difficulty,
-      identity: restored.identity,
+      initialProblem: { identity: restored.identity, purpose: "replay" },
     },
   };
 }
@@ -51,14 +54,10 @@ export const reflectionCatalogEntry = {
   entryPath: "/puzzles/reflection",
   playRecordDisplay: reflectionPlayRecordDisplay,
   replayRecord(record) {
-    return renderRecordReplay(
-      resolveReflectionReplayStart(record),
-      ({ difficulty, identity }) => (
-        <PlayableReflection
-          difficulty={difficulty}
-          initialProblem={{ identity, purpose: "replay" }}
-        />
-      ),
-    );
+    return renderRecordReplay(resolveReflectionReplayStart(record), (start) => (
+      <PlayableReflection {...start} />
+    ));
   },
 } satisfies GameCatalogEntry;
+
+export const _private = { resolveReflectionReplayStart };
