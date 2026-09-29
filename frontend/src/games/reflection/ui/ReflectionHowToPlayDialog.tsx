@@ -184,7 +184,7 @@ export function ReflectionHowToPlayDialog({
           </li>
           <li className="space-y-2">
             <p>
-              置くたびに、今の配置で光が数字と記号のとおりに進む外周ヒントは、地が緑になる。すべて緑になれば完成。
+              置くたびに、今の配置で光が数字と記号のとおりに進む外周ヒントは、地が緑になる。退出は、光が出た先の外周ヒントも同じ数字の退出のときだけ緑になる。すべて緑になれば完成。
             </p>
             <div className="flex items-center gap-4">
               <figure className="flex items-center gap-2">
