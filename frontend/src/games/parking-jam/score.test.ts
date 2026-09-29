@@ -1,7 +1,6 @@
 import {
   calculateParkingJamPlayScore,
   calculateParkingJamSpeedFullScoreMs,
-  getParkingJamGameResultLevel,
   PARKING_JAM_SCORE_MAXIMUMS,
   type ParkingJamPlayScoreInput,
 } from "@/games/parking-jam/score";
@@ -157,20 +156,5 @@ describe("calculateParkingJamPlayScore", () => {
         breakdown: { accuracy: 0, speed: 0, stability: 0 },
       });
     });
-  });
-});
-
-describe("getParkingJamGameResultLevel", () => {
-  const cases = [
-    [100, "perfect"],
-    [90, "great"],
-    [80, "good"],
-    [79, "clear"],
-  ] as const;
-
-  test.each(cases)("評価点 %i を %s 段階として扱うこと", (score, expected) => {
-    const level = getParkingJamGameResultLevel(score);
-
-    expect(level).toBe(expected);
   });
 });

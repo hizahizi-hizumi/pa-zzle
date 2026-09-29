@@ -1,5 +1,4 @@
 import type { LegacyParkingJamDifficulty } from "@/games/parking-jam/difficulty";
-import type { GameResultLevel } from "@/games/result";
 
 export const PARKING_JAM_SCORE_MODEL_VERSION = "play-quality-v2";
 
@@ -102,11 +101,4 @@ export function calculateParkingJamPlayScore({
     total: accuracy + speed + stability,
     breakdown: { accuracy, speed, stability },
   };
-}
-
-export function getParkingJamGameResultLevel(score: number): GameResultLevel {
-  if (score >= 100) return "perfect";
-  if (score >= 90) return "great";
-  if (score >= 80) return "good";
-  return "clear";
 }
