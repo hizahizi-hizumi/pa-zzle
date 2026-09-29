@@ -19,6 +19,7 @@ import { isTakuzuPlayRecord } from "@/games/takuzu/play-record";
 import { restoreTakuzuProblem } from "@/games/takuzu/problem-selection";
 import { parseWaterSortDifficulty } from "@/games/water-sort/difficulty";
 import { isWaterSortPlayRecord } from "@/games/water-sort/play-record";
+import { restoreWaterSortProblem } from "@/games/water-sort/problem/generator";
 import { readPlayRecords } from "@/records/storage";
 import { Link, useParams } from "@/router";
 
@@ -52,7 +53,7 @@ export function RecordedProblemReplayView() {
     return (
       <PlayableWaterSort
         difficulty={waterSortDifficulty}
-        initialProblemIdentity={record.payload.problemIdentity}
+        initialProblem={restoreWaterSortProblem(record.payload.problemIdentity)}
       />
     );
   }
