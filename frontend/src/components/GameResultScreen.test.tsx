@@ -83,3 +83,35 @@ describe("GameResultScreen", () => {
     expect(props.onOpenDiagnostics).toHaveBeenCalledOnce();
   });
 });
+
+describe("スコアを出さないプレイの場合", () => {
+  beforeEach(() => {
+    const {
+      score: _score,
+      scoreBreakdown: _scoreBreakdown,
+      scoreCriteria: _scoreCriteria,
+      ...common
+    } = createProps();
+    render(
+      <GameResultScreen
+        {...common}
+        score={null}
+        unscoredReason="評価の材料が無いため、スコアは出しません。"
+      />,
+    );
+  });
+
+  test("スコアの代わりに理由を示し、内訳を開く操作を出さないこと", () => {
+    const reason = screen.getByText(
+      "評価の材料が無いため、スコアは出しません。",
+    );
+    const score = screen.queryByText("スコア");
+    const details = screen.queryByRole("button", {
+      name: "スコアの内訳・採点基準",
+    });
+
+    expect(reason).toBeTruthy();
+    expect(score).toBeNull();
+    expect(details).toBeNull();
+  });
+});
