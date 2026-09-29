@@ -8,11 +8,10 @@ import {
 } from "@/games/water-sort/difficulty";
 import { restoreWaterSortProblem } from "@/games/water-sort/problem/generator";
 import {
-  WATER_SORT_GENERATOR_VERSION,
+  isWaterSortProblemIdentity,
   type WaterSortGeneratedProblem,
   type WaterSortProblemIdentity,
 } from "@/games/water-sort/problem/problem";
-import { WATER_SORT_BOTTLE_CAPACITY } from "@/games/water-sort/puzzle/state";
 
 export type WaterSortDiagnosticSnapshot = InternalDiagnosticSnapshot<
   "water-sort",
@@ -57,7 +56,7 @@ export function parseWaterSortDiagnosticSnapshot(
     value.formatVersion !== INTERNAL_DIAGNOSTIC_FORMAT_VERSION ||
     value.game !== "water-sort" ||
     !difficulty ||
-    !isProblemIdentity(value.problemIdentity) ||
+    !isWaterSortProblemIdentity(value.problemIdentity) ||
     !(typeof value.buildRevision === "string" || value.buildRevision === null)
   ) {
     throw new TypeError("Invalid water sort diagnostic snapshot");
@@ -76,24 +75,6 @@ export function restoreWaterSortProblemFromDiagnosticSnapshot(
   snapshot: WaterSortDiagnosticSnapshot,
 ): WaterSortGeneratedProblem {
   return restoreWaterSortProblem(snapshot.problemIdentity);
-}
-
-function isProblemIdentity(value: unknown): value is WaterSortProblemIdentity {
-  if (!isRecord(value) || !isRecord(value.conditions)) {
-    return false;
-  }
-
-  return (
-    value.generatorVersion === WATER_SORT_GENERATOR_VERSION &&
-    typeof value.seed === "string" &&
-    Number.isInteger(value.conditions.colorCount) &&
-    Number(value.conditions.colorCount) > 0 &&
-    value.conditions.capacity === WATER_SORT_BOTTLE_CAPACITY &&
-    Number.isInteger(value.conditions.emptyBottleCount) &&
-    Number(value.conditions.emptyBottleCount) > 0 &&
-    Number.isInteger(value.generationAttempt) &&
-    Number(value.generationAttempt) > 0
-  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
