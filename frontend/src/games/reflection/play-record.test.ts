@@ -10,7 +10,7 @@ import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 
 const problemIdentity = createReflectionProblemIdentity(6, 11, 3);
 
-// 試し置きでは解き切れない問題。基準時間は 24×0.5 + 11×7 + 15×8 + 8×15 = 329秒。
+// 試し置きでは解き切れない問題。基準時間は 24×0.5 + 11×3.5 + 15×1.25 + 8×3.5 = 97.25秒。
 const workload = {
   pieceCount: 11,
   clueCount: 24,
@@ -20,7 +20,7 @@ const workload = {
 };
 
 const performance = {
-  elapsedMs: 400_000,
+  elapsedMs: 119_000,
   relocationCount: 2,
   restartCount: 0,
   laserCheckCount: 12,
@@ -32,7 +32,7 @@ const record = createReflectionPlayRecord({
   problemIdentity,
   workload,
   startedAt: 1_000,
-  completedAt: 401_000,
+  completedAt: 120_000,
   result: performance,
 });
 
@@ -52,7 +52,7 @@ describe("createReflectionPlayRecord", () => {
     const { id, gameId, payloadVersion, payload } = record;
 
     expect({ id, gameId, payloadVersion }).toEqual({
-      id: "reflection:1000:401000:rf-6-11-3",
+      id: "reflection:1000:120000:rf-6-11-3",
       gameId: "reflection",
       payloadVersion: 2,
     });
@@ -84,7 +84,7 @@ describe("getReflectionPlayRecordTimeDelta", () => {
   test("保存した作業の量から基準時間との差を導出すること", () => {
     const timeDeltaMs = getReflectionPlayRecordTimeDelta(record);
 
-    expect(timeDeltaMs).toBe(71_000);
+    expect(timeDeltaMs).toBe(21_750);
   });
 });
 
@@ -216,7 +216,7 @@ describe("reflectionPlayRecordDefinition", () => {
       ),
     );
 
-    expect(values).toEqual([89, 71_000]);
+    expect(values).toEqual([89, 21_750]);
   });
 
   describe("生成器の版が今と違う記録の場合", () => {
@@ -231,7 +231,7 @@ describe("reflectionPlayRecordDefinition", () => {
         ),
       );
 
-      expect(values).toEqual([89, 71_000]);
+      expect(values).toEqual([89, 21_750]);
     });
   });
 });

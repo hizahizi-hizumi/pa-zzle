@@ -23,8 +23,8 @@ const heavyWorkload: ReflectionSolveWorkload = {
   trialMoveCount: null,
 };
 
-const lightFullScoreMs = 24_000;
-const heavyFullScoreMs = 353_000;
+const lightFullScoreMs = 17_000;
+const heavyFullScoreMs = 105_000;
 
 function scoreAtRatio(
   elapsedRatio: number,
@@ -47,7 +47,7 @@ describe("calculateReflectionSpeedFullScoreMs", () => {
   ] as const;
 
   test.each(cases)(
-    "%s で、外周ヒント1本0.5秒・ピース1個7秒・照らし直し1回8秒・仮に置く1回15秒（10回まで）を足すこと",
+    "%s で、外周ヒント1本0.5秒・ピース1個3.5秒・照らし直し1回1.25秒・仮に置く1回3.5秒（10回まで）を足すこと",
     (_, workload, expected) => {
       const speedFullScoreMs = calculateReflectionSpeedFullScoreMs(workload);
 
@@ -57,13 +57,13 @@ describe("calculateReflectionSpeedFullScoreMs", () => {
 
   describe("試し置きで解き切れる問題", () => {
     test("試し置きの方が速ければ、読む時間と試し置きの時間の中間にすること", () => {
-      // 読む 24秒、試し置き 外周ヒント20本 × 0.5秒 + 2手 × 5秒 = 20秒。
+      // 読む 17秒、試し置き 外周ヒント20本 × 0.5秒 + 1手 × 5秒 = 15秒。
       const speedFullScoreMs = calculateReflectionSpeedFullScoreMs({
         ...lightWorkload,
-        trialMoveCount: 2,
+        trialMoveCount: 1,
       });
 
-      expect(speedFullScoreMs).toBe(22_000);
+      expect(speedFullScoreMs).toBe(16_000);
     });
 
     test("試し置きの方が遅ければ、読む時間にすること", () => {

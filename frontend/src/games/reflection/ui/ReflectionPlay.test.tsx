@@ -39,14 +39,14 @@ afterEach(() => {
 });
 
 function createResult(performance: ReflectionSessionResult): ReflectionResult {
-  // 読んで解く時間 28 × 0.5 + 8 × 7 + 3 × 8 + min(12, 10) × 15 = 244秒、試し置きの時間 28 × 0.5 + 40 × 5 = 214秒。
-  // 基準時間はその中間の229秒（03:49）、0点になる時間 11:27。
+  // 読んで解く時間 28 × 0.5 + 8 × 3.5 + 8 × 1.25 + min(12, 10) × 3.5 = 87秒、試し置きの時間 28 × 0.5 + 13 × 5 = 79秒。
+  // 基準時間はその中間の83秒（01:23）、0点になる時間 04:09。
   const workload = {
     pieceCount: 8,
     clueCount: 28,
-    propagationRoundCount: 3,
+    propagationRoundCount: 8,
     assumptionTestCount: 12,
-    trialMoveCount: 40,
+    trialMoveCount: 13,
   };
   return {
     ...performance,
@@ -64,9 +64,9 @@ function createResult(performance: ReflectionSessionResult): ReflectionResult {
   };
 }
 
-// 31秒超過で93点。置き直し2回・盤面戻し1回は点に入らない。
+// 12秒超過で93点。置き直し2回・盤面戻し1回は点に入らない。
 const performance = {
-  elapsedMs: 260_000,
+  elapsedMs: 95_000,
   relocationCount: 2,
   restartCount: 1,
   laserCheckCount: 4,
@@ -74,7 +74,7 @@ const performance = {
 };
 const result = createResult(performance);
 // 基準時間以内なら、置き直しや盤面戻しがあっても100点。
-const perfectResult = createResult({ ...performance, elapsedMs: 214_000 });
+const perfectResult = createResult({ ...performance, elapsedMs: 68_000 });
 
 describe("ReflectionPlay", () => {
   const solution = parseReflectionBoard(["/..", "...", "..@"]);
@@ -452,7 +452,7 @@ describe("ReflectionPlay", () => {
           .map((definition) => definition.textContent);
 
         expect(terms).toEqual(["時間", "置き直し"]);
-        expect(definitions).toEqual(["04:20", "基準 +00:31", "2"]);
+        expect(definitions).toEqual(["01:35", "基準 +00:12", "2"]);
       });
 
       test("結果画面へフォーカスを移すこと", () => {
@@ -525,12 +525,12 @@ describe("ReflectionPlay", () => {
             expect.arrayContaining([
               "1回",
               "4回",
-              "03:49",
+              "01:23",
               "8個",
               "28本",
-              "3回",
+              "8回",
               "12回",
-              "40手",
+              "13手",
             ]),
           );
         });
@@ -539,7 +539,7 @@ describe("ReflectionPlay", () => {
           const criteria = screen.getByText(/基準時間は/);
 
           expect(criteria.textContent).toBe(
-            "基準時間03:49以内で100点、11:27以上で0点、その間は時間に応じて減点。基準時間は読んで解く時間04:04（外周ヒント28本 × 0.5秒 + ピース8個 × 7秒 + 照らし直す局面3回 × 8秒 + 仮に置いて確かめる10回 × 15秒）と、一致表示を見ながら試し置きで解く時間03:34（外周ヒント28本 × 0.5秒 + 試し置き40手 × 5秒）の中間です。局面と仮に置く回数は、この問題を外周ヒントから読んで解くときに要る回数です（仮に置く回数は10回まで数えます）。",
+            "基準時間01:23以内で100点、04:09以上で0点、その間は時間に応じて減点。基準時間は読んで解く時間01:27（外周ヒント28本 × 0.5秒 + ピース8個 × 3.5秒 + 照らし直す局面8回 × 1.25秒 + 仮に置いて確かめる10回 × 3.5秒）と、一致表示を見ながら試し置きで解く時間01:19（外周ヒント28本 × 0.5秒 + 試し置き13手 × 5秒）の中間です。局面と仮に置く回数は、この問題を外周ヒントから読んで解くときに要る回数です（仮に置く回数は10回まで数えます）。",
           );
         });
 
@@ -602,7 +602,7 @@ describe("ReflectionPlay", () => {
 
         expect(reason).toBeTruthy();
         expect(score).toBeNull();
-        expect(definitions).toEqual(["04:20", "2"]);
+        expect(definitions).toEqual(["01:35", "2"]);
       });
 
       test("スコアの内訳を出さないこと", () => {

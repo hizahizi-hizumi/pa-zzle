@@ -5,24 +5,26 @@ import type { GameResultLevel } from "@/games/result";
  * 解き切る速さを称える。問題ごとの基準時間と比べた速さだけで100点満点にする。
  * 置き直し・盤面を戻した回数・光路を確かめた回数は減点しない。一致表示を見ながら置いて確かめ、動かして直すことが
  * このゲームの中心の操作で、それを減点すると遊び方そのもの（押し間違いも含む）を罰するため。
- * 基準時間の係数と0点になる倍率は仮置きで、実プレイで校正する（`リフレクション成績評価.md`）。
+ * 基準時間の係数は人間の実測（レベル5 の問題を熟練者が読んで3分8秒、同じ人のレベル5 の記録6件）で水準を合わせた暫定値で、
+ * 0点になる倍率は仮置き。
+ * どちらも実プレイを重ねて校正する（`リフレクション成績評価.md` §15）。
  */
 export const REFLECTION_SCORE_MAXIMUM = 100;
 
-/** 基準時間の係数（仮置き）。外周ヒント1本ごとの盤面把握の時間。 */
+/** 基準時間の係数（暫定）。外周ヒント1本ごとの盤面把握の時間。 */
 export const REFLECTION_SPEED_PER_CLUE_MS = 500;
-/** 基準時間の係数（仮置き）。置くピース1個ごとの時間。 */
-export const REFLECTION_SPEED_PER_PIECE_MS = 7_000;
-/** 基準時間の係数（仮置き）。全外周ヒントへ照らし直す1回ごとの時間。 */
-export const REFLECTION_SPEED_PER_PROPAGATION_ROUND_MS = 8_000;
-/** 基準時間の係数（仮置き）。候補を仮に置いて確かめる1回ごとの時間。 */
-export const REFLECTION_SPEED_PER_ASSUMPTION_TEST_MS = 15_000;
+/** 基準時間の係数（暫定）。置くピース1個ごとの時間。 */
+export const REFLECTION_SPEED_PER_PIECE_MS = 3_500;
+/** 基準時間の係数（暫定）。全外周ヒントへ照らし直す1回ごとの時間。 */
+export const REFLECTION_SPEED_PER_PROPAGATION_ROUND_MS = 1_250;
+/** 基準時間の係数（暫定）。候補を仮に置いて確かめる1回ごとの時間。 */
+export const REFLECTION_SPEED_PER_ASSUMPTION_TEST_MS = 3_500;
 /**
  * 基準時間に数える、仮に置いて確かめた回数の上限（仮置き）。
  * 解法器は候補を端から順に試すので、回数の裾が長い（問題集の最大776回）。人間は見込みの高い候補から試すとみなし、上限で打ち切る。
  */
 export const REFLECTION_SPEED_ASSUMPTION_TEST_LIMIT = 10;
-/** 基準時間の係数（仮置き）。一致表示を見ながら1本ずつ満たす試し置きの1手（ピースを選んで置き、一致を見る）ごとの時間。 */
+/** 基準時間の係数（暫定）。一致表示を見ながら1本ずつ満たす試し置きの1手（ピースを選んで置き、一致を見る）ごとの時間。 */
 export const REFLECTION_SPEED_PER_TRIAL_MOVE_MS = 5_000;
 
 /**
