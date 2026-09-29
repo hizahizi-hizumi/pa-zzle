@@ -18,5 +18,5 @@ export function WaterSortPlayView() {
     );
   }
 
-  return <PlayableWaterSort difficulty={difficulty} />;
+  return <PlayableWaterSort key={difficulty} difficulty={difficulty} />;
 }

@@ -18,5 +18,5 @@ export function SlidePuzzlePlayView() {
     );
   }
 
-  return <PlayableSlidePuzzle difficulty={difficulty} />;
+  return <PlayableSlidePuzzle key={difficulty} difficulty={difficulty} />;
 }
