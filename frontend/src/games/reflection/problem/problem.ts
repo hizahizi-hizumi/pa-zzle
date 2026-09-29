@@ -63,6 +63,19 @@ export type ReflectionIdentifiedProblem = {
 };
 
 /**
+ * 問題を解き切る作業の量。速さの基準時間を問題ごとに決めるために使い、難易度そのものは表さない。
+ * - `pieceCount` / `clueCount`: 置くピースの数と、読む外周ヒントの本数。
+ * - `propagationRoundCount`: 人間向け解法器で、全外周ヒントへ照らし直して候補が変わった回数。
+ * - `assumptionTestCount`: 人間向け解法器で、候補を仮に置いて確かめた回数（推論レベル5 でだけ増える）。
+ */
+export type ReflectionSolveWorkload = {
+  pieceCount: number;
+  clueCount: number;
+  propagationRoundCount: number;
+  assumptionTestCount: number;
+};
+
+/**
  * 生成条件と候補番号から identity を作る。seed は条件ごとに別の系列になるよう条件を含める。
  * 例: 7×7・10ピース・候補番号 3 は `rf-7-10-3`。
  */

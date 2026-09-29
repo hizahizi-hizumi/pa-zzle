@@ -4,7 +4,10 @@ import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
 import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
 import { generateReflectionProblem } from "@/games/reflection/problem/generator";
 import type { ReflectionProblemIdentity } from "@/games/reflection/problem/problem";
-import { selectReflectionProblemForDifficulty } from "@/games/reflection/problem-selection";
+import {
+  restoreReflectionProblem,
+  selectReflectionProblemForDifficulty,
+} from "@/games/reflection/problem-selection";
 import type { ReflectionPiece } from "@/games/reflection/puzzle/board";
 import {
   type ReflectionEntry,
@@ -59,8 +62,10 @@ function createPlayState(
   startedAt: number,
   initialProblemIdentity?: ReflectionProblemIdentity,
 ): ReflectionPlayState {
+  // 問題集に無い identity も診断のために遊べるよう、生成器で作り直す。
   const generated = initialProblemIdentity
-    ? generateReflectionProblem(initialProblemIdentity)
+    ? (restoreReflectionProblem(initialProblemIdentity) ??
+      generateReflectionProblem(initialProblemIdentity))
     : selectReflectionProblemForDifficulty(difficulty, seed);
 
   return {
