@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useSearchParams } from "react-router";
 
 import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
+import { PlayableParkingJam } from "@/game-catalog/parking-jam/PlayableParkingJam";
 import {
   hasParkingJamProblemQuery,
   parseParkingJamProblemQuery,
@@ -9,7 +10,6 @@ import {
 import { parseParkingJamDifficulty } from "@/games/parking-jam/difficulty";
 import { internalDiagnosticsAvailable } from "@/lib/internal-diagnostics";
 import { useParams } from "@/router";
-import { PlayableParkingJam } from "@/views/ParkingJamPlayView/PlayableParkingJam";
 
 export function ParkingJamPlayView() {
   const { difficulty: difficultyParam } = useParams(

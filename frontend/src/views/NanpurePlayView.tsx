@@ -1,7 +1,7 @@
 import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
+import { PlayableNanpure } from "@/game-catalog/nanpure/PlayableNanpure";
 import { parseNanpureDifficulty } from "@/games/nanpure/difficulty";
 import { useParams } from "@/router";
-import { PlayableNanpure } from "@/views/NanpurePlayView/PlayableNanpure";
 
 export function NanpurePlayView() {
   const { difficulty: difficultyParam } = useParams(

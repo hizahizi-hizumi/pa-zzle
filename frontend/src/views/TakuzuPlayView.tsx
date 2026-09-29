@@ -1,7 +1,7 @@
 import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
+import { PlayableTakuzu } from "@/game-catalog/takuzu/PlayableTakuzu";
 import { parseTakuzuDifficulty } from "@/games/takuzu/difficulty";
 import { useParams } from "@/router";
-import { PlayableTakuzu } from "@/views/TakuzuPlayView/PlayableTakuzu";
 
 export function TakuzuPlayView() {
   const { difficulty: difficultyParam } = useParams(

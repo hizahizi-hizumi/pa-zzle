@@ -1,7 +1,7 @@
 import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
+import { PlayableWaterSort } from "@/game-catalog/water-sort/PlayableWaterSort";
 import { parseWaterSortDifficulty } from "@/games/water-sort/difficulty";
 import { useParams } from "@/router";
-import { PlayableWaterSort } from "@/views/WaterSortPlayView/PlayableWaterSort";
 
 export function WaterSortPlayView() {
   const { difficulty: difficultyParam } = useParams(
