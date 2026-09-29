@@ -29,11 +29,11 @@ import {
 import type { ReflectionResult } from "@/games/reflection/play/use-reflection-play";
 import { getReflectionGameResultLevel } from "@/games/reflection/score";
 import type { ReflectionSessionResult } from "@/games/reflection/session/session";
-import { formatElapsedTime } from "@/games/reflection/ui/format-elapsed-time";
-import { formatReflectionTimeDelta } from "@/games/reflection/ui/format-performance-delta";
 import { DetailMetric } from "@/games/reflection/ui/result/ReflectionResultScreen/DetailMetric";
 import { ResultMetric } from "@/games/reflection/ui/result/ReflectionResultScreen/ResultMetric";
 import { ScoreCriteria } from "@/games/reflection/ui/result/ReflectionResultScreen/ScoreCriteria";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
+import { formatElapsedTimeDelta } from "@/lib/format-performance-delta";
 
 type ReflectionResultScreenProps = {
   /** 結果に出す難易度の表示名。問題を指定したプレイでは難易度を伏せた名前を渡す。 */
@@ -112,7 +112,7 @@ export function ReflectionResultScreen({
             value={formatElapsedTime(performance.elapsedMs)}
             detail={
               result
-                ? `基準 ${formatReflectionTimeDelta(result.timeDeltaMs)}`
+                ? `基準 ${formatElapsedTimeDelta(result.timeDeltaMs)}`
                 : undefined
             }
           />

@@ -4,7 +4,7 @@ import {
 } from "@/games/reflection/difficulty";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import { reflectionPlayRecordDefinition } from "@/games/reflection/play-record";
-import { formatReflectionTimeDelta } from "@/games/reflection/ui/format-performance-delta";
+import { formatElapsedTimeDelta } from "@/lib/format-performance-delta";
 
 export const reflectionPlayRecordDisplay = {
   definition: reflectionPlayRecordDefinition,
@@ -28,7 +28,7 @@ export const reflectionPlayRecordDisplay = {
       id: "time-delta-ms",
       label: "基準時間との差",
       historyLabel: "時間差",
-      formatValue: formatReflectionTimeDelta,
+      formatValue: formatElapsedTimeDelta,
       referenceValue: 0,
       axis: { kind: "duration-ms" as const },
     },

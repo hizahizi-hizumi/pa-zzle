@@ -10,7 +10,7 @@ import {
   REFLECTION_SPEED_PER_PROPAGATION_ROUND_MS,
   REFLECTION_SPEED_PER_TRIAL_MOVE_MS,
 } from "@/games/reflection/score";
-import { formatElapsedTime } from "@/games/reflection/ui/format-elapsed-time";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type ScoreCriteriaProps = {
   result: ReflectionResult;

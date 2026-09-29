@@ -1,6 +1,6 @@
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
-import { formatElapsedTime } from "@/games/reflection/ui/format-elapsed-time";
 import { PlayMetric } from "@/games/reflection/ui/ReflectionPlay/ReflectionPlayHeader/PlayHeaderSummary/PlayMetric";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type PlayHeaderSummaryProps = {
   elapsedMs: number;
