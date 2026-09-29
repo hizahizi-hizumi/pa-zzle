@@ -3,7 +3,10 @@ import {
   type WaterSortDifficulty,
   type WaterSortRecordedDifficulty,
 } from "@/games/water-sort/difficulty";
-import type { WaterSortProblemIdentity } from "@/games/water-sort/problem/problem";
+import {
+  isWaterSortProblemIdentity,
+  type WaterSortProblemIdentity,
+} from "@/games/water-sort/problem/problem";
 import {
   calculateWaterSortMoveDelta,
   calculateWaterSortPlayScore,
@@ -66,31 +69,6 @@ type CreateWaterSortPlayRecordInput = {
 
 function isNonNegativeInteger(value: unknown): value is number {
   return typeof value === "number" && Number.isInteger(value) && value >= 0;
-}
-
-function isPositiveInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value > 0;
-}
-
-function isWaterSortProblemIdentity(
-  value: unknown,
-): value is WaterSortProblemIdentity {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const identity = value as Partial<WaterSortProblemIdentity>;
-  const conditions = identity.conditions;
-  return (
-    identity.generatorVersion === "1" &&
-    typeof identity.seed === "string" &&
-    !!conditions &&
-    typeof conditions === "object" &&
-    isPositiveInteger(conditions.colorCount) &&
-    conditions.capacity === 4 &&
-    isPositiveInteger(conditions.emptyBottleCount) &&
-    isPositiveInteger(identity.generationAttempt)
-  );
 }
 
 function isWaterSortPerformanceV1(
