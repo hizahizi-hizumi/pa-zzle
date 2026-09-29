@@ -1,8 +1,8 @@
 import {
-  createProblemRandom,
+  createProblemSeededRandom,
   type ProblemRandom,
   shuffleProblemValues,
-} from "@/games/problem-random";
+} from "@/games/problem-seed";
 import { doAllReflectionPiecesInfluenceClues } from "@/games/reflection/problem/generation/piece-influence";
 import { countReflectionSolutions } from "@/games/reflection/problem/generation/solver";
 import { getReflectionSymmetryKey } from "@/games/reflection/problem/generation/symmetry";
@@ -115,7 +115,7 @@ export function generateReflectionProblem(
 ): ReflectionGeneratedProblem {
   validateIdentity(identity);
   const { seed, conditions } = identity;
-  const random = createProblemRandom(`reflection:${seed}`);
+  const random = createProblemSeededRandom(`reflection:${seed}`);
 
   for (let attempt = 1; attempt <= MAXIMUM_GENERATION_ATTEMPTS; attempt += 1) {
     const pieces = sampleInventoryPieces(conditions.pieceCount, random);
