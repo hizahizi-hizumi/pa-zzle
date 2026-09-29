@@ -88,6 +88,7 @@ export function ParkingJamPlay({
         onOpenRecords={onOpenRecords}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
+        onOpenDiagnostics={onOpenDiagnostics}
       />
     );
   }
