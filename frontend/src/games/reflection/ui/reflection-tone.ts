@@ -3,7 +3,8 @@ import type { ReflectionOutcome } from "@/games/reflection/puzzle/laser";
 
 /**
  * リフレクション固有の色。共通UIの意味色（`primary`・`ring`・`success` など）は流用しない。
- * - `selection`: 選んでいるピース・ストックの種類。無彩色にして、ピースや外周ヒントの結果の色と取り違えないようにする。
+ * - 選んでいるピース・ストックの種類は、地や枠を変えず、ピースの色の印で示す（盤面のマスは四隅の鉤形、ストックは下の短い線。
+ *   `reflectionPieceBarClassNames`）。2026-09-29 の人間判断で、無彩色の地と太枠をやめた。
  * - `returnTarget`: 盤面のピースを選んでいる間の戻し先（ストック）。枠で囲まず、地の色の差だけで示す。
  * - `laser`: 光路と、光路を表示している外周ヒント。線や記号は `laserText`、外周ヒントに添える今の光の通るマスの数は、
  *   白地でも文字として読める濃さの `laserLabel` を使う。外周ヒントには枠や地を足さない。
@@ -14,8 +15,6 @@ import type { ReflectionOutcome } from "@/games/reflection/puzzle/laser";
  *   ゲームの中の状態を示す色で、アプリ共通の `success`（クリア・完了）とは分ける。
  */
 export const reflectionToneClassNames = {
-  selectionText: "text-foreground",
-  selectionSurface: "bg-foreground/10 ring-2 ring-foreground ring-inset",
   returnTargetSurface: "bg-foreground/7",
   laserText: "text-orange-600 dark:text-amber-400",
   laserLabel: "text-orange-700 dark:text-amber-400",
@@ -35,6 +34,12 @@ export const reflectionOutcomeToneClassNames = {
   absorb: "text-violet-600 dark:text-violet-400",
 } as const satisfies Record<ReflectionOutcome, string>;
 
+const outcomeBarClassNames = {
+  exit: "bg-blue-600 dark:bg-blue-400",
+  reflect: "bg-pink-600 dark:bg-pink-400",
+  absorb: "bg-violet-600 dark:bg-violet-400",
+} as const satisfies Record<ReflectionOutcome, string>;
+
 /**
  * ピースの色。そのピースの働きを外周ヒントの結果の色にそろえる（2026-09-29 の人間判断で両面鏡を「反射」へ変更）。
  * 光を直角に曲げて外へ導く斜め鏡2種は「退出」、正面から当たった光をはね返す両面鏡2種と、当たった光を必ずはね返す
@@ -47,4 +52,14 @@ export const reflectionPieceToneClassNames = {
   "horizontal-double": reflectionOutcomeToneClassNames.reflect,
   reflector: reflectionOutcomeToneClassNames.reflect,
   "black-hole": reflectionOutcomeToneClassNames.absorb,
+} as const satisfies Record<ReflectionPiece, string>;
+
+/** ストックで選んでいる種類の下に引く短い線の色。ピースの色と同じ色相の塗り。 */
+export const reflectionPieceBarClassNames = {
+  slash: outcomeBarClassNames.exit,
+  backslash: outcomeBarClassNames.exit,
+  "vertical-double": outcomeBarClassNames.reflect,
+  "horizontal-double": outcomeBarClassNames.reflect,
+  reflector: outcomeBarClassNames.reflect,
+  "black-hole": outcomeBarClassNames.absorb,
 } as const satisfies Record<ReflectionPiece, string>;

@@ -6,7 +6,15 @@ import {
 } from "@/games/reflection/puzzle/board";
 import { ReflectionPieceIcon } from "@/games/reflection/ui/board/ReflectionPieceIcon";
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
-import { reflectionToneClassNames } from "@/games/reflection/ui/reflection-tone";
+import { reflectionPieceToneClassNames } from "@/games/reflection/ui/reflection-tone";
+
+/**
+ * 選んだピースのマスの四隅に置く鉤形の印。ピースの色（`currentColor`）で描き、マスの地や枠は変えない。
+ * 線幅は2px、各辺の長さはマスの28%。
+ */
+const SELECTION_CORNERS =
+  "linear-gradient(currentColor,currentColor) top left/28% 2px no-repeat,linear-gradient(currentColor,currentColor) top left/2px 28% no-repeat,linear-gradient(currentColor,currentColor) top right/28% 2px no-repeat,linear-gradient(currentColor,currentColor) top right/2px 28% no-repeat,linear-gradient(currentColor,currentColor) bottom left/28% 2px no-repeat,linear-gradient(currentColor,currentColor) bottom left/2px 28% no-repeat,linear-gradient(currentColor,currentColor) bottom right/28% 2px no-repeat,linear-gradient(currentColor,currentColor) bottom right/2px 28% no-repeat";
+
 import { cn } from "@/lib/utils";
 
 type ReflectionCellProps = {
@@ -68,9 +76,19 @@ export function ReflectionCell({
         gridLineClassNames[
           `${column !== size - 1 ? "right" : ""}${row !== size - 1 ? "bottom" : ""}`
         ],
-        selected && reflectionToneClassNames.selectionSurface,
       )}
     >
+      {selected && cell !== null ? (
+        <span
+          aria-hidden="true"
+          className={cn(
+            "pointer-events-none absolute inset-[10%]",
+            reflectionPieceToneClassNames[cell],
+          )}
+          data-selection-mark=""
+          style={{ background: SELECTION_CORNERS }}
+        />
+      ) : null}
       {cell !== null ? (
         <ReflectionPieceIcon key={cell} piece={cell} size="cell" appearing />
       ) : null}

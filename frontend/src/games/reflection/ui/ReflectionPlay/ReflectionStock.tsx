@@ -8,7 +8,10 @@ import {
 import type { ReflectionSelection } from "@/games/reflection/session/session";
 import { ReflectionPieceIcon } from "@/games/reflection/ui/board/ReflectionPieceIcon";
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
-import { reflectionToneClassNames } from "@/games/reflection/ui/reflection-tone";
+import {
+  reflectionPieceBarClassNames,
+  reflectionToneClassNames,
+} from "@/games/reflection/ui/reflection-tone";
 import { cn } from "@/lib/utils";
 
 type ReflectionStockProps = {
@@ -59,7 +62,7 @@ export function ReflectionStock({
           aria-hidden="true"
           className={cn(
             "pointer-events-none absolute bottom-full left-1/2 flex h-4 -translate-x-1/2 items-center gap-1 whitespace-nowrap text-play-meta",
-            reflectionToneClassNames.selectionText,
+            "text-foreground",
           )}
         >
           <CornerLeftDown className="size-3" />
@@ -82,9 +85,18 @@ export function ReflectionStock({
             onClick={() => onTapStock(piece)}
             className={cn(
               "relative flex h-11 min-w-0 max-w-16 flex-1 touch-manipulation select-none items-center justify-center text-foreground outline-none transition-[background-color,color,opacity] duration-(--duration-fast) focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset enabled:hover:bg-accent/60 enabled:active:bg-accent disabled:opacity-40",
-              selected && reflectionToneClassNames.selectionSurface,
             )}
           >
+            {selected ? (
+              <span
+                aria-hidden="true"
+                data-selection-mark=""
+                className={cn(
+                  "pointer-events-none absolute inset-x-[25%] bottom-0 h-[3px]",
+                  reflectionPieceBarClassNames[piece],
+                )}
+              />
+            ) : null}
             <ReflectionPieceIcon piece={piece} size="stock" />
             <span className="absolute right-1 bottom-0.5 font-mono text-[0.6875rem] leading-none font-semibold tabular-nums text-muted-foreground">
               {remaining}
