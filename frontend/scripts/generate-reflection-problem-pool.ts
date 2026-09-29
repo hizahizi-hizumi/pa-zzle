@@ -48,7 +48,7 @@ const defaultPerLevel = {
  * 問題集の版。問題の並び（問題番号 `<レベル>-<番号>` が指す問題）が変わる作り直しをしたら上げる。
  * 生成器の版（`REFLECTION_GENERATOR_VERSION`）が上がったときも並びは変わるので上げる。
  */
-const poolVersion = "2";
+const poolVersion = "3";
 
 const usage = `Usage: bun run generate:reflection-pool -- [options]
 

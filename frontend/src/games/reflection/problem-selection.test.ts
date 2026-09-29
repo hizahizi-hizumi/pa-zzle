@@ -22,6 +22,10 @@ import {
   restoreReflectionProblem,
   selectReflectionProblemForDifficulty,
 } from "@/games/reflection/problem-selection";
+import {
+  isReflectionSolved,
+  listReflectionClueMatches,
+} from "@/games/reflection/puzzle/rules";
 
 const difficulties = reflectionDifficulties.map(({ id }) => id);
 
@@ -143,6 +147,29 @@ describe("問題集", () => {
             trace.retryCount >= minimumTrialRetryCount,
         ),
       ).toBe(true);
+    },
+    60_000,
+  );
+
+  test.each(difficulties)(
+    "レベル %s から抜き出した問題の正解配置では、全外周ヒントが一致してクリアになること",
+    (difficulty) => {
+      const sampled = sampleEvenly(
+        listPooledProblems(difficulty),
+        trialCheckedEntryCountPerDifficulty,
+      );
+
+      const results = sampled.map(({ problem }) => ({
+        allMatched: listReflectionClueMatches(
+          problem.solution,
+          problem.clues,
+        ).every(Boolean),
+        solved: isReflectionSolved(problem.solution, problem),
+      }));
+
+      expect(results).toEqual(
+        sampled.map(() => ({ allMatched: true, solved: true })),
+      );
     },
   );
 
