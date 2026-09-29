@@ -6,6 +6,7 @@ import { PlayableSlidePuzzle } from "@/game-catalog/slide-puzzle/PlayableSlidePu
 import { PlayableTakuzu } from "@/game-catalog/takuzu/PlayableTakuzu";
 import { PlayableWaterSort } from "@/game-catalog/water-sort/PlayableWaterSort";
 import { isMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
+import { restoreMinesweeperProblemWithoutAnalysis } from "@/games/minesweeper/problem/generator";
 import { parseNanpureDifficulty } from "@/games/nanpure/difficulty";
 import { isNanpurePlayRecord } from "@/games/nanpure/play-record";
 import { restoreNanpureProblem } from "@/games/nanpure/problem-selection";
@@ -91,7 +92,9 @@ export function RecordedProblemReplayView() {
     return (
       <PlayableMinesweeper
         difficulty={record.payload.difficulty}
-        initialProblemIdentity={record.payload.problemIdentity}
+        initialProblem={restoreMinesweeperProblemWithoutAnalysis(
+          record.payload.problemIdentity,
+        )}
       />
     );
   }

@@ -7,7 +7,7 @@ import {
   createMinesweeperPlayRecord,
   minesweeperPlayRecordDefinition,
 } from "@/games/minesweeper/play-record";
-import type { MinesweeperProblemIdentity } from "@/games/minesweeper/problem/problem";
+import type { MinesweeperRestoredProblem } from "@/games/minesweeper/problem/generator";
 import { MinesweeperDiagnostics } from "@/games/minesweeper/ui/MinesweeperDiagnostics";
 import { MinesweeperPlay } from "@/games/minesweeper/ui/MinesweeperPlay";
 import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
@@ -21,14 +21,14 @@ import { useNavigate } from "@/router";
 
 type PlayableMinesweeperProps = {
   difficulty: MinesweeperDifficulty;
-  initialProblemIdentity?: MinesweeperProblemIdentity;
+  initialProblem?: MinesweeperRestoredProblem;
 };
 
 export function PlayableMinesweeper({
   difficulty,
-  initialProblemIdentity,
+  initialProblem,
 }: PlayableMinesweeperProps) {
-  const play = useMinesweeperPlay(difficulty, initialProblemIdentity);
+  const play = useMinesweeperPlay(difficulty, initialProblem);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>

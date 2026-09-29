@@ -48,12 +48,13 @@ describe("useMinesweeperPlay", () => {
     });
   });
 
-  describe("再現用情報を渡した場合", () => {
+  describe("復元した問題を渡した場合", () => {
     const identity = toMinesweeperPoolIdentity(
       "5",
       listMinesweeperPoolEntries("5")[0]!,
     );
-    const { problem } = restoreMinesweeperProblemWithoutAnalysis(identity);
+    const restored = restoreMinesweeperProblemWithoutAnalysis(identity);
+    const { problem } = restored;
     const initialRevealedCellIndices = [
       ...problem.initialRevealedCellIndices,
     ].sort((left, right) => left - right);
@@ -69,7 +70,7 @@ describe("useMinesweeperPlay", () => {
     let hook: MinesweeperPlayHook;
 
     beforeEach(() => {
-      hook = renderHook(() => useMinesweeperPlay("5", identity));
+      hook = renderHook(() => useMinesweeperPlay("5", restored));
     });
 
     test("その問題を初期開示から始めること", () => {
