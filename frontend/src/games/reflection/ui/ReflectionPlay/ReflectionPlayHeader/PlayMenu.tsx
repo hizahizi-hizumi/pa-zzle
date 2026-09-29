@@ -6,6 +6,7 @@ import {
   RefreshCw,
   RotateCcw,
   SlidersHorizontal,
+  Wrench,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -22,10 +23,10 @@ type PlayMenuProps = {
   onRestart: () => void;
   onReplay: () => void;
   onStartNewProblem: () => void;
-  /** 難易度選択画面ができるまでは渡さず、項目を出さない。 */
-  onChangeDifficulty?: () => void;
+  onChangeDifficulty: () => void;
   onBackToHome: () => void;
   onOpenHowToPlay: () => void;
+  onOpenDiagnostics?: () => void;
 };
 
 export function PlayMenu({
@@ -36,6 +37,7 @@ export function PlayMenu({
   onChangeDifficulty,
   onBackToHome,
   onOpenHowToPlay,
+  onOpenDiagnostics,
 }: PlayMenuProps) {
   return (
     <DropdownMenu>
@@ -62,12 +64,10 @@ export function PlayMenu({
           <Play />
           別の問題
         </DropdownMenuItem>
-        {onChangeDifficulty && (
-          <DropdownMenuItem onSelect={onChangeDifficulty}>
-            <SlidersHorizontal />
-            難易度変更
-          </DropdownMenuItem>
-        )}
+        <DropdownMenuItem onSelect={onChangeDifficulty}>
+          <SlidersHorizontal />
+          難易度変更
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={onBackToHome}>
           <Home />
           ホーム
@@ -77,6 +77,15 @@ export function PlayMenu({
           <CircleHelp />
           遊び方
         </DropdownMenuItem>
+        {onOpenDiagnostics && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={onOpenDiagnostics}>
+              <Wrench />
+              検証情報
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

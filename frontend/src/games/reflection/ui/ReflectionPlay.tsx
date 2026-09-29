@@ -54,8 +54,10 @@ type ReflectionPlayProps = {
   onReplay: () => void;
   onClearAnimationComplete: () => void;
   onStartNewProblem: () => void;
-  onChangeDifficulty?: () => void;
+  onChangeDifficulty: () => void;
   onBackToHome: () => void;
+  /** 内部診断が有効なときだけ渡し、メニューに検証情報を出す。 */
+  onOpenDiagnostics?: () => void;
 };
 
 /** 数字キーの `1` から順に、ストックに並ぶ種類を選ぶ。 */
@@ -90,6 +92,7 @@ export function ReflectionPlay({
   onStartNewProblem,
   onChangeDifficulty,
   onBackToHome,
+  onOpenDiagnostics,
 }: ReflectionPlayProps) {
   // 初めて遊ぶときだけ、盤面より先に遊び方を開く（intro）。
   const [howToPlay, setHowToPlay] = useState<"closed" | "intro" | "open">(() =>
@@ -164,6 +167,7 @@ export function ReflectionPlay({
         onStartNewProblem={onStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
+        onOpenDiagnostics={onOpenDiagnostics}
         onOpenHowToPlay={() => setHowToPlay("open")}
       />
       <ReflectionHowToPlayDialog

@@ -1,11 +1,16 @@
+import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
 import {
+  createReflectionDiagnosticSnapshot,
   formatReflectionPoolProblemQuery,
   formatReflectionProblemQuery,
   hasReflectionProblemQuery,
+  parseReflectionDiagnosticSnapshot,
   parseReflectionProblemQuery,
+  restoreReflectionProblemFromDiagnosticSnapshot,
 } from "@/games/reflection/diagnostics";
 import { createReflectionProblemIdentity } from "@/games/reflection/problem/problem";
 import { toReflectionPooledProblem } from "@/games/reflection/problem/problem-pool";
+import { selectReflectionProblemForDifficulty } from "@/games/reflection/problem-selection";
 
 describe("parseReflectionProblemQuery", () => {
   const identity = createReflectionProblemIdentity(6, 6, 2);
@@ -86,4 +91,56 @@ describe("hasReflectionProblemQuery", () => {
       expect(result).toBe(expected);
     },
   );
+});
+
+describe("ReflectionDiagnosticSnapshot", () => {
+  const selected = selectReflectionProblemForDifficulty("4", "diagnostic-seed");
+  const snapshot = createReflectionDiagnosticSnapshot({
+    difficulty: "4",
+    problemIdentity: selected.identity,
+    buildRevision: "abcdef1234567890",
+  });
+  const serialized = serializeInternalDiagnosticSnapshot(snapshot);
+  const missing = createReflectionDiagnosticSnapshot({
+    difficulty: "1",
+    problemIdentity: createReflectionProblemIdentity(5, 2, 999_999),
+    buildRevision: null,
+  });
+  const invalidCases = [
+    ["形式の版が違う", { ...snapshot, formatVersion: 2 }],
+    ["別のゲーム", { ...snapshot, game: "takuzu" }],
+    ["未定義の難易度", { ...snapshot, difficulty: "9" }],
+    [
+      "扱わない盤面サイズ",
+      {
+        ...snapshot,
+        problemIdentity: {
+          ...snapshot.problemIdentity,
+          conditions: { ...snapshot.problemIdentity.conditions, size: 8 },
+        },
+      },
+    ],
+  ] as const;
+
+  test("コピー形式を復元して同じ問題を再現できること", () => {
+    const parsed = parseReflectionDiagnosticSnapshot(serialized);
+    const restored = restoreReflectionProblemFromDiagnosticSnapshot(parsed);
+
+    expect(parsed).toEqual(snapshot);
+    expect(restored?.problem).toEqual(selected.problem);
+  });
+
+  test("問題集に無い identity は復元できないこと", () => {
+    const restored = restoreReflectionProblemFromDiagnosticSnapshot(missing);
+
+    expect(restored).toBeNull();
+  });
+
+  test.each(invalidCases)("%s JSON を拒否すること", (_, value) => {
+    function act() {
+      return parseReflectionDiagnosticSnapshot(JSON.stringify(value));
+    }
+
+    expect(act).toThrow("Invalid Reflection diagnostic snapshot");
+  });
 });

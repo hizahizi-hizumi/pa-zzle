@@ -47,6 +47,7 @@ describe("ReflectionPlay", () => {
     onReplay: vi.fn(),
     onClearAnimationComplete: vi.fn(),
     onStartNewProblem: vi.fn(),
+    onChangeDifficulty: vi.fn(),
     onBackToHome: vi.fn(),
   };
 
@@ -169,6 +170,55 @@ describe("ReflectionPlay", () => {
       fireEvent.keyDown(firstCell as HTMLElement, { key: "Escape" });
 
       expect(callbacks.onClearSelection).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("ヘッダーの移動とメニューの場合", () => {
+    function openMenu(): void {
+      fireEvent.pointerDown(
+        screen.getByRole("button", { name: "その他の操作" }),
+        { button: 0, ctrlKey: false },
+      );
+    }
+
+    test("戻るボタンで難易度選択への移動を通知すること", () => {
+      renderPlay({});
+
+      fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
+
+      expect(callbacks.onChangeDifficulty).toHaveBeenCalledOnce();
+      expect(callbacks.onBackToHome).not.toHaveBeenCalled();
+    });
+
+    test.each([
+      ["難易度変更", "onChangeDifficulty"],
+      ["ホーム", "onBackToHome"],
+    ] as const)("メニューの%sで移動を通知すること", (name, callbackName) => {
+      renderPlay({});
+      openMenu();
+
+      fireEvent.click(screen.getByRole("menuitem", { name }));
+
+      expect(callbacks[callbackName]).toHaveBeenCalledOnce();
+    });
+
+    test("検証情報のつなぎ先を渡さなければメニューに検証情報を出さないこと", () => {
+      renderPlay({});
+      openMenu();
+
+      const item = screen.queryByRole("menuitem", { name: "検証情報" });
+
+      expect(item).toBeNull();
+    });
+
+    test("メニューの検証情報で検証情報を開く操作を通知すること", () => {
+      const onOpenDiagnostics = vi.fn();
+      renderPlay({ onOpenDiagnostics });
+      openMenu();
+
+      fireEvent.click(screen.getByRole("menuitem", { name: "検証情報" }));
+
+      expect(onOpenDiagnostics).toHaveBeenCalledOnce();
     });
   });
 

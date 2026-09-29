@@ -12,9 +12,10 @@ type ReflectionPlayHeaderProps = {
   onRestart: () => void;
   onReplay: () => void;
   onStartNewProblem: () => void;
-  onChangeDifficulty?: () => void;
+  onChangeDifficulty: () => void;
   onBackToHome: () => void;
   onOpenHowToPlay: () => void;
+  onOpenDiagnostics?: () => void;
 };
 
 export function ReflectionPlayHeader({
@@ -28,6 +29,7 @@ export function ReflectionPlayHeader({
   onChangeDifficulty,
   onBackToHome,
   onOpenHowToPlay,
+  onOpenDiagnostics,
 }: ReflectionPlayHeaderProps) {
   return (
     <header className="grid h-[4.5rem] shrink-0 grid-cols-[3rem_minmax(0,1fr)_3rem] items-start bg-background px-3 pt-2">
@@ -35,8 +37,8 @@ export function ReflectionPlayHeader({
         type="button"
         variant="ghost"
         size="icon-lg"
-        aria-label={onChangeDifficulty ? "難易度選択へ戻る" : "ホームへ戻る"}
-        onClick={onChangeDifficulty ?? onBackToHome}
+        aria-label="難易度選択へ戻る"
+        onClick={onChangeDifficulty}
       >
         <ArrowLeft />
       </Button>
@@ -53,6 +55,7 @@ export function ReflectionPlayHeader({
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
         onOpenHowToPlay={onOpenHowToPlay}
+        onOpenDiagnostics={onOpenDiagnostics}
       />
     </header>
   );

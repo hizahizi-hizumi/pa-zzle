@@ -1,11 +1,1 @@
-import { Navigate } from "@/router";
-
-export default function ReflectionDifficultyRedirect() {
-  return (
-    <Navigate
-      to="/puzzles/reflection/play/:difficulty"
-      params={{ difficulty: "1" }}
-      replace
-    />
-  );
-}
+export { ReflectionDifficultyView as default } from "@/views/ReflectionDifficultyView";
