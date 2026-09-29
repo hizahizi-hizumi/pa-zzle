@@ -171,7 +171,8 @@ function selectionAfterPlacing(
 
 /**
  * ストックを押す。`piece` は押したピースの種類。
- * - 盤面のピースを選んでいれば、そのピースをストックへ戻す（どの種類を押しても同じ）。
+ * - 盤面のピースを選んでいれば、同じ種類ならそのピースをストックへ戻し、別の種類（残りがあるもの）ならその種類に置き換える
+ *   （選んでいたピースはストックへ戻る）。どちらも置き直しに数え、選択を解除する。残りが無い別の種類では何もしない。
  * - そうでなければ、その種類を選ぶ。選んでいる種類をもう一度押すと選択を解除する。残りが無い種類は選べない。
  */
 export function tapReflectionSessionStock(
@@ -183,9 +184,20 @@ export function tapReflectionSessionStock(
 
   const { selection } = session;
   if (selection?.type === "cell") {
+    const selectedCell = session.board.cells[selection.cellIndex] ?? null;
+    if (
+      selectedCell !== piece &&
+      getReflectionSessionStock(session)[piece] <= 0
+    ) {
+      return session;
+    }
     return applyBoardChange(
       session,
-      withCell(session.board, selection.cellIndex, null),
+      withCell(
+        session.board,
+        selection.cellIndex,
+        selectedCell === piece ? null : piece,
+      ),
       null,
       true,
       operatedAt,
@@ -202,7 +214,8 @@ export function tapReflectionSessionStock(
 
 /**
  * 盤面のマスを押す。
- * - ストックの種類を選んでいれば、空きマスへ置く。別の種類のピースがあるマスでは、そのピースをストックへ戻して置き直す。
+ * - ストックの種類を選んでいれば、空きマスへ置く。ピースのあるマスでは置き換えず、そのピースを選ぶ（選択を切り替える）。
+ *   置き換えは、盤面のピースを選んでからストックの種類を押して行う。
  * - 盤面のピースを選んでいれば、空きマスへ移す、または別の種類のピースと入れ替える。同じマスを押すと選択を解除する。
  * - 何も選んでいなければ、ピースのあるマスを選ぶ。
  */
@@ -218,14 +231,16 @@ export function tapReflectionSessionCell(
   if (tappedCell === undefined) return session;
 
   if (selection?.type === "stock") {
-    if (tappedCell === selection.piece) return session;
+    if (tappedCell !== null) {
+      return changeSelection(session, { type: "cell", cellIndex });
+    }
 
     const nextBoard = withCell(board, cellIndex, selection.piece);
     return applyBoardChange(
       session,
       nextBoard,
       selectionAfterPlacing(session, nextBoard, selection.piece),
-      tappedCell !== null,
+      false,
       operatedAt,
     );
   }

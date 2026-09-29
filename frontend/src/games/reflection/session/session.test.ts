@@ -124,13 +124,31 @@ describe("tapReflectionSessionStock", () => {
   describe("盤面のピースを選んでいる場合", () => {
     const selected = tapReflectionSessionCell(slashAtCenter, 4, startedAt);
 
-    test("押した種類によらず、選んだピースをストックへ戻し置き直しに数えること", () => {
-      const next = tapReflectionSessionStock(selected, "black-hole", startedAt);
+    test("同じ種類を押すと、選んだピースをストックへ戻し置き直しに数えること", () => {
+      const next = tapReflectionSessionStock(selected, "slash", startedAt);
 
       expect(next.board.cells[4]).toBeNull();
       expect(getReflectionSessionStock(next).slash).toBe(1);
       expect(next.selection).toBeNull();
       expect(next.relocationCount).toBe(1);
+    });
+
+    test("別の種類を押すと、その種類に置き換えて選んでいたピースをストックへ戻し、置き直しに数えること", () => {
+      const next = tapReflectionSessionStock(selected, "black-hole", startedAt);
+
+      expect(next.board.cells[4]).toBe("black-hole");
+      expect(getReflectionSessionStock(next)).toMatchObject({
+        slash: 1,
+        "black-hole": 0,
+      });
+      expect(next.selection).toBeNull();
+      expect(next.relocationCount).toBe(1);
+    });
+
+    test("残りが無い別の種類を押しても何もしないこと", () => {
+      const next = tapReflectionSessionStock(selected, "reflector", startedAt);
+
+      expect(next).toBe(selected);
     });
   });
 });
@@ -176,12 +194,12 @@ describe("tapReflectionSessionCell", () => {
       expect(next.selection).toEqual({ type: "stock", piece: "slash" });
     });
 
-    test("別の種類のピースがあるマスでは、元のピースをストックへ戻して置き、置き直しに数えること", () => {
+    test("ピースのあるマスでは置き換えず、そのピースを選ぶこと", () => {
       const next = tapReflectionSessionCell(selectedBlackHole, 4, startedAt);
 
-      expect(next.board.cells[4]).toBe("black-hole");
-      expect(getReflectionSessionStock(next).slash).toBe(1);
-      expect(next.relocationCount).toBe(1);
+      expect(next.board).toBe(selectedBlackHole.board);
+      expect(next.selection).toEqual({ type: "cell", cellIndex: 4 });
+      expect(next.relocationCount).toBe(0);
     });
   });
 

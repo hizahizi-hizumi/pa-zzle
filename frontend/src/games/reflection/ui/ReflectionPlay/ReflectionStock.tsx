@@ -15,6 +15,8 @@ type ReflectionStockProps = {
   inventory: ReflectionInventory;
   stock: ReflectionInventory;
   selection: ReflectionSelection | null;
+  /** 盤面で選んでいるマスのピース。盤面のピースを選んでいないときは `null`。 */
+  selectedCell: ReflectionPiece | null;
   disabled: boolean;
   onTapStock: (piece: ReflectionPiece) => void;
 };
@@ -34,10 +36,13 @@ export function ReflectionStock({
   inventory,
   stock,
   selection,
+  selectedCell,
   disabled,
   onTapStock,
 }: ReflectionStockProps) {
   const returning = !disabled && selection?.type === "cell";
+  // 盤面のピースを選んでいる間、そのピースと同じ種類（押すと戻す）と、残りのある種類（押すと置き換える）を押せる。
+  const selectedCellPiece = returning ? selectedCell : null;
   const pieces = listReflectionStockPieces(inventory);
 
   return (
@@ -71,7 +76,9 @@ export function ReflectionStock({
             type="button"
             aria-label={`${reflectionPieceLabels[piece]} 残り${remaining}`}
             aria-pressed={selected}
-            disabled={disabled || (!returning && remaining === 0)}
+            disabled={
+              disabled || (remaining === 0 && piece !== selectedCellPiece)
+            }
             onClick={() => onTapStock(piece)}
             className={cn(
               "relative flex h-11 min-w-0 max-w-16 flex-1 touch-manipulation select-none items-center justify-center text-foreground outline-none transition-[background-color,color,opacity] duration-(--duration-fast) focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset enabled:hover:bg-accent/60 enabled:active:bg-accent disabled:opacity-40",

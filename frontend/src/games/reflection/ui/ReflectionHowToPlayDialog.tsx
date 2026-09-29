@@ -179,7 +179,7 @@ export function ReflectionHowToPlayDialog({
           </li>
           <li>
             <p>
-              ストックでピースを選び、マスを押して置く。置いたピースを押して選ぶと、別のマスへ移す・入れ替える・ストックへ戻すができる。
+              ストックでピースを選び、空いたマスを押して置く。置いたピースを押して選ぶと、マスを押して移す・入れ替える、ストックの別の種類を押して置き換える、同じ種類を押してストックへ戻すができる。
             </p>
           </li>
           <li className="space-y-2">
@@ -210,7 +210,7 @@ export function ReflectionHowToPlayDialog({
           <li className="hidden pointer-fine:list-item">
             <p className="text-muted-foreground">
               キーボード: 矢印キーで移動、Enter
-              で押す、数字キーでストックを選ぶ、Delete でストックへ戻す、Esc
+              で押す、数字キーでストックを押す、Delete でストックへ戻す、Esc
               で選択を解除。
             </p>
           </li>
