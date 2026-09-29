@@ -20,16 +20,14 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { getGameResultLevel } from "@/games/result";
 import waterSortPictogramSvg from "@/games/water-sort/assets/pictogram.svg?raw";
 import {
   getWaterSortDifficultyLabel,
   type WaterSortDifficulty,
 } from "@/games/water-sort/difficulty";
 import type { WaterSortResult } from "@/games/water-sort/play/use-water-sort-play";
-import {
-  getWaterSortGameResultLevel,
-  WATER_SORT_SCORE_MAXIMUMS,
-} from "@/games/water-sort/score";
+import { WATER_SORT_SCORE_MAXIMUMS } from "@/games/water-sort/score";
 import { formatWaterSortElapsedTime } from "@/games/water-sort/ui/format-elapsed-time";
 import {
   formatWaterSortMoveDelta,
@@ -64,7 +62,7 @@ export function WaterSortResultScreen({
   onOpenDiagnostics,
 }: WaterSortResultScreenProps) {
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const resultLevel = getWaterSortGameResultLevel(result.score.total);
+  const resultLevel = getGameResultLevel(result.score.total);
 
   return (
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-y-auto bg-background">
