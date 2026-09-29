@@ -117,11 +117,13 @@ export function ParkingJamPlay({
           onExitAnimationComplete={onClearAnimationComplete}
         />
       </main>
-      <footer className="flex h-20 shrink-0 items-center justify-center">
-        <UndoButton
-          disabled={!canUndo || status !== "playing"}
-          onUndo={onUndo}
-        />
+      <footer className="grid h-28 shrink-0 items-end px-4 pb-2">
+        <div className="flex h-14 items-center justify-center">
+          <UndoButton
+            disabled={!canUndo || status !== "playing"}
+            onUndo={onUndo}
+          />
+        </div>
       </footer>
     </section>
   );
