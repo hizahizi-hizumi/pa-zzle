@@ -28,11 +28,11 @@ import {
 } from "@/games/takuzu/difficulty";
 import type { TakuzuResult } from "@/games/takuzu/play/use-takuzu-play";
 import { TAKUZU_SCORE_MAXIMUMS } from "@/games/takuzu/score";
-import { formatElapsedTime } from "@/games/takuzu/ui/format-elapsed-time";
-import { formatTakuzuTimeDelta } from "@/games/takuzu/ui/format-performance-delta";
 import { DetailMetric } from "@/games/takuzu/ui/result/TakuzuResultScreen/DetailMetric";
 import { ResultMetric } from "@/games/takuzu/ui/result/TakuzuResultScreen/ResultMetric";
 import { ScoreCriteria } from "@/games/takuzu/ui/result/TakuzuResultScreen/ScoreCriteria";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
+import { formatElapsedTimeDelta } from "@/lib/format-performance-delta";
 
 type TakuzuResultScreenProps = {
   difficulty: TakuzuDifficulty;
@@ -92,7 +92,7 @@ export function TakuzuResultScreen({
           <ResultMetric
             label="時間"
             value={formatElapsedTime(result.elapsedMs)}
-            detail={`基準 ${formatTakuzuTimeDelta(result.timeDeltaMs)}`}
+            detail={`基準 ${formatElapsedTimeDelta(result.timeDeltaMs)}`}
           />
           <ResultMetric
             label="置き直し"

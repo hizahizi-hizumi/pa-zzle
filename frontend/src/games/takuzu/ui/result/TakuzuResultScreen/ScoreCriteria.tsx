@@ -9,7 +9,7 @@ import {
   TAKUZU_SPEED_PER_ROUND_MS,
   TAKUZU_UNDO_PENALTY,
 } from "@/games/takuzu/score";
-import { formatElapsedTime } from "@/games/takuzu/ui/format-elapsed-time";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type ScoreCriteriaProps = {
   result: TakuzuResult;

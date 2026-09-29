@@ -11,8 +11,8 @@ import type {
 import type { SlidePuzzleDirection } from "@/games/slide-puzzle/puzzle/rules";
 import type { SlidePuzzleBoard as SlidePuzzleBoardState } from "@/games/slide-puzzle/puzzle/state";
 import { SlidePuzzleBoard } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard";
-import { formatSlidePuzzleElapsedTime } from "@/games/slide-puzzle/ui/format-elapsed-time";
 import { SlidePuzzleResultScreen } from "@/games/slide-puzzle/ui/SlidePuzzlePlay/SlidePuzzleResultScreen";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type SlidePuzzlePlayProps = {
   difficulty: SlidePuzzleDifficulty;
@@ -125,7 +125,7 @@ export function SlidePuzzlePlay({
         metricGroups={[
           [
             { label: "手数", value: String(moveCount) },
-            { label: "時間", value: formatSlidePuzzleElapsedTime(elapsedMs) },
+            { label: "時間", value: formatElapsedTime(elapsedMs) },
           ],
         ]}
         onRestart={onRestart}

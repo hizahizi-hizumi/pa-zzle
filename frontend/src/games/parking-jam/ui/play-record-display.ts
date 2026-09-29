@@ -3,7 +3,7 @@ import {
   parseParkingJamRecordedDifficulty,
 } from "@/games/parking-jam/difficulty";
 import { parkingJamPlayRecordDefinition } from "@/games/parking-jam/play-record";
-import { formatParkingJamElapsedTime } from "@/games/parking-jam/ui/format-elapsed-time";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 export const parkingJamPlayRecordDisplay = {
   definition: parkingJamPlayRecordDefinition,
@@ -27,7 +27,7 @@ export const parkingJamPlayRecordDisplay = {
       id: "elapsed-ms",
       label: "クリア時間",
       historyLabel: "時間",
-      formatValue: formatParkingJamElapsedTime,
+      formatValue: formatElapsedTime,
       axis: { kind: "duration-ms" as const, minimum: 0 },
     },
     {

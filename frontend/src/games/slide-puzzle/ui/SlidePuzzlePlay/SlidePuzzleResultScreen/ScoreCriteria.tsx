@@ -4,7 +4,7 @@ import {
   SLIDE_PUZZLE_SPEED_PER_OPTIMAL_MOVE_MS,
   slidePuzzleSpeedInitialRecognitionMsByBoardSize,
 } from "@/games/slide-puzzle/score";
-import { formatScoreTime } from "@/games/slide-puzzle/ui/SlidePuzzlePlay/SlidePuzzleResultScreen/format-score-time";
+import { formatElapsedTimeWithTenths } from "@/lib/format-elapsed-time";
 
 type ScoreCriteriaProps = {
   result: SlidePuzzleResult;
@@ -29,9 +29,9 @@ export function ScoreCriteria({ result }: ScoreCriteriaProps) {
       <div>
         <dt className="font-semibold text-foreground">速さ</dt>
         <dd className="mt-1">
-          基準時間{formatScoreTime(result.speedFullScoreMs)}以内で
+          基準時間{formatElapsedTimeWithTenths(result.speedFullScoreMs)}以内で
           {SLIDE_PUZZLE_SCORE_MAXIMUMS.speed}点。
-          {formatScoreTime(speedZeroScoreMs)}
+          {formatElapsedTimeWithTenths(speedZeroScoreMs)}
           以上で0点、その間は時間に応じて減点。基準時間は
           {`盤面把握${slidePuzzleSpeedInitialRecognitionMsByBoardSize[result.boardSize] / 1000}秒 + 最短${result.optimalMoveCount}手 × ${SLIDE_PUZZLE_SPEED_PER_OPTIMAL_MOVE_MS / 1000}秒`}
           。

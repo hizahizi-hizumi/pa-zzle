@@ -16,9 +16,9 @@ import {
   MinesweeperBoard,
   type MinesweeperInputMode,
 } from "@/games/minesweeper/ui/board/MinesweeperBoard";
-import { formatElapsedTime } from "@/games/minesweeper/ui/format-elapsed-time";
 import { InputModeToggle } from "@/games/minesweeper/ui/MinesweeperPlay/InputModeToggle";
 import { MinesweeperResultScreen } from "@/games/minesweeper/ui/result/MinesweeperResultScreen";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type MinesweeperPlayProps = {
   difficulty: MinesweeperDifficulty;

@@ -11,9 +11,9 @@ import type {
 } from "@/games/water-sort/play/use-water-sort-play";
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
-import { formatWaterSortElapsedTime } from "@/games/water-sort/ui/format-elapsed-time";
 import { DeadlockNotice } from "@/games/water-sort/ui/WaterSortPlay/DeadlockNotice";
 import { WaterSortResultScreen } from "@/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type WaterSortPlayProps = {
   difficulty: WaterSortDifficulty;
@@ -93,7 +93,7 @@ export function WaterSortPlay({
         metricGroups={[
           [
             { label: "手数", value: String(moveCount) },
-            { label: "時間", value: formatWaterSortElapsedTime(elapsedMs) },
+            { label: "時間", value: formatElapsedTime(elapsedMs) },
             { label: "待った", value: String(undoCount) },
           ],
         ]}

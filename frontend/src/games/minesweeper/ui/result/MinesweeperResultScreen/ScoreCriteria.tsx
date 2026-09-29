@@ -6,7 +6,7 @@ import {
   MINESWEEPER_SPEED_PER_MINE_MS,
   MINESWEEPER_SPEED_PER_MINIMUM_OPEN_MS,
 } from "@/games/minesweeper/score";
-import { formatElapsedTime } from "@/games/minesweeper/ui/format-elapsed-time";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type ScoreCriteriaProps = {
   result: MinesweeperResult;

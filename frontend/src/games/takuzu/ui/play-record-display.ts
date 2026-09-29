@@ -3,7 +3,7 @@ import {
   parseTakuzuDifficulty,
 } from "@/games/takuzu/difficulty";
 import { takuzuPlayRecordDefinition } from "@/games/takuzu/play-record";
-import { formatTakuzuTimeDelta } from "@/games/takuzu/ui/format-performance-delta";
+import { formatElapsedTimeDelta } from "@/lib/format-performance-delta";
 
 export const takuzuPlayRecordDisplay = {
   definition: takuzuPlayRecordDefinition,
@@ -27,7 +27,7 @@ export const takuzuPlayRecordDisplay = {
       id: "time-delta-ms",
       label: "基準時間との差",
       historyLabel: "時間差",
-      formatValue: formatTakuzuTimeDelta,
+      formatValue: formatElapsedTimeDelta,
       referenceValue: 0,
       axis: { kind: "duration-ms" as const },
     },

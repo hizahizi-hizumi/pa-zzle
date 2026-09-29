@@ -6,7 +6,7 @@ import {
   NANPURE_SPEED_PENALTY_PER_INTERVAL,
   NANPURE_UNDO_PENALTY,
 } from "@/games/nanpure/score";
-import { formatElapsedTime } from "@/games/nanpure/ui/format-elapsed-time";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 export function ScoreCriteria() {
   return (

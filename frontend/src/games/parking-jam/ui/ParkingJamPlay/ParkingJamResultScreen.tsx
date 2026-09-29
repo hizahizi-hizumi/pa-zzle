@@ -20,8 +20,8 @@ import {
   PARKING_JAM_SCORE_MAXIMUMS,
   PARKING_JAM_UNDO_PENALTY,
 } from "@/games/parking-jam/score";
-import { formatParkingJamElapsedTime } from "@/games/parking-jam/ui/format-elapsed-time";
 import { getGameResultLevel } from "@/games/result";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type ParkingJamResultScreenProps = {
   difficultyLabel: string;
@@ -66,7 +66,7 @@ export function ParkingJamResultScreen({
           <div className="rounded-xl border px-2 py-2 text-center">
             <dt className="text-xs text-muted-foreground">時間</dt>
             <dd className="mt-1 font-mono text-base font-semibold tabular-nums">
-              {formatParkingJamElapsedTime(result.elapsedMs)}
+              {formatElapsedTime(result.elapsedMs)}
             </dd>
           </div>
           <div className="rounded-xl border px-2 py-2 text-center">
@@ -147,7 +147,7 @@ export function ParkingJamResultScreen({
               {PARKING_JAM_FAILED_MOVE_PENALTY}点
             </p>
             <p>
-              速さ: {formatParkingJamElapsedTime(result.speedFullScoreMs)}
+              速さ: {formatElapsedTime(result.speedFullScoreMs)}
               まで満点、2倍の時間で0点
             </p>
             <p>

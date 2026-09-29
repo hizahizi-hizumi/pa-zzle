@@ -16,10 +16,10 @@ import type {
 } from "@/games/takuzu/session/session";
 import { TakuzuClearAnimation } from "@/games/takuzu/ui/board/clear/TakuzuClearAnimation";
 import { TakuzuBoard } from "@/games/takuzu/ui/board/TakuzuBoard";
-import { formatElapsedTime } from "@/games/takuzu/ui/format-elapsed-time";
 import { readTakuzuHowToPlaySeen } from "@/games/takuzu/ui/how-to-play-seen";
 import { TakuzuResultScreen } from "@/games/takuzu/ui/result/TakuzuResultScreen";
 import { TakuzuHowToPlayDialog } from "@/games/takuzu/ui/TakuzuHowToPlayDialog";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type TakuzuPlayProps = {
   difficulty: TakuzuDifficulty;
