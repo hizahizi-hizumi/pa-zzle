@@ -195,5 +195,35 @@ describe("runEvaluationPlan", () => {
     });
     expect(result.diagnostics[0]?.partProbability).toBeUndefined();
   });
+
+  test("provider requestの失敗に、どのrequestかと推定input tokenを添える", async () => {
+    const rule = sampleRule();
+    const plan = buildEvaluationPlan({
+      documents: [
+        {
+          path: "frontend/example.test.ts",
+          source: "const value = 1;\n",
+        },
+      ],
+      rules: [rule],
+      extractor,
+      matchesPath: () => true,
+    });
+    const taskId = plan.files[0]?.tasks[0]?.id;
+    // 判定を持たないfake providerはevaluateでthrowする。
+    const provider = new FakeDecisionProvider(
+      {},
+      { estimate: () => ({ state: 40, questions: [7, 5], total: 63 }) },
+    );
+
+    const run = runEvaluationPlan({ plan, rules: [rule], provider });
+
+    await expect(run).rejects.toThrow(
+      `provider requestに失敗しました (batch frontend/example.test.ts#0, file frontend/example.test.ts, 推定input 63 tokens: state 40, questions 12 (2判定)): fake decisionがありません: ${taskId}`,
+    );
+    await expect(run).rejects.toMatchObject({
+      cause: { message: `fake decisionがありません: ${taskId}` },
+    });
+  });
 });
 
