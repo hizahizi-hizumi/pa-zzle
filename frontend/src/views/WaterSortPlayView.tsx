@@ -1,6 +1,6 @@
+import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
 import { parseWaterSortDifficulty } from "@/games/water-sort/difficulty";
 import { useParams } from "@/router";
-import { InvalidDifficulty } from "@/views/WaterSortPlayView/InvalidDifficulty";
 import { PlayableWaterSort } from "@/views/WaterSortPlayView/PlayableWaterSort";
 
 export function WaterSortPlayView() {
@@ -10,7 +10,12 @@ export function WaterSortPlayView() {
   const difficulty = parseWaterSortDifficulty(difficultyParam);
 
   if (!difficulty) {
-    return <InvalidDifficulty />;
+    return (
+      <PlayUnavailableNotice
+        title="この難易度は選べません"
+        backTo="/puzzles/water-sort"
+      />
+    );
   }
 
   return <PlayableWaterSort difficulty={difficulty} />;

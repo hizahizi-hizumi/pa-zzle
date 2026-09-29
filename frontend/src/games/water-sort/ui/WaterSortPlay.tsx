@@ -1,6 +1,7 @@
 import { type ReactNode, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
+import { UndoButton } from "@/components/UndoButton";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import type {
   WaterSortOperation,
@@ -10,7 +11,6 @@ import type {
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
 import { DeadlockNotice } from "@/games/water-sort/ui/WaterSortPlay/DeadlockNotice";
-import { UndoButton } from "@/games/water-sort/ui/WaterSortPlay/UndoButton";
 import { WaterSortPlayHeader } from "@/games/water-sort/ui/WaterSortPlay/WaterSortPlayHeader";
 import { WaterSortResultScreen } from "@/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen";
 

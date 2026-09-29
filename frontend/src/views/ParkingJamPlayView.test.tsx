@@ -64,10 +64,12 @@ describe("ParkingJamPlayView", () => {
       renderAt(`/puzzles/parking-jam/play/${value}`);
     });
 
-    test("選べない難易度であることを示すこと", () => {
+    test("選べない難易度であることを示し難易度選択へ戻る導線を出すこと", () => {
       const message = screen.getByText("この難易度は選べません");
+      const backLink = screen.getByRole("link", { name: "難易度選択へ戻る" });
 
       expect(message).toBeTruthy();
+      expect(backLink.getAttribute("href")).toBe("/puzzles/parking-jam");
     });
   });
 

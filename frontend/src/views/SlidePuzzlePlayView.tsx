@@ -1,6 +1,6 @@
+import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
 import { parseSlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import { useParams } from "@/router";
-import { InvalidDifficulty } from "@/views/SlidePuzzlePlayView/InvalidDifficulty";
 import { PlayableSlidePuzzle } from "@/views/SlidePuzzlePlayView/PlayableSlidePuzzle";
 
 export function SlidePuzzlePlayView() {
@@ -10,7 +10,12 @@ export function SlidePuzzlePlayView() {
   const difficulty = parseSlidePuzzleDifficulty(difficultyParam);
 
   if (!difficulty) {
-    return <InvalidDifficulty />;
+    return (
+      <PlayUnavailableNotice
+        title="この難易度は選べません"
+        backTo="/puzzles/slide-puzzle"
+      />
+    );
   }
 
   return <PlayableSlidePuzzle difficulty={difficulty} />;

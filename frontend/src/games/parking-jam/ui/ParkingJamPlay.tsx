@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
+import { UndoButton } from "@/components/UndoButton";
 import type {
   ParkingJamOperation,
   ParkingJamProgress,
@@ -15,7 +16,6 @@ import type {
 import { ParkingJamBoard } from "@/games/parking-jam/ui/board/ParkingJamBoard";
 import { ParkingJamPlayHeader } from "@/games/parking-jam/ui/ParkingJamPlay/ParkingJamPlayHeader";
 import { ParkingJamResultScreen } from "@/games/parking-jam/ui/ParkingJamPlay/ParkingJamResultScreen";
-import { UndoButton } from "@/games/parking-jam/ui/ParkingJamPlay/UndoButton";
 
 type ParkingJamPlayProps = {
   /** 結果画面に出す難易度の表示名。 */
@@ -117,11 +117,13 @@ export function ParkingJamPlay({
           onExitAnimationComplete={onClearAnimationComplete}
         />
       </main>
-      <footer className="flex h-20 shrink-0 items-center justify-center">
-        <UndoButton
-          disabled={!canUndo || status !== "playing"}
-          onUndo={onUndo}
-        />
+      <footer className="grid h-28 shrink-0 items-end px-4 pb-2">
+        <div className="flex h-14 items-center justify-center">
+          <UndoButton
+            disabled={!canUndo || status !== "playing"}
+            onUndo={onUndo}
+          />
+        </div>
       </footer>
     </section>
   );
