@@ -1,4 +1,5 @@
-import { hashProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import type { ProblemSeed } from "@/games/problem-seed";
+import { selectProblemPoolEntry } from "@/games/problem-selection";
 import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
 import {
   isReflectionProblemIdentity,
@@ -22,14 +23,13 @@ export function selectReflectionProblemForDifficulty(
   difficulty: ReflectionDifficulty,
   seed: ProblemSeed,
 ): ReflectionPooledProblem {
-  const entries = listReflectionPoolEntries(difficulty);
-  if (entries.length === 0) {
-    throw new Error(`No level ${difficulty} Reflection problem is available`);
-  }
-  return toReflectionPooledProblem(
-    difficulty,
-    hashProblemSeed(seed) % entries.length,
+  // 問題集の中の位置（問題番号）を添えて復元するので、問題そのものではなく位置を選ぶ。
+  const entryIndex = selectProblemPoolEntry(
+    [...listReflectionPoolEntries(difficulty).keys()],
+    seed,
+    `level ${difficulty} Reflection`,
   );
+  return toReflectionPooledProblem(difficulty, entryIndex);
 }
 
 /**

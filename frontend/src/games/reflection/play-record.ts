@@ -182,7 +182,9 @@ export function getReflectionPlayRecordTimeDelta(
   });
 }
 
-export const reflectionPlayRecordDefinition: PlayRecordDefinition = {
+export type ReflectionPlayRecordMetricId = "play-score" | "time-delta-ms";
+
+export const reflectionPlayRecordDefinition = {
   gameId: REFLECTION_GAME_ID,
   isRecord: isReflectionPlayRecord,
   getComparisonKey(record) {
@@ -200,4 +202,4 @@ export const reflectionPlayRecordDefinition: PlayRecordDefinition = {
       getValue: getReflectionPlayRecordTimeDelta,
     },
   ],
-};
+} satisfies PlayRecordDefinition<ReflectionPlayRecordMetricId>;
