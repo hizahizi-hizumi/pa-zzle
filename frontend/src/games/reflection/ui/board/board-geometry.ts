@@ -130,36 +130,51 @@ export function getReflectionBoardOrigin(): ReflectionPoint {
   return { x: BOARD_OFFSET, y: BOARD_OFFSET };
 }
 
-/** 光路の端を外周ヒントの縁から盤面側へ寄せる量（マス単位）。 */
-const LASER_END_INSET = 0.05;
-
 /**
- * 光路の端の位置。外周ヒントの盤面側の縁から、盤面との隙間へ少し入った点。
- * 端の点や矢印を外周ヒント（一致の地）に重ねず、盤面の外枠の外側に置く。
+ * 盤面の縁の、外周の位置 `entry` の列（行）の中点から、盤面の内側へ `inset`（マス単位）だけ入った点。
+ * 盤面の外枠は盤面の外側に描くので、盤面の縁が外枠の内側の縁になる。
  */
 export function getReflectionLaserEnd(
   size: number,
   entry: ReflectionEntry,
+  inset: number,
 ): ReflectionPoint {
   const anchor = getReflectionClueAnchor(size, entry);
   const { dx, dy } = getReflectionOutwardVector(entry.side);
-  return {
-    x: anchor.x - dx * LASER_END_INSET,
-    y: anchor.y - dy * LASER_END_INSET,
-  };
+  const distance = GAP_TRACK + inset;
+  return { x: anchor.x - dx * distance, y: anchor.y - dy * distance };
 }
 
-/** 光路の折れ線。入った外周の端・曲がる／はね返るマスの中心・出た外周の端（吸収ならそのマスの中心）を結ぶ。 */
+/** 光路の両端を盤面の縁からどれだけ内側に置くか（マス単位）。端の印の大きさに合わせて決める。 */
+export type ReflectionLaserEndInsets = {
+  /** 入った位置（入口の印を置く端）。 */
+  entry: number;
+  /** 外へ出た位置（出口の矢印を置く端）。反射は入った位置から出るので、入った側の端もこれを使う。 */
+  exit: number;
+};
+
+/**
+ * 光路の折れ線。入った端・曲がる／はね返るマスの中心・出た端（吸収ならそのマスの中心）を結ぶ。
+ * 両端は盤面の内側に置き、光路が外枠をまたいで外へ出ないようにする。
+ */
 export function getReflectionLaserPoints(
   size: number,
   entry: ReflectionEntry,
   trace: ReflectionLaserTrace,
+  insets: ReflectionLaserEndInsets,
 ): ReflectionPoint[] {
   const turns = trace.path
     .filter((step) => step.leaving !== step.entering)
     .map((step) => getCellCenter(size, step.cellIndex));
-  const end = trace.exit ? [getReflectionLaserEnd(size, trace.exit)] : [];
-  return [getReflectionLaserEnd(size, entry), ...turns, ...end];
+  const start = getReflectionLaserEnd(
+    size,
+    entry,
+    trace.outcome === "reflect" ? insets.exit : insets.entry,
+  );
+  const end = trace.exit
+    ? [getReflectionLaserEnd(size, trace.exit, insets.exit)]
+    : [];
+  return [start, ...turns, ...end];
 }
 
 export type ReflectionTracedEntry = {

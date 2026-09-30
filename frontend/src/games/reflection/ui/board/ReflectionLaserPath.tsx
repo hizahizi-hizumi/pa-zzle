@@ -6,6 +6,7 @@ import {
   getReflectionLaserEnd,
   getReflectionLaserPoints,
   getReflectionOutwardVector,
+  type ReflectionLaserEndInsets,
   type ReflectionPoint,
 } from "@/games/reflection/ui/board/board-geometry";
 
@@ -21,9 +22,17 @@ const LASER_WIDTH = 0.075;
 /** 入口の印（光路に直交する短い太線）の半分の長さと太さ。 */
 const ENTRY_MARK_HALF_LENGTH = 0.2;
 const ENTRY_MARK_WIDTH = 0.1;
-/** 出口の矢印。盤面との隙間（マスの0.2）に収まる大きさにする。 */
+/** 出口の矢印。 */
 const ARROW_LENGTH = 0.17;
 const ARROW_HALF_WIDTH = 0.11;
+/**
+ * 端の印は盤面の内側に置く。入口の印は外側の縁を、出口の矢印は先を盤面の縁（外枠の内側の縁）にそろえる。
+ * 光路の端は印の中に隠れる位置に置き、線の丸い端が印から出ないようにする。
+ */
+const LASER_END_INSETS: ReflectionLaserEndInsets = {
+  entry: ENTRY_MARK_WIDTH / 2,
+  exit: ARROW_LENGTH / 2,
+};
 
 function formatPoints(points: readonly ReflectionPoint[]): string {
   return points.map(({ x, y }) => `${x},${y}`).join(" ");
@@ -41,15 +50,11 @@ function getArrowPoints(
   ]);
 }
 
-/** 入口の印。光路の端から太さの半分だけ盤面側へ寄せ、外周ヒント（一致の地）に重ねない。 */
+/** 入口の印。外側の縁が盤面の縁に沿う。 */
 function getEntryMarkPoints(
-  end: ReflectionPoint,
+  center: ReflectionPoint,
   { dx, dy }: { dx: number; dy: number },
 ): string {
-  const center = {
-    x: end.x - (dx * ENTRY_MARK_WIDTH) / 2,
-    y: end.y - (dy * ENTRY_MARK_WIDTH) / 2,
-  };
   return formatPoints([
     {
       x: center.x - dy * ENTRY_MARK_HALF_LENGTH,
@@ -64,8 +69,8 @@ function getEntryMarkPoints(
 
 /**
  * 1本の光路。座標はマス1辺を1とする図の単位。
- * 両端は外周ヒントの縁ではなく、外周ヒントと盤面の間の隙間に置き、外周ヒント（一致の地）に重ねない。
- * 入った位置（押した外周ヒントの前）に光路と直交する短い太線、外へ出た位置に外向きの矢印を置き、向きを示す。
+ * 光路と端の印は盤面の外枠の内側で止め、外枠をまたいで外へ出さない。
+ * 入った位置（押した外周ヒントの前の盤面の縁）に光路と直交する短い太線、外へ出た位置に先が盤面の縁に接する外向きの矢印を置き、向きを示す。
  * 反射は入った位置へ戻って出るので矢印だけ、吸収は入口の印だけになる。
  */
 export function ReflectionLaserPath({
@@ -74,7 +79,7 @@ export function ReflectionLaserPath({
   trace,
   clearStep,
 }: ReflectionLaserPathProps) {
-  const points = getReflectionLaserPoints(size, entry, trace);
+  const points = getReflectionLaserPoints(size, entry, trace, LASER_END_INSETS);
   const { exit } = trace;
 
   return (
@@ -93,7 +98,7 @@ export function ReflectionLaserPath({
         <polyline
           data-laser-entry=""
           points={getEntryMarkPoints(
-            getReflectionLaserEnd(size, entry),
+            getReflectionLaserEnd(size, entry, LASER_END_INSETS.entry),
             getReflectionOutwardVector(entry.side),
           )}
           fill="none"
@@ -106,7 +111,7 @@ export function ReflectionLaserPath({
         <polygon
           data-laser-arrow=""
           points={getArrowPoints(
-            getReflectionLaserEnd(size, exit),
+            getReflectionLaserEnd(size, exit, 0),
             getReflectionOutwardVector(exit.side),
           )}
           fill="currentColor"

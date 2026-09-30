@@ -11,8 +11,11 @@ describe("getReflectionLaserPoints", () => {
   const entry = { side: "left", index: 1 } as const;
   const trace = traceReflectionLaser(board, entry);
 
-  test("入った外周の端・曲がるマスの中心・出た外周の端を結び、端は外周ヒントの縁から盤面との隙間へ寄せること", () => {
-    const points = getReflectionLaserPoints(board.size, entry, trace);
+  test("入った端・曲がるマスの中心・出た端を結び、両端は盤面の縁から指定した分だけ内側に置くこと", () => {
+    const points = getReflectionLaserPoints(board.size, entry, trace, {
+      entry: 0.05,
+      exit: 0.1,
+    });
 
     expect(
       points.map(({ x, y }) => ({
@@ -20,10 +23,26 @@ describe("getReflectionLaserPoints", () => {
         y: Number(y.toFixed(6)),
       })),
     ).toEqual([
-      { x: 0.85, y: 2.5 },
+      { x: 1.05, y: 2.5 },
       { x: 2.5, y: 2.5 },
-      { x: 2.5, y: 0.85 },
+      { x: 2.5, y: 1.1 },
     ]);
+  });
+});
+
+describe("getReflectionLaserPoints（反射）", () => {
+  test("入った位置へ戻って出る光路は、両端とも出た端の位置に置くこと", () => {
+    const board = parseReflectionBoard(["...", "..o", "..."]);
+    const entry = { side: "left", index: 1 } as const;
+    const trace = traceReflectionLaser(board, entry);
+
+    const points = getReflectionLaserPoints(board.size, entry, trace, {
+      entry: 0.05,
+      exit: 0.1,
+    });
+
+    expect(points[0]).toEqual({ x: 1.1, y: 2.5 });
+    expect(points.at(-1)).toEqual({ x: 1.1, y: 2.5 });
   });
 });
 

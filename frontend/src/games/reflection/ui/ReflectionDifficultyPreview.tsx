@@ -40,10 +40,12 @@ const previewStrip = {
   pairCounts: Record<ReflectionDifficulty, number>;
 };
 
-/** 図の上下と左右で、帯・入口の点・出口の矢印の外に残す余白（マス単位）。 */
+/** 帯の外枠の太さ（マス単位）。外枠はプレイ画面と同じく帯の外側に描き、帯の縁で止める光路の端の印と重ねない。 */
+const FRAME_WIDTH = 0.05;
+/** 図の上下と左右で、帯の外枠の外に残す余白（マス単位）。 */
 const STRIP_PADDING = 0.08;
-/** 左右の外周ヒントの帯のうち、入口の点と出口の矢印に要る幅だけを残して切り落とす幅（マス単位）。 */
-const CLUE_CROP = 0.62;
+/** 左右の外周ヒントの帯と隙間を、外枠と余白だけを残して切り落とす幅（マス単位）。光路と端の印は帯の内側に収まる。 */
+const CLUE_CROP = getReflectionBoardOrigin().x - FRAME_WIDTH - STRIP_PADDING;
 
 type PreviewStrip = {
   board: ReflectionBoard;
@@ -102,12 +104,12 @@ export function ReflectionDifficultyPreview({
         }}
       >
         <rect
-          x={origin.x}
-          y={origin.y + firstRow}
-          width={size}
-          height={previewStrip.rowCount}
+          x={origin.x - FRAME_WIDTH / 2}
+          y={origin.y + firstRow - FRAME_WIDTH / 2}
+          width={size + FRAME_WIDTH}
+          height={previewStrip.rowCount + FRAME_WIDTH}
           className="fill-background stroke-foreground/35"
-          strokeWidth={0.05}
+          strokeWidth={FRAME_WIDTH}
         />
         <g className={reflectionToneClassNames.laserText}>
           <ReflectionLaserPath size={size} entry={entry} trace={trace} />
