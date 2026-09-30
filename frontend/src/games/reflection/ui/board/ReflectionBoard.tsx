@@ -30,6 +30,7 @@ import { ReflectionCell } from "@/games/reflection/ui/board/ReflectionBoard/Refl
 import { ReflectionClueButton } from "@/games/reflection/ui/board/ReflectionBoard/ReflectionClueButton";
 import { ReflectionLaserPath } from "@/games/reflection/ui/board/ReflectionLaserPath";
 import { reflectionToneClassNames } from "@/games/reflection/ui/reflection-tone";
+import { useTouchTap } from "@/games/reflection/ui/touch-tap";
 import { cn } from "@/lib/utils";
 
 type ReflectionBoardProps = {
@@ -136,6 +137,8 @@ export function ReflectionBoard({
   const { size } = board;
   const [focusableKey, setFocusableKey] = useState(getCellFocusKey(0));
   const elementRefs = useRef(new Map<string, HTMLButtonElement>());
+  // マスと外周ヒントは隣り合うので、続けて押したときの click の捨て方を共有する。
+  const { getTapHandlers } = useTouchTap();
   const entries = listReflectionEntries(size);
   const extent = getReflectionFigureExtent(size);
   const tracks = getReflectionFigureTracks(size);
@@ -270,7 +273,7 @@ export function ReflectionBoard({
               focusable={focusKey === focusableKey}
               focusKey={focusKey}
               onElementChange={handleElementChange}
-              onTap={onTapCell}
+              tapHandlers={getTapHandlers(() => onTapCell(cellIndex))}
               onFocus={setFocusableKey}
             />
           );
@@ -298,7 +301,7 @@ export function ReflectionBoard({
             focusable={focusKey === focusableKey}
             focusKey={focusKey}
             onElementChange={handleElementChange}
-            onTap={onTapClue}
+            tapHandlers={getTapHandlers(() => onTapClue(entry))}
             onFocus={setFocusableKey}
           />
         ) : null;

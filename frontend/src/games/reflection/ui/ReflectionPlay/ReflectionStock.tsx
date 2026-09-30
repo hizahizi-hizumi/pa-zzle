@@ -7,6 +7,7 @@ import type { ReflectionSelection } from "@/games/reflection/session/session";
 import { ReflectionPieceIcon } from "@/games/reflection/ui/board/ReflectionPieceIcon";
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
 import { reflectionPieceBarClassNames } from "@/games/reflection/ui/reflection-tone";
+import { useTouchTap } from "@/games/reflection/ui/touch-tap";
 import { cn } from "@/lib/utils";
 
 type ReflectionStockProps = {
@@ -42,6 +43,7 @@ export function ReflectionStock({
   // 盤面のピースを選んでいる間、そのピースと同じ種類（押すと戻す）と、残りのある種類（押すと置き換える）を押せる。
   const selectedCellPiece = returning ? selectedCell : null;
   const pieces = listReflectionStockPieces(inventory);
+  const { getTapHandlers } = useTouchTap();
 
   return (
     <div
@@ -66,7 +68,7 @@ export function ReflectionStock({
             disabled={
               disabled || (remaining === 0 && piece !== selectedCellPiece)
             }
-            onClick={() => onTapStock(piece)}
+            {...getTapHandlers(() => onTapStock(piece))}
             className={cn(
               "relative flex h-11 min-w-0 max-w-16 flex-1 touch-manipulation select-none items-center justify-center text-foreground outline-none transition-[background-color,color,opacity] duration-(--duration-fast) focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset enabled:hover:bg-accent/60 enabled:active:bg-accent disabled:opacity-40",
             )}
