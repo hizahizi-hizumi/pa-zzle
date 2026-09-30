@@ -23,6 +23,7 @@ import {
   getReflectionBoardGridArea,
   getReflectionFigureExtent,
   getReflectionFigureTracks,
+  listReflectionGridLines,
 } from "@/games/reflection/ui/board/board-geometry";
 import { ReflectionClearLight } from "@/games/reflection/ui/board/clear/ReflectionClearLight";
 import { ReflectionCell } from "@/games/reflection/ui/board/ReflectionBoard/ReflectionCell";
@@ -116,7 +117,7 @@ function hasModifierKey(event: ReactKeyboardEvent): boolean {
 }
 
 /**
- * 盤面と、その四辺を囲む外周ヒント。外周ヒントを押した位置の光路を、ピースの下に重ねて描く。
+ * 盤面と、その四辺を囲む外周ヒント。外周ヒントを押した位置の光路を、罫線の上・ピースの下に重ねて描く。
  * 今の配置での光が一致している外周ヒントは、地の色で示す。
  * 盤面が揃うと全光路を描き、完成演出を終えたら `onClearAnimationComplete` を呼ぶ。
  */
@@ -138,6 +139,7 @@ export function ReflectionBoard({
   const entries = listReflectionEntries(size);
   const extent = getReflectionFigureExtent(size);
   const tracks = getReflectionFigureTracks(size);
+  const gridLines = listReflectionGridLines(size);
   const playing = progress === "playing";
   const selectedCellIndex =
     selection?.type === "cell" ? selection.cellIndex : null;
@@ -182,7 +184,7 @@ export function ReflectionBoard({
 
   return (
     <div
-      className="relative grid size-full [container-type:inline-size]"
+      className="relative isolate grid size-full [container-type:inline-size]"
       style={
         {
           gridTemplateColumns: tracks,
@@ -193,29 +195,42 @@ export function ReflectionBoard({
       onKeyDown={handleKeyDown}
     >
       {/*
-        盤面の外枠。outline で盤面の外側に描く。border にするとマスが枠の内側に詰められ、
+        重なり順は、盤面の地と外枠 < 罫線と光路 < マス（ピース・選択の印）とし、この要素の中の明示的な z-index で決める。
+        盤面の地と外枠: 外枠は outline で盤面の外側に描く。border にするとマスが枠の内側に詰められ、
         外周ヒントと光路の座標（grid の列をそのまま等分した位置）からマスの中心がずれる。
-        position の無い要素の outline は position を持つ要素（光路の図）より後に描かれるので、
-        盤面の要素ではなく、光路の図より前に置いた relative の要素に描き、光路が枠の上を通るようにする。
       */}
       <div
         aria-hidden="true"
-        className="pointer-events-none relative outline-2 outline-foreground/55 outline-solid"
+        className="pointer-events-none relative z-0 bg-background outline-2 outline-foreground/55 outline-solid"
         style={getReflectionBoardGridArea(size)}
       />
       {/*
-        光路は盤面の地と外枠より上、マスのピースより下に描く。position を持つ要素は文書順に重なるので、
-        この図を盤面より先に置くと、盤面の地（position なし）の上・マス（relative）の下になる。
-        ピースは背景色の縁で光路を切るので、光路がピースの形を隠さない。
+        罫線と光路は1つの図に、罫線・光路の順で描く。同じ SVG の中は文書順に描かれるので、罫線が光路の上に来ない。
+        マスはこの図より上に重ね、ピースは背景色の縁で光路を切るので、光路がピースの形を隠さない。
       */}
       <svg
         aria-hidden="true"
         viewBox={`0 0 ${extent} ${extent}`}
         className={cn(
-          "pointer-events-none absolute inset-0 size-full",
+          "pointer-events-none absolute inset-0 z-1 size-full",
           reflectionToneClassNames.laserText,
         )}
       >
+        <g
+          className="stroke-border"
+          strokeWidth={1}
+          shapeRendering="crispEdges"
+        >
+          {gridLines.map(function renderGridLine(line) {
+            return (
+              <line
+                key={`${line.x1},${line.y1}`}
+                {...line}
+                vectorEffect="non-scaling-stroke"
+              />
+            );
+          })}
+        </g>
         {laser ? (
           <ReflectionLaserPath
             size={size}
@@ -234,8 +249,8 @@ export function ReflectionBoard({
       <div
         role="group"
         aria-label={`${REFLECTION_DISPLAY_NAME}盤面`}
-        // 外枠は光路の図より前の要素に描く（上のコメント）。
-        className="grid bg-background"
+        // マスは地を持たず、光路の図より上でピースと選択の印だけを描く。
+        className="relative z-2 grid"
         style={{
           ...getReflectionBoardGridArea(size),
           gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,

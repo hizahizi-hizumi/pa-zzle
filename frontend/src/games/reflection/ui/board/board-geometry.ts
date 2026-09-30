@@ -39,6 +39,21 @@ export function getReflectionBoardGridArea(size: number): {
   return { gridRow: `3 / span ${size}`, gridColumn: `3 / span ${size}` };
 }
 
+export type ReflectionLine = { x1: number; y1: number; x2: number; y2: number };
+
+/** 盤面の内側の罫線（外枠を除く）。座標は図の単位。 */
+export function listReflectionGridLines(size: number): ReflectionLine[] {
+  const start = BOARD_OFFSET;
+  const end = BOARD_OFFSET + size;
+  return Array.from(
+    { length: size - 1 },
+    (_, index) => start + index + 1,
+  ).flatMap((position) => [
+    { x1: position, y1: start, x2: position, y2: end },
+    { x1: start, y1: position, x2: end, y2: position },
+  ]);
+}
+
 /** 外周ヒントを置く grid の位置（1始まり）。 */
 export function getReflectionClueGridPosition(
   size: number,
