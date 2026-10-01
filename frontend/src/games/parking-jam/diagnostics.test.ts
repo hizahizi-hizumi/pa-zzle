@@ -2,6 +2,7 @@ import {
   createParkingJamDiagnosticSnapshot,
   formatParkingJamProblemQuery,
   hasParkingJamProblemQuery,
+  PARKING_JAM_DIAGNOSTIC_FORMAT_VERSION,
   parseParkingJamProblemQuery,
   serializeParkingJamDiagnosticSnapshot,
 } from "@/games/parking-jam/diagnostics";
@@ -27,6 +28,8 @@ describe("createParkingJamDiagnosticSnapshot", () => {
 
     const serialized = serializeParkingJamDiagnosticSnapshot(snapshot);
 
+    expect(snapshot.formatVersion).toBe(PARKING_JAM_DIAGNOSTIC_FORMAT_VERSION);
+    expect(snapshot.formatVersion).toBe(3);
     expect(snapshot.problemIdentity).toEqual(selected.identity);
     expect(snapshot.difficultyAnalysis).toEqual(difficultyAnalysis);
     expect(snapshot.difficultyModelVersion).toBe(

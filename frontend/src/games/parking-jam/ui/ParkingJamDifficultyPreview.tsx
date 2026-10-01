@@ -13,61 +13,84 @@ import { useParkingJamBoardPaint } from "@/games/parking-jam/ui/board/parking-ja
 
 import "@/games/parking-jam/ui/board/parking-jam-board.css";
 
-// 全レベルで同じ4行7列の駐車場を使う。英小文字1字が1台の車で、同じ文字のマスが車の占める範囲になる。
-// 上のレベルは下のレベルの車と道路開口をすべて同じ位置に残し、判定に効くレバーを1つずつ強める。
-// 依存を強めるときは塞いでいる車の出口側を塞ぐ車を足し、読み違いを強めるときは、どの車の出庫にも
-// 使われない隣の車線に開口を足して、出られそうに見えて出られない車を作る。
-// 規模のレバーはこの大きさの図では表せないため、全レベルで同じ小さな駐車場のままにする。
+// 全レベルで同じ8行8列の駐車場を使い、上のレベルは下のレベルの車と道路開口を
+// すべて同じ位置に残したまま、「依存」と「選択制約」を交互に1段ずつ強める。
+// 盤面を大きくするだけで難しく見せず、判定要因そのものの差を本番の分析で確認できる手設計の簡略図にする。
 type PreviewLevelLayout = {
   vehicles: readonly string[];
   roadOpenings: readonly ParkingJamRoadOpening[];
 };
 
 const baseRoadOpenings: readonly ParkingJamRoadOpening[] = [
-  { side: "right", startOffset: 0, length: 3 },
-  { side: "up", startOffset: 3, length: 3 },
+  { side: "right", startOffset: 0, length: 8 },
+  { side: "up", startOffset: 2, length: 6 },
 ];
-// 縦の b の下側の隣の列にある開口。b が下へ出られそうに見える。
-const openingBesideVerticalVehicle: ParkingJamRoadOpening = {
-  side: "down",
-  startOffset: 2,
-  length: 1,
-};
-// 横の a の左側の隣の行にある開口。a が左へ出られそうに見える。
-const openingBesideHorizontalVehicle: ParkingJamRoadOpening = {
-  side: "left",
-  startOffset: 0,
-  length: 1,
-};
 
 const previewLevelLayouts = {
   "1": {
-    vehicles: [".......", "aa.b...", "cc.b...", "......."],
+    vehicles: [
+      "aa......",
+      "bb....h.",
+      "cc....h.",
+      "dd....h.",
+      "ee......",
+      "ff......",
+      "gg......",
+      "........",
+    ],
     roadOpenings: baseRoadOpenings,
   },
   "2": {
-    vehicles: [".......", "aa.b...", "cc.b...", "......."],
-    roadOpenings: [...baseRoadOpenings, openingBesideVerticalVehicle],
+    vehicles: [
+      "aa......",
+      "bb....h.",
+      "cc....h.",
+      "dd....h.",
+      "ee..i...",
+      "ff..i...",
+      "gg..i...",
+      "........",
+    ],
+    roadOpenings: baseRoadOpenings,
   },
   "3": {
-    vehicles: ["..dd...", "aa.b...", "cc.b...", "......."],
-    roadOpenings: [...baseRoadOpenings, openingBesideVerticalVehicle],
+    vehicles: [
+      "aa...jj.",
+      "bb....h.",
+      "cc....h.",
+      "dd....h.",
+      "ee..i...",
+      "ff..i...",
+      "gg..i...",
+      "........",
+    ],
+    roadOpenings: baseRoadOpenings,
   },
   "4": {
-    vehicles: ["..dd...", "aa.b...", "cc.b...", "......."],
-    roadOpenings: [
-      ...baseRoadOpenings,
-      openingBesideVerticalVehicle,
-      openingBesideHorizontalVehicle,
+    vehicles: [
+      "aa...jj.",
+      "bb.l..h.",
+      "cc.l..h.",
+      "dd.l..h.",
+      "eek.i..m",
+      "ffk.i..m",
+      "ggk.i..m",
+      "........",
     ],
+    roadOpenings: baseRoadOpenings,
   },
   "5": {
-    vehicles: ["eeddff.", "aa.b...", "cc.b...", "......."],
-    roadOpenings: [
-      ...baseRoadOpenings,
-      openingBesideVerticalVehicle,
-      openingBesideHorizontalVehicle,
+    vehicles: [
+      "aa...jjn",
+      "bb.l..hn",
+      "cc.l..hn",
+      "dd.l..h.",
+      "eek.i..m",
+      "ffk.i..m",
+      "ggk.i..m",
+      "........",
     ],
+    roadOpenings: baseRoadOpenings,
   },
 } as const satisfies Record<ParkingJamDifficulty, PreviewLevelLayout>;
 

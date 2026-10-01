@@ -28,7 +28,6 @@ function formatInteger(value: number | null): string {
 const outOfRangeReasonLabels = {
   "too-light": "提供範囲外（軽すぎ）",
   "too-heavy": "提供範囲外（重すぎ）",
-  "unlisted-levers": "提供範囲外（組合せ外）",
 } as const;
 
 function formatAssessment(assessment: ParkingJamDifficultyAssessment): string {
@@ -42,10 +41,10 @@ function formatAssessment(assessment: ParkingJamDifficultyAssessment): string {
   }
 }
 
-function formatLevers(assessment: ParkingJamDifficultyAssessment): string {
-  if (!("levers" in assessment)) return "取得なし";
-  const { dependency, misread, scale } = assessment.levers;
-  return `依存 ${dependency} / 読み違い ${misread} / 規模 ${scale}`;
+function formatFactors(assessment: ParkingJamDifficultyAssessment): string {
+  if (!("factors" in assessment)) return "取得なし";
+  const { dependency, choiceConstraint } = assessment.factors;
+  return `依存 ${dependency} / 選択制約 ${choiceConstraint}`;
 }
 
 export function ParkingJamDiagnostics({
@@ -77,8 +76,8 @@ export function ParkingJamDiagnostics({
               value: formatAssessment(snapshot.difficultyAssessment),
             },
             {
-              label: "レバー",
-              value: formatLevers(snapshot.difficultyAssessment),
+              label: "判定要因",
+              value: formatFactors(snapshot.difficultyAssessment),
               mono: true,
             },
           ],

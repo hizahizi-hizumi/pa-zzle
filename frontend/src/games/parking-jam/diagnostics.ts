@@ -14,7 +14,7 @@ import {
   type ParkingJamProblemIdentity,
 } from "@/games/parking-jam/problem/problem";
 
-export const PARKING_JAM_DIAGNOSTIC_FORMAT_VERSION = 2;
+export const PARKING_JAM_DIAGNOSTIC_FORMAT_VERSION = 3;
 
 export type ParkingJamDiagnosticSnapshot = {
   formatVersion: typeof PARKING_JAM_DIAGNOSTIC_FORMAT_VERSION;
