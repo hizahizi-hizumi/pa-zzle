@@ -1,9 +1,9 @@
 /**
  * パーキングジャム難易度5段階の分類案（Issue #405 の設計調査用）。
- * 採用した案 T3 は本番の判定（`challenge-levers-v1`）そのもので、ほかの案は比較用に残す。
- * レバーの強さは本番の `calculateParkingJamChallengeLevers` の値を使う。
+ * Issue #405 で採用した案 T3（`challenge-levers-v1`）と比較案を再現する。
+ * レバーの強さは当時の判定を `parking-jam-challenge-levers-v1.ts` で再現する。
  */
-import type { ParkingJamLeverStrength } from "@/games/parking-jam/difficulty";
+import type { ParkingJamLegacyLeverStrength } from "./parking-jam-challenge-levers-v1";
 import type { ParkingJamStudyFeatures } from "./parking-jam-difficulty-features";
 
 export type StudyAssessment =
@@ -120,42 +120,25 @@ function leversOf(features: ParkingJamStudyFeatures) {
   return features.levers;
 }
 
-/** 依存レバーの強さ（本番の値）。 */
+/** Issue #405 で採用した依存レバーの強さ。 */
 export function dependencyLeverOf(
   features: ParkingJamStudyFeatures,
-): ParkingJamLeverStrength {
+): ParkingJamLegacyLeverStrength {
   return leversOf(features).dependency;
 }
 
-/** 読み違いレバーの強さ（本番の値）。 */
+/** Issue #405 で採用した読み違いレバーの強さ。 */
 export function misreadLeverOf(
   features: ParkingJamStudyFeatures,
-): ParkingJamLeverStrength {
+): ParkingJamLegacyLeverStrength {
   return leversOf(features).misread;
 }
 
-/** 規模レバーの強さ（本番の値）。 */
+/** Issue #405 で採用した規模レバーの強さ。 */
 export function scaleLeverOf(
   features: ParkingJamStudyFeatures,
-): ParkingJamLeverStrength {
+): ParkingJamLegacyLeverStrength {
   return leversOf(features).scale;
-}
-
-/** 本番の判定結果を調査用の分類結果へ写す。 */
-function classifyByProduction(
-  features: ParkingJamStudyFeatures,
-): StudyAssessment {
-  const { assessment } = features;
-  switch (assessment.status) {
-    case "classified":
-      return level(Number(assessment.difficulty) as 1 | 2 | 3 | 4 | 5);
-    case "out-of-range":
-      return assessment.reason === "unlisted-levers"
-        ? { status: "unplaced" }
-        : { status: assessment.reason };
-    case "unsupported":
-      return { status: "unsupported" };
-  }
 }
 
 type LeverStep = {
@@ -238,6 +221,14 @@ const scaleStrictSteps = [
   { dependency: 3, misread: 3, scale: [3, 3] },
 ] as const;
 
+const challengeLeversV1Steps = [
+  { dependency: 1, misread: 1, scale: [1, 2] },
+  { dependency: 1, misread: 2, scale: [1, 2] },
+  { dependency: 2, misread: 2, scale: [1, 3] },
+  { dependency: 2, misread: 3, scale: [2, 3] },
+  { dependency: 3, misread: 3, scale: [2, 3] },
+] as const;
+
 export const studyPlans: readonly StudyPlan[] = [
   {
     id: "T1",
@@ -248,8 +239,8 @@ export const studyPlans: readonly StudyPlan[] = [
   {
     id: "T3",
     summary:
-      "採用（本番 challenge-levers-v1）: 依存と読み違いは M3 の交互の階段、規模は T1 と同じ範囲",
-    classify: classifyByProduction,
+      "当時採用（challenge-levers-v1）: 依存と読み違いは M3 の交互の階段、規模は T1 と同じ範囲",
+    classify: classifyByLeverSteps(challengeLeversV1Steps, true),
   },
   {
     id: "T1s",

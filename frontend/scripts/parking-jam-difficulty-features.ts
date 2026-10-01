@@ -1,15 +1,10 @@
 /**
  * パーキングジャム難易度5段階の設計調査（Issue #405）で使う分析用の特徴量。
  * 本番の盤面・ルール・難易度分析の関数をそのまま使い、盤面の幾何と単調削除の状態空間から、
- * 挑戦の候補特徴を観測する。本番の判定（`challenge-levers-v1`）が使う特徴は本番の分析結果から取り、
- * ここでは本番が使わない調査用の特徴だけを求める。
+ * 挑戦の候補特徴を観測する。Issue #405 で採用した `challenge-levers-v1` の特徴も比較用に再現し、
+ * 現行判定とは分けて扱う。
  */
-import {
-  assessParkingJamDifficulty,
-  calculateParkingJamChallengeLevers,
-  type ParkingJamChallengeLevers,
-  type ParkingJamDifficultyAssessment,
-} from "@/games/parking-jam/difficulty";
+
 import {
   analyzeParkingJamDifficulty,
   type ParkingJamDifficultyAnalysis,
@@ -25,6 +20,10 @@ import {
   type ParkingJamVehicle,
 } from "@/games/parking-jam/puzzle/board";
 import { listParkingJamLegalMoves } from "@/games/parking-jam/puzzle/rules";
+import {
+  calculateParkingJamChallengeLeversV1,
+  type ParkingJamLegacyChallengeLevers,
+} from "./parking-jam-challenge-levers-v1";
 
 type DirectionGeometry = {
   direction: ParkingJamDirection;
@@ -201,10 +200,9 @@ function assessVisualLocalLoadV1({ features }: ParkingJamDifficultyAnalysis): {
 }
 
 export type ParkingJamStudyFeatures = {
-  // 本番の判定（challenge-levers-v1）
-  /** 本番の3レバー。状態空間を解析できない問題では null。 */
-  levers: ParkingJamChallengeLevers | null;
-  assessment: ParkingJamDifficultyAssessment;
+  // Issue #405 時点の判定（challenge-levers-v1）
+  /** Issue #405 で採用した3レバー。状態空間を解析できない問題では null。 */
+  levers: ParkingJamLegacyChallengeLevers | null;
   // 規模（対照指標）
   width: number;
   height: number;
@@ -214,7 +212,7 @@ export type ParkingJamStudyFeatures = {
   fixedAreaCount: number;
   fixedAreaCellCount: number;
   roadOpeningCellCount: number;
-  // 現行 visual-local-load-v1
+  // 旧 visual-local-load-v1
   v1Score: number;
   v1Difficulty: string;
   initialBlockedCount: number;
@@ -502,8 +500,7 @@ export function analyzeParkingJamStudyFeatures(
   );
 
   return {
-    levers: calculateParkingJamChallengeLevers(analysis.features),
-    assessment: assessParkingJamDifficulty(analysis),
+    levers: calculateParkingJamChallengeLeversV1(analysis.features),
     width: board.width,
     height: board.height,
     cellCount: board.width * board.height,

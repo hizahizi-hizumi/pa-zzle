@@ -1,10 +1,10 @@
 import { cleanup, render } from "@testing-library/react";
 
 import {
-  calculateParkingJamChallengeLevers,
+  assessParkingJamDifficulty,
+  calculateParkingJamDifficultyFactors,
   type ParkingJamDifficulty,
   parkingJamDifficulties,
-  parkingJamLevelLevers,
 } from "@/games/parking-jam/difficulty";
 import { analyzeParkingJamDifficulty } from "@/games/parking-jam/problem/difficulty-analysis";
 import { analyzeParkingJamSolvability } from "@/games/parking-jam/problem/generation/solvability";
@@ -35,14 +35,6 @@ function analyzePreviewBoard(difficulty: ParkingJamDifficulty) {
   );
 }
 
-function calculatePreviewLevers(difficulty: ParkingJamDifficulty) {
-  const levers = calculateParkingJamChallengeLevers(
-    analyzePreviewBoard(difficulty).features,
-  );
-  if (!levers) throw new Error("Expected preview levers");
-  return levers;
-}
-
 describe("createPreviewBoard", () => {
   test.each(difficulties)(
     "レベル %s の駐車場が盤面の検証を通り全車を出庫できること",
@@ -58,29 +50,15 @@ describe("createPreviewBoard", () => {
   );
 
   test.each(difficulties)(
-    "レベル %s の駐車場が出す順序を読む挑戦を持つこと",
+    "レベル %s の駐車場が本番の難易度判定で同じレベルになること",
     (difficulty) => {
-      const { features } = analyzePreviewBoard(difficulty);
+      const assessment = assessParkingJamDifficulty(
+        analyzePreviewBoard(difficulty),
+      );
 
-      const initialBlockedVehicleCount =
-        features.vehicleCount - features.initialLegalVehicleCount;
-
-      expect(features.dependencyDepth).toBeGreaterThanOrEqual(2);
-      expect(initialBlockedVehicleCount).toBeGreaterThanOrEqual(2);
-    },
-  );
-
-  test.each(difficulties)(
-    "レベル %s の駐車場の依存と読み違いのレバーがそのレベルの組合せに一致すること",
-    (difficulty) => {
-      const levers = calculatePreviewLevers(difficulty);
-
-      expect({
-        dependency: levers.dependency,
-        misread: levers.misread,
-      }).toEqual({
-        dependency: parkingJamLevelLevers[difficulty].dependency,
-        misread: parkingJamLevelLevers[difficulty].misread,
+      expect(assessment).toMatchObject({
+        status: "classified",
+        difficulty,
       });
     },
   );
@@ -114,14 +92,21 @@ describe("createPreviewBoard", () => {
   );
 
   test.each(adjacentDifficulties)(
-    "レベル %s よりレベル %s で依存と読み違いのレバーがどちらも弱まらず片方だけ強まること",
+    "レベル %s よりレベル %s で判定要因が弱まらず片方だけ強まること",
     (lower, higher) => {
-      const lowerLevers = calculatePreviewLevers(lower);
-      const higherLevers = calculatePreviewLevers(higher);
+      const lowerFactors = calculateParkingJamDifficultyFactors(
+        analyzePreviewBoard(lower).features,
+      );
+      const higherFactors = calculateParkingJamDifficultyFactors(
+        analyzePreviewBoard(higher).features,
+      );
+      if (!lowerFactors || !higherFactors) {
+        throw new Error("Expected preview difficulty factors");
+      }
 
       const increases = [
-        higherLevers.dependency - lowerLevers.dependency,
-        higherLevers.misread - lowerLevers.misread,
+        higherFactors.dependency - lowerFactors.dependency,
+        higherFactors.choiceConstraint - lowerFactors.choiceConstraint,
       ];
 
       expect(increases.every((increase) => increase >= 0)).toBe(true);
