@@ -11,8 +11,8 @@ import type {
 import type { SlidePuzzleDirection } from "@/games/slide-puzzle/puzzle/rules";
 import type { SlidePuzzleBoard as SlidePuzzleBoardState } from "@/games/slide-puzzle/puzzle/state";
 import { SlidePuzzleBoard } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard";
+import { SlidePuzzleResultScreen } from "@/games/slide-puzzle/ui/result/SlidePuzzleResultScreen";
 import { SlidePuzzleHowToPlayDialog } from "@/games/slide-puzzle/ui/SlidePuzzleHowToPlayDialog";
-import { SlidePuzzleResultScreen } from "@/games/slide-puzzle/ui/SlidePuzzlePlay/SlidePuzzleResultScreen";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type SlidePuzzlePlayProps = {

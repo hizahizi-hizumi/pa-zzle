@@ -8,7 +8,7 @@ import {
 } from "@/games/water-sort/difficulty";
 import type { WaterSortResult } from "@/games/water-sort/play/use-water-sort-play";
 import { WATER_SORT_SCORE_MAXIMUMS } from "@/games/water-sort/score";
-import { getWaterSortScoreCriteria } from "@/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen/score-criteria";
+import { getWaterSortScoreCriteria } from "@/games/water-sort/ui/result/WaterSortResultScreen/score-criteria";
 import {
   formatElapsedTime,
   formatElapsedTimeWithTenths,
