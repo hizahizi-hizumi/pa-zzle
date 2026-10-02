@@ -1,5 +1,6 @@
 import {
   applyTsumeShogiMove,
+  explainTsumeShogiIllegalMove,
   formatTsumeShogiMoveUsi,
   isTsumeShogiCheckmate,
   isTsumeShogiDefenderInCheck,
@@ -179,6 +180,58 @@ describe("打歩詰", () => {
 
       expect(checkmate).toBe(true);
     });
+  });
+});
+
+describe("explainTsumeShogiIllegalMove", () => {
+  // 玉1一、攻方の金2三・桂3三・歩5七・香8四・桂7五・銀4六。持駒は歩・香・桂。
+  const position = createTsumeShogiPosition("8k/9/6NG1/1L7/2N6/5S3/4P4/9/9", {
+    pawn: 1,
+    lance: 1,
+    knight: 1,
+  });
+  const cases = [
+    ["合法手", "4f4e", null],
+    ["歩のある筋に歩を打つ", "P*5c", "double-pawn"],
+    ["歩を打って詰ませる", "P*1b", "pawn-drop-mate"],
+    ["桂を2段目に打つ", "N*5b", "dead-piece"],
+    ["香を1段目に打つ", "L*5a", "dead-piece"],
+    ["香が1段目へ成らずに進む", "8d8a", "dead-piece"],
+    ["桂が駒の動きで届かない升へ動く", "7e7d", "unreachable"],
+    ["駒のある升に打つ", "P*2c", "unreachable"],
+    ["銀が敵陣の外で成る", "4f4e+", "unreachable"],
+  ] as const;
+
+  test.each(cases)("%s手（%s）の理由を返すこと", (_, usi, expected) => {
+    const reason = explainTsumeShogiIllegalMove(
+      position,
+      parseTsumeShogiMoveUsi(usi),
+    );
+
+    expect(reason).toBe(expected);
+  });
+
+  describe("持駒に無い駒を打つ場合", () => {
+    const withoutHand = createTsumeShogiPosition(
+      "8k/9/6NG1/1L7/2N6/5S3/4P4/9/9",
+      {},
+    );
+    const dropCases = [
+      ["歩のある筋への歩", "P*5c"],
+      ["2段目への桂", "N*5b"],
+    ] as const;
+
+    test.each(dropCases)(
+      "%s（%s）も、駒が無いので打てない理由を返すこと",
+      (_, usi) => {
+        const reason = explainTsumeShogiIllegalMove(
+          withoutHand,
+          parseTsumeShogiMoveUsi(usi),
+        );
+
+        expect(reason).toBe("unreachable");
+      },
+    );
   });
 });
 
