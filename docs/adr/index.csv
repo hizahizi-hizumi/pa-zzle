@@ -1,1 +1,2 @@
 id,title,summary,status,date,path
+ADR-0001,問題IDと結果画面の専用パス,"問題を生成器の版・生成条件・seed・生成試行を含む識別情報全体のハッシュから求めた不透明な問題IDで指し、プレイ画面URLの problem クエリに載せる。seed の公開、問題集の番号、記録専用の再プレイパスと比べ、内部の意味を外へ出さず問題集の作り直しにも揺れないことを重視した。結果画面は記録IDの専用パスとし、再読み込みで結果を失わない。",accepted,2026-10-02,docs/adr/ADR-0001-problem-id-and-result-path.md
