@@ -20,7 +20,7 @@ type HowToPlayDialogProps = {
   onClose: () => void;
 };
 
-/** ゲームのルールと操作を、番号付きの短い項目で示す。 */
+/** ゲームのルールと操作を、順に並べた短い項目で示す。 */
 export function HowToPlayDialog({
   open,
   description,
