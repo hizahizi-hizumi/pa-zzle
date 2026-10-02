@@ -6,15 +6,37 @@ import {
   type TsumeShogiProblemIdentity,
   type TsumeShogiRootCheckRange,
 } from "@/games/tsume-shogi/problem/problem";
-import { restoreTsumeShogiProblem } from "@/games/tsume-shogi/problem-selection";
+import {
+  getTsumeShogiProblemPoolVersion,
+  type TsumeShogiProblemPoolReference,
+} from "@/games/tsume-shogi/problem/problem-pool";
+import {
+  restoreTsumeShogiPoolProblem,
+  restoreTsumeShogiProblem,
+} from "@/games/tsume-shogi/problem-selection";
 
-// 内部診断が有効なビルドで、特定の問題を遊ぶための URL クエリ。
-// 例: ?generator=1&seed=ts-5-3&plies=5、?seed=ts-5-c1-4-3&plies=5&checks=1-4
-// `generator` は省略でき、省略時は今の生成器の版とみなす。`checks` は生成条件の初手の王手の数の範囲で、無い identity では省く。
-const problemQueryKeys = ["generator", "seed", "plies", "checks"] as const;
+// 内部診断が有効なビルドで、特定の問題を遊ぶための URL クエリ。2通りの指定を受け付ける。
+// - 問題集の番号: ?pool=1&problem=4-17（`pool` は省略でき、省略時は今の問題集の版）
+// - 生成器の identity: ?generator=1&seed=ts-5-c1-4-3&plies=5&checks=1-4（`generator` は省略でき、省略時は今の生成器の版。
+//   `checks` は生成条件の初手の王手の数の範囲で、無い identity では省く）
+// 問題集の番号は問題集を作り直すと別の問題を指すので、記録や資料に残すときは identity の形を使う。
+const poolQueryKeys = ["pool", "problem"] as const;
+const identityQueryKeys = ["generator", "seed", "plies", "checks"] as const;
 
 export function hasTsumeShogiProblemQuery(params: URLSearchParams): boolean {
-  return problemQueryKeys.some((key) => params.has(key));
+  return [...poolQueryKeys, ...identityQueryKeys].some((key) =>
+    params.has(key),
+  );
+}
+
+export function formatTsumeShogiPoolProblemQuery({
+  poolVersion,
+  problemId,
+}: TsumeShogiProblemPoolReference): string {
+  return new URLSearchParams({
+    pool: poolVersion,
+    problem: problemId,
+  }).toString();
 }
 
 export function formatTsumeShogiProblemQuery(
@@ -46,12 +68,20 @@ function parseRootCheckRange(
     : null;
 }
 
-/**
- * URL クエリの identity から問題を復元する。出題できる問題に無い identity は生成器で作る
- * （5手詰では数秒から1分近くかかることがある。内部診断でだけ使う）。
- * 値が欠けている・今の生成器で扱えない・生成器が問題を作れない場合は null を返す。
- */
-export function parseTsumeShogiProblemQuery(
+function parsePoolProblemQuery(
+  params: URLSearchParams,
+): TsumeShogiIdentifiedProblem | null {
+  const problemId = params.get("problem");
+  if (problemId === null) return null;
+
+  const pooled = restoreTsumeShogiPoolProblem({
+    poolVersion: params.get("pool") ?? getTsumeShogiProblemPoolVersion(),
+    problemId,
+  });
+  return pooled && { problem: pooled.problem, identity: pooled.identity };
+}
+
+function parseIdentityQuery(
   params: URLSearchParams,
 ): TsumeShogiIdentifiedProblem | null {
   const rootChecks = parseRootCheckRange(params.get("checks"));
@@ -66,7 +96,8 @@ export function parseTsumeShogiProblemQuery(
   if (!isTsumeShogiProblemIdentity(identity)) return null;
 
   const restored = restoreTsumeShogiProblem(identity);
-  if (restored) return restored;
+  if (restored)
+    return { problem: restored.problem, identity: restored.identity };
 
   try {
     const { problem } = generateTsumeShogiProblem(identity);
@@ -74,4 +105,21 @@ export function parseTsumeShogiProblemQuery(
   } catch {
     return null;
   }
+}
+
+/**
+ * URL クエリから問題を復元する。問題集の番号で指定したときは問題集の問題を、identity で指定したときは問題集の問題か、
+ * 問題集に無ければ生成器で作った問題を返す（5手詰では数秒から1分近くかかることがある。内部診断でだけ使う）。
+ * 値が欠けている・2通りの指定が混ざる・今の問題集や生成器で扱えない・生成器が問題を作れない場合は null を返す。
+ */
+export function parseTsumeShogiProblemQuery(
+  params: URLSearchParams,
+): TsumeShogiIdentifiedProblem | null {
+  const hasPoolQuery = poolQueryKeys.some((key) => params.has(key));
+  const hasIdentityQuery = identityQueryKeys.some((key) => params.has(key));
+  if (hasPoolQuery === hasIdentityQuery) return null;
+
+  return hasPoolQuery
+    ? parsePoolProblemQuery(params)
+    : parseIdentityQuery(params);
 }

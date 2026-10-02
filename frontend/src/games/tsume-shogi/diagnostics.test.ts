@@ -1,4 +1,5 @@
 import {
+  formatTsumeShogiPoolProblemQuery,
   formatTsumeShogiProblemQuery,
   hasTsumeShogiProblemQuery,
   parseTsumeShogiProblemQuery,
@@ -7,12 +8,18 @@ import {
   createTsumeShogiProblemIdentity,
   formatTsumeShogiProblemText,
 } from "@/games/tsume-shogi/problem/problem";
-import { restoreTsumeShogiProblem } from "@/games/tsume-shogi/problem-selection";
+import { toTsumeShogiPooledProblem } from "@/games/tsume-shogi/problem/problem-pool";
 
 describe("parseTsumeShogiProblemQuery", () => {
-  const provisionalIdentity = createTsumeShogiProblemIdentity(3, 14);
-  const provisionalParams = new URLSearchParams(
-    formatTsumeShogiProblemQuery(provisionalIdentity),
+  const pooled = toTsumeShogiPooledProblem("3", 2);
+  const pooledIdentityParams = new URLSearchParams(
+    formatTsumeShogiProblemQuery(pooled.identity),
+  );
+  const poolParams = new URLSearchParams(
+    formatTsumeShogiPoolProblemQuery(pooled.poolReference),
+  );
+  const poolParamsWithoutVersion = new URLSearchParams(
+    `problem=${pooled.poolReference.problemId}`,
   );
   const generatedIdentity = createTsumeShogiProblemIdentity(3, 0);
   const paramsWithoutGenerator = new URLSearchParams("seed=ts-3-0&plies=3");
@@ -30,12 +37,33 @@ describe("parseTsumeShogiProblemQuery", () => {
     ["今と違う生成器の版", "generator=0&seed=ts-3-0&plies=3"],
     ["形の違う初手の王手の数の範囲", "seed=ts-3-c1-1-3&plies=3&checks=1"],
     ["逆転した初手の王手の数の範囲", "seed=ts-3-c4-1-3&plies=3&checks=4-1"],
+    ["今と違う問題集の版", "pool=0&problem=1-1"],
+    ["範囲外の問題番号", "problem=1-100000"],
+    [
+      "問題集の番号と identity が混ざったクエリ",
+      "problem=1-1&seed=ts-3-0&plies=3",
+    ],
   ] as const;
 
-  test("仮の問題の identity から、その問題を読み戻すこと", () => {
-    const result = parseTsumeShogiProblemQuery(provisionalParams);
+  test("問題集の問題の identity から、その問題を読み戻すこと", () => {
+    const result = parseTsumeShogiProblemQuery(pooledIdentityParams);
 
-    expect(result).toEqual(restoreTsumeShogiProblem(provisionalIdentity));
+    expect(result).toEqual({
+      problem: pooled.problem,
+      identity: pooled.identity,
+    });
+  });
+
+  test.each([
+    ["版つき", poolParams],
+    ["版を省いた", poolParamsWithoutVersion],
+  ])("%sの問題集の番号から、その問題を読み戻すこと", (_, params) => {
+    const result = parseTsumeShogiProblemQuery(params);
+
+    expect(result).toEqual({
+      problem: pooled.problem,
+      identity: pooled.identity,
+    });
   });
 
   test("生成器の版を省略したクエリは今の版として、生成器で問題を作ること", () => {
@@ -65,6 +93,7 @@ describe("hasTsumeShogiProblemQuery", () => {
   const cases = [
     ["seed=ts-3-0", true],
     ["plies=3", true],
+    ["problem=1-1", true],
     ["other=1", false],
   ] as const;
 

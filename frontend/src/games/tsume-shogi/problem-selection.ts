@@ -1,37 +1,46 @@
 import type { ProblemSeed } from "@/games/problem-seed";
 import { selectProblemPoolEntry } from "@/games/problem-selection";
 import type { TsumeShogiDifficulty } from "@/games/tsume-shogi/difficulty";
-import type {
-  TsumeShogiIdentifiedProblem,
-  TsumeShogiProblemIdentity,
-} from "@/games/tsume-shogi/problem/problem";
-import { listTsumeShogiProvisionalProblems } from "@/games/tsume-shogi/problem/provisional-problems";
+import type { TsumeShogiProblemIdentity } from "@/games/tsume-shogi/problem/problem";
+import {
+  findTsumeShogiPooledProblem,
+  findTsumeShogiPooledProblemByReference,
+  listTsumeShogiPoolEntries,
+  type TsumeShogiPooledProblem,
+  type TsumeShogiProblemPoolReference,
+  toTsumeShogiPooledProblem,
+} from "@/games/tsume-shogi/problem/problem-pool";
 
 /**
- * 難易度の問題を seed で選ぶ。問題集ができるまでは、どの難易度でも仮の問題から選ぶ（難易度を分析していない）。
- * 問題集から出題できるようになったら、難易度ごとの問題集からの選択に置き換える。
+ * 難易度の問題集から seed で1問を選ぶ。
+ * 問題集は生成時に strict validator・難易度分析・分類を済ませてあるので、プレイ時には生成・探索・分析を走らせない。
  */
 export function selectTsumeShogiProblemForDifficulty(
-  _difficulty: TsumeShogiDifficulty,
+  difficulty: TsumeShogiDifficulty,
   seed: ProblemSeed,
-): TsumeShogiIdentifiedProblem {
-  return selectProblemPoolEntry(
-    listTsumeShogiProvisionalProblems(),
+): TsumeShogiPooledProblem {
+  // 問題集の中の位置（問題番号）を添えて復元するので、問題そのものではなく位置を選ぶ。
+  const entryIndex = selectProblemPoolEntry(
+    [...listTsumeShogiPoolEntries(difficulty).keys()],
     seed,
-    "provisional Tsume Shogi",
+    `level ${difficulty} Tsume Shogi`,
   );
+  return toTsumeShogiPooledProblem(difficulty, entryIndex);
 }
 
-/** identity が出題できる問題のものなら、その問題を返す。無ければ `null`。 */
+/**
+ * 記録などに残した identity から同じ問題を復元する。
+ * 問題集に無い identity（生成器の版や条件が今と違うものなど）は `null` を返す。
+ */
 export function restoreTsumeShogiProblem(
   identity: TsumeShogiProblemIdentity,
-): TsumeShogiIdentifiedProblem | null {
-  return (
-    listTsumeShogiProvisionalProblems().find(
-      (candidate) =>
-        candidate.identity.generatorVersion === identity.generatorVersion &&
-        candidate.identity.seed === identity.seed &&
-        candidate.identity.conditions.plies === identity.conditions.plies,
-    ) ?? null
-  );
+): TsumeShogiPooledProblem | null {
+  return findTsumeShogiPooledProblem(identity);
+}
+
+/** 問題集の版と問題番号から同じ問題を復元する。問題集の版が今と違えば `null` を返す。 */
+export function restoreTsumeShogiPoolProblem(
+  reference: TsumeShogiProblemPoolReference,
+): TsumeShogiPooledProblem | null {
+  return findTsumeShogiPooledProblemByReference(reference);
 }

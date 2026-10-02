@@ -31,7 +31,7 @@ export function TsumeShogiPlayView() {
     return (
       <TsumeShogiPlayUnavailable
         title="指定された問題を復元できません"
-        description="URL の問題指定（generator・seed・plies）を確かめてください。"
+        description="URL の問題指定（pool・problem、または generator・seed・plies・checks）を確かめてください。"
       />
     );
   }
