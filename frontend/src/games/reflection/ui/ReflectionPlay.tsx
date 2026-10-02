@@ -9,11 +9,10 @@ import type {
   ReflectionProgress,
   ReflectionResult,
 } from "@/games/reflection/play/use-reflection-play";
-import {
-  getReflectionInventoryPieceCount,
-  type ReflectionBoard as ReflectionBoardState,
-  type ReflectionInventory,
-  type ReflectionPiece,
+import type {
+  ReflectionBoard as ReflectionBoardState,
+  ReflectionInventory,
+  ReflectionPiece,
 } from "@/games/reflection/puzzle/board";
 import type {
   ReflectionClue,
@@ -27,7 +26,6 @@ import type {
 import { ReflectionBoard } from "@/games/reflection/ui/board/ReflectionBoard";
 import { readReflectionHowToPlaySeen } from "@/games/reflection/ui/how-to-play-seen";
 import { ReflectionHowToPlayDialog } from "@/games/reflection/ui/ReflectionHowToPlayDialog";
-import { ReflectionClueMatchStatus } from "@/games/reflection/ui/ReflectionPlay/ReflectionClueMatchStatus";
 import {
   listReflectionStockPieces,
   ReflectionStock,
@@ -112,11 +110,6 @@ export function ReflectionPlay({
     () => listReflectionClueMatches(board, clues),
     [board, clues],
   );
-  // 手持ちを置き切っても揃っていないときだけ、合っていない外周ヒントの本数を知らせる。
-  const unmatchedClueCount =
-    playing && getReflectionInventoryPieceCount(stock) === 0
-      ? clueMatches.filter((matched) => !matched).length
-      : 0;
   const playAreaRef = useRef<HTMLElement>(null);
 
   function closeHowToPlay() {
@@ -230,8 +223,8 @@ export function ReflectionPlay({
           />
         </div>
       </main>
-      <footer className="grid shrink-0 gap-2 px-3 pb-2">
-        <ReflectionClueMatchStatus unmatchedClueCount={unmatchedClueCount} />
+      {/* 置き切っても揃わないときも文は出さない。どれが合っていないかは外周ヒントの一致の地で見える。 */}
+      <footer className="grid shrink-0 px-3 pb-2">
         <ReflectionStock
           inventory={inventory}
           stock={stock}

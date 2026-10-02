@@ -12,7 +12,6 @@ import type { ReflectionResult } from "@/games/reflection/play/use-reflection-pl
 import {
   countReflectionBoardPieces,
   createEmptyReflectionBoard,
-  createEmptyReflectionInventory,
   parseReflectionBoard,
 } from "@/games/reflection/puzzle/board";
 import {
@@ -346,7 +345,6 @@ describe("ReflectionPlay", () => {
 
   describe("外周ヒントの一致", () => {
     const matchedName = / 一致$/;
-    const emptyStock = createEmptyReflectionInventory();
 
     test("今の配置での光が一致している外周ヒントだけを一致として示すこと", () => {
       renderPlay({ board: emptyBoard });
@@ -372,27 +370,6 @@ describe("ReflectionPlay", () => {
       expect(
         screen.getByRole("button", { name: "左2行 退出 3マス" }),
       ).toBeTruthy();
-    });
-
-    test("手持ちを置き切っても揃わないとき、合っていない外周ヒントの本数を知らせること", () => {
-      renderPlay({
-        board: parseReflectionBoard(["/..", "...", ".@."]),
-        stock: emptyStock,
-      });
-
-      expect(
-        screen.getByText(
-          (_, element) =>
-            element?.tagName === "SPAN" &&
-            element.textContent === "合っていない外周ヒントが6本あります",
-        ),
-      ).toBeTruthy();
-    });
-
-    test("手持ちが残っている間は、合っていない外周ヒントの本数を出さないこと", () => {
-      renderPlay({ board: parseReflectionBoard(["/..", "...", "..."]) });
-
-      expect(screen.queryByText(/合っていない外周ヒント/)).toBeNull();
     });
   });
 
