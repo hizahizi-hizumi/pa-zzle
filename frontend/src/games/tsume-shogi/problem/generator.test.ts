@@ -6,6 +6,7 @@ import {
   formatTsumeShogiProblemText,
   TSUME_SHOGI_GENERATOR_VERSION,
 } from "@/games/tsume-shogi/problem/problem";
+import { listTsumeShogiAttackerChecks } from "@/games/tsume-shogi/puzzle/moves";
 
 describe("generateTsumeShogiProblem", () => {
   describe.each([1, 3, 5] as const)("%i手の identity", (plies) => {
@@ -56,6 +57,75 @@ describe("generateTsumeShogiProblem", () => {
     });
   });
 
+  describe.each([
+    ["1〜1", { minimum: 1, maximum: 1 }, 3],
+    ["8以上", { minimum: 8, maximum: 99 }, 0],
+  ] as const)(
+    "初手の王手の数が%sの identity",
+    (_, rootChecks, candidateIndex) => {
+      const identity = createTsumeShogiProblemIdentity(
+        3,
+        candidateIndex,
+        rootChecks,
+      );
+
+      test("初手の王手の数がその範囲に入る問題を作ること", () => {
+        const { problem } = generateTsumeShogiProblem(identity);
+
+        const rootCheckCount = listTsumeShogiAttackerChecks(
+          problem.initialPosition,
+        ).length;
+        expect(rootCheckCount).toBeGreaterThanOrEqual(rootChecks.minimum);
+        expect(rootCheckCount).toBeLessThanOrEqual(rootChecks.maximum);
+      });
+    },
+  );
+
+  describe("盤上の駒を動かす1手詰を起点にする identity", () => {
+    const identity = createTsumeShogiProblemIdentity(
+      3,
+      1,
+      { minimum: 1, maximum: 4 },
+      "board-move",
+    );
+
+    test("最終手が盤上の駒の移動の問題を作ること", () => {
+      const { problem } = generateTsumeShogiProblem(identity);
+
+      expect(problem.mainLine.at(-1)?.kind).toBe("board");
+    });
+  });
+
+  describe("起点の玉を盤の中ほどに置く identity", () => {
+    const identity = createTsumeShogiProblemIdentity(
+      3,
+      1,
+      { minimum: 1, maximum: 4 },
+      undefined,
+      "middle",
+    );
+
+    test("起点の玉の範囲の無い identity と別の問題を作ること", () => {
+      const { problem } = generateTsumeShogiProblem(identity);
+      const { problem: edgeProblem } = generateTsumeShogiProblem(
+        createTsumeShogiProblemIdentity(3, 1, { minimum: 1, maximum: 4 }),
+      );
+
+      expect(formatTsumeShogiProblemText(problem)).not.toEqual(
+        formatTsumeShogiProblemText(edgeProblem),
+      );
+    });
+
+    test("同じ identity から同じ問題を作ること", () => {
+      const first = generateTsumeShogiProblem(identity);
+      const second = generateTsumeShogiProblem(structuredClone(identity));
+
+      expect(formatTsumeShogiProblemText(second.problem)).toEqual(
+        formatTsumeShogiProblemText(first.problem),
+      );
+    });
+  });
+
   describe("扱わない identity", () => {
     const cases = [
       [
@@ -69,6 +139,28 @@ describe("generateTsumeShogiProblem", () => {
           generatorVersion: TSUME_SHOGI_GENERATOR_VERSION,
           seed: "ts-7-0",
           conditions: { plies: 7 },
+        },
+        RangeError,
+      ],
+      [
+        "初手の王手の数の範囲が逆転した",
+        {
+          generatorVersion: TSUME_SHOGI_GENERATOR_VERSION,
+          seed: "ts-3-c4-1-0",
+          conditions: { plies: 3, rootChecks: { minimum: 4, maximum: 1 } },
+        },
+        RangeError,
+      ],
+      [
+        "起点の玉の範囲が扱わない",
+        {
+          generatorVersion: TSUME_SHOGI_GENERATOR_VERSION,
+          seed: "ts-3-c1-4-top-0",
+          conditions: {
+            plies: 3,
+            rootChecks: { minimum: 1, maximum: 4 },
+            baseKingArea: "top",
+          },
         },
         RangeError,
       ],
