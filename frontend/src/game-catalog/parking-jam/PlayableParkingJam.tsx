@@ -4,6 +4,7 @@ import {
   useProblemIdQuerySync,
   useRequestedProblem,
 } from "@/game-catalog/problem-id-query";
+import { useRecordResultNavigation } from "@/game-catalog/record-result-navigation";
 import { createParkingJamDiagnosticSnapshot } from "@/games/parking-jam/diagnostics";
 import {
   getParkingJamDifficultyLabel,
@@ -83,6 +84,11 @@ export function PlayableParkingJam({
     playRecord,
     parkingJamPlayRecordDefinition,
   );
+  const navigatesToRecordResult = useRecordResultNavigation(
+    play.progress === "result",
+    playRecord,
+    recordOutcome,
+  );
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const diagnostics = useMemo(
     () =>
@@ -115,7 +121,8 @@ export function PlayableParkingJam({
         undoCount={play.undoCount}
         canUndo={play.canUndo}
         canRestart={play.canRestart}
-        result={play.result}
+        // 記録の結果画面へ遷移する間は、その場の結果画面を出さず盤面を見せておく。
+        result={navigatesToRecordResult ? null : play.result}
         recordOutcomeNotice={
           <PlayRecordOutcomeNotice
             outcome={recordOutcome}

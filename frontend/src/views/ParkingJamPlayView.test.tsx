@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import {
   createMemoryRouter,
   type InitialEntry,
@@ -10,9 +10,22 @@ import {
 import { createPlayLocationState } from "@/game-catalog/play-location-state";
 import { formatParkingJamProblemQuery } from "@/games/parking-jam/diagnostics";
 import * as problemSelection from "@/games/parking-jam/problem-selection";
+import {
+  createParkingJamInitialState,
+  isParkingJamCleared,
+  type ParkingJamBoard,
+  type ParkingJamMove,
+  type ParkingJamVehicle,
+} from "@/games/parking-jam/puzzle/board";
+import {
+  applyParkingJamMove,
+  listParkingJamLegalMoves,
+} from "@/games/parking-jam/puzzle/rules";
 import { createProblemId } from "@/games/problem-id";
 import * as problemSeed from "@/games/problem-seed";
+import { readPlayRecords } from "@/records/storage";
 import { ParkingJamPlayView } from "@/views/ParkingJamPlayView";
+import { PlayResultView } from "@/views/PlayResultView";
 
 const internalDiagnostics = vi.hoisted(() => ({ available: false }));
 
@@ -27,6 +40,7 @@ afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   internalDiagnostics.available = false;
+  window.localStorage.clear();
 });
 
 function renderAt(path: string): void {
@@ -60,6 +74,10 @@ function renderRouterAt(entry: InitialEntry): PlayRouter {
       {
         path: "/puzzles/parking-jam/play/:difficulty",
         element: <ParkingJamPlayView />,
+      },
+      {
+        path: "/puzzles/:game/result/:recordId",
+        element: <PlayResultView />,
       },
     ],
     { initialEntries: [entry] },
@@ -222,6 +240,86 @@ describe("ParkingJamPlayView", () => {
         });
       },
     );
+  });
+});
+
+/** 車の向きに沿って出庫できる車を順に出し、すべての車を出庫させる手順を求める。車が減っても出庫できなくなる車は無い。 */
+function findExitMoves(board: ParkingJamBoard): ParkingJamMove[] {
+  const moves: ParkingJamMove[] = [];
+  let state = createParkingJamInitialState(board);
+  while (!isParkingJamCleared(state)) {
+    const move = listParkingJamLegalMoves(board, state).find(
+      ({ vehicleId, direction }) =>
+        (board.vehicles.find((vehicle) => vehicle.id === vehicleId)
+          ?.orientation ===
+          "horizontal") ===
+        (direction === "left" || direction === "right"),
+    );
+    const next = move && applyParkingJamMove(board, state, move);
+    if (!move || !next) {
+      throw new Error("Parking jam board must be solvable");
+    }
+    moves.push(move);
+    state = next;
+  }
+  return moves;
+}
+
+const arrowKeys = {
+  up: "ArrowUp",
+  right: "ArrowRight",
+  down: "ArrowDown",
+  left: "ArrowLeft",
+} as const;
+
+function getVehicleLabel(vehicle: ParkingJamVehicle): string {
+  return `${vehicle.orientation === "horizontal" ? "横向き" : "縦向き"}の車 行${vehicle.row + 1} 列${vehicle.column + 1}`;
+}
+
+describe("解き終えた場合", () => {
+  const { problem, identity } =
+    problemSelection.selectParkingJamProblemForDifficulty("1", "solve");
+  const exits = findExitMoves(problem.board).map((move) => ({
+    label: getVehicleLabel(
+      problem.board.vehicles.find(
+        (vehicle) => vehicle.id === move.vehicleId,
+      ) as ParkingJamVehicle,
+    ),
+    key: arrowKeys[move.direction],
+  }));
+  let router: PlayRouter;
+
+  beforeEach(() => {
+    router = renderRouterAt(
+      `/puzzles/parking-jam/play/1?problem=${createProblemId(identity)}`,
+    );
+    for (const exit of exits) {
+      fireEvent.keyDown(screen.getByLabelText(exit.label), { key: exit.key });
+    }
+    const lastExit = exits.at(-1);
+    if (lastExit) {
+      // jsdom には animationend の CSS 対応が無く、React は接頭辞付きのイベント名で購読する。
+      fireEvent(
+        screen.getByLabelText(lastExit.label),
+        new Event("webkitAnimationEnd", { bubbles: true }),
+      );
+    }
+  });
+
+  test("保存した記録の結果画面へ履歴を置き換えて移ること", async () => {
+    const resultScreen = await screen.findByRole("region", {
+      name: "プレイ結果",
+    });
+    const [record] = readPlayRecords();
+
+    expect(resultScreen).toBeTruthy();
+    expect(router.state.location.pathname).toBe(
+      `/puzzles/parking-jam/result/${encodeURIComponent(record?.id ?? "")}`,
+    );
+    expect(router.state.historyAction).toBe("REPLACE");
+    expect(router.state.location.state).toEqual({
+      recordSaveOutcome: { status: "first-record" },
+    });
   });
 });
 

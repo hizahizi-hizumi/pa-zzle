@@ -4,8 +4,12 @@ import {
   getParkingJamPlayRecordScore,
   isParkingJamPlayRecord,
   parkingJamPlayRecordDefinition,
+  restoreParkingJamRecordedResult,
 } from "@/games/parking-jam/play-record";
-import { PARKING_JAM_SCORE_MODEL_VERSION } from "@/games/parking-jam/score";
+import {
+  calculateParkingJamSpeedFullScoreMs,
+  PARKING_JAM_SCORE_MODEL_VERSION,
+} from "@/games/parking-jam/score";
 import type { PlayRecord } from "@/records/play-record";
 
 const problemIdentity = {
@@ -226,5 +230,39 @@ describe("parkingJamPlayRecordDefinition", () => {
       "elapsed-ms",
       "failed-move-count",
     ]);
+  });
+});
+
+describe("restoreParkingJamRecordedResult", () => {
+  describe("今の版の記録の場合", () => {
+    const speedReference = { vehicleCount: 14, initialBlockedVehicleCount: 6 };
+
+    test("記録の成績と問題の事実から結果を作り直すこと", () => {
+      const recorded = restoreParkingJamRecordedResult(record);
+
+      expect(recorded).toMatchObject({
+        difficulty: "3",
+        problemIdentity,
+        result: {
+          ...performance,
+          problemIdentity,
+          speedReference,
+          speedFullScoreMs: calculateParkingJamSpeedFullScoreMs(speedReference),
+          score: { total: getParkingJamPlayRecordScore(record) },
+        },
+      });
+    });
+  });
+
+  const unrestorableRecords = [
+    ["採点版の無い記録", legacyRecord],
+    ["3段階の難易度の記録", threeLevelRecord],
+    ["別のゲームの記録", { ...record, gameId: "nanpure" }],
+  ] as const;
+
+  test.each(unrestorableRecords)("%sには null を返すこと", (_, target) => {
+    const recorded = restoreParkingJamRecordedResult(target);
+
+    expect(recorded).toBeNull();
   });
 });
