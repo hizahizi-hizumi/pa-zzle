@@ -26,6 +26,11 @@ export function MinesweeperHowToPlayDialog({
         </p>
         <HowToPlayFigure rows={["*..", ".2.", "..*"]} />
       </li>
+      <li>
+        <p>
+          最初から一部のマスが開いていて、推測しなくても数字と地雷の数だけで最後まで解ける。
+        </p>
+      </li>
       <li className="space-y-2">
         <p>周りに地雷がないマスを開くと、周りも続けて開く。</p>
         <HowToPlayTransition>
@@ -35,20 +40,20 @@ export function MinesweeperHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>
-          押して開く。上のボタンで開く
+          マスを押すと開く。上のボタン
           <Pointer
             className="mx-0.5 inline size-4 align-text-bottom"
             aria-hidden
           />
-          と旗
+          を押して旗
           <Flag
             className="mx-0.5 inline size-4 align-text-bottom"
             aria-hidden
           />
-          を切り替えると、押して旗を置く・外す。長押しと右クリックは、いつでも旗を置く・外す。
+          に切り替えると、押したマスに旗を置く・外す。長押しと右クリックは、いつでも旗を置く・外す。
         </p>
         <HowToPlayTransition>
-          <HowToPlayFigure rows={["."]} />
+          <HowToPlayFigure rows={["."]} pressed={[0, 0]} />
           <HowToPlayFigure rows={["F"]} />
         </HowToPlayTransition>
       </li>
@@ -59,7 +64,7 @@ export function MinesweeperHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>
-          開くモードで開いた数字を押すと、周りの旗と踏んだ地雷が数字と同じ数のとき、残りのマスをまとめて開く。旗が間違っていると地雷を踏む。
+          旗に切り替えていないときに開いた数字を押すと、周りの旗と踏んだ地雷の合計が数字と同じなら、残りのマスをまとめて開く。旗が間違っていると地雷を踏む。
         </p>
         <HowToPlayTransition>
           <HowToPlayFigure rows={["F..", ".1.", "..."]} pressed={[1, 1]} />
@@ -68,7 +73,7 @@ export function MinesweeperHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>
-          地雷を踏んでも続けられる。踏んだ地雷は盤面に残り、ミスとして数える。
+          地雷を踏んでも終わらずに続けられる。踏んだ地雷は盤面に残り、1つごとにミスとして数える。
         </p>
         <HowToPlayFigure rows={["1x1", "111"]} />
       </li>

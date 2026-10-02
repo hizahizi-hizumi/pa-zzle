@@ -16,6 +16,9 @@ type HowToPlayFigureProps = {
 };
 
 function toVisibleCell(mark: string): MinesweeperVisibleCell {
+  if (mark === ".") {
+    return { state: "hidden" };
+  }
   if (mark === "F") {
     return { state: "flagged" };
   }
@@ -25,11 +28,10 @@ function toVisibleCell(mark: string): MinesweeperVisibleCell {
   if (mark === "x") {
     return { state: "steppedMine" };
   }
-  const adjacentMineCount = Number(mark);
-  if (Number.isInteger(adjacentMineCount)) {
-    return { state: "revealed", adjacentMineCount };
+  if (/^[0-8]$/.test(mark)) {
+    return { state: "revealed", adjacentMineCount: Number(mark) };
   }
-  return { state: "hidden" };
+  throw new Error(`Unknown minesweeper how-to-play figure mark: ${mark}`);
 }
 
 type FigureCell = {
