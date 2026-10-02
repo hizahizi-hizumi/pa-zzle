@@ -32,13 +32,22 @@ import {
 // - 生成器の identity: ?generator=2&seed=rf-7-10-3&size=7&pieces=10（`generator` は省略でき、省略時は今の生成器の版）
 // 問題集の番号は問題集を作り直すと別の問題を指すので、記録や資料に残すときは identity の形を使う。
 // identity の形では、問題集に無い問題も開ける（スコアは出さず、記録もしない）。
-const poolQueryKeys = ["pool", "problem"] as const;
 const identityQueryKeys = ["generator", "seed", "size", "pieces"] as const;
+// `problem` は通常のプレイ画面でも問題 ID（`?problem=0123456789`）に使うので、問題集の番号の形のときだけ問題集の番号とみなす。
+const poolProblemIdPattern = /^\d+-\d+$/;
+
+function hasPoolQuery(params: URLSearchParams): boolean {
+  return (
+    params.has("pool") || poolProblemIdPattern.test(params.get("problem") ?? "")
+  );
+}
+
+function hasIdentityQuery(params: URLSearchParams): boolean {
+  return identityQueryKeys.some((key) => params.has(key));
+}
 
 export function hasReflectionProblemQuery(params: URLSearchParams): boolean {
-  return [...poolQueryKeys, ...identityQueryKeys].some((key) =>
-    params.has(key),
-  );
+  return hasPoolQuery(params) || hasIdentityQuery(params);
 }
 
 export function formatReflectionProblemQuery(
@@ -109,11 +118,10 @@ function parseIdentityQuery(
 export function parseReflectionProblemQuery(
   params: URLSearchParams,
 ): ReflectionProblemIdentity | null {
-  const hasPoolQuery = poolQueryKeys.some((key) => params.has(key));
-  const hasIdentityQuery = identityQueryKeys.some((key) => params.has(key));
-  if (hasPoolQuery === hasIdentityQuery) return null;
+  const isPoolQuery = hasPoolQuery(params);
+  if (isPoolQuery === hasIdentityQuery(params)) return null;
 
-  return hasPoolQuery
+  return isPoolQuery
     ? parsePoolProblemQuery(params)
     : parseIdentityQuery(params);
 }

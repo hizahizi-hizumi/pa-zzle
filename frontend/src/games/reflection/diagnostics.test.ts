@@ -98,6 +98,7 @@ describe("hasReflectionProblemQuery", () => {
     ["seed=a", true],
     ["size=5", true],
     ["problem=1-1", true],
+    ["problem=0123456789", false],
     ["from=home", false],
   ] as const;
 
