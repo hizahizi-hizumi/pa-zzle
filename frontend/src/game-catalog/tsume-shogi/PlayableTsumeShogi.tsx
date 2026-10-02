@@ -1,3 +1,4 @@
+import { useGameNavigation } from "@/game-catalog/game-navigation";
 import {
   useProblemIdQuerySync,
   useRequestedProblem,
@@ -7,7 +8,6 @@ import type { TsumeShogiDifficulty } from "@/games/tsume-shogi/difficulty";
 import { useTsumeShogiPlay } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
 import { selectTsumeShogiProblemById } from "@/games/tsume-shogi/problem-selection";
 import { TsumeShogiPlay } from "@/games/tsume-shogi/ui/TsumeShogiPlay";
-import { useNavigate } from "@/router";
 
 type PlayableTsumeShogiProps = {
   difficulty: TsumeShogiDifficulty;
@@ -28,7 +28,10 @@ export function PlayableTsumeShogi({
     avoidedProblemId,
   );
   useProblemIdQuerySync(play.problemIdentity);
-  const navigate = useNavigate();
+  const navigation = useGameNavigation({
+    entryPath: "/puzzles/tsume-shogi",
+    playPath: "/puzzles/tsume-shogi/play/:difficulty",
+  });
 
   return (
     <TsumeShogiPlay
@@ -61,10 +64,9 @@ export function PlayableTsumeShogi({
       onReplay={play.replay}
       onClearAnimationComplete={play.completeClearAnimation}
       onStartNewProblem={play.startNewProblem}
-      onOpenRecords={() => navigate("/records")}
-      // 難易度選択はまだ無いので、ホームへ戻す。
-      onChangeDifficulty={() => navigate("/")}
-      onBackToHome={() => navigate("/")}
+      onOpenRecords={navigation.openRecords}
+      onChangeDifficulty={navigation.changeDifficulty}
+      onBackToHome={navigation.backToHome}
     />
   );
 }
