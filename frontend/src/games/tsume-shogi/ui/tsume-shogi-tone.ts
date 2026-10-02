@@ -22,6 +22,8 @@ export const tsumeShogiToneClassNames = {
   /** 黒漆の罫線と星。茶を含んだ黒で、罫線は木目を消さない濃さに抑える。外枠も内側と同じ太さ。 */
   boardLine: "border-[#2a1b10]/70",
   boardOutline: "outline-[#2a1b10]/80",
+  /** 盤の一部を切り出した図の、本当の盤の端。盤の外枠と同じ色。 */
+  boardEdge: "border-[#2a1b10]/80",
   boardStar: "bg-[#2a1b10]",
   /** 筋・段は盤の木の縁に墨で書く。 */
   coordinate: "text-[#4a3220]",
