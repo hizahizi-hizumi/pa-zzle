@@ -7,6 +7,7 @@ import {
 } from "@testing-library/react";
 
 import type { PlayRecord } from "@/records/play-record";
+import { serializePlayRecordForCopy } from "@/records/play-record-copy";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
 import { PlayRecordRow } from "@/records/ui/PlayRecordsScreen/PlayRecordRow";
 import { createPlayRecordDisplay } from "@/records/ui/play-record-display";
@@ -44,9 +45,6 @@ const display = createPlayRecordDisplay({
   getComparisonLabel() {
     return "テスト";
   },
-  getHistoryCopyText() {
-    return '{"game":"test"}';
-  },
   metrics: {
     score: {
       label: "スコア",
@@ -83,7 +81,7 @@ describe("PlayRecordRow", () => {
     fireEvent.click(screen.getByRole("button", { name: "再現用JSONをコピー" }));
 
     await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
-    expect(writeText).toHaveBeenCalledWith('{"game":"test"}');
+    expect(writeText).toHaveBeenCalledWith(serializePlayRecordForCopy(record));
     expect(screen.getByRole("button", { name: "コピーしました" })).toBeTruthy();
   });
 });

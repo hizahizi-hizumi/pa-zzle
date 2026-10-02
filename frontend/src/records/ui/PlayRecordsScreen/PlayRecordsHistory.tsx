@@ -24,7 +24,6 @@ export function PlayRecordsHistory({
         style={{
           gridTemplateColumns: getPlayRecordGridTemplateColumns(
             display.metrics.length,
-            display.getHistoryCopyText !== undefined,
           ),
         }}
       >

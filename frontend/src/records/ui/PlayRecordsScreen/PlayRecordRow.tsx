@@ -7,6 +7,7 @@ import {
   type PersonalBest,
 } from "@/records/personal-best";
 import type { PlayRecord } from "@/records/play-record";
+import { serializePlayRecordForCopy } from "@/records/play-record-copy";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 import { formatRecordCompletedAt } from "@/records/ui/format";
 import { getPlayRecordGridTemplateColumns } from "@/records/ui/PlayRecordsScreen/record-grid";
@@ -33,13 +34,10 @@ export function PlayRecordRow({
     personalBests,
     display.definition,
   );
-  const copyText = display.getHistoryCopyText?.(record) ?? null;
 
   async function copyRecord() {
-    if (copyText === null) return;
-
     try {
-      await navigator.clipboard.writeText(copyText);
+      await navigator.clipboard.writeText(serializePlayRecordForCopy(record));
       setCopyState("copied");
       window.setTimeout(() => setCopyState("idle"), 1600);
     } catch {
@@ -60,7 +58,6 @@ export function PlayRecordRow({
       style={{
         gridTemplateColumns: getPlayRecordGridTemplateColumns(
           display.metrics.length,
-          display.getHistoryCopyText !== undefined,
         ),
       }}
     >
@@ -93,18 +90,16 @@ export function PlayRecordRow({
         );
       })}
       <div className="flex justify-end gap-1">
-        {copyText !== null && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label={copyLabel}
-            title={copyLabel}
-            onClick={copyRecord}
-          >
-            {copyState === "copied" ? <Check /> : <Clipboard />}
-          </Button>
-        )}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={copyLabel}
+          title={copyLabel}
+          onClick={copyRecord}
+        >
+          {copyState === "copied" ? <Check /> : <Clipboard />}
+        </Button>
         <Button
           type="button"
           variant="ghost"
