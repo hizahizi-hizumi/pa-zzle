@@ -4,16 +4,10 @@ import {
   type ReflectionLaserPathMode,
 } from "@/games/reflection/laser-path-mode";
 import type { ReflectionPiece } from "@/games/reflection/puzzle/board";
-import type { ReflectionClue } from "@/games/reflection/puzzle/laser";
-import { ReflectionOutcomeMark } from "@/games/reflection/ui/board/ReflectionOutcomeMark";
 import { ReflectionPieceIcon } from "@/games/reflection/ui/board/ReflectionPieceIcon";
 import { reflectionOutcomeLabels } from "@/games/reflection/ui/outcome-label";
+import { ClueMatchExample } from "@/games/reflection/ui/ReflectionHowToPlayDialog/ClueMatchExample";
 import { HowToPlayFigure } from "@/games/reflection/ui/ReflectionHowToPlayDialog/HowToPlayFigure";
-import {
-  reflectionOutcomeToneClassNames,
-  reflectionToneClassNames,
-} from "@/games/reflection/ui/reflection-tone";
-import { cn } from "@/lib/utils";
 
 type ReflectionHowToPlayDialogProps = {
   open: boolean;
@@ -47,40 +41,6 @@ const pieceGroups: readonly {
 ];
 
 const leftMiddle = { side: "left", index: 1 } as const;
-
-const matchExampleClue: ReflectionClue = { outcome: "exit", distance: 3 };
-
-/** 盤面の外周ヒントと同じ並び（数字の下に結果の形）で、一致しているときの地と数字の色を見せる見本。 */
-function ClueMatchExample({ matched }: { matched: boolean }) {
-  return (
-    <span
-      className={cn(
-        "flex size-10 flex-col items-center justify-center gap-0.5 leading-none text-foreground",
-        matched && reflectionToneClassNames.clueMatchSurface,
-      )}
-    >
-      <span
-        className={cn(
-          "font-semibold tabular-nums",
-          matched && reflectionToneClassNames.clueMatchLabel,
-        )}
-      >
-        {matchExampleClue.distance}
-      </span>
-      <span
-        className={cn(
-          "flex",
-          reflectionOutcomeToneClassNames[matchExampleClue.outcome],
-        )}
-      >
-        <ReflectionOutcomeMark
-          outcome={matchExampleClue.outcome}
-          size="inline"
-        />
-      </span>
-    </span>
-  );
-}
 
 /**
  * ルールと操作を、盤面と同じ形・色の小さな図と短い一文で示す。
