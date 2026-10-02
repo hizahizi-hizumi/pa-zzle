@@ -9,28 +9,48 @@ type WaterSortHowToPlayDialogProps = {
   onClose: () => void;
 };
 
-/** 左を注ぎ元、右を注ぎ先とした2本のボトルと、そこへ注げるかどうか。 */
-const pourConditionFigures: readonly {
+type PourConditionFigure = {
   key: string;
+  /** 左を注ぎ元、右を注ぎ先とした2本のボトル。 */
   bottles: WaterSortState;
+};
+
+/** 注げる形と注げない形。狭い画面でも同じ判定の図どうしが同じ行に残るよう分けて並べる。 */
+const pourConditionFigureGroups: readonly {
   pourable: boolean;
+  figures: readonly PourConditionFigure[];
 }[] = [
-  { key: "empty", bottles: [[1, 0], []], pourable: true },
   {
-    key: "same-color",
-    bottles: [
-      [1, 0],
-      [2, 0],
-    ],
     pourable: true,
+    figures: [
+      { key: "empty", bottles: [[1, 0], []] },
+      {
+        key: "same-color",
+        bottles: [
+          [1, 0],
+          [2, 0],
+        ],
+      },
+    ],
   },
   {
-    key: "different-color",
-    bottles: [
-      [1, 0],
-      [2, 1],
-    ],
     pourable: false,
+    figures: [
+      {
+        key: "different-color",
+        bottles: [
+          [1, 0],
+          [2, 1],
+        ],
+      },
+      {
+        key: "full",
+        bottles: [
+          [1, 0],
+          [2, 0, 0, 0],
+        ],
+      },
+    ],
   },
 ];
 
@@ -60,25 +80,32 @@ export function WaterSortHowToPlayDialog({
           <HowToPlayFigure
             bottles={[
               [2, 1, 1, 1],
-              [3, 3, 1],
+              [3, 1],
             ]}
             selectedBottleIndex={0}
           />
           <HowToPlayFigure
             bottles={[
-              [2, 1, 1],
-              [3, 3, 1, 1],
+              [2, 1],
+              [3, 1, 1, 1],
             ]}
           />
         </HowToPlayTransition>
       </li>
       <li className="space-y-2">
         <p>注げるのは、注ぎ先が空か、上の色が同じで空きがあるとき。</p>
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-          {pourConditionFigures.map(({ key, bottles, pourable }) => (
-            <div key={key} className="flex items-center gap-2">
-              <HowToPlayFigure bottles={bottles} />
-              <HowToPlayRuleMark allowed={pourable} />
+        <div className="flex flex-wrap gap-x-5 gap-y-2">
+          {pourConditionFigureGroups.map(({ pourable, figures }) => (
+            <div
+              key={String(pourable)}
+              className="flex flex-wrap items-center gap-x-5 gap-y-2"
+            >
+              {figures.map(({ key, bottles }) => (
+                <div key={key} className="flex items-center gap-2">
+                  <HowToPlayFigure bottles={bottles} selectedBottleIndex={0} />
+                  <HowToPlayRuleMark allowed={pourable} />
+                </div>
+              ))}
             </div>
           ))}
         </div>
@@ -89,7 +116,7 @@ export function WaterSortHowToPlayDialog({
       </li>
       <li>
         <p>
-          待ったで1手ずつ戻せる。注げる手がなくなったら、待ったか盤面を戻すで続ける。
+          待ったで1手ずつ戻せる。手詰まりになったら、待ったか盤面を戻すで続ける。
         </p>
       </li>
     </HowToPlayDialog>
