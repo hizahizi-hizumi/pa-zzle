@@ -215,7 +215,8 @@ function selectProblem(
   ).problem;
 }
 
-function createTsumeShogiResult(
+/** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
+export function createTsumeShogiResult(
   sessionResult: TsumeShogiSessionResult,
   workload: TsumeShogiSolveWorkload,
 ): TsumeShogiResult {
