@@ -16,11 +16,20 @@ describe("parseTsumeShogiProblemQuery", () => {
   );
   const generatedIdentity = createTsumeShogiProblemIdentity(3, 0);
   const paramsWithoutGenerator = new URLSearchParams("seed=ts-3-0&plies=3");
+  const rootCheckIdentity = createTsumeShogiProblemIdentity(3, 3, {
+    minimum: 1,
+    maximum: 1,
+  });
+  const rootCheckParams = new URLSearchParams(
+    formatTsumeShogiProblemQuery(rootCheckIdentity),
+  );
   const invalidCases = [
     ["seed の欠けたクエリ", "plies=3"],
     ["扱わない手数", "seed=ts-7-0&plies=7"],
     ["数でない手数", "seed=ts-3-0&plies=three"],
     ["今と違う生成器の版", "generator=0&seed=ts-3-0&plies=3"],
+    ["形の違う初手の王手の数の範囲", "seed=ts-3-c1-1-3&plies=3&checks=1"],
+    ["逆転した初手の王手の数の範囲", "seed=ts-3-c4-1-3&plies=3&checks=4-1"],
   ] as const;
 
   test("仮の問題の identity から、その問題を読み戻すこと", () => {
@@ -36,6 +45,13 @@ describe("parseTsumeShogiProblemQuery", () => {
     expect(formatTsumeShogiProblemText(result!.problem).mainLine).toHaveLength(
       3,
     );
+  });
+
+  test("初手の王手の数の範囲のある identity から、生成器で問題を作ること", () => {
+    const result = parseTsumeShogiProblemQuery(rootCheckParams);
+
+    expect(rootCheckParams.get("checks")).toBe("1-1");
+    expect(result?.identity).toEqual(rootCheckIdentity);
   });
 
   test.each(invalidCases)("%sは null を返すこと", (_, query) => {

@@ -44,9 +44,20 @@ export type TsumeShogiGenerationPlies =
 /** 生成手順を変えて同じ identity から別の問題ができるようになったら上げる。 */
 export const TSUME_SHOGI_GENERATOR_VERSION = "1";
 
-/** 問題を作る条件。 */
+/** 初手の合法な王手の数の範囲（両端を含む）。 */
+export type TsumeShogiRootCheckRange = {
+  minimum: number;
+  maximum: number;
+};
+
+/**
+ * 問題を作る条件。
+ * - `plies`: 手数。
+ * - `rootChecks`: 初手の合法な王手の数をこの範囲に絞る。難易度のレベルごとに候補の領域を寄せるために使う。省略すると絞らない。
+ */
 export type TsumeShogiGenerationConditions = {
   plies: TsumeShogiGenerationPlies;
+  rootChecks?: TsumeShogiRootCheckRange;
 };
 
 /** 同じ問題を再現するための情報。 */
@@ -64,17 +75,24 @@ export type TsumeShogiIdentifiedProblem = {
 
 /**
  * 生成条件と候補番号から identity を作る。seed は条件ごとに別の系列になるよう条件を含める。
- * 例: 5手・候補番号 3 は `ts-5-3`。
+ * 例: 5手・候補番号 3 は `ts-5-3`、5手・初手の王手 1〜4・候補番号 3 は `ts-5-c1-4-3`。
  */
 export function createTsumeShogiProblemIdentity(
   plies: TsumeShogiGenerationPlies,
   candidateIndex: number,
+  rootChecks?: TsumeShogiRootCheckRange,
 ): TsumeShogiProblemIdentity {
-  return {
-    generatorVersion: TSUME_SHOGI_GENERATOR_VERSION,
-    seed: `ts-${plies}-${candidateIndex}`,
-    conditions: { plies },
-  };
+  return rootChecks === undefined
+    ? {
+        generatorVersion: TSUME_SHOGI_GENERATOR_VERSION,
+        seed: `ts-${plies}-${candidateIndex}`,
+        conditions: { plies },
+      }
+    : {
+        generatorVersion: TSUME_SHOGI_GENERATOR_VERSION,
+        seed: `ts-${plies}-c${rootChecks.minimum}-${rootChecks.maximum}-${candidateIndex}`,
+        conditions: { plies, rootChecks: { ...rootChecks } },
+      };
 }
 
 export function isTsumeShogiGenerationPlies(
@@ -97,7 +115,21 @@ export function isTsumeShogiProblemIdentity(
     value.generatorVersion === TSUME_SHOGI_GENERATOR_VERSION &&
     typeof value.seed === "string" &&
     value.seed.length > 0 &&
-    isTsumeShogiGenerationPlies(value.conditions.plies)
+    isTsumeShogiGenerationPlies(value.conditions.plies) &&
+    (value.conditions.rootChecks === undefined ||
+      isTsumeShogiRootCheckRange(value.conditions.rootChecks))
+  );
+}
+
+export function isTsumeShogiRootCheckRange(
+  value: unknown,
+): value is TsumeShogiRootCheckRange {
+  return (
+    isRecordObject(value) &&
+    Number.isInteger(value.minimum) &&
+    Number.isInteger(value.maximum) &&
+    (value.minimum as number) >= 1 &&
+    (value.minimum as number) <= (value.maximum as number)
   );
 }
 

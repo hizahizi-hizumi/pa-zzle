@@ -22,6 +22,19 @@ describe("createTsumeShogiProblemIdentity", () => {
       conditions: { plies: 5 },
     });
   });
+
+  test("初手の王手の数の範囲を条件と seed に含めること", () => {
+    const result = createTsumeShogiProblemIdentity(5, 3, {
+      minimum: 1,
+      maximum: 4,
+    });
+
+    expect(result).toEqual({
+      generatorVersion: "1",
+      seed: "ts-5-c1-4-3",
+      conditions: { plies: 5, rootChecks: { minimum: 1, maximum: 4 } },
+    });
+  });
 });
 
 describe("isTsumeShogiProblemIdentity", () => {
@@ -40,6 +53,29 @@ describe("isTsumeShogiProblemIdentity", () => {
     [
       "seed の無い identity",
       { generatorVersion: "1", seed: "", conditions: { plies: 3 } },
+      false,
+    ],
+    [
+      "初手の王手の数の範囲のある identity",
+      createTsumeShogiProblemIdentity(3, 0, { minimum: 2, maximum: 10 }),
+      true,
+    ],
+    [
+      "初手の王手の数の範囲が逆転した identity",
+      {
+        generatorVersion: "1",
+        seed: "ts-3-c4-1-0",
+        conditions: { plies: 3, rootChecks: { minimum: 4, maximum: 1 } },
+      },
+      false,
+    ],
+    [
+      "初手の王手の数の下限が0の identity",
+      {
+        generatorVersion: "1",
+        seed: "ts-3-c0-1-0",
+        conditions: { plies: 3, rootChecks: { minimum: 0, maximum: 1 } },
+      },
       false,
     ],
   ] as const;

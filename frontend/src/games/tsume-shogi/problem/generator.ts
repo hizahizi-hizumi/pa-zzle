@@ -17,7 +17,9 @@ import {
 } from "@/games/tsume-shogi/problem/generation/validator";
 import {
   isTsumeShogiGenerationPlies,
+  isTsumeShogiRootCheckRange,
   TSUME_SHOGI_GENERATOR_VERSION,
+  type TsumeShogiGenerationConditions,
   type TsumeShogiIdentifiedProblem,
   type TsumeShogiProblemIdentity,
 } from "@/games/tsume-shogi/problem/problem";
@@ -161,19 +163,45 @@ function hasUniqueFirstMove(
   return matingCheckCount === 1;
 }
 
+/** 生成条件の初手の王手の数の範囲に入るか。範囲が無ければ絞らない。 */
+function hasRootChecksWithin(
+  position: TsumeShogiPosition,
+  { rootChecks }: TsumeShogiGenerationConditions,
+): boolean {
+  if (rootChecks === undefined) {
+    return true;
+  }
+  const count = new TsumeShogiSearchPosition(position).listAttackerChecks()
+    .length;
+  return rootChecks.minimum <= count && count <= rootChecks.maximum;
+}
+
 class RetroGeneration {
   readonly #shuffle: <T>(values: readonly T[]) => T[];
   readonly #search = new TsumeShogiMateSearch();
+  readonly #conditions: TsumeShogiGenerationConditions;
   validatedCandidateCount = 0;
 
-  constructor(random: ProblemRandom) {
+  constructor(
+    random: ProblemRandom,
+    conditions: TsumeShogiGenerationConditions,
+  ) {
     this.#shuffle = function shuffle(values) {
       return shuffleProblemValues(values, random);
     };
+    this.#conditions = conditions;
   }
 
-  /** `plies` 手で採用できる局面か。 */
+  /**
+   * `plies` 手で採用できる局面か。目標の手数の局面は、strict validator より先に初手の王手の数で安く絞る。
+   */
   accepts(position: TsumeShogiPosition, plies: number): boolean {
+    if (
+      plies === this.#conditions.plies &&
+      !hasRootChecksWithin(position, this.#conditions)
+    ) {
+      return false;
+    }
     if (!hasUniqueFirstMove(position, plies, this.#search)) {
       return false;
     }
@@ -219,11 +247,18 @@ function validateIdentity(identity: TsumeShogiProblemIdentity): void {
       `Unsupported Tsume Shogi plies: ${identity.conditions.plies}`,
     );
   }
+  const { rootChecks } = identity.conditions;
+  if (rootChecks !== undefined && !isTsumeShogiRootCheckRange(rootChecks)) {
+    throw new RangeError(
+      `Unsupported Tsume Shogi root check range: ${JSON.stringify(rootChecks)}`,
+    );
+  }
 }
 
 /**
  * identity の seed から逆算で問題を作る。乱数で作った詰み上がり近くの局面から strict validator が採用する1手詰を探し、
- * 王手と応手を1組ずつさかのぼって、各段で strict validator が採用する局面だけを残す。
+ * 王手と応手を1組ずつさかのぼって、各段で strict validator が採用する局面だけを残す。生成条件に初手の王手の数の範囲が
+ * あれば、最後の段ではその範囲の局面だけを採る。
  * 同じ identity からは同じ問題を作る。上限までに作れなければ `TsumeShogiGenerationExhaustedError` を投げる。
  */
 export function generateTsumeShogiProblem(
@@ -232,7 +267,7 @@ export function generateTsumeShogiProblem(
   validateIdentity(identity);
   const { seed, conditions } = identity;
   const random = createProblemSeededRandom(`tsume-shogi:${seed}`);
-  const generation = new RetroGeneration(random);
+  const generation = new RetroGeneration(random, conditions);
 
   for (let baseCount = 1; baseCount <= MAXIMUM_BASE_COUNT; baseCount += 1) {
     const base = findMateInOneBase(random, generation);
