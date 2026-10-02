@@ -8,12 +8,13 @@ import {
 } from "@/games/tsume-shogi/puzzle/mate-search";
 import {
   applyTsumeShogiMove,
+  explainTsumeShogiIllegalMove,
   formatTsumeShogiMoveUsi,
   isSameTsumeShogiMove,
   isTsumeShogiCheckmate,
   isTsumeShogiDefenderInCheck,
-  isTsumeShogiLegalMove,
   listTsumeShogiAttackerChecks,
+  type TsumeShogiIllegalMoveReason,
   type TsumeShogiMove,
 } from "@/games/tsume-shogi/puzzle/moves";
 import {
@@ -67,12 +68,10 @@ export type TsumeShogiPromotionChoice = {
 };
 
 /**
- * 着手させなかった入力。
- * - `illegal`: 将棋のルールで指せない手（動けない升・二歩・打歩詰・行き所のない駒など）。
- * - `not-check`: 指せるが王手にならない手。
+ * 着手させなかった入力。`reason` は、王手にならない手（`not-check`）か、ルールで指せない理由。
  */
 export type TsumeShogiRejection = {
-  reason: "illegal" | "not-check";
+  reason: "not-check" | TsumeShogiIllegalMoveReason;
   to: TsumeShogiSquare;
 };
 
@@ -173,18 +172,6 @@ export function getTsumeShogiSessionPosition(
     : lastTurn.positionAfterDefense;
 }
 
-/** 盤面に見せている最後の手。まだ指していなければ `null`。 */
-export function getTsumeShogiSessionLastMove(
-  session: TsumeShogiSession,
-): TsumeShogiMove | null {
-  const lastTurn = session.turns.at(-1);
-  if (!lastTurn) return null;
-
-  return session.defenderReplyPending
-    ? lastTurn.attackerMove
-    : (lastTurn.defenderMove ?? lastTurn.attackerMove);
-}
-
 export function getTsumeShogiSessionPhase(
   session: TsumeShogiSession,
 ): TsumeShogiSessionPhase {
@@ -265,7 +252,8 @@ function tryAttackerCheck(
   position: TsumeShogiPosition,
   move: TsumeShogiMove,
 ): TsumeShogiPosition | TsumeShogiRejection["reason"] {
-  if (!isTsumeShogiLegalMove(position, move)) return "illegal";
+  const illegalReason = explainTsumeShogiIllegalMove(position, move);
+  if (illegalReason) return illegalReason;
 
   const next = applyTsumeShogiMove(position, move);
   return isTsumeShogiDefenderInCheck(next) ? next : "not-check";
@@ -450,7 +438,7 @@ function moveSelectedPiece(
     return { move, result: tryAttackerCheck(position, move) };
   });
   const legalCandidates = candidates.filter(
-    ({ result }) => result !== "illegal",
+    ({ result }) => typeof result !== "string" || result === "not-check",
   );
   // 成・不成のどちらも指せる移動では、王手になるかどうかに関係なく選ばせる。王手になる方だけを選ばせると、
   // 選択肢が出るかどうかが王手の手がかりになるため。
@@ -474,7 +462,12 @@ function moveSelectedPiece(
         );
   }
 
-  return reject(session, "illegal", to);
+  const [withoutPromotion] = candidates;
+  const illegalReason =
+    typeof withoutPromotion?.result === "string"
+      ? withoutPromotion.result
+      : "unreachable";
+  return reject(session, illegalReason, to);
 }
 
 /**

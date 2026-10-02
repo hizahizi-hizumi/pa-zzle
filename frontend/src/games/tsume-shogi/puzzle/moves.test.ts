@@ -1,5 +1,6 @@
 import {
   applyTsumeShogiMove,
+  canTsumeShogiMovePromote,
   explainTsumeShogiIllegalMove,
   formatTsumeShogiMoveUsi,
   isTsumeShogiCheckmate,
@@ -233,6 +234,32 @@ describe("explainTsumeShogiIllegalMove", () => {
       },
     );
   });
+});
+
+describe("canTsumeShogiMovePromote", () => {
+  const cases = [
+    ["攻方の銀が敵陣へ入る", "attacker", "silver", "4d4c", true],
+    ["攻方の銀が敵陣から出る", "attacker", "silver", "4c4d", true],
+    ["攻方の銀が敵陣の外で動く", "attacker", "silver", "4e4d", false],
+    ["攻方の金が敵陣へ入る", "attacker", "gold", "4d4c", false],
+    ["攻方の龍が敵陣で動く", "attacker", "dragon", "4c4b", false],
+    ["攻方が銀を敵陣に打つ", "attacker", "silver", "S*4c", false],
+    ["玉方の銀が攻方の陣へ入る", "defender", "silver", "4f4g", true],
+    ["玉方の銀が玉方の陣で動く", "defender", "silver", "4b4c", false],
+  ] as const;
+
+  test.each(cases)(
+    "%s手の成れるかどうかを返すこと",
+    (_, side, pieceType, usi, expected) => {
+      const promotable = canTsumeShogiMovePromote(
+        side,
+        pieceType,
+        parseTsumeShogiMoveUsi(usi),
+      );
+
+      expect(promotable).toBe(expected);
+    },
+  );
 });
 
 describe("listTsumeShogiAttackerChecks", () => {
