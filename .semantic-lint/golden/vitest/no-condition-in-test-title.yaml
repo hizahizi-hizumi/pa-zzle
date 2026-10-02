@@ -1,50 +1,135 @@
 # 実repoのテストコードに対する期待finding。
 # findingsは違反として指摘されるべきテスト名の文字列の位置（lines と columns。columnsは両端を含む列）。
-# 実repoの違反が少ないため、違反例はfixtures/の最小fixtureで補う。
+# 違反例と境界例はfixtures/の最小fixtureで補う。
 # ラベル粒度: test / it の第1引数の文字列。describeの名前は対象外。
-# 規約の文面どおり「場合」「時」を対象にし、時間・時計・時刻などの語の一部や「とき」「なら」は違反にしない。
+# 条件は前提となる状態や、操作・入力の対象が持つ性質などArrangeで決まるもの。操作そのものと期待動作の内容は条件にしない。
+# test.eachのケース名（%s・%iなどのplaceholderを含む名前）は違反にしない。
 version: 1
 rule: vitest/no-condition-in-test-title
-baseCommit: 8f5b620e7b14bd3208d2ab8d02b5342b7e6ff205
+baseCommit: 9c36f1c07024ca435157272bbe2558aa127a9691
 files:
   - path: .semantic-lint/golden/vitest/fixtures/submit-answer.test.ts
-    blob: 0ebf38d5cfb99173f135bcb5213cd2084f757fb5
+    blob: fa91df288c503faeabd84535241486cdd0ae4506
+    note: 「送信すると」「2回送信しても」は操作。test.eachのケース名は条件を含んでも違反にしない
     findings:
-      - lines: [9, 9]
+      - lines: [10, 10]
         columns: [8, 25]
-      - lines: [15, 15]
+      - lines: [16, 16]
         columns: [8, 22]
-      - lines: [21, 21]
-        columns: [8, 28]
-      - lines: [60, 60]
+      - lines: [22, 22]
+        columns: [8, 24]
+      - lines: [74, 74]
         columns: [8, 25]
+      - lines: [80, 80]
+        columns: [8, 30]
   - path: frontend/src/games/water-sort/ui/WaterSortPlay.test.tsx
     blob: 377f29ec48469a6c008d113fd43a3e0831b982da
+    note: 「完了してから」は期待動作の順序、「選択中の注ぎ元だけを」「プレイ中の直接操作として」は期待動作の内容で、条件ではない
     findings:
+      - lines: [68, 68]
+        columns: [8, 37]
       - lines: [105, 105]
         columns: [8, 40]
+      - lines: [182, 182]
+        columns: [8, 41]
       - lines: [240, 240]
         columns: [8, 34]
+      - lines: [308, 308]
+        columns: [8, 36]
+      - lines: [319, 319]
+        columns: [8, 30]
+      - lines: [325, 325]
+        columns: [8, 30]
+      - lines: [376, 376]
+        columns: [8, 29]
+      - lines: [469, 469]
+        columns: [8, 41]
   - path: frontend/src/games/water-sort/play/use-water-sort-play.test.ts
     blob: 94717c7f0646e33fe3f42d00dd882c39b685e85e
+    note: 82行はtest.eachのケース名。「新しい問題では」「盤面が完成すると」は操作とその結果として違反にしない。判断が割れうる
     findings:
-      - lines: [82, 82]
-        columns: [5, 42]
-        note: 開始時は「〜時」の形。時期を表すだけで条件ではないとも読め、判断が割れうる
+      - lines: [94, 94]
+        columns: [8, 40]
+      - lines: [109, 109]
+        columns: [8, 39]
+      - lines: [154, 154]
+        columns: [8, 31]
+      - lines: [163, 163]
+        columns: [8, 40]
+      - lines: [236, 236]
+        columns: [8, 44]
   - path: frontend/src/games/nanpure/session/session.test.ts
     blob: 1b386049318ca8dd99fe9e2962a8eec2cca2b23f
-    note: 「クリア時点」の時点は時を含む別の語として違反にしない。判断が割れうる
-    findings: []
+    note: 「空きマスの」「プレイヤーが入力した」「手動メモだけのマス」は操作対象の性質で、別のArrangeで対になるケースを作れるため違反。「クリア時点の」は返す値の説明で条件ではない。判断が割れうる
+    findings:
+      - lines: [57, 57]
+        columns: [8, 30]
+      - lines: [70, 70]
+        columns: [8, 38]
+      - lines: [95, 95]
+        columns: [8, 29]
+      - lines: [108, 108]
+        columns: [8, 28]
+      - lines: [121, 121]
+        columns: [8, 30]
+      - lines: [159, 159]
+        columns: [8, 43]
+      - lines: [189, 189]
+        columns: [8, 28]
+      - lines: [199, 199]
+        columns: [8, 23]
+      - lines: [210, 210]
+        columns: [8, 29]
+      - lines: [224, 224]
+        columns: [6, 24]
   - path: frontend/src/records/ui/PlayRecordsScreen/trend-value-axis.test.ts
     blob: 1668f20e88071d3994c21ec3101d5710eae96330
-    note: 時間・時計は単語の一部。「ときは」は規約の対象外
-    findings: []
+    note: 「整数スコアを」「秒単位の時間差を」など入力の性質はArrangeで決まる条件
+    findings:
+      - lines: [14, 14]
+        columns: [8, 41]
+      - lines: [21, 21]
+        columns: [8, 32]
+      - lines: [28, 28]
+        columns: [8, 36]
+      - lines: [34, 34]
+        columns: [8, 38]
+      - lines: [40, 40]
+        columns: [8, 38]
+      - lines: [46, 46]
+        columns: [8, 38]
+      - lines: [60, 60]
+        columns: [8, 44]
+      - lines: [66, 66]
+        columns: [8, 32]
   - path: frontend/src/games/water-sort/score.test.ts
     blob: 20ddb63f4c91d8318eb9c1a2de29fbed361af227
-    findings: []
+    note: 180行はtest.eachのケース名
+    findings:
+      - lines: [63, 63]
+        columns: [8, 39]
+      - lines: [82, 82]
+        columns: [8, 36]
+      - lines: [94, 94]
+        columns: [8, 36]
+      - lines: [106, 106]
+        columns: [8, 30]
+      - lines: [118, 118]
+        columns: [8, 30]
+      - lines: [130, 130]
+        columns: [8, 33]
+      - lines: [142, 142]
+        columns: [8, 32]
   - path: frontend/src/games/nanpure/score.test.ts
     blob: de82af27aa215c172a62000ca518d040dc504bae
-    findings: []
+    note: 「ミス1回につき」「15分を超えた時間を」は減点規則の内容で条件ではない。85行はtest.eachのケース名。判断が割れうる
+    findings:
+      - lines: [8, 8]
+        columns: [8, 39]
   - path: frontend/src/games/water-sort/play-record.test.ts
     blob: 966293726aad86a2d05d6f2836ec872291164f68
-    findings: []
+    findings:
+      - lines: [75, 75]
+        columns: [6, 42]
+      - lines: [109, 109]
+        columns: [6, 39]
