@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="詰将棋">
+  <polygon points="60,57 78.48,45.12 82,13 38,13 41.52,45.12" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linejoin="round"/>
+  <path fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" d="M52 42H68M53.6 32H66.4M50 22H70M60 42V22"/>
+  <polygon points="23,71 33.92,78.56 36,99 10,99 12.08,78.56" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" stroke-linejoin="round"/>
+  <polygon points="60,65 73.44,74.18 76,99 44,99 46.56,74.18" fill="var(--game-pictogram-strong)"/>
+  <polygon points="97,71 107.92,78.56 110,99 84,99 86.08,78.56" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" stroke-linejoin="round"/>
+</svg>
