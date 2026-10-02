@@ -110,6 +110,7 @@ frontend/src/game-catalog/
 ├── game-catalog-entry.ts
 ├── game-catalog.ts
 ├── problem-id-query.ts
+├── play-location-state.ts
 └── <game>/
     ├── <game>-catalog-entry.tsx
     └── Playable<Game>.tsx
@@ -118,6 +119,7 @@ frontend/src/game-catalog/
 - `game-catalog-entry.ts`: 1ゲーム分のカタログ項目 `GameCatalogEntry` と、記録の問題を遊び直すプレイ画面の契約を置く。
 - `game-catalog.ts`: 全ゲームを表示順に並べた `gameCatalog` を置く。パズル選択・記録の画面は、ゲームを列挙せずこれを回す。
 - `problem-id-query.ts`: プレイ画面の URL の `problem` クエリ（問題 ID）の読み書きを置く。
+- `play-location-state.ts`: プレイ画面へ渡す location state（最初に避ける問題の ID）の作成と読み取りを置く。
 - `<game>-catalog-entry.tsx`: ID（記録の `gameId`）、表示名、ピクトグラム、入口パス、プレイ画面のパス、記録表示、記録の問題を遊び直す難易度と問題 ID を持つ。遊び直し先は記録一覧の全行で求めるので、問題を復元せず問題集の索引で引けるかだけを確かめる。
 - `Playable<Game>.tsx`: `play/`・`ui/`・記録保存・診断・画面遷移を合成し、1問を遊べるプレイ画面にする。
 
