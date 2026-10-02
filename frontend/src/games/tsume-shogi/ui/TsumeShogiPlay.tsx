@@ -28,7 +28,10 @@ import { TsumeShogiBoard } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard";
 import { readTsumeShogiHowToPlaySeen } from "@/games/tsume-shogi/ui/how-to-play-seen";
 import { TsumeShogiResultScreen } from "@/games/tsume-shogi/ui/result/TsumeShogiResultScreen";
 import { TsumeShogiHowToPlayDialog } from "@/games/tsume-shogi/ui/TsumeShogiHowToPlayDialog";
-import { TsumeShogiHand } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiHand";
+import {
+  TsumeShogiHand,
+  type TsumeShogiHandAvailability,
+} from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiHand";
 import { TsumeShogiPieceBox } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiPieceBox";
 import { TsumeShogiPlayStatus } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiPlayStatus";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
@@ -122,6 +125,11 @@ export function TsumeShogiPlay({
   );
   const playing = progress === "playing";
   const acceptsInput = playing && phase === "attacker";
+  const handAvailability: TsumeShogiHandAvailability = acceptsInput
+    ? "available"
+    : playing && phase === "defender"
+      ? "waiting"
+      : "unavailable";
 
   function closeHowToPlay() {
     // 初めての遊び方を読んでいた時間はプレイ時間に含めないよう、閉じたところから測り直す。
@@ -230,7 +238,7 @@ export function TsumeShogiPlay({
               selectedPieceType={
                 selection?.type === "hand" ? selection.pieceType : null
               }
-              disabled={!acceptsInput}
+              availability={handAvailability}
               onTapHand={onTapHand}
             />
             <div className="flex shrink-0 items-center gap-2">

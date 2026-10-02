@@ -45,6 +45,7 @@ type TsumeShogiSquareButtonProps = {
   /** この升へ指した手。駒を移動元から滑らせる（打った駒は浮かび上がらせる）。 */
   arrivedMove: TsumeShogiPlayedMove | null;
   highlight: TsumeShogiSquareHighlight | null;
+  /** 押しても何もしない。応手を待つ間などに押せなくしても、フォーカスは升に残す。 */
   disabled: boolean;
   tapHandlers: TapHandlers;
   isLastFile: boolean;
@@ -103,18 +104,20 @@ export function TsumeShogiSquareButton({
   const pieceLabel = piece
     ? ` ${piece.side === "attacker" ? "攻方" : "玉方"}の${tsumeShogiPieceNames[piece.type]}`
     : "";
+  // 選べるのは攻方の駒の升だけなので、その升だけを選択の切り替えとして読み上げる。
+  const selectable = piece?.side === "attacker";
 
   return (
     <button
       type="button"
       aria-label={`${formatTsumeShogiSquare(square)}${pieceLabel}`}
-      aria-pressed={highlight === "selected"}
-      disabled={disabled}
+      aria-pressed={selectable ? highlight === "selected" : undefined}
+      aria-disabled={disabled || undefined}
       data-mated-king={highlight === "mated" ? "" : undefined}
       onPointerUp={tapHandlers.onPointerUp}
       onClick={tapHandlers.onClick}
       className={cn(
-        "relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 focus-visible:outline-foreground/70 disabled:cursor-default",
+        "relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 focus-visible:outline-foreground/70 aria-disabled:cursor-default",
         tsumeShogiToneClassNames.boardLine,
         !isLastFile && "border-r",
         !isLastRank && "border-b",

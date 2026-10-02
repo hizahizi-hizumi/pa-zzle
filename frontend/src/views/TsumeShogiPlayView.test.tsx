@@ -396,6 +396,24 @@ describe("TsumeShogiPlayView", () => {
       ).toBeTruthy();
     });
 
+    describe("王手を指して玉方の応手を待っている場合", () => {
+      beforeEach(() => {
+        tapHand("銀");
+        const destination = getSquare({ file: 2, rank: 2 });
+        destination.focus();
+        fireEvent.click(destination);
+      });
+
+      test("指した升のフォーカスを残したまま、盤の升を押せなくすること", () => {
+        const playedSquare = within(getBoard()).getByRole("button", {
+          name: "2二 攻方の銀",
+        });
+
+        expect(document.activeElement).toBe(playedSquare);
+        expect(playedSquare.getAttribute("aria-disabled")).toBe("true");
+      });
+    });
+
     test("王手にならない手は着手させないこと", () => {
       tapSquare(/^4三 攻方の龍$/);
       tapSquare(/^4四$/);
