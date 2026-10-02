@@ -9,6 +9,7 @@ import { parkingJamCatalogEntry } from "@/game-catalog/parking-jam/parking-jam-c
 import { reflectionCatalogEntry } from "@/game-catalog/reflection/reflection-catalog-entry";
 import { slidePuzzleCatalogEntry } from "@/game-catalog/slide-puzzle/slide-puzzle-catalog-entry";
 import { takuzuCatalogEntry } from "@/game-catalog/takuzu/takuzu-catalog-entry";
+import { tsumeShogiCatalogEntry } from "@/game-catalog/tsume-shogi/tsume-shogi-catalog-entry";
 import { waterSortCatalogEntry } from "@/game-catalog/water-sort/water-sort-catalog-entry";
 import type { PlayRecord } from "@/records/play-record";
 
@@ -21,6 +22,7 @@ export const gameCatalog = [
   slidePuzzleCatalogEntry,
   takuzuCatalogEntry,
   reflectionCatalogEntry,
+  tsumeShogiCatalogEntry,
 ] as const satisfies readonly [GameCatalogEntry, ...GameCatalogEntry[]];
 
 export function findGameCatalogEntry(
