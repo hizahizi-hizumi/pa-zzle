@@ -34,7 +34,7 @@ export function SlidePuzzleHowToPlayDialog({
       onClose={onClose}
     >
       <li className="space-y-2">
-        <p>左上から 1 から順に並び、右下が空白になれば完成。</p>
+        <p>左上の 1 から番号順に並び、右下が空白になれば完成。</p>
         <HowToPlayFigure board={solvedBoard} />
       </li>
       <li className="space-y-2">
