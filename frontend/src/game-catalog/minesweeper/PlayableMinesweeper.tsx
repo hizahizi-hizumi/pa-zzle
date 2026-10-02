@@ -4,6 +4,7 @@ import {
   useProblemIdQuerySync,
   useRequestedProblem,
 } from "@/game-catalog/problem-id-query";
+import { useRecordResultNavigation } from "@/game-catalog/record-result-navigation";
 import { createMinesweeperDiagnosticSnapshot } from "@/games/minesweeper/diagnostics";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import { useMinesweeperPlay } from "@/games/minesweeper/play/use-minesweeper-play";
@@ -67,6 +68,11 @@ export function PlayableMinesweeper({
     playRecord,
     minesweeperPlayRecordDefinition,
   );
+  const navigatesToRecordResult = useRecordResultNavigation(
+    play.progress === "result",
+    playRecord,
+    recordOutcome,
+  );
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const diagnostics = internalDiagnosticsAvailable
     ? createMinesweeperDiagnosticSnapshot({
@@ -89,7 +95,8 @@ export function PlayableMinesweeper({
         visibleCells={play.visibleCells}
         status={play.status}
         progress={play.progress}
-        result={play.result}
+        // 記録の結果画面へ遷移する間は、その場の結果画面を出さず盤面を見せておく。
+        result={navigatesToRecordResult ? null : play.result}
         recordOutcomeNotice={
           <PlayRecordOutcomeNotice
             outcome={recordOutcome}

@@ -4,8 +4,13 @@ import {
   getMinesweeperPlayRecordTimeDelta,
   isMinesweeperPlayRecord,
   minesweeperPlayRecordDefinition,
+  restoreMinesweeperRecordedResult,
 } from "@/games/minesweeper/play-record";
-import { calculateMinesweeperPlayScore } from "@/games/minesweeper/score";
+import {
+  calculateMinesweeperPlayScore,
+  calculateMinesweeperSpeedFullScoreMs,
+  calculateMinesweeperTimeDeltaMs,
+} from "@/games/minesweeper/score";
 import type { PlayRecord } from "@/records/play-record";
 
 function createRecord() {
@@ -83,4 +88,60 @@ test("解釈できない記録を評価しないこと", () => {
   expect(isMinesweeperPlayRecord(record)).toBe(false);
   expect(getMinesweeperPlayRecordScore(record)).toBeNull();
   expect(getMinesweeperPlayRecordTimeDelta(record)).toBeNull();
+});
+
+describe("restoreMinesweeperRecordedResult", () => {
+  const record = createRecord();
+  const { performance } = record.payload;
+
+  describe("今の版の記録の場合", () => {
+    test("記録の難易度・問題・成績から結果を作り直すこと", () => {
+      const recorded = restoreMinesweeperRecordedResult(record);
+
+      expect(recorded).toEqual({
+        difficulty: "3",
+        problemIdentity: record.payload.problemIdentity,
+        result: {
+          ...performance,
+          mineCount: 16,
+          speedFullScoreMs: calculateMinesweeperSpeedFullScoreMs({
+            minimumOpenCount: 25,
+            mineCount: 16,
+          }),
+          timeDeltaMs: calculateMinesweeperTimeDeltaMs({
+            ...performance,
+            mineCount: 16,
+          }),
+          score: calculateMinesweeperPlayScore({
+            ...performance,
+            mineCount: 16,
+          }),
+        },
+      });
+    });
+  });
+
+  const unrestorableRecords: readonly (readonly [string, PlayRecord])[] = [
+    ["別の版の記録", { ...record, payloadVersion: 2 }],
+    [
+      "今と違う生成器の問題の記録",
+      {
+        ...record,
+        payload: {
+          ...record.payload,
+          problemIdentity: {
+            ...record.payload.problemIdentity,
+            generatorVersion: "0",
+          },
+        },
+      },
+    ],
+    ["別のゲームの記録", { ...record, gameId: "nanpure" }],
+  ];
+
+  test.each(unrestorableRecords)("%sには null を返すこと", (_, target) => {
+    const recorded = restoreMinesweeperRecordedResult(target);
+
+    expect(recorded).toBeNull();
+  });
 });

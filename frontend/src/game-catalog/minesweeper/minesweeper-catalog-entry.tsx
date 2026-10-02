@@ -2,11 +2,13 @@ import {
   type GameCatalogEntry,
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
+import { RecordedMinesweeperResult } from "@/game-catalog/minesweeper/RecordedMinesweeperResult";
 import pictogramSvg from "@/games/minesweeper/assets/pictogram.svg?raw";
 import { parseMinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import {
   isMinesweeperPlayRecord,
   minesweeperPlayRecordDefinition,
+  restoreMinesweeperRecordedResult,
 } from "@/games/minesweeper/play-record";
 import { canSelectMinesweeperProblemById } from "@/games/minesweeper/problem-selection";
 import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
@@ -27,7 +29,10 @@ export const minesweeperCatalogEntry = {
         )
       : null;
   },
-  renderRecordResult() {
-    return null;
+  renderRecordResult(record, context) {
+    const recorded = restoreMinesweeperRecordedResult(record);
+    return recorded ? (
+      <RecordedMinesweeperResult {...recorded} {...context} />
+    ) : null;
   },
 } satisfies GameCatalogEntry;

@@ -3,6 +3,10 @@ import {
   parseMinesweeperDifficulty,
 } from "@/games/minesweeper/difficulty";
 import {
+  createMinesweeperResult,
+  type MinesweeperResult,
+} from "@/games/minesweeper/play/use-minesweeper-play";
+import {
   isMinesweeperProblemIdentity,
   type MinesweeperProblemIdentity,
 } from "@/games/minesweeper/problem/problem";
@@ -110,6 +114,35 @@ export function createMinesweeperPlayRecord({
         minimumOpenCount: result.minimumOpenCount,
       },
     },
+  };
+}
+
+/** 記録から作り直した、結果画面に出す内容。 */
+export type MinesweeperRecordedResult = {
+  difficulty: MinesweeperDifficulty;
+  problemIdentity: MinesweeperProblemIdentity;
+  result: MinesweeperResult;
+};
+
+/**
+ * 記録から結果画面に出す内容を作り直す。
+ * 今の版の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
+ */
+export function restoreMinesweeperRecordedResult(
+  record: PlayRecord,
+): MinesweeperRecordedResult | null {
+  if (!isMinesweeperPlayRecord(record)) {
+    return null;
+  }
+
+  const { difficulty, problemIdentity, performance } = record.payload;
+  return {
+    difficulty,
+    problemIdentity,
+    result: createMinesweeperResult(
+      performance,
+      problemIdentity.conditions.mineCount,
+    ),
   };
 }
 

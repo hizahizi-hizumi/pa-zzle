@@ -11,7 +11,9 @@ import { createPlayLocationState } from "@/game-catalog/play-location-state";
 import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
 import { createProblemId } from "@/games/problem-id";
 import * as problemSeed from "@/games/problem-seed";
+import { readPlayRecords } from "@/records/storage";
 import { MinesweeperPlayView } from "@/views/MinesweeperPlayView";
+import { PlayResultView } from "@/views/PlayResultView";
 
 const internalDiagnostics = vi.hoisted(() => ({ available: false }));
 
@@ -25,6 +27,8 @@ vi.mock("@/lib/internal-diagnostics", () => ({
 afterEach(() => {
   cleanup();
   internalDiagnostics.available = false;
+  window.localStorage.clear();
+  vi.unstubAllGlobals();
 });
 
 function renderAt(path: string): void {
@@ -48,6 +52,10 @@ function renderRouterAt(entry: InitialEntry): PlayRouter {
       {
         path: "/puzzles/minesweeper/play/:difficulty",
         element: <MinesweeperPlayView />,
+      },
+      {
+        path: "/puzzles/:game/result/:recordId",
+        element: <PlayResultView />,
       },
     ],
     { initialEntries: [entry] },
@@ -200,6 +208,56 @@ describe("MinesweeperPlayView", () => {
         });
       },
     );
+  });
+});
+
+describe("解き終えた場合", () => {
+  const { problem, identity } = selectMinesweeperProblemForDifficulty(
+    "1",
+    "solve",
+  );
+  const mineCellIndices = new Set(problem.board.mineCellIndices);
+  const cellCount = problem.board.rows * problem.board.columns;
+  let router: PlayRouter;
+
+  /** 地雷の無いマスのうち、まだ開いていないマスを順に開く。 */
+  function solve(): void {
+    for (let cellIndex = 0; cellIndex < cellCount; cellIndex += 1) {
+      const hiddenCell = mineCellIndices.has(cellIndex)
+        ? null
+        : screen.queryByLabelText(`マス ${cellIndex + 1} 未開示`);
+      if (hiddenCell) {
+        fireEvent.click(hiddenCell);
+      }
+    }
+  }
+
+  beforeEach(() => {
+    // クリア演出を待たずに結果へ進める。
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({ matches: true }) as MediaQueryList),
+    );
+    router = renderRouterAt(
+      `/puzzles/minesweeper/play/1?problem=${createProblemId(identity)}`,
+    );
+    solve();
+  });
+
+  test("保存した記録の結果画面へ履歴を置き換えて移ること", async () => {
+    const resultScreen = await screen.findByRole("region", {
+      name: "プレイ結果",
+    });
+    const [record] = readPlayRecords();
+
+    expect(resultScreen).toBeTruthy();
+    expect(router.state.location.pathname).toBe(
+      `/puzzles/minesweeper/result/${encodeURIComponent(record?.id ?? "")}`,
+    );
+    expect(router.state.historyAction).toBe("REPLACE");
+    expect(router.state.location.state).toEqual({
+      recordSaveOutcome: { status: "first-record" },
+    });
   });
 });
 

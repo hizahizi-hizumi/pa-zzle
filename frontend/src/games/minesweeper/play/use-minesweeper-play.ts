@@ -35,6 +35,26 @@ export type MinesweeperResult = MinesweeperSessionResult & {
   score: MinesweeperPlayScore;
 };
 
+/** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
+export function createMinesweeperResult(
+  sessionResult: MinesweeperSessionResult,
+  mineCount: number,
+): MinesweeperResult {
+  return {
+    ...sessionResult,
+    mineCount,
+    speedFullScoreMs: calculateMinesweeperSpeedFullScoreMs({
+      minimumOpenCount: sessionResult.minimumOpenCount,
+      mineCount,
+    }),
+    timeDeltaMs: calculateMinesweeperTimeDeltaMs({
+      ...sessionResult,
+      mineCount,
+    }),
+    score: calculateMinesweeperPlayScore({ ...sessionResult, mineCount }),
+  };
+}
+
 type MinesweeperPlayState = {
   seed: ProblemSeed;
   problemIdentity: MinesweeperProblemIdentity;
@@ -203,26 +223,11 @@ export function useMinesweeperPlay(
     () => getMinesweeperSessionResult(session, now),
     [now, session],
   );
-  const result = useMemo<MinesweeperResult | null>(() => {
-    if (!sessionResult) {
-      return null;
-    }
-
-    const speedFullScoreMs = calculateMinesweeperSpeedFullScoreMs({
-      minimumOpenCount: sessionResult.minimumOpenCount,
-      mineCount,
-    });
-    return {
-      ...sessionResult,
-      mineCount,
-      speedFullScoreMs,
-      timeDeltaMs: calculateMinesweeperTimeDeltaMs({
-        ...sessionResult,
-        mineCount,
-      }),
-      score: calculateMinesweeperPlayScore({ ...sessionResult, mineCount }),
-    };
-  }, [mineCount, sessionResult]);
+  const result = useMemo<MinesweeperResult | null>(
+    () =>
+      sessionResult ? createMinesweeperResult(sessionResult, mineCount) : null,
+    [mineCount, sessionResult],
+  );
 
   return {
     difficulty,
