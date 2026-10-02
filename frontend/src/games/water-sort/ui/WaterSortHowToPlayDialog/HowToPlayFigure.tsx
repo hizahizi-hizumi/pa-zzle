@@ -8,7 +8,10 @@ type HowToPlayFigureProps = {
   selectedBottleIndex?: number;
 };
 
-/** 盤面と同じボトルを、難易度の見本と同じ縦横比で小さく並べる。 */
+/**
+ * 盤面と同じボトルを小さく並べる。
+ * ボトルの枠線や液面の余白は px 固定なので、高さだけを縮めず全体を縮小して盤面と同じ見え方を保つ。
+ */
 export function HowToPlayFigure({
   bottles,
   selectedBottleIndex,
