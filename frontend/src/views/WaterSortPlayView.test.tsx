@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import {
   createMemoryRouter,
   type InitialEntry,
@@ -7,7 +7,10 @@ import {
 import { createPlayLocationState } from "@/game-catalog/play-location-state";
 import { createProblemId } from "@/games/problem-id";
 import * as problemSeed from "@/games/problem-seed";
+import { solveWaterSort } from "@/games/water-sort/problem/generation/solver";
 import { selectWaterSortProblemForDifficulty } from "@/games/water-sort/problem-selection";
+import { readPlayRecords } from "@/records/storage";
+import { PlayResultView } from "@/views/PlayResultView";
 import { WaterSortPlayView } from "@/views/WaterSortPlayView";
 
 vi.mock("@/lib/internal-diagnostics", () => ({
@@ -28,6 +31,10 @@ function renderRouterAt(entry: InitialEntry): PlayRouter {
       {
         path: "/puzzles/water-sort/play/:difficulty",
         element: <WaterSortPlayView />,
+      },
+      {
+        path: "/puzzles/:game/result/:recordId",
+        element: <PlayResultView />,
       },
     ],
     { initialEntries: [entry] },
@@ -99,6 +106,47 @@ describe("WaterSortPlayView", () => {
         });
       },
     );
+  });
+});
+
+describe("解き終えた場合", () => {
+  const { problem, identity } = selectWaterSortProblemForDifficulty(
+    "1",
+    "solve",
+  );
+  const { moves } = solveWaterSort(problem.initialState);
+  let router: PlayRouter;
+
+  function pressBottle(bottleIndex: number): void {
+    fireEvent.click(
+      screen.getByLabelText(new RegExp(`^ボトル ${bottleIndex + 1}:`)),
+    );
+  }
+
+  beforeEach(() => {
+    router = renderRouterAt(
+      `/puzzles/water-sort/play/1?problem=${createProblemId(identity)}`,
+    );
+    for (const move of moves) {
+      pressBottle(move.sourceBottleIndex);
+      pressBottle(move.destinationBottleIndex);
+    }
+  });
+
+  test("保存した記録の結果画面へ履歴を置き換えて移ること", async () => {
+    const resultScreen = await screen.findByRole("region", {
+      name: "プレイ結果",
+    });
+    const [record] = readPlayRecords();
+
+    expect(resultScreen).toBeTruthy();
+    expect(router.state.location.pathname).toBe(
+      `/puzzles/water-sort/result/${encodeURIComponent(record?.id ?? "")}`,
+    );
+    expect(router.state.historyAction).toBe("REPLACE");
+    expect(router.state.location.state).toEqual({
+      recordSaveOutcome: { status: "first-record" },
+    });
   });
 });
 

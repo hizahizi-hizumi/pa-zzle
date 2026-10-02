@@ -4,6 +4,7 @@ import {
   useProblemIdQuerySync,
   useRequestedProblem,
 } from "@/game-catalog/problem-id-query";
+import { useRecordResultNavigation } from "@/game-catalog/record-result-navigation";
 import type { ProblemId } from "@/games/problem-id";
 import { createWaterSortDiagnosticSnapshot } from "@/games/water-sort/diagnostics";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
@@ -63,6 +64,11 @@ export function PlayableWaterSort({
     playRecord,
     waterSortPlayRecordDefinition,
   );
+  const navigatesToRecordResult = useRecordResultNavigation(
+    play.progress === "result",
+    playRecord,
+    recordOutcome,
+  );
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const diagnostics = internalDiagnosticsAvailable
     ? createWaterSortDiagnosticSnapshot({
@@ -86,7 +92,8 @@ export function PlayableWaterSort({
         isDeadlocked={play.isDeadlocked}
         sourceBottleIndex={play.sourceBottleIndex}
         operation={play.operation}
-        result={play.result}
+        // 記録の結果画面へ遷移する間は、その場の結果画面を出さず盤面を見せておく。
+        result={navigatesToRecordResult ? null : play.result}
         recordOutcomeNotice={
           <PlayRecordOutcomeNotice
             outcome={recordOutcome}

@@ -4,6 +4,7 @@ import {
   getWaterSortPlayRecordScore,
   getWaterSortPlayRecordTimeDelta,
   isWaterSortPlayRecord,
+  restoreWaterSortRecordedResult,
   waterSortPlayRecordDefinition,
 } from "@/games/water-sort/play-record";
 import type { PlayRecord } from "@/records/play-record";
@@ -140,4 +141,62 @@ test("やり直しで失われた手数を復元できない旧記録は評価�
   expect(isWaterSortPlayRecord(legacyRecord)).toBe(true);
   expect(score).toBeNull();
   expect(metricValue).toBeNull();
+});
+
+describe("restoreWaterSortRecordedResult", () => {
+  const record = createRecord();
+
+  describe("今の版の記録の場合", () => {
+    test("記録の成績・最短手数・色数から結果を作り直すこと", () => {
+      const recorded = restoreWaterSortRecordedResult(record);
+
+      expect(recorded).toMatchObject({
+        difficulty: "3",
+        problemIdentity: record.payload.problemIdentity,
+        result: {
+          elapsedMs: 65_000,
+          moveCount: 14,
+          completionMoveCount: 12,
+          undoCount: 2,
+          restartCount: 0,
+          optimalMoveCount: 10,
+          backtrackMoveCount: 2,
+          timeDeltaMs: 1_000,
+          colorCount: 6,
+          score: { total: 87 },
+        },
+      });
+    });
+  });
+
+  const unrestorableRecords: readonly (readonly [string, PlayRecord])[] = [
+    [
+      "前の版の記録",
+      {
+        ...record,
+        payloadVersion: 1,
+        payload: {
+          ...record.payload,
+          performance: {
+            elapsedMs: 65_000,
+            moveCount: 14,
+            undoCount: 2,
+            restartCount: 0,
+            optimalMoveCount: 10,
+          },
+        },
+      },
+    ],
+    [
+      "以前の難易度区分の記録",
+      { ...record, payload: { ...record.payload, difficulty: "normal" } },
+    ],
+    ["別のゲームの記録", { ...record, gameId: "nanpure" }],
+  ];
+
+  test.each(unrestorableRecords)("%sには null を返すこと", (_, target) => {
+    const recorded = restoreWaterSortRecordedResult(target);
+
+    expect(recorded).toBeNull();
+  });
 });
