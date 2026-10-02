@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router";
 
+import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
 import { PlayableTsumeShogi } from "@/game-catalog/tsume-shogi/PlayableTsumeShogi";
 import {
   hasTsumeShogiProblemQuery,
@@ -9,7 +10,6 @@ import {
 import { parseTsumeShogiDifficulty } from "@/games/tsume-shogi/difficulty";
 import { internalDiagnosticsAvailable } from "@/lib/internal-diagnostics";
 import { useParams } from "@/router";
-import { TsumeShogiPlayUnavailable } from "@/views/TsumeShogiPlayView/TsumeShogiPlayUnavailable";
 
 export function TsumeShogiPlayView() {
   const { difficulty: difficultyParam } = useParams(
@@ -25,13 +25,19 @@ export function TsumeShogiPlayView() {
   const difficulty = parseTsumeShogiDifficulty(difficultyParam);
 
   if (!difficulty) {
-    return <TsumeShogiPlayUnavailable title="この難易度は選べません" />;
+    return (
+      <PlayUnavailableNotice
+        title="この難易度は選べません"
+        backTo="/puzzles/tsume-shogi"
+      />
+    );
   }
   if (specifiedProblem && !specifiedProblem.problem) {
     return (
-      <TsumeShogiPlayUnavailable
+      <PlayUnavailableNotice
         title="指定された問題を復元できません"
         description="URL の問題指定（pool・problem、または generator・seed・plies・checks）を確かめてください。"
+        backTo="/puzzles/tsume-shogi"
       />
     );
   }

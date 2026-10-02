@@ -65,8 +65,7 @@ export function PlayableTsumeShogi({
       onReplay={play.replay}
       onClearAnimationComplete={play.completeClearAnimation}
       onStartNewProblem={play.startNewProblem}
-      // 難易度選択はまだ無いので、ホームへ戻す。
-      onChangeDifficulty={() => navigate("/")}
+      onChangeDifficulty={() => navigate("/puzzles/tsume-shogi")}
       onBackToHome={() => navigate("/")}
     />
   );
