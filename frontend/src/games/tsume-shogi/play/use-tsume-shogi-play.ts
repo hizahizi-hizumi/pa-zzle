@@ -46,7 +46,6 @@ import {
   getTsumeShogiSessionElapsedMs,
   getTsumeShogiSessionPhase,
   getTsumeShogiSessionPosition,
-  getTsumeShogiSessionRemainingPlies,
   getTsumeShogiSessionResult,
   isTsumeShogiSessionOnWrongLine,
   playTsumeShogiSessionDefenderReply,
@@ -327,6 +326,7 @@ export function useTsumeShogiPlay(
 
   const tapHand = useCallback(
     (pieceType: TsumeShogiHandPieceType) => {
+      setNow(Date.now());
       updateSession((current) => tapTsumeShogiSessionHand(current, pieceType));
     },
     [updateSession],
@@ -399,10 +399,6 @@ export function useTsumeShogiPlay(
     () => getTsumeShogiHand(position, "attacker"),
     [position],
   );
-  const pieceBox = useMemo(
-    () => getTsumeShogiHand(position, "defender"),
-    [position],
-  );
   const lastTurn = session.turns.at(-1);
   const shownMoves = useMemo(
     () => listShownMoves(lastTurn, session.defenderReplyPending),
@@ -433,10 +429,8 @@ export function useTsumeShogiPlay(
     progress: play.progress,
     phase: getTsumeShogiSessionPhase(session),
     onWrongLine: isTsumeShogiSessionOnWrongLine(session),
-    remainingPlies: getTsumeShogiSessionRemainingPlies(session),
     boardPieces,
     attackerHand,
-    pieceBox,
     shownMoves,
     shownMovesRestored:
       lastTurn !== undefined && lastTurn === play.restoredTurn,
