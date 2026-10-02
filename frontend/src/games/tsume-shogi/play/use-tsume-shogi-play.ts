@@ -183,7 +183,8 @@ function withNextSession(
   };
 }
 
-function createTsumeShogiResult(
+/** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
+export function createTsumeShogiResult(
   sessionResult: TsumeShogiSessionResult,
   workload: TsumeShogiSolveWorkload,
 ): TsumeShogiResult {
@@ -378,6 +379,7 @@ export function useTsumeShogiPlay(
     problemIdentity: play.problemIdentity,
     workload,
     poolReference: play.poolReference,
+    problem: session.problem,
     plies: session.problem.plies,
     status: session.status,
     progress: play.progress,

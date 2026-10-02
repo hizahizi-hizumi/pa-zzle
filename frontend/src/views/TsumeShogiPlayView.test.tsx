@@ -15,6 +15,7 @@ import {
 } from "react-router";
 
 import { createProblemId } from "@/games/problem-id";
+
 import { TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
 import type { TsumeShogiProblem } from "@/games/tsume-shogi/problem/problem";
 import { toTsumeShogiPooledProblem } from "@/games/tsume-shogi/problem/problem-pool";
@@ -30,8 +31,10 @@ import {
   formatTsumeShogiSquare,
   tsumeShogiHandPieceNames,
 } from "@/games/tsume-shogi/ui/piece-label";
+import { readPlayRecords } from "@/records/storage";
 import { TsumeShogiPlayView } from "@/views/TsumeShogiPlayView";
 
+const internalDiagnostics = vi.hoisted(() => ({ available: false }));
 const problemSeed = "tsume-shogi-play-view";
 
 vi.mock("@/games/problem-seed", async (importOriginal) => ({
@@ -39,10 +42,18 @@ vi.mock("@/games/problem-seed", async (importOriginal) => ({
   createProblemSeed: () => problemSeed,
 }));
 
+vi.mock("@/lib/internal-diagnostics", () => ({
+  get internalDiagnosticsAvailable() {
+    return internalDiagnostics.available;
+  },
+  buildRevision: null,
+}));
+
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
   vi.useRealTimers();
+  internalDiagnostics.available = false;
 });
 
 function renderAt(path: string): void {
@@ -54,6 +65,7 @@ function renderAt(path: string): void {
           element={<TsumeShogiPlayView />}
         />
         <Route path="/puzzles/tsume-shogi" element={<p>難易度選択画面</p>} />
+        <Route path="/records" element={<p>記録画面</p>} />
         <Route path="/" element={<p>ホーム画面</p>} />
       </Routes>
     </MemoryRouter>,
@@ -139,6 +151,10 @@ function playMainLine({ mainLine }: TsumeShogiProblem): void {
   });
 }
 
+function getResultScreen() {
+  return within(screen.getByRole("region", { name: "プレイ結果" }));
+}
+
 const selected = selectTsumeShogiProblemForDifficulty("1", problemSeed);
 const initialPosition = selected.problem.initialPosition;
 const [firstMove] = selected.problem.mainLine as [TsumeShogiMove];
@@ -212,10 +228,82 @@ describe("TsumeShogiPlayView", () => {
       playMainLine(selected.problem);
     });
 
-    test("完成演出の後に詰みを示すこと", () => {
-      const cleared = screen.getByRole("region", { name: "詰み" });
+    test("結果画面で難易度とスコアと誤王手の回数を示すこと", () => {
+      const resultScreen = getResultScreen();
 
-      expect(within(cleared).getByText(/手詰 ・ レベル 1$/)).toBeTruthy();
+      expect(resultScreen.getByText("レベル 1")).toBeTruthy();
+      expect(resultScreen.getByRole("region", { name: "スコア" })).toBeTruthy();
+      expect(resultScreen.getByText("誤王手")).toBeTruthy();
+    });
+
+    test("遊んだ問題と問題集の位置と作業の量とプレイの事実を記録へ保存すること", () => {
+      const records = readPlayRecords();
+
+      expect(records).toHaveLength(1);
+      expect(records[0]).toMatchObject({
+        gameId: "tsume-shogi",
+        payload: {
+          difficulty: "1",
+          problemIdentity: selected.identity,
+          poolReference: selected.poolReference,
+          workload: selected.workload,
+          performance: { wrongCheckCount: 0, illegalInputCount: 0 },
+        },
+      });
+    });
+
+    test("記録を確認で記録画面へ移ること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "記録を確認" }));
+
+      expect(screen.getByText("記録画面")).toBeTruthy();
+    });
+
+    describe("同じ問題をもう一度詰ませた場合", () => {
+      beforeEach(() => {
+        fireEvent.click(screen.getByRole("button", { name: "同じ問題" }));
+        playMainLine(selected.problem);
+      });
+
+      test("もう1件の記録として保存すること", () => {
+        const records = readPlayRecords();
+
+        expect(records).toHaveLength(2);
+      });
+    });
+  });
+
+  describe("内部診断を使えるビルドの場合", () => {
+    beforeEach(() => {
+      internalDiagnostics.available = true;
+      renderAt("/puzzles/tsume-shogi/play/1");
+      openMenu();
+    });
+
+    test("メニューの検証情報から出題中の問題の検証情報を開けること", () => {
+      fireEvent.click(screen.getByRole("menuitem", { name: "検証情報" }));
+
+      const dialog = screen.getByRole("dialog", { name: "検証情報" });
+      const { poolVersion, problemId } = selected.poolReference;
+
+      // 出題した難易度と、分析し直した分類。
+      expect(within(dialog).getAllByText("レベル 1")).toHaveLength(2);
+      expect(within(dialog).getByText(selected.identity.seed)).toBeTruthy();
+      expect(
+        within(dialog).getByText(`v${poolVersion} / ${problemId}`),
+      ).toBeTruthy();
+    });
+  });
+
+  describe("内部診断を使えないビルドの場合", () => {
+    beforeEach(() => {
+      renderAt("/puzzles/tsume-shogi/play/1");
+      openMenu();
+    });
+
+    test("メニューに検証情報を出さないこと", () => {
+      const item = screen.queryByRole("menuitem", { name: "検証情報" });
+
+      expect(item).toBeNull();
     });
   });
 
