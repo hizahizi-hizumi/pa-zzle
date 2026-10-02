@@ -1,4 +1,5 @@
 import {
+  findTsumeShogiLongestResistance,
   findTsumeShogiRefutation,
   isTsumeShogiMateWithin,
   TsumeShogiMateSearch,
@@ -98,6 +99,38 @@ describe("findTsumeShogiRefutation", () => {
       const act = () => findTsumeShogiRefutation(fivePly, 4);
 
       expect(act).toThrow(RangeError);
+    });
+  });
+});
+
+describe("findTsumeShogiLongestResistance", () => {
+  describe("詰む王手の後", () => {
+    const afterCheck = play(fivePly, "4c3b+");
+
+    test("詰むまでの手数が最も長い玉方の応手を返すこと", () => {
+      const response = findTsumeShogiLongestResistance(afterCheck, 4);
+
+      expect(formatTsumeShogiMoveUsi(response!)).toBe("2a1a");
+    });
+  });
+
+  describe("詰まない王手の後", () => {
+    const afterCheck = play(fivePly, "4c3b");
+
+    test("null を返すこと", () => {
+      const response = findTsumeShogiLongestResistance(afterCheck, 4);
+
+      expect(response).toBeNull();
+    });
+  });
+
+  describe("詰め上がり", () => {
+    const mated = play(threePly, "S*3c", "3b3a", "2d2b");
+
+    test("応手が無いので null を返すこと", () => {
+      const response = findTsumeShogiLongestResistance(mated, 0);
+
+      expect(response).toBeNull();
     });
   });
 });
