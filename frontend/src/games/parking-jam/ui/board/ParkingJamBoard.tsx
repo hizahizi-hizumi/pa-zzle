@@ -15,6 +15,10 @@ import type {
 } from "@/games/parking-jam/puzzle/board";
 import { ParkingJamBoardDefs } from "@/games/parking-jam/ui/board/ParkingJamBoardDefs";
 import { ParkingJamCar } from "@/games/parking-jam/ui/board/ParkingJamCar";
+import {
+  getParkingJamDirectionControls,
+  ParkingJamDirectionMark,
+} from "@/games/parking-jam/ui/board/ParkingJamDirectionMark";
 import { ParkingJamLot } from "@/games/parking-jam/ui/board/ParkingJamLot";
 import {
   PARKING_JAM_CELL,
@@ -61,61 +65,6 @@ function getSwipeDirection(
 
 function getVehicleLabel(vehicle: ParkingJamVehicle) {
   return `${vehicle.orientation === "horizontal" ? "横向き" : "縦向き"}の車 行${vehicle.row + 1} 列${vehicle.column + 1}`;
-}
-
-type DirectionControl = {
-  direction: ParkingJamDirection;
-  cx: number;
-  cy: number;
-  path: string;
-};
-
-function getDirectionControls(vehicle: ParkingJamVehicle): DirectionControl[] {
-  const horizontal = vehicle.orientation === "horizontal";
-  const width = (horizontal ? vehicle.length : 1) * PARKING_JAM_CELL - 20;
-  const height = (horizontal ? 1 : vehicle.length) * PARKING_JAM_CELL - 20;
-  const x = vehicle.column * PARKING_JAM_CELL + 10;
-  const y = vehicle.row * PARKING_JAM_CELL + 10;
-  const inset = 27;
-  const arrowHalf = 8;
-
-  if (horizontal) {
-    const cy = y + height / 2;
-    const left = x + inset;
-    const right = x + width - inset;
-    return [
-      {
-        direction: "left",
-        cx: left,
-        cy,
-        path: `M ${left + arrowHalf} ${cy - arrowHalf} L ${left - 4} ${cy} L ${left + arrowHalf} ${cy + arrowHalf}`,
-      },
-      {
-        direction: "right",
-        cx: right,
-        cy,
-        path: `M ${right - arrowHalf} ${cy - arrowHalf} L ${right + 4} ${cy} L ${right - arrowHalf} ${cy + arrowHalf}`,
-      },
-    ];
-  }
-
-  const cx = x + width / 2;
-  const up = y + inset;
-  const down = y + height - inset;
-  return [
-    {
-      direction: "up",
-      cx,
-      cy: up,
-      path: `M ${cx - arrowHalf} ${up + arrowHalf} L ${cx} ${up - 4} L ${cx + arrowHalf} ${up + arrowHalf}`,
-    },
-    {
-      direction: "down",
-      cx,
-      cy: down,
-      path: `M ${cx - arrowHalf} ${down - arrowHalf} L ${cx} ${down + 4} L ${cx + arrowHalf} ${down - arrowHalf}`,
-    },
-  ];
 }
 
 function getDirectionLabel(direction: ParkingJamDirection): string {
@@ -268,7 +217,7 @@ export function ParkingJamBoard({
         })}
       </g>
       {selectedVehicle && !interactionDisabled
-        ? getDirectionControls(selectedVehicle).map((control) => (
+        ? getParkingJamDirectionControls(selectedVehicle).map((control) => (
             <g
               key={`direction-${selectedVehicle.id}-${control.direction}`}
               role="button"
@@ -289,16 +238,7 @@ export function ParkingJamBoard({
                 r="30"
                 className="parking-jam-direction-control__hit"
               />
-              <circle
-                cx={control.cx}
-                cy={control.cy}
-                r="21"
-                className="parking-jam-direction-control__surface"
-              />
-              <path
-                d={control.path}
-                className="parking-jam-direction-control__arrow"
-              />
+              <ParkingJamDirectionMark control={control} />
             </g>
           ))
         : null}
