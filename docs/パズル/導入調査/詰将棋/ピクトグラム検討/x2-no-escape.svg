@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="詰将棋">
+  <path fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" d="M46 18v84M74 18v84M18 46h84M18 74h84"/>
+  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <g fill="var(--game-pictogram-soft)"><circle cx="32" cy="32" r="4"/><circle cx="32" cy="60" r="4"/><circle cx="32" cy="88" r="4"/><circle cx="60" cy="32" r="4"/><circle cx="60" cy="88" r="4"/><circle cx="88" cy="32" r="4"/><circle cx="88" cy="60" r="4"/><circle cx="88" cy="88" r="4"/></g>
+  <polygon points="60,71 69.24,65.06 71,49 49,49 50.76,65.06" fill="var(--game-pictogram-strong)"/>
+</svg>
