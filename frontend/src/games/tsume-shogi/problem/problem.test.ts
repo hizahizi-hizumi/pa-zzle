@@ -3,6 +3,9 @@ import {
   createTsumeShogiProblemIdentity,
   formatTsumeShogiProblemText,
   isTsumeShogiProblemIdentity,
+  isTsumeShogiRecordedProblemIdentity,
+  isTsumeShogiSolveWorkload,
+  isTsumeShogiWorkloadOfIdentity,
   parseTsumeShogiProblemText,
   type TsumeShogiProblem,
 } from "@/games/tsume-shogi/problem/problem";
@@ -84,6 +87,96 @@ describe("isTsumeShogiProblemIdentity", () => {
     const result = isTsumeShogiProblemIdentity(value);
 
     expect(result).toBe(expected);
+  });
+});
+
+describe("isTsumeShogiRecordedProblemIdentity", () => {
+  const cases = [
+    ["今の生成器の identity", createTsumeShogiProblemIdentity(5, 3), true],
+    [
+      "版の違う identity（条件の形を問わない）",
+      { generatorVersion: "0", seed: "ts-7-0", conditions: { depth: 7 } },
+      true,
+    ],
+    [
+      "今の版で扱えない条件の identity",
+      { generatorVersion: "1", seed: "ts-7-0", conditions: { plies: 7 } },
+      false,
+    ],
+    [
+      "版の無い identity",
+      { generatorVersion: "", seed: "ts-3-0", conditions: { plies: 3 } },
+      false,
+    ],
+    [
+      "seed の無い版の違う identity",
+      { generatorVersion: "0", seed: "", conditions: {} },
+      false,
+    ],
+  ] as const;
+
+  test.each(cases)("%sを判定すること", (_, value, expected) => {
+    const result = isTsumeShogiRecordedProblemIdentity(value);
+
+    expect(result).toBe(expected);
+  });
+});
+
+describe("isTsumeShogiSolveWorkload", () => {
+  const workload = {
+    plies: 5,
+    rootChecks: 7,
+    plausibleWrong: 5,
+    deepDecoyCount: 1,
+  };
+  const cases = [
+    ["作業の量", workload, true],
+    ["偶数の手数", { ...workload, plies: 4 }, false],
+    ["初手の王手が0の作業の量", { ...workload, rootChecks: 0 }, false],
+    ["負の誤王手", { ...workload, plausibleWrong: -1 }, false],
+    [
+      "深い紛れがもっともらしい誤王手より多い作業の量",
+      { ...workload, deepDecoyCount: 6 },
+      false,
+    ],
+    ["整数でない値", { ...workload, rootChecks: 1.5 }, false],
+    ["項目の欠けた値", { plies: 5, rootChecks: 7 }, false],
+  ] as const;
+
+  test.each(cases)("%sを判定すること", (_, value, expected) => {
+    const result = isTsumeShogiSolveWorkload(value);
+
+    expect(result).toBe(expected);
+  });
+});
+
+describe("isTsumeShogiWorkloadOfIdentity", () => {
+  const identity = createTsumeShogiProblemIdentity(5, 3, {
+    minimum: 3,
+    maximum: 12,
+  });
+  const cases = [
+    ["手数と初手の王手が条件に合う", { plies: 5, rootChecks: 12 }, true],
+    ["手数が条件と違う", { plies: 3, rootChecks: 7 }, false],
+    ["初手の王手が範囲の外にある", { plies: 5, rootChecks: 2 }, false],
+  ] as const;
+
+  test.each(cases)("%s作業の量を判定すること", (_, partial, expected) => {
+    const result = isTsumeShogiWorkloadOfIdentity(
+      { ...partial, plausibleWrong: 1, deepDecoyCount: 0 },
+      identity,
+    );
+
+    expect(result).toBe(expected);
+  });
+
+  test("初手の王手の数の範囲の無い identity では手数だけを比べること", () => {
+    const result = isTsumeShogiWorkloadOfIdentity(
+      { plies: 3, rootChecks: 30, plausibleWrong: 1, deepDecoyCount: 0 },
+      createTsumeShogiProblemIdentity(3, 0),
+    );
+
+    expect(result).toBe(true);
   });
 });
 

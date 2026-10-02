@@ -96,7 +96,7 @@ Options:
   --oracle-input <path>    分類できた候補の {"sfen", "plies"} を JSONL で書く（oracle 照合の入力）
   --oracle-results <path>  compare-tsume-shogi-oracle.ts --results の JSONL。照合で問題の無い候補だけを採る
   --details <path>         採った問題ごとの seed・特徴・指紋を JSONL で書く
-  --verify                 生成せず、同梱の問題集の全問を再生成→分析→分類し、重複・偏りの上限・JSON の大きさ・選択時間を確かめる`;
+  --verify                 生成せず、同梱の問題集の全問を再生成→分析→分類し、作業の量・重複・偏りの上限・JSON の大きさ・選択時間を確かめる`;
 
 const outputPath = new URL(
   "../src/games/tsume-shogi/problem/problem-pool.json",
@@ -111,6 +111,16 @@ type CandidateFeatures = Pick<
   | "defenseBranching"
   | "tesujiKindCount"
 >;
+
+/**
+ * 候補の問題を問題集と同じ文字列の形で持つ（seed、盤面と攻方の持駒、作意）。問題集の1問は、これに作業の量（`features` の
+ * 初手の王手・もっともらしい誤王手・深い紛れ）を足したもの（`toPoolEntry`）。
+ */
+type CandidateText = readonly [
+  seed: string,
+  position: string,
+  mainLine: string,
+];
 
 type Candidate = {
   condition: string;
@@ -127,7 +137,7 @@ type Candidate = {
   difficulty: TsumeShogiDifficulty | null;
   plies: number;
   sfen: string | null;
-  entry: TsumeShogiProblemPoolEntry | null;
+  entry: CandidateText | null;
   fingerprint: TsumeShogiProblemFingerprint | null;
   features: CandidateFeatures | null;
 };
@@ -184,7 +194,9 @@ function listAllConditions(): string[] {
 }
 
 /** 作意の最終手が駒打ちか。 */
-function endsWithDrop([, , mainLine]: TsumeShogiProblemPoolEntry): boolean {
+function endsWithDrop([, , mainLine]:
+  | CandidateText
+  | TsumeShogiProblemPoolEntry): boolean {
   return mainLine.split(" ").at(-1)!.includes("*");
 }
 
@@ -215,15 +227,23 @@ function summarizeFeatures(
   };
 }
 
-function toPoolEntry(
+function toCandidateText(
   seed: string,
   problem: TsumeShogiProblem,
-): TsumeShogiProblemPoolEntry {
+): CandidateText {
   return [
     seed,
     formatTsumeShogiPoolPosition(problem.initialPosition),
     formatTsumeShogiProblemText(problem).mainLine.join(" "),
   ];
+}
+
+/** 問題集の1問。候補の文字列の形に、速さの基準時間に使う作業の量を足す。 */
+function toPoolEntry(
+  text: CandidateText,
+  { rootChecks, plausibleWrong, deepDecoyCount }: CandidateFeatures,
+): TsumeShogiProblemPoolEntry {
+  return [...text, rootChecks, plausibleWrong, deepDecoyCount];
 }
 
 function evaluateCandidate(condition: string, index: number): Candidate {
@@ -251,7 +271,7 @@ function evaluateCandidate(condition: string, index: number): Candidate {
       difficulty:
         assessment.status === "classified" ? assessment.difficulty : null,
       sfen: formatTsumeShogiProblemText(problem).sfen,
-      entry: toPoolEntry(identity.seed, problem),
+      entry: toCandidateText(identity.seed, problem),
       fingerprint,
       features:
         analysis.status === "analyzed"
@@ -600,7 +620,7 @@ function describeSize(json: string): string {
 }
 
 type LevelSummarySource = {
-  entry: TsumeShogiProblemPoolEntry;
+  entry: CandidateText | TsumeShogiProblemPoolEntry;
   fingerprint: TsumeShogiProblemFingerprint;
   features: CandidateFeatures;
 };
@@ -748,7 +768,11 @@ async function runMain(): Promise<void> {
   const levels = Object.fromEntries(
     tsumeShogiDifficulties.map(({ id }) => [
       id,
-      selections.get(id)!.selected.map((candidate) => candidate.entry!),
+      selections
+        .get(id)!
+        .selected.map((candidate) =>
+          toPoolEntry(candidate.entry!, candidate.features!),
+        ),
     ]),
   ) as Record<TsumeShogiDifficulty, TsumeShogiProblemPoolEntry[]>;
   const json = formatPoolJson(levels);
@@ -829,13 +853,17 @@ function verifyEntry(
   const entry = listTsumeShogiPoolEntries(difficulty)[index]!;
   const pooled = toTsumeShogiPooledProblem(difficulty, index);
   const generated = generateTsumeShogiProblem(pooled.identity);
-  const regenerated = toPoolEntry(pooled.identity.seed, generated.problem);
-  if (regenerated.join("|") !== entry.join("|")) {
+  const regenerated = toCandidateText(pooled.identity.seed, generated.problem);
+  if (regenerated.join("|") !== entry.slice(0, 3).join("|")) {
     return fail("identity から再生成した問題が問題集と違う");
   }
   const analysis = analyzeTsumeShogiDifficulty(pooled.problem);
   if (analysis.status !== "analyzed") {
     return fail(`分析できない (${analysis.status}: ${analysis.reason})`);
+  }
+  const features = summarizeFeatures(analysis.features);
+  if (toPoolEntry(regenerated, features).join("|") !== entry.join("|")) {
+    return fail("分析し直した作業の量が問題集と違う");
   }
   const assessment = assessTsumeShogiDifficulty(analysis);
   if (
@@ -849,7 +877,7 @@ function verifyEntry(
     difficulty,
     index,
     fingerprint: createTsumeShogiProblemFingerprint(pooled.problem),
-    features: summarizeFeatures(analysis.features),
+    features,
   };
 }
 

@@ -96,9 +96,9 @@ describe("restoreTsumeShogiPoolEntry", () => {
   const position = formatTsumeShogiPoolPosition(fivePly.initialPosition);
   const mainLine = formatTsumeShogiProblemText(fivePly).mainLine.join(" ");
 
-  test("seed の identity と、盤面・攻方の持駒・作意から問題を復元すること", () => {
+  test("seed の identity と、盤面・攻方の持駒・作意・作業の量から問題を復元すること", () => {
     const pooled = restoreTsumeShogiPoolEntry(
-      ["ts-5-c3-12-7", position, mainLine],
+      ["ts-5-c3-12-7", position, mainLine, 7, 5, 1],
       reference,
     );
 
@@ -108,15 +108,32 @@ describe("restoreTsumeShogiPoolEntry", () => {
     expect(pooled.identity).toEqual(
       createTsumeShogiProblemIdentity(5, 7, { minimum: 3, maximum: 12 }),
     );
+    expect(pooled.workload).toEqual({
+      plies: 5,
+      rootChecks: 7,
+      plausibleWrong: 5,
+      deepDecoyCount: 1,
+    });
     expect(pooled.poolReference).toEqual(reference);
   });
 
-  test("seed の手数と作意の長さが違う問題を拒否すること", () => {
-    const act = () =>
-      restoreTsumeShogiPoolEntry(
-        ["ts-3-c3-12-7", position, mainLine],
-        reference,
-      );
+  const invalidCases = [
+    [
+      "seed の手数と作意の長さが違う問題",
+      ["ts-3-c3-12-7", position, mainLine, 7, 5, 1],
+    ],
+    [
+      "初手の王手の数が生成条件の範囲の外にある問題",
+      ["ts-5-c3-12-7", position, mainLine, 13, 5, 1],
+    ],
+    [
+      "深い紛れがもっともらしい誤王手より多い問題",
+      ["ts-5-c3-12-7", position, mainLine, 7, 1, 2],
+    ],
+  ] as const;
+
+  test.each(invalidCases)("%sを拒否すること", (_, entry) => {
+    const act = () => restoreTsumeShogiPoolEntry(entry, reference);
 
     expect(act).toThrow(RangeError);
   });
