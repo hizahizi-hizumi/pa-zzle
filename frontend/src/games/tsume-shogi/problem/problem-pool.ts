@@ -7,11 +7,14 @@ import {
   createTsumeShogiProblemIdentity,
   isSameTsumeShogiGenerationConditions,
   isTsumeShogiGenerationPlies,
+  isTsumeShogiSolveWorkload,
+  isTsumeShogiWorkloadOfIdentity,
   parseTsumeShogiBaseMateSeedLabel,
   type TSUME_SHOGI_GENERATOR_VERSION,
   type TsumeShogiIdentifiedProblem,
   type TsumeShogiProblem,
   type TsumeShogiProblemIdentity,
+  type TsumeShogiSolveWorkload,
 } from "@/games/tsume-shogi/problem/problem";
 import problemPoolJson from "@/games/tsume-shogi/problem/problem-pool.json";
 import { parseTsumeShogiMoveUsi } from "@/games/tsume-shogi/puzzle/moves";
@@ -29,12 +32,17 @@ import {
  * - `position`: 初期局面の盤面（SFEN の盤面の部分）と攻方の持駒（SFEN の持駒の書き方、無ければ `-`）を空白で区切ったもの。
  *   玉方の持駒（駒箱）は盤面と攻方の持駒から決まるので持たない。
  * - `mainLine`: 作意の USI を空白で区切ったもの。
- * 実行時に生成器・探索を呼ばずに問題を復元するため、生成結果そのものを持つ。
+ * - `rootChecks` / `plausibleWrong` / `deepDecoyCount`: 生成時の難易度分析の特徴。速さの基準時間に使う作業の量
+ *   （`TsumeShogiSolveWorkload`。手数は作意の長さから求める）。
+ * 実行時に生成器・探索・難易度分析を呼ばずに問題と作業の量を復元するため、生成結果そのものを持つ。
  */
 export type TsumeShogiProblemPoolEntry = readonly [
   seed: string,
   position: string,
   mainLine: string,
+  rootChecks: number,
+  plausibleWrong: number,
+  deepDecoyCount: number,
 ];
 
 /**
@@ -48,8 +56,9 @@ export type TsumeShogiProblemPoolReference = {
   problemId: string;
 };
 
-/** 問題集から復元した1問と、問題集の中の位置。 */
+/** 問題集から復元した1問と、その作業の量、問題集の中の位置。 */
 export type TsumeShogiPooledProblem = TsumeShogiIdentifiedProblem & {
+  workload: TsumeShogiSolveWorkload;
   poolReference: TsumeShogiProblemPoolReference;
 };
 
@@ -154,7 +163,14 @@ export function formatTsumeShogiPoolProblemId(
 
 /** 問題集の1問を、問題集の中の位置 `poolReference` を添えて復元する。 */
 export function restoreTsumeShogiPoolEntry(
-  [seed, position, mainLine]: TsumeShogiProblemPoolEntry,
+  [
+    seed,
+    position,
+    mainLine,
+    rootChecks,
+    plausibleWrong,
+    deepDecoyCount,
+  ]: TsumeShogiProblemPoolEntry,
   poolReference: TsumeShogiProblemPoolReference,
 ): TsumeShogiPooledProblem {
   const identity = parseTsumeShogiPoolSeed(seed);
@@ -164,7 +180,21 @@ export function restoreTsumeShogiPoolEntry(
       `Tsume Shogi pool problem ${poolReference.problemId} has ${problem.plies} plies but seed ${seed}`,
     );
   }
-  return { problem, identity, poolReference };
+  const workload = {
+    plies: problem.plies,
+    rootChecks,
+    plausibleWrong,
+    deepDecoyCount,
+  };
+  if (
+    !isTsumeShogiSolveWorkload(workload) ||
+    !isTsumeShogiWorkloadOfIdentity(workload, identity)
+  ) {
+    throw new RangeError(
+      `Tsume Shogi pool problem ${poolReference.problemId} has an invalid workload`,
+    );
+  }
+  return { problem, identity, workload, poolReference };
 }
 
 export function toTsumeShogiPooledProblem(
