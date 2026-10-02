@@ -1,3 +1,4 @@
+import type { PlayRecord } from "@/records/play-record";
 import type {
   PlayRecordDefinition,
   PlayRecordMetricId,
@@ -25,6 +26,7 @@ type PlayRecordMetricPresentation = Omit<PlayRecordMetricDisplay, "id">;
 export type PlayRecordDisplayDefinition = {
   definition: PlayRecordDefinition;
   getComparisonLabel: (comparisonKey: string) => string | null;
+  getHistoryCopyText?: (record: PlayRecord) => string | null;
   metrics: readonly PlayRecordMetricDisplay[];
 };
 

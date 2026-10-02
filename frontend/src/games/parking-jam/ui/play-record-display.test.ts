@@ -72,4 +72,23 @@ describe("parkingJamPlayRecordDisplay", () => {
     expect(elapsed).toBe("02:00");
     expect(failedMoves).toBe("2回");
   });
+
+  test("履歴から問題とプレイ事実を再現用JSONとして書き出せること", () => {
+    const copyText = parkingJamPlayRecordDisplay.getHistoryCopyText?.(record);
+    if (!copyText) throw new Error("Expected parking jam history copy text");
+
+    expect(JSON.parse(copyText)).toEqual({
+      formatVersion: 1,
+      game: "parking-jam",
+      recordId: record.id,
+      completedAt: 121_000,
+      payloadVersion: 4,
+      difficulty: "5",
+      difficultyModelVersion: record.payload.difficultyModelVersion,
+      scoreModelVersion: record.payload.scoreModelVersion,
+      problemIdentity: record.payload.problemIdentity,
+      problemFacts: record.payload.problemFacts,
+      performance: record.payload.performance,
+    });
+  });
 });

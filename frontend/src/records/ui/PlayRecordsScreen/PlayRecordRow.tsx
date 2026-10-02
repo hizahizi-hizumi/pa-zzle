@@ -1,4 +1,5 @@
-import { PlayIcon } from "lucide-react";
+import { Check, Clipboard, PlayIcon } from "lucide-react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,17 +19,40 @@ type PlayRecordRowProps = {
   onReplay: (recordId: string) => void;
 };
 
+type CopyState = "idle" | "copied" | "failed";
+
 export function PlayRecordRow({
   record,
   display,
   personalBests,
   onReplay,
 }: PlayRecordRowProps) {
+  const [copyState, setCopyState] = useState<CopyState>("idle");
   const bestMetricIds = getPersonalBestMetricIdsForRecord(
     record,
     personalBests,
     display.definition,
   );
+  const copyText = display.getHistoryCopyText?.(record) ?? null;
+
+  async function copyRecord() {
+    if (copyText === null) return;
+
+    try {
+      await navigator.clipboard.writeText(copyText);
+      setCopyState("copied");
+      window.setTimeout(() => setCopyState("idle"), 1600);
+    } catch {
+      setCopyState("failed");
+    }
+  }
+
+  const copyLabel =
+    copyState === "copied"
+      ? "コピーしました"
+      : copyState === "failed"
+        ? "コピーできませんでした"
+        : "再現用JSONをコピー";
 
   return (
     <li
@@ -36,6 +60,7 @@ export function PlayRecordRow({
       style={{
         gridTemplateColumns: getPlayRecordGridTemplateColumns(
           display.metrics.length,
+          display.getHistoryCopyText !== undefined,
         ),
       }}
     >
@@ -67,16 +92,30 @@ export function PlayRecordRow({
           </span>
         );
       })}
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        aria-label="同じ問題をプレイ"
-        title="同じ問題をプレイ"
-        onClick={() => onReplay(record.id)}
-      >
-        <PlayIcon />
-      </Button>
+      <div className="flex justify-end gap-1">
+        {copyText !== null && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={copyLabel}
+            title={copyLabel}
+            onClick={copyRecord}
+          >
+            {copyState === "copied" ? <Check /> : <Clipboard />}
+          </Button>
+        )}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label="同じ問題をプレイ"
+          title="同じ問題をプレイ"
+          onClick={() => onReplay(record.id)}
+        >
+          <PlayIcon />
+        </Button>
+      </div>
     </li>
   );
 }
