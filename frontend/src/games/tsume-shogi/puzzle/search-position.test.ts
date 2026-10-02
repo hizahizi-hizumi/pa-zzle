@@ -157,4 +157,35 @@ describe("TsumeShogiSearchPosition", () => {
       expect(interpositions.length).toBeGreaterThan(0);
     });
   });
+  describe("王手をかけている駒", () => {
+    // 2一の銀を1二へ引くと、1二の銀と9一の飛（開き王手）の両方が1一の玉に利く。
+    const position = play(
+      createTsumeShogiPosition("R6Sk/9/9/9/9/9/9/9/9", {}),
+      "2a1b",
+    );
+    const state = new TsumeShogiSearchPosition(position);
+
+    test("両王手の2つの駒のマスと玉の位置を返すこと", () => {
+      const checkers = state.listCheckingSquares();
+      const king = state.defenderKingSquare;
+
+      expect(checkers).toEqual(
+        expect.arrayContaining([
+          { file: 1, rank: 2 },
+          { file: 9, rank: 1 },
+        ]),
+      );
+      expect(checkers).toHaveLength(2);
+      expect(king).toEqual({ file: 1, rank: 1 });
+    });
+
+    test("駒のあるマスと空きマスを見分けること", () => {
+      const occupied = [
+        { file: 1, rank: 2 },
+        { file: 2, rank: 1 },
+      ].map((square) => state.isOccupied(square));
+
+      expect(occupied).toEqual([true, false]);
+    });
+  });
 });
