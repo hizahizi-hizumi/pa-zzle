@@ -90,8 +90,7 @@ export function ParkingJamHowToPlayDialog({
       </li>
       <li className="hidden pointer-fine:list-item">
         <p className="text-muted-foreground">
-          キーボード: Tab で車へ移動、車の向きに沿う矢印キーで出す、Enter
-          で両端の矢印を出す。
+          キーボード: Tab で車へ移動、車の向きに沿う矢印キーで出す。
         </p>
       </li>
     </HowToPlayDialog>
