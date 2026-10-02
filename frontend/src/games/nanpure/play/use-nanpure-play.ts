@@ -36,6 +36,18 @@ export type NanpureResult = NanpureSessionResult & {
   score: NanpurePlayScore;
 };
 
+/** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
+export function createNanpureResult(
+  sessionResult: NanpureSessionResult,
+  problemIdentity: NanpureProblemIdentity,
+): NanpureResult {
+  return {
+    ...sessionResult,
+    problemIdentity,
+    score: calculateNanpurePlayScore(sessionResult),
+  };
+}
+
 type NanpurePlayState = {
   session: NanpureSession;
   problemIdentity: NanpureProblemIdentity;
@@ -210,11 +222,7 @@ export function useNanpurePlay(
   const result = useMemo<NanpureResult | null>(
     () =>
       sessionResult
-        ? {
-            ...sessionResult,
-            problemIdentity: play.problemIdentity,
-            score: calculateNanpurePlayScore(sessionResult),
-          }
+        ? createNanpureResult(sessionResult, play.problemIdentity)
         : null,
     [play.problemIdentity, sessionResult],
   );

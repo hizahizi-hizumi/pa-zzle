@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import {
   createMemoryRouter,
   type InitialEntry,
@@ -11,7 +17,9 @@ import { createPlayLocationState } from "@/game-catalog/play-location-state";
 import { selectNanpureProblemForDifficulty } from "@/games/nanpure/problem-selection";
 import { createProblemId } from "@/games/problem-id";
 import { createProblemSeed } from "@/games/problem-seed";
+import { readPlayRecords } from "@/records/storage";
 import { NanpurePlayView } from "@/views/NanpurePlayView";
+import { PlayResultView } from "@/views/PlayResultView";
 
 const internalDiagnostics = vi.hoisted(() => ({ available: false }));
 
@@ -31,6 +39,8 @@ afterEach(() => {
   cleanup();
   internalDiagnostics.available = false;
   window.localStorage.clear();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 function renderAt(path: string): void {
@@ -55,6 +65,10 @@ function renderRouterAt(entry: InitialEntry): PlayRouter {
       {
         path: "/puzzles/nanpure/play/:difficulty",
         element: <NanpurePlayView />,
+      },
+      {
+        path: "/puzzles/:game/result/:recordId",
+        element: <PlayResultView />,
       },
     ],
     { initialEntries: [entry] },
@@ -174,6 +188,84 @@ describe("NanpurePlayView", () => {
         });
       },
     );
+  });
+});
+
+describe("解き終えた場合", () => {
+  const { problem } = selectNanpureProblemForDifficulty(
+    "1",
+    "nanpure-play-view",
+  );
+  let router: PlayRouter;
+
+  /** 空きマスを順に選び、解の数字を入れる。 */
+  function solve(): void {
+    problem.clues.forEach((clue, cellIndex) => {
+      if (clue !== null) {
+        return;
+      }
+      const cells = screen.getAllByRole("button", { name: /^\d行\d列、/ });
+      fireEvent.click(cells[cellIndex] as HTMLElement);
+      fireEvent.click(
+        within(screen.getByRole("group", { name: "数字入力" })).getByText(
+          String(problem.solution[cellIndex]),
+        ),
+      );
+    });
+  }
+
+  beforeEach(() => {
+    // クリア演出を待たずに結果へ進める。
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({ matches: true }) as MediaQueryList),
+    );
+  });
+
+  describe("記録を保存できた場合", () => {
+    beforeEach(() => {
+      router = renderRouterAt("/puzzles/nanpure/play/1");
+      solve();
+    });
+
+    test("保存した記録の結果画面へ履歴を置き換えて移ること", async () => {
+      const resultScreen = await screen.findByRole("region", {
+        name: "プレイ結果",
+      });
+      const [record] = readPlayRecords();
+
+      expect(resultScreen).toBeTruthy();
+      expect(router.state.location.pathname).toBe(
+        `/puzzles/nanpure/result/${encodeURIComponent(record?.id ?? "")}`,
+      );
+      expect(router.state.historyAction).toBe("REPLACE");
+      expect(router.state.location.state).toEqual({
+        recordSaveOutcome: { status: "first-record" },
+      });
+    });
+  });
+
+  describe("記録を保存できなかった場合", () => {
+    beforeEach(() => {
+      vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+        throw new DOMException("quota", "QuotaExceededError");
+      });
+      router = renderRouterAt("/puzzles/nanpure/play/1");
+      solve();
+    });
+
+    test("プレイ画面のまま結果と保存できなかったことを示すこと", async () => {
+      const resultScreen = await screen.findByRole("region", {
+        name: "プレイ結果",
+      });
+      const failure = screen.getByText(
+        "このプレイの記録を保存できませんでした",
+      );
+
+      expect(resultScreen).toBeTruthy();
+      expect(failure).toBeTruthy();
+      expect(router.state.location.pathname).toBe("/puzzles/nanpure/play/1");
+    });
   });
 });
 

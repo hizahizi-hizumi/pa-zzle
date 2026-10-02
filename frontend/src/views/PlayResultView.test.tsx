@@ -1,19 +1,33 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  createMemoryRouter,
+  type InitialEntry,
+  RouterProvider,
+} from "react-router";
+
+import { createPlayLocationState } from "@/game-catalog/play-location-state";
+import { createRecordResultLocationState } from "@/game-catalog/record-result-location-state";
 
 import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
+import { createNanpureProblemIdentity } from "@/games/nanpure/problem/problem";
 import { selectNanpureProblemForDifficulty } from "@/games/nanpure/problem-selection";
+import { createProblemId } from "@/games/problem-id";
 import type { PlayRecord } from "@/records/play-record";
 import { writePlayRecords } from "@/records/storage";
 import { PlayResultView } from "@/views/PlayResultView";
 
+const internalDiagnostics = vi.hoisted(() => ({ available: false }));
+
 vi.mock("@/lib/internal-diagnostics", () => ({
-  internalDiagnosticsAvailable: false,
+  get internalDiagnosticsAvailable() {
+    return internalDiagnostics.available;
+  },
   buildRevision: null,
 }));
 
 afterEach(() => {
   cleanup();
+  internalDiagnostics.available = false;
   window.localStorage.clear();
 });
 
@@ -27,6 +41,20 @@ const nanpureRecord = createNanpurePlayRecord({
     elapsedMs: 120_000,
     mistakeCount: 1,
     undoCount: 2,
+    restartCount: 0,
+  },
+});
+
+// 今の生成器の問題だが、問題集に無いので遊び直せない記録。
+const unreplayableNanpureRecord = createNanpurePlayRecord({
+  difficulty: "3",
+  problemIdentity: createNanpureProblemIdentity("x-wing", 999_999),
+  startedAt: 2_000,
+  completedAt: 122_000,
+  result: {
+    elapsedMs: 120_000,
+    mistakeCount: 0,
+    undoCount: 0,
     restartCount: 0,
   },
 });
@@ -60,18 +88,133 @@ const unknownGameRecord: PlayRecord = {
   gameId: "unknown-game",
 };
 
-function renderAt(path: string): void {
+type ResultRouter = ReturnType<typeof createMemoryRouter>;
+
+function renderAt(entry: InitialEntry): ResultRouter {
   const router = createMemoryRouter(
     [
       {
         path: "/puzzles/:game/result/:recordId",
         element: <PlayResultView />,
       },
+      { path: "/puzzles/nanpure/play/:difficulty", element: <p>プレイ画面</p> },
+      { path: "/puzzles/nanpure", element: <p>難易度選択画面</p> },
+      { path: "/records", element: <p>記録画面</p> },
+      { path: "/", element: <p>ホーム画面</p> },
     ],
-    { initialEntries: [path] },
+    { initialEntries: [entry] },
   );
   render(<RouterProvider router={router} />);
+  return router;
 }
+
+function createResultPath(record: PlayRecord): string {
+  return `/puzzles/${record.gameId}/result/${encodeURIComponent(record.id)}`;
+}
+
+describe("今の版の記録の場合", () => {
+  let router: ResultRouter;
+
+  beforeEach(() => {
+    writePlayRecords([nanpureRecord]);
+    router = renderAt(createResultPath(nanpureRecord));
+  });
+
+  test("記録の難易度と成績で結果画面を出すこと", () => {
+    const resultScreen = screen.getByRole("region", { name: "プレイ結果" });
+
+    expect(resultScreen.textContent).toContain("レベル 3");
+    expect(resultScreen.textContent).toContain("02:00");
+  });
+
+  test("保存結果の state が無いと自己ベスト更新を告知しないこと", () => {
+    const bestUpdate = screen.queryByRole("region", { name: "自己ベスト更新" });
+
+    expect(bestUpdate).toBeNull();
+  });
+
+  const navigationCases = [
+    [
+      "プレイ！",
+      "/puzzles/nanpure/play/3",
+      "",
+      createPlayLocationState(createProblemId(nanpureProblem.identity)),
+    ],
+    [
+      "同じ問題",
+      "/puzzles/nanpure/play/3",
+      `?problem=${createProblemId(nanpureProblem.identity)}`,
+      null,
+    ],
+    ["記録を確認", "/records", "", null],
+    ["難易度変更", "/puzzles/nanpure", "", null],
+    ["ホーム", "/", "", null],
+  ] as const;
+
+  test.each(navigationCases)(
+    "%sで遷移すること",
+    (buttonName, pathname, search, state) => {
+      fireEvent.click(screen.getByRole("button", { name: buttonName }));
+
+      const { location } = router.state;
+
+      expect(location.pathname).toBe(pathname);
+      expect(location.search).toBe(search);
+      expect(location.state).toEqual(state);
+    },
+  );
+});
+
+describe("自己ベスト更新の保存結果を state に持つ場合", () => {
+  beforeEach(() => {
+    writePlayRecords([nanpureRecord]);
+    renderAt({
+      pathname: createResultPath(nanpureRecord),
+      state: createRecordResultLocationState({
+        status: "updated",
+        updates: [
+          { metricId: "play-score", previousValue: 80, currentValue: 90 },
+        ],
+      }),
+    });
+  });
+
+  test("自己ベスト更新を告知すること", () => {
+    const bestUpdate = screen.getByRole("region", { name: "自己ベスト更新" });
+
+    expect(bestUpdate.textContent).toContain("+10点");
+  });
+});
+
+describe("遊び直せない記録の場合", () => {
+  beforeEach(() => {
+    writePlayRecords([unreplayableNanpureRecord]);
+    renderAt(createResultPath(unreplayableNanpureRecord));
+  });
+
+  test("同じ問題の操作を押せない状態で出すこと", () => {
+    const replayButton = screen.getByRole("button", { name: "同じ問題" });
+
+    expect(replayButton.hasAttribute("disabled")).toBe(true);
+  });
+});
+
+describe("内部診断を使える環境の場合", () => {
+  beforeEach(() => {
+    internalDiagnostics.available = true;
+    writePlayRecords([nanpureRecord]);
+    renderAt(createResultPath(nanpureRecord));
+  });
+
+  test("記録の問題の検証情報を開けること", () => {
+    fireEvent.click(screen.getByRole("button", { name: "検証情報" }));
+
+    const dialog = screen.getByRole("dialog", { name: "検証情報" });
+
+    expect(dialog.textContent).toContain("レベル 3");
+    expect(dialog.textContent).toContain(nanpureProblem.identity.seed);
+  });
+});
 
 const unrenderableCases = [
   ["存在しない記録 ID", "/puzzles/nanpure/result/missing"],
