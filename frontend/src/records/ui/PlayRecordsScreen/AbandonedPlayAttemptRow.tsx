@@ -1,5 +1,6 @@
 import type { AbandonedPlayAttempt } from "@/records/play-attempt";
 import { formatRecordCompletedAt } from "@/records/ui/format";
+import { ReplayPlayButton } from "@/records/ui/PlayRecordsScreen/ReplayPlayButton";
 import { getPlayRecordGridTemplateColumns } from "@/records/ui/PlayRecordsScreen/record-grid";
 import type { PlayAttemptDisplayDefinition } from "@/records/ui/play-attempt-display";
 
@@ -7,16 +8,19 @@ type AbandonedPlayAttemptRowProps = {
   attempt: AbandonedPlayAttempt;
   attemptDisplay: PlayAttemptDisplayDefinition;
   metricCount: number;
+  onReplay: (attemptId: string) => void;
 };
 
 /**
  * 離脱したプレイの1行。評価が無いため最初の指標（評価）の列に離脱したことを示し、
  * 完了したプレイの指標とは比べられない進み具合は、残りの指標の列をまとめた幅にラベル付きで並べる。
+ * 同じ問題の再プレイは完了したプレイの行と同じく選べる。JSONでのコピーは完了記録だけが対象なので置かない。
  */
 export function AbandonedPlayAttemptRow({
   attempt,
   attemptDisplay,
   metricCount,
+  onReplay,
 }: AbandonedPlayAttemptRowProps) {
   const progress = attemptDisplay.progress.flatMap((item) => {
     const value = attemptDisplay.definition.progress
@@ -51,8 +55,10 @@ export function AbandonedPlayAttemptRow({
           </div>
         ))}
       </dl>
-      {/* 完了したプレイの行と高さを揃えるため、操作の列を空けておく。 */}
-      <div className="h-8" aria-hidden="true" />
+      {/* 完了したプレイの行と同じ見た目にするため、行の控えめな文字色を操作には引き継がない。 */}
+      <div className="flex justify-end text-foreground">
+        <ReplayPlayButton onReplay={() => onReplay(attempt.id)} />
+      </div>
     </li>
   );
 }

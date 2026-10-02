@@ -1,25 +1,38 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 
+import { createMinesweeperPlayAttempt } from "@/games/minesweeper/play-attempt";
 import { createMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
 import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
+import { createNanpurePlayAttempt } from "@/games/nanpure/play-attempt";
 import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
 import { createNanpureProblemIdentity } from "@/games/nanpure/problem/problem";
 import { restoreNanpureProblem } from "@/games/nanpure/problem-selection";
+import { createParkingJamPlayAttempt } from "@/games/parking-jam/play-attempt";
 import { createParkingJamPlayRecord } from "@/games/parking-jam/play-record";
 import { selectParkingJamProblemForDifficulty } from "@/games/parking-jam/problem-selection";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
+import { createReflectionPlayAttempt } from "@/games/reflection/play-attempt";
 import { createReflectionPlayRecord } from "@/games/reflection/play-record";
 import { createReflectionProblemIdentity } from "@/games/reflection/problem/problem";
 import { toReflectionPooledProblem } from "@/games/reflection/problem/problem-pool";
 import { writeReflectionHowToPlaySeen } from "@/games/reflection/ui/how-to-play-seen";
+import { createSlidePuzzlePlayAttempt } from "@/games/slide-puzzle/play-attempt";
 import { createSlidePuzzlePlayRecord } from "@/games/slide-puzzle/play-record";
 import { selectSlidePuzzleProblemForDifficulty } from "@/games/slide-puzzle/problem-selection";
+import { createTakuzuPlayAttempt } from "@/games/takuzu/play-attempt";
 import { createTakuzuPlayRecord } from "@/games/takuzu/play-record";
 import { createTakuzuProblemIdentity } from "@/games/takuzu/problem/problem";
 import { writeTakuzuHowToPlaySeen } from "@/games/takuzu/ui/how-to-play-seen";
+import { createWaterSortPlayAttempt } from "@/games/water-sort/play-attempt";
 import { createWaterSortPlayRecord } from "@/games/water-sort/play-record";
 import { selectWaterSortProblemForDifficulty } from "@/games/water-sort/problem-selection";
+import type { PlayAttempt } from "@/records/play-attempt";
+import {
+  abandonPlayAttempt,
+  readPlayAttempts,
+  startPlayAttempt,
+} from "@/records/play-attempt-storage";
 import type { PlayRecord } from "@/records/play-record";
 import { writePlayRecords } from "@/records/storage";
 import { RecordedProblemReplayView } from "@/views/RecordedProblemReplayView";
@@ -379,6 +392,238 @@ describe("RecordedProblemReplayView", () => {
         expect(heading).toBeTruthy();
         expect(reason).toBeTruthy();
       });
+    });
+  });
+});
+
+describe("RecordedProblemReplayView で離脱したプレイを再プレイする場合", () => {
+  const abandonedAt = 61_000;
+
+  /** 開始を記録してから離脱を記録し、記録画面に離脱として並ぶ試行にする。 */
+  function storeAbandonedAttempt(attempt: PlayAttempt, progress: unknown) {
+    startPlayAttempt(attempt);
+    abandonPlayAttempt(attempt.id, { abandonedAt, progress });
+  }
+
+  const waterSortAttempt = createWaterSortPlayAttempt({
+    difficulty: "1",
+    problemIdentity: waterSortProblem.identity,
+    startedAt,
+  });
+  const nanpureAttempt = createNanpurePlayAttempt({
+    difficulty: "3",
+    problemIdentity: createNanpureProblemIdentity("locked-candidates", 740),
+    startedAt,
+  });
+  const reflectionPooled = toReflectionPooledProblem("3", 0);
+
+  const replayableAttempts = [
+    [
+      "ウォーターソート",
+      waterSortAttempt,
+      { elapsedMs: 60_000, moveCount: 3, undoCount: 0, restartCount: 0 },
+    ],
+    [
+      "ナンプレ",
+      nanpureAttempt,
+      { elapsedMs: 60_000, mistakeCount: 1, undoCount: 0, restartCount: 0 },
+    ],
+    [
+      "マインスイーパー",
+      createMinesweeperPlayAttempt({
+        difficulty: "1",
+        problemIdentity: minesweeperRecord.payload.problemIdentity,
+        startedAt,
+      }),
+      { elapsedMs: 60_000, mistakeCount: 0 },
+    ],
+    [
+      "パーキングジャム",
+      createParkingJamPlayAttempt({
+        difficulty: "1",
+        problemIdentity: parkingJamProblem.identity,
+        startedAt,
+      }),
+      {
+        elapsedMs: 60_000,
+        moveAttemptCount: 2,
+        successfulMoveCount: 1,
+        failedMoveCount: 1,
+        undoCount: 0,
+        restartCount: 0,
+      },
+    ],
+    [
+      "スライドパズル",
+      createSlidePuzzlePlayAttempt({
+        difficulty: "1",
+        problemIdentity: slidePuzzleProblem.identity,
+        startedAt,
+      }),
+      { elapsedMs: 60_000, moveCount: 4, slideCount: 4, restartCount: 0 },
+    ],
+    [
+      "バイナリパズル",
+      createTakuzuPlayAttempt({
+        difficulty: "4",
+        problemIdentity: createTakuzuProblemIdentity(
+          "duplicate-avoidance",
+          2,
+          160,
+        ),
+        startedAt,
+      }),
+      {
+        elapsedMs: 60_000,
+        correctionCount: 0,
+        restartCount: 0,
+        undoCount: 0,
+        inputCount: 5,
+      },
+    ],
+    [
+      REFLECTION_DISPLAY_NAME,
+      createReflectionPlayAttempt({
+        difficulty: "3",
+        problemIdentity: reflectionPooled.identity,
+        startedAt,
+      }),
+      {
+        elapsedMs: 60_000,
+        relocationCount: 0,
+        restartCount: 0,
+        laserCheckCount: 1,
+        inputCount: 3,
+      },
+    ],
+  ] as const;
+
+  describe.each(replayableAttempts)(
+    "%sの試行の場合",
+    (gameName, attempt, progress) => {
+      beforeEach(() => {
+        storeAbandonedAttempt(attempt, progress);
+        renderReplay(attempt.id);
+      });
+
+      test("そのゲームのプレイ画面で再プレイを始めること", () => {
+        const heading = screen.getByRole("heading", { level: 1 });
+
+        expect(heading.textContent).toBe(gameName);
+      });
+
+      test("再プレイを新しいプレイとして開始を記録すること", () => {
+        const startedAttempts = readPlayAttempts().filter(
+          (stored) => stored.gameId === attempt.gameId,
+        );
+
+        expect(startedAttempts).toHaveLength(2);
+        expect(startedAttempts[1]?.start).toEqual(attempt.start);
+      });
+    },
+  );
+
+  describe("問題集にあるナンプレの試行の場合", () => {
+    const expectedClueLabels =
+      restoreNanpureProblem(
+        nanpureAttempt.start.problemIdentity,
+      )?.problem.clues.flatMap((digit, cellIndex) =>
+        digit === null
+          ? []
+          : [
+              `${Math.floor(cellIndex / 9) + 1}行${(cellIndex % 9) + 1}列、${digit}、初期ヒント`,
+            ],
+      ) ?? [];
+
+    beforeEach(() => {
+      storeAbandonedAttempt(nanpureAttempt, {
+        elapsedMs: 60_000,
+        mistakeCount: 1,
+        undoCount: 0,
+        restartCount: 0,
+      });
+      renderReplay(nanpureAttempt.id);
+    });
+
+    test("試行と同じ問題のヒントから、最初の状態でプレイを始めること", () => {
+      const clueLabels = screen
+        .getAllByRole("button", { name: /初期ヒント$/ })
+        .map((cell) => cell.getAttribute("aria-label"));
+
+      expect(clueLabels).toEqual(expectedClueLabels);
+    });
+  });
+
+  describe("問題集に無いナンプレの試行の場合", () => {
+    beforeEach(() => {
+      const attempt = createNanpurePlayAttempt({
+        difficulty: "3",
+        problemIdentity: createNanpureProblemIdentity(
+          "locked-candidates",
+          99_999,
+        ),
+        startedAt,
+      });
+      storeAbandonedAttempt(attempt, {
+        elapsedMs: 60_000,
+        mistakeCount: 0,
+        undoCount: 0,
+        restartCount: 0,
+      });
+      renderReplay(attempt.id);
+    });
+
+    test("完了記録と同じく、問題集に問題が無いため再プレイできないことを示すこと", () => {
+      const heading = screen.getByRole("heading", {
+        name: "この記録は再プレイできません",
+      });
+      const reason = screen.getByText(
+        "この記録の問題は、現在の問題集にありません。",
+      );
+
+      expect(heading).toBeTruthy();
+      expect(reason).toBeTruthy();
+    });
+  });
+
+  describe("現在のアプリに無いゲームの試行の場合", () => {
+    beforeEach(() => {
+      const attempt = {
+        ...waterSortAttempt,
+        id: "unknown-game:1000",
+        gameId: "unknown-game",
+      };
+      storeAbandonedAttempt(attempt, {});
+      renderReplay(attempt.id);
+    });
+
+    test("再プレイに対応していないことを示すこと", () => {
+      const reason = screen.getByText(
+        "現在のバージョンでは、この記録の再プレイに対応していません。",
+      );
+
+      expect(reason).toBeTruthy();
+    });
+  });
+
+  describe.each([
+    ["離脱を記録していない", false],
+    ["完了記録がある", true],
+  ] as const)("%s試行の場合", (_, cleared) => {
+    beforeEach(() => {
+      startPlayAttempt(waterSortAttempt);
+      if (cleared) {
+        writePlayRecords([waterSortRecord]);
+      }
+      renderReplay(waterSortAttempt.id);
+    });
+
+    test("記録画面に離脱として並ばないので、記録が見つからないことを示すこと", () => {
+      const heading = screen.getByRole("heading", {
+        name: "記録が見つかりません",
+      });
+
+      expect(heading).toBeTruthy();
     });
   });
 });

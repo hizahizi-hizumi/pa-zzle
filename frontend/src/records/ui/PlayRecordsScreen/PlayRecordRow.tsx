@@ -1,6 +1,3 @@
-import { PlayIcon } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
 import {
   getPersonalBestMetricIdsForRecord,
   type PersonalBest,
@@ -9,6 +6,7 @@ import type { PlayRecord } from "@/records/play-record";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 import { formatRecordCompletedAt } from "@/records/ui/format";
 import { CopyPlayRecordsButton } from "@/records/ui/PlayRecordsScreen/CopyPlayRecordsButton";
+import { ReplayPlayButton } from "@/records/ui/PlayRecordsScreen/ReplayPlayButton";
 import { getPlayRecordGridTemplateColumns } from "@/records/ui/PlayRecordsScreen/record-grid";
 import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
 
@@ -73,16 +71,7 @@ export function PlayRecordRow({
           records={[record]}
           label="この記録をJSONでコピー"
         />
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="同じ問題をプレイ"
-          title="同じ問題をプレイ"
-          onClick={() => onReplay(record.id)}
-        >
-          <PlayIcon />
-        </Button>
+        <ReplayPlayButton onReplay={() => onReplay(record.id)} />
       </div>
     </li>
   );

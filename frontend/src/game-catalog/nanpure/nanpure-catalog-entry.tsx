@@ -1,7 +1,7 @@
 import {
+  createGameReplay,
   type GameCatalogEntry,
   type RecordReplayStart,
-  renderRecordReplay,
   unavailableRecordReplay,
 } from "@/game-catalog/game-catalog-entry";
 import { PlayableNanpure } from "@/game-catalog/nanpure/PlayableNanpure";
@@ -10,36 +10,42 @@ import {
   type NanpureDifficulty,
   parseNanpureDifficulty,
 } from "@/games/nanpure/difficulty";
+import { isNanpurePlayAttempt } from "@/games/nanpure/play-attempt";
 import {
   isNanpurePlayRecord,
   nanpurePlayRecordDefinition,
 } from "@/games/nanpure/play-record";
-import type { NanpureIdentifiedProblem } from "@/games/nanpure/problem/problem";
+import type {
+  NanpureIdentifiedProblem,
+  NanpureRecordedProblemIdentity,
+} from "@/games/nanpure/problem/problem";
 import { restoreNanpureProblem } from "@/games/nanpure/problem-selection";
 import { nanpurePlayAttemptDisplay } from "@/games/nanpure/ui/play-attempt-display";
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
-import type { PlayRecord } from "@/records/play-record";
+
+/** 完了記録と試行に共通する開始条件。完了記録には3段階の難易度で遊んだものもある。 */
+type NanpureReplayConditions = {
+  difficulty: string;
+  problemIdentity: NanpureRecordedProblemIdentity;
+};
 
 type NanpureReplayStart = {
   difficulty: NanpureDifficulty;
   initialProblem: NanpureIdentifiedProblem;
 };
 
-function resolveNanpureReplayStart(
-  record: PlayRecord,
-): RecordReplayStart<NanpureReplayStart> {
-  if (!isNanpurePlayRecord(record)) {
-    return unavailableRecordReplay("unsupported-record");
-  }
-
+function resolveNanpureReplayStart({
+  difficulty: recordedDifficulty,
+  problemIdentity,
+}: NanpureReplayConditions): RecordReplayStart<NanpureReplayStart> {
   // 3段階の難易度で遊んだ記録はレベルへ読み替えないので再プレイできない。
-  const difficulty = parseNanpureDifficulty(record.payload.difficulty);
+  const difficulty = parseNanpureDifficulty(recordedDifficulty);
   if (!difficulty) {
     return unavailableRecordReplay("legacy-difficulty");
   }
 
   // ナンプレは問題を問題集にしか持たないので、問題集から引けない記録は再プレイできない。
-  const initialProblem = restoreNanpureProblem(record.payload.problemIdentity);
+  const initialProblem = restoreNanpureProblem(problemIdentity);
   if (!initialProblem) {
     return unavailableRecordReplay("problem-not-in-pool");
   }
@@ -54,11 +60,14 @@ export const nanpureCatalogEntry = {
   entryPath: "/puzzles/nanpure",
   playRecordDisplay: nanpurePlayRecordDisplay,
   playAttemptDisplay: nanpurePlayAttemptDisplay,
-  replayRecord(record) {
-    return renderRecordReplay(resolveNanpureReplayStart(record), (start) => (
-      <PlayableNanpure {...start} />
-    ));
-  },
+  ...createGameReplay({
+    readRecordConditions: (record) =>
+      isNanpurePlayRecord(record) ? record.payload : null,
+    readAttemptConditions: (attempt) =>
+      isNanpurePlayAttempt(attempt) ? attempt.start : null,
+    resolveStart: resolveNanpureReplayStart,
+    renderPlay: (start) => <PlayableNanpure {...start} />,
+  }),
 } satisfies GameCatalogEntry;
 
 export const _private = { resolveNanpureReplayStart };

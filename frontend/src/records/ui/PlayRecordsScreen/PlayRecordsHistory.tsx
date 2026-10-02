@@ -31,7 +31,8 @@ type PlayRecordsHistoryProps = {
   /** 完了したプレイが無く、離脱したプレイを常に表示するときは切り替えられない。 */
   filterDisabled: boolean;
   onFilterChange: (filter: PlayHistoryFilter) => void;
-  onReplay: (recordId: string) => void;
+  /** 完了記録または離脱した試行の id で、その問題を再プレイする。 */
+  onReplay: (playId: string) => void;
 };
 
 export function PlayRecordsHistory({
@@ -97,6 +98,7 @@ export function PlayRecordsHistory({
               attempt={entry.attempt}
               attemptDisplay={attemptDisplay}
               metricCount={display.metrics.length}
+              onReplay={onReplay}
             />
           ),
         )}

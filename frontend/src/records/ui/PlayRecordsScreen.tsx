@@ -32,7 +32,8 @@ type PlayRecordsScreenProps = {
   attempts: readonly PlayAttempt[];
   games: PlayRecordGameCatalog;
   emptyAction: ReactNode;
-  onReplay: (recordId: string) => void;
+  /** 完了記録または離脱した試行の id で、その問題を再プレイする。 */
+  onReplay: (playId: string) => void;
 };
 
 type ComparisonOption = {

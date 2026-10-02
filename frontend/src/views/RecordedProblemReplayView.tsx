@@ -6,6 +6,8 @@ import {
   type RecordReplayUnavailableReason,
   unavailableRecordReplay,
 } from "@/game-catalog/game-catalog-entry";
+import { getAbandonedPlayAttempts } from "@/records/play-attempt";
+import { readPlayAttempts } from "@/records/play-attempt-storage";
 import { readPlayRecords } from "@/records/storage";
 import { Link, useParams } from "@/router";
 
@@ -19,24 +21,39 @@ const unavailableReasonMessages: Record<RecordReplayUnavailableReason, string> =
     "problem-not-restorable": "この記録の問題を復元できません。",
   };
 
-function replayStoredRecord(recordId: string): RecordReplay | null {
-  const record = readPlayRecords().find(
-    (candidate) => candidate.id === recordId,
+/**
+ * 記録画面に並ぶプレイ（完了記録か離脱した試行）の問題で再プレイを始める。
+ * 完了記録の id はゲーム・開始・完了の時刻と問題の識別情報から、試行の id はゲームと開始時刻から作るので、
+ * 両者が同じ id になることはない。完了記録を先に探す。
+ */
+function replayStoredPlay(playId: string): RecordReplay | null {
+  const records = readPlayRecords();
+  const record = records.find((candidate) => candidate.id === playId);
+  if (record) {
+    const game = findGameCatalogEntry(record.gameId);
+    return game
+      ? game.replayRecord(record)
+      : unavailableRecordReplay("unsupported-record");
+  }
+
+  // 記録画面に出ない試行（完了記録がある・離脱していない）は再プレイの対象にしない。
+  const attempt = getAbandonedPlayAttempts(readPlayAttempts(), records).find(
+    (candidate) => candidate.id === playId,
   );
-  if (!record) {
+  if (!attempt) {
     return null;
   }
 
-  const game = findGameCatalogEntry(record.gameId);
+  const game = findGameCatalogEntry(attempt.gameId);
   return game
-    ? game.replayRecord(record)
+    ? game.replayAttempt(attempt)
     : unavailableRecordReplay("unsupported-record");
 }
 
 export function RecordedProblemReplayView() {
   const { recordId } = useParams("/records/replay/:recordId");
   // 問題の復元は重いことがあるので、画面を開いたときに一度だけ行う。
-  const [replay] = useState(() => replayStoredRecord(recordId));
+  const [replay] = useState(() => replayStoredPlay(recordId));
 
   if (!replay) {
     return (

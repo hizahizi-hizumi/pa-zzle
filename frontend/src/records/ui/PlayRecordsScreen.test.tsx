@@ -237,6 +237,8 @@ const attempts: PlayAttempt[] = [
 ];
 
 describe("PlayRecordsScreen", () => {
+  const onReplay = vi.fn<(playId: string) => void>();
+
   beforeEach(() => {
     render(
       <PlayRecordsScreen
@@ -244,12 +246,15 @@ describe("PlayRecordsScreen", () => {
         attempts={attempts}
         games={playRecordGames}
         emptyAction={<a href="/">パズルを選ぶ</a>}
-        onReplay={() => {}}
+        onReplay={onReplay}
       />,
     );
   });
 
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    onReplay.mockClear();
+  });
 
   test("見出しとパズルと開始条件を同じヘッダーで選べること", () => {
     const heading = screen.getByRole("heading", { name: "記録" });
@@ -381,7 +386,11 @@ describe("PlayRecordsScreen", () => {
     expect(within(abandonedRow).getByText("手数")).toBeTruthy();
     expect(within(abandonedRow).getByText("5手")).toBeTruthy();
     expect(within(abandonedRow).queryByText(/点$/)).toBeNull();
-    expect(within(abandonedRow).queryByRole("button")).toBeNull();
+    expect(
+      within(abandonedRow)
+        .getAllByRole("button")
+        .map((button) => button.getAttribute("aria-label")),
+    ).toEqual(["同じ問題をプレイ"]);
     expect(within(newestRow).queryByText("離脱")).toBeNull();
     expect(within(oldestRow).queryByText("離脱")).toBeNull();
     expect(screen.getAllByText("離脱")).toHaveLength(1);
@@ -389,6 +398,23 @@ describe("PlayRecordsScreen", () => {
     expect(
       screen.getByRole("button", { name: "クリアした記録をJSONでコピー" }),
     ).toBeTruthy();
+  });
+
+  test("離脱したプレイの行から、その試行の問題を再プレイできること", () => {
+    fireEvent.change(screen.getByRole("combobox", { name: "表示するプレイ" }), {
+      target: { value: "all" },
+    });
+    const abandonedRow = screen
+      .getAllByRole("listitem")
+      .find((row) => within(row).queryByText("離脱"));
+    if (!abandonedRow) {
+      throw new Error("離脱したプレイの行がありません");
+    }
+    fireEvent.click(
+      within(abandonedRow).getByRole("button", { name: "同じ問題をプレイ" }),
+    );
+
+    expect(onReplay).toHaveBeenCalledExactlyOnceWith("water-sort:100000");
   });
 
   test("離脱したプレイを自己ベストと推移の対象にしないこと", () => {
