@@ -6,7 +6,8 @@ import {
   type NanpureDigit,
 } from "@/games/nanpure/puzzle/board";
 import type { NanpureNotes } from "@/games/nanpure/session/session";
-import { NanpureCellNotes } from "@/games/nanpure/ui/board/NanpureCell/NanpureCellNotes";
+import { NanpureCellNotes } from "@/games/nanpure/ui/board/NanpureCellNotes";
+import { nanpureCellToneClassNames } from "@/games/nanpure/ui/board/nanpure-cell-tone";
 import { cn } from "@/lib/utils";
 
 type NanpureCellProps = {
@@ -93,22 +94,22 @@ export function NanpureCell({
         column % 3 === 2 &&
           column !== NANPURE_SIZE - 1 &&
           "border-r-2 border-r-foreground/55",
-        related && "bg-violet-100/70 dark:bg-violet-950/35",
-        matching && "bg-violet-200/75 dark:bg-violet-900/50",
-        selected && "bg-violet-300/80 dark:bg-violet-800/60",
-        clue && "font-semibold text-foreground",
-        !clue &&
-          value !== null &&
-          "font-medium text-violet-600 dark:text-violet-300",
-        mistake &&
-          "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300",
-        conflict &&
-          "bg-rose-100 text-rose-700 dark:bg-rose-950/45 dark:text-rose-300",
+        related && nanpureCellToneClassNames.related,
+        matching && nanpureCellToneClassNames.matching,
+        selected && nanpureCellToneClassNames.selected,
+        clue && nanpureCellToneClassNames.clue,
+        !clue && value !== null && nanpureCellToneClassNames.entered,
+        mistake && nanpureCellToneClassNames.mistake,
+        conflict && nanpureCellToneClassNames.conflict,
       )}
       onClick={() => onSelect(cellIndex)}
     >
       {value ?? (
-        <NanpureCellNotes notes={notes} selectedValue={selectedValue} />
+        <NanpureCellNotes
+          notes={notes}
+          selectedValue={selectedValue}
+          size="board"
+        />
       )}
     </button>
   );

@@ -5,19 +5,31 @@ import {
 import type { NanpureNotes } from "@/games/nanpure/session/session";
 import { cn } from "@/lib/utils";
 
+type NanpureCellNotesSize = "board" | "figure";
+
 type NanpureCellNotesProps = {
   notes: NanpureNotes[number];
   selectedValue: NanpureDigit | null;
+  size: NanpureCellNotesSize;
+};
+
+const textSizeClassNames: Record<NanpureCellNotesSize, string> = {
+  board: "text-[clamp(0.58rem,2.4vw,0.9rem)]",
+  figure: "text-[0.5625rem]",
 };
 
 export function NanpureCellNotes({
   notes,
   selectedValue,
+  size,
 }: NanpureCellNotesProps) {
   return (
     <span
       aria-hidden="true"
-      className="grid h-full w-full grid-cols-3 grid-rows-3 place-items-center text-[clamp(0.58rem,2.4vw,0.9rem)] leading-none font-normal text-muted-foreground/60"
+      className={cn(
+        "grid h-full w-full grid-cols-3 grid-rows-3 place-items-center leading-none font-normal text-muted-foreground/60",
+        textSizeClassNames[size],
+      )}
     >
       {NANPURE_DIGITS.map((digit) => (
         <span
