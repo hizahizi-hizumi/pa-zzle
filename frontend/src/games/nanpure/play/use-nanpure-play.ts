@@ -26,7 +26,8 @@ import {
   toggleNanpureNote,
   undoNanpureSession,
 } from "@/games/nanpure/session/session";
-import { createProblemSeed } from "@/games/problem-seed";
+import { createProblemId, type ProblemId } from "@/games/problem-id";
+import { selectProblemAvoiding } from "@/games/problem-selection";
 
 export type NanpureProgress = "playing" | "clearing" | "result";
 
@@ -43,9 +44,6 @@ type NanpurePlayState = {
   progress: NanpureProgress;
 };
 
-// 問題集が小さい場合でも「別の問題」で同じ問題に戻らないよう、選び直す回数の上限。
-const maximumNewProblemSelectionAttempts = 8;
-
 function createPlayState(
   { problem, identity }: NanpureIdentifiedProblem,
   startedAt: number,
@@ -59,43 +57,31 @@ function createPlayState(
   };
 }
 
-function createNewProblemPlayState(
+function createSelectedPlayState(
   difficulty: NanpureDifficulty,
-  currentProblemIdentity: NanpureProblemIdentity,
+  avoidedProblemId: ProblemId | undefined,
   startedAt: number,
 ): NanpurePlayState {
-  let selected = selectNanpureProblemForDifficulty(
-    difficulty,
-    createProblemSeed(),
+  const { problem } = selectProblemAvoiding(
+    (seed) => selectNanpureProblemForDifficulty(difficulty, seed),
+    avoidedProblemId,
   );
-  for (
-    let attempt = 1;
-    attempt < maximumNewProblemSelectionAttempts &&
-    selected.identity.seed === currentProblemIdentity.seed;
-    attempt += 1
-  ) {
-    selected = selectNanpureProblemForDifficulty(
-      difficulty,
-      createProblemSeed(),
-    );
-  }
-  return createPlayState(selected, startedAt);
+  return createPlayState(problem, startedAt);
 }
 
 /**
- * `initialProblem` を渡すと、その問題で始める（記録からの再プレイ）。渡さなければ難易度の問題集から選ぶ。
- * `startNewProblem` は問題集から別の問題を選び直す。
+ * `initialProblem` を渡すと、その問題で始める。渡さなければ難易度の問題集から `avoidedProblemId` の問題を避けて選ぶ。
+ * `startNewProblem` は問題集から遊んでいる問題を避けて選び直す。
  */
 export function useNanpurePlay(
   difficulty: NanpureDifficulty,
   initialProblem?: NanpureIdentifiedProblem,
+  avoidedProblemId?: ProblemId,
 ) {
   const [play, setPlay] = useState<NanpurePlayState>(() =>
-    createPlayState(
-      initialProblem ??
-        selectNanpureProblemForDifficulty(difficulty, createProblemSeed()),
-      Date.now(),
-    ),
+    initialProblem
+      ? createPlayState(initialProblem, Date.now())
+      : createSelectedPlayState(difficulty, avoidedProblemId, Date.now()),
   );
   const [now, setNow] = useState(() => Date.now());
 
@@ -187,7 +173,11 @@ export function useNanpurePlay(
     const startedAt = Date.now();
     setNow(startedAt);
     setPlay((current) =>
-      createNewProblemPlayState(difficulty, current.problemIdentity, startedAt),
+      createSelectedPlayState(
+        difficulty,
+        createProblemId(current.problemIdentity),
+        startedAt,
+      ),
     );
   }, [difficulty]);
 

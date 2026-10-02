@@ -4,6 +4,7 @@ import {
   useProblemIdQuerySync,
   useRequestedProblem,
 } from "@/game-catalog/problem-id-query";
+import type { ProblemId } from "@/games/problem-id";
 import { createReflectionDiagnosticSnapshot } from "@/games/reflection/diagnostics";
 import {
   getReflectionDifficultyLabel,
@@ -30,6 +31,8 @@ import { useNavigate } from "@/router";
 
 type PlayableReflectionProps = {
   difficulty: ReflectionDifficulty;
+  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
+  avoidedProblemId?: ProblemId;
   /**
    * 人間の遊び比べ用に identity で指定した問題。最初の1問だけこの問題を出し、難易度を伏せて記録を保存しない。
    * URL の問題 ID とは結ばない。
@@ -41,6 +44,7 @@ const BLIND_COMPARISON_DIFFICULTY_LABEL = "問題指定";
 
 export function PlayableReflection({
   difficulty,
+  avoidedProblemId,
   blindComparisonProblemIdentity,
 }: PlayableReflectionProps) {
   const requestedProblem = useRequestedProblem((problemId) =>
@@ -49,6 +53,7 @@ export function PlayableReflection({
   const play = useReflectionPlay(
     difficulty,
     blindComparisonProblemIdentity ?? requestedProblem?.identity,
+    avoidedProblemId,
   );
   useProblemIdQuerySync(
     blindComparisonProblemIdentity ? null : play.problemIdentity,

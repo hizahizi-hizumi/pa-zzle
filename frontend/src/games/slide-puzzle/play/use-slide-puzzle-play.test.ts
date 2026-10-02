@@ -1,11 +1,13 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
-
+import { createProblemId } from "@/games/problem-id";
+import * as problemSeed from "@/games/problem-seed";
 import { useSlidePuzzlePlay } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import { restoreSlidePuzzleProblemWithOptimalMoveCount } from "@/games/slide-puzzle/problem/generator";
 import {
   listSlidePuzzlePoolEntries,
   toSlidePuzzlePooledProblem,
 } from "@/games/slide-puzzle/problem/problem-pool";
+import { selectSlidePuzzleProblemForDifficulty } from "@/games/slide-puzzle/problem-selection";
 
 // 最下段だけが 1 マスずつずれた盤面。右下のタイルをタップすると 3 枚まとめて滑って完成する。
 vi.mock("@/games/slide-puzzle/problem-selection", async (importOriginal) => ({
@@ -234,5 +236,70 @@ describe("useSlidePuzzlePlay", () => {
         );
       },
     );
+  });
+});
+
+describe("useSlidePuzzlePlay で避ける問題", () => {
+  const firstSeed = "avoided-problem-first";
+  const secondSeed = "avoided-problem-second";
+  const firstProblem = selectSlidePuzzleProblemForDifficulty("1", firstSeed);
+  const secondProblem = selectSlidePuzzleProblemForDifficulty("1", secondSeed);
+  const firstProblemId = createProblemId(firstProblem.identity);
+  let result: { current: ReturnType<typeof useSlidePuzzlePlay> };
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe("最初の問題として避ける問題を渡した場合", () => {
+    beforeEach(() => {
+      vi.spyOn(problemSeed, "createProblemSeed")
+        .mockReturnValueOnce("avoided-problem-first")
+        .mockReturnValue("avoided-problem-second");
+      ({ result } = renderHook(() =>
+        useSlidePuzzlePlay("1", undefined, firstProblemId),
+      ));
+    });
+
+    test("避ける問題を選び直して別の問題で始めること", () => {
+      const { problemIdentity } = result.current;
+
+      expect(secondProblem.identity).not.toEqual(firstProblem.identity);
+      expect(problemIdentity).toEqual(secondProblem.identity);
+    });
+  });
+
+  describe("最初の問題と避ける問題に同じ問題を渡した場合", () => {
+    beforeEach(() => {
+      vi.spyOn(problemSeed, "createProblemSeed").mockReturnValue(
+        "avoided-problem-second",
+      );
+      ({ result } = renderHook(() =>
+        useSlidePuzzlePlay("1", firstProblem, firstProblemId),
+      ));
+    });
+
+    test("渡した問題で始めること", () => {
+      const { problemIdentity } = result.current;
+
+      expect(problemIdentity).toEqual(firstProblem.identity);
+    });
+  });
+
+  describe("新しい問題の最初の seed が遊んでいる問題を指す場合", () => {
+    beforeEach(() => {
+      vi.spyOn(problemSeed, "createProblemSeed")
+        .mockReturnValueOnce("avoided-problem-first")
+        .mockReturnValueOnce("avoided-problem-first")
+        .mockReturnValue("avoided-problem-second");
+      ({ result } = renderHook(() => useSlidePuzzlePlay("1")));
+    });
+
+    test("遊んでいる問題を避けて選び直した問題を始めること", () => {
+      act(() => result.current.startNewProblem());
+      const { problemIdentity } = result.current;
+
+      expect(problemIdentity).toEqual(secondProblem.identity);
+    });
   });
 });

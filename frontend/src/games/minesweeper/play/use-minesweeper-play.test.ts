@@ -4,7 +4,6 @@ import {
   type RenderHookResult,
   renderHook,
 } from "@testing-library/react";
-
 import { isInMinesweeperDifficultyBoardRange } from "@/games/minesweeper/difficulty";
 import { useMinesweeperPlay } from "@/games/minesweeper/play/use-minesweeper-play";
 import { restoreMinesweeperProblemWithoutAnalysis } from "@/games/minesweeper/problem/generator";
@@ -12,6 +11,9 @@ import {
   listMinesweeperPoolEntries,
   toMinesweeperPoolIdentity,
 } from "@/games/minesweeper/problem/problem-pool";
+import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
+import { createProblemId } from "@/games/problem-id";
+import * as problemSeed from "@/games/problem-seed";
 
 afterEach(cleanup);
 
@@ -185,6 +187,71 @@ describe("useMinesweeperPlay", () => {
           play.problemIdentity.conditions,
         ),
       ).toBe(true);
+    });
+  });
+});
+
+describe("useMinesweeperPlay で避ける問題", () => {
+  const firstSeed = "avoided-problem-first";
+  const secondSeed = "avoided-problem-second";
+  const firstProblem = selectMinesweeperProblemForDifficulty("3", firstSeed);
+  const secondProblem = selectMinesweeperProblemForDifficulty("3", secondSeed);
+  const firstProblemId = createProblemId(firstProblem.identity);
+  let result: { current: ReturnType<typeof useMinesweeperPlay> };
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe("最初の問題として避ける問題を渡した場合", () => {
+    beforeEach(() => {
+      vi.spyOn(problemSeed, "createProblemSeed")
+        .mockReturnValueOnce("avoided-problem-first")
+        .mockReturnValue("avoided-problem-second");
+      ({ result } = renderHook(() =>
+        useMinesweeperPlay("3", undefined, firstProblemId),
+      ));
+    });
+
+    test("避ける問題を選び直して別の問題で始めること", () => {
+      const { problemIdentity } = result.current;
+
+      expect(secondProblem.identity).not.toEqual(firstProblem.identity);
+      expect(problemIdentity).toEqual(secondProblem.identity);
+    });
+  });
+
+  describe("最初の問題と避ける問題に同じ問題を渡した場合", () => {
+    beforeEach(() => {
+      vi.spyOn(problemSeed, "createProblemSeed").mockReturnValue(
+        "avoided-problem-second",
+      );
+      ({ result } = renderHook(() =>
+        useMinesweeperPlay("3", firstProblem, firstProblemId),
+      ));
+    });
+
+    test("渡した問題で始めること", () => {
+      const { problemIdentity } = result.current;
+
+      expect(problemIdentity).toEqual(firstProblem.identity);
+    });
+  });
+
+  describe("新しい問題の最初の seed が遊んでいる問題を指す場合", () => {
+    beforeEach(() => {
+      vi.spyOn(problemSeed, "createProblemSeed")
+        .mockReturnValueOnce("avoided-problem-first")
+        .mockReturnValueOnce("avoided-problem-first")
+        .mockReturnValue("avoided-problem-second");
+      ({ result } = renderHook(() => useMinesweeperPlay("3")));
+    });
+
+    test("遊んでいる問題を避けて選び直した問題を始めること", () => {
+      act(() => result.current.startNewProblem());
+      const { problemIdentity } = result.current;
+
+      expect(problemIdentity).toEqual(secondProblem.identity);
     });
   });
 });

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { createProblemSeed } from "@/games/problem-seed";
+import { createProblemId, type ProblemId } from "@/games/problem-id";
+import { selectProblemAvoiding } from "@/games/problem-selection";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import type {
   TakuzuProblemIdentity,
@@ -58,9 +59,6 @@ type TakuzuPlayState = {
 
 const elapsedTimeTickMs = 1_000;
 
-// 問題集が小さい場合でも「別の問題」で同じ問題に戻らないよう、選び直す回数の上限。
-const maximumNewProblemSelectionAttempts = 8;
-
 function createPlayState(
   { problem, identity, workload }: TakuzuPooledProblem,
   startedAt: number,
@@ -73,42 +71,16 @@ function createPlayState(
   };
 }
 
-function createInitialPlayState(
+function createSelectedPlayState(
   difficulty: TakuzuDifficulty,
-  startedAt: number,
-  initialProblem: TakuzuPooledProblem | undefined,
-): TakuzuPlayState {
-  if (initialProblem) {
-    return createPlayState(initialProblem, startedAt);
-  }
-
-  return createPlayState(
-    selectTakuzuProblemForDifficulty(difficulty, createProblemSeed()),
-    startedAt,
-  );
-}
-
-function createNewProblemPlayState(
-  difficulty: TakuzuDifficulty,
-  currentProblemIdentity: TakuzuProblemIdentity,
+  avoidedProblemId: ProblemId | undefined,
   startedAt: number,
 ): TakuzuPlayState {
-  let selected = selectTakuzuProblemForDifficulty(
-    difficulty,
-    createProblemSeed(),
+  const { problem } = selectProblemAvoiding(
+    (seed) => selectTakuzuProblemForDifficulty(difficulty, seed),
+    avoidedProblemId,
   );
-  for (
-    let attempt = 1;
-    attempt < maximumNewProblemSelectionAttempts &&
-    selected.identity.seed === currentProblemIdentity.seed;
-    attempt += 1
-  ) {
-    selected = selectTakuzuProblemForDifficulty(
-      difficulty,
-      createProblemSeed(),
-    );
-  }
-  return createPlayState(selected, startedAt);
+  return createPlayState(problem, startedAt);
 }
 
 function applySession(
@@ -145,17 +117,19 @@ function createTakuzuResult(
 
 /**
  * 難易度の問題集から選んだ問題を遊ぶ。
- * `initialProblem` を渡すと、記録から復元したその問題で始める。
- * 問題集から引けない記録を再プレイできないものとして呼び出し側で扱えるよう、identity ではなく引いた問題を受け取る。
+ * `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。
  * `undo` は直前の盤面操作を1つ取り消し（待った）、`restart` は同じプレイのまま盤面を戻し、`replay` は同じ問題を新しいプレイとして始める（リセット）。
- * `startNewProblem` は問題集から別の問題を選び直す。
+ * `startNewProblem` は問題集から遊んでいる問題を避けて選び直す。
  */
 export function useTakuzuPlay(
   difficulty: TakuzuDifficulty,
   initialProblem?: TakuzuPooledProblem,
+  avoidedProblemId?: ProblemId,
 ) {
   const [play, setPlay] = useState(() =>
-    createInitialPlayState(difficulty, Date.now(), initialProblem),
+    initialProblem
+      ? createPlayState(initialProblem, Date.now())
+      : createSelectedPlayState(difficulty, avoidedProblemId, Date.now()),
   );
   const [now, setNow] = useState(() => Date.now());
   const { session, progress, workload } = play;
@@ -230,7 +204,11 @@ export function useTakuzuPlay(
     const startedAt = Date.now();
     setNow(startedAt);
     setPlay((current) =>
-      createNewProblemPlayState(difficulty, current.problemIdentity, startedAt),
+      createSelectedPlayState(
+        difficulty,
+        createProblemId(current.problemIdentity),
+        startedAt,
+      ),
     );
   }, [difficulty]);
 

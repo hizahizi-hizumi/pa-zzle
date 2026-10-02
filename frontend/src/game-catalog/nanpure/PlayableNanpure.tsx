@@ -15,6 +15,7 @@ import { selectNanpureProblemById } from "@/games/nanpure/problem-selection";
 import { NanpureDiagnostics } from "@/games/nanpure/ui/NanpureDiagnostics";
 import { NanpurePlay } from "@/games/nanpure/ui/NanpurePlay";
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
+import type { ProblemId } from "@/games/problem-id";
 import {
   buildRevision,
   internalDiagnosticsAvailable,
@@ -25,13 +26,18 @@ import { useNavigate } from "@/router";
 
 type PlayableNanpureProps = {
   difficulty: NanpureDifficulty;
+  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
+  avoidedProblemId?: ProblemId;
 };
 
-export function PlayableNanpure({ difficulty }: PlayableNanpureProps) {
+export function PlayableNanpure({
+  difficulty,
+  avoidedProblemId,
+}: PlayableNanpureProps) {
   const requestedProblem = useRequestedProblem((problemId) =>
     selectNanpureProblemById(difficulty, problemId),
   );
-  const play = useNanpurePlay(difficulty, requestedProblem);
+  const play = useNanpurePlay(difficulty, requestedProblem, avoidedProblemId);
   useProblemIdQuerySync(play.problemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(

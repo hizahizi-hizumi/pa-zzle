@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import { createProblemId, type ProblemId } from "@/games/problem-id";
+import { selectProblemAvoiding } from "@/games/problem-selection";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import type {
   SlidePuzzleGeneratedProblem,
@@ -62,14 +63,9 @@ type SlidePuzzlePlayState = {
 };
 
 function createPlayState(
-  difficulty: SlidePuzzleDifficulty,
-  seed: ProblemSeed,
+  generatedProblem: SlidePuzzleGeneratedProblem,
   startedAt: number,
-  initialProblem?: SlidePuzzleGeneratedProblem,
 ): SlidePuzzlePlayState {
-  const generatedProblem =
-    initialProblem ?? selectSlidePuzzleProblemForDifficulty(difficulty, seed);
-
   return {
     session: createSlidePuzzleSession(generatedProblem.problem, startedAt),
     problemIdentity: generatedProblem.identity,
@@ -77,6 +73,18 @@ function createPlayState(
     progress: "playing",
     operation: null,
   };
+}
+
+function createSelectedPlayState(
+  difficulty: SlidePuzzleDifficulty,
+  avoidedProblemId: ProblemId | undefined,
+  startedAt: number,
+): SlidePuzzlePlayState {
+  const { problem } = selectProblemAvoiding(
+    (seed) => selectSlidePuzzleProblemForDifficulty(difficulty, seed),
+    avoidedProblemId,
+  );
+  return createPlayState(problem, startedAt);
 }
 
 function slideTileInPlay(
@@ -117,18 +125,19 @@ function slideTileInPlay(
   };
 }
 
-/** `initialProblem` は、記録からの再プレイで最初に遊ぶ問題。 */
+/**
+ * `initialProblem` を渡すと、その問題で始める。渡さなければ難易度の問題集から `avoidedProblemId` の問題を避けて選ぶ。
+ * `startNewProblem` は遊んでいる問題を避けて選び直す。
+ */
 export function useSlidePuzzlePlay(
   difficulty: SlidePuzzleDifficulty,
   initialProblem?: SlidePuzzleGeneratedProblem,
+  avoidedProblemId?: ProblemId,
 ) {
   const [play, setPlay] = useState<SlidePuzzlePlayState>(() =>
-    createPlayState(
-      difficulty,
-      initialProblem?.identity.seed ?? createProblemSeed(),
-      Date.now(),
-      initialProblem,
-    ),
+    initialProblem
+      ? createPlayState(initialProblem, Date.now())
+      : createSelectedPlayState(difficulty, avoidedProblemId, Date.now()),
   );
   const [now, setNow] = useState(() => Date.now());
   const nextOperationId = useRef(0);
@@ -201,12 +210,17 @@ export function useSlidePuzzlePlay(
     }));
   }, []);
 
+  const currentProblemIdentity = play.problemIdentity;
   const startNewProblem = useCallback(() => {
     const startedAt = Date.now();
-    const next = createPlayState(difficulty, createProblemSeed(), startedAt);
+    const next = createSelectedPlayState(
+      difficulty,
+      createProblemId(currentProblemIdentity),
+      startedAt,
+    );
     setNow(startedAt);
     setPlay(next);
-  }, [difficulty]);
+  }, [currentProblemIdentity, difficulty]);
 
   const completeClearing = useCallback(() => {
     setPlay((current) =>

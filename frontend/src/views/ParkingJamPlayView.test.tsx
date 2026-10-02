@@ -1,14 +1,17 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import {
   createMemoryRouter,
+  type InitialEntry,
   MemoryRouter,
   Route,
   RouterProvider,
   Routes,
 } from "react-router";
+import { createPlayLocationState } from "@/game-catalog/play-location-state";
 import { formatParkingJamProblemQuery } from "@/games/parking-jam/diagnostics";
 import * as problemSelection from "@/games/parking-jam/problem-selection";
 import { createProblemId } from "@/games/problem-id";
+import * as problemSeed from "@/games/problem-seed";
 import { ParkingJamPlayView } from "@/views/ParkingJamPlayView";
 
 const internalDiagnostics = vi.hoisted(() => ({ available: false }));
@@ -51,7 +54,7 @@ const specifiedProblemPath = `/puzzles/parking-jam/play/1?${formatParkingJamProb
 
 type PlayRouter = ReturnType<typeof createMemoryRouter>;
 
-function renderRouterAt(path: string): PlayRouter {
+function renderRouterAt(entry: InitialEntry): PlayRouter {
   const router = createMemoryRouter(
     [
       {
@@ -59,7 +62,7 @@ function renderRouterAt(path: string): PlayRouter {
         element: <ParkingJamPlayView />,
       },
     ],
-    { initialEntries: [path] },
+    { initialEntries: [entry] },
   );
   render(<RouterProvider router={router} />);
   return router;
@@ -219,5 +222,63 @@ describe("ParkingJamPlayView", () => {
         });
       },
     );
+  });
+});
+
+describe("直前の問題を避ける location state", () => {
+  const firstProblem = problemSelection.selectParkingJamProblemForDifficulty(
+    "1",
+    "avoided-first",
+  );
+  const secondProblem = problemSelection.selectParkingJamProblemForDifficulty(
+    "1",
+    "avoided-second",
+  );
+  const firstProblemId = createProblemId(firstProblem.identity);
+  const secondProblemId = createProblemId(secondProblem.identity);
+  const state = createPlayLocationState(firstProblemId);
+  let router: PlayRouter;
+
+  beforeEach(() => {
+    vi.spyOn(problemSeed, "createProblemSeed")
+      .mockReturnValueOnce("avoided-first")
+      .mockReturnValueOnce("avoided-second");
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe("問題IDの無いURLで開いた場合", () => {
+    beforeEach(() => {
+      router = renderRouterAt({
+        pathname: "/puzzles/parking-jam/play/1",
+        state,
+      });
+    });
+
+    test("避ける問題を選ばずに別の問題で始めること", () => {
+      const problemId = readProblemId(router);
+
+      expect(secondProblemId).not.toBe(firstProblemId);
+      expect(problemId).toBe(secondProblemId);
+    });
+  });
+
+  describe("避ける問題をURLの問題IDでも指定した場合", () => {
+    beforeEach(() => {
+      router = renderRouterAt({
+        pathname: "/puzzles/parking-jam/play/1",
+        search: `?problem=${firstProblemId}`,
+        state,
+      });
+    });
+
+    test("URLで指定した問題で始めること", () => {
+      const problemId = readProblemId(router);
+
+      expect(problemId).toBe(firstProblemId);
+      expect(router.state.historyAction).toBe("POP");
+    });
   });
 });

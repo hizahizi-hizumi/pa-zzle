@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router";
+import { useLocation, useSearchParams } from "react-router";
 
 import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
+import { readAvoidedProblemId } from "@/game-catalog/play-location-state";
 import { PlayableReflection } from "@/game-catalog/reflection/PlayableReflection";
 import {
   hasReflectionProblemQuery,
@@ -15,6 +16,7 @@ export function ReflectionPlayView() {
   const { difficulty: difficultyParam } = useParams(
     "/puzzles/reflection/play/:difficulty",
   );
+  const avoidedProblemId = readAvoidedProblemId(useLocation().state);
   const [searchParams] = useSearchParams();
   // 問題の指定は人間の遊び比べのための入口で、内部診断が有効なビルドでだけ受け付ける。
   const [specifiedProblem] = useState(() =>
@@ -46,6 +48,7 @@ export function ReflectionPlayView() {
     <PlayableReflection
       key={difficulty}
       difficulty={difficulty}
+      avoidedProblemId={avoidedProblemId}
       blindComparisonProblemIdentity={specifiedProblem?.identity ?? undefined}
     />
   );

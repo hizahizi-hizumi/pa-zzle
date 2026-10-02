@@ -1,5 +1,8 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
+import { createProblemId } from "@/games/problem-id";
+import * as problemSeed from "@/games/problem-seed";
 import { useWaterSortPlay } from "@/games/water-sort/play/use-water-sort-play";
+import { selectWaterSortProblemForDifficulty } from "@/games/water-sort/problem-selection";
 import {
   applyWaterSortMove,
   listWaterSortLegalMoves,
@@ -220,5 +223,70 @@ describe("useWaterSortPlay", () => {
     expect(result.current.undoCount).toBe(0);
     expect(result.current.restartCount).toBe(0);
     expect(result.current.result).toBeNull();
+  });
+});
+
+describe("useWaterSortPlay で避ける問題", () => {
+  const firstSeed = "avoided-problem-first";
+  const secondSeed = "avoided-problem-second";
+  const firstProblem = selectWaterSortProblemForDifficulty("1", firstSeed);
+  const secondProblem = selectWaterSortProblemForDifficulty("1", secondSeed);
+  const firstProblemId = createProblemId(firstProblem.identity);
+  let result: { current: ReturnType<typeof useWaterSortPlay> };
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe("最初の問題として避ける問題を渡した場合", () => {
+    beforeEach(() => {
+      vi.spyOn(problemSeed, "createProblemSeed")
+        .mockReturnValueOnce("avoided-problem-first")
+        .mockReturnValue("avoided-problem-second");
+      ({ result } = renderHook(() =>
+        useWaterSortPlay("1", undefined, firstProblemId),
+      ));
+    });
+
+    test("避ける問題を選び直して別の問題で始めること", () => {
+      const { problemIdentity } = result.current;
+
+      expect(secondProblem.identity).not.toEqual(firstProblem.identity);
+      expect(problemIdentity).toEqual(secondProblem.identity);
+    });
+  });
+
+  describe("最初の問題と避ける問題に同じ問題を渡した場合", () => {
+    beforeEach(() => {
+      vi.spyOn(problemSeed, "createProblemSeed").mockReturnValue(
+        "avoided-problem-second",
+      );
+      ({ result } = renderHook(() =>
+        useWaterSortPlay("1", firstProblem, firstProblemId),
+      ));
+    });
+
+    test("渡した問題で始めること", () => {
+      const { problemIdentity } = result.current;
+
+      expect(problemIdentity).toEqual(firstProblem.identity);
+    });
+  });
+
+  describe("新しい問題の最初の seed が遊んでいる問題を指す場合", () => {
+    beforeEach(() => {
+      vi.spyOn(problemSeed, "createProblemSeed")
+        .mockReturnValueOnce("avoided-problem-first")
+        .mockReturnValueOnce("avoided-problem-first")
+        .mockReturnValue("avoided-problem-second");
+      ({ result } = renderHook(() => useWaterSortPlay("1")));
+    });
+
+    test("遊んでいる問題を避けて選び直した問題を始めること", () => {
+      act(() => result.current.startNewProblem());
+      const { problemIdentity } = result.current;
+
+      expect(problemIdentity).toEqual(secondProblem.identity);
+    });
   });
 });

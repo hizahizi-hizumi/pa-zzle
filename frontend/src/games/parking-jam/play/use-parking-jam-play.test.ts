@@ -1,5 +1,4 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
-
 import {
   assessParkingJamDifficulty,
   type ParkingJamDifficulty,
@@ -7,6 +6,7 @@ import {
 import { useParkingJamPlay } from "@/games/parking-jam/play/use-parking-jam-play";
 import { restoreParkingJamProblem } from "@/games/parking-jam/problem/generator";
 import { selectParkingJamProblemForDifficulty } from "@/games/parking-jam/problem-selection";
+import { createProblemId } from "@/games/problem-id";
 import * as problemSeed from "@/games/problem-seed";
 
 afterEach(() => {
@@ -162,6 +162,71 @@ describe("useParkingJamPlay", () => {
       act(() => result.current.undo());
 
       expect(result.current.canRestart).toBe(false);
+    });
+  });
+});
+
+describe("useParkingJamPlay で避ける問題", () => {
+  const firstSeed = "avoided-problem-first";
+  const secondSeed = "avoided-problem-second";
+  const firstProblem = selectParkingJamProblemForDifficulty("2", firstSeed);
+  const secondProblem = selectParkingJamProblemForDifficulty("2", secondSeed);
+  const firstProblemId = createProblemId(firstProblem.identity);
+  let result: { current: ReturnType<typeof useParkingJamPlay> };
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe("最初の問題として避ける問題を渡した場合", () => {
+    beforeEach(() => {
+      vi.spyOn(problemSeed, "createProblemSeed")
+        .mockReturnValueOnce("avoided-problem-first")
+        .mockReturnValue("avoided-problem-second");
+      ({ result } = renderHook(() =>
+        useParkingJamPlay("2", undefined, firstProblemId),
+      ));
+    });
+
+    test("避ける問題を選び直して別の問題で始めること", () => {
+      const { problemIdentity } = result.current;
+
+      expect(secondProblem.identity).not.toEqual(firstProblem.identity);
+      expect(problemIdentity).toEqual(secondProblem.identity);
+    });
+  });
+
+  describe("最初の問題と避ける問題に同じ問題を渡した場合", () => {
+    beforeEach(() => {
+      vi.spyOn(problemSeed, "createProblemSeed").mockReturnValue(
+        "avoided-problem-second",
+      );
+      ({ result } = renderHook(() =>
+        useParkingJamPlay("2", firstProblem, firstProblemId),
+      ));
+    });
+
+    test("渡した問題で始めること", () => {
+      const { problemIdentity } = result.current;
+
+      expect(problemIdentity).toEqual(firstProblem.identity);
+    });
+  });
+
+  describe("新しい問題の最初の seed が遊んでいる問題を指す場合", () => {
+    beforeEach(() => {
+      vi.spyOn(problemSeed, "createProblemSeed")
+        .mockReturnValueOnce("avoided-problem-first")
+        .mockReturnValueOnce("avoided-problem-first")
+        .mockReturnValue("avoided-problem-second");
+      ({ result } = renderHook(() => useParkingJamPlay("2")));
+    });
+
+    test("遊んでいる問題を避けて選び直した問題を始めること", () => {
+      act(() => result.current.startNewProblem());
+      const { problemIdentity } = result.current;
+
+      expect(problemIdentity).toEqual(secondProblem.identity);
     });
   });
 });

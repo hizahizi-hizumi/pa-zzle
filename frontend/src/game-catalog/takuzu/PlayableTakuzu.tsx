@@ -4,6 +4,7 @@ import {
   useProblemIdQuerySync,
   useRequestedProblem,
 } from "@/game-catalog/problem-id-query";
+import type { ProblemId } from "@/games/problem-id";
 import { createTakuzuDiagnosticSnapshot } from "@/games/takuzu/diagnostics";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import { useTakuzuPlay } from "@/games/takuzu/play/use-takuzu-play";
@@ -25,13 +26,18 @@ import { useNavigate } from "@/router";
 
 type PlayableTakuzuProps = {
   difficulty: TakuzuDifficulty;
+  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
+  avoidedProblemId?: ProblemId;
 };
 
-export function PlayableTakuzu({ difficulty }: PlayableTakuzuProps) {
+export function PlayableTakuzu({
+  difficulty,
+  avoidedProblemId,
+}: PlayableTakuzuProps) {
   const requestedProblem = useRequestedProblem((problemId) =>
     selectTakuzuProblemById(difficulty, problemId),
   );
-  const play = useTakuzuPlay(difficulty, requestedProblem);
+  const play = useTakuzuPlay(difficulty, requestedProblem, avoidedProblemId);
   useProblemIdQuerySync(play.problemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(

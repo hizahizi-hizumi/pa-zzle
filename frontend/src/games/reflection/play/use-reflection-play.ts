@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import { createProblemId, type ProblemId } from "@/games/problem-id";
+import { selectProblemAvoiding } from "@/games/problem-selection";
 import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
 import { generateReflectionProblem } from "@/games/reflection/problem/generator";
 import type {
@@ -98,27 +99,29 @@ function createPooledPlayState(
   };
 }
 
-function createPlayState(
+function createSelectedPlayState(
   difficulty: ReflectionDifficulty,
-  seed: ProblemSeed,
+  avoidedProblemId: ProblemId | undefined,
   startedAt: number,
-  initialProblemIdentity?: ReflectionProblemIdentity,
 ): ReflectionPlayState {
-  if (!initialProblemIdentity) {
-    return createPooledPlayState(
-      selectReflectionProblemForDifficulty(difficulty, seed),
-      "selected",
-      startedAt,
-    );
-  }
+  const { problem } = selectProblemAvoiding(
+    (seed) => selectReflectionProblemForDifficulty(difficulty, seed),
+    avoidedProblemId,
+  );
+  return createPooledPlayState(problem, "selected", startedAt);
+}
 
-  const pooled = restoreReflectionProblem(initialProblemIdentity);
+function createGivenPlayState(
+  problemIdentity: ReflectionProblemIdentity,
+  startedAt: number,
+): ReflectionPlayState {
+  const pooled = restoreReflectionProblem(problemIdentity);
   if (pooled) {
     return createPooledPlayState(pooled, "given", startedAt);
   }
 
   // 問題集に無い identity も診断のために遊べるよう、生成器で作り直す。作業の量が無いので評価はしない。
-  const generated = generateReflectionProblem(initialProblemIdentity);
+  const generated = generateReflectionProblem(problemIdentity);
   return {
     session: createReflectionSession(generated.problem, startedAt),
     progress: "playing",
@@ -151,22 +154,21 @@ function createReflectionResult(
 
 /**
  * 難易度のプレイを始める。`initialProblemIdentity` を渡すと、最初の1問だけその問題を出す。
+ * 渡さなければ難易度の問題集から `avoidedProblemId` の問題を避けて選ぶ。
  * `restart` は同じプレイのまま全ピースをストックへ戻し（盤面を戻す）、
- * `replay` は同じ問題を新しいプレイとして始め（やり直す）、`startNewProblem` は同じ難易度の別の問題を始める。
+ * `replay` は同じ問題を新しいプレイとして始め（やり直す）、`startNewProblem` は遊んでいる問題を避けて同じ難易度の別の問題を始める。
  * `tapClue` は外周ヒントの光路を表示し、盤面が揃うと `progress` が `clearing` になる。
  * クリアすると `result` に評価を返す。問題集に無い問題を指定したときは作業の量が無いので `result` は `null` のまま。
  */
 export function useReflectionPlay(
   difficulty: ReflectionDifficulty,
   initialProblemIdentity?: ReflectionProblemIdentity,
+  avoidedProblemId?: ProblemId,
 ) {
   const [play, setPlay] = useState<ReflectionPlayState>(() =>
-    createPlayState(
-      difficulty,
-      createProblemSeed(),
-      Date.now(),
-      initialProblemIdentity,
-    ),
+    initialProblemIdentity
+      ? createGivenPlayState(initialProblemIdentity, Date.now())
+      : createSelectedPlayState(difficulty, avoidedProblemId, Date.now()),
   );
   const [now, setNow] = useState(() => Date.now());
   const { session, progress } = play;
@@ -265,11 +267,18 @@ export function useReflectionPlay(
     );
   }, []);
 
+  const currentProblemIdentity = play.problemIdentity;
   const startNewProblem = useCallback(() => {
     const startedAt = Date.now();
     setNow(startedAt);
-    setPlay(createPlayState(difficulty, createProblemSeed(), startedAt));
-  }, [difficulty]);
+    setPlay(
+      createSelectedPlayState(
+        difficulty,
+        createProblemId(currentProblemIdentity),
+        startedAt,
+      ),
+    );
+  }, [currentProblemIdentity, difficulty]);
 
   const stock = useMemo(() => getReflectionSessionStock(session), [session]);
   const sessionResult = useMemo(

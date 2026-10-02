@@ -4,6 +4,7 @@ import {
   useProblemIdQuerySync,
   useRequestedProblem,
 } from "@/game-catalog/problem-id-query";
+import type { ProblemId } from "@/games/problem-id";
 import { createWaterSortDiagnosticSnapshot } from "@/games/water-sort/diagnostics";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import { useWaterSortPlay } from "@/games/water-sort/play/use-water-sort-play";
@@ -25,13 +26,18 @@ import { useNavigate } from "@/router";
 
 type PlayableWaterSortProps = {
   difficulty: WaterSortDifficulty;
+  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
+  avoidedProblemId?: ProblemId;
 };
 
-export function PlayableWaterSort({ difficulty }: PlayableWaterSortProps) {
+export function PlayableWaterSort({
+  difficulty,
+  avoidedProblemId,
+}: PlayableWaterSortProps) {
   const requestedProblem = useRequestedProblem((problemId) =>
     selectWaterSortProblemById(difficulty, problemId),
   );
-  const play = useWaterSortPlay(difficulty, requestedProblem);
+  const play = useWaterSortPlay(difficulty, requestedProblem, avoidedProblemId);
   useProblemIdQuerySync(play.problemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(

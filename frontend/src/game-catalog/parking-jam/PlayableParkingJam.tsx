@@ -19,6 +19,7 @@ import { selectParkingJamProblemById } from "@/games/parking-jam/problem-selecti
 import { ParkingJamDiagnostics } from "@/games/parking-jam/ui/ParkingJamDiagnostics";
 import { ParkingJamPlay } from "@/games/parking-jam/ui/ParkingJamPlay";
 import { parkingJamPlayRecordDisplay } from "@/games/parking-jam/ui/play-record-display";
+import type { ProblemId } from "@/games/problem-id";
 import {
   buildRevision,
   internalDiagnosticsAvailable,
@@ -29,6 +30,8 @@ import { useNavigate } from "@/router";
 
 type PlayableParkingJamProps = {
   difficulty: ParkingJamDifficulty;
+  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
+  avoidedProblemId?: ProblemId;
   /**
    * 人間の遊び比べ用に指定した問題。最初の1問だけこの問題を出し、難易度を伏せて記録を保存しない。
    * URL の問題 ID とは結ばない。
@@ -40,6 +43,7 @@ const BLIND_COMPARISON_DIFFICULTY_LABEL = "問題指定";
 
 export function PlayableParkingJam({
   difficulty,
+  avoidedProblemId,
   blindComparisonProblem,
 }: PlayableParkingJamProps) {
   const requestedProblem = useRequestedProblem((problemId) =>
@@ -48,6 +52,7 @@ export function PlayableParkingJam({
   const play = useParkingJamPlay(
     difficulty,
     blindComparisonProblem ?? requestedProblem,
+    avoidedProblemId,
   );
   useProblemIdQuerySync(blindComparisonProblem ? null : play.problemIdentity);
   const navigate = useNavigate();

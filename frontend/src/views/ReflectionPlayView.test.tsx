@@ -7,13 +7,15 @@ import {
 } from "@testing-library/react";
 import {
   createMemoryRouter,
+  type InitialEntry,
   MemoryRouter,
   Route,
   RouterProvider,
   Routes,
 } from "react-router";
+import { createPlayLocationState } from "@/game-catalog/play-location-state";
 import { createProblemId } from "@/games/problem-id";
-
+import { createProblemSeed } from "@/games/problem-seed";
 import {
   formatReflectionPoolProblemQuery,
   formatReflectionProblemQuery,
@@ -36,7 +38,7 @@ const problemSeed = "reflection-play-view";
 
 vi.mock("@/games/problem-seed", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/games/problem-seed")>()),
-  createProblemSeed: () => problemSeed,
+  createProblemSeed: vi.fn(() => problemSeed),
 }));
 
 vi.mock("@/lib/internal-diagnostics", () => ({
@@ -109,7 +111,7 @@ function solve(solution: ReflectionBoard): void {
 
 type PlayRouter = ReturnType<typeof createMemoryRouter>;
 
-function renderRouterAt(path: string): PlayRouter {
+function renderRouterAt(entry: InitialEntry): PlayRouter {
   const router = createMemoryRouter(
     [
       {
@@ -117,7 +119,7 @@ function renderRouterAt(path: string): PlayRouter {
         element: <ReflectionPlayView />,
       },
     ],
-    { initialEntries: [path] },
+    { initialEntries: [entry] },
   );
   render(<RouterProvider router={router} />);
   return router;
@@ -464,5 +466,63 @@ describe("ReflectionPlayView", () => {
         });
       },
     );
+  });
+});
+
+describe("直前の問題を避ける location state", () => {
+  const firstProblem = selectReflectionProblemForDifficulty(
+    "1",
+    "avoided-first",
+  );
+  const secondProblem = selectReflectionProblemForDifficulty(
+    "1",
+    "avoided-second",
+  );
+  const firstProblemId = createProblemId(firstProblem.identity);
+  const secondProblemId = createProblemId(secondProblem.identity);
+  const state = createPlayLocationState(firstProblemId);
+  let router: PlayRouter;
+
+  beforeEach(() => {
+    vi.mocked(createProblemSeed)
+      .mockReturnValueOnce("avoided-first")
+      .mockReturnValueOnce("avoided-second");
+  });
+
+  afterEach(() => {
+    vi.mocked(createProblemSeed).mockReset();
+  });
+
+  describe("問題IDの無いURLで開いた場合", () => {
+    beforeEach(() => {
+      router = renderRouterAt({
+        pathname: "/puzzles/reflection/play/1",
+        state,
+      });
+    });
+
+    test("避ける問題を選ばずに別の問題で始めること", () => {
+      const problemId = readProblemId(router);
+
+      expect(secondProblemId).not.toBe(firstProblemId);
+      expect(problemId).toBe(secondProblemId);
+    });
+  });
+
+  describe("避ける問題をURLの問題IDでも指定した場合", () => {
+    beforeEach(() => {
+      router = renderRouterAt({
+        pathname: "/puzzles/reflection/play/1",
+        search: `?problem=${firstProblemId}`,
+        state,
+      });
+    });
+
+    test("URLで指定した問題で始めること", () => {
+      const problemId = readProblemId(router);
+
+      expect(problemId).toBe(firstProblemId);
+      expect(router.state.historyAction).toBe("POP");
+    });
   });
 });

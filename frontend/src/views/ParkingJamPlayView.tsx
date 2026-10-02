@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router";
+import { useLocation, useSearchParams } from "react-router";
 
 import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
 import { PlayableParkingJam } from "@/game-catalog/parking-jam/PlayableParkingJam";
+import { readAvoidedProblemId } from "@/game-catalog/play-location-state";
 import {
   hasParkingJamProblemQuery,
   parseParkingJamProblemQuery,
@@ -28,6 +29,7 @@ export function ParkingJamPlayView() {
   const { difficulty: difficultyParam } = useParams(
     "/puzzles/parking-jam/play/:difficulty",
   );
+  const avoidedProblemId = readAvoidedProblemId(useLocation().state);
   const [searchParams] = useSearchParams();
   // 問題の指定は人間の遊び比べのための入口で、内部診断が有効なビルドでだけ受け付ける。
   const [specifiedProblem] = useState(() =>
@@ -59,6 +61,7 @@ export function ParkingJamPlayView() {
     <PlayableParkingJam
       key={difficulty}
       difficulty={difficulty}
+      avoidedProblemId={avoidedProblemId}
       blindComparisonProblem={specifiedProblem?.restored ?? undefined}
     />
   );

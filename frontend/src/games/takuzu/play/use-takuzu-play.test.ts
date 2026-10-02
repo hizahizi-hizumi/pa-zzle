@@ -1,4 +1,5 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
+import { createProblemId } from "@/games/problem-id";
 
 import { createProblemSeed } from "@/games/problem-seed";
 import { useTakuzuPlay } from "@/games/takuzu/play/use-takuzu-play";
@@ -214,7 +215,7 @@ describe("useTakuzuPlay", () => {
     });
   });
 
-  describe("記録から復元した問題を渡した場合", () => {
+  describe("最初の問題を渡した場合", () => {
     let result: HookResult;
 
     beforeEach(() => {
@@ -228,6 +229,48 @@ describe("useTakuzuPlay", () => {
       expect(problemIdentity).toEqual(other.identity);
       expect(workload).toEqual(other.workload);
       expect(listCells(result)).toEqual(other.problem.givens.cells);
+    });
+  });
+});
+
+describe("useTakuzuPlay で避ける問題", () => {
+  const firstSeed = "avoided-problem-first";
+  const secondSeed = "avoided-problem-second";
+  const firstProblem = selectTakuzuProblemForDifficulty("3", firstSeed);
+  const secondProblem = selectTakuzuProblemForDifficulty("3", secondSeed);
+  const firstProblemId = createProblemId(firstProblem.identity);
+  let result: { current: ReturnType<typeof useTakuzuPlay> };
+
+  describe("最初の問題として避ける問題を渡した場合", () => {
+    beforeEach(() => {
+      vi.mocked(createProblemSeed)
+        .mockReturnValueOnce("avoided-problem-first")
+        .mockReturnValue("avoided-problem-second");
+      ({ result } = renderHook(() =>
+        useTakuzuPlay("3", undefined, firstProblemId),
+      ));
+    });
+
+    test("避ける問題を選び直して別の問題で始めること", () => {
+      const { problemIdentity } = result.current;
+
+      expect(secondProblem.identity).not.toEqual(firstProblem.identity);
+      expect(problemIdentity).toEqual(secondProblem.identity);
+    });
+  });
+
+  describe("最初の問題と避ける問題に同じ問題を渡した場合", () => {
+    beforeEach(() => {
+      vi.mocked(createProblemSeed).mockReturnValue("avoided-problem-second");
+      ({ result } = renderHook(() =>
+        useTakuzuPlay("3", firstProblem, firstProblemId),
+      ));
+    });
+
+    test("渡した問題で始めること", () => {
+      const { problemIdentity } = result.current;
+
+      expect(problemIdentity).toEqual(firstProblem.identity);
     });
   });
 });

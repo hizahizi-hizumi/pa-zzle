@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import { createProblemId, type ProblemId } from "@/games/problem-id";
+import { selectProblemAvoiding } from "@/games/problem-selection";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import type {
   WaterSortGeneratedProblem,
@@ -67,21 +68,10 @@ type WaterSortPlayState = {
   operation: WaterSortOperation | null;
 };
 
-function generateProblem(
-  difficulty: WaterSortDifficulty,
-  seed: ProblemSeed,
-): WaterSortGeneratedProblem {
-  return selectWaterSortProblemForDifficulty(difficulty, seed);
-}
-
 function createPlayState(
-  difficulty: WaterSortDifficulty,
-  seed: ProblemSeed,
+  generatedProblem: WaterSortGeneratedProblem,
   startedAt: number,
-  initialProblem?: WaterSortGeneratedProblem,
 ): WaterSortPlayState {
-  const generatedProblem = initialProblem ?? generateProblem(difficulty, seed);
-
   return {
     session: createWaterSortSession(generatedProblem.problem, startedAt),
     problemIdentity: generatedProblem.identity,
@@ -92,18 +82,31 @@ function createPlayState(
   };
 }
 
-/** `initialProblem` を渡すと、記録から復元したその問題で始める。 */
+function createSelectedPlayState(
+  difficulty: WaterSortDifficulty,
+  avoidedProblemId: ProblemId | undefined,
+  startedAt: number,
+): WaterSortPlayState {
+  const { problem } = selectProblemAvoiding(
+    (seed) => selectWaterSortProblemForDifficulty(difficulty, seed),
+    avoidedProblemId,
+  );
+  return createPlayState(problem, startedAt);
+}
+
+/**
+ * `initialProblem` を渡すと、その問題で始める。渡さなければ難易度の問題集から `avoidedProblemId` の問題を避けて選ぶ。
+ * `startNewProblem` は遊んでいる問題を避けて選び直す。
+ */
 export function useWaterSortPlay(
   difficulty: WaterSortDifficulty,
   initialProblem?: WaterSortGeneratedProblem,
+  avoidedProblemId?: ProblemId,
 ) {
   const [play, setPlay] = useState<WaterSortPlayState>(() =>
-    createPlayState(
-      difficulty,
-      createProblemSeed(),
-      Date.now(),
-      initialProblem,
-    ),
+    initialProblem
+      ? createPlayState(initialProblem, Date.now())
+      : createSelectedPlayState(difficulty, avoidedProblemId, Date.now()),
   );
   const [now, setNow] = useState(() => Date.now());
   const nextOperationId = useRef(0);
@@ -239,12 +242,17 @@ export function useWaterSortPlay(
     }));
   }, []);
 
+  const currentProblemIdentity = play.problemIdentity;
   const startNewProblem = useCallback(() => {
     const startedAt = Date.now();
-    const next = createPlayState(difficulty, createProblemSeed(), startedAt);
+    const next = createSelectedPlayState(
+      difficulty,
+      createProblemId(currentProblemIdentity),
+      startedAt,
+    );
     setNow(startedAt);
     setPlay(next);
-  }, [difficulty]);
+  }, [currentProblemIdentity, difficulty]);
 
   const completeClearingPour = useCallback(() => {
     setPlay((current) =>

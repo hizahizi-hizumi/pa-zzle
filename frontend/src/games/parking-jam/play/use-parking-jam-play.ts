@@ -29,7 +29,8 @@ import {
   restartParkingJamSession,
   undoParkingJamSession,
 } from "@/games/parking-jam/session/session";
-import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import { createProblemId, type ProblemId } from "@/games/problem-id";
+import { selectProblemAvoiding } from "@/games/problem-selection";
 
 export type ParkingJamOperation = {
   id: number;
@@ -40,7 +41,7 @@ export type ParkingJamOperation = {
 
 export type ParkingJamProgress = "playing" | "clearing" | "result";
 
-/** 遊んでいる問題の出どころ。`given` は開始時に identity で指定された問題（記録の再プレイなど）。 */
+/** 遊んでいる問題の出どころ。`given` は開始時に指定された問題。 */
 export type ParkingJamProblemSource = "pool" | "given";
 
 export type ParkingJamResult = ParkingJamSessionResult & {
@@ -74,18 +75,14 @@ function getSpeedReference(board: ParkingJamBoard): ParkingJamSpeedReference {
 }
 
 function createPlayState(
-  difficulty: ParkingJamDifficulty,
-  seed: ProblemSeed,
+  restored: ParkingJamRestoredProblem,
+  problemSource: ParkingJamProblemSource,
   startedAt: number,
-  initialProblem?: ParkingJamRestoredProblem,
 ): ParkingJamPlayState {
-  const restored =
-    initialProblem ?? selectParkingJamProblemForDifficulty(difficulty, seed);
-
   return {
     session: createParkingJamSession(restored.problem, startedAt),
     problemIdentity: restored.identity,
-    problemSource: initialProblem ? "given" : "pool",
+    problemSource,
     speedReference: getSpeedReference(restored.problem.board),
     selectedVehicleId: null,
     operation: null,
@@ -93,18 +90,31 @@ function createPlayState(
   };
 }
 
-/** `initialProblem` を渡すと、指定された問題で始める。 */
+function createSelectedPlayState(
+  difficulty: ParkingJamDifficulty,
+  avoidedProblemId: ProblemId | undefined,
+  startedAt: number,
+): ParkingJamPlayState {
+  const { problem } = selectProblemAvoiding(
+    (seed) => selectParkingJamProblemForDifficulty(difficulty, seed),
+    avoidedProblemId,
+  );
+  return createPlayState(problem, "pool", startedAt);
+}
+
+/**
+ * `initialProblem` を渡すと、指定された問題で始める。渡さなければ難易度の問題集から `avoidedProblemId` の問題を避けて選ぶ。
+ * `startNewProblem` は遊んでいる問題を避けて選び直す。
+ */
 export function useParkingJamPlay(
   difficulty: ParkingJamDifficulty,
   initialProblem?: ParkingJamRestoredProblem,
+  avoidedProblemId?: ProblemId,
 ) {
   const [play, setPlay] = useState<ParkingJamPlayState>(() =>
-    createPlayState(
-      difficulty,
-      createProblemSeed(),
-      Date.now(),
-      initialProblem,
-    ),
+    initialProblem
+      ? createPlayState(initialProblem, "given", Date.now())
+      : createSelectedPlayState(difficulty, avoidedProblemId, Date.now()),
   );
   const [now, setNow] = useState(() => Date.now());
   const nextOperationId = useRef(0);
@@ -220,12 +230,17 @@ export function useParkingJamPlay(
     }));
   }, [canReplay]);
 
+  const currentProblemIdentity = play.problemIdentity;
   const startNewProblem = useCallback(() => {
     const startedAt = Date.now();
-    const next = createPlayState(difficulty, createProblemSeed(), startedAt);
+    const next = createSelectedPlayState(
+      difficulty,
+      createProblemId(currentProblemIdentity),
+      startedAt,
+    );
     setNow(startedAt);
     setPlay(next);
-  }, [difficulty]);
+  }, [currentProblemIdentity, difficulty]);
 
   const completeClearAnimation = useCallback(() => {
     setPlay((current) =>
