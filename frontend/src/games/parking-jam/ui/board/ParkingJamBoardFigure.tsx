@@ -1,9 +1,14 @@
 import type {
   ParkingJamBoard,
   ParkingJamSide,
+  ParkingJamVehicleId,
 } from "@/games/parking-jam/puzzle/board";
 import { ParkingJamBoardDefs } from "@/games/parking-jam/ui/board/ParkingJamBoardDefs";
 import { ParkingJamCar } from "@/games/parking-jam/ui/board/ParkingJamCar";
+import {
+  getParkingJamDirectionControls,
+  ParkingJamDirectionMark,
+} from "@/games/parking-jam/ui/board/ParkingJamDirectionMark";
 import { ParkingJamLot } from "@/games/parking-jam/ui/board/ParkingJamLot";
 import { PARKING_JAM_CELL } from "@/games/parking-jam/ui/board/parking-jam-board-geometry";
 import { useParkingJamBoardPaint } from "@/games/parking-jam/ui/board/parking-jam-board-paint";
@@ -22,13 +27,18 @@ function getFigureMargin(board: ParkingJamBoard, side: ParkingJamSide) {
 
 type ParkingJamBoardFigureProps = {
   board: ParkingJamBoard;
+  /** 盤面と同じ選択の縁取りと、両端の出庫方向の矢印を付ける車。 */
+  selectedVehicleId?: ParkingJamVehicleId;
 };
 
 /**
  * 盤面と同じ見た目で、操作できない小さな駐車場を描く。
  * 高さいっぱいに広がるので、大きさは置き場所の高さで決める。
  */
-export function ParkingJamBoardFigure({ board }: ParkingJamBoardFigureProps) {
+export function ParkingJamBoardFigure({
+  board,
+  selectedVehicleId,
+}: ParkingJamBoardFigureProps) {
   const paint = useParkingJamBoardPaint();
   const left = getFigureMargin(board, "left");
   const top = getFigureMargin(board, "up");
@@ -36,6 +46,9 @@ export function ParkingJamBoardFigure({ board }: ParkingJamBoardFigureProps) {
     board.width * PARKING_JAM_CELL + left + getFigureMargin(board, "right");
   const viewHeight =
     board.height * PARKING_JAM_CELL + top + getFigureMargin(board, "down");
+  const selectedVehicle = board.vehicles.find(
+    (vehicle) => vehicle.id === selectedVehicleId,
+  );
 
   return (
     <svg
@@ -47,13 +60,26 @@ export function ParkingJamBoardFigure({ board }: ParkingJamBoardFigureProps) {
       <ParkingJamLot board={board} paint={paint} />
       <g clipPath={paint.vehicleSpaceClipPath}>
         {board.vehicles.map((vehicle) => (
-          <ParkingJamCar
+          <g
             key={vehicle.id}
-            vehicle={vehicle}
-            glassFill={paint.glassFill}
-          />
+            className={
+              vehicle.id === selectedVehicleId
+                ? "parking-jam-car--selected"
+                : undefined
+            }
+          >
+            <ParkingJamCar vehicle={vehicle} glassFill={paint.glassFill} />
+          </g>
         ))}
       </g>
+      {selectedVehicle
+        ? getParkingJamDirectionControls(selectedVehicle).map((control) => (
+            <ParkingJamDirectionMark
+              key={control.direction}
+              control={control}
+            />
+          ))
+        : null}
     </svg>
   );
 }
