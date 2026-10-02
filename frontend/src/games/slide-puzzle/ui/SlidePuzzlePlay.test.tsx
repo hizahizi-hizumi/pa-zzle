@@ -124,6 +124,24 @@ describe("SlidePuzzlePlay", () => {
       },
     );
 
+    test("遊び方を自動では開かないこと", () => {
+      const dialog = screen.queryByRole("dialog", { name: "遊び方" });
+
+      expect(dialog).toBeNull();
+    });
+
+    test("メニューの 遊び方 で遊び方を開くこと", () => {
+      fireEvent.pointerDown(
+        screen.getByRole("button", { name: "その他の操作" }),
+        { button: 0, ctrlKey: false },
+      );
+      fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+
+      const dialog = screen.getByRole("dialog", { name: "遊び方" });
+
+      expect(dialog).toBeTruthy();
+    });
+
     test("検証情報を渡さなければメニューへ表示しないこと", () => {
       fireEvent.pointerDown(
         screen.getByRole("button", { name: "その他の操作" }),
