@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
-
 import {
   useProblemIdQuerySync,
   useRequestedProblem,
 } from "@/game-catalog/problem-id-query";
+import type { ProblemId } from "@/games/problem-id";
 import { createSlidePuzzleDiagnosticSnapshot } from "@/games/slide-puzzle/diagnostics";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import { useSlidePuzzlePlay } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
@@ -25,13 +25,22 @@ import { useNavigate } from "@/router";
 
 type PlayableSlidePuzzleProps = {
   difficulty: SlidePuzzleDifficulty;
+  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
+  avoidedProblemId?: ProblemId;
 };
 
-export function PlayableSlidePuzzle({ difficulty }: PlayableSlidePuzzleProps) {
+export function PlayableSlidePuzzle({
+  difficulty,
+  avoidedProblemId,
+}: PlayableSlidePuzzleProps) {
   const requestedProblem = useRequestedProblem((problemId) =>
     selectSlidePuzzleProblemById(difficulty, problemId),
   );
-  const play = useSlidePuzzlePlay(difficulty, requestedProblem);
+  const play = useSlidePuzzlePlay(
+    difficulty,
+    requestedProblem,
+    avoidedProblemId,
+  );
   useProblemIdQuerySync(play.problemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(

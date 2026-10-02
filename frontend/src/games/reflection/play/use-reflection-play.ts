@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import type { ProblemId } from "@/games/problem-id";
+import { selectProblemAvoiding } from "@/games/problem-selection";
 import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
 import type {
   ReflectionProblemIdentity,
@@ -73,12 +74,16 @@ type ReflectionPlayState = {
 
 function createPlayState(
   difficulty: ReflectionDifficulty,
-  seed: ProblemSeed,
   startedAt: number,
   initialProblem?: ReflectionPooledProblem,
+  avoidedProblemId?: ProblemId,
 ): ReflectionPlayState {
   const { problem, identity, poolReference, workload } =
-    initialProblem ?? selectReflectionProblemForDifficulty(difficulty, seed);
+    initialProblem ??
+    selectProblemAvoiding(
+      (seed) => selectReflectionProblemForDifficulty(difficulty, seed),
+      avoidedProblemId,
+    ).problem;
 
   return {
     session: createReflectionSession(problem, startedAt),
@@ -111,6 +116,7 @@ function createReflectionResult(
 
 /**
  * 難易度のプレイを始める。`initialProblem` を渡すと、最初の1問だけその問題を出す。
+ * 渡さなければ、最初の1問は `avoidedProblemId` の問題を避けて選ぶ。
  * `restart` は同じプレイのまま全ピースをストックへ戻し（盤面を戻す）、
  * `replay` は同じ問題を新しいプレイとして始め（やり直す）、`startNewProblem` は同じ難易度の別の問題を始める。
  * `tapClue` は外周ヒントの光路を表示し、盤面が揃うと `progress` が `clearing` になる。
@@ -119,14 +125,10 @@ function createReflectionResult(
 export function useReflectionPlay(
   difficulty: ReflectionDifficulty,
   initialProblem?: ReflectionPooledProblem,
+  avoidedProblemId?: ProblemId,
 ) {
   const [play, setPlay] = useState<ReflectionPlayState>(() =>
-    createPlayState(
-      difficulty,
-      createProblemSeed(),
-      Date.now(),
-      initialProblem,
-    ),
+    createPlayState(difficulty, Date.now(), initialProblem, avoidedProblemId),
   );
   const [now, setNow] = useState(() => Date.now());
   const { session, progress } = play;
@@ -228,7 +230,7 @@ export function useReflectionPlay(
   const startNewProblem = useCallback(() => {
     const startedAt = Date.now();
     setNow(startedAt);
-    setPlay(createPlayState(difficulty, createProblemSeed(), startedAt));
+    setPlay(createPlayState(difficulty, startedAt));
   }, [difficulty]);
 
   const stock = useMemo(() => getReflectionSessionStock(session), [session]);

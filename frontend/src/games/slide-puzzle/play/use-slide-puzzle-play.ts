@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import type { ProblemId } from "@/games/problem-id";
+import { selectProblemAvoiding } from "@/games/problem-selection";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import type {
   SlidePuzzleGeneratedProblem,
@@ -63,12 +64,16 @@ type SlidePuzzlePlayState = {
 
 function createPlayState(
   difficulty: SlidePuzzleDifficulty,
-  seed: ProblemSeed,
   startedAt: number,
   initialProblem?: SlidePuzzleGeneratedProblem,
+  avoidedProblemId?: ProblemId,
 ): SlidePuzzlePlayState {
   const generatedProblem =
-    initialProblem ?? selectSlidePuzzleProblemForDifficulty(difficulty, seed);
+    initialProblem ??
+    selectProblemAvoiding(
+      (seed) => selectSlidePuzzleProblemForDifficulty(difficulty, seed),
+      avoidedProblemId,
+    ).problem;
 
   return {
     session: createSlidePuzzleSession(generatedProblem.problem, startedAt),
@@ -117,18 +122,14 @@ function slideTileInPlay(
   };
 }
 
-/** `initialProblem` は、記録からの再プレイで最初に遊ぶ問題。 */
+/** `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。 */
 export function useSlidePuzzlePlay(
   difficulty: SlidePuzzleDifficulty,
   initialProblem?: SlidePuzzleGeneratedProblem,
+  avoidedProblemId?: ProblemId,
 ) {
   const [play, setPlay] = useState<SlidePuzzlePlayState>(() =>
-    createPlayState(
-      difficulty,
-      initialProblem?.identity.seed ?? createProblemSeed(),
-      Date.now(),
-      initialProblem,
-    ),
+    createPlayState(difficulty, Date.now(), initialProblem, avoidedProblemId),
   );
   const [now, setNow] = useState(() => Date.now());
   const nextOperationId = useRef(0);
@@ -203,7 +204,7 @@ export function useSlidePuzzlePlay(
 
   const startNewProblem = useCallback(() => {
     const startedAt = Date.now();
-    const next = createPlayState(difficulty, createProblemSeed(), startedAt);
+    const next = createPlayState(difficulty, startedAt);
     setNow(startedAt);
     setPlay(next);
   }, [difficulty]);

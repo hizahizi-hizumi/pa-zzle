@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-
 import {
   useProblemIdQuerySync,
   useRequestedProblem,
@@ -18,6 +17,7 @@ import { selectParkingJamProblemById } from "@/games/parking-jam/problem-selecti
 import { ParkingJamDiagnostics } from "@/games/parking-jam/ui/ParkingJamDiagnostics";
 import { ParkingJamPlay } from "@/games/parking-jam/ui/ParkingJamPlay";
 import { parkingJamPlayRecordDisplay } from "@/games/parking-jam/ui/play-record-display";
+import type { ProblemId } from "@/games/problem-id";
 import {
   buildRevision,
   internalDiagnosticsAvailable,
@@ -28,13 +28,22 @@ import { useNavigate } from "@/router";
 
 type PlayableParkingJamProps = {
   difficulty: ParkingJamDifficulty;
+  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
+  avoidedProblemId?: ProblemId;
 };
 
-export function PlayableParkingJam({ difficulty }: PlayableParkingJamProps) {
+export function PlayableParkingJam({
+  difficulty,
+  avoidedProblemId,
+}: PlayableParkingJamProps) {
   const requestedProblem = useRequestedProblem((problemId) =>
     selectParkingJamProblemById(difficulty, problemId),
   );
-  const play = useParkingJamPlay(difficulty, requestedProblem);
+  const play = useParkingJamPlay(
+    difficulty,
+    requestedProblem,
+    avoidedProblemId,
+  );
   useProblemIdQuerySync(play.problemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(

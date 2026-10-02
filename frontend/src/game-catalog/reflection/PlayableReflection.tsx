@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
-
 import {
   useProblemIdQuerySync,
   useRequestedProblem,
 } from "@/game-catalog/problem-id-query";
+import type { ProblemId } from "@/games/problem-id";
 import { createReflectionDiagnosticSnapshot } from "@/games/reflection/diagnostics";
 import {
   getReflectionDifficultyLabel,
@@ -29,13 +29,22 @@ import { useNavigate } from "@/router";
 
 type PlayableReflectionProps = {
   difficulty: ReflectionDifficulty;
+  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
+  avoidedProblemId?: ProblemId;
 };
 
-export function PlayableReflection({ difficulty }: PlayableReflectionProps) {
+export function PlayableReflection({
+  difficulty,
+  avoidedProblemId,
+}: PlayableReflectionProps) {
   const requestedProblem = useRequestedProblem((problemId) =>
     selectReflectionProblemById(difficulty, problemId),
   );
-  const play = useReflectionPlay(difficulty, requestedProblem);
+  const play = useReflectionPlay(
+    difficulty,
+    requestedProblem,
+    avoidedProblemId,
+  );
   useProblemIdQuerySync(play.problemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(

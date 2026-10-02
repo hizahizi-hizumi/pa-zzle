@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-
 import {
   useProblemIdQuerySync,
   useRequestedProblem,
@@ -15,6 +14,7 @@ import { selectMinesweeperProblemById } from "@/games/minesweeper/problem-select
 import { MinesweeperDiagnostics } from "@/games/minesweeper/ui/MinesweeperDiagnostics";
 import { MinesweeperPlay } from "@/games/minesweeper/ui/MinesweeperPlay";
 import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
+import type { ProblemId } from "@/games/problem-id";
 import {
   buildRevision,
   internalDiagnosticsAvailable,
@@ -25,13 +25,22 @@ import { useNavigate } from "@/router";
 
 type PlayableMinesweeperProps = {
   difficulty: MinesweeperDifficulty;
+  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
+  avoidedProblemId?: ProblemId;
 };
 
-export function PlayableMinesweeper({ difficulty }: PlayableMinesweeperProps) {
+export function PlayableMinesweeper({
+  difficulty,
+  avoidedProblemId,
+}: PlayableMinesweeperProps) {
   const requestedProblem = useRequestedProblem((problemId) =>
     selectMinesweeperProblemById(difficulty, problemId),
   );
-  const play = useMinesweeperPlay(difficulty, requestedProblem);
+  const play = useMinesweeperPlay(
+    difficulty,
+    requestedProblem,
+    avoidedProblemId,
+  );
   useProblemIdQuerySync(play.problemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(

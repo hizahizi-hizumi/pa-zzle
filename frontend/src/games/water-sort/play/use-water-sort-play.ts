@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import type { ProblemId } from "@/games/problem-id";
+import { selectProblemAvoiding } from "@/games/problem-selection";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import type {
   WaterSortGeneratedProblem,
@@ -69,18 +70,22 @@ type WaterSortPlayState = {
 
 function generateProblem(
   difficulty: WaterSortDifficulty,
-  seed: ProblemSeed,
+  avoidedProblemId: ProblemId | undefined,
 ): WaterSortGeneratedProblem {
-  return selectWaterSortProblemForDifficulty(difficulty, seed);
+  return selectProblemAvoiding(
+    (seed) => selectWaterSortProblemForDifficulty(difficulty, seed),
+    avoidedProblemId,
+  ).problem;
 }
 
 function createPlayState(
   difficulty: WaterSortDifficulty,
-  seed: ProblemSeed,
   startedAt: number,
   initialProblem?: WaterSortGeneratedProblem,
+  avoidedProblemId?: ProblemId,
 ): WaterSortPlayState {
-  const generatedProblem = initialProblem ?? generateProblem(difficulty, seed);
+  const generatedProblem =
+    initialProblem ?? generateProblem(difficulty, avoidedProblemId);
 
   return {
     session: createWaterSortSession(generatedProblem.problem, startedAt),
@@ -92,18 +97,14 @@ function createPlayState(
   };
 }
 
-/** `initialProblem` を渡すと、記録から復元したその問題で始める。 */
+/** `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。 */
 export function useWaterSortPlay(
   difficulty: WaterSortDifficulty,
   initialProblem?: WaterSortGeneratedProblem,
+  avoidedProblemId?: ProblemId,
 ) {
   const [play, setPlay] = useState<WaterSortPlayState>(() =>
-    createPlayState(
-      difficulty,
-      createProblemSeed(),
-      Date.now(),
-      initialProblem,
-    ),
+    createPlayState(difficulty, Date.now(), initialProblem, avoidedProblemId),
   );
   const [now, setNow] = useState(() => Date.now());
   const nextOperationId = useRef(0);
@@ -241,7 +242,7 @@ export function useWaterSortPlay(
 
   const startNewProblem = useCallback(() => {
     const startedAt = Date.now();
-    const next = createPlayState(difficulty, createProblemSeed(), startedAt);
+    const next = createPlayState(difficulty, startedAt);
     setNow(startedAt);
     setPlay(next);
   }, [difficulty]);

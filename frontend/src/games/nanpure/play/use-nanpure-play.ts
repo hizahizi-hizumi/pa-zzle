@@ -26,7 +26,9 @@ import {
   toggleNanpureNote,
   undoNanpureSession,
 } from "@/games/nanpure/session/session";
+import type { ProblemId } from "@/games/problem-id";
 import { createProblemSeed } from "@/games/problem-seed";
+import { selectProblemAvoiding } from "@/games/problem-selection";
 
 export type NanpureProgress = "playing" | "clearing" | "result";
 
@@ -83,17 +85,21 @@ function createNewProblemPlayState(
 }
 
 /**
- * `initialProblem` を渡すと、その問題で始める（記録からの再プレイ）。渡さなければ難易度の問題集から選ぶ。
+ * `initialProblem` を渡すと、その問題で始める。渡さなければ難易度の問題集から `avoidedProblemId` の問題を避けて選ぶ。
  * `startNewProblem` は問題集から別の問題を選び直す。
  */
 export function useNanpurePlay(
   difficulty: NanpureDifficulty,
   initialProblem?: NanpureIdentifiedProblem,
+  avoidedProblemId?: ProblemId,
 ) {
   const [play, setPlay] = useState<NanpurePlayState>(() =>
     createPlayState(
       initialProblem ??
-        selectNanpureProblemForDifficulty(difficulty, createProblemSeed()),
+        selectProblemAvoiding(
+          (seed) => selectNanpureProblemForDifficulty(difficulty, seed),
+          avoidedProblemId,
+        ).problem,
       Date.now(),
     ),
   );
