@@ -2,6 +2,7 @@ import {
   isBetterPersonalBestValue,
   type PersonalBestUpdate,
 } from "@/records/personal-best";
+import { removeClearedPlayAttempts } from "@/records/play-attempt-storage";
 import type { PlayRecord } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
 import {
@@ -97,6 +98,10 @@ export function savePlayRecord(
 
   const outcome = getPlayRecordSaveOutcome(previousRecords, record, definition);
   const saveStatus = appendPlayRecord(record, storage);
+  if (saveStatus === "failed") {
+    return { status: "failed" };
+  }
 
-  return saveStatus === "failed" ? { status: "failed" } : outcome;
+  removeClearedPlayAttempts(storage);
+  return outcome;
 }

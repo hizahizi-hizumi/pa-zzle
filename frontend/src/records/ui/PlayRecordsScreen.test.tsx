@@ -236,25 +236,54 @@ const attempts: PlayAttempt[] = [
   },
 ];
 
+function renderScreen(
+  screenRecords: typeof records,
+  screenAttempts: readonly PlayAttempt[],
+  onReplay: (playId: string) => void = () => {},
+) {
+  render(
+    <PlayRecordsScreen
+      records={screenRecords}
+      attempts={screenAttempts}
+      games={playRecordGames}
+      emptyAction={<a href="/">パズルを選ぶ</a>}
+      onReplay={onReplay}
+    />,
+  );
+}
+
+function showAllPlays() {
+  fireEvent.change(screen.getByRole("combobox", { name: "表示するプレイ" }), {
+    target: { value: "all" },
+  });
+}
+
+function openTrend() {
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "推移" }), {
+    button: 0,
+    ctrlKey: false,
+  });
+}
+
+function getAbandonedRow(): HTMLElement {
+  const abandonedRow = screen
+    .getAllByRole("listitem")
+    .find((row) => within(row).queryByText("離脱"));
+  if (!abandonedRow) {
+    throw new Error("離脱したプレイの行がありません");
+  }
+  return abandonedRow;
+}
+
 describe("PlayRecordsScreen", () => {
-  const onReplay = vi.fn<(playId: string) => void>();
+  let onReplay: (playId: string) => void;
 
   beforeEach(() => {
-    render(
-      <PlayRecordsScreen
-        records={records}
-        attempts={attempts}
-        games={playRecordGames}
-        emptyAction={<a href="/">パズルを選ぶ</a>}
-        onReplay={onReplay}
-      />,
-    );
+    onReplay = vi.fn<(playId: string) => void>();
+    renderScreen(records, attempts, onReplay);
   });
 
-  afterEach(() => {
-    cleanup();
-    onReplay.mockClear();
-  });
+  afterEach(cleanup);
 
   test("見出しとパズルと開始条件を同じヘッダーで選べること", () => {
     const heading = screen.getByRole("heading", { name: "記録" });
@@ -360,158 +389,178 @@ describe("PlayRecordsScreen", () => {
   test("既定ではクリアしたプレイだけを履歴に並べること", () => {
     const filterSelect = screen.getByRole("combobox", {
       name: "表示するプレイ",
-    });
+    }) as HTMLSelectElement;
+    const abandonedLabel = screen.queryByText("離脱");
+    const count = screen.getByText("2件");
 
-    expect((filterSelect as HTMLSelectElement).value).toBe("cleared");
-    expect(screen.queryByText("離脱")).toBeNull();
-    expect(screen.getByText("2件")).toBeTruthy();
+    expect(filterSelect.value).toBe("cleared");
+    expect(abandonedLabel).toBeNull();
+    expect(count).toBeTruthy();
   });
 
   test("すべてに切り替えると同じ開始条件の離脱したプレイを時系列で混ぜて並べること", () => {
-    const filterSelect = screen.getByRole("combobox", {
-      name: "表示するプレイ",
-    });
-    fireEvent.change(filterSelect, { target: { value: "all" } });
-    const rows = screen.getAllByRole("listitem");
-    const [newestRow, abandonedRow, oldestRow] = rows as [
-      HTMLElement,
-      HTMLElement,
-      HTMLElement,
-    ];
+    showAllPlays();
+    const rowLabels = screen
+      .getAllByRole("listitem")
+      .map((row) => within(row).queryByText("離脱") !== null);
+    const count = screen.getByText("3件");
 
-    expect(rows).toHaveLength(3);
-    expect(within(abandonedRow).getByText("離脱")).toBeTruthy();
+    expect(rowLabels).toEqual([false, true, false]);
+    expect(count).toBeTruthy();
+  });
+
+  test("離脱したプレイには評価を示さず、離れた時点の進み具合を示すこと", () => {
+    showAllPlays();
+    const abandonedRow = getAbandonedRow();
+
     expect(within(abandonedRow).getByText("経過")).toBeTruthy();
     expect(within(abandonedRow).getByText("00:30")).toBeTruthy();
     expect(within(abandonedRow).getByText("手数")).toBeTruthy();
     expect(within(abandonedRow).getByText("5手")).toBeTruthy();
     expect(within(abandonedRow).queryByText(/点$/)).toBeNull();
-    expect(
-      within(abandonedRow)
-        .getAllByRole("button")
-        .map((button) => button.getAttribute("aria-label")),
-    ).toEqual(["同じ問題をプレイ"]);
-    expect(within(newestRow).queryByText("離脱")).toBeNull();
-    expect(within(oldestRow).queryByText("離脱")).toBeNull();
-    expect(screen.getAllByText("離脱")).toHaveLength(1);
-    expect(screen.getByText("3件")).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: "クリアした記録をJSONでコピー" }),
-    ).toBeTruthy();
+  });
+
+  test("離脱したプレイの行には再プレイの操作だけを置くこと", () => {
+    showAllPlays();
+    const buttonLabels = within(getAbandonedRow())
+      .getAllByRole("button")
+      .map((button) => button.getAttribute("aria-label"));
+
+    expect(buttonLabels).toEqual(["同じ問題をプレイ"]);
+  });
+
+  test("離脱したプレイを並べてもクリアした記録だけをJSONでコピーすること", () => {
+    showAllPlays();
+    const copyButton = screen.getByRole("button", {
+      name: "クリアした記録をJSONでコピー",
+    });
+
+    expect(copyButton).toBeTruthy();
   });
 
   test("離脱したプレイの行から、その試行の問題を再プレイできること", () => {
-    fireEvent.change(screen.getByRole("combobox", { name: "表示するプレイ" }), {
-      target: { value: "all" },
-    });
-    const abandonedRow = screen
-      .getAllByRole("listitem")
-      .find((row) => within(row).queryByText("離脱"));
-    if (!abandonedRow) {
-      throw new Error("離脱したプレイの行がありません");
-    }
+    showAllPlays();
     fireEvent.click(
-      within(abandonedRow).getByRole("button", { name: "同じ問題をプレイ" }),
+      within(getAbandonedRow()).getByRole("button", {
+        name: "同じ問題をプレイ",
+      }),
     );
 
     expect(onReplay).toHaveBeenCalledExactlyOnceWith("water-sort:100000");
   });
 
-  test("離脱したプレイを自己ベストと推移の対象にしないこと", () => {
-    const filterSelect = screen.getByRole("combobox", {
+  test("離脱したプレイを推移の対象にしないこと", () => {
+    showAllPlays();
+    openTrend();
+    const filterSelect = screen.queryByRole("combobox", {
       name: "表示するプレイ",
     });
-    fireEvent.change(filterSelect, { target: { value: "all" } });
-    const trendButton = screen.getByRole("tab", { name: "推移" });
-    fireEvent.mouseDown(trendButton, { button: 0, ctrlKey: false });
+    const count = screen.getByText("2件");
 
-    expect(
-      screen.queryByRole("combobox", { name: "表示するプレイ" }),
-    ).toBeNull();
-    expect(screen.getByText("2件")).toBeTruthy();
+    expect(filterSelect).toBeNull();
+    expect(count).toBeTruthy();
   });
 });
 
-describe("PlayRecordsScreen の離脱だけの比較文脈", () => {
+describe("離脱しかない開始条件がある場合", () => {
+  beforeEach(() => {
+    renderScreen(records, attempts);
+  });
+
   afterEach(cleanup);
 
-  function renderScreen(
-    screenRecords: typeof records,
-    screenAttempts: readonly PlayAttempt[],
-  ) {
-    render(
-      <PlayRecordsScreen
-        records={screenRecords}
-        attempts={screenAttempts}
-        games={playRecordGames}
-        emptyAction={<a href="/">パズルを選ぶ</a>}
-        onReplay={() => {}}
-      />,
-    );
-  }
-
-  test("離脱しかない開始条件も、新しく遊んだ順に開始条件として選べること", () => {
-    renderScreen(records, attempts);
+  test("新しく遊んだ順に開始条件として選べること", () => {
     const comparisonSelect = screen.getByRole("combobox", {
       name: "開始条件",
     }) as HTMLSelectElement;
 
-    expect(
-      Array.from(comparisonSelect.options, (option) => option.value),
-    ).toEqual(["3", "4"]);
+    const optionValues = Array.from(
+      comparisonSelect.options,
+      (option) => option.value,
+    );
+
+    expect(optionValues).toEqual(["3", "4"]);
   });
 
-  test("離脱しかない開始条件では自己ベストを持たず、離脱したプレイを表示すること", () => {
-    renderScreen(records, attempts);
+  test("その開始条件を選ぶと自己ベストを持たず、離脱したプレイだけを並べること", () => {
     fireEvent.change(screen.getByRole("combobox", { name: "開始条件" }), {
       target: { value: "4" },
     });
     const filterSelect = screen.getByRole("combobox", {
       name: "表示するプレイ",
     }) as HTMLSelectElement;
+    const rows = screen.getAllByRole("listitem");
 
     expect(screen.getByText("まだクリアしていません")).toBeTruthy();
     expect(filterSelect.value).toBe("all");
     expect(filterSelect.disabled).toBe(true);
-    expect(screen.getAllByRole("listitem")).toHaveLength(1);
-    expect(screen.getByText("離脱")).toBeTruthy();
+    expect(rows).toHaveLength(1);
+    expect(within(rows[0] as HTMLElement).getByText("離脱")).toBeTruthy();
     expect(screen.getByText("1件")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /JSONでコピー/ })).toBeNull();
-
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "推移" }), {
-      button: 0,
-      ctrlKey: false,
-    });
-    expect(screen.getByText("表示できる記録がありません。")).toBeTruthy();
   });
 
-  test("最後に離脱したプレイの開始条件を最初に開くこと", () => {
+  test("その開始条件を選ぶと推移に表示できる記録が無いこと", () => {
+    fireEvent.change(screen.getByRole("combobox", { name: "開始条件" }), {
+      target: { value: "4" },
+    });
+    openTrend();
+    const emptyMessage = screen.getByText("表示できる記録がありません。");
+
+    expect(emptyMessage).toBeTruthy();
+  });
+});
+
+describe("最後に遊んだのが離脱したプレイの場合", () => {
+  beforeEach(() => {
     renderScreen(records, [
       createAbandonedWaterSortAttempt("4", 900_000, 1_000_000),
     ]);
+  });
+
+  afterEach(cleanup);
+
+  test("その開始条件を最初に開くこと", () => {
     const comparisonSelect = screen.getByRole("combobox", {
       name: "開始条件",
     }) as HTMLSelectElement;
+    const abandonedLabel = screen.getByText("離脱");
 
     expect(comparisonSelect.value).toBe("4");
-    expect(screen.getByText("離脱")).toBeTruthy();
+    expect(abandonedLabel).toBeTruthy();
+  });
+});
+
+describe("完了記録が無く離脱したプレイだけがある場合", () => {
+  beforeEach(() => {
+    renderScreen([], [createAbandonedWaterSortAttempt("3", 100_000, 130_000)]);
   });
 
-  test("完了記録が無くても、離脱したゲームを開いて離脱したプレイを表示すること", () => {
-    renderScreen([], [createAbandonedWaterSortAttempt("3", 100_000, 130_000)]);
+  afterEach(cleanup);
 
-    expect(screen.queryByText("まだ記録がありません")).toBeNull();
-    expect(
-      (screen.getByRole("combobox", { name: "パズル" }) as HTMLSelectElement)
-        .value,
-    ).toBe("water-sort");
+  test("離脱したゲームを開いて離脱したプレイを表示すること", () => {
+    const gameSelect = screen.getByRole("combobox", {
+      name: "パズル",
+    }) as HTMLSelectElement;
+    const emptyMessage = screen.queryByText("まだ記録がありません");
+
+    expect(gameSelect.value).toBe("water-sort");
+    expect(emptyMessage).toBeNull();
     expect(screen.getByText("離脱")).toBeTruthy();
     expect(screen.getByText("まだクリアしていません")).toBeTruthy();
   });
+});
 
-  test("完了記録も離脱も無ければ空の状態を表示すること", () => {
+describe("完了記録も離脱も無い場合", () => {
+  beforeEach(() => {
     renderScreen([], []);
+  });
 
-    expect(screen.getByText("まだ記録がありません")).toBeTruthy();
+  afterEach(cleanup);
+
+  test("空の状態を表示すること", () => {
+    const emptyMessage = screen.getByText("まだ記録がありません");
+
+    expect(emptyMessage).toBeTruthy();
   });
 });

@@ -61,12 +61,16 @@ export const nanpureCatalogEntry = {
   playRecordDisplay: nanpurePlayRecordDisplay,
   playAttemptDisplay: nanpurePlayAttemptDisplay,
   ...createGameReplay({
-    readRecordConditions: (record) =>
-      isNanpurePlayRecord(record) ? record.payload : null,
-    readAttemptConditions: (attempt) =>
-      isNanpurePlayAttempt(attempt) ? attempt.start : null,
+    readRecordConditions(record) {
+      return isNanpurePlayRecord(record) ? record.payload : null;
+    },
+    readAttemptConditions(attempt) {
+      return isNanpurePlayAttempt(attempt) ? attempt.start : null;
+    },
     resolveStart: resolveNanpureReplayStart,
-    renderPlay: (start) => <PlayableNanpure {...start} />,
+    renderPlay(start) {
+      return <PlayableNanpure {...start} />;
+    },
   }),
 } satisfies GameCatalogEntry;
 

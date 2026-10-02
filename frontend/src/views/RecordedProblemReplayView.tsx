@@ -21,11 +21,7 @@ const unavailableReasonMessages: Record<RecordReplayUnavailableReason, string> =
     "problem-not-restorable": "この記録の問題を復元できません。",
   };
 
-/**
- * 記録画面に並ぶプレイ（完了記録か離脱した試行）の問題で再プレイを始める。
- * 完了記録の id はゲーム・開始・完了の時刻と問題の識別情報から、試行の id はゲームと開始時刻から作るので、
- * 両者が同じ id になることはない。完了記録を先に探す。
- */
+/** 記録画面に並ぶプレイ（完了記録か離脱した試行）の問題で再プレイを始める。 */
 function replayStoredPlay(playId: string): RecordReplay | null {
   const records = readPlayRecords();
   const record = records.find((candidate) => candidate.id === playId);

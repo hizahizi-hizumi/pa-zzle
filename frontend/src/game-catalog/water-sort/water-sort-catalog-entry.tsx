@@ -62,12 +62,16 @@ export const waterSortCatalogEntry = {
   playRecordDisplay: waterSortPlayRecordDisplay,
   playAttemptDisplay: waterSortPlayAttemptDisplay,
   ...createGameReplay({
-    readRecordConditions: (record) =>
-      isWaterSortPlayRecord(record) ? record.payload : null,
-    readAttemptConditions: (attempt) =>
-      isWaterSortPlayAttempt(attempt) ? attempt.start : null,
+    readRecordConditions(record) {
+      return isWaterSortPlayRecord(record) ? record.payload : null;
+    },
+    readAttemptConditions(attempt) {
+      return isWaterSortPlayAttempt(attempt) ? attempt.start : null;
+    },
     resolveStart: resolveWaterSortReplayStart,
-    renderPlay: (start) => <PlayableWaterSort {...start} />,
+    renderPlay(start) {
+      return <PlayableWaterSort {...start} />;
+    },
   }),
 } satisfies GameCatalogEntry;
 

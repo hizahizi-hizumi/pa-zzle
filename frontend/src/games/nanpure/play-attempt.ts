@@ -35,7 +35,7 @@ type NanpurePlayAttemptProgress = {
   restartCount: number;
 };
 
-export type NanpurePlayAttempt = PlayAttempt & {
+type NanpurePlayAttempt = PlayAttempt & {
   payloadVersion: typeof NANPURE_PLAY_ATTEMPT_PAYLOAD_VERSION;
   start: NanpurePlayAttemptStart;
   abandonment:
@@ -143,7 +143,7 @@ function getNanpureAbandonedProgress(
     : null;
 }
 
-export type NanpurePlayAttemptProgressId = "elapsed-ms" | "mistake-count";
+type NanpurePlayAttemptProgressId = "elapsed-ms" | "mistake-count";
 
 export const nanpurePlayAttemptDefinition = {
   gameId: nanpurePlayRecordDefinition.gameId,

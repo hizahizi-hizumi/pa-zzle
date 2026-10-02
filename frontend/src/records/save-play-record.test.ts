@@ -1,6 +1,14 @@
+import type { PlayAttempt } from "@/records/play-attempt";
+import {
+  readPlayAttempts,
+  startPlayAttempt,
+} from "@/records/play-attempt-storage";
 import type { PlayRecord } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
-import { getPlayRecordSaveOutcome } from "@/records/save-play-record";
+import {
+  getPlayRecordSaveOutcome,
+  savePlayRecord,
+} from "@/records/save-play-record";
 
 function createRecord(id: string, value: number): PlayRecord {
   return {
@@ -67,4 +75,39 @@ test("同率の自己ベストを更新扱いにしないこと", () => {
   const outcome = getPlayRecordSaveOutcome(previous, current, definition);
 
   expect(outcome).toEqual({ status: "recorded" });
+});
+
+describe("savePlayRecord", () => {
+  const record = createRecord("record-1", 80);
+  const attemptOfRecord: PlayAttempt = {
+    id: "test-game:1000",
+    gameId: "test-game",
+    startedAt: record.startedAt,
+    payloadVersion: 1,
+    start: { condition: "normal" },
+    abandonment: null,
+  };
+  const abandonedAttempt: PlayAttempt = {
+    ...attemptOfRecord,
+    id: "test-game:500",
+    startedAt: 500,
+    abandonment: { abandonedAt: 900, progress: {} },
+  };
+
+  beforeEach(() => {
+    window.localStorage.clear();
+    startPlayAttempt(attemptOfRecord);
+    startPlayAttempt(abandonedAttempt);
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
+  test("保存した記録のプレイの試行を除き、離脱した試行を残すこと", () => {
+    savePlayRecord(record, definition);
+    const remainingIds = readPlayAttempts().map(({ id }) => id);
+
+    expect(remainingIds).toEqual([abandonedAttempt.id]);
+  });
 });

@@ -3,11 +3,11 @@ import {
   type ParkingJamDifficulty,
   parseParkingJamDifficulty,
 } from "@/games/parking-jam/difficulty";
+import { parkingJamPlayRecordDefinition } from "@/games/parking-jam/play-record";
 import {
   isParkingJamProblemIdentity,
-  parkingJamPlayRecordDefinition,
-} from "@/games/parking-jam/play-record";
-import type { ParkingJamProblemIdentity } from "@/games/parking-jam/problem/problem";
+  type ParkingJamProblemIdentity,
+} from "@/games/parking-jam/problem/problem";
 import {
   getParkingJamSessionElapsedMs,
   type ParkingJamSession,
@@ -38,7 +38,7 @@ type ParkingJamPlayAttemptProgress = {
   restartCount: number;
 };
 
-export type ParkingJamPlayAttempt = PlayAttempt & {
+type ParkingJamPlayAttempt = PlayAttempt & {
   payloadVersion: typeof PARKING_JAM_PLAY_ATTEMPT_PAYLOAD_VERSION;
   start: ParkingJamPlayAttemptStart;
   abandonment:
@@ -152,9 +152,7 @@ function getParkingJamAbandonedProgress(
     : null;
 }
 
-export type ParkingJamPlayAttemptProgressId =
-  | "elapsed-ms"
-  | "failed-move-count";
+type ParkingJamPlayAttemptProgressId = "elapsed-ms" | "failed-move-count";
 
 export const parkingJamPlayAttemptDefinition = {
   gameId: parkingJamPlayRecordDefinition.gameId,

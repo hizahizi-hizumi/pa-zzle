@@ -29,7 +29,7 @@ export type PlayAttempt = {
  * - `abandoned`: 完了記録が無く、離脱を記録した。
  * - `unfinished`: どちらも無い。離脱を記録できないまま終わったプレイを含む。
  */
-export type PlayAttemptStatus = "cleared" | "abandoned" | "unfinished";
+type PlayAttemptStatus = "cleared" | "abandoned" | "unfinished";
 
 /** 離脱を記録した試行。 */
 export type AbandonedPlayAttempt = PlayAttempt & {
@@ -80,7 +80,7 @@ export function isPlayAttempt(value: unknown): value is PlayAttempt {
 }
 
 /** 同じゲームで同じ時刻に始めたプレイの完了記録を、その試行の完了記録とみなす。 */
-export function isPlayRecordOfAttempt(
+function isPlayRecordOfAttempt(
   record: Pick<PlayRecord, "gameId" | "startedAt">,
   attempt: Pick<PlayAttempt, "gameId" | "startedAt">,
 ): boolean {

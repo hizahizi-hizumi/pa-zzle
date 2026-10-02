@@ -396,7 +396,7 @@ describe("RecordedProblemReplayView", () => {
   });
 });
 
-describe("RecordedProblemReplayView で離脱したプレイを再プレイする場合", () => {
+describe("離脱したプレイを再プレイする場合", () => {
   const abandonedAt = 61_000;
 
   /** 開始を記録してから離脱を記録し、記録画面に離脱として並ぶ試行にする。 */
@@ -555,15 +555,16 @@ describe("RecordedProblemReplayView で離脱したプレイを再プレイす�
   });
 
   describe("問題集に無いナンプレの試行の場合", () => {
+    const attempt = createNanpurePlayAttempt({
+      difficulty: "3",
+      problemIdentity: createNanpureProblemIdentity(
+        "locked-candidates",
+        99_999,
+      ),
+      startedAt,
+    });
+
     beforeEach(() => {
-      const attempt = createNanpurePlayAttempt({
-        difficulty: "3",
-        problemIdentity: createNanpureProblemIdentity(
-          "locked-candidates",
-          99_999,
-        ),
-        startedAt,
-      });
       storeAbandonedAttempt(attempt, {
         elapsedMs: 60_000,
         mistakeCount: 0,
@@ -587,12 +588,13 @@ describe("RecordedProblemReplayView で離脱したプレイを再プレイす�
   });
 
   describe("現在のアプリに無いゲームの試行の場合", () => {
+    const attempt = {
+      ...waterSortAttempt,
+      id: "unknown-game:1000",
+      gameId: "unknown-game",
+    };
+
     beforeEach(() => {
-      const attempt = {
-        ...waterSortAttempt,
-        id: "unknown-game:1000",
-        gameId: "unknown-game",
-      };
       storeAbandonedAttempt(attempt, {});
       renderReplay(attempt.id);
     });
@@ -606,15 +608,15 @@ describe("RecordedProblemReplayView で離脱したプレイを再プレイす�
     });
   });
 
-  describe.each([
-    ["離脱を記録していない", false],
-    ["完了記録がある", true],
-  ] as const)("%s試行の場合", (_, cleared) => {
+  const unlistedAttemptCases = [
+    ["離脱を記録していない", []],
+    ["完了記録がある", [waterSortRecord]],
+  ] as const;
+
+  describe.each(unlistedAttemptCases)("%s試行の場合", (_, storedRecords) => {
     beforeEach(() => {
       startPlayAttempt(waterSortAttempt);
-      if (cleared) {
-        writePlayRecords([waterSortRecord]);
-      }
+      writePlayRecords(storedRecords);
       renderReplay(waterSortAttempt.id);
     });
 

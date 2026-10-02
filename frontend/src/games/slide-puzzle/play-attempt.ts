@@ -35,7 +35,7 @@ type SlidePuzzlePlayAttemptProgress = {
   restartCount: number;
 };
 
-export type SlidePuzzlePlayAttempt = PlayAttempt & {
+type SlidePuzzlePlayAttempt = PlayAttempt & {
   payloadVersion: typeof SLIDE_PUZZLE_PLAY_ATTEMPT_PAYLOAD_VERSION;
   start: SlidePuzzlePlayAttemptStart;
   abandonment:
@@ -147,7 +147,7 @@ function getSlidePuzzleAbandonedProgress(
     : null;
 }
 
-export type SlidePuzzlePlayAttemptProgressId = "elapsed-ms" | "move-count";
+type SlidePuzzlePlayAttemptProgressId = "elapsed-ms" | "move-count";
 
 export const slidePuzzlePlayAttemptDefinition = {
   gameId: slidePuzzlePlayRecordDefinition.gameId,

@@ -49,7 +49,8 @@ export function usePlayAttemptRecord(
   });
   const pendingAbandonment = useRef<PendingAbandonment | null>(null);
 
-  // 置き換え前のプレイの離脱を保存するとき前のプレイの状態を読むため、描画中ではなく effect で更新する。
+  // 別のプレイへ置き換えたときのクリーンアップは、前のプレイの最後に確定した状態で離脱を保存する。
+  // useEffectEvent はクリーンアップより前に置き換え後の値へ切り替わるため使わず、確定後の effect で更新する。
   // 後続の effect より先に宣言し、新しいプレイの開始時にはそのプレイの状態を読めるようにする。
   useEffect(() => {
     tracked.current = { attempt, finished, getProgress };

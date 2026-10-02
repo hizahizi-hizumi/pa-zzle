@@ -13,6 +13,7 @@ paths:
   - frontend/src/games/*/score.ts
   - frontend/src/games/*/problem-selection.ts
   - frontend/src/games/*/play-record.ts
+  - frontend/src/games/*/play-attempt.ts
 exclude:
   - "**/*.test.ts"
 
@@ -46,6 +47,8 @@ rules:
       conditions from the problem supply and difficulty.ts.
       play-record.ts: connects the game's completion facts to the shared
       records feature.
+      play-attempt.ts: connects the game's start conditions and the progress
+      of a play left before completion to the shared records feature.
       Violation: the file implements a responsibility of another position,
       such as computing a score or evaluation in session/, classification
       thresholds in difficulty-analysis.ts, feature analysis in

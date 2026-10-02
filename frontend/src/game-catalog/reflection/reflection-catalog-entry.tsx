@@ -56,12 +56,16 @@ export const reflectionCatalogEntry = {
   playRecordDisplay: reflectionPlayRecordDisplay,
   playAttemptDisplay: reflectionPlayAttemptDisplay,
   ...createGameReplay({
-    readRecordConditions: (record) =>
-      isReflectionPlayRecord(record) ? record.payload : null,
-    readAttemptConditions: (attempt) =>
-      isReflectionPlayAttempt(attempt) ? attempt.start : null,
+    readRecordConditions(record) {
+      return isReflectionPlayRecord(record) ? record.payload : null;
+    },
+    readAttemptConditions(attempt) {
+      return isReflectionPlayAttempt(attempt) ? attempt.start : null;
+    },
     resolveStart: resolveReflectionReplayStart,
-    renderPlay: (start) => <PlayableReflection {...start} />,
+    renderPlay(start) {
+      return <PlayableReflection {...start} />;
+    },
   }),
 } satisfies GameCatalogEntry;
 

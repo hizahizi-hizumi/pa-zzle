@@ -67,12 +67,16 @@ export const parkingJamCatalogEntry = {
   playRecordDisplay: parkingJamPlayRecordDisplay,
   playAttemptDisplay: parkingJamPlayAttemptDisplay,
   ...createGameReplay({
-    readRecordConditions: (record) =>
-      isParkingJamPlayRecord(record) ? record.payload : null,
-    readAttemptConditions: (attempt) =>
-      isParkingJamPlayAttempt(attempt) ? attempt.start : null,
+    readRecordConditions(record) {
+      return isParkingJamPlayRecord(record) ? record.payload : null;
+    },
+    readAttemptConditions(attempt) {
+      return isParkingJamPlayAttempt(attempt) ? attempt.start : null;
+    },
     resolveStart: resolveParkingJamReplayStart,
-    renderPlay: (start) => <PlayableParkingJam {...start} />,
+    renderPlay(start) {
+      return <PlayableParkingJam {...start} />;
+    },
   }),
 } satisfies GameCatalogEntry;
 

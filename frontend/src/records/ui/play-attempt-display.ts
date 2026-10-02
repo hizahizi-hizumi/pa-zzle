@@ -3,7 +3,7 @@ import type {
   PlayAttemptProgressId,
 } from "@/records/play-attempt-definition";
 
-export type PlayAttemptProgressDisplay = {
+type PlayAttemptProgressDisplay = {
   id: string;
   label: string;
   formatValue: (value: number) => string;

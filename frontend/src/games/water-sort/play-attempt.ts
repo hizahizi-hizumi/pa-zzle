@@ -34,7 +34,7 @@ type WaterSortPlayAttemptProgress = {
   restartCount: number;
 };
 
-export type WaterSortPlayAttempt = PlayAttempt & {
+type WaterSortPlayAttempt = PlayAttempt & {
   payloadVersion: typeof WATER_SORT_PLAY_ATTEMPT_PAYLOAD_VERSION;
   start: WaterSortPlayAttemptStart;
   abandonment:
@@ -142,7 +142,7 @@ function getWaterSortAbandonedProgress(
     : null;
 }
 
-export type WaterSortPlayAttemptProgressId = "elapsed-ms" | "move-count";
+type WaterSortPlayAttemptProgressId = "elapsed-ms" | "move-count";
 
 export const waterSortPlayAttemptDefinition = {
   gameId: waterSortPlayRecordDefinition.gameId,

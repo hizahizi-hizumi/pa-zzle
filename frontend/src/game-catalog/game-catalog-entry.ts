@@ -89,7 +89,11 @@ export function createGameReplay<Conditions, Start>({
   }
 
   return {
-    replayRecord: (record) => replay(readRecordConditions(record)),
-    replayAttempt: (attempt) => replay(readAttemptConditions(attempt)),
+    replayRecord(record) {
+      return replay(readRecordConditions(record));
+    },
+    replayAttempt(attempt) {
+      return replay(readAttemptConditions(attempt));
+    },
   };
 }

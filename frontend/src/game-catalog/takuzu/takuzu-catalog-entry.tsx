@@ -50,12 +50,16 @@ export const takuzuCatalogEntry = {
   playRecordDisplay: takuzuPlayRecordDisplay,
   playAttemptDisplay: takuzuPlayAttemptDisplay,
   ...createGameReplay({
-    readRecordConditions: (record) =>
-      isTakuzuPlayRecord(record) ? record.payload : null,
-    readAttemptConditions: (attempt) =>
-      isTakuzuPlayAttempt(attempt) ? attempt.start : null,
+    readRecordConditions(record) {
+      return isTakuzuPlayRecord(record) ? record.payload : null;
+    },
+    readAttemptConditions(attempt) {
+      return isTakuzuPlayAttempt(attempt) ? attempt.start : null;
+    },
     resolveStart: resolveTakuzuReplayStart,
-    renderPlay: (start) => <PlayableTakuzu {...start} />,
+    renderPlay(start) {
+      return <PlayableTakuzu {...start} />;
+    },
   }),
 } satisfies GameCatalogEntry;
 

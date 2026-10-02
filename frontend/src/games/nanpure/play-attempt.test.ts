@@ -18,11 +18,13 @@ import { getPlayAttemptStatus, type PlayAttempt } from "@/records/play-attempt";
 
 const problemIdentity = createNanpureProblemIdentity("locked-candidates", 740);
 
-const attempt = createNanpurePlayAttempt({
+const attemptInput: Parameters<typeof createNanpurePlayAttempt>[0] = {
   difficulty: "3",
   problemIdentity,
   startedAt: 1_000,
-});
+};
+
+const attempt = createNanpurePlayAttempt(attemptInput);
 
 const solution = [
   "534678912",
@@ -59,23 +61,30 @@ const record = createNanpurePlayRecord({
   },
 });
 
-test("開始条件だけを持つ開始記録を作ること", () => {
-  expect(attempt).toEqual({
-    id: "nanpure:1000",
-    gameId: "nanpure",
-    startedAt: 1_000,
-    payloadVersion: 1,
-    start: {
-      difficulty: "3",
-      problemIdentity,
-    },
-    abandonment: null,
-  });
-  expect(attempt.start.problemIdentity).not.toBe(problemIdentity);
-});
+describe("createNanpurePlayAttempt", () => {
+  test("開始条件だけを持つ開始記録を作ること", () => {
+    const created = createNanpurePlayAttempt(attemptInput);
 
-test("同じ時刻に始めたプレイの完了記録と突き合わせられること", () => {
-  expect(getPlayAttemptStatus(attempt, [record])).toBe("cleared");
+    expect(created).toEqual({
+      id: "nanpure:1000",
+      gameId: "nanpure",
+      startedAt: 1_000,
+      payloadVersion: 1,
+      start: {
+        difficulty: "3",
+        problemIdentity,
+      },
+      abandonment: null,
+    });
+    expect(created.start.problemIdentity).not.toBe(problemIdentity);
+  });
+
+  test("同じ時刻に始めたプレイの完了記録と突き合わせられること", () => {
+    const created = createNanpurePlayAttempt(attemptInput);
+    const status = getPlayAttemptStatus(created, [record]);
+
+    expect(status).toBe("cleared");
+  });
 });
 
 test("離れた時点までの実測値を進み具合にすること", () => {
@@ -89,6 +98,15 @@ test("離れた時点までの実測値を進み具合にすること", () => {
   });
 });
 
+function getProgressValues(value: PlayAttempt) {
+  return Object.fromEntries(
+    nanpurePlayAttemptDefinition.progress.map(({ id, getValue }) => [
+      id,
+      getValue(value),
+    ]),
+  );
+}
+
 describe("nanpurePlayAttemptDefinition", () => {
   const abandoned = {
     ...attempt,
@@ -99,42 +117,14 @@ describe("nanpurePlayAttemptDefinition", () => {
   };
   // 保存先から読み戻したときと同じく、JSON を経由した値で確かめる。
   const stored: PlayAttempt = JSON.parse(JSON.stringify(abandoned));
-
-  test("保存した開始記録と離脱を読み戻せること", () => {
-    expect(isNanpurePlayAttempt(JSON.parse(JSON.stringify(attempt)))).toBe(
-      true,
-    );
-    expect(isNanpurePlayAttempt(stored)).toBe(true);
-  });
-
-  test("開始条件から完了記録と同じ比較キーを返すこと", () => {
-    const comparisonKey = nanpurePlayAttemptDefinition.getComparisonKey(stored);
-
-    expect(comparisonKey).not.toBeNull();
-    expect(comparisonKey).toBe(
-      nanpurePlayRecordDefinition.getComparisonKey(record),
-    );
-  });
-
-  test("離れた時点の進み具合を返し、離脱していない試行では返さないこと", () => {
-    const progressOf = (value: PlayAttempt) =>
-      Object.fromEntries(
-        nanpurePlayAttemptDefinition.progress.map(({ id, getValue }) => [
-          id,
-          getValue(value),
-        ]),
-      );
-
-    expect(progressOf(stored)).toEqual({
-      "elapsed-ms": 40_000,
-      "mistake-count": 1,
-    });
-    expect(
-      Object.values(progressOf(attempt)).every((value) => value === null),
-    ).toBe(true);
-  });
-
-  test.each([
+  const storedStart: PlayAttempt = JSON.parse(JSON.stringify(attempt));
+  const recordComparisonKey =
+    nanpurePlayRecordDefinition.getComparisonKey(record);
+  const readableCases = [
+    ["開始だけを記録した", storedStart],
+    ["離脱を記録した", stored],
+  ] as const;
+  const unreadableCases = [
     ["未知の版の", { ...stored, payloadVersion: 2 }],
     ["別のゲームの", { ...stored, gameId: "other-game" }],
     [
@@ -148,8 +138,47 @@ describe("nanpurePlayAttemptDefinition", () => {
         abandonment: { abandonedAt: 41_000, progress: { elapsedMs: -1 } },
       },
     ],
-  ])("%s試行を読まないこと", (_, value) => {
-    expect(isNanpurePlayAttempt(value)).toBe(false);
-    expect(nanpurePlayAttemptDefinition.getComparisonKey(value)).toBeNull();
+  ] as const;
+
+  test.each(readableCases)("保存した%s試行を読み戻せること", (_, value) => {
+    const readable = isNanpurePlayAttempt(value);
+
+    expect(readable).toBe(true);
   });
+
+  test("開始条件から完了記録と同じ比較キーを返すこと", () => {
+    const comparisonKey = nanpurePlayAttemptDefinition.getComparisonKey(stored);
+
+    expect(comparisonKey).not.toBeNull();
+    expect(comparisonKey).toBe(recordComparisonKey);
+  });
+
+  test("離れた時点の進み具合を返すこと", () => {
+    const progress = getProgressValues(stored);
+
+    expect(progress).toEqual({
+      "elapsed-ms": 40_000,
+      "mistake-count": 1,
+    });
+  });
+
+  test("離脱していない試行では進み具合を返さないこと", () => {
+    const progress = getProgressValues(storedStart);
+
+    expect(Object.values(progress).filter((value) => value !== null)).toEqual(
+      [],
+    );
+  });
+
+  test.each(unreadableCases)(
+    "%s試行を読まず、比較キーも返さないこと",
+    (_, value) => {
+      const readable = isNanpurePlayAttempt(value);
+      const comparisonKey =
+        nanpurePlayAttemptDefinition.getComparisonKey(value);
+
+      expect(readable).toBe(false);
+      expect(comparisonKey).toBeNull();
+    },
+  );
 });

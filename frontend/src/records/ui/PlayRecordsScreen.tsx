@@ -93,6 +93,37 @@ function getComparisonOptions(
   return Array.from(options, ([key, label]) => ({ key, label }));
 }
 
+function getLastPlayedAt(
+  records: readonly PlayRecord[],
+  abandonedAttempts: readonly AbandonedPlayAttempt[],
+  game: PlayRecordGame,
+): number | null {
+  const plays = getGamePlays(records, abandonedAttempts, game);
+  return (
+    getPlayHistoryEntries(plays.records, plays.abandonedAttempts)[0]
+      ?.occurredAt ?? null
+  );
+}
+
+/** 完了・離脱のどちらでも、最後に遊んだゲーム。まだ遊んでいなければ最初のゲーム。 */
+function getLastPlayedGame(
+  games: PlayRecordGameCatalog,
+  records: readonly PlayRecord[],
+  abandonedAttempts: readonly AbandonedPlayAttempt[],
+): PlayRecordGame {
+  let lastPlayed: { game: PlayRecordGame; playedAt: number } | null = null;
+  for (const game of games) {
+    const playedAt = getLastPlayedAt(records, abandonedAttempts, game);
+    if (
+      playedAt !== null &&
+      (lastPlayed === null || playedAt > lastPlayed.playedAt)
+    ) {
+      lastPlayed = { game, playedAt };
+    }
+  }
+  return lastPlayed?.game ?? games[0];
+}
+
 export function PlayRecordsScreen({
   records,
   attempts,
@@ -109,28 +140,7 @@ export function PlayRecordsScreen({
     () => getAbandonedPlayAttempts(attempts, records),
     [attempts, records],
   );
-  const [selectedGameId, setSelectedGameId] = useState(() => {
-    // 完了・離脱のどちらでも、最後に遊んだゲームを最初に開く。
-    const newestGame = games
-      .map((candidate) => {
-        const plays = getGamePlays(sortedRecords, abandonedAttempts, candidate);
-        const newest = getPlayHistoryEntries(
-          plays.records,
-          plays.abandonedAttempts,
-        )[0];
-        return { candidate, occurredAt: newest?.occurredAt ?? null };
-      })
-      .reduce<{ candidate: PlayRecordGame; occurredAt: number } | null>(
-        (newest, { candidate, occurredAt }) =>
-          occurredAt !== null &&
-          (newest === null || occurredAt > newest.occurredAt)
-            ? { candidate, occurredAt }
-            : newest,
-        null,
-      );
-    return (newestGame?.candidate ?? games[0]).playRecordDisplay.definition
-      .gameId;
-  });
+  const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [selectedComparisonKey, setSelectedComparisonKey] = useState<
     string | null
   >(null);
@@ -141,7 +151,7 @@ export function PlayRecordsScreen({
   const game =
     games.find(
       (item) => item.playRecordDisplay.definition.gameId === selectedGameId,
-    ) ?? games[0];
+    ) ?? getLastPlayedGame(games, sortedRecords, abandonedAttempts);
   const display = game.playRecordDisplay;
   const { definition } = display;
   const comparisonOptions = getComparisonOptions(

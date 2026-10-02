@@ -1,11 +1,10 @@
 import type { PlayAttempt } from "@/records/play-attempt";
 
 /** 離脱した時点の進み具合として見せる1つの値。離脱していない試行や読めない試行では `null`。 */
-export type PlayAttemptProgressDefinition<ProgressId extends string = string> =
-  {
-    id: ProgressId;
-    getValue: (attempt: PlayAttempt) => number | null;
-  };
+type PlayAttemptProgressDefinition<ProgressId extends string = string> = {
+  id: ProgressId;
+  getValue: (attempt: PlayAttempt) => number | null;
+};
 
 /**
  * ゲームごとの、保存済みのプレイ試行の読み戻し方。

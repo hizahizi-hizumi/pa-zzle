@@ -37,7 +37,7 @@ type TakuzuPlayAttemptProgress = {
   inputCount: number;
 };
 
-export type TakuzuPlayAttempt = PlayAttempt & {
+type TakuzuPlayAttempt = PlayAttempt & {
   payloadVersion: typeof TAKUZU_PLAY_ATTEMPT_PAYLOAD_VERSION;
   start: TakuzuPlayAttemptStart;
   abandonment:
@@ -145,7 +145,7 @@ function getTakuzuAbandonedProgress(
     : null;
 }
 
-export type TakuzuPlayAttemptProgressId = "elapsed-ms" | "correction-count";
+type TakuzuPlayAttemptProgressId = "elapsed-ms" | "correction-count";
 
 export const takuzuPlayAttemptDefinition = {
   gameId: takuzuPlayRecordDefinition.gameId,

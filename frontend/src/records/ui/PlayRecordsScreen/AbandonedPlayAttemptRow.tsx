@@ -1,5 +1,5 @@
 import type { AbandonedPlayAttempt } from "@/records/play-attempt";
-import { formatRecordCompletedAt } from "@/records/ui/format";
+import { formatPlayedAt } from "@/records/ui/format";
 import { ReplayPlayButton } from "@/records/ui/PlayRecordsScreen/ReplayPlayButton";
 import { getPlayRecordGridTemplateColumns } from "@/records/ui/PlayRecordsScreen/record-grid";
 import type { PlayAttemptDisplayDefinition } from "@/records/ui/play-attempt-display";
@@ -11,11 +11,7 @@ type AbandonedPlayAttemptRowProps = {
   onReplay: (attemptId: string) => void;
 };
 
-/**
- * 離脱したプレイの1行。評価が無いため最初の指標（評価）の列に離脱したことを示し、
- * 完了したプレイの指標とは比べられない進み具合は、残りの指標の列をまとめた幅にラベル付きで並べる。
- * 同じ問題の再プレイは完了したプレイの行と同じく選べる。JSONでのコピーは完了記録だけが対象なので置かない。
- */
+/** 離脱したプレイは評価を持たず、進み具合も完了したプレイの指標と比べられないので、指標の列には揃えない。 */
 export function AbandonedPlayAttemptRow({
   attempt,
   attemptDisplay,
@@ -31,6 +27,24 @@ export function AbandonedPlayAttemptRow({
       : [{ ...item, formattedValue: item.formatValue(value) }];
   });
 
+  // 評価の列に離脱したことを示し、残りの指標の列をまとめて進み具合に使う。
+  const progressColumnCount = metricCount - 1;
+  const abandonedLabel = (
+    <span className="text-right text-supporting font-medium">離脱</span>
+  );
+  const progressList = (
+    <dl className="flex min-w-0 flex-wrap items-baseline justify-end gap-x-3 text-meta">
+      {progress.map((item) => (
+        <div key={item.id} className="flex items-baseline gap-1">
+          <dt>{item.label}</dt>
+          <dd className="font-mono font-medium tabular-nums">
+            {item.formattedValue}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+
   return (
     <li
       className="grid items-center gap-x-2 py-3 text-muted-foreground"
@@ -39,22 +53,24 @@ export function AbandonedPlayAttemptRow({
       }}
     >
       <p className="text-meta tabular-nums">
-        {formatRecordCompletedAt(attempt.abandonment.abandonedAt)}
+        {formatPlayedAt(attempt.abandonment.abandonedAt)}
       </p>
-      <span className="text-right text-supporting font-medium">離脱</span>
-      <dl
-        className="flex min-w-0 flex-wrap items-baseline justify-end gap-x-3 text-meta"
-        style={{ gridColumn: `span ${Math.max(metricCount - 1, 1)}` }}
-      >
-        {progress.map((item) => (
-          <div key={item.id} className="flex items-baseline gap-1">
-            <dt>{item.label}</dt>
-            <dd className="font-mono font-medium tabular-nums">
-              {item.formattedValue}
-            </dd>
+      {progressColumnCount > 0 ? (
+        <>
+          {abandonedLabel}
+          <div
+            className="flex min-w-0 justify-end"
+            style={{ gridColumn: `span ${progressColumnCount}` }}
+          >
+            {progressList}
           </div>
-        ))}
-      </dl>
+        </>
+      ) : (
+        <div className="flex min-w-0 flex-wrap items-baseline justify-end gap-x-3">
+          {abandonedLabel}
+          {progressList}
+        </div>
+      )}
       {/* 完了したプレイの行と同じ見た目にするため、行の控えめな文字色を操作には引き継がない。 */}
       <div className="flex justify-end text-foreground">
         <ReplayPlayButton onReplay={() => onReplay(attempt.id)} />

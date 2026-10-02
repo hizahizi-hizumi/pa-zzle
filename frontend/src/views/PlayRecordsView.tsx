@@ -1,14 +1,21 @@
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import { gameCatalog } from "@/game-catalog/game-catalog";
-import { readPlayAttempts } from "@/records/play-attempt-storage";
+import {
+  readPlayAttemptsSnapshot,
+  subscribePlayAttempts,
+} from "@/records/play-attempt-storage";
 import { readPlayRecords } from "@/records/storage";
 import { PlayRecordsScreen } from "@/records/ui/PlayRecordsScreen";
 import { Link, useNavigate } from "@/router";
 
 export function PlayRecordsView() {
   const [records] = useState(() => readPlayRecords());
-  const [attempts] = useState(() => readPlayAttempts());
+  // 直前のプレイ画面の離脱は、この画面を描画したあとに保存されるので、保存へ追従する。
+  const attempts = useSyncExternalStore(
+    subscribePlayAttempts,
+    readPlayAttemptsSnapshot,
+  );
   const navigate = useNavigate();
 
   return (

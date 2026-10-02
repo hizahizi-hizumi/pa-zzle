@@ -54,12 +54,16 @@ export const minesweeperCatalogEntry = {
   playRecordDisplay: minesweeperPlayRecordDisplay,
   playAttemptDisplay: minesweeperPlayAttemptDisplay,
   ...createGameReplay({
-    readRecordConditions: (record) =>
-      isMinesweeperPlayRecord(record) ? record.payload : null,
-    readAttemptConditions: (attempt) =>
-      isMinesweeperPlayAttempt(attempt) ? attempt.start : null,
+    readRecordConditions(record) {
+      return isMinesweeperPlayRecord(record) ? record.payload : null;
+    },
+    readAttemptConditions(attempt) {
+      return isMinesweeperPlayAttempt(attempt) ? attempt.start : null;
+    },
     resolveStart: resolveMinesweeperReplayStart,
-    renderPlay: (start) => <PlayableMinesweeper {...start} />,
+    renderPlay(start) {
+      return <PlayableMinesweeper {...start} />;
+    },
   }),
 } satisfies GameCatalogEntry;
 

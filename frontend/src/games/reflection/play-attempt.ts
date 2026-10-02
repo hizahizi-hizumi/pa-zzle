@@ -36,7 +36,7 @@ type ReflectionPlayAttemptProgress = {
   inputCount: number;
 };
 
-export type ReflectionPlayAttempt = PlayAttempt & {
+type ReflectionPlayAttempt = PlayAttempt & {
   payloadVersion: typeof REFLECTION_PLAY_ATTEMPT_PAYLOAD_VERSION;
   start: ReflectionPlayAttemptStart;
   abandonment:
@@ -146,7 +146,7 @@ function getReflectionAbandonedProgress(
     : null;
 }
 
-export type ReflectionPlayAttemptProgressId = "elapsed-ms";
+type ReflectionPlayAttemptProgressId = "elapsed-ms";
 
 export const reflectionPlayAttemptDefinition = {
   gameId: reflectionPlayRecordDefinition.gameId,

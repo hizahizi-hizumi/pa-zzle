@@ -32,7 +32,7 @@ type MinesweeperPlayAttemptProgress = {
   mistakeCount: number;
 };
 
-export type MinesweeperPlayAttempt = PlayAttempt & {
+type MinesweeperPlayAttempt = PlayAttempt & {
   payloadVersion: typeof MINESWEEPER_PLAY_ATTEMPT_PAYLOAD_VERSION;
   start: MinesweeperPlayAttemptStart;
   abandonment:
@@ -136,7 +136,7 @@ function getMinesweeperAbandonedProgress(
     : null;
 }
 
-export type MinesweeperPlayAttemptProgressId = "elapsed-ms" | "mistake-count";
+type MinesweeperPlayAttemptProgressId = "elapsed-ms" | "mistake-count";
 
 export const minesweeperPlayAttemptDefinition = {
   gameId: minesweeperPlayRecordDefinition.gameId,

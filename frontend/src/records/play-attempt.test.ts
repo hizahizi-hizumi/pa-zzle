@@ -34,62 +34,82 @@ function createRecord(gameId: string, startedAt: number): PlayRecord {
 }
 
 describe("getPlayAttemptStatus", () => {
-  test("同じゲームで同じ時刻に始めた完了記録があればクリアとすること", () => {
-    const records = [createRecord("test-game", 1_000)];
+  const clearedRecords = [createRecord("test-game", 1_000)];
+  const otherRecords = [
+    createRecord("other-game", 1_000),
+    createRecord("test-game", 2_000),
+  ];
+  const cases = [
+    [
+      "同じゲームで同じ時刻に始めた完了記録があればクリアとすること",
+      attempt,
+      clearedRecords,
+      "cleared",
+    ],
+    [
+      "離脱を記録していても完了記録を優先すること",
+      abandoned,
+      clearedRecords,
+      "cleared",
+    ],
+    [
+      "完了記録が無く離脱を記録していれば離脱とすること",
+      abandoned,
+      otherRecords,
+      "abandoned",
+    ],
+    ["完了記録も離脱も無ければ未完了とすること", attempt, [], "unfinished"],
+  ] as const;
 
-    expect(getPlayAttemptStatus(attempt, records)).toBe("cleared");
-  });
+  test.each(cases)("%s", (_, target, records, expected) => {
+    const status = getPlayAttemptStatus(target, records);
 
-  test("離脱を記録していても完了記録を優先すること", () => {
-    const records = [createRecord("test-game", 1_000)];
-
-    expect(getPlayAttemptStatus(abandoned, records)).toBe("cleared");
-  });
-
-  test("完了記録が無く離脱を記録していれば離脱とすること", () => {
-    const records = [
-      createRecord("other-game", 1_000),
-      createRecord("test-game", 2_000),
-    ];
-
-    expect(getPlayAttemptStatus(abandoned, records)).toBe("abandoned");
-  });
-
-  test("完了記録も離脱も無ければ未完了とすること", () => {
-    expect(getPlayAttemptStatus(attempt, [])).toBe("unfinished");
+    expect(status).toBe(expected);
   });
 });
 
 describe("getAbandonedPlayAttempts", () => {
-  test("離脱の試行だけを選び、未完了とクリアの試行を除くこと", () => {
-    const abandonedLater: PlayAttempt = {
-      ...abandoned,
-      id: "test-game:2000",
-      startedAt: 2_000,
-      abandonment: { abandonedAt: 6_000, progress: {} },
-    };
-    const records = [createRecord("test-game", 2_000)];
+  const abandonedLater: PlayAttempt = {
+    ...abandoned,
+    id: "test-game:2000",
+    startedAt: 2_000,
+    abandonment: { abandonedAt: 6_000, progress: {} },
+  };
+  const records = [createRecord("test-game", 2_000)];
 
-    expect(
-      getAbandonedPlayAttempts([attempt, abandoned, abandonedLater], records),
-    ).toEqual([abandoned]);
+  test("離脱の試行だけを選び、未完了とクリアの試行を除くこと", () => {
+    const abandonedAttempts = getAbandonedPlayAttempts(
+      [attempt, abandoned, abandonedLater],
+      records,
+    );
+
+    expect(abandonedAttempts).toEqual([abandoned]);
   });
 });
 
 describe("isPlayAttempt", () => {
-  test("開始記録と離脱を記録した試行を解釈できること", () => {
-    expect(isPlayAttempt(attempt)).toBe(true);
-    expect(isPlayAttempt(abandoned)).toBe(true);
-  });
-
-  test.each([
+  const readableCases = [
+    ["開始だけを記録した", attempt],
+    ["離脱を記録した", abandoned],
+  ] as const;
+  const unreadableCases = [
     ["開始条件が無い", withoutStart],
     [
       "開始より前に離れている",
       { ...attempt, abandonment: { abandonedAt: 500, progress: {} } },
     ],
     ["進み具合が無い", { ...attempt, abandonment: { abandonedAt: 5_000 } }],
-  ])("%s試行を解釈しないこと", (_, value) => {
-    expect(isPlayAttempt(value)).toBe(false);
+  ] as const;
+
+  test.each(readableCases)("%s試行を解釈できること", (_, value) => {
+    const readable = isPlayAttempt(value);
+
+    expect(readable).toBe(true);
+  });
+
+  test.each(unreadableCases)("%s試行を解釈しないこと", (_, value) => {
+    const readable = isPlayAttempt(value);
+
+    expect(readable).toBe(false);
   });
 });

@@ -22,6 +22,8 @@ function createAttempt(startedAt: number): PlayAttempt {
   };
 }
 
+type AttemptHook = ReturnType<typeof renderAttemptHook>;
+
 function renderAttemptHook(initialProps: HookProps) {
   return renderHook(
     ({ attempt, finished, moveCount }: HookProps) =>
@@ -49,107 +51,138 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-test("始めたプレイを1件だけ記録し、StrictMode の張り直しを離脱にしないこと", async () => {
-  renderAttemptHook({
-    attempt: createAttempt(1_000),
-    finished: false,
-    moveCount: 0,
-  });
-  await flushAbandonment();
-
-  expect(readPlayAttempts()).toEqual([createAttempt(1_000)]);
-});
-
-test("プレイ画面を離れたときの進み具合を離脱として記録すること", async () => {
-  const hook = renderAttemptHook({
-    attempt: createAttempt(1_000),
-    finished: false,
-    moveCount: 0,
-  });
-  hook.rerender({
-    attempt: createAttempt(1_000),
-    finished: false,
-    moveCount: 3,
+describe("プレイを始めた場合", () => {
+  beforeEach(() => {
+    renderAttemptHook({
+      attempt: createAttempt(1_000),
+      finished: false,
+      moveCount: 0,
+    });
   });
 
-  hook.unmount();
-  await flushAbandonment();
+  test("始めたプレイを1件だけ記録し、StrictMode の張り直しを離脱にしないこと", async () => {
+    await flushAbandonment();
+    const attempts = readPlayAttempts();
 
-  expect(readPlayAttempts()[0]?.abandonment).toEqual({
-    abandonedAt: 9_000,
-    progress: { moveCount: 3, abandonedAt: 9_000 },
+    expect(attempts).toEqual([createAttempt(1_000)]);
+  });
+
+  test("ページを離れると、その時点の進み具合を離脱として記録すること", () => {
+    window.dispatchEvent(new PageTransitionEvent("pagehide"));
+    const abandonment = readPlayAttempts()[0]?.abandonment;
+
+    expect(abandonment).toEqual({
+      abandonedAt: 9_000,
+      progress: { moveCount: 0, abandonedAt: 9_000 },
+    });
   });
 });
 
-test("解き終えたプレイを離れても離脱にしないこと", async () => {
-  const hook = renderAttemptHook({
-    attempt: createAttempt(1_000),
-    finished: false,
-    moveCount: 0,
-  });
-  hook.rerender({
-    attempt: createAttempt(1_000),
-    finished: true,
-    moveCount: 5,
+describe("ページを離れた場合", () => {
+  beforeEach(() => {
+    renderAttemptHook({
+      attempt: createAttempt(1_000),
+      finished: false,
+      moveCount: 2,
+    });
+    window.dispatchEvent(new PageTransitionEvent("pagehide"));
   });
 
-  hook.unmount();
-  await flushAbandonment();
+  test("同じページへ戻ると離脱を取り消すこと", () => {
+    window.dispatchEvent(
+      new PageTransitionEvent("pageshow", { persisted: true }),
+    );
+    const abandonment = readPlayAttempts()[0]?.abandonment;
 
-  expect(readPlayAttempts()[0]?.abandonment).toBeNull();
+    expect(abandonment).toBeNull();
+  });
 });
 
-test("別のプレイに置き換えたとき前のプレイの進み具合で離脱を記録すること", async () => {
-  const hook = renderAttemptHook({
-    attempt: createAttempt(1_000),
-    finished: false,
-    moveCount: 4,
+describe("プレイを進めた場合", () => {
+  let hook: AttemptHook;
+
+  beforeEach(() => {
+    hook = renderAttemptHook({
+      attempt: createAttempt(1_000),
+      finished: false,
+      moveCount: 0,
+    });
+    hook.rerender({
+      attempt: createAttempt(1_000),
+      finished: false,
+      moveCount: 3,
+    });
   });
 
-  hook.rerender({
-    attempt: createAttempt(2_000),
-    finished: false,
-    moveCount: 0,
-  });
-  await flushAbandonment();
+  test("プレイ画面を離れると、その時点の進み具合を離脱として記録すること", async () => {
+    hook.unmount();
+    await flushAbandonment();
+    const abandonment = readPlayAttempts()[0]?.abandonment;
 
-  const [previous, next] = readPlayAttempts();
-  expect(previous?.abandonment?.progress).toEqual({
-    moveCount: 4,
-    abandonedAt: 9_000,
+    expect(abandonment).toEqual({
+      abandonedAt: 9_000,
+      progress: { moveCount: 3, abandonedAt: 9_000 },
+    });
   });
-  expect(next).toEqual(createAttempt(2_000));
+
+  test("別のプレイに置き換えると、前のプレイの進み具合で離脱を記録し次のプレイを始めること", async () => {
+    hook.rerender({
+      attempt: createAttempt(2_000),
+      finished: false,
+      moveCount: 0,
+    });
+    await flushAbandonment();
+    const [previous, next] = readPlayAttempts();
+
+    expect(previous?.abandonment?.progress).toEqual({
+      moveCount: 3,
+      abandonedAt: 9_000,
+    });
+    expect(next).toEqual(createAttempt(2_000));
+  });
 });
 
-test("ページを離れたとき離脱を記録し、同じページへ戻ったら取り消すこと", () => {
-  renderAttemptHook({
-    attempt: createAttempt(1_000),
-    finished: false,
-    moveCount: 2,
+describe("解き終えた場合", () => {
+  let hook: AttemptHook;
+
+  beforeEach(() => {
+    hook = renderAttemptHook({
+      attempt: createAttempt(1_000),
+      finished: false,
+      moveCount: 0,
+    });
+    hook.rerender({
+      attempt: createAttempt(1_000),
+      finished: true,
+      moveCount: 5,
+    });
   });
 
-  window.dispatchEvent(new PageTransitionEvent("pagehide"));
-  const hidden = readPlayAttempts()[0]?.abandonment;
-  window.dispatchEvent(
-    new PageTransitionEvent("pageshow", { persisted: true }),
-  );
+  test("プレイ画面を離れても離脱にしないこと", async () => {
+    hook.unmount();
+    await flushAbandonment();
+    const abandonment = readPlayAttempts()[0]?.abandonment;
 
-  expect(hidden).toEqual({
-    abandonedAt: 9_000,
-    progress: { moveCount: 2, abandonedAt: 9_000 },
+    expect(abandonment).toBeNull();
   });
-  expect(readPlayAttempts()[0]?.abandonment).toBeNull();
 });
 
-test("記録しないプレイは始めたことも記録しないこと", async () => {
-  const hook = renderAttemptHook({
-    attempt: null,
-    finished: false,
-    moveCount: 0,
+describe("記録しないプレイの場合", () => {
+  let hook: AttemptHook;
+
+  beforeEach(() => {
+    hook = renderAttemptHook({
+      attempt: null,
+      finished: false,
+      moveCount: 0,
+    });
   });
 
-  hook.unmount();
-  await flushAbandonment();
+  test("始めたことも離れたことも記録しないこと", async () => {
+    hook.unmount();
+    await flushAbandonment();
+    const attempts = readPlayAttempts();
 
-  expect(readPlayAttempts()).toEqual([]);
+    expect(attempts).toEqual([]);
+  });
 });

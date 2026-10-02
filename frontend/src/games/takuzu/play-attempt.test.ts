@@ -22,11 +22,13 @@ const problemIdentity = createTakuzuProblemIdentity(
   160,
 );
 
-const attempt = createTakuzuPlayAttempt({
+const attemptInput: Parameters<typeof createTakuzuPlayAttempt>[0] = {
   difficulty: "3",
   problemIdentity,
   startedAt: 1_000,
-});
+};
+
+const attempt = createTakuzuPlayAttempt(attemptInput);
 
 const problem: TakuzuProblem = {
   givens: parseTakuzuBoard(["A..B", "....", "..A.", "B..."]),
@@ -55,23 +57,30 @@ const record = createTakuzuPlayRecord({
   },
 });
 
-test("開始条件だけを持つ開始記録を作ること", () => {
-  expect(attempt).toEqual({
-    id: "takuzu:1000",
-    gameId: "takuzu",
-    startedAt: 1_000,
-    payloadVersion: 1,
-    start: {
-      difficulty: "3",
-      problemIdentity,
-    },
-    abandonment: null,
-  });
-  expect(attempt.start.problemIdentity).not.toBe(problemIdentity);
-});
+describe("createTakuzuPlayAttempt", () => {
+  test("開始条件だけを持つ開始記録を作ること", () => {
+    const created = createTakuzuPlayAttempt(attemptInput);
 
-test("同じ時刻に始めたプレイの完了記録と突き合わせられること", () => {
-  expect(getPlayAttemptStatus(attempt, [record])).toBe("cleared");
+    expect(created).toEqual({
+      id: "takuzu:1000",
+      gameId: "takuzu",
+      startedAt: 1_000,
+      payloadVersion: 1,
+      start: {
+        difficulty: "3",
+        problemIdentity,
+      },
+      abandonment: null,
+    });
+    expect(created.start.problemIdentity).not.toBe(problemIdentity);
+  });
+
+  test("同じ時刻に始めたプレイの完了記録と突き合わせられること", () => {
+    const created = createTakuzuPlayAttempt(attemptInput);
+    const status = getPlayAttemptStatus(created, [record]);
+
+    expect(status).toBe("cleared");
+  });
 });
 
 test("離れた時点までの実測値を進み具合にすること", () => {
@@ -86,6 +95,15 @@ test("離れた時点までの実測値を進み具合にすること", () => {
   });
 });
 
+function getProgressValues(value: PlayAttempt) {
+  return Object.fromEntries(
+    takuzuPlayAttemptDefinition.progress.map(({ id, getValue }) => [
+      id,
+      getValue(value),
+    ]),
+  );
+}
+
 describe("takuzuPlayAttemptDefinition", () => {
   const abandoned = {
     ...attempt,
@@ -96,40 +114,14 @@ describe("takuzuPlayAttemptDefinition", () => {
   };
   // 保存先から読み戻したときと同じく、JSON を経由した値で確かめる。
   const stored: PlayAttempt = JSON.parse(JSON.stringify(abandoned));
-
-  test("保存した開始記録と離脱を読み戻せること", () => {
-    expect(isTakuzuPlayAttempt(JSON.parse(JSON.stringify(attempt)))).toBe(true);
-    expect(isTakuzuPlayAttempt(stored)).toBe(true);
-  });
-
-  test("開始条件から完了記録と同じ比較キーを返すこと", () => {
-    const comparisonKey = takuzuPlayAttemptDefinition.getComparisonKey(stored);
-
-    expect(comparisonKey).not.toBeNull();
-    expect(comparisonKey).toBe(
-      takuzuPlayRecordDefinition.getComparisonKey(record),
-    );
-  });
-
-  test("離れた時点の進み具合を返し、離脱していない試行では返さないこと", () => {
-    const progressOf = (value: PlayAttempt) =>
-      Object.fromEntries(
-        takuzuPlayAttemptDefinition.progress.map(({ id, getValue }) => [
-          id,
-          getValue(value),
-        ]),
-      );
-
-    expect(progressOf(stored)).toEqual({
-      "elapsed-ms": 40_000,
-      "correction-count": 3,
-    });
-    expect(
-      Object.values(progressOf(attempt)).every((value) => value === null),
-    ).toBe(true);
-  });
-
-  test.each([
+  const storedStart: PlayAttempt = JSON.parse(JSON.stringify(attempt));
+  const recordComparisonKey =
+    takuzuPlayRecordDefinition.getComparisonKey(record);
+  const readableCases = [
+    ["開始だけを記録した", storedStart],
+    ["離脱を記録した", stored],
+  ] as const;
+  const unreadableCases = [
     ["未知の版の", { ...stored, payloadVersion: 2 }],
     ["別のゲームの", { ...stored, gameId: "other-game" }],
     [
@@ -143,8 +135,46 @@ describe("takuzuPlayAttemptDefinition", () => {
         abandonment: { abandonedAt: 41_000, progress: { elapsedMs: -1 } },
       },
     ],
-  ])("%s試行を読まないこと", (_, value) => {
-    expect(isTakuzuPlayAttempt(value)).toBe(false);
-    expect(takuzuPlayAttemptDefinition.getComparisonKey(value)).toBeNull();
+  ] as const;
+
+  test.each(readableCases)("保存した%s試行を読み戻せること", (_, value) => {
+    const readable = isTakuzuPlayAttempt(value);
+
+    expect(readable).toBe(true);
   });
+
+  test("開始条件から完了記録と同じ比較キーを返すこと", () => {
+    const comparisonKey = takuzuPlayAttemptDefinition.getComparisonKey(stored);
+
+    expect(comparisonKey).not.toBeNull();
+    expect(comparisonKey).toBe(recordComparisonKey);
+  });
+
+  test("離れた時点の進み具合を返すこと", () => {
+    const progress = getProgressValues(stored);
+
+    expect(progress).toEqual({
+      "elapsed-ms": 40_000,
+      "correction-count": 3,
+    });
+  });
+
+  test("離脱していない試行では進み具合を返さないこと", () => {
+    const progress = getProgressValues(storedStart);
+
+    expect(Object.values(progress).filter((value) => value !== null)).toEqual(
+      [],
+    );
+  });
+
+  test.each(unreadableCases)(
+    "%s試行を読まず、比較キーも返さないこと",
+    (_, value) => {
+      const readable = isTakuzuPlayAttempt(value);
+      const comparisonKey = takuzuPlayAttemptDefinition.getComparisonKey(value);
+
+      expect(readable).toBe(false);
+      expect(comparisonKey).toBeNull();
+    },
+  );
 });

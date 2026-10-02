@@ -4,7 +4,7 @@ import {
 } from "@/records/personal-best";
 import type { PlayRecord } from "@/records/play-record";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
-import { formatRecordCompletedAt } from "@/records/ui/format";
+import { formatPlayedAt } from "@/records/ui/format";
 import { CopyPlayRecordsButton } from "@/records/ui/PlayRecordsScreen/CopyPlayRecordsButton";
 import { ReplayPlayButton } from "@/records/ui/PlayRecordsScreen/ReplayPlayButton";
 import { getPlayRecordGridTemplateColumns } from "@/records/ui/PlayRecordsScreen/record-grid";
@@ -39,7 +39,7 @@ export function PlayRecordRow({
       }}
     >
       <p className="text-meta text-muted-foreground tabular-nums">
-        {formatRecordCompletedAt(record.completedAt)}
+        {formatPlayedAt(record.completedAt)}
       </p>
       {display.metrics.map((metric, metricIndex) => {
         const value = getPlayRecordMetricValue(

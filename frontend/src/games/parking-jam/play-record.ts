@@ -5,7 +5,10 @@ import {
   parseLegacyParkingJamDifficulty,
   parseParkingJamDifficulty,
 } from "@/games/parking-jam/difficulty";
-import type { ParkingJamProblemIdentity } from "@/games/parking-jam/problem/problem";
+import {
+  isParkingJamProblemIdentity,
+  type ParkingJamProblemIdentity,
+} from "@/games/parking-jam/problem/problem";
 import {
   calculateParkingJamPlayScore,
   calculateParkingJamSpeedFullScoreMs,
@@ -80,43 +83,6 @@ type CreateParkingJamPlayRecordInput = {
 
 function isNonNegativeInteger(value: unknown): value is number {
   return typeof value === "number" && Number.isInteger(value) && value >= 0;
-}
-
-function isPositiveInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value > 0;
-}
-
-function isFiniteUnitInterval(value: unknown): value is number {
-  return (
-    typeof value === "number" &&
-    Number.isFinite(value) &&
-    value >= 0 &&
-    value <= 1
-  );
-}
-
-export function isParkingJamProblemIdentity(
-  value: unknown,
-): value is ParkingJamProblemIdentity {
-  if (!value || typeof value !== "object") return false;
-
-  const identity = value as Partial<ParkingJamProblemIdentity>;
-  const conditions = identity.conditions;
-  return (
-    identity.generatorVersion === "2" &&
-    typeof identity.seed === "string" &&
-    !!conditions &&
-    typeof conditions === "object" &&
-    isPositiveInteger(conditions.width) &&
-    isPositiveInteger(conditions.height) &&
-    isPositiveInteger(conditions.vehicleCount) &&
-    isPositiveInteger(conditions.roadOpeningCount) &&
-    isPositiveInteger(conditions.roadOpeningSpan) &&
-    isNonNegativeInteger(conditions.fixedAreaCount) &&
-    isPositiveInteger(conditions.fixedAreaLength) &&
-    isFiniteUnitInterval(conditions.blockingPlacementProbability) &&
-    isPositiveInteger(identity.generationAttempt)
-  );
 }
 
 function isParkingJamPerformance(

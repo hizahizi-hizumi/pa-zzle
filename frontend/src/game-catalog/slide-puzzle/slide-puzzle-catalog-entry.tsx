@@ -52,12 +52,16 @@ export const slidePuzzleCatalogEntry = {
   playRecordDisplay: slidePuzzlePlayRecordDisplay,
   playAttemptDisplay: slidePuzzlePlayAttemptDisplay,
   ...createGameReplay({
-    readRecordConditions: (record) =>
-      isSlidePuzzlePlayRecord(record) ? record.payload : null,
-    readAttemptConditions: (attempt) =>
-      isSlidePuzzlePlayAttempt(attempt) ? attempt.start : null,
+    readRecordConditions(record) {
+      return isSlidePuzzlePlayRecord(record) ? record.payload : null;
+    },
+    readAttemptConditions(attempt) {
+      return isSlidePuzzlePlayAttempt(attempt) ? attempt.start : null;
+    },
     resolveStart: resolveSlidePuzzleReplayStart,
-    renderPlay: (start) => <PlayableSlidePuzzle {...start} />,
+    renderPlay(start) {
+      return <PlayableSlidePuzzle {...start} />;
+    },
   }),
 } satisfies GameCatalogEntry;
 
