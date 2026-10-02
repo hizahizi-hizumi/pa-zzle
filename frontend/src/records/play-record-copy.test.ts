@@ -1,30 +1,38 @@
 import type { PlayRecord } from "@/records/play-record";
-import { serializePlayRecordForCopy } from "@/records/play-record-copy";
+import { serializePlayRecordsForCopy } from "@/records/play-record-copy";
 
-describe("serializePlayRecordForCopy", () => {
-  test("記録の識別情報と保存済みpayloadを再現用JSONとして書き出すこと", () => {
-    const payload = {
+function createRecord(id: string, completedAt: number): PlayRecord {
+  return {
+    id,
+    gameId: "test",
+    startedAt: completedAt - 1_000,
+    completedAt,
+    payloadVersion: 2,
+    payload: {
       difficulty: "5",
-      problemIdentity: { seed: "seed", conditions: { size: 4 } },
-      performance: { elapsedMs: 120_000 },
-    };
-    const record: PlayRecord = {
-      id: "record-1",
-      gameId: "test",
-      startedAt: 1_000,
-      completedAt: 121_000,
-      payloadVersion: 2,
-      payload,
-    };
+      problemIdentity: { seed: id, conditions: { size: 4 } },
+      performance: { elapsedMs: 1_000 },
+    },
+  };
+}
 
-    expect(JSON.parse(serializePlayRecordForCopy(record))).toEqual({
+describe("serializePlayRecordsForCopy", () => {
+  test("一覧の記録を並び順のまま識別情報と保存済みpayloadで書き出すこと", () => {
+    const records = [
+      createRecord("record-2", 3_000),
+      createRecord("record-1", 2_000),
+    ];
+
+    expect(JSON.parse(serializePlayRecordsForCopy(records))).toEqual({
       formatVersion: 1,
-      gameId: "test",
-      recordId: "record-1",
-      startedAt: 1_000,
-      completedAt: 121_000,
-      payloadVersion: 2,
-      payload,
+      records: records.map((record) => ({
+        gameId: record.gameId,
+        recordId: record.id,
+        startedAt: record.startedAt,
+        completedAt: record.completedAt,
+        payloadVersion: record.payloadVersion,
+        payload: record.payload,
+      })),
     });
   });
 });

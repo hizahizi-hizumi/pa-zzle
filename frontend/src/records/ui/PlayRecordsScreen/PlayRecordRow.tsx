@@ -1,5 +1,4 @@
-import { Check, Clipboard, PlayIcon } from "lucide-react";
-import { useState } from "react";
+import { PlayIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -7,7 +6,6 @@ import {
   type PersonalBest,
 } from "@/records/personal-best";
 import type { PlayRecord } from "@/records/play-record";
-import { serializePlayRecordForCopy } from "@/records/play-record-copy";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 import { formatRecordCompletedAt } from "@/records/ui/format";
 import { getPlayRecordGridTemplateColumns } from "@/records/ui/PlayRecordsScreen/record-grid";
@@ -20,37 +18,17 @@ type PlayRecordRowProps = {
   onReplay: (recordId: string) => void;
 };
 
-type CopyState = "idle" | "copied" | "failed";
-
 export function PlayRecordRow({
   record,
   display,
   personalBests,
   onReplay,
 }: PlayRecordRowProps) {
-  const [copyState, setCopyState] = useState<CopyState>("idle");
   const bestMetricIds = getPersonalBestMetricIdsForRecord(
     record,
     personalBests,
     display.definition,
   );
-
-  async function copyRecord() {
-    try {
-      await navigator.clipboard.writeText(serializePlayRecordForCopy(record));
-      setCopyState("copied");
-      window.setTimeout(() => setCopyState("idle"), 1600);
-    } catch {
-      setCopyState("failed");
-    }
-  }
-
-  const copyLabel =
-    copyState === "copied"
-      ? "コピーしました"
-      : copyState === "failed"
-        ? "コピーできませんでした"
-        : "再現用JSONをコピー";
 
   return (
     <li
@@ -89,28 +67,16 @@ export function PlayRecordRow({
           </span>
         );
       })}
-      <div className="flex justify-end gap-1">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label={copyLabel}
-          title={copyLabel}
-          onClick={copyRecord}
-        >
-          {copyState === "copied" ? <Check /> : <Clipboard />}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="同じ問題をプレイ"
-          title="同じ問題をプレイ"
-          onClick={() => onReplay(record.id)}
-        >
-          <PlayIcon />
-        </Button>
-      </div>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        aria-label="同じ問題をプレイ"
+        title="同じ問題をプレイ"
+        onClick={() => onReplay(record.id)}
+      >
+        <PlayIcon />
+      </Button>
     </li>
   );
 }
