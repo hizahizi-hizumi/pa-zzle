@@ -414,6 +414,25 @@ describe("TsumeShogiPlayView", () => {
       });
     });
 
+    describe("駒を選んでから遊び方を開いた場合", () => {
+      beforeEach(() => {
+        tapSquare(/^4三 攻方の龍$/);
+        openMenu();
+        fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+      });
+
+      test("遊び方を閉じる Escape で駒の選択を解除しないこと", () => {
+        fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+
+        const dragon = within(getBoard()).getByRole("button", {
+          name: "4三 攻方の龍",
+        });
+
+        expect(screen.queryByRole("dialog")).toBeNull();
+        expect(dragon.getAttribute("aria-pressed")).toBe("true");
+      });
+    });
+
     test("王手にならない手は着手させないこと", () => {
       tapSquare(/^4三 攻方の龍$/);
       tapSquare(/^4四$/);

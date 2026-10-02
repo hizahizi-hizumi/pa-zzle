@@ -132,6 +132,7 @@ export function TsumeShogiPlay({
     : playing && phase === "defender"
       ? "waiting"
       : "unavailable";
+  const howToPlayOpen = howToPlay !== "closed";
 
   function closeHowToPlay() {
     // 初めての遊び方を読んでいた時間はプレイ時間に含めないよう、閉じたところから測り直す。
@@ -142,7 +143,8 @@ export function TsumeShogiPlay({
   }
 
   useEffect(() => {
-    if (!playing) return;
+    // 遊び方を開いている間の Esc は遊び方を閉じる操作なので、盤の選択には効かせない。
+    if (!playing || howToPlayOpen) return;
 
     function handleKeyDown(event: KeyboardEvent): void {
       if (event.key !== "Escape" || event.defaultPrevented) return;
@@ -156,7 +158,13 @@ export function TsumeShogiPlay({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [playing, promotionChoice, onCancelPromotion, onClearSelection]);
+  }, [
+    playing,
+    howToPlayOpen,
+    promotionChoice,
+    onCancelPromotion,
+    onClearSelection,
+  ]);
 
   // 完成演出の間は詰め上がりの盤をそのまま見せ、演出を終えてから結果画面に切り替える。
   if (progress === "result" && sessionResult && result) {
@@ -197,7 +205,7 @@ export function TsumeShogiPlay({
         onOpenDiagnostics={onOpenDiagnostics}
       />
       <TsumeShogiHowToPlayDialog
-        open={howToPlay !== "closed"}
+        open={howToPlayOpen}
         onClose={closeHowToPlay}
       />
       {/* 玉方の持駒・盤・攻方の持駒を1つのまとまりとして、盤の幅にそろえて並べる。 */}
