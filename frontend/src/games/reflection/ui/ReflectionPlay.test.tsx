@@ -32,6 +32,13 @@ afterEach(() => {
   cleanup();
 });
 
+function openPlayMenu(): void {
+  fireEvent.pointerDown(screen.getByRole("button", { name: "その他の操作" }), {
+    button: 0,
+    ctrlKey: false,
+  });
+}
+
 function createResult(performance: ReflectionSessionResult): ReflectionResult {
   // 読んで解く時間 28 × 0.5 + 8 × 3.5 + 8 × 1.25 + min(12, 10) × 3.5 = 87秒、試し置きの時間 28 × 0.5 + 13 × 5 = 79秒。
   // 基準時間はその中間の83秒（01:23）、0点になる時間 04:09。
@@ -127,10 +134,7 @@ describe("ReflectionPlay", () => {
 
   describe("メニューから遊び方を開いた場合", () => {
     function openHowToPlay(): void {
-      fireEvent.pointerDown(
-        screen.getByRole("button", { name: "その他の操作" }),
-        { button: 0, ctrlKey: false },
-      );
+      openPlayMenu();
       fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
     }
 
@@ -211,10 +215,7 @@ describe("ReflectionPlay", () => {
     );
 
     test("メニューを開いている間は数字キーで選ばないこと", () => {
-      fireEvent.pointerDown(
-        screen.getByRole("button", { name: "その他の操作" }),
-        { button: 0, ctrlKey: false },
-      );
+      openPlayMenu();
       const menu = screen.getByRole("menu");
 
       fireEvent.keyDown(menu, { key: "1" });
@@ -232,13 +233,6 @@ describe("ReflectionPlay", () => {
   });
 
   describe("ヘッダーの移動とメニューの場合", () => {
-    function openMenu(): void {
-      fireEvent.pointerDown(
-        screen.getByRole("button", { name: "その他の操作" }),
-        { button: 0, ctrlKey: false },
-      );
-    }
-
     test("戻るボタンで難易度選択への移動を通知すること", () => {
       renderPlay({});
 
@@ -253,7 +247,7 @@ describe("ReflectionPlay", () => {
       ["ホーム", "onBackToHome"],
     ] as const)("メニューの%sで移動を通知すること", (name, callbackName) => {
       renderPlay({});
-      openMenu();
+      openPlayMenu();
 
       fireEvent.click(screen.getByRole("menuitem", { name }));
 
@@ -262,7 +256,7 @@ describe("ReflectionPlay", () => {
 
     test("検証情報のつなぎ先を渡さなければメニューに検証情報を出さないこと", () => {
       renderPlay({});
-      openMenu();
+      openPlayMenu();
 
       const item = screen.queryByRole("menuitem", { name: "検証情報" });
 
@@ -272,7 +266,7 @@ describe("ReflectionPlay", () => {
     test("メニューの検証情報で検証情報を開く操作を通知すること", () => {
       const onOpenDiagnostics = vi.fn();
       renderPlay({ onOpenDiagnostics });
-      openMenu();
+      openPlayMenu();
 
       fireEvent.click(screen.getByRole("menuitem", { name: "検証情報" }));
 
