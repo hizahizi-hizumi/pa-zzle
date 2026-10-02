@@ -16,6 +16,9 @@ import { reflectionPlayRecordDisplay } from "@/games/reflection/ui/play-record-d
 import { createTakuzuPlayRecord } from "@/games/takuzu/play-record";
 import { createTakuzuProblemIdentity } from "@/games/takuzu/problem/problem";
 import { takuzuPlayRecordDisplay } from "@/games/takuzu/ui/play-record-display";
+import { createTsumeShogiPlayRecord } from "@/games/tsume-shogi/play-record";
+import { createTsumeShogiProblemIdentity } from "@/games/tsume-shogi/problem/problem";
+import { tsumeShogiPlayRecordDisplay } from "@/games/tsume-shogi/ui/play-record-display";
 import { createWaterSortPlayRecord } from "@/games/water-sort/play-record";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 
@@ -28,6 +31,7 @@ const playRecordGames = [
   { name: "マインスイーパー", playRecordDisplay: minesweeperPlayRecordDisplay },
   { name: "バイナリパズル", playRecordDisplay: takuzuPlayRecordDisplay },
   { name: "リフレクション", playRecordDisplay: reflectionPlayRecordDisplay },
+  { name: "詰将棋", playRecordDisplay: tsumeShogiPlayRecordDisplay },
 ] as const satisfies PlayRecordGameCatalog;
 
 const records = [
@@ -157,6 +161,33 @@ const records = [
       inputCount: 12,
     },
   }),
+  // 基準時間 8 + 3×4 + 12×2 + 13×4 + 8×6 = 144秒を 174秒で、誤王手1回で詰ませた記録。
+  createTsumeShogiPlayRecord({
+    difficulty: "5",
+    problemIdentity: createTsumeShogiProblemIdentity(5, 50, {
+      minimum: 10,
+      maximum: 99,
+    }),
+    poolReference: { poolVersion: "1", problemId: "5-17" },
+    workload: {
+      plies: 5,
+      rootChecks: 12,
+      plausibleWrong: 13,
+      deepDecoyCount: 8,
+    },
+    startedAt: 10_000,
+    completedAt: 184_000,
+    result: {
+      elapsedMs: 174_000,
+      wrongCheckCount: 1,
+      refutationViewCount: 1,
+      returnCount: 1,
+      undoCount: 1,
+      restartCount: 0,
+      illegalInputCount: 2,
+      inputCount: 14,
+    },
+  }),
 ];
 
 describe("PlayRecordsScreen", () => {
@@ -272,6 +303,21 @@ describe("PlayRecordsScreen", () => {
     expect(comparisonSelect.textContent).toContain("レベル 4");
     expect(screen.getAllByText("91点").length).toBeGreaterThan(0);
     expect(screen.getAllByText("+00:16").length).toBeGreaterThan(0);
+    expect(screen.getByText("1件")).toBeTruthy();
+  });
+
+  test("詰将棋では難易度ごとにスコア・基準時間との差・誤王手を比較すること", () => {
+    const gameSelect = screen.getByRole("combobox", { name: "パズル" });
+    fireEvent.change(gameSelect, { target: { value: "tsume-shogi" } });
+    const comparisonSelect = screen.getByRole("combobox", {
+      name: "開始条件",
+    });
+
+    expect(gameSelect.textContent).toContain("詰将棋");
+    expect(comparisonSelect.textContent).toContain("レベル 5");
+    expect(screen.getAllByText("87点").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("+00:30").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("誤王手").length).toBeGreaterThan(0);
     expect(screen.getByText("1件")).toBeTruthy();
   });
 });
