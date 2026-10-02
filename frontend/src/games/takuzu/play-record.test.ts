@@ -3,6 +3,7 @@ import {
   getTakuzuPlayRecordScore,
   getTakuzuPlayRecordTimeDelta,
   isTakuzuPlayRecord,
+  restoreTakuzuRecordedResult,
   takuzuPlayRecordDefinition,
 } from "@/games/takuzu/play-record";
 import { createTakuzuProblemIdentity } from "@/games/takuzu/problem/problem";
@@ -240,5 +241,54 @@ describe("takuzuPlayRecordDefinition", () => {
 
       expect(values).toEqual([83, 44_000, 1]);
     });
+  });
+});
+
+describe("restoreTakuzuRecordedResult", () => {
+  describe("今の版の記録の場合", () => {
+    test("記録の成績と問題の作業の量から結果を作り直すこと", () => {
+      const recorded = restoreTakuzuRecordedResult(record);
+
+      expect(recorded).toMatchObject({
+        difficulty: "4",
+        problemIdentity,
+        result: {
+          ...performance,
+          workload,
+          timeDeltaMs: 44_000,
+          score: { total: getTakuzuPlayRecordScore(record) },
+        },
+      });
+    });
+  });
+
+  describe("待ったの回数が無い記録の場合", () => {
+    const { undoCount: _undoCount, ...performanceWithoutUndo } = performance;
+    const recordWithoutUndo = withPayload({
+      performance: performanceWithoutUndo,
+    });
+
+    test("待った0回として結果を作り直すこと", () => {
+      const recorded = restoreTakuzuRecordedResult(recordWithoutUndo);
+
+      expect(recorded?.result.undoCount).toBe(0);
+    });
+  });
+
+  const unrestorableRecords = [
+    ["別の版の記録", { ...record, payloadVersion: 2 }],
+    [
+      "今と違う生成器の問題の記録",
+      withPayload({
+        problemIdentity: { ...problemIdentity, generatorVersion: "0" },
+      }),
+    ],
+    ["別のゲームの記録", { ...record, gameId: "nanpure" }],
+  ] as const;
+
+  test.each(unrestorableRecords)("%sには null を返すこと", (_, target) => {
+    const recorded = restoreTakuzuRecordedResult(target);
+
+    expect(recorded).toBeNull();
   });
 });

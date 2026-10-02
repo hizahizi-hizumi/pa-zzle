@@ -4,6 +4,7 @@ import {
   useProblemIdQuerySync,
   useRequestedProblem,
 } from "@/game-catalog/problem-id-query";
+import { useRecordResultNavigation } from "@/game-catalog/record-result-navigation";
 import type { ProblemId } from "@/games/problem-id";
 import { createTakuzuDiagnosticSnapshot } from "@/games/takuzu/diagnostics";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
@@ -65,6 +66,11 @@ export function PlayableTakuzu({
     playRecord,
     takuzuPlayRecordDefinition,
   );
+  const navigatesToRecordResult = useRecordResultNavigation(
+    play.progress === "result",
+    playRecord,
+    recordOutcome,
+  );
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const diagnostics = internalDiagnosticsAvailable
     ? createTakuzuDiagnosticSnapshot({
@@ -86,7 +92,8 @@ export function PlayableTakuzu({
         undoCount={play.undoCount}
         canUndo={play.canUndo}
         elapsedMs={play.elapsedMs}
-        result={play.result}
+        // 記録の結果画面へ遷移する間は、その場の結果画面を出さず盤面を見せておく。
+        result={navigatesToRecordResult ? null : play.result}
         recordOutcomeNotice={
           <PlayRecordOutcomeNotice
             outcome={recordOutcome}

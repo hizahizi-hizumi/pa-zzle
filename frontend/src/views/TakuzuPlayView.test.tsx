@@ -19,6 +19,7 @@ import { createProblemSeed } from "@/games/problem-seed";
 import { selectTakuzuProblemForDifficulty } from "@/games/takuzu/problem-selection";
 import { writeTakuzuHowToPlaySeen } from "@/games/takuzu/ui/how-to-play-seen";
 import { readPlayRecords } from "@/records/storage";
+import { PlayResultView } from "@/views/PlayResultView";
 import { TakuzuPlayView } from "@/views/TakuzuPlayView";
 
 const internalDiagnostics = vi.hoisted(() => ({ available: false }));
@@ -54,6 +55,10 @@ function renderAt(path: string): void {
           path="/puzzles/takuzu/play/:difficulty"
           element={<TakuzuPlayView />}
         />
+        <Route
+          path="/puzzles/:game/result/:recordId"
+          element={<PlayResultView />}
+        />
         <Route path="/puzzles/takuzu" element={<p>難易度選択画面</p>} />
         <Route path="/records" element={<p>記録画面</p>} />
       </Routes>
@@ -69,6 +74,10 @@ function renderRouterAt(entry: InitialEntry): PlayRouter {
       {
         path: "/puzzles/takuzu/play/:difficulty",
         element: <TakuzuPlayView />,
+      },
+      {
+        path: "/puzzles/:game/result/:recordId",
+        element: <PlayResultView />,
       },
     ],
     { initialEntries: [entry] },
@@ -170,6 +179,31 @@ describe("TakuzuPlayView", () => {
       // B → 空き → A と、別のマスへ移った後で置いたタイルを直す。
       pressCell(correctedCellIndex as number, 2);
     }
+
+    describe("そのまま解いた場合", () => {
+      let router: PlayRouter;
+
+      beforeEach(() => {
+        router = renderRouterAt("/puzzles/takuzu/play/1");
+        solve();
+      });
+
+      test("保存した記録の結果画面へ履歴を置き換えて移ること", async () => {
+        const resultScreen = await screen.findByRole("region", {
+          name: "プレイ結果",
+        });
+        const [record] = readPlayRecords();
+
+        expect(resultScreen).toBeTruthy();
+        expect(router.state.location.pathname).toBe(
+          `/puzzles/takuzu/result/${encodeURIComponent(record?.id ?? "")}`,
+        );
+        expect(router.state.historyAction).toBe("REPLACE");
+        expect(router.state.location.state).toEqual({
+          recordSaveOutcome: { status: "first-record" },
+        });
+      });
+    });
 
     describe("置いたタイルを待ったで取り消してから解いた場合", () => {
       beforeEach(() => {
