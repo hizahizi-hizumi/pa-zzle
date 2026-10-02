@@ -1,6 +1,5 @@
-import { ArrowRight } from "lucide-react";
-
 import { HowToPlayDialog } from "@/components/HowToPlayDialog";
+import { HowToPlayTransition } from "@/components/HowToPlayTransition";
 import {
   HowToPlayFigure,
   type HowToPlayFigureCell,
@@ -52,35 +51,32 @@ export function NanpureHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>マスを選び、下の数字を押して入れる。</p>
-        <div className="flex items-center gap-2 text-muted-foreground">
+        <HowToPlayTransition>
           <HowToPlayFigure rows={[[{ highlight: "selected" }]]} />
-          <ArrowRight className="size-4" aria-hidden />
           <HowToPlayFigure rows={[[{ highlight: "selected", digit: 7 }]]} />
-        </div>
+        </HowToPlayTransition>
       </li>
       <li className="space-y-2">
         <p>
           メモをオンにすると、数字を候補として小さく書く。もう一度押すと消える。
         </p>
-        <div className="flex items-center gap-2 text-muted-foreground">
+        <HowToPlayTransition>
           <HowToPlayFigure rows={[[{ highlight: "selected" }]]} />
-          <ArrowRight className="size-4" aria-hidden />
           <HowToPlayFigure
             rows={[[{ highlight: "selected", notes: [1, 3, 8] }]]}
           />
-        </div>
+        </HowToPlayTransition>
       </li>
       <li className="space-y-2">
         <p>
           正しい数字を入れると、同じ行・列・ブロックのメモからその数字が消える。
         </p>
-        <div className="flex items-center gap-2 text-muted-foreground">
+        <HowToPlayTransition>
           <HowToPlayFigure
             rows={[
               [{ notes: [2, 5] }, { notes: [5, 8] }, { highlight: "selected" }],
             ]}
           />
-          <ArrowRight className="size-4" aria-hidden />
           <HowToPlayFigure
             rows={[
               [
@@ -90,7 +86,7 @@ export function NanpureHowToPlayDialog({
               ],
             ]}
           />
-        </div>
+        </HowToPlayTransition>
       </li>
       <li className="space-y-2">
         <p>答えと違う数字は赤くなり、ミスに数える。</p>
