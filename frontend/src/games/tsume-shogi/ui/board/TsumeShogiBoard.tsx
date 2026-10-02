@@ -140,7 +140,10 @@ export function TsumeShogiBoard({
           <TsumeShogiPromotionPicker
             to={promotionChoice.to}
             pieceType={promotingPiece.type}
-            onChoose={onChoosePromotion}
+            optionTapHandlers={{
+              promote: getTapHandlers(() => onChoosePromotion(true)),
+              keep: getTapHandlers(() => onChoosePromotion(false)),
+            }}
           />
         )}
       </div>
