@@ -3,6 +3,7 @@ import {
   getTsumeShogiPlayRecordScore,
   getTsumeShogiPlayRecordTimeDelta,
   isTsumeShogiPlayRecord,
+  restoreTsumeShogiRecordedResult,
   tsumeShogiPlayRecordDefinition,
 } from "@/games/tsume-shogi/play-record";
 import { createTsumeShogiProblemIdentity } from "@/games/tsume-shogi/problem/problem";
@@ -261,6 +262,46 @@ describe("tsumeShogiPlayRecordDefinition", () => {
       );
 
       expect(values).toEqual([87, 28_800, 1]);
+    });
+  });
+});
+
+describe("restoreTsumeShogiRecordedResult", () => {
+  describe("今の版の記録の場合", () => {
+    test("記録の成績と問題の作業の量から結果を作り直すこと", () => {
+      const recorded = restoreTsumeShogiRecordedResult(record);
+
+      expect(recorded).toMatchObject({
+        difficulty: "5",
+        problemIdentity: record.payload.problemIdentity,
+        result: {
+          ...performance,
+          workload,
+          speedFullScoreMs: 144_000,
+          timeDeltaMs: 28_800,
+          score: { total: getTsumeShogiPlayRecordScore(record) },
+        },
+      });
+    });
+  });
+
+  describe("別の版の記録の場合", () => {
+    const unrestorableRecord = { ...record, payloadVersion: 2 };
+
+    test("null を返すこと", () => {
+      const recorded = restoreTsumeShogiRecordedResult(unrestorableRecord);
+
+      expect(recorded).toBeNull();
+    });
+  });
+
+  describe("生成器の版が今と違う記録の場合", () => {
+    const pastRecord = withPayload({ problemIdentity: pastProblemIdentity });
+
+    test("null を返すこと", () => {
+      const recorded = restoreTsumeShogiRecordedResult(pastRecord);
+
+      expect(recorded).toBeNull();
     });
   });
 });
