@@ -193,3 +193,41 @@ export function findTsumeShogiRefutation(
   }
   return null;
 }
+
+/**
+ * 攻方の王手の後（玉方の手番）で、残り `remainingPlies` 手（この玉方の手を含む）以内に詰む局面での、最も長く逃れる応手。
+ * 応手の後の最短の詰み手数が最も長い手を選び、並べば合駒でない応手、残りは列挙の順で最初の手にする。
+ * 応手が無い（詰んでいる）、または残り手数以内に詰まない応手があるなら `null`。玉方の手番でなければ `RangeError` を投げる。
+ *
+ * 作意から外れた詰み筋を続けるときの安全側の応手に使う。作意線上の玉方の手は問題の作意を使う。
+ */
+export function findTsumeShogiLongestResistance(
+  position: TsumeShogiPosition,
+  remainingPlies: number,
+): TsumeShogiMove | null {
+  if (getTsumeShogiSideToMove(position) !== "defender") {
+    throw new RangeError("玉方の手番ではありません");
+  }
+  const state = new TsumeShogiSearchPosition(position);
+  const search = new TsumeShogiMateSearch();
+  const responses = state.listDefenderResponses();
+  const ordered = [
+    ...responses.filter(function isNotInterposition(move) {
+      return !isTsumeShogiInterposition(move);
+    }),
+    ...responses.filter(isTsumeShogiInterposition),
+  ];
+  let longest: { response: TsumeShogiMove; plies: number } | null = null;
+  for (const response of ordered) {
+    state.play(response);
+    const plies = search.findShortestMate(state, remainingPlies - 1);
+    state.undo(response);
+    if (plies === null) {
+      return null;
+    }
+    if (longest === null || plies > longest.plies) {
+      longest = { response: toTsumeShogiMove(response), plies };
+    }
+  }
+  return longest?.response ?? null;
+}
