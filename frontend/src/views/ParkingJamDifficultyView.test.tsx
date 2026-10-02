@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 
 import { ParkingJamDifficultyView } from "@/views/ParkingJamDifficultyView";
@@ -33,5 +33,13 @@ describe("ParkingJamDifficultyView", () => {
     const legacyOption = screen.queryByRole("link", { name: "ふつう" });
 
     expect(legacyOption).toBeNull();
+  });
+
+  test("遊び方を開けること", () => {
+    fireEvent.click(screen.getByRole("button", { name: "遊び方" }));
+
+    const dialog = screen.getByRole("dialog", { name: "遊び方" });
+
+    expect(dialog).toBeTruthy();
   });
 });
