@@ -236,6 +236,7 @@ export function useMinesweeperPlay(
     problemIdentity: play.problemIdentity,
     startedAt: session.startedAt,
     completedAt: session.finishedAt,
+    session,
     progress: play.progress,
     rows: session.problem.board.rows,
     columns: session.problem.board.columns,

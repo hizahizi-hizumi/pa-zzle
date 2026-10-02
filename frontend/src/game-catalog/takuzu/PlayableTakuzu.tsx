@@ -4,6 +4,10 @@ import { createTakuzuDiagnosticSnapshot } from "@/games/takuzu/diagnostics";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import { useTakuzuPlay } from "@/games/takuzu/play/use-takuzu-play";
 import {
+  createTakuzuPlayAttempt,
+  createTakuzuPlayAttemptProgress,
+} from "@/games/takuzu/play-attempt";
+import {
   createTakuzuPlayRecord,
   takuzuPlayRecordDefinition,
 } from "@/games/takuzu/play-record";
@@ -15,6 +19,7 @@ import {
   buildRevision,
   internalDiagnosticsAvailable,
 } from "@/lib/internal-diagnostics";
+import { usePlayAttemptRecord } from "@/records/hooks/use-play-attempt-record";
 import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
@@ -55,6 +60,21 @@ export function PlayableTakuzu({
     playRecord,
     takuzuPlayRecordDefinition,
   );
+  const playAttempt = useMemo(
+    () =>
+      createTakuzuPlayAttempt({
+        difficulty,
+        problemIdentity: play.problemIdentity,
+        startedAt: play.startedAt,
+      }),
+    [difficulty, play.problemIdentity, play.startedAt],
+  );
+  usePlayAttemptRecord(playAttempt, {
+    finished: play.completedAt !== null,
+    getProgress(abandonedAt) {
+      return createTakuzuPlayAttemptProgress(play.session, abandonedAt);
+    },
+  });
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const diagnostics = internalDiagnosticsAvailable
     ? createTakuzuDiagnosticSnapshot({

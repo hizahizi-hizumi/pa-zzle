@@ -264,6 +264,7 @@ export function useParkingJamPlay(
     progress: play.progress,
     startedAt: session.startedAt,
     completedAt: session.finishedAt,
+    session,
     board: session.problem.board,
     state: session.state,
     selectedVehicleId: play.selectedVehicleId,

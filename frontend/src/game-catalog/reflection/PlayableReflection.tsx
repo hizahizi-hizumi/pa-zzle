@@ -8,6 +8,10 @@ import {
 import { reflectionLaserPathMode } from "@/games/reflection/laser-path-mode";
 import { useReflectionPlay } from "@/games/reflection/play/use-reflection-play";
 import {
+  createReflectionPlayAttempt,
+  createReflectionPlayAttemptProgress,
+} from "@/games/reflection/play-attempt";
+import {
   createReflectionPlayRecord,
   reflectionPlayRecordDefinition,
 } from "@/games/reflection/play-record";
@@ -19,6 +23,7 @@ import {
   buildRevision,
   internalDiagnosticsAvailable,
 } from "@/lib/internal-diagnostics";
+import { usePlayAttemptRecord } from "@/records/hooks/use-play-attempt-record";
 import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
@@ -63,6 +68,21 @@ export function PlayableReflection({
     playRecord,
     reflectionPlayRecordDefinition,
   );
+  const playAttempt = useMemo(
+    () =>
+      createReflectionPlayAttempt({
+        difficulty,
+        problemIdentity: play.problemIdentity,
+        startedAt: play.startedAt,
+      }),
+    [difficulty, play.problemIdentity, play.startedAt],
+  );
+  usePlayAttemptRecord(playAttempt, {
+    finished: play.completedAt !== null,
+    getProgress(abandonedAt) {
+      return createReflectionPlayAttemptProgress(play.session, abandonedAt);
+    },
+  });
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const diagnostics = useMemo(
     () =>

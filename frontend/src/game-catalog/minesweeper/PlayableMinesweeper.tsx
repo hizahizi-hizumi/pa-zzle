@@ -4,6 +4,10 @@ import { createMinesweeperDiagnosticSnapshot } from "@/games/minesweeper/diagnos
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import { useMinesweeperPlay } from "@/games/minesweeper/play/use-minesweeper-play";
 import {
+  createMinesweeperPlayAttempt,
+  createMinesweeperPlayAttemptProgress,
+} from "@/games/minesweeper/play-attempt";
+import {
   createMinesweeperPlayRecord,
   minesweeperPlayRecordDefinition,
 } from "@/games/minesweeper/play-record";
@@ -15,6 +19,7 @@ import {
   buildRevision,
   internalDiagnosticsAvailable,
 } from "@/lib/internal-diagnostics";
+import { usePlayAttemptRecord } from "@/records/hooks/use-play-attempt-record";
 import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
@@ -53,6 +58,21 @@ export function PlayableMinesweeper({
     playRecord,
     minesweeperPlayRecordDefinition,
   );
+  const playAttempt = useMemo(
+    () =>
+      createMinesweeperPlayAttempt({
+        difficulty,
+        problemIdentity: play.problemIdentity,
+        startedAt: play.startedAt,
+      }),
+    [difficulty, play.problemIdentity, play.startedAt],
+  );
+  usePlayAttemptRecord(playAttempt, {
+    finished: play.completedAt !== null,
+    getProgress(abandonedAt) {
+      return createMinesweeperPlayAttemptProgress(play.session, abandonedAt);
+    },
+  });
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const diagnostics = internalDiagnosticsAvailable
     ? createMinesweeperDiagnosticSnapshot({

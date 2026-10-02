@@ -312,6 +312,7 @@ export function useWaterSortPlay(
     status: session.status,
     startedAt: session.startedAt,
     completedAt: session.finishedAt,
+    session,
     progress: play.progress,
     state: session.state,
     elapsedMs,

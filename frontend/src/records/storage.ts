@@ -4,7 +4,7 @@ const PLAY_RECORDS_STORAGE_KEY = "pa-zzle.play-records.v1";
 
 export type PlayRecordStorage = Pick<Storage, "getItem" | "setItem">;
 
-function getDefaultStorage(): PlayRecordStorage | null {
+export function getDefaultStorage(): PlayRecordStorage | null {
   if (typeof window === "undefined") {
     return null;
   }

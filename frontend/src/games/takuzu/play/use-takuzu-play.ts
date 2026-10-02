@@ -259,6 +259,7 @@ export function useTakuzuPlay(
     workload,
     startedAt: session.startedAt,
     completedAt: session.finishedAt,
+    session,
     size: session.board.size,
     cells,
     lineViolations,
