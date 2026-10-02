@@ -5,7 +5,15 @@ import {
   screen,
   within,
 } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router";
+import {
+  createMemoryRouter,
+  MemoryRouter,
+  Route,
+  RouterProvider,
+  Routes,
+} from "react-router";
+import { createProblemId } from "@/games/problem-id";
+
 import {
   formatReflectionPoolProblemQuery,
   formatReflectionProblemQuery,
@@ -97,6 +105,26 @@ function solve(solution: ReflectionBoard): void {
     }
     fireEvent.click(cells[cellIndex] as HTMLElement);
   });
+}
+
+type PlayRouter = ReturnType<typeof createMemoryRouter>;
+
+function renderRouterAt(path: string): PlayRouter {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/puzzles/reflection/play/:difficulty",
+        element: <ReflectionPlayView />,
+      },
+    ],
+    { initialEntries: [path] },
+  );
+  render(<RouterProvider router={router} />);
+  return router;
+}
+
+function readProblemId(router: PlayRouter): string | null {
+  return new URLSearchParams(router.state.location.search).get("problem");
 }
 
 describe("ReflectionPlayView", () => {
@@ -345,5 +373,96 @@ describe("ReflectionPlayView", () => {
       expect(message).toBeTruthy();
       expect(backLink.getAttribute("href")).toBe("/puzzles/reflection");
     });
+  });
+
+  describe("問題IDのクエリ", () => {
+    const poolProblemId = createProblemId(
+      selectReflectionProblemForDifficulty("1", "problem-id-query").identity,
+    );
+    let router: PlayRouter;
+
+    describe("問題IDの無いURLで開いた場合", () => {
+      beforeEach(() => {
+        router = renderRouterAt("/puzzles/reflection/play/1");
+      });
+
+      test("出題した問題のIDを履歴を増やさずにURLへ反映すること", () => {
+        const problemId = readProblemId(router);
+
+        expect(problemId).toMatch(/^[0-9a-v]{10}$/);
+        expect(router.state.historyAction).toBe("REPLACE");
+      });
+    });
+
+    describe("問題集にある問題IDで開いた場合", () => {
+      beforeEach(() => {
+        router = renderRouterAt(
+          `/puzzles/reflection/play/1?problem=${poolProblemId}`,
+        );
+      });
+
+      test("その問題で始めURLを置き換えないこと", () => {
+        const problemId = readProblemId(router);
+
+        expect(problemId).toBe(poolProblemId);
+        expect(router.state.historyAction).toBe("POP");
+      });
+    });
+
+    describe("内部診断を使えるビルドで遊び比べの問題を指定した場合", () => {
+      beforeEach(() => {
+        internalDiagnostics.available = true;
+        router = renderRouterAt(specifiedProblemPath);
+      });
+
+      test("URLに問題IDを加えないこと", () => {
+        const problemId = readProblemId(router);
+
+        expect(problemId).toBeNull();
+        expect(router.state.historyAction).toBe("POP");
+      });
+    });
+
+    describe("内部診断を使えるビルドで問題集にある問題IDで開いた場合", () => {
+      beforeEach(() => {
+        internalDiagnostics.available = true;
+        router = renderRouterAt(
+          `/puzzles/reflection/play/1?problem=${poolProblemId}`,
+        );
+      });
+
+      test("遊び比べの問題指定とみなさず、その問題で始めること", () => {
+        const problemId = readProblemId(router);
+
+        expect(problemId).toBe(poolProblemId);
+        expect(router.state.historyAction).toBe("POP");
+        expect(screen.queryByText("指定された問題を復元できません")).toBeNull();
+      });
+    });
+
+    const unresolvedCases = [
+      ["形式の違う問題ID", "1", "invalid"],
+      ["別の難易度の問題ID", "2", poolProblemId],
+    ] as const;
+
+    describe.each(unresolvedCases)(
+      "%sで開いた場合",
+      (_, difficulty, requestedProblemId) => {
+        beforeEach(() => {
+          router = renderRouterAt(
+            `/puzzles/reflection/play/${difficulty}?problem=${requestedProblemId}`,
+          );
+        });
+
+        test("知らせずに新しい問題を出し、そのIDへURLを置き換えること", () => {
+          const problemId = readProblemId(router);
+
+          expect(problemId).toMatch(/^[0-9a-v]{10}$/);
+          expect(problemId).not.toBe(requestedProblemId);
+          expect(router.state.historyAction).toBe("REPLACE");
+          expect(screen.queryByText(/選べません|復元できません/)).toBeNull();
+        });
+      },
+    );
   });
 });

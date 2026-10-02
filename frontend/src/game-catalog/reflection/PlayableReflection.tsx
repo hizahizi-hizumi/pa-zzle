@@ -1,5 +1,9 @@
 import { useMemo, useState } from "react";
 
+import {
+  useProblemIdQuerySync,
+  useRequestedProblem,
+} from "@/game-catalog/problem-id-query";
 import { createReflectionDiagnosticSnapshot } from "@/games/reflection/diagnostics";
 import {
   getReflectionDifficultyLabel,
@@ -12,6 +16,7 @@ import {
   reflectionPlayRecordDefinition,
 } from "@/games/reflection/play-record";
 import type { ReflectionProblemIdentity } from "@/games/reflection/problem/problem";
+import { selectReflectionProblemById } from "@/games/reflection/problem-selection";
 import { reflectionPlayRecordDisplay } from "@/games/reflection/ui/play-record-display";
 import { ReflectionDiagnostics } from "@/games/reflection/ui/ReflectionDiagnostics";
 import { ReflectionPlay } from "@/games/reflection/ui/ReflectionPlay";
@@ -24,7 +29,7 @@ import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
 
 /**
- * 最初に遊ぶ問題を identity で指定する。
+ * 最初に遊ぶ問題を identity で指定する。指定した問題は URL の問題 ID とは結ばない。
  * - `replay`: 記録の問題を、その記録の難易度として遊び直す。記録は通常どおり保存する。
  * - `blind-comparison`: 人間の遊び比べ用に指定した問題。難易度を伏せ、記録を保存しない。
  */
@@ -44,7 +49,14 @@ export function PlayableReflection({
   difficulty,
   initialProblem,
 }: PlayableReflectionProps) {
-  const play = useReflectionPlay(difficulty, initialProblem?.identity);
+  const requestedProblem = useRequestedProblem((problemId) =>
+    selectReflectionProblemById(difficulty, problemId),
+  );
+  const play = useReflectionPlay(
+    difficulty,
+    initialProblem?.identity ?? requestedProblem?.identity,
+  );
+  useProblemIdQuerySync(initialProblem ? null : play.problemIdentity);
   const navigate = useNavigate();
   // 別の問題へ進むと指定した問題ではなくなるので、難易度を出し、記録も保存する。
   const isBlindComparison =

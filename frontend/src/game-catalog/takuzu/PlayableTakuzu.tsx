@@ -1,5 +1,9 @@
 import { useMemo, useState } from "react";
 
+import {
+  useProblemIdQuerySync,
+  useRequestedProblem,
+} from "@/game-catalog/problem-id-query";
 import { createTakuzuDiagnosticSnapshot } from "@/games/takuzu/diagnostics";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import { useTakuzuPlay } from "@/games/takuzu/play/use-takuzu-play";
@@ -8,6 +12,7 @@ import {
   takuzuPlayRecordDefinition,
 } from "@/games/takuzu/play-record";
 import type { TakuzuPooledProblem } from "@/games/takuzu/problem/problem-pool";
+import { selectTakuzuProblemById } from "@/games/takuzu/problem-selection";
 import { takuzuPlayRecordDisplay } from "@/games/takuzu/ui/play-record-display";
 import { TakuzuDiagnostics } from "@/games/takuzu/ui/TakuzuDiagnostics";
 import { TakuzuPlay } from "@/games/takuzu/ui/TakuzuPlay";
@@ -21,6 +26,7 @@ import { useNavigate } from "@/router";
 
 type PlayableTakuzuProps = {
   difficulty: TakuzuDifficulty;
+  /** 記録から復元した問題。渡すとその問題で始め、URL の問題 ID とは結ばない。 */
   initialProblem?: TakuzuPooledProblem;
 };
 
@@ -28,7 +34,11 @@ export function PlayableTakuzu({
   difficulty,
   initialProblem,
 }: PlayableTakuzuProps) {
-  const play = useTakuzuPlay(difficulty, initialProblem);
+  const requestedProblem = useRequestedProblem((problemId) =>
+    selectTakuzuProblemById(difficulty, problemId),
+  );
+  const play = useTakuzuPlay(difficulty, initialProblem ?? requestedProblem);
+  useProblemIdQuerySync(initialProblem ? null : play.problemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>
