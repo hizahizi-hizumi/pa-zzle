@@ -1,10 +1,10 @@
 import { CircleHelp } from "lucide-react";
 import { useState } from "react";
 
+import { HomeBackLink } from "@/components/HomeBackLink";
 import { Button } from "@/components/ui/button";
 import { takuzuDifficulties } from "@/games/takuzu/difficulty";
 import { TakuzuHowToPlayDialog } from "@/games/takuzu/ui/TakuzuHowToPlayDialog";
-import { Link } from "@/router";
 import { TakuzuDifficultyOption } from "@/views/TakuzuDifficultyView/TakuzuDifficultyOption";
 
 export function TakuzuDifficultyView() {
@@ -13,12 +13,7 @@ export function TakuzuDifficultyView() {
   return (
     <section className="space-y-6 sm:space-y-8">
       <div className="space-y-2">
-        <Link
-          to="/"
-          className="text-supporting text-muted-foreground hover:text-foreground"
-        >
-          ← 戻る
-        </Link>
+        <HomeBackLink />
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-screen-title">バイナリパズル</h1>
           <Button

@@ -1,4 +1,3 @@
-import { ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
 
 import {
@@ -6,6 +5,7 @@ import {
   PlayHeaderSummary,
 } from "@/components/PlayHeader/PlayHeaderSummary";
 import { PlayMenu } from "@/components/PlayHeader/PlayMenu";
+import { PuzzleBackIcon } from "@/components/PuzzleBackIcon";
 import { Button } from "@/components/ui/button";
 
 type PlayHeaderProps = {
@@ -71,7 +71,7 @@ export function PlayHeader({
         aria-label="難易度選択へ戻る"
         onClick={onChangeDifficulty}
       >
-        <ArrowLeft />
+        <PuzzleBackIcon />
       </Button>
       <PlayHeaderSummary title={title} metricGroups={metricGroups} />
       {hasTrailingAction ? (
