@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { PlayHeader } from "@/components/PlayHeader";
@@ -14,6 +14,7 @@ import type {
 import type { NanpureNotes } from "@/games/nanpure/session/session";
 import { NanpureClearAnimation } from "@/games/nanpure/ui/board/clear/NanpureClearAnimation";
 import { NanpureBoard } from "@/games/nanpure/ui/board/NanpureBoard";
+import { NanpureHowToPlayDialog } from "@/games/nanpure/ui/NanpureHowToPlayDialog";
 import { NanpureInputPanel } from "@/games/nanpure/ui/play/NanpureInputPanel";
 import { NanpureResultScreen } from "@/games/nanpure/ui/result/NanpureResultScreen";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
@@ -83,6 +84,8 @@ export function NanpurePlay({
   onClearAnimationComplete,
   onOpenDiagnostics,
 }: NanpurePlayProps) {
+  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
+
   if (progress === "result" && status === "cleared" && result) {
     return (
       <NanpureResultScreen
@@ -124,7 +127,12 @@ export function NanpurePlay({
         onStartNewProblem={onStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
+        onOpenHowToPlay={() => setHowToPlayOpen(true)}
         onOpenDiagnostics={onOpenDiagnostics}
+      />
+      <NanpureHowToPlayDialog
+        open={howToPlayOpen}
+        onClose={() => setHowToPlayOpen(false)}
       />
 
       <main className="flex shrink-0 justify-center px-2 pt-1 sm:px-6 sm:pt-3">

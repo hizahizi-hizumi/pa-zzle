@@ -135,6 +135,34 @@ describe("NanpurePlay", () => {
       expect(props.onRestart).toHaveBeenCalledOnce();
       expect(props.onReplay).toHaveBeenCalledOnce();
     });
+
+    test("遊び方を自動では開かないこと", () => {
+      const dialog = screen.queryByRole("dialog", { name: "遊び方" });
+
+      expect(dialog).toBeNull();
+    });
+
+    describe("その他の操作から遊び方を選んだ場合", () => {
+      beforeEach(() => {
+        fireEvent.pointerDown(
+          screen.getByRole("button", { name: "その他の操作" }),
+          { button: 0, ctrlKey: false },
+        );
+        fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+      });
+
+      test("遊び方を開くこと", () => {
+        const dialog = screen.getByRole("dialog", { name: "遊び方" });
+
+        expect(dialog).toBeTruthy();
+      });
+
+      test("閉じてもプレイを測り直さないこと", () => {
+        fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+
+        expect(props.onReplay).not.toHaveBeenCalled();
+      });
+    });
   });
 
   describe("数字9を使い切っている場合", () => {
