@@ -7,6 +7,7 @@ import {
 import { ReflectionPieceIcon } from "@/games/reflection/ui/board/ReflectionPieceIcon";
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
 import { reflectionPieceToneClassNames } from "@/games/reflection/ui/reflection-tone";
+import type { TapHandlers } from "@/games/reflection/ui/touch-tap";
 
 /**
  * 選んだピースのマスの四隅に置く鉤形の印。ピースの色（`currentColor`）で描き、マスの地や枠は変えない。
@@ -25,20 +26,10 @@ type ReflectionCellProps = {
   disabled: boolean;
   focusable: boolean;
   onElementChange: (key: string, element: HTMLButtonElement | null) => void;
-  onTap: (cellIndex: number) => void;
+  /** 押したときの受け口。タッチは押した位置のマスで受ける（`useTouchTap`）。 */
+  tapHandlers: TapHandlers;
   onFocus: (key: string) => void;
   focusKey: string;
-};
-
-/**
- * マスの罫線。border にするとピースを置く領域が1px欠けて中心が光路からずれるので、
- * 大きさを変えない内側の影で描く（選択の ring とは重ねて描ける）。
- */
-const gridLineClassNames: Record<string, string> = {
-  rightbottom: "shadow-[inset_-1px_-1px_0_0_var(--color-border)]",
-  right: "shadow-[inset_-1px_0_0_0_var(--color-border)]",
-  bottom: "shadow-[inset_0_-1px_0_0_var(--color-border)]",
-  "": "",
 };
 
 export function ReflectionCell({
@@ -49,7 +40,7 @@ export function ReflectionCell({
   disabled,
   focusable,
   onElementChange,
-  onTap,
+  tapHandlers,
   onFocus,
   focusKey,
 }: ReflectionCellProps) {
@@ -61,7 +52,7 @@ export function ReflectionCell({
   );
 
   return (
-    // 光路をマスの下に描くため、マスの地は透明にし、盤面の地は盤面の枠が持つ。
+    // 光路をマスの下に描くため、マスは地も罫線も持たない。どちらも盤面が光路より下の層に描く。
     <button
       ref={buttonRef}
       type="button"
@@ -69,14 +60,10 @@ export function ReflectionCell({
       aria-pressed={selected}
       disabled={disabled}
       tabIndex={focusable ? 0 : -1}
-      onClick={() => onTap(cellIndex)}
+      onPointerUp={tapHandlers.onPointerUp}
+      onClick={tapHandlers.onClick}
       onFocus={() => onFocus(focusKey)}
-      className={cn(
-        "relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center text-foreground outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent",
-        gridLineClassNames[
-          `${column !== size - 1 ? "right" : ""}${row !== size - 1 ? "bottom" : ""}`
-        ],
-      )}
+      className="relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center text-foreground outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent"
     >
       {selected && cell !== null ? (
         <span

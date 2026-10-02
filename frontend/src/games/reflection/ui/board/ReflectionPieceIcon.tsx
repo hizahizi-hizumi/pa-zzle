@@ -79,7 +79,7 @@ export function ReflectionPieceIcon({
       aria-hidden="true"
       viewBox="0 0 100 100"
       className={cn(
-        "shrink-0 overflow-visible",
+        "pointer-events-none shrink-0 overflow-visible",
         sizeClassNames[size],
         reflectionPieceToneClassNames[piece],
         appearing && appearingClassName,

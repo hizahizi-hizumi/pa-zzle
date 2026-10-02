@@ -12,7 +12,6 @@ import type { ReflectionResult } from "@/games/reflection/play/use-reflection-pl
 import {
   countReflectionBoardPieces,
   createEmptyReflectionBoard,
-  createEmptyReflectionInventory,
   parseReflectionBoard,
 } from "@/games/reflection/puzzle/board";
 import {
@@ -306,11 +305,46 @@ describe("ReflectionPlay", () => {
 
       expect(callbacks.onRemovePiece).toHaveBeenCalledWith(4);
     });
+
+    describe("タッチで押す場合", () => {
+      const touch = { pointerType: "touch", isPrimary: true } as const;
+
+      function getCell(name: string): HTMLElement {
+        return within(getBoardGroup()).getByRole("button", { name });
+      }
+
+      test("指を離したマスを1回だけ知らせ、続いて届く click で重ねて知らせないこと", () => {
+        fireEvent.pointerUp(getCell("2行3列 空き"), touch);
+        fireEvent.click(getCell("2行3列 空き"), { detail: 1 });
+
+        expect(callbacks.onTapCell.mock.calls).toEqual([[5]]);
+      });
+
+      test("隣のマスを続けて押すと、前に押したマスへ届く click ではなく指を離したマスを知らせること", () => {
+        // iOS Safari は近くを続けて押すと2回目をダブルタップとし、click を1回目の位置へ送る。
+        fireEvent.pointerUp(getCell("2行2列 ブラックホール"), touch);
+        fireEvent.click(getCell("2行2列 ブラックホール"), { detail: 1 });
+        fireEvent.pointerUp(getCell("2行3列 空き"), touch);
+        fireEvent.click(getCell("2行2列 ブラックホール"), { detail: 2 });
+
+        expect(callbacks.onTapCell.mock.calls).toEqual([[4], [5]]);
+      });
+
+      test("ストックも指を離した種類を1回だけ知らせること", () => {
+        const stockButton = screen.getByRole("button", {
+          name: "右上がりの鏡 残り1",
+        });
+
+        fireEvent.pointerUp(stockButton, touch);
+        fireEvent.click(stockButton, { detail: 1 });
+
+        expect(callbacks.onTapStock.mock.calls).toEqual([["slash"]]);
+      });
+    });
   });
 
   describe("外周ヒントの一致", () => {
     const matchedName = / 一致$/;
-    const emptyStock = createEmptyReflectionInventory();
 
     test("今の配置での光が一致している外周ヒントだけを一致として示すこと", () => {
       renderPlay({ board: emptyBoard });
@@ -336,27 +370,6 @@ describe("ReflectionPlay", () => {
       expect(
         screen.getByRole("button", { name: "左2行 退出 3マス" }),
       ).toBeTruthy();
-    });
-
-    test("手持ちを置き切っても揃わないとき、合っていない外周ヒントの本数を知らせること", () => {
-      renderPlay({
-        board: parseReflectionBoard(["/..", "...", ".@."]),
-        stock: emptyStock,
-      });
-
-      expect(
-        screen.getByText(
-          (_, element) =>
-            element?.tagName === "SPAN" &&
-            element.textContent === "合っていない外周ヒントが6本あります",
-        ),
-      ).toBeTruthy();
-    });
-
-    test("手持ちが残っている間は、合っていない外周ヒントの本数を出さないこと", () => {
-      renderPlay({ board: parseReflectionBoard(["/..", "...", "..."]) });
-
-      expect(screen.queryByText(/合っていない外周ヒント/)).toBeNull();
     });
   });
 

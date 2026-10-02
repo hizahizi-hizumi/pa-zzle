@@ -11,6 +11,7 @@ const FRAME_WIDTH = 0.06;
 
 /**
  * 図の盤面の地・格子線・外枠。座標はマス1辺を1とする図の単位で、`board-geometry` と同じ置き方をする。
+ * 外枠はプレイ画面と同じく盤面の外側に描き、盤面の縁で止める光路の端の印と重ねない。
  * 行を切り出したときは、盤面の端ではない上下の縁を格子線で描き、盤面が上下へ続いて見えるようにする。
  */
 export function ReflectionFigureGrid({
@@ -24,6 +25,10 @@ export function ReflectionFigureGrid({
   const right = offset + size;
   const touchesTop = rows.first === 0;
   const touchesBottom = rows.first + rows.count === size;
+  const frameOffset = FRAME_WIDTH / 2;
+  // 左右の線は、上下の線と四隅で欠けずにつながるよう、盤面の端の側を外枠の幅だけ伸ばす。
+  const frameTop = touchesTop ? top - FRAME_WIDTH : top;
+  const frameBottom = touchesBottom ? bottom + FRAME_WIDTH : bottom;
 
   return (
     <g>
@@ -59,13 +64,35 @@ export function ReflectionFigureGrid({
       <g
         className="stroke-foreground/55"
         strokeWidth={FRAME_WIDTH}
-        strokeLinecap="square"
+        strokeLinecap="butt"
       >
-        <line x1={left} y1={top} x2={left} y2={bottom} />
-        <line x1={right} y1={top} x2={right} y2={bottom} />
-        {touchesTop ? <line x1={left} y1={top} x2={right} y2={top} /> : null}
+        <line
+          x1={left - frameOffset}
+          y1={frameTop}
+          x2={left - frameOffset}
+          y2={frameBottom}
+        />
+        <line
+          x1={right + frameOffset}
+          y1={frameTop}
+          x2={right + frameOffset}
+          y2={frameBottom}
+        />
+        {touchesTop ? (
+          <line
+            x1={left}
+            y1={top - frameOffset}
+            x2={right}
+            y2={top - frameOffset}
+          />
+        ) : null}
         {touchesBottom ? (
-          <line x1={left} y1={bottom} x2={right} y2={bottom} />
+          <line
+            x1={left}
+            y1={bottom + frameOffset}
+            x2={right}
+            y2={bottom + frameOffset}
+          />
         ) : null}
       </g>
     </g>
