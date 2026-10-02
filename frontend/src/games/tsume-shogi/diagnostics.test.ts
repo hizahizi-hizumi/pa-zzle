@@ -1,4 +1,5 @@
 import {
+  createTsumeShogiDiagnosticSnapshot,
   formatTsumeShogiPoolProblemQuery,
   formatTsumeShogiProblemQuery,
   hasTsumeShogiProblemQuery,
@@ -7,6 +8,7 @@ import {
 import {
   createTsumeShogiProblemIdentity,
   formatTsumeShogiProblemText,
+  parseTsumeShogiProblemText,
 } from "@/games/tsume-shogi/problem/problem";
 import { toTsumeShogiPooledProblem } from "@/games/tsume-shogi/problem/problem-pool";
 
@@ -101,5 +103,59 @@ describe("hasTsumeShogiProblemQuery", () => {
     const result = hasTsumeShogiProblemQuery(new URLSearchParams(query));
 
     expect(result).toBe(expected);
+  });
+});
+
+describe("createTsumeShogiDiagnosticSnapshot", () => {
+  describe("問題集の問題の場合", () => {
+    const pooled = toTsumeShogiPooledProblem("2", 0);
+
+    test("identity・問題集の位置・局面と作意・分析し直した特徴と分類を返すこと", () => {
+      const snapshot = createTsumeShogiDiagnosticSnapshot({
+        difficulty: "2",
+        problemIdentity: pooled.identity,
+        problem: pooled.problem,
+        buildRevision: "abc",
+      });
+
+      expect(snapshot).toMatchObject({
+        formatVersion: 1,
+        game: "tsume-shogi",
+        difficulty: "2",
+        problemIdentity: pooled.identity,
+        problemPool: pooled.poolReference,
+        problem: formatTsumeShogiProblemText(pooled.problem),
+        difficultyFeatures: {
+          rootChecks: pooled.workload.rootChecks,
+          plausibleWrong: pooled.workload.plausibleWrong,
+          deepDecoyCount: pooled.workload.deepDecoyCount,
+        },
+        difficultyAssessment: { status: "classified", difficulty: "2" },
+        buildRevision: "abc",
+      });
+      expect(snapshot.problemIdentity).not.toBe(pooled.identity);
+    });
+  });
+
+  describe("問題集に無い問題の場合", () => {
+    // 生成器の版 1 の `ts-3-5`。
+    const identity = createTsumeShogiProblemIdentity(3, 5);
+    const problem = parseTsumeShogiProblemText({
+      sfen: "5s3/6k2/9/5P1+R1/9/9/9/9/9 b Sr2b4g2s4n4l17p 1",
+      mainLine: ["S*3c", "3b3a", "2d2b"],
+    });
+
+    test("問題集の位置を null にし、分析し直した分類を返すこと", () => {
+      const snapshot = createTsumeShogiDiagnosticSnapshot({
+        difficulty: "1",
+        problemIdentity: identity,
+        problem,
+        buildRevision: null,
+      });
+
+      expect(snapshot.problemPool).toBeNull();
+      expect(snapshot.difficultyFeatures).not.toBeNull();
+      expect(snapshot.difficultyAssessment.status).not.toBe("invalid");
+    });
   });
 });
