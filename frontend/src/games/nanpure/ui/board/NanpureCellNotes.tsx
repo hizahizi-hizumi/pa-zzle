@@ -27,8 +27,9 @@ export function NanpureCellNotes({
     <span
       aria-hidden="true"
       className={cn(
-        "grid h-full w-full grid-cols-3 grid-rows-3 place-items-center leading-none font-normal text-muted-foreground/60",
+        // 文字サイズのクラスは後ろに置くと cn が leading-none を外すため、先に置く。
         textSizeClassNames[size],
+        "grid h-full w-full grid-cols-3 grid-rows-3 place-items-center leading-none font-normal text-muted-foreground/60",
       )}
     >
       {NANPURE_DIGITS.map((digit) => (
