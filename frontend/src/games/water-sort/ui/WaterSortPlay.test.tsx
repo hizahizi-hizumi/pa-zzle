@@ -316,6 +316,27 @@ describe("WaterSortPlay", () => {
     expect(screen.queryByRole("menuitem", { name: "検証情報" })).toBeNull();
   });
 
+  test("遊び方を自動では開かないこと", () => {
+    render(<WaterSortPlay {...baseProps} />);
+
+    const dialog = screen.queryByRole("dialog", { name: "遊び方" });
+
+    expect(dialog).toBeNull();
+  });
+
+  test("メニューから遊び方を開けること", () => {
+    render(<WaterSortPlay {...baseProps} />);
+    fireEvent.pointerDown(
+      screen.getByRole("button", { name: "その他の操作" }),
+      { button: 0, ctrlKey: false },
+    );
+    fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+
+    const dialog = screen.getByRole("dialog", { name: "遊び方" });
+
+    expect(dialog).toBeTruthy();
+  });
+
   test("待ったで戻せる手がない操作を無効にすること", () => {
     render(<WaterSortPlay {...baseProps} canUndo={false} />);
     const button = screen.getByRole("button", { name: "待った" });
