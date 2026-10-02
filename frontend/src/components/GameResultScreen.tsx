@@ -27,33 +27,14 @@ const metricColumnsClassNames = {
   3: "grid-cols-3",
 } as const;
 
-type ScoredGameResultProps = {
+type GameResultScreenProps = {
+  gameName: string;
+  difficultyLabel: string;
+  pictogramSvg: string;
   score: number;
   /** 開いたときに見せるスコアの内訳と、評価材料になった問題の値。 */
   scoreBreakdown: readonly GameResultDetailMetric[];
   scoreCriteria: GameResultScoreCriteria;
-  unscoredReason?: never;
-};
-
-/**
- * 評価の材料が無く、スコアを出さないプレイ。
- * 例: 内部診断で問題集に無い問題を指定して遊んだとき、問題ごとの基準時間が無い。
- */
-type UnscoredGameResultProps = {
-  score: null;
-  /** スコアの代わりに見せる、スコアを出さない理由。 */
-  unscoredReason: string;
-  scoreBreakdown?: never;
-  scoreCriteria?: never;
-};
-
-type GameResultScreenProps = (
-  | ScoredGameResultProps
-  | UnscoredGameResultProps
-) & {
-  gameName: string;
-  difficultyLabel: string;
-  pictogramSvg: string;
   /** 評価を理解するためのゲーム固有の主要成績。1行に並べる。 */
   metrics: GameResultMetrics;
   recordOutcomeNotice: ReactNode;
@@ -75,7 +56,6 @@ export function GameResultScreen({
   recordOutcomeNotice,
   scoreBreakdown,
   scoreCriteria,
-  unscoredReason,
   onStartNewProblem,
   onReplay,
   onOpenRecords,
@@ -83,7 +63,7 @@ export function GameResultScreen({
   onBackToHome,
   onOpenDiagnostics,
 }: GameResultScreenProps) {
-  const resultLevel = score === null ? "clear" : getGameResultLevel(score);
+  const resultLevel = getGameResultLevel(score);
   const screenRef = useRef<HTMLElement>(null);
 
   // クリアした操作の対象は盤面ごと消え、フォーカスも失われる。
@@ -109,13 +89,7 @@ export function GameResultScreen({
           level={resultLevel}
         />
 
-        {score === null ? (
-          <p className="mt-3 rounded-xl bg-muted/55 px-3 py-3 text-center text-supporting text-muted-foreground">
-            {unscoredReason}
-          </p>
-        ) : (
-          <GameResultScoreCard score={score} level={resultLevel} />
-        )}
+        <GameResultScoreCard score={score} level={resultLevel} />
 
         {recordOutcomeNotice}
 
@@ -140,12 +114,10 @@ export function GameResultScreen({
           onBackToHome={onBackToHome}
         />
 
-        {scoreCriteria && (
-          <GameResultDetails
-            breakdown={scoreBreakdown}
-            criteria={scoreCriteria}
-          />
-        )}
+        <GameResultDetails
+          breakdown={scoreBreakdown}
+          criteria={scoreCriteria}
+        />
 
         {onOpenDiagnostics && (
           <div className="mt-1 flex justify-center">

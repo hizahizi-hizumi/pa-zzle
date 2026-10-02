@@ -8,19 +8,14 @@ import {
   type ReflectionLaserPathMode,
 } from "@/games/reflection/laser-path-mode";
 import type { ReflectionResult } from "@/games/reflection/play/use-reflection-play";
-import type { ReflectionSessionResult } from "@/games/reflection/session/session";
 import { getReflectionScoreCriteria } from "@/games/reflection/ui/result/ReflectionResultScreen/score-criteria";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 import { formatElapsedTimeDelta } from "@/lib/format-performance-delta";
 
 type ReflectionResultScreenProps = {
-  /** 結果に出す難易度の表示名。問題を指定したプレイでは難易度を伏せた名前を渡す。 */
   difficultyLabel: string;
   laserPathMode: ReflectionLaserPathMode;
-  /** そのプレイで起きた事実。 */
-  performance: ReflectionSessionResult;
-  /** 事実と問題の作業の量から導いた評価。問題集に無い問題を指定したプレイでは作業の量が無く、`null`。 */
-  result: ReflectionResult | null;
+  result: ReflectionResult;
   recordOutcomeNotice: ReactNode;
   onReplay: () => void;
   onStartNewProblem: () => void;
@@ -64,7 +59,6 @@ function listScoreBreakdown(
 export function ReflectionResultScreen({
   difficultyLabel,
   laserPathMode,
-  performance,
   result,
   recordOutcomeNotice,
   onReplay,
@@ -76,41 +70,30 @@ export function ReflectionResultScreen({
 }: ReflectionResultScreenProps) {
   const { showsCheckCountInResult } =
     getReflectionLaserPathPolicy(laserPathMode);
-  const common = {
-    gameName: REFLECTION_DISPLAY_NAME,
-    difficultyLabel,
-    pictogramSvg: reflectionPictogramSvg,
-    metrics: [
-      {
-        label: "時間",
-        value: formatElapsedTime(performance.elapsedMs),
-        detail: result
-          ? `基準 ${formatElapsedTimeDelta(result.timeDeltaMs)}`
-          : undefined,
-      },
-      { label: "置き直し", value: String(performance.relocationCount) },
-    ],
-    recordOutcomeNotice,
-    onStartNewProblem,
-    onReplay,
-    onOpenRecords,
-    onChangeDifficulty,
-    onBackToHome,
-    onOpenDiagnostics,
-  } as const;
 
-  return result ? (
+  return (
     <GameResultScreen
-      {...common}
+      gameName={REFLECTION_DISPLAY_NAME}
+      difficultyLabel={difficultyLabel}
+      pictogramSvg={reflectionPictogramSvg}
+      metrics={[
+        {
+          label: "時間",
+          value: formatElapsedTime(result.elapsedMs),
+          detail: `基準 ${formatElapsedTimeDelta(result.timeDeltaMs)}`,
+        },
+        { label: "置き直し", value: String(result.relocationCount) },
+      ]}
       score={result.score}
       scoreBreakdown={listScoreBreakdown(result, showsCheckCountInResult)}
       scoreCriteria={getReflectionScoreCriteria(result)}
-    />
-  ) : (
-    <GameResultScreen
-      {...common}
-      score={null}
-      unscoredReason="問題集に無い問題のため、スコアは出しません。"
+      recordOutcomeNotice={recordOutcomeNotice}
+      onStartNewProblem={onStartNewProblem}
+      onReplay={onReplay}
+      onOpenRecords={onOpenRecords}
+      onChangeDifficulty={onChangeDifficulty}
+      onBackToHome={onBackToHome}
+      onOpenDiagnostics={onOpenDiagnostics}
     />
   );
 }

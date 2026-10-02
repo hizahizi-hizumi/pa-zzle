@@ -2,10 +2,7 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 
 import { createProblemSeed } from "@/games/problem-seed";
 import { useReflectionPlay } from "@/games/reflection/play/use-reflection-play";
-import {
-  createReflectionProblemIdentity,
-  type ReflectionProblem,
-} from "@/games/reflection/problem/problem";
+import type { ReflectionProblem } from "@/games/reflection/problem/problem";
 import { selectReflectionProblemForDifficulty } from "@/games/reflection/problem-selection";
 import {
   calculateReflectionPlayScore,
@@ -22,7 +19,6 @@ type HookResult = { current: ReturnType<typeof useReflectionPlay> };
 const difficulty = "3";
 const seed = "use-reflection-play-a";
 const pooled = selectReflectionProblemForDifficulty(difficulty, seed);
-const unpooledIdentity = createReflectionProblemIdentity(5, 3, 100_000);
 
 /** ストックから種類を選び、解のマスへ置く。同じ種類が続くときは選択が残るので選び直さない。 */
 function placeSolution(result: HookResult, problem: ReflectionProblem): void {
@@ -51,16 +47,14 @@ describe("useReflectionPlay", () => {
       ({ result } = renderHook(() => useReflectionPlay(difficulty)));
     });
 
-    test("問題集から選んだ問題の作業の量と問題集の中の位置を返すこと", () => {
+    test("問題集から選んだ問題と問題集の中の位置を返すこと", () => {
       const {
         problemIdentity,
-        workload,
         poolReference,
         result: playResult,
       } = result.current;
 
       expect(problemIdentity).toEqual(pooled.identity);
-      expect(workload).toEqual(pooled.workload);
       expect(poolReference).toEqual(pooled.poolReference);
       expect(playResult).toBeNull();
     });
@@ -71,51 +65,30 @@ describe("useReflectionPlay", () => {
       });
 
       test("プレイの事実と作業の量から評価を返すこと", () => {
-        const { sessionResult, result: playResult } = result.current;
+        const playResult = result.current.result;
 
-        expect(sessionResult).not.toBeNull();
         expect(playResult).toMatchObject({
-          ...sessionResult,
+          relocationCount: 0,
+          restartCount: 0,
           workload: pooled.workload,
           speedFullScoreMs: calculateReflectionSpeedFullScoreMs(
             pooled.workload,
           ),
           score:
-            sessionResult &&
+            playResult &&
             calculateReflectionPlayScore({
-              ...sessionResult,
+              elapsedMs: playResult.elapsedMs,
               workload: pooled.workload,
             }),
         });
       });
 
       test("記録に使う開始と完了の時刻を返すこと", () => {
-        const { startedAt, completedAt, sessionResult } = result.current;
+        const { startedAt, completedAt, result: playResult } = result.current;
 
         expect(completedAt).not.toBeNull();
-        expect((completedAt ?? 0) - startedAt).toBe(sessionResult?.elapsedMs);
+        expect((completedAt ?? 0) - startedAt).toBe(playResult?.elapsedMs);
       });
-    });
-  });
-
-  describe("問題集に無い identity を渡した場合", () => {
-    let result: HookResult;
-
-    beforeEach(() => {
-      vi.mocked(createProblemSeed).mockReturnValueOnce(seed);
-      ({ result } = renderHook(() =>
-        useReflectionPlay(difficulty, unpooledIdentity),
-      ));
-    });
-
-    test("生成器で作った問題を作業の量と問題集の中の位置なしで出すこと", () => {
-      const { problemIdentity, problemSource, workload, poolReference } =
-        result.current;
-
-      expect(problemIdentity).toEqual(unpooledIdentity);
-      expect(problemSource).toBe("given");
-      expect(workload).toBeNull();
-      expect(poolReference).toBeNull();
     });
   });
 });

@@ -4,7 +4,6 @@ import {
   parseReflectionDiagnosticSnapshot,
   restoreReflectionProblemFromDiagnosticSnapshot,
 } from "@/games/reflection/diagnostics";
-import { createReflectionProblemIdentity } from "@/games/reflection/problem/problem";
 import { selectReflectionProblemForDifficulty } from "@/games/reflection/problem-selection";
 
 describe("ReflectionDiagnosticSnapshot", () => {
@@ -12,14 +11,10 @@ describe("ReflectionDiagnosticSnapshot", () => {
   const snapshot = createReflectionDiagnosticSnapshot({
     difficulty: "4",
     problemIdentity: selected.identity,
+    poolReference: selected.poolReference,
     buildRevision: "abcdef1234567890",
   });
   const serialized = serializeInternalDiagnosticSnapshot(snapshot);
-  const missing = createReflectionDiagnosticSnapshot({
-    difficulty: "1",
-    problemIdentity: createReflectionProblemIdentity(5, 2, 999_999),
-    buildRevision: null,
-  });
   const invalidCases = [
     ["形式の版が違う", { ...snapshot, formatVersion: 2 }],
     ["別のゲーム", { ...snapshot, game: "takuzu" }],
@@ -28,7 +23,12 @@ describe("ReflectionDiagnosticSnapshot", () => {
       "問題集の番号が欠けた",
       { ...snapshot, problemPool: { poolVersion: "1" } },
     ],
+    ["問題集の版と番号が無い", { ...snapshot, problemPool: null }],
     ["分類が欠けた", { ...snapshot, difficultyAssessment: undefined }],
+    [
+      "分類されていない",
+      { ...snapshot, difficultyAssessment: { status: "unsupported" } },
+    ],
     [
       "扱わない盤面サイズ",
       {
@@ -63,42 +63,6 @@ describe("ReflectionDiagnosticSnapshot", () => {
       difficulty: "4",
       reasoningLevel: 4,
     });
-  });
-
-  test("問題集に無い 8×8 以上の盤面は分析せず、コピー形式から読み戻せること", () => {
-    const sample = createReflectionDiagnosticSnapshot({
-      difficulty: "3",
-      problemIdentity: createReflectionProblemIdentity(8, 12, 6),
-      buildRevision: null,
-    });
-
-    const parsed = parseReflectionDiagnosticSnapshot(
-      serializeInternalDiagnosticSnapshot(sample),
-    );
-
-    expect(sample.difficultyAssessment).toEqual({
-      status: "not-analyzed",
-      reason: "large-board",
-    });
-    expect(parsed).toEqual(sample);
-  });
-
-  test("問題集に無い 7×7 以下の identity は分析し直して分類すること", () => {
-    const { difficultyAssessment } = missing;
-
-    expect(difficultyAssessment.status).not.toBe("not-analyzed");
-  });
-
-  test("問題集に無い identity では問題集の番号を持たないこと", () => {
-    const { problemPool } = missing;
-
-    expect(problemPool).toBeNull();
-  });
-
-  test("問題集に無い identity は復元できないこと", () => {
-    const restored = restoreReflectionProblemFromDiagnosticSnapshot(missing);
-
-    expect(restored).toBeNull();
   });
 
   test.each(invalidCases)("%s JSON を拒否すること", (_, value) => {
