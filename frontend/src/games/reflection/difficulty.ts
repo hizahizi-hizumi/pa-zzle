@@ -45,6 +45,9 @@ type InclusiveRange<T extends number> = { minimum: T; maximum: T };
  * 1つのレベルが求める組み合わせ。
  * - `reasoningLevel`: 置き場所を決め切るのに要る最も深い推論レベル。レベルの挑戦の中身を決める。
  * - `boardSize` / `pieceCount`: 読む範囲（外周ヒント 4n 本と光路の長さ）と置く対象の数。単独でレベルを決めない。
+ * - `piecesPerClue`: 外周ヒント1本あたりのピース数（ピース数 ÷ 4n）の範囲。同じピース数でも盤面が狭いほどヒント同士が
+ *   同じピースを取り合い、1本あたりの手掛かりも減るので難しい。レベルの中でこれを揃え、盤面が広いほどピースを多くして、
+ *   広い盤面が狭い盤面より易しくなる逆転を防ぐ。省略したレベルでは問わない。
  * - `minimumTrialRetryCount`: 一致表示を見ながら1本ずつ満たす試し置きで、少なくともこの回数は一致を崩したり
  *   置き方を変えたりしないと解けないこと（試し置きで解き切れない問題も満たす）。一致表示があっても、外周ヒント同士の
  *   干渉で試し置きだけでは押し切れない問題に限る。省略したレベルでは問わない。
@@ -53,6 +56,7 @@ export type ReflectionLevelCombination = {
   reasoningLevel: ReflectionReasoningLevel;
   boardSize: InclusiveRange<ReflectionBoardSize>;
   pieceCount: InclusiveRange<number>;
+  piecesPerClue?: InclusiveRange<number>;
   minimumTrialRetryCount?: number;
 };
 
@@ -60,6 +64,8 @@ export type ReflectionLevelCombination = {
  * 各レベルの組み合わせ。推論レベルを1段ずつ上げ、規模の範囲と試し置きのやり直しの下限は両端とも下げない。
  * 隣のレベルとは規模の範囲が重なり、重なった規模では推論レベルと試し置きのやり直しでレベルが分かれる。
  * レベル4・5 は、一致表示を見ながら1本ずつ満たす試し置きでは押し切れない（外周ヒント同士が干渉する）問題に限る。
+ * レベル4・5 は外周ヒント1本あたりのピース数も揃える。密な盤面ではピースが他のピースの陰に隠れて問題成立条件を満たしにくく、
+ * 10×10 は20ピースまでしか安定して作れない。11×11 はレベル5 の密度の問題をほとんど作れないので、どのレベルにも含めない。
  * 境界は人間の実プレイで確かめる前の暫定値。
  */
 export const reflectionLevelCombinations = {
@@ -81,13 +87,15 @@ export const reflectionLevelCombinations = {
   "4": {
     reasoningLevel: 4,
     boardSize: { minimum: 7, maximum: 9 },
-    pieceCount: { minimum: 8, maximum: 16 },
+    pieceCount: { minimum: 8, maximum: 18 },
+    piecesPerClue: { minimum: 0.28, maximum: 0.5 },
     minimumTrialRetryCount: 3,
   },
   "5": {
     reasoningLevel: 5,
-    boardSize: { minimum: 9, maximum: 11 },
-    pieceCount: { minimum: 16, maximum: 18 },
+    boardSize: { minimum: 9, maximum: 10 },
+    pieceCount: { minimum: 17, maximum: 20 },
+    piecesPerClue: { minimum: 0.47, maximum: 0.56 },
     minimumTrialRetryCount: 15,
   },
 } as const satisfies Record<ReflectionDifficulty, ReflectionLevelCombination>;
@@ -131,17 +139,28 @@ function resistsTrial(
   );
 }
 
+/** 生成条件（盤面サイズとピース数の組）が、レベルの規模の範囲に入るか。 */
+export function coversReflectionGenerationCondition(
+  { boardSize, pieceCount, piecesPerClue }: ReflectionLevelCombination,
+  condition: { size: number; pieceCount: number },
+): boolean {
+  return (
+    isInRange(condition.size, boardSize) &&
+    isInRange(condition.pieceCount, pieceCount) &&
+    (piecesPerClue === undefined ||
+      isInRange(condition.pieceCount / (condition.size * 4), piecesPerClue))
+  );
+}
+
 function matchesLevelCombination(
   reasoningLevel: ReflectionReasoningLevel,
-  size: number,
-  pieceCount: number,
+  condition: { size: number; pieceCount: number },
   trial: ReflectionTrialFeatures,
   combination: ReflectionLevelCombination,
 ): boolean {
   return (
     combination.reasoningLevel === reasoningLevel &&
-    isInRange(size, combination.boardSize) &&
-    isInRange(pieceCount, combination.pieceCount) &&
+    coversReflectionGenerationCondition(combination, condition) &&
     resistsTrial(trial, combination.minimumTrialRetryCount)
   );
 }
@@ -160,8 +179,7 @@ export function assessReflectionDifficulty(
       const difficulty = reflectionDifficulties.find(({ id }) =>
         matchesLevelCombination(
           highestLevel,
-          size,
-          pieceCount,
+          { size, pieceCount },
           analysis.trial,
           reflectionLevelCombinations[id],
         ),
@@ -181,7 +199,8 @@ export function assessReflectionDifficulty(
 export function listReflectionGenerationConditions(
   difficulty: ReflectionDifficulty,
 ): ReflectionGenerationConditions[] {
-  const { boardSize, pieceCount } = reflectionLevelCombinations[difficulty];
+  const combination = reflectionLevelCombinations[difficulty];
+  const { boardSize, pieceCount } = combination;
   return reflectionBoardSizes
     .filter((size) => isInRange(size, boardSize))
     .flatMap((size) =>
@@ -189,5 +208,8 @@ export function listReflectionGenerationConditions(
         { length: pieceCount.maximum - pieceCount.minimum + 1 },
         (_, offset) => ({ size, pieceCount: pieceCount.minimum + offset }),
       ),
+    )
+    .filter((condition) =>
+      coversReflectionGenerationCondition(combination, condition),
     );
 }

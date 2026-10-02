@@ -111,22 +111,42 @@ describe("reflectionLevelCombinations", () => {
     ).toBeGreaterThan(0);
   });
 
-  test.each(adjacentPairs)(
-    "レベル %s が同じ盤面サイズ・ピース数を共有し、規模だけでレベルが決まらないこと",
-    (_, lower, upper) => {
-      const sharedMaximumSize = Math.min(
-        lower.boardSize.maximum,
-        upper.boardSize.maximum,
-      );
-      const sharedMaximumPieceCount = Math.min(
-        lower.pieceCount.maximum,
-        upper.pieceCount.maximum,
+  const adjacentIdPairs = difficultyIds
+    .slice(1)
+    .map((upperId, index) => [difficultyIds[index]!, upperId] as const);
+
+  test.each(adjacentIdPairs)(
+    "レベル %s と %s が同じ盤面サイズ・ピース数を共有し、規模だけでレベルが決まらないこと",
+    (lowerId, upperId) => {
+      const upperConditions = listReflectionGenerationConditions(upperId);
+      const shared = listReflectionGenerationConditions(lowerId).filter(
+        (condition) =>
+          upperConditions.some(
+            ({ size, pieceCount }) =>
+              size === condition.size && pieceCount === condition.pieceCount,
+          ),
       );
 
-      expect(sharedMaximumSize).toBeGreaterThanOrEqual(upper.boardSize.minimum);
-      expect(sharedMaximumPieceCount).toBeGreaterThanOrEqual(
-        upper.pieceCount.minimum,
-      );
+      expect(shared).not.toEqual([]);
+    },
+  );
+
+  test.each(difficultyIds)(
+    "レベル %s で、盤面が広いほどピース数の範囲が両端とも小さくならないこと",
+    (difficulty) => {
+      const conditions = listReflectionGenerationConditions(difficulty);
+      const pieceCountRanges = [
+        ...Map.groupBy(conditions, ({ size }) => size).values(),
+      ].map((group) => group.map(({ pieceCount }) => pieceCount));
+      const narrowed = pieceCountRanges
+        .slice(1)
+        .filter(
+          (counts, index) =>
+            Math.min(...counts) < Math.min(...pieceCountRanges[index]!) ||
+            Math.max(...counts) < Math.max(...pieceCountRanges[index]!),
+        );
+
+      expect(narrowed).toEqual([]);
     },
   );
 });
@@ -225,6 +245,16 @@ describe("assessReflectionDifficulty", () => {
     });
   });
 
+  describe("盤面サイズとピース数はレベル5の範囲だが、外周ヒント1本あたりのピースが少ない問題", () => {
+    const analysis = toAnalysis(5, 10, 18);
+
+    test("提供範囲外とすること", () => {
+      const result = assessReflectionDifficulty(analysis);
+
+      expect(result).toMatchObject({ status: "out-of-range" });
+    });
+  });
+
   describe("規模はレベル5の範囲だが推論が浅い問題", () => {
     const { boardSize, pieceCount } = reflectionLevelCombinations["5"];
     const analysis = toAnalysis(3, boardSize.maximum, pieceCount.maximum);
@@ -271,16 +301,18 @@ describe("assessReflectionDifficulty", () => {
 });
 
 describe("listReflectionGenerationConditions", () => {
-  const cases = combinationCases.map(
-    ([difficulty, { boardSize, pieceCount }]) =>
-      [
-        difficulty,
-        (boardSize.maximum - boardSize.minimum + 1) *
-          (pieceCount.maximum - pieceCount.minimum + 1),
-        { size: boardSize.minimum, pieceCount: pieceCount.minimum },
-        { size: boardSize.maximum, pieceCount: pieceCount.maximum },
-      ] as const,
-  );
+  const cases = combinationCases
+    .filter(([, combination]) => !("piecesPerClue" in combination))
+    .map(
+      ([difficulty, { boardSize, pieceCount }]) =>
+        [
+          difficulty,
+          (boardSize.maximum - boardSize.minimum + 1) *
+            (pieceCount.maximum - pieceCount.minimum + 1),
+          { size: boardSize.minimum, pieceCount: pieceCount.minimum },
+          { size: boardSize.maximum, pieceCount: pieceCount.maximum },
+        ] as const,
+    );
 
   test.each(cases)(
     "レベル %s の規模の範囲に入る盤面サイズとピース数の組をすべて挙げること",
@@ -292,6 +324,19 @@ describe("listReflectionGenerationConditions", () => {
       expect(conditions).toContainEqual(largest);
     },
   );
+
+  test("レベル5 は、外周ヒント1本あたりのピース数の範囲に入る組だけを挙げること", () => {
+    const conditions = listReflectionGenerationConditions("5");
+
+    expect(conditions).toEqual([
+      { size: 9, pieceCount: 17 },
+      { size: 9, pieceCount: 18 },
+      { size: 9, pieceCount: 19 },
+      { size: 9, pieceCount: 20 },
+      { size: 10, pieceCount: 19 },
+      { size: 10, pieceCount: 20 },
+    ]);
+  });
 });
 
 describe("parseReflectionDifficulty", () => {

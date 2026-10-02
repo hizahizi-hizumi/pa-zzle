@@ -2,6 +2,7 @@ import { writeFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import {
   assessReflectionDifficulty,
+  coversReflectionGenerationCondition,
   listReflectionGenerationConditions,
   type ReflectionDifficulty,
   type ReflectionLevelCombination,
@@ -33,7 +34,7 @@ import { selectReflectionProblemForDifficulty } from "@/games/reflection/problem
 import { reflectionPieces } from "@/games/reflection/puzzle/board";
 
 /**
- * レベルごとの問題数。レベル4・5 は 8×8〜11×11 の盤面で1候補の生成と分析に数秒〜数十秒かかり、事前生成が4並列で
+ * レベルごとの問題数。レベル4・5 は 8×8〜10×10 の盤面で1候補の生成と分析に数秒〜数十秒かかり、事前生成が4並列で
  * 数時間に収まるよう少なくしている。
  */
 const defaultPerLevel = {
@@ -48,7 +49,7 @@ const defaultPerLevel = {
  * 問題集の版。問題の並び（問題番号 `<レベル>-<番号>` が指す問題）が変わる作り直しをしたら上げる。
  * 生成器の版（`REFLECTION_GENERATOR_VERSION`）が上がったときも並びは変わるので上げる。
  */
-const poolVersion = "3";
+const poolVersion = "4";
 
 const usage = `Usage: bun run generate:reflection-pool -- [options]
 
@@ -137,12 +138,8 @@ function findTrialPrefilter(
     .map(
       ({ id }): ReflectionLevelCombination => reflectionLevelCombinations[id],
     )
-    .filter(
-      ({ boardSize, pieceCount }) =>
-        boardSize.minimum <= condition.size &&
-        condition.size <= boardSize.maximum &&
-        pieceCount.minimum <= condition.pieceCount &&
-        condition.pieceCount <= pieceCount.maximum,
+    .filter((combination) =>
+      coversReflectionGenerationCondition(combination, condition),
     )
     .map((combination) => combination.minimumTrialRetryCount);
   return minimums.length > 0 &&

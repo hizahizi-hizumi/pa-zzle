@@ -33,7 +33,7 @@ const previewStrip = {
   /** 鏡の組を置く最初の列。組は左から1列ずつ、上下のマスに同じ向きの斜め鏡を置き、1組目は右下がり、2組目は右上がりと交互にする。 */
   firstPairColumn: 1,
   /** レベルごとの鏡の組の数。ピース数（組の数 × 2）はそのレベルのピース数の範囲に入れる。 */
-  pairCounts: { "1": 1, "2": 2, "3": 3, "4": 5, "5": 8 },
+  pairCounts: { "1": 1, "2": 2, "3": 3, "4": 5, "5": 9 },
 } as const satisfies {
   rowCount: number;
   firstPairColumn: number;
