@@ -381,6 +381,7 @@ export function useTsumeShogiPlay(
     problemSource: play.problemSource,
     workload,
     poolReference: play.poolReference,
+    problem: session.problem,
     plies: session.problem.plies,
     status: session.status,
     progress: play.progress,

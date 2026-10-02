@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useState } from "react";
+import { type CSSProperties, type ReactNode, useEffect, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { PlayHeader } from "@/components/PlayHeader";
@@ -8,6 +8,7 @@ import { TSUME_SHOGI_DISPLAY_NAME } from "@/games/tsume-shogi/display-name";
 import type {
   TsumeShogiPlayedMove,
   TsumeShogiProgress,
+  TsumeShogiResult,
 } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
 import type {
   TsumeShogiBoardPiece,
@@ -20,19 +21,20 @@ import type {
   TsumeShogiRejection,
   TsumeShogiSelection,
   TsumeShogiSessionPhase,
+  TsumeShogiSessionResult,
 } from "@/games/tsume-shogi/session/session";
 import { TsumeShogiClearAnimation } from "@/games/tsume-shogi/ui/board/clear/TsumeShogiClearAnimation";
 import { TsumeShogiBoard } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard";
 import { readTsumeShogiHowToPlaySeen } from "@/games/tsume-shogi/ui/how-to-play-seen";
+import { TsumeShogiResultScreen } from "@/games/tsume-shogi/ui/result/TsumeShogiResultScreen";
 import { TsumeShogiHowToPlayDialog } from "@/games/tsume-shogi/ui/TsumeShogiHowToPlayDialog";
-import { TsumeShogiClearedPanel } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiClearedPanel";
 import { TsumeShogiHand } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiHand";
 import { TsumeShogiPieceBox } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiPieceBox";
 import { TsumeShogiPlayStatus } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiPlayStatus";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type TsumeShogiPlayProps = {
-  /** 詰み上がりに出す難易度の表示名。問題を指定したプレイでは難易度を伏せた名前を渡す。 */
+  /** 結果に出す難易度の表示名。問題を指定したプレイでは難易度を伏せた名前を渡す。 */
   difficultyLabel: string;
   plies: number;
   progress: TsumeShogiProgress;
@@ -47,6 +49,11 @@ type TsumeShogiPlayProps = {
   elapsedMs: number;
   canUndo: boolean;
   canRestart: boolean;
+  /** クリアしたプレイの事実。クリアするまでは `null`。 */
+  sessionResult: TsumeShogiSessionResult | null;
+  /** クリアしたプレイの評価。問題集に無い問題を指定したプレイでは `null`。 */
+  result: TsumeShogiResult | null;
+  recordOutcomeNotice: ReactNode;
   onTapSquare: (square: TsumeShogiSquare) => void;
   onTapHand: (pieceType: TsumeShogiHandPieceType) => void;
   onChoosePromotion: (promote: boolean) => void;
@@ -58,8 +65,11 @@ type TsumeShogiPlayProps = {
   onReplay: () => void;
   onClearAnimationComplete: () => void;
   onStartNewProblem: () => void;
+  onOpenRecords: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
+  /** 内部診断が有効なときだけ渡し、メニューに検証情報を出す。 */
+  onOpenDiagnostics?: () => void;
 };
 
 /**
@@ -87,6 +97,9 @@ export function TsumeShogiPlay({
   elapsedMs,
   canUndo,
   canRestart,
+  sessionResult,
+  result,
+  recordOutcomeNotice,
   onTapSquare,
   onTapHand,
   onChoosePromotion,
@@ -98,8 +111,10 @@ export function TsumeShogiPlay({
   onReplay,
   onClearAnimationComplete,
   onStartNewProblem,
+  onOpenRecords,
   onChangeDifficulty,
   onBackToHome,
+  onOpenDiagnostics,
 }: TsumeShogiPlayProps) {
   // 初めて遊ぶときだけ、盤より先に遊び方を開く（intro）。
   const [howToPlay, setHowToPlay] = useState<"closed" | "intro" | "open">(() =>
@@ -133,6 +148,24 @@ export function TsumeShogiPlay({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [playing, promotionChoice, onCancelPromotion, onClearSelection]);
 
+  // 完成演出の間は詰め上がりの盤をそのまま見せ、演出を終えてから結果画面に切り替える。
+  if (progress === "result" && sessionResult && result) {
+    return (
+      <TsumeShogiResultScreen
+        difficultyLabel={difficultyLabel}
+        performance={sessionResult}
+        result={result}
+        recordOutcomeNotice={recordOutcomeNotice}
+        onReplay={onReplay}
+        onStartNewProblem={onStartNewProblem}
+        onOpenRecords={onOpenRecords}
+        onChangeDifficulty={onChangeDifficulty}
+        onBackToHome={onBackToHome}
+        onOpenDiagnostics={onOpenDiagnostics}
+      />
+    );
+  }
+
   return (
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
       <BrandIdentityHeader />
@@ -151,6 +184,7 @@ export function TsumeShogiPlay({
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
         onOpenHowToPlay={() => setHowToPlay("open")}
+        onOpenDiagnostics={onOpenDiagnostics}
       />
       <TsumeShogiHowToPlayDialog
         open={howToPlay !== "closed"}
@@ -182,14 +216,6 @@ export function TsumeShogiPlay({
                 onChoosePromotion={onChoosePromotion}
               />
             </TsumeShogiClearAnimation>
-            {progress === "result" && (
-              <TsumeShogiClearedPanel
-                difficultyLabel={difficultyLabel}
-                plies={plies}
-                onReplay={onReplay}
-                onStartNewProblem={onStartNewProblem}
-              />
-            )}
           </div>
           <div className="h-5 px-1">
             <TsumeShogiPlayStatus
