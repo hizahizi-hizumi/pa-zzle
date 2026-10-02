@@ -212,7 +212,10 @@ export function PlayRecordsScreen({
                   <p className="text-meta text-muted-foreground">
                     {selectedRecords.length}件
                   </p>
-                  <CopyPlayRecordsButton records={selectedRecords} />
+                  <CopyPlayRecordsButton
+                    records={selectedRecords}
+                    label="一覧の記録をJSONでコピー"
+                  />
                 </div>
               </div>
 

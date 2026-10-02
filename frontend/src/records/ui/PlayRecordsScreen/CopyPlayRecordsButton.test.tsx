@@ -30,7 +30,12 @@ describe("CopyPlayRecordsButton", () => {
       configurable: true,
       value: { writeText },
     });
-    render(<CopyPlayRecordsButton records={records} />);
+    render(
+      <CopyPlayRecordsButton
+        records={records}
+        label="一覧の記録をJSONでコピー"
+      />,
+    );
   });
 
   afterEach(cleanup);

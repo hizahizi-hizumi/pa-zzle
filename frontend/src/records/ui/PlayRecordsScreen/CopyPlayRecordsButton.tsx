@@ -9,9 +9,13 @@ type CopyState = "idle" | "copied" | "failed";
 
 type CopyPlayRecordsButtonProps = {
   records: readonly PlayRecord[];
+  label: string;
 };
 
-export function CopyPlayRecordsButton({ records }: CopyPlayRecordsButtonProps) {
+export function CopyPlayRecordsButton({
+  records,
+  label: idleLabel,
+}: CopyPlayRecordsButtonProps) {
   const [copyState, setCopyState] = useState<CopyState>("idle");
 
   async function copyRecords() {
@@ -29,7 +33,7 @@ export function CopyPlayRecordsButton({ records }: CopyPlayRecordsButtonProps) {
       ? "コピーしました"
       : copyState === "failed"
         ? "コピーできませんでした"
-        : "一覧の記録をJSONでコピー";
+        : idleLabel;
 
   return (
     <Button
