@@ -182,11 +182,14 @@ export function isTsumeShogiSessionOnWrongLine(
   return session.turns.some((turn) => turn.line === "wrong");
 }
 
-/** 詰むまでに残っている手数（問題の手数から盤面に指した手を引いたもの）。 */
+/**
+ * 詰むまでに残っている手数（問題の手数から盤面に指した手を引いたもの）。誤王手の筋で最後の手に王手を続けると、
+ * 玉方の応手の分だけ問題の手数を超えるので、0 で止める。
+ */
 export function getTsumeShogiSessionRemainingPlies(
   session: TsumeShogiSession,
 ): number {
-  return session.problem.plies - countPlayedPlies(session);
+  return Math.max(0, session.problem.plies - countPlayedPlies(session));
 }
 
 /** 盤面に指した手の数。玉方の応手を待っている手と、詰めた手には玉方の手が無い。 */
@@ -450,7 +453,7 @@ export function tapTsumeShogiSessionSquare(
 ): TsumeShogiSession {
   if (!acceptsAttackerInput(session)) return session;
   if (session.promotionChoice) {
-    return { ...session, promotionChoice: null };
+    return cancelTsumeShogiSessionPromotion(session);
   }
 
   const piece = getTsumeShogiPieceAt(
@@ -523,7 +526,11 @@ export function cancelTsumeShogiSessionPromotion(
 ): TsumeShogiSession {
   if (!session.promotionChoice) return session;
 
-  return { ...session, promotionChoice: null };
+  return {
+    ...session,
+    promotionChoice: null,
+    inputCount: session.inputCount + 1,
+  };
 }
 
 /** 選択を解除する。 */

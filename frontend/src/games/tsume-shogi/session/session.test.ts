@@ -5,6 +5,7 @@ import {
   type TsumeShogiSquare,
 } from "@/games/tsume-shogi/puzzle/position";
 import {
+  cancelTsumeShogiSessionPromotion,
   canUndoTsumeShogiSession,
   chooseTsumeShogiSessionPromotion,
   createTsumeShogiSession,
@@ -151,6 +152,7 @@ describe("tapTsumeShogiSessionSquare", () => {
       expect(session.wrongCheckCount).toBe(1);
       expect(session.refutationViewCount).toBe(2);
       expect(getTsumeShogiSessionPhase(session)).toBe("refuted");
+      expect(getTsumeShogiSessionRemainingPlies(session)).toBe(0);
     });
   });
 
@@ -228,6 +230,18 @@ describe("chooseTsumeShogiSessionPromotion", () => {
       "1a2b+",
     );
     expect(session.promotionChoice).toBeNull();
+  });
+});
+
+describe("cancelTsumeShogiSessionPromotion", () => {
+  const choosing = moveOnBoard(initial, square(1, 1), square(2, 2), 2_000);
+
+  test("駒の選択を残して選ぶのをやめ、操作回数に数えること", () => {
+    const session = cancelTsumeShogiSessionPromotion(choosing);
+
+    expect(session.promotionChoice).toBeNull();
+    expect(session.selection).toEqual({ type: "board", square: square(1, 1) });
+    expect(session.inputCount).toBe(choosing.inputCount + 1);
   });
 });
 
