@@ -16,6 +16,7 @@ import {
   MinesweeperBoard,
   type MinesweeperInputMode,
 } from "@/games/minesweeper/ui/board/MinesweeperBoard";
+import { MinesweeperHowToPlayDialog } from "@/games/minesweeper/ui/MinesweeperHowToPlayDialog";
 import { InputModeToggle } from "@/games/minesweeper/ui/MinesweeperPlay/InputModeToggle";
 import { MinesweeperResultScreen } from "@/games/minesweeper/ui/result/MinesweeperResultScreen";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
@@ -70,6 +71,7 @@ export function MinesweeperPlay({
   onOpenDiagnostics,
 }: MinesweeperPlayProps) {
   const [mode, setMode] = useState<MinesweeperInputMode>("reveal");
+  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
 
   function handleReplay(): void {
     setMode("reveal");
@@ -123,7 +125,12 @@ export function MinesweeperPlay({
         onStartNewProblem={handleStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
+        onOpenHowToPlay={() => setHowToPlayOpen(true)}
         onOpenDiagnostics={onOpenDiagnostics}
+      />
+      <MinesweeperHowToPlayDialog
+        open={howToPlayOpen}
+        onClose={() => setHowToPlayOpen(false)}
       />
       <main className="flex min-h-0 flex-1 items-center justify-center px-2 py-3 sm:px-6">
         <div className="w-full max-w-[27rem]">

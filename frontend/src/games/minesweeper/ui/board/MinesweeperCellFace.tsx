@@ -2,7 +2,8 @@ import { Bomb, Flag } from "lucide-react";
 
 import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
 
-export type MinesweeperCellFaceSize = "board" | "preview";
+/** `board` は盤面のマス、`preview` は難易度選択の小さな盤面、`figure` は遊び方の図のマス。 */
+export type MinesweeperCellFaceSize = "board" | "preview" | "figure";
 
 const NUMBER_CLASS_NAMES = [
   "",
@@ -19,11 +20,13 @@ const NUMBER_CLASS_NAMES = [
 const SIZE_CLASS_NAMES = {
   board: "text-[clamp(0.8rem,4vw,1.15rem)]",
   preview: "text-[11px] tabular-nums",
+  figure: "text-sm tabular-nums",
 } satisfies Record<MinesweeperCellFaceSize, string>;
 
 const MINE_ICON_CLASS_NAMES = {
   board: "size-[50%]",
   preview: "size-[60%]",
+  figure: "size-[55%]",
 } satisfies Record<MinesweeperCellFaceSize, string>;
 
 function getStateClassName(view: MinesweeperVisibleCell): string {
