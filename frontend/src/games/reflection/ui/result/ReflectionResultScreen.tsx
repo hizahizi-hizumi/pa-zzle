@@ -22,7 +22,8 @@ type ReflectionResultScreenProps = {
   /** 事実と問題の作業の量から導いた評価。問題集に無い問題を指定したプレイでは作業の量が無く、`null`。 */
   result: ReflectionResult | null;
   recordOutcomeNotice: ReactNode;
-  onReplay: () => void;
+  /** 省略すると同じ問題を遊び直す操作を押せない状態で出す。 */
+  onReplay?: () => void;
   onStartNewProblem: () => void;
   onOpenRecords: () => void;
   onChangeDifficulty: () => void;

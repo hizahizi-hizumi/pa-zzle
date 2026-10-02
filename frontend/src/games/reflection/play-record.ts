@@ -3,6 +3,10 @@ import {
   type ReflectionDifficulty,
 } from "@/games/reflection/difficulty";
 import {
+  createReflectionResult,
+  type ReflectionResult,
+} from "@/games/reflection/play/use-reflection-play";
+import {
   isReflectionProblemIdentity,
   isReflectionRecordedProblemIdentity,
   isReflectionSolveWorkload,
@@ -109,6 +113,43 @@ export function isReflectionPlayRecord(
     isWorkloadOfRecordedIdentity(workload, problemIdentity) &&
     isReflectionPerformance(performance)
   );
+}
+
+/** 記録から作り直した、結果画面に出す内容。 */
+export type ReflectionRecordedResult = {
+  difficulty: ReflectionDifficulty;
+  problemIdentity: ReflectionProblemIdentity;
+  result: ReflectionResult;
+};
+
+/**
+ * 記録から結果画面に出す内容を作り直す。
+ * 今の版の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
+ */
+export function restoreReflectionRecordedResult(
+  record: PlayRecord,
+): ReflectionRecordedResult | null {
+  if (
+    !isReflectionPlayRecord(record) ||
+    !isReflectionProblemIdentity(record.payload.problemIdentity)
+  ) {
+    return null;
+  }
+
+  const { difficulty, problemIdentity, workload, performance } = record.payload;
+  // 以前の記録にある評価に使わない項目を結果へ持ち込まない。
+  const sessionResult: ReflectionSessionResult = {
+    elapsedMs: performance.elapsedMs,
+    relocationCount: performance.relocationCount,
+    restartCount: performance.restartCount,
+    laserCheckCount: performance.laserCheckCount,
+    inputCount: performance.inputCount,
+  };
+  return {
+    difficulty,
+    problemIdentity,
+    result: createReflectionResult(sessionResult, workload),
+  };
 }
 
 export function createReflectionPlayRecord({

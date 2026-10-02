@@ -31,6 +31,7 @@ import type { ReflectionBoard } from "@/games/reflection/puzzle/board";
 import { writeReflectionHowToPlaySeen } from "@/games/reflection/ui/how-to-play-seen";
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
 import { readPlayRecords } from "@/records/storage";
+import { PlayResultView } from "@/views/PlayResultView";
 import { ReflectionPlayView } from "@/views/ReflectionPlayView";
 
 const internalDiagnostics = vi.hoisted(() => ({ available: false }));
@@ -65,6 +66,10 @@ function renderAt(path: string): void {
         <Route
           path="/puzzles/reflection/play/:difficulty"
           element={<ReflectionPlayView />}
+        />
+        <Route
+          path="/puzzles/:game/result/:recordId"
+          element={<PlayResultView />}
         />
         <Route path="/puzzles/reflection" element={<p>難易度選択画面</p>} />
         <Route path="/records" element={<p>記録画面</p>} />
@@ -117,6 +122,10 @@ function renderRouterAt(entry: InitialEntry): PlayRouter {
       {
         path: "/puzzles/reflection/play/:difficulty",
         element: <ReflectionPlayView />,
+      },
+      {
+        path: "/puzzles/:game/result/:recordId",
+        element: <PlayResultView />,
       },
     ],
     { initialEntries: [entry] },
@@ -222,6 +231,32 @@ describe("ReflectionPlayView", () => {
         const records = readPlayRecords();
 
         expect(records).toHaveLength(2);
+      });
+    });
+  });
+
+  describe("通常の出題を解き終えた場合の画面遷移", () => {
+    const selected = selectReflectionProblemForDifficulty("1", problemSeed);
+    let router: PlayRouter;
+
+    beforeEach(() => {
+      router = renderRouterAt("/puzzles/reflection/play/1");
+      solve(selected.problem.solution);
+    });
+
+    test("保存した記録の結果画面へ履歴を置き換えて移ること", async () => {
+      const resultScreen = await screen.findByRole("region", {
+        name: "プレイ結果",
+      });
+      const [record] = readPlayRecords();
+
+      expect(resultScreen).toBeTruthy();
+      expect(router.state.location.pathname).toBe(
+        `/puzzles/reflection/result/${encodeURIComponent(record?.id ?? "")}`,
+      );
+      expect(router.state.historyAction).toBe("REPLACE");
+      expect(router.state.location.state).toEqual({
+        recordSaveOutcome: { status: "first-record" },
       });
     });
   });
