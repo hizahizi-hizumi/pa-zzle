@@ -185,6 +185,17 @@ function createSelectedPlayState(
   );
 }
 
+function withNextSession(
+  current: TsumeShogiPlayState,
+  next: TsumeShogiSession,
+): TsumeShogiPlayState {
+  return {
+    ...current,
+    session: next,
+    progress: next.status === "cleared" ? "clearing" : current.progress,
+  };
+}
+
 function createTsumeShogiResult(
   sessionResult: TsumeShogiSessionResult,
   workload: TsumeShogiSolveWorkload,
@@ -243,16 +254,26 @@ export function useTsumeShogiPlay(
     (update: (current: TsumeShogiSession) => TsumeShogiSession) => {
       setPlay((current) => {
         const next = update(current.session);
-        if (next === current.session) return current;
-
-        return {
-          ...current,
-          session: next,
-          progress: next.status === "cleared" ? "clearing" : current.progress,
-        };
+        return next === current.session
+          ? current
+          : withNextSession(current, next);
       });
     },
     [],
+  );
+
+  // 攻方の着手は玉方の応手を決める探索を伴い重いので、updater（StrictMode では2回呼ばれる）の中では求めない。
+  // 操作のときに表示中の session から1回だけ求め、その間に session が変わっていなければ反映する。
+  const playAttackerOperation = useCallback(
+    (operate: (current: TsumeShogiSession) => TsumeShogiSession) => {
+      const next = operate(session);
+      if (next === session) return;
+
+      setPlay((current) =>
+        current.session === session ? withNextSession(current, next) : current,
+      );
+    },
+    [session],
   );
 
   // 元に戻した後に別の手を指したときも、その手の応手を待ち直すよう、応手を待つ手ごとに間を置く。
@@ -273,11 +294,11 @@ export function useTsumeShogiPlay(
     (square: TsumeShogiSquare) => {
       const operatedAt = Date.now();
       setNow(operatedAt);
-      updateSession((current) =>
+      playAttackerOperation((current) =>
         tapTsumeShogiSessionSquare(current, square, operatedAt),
       );
     },
-    [updateSession],
+    [playAttackerOperation],
   );
 
   const tapHand = useCallback(
@@ -291,11 +312,11 @@ export function useTsumeShogiPlay(
     (promote: boolean) => {
       const operatedAt = Date.now();
       setNow(operatedAt);
-      updateSession((current) =>
+      playAttackerOperation((current) =>
         chooseTsumeShogiSessionPromotion(current, promote, operatedAt),
       );
     },
-    [updateSession],
+    [playAttackerOperation],
   );
 
   const cancelPromotion = useCallback(() => {
