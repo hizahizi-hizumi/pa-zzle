@@ -8,10 +8,22 @@ import {
 import { createPlayLocationState } from "@/game-catalog/play-location-state";
 import { createRecordResultLocationState } from "@/game-catalog/record-result-location-state";
 
+import { createMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
+import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
 import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
 import { createNanpureProblemIdentity } from "@/games/nanpure/problem/problem";
 import { selectNanpureProblemForDifficulty } from "@/games/nanpure/problem-selection";
+import { createParkingJamPlayRecord } from "@/games/parking-jam/play-record";
+import { selectParkingJamProblemForDifficulty } from "@/games/parking-jam/problem-selection";
 import { createProblemId } from "@/games/problem-id";
+import { createReflectionPlayRecord } from "@/games/reflection/play-record";
+import { selectReflectionProblemForDifficulty } from "@/games/reflection/problem-selection";
+import { createSlidePuzzlePlayRecord } from "@/games/slide-puzzle/play-record";
+import { selectSlidePuzzleProblemForDifficulty } from "@/games/slide-puzzle/problem-selection";
+import { createTakuzuPlayRecord } from "@/games/takuzu/play-record";
+import { selectTakuzuProblemForDifficulty } from "@/games/takuzu/problem-selection";
+import { createWaterSortPlayRecord } from "@/games/water-sort/play-record";
+import { selectWaterSortProblemForDifficulty } from "@/games/water-sort/problem-selection";
 import type { PlayRecord } from "@/records/play-record";
 import { writePlayRecords } from "@/records/storage";
 import { PlayResultView } from "@/views/PlayResultView";
@@ -98,6 +110,7 @@ function renderAt(entry: InitialEntry): ResultRouter {
         element: <PlayResultView />,
       },
       { path: "/puzzles/nanpure/play/:difficulty", element: <p>プレイ画面</p> },
+      { path: "/puzzles/:game/play/:difficulty", element: <p>プレイ画面</p> },
       { path: "/puzzles/nanpure", element: <p>難易度選択画面</p> },
       { path: "/records", element: <p>記録画面</p> },
       { path: "/", element: <p>ホーム画面</p> },
@@ -164,6 +177,174 @@ describe("今の版の記録の場合", () => {
     },
   );
 });
+
+const startedAt = 1_000;
+const completedAt = 121_000;
+
+const waterSortProblem = selectWaterSortProblemForDifficulty("2", "result");
+const minesweeperProblem = selectMinesweeperProblemForDifficulty("1", "result");
+const parkingJamProblem = selectParkingJamProblemForDifficulty("1", "result");
+const parkingJamVehicleCount =
+  parkingJamProblem.identity.conditions.vehicleCount;
+const slidePuzzleProblem = selectSlidePuzzleProblemForDifficulty("1", "result");
+const takuzuProblem = selectTakuzuProblemForDifficulty("4", "result");
+const reflectionProblem = selectReflectionProblemForDifficulty("3", "result");
+
+const gameRecords = [
+  [
+    "ウォーターソート",
+    createWaterSortPlayRecord({
+      difficulty: "2",
+      problemIdentity: waterSortProblem.identity,
+      startedAt,
+      completedAt,
+      result: {
+        elapsedMs: 120_000,
+        moveCount: waterSortProblem.optimalMoveCount,
+        completionMoveCount: waterSortProblem.optimalMoveCount,
+        undoCount: 0,
+        restartCount: 0,
+        optimalMoveCount: waterSortProblem.optimalMoveCount,
+      },
+    }),
+    "/puzzles/water-sort/play/2",
+    createProblemId(waterSortProblem.identity),
+  ],
+  [
+    "ナンプレ",
+    nanpureRecord,
+    "/puzzles/nanpure/play/3",
+    createProblemId(nanpureProblem.identity),
+  ],
+  [
+    "マインスイーパー",
+    createMinesweeperPlayRecord({
+      difficulty: "1",
+      problemIdentity: minesweeperProblem.identity,
+      startedAt,
+      completedAt,
+      result: { elapsedMs: 120_000, mistakeCount: 0, minimumOpenCount: 10 },
+    }),
+    "/puzzles/minesweeper/play/1",
+    createProblemId(minesweeperProblem.identity),
+  ],
+  [
+    "パーキングジャム",
+    createParkingJamPlayRecord({
+      difficulty: "1",
+      problemIdentity: parkingJamProblem.identity,
+      speedReference: {
+        vehicleCount: parkingJamVehicleCount,
+        initialBlockedVehicleCount: 0,
+      },
+      startedAt,
+      completedAt,
+      result: {
+        elapsedMs: 120_000,
+        moveAttemptCount: parkingJamVehicleCount,
+        successfulMoveCount: parkingJamVehicleCount,
+        failedMoveCount: 0,
+        undoCount: 0,
+        restartCount: 0,
+      },
+    }),
+    "/puzzles/parking-jam/play/1",
+    createProblemId(parkingJamProblem.identity),
+  ],
+  [
+    "スライドパズル",
+    createSlidePuzzlePlayRecord({
+      difficulty: "1",
+      problemIdentity: slidePuzzleProblem.identity,
+      startedAt,
+      completedAt,
+      result: {
+        elapsedMs: 120_000,
+        moveCount: slidePuzzleProblem.optimalMoveCount,
+        completionMoveCount: slidePuzzleProblem.optimalMoveCount,
+        slideCount: slidePuzzleProblem.optimalMoveCount,
+        restartCount: 0,
+        optimalMoveCount: slidePuzzleProblem.optimalMoveCount,
+      },
+    }),
+    "/puzzles/slide-puzzle/play/1",
+    createProblemId(slidePuzzleProblem.identity),
+  ],
+  [
+    "バイナリパズル",
+    createTakuzuPlayRecord({
+      difficulty: "4",
+      problemIdentity: takuzuProblem.identity,
+      workload: takuzuProblem.workload,
+      startedAt,
+      completedAt,
+      result: {
+        elapsedMs: 220_000,
+        correctionCount: 1,
+        restartCount: 0,
+        undoCount: 0,
+        inputCount: 70,
+      },
+    }),
+    "/puzzles/takuzu/play/4",
+    createProblemId(takuzuProblem.identity),
+  ],
+  [
+    "リフレクション",
+    createReflectionPlayRecord({
+      difficulty: "3",
+      problemIdentity: reflectionProblem.identity,
+      workload: reflectionProblem.workload,
+      startedAt,
+      completedAt,
+      result: {
+        elapsedMs: 90_000,
+        relocationCount: 1,
+        restartCount: 0,
+        laserCheckCount: 3,
+        inputCount: 10,
+      },
+    }),
+    "/puzzles/reflection/play/3",
+    createProblemId(reflectionProblem.identity),
+  ],
+] as const;
+
+describe.each(gameRecords)(
+  "%sの今の版の記録の場合",
+  (gameName, record, playPath, problemId) => {
+    let router: ResultRouter;
+
+    beforeEach(() => {
+      writePlayRecords([record]);
+      router = renderAt(createResultPath(record));
+    });
+
+    test("そのゲームの結果画面を出すこと", () => {
+      const resultScreen = screen.getByRole("region", { name: "プレイ結果" });
+
+      expect(resultScreen.textContent).toContain(gameName);
+    });
+
+    test("プレイ！で記録と同じ難易度のプレイ画面へ記録の問題を避けて移ること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "プレイ！" }));
+
+      const { location } = router.state;
+
+      expect(location.pathname).toBe(playPath);
+      expect(location.state).toEqual(createPlayLocationState(problemId));
+    });
+
+    test("同じ問題で記録の問題 ID を付けたプレイ画面へ移ること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "同じ問題" }));
+
+      const { location } = router.state;
+
+      expect(location.pathname).toBe(playPath);
+      expect(location.search).toBe(`?problem=${problemId}`);
+    });
+  },
+);
 
 describe("自己ベスト更新の保存結果を state に持つ場合", () => {
   beforeEach(() => {
