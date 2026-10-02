@@ -1,39 +1,36 @@
 import { Button } from "@/components/ui/button";
-import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type TsumeShogiClearedPanelProps = {
+  difficultyLabel: string;
   plies: number;
-  elapsedMs: number;
   onReplay: () => void;
   onStartNewProblem: () => void;
-  onBackToHome: () => void;
 };
 
+/** 結果画面を導入するまで、詰み上がりの盤の上に次の行動を置く仮表示。 */
 export function TsumeShogiClearedPanel({
+  difficultyLabel,
   plies,
-  elapsedMs,
   onReplay,
   onStartNewProblem,
-  onBackToHome,
 }: TsumeShogiClearedPanelProps) {
   return (
     <section
       aria-label="詰み"
-      className="mx-auto flex max-w-xl flex-col items-center gap-3 py-4"
+      className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-background/80 p-4 animate-in fade-in duration-(--duration-slow) motion-reduce:animate-none"
     >
-      <h2 className="text-xl font-semibold">詰み</h2>
-      <p className="text-supporting text-muted-foreground">
-        {plies}手詰 ・ {formatElapsedTime(elapsedMs)}
-      </p>
+      <div className="flex flex-col items-center gap-1">
+        <strong className="text-screen-title">詰み</strong>
+        <span className="text-meta text-muted-foreground">
+          {plies}手詰 ・ {difficultyLabel}
+        </span>
+      </div>
       <div className="flex flex-wrap justify-center gap-2">
+        <Button type="button" variant="secondary" onClick={onReplay}>
+          同じ問題をもう一度
+        </Button>
         <Button type="button" onClick={onStartNewProblem}>
           別の問題
-        </Button>
-        <Button type="button" variant="outline" onClick={onReplay}>
-          もう一度
-        </Button>
-        <Button type="button" variant="ghost" onClick={onBackToHome}>
-          ホーム
         </Button>
       </div>
     </section>

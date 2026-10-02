@@ -44,6 +44,36 @@ export type TsumeShogiMove =
       to: TsumeShogiSquare;
     };
 
+const promotablePieceTypes: ReadonlySet<TsumeShogiPieceType> = new Set([
+  "rook",
+  "bishop",
+  "silver",
+  "knight",
+  "lance",
+  "pawn",
+]);
+
+function isInPromotionZone(side: TsumeShogiSide, rank: number): boolean {
+  return side === "attacker" ? rank <= 3 : rank >= 7;
+}
+
+/**
+ * 盤上の駒の移動で成ることを選べるか。成れる駒（`pieceType` は動かす前の駒）が、相手の陣（相手側の3段）へ入る・
+ * その中で動く・そこから出る移動なら成れる。打つ手は成れない。
+ */
+export function canTsumeShogiMovePromote(
+  side: TsumeShogiSide,
+  pieceType: TsumeShogiPieceType,
+  move: TsumeShogiMove,
+): boolean {
+  return (
+    move.kind === "board" &&
+    promotablePieceTypes.has(pieceType) &&
+    (isInPromotionZone(side, move.from.rank) ||
+      isInPromotionZone(side, move.to.rank))
+  );
+}
+
 /** USI 形式（例: `7g7f`、`8h2b+`、`G*5b`）。 */
 export function formatTsumeShogiMoveUsi(move: TsumeShogiMove): string {
   const to = toEngineSquare(move.to).usi;
