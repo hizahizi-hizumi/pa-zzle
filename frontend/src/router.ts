@@ -18,6 +18,7 @@ export type Path =
   | `/puzzles/slide-puzzle/play/:difficulty`
   | `/puzzles/takuzu`
   | `/puzzles/takuzu/play/:difficulty`
+  | `/puzzles/tsume-shogi/play/:difficulty`
   | `/puzzles/water-sort`
   | `/puzzles/water-sort/play/:difficulty`
   | `/records`
@@ -30,6 +31,7 @@ export type Params = {
   '/puzzles/reflection/play/:difficulty': { difficulty: string }
   '/puzzles/slide-puzzle/play/:difficulty': { difficulty: string }
   '/puzzles/takuzu/play/:difficulty': { difficulty: string }
+  '/puzzles/tsume-shogi/play/:difficulty': { difficulty: string }
   '/puzzles/water-sort/play/:difficulty': { difficulty: string }
 }
 
