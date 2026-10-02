@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from "react";
-
+import type { TapHandlers } from "@/components/touch-tap";
 import type { TsumeShogiPlayedMove } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
 import type {
   TsumeShogiPiece,
@@ -10,7 +10,6 @@ import {
   formatTsumeShogiSquare,
   tsumeShogiPieceNames,
 } from "@/games/tsume-shogi/ui/piece-label";
-import type { TapHandlers } from "@/games/tsume-shogi/ui/touch-tap";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
 import { cn } from "@/lib/utils";
 

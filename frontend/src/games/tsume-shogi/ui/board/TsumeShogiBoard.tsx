@@ -1,3 +1,4 @@
+import { useTouchTap } from "@/components/touch-tap";
 import type { TsumeShogiPlayedMove } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
 import {
   isSameTsumeShogiSquare,
@@ -15,7 +16,6 @@ import {
   type TsumeShogiSquareHighlight,
 } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard/TsumeShogiSquareButton";
 import { formatTsumeShogiRank } from "@/games/tsume-shogi/ui/piece-label";
-import { useTouchTap } from "@/games/tsume-shogi/ui/touch-tap";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
 import { cn } from "@/lib/utils";
 

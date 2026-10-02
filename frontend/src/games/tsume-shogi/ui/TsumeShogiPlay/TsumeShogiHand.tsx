@@ -1,3 +1,4 @@
+import { useTouchTap } from "@/components/touch-tap";
 import {
   type TsumeShogiHand as TsumeShogiHandCounts,
   type TsumeShogiHandPieceType,
@@ -5,7 +6,6 @@ import {
 } from "@/games/tsume-shogi/puzzle/position";
 import { TsumeShogiPieceGlyph } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceGlyph";
 import { tsumeShogiHandPieceNames } from "@/games/tsume-shogi/ui/piece-label";
-import { useTouchTap } from "@/games/tsume-shogi/ui/touch-tap";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
 import { cn } from "@/lib/utils";
 
