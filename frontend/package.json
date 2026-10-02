@@ -27,6 +27,7 @@
     "analyze:slide-puzzle": "bun scripts/analyze-slide-puzzle-corpus.ts",
     "analyze:reflection": "bun scripts/analyze-reflection-corpus.ts",
     "generate:reflection-pool": "bun scripts/generate-reflection-problem-pool.ts",
+    "analyze:tsume-shogi": "bun scripts/analyze-tsume-shogi-corpus.ts",
     "generate:tsume-shogi-pool": "bun scripts/generate-tsume-shogi-problem-pool.ts"
   },
   "dependencies": {
