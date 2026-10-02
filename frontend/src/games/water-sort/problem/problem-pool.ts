@@ -1,3 +1,4 @@
+import { createProblemPoolIdLookup } from "@/games/problem-id";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import {
   WATER_SORT_GENERATOR_VERSION,
@@ -56,4 +57,17 @@ export function listWaterSortPoolEntries(
   difficulty: WaterSortDifficulty,
 ): readonly WaterSortProblemPoolEntry[] {
   return problemPool.levels[difficulty];
+}
+
+const findPoolPositionByProblemId = createProblemPoolIdLookup(
+  problemPool.levels,
+  (entry) => toWaterSortPooledProblem(entry).identity,
+);
+
+/** 難易度の問題集から問題 ID で1問を探す。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+export function findWaterSortPoolEntryByProblemId(
+  difficulty: WaterSortDifficulty,
+  problemId: string,
+): WaterSortProblemPoolEntry | null {
+  return findPoolPositionByProblemId(difficulty, problemId)?.entry ?? null;
 }

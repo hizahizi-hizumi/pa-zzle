@@ -1,3 +1,4 @@
+import { createProblemId } from "@/games/problem-id";
 import {
   assessReflectionDifficulty,
   type ReflectionDifficulty,
@@ -20,6 +21,7 @@ import {
 import {
   restoreReflectionPoolProblem,
   restoreReflectionProblem,
+  selectReflectionProblemById,
   selectReflectionProblemForDifficulty,
 } from "@/games/reflection/problem-selection";
 import {
@@ -278,5 +280,22 @@ describe("restoreReflectionPoolProblem", () => {
     );
 
     expect(restored).toEqual(selected);
+  });
+});
+
+describe("selectReflectionProblemById", () => {
+  const selected = selectReflectionProblemForDifficulty("1", "seed-a");
+  const problemId = createProblemId(selected.identity);
+
+  test("seed で選んだ問題を、その問題IDから同じ問題として引けること", () => {
+    const found = selectReflectionProblemById("1", problemId);
+
+    expect(found).toEqual(selected);
+  });
+
+  test("別の難易度の問題IDには null を返すこと", () => {
+    const found = selectReflectionProblemById("2", problemId);
+
+    expect(found).toBeNull();
   });
 });

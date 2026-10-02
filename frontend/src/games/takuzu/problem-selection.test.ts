@@ -1,3 +1,4 @@
+import { createProblemId } from "@/games/problem-id";
 import {
   assessTakuzuDifficulty,
   type TakuzuDifficulty,
@@ -17,6 +18,7 @@ import {
 } from "@/games/takuzu/problem/problem-pool";
 import {
   restoreTakuzuProblem,
+  selectTakuzuProblemById,
   selectTakuzuProblemForDifficulty,
 } from "@/games/takuzu/problem-selection";
 
@@ -210,4 +212,21 @@ describe("restoreTakuzuProblem", () => {
       expect(restored).toBeNull();
     },
   );
+});
+
+describe("selectTakuzuProblemById", () => {
+  const selected = selectTakuzuProblemForDifficulty("1", "seed-a");
+  const problemId = createProblemId(selected.identity);
+
+  test("seed で選んだ問題を、その問題IDから同じ問題として引けること", () => {
+    const found = selectTakuzuProblemById("1", problemId);
+
+    expect(found).toEqual(selected);
+  });
+
+  test("別の難易度の問題IDには null を返すこと", () => {
+    const found = selectTakuzuProblemById("2", problemId);
+
+    expect(found).toBeNull();
+  });
 });

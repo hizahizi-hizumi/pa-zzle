@@ -1,11 +1,16 @@
+import { createProblemId } from "@/games/problem-id";
+import { reflectionDifficulties } from "@/games/reflection/difficulty";
 import { generateReflectionProblem } from "@/games/reflection/problem/generator";
 import { createReflectionProblemIdentity } from "@/games/reflection/problem/problem";
 import {
   decodeReflectionPoolSolution,
   encodeReflectionPoolSolution,
   findReflectionPooledProblem,
+  findReflectionPooledProblemByProblemId,
   findReflectionPooledProblemByReference,
+  formatReflectionPoolProblemId,
   getReflectionProblemPoolVersion,
+  listReflectionPoolEntries,
   restoreReflectionPoolEntry,
   toReflectionPooledProblem,
   toReflectionPoolIdentity,
@@ -139,6 +144,54 @@ describe("findReflectionPooledProblemByReference", () => {
 
   test.each(unknownReferences)("%s には null を返すこと", (_, reference) => {
     const found = findReflectionPooledProblemByReference(reference);
+
+    expect(found).toBeNull();
+  });
+});
+
+describe("findReflectionPooledProblemByProblemId", () => {
+  const poolEntries = reflectionDifficulties.flatMap(({ id: difficulty }) =>
+    listReflectionPoolEntries(difficulty).map((entry, entryIndex) => ({
+      difficulty,
+      poolProblemId: formatReflectionPoolProblemId(difficulty, entryIndex),
+      problemId: createProblemId(toReflectionPoolIdentity(entry)),
+    })),
+  );
+  const firstLevel2Entry = poolEntries.find(
+    ({ difficulty }) => difficulty === "2",
+  );
+  const unknownProblemId = "0000000000";
+
+  test("問題集の全項目の問題IDが互いに異なること", () => {
+    const distinctProblemIds = new Set(
+      poolEntries.map(({ problemId }) => problemId),
+    );
+
+    expect(distinctProblemIds.size).toBe(poolEntries.length);
+  });
+
+  test("問題集の全項目をその難易度と問題IDで引けること", () => {
+    const unresolvedEntries = poolEntries.filter(
+      ({ difficulty, poolProblemId, problemId }) =>
+        findReflectionPooledProblemByProblemId(difficulty, problemId)
+          ?.poolReference.problemId !== poolProblemId,
+    );
+
+    expect(unresolvedEntries).toEqual([]);
+  });
+
+  test("別の難易度の問題IDでは引けないこと", () => {
+    const found = findReflectionPooledProblemByProblemId(
+      "1",
+      firstLevel2Entry?.problemId ?? "",
+    );
+
+    expect(firstLevel2Entry).toBeDefined();
+    expect(found).toBeNull();
+  });
+
+  test("問題集に無い問題IDでは引けないこと", () => {
+    const found = findReflectionPooledProblemByProblemId("1", unknownProblemId);
 
     expect(found).toBeNull();
   });

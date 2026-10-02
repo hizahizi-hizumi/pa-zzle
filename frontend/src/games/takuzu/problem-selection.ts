@@ -7,6 +7,7 @@ import {
 } from "@/games/takuzu/problem/problem";
 import {
   findTakuzuPoolEntry,
+  findTakuzuPoolEntryByProblemId,
   listTakuzuPoolEntries,
   type TakuzuPooledProblem,
   toTakuzuPooledProblem,
@@ -39,5 +40,14 @@ export function restoreTakuzuProblem(
   const entry = isTakuzuProblemIdentity(identity)
     ? findTakuzuPoolEntry(identity)
     : null;
+  return entry ? toTakuzuPooledProblem(entry) : null;
+}
+
+/** 難易度の問題集から問題 ID で1問を引く。引けない ID には `null` を返す。 */
+export function selectTakuzuProblemById(
+  difficulty: TakuzuDifficulty,
+  problemId: string,
+): TakuzuPooledProblem | null {
+  const entry = findTakuzuPoolEntryByProblemId(difficulty, problemId);
   return entry ? toTakuzuPooledProblem(entry) : null;
 }

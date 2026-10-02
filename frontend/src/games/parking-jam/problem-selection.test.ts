@@ -13,7 +13,11 @@ import {
   listParkingJamPoolEntries,
   toParkingJamPoolIdentity,
 } from "@/games/parking-jam/problem/problem-pool";
-import { selectParkingJamProblemForDifficulty } from "@/games/parking-jam/problem-selection";
+import {
+  selectParkingJamProblemById,
+  selectParkingJamProblemForDifficulty,
+} from "@/games/parking-jam/problem-selection";
+import { createProblemId } from "@/games/problem-id";
 
 const difficulties = parkingJamDifficulties.map(({ id }) => id);
 
@@ -136,5 +140,22 @@ describe("selectParkingJamProblemForDifficulty", () => {
 
       expect(properties).toEqual(["problem", "identity"]);
     });
+  });
+});
+
+describe("selectParkingJamProblemById", () => {
+  const selected = selectParkingJamProblemForDifficulty("1", "seed-a");
+  const problemId = createProblemId(selected.identity);
+
+  test("seed で選んだ問題を、その問題IDから同じ問題として引けること", () => {
+    const found = selectParkingJamProblemById("1", problemId);
+
+    expect(found).toEqual(selected);
+  });
+
+  test("別の難易度の問題IDには null を返すこと", () => {
+    const found = selectParkingJamProblemById("2", problemId);
+
+    expect(found).toBeNull();
   });
 });

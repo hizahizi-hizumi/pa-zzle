@@ -1,3 +1,4 @@
+import { createProblemId } from "@/games/problem-id";
 import {
   assessWaterSortDifficulty,
   waterSortDifficulties,
@@ -6,7 +7,10 @@ import {
   listWaterSortPoolEntries,
   toWaterSortPooledProblem,
 } from "@/games/water-sort/problem/problem-pool";
-import { selectWaterSortProblemForDifficulty } from "@/games/water-sort/problem-selection";
+import {
+  selectWaterSortProblemById,
+  selectWaterSortProblemForDifficulty,
+} from "@/games/water-sort/problem-selection";
 import { isStandardWaterSortInitialState } from "@/games/water-sort/puzzle/state";
 
 const difficulties = waterSortDifficulties.map(({ id }) => id);
@@ -48,4 +52,21 @@ describe("selectWaterSortProblemForDifficulty", () => {
       ).toBe(true);
     },
   );
+});
+
+describe("selectWaterSortProblemById", () => {
+  const selected = selectWaterSortProblemForDifficulty("1", "seed-a");
+  const problemId = createProblemId(selected.identity);
+
+  test("seed で選んだ問題を、その問題IDから同じ問題として引けること", () => {
+    const found = selectWaterSortProblemById("1", problemId);
+
+    expect(found).toEqual(selected);
+  });
+
+  test("別の難易度の問題IDには null を返すこと", () => {
+    const found = selectWaterSortProblemById("2", problemId);
+
+    expect(found).toBeNull();
+  });
 });

@@ -7,6 +7,7 @@ import {
   type MinesweeperProblemIdentity,
 } from "@/games/minesweeper/problem/problem";
 import problemPoolJson from "@/games/minesweeper/problem/problem-pool.json";
+import { createProblemPoolIdLookup } from "@/games/problem-id";
 
 /**
  * 事前生成した問題集の1問。
@@ -68,4 +69,17 @@ export function listMinesweeperPoolEntries(
   difficulty: MinesweeperDifficulty,
 ): readonly MinesweeperProblemPoolEntry[] {
   return problemPool.levels[difficulty];
+}
+
+const findPoolPositionByProblemId = createProblemPoolIdLookup(
+  problemPool.levels,
+  (entry, difficulty) => toMinesweeperPoolIdentity(difficulty, entry),
+);
+
+/** 難易度の問題集から問題 ID で1問を探す。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+export function findMinesweeperPoolEntryByProblemId(
+  difficulty: MinesweeperDifficulty,
+  problemId: string,
+): MinesweeperProblemPoolEntry | null {
+  return findPoolPositionByProblemId(difficulty, problemId)?.entry ?? null;
 }

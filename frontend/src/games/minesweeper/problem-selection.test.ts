@@ -12,7 +12,11 @@ import {
   listMinesweeperPoolEntries,
   toMinesweeperPoolIdentity,
 } from "@/games/minesweeper/problem/problem-pool";
-import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
+import {
+  selectMinesweeperProblemById,
+  selectMinesweeperProblemForDifficulty,
+} from "@/games/minesweeper/problem-selection";
+import { createProblemId } from "@/games/problem-id";
 
 const difficulties = minesweeperDifficulties.map(({ id }) => id);
 
@@ -130,5 +134,22 @@ describe("selectMinesweeperProblemForDifficulty", () => {
     const selected = selectMinesweeperProblemForDifficulty("1", "seed-a");
 
     expect(selected).not.toHaveProperty("difficultyAnalysis");
+  });
+});
+
+describe("selectMinesweeperProblemById", () => {
+  const selected = selectMinesweeperProblemForDifficulty("1", "seed-a");
+  const problemId = createProblemId(selected.identity);
+
+  test("seed で選んだ問題を、その問題IDから同じ問題として引けること", () => {
+    const found = selectMinesweeperProblemById("1", problemId);
+
+    expect(found).toEqual(selected);
+  });
+
+  test("別の難易度の問題IDには null を返すこと", () => {
+    const found = selectMinesweeperProblemById("2", problemId);
+
+    expect(found).toBeNull();
   });
 });

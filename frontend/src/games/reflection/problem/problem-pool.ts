@@ -1,3 +1,4 @@
+import { createProblemPoolIdLookup } from "@/games/problem-id";
 import {
   type ReflectionDifficulty,
   reflectionDifficulties,
@@ -195,6 +196,22 @@ export function listReflectionPoolEntries(
   difficulty: ReflectionDifficulty,
 ): readonly ReflectionProblemPoolEntry[] {
   return problemPool.levels[difficulty];
+}
+
+const findPoolPositionByProblemId = createProblemPoolIdLookup(
+  problemPool.levels,
+  toReflectionPoolIdentity,
+);
+
+/** 難易度の問題集から問題 ID で1問を探して復元する。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+export function findReflectionPooledProblemByProblemId(
+  difficulty: ReflectionDifficulty,
+  problemId: string,
+): ReflectionPooledProblem | null {
+  const position = findPoolPositionByProblemId(difficulty, problemId);
+  return position
+    ? toReflectionPooledProblem(difficulty, position.entryIndex)
+    : null;
 }
 
 type PoolPosition = { difficulty: ReflectionDifficulty; entryIndex: number };

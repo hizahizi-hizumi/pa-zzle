@@ -16,8 +16,10 @@ import {
 } from "@/games/nanpure/problem/problem-pool";
 import {
   restoreNanpureProblem,
+  selectNanpureProblemById,
   selectNanpureProblemForDifficulty,
 } from "@/games/nanpure/problem-selection";
+import { createProblemId } from "@/games/problem-id";
 
 const difficulties = nanpureDifficulties.map(({ id }) => id);
 
@@ -175,4 +177,21 @@ describe("restoreNanpureProblem", () => {
       expect(restored).toBeNull();
     },
   );
+});
+
+describe("selectNanpureProblemById", () => {
+  const selected = selectNanpureProblemForDifficulty("1", "seed-a");
+  const problemId = createProblemId(selected.identity);
+
+  test("seed で選んだ問題を、その問題IDから同じ問題として引けること", () => {
+    const found = selectNanpureProblemById("1", problemId);
+
+    expect(found).toEqual(selected);
+  });
+
+  test("別の難易度の問題IDには null を返すこと", () => {
+    const found = selectNanpureProblemById("2", problemId);
+
+    expect(found).toBeNull();
+  });
 });

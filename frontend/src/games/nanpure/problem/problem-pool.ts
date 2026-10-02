@@ -15,6 +15,7 @@ import {
   type NanpureCell,
   type NanpureDigit,
 } from "@/games/nanpure/puzzle/board";
+import { createProblemPoolIdLookup } from "@/games/problem-id";
 
 /**
  * 事前生成した問題集の1問。
@@ -122,6 +123,19 @@ export function listNanpurePoolEntries(
   difficulty: NanpureDifficulty,
 ): readonly NanpureProblemPoolEntry[] {
   return problemPool.levels[difficulty];
+}
+
+const findPoolPositionByProblemId = createProblemPoolIdLookup(
+  problemPool.levels,
+  toNanpurePoolIdentity,
+);
+
+/** 難易度の問題集から問題 ID で1問を探す。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+export function findNanpurePoolEntryByProblemId(
+  difficulty: NanpureDifficulty,
+  problemId: string,
+): NanpureProblemPoolEntry | null {
+  return findPoolPositionByProblemId(difficulty, problemId)?.entry ?? null;
 }
 
 let entriesBySeed: ReadonlyMap<string, NanpureProblemPoolEntry> | undefined;

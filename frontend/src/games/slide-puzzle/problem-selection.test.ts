@@ -1,3 +1,4 @@
+import { createProblemId } from "@/games/problem-id";
 // @vitest-environment node
 
 import {
@@ -15,6 +16,7 @@ import {
 } from "@/games/slide-puzzle/problem/problem-pool";
 import {
   restoreSlidePuzzlePooledProblem,
+  selectSlidePuzzleProblemById,
   selectSlidePuzzleProblemForDifficulty,
 } from "@/games/slide-puzzle/problem-selection";
 import { isSolvableSlidePuzzleBoard } from "@/games/slide-puzzle/puzzle/rules";
@@ -155,4 +157,21 @@ describe("restoreSlidePuzzlePooledProblem", () => {
       expect(result).toBeNull();
     },
   );
+});
+
+describe("selectSlidePuzzleProblemById", () => {
+  const selected = selectSlidePuzzleProblemForDifficulty("1", "seed-a");
+  const problemId = createProblemId(selected.identity);
+
+  test("seed で選んだ問題を、その問題IDから同じ問題として引けること", () => {
+    const found = selectSlidePuzzleProblemById("1", problemId);
+
+    expect(found).toEqual(selected);
+  });
+
+  test("別の難易度の問題IDには null を返すこと", () => {
+    const found = selectSlidePuzzleProblemById("2", problemId);
+
+    expect(found).toBeNull();
+  });
 });
