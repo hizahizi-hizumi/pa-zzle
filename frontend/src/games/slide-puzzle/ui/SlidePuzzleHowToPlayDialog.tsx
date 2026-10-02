@@ -1,6 +1,5 @@
-import { ArrowRight } from "lucide-react";
-
 import { HowToPlayDialog } from "@/components/HowToPlayDialog";
+import { HowToPlayTransition } from "@/components/HowToPlayTransition";
 import type { SlidePuzzleBoard } from "@/games/slide-puzzle/puzzle/state";
 import { HowToPlayFigure } from "@/games/slide-puzzle/ui/SlidePuzzleHowToPlayDialog/HowToPlayFigure";
 
@@ -40,27 +39,25 @@ export function SlidePuzzleHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>空白の隣のタイルを押すと、空白へ滑る。</p>
-        <div className="flex items-center gap-2 text-muted-foreground">
+        <HowToPlayTransition>
           <HowToPlayFigure
             board={singleSlide.before}
             pressedTile={singleSlide.pressedTile}
           />
-          <ArrowRight className="size-4" aria-hidden />
           <HowToPlayFigure board={singleSlide.after} />
-        </div>
+        </HowToPlayTransition>
       </li>
       <li className="space-y-2">
         <p>
           空白と同じ行・列のタイルを押すと、間のタイルごとまとめて滑る。手数は動いたタイルの枚数で数える。
         </p>
-        <div className="flex items-center gap-2 text-muted-foreground">
+        <HowToPlayTransition>
           <HowToPlayFigure
             board={multipleSlide.before}
             pressedTile={multipleSlide.pressedTile}
           />
-          <ArrowRight className="size-4" aria-hidden />
           <HowToPlayFigure board={multipleSlide.after} />
-        </div>
+        </HowToPlayTransition>
       </li>
       <li>
         <p>空白と同じ行・列にないタイルは動かない。</p>
