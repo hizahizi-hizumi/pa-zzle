@@ -10,7 +10,10 @@ import type {
 import type { TsumeShogiDifficulty } from "@/games/tsume-shogi/difficulty";
 import { TSUME_SHOGI_DISPLAY_NAME } from "@/games/tsume-shogi/display-name";
 import type { TsumeShogiOperation } from "@/games/tsume-shogi/play/tsume-shogi-operation";
-import type { TsumeShogiPlayedMove } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
+import type {
+  TsumeShogiPlayedMove,
+  TsumeShogiResult,
+} from "@/games/tsume-shogi/play/use-tsume-shogi-play";
 import type {
   TsumeShogiBoardPiece,
   TsumeShogiHand as TsumeShogiHandCounts,
@@ -22,7 +25,6 @@ import type {
   TsumeShogiRejection,
   TsumeShogiSelection,
   TsumeShogiSessionPhase,
-  TsumeShogiSessionResult,
 } from "@/games/tsume-shogi/session/session";
 import { TsumeShogiClearAnimation } from "@/games/tsume-shogi/ui/board/clear/TsumeShogiClearAnimation";
 import {
@@ -30,8 +32,8 @@ import {
   tsumeShogiBoardFrameStyle,
 } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard";
 import { TsumeShogiPieceDefs } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceDefs";
+import { TsumeShogiResultScreen } from "@/games/tsume-shogi/ui/result/TsumeShogiResultScreen";
 import { TsumeShogiHowToPlayDialog } from "@/games/tsume-shogi/ui/TsumeShogiHowToPlayDialog";
-import { TsumeShogiClearedPanel } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiClearedPanel";
 import {
   TsumeShogiHand,
   type TsumeShogiHandAvailability,
@@ -45,7 +47,7 @@ import { cn } from "@/lib/utils";
 
 type TsumeShogiPlayProps = GamePlayScreenProps<
   TsumeShogiDifficulty,
-  TsumeShogiSessionResult
+  TsumeShogiResult
 > &
   RestartableGamePlayScreenProps &
   UndoableGamePlayScreenProps & {
@@ -101,6 +103,7 @@ export function TsumeShogiPlay({
   progress,
   elapsedMs,
   result,
+  recordOutcomeNotice,
   plies,
   phase,
   boardPieces,
@@ -125,6 +128,7 @@ export function TsumeShogiPlay({
   onReplay,
   onClearAnimationComplete,
   onStartNewProblem,
+  onOpenRecords,
   onChangeDifficulty,
   onBackToHome,
   onOpenDiagnostics,
@@ -196,13 +200,16 @@ export function TsumeShogiPlay({
         <TsumeShogiHowToPlayDialog open={open} onClose={onClose} />
       )}
       renderResultScreen={(clearedResult) => (
-        <TsumeShogiClearedPanel
+        <TsumeShogiResultScreen
           difficulty={difficulty}
-          plies={plies}
           result={clearedResult}
+          recordOutcomeNotice={recordOutcomeNotice}
           onReplay={onReplay}
           onStartNewProblem={onStartNewProblem}
+          onOpenRecords={onOpenRecords}
+          onChangeDifficulty={onChangeDifficulty}
           onBackToHome={onBackToHome}
+          onOpenDiagnostics={onOpenDiagnostics}
         />
       )}
     >
