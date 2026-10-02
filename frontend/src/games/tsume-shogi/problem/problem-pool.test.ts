@@ -8,10 +8,13 @@ import {
 import {
   findTsumeShogiPooledProblem,
   findTsumeShogiPooledProblemByProblemId,
+  findTsumeShogiPoolProblemFeatures,
   formatTsumeShogiPoolPosition,
   formatTsumeShogiPoolProblemId,
   hasTsumeShogiPoolProblemId,
   listTsumeShogiPoolEntries,
+  listTsumeShogiPoolIndexEntries,
+  listTsumeShogiPoolProblemIds,
   listTsumeShogiPoolSeeds,
   parseTsumeShogiPoolPosition,
   parseTsumeShogiPoolSeed,
@@ -19,11 +22,14 @@ import {
   storeTsumeShogiProblemPool,
   toTsumeShogiPooledProblem,
   toTsumeShogiPoolIdentity,
+  toTsumeShogiPoolIndexEntry,
 } from "@/games/tsume-shogi/problem/problem-pool";
 import problemPoolJson from "@/games/tsume-shogi/problem/problem-pool.json";
 import {
   createTsumeShogiPosition,
   formatTsumeShogiPosition,
+  getTsumeShogiHand,
+  listTsumeShogiBoardPieces,
 } from "@/games/tsume-shogi/puzzle/position";
 
 // 問題集の本体は画面を開いたときに読み込むので、テストではファイルの内容を先に置いておく。
@@ -281,10 +287,10 @@ describe("同梱の問題集", () => {
     expect(counts.every((count) => count > 0)).toBe(true);
   });
 
-  test("索引の seed が問題集と同じ並びであること", () => {
+  test("索引が、問題集と同じ並びで各問の seed と始めたときの局面の駒の数を持つこと", () => {
     for (const { id } of difficultyLevels) {
-      expect(listTsumeShogiPoolSeeds(id)).toEqual(
-        listTsumeShogiPoolEntries(id).map(([seed]) => seed),
+      expect(listTsumeShogiPoolIndexEntries(id)).toEqual(
+        listTsumeShogiPoolEntries(id).map(toTsumeShogiPoolIndexEntry),
       );
     }
   });
@@ -311,6 +317,75 @@ describe("同梱の問題集", () => {
       );
 
     expect(restore).not.toThrow();
+  });
+});
+
+describe("toTsumeShogiPoolIndexEntry", () => {
+  const cases = [
+    [
+      "攻方の持駒の無い局面",
+      "6l1k/7g1/7P1/4+B4/9/2B6/9/9/9 -",
+      ["ts-5-c1-99-3", 0, 6],
+    ],
+    [
+      "攻方の持駒が2種類ある局面",
+      "8k/7Ps/7+P1/9/9/9/9/9/9 2GS",
+      ["ts-5-c1-99-3", 3, 4],
+    ],
+  ] as const;
+
+  test.each(cases)(
+    "%sの seed と、攻方の持駒の枚数と、成駒・玉を含む盤上の駒の数を返すこと",
+    (_, position, expected) => {
+      const indexEntry = toTsumeShogiPoolIndexEntry([
+        "ts-5-c1-99-3",
+        position,
+        "",
+        0,
+        0,
+        0,
+      ]);
+
+      expect(indexEntry).toEqual(expected);
+    },
+  );
+});
+
+describe("listTsumeShogiPoolProblemIds", () => {
+  test("難易度の問題集の全問の問題 ID を、問題集の並び順で返すこと", () => {
+    const problemIds = listTsumeShogiPoolProblemIds("2");
+
+    expect(problemIds).toEqual(
+      listTsumeShogiPoolSeeds("2").map((seed) =>
+        createProblemId(parseTsumeShogiPoolSeed(seed)),
+      ),
+    );
+  });
+});
+
+describe("findTsumeShogiPoolProblemFeatures", () => {
+  const pooled = toTsumeShogiPooledProblem("2", 0);
+  const problemId = createProblemId(pooled.identity);
+
+  test("問題集の1問の特徴を、復元した問題の手数と始めたときの局面の駒の数で返すこと", () => {
+    const { initialPosition } = pooled.problem;
+    const features = findTsumeShogiPoolProblemFeatures("2", problemId);
+
+    expect(features).toEqual({
+      plies: pooled.problem.plies,
+      attackerHandPieceCount: Object.values(
+        getTsumeShogiHand(initialPosition, "attacker"),
+      ).reduce((sum, count) => sum + count, 0),
+      boardPieceCount: listTsumeShogiBoardPieces(initialPosition).length,
+    });
+  });
+
+  test("問題集に無い ID と、別の難易度の ID には null を返すこと", () => {
+    const unknown = findTsumeShogiPoolProblemFeatures("2", "unknown");
+    const otherDifficulty = findTsumeShogiPoolProblemFeatures("1", problemId);
+
+    expect(unknown).toBeNull();
+    expect(otherDifficulty).toBeNull();
   });
 });
 

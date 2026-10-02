@@ -1,25 +1,27 @@
-import { useMemo } from "react";
+import { useCallback } from "react";
 
-import { useGameNavigation } from "@/game-catalog/game-navigation";
-import { useInternalDiagnosticsDialog } from "@/game-catalog/internal-diagnostics-dialog";
 import {
-  useProblemIdQuerySync,
-  useRequestedProblem,
-} from "@/game-catalog/problem-id-query";
+  type CompletedGamePlay,
+  usePlayableGame,
+} from "@/game-catalog/playable-game";
+import { useRequestedProblem } from "@/game-catalog/problem-id-query";
+import { tsumeShogiCatalogEntry } from "@/game-catalog/tsume-shogi/tsume-shogi-catalog-entry";
 import type { ProblemId } from "@/games/problem-id";
 import { createTsumeShogiDiagnosticSnapshot } from "@/games/tsume-shogi/diagnostics";
 import type { TsumeShogiDifficulty } from "@/games/tsume-shogi/difficulty";
-import { useTsumeShogiPlay } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
+import {
+  type TsumeShogiResult,
+  useTsumeShogiPlay,
+} from "@/games/tsume-shogi/play/use-tsume-shogi-play";
+import { createTsumeShogiPlayAttemptProgress } from "@/games/tsume-shogi/play-attempt";
 import {
   createTsumeShogiPlayRecord,
   tsumeShogiPlayRecordDefinition,
 } from "@/games/tsume-shogi/play-record";
+import type { TsumeShogiProblemIdentity } from "@/games/tsume-shogi/problem/problem";
 import { selectTsumeShogiProblemById } from "@/games/tsume-shogi/problem-selection";
-import { tsumeShogiPlayRecordDisplay } from "@/games/tsume-shogi/ui/play-record-display";
 import { TsumeShogiDiagnostics } from "@/games/tsume-shogi/ui/TsumeShogiDiagnostics";
 import { TsumeShogiPlay } from "@/games/tsume-shogi/ui/TsumeShogiPlay";
-import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
-import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 
 type PlayableTsumeShogiProps = {
   difficulty: TsumeShogiDifficulty;
@@ -39,62 +41,44 @@ export function PlayableTsumeShogi({
     requestedProblem,
     avoidedProblemId,
   );
-  useProblemIdQuerySync(play.problemIdentity);
-  const navigation = useGameNavigation({
-    entryPath: "/puzzles/tsume-shogi",
-    playPath: "/puzzles/tsume-shogi/play/:difficulty",
+  const { poolReference } = play;
+  // 記録には遊んだ問題の問題集の位置も残す。問題が替わるまでは同じ関数を渡し、記録を作り直さない。
+  const createPlayRecord = useCallback(
+    (
+      completed: CompletedGamePlay<
+        TsumeShogiDifficulty,
+        TsumeShogiProblemIdentity,
+        TsumeShogiResult
+      >,
+    ) =>
+      createTsumeShogiPlayRecord({
+        ...completed,
+        poolReference,
+        workload: completed.result.workload,
+      }),
+    [poolReference],
+  );
+  const { screenProps, diagnostics } = usePlayableGame({
+    game: tsumeShogiCatalogEntry,
+    play,
+    playRecordDefinition: tsumeShogiPlayRecordDefinition,
+    createPlayRecord,
+    createPlayAttemptProgress: createTsumeShogiPlayAttemptProgress,
+    createDiagnosticSnapshot(buildRevision) {
+      return createTsumeShogiDiagnosticSnapshot({
+        difficulty,
+        problemIdentity: play.problemIdentity,
+        poolReference,
+        problem: play.session.problem,
+        buildRevision,
+      });
+    },
   });
-  const { problemIdentity, poolReference, startedAt, completedAt, result } =
-    play;
-  const playRecord = useMemo(
-    () =>
-      result !== null && completedAt !== null
-        ? createTsumeShogiPlayRecord({
-            difficulty,
-            problemIdentity,
-            poolReference,
-            workload: result.workload,
-            startedAt,
-            completedAt,
-            result,
-          })
-        : null,
-    [
-      difficulty,
-      problemIdentity,
-      poolReference,
-      startedAt,
-      completedAt,
-      result,
-    ],
-  );
-  const recordOutcome = useSavePlayRecord(
-    playRecord,
-    tsumeShogiPlayRecordDefinition,
-  );
-  const diagnostics = useInternalDiagnosticsDialog((buildRevision) =>
-    createTsumeShogiDiagnosticSnapshot({
-      difficulty,
-      problemIdentity,
-      poolReference,
-      problem: play.session.problem,
-      buildRevision,
-    }),
-  );
 
   return (
     <>
       <TsumeShogiPlay
-        difficulty={difficulty}
-        progress={play.progress}
-        elapsedMs={play.elapsedMs}
-        result={result}
-        recordOutcomeNotice={
-          <PlayRecordOutcomeNotice
-            outcome={recordOutcome}
-            display={tsumeShogiPlayRecordDisplay}
-          />
-        }
+        {...screenProps}
         plies={play.plies}
         phase={play.phase}
         boardPieces={play.boardPieces}
@@ -116,13 +100,6 @@ export function PlayableTsumeShogi({
         onClearSelection={play.clearSelection}
         onUndo={play.undo}
         onRestart={play.restart}
-        onReplay={play.replay}
-        onClearAnimationComplete={play.completeClearAnimation}
-        onStartNewProblem={play.startNewProblem}
-        onOpenRecords={navigation.openRecords}
-        onChangeDifficulty={navigation.changeDifficulty}
-        onBackToHome={navigation.backToHome}
-        onOpenDiagnostics={diagnostics.open}
       />
       {diagnostics.snapshot && (
         <TsumeShogiDiagnostics

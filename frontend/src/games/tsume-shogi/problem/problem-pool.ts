@@ -1,5 +1,9 @@
 import { difficultyLevels } from "@/games/difficulty";
-import { createProblemPoolIndex } from "@/games/problem-id";
+import {
+  createCountFeatureValue,
+  type ProblemFeatureAxis,
+} from "@/games/problem-feature";
+import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 import type { TsumeShogiDifficulty } from "@/games/tsume-shogi/difficulty";
 import {
   createTsumeShogiProblemIdentity,
@@ -21,6 +25,8 @@ import { parseTsumeShogiMoveUsi } from "@/games/tsume-shogi/puzzle/moves";
 import {
   createTsumeShogiPosition,
   formatTsumeShogiPosition,
+  getTsumeShogiHand,
+  listTsumeShogiBoardPieces,
   type TsumeShogiHandPieceType,
   type TsumeShogiPosition,
 } from "@/games/tsume-shogi/puzzle/position";
@@ -69,14 +75,27 @@ export type TsumeShogiProblemPool = {
 };
 
 /**
- * 問題集の索引。問題集の版と、レベルごとの各問の seed を問題集と同じ並びで持つ（`problem-pool-index.json`）。
- * 問題集の本体（`problem-pool.json`）は詰将棋の画面を開いたときに初めて読み込むので、記録の画面などで、
- * 問題を復元せずに問題 ID・identity が問題集の問題を指すかを確かめるときは索引を引く。
+ * 索引の1問。seed と、始めたときの局面の攻方の持駒の枚数・盤上の駒の数（図鑑で問題の特徴として示す）。
+ * 手数は seed から求める。
+ */
+export type TsumeShogiProblemPoolIndexEntry = readonly [
+  seed: string,
+  attackerHandPieceCount: number,
+  boardPieceCount: number,
+];
+
+/**
+ * 問題集の索引。問題集の版と、レベルごとの各問を問題集と同じ並びで持つ（`problem-pool-index.json`）。
+ * 問題集の本体（`problem-pool.json`）は詰将棋の画面を開いたときに初めて読み込むので、記録や図鑑の画面などで、
+ * 問題を復元せずに問題 ID・identity が問題集の問題を指すかを確かめるときや、問題の特徴を求めるときは索引を引く。
  */
 export type TsumeShogiProblemPoolIndex = {
   poolVersion: string;
   generatorVersion: typeof TSUME_SHOGI_GENERATOR_VERSION;
-  levels: Record<TsumeShogiDifficulty, readonly string[]>;
+  levels: Record<
+    TsumeShogiDifficulty,
+    readonly TsumeShogiProblemPoolIndexEntry[]
+  >;
 };
 
 const problemPoolIndex =
@@ -291,17 +310,47 @@ export function listTsumeShogiPoolEntries(
   return getProblemPool().levels[difficulty];
 }
 
+/** 問題集の1問の索引の項目。始めたときの局面の駒を数える。 */
+export function toTsumeShogiPoolIndexEntry([
+  seed,
+  position,
+]: TsumeShogiProblemPoolEntry): TsumeShogiProblemPoolIndexEntry {
+  const initialPosition = parseTsumeShogiPoolPosition(position);
+  const attackerHandPieceCount = Object.values(
+    getTsumeShogiHand(initialPosition, "attacker"),
+  ).reduce((sum, count) => sum + count, 0);
+  return [
+    seed,
+    attackerHandPieceCount,
+    listTsumeShogiBoardPieces(initialPosition).length,
+  ];
+}
+
+/** 索引にある、難易度の問題集の各問。問題集の本体を読み込まなくても引ける。 */
+export function listTsumeShogiPoolIndexEntries(
+  difficulty: TsumeShogiDifficulty,
+): readonly TsumeShogiProblemPoolIndexEntry[] {
+  return problemPoolIndex.levels[difficulty];
+}
+
 /** 索引にある、難易度の問題集の各問の seed。問題集の本体を読み込まなくても引ける。 */
 export function listTsumeShogiPoolSeeds(
   difficulty: TsumeShogiDifficulty,
 ): readonly string[] {
-  return problemPoolIndex.levels[difficulty];
+  return problemPoolIndex.levels[difficulty].map(([seed]) => seed);
 }
 
 const problemIdIndex = createProblemPoolIndex(
   problemPoolIndex.levels,
-  parseTsumeShogiPoolSeed,
+  ([seed]) => parseTsumeShogiPoolSeed(seed),
 );
+
+/** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。問題集の本体を読み込まなくても引ける。 */
+export function listTsumeShogiPoolProblemIds(
+  difficulty: TsumeShogiDifficulty,
+): readonly ProblemId[] {
+  return problemIdIndex.listProblemIds(difficulty);
+}
 
 /** 難易度の問題集に問題 ID の問題があるかを、索引で返す。問題集の本体を読み込まなくても引ける。 */
 export function hasTsumeShogiPoolProblemId(
@@ -330,7 +379,7 @@ function getPositionsBySeed(): ReadonlyMap<string, PoolPosition> {
   positionsBySeed ??= new Map(
     difficultyLevels.flatMap(({ id: difficulty }) =>
       problemPoolIndex.levels[difficulty].map(
-        (seed, entryIndex) => [seed, { difficulty, entryIndex }] as const,
+        ([seed], entryIndex) => [seed, { difficulty, entryIndex }] as const,
       ),
     ),
   );
@@ -359,3 +408,52 @@ export function findTsumeShogiPooledProblem(
     ? pooled
     : null;
 }
+
+/** 始めたときの局面を見れば分かる、問題の特徴。手数は見出しに「n手詰」として出す問題の条件。 */
+export type TsumeShogiProblemFeatures = {
+  plies: number;
+  attackerHandPieceCount: number;
+  boardPieceCount: number;
+};
+
+/** 難易度の問題集の1問の特徴を、問題集の本体を読み込まずに索引から求める。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+export function findTsumeShogiPoolProblemFeatures(
+  difficulty: TsumeShogiDifficulty,
+  problemId: string,
+): TsumeShogiProblemFeatures | null {
+  const entry = problemIdIndex.findPositionById(difficulty, problemId)?.entry;
+  if (!entry) {
+    return null;
+  }
+  const [seed, attackerHandPieceCount, boardPieceCount] = entry;
+  return {
+    plies: parseTsumeShogiPoolSeed(seed).conditions.plies,
+    attackerHandPieceCount,
+    boardPieceCount,
+  };
+}
+
+/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
+export const tsumeShogiProblemFeatureAxes = [
+  {
+    id: "plies",
+    getValue({ plies }) {
+      return createCountFeatureValue(plies);
+    },
+  },
+  {
+    id: "attacker-hand-piece-count",
+    getValue({ attackerHandPieceCount }) {
+      return createCountFeatureValue(attackerHandPieceCount);
+    },
+  },
+  {
+    id: "board-piece-count",
+    getValue({ boardPieceCount }) {
+      return createCountFeatureValue(boardPieceCount);
+    },
+  },
+] as const satisfies readonly ProblemFeatureAxis<TsumeShogiProblemFeatures>[];
+
+export type TsumeShogiProblemFeatureAxisId =
+  (typeof tsumeShogiProblemFeatureAxes)[number]["id"];

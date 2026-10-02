@@ -31,10 +31,11 @@ import {
   formatTsumeShogiPoolPosition,
   formatTsumeShogiPoolProblemId,
   listTsumeShogiPoolEntries,
-  listTsumeShogiPoolSeeds,
+  listTsumeShogiPoolIndexEntries,
   storeTsumeShogiProblemPool,
   type TsumeShogiProblemPoolEntry,
   toTsumeShogiPooledProblem,
+  toTsumeShogiPoolIndexEntry,
 } from "@/games/tsume-shogi/problem/problem-pool";
 import { selectTsumeShogiProblemForDifficulty } from "@/games/tsume-shogi/problem-selection";
 
@@ -643,16 +644,16 @@ function formatCounts(values: readonly (string | number)[]): string {
 }
 
 /**
- * 問題集の形の JSON。1問を1行に書き、作り直したときの差分を読みやすくする。各問を `toJsonEntry` で書く値にする。
+ * 問題集の形の JSON。1問を1行に書き、作り直したときの差分を読みやすくする。各問を `formatEntry` で JSON の1行にする。
  */
 function formatPoolLevelsJson(
   levels: Record<TsumeShogiDifficulty, readonly TsumeShogiProblemPoolEntry[]>,
-  toJsonEntry: (entry: TsumeShogiProblemPoolEntry) => unknown,
+  formatEntry: (entry: TsumeShogiProblemPoolEntry) => string,
 ): string {
   const lines = difficultyLevels.map(
     ({ id }, levelIndex) =>
       `    ${JSON.stringify(id)}: [\n${levels[id]
-        .map((entry) => `      ${JSON.stringify(toJsonEntry(entry))}`)
+        .map((entry) => `      ${formatEntry(entry)}`)
         .join(
           ",\n",
         )}\n    ]${levelIndex < difficultyLevels.length - 1 ? "," : ""}`,
@@ -663,14 +664,24 @@ function formatPoolLevelsJson(
 function formatPoolJson(
   levels: Record<TsumeShogiDifficulty, readonly TsumeShogiProblemPoolEntry[]>,
 ): string {
-  return formatPoolLevelsJson(levels, (entry) => entry);
+  return formatPoolLevelsJson(levels, (entry) => JSON.stringify(entry));
 }
 
-/** 問題集の索引（各問の seed を問題集と同じ並びで持つ）。問題集の本体を読み込まずに問題 ID を引くのに使う。 */
+/**
+ * 問題集の索引（各問の seed と始めたときの局面の駒の数を問題集と同じ並びで持つ）。問題集の本体を読み込まずに問題 ID を
+ * 引き、図鑑で問題の特徴を求めるのに使う。
+ */
 function formatPoolIndexJson(
   levels: Record<TsumeShogiDifficulty, readonly TsumeShogiProblemPoolEntry[]>,
 ): string {
-  return formatPoolLevelsJson(levels, ([seed]) => seed);
+  // 索引は Biome の整形の対象なので、Biome と同じく値の間に空白を置く。
+  return formatPoolLevelsJson(
+    levels,
+    (entry) =>
+      `[${toTsumeShogiPoolIndexEntry(entry)
+        .map((value) => JSON.stringify(value))
+        .join(", ")}]`,
+  );
 }
 
 function describeSize(json: string): string {
@@ -989,11 +1000,14 @@ function checkDuplicatesAndBiases(
   const seeds = difficultyLevels.flatMap(({ id }) =>
     listTsumeShogiPoolEntries(id).map(([seed]) => seed),
   );
-  const indexedSeeds = difficultyLevels.flatMap(({ id }) =>
-    listTsumeShogiPoolSeeds(id),
+  const indexEntries = difficultyLevels.flatMap(({ id }) =>
+    listTsumeShogiPoolIndexEntries(id),
   );
-  if (indexedSeeds.join("\n") !== seeds.join("\n")) {
-    violations.push("索引の seed が問題集の並びと一致しない");
+  const expectedIndexEntries = difficultyLevels.flatMap(({ id }) =>
+    listTsumeShogiPoolEntries(id).map(toTsumeShogiPoolIndexEntry),
+  );
+  if (JSON.stringify(indexEntries) !== JSON.stringify(expectedIndexEntries)) {
+    violations.push("索引が問題集の並び・seed・駒の数と一致しない");
   }
   if (new Set(seeds).size !== seeds.length) {
     violations.push(`seed の重複 ${seeds.length - new Set(seeds).size}`);
