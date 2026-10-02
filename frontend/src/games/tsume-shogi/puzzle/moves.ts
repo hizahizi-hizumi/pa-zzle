@@ -296,7 +296,7 @@ function* generateLegalEngineMoves(
  * - `double-pawn`: 二歩（同じ筋に成っていない攻方の歩がある筋へ歩を打つ）。
  * - `pawn-drop-mate`: 打歩詰（歩を打って玉方を詰ませる）。
  * - `dead-piece`: 行き所のない駒（その先へ動けない段へ、成らずに打つ・動く）。
- * - `unreachable`: その駒がその升へ動けない・打てない（駒の動き、駒のある升、間の駒など）。
+ * - `unreachable`: その駒がその升へ動けない・打てない（駒の動き、駒のある升、間の駒、持っていない駒など）。
  */
 export type TsumeShogiIllegalMoveReason =
   | "double-pawn"
@@ -330,10 +330,10 @@ export function explainTsumeShogiIllegalMove(
       : "unreachable";
   }
 
-  if (engine.board.at(to) !== null) {
+  const pieceType = toEnginePieceType(move.pieceType);
+  if (engine.blackHand.count(pieceType) <= 0 || engine.board.at(to) !== null) {
     return "unreachable";
   }
-  const pieceType = toEnginePieceType(move.pieceType);
   if (isDeadRank(pieceType, move.to.rank)) {
     return "dead-piece";
   }

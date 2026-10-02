@@ -210,6 +210,29 @@ describe("explainTsumeShogiIllegalMove", () => {
 
     expect(reason).toBe(expected);
   });
+
+  describe("持駒に無い駒を打つ場合", () => {
+    const withoutHand = createTsumeShogiPosition(
+      "8k/9/6NG1/1L7/2N6/5S3/4P4/9/9",
+      {},
+    );
+    const dropCases = [
+      ["歩のある筋への歩", "P*5c"],
+      ["2段目への桂", "N*5b"],
+    ] as const;
+
+    test.each(dropCases)(
+      "%s（%s）も、駒が無いので打てない理由を返すこと",
+      (_, usi) => {
+        const reason = explainTsumeShogiIllegalMove(
+          withoutHand,
+          parseTsumeShogiMoveUsi(usi),
+        );
+
+        expect(reason).toBe("unreachable");
+      },
+    );
+  });
 });
 
 describe("listTsumeShogiAttackerChecks", () => {
