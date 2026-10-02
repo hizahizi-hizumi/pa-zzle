@@ -2,10 +2,12 @@ import {
   type GameCatalogEntry,
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
+import { RecordedTakuzuResult } from "@/game-catalog/takuzu/RecordedTakuzuResult";
 import pictogramSvg from "@/games/takuzu/assets/pictogram.svg?raw";
 import { parseTakuzuDifficulty } from "@/games/takuzu/difficulty";
 import {
   isTakuzuPlayRecord,
+  restoreTakuzuRecordedResult,
   takuzuPlayRecordDefinition,
 } from "@/games/takuzu/play-record";
 import { canSelectTakuzuProblemById } from "@/games/takuzu/problem-selection";
@@ -26,5 +28,11 @@ export const takuzuCatalogEntry = {
           canSelectTakuzuProblemById,
         )
       : null;
+  },
+  renderRecordResult(record, context) {
+    const recorded = restoreTakuzuRecordedResult(record);
+    return recorded ? (
+      <RecordedTakuzuResult {...recorded} {...context} />
+    ) : null;
   },
 } satisfies GameCatalogEntry;

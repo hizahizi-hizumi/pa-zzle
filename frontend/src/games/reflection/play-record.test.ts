@@ -4,6 +4,7 @@ import {
   getReflectionPlayRecordTimeDelta,
   isReflectionPlayRecord,
   reflectionPlayRecordDefinition,
+  restoreReflectionRecordedResult,
 } from "@/games/reflection/play-record";
 import { createReflectionProblemIdentity } from "@/games/reflection/problem/problem";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
@@ -232,6 +233,35 @@ describe("reflectionPlayRecordDefinition", () => {
       );
 
       expect(values).toEqual([89, 21_750]);
+    });
+  });
+});
+
+describe("restoreReflectionRecordedResult", () => {
+  describe("今の版の記録の場合", () => {
+    test("記録の成績と問題の作業の量から結果を作り直すこと", () => {
+      const recorded = restoreReflectionRecordedResult(record);
+
+      expect(recorded).toMatchObject({
+        difficulty: "5",
+        problemIdentity,
+        result: {
+          ...performance,
+          workload,
+          timeDeltaMs: 21_750,
+          score: getReflectionPlayRecordScore(record),
+        },
+      });
+    });
+  });
+
+  describe("別の版の記録の場合", () => {
+    const unrestorableRecord = { ...record, payloadVersion: 1 };
+
+    test("null を返すこと", () => {
+      const recorded = restoreReflectionRecordedResult(unrestorableRecord);
+
+      expect(recorded).toBeNull();
     });
   });
 });

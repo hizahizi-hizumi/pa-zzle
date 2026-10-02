@@ -3,6 +3,7 @@ import {
   getTakuzuPlayRecordScore,
   getTakuzuPlayRecordTimeDelta,
   isTakuzuPlayRecord,
+  restoreTakuzuRecordedResult,
   takuzuPlayRecordDefinition,
 } from "@/games/takuzu/play-record";
 import { createTakuzuProblemIdentity } from "@/games/takuzu/problem/problem";
@@ -239,6 +240,35 @@ describe("takuzuPlayRecordDefinition", () => {
       );
 
       expect(values).toEqual([83, 44_000, 1]);
+    });
+  });
+});
+
+describe("restoreTakuzuRecordedResult", () => {
+  describe("今の版の記録の場合", () => {
+    test("記録の成績と問題の作業の量から結果を作り直すこと", () => {
+      const recorded = restoreTakuzuRecordedResult(record);
+
+      expect(recorded).toMatchObject({
+        difficulty: "4",
+        problemIdentity,
+        result: {
+          ...performance,
+          workload,
+          timeDeltaMs: 44_000,
+          score: { total: getTakuzuPlayRecordScore(record) },
+        },
+      });
+    });
+  });
+
+  describe("別の版の記録の場合", () => {
+    const unrestorableRecord = { ...record, payloadVersion: 2 };
+
+    test("null を返すこと", () => {
+      const recorded = restoreTakuzuRecordedResult(unrestorableRecord);
+
+      expect(recorded).toBeNull();
     });
   });
 });

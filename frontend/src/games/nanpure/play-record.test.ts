@@ -3,8 +3,10 @@ import {
   getNanpurePlayRecordScore,
   isNanpurePlayRecord,
   nanpurePlayRecordDefinition,
+  restoreNanpureRecordedResult,
 } from "@/games/nanpure/play-record";
 import { createNanpureProblemIdentity } from "@/games/nanpure/problem/problem";
+import { calculateNanpurePlayScore } from "@/games/nanpure/score";
 import type { PlayRecord } from "@/records/play-record";
 
 const performance = {
@@ -159,4 +161,32 @@ describe("nanpurePlayRecordDefinition", () => {
       expect(comparisonKey).toBe(expected);
     },
   );
+});
+
+describe("restoreNanpureRecordedResult", () => {
+  describe("今の版の記録の場合", () => {
+    test("記録の難易度・問題・成績から結果を作り直すこと", () => {
+      const recorded = restoreNanpureRecordedResult(record);
+
+      expect(recorded).toEqual({
+        difficulty: "3",
+        problemIdentity: record.payload.problemIdentity,
+        result: {
+          ...performance,
+          problemIdentity: record.payload.problemIdentity,
+          score: calculateNanpurePlayScore(performance),
+        },
+      });
+    });
+  });
+
+  describe("3段階の難易度の記録の場合", () => {
+    const unrestorableRecord = threeLevelRecord;
+
+    test("null を返すこと", () => {
+      const recorded = restoreNanpureRecordedResult(unrestorableRecord);
+
+      expect(recorded).toBeNull();
+    });
+  });
 });

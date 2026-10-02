@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import {
   createProblemId,
   type ProblemId,
@@ -16,7 +18,18 @@ export type RecordProblemPlayTarget = {
   problemId: ProblemId;
 };
 
-/** アプリが提供する1つのゲームの、入口・プレイ画面・記録・記録の問題の遊び直し先。 */
+/** 記録から描く結果画面へ、ゲームの外側が渡す告知と操作。次の問題・検証情報はゲームが記録から用意する。 */
+export type RecordResultContext = {
+  /** 記録を保存した直後の自己ベスト更新などの告知。 */
+  recordOutcomeNotice: ReactNode;
+  /** 記録の問題を遊び直す。遊び直せない記録では `undefined`。 */
+  onReplay: (() => void) | undefined;
+  onOpenRecords: () => void;
+  onChangeDifficulty: () => void;
+  onBackToHome: () => void;
+};
+
+/** アプリが提供する1つのゲームの、入口・プレイ画面・記録・記録の問題の遊び直し先・記録の結果画面。 */
 export type GameCatalogEntry = {
   /** 記録の `gameId` と同じ値。 */
   id: string;
@@ -32,6 +45,14 @@ export type GameCatalogEntry = {
   recordProblemPlayTarget: (
     record: PlayRecord,
   ) => RecordProblemPlayTarget | null;
+  /**
+   * 記録から結果画面を描く。今の版の記録でなく結果を作れないときは `null` を返す。
+   * 呼び出し側は記録の `gameId` がこのゲームの `id` と一致することを確かめてから渡す。
+   */
+  renderRecordResult: (
+    record: PlayRecord,
+    context: RecordResultContext,
+  ) => ReactNode | null;
 };
 
 /**

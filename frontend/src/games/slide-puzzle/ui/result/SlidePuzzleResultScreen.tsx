@@ -22,7 +22,8 @@ type SlidePuzzleResultScreenProps = {
   difficulty: SlidePuzzleDifficulty;
   result: SlidePuzzleResult;
   recordOutcomeNotice: ReactNode;
-  onReplay: () => void;
+  /** 省略すると同じ問題を遊び直す操作を押せない状態で出す。 */
+  onReplay?: () => void;
   onStartNewProblem: () => void;
   onOpenRecords: () => void;
   onChangeDifficulty: () => void;

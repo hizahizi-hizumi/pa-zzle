@@ -59,6 +59,38 @@ export type WaterSortResult = WaterSortSessionResult & {
   score: WaterSortPlayScore;
 };
 
+/** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
+export function createWaterSortResult(
+  sessionResult: WaterSortSessionResult,
+  optimalMoveCount: number,
+  colorCount: number,
+): WaterSortResult {
+  const comparison = calculateWaterSortPerformanceComparison({
+    elapsedMs: sessionResult.elapsedMs,
+    completionMoveCount: sessionResult.completionMoveCount,
+    optimalMoveCount,
+    colorCount,
+  });
+
+  return {
+    ...sessionResult,
+    optimalMoveCount,
+    moveDelta: comparison.moveDelta,
+    timeDeltaMs: comparison.timeDeltaMs,
+    backtrackMoveCount:
+      sessionResult.moveCount - sessionResult.completionMoveCount,
+    speedFullScoreMs: comparison.speedFullScoreMs,
+    colorCount,
+    score: calculateWaterSortPlayScore({
+      elapsedMs: sessionResult.elapsedMs,
+      moveCount: sessionResult.moveCount,
+      completionMoveCount: sessionResult.completionMoveCount,
+      optimalMoveCount,
+      colorCount,
+    }),
+  };
+}
+
 type WaterSortPlayState = {
   session: WaterSortSession;
   sourceBottleIndex: number | null;
@@ -268,41 +300,14 @@ export function useWaterSortPlay(
     () => getWaterSortSessionResult(session, now),
     [now, session],
   );
-  const result = useMemo<WaterSortResult | null>(() => {
-    if (!sessionResult) {
-      return null;
-    }
-
-    const colorCount = play.problemIdentity.conditions.colorCount;
-    const comparison = calculateWaterSortPerformanceComparison({
-      elapsedMs: sessionResult.elapsedMs,
-      completionMoveCount: sessionResult.completionMoveCount,
-      optimalMoveCount,
-      colorCount,
-    });
-
-    return {
-      ...sessionResult,
-      optimalMoveCount,
-      moveDelta: comparison.moveDelta,
-      timeDeltaMs: comparison.timeDeltaMs,
-      backtrackMoveCount:
-        sessionResult.moveCount - sessionResult.completionMoveCount,
-      speedFullScoreMs: comparison.speedFullScoreMs,
-      colorCount,
-      score: calculateWaterSortPlayScore({
-        elapsedMs: sessionResult.elapsedMs,
-        moveCount: sessionResult.moveCount,
-        completionMoveCount: sessionResult.completionMoveCount,
-        optimalMoveCount,
-        colorCount,
-      }),
-    };
-  }, [
-    optimalMoveCount,
-    play.problemIdentity.conditions.colorCount,
-    sessionResult,
-  ]);
+  const colorCount = play.problemIdentity.conditions.colorCount;
+  const result = useMemo<WaterSortResult | null>(
+    () =>
+      sessionResult
+        ? createWaterSortResult(sessionResult, optimalMoveCount, colorCount)
+        : null,
+    [colorCount, optimalMoveCount, sessionResult],
+  );
 
   const problemIdentity = play.problemIdentity;
 

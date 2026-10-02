@@ -54,6 +54,35 @@ export type SlidePuzzleResult = SlidePuzzleSessionResult & {
   score: SlidePuzzlePlayScore;
 };
 
+/** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
+export function createSlidePuzzleResult(
+  sessionResult: SlidePuzzleSessionResult,
+  boardSize: SlidePuzzleBoardSize,
+  optimalMoveCount: number,
+): SlidePuzzleResult {
+  const comparison = calculateSlidePuzzlePerformanceComparison({
+    elapsedMs: sessionResult.elapsedMs,
+    moveCount: sessionResult.moveCount,
+    boardSize,
+    optimalMoveCount,
+  });
+
+  return {
+    ...sessionResult,
+    boardSize,
+    optimalMoveCount,
+    moveDelta: comparison.moveDelta,
+    timeDeltaMs: comparison.timeDeltaMs,
+    speedFullScoreMs: comparison.speedFullScoreMs,
+    score: calculateSlidePuzzlePlayScore({
+      elapsedMs: sessionResult.elapsedMs,
+      moveCount: sessionResult.moveCount,
+      boardSize,
+      optimalMoveCount,
+    }),
+  };
+}
+
 type SlidePuzzlePlayState = {
   session: SlidePuzzleSession;
   problemIdentity: SlidePuzzleProblemIdentity;
@@ -224,33 +253,13 @@ export function useSlidePuzzlePlay(
   );
   const optimalMoveCount = play.optimalMoveCount;
   const boardSize = play.problemIdentity.conditions.size;
-  const result = useMemo<SlidePuzzleResult | null>(() => {
-    if (!sessionResult) {
-      return null;
-    }
-
-    const comparison = calculateSlidePuzzlePerformanceComparison({
-      elapsedMs: sessionResult.elapsedMs,
-      moveCount: sessionResult.moveCount,
-      boardSize,
-      optimalMoveCount,
-    });
-
-    return {
-      ...sessionResult,
-      boardSize,
-      optimalMoveCount,
-      moveDelta: comparison.moveDelta,
-      timeDeltaMs: comparison.timeDeltaMs,
-      speedFullScoreMs: comparison.speedFullScoreMs,
-      score: calculateSlidePuzzlePlayScore({
-        elapsedMs: sessionResult.elapsedMs,
-        moveCount: sessionResult.moveCount,
-        boardSize,
-        optimalMoveCount,
-      }),
-    };
-  }, [boardSize, optimalMoveCount, sessionResult]);
+  const result = useMemo<SlidePuzzleResult | null>(
+    () =>
+      sessionResult
+        ? createSlidePuzzleResult(sessionResult, boardSize, optimalMoveCount)
+        : null,
+    [boardSize, optimalMoveCount, sessionResult],
+  );
 
   return {
     difficulty,

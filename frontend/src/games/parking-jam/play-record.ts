@@ -5,6 +5,10 @@ import {
   parseLegacyParkingJamDifficulty,
   parseParkingJamDifficulty,
 } from "@/games/parking-jam/difficulty";
+import {
+  createParkingJamResult,
+  type ParkingJamResult,
+} from "@/games/parking-jam/play/use-parking-jam-play";
 import type { ParkingJamProblemIdentity } from "@/games/parking-jam/problem/problem";
 import {
   calculateParkingJamPlayScore,
@@ -247,6 +251,39 @@ export function createParkingJamPlayRecord({
         restartCount: result.restartCount,
       },
     },
+  };
+}
+
+/** 記録から作り直した、結果画面に出す内容。 */
+export type ParkingJamRecordedResult = {
+  difficulty: ParkingJamDifficulty;
+  problemIdentity: ParkingJamProblemIdentity;
+  result: ParkingJamResult;
+};
+
+/**
+ * 記録から結果画面に出す内容を作り直す。
+ * 今の版（レベル1〜5の難易度）の記録のときだけ作れる。それ以外は `null` を返す。
+ */
+export function restoreParkingJamRecordedResult(
+  record: PlayRecord,
+): ParkingJamRecordedResult | null {
+  if (
+    !isParkingJamPlayRecord(record) ||
+    record.payloadVersion !== PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION
+  ) {
+    return null;
+  }
+
+  const { difficulty, problemIdentity, problemFacts, performance } =
+    record.payload;
+  return {
+    difficulty,
+    problemIdentity,
+    result: createParkingJamResult(performance, problemIdentity, {
+      vehicleCount: problemIdentity.conditions.vehicleCount,
+      initialBlockedVehicleCount: problemFacts.initialBlockedVehicleCount,
+    }),
   };
 }
 
