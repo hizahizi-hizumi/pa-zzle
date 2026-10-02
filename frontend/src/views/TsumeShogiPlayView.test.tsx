@@ -45,6 +45,7 @@ import {
   tsumeShogiPieceNames,
 } from "@/games/tsume-shogi/ui/piece-label";
 import { readPlayRecords } from "@/records/storage";
+import { PlayResultView } from "@/views/PlayResultView";
 import { TsumeShogiPlayView } from "@/views/TsumeShogiPlayView";
 
 // 問題集の本体は画面を開いたときに読み込むので、テストではファイルの内容を先に置いておく。
@@ -92,6 +93,10 @@ function renderAt(path: string): void {
         <Route path="/puzzles/tsume-shogi" element={<p>難易度選択画面</p>} />
         <Route path="/records" element={<p>記録画面</p>} />
         <Route path="/" element={<p>ホーム画面</p>} />
+        <Route
+          path="/puzzles/:game/result/:recordId"
+          element={<PlayResultView />}
+        />
       </Routes>
     </MemoryRouter>,
   );
@@ -106,6 +111,7 @@ function renderRouterAt(path: string): PlayRouter {
         path: "/puzzles/tsume-shogi/play/:difficulty",
         element: <TsumeShogiPlayView />,
       },
+      { path: "/puzzles/:game/result/:recordId", element: <PlayResultView /> },
     ],
     { initialEntries: [path] },
   );
@@ -321,6 +327,26 @@ describe("TsumeShogiPlayView", () => {
 
         expect(records).toHaveLength(2);
       });
+    });
+  });
+
+  describe("詰ませて記録を保存した場合", () => {
+    let router: PlayRouter;
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      router = renderRouterAt("/puzzles/tsume-shogi/play/1");
+      playMainLine(selected.problem);
+    });
+
+    test("記録の結果画面のパスへ履歴を置き換えて移ること", () => {
+      const [record] = readPlayRecords();
+
+      expect(router.state.location.pathname).toBe(
+        `/puzzles/tsume-shogi/result/${encodeURIComponent(record?.id ?? "")}`,
+      );
+      expect(router.state.historyAction).toBe("REPLACE");
+      expect(getResultScreen().getByText("レベル 1")).toBeTruthy();
     });
   });
 
