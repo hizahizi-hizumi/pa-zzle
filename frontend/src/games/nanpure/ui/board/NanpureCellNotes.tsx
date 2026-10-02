@@ -15,7 +15,7 @@ type NanpureCellNotesProps = {
 
 const textSizeClassNames: Record<NanpureCellNotesSize, string> = {
   board: "text-[clamp(0.58rem,2.4vw,0.9rem)]",
-  figure: "text-[0.5625rem]",
+  figure: "text-xs",
 };
 
 export function NanpureCellNotes({

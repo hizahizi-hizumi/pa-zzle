@@ -52,7 +52,7 @@ export function HowToPlayFigure({ rows }: HowToPlayFigureProps) {
     <span
       aria-hidden="true"
       className="inline-grid shrink-0 border-2 border-foreground/55 bg-background"
-      style={{ gridTemplateColumns: `repeat(${columnCount}, 2rem)` }}
+      style={{ gridTemplateColumns: `repeat(${columnCount}, 2.5rem)` }}
     >
       {toPositionedCells(rows).map(function renderCell({
         key,
@@ -68,7 +68,7 @@ export function HowToPlayFigure({ rows }: HowToPlayFigureProps) {
           <span
             key={key}
             className={cn(
-              "flex size-8 items-center justify-center font-sans text-lg leading-none",
+              "flex size-10 items-center justify-center font-sans text-xl leading-none",
               !bottomEdge && "border-b border-b-border",
               !rightEdge && "border-r border-r-border",
               highlight !== undefined && nanpureCellToneClassNames[highlight],
