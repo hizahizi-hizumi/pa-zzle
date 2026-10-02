@@ -1,6 +1,5 @@
-import { ArrowRight } from "lucide-react";
-
 import { HowToPlayDialog } from "@/components/HowToPlayDialog";
+import { HowToPlayTransition } from "@/components/HowToPlayTransition";
 import type { ParkingJamRoadOpening } from "@/games/parking-jam/puzzle/board";
 import { HowToPlayFigure } from "@/games/parking-jam/ui/ParkingJamHowToPlayDialog/HowToPlayFigure";
 
@@ -50,17 +49,16 @@ export function ParkingJamHowToPlayDialog({
         <p>
           車は前か後ろへまっすぐ進む。進む先が道路につながっていれば、一度で外へ出る。
         </p>
-        <div className="flex items-center gap-2 text-muted-foreground">
+        <HowToPlayTransition>
           <HowToPlayFigure
             rows={["aa.", "..."]}
             roadOpenings={roadRightOfFirstLane}
           />
-          <ArrowRight className="size-4 shrink-0" aria-hidden />
           <HowToPlayFigure
             rows={["...", "..."]}
             roadOpenings={roadRightOfFirstLane}
           />
-        </div>
+        </HowToPlayTransition>
       </li>
       <li className="space-y-2">
         <p>
