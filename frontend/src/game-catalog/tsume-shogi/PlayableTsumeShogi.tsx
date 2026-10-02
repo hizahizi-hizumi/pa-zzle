@@ -42,12 +42,12 @@ export function PlayableTsumeShogi({
           : getTsumeShogiDifficultyLabel(difficulty)
       }
       plies={play.plies}
+      progress={play.progress}
       phase={play.phase}
       onWrongLine={play.onWrongLine}
-      remainingPlies={play.remainingPlies}
       boardPieces={play.boardPieces}
       attackerHand={play.attackerHand}
-      lastMove={play.lastMove}
+      shownMoves={play.shownMoves}
       selection={play.selection}
       promotionChoice={play.promotionChoice}
       rejection={play.rejection}
@@ -58,10 +58,12 @@ export function PlayableTsumeShogi({
       onTapHand={play.tapHand}
       onChoosePromotion={play.choosePromotion}
       onCancelPromotion={play.cancelPromotion}
+      onClearSelection={play.clearSelection}
       onReturnToDecision={play.returnToDecision}
       onUndo={play.undo}
       onRestart={play.restart}
       onReplay={play.replay}
+      onClearAnimationComplete={play.completeClearAnimation}
       onStartNewProblem={play.startNewProblem}
       // 難易度選択はまだ無いので、ホームへ戻す。
       onChangeDifficulty={() => navigate("/")}

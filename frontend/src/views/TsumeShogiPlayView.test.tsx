@@ -11,6 +11,7 @@ import { MemoryRouter, Route, Routes } from "react-router";
 import { formatTsumeShogiProblemQuery } from "@/games/tsume-shogi/diagnostics";
 import { TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
 import { createTsumeShogiProblemIdentity } from "@/games/tsume-shogi/problem/problem";
+import { writeTsumeShogiHowToPlaySeen } from "@/games/tsume-shogi/ui/how-to-play-seen";
 import { TsumeShogiPlayView } from "@/views/TsumeShogiPlayView";
 
 const internalDiagnostics = vi.hoisted(() => ({ available: false }));
@@ -22,8 +23,13 @@ vi.mock("@/lib/internal-diagnostics", () => ({
   buildRevision: null,
 }));
 
+beforeEach(() => {
+  writeTsumeShogiHowToPlaySeen();
+});
+
 afterEach(() => {
   cleanup();
+  window.localStorage.clear();
   vi.useRealTimers();
   internalDiagnostics.available = false;
 });
@@ -72,11 +78,10 @@ describe("TsumeShogiPlayView", () => {
       renderAt("/puzzles/tsume-shogi/play/1");
     });
 
-    test("9×9の盤と難易度を表示すること", () => {
+    test("9×9の盤を表示すること", () => {
       const squares = within(getBoard()).getAllByRole("button");
 
       expect(squares).toHaveLength(81);
-      expect(screen.getByText("レベル 1")).toBeTruthy();
     });
   });
 
@@ -100,9 +105,10 @@ describe("TsumeShogiPlayView", () => {
     });
 
     test("指定を無視して難易度の問題を出すこと", () => {
-      const difficultyLabel = screen.getByText("レベル 1");
+      const squares = within(getBoard()).getAllByRole("button");
 
-      expect(difficultyLabel).toBeTruthy();
+      expect(squares).toHaveLength(81);
+      expect(screen.queryByText("指定された問題を復元できません")).toBeNull();
     });
   });
 
@@ -126,26 +132,27 @@ describe("TsumeShogiPlayView", () => {
       renderAt(specifiedProblemPath);
     });
 
-    test("難易度を伏せて指定した問題を出すこと", () => {
+    test("指定した問題を出すこと", () => {
       const silverOn1a = within(getBoard()).getByRole("button", {
         name: "1一 攻方の銀",
       });
 
       expect(silverOn1a).toBeTruthy();
-      expect(screen.getByText("問題指定")).toBeTruthy();
-      expect(screen.queryByText("レベル 1")).toBeNull();
     });
 
-    test("作意どおりに指すと玉方が応手し、詰めると詰みを示すこと", () => {
+    test("作意どおりに指すと玉方が応手し、詰めると完成演出の後に詰みを示すこと", () => {
       tapHand("銀");
       tapSquare(/^2二$/);
       waitForDefenderReply();
       tapSquare(/^4三 攻方の龍$/);
       tapSquare(/^1三$/);
+      act(() => {
+        vi.runAllTimers();
+      });
 
       const cleared = screen.getByRole("region", { name: "詰み" });
 
-      expect(cleared).toBeTruthy();
+      expect(within(cleared).getByText("3手詰 ・ 問題指定")).toBeTruthy();
       expect(
         within(getBoard()).getByRole("button", { name: "1二 玉方の玉" }),
       ).toBeTruthy();
@@ -175,7 +182,7 @@ describe("TsumeShogiPlayView", () => {
 
       const status = screen.getByRole("status");
 
-      expect(status.textContent).toBe("王手になる手だけ指せます");
+      expect(status.textContent).toBe("王手になりません");
       expect(
         within(getBoard()).getByRole("button", { name: "4三 攻方の龍" }),
       ).toBeTruthy();

@@ -7,10 +7,14 @@ import type {
   TsumeShogiProblemIdentity,
 } from "@/games/tsume-shogi/problem/problem";
 import { selectTsumeShogiProblemForDifficulty } from "@/games/tsume-shogi/problem-selection";
+import type { TsumeShogiMove } from "@/games/tsume-shogi/puzzle/moves";
 import {
   getTsumeShogiHand,
+  getTsumeShogiPieceAt,
   listTsumeShogiBoardPieces,
   type TsumeShogiHandPieceType,
+  type TsumeShogiPieceType,
+  type TsumeShogiSide,
   type TsumeShogiSquare,
 } from "@/games/tsume-shogi/puzzle/position";
 import {
@@ -21,7 +25,6 @@ import {
   clearTsumeShogiSessionSelection,
   createTsumeShogiSession,
   getTsumeShogiSessionElapsedMs,
-  getTsumeShogiSessionLastMove,
   getTsumeShogiSessionPhase,
   getTsumeShogiSessionPosition,
   getTsumeShogiSessionRemainingPlies,
@@ -32,6 +35,8 @@ import {
   restartTsumeShogiSession,
   returnTsumeShogiSessionToDecision,
   type TsumeShogiSession,
+  type TsumeShogiSessionTurn,
+  type TsumeShogiTurnLine,
   tapTsumeShogiSessionHand,
   tapTsumeShogiSessionSquare,
   undoTsumeShogiSession,
@@ -45,11 +50,59 @@ const elapsedTimeTickMs = 1_000;
  */
 export const TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS = 600;
 
+/**
+ * 盤面に見せている最後の組の手。`pieceType` は指した後の駒（成った手は成った駒）、`line` はその手の筋。
+ */
+export type TsumeShogiPlayedMove = {
+  side: TsumeShogiSide;
+  move: TsumeShogiMove;
+  pieceType: TsumeShogiPieceType;
+  line: TsumeShogiTurnLine;
+};
+
+function listShownMoves(
+  turn: TsumeShogiSessionTurn | undefined,
+  defenderReplyPending: boolean,
+): TsumeShogiPlayedMove[] {
+  if (!turn) return [];
+
+  const attacker: TsumeShogiPlayedMove = {
+    side: "attacker",
+    move: turn.attackerMove,
+    pieceType: getTsumeShogiPieceAt(
+      turn.positionAfterAttack,
+      turn.attackerMove.to,
+    )!.type,
+    line: turn.line,
+  };
+  if (defenderReplyPending || turn.defenderMove === null) return [attacker];
+
+  return [
+    attacker,
+    {
+      side: "defender",
+      move: turn.defenderMove,
+      pieceType: getTsumeShogiPieceAt(
+        turn.positionAfterDefense,
+        turn.defenderMove.to,
+      )!.type,
+      line: turn.line,
+    },
+  ];
+}
+
 /** 遊んでいる問題の出どころ。`given` は開始時に指定された問題。 */
 export type TsumeShogiProblemSource = "selected" | "given";
 
+/**
+ * 画面の進行。`clearing` は詰んでから完成演出を終えるまで。
+ * 完成演出の間も session はクリア済みで、経過時間は止まっている。
+ */
+export type TsumeShogiProgress = "playing" | "clearing" | "result";
+
 type TsumeShogiPlayState = {
   session: TsumeShogiSession;
+  progress: TsumeShogiProgress;
   problemIdentity: TsumeShogiProblemIdentity;
   problemSource: TsumeShogiProblemSource;
 };
@@ -61,6 +114,7 @@ function createPlayState(
 ): TsumeShogiPlayState {
   return {
     session: createTsumeShogiSession(problem, startedAt),
+    progress: "playing",
     problemIdentity: identity,
     problemSource,
   };
@@ -83,7 +137,8 @@ function createSelectedPlayState(
  * 攻方が王手を指すと、`TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS` の間を置いて玉方の応手（作意の応手、誤王手なら反証）を指す。
  * `returnToDecision` は誤王手の筋から判断地点へ戻り、`undo` は攻方の1手を取り消す。
  * `restart` は同じプレイのまま初期局面へ戻し、`replay` は同じ問題を新しいプレイとして始め、
- * `startNewProblem` は同じ難易度の別の問題を始める。
+ * `startNewProblem` は同じ難易度の別の問題を始める。詰むと `progress` が `clearing` になり、
+ * 完成演出を終えたら `completeClearAnimation` で `result` に進める。
  */
 export function useTsumeShogiPlay(
   difficulty: TsumeShogiDifficulty,
@@ -115,7 +170,11 @@ export function useTsumeShogiPlay(
         const next = update(current.session);
         if (next === current.session) return current;
 
-        return { ...current, session: next };
+        return {
+          ...current,
+          session: next,
+          progress: next.status === "cleared" ? "clearing" : current.progress,
+        };
       });
     },
     [],
@@ -190,7 +249,16 @@ export function useTsumeShogiPlay(
     setPlay((current) => ({
       ...current,
       session: replayTsumeShogiSession(current.session, startedAt),
+      progress: "playing",
     }));
+  }, []);
+
+  const completeClearAnimation = useCallback(() => {
+    setPlay((current) =>
+      current.progress === "clearing"
+        ? { ...current, progress: "result" }
+        : current,
+    );
   }, []);
 
   const startNewProblem = useCallback(() => {
@@ -214,6 +282,11 @@ export function useTsumeShogiPlay(
     () => getTsumeShogiHand(position, "defender"),
     [position],
   );
+  const lastTurn = session.turns.at(-1);
+  const shownMoves = useMemo(
+    () => listShownMoves(lastTurn, session.defenderReplyPending),
+    [lastTurn, session.defenderReplyPending],
+  );
   const sessionResult = useMemo(
     () => getTsumeShogiSessionResult(session),
     [session],
@@ -225,13 +298,14 @@ export function useTsumeShogiPlay(
     problemSource: play.problemSource,
     plies: session.problem.plies,
     status: session.status,
+    progress: play.progress,
     phase: getTsumeShogiSessionPhase(session),
     onWrongLine: isTsumeShogiSessionOnWrongLine(session),
     remainingPlies: getTsumeShogiSessionRemainingPlies(session),
     boardPieces,
     attackerHand,
     pieceBox,
-    lastMove: getTsumeShogiSessionLastMove(session),
+    shownMoves,
     selection: session.selection,
     promotionChoice: session.promotionChoice,
     rejection: session.rejection,
@@ -250,6 +324,7 @@ export function useTsumeShogiPlay(
     undo,
     restart,
     replay,
+    completeClearAnimation,
     startNewProblem,
   };
 }
