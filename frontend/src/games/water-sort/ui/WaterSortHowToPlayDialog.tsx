@@ -1,6 +1,6 @@
-import { ArrowRight, Check, X } from "lucide-react";
-
 import { HowToPlayDialog } from "@/components/HowToPlayDialog";
+import { HowToPlayRuleMark } from "@/components/HowToPlayRuleMark";
+import { HowToPlayTransition } from "@/components/HowToPlayTransition";
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import { HowToPlayFigure } from "@/games/water-sort/ui/WaterSortHowToPlayDialog/HowToPlayFigure";
 
@@ -49,15 +49,14 @@ export function WaterSortHowToPlayDialog({
         <p>
           注ぎ元のボトルを押して選び、注ぎ先のボトルを押して注ぐ。選んだボトルをもう一度押すと選び直せる。
         </p>
-        <div className="flex items-center gap-3">
+        <HowToPlayTransition>
           <HowToPlayFigure bottles={[[1, 0], []]} selectedBottleIndex={0} />
-          <ArrowRight className="size-4 text-muted-foreground" aria-hidden />
           <HowToPlayFigure bottles={[[1], [0]]} />
-        </div>
+        </HowToPlayTransition>
       </li>
       <li className="space-y-2">
         <p>上に続く同じ色は、入るだけまとめて移る。</p>
-        <div className="flex items-center gap-3">
+        <HowToPlayTransition>
           <HowToPlayFigure
             bottles={[
               [2, 1, 1, 1],
@@ -65,14 +64,13 @@ export function WaterSortHowToPlayDialog({
             ]}
             selectedBottleIndex={0}
           />
-          <ArrowRight className="size-4 text-muted-foreground" aria-hidden />
           <HowToPlayFigure
             bottles={[
               [2, 1, 1],
               [3, 3, 1, 1],
             ]}
           />
-        </div>
+        </HowToPlayTransition>
       </li>
       <li className="space-y-2">
         <p>注げるのは、注ぎ先が空か、上の色が同じで空きがあるとき。</p>
@@ -80,11 +78,7 @@ export function WaterSortHowToPlayDialog({
           {pourConditionFigures.map(({ key, bottles, pourable }) => (
             <div key={key} className="flex items-center gap-2">
               <HowToPlayFigure bottles={bottles} />
-              {pourable ? (
-                <Check className="size-4 text-muted-foreground" aria-hidden />
-              ) : (
-                <X className="size-4 text-muted-foreground" aria-hidden />
-              )}
+              <HowToPlayRuleMark allowed={pourable} />
             </div>
           ))}
         </div>
