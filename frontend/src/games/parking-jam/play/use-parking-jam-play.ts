@@ -40,9 +40,6 @@ export type ParkingJamOperation = {
 
 export type ParkingJamProgress = "playing" | "clearing" | "result";
 
-/** 遊んでいる問題の出どころ。`given` は開始時に identity で指定された問題（記録の再プレイなど）。 */
-export type ParkingJamProblemSource = "pool" | "given";
-
 export type ParkingJamResult = ParkingJamSessionResult & {
   problemIdentity: ParkingJamProblemIdentity;
   speedReference: ParkingJamSpeedReference;
@@ -53,7 +50,6 @@ export type ParkingJamResult = ParkingJamSessionResult & {
 type ParkingJamPlayState = {
   session: ParkingJamSession;
   problemIdentity: ParkingJamProblemIdentity;
-  problemSource: ParkingJamProblemSource;
   speedReference: ParkingJamSpeedReference;
   selectedVehicleId: ParkingJamVehicleId | null;
   operation: ParkingJamOperation | null;
@@ -85,7 +81,6 @@ function createPlayState(
   return {
     session: createParkingJamSession(restored.problem, startedAt),
     problemIdentity: restored.identity,
-    problemSource: initialProblem ? "given" : "pool",
     speedReference: getSpeedReference(restored.problem.board),
     selectedVehicleId: null,
     operation: null,
@@ -265,7 +260,6 @@ export function useParkingJamPlay(
   return {
     difficulty,
     problemIdentity: play.problemIdentity,
-    problemSource: play.problemSource,
     status: session.status,
     progress: play.progress,
     startedAt: session.startedAt,

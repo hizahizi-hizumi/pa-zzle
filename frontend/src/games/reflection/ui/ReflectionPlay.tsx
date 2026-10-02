@@ -19,10 +19,7 @@ import type {
   ReflectionEntry,
 } from "@/games/reflection/puzzle/laser";
 import { listReflectionClueMatches } from "@/games/reflection/puzzle/rules";
-import type {
-  ReflectionSelection,
-  ReflectionSessionResult,
-} from "@/games/reflection/session/session";
+import type { ReflectionSelection } from "@/games/reflection/session/session";
 import { ReflectionBoard } from "@/games/reflection/ui/board/ReflectionBoard";
 import { readReflectionHowToPlaySeen } from "@/games/reflection/ui/how-to-play-seen";
 import { ReflectionHowToPlayDialog } from "@/games/reflection/ui/ReflectionHowToPlayDialog";
@@ -34,7 +31,6 @@ import { ReflectionResultScreen } from "@/games/reflection/ui/result/ReflectionR
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type ReflectionPlayProps = {
-  /** 結果に出す難易度の表示名。問題を指定したプレイでは難易度を伏せた名前を渡す。 */
   difficultyLabel: string;
   laserPathMode: ReflectionLaserPathMode;
   progress: ReflectionProgress;
@@ -46,9 +42,7 @@ type ReflectionPlayProps = {
   laser: ReflectionLaserView | null;
   elapsedMs: number;
   canRestart: boolean;
-  /** クリアしたプレイの事実。クリアするまでは `null`。 */
-  sessionResult: ReflectionSessionResult | null;
-  /** クリアしたプレイの評価。問題集に無い問題を指定したプレイでは `null`。 */
+  /** クリアしたプレイの評価。クリアするまでは `null`。 */
   result: ReflectionResult | null;
   recordOutcomeNotice: ReactNode;
   onTapCell: (cellIndex: number) => void;
@@ -84,7 +78,6 @@ export function ReflectionPlay({
   laser,
   elapsedMs,
   canRestart,
-  sessionResult,
   result,
   recordOutcomeNotice,
   onTapCell,
@@ -163,12 +156,11 @@ export function ReflectionPlay({
   }, [playing, inventory, onClearSelection, onTapStock]);
 
   // 完成演出の間は揃った盤面と全光路をそのまま見せ、演出を終えてから結果画面に切り替える。
-  if (progress === "result" && sessionResult) {
+  if (progress === "result" && result) {
     return (
       <ReflectionResultScreen
         difficultyLabel={difficultyLabel}
         laserPathMode={laserPathMode}
-        performance={sessionResult}
         result={result}
         recordOutcomeNotice={recordOutcomeNotice}
         onReplay={onReplay}

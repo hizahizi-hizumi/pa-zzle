@@ -22,7 +22,7 @@ import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
 
-/** 最初に遊ぶ問題。記録の問題を、その記録の難易度として遊び直すときに渡す。記録は通常どおり保存する。 */
+/** 最初に遊ぶ問題。記録の問題を、その記録の難易度として遊び直すときに渡す。 */
 type ParkingJamInitialProblem = {
   restored: ParkingJamRestoredProblem;
 };

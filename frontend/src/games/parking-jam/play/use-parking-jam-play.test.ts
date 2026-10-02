@@ -43,12 +43,11 @@ describe("useParkingJamPlay", () => {
       );
 
       expect(assessment).toMatchObject({ status: "classified", difficulty });
-      expect(result.current.problemSource).toBe("pool");
       expect(result.current.board).toEqual(generated.problem.board);
     });
   });
 
-  describe("開始時に問題を指定する場合", () => {
+  describe("開始時に問題を渡す場合", () => {
     const given = selectParkingJamProblemForDifficulty("5", "given-problem");
     let result: { current: HookResult };
 
@@ -59,18 +58,16 @@ describe("useParkingJamPlay", () => {
       ({ result } = renderHook(() => useParkingJamPlay("1", given)));
     });
 
-    test("指定した問題でプレイを開始すること", () => {
-      const { problemIdentity, problemSource, board } = result.current;
+    test("渡した問題でプレイを開始すること", () => {
+      const { problemIdentity, board } = result.current;
 
       expect(problemIdentity).toEqual(given.identity);
-      expect(problemSource).toBe("given");
       expect(board).toEqual(given.problem.board);
     });
 
     test("新しい問題は開始時のレベルの問題集から選ぶこと", () => {
       act(() => result.current.startNewProblem());
 
-      expect(result.current.problemSource).toBe("pool");
       expect(result.current.problemIdentity).toEqual(
         selectParkingJamProblemForDifficulty(
           "1",
