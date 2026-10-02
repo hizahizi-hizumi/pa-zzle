@@ -27,4 +27,7 @@ export const nanpureCatalogEntry = {
         )
       : null;
   },
+  renderRecordResult() {
+    return null;
+  },
 } satisfies GameCatalogEntry;

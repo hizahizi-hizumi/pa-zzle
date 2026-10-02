@@ -27,4 +27,7 @@ export const takuzuCatalogEntry = {
         )
       : null;
   },
+  renderRecordResult() {
+    return null;
+  },
 } satisfies GameCatalogEntry;

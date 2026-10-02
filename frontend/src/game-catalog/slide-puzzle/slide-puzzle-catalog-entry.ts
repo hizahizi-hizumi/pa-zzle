@@ -27,4 +27,7 @@ export const slidePuzzleCatalogEntry = {
         )
       : null;
   },
+  renderRecordResult() {
+    return null;
+  },
 } satisfies GameCatalogEntry;

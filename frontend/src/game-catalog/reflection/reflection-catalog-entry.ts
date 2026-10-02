@@ -28,4 +28,7 @@ export const reflectionCatalogEntry = {
         )
       : null;
   },
+  renderRecordResult() {
+    return null;
+  },
 } satisfies GameCatalogEntry;

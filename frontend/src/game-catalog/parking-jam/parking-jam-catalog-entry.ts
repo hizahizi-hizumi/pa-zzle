@@ -27,4 +27,7 @@ export const parkingJamCatalogEntry = {
         )
       : null;
   },
+  renderRecordResult() {
+    return null;
+  },
 } satisfies GameCatalogEntry;

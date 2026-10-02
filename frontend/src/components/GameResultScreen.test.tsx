@@ -115,3 +115,16 @@ describe("スコアを出さないプレイの場合", () => {
     expect(details).toBeNull();
   });
 });
+
+describe("同じ問題を遊び直せない場合", () => {
+  beforeEach(() => {
+    const { onReplay: _onReplay, ...props } = createProps();
+    render(<GameResultScreen {...props} />);
+  });
+
+  test("同じ問題の操作を押せない状態で出すこと", () => {
+    const replayButton = screen.getByRole("button", { name: "同じ問題" });
+
+    expect(replayButton.hasAttribute("disabled")).toBe(true);
+  });
+});
