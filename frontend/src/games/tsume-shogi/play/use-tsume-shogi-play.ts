@@ -3,8 +3,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import type { TsumeShogiDifficulty } from "@/games/tsume-shogi/difficulty";
-import type { TsumeShogiProblemIdentity } from "@/games/tsume-shogi/problem/problem";
-import type { TsumeShogiPooledProblem } from "@/games/tsume-shogi/problem/problem-pool";
+import type {
+  TsumeShogiProblemIdentity,
+  TsumeShogiSolveWorkload,
+} from "@/games/tsume-shogi/problem/problem";
+import type {
+  TsumeShogiPooledProblem,
+  TsumeShogiProblemPoolReference,
+} from "@/games/tsume-shogi/problem/problem-pool";
 import { selectTsumeShogiProblemForDifficulty } from "@/games/tsume-shogi/problem-selection";
 import {
   canTsumeShogiMovePromote,
@@ -21,6 +27,13 @@ import {
   type TsumeShogiSquare,
 } from "@/games/tsume-shogi/puzzle/position";
 import {
+  calculateTsumeShogiPlayScore,
+  calculateTsumeShogiSpeedFullScoreMs,
+  calculateTsumeShogiSpeedZeroScoreMs,
+  calculateTsumeShogiTimeDeltaMs,
+  type TsumeShogiPlayScore,
+} from "@/games/tsume-shogi/score";
+import {
   cancelTsumeShogiSessionPromotion,
   canRestartTsumeShogiSession,
   canUndoTsumeShogiSession,
@@ -30,10 +43,12 @@ import {
   getTsumeShogiSessionElapsedMs,
   getTsumeShogiSessionPhase,
   getTsumeShogiSessionPosition,
+  getTsumeShogiSessionResult,
   playTsumeShogiSessionDefenderReply,
   replayTsumeShogiSession,
   restartTsumeShogiSession,
   type TsumeShogiSession,
+  type TsumeShogiSessionResult,
   type TsumeShogiSessionTurn,
   type TsumeShogiTurnLine,
   tapTsumeShogiSessionHand,
@@ -110,7 +125,17 @@ function listShownMoves(
  */
 export type TsumeShogiProgress = "playing" | "clearing" | "result";
 
+/** クリアしたプレイの事実と、それを遊んだ問題の作業の量から導いた評価。 */
+export type TsumeShogiResult = TsumeShogiSessionResult & {
+  workload: TsumeShogiSolveWorkload;
+  speedFullScoreMs: number;
+  speedZeroScoreMs: number;
+  timeDeltaMs: number;
+  score: TsumeShogiPlayScore;
+};
+
 /**
+ * - `workload` / `poolReference`: 問題集から出した問題の作業の量と、問題集の中の位置。
  * - `restoredTurn`: 元に戻す・盤面を戻すで、最後の組として盤面に戻ってきた手。指し直したときのように動かして見せない。
  */
 type TsumeShogiPlayState = {
@@ -118,6 +143,8 @@ type TsumeShogiPlayState = {
   restoredTurn: TsumeShogiSessionTurn | null;
   progress: TsumeShogiProgress;
   problemIdentity: TsumeShogiProblemIdentity;
+  workload: TsumeShogiSolveWorkload;
+  poolReference: TsumeShogiProblemPoolReference;
 };
 
 function createPlayState(
@@ -126,7 +153,7 @@ function createPlayState(
   initialProblem?: TsumeShogiPooledProblem,
   avoidedProblemId?: ProblemId,
 ): TsumeShogiPlayState {
-  const { problem, identity } =
+  const { problem, identity, workload, poolReference } =
     initialProblem ??
     selectProblemAvoiding(
       (seed) => selectTsumeShogiProblemForDifficulty(difficulty, seed),
@@ -138,6 +165,8 @@ function createPlayState(
     restoredTurn: null,
     progress: "playing",
     problemIdentity: identity,
+    workload,
+    poolReference,
   };
 }
 
@@ -154,6 +183,27 @@ function withNextSession(
   };
 }
 
+function createTsumeShogiResult(
+  sessionResult: TsumeShogiSessionResult,
+  workload: TsumeShogiSolveWorkload,
+): TsumeShogiResult {
+  return {
+    ...sessionResult,
+    workload,
+    speedFullScoreMs: calculateTsumeShogiSpeedFullScoreMs(workload),
+    speedZeroScoreMs: calculateTsumeShogiSpeedZeroScoreMs(workload),
+    timeDeltaMs: calculateTsumeShogiTimeDeltaMs({
+      elapsedMs: sessionResult.elapsedMs,
+      workload,
+    }),
+    score: calculateTsumeShogiPlayScore({
+      elapsedMs: sessionResult.elapsedMs,
+      wrongCheckCount: sessionResult.wrongCheckCount,
+      workload,
+    }),
+  };
+}
+
 /**
  * 難易度のプレイを始める。`initialProblem` を渡すと、最初の1問だけその問題を出す。
  * 渡さなければ、最初の1問は `avoidedProblemId` の問題を避けて選ぶ。
@@ -162,6 +212,7 @@ function withNextSession(
  * `restart` は同じプレイのまま初期局面へ戻し、`replay` は同じ問題を新しいプレイとして始め、
  * `startNewProblem` は同じ難易度の別の問題を始める。詰むと `progress` が `clearing` になり、
  * 完成演出を終えたら `completeClearAnimation` で `result` に進める。
+ * クリアすると `result` に評価を返す。
  */
 export function useTsumeShogiPlay(
   difficulty: TsumeShogiDifficulty,
@@ -311,10 +362,22 @@ export function useTsumeShogiPlay(
     () => listShownMoves(lastTurn, session.defenderReplyPending),
     [lastTurn, session.defenderReplyPending],
   );
+  const sessionResult = useMemo(
+    () => getTsumeShogiSessionResult(session),
+    [session],
+  );
+  const { workload } = play;
+  const result = useMemo(
+    () =>
+      sessionResult ? createTsumeShogiResult(sessionResult, workload) : null,
+    [sessionResult, workload],
+  );
 
   return {
     difficulty,
     problemIdentity: play.problemIdentity,
+    workload,
+    poolReference: play.poolReference,
     plies: session.problem.plies,
     status: session.status,
     progress: play.progress,
@@ -332,6 +395,7 @@ export function useTsumeShogiPlay(
     canRestart: canRestartTsumeShogiSession(session),
     startedAt: session.startedAt,
     completedAt: session.finishedAt,
+    result,
     tapSquare,
     tapHand,
     choosePromotion,
