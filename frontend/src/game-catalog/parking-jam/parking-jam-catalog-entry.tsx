@@ -26,7 +26,6 @@ type ParkingJamReplayStart = {
   difficulty: ParkingJamDifficulty;
   initialProblem: {
     restored: ParkingJamRestoredProblem;
-    purpose: "replay";
   };
 };
 
@@ -52,7 +51,7 @@ function resolveParkingJamReplayStart(
 
   return {
     status: "available",
-    start: { difficulty, initialProblem: { restored, purpose: "replay" } },
+    start: { difficulty, initialProblem: { restored } },
   };
 }
 

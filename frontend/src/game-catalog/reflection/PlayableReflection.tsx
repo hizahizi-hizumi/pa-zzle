@@ -23,14 +23,9 @@ import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
 
-/**
- * 最初に遊ぶ問題を identity で指定する。
- * - `replay`: 記録の問題を、その記録の難易度として遊び直す。記録は通常どおり保存する。
- * - `blind-comparison`: 人間の遊び比べ用に指定した問題。難易度を伏せ、記録を保存しない。
- */
+/** 最初に遊ぶ問題の identity。記録の問題を、その記録の難易度として遊び直すときに渡す。記録は通常どおり保存する。 */
 type ReflectionInitialProblem = {
   identity: ReflectionProblemIdentity;
-  purpose: "replay" | "blind-comparison";
 };
 
 type PlayableReflectionProps = {
@@ -38,22 +33,16 @@ type PlayableReflectionProps = {
   initialProblem?: ReflectionInitialProblem;
 };
 
-const BLIND_COMPARISON_DIFFICULTY_LABEL = "問題指定";
-
 export function PlayableReflection({
   difficulty,
   initialProblem,
 }: PlayableReflectionProps) {
   const play = useReflectionPlay(difficulty, initialProblem?.identity);
   const navigate = useNavigate();
-  // 別の問題へ進むと指定した問題ではなくなるので、難易度を出し、記録も保存する。
-  const isBlindComparison =
-    initialProblem?.purpose === "blind-comparison" &&
-    play.problemSource === "given";
   const playRecord = useMemo(
     () =>
       // 評価（`result`）は作業の量がある問題集の問題でだけ得られるので、評価できたプレイだけを記録する。
-      !isBlindComparison && play.result && play.completedAt !== null
+      play.result && play.completedAt !== null
         ? createReflectionPlayRecord({
             difficulty,
             problemIdentity: play.problemIdentity,
@@ -65,7 +54,6 @@ export function PlayableReflection({
         : null,
     [
       difficulty,
-      isBlindComparison,
       play.completedAt,
       play.problemIdentity,
       play.result,
@@ -92,11 +80,7 @@ export function PlayableReflection({
   return (
     <>
       <ReflectionPlay
-        difficultyLabel={
-          isBlindComparison
-            ? BLIND_COMPARISON_DIFFICULTY_LABEL
-            : getReflectionDifficultyLabel(difficulty)
-        }
+        difficultyLabel={getReflectionDifficultyLabel(difficulty)}
         laserPathMode={reflectionLaserPathMode}
         progress={play.progress}
         board={play.board}

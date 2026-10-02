@@ -18,7 +18,6 @@ import {
   toReflectionPooledProblem,
 } from "@/games/reflection/problem/problem-pool";
 import {
-  restoreReflectionPoolProblem,
   restoreReflectionProblem,
   selectReflectionProblemForDifficulty,
 } from "@/games/reflection/problem-selection";
@@ -267,16 +266,4 @@ describe("restoreReflectionProblem", () => {
       expect(restored).toBeNull();
     },
   );
-});
-
-describe("restoreReflectionPoolProblem", () => {
-  const selected = selectReflectionProblemForDifficulty("2", "seed-b");
-
-  test("問題集の版と問題番号から同じ問題を復元すること", () => {
-    const restored = restoreReflectionPoolProblem(
-      structuredClone(selected.poolReference),
-    );
-
-    expect(restored).toEqual(selected);
-  });
 });
