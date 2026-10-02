@@ -4,7 +4,7 @@ import { GameResultScreen } from "@/components/GameResultScreen";
 import parkingJamPictogramSvg from "@/games/parking-jam/assets/pictogram.svg?raw";
 import type { ParkingJamResult } from "@/games/parking-jam/play/use-parking-jam-play";
 import { PARKING_JAM_SCORE_MAXIMUMS } from "@/games/parking-jam/score";
-import { getParkingJamScoreCriteria } from "@/games/parking-jam/ui/ParkingJamPlay/ParkingJamResultScreen/score-criteria";
+import { getParkingJamScoreCriteria } from "@/games/parking-jam/ui/result/ParkingJamResultScreen/score-criteria";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type ParkingJamResultScreenProps = {

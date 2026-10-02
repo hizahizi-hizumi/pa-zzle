@@ -8,7 +8,7 @@ import {
 } from "@/games/slide-puzzle/difficulty";
 import type { SlidePuzzleResult } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import { SLIDE_PUZZLE_SCORE_MAXIMUMS } from "@/games/slide-puzzle/score";
-import { getSlidePuzzleScoreCriteria } from "@/games/slide-puzzle/ui/SlidePuzzlePlay/SlidePuzzleResultScreen/score-criteria";
+import { getSlidePuzzleScoreCriteria } from "@/games/slide-puzzle/ui/result/SlidePuzzleResultScreen/score-criteria";
 import {
   formatElapsedTime,
   formatElapsedTimeWithTenths,
