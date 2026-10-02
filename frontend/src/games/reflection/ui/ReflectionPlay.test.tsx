@@ -25,16 +25,11 @@ import {
   calculateReflectionTimeDeltaMs,
 } from "@/games/reflection/score";
 import type { ReflectionSessionResult } from "@/games/reflection/session/session";
-import {
-  readReflectionHowToPlaySeen,
-  writeReflectionHowToPlaySeen,
-} from "@/games/reflection/ui/how-to-play-seen";
 import { reflectionOutcomeLabels } from "@/games/reflection/ui/outcome-label";
 import { ReflectionPlay } from "@/games/reflection/ui/ReflectionPlay";
 
 afterEach(() => {
   cleanup();
-  window.localStorage.clear();
 });
 
 function createResult(performance: ReflectionSessionResult): ReflectionResult {
@@ -128,47 +123,61 @@ describe("ReflectionPlay", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    writeReflectionHowToPlaySeen();
   });
 
-  describe("初めて遊ぶ場合", () => {
-    beforeEach(() => {
-      window.localStorage.clear();
-      renderPlay({});
+  describe("メニューから遊び方を開いた場合", () => {
+    function openHowToPlay(): void {
+      fireEvent.pointerDown(
+        screen.getByRole("button", { name: "その他の操作" }),
+        { button: 0, ctrlKey: false },
+      );
+      fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+    }
+
+    describe("光路表示を補助として扱う場合", () => {
+      beforeEach(() => {
+        renderPlay({});
+        openHowToPlay();
+      });
+
+      test("光路表示を補助として説明すること", () => {
+        const dialog = screen.getByRole("dialog", { name: "遊び方" });
+
+        expect(
+          within(dialog).getByText(/補助。使った回数は記録に残る/),
+        ).toBeTruthy();
+      });
+
+      test("閉じてもプレイを測り直さないこと", () => {
+        fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+
+        expect(callbacks.onReplay).not.toHaveBeenCalled();
+      });
     });
 
-    test("遊び方を開き、光路表示を補助として説明すること", () => {
-      const dialog = screen.getByRole("dialog", { name: "遊び方" });
+    describe("光路表示を通常の操作として扱う場合", () => {
+      beforeEach(() => {
+        renderPlay({ laserPathMode: "normal" });
+        openHowToPlay();
+      });
 
-      expect(
-        within(dialog).getByText(/補助。使った回数は記録に残る/),
-      ).toBeTruthy();
-    });
+      test("遊び方で補助と説明しないこと", () => {
+        const dialog = screen.getByRole("dialog", { name: "遊び方" });
 
-    test("遊び方を閉じると測り直し、次からは開かないこと", () => {
-      fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
-
-      expect(callbacks.onReplay).toHaveBeenCalledOnce();
-      expect(readReflectionHowToPlaySeen()).toBe(true);
-    });
-  });
-
-  describe("光路表示を通常の操作として扱う場合", () => {
-    beforeEach(() => {
-      window.localStorage.clear();
-      renderPlay({ laserPathMode: "normal" });
-    });
-
-    test("遊び方で補助と説明しないこと", () => {
-      const dialog = screen.getByRole("dialog", { name: "遊び方" });
-
-      expect(within(dialog).queryByText(/補助/)).toBeNull();
+        expect(within(dialog).queryByText(/補助/)).toBeNull();
+      });
     });
   });
 
   describe("プレイ中の場合", () => {
     beforeEach(() => {
       renderPlay({});
+    });
+
+    test("遊び方を自動では開かないこと", () => {
+      const dialog = screen.queryByRole("dialog", { name: "遊び方" });
+
+      expect(dialog).toBeNull();
     });
 
     test("時間だけをヘッダーに出し、置き直しと待ったを出さないこと", () => {

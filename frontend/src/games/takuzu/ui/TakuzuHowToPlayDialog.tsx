@@ -9,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { writeTakuzuHowToPlaySeen } from "@/games/takuzu/ui/how-to-play-seen";
 import { HowToPlayFigure } from "@/games/takuzu/ui/TakuzuHowToPlayDialog/HowToPlayFigure";
 
 type TakuzuHowToPlayDialogProps = {
@@ -19,7 +18,6 @@ type TakuzuHowToPlayDialogProps = {
 
 /**
  * ルールと操作を、盤面と同じ見え方の小さな図と短い一文で示す。
- * 一度閉じたら、初めて遊ぶときの自動表示をしないよう記録する。
  */
 export function TakuzuHowToPlayDialog({
   open,
@@ -27,7 +25,6 @@ export function TakuzuHowToPlayDialog({
 }: TakuzuHowToPlayDialogProps) {
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
-      writeTakuzuHowToPlaySeen();
       onClose();
     }
   }

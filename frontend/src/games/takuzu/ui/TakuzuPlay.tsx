@@ -16,7 +16,6 @@ import type {
 } from "@/games/takuzu/session/session";
 import { TakuzuClearAnimation } from "@/games/takuzu/ui/board/clear/TakuzuClearAnimation";
 import { TakuzuBoard } from "@/games/takuzu/ui/board/TakuzuBoard";
-import { readTakuzuHowToPlaySeen } from "@/games/takuzu/ui/how-to-play-seen";
 import { TakuzuResultScreen } from "@/games/takuzu/ui/result/TakuzuResultScreen";
 import { TakuzuHowToPlayDialog } from "@/games/takuzu/ui/TakuzuHowToPlayDialog";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
@@ -70,18 +69,7 @@ export function TakuzuPlay({
   onBackToHome,
   onOpenDiagnostics,
 }: TakuzuPlayProps) {
-  // 初めて遊ぶときだけ、盤面より先に遊び方を開く（intro）。
-  const [howToPlay, setHowToPlay] = useState<"closed" | "intro" | "open">(() =>
-    readTakuzuHowToPlaySeen() ? "closed" : "intro",
-  );
-
-  function closeHowToPlay() {
-    // 初めての遊び方を読んでいた時間はプレイ時間に含めないよう、閉じたところから測り直す。
-    if (howToPlay === "intro") {
-      onReplay();
-    }
-    setHowToPlay("closed");
-  }
+  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
 
   if (progress === "result" && result) {
     return (
@@ -121,12 +109,12 @@ export function TakuzuPlay({
         onStartNewProblem={onStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
-        onOpenHowToPlay={() => setHowToPlay("open")}
+        onOpenHowToPlay={() => setHowToPlayOpen(true)}
         onOpenDiagnostics={onOpenDiagnostics}
       />
       <TakuzuHowToPlayDialog
-        open={howToPlay !== "closed"}
-        onClose={closeHowToPlay}
+        open={howToPlayOpen}
+        onClose={() => setHowToPlayOpen(false)}
       />
       <main className="flex min-h-0 flex-1 items-center justify-center py-2 [container-type:size] sm:px-3">
         <div className="relative aspect-square w-[min(100cqw,100cqh,42rem)]">

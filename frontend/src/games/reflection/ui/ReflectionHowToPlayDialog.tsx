@@ -17,7 +17,6 @@ import type { ReflectionPiece } from "@/games/reflection/puzzle/board";
 import type { ReflectionClue } from "@/games/reflection/puzzle/laser";
 import { ReflectionOutcomeMark } from "@/games/reflection/ui/board/ReflectionOutcomeMark";
 import { ReflectionPieceIcon } from "@/games/reflection/ui/board/ReflectionPieceIcon";
-import { writeReflectionHowToPlaySeen } from "@/games/reflection/ui/how-to-play-seen";
 import { reflectionOutcomeLabels } from "@/games/reflection/ui/outcome-label";
 import { HowToPlayFigure } from "@/games/reflection/ui/ReflectionHowToPlayDialog/HowToPlayFigure";
 import {
@@ -95,7 +94,7 @@ function ClueMatchExample({ matched }: { matched: boolean }) {
 
 /**
  * ルールと操作を、盤面と同じ形・色の小さな図と短い一文で示す。
- * 光路表示の説明は光路表示の扱いに合わせる。一度閉じたら、初めて遊ぶときの自動表示をしないよう記録する。
+ * 光路表示の説明は光路表示の扱いに合わせる。
  */
 export function ReflectionHowToPlayDialog({
   open,
@@ -106,7 +105,6 @@ export function ReflectionHowToPlayDialog({
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
-      writeReflectionHowToPlaySeen();
       onClose();
     }
   }

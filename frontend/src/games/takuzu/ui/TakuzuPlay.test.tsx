@@ -11,10 +11,6 @@ import type {
   TakuzuResult,
 } from "@/games/takuzu/play/use-takuzu-play";
 import type { TakuzuCellView } from "@/games/takuzu/session/session";
-import {
-  readTakuzuHowToPlaySeen,
-  writeTakuzuHowToPlaySeen,
-} from "@/games/takuzu/ui/how-to-play-seen";
 import { TakuzuPlay } from "@/games/takuzu/ui/TakuzuPlay";
 
 const cells: TakuzuCellView[] = [
@@ -50,7 +46,6 @@ const perfectResult: TakuzuResult = {
 
 afterEach(() => {
   cleanup();
-  window.localStorage.clear();
 });
 
 describe("TakuzuPlay", () => {
@@ -107,34 +102,6 @@ describe("TakuzuPlay", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    writeTakuzuHowToPlaySeen();
-  });
-
-  describe("初めて遊ぶ場合", () => {
-    beforeEach(() => {
-      window.localStorage.clear();
-      renderPlay("playing");
-    });
-
-    test("遊び方を開くこと", () => {
-      const dialog = screen.getByRole("dialog", { name: "遊び方" });
-
-      expect(dialog).toBeTruthy();
-    });
-
-    describe("遊び方を閉じた場合", () => {
-      beforeEach(() => {
-        fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
-      });
-
-      test("読んでいた時間を除くため、同じ問題を測り直す操作を通知すること", () => {
-        expect(callbacks.onReplay).toHaveBeenCalledOnce();
-      });
-
-      test("次からは自動で開かないよう記録すること", () => {
-        expect(readTakuzuHowToPlaySeen()).toBe(true);
-      });
-    });
   });
 
   describe("プレイ中の場合", () => {
@@ -165,6 +132,12 @@ describe("TakuzuPlay", () => {
       expect(undoCount).toBeTruthy();
     });
 
+    test("遊び方を自動では開かないこと", () => {
+      const dialog = screen.queryByRole("dialog", { name: "遊び方" });
+
+      expect(dialog).toBeNull();
+    });
+
     test("待ったボタンで待ったを通知すること", () => {
       fireEvent.click(screen.getByRole("button", { name: "待った" }));
 
@@ -190,12 +163,6 @@ describe("TakuzuPlay", () => {
         ["難易度変更", "onChangeDifficulty"],
         ["ホーム", "onBackToHome"],
       ] as const;
-
-      test("遊び方を自動では開かないこと", () => {
-        const dialog = screen.queryByRole("dialog", { name: "遊び方" });
-
-        expect(dialog).toBeNull();
-      });
 
       test.each(menuCases)(
         "%s で対応する操作を通知すること",

@@ -12,12 +12,10 @@ import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import { createReflectionPlayRecord } from "@/games/reflection/play-record";
 import { createReflectionProblemIdentity } from "@/games/reflection/problem/problem";
 import { restoreReflectionPoolProblem } from "@/games/reflection/problem-selection";
-import { writeReflectionHowToPlaySeen } from "@/games/reflection/ui/how-to-play-seen";
 import { createSlidePuzzlePlayRecord } from "@/games/slide-puzzle/play-record";
 import { selectSlidePuzzleProblemForDifficulty } from "@/games/slide-puzzle/problem-selection";
 import { createTakuzuPlayRecord } from "@/games/takuzu/play-record";
 import { createTakuzuProblemIdentity } from "@/games/takuzu/problem/problem";
-import { writeTakuzuHowToPlaySeen } from "@/games/takuzu/ui/how-to-play-seen";
 import { createWaterSortPlayRecord } from "@/games/water-sort/play-record";
 import { selectWaterSortProblemForDifficulty } from "@/games/water-sort/problem-selection";
 import type { PlayRecord } from "@/records/play-record";
@@ -170,11 +168,6 @@ function renderReplay(recordId: string): void {
     </MemoryRouter>,
   );
 }
-
-beforeEach(() => {
-  writeTakuzuHowToPlaySeen();
-  writeReflectionHowToPlaySeen();
-});
 
 afterEach(() => {
   cleanup();

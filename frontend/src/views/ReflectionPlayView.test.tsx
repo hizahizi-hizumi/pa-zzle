@@ -18,7 +18,6 @@ import {
   selectReflectionProblemForDifficulty,
 } from "@/games/reflection/problem-selection";
 import type { ReflectionBoard } from "@/games/reflection/puzzle/board";
-import { writeReflectionHowToPlaySeen } from "@/games/reflection/ui/how-to-play-seen";
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
 import { readPlayRecords } from "@/records/storage";
 import { ReflectionPlayView } from "@/views/ReflectionPlayView";
@@ -37,10 +36,6 @@ vi.mock("@/lib/internal-diagnostics", () => ({
   },
   buildRevision: null,
 }));
-
-beforeEach(() => {
-  writeReflectionHowToPlaySeen();
-});
 
 afterEach(() => {
   cleanup();

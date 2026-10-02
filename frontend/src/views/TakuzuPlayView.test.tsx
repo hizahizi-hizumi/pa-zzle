@@ -8,7 +8,6 @@ import {
 import { MemoryRouter, Route, Routes } from "react-router";
 
 import { selectTakuzuProblemForDifficulty } from "@/games/takuzu/problem-selection";
-import { writeTakuzuHowToPlaySeen } from "@/games/takuzu/ui/how-to-play-seen";
 import { readPlayRecords } from "@/records/storage";
 import { TakuzuPlayView } from "@/views/TakuzuPlayView";
 
@@ -26,10 +25,6 @@ vi.mock("@/lib/internal-diagnostics", () => ({
   },
   buildRevision: null,
 }));
-
-beforeEach(() => {
-  writeTakuzuHowToPlaySeen();
-});
 
 afterEach(() => {
   cleanup();
