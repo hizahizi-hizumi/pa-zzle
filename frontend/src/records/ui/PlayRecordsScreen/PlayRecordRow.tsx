@@ -8,6 +8,7 @@ import {
 import type { PlayRecord } from "@/records/play-record";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 import { formatRecordCompletedAt } from "@/records/ui/format";
+import { CopyPlayRecordsButton } from "@/records/ui/PlayRecordsScreen/CopyPlayRecordsButton";
 import { getPlayRecordGridTemplateColumns } from "@/records/ui/PlayRecordsScreen/record-grid";
 import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
 
@@ -67,16 +68,22 @@ export function PlayRecordRow({
           </span>
         );
       })}
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        aria-label="同じ問題をプレイ"
-        title="同じ問題をプレイ"
-        onClick={() => onReplay(record.id)}
-      >
-        <PlayIcon />
-      </Button>
+      <div className="flex justify-end gap-1">
+        <CopyPlayRecordsButton
+          records={[record]}
+          label="この記録をJSONでコピー"
+        />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label="同じ問題をプレイ"
+          title="同じ問題をプレイ"
+          onClick={() => onReplay(record.id)}
+        >
+          <PlayIcon />
+        </Button>
+      </div>
     </li>
   );
 }

@@ -7,6 +7,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getPersonalBests } from "@/records/personal-best";
 import type { PlayRecord } from "@/records/play-record";
+import { CopyPlayRecordsButton } from "@/records/ui/PlayRecordsScreen/CopyPlayRecordsButton";
 import { EmptyRecords } from "@/records/ui/PlayRecordsScreen/EmptyRecords";
 import { PlayRecordsHistory } from "@/records/ui/PlayRecordsScreen/PlayRecordsHistory";
 import { PlayRecordsTrend } from "@/records/ui/PlayRecordsScreen/PlayRecordsTrend";
@@ -207,9 +208,15 @@ export function PlayRecordsScreen({
                   <TabsTrigger value="history">履歴</TabsTrigger>
                   <TabsTrigger value="trend">推移</TabsTrigger>
                 </TabsList>
-                <p className="text-meta text-muted-foreground">
-                  {selectedRecords.length}件
-                </p>
+                <div className="flex items-center gap-1">
+                  <p className="text-meta text-muted-foreground">
+                    {selectedRecords.length}件
+                  </p>
+                  <CopyPlayRecordsButton
+                    records={selectedRecords}
+                    label="一覧の記録をJSONでコピー"
+                  />
+                </div>
               </div>
 
               <TabsContent value="history">
