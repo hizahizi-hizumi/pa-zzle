@@ -11,7 +11,6 @@ import {
   createMinesweeperPlayRecord,
   minesweeperPlayRecordDefinition,
 } from "@/games/minesweeper/play-record";
-import type { MinesweeperRestoredProblem } from "@/games/minesweeper/problem/generator";
 import { selectMinesweeperProblemById } from "@/games/minesweeper/problem-selection";
 import { MinesweeperDiagnostics } from "@/games/minesweeper/ui/MinesweeperDiagnostics";
 import { MinesweeperPlay } from "@/games/minesweeper/ui/MinesweeperPlay";
@@ -26,22 +25,14 @@ import { useNavigate } from "@/router";
 
 type PlayableMinesweeperProps = {
   difficulty: MinesweeperDifficulty;
-  /** 記録から復元した問題。渡すとその問題で始め、URL の問題 ID とは結ばない。 */
-  initialProblem?: MinesweeperRestoredProblem;
 };
 
-export function PlayableMinesweeper({
-  difficulty,
-  initialProblem,
-}: PlayableMinesweeperProps) {
+export function PlayableMinesweeper({ difficulty }: PlayableMinesweeperProps) {
   const requestedProblem = useRequestedProblem((problemId) =>
     selectMinesweeperProblemById(difficulty, problemId),
   );
-  const play = useMinesweeperPlay(
-    difficulty,
-    initialProblem ?? requestedProblem,
-  );
-  useProblemIdQuerySync(initialProblem ? null : play.problemIdentity);
+  const play = useMinesweeperPlay(difficulty, requestedProblem);
+  useProblemIdQuerySync(play.problemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>

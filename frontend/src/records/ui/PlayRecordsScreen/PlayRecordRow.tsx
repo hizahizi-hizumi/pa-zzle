@@ -16,13 +16,18 @@ type PlayRecordRowProps = {
   record: PlayRecord;
   display: PlayRecordDisplayDefinition;
   personalBests: readonly PersonalBest[];
-  onReplay: (recordId: string) => void;
+  replayable: boolean;
+  onReplay: (record: PlayRecord) => void;
 };
+
+const replayLabel = "同じ問題をプレイ";
+const unavailableReplayLabel = "この記録の問題は今は遊べません";
 
 export function PlayRecordRow({
   record,
   display,
   personalBests,
+  replayable,
   onReplay,
 }: PlayRecordRowProps) {
   const bestMetricIds = getPersonalBestMetricIdsForRecord(
@@ -73,16 +78,19 @@ export function PlayRecordRow({
           records={[record]}
           label="この記録をJSONでコピー"
         />
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="同じ問題をプレイ"
-          title="同じ問題をプレイ"
-          onClick={() => onReplay(record.id)}
-        >
-          <PlayIcon />
-        </Button>
+        {/* 押せないボタンはポインターを受けないので、押せない理由の title は包む要素に付ける。 */}
+        <span title={replayable ? replayLabel : unavailableReplayLabel}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={replayable ? replayLabel : unavailableReplayLabel}
+            disabled={!replayable}
+            onClick={() => onReplay(record)}
+          >
+            <PlayIcon />
+          </Button>
+        </span>
       </div>
     </li>
   );

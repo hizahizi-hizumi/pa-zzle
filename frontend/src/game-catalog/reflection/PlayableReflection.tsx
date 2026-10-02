@@ -28,39 +28,35 @@ import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
 
-/**
- * 最初に遊ぶ問題を identity で指定する。指定した問題は URL の問題 ID とは結ばない。
- * - `replay`: 記録の問題を、その記録の難易度として遊び直す。記録は通常どおり保存する。
- * - `blind-comparison`: 人間の遊び比べ用に指定した問題。難易度を伏せ、記録を保存しない。
- */
-type ReflectionInitialProblem = {
-  identity: ReflectionProblemIdentity;
-  purpose: "replay" | "blind-comparison";
-};
-
 type PlayableReflectionProps = {
   difficulty: ReflectionDifficulty;
-  initialProblem?: ReflectionInitialProblem;
+  /**
+   * 人間の遊び比べ用に identity で指定した問題。最初の1問だけこの問題を出し、難易度を伏せて記録を保存しない。
+   * URL の問題 ID とは結ばない。
+   */
+  blindComparisonProblemIdentity?: ReflectionProblemIdentity;
 };
 
 const BLIND_COMPARISON_DIFFICULTY_LABEL = "問題指定";
 
 export function PlayableReflection({
   difficulty,
-  initialProblem,
+  blindComparisonProblemIdentity,
 }: PlayableReflectionProps) {
   const requestedProblem = useRequestedProblem((problemId) =>
     selectReflectionProblemById(difficulty, problemId),
   );
   const play = useReflectionPlay(
     difficulty,
-    initialProblem?.identity ?? requestedProblem?.identity,
+    blindComparisonProblemIdentity ?? requestedProblem?.identity,
   );
-  useProblemIdQuerySync(initialProblem ? null : play.problemIdentity);
+  useProblemIdQuerySync(
+    blindComparisonProblemIdentity ? null : play.problemIdentity,
+  );
   const navigate = useNavigate();
   // 別の問題へ進むと指定した問題ではなくなるので、難易度を出し、記録も保存する。
   const isBlindComparison =
-    initialProblem?.purpose === "blind-comparison" &&
+    blindComparisonProblemIdentity !== undefined &&
     play.problemSource === "given";
   const playRecord = useMemo(
     () =>

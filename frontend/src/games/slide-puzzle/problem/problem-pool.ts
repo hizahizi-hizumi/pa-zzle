@@ -61,7 +61,7 @@ export function findSlidePuzzlePoolEntryByProblemId(
   return findPoolPositionByProblemId(difficulty, problemId)?.entry ?? null;
 }
 
-/** 再プレイ・診断用。問題集に無い識別情報なら `null` を返す。 */
+/** 診断用。問題集に無い識別情報なら `null` を返す。 */
 export function findSlidePuzzlePooledOptimalMoveCount(
   identity: SlidePuzzleProblemIdentity,
 ): number | null {

@@ -43,3 +43,11 @@ export function selectMinesweeperProblemById(
   const entry = findMinesweeperPoolEntryByProblemId(difficulty, problemId);
   return entry ? restorePoolEntry(difficulty, entry) : null;
 }
+
+/** 難易度の問題集から問題 ID で1問を引けるかを、問題を復元せずに確かめる。 */
+export function canSelectMinesweeperProblemById(
+  difficulty: MinesweeperDifficulty,
+  problemId: string,
+): boolean {
+  return findMinesweeperPoolEntryByProblemId(difficulty, problemId) !== null;
+}

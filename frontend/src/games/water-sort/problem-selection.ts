@@ -40,3 +40,11 @@ export function selectWaterSortProblemById(
   const entry = findWaterSortPoolEntryByProblemId(difficulty, problemId);
   return entry ? restorePoolEntry(entry) : null;
 }
+
+/** 難易度の問題集から問題 ID で1問を引けるかを、問題を復元せずに確かめる。 */
+export function canSelectWaterSortProblemById(
+  difficulty: WaterSortDifficulty,
+  problemId: string,
+): boolean {
+  return findWaterSortPoolEntryByProblemId(difficulty, problemId) !== null;
+}

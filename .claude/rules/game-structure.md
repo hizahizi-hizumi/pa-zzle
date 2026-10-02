@@ -109,19 +109,21 @@ frontend/src/games/
 frontend/src/game-catalog/
 ├── game-catalog-entry.ts
 ├── game-catalog.ts
+├── problem-id-query.ts
 └── <game>/
-    ├── <game>-catalog-entry.tsx
+    ├── <game>-catalog-entry.ts
     └── Playable<Game>.tsx
 ```
 
-- `game-catalog-entry.ts`: 1ゲーム分のカタログ項目 `GameCatalogEntry` と、記録からの再プレイの契約を置く。
-- `game-catalog.ts`: 全ゲームを表示順に並べた `gameCatalog` を置く。パズル選択・記録・記録からの再プレイの画面は、ゲームを列挙せずこれを回す。
-- `<game>-catalog-entry.tsx`: ID（記録の `gameId`）、表示名、ピクトグラム、入口パス、記録表示、記録から再プレイを始める条件または始められない理由を持つ。問題の復元に失敗しうる場合は、ここで始められない理由に変える。
-- `Playable<Game>.tsx`: `play/`・`ui/`・記録保存・診断・画面遷移を合成し、1問を遊べるプレイ画面にする。プレイ View と記録からの再プレイ View の両方が使う。
+- `game-catalog-entry.ts`: 1ゲーム分のカタログ項目 `GameCatalogEntry` と、記録の問題を遊び直すプレイ画面の契約を置く。
+- `game-catalog.ts`: 全ゲームを表示順に並べた `gameCatalog` を置く。パズル選択・記録の画面は、ゲームを列挙せずこれを回す。
+- `problem-id-query.ts`: プレイ画面の URL の `problem` クエリ（問題 ID）の読み書きを置く。
+- `<game>-catalog-entry.ts`: ID（記録の `gameId`）、表示名、ピクトグラム、入口パス、プレイ画面のパス、記録表示、記録の問題を遊び直す難易度と問題 ID を持つ。遊び直し先は記録一覧の全行で求めるので、問題を復元せず問題集の索引で引けるかだけを確かめる。
+- `Playable<Game>.tsx`: `play/`・`ui/`・記録保存・診断・画面遷移を合成し、1問を遊べるプレイ画面にする。
 
 ## ゲームを追加するとき
 
 1. `games/<game>/` を標準配置で実装する。
-2. `game-catalog/<game>/` に `Playable<Game>.tsx` と `<game>-catalog-entry.tsx` を置き、`game-catalog.ts` の並びへ加える。
+2. `game-catalog/<game>/` に `Playable<Game>.tsx` と `<game>-catalog-entry.ts` を置き、`game-catalog.ts` の並びへ加える。
 3. `pages/puzzles/<game>/` と、そのルートの View（難易度選択・プレイ）を置く。
 4. `bun run --cwd frontend generate:dependency-rules` で `frontend/biome.json` の依存規則を生成し直す。規則は `src/games/` 直下のディレクトリから全ゲームに同じ形で作られ、生成結果との一致はテストで検査される。

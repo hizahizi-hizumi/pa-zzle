@@ -8,13 +8,15 @@ type PlayRecordsHistoryProps = {
   records: readonly PlayRecord[];
   display: PlayRecordDisplayDefinition;
   personalBests: readonly PersonalBest[];
-  onReplay: (recordId: string) => void;
+  isReplayable: (record: PlayRecord) => boolean;
+  onReplay: (record: PlayRecord) => void;
 };
 
 export function PlayRecordsHistory({
   records,
   display,
   personalBests,
+  isReplayable,
   onReplay,
 }: PlayRecordsHistoryProps) {
   return (
@@ -42,6 +44,7 @@ export function PlayRecordsHistory({
             record={record}
             display={display}
             personalBests={personalBests}
+            replayable={isReplayable(record)}
             onReplay={onReplay}
           />
         ))}

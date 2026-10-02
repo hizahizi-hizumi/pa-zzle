@@ -42,3 +42,11 @@ export function selectParkingJamProblemById(
   const entry = findParkingJamPoolEntryByProblemId(difficulty, problemId);
   return entry ? restorePoolEntry(entry) : null;
 }
+
+/** 難易度の問題集から問題 ID で1問を引けるかを、問題を復元せずに確かめる。 */
+export function canSelectParkingJamProblemById(
+  difficulty: ParkingJamDifficulty,
+  problemId: string,
+): boolean {
+  return findParkingJamPoolEntryByProblemId(difficulty, problemId) !== null;
+}

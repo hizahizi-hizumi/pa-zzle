@@ -57,3 +57,11 @@ export function restoreSlidePuzzlePooledProblem(
     ? null
     : restoreSlidePuzzleProblemWithOptimalMoveCount(identity, optimalMoveCount);
 }
+
+/** 難易度の問題集から問題 ID で1問を引けるかを、問題を復元せずに確かめる。 */
+export function canSelectSlidePuzzleProblemById(
+  difficulty: SlidePuzzleDifficulty,
+  problemId: string,
+): boolean {
+  return findSlidePuzzlePoolEntryByProblemId(difficulty, problemId) !== null;
+}

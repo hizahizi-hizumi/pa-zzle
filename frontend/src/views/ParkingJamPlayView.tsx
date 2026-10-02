@@ -59,11 +59,7 @@ export function ParkingJamPlayView() {
     <PlayableParkingJam
       key={difficulty}
       difficulty={difficulty}
-      initialProblem={
-        specifiedProblem?.restored
-          ? { restored: specifiedProblem.restored, purpose: "blind-comparison" }
-          : undefined
-      }
+      blindComparisonProblem={specifiedProblem?.restored ?? undefined}
     />
   );
 }

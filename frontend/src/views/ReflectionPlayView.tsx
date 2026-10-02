@@ -46,11 +46,7 @@ export function ReflectionPlayView() {
     <PlayableReflection
       key={difficulty}
       difficulty={difficulty}
-      initialProblem={
-        specifiedProblem?.identity
-          ? { identity: specifiedProblem.identity, purpose: "blind-comparison" }
-          : undefined
-      }
+      blindComparisonProblemIdentity={specifiedProblem?.identity ?? undefined}
     />
   );
 }

@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { createMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
 import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
 import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
@@ -160,6 +166,7 @@ describe("PlayRecordsScreen", () => {
         records={records}
         games={playRecordGames}
         emptyAction={<a href="/">パズルを選ぶ</a>}
+        isReplayable={() => true}
         onReplay={() => {}}
       />,
     );
@@ -266,5 +273,49 @@ describe("PlayRecordsScreen", () => {
     expect(screen.getAllByText("91点").length).toBeGreaterThan(0);
     expect(screen.getAllByText("+00:16").length).toBeGreaterThan(0);
     expect(screen.getByText("1件")).toBeTruthy();
+  });
+});
+
+describe("PlayRecordsScreen の同じ問題をプレイ", () => {
+  const [unreplayableRecord, replayableRecord] = records;
+  const onReplay = vi.fn();
+
+  beforeEach(() => {
+    render(
+      <PlayRecordsScreen
+        records={records}
+        games={playRecordGames}
+        emptyAction={<a href="/">パズルを選ぶ</a>}
+        isReplayable={(record) => record !== unreplayableRecord}
+        onReplay={onReplay}
+      />,
+    );
+  });
+
+  afterEach(() => {
+    cleanup();
+    onReplay.mockReset();
+  });
+
+  test("遊び直せる記録ではその記録を渡して遊び直しを求めること", () => {
+    const history = screen.getByRole("list");
+    const replayButton = within(history).getByRole("button", {
+      name: "同じ問題をプレイ",
+    });
+    fireEvent.click(replayButton);
+
+    expect(onReplay).toHaveBeenCalledExactlyOnceWith(replayableRecord);
+  });
+
+  test("遊び直せない記録では押せないボタンで今は遊べないことを示すこと", () => {
+    const history = screen.getByRole("list");
+    const unavailableButton = within(history).getByRole("button", {
+      name: "この記録の問題は今は遊べません",
+    });
+
+    expect(unavailableButton.hasAttribute("disabled")).toBe(true);
+    expect(unavailableButton.parentElement?.getAttribute("title")).toBe(
+      "この記録の問題は今は遊べません",
+    );
   });
 });

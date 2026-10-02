@@ -203,6 +203,14 @@ const findPoolPositionByProblemId = createProblemPoolIdLookup(
   toReflectionPoolIdentity,
 );
 
+/** 難易度の問題集に問題 ID の問題があるかを返す。 */
+export function hasReflectionPoolProblemId(
+  difficulty: ReflectionDifficulty,
+  problemId: string,
+): boolean {
+  return findPoolPositionByProblemId(difficulty, problemId) !== null;
+}
+
 /** 難易度の問題集から問題 ID で1問を探して復元する。問題集に無い ID・別の難易度の ID には `null` を返す。 */
 export function findReflectionPooledProblemByProblemId(
   difficulty: ReflectionDifficulty,
