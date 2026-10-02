@@ -58,12 +58,15 @@ export function NanpureHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>
-          メモをオンにすると、数字を候補として小さく書く。もう一度押すと消える。
+          メモをオンにすると、押した数字を候補として小さく書く。同じ数字をもう一度押すと消える。
         </p>
         <HowToPlayTransition>
           <HowToPlayFigure rows={[[{ highlight: "selected" }]]} />
           <HowToPlayFigure
             rows={[[{ highlight: "selected", notes: [1, 3, 8] }]]}
+          />
+          <HowToPlayFigure
+            rows={[[{ highlight: "selected", notes: [1, 8] }]]}
           />
         </HowToPlayTransition>
       </li>
@@ -74,14 +77,18 @@ export function NanpureHowToPlayDialog({
         <HowToPlayTransition>
           <HowToPlayFigure
             rows={[
-              [{ notes: [2, 5] }, { notes: [5, 8] }, { highlight: "selected" }],
+              [
+                { highlight: "related", notes: [2, 5] },
+                { highlight: "related", notes: [5, 8] },
+                { highlight: "selected" },
+              ],
             ]}
           />
           <HowToPlayFigure
             rows={[
               [
-                { notes: [2] },
-                { notes: [8] },
+                { highlight: "related", notes: [2] },
+                { highlight: "related", notes: [8] },
                 { highlight: "selected", digit: 5 },
               ],
             ]}
@@ -93,7 +100,9 @@ export function NanpureHowToPlayDialog({
         <HowToPlayFigure rows={[[{ digit: 4, error: "mistake" }]]} />
       </li>
       <li className="space-y-2">
-        <p>同じ行・列・ブロックで重なった数字は、どちらも濃い赤になる。</p>
+        <p>
+          同じ行・列・ブロックで重なった数字は、最初からある数字も含めて赤くなる。
+        </p>
         <HowToPlayFigure
           rows={[
             [
@@ -108,7 +117,7 @@ export function NanpureHowToPlayDialog({
         <p>「消す」で選んだマスの数字とメモを消す。「待った」で1手戻す。</p>
       </li>
       <li>
-        <p>9つとも正しく入れた数字は、下の数字が押せなくなる。</p>
+        <p>盤面に正しく9つそろった数字は、下の数字が押せなくなる。</p>
       </li>
     </HowToPlayDialog>
   );
