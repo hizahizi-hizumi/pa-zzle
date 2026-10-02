@@ -3,6 +3,10 @@ import {
   type TsumeShogiMainLine,
 } from "@/games/tsume-shogi/problem/generation/solver";
 import { TsumeShogiMateSearch } from "@/games/tsume-shogi/puzzle/mate-search";
+import {
+  isSameTsumeShogiMove,
+  type TsumeShogiMove,
+} from "@/games/tsume-shogi/puzzle/moves";
 import type { TsumeShogiPosition } from "@/games/tsume-shogi/puzzle/position";
 import { TsumeShogiSearchPosition } from "@/games/tsume-shogi/puzzle/search-position";
 
@@ -27,8 +31,8 @@ export type TsumeShogiQualityIssue =
   /** 作意の玉方の手に合駒がある。 */
   | "interpositionInMainLine"
   /**
-   * 玉方の合駒を逃れに数えないと、最短の詰み手数か、作意の攻方の手番で残りの手数以内に詰む王手の数が変わる
-   * （無駄合の解釈で答えが変わりうる）。
+   * 玉方の合駒を逃れに数えないと、最短の詰み手数、作意の攻方の手番で残りの手数以内に詰む王手の数、
+   * または作意の手順が変わる（無駄合の解釈で答えが変わりうる）。
    */
   | "interpositionSensitive"
   /**
@@ -94,6 +98,15 @@ export function validateTsumeShogiProblem(
     mainLine === null
       ? []
       : countMatingChecksAlongMainLine(root, mainLine, ignoringInterposition);
+  const mainLineIgnoringInterposition =
+    mainLine !== null &&
+    shortestMatePliesIgnoringInterposition === shortestMatePlies
+      ? solveTsumeShogiMainLine(
+          position,
+          shortestMatePlies!,
+          ignoringInterposition,
+        )
+      : null;
 
   const issues: TsumeShogiQualityIssue[] = [];
   if (shortestMatePlies === null) {
@@ -116,7 +129,11 @@ export function validateTsumeShogiProblem(
       issues.push("interpositionInMainLine");
     }
     if (
-      shortestMatePliesIgnoringInterposition !== shortestMatePlies ||
+      mainLineIgnoringInterposition === null ||
+      !isSameMoveSequence(
+        mainLine.moves,
+        mainLineIgnoringInterposition.moves,
+      ) ||
       matingCheckCountsIgnoringInterposition.some(
         function differsFromCounted(count, turnIndex) {
           return count !== mainLine.attackerTurns[turnIndex]!.matingCheckCount;
@@ -150,6 +167,18 @@ export function validateTsumeShogiProblem(
     shortestMatePliesIgnoringInterposition,
     matingCheckCountsIgnoringInterposition,
   };
+}
+
+function isSameMoveSequence(
+  left: readonly TsumeShogiMove[],
+  right: readonly TsumeShogiMove[],
+): boolean {
+  return (
+    left.length === right.length &&
+    left.every(function isSameAt(move, index) {
+      return isSameTsumeShogiMove(move, right[index]!);
+    })
+  );
 }
 
 function decideVerdict(

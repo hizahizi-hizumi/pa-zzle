@@ -20,7 +20,7 @@ describe("createTsumeShogiProblemIdentity", () => {
     const result = createTsumeShogiProblemIdentity(5, 3);
 
     expect(result).toEqual({
-      generatorVersion: "1",
+      generatorVersion: "2",
       seed: "ts-5-3",
       conditions: { plies: 5 },
     });
@@ -33,7 +33,7 @@ describe("createTsumeShogiProblemIdentity", () => {
     });
 
     expect(result).toEqual({
-      generatorVersion: "1",
+      generatorVersion: "2",
       seed: "ts-5-c1-4-3",
       conditions: { plies: 5, rootChecks: { minimum: 1, maximum: 4 } },
     });
@@ -50,12 +50,12 @@ describe("isTsumeShogiProblemIdentity", () => {
     ],
     [
       "扱わない手数の identity",
-      { generatorVersion: "1", seed: "ts-7-0", conditions: { plies: 7 } },
+      { generatorVersion: "2", seed: "ts-7-0", conditions: { plies: 7 } },
       false,
     ],
     [
       "seed の無い identity",
-      { generatorVersion: "1", seed: "", conditions: { plies: 3 } },
+      { generatorVersion: "2", seed: "", conditions: { plies: 3 } },
       false,
     ],
     [
@@ -66,7 +66,7 @@ describe("isTsumeShogiProblemIdentity", () => {
     [
       "初手の王手の数の範囲が逆転した identity",
       {
-        generatorVersion: "1",
+        generatorVersion: "2",
         seed: "ts-3-c4-1-0",
         conditions: { plies: 3, rootChecks: { minimum: 4, maximum: 1 } },
       },
@@ -75,7 +75,7 @@ describe("isTsumeShogiProblemIdentity", () => {
     [
       "初手の王手の数の下限が0の identity",
       {
-        generatorVersion: "1",
+        generatorVersion: "2",
         seed: "ts-3-c0-1-0",
         conditions: { plies: 3, rootChecks: { minimum: 0, maximum: 1 } },
       },
@@ -100,7 +100,7 @@ describe("isTsumeShogiRecordedProblemIdentity", () => {
     ],
     [
       "今の版で扱えない条件の identity",
-      { generatorVersion: "1", seed: "ts-7-0", conditions: { plies: 7 } },
+      { generatorVersion: "2", seed: "ts-7-0", conditions: { plies: 7 } },
       false,
     ],
     [

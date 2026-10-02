@@ -65,7 +65,7 @@ export function findTsumeShogiShortestMate(
 
 /**
  * 攻方の手番の局面の作意。最短の詰みがちょうど `plies` 手でなければ `RangeError` を投げる。
- * `search` を渡すと、同じ局面を調べた置換表を使い回す。
+ * `search` を渡すと、同じ局面を調べた置換表を使い回す。合駒を逃れに数えない `search` では、玉方の合駒を応手に含めない。
  */
 export function solveTsumeShogiMainLine(
   position: TsumeShogiPosition,
@@ -135,7 +135,13 @@ class MainLineSolver {
 
   /** 玉方の手番で、`plies` 手以内に必ず詰み、それより2手短くは詰まない局面。 */
   evaluateDefender(state: TsumeShogiSearchPosition, plies: number): Evaluation {
-    const responses = state.listDefenderResponses();
+    const responses = state
+      .listDefenderResponses()
+      .filter(
+        (response) =>
+          this.#search.interpositionRule === "counted" ||
+          !isTsumeShogiInterposition(response),
+      );
     if (responses.length === 0) {
       return {
         moves: [],

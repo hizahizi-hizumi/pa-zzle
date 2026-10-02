@@ -39,6 +39,10 @@ export class TsumeShogiMateSearch {
     this.#interpositionRule = interpositionRule;
   }
 
+  get interpositionRule(): TsumeShogiInterpositionRule {
+    return this.#interpositionRule;
+  }
+
   /** 探索した局面の数（置換表で済んだ局面を除く）。計測用。 */
   get nodeCount(): number {
     return this.#nodeCount;

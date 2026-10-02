@@ -8,11 +8,11 @@ const snapshot: TsumeShogiDiagnosticSnapshot = {
   game: "tsume-shogi",
   difficulty: "4",
   problemIdentity: {
-    generatorVersion: "1",
+    generatorVersion: "2",
     seed: "ts-5-c6-99-4",
     conditions: { plies: 5, rootChecks: { minimum: 6, maximum: 99 } },
   },
-  problemPool: { poolVersion: "1", problemId: "4-2" },
+  problemPool: { poolVersion: "2", problemId: "4-2" },
   problem: {
     sfen: "3+R2s2/8k/6SR1/9/9/9/9/9/9 b 2b4g2s4n4l18p 1",
     mainLine: ["2c2a+", "1b2a", "6a3a", "2a3a", "S*3b"],
@@ -90,7 +90,7 @@ describe("TsumeShogiDiagnostics", () => {
       ].map(getRowValue);
 
       expect(values).toEqual([
-        "v1 / 4-2",
+        "v2 / 4-2",
         "レベル 4",
         "10 / 6 / 4",
         "2 / 3",

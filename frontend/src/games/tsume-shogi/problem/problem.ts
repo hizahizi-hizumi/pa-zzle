@@ -42,7 +42,7 @@ export type TsumeShogiGenerationPlies =
   (typeof tsumeShogiGenerationPlies)[number];
 
 /** 生成手順を変えて同じ identity から別の問題ができるようになったら上げる。 */
-export const TSUME_SHOGI_GENERATOR_VERSION = "1";
+export const TSUME_SHOGI_GENERATOR_VERSION = "2";
 
 /** 初手の合法な王手の数の範囲（両端を含む）。 */
 export type TsumeShogiRootCheckRange = {

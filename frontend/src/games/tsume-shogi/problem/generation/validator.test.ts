@@ -56,6 +56,15 @@ const futileInterposition = createTsumeShogiPosition("8k/8p/6NG1/9/9/9/9/9/9", {
   rook: 1,
 });
 
+/**
+ * ▲6三角成 △5一玉 ▲4一飛打 の3手詰。2手目の △6一玉 も3手で詰むが、合駒を逃れに数えると駒余りになるので作意は △5一玉。
+ * 合駒を逃れに数えなければ △6一玉 ▲8一飛打 も駒余りにならず、作意が入れ替わる。
+ */
+const mainLineSwapsIgnoringInterposition = createTsumeShogiPosition(
+  "4B4/4k4/2Gr1g3/9/5B3/9/9/9/9",
+  {},
+);
+
 /** ▲3三角打 △2二飛打 ▲同角成 の3手詰。作意に玉方の合駒が現れる。 */
 const interpositionInMainLine = createTsumeShogiPosition(
   "8k/8s/9/7L1/9/9/9/9/9",
@@ -106,6 +115,13 @@ describe("validateTsumeShogiProblem", () => {
         5,
         "unsupported",
         ["interpositionSensitive"],
+      ],
+      [
+        "合駒を数えないと作意が入れ替わる3手詰",
+        mainLineSwapsIgnoringInterposition,
+        3,
+        "unsupported",
+        ["interpositionSensitive", "equalLengthVariation"],
       ],
     ] as const;
 

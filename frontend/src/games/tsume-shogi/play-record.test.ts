@@ -12,7 +12,7 @@ const problemIdentity = createTsumeShogiProblemIdentity(5, 50, {
   minimum: 10,
   maximum: 99,
 });
-const poolReference = { poolVersion: "1", problemId: "5-17" };
+const poolReference = { poolVersion: "2", problemId: "5-17" };
 
 // 基準時間は 8 + 攻方3手 × 4 + 王手12 × 2 + もっともらしい誤王手13 × 4 + 深い紛れ8 × 6 = 144秒。
 const workload = {
@@ -67,7 +67,7 @@ describe("createTsumeShogiPlayRecord", () => {
     expect(payload).toEqual({
       difficulty: "5",
       problemIdentity: {
-        generatorVersion: "1",
+        generatorVersion: "2",
         seed: "ts-5-c10-99-50",
         conditions: { plies: 5, rootChecks: { minimum: 10, maximum: 99 } },
       },
@@ -143,7 +143,7 @@ describe("isTsumeShogiPlayRecord", () => {
     ["問題集の位置が無い記録", withPayload({ poolReference: undefined })],
     [
       "問題番号が空の記録",
-      withPayload({ poolReference: { poolVersion: "1", problemId: "" } }),
+      withPayload({ poolReference: { poolVersion: "2", problemId: "" } }),
     ],
     ["作業の量が無い記録", withPayload({ workload: undefined })],
     [
