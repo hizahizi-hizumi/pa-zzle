@@ -46,6 +46,7 @@ type TsumeShogiPlayProps = {
   boardPieces: readonly TsumeShogiBoardPiece[];
   attackerHand: TsumeShogiHandCounts;
   shownMoves: readonly TsumeShogiPlayedMove[];
+  shownMovesRestored: boolean;
   selection: TsumeShogiSelection | null;
   promotionChoice: TsumeShogiPromotionChoice | null;
   rejection: TsumeShogiRejection | null;
@@ -94,6 +95,7 @@ export function TsumeShogiPlay({
   boardPieces,
   attackerHand,
   shownMoves,
+  shownMovesRestored,
   selection,
   promotionChoice,
   rejection,
@@ -216,6 +218,7 @@ export function TsumeShogiPlay({
                 boardPieces={boardPieces}
                 selection={selection}
                 shownMoves={shownMoves}
+                shownMovesRestored={shownMovesRestored}
                 promotionChoice={promotionChoice}
                 rejection={rejection}
                 mated={progress !== "playing"}

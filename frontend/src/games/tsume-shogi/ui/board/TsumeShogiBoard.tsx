@@ -24,6 +24,8 @@ type TsumeShogiBoardProps = {
   selection: TsumeShogiSelection | null;
   /** 盤面に見せている最後の組の手。最後の手の移動先の地を変え、その駒を動かして見せる。 */
   shownMoves: readonly TsumeShogiPlayedMove[];
+  /** `shownMoves` が、元に戻すなどで盤面に戻ってきた手か。指した手ではないので駒を動かして見せない。 */
+  shownMovesRestored: boolean;
   promotionChoice: TsumeShogiPromotionChoice | null;
   rejection: TsumeShogiRejection | null;
   /** 詰んだ玉の升の地を変える。 */
@@ -56,6 +58,7 @@ export function TsumeShogiBoard({
   boardPieces,
   selection,
   shownMoves,
+  shownMovesRestored,
   promotionChoice,
   rejection,
   mated,
@@ -118,7 +121,9 @@ export function TsumeShogiBoard({
           files.map((file) => {
             const square = { file, rank };
             const arrivedMove =
-              lastMove && isSameTsumeShogiSquare(lastMove.move.to, square)
+              lastMove &&
+              !shownMovesRestored &&
+              isSameTsumeShogiSquare(lastMove.move.to, square)
                 ? lastMove
                 : null;
             return (

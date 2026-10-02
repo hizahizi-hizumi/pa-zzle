@@ -146,9 +146,11 @@ export type TsumeShogiResult = TsumeShogiSessionResult & {
 /**
  * - `workload` / `poolReference`: 問題集から出した問題の作業の量と、問題集の中の位置。
  *   問題集に無い identity を指定して生成した問題（内部診断）では `null` で、評価できない。
+ * - `restoredTurn`: 元に戻す・判断地点へ戻る・盤面を戻すで、最後の組として盤面に戻ってきた手。指し直したときのように動かして見せない。
  */
 type TsumeShogiPlayState = {
   session: TsumeShogiSession;
+  restoredTurn: TsumeShogiSessionTurn | null;
   progress: TsumeShogiProgress;
   problemIdentity: TsumeShogiProblemIdentity;
   problemSource: TsumeShogiProblemSource;
@@ -163,6 +165,7 @@ function createPooledPlayState(
 ): TsumeShogiPlayState {
   return {
     session: createTsumeShogiSession(problem, startedAt),
+    restoredTurn: null,
     progress: "playing",
     problemIdentity: identity,
     problemSource,
@@ -183,6 +186,7 @@ function createGivenPlayState(
 
   return {
     session: createTsumeShogiSession(given.problem, startedAt),
+    restoredTurn: null,
     progress: "playing",
     problemIdentity: given.identity,
     problemSource: "given",
@@ -207,9 +211,11 @@ function withNextSession(
   current: TsumeShogiPlayState,
   next: TsumeShogiSession,
 ): TsumeShogiPlayState {
+  const rewound = next.turns.length < current.session.turns.length;
   return {
     ...current,
     session: next,
+    restoredTurn: rewound ? (next.turns.at(-1) ?? null) : current.restoredTurn,
     progress: next.status === "cleared" ? "clearing" : current.progress,
   };
 }
@@ -363,6 +369,7 @@ export function useTsumeShogiPlay(
     setPlay((current) => ({
       ...current,
       session: replayTsumeShogiSession(current.session, startedAt),
+      restoredTurn: null,
       progress: "playing",
     }));
   }, []);
@@ -431,6 +438,8 @@ export function useTsumeShogiPlay(
     attackerHand,
     pieceBox,
     shownMoves,
+    shownMovesRestored:
+      lastTurn !== undefined && lastTurn === play.restoredTurn,
     selection: session.selection,
     promotionChoice: session.promotionChoice,
     rejection: session.rejection,

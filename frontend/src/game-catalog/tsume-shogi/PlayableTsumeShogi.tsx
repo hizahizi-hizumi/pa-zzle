@@ -109,6 +109,7 @@ export function PlayableTsumeShogi({
         boardPieces={play.boardPieces}
         attackerHand={play.attackerHand}
         shownMoves={play.shownMoves}
+        shownMovesRestored={play.shownMovesRestored}
         selection={play.selection}
         promotionChoice={play.promotionChoice}
         rejection={play.rejection}

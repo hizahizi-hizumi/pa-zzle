@@ -11,6 +11,7 @@ import {
   type TsumeShogiProblem,
 } from "@/games/tsume-shogi/problem/problem";
 import { selectTsumeShogiProblemForDifficulty } from "@/games/tsume-shogi/problem-selection";
+import { formatTsumeShogiMoveUsi } from "@/games/tsume-shogi/puzzle/moves";
 import {
   calculateTsumeShogiPlayScore,
   calculateTsumeShogiSpeedFullScoreMs,
@@ -26,6 +27,7 @@ type HookResult = { current: ReturnType<typeof useTsumeShogiPlay> };
 const difficulty = "2";
 const seed = "use-tsume-shogi-play-a";
 const pooled = selectTsumeShogiProblemForDifficulty(difficulty, seed);
+const fivePly = selectTsumeShogiProblemForDifficulty("3", seed);
 
 // 問題集に無い identity の3手詰（生成器の版 1 の `ts-3-5`）。
 const unpooled = {
@@ -36,9 +38,15 @@ const unpooled = {
   identity: createTsumeShogiProblemIdentity(3, 5),
 };
 
-/** 作意の攻方の手を盤面と持駒の操作で指し、玉方の応手の間を進める。 */
-function playMainLine(result: HookResult, problem: TsumeShogiProblem): void {
-  problem.mainLine.forEach((move, index) => {
+/**
+ * 作意の攻方の手を盤面と持駒の操作で指し、玉方の応手の間を進める。`plies` を渡すと、作意の初めのその手数までを指す。
+ */
+function playMainLine(
+  result: HookResult,
+  problem: TsumeShogiProblem,
+  plies = problem.mainLine.length,
+): void {
+  problem.mainLine.slice(0, plies).forEach((move, index) => {
     if (index % 2 === 1) return;
 
     if (move.kind === "drop") {
@@ -162,6 +170,32 @@ describe("useTsumeShogiPlay", () => {
       expect(workload).toBeNull();
       expect(poolReference).toBeNull();
       expect(playResult).toBeNull();
+    });
+  });
+
+  describe("2つ目の王手まで指して元に戻した場合", () => {
+    let result: HookResult;
+
+    beforeEach(() => {
+      ({ result } = renderHook(() =>
+        useTsumeShogiPlay("3", {
+          problem: fivePly.problem,
+          identity: fivePly.identity,
+        }),
+      ));
+      playMainLine(result, fivePly.problem, 4);
+      act(() => result.current.undo());
+    });
+
+    test("1つ目の組の手を、指した手ではなく盤面に戻ってきた手として返すこと", () => {
+      const { shownMoves, shownMovesRestored } = result.current;
+
+      expect(
+        shownMoves.map(({ move }) => formatTsumeShogiMoveUsi(move)),
+      ).toEqual(
+        fivePly.problem.mainLine.slice(0, 2).map(formatTsumeShogiMoveUsi),
+      );
+      expect(shownMovesRestored).toBe(true);
     });
   });
 });
