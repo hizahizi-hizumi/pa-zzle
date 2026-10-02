@@ -15,13 +15,17 @@ import {
   restoreTsumeShogiProblem,
   selectTsumeShogiProblemForDifficulty,
 } from "@/games/tsume-shogi/problem-selection";
-import type { TsumeShogiMove } from "@/games/tsume-shogi/puzzle/moves";
+import {
+  canTsumeShogiMovePromote,
+  type TsumeShogiMove,
+} from "@/games/tsume-shogi/puzzle/moves";
 import {
   getTsumeShogiHand,
   getTsumeShogiPieceAt,
   listTsumeShogiBoardPieces,
   type TsumeShogiHandPieceType,
   type TsumeShogiPieceType,
+  type TsumeShogiPosition,
   type TsumeShogiSide,
   type TsumeShogiSquare,
 } from "@/games/tsume-shogi/puzzle/position";
@@ -68,13 +72,33 @@ export const TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS = 600;
 
 /**
  * 盤面に見せている最後の組の手。`pieceType` は指した後の駒（成った手は成った駒）、`line` はその手の筋。
+ * `promotable` は成ることを選べた手か（成った手と、成れたのに成らなかった手）。
  */
 export type TsumeShogiPlayedMove = {
   side: TsumeShogiSide;
   move: TsumeShogiMove;
   pieceType: TsumeShogiPieceType;
+  promotable: boolean;
   line: TsumeShogiTurnLine;
 };
+
+function toPlayedMove(
+  side: TsumeShogiSide,
+  move: TsumeShogiMove,
+  positionAfterMove: TsumeShogiPosition,
+  line: TsumeShogiTurnLine,
+): TsumeShogiPlayedMove {
+  const pieceType = getTsumeShogiPieceAt(positionAfterMove, move.to)!.type;
+  return {
+    side,
+    move,
+    pieceType,
+    promotable:
+      move.kind === "board" &&
+      (move.promote || canTsumeShogiMovePromote(side, pieceType, move)),
+    line,
+  };
+}
 
 function listShownMoves(
   turn: TsumeShogiSessionTurn | undefined,
@@ -82,28 +106,22 @@ function listShownMoves(
 ): TsumeShogiPlayedMove[] {
   if (!turn) return [];
 
-  const attacker: TsumeShogiPlayedMove = {
-    side: "attacker",
-    move: turn.attackerMove,
-    pieceType: getTsumeShogiPieceAt(
-      turn.positionAfterAttack,
-      turn.attackerMove.to,
-    )!.type,
-    line: turn.line,
-  };
+  const attacker = toPlayedMove(
+    "attacker",
+    turn.attackerMove,
+    turn.positionAfterAttack,
+    turn.line,
+  );
   if (defenderReplyPending || turn.defenderMove === null) return [attacker];
 
   return [
     attacker,
-    {
-      side: "defender",
-      move: turn.defenderMove,
-      pieceType: getTsumeShogiPieceAt(
-        turn.positionAfterDefense,
-        turn.defenderMove.to,
-      )!.type,
-      line: turn.line,
-    },
+    toPlayedMove(
+      "defender",
+      turn.defenderMove,
+      turn.positionAfterDefense,
+      turn.line,
+    ),
   ];
 }
 
