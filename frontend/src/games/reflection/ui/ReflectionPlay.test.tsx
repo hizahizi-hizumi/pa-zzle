@@ -91,6 +91,7 @@ describe("ReflectionPlay", () => {
     onClearSelection: vi.fn(),
     onRestart: vi.fn(),
     onReplay: vi.fn(),
+    onRestartTiming: vi.fn(),
     onClearAnimationComplete: vi.fn(),
     onStartNewProblem: vi.fn(),
     onOpenRecords: vi.fn(),
@@ -147,7 +148,8 @@ describe("ReflectionPlay", () => {
     test("遊び方を閉じると測り直し、次からは開かないこと", () => {
       fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
 
-      expect(callbacks.onReplay).toHaveBeenCalledOnce();
+      expect(callbacks.onRestartTiming).toHaveBeenCalledOnce();
+      expect(callbacks.onReplay).not.toHaveBeenCalled();
       expect(readReflectionHowToPlaySeen()).toBe(true);
     });
   });

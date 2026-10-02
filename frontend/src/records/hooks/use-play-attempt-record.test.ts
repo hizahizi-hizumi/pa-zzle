@@ -142,6 +142,41 @@ describe("プレイを進めた場合", () => {
   });
 });
 
+describe("プレイを記録から除いた場合", () => {
+  let hook: AttemptHook;
+
+  beforeEach(async () => {
+    hook = renderAttemptHook({
+      attempt: createAttempt(1_000),
+      finished: false,
+      moveCount: 0,
+    });
+    await flushAbandonment();
+    act(() => {
+      hook.result.current.discard();
+    });
+  });
+
+  test("別のプレイに置き換えても前のプレイを離脱にせず、次のプレイだけを記録すること", async () => {
+    hook.rerender({
+      attempt: createAttempt(2_000),
+      finished: false,
+      moveCount: 0,
+    });
+    await flushAbandonment();
+    const attempts = readPlayAttempts();
+
+    expect(attempts).toEqual([createAttempt(2_000)]);
+  });
+
+  test("ページを離れても離脱を記録しないこと", () => {
+    window.dispatchEvent(new PageTransitionEvent("pagehide"));
+    const attempts = readPlayAttempts();
+
+    expect(attempts).toEqual([]);
+  });
+});
+
 describe("解き終えた場合", () => {
   let hook: AttemptHook;
 

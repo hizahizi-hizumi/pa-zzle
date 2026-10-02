@@ -138,6 +138,27 @@ export function abandonPlayAttempt(
 }
 
 /**
+ * 始めたプレイを、遊んでいないものとして保存から除く。
+ * 離脱にも未完了にも数えないプレイに使う。
+ */
+export function discardPlayAttempt(
+  attemptId: string,
+  storage: PlayRecordStorage | null = getDefaultStorage(),
+): "saved" | "ignored" | "failed" {
+  if (!storage) {
+    return "failed";
+  }
+
+  const attempts = readPlayAttempts(storage);
+  const remaining = attempts.filter((attempt) => attempt.id !== attemptId);
+  if (remaining.length === attempts.length) {
+    return "ignored";
+  }
+
+  return writePlayAttempts(remaining, storage) ? "saved" : "failed";
+}
+
+/**
  * 離脱として保存した試行を、続いているプレイへ戻す。
  * ページを離れたあとに同じページへ戻ってプレイが続く場合に使う。
  */

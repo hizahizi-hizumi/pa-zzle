@@ -1,6 +1,7 @@
 import type { PlayAttempt } from "@/records/play-attempt";
 import {
   abandonPlayAttempt,
+  discardPlayAttempt,
   readPlayAttempts,
   readPlayAttemptsSnapshot,
   removeClearedPlayAttempts,
@@ -131,6 +132,33 @@ describe("abandonPlayAttempt", () => {
 
       expect(status).toBe("ignored");
       expect(attempts).toEqual([]);
+    });
+  });
+});
+
+describe("discardPlayAttempt", () => {
+  const otherAttempt = createAttempt(2_000);
+
+  describe("始めたプレイの場合", () => {
+    beforeEach(() => {
+      startPlayAttempt(attempt, storage);
+      startPlayAttempt(otherAttempt, storage);
+    });
+
+    test("そのプレイだけを保存から除くこと", () => {
+      const status = discardPlayAttempt(attempt.id, storage);
+      const attempts = readPlayAttempts(storage);
+
+      expect(status).toBe("saved");
+      expect(attempts).toEqual([otherAttempt]);
+    });
+  });
+
+  describe("始めた記録が無い場合", () => {
+    test("保存し直さないこと", () => {
+      const status = discardPlayAttempt(attempt.id, storage);
+
+      expect(status).toBe("ignored");
     });
   });
 });

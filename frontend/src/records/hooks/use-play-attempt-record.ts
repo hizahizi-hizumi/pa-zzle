@@ -6,6 +6,7 @@ import type {
 } from "@/records/play-attempt";
 import {
   abandonPlayAttempt,
+  discardPlayAttempt,
   resumePlayAttempt,
   startPlayAttempt,
 } from "@/records/play-attempt-storage";
@@ -19,6 +20,14 @@ type PlayAttemptProgressSource = {
 
 type TrackedPlayAttempt = PlayAttemptProgressSource & {
   attempt: PlayAttempt | null;
+};
+
+type PlayAttemptRecordControl = {
+  /**
+   * 今のプレイを遊んでいないものとして記録から除き、このあと置き換えても離脱にしない。
+   * 遊び始める前の準備を終えて、同じ問題を測り直すときに使う。
+   */
+  discard: () => void;
 };
 
 type PendingAbandonment = {
@@ -41,13 +50,14 @@ function captureAbandonment(
 export function usePlayAttemptRecord(
   attempt: PlayAttempt | null,
   { finished, getProgress }: PlayAttemptProgressSource,
-): void {
+): PlayAttemptRecordControl {
   const tracked = useRef<TrackedPlayAttempt>({
     attempt,
     finished,
     getProgress,
   });
   const pendingAbandonment = useRef<PendingAbandonment | null>(null);
+  const discardedAttemptId = useRef<string | null>(null);
 
   // 別のプレイへ置き換えたときのクリーンアップは、前のプレイの最後に確定した状態で離脱を保存する。
   // useEffectEvent はクリーンアップより前に置き換え後の値へ切り替わるため使わず、確定後の effect で更新する。
@@ -73,6 +83,9 @@ export function usePlayAttemptRecord(
 
     let pageHiddenAbandonedAt: number | null = null;
     function handlePageHide() {
+      if (discardedAttemptId.current === currentId) {
+        return;
+      }
       const abandonment = captureAbandonment(tracked.current, Date.now());
       if (
         abandonment &&
@@ -95,6 +108,9 @@ export function usePlayAttemptRecord(
       window.removeEventListener("pagehide", handlePageHide);
       window.removeEventListener("pageshow", handlePageShow);
 
+      if (discardedAttemptId.current === currentId) {
+        return;
+      }
       const abandonment = captureAbandonment(tracked.current, Date.now());
       if (!abandonment) {
         return;
@@ -116,4 +132,15 @@ export function usePlayAttemptRecord(
       });
     };
   }, [attemptId]);
+
+  return {
+    discard() {
+      const current = tracked.current.attempt;
+      if (!current) {
+        return;
+      }
+      discardedAttemptId.current = current.id;
+      discardPlayAttempt(current.id);
+    },
+  };
 }

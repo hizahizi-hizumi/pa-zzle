@@ -60,6 +60,7 @@ describe("TakuzuPlay", () => {
     onUndo: vi.fn(),
     onRestart: vi.fn(),
     onReplay: vi.fn(),
+    onRestartTiming: vi.fn(),
     onClearAnimationComplete: vi.fn(),
     onStartNewProblem: vi.fn(),
     onOpenRecords: vi.fn(),
@@ -127,8 +128,9 @@ describe("TakuzuPlay", () => {
         fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
       });
 
-      test("読んでいた時間を除くため、同じ問題を測り直す操作を通知すること", () => {
-        expect(callbacks.onReplay).toHaveBeenCalledOnce();
+      test("読んでいた時間を除くため、やり直しではなく測り直しを通知すること", () => {
+        expect(callbacks.onRestartTiming).toHaveBeenCalledOnce();
+        expect(callbacks.onReplay).not.toHaveBeenCalled();
       });
 
       test("次からは自動で開かないよう記録すること", () => {
@@ -220,7 +222,7 @@ describe("TakuzuPlay", () => {
         test("閉じてもプレイを測り直さないこと", () => {
           fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
 
-          expect(callbacks.onReplay).not.toHaveBeenCalled();
+          expect(callbacks.onRestartTiming).not.toHaveBeenCalled();
         });
       });
 

@@ -69,12 +69,19 @@ export function PlayableTakuzu({
       }),
     [difficulty, play.problemIdentity, play.startedAt],
   );
-  usePlayAttemptRecord(playAttempt, {
+  const playAttemptRecord = usePlayAttemptRecord(playAttempt, {
     finished: play.completedAt !== null,
     getProgress(abandonedAt) {
       return createTakuzuPlayAttemptProgress(play.session, abandonedAt);
     },
   });
+
+  function restartTiming() {
+    // 測り直す前は遊び始める前の準備なので、離脱としても開始としても残さない。
+    playAttemptRecord.discard();
+    play.replay();
+  }
+
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const diagnostics = internalDiagnosticsAvailable
     ? createTakuzuDiagnosticSnapshot({
@@ -108,6 +115,7 @@ export function PlayableTakuzu({
         onUndo={play.undo}
         onRestart={play.restart}
         onReplay={play.replay}
+        onRestartTiming={restartTiming}
         onStartNewProblem={play.startNewProblem}
         onOpenRecords={() => navigate("/records")}
         onClearAnimationComplete={play.completeClearAnimation}

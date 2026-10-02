@@ -52,6 +52,8 @@ type ReflectionPlayProps = {
   onClearSelection: () => void;
   onRestart: () => void;
   onReplay: () => void;
+  /** 同じ問題を、まだ遊んでいないプレイとして測り直す。 */
+  onRestartTiming: () => void;
   onClearAnimationComplete: () => void;
   onStartNewProblem: () => void;
   onOpenRecords: () => void;
@@ -87,6 +89,7 @@ export function ReflectionPlay({
   onClearSelection,
   onRestart,
   onReplay,
+  onRestartTiming,
   onClearAnimationComplete,
   onStartNewProblem,
   onOpenRecords,
@@ -108,7 +111,7 @@ export function ReflectionPlay({
   function closeHowToPlay() {
     // 初めての遊び方を読んでいた時間はプレイ時間に含めないよう、閉じたところから測り直す。
     if (howToPlay === "intro") {
-      onReplay();
+      onRestartTiming();
     }
     setHowToPlay("closed");
   }
