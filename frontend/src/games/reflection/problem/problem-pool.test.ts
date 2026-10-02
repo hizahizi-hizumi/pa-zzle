@@ -4,8 +4,6 @@ import {
   decodeReflectionPoolSolution,
   encodeReflectionPoolSolution,
   findReflectionPooledProblem,
-  findReflectionPooledProblemByReference,
-  getReflectionProblemPoolVersion,
   restoreReflectionPoolEntry,
   toReflectionPooledProblem,
   toReflectionPoolIdentity,
@@ -111,34 +109,6 @@ describe("findReflectionPooledProblem", () => {
       ...pooled.identity,
       conditions: { ...pooled.identity.conditions, size: 7 },
     });
-
-    expect(found).toBeNull();
-  });
-});
-
-describe("findReflectionPooledProblemByReference", () => {
-  const pooled = toReflectionPooledProblem("5", 0);
-
-  test("問題集の版と問題番号から同じ問題を引くこと", () => {
-    const found = findReflectionPooledProblemByReference({
-      poolVersion: getReflectionProblemPoolVersion(),
-      problemId: "5-1",
-    });
-
-    expect(pooled.poolReference.problemId).toBe("5-1");
-    expect(found).toEqual(pooled);
-  });
-
-  const unknownReferences = [
-    ["今と違う問題集の版", { poolVersion: "0", problemId: "5-1" }],
-    ["無いレベル", { poolVersion: "1", problemId: "6-1" }],
-    ["0番", { poolVersion: "1", problemId: "5-0" }],
-    ["範囲外の番号", { poolVersion: "1", problemId: "5-100000" }],
-    ["形の違う番号", { poolVersion: "1", problemId: "rf-5-2-0" }],
-  ] as const;
-
-  test.each(unknownReferences)("%s には null を返すこと", (_, reference) => {
-    const found = findReflectionPooledProblemByReference(reference);
 
     expect(found).toBeNull();
   });

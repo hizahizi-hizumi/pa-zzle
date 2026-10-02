@@ -21,7 +21,6 @@ type ReflectionReplayStart = {
   difficulty: ReflectionDifficulty;
   initialProblem: {
     identity: ReflectionProblemIdentity;
-    purpose: "replay";
   };
 };
 
@@ -42,7 +41,7 @@ function resolveReflectionReplayStart(
     status: "available",
     start: {
       difficulty: record.payload.difficulty,
-      initialProblem: { identity: restored.identity, purpose: "replay" },
+      initialProblem: { identity: restored.identity },
     },
   };
 }

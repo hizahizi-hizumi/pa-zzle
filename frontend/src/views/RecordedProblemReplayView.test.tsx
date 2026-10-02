@@ -11,7 +11,7 @@ import { selectParkingJamProblemForDifficulty } from "@/games/parking-jam/proble
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import { createReflectionPlayRecord } from "@/games/reflection/play-record";
 import { createReflectionProblemIdentity } from "@/games/reflection/problem/problem";
-import { restoreReflectionPoolProblem } from "@/games/reflection/problem-selection";
+import { toReflectionPooledProblem } from "@/games/reflection/problem/problem-pool";
 import { createSlidePuzzlePlayRecord } from "@/games/slide-puzzle/play-record";
 import { selectSlidePuzzleProblemForDifficulty } from "@/games/slide-puzzle/problem-selection";
 import { createTakuzuPlayRecord } from "@/games/takuzu/play-record";
@@ -299,10 +299,7 @@ describe("RecordedProblemReplayView", () => {
   });
 
   describe("リフレクションの記録の場合", () => {
-    const pooled = restoreReflectionPoolProblem({
-      poolVersion: "4",
-      problemId: "3-1",
-    });
+    const pooled = toReflectionPooledProblem("3", 0);
     const reflectionPerformance = {
       elapsedMs: 90_000,
       relocationCount: 1,
@@ -333,9 +330,7 @@ describe("RecordedProblemReplayView", () => {
 
     describe("問題集にある問題の場合", () => {
       beforeEach(() => {
-        const record = createRecord(
-          pooled?.identity ?? createReflectionProblemIdentity(5, 4, 0),
-        );
+        const record = createRecord(pooled.identity);
         writePlayRecords([record]);
         renderReplay(record.id);
       });
@@ -350,11 +345,11 @@ describe("RecordedProblemReplayView", () => {
             Number(button.getAttribute("aria-label")?.match(/(\d+)マス/)?.[1]),
           )
           .sort((a, b) => a - b);
-        const expectedDistances = (pooled?.problem.clues ?? [])
+        const expectedDistances = pooled.problem.clues
           .map((clue) => clue.distance)
           .sort((a, b) => a - b);
 
-        expect(cells).toHaveLength((pooled?.problem.size ?? 0) ** 2);
+        expect(cells).toHaveLength(pooled.problem.size ** 2);
         expect(clueDistances).toEqual(expectedDistances);
       });
     });
