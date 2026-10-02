@@ -23,7 +23,7 @@ type TsumeShogiPlayStatusProps = {
 
 /**
  * 盤の下の1行。直前の組の手を棋譜で示し、誤王手の筋では玉方の反証を反証の色で示す。
- * 着手させなかった入力の理由はその入力の直後だけ示す。行の高さは変えず、盤を動かさない。
+ * 着手させなかった入力の理由はその入力の直後だけ、反証の色を使わずに示す。行の高さは変えず、盤を動かさない。
  */
 export function TsumeShogiPlayStatus({
   phase,
@@ -32,13 +32,7 @@ export function TsumeShogiPlayStatus({
 }: TsumeShogiPlayStatusProps) {
   if (rejection) {
     return (
-      <p
-        role="status"
-        className={cn(
-          "truncate text-supporting",
-          tsumeShogiToneClassNames.refutationText,
-        )}
-      >
+      <p role="status" className="truncate text-supporting">
         {rejectionMessages[rejection.reason]}
       </p>
     );

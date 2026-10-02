@@ -3,6 +3,7 @@
  * 流用しない。駒は盤の地の色によらず淡い地に濃い文字で描き、ダークでも同じ読みやすさにする。
  * - `boardEdge`: 盤の一部を切り出した図の、本当の盤の端。盤の外枠（`boardOutline`）と同じ色。
  * - `square*`: 升の地。選んだ駒・最後の手・反証・着手させなかった升を地の色で示し、駒や罫線は変えない。
+ *   着手させなかった升は、誤王手への反証（ローズ）と取り違えないよう、色相を持たない灰色にする。
  * - `promoted`: 成った駒の文字。将棋の駒の慣例どおり赤くする。
  * - `refutation`: 誤王手への玉方の反証。最後の手の地とは色相を分け、「この筋では逃れられた」ことを示す。
  */
@@ -19,7 +20,7 @@ export const tsumeShogiToneClassNames = {
   squareSelected: "bg-sky-200 dark:bg-sky-900",
   squareLastMove: "bg-amber-300/70 dark:bg-amber-900/70",
   squareRefutation: "bg-rose-200 dark:bg-rose-900/80",
-  squareRejected: "bg-rose-300/80 dark:bg-rose-800/80",
+  squareRejected: "bg-stone-400/60 dark:bg-stone-600",
   squareMated: "bg-amber-400 dark:bg-amber-600",
   handSelected: "bg-sky-200 dark:bg-sky-900",
   refutationText: "text-rose-700 dark:text-rose-300",
