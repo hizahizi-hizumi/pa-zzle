@@ -1,11 +1,22 @@
-import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
+import {
+  parseWaterSortDifficulty,
+  type WaterSortDifficulty,
+} from "@/games/water-sort/difficulty";
 import { waterSortPlayRecordDefinition } from "@/games/water-sort/play-record";
-import type { WaterSortProblemIdentity } from "@/games/water-sort/problem/problem";
+import {
+  isWaterSortProblemIdentity,
+  type WaterSortProblemIdentity,
+} from "@/games/water-sort/problem/problem";
 import {
   getWaterSortSessionElapsedMs,
   type WaterSortSession,
 } from "@/games/water-sort/session/session";
-import { createPlayAttemptId, type PlayAttempt } from "@/records/play-attempt";
+import {
+  createPlayAttemptId,
+  type PlayAttempt,
+  type PlayAttemptAbandonment,
+} from "@/records/play-attempt";
+import type { PlayAttemptDefinition } from "@/records/play-attempt-definition";
 
 const WATER_SORT_PLAY_ATTEMPT_PAYLOAD_VERSION = 1;
 
@@ -26,6 +37,9 @@ type WaterSortPlayAttemptProgress = {
 export type WaterSortPlayAttempt = PlayAttempt & {
   payloadVersion: typeof WATER_SORT_PLAY_ATTEMPT_PAYLOAD_VERSION;
   start: WaterSortPlayAttemptStart;
+  abandonment:
+    | (PlayAttemptAbandonment & { progress: WaterSortPlayAttemptProgress })
+    | null;
 };
 
 type CreateWaterSortPlayAttemptInput = {
@@ -67,3 +81,87 @@ export function createWaterSortPlayAttemptProgress(
     restartCount: session.restartCount,
   };
 }
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
+function isWaterSortPlayAttemptStart(
+  value: unknown,
+): value is WaterSortPlayAttemptStart {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const start = value as Partial<
+    Record<keyof WaterSortPlayAttemptStart, unknown>
+  >;
+  return (
+    typeof start.difficulty === "string" &&
+    parseWaterSortDifficulty(start.difficulty) !== undefined &&
+    isWaterSortProblemIdentity(start.problemIdentity)
+  );
+}
+
+function isWaterSortPlayAttemptProgress(
+  value: unknown,
+): value is WaterSortPlayAttemptProgress {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const progress = value as Partial<WaterSortPlayAttemptProgress>;
+  return (
+    typeof progress.elapsedMs === "number" &&
+    Number.isFinite(progress.elapsedMs) &&
+    progress.elapsedMs >= 0 &&
+    isNonNegativeInteger(progress.moveCount) &&
+    isNonNegativeInteger(progress.undoCount) &&
+    isNonNegativeInteger(progress.restartCount)
+  );
+}
+
+/** 保存済みの試行を、今のアプリが読める開始条件と進み具合を持つウォーターソートの試行として読む。 */
+export function isWaterSortPlayAttempt(
+  attempt: PlayAttempt,
+): attempt is WaterSortPlayAttempt {
+  return (
+    attempt.gameId === waterSortPlayRecordDefinition.gameId &&
+    attempt.payloadVersion === WATER_SORT_PLAY_ATTEMPT_PAYLOAD_VERSION &&
+    isWaterSortPlayAttemptStart(attempt.start) &&
+    (attempt.abandonment === null ||
+      isWaterSortPlayAttemptProgress(attempt.abandonment.progress))
+  );
+}
+
+function getWaterSortAbandonedProgress(
+  attempt: PlayAttempt,
+): WaterSortPlayAttemptProgress | null {
+  return isWaterSortPlayAttempt(attempt)
+    ? (attempt.abandonment?.progress ?? null)
+    : null;
+}
+
+export type WaterSortPlayAttemptProgressId = "elapsed-ms" | "move-count";
+
+export const waterSortPlayAttemptDefinition = {
+  gameId: waterSortPlayRecordDefinition.gameId,
+  isAttempt: isWaterSortPlayAttempt,
+  getComparisonKey(attempt) {
+    return isWaterSortPlayAttempt(attempt) ? attempt.start.difficulty : null;
+  },
+  progress: [
+    {
+      id: "elapsed-ms",
+      getValue(attempt) {
+        return getWaterSortAbandonedProgress(attempt)?.elapsedMs ?? null;
+      },
+    },
+    {
+      id: "move-count",
+      getValue(attempt) {
+        return getWaterSortAbandonedProgress(attempt)?.moveCount ?? null;
+      },
+    },
+  ],
+} satisfies PlayAttemptDefinition<WaterSortPlayAttemptProgressId>;

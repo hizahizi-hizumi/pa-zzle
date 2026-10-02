@@ -31,6 +31,11 @@ export type PlayAttempt = {
  */
 export type PlayAttemptStatus = "cleared" | "abandoned" | "unfinished";
 
+/** 離脱を記録した試行。 */
+export type AbandonedPlayAttempt = PlayAttempt & {
+  abandonment: PlayAttemptAbandonment;
+};
+
 export function createPlayAttemptId(gameId: string, startedAt: number): string {
   return `${gameId}:${startedAt}`;
 }
@@ -93,4 +98,15 @@ export function getPlayAttemptStatus(
   }
 
   return attempt.abandonment ? "abandoned" : "unfinished";
+}
+
+/** 状態が離脱の試行だけを選ぶ。完了記録がある試行は離脱を記録していてもクリアとして除く。 */
+export function getAbandonedPlayAttempts(
+  attempts: readonly PlayAttempt[],
+  records: readonly PlayRecord[],
+): AbandonedPlayAttempt[] {
+  return attempts.filter(
+    (attempt): attempt is AbandonedPlayAttempt =>
+      getPlayAttemptStatus(attempt, records) === "abandoned",
+  );
 }

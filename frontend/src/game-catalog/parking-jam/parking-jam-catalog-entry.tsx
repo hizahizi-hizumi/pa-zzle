@@ -18,6 +18,7 @@ import {
   type ParkingJamRestoredProblem,
   restoreParkingJamProblemWithoutAnalysis,
 } from "@/games/parking-jam/problem/generator";
+import { parkingJamPlayAttemptDisplay } from "@/games/parking-jam/ui/play-attempt-display";
 import { parkingJamPlayRecordDisplay } from "@/games/parking-jam/ui/play-record-display";
 import { restoreProblemOrNull } from "@/games/problem-restoration";
 import type { PlayRecord } from "@/records/play-record";
@@ -61,6 +62,7 @@ export const parkingJamCatalogEntry = {
   pictogramSvg,
   entryPath: "/puzzles/parking-jam",
   playRecordDisplay: parkingJamPlayRecordDisplay,
+  playAttemptDisplay: parkingJamPlayAttemptDisplay,
   replayRecord(record) {
     return renderRecordReplay(resolveParkingJamReplayStart(record), (start) => (
       <PlayableParkingJam {...start} />

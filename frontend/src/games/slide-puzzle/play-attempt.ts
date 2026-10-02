@@ -1,11 +1,23 @@
-import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
+import {
+  isSlidePuzzleProblemIdentityOfDifficulty,
+  parseSlidePuzzleDifficulty,
+  type SlidePuzzleDifficulty,
+} from "@/games/slide-puzzle/difficulty";
 import { slidePuzzlePlayRecordDefinition } from "@/games/slide-puzzle/play-record";
-import type { SlidePuzzleProblemIdentity } from "@/games/slide-puzzle/problem/problem";
+import {
+  isSlidePuzzleProblemIdentity,
+  type SlidePuzzleProblemIdentity,
+} from "@/games/slide-puzzle/problem/problem";
 import {
   getSlidePuzzleSessionElapsedMs,
   type SlidePuzzleSession,
 } from "@/games/slide-puzzle/session/session";
-import { createPlayAttemptId, type PlayAttempt } from "@/records/play-attempt";
+import {
+  createPlayAttemptId,
+  type PlayAttempt,
+  type PlayAttemptAbandonment,
+} from "@/records/play-attempt";
+import type { PlayAttemptDefinition } from "@/records/play-attempt-definition";
 
 const SLIDE_PUZZLE_PLAY_ATTEMPT_PAYLOAD_VERSION = 1;
 
@@ -26,6 +38,9 @@ type SlidePuzzlePlayAttemptProgress = {
 export type SlidePuzzlePlayAttempt = PlayAttempt & {
   payloadVersion: typeof SLIDE_PUZZLE_PLAY_ATTEMPT_PAYLOAD_VERSION;
   start: SlidePuzzlePlayAttemptStart;
+  abandonment:
+    | (PlayAttemptAbandonment & { progress: SlidePuzzlePlayAttemptProgress })
+    | null;
 };
 
 type CreateSlidePuzzlePlayAttemptInput = {
@@ -67,3 +82,91 @@ export function createSlidePuzzlePlayAttemptProgress(
     restartCount: session.restartCount,
   };
 }
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
+function isSlidePuzzlePlayAttemptStart(
+  value: unknown,
+): value is SlidePuzzlePlayAttemptStart {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const start = value as Partial<
+    Record<keyof SlidePuzzlePlayAttemptStart, unknown>
+  >;
+  const difficulty =
+    typeof start.difficulty === "string"
+      ? parseSlidePuzzleDifficulty(start.difficulty)
+      : undefined;
+  return (
+    difficulty !== undefined &&
+    isSlidePuzzleProblemIdentity(start.problemIdentity) &&
+    isSlidePuzzleProblemIdentityOfDifficulty(start.problemIdentity, difficulty)
+  );
+}
+
+function isSlidePuzzlePlayAttemptProgress(
+  value: unknown,
+): value is SlidePuzzlePlayAttemptProgress {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const progress = value as Partial<SlidePuzzlePlayAttemptProgress>;
+  return (
+    typeof progress.elapsedMs === "number" &&
+    Number.isFinite(progress.elapsedMs) &&
+    progress.elapsedMs >= 0 &&
+    isNonNegativeInteger(progress.moveCount) &&
+    isNonNegativeInteger(progress.slideCount) &&
+    isNonNegativeInteger(progress.restartCount)
+  );
+}
+
+/** 保存済みの試行を、今のアプリが読める開始条件と進み具合を持つスライドパズルの試行として読む。 */
+export function isSlidePuzzlePlayAttempt(
+  attempt: PlayAttempt,
+): attempt is SlidePuzzlePlayAttempt {
+  return (
+    attempt.gameId === slidePuzzlePlayRecordDefinition.gameId &&
+    attempt.payloadVersion === SLIDE_PUZZLE_PLAY_ATTEMPT_PAYLOAD_VERSION &&
+    isSlidePuzzlePlayAttemptStart(attempt.start) &&
+    (attempt.abandonment === null ||
+      isSlidePuzzlePlayAttemptProgress(attempt.abandonment.progress))
+  );
+}
+
+function getSlidePuzzleAbandonedProgress(
+  attempt: PlayAttempt,
+): SlidePuzzlePlayAttemptProgress | null {
+  return isSlidePuzzlePlayAttempt(attempt)
+    ? (attempt.abandonment?.progress ?? null)
+    : null;
+}
+
+export type SlidePuzzlePlayAttemptProgressId = "elapsed-ms" | "move-count";
+
+export const slidePuzzlePlayAttemptDefinition = {
+  gameId: slidePuzzlePlayRecordDefinition.gameId,
+  isAttempt: isSlidePuzzlePlayAttempt,
+  getComparisonKey(attempt) {
+    return isSlidePuzzlePlayAttempt(attempt) ? attempt.start.difficulty : null;
+  },
+  progress: [
+    {
+      id: "elapsed-ms",
+      getValue(attempt) {
+        return getSlidePuzzleAbandonedProgress(attempt)?.elapsedMs ?? null;
+      },
+    },
+    {
+      id: "move-count",
+      getValue(attempt) {
+        return getSlidePuzzleAbandonedProgress(attempt)?.moveCount ?? null;
+      },
+    },
+  ],
+} satisfies PlayAttemptDefinition<SlidePuzzlePlayAttemptProgressId>;

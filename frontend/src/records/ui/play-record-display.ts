@@ -2,6 +2,7 @@ import type {
   PlayRecordDefinition,
   PlayRecordMetricId,
 } from "@/records/play-record-definition";
+import type { PlayAttemptDisplayDefinition } from "@/records/ui/play-attempt-display";
 
 type PlayRecordMetricAxisBounds = {
   minimum?: number;
@@ -40,6 +41,7 @@ type PlayRecordDisplaySource<Definition extends PlayRecordDefinition> = Omit<
 export type PlayRecordGame = {
   name: string;
   playRecordDisplay: PlayRecordDisplayDefinition;
+  playAttemptDisplay: PlayAttemptDisplayDefinition;
 };
 
 export type PlayRecordGameCatalog = readonly [

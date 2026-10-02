@@ -257,6 +257,11 @@ function createConcreteGameOverrides(
       concreteGameBoundary(["@/records/ui/play-record-display"]),
       crossGame,
     ]),
+    restrictImports(gameFiles("ui/play-attempt-display.ts"), [
+      // 離脱したプレイの表示定義は、記録 UI が受け取る表示契約へゲームを接続する。
+      concreteGameBoundary(["@/records/ui/play-attempt-display"]),
+      crossGame,
+    ]),
     restrictImports(gameFiles("puzzle/**/*.{ts,tsx}"), [
       ...boundary,
       {

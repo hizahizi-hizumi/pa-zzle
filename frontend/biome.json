@@ -434,6 +434,49 @@
       }
     },
     {
+      "includes": ["src/games/minesweeper/ui/play-attempt-display.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "!@/records/ui/play-attempt-display",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/games/minesweeper/puzzle/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
@@ -701,6 +744,49 @@
                       "@/records/hooks/**",
                       "@/records/ui/**",
                       "!@/records/ui/play-record-display",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/nanpure/ui/play-attempt-display.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "!@/records/ui/play-attempt-display",
                       "@/views/**",
                       "@/pages/**",
                       "@/router"
@@ -1018,6 +1104,49 @@
       }
     },
     {
+      "includes": ["src/games/parking-jam/ui/play-attempt-display.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "!@/records/ui/play-attempt-display",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/games/parking-jam/puzzle/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
@@ -1285,6 +1414,49 @@
                       "@/records/hooks/**",
                       "@/records/ui/**",
                       "!@/records/ui/play-record-display",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/reflection/ui/play-attempt-display.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "!@/records/ui/play-attempt-display",
                       "@/views/**",
                       "@/pages/**",
                       "@/router"
@@ -1602,6 +1774,49 @@
       }
     },
     {
+      "includes": ["src/games/slide-puzzle/ui/play-attempt-display.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "!@/records/ui/play-attempt-display",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/takuzu/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/games/slide-puzzle/puzzle/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
@@ -1894,6 +2109,49 @@
       }
     },
     {
+      "includes": ["src/games/takuzu/ui/play-attempt-display.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "!@/records/ui/play-attempt-display",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/games/takuzu/puzzle/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
@@ -2161,6 +2419,49 @@
                       "@/records/hooks/**",
                       "@/records/ui/**",
                       "!@/records/ui/play-record-display",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/water-sort/ui/play-attempt-display.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "!@/records/ui/play-attempt-display",
                       "@/views/**",
                       "@/pages/**",
                       "@/router"

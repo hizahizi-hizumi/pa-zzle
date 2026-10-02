@@ -16,6 +16,7 @@ import {
 } from "@/games/nanpure/play-record";
 import type { NanpureIdentifiedProblem } from "@/games/nanpure/problem/problem";
 import { restoreNanpureProblem } from "@/games/nanpure/problem-selection";
+import { nanpurePlayAttemptDisplay } from "@/games/nanpure/ui/play-attempt-display";
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
 import type { PlayRecord } from "@/records/play-record";
 
@@ -52,6 +53,7 @@ export const nanpureCatalogEntry = {
   pictogramSvg,
   entryPath: "/puzzles/nanpure",
   playRecordDisplay: nanpurePlayRecordDisplay,
+  playAttemptDisplay: nanpurePlayAttemptDisplay,
   replayRecord(record) {
     return renderRecordReplay(resolveNanpureReplayStart(record), (start) => (
       <PlayableNanpure {...start} />

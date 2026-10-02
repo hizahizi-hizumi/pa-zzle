@@ -6,19 +6,30 @@ import {
 } from "@/components/ui/native-select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getPersonalBests } from "@/records/personal-best";
+import {
+  type AbandonedPlayAttempt,
+  getAbandonedPlayAttempts,
+  type PlayAttempt,
+} from "@/records/play-attempt";
 import type { PlayRecord } from "@/records/play-record";
 import { CopyPlayRecordsButton } from "@/records/ui/PlayRecordsScreen/CopyPlayRecordsButton";
 import { EmptyRecords } from "@/records/ui/PlayRecordsScreen/EmptyRecords";
-import { PlayRecordsHistory } from "@/records/ui/PlayRecordsScreen/PlayRecordsHistory";
+import {
+  type PlayHistoryFilter,
+  PlayRecordsHistory,
+} from "@/records/ui/PlayRecordsScreen/PlayRecordsHistory";
 import { PlayRecordsTrend } from "@/records/ui/PlayRecordsScreen/PlayRecordsTrend";
+import { getPlayHistoryEntries } from "@/records/ui/PlayRecordsScreen/play-history-entries";
 import {
   getPlayRecordMetricDisplay,
-  type PlayRecordDisplayDefinition,
+  type PlayRecordGame,
   type PlayRecordGameCatalog,
 } from "@/records/ui/play-record-display";
 
 type PlayRecordsScreenProps = {
   records: readonly PlayRecord[];
+  /** 始めたプレイの記録。離脱したものだけを、履歴でクリアと混ぜて表示できる。 */
+  attempts: readonly PlayAttempt[];
   games: PlayRecordGameCatalog;
   emptyAction: ReactNode;
   onReplay: (recordId: string) => void;
@@ -35,19 +46,43 @@ function isRecordsMode(value: string): value is RecordsMode {
   return value === "history" || value === "trend";
 }
 
+/** その比較文脈で記録画面に出せる、完了記録と離脱した試行。 */
+function getGamePlays(
+  records: readonly PlayRecord[],
+  abandonedAttempts: readonly AbandonedPlayAttempt[],
+  game: PlayRecordGame,
+) {
+  const { definition } = game.playRecordDisplay;
+  const attemptDefinition = game.playAttemptDisplay.definition;
+  return {
+    records: records.filter((record) => definition.isRecord(record)),
+    abandonedAttempts: abandonedAttempts.filter((attempt) =>
+      attemptDefinition.isAttempt(attempt),
+    ),
+  };
+}
+
+/**
+ * 完了記録と離脱した試行の両方から開始条件の選択肢を作る。
+ * 完了・離脱した日時の新しいプレイがある開始条件から順に並べる。
+ */
 function getComparisonOptions(
   records: readonly PlayRecord[],
-  display: PlayRecordDisplayDefinition,
+  abandonedAttempts: readonly AbandonedPlayAttempt[],
+  game: PlayRecordGame,
 ): ComparisonOption[] {
   const options = new Map<string, string>();
-  const { definition } = display;
+  const display = game.playRecordDisplay;
+  const plays = getGamePlays(records, abandonedAttempts, game);
 
-  for (const record of records) {
-    if (!definition.isRecord(record)) {
-      continue;
-    }
-
-    const key = definition.getComparisonKey(record);
+  for (const entry of getPlayHistoryEntries(
+    plays.records,
+    plays.abandonedAttempts,
+  )) {
+    const key =
+      entry.kind === "cleared"
+        ? display.definition.getComparisonKey(entry.record)
+        : game.playAttemptDisplay.definition.getComparisonKey(entry.attempt);
     const label = key === null ? null : display.getComparisonLabel(key);
     if (key !== null && label !== null && !options.has(key)) {
       options.set(key, label);
@@ -59,6 +94,7 @@ function getComparisonOptions(
 
 export function PlayRecordsScreen({
   records,
+  attempts,
   games,
   emptyAction,
   onReplay,
@@ -68,29 +104,50 @@ export function PlayRecordsScreen({
       [...records].sort((left, right) => right.completedAt - left.completedAt),
     [records],
   );
-  const newestRecord = sortedRecords.find((record) =>
-    games.some((game) => game.playRecordDisplay.definition.isRecord(record)),
+  const abandonedAttempts = useMemo(
+    () => getAbandonedPlayAttempts(attempts, records),
+    [attempts, records],
   );
-  const newestGame = newestRecord
-    ? games.find((game) =>
-        game.playRecordDisplay.definition.isRecord(newestRecord),
-      )
-    : undefined;
-  const [selectedGameId, setSelectedGameId] = useState(
-    (newestGame ?? games[0]).playRecordDisplay.definition.gameId,
-  );
+  const [selectedGameId, setSelectedGameId] = useState(() => {
+    // 完了・離脱のどちらでも、最後に遊んだゲームを最初に開く。
+    const newestGame = games
+      .map((candidate) => {
+        const plays = getGamePlays(sortedRecords, abandonedAttempts, candidate);
+        const newest = getPlayHistoryEntries(
+          plays.records,
+          plays.abandonedAttempts,
+        )[0];
+        return { candidate, occurredAt: newest?.occurredAt ?? null };
+      })
+      .reduce<{ candidate: PlayRecordGame; occurredAt: number } | null>(
+        (newest, { candidate, occurredAt }) =>
+          occurredAt !== null &&
+          (newest === null || occurredAt > newest.occurredAt)
+            ? { candidate, occurredAt }
+            : newest,
+        null,
+      );
+    return (newestGame?.candidate ?? games[0]).playRecordDisplay.definition
+      .gameId;
+  });
   const [selectedComparisonKey, setSelectedComparisonKey] = useState<
     string | null
   >(null);
   const [mode, setMode] = useState<RecordsMode>("history");
   const [selectedMetricId, setSelectedMetricId] = useState<string | null>(null);
+  const [historyFilter, setHistoryFilter] =
+    useState<PlayHistoryFilter>("cleared");
   const game =
     games.find(
       (item) => item.playRecordDisplay.definition.gameId === selectedGameId,
     ) ?? games[0];
   const display = game.playRecordDisplay;
   const { definition } = display;
-  const comparisonOptions = getComparisonOptions(sortedRecords, display);
+  const comparisonOptions = getComparisonOptions(
+    sortedRecords,
+    abandonedAttempts,
+    game,
+  );
   const effectiveComparisonKey =
     selectedComparisonKey &&
     comparisonOptions.some((option) => option.key === selectedComparisonKey)
@@ -102,6 +159,27 @@ export function PlayRecordsScreen({
       definition.getComparisonKey(record) === effectiveComparisonKey,
   );
   const personalBests = getPersonalBests(selectedRecords, definition);
+  const attemptDisplay = game.playAttemptDisplay;
+  // 完了記録の無い比較文脈では、離脱したプレイが見えるようにすべてを表示する。
+  const hasClearedRecords = selectedRecords.length > 0;
+  const effectiveHistoryFilter: PlayHistoryFilter = hasClearedRecords
+    ? historyFilter
+    : "all";
+  const selectedAbandonedAttempts =
+    effectiveHistoryFilter === "all"
+      ? abandonedAttempts.filter(
+          (attempt) =>
+            attemptDisplay.definition.isAttempt(attempt) &&
+            attemptDisplay.definition.getComparisonKey(attempt) ===
+              effectiveComparisonKey,
+        )
+      : [];
+  const historyEntries = getPlayHistoryEntries(
+    selectedRecords,
+    selectedAbandonedAttempts,
+  );
+  const listedCount =
+    mode === "history" ? historyEntries.length : selectedRecords.length;
   const effectiveMetricId =
     selectedMetricId &&
     display.metrics.some((metric) => metric.id === selectedMetricId)
@@ -174,6 +252,11 @@ export function PlayRecordsScreen({
             >
               自己ベスト
             </h2>
+            {!hasClearedRecords && (
+              <p className="text-meta text-muted-foreground">
+                まだクリアしていません
+              </p>
+            )}
             <dl className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
               {personalBests.flatMap((best) => {
                 const metricDisplay = getPlayRecordMetricDisplay(
@@ -210,20 +293,30 @@ export function PlayRecordsScreen({
                 </TabsList>
                 <div className="flex items-center gap-1">
                   <p className="text-meta text-muted-foreground">
-                    {selectedRecords.length}件
+                    {listedCount}件
                   </p>
-                  <CopyPlayRecordsButton
-                    records={selectedRecords}
-                    label="一覧の記録をJSONでコピー"
-                  />
+                  {hasClearedRecords && (
+                    <CopyPlayRecordsButton
+                      records={selectedRecords}
+                      label={
+                        listedCount === selectedRecords.length
+                          ? "一覧の記録をJSONでコピー"
+                          : "クリアした記録をJSONでコピー"
+                      }
+                    />
+                  )}
                 </div>
               </div>
 
               <TabsContent value="history">
                 <PlayRecordsHistory
-                  records={selectedRecords}
+                  entries={historyEntries}
                   display={display}
+                  attemptDisplay={attemptDisplay}
                   personalBests={personalBests}
+                  filter={effectiveHistoryFilter}
+                  filterDisabled={!hasClearedRecords}
+                  onFilterChange={setHistoryFilter}
                   onReplay={onReplay}
                 />
               </TabsContent>

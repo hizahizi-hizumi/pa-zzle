@@ -15,6 +15,7 @@ import {
   type MinesweeperRestoredProblem,
   restoreMinesweeperProblemWithoutAnalysis,
 } from "@/games/minesweeper/problem/generator";
+import { minesweeperPlayAttemptDisplay } from "@/games/minesweeper/ui/play-attempt-display";
 import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
 import { restoreProblemOrNull } from "@/games/problem-restoration";
 import type { PlayRecord } from "@/records/play-record";
@@ -48,6 +49,7 @@ export const minesweeperCatalogEntry = {
   pictogramSvg,
   entryPath: "/puzzles/minesweeper",
   playRecordDisplay: minesweeperPlayRecordDisplay,
+  playAttemptDisplay: minesweeperPlayAttemptDisplay,
   replayRecord(record) {
     return renderRecordReplay(
       resolveMinesweeperReplayStart(record),

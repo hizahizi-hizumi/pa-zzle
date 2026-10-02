@@ -14,6 +14,7 @@ import {
 } from "@/games/reflection/play-record";
 import type { ReflectionPooledProblem } from "@/games/reflection/problem/problem-pool";
 import { restoreReflectionProblem } from "@/games/reflection/problem-selection";
+import { reflectionPlayAttemptDisplay } from "@/games/reflection/ui/play-attempt-display";
 import { reflectionPlayRecordDisplay } from "@/games/reflection/ui/play-record-display";
 import type { PlayRecord } from "@/records/play-record";
 
@@ -52,6 +53,7 @@ export const reflectionCatalogEntry = {
   pictogramSvg,
   entryPath: "/puzzles/reflection",
   playRecordDisplay: reflectionPlayRecordDisplay,
+  playAttemptDisplay: reflectionPlayAttemptDisplay,
   replayRecord(record) {
     return renderRecordReplay(resolveReflectionReplayStart(record), (start) => (
       <PlayableReflection {...start} />

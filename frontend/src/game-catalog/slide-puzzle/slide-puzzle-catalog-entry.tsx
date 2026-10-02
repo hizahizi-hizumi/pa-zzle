@@ -13,6 +13,7 @@ import {
 } from "@/games/slide-puzzle/play-record";
 import type { SlidePuzzleGeneratedProblem } from "@/games/slide-puzzle/problem/problem";
 import { restoreSlidePuzzlePooledProblem } from "@/games/slide-puzzle/problem-selection";
+import { slidePuzzlePlayAttemptDisplay } from "@/games/slide-puzzle/ui/play-attempt-display";
 import { slidePuzzlePlayRecordDisplay } from "@/games/slide-puzzle/ui/play-record-display";
 import type { PlayRecord } from "@/records/play-record";
 
@@ -48,6 +49,7 @@ export const slidePuzzleCatalogEntry = {
   pictogramSvg,
   entryPath: "/puzzles/slide-puzzle",
   playRecordDisplay: slidePuzzlePlayRecordDisplay,
+  playAttemptDisplay: slidePuzzlePlayAttemptDisplay,
   replayRecord(record) {
     return renderRecordReplay(
       resolveSlidePuzzleReplayStart(record),

@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 
 import type { PlayRecord } from "@/records/play-record";
+import type { PlayAttemptDisplayDefinition } from "@/records/ui/play-attempt-display";
 import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
 import type { Path } from "@/router";
 
@@ -37,6 +38,7 @@ export type GameCatalogEntry = {
   pictogramSvg: string;
   entryPath: Path;
   playRecordDisplay: PlayRecordDisplayDefinition;
+  playAttemptDisplay: PlayAttemptDisplayDefinition;
   replayRecord: (record: PlayRecord) => RecordReplay;
 };
 

@@ -1,4 +1,5 @@
 import {
+  getAbandonedPlayAttempts,
   getPlayAttemptStatus,
   isPlayAttempt,
   type PlayAttempt,
@@ -56,6 +57,22 @@ describe("getPlayAttemptStatus", () => {
 
   test("完了記録も離脱も無ければ未完了とすること", () => {
     expect(getPlayAttemptStatus(attempt, [])).toBe("unfinished");
+  });
+});
+
+describe("getAbandonedPlayAttempts", () => {
+  test("離脱の試行だけを選び、未完了とクリアの試行を除くこと", () => {
+    const abandonedLater: PlayAttempt = {
+      ...abandoned,
+      id: "test-game:2000",
+      startedAt: 2_000,
+      abandonment: { abandonedAt: 6_000, progress: {} },
+    };
+    const records = [createRecord("test-game", 2_000)];
+
+    expect(
+      getAbandonedPlayAttempts([attempt, abandoned, abandonedLater], records),
+    ).toEqual([abandoned]);
   });
 });
 

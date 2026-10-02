@@ -95,7 +95,7 @@ function isFiniteUnitInterval(value: unknown): value is number {
   );
 }
 
-function isParkingJamProblemIdentity(
+export function isParkingJamProblemIdentity(
   value: unknown,
 ): value is ParkingJamProblemIdentity {
   if (!value || typeof value !== "object") return false;

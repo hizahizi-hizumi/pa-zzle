@@ -17,6 +17,7 @@ import {
 } from "@/games/water-sort/play-record";
 import { restoreWaterSortProblem } from "@/games/water-sort/problem/generator";
 import type { WaterSortGeneratedProblem } from "@/games/water-sort/problem/problem";
+import { waterSortPlayAttemptDisplay } from "@/games/water-sort/ui/play-attempt-display";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 import type { PlayRecord } from "@/records/play-record";
 
@@ -54,6 +55,7 @@ export const waterSortCatalogEntry = {
   pictogramSvg,
   entryPath: "/puzzles/water-sort",
   playRecordDisplay: waterSortPlayRecordDisplay,
+  playAttemptDisplay: waterSortPlayAttemptDisplay,
   replayRecord(record) {
     return renderRecordReplay(resolveWaterSortReplayStart(record), (start) => (
       <PlayableWaterSort {...start} />

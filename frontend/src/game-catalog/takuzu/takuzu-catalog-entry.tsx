@@ -13,6 +13,7 @@ import {
 } from "@/games/takuzu/play-record";
 import type { TakuzuPooledProblem } from "@/games/takuzu/problem/problem-pool";
 import { restoreTakuzuProblem } from "@/games/takuzu/problem-selection";
+import { takuzuPlayAttemptDisplay } from "@/games/takuzu/ui/play-attempt-display";
 import { takuzuPlayRecordDisplay } from "@/games/takuzu/ui/play-record-display";
 import type { PlayRecord } from "@/records/play-record";
 
@@ -46,6 +47,7 @@ export const takuzuCatalogEntry = {
   pictogramSvg,
   entryPath: "/puzzles/takuzu",
   playRecordDisplay: takuzuPlayRecordDisplay,
+  playAttemptDisplay: takuzuPlayAttemptDisplay,
   replayRecord(record) {
     return renderRecordReplay(resolveTakuzuReplayStart(record), (start) => (
       <PlayableTakuzu {...start} />
