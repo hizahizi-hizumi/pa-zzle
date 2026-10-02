@@ -4,6 +4,10 @@ import {
   type SlidePuzzleDifficulty,
 } from "@/games/slide-puzzle/difficulty";
 import {
+  createSlidePuzzleResult,
+  type SlidePuzzleResult,
+} from "@/games/slide-puzzle/play/use-slide-puzzle-play";
+import {
   isSlidePuzzleProblemIdentity,
   type SlidePuzzleProblemIdentity,
 } from "@/games/slide-puzzle/problem/problem";
@@ -141,6 +145,37 @@ export function createSlidePuzzlePlayRecord({
         optimalMoveCount: result.optimalMoveCount,
       },
     },
+  };
+}
+
+/** 記録から作り直した、結果画面に出す内容。 */
+export type SlidePuzzleRecordedResult = {
+  difficulty: SlidePuzzleDifficulty;
+  problemIdentity: SlidePuzzleProblemIdentity;
+  result: SlidePuzzleResult;
+};
+
+/**
+ * 記録から結果画面に出す内容を作り直す。
+ * 今の版の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
+ */
+export function restoreSlidePuzzleRecordedResult(
+  record: PlayRecord,
+): SlidePuzzleRecordedResult | null {
+  if (!isSlidePuzzlePlayRecord(record)) {
+    return null;
+  }
+
+  const { difficulty, problemIdentity, performance } = record.payload;
+  const { optimalMoveCount, ...sessionResult } = performance;
+  return {
+    difficulty,
+    problemIdentity,
+    result: createSlidePuzzleResult(
+      sessionResult,
+      problemIdentity.conditions.size,
+      optimalMoveCount,
+    ),
   };
 }
 

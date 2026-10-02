@@ -2,10 +2,12 @@ import {
   type GameCatalogEntry,
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
+import { RecordedSlidePuzzleResult } from "@/game-catalog/slide-puzzle/RecordedSlidePuzzleResult";
 import pictogramSvg from "@/games/slide-puzzle/assets/pictogram.svg?raw";
 import { parseSlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import {
   isSlidePuzzlePlayRecord,
+  restoreSlidePuzzleRecordedResult,
   slidePuzzlePlayRecordDefinition,
 } from "@/games/slide-puzzle/play-record";
 import { canSelectSlidePuzzleProblemById } from "@/games/slide-puzzle/problem-selection";
@@ -27,7 +29,10 @@ export const slidePuzzleCatalogEntry = {
         )
       : null;
   },
-  renderRecordResult() {
-    return null;
+  renderRecordResult(record, context) {
+    const recorded = restoreSlidePuzzleRecordedResult(record);
+    return recorded ? (
+      <RecordedSlidePuzzleResult {...recorded} {...context} />
+    ) : null;
   },
 } satisfies GameCatalogEntry;

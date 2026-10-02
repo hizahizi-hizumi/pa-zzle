@@ -1,4 +1,10 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import {
   createMemoryRouter,
   type InitialEntry,
@@ -8,6 +14,17 @@ import { createPlayLocationState } from "@/game-catalog/play-location-state";
 import { createProblemId } from "@/games/problem-id";
 import * as problemSeed from "@/games/problem-seed";
 import { selectSlidePuzzleProblemForDifficulty } from "@/games/slide-puzzle/problem-selection";
+import {
+  applySlidePuzzleSlide,
+  getSlidePuzzleSlide,
+  listSlidePuzzleSingleMoves,
+} from "@/games/slide-puzzle/puzzle/rules";
+import {
+  isSlidePuzzleSolved,
+  type SlidePuzzleBoard,
+} from "@/games/slide-puzzle/puzzle/state";
+import { readPlayRecords } from "@/records/storage";
+import { PlayResultView } from "@/views/PlayResultView";
 import { SlidePuzzlePlayView } from "@/views/SlidePuzzlePlayView";
 
 vi.mock("@/lib/internal-diagnostics", () => ({
@@ -28,6 +45,10 @@ function renderRouterAt(entry: InitialEntry): PlayRouter {
       {
         path: "/puzzles/slide-puzzle/play/:difficulty",
         element: <SlidePuzzlePlayView />,
+      },
+      {
+        path: "/puzzles/:game/result/:recordId",
+        element: <PlayResultView />,
       },
     ],
     { initialEntries: [entry] },
@@ -99,6 +120,78 @@ describe("SlidePuzzlePlayView", () => {
         });
       },
     );
+  });
+});
+
+/** 幅優先探索で、盤面を完成させるまでに動かすタイルの番号を順に求める。 */
+function findSolvingTiles(initialBoard: SlidePuzzleBoard): number[] {
+  const previous = new Map<string, { key: string; tile: number } | null>([
+    [initialBoard.join(","), null],
+  ]);
+  const queue = [initialBoard];
+  for (const board of queue) {
+    if (isSlidePuzzleSolved(board)) {
+      const tiles: number[] = [];
+      for (
+        let step = previous.get(board.join(","));
+        step;
+        step = previous.get(step.key)
+      ) {
+        tiles.unshift(step.tile);
+      }
+      return tiles;
+    }
+    for (const cellIndex of listSlidePuzzleSingleMoves(board)) {
+      const slide = getSlidePuzzleSlide(board, cellIndex);
+      const next = slide ? applySlidePuzzleSlide(board, slide) : board;
+      const nextKey = next.join(",");
+      if (!previous.has(nextKey)) {
+        previous.set(nextKey, {
+          key: board.join(","),
+          tile: board[cellIndex] as number,
+        });
+        queue.push(next);
+      }
+    }
+  }
+  throw new Error("Slide puzzle board must be solvable");
+}
+
+describe("解き終えた場合", () => {
+  const { problem, identity } = selectSlidePuzzleProblemForDifficulty(
+    "1",
+    "solve",
+  );
+  const solvingTiles = findSolvingTiles(problem.initialBoard);
+  let router: PlayRouter;
+
+  beforeEach(() => {
+    router = renderRouterAt(
+      `/puzzles/slide-puzzle/play/1?problem=${createProblemId(identity)}`,
+    );
+    for (const tile of solvingTiles) {
+      fireEvent.click(
+        within(screen.getByRole("group", { name: "盤面" })).getByText(
+          String(tile),
+        ),
+      );
+    }
+  });
+
+  test("保存した記録の結果画面へ履歴を置き換えて移ること", async () => {
+    const resultScreen = await screen.findByRole("region", {
+      name: "プレイ結果",
+    });
+    const [record] = readPlayRecords();
+
+    expect(resultScreen).toBeTruthy();
+    expect(router.state.location.pathname).toBe(
+      `/puzzles/slide-puzzle/result/${encodeURIComponent(record?.id ?? "")}`,
+    );
+    expect(router.state.historyAction).toBe("REPLACE");
+    expect(router.state.location.state).toEqual({
+      recordSaveOutcome: { status: "first-record" },
+    });
   });
 });
 
