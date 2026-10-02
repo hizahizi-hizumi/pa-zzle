@@ -6,6 +6,7 @@ import {
 } from "@/games/nanpure/problem/problem";
 import {
   findNanpurePoolEntry,
+  findNanpurePoolEntryByProblemId,
   listNanpurePoolEntries,
   toNanpurePooledProblem,
 } from "@/games/nanpure/problem/problem-pool";
@@ -38,5 +39,14 @@ export function restoreNanpureProblem(
   const entry = isNanpureProblemIdentity(identity)
     ? findNanpurePoolEntry(identity)
     : null;
+  return entry ? toNanpurePooledProblem(entry) : null;
+}
+
+/** 難易度の問題集から問題 ID で1問を引く。引けない ID には `null` を返す。 */
+export function selectNanpureProblemById(
+  difficulty: NanpureDifficulty,
+  problemId: string,
+): NanpureIdentifiedProblem | null {
+  const entry = findNanpurePoolEntryByProblemId(difficulty, problemId);
   return entry ? toNanpurePooledProblem(entry) : null;
 }

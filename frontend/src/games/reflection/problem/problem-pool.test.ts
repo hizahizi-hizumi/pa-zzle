@@ -1,9 +1,14 @@
+import { createProblemId } from "@/games/problem-id";
+import { reflectionDifficulties } from "@/games/reflection/difficulty";
 import { generateReflectionProblem } from "@/games/reflection/problem/generator";
 import { createReflectionProblemIdentity } from "@/games/reflection/problem/problem";
 import {
   decodeReflectionPoolSolution,
   encodeReflectionPoolSolution,
   findReflectionPooledProblem,
+  findReflectionPooledProblemByProblemId,
+  formatReflectionPoolProblemId,
+  listReflectionPoolEntries,
   restoreReflectionPoolEntry,
   toReflectionPooledProblem,
   toReflectionPoolIdentity,
@@ -111,5 +116,33 @@ describe("findReflectionPooledProblem", () => {
     });
 
     expect(found).toBeNull();
+  });
+});
+
+describe("findReflectionPooledProblemByProblemId", () => {
+  const poolEntries = reflectionDifficulties.flatMap(({ id: difficulty }) =>
+    listReflectionPoolEntries(difficulty).map((entry, entryIndex) => ({
+      difficulty,
+      poolProblemId: formatReflectionPoolProblemId(difficulty, entryIndex),
+      problemId: createProblemId(toReflectionPoolIdentity(entry)),
+    })),
+  );
+
+  test("問題集の全項目の問題IDが互いに異なること", () => {
+    const distinctProblemIds = new Set(
+      poolEntries.map(({ problemId }) => problemId),
+    );
+
+    expect(distinctProblemIds.size).toBe(poolEntries.length);
+  });
+
+  test("問題集の全項目をその難易度と問題IDで引けること", () => {
+    const unresolvedEntries = poolEntries.filter(
+      ({ difficulty, poolProblemId, problemId }) =>
+        findReflectionPooledProblemByProblemId(difficulty, problemId)
+          ?.poolReference.problemId !== poolProblemId,
+    );
+
+    expect(unresolvedEntries).toEqual([]);
   });
 });

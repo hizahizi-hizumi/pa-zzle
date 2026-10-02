@@ -7,6 +7,7 @@ import {
 } from "@/games/reflection/problem/problem";
 import {
   findReflectionPooledProblem,
+  findReflectionPooledProblemByProblemId,
   listReflectionPoolEntries,
   type ReflectionPooledProblem,
   toReflectionPooledProblem,
@@ -40,4 +41,12 @@ export function restoreReflectionProblem(
   return isReflectionProblemIdentity(identity)
     ? findReflectionPooledProblem(identity)
     : null;
+}
+
+/** 難易度の問題集から問題 ID で1問を引く。引けない ID には `null` を返す。 */
+export function selectReflectionProblemById(
+  difficulty: ReflectionDifficulty,
+  problemId: string,
+): ReflectionPooledProblem | null {
+  return findReflectionPooledProblemByProblemId(difficulty, problemId);
 }
