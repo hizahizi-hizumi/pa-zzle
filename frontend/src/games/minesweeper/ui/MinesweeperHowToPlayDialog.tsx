@@ -1,6 +1,7 @@
-import { ArrowRight, Flag, Pointer } from "lucide-react";
+import { Flag, Pointer } from "lucide-react";
 
 import { HowToPlayDialog } from "@/components/HowToPlayDialog";
+import { HowToPlayTransition } from "@/components/HowToPlayTransition";
 import { HowToPlayFigure } from "@/games/minesweeper/ui/MinesweeperHowToPlayDialog/HowToPlayFigure";
 
 type MinesweeperHowToPlayDialogProps = {
@@ -27,11 +28,10 @@ export function MinesweeperHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>周りに地雷がないマスを開くと、周りも続けて開く。</p>
-        <div className="flex items-center gap-2 text-muted-foreground">
+        <HowToPlayTransition>
           <HowToPlayFigure rows={["....", "....", "...."]} pressed={[2, 0]} />
-          <ArrowRight className="size-4" aria-hidden />
           <HowToPlayFigure rows={["001.", "0011", "0000"]} />
-        </div>
+        </HowToPlayTransition>
       </li>
       <li className="space-y-2">
         <p>
@@ -47,11 +47,10 @@ export function MinesweeperHowToPlayDialog({
           />
           を切り替えると、押して旗を置く・外す。長押しと右クリックは、いつでも旗を置く・外す。
         </p>
-        <div className="flex items-center gap-2 text-muted-foreground">
+        <HowToPlayTransition>
           <HowToPlayFigure rows={["."]} />
-          <ArrowRight className="size-4" aria-hidden />
           <HowToPlayFigure rows={["F"]} />
-        </div>
+        </HowToPlayTransition>
       </li>
       <li>
         <p>
@@ -62,11 +61,10 @@ export function MinesweeperHowToPlayDialog({
         <p>
           開くモードで開いた数字を押すと、周りの旗と踏んだ地雷が数字と同じ数のとき、残りのマスをまとめて開く。旗が間違っていると地雷を踏む。
         </p>
-        <div className="flex items-center gap-2 text-muted-foreground">
+        <HowToPlayTransition>
           <HowToPlayFigure rows={["F..", ".1.", "..."]} pressed={[1, 1]} />
-          <ArrowRight className="size-4" aria-hidden />
           <HowToPlayFigure rows={["F10", "110", "000"]} />
-        </div>
+        </HowToPlayTransition>
       </li>
       <li className="space-y-2">
         <p>
