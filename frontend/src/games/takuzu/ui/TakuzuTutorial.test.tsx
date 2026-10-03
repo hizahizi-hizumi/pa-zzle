@@ -27,21 +27,48 @@ const stageBoards = [
 /** 解けた盤面の波と、解けたときの一言を読む間を待ち切る長さ。 */
 const stageTransitionMs = 2000;
 
+/** ルールに合わない手に、揺れと違反の一言で応えるまでの間。 */
+const violationReactionDelayMs = 500;
+
 afterEach(() => {
   cleanup();
+  delete (HTMLElement.prototype as { animate?: Element["animate"] }).animate;
   vi.useRealTimers();
 });
+
+function installAnimate() {
+  const animate = vi.fn(
+    () =>
+      ({
+        cancel: vi.fn(),
+        finished: Promise.resolve(),
+      }) as unknown as Animation,
+  );
+  Object.defineProperty(HTMLElement.prototype, "animate", {
+    configurable: true,
+    value: animate,
+  });
+  return animate;
+}
+
+function advanceTime(ms: number): void {
+  act(() => {
+    vi.advanceTimersByTime(ms);
+  });
+}
 
 function getBoard(): HTMLElement {
   return screen.getByRole("group", { name: "バイナリパズル盤面" });
 }
 
+function getCell(row: number, column: number): HTMLElement {
+  return within(getBoard()).getByRole("button", {
+    name: new RegExp(`^${row}行${column}列 `),
+  });
+}
+
 function tapCell(row: number, column: number): void {
-  fireEvent.click(
-    within(getBoard()).getByRole("button", {
-      name: new RegExp(`^${row}行${column}列 `),
-    }),
-  );
+  fireEvent.click(getCell(row, column));
 }
 
 /** 空きマスを解のとおりに埋める。四角は1回、丸は2回タップする。 */
@@ -122,6 +149,7 @@ describe("TakuzuTutorial", () => {
 
     test("最初のタップで四角が3つ続くと、3つ続かないことを伝えること", () => {
       tapCell(1, 3);
+      advanceTime(violationReactionDelayMs);
 
       const cell = within(getBoard()).getByRole("button", {
         name: /^1行3列 /,
@@ -155,6 +183,43 @@ describe("TakuzuTutorial", () => {
         "1行3列 丸 固定",
       ]);
       expect(message).toBeTruthy();
+    });
+
+    describe("ルールに合わない手を置いた場合", () => {
+      test("違反が続くまでは、違反の一言も揺れも出さないこと", () => {
+        const animate = installAnimate();
+        tapCell(1, 3);
+        advanceTime(violationReactionDelayMs - 1);
+
+        const message = screen.queryByText("同じものは3つ続かない");
+
+        expect(message).toBeNull();
+        expect(animate).not.toHaveBeenCalled();
+      });
+
+      test("違反が続くと、違反の一言を出して置いたタイルを揺らすこと", () => {
+        const animate = installAnimate();
+        tapCell(1, 3);
+        advanceTime(violationReactionDelayMs);
+
+        const message = screen.getByText("同じものは3つ続かない");
+
+        expect(message).toBeTruthy();
+        expect(animate).toHaveBeenCalledOnce();
+      });
+
+      test("違反が続く前に次の手で違反が無くなると、違反に応えないこと", () => {
+        const animate = installAnimate();
+        tapCell(1, 3);
+        advanceTime(violationReactionDelayMs / 2);
+        fireEvent.contextMenu(getCell(1, 3));
+        advanceTime(violationReactionDelayMs * 2);
+
+        const message = screen.getByText("マスをタップしてみよう");
+
+        expect(message).toBeTruthy();
+        expect(animate).not.toHaveBeenCalled();
+      });
     });
 
     test("最後の盤面で行き詰まると、3つ目のルールを明かすこと", () => {

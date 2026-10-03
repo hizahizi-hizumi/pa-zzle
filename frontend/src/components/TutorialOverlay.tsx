@@ -104,9 +104,10 @@ export function TutorialOverlay({
           </DialogClose>
         </header>
 
+        {/* 一言が差し替わっても盤面が上下に動かないよう、見出し2行と補足1行が収まる高さに固定する。 */}
         <div
           aria-live="polite"
-          className="flex min-h-20 shrink-0 flex-col items-center justify-end px-4"
+          className="flex h-20 shrink-0 flex-col items-center justify-end px-4"
         >
           <p
             key={`${message.headline}\n${message.detail ?? ""}`}

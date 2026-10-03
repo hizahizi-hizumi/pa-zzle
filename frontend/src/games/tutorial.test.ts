@@ -1,6 +1,7 @@
 import {
   advanceTutorialStage,
   getCurrentTutorialStage,
+  getTutorialMessage,
   performTutorialAction,
   startTutorial,
   type Tutorial,
@@ -78,6 +79,7 @@ describe("startTutorial", () => {
       stageState: 0,
       earnedRuleIds: [],
       message: firstStage.intro,
+      violated: false,
       phase: "playing",
     });
   });
@@ -92,17 +94,18 @@ describe("performTutorialAction", () => {
     expect(result).toBe(started);
   });
 
-  test("ルールに合わない手で違反の一言にすること", () => {
+  test("ルールに合わない手で違反を残し、違反の前の一言を保つこと", () => {
     const result = performTutorialAction(fakeTutorial, started, "violated");
 
-    expect(result.message).toBe(firstStage.violation);
+    expect(result.violated).toBe(true);
+    expect(result.message).toBe(firstStage.intro);
     expect(result.stageState).toBe(1);
   });
 
-  test("違反の後にルールに合う手を置くと導入の一言へ戻すこと", () => {
+  test("違反の後にルールに合う手を置くと違反を解くこと", () => {
     const result = performAll(started, ["violated", "continued"]);
 
-    expect(result.message).toBe(firstStage.intro);
+    expect(result.violated).toBe(false);
   });
 
   test("解けたらステージのルールを手に入れ、次へ進むのを待つこと", () => {
@@ -177,6 +180,7 @@ describe("advanceTutorialStage", () => {
       stageState: 0,
       earnedRuleIds: ["first"],
       message: secondStage.intro,
+      violated: false,
       phase: "playing",
     });
   });
@@ -204,5 +208,25 @@ describe("advanceTutorialStage", () => {
         phase: "completed",
       });
     });
+  });
+});
+
+describe("getTutorialMessage", () => {
+  const violated = performTutorialAction(
+    fakeTutorial,
+    startTutorial(fakeTutorial),
+    "violated",
+  );
+
+  test("違反が続いたときに違反の一言を出すこと", () => {
+    const result = getTutorialMessage(fakeTutorial, violated, true);
+
+    expect(result).toBe(firstStage.violation);
+  });
+
+  test("違反が続くまでは違反の前の一言を出すこと", () => {
+    const result = getTutorialMessage(fakeTutorial, violated, false);
+
+    expect(result).toBe(firstStage.intro);
   });
 });

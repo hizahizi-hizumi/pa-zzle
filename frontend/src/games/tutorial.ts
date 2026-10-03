@@ -21,7 +21,7 @@ export type TutorialRule<RuleId extends string> = {
 /**
  * 1つのステージ。答えは示さず、文言は手の結果に応じて切り替える。
  * - `intro`: ステージを始めたときと、ルールに合う手を置いたとき。
- * - `violation`: ルールに合わないところができたとき。
+ * - `violation`: ルールに合わないところができ、そのまましばらく続いたとき。
  * - `solved`: 解けたとき。
  * - `earnedRuleId`: 解けたときに手に入るルール。
  * - `revealedRule`: 解いている途中で明かすルールと、明かしてからの文言。明かした時点で手に入る。
@@ -75,11 +75,16 @@ export type Tutorial<
  */
 export type TutorialPhase = "playing" | "stage-solved" | "completed";
 
+/**
+ * - `message`: ルールに合わないところが無いときの一言。
+ * - `violated`: 最後の手でルールに合わないところができている。違反の一言は、違反がしばらく続いたときに出す側が出す。
+ */
 export type TutorialProgress<RuleId extends string, StageState> = {
   stageIndex: number;
   stageState: StageState;
   earnedRuleIds: readonly RuleId[];
   message: TutorialMessage;
+  violated: boolean;
   phase: TutorialPhase;
 };
 
@@ -99,6 +104,7 @@ function startStageProgress<
     stageState: tutorial.startStage(stage),
     earnedRuleIds,
     message: stage.intro,
+    violated: false,
     phase: "playing",
   };
 }
@@ -162,6 +168,25 @@ export function getCurrentTutorialStage<
   return getTutorialStage(tutorial, progress.stageIndex);
 }
 
+/**
+ * 盤面の上に出す一言。
+ * 違反の一言は、切り替えの途中で一瞬だけ違反になった手で文言がちらつかないよう、出す側が違反の続いたこと（`violationSettled`）を確かめてから出す。
+ */
+export function getTutorialMessage<
+  RuleId extends string,
+  Stage extends TutorialStage<RuleId>,
+  StageState,
+  Action,
+>(
+  tutorial: Tutorial<RuleId, Stage, StageState, Action>,
+  progress: TutorialProgress<RuleId, StageState>,
+  violationSettled: boolean,
+): TutorialMessage {
+  return progress.violated && violationSettled
+    ? getCurrentTutorialStage(tutorial, progress).violation
+    : progress.message;
+}
+
 /** ステージを解いている間だけ操作を受け付ける。それ以外では同じ進行をそのまま返す。 */
 export function performTutorialAction<
   RuleId extends string,
@@ -183,7 +208,7 @@ export function performTutorialAction<
     progress.stageState,
     action,
   );
-  const moved = { ...progress, stageState: state };
+  const moved = { ...progress, stageState: state, violated: false };
   switch (outcome) {
     case "ignored":
       return progress;
@@ -193,7 +218,7 @@ export function performTutorialAction<
         message: getGuidingMessage(stage, progress.earnedRuleIds),
       };
     case "violated":
-      return { ...moved, message: stage.violation };
+      return { ...moved, violated: true };
     case "rule-revealed": {
       const earnedRuleIds = earnRule(
         progress.earnedRuleIds,

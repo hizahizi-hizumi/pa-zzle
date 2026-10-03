@@ -24,6 +24,7 @@ import { TakuzuBoard } from "@/games/takuzu/ui/board/TakuzuBoard";
 import {
   advanceTutorialStage,
   getCurrentTutorialStage,
+  getTutorialMessage,
   performTutorialAction,
   startTutorial,
   type TutorialProgress,
@@ -43,6 +44,13 @@ type TakuzuTutorialProgress = TutorialProgress<
 
 /** 手が止まってから、決まるマスを示すまでの間。 */
 const IDLE_HINT_DELAY_MS = 7000;
+
+/**
+ * ルールに合わない手に、置いたタイルの揺れと違反の一言で応えるまでの間。
+ * 空き→四角→丸と切り替える途中の四角が一瞬だけ違反になっても画面が揺れないよう、違反が続いたときだけ応える。
+ * 盤面の違反の印の遅れ（240ms）より長く取り、ゆっくり続けて押す間隔（300〜400ms）でも出ず、手を止めればすぐ分かる長さにする。
+ */
+const VIOLATION_REACTION_DELAY_MS = 500;
 
 /** 解けた盤面の波が終わってから次の盤面へ移るまでの、解けたときの一言を読む間。 */
 const STAGE_SOLVED_PAUSE_MS = 700;
@@ -68,15 +76,19 @@ function getBoardFrameStyle(
   };
 }
 
+/** 違反の揺れは、違反が続いたとき（`violationSettled`）だけ返す。 */
 function getCellCues(
   state: TakuzuTutorialStageState,
+  violationSettled: boolean,
   hintCellIndex: number | null,
 ): TakuzuCellCue[] {
   const { lastMove, moveCount } = state;
   const moveCues: TakuzuCellCue[] = !lastMove
     ? []
     : lastMove.violated
-      ? [{ cellIndex: lastMove.cellIndex, kind: "rejected", id: moveCount }]
+      ? violationSettled
+        ? [{ cellIndex: lastMove.cellIndex, kind: "rejected", id: moveCount }]
+        : []
       : lastMove.reasonCellIndices.map((cellIndex) => ({
           cellIndex,
           kind: "reason",
@@ -101,10 +113,14 @@ export function TakuzuTutorial({
   );
   const [idleProgress, setIdleProgress] =
     useState<TakuzuTutorialProgress | null>(null);
+  const [settledViolationProgress, setSettledViolationProgress] =
+    useState<TakuzuTutorialProgress | null>(null);
   const advanceTimerRef = useRef<number | null>(null);
+  const violationTimerRef = useRef<number | null>(null);
   const stage = getCurrentTutorialStage(takuzuTutorial, progress);
   const { stageState } = progress;
   const { rowCount, columnCount } = stageState.grid.shape;
+  const violationSettled = settledViolationProgress === progress;
   const hintCellIndex =
     idleProgress === progress
       ? findTakuzuTutorialHintCellIndex(stageState)
@@ -126,8 +142,18 @@ export function TakuzuTutorial({
       if (advanceTimerRef.current !== null) {
         window.clearTimeout(advanceTimerRef.current);
       }
+      if (violationTimerRef.current !== null) {
+        window.clearTimeout(violationTimerRef.current);
+      }
     };
   }, []);
+
+  function cancelViolationReaction(): void {
+    if (violationTimerRef.current !== null) {
+      window.clearTimeout(violationTimerRef.current);
+      violationTimerRef.current = null;
+    }
+  }
 
   const handleClearAnimationComplete = useCallback(() => {
     advanceTimerRef.current = window.setTimeout(() => {
@@ -137,9 +163,19 @@ export function TakuzuTutorial({
   }, []);
 
   function perform(action: TakuzuTutorialAction): void {
-    setProgress((current) =>
-      performTutorialAction(takuzuTutorial, current, action),
-    );
+    const next = performTutorialAction(takuzuTutorial, progress, action);
+    if (next === progress) {
+      return;
+    }
+    setProgress(next);
+    // 次の手が来たら、前の手の違反には応えない。
+    cancelViolationReaction();
+    if (next.violated) {
+      violationTimerRef.current = window.setTimeout(() => {
+        violationTimerRef.current = null;
+        setSettledViolationProgress(next);
+      }, VIOLATION_REACTION_DELAY_MS);
+    }
   }
 
   function handleCycleCell(
@@ -159,7 +195,9 @@ export function TakuzuTutorial({
       window.clearTimeout(advanceTimerRef.current);
       advanceTimerRef.current = null;
     }
+    cancelViolationReaction();
     setIdleProgress(null);
+    setSettledViolationProgress(null);
     setProgress(startTutorial(takuzuTutorial));
   }
 
@@ -181,7 +219,7 @@ export function TakuzuTutorial({
         ...rule,
         earned: progress.earnedRuleIds.includes(rule.id),
       }))}
-      message={progress.message}
+      message={getTutorialMessage(takuzuTutorial, progress, violationSettled)}
       completed={progress.phase === "completed"}
       finishAction={
         onStartPlay
@@ -207,7 +245,7 @@ export function TakuzuTutorial({
             cells={getTakuzuTutorialCellViews(stage, stageState)}
             lineViolations={getTakuzuTutorialLineViolations(stageState)}
             disabled={progress.phase !== "playing"}
-            cues={getCellCues(stageState, hintCellIndex)}
+            cues={getCellCues(stageState, violationSettled, hintCellIndex)}
             onCycleCell={handleCycleCell}
             onPlaceCell={handlePlaceCell}
           />
