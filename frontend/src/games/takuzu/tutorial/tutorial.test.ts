@@ -415,3 +415,43 @@ describe("takuzuTutorial.perform", () => {
     });
   });
 });
+
+describe("takuzuTutorial.describeViolation", () => {
+  const cases = [
+    [
+      "四角が3つ続いた",
+      runStage,
+      [tap(2)],
+      {
+        headline: "四角が3つ続いている",
+        detail: "同じものは3つ続けて置けない",
+      },
+    ],
+    [
+      "1行だけの盤面で四角が多すぎる",
+      countStage,
+      [tap(3)],
+      { headline: "四角が多すぎる", detail: "行も列も、四角と丸は同じ数" },
+    ],
+    [
+      "4×4の盤面で四角が多すぎる列ができた",
+      twoRuleStage,
+      [place(14, "a"), place(2, "a")],
+      {
+        headline: "四角が多すぎる列がある",
+        detail: "行も列も、四角と丸は同じ数",
+      },
+    ],
+  ] as const;
+
+  test.each(cases)(
+    "当たったルールを具体的に言うこと: %s",
+    (_, stage, actions, expected) => {
+      const { state } = performAll(stage, actions);
+
+      const result = takuzuTutorial.describeViolation(stage, state);
+
+      expect(result).toEqual(expected);
+    },
+  );
+});

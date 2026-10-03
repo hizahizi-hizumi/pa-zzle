@@ -22,7 +22,6 @@ function createMessage(headline: string) {
 
 const firstStage: TutorialStage<RuleId> = {
   intro: createMessage("1の導入"),
-  violation: createMessage("1の違反"),
   solved: createMessage("1の解決"),
   earnedRuleId: "first",
   revealedRule: null,
@@ -31,7 +30,6 @@ const firstStage: TutorialStage<RuleId> = {
 
 const secondStage: TutorialStage<RuleId> = {
   intro: createMessage("2の導入"),
-  violation: createMessage("2の違反"),
   solved: createMessage("2の解決"),
   earnedRuleId: "second",
   revealedRule: { id: "second", message: createMessage("2のルール") },
@@ -40,7 +38,6 @@ const secondStage: TutorialStage<RuleId> = {
 
 const guidedStage: TutorialStage<RuleId> = {
   intro: createMessage("案内の後"),
-  violation: createMessage("案内中の違反"),
   solved: createMessage("案内の解決"),
   earnedRuleId: null,
   revealedRule: null,
@@ -64,6 +61,9 @@ const fakeTutorial: Tutorial<
   completion: createMessage("完了"),
   startStage() {
     return 0;
+  },
+  describeViolation(_stage, state) {
+    return createMessage(`${state}手目の違反`);
   },
   startGuide(_stage, state) {
     return state;
@@ -239,10 +239,10 @@ describe("getTutorialMessage", () => {
     "violated",
   );
 
-  test("違反が続いたときに違反の一言を出すこと", () => {
+  test("違反が続いたときに、今の盤面から決めた違反の一言を出すこと", () => {
     const result = getTutorialMessage(fakeTutorial, violated, true);
 
-    expect(result).toBe(firstStage.violation);
+    expect(result).toEqual(createMessage("1手目の違反"));
   });
 
   test("違反が続くまでは違反の前の一言を出すこと", () => {

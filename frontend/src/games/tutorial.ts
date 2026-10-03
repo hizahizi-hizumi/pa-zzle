@@ -33,7 +33,6 @@ export type TutorialGuide<RuleId extends string> = {
  * 1つのステージ。答えは示さず、文言は手の結果に応じて切り替える。
  * - `intro`: ステージを始めたときと、ルールに合う手を置いたとき。案内があるステージでは、案内を終えた後。
  * - `guides`: 最初の数手の案内。順に1つずつ進み、すべて終えたら手を離す。
- * - `violation`: ルールに合わないところができ、そのまましばらく続いたとき。
  * - `solved`: 解けたとき。
  * - `earnedRuleId`: 解けたときに手に入るルール。
  * - `revealedRule`: 解いている途中で明かすルールと、明かしてからの文言。明かした時点で手に入る。
@@ -41,7 +40,6 @@ export type TutorialGuide<RuleId extends string> = {
 export type TutorialStage<RuleId extends string> = {
   intro: TutorialMessage;
   guides: readonly TutorialGuide<RuleId>[];
-  violation: TutorialMessage;
   solved: TutorialMessage;
   earnedRuleId: RuleId | null;
   revealedRule: { id: RuleId; message: TutorialMessage } | null;
@@ -76,6 +74,8 @@ export type Tutorial<
   /** すべてのステージを解き終えたときの一言。 */
   completion: TutorialMessage;
   startStage: (stage: Stage) => StageState;
+  /** ルールに合わないところが続いたときの一言。どのルールに当たったかを、今の盤面から具体的に言う。 */
+  describeViolation: (stage: Stage, state: StageState) => TutorialMessage;
   /**
    * 案内を始めるときと、すべての案内を終えて手を離すとき（`guide` が `null`）に呼ぶ。
    * 手を引いている間にどの操作を受け付けるかは、ゲームがここで盤面の状態に決めておき、`perform` で守る。
@@ -216,7 +216,10 @@ export function getTutorialMessage<
   violationSettled: boolean,
 ): TutorialMessage {
   return progress.violated && violationSettled
-    ? getCurrentTutorialStage(tutorial, progress).violation
+    ? tutorial.describeViolation(
+        getCurrentTutorialStage(tutorial, progress),
+        progress.stageState,
+      )
     : progress.message;
 }
 

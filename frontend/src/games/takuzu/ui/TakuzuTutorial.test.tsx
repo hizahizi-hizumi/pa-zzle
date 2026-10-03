@@ -174,14 +174,14 @@ describe("TakuzuTutorial", () => {
       expect(chips).toEqual(["？", "？", "？"]);
     });
 
-    test("最初のタップで四角が3つ続くと、3つ続かないことを伝えること", () => {
+    test("最初のタップで四角が3つ続くと、四角が3つ続いていることを伝えること", () => {
       tapCell(1, 3);
       advanceTime(violationReactionDelayMs);
 
       const cell = within(getBoard()).getByRole("button", {
         name: /^1行3列 /,
       });
-      const message = screen.getByText("同じものは3つ続かない");
+      const message = screen.getByText("四角が3つ続いている");
 
       expect(cell.getAttribute("aria-label")).toBe("1行3列 四角 3連続");
       expect(message).toBeTruthy();
@@ -218,7 +218,7 @@ describe("TakuzuTutorial", () => {
         tapCell(1, 3);
         advanceTime(violationReactionDelayMs - 1);
 
-        const message = screen.queryByText("同じものは3つ続かない");
+        const message = screen.queryByText("四角が3つ続いている");
 
         expect(message).toBeNull();
         expect(animate).not.toHaveBeenCalled();
@@ -229,7 +229,7 @@ describe("TakuzuTutorial", () => {
         tapCell(1, 3);
         advanceTime(violationReactionDelayMs);
 
-        const message = screen.getByText("同じものは3つ続かない");
+        const message = screen.getByText("四角が3つ続いている");
 
         expect(message).toBeTruthy();
         expect(animate).toHaveBeenCalledOnce();
@@ -322,7 +322,7 @@ describe("TakuzuTutorial", () => {
         tapCell(1, 3);
         advanceTime(violationReactionDelayMs);
 
-        const message = screen.getByText("ルールに合わないところがある");
+        const message = screen.getByText("四角が多すぎる列がある");
         const hinted = getHintedCellPositions();
 
         expect(message).toBeTruthy();

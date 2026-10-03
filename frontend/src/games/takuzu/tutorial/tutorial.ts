@@ -23,6 +23,7 @@ import type {
 import type {
   Tutorial,
   TutorialGuide,
+  TutorialMessage,
   TutorialMoveOutcome,
   TutorialStage,
 } from "@/games/tutorial";
@@ -451,6 +452,101 @@ export function getTakuzuTutorialLineViolations(
   );
 }
 
+/** 遊び方の説明と同じ、画面のタイルの呼び方。 */
+const tileNames = { a: "四角", b: "丸" } as const satisfies Record<
+  TakuzuTile,
+  string
+>;
+
+const lineNames = { row: "行", column: "列" } as const satisfies Record<
+  TakuzuLine["axis"],
+  string
+>;
+
+/** 違反の一言の補足に添える、当たったルールそのもの。 */
+const ruleStatements = {
+  run: "同じものは3つ続けて置けない",
+  count: "行も列も、四角と丸は同じ数",
+  duplicate: "同じ並びの行・列は作れない",
+} as const satisfies Record<TakuzuTutorialRuleId, string>;
+
+/** 1つの違反と、その違反に当たっているマス。 */
+type TakuzuViolationDescription = {
+  cellIndices: readonly number[];
+  message: TutorialMessage;
+};
+
+function listViolationDescriptions(
+  grid: TakuzuGrid,
+  violations: TakuzuRuleViolations,
+): TakuzuViolationDescription[] {
+  const singleRow = grid.shape.rowCount === 1;
+  const runs = violations.runCellIndices.flatMap((cellIndex) => {
+    const tile = grid.cells[cellIndex];
+    return tile
+      ? [
+          {
+            cellIndices: [cellIndex],
+            message: {
+              headline: `${tileNames[tile]}が3つ続いている`,
+              detail: ruleStatements.run,
+            },
+          },
+        ]
+      : [];
+  });
+  const overfilled = violations.overfilledLines.flatMap((line) => {
+    const cellIndices = getTakuzuGridLineCellIndices(grid.shape, line);
+    const cells = getLineCells(grid, cellIndices);
+    const tile = takuzuTiles.find(
+      (candidate) => countTile(cells, candidate) > cells.length / 2,
+    );
+    return tile
+      ? [
+          {
+            cellIndices,
+            message: {
+              headline: singleRow
+                ? `${tileNames[tile]}が多すぎる`
+                : `${tileNames[tile]}が多すぎる${lineNames[line.axis]}がある`,
+              detail: ruleStatements.count,
+            },
+          },
+        ]
+      : [];
+  });
+  const duplicates = violations.duplicateLines.map((line) => ({
+    cellIndices: getTakuzuGridLineCellIndices(grid.shape, line),
+    message: {
+      headline: `同じ並びの${lineNames[line.axis]}がある`,
+      detail: ruleStatements.duplicate,
+    },
+  }));
+  return [...runs, ...overfilled, ...duplicates];
+}
+
+/** 直前に置いたマスが当たっている違反を先に言う。古い違反が残っていても、今の手の結果を返すため。 */
+function describeTakuzuTutorialViolation(
+  _stage: TakuzuTutorialStage,
+  state: TakuzuTutorialStageState,
+): TutorialMessage {
+  const descriptions = listViolationDescriptions(
+    state.grid,
+    findVisibleViolations(state.grid, state.ruleIds),
+  );
+  const lastCellIndex = state.lastMove?.cellIndex;
+  const description =
+    descriptions.find(({ cellIndices }) =>
+      cellIndices.some((cellIndex) => cellIndex === lastCellIndex),
+    ) ?? descriptions[0];
+  return (
+    description?.message ?? {
+      headline: "ルールに合わないところがある",
+      detail: "タップで直せる",
+    }
+  );
+}
+
 /**
  * 案内や、手が止まったときに示す、今の盤面と知っているルールだけで決まるマス。無ければ `null`。
  * `preferredRuleId` を渡すと、そのルールで決まるマスを先に探す。無ければ、ほかの知っているルールで決まるマスを返す。
@@ -474,11 +570,6 @@ const smallBoardIdleHintDelayMs = 7000;
 /** 4×4 の盤面で、手が止まってから決まるマスを示すまでの間。探す範囲が広く迷いやすいので、早めに示す。 */
 const boardIdleHintDelayMs = 4000;
 
-const violationMessage = {
-  headline: "ルールに合わないところがある",
-  detail: "タップで直せる",
-};
-
 /**
  * 答えは示さず、置いたタイルの結果から「ここはこれしかない」に気づかせる順に並べる。
  * 盤面が 1×3 → 1×4 → 4×4 と育ち、ルールを1つずつ手に入れる。
@@ -495,10 +586,6 @@ const stages: readonly TakuzuTutorialStage[] = [
     givens: parseTakuzuGrid(["AA."]),
     ruleIds: ["run"],
     intro: { headline: "マスをタップしてみよう", detail: null },
-    violation: {
-      headline: "同じものは3つ続かない",
-      detail: "もう一度タップすると、丸に変わる",
-    },
     solved: {
       headline: "そう。3つは続かない",
       detail: "四角が2つ並んだら、隣は丸",
@@ -512,10 +599,6 @@ const stages: readonly TakuzuTutorialStage[] = [
     givens: parseTakuzuGrid(["B.B"]),
     ruleIds: ["run"],
     intro: { headline: "ここに入るのは？", detail: null },
-    violation: {
-      headline: "3つ続いてしまった",
-      detail: "タップで切り替えられる",
-    },
     solved: {
       headline: "挟まれていても決まる",
       detail: "丸と丸の間は、四角",
@@ -529,10 +612,6 @@ const stages: readonly TakuzuTutorialStage[] = [
     givens: parseTakuzuGrid(["ABA."]),
     ruleIds: ["run", "count"],
     intro: { headline: "ここに入るのは？", detail: null },
-    violation: {
-      headline: "四角が多すぎる",
-      detail: "四角と丸は同じ数ずつ",
-    },
     solved: {
       headline: "四角2つ、丸2つ",
       detail: "行も列も、四角と丸は同じ数",
@@ -546,7 +625,6 @@ const stages: readonly TakuzuTutorialStage[] = [
     givens: parseTakuzuGrid([".A.B", "..A.", "B...", ".B.B"]),
     ruleIds: ["run", "count"],
     intro: { headline: "その調子。残りも埋めよう", detail: null },
-    violation: violationMessage,
     solved: { headline: "解けた！", detail: null },
     earnedRuleId: null,
     revealedRule: null,
@@ -575,7 +653,6 @@ const stages: readonly TakuzuTutorialStage[] = [
       headline: "まず2つのルールで進めよう",
       detail: "最後の盤面。決まるマスから",
     },
-    violation: violationMessage,
     solved: { headline: "解けた！", detail: null },
     earnedRuleId: "duplicate",
     revealedRule: {
@@ -607,6 +684,7 @@ export const takuzuTutorial: Tutorial<
     detail: "本番は 8×8。同じ3つのルールで解ける",
   },
   startStage: startTakuzuTutorialStage,
+  describeViolation: describeTakuzuTutorialViolation,
   startGuide: startTakuzuTutorialGuide,
   perform: performTakuzuTutorialAction,
 };
