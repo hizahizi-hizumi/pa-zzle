@@ -32,11 +32,11 @@ const stageBoards: readonly {
     guided: [],
   },
   {
-    givens: [".A.B", "..A.", "B...", ".B.B"],
-    solution: ["AABB", "BBAA", "BABA", "ABAB"],
+    givens: ["AA..", "BBA.", "...B", ".B.."],
+    solution: ["AABB", "BBAA", "BAAB", "ABBA"],
     guided: [
-      [4, 3],
       [1, 3],
+      [1, 4],
     ],
   },
   {
@@ -124,6 +124,14 @@ function solveStage(stageIndex: number): void {
     for (let tap = 0; tap < tapCount; tap += 1) {
       tapCell(row, column);
     }
+  }
+}
+
+/** 空きの多い 4×4 の盤面で、手を引く2マスをどちらも丸にする。 */
+function solveGuidedCells(): void {
+  for (const column of [3, 4]) {
+    tapCell(1, column);
+    tapCell(1, column);
   }
 }
 
@@ -363,36 +371,37 @@ describe("TakuzuTutorial", () => {
       });
     });
 
-    describe("4×4の最初の盤面に進んだ場合", () => {
+    describe("空きの多い4×4の盤面に進んだ場合", () => {
       beforeEach(() => {
         solveStages(5);
       });
 
       test("最初から、3つ続かないことで決まるマスを示すこと", () => {
-        const message = screen.getByText("4×4 も同じ2つのルールで解ける");
+        const message = screen.getByText("空きが多くても、3つのルールで解ける");
         const hinted = getHintedCellPositions();
+        const currentChips = getCurrentRuleChipTexts();
 
         expect(message).toBeTruthy();
-        expect(hinted).toEqual(["4行3列"]);
+        expect(hinted).toEqual(["1行3列"]);
+        expect(currentChips).toEqual([]);
       });
 
       test("示したマスに置くと、決め手が光った後に同じ数で決まるマスを示すこと", () => {
-        tapCell(4, 3);
+        tapCell(1, 3);
+        tapCell(1, 3);
         const hintedRightAfter = getHintedCellPositions();
         advanceTime(900);
 
-        const message = screen.getByText("次の印のマスは、縦の列を見よう");
+        const message = screen.getByText("次の印のマスは、同じ行を見よう");
         const hinted = getHintedCellPositions();
 
         expect(message).toBeTruthy();
         expect(hintedRightAfter).toEqual([]);
-        expect(hinted).toEqual(["1行3列"]);
+        expect(hinted).toEqual(["1行4列"]);
       });
 
       test("2手置くと手を離し、手が止まったときだけ決まるマスを示すこと", () => {
-        tapCell(4, 3);
-        tapCell(1, 3);
-        tapCell(1, 3);
+        solveGuidedCells();
         advanceTime(3999);
         const hintedBeforeIdle = getHintedCellPositions();
         advanceTime(1);
@@ -406,10 +415,10 @@ describe("TakuzuTutorial", () => {
       });
 
       test("示していないマスを押しても、何も置かず、案内を進めず、示したマスを示し直すこと", () => {
-        const hintCueBefore = getCell(4, 3).querySelector(
+        const hintCueBefore = getCell(1, 3).querySelector(
           '[data-cell-cue="hint"]',
         );
-        // 4列目は丸が2つそろっていて、2行目は四角に決まるが、示していない。
+        // 2行目は丸が2つそろっていて、4列目は四角に決まるが、示していない。
         tapCell(2, 4);
         tapCell(3, 3);
         act(() => {
@@ -417,36 +426,35 @@ describe("TakuzuTutorial", () => {
         });
         fireEvent.keyDown(getCell(3, 3), { key: "1" });
 
-        const message = screen.getByText("4×4 も同じ2つのルールで解ける");
+        const message = screen.getByText("空きが多くても、3つのルールで解ける");
         const hinted = getHintedCellPositions();
-        const hintCueAfter = getCell(4, 3).querySelector(
+        const hintCueAfter = getCell(1, 3).querySelector(
           '[data-cell-cue="hint"]',
         );
 
         expect(message).toBeTruthy();
         expect(getCell(2, 4).getAttribute("aria-label")).toBe("2行4列 空き");
         expect(getCell(3, 3).getAttribute("aria-label")).toBe("3行3列 空き");
-        expect(hinted).toEqual(["4行3列"]);
+        expect(hinted).toEqual(["1行3列"]);
         expect(hintCueAfter).not.toBe(hintCueBefore);
       });
 
       test("示したマスに違う方を置くと、案内を進めず、同じマスを示し続けること", () => {
-        tapCell(4, 3);
-        advanceTime(900);
         tapCell(1, 3);
+        tapCell(1, 3);
+        advanceTime(900);
+        tapCell(1, 4);
         advanceTime(violationReactionDelayMs);
 
-        const message = screen.getByText("四角が多すぎる列がある");
+        const message = screen.getByText("四角が多すぎる行がある");
         const hinted = getHintedCellPositions();
 
         expect(message).toBeTruthy();
-        expect(hinted).toEqual(["1行3列"]);
+        expect(hinted).toEqual(["1行4列"]);
       });
 
       test("手を離した後は、示していないマスにも置けること", () => {
-        tapCell(4, 3);
-        tapCell(1, 3);
-        tapCell(1, 3);
+        solveGuidedCells();
         tapCell(3, 3);
 
         const label = getCell(3, 3).getAttribute("aria-label");
