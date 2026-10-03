@@ -195,8 +195,10 @@ describe("TakuzuTutorial", () => {
 
     test("1行2マスの盤面で、何をするパズルかと最初に押すマスを示し、ルールを伏せておくこと", () => {
       const cells = within(getBoard()).getAllByRole("button");
-      const headline = screen.getByText("マスを四角か丸で全部埋めるパズル");
-      const detail = screen.getByText("まず、左のマスをタップ");
+      const headline = screen.getByText(
+        "マスを四角か丸で、すべて埋めるパズルです",
+      );
+      const detail = screen.getByText("左のマスをタップしてください");
       const hinted = getHintedCellPositions();
       const chips = getRuleChipTexts();
 
@@ -211,7 +213,9 @@ describe("TakuzuTutorial", () => {
       tapCell(1, 1);
 
       const label = getCell(1, 1).getAttribute("aria-label");
-      const message = screen.getByText("タップするたび 四角 → 丸 → 空き");
+      const message = screen.getByText(
+        "タップで 四角 → 丸 → 空き と変わります",
+      );
       const hinted = getHintedCellPositions();
 
       expect(label).toBe("1行1列 四角");
@@ -222,7 +226,7 @@ describe("TakuzuTutorial", () => {
     test("右のマスを丸にすると、全部埋まったことを伝えること", () => {
       solveStage(0);
 
-      const message = screen.getByText("全部埋まった！");
+      const message = screen.getByText("すべて埋まりました");
 
       expect(message).toBeTruthy();
     });
@@ -232,16 +236,14 @@ describe("TakuzuTutorial", () => {
         solveStages(1);
       });
 
-      test("1つ目のルールを示してチップに加え、それから問うこと", () => {
+      test("1つ目のルールを示してチップに加えること", () => {
         const cells = within(getBoard()).getAllByRole("button");
-        const rule = screen.getByText("同じものは3つ続けて置けない");
-        const question = screen.getByText("では、空いているマスに入るのは？");
+        const rule = screen.getByText("同じものは、3つ続けて置けません");
         const chips = getRuleChipTexts();
         const currentChips = getCurrentRuleChipTexts();
 
         expect(cells).toHaveLength(3);
         expect(rule).toBeTruthy();
-        expect(question).toBeTruthy();
         expect(chips).toEqual(["3つ続かない", "？", "？"]);
         expect(currentChips).toEqual(["3つ続かない"]);
       });
@@ -253,7 +255,7 @@ describe("TakuzuTutorial", () => {
         const cell = within(getBoard()).getByRole("button", {
           name: /^1行3列 /,
         });
-        const message = screen.getByText("四角が3つ続いている");
+        const message = screen.getByText("四角が3つ続いています");
 
         expect(cell.getAttribute("aria-label")).toBe("1行3列 四角 3連続");
         expect(message).toBeTruthy();
@@ -263,7 +265,7 @@ describe("TakuzuTutorial", () => {
         tapCell(1, 3);
         tapCell(1, 3);
 
-        const message = screen.getByText("そう。ここは丸");
+        const message = screen.getByText("四角が2つ並ぶと、隣は丸になります");
 
         expect(message).toBeTruthy();
       });
@@ -273,7 +275,9 @@ describe("TakuzuTutorial", () => {
         waitForNextStage();
 
         const cells = within(getBoard()).getAllByRole("button");
-        const message = screen.getByText("ここに入るのは？");
+        const message = screen.getByText(
+          "挟まれたマスも、同じルールで決まります",
+        );
 
         expect(cells.map((cell) => cell.getAttribute("aria-label"))).toEqual([
           "1行1列 丸 固定",
@@ -289,7 +293,7 @@ describe("TakuzuTutorial", () => {
           tapCell(1, 3);
           advanceTime(violationReactionDelayMs - 1);
 
-          const message = screen.queryByText("四角が3つ続いている");
+          const message = screen.queryByText("四角が3つ続いています");
 
           expect(message).toBeNull();
           expect(animate).not.toHaveBeenCalled();
@@ -300,7 +304,7 @@ describe("TakuzuTutorial", () => {
           tapCell(1, 3);
           advanceTime(violationReactionDelayMs);
 
-          const message = screen.getByText("四角が3つ続いている");
+          const message = screen.getByText("四角が3つ続いています");
 
           expect(message).toBeTruthy();
           expect(animate).toHaveBeenCalledOnce();
@@ -313,7 +317,7 @@ describe("TakuzuTutorial", () => {
           fireEvent.contextMenu(getCell(1, 3));
           advanceTime(violationReactionDelayMs * 2);
 
-          const message = screen.getByText("同じものは3つ続けて置けない");
+          const message = screen.getByText("同じものは、3つ続けて置けません");
 
           expect(message).toBeTruthy();
           expect(animate).not.toHaveBeenCalled();
@@ -321,10 +325,10 @@ describe("TakuzuTutorial", () => {
       });
     });
 
-    test("1×4の盤面では、2つ目のルールを示してチップに加え、それから問うこと", () => {
+    test("1×4の盤面では、2つ目のルールを示してチップに加えること", () => {
       solveStages(3);
 
-      const rule = screen.getByText("行も列も、四角と丸は同じ数");
+      const rule = screen.getByText("行も列も、四角と丸は同じ数ずつです");
       const chips = getRuleChipTexts();
       const currentChips = getCurrentRuleChipTexts();
 
@@ -338,14 +342,12 @@ describe("TakuzuTutorial", () => {
         solveStages(4);
       });
 
-      test("3つ目のルールを示してチップに加え、それから問うこと", () => {
-        const rule = screen.getByText("同じ並びの行・列は作れない");
-        const question = screen.getByText("では、空いているマスに入るのは？");
+      test("3つ目のルールを示してチップに加えること", () => {
+        const rule = screen.getByText("同じ並びの行・列は作れません");
         const chips = getRuleChipTexts();
         const currentChips = getCurrentRuleChipTexts();
 
         expect(rule).toBeTruthy();
-        expect(question).toBeTruthy();
         expect(chips).toEqual(["3つ続かない", "同じ数", "同じ並びなし"]);
         expect(currentChips).toEqual(["同じ並びなし"]);
       });
@@ -357,7 +359,7 @@ describe("TakuzuTutorial", () => {
         tapCell(3, 4);
         advanceTime(violationReactionDelayMs);
 
-        const message = screen.getByText("上の行と同じ並びになっている");
+        const message = screen.getByText("上の行と同じ並びになっています");
 
         expect(message).toBeTruthy();
       });
@@ -365,7 +367,7 @@ describe("TakuzuTutorial", () => {
       test("同じ並びにならない方を入れて解くと、見比べると決まることを伝えること", () => {
         solveStage(4);
 
-        const message = screen.getByText("そう。上の行と見比べると決まる");
+        const message = screen.getByText("上の行と同じになる方は入りません");
 
         expect(message).toBeTruthy();
       });
@@ -377,7 +379,9 @@ describe("TakuzuTutorial", () => {
       });
 
       test("最初から、3つ続かないことで決まるマスを示すこと", () => {
-        const message = screen.getByText("空きが多くても、3つのルールで解ける");
+        const message = screen.getByText(
+          "空きが多くても、3つのルールで決まります",
+        );
         const hinted = getHintedCellPositions();
         const currentChips = getCurrentRuleChipTexts();
 
@@ -392,7 +396,9 @@ describe("TakuzuTutorial", () => {
         const hintedRightAfter = getHintedCellPositions();
         advanceTime(900);
 
-        const message = screen.getByText("次の印のマスは、同じ行を見よう");
+        const message = screen.getByText(
+          "次の印のマスは、同じ行の数で決まります",
+        );
         const hinted = getHintedCellPositions();
 
         expect(message).toBeTruthy();
@@ -406,7 +412,7 @@ describe("TakuzuTutorial", () => {
         const hintedBeforeIdle = getHintedCellPositions();
         advanceTime(1);
 
-        const message = screen.getByText("その調子。残りも埋めよう");
+        const message = screen.getByText("残りも同じように埋められます");
         const hinted = getHintedCellPositions();
 
         expect(message).toBeTruthy();
@@ -426,7 +432,9 @@ describe("TakuzuTutorial", () => {
         });
         fireEvent.keyDown(getCell(3, 3), { key: "1" });
 
-        const message = screen.getByText("空きが多くても、3つのルールで解ける");
+        const message = screen.getByText(
+          "空きが多くても、3つのルールで決まります",
+        );
         const hinted = getHintedCellPositions();
         const hintCueAfter = getCell(1, 3).querySelector(
           '[data-cell-cue="hint"]',
@@ -446,7 +454,7 @@ describe("TakuzuTutorial", () => {
         tapCell(1, 4);
         advanceTime(violationReactionDelayMs);
 
-        const message = screen.getByText("四角が多すぎる行がある");
+        const message = screen.getByText("四角が多すぎる行があります");
         const hinted = getHintedCellPositions();
 
         expect(message).toBeTruthy();
@@ -466,7 +474,7 @@ describe("TakuzuTutorial", () => {
     test("最後の盤面は、3つのルールを手に入れたまま、どれも目立たせずに始めること", () => {
       solveStages(6);
 
-      const message = screen.getByText("3つのルールで解いてみよう");
+      const message = screen.getByText("最後の盤面です");
       const chips = getRuleChipTexts();
       const currentChips = getCurrentRuleChipTexts();
 
@@ -477,7 +485,7 @@ describe("TakuzuTutorial", () => {
 
     test("すべての盤面を解くと終わりの一言を出し、レベル1を遊ぶで本番を始めること", () => {
       solveStages(7);
-      const message = screen.getByText("ルールはこれで全部");
+      const message = screen.getByText("ルールは以上です");
       fireEvent.click(screen.getByRole("button", { name: "レベル1を遊ぶ" }));
 
       expect(message).toBeTruthy();
@@ -488,7 +496,9 @@ describe("TakuzuTutorial", () => {
       solveStages(7);
       fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
 
-      const message = screen.getByText("マスを四角か丸で全部埋めるパズル");
+      const message = screen.getByText(
+        "マスを四角か丸で、すべて埋めるパズルです",
+      );
       const chips = getRuleChipTexts();
 
       expect(message).toBeTruthy();
@@ -501,7 +511,9 @@ describe("TakuzuTutorial", () => {
       rerenderTutorial(false);
       rerenderTutorial(true);
 
-      const message = screen.getByText("マスを四角か丸で全部埋めるパズル");
+      const message = screen.getByText(
+        "マスを四角か丸で、すべて埋めるパズルです",
+      );
 
       expect(onClose).toHaveBeenCalledOnce();
       expect(message).toBeTruthy();

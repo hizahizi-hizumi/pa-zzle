@@ -458,9 +458,9 @@ const lineNames = { row: "行", column: "列" } as const satisfies Record<
 
 /** 違反の一言の補足に添える、当たったルールそのもの。 */
 const ruleStatements = {
-  run: "同じものは3つ続けて置けない",
-  count: "行も列も、四角と丸は同じ数",
-  duplicate: "同じ並びの行・列は作れない",
+  run: "同じものは、3つ続けて置けません",
+  count: "行も列も、四角と丸は同じ数ずつです",
+  duplicate: "同じ並びの行・列は作れません",
 } as const satisfies Record<TakuzuTutorialRuleId, string>;
 
 /** 隣り合う行・列は向きで、離れた行・列は何番目かで言う。 */
@@ -523,7 +523,7 @@ function listViolationDescriptions(
           {
             cellIndices: [cellIndex],
             message: {
-              headline: `${tileNames[tile]}が3つ続いている`,
+              headline: `${tileNames[tile]}が3つ続いています`,
               detail: ruleStatements.run,
             },
           },
@@ -542,8 +542,8 @@ function listViolationDescriptions(
             cellIndices,
             message: {
               headline: singleRow
-                ? `${tileNames[tile]}が多すぎる`
-                : `${tileNames[tile]}が多すぎる${lineNames[line.axis]}がある`,
+                ? `${tileNames[tile]}が多すぎます`
+                : `${tileNames[tile]}が多すぎる${lineNames[line.axis]}があります`,
               detail: ruleStatements.count,
             },
           },
@@ -553,7 +553,7 @@ function listViolationDescriptions(
   const duplicates = violations.duplicateLines.map((line) => ({
     cellIndices: getTakuzuGridLineCellIndices(grid.shape, line),
     message: {
-      headline: `${describeTwinLine(grid, violations.duplicateLines, line)}と同じ並びになっている`,
+      headline: `${describeTwinLine(grid, violations.duplicateLines, line)}と同じ並びになっています`,
       detail: ruleStatements.duplicate,
     },
   }));
@@ -576,8 +576,8 @@ function describeTakuzuTutorialViolation(
     ) ?? descriptions[0];
   return (
     description?.message ?? {
-      headline: "ルールに合わないところがある",
-      detail: "タップで直せる",
+      headline: "ルールに合わないところがあります",
+      detail: null,
     }
   );
 }
@@ -628,25 +628,28 @@ const stages: readonly TakuzuTutorialStage[] = [
     givens: parseTakuzuGrid([".."]),
     goal: parseTakuzuGrid(["AB"]),
     ruleIds: [],
-    intro: { headline: "マスを四角か丸で全部埋めるパズル", detail: null },
+    intro: {
+      headline: "マスを四角か丸で、すべて埋めるパズルです",
+      detail: null,
+    },
     solved: {
-      headline: "全部埋まった！",
-      detail: "次からは、ルールに合うように埋める",
+      headline: "すべて埋まりました",
+      detail: "ここからは、ルールに合うように埋めます",
     },
     introducedRuleId: null,
     guides: [
       {
         ruleId: null,
         message: {
-          headline: "マスを四角か丸で全部埋めるパズル",
-          detail: "まず、左のマスをタップ",
+          headline: "マスを四角か丸で、すべて埋めるパズルです",
+          detail: "左のマスをタップしてください",
         },
       },
       {
         ruleId: null,
         message: {
-          headline: "タップするたび 四角 → 丸 → 空き",
-          detail: "右のマスを丸にしよう",
+          headline: "タップで 四角 → 丸 → 空き と変わります",
+          detail: "右のマスを丸にしてください",
         },
       },
     ],
@@ -657,12 +660,12 @@ const stages: readonly TakuzuTutorialStage[] = [
     goal: null,
     ruleIds: ["run"],
     intro: {
-      headline: "同じものは3つ続けて置けない",
-      detail: "では、空いているマスに入るのは？",
+      headline: "同じものは、3つ続けて置けません",
+      detail: null,
     },
     solved: {
-      headline: "そう。ここは丸",
-      detail: "四角が2つ並んだら、隣は丸",
+      headline: "四角が2つ並ぶと、隣は丸になります",
+      detail: null,
     },
     introducedRuleId: "run",
     guides: [],
@@ -673,12 +676,12 @@ const stages: readonly TakuzuTutorialStage[] = [
     goal: null,
     ruleIds: ["run"],
     intro: {
-      headline: "ここに入るのは？",
-      detail: "これも「3つ続かない」で決まる",
+      headline: "挟まれたマスも、同じルールで決まります",
+      detail: null,
     },
     solved: {
-      headline: "挟まれていても決まる",
-      detail: "丸と丸の間は、四角",
+      headline: "丸と丸の間は、四角になります",
+      detail: null,
     },
     introducedRuleId: null,
     guides: [],
@@ -689,12 +692,12 @@ const stages: readonly TakuzuTutorialStage[] = [
     goal: null,
     ruleIds: ["run", "count"],
     intro: {
-      headline: "行も列も、四角と丸は同じ数",
-      detail: "では、空いているマスに入るのは？",
+      headline: "行も列も、四角と丸は同じ数ずつです",
+      detail: null,
     },
     solved: {
-      headline: "そう。四角2つ、丸2つ",
-      detail: "同じ数ずつになった",
+      headline: "四角2つ、丸2つでそろいます",
+      detail: null,
     },
     introducedRuleId: "count",
     guides: [],
@@ -705,12 +708,12 @@ const stages: readonly TakuzuTutorialStage[] = [
     goal: null,
     ruleIds: ["run", "count", "duplicate"],
     intro: {
-      headline: "同じ並びの行・列は作れない",
-      detail: "では、空いているマスに入るのは？",
+      headline: "同じ並びの行・列は作れません",
+      detail: null,
     },
     solved: {
-      headline: "そう。上の行と見比べると決まる",
-      detail: "同じ並びになる方は入れられない",
+      headline: "上の行と同じになる方は入りません",
+      detail: null,
     },
     introducedRuleId: "duplicate",
     guides: [],
@@ -721,24 +724,24 @@ const stages: readonly TakuzuTutorialStage[] = [
     goal: null,
     ruleIds: ["run", "count", "duplicate"],
     intro: {
-      headline: "その調子。残りも埋めよう",
-      detail: "迷ったら、少し待つと印が出る",
+      headline: "残りも同じように埋められます",
+      detail: "迷ったときは、少し待つと印が出ます",
     },
-    solved: { headline: "解けた！", detail: "3つのルールを全部使った" },
+    solved: { headline: "完成です", detail: null },
     introducedRuleId: null,
     guides: [
       {
         ruleId: "run",
         message: {
-          headline: "空きが多くても、3つのルールで解ける",
-          detail: "印のマスの左に、四角が2つ並んでいる",
+          headline: "空きが多くても、3つのルールで決まります",
+          detail: "印のマスの左に、四角が2つ並んでいます",
         },
       },
       {
         ruleId: "count",
         message: {
-          headline: "次の印のマスは、同じ行を見よう",
-          detail: "四角がもう2つある",
+          headline: "次の印のマスは、同じ行の数で決まります",
+          detail: "この行には、四角がもう2つあります",
         },
       },
     ],
@@ -748,8 +751,8 @@ const stages: readonly TakuzuTutorialStage[] = [
     givens: parseTakuzuGrid(["..A.", "A.BB", "B...", "...B"]),
     goal: null,
     ruleIds: ["run", "count", "duplicate"],
-    intro: { headline: "最後の盤面", detail: "3つのルールで解いてみよう" },
-    solved: { headline: "解けた！", detail: "3つのルールで全部埋まった" },
+    intro: { headline: "最後の盤面です", detail: null },
+    solved: { headline: "完成です", detail: null },
     introducedRuleId: null,
     guides: [],
     idleHintDelayMs: solvingIdleHintDelayMs,
@@ -769,8 +772,8 @@ export const takuzuTutorial: Tutorial<
   ],
   stages,
   completion: {
-    headline: "ルールはこれで全部",
-    detail: "本番は 8×8。同じ3つのルールで解ける",
+    headline: "ルールは以上です",
+    detail: "本番は 8×8 で、同じ3つのルールで解けます",
   },
   startStage: startTakuzuTutorialStage,
   describeViolation: describeTakuzuTutorialViolation,

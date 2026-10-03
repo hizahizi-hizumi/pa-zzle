@@ -528,23 +528,26 @@ describe("takuzuTutorial.describeViolation", () => {
       runStage,
       [tap(2)],
       {
-        headline: "四角が3つ続いている",
-        detail: "同じものは3つ続けて置けない",
+        headline: "四角が3つ続いています",
+        detail: "同じものは、3つ続けて置けません",
       },
     ],
     [
       "1行だけの盤面で四角が多すぎる",
       countStage,
       [tap(3)],
-      { headline: "四角が多すぎる", detail: "行も列も、四角と丸は同じ数" },
+      {
+        headline: "四角が多すぎます",
+        detail: "行も列も、四角と丸は同じ数ずつです",
+      },
     ],
     [
       "すぐ上の行と同じ並びにした",
       duplicateStage,
       [place(10, "b"), place(11, "a")],
       {
-        headline: "上の行と同じ並びになっている",
-        detail: "同じ並びの行・列は作れない",
+        headline: "上の行と同じ並びになっています",
+        detail: "同じ並びの行・列は作れません",
       },
     ],
     [
@@ -552,8 +555,8 @@ describe("takuzuTutorial.describeViolation", () => {
       duplicateStage,
       [place(14, "a"), place(15, "b")],
       {
-        headline: "1行目と同じ並びになっている",
-        detail: "同じ並びの行・列は作れない",
+        headline: "1行目と同じ並びになっています",
+        detail: "同じ並びの行・列は作れません",
       },
     ],
     [
@@ -561,8 +564,8 @@ describe("takuzuTutorial.describeViolation", () => {
       guidedStage,
       [place(8, "a"), place(12, "a")],
       {
-        headline: "四角が多すぎる列がある",
-        detail: "行も列も、四角と丸は同じ数",
+        headline: "四角が多すぎる列があります",
+        detail: "行も列も、四角と丸は同じ数ずつです",
       },
     ],
   ] as const;
