@@ -1,14 +1,13 @@
 import {
-  advanceTutorialStage,
-  getCurrentTutorialGuide,
-  getCurrentTutorialStage,
+  completeTutorial,
+  getCurrentTutorialStep,
   getTutorialMessage,
   performTutorialAction,
   startTutorial,
   type Tutorial,
   type TutorialMoveOutcome,
   type TutorialProgress,
-  type TutorialStage,
+  type TutorialStep,
 } from "@/games/tutorial";
 
 type RuleId = "first" | "second";
@@ -20,33 +19,24 @@ function createMessage(headline: string) {
   return { headline, detail: null };
 }
 
-const firstStage: TutorialStage<RuleId> = {
-  intro: createMessage("1の導入"),
-  solved: createMessage("1の解決"),
-  introducedRuleId: "first",
-  guides: [],
-};
-
-const secondStage: TutorialStage<RuleId> = {
-  intro: createMessage("2の導入"),
-  solved: createMessage("2の解決"),
-  introducedRuleId: "second",
-  guides: [],
-};
-
-const guidedStage: TutorialStage<RuleId> = {
-  intro: createMessage("案内の後"),
-  solved: createMessage("案内の解決"),
+const operationStep: TutorialStep<RuleId> = {
+  message: createMessage("操作"),
   introducedRuleId: null,
-  guides: [
-    { ruleId: "first", message: createMessage("1つ目の案内") },
-    { ruleId: "second", message: createMessage("2つ目の案内") },
-  ],
+};
+
+const firstRuleStep: TutorialStep<RuleId> = {
+  message: createMessage("1つ目のルール"),
+  introducedRuleId: "first",
+};
+
+const secondRuleStep: TutorialStep<RuleId> = {
+  message: createMessage("2つ目のルール"),
+  introducedRuleId: "second",
 };
 
 const fakeTutorial: Tutorial<
   RuleId,
-  TutorialStage<RuleId>,
+  TutorialStep<RuleId>,
   number,
   FakeAction
 > = {
@@ -54,22 +44,20 @@ const fakeTutorial: Tutorial<
     { id: "first", label: "1つ目" },
     { id: "second", label: "2つ目" },
   ],
-  stages: [firstStage, secondStage],
+  steps: [operationStep, firstRuleStep, secondRuleStep],
+  freePlay: createMessage("残り"),
   completion: createMessage("完了"),
-  startStage() {
+  start() {
     return 0;
   },
-  describeViolation(_stage, state) {
-    return createMessage(`${state}手目の違反`);
-  },
-  startGuide(_stage, state) {
-    return state;
-  },
-  perform(_stage, state, action) {
+  perform(_situation, state, action) {
     return {
       state: action === "ignored" ? state : state + 1,
       outcome: action,
     };
+  },
+  describeViolation({ earnedRuleIds }, state) {
+    return createMessage(`${state}手目の違反（${earnedRuleIds.join("・")}）`);
   },
 };
 
@@ -78,24 +66,21 @@ type FakeProgress = TutorialProgress<RuleId, number>;
 function performAll(
   progress: FakeProgress,
   actions: readonly FakeAction[],
-  tutorial: typeof fakeTutorial = fakeTutorial,
 ): FakeProgress {
   return actions.reduce(
-    (current, action) => performTutorialAction(tutorial, current, action),
+    (current, action) => performTutorialAction(fakeTutorial, current, action),
     progress,
   );
 }
 
 describe("startTutorial", () => {
-  test("最初のステージの導入から、そのステージで示すルールを手に入れて始めること", () => {
+  test("最初の手順から、ルールを手に入れずに始めること", () => {
     const result = startTutorial(fakeTutorial);
 
     expect(result).toEqual({
-      stageIndex: 0,
-      stageState: 0,
-      earnedRuleIds: ["first"],
-      guideIndex: 0,
-      message: firstStage.intro,
+      boardState: 0,
+      stepIndex: 0,
+      earnedRuleIds: [],
       violated: false,
       phase: "playing",
     });
@@ -104,6 +89,8 @@ describe("startTutorial", () => {
 
 describe("performTutorialAction", () => {
   const started = startTutorial(fakeTutorial);
+  const released = performAll(started, ["stepped", "stepped", "stepped"]);
+  const solved = performAll(released, ["solved"]);
 
   test("盤面が変わらない手では同じ進行を返すこと", () => {
     const result = performTutorialAction(fakeTutorial, started, "ignored");
@@ -111,162 +98,98 @@ describe("performTutorialAction", () => {
     expect(result).toBe(started);
   });
 
-  test("ルールに合わない手で違反を残し、違反の前の一言を保つこと", () => {
-    const result = performTutorialAction(fakeTutorial, started, "violated");
+  test("手順どおりでない手や違反では、手順を進めないこと", () => {
+    const result = performAll(started, ["continued", "violated", "continued"]);
 
-    expect(result.violated).toBe(true);
-    expect(result.message).toBe(firstStage.intro);
-    expect(result.stageState).toBe(1);
+    expect(result.stepIndex).toBe(0);
+    expect(result.boardState).toBe(3);
   });
 
-  test("違反の後にルールに合う手を置くと違反を解くこと", () => {
-    const result = performAll(started, ["violated", "continued"]);
+  test("ルールに合わない手で違反を残し、次の手で解くこと", () => {
+    const violated = performAll(started, ["violated"]);
+    const recovered = performAll(violated, ["continued"]);
 
-    expect(result.violated).toBe(false);
+    expect(violated.violated).toBe(true);
+    expect(recovered.violated).toBe(false);
   });
 
-  test("解けたら解けたときの一言を出し、次へ進むのを待つこと", () => {
-    const result = performTutorialAction(fakeTutorial, started, "solved");
+  test("手順どおりの手で次の手順へ進み、その手順で示すルールを手に入れること", () => {
+    const result = performAll(started, ["stepped", "stepped"]);
 
-    expect(result).toMatchObject({
-      earnedRuleIds: ["first"],
-      message: firstStage.solved,
-      phase: "stage-solved",
-    });
+    expect(getCurrentTutorialStep(fakeTutorial, result)).toBe(secondRuleStep);
+    expect(result.earnedRuleIds).toEqual(["first", "second"]);
   });
 
-  describe("解けた後の場合", () => {
-    const solved = performTutorialAction(fakeTutorial, started, "solved");
+  test("すべての手順を終えると手を離すこと", () => {
+    const result = getCurrentTutorialStep(fakeTutorial, released);
 
-    test("手を受け付けないこと", () => {
-      const result = performTutorialAction(fakeTutorial, solved, "violated");
+    expect(result).toBeNull();
+    expect(released.stepIndex).toBe(fakeTutorial.steps.length);
+  });
 
-      expect(result).toBe(solved);
-    });
+  test("解けたら、解けた盤面の演出を待つこと", () => {
+    const result = solved.phase;
+
+    expect(result).toBe("solved");
+  });
+
+  test("解けた後は手を受け付けないこと", () => {
+    const result = performTutorialAction(fakeTutorial, solved, "violated");
+
+    expect(result).toBe(solved);
   });
 });
 
-describe("advanceTutorialStage", () => {
+describe("completeTutorial", () => {
   const started = startTutorial(fakeTutorial);
-  const firstSolved = performTutorialAction(fakeTutorial, started, "solved");
+  const solved = performAll(started, ["solved"]);
 
-  test("解いたステージの次のステージを、手に入れたルールにそのステージで示すルールを加えて始めること", () => {
-    const result = advanceTutorialStage(fakeTutorial, firstSolved);
-    const stage = getCurrentTutorialStage(fakeTutorial, result);
+  test("解けた後に、終えたときの操作を待つこと", () => {
+    const result = completeTutorial(solved);
 
-    expect(stage).toBe(secondStage);
-    expect(result).toEqual({
-      stageIndex: 1,
-      stageState: 0,
-      earnedRuleIds: ["first", "second"],
-      guideIndex: 0,
-      message: secondStage.intro,
-      violated: false,
-      phase: "playing",
-    });
+    expect(result.phase).toBe("completed");
   });
 
-  test("解いている途中では進めないこと", () => {
-    const result = advanceTutorialStage(fakeTutorial, started);
+  test("解いている途中では終えないこと", () => {
+    const result = completeTutorial(started);
 
     expect(result).toBe(started);
-  });
-
-  describe("最後のステージを解いた場合", () => {
-    const secondSolved = performTutorialAction(
-      fakeTutorial,
-      advanceTutorialStage(fakeTutorial, firstSolved),
-      "solved",
-    );
-
-    test("終わりの一言を出して終えること", () => {
-      const result = advanceTutorialStage(fakeTutorial, secondSolved);
-
-      expect(result).toMatchObject({
-        stageIndex: 1,
-        earnedRuleIds: ["first", "second"],
-        message: fakeTutorial.completion,
-        phase: "completed",
-      });
-    });
   });
 });
 
 describe("getTutorialMessage", () => {
-  const violated = performTutorialAction(
-    fakeTutorial,
-    startTutorial(fakeTutorial),
-    "violated",
-  );
+  const started = startTutorial(fakeTutorial);
+  const violated = performAll(started, ["stepped", "violated"]);
+  const released = performAll(started, ["stepped", "stepped", "stepped"]);
+  const solved = performAll(released, ["solved"]);
 
-  test("違反が続いたときに、今の盤面から決めた違反の一言を出すこと", () => {
+  test("今の手順の一言を出すこと", () => {
+    const result = getTutorialMessage(fakeTutorial, started, false);
+
+    expect(result).toBe(operationStep.message);
+  });
+
+  test("違反が続いたときに、今の盤面と手に入れたルールから決めた違反の一言を出すこと", () => {
     const result = getTutorialMessage(fakeTutorial, violated, true);
 
-    expect(result).toEqual(createMessage("1手目の違反"));
+    expect(result).toEqual(createMessage("2手目の違反（first）"));
   });
 
-  test("違反が続くまでは違反の前の一言を出すこと", () => {
+  test("違反が続くまでは、今の手順の一言を出すこと", () => {
     const result = getTutorialMessage(fakeTutorial, violated, false);
 
-    expect(result).toBe(firstStage.intro);
-  });
-});
-
-describe("案内のあるステージ", () => {
-  const guidedTutorial = { ...fakeTutorial, stages: [guidedStage] };
-  const started = startTutorial(guidedTutorial);
-
-  test("1つ目の案内の一言から始めること", () => {
-    const result = getCurrentTutorialGuide(guidedTutorial, started);
-
-    expect(result).toBe(guidedStage.guides[0]);
-    expect(started.message).toBe(guidedStage.guides[0]?.message);
+    expect(result).toBe(firstRuleStep.message);
   });
 
-  test("案内どおりの手を置くと次の案内へ進むこと", () => {
-    const result = performTutorialAction(guidedTutorial, started, "guided");
+  test("手を離した後は、残りを解く間の一言を出すこと", () => {
+    const result = getTutorialMessage(fakeTutorial, released, false);
 
-    expect(getCurrentTutorialGuide(guidedTutorial, result)).toBe(
-      guidedStage.guides[1],
-    );
-    expect(result.message).toBe(guidedStage.guides[1]?.message);
+    expect(result).toBe(fakeTutorial.freePlay);
   });
 
-  test("案内どおりでない手や違反では案内を進めないこと", () => {
-    const result = performAll(
-      started,
-      ["continued", "violated", "continued"],
-      guidedTutorial,
-    );
+  test("解けたら、解き終えたときの一言を出すこと", () => {
+    const result = getTutorialMessage(fakeTutorial, solved, false);
 
-    expect(result.guideIndex).toBe(0);
-    expect(result.message).toBe(guidedStage.guides[0]?.message);
-  });
-
-  test("すべての案内を終えると手を離し、導入の一言を出すこと", () => {
-    const result = performAll(
-      started,
-      ["guided", "guided", "guided"],
-      guidedTutorial,
-    );
-
-    expect(getCurrentTutorialGuide(guidedTutorial, result)).toBeNull();
-    expect(result.guideIndex).toBe(2);
-    expect(result.message).toBe(guidedStage.intro);
-  });
-
-  test("案内を始めるたびと手を離すときに、ゲームへ今の案内を渡すこと", () => {
-    const startGuide = vi.fn<typeof fakeTutorial.startGuide>(
-      (_stage, state) => state,
-    );
-    const tutorial = { ...guidedTutorial, startGuide };
-
-    performAll(startTutorial(tutorial), ["guided", "guided"], tutorial);
-
-    expect(startGuide.mock.calls.map(([, , guide]) => guide)).toEqual([
-      guidedStage.guides[0],
-      guidedStage.guides[1],
-      null,
-    ]);
+    expect(result).toBe(fakeTutorial.completion);
   });
 });

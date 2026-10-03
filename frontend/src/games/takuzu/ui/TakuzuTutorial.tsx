@@ -1,10 +1,4 @@
-import {
-  type CSSProperties,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { TutorialOverlay } from "@/components/TutorialOverlay";
 import type { TakuzuCell } from "@/games/takuzu/puzzle/board";
@@ -13,19 +7,19 @@ import {
   findTakuzuTutorialHintCellIndex,
   getTakuzuTutorialCellViews,
   getTakuzuTutorialLineViolations,
+  getTakuzuTutorialStepCellIndices,
   type TakuzuTutorialAction,
+  type TakuzuTutorialBoardState,
   type TakuzuTutorialRuleId,
-  type TakuzuTutorialStageState,
   takuzuTutorial,
 } from "@/games/takuzu/tutorial/tutorial";
 import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
 import { TakuzuClearAnimation } from "@/games/takuzu/ui/board/clear/TakuzuClearAnimation";
 import { TakuzuBoard } from "@/games/takuzu/ui/board/TakuzuBoard";
 import {
-  advanceTutorialStage,
-  getCurrentTutorialGuide,
-  getCurrentTutorialStage,
+  completeTutorial,
   getTutorialMessage,
+  getTutorialSituation,
   performTutorialAction,
   startTutorial,
   type TutorialProgress,
@@ -40,7 +34,7 @@ type TakuzuTutorialProps = {
 
 type TakuzuTutorialProgress = TutorialProgress<
   TakuzuTutorialRuleId,
-  TakuzuTutorialStageState
+  TakuzuTutorialBoardState
 >;
 
 /**
@@ -50,62 +44,40 @@ type TakuzuTutorialProgress = TutorialProgress<
  */
 const VIOLATION_REACTION_DELAY_MS = 500;
 
-/** 案内どおりの手を置いてから次の案内のマスを示すまでの間。決め手が光って消えるのを見届けてから示す。 */
-const NEXT_GUIDE_HINT_DELAY_MS = 900;
+/** 手順どおりに置いてから次の印を付けるまでの間。決め手が光って消えるのを見届けてから示す。 */
+const NEXT_STEP_CUE_DELAY_MS = 900;
 
-/** 解けた盤面の波が終わってから次の盤面へ移るまでの、解けたときの一言を読む間。 */
-const STAGE_SOLVED_PAUSE_MS = 700;
-
-/** どのステージでもマスの大きさを揃え、盤面が 1×2 から 4×4 へ育って見えるようにする。 */
-const largestLineLength = Math.max(
-  ...takuzuTutorial.stages.map(({ givens }) =>
-    Math.max(givens.shape.rowCount, givens.shape.columnCount),
-  ),
-);
-
-/** 盤面の部品が、違反の印のために周りへ取る余白と枠の幅。 */
-const boardFrameSize = "28px";
-
-function getBoardFrameStyle(
-  rowCount: number,
-  columnCount: number,
-): CSSProperties {
-  const cellSize = `min(calc((100cqw - ${boardFrameSize}) / ${largestLineLength}), calc((100cqh - ${boardFrameSize}) / ${largestLineLength}), 6.5rem)`;
-  return {
-    width: `calc(${columnCount} * ${cellSize} + ${boardFrameSize})`,
-    height: `calc(${rowCount} * ${cellSize} + ${boardFrameSize})`,
-  };
-}
+/** 手を離した後、手が止まってから決まるマスを示すまでの間。 */
+const IDLE_HINT_DELAY_MS = 4000;
 
 /**
- * 決まるマスを示すまでの間。0 ならすぐ示し、`null` なら示さない。
- * 手を引いている間は、示したマスにしか置けないので、違反があっても示し続ける。
- * 手を離した後は手が止まったときだけ示し、違反がある間は直すことに向かわせるため示さない。
+ * 印を付けるまでの間。0 ならすぐ付け、`null` なら付けない。
+ * 手を引いている間は、印のマスにしか置けないので、違反があっても付け続ける。
+ * 手を離した後は手が止まったときだけ付け、違反がある間は直すことに向かわせるため付けない。
  */
-function getHintDelayMs(
+function getCueDelayMs(
   progress: TakuzuTutorialProgress,
-  idleHintDelayMs: number,
   guiding: boolean,
 ): number | null {
   if (progress.phase !== "playing") {
     return null;
   }
-  const { lastMove } = progress.stageState;
+  const { lastMove } = progress.boardState;
   if (!guiding) {
-    return progress.violated || lastMove?.violated ? null : idleHintDelayMs;
+    return progress.violated || lastMove?.violated ? null : IDLE_HINT_DELAY_MS;
   }
   const reasoned = (lastMove?.reasonCellIndices.length ?? 0) > 0;
-  return reasoned ? NEXT_GUIDE_HINT_DELAY_MS : 0;
+  return reasoned ? NEXT_STEP_CUE_DELAY_MS : 0;
 }
 
 /**
  * 違反の揺れは、違反が続いたとき（`violationSettled`）だけ返す。
- * 示すマスの合図は `hintCueId` が変わったときだけやり直し、手を置くたびには示し直さない。
+ * 印の合図は `hintCueId` が変わったときだけやり直し、手を置くたびには付け直さない。
  */
 function getCellCues(
-  state: TakuzuTutorialStageState,
+  state: TakuzuTutorialBoardState,
   violationSettled: boolean,
-  hintCellIndex: number | null,
+  hintCellIndices: readonly number[],
   hintCueId: number,
 ): TakuzuCellCue[] {
   const { lastMove, moveCount } = state;
@@ -120,14 +92,21 @@ function getCellCues(
           kind: "reason",
           id: moveCount,
         }));
-  return hintCellIndex === null
-    ? moveCues
-    : [...moveCues, { cellIndex: hintCellIndex, kind: "hint", id: hintCueId }];
+  return [
+    ...moveCues,
+    ...hintCellIndices.map(
+      (cellIndex): TakuzuCellCue => ({
+        cellIndex,
+        kind: "hint",
+        id: hintCueId,
+      }),
+    ),
+  ];
 }
 
 /**
- * 1×2 から 4×4 へ育つ小さな盤面を順に解かせ、示したルールをすぐ使って「ここはこれしかない」と気づく手応えの中で身につけさせる。
- * 盤面・違反の印・解けたときの波は本番と同じ部品を使う。
+ * 4×4 の盤面を、一言と印に沿って1マスずつ一緒に埋め、ルールを1つずつ使って身につけさせる。
+ * 手順を終えたら手を離し、残りを自分で埋めさせる。盤面・違反の印・解けたときの波は本番と同じ部品を使う。
  */
 export function TakuzuTutorial({
   open,
@@ -137,48 +116,47 @@ export function TakuzuTutorial({
   const [progress, setProgress] = useState<TakuzuTutorialProgress>(() =>
     startTutorial(takuzuTutorial),
   );
+  // もう一度始めるたびに盤面を作り直し、解けたときの波の状態も残さない。
+  const [runId, setRunId] = useState(0);
   const [idleProgress, setIdleProgress] =
     useState<TakuzuTutorialProgress | null>(null);
   const [settledViolationProgress, setSettledViolationProgress] =
     useState<TakuzuTutorialProgress | null>(null);
-  // 手を引いている間に示していないマスを押されたら、示しているマスを示し直す。
+  // 手を引いている間に印の無いマスを押されたら、印を付け直す。
   const [hintCueId, setHintCueId] = useState(0);
-  const advanceTimerRef = useRef<number | null>(null);
   const violationTimerRef = useRef<number | null>(null);
-  const stage = getCurrentTutorialStage(takuzuTutorial, progress);
-  const guide = getCurrentTutorialGuide(takuzuTutorial, progress);
-  const { stageState } = progress;
-  const { rowCount, columnCount } = stageState.grid.shape;
+  const situation = getTutorialSituation(takuzuTutorial, progress);
+  const guiding = situation.step !== null;
+  const { boardState } = progress;
   const violationSettled = settledViolationProgress === progress;
-  const hintDelayMs = getHintDelayMs(
-    progress,
-    stage.idleHintDelayMs,
-    guide !== null,
-  );
-  const hintShown =
-    hintDelayMs === 0 || (hintDelayMs !== null && idleProgress === progress);
-  const hintCellIndex = !hintShown
-    ? null
-    : guide !== null
-      ? stageState.guidedCellIndex
-      : findTakuzuTutorialHintCellIndex(stage, stageState);
+  const cueDelayMs = getCueDelayMs(progress, guiding);
+  const cueShown =
+    cueDelayMs === 0 || (cueDelayMs !== null && idleProgress === progress);
+  const idleHintCellIndex =
+    cueShown && !guiding
+      ? findTakuzuTutorialHintCellIndex(situation, boardState)
+      : null;
+  const hintCellIndices = !cueShown
+    ? []
+    : guiding
+      ? getTakuzuTutorialStepCellIndices(situation, boardState)
+      : idleHintCellIndex === null
+        ? []
+        : [idleHintCellIndex];
 
   useEffect(() => {
-    if (!open || hintDelayMs === null || hintDelayMs === 0) {
+    if (!open || cueDelayMs === null || cueDelayMs === 0) {
       return;
     }
     const timer = window.setTimeout(
       () => setIdleProgress(progress),
-      hintDelayMs,
+      cueDelayMs,
     );
     return () => window.clearTimeout(timer);
-  }, [open, progress, hintDelayMs]);
+  }, [open, progress, cueDelayMs]);
 
   useEffect(() => {
     return () => {
-      if (advanceTimerRef.current !== null) {
-        window.clearTimeout(advanceTimerRef.current);
-      }
       if (violationTimerRef.current !== null) {
         window.clearTimeout(violationTimerRef.current);
       }
@@ -193,16 +171,13 @@ export function TakuzuTutorial({
   }
 
   const handleClearAnimationComplete = useCallback(() => {
-    advanceTimerRef.current = window.setTimeout(() => {
-      advanceTimerRef.current = null;
-      setProgress((current) => advanceTutorialStage(takuzuTutorial, current));
-    }, STAGE_SOLVED_PAUSE_MS);
+    setProgress(completeTutorial);
   }, []);
 
   function perform(action: TakuzuTutorialAction): void {
     const next = performTutorialAction(takuzuTutorial, progress, action);
     if (next === progress) {
-      if (guide !== null) {
+      if (guiding) {
         setHintCueId((id) => id + 1);
       }
       return;
@@ -231,14 +206,11 @@ export function TakuzuTutorial({
 
   // 終えたかどうかは残さないので、閉じたら次に開いたとき最初から始まるようにする。
   function restart(): void {
-    if (advanceTimerRef.current !== null) {
-      window.clearTimeout(advanceTimerRef.current);
-      advanceTimerRef.current = null;
-    }
     cancelViolationReaction();
     setIdleProgress(null);
     setSettledViolationProgress(null);
     setProgress(startTutorial(takuzuTutorial));
+    setRunId((id) => id + 1);
   }
 
   function handleClose(): void {
@@ -251,6 +223,7 @@ export function TakuzuTutorial({
     onStartPlay?.();
   }
 
+  const { size } = boardState.board;
   return (
     <TutorialOverlay
       open={open}
@@ -258,7 +231,7 @@ export function TakuzuTutorial({
       rules={takuzuTutorial.rules.map((rule) => ({
         ...rule,
         earned: progress.earnedRuleIds.includes(rule.id),
-        current: stage.introducedRuleId === rule.id,
+        current: situation.step?.introducedRuleId === rule.id,
       }))}
       message={getTutorialMessage(takuzuTutorial, progress, violationSettled)}
       completed={progress.phase === "completed"}
@@ -270,26 +243,27 @@ export function TakuzuTutorial({
       onRestart={restart}
       onClose={handleClose}
     >
-      {/* ステージごとに盤面を作り直し、次の盤面が現れる動きを付ける。 */}
       <div
-        key={progress.stageIndex}
-        className="animate-in fade-in-0 zoom-in-90 duration-300 ease-(--ease-enter) motion-reduce:animate-none"
-        style={getBoardFrameStyle(rowCount, columnCount)}
+        key={runId}
+        className="aspect-square w-[min(100cqw,100cqh,28rem)] animate-in fade-in-0 zoom-in-90 duration-300 ease-(--ease-enter) motion-reduce:animate-none"
       >
         <TakuzuClearAnimation
-          active={progress.phase === "stage-solved"}
+          active={progress.phase === "solved"}
           onComplete={handleClearAnimationComplete}
         >
           <TakuzuBoard
-            rowCount={rowCount}
-            columnCount={columnCount}
-            cells={getTakuzuTutorialCellViews(stage, stageState)}
-            lineViolations={getTakuzuTutorialLineViolations(stage, stageState)}
+            rowCount={size}
+            columnCount={size}
+            cells={getTakuzuTutorialCellViews(situation, boardState)}
+            lineViolations={getTakuzuTutorialLineViolations(
+              situation,
+              boardState,
+            )}
             disabled={progress.phase !== "playing"}
             cues={getCellCues(
-              stageState,
+              boardState,
               violationSettled,
-              hintCellIndex,
+              hintCellIndices,
               hintCueId,
             )}
             onCycleCell={handleCycleCell}

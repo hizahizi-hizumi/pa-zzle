@@ -1,8 +1,9 @@
 /**
- * 小さなパズルを順に解きながら、示されたルールをすぐ使って身につけるチュートリアルの、ゲームに依存しない契約。
- * ステージの進行、手に入れたルール、盤面の上に出す一言を扱い、盤面と判定はゲームが持つ。
+ * 1つの盤面を、ルールを1つずつ示しながら一緒に埋めていくチュートリアルの、ゲームに依存しない契約。
+ * 最初は手順ごとに一言と操作するところを示して手を引き、手順を終えたら手を離して残りを解かせる。
+ * 手順の進行、手に入れたルール、盤面の上に出す一言を扱い、盤面と判定はゲームが持つ。
  * - `RuleId`: ゲームのルールの識別子。
- * - `StageState`: 1つのステージを解いている途中の盤面の状態。
+ * - `BoardState`: 盤面を解いている途中の状態。
  * - `Action`: 利用者の1回の操作。
  */
 
@@ -19,138 +20,88 @@ export type TutorialRule<RuleId extends string> = {
 };
 
 /**
- * ステージの最初の数手だけ手を引く案内の1手ぶん。決まるマスを最初から示し、手を引いている間はそのマスへの操作だけを受け付ける。
- * 示したマスに案内どおりの手が置かれたら、次の案内へ進む。
- * - `ruleId`: 示すマスを決めるルール。`null` ならルールによらず、ゲームがステージの目標から示すマスを決める。操作だけを練習するステージに使う。
- * - `message`: 案内している間の一言。
+ * 手を引く1手順。ゲームは、手順で操作させるところと、そこを終えたとみなす盤面を、この型を広げて持つ。
+ * - `message`: この手順の間の一言。
+ * - `introducedRuleId`: この手順で示すルール。手順を始めた時点で手に入り、上部のチップでも今示しているルールとして目立たせる。
  */
-export type TutorialGuide<RuleId extends string> = {
-  ruleId: RuleId | null;
+export type TutorialStep<RuleId extends string> = {
   message: TutorialMessage;
-};
-
-/**
- * 1つのステージ。ルールは使わせる前に示し、答えは示さず、文言は手の結果に応じて切り替える。
- * - `intro`: ステージを始めたときと、ルールに合う手を置いたとき。案内があるステージでは、案内を終えた後。
- * - `guides`: 最初の数手の案内。順に1つずつ進み、すべて終えたら手を離す。
- * - `solved`: 解けたとき。
- * - `introducedRuleId`: ステージを始めるときに示すルール。示した時点で手に入り、`intro` でそのルールを言う。上部のチップでも、今のステージで示したルールとして目立たせる。
- */
-export type TutorialStage<RuleId extends string> = {
-  intro: TutorialMessage;
-  guides: readonly TutorialGuide<RuleId>[];
-  solved: TutorialMessage;
   introducedRuleId: RuleId | null;
 };
 
 /**
+ * ゲームが手を判定するときの、今の手順と手に入れたルール。
+ * - `step`: 手を引いている手順。手順を終えて手を離した後は `null`。
+ * - `earnedRuleIds`: 手に入れたルール。まだ示していないルールの違反は見せない。
+ */
+export type TutorialSituation<
+  RuleId extends string,
+  Step extends TutorialStep<RuleId>,
+> = {
+  step: Step | null;
+  earnedRuleIds: readonly RuleId[];
+};
+
+/**
  * ゲームが判定した1手の結果。
- * - `ignored`: 盤面が変わらなかった。
- * - `continued`: ルールに合うところに置いた。まだ解けていない。
- * - `guided`: 案内しているところに、案内どおりの手を置いた。まだ解けていない。次の案内へ進む。
- * - `violated`: ルールに合わないところができた。
+ * - `ignored`: 盤面が変わらなかった。手を引いている間に、手順で操作させていないところを押した場合も含む。
+ * - `continued`: 盤面が変わった。ルールに合わないところは無く、手順もまだ終えていない。
+ * - `stepped`: 手順で操作させたところを、手順どおりにした。次の手順へ進む。
+ * - `violated`: 手に入れたルールに合わないところができた。
  * - `solved`: 解けた。
  */
 export type TutorialMoveOutcome =
   | "ignored"
   | "continued"
-  | "guided"
+  | "stepped"
   | "violated"
   | "solved";
 
 export type Tutorial<
   RuleId extends string,
-  Stage extends TutorialStage<RuleId>,
-  StageState,
+  Step extends TutorialStep<RuleId>,
+  BoardState,
   Action,
 > = {
   /** 上部に並べる順。 */
   rules: readonly TutorialRule<RuleId>[];
-  stages: readonly Stage[];
-  /** すべてのステージを解き終えたときの一言。 */
+  /** 手を引く順。最後の手順を終えると手を離す。 */
+  steps: readonly Step[];
+  /** 手を離した後、解き終えるまでの一言。 */
+  freePlay: TutorialMessage;
+  /** 解き終えたときの一言。 */
   completion: TutorialMessage;
-  startStage: (stage: Stage) => StageState;
-  /** ルールに合わないところが続いたときの一言。どのルールに当たったかを、今の盤面から具体的に言う。 */
-  describeViolation: (stage: Stage, state: StageState) => TutorialMessage;
-  /**
-   * 案内を始めるときと、すべての案内を終えて手を離すとき（`guide` が `null`）に呼ぶ。
-   * 手を引いている間にどの操作を受け付けるかは、ゲームがここで盤面の状態に決めておき、`perform` で守る。
-   */
-  startGuide: (
-    stage: Stage,
-    state: StageState,
-    guide: TutorialGuide<RuleId> | null,
-  ) => StageState;
+  start: () => BoardState;
   perform: (
-    stage: Stage,
-    state: StageState,
+    situation: TutorialSituation<RuleId, Step>,
+    state: BoardState,
     action: Action,
-  ) => { state: StageState; outcome: TutorialMoveOutcome };
+  ) => { state: BoardState; outcome: TutorialMoveOutcome };
+  /** ルールに合わないところが続いたときの一言。どのルールに当たったかを、今の盤面から具体的に言う。 */
+  describeViolation: (
+    situation: TutorialSituation<RuleId, Step>,
+    state: BoardState,
+  ) => TutorialMessage;
 };
 
 /**
- * - `playing`: ステージを解いている。
- * - `stage-solved`: ステージを解き、次へ進むのを待っている。解けた盤面の演出を見せる間。
- * - `completed`: すべてのステージを解き終えた。
+ * - `playing`: 盤面を解いている。
+ * - `solved`: 解けた。解けた盤面の演出を見せている間。
+ * - `completed`: 演出を終え、終えたときの操作を待っている。
  */
-export type TutorialPhase = "playing" | "stage-solved" | "completed";
+export type TutorialPhase = "playing" | "solved" | "completed";
 
 /**
- * - `guideIndex`: ステージの案内のうち、今の案内の位置。案内の数と同じなら手を離している。
- * - `message`: ルールに合わないところが無いときの一言。
+ * - `stepIndex`: 今の手順の位置。手順の数と同じなら手を離している。
  * - `violated`: 最後の手でルールに合わないところができている。違反の一言は、違反がしばらく続いたときに出す側が出す。
  */
-export type TutorialProgress<RuleId extends string, StageState> = {
-  stageIndex: number;
-  stageState: StageState;
+export type TutorialProgress<RuleId extends string, BoardState> = {
+  boardState: BoardState;
+  stepIndex: number;
   earnedRuleIds: readonly RuleId[];
-  guideIndex: number;
-  message: TutorialMessage;
   violated: boolean;
   phase: TutorialPhase;
 };
-
-function startStageProgress<
-  RuleId extends string,
-  Stage extends TutorialStage<RuleId>,
-  StageState,
-  Action,
->(
-  tutorial: Tutorial<RuleId, Stage, StageState, Action>,
-  stageIndex: number,
-  earnedRuleIds: readonly RuleId[],
-): TutorialProgress<RuleId, StageState> {
-  const stage = getTutorialStage(tutorial, stageIndex);
-  return {
-    stageIndex,
-    stageState: tutorial.startGuide(
-      stage,
-      tutorial.startStage(stage),
-      stage.guides[0] ?? null,
-    ),
-    earnedRuleIds: earnRule(earnedRuleIds, stage.introducedRuleId),
-    guideIndex: 0,
-    message: stage.guides[0]?.message ?? stage.intro,
-    violated: false,
-    phase: "playing",
-  };
-}
-
-function getTutorialStage<
-  RuleId extends string,
-  Stage extends TutorialStage<RuleId>,
-  StageState,
-  Action,
->(
-  tutorial: Tutorial<RuleId, Stage, StageState, Action>,
-  stageIndex: number,
-): Stage {
-  const stage = tutorial.stages[stageIndex];
-  if (!stage) {
-    throw new RangeError(`Tutorial has no stage ${stageIndex}`);
-  }
-  return stage;
-}
 
 function earnRule<RuleId extends string>(
   earnedRuleIds: readonly RuleId[],
@@ -161,36 +112,77 @@ function earnRule<RuleId extends string>(
     : [...earnedRuleIds, ruleId];
 }
 
-/** ルールに合う手を置いたときの一言。案内の途中ならその案内を出し続ける。 */
-function getGuidingMessage<RuleId extends string>(
-  stage: TutorialStage<RuleId>,
-  guideIndex: number,
-): TutorialMessage {
-  return stage.guides[guideIndex]?.message ?? stage.intro;
+/** 手順を始め、その手順で示すルールを手に入れる。 */
+function enterStep<
+  RuleId extends string,
+  Step extends TutorialStep<RuleId>,
+  BoardState,
+  Action,
+>(
+  tutorial: Tutorial<RuleId, Step, BoardState, Action>,
+  progress: TutorialProgress<RuleId, BoardState>,
+  stepIndex: number,
+): TutorialProgress<RuleId, BoardState> {
+  const step = tutorial.steps[stepIndex];
+  return {
+    ...progress,
+    stepIndex,
+    earnedRuleIds: earnRule(
+      progress.earnedRuleIds,
+      step?.introducedRuleId ?? null,
+    ),
+  };
 }
 
 export function startTutorial<
   RuleId extends string,
-  Stage extends TutorialStage<RuleId>,
-  StageState,
+  Step extends TutorialStep<RuleId>,
+  BoardState,
   Action,
 >(
-  tutorial: Tutorial<RuleId, Stage, StageState, Action>,
-): TutorialProgress<RuleId, StageState> {
-  return startStageProgress(tutorial, 0, []);
+  tutorial: Tutorial<RuleId, Step, BoardState, Action>,
+): TutorialProgress<RuleId, BoardState> {
+  return enterStep(
+    tutorial,
+    {
+      boardState: tutorial.start(),
+      stepIndex: 0,
+      earnedRuleIds: [],
+      violated: false,
+      phase: "playing",
+    },
+    0,
+  );
 }
 
-/** 取り組んでいる、または最後に解いたステージ。 */
-export function getCurrentTutorialStage<
+/** 手を引いている手順。手を離した後と、解いている間でなければ `null`。 */
+export function getCurrentTutorialStep<
   RuleId extends string,
-  Stage extends TutorialStage<RuleId>,
-  StageState,
+  Step extends TutorialStep<RuleId>,
+  BoardState,
   Action,
 >(
-  tutorial: Tutorial<RuleId, Stage, StageState, Action>,
-  progress: TutorialProgress<RuleId, StageState>,
-): Stage {
-  return getTutorialStage(tutorial, progress.stageIndex);
+  tutorial: Tutorial<RuleId, Step, BoardState, Action>,
+  progress: TutorialProgress<RuleId, BoardState>,
+): Step | null {
+  return progress.phase === "playing"
+    ? (tutorial.steps[progress.stepIndex] ?? null)
+    : null;
+}
+
+export function getTutorialSituation<
+  RuleId extends string,
+  Step extends TutorialStep<RuleId>,
+  BoardState,
+  Action,
+>(
+  tutorial: Tutorial<RuleId, Step, BoardState, Action>,
+  progress: TutorialProgress<RuleId, BoardState>,
+): TutorialSituation<RuleId, Step> {
+  return {
+    step: getCurrentTutorialStep(tutorial, progress),
+    earnedRuleIds: progress.earnedRuleIds,
+  };
 }
 
 /**
@@ -199,106 +191,68 @@ export function getCurrentTutorialStage<
  */
 export function getTutorialMessage<
   RuleId extends string,
-  Stage extends TutorialStage<RuleId>,
-  StageState,
+  Step extends TutorialStep<RuleId>,
+  BoardState,
   Action,
 >(
-  tutorial: Tutorial<RuleId, Stage, StageState, Action>,
-  progress: TutorialProgress<RuleId, StageState>,
+  tutorial: Tutorial<RuleId, Step, BoardState, Action>,
+  progress: TutorialProgress<RuleId, BoardState>,
   violationSettled: boolean,
 ): TutorialMessage {
-  return progress.violated && violationSettled
-    ? tutorial.describeViolation(
-        getCurrentTutorialStage(tutorial, progress),
-        progress.stageState,
-      )
-    : progress.message;
-}
-
-/** 手を引いている間の今の案内。手を離した後と、ステージを解いている間でなければ `null`。 */
-export function getCurrentTutorialGuide<
-  RuleId extends string,
-  Stage extends TutorialStage<RuleId>,
-  StageState,
-  Action,
->(
-  tutorial: Tutorial<RuleId, Stage, StageState, Action>,
-  progress: TutorialProgress<RuleId, StageState>,
-): TutorialGuide<RuleId> | null {
   if (progress.phase !== "playing") {
-    return null;
+    return tutorial.completion;
   }
-  const stage = getCurrentTutorialStage(tutorial, progress);
-  return stage.guides[progress.guideIndex] ?? null;
+  const situation = getTutorialSituation(tutorial, progress);
+  if (progress.violated && violationSettled) {
+    return tutorial.describeViolation(situation, progress.boardState);
+  }
+  return situation.step?.message ?? tutorial.freePlay;
 }
 
-/** ステージを解いている間だけ操作を受け付ける。それ以外では同じ進行をそのまま返す。 */
+/** 解いている間だけ操作を受け付ける。それ以外と、盤面が変わらない手では、同じ進行をそのまま返す。 */
 export function performTutorialAction<
   RuleId extends string,
-  Stage extends TutorialStage<RuleId>,
-  StageState,
+  Step extends TutorialStep<RuleId>,
+  BoardState,
   Action,
 >(
-  tutorial: Tutorial<RuleId, Stage, StageState, Action>,
-  progress: TutorialProgress<RuleId, StageState>,
+  tutorial: Tutorial<RuleId, Step, BoardState, Action>,
+  progress: TutorialProgress<RuleId, BoardState>,
   action: Action,
-): TutorialProgress<RuleId, StageState> {
+): TutorialProgress<RuleId, BoardState> {
   if (progress.phase !== "playing") {
     return progress;
   }
 
-  const stage = getCurrentTutorialStage(tutorial, progress);
   const { state, outcome } = tutorial.perform(
-    stage,
-    progress.stageState,
+    getTutorialSituation(tutorial, progress),
+    progress.boardState,
     action,
   );
-  const moved = { ...progress, stageState: state, violated: false };
+  const moved = { ...progress, boardState: state, violated: false };
   switch (outcome) {
     case "ignored":
       return progress;
     case "continued":
-      return {
-        ...moved,
-        message: getGuidingMessage(stage, progress.guideIndex),
-      };
-    case "guided": {
-      const guideIndex = Math.min(progress.guideIndex + 1, stage.guides.length);
-      return {
-        ...moved,
-        stageState: tutorial.startGuide(
-          stage,
-          state,
-          stage.guides[guideIndex] ?? null,
-        ),
-        guideIndex,
-        message: getGuidingMessage(stage, guideIndex),
-      };
-    }
+      return moved;
+    case "stepped":
+      return enterStep(
+        tutorial,
+        moved,
+        Math.min(progress.stepIndex + 1, tutorial.steps.length),
+      );
     case "violated":
       return { ...moved, violated: true };
     case "solved":
-      return { ...moved, message: stage.solved, phase: "stage-solved" };
+      return { ...moved, phase: "solved" };
   }
 }
 
-/** 解いたステージから次のステージへ進む。最後のステージなら終える。 */
-export function advanceTutorialStage<
-  RuleId extends string,
-  Stage extends TutorialStage<RuleId>,
-  StageState,
-  Action,
->(
-  tutorial: Tutorial<RuleId, Stage, StageState, Action>,
-  progress: TutorialProgress<RuleId, StageState>,
-): TutorialProgress<RuleId, StageState> {
-  if (progress.phase !== "stage-solved") {
-    return progress;
-  }
-
-  const nextStageIndex = progress.stageIndex + 1;
-  if (nextStageIndex >= tutorial.stages.length) {
-    return { ...progress, message: tutorial.completion, phase: "completed" };
-  }
-  return startStageProgress(tutorial, nextStageIndex, progress.earnedRuleIds);
+/** 解けた盤面の演出を終えて、終えたときの操作を出す。 */
+export function completeTutorial<RuleId extends string, BoardState>(
+  progress: TutorialProgress<RuleId, BoardState>,
+): TutorialProgress<RuleId, BoardState> {
+  return progress.phase === "solved"
+    ? { ...progress, phase: "completed" }
+    : progress;
 }
