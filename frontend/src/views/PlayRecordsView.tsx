@@ -1,5 +1,6 @@
 import { useState, useSyncExternalStore } from "react";
 
+import { HomeBackLink } from "@/components/HomeBackLink";
 import {
   findAttemptProblemPlayDestination,
   findRecordProblemPlayDestination,
@@ -39,12 +40,7 @@ export function PlayRecordsView() {
 
   return (
     <section className="mx-auto w-full max-w-3xl">
-      <Link
-        to="/"
-        className="text-supporting text-muted-foreground hover:text-foreground"
-      >
-        ← パズル選択
-      </Link>
+      <HomeBackLink />
       <PlayRecordsScreen
         records={records}
         attempts={attempts}
