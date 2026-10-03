@@ -19,7 +19,8 @@ export type TutorialRule<RuleId extends string> = {
 };
 
 /**
- * ステージの最初の数手だけ手を引く案内の1手ぶん。決まるマスを最初から示し、その手が置かれたら次の案内へ進む。
+ * ステージの最初の数手だけ手を引く案内の1手ぶん。決まるマスを最初から示し、手を引いている間はそのマスへの操作だけを受け付ける。
+ * 示したマスに案内どおりの手が置かれたら、次の案内へ進む。
  * - `ruleId`: 示すマスを決めるルール。
  * - `message`: 案内している間の一言。
  */
@@ -50,7 +51,7 @@ export type TutorialStage<RuleId extends string> = {
  * ゲームが判定した1手の結果。
  * - `ignored`: 盤面が変わらなかった。
  * - `continued`: ルールに合うところに置いた。まだ解けていない。
- * - `deduced`: ルールに合うところに、手前の盤面から決まっていたタイルを置いた。まだ解けていない。案内を1つ進める。
+ * - `guided`: 案内しているところに、案内どおりの手を置いた。まだ解けていない。次の案内へ進む。
  * - `violated`: ルールに合わないところができた。
  * - `rule-revealed`: ステージの `revealedRule` を明かす局面になった。
  * - `solved`: 解けた。
@@ -58,7 +59,7 @@ export type TutorialStage<RuleId extends string> = {
 export type TutorialMoveOutcome =
   | "ignored"
   | "continued"
-  | "deduced"
+  | "guided"
   | "violated"
   | "rule-revealed"
   | "solved";
@@ -75,6 +76,15 @@ export type Tutorial<
   /** すべてのステージを解き終えたときの一言。 */
   completion: TutorialMessage;
   startStage: (stage: Stage) => StageState;
+  /**
+   * 案内を始めるときと、すべての案内を終えて手を離すとき（`guide` が `null`）に呼ぶ。
+   * 手を引いている間にどの操作を受け付けるかは、ゲームがここで盤面の状態に決めておき、`perform` で守る。
+   */
+  startGuide: (
+    stage: Stage,
+    state: StageState,
+    guide: TutorialGuide<RuleId> | null,
+  ) => StageState;
   perform: (
     stage: Stage,
     state: StageState,
@@ -117,7 +127,11 @@ function startStageProgress<
   const stage = getTutorialStage(tutorial, stageIndex);
   return {
     stageIndex,
-    stageState: tutorial.startStage(stage),
+    stageState: tutorial.startGuide(
+      stage,
+      tutorial.startStage(stage),
+      stage.guides[0] ?? null,
+    ),
     earnedRuleIds,
     guideIndex: 0,
     message: stage.guides[0]?.message ?? stage.intro,
@@ -257,10 +271,15 @@ export function performTutorialAction<
           progress.guideIndex,
         ),
       };
-    case "deduced": {
+    case "guided": {
       const guideIndex = Math.min(progress.guideIndex + 1, stage.guides.length);
       return {
         ...moved,
+        stageState: tutorial.startGuide(
+          stage,
+          state,
+          stage.guides[guideIndex] ?? null,
+        ),
         guideIndex,
         message: getGuidingMessage(stage, progress.earnedRuleIds, guideIndex),
       };

@@ -22,6 +22,7 @@ import type {
 } from "@/games/takuzu/session/session";
 import type {
   Tutorial,
+  TutorialGuide,
   TutorialMoveOutcome,
   TutorialStage,
 } from "@/games/tutorial";
@@ -63,12 +64,14 @@ export type TakuzuTutorialMove = {
 /**
  * - `ruleIds`: 今の判定に使うルール。ステージの途中で明かしたルールを含む。
  * - `moveCount`: 盤面を変えた手の数。同じマスへの合図をやり直す目印に使う。
+ * - `guidedCellIndex`: 手を引いている間に示し、操作を受け付ける唯一のマス。案内を始めた盤面で決め、その案内の間は動かさない。手を離していれば `null`。
  */
 export type TakuzuTutorialStageState = {
   grid: TakuzuGrid;
   ruleIds: readonly TakuzuTutorialRuleId[];
   moveCount: number;
   lastMove: TakuzuTutorialMove | null;
+  guidedCellIndex: number | null;
 };
 
 /** 空きマスに入るタイルが、今の盤面とルールだけで決まるときの、そのタイルと決め手のマス。 */
@@ -323,7 +326,29 @@ function startTakuzuTutorialStage(
     ruleIds: stage.ruleIds,
     moveCount: 0,
     lastMove: null,
+    guidedCellIndex: null,
   };
+}
+
+function startTakuzuTutorialGuide(
+  _stage: TakuzuTutorialStage,
+  state: TakuzuTutorialStageState,
+  guide: TutorialGuide<TakuzuTutorialRuleId> | null,
+): TakuzuTutorialStageState {
+  return {
+    ...state,
+    guidedCellIndex:
+      guide === null
+        ? null
+        : findTakuzuTutorialHintCellIndex(state, guide.ruleId),
+  };
+}
+
+function isOutsideGuide(
+  state: TakuzuTutorialStageState,
+  cellIndex: number,
+): boolean {
+  return state.guidedCellIndex !== null && state.guidedCellIndex !== cellIndex;
 }
 
 function performTakuzuTutorialAction(
@@ -334,7 +359,7 @@ function performTakuzuTutorialAction(
   const { cellIndex } = action;
   const current = state.grid.cells[cellIndex];
   const given = (stage.givens.cells[cellIndex] ?? null) !== null;
-  if (current === undefined || given) {
+  if (current === undefined || given || isOutsideGuide(state, cellIndex)) {
     return { state, outcome: "ignored" };
   }
   const placed = getPlacedCell(current, action);
@@ -356,6 +381,7 @@ function performTakuzuTutorialAction(
       ? []
       : getPlacementReason(state.grid, state.ruleIds, cellIndex, placed);
   const next: TakuzuTutorialStageState = {
+    ...state,
     grid,
     ruleIds,
     moveCount: state.moveCount + 1,
@@ -378,10 +404,9 @@ function performTakuzuTutorialAction(
   if (hasTakuzuRuleViolation(visibleViolations)) {
     return { state: next, outcome: "violated" };
   }
-  return {
-    state: next,
-    outcome: reasonCellIndices.length > 0 ? "deduced" : "continued",
-  };
+  const followedGuide =
+    state.guidedCellIndex === cellIndex && reasonCellIndices.length > 0;
+  return { state: next, outcome: followedGuide ? "guided" : "continued" };
 }
 
 export function getTakuzuTutorialCellViews(
@@ -462,6 +487,7 @@ const violationMessage = {
  * - 3 `ABA.`: 四角を置くと多すぎ、丸で解ける。同じ数を知る。
  * - 4: 3つ続かないことと同じ数だけで解き切れる。1行から盤面への飛躍を埋めるため、最初の2手だけ、
  *   3つ続かない・同じ数の順にそれぞれで決まるマスを示して手を引き、その後は手が止まったときだけ示す。
+ *   手を引いている間は示したマスにしか置けず、どちらのマスも違う方を置くと知っているルールに合わなくなるので、自分で気づいて直せる。
  * - 5: 途中で2つのルールでは決まらなくなる。そこで同じ並びを作れないことを明かし、それで解き切る。
  */
 const stages: readonly TakuzuTutorialStage[] = [
@@ -581,6 +607,7 @@ export const takuzuTutorial: Tutorial<
     detail: "本番は 8×8。同じ3つのルールで解ける",
   },
   startStage: startTakuzuTutorialStage,
+  startGuide: startTakuzuTutorialGuide,
   perform: performTakuzuTutorialAction,
 };
 

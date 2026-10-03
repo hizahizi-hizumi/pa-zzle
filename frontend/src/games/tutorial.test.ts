@@ -65,6 +65,9 @@ const fakeTutorial: Tutorial<
   startStage() {
     return 0;
   },
+  startGuide(_stage, state) {
+    return state;
+  },
   perform(_stage, state, action) {
     return {
       state: action === "ignored" ? state : state + 1,
@@ -260,8 +263,8 @@ describe("案内のあるステージ", () => {
     expect(started.message).toBe(guidedStage.guides[0]?.message);
   });
 
-  test("決まる手を置くと次の案内へ進むこと", () => {
-    const result = performTutorialAction(guidedTutorial, started, "deduced");
+  test("案内どおりの手を置くと次の案内へ進むこと", () => {
+    const result = performTutorialAction(guidedTutorial, started, "guided");
 
     expect(getCurrentTutorialGuide(guidedTutorial, result)).toBe(
       guidedStage.guides[1],
@@ -269,7 +272,7 @@ describe("案内のあるステージ", () => {
     expect(result.message).toBe(guidedStage.guides[1]?.message);
   });
 
-  test("決まらない手や違反では案内を進めないこと", () => {
+  test("案内どおりでない手や違反では案内を進めないこと", () => {
     const result = performAll(
       started,
       ["continued", "violated", "continued"],
@@ -283,12 +286,27 @@ describe("案内のあるステージ", () => {
   test("すべての案内を終えると手を離し、導入の一言を出すこと", () => {
     const result = performAll(
       started,
-      ["deduced", "deduced", "deduced"],
+      ["guided", "guided", "guided"],
       guidedTutorial,
     );
 
     expect(getCurrentTutorialGuide(guidedTutorial, result)).toBeNull();
     expect(result.guideIndex).toBe(2);
     expect(result.message).toBe(guidedStage.intro);
+  });
+
+  test("案内を始めるたびと手を離すときに、ゲームへ今の案内を渡すこと", () => {
+    const startGuide = vi.fn<typeof fakeTutorial.startGuide>(
+      (_stage, state) => state,
+    );
+    const tutorial = { ...guidedTutorial, startGuide };
+
+    performAll(startTutorial(tutorial), ["guided", "guided"], tutorial);
+
+    expect(startGuide.mock.calls.map(([, , guide]) => guide)).toEqual([
+      guidedStage.guides[0],
+      guidedStage.guides[1],
+      null,
+    ]);
   });
 });

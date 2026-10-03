@@ -79,29 +79,34 @@ function getBoardFrameStyle(
 
 /**
  * 決まるマスを示すまでの間。0 ならすぐ示し、`null` なら示さない。
- * 手を引いている間は最初から示し、手を離した後は手が止まったときだけ示す。違反がある間は直すことに向かわせるため示さない。
+ * 手を引いている間は、示したマスにしか置けないので、違反があっても示し続ける。
+ * 手を離した後は手が止まったときだけ示し、違反がある間は直すことに向かわせるため示さない。
  */
 function getHintDelayMs(
   progress: TakuzuTutorialProgress,
   idleHintDelayMs: number,
   guiding: boolean,
 ): number | null {
-  if (progress.phase !== "playing" || progress.violated) {
+  if (progress.phase !== "playing") {
     return null;
   }
   if (!guiding) {
-    return idleHintDelayMs;
+    return progress.violated ? null : idleHintDelayMs;
   }
   const reasoned =
     (progress.stageState.lastMove?.reasonCellIndices.length ?? 0) > 0;
   return reasoned ? NEXT_GUIDE_HINT_DELAY_MS : 0;
 }
 
-/** 違反の揺れは、違反が続いたとき（`violationSettled`）だけ返す。 */
+/**
+ * 違反の揺れは、違反が続いたとき（`violationSettled`）だけ返す。
+ * 示すマスの合図は `hintCueId` が変わったときだけやり直し、手を置くたびには示し直さない。
+ */
 function getCellCues(
   state: TakuzuTutorialStageState,
   violationSettled: boolean,
   hintCellIndex: number | null,
+  hintCueId: number,
 ): TakuzuCellCue[] {
   const { lastMove, moveCount } = state;
   const moveCues: TakuzuCellCue[] = !lastMove
@@ -115,10 +120,9 @@ function getCellCues(
           kind: "reason",
           id: moveCount,
         }));
-  // 示すマスが変わらない間は、手を置いても示し直さない。
   return hintCellIndex === null
     ? moveCues
-    : [...moveCues, { cellIndex: hintCellIndex, kind: "hint", id: 0 }];
+    : [...moveCues, { cellIndex: hintCellIndex, kind: "hint", id: hintCueId }];
 }
 
 /**
@@ -137,6 +141,8 @@ export function TakuzuTutorial({
     useState<TakuzuTutorialProgress | null>(null);
   const [settledViolationProgress, setSettledViolationProgress] =
     useState<TakuzuTutorialProgress | null>(null);
+  // 手を引いている間に示していないマスを押されたら、示しているマスを示し直す。
+  const [hintCueId, setHintCueId] = useState(0);
   const advanceTimerRef = useRef<number | null>(null);
   const violationTimerRef = useRef<number | null>(null);
   const stage = getCurrentTutorialStage(takuzuTutorial, progress);
@@ -149,10 +155,13 @@ export function TakuzuTutorial({
     stage.idleHintDelayMs,
     guide !== null,
   );
-  const hintCellIndex =
-    hintDelayMs === 0 || (hintDelayMs !== null && idleProgress === progress)
-      ? findTakuzuTutorialHintCellIndex(stageState, guide?.ruleId ?? null)
-      : null;
+  const hintShown =
+    hintDelayMs === 0 || (hintDelayMs !== null && idleProgress === progress);
+  const hintCellIndex = !hintShown
+    ? null
+    : guide !== null
+      ? stageState.guidedCellIndex
+      : findTakuzuTutorialHintCellIndex(stageState);
 
   useEffect(() => {
     if (!open || hintDelayMs === null || hintDelayMs === 0) {
@@ -193,6 +202,9 @@ export function TakuzuTutorial({
   function perform(action: TakuzuTutorialAction): void {
     const next = performTutorialAction(takuzuTutorial, progress, action);
     if (next === progress) {
+      if (guide !== null) {
+        setHintCueId((id) => id + 1);
+      }
       return;
     }
     setProgress(next);
@@ -273,7 +285,12 @@ export function TakuzuTutorial({
             cells={getTakuzuTutorialCellViews(stage, stageState)}
             lineViolations={getTakuzuTutorialLineViolations(stageState)}
             disabled={progress.phase !== "playing"}
-            cues={getCellCues(stageState, violationSettled, hintCellIndex)}
+            cues={getCellCues(
+              stageState,
+              violationSettled,
+              hintCellIndex,
+              hintCueId,
+            )}
             onCycleCell={handleCycleCell}
             onPlaceCell={handlePlaceCell}
           />

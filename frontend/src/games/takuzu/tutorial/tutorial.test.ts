@@ -93,6 +93,7 @@ function fillByDeduction(
 function performAll(
   stage: TakuzuTutorialStage,
   actions: readonly TakuzuTutorialAction[],
+  initialState: TakuzuTutorialStageState = takuzuTutorial.startStage(stage),
 ): { state: TakuzuTutorialStageState; outcomes: TutorialMoveOutcome[] } {
   return actions.reduce<{
     state: TakuzuTutorialStageState;
@@ -102,7 +103,19 @@ function performAll(
       const result = takuzuTutorial.perform(stage, state, action);
       return { state: result.state, outcomes: [...outcomes, result.outcome] };
     },
-    { state: takuzuTutorial.startStage(stage), outcomes: [] },
+    { state: initialState, outcomes: [] },
+  );
+}
+
+function startGuide(
+  stage: TakuzuTutorialStage,
+  state: TakuzuTutorialStageState,
+  guideIndex: number,
+): TakuzuTutorialStageState {
+  return takuzuTutorial.startGuide(
+    stage,
+    state,
+    stage.guides[guideIndex] ?? null,
   );
 }
 
@@ -234,22 +247,92 @@ describe("takuzuTutorial.perform", () => {
     });
   });
 
-  describe("ステージ4", () => {
-    test("挟まれて決まるマスに置くと、決まる手として返すこと", () => {
-      // 4行目 `.B.B` の3列目は、丸に挟まれて四角に決まる。
-      const { outcomes } = performAll(twoRuleStage, [place(14, "a")]);
+  describe("ステージ4で手を引いている場合", () => {
+    const firstGuideState = startGuide(
+      twoRuleStage,
+      takuzuTutorial.startStage(twoRuleStage),
+      0,
+    );
+    // 4行目 `.B.B` の3列目は、丸に挟まれて四角に決まる。
+    const secondGuideState = startGuide(
+      twoRuleStage,
+      performAll(twoRuleStage, [place(14, "a")], firstGuideState).state,
+      1,
+    );
 
-      const result = outcomes;
+    test("1つ目の案内では、3つ続かないことで決まるマスを示すこと", () => {
+      const result = firstGuideState.guidedCellIndex;
 
-      expect(result).toEqual(["deduced"]);
+      expect(result).toBe(14);
     });
 
-    test("まだ決まらないマスに置くと、決まる手として返さないこと", () => {
-      const { outcomes } = performAll(twoRuleStage, [place(0, "a")]);
+    test("示していないマスへの操作は、決まるマスでも盤面を変えないこと", () => {
+      // 4列目は丸が2つそろっていて、2行目は四角に決まる。
+      const { state, outcomes } = performAll(
+        twoRuleStage,
+        [place(0, "a"), tap(7), place(7, "a")],
+        firstGuideState,
+      );
 
-      const result = outcomes;
+      expect(outcomes).toEqual(["ignored", "ignored", "ignored"]);
+      expect(state).toBe(firstGuideState);
+    });
 
-      expect(result).toEqual(["continued"]);
+    test("示したマスに案内どおりのタイルを置くと、案内どおりの手として返すこと", () => {
+      const { outcomes } = performAll(
+        twoRuleStage,
+        [place(14, "a")],
+        firstGuideState,
+      );
+
+      expect(outcomes).toEqual(["guided"]);
+    });
+
+    test("2つ目の案内では、同じ数で決まるマスを示すこと", () => {
+      const result = secondGuideState.guidedCellIndex;
+
+      expect(result).toBe(2);
+    });
+
+    test("示したマスは、四角から丸へ切り替えて案内どおりにできること", () => {
+      const { outcomes } = performAll(
+        twoRuleStage,
+        [tap(2), tap(2)],
+        secondGuideState,
+      );
+
+      expect(outcomes).toEqual(["violated", "guided"]);
+    });
+
+    test.each([
+      [1, 14, "b"],
+      [2, 2, "a"],
+    ] as const)(
+      "%i つ目の案内のマスに違う方を置くと、知っているルールに合わなくなること",
+      (guideIndex, cellIndex, wrongTile) => {
+        const initialState =
+          guideIndex === 1 ? firstGuideState : secondGuideState;
+        const { outcomes } = performAll(
+          twoRuleStage,
+          [place(cellIndex, wrongTile)],
+          initialState,
+        );
+
+        expect(outcomes).toEqual(["violated"]);
+      },
+    );
+
+    test("手を離すと、どのマスにも置けること", () => {
+      const released = startGuide(
+        twoRuleStage,
+        performAll(twoRuleStage, [place(2, "b")], secondGuideState).state,
+        2,
+      );
+
+      const { outcomes } = performAll(twoRuleStage, [place(0, "a")], released);
+
+      expect(released.guidedCellIndex).toBeNull();
+      expect(outcomes).toEqual(["continued"]);
     });
   });
 

@@ -9,20 +9,29 @@ import {
 
 import { TakuzuTutorial } from "@/games/takuzu/ui/TakuzuTutorial";
 
-/** ステージごとの最初の盤面と解。`.` が空きマス。 */
-const stageBoards = [
-  { givens: ["AA."], solution: ["AAB"] },
-  { givens: ["B.B"], solution: ["BAB"] },
-  { givens: ["ABA."], solution: ["ABAB"] },
+/** ステージごとの最初の盤面と解。`.` が空きマス。`guided` は手を引いている間に示すマスの順（1始まりの行・列）。 */
+const stageBoards: readonly {
+  givens: readonly string[];
+  solution: readonly string[];
+  guided: readonly (readonly [number, number])[];
+}[] = [
+  { givens: ["AA."], solution: ["AAB"], guided: [] },
+  { givens: ["B.B"], solution: ["BAB"], guided: [] },
+  { givens: ["ABA."], solution: ["ABAB"], guided: [] },
   {
     givens: [".A.B", "..A.", "B...", ".B.B"],
     solution: ["AABB", "BBAA", "BABA", "ABAB"],
+    guided: [
+      [4, 3],
+      [1, 3],
+    ],
   },
   {
     givens: ["..A.", "A.BB", "B...", "...B"],
     solution: ["BBAA", "AABB", "BABA", "ABAB"],
+    guided: [],
   },
-] as const;
+];
 
 /** 解けた盤面の波と、解けたときの一言を読む間を待ち切る長さ。 */
 const stageTransitionMs = 2000;
@@ -79,20 +88,30 @@ function getHintedCellPositions(): string[] {
     .map((cell) => cell.getAttribute("aria-label")?.split(" ")[0] ?? "");
 }
 
-/** 空きマスを解のとおりに埋める。四角は1回、丸は2回タップする。 */
+/** 空きマスを解のとおりに埋める。四角は1回、丸は2回タップする。手を引くマスから先に埋める。 */
 function solveStage(stageIndex: number): void {
-  const { givens, solution } = stageBoards[stageIndex] ?? stageBoards[0];
-  givens.forEach((givenRow, rowIndex) => {
-    Array.from(givenRow).forEach((given, columnIndex) => {
-      if (given !== ".") {
-        return;
-      }
-      const tapCount = solution[rowIndex]?.[columnIndex] === "A" ? 1 : 2;
-      for (let tap = 0; tap < tapCount; tap += 1) {
-        tapCell(rowIndex + 1, columnIndex + 1);
-      }
-    });
-  });
+  const { givens, solution, guided } = stageBoards[stageIndex] ?? {
+    givens: [],
+    solution: [],
+    guided: [],
+  };
+  const emptyCells = givens.flatMap((givenRow, rowIndex) =>
+    Array.from(givenRow).flatMap((given, columnIndex) =>
+      given === "." ? [[rowIndex + 1, columnIndex + 1] as const] : [],
+    ),
+  );
+  const unguidedCells = emptyCells.filter(
+    ([row, column]) =>
+      !guided.some(([guidedRow, guidedColumn]) => {
+        return guidedRow === row && guidedColumn === column;
+      }),
+  );
+  for (const [row, column] of [...guided, ...unguidedCells]) {
+    const tapCount = solution[row - 1]?.[column - 1] === "A" ? 1 : 2;
+    for (let tap = 0; tap < tapCount; tap += 1) {
+      tapCell(row, column);
+    }
+  }
 }
 
 function waitForNextStage(): void {
@@ -272,24 +291,53 @@ describe("TakuzuTutorial", () => {
         expect(hinted).toHaveLength(1);
       });
 
-      test("示したマスとは別の決まるマスに置いても、案内を1つ進めること", () => {
-        // 4列目は丸が2つそろっていて、2行目は四角に決まる。
+      test("示していないマスを押しても、何も置かず、案内を進めず、示したマスを示し直すこと", () => {
+        const hintCueBefore = getCell(4, 3).querySelector(
+          '[data-cell-cue="hint"]',
+        );
+        // 4列目は丸が2つそろっていて、2行目は四角に決まるが、示していない。
         tapCell(2, 4);
-
-        const message = screen.getByText("同じ数でも決まる");
-
-        expect(message).toBeTruthy();
-      });
-
-      test("まだ決まらないマスに置くと、案内を進めず、3つ続かないことで決まるマスを示し続けること", () => {
-        // 1行目が `AA.B` になり、3列目が3つ続かないことで決まる。
-        tapCell(1, 1);
+        tapCell(3, 3);
+        act(() => {
+          getCell(3, 3).focus();
+        });
+        fireEvent.keyDown(getCell(3, 3), { key: "1" });
 
         const message = screen.getByText("同じもの2つの、隣か間を探そう");
+        const hinted = getHintedCellPositions();
+        const hintCueAfter = getCell(4, 3).querySelector(
+          '[data-cell-cue="hint"]',
+        );
+
+        expect(message).toBeTruthy();
+        expect(getCell(2, 4).getAttribute("aria-label")).toBe("2行4列 空き");
+        expect(getCell(3, 3).getAttribute("aria-label")).toBe("3行3列 空き");
+        expect(hinted).toEqual(["4行3列"]);
+        expect(hintCueAfter).not.toBe(hintCueBefore);
+      });
+
+      test("示したマスに違う方を置くと、案内を進めず、同じマスを示し続けること", () => {
+        tapCell(4, 3);
+        advanceTime(900);
+        tapCell(1, 3);
+        advanceTime(violationReactionDelayMs);
+
+        const message = screen.getByText("ルールに合わないところがある");
         const hinted = getHintedCellPositions();
 
         expect(message).toBeTruthy();
         expect(hinted).toEqual(["1行3列"]);
+      });
+
+      test("手を離した後は、示していないマスにも置けること", () => {
+        tapCell(4, 3);
+        tapCell(1, 3);
+        tapCell(1, 3);
+        tapCell(3, 3);
+
+        const label = getCell(3, 3).getAttribute("aria-label");
+
+        expect(label).not.toBe("3行3列 空き");
       });
     });
 
