@@ -150,14 +150,14 @@ function solveStages(count: number): void {
 
 /** 今のステージで示したルールとして目立たせているチップ。 */
 function getCurrentRuleChipTexts(): string[] {
-  return within(screen.getByRole("list", { name: "見つけたルール" }))
+  return within(screen.getByRole("list", { name: "ルール" }))
     .getAllByRole("listitem")
     .filter((item) => item.querySelector('[aria-current="step"]'))
     .map((item) => item.textContent ?? "");
 }
 
 function getRuleChipTexts(): string[] {
-  return within(screen.getByRole("list", { name: "見つけたルール" }))
+  return within(screen.getByRole("list", { name: "ルール" }))
     .getAllByRole("listitem")
     .map((item) => item.textContent ?? "");
 }

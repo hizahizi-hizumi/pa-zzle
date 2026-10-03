@@ -57,7 +57,10 @@ describe("TakuzuDifficultyView", () => {
   test("チュートリアルを開けること", () => {
     fireEvent.click(screen.getByRole("button", { name: "チュートリアル" }));
 
-    const dialog = screen.getByRole("dialog", { name: "チュートリアル" });
+    const dialog = screen.getByRole("dialog", {
+      name: "バイナリパズル",
+      description: "チュートリアル",
+    });
 
     expect(dialog).toBeTruthy();
   });

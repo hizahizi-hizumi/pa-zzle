@@ -199,7 +199,10 @@ describe("TakuzuPlay", () => {
         });
 
         test("チュートリアルを開くこと", () => {
-          const dialog = screen.getByRole("dialog", { name: "チュートリアル" });
+          const dialog = screen.getByRole("dialog", {
+            name: "バイナリパズル",
+            description: "チュートリアル",
+          });
 
           expect(dialog).toBeTruthy();
         });
@@ -207,11 +210,14 @@ describe("TakuzuPlay", () => {
         test("閉じるとチュートリアルを閉じて同じプレイの盤面へ戻ること", () => {
           fireEvent.click(
             within(
-              screen.getByRole("dialog", { name: "チュートリアル" }),
+              screen.getByRole("dialog", {
+                name: "バイナリパズル",
+                description: "チュートリアル",
+              }),
             ).getByRole("button", { name: "閉じる" }),
           );
           const dialog = screen.queryByRole("dialog", {
-            name: "チュートリアル",
+            name: "バイナリパズル",
           });
           const board = screen.getByRole("group", {
             name: "バイナリパズル盤面",

@@ -254,7 +254,7 @@ export function TakuzuTutorial({
   return (
     <TutorialOverlay
       open={open}
-      gameTitle="バイナリパズル"
+      title="バイナリパズル"
       rules={takuzuTutorial.rules.map((rule) => ({
         ...rule,
         earned: progress.earnedRuleIds.includes(rule.id),
