@@ -30,6 +30,13 @@ export const reflectionCatalogEntry = {
         )
       : null;
   },
+  attemptProblemPlayTarget({ start }) {
+    return resolveRecordProblemPlayTarget(
+      parseReflectionDifficulty(start.difficulty),
+      start.problemIdentity,
+      canSelectReflectionProblemById,
+    );
+  },
   renderRecordResult(record, context) {
     const recorded = restoreReflectionRecordedResult(record);
     return recorded ? (

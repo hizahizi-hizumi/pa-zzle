@@ -3,6 +3,7 @@ import {
   parseWaterSortRecordedDifficulty,
 } from "@/games/water-sort/difficulty";
 import { waterSortPlayRecordDefinition } from "@/games/water-sort/play-record";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
 import {
   formatCountDelta,
   formatElapsedTimeDelta,
@@ -38,6 +39,15 @@ export const waterSortPlayRecordDisplay = createPlayRecordDisplay({
       formatValue: formatCountDelta,
       referenceValue: 0,
       axis: { kind: "integer", minimum: 0 },
+    },
+  },
+  progress: {
+    elapsedMs: { label: "経過", formatValue: formatElapsedTime },
+    moveCount: {
+      label: "手数",
+      formatValue(value: number) {
+        return `${value}手`;
+      },
     },
   },
 });

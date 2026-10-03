@@ -29,6 +29,13 @@ export const parkingJamCatalogEntry = {
         )
       : null;
   },
+  attemptProblemPlayTarget({ start }) {
+    return resolveRecordProblemPlayTarget(
+      parseParkingJamDifficulty(start.difficulty),
+      start.problemIdentity,
+      canSelectParkingJamProblemById,
+    );
+  },
   renderRecordResult(record, context) {
     const recorded = restoreParkingJamRecordedResult(record);
     return recorded ? (

@@ -22,10 +22,17 @@ export type PlayRecordMetricDisplay = {
 
 type PlayRecordMetricPresentation = Omit<PlayRecordMetricDisplay, "id">;
 
+type PlayAttemptProgressDisplay = {
+  label: string;
+  formatValue: (value: number) => string;
+};
+
 export type PlayRecordDisplayDefinition = {
   definition: PlayRecordDefinition;
   getComparisonLabel: (comparisonKey: string) => string | null;
   metrics: readonly PlayRecordMetricDisplay[];
+  /** 離脱したプレイで見せる進み具合。進み具合の名前ごとの表示を、見せる順に並べる。 */
+  progress: Readonly<Record<string, PlayAttemptProgressDisplay>>;
 };
 
 type PlayRecordDisplaySource<Definition extends PlayRecordDefinition> = Omit<

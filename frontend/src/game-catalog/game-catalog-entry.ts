@@ -5,6 +5,7 @@ import {
   type ProblemId,
   type ProblemIdentity,
 } from "@/games/problem-id";
+import type { PlayAttempt } from "@/records/play-attempt";
 import type { PlayRecord } from "@/records/play-record";
 import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
 import type { Path } from "@/router";
@@ -12,7 +13,7 @@ import type { Path } from "@/router";
 /** 難易度を `:difficulty` に入れて開くプレイ画面のパス。 */
 export type GamePlayPath = Extract<Path, `/puzzles/${string}/play/:difficulty`>;
 
-/** 記録の問題を遊び直すプレイ画面の難易度と、その難易度の問題集で引ける問題 ID。 */
+/** 完了記録や離脱した試行の問題を遊び直すプレイ画面の難易度と、その難易度の問題集で引ける問題 ID。 */
 export type RecordProblemPlayTarget = {
   difficulty: string;
   problemId: ProblemId;
@@ -29,7 +30,7 @@ export type RecordResultContext = {
   onBackToHome: () => void;
 };
 
-/** アプリが提供する1つのゲームの、入口・プレイ画面・記録・記録の問題の遊び直し先・記録の結果画面。 */
+/** アプリが提供する1つのゲームの、入口・プレイ画面・記録・離脱したプレイ・それらの問題の遊び直し先・記録の結果画面。 */
 export type GameCatalogEntry = {
   /** 記録の `gameId` と同じ値。 */
   id: string;
@@ -46,6 +47,13 @@ export type GameCatalogEntry = {
     record: PlayRecord,
   ) => RecordProblemPlayTarget | null;
   /**
+   * 離脱した試行の問題を遊び直すプレイ画面の難易度と問題 ID を返す。遊び直せない試行には `null` を返す。
+   * 完了記録の `recordProblemPlayTarget` と同じく、問題を復元せず問題集の索引で引けるかだけを確かめる。
+   */
+  attemptProblemPlayTarget: (
+    attempt: PlayAttempt,
+  ) => RecordProblemPlayTarget | null;
+  /**
    * 記録から結果画面を描く。今の版の記録でなく結果を作れないときは `null` を返す。
    * 呼び出し側は記録の `gameId` がこのゲームの `id` と一致することを確かめてから渡す。
    */
@@ -56,7 +64,7 @@ export type GameCatalogEntry = {
 };
 
 /**
- * 記録の難易度と identity から遊び直し先を求める。
+ * 完了記録や試行の難易度と identity から遊び直し先を求める。
  * 難易度が今の難易度区分に無い（`undefined`）か、その難易度の問題集で問題 ID を引けなければ `null` を返す。
  */
 export function resolveRecordProblemPlayTarget<Difficulty extends string>(

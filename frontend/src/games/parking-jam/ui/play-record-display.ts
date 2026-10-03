@@ -38,4 +38,13 @@ export const parkingJamPlayRecordDisplay = createPlayRecordDisplay({
       axis: { kind: "integer", minimum: 0 },
     },
   },
+  progress: {
+    elapsedMs: { label: "経過", formatValue: formatElapsedTime },
+    failedMoveCount: {
+      label: "ミス",
+      formatValue(value: number) {
+        return `${value}回`;
+      },
+    },
+  },
 });

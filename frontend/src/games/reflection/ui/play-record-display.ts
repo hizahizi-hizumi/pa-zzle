@@ -3,6 +3,7 @@ import {
   parseReflectionDifficulty,
 } from "@/games/reflection/difficulty";
 import { reflectionPlayRecordDefinition } from "@/games/reflection/play-record";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
 import { formatElapsedTimeDelta } from "@/lib/format-performance-delta";
 import { createPlayRecordDisplay } from "@/records/ui/play-record-display";
 
@@ -29,5 +30,8 @@ export const reflectionPlayRecordDisplay = createPlayRecordDisplay({
       referenceValue: 0,
       axis: { kind: "duration-ms" },
     },
+  },
+  progress: {
+    elapsedMs: { label: "経過", formatValue: formatElapsedTime },
   },
 });
