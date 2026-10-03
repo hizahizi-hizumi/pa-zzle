@@ -21,7 +21,9 @@ import {
   revealMinesweeperSessionCell,
   toggleMinesweeperSessionFlag,
 } from "@/games/minesweeper/session/session";
+import type { ProblemId } from "@/games/problem-id";
 import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import { selectProblemAvoiding } from "@/games/problem-selection";
 
 /** クリア後は最終操作の結果を見せる `clearing` を経て `result` へ進む。 */
 export type MinesweeperProgress = "playing" | "clearing" | "result";
@@ -82,6 +84,7 @@ function createPlayState(
 function createInitialPlayState(
   difficulty: MinesweeperDifficulty,
   initialProblem: MinesweeperRestoredProblem | undefined,
+  avoidedProblemId: ProblemId | undefined,
   startedAt: number,
 ): MinesweeperPlayState {
   if (initialProblem) {
@@ -92,12 +95,12 @@ function createInitialPlayState(
     );
   }
 
-  const seed = createProblemSeed();
-  return createPlayState(
-    seed,
-    selectMinesweeperProblemForDifficulty(difficulty, seed),
-    startedAt,
+  const { seed, problem } = selectProblemAvoiding(
+    (candidateSeed) =>
+      selectMinesweeperProblemForDifficulty(difficulty, candidateSeed),
+    avoidedProblemId,
   );
+  return createPlayState(seed, problem, startedAt);
 }
 
 function createNewProblemPlayState(
@@ -121,14 +124,20 @@ function createNewProblemPlayState(
 
 /**
  * 難易度の問題集から seed で選んだ問題を遊ぶ。
- * `initialProblem` を渡すと、記録から復元したその問題で始める。
+ * `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。
  */
 export function useMinesweeperPlay(
   difficulty: MinesweeperDifficulty,
   initialProblem?: MinesweeperRestoredProblem,
+  avoidedProblemId?: ProblemId,
 ) {
   const [play, setPlay] = useState(() =>
-    createInitialPlayState(difficulty, initialProblem, Date.now()),
+    createInitialPlayState(
+      difficulty,
+      initialProblem,
+      avoidedProblemId,
+      Date.now(),
+    ),
   );
   const [now, setNow] = useState(() => Date.now());
 

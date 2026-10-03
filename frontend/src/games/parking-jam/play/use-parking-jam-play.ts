@@ -29,7 +29,8 @@ import {
   restartParkingJamSession,
   undoParkingJamSession,
 } from "@/games/parking-jam/session/session";
-import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import type { ProblemId } from "@/games/problem-id";
+import { selectProblemAvoiding } from "@/games/problem-selection";
 
 export type ParkingJamOperation = {
   id: number;
@@ -71,12 +72,16 @@ function getSpeedReference(board: ParkingJamBoard): ParkingJamSpeedReference {
 
 function createPlayState(
   difficulty: ParkingJamDifficulty,
-  seed: ProblemSeed,
   startedAt: number,
   initialProblem?: ParkingJamRestoredProblem,
+  avoidedProblemId?: ProblemId,
 ): ParkingJamPlayState {
   const restored =
-    initialProblem ?? selectParkingJamProblemForDifficulty(difficulty, seed);
+    initialProblem ??
+    selectProblemAvoiding(
+      (seed) => selectParkingJamProblemForDifficulty(difficulty, seed),
+      avoidedProblemId,
+    ).problem;
 
   return {
     session: createParkingJamSession(restored.problem, startedAt),
@@ -88,18 +93,14 @@ function createPlayState(
   };
 }
 
-/** `initialProblem` を渡すと、指定された問題で始める。 */
+/** `initialProblem` を渡すと、指定された問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。 */
 export function useParkingJamPlay(
   difficulty: ParkingJamDifficulty,
   initialProblem?: ParkingJamRestoredProblem,
+  avoidedProblemId?: ProblemId,
 ) {
   const [play, setPlay] = useState<ParkingJamPlayState>(() =>
-    createPlayState(
-      difficulty,
-      createProblemSeed(),
-      Date.now(),
-      initialProblem,
-    ),
+    createPlayState(difficulty, Date.now(), initialProblem, avoidedProblemId),
   );
   const [now, setNow] = useState(() => Date.now());
   const nextOperationId = useRef(0);
@@ -217,7 +218,7 @@ export function useParkingJamPlay(
 
   const startNewProblem = useCallback(() => {
     const startedAt = Date.now();
-    const next = createPlayState(difficulty, createProblemSeed(), startedAt);
+    const next = createPlayState(difficulty, startedAt);
     setNow(startedAt);
     setPlay(next);
   }, [difficulty]);

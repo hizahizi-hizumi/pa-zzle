@@ -1,4 +1,13 @@
-import { hashProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import {
+  createProblemId,
+  type ProblemId,
+  type ProblemIdentity,
+} from "@/games/problem-id";
+import {
+  createProblemSeed,
+  hashProblemSeed,
+  type ProblemSeed,
+} from "@/games/problem-seed";
 
 /**
  * 問題集から seed で1問を選ぶ。同じ seed と問題集からは同じ1問を選ぶ。
@@ -14,4 +23,38 @@ export function selectProblemPoolEntry<Entry>(
     throw new Error(`No ${poolDescription} problem is available`);
   }
   return entry;
+}
+
+// 問題集に避ける問題しか無いときにも選択を終えるための、選び直す回数の上限。
+const maximumAvoidingSelectionAttempts = 8;
+
+/** 新しい seed と、その seed で選んだ1問。 */
+export type SeededProblemSelection<Problem> = {
+  seed: ProblemSeed;
+  problem: Problem;
+};
+
+/**
+ * 新しい seed で1問を選ぶ。`avoidedProblemId` の問題を選んだら seed を変えて選び直す。
+ * 選び直しには上限があり、上限まで避けられなければ最後に選んだ問題を返す。
+ */
+export function selectProblemAvoiding<
+  Problem extends { identity: ProblemIdentity },
+>(
+  selectProblem: (seed: ProblemSeed) => Problem,
+  avoidedProblemId?: ProblemId,
+): SeededProblemSelection<Problem> {
+  let seed = createProblemSeed();
+  let problem = selectProblem(seed);
+  for (
+    let attempt = 1;
+    attempt < maximumAvoidingSelectionAttempts &&
+    avoidedProblemId !== undefined &&
+    createProblemId(problem.identity) === avoidedProblemId;
+    attempt += 1
+  ) {
+    seed = createProblemSeed();
+    problem = selectProblem(seed);
+  }
+  return { seed, problem };
 }
