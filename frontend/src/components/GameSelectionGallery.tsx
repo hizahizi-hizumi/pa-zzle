@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 
 import { GamePictogram } from "@/components/GamePictogram";
@@ -21,6 +21,27 @@ export function GameSelectionGallery({
 }: GameSelectionGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const selectedGame = games[selectedIndex] ?? games[0];
+  const listRef = useRef<HTMLDivElement>(null);
+  const [overflow, setOverflow] = useState({ start: false, end: false });
+
+  const updateOverflow = useCallback(() => {
+    const list = listRef.current;
+    if (!list) {
+      return;
+    }
+    const maxScrollLeft = list.scrollWidth - list.clientWidth;
+    const start = list.scrollLeft > 1;
+    const end = list.scrollLeft < maxScrollLeft - 1;
+    setOverflow((current) =>
+      current.start === start && current.end === end ? current : { start, end },
+    );
+  }, []);
+
+  useEffect(() => {
+    updateOverflow();
+    window.addEventListener("resize", updateOverflow);
+    return () => window.removeEventListener("resize", updateOverflow);
+  }, [updateOverflow]);
 
   if (!selectedGame) {
     return null;
@@ -55,7 +76,18 @@ export function GameSelectionGallery({
         aria-label="パズル一覧"
         className="min-h-0 overflow-hidden border-t-(length:--border-width-normal) bg-background pt-4 sm:flex sm:items-center sm:px-[max(calc(var(--spacing)*6),calc((100vw-73.75rem)/2))] sm:py-6"
       >
-        <div className="flex w-full snap-x snap-proximity gap-3 overflow-x-auto px-4 py-1 [scrollbar-width:none] sm:gap-3 sm:px-0 [&::-webkit-scrollbar]:hidden">
+        <div
+          ref={listRef}
+          onScroll={updateOverflow}
+          data-overflow-start={overflow.start}
+          data-overflow-end={overflow.end}
+          style={{
+            maskImage: `linear-gradient(to right, ${
+              overflow.start ? "transparent, black 2.5rem" : "black, black"
+            }, ${overflow.end ? "black calc(100% - 2.5rem), transparent" : "black, black"})`,
+          }}
+          className="flex w-full scroll-px-4 snap-x snap-proximity gap-1 overflow-x-auto px-4 py-1 [scrollbar-width:none] sm:scroll-px-0 sm:gap-2 sm:px-0 [&::-webkit-scrollbar]:hidden"
+        >
           {games.map((game, index) => {
             const isSelected = index === selectedIndex;
 
@@ -66,7 +98,7 @@ export function GameSelectionGallery({
                 aria-label={`${game.name}を選択`}
                 aria-pressed={isSelected}
                 onClick={() => setSelectedIndex(index)}
-                className="group flex w-[4.875rem] shrink-0 snap-start flex-col items-center focus-visible:outline-none sm:w-[6.25rem]"
+                className="group flex w-[6.5rem] shrink-0 snap-start flex-col items-center focus-visible:outline-none sm:w-[7rem]"
               >
                 <span
                   className={`flex size-[4.875rem] items-center justify-center rounded-xl bg-background p-[18%] transition-colors group-focus-visible:ring-2 group-focus-visible:ring-ring group-focus-visible:ring-offset-2 sm:size-[6.25rem] sm:rounded-xl sm:p-[20%] ${
@@ -77,7 +109,7 @@ export function GameSelectionGallery({
                 >
                   <GamePictogram svg={game.pictogramSvg} />
                 </span>
-                <span className="mt-2 w-full truncate text-center text-meta font-semibold sm:mt-2">
+                <span className="mt-2 w-full truncate px-0.5 text-center text-meta font-semibold sm:mt-2">
                   {game.name}
                 </span>
               </button>
