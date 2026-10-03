@@ -153,6 +153,45 @@ describe("tapTsumeShogiSessionSquare", () => {
     });
   });
 
+  describe("同じ判断地点で指し直した同じ誤王手", () => {
+    test.each([
+      ["待った", undoTsumeShogiSession],
+      ["戻る", returnTsumeShogiSessionToDecision],
+      ["盤面を戻す", restartTsumeShogiSession],
+    ])("%sで戻しても、誤王手を数え直さないこと", (_, rewind) => {
+      const session = playTsumeShogiSessionDefenderReply(
+        moveOnBoard(rewind(afterRefutation), square(4, 3), square(4, 1), 3_000),
+      );
+
+      expect(session.wrongCheckCount).toBe(1);
+      expect(session.refutationViewCount).toBe(2);
+    });
+
+    test("別の誤王手は数えること", () => {
+      const session = moveOnBoard(
+        undoTsumeShogiSession(afterRefutation),
+        square(4, 3),
+        square(2, 3),
+        3_000,
+      );
+
+      expect(session.turns[0]?.line).toBe("wrong");
+      expect(session.wrongCheckCount).toBe(2);
+    });
+
+    test("新しいプレイとしてやり直せば、また数えること", () => {
+      const session = moveOnBoard(
+        replayTsumeShogiSession(afterRefutation, 3_000),
+        square(4, 3),
+        square(4, 1),
+        3_500,
+      );
+
+      expect(session.wrongCheckCount).toBe(1);
+      expect(session.refutationViewCount).toBe(0);
+    });
+  });
+
   describe("誤王手の筋を続けた王手", () => {
     test("誤王手に数えず、残りの手数が尽きたら続けられないこと", () => {
       const session = playTsumeShogiSessionDefenderReply(

@@ -122,6 +122,10 @@ describe("isTsumeShogiPlayRecord", () => {
       "生成器の版が今と違う記録",
       withPayload({ problemIdentity: pastProblemIdentity }),
     ],
+    [
+      "同じ誤王手を指し直して、誤王手より多く判断地点へ戻った記録",
+      withPayload({ performance: { ...performance, returnCount: 2 } }),
+    ],
   ] as const;
 
   const invalidCases = [
@@ -176,8 +180,10 @@ describe("isTsumeShogiPlayRecord", () => {
       }),
     ],
     [
-      "誤王手より多く判断地点へ戻った記録",
-      withPayload({ performance: { ...performance, returnCount: 2 } }),
+      "誤王手が無いのに判断地点へ戻った記録",
+      withPayload({
+        performance: { ...performance, wrongCheckCount: 0, returnCount: 1 },
+      }),
     ],
     [
       "反証を見た回数が無い記録",

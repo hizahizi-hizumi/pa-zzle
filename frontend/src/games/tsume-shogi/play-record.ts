@@ -80,7 +80,8 @@ function isPoolReference(
 
 /**
  * 誤王手と非合法入力はそれぞれ別の入力で起きるので、合わせて入力回数を超えない。
- * 判断地点へ戻るのは誤王手の筋にいるときだけなので、戻った回数は誤王手の回数を超えない。
+ * 判断地点へ戻るのは誤王手の筋にいるときだけなので、戻ったことがあれば誤王手も1回以上ある（同じ誤王手を指し直して
+ * 戻っても誤王手は1回だけ数えるので、戻った回数は誤王手の回数を超えうる）。
  */
 function isTsumeShogiPerformance(
   value: unknown,
@@ -98,7 +99,7 @@ function isTsumeShogiPerformance(
     isNonNegativeInteger(value.illegalInputCount) &&
     isNonNegativeInteger(value.inputCount) &&
     value.wrongCheckCount + value.illegalInputCount <= value.inputCount &&
-    value.returnCount <= value.wrongCheckCount
+    (value.returnCount === 0 || value.wrongCheckCount > 0)
   );
 }
 

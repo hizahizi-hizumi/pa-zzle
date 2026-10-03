@@ -9,6 +9,7 @@ import {
 import {
   applyTsumeShogiMove,
   explainTsumeShogiIllegalMove,
+  formatTsumeShogiMoveUsi,
   isSameTsumeShogiMove,
   isTsumeShogiCheckmate,
   isTsumeShogiDefenderInCheck,
@@ -101,8 +102,13 @@ export type TsumeShogiSession = {
   finishedAt: number | null;
   /** 盤面・持駒を押して状態が変わった回数。 */
   inputCount: number;
-  /** 作意・詰み筋の上の判断地点から、残りの手数以内に詰まない合法な王手を指した回数。 */
+  /**
+   * 作意・詰み筋の上の判断地点から、残りの手数以内に詰まない合法な王手を指した回数。同じ判断地点で同じ誤王手を
+   * 「待った」「戻る」で戻して指し直しても、1回だけ数える。
+   */
   wrongCheckCount: number;
+  /** 誤王手に数えた手。判断地点までの手順と誤王手を USI で並べたもの（`formatWrongCheckKey`）。 */
+  countedWrongChecks: readonly string[];
   /** 玉方の反証の応手を盤面で見た回数。誤王手の筋を続けて見た反証も数える。 */
   refutationViewCount: number;
   /** 誤王手の筋から判断地点へ戻った回数。 */
@@ -145,6 +151,7 @@ export function createTsumeShogiSession(
     finishedAt: null,
     inputCount: 0,
     wrongCheckCount: 0,
+    countedWrongChecks: [],
     refutationViewCount: 0,
     returnCount: 0,
     undoCount: 0,
@@ -316,7 +323,13 @@ function playAttackerCheck(
     positionAfterAttack,
     defenderMove,
   );
-  const wasOnWrongLine = isTsumeShogiSessionOnWrongLine(session);
+  const wrongCheckKey =
+    line === "wrong" && !isTsumeShogiSessionOnWrongLine(session)
+      ? formatWrongCheckKey(session.turns, move)
+      : null;
+  const isNewWrongCheck =
+    wrongCheckKey !== null &&
+    !session.countedWrongChecks.includes(wrongCheckKey);
 
   return {
     ...base,
@@ -335,9 +348,26 @@ function playAttackerCheck(
       },
     ],
     defenderReplyPending: true,
-    wrongCheckCount:
-      session.wrongCheckCount + (line === "wrong" && !wasOnWrongLine ? 1 : 0),
+    ...(isNewWrongCheck && {
+      wrongCheckCount: session.wrongCheckCount + 1,
+      countedWrongChecks: [...session.countedWrongChecks, wrongCheckKey],
+    }),
   };
+}
+
+/** 判断地点までの手順と、そこで指した誤王手を1つの文字列にする。手順が同じなら判断地点の局面も同じ。 */
+function formatWrongCheckKey(
+  turnsBeforeDecision: readonly TsumeShogiSessionTurn[],
+  wrongCheck: TsumeShogiMove,
+): string {
+  return [
+    ...turnsBeforeDecision.flatMap(({ attackerMove, defenderMove }) =>
+      defenderMove === null ? [attackerMove] : [attackerMove, defenderMove],
+    ),
+    wrongCheck,
+  ]
+    .map(formatTsumeShogiMoveUsi)
+    .join(" ");
 }
 
 function isMainLineMove(
