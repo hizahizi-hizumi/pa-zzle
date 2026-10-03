@@ -8,6 +8,7 @@ import type { ProblemId } from "@/games/problem-id";
 import { createWaterSortDiagnosticSnapshot } from "@/games/water-sort/diagnostics";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import { useWaterSortPlay } from "@/games/water-sort/play/use-water-sort-play";
+import { createWaterSortPlayAttemptProgress } from "@/games/water-sort/play-attempt";
 import {
   createWaterSortPlayRecord,
   waterSortPlayRecordDefinition,
@@ -20,6 +21,7 @@ import {
   buildRevision,
   internalDiagnosticsAvailable,
 } from "@/lib/internal-diagnostics";
+import { usePlayAttemptRecord } from "@/records/hooks/use-play-attempt-record";
 import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
@@ -68,6 +70,15 @@ export function PlayableWaterSort({
     playRecord,
     recordOutcome,
   );
+  usePlayAttemptRecord({
+    gameId: waterSortPlayRecordDefinition.gameId,
+    startedAt: play.startedAt,
+    start: { difficulty, problemIdentity: play.problemIdentity },
+    finished: play.completedAt !== null,
+    getProgress(abandonedAt) {
+      return createWaterSortPlayAttemptProgress(play.session, abandonedAt);
+    },
+  });
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const diagnostics = internalDiagnosticsAvailable
     ? createWaterSortDiagnosticSnapshot({

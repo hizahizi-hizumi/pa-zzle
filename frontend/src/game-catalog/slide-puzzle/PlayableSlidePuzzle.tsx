@@ -8,6 +8,7 @@ import type { ProblemId } from "@/games/problem-id";
 import { createSlidePuzzleDiagnosticSnapshot } from "@/games/slide-puzzle/diagnostics";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import { useSlidePuzzlePlay } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
+import { createSlidePuzzlePlayAttemptProgress } from "@/games/slide-puzzle/play-attempt";
 import {
   createSlidePuzzlePlayRecord,
   slidePuzzlePlayRecordDefinition,
@@ -20,6 +21,7 @@ import {
   buildRevision,
   internalDiagnosticsAvailable,
 } from "@/lib/internal-diagnostics";
+import { usePlayAttemptRecord } from "@/records/hooks/use-play-attempt-record";
 import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
@@ -72,6 +74,15 @@ export function PlayableSlidePuzzle({
     playRecord,
     recordOutcome,
   );
+  usePlayAttemptRecord({
+    gameId: slidePuzzlePlayRecordDefinition.gameId,
+    startedAt: play.startedAt,
+    start: { difficulty, problemIdentity: play.problemIdentity },
+    finished: play.completedAt !== null,
+    getProgress(abandonedAt) {
+      return createSlidePuzzlePlayAttemptProgress(play.session, abandonedAt);
+    },
+  });
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const diagnostics = internalDiagnosticsAvailable
     ? createSlidePuzzleDiagnosticSnapshot({
