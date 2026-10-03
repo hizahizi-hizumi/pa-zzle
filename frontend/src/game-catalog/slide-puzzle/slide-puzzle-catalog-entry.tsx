@@ -1,7 +1,7 @@
 import {
+  createGameReplay,
   type GameCatalogEntry,
   type RecordReplayStart,
-  renderRecordReplay,
   unavailableRecordReplay,
 } from "@/game-catalog/game-catalog-entry";
 import { PlayableSlidePuzzle } from "@/game-catalog/slide-puzzle/PlayableSlidePuzzle";
@@ -11,35 +11,35 @@ import {
   isSlidePuzzlePlayRecord,
   slidePuzzlePlayRecordDefinition,
 } from "@/games/slide-puzzle/play-record";
-import type { SlidePuzzleGeneratedProblem } from "@/games/slide-puzzle/problem/problem";
+import type {
+  SlidePuzzleGeneratedProblem,
+  SlidePuzzleProblemIdentity,
+} from "@/games/slide-puzzle/problem/problem";
 import { restoreSlidePuzzlePooledProblem } from "@/games/slide-puzzle/problem-selection";
 import { slidePuzzlePlayRecordDisplay } from "@/games/slide-puzzle/ui/play-record-display";
-import type { PlayRecord } from "@/records/play-record";
+
+/** 完了記録の開始条件。 */
+type SlidePuzzleReplayConditions = {
+  difficulty: SlidePuzzleDifficulty;
+  problemIdentity: SlidePuzzleProblemIdentity;
+};
 
 type SlidePuzzleReplayStart = {
   difficulty: SlidePuzzleDifficulty;
   initialProblem: SlidePuzzleGeneratedProblem;
 };
 
-function resolveSlidePuzzleReplayStart(
-  record: PlayRecord,
-): RecordReplayStart<SlidePuzzleReplayStart> {
-  if (!isSlidePuzzlePlayRecord(record)) {
-    return unavailableRecordReplay("unsupported-record");
-  }
-
+function resolveSlidePuzzleReplayStart({
+  difficulty,
+  problemIdentity,
+}: SlidePuzzleReplayConditions): RecordReplayStart<SlidePuzzleReplayStart> {
   // 評価の基準になる最短手数は問題集にしか無いので、問題集に無い問題は再プレイできない。
-  const initialProblem = restoreSlidePuzzlePooledProblem(
-    record.payload.problemIdentity,
-  );
+  const initialProblem = restoreSlidePuzzlePooledProblem(problemIdentity);
   if (!initialProblem) {
     return unavailableRecordReplay("problem-not-in-pool");
   }
 
-  return {
-    status: "available",
-    start: { difficulty: record.payload.difficulty, initialProblem },
-  };
+  return { status: "available", start: { difficulty, initialProblem } };
 }
 
 export const slidePuzzleCatalogEntry = {
@@ -48,12 +48,15 @@ export const slidePuzzleCatalogEntry = {
   pictogramSvg,
   entryPath: "/puzzles/slide-puzzle",
   playRecordDisplay: slidePuzzlePlayRecordDisplay,
-  replayRecord(record) {
-    return renderRecordReplay(
-      resolveSlidePuzzleReplayStart(record),
-      (start) => <PlayableSlidePuzzle {...start} />,
-    );
-  },
+  ...createGameReplay({
+    readRecordConditions(record) {
+      return isSlidePuzzlePlayRecord(record) ? record.payload : null;
+    },
+    resolveStart: resolveSlidePuzzleReplayStart,
+    renderPlay(start) {
+      return <PlayableSlidePuzzle {...start} />;
+    },
+  }),
 } satisfies GameCatalogEntry;
 
 export const _private = { resolveSlidePuzzleReplayStart };

@@ -20,7 +20,7 @@ type RecordReplayUnavailable = {
   reason: RecordReplayUnavailableReason;
 };
 
-/** 記録から求めた、再プレイを始めるための開始条件。 */
+/** 記録の開始条件から求めた、再プレイを始めるための開始条件。 */
 export type RecordReplayStart<Start> =
   | { status: "available"; start: Start }
   | RecordReplayUnavailable;
@@ -46,11 +46,38 @@ export function unavailableRecordReplay(
   return { status: "unavailable", reason };
 }
 
-export function renderRecordReplay<Start>(
+function renderRecordReplay<Start>(
   replayStart: RecordReplayStart<Start>,
   renderPlay: (start: Start) => ReactElement,
 ): RecordReplay {
   return replayStart.status === "available"
     ? { status: "available", play: renderPlay(replayStart.start) }
     : replayStart;
+}
+
+type GameReplaySource<Conditions, Start> = {
+  /** 今のアプリが読める完了記録なら、その開始条件を返す。 */
+  readRecordConditions: (record: PlayRecord) => Conditions | null;
+  /** 難易度・問題識別情報などの開始条件から、再プレイを始める問題を復元する。 */
+  resolveStart: (conditions: Conditions) => RecordReplayStart<Start>;
+  renderPlay: (start: Start) => ReactElement;
+};
+
+/** 記録から開始条件を読み、その開始条件から問題を復元して再プレイを始める。 */
+export function createGameReplay<Conditions, Start>({
+  readRecordConditions,
+  resolveStart,
+  renderPlay,
+}: GameReplaySource<Conditions, Start>): Pick<
+  GameCatalogEntry,
+  "replayRecord"
+> {
+  return {
+    replayRecord(record) {
+      const conditions = readRecordConditions(record);
+      return conditions === null
+        ? unavailableRecordReplay("unsupported-record")
+        : renderRecordReplay(resolveStart(conditions), renderPlay);
+    },
+  };
 }

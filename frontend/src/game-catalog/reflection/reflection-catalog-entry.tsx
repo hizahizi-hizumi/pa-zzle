@@ -1,7 +1,7 @@
 import {
+  createGameReplay,
   type GameCatalogEntry,
   type RecordReplayStart,
-  renderRecordReplay,
   unavailableRecordReplay,
 } from "@/game-catalog/game-catalog-entry";
 import { PlayableReflection } from "@/game-catalog/reflection/PlayableReflection";
@@ -12,10 +12,16 @@ import {
   isReflectionPlayRecord,
   reflectionPlayRecordDefinition,
 } from "@/games/reflection/play-record";
+import type { ReflectionRecordedProblemIdentity } from "@/games/reflection/problem/problem";
 import type { ReflectionPooledProblem } from "@/games/reflection/problem/problem-pool";
 import { restoreReflectionProblem } from "@/games/reflection/problem-selection";
 import { reflectionPlayRecordDisplay } from "@/games/reflection/ui/play-record-display";
-import type { PlayRecord } from "@/records/play-record";
+
+/** 完了記録の開始条件。 */
+type ReflectionReplayConditions = {
+  difficulty: ReflectionDifficulty;
+  problemIdentity: ReflectionRecordedProblemIdentity;
+};
 
 type ReflectionReplayStart = {
   difficulty: ReflectionDifficulty;
@@ -24,25 +30,19 @@ type ReflectionReplayStart = {
   };
 };
 
-function resolveReflectionReplayStart(
-  record: PlayRecord,
-): RecordReplayStart<ReflectionReplayStart> {
-  if (!isReflectionPlayRecord(record)) {
-    return unavailableRecordReplay("unsupported-record");
-  }
-
+function resolveReflectionReplayStart({
+  difficulty,
+  problemIdentity,
+}: ReflectionReplayConditions): RecordReplayStart<ReflectionReplayStart> {
   // 評価の基準時間に使う作業の量は問題集にしか無いので、問題集に無い問題は再プレイできない。
-  const restored = restoreReflectionProblem(record.payload.problemIdentity);
+  const restored = restoreReflectionProblem(problemIdentity);
   if (!restored) {
     return unavailableRecordReplay("problem-not-in-pool");
   }
 
   return {
     status: "available",
-    start: {
-      difficulty: record.payload.difficulty,
-      initialProblem: { restored },
-    },
+    start: { difficulty, initialProblem: { restored } },
   };
 }
 
@@ -52,11 +52,15 @@ export const reflectionCatalogEntry = {
   pictogramSvg,
   entryPath: "/puzzles/reflection",
   playRecordDisplay: reflectionPlayRecordDisplay,
-  replayRecord(record) {
-    return renderRecordReplay(resolveReflectionReplayStart(record), (start) => (
-      <PlayableReflection {...start} />
-    ));
-  },
+  ...createGameReplay({
+    readRecordConditions(record) {
+      return isReflectionPlayRecord(record) ? record.payload : null;
+    },
+    resolveStart: resolveReflectionReplayStart,
+    renderPlay(start) {
+      return <PlayableReflection {...start} />;
+    },
+  }),
 } satisfies GameCatalogEntry;
 
 export const _private = { resolveReflectionReplayStart };

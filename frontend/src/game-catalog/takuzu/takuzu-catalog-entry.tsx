@@ -1,7 +1,7 @@
 import {
+  createGameReplay,
   type GameCatalogEntry,
   type RecordReplayStart,
-  renderRecordReplay,
   unavailableRecordReplay,
 } from "@/game-catalog/game-catalog-entry";
 import { PlayableTakuzu } from "@/game-catalog/takuzu/PlayableTakuzu";
@@ -11,33 +11,33 @@ import {
   isTakuzuPlayRecord,
   takuzuPlayRecordDefinition,
 } from "@/games/takuzu/play-record";
+import type { TakuzuRecordedProblemIdentity } from "@/games/takuzu/problem/problem";
 import type { TakuzuPooledProblem } from "@/games/takuzu/problem/problem-pool";
 import { restoreTakuzuProblem } from "@/games/takuzu/problem-selection";
 import { takuzuPlayRecordDisplay } from "@/games/takuzu/ui/play-record-display";
-import type { PlayRecord } from "@/records/play-record";
+
+/** 完了記録の開始条件。 */
+type TakuzuReplayConditions = {
+  difficulty: TakuzuDifficulty;
+  problemIdentity: TakuzuRecordedProblemIdentity;
+};
 
 type TakuzuReplayStart = {
   difficulty: TakuzuDifficulty;
   initialProblem: TakuzuPooledProblem;
 };
 
-function resolveTakuzuReplayStart(
-  record: PlayRecord,
-): RecordReplayStart<TakuzuReplayStart> {
-  if (!isTakuzuPlayRecord(record)) {
-    return unavailableRecordReplay("unsupported-record");
-  }
-
+function resolveTakuzuReplayStart({
+  difficulty,
+  problemIdentity,
+}: TakuzuReplayConditions): RecordReplayStart<TakuzuReplayStart> {
   // バイナリパズルは問題を問題集にしか持たないので、問題集から引けない記録は再プレイできない。
-  const initialProblem = restoreTakuzuProblem(record.payload.problemIdentity);
+  const initialProblem = restoreTakuzuProblem(problemIdentity);
   if (!initialProblem) {
     return unavailableRecordReplay("problem-not-in-pool");
   }
 
-  return {
-    status: "available",
-    start: { difficulty: record.payload.difficulty, initialProblem },
-  };
+  return { status: "available", start: { difficulty, initialProblem } };
 }
 
 export const takuzuCatalogEntry = {
@@ -46,11 +46,15 @@ export const takuzuCatalogEntry = {
   pictogramSvg,
   entryPath: "/puzzles/takuzu",
   playRecordDisplay: takuzuPlayRecordDisplay,
-  replayRecord(record) {
-    return renderRecordReplay(resolveTakuzuReplayStart(record), (start) => (
-      <PlayableTakuzu {...start} />
-    ));
-  },
+  ...createGameReplay({
+    readRecordConditions(record) {
+      return isTakuzuPlayRecord(record) ? record.payload : null;
+    },
+    resolveStart: resolveTakuzuReplayStart,
+    renderPlay(start) {
+      return <PlayableTakuzu {...start} />;
+    },
+  }),
 } satisfies GameCatalogEntry;
 
 export const _private = { resolveTakuzuReplayStart };

@@ -1,7 +1,7 @@
 import {
+  createGameReplay,
   type GameCatalogEntry,
   type RecordReplayStart,
-  renderRecordReplay,
   unavailableRecordReplay,
 } from "@/game-catalog/game-catalog-entry";
 import { PlayableMinesweeper } from "@/game-catalog/minesweeper/PlayableMinesweeper";
@@ -15,23 +15,25 @@ import {
   type MinesweeperRestoredProblem,
   restoreMinesweeperProblemWithoutAnalysis,
 } from "@/games/minesweeper/problem/generator";
+import type { MinesweeperProblemIdentity } from "@/games/minesweeper/problem/problem";
 import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
 import { restoreProblemOrNull } from "@/games/problem-restoration";
-import type { PlayRecord } from "@/records/play-record";
+
+/** 完了記録の開始条件。 */
+type MinesweeperReplayConditions = {
+  difficulty: MinesweeperDifficulty;
+  problemIdentity: MinesweeperProblemIdentity;
+};
 
 type MinesweeperReplayStart = {
   difficulty: MinesweeperDifficulty;
   initialProblem: MinesweeperRestoredProblem;
 };
 
-function resolveMinesweeperReplayStart(
-  record: PlayRecord,
-): RecordReplayStart<MinesweeperReplayStart> {
-  if (!isMinesweeperPlayRecord(record)) {
-    return unavailableRecordReplay("unsupported-record");
-  }
-
-  const { difficulty, problemIdentity } = record.payload;
+function resolveMinesweeperReplayStart({
+  difficulty,
+  problemIdentity,
+}: MinesweeperReplayConditions): RecordReplayStart<MinesweeperReplayStart> {
   const initialProblem = restoreProblemOrNull(() =>
     restoreMinesweeperProblemWithoutAnalysis(problemIdentity),
   );
@@ -48,12 +50,15 @@ export const minesweeperCatalogEntry = {
   pictogramSvg,
   entryPath: "/puzzles/minesweeper",
   playRecordDisplay: minesweeperPlayRecordDisplay,
-  replayRecord(record) {
-    return renderRecordReplay(
-      resolveMinesweeperReplayStart(record),
-      (start) => <PlayableMinesweeper {...start} />,
-    );
-  },
+  ...createGameReplay({
+    readRecordConditions(record) {
+      return isMinesweeperPlayRecord(record) ? record.payload : null;
+    },
+    resolveStart: resolveMinesweeperReplayStart,
+    renderPlay(start) {
+      return <PlayableMinesweeper {...start} />;
+    },
+  }),
 } satisfies GameCatalogEntry;
 
 export const _private = { resolveMinesweeperReplayStart };

@@ -1,7 +1,7 @@
 import {
+  createGameReplay,
   type GameCatalogEntry,
   type RecordReplayStart,
-  renderRecordReplay,
   unavailableRecordReplay,
 } from "@/game-catalog/game-catalog-entry";
 import { PlayableWaterSort } from "@/game-catalog/water-sort/PlayableWaterSort";
@@ -16,28 +16,32 @@ import {
   waterSortPlayRecordDefinition,
 } from "@/games/water-sort/play-record";
 import { restoreWaterSortProblem } from "@/games/water-sort/problem/generator";
-import type { WaterSortGeneratedProblem } from "@/games/water-sort/problem/problem";
+import type {
+  WaterSortGeneratedProblem,
+  WaterSortProblemIdentity,
+} from "@/games/water-sort/problem/problem";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
-import type { PlayRecord } from "@/records/play-record";
+
+/** 完了記録の開始条件。完了記録には以前の難易度区分で遊んだものもある。 */
+type WaterSortReplayConditions = {
+  difficulty: string;
+  problemIdentity: WaterSortProblemIdentity;
+};
 
 type WaterSortReplayStart = {
   difficulty: WaterSortDifficulty;
   initialProblem: WaterSortGeneratedProblem;
 };
 
-function resolveWaterSortReplayStart(
-  record: PlayRecord,
-): RecordReplayStart<WaterSortReplayStart> {
-  if (!isWaterSortPlayRecord(record)) {
-    return unavailableRecordReplay("unsupported-record");
-  }
-
-  const difficulty = parseWaterSortDifficulty(record.payload.difficulty);
+function resolveWaterSortReplayStart({
+  difficulty: recordedDifficulty,
+  problemIdentity,
+}: WaterSortReplayConditions): RecordReplayStart<WaterSortReplayStart> {
+  const difficulty = parseWaterSortDifficulty(recordedDifficulty);
   if (!difficulty) {
     return unavailableRecordReplay("legacy-difficulty");
   }
 
-  const { problemIdentity } = record.payload;
   const initialProblem = restoreProblemOrNull(() =>
     restoreWaterSortProblem(problemIdentity),
   );
@@ -54,11 +58,15 @@ export const waterSortCatalogEntry = {
   pictogramSvg,
   entryPath: "/puzzles/water-sort",
   playRecordDisplay: waterSortPlayRecordDisplay,
-  replayRecord(record) {
-    return renderRecordReplay(resolveWaterSortReplayStart(record), (start) => (
-      <PlayableWaterSort {...start} />
-    ));
-  },
+  ...createGameReplay({
+    readRecordConditions(record) {
+      return isWaterSortPlayRecord(record) ? record.payload : null;
+    },
+    resolveStart: resolveWaterSortReplayStart,
+    renderPlay(start) {
+      return <PlayableWaterSort {...start} />;
+    },
+  }),
 } satisfies GameCatalogEntry;
 
 export const _private = { resolveWaterSortReplayStart };

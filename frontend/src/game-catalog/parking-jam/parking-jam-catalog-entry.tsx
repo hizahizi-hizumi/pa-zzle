@@ -1,7 +1,7 @@
 import {
+  createGameReplay,
   type GameCatalogEntry,
   type RecordReplayStart,
-  renderRecordReplay,
   unavailableRecordReplay,
 } from "@/game-catalog/game-catalog-entry";
 import { PlayableParkingJam } from "@/game-catalog/parking-jam/PlayableParkingJam";
@@ -18,9 +18,15 @@ import {
   type ParkingJamRestoredProblem,
   restoreParkingJamProblemWithoutAnalysis,
 } from "@/games/parking-jam/problem/generator";
+import type { ParkingJamProblemIdentity } from "@/games/parking-jam/problem/problem";
 import { parkingJamPlayRecordDisplay } from "@/games/parking-jam/ui/play-record-display";
 import { restoreProblemOrNull } from "@/games/problem-restoration";
-import type { PlayRecord } from "@/records/play-record";
+
+/** 完了記録の開始条件。完了記録には以前の難易度区分で遊んだものもある。 */
+type ParkingJamReplayConditions = {
+  difficulty: string;
+  problemIdentity: ParkingJamProblemIdentity;
+};
 
 type ParkingJamReplayStart = {
   difficulty: ParkingJamDifficulty;
@@ -29,19 +35,15 @@ type ParkingJamReplayStart = {
   };
 };
 
-function resolveParkingJamReplayStart(
-  record: PlayRecord,
-): RecordReplayStart<ParkingJamReplayStart> {
-  if (!isParkingJamPlayRecord(record)) {
-    return unavailableRecordReplay("unsupported-record");
-  }
-
-  const difficulty = parseParkingJamDifficulty(record.payload.difficulty);
+function resolveParkingJamReplayStart({
+  difficulty: recordedDifficulty,
+  problemIdentity,
+}: ParkingJamReplayConditions): RecordReplayStart<ParkingJamReplayStart> {
+  const difficulty = parseParkingJamDifficulty(recordedDifficulty);
   if (!difficulty) {
     return unavailableRecordReplay("legacy-difficulty");
   }
 
-  const { problemIdentity } = record.payload;
   const restored = restoreProblemOrNull(() =>
     restoreParkingJamProblemWithoutAnalysis(problemIdentity),
   );
@@ -61,11 +63,15 @@ export const parkingJamCatalogEntry = {
   pictogramSvg,
   entryPath: "/puzzles/parking-jam",
   playRecordDisplay: parkingJamPlayRecordDisplay,
-  replayRecord(record) {
-    return renderRecordReplay(resolveParkingJamReplayStart(record), (start) => (
-      <PlayableParkingJam {...start} />
-    ));
-  },
+  ...createGameReplay({
+    readRecordConditions(record) {
+      return isParkingJamPlayRecord(record) ? record.payload : null;
+    },
+    resolveStart: resolveParkingJamReplayStart,
+    renderPlay(start) {
+      return <PlayableParkingJam {...start} />;
+    },
+  }),
 } satisfies GameCatalogEntry;
 
 export const _private = { resolveParkingJamReplayStart };
