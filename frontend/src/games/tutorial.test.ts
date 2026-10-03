@@ -3,6 +3,7 @@ import {
   getCurrentTutorialGuide,
   getCurrentTutorialStage,
   getTutorialMessage,
+  isTutorialStageRule,
   performTutorialAction,
   startTutorial,
   type Tutorial,
@@ -309,4 +310,21 @@ describe("案内のあるステージ", () => {
       null,
     ]);
   });
+});
+
+describe("isTutorialStageRule", () => {
+  const cases = [
+    ["始めるときに示すルール", firstStage, "first", true],
+    ["途中で示すルール", secondStage, "second", true],
+    ["前のステージで示したルール", secondStage, "first", false],
+  ] as const;
+
+  test.each(cases)(
+    "今のステージで示すルールかを返すこと: %s",
+    (_, stage, ruleId, expected) => {
+      const result = isTutorialStageRule(stage, ruleId);
+
+      expect(result).toBe(expected);
+    },
+  );
 });

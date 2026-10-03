@@ -11,12 +11,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { TutorialMessage } from "@/games/tutorial";
+import { cn } from "@/lib/utils";
 
-/** 上部に並べるルール。手に入れるまでは中身を伏せる。 */
+/**
+ * 上部に並べるルール。手に入れるまでは中身を伏せる。
+ * - `current`: 今のステージで示したルール。一言で示したルールがどれかを、チップの側でも分かるようにする。
+ */
 export type TutorialRuleChip = {
   id: string;
   label: string;
   earned: boolean;
+  current: boolean;
 };
 
 /** 終えたときの主な操作。どこへ進むかは開いた側が決める。 */
@@ -81,7 +86,16 @@ export function TutorialOverlay({
                       key="earned"
                       className="flex animate-in fade-in-0 zoom-in-75 duration-300 ease-(--ease-enter) motion-reduce:animate-none"
                     >
-                      <Badge variant="secondary">{rule.label}</Badge>
+                      <Badge
+                        variant="secondary"
+                        aria-current={rule.current ? "step" : undefined}
+                        className={cn(
+                          "transition-shadow duration-300",
+                          rule.current && "ring-2 ring-ring",
+                        )}
+                      >
+                        {rule.label}
+                      </Badge>
                     </span>
                   ) : (
                     <Badge key="hidden" variant="outline">

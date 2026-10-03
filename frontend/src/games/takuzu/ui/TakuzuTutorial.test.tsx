@@ -135,6 +135,14 @@ function solveStages(count: number): void {
   }
 }
 
+/** 今のステージで示したルールとして目立たせているチップ。 */
+function getCurrentRuleChipTexts(): string[] {
+  return within(screen.getByRole("list", { name: "見つけたルール" }))
+    .getAllByRole("listitem")
+    .filter((item) => item.querySelector('[aria-current="step"]'))
+    .map((item) => item.textContent ?? "");
+}
+
 function getRuleChipTexts(): string[] {
   return within(screen.getByRole("list", { name: "見つけたルール" }))
     .getAllByRole("listitem")
@@ -216,11 +224,13 @@ describe("TakuzuTutorial", () => {
         const rule = screen.getByText("同じものは3つ続けて置けない");
         const question = screen.getByText("では、空いているマスに入るのは？");
         const chips = getRuleChipTexts();
+        const currentChips = getCurrentRuleChipTexts();
 
         expect(cells).toHaveLength(3);
         expect(rule).toBeTruthy();
         expect(question).toBeTruthy();
         expect(chips).toEqual(["3つ続かない", "？", "？"]);
+        expect(currentChips).toEqual(["3つ続かない"]);
       });
 
       test("最初のタップで四角が3つ続くと、四角が3つ続いていることを伝えること", () => {
@@ -303,9 +313,11 @@ describe("TakuzuTutorial", () => {
 
       const rule = screen.getByText("行も列も、四角と丸は同じ数");
       const chips = getRuleChipTexts();
+      const currentChips = getCurrentRuleChipTexts();
 
       expect(rule).toBeTruthy();
       expect(chips).toEqual(["3つ続かない", "同じ数", "？"]);
+      expect(currentChips).toEqual(["同じ数"]);
     });
 
     describe("4×4の最初の盤面に進んだ場合", () => {

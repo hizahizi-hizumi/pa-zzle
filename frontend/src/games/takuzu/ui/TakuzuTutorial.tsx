@@ -26,6 +26,7 @@ import {
   getCurrentTutorialGuide,
   getCurrentTutorialStage,
   getTutorialMessage,
+  isTutorialStageRule,
   performTutorialAction,
   startTutorial,
   type TutorialProgress,
@@ -265,6 +266,7 @@ export function TakuzuTutorial({
       rules={takuzuTutorial.rules.map((rule) => ({
         ...rule,
         earned: progress.earnedRuleIds.includes(rule.id),
+        current: isTutorialStageRule(stage, rule.id),
       }))}
       message={getTutorialMessage(takuzuTutorial, progress, violationSettled)}
       completed={progress.phase === "completed"}

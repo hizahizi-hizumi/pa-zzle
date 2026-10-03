@@ -223,6 +223,14 @@ export function getTutorialMessage<
     : progress.message;
 }
 
+/** 今のステージで示すルールか。ステージを始めるときに示すルールと、途中で示すルール。 */
+export function isTutorialStageRule<RuleId extends string>(
+  stage: TutorialStage<RuleId>,
+  ruleId: RuleId,
+): boolean {
+  return stage.introducedRuleId === ruleId || stage.revealedRule?.id === ruleId;
+}
+
 /** 手を引いている間の今の案内。手を離した後と、ステージを解いている間でなければ `null`。 */
 export function getCurrentTutorialGuide<
   RuleId extends string,
