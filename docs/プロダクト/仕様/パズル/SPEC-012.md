@@ -2,10 +2,11 @@
 id: SPEC-012
 upstream:
   - FR-003
-  - FR-004
   - FR-005
   - FR-006
   - FR-007
+  - NFR-007
+  - NFR-008
 ---
 # SPEC-012 バイナリパズル
 
