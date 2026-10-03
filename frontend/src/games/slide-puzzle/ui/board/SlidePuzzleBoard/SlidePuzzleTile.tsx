@@ -6,17 +6,13 @@ import {
   type SlidePuzzleBoardSize,
   type SlidePuzzleTile as SlidePuzzleTileNumber,
 } from "@/games/slide-puzzle/puzzle/state";
+import { SlidePuzzleTileFace } from "@/games/slide-puzzle/ui/board/SlidePuzzleTileFace";
 
-/** 盤面の幅を一辺のマス数で等分し、数字はタイル幅の約 3 分の 1 にする。 */
+/** 盤面の幅を一辺のマス数で等分する。 */
 const tileSizeClassByBoardSize: Record<SlidePuzzleBoardSize, string> = {
   3: "size-1/3",
   4: "size-1/4",
   5: "size-1/5",
-};
-const tileNumberClassByBoardSize: Record<SlidePuzzleBoardSize, string> = {
-  3: "text-[10.6cqw]",
-  4: "text-[8cqw]",
-  5: "text-[6.4cqw]",
 };
 
 type SlidePuzzleTileProps = {
@@ -53,12 +49,7 @@ export function SlidePuzzleTile({
       }`}
       style={{ transform: `translate(${column * 100}%, ${row * 100}%)` }}
     >
-      <span
-        ref={faceRef}
-        className={`flex size-full items-center justify-center rounded-[1.6cqw] border border-border bg-card font-sans ${tileNumberClassByBoardSize[boardSize]} leading-none font-semibold text-card-foreground tabular-nums shadow-raised transition-colors duration-fast group-active:bg-accent group-focus-visible:ring-2 group-focus-visible:ring-ring`}
-      >
-        {tile}
-      </span>
+      <SlidePuzzleTileFace tile={tile} boardSize={boardSize} ref={faceRef} />
     </button>
   );
 }

@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { PlayHeader } from "@/components/PlayHeader";
@@ -11,6 +11,7 @@ import type {
 import type { SlidePuzzleDirection } from "@/games/slide-puzzle/puzzle/rules";
 import type { SlidePuzzleBoard as SlidePuzzleBoardState } from "@/games/slide-puzzle/puzzle/state";
 import { SlidePuzzleBoard } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard";
+import { SlidePuzzleHowToPlayDialog } from "@/games/slide-puzzle/ui/SlidePuzzleHowToPlayDialog";
 import { SlidePuzzleResultScreen } from "@/games/slide-puzzle/ui/SlidePuzzlePlay/SlidePuzzleResultScreen";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
@@ -65,6 +66,7 @@ export function SlidePuzzlePlay({
   onOpenDiagnostics,
 }: SlidePuzzlePlayProps) {
   const playAreaRef = useRef<HTMLElement>(null);
+  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
 
   useEffect(() => {
     if (progress !== "playing") {
@@ -133,7 +135,12 @@ export function SlidePuzzlePlay({
         onStartNewProblem={onStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
+        onOpenHowToPlay={() => setHowToPlayOpen(true)}
         onOpenDiagnostics={onOpenDiagnostics}
+      />
+      <SlidePuzzleHowToPlayDialog
+        open={howToPlayOpen}
+        onClose={() => setHowToPlayOpen(false)}
       />
       <main className="flex min-h-0 flex-1 items-center justify-center px-3 pt-2 pb-6 [container-type:size] sm:px-6 sm:pb-8">
         <div className="relative aspect-square w-[min(100cqw,100cqh,40rem)]">
