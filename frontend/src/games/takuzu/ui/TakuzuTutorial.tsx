@@ -23,6 +23,7 @@ import { TakuzuClearAnimation } from "@/games/takuzu/ui/board/clear/TakuzuClearA
 import { TakuzuBoard } from "@/games/takuzu/ui/board/TakuzuBoard";
 import {
   advanceTutorialStage,
+  getCurrentTutorialGuide,
   getCurrentTutorialStage,
   getTutorialMessage,
   performTutorialAction,
@@ -42,15 +43,15 @@ type TakuzuTutorialProgress = TutorialProgress<
   TakuzuTutorialStageState
 >;
 
-/** 手が止まってから、決まるマスを示すまでの間。 */
-const IDLE_HINT_DELAY_MS = 7000;
-
 /**
  * ルールに合わない手に、置いたタイルの揺れと違反の一言で応えるまでの間。
  * 空き→四角→丸と切り替える途中の四角が一瞬だけ違反になっても画面が揺れないよう、違反が続いたときだけ応える。
  * 盤面の違反の印の遅れ（240ms）より長く取り、ゆっくり続けて押す間隔（300〜400ms）でも出ず、手を止めればすぐ分かる長さにする。
  */
 const VIOLATION_REACTION_DELAY_MS = 500;
+
+/** 案内どおりの手を置いてから次の案内のマスを示すまでの間。決め手が光って消えるのを見届けてから示す。 */
+const NEXT_GUIDE_HINT_DELAY_MS = 900;
 
 /** 解けた盤面の波が終わってから次の盤面へ移るまでの、解けたときの一言を読む間。 */
 const STAGE_SOLVED_PAUSE_MS = 700;
@@ -76,6 +77,26 @@ function getBoardFrameStyle(
   };
 }
 
+/**
+ * 決まるマスを示すまでの間。0 ならすぐ示し、`null` なら示さない。
+ * 手を引いている間は最初から示し、手を離した後は手が止まったときだけ示す。違反がある間は直すことに向かわせるため示さない。
+ */
+function getHintDelayMs(
+  progress: TakuzuTutorialProgress,
+  idleHintDelayMs: number,
+  guiding: boolean,
+): number | null {
+  if (progress.phase !== "playing" || progress.violated) {
+    return null;
+  }
+  if (!guiding) {
+    return idleHintDelayMs;
+  }
+  const reasoned =
+    (progress.stageState.lastMove?.reasonCellIndices.length ?? 0) > 0;
+  return reasoned ? NEXT_GUIDE_HINT_DELAY_MS : 0;
+}
+
 /** 違反の揺れは、違反が続いたとき（`violationSettled`）だけ返す。 */
 function getCellCues(
   state: TakuzuTutorialStageState,
@@ -94,9 +115,10 @@ function getCellCues(
           kind: "reason",
           id: moveCount,
         }));
+  // 示すマスが変わらない間は、手を置いても示し直さない。
   return hintCellIndex === null
     ? moveCues
-    : [...moveCues, { cellIndex: hintCellIndex, kind: "hint", id: moveCount }];
+    : [...moveCues, { cellIndex: hintCellIndex, kind: "hint", id: 0 }];
 }
 
 /**
@@ -118,24 +140,30 @@ export function TakuzuTutorial({
   const advanceTimerRef = useRef<number | null>(null);
   const violationTimerRef = useRef<number | null>(null);
   const stage = getCurrentTutorialStage(takuzuTutorial, progress);
+  const guide = getCurrentTutorialGuide(takuzuTutorial, progress);
   const { stageState } = progress;
   const { rowCount, columnCount } = stageState.grid.shape;
   const violationSettled = settledViolationProgress === progress;
+  const hintDelayMs = getHintDelayMs(
+    progress,
+    stage.idleHintDelayMs,
+    guide !== null,
+  );
   const hintCellIndex =
-    idleProgress === progress
-      ? findTakuzuTutorialHintCellIndex(stageState)
+    hintDelayMs === 0 || (hintDelayMs !== null && idleProgress === progress)
+      ? findTakuzuTutorialHintCellIndex(stageState, guide?.ruleId ?? null)
       : null;
 
   useEffect(() => {
-    if (!open || progress.phase !== "playing") {
+    if (!open || hintDelayMs === null || hintDelayMs === 0) {
       return;
     }
     const timer = window.setTimeout(
       () => setIdleProgress(progress),
-      IDLE_HINT_DELAY_MS,
+      hintDelayMs,
     );
     return () => window.clearTimeout(timer);
-  }, [open, progress]);
+  }, [open, progress, hintDelayMs]);
 
   useEffect(() => {
     return () => {

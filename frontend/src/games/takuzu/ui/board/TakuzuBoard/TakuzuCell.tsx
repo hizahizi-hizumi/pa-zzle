@@ -121,6 +121,7 @@ export function TakuzuCell({
         <span
           key={cue.id}
           aria-hidden="true"
+          data-cell-cue={cue.kind}
           className="pointer-events-none absolute inset-0 bg-sky-100 ring-2 ring-sky-500/50 ring-inset fill-mode-forwards animate-out fade-out-0 duration-900 ease-in dark:bg-sky-900/60 dark:ring-sky-300/50"
         />
       )}
@@ -128,6 +129,7 @@ export function TakuzuCell({
         <span
           key={cue.id}
           aria-hidden="true"
+          data-cell-cue={cue.kind}
           className="pointer-events-none absolute inset-1 rounded-sm border-2 border-sky-600/60 border-dashed animate-in fade-in-0 duration-500 motion-reduce:animate-none dark:border-sky-300/60"
         />
       )}

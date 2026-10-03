@@ -19,8 +19,19 @@ export type TutorialRule<RuleId extends string> = {
 };
 
 /**
+ * ステージの最初の数手だけ手を引く案内の1手ぶん。決まるマスを最初から示し、その手が置かれたら次の案内へ進む。
+ * - `ruleId`: 示すマスを決めるルール。
+ * - `message`: 案内している間の一言。
+ */
+export type TutorialGuide<RuleId extends string> = {
+  ruleId: RuleId;
+  message: TutorialMessage;
+};
+
+/**
  * 1つのステージ。答えは示さず、文言は手の結果に応じて切り替える。
- * - `intro`: ステージを始めたときと、ルールに合う手を置いたとき。
+ * - `intro`: ステージを始めたときと、ルールに合う手を置いたとき。案内があるステージでは、案内を終えた後。
+ * - `guides`: 最初の数手の案内。順に1つずつ進み、すべて終えたら手を離す。
  * - `violation`: ルールに合わないところができ、そのまましばらく続いたとき。
  * - `solved`: 解けたとき。
  * - `earnedRuleId`: 解けたときに手に入るルール。
@@ -28,6 +39,7 @@ export type TutorialRule<RuleId extends string> = {
  */
 export type TutorialStage<RuleId extends string> = {
   intro: TutorialMessage;
+  guides: readonly TutorialGuide<RuleId>[];
   violation: TutorialMessage;
   solved: TutorialMessage;
   earnedRuleId: RuleId | null;
@@ -38,6 +50,7 @@ export type TutorialStage<RuleId extends string> = {
  * ゲームが判定した1手の結果。
  * - `ignored`: 盤面が変わらなかった。
  * - `continued`: ルールに合うところに置いた。まだ解けていない。
+ * - `deduced`: ルールに合うところに、手前の盤面から決まっていたタイルを置いた。まだ解けていない。案内を1つ進める。
  * - `violated`: ルールに合わないところができた。
  * - `rule-revealed`: ステージの `revealedRule` を明かす局面になった。
  * - `solved`: 解けた。
@@ -45,6 +58,7 @@ export type TutorialStage<RuleId extends string> = {
 export type TutorialMoveOutcome =
   | "ignored"
   | "continued"
+  | "deduced"
   | "violated"
   | "rule-revealed"
   | "solved";
@@ -76,6 +90,7 @@ export type Tutorial<
 export type TutorialPhase = "playing" | "stage-solved" | "completed";
 
 /**
+ * - `guideIndex`: ステージの案内のうち、今の案内の位置。案内の数と同じなら手を離している。
  * - `message`: ルールに合わないところが無いときの一言。
  * - `violated`: 最後の手でルールに合わないところができている。違反の一言は、違反がしばらく続いたときに出す側が出す。
  */
@@ -83,6 +98,7 @@ export type TutorialProgress<RuleId extends string, StageState> = {
   stageIndex: number;
   stageState: StageState;
   earnedRuleIds: readonly RuleId[];
+  guideIndex: number;
   message: TutorialMessage;
   violated: boolean;
   phase: TutorialPhase;
@@ -103,7 +119,8 @@ function startStageProgress<
     stageIndex,
     stageState: tutorial.startStage(stage),
     earnedRuleIds,
-    message: stage.intro,
+    guideIndex: 0,
+    message: stage.guides[0]?.message ?? stage.intro,
     violated: false,
     phase: "playing",
   };
@@ -134,14 +151,16 @@ function earnRule<RuleId extends string>(
     : [...earnedRuleIds, ruleId];
 }
 
-/** ルールに合う手を置いたときの一言。途中で明かしたルールがあれば、その説明を出し続ける。 */
+/** ルールに合う手を置いたときの一言。途中で明かしたルールがあればその説明を、案内の途中ならその案内を出し続ける。 */
 function getGuidingMessage<RuleId extends string>(
   stage: TutorialStage<RuleId>,
   earnedRuleIds: readonly RuleId[],
+  guideIndex: number,
 ): TutorialMessage {
-  return stage.revealedRule && earnedRuleIds.includes(stage.revealedRule.id)
-    ? stage.revealedRule.message
-    : stage.intro;
+  if (stage.revealedRule && earnedRuleIds.includes(stage.revealedRule.id)) {
+    return stage.revealedRule.message;
+  }
+  return stage.guides[guideIndex]?.message ?? stage.intro;
 }
 
 export function startTutorial<
@@ -187,6 +206,23 @@ export function getTutorialMessage<
     : progress.message;
 }
 
+/** 手を引いている間の今の案内。手を離した後と、ステージを解いている間でなければ `null`。 */
+export function getCurrentTutorialGuide<
+  RuleId extends string,
+  Stage extends TutorialStage<RuleId>,
+  StageState,
+  Action,
+>(
+  tutorial: Tutorial<RuleId, Stage, StageState, Action>,
+  progress: TutorialProgress<RuleId, StageState>,
+): TutorialGuide<RuleId> | null {
+  if (progress.phase !== "playing") {
+    return null;
+  }
+  const stage = getCurrentTutorialStage(tutorial, progress);
+  return stage.guides[progress.guideIndex] ?? null;
+}
+
 /** ステージを解いている間だけ操作を受け付ける。それ以外では同じ進行をそのまま返す。 */
 export function performTutorialAction<
   RuleId extends string,
@@ -215,8 +251,20 @@ export function performTutorialAction<
     case "continued":
       return {
         ...moved,
-        message: getGuidingMessage(stage, progress.earnedRuleIds),
+        message: getGuidingMessage(
+          stage,
+          progress.earnedRuleIds,
+          progress.guideIndex,
+        ),
       };
+    case "deduced": {
+      const guideIndex = Math.min(progress.guideIndex + 1, stage.guides.length);
+      return {
+        ...moved,
+        guideIndex,
+        message: getGuidingMessage(stage, progress.earnedRuleIds, guideIndex),
+      };
+    }
     case "violated":
       return { ...moved, violated: true };
     case "rule-revealed": {
@@ -227,7 +275,7 @@ export function performTutorialAction<
       return {
         ...moved,
         earnedRuleIds,
-        message: getGuidingMessage(stage, earnedRuleIds),
+        message: getGuidingMessage(stage, earnedRuleIds, progress.guideIndex),
       };
     }
     case "solved":

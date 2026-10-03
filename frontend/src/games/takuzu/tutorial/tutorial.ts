@@ -41,10 +41,12 @@ export type TakuzuTutorialAction =
 /**
  * - `givens`: 最初からあるタイル。固定マスになる。
  * - `ruleIds`: 盤面の判定に使うルール。途中で明かすルールは、明かすまで含めない。
+ * - `idleHintDelayMs`: 手を離している間に、手が止まってから決まるマスを示すまでの間。
  */
 export type TakuzuTutorialStage = TutorialStage<TakuzuTutorialRuleId> & {
   givens: TakuzuGrid;
   ruleIds: readonly TakuzuTutorialRuleId[];
+  idleHintDelayMs: number;
 };
 
 /**
@@ -349,6 +351,10 @@ function performTakuzuTutorialAction(
       ? [...state.ruleIds, stage.revealedRule.id]
       : state.ruleIds;
   const visibleViolations = findVisibleViolations(grid, ruleIds);
+  const reasonCellIndices =
+    placed === null
+      ? []
+      : getPlacementReason(state.grid, state.ruleIds, cellIndex, placed);
   const next: TakuzuTutorialStageState = {
     grid,
     ruleIds,
@@ -356,10 +362,7 @@ function performTakuzuTutorialAction(
     lastMove: {
       cellIndex,
       violated: isCellInViolation(grid, visibleViolations, cellIndex),
-      reasonCellIndices:
-        placed === null
-          ? []
-          : getPlacementReason(state.grid, state.ruleIds, cellIndex, placed),
+      reasonCellIndices,
     },
   };
 
@@ -372,11 +375,12 @@ function performTakuzuTutorialAction(
   if (revealed) {
     return { state: next, outcome: "rule-revealed" };
   }
+  if (hasTakuzuRuleViolation(visibleViolations)) {
+    return { state: next, outcome: "violated" };
+  }
   return {
     state: next,
-    outcome: hasTakuzuRuleViolation(visibleViolations)
-      ? "violated"
-      : "continued",
+    outcome: reasonCellIndices.length > 0 ? "deduced" : "continued",
   };
 }
 
@@ -422,12 +426,28 @@ export function getTakuzuTutorialLineViolations(
   );
 }
 
-/** 手が止まったときに示す、今の盤面と知っているルールだけで決まるマス。無ければ `null`。 */
+/**
+ * 案内や、手が止まったときに示す、今の盤面と知っているルールだけで決まるマス。無ければ `null`。
+ * `preferredRuleId` を渡すと、そのルールで決まるマスを先に探す。無ければ、ほかの知っているルールで決まるマスを返す。
+ */
 export function findTakuzuTutorialHintCellIndex(
   state: TakuzuTutorialStageState,
+  preferredRuleId: TakuzuTutorialRuleId | null = null,
 ): number | null {
-  return findDeducibleCellIndex(state.grid, state.ruleIds);
+  const preferredCellIndex =
+    preferredRuleId !== null && state.ruleIds.includes(preferredRuleId)
+      ? findDeducibleCellIndex(state.grid, [preferredRuleId])
+      : null;
+  return (
+    preferredCellIndex ?? findDeducibleCellIndex(state.grid, state.ruleIds)
+  );
 }
+
+/** 1行だけの盤面で、手が止まってから決まるマスを示すまでの間。考える余地を残すため長めに待つ。 */
+const smallBoardIdleHintDelayMs = 7000;
+
+/** 4×4 の盤面で、手が止まってから決まるマスを示すまでの間。探す範囲が広く迷いやすいので、早めに示す。 */
+const boardIdleHintDelayMs = 4000;
 
 const violationMessage = {
   headline: "ルールに合わないところがある",
@@ -440,7 +460,8 @@ const violationMessage = {
  * - 1 `AA.`: 初めのタップで四角が3つ続き、もう一度で丸になって解ける。切り替えと3つ続かないことを同時に知る。
  * - 2 `B.B`: 挟まれていても決まる。
  * - 3 `ABA.`: 四角を置くと多すぎ、丸で解ける。同じ数を知る。
- * - 4: 3つ続かないことと同じ数だけで解き切れる。
+ * - 4: 3つ続かないことと同じ数だけで解き切れる。1行から盤面への飛躍を埋めるため、最初の2手だけ、
+ *   3つ続かない・同じ数の順にそれぞれで決まるマスを示して手を引き、その後は手が止まったときだけ示す。
  * - 5: 途中で2つのルールでは決まらなくなる。そこで同じ並びを作れないことを明かし、それで解き切る。
  */
 const stages: readonly TakuzuTutorialStage[] = [
@@ -458,6 +479,8 @@ const stages: readonly TakuzuTutorialStage[] = [
     },
     earnedRuleId: "run",
     revealedRule: null,
+    guides: [],
+    idleHintDelayMs: smallBoardIdleHintDelayMs,
   },
   {
     givens: parseTakuzuGrid(["B.B"]),
@@ -473,6 +496,8 @@ const stages: readonly TakuzuTutorialStage[] = [
     },
     earnedRuleId: null,
     revealedRule: null,
+    guides: [],
+    idleHintDelayMs: smallBoardIdleHintDelayMs,
   },
   {
     givens: parseTakuzuGrid(["ABA."]),
@@ -488,23 +513,42 @@ const stages: readonly TakuzuTutorialStage[] = [
     },
     earnedRuleId: "count",
     revealedRule: null,
+    guides: [],
+    idleHintDelayMs: smallBoardIdleHintDelayMs,
   },
   {
     givens: parseTakuzuGrid([".A.B", "..A.", "B...", ".B.B"]),
     ruleIds: ["run", "count"],
-    intro: {
-      headline: "2つのルールで、全部埋めよう",
-      detail: "決まるマスから置いていく",
-    },
+    intro: { headline: "その調子。残りも埋めよう", detail: null },
     violation: violationMessage,
     solved: { headline: "解けた！", detail: null },
     earnedRuleId: null,
     revealedRule: null,
+    guides: [
+      {
+        ruleId: "run",
+        message: {
+          headline: "同じもの2つの、隣か間を探そう",
+          detail: "3つ続かないから決まる",
+        },
+      },
+      {
+        ruleId: "count",
+        message: {
+          headline: "同じ数でも決まる",
+          detail: "四角か丸が2つそろった行・列を探そう",
+        },
+      },
+    ],
+    idleHintDelayMs: boardIdleHintDelayMs,
   },
   {
     givens: parseTakuzuGrid(["..A.", "A.BB", "B...", "...B"]),
     ruleIds: ["run", "count"],
-    intro: { headline: "最後の盤面", detail: "同じように埋めてみよう" },
+    intro: {
+      headline: "まず2つのルールで進めよう",
+      detail: "最後の盤面。決まるマスから",
+    },
     violation: violationMessage,
     solved: { headline: "解けた！", detail: null },
     earnedRuleId: "duplicate",
@@ -515,6 +559,8 @@ const stages: readonly TakuzuTutorialStage[] = [
         detail: "同じ並びの行・列は作れない",
       },
     },
+    guides: [],
+    idleHintDelayMs: boardIdleHintDelayMs,
   },
 ];
 

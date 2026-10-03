@@ -1,5 +1,6 @@
 import {
   advanceTutorialStage,
+  getCurrentTutorialGuide,
   getCurrentTutorialStage,
   getTutorialMessage,
   performTutorialAction,
@@ -25,6 +26,7 @@ const firstStage: TutorialStage<RuleId> = {
   solved: createMessage("1の解決"),
   earnedRuleId: "first",
   revealedRule: null,
+  guides: [],
 };
 
 const secondStage: TutorialStage<RuleId> = {
@@ -33,6 +35,19 @@ const secondStage: TutorialStage<RuleId> = {
   solved: createMessage("2の解決"),
   earnedRuleId: "second",
   revealedRule: { id: "second", message: createMessage("2のルール") },
+  guides: [],
+};
+
+const guidedStage: TutorialStage<RuleId> = {
+  intro: createMessage("案内の後"),
+  violation: createMessage("案内中の違反"),
+  solved: createMessage("案内の解決"),
+  earnedRuleId: null,
+  revealedRule: null,
+  guides: [
+    { ruleId: "first", message: createMessage("1つ目の案内") },
+    { ruleId: "second", message: createMessage("2つ目の案内") },
+  ],
 };
 
 const fakeTutorial: Tutorial<
@@ -63,9 +78,10 @@ type FakeProgress = TutorialProgress<RuleId, number>;
 function performAll(
   progress: FakeProgress,
   actions: readonly FakeAction[],
+  tutorial: typeof fakeTutorial = fakeTutorial,
 ): FakeProgress {
   return actions.reduce(
-    (current, action) => performTutorialAction(fakeTutorial, current, action),
+    (current, action) => performTutorialAction(tutorial, current, action),
     progress,
   );
 }
@@ -78,6 +94,7 @@ describe("startTutorial", () => {
       stageIndex: 0,
       stageState: 0,
       earnedRuleIds: [],
+      guideIndex: 0,
       message: firstStage.intro,
       violated: false,
       phase: "playing",
@@ -179,6 +196,7 @@ describe("advanceTutorialStage", () => {
       stageIndex: 1,
       stageState: 0,
       earnedRuleIds: ["first"],
+      guideIndex: 0,
       message: secondStage.intro,
       violated: false,
       phase: "playing",
@@ -228,5 +246,49 @@ describe("getTutorialMessage", () => {
     const result = getTutorialMessage(fakeTutorial, violated, false);
 
     expect(result).toBe(firstStage.intro);
+  });
+});
+
+describe("案内のあるステージ", () => {
+  const guidedTutorial = { ...fakeTutorial, stages: [guidedStage] };
+  const started = startTutorial(guidedTutorial);
+
+  test("1つ目の案内の一言から始めること", () => {
+    const result = getCurrentTutorialGuide(guidedTutorial, started);
+
+    expect(result).toBe(guidedStage.guides[0]);
+    expect(started.message).toBe(guidedStage.guides[0]?.message);
+  });
+
+  test("決まる手を置くと次の案内へ進むこと", () => {
+    const result = performTutorialAction(guidedTutorial, started, "deduced");
+
+    expect(getCurrentTutorialGuide(guidedTutorial, result)).toBe(
+      guidedStage.guides[1],
+    );
+    expect(result.message).toBe(guidedStage.guides[1]?.message);
+  });
+
+  test("決まらない手や違反では案内を進めないこと", () => {
+    const result = performAll(
+      started,
+      ["continued", "violated", "continued"],
+      guidedTutorial,
+    );
+
+    expect(result.guideIndex).toBe(0);
+    expect(result.message).toBe(guidedStage.guides[0]?.message);
+  });
+
+  test("すべての案内を終えると手を離し、導入の一言を出すこと", () => {
+    const result = performAll(
+      started,
+      ["deduced", "deduced", "deduced"],
+      guidedTutorial,
+    );
+
+    expect(getCurrentTutorialGuide(guidedTutorial, result)).toBeNull();
+    expect(result.guideIndex).toBe(2);
+    expect(result.message).toBe(guidedStage.intro);
   });
 });

@@ -71,6 +71,14 @@ function tapCell(row: number, column: number): void {
   fireEvent.click(getCell(row, column));
 }
 
+/** 案内や手が止まったときに、決まるマスとして示しているマスの位置。 */
+function getHintedCellPositions(): string[] {
+  return within(getBoard())
+    .getAllByRole("button")
+    .filter((cell) => cell.querySelector('[data-cell-cue="hint"]'))
+    .map((cell) => cell.getAttribute("aria-label")?.split(" ")[0] ?? "");
+}
+
 /** 空きマスを解のとおりに埋める。四角は1回、丸は2回タップする。 */
 function solveStage(stageIndex: number): void {
   const { givens, solution } = stageBoards[stageIndex] ?? stageBoards[0];
@@ -219,6 +227,69 @@ describe("TakuzuTutorial", () => {
 
         expect(message).toBeTruthy();
         expect(animate).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("4×4の最初の盤面に進んだ場合", () => {
+      beforeEach(() => {
+        solveStages(3);
+      });
+
+      test("最初から、3つ続かないことで決まるマスを示すこと", () => {
+        const message = screen.getByText("同じもの2つの、隣か間を探そう");
+        const hinted = getHintedCellPositions();
+
+        expect(message).toBeTruthy();
+        expect(hinted).toEqual(["4行3列"]);
+      });
+
+      test("示したマスに置くと、決め手が光った後に同じ数で決まるマスを示すこと", () => {
+        tapCell(4, 3);
+        const hintedRightAfter = getHintedCellPositions();
+        advanceTime(900);
+
+        const message = screen.getByText("同じ数でも決まる");
+        const hinted = getHintedCellPositions();
+
+        expect(message).toBeTruthy();
+        expect(hintedRightAfter).toEqual([]);
+        expect(hinted).toEqual(["1行3列"]);
+      });
+
+      test("2手置くと手を離し、手が止まったときだけ決まるマスを示すこと", () => {
+        tapCell(4, 3);
+        tapCell(1, 3);
+        tapCell(1, 3);
+        advanceTime(3999);
+        const hintedBeforeIdle = getHintedCellPositions();
+        advanceTime(1);
+
+        const message = screen.getByText("その調子。残りも埋めよう");
+        const hinted = getHintedCellPositions();
+
+        expect(message).toBeTruthy();
+        expect(hintedBeforeIdle).toEqual([]);
+        expect(hinted).toHaveLength(1);
+      });
+
+      test("示したマスとは別の決まるマスに置いても、案内を1つ進めること", () => {
+        // 4列目は丸が2つそろっていて、2行目は四角に決まる。
+        tapCell(2, 4);
+
+        const message = screen.getByText("同じ数でも決まる");
+
+        expect(message).toBeTruthy();
+      });
+
+      test("まだ決まらないマスに置くと、案内を進めず、3つ続かないことで決まるマスを示し続けること", () => {
+        // 1行目が `AA.B` になり、3列目が3つ続かないことで決まる。
+        tapCell(1, 1);
+
+        const message = screen.getByText("同じもの2つの、隣か間を探そう");
+        const hinted = getHintedCellPositions();
+
+        expect(message).toBeTruthy();
+        expect(hinted).toEqual(["1行3列"]);
       });
     });
 

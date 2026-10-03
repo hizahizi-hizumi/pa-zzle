@@ -234,6 +234,47 @@ describe("takuzuTutorial.perform", () => {
     });
   });
 
+  describe("ステージ4", () => {
+    test("挟まれて決まるマスに置くと、決まる手として返すこと", () => {
+      // 4行目 `.B.B` の3列目は、丸に挟まれて四角に決まる。
+      const { outcomes } = performAll(twoRuleStage, [place(14, "a")]);
+
+      const result = outcomes;
+
+      expect(result).toEqual(["deduced"]);
+    });
+
+    test("まだ決まらないマスに置くと、決まる手として返さないこと", () => {
+      const { outcomes } = performAll(twoRuleStage, [place(0, "a")]);
+
+      const result = outcomes;
+
+      expect(result).toEqual(["continued"]);
+    });
+  });
+
+  describe("ステージ4を始めた盤面で決まるマスを探す場合", () => {
+    const state = takuzuTutorial.startStage(twoRuleStage);
+
+    test("3つ続かないことを先に探すと、挟まれたマスを返すこと", () => {
+      const result = findTakuzuTutorialHintCellIndex(state, "run");
+
+      expect(result).toBe(14);
+    });
+
+    test("同じ数を先に探すと、四角か丸がそろった列のマスを返すこと", () => {
+      const result = findTakuzuTutorialHintCellIndex(state, "count");
+
+      expect(result).toBe(7);
+    });
+
+    test("知らないルールを先に探そうとしても、知っているルールで決まるマスを返すこと", () => {
+      const result = findTakuzuTutorialHintCellIndex(state, "duplicate");
+
+      expect(result).toBe(14);
+    });
+  });
+
   describe("固定マスを押した場合", () => {
     const { state, outcomes } = performAll(runStage, [tap(0)]);
 
