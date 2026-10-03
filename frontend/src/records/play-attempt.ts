@@ -29,6 +29,10 @@ export type PlayAttempt = {
   abandonment: PlayAttemptAbandonment | null;
 };
 
+export type AbandonedPlayAttempt = PlayAttempt & {
+  abandonment: PlayAttemptAbandonment;
+};
+
 type PlayStartKey = Pick<PlayAttempt, "gameId" | "startedAt">;
 
 /** 同じゲームで同じ時刻に始めたプレイか。試行どうし、試行と完了記録の突き合わせに使う。 */
@@ -42,6 +46,17 @@ export function isPlayAttemptCleared(
   records: readonly PlayRecord[],
 ): boolean {
   return records.some((record) => isSamePlayStart(record, attempt));
+}
+
+/** 状態が離脱の試行だけを選ぶ。完了記録がある試行は離脱を記録していてもクリアとして除く。 */
+export function getAbandonedPlayAttempts(
+  attempts: readonly PlayAttempt[],
+  records: readonly PlayRecord[],
+): AbandonedPlayAttempt[] {
+  return attempts.filter(
+    (attempt): attempt is AbandonedPlayAttempt =>
+      attempt.abandonment !== null && !isPlayAttemptCleared(attempt, records),
+  );
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {

@@ -29,6 +29,13 @@ export const slidePuzzleCatalogEntry = {
         )
       : null;
   },
+  attemptProblemPlayTarget({ start }) {
+    return resolveRecordProblemPlayTarget(
+      parseSlidePuzzleDifficulty(start.difficulty),
+      start.problemIdentity,
+      canSelectSlidePuzzleProblemById,
+    );
+  },
   renderRecordResult(record, context) {
     const recorded = restoreSlidePuzzleRecordedResult(record);
     return recorded ? (

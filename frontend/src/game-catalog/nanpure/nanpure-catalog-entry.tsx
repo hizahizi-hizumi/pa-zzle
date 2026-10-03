@@ -29,6 +29,13 @@ export const nanpureCatalogEntry = {
         )
       : null;
   },
+  attemptProblemPlayTarget({ start }) {
+    return resolveRecordProblemPlayTarget(
+      parseNanpureDifficulty(start.difficulty),
+      start.problemIdentity,
+      canSelectNanpureProblemById,
+    );
+  },
   renderRecordResult(record, context) {
     const recorded = restoreNanpureRecordedResult(record);
     return recorded ? (

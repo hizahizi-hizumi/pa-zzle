@@ -1,9 +1,20 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { createMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
 import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
 import { createProblemId } from "@/games/problem-id";
+import type { PlayAttempt } from "@/records/play-attempt";
+import {
+  abandonPlayAttempt,
+  startPlayAttempt,
+} from "@/records/play-attempt-storage";
 import type { PlayRecord } from "@/records/play-record";
 import { writePlayRecords } from "@/records/storage";
 import { PlayRecordsView } from "@/views/PlayRecordsView";
@@ -24,6 +35,16 @@ const minesweeperRecord = createMinesweeperPlayRecord({
   completedAt: 121_000,
   result: { elapsedMs: 120_000, mistakeCount: 0, minimumOpenCount: 10 },
 });
+const minesweeperAttempt: PlayAttempt = {
+  gameId: "minesweeper",
+  startedAt: 200_000,
+  start: { difficulty: "1", problemIdentity: minesweeperProblem.identity },
+  abandonment: null,
+};
+const abandonment = {
+  abandonedAt: 230_000,
+  progress: { elapsedMs: 30_000, mistakeCount: 1 },
+};
 
 type RecordsRouter = ReturnType<typeof createMemoryRouter>;
 
@@ -84,6 +105,42 @@ describe("PlayRecordsView", () => {
 
       expect(unavailableButton.hasAttribute("disabled")).toBe(true);
       expect(pathname).toBe("/records");
+    });
+  });
+
+  describe("問題集にある問題で離脱したプレイの場合", () => {
+    let router: RecordsRouter;
+
+    beforeEach(() => {
+      startPlayAttempt(minesweeperAttempt);
+      abandonPlayAttempt(minesweeperAttempt, abandonment);
+      router = renderRecords([]);
+    });
+
+    test("同じ問題をプレイで離脱したプレイの難易度のプレイ画面をその問題のIDで開くこと", () => {
+      fireEvent.click(screen.getByRole("button", { name: "同じ問題をプレイ" }));
+      const { pathname, search } = router.state.location;
+
+      expect(pathname).toBe("/puzzles/minesweeper/play/1");
+      expect(search).toBe(
+        `?problem=${createProblemId(minesweeperProblem.identity)}`,
+      );
+    });
+  });
+
+  describe("直前のプレイの離脱を画面を開いたあとに保存する場合", () => {
+    beforeEach(() => {
+      startPlayAttempt(minesweeperAttempt);
+      renderRecords([]);
+    });
+
+    test("保存した離脱を一覧に表示すること", () => {
+      act(() => {
+        abandonPlayAttempt(minesweeperAttempt, abandonment);
+      });
+      const abandonedLabel = screen.getByText("離脱");
+
+      expect(abandonedLabel).toBeTruthy();
     });
   });
 });

@@ -3,6 +3,7 @@ import {
   parseMinesweeperDifficulty,
 } from "@/games/minesweeper/difficulty";
 import { minesweeperPlayRecordDefinition } from "@/games/minesweeper/play-record";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
 import { formatElapsedTimeDelta } from "@/lib/format-performance-delta";
 import { createPlayRecordDisplay } from "@/records/ui/play-record-display";
 
@@ -37,6 +38,15 @@ export const minesweeperPlayRecordDisplay = createPlayRecordDisplay({
       },
       referenceValue: 0,
       axis: { kind: "integer", minimum: 0 },
+    },
+  },
+  progress: {
+    elapsedMs: { label: "経過", formatValue: formatElapsedTime },
+    mistakeCount: {
+      label: "ミス",
+      formatValue(value: number) {
+        return `${value}回`;
+      },
     },
   },
 });

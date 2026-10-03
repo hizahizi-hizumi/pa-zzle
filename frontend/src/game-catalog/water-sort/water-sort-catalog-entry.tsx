@@ -29,6 +29,13 @@ export const waterSortCatalogEntry = {
         )
       : null;
   },
+  attemptProblemPlayTarget({ start }) {
+    return resolveRecordProblemPlayTarget(
+      parseWaterSortDifficulty(start.difficulty),
+      start.problemIdentity,
+      canSelectWaterSortProblemById,
+    );
+  },
   renderRecordResult(record, context) {
     const recorded = restoreWaterSortRecordedResult(record);
     return recorded ? (

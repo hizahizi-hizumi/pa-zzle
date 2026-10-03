@@ -29,6 +29,13 @@ export const minesweeperCatalogEntry = {
         )
       : null;
   },
+  attemptProblemPlayTarget({ start }) {
+    return resolveRecordProblemPlayTarget(
+      parseMinesweeperDifficulty(start.difficulty),
+      start.problemIdentity,
+      canSelectMinesweeperProblemById,
+    );
+  },
   renderRecordResult(record, context) {
     const recorded = restoreMinesweeperRecordedResult(record);
     return recorded ? (

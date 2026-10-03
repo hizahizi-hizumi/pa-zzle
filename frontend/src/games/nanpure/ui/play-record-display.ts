@@ -39,4 +39,13 @@ export const nanpurePlayRecordDisplay = createPlayRecordDisplay({
       axis: { kind: "integer", minimum: 0 },
     },
   },
+  progress: {
+    elapsedMs: { label: "経過", formatValue: formatElapsedTime },
+    mistakeCount: {
+      label: "ミス",
+      formatValue(value: number) {
+        return `${value}回`;
+      },
+    },
+  },
 });

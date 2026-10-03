@@ -29,6 +29,13 @@ export const takuzuCatalogEntry = {
         )
       : null;
   },
+  attemptProblemPlayTarget({ start }) {
+    return resolveRecordProblemPlayTarget(
+      parseTakuzuDifficulty(start.difficulty),
+      start.problemIdentity,
+      canSelectTakuzuProblemById,
+    );
+  },
   renderRecordResult(record, context) {
     const recorded = restoreTakuzuRecordedResult(record);
     return recorded ? (

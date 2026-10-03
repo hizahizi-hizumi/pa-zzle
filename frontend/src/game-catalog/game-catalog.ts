@@ -10,6 +10,7 @@ import { reflectionCatalogEntry } from "@/game-catalog/reflection/reflection-cat
 import { slidePuzzleCatalogEntry } from "@/game-catalog/slide-puzzle/slide-puzzle-catalog-entry";
 import { takuzuCatalogEntry } from "@/game-catalog/takuzu/takuzu-catalog-entry";
 import { waterSortCatalogEntry } from "@/game-catalog/water-sort/water-sort-catalog-entry";
+import type { PlayAttempt } from "@/records/play-attempt";
 import type { PlayRecord } from "@/records/play-record";
 
 /** アプリが提供するゲームを、パズル選択と記録で見せる順に並べる。 */
@@ -29,7 +30,7 @@ export function findGameCatalogEntry(
   return gameCatalog.find((game) => game.id === gameId);
 }
 
-/** 記録の問題を遊び直すプレイ画面。 */
+/** 完了記録や離脱した試行の問題を遊び直すプレイ画面。 */
 export type RecordProblemPlayDestination = RecordProblemPlayTarget & {
   playPath: GamePlayPath;
 };
@@ -40,5 +41,14 @@ export function findRecordProblemPlayDestination(
 ): RecordProblemPlayDestination | null {
   const game = findGameCatalogEntry(record.gameId);
   const target = game?.recordProblemPlayTarget(record);
+  return game && target ? { ...target, playPath: game.playPath } : null;
+}
+
+/** 離脱した試行の問題を遊び直すプレイ画面を求める。今のアプリに無いゲームの試行や、遊び直せない試行には `null` を返す。 */
+export function findAttemptProblemPlayDestination(
+  attempt: PlayAttempt,
+): RecordProblemPlayDestination | null {
+  const game = findGameCatalogEntry(attempt.gameId);
+  const target = game?.attemptProblemPlayTarget(attempt);
   return game && target ? { ...target, playPath: game.playPath } : null;
 }
