@@ -24,9 +24,11 @@ const [
   runStage,
   sandwichStage,
   countStage,
+  duplicateStage,
   twoRuleStage,
   finalStage,
 ] = takuzuTutorial.stages as [
+  TakuzuTutorialStage,
   TakuzuTutorialStage,
   TakuzuTutorialStage,
   TakuzuTutorialStage,
@@ -161,6 +163,28 @@ describe("takuzuTutorial.stages", () => {
   );
 
   describe("ステージ4", () => {
+    test("3つ続かないことと同じ数だけでは解が1つに決まらないこと", () => {
+      const result = listSolutions(duplicateStage.givens, ["run", "count"]);
+
+      expect(result.length).toBeGreaterThan(1);
+    });
+
+    test("3つ続かないことと同じ数だけで決まるマスが無いこと", () => {
+      const result = fillByDeduction(duplicateStage.givens, ["run", "count"]);
+
+      expect(result).toEqual(duplicateStage.givens.cells);
+    });
+
+    test("同じ並びを作れないことを加えると、決まるマスを順に埋めて解き切れること", () => {
+      const result = fillByDeduction(duplicateStage.givens, allRuleIds);
+
+      expect(result.join("")).toBe(
+        listSolutions(duplicateStage.givens, allRuleIds)[0],
+      );
+    });
+  });
+
+  describe("ステージ5", () => {
     test("3つ続かないことと同じ数だけで、決まるマスを順に埋めて解き切れること", () => {
       const result = fillByDeduction(twoRuleStage.givens, ["run", "count"]);
 
@@ -170,7 +194,7 @@ describe("takuzuTutorial.stages", () => {
     });
   });
 
-  describe("ステージ5", () => {
+  describe("ステージ6", () => {
     test("3つ続かないことと同じ数だけでは解が1つに決まらないこと", () => {
       const result = listSolutions(finalStage.givens, ["run", "count"]);
 
@@ -271,7 +295,6 @@ describe("takuzuTutorial.perform", () => {
         cellIndex: 2,
         violated: false,
         reasonCellIndices: [0, 1],
-        revealedRuleId: null,
       });
     });
   });
@@ -306,7 +329,7 @@ describe("takuzuTutorial.perform", () => {
     const { state, outcomes } = performAll(countStage, [tap(3)]);
 
     test("行の個数超過を示すこと", () => {
-      const result = getTakuzuTutorialLineViolations(state);
+      const result = getTakuzuTutorialLineViolations(countStage, state);
 
       expect(outcomes).toEqual(["violated"]);
       expect(result).toEqual([
@@ -328,7 +351,7 @@ describe("takuzuTutorial.perform", () => {
     });
   });
 
-  describe("ステージ4で手を引いている場合", () => {
+  describe("ステージ5で手を引いている場合", () => {
     const firstGuideState = startGuide(
       twoRuleStage,
       takuzuTutorial.startStage(twoRuleStage),
@@ -417,23 +440,35 @@ describe("takuzuTutorial.perform", () => {
     });
   });
 
-  describe("ステージ4を始めた盤面で決まるマスを探す場合", () => {
+  describe("ステージ5を始めた盤面で決まるマスを探す場合", () => {
     const state = takuzuTutorial.startStage(twoRuleStage);
 
     test("3つ続かないことを先に探すと、挟まれたマスを返すこと", () => {
-      const result = findTakuzuTutorialHintCellIndex(state, "run");
+      const result = findTakuzuTutorialHintCellIndex(
+        twoRuleStage,
+        state,
+        "run",
+      );
 
       expect(result).toBe(14);
     });
 
     test("同じ数を先に探すと、四角か丸がそろった列のマスを返すこと", () => {
-      const result = findTakuzuTutorialHintCellIndex(state, "count");
+      const result = findTakuzuTutorialHintCellIndex(
+        twoRuleStage,
+        state,
+        "count",
+      );
 
       expect(result).toBe(7);
     });
 
-    test("知らないルールを先に探そうとしても、知っているルールで決まるマスを返すこと", () => {
-      const result = findTakuzuTutorialHintCellIndex(state, "duplicate");
+    test("先に探すルールで決まるマスが無ければ、ほかのルールで決まるマスを返すこと", () => {
+      const result = findTakuzuTutorialHintCellIndex(
+        twoRuleStage,
+        state,
+        "duplicate",
+      );
 
       expect(result).toBe(14);
     });
@@ -450,32 +485,24 @@ describe("takuzuTutorial.perform", () => {
     });
   });
 
-  describe("ステージ5で決まるマスだけを埋めて行き詰まった場合", () => {
+  describe("ステージ6で3つ続かないことと同じ数で決まるマスを埋め切った場合", () => {
     const stuckCells = fillByDeduction(finalStage.givens, ["run", "count"]);
     const actions = stuckCells.flatMap((cell, cellIndex) =>
       cell !== null && finalStage.givens.cells[cellIndex] === null
         ? [place(cellIndex, cell)]
         : [],
     );
-    const { state, outcomes } = performAll(finalStage, actions);
+    const { state } = performAll(finalStage, actions);
 
-    test("行き詰まった手で同じ並びのルールを示すこと", () => {
-      const result = outcomes;
-
-      expect(result.at(-1)).toBe("rule-revealed");
-      expect(result.slice(0, -1)).not.toContain("rule-revealed");
-      expect(state.ruleIds).toContain("duplicate");
-      expect(state.lastMove?.revealedRuleId).toBe("duplicate");
-    });
-
-    test("示した後は、同じ並びのルールで決まるマスを示せること", () => {
-      const result = findTakuzuTutorialHintCellIndex(state);
+    test("同じ並びを作れないことで決まるマスを示すこと", () => {
+      const result = findTakuzuTutorialHintCellIndex(finalStage, state);
 
       expect(result).not.toBeNull();
+      expect(deduceCell(state.grid, ["run", "count"], result ?? -1)).toBeNull();
     });
   });
 
-  describe("ステージ5で1行目と3行目を同じ並びにした場合", () => {
+  describe("ステージ6で1行目と3行目を同じ並びにした場合", () => {
     // どちらも BBAA。3つ続かないことと同じ数には合う。
     const { state, outcomes } = performAll(finalStage, [
       place(0, "b"),
@@ -486,10 +513,10 @@ describe("takuzuTutorial.perform", () => {
       place(11, "a"),
     ]);
 
-    test("同じ並びのルールを示し、重なった行を示すこと", () => {
-      const result = getTakuzuTutorialLineViolations(state);
+    test("ルールに合わないとして、重なった行を示すこと", () => {
+      const result = getTakuzuTutorialLineViolations(finalStage, state);
 
-      expect(outcomes.at(-1)).toBe("rule-revealed");
+      expect(outcomes.at(-1)).toBe("violated");
       expect(result).toEqual([
         { axis: "row", index: 0, overfilled: false, duplicated: true },
         { axis: "row", index: 2, overfilled: false, duplicated: true },
@@ -514,6 +541,24 @@ describe("takuzuTutorial.describeViolation", () => {
       countStage,
       [tap(3)],
       { headline: "四角が多すぎる", detail: "行も列も、四角と丸は同じ数" },
+    ],
+    [
+      "すぐ上の行と同じ並びにした",
+      duplicateStage,
+      [place(10, "b"), place(11, "a")],
+      {
+        headline: "上の行と同じ並びになっている",
+        detail: "同じ並びの行・列は作れない",
+      },
+    ],
+    [
+      "離れた行と同じ並びにした",
+      duplicateStage,
+      [place(14, "a"), place(15, "b")],
+      {
+        headline: "1行目と同じ並びになっている",
+        detail: "同じ並びの行・列は作れない",
+      },
     ],
     [
       "4×4の盤面で四角が多すぎる列ができた",

@@ -3,7 +3,6 @@ import {
   getCurrentTutorialGuide,
   getCurrentTutorialStage,
   getTutorialMessage,
-  isTutorialStageRule,
   performTutorialAction,
   startTutorial,
   type Tutorial,
@@ -25,15 +24,13 @@ const firstStage: TutorialStage<RuleId> = {
   intro: createMessage("1の導入"),
   solved: createMessage("1の解決"),
   introducedRuleId: "first",
-  revealedRule: null,
   guides: [],
 };
 
 const secondStage: TutorialStage<RuleId> = {
   intro: createMessage("2の導入"),
   solved: createMessage("2の解決"),
-  introducedRuleId: null,
-  revealedRule: { id: "second", message: createMessage("2のルール") },
+  introducedRuleId: "second",
   guides: [],
 };
 
@@ -41,7 +38,6 @@ const guidedStage: TutorialStage<RuleId> = {
   intro: createMessage("案内の後"),
   solved: createMessage("案内の解決"),
   introducedRuleId: null,
-  revealedRule: null,
   guides: [
     { ruleId: "first", message: createMessage("1つ目の案内") },
     { ruleId: "second", message: createMessage("2つ目の案内") },
@@ -148,50 +144,13 @@ describe("performTutorialAction", () => {
       expect(result).toBe(solved);
     });
   });
-
-  describe("途中でルールを示すステージの場合", () => {
-    const secondStageStarted = advanceTutorialStage(
-      fakeTutorial,
-      performTutorialAction(fakeTutorial, started, "solved"),
-    );
-
-    test("示したルールを手に入れ、その説明を出すこと", () => {
-      const result = performTutorialAction(
-        fakeTutorial,
-        secondStageStarted,
-        "rule-revealed",
-      );
-
-      expect(result.earnedRuleIds).toEqual(["first", "second"]);
-      expect(result.message).toBe(secondStage.revealedRule?.message);
-    });
-
-    test("示した後にルールに合う手を置くと、導入ではなくルールの説明を出し続けること", () => {
-      const result = performAll(secondStageStarted, [
-        "rule-revealed",
-        "violated",
-        "continued",
-      ]);
-
-      expect(result.message).toBe(secondStage.revealedRule?.message);
-    });
-
-    test("示したルールを解けたときに重ねて手に入れないこと", () => {
-      const result = performAll(secondStageStarted, [
-        "rule-revealed",
-        "solved",
-      ]);
-
-      expect(result.earnedRuleIds).toEqual(["first", "second"]);
-    });
-  });
 });
 
 describe("advanceTutorialStage", () => {
   const started = startTutorial(fakeTutorial);
   const firstSolved = performTutorialAction(fakeTutorial, started, "solved");
 
-  test("解いたステージの次のステージを、手に入れたルールを保ったまま始めること", () => {
+  test("解いたステージの次のステージを、手に入れたルールにそのステージで示すルールを加えて始めること", () => {
     const result = advanceTutorialStage(fakeTutorial, firstSolved);
     const stage = getCurrentTutorialStage(fakeTutorial, result);
 
@@ -199,7 +158,7 @@ describe("advanceTutorialStage", () => {
     expect(result).toEqual({
       stageIndex: 1,
       stageState: 0,
-      earnedRuleIds: ["first"],
+      earnedRuleIds: ["first", "second"],
       guideIndex: 0,
       message: secondStage.intro,
       violated: false,
@@ -220,7 +179,7 @@ describe("advanceTutorialStage", () => {
       "solved",
     );
 
-    test("途中で示すルールを示さずに解いても手に入れて、終えること", () => {
+    test("終わりの一言を出して終えること", () => {
       const result = advanceTutorialStage(fakeTutorial, secondSolved);
 
       expect(result).toMatchObject({
@@ -310,21 +269,4 @@ describe("案内のあるステージ", () => {
       null,
     ]);
   });
-});
-
-describe("isTutorialStageRule", () => {
-  const cases = [
-    ["始めるときに示すルール", firstStage, "first", true],
-    ["途中で示すルール", secondStage, "second", true],
-    ["前のステージで示したルール", secondStage, "first", false],
-  ] as const;
-
-  test.each(cases)(
-    "今のステージで示すルールかを返すこと: %s",
-    (_, stage, ruleId, expected) => {
-      const result = isTutorialStageRule(stage, ruleId);
-
-      expect(result).toBe(expected);
-    },
-  );
 });

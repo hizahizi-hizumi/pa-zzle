@@ -26,7 +26,6 @@ import {
   getCurrentTutorialGuide,
   getCurrentTutorialStage,
   getTutorialMessage,
-  isTutorialStageRule,
   performTutorialAction,
   startTutorial,
   type TutorialProgress,
@@ -81,8 +80,7 @@ function getBoardFrameStyle(
 /**
  * 決まるマスを示すまでの間。0 ならすぐ示し、`null` なら示さない。
  * 手を引いている間は、示したマスにしか置けないので、違反があっても示し続ける。
- * 行き詰まってルールを示した直後は、示したルールをどこで使うかをすぐ示す。
- * それ以外の手を離した後は手が止まったときだけ示し、違反がある間は直すことに向かわせるため示さない。
+ * 手を離した後は手が止まったときだけ示し、違反がある間は直すことに向かわせるため示さない。
  */
 function getHintDelayMs(
   progress: TakuzuTutorialProgress,
@@ -94,10 +92,7 @@ function getHintDelayMs(
   }
   const { lastMove } = progress.stageState;
   if (!guiding) {
-    if (progress.violated || lastMove?.violated) {
-      return null;
-    }
-    return lastMove?.revealedRuleId ? 0 : idleHintDelayMs;
+    return progress.violated || lastMove?.violated ? null : idleHintDelayMs;
   }
   const reasoned = (lastMove?.reasonCellIndices.length ?? 0) > 0;
   return reasoned ? NEXT_GUIDE_HINT_DELAY_MS : 0;
@@ -166,10 +161,7 @@ export function TakuzuTutorial({
     ? null
     : guide !== null
       ? stageState.guidedCellIndex
-      : findTakuzuTutorialHintCellIndex(
-          stageState,
-          stageState.lastMove?.revealedRuleId ?? null,
-        );
+      : findTakuzuTutorialHintCellIndex(stage, stageState);
 
   useEffect(() => {
     if (!open || hintDelayMs === null || hintDelayMs === 0) {
@@ -266,7 +258,7 @@ export function TakuzuTutorial({
       rules={takuzuTutorial.rules.map((rule) => ({
         ...rule,
         earned: progress.earnedRuleIds.includes(rule.id),
-        current: isTutorialStageRule(stage, rule.id),
+        current: stage.introducedRuleId === rule.id,
       }))}
       message={getTutorialMessage(takuzuTutorial, progress, violationSettled)}
       completed={progress.phase === "completed"}
@@ -292,7 +284,7 @@ export function TakuzuTutorial({
             rowCount={rowCount}
             columnCount={columnCount}
             cells={getTakuzuTutorialCellViews(stage, stageState)}
-            lineViolations={getTakuzuTutorialLineViolations(stageState)}
+            lineViolations={getTakuzuTutorialLineViolations(stage, stageState)}
             disabled={progress.phase !== "playing"}
             cues={getCellCues(
               stageState,

@@ -27,6 +27,11 @@ const stageBoards: readonly {
   { givens: ["B.B"], solution: ["BAB"], guided: [] },
   { givens: ["ABA."], solution: ["ABAB"], guided: [] },
   {
+    givens: ["ABAB", "BABA", "BA..", "AB.."],
+    solution: ["ABAB", "BABA", "BAAB", "ABBA"],
+    guided: [],
+  },
+  {
     givens: [".A.B", "..A.", "B...", ".B.B"],
     solution: ["AABB", "BBAA", "BABA", "ABAB"],
     guided: [
@@ -320,9 +325,47 @@ describe("TakuzuTutorial", () => {
       expect(currentChips).toEqual(["同じ数"]);
     });
 
-    describe("4×4の最初の盤面に進んだ場合", () => {
+    describe("3つ目のルールの盤面に進んだ場合", () => {
       beforeEach(() => {
         solveStages(4);
+      });
+
+      test("3つ目のルールを示してチップに加え、それから問うこと", () => {
+        const rule = screen.getByText("同じ並びの行・列は作れない");
+        const question = screen.getByText("では、空いているマスに入るのは？");
+        const chips = getRuleChipTexts();
+        const currentChips = getCurrentRuleChipTexts();
+
+        expect(rule).toBeTruthy();
+        expect(question).toBeTruthy();
+        expect(chips).toEqual(["3つ続かない", "同じ数", "同じ並びなし"]);
+        expect(currentChips).toEqual(["同じ並びなし"]);
+      });
+
+      test("上の行と同じ並びにすると、上の行と同じ並びになっていることを伝えること", () => {
+        // 3行目を2行目と同じ BABA にする。
+        tapCell(3, 3);
+        tapCell(3, 3);
+        tapCell(3, 4);
+        advanceTime(violationReactionDelayMs);
+
+        const message = screen.getByText("上の行と同じ並びになっている");
+
+        expect(message).toBeTruthy();
+      });
+
+      test("同じ並びにならない方を入れて解くと、見比べると決まることを伝えること", () => {
+        solveStage(4);
+
+        const message = screen.getByText("そう。上の行と見比べると決まる");
+
+        expect(message).toBeTruthy();
+      });
+    });
+
+    describe("4×4の最初の盤面に進んだ場合", () => {
+      beforeEach(() => {
+        solveStages(5);
       });
 
       test("最初から、3つ続かないことで決まるマスを示すこと", () => {
@@ -412,29 +455,20 @@ describe("TakuzuTutorial", () => {
       });
     });
 
-    test("最後の盤面で行き詰まると、3つ目のルールを示してチップに加え、それで決まるマスをすぐ示すこと", () => {
-      solveStages(5);
-      // 3つ続かないことと同じ数で決まる6マスを埋めると、残りはそれだけでは決まらない。
-      tapCell(1, 4);
-      tapCell(1, 1);
-      tapCell(1, 1);
-      tapCell(1, 2);
-      tapCell(1, 2);
-      tapCell(2, 2);
-      tapCell(3, 4);
-      tapCell(4, 1);
+    test("最後の盤面は、3つのルールを手に入れたまま、どれも目立たせずに始めること", () => {
+      solveStages(6);
 
-      const message = screen.getByText("同じ並びの行・列は作れない");
+      const message = screen.getByText("3つのルールで解いてみよう");
       const chips = getRuleChipTexts();
-      const hinted = getHintedCellPositions();
+      const currentChips = getCurrentRuleChipTexts();
 
       expect(message).toBeTruthy();
       expect(chips).toEqual(["3つ続かない", "同じ数", "同じ並びなし"]);
-      expect(hinted).toEqual(["3行2列"]);
+      expect(currentChips).toEqual([]);
     });
 
     test("すべての盤面を解くと終わりの一言を出し、レベル1を遊ぶで本番を始めること", () => {
-      solveStages(6);
+      solveStages(7);
       const message = screen.getByText("ルールはこれで全部");
       fireEvent.click(screen.getByRole("button", { name: "レベル1を遊ぶ" }));
 
@@ -443,7 +477,7 @@ describe("TakuzuTutorial", () => {
     });
 
     test("終えた後のもう一度で最初の盤面から始めること", () => {
-      solveStages(6);
+      solveStages(7);
       fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
 
       const message = screen.getByText("マスを四角か丸で全部埋めるパズル");
@@ -472,7 +506,7 @@ describe("TakuzuTutorial", () => {
     });
 
     test("すべての盤面を解くと、プレイに戻る操作で閉じること", () => {
-      solveStages(6);
+      solveStages(7);
       fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
 
       expect(onClose).toHaveBeenCalledOnce();
