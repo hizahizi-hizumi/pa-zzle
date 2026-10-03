@@ -2,7 +2,9 @@
 id: SPEC-005
 upstream:
   - FR-003
-  - FR-004
+  - NFR-007
+  - NFR-008
+  - NFR-009
 ---
 # SPEC-005 問題の成立性と難易度
 

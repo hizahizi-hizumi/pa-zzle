@@ -3,6 +3,7 @@ id: SPEC-014
 upstream:
   - FR-003
   - FR-009
+  - FR-020
 ---
 # SPEC-014 問題ID
 
