@@ -113,6 +113,21 @@ describe("ParkingJamPlay", () => {
     expect(props.onUndo).toHaveBeenCalledOnce();
   });
 
+  test("遊び方を自動では開かないこと", () => {
+    const dialog = screen.queryByRole("dialog", { name: "遊び方" });
+
+    expect(dialog).toBeNull();
+  });
+
+  test("メニューから遊び方を開けること", () => {
+    openPlayMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+
+    const dialog = screen.getByRole("dialog", { name: "遊び方" });
+
+    expect(dialog).toBeTruthy();
+  });
+
   test("内部診断が有効なとき検証情報を開けること", () => {
     openPlayMenu();
     fireEvent.click(screen.getByRole("menuitem", { name: "検証情報" }));

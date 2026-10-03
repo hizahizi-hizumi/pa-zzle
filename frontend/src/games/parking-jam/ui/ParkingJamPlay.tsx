@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { PlayHeader } from "@/components/PlayHeader";
@@ -15,6 +15,7 @@ import type {
   ParkingJamVehicleId,
 } from "@/games/parking-jam/puzzle/board";
 import { ParkingJamBoard } from "@/games/parking-jam/ui/board/ParkingJamBoard";
+import { ParkingJamHowToPlayDialog } from "@/games/parking-jam/ui/ParkingJamHowToPlayDialog";
 import { ParkingJamResultScreen } from "@/games/parking-jam/ui/ParkingJamPlay/ParkingJamResultScreen";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
@@ -77,6 +78,8 @@ export function ParkingJamPlay({
   onClearAnimationComplete,
   onOpenDiagnostics,
 }: ParkingJamPlayProps) {
+  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
+
   if (progress === "result" && result) {
     return (
       <ParkingJamResultScreen
@@ -110,7 +113,12 @@ export function ParkingJamPlay({
         onStartNewProblem={onStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
+        onOpenHowToPlay={() => setHowToPlayOpen(true)}
         onOpenDiagnostics={onOpenDiagnostics}
+      />
+      <ParkingJamHowToPlayDialog
+        open={howToPlayOpen}
+        onClose={() => setHowToPlayOpen(false)}
       />
       <main className="flex min-h-0 flex-1 items-center justify-center overflow-hidden px-3 py-2 sm:px-6">
         <ParkingJamBoard
