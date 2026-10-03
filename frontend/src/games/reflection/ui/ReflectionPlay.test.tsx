@@ -112,7 +112,6 @@ describe("ReflectionPlay", () => {
     laser: null,
     elapsedMs: 65_000,
     canRestart: false,
-    sessionResult: null,
     result: null,
     recordOutcomeNotice: null,
     ...callbacks,
@@ -414,7 +413,6 @@ describe("ReflectionPlay", () => {
       renderPlay({
         board: solution,
         progress: "clearing",
-        sessionResult: performance,
         result,
       });
     });
@@ -435,7 +433,6 @@ describe("ReflectionPlay", () => {
       renderPlay({
         board: solution,
         progress: "result",
-        sessionResult: performance,
         result,
         ...props,
       });
@@ -589,7 +586,7 @@ describe("ReflectionPlay", () => {
 
     describe("100点で解いた場合", () => {
       beforeEach(() => {
-        renderResult({ sessionResult: perfectResult, result: perfectResult });
+        renderResult({ result: perfectResult });
       });
 
       test("最高段階として称えること", () => {
@@ -602,34 +599,6 @@ describe("ReflectionPlay", () => {
         const timeDelta = screen.getByText("基準 -00:15");
 
         expect(timeDelta).toBeTruthy();
-      });
-    });
-
-    describe("評価できない問題を解いた場合", () => {
-      beforeEach(() => {
-        renderResult({ difficultyLabel: "問題指定", result: null });
-      });
-
-      test("スコアを出さない理由と、プレイの事実を表示すること", () => {
-        const reason = screen.getByText(
-          "問題集に無い問題のため、スコアは出しません。",
-        );
-        const score = screen.queryByRole("region", { name: "スコア" });
-        const definitions = screen
-          .getAllByRole("definition")
-          .map((definition) => definition.textContent);
-
-        expect(reason).toBeTruthy();
-        expect(score).toBeNull();
-        expect(definitions).toEqual(["01:35", "2"]);
-      });
-
-      test("スコアの内訳を出さないこと", () => {
-        const button = screen.queryByRole("button", {
-          name: "スコアの内訳・採点基準",
-        });
-
-        expect(button).toBeNull();
       });
     });
 

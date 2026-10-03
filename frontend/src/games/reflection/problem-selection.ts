@@ -7,10 +7,8 @@ import {
 } from "@/games/reflection/problem/problem";
 import {
   findReflectionPooledProblem,
-  findReflectionPooledProblemByReference,
   listReflectionPoolEntries,
   type ReflectionPooledProblem,
-  type ReflectionProblemPoolReference,
   toReflectionPooledProblem,
 } from "@/games/reflection/problem/problem-pool";
 
@@ -42,11 +40,4 @@ export function restoreReflectionProblem(
   return isReflectionProblemIdentity(identity)
     ? findReflectionPooledProblem(identity)
     : null;
-}
-
-/** 問題集の版と問題番号から同じ問題を復元する。問題集の版が今と違えば `null` を返す。 */
-export function restoreReflectionPoolProblem(
-  reference: ReflectionProblemPoolReference,
-): ReflectionPooledProblem | null {
-  return findReflectionPooledProblemByReference(reference);
 }

@@ -12,7 +12,7 @@ import {
   isReflectionPlayRecord,
   reflectionPlayRecordDefinition,
 } from "@/games/reflection/play-record";
-import type { ReflectionProblemIdentity } from "@/games/reflection/problem/problem";
+import type { ReflectionPooledProblem } from "@/games/reflection/problem/problem-pool";
 import { restoreReflectionProblem } from "@/games/reflection/problem-selection";
 import { reflectionPlayRecordDisplay } from "@/games/reflection/ui/play-record-display";
 import type { PlayRecord } from "@/records/play-record";
@@ -20,8 +20,7 @@ import type { PlayRecord } from "@/records/play-record";
 type ReflectionReplayStart = {
   difficulty: ReflectionDifficulty;
   initialProblem: {
-    identity: ReflectionProblemIdentity;
-    purpose: "replay";
+    restored: ReflectionPooledProblem;
   };
 };
 
@@ -42,7 +41,7 @@ function resolveReflectionReplayStart(
     status: "available",
     start: {
       difficulty: record.payload.difficulty,
-      initialProblem: { identity: restored.identity, purpose: "replay" },
+      initialProblem: { restored },
     },
   };
 }

@@ -6,17 +6,8 @@ import {
   within,
 } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
-import {
-  formatReflectionPoolProblemQuery,
-  formatReflectionProblemQuery,
-} from "@/games/reflection/diagnostics";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
-import { generateReflectionProblem } from "@/games/reflection/problem/generator";
-import { createReflectionProblemIdentity } from "@/games/reflection/problem/problem";
-import {
-  restoreReflectionPoolProblem,
-  selectReflectionProblemForDifficulty,
-} from "@/games/reflection/problem-selection";
+import { selectReflectionProblemForDifficulty } from "@/games/reflection/problem-selection";
 import type { ReflectionBoard } from "@/games/reflection/puzzle/board";
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
 import { readPlayRecords } from "@/records/storage";
@@ -70,12 +61,6 @@ function getBoardCells(): HTMLElement[] {
     screen.getByRole("group", { name: `${REFLECTION_DISPLAY_NAME}盤面` }),
   ).getAllByRole("button");
 }
-
-// 問題集に無い（7×7・3ピースは提供範囲外の）問題。
-const specifiedProblemIdentity = createReflectionProblemIdentity(7, 3, 0);
-const specifiedProblemPath = `/puzzles/reflection/play/1?${formatReflectionProblemQuery(specifiedProblemIdentity)}`;
-const poolProblemReference = { poolVersion: "4", problemId: "2-1" };
-const poolProblemPath = `/puzzles/reflection/play/1?${formatReflectionPoolProblemQuery(poolProblemReference)}`;
 
 /** 解どおりに、ストックの種類を選んでからマスを押して置く。 */
 function solve(solution: ReflectionBoard): void {
@@ -218,123 +203,6 @@ describe("ReflectionPlayView", () => {
 
     test("選べない難易度であることを示し難易度選択へ戻る導線を出すこと", () => {
       const message = screen.getByText("この難易度は選べません");
-      const backLink = screen.getByRole("link", { name: "難易度選択へ戻る" });
-
-      expect(message).toBeTruthy();
-      expect(backLink.getAttribute("href")).toBe("/puzzles/reflection");
-    });
-  });
-
-  describe("内部診断を使えないビルドで問題を指定した場合", () => {
-    beforeEach(() => {
-      renderAt(specifiedProblemPath);
-    });
-
-    test("指定を無視して難易度の問題を出すこと", () => {
-      const cells = getBoardCells();
-
-      expect(cells).toHaveLength(25);
-    });
-  });
-
-  describe("内部診断を使えるビルドで問題を指定した場合", () => {
-    beforeEach(() => {
-      internalDiagnostics.available = true;
-      renderAt(specifiedProblemPath);
-    });
-
-    test("指定した問題を出すこと", () => {
-      const cells = getBoardCells();
-
-      expect(cells).toHaveLength(49);
-    });
-
-    describe("解き終えた場合", () => {
-      beforeEach(() => {
-        solve(
-          generateReflectionProblem(specifiedProblemIdentity).problem.solution,
-        );
-      });
-
-      test("結果で難易度を伏せること", () => {
-        const resultScreen = within(
-          screen.getByRole("region", { name: "プレイ結果" }),
-        );
-
-        expect(resultScreen.getByText("問題指定")).toBeTruthy();
-        expect(resultScreen.queryByText("レベル 1")).toBeNull();
-      });
-
-      test("問題集に無い問題なのでスコアを出さないこと", () => {
-        const reason = screen.getByText(
-          "問題集に無い問題のため、スコアは出しません。",
-        );
-
-        expect(reason).toBeTruthy();
-      });
-
-      test("記録を保存しないこと", () => {
-        const records = readPlayRecords();
-
-        expect(records).toEqual([]);
-      });
-    });
-  });
-
-  describe("内部診断を使えるビルドで問題集の問題を指定して解いた場合", () => {
-    beforeEach(() => {
-      internalDiagnostics.available = true;
-      renderAt(poolProblemPath);
-      solve(
-        restoreReflectionPoolProblem(poolProblemReference)?.problem
-          .solution as ReflectionBoard,
-      );
-    });
-
-    test("難易度を伏せてスコアを出すこと", () => {
-      const resultScreen = within(
-        screen.getByRole("region", { name: "プレイ結果" }),
-      );
-
-      expect(resultScreen.getByText("問題指定")).toBeTruthy();
-      expect(resultScreen.getByRole("region", { name: "スコア" })).toBeTruthy();
-    });
-
-    test("記録を保存しないこと", () => {
-      const records = readPlayRecords();
-
-      expect(records).toEqual([]);
-    });
-
-    describe("結果画面から別の問題を解いた場合", () => {
-      beforeEach(() => {
-        fireEvent.click(screen.getByRole("button", { name: "プレイ！" }));
-        solve(
-          selectReflectionProblemForDifficulty("1", problemSeed).problem
-            .solution,
-        );
-      });
-
-      test("URL の難易度として結果を出し、記録を保存すること", () => {
-        const resultScreen = within(
-          screen.getByRole("region", { name: "プレイ結果" }),
-        );
-        const records = readPlayRecords();
-
-        expect(resultScreen.getByText("レベル 1")).toBeTruthy();
-        expect(records).toHaveLength(1);
-      });
-    });
-  });
-
-  describe("内部診断を使えるビルドで復元できない問題を指定した場合", () => {
-    beforeEach(() => {
-      internalDiagnostics.available = true;
-      renderAt("/puzzles/reflection/play/1?seed=abc&size=12&pieces=3");
-    });
-
-    test("指定を復元できないことを示し難易度選択へ戻る導線を出すこと", () => {
-      const message = screen.getByText("指定された問題を復元できません");
       const backLink = screen.getByRole("link", { name: "難易度選択へ戻る" });
 
       expect(message).toBeTruthy();

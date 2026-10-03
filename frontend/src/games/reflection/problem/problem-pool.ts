@@ -66,10 +66,6 @@ export type ReflectionProblemPool = {
 
 const problemPool = problemPoolJson as unknown as ReflectionProblemPool;
 
-export function getReflectionProblemPoolVersion(): string {
-  return problemPool.poolVersion;
-}
-
 export function encodeReflectionPoolSolution(
   solution: ReflectionBoard,
 ): string {
@@ -135,18 +131,6 @@ export function formatReflectionPoolProblemId(
   entryIndex: number,
 ): string {
   return `${difficulty}-${entryIndex + 1}`;
-}
-
-function parsePoolProblemId(
-  problemId: string,
-): { difficulty: ReflectionDifficulty; entryIndex: number } | null {
-  const match = problemId.match(/^([1-9]\d*)-([1-9]\d*)$/);
-  const difficulty = reflectionDifficulties.find(
-    ({ id }) => id === match?.[1],
-  )?.id;
-  return match && difficulty
-    ? { difficulty, entryIndex: Number(match[2]) - 1 }
-    : null;
 }
 
 /** 問題集の1問を、問題集の中の位置 `poolReference` を添えて復元する。 */
@@ -236,22 +220,4 @@ export function findReflectionPooledProblem(
     conditions.pieceCount === identity.conditions.pieceCount
     ? pooled
     : null;
-}
-
-/** 問題集の中の位置から1問を復元する。問題集の版が今と違う・番号が範囲外なら `null` を返す。 */
-export function findReflectionPooledProblemByReference({
-  poolVersion,
-  problemId,
-}: ReflectionProblemPoolReference): ReflectionPooledProblem | null {
-  if (poolVersion !== problemPool.poolVersion) {
-    return null;
-  }
-  const position = parsePoolProblemId(problemId);
-  if (
-    !position ||
-    position.entryIndex >= problemPool.levels[position.difficulty].length
-  ) {
-    return null;
-  }
-  return toReflectionPooledProblem(position.difficulty, position.entryIndex);
 }

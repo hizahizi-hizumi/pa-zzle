@@ -22,14 +22,9 @@ import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
 
-/**
- * 最初に遊ぶ問題を指定する。
- * - `replay`: 記録の問題を、その記録の難易度として遊び直す。記録は通常どおり保存する。
- * - `blind-comparison`: 人間の遊び比べ用に指定した問題。難易度を伏せ、記録を保存しない。
- */
+/** 最初に遊ぶ問題。記録の問題を、その記録の難易度として遊び直すときに渡す。 */
 type ParkingJamInitialProblem = {
   restored: ParkingJamRestoredProblem;
-  purpose: "replay" | "blind-comparison";
 };
 
 type PlayableParkingJamProps = {
@@ -37,20 +32,15 @@ type PlayableParkingJamProps = {
   initialProblem?: ParkingJamInitialProblem;
 };
 
-const BLIND_COMPARISON_DIFFICULTY_LABEL = "問題指定";
-
 export function PlayableParkingJam({
   difficulty,
   initialProblem,
 }: PlayableParkingJamProps) {
   const play = useParkingJamPlay(difficulty, initialProblem?.restored);
   const navigate = useNavigate();
-  const isBlindComparison =
-    initialProblem?.purpose === "blind-comparison" &&
-    play.problemSource === "given";
   const playRecord = useMemo(
     () =>
-      !isBlindComparison && play.result && play.completedAt !== null
+      play.result && play.completedAt !== null
         ? createParkingJamPlayRecord({
             difficulty,
             problemIdentity: play.problemIdentity,
@@ -62,7 +52,6 @@ export function PlayableParkingJam({
         : null,
     [
       difficulty,
-      isBlindComparison,
       play.completedAt,
       play.problemIdentity,
       play.result,
@@ -89,11 +78,7 @@ export function PlayableParkingJam({
   return (
     <>
       <ParkingJamPlay
-        difficultyLabel={
-          isBlindComparison
-            ? BLIND_COMPARISON_DIFFICULTY_LABEL
-            : getParkingJamDifficultyLabel(difficulty)
-        }
+        difficultyLabel={getParkingJamDifficultyLabel(difficulty)}
         status={play.status}
         progress={play.progress}
         board={play.board}
