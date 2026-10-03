@@ -1,5 +1,9 @@
 import { useMemo, useState } from "react";
 
+import {
+  useProblemIdQuerySync,
+  useRequestedProblem,
+} from "@/game-catalog/problem-id-query";
 import { createNanpureDiagnosticSnapshot } from "@/games/nanpure/diagnostics";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import { useNanpurePlay } from "@/games/nanpure/play/use-nanpure-play";
@@ -8,6 +12,7 @@ import {
   nanpurePlayRecordDefinition,
 } from "@/games/nanpure/play-record";
 import type { NanpureIdentifiedProblem } from "@/games/nanpure/problem/problem";
+import { selectNanpureProblemById } from "@/games/nanpure/problem-selection";
 import { NanpureDiagnostics } from "@/games/nanpure/ui/NanpureDiagnostics";
 import { NanpurePlay } from "@/games/nanpure/ui/NanpurePlay";
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
@@ -21,6 +26,7 @@ import { useNavigate } from "@/router";
 
 type PlayableNanpureProps = {
   difficulty: NanpureDifficulty;
+  /** 記録から復元した問題。渡すとその問題で始め、URL の問題 ID とは結ばない。 */
   initialProblem?: NanpureIdentifiedProblem;
 };
 
@@ -28,7 +34,11 @@ export function PlayableNanpure({
   difficulty,
   initialProblem,
 }: PlayableNanpureProps) {
-  const play = useNanpurePlay(difficulty, initialProblem);
+  const requestedProblem = useRequestedProblem((problemId) =>
+    selectNanpureProblemById(difficulty, problemId),
+  );
+  const play = useNanpurePlay(difficulty, initialProblem ?? requestedProblem);
+  useProblemIdQuerySync(initialProblem ? null : play.problemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>

@@ -1,5 +1,9 @@
 import { useMemo, useState } from "react";
 
+import {
+  useProblemIdQuerySync,
+  useRequestedProblem,
+} from "@/game-catalog/problem-id-query";
 import { createMinesweeperDiagnosticSnapshot } from "@/games/minesweeper/diagnostics";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import { useMinesweeperPlay } from "@/games/minesweeper/play/use-minesweeper-play";
@@ -8,6 +12,7 @@ import {
   minesweeperPlayRecordDefinition,
 } from "@/games/minesweeper/play-record";
 import type { MinesweeperRestoredProblem } from "@/games/minesweeper/problem/generator";
+import { selectMinesweeperProblemById } from "@/games/minesweeper/problem-selection";
 import { MinesweeperDiagnostics } from "@/games/minesweeper/ui/MinesweeperDiagnostics";
 import { MinesweeperPlay } from "@/games/minesweeper/ui/MinesweeperPlay";
 import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
@@ -21,6 +26,7 @@ import { useNavigate } from "@/router";
 
 type PlayableMinesweeperProps = {
   difficulty: MinesweeperDifficulty;
+  /** 記録から復元した問題。渡すとその問題で始め、URL の問題 ID とは結ばない。 */
   initialProblem?: MinesweeperRestoredProblem;
 };
 
@@ -28,7 +34,14 @@ export function PlayableMinesweeper({
   difficulty,
   initialProblem,
 }: PlayableMinesweeperProps) {
-  const play = useMinesweeperPlay(difficulty, initialProblem);
+  const requestedProblem = useRequestedProblem((problemId) =>
+    selectMinesweeperProblemById(difficulty, problemId),
+  );
+  const play = useMinesweeperPlay(
+    difficulty,
+    initialProblem ?? requestedProblem,
+  );
+  useProblemIdQuerySync(initialProblem ? null : play.problemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>
