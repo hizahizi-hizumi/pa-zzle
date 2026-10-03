@@ -5,6 +5,11 @@ import {
   parseNanpureDifficulty,
 } from "@/games/nanpure/difficulty";
 import {
+  createNanpureResult,
+  type NanpureResult,
+} from "@/games/nanpure/play/use-nanpure-play";
+import {
+  isNanpureProblemIdentity,
   isNanpureRecordedProblemIdentity,
   type NanpureProblemIdentity,
   type NanpureRecordedProblemIdentity,
@@ -138,6 +143,36 @@ export function createNanpurePlayRecord({
         restartCount: result.restartCount,
       },
     },
+  };
+}
+
+/** 記録から作り直した、結果画面に出す内容。 */
+export type NanpureRecordedResult = {
+  difficulty: NanpureDifficulty;
+  problemIdentity: NanpureProblemIdentity;
+  result: NanpureResult;
+};
+
+/**
+ * 記録から結果画面に出す内容を作り直す。
+ * 今の版の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
+ */
+export function restoreNanpureRecordedResult(
+  record: PlayRecord,
+): NanpureRecordedResult | null {
+  if (
+    !isNanpurePlayRecord(record) ||
+    record.payloadVersion !== NANPURE_PLAY_RECORD_PAYLOAD_VERSION ||
+    !isNanpureProblemIdentity(record.payload.problemIdentity)
+  ) {
+    return null;
+  }
+
+  const { difficulty, problemIdentity, performance } = record.payload;
+  return {
+    difficulty,
+    problemIdentity,
+    result: createNanpureResult(performance, problemIdentity),
   };
 }
 

@@ -11,6 +11,7 @@ import { selectReflectionProblemForDifficulty } from "@/games/reflection/problem
 import type { ReflectionBoard } from "@/games/reflection/puzzle/board";
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
 import { readPlayRecords } from "@/records/storage";
+import { PlayResultView } from "@/views/PlayResultView";
 import { ReflectionPlayView } from "@/views/ReflectionPlayView";
 
 const internalDiagnostics = vi.hoisted(() => ({ available: false }));
@@ -44,6 +45,10 @@ function renderAt(path: string): void {
         />
         <Route path="/puzzles/reflection" element={<p>難易度選択画面</p>} />
         <Route path="/records" element={<p>記録画面</p>} />
+        <Route
+          path="/puzzles/:game/result/:recordId"
+          element={<PlayResultView />}
+        />
       </Routes>
     </MemoryRouter>,
   );

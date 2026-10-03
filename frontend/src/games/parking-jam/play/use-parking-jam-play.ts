@@ -48,6 +48,28 @@ export type ParkingJamResult = ParkingJamSessionResult & {
   score: ParkingJamPlayScore;
 };
 
+/** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
+export function createParkingJamResult(
+  sessionResult: ParkingJamSessionResult,
+  problemIdentity: ParkingJamProblemIdentity,
+  speedReference: ParkingJamSpeedReference,
+): ParkingJamResult {
+  const speedFullScoreMs = calculateParkingJamSpeedFullScoreMs(speedReference);
+  return {
+    ...sessionResult,
+    problemIdentity,
+    speedReference,
+    speedFullScoreMs,
+    score: calculateParkingJamPlayScore({
+      speedFullScoreMs,
+      elapsedMs: sessionResult.elapsedMs,
+      failedMoveCount: sessionResult.failedMoveCount,
+      undoCount: sessionResult.undoCount,
+      restartCount: sessionResult.restartCount,
+    }),
+  };
+}
+
 type ParkingJamPlayState = {
   session: ParkingJamSession;
   problemIdentity: ParkingJamProblemIdentity;
@@ -237,26 +259,17 @@ export function useParkingJamPlay(
     () => getParkingJamSessionResult(session, now),
     [now, session],
   );
-  const result = useMemo<ParkingJamResult | null>(() => {
-    if (!sessionResult) return null;
-
-    const speedReference = play.speedReference;
-    const speedFullScoreMs =
-      calculateParkingJamSpeedFullScoreMs(speedReference);
-    return {
-      ...sessionResult,
-      problemIdentity: play.problemIdentity,
-      speedReference,
-      speedFullScoreMs,
-      score: calculateParkingJamPlayScore({
-        speedFullScoreMs,
-        elapsedMs: sessionResult.elapsedMs,
-        failedMoveCount: sessionResult.failedMoveCount,
-        undoCount: sessionResult.undoCount,
-        restartCount: sessionResult.restartCount,
-      }),
-    };
-  }, [play.speedReference, play.problemIdentity, sessionResult]);
+  const result = useMemo<ParkingJamResult | null>(
+    () =>
+      sessionResult
+        ? createParkingJamResult(
+            sessionResult,
+            play.problemIdentity,
+            play.speedReference,
+          )
+        : null,
+    [play.speedReference, play.problemIdentity, sessionResult],
+  );
 
   return {
     difficulty,

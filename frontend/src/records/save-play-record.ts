@@ -100,3 +100,40 @@ export function savePlayRecord(
 
   return saveStatus === "failed" ? { status: "failed" } : outcome;
 }
+
+function isPersonalBestUpdate(value: unknown): value is PersonalBestUpdate {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "metricId" in value &&
+    typeof value.metricId === "string" &&
+    "previousValue" in value &&
+    typeof value.previousValue === "number" &&
+    "currentValue" in value &&
+    typeof value.currentValue === "number"
+  );
+}
+
+/** 履歴の state など外部から読み戻した値が、保存結果の形をしているかを確かめる。 */
+export function isPlayRecordSaveOutcome(
+  value: unknown,
+): value is PlayRecordSaveOutcome {
+  if (typeof value !== "object" || value === null || !("status" in value)) {
+    return false;
+  }
+
+  switch (value.status) {
+    case "first-record":
+    case "recorded":
+    case "failed":
+      return true;
+    case "updated":
+      return (
+        "updates" in value &&
+        Array.isArray(value.updates) &&
+        value.updates.every(isPersonalBestUpdate)
+      );
+    default:
+      return false;
+  }
+}

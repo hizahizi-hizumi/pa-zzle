@@ -4,14 +4,15 @@ import { GameResultScreen } from "@/components/GameResultScreen";
 import parkingJamPictogramSvg from "@/games/parking-jam/assets/pictogram.svg?raw";
 import type { ParkingJamResult } from "@/games/parking-jam/play/use-parking-jam-play";
 import { PARKING_JAM_SCORE_MAXIMUMS } from "@/games/parking-jam/score";
-import { getParkingJamScoreCriteria } from "@/games/parking-jam/ui/ParkingJamPlay/ParkingJamResultScreen/score-criteria";
+import { getParkingJamScoreCriteria } from "@/games/parking-jam/ui/result/ParkingJamResultScreen/score-criteria";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type ParkingJamResultScreenProps = {
   difficultyLabel: string;
   result: ParkingJamResult;
   recordOutcomeNotice: ReactNode;
-  onReplay: () => void;
+  /** 省略すると同じ問題を遊び直す操作を押せない状態で出す。 */
+  onReplay?: () => void;
   onStartNewProblem: () => void;
   onOpenRecords: () => void;
   onChangeDifficulty: () => void;

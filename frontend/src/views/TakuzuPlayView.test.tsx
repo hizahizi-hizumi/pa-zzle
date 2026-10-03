@@ -9,6 +9,7 @@ import { MemoryRouter, Route, Routes } from "react-router";
 
 import { selectTakuzuProblemForDifficulty } from "@/games/takuzu/problem-selection";
 import { readPlayRecords } from "@/records/storage";
+import { PlayResultView } from "@/views/PlayResultView";
 import { TakuzuPlayView } from "@/views/TakuzuPlayView";
 
 const internalDiagnostics = vi.hoisted(() => ({ available: false }));
@@ -42,6 +43,10 @@ function renderAt(path: string): void {
         />
         <Route path="/puzzles/takuzu" element={<p>難易度選択画面</p>} />
         <Route path="/records" element={<p>記録画面</p>} />
+        <Route
+          path="/puzzles/:game/result/:recordId"
+          element={<PlayResultView />}
+        />
       </Routes>
     </MemoryRouter>,
   );

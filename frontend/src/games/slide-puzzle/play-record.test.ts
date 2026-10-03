@@ -2,6 +2,7 @@ import {
   _private,
   createSlidePuzzlePlayRecord,
   isSlidePuzzlePlayRecord,
+  restoreSlidePuzzleRecordedResult,
   slidePuzzlePlayRecordDefinition,
 } from "@/games/slide-puzzle/play-record";
 import type { PlayRecord } from "@/records/play-record";
@@ -205,4 +206,39 @@ describe("isSlidePuzzlePlayRecord", () => {
       expect(score).toBeNull();
     },
   );
+});
+
+describe("restoreSlidePuzzleRecordedResult", () => {
+  describe("今の版の記録の場合", () => {
+    test("記録の成績と最短手数から結果を作り直すこと", () => {
+      const recorded = restoreSlidePuzzleRecordedResult(record);
+
+      expect(recorded).toMatchObject({
+        difficulty: "3",
+        problemIdentity: record.payload.problemIdentity,
+        result: {
+          elapsedMs: 80_000,
+          moveCount: 42,
+          completionMoveCount: 34,
+          slideCount: 25,
+          restartCount: 1,
+          boardSize: 4,
+          optimalMoveCount: 30,
+          moveDelta: 12,
+          timeDeltaMs: 10_000,
+          score: { total: 77 },
+        },
+      });
+    });
+  });
+
+  describe("別の版の記録の場合", () => {
+    const unrestorableRecord = { ...record, payloadVersion: 2 };
+
+    test("null を返すこと", () => {
+      const recorded = restoreSlidePuzzleRecordedResult(unrestorableRecord);
+
+      expect(recorded).toBeNull();
+    });
+  });
 });

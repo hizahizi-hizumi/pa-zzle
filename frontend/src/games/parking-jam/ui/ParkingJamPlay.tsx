@@ -16,7 +16,7 @@ import type {
 } from "@/games/parking-jam/puzzle/board";
 import { ParkingJamBoard } from "@/games/parking-jam/ui/board/ParkingJamBoard";
 import { ParkingJamHowToPlayDialog } from "@/games/parking-jam/ui/ParkingJamHowToPlayDialog";
-import { ParkingJamResultScreen } from "@/games/parking-jam/ui/ParkingJamPlay/ParkingJamResultScreen";
+import { ParkingJamResultScreen } from "@/games/parking-jam/ui/result/ParkingJamResultScreen";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type ParkingJamPlayProps = {

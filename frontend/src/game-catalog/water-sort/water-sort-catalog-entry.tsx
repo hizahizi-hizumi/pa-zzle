@@ -2,10 +2,12 @@ import {
   type GameCatalogEntry,
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
+import { RecordedWaterSortResult } from "@/game-catalog/water-sort/RecordedWaterSortResult";
 import pictogramSvg from "@/games/water-sort/assets/pictogram.svg?raw";
 import { parseWaterSortDifficulty } from "@/games/water-sort/difficulty";
 import {
   isWaterSortPlayRecord,
+  restoreWaterSortRecordedResult,
   waterSortPlayRecordDefinition,
 } from "@/games/water-sort/play-record";
 import { canSelectWaterSortProblemById } from "@/games/water-sort/problem-selection";
@@ -26,5 +28,11 @@ export const waterSortCatalogEntry = {
           canSelectWaterSortProblemById,
         )
       : null;
+  },
+  renderRecordResult(record, context) {
+    const recorded = restoreWaterSortRecordedResult(record);
+    return recorded ? (
+      <RecordedWaterSortResult {...recorded} {...context} />
+    ) : null;
   },
 } satisfies GameCatalogEntry;

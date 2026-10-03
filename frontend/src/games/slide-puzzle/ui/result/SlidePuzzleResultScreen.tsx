@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
 
 import { GameResultScreen } from "@/components/GameResultScreen";
-import waterSortPictogramSvg from "@/games/water-sort/assets/pictogram.svg?raw";
+import slidePuzzlePictogramSvg from "@/games/slide-puzzle/assets/pictogram.svg?raw";
 import {
-  getWaterSortDifficultyLabel,
-  type WaterSortDifficulty,
-} from "@/games/water-sort/difficulty";
-import type { WaterSortResult } from "@/games/water-sort/play/use-water-sort-play";
-import { WATER_SORT_SCORE_MAXIMUMS } from "@/games/water-sort/score";
-import { getWaterSortScoreCriteria } from "@/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen/score-criteria";
+  getSlidePuzzleDifficultyLabel,
+  type SlidePuzzleDifficulty,
+} from "@/games/slide-puzzle/difficulty";
+import type { SlidePuzzleResult } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
+import { SLIDE_PUZZLE_SCORE_MAXIMUMS } from "@/games/slide-puzzle/score";
+import { getSlidePuzzleScoreCriteria } from "@/games/slide-puzzle/ui/result/SlidePuzzleResultScreen/score-criteria";
 import {
   formatElapsedTime,
   formatElapsedTimeWithTenths,
@@ -18,11 +18,12 @@ import {
   formatElapsedTimeDelta,
 } from "@/lib/format-performance-delta";
 
-type WaterSortResultScreenProps = {
-  difficulty: WaterSortDifficulty;
-  result: WaterSortResult;
+type SlidePuzzleResultScreenProps = {
+  difficulty: SlidePuzzleDifficulty;
+  result: SlidePuzzleResult;
   recordOutcomeNotice: ReactNode;
-  onReplay: () => void;
+  /** 省略すると同じ問題を遊び直す操作を押せない状態で出す。 */
+  onReplay?: () => void;
   onStartNewProblem: () => void;
   onOpenRecords: () => void;
   onChangeDifficulty: () => void;
@@ -30,7 +31,7 @@ type WaterSortResultScreenProps = {
   onOpenDiagnostics?: () => void;
 };
 
-export function WaterSortResultScreen({
+export function SlidePuzzleResultScreen({
   difficulty,
   result,
   recordOutcomeNotice,
@@ -40,17 +41,17 @@ export function WaterSortResultScreen({
   onChangeDifficulty,
   onBackToHome,
   onOpenDiagnostics,
-}: WaterSortResultScreenProps) {
+}: SlidePuzzleResultScreenProps) {
   return (
     <GameResultScreen
-      gameName="ウォーターソート"
-      difficultyLabel={getWaterSortDifficultyLabel(difficulty)}
-      pictogramSvg={waterSortPictogramSvg}
+      gameName="スライドパズル"
+      difficultyLabel={getSlidePuzzleDifficultyLabel(difficulty)}
+      pictogramSvg={slidePuzzlePictogramSvg}
       score={result.score.total}
       metrics={[
         {
           label: "手数",
-          value: String(result.completionMoveCount),
+          value: String(result.moveCount),
           detail: `最短 ${formatCountDelta(result.moveDelta)}`,
         },
         {
@@ -63,26 +64,22 @@ export function WaterSortResultScreen({
       scoreBreakdown={[
         {
           label: "効率",
-          value: `${result.score.breakdown.efficiency} / ${WATER_SORT_SCORE_MAXIMUMS.efficiency}`,
+          value: `${result.score.breakdown.efficiency} / ${SLIDE_PUZZLE_SCORE_MAXIMUMS.efficiency}`,
         },
         {
           label: "速さ",
-          value: `${result.score.breakdown.speed} / ${WATER_SORT_SCORE_MAXIMUMS.speed}`,
+          value: `${result.score.breakdown.speed} / ${SLIDE_PUZZLE_SCORE_MAXIMUMS.speed}`,
         },
-        {
-          label: "正確性",
-          value: `${result.score.breakdown.accuracy} / ${WATER_SORT_SCORE_MAXIMUMS.accuracy}`,
-        },
+        { label: "最短手数", value: `${result.optimalMoveCount}手` },
         {
           label: "基準時間",
           value: formatElapsedTimeWithTenths(result.speedFullScoreMs),
         },
-        { label: "総手数", value: String(result.moveCount) },
-        { label: "手戻り", value: `${result.backtrackMoveCount}手` },
-        { label: "待った", value: `${result.undoCount}回` },
-        { label: "やり直し", value: `${result.restartCount}回` },
+        { label: "完成時の手数", value: `${result.completionMoveCount}手` },
+        { label: "盤面を戻す", value: `${result.restartCount}回` },
+        { label: "スライド操作", value: `${result.slideCount}回` },
       ]}
-      scoreCriteria={getWaterSortScoreCriteria(result)}
+      scoreCriteria={getSlidePuzzleScoreCriteria(result)}
       onStartNewProblem={onStartNewProblem}
       onReplay={onReplay}
       onOpenRecords={onOpenRecords}

@@ -1,8 +1,13 @@
 import {
+  parseWaterSortDifficulty,
   parseWaterSortRecordedDifficulty,
   type WaterSortDifficulty,
   type WaterSortRecordedDifficulty,
 } from "@/games/water-sort/difficulty";
+import {
+  createWaterSortResult,
+  type WaterSortResult,
+} from "@/games/water-sort/play/use-water-sort-play";
 import {
   isWaterSortProblemIdentity,
   type WaterSortProblemIdentity,
@@ -137,6 +142,45 @@ export function isWaterSortPlayRecord(
     record.payloadVersion === WATER_SORT_PLAY_RECORD_PAYLOAD_VERSION &&
     isWaterSortPerformance(payload.performance)
   );
+}
+
+/** 記録から作り直した、結果画面に出す内容。 */
+export type WaterSortRecordedResult = {
+  difficulty: WaterSortDifficulty;
+  problemIdentity: WaterSortProblemIdentity;
+  result: WaterSortResult;
+};
+
+/**
+ * 記録から結果画面に出す内容を作り直す。
+ * 今の版の記録で、今の難易度区分と今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
+ */
+export function restoreWaterSortRecordedResult(
+  record: PlayRecord,
+): WaterSortRecordedResult | null {
+  if (
+    !isWaterSortPlayRecord(record) ||
+    record.payloadVersion !== WATER_SORT_PLAY_RECORD_PAYLOAD_VERSION
+  ) {
+    return null;
+  }
+
+  const difficulty = parseWaterSortDifficulty(record.payload.difficulty);
+  if (difficulty === undefined) {
+    return null;
+  }
+
+  const { problemIdentity, performance } = record.payload;
+  const { optimalMoveCount, ...sessionResult } = performance;
+  return {
+    difficulty,
+    problemIdentity,
+    result: createWaterSortResult(
+      sessionResult,
+      optimalMoveCount,
+      problemIdentity.conditions.colorCount,
+    ),
+  };
 }
 
 export function createWaterSortPlayRecord({
