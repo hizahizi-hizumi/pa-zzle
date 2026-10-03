@@ -11,6 +11,7 @@ import type {
 } from "@/games/water-sort/play/use-water-sort-play";
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
+import { WaterSortHowToPlayDialog } from "@/games/water-sort/ui/WaterSortHowToPlayDialog";
 import { DeadlockNotice } from "@/games/water-sort/ui/WaterSortPlay/DeadlockNotice";
 import { WaterSortResultScreen } from "@/games/water-sort/ui/WaterSortPlay/WaterSortResultScreen";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
@@ -67,6 +68,7 @@ export function WaterSortPlay({
   onOpenDiagnostics,
 }: WaterSortPlayProps) {
   const [hasActivePourAnimation, setHasActivePourAnimation] = useState(false);
+  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
   const showDeadlockNotice = isDeadlocked && !hasActivePourAnimation;
 
   if (progress === "result" && status === "cleared" && result) {
@@ -102,7 +104,12 @@ export function WaterSortPlay({
         onStartNewProblem={onStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
+        onOpenHowToPlay={() => setHowToPlayOpen(true)}
         onOpenDiagnostics={onOpenDiagnostics}
+      />
+      <WaterSortHowToPlayDialog
+        open={howToPlayOpen}
+        onClose={() => setHowToPlayOpen(false)}
       />
       <main className="flex min-h-0 flex-1 items-center justify-center px-3 py-2 sm:px-6">
         <WaterSortBoard
