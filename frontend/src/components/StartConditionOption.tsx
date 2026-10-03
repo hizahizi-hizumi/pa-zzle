@@ -1,10 +1,16 @@
 import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 
+import {
+  type DifficultyLevel,
+  DifficultyLevelPieces,
+} from "@/components/DifficultyLevelPieces";
 import { cn } from "@/lib/utils";
 
 type StartConditionOptionProps = {
   label: string;
+  /** 難易度の選択肢のとき、レベルをピースの帯で示し、ラベルはその補足に下げる。 */
+  level?: DifficultyLevel;
   children: ReactNode;
   density?: "regular" | "compact";
 };
@@ -24,6 +30,7 @@ const previewFrameClassNames = {
 
 export function StartConditionOption({
   label,
+  level,
   children,
   density = "regular",
 }: StartConditionOptionProps) {
@@ -35,7 +42,14 @@ export function StartConditionOption({
       )}
     >
       <span className={previewFrameClassNames[density]}>{children}</span>
-      <span className="text-heading">{label}</span>
+      {level === undefined ? (
+        <span className="text-heading">{label}</span>
+      ) : (
+        <span className="flex flex-col items-start gap-1 lg:items-center lg:gap-2">
+          <DifficultyLevelPieces level={level} />
+          <span className="text-supporting text-muted-foreground">{label}</span>
+        </span>
+      )}
       <ChevronRight
         className={cn(
           "absolute right-4 size-5 text-muted-foreground transition-transform duration-(--duration-fast) ease-standard group-hover:translate-x-0.5",

@@ -18,7 +18,7 @@ export function MinesweeperDifficultyOption({
       params={{ difficulty }}
       className="group block rounded-xl focus-visible:outline-none"
     >
-      <StartConditionOption label={label} density="compact">
+      <StartConditionOption label={label} level={difficulty} density="compact">
         <MinesweeperDifficultyPreview difficulty={difficulty} />
       </StartConditionOption>
     </Link>

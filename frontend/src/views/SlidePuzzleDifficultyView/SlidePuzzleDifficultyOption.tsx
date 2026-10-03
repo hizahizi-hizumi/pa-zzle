@@ -18,7 +18,7 @@ export function SlidePuzzleDifficultyOption({
       params={{ difficulty }}
       className="group block rounded-xl focus-visible:outline-none"
     >
-      <StartConditionOption label={label} density="compact">
+      <StartConditionOption label={label} level={difficulty} density="compact">
         <SlidePuzzleDifficultyPreview difficulty={difficulty} />
       </StartConditionOption>
     </Link>
