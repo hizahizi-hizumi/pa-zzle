@@ -83,10 +83,10 @@ export function GameSelectionGallery({
           data-overflow-end={overflow.end}
           style={{
             maskImage: `linear-gradient(to right, ${
-              overflow.start ? "transparent, black 2.5rem" : "black, black"
-            }, ${overflow.end ? "black calc(100% - 2.5rem), transparent" : "black, black"})`,
+              overflow.start ? "transparent, black 1.5rem" : "black, black"
+            }, ${overflow.end ? "black calc(100% - 1.5rem), transparent" : "black, black"})`,
           }}
-          className="flex w-full scroll-px-4 snap-x snap-proximity gap-1 overflow-x-auto px-4 py-1 [scrollbar-width:none] sm:scroll-px-0 sm:gap-2 sm:px-0 [&::-webkit-scrollbar]:hidden"
+          className="flex w-full scroll-px-4 snap-x snap-proximity gap-3 overflow-x-auto px-4 py-1 [scrollbar-width:none] sm:scroll-px-0 sm:px-0 [&::-webkit-scrollbar]:hidden"
         >
           {games.map((game, index) => {
             const isSelected = index === selectedIndex;
@@ -98,7 +98,7 @@ export function GameSelectionGallery({
                 aria-label={`${game.name}を選択`}
                 aria-pressed={isSelected}
                 onClick={() => setSelectedIndex(index)}
-                className="group flex w-[6.5rem] shrink-0 snap-start flex-col items-center focus-visible:outline-none sm:w-[7rem]"
+                className="group flex shrink-0 snap-start focus-visible:outline-none"
               >
                 <span
                   className={`flex size-[4.875rem] items-center justify-center rounded-xl bg-background p-[18%] transition-colors group-focus-visible:ring-2 group-focus-visible:ring-ring group-focus-visible:ring-offset-2 sm:size-[6.25rem] sm:rounded-xl sm:p-[20%] ${
@@ -108,9 +108,6 @@ export function GameSelectionGallery({
                   }`}
                 >
                   <GamePictogram svg={game.pictogramSvg} />
-                </span>
-                <span className="mt-2 w-full truncate px-0.5 text-center text-meta font-semibold sm:mt-2">
-                  {game.name}
                 </span>
               </button>
             );
