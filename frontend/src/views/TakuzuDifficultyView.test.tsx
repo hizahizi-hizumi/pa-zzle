@@ -53,4 +53,12 @@ describe("TakuzuDifficultyView", () => {
 
     expect(dialog).toBeTruthy();
   });
+
+  test("チュートリアルを開けること", () => {
+    fireEvent.click(screen.getByRole("button", { name: "チュートリアル" }));
+
+    const dialog = screen.getByRole("dialog", { name: "チュートリアル" });
+
+    expect(dialog).toBeTruthy();
+  });
 });

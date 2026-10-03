@@ -26,6 +26,8 @@ type PlayHeaderProps = {
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
   onOpenHowToPlay?: () => void;
+  /** 省略するとメニューに「チュートリアル」を出さない。 */
+  onOpenTutorial?: () => void;
   onOpenDiagnostics?: () => void;
 };
 
@@ -40,6 +42,7 @@ export function PlayHeader({
   onChangeDifficulty,
   onBackToHome,
   onOpenHowToPlay,
+  onOpenTutorial,
   onOpenDiagnostics,
 }: PlayHeaderProps) {
   const hasTrailingAction = trailingAction !== undefined;
@@ -52,6 +55,7 @@ export function PlayHeader({
       onChangeDifficulty={onChangeDifficulty}
       onBackToHome={onBackToHome}
       onOpenHowToPlay={onOpenHowToPlay}
+      onOpenTutorial={onOpenTutorial}
       onOpenDiagnostics={onOpenDiagnostics}
     />
   );

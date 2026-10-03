@@ -191,6 +191,38 @@ describe("TakuzuPlay", () => {
         });
       });
 
+      describe("チュートリアルを選んだ場合", () => {
+        beforeEach(() => {
+          fireEvent.click(
+            screen.getByRole("menuitem", { name: "チュートリアル" }),
+          );
+        });
+
+        test("チュートリアルを開くこと", () => {
+          const dialog = screen.getByRole("dialog", { name: "チュートリアル" });
+
+          expect(dialog).toBeTruthy();
+        });
+
+        test("閉じるとチュートリアルを閉じて同じプレイの盤面へ戻ること", () => {
+          fireEvent.click(
+            within(
+              screen.getByRole("dialog", { name: "チュートリアル" }),
+            ).getByRole("button", { name: "閉じる" }),
+          );
+          const dialog = screen.queryByRole("dialog", {
+            name: "チュートリアル",
+          });
+          const board = screen.getByRole("group", {
+            name: "バイナリパズル盤面",
+          });
+
+          expect(dialog).toBeNull();
+          expect(board).toBeTruthy();
+          expect(callbacks.onReplay).not.toHaveBeenCalled();
+        });
+      });
+
       describe("検証情報のつなぎ先を渡していない場合", () => {
         test("検証情報を表示しないこと", () => {
           const item = screen.queryByRole("menuitem", { name: "検証情報" });

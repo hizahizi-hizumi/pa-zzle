@@ -2,6 +2,7 @@ import { DifficultySelectionHeading } from "@/components/DifficultySelectionHead
 import { HomeBackLink } from "@/components/HomeBackLink";
 import { takuzuDifficulties } from "@/games/takuzu/difficulty";
 import { TakuzuHowToPlayDialog } from "@/games/takuzu/ui/TakuzuHowToPlayDialog";
+import { TakuzuTutorial } from "@/games/takuzu/ui/TakuzuTutorial";
 import { TakuzuDifficultyOption } from "@/views/TakuzuDifficultyView/TakuzuDifficultyOption";
 
 export function TakuzuDifficultyView() {
@@ -13,6 +14,13 @@ export function TakuzuDifficultyView() {
           title="バイナリパズル"
           renderHowToPlayDialog={({ open, onClose }) => (
             <TakuzuHowToPlayDialog open={open} onClose={onClose} />
+          )}
+          renderTutorial={({ open, onClose }) => (
+            <TakuzuTutorial
+              open={open}
+              origin="difficulty-selection"
+              onClose={onClose}
+            />
           )}
         />
       </div>
