@@ -25,8 +25,12 @@ type TakuzuBoardProps = {
   cells: readonly TakuzuCellView[];
   lineViolations: readonly TakuzuLineViolationView[];
   disabled: boolean;
+  /** 操作する対象として示すマス。チュートリアルで指示したマスを示すのに使う。 */
+  highlightedCellIndices?: readonly number[];
   onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
   onPlaceCell: (cellIndex: number, cell: TakuzuCellValue) => void;
+  /** 固定マスを押したとき。盤面は変えず、押したことだけを伝える。 */
+  onPressGivenCell?: (cellIndex: number) => void;
 };
 
 /** キーボードで直接置くキー。`1` と `2` は巡回の順（A → B）に合わせる。 */
@@ -79,8 +83,10 @@ export function TakuzuBoard({
   cells,
   lineViolations,
   disabled,
+  highlightedCellIndices = [],
   onCycleCell,
   onPlaceCell,
+  onPressGivenCell,
 }: TakuzuBoardProps) {
   const [focusableCellIndex, setFocusableCellIndex] = useState(0);
   const cellElementRefs = useRef(new Map<number, HTMLButtonElement>());
@@ -99,12 +105,17 @@ export function TakuzuBoard({
     [],
   );
 
+  function rejectGivenCell(cellIndex: number): void {
+    animateGivenCellRejection(cellElementRefs.current.get(cellIndex));
+    onPressGivenCell?.(cellIndex);
+  }
+
   function handleCycle(
     cellIndex: number,
     direction: TakuzuCycleDirection,
   ): void {
     if (cells[cellIndex]?.given) {
-      animateGivenCellRejection(cellElementRefs.current.get(cellIndex));
+      rejectGivenCell(cellIndex);
       return;
     }
     onCycleCell(cellIndex, direction);
@@ -140,9 +151,7 @@ export function TakuzuBoard({
     }
     event.preventDefault();
     if (cells[focusableCellIndex]?.given) {
-      animateGivenCellRejection(
-        cellElementRefs.current.get(focusableCellIndex),
-      );
+      rejectGivenCell(focusableCellIndex);
       return;
     }
     onPlaceCell(focusableCellIndex, cellByInputKey[event.key] ?? null);
@@ -182,6 +191,7 @@ export function TakuzuBoard({
                 ),
               ]}
               disabled={disabled}
+              highlighted={highlightedCellIndices.includes(cellIndex)}
               focusable={cellIndex === focusableCellIndex}
               onElementChange={handleCellElementChange}
               onCycle={handleCycle}

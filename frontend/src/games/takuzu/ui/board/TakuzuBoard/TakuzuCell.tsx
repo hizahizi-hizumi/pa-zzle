@@ -20,6 +20,8 @@ type TakuzuCellProps = {
   /** このマスを含む行・列の違反の読み上げ名（例「行の個数超過」）。 */
   lineViolationNames: readonly string[];
   disabled: boolean;
+  /** 操作する対象として示す。 */
+  highlighted: boolean;
   focusable: boolean;
   onElementChange: (
     cellIndex: number,
@@ -36,10 +38,12 @@ function getAccessibleName(
   cellIndex: number,
   view: TakuzuCellView,
   lineViolationNames: readonly string[],
+  highlighted: boolean,
 ): string {
   const { row, column } = getTakuzuCellPosition(size, cellIndex);
   const content = view.cell === null ? "空き" : tileNameByCell[view.cell];
   const qualifiers = [
+    highlighted ? "操作対象" : null,
     view.given ? "固定" : null,
     view.inViolatingRun ? "3連続" : null,
     ...lineViolationNames,
@@ -53,6 +57,7 @@ export function TakuzuCell({
   view,
   lineViolationNames,
   disabled,
+  highlighted,
   focusable,
   onElementChange,
   onCycle,
@@ -83,7 +88,13 @@ export function TakuzuCell({
     <button
       ref={buttonRef}
       type="button"
-      aria-label={getAccessibleName(size, cellIndex, view, lineViolationNames)}
+      aria-label={getAccessibleName(
+        size,
+        cellIndex,
+        view,
+        lineViolationNames,
+        highlighted,
+      )}
       aria-disabled={view.given || undefined}
       disabled={disabled}
       tabIndex={focusable ? 0 : -1}
@@ -92,6 +103,7 @@ export function TakuzuCell({
       onPointerDown={handlePointerDown}
       onFocus={() => onFocus(cellIndex)}
       data-violated={view.inViolatingRun || undefined}
+      data-highlighted={highlighted || undefined}
       className={cn(
         "group relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center bg-background outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:bg-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-foreground/70 disabled:cursor-default enabled:not-aria-disabled:hover:bg-accent/60 enabled:not-aria-disabled:active:bg-accent",
         row !== size - 1 && "border-b border-b-border",
@@ -106,6 +118,12 @@ export function TakuzuCell({
           runViolationCellClassName,
         )}
       />
+      {highlighted && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0.5 rounded-sm ring-2 ring-ring ring-inset"
+        />
+      )}
       {/*
         固定マスを押したときの揺れと完成の波は、格子を崩さないよう中のタイルだけに掛ける。
         タイルは常に独立した合成レイヤーに置く。動くときだけレイヤーに上がると、後ろに描くマスがまとめて
