@@ -120,7 +120,7 @@ export function TakuzuDifficultyPreview({
   return (
     <span
       aria-hidden="true"
-      className="flex h-14 w-32 shrink-0 flex-col justify-center gap-0.5 lg:items-center"
+      className="flex h-14 w-full flex-col justify-center gap-0.5 lg:w-32 lg:items-center"
     >
       {rows.map(function renderRow({ row, complete, cells }) {
         return (

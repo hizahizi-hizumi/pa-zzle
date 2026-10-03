@@ -85,7 +85,7 @@ export function MinesweeperDifficultyPreview({
   return (
     <span
       aria-hidden="true"
-      className="flex h-12 w-32 shrink-0 items-center lg:justify-center"
+      className="flex h-12 w-full items-center lg:w-32 lg:justify-center"
     >
       <span
         className="grid auto-rows-[15px] grid-cols-[repeat(var(--preview-columns),15px)] border-t border-l border-slate-300 dark:border-slate-600"

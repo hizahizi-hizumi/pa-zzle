@@ -16,6 +16,12 @@ const layoutClassNames = {
     "h-16 flex-row justify-start gap-4 px-4 lg:h-60 lg:flex-col lg:justify-center lg:gap-6 lg:py-8",
 } satisfies Record<NonNullable<StartConditionOptionProps["density"]>, string>;
 
+// 一覧で選択肢を並べたとき、ラベルの位置をゲームによらずそろえるため、プレビューの幅をここで固定する。
+const previewFrameClassNames = {
+  regular: "contents",
+  compact: "flex w-32 shrink-0 lg:w-full lg:justify-center",
+} satisfies Record<NonNullable<StartConditionOptionProps["density"]>, string>;
+
 export function StartConditionOption({
   label,
   children,
@@ -28,7 +34,7 @@ export function StartConditionOption({
         layoutClassNames[density],
       )}
     >
-      {children}
+      <span className={previewFrameClassNames[density]}>{children}</span>
       <span className="text-heading">{label}</span>
       <ChevronRight
         className={cn(
