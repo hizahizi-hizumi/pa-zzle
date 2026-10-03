@@ -7,6 +7,8 @@ import {
 } from "@/games/reflection/problem/problem";
 import {
   findReflectionPooledProblem,
+  findReflectionPooledProblemByProblemId,
+  hasReflectionPoolProblemId,
   listReflectionPoolEntries,
   type ReflectionPooledProblem,
   toReflectionPooledProblem,
@@ -32,7 +34,7 @@ export function selectReflectionProblemForDifficulty(
 
 /**
  * 記録に残した identity から同じ問題を復元する。
- * 問題集に無い identity（生成器の版が今と違う記録など）は再プレイできないので `null` を返す。
+ * 問題集に無い identity（生成器の版が今と違う記録など）は復元できないので `null` を返す。
  */
 export function restoreReflectionProblem(
   identity: ReflectionRecordedProblemIdentity,
@@ -40,4 +42,20 @@ export function restoreReflectionProblem(
   return isReflectionProblemIdentity(identity)
     ? findReflectionPooledProblem(identity)
     : null;
+}
+
+/** 難易度の問題集から問題 ID で1問を引く。引けない ID には `null` を返す。 */
+export function selectReflectionProblemById(
+  difficulty: ReflectionDifficulty,
+  problemId: string,
+): ReflectionPooledProblem | null {
+  return findReflectionPooledProblemByProblemId(difficulty, problemId);
+}
+
+/** 難易度の問題集から問題 ID で1問を引けるかを、問題を復元せずに確かめる。 */
+export function canSelectReflectionProblemById(
+  difficulty: ReflectionDifficulty,
+  problemId: string,
+): boolean {
+  return hasReflectionPoolProblemId(difficulty, problemId);
 }

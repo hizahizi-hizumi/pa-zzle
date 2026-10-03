@@ -1,5 +1,9 @@
 import { useMemo, useState } from "react";
 
+import {
+  useProblemIdQuerySync,
+  useRequestedProblem,
+} from "@/game-catalog/problem-id-query";
 import { createSlidePuzzleDiagnosticSnapshot } from "@/games/slide-puzzle/diagnostics";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import { useSlidePuzzlePlay } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
@@ -7,7 +11,7 @@ import {
   createSlidePuzzlePlayRecord,
   slidePuzzlePlayRecordDefinition,
 } from "@/games/slide-puzzle/play-record";
-import type { SlidePuzzleGeneratedProblem } from "@/games/slide-puzzle/problem/problem";
+import { selectSlidePuzzleProblemById } from "@/games/slide-puzzle/problem-selection";
 import { slidePuzzlePlayRecordDisplay } from "@/games/slide-puzzle/ui/play-record-display";
 import { SlidePuzzleDiagnostics } from "@/games/slide-puzzle/ui/SlidePuzzleDiagnostics";
 import { SlidePuzzlePlay } from "@/games/slide-puzzle/ui/SlidePuzzlePlay";
@@ -21,14 +25,14 @@ import { useNavigate } from "@/router";
 
 type PlayableSlidePuzzleProps = {
   difficulty: SlidePuzzleDifficulty;
-  initialProblem?: SlidePuzzleGeneratedProblem;
 };
 
-export function PlayableSlidePuzzle({
-  difficulty,
-  initialProblem,
-}: PlayableSlidePuzzleProps) {
-  const play = useSlidePuzzlePlay(difficulty, initialProblem);
+export function PlayableSlidePuzzle({ difficulty }: PlayableSlidePuzzleProps) {
+  const requestedProblem = useRequestedProblem((problemId) =>
+    selectSlidePuzzleProblemById(difficulty, problemId),
+  );
+  const play = useSlidePuzzlePlay(difficulty, requestedProblem);
+  useProblemIdQuerySync(play.problemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>

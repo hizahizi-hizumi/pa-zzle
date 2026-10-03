@@ -1,5 +1,9 @@
 import { useMemo, useState } from "react";
 
+import {
+  useProblemIdQuerySync,
+  useRequestedProblem,
+} from "@/game-catalog/problem-id-query";
 import { createReflectionDiagnosticSnapshot } from "@/games/reflection/diagnostics";
 import {
   getReflectionDifficultyLabel,
@@ -11,7 +15,7 @@ import {
   createReflectionPlayRecord,
   reflectionPlayRecordDefinition,
 } from "@/games/reflection/play-record";
-import type { ReflectionPooledProblem } from "@/games/reflection/problem/problem-pool";
+import { selectReflectionProblemById } from "@/games/reflection/problem-selection";
 import { reflectionPlayRecordDisplay } from "@/games/reflection/ui/play-record-display";
 import { ReflectionDiagnostics } from "@/games/reflection/ui/ReflectionDiagnostics";
 import { ReflectionPlay } from "@/games/reflection/ui/ReflectionPlay";
@@ -23,21 +27,16 @@ import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
 
-/** 最初に遊ぶ問題。記録の問題を、その記録の難易度として遊び直すときに渡す。 */
-type ReflectionInitialProblem = {
-  restored: ReflectionPooledProblem;
-};
-
 type PlayableReflectionProps = {
   difficulty: ReflectionDifficulty;
-  initialProblem?: ReflectionInitialProblem;
 };
 
-export function PlayableReflection({
-  difficulty,
-  initialProblem,
-}: PlayableReflectionProps) {
-  const play = useReflectionPlay(difficulty, initialProblem?.restored);
+export function PlayableReflection({ difficulty }: PlayableReflectionProps) {
+  const requestedProblem = useRequestedProblem((problemId) =>
+    selectReflectionProblemById(difficulty, problemId),
+  );
+  const play = useReflectionPlay(difficulty, requestedProblem);
+  useProblemIdQuerySync(play.problemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>

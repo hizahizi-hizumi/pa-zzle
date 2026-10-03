@@ -7,10 +7,22 @@ import type {
   SlidePuzzleProblemIdentity,
 } from "@/games/slide-puzzle/problem/problem";
 import {
+  findSlidePuzzlePoolEntryByProblemId,
   findSlidePuzzlePooledOptimalMoveCount,
   listSlidePuzzlePoolEntries,
+  type SlidePuzzleProblemPoolEntry,
   toSlidePuzzlePooledProblem,
 } from "@/games/slide-puzzle/problem/problem-pool";
+
+function restorePoolEntry(
+  entry: SlidePuzzleProblemPoolEntry,
+): SlidePuzzleGeneratedProblem {
+  const { identity, optimalMoveCount } = toSlidePuzzlePooledProblem(entry);
+  return restoreSlidePuzzleProblemWithOptimalMoveCount(
+    identity,
+    optimalMoveCount,
+  );
+}
 
 export function selectSlidePuzzleProblemForDifficulty(
   difficulty: SlidePuzzleDifficulty,
@@ -21,12 +33,16 @@ export function selectSlidePuzzleProblemForDifficulty(
     seed,
     `level ${difficulty} slide puzzle`,
   );
+  return restorePoolEntry(entry);
+}
 
-  const { identity, optimalMoveCount } = toSlidePuzzlePooledProblem(entry);
-  return restoreSlidePuzzleProblemWithOptimalMoveCount(
-    identity,
-    optimalMoveCount,
-  );
+/** 難易度の問題集から問題 ID で1問を引いて復元する。引けない ID には `null` を返す。 */
+export function selectSlidePuzzleProblemById(
+  difficulty: SlidePuzzleDifficulty,
+  problemId: string,
+): SlidePuzzleGeneratedProblem | null {
+  const entry = findSlidePuzzlePoolEntryByProblemId(difficulty, problemId);
+  return entry ? restorePoolEntry(entry) : null;
 }
 
 /**
@@ -40,4 +56,12 @@ export function restoreSlidePuzzlePooledProblem(
   return optimalMoveCount === null
     ? null
     : restoreSlidePuzzleProblemWithOptimalMoveCount(identity, optimalMoveCount);
+}
+
+/** 難易度の問題集から問題 ID で1問を引けるかを、問題を復元せずに確かめる。 */
+export function canSelectSlidePuzzleProblemById(
+  difficulty: SlidePuzzleDifficulty,
+  problemId: string,
+): boolean {
+  return findSlidePuzzlePoolEntryByProblemId(difficulty, problemId) !== null;
 }

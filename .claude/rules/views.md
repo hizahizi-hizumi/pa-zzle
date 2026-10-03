@@ -36,7 +36,7 @@ pages/games/nanpure/play/[difficulty].tsx
 - 保存、評価など、独立した機能固有の規則を実装しない。
 - 他のViewでも利用する処理や再利用可能なUIをViewの責務として所有しない。
 - 共有したい処理が生じても `views/common`、`views/hooks`、`views/utils` へ集約せず、その処理が属する責務を見直す。
-  - 例: プレイ View と記録からの再プレイ View が使うゲームのプレイ合成は、`game-catalog/<game>/Playable<Game>.tsx` に置く。
+  - 例: ゲームのプレイ合成は、`game-catalog/<game>/Playable<Game>.tsx` に置く。
 
 ## 配置
 

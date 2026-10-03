@@ -21,7 +21,9 @@ type PlayRecordsScreenProps = {
   records: readonly PlayRecord[];
   games: PlayRecordGameCatalog;
   emptyAction: ReactNode;
-  onReplay: (recordId: string) => void;
+  /** 記録の問題を今も遊び直せるか。遊び直せない記録の「同じ問題をプレイ」は押せない。 */
+  isReplayable: (record: PlayRecord) => boolean;
+  onReplay: (record: PlayRecord) => void;
 };
 
 type ComparisonOption = {
@@ -61,6 +63,7 @@ export function PlayRecordsScreen({
   records,
   games,
   emptyAction,
+  isReplayable,
   onReplay,
 }: PlayRecordsScreenProps) {
   const sortedRecords = useMemo(
@@ -224,6 +227,7 @@ export function PlayRecordsScreen({
                   records={selectedRecords}
                   display={display}
                   personalBests={personalBests}
+                  isReplayable={isReplayable}
                   onReplay={onReplay}
                 />
               </TabsContent>

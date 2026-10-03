@@ -1,3 +1,4 @@
+import { createProblemPoolIdLookup } from "@/games/problem-id";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import {
   SLIDE_PUZZLE_GENERATOR_VERSION,
@@ -47,7 +48,20 @@ export function listSlidePuzzlePoolEntries(
   return problemPool.levels[difficulty];
 }
 
-/** 再プレイ・診断用。問題集に無い識別情報なら `null` を返す。 */
+const findPoolPositionByProblemId = createProblemPoolIdLookup(
+  problemPool.levels,
+  (entry) => toSlidePuzzlePooledProblem(entry).identity,
+);
+
+/** 難易度の問題集から問題 ID で1問を探す。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+export function findSlidePuzzlePoolEntryByProblemId(
+  difficulty: SlidePuzzleDifficulty,
+  problemId: string,
+): SlidePuzzleProblemPoolEntry | null {
+  return findPoolPositionByProblemId(difficulty, problemId)?.entry ?? null;
+}
+
+/** 診断用。問題集に無い識別情報なら `null` を返す。 */
 export function findSlidePuzzlePooledOptimalMoveCount(
   identity: SlidePuzzleProblemIdentity,
 ): number | null {

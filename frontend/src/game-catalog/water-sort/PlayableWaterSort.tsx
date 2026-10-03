@@ -1,5 +1,9 @@
 import { useMemo, useState } from "react";
 
+import {
+  useProblemIdQuerySync,
+  useRequestedProblem,
+} from "@/game-catalog/problem-id-query";
 import { createWaterSortDiagnosticSnapshot } from "@/games/water-sort/diagnostics";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import { useWaterSortPlay } from "@/games/water-sort/play/use-water-sort-play";
@@ -7,7 +11,7 @@ import {
   createWaterSortPlayRecord,
   waterSortPlayRecordDefinition,
 } from "@/games/water-sort/play-record";
-import type { WaterSortGeneratedProblem } from "@/games/water-sort/problem/problem";
+import { selectWaterSortProblemById } from "@/games/water-sort/problem-selection";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 import { WaterSortDiagnostics } from "@/games/water-sort/ui/WaterSortDiagnostics";
 import { WaterSortPlay } from "@/games/water-sort/ui/WaterSortPlay";
@@ -21,14 +25,14 @@ import { useNavigate } from "@/router";
 
 type PlayableWaterSortProps = {
   difficulty: WaterSortDifficulty;
-  initialProblem?: WaterSortGeneratedProblem;
 };
 
-export function PlayableWaterSort({
-  difficulty,
-  initialProblem,
-}: PlayableWaterSortProps) {
-  const play = useWaterSortPlay(difficulty, initialProblem);
+export function PlayableWaterSort({ difficulty }: PlayableWaterSortProps) {
+  const requestedProblem = useRequestedProblem((problemId) =>
+    selectWaterSortProblemById(difficulty, problemId),
+  );
+  const play = useWaterSortPlay(difficulty, requestedProblem);
+  useProblemIdQuerySync(play.problemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>

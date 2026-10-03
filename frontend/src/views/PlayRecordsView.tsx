@@ -1,6 +1,11 @@
 import { useState } from "react";
 
-import { gameCatalog } from "@/game-catalog/game-catalog";
+import {
+  findRecordProblemPlayDestination,
+  gameCatalog,
+} from "@/game-catalog/game-catalog";
+import { createProblemIdSearch } from "@/game-catalog/problem-id-query";
+import type { PlayRecord } from "@/records/play-record";
 import { readPlayRecords } from "@/records/storage";
 import { PlayRecordsScreen } from "@/records/ui/PlayRecordsScreen";
 import { Link, useNavigate } from "@/router";
@@ -8,6 +13,20 @@ import { Link, useNavigate } from "@/router";
 export function PlayRecordsView() {
   const [records] = useState(() => readPlayRecords());
   const navigate = useNavigate();
+
+  function handleReplay(record: PlayRecord) {
+    const destination = findRecordProblemPlayDestination(record);
+    if (!destination) {
+      return;
+    }
+    navigate(
+      {
+        pathname: destination.playPath,
+        search: createProblemIdSearch(destination.problemId),
+      },
+      { params: { difficulty: destination.difficulty } },
+    );
+  }
 
   return (
     <section className="mx-auto w-full max-w-3xl">
@@ -21,9 +40,10 @@ export function PlayRecordsView() {
         records={records}
         games={gameCatalog}
         emptyAction={<Link to="/">パズルを選ぶ</Link>}
-        onReplay={(recordId) =>
-          navigate("/records/replay/:recordId", { params: { recordId } })
+        isReplayable={(record) =>
+          findRecordProblemPlayDestination(record) !== null
         }
+        onReplay={handleReplay}
       />
     </section>
   );
