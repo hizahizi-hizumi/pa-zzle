@@ -10,6 +10,54 @@ type GameSelectionGame = {
   to: Path;
 };
 
+type PieceEdge = -1 | 0 | 1;
+
+type PieceEdges = {
+  top: PieceEdge;
+  right: PieceEdge;
+  bottom: PieceEdge;
+  left: PieceEdge;
+};
+
+// ピースは 100x100 の座標系で描き、凸(1)・凹(-1)・平ら(0)を辺ごとに指定する。
+const PIECE_SIZE = 100;
+const KNOB_RADIUS = 11.5;
+const KNOB_NECK = 7;
+
+// 隣同士の左右がかみ合い、上下の凹凸が交互になるジグソーの一列として並べる。
+function pieceEdges(index: number, count: number): PieceEdges {
+  const isOdd = index % 2 === 1;
+
+  return {
+    top: isOdd ? -1 : 1,
+    right: index < count - 1 ? 1 : 0,
+    bottom: isOdd ? 1 : -1,
+    left: index > 0 ? -1 : 0,
+  };
+}
+
+function piecePath({ top, right, bottom, left }: PieceEdges) {
+  const size = PIECE_SIZE;
+  const center = size / 2;
+  const knob = (edge: PieceEdge, x: number, y: number) =>
+    `A${KNOB_RADIUS},${KNOB_RADIUS} 0 1 ${edge > 0 ? 1 : 0} ${x},${y}`;
+
+  return [
+    "M0,0",
+    top
+      ? `H${center - KNOB_NECK} ${knob(top, center + KNOB_NECK, 0)} H${size}`
+      : `H${size}`,
+    right
+      ? `V${center - KNOB_NECK} ${knob(right, size, center + KNOB_NECK)} V${size}`
+      : `V${size}`,
+    bottom
+      ? `H${center + KNOB_NECK} ${knob(bottom, center - KNOB_NECK, size)} H0`
+      : "H0",
+    left ? `V${center + KNOB_NECK} ${knob(left, 0, center - KNOB_NECK)}` : "",
+    "Z",
+  ].join(" ");
+}
+
 type GameSelectionGalleryProps = {
   games: readonly GameSelectionGame[];
   recordsTo: Path;
@@ -92,7 +140,7 @@ export function GameSelectionGallery({
                 overflow.start ? "transparent, black 1.5rem" : "black, black"
               }, ${overflow.end ? "black calc(100% - 1.5rem), transparent" : "black, black"})`,
             }}
-            className="flex w-full scroll-px-4 snap-x snap-proximity gap-3 overflow-x-auto px-4 py-1 [scrollbar-width:none] sm:scroll-px-0 sm:px-0 [&::-webkit-scrollbar]:hidden"
+            className="flex w-full scroll-px-4 snap-x snap-proximity overflow-x-auto px-4 py-[1.375rem] [scrollbar-width:none] sm:scroll-px-0 sm:px-0 [&::-webkit-scrollbar]:hidden"
           >
             {games.map((game, index) => {
               const isSelected = index === selectedIndex;
@@ -104,15 +152,24 @@ export function GameSelectionGallery({
                   aria-label={`${game.name}を選択`}
                   aria-pressed={isSelected}
                   onClick={() => setSelectedIndex(index)}
-                  className="group flex shrink-0 snap-start focus-visible:outline-none"
+                  className={`group relative size-[4.875rem] shrink-0 snap-start focus-visible:outline-none sm:size-[6.25rem] ${isSelected ? "z-10" : ""}`}
                 >
-                  <span
-                    className={`flex size-[4.875rem] items-center justify-center rounded-xl bg-background p-[18%] transition-colors group-focus-visible:ring-2 group-focus-visible:ring-ring group-focus-visible:ring-offset-2 sm:size-[6.25rem] sm:rounded-xl sm:p-[20%] ${
-                      isSelected
-                        ? "border-(length:--border-width-strong) border-ring"
-                        : "border-(length:--border-width-normal) border-border group-hover:bg-accent"
-                    }`}
+                  <svg
+                    viewBox={`0 0 ${PIECE_SIZE} ${PIECE_SIZE}`}
+                    aria-hidden="true"
+                    className="absolute inset-0 size-full overflow-visible"
                   >
+                    <path
+                      d={piecePath(pieceEdges(index, games.length))}
+                      vectorEffect="non-scaling-stroke"
+                      className={`fill-background transition-colors group-focus-visible:stroke-ring ${
+                        isSelected
+                          ? "stroke-ring stroke-3"
+                          : "stroke-border stroke-[1.5] group-hover:fill-accent"
+                      }`}
+                    />
+                  </svg>
+                  <span className="absolute inset-[22%]">
                     <GamePictogram svg={game.pictogramSvg} />
                   </span>
                 </button>
@@ -122,7 +179,7 @@ export function GameSelectionGallery({
           {scrollbar.size < 1 && (
             <div
               aria-hidden="true"
-              className="mx-4 mt-3 h-1 overflow-hidden rounded-full bg-muted sm:mx-0"
+              className="mx-4 h-1 overflow-hidden rounded-full bg-muted sm:mx-0"
             >
               <div
                 className="h-full rounded-full bg-muted-foreground/50"
