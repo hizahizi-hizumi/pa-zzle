@@ -1,3 +1,4 @@
+import { createProblemPoolIdLookup } from "@/games/problem-id";
 import {
   type TsumeShogiDifficulty,
   tsumeShogiDifficulties,
@@ -146,6 +147,13 @@ function toProblem(position: string, mainLine: string): TsumeShogiProblem {
   };
 }
 
+/** 問題集の1問の identity。seed から再構成する。 */
+export function toTsumeShogiPoolIdentity([
+  seed,
+]: TsumeShogiProblemPoolEntry): TsumeShogiProblemIdentity {
+  return parseTsumeShogiPoolSeed(seed);
+}
+
 export function formatTsumeShogiPoolProblemId(
   difficulty: TsumeShogiDifficulty,
   entryIndex: number,
@@ -208,6 +216,30 @@ export function listTsumeShogiPoolEntries(
   difficulty: TsumeShogiDifficulty,
 ): readonly TsumeShogiProblemPoolEntry[] {
   return problemPool.levels[difficulty];
+}
+
+const findPoolPositionByProblemId = createProblemPoolIdLookup(
+  problemPool.levels,
+  toTsumeShogiPoolIdentity,
+);
+
+/** 難易度の問題集に問題 ID の問題があるかを返す。 */
+export function hasTsumeShogiPoolProblemId(
+  difficulty: TsumeShogiDifficulty,
+  problemId: string,
+): boolean {
+  return findPoolPositionByProblemId(difficulty, problemId) !== null;
+}
+
+/** 難易度の問題集から問題 ID で1問を探して復元する。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+export function findTsumeShogiPooledProblemByProblemId(
+  difficulty: TsumeShogiDifficulty,
+  problemId: string,
+): TsumeShogiPooledProblem | null {
+  const position = findPoolPositionByProblemId(difficulty, problemId);
+  return position
+    ? toTsumeShogiPooledProblem(difficulty, position.entryIndex)
+    : null;
 }
 
 type PoolPosition = { difficulty: TsumeShogiDifficulty; entryIndex: number };

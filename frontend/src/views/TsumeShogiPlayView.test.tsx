@@ -6,10 +6,19 @@ import {
   screen,
   within,
 } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router";
+import {
+  createMemoryRouter,
+  MemoryRouter,
+  Route,
+  RouterProvider,
+  Routes,
+} from "react-router";
+
+import { createProblemId } from "@/games/problem-id";
 
 import { TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
 import type { TsumeShogiProblem } from "@/games/tsume-shogi/problem/problem";
+import { toTsumeShogiPooledProblem } from "@/games/tsume-shogi/problem/problem-pool";
 import { selectTsumeShogiProblemForDifficulty } from "@/games/tsume-shogi/problem-selection";
 import {
   formatTsumeShogiMoveUsi,
@@ -66,6 +75,26 @@ function renderAt(path: string): void {
       </Routes>
     </MemoryRouter>,
   );
+}
+
+type PlayRouter = ReturnType<typeof createMemoryRouter>;
+
+function renderRouterAt(path: string): PlayRouter {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/puzzles/tsume-shogi/play/:difficulty",
+        element: <TsumeShogiPlayView />,
+      },
+    ],
+    { initialEntries: [path] },
+  );
+  render(<RouterProvider router={router} />);
+  return router;
+}
+
+function readProblemId(router: PlayRouter): string | null {
+  return new URLSearchParams(router.state.location.search).get("problem");
 }
 
 function openMenu(): void {
@@ -379,5 +408,64 @@ describe("TsumeShogiPlayView", () => {
         sourceLabel,
       );
     });
+  });
+
+  describe("問題IDのクエリ", () => {
+    const requested = toTsumeShogiPooledProblem("3", 4);
+    const requestedProblemId = createProblemId(requested.identity);
+    let router: PlayRouter;
+
+    describe("問題IDの無いURLで開いた場合", () => {
+      beforeEach(() => {
+        router = renderRouterAt("/puzzles/tsume-shogi/play/1");
+      });
+
+      test("出題した問題のIDを履歴を増やさずにURLへ反映すること", () => {
+        const problemId = readProblemId(router);
+
+        expect(problemId).toBe(createProblemId(selected.identity));
+        expect(router.state.historyAction).toBe("REPLACE");
+      });
+    });
+
+    describe("問題集にある問題IDで開いた場合", () => {
+      beforeEach(() => {
+        router = renderRouterAt(
+          `/puzzles/tsume-shogi/play/3?problem=${requestedProblemId}`,
+        );
+      });
+
+      test("その問題で始めURLを置き換えないこと", () => {
+        const problemId = readProblemId(router);
+        const plies = screen.getByText(`${requested.problem.plies}手詰`);
+
+        expect(problemId).toBe(requestedProblemId);
+        expect(router.state.historyAction).toBe("POP");
+        expect(plies).toBeTruthy();
+      });
+    });
+
+    const unresolvedCases = [
+      ["形式の違う問題ID", "1", "invalid"],
+      ["別の難易度の問題ID", "1", requestedProblemId],
+    ] as const;
+
+    describe.each(unresolvedCases)(
+      "%sで開いた場合",
+      (_, difficulty, problemIdInUrl) => {
+        beforeEach(() => {
+          router = renderRouterAt(
+            `/puzzles/tsume-shogi/play/${difficulty}?problem=${problemIdInUrl}`,
+          );
+        });
+
+        test("知らせずに新しい問題を出し、そのIDへURLを置き換えること", () => {
+          const problemId = readProblemId(router);
+
+          expect(problemId).toBe(createProblemId(selected.identity));
+          expect(router.state.historyAction).toBe("REPLACE");
+        });
+      },
+    );
   });
 });

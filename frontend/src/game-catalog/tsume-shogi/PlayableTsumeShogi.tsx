@@ -1,5 +1,10 @@
 import { useMemo, useState } from "react";
 
+import {
+  useProblemIdQuerySync,
+  useRequestedProblem,
+} from "@/game-catalog/problem-id-query";
+import type { ProblemId } from "@/games/problem-id";
 import { createTsumeShogiDiagnosticSnapshot } from "@/games/tsume-shogi/diagnostics";
 import {
   getTsumeShogiDifficultyLabel,
@@ -10,6 +15,7 @@ import {
   createTsumeShogiPlayRecord,
   tsumeShogiPlayRecordDefinition,
 } from "@/games/tsume-shogi/play-record";
+import { selectTsumeShogiProblemById } from "@/games/tsume-shogi/problem-selection";
 import { tsumeShogiPlayRecordDisplay } from "@/games/tsume-shogi/ui/play-record-display";
 import { TsumeShogiDiagnostics } from "@/games/tsume-shogi/ui/TsumeShogiDiagnostics";
 import { TsumeShogiPlay } from "@/games/tsume-shogi/ui/TsumeShogiPlay";
@@ -23,10 +29,23 @@ import { useNavigate } from "@/router";
 
 type PlayableTsumeShogiProps = {
   difficulty: TsumeShogiDifficulty;
+  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
+  avoidedProblemId?: ProblemId;
 };
 
-export function PlayableTsumeShogi({ difficulty }: PlayableTsumeShogiProps) {
-  const play = useTsumeShogiPlay(difficulty);
+export function PlayableTsumeShogi({
+  difficulty,
+  avoidedProblemId,
+}: PlayableTsumeShogiProps) {
+  const requestedProblem = useRequestedProblem((problemId) =>
+    selectTsumeShogiProblemById(difficulty, problemId),
+  );
+  const play = useTsumeShogiPlay(
+    difficulty,
+    requestedProblem,
+    avoidedProblemId,
+  );
+  useProblemIdQuerySync(play.problemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>

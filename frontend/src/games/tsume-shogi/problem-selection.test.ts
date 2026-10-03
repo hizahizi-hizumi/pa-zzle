@@ -1,8 +1,11 @@
+import { createProblemId } from "@/games/problem-id";
 import { tsumeShogiDifficulties } from "@/games/tsume-shogi/difficulty";
 import { createTsumeShogiProblemIdentity } from "@/games/tsume-shogi/problem/problem";
 import { toTsumeShogiPooledProblem } from "@/games/tsume-shogi/problem/problem-pool";
 import {
+  canSelectTsumeShogiProblemById,
   restoreTsumeShogiProblem,
+  selectTsumeShogiProblemById,
   selectTsumeShogiProblemForDifficulty,
 } from "@/games/tsume-shogi/problem-selection";
 
@@ -42,4 +45,42 @@ describe("restoreTsumeShogiProblem", () => {
 
     expect(restored).toBeNull();
   });
+});
+
+describe("selectTsumeShogiProblemById", () => {
+  const pooled = toTsumeShogiPooledProblem("3", 4);
+  const problemId = createProblemId(pooled.identity);
+
+  test("難易度の問題集から問題IDでその問題を引くこと", () => {
+    const selected = selectTsumeShogiProblemById("3", problemId);
+
+    expect(selected).toEqual(pooled);
+  });
+
+  test("別の難易度の問題IDは引かないこと", () => {
+    const selected = selectTsumeShogiProblemById("2", problemId);
+
+    expect(selected).toBeNull();
+  });
+});
+
+describe("canSelectTsumeShogiProblemById", () => {
+  const problemId = createProblemId(toTsumeShogiPooledProblem("4", 0).identity);
+  const cases = [
+    ["その難易度の問題集にある", "4", problemId, true],
+    ["別の難易度の", "5", problemId, false],
+    ["問題集に無い", "4", "0000000000", false],
+  ] as const;
+
+  test.each(cases)(
+    "%s問題IDを引けるか確かめること",
+    (_, difficulty, requestedProblemId, expected) => {
+      const result = canSelectTsumeShogiProblemById(
+        difficulty,
+        requestedProblemId,
+      );
+
+      expect(result).toBe(expected);
+    },
+  );
 });

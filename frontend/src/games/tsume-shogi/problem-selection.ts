@@ -4,6 +4,8 @@ import type { TsumeShogiDifficulty } from "@/games/tsume-shogi/difficulty";
 import type { TsumeShogiProblemIdentity } from "@/games/tsume-shogi/problem/problem";
 import {
   findTsumeShogiPooledProblem,
+  findTsumeShogiPooledProblemByProblemId,
+  hasTsumeShogiPoolProblemId,
   listTsumeShogiPoolEntries,
   type TsumeShogiPooledProblem,
   toTsumeShogiPooledProblem,
@@ -34,4 +36,20 @@ export function restoreTsumeShogiProblem(
   identity: TsumeShogiProblemIdentity,
 ): TsumeShogiPooledProblem | null {
   return findTsumeShogiPooledProblem(identity);
+}
+
+/** 難易度の問題集から問題 ID で1問を引く。引けない ID には `null` を返す。 */
+export function selectTsumeShogiProblemById(
+  difficulty: TsumeShogiDifficulty,
+  problemId: string,
+): TsumeShogiPooledProblem | null {
+  return findTsumeShogiPooledProblemByProblemId(difficulty, problemId);
+}
+
+/** 難易度の問題集から問題 ID で1問を引けるかを、問題を復元せずに確かめる。 */
+export function canSelectTsumeShogiProblemById(
+  difficulty: TsumeShogiDifficulty,
+  problemId: string,
+): boolean {
+  return hasTsumeShogiPoolProblemId(difficulty, problemId);
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import type { ProblemId } from "@/games/problem-id";
+import { selectProblemAvoiding } from "@/games/problem-selection";
 import type { TsumeShogiDifficulty } from "@/games/tsume-shogi/difficulty";
 import type {
   TsumeShogiProblemIdentity,
@@ -150,12 +151,16 @@ type TsumeShogiPlayState = {
 
 function createPlayState(
   difficulty: TsumeShogiDifficulty,
-  seed: ProblemSeed,
   startedAt: number,
   initialProblem?: TsumeShogiPooledProblem,
+  avoidedProblemId?: ProblemId,
 ): TsumeShogiPlayState {
   const { problem, identity, workload, poolReference } =
-    initialProblem ?? selectTsumeShogiProblemForDifficulty(difficulty, seed);
+    initialProblem ??
+    selectProblemAvoiding(
+      (seed) => selectTsumeShogiProblemForDifficulty(difficulty, seed),
+      avoidedProblemId,
+    ).problem;
 
   return {
     session: createTsumeShogiSession(problem, startedAt),
@@ -204,6 +209,7 @@ export function createTsumeShogiResult(
 
 /**
  * 難易度のプレイを始める。`initialProblem` を渡すと、最初の1問だけその問題を出す。
+ * 渡さなければ、最初の1問は `avoidedProblemId` の問題を避けて選ぶ。
  * 攻方が王手を指すと、`TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS` の間を置いて玉方の応手（作意の応手、誤王手なら反証）を指す。
  * `returnToDecision` は誤王手の筋から判断地点へ戻り、`undo` は攻方の1手を取り消す。
  * `restart` は同じプレイのまま初期局面へ戻し、`replay` は同じ問題を新しいプレイとして始め、
@@ -214,14 +220,10 @@ export function createTsumeShogiResult(
 export function useTsumeShogiPlay(
   difficulty: TsumeShogiDifficulty,
   initialProblem?: TsumeShogiPooledProblem,
+  avoidedProblemId?: ProblemId,
 ) {
   const [play, setPlay] = useState<TsumeShogiPlayState>(() =>
-    createPlayState(
-      difficulty,
-      createProblemSeed(),
-      Date.now(),
-      initialProblem,
-    ),
+    createPlayState(difficulty, Date.now(), initialProblem, avoidedProblemId),
   );
   const [now, setNow] = useState(() => Date.now());
   const { session } = play;
@@ -350,7 +352,7 @@ export function useTsumeShogiPlay(
   const startNewProblem = useCallback(() => {
     const startedAt = Date.now();
     setNow(startedAt);
-    setPlay(createPlayState(difficulty, createProblemSeed(), startedAt));
+    setPlay(createPlayState(difficulty, startedAt));
   }, [difficulty]);
 
   const position = getTsumeShogiSessionPosition(session);

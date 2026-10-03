@@ -1,3 +1,4 @@
+import { createProblemId } from "@/games/problem-id";
 import { tsumeShogiDifficulties } from "@/games/tsume-shogi/difficulty";
 import {
   createTsumeShogiProblemIdentity,
@@ -6,12 +7,15 @@ import {
 } from "@/games/tsume-shogi/problem/problem";
 import {
   findTsumeShogiPooledProblem,
+  findTsumeShogiPooledProblemByProblemId,
   formatTsumeShogiPoolPosition,
+  formatTsumeShogiPoolProblemId,
   listTsumeShogiPoolEntries,
   parseTsumeShogiPoolPosition,
   parseTsumeShogiPoolSeed,
   restoreTsumeShogiPoolEntry,
   toTsumeShogiPooledProblem,
+  toTsumeShogiPoolIdentity,
 } from "@/games/tsume-shogi/problem/problem-pool";
 import {
   createTsumeShogiPosition,
@@ -220,5 +224,40 @@ describe("findTsumeShogiPooledProblem", () => {
 
       expect(found).toBeNull();
     });
+  });
+});
+
+describe("findTsumeShogiPooledProblemByProblemId", () => {
+  const poolEntries = tsumeShogiDifficulties.flatMap(({ id: difficulty }) =>
+    listTsumeShogiPoolEntries(difficulty).map((entry, entryIndex) => ({
+      difficulty,
+      poolProblemId: formatTsumeShogiPoolProblemId(difficulty, entryIndex),
+      problemId: createProblemId(toTsumeShogiPoolIdentity(entry)),
+    })),
+  );
+
+  test("問題集の全項目の問題IDが互いに異なること", () => {
+    const distinctProblemIds = new Set(
+      poolEntries.map(({ problemId }) => problemId),
+    );
+
+    expect(distinctProblemIds.size).toBe(poolEntries.length);
+  });
+
+  test("問題集の全項目をその難易度と問題IDで引けること", () => {
+    const unresolvedEntries = poolEntries.filter(
+      ({ difficulty, poolProblemId, problemId }) =>
+        findTsumeShogiPooledProblemByProblemId(difficulty, problemId)
+          ?.poolReference.problemId !== poolProblemId,
+    );
+
+    expect(unresolvedEntries).toEqual([]);
+  });
+
+  test("別の難易度の問題IDには null を返すこと", () => {
+    const [{ problemId }] = poolEntries as [(typeof poolEntries)[number]];
+    const found = findTsumeShogiPooledProblemByProblemId("5", problemId);
+
+    expect(found).toBeNull();
   });
 });

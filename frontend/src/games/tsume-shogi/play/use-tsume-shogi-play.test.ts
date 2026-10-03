@@ -1,5 +1,6 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 
+import { createProblemId } from "@/games/problem-id";
 import { createProblemSeed } from "@/games/problem-seed";
 import {
   TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS,
@@ -110,6 +111,32 @@ describe("useTsumeShogiPlay", () => {
           }),
         });
       });
+    });
+  });
+
+  describe("避ける問題を渡した場合", () => {
+    const otherSeed = "use-tsume-shogi-play-b";
+    const other = selectTsumeShogiProblemForDifficulty(difficulty, otherSeed);
+    let result: HookResult;
+
+    beforeEach(() => {
+      vi.mocked(createProblemSeed)
+        .mockReturnValueOnce(seed)
+        .mockReturnValueOnce(otherSeed);
+      ({ result } = renderHook(() =>
+        useTsumeShogiPlay(
+          difficulty,
+          undefined,
+          createProblemId(pooled.identity),
+        ),
+      ));
+    });
+
+    test("避ける問題を選ばずに選び直した問題で始めること", () => {
+      const { problemIdentity } = result.current;
+
+      expect(other.identity).not.toEqual(pooled.identity);
+      expect(problemIdentity).toEqual(other.identity);
     });
   });
 
