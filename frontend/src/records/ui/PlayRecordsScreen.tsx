@@ -194,7 +194,7 @@ export function PlayRecordsScreen({
 
   return (
     <>
-      <header className="mt-4 flex min-w-0 items-center gap-2 border-b-(length:--border-width-normal) pb-3">
+      <header className="mt-2 flex min-w-0 items-center gap-2 border-b-(length:--border-width-normal) pb-3">
         <h1 className="shrink-0 text-screen-title">記録</h1>
         <NativeSelect
           size="sm"
