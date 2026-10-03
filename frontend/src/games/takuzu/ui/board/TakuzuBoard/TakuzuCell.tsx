@@ -14,7 +14,8 @@ import { runViolationCellClassName } from "@/games/takuzu/ui/board/violation-mar
 import { cn } from "@/lib/utils";
 
 type TakuzuCellProps = {
-  size: number;
+  rowCount: number;
+  columnCount: number;
   cellIndex: number;
   view: TakuzuCellView;
   /** このマスを含む行・列の違反の読み上げ名（例「行の個数超過」）。 */
@@ -34,13 +35,13 @@ type TakuzuCellProps = {
 const tileNameByCell = { a: "四角", b: "丸" } as const;
 
 function getAccessibleName(
-  size: number,
+  columnCount: number,
   cellIndex: number,
   view: TakuzuCellView,
   lineViolationNames: readonly string[],
   highlighted: boolean,
 ): string {
-  const { row, column } = getTakuzuCellPosition(size, cellIndex);
+  const { row, column } = getTakuzuCellPosition(columnCount, cellIndex);
   const content = view.cell === null ? "空き" : tileNameByCell[view.cell];
   const qualifiers = [
     highlighted ? "操作対象" : null,
@@ -52,7 +53,8 @@ function getAccessibleName(
 }
 
 export function TakuzuCell({
-  size,
+  rowCount,
+  columnCount,
   cellIndex,
   view,
   lineViolationNames,
@@ -64,7 +66,7 @@ export function TakuzuCell({
   onFocus,
 }: TakuzuCellProps) {
   const lastPointerTypeRef = useRef<string | null>(null);
-  const { row, column } = getTakuzuCellPosition(size, cellIndex);
+  const { row, column } = getTakuzuCellPosition(columnCount, cellIndex);
   const buttonRef = useCallback(
     (element: HTMLButtonElement | null) => onElementChange(cellIndex, element),
     [cellIndex, onElementChange],
@@ -89,7 +91,7 @@ export function TakuzuCell({
       ref={buttonRef}
       type="button"
       aria-label={getAccessibleName(
-        size,
+        columnCount,
         cellIndex,
         view,
         lineViolationNames,
@@ -106,8 +108,8 @@ export function TakuzuCell({
       data-highlighted={highlighted || undefined}
       className={cn(
         "group relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center bg-background outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:bg-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-foreground/70 disabled:cursor-default enabled:not-aria-disabled:hover:bg-accent/60 enabled:not-aria-disabled:active:bg-accent",
-        row !== size - 1 && "border-b border-b-border",
-        column !== size - 1 && "border-r border-r-border",
+        row !== rowCount - 1 && "border-b border-b-border",
+        column !== columnCount - 1 && "border-r border-r-border",
       )}
     >
       <span

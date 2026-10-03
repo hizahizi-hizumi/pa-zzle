@@ -79,7 +79,8 @@ export function TakuzuTutorial({ open, origin, onClose }: TakuzuTutorialProps) {
         onComplete={ignoreClearAnimationComplete}
       >
         <TakuzuBoard
-          size={session.board.size}
+          rowCount={session.board.size}
+          columnCount={session.board.size}
           cells={getTakuzuSessionCellViews(session)}
           lineViolations={getTakuzuSessionLineViolations(session)}
           disabled={step === null}

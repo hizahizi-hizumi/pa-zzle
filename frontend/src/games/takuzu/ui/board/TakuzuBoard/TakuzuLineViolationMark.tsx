@@ -6,7 +6,8 @@ import { lineViolationBarClassName } from "@/games/takuzu/ui/board/violation-mar
 import { cn } from "@/lib/utils";
 
 type TakuzuLineViolationMarkProps = {
-  size: number;
+  rowCount: number;
+  columnCount: number;
   line: TakuzuLine;
   violated: boolean;
 };
@@ -28,13 +29,15 @@ const barPlacementClassNames = {
 
 /** 行・列の端のマスのグリッド領域。印はこの領域の外側（盤面の縁の外）に置く。 */
 function getEdgeCellArea(
-  size: number,
+  rowCount: number,
+  columnCount: number,
   { axis, index }: TakuzuLine,
   edge: LineEdge,
 ): CSSProperties {
+  const lineLength = axis === "row" ? columnCount : rowCount;
   // 絶対配置のグリッドの子は、終わりの線を省くとグリッドの端まで広がるため、1本分の範囲を明示する。
   const lineTrack = `${index + 1} / span 1`;
-  const edgeTrack = `${edge === "start" ? 1 : size} / span 1`;
+  const edgeTrack = `${edge === "start" ? 1 : lineLength} / span 1`;
   return axis === "row"
     ? { gridRow: lineTrack, gridColumn: edgeTrack }
     : { gridRow: edgeTrack, gridColumn: lineTrack };
@@ -45,7 +48,8 @@ function getEdgeCellArea(
  * 直す必要のないタイルまで誤りに見せないためと、マスごとに示す3連続と見分けるため。
  */
 export function TakuzuLineViolationMark({
-  size,
+  rowCount,
+  columnCount,
   line,
   violated,
 }: TakuzuLineViolationMarkProps) {
@@ -56,7 +60,7 @@ export function TakuzuLineViolationMark({
         aria-hidden="true"
         data-violated={violated || undefined}
         className="group pointer-events-none absolute inset-0"
-        style={getEdgeCellArea(size, line, edge)}
+        style={getEdgeCellArea(rowCount, columnCount, line, edge)}
       >
         <span
           className={cn(
