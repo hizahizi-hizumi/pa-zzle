@@ -1,11 +1,7 @@
 import { tsumeShogiDifficulties } from "@/games/tsume-shogi/difficulty";
 import { createTsumeShogiProblemIdentity } from "@/games/tsume-shogi/problem/problem";
+import { toTsumeShogiPooledProblem } from "@/games/tsume-shogi/problem/problem-pool";
 import {
-  getTsumeShogiProblemPoolVersion,
-  toTsumeShogiPooledProblem,
-} from "@/games/tsume-shogi/problem/problem-pool";
-import {
-  restoreTsumeShogiPoolProblem,
   restoreTsumeShogiProblem,
   selectTsumeShogiProblemForDifficulty,
 } from "@/games/tsume-shogi/problem-selection";
@@ -45,18 +41,5 @@ describe("restoreTsumeShogiProblem", () => {
     const restored = restoreTsumeShogiProblem(unknownIdentity);
 
     expect(restored).toBeNull();
-  });
-});
-
-describe("restoreTsumeShogiPoolProblem", () => {
-  const reference = {
-    poolVersion: getTsumeShogiProblemPoolVersion(),
-    problemId: "4-2",
-  };
-
-  test("問題集の版と問題番号からその問題を返すこと", () => {
-    const restored = restoreTsumeShogiPoolProblem(reference);
-
-    expect(restored).toEqual(toTsumeShogiPooledProblem("4", 1));
   });
 });

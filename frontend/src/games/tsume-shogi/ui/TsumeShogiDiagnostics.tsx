@@ -39,11 +39,9 @@ function formatGenerationConditions({
 }
 
 function formatProblemPool(
-  problemPool: TsumeShogiProblemPoolReference | null,
+  problemPool: TsumeShogiProblemPoolReference,
 ): string {
-  return problemPool
-    ? `v${problemPool.poolVersion} / ${problemPool.problemId}`
-    : "問題集に無い";
+  return `v${problemPool.poolVersion} / ${problemPool.problemId}`;
 }
 
 function formatAssessment(assessment: TsumeShogiDifficultyAssessment): string {

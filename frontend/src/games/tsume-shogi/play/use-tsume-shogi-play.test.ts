@@ -5,11 +5,7 @@ import {
   TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS,
   useTsumeShogiPlay,
 } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
-import {
-  createTsumeShogiProblemIdentity,
-  parseTsumeShogiProblemText,
-  type TsumeShogiProblem,
-} from "@/games/tsume-shogi/problem/problem";
+import type { TsumeShogiProblem } from "@/games/tsume-shogi/problem/problem";
 import { selectTsumeShogiProblemForDifficulty } from "@/games/tsume-shogi/problem-selection";
 import { formatTsumeShogiMoveUsi } from "@/games/tsume-shogi/puzzle/moves";
 import {
@@ -28,15 +24,6 @@ const difficulty = "2";
 const seed = "use-tsume-shogi-play-a";
 const pooled = selectTsumeShogiProblemForDifficulty(difficulty, seed);
 const fivePly = selectTsumeShogiProblemForDifficulty("3", seed);
-
-// 問題集に無い identity の3手詰（生成器の版 1 の `ts-3-5`）。
-const unpooled = {
-  problem: parseTsumeShogiProblemText({
-    sfen: "5s3/6k2/9/5P1+R1/9/9/9/9/9 b Sr2b4g2s4n4l17p 1",
-    mainLine: ["S*3c", "3b3a", "2d2b"],
-  }),
-  identity: createTsumeShogiProblemIdentity(3, 5),
-};
 
 /**
  * 作意の攻方の手を盤面と持駒の操作で指し、玉方の応手の間を進める。`plies` を渡すと、作意の初めのその手数までを指す。
@@ -103,11 +90,11 @@ describe("useTsumeShogiPlay", () => {
       });
 
       test("プレイの事実と作業の量から評価を返すこと", () => {
-        const { sessionResult, result: playResult } = result.current;
+        const { result: playResult } = result.current;
+        const elapsedMs = playResult?.elapsedMs ?? 0;
 
-        expect(sessionResult).not.toBeNull();
-        expect(playResult).toEqual({
-          ...sessionResult,
+        expect(playResult).toMatchObject({
+          wrongCheckCount: 0,
           workload: pooled.workload,
           speedFullScoreMs: calculateTsumeShogiSpeedFullScoreMs(
             pooled.workload,
@@ -115,10 +102,9 @@ describe("useTsumeShogiPlay", () => {
           speedZeroScoreMs:
             calculateTsumeShogiSpeedFullScoreMs(pooled.workload) * 3,
           timeDeltaMs:
-            sessionResult!.elapsedMs -
-            calculateTsumeShogiSpeedFullScoreMs(pooled.workload),
+            elapsedMs - calculateTsumeShogiSpeedFullScoreMs(pooled.workload),
           score: calculateTsumeShogiPlayScore({
-            elapsedMs: sessionResult!.elapsedMs,
+            elapsedMs,
             wrongCheckCount: 0,
             workload: pooled.workload,
           }),
@@ -131,45 +117,15 @@ describe("useTsumeShogiPlay", () => {
     let result: HookResult;
 
     beforeEach(() => {
-      ({ result } = renderHook(() =>
-        useTsumeShogiPlay(difficulty, {
-          problem: pooled.problem,
-          identity: pooled.identity,
-        }),
-      ));
+      ({ result } = renderHook(() => useTsumeShogiPlay(difficulty, pooled)));
     });
 
-    test("問題集から作業の量と問題集の中の位置を引くこと", () => {
-      const { problemSource, workload, poolReference } = result.current;
+    test("指定した問題と作業の量と問題集の中の位置で始めること", () => {
+      const { problemIdentity, workload, poolReference } = result.current;
 
-      expect(problemSource).toBe("given");
+      expect(problemIdentity).toEqual(pooled.identity);
       expect(workload).toEqual(pooled.workload);
       expect(poolReference).toEqual(pooled.poolReference);
-    });
-  });
-
-  describe("問題集に無い問題を指定した場合", () => {
-    let result: HookResult;
-
-    beforeEach(() => {
-      ({ result } = renderHook(() => useTsumeShogiPlay("1", unpooled)));
-      playMainLine(result, unpooled.problem);
-    });
-
-    test("詰ませても作業の量が無いので評価を返さないこと", () => {
-      const {
-        status,
-        sessionResult,
-        workload,
-        poolReference,
-        result: playResult,
-      } = result.current;
-
-      expect(status).toBe("cleared");
-      expect(sessionResult).not.toBeNull();
-      expect(workload).toBeNull();
-      expect(poolReference).toBeNull();
-      expect(playResult).toBeNull();
     });
   });
 
@@ -177,12 +133,7 @@ describe("useTsumeShogiPlay", () => {
     let result: HookResult;
 
     beforeEach(() => {
-      ({ result } = renderHook(() =>
-        useTsumeShogiPlay("3", {
-          problem: fivePly.problem,
-          identity: fivePly.identity,
-        }),
-      ));
+      ({ result } = renderHook(() => useTsumeShogiPlay("3", fivePly)));
       playMainLine(result, fivePly.problem, 4);
       act(() => result.current.undo());
     });

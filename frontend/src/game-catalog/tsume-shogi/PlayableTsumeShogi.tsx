@@ -10,7 +10,6 @@ import {
   createTsumeShogiPlayRecord,
   tsumeShogiPlayRecordDefinition,
 } from "@/games/tsume-shogi/play-record";
-import type { TsumeShogiIdentifiedProblem } from "@/games/tsume-shogi/problem/problem";
 import { tsumeShogiPlayRecordDisplay } from "@/games/tsume-shogi/ui/play-record-display";
 import { TsumeShogiDiagnostics } from "@/games/tsume-shogi/ui/TsumeShogiDiagnostics";
 import { TsumeShogiPlay } from "@/games/tsume-shogi/ui/TsumeShogiPlay";
@@ -22,40 +21,16 @@ import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
 
-/**
- * 最初に遊ぶ問題を指定する。
- * - `replay`: 記録の問題を、その記録の難易度として遊び直す。記録は通常どおり保存する。
- * - `blind-comparison`: 人間の遊び比べ用に指定した問題。難易度を伏せ、記録を保存しない。
- */
-type TsumeShogiInitialProblem = {
-  problem: TsumeShogiIdentifiedProblem;
-  purpose: "replay" | "blind-comparison";
-};
-
 type PlayableTsumeShogiProps = {
   difficulty: TsumeShogiDifficulty;
-  initialProblem?: TsumeShogiInitialProblem;
 };
 
-const BLIND_COMPARISON_DIFFICULTY_LABEL = "問題指定";
-
-export function PlayableTsumeShogi({
-  difficulty,
-  initialProblem,
-}: PlayableTsumeShogiProps) {
-  const play = useTsumeShogiPlay(difficulty, initialProblem?.problem);
+export function PlayableTsumeShogi({ difficulty }: PlayableTsumeShogiProps) {
+  const play = useTsumeShogiPlay(difficulty);
   const navigate = useNavigate();
-  // 別の問題へ進むと指定した問題ではなくなるので、難易度を出し、記録も保存する。
-  const isBlindComparison =
-    initialProblem?.purpose === "blind-comparison" &&
-    play.problemSource === "given";
   const playRecord = useMemo(
     () =>
-      // 評価（`result`）は作業の量がある問題集の問題でだけ得られるので、評価できたプレイだけを記録する。
-      !isBlindComparison &&
-      play.result &&
-      play.poolReference &&
-      play.completedAt !== null
+      play.result && play.completedAt !== null
         ? createTsumeShogiPlayRecord({
             difficulty,
             problemIdentity: play.problemIdentity,
@@ -68,7 +43,6 @@ export function PlayableTsumeShogi({
         : null,
     [
       difficulty,
-      isBlindComparison,
       play.completedAt,
       play.poolReference,
       play.problemIdentity,
@@ -87,21 +61,24 @@ export function PlayableTsumeShogi({
         ? createTsumeShogiDiagnosticSnapshot({
             difficulty,
             problemIdentity: play.problemIdentity,
+            poolReference: play.poolReference,
             problem: play.problem,
             buildRevision,
           })
         : null,
-    [difficulty, diagnosticsOpen, play.problemIdentity, play.problem],
+    [
+      difficulty,
+      diagnosticsOpen,
+      play.problemIdentity,
+      play.poolReference,
+      play.problem,
+    ],
   );
 
   return (
     <>
       <TsumeShogiPlay
-        difficultyLabel={
-          isBlindComparison
-            ? BLIND_COMPARISON_DIFFICULTY_LABEL
-            : getTsumeShogiDifficultyLabel(difficulty)
-        }
+        difficultyLabel={getTsumeShogiDifficultyLabel(difficulty)}
         plies={play.plies}
         progress={play.progress}
         phase={play.phase}
@@ -116,7 +93,6 @@ export function PlayableTsumeShogi({
         elapsedMs={play.elapsedMs}
         canUndo={play.canUndo}
         canRestart={play.canRestart}
-        sessionResult={play.sessionResult}
         result={play.result}
         recordOutcomeNotice={
           <PlayRecordOutcomeNotice

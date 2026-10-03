@@ -41,7 +41,6 @@ describe("TsumeShogiResultScreen", () => {
       render(
         <TsumeShogiResultScreen
           difficultyLabel="レベル 1"
-          performance={performance}
           result={result}
           {...handlers}
         />,

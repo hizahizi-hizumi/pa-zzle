@@ -114,7 +114,6 @@ describe("TsumeShogiDiagnostics", () => {
         <TsumeShogiDiagnostics
           snapshot={{
             ...snapshot,
-            problemPool: null,
             difficultyFeatures: null,
             difficultyAssessment: { status: "unsupported" },
           }}
@@ -123,10 +122,10 @@ describe("TsumeShogiDiagnostics", () => {
       );
     });
 
-    test("問題集に無いことと評価不能を表示すること", () => {
-      const values = ["問題集", "分類", "特徴"].map(getRowValue);
+    test("評価不能と分析できないことを表示すること", () => {
+      const values = ["分類", "特徴"].map(getRowValue);
 
-      expect(values).toEqual(["問題集に無い", "評価不能", "分析できない"]);
+      expect(values).toEqual(["評価不能", "分析できない"]);
     });
   });
 });

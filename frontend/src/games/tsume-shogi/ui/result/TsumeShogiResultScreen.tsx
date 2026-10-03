@@ -5,17 +5,12 @@ import tsumeShogiPictogramSvg from "@/games/tsume-shogi/assets/pictogram.svg?raw
 import { TSUME_SHOGI_DISPLAY_NAME } from "@/games/tsume-shogi/display-name";
 import type { TsumeShogiResult } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
 import { TSUME_SHOGI_SCORE_MAXIMUMS } from "@/games/tsume-shogi/score";
-import type { TsumeShogiSessionResult } from "@/games/tsume-shogi/session/session";
 import { getTsumeShogiScoreCriteria } from "@/games/tsume-shogi/ui/result/TsumeShogiResultScreen/score-criteria";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 import { formatElapsedTimeDelta } from "@/lib/format-performance-delta";
 
 type TsumeShogiResultScreenProps = {
-  /** 結果に出す難易度の表示名。問題を指定したプレイでは難易度を伏せた名前を渡す。 */
   difficultyLabel: string;
-  /** そのプレイで起きた事実。 */
-  performance: TsumeShogiSessionResult;
-  /** 事実と問題の作業の量から導いた評価。 */
   result: TsumeShogiResult;
   recordOutcomeNotice: ReactNode;
   onReplay: () => void;
@@ -50,7 +45,6 @@ function listScoreBreakdown(result: TsumeShogiResult) {
 
 export function TsumeShogiResultScreen({
   difficultyLabel,
-  performance,
   result,
   recordOutcomeNotice,
   onReplay,
@@ -60,33 +54,29 @@ export function TsumeShogiResultScreen({
   onBackToHome,
   onOpenDiagnostics,
 }: TsumeShogiResultScreenProps) {
-  const common = {
-    gameName: TSUME_SHOGI_DISPLAY_NAME,
-    difficultyLabel,
-    pictogramSvg: tsumeShogiPictogramSvg,
-    metrics: [
-      {
-        label: "時間",
-        value: formatElapsedTime(performance.elapsedMs),
-        detail: `基準 ${formatElapsedTimeDelta(result.timeDeltaMs)}`,
-      },
-      { label: "誤王手", value: String(performance.wrongCheckCount) },
-    ],
-    recordOutcomeNotice,
-    onStartNewProblem,
-    onReplay,
-    onOpenRecords,
-    onChangeDifficulty,
-    onBackToHome,
-    onOpenDiagnostics,
-  } as const;
-
   return (
     <GameResultScreen
-      {...common}
+      gameName={TSUME_SHOGI_DISPLAY_NAME}
+      difficultyLabel={difficultyLabel}
+      pictogramSvg={tsumeShogiPictogramSvg}
+      metrics={[
+        {
+          label: "時間",
+          value: formatElapsedTime(result.elapsedMs),
+          detail: `基準 ${formatElapsedTimeDelta(result.timeDeltaMs)}`,
+        },
+        { label: "誤王手", value: String(result.wrongCheckCount) },
+      ]}
       score={result.score.total}
       scoreBreakdown={listScoreBreakdown(result)}
       scoreCriteria={getTsumeShogiScoreCriteria(result)}
+      recordOutcomeNotice={recordOutcomeNotice}
+      onStartNewProblem={onStartNewProblem}
+      onReplay={onReplay}
+      onOpenRecords={onOpenRecords}
+      onChangeDifficulty={onChangeDifficulty}
+      onBackToHome={onBackToHome}
+      onOpenDiagnostics={onOpenDiagnostics}
     />
   );
 }

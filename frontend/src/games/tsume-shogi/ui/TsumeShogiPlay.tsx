@@ -21,7 +21,6 @@ import type {
   TsumeShogiRejection,
   TsumeShogiSelection,
   TsumeShogiSessionPhase,
-  TsumeShogiSessionResult,
 } from "@/games/tsume-shogi/session/session";
 import { TsumeShogiClearAnimation } from "@/games/tsume-shogi/ui/board/clear/TsumeShogiClearAnimation";
 import { TsumeShogiBoard } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard";
@@ -37,7 +36,6 @@ import { TsumeShogiPlayStatus } from "@/games/tsume-shogi/ui/TsumeShogiPlay/Tsum
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type TsumeShogiPlayProps = {
-  /** 結果に出す難易度の表示名。問題を指定したプレイでは難易度を伏せた名前を渡す。 */
   difficultyLabel: string;
   plies: number;
   progress: TsumeShogiProgress;
@@ -53,9 +51,7 @@ type TsumeShogiPlayProps = {
   elapsedMs: number;
   canUndo: boolean;
   canRestart: boolean;
-  /** クリアしたプレイの事実。クリアするまでは `null`。 */
-  sessionResult: TsumeShogiSessionResult | null;
-  /** クリアしたプレイの評価。問題集に無い問題を指定したプレイでは `null`。 */
+  /** クリアしたプレイの評価。クリアするまでは `null`。 */
   result: TsumeShogiResult | null;
   recordOutcomeNotice: ReactNode;
   onTapSquare: (square: TsumeShogiSquare) => void;
@@ -102,7 +98,6 @@ export function TsumeShogiPlay({
   elapsedMs,
   canUndo,
   canRestart,
-  sessionResult,
   result,
   recordOutcomeNotice,
   onTapSquare,
@@ -167,11 +162,10 @@ export function TsumeShogiPlay({
   ]);
 
   // 完成演出の間は詰め上がりの盤をそのまま見せ、演出を終えてから結果画面に切り替える。
-  if (progress === "result" && sessionResult && result) {
+  if (progress === "result" && result) {
     return (
       <TsumeShogiResultScreen
         difficultyLabel={difficultyLabel}
-        performance={sessionResult}
         result={result}
         recordOutcomeNotice={recordOutcomeNotice}
         onReplay={onReplay}

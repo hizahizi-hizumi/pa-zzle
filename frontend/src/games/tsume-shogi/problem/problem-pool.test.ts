@@ -6,9 +6,7 @@ import {
 } from "@/games/tsume-shogi/problem/problem";
 import {
   findTsumeShogiPooledProblem,
-  findTsumeShogiPooledProblemByReference,
   formatTsumeShogiPoolPosition,
-  getTsumeShogiProblemPoolVersion,
   listTsumeShogiPoolEntries,
   parseTsumeShogiPoolPosition,
   parseTsumeShogiPoolSeed,
@@ -222,31 +220,5 @@ describe("findTsumeShogiPooledProblem", () => {
 
       expect(found).toBeNull();
     });
-  });
-});
-
-describe("findTsumeShogiPooledProblemByReference", () => {
-  const pooled = toTsumeShogiPooledProblem("5", 0);
-  const poolVersion = getTsumeShogiProblemPoolVersion();
-
-  test("問題集の版と問題番号から同じ問題を引くこと", () => {
-    const found = findTsumeShogiPooledProblemByReference({
-      poolVersion,
-      problemId: "5-1",
-    });
-
-    expect(found).toEqual(pooled);
-  });
-
-  const missingCases = [
-    ["版の違う", { poolVersion: "0", problemId: "5-1" }],
-    ["番号が範囲外の", { poolVersion, problemId: "5-100000" }],
-    ["形の違う", { poolVersion, problemId: "5" }],
-  ] as const;
-
-  test.each(missingCases)("%s問題番号には null を返すこと", (_, reference) => {
-    const found = findTsumeShogiPooledProblemByReference(reference);
-
-    expect(found).toBeNull();
   });
 });

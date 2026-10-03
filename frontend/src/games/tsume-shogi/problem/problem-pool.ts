@@ -69,10 +69,6 @@ export type TsumeShogiProblemPool = {
 
 const problemPool = problemPoolJson as unknown as TsumeShogiProblemPool;
 
-export function getTsumeShogiProblemPoolVersion(): string {
-  return problemPool.poolVersion;
-}
-
 /** 初期局面を問題集の形（盤面と攻方の持駒）にする。 */
 export function formatTsumeShogiPoolPosition(
   position: TsumeShogiPosition,
@@ -155,18 +151,6 @@ export function formatTsumeShogiPoolProblemId(
   entryIndex: number,
 ): string {
   return `${difficulty}-${entryIndex + 1}`;
-}
-
-function parsePoolProblemId(
-  problemId: string,
-): { difficulty: TsumeShogiDifficulty; entryIndex: number } | null {
-  const match = problemId.match(/^([1-9]\d*)-([1-9]\d*)$/);
-  const difficulty = tsumeShogiDifficulties.find(
-    ({ id }) => id === match?.[1],
-  )?.id;
-  return match && difficulty
-    ? { difficulty, entryIndex: Number(match[2]) - 1 }
-    : null;
 }
 
 /** 問題集の1問を、問題集の中の位置 `poolReference` を添えて復元する。 */
@@ -262,22 +246,4 @@ export function findTsumeShogiPooledProblem(
   )
     ? pooled
     : null;
-}
-
-/** 問題集の中の位置から1問を復元する。問題集の版が今と違う・番号が範囲外なら `null` を返す。 */
-export function findTsumeShogiPooledProblemByReference({
-  poolVersion,
-  problemId,
-}: TsumeShogiProblemPoolReference): TsumeShogiPooledProblem | null {
-  if (poolVersion !== problemPool.poolVersion) {
-    return null;
-  }
-  const position = parsePoolProblemId(problemId);
-  if (
-    !position ||
-    position.entryIndex >= problemPool.levels[position.difficulty].length
-  ) {
-    return null;
-  }
-  return toTsumeShogiPooledProblem(position.difficulty, position.entryIndex);
 }

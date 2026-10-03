@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
 import type { TsumeShogiDifficulty } from "@/games/tsume-shogi/difficulty";
 import type {
-  TsumeShogiIdentifiedProblem,
   TsumeShogiProblemIdentity,
   TsumeShogiSolveWorkload,
 } from "@/games/tsume-shogi/problem/problem";
@@ -11,10 +10,7 @@ import type {
   TsumeShogiPooledProblem,
   TsumeShogiProblemPoolReference,
 } from "@/games/tsume-shogi/problem/problem-pool";
-import {
-  restoreTsumeShogiProblem,
-  selectTsumeShogiProblemForDifficulty,
-} from "@/games/tsume-shogi/problem-selection";
+import { selectTsumeShogiProblemForDifficulty } from "@/games/tsume-shogi/problem-selection";
 import {
   canTsumeShogiMovePromote,
   type TsumeShogiMove,
@@ -124,9 +120,6 @@ function listShownMoves(
   ];
 }
 
-/** 遊んでいる問題の出どころ。`given` は開始時に指定された問題。 */
-export type TsumeShogiProblemSource = "selected" | "given";
-
 /**
  * 画面の進行。`clearing` は詰んでから完成演出を終えるまで。
  * 完成演出の間も session はクリア済みで、経過時間は止まっている。
@@ -144,7 +137,6 @@ export type TsumeShogiResult = TsumeShogiSessionResult & {
 
 /**
  * - `workload` / `poolReference`: 問題集から出した問題の作業の量と、問題集の中の位置。
- *   問題集に無い identity を指定して生成した問題（内部診断）では `null` で、評価できない。
  * - `restoredTurn`: 元に戻す・判断地点へ戻る・盤面を戻すで、最後の組として盤面に戻ってきた手。指し直したときのように動かして見せない。
  */
 type TsumeShogiPlayState = {
@@ -152,58 +144,27 @@ type TsumeShogiPlayState = {
   restoredTurn: TsumeShogiSessionTurn | null;
   progress: TsumeShogiProgress;
   problemIdentity: TsumeShogiProblemIdentity;
-  problemSource: TsumeShogiProblemSource;
-  workload: TsumeShogiSolveWorkload | null;
-  poolReference: TsumeShogiProblemPoolReference | null;
+  workload: TsumeShogiSolveWorkload;
+  poolReference: TsumeShogiProblemPoolReference;
 };
 
-function createPooledPlayState(
-  { problem, identity, workload, poolReference }: TsumeShogiPooledProblem,
-  problemSource: TsumeShogiProblemSource,
+function createPlayState(
+  difficulty: TsumeShogiDifficulty,
+  seed: ProblemSeed,
   startedAt: number,
+  initialProblem?: TsumeShogiPooledProblem,
 ): TsumeShogiPlayState {
+  const { problem, identity, workload, poolReference } =
+    initialProblem ?? selectTsumeShogiProblemForDifficulty(difficulty, seed);
+
   return {
     session: createTsumeShogiSession(problem, startedAt),
     restoredTurn: null,
     progress: "playing",
     problemIdentity: identity,
-    problemSource,
     workload,
     poolReference,
   };
-}
-
-/** 指定された問題で始める。問題集の問題なら作業の量と問題集の位置を引き、問題集に無い問題は評価しない。 */
-function createGivenPlayState(
-  given: TsumeShogiIdentifiedProblem,
-  startedAt: number,
-): TsumeShogiPlayState {
-  const pooled = restoreTsumeShogiProblem(given.identity);
-  if (pooled) {
-    return createPooledPlayState(pooled, "given", startedAt);
-  }
-
-  return {
-    session: createTsumeShogiSession(given.problem, startedAt),
-    restoredTurn: null,
-    progress: "playing",
-    problemIdentity: given.identity,
-    problemSource: "given",
-    workload: null,
-    poolReference: null,
-  };
-}
-
-function createSelectedPlayState(
-  difficulty: TsumeShogiDifficulty,
-  seed: ProblemSeed,
-  startedAt: number,
-): TsumeShogiPlayState {
-  return createPooledPlayState(
-    selectTsumeShogiProblemForDifficulty(difficulty, seed),
-    "selected",
-    startedAt,
-  );
 }
 
 function withNextSession(
@@ -219,7 +180,8 @@ function withNextSession(
   };
 }
 
-function createTsumeShogiResult(
+/** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
+export function createTsumeShogiResult(
   sessionResult: TsumeShogiSessionResult,
   workload: TsumeShogiSolveWorkload,
 ): TsumeShogiResult {
@@ -247,16 +209,19 @@ function createTsumeShogiResult(
  * `restart` は同じプレイのまま初期局面へ戻し、`replay` は同じ問題を新しいプレイとして始め、
  * `startNewProblem` は同じ難易度の別の問題を始める。詰むと `progress` が `clearing` になり、
  * 完成演出を終えたら `completeClearAnimation` で `result` に進める。
- * クリアすると `result` に評価を返す。問題集に無い問題を指定したときは作業の量が無いので `result` は `null` のまま。
+ * クリアすると `result` に評価を返す。
  */
 export function useTsumeShogiPlay(
   difficulty: TsumeShogiDifficulty,
-  initialProblem?: TsumeShogiIdentifiedProblem,
+  initialProblem?: TsumeShogiPooledProblem,
 ) {
   const [play, setPlay] = useState<TsumeShogiPlayState>(() =>
-    initialProblem
-      ? createGivenPlayState(initialProblem, Date.now())
-      : createSelectedPlayState(difficulty, createProblemSeed(), Date.now()),
+    createPlayState(
+      difficulty,
+      createProblemSeed(),
+      Date.now(),
+      initialProblem,
+    ),
   );
   const [now, setNow] = useState(() => Date.now());
   const { session } = play;
@@ -385,9 +350,7 @@ export function useTsumeShogiPlay(
   const startNewProblem = useCallback(() => {
     const startedAt = Date.now();
     setNow(startedAt);
-    setPlay(
-      createSelectedPlayState(difficulty, createProblemSeed(), startedAt),
-    );
+    setPlay(createPlayState(difficulty, createProblemSeed(), startedAt));
   }, [difficulty]);
 
   const position = getTsumeShogiSessionPosition(session);
@@ -411,16 +374,13 @@ export function useTsumeShogiPlay(
   const { workload } = play;
   const result = useMemo(
     () =>
-      sessionResult && workload
-        ? createTsumeShogiResult(sessionResult, workload)
-        : null,
+      sessionResult ? createTsumeShogiResult(sessionResult, workload) : null,
     [sessionResult, workload],
   );
 
   return {
     difficulty,
     problemIdentity: play.problemIdentity,
-    problemSource: play.problemSource,
     workload,
     poolReference: play.poolReference,
     problem: session.problem,
@@ -442,7 +402,6 @@ export function useTsumeShogiPlay(
     canRestart: canRestartTsumeShogiSession(session),
     startedAt: session.startedAt,
     completedAt: session.finishedAt,
-    sessionResult,
     result,
     tapSquare,
     tapHand,
