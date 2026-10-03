@@ -24,7 +24,6 @@ import type {
 } from "@/games/tsume-shogi/session/session";
 import { TsumeShogiClearAnimation } from "@/games/tsume-shogi/ui/board/clear/TsumeShogiClearAnimation";
 import { TsumeShogiBoard } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard";
-import { readTsumeShogiHowToPlaySeen } from "@/games/tsume-shogi/ui/how-to-play-seen";
 import { TsumeShogiResultScreen } from "@/games/tsume-shogi/ui/result/TsumeShogiResultScreen";
 import { TsumeShogiHowToPlayDialog } from "@/games/tsume-shogi/ui/TsumeShogiHowToPlayDialog";
 import {
@@ -116,10 +115,7 @@ export function TsumeShogiPlay({
   onBackToHome,
   onOpenDiagnostics,
 }: TsumeShogiPlayProps) {
-  // 初めて遊ぶときだけ、盤より先に遊び方を開く（intro）。
-  const [howToPlay, setHowToPlay] = useState<"closed" | "intro" | "open">(() =>
-    readTsumeShogiHowToPlaySeen() ? "closed" : "intro",
-  );
+  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
   const playing = progress === "playing";
   const acceptsInput = playing && phase === "attacker";
   const handAvailability: TsumeShogiHandAvailability = acceptsInput
@@ -127,15 +123,6 @@ export function TsumeShogiPlay({
     : playing && phase === "defender"
       ? "waiting"
       : "unavailable";
-  const howToPlayOpen = howToPlay !== "closed";
-
-  function closeHowToPlay() {
-    // 初めての遊び方を読んでいた時間はプレイ時間に含めないよう、閉じたところから測り直す。
-    if (howToPlay === "intro") {
-      onReplay();
-    }
-    setHowToPlay("closed");
-  }
 
   useEffect(() => {
     // 遊び方を開いている間の Esc は遊び方を閉じる操作なので、盤の選択には効かせない。
@@ -195,12 +182,12 @@ export function TsumeShogiPlay({
         onStartNewProblem={onStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
-        onOpenHowToPlay={() => setHowToPlay("open")}
+        onOpenHowToPlay={() => setHowToPlayOpen(true)}
         onOpenDiagnostics={onOpenDiagnostics}
       />
       <TsumeShogiHowToPlayDialog
         open={howToPlayOpen}
-        onClose={closeHowToPlay}
+        onClose={() => setHowToPlayOpen(false)}
       />
       {/* 玉方の持駒・盤・攻方の持駒を1つのまとまりとして、盤の幅にそろえて並べる。 */}
       <main className="flex min-h-0 flex-1 items-center justify-center px-0.5 py-1 [container-type:size]">

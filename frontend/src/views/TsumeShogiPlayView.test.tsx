@@ -27,7 +27,6 @@ import {
   type TsumeShogiMove,
 } from "@/games/tsume-shogi/puzzle/moves";
 import type { TsumeShogiSquare } from "@/games/tsume-shogi/puzzle/position";
-import { writeTsumeShogiHowToPlaySeen } from "@/games/tsume-shogi/ui/how-to-play-seen";
 import {
   formatTsumeShogiSquare,
   tsumeShogiHandPieceNames,
@@ -50,10 +49,6 @@ vi.mock("@/lib/internal-diagnostics", () => ({
   },
   buildRevision: null,
 }));
-
-beforeEach(() => {
-  writeTsumeShogiHowToPlaySeen();
-});
 
 afterEach(() => {
   cleanup();
@@ -197,6 +192,12 @@ describe("TsumeShogiPlayView", () => {
   describe("定義済みの難易度の場合", () => {
     beforeEach(() => {
       renderAt("/puzzles/tsume-shogi/play/1");
+    });
+
+    test("遊び方を自動では開かないこと", () => {
+      const dialog = screen.queryByRole("dialog");
+
+      expect(dialog).toBeNull();
     });
 
     test("9×9の盤を表示すること", () => {
