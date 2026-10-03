@@ -18,6 +18,7 @@ import { TakuzuClearAnimation } from "@/games/takuzu/ui/board/clear/TakuzuClearA
 import { TakuzuBoard } from "@/games/takuzu/ui/board/TakuzuBoard";
 import { TakuzuResultScreen } from "@/games/takuzu/ui/result/TakuzuResultScreen";
 import { TakuzuHowToPlayDialog } from "@/games/takuzu/ui/TakuzuHowToPlayDialog";
+import { TakuzuTutorial } from "@/games/takuzu/ui/TakuzuTutorial";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type TakuzuPlayProps = {
@@ -70,6 +71,7 @@ export function TakuzuPlay({
   onOpenDiagnostics,
 }: TakuzuPlayProps) {
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
 
   if (progress === "result" && result) {
     return (
@@ -110,11 +112,16 @@ export function TakuzuPlay({
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
         onOpenHowToPlay={() => setHowToPlayOpen(true)}
+        onOpenTutorial={() => setTutorialOpen(true)}
         onOpenDiagnostics={onOpenDiagnostics}
       />
       <TakuzuHowToPlayDialog
         open={howToPlayOpen}
         onClose={() => setHowToPlayOpen(false)}
+      />
+      <TakuzuTutorial
+        open={tutorialOpen}
+        onClose={() => setTutorialOpen(false)}
       />
       <main className="flex min-h-0 flex-1 items-center justify-center py-2 [container-type:size] sm:px-3">
         <div className="relative aspect-square w-[min(100cqw,100cqh,42rem)]">
@@ -123,7 +130,8 @@ export function TakuzuPlay({
             onComplete={onClearAnimationComplete}
           >
             <TakuzuBoard
-              size={size}
+              rowCount={size}
+              columnCount={size}
               cells={cells}
               lineViolations={lineViolations}
               disabled={progress !== "playing"}

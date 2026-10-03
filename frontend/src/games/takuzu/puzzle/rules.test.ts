@@ -1,5 +1,6 @@
-import { parseTakuzuBoard } from "@/games/takuzu/puzzle/board";
+import { parseTakuzuBoard, parseTakuzuGrid } from "@/games/takuzu/puzzle/board";
 import {
+  findTakuzuGridRuleViolations,
   findTakuzuRuleViolations,
   isTakuzuSolved,
 } from "@/games/takuzu/puzzle/rules";
@@ -84,6 +85,36 @@ describe("findTakuzuRuleViolations", () => {
       const result = findTakuzuRuleViolations(board);
 
       expect(result.duplicateLines).toEqual([]);
+    });
+  });
+});
+
+describe("findTakuzuGridRuleViolations", () => {
+  describe("1行だけの並びで同じタイルが3つ続く場合", () => {
+    const grid = parseTakuzuGrid(["AAA"]);
+
+    test("続いているマスだけを返し、奇数の行を個数超過にしないこと", () => {
+      const result = findTakuzuGridRuleViolations(grid);
+
+      expect(result).toEqual({
+        runCellIndices: [0, 1, 2],
+        overfilledLines: [],
+        duplicateLines: [],
+      });
+    });
+  });
+
+  describe("1行だけの偶数の並びで半分を超えてタイルを置いた場合", () => {
+    const grid = parseTakuzuGrid(["ABAA"]);
+
+    test("その行を個数超過として返し、1マスの列を判定しないこと", () => {
+      const result = findTakuzuGridRuleViolations(grid);
+
+      expect(result).toEqual({
+        runCellIndices: [],
+        overfilledLines: [{ axis: "row", index: 0 }],
+        duplicateLines: [],
+      });
     });
   });
 });

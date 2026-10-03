@@ -13,6 +13,7 @@ paths:
 ```text
 frontend/src/games/
 ├── result.ts
+├── tutorial.ts
 └── <game>/
     ├── puzzle/
     ├── problem/
@@ -24,6 +25,7 @@ frontend/src/games/
     │   └── session.ts
     ├── play/
     │   └── use-<game>-play.ts
+    ├── tutorial/
     ├── ui/
     │   └── result/
     │       └── <Game>ResultScreen.tsx
@@ -56,6 +58,7 @@ frontend/src/games/
 - `problem/generation/`: 問題生成・検証の内部でだけ使う解探索、手筋解析などを置く。通常プレイから直接参照しない。
 - `diagnostics.ts`: ゲーム固有の内部診断を提供する場合に置く。
 - `assets/`: ゲーム固有の静的資産がある場合に置く。
+- `tutorial/`: 小さなパズルを実際に解いてルールと操作を身につけるチュートリアルを提供する場合に置く。固定盤面のステージ、手の判定、決め手やヒントの導出を、`games/tutorial.ts` の契約に沿って純粋な TypeScript で持つ。
 
 ## 問題契約
 
@@ -89,7 +92,8 @@ frontend/src/games/
 - `problem-selection.ts` は問題供給と `difficulty.ts` へ依存できる。
 - `score.ts` は評価に必要な事実の契約とゲーム共通契約へ依存できるが、`play/`、`ui/` を知らない。
 - `play/` は下位のゲーム責務を調停するが、`ui/` を import しない。
-- `ui/` は `play/` と表示に必要な読み取り専用の契約へ依存できる。問題生成、session更新、採点規則を実装しない。
+- `tutorial/` は `problem/`・`puzzle/`・`session/` とゲーム共通契約へ依存できるが、生成内部、難易度分類、採点、`play/`、保存、React、UIを知らない。通常プレイの生成・採点・記録・タイマーを通さず、`puzzle/` のルールと遷移を使う純関数で盤面を進める。
+- `ui/` は `play/` と表示に必要な読み取り専用の契約へ依存できる。問題生成、session更新、採点規則を実装しない。チュートリアルの UI は `tutorial/` の定義を `games/tutorial.ts` の進行関数で進める。
 - `play-record.ts` と `diagnostics.ts` は接続先と必要なゲーム内部契約へ依存できるが、通常プレイから逆依存させない。
 - `ui/play-record-display.ts` は記録 UI の表示契約（`@/records/ui/play-record-display`）へ接続できる。記録表示は記録定義の全指標を網羅する。
 - ゲームカタログ（`frontend/src/game-catalog/`）へ依存しない。

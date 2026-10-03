@@ -299,6 +299,23 @@ function createConcreteGameOverrides(
           "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。",
       },
     ]),
+    restrictImports(gameFiles("tutorial/**/*.{ts,tsx}"), [
+      ...boundary,
+      {
+        group: [
+          gameImport("problem/generation/**"),
+          gameImport("difficulty"),
+          gameImport("score"),
+          gameImport("play/**"),
+          gameImport("ui/**"),
+          gameImport("play-record"),
+          "@/records/**",
+          "react*",
+        ],
+        message:
+          "[dependency/game-tutorial-layer] tutorial は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。",
+      },
+    ]),
     restrictImports(gameFiles("play/**/*.{ts,tsx}"), [
       ...boundary,
       {

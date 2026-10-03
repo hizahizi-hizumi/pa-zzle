@@ -1,13 +1,14 @@
 import {
   type KeyboardEvent as ReactKeyboardEvent,
   useCallback,
+  useEffect,
   useRef,
   useState,
 } from "react";
 
 import {
   getTakuzuCellPosition,
-  listTakuzuLines,
+  listTakuzuGridLines,
   type TakuzuCell as TakuzuCellValue,
   type TakuzuLine,
 } from "@/games/takuzu/puzzle/board";
@@ -16,15 +17,20 @@ import type {
   TakuzuCellView,
   TakuzuLineViolationView,
 } from "@/games/takuzu/session/session";
-import { animateGivenCellRejection } from "@/games/takuzu/ui/board/TakuzuBoard/animate-given-cell-rejection";
+import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
+import { animateTakuzuTileRejection } from "@/games/takuzu/ui/board/TakuzuBoard/animate-tile-rejection";
 import { TakuzuCell } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuCell";
 import { TakuzuLineViolationMark } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuLineViolationMark";
 
 type TakuzuBoardProps = {
-  size: number;
+  /** 本番の盤面は正方形。チュートリアルでは1行だけの盤面も描く。 */
+  rowCount: number;
+  columnCount: number;
   cells: readonly TakuzuCellView[];
   lineViolations: readonly TakuzuLineViolationView[];
   disabled: boolean;
+  /** マスに一時的に重ねる合図。通常のプレイでは渡さない。 */
+  cues?: readonly TakuzuCellCue[];
   onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
   onPlaceCell: (cellIndex: number, cell: TakuzuCellValue) => void;
 };
@@ -49,8 +55,8 @@ const offsetByArrowKey: Readonly<
 
 const axisName = { row: "行", column: "列" } as const;
 
-function getCellKey(size: number, cellIndex: number): string {
-  const { row, column } = getTakuzuCellPosition(size, cellIndex);
+function getCellKey(columnCount: number, cellIndex: number): string {
+  const { row, column } = getTakuzuCellPosition(columnCount, cellIndex);
   return `${row}:${column}`;
 }
 
@@ -75,10 +81,12 @@ function listLineViolationNames(
 }
 
 export function TakuzuBoard({
-  size,
+  rowCount,
+  columnCount,
   cells,
   lineViolations,
   disabled,
+  cues = [],
   onCycleCell,
   onPlaceCell,
 }: TakuzuBoardProps) {
@@ -87,6 +95,18 @@ export function TakuzuBoard({
   const lineViolationByKey = new Map(
     lineViolations.map((violation) => [getLineKey(violation), violation]),
   );
+  const cueByCellIndex = new Map(cues.map((cue) => [cue.cellIndex, cue]));
+  const rejectedCue = cues.find((cue) => cue.kind === "rejected");
+  const rejectedCueId = rejectedCue?.id ?? null;
+  const rejectedCellIndex = rejectedCue?.cellIndex ?? null;
+
+  // 揺れは DOM のアニメーションで描くので、合図が届いたときに要素へ掛ける。
+  useEffect(() => {
+    if (rejectedCueId === null || rejectedCellIndex === null) {
+      return;
+    }
+    animateTakuzuTileRejection(cellElementRefs.current.get(rejectedCellIndex));
+  }, [rejectedCueId, rejectedCellIndex]);
 
   const handleCellElementChange = useCallback(
     (cellIndex: number, element: HTMLButtonElement | null) => {
@@ -104,7 +124,7 @@ export function TakuzuBoard({
     direction: TakuzuCycleDirection,
   ): void {
     if (cells[cellIndex]?.given) {
-      animateGivenCellRejection(cellElementRefs.current.get(cellIndex));
+      animateTakuzuTileRejection(cellElementRefs.current.get(cellIndex));
       return;
     }
     onCycleCell(cellIndex, direction);
@@ -115,10 +135,13 @@ export function TakuzuBoard({
     rowOffset: number,
     columnOffset: number,
   ): void {
-    const { row, column } = getTakuzuCellPosition(size, cellIndex);
-    const nextRow = Math.min(size - 1, Math.max(0, row + rowOffset));
-    const nextColumn = Math.min(size - 1, Math.max(0, column + columnOffset));
-    const nextCellIndex = nextRow * size + nextColumn;
+    const { row, column } = getTakuzuCellPosition(columnCount, cellIndex);
+    const nextRow = Math.min(rowCount - 1, Math.max(0, row + rowOffset));
+    const nextColumn = Math.min(
+      columnCount - 1,
+      Math.max(0, column + columnOffset),
+    );
+    const nextCellIndex = nextRow * columnCount + nextColumn;
     setFocusableCellIndex(nextCellIndex);
     cellElementRefs.current.get(nextCellIndex)?.focus();
   }
@@ -140,7 +163,7 @@ export function TakuzuBoard({
     }
     event.preventDefault();
     if (cells[focusableCellIndex]?.given) {
-      animateGivenCellRejection(
+      animateTakuzuTileRejection(
         cellElementRefs.current.get(focusableCellIndex),
       );
       return;
@@ -156,17 +179,18 @@ export function TakuzuBoard({
         aria-label="バイナリパズル盤面"
         className="relative grid size-full border-2 border-foreground/55 bg-background"
         style={{
-          gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,
-          gridTemplateRows: `repeat(${size}, minmax(0, 1fr))`,
+          gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${rowCount}, minmax(0, 1fr))`,
         }}
         onKeyDown={handleKeyDown}
       >
         {cells.map(function renderCell(view, cellIndex) {
-          const { row, column } = getTakuzuCellPosition(size, cellIndex);
+          const { row, column } = getTakuzuCellPosition(columnCount, cellIndex);
           return (
             <TakuzuCell
-              key={getCellKey(size, cellIndex)}
-              size={size}
+              key={getCellKey(columnCount, cellIndex)}
+              rowCount={rowCount}
+              columnCount={columnCount}
               cellIndex={cellIndex}
               view={view}
               lineViolationNames={[
@@ -182,6 +206,7 @@ export function TakuzuBoard({
                 ),
               ]}
               disabled={disabled}
+              cue={cueByCellIndex.get(cellIndex)}
               focusable={cellIndex === focusableCellIndex}
               onElementChange={handleCellElementChange}
               onCycle={handleCycle}
@@ -189,16 +214,19 @@ export function TakuzuBoard({
             />
           );
         })}
-        {listTakuzuLines(size).map(function renderLineMark(line) {
-          return (
-            <TakuzuLineViolationMark
-              key={getLineKey(line)}
-              size={size}
-              line={line}
-              violated={lineViolationByKey.has(getLineKey(line))}
-            />
-          );
-        })}
+        {listTakuzuGridLines({ rowCount, columnCount }).map(
+          function renderLineMark(line) {
+            return (
+              <TakuzuLineViolationMark
+                key={getLineKey(line)}
+                rowCount={rowCount}
+                columnCount={columnCount}
+                line={line}
+                violated={lineViolationByKey.has(getLineKey(line))}
+              />
+            );
+          },
+        )}
       </div>
     </div>
   );

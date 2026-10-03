@@ -48,7 +48,8 @@ describe("TakuzuBoard", () => {
     beforeEach(() => {
       render(
         <TakuzuBoard
-          size={2}
+          rowCount={2}
+          columnCount={2}
           cells={cells}
           lineViolations={lineViolations}
           disabled={false}
@@ -198,11 +199,72 @@ describe("TakuzuBoard", () => {
     });
   });
 
+  describe("1行だけの盤面の場合", () => {
+    const singleRowCells: TakuzuCellView[] = [
+      { cell: "a", given: true, inViolatingRun: false },
+      { cell: "b", given: true, inViolatingRun: false },
+      { cell: "a", given: true, inViolatingRun: false },
+      { cell: "a", given: false, inViolatingRun: false },
+    ];
+    const singleRowViolations: TakuzuLineViolationView[] = [
+      { axis: "row", index: 0, overfilled: true, duplicated: false },
+    ];
+
+    beforeEach(() => {
+      render(
+        <TakuzuBoard
+          rowCount={1}
+          columnCount={4}
+          cells={singleRowCells}
+          lineViolations={singleRowViolations}
+          disabled={false}
+          onCycleCell={onCycleCell}
+          onPlaceCell={onPlaceCell}
+        />,
+      );
+      board = screen.getByRole("group", { name: "バイナリパズル盤面" });
+    });
+
+    test("1行に並ぶマスと行の違反を名前で伝えること", () => {
+      const result = within(board)
+        .getAllByRole("button")
+        .map((cell) => cell.getAttribute("aria-label"));
+
+      expect(result).toEqual([
+        "1行1列 四角 固定 行の個数超過",
+        "1行2列 丸 固定 行の個数超過",
+        "1行3列 四角 固定 行の個数超過",
+        "1行4列 四角 行の個数超過",
+      ]);
+    });
+
+    describe("右端のマスにフォーカスがある場合", () => {
+      beforeEach(() => {
+        within(board)
+          .getByRole("button", { name: "1行4列 四角 行の個数超過" })
+          .focus();
+      });
+
+      test("右や下へ動かしても行の中に留まること", () => {
+        fireEvent.keyDown(document.activeElement ?? board, {
+          key: "ArrowRight",
+        });
+        fireEvent.keyDown(document.activeElement ?? board, {
+          key: "ArrowDown",
+        });
+        const result = document.activeElement?.getAttribute("aria-label");
+
+        expect(result).toBe("1行4列 四角 行の個数超過");
+      });
+    });
+  });
+
   describe("操作できない場合", () => {
     beforeEach(() => {
       render(
         <TakuzuBoard
-          size={2}
+          rowCount={2}
+          columnCount={2}
           cells={cells}
           lineViolations={lineViolations}
           disabled={true}
