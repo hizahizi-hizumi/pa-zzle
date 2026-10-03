@@ -30,7 +30,7 @@ import {
 const difficulties = reflectionDifficulties.map(({ id }) => id);
 
 // 全問の一意性確認・分析・再生成には数十分かかるため、テストでは等間隔に抜き出した問題だけを確かめる。
-// 人間向け解法器の分析はレベル5 の 9×9〜11×11 で1問数秒〜数十秒かかるので、レベル1〜4 だけで行う。
+// 人間向け解法器の分析はレベル5 の 9×9〜10×10 で1問数秒〜数十秒かかるので、レベル1〜4 だけで行う。
 // 全問の検証は `bun run generate:reflection-pool -- --verify` で行う。
 const analyzedEntryCountByDifficulty = {
   "1": 20,

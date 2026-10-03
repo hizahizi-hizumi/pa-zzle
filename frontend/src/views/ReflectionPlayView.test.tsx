@@ -74,7 +74,7 @@ function getBoardCells(): HTMLElement[] {
 // 問題集に無い（7×7・3ピースは提供範囲外の）問題。
 const specifiedProblemIdentity = createReflectionProblemIdentity(7, 3, 0);
 const specifiedProblemPath = `/puzzles/reflection/play/1?${formatReflectionProblemQuery(specifiedProblemIdentity)}`;
-const poolProblemReference = { poolVersion: "3", problemId: "2-1" };
+const poolProblemReference = { poolVersion: "4", problemId: "2-1" };
 const poolProblemPath = `/puzzles/reflection/play/1?${formatReflectionPoolProblemQuery(poolProblemReference)}`;
 
 /** 解どおりに、ストックの種類を選んでからマスを押して置く。 */
@@ -206,7 +206,7 @@ describe("ReflectionPlayView", () => {
       // 出題した難易度と、分析し直した分類。
       expect(within(dialog).getAllByText("レベル 3")).toHaveLength(2);
       expect(within(dialog).getByText(/^rf-/)).toBeTruthy();
-      expect(within(dialog).getByText(/^v3 \/ 3-\d+$/)).toBeTruthy();
+      expect(within(dialog).getByText(/^v4 \/ 3-\d+$/)).toBeTruthy();
       expect(within(dialog).getByText("L3")).toBeTruthy();
     });
   });
