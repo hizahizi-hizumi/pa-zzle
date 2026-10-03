@@ -18,7 +18,7 @@ export function TsumeShogiDifficultyOption({
       params={{ difficulty }}
       className="group block rounded-xl focus-visible:outline-none"
     >
-      <StartConditionOption label={label} density="compact">
+      <StartConditionOption label={label} level={difficulty} density="compact">
         <TsumeShogiDifficultyPreview difficulty={difficulty} />
       </StartConditionOption>
     </Link>

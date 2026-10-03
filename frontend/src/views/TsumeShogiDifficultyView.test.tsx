@@ -43,7 +43,7 @@ describe("TsumeShogiDifficultyView", () => {
   );
 
   test("戻るリンクでホームへ戻れること", () => {
-    const backLink = screen.getByRole("link", { name: "← 戻る" });
+    const backLink = screen.getByRole("link", { name: "戻る" });
 
     const href = backLink.getAttribute("href");
 

@@ -92,8 +92,8 @@ export function TsumeShogiDifficultyPreview({
   return (
     <span
       aria-hidden="true"
-      // 320px 幅では選択肢のラベルが折り返さないよう、升を小さくして図の幅を抑える。
-      className="flex h-14 w-32 shrink-0 items-center [--preview-unit:16px] min-[360px]:w-36 min-[360px]:[--preview-unit:17px] lg:h-28 lg:w-full lg:justify-center lg:[--preview-unit:26px]"
+      // 5筋分の盤と持駒の列（升6つ分と枠・隙間）がプレビュー枠（128px）に、3段が図の高さに収まる升の大きさにする。
+      className="flex h-14 w-full items-center [--preview-unit:17px] lg:h-28 lg:justify-center lg:[--preview-unit:20px]"
     >
       {/* 攻方の持駒は、プレイ画面と同じく盤の外に並べる。盤の下端にそろえる。 */}
       <span className="flex items-end gap-1 lg:gap-1.5">
