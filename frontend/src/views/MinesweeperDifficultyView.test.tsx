@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 
 import { MinesweeperDifficultyView } from "@/views/MinesweeperDifficultyView";
@@ -35,5 +35,13 @@ describe("MinesweeperDifficultyView", () => {
     const href = backLink.getAttribute("href");
 
     expect(href).toBe("/");
+  });
+
+  test("遊び方を開けること", () => {
+    fireEvent.click(screen.getByRole("button", { name: "遊び方" }));
+
+    const dialog = screen.getByRole("dialog", { name: "遊び方" });
+
+    expect(dialog).toBeTruthy();
   });
 });

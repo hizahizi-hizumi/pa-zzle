@@ -107,6 +107,31 @@ describe("MinesweeperPlay", () => {
       expect(onReplay).not.toHaveBeenCalled();
     });
 
+    test("遊び方を自動では開かないこと", () => {
+      const dialog = screen.queryByRole("dialog", { name: "遊び方" });
+
+      expect(dialog).toBeNull();
+    });
+
+    describe("メニューの遊び方を選んだ場合", () => {
+      beforeEach(() => {
+        openPlayMenu();
+        fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+      });
+
+      test("遊び方を開くこと", () => {
+        const dialog = screen.getByRole("dialog", { name: "遊び方" });
+
+        expect(dialog).toBeTruthy();
+      });
+
+      test("閉じてもプレイを測り直さないこと", () => {
+        fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+
+        expect(onReplay).not.toHaveBeenCalled();
+      });
+    });
+
     describe("検証情報を開く操作を渡さない場合", () => {
       test("メニューに検証情報を出さないこと", () => {
         openPlayMenu();

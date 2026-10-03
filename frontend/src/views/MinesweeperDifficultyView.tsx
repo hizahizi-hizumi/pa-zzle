@@ -1,5 +1,7 @@
+import { DifficultySelectionHeading } from "@/components/DifficultySelectionHeading";
 import { HomeBackLink } from "@/components/HomeBackLink";
 import { minesweeperDifficulties } from "@/games/minesweeper/difficulty";
+import { MinesweeperHowToPlayDialog } from "@/games/minesweeper/ui/MinesweeperHowToPlayDialog";
 import { MinesweeperDifficultyOption } from "@/views/MinesweeperDifficultyView/MinesweeperDifficultyOption";
 
 export function MinesweeperDifficultyView() {
@@ -7,7 +9,12 @@ export function MinesweeperDifficultyView() {
     <section className="space-y-6 sm:space-y-8">
       <div className="space-y-2">
         <HomeBackLink />
-        <h1 className="text-screen-title">マインスイーパー</h1>
+        <DifficultySelectionHeading
+          title="マインスイーパー"
+          renderHowToPlayDialog={({ open, onClose }) => (
+            <MinesweeperHowToPlayDialog open={open} onClose={onClose} />
+          )}
+        />
       </div>
 
       <div className="grid gap-2 sm:gap-4 lg:grid-cols-5">
