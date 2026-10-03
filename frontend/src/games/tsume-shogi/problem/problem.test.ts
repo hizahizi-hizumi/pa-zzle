@@ -1,11 +1,13 @@
 import {
   assertTsumeShogiProblem,
   createTsumeShogiProblemIdentity,
+  formatTsumeShogiGenerationConditionsText,
   formatTsumeShogiProblemText,
   isTsumeShogiProblemIdentity,
   isTsumeShogiRecordedProblemIdentity,
   isTsumeShogiSolveWorkload,
   isTsumeShogiWorkloadOfIdentity,
+  parseTsumeShogiGenerationConditionsText,
   parseTsumeShogiProblemText,
   type TsumeShogiProblem,
 } from "@/games/tsume-shogi/problem/problem";
@@ -38,6 +40,54 @@ describe("createTsumeShogiProblemIdentity", () => {
       conditions: { plies: 5, rootChecks: { minimum: 1, maximum: 4 } },
     });
   });
+
+  test("起点の詰め手の種類を条件と seed に含めること", () => {
+    const result = createTsumeShogiProblemIdentity(
+      3,
+      7,
+      { minimum: 1, maximum: 4 },
+      "board-move",
+    );
+
+    expect(result).toEqual({
+      generatorVersion: "2",
+      seed: "ts-3-c1-4-move-7",
+      conditions: {
+        plies: 3,
+        rootChecks: { minimum: 1, maximum: 4 },
+        baseMate: "board-move",
+      },
+    });
+  });
+});
+
+describe("parseTsumeShogiGenerationConditionsText", () => {
+  test.each([
+    ["5", { plies: 5 }],
+    ["5:1-4", { plies: 5, rootChecks: { minimum: 1, maximum: 4 } }],
+    [
+      "3:1-4:board-move",
+      {
+        plies: 3,
+        rootChecks: { minimum: 1, maximum: 4 },
+        baseMate: "board-move",
+      },
+    ],
+  ] as const)("%s を読み、同じ文字列に書き戻せること", (text, expected) => {
+    const conditions = parseTsumeShogiGenerationConditionsText(text);
+
+    expect(conditions).toEqual(expected);
+    expect(formatTsumeShogiGenerationConditionsText(conditions)).toBe(text);
+  });
+
+  test.each(["7", "3:1-4:drop", "3-1-4"])(
+    "%s は読まずに RangeError を投げること",
+    (text) => {
+      expect(() => parseTsumeShogiGenerationConditionsText(text)).toThrow(
+        RangeError,
+      );
+    },
+  );
 });
 
 describe("isTsumeShogiProblemIdentity", () => {
@@ -62,6 +112,29 @@ describe("isTsumeShogiProblemIdentity", () => {
       "初手の王手の数の範囲のある identity",
       createTsumeShogiProblemIdentity(3, 0, { minimum: 2, maximum: 10 }),
       true,
+    ],
+    [
+      "起点の詰め手の種類のある identity",
+      createTsumeShogiProblemIdentity(
+        3,
+        0,
+        { minimum: 1, maximum: 4 },
+        "board-move",
+      ),
+      true,
+    ],
+    [
+      "扱わない起点の詰め手の種類の identity",
+      {
+        generatorVersion: "2",
+        seed: "ts-3-c1-4-drop-0",
+        conditions: {
+          plies: 3,
+          rootChecks: { minimum: 1, maximum: 4 },
+          baseMate: "drop",
+        },
+      },
+      false,
     ],
     [
       "初手の王手の数の範囲が逆転した identity",

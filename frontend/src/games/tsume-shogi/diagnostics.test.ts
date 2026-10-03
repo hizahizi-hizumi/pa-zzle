@@ -32,6 +32,15 @@ describe("parseTsumeShogiProblemQuery", () => {
   const rootCheckParams = new URLSearchParams(
     formatTsumeShogiProblemQuery(rootCheckIdentity),
   );
+  const baseMateIdentity = createTsumeShogiProblemIdentity(
+    3,
+    1,
+    { minimum: 1, maximum: 4 },
+    "board-move",
+  );
+  const baseMateParams = new URLSearchParams(
+    formatTsumeShogiProblemQuery(baseMateIdentity),
+  );
   const invalidCases = [
     ["seed の欠けたクエリ", "plies=3"],
     ["扱わない手数", "seed=ts-7-0&plies=7"],
@@ -39,6 +48,10 @@ describe("parseTsumeShogiProblemQuery", () => {
     ["今と違う生成器の版", "generator=0&seed=ts-3-0&plies=3"],
     ["形の違う初手の王手の数の範囲", "seed=ts-3-c1-1-3&plies=3&checks=1"],
     ["逆転した初手の王手の数の範囲", "seed=ts-3-c4-1-3&plies=3&checks=4-1"],
+    [
+      "扱わない起点の詰め手の種類",
+      "seed=ts-3-c1-4-drop-3&plies=3&checks=1-4&base=drop",
+    ],
     ["今と違う問題集の版", "pool=0&problem=1-1"],
     ["範囲外の問題番号", "problem=1-100000"],
     [
@@ -82,6 +95,14 @@ describe("parseTsumeShogiProblemQuery", () => {
 
     expect(rootCheckParams.get("checks")).toBe("1-1");
     expect(result?.identity).toEqual(rootCheckIdentity);
+  });
+
+  test("起点の詰め手の種類のある identity から、生成器で問題を作ること", () => {
+    const result = parseTsumeShogiProblemQuery(baseMateParams);
+
+    expect(baseMateParams.get("base")).toBe("board-move");
+    expect(result?.identity).toEqual(baseMateIdentity);
+    expect(result?.problem.mainLine.at(-1)?.kind).toBe("board");
   });
 
   test.each(invalidCases)("%sは null を返すこと", (_, query) => {

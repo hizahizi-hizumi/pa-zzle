@@ -36,7 +36,7 @@ export function TsumeShogiPlayView() {
     return (
       <PlayUnavailableNotice
         title="指定された問題を復元できません"
-        description="URL の問題指定（pool・problem、または generator・seed・plies・checks）を確かめてください。"
+        description="URL の問題指定（pool・problem、または generator・seed・plies・checks・base）を確かめてください。"
         backTo="/puzzles/tsume-shogi"
       />
     );

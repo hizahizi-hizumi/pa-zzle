@@ -223,11 +223,25 @@ describe("assessTsumeShogiDifficulty", () => {
 
 describe("listTsumeShogiGenerationConditions", () => {
   test("深い紛れを求めないレベルは3手と5手の生成条件を挙げること", () => {
+    const result = listTsumeShogiGenerationConditions("2");
+
+    expect(result).toEqual([
+      { plies: 3, rootChecks: { minimum: 2, maximum: 10 } },
+      { plies: 5, rootChecks: { minimum: 2, maximum: 10 } },
+    ]);
+  });
+
+  test("レベル1 は盤上の駒を動かす1手詰を起点にした3手の生成条件を足すこと", () => {
     const result = listTsumeShogiGenerationConditions("1");
 
     expect(result).toEqual([
       { plies: 3, rootChecks: { minimum: 1, maximum: 4 } },
       { plies: 5, rootChecks: { minimum: 1, maximum: 4 } },
+      {
+        plies: 3,
+        rootChecks: { minimum: 1, maximum: 4 },
+        baseMate: "board-move",
+      },
     ]);
   });
 

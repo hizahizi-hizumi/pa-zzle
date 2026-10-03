@@ -18,8 +18,9 @@ import {
 } from "@/games/tsume-shogi/problem/generator";
 import {
   createTsumeShogiProblemIdentity,
+  formatTsumeShogiGenerationConditionsText,
   formatTsumeShogiProblemText,
-  isTsumeShogiGenerationPlies,
+  parseTsumeShogiGenerationConditionsText,
   parseTsumeShogiProblemText,
   type TsumeShogiGenerationConditions,
   type TsumeShogiProblem,
@@ -32,6 +33,7 @@ const usage = `Usage: bun run analyze:tsume-shogi -- --output <path-prefix> [opt
 
 Options:
   --conditions <spec>    生成条件をセミコロン区切りで。<手数>（絞らない）か <手数>:<下限>-<上限>（初手の王手の数）。
+                         起点を絞るなら後ろに :<起点の詰め手の種類>（例: 3:1-4:board-move）。
                          例: "3;5;5:10-99" (default: 3・5の絞らない条件と、各レベルの生成条件)
   --seeds <n>            条件ごとの seed 数 (default: 40)
   --jobs <n>             並列ワーカー数 (default: 4)
@@ -81,29 +83,6 @@ function readPositiveInteger(name: string, fallback: number): number {
   return value;
 }
 
-function formatCondition({
-  plies,
-  rootChecks,
-}: TsumeShogiGenerationConditions): string {
-  return rootChecks === undefined
-    ? String(plies)
-    : `${plies}:${rootChecks.minimum}-${rootChecks.maximum}`;
-}
-
-function parseCondition(text: string): TsumeShogiGenerationConditions {
-  const match = text.trim().match(/^(\d+)(?::(\d+)-(\d+))?$/);
-  const plies = Number(match?.[1]);
-  if (!match || !isTsumeShogiGenerationPlies(plies)) {
-    throw new RangeError(`Invalid --conditions entry: ${text}`);
-  }
-  return match[2] === undefined
-    ? { plies }
-    : {
-        plies,
-        rootChecks: { minimum: Number(match[2]), maximum: Number(match[3]) },
-      };
-}
-
 function listDefaultConditions(): TsumeShogiGenerationConditions[] {
   const conditions: TsumeShogiGenerationConditions[] = [
     { plies: 3 },
@@ -114,7 +93,10 @@ function listDefaultConditions(): TsumeShogiGenerationConditions[] {
   ];
   return [
     ...new Map(
-      conditions.map((condition) => [formatCondition(condition), condition]),
+      conditions.map((condition) => [
+        formatTsumeShogiGenerationConditionsText(condition),
+        condition,
+      ]),
     ).values(),
   ];
 }
@@ -138,7 +120,7 @@ function createTasks(): CorpusTask[] {
   const conditions =
     conditionSpec === undefined
       ? listDefaultConditions()
-      : conditionSpec.split(";").map(parseCondition);
+      : conditionSpec.split(";").map(parseTsumeShogiGenerationConditionsText);
   const seeds = readPositiveInteger("seeds", 40);
   return conditions.flatMap((condition) =>
     Array.from({ length: seeds }, (_, index) => ({
@@ -179,11 +161,12 @@ function runTask(task: CorpusTask): CorpusRecord {
       ...analyzeProblem(problem),
     };
   }
-  const { plies, rootChecks } = task.conditions;
+  const { plies, rootChecks, baseMate } = task.conditions;
   const identity = createTsumeShogiProblemIdentity(
     plies,
     task.index,
     rootChecks,
+    baseMate,
   );
   const startedAt = performance.now();
   try {
@@ -194,7 +177,7 @@ function runTask(task: CorpusTask): CorpusRecord {
     const text = formatTsumeShogiProblemText(generated.problem);
     return {
       seed: identity.seed,
-      condition: formatCondition(task.conditions),
+      condition: formatTsumeShogiGenerationConditionsText(task.conditions),
       plies,
       generationMilliseconds,
       sfen: text.sfen,
@@ -208,7 +191,7 @@ function runTask(task: CorpusTask): CorpusRecord {
     }
     return {
       seed: identity.seed,
-      condition: formatCondition(task.conditions),
+      condition: formatTsumeShogiGenerationConditionsText(task.conditions),
       plies,
       generationMilliseconds: roundMilliseconds(performance.now() - startedAt),
       analysisMilliseconds: null,

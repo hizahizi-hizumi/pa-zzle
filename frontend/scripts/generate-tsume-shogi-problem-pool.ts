@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import {
   assessTsumeShogiDifficulty,
+  isTsumeShogiSupplementalGenerationConditions,
   listTsumeShogiGenerationConditions,
   type TsumeShogiDifficulty,
   tsumeShogiDifficulties,
@@ -20,10 +21,10 @@ import {
 } from "@/games/tsume-shogi/problem/generator";
 import {
   createTsumeShogiProblemIdentity,
+  formatTsumeShogiGenerationConditionsText,
   formatTsumeShogiProblemText,
-  isTsumeShogiGenerationPlies,
+  parseTsumeShogiGenerationConditionsText,
   TSUME_SHOGI_GENERATOR_VERSION,
-  type TsumeShogiGenerationConditions,
   type TsumeShogiProblem,
 } from "@/games/tsume-shogi/problem/problem";
 import {
@@ -51,7 +52,7 @@ const defaultPerLevel = {
  * 問題集の版。問題の並び（問題番号 `<レベル>-<番号>` が指す問題）が変わる作り直しをしたら上げる。
  * 生成器の版（`TSUME_SHOGI_GENERATOR_VERSION`）が上がったときも並びは変わるので上げる。
  */
-const poolVersion = "2";
+const poolVersion = "3";
 
 /**
  * 1つのレベルの中で、同じ手筋の列（`motif` の指紋）の問題が占めてよい割合の上限。逆算で作りやすい筋に偏らないようにする。
@@ -63,10 +64,11 @@ const SACRIFICE_KING_CAPTURE_SHARE_LIMIT = 0.5;
 
 /**
  * 1つのレベルの中で、最終手が駒打ちの問題が占めてよい割合の上限。逆算の起点の1手詰の多くが駒打ちなので上限を置く。
- * レベル1 は候補のほぼすべてが最終手の駒打ちで、上限を置くと埋まらないので置かない（生成器の起点の作り方で直す）。
+ * レベル1 は起点を限らない候補のほぼすべてが最終手の駒打ちなので、盤上の駒を動かす1手詰を起点にした候補を足し、
+ * 駒打ちと盤上の駒の移動が半々になるまで寄せる。
  */
 const finalDropShareLimits = {
-  "1": 1,
+  "1": 0.5,
   "2": 0.85,
   "3": 0.85,
   "4": 0.85,
@@ -163,31 +165,14 @@ function readPositiveNumber(name: string, fallback: number): number {
   return value;
 }
 
-function formatCondition({
-  plies,
-  rootChecks,
-}: TsumeShogiGenerationConditions): string {
-  return `${plies}:${rootChecks!.minimum}-${rootChecks!.maximum}`;
-}
-
-function parseCondition(text: string): TsumeShogiGenerationConditions {
-  const match = text.match(/^(\d+):(\d+)-(\d+)$/);
-  const plies = Number(match?.[1]);
-  if (!match || !isTsumeShogiGenerationPlies(plies)) {
-    throw new RangeError(`Invalid condition: ${text}`);
-  }
-  return {
-    plies,
-    rootChecks: { minimum: Number(match[2]), maximum: Number(match[3]) },
-  };
-}
-
 /** 全レベルの生成条件を、レベル1の条件から順に重複なく並べる。この順が問題集で採る順の一部になる。 */
 function listAllConditions(): string[] {
   return [
     ...new Set(
       tsumeShogiDifficulties.flatMap(({ id }) =>
-        listTsumeShogiGenerationConditions(id).map(formatCondition),
+        listTsumeShogiGenerationConditions(id).map(
+          formatTsumeShogiGenerationConditionsText,
+        ),
       ),
     ),
   ];
@@ -247,11 +232,12 @@ function toPoolEntry(
 }
 
 function evaluateCandidate(condition: string, index: number): Candidate {
-  const conditions = parseCondition(condition);
+  const conditions = parseTsumeShogiGenerationConditionsText(condition);
   const identity = createTsumeShogiProblemIdentity(
     conditions.plies,
     index,
     conditions.rootChecks,
+    conditions.baseMate,
   );
   const startedAt = performance.now();
   const base = {
@@ -461,7 +447,8 @@ function limitOf(perLevel: number, share: number): number {
 }
 
 /**
- * 1つのレベルに分類された候補を、候補番号の順（同じ番号は生成条件の順）に1つずつ見て採る。局面・作意の指紋が
+ * 1つのレベルに分類された候補を、候補番号の順（同じ番号は生成条件の順）に1つずつ見て採る。起点を絞った生成条件の
+ * 候補は、その条件を挙げたレベルにだけ採る（ほかのレベルの候補の並びを変えないため）。局面・作意の指紋が
  * 先に採った問題（下のレベルを含む）と同じ候補、手筋の列・捨駒を玉で取らせる筋・最終手の駒打ちの上限を超える候補は飛ばす。
  * 採る問題は候補の JSONL の中身だけで決まり、ワーカー数や生成の順に依存しない。
  */
@@ -474,9 +461,21 @@ function selectLevel(
   oracleResults: ReadonlyMap<string, string> | null,
 ): LevelSelection {
   const conditionOrder = listAllConditions();
+  const levelConditions = new Set(
+    listTsumeShogiGenerationConditions(difficulty).map(
+      formatTsumeShogiGenerationConditionsText,
+    ),
+  );
   const candidates = [...store.values()]
     .flat()
-    .filter((candidate) => candidate.difficulty === difficulty)
+    .filter(
+      (candidate) =>
+        candidate.difficulty === difficulty &&
+        (levelConditions.has(candidate.condition) ||
+          !isTsumeShogiSupplementalGenerationConditions(
+            parseTsumeShogiGenerationConditionsText(candidate.condition),
+          )),
+    )
     .sort(
       (left, right) =>
         left.index - right.index ||
@@ -729,7 +728,7 @@ async function runMain(): Promise<void> {
     for (const difficulty of pending) {
       for (const condition of listTsumeShogiGenerationConditions(
         difficulty,
-      ).map(formatCondition)) {
+      ).map(formatTsumeShogiGenerationConditionsText)) {
         const length = Math.min(store.get(condition)!.length + block, budget);
         requiredLengths.set(
           condition,

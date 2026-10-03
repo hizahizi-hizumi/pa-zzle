@@ -4,9 +4,11 @@ import {
 } from "@/games/tsume-shogi/difficulty";
 import {
   createTsumeShogiProblemIdentity,
+  isSameTsumeShogiGenerationConditions,
   isTsumeShogiGenerationPlies,
   isTsumeShogiSolveWorkload,
   isTsumeShogiWorkloadOfIdentity,
+  parseTsumeShogiBaseMateSeedLabel,
   type TSUME_SHOGI_GENERATOR_VERSION,
   type TsumeShogiIdentifiedProblem,
   type TsumeShogiProblem,
@@ -24,8 +26,8 @@ import {
 
 /**
  * 事前生成した問題集の1問。
- * - `seed`: 生成器の identity の seed（例: `ts-5-c6-99-12`）。手数と生成条件（初手の王手の数の範囲）を含むので、
- *   ここから identity を再構成する。
+ * - `seed`: 生成器の identity の seed（例: `ts-5-c6-99-12`、`ts-3-c1-4-move-7`）。手数と生成条件（初手の王手の数の範囲、
+ *   起点の詰め手の種類）を含むので、ここから identity を再構成する。
  * - `position`: 初期局面の盤面（SFEN の盤面の部分）と攻方の持駒（SFEN の持駒の書き方、無ければ `-`）を空白で区切ったもの。
  *   玉方の持駒（駒箱）は盤面と攻方の持駒から決まるので持たない。
  * - `mainLine`: 作意の USI を空白で区切ったもの。
@@ -117,15 +119,26 @@ const handPieceTypeByLetter: Record<string, TsumeShogiHandPieceType> = {
 export function parseTsumeShogiPoolSeed(
   seed: string,
 ): TsumeShogiProblemIdentity {
-  const match = seed.match(/^ts-(\d+)-c(\d+)-(\d+)-(\d+)$/);
+  const match = seed.match(/^ts-(\d+)-c(\d+)-(\d+)-(?:([a-z]+)-)?(\d+)$/);
   const plies = Number(match?.[1]);
-  if (!match || !isTsumeShogiGenerationPlies(plies)) {
+  const baseMateLabel = match?.[4];
+  const baseMate =
+    baseMateLabel === undefined
+      ? undefined
+      : parseTsumeShogiBaseMateSeedLabel(baseMateLabel);
+  if (
+    !match ||
+    !isTsumeShogiGenerationPlies(plies) ||
+    (baseMateLabel !== undefined && baseMate === undefined)
+  ) {
     throw new RangeError(`Invalid Tsume Shogi pool seed: ${seed}`);
   }
-  return createTsumeShogiProblemIdentity(plies, Number(match[4]), {
-    minimum: Number(match[2]),
-    maximum: Number(match[3]),
-  });
+  return createTsumeShogiProblemIdentity(
+    plies,
+    Number(match[5]),
+    { minimum: Number(match[2]), maximum: Number(match[3]) },
+    baseMate,
+  );
 }
 
 function toProblem(position: string, mainLine: string): TsumeShogiProblem {
@@ -228,18 +241,6 @@ function getPositionsBySeed(): ReadonlyMap<string, PoolPosition> {
   return positionsBySeed;
 }
 
-function isSameRootCheckRange(
-  left: TsumeShogiProblemIdentity,
-  right: TsumeShogiProblemIdentity,
-): boolean {
-  const leftRange = left.conditions.rootChecks;
-  const rightRange = right.conditions.rootChecks;
-  return (
-    leftRange?.minimum === rightRange?.minimum &&
-    leftRange?.maximum === rightRange?.maximum
-  );
-}
-
 /** identity に一致する問題集の1問を復元する。生成器の版や条件が違う identity・問題集に無い identity には `null` を返す。 */
 export function findTsumeShogiPooledProblem(
   identity: TsumeShogiProblemIdentity,
@@ -255,8 +256,10 @@ export function findTsumeShogiPooledProblem(
     position.difficulty,
     position.entryIndex,
   );
-  return pooled.identity.conditions.plies === identity.conditions.plies &&
-    isSameRootCheckRange(pooled.identity, identity)
+  return isSameTsumeShogiGenerationConditions(
+    pooled.identity.conditions,
+    identity.conditions,
+  )
     ? pooled
     : null;
 }

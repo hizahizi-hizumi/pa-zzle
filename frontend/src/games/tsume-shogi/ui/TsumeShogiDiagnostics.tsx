@@ -9,7 +9,10 @@ import {
   type TsumeShogiDifficultyAssessment,
 } from "@/games/tsume-shogi/difficulty";
 import type { TsumeShogiDifficultyFeatures } from "@/games/tsume-shogi/problem/difficulty-analysis";
-import type { TsumeShogiGenerationConditions } from "@/games/tsume-shogi/problem/problem";
+import type {
+  TsumeShogiBaseMate,
+  TsumeShogiGenerationConditions,
+} from "@/games/tsume-shogi/problem/problem";
 import type { TsumeShogiProblemPoolReference } from "@/games/tsume-shogi/problem/problem-pool";
 
 type TsumeShogiDiagnosticsProps = {
@@ -17,13 +20,22 @@ type TsumeShogiDiagnosticsProps = {
   onClose: () => void;
 };
 
+const baseMateLabels = {
+  "board-move": "盤上の駒を動かす1手詰から",
+} as const satisfies Record<TsumeShogiBaseMate, string>;
+
 function formatGenerationConditions({
   plies,
   rootChecks,
+  baseMate,
 }: TsumeShogiGenerationConditions): string {
-  return rootChecks === undefined
-    ? `${plies}手`
-    : `${plies}手 / 初手の王手 ${rootChecks.minimum}〜${rootChecks.maximum}`;
+  return [
+    `${plies}手`,
+    ...(rootChecks === undefined
+      ? []
+      : [`初手の王手 ${rootChecks.minimum}〜${rootChecks.maximum}`]),
+    ...(baseMate === undefined ? [] : [baseMateLabels[baseMate]]),
+  ].join(" / ");
 }
 
 function formatProblemPool(

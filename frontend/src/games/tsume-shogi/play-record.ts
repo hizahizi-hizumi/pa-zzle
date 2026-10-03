@@ -3,6 +3,7 @@ import {
   type TsumeShogiDifficulty,
 } from "@/games/tsume-shogi/difficulty";
 import {
+  copyTsumeShogiGenerationConditions,
   isTsumeShogiProblemIdentity,
   isTsumeShogiRecordedProblemIdentity,
   isTsumeShogiSolveWorkload,
@@ -146,7 +147,6 @@ export function createTsumeShogiPlayRecord({
   completedAt,
   result,
 }: CreateTsumeShogiPlayRecordInput): TsumeShogiPlayRecord {
-  const { rootChecks } = problemIdentity.conditions;
   return {
     id: createPlayRecordId([
       TSUME_SHOGI_GAME_ID,
@@ -163,12 +163,9 @@ export function createTsumeShogiPlayRecord({
       problemIdentity: {
         generatorVersion: problemIdentity.generatorVersion,
         seed: problemIdentity.seed,
-        conditions: {
-          plies: problemIdentity.conditions.plies,
-          ...(rootChecks === undefined
-            ? {}
-            : { rootChecks: { ...rootChecks } }),
-        },
+        conditions: copyTsumeShogiGenerationConditions(
+          problemIdentity.conditions,
+        ),
       },
       poolReference: {
         poolVersion: poolReference.poolVersion,

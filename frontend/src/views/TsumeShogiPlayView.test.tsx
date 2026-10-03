@@ -17,6 +17,7 @@ import {
   createTsumeShogiProblemIdentity,
   type TsumeShogiProblem,
 } from "@/games/tsume-shogi/problem/problem";
+import { getTsumeShogiProblemPoolVersion } from "@/games/tsume-shogi/problem/problem-pool";
 import {
   restoreTsumeShogiPoolProblem,
   selectTsumeShogiProblemForDifficulty,
@@ -145,7 +146,10 @@ function getResultScreen() {
 // 問題集に無い3手詰: ▲2二銀打 △1二玉 ▲1三龍。
 const specifiedProblemIdentity = createTsumeShogiProblemIdentity(3, 14);
 const specifiedProblemPath = `/puzzles/tsume-shogi/play/1?${formatTsumeShogiProblemQuery(specifiedProblemIdentity)}`;
-const poolProblemReference = { poolVersion: "2", problemId: "1-1" };
+const poolProblemReference = {
+  poolVersion: getTsumeShogiProblemPoolVersion(),
+  problemId: "1-1",
+};
 const poolProblemPath = `/puzzles/tsume-shogi/play/2?${formatTsumeShogiPoolProblemQuery(poolProblemReference)}`;
 
 describe("TsumeShogiPlayView", () => {
@@ -249,7 +253,11 @@ describe("TsumeShogiPlayView", () => {
       // 出題した難易度と、分析し直した分類。
       expect(within(dialog).getAllByText("レベル 1")).toHaveLength(2);
       expect(within(dialog).getByText(/^ts-/)).toBeTruthy();
-      expect(within(dialog).getByText(/^v2 \/ 1-\d+$/)).toBeTruthy();
+      expect(
+        within(dialog).getByText(
+          new RegExp(`^v${getTsumeShogiProblemPoolVersion()} / 1-\\d+$`),
+        ),
+      ).toBeTruthy();
     });
   });
 

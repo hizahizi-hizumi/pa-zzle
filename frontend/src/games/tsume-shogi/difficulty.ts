@@ -3,10 +3,11 @@ import {
   type TsumeShogiDifficultyAnalysis,
   type TsumeShogiDifficultyFeatures,
 } from "@/games/tsume-shogi/problem/difficulty-analysis";
-import type {
-  TsumeShogiGenerationConditions,
-  TsumeShogiGenerationPlies,
-  TsumeShogiRootCheckRange,
+import {
+  copyTsumeShogiGenerationConditions,
+  type TsumeShogiGenerationConditions,
+  type TsumeShogiGenerationPlies,
+  type TsumeShogiRootCheckRange,
 } from "@/games/tsume-shogi/problem/problem";
 
 export const tsumeShogiDifficulties = [
@@ -186,19 +187,48 @@ const levelGenerationPlies = [3, 5] as const satisfies readonly Exclude<
 >[];
 
 /**
- * レベルの問題の候補を作る生成条件（手数と初手の王手の数の範囲）をすべて挙げる。深い紛れを求めるレベルは、深い紛れが
- * 起きうる手数（残りの手数が5以上の判断地点を持つ手数）だけにする。
+ * レベルの候補を足すために、逆算の起点を絞った生成条件。この条件の候補は、条件を挙げたレベルにだけ採る。
+ * レベル1 は起点の1手詰の多くが駒打ちで、最終手が駒打ちの問題に偏るので、盤上の駒を動かして詰める1手詰を起点にした
+ * 3手詰を足す（同じ起点の5手詰は、レベル1 に分類される候補が少ない）。
+ */
+const supplementalGenerationConditions: Partial<
+  Record<TsumeShogiDifficulty, readonly TsumeShogiGenerationConditions[]>
+> = {
+  "1": [
+    {
+      plies: 3,
+      rootChecks: tsumeShogiLevelCombinations["1"].generationRootChecks,
+      baseMate: "board-move",
+    },
+  ],
+};
+
+/**
+ * レベルの問題の候補を作る生成条件（手数と初手の王手の数の範囲、起点を絞るなら起点の種類）をすべて挙げる。深い紛れを
+ * 求めるレベルは、深い紛れが起きうる手数（残りの手数が5以上の判断地点を持つ手数）だけにする。
  */
 export function listTsumeShogiGenerationConditions(
   difficulty: TsumeShogiDifficulty,
 ): TsumeShogiGenerationConditions[] {
   const { deepDecoyCount, generationRootChecks } =
     tsumeShogiLevelCombinations[difficulty];
-  return levelGenerationPlies
-    .filter(
-      (plies) =>
-        deepDecoyCount.minimum === 0 ||
-        plies >= TSUME_SHOGI_DEEP_DECOY_MINIMUM_REMAINING_PLIES,
-    )
-    .map((plies) => ({ plies, rootChecks: { ...generationRootChecks } }));
+  return [
+    ...levelGenerationPlies
+      .filter(
+        (plies) =>
+          deepDecoyCount.minimum === 0 ||
+          plies >= TSUME_SHOGI_DEEP_DECOY_MINIMUM_REMAINING_PLIES,
+      )
+      .map((plies) => ({ plies, rootChecks: { ...generationRootChecks } })),
+    ...(supplementalGenerationConditions[difficulty] ?? []).map(
+      copyTsumeShogiGenerationConditions,
+    ),
+  ];
+}
+
+/** 逆算の起点を絞った生成条件か。この条件の候補は、条件を挙げたレベルにだけ採る。 */
+export function isTsumeShogiSupplementalGenerationConditions(
+  conditions: TsumeShogiGenerationConditions,
+): boolean {
+  return conditions.baseMate !== undefined;
 }

@@ -81,6 +81,21 @@ describe("generateTsumeShogiProblem", () => {
     },
   );
 
+  describe("盤上の駒を動かす1手詰を起点にする identity", () => {
+    const identity = createTsumeShogiProblemIdentity(
+      3,
+      1,
+      { minimum: 1, maximum: 4 },
+      "board-move",
+    );
+
+    test("最終手が盤上の駒の移動の問題を作ること", () => {
+      const { problem } = generateTsumeShogiProblem(identity);
+
+      expect(problem.mainLine.at(-1)?.kind).toBe("board");
+    });
+  });
+
   describe("扱わない identity", () => {
     const cases = [
       [

@@ -79,9 +79,23 @@ describe("parseTsumeShogiPoolSeed", () => {
     );
   });
 
+  test("起点の詰め手の種類を含む seed から identity を作ること", () => {
+    const identity = parseTsumeShogiPoolSeed("ts-3-c1-4-move-7");
+
+    expect(identity).toEqual(
+      createTsumeShogiProblemIdentity(
+        3,
+        7,
+        { minimum: 1, maximum: 4 },
+        "board-move",
+      ),
+    );
+  });
+
   const invalidCases = [
     ["初手の王手の数の範囲の無い seed", "ts-5-3"],
     ["扱わない手数の seed", "ts-7-c1-4-0"],
+    ["扱わない起点の詰め手の種類の seed", "ts-3-c1-4-drop-0"],
   ] as const;
 
   test.each(invalidCases)("%sを拒否すること", (_, seed) => {
@@ -180,6 +194,34 @@ describe("findTsumeShogiPooledProblem", () => {
     });
 
     expect(found).toBeNull();
+  });
+
+  describe("起点の詰め手の種類のある問題", () => {
+    const boardMoveIndex = listTsumeShogiPoolEntries("1").findIndex(([seed]) =>
+      seed.includes("-move-"),
+    );
+    const boardMovePooled = toTsumeShogiPooledProblem("1", boardMoveIndex);
+
+    test("同じ identity から同じ問題を引くこと", () => {
+      const found = findTsumeShogiPooledProblem(
+        structuredClone(boardMovePooled.identity),
+      );
+
+      expect(boardMovePooled.identity.conditions.baseMate).toBe("board-move");
+      expect(found).toEqual(boardMovePooled);
+    });
+
+    test("起点の詰め手の種類の無い identity には null を返すこと", () => {
+      const { baseMate: _, ...conditions } =
+        boardMovePooled.identity.conditions;
+
+      const found = findTsumeShogiPooledProblem({
+        ...boardMovePooled.identity,
+        conditions,
+      });
+
+      expect(found).toBeNull();
+    });
   });
 });
 

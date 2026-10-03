@@ -13,6 +13,7 @@ import {
 } from "@/games/tsume-shogi/problem/difficulty-analysis";
 import { generateTsumeShogiProblem } from "@/games/tsume-shogi/problem/generator";
 import {
+  copyTsumeShogiGenerationConditions,
   formatTsumeShogiProblemText,
   isTsumeShogiProblemIdentity,
   TSUME_SHOGI_GENERATOR_VERSION,
@@ -35,10 +36,16 @@ import {
 // 内部診断が有効なビルドで、特定の問題を遊ぶための URL クエリ。2通りの指定を受け付ける。
 // - 問題集の番号: ?pool=1&problem=4-17（`pool` は省略でき、省略時は今の問題集の版）
 // - 生成器の identity: ?generator=1&seed=ts-5-c1-4-3&plies=5&checks=1-4（`generator` は省略でき、省略時は今の生成器の版。
-//   `checks` は生成条件の初手の王手の数の範囲で、無い identity では省く）
+//   `checks` は生成条件の初手の王手の数の範囲、`base` は起点の詰め手の種類（例: `board-move`）で、無い identity では省く）
 // 問題集の番号は問題集を作り直すと別の問題を指すので、記録や資料に残すときは identity の形を使う。
 const poolQueryKeys = ["pool", "problem"] as const;
-const identityQueryKeys = ["generator", "seed", "plies", "checks"] as const;
+const identityQueryKeys = [
+  "generator",
+  "seed",
+  "plies",
+  "checks",
+  "base",
+] as const;
 
 export function hasTsumeShogiProblemQuery(params: URLSearchParams): boolean {
   return [...poolQueryKeys, ...identityQueryKeys].some((key) =>
@@ -59,7 +66,7 @@ export function formatTsumeShogiPoolProblemQuery({
 export function formatTsumeShogiProblemQuery(
   identity: TsumeShogiProblemIdentity,
 ): string {
-  const { plies, rootChecks } = identity.conditions;
+  const { plies, rootChecks, baseMate } = identity.conditions;
   return new URLSearchParams({
     generator: identity.generatorVersion,
     seed: identity.seed,
@@ -67,6 +74,7 @@ export function formatTsumeShogiProblemQuery(
     ...(rootChecks === undefined
       ? {}
       : { checks: `${rootChecks.minimum}-${rootChecks.maximum}` }),
+    ...(baseMate === undefined ? {} : { base: baseMate }),
   }).toString();
 }
 
@@ -102,12 +110,14 @@ function parseIdentityQuery(
   params: URLSearchParams,
 ): TsumeShogiIdentifiedProblem | null {
   const rootChecks = parseRootCheckRange(params.get("checks"));
+  const baseMate = params.get("base");
   const identity = {
     generatorVersion: params.get("generator") ?? TSUME_SHOGI_GENERATOR_VERSION,
     seed: params.get("seed"),
     conditions: {
       plies: parseInteger(params.get("plies")),
       ...(rootChecks === undefined ? {} : { rootChecks }),
+      ...(baseMate === null ? {} : { baseMate }),
     },
   };
   if (!isTsumeShogiProblemIdentity(identity)) return null;
@@ -183,12 +193,7 @@ export function createTsumeShogiDiagnosticSnapshot({
     difficulty,
     problemIdentity: {
       ...problemIdentity,
-      conditions: {
-        ...conditions,
-        ...(conditions.rootChecks === undefined
-          ? {}
-          : { rootChecks: { ...conditions.rootChecks } }),
-      },
+      conditions: copyTsumeShogiGenerationConditions(conditions),
     },
     problemPool: pooled ? { ...pooled.poolReference } : null,
     problem: formatTsumeShogiProblemText(problem),
