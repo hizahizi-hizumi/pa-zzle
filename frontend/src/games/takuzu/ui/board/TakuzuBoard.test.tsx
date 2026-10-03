@@ -199,49 +199,6 @@ describe("TakuzuBoard", () => {
     });
   });
 
-  describe("操作する対象のマスを示す場合", () => {
-    let onPressGivenCell: ReturnType<typeof vi.fn<(cellIndex: number) => void>>;
-
-    beforeEach(() => {
-      onPressGivenCell = vi.fn<(cellIndex: number) => void>();
-      render(
-        <TakuzuBoard
-          rowCount={2}
-          columnCount={2}
-          cells={cells}
-          lineViolations={[]}
-          disabled={false}
-          highlightedCellIndices={[1]}
-          onCycleCell={onCycleCell}
-          onPlaceCell={onPlaceCell}
-          onPressGivenCell={onPressGivenCell}
-        />,
-      );
-      board = screen.getByRole("group", { name: "バイナリパズル盤面" });
-    });
-
-    test("示したマスだけを操作対象として名前で伝えること", () => {
-      const result = within(board)
-        .getAllByRole("button")
-        .map((cell) => cell.getAttribute("aria-label"));
-
-      expect(result).toEqual([
-        "1行1列 四角 固定",
-        "1行2列 空き 操作対象",
-        "2行1列 丸 3連続",
-        "2行2列 空き",
-      ]);
-    });
-
-    test("固定マスを押したことを通知すること", () => {
-      fireEvent.click(
-        within(board).getByRole("button", { name: "1行1列 四角 固定" }),
-      );
-
-      expect(onPressGivenCell).toHaveBeenCalledWith(0);
-    });
-  });
-
   describe("1行だけの盤面の場合", () => {
     const singleRowCells: TakuzuCellView[] = [
       { cell: "a", given: true, inViolatingRun: false },

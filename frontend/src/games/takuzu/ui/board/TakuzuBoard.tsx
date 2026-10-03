@@ -29,14 +29,10 @@ type TakuzuBoardProps = {
   cells: readonly TakuzuCellView[];
   lineViolations: readonly TakuzuLineViolationView[];
   disabled: boolean;
-  /** 操作する対象として示すマス。チュートリアルで指示したマスを示すのに使う。 */
-  highlightedCellIndices?: readonly number[];
   /** マスに一時的に重ねる合図。通常のプレイでは渡さない。 */
   cues?: readonly TakuzuCellCue[];
   onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
   onPlaceCell: (cellIndex: number, cell: TakuzuCellValue) => void;
-  /** 固定マスを押したとき。盤面は変えず、押したことだけを伝える。 */
-  onPressGivenCell?: (cellIndex: number) => void;
 };
 
 /** キーボードで直接置くキー。`1` と `2` は巡回の順（A → B）に合わせる。 */
@@ -90,11 +86,9 @@ export function TakuzuBoard({
   cells,
   lineViolations,
   disabled,
-  highlightedCellIndices = [],
   cues = [],
   onCycleCell,
   onPlaceCell,
-  onPressGivenCell,
 }: TakuzuBoardProps) {
   const [focusableCellIndex, setFocusableCellIndex] = useState(0);
   const cellElementRefs = useRef(new Map<number, HTMLButtonElement>());
@@ -125,17 +119,12 @@ export function TakuzuBoard({
     [],
   );
 
-  function rejectGivenCell(cellIndex: number): void {
-    animateTakuzuTileRejection(cellElementRefs.current.get(cellIndex));
-    onPressGivenCell?.(cellIndex);
-  }
-
   function handleCycle(
     cellIndex: number,
     direction: TakuzuCycleDirection,
   ): void {
     if (cells[cellIndex]?.given) {
-      rejectGivenCell(cellIndex);
+      animateTakuzuTileRejection(cellElementRefs.current.get(cellIndex));
       return;
     }
     onCycleCell(cellIndex, direction);
@@ -174,7 +163,9 @@ export function TakuzuBoard({
     }
     event.preventDefault();
     if (cells[focusableCellIndex]?.given) {
-      rejectGivenCell(focusableCellIndex);
+      animateTakuzuTileRejection(
+        cellElementRefs.current.get(focusableCellIndex),
+      );
       return;
     }
     onPlaceCell(focusableCellIndex, cellByInputKey[event.key] ?? null);
@@ -215,7 +206,6 @@ export function TakuzuBoard({
                 ),
               ]}
               disabled={disabled}
-              highlighted={highlightedCellIndices.includes(cellIndex)}
               cue={cueByCellIndex.get(cellIndex)}
               focusable={cellIndex === focusableCellIndex}
               onElementChange={handleCellElementChange}

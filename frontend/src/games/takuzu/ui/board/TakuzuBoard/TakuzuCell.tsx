@@ -22,8 +22,6 @@ type TakuzuCellProps = {
   /** このマスを含む行・列の違反の読み上げ名（例「行の個数超過」）。 */
   lineViolationNames: readonly string[];
   disabled: boolean;
-  /** 操作する対象として示す。 */
-  highlighted: boolean;
   /** 揺れの合図は盤面が掛けるので、マスは光と目印の合図だけを描く。 */
   cue: TakuzuCellCue | undefined;
   focusable: boolean;
@@ -42,12 +40,10 @@ function getAccessibleName(
   cellIndex: number,
   view: TakuzuCellView,
   lineViolationNames: readonly string[],
-  highlighted: boolean,
 ): string {
   const { row, column } = getTakuzuCellPosition(columnCount, cellIndex);
   const content = view.cell === null ? "空き" : tileNameByCell[view.cell];
   const qualifiers = [
-    highlighted ? "操作対象" : null,
     view.given ? "固定" : null,
     view.inViolatingRun ? "3連続" : null,
     ...lineViolationNames,
@@ -62,7 +58,6 @@ export function TakuzuCell({
   view,
   lineViolationNames,
   disabled,
-  highlighted,
   cue,
   focusable,
   onElementChange,
@@ -99,7 +94,6 @@ export function TakuzuCell({
         cellIndex,
         view,
         lineViolationNames,
-        highlighted,
       )}
       aria-disabled={view.given || undefined}
       disabled={disabled}
@@ -109,7 +103,6 @@ export function TakuzuCell({
       onPointerDown={handlePointerDown}
       onFocus={() => onFocus(cellIndex)}
       data-violated={view.inViolatingRun || undefined}
-      data-highlighted={highlighted || undefined}
       className={cn(
         "group relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center bg-background outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:bg-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-foreground/70 disabled:cursor-default enabled:not-aria-disabled:hover:bg-accent/60 enabled:not-aria-disabled:active:bg-accent",
         row !== rowCount - 1 && "border-b border-b-border",
@@ -136,12 +129,6 @@ export function TakuzuCell({
           key={cue.id}
           aria-hidden="true"
           className="pointer-events-none absolute inset-1 rounded-sm border-2 border-sky-600/60 border-dashed animate-in fade-in-0 duration-500 motion-reduce:animate-none dark:border-sky-300/60"
-        />
-      )}
-      {highlighted && (
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0.5 rounded-sm ring-2 ring-ring ring-inset"
         />
       )}
       {/*
