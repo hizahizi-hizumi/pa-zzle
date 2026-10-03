@@ -1,6 +1,7 @@
 import {
   type KeyboardEvent as ReactKeyboardEvent,
   useCallback,
+  useEffect,
   useRef,
   useState,
 } from "react";
@@ -16,7 +17,8 @@ import type {
   TakuzuCellView,
   TakuzuLineViolationView,
 } from "@/games/takuzu/session/session";
-import { animateGivenCellRejection } from "@/games/takuzu/ui/board/TakuzuBoard/animate-given-cell-rejection";
+import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
+import { animateTakuzuTileRejection } from "@/games/takuzu/ui/board/TakuzuBoard/animate-tile-rejection";
 import { TakuzuCell } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuCell";
 import { TakuzuLineViolationMark } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuLineViolationMark";
 
@@ -29,6 +31,8 @@ type TakuzuBoardProps = {
   disabled: boolean;
   /** 操作する対象として示すマス。チュートリアルで指示したマスを示すのに使う。 */
   highlightedCellIndices?: readonly number[];
+  /** マスに一時的に重ねる合図。通常のプレイでは渡さない。 */
+  cues?: readonly TakuzuCellCue[];
   onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
   onPlaceCell: (cellIndex: number, cell: TakuzuCellValue) => void;
   /** 固定マスを押したとき。盤面は変えず、押したことだけを伝える。 */
@@ -87,6 +91,7 @@ export function TakuzuBoard({
   lineViolations,
   disabled,
   highlightedCellIndices = [],
+  cues = [],
   onCycleCell,
   onPlaceCell,
   onPressGivenCell,
@@ -96,6 +101,18 @@ export function TakuzuBoard({
   const lineViolationByKey = new Map(
     lineViolations.map((violation) => [getLineKey(violation), violation]),
   );
+  const cueByCellIndex = new Map(cues.map((cue) => [cue.cellIndex, cue]));
+  const rejectedCue = cues.find((cue) => cue.kind === "rejected");
+  const rejectedCueId = rejectedCue?.id ?? null;
+  const rejectedCellIndex = rejectedCue?.cellIndex ?? null;
+
+  // 揺れは DOM のアニメーションで描くので、合図が届いたときに要素へ掛ける。
+  useEffect(() => {
+    if (rejectedCueId === null || rejectedCellIndex === null) {
+      return;
+    }
+    animateTakuzuTileRejection(cellElementRefs.current.get(rejectedCellIndex));
+  }, [rejectedCueId, rejectedCellIndex]);
 
   const handleCellElementChange = useCallback(
     (cellIndex: number, element: HTMLButtonElement | null) => {
@@ -109,7 +126,7 @@ export function TakuzuBoard({
   );
 
   function rejectGivenCell(cellIndex: number): void {
-    animateGivenCellRejection(cellElementRefs.current.get(cellIndex));
+    animateTakuzuTileRejection(cellElementRefs.current.get(cellIndex));
     onPressGivenCell?.(cellIndex);
   }
 
@@ -199,6 +216,7 @@ export function TakuzuBoard({
               ]}
               disabled={disabled}
               highlighted={highlightedCellIndices.includes(cellIndex)}
+              cue={cueByCellIndex.get(cellIndex)}
               focusable={cellIndex === focusableCellIndex}
               onElementChange={handleCellElementChange}
               onCycle={handleCycle}

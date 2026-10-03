@@ -8,6 +8,7 @@ import {
 import { getTakuzuCellPosition } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import type { TakuzuCellView } from "@/games/takuzu/session/session";
+import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
 import { violationMarkTimingClassName } from "@/games/takuzu/ui/board/TakuzuBoard/violation-mark-timing";
 import { TakuzuCellFace } from "@/games/takuzu/ui/board/TakuzuCellFace";
 import { runViolationCellClassName } from "@/games/takuzu/ui/board/violation-mark-style";
@@ -23,6 +24,8 @@ type TakuzuCellProps = {
   disabled: boolean;
   /** 操作する対象として示す。 */
   highlighted: boolean;
+  /** 揺れの合図は盤面が掛けるので、マスは光と目印の合図だけを描く。 */
+  cue: TakuzuCellCue | undefined;
   focusable: boolean;
   onElementChange: (
     cellIndex: number,
@@ -60,6 +63,7 @@ export function TakuzuCell({
   lineViolationNames,
   disabled,
   highlighted,
+  cue,
   focusable,
   onElementChange,
   onCycle,
@@ -120,6 +124,20 @@ export function TakuzuCell({
           runViolationCellClassName,
         )}
       />
+      {cue?.kind === "reason" && (
+        <span
+          key={cue.id}
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-sky-100 ring-2 ring-sky-500/50 ring-inset fill-mode-forwards animate-out fade-out-0 duration-900 ease-in dark:bg-sky-900/60 dark:ring-sky-300/50"
+        />
+      )}
+      {cue?.kind === "hint" && (
+        <span
+          key={cue.id}
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-1 rounded-sm border-2 border-sky-600/60 border-dashed animate-in fade-in-0 duration-500 motion-reduce:animate-none dark:border-sky-300/60"
+        />
+      )}
       {highlighted && (
         <span
           aria-hidden="true"
