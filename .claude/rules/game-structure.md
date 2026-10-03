@@ -32,6 +32,7 @@ frontend/src/games/
     ├── score.ts
     ├── problem-selection.ts
     ├── play-record.ts
+    ├── play-attempt.ts
     └── diagnostics.ts
 ```
 
@@ -46,6 +47,7 @@ frontend/src/games/
 - `score.ts`: 完了したプレイの事実をゲーム固有の評価へ変換する。
 - `problem-selection.ts`: 開始条件に合う問題を問題供給元と難易度方針から選ぶ。
 - `play-record.ts`: ゲーム固有の完了事実を共通記録機能へ接続する。今の版の記録から結果画面に出す内容を作り直す `restore<Game>RecordedResult` も置き、結果の計算は `play/` の `create<Game>Result` をプレイ中と共用する。
+- `play-attempt.ts`: 完了せずに離れたプレイの進み具合として記録する実測値を、`session/` から選ぶ。
 
 これらを省略するのは、`APP.md` / `GAME.md` 上、そのゲームだけ当該体験を持たないと説明できる場合に限る。
 
@@ -90,7 +92,7 @@ frontend/src/games/
 - `score.ts` は評価に必要な事実の契約とゲーム共通契約へ依存できるが、`play/`、`ui/` を知らない。
 - `play/` は下位のゲーム責務を調停するが、`ui/` を import しない。
 - `ui/` は `play/` と表示に必要な読み取り専用の契約へ依存できる。問題生成、session更新、採点規則を実装しない。
-- `play-record.ts` と `diagnostics.ts` は接続先と必要なゲーム内部契約へ依存できるが、通常プレイから逆依存させない。
+- `play-record.ts`、`play-attempt.ts`、`diagnostics.ts` は接続先と必要なゲーム内部契約へ依存できるが、通常プレイから逆依存させない。
 - `ui/play-record-display.ts` は記録 UI の表示契約（`@/records/ui/play-record-display`）へ接続できる。記録表示は記録定義の全指標を網羅する。
 - ゲームカタログ（`frontend/src/game-catalog/`）へ依存しない。
 - 別ゲームの実装を直接 import しない。
@@ -98,7 +100,7 @@ frontend/src/games/
 
 ## ゲーム直下
 
-- ゲーム直下には `difficulty`、`score`、`problem-selection`、`play-record`、`diagnostics` のようなゲーム全体の責務だけを置く。
+- ゲーム直下には `difficulty`、`score`、`problem-selection`、`play-record`、`play-attempt`、`diagnostics` のようなゲーム全体の責務だけを置く。
 - `hooks`、`services`、`utils`、`manager`、`game` のような実装方式・汎用箱で責務を分類しない。
 - 同じ横断責務が複数ゲームに現れたら、同じ責務名と標準位置を使う。
 - 1責務が複数ファイルへ成長した場合は、責務名を保った同名ディレクトリへ分割する。

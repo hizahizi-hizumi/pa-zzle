@@ -269,6 +269,7 @@ export function useSlidePuzzlePlay(
     board: session.board,
     startedAt: session.startedAt,
     completedAt: session.finishedAt,
+    session,
     elapsedMs: getSlidePuzzleSessionElapsedMs(session, now),
     moveCount: session.moveCount,
     restartCount: session.restartCount,

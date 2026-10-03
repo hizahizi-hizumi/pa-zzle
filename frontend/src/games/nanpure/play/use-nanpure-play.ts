@@ -248,6 +248,7 @@ export function useNanpurePlay(
     status: session.status,
     startedAt: session.startedAt,
     completedAt: session.finishedAt,
+    session,
     progress: play.progress,
     clues: session.problem.clues,
     board: session.board,

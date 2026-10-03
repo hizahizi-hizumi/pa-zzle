@@ -7,6 +7,7 @@ import { useRecordResultNavigation } from "@/game-catalog/record-result-navigati
 import { createNanpureDiagnosticSnapshot } from "@/games/nanpure/diagnostics";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import { useNanpurePlay } from "@/games/nanpure/play/use-nanpure-play";
+import { createNanpurePlayAttemptProgress } from "@/games/nanpure/play-attempt";
 import {
   createNanpurePlayRecord,
   nanpurePlayRecordDefinition,
@@ -20,6 +21,7 @@ import {
   buildRevision,
   internalDiagnosticsAvailable,
 } from "@/lib/internal-diagnostics";
+import { usePlayAttemptRecord } from "@/records/hooks/use-play-attempt-record";
 import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
@@ -68,6 +70,15 @@ export function PlayableNanpure({
     playRecord,
     recordOutcome,
   );
+  usePlayAttemptRecord({
+    gameId: nanpurePlayRecordDefinition.gameId,
+    startedAt: play.startedAt,
+    start: { difficulty, problemIdentity: play.problemIdentity },
+    finished: play.completedAt !== null,
+    getProgress(abandonedAt) {
+      return createNanpurePlayAttemptProgress(play.session, abandonedAt);
+    },
+  });
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const diagnostics = internalDiagnosticsAvailable
     ? createNanpureDiagnosticSnapshot({

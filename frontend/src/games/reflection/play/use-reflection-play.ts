@@ -268,6 +268,7 @@ export function useReflectionPlay(
     canRestart: canRestartReflectionSession(session),
     startedAt: session.startedAt,
     completedAt: session.finishedAt,
+    session,
     result,
     tapStock,
     tapCell,

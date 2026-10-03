@@ -10,6 +10,7 @@ import {
   type ParkingJamDifficulty,
 } from "@/games/parking-jam/difficulty";
 import { useParkingJamPlay } from "@/games/parking-jam/play/use-parking-jam-play";
+import { createParkingJamPlayAttemptProgress } from "@/games/parking-jam/play-attempt";
 import {
   createParkingJamPlayRecord,
   parkingJamPlayRecordDefinition,
@@ -23,6 +24,7 @@ import {
   buildRevision,
   internalDiagnosticsAvailable,
 } from "@/lib/internal-diagnostics";
+import { usePlayAttemptRecord } from "@/records/hooks/use-play-attempt-record";
 import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
@@ -76,6 +78,15 @@ export function PlayableParkingJam({
     playRecord,
     recordOutcome,
   );
+  usePlayAttemptRecord({
+    gameId: parkingJamPlayRecordDefinition.gameId,
+    startedAt: play.startedAt,
+    start: { difficulty, problemIdentity: play.problemIdentity },
+    finished: play.completedAt !== null,
+    getProgress(abandonedAt) {
+      return createParkingJamPlayAttemptProgress(play.session, abandonedAt);
+    },
+  });
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const diagnostics = useMemo(
     () =>

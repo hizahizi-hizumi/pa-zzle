@@ -1,8 +1,14 @@
+import type { PlayAttempt } from "@/records/play-attempt";
+import {
+  readPlayAttempts,
+  startPlayAttempt,
+} from "@/records/play-attempt-storage";
 import type { PlayRecord } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
 import {
   getPlayRecordSaveOutcome,
   isPlayRecordSaveOutcome,
+  savePlayRecord,
 } from "@/records/save-play-record";
 
 function createRecord(id: string, value: number): PlayRecord {
@@ -110,5 +116,37 @@ describe("isPlayRecordSaveOutcome", () => {
     const accepted = isPlayRecordSaveOutcome(value);
 
     expect(accepted).toBe(false);
+  });
+});
+
+describe("savePlayRecord", () => {
+  const record = createRecord("record-1", 80);
+  const attemptOfRecord: PlayAttempt = {
+    gameId: "test-game",
+    startedAt: record.startedAt,
+    start: { difficulty: "normal", problemIdentity: {} },
+    abandonment: null,
+  };
+  const abandonedAttempt: PlayAttempt = {
+    ...attemptOfRecord,
+    startedAt: 500,
+    abandonment: { abandonedAt: 900, progress: {} },
+  };
+
+  beforeEach(() => {
+    window.localStorage.clear();
+    startPlayAttempt(attemptOfRecord);
+    startPlayAttempt(abandonedAttempt);
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
+  test("保存した記録のプレイの試行を除き、離脱した試行を残すこと", () => {
+    savePlayRecord(record, definition);
+    const remaining = readPlayAttempts();
+
+    expect(remaining).toEqual([abandonedAttempt]);
   });
 });
