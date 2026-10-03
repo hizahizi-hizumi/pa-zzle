@@ -11,7 +11,6 @@ import {
   createTakuzuPlayRecord,
   takuzuPlayRecordDefinition,
 } from "@/games/takuzu/play-record";
-import type { TakuzuPooledProblem } from "@/games/takuzu/problem/problem-pool";
 import { selectTakuzuProblemById } from "@/games/takuzu/problem-selection";
 import { takuzuPlayRecordDisplay } from "@/games/takuzu/ui/play-record-display";
 import { TakuzuDiagnostics } from "@/games/takuzu/ui/TakuzuDiagnostics";
@@ -26,19 +25,14 @@ import { useNavigate } from "@/router";
 
 type PlayableTakuzuProps = {
   difficulty: TakuzuDifficulty;
-  /** 記録から復元した問題。渡すとその問題で始め、URL の問題 ID とは結ばない。 */
-  initialProblem?: TakuzuPooledProblem;
 };
 
-export function PlayableTakuzu({
-  difficulty,
-  initialProblem,
-}: PlayableTakuzuProps) {
+export function PlayableTakuzu({ difficulty }: PlayableTakuzuProps) {
   const requestedProblem = useRequestedProblem((problemId) =>
     selectTakuzuProblemById(difficulty, problemId),
   );
-  const play = useTakuzuPlay(difficulty, initialProblem ?? requestedProblem);
-  useProblemIdQuerySync(initialProblem ? null : play.problemIdentity);
+  const play = useTakuzuPlay(difficulty, requestedProblem);
+  useProblemIdQuerySync(play.problemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>

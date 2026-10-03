@@ -14,7 +14,6 @@ import {
   createParkingJamPlayRecord,
   parkingJamPlayRecordDefinition,
 } from "@/games/parking-jam/play-record";
-import type { ParkingJamRestoredProblem } from "@/games/parking-jam/problem/generator";
 import { selectParkingJamProblemById } from "@/games/parking-jam/problem-selection";
 import { ParkingJamDiagnostics } from "@/games/parking-jam/ui/ParkingJamDiagnostics";
 import { ParkingJamPlay } from "@/games/parking-jam/ui/ParkingJamPlay";
@@ -27,28 +26,16 @@ import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
 
-/** 最初に遊ぶ問題。記録の問題を、その記録の難易度として遊び直すときに渡し、URL の問題 ID とは結ばない。 */
-type ParkingJamInitialProblem = {
-  restored: ParkingJamRestoredProblem;
-};
-
 type PlayableParkingJamProps = {
   difficulty: ParkingJamDifficulty;
-  initialProblem?: ParkingJamInitialProblem;
 };
 
-export function PlayableParkingJam({
-  difficulty,
-  initialProblem,
-}: PlayableParkingJamProps) {
+export function PlayableParkingJam({ difficulty }: PlayableParkingJamProps) {
   const requestedProblem = useRequestedProblem((problemId) =>
     selectParkingJamProblemById(difficulty, problemId),
   );
-  const play = useParkingJamPlay(
-    difficulty,
-    initialProblem?.restored ?? requestedProblem,
-  );
-  useProblemIdQuerySync(initialProblem ? null : play.problemIdentity);
+  const play = useParkingJamPlay(difficulty, requestedProblem);
+  useProblemIdQuerySync(play.problemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>

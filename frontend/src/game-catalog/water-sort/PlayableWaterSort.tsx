@@ -11,7 +11,6 @@ import {
   createWaterSortPlayRecord,
   waterSortPlayRecordDefinition,
 } from "@/games/water-sort/play-record";
-import type { WaterSortGeneratedProblem } from "@/games/water-sort/problem/problem";
 import { selectWaterSortProblemById } from "@/games/water-sort/problem-selection";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 import { WaterSortDiagnostics } from "@/games/water-sort/ui/WaterSortDiagnostics";
@@ -26,19 +25,14 @@ import { useNavigate } from "@/router";
 
 type PlayableWaterSortProps = {
   difficulty: WaterSortDifficulty;
-  /** 記録から復元した問題。渡すとその問題で始め、URL の問題 ID とは結ばない。 */
-  initialProblem?: WaterSortGeneratedProblem;
 };
 
-export function PlayableWaterSort({
-  difficulty,
-  initialProblem,
-}: PlayableWaterSortProps) {
+export function PlayableWaterSort({ difficulty }: PlayableWaterSortProps) {
   const requestedProblem = useRequestedProblem((problemId) =>
     selectWaterSortProblemById(difficulty, problemId),
   );
-  const play = useWaterSortPlay(difficulty, initialProblem ?? requestedProblem);
-  useProblemIdQuerySync(initialProblem ? null : play.problemIdentity);
+  const play = useWaterSortPlay(difficulty, requestedProblem);
+  useProblemIdQuerySync(play.problemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>

@@ -15,7 +15,6 @@ import {
   createReflectionPlayRecord,
   reflectionPlayRecordDefinition,
 } from "@/games/reflection/play-record";
-import type { ReflectionPooledProblem } from "@/games/reflection/problem/problem-pool";
 import { selectReflectionProblemById } from "@/games/reflection/problem-selection";
 import { reflectionPlayRecordDisplay } from "@/games/reflection/ui/play-record-display";
 import { ReflectionDiagnostics } from "@/games/reflection/ui/ReflectionDiagnostics";
@@ -28,28 +27,16 @@ import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 import { useNavigate } from "@/router";
 
-/** 最初に遊ぶ問題。記録の問題を、その記録の難易度として遊び直すときに渡し、URL の問題 ID とは結ばない。 */
-type ReflectionInitialProblem = {
-  restored: ReflectionPooledProblem;
-};
-
 type PlayableReflectionProps = {
   difficulty: ReflectionDifficulty;
-  initialProblem?: ReflectionInitialProblem;
 };
 
-export function PlayableReflection({
-  difficulty,
-  initialProblem,
-}: PlayableReflectionProps) {
+export function PlayableReflection({ difficulty }: PlayableReflectionProps) {
   const requestedProblem = useRequestedProblem((problemId) =>
     selectReflectionProblemById(difficulty, problemId),
   );
-  const play = useReflectionPlay(
-    difficulty,
-    initialProblem?.restored ?? requestedProblem,
-  );
-  useProblemIdQuerySync(initialProblem ? null : play.problemIdentity);
+  const play = useReflectionPlay(difficulty, requestedProblem);
+  useProblemIdQuerySync(play.problemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>

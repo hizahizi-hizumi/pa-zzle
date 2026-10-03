@@ -11,7 +11,6 @@ import {
   createSlidePuzzlePlayRecord,
   slidePuzzlePlayRecordDefinition,
 } from "@/games/slide-puzzle/play-record";
-import type { SlidePuzzleGeneratedProblem } from "@/games/slide-puzzle/problem/problem";
 import { selectSlidePuzzleProblemById } from "@/games/slide-puzzle/problem-selection";
 import { slidePuzzlePlayRecordDisplay } from "@/games/slide-puzzle/ui/play-record-display";
 import { SlidePuzzleDiagnostics } from "@/games/slide-puzzle/ui/SlidePuzzleDiagnostics";
@@ -26,22 +25,14 @@ import { useNavigate } from "@/router";
 
 type PlayableSlidePuzzleProps = {
   difficulty: SlidePuzzleDifficulty;
-  /** 記録から復元した問題。渡すとその問題で始め、URL の問題 ID とは結ばない。 */
-  initialProblem?: SlidePuzzleGeneratedProblem;
 };
 
-export function PlayableSlidePuzzle({
-  difficulty,
-  initialProblem,
-}: PlayableSlidePuzzleProps) {
+export function PlayableSlidePuzzle({ difficulty }: PlayableSlidePuzzleProps) {
   const requestedProblem = useRequestedProblem((problemId) =>
     selectSlidePuzzleProblemById(difficulty, problemId),
   );
-  const play = useSlidePuzzlePlay(
-    difficulty,
-    initialProblem ?? requestedProblem,
-  );
-  useProblemIdQuerySync(initialProblem ? null : play.problemIdentity);
+  const play = useSlidePuzzlePlay(difficulty, requestedProblem);
+  useProblemIdQuerySync(play.problemIdentity);
   const navigate = useNavigate();
   const playRecord = useMemo(
     () =>
