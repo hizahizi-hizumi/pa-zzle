@@ -30,6 +30,12 @@ const threePly = parseTsumeShogiProblemText({
   mainLine: ["S*2b", "2a1b", "4c1c"],
 });
 
+/** `threePly` に、成・不成のどちらも指せる移動を持つ攻方の桂（4五）を足したもの。 */
+const threePlyWithKnight = parseTsumeShogiProblemText({
+  sfen: "7kS/9/5+R3/9/5N3/9/9/9/9 b Sr2b4g2s3n4l18p 1",
+  mainLine: ["S*2b", "2a1b", "4c1c"],
+});
+
 const startedAt = 1_000;
 
 function square(file: number, rank: number): TsumeShogiSquare {
@@ -59,6 +65,10 @@ function dropSilverOn2b(session: TsumeShogiSession): TsumeShogiSession {
 }
 
 const initial = createTsumeShogiSession(threePly, startedAt);
+const initialWithKnight = createTsumeShogiSession(
+  threePlyWithKnight,
+  startedAt,
+);
 const afterCorrectCheck = dropSilverOn2b(initial);
 const afterCorrectReply = playTsumeShogiSessionDefenderReply(afterCorrectCheck);
 const afterWrongCheck = moveOnBoard(initial, square(4, 3), square(4, 1), 2_000);
@@ -201,6 +211,26 @@ describe("tapTsumeShogiSessionSquare", () => {
     });
   });
 
+  describe.each([
+    ["片方だけが王手になる移動", square(3, 3)],
+    ["どちらも王手にならない移動", square(5, 3)],
+  ])("成・不成のどちらも指せて%s", (_, to) => {
+    const selected = tapTsumeShogiSessionSquare(
+      initialWithKnight,
+      square(4, 5),
+      2_000,
+    );
+
+    test("王手になるかどうかを明かさず、成・不成の選択を待つこと", () => {
+      const session = tapTsumeShogiSessionSquare(selected, to, 2_000);
+
+      expect(session.turns).toHaveLength(0);
+      expect(session.rejection).toBeNull();
+      expect(session.illegalInputCount).toBe(0);
+      expect(session.promotionChoice).toEqual({ from: square(4, 5), to });
+    });
+  });
+
   describe("選んでいる駒の升", () => {
     const selected = tapTsumeShogiSessionSquare(initial, square(4, 3), 2_000);
 
@@ -230,6 +260,48 @@ describe("chooseTsumeShogiSessionPromotion", () => {
       "1a2b+",
     );
     expect(session.promotionChoice).toBeNull();
+  });
+
+  describe("選んだ方が王手にならない移動", () => {
+    const choosingKnight = moveOnBoard(
+      initialWithKnight,
+      square(4, 5),
+      square(3, 3),
+      2_000,
+    );
+
+    test("着手させず、理由を残して非合法入力に数えること", () => {
+      const session = chooseTsumeShogiSessionPromotion(
+        choosingKnight,
+        true,
+        2_500,
+      );
+
+      expect(session.turns).toHaveLength(0);
+      expect(session.promotionChoice).toBeNull();
+      expect(session.rejection).toEqual({
+        reason: "not-check",
+        to: square(3, 3),
+      });
+      expect(session.illegalInputCount).toBe(1);
+      expect(session.selection).toEqual({
+        type: "board",
+        square: square(4, 5),
+      });
+    });
+
+    test("王手になる方を選べば指すこと", () => {
+      const session = chooseTsumeShogiSessionPromotion(
+        choosingKnight,
+        false,
+        2_500,
+      );
+
+      expect(formatTsumeShogiMoveUsi(session.turns[0]!.attackerMove)).toBe(
+        "4e3c",
+      );
+      expect(session.illegalInputCount).toBe(0);
+    });
   });
 });
 

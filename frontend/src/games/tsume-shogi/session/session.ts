@@ -60,7 +60,7 @@ export type TsumeShogiSelection =
   | { type: "board"; square: TsumeShogiSquare }
   | { type: "hand"; pieceType: TsumeShogiHandPieceType };
 
-/** 成と不成のどちらも王手になる移動で、どちらにするかを選んでいる途中。 */
+/** 成と不成のどちらもルール上指せる移動で、どちらにするかを選んでいる途中。 */
 export type TsumeShogiPromotionChoice = {
   from: TsumeShogiSquare;
   to: TsumeShogiSquare;
@@ -407,11 +407,12 @@ function moveSelectedPiece(
     };
     return { move, result: tryAttackerCheck(position, move) };
   });
-  const checks = candidates.flatMap(({ move, result }) =>
-    typeof result === "string" ? [] : [{ move, position: result }],
+  const legalCandidates = candidates.filter(
+    ({ result }) => typeof result !== "string" || result === "not-check",
   );
-  const [onlyCheck] = checks;
-  if (checks.length === 2) {
+  // 成・不成のどちらも指せる移動では、王手になるかどうかに関係なく選ばせる。王手になる方だけを選ばせると、
+  // 選択肢が出るかどうかが王手の手がかりになるため。
+  if (legalCandidates.length === 2) {
     return {
       ...session,
       promotionChoice: { from: selection.square, to },
@@ -419,24 +420,24 @@ function moveSelectedPiece(
       inputCount: session.inputCount + 1,
     };
   }
-  if (onlyCheck) {
-    return playAttackerCheck(
-      session,
-      onlyCheck.move,
-      onlyCheck.position,
-      operatedAt,
-    );
+  const [onlyLegal] = legalCandidates;
+  if (onlyLegal) {
+    return typeof onlyLegal.result === "string"
+      ? reject(session, onlyLegal.result, to)
+      : playAttackerCheck(
+          session,
+          onlyLegal.move,
+          onlyLegal.result,
+          operatedAt,
+        );
   }
 
-  const legalButNotCheck = candidates.some(
-    ({ result }) => result === "not-check",
-  );
   const [withoutPromotion] = candidates;
   const illegalReason =
     typeof withoutPromotion?.result === "string"
       ? withoutPromotion.result
       : "unreachable";
-  return reject(session, legalButNotCheck ? "not-check" : illegalReason, to);
+  return reject(session, illegalReason, to);
 }
 
 /**
@@ -499,7 +500,7 @@ export function tapTsumeShogiSessionHand(
   );
 }
 
-/** 成・不成を選んで指す。 */
+/** 成・不成を選んで指す。選んだ手が王手にならなければ、ほかの王手にならない手と同じく着手させない。 */
 export function chooseTsumeShogiSessionPromotion(
   session: TsumeShogiSession,
   promote: boolean,
@@ -515,7 +516,7 @@ export function chooseTsumeShogiSessionPromotion(
     promote,
   };
   const result = tryAttackerCheck(getTsumeShogiSessionPosition(session), move);
-  if (typeof result === "string") return session;
+  if (typeof result === "string") return reject(session, result, choice.to);
 
   return playAttackerCheck(session, move, result, operatedAt);
 }
