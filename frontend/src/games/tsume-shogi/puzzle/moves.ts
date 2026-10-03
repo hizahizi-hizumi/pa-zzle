@@ -4,6 +4,7 @@ import {
   type Move,
   MoveType,
   movableDirections,
+  PieceType,
   parseUSIMove,
   resolveMoveType,
   Square,
@@ -42,6 +43,36 @@ export type TsumeShogiMove =
       pieceType: TsumeShogiHandPieceType;
       to: TsumeShogiSquare;
     };
+
+const promotablePieceTypes: ReadonlySet<TsumeShogiPieceType> = new Set([
+  "rook",
+  "bishop",
+  "silver",
+  "knight",
+  "lance",
+  "pawn",
+]);
+
+function isInPromotionZone(side: TsumeShogiSide, rank: number): boolean {
+  return side === "attacker" ? rank <= 3 : rank >= 7;
+}
+
+/**
+ * 盤上の駒の移動で成ることを選べるか。成れる駒（`pieceType` は動かす前の駒）が、相手の陣（相手側の3段）へ入る・
+ * その中で動く・そこから出る移動なら成れる。打つ手は成れない。
+ */
+export function canTsumeShogiMovePromote(
+  side: TsumeShogiSide,
+  pieceType: TsumeShogiPieceType,
+  move: TsumeShogiMove,
+): boolean {
+  return (
+    move.kind === "board" &&
+    promotablePieceTypes.has(pieceType) &&
+    (isInPromotionZone(side, move.from.rank) ||
+      isInPromotionZone(side, move.to.rank))
+  );
+}
 
 /** USI 形式（例: `7g7f`、`8h2b+`、`G*5b`）。 */
 export function formatTsumeShogiMoveUsi(move: TsumeShogiMove): string {
@@ -288,4 +319,72 @@ function* generateLegalEngineMoves(
       }
     }
   }
+}
+
+/**
+ * 攻方が指せない手の理由。
+ * - `double-pawn`: 二歩（同じ筋に成っていない攻方の歩がある筋へ歩を打つ）。
+ * - `pawn-drop-mate`: 打歩詰（歩を打って玉方を詰ませる）。
+ * - `dead-piece`: 行き所のない駒（その先へ動けない段へ、成らずに打つ・動く）。
+ * - `unreachable`: その駒がその升へ動けない・打てない（駒の動き、駒のある升、間の駒、持っていない駒など）。
+ */
+export type TsumeShogiIllegalMoveReason =
+  | "double-pawn"
+  | "pawn-drop-mate"
+  | "dead-piece"
+  | "unreachable";
+
+/** 攻方の手番で、合法ではない手がなぜ指せないか。合法手なら `null`。 */
+export function explainTsumeShogiIllegalMove(
+  position: TsumeShogiPosition,
+  move: TsumeShogiMove,
+): TsumeShogiIllegalMoveReason | null {
+  if (isTsumeShogiLegalMove(position, move)) {
+    return null;
+  }
+  const engine = unwrapEnginePosition(position);
+  const to = toEngineSquare(move.to);
+  if (!to.valid) {
+    return "unreachable";
+  }
+  if (move.kind === "board") {
+    const from = toEngineSquare(move.from);
+    const piece = from.valid ? engine.board.at(from) : null;
+    const engineMove = piece === null ? null : engine.createMove(from, to);
+    const reachableWithPromotion =
+      engineMove !== null && engine.isValidMove(engineMove.withPromote());
+    return !move.promote &&
+      reachableWithPromotion &&
+      isDeadRank(piece!.type, move.to.rank)
+      ? "dead-piece"
+      : "unreachable";
+  }
+
+  const pieceType = toEnginePieceType(move.pieceType);
+  if (engine.blackHand.count(pieceType) <= 0 || engine.board.at(to) !== null) {
+    return "unreachable";
+  }
+  if (isDeadRank(pieceType, move.to.rank)) {
+    return "dead-piece";
+  }
+  if (move.pieceType === "pawn") {
+    const hasPawnOnFile = Square.all.some(function isOwnPawnOnFile(square) {
+      const piece = engine.board.at(square);
+      return (
+        square.file === move.to.file &&
+        piece?.color === Color.BLACK &&
+        piece.type === PieceType.PAWN
+      );
+    });
+    return hasPawnOnFile ? "double-pawn" : "pawn-drop-mate";
+  }
+  return "unreachable";
+}
+
+/** 攻方（先手）が、その駒を成らずに置けない段か。 */
+function isDeadRank(type: PieceType, rank: number): boolean {
+  if (type === PieceType.PAWN || type === PieceType.LANCE) {
+    return rank === 1;
+  }
+  return type === PieceType.KNIGHT && rank <= 2;
 }
