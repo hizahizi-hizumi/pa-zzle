@@ -5,7 +5,7 @@ import {
   useRef,
   useState,
 } from "react";
-
+import { useTouchTap } from "@/components/touch-tap";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import type {
   ReflectionLaserView,
@@ -30,7 +30,6 @@ import { ReflectionCell } from "@/games/reflection/ui/board/ReflectionBoard/Refl
 import { ReflectionClueButton } from "@/games/reflection/ui/board/ReflectionBoard/ReflectionClueButton";
 import { ReflectionLaserPath } from "@/games/reflection/ui/board/ReflectionLaserPath";
 import { reflectionToneClassNames } from "@/games/reflection/ui/reflection-tone";
-import { useTouchTap } from "@/games/reflection/ui/touch-tap";
 import { cn } from "@/lib/utils";
 
 type ReflectionBoardProps = {
