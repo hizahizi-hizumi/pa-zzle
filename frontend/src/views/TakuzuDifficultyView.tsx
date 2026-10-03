@@ -3,9 +3,18 @@ import { HomeBackLink } from "@/components/HomeBackLink";
 import { takuzuDifficulties } from "@/games/takuzu/difficulty";
 import { TakuzuHowToPlayDialog } from "@/games/takuzu/ui/TakuzuHowToPlayDialog";
 import { TakuzuTutorial } from "@/games/takuzu/ui/TakuzuTutorial";
+import { useNavigate } from "@/router";
 import { TakuzuDifficultyOption } from "@/views/TakuzuDifficultyView/TakuzuDifficultyOption";
 
 export function TakuzuDifficultyView() {
+  const navigate = useNavigate();
+
+  function startLevelOne(): void {
+    navigate("/puzzles/takuzu/play/:difficulty", {
+      params: { difficulty: "1" },
+    });
+  }
+
   return (
     <section className="space-y-6 sm:space-y-8">
       <div className="space-y-2">
@@ -18,7 +27,7 @@ export function TakuzuDifficultyView() {
           renderTutorial={({ open, onClose }) => (
             <TakuzuTutorial
               open={open}
-              origin="difficulty-selection"
+              onStartPlay={startLevelOne}
               onClose={onClose}
             />
           )}

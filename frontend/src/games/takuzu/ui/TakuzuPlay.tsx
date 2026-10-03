@@ -121,7 +121,6 @@ export function TakuzuPlay({
       />
       <TakuzuTutorial
         open={tutorialOpen}
-        origin="play"
         onClose={() => setTutorialOpen(false)}
       />
       <main className="flex min-h-0 flex-1 items-center justify-center py-2 [container-type:size] sm:px-3">

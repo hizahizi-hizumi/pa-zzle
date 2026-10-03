@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,41 +10,47 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
+import type { TutorialMessage } from "@/games/tutorial";
 
-/** チュートリアルを開いた画面。終えた後の戻り先の言い方を決める。 */
-export type TutorialOrigin = "difficulty-selection" | "play";
+/** 上部に並べるルール。手に入れるまでは中身を伏せる。 */
+export type TutorialRuleChip = {
+  id: string;
+  label: string;
+  earned: boolean;
+};
+
+/** 終えたときの主な操作。どこへ進むかは開いた側が決める。 */
+export type TutorialFinishAction = {
+  label: string;
+  onSelect: () => void;
+};
 
 type TutorialOverlayProps = {
   open: boolean;
   gameTitle: string;
-  stepCount: number;
-  achievedStepCount: number;
-  /** 取り組んでいるステップの指示。すべて終えたら `null`。 */
-  instruction: string | null;
-  origin: TutorialOrigin;
-  /** ゲーム固有の盤面。 */
+  rules: readonly TutorialRuleChip[];
+  message: TutorialMessage;
+  completed: boolean;
+  finishAction: TutorialFinishAction;
+  /** ゲーム固有の盤面。盤面の大きさは盤面の側が、この領域の大きさから決める。 */
   children: ReactNode;
+  onRestart: () => void;
   onClose: () => void;
 };
 
-const returnLabelByOrigin = {
-  "difficulty-selection": "遊んでみる",
-  play: "プレイに戻る",
-} as const satisfies Record<TutorialOrigin, string>;
-
 /**
- * 小さな盤面を実際に操作してルールと操作を学ぶ全画面の枠。
- * 盤面を主役にし、指示は盤面の上に短く1つだけ出す。
+ * 小さなパズルを順に解きながらルールを見つけていく全画面の枠。
+ * 盤面を主役にし、上部に手に入れたルール、盤面の直上に短い一言だけを出す。
  */
 export function TutorialOverlay({
   open,
   gameTitle,
-  stepCount,
-  achievedStepCount,
-  instruction,
-  origin,
+  rules,
+  message,
+  completed,
+  finishAction,
   children,
+  onRestart,
   onClose,
 }: TutorialOverlayProps) {
   function handleOpenChange(nextOpen: boolean) {
@@ -58,16 +65,33 @@ export function TutorialOverlay({
         showCloseButton={false}
         className="top-0 left-0 flex h-svh max-h-none w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 p-0 pb-[env(safe-area-inset-bottom)] shadow-none sm:max-w-none"
       >
-        <header className="grid h-[4.5rem] shrink-0 grid-cols-[3rem_minmax(0,1fr)_3rem] items-start px-3 pt-2">
-          <div />
-          <div className="flex min-w-0 flex-col items-center pt-1">
-            <DialogTitle className="text-play-context">
-              チュートリアル
-            </DialogTitle>
-            <DialogDescription className="text-play-meta text-muted-foreground">
-              {gameTitle}
-            </DialogDescription>
-          </div>
+        <DialogTitle className="sr-only">チュートリアル</DialogTitle>
+        <DialogDescription className="sr-only">{gameTitle}</DialogDescription>
+        <header className="flex min-h-14 shrink-0 items-center gap-2 pt-2 pr-3 pl-4">
+          <ul
+            aria-label="見つけたルール"
+            className="flex min-w-0 flex-1 flex-wrap gap-1.5"
+          >
+            {rules.map(function renderRuleChip(rule) {
+              return (
+                <li key={rule.id} className="flex">
+                  {rule.earned ? (
+                    // 手に入れた瞬間だけ現れる動きを付けるため、伏せたチップと別の要素にして作り直す。
+                    <span
+                      key="earned"
+                      className="flex animate-in fade-in-0 zoom-in-75 duration-300 ease-(--ease-enter) motion-reduce:animate-none"
+                    >
+                      <Badge variant="secondary">{rule.label}</Badge>
+                    </span>
+                  ) : (
+                    <Badge key="hidden" variant="outline">
+                      ？
+                    </Badge>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
           <DialogClose asChild>
             <Button
               type="button"
@@ -80,52 +104,40 @@ export function TutorialOverlay({
           </DialogClose>
         </header>
 
-        <div className="flex shrink-0 flex-col items-center gap-4 px-4">
-          <div
-            role="progressbar"
-            aria-label="チュートリアルの進み具合"
-            aria-valuemin={0}
-            aria-valuemax={stepCount}
-            aria-valuenow={achievedStepCount}
-            className="flex w-full max-w-xs gap-1"
-          >
-            {Array.from({ length: stepCount }, (_, stepIndex) => (
-              <span
-                // biome-ignore lint/suspicious/noArrayIndexKey: ステップの並びは固定で、番号そのものが識別子になる。
-                key={stepIndex}
-                className={cn(
-                  "h-1 flex-1 rounded-full transition-colors duration-(--duration-normal)",
-                  stepIndex < achievedStepCount
-                    ? "bg-foreground/70"
-                    : stepIndex === achievedStepCount
-                      ? "bg-foreground/30"
-                      : "bg-foreground/10",
-                )}
-              />
-            ))}
-          </div>
+        <div
+          aria-live="polite"
+          className="flex min-h-20 shrink-0 flex-col items-center justify-end px-4"
+        >
           <p
-            aria-live="polite"
-            className={cn(
-              "flex min-h-12 max-w-md items-center text-balance text-center [word-break:auto-phrase]",
-              instruction === null ? "text-heading" : "text-body",
-            )}
+            key={`${message.headline}\n${message.detail ?? ""}`}
+            className="flex animate-in flex-col items-center gap-0.5 text-balance text-center duration-300 ease-(--ease-enter) fade-in-0 slide-in-from-bottom-1 [word-break:auto-phrase] motion-reduce:animate-none"
           >
-            {instruction ?? "完成！"}
+            <span className="text-heading">{message.headline}</span>
+            <span className="min-h-5 text-muted-foreground text-supporting">
+              {message.detail}
+            </span>
           </p>
         </div>
 
-        <main className="flex min-h-0 flex-1 items-center justify-center px-4 py-2 [container-type:size]">
-          <div className="relative aspect-square w-[min(100cqw,100cqh,28rem)]">
-            {children}
-          </div>
+        <main className="flex min-h-0 flex-1 justify-center px-4 pt-6 pb-2 [container-type:size]">
+          {children}
         </main>
 
-        <footer className="flex h-28 shrink-0 items-center justify-center px-4 pb-2">
-          {instruction === null && (
-            <Button type="button" size="lg" onClick={onClose}>
-              {returnLabelByOrigin[origin]}
-            </Button>
+        <footer className="flex h-28 shrink-0 items-center justify-center gap-2 px-4 pb-2">
+          {completed && (
+            <>
+              <Button type="button" size="lg" onClick={finishAction.onSelect}>
+                {finishAction.label}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={onRestart}
+              >
+                もう一度
+              </Button>
+            </>
           )}
         </footer>
       </DialogContent>

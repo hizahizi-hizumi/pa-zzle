@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -8,57 +9,84 @@ import {
 
 import { TakuzuTutorial } from "@/games/takuzu/ui/TakuzuTutorial";
 
-afterEach(cleanup);
+/** ステージごとの最初の盤面と解。`.` が空きマス。 */
+const stageBoards = [
+  { givens: ["AA."], solution: ["AAB"] },
+  { givens: ["B.B"], solution: ["BAB"] },
+  { givens: ["ABA."], solution: ["ABAB"] },
+  {
+    givens: [".A.B", "..A.", "B...", ".B.B"],
+    solution: ["AABB", "BBAA", "BABA", "ABAB"],
+  },
+  {
+    givens: ["..A.", "A.BB", "B...", "...B"],
+    solution: ["BBAA", "AABB", "BABA", "ABAB"],
+  },
+] as const;
+
+/** 解けた盤面の波と、解けたときの一言を読む間を待ち切る長さ。 */
+const stageTransitionMs = 2000;
+
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 
 function getBoard(): HTMLElement {
   return screen.getByRole("group", { name: "バイナリパズル盤面" });
 }
 
-function getCell(row: number, column: number): HTMLElement {
-  return within(getBoard()).getByRole("button", {
-    name: new RegExp(`^${row}行${column}列 `),
+function tapCell(row: number, column: number): void {
+  fireEvent.click(
+    within(getBoard()).getByRole("button", {
+      name: new RegExp(`^${row}行${column}列 `),
+    }),
+  );
+}
+
+/** 空きマスを解のとおりに埋める。四角は1回、丸は2回タップする。 */
+function solveStage(stageIndex: number): void {
+  const { givens, solution } = stageBoards[stageIndex] ?? stageBoards[0];
+  givens.forEach((givenRow, rowIndex) => {
+    Array.from(givenRow).forEach((given, columnIndex) => {
+      if (given !== ".") {
+        return;
+      }
+      const tapCount = solution[rowIndex]?.[columnIndex] === "A" ? 1 : 2;
+      for (let tap = 0; tap < tapCount; tap += 1) {
+        tapCell(rowIndex + 1, columnIndex + 1);
+      }
+    });
   });
 }
 
-function tapCell(row: number, column: number): void {
-  fireEvent.click(getCell(row, column));
+function waitForNextStage(): void {
+  act(() => {
+    vi.advanceTimersByTime(stageTransitionMs);
+  });
 }
 
-/** 指示どおりに、最後のステップの手前まで進める。5 は一度同じ並びを作ってから直す。 */
-function followGuidedSteps(): void {
-  tapCell(1, 3);
-  tapCell(1, 3);
-  tapCell(3, 3);
-  tapCell(3, 3);
-  tapCell(3, 4);
-  tapCell(3, 4);
-  tapCell(1, 2);
-  tapCell(1, 4);
-  tapCell(1, 4);
-  tapCell(1, 2);
-  tapCell(1, 4);
-  tapCell(1, 4);
-  tapCell(2, 3);
+function solveStages(count: number): void {
+  for (let stageIndex = 0; stageIndex < count; stageIndex += 1) {
+    solveStage(stageIndex);
+    waitForNextStage();
+  }
 }
 
-/** 残りのマスを解のとおりに埋める（2行1列 丸・2行2列 四角・2行4列 丸・4行1列 丸・4行3列 四角・4行4列 四角）。 */
-function fillRemainingCells(): void {
-  tapCell(2, 1);
-  tapCell(2, 1);
-  tapCell(2, 2);
-  tapCell(2, 4);
-  tapCell(2, 4);
-  tapCell(4, 1);
-  tapCell(4, 1);
-  tapCell(4, 3);
-  tapCell(4, 4);
+function getRuleChipTexts(): string[] {
+  return within(screen.getByRole("list", { name: "見つけたルール" }))
+    .getAllByRole("listitem")
+    .map((item) => item.textContent ?? "");
 }
 
 describe("TakuzuTutorial", () => {
   let onClose: ReturnType<typeof vi.fn<() => void>>;
+  let onStartPlay: ReturnType<typeof vi.fn<() => void>>;
 
   beforeEach(() => {
+    vi.useFakeTimers();
     onClose = vi.fn<() => void>();
+    onStartPlay = vi.fn<() => void>();
   });
 
   describe("難易度選択から開いた場合", () => {
@@ -68,7 +96,7 @@ describe("TakuzuTutorial", () => {
       const { rerender } = render(
         <TakuzuTutorial
           open={true}
-          origin="difficulty-selection"
+          onStartPlay={onStartPlay}
           onClose={onClose}
         />,
       );
@@ -76,104 +104,121 @@ describe("TakuzuTutorial", () => {
         rerender(
           <TakuzuTutorial
             open={open}
-            origin="difficulty-selection"
+            onStartPlay={onStartPlay}
             onClose={onClose}
           />,
         );
     });
 
-    test("最初の指示を表示すること", () => {
-      const instruction = screen.getByText(
-        "このマスをタップして、四角を置こう。",
-      );
+    test("1行3マスの盤面と最初の一言を出し、ルールを伏せておくこと", () => {
+      const cells = within(getBoard()).getAllByRole("button");
+      const message = screen.getByText("マスをタップしてみよう");
+      const chips = getRuleChipTexts();
 
-      expect(instruction).toBeTruthy();
+      expect(cells).toHaveLength(3);
+      expect(message).toBeTruthy();
+      expect(chips).toEqual(["？", "？", "？"]);
     });
 
-    test("指示したマスだけを操作対象として示すこと", () => {
-      const targets = within(getBoard())
-        .getAllByRole("button", { name: /操作対象/ })
-        .map((cell) => cell.getAttribute("aria-label"));
-
-      expect(targets).toEqual(["1行3列 空き 操作対象"]);
-    });
-
-    test("指示していないマスを押しても盤面と指示が変わらないこと", () => {
-      tapCell(2, 1);
-
-      const cell = getCell(2, 1).getAttribute("aria-label");
-      const instruction = screen.getByText(
-        "このマスをタップして、四角を置こう。",
-      );
-
-      expect(cell).toBe("2行1列 空き");
-      expect(instruction).toBeTruthy();
-    });
-
-    test("指示したマスを押すと四角が置かれ、次の指示へ進むこと", () => {
+    test("最初のタップで四角が3つ続くと、3つ続かないことを伝えること", () => {
       tapCell(1, 3);
 
-      const cell = getCell(1, 3).getAttribute("aria-label");
-      const instruction = screen.getByText(
-        "もう一度タップして、丸に変えよう。",
-      );
-      const progress = screen.getByRole("progressbar", {
-        name: "チュートリアルの進み具合",
+      const cell = within(getBoard()).getByRole("button", {
+        name: /^1行3列 /,
       });
+      const message = screen.getByText("同じものは3つ続かない");
 
-      expect(cell).toBe("1行3列 四角 操作対象");
-      expect(instruction).toBeTruthy();
-      expect(progress.getAttribute("aria-valuenow")).toBe("1");
+      expect(cell.getAttribute("aria-label")).toBe("1行3列 四角 3連続");
+      expect(message).toBeTruthy();
     });
 
-    test("指示どおりに進めると最後に盤面を自由に埋めるステップになること", () => {
-      followGuidedSteps();
-
-      const instruction = screen.getByText("残りのマスを埋めて完成させよう。");
-      const targets = within(getBoard()).queryAllByRole("button", {
-        name: /操作対象/,
-      });
-
-      expect(instruction).toBeTruthy();
-      expect(targets).toEqual([]);
-    });
-
-    test("盤面を完成させると完成を示し、遊んでみるで閉じることを通知すること", () => {
-      followGuidedSteps();
-      fillRemainingCells();
-      const completion = screen.getByText("完成！");
-      fireEvent.click(screen.getByRole("button", { name: "遊んでみる" }));
-
-      expect(completion).toBeTruthy();
-      expect(onClose).toHaveBeenCalledOnce();
-    });
-
-    test("閉じてから開き直すと最初のステップから始まること", () => {
+    test("丸に切り替えて解くと、1つ目のルールを手に入れること", () => {
       tapCell(1, 3);
+      tapCell(1, 3);
+
+      const message = screen.getByText("そう。3つは続かない");
+      const chips = getRuleChipTexts();
+
+      expect(message).toBeTruthy();
+      expect(chips).toEqual(["3つ続かない", "？", "？"]);
+    });
+
+    test("解いた後に、次の盤面へ移ること", () => {
+      solveStages(1);
+
+      const cells = within(getBoard()).getAllByRole("button");
+      const message = screen.getByText("ここに入るのは？");
+
+      expect(cells.map((cell) => cell.getAttribute("aria-label"))).toEqual([
+        "1行1列 丸 固定",
+        "1行2列 空き",
+        "1行3列 丸 固定",
+      ]);
+      expect(message).toBeTruthy();
+    });
+
+    test("最後の盤面で行き詰まると、3つ目のルールを明かすこと", () => {
+      solveStages(4);
+      // 3つ続かないことと同じ数で決まる6マスを埋めると、残りはそれだけでは決まらない。
+      tapCell(1, 4);
+      tapCell(1, 1);
+      tapCell(1, 1);
+      tapCell(1, 2);
+      tapCell(1, 2);
+      tapCell(2, 2);
+      tapCell(3, 4);
+      tapCell(4, 1);
+
+      const message = screen.getByText("最後のルール");
+      const chips = getRuleChipTexts();
+
+      expect(message).toBeTruthy();
+      expect(chips).toEqual(["3つ続かない", "同じ数", "同じ並びなし"]);
+    });
+
+    test("すべての盤面を解くと終わりの一言を出し、レベル1を遊ぶで本番を始めること", () => {
+      solveStages(5);
+      const message = screen.getByText("ルールはこれで全部");
+      fireEvent.click(screen.getByRole("button", { name: "レベル1を遊ぶ" }));
+
+      expect(message).toBeTruthy();
+      expect(onStartPlay).toHaveBeenCalledOnce();
+    });
+
+    test("終えた後のもう一度で最初の盤面から始めること", () => {
+      solveStages(5);
+      fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
+
+      const message = screen.getByText("マスをタップしてみよう");
+      const chips = getRuleChipTexts();
+
+      expect(message).toBeTruthy();
+      expect(chips).toEqual(["？", "？", "？"]);
+    });
+
+    test("閉じてから開き直すと最初の盤面から始まること", () => {
+      solveStages(1);
       fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
       rerenderTutorial(false);
       rerenderTutorial(true);
 
-      const instruction = screen.getByText(
-        "このマスをタップして、四角を置こう。",
-      );
+      const message = screen.getByText("マスをタップしてみよう");
 
       expect(onClose).toHaveBeenCalledOnce();
-      expect(instruction).toBeTruthy();
+      expect(message).toBeTruthy();
     });
   });
 
   describe("プレイ中に開いた場合", () => {
     beforeEach(() => {
-      render(<TakuzuTutorial open={true} origin="play" onClose={onClose} />);
+      render(<TakuzuTutorial open={true} onClose={onClose} />);
     });
 
-    test("盤面を完成させるとプレイに戻る操作を出すこと", () => {
-      followGuidedSteps();
-      fillRemainingCells();
-      const back = screen.getByRole("button", { name: "プレイに戻る" });
+    test("すべての盤面を解くと、プレイに戻る操作で閉じること", () => {
+      solveStages(5);
+      fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
 
-      expect(back).toBeTruthy();
+      expect(onClose).toHaveBeenCalledOnce();
     });
   });
 });
