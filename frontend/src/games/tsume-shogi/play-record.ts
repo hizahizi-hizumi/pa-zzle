@@ -3,6 +3,10 @@ import {
   type TsumeShogiDifficulty,
 } from "@/games/tsume-shogi/difficulty";
 import {
+  createTsumeShogiResult,
+  type TsumeShogiResult,
+} from "@/games/tsume-shogi/play/use-tsume-shogi-play";
+import {
   copyTsumeShogiGenerationConditions,
   isTsumeShogiProblemIdentity,
   isTsumeShogiRecordedProblemIdentity,
@@ -136,6 +140,46 @@ export function isTsumeShogiPlayRecord(
     isWorkloadOfRecordedIdentity(workload, problemIdentity) &&
     isTsumeShogiPerformance(performance)
   );
+}
+
+/** 記録から作り直した、結果画面に出す内容。 */
+export type TsumeShogiRecordedResult = {
+  difficulty: TsumeShogiDifficulty;
+  problemIdentity: TsumeShogiProblemIdentity;
+  result: TsumeShogiResult;
+};
+
+/**
+ * 記録から結果画面に出す内容を作り直す。
+ * 今の版の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
+ */
+export function restoreTsumeShogiRecordedResult(
+  record: PlayRecord,
+): TsumeShogiRecordedResult | null {
+  if (
+    !isTsumeShogiPlayRecord(record) ||
+    !isTsumeShogiProblemIdentity(record.payload.problemIdentity)
+  ) {
+    return null;
+  }
+
+  const { difficulty, problemIdentity, workload, performance } = record.payload;
+  // 記録に評価に使わない項目が増えても、結果へ持ち込まない。
+  const sessionResult: TsumeShogiSessionResult = {
+    elapsedMs: performance.elapsedMs,
+    wrongCheckCount: performance.wrongCheckCount,
+    refutationViewCount: performance.refutationViewCount,
+    returnCount: performance.returnCount,
+    undoCount: performance.undoCount,
+    restartCount: performance.restartCount,
+    illegalInputCount: performance.illegalInputCount,
+    inputCount: performance.inputCount,
+  };
+  return {
+    difficulty,
+    problemIdentity,
+    result: createTsumeShogiResult(sessionResult, workload),
+  };
 }
 
 export function createTsumeShogiPlayRecord({
