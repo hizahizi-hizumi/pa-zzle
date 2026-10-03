@@ -23,7 +23,7 @@ function createMessage(headline: string) {
 const firstStage: TutorialStage<RuleId> = {
   intro: createMessage("1の導入"),
   solved: createMessage("1の解決"),
-  earnedRuleId: "first",
+  introducedRuleId: "first",
   revealedRule: null,
   guides: [],
 };
@@ -31,7 +31,7 @@ const firstStage: TutorialStage<RuleId> = {
 const secondStage: TutorialStage<RuleId> = {
   intro: createMessage("2の導入"),
   solved: createMessage("2の解決"),
-  earnedRuleId: "second",
+  introducedRuleId: null,
   revealedRule: { id: "second", message: createMessage("2のルール") },
   guides: [],
 };
@@ -39,7 +39,7 @@ const secondStage: TutorialStage<RuleId> = {
 const guidedStage: TutorialStage<RuleId> = {
   intro: createMessage("案内の後"),
   solved: createMessage("案内の解決"),
-  earnedRuleId: null,
+  introducedRuleId: null,
   revealedRule: null,
   guides: [
     { ruleId: "first", message: createMessage("1つ目の案内") },
@@ -90,13 +90,13 @@ function performAll(
 }
 
 describe("startTutorial", () => {
-  test("最初のステージの導入から、ルールを持たずに始めること", () => {
+  test("最初のステージの導入から、そのステージで示すルールを手に入れて始めること", () => {
     const result = startTutorial(fakeTutorial);
 
     expect(result).toEqual({
       stageIndex: 0,
       stageState: 0,
-      earnedRuleIds: [],
+      earnedRuleIds: ["first"],
       guideIndex: 0,
       message: firstStage.intro,
       violated: false,
@@ -128,7 +128,7 @@ describe("performTutorialAction", () => {
     expect(result.violated).toBe(false);
   });
 
-  test("解けたらステージのルールを手に入れ、次へ進むのを待つこと", () => {
+  test("解けたら解けたときの一言を出し、次へ進むのを待つこと", () => {
     const result = performTutorialAction(fakeTutorial, started, "solved");
 
     expect(result).toMatchObject({
@@ -148,13 +148,13 @@ describe("performTutorialAction", () => {
     });
   });
 
-  describe("途中でルールを明かすステージの場合", () => {
+  describe("途中でルールを示すステージの場合", () => {
     const secondStageStarted = advanceTutorialStage(
       fakeTutorial,
       performTutorialAction(fakeTutorial, started, "solved"),
     );
 
-    test("明かしたルールを手に入れ、その説明を出すこと", () => {
+    test("示したルールを手に入れ、その説明を出すこと", () => {
       const result = performTutorialAction(
         fakeTutorial,
         secondStageStarted,
@@ -165,7 +165,7 @@ describe("performTutorialAction", () => {
       expect(result.message).toBe(secondStage.revealedRule?.message);
     });
 
-    test("明かした後にルールに合う手を置くと、導入ではなくルールの説明を出し続けること", () => {
+    test("示した後にルールに合う手を置くと、導入ではなくルールの説明を出し続けること", () => {
       const result = performAll(secondStageStarted, [
         "rule-revealed",
         "violated",
@@ -175,7 +175,7 @@ describe("performTutorialAction", () => {
       expect(result.message).toBe(secondStage.revealedRule?.message);
     });
 
-    test("明かしたルールを解けたときに重ねて手に入れないこと", () => {
+    test("示したルールを解けたときに重ねて手に入れないこと", () => {
       const result = performAll(secondStageStarted, [
         "rule-revealed",
         "solved",
@@ -219,7 +219,7 @@ describe("advanceTutorialStage", () => {
       "solved",
     );
 
-    test("終えること", () => {
+    test("途中で示すルールを示さずに解いても手に入れて、終えること", () => {
       const result = advanceTutorialStage(fakeTutorial, secondSolved);
 
       expect(result).toMatchObject({

@@ -56,7 +56,7 @@ const NEXT_GUIDE_HINT_DELAY_MS = 900;
 /** 解けた盤面の波が終わってから次の盤面へ移るまでの、解けたときの一言を読む間。 */
 const STAGE_SOLVED_PAUSE_MS = 700;
 
-/** どのステージでもマスの大きさを揃え、盤面が 1×3 から 4×4 へ育って見えるようにする。 */
+/** どのステージでもマスの大きさを揃え、盤面が 1×2 から 4×4 へ育って見えるようにする。 */
 const largestLineLength = Math.max(
   ...takuzuTutorial.stages.map(({ givens }) =>
     Math.max(givens.shape.rowCount, givens.shape.columnCount),
@@ -80,7 +80,8 @@ function getBoardFrameStyle(
 /**
  * 決まるマスを示すまでの間。0 ならすぐ示し、`null` なら示さない。
  * 手を引いている間は、示したマスにしか置けないので、違反があっても示し続ける。
- * 手を離した後は手が止まったときだけ示し、違反がある間は直すことに向かわせるため示さない。
+ * 行き詰まってルールを示した直後は、示したルールをどこで使うかをすぐ示す。
+ * それ以外の手を離した後は手が止まったときだけ示し、違反がある間は直すことに向かわせるため示さない。
  */
 function getHintDelayMs(
   progress: TakuzuTutorialProgress,
@@ -90,11 +91,14 @@ function getHintDelayMs(
   if (progress.phase !== "playing") {
     return null;
   }
+  const { lastMove } = progress.stageState;
   if (!guiding) {
-    return progress.violated ? null : idleHintDelayMs;
+    if (progress.violated || lastMove?.violated) {
+      return null;
+    }
+    return lastMove?.revealedRuleId ? 0 : idleHintDelayMs;
   }
-  const reasoned =
-    (progress.stageState.lastMove?.reasonCellIndices.length ?? 0) > 0;
+  const reasoned = (lastMove?.reasonCellIndices.length ?? 0) > 0;
   return reasoned ? NEXT_GUIDE_HINT_DELAY_MS : 0;
 }
 
@@ -126,7 +130,7 @@ function getCellCues(
 }
 
 /**
- * 1×3 から 4×4 へ育つ小さな盤面を順に解かせ、「ここはこれしかない」と気づく手応えの中でルールを手に入れさせる。
+ * 1×2 から 4×4 へ育つ小さな盤面を順に解かせ、示したルールをすぐ使って「ここはこれしかない」と気づく手応えの中で身につけさせる。
  * 盤面・違反の印・解けたときの波は本番と同じ部品を使う。
  */
 export function TakuzuTutorial({
@@ -161,7 +165,10 @@ export function TakuzuTutorial({
     ? null
     : guide !== null
       ? stageState.guidedCellIndex
-      : findTakuzuTutorialHintCellIndex(stageState);
+      : findTakuzuTutorialHintCellIndex(
+          stageState,
+          stageState.lastMove?.revealedRuleId ?? null,
+        );
 
   useEffect(() => {
     if (!open || hintDelayMs === null || hintDelayMs === 0) {

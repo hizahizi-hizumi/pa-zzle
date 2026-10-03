@@ -1,5 +1,5 @@
 /**
- * 小さなパズルを順に解きながら、ルールを自分で見つけていくチュートリアルの、ゲームに依存しない契約。
+ * 小さなパズルを順に解きながら、示されたルールをすぐ使って身につけるチュートリアルの、ゲームに依存しない契約。
  * ステージの進行、手に入れたルール、盤面の上に出す一言を扱い、盤面と判定はゲームが持つ。
  * - `RuleId`: ゲームのルールの識別子。
  * - `StageState`: 1つのステージを解いている途中の盤面の状態。
@@ -21,27 +21,27 @@ export type TutorialRule<RuleId extends string> = {
 /**
  * ステージの最初の数手だけ手を引く案内の1手ぶん。決まるマスを最初から示し、手を引いている間はそのマスへの操作だけを受け付ける。
  * 示したマスに案内どおりの手が置かれたら、次の案内へ進む。
- * - `ruleId`: 示すマスを決めるルール。
+ * - `ruleId`: 示すマスを決めるルール。`null` ならルールによらず、ゲームがステージの目標から示すマスを決める。操作だけを練習するステージに使う。
  * - `message`: 案内している間の一言。
  */
 export type TutorialGuide<RuleId extends string> = {
-  ruleId: RuleId;
+  ruleId: RuleId | null;
   message: TutorialMessage;
 };
 
 /**
- * 1つのステージ。答えは示さず、文言は手の結果に応じて切り替える。
+ * 1つのステージ。ルールは使わせる前に示し、答えは示さず、文言は手の結果に応じて切り替える。
  * - `intro`: ステージを始めたときと、ルールに合う手を置いたとき。案内があるステージでは、案内を終えた後。
  * - `guides`: 最初の数手の案内。順に1つずつ進み、すべて終えたら手を離す。
  * - `solved`: 解けたとき。
- * - `earnedRuleId`: 解けたときに手に入るルール。
- * - `revealedRule`: 解いている途中で明かすルールと、明かしてからの文言。明かした時点で手に入る。
+ * - `introducedRuleId`: ステージを始めるときに示すルール。示した時点で手に入り、`intro` でそのルールを言う。
+ * - `revealedRule`: 必要になる直前まで伏せておき、解いている途中で示すルールと、示してからの文言。示した時点で手に入る。示さずに解けたときは、解けた時点で手に入る。
  */
 export type TutorialStage<RuleId extends string> = {
   intro: TutorialMessage;
   guides: readonly TutorialGuide<RuleId>[];
   solved: TutorialMessage;
-  earnedRuleId: RuleId | null;
+  introducedRuleId: RuleId | null;
   revealedRule: { id: RuleId; message: TutorialMessage } | null;
 };
 
@@ -51,7 +51,7 @@ export type TutorialStage<RuleId extends string> = {
  * - `continued`: ルールに合うところに置いた。まだ解けていない。
  * - `guided`: 案内しているところに、案内どおりの手を置いた。まだ解けていない。次の案内へ進む。
  * - `violated`: ルールに合わないところができた。
- * - `rule-revealed`: ステージの `revealedRule` を明かす局面になった。
+ * - `rule-revealed`: ステージの `revealedRule` を示す局面になった。
  * - `solved`: 解けた。
  */
 export type TutorialMoveOutcome =
@@ -132,7 +132,7 @@ function startStageProgress<
       tutorial.startStage(stage),
       stage.guides[0] ?? null,
     ),
-    earnedRuleIds,
+    earnedRuleIds: earnRule(earnedRuleIds, stage.introducedRuleId),
     guideIndex: 0,
     message: stage.guides[0]?.message ?? stage.intro,
     violated: false,
@@ -165,7 +165,7 @@ function earnRule<RuleId extends string>(
     : [...earnedRuleIds, ruleId];
 }
 
-/** ルールに合う手を置いたときの一言。途中で明かしたルールがあればその説明を、案内の途中ならその案内を出し続ける。 */
+/** ルールに合う手を置いたときの一言。途中で示したルールがあればその説明を、案内の途中ならその案内を出し続ける。 */
 function getGuidingMessage<RuleId extends string>(
   stage: TutorialStage<RuleId>,
   earnedRuleIds: readonly RuleId[],
@@ -303,7 +303,10 @@ export function performTutorialAction<
     case "solved":
       return {
         ...moved,
-        earnedRuleIds: earnRule(progress.earnedRuleIds, stage.earnedRuleId),
+        earnedRuleIds: earnRule(
+          progress.earnedRuleIds,
+          stage.revealedRule?.id ?? null,
+        ),
         message: stage.solved,
         phase: "stage-solved",
       };

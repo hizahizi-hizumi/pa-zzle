@@ -19,14 +19,21 @@ import type { TutorialMoveOutcome } from "@/games/tutorial";
 
 const { deduceCell } = _private;
 
-const [runStage, sandwichStage, countStage, twoRuleStage, finalStage] =
-  takuzuTutorial.stages as [
-    TakuzuTutorialStage,
-    TakuzuTutorialStage,
-    TakuzuTutorialStage,
-    TakuzuTutorialStage,
-    TakuzuTutorialStage,
-  ];
+const [
+  operationStage,
+  runStage,
+  sandwichStage,
+  countStage,
+  twoRuleStage,
+  finalStage,
+] = takuzuTutorial.stages as [
+  TakuzuTutorialStage,
+  TakuzuTutorialStage,
+  TakuzuTutorialStage,
+  TakuzuTutorialStage,
+  TakuzuTutorialStage,
+  TakuzuTutorialStage,
+];
 
 const allRuleIds = [
   "run",
@@ -128,11 +135,23 @@ function place(cellIndex: number, cell: TakuzuCell): TakuzuTutorialAction {
 }
 
 describe("takuzuTutorial.stages", () => {
-  const stageCases = takuzuTutorial.stages.map(
-    (stage, index) => [index + 1, stage] as const,
+  const ruleStageCases = takuzuTutorial.stages.flatMap((stage, index) =>
+    stage.goal === null ? [[index, stage] as const] : [],
   );
 
-  test.each(stageCases)(
+  describe("ステージ0", () => {
+    test("ルールを持たず、目標の盤面で解けること", () => {
+      const result = {
+        ruleIds: operationStage.ruleIds,
+        goal: operationStage.goal,
+      };
+
+      expect(result.ruleIds).toEqual([]);
+      expect(result.goal?.cells).toEqual(["a", "b"]);
+    });
+  });
+
+  test.each(ruleStageCases)(
     "ステージ %i の盤面は3つのルールでただ1つの解を持つこと",
     (_, stage) => {
       const result = listSolutions(stage.givens, allRuleIds);
@@ -175,6 +194,67 @@ describe("takuzuTutorial.stages", () => {
 });
 
 describe("takuzuTutorial.perform", () => {
+  describe("ステージ0で手を引いている場合", () => {
+    const firstGuideState = startGuide(
+      operationStage,
+      takuzuTutorial.startStage(operationStage),
+      0,
+    );
+    const secondGuideState = startGuide(
+      operationStage,
+      performAll(operationStage, [tap(0)], firstGuideState).state,
+      1,
+    );
+
+    test("左のマスから順に、目標と違うマスを示すこと", () => {
+      const result = [
+        firstGuideState.guidedCellIndex,
+        secondGuideState.guidedCellIndex,
+      ];
+
+      expect(result).toEqual([0, 1]);
+    });
+
+    test("左を四角にすると案内どおりの手になり、右を丸に切り替えると解けること", () => {
+      const { outcomes: firstOutcomes } = performAll(
+        operationStage,
+        [tap(0)],
+        firstGuideState,
+      );
+      const { outcomes: secondOutcomes } = performAll(
+        operationStage,
+        [tap(1), tap(1)],
+        secondGuideState,
+      );
+
+      expect(firstOutcomes).toEqual(["guided"]);
+      expect(secondOutcomes).toEqual(["continued", "solved"]);
+    });
+
+    test("示していないマスへの操作は、盤面を変えないこと", () => {
+      const { outcomes } = performAll(
+        operationStage,
+        [tap(1)],
+        firstGuideState,
+      );
+
+      expect(outcomes).toEqual(["ignored"]);
+    });
+  });
+
+  describe("ステージ0で四角を2つ置いた場合", () => {
+    const { outcomes } = performAll(operationStage, [
+      place(0, "a"),
+      place(1, "a"),
+    ]);
+
+    test("ルールに合わないとはせず、目標と違うので解けないこと", () => {
+      const result = outcomes;
+
+      expect(result).toEqual(["continued", "continued"]);
+    });
+  });
+
   describe("ステージ1", () => {
     const { state, outcomes } = performAll(runStage, [tap(2), tap(2)]);
 
@@ -191,6 +271,7 @@ describe("takuzuTutorial.perform", () => {
         cellIndex: 2,
         violated: false,
         reasonCellIndices: [0, 1],
+        revealedRuleId: null,
       });
     });
   });
@@ -378,15 +459,16 @@ describe("takuzuTutorial.perform", () => {
     );
     const { state, outcomes } = performAll(finalStage, actions);
 
-    test("行き詰まった手で同じ並びのルールを明かすこと", () => {
+    test("行き詰まった手で同じ並びのルールを示すこと", () => {
       const result = outcomes;
 
       expect(result.at(-1)).toBe("rule-revealed");
       expect(result.slice(0, -1)).not.toContain("rule-revealed");
       expect(state.ruleIds).toContain("duplicate");
+      expect(state.lastMove?.revealedRuleId).toBe("duplicate");
     });
 
-    test("明かした後は、同じ並びのルールで決まるマスを示せること", () => {
+    test("示した後は、同じ並びのルールで決まるマスを示せること", () => {
       const result = findTakuzuTutorialHintCellIndex(state);
 
       expect(result).not.toBeNull();
@@ -404,7 +486,7 @@ describe("takuzuTutorial.perform", () => {
       place(11, "a"),
     ]);
 
-    test("同じ並びのルールを明かし、重なった行を示すこと", () => {
+    test("同じ並びのルールを示し、重なった行を示すこと", () => {
       const result = getTakuzuTutorialLineViolations(state);
 
       expect(outcomes.at(-1)).toBe("rule-revealed");
