@@ -92,7 +92,7 @@ export function ReflectionDifficultyPreview({
   return (
     <span
       aria-hidden="true"
-      // 最も広いレベル（11列）の帯がプレビュー枠（128px）に収まるマスの大きさにする。
+      // 最も広いレベルの帯がプレビュー枠（128px）に収まるマスの大きさにする。
       className="flex h-14 w-full items-center [--preview-unit:11px] lg:h-28 lg:justify-center lg:[--preview-unit:12px]"
     >
       {/* マスの大きさをどのレベルでもそろえるため、図の幅を帯の列の数に比例させる。 */}
