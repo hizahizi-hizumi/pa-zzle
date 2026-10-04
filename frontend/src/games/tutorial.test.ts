@@ -1,5 +1,6 @@
 import {
   completeTutorial,
+  finishTutorialIntro,
   getCurrentTutorialStep,
   getTutorialMessage,
   performTutorialAction,
@@ -50,6 +51,9 @@ const fakeTutorial: Tutorial<
   start() {
     return 0;
   },
+  goal() {
+    return 10;
+  },
   perform(_situation, state, action) {
     return {
       state: action === "ignored" ? state : state + 1,
@@ -74,7 +78,7 @@ function performAll(
 }
 
 describe("startTutorial", () => {
-  test("最初の手順から、ルールを手に入れずに始めること", () => {
+  test("最初の手順で、ルールを手に入れずに、導入から始めること", () => {
     const result = startTutorial(fakeTutorial);
 
     expect(result).toEqual({
@@ -82,15 +86,40 @@ describe("startTutorial", () => {
       stepIndex: 0,
       earnedRuleIds: [],
       violated: false,
-      phase: "playing",
+      phase: "intro",
     });
   });
 });
 
+describe("finishTutorialIntro", () => {
+  const introducing = startTutorial(fakeTutorial);
+  const playing = finishTutorialIntro(introducing);
+
+  test("導入を終えて、最初の手順から手を引くこと", () => {
+    const result = finishTutorialIntro(introducing);
+
+    expect(result.phase).toBe("playing");
+    expect(getCurrentTutorialStep(fakeTutorial, result)).toBe(operationStep);
+  });
+
+  test("導入の後では進行を変えないこと", () => {
+    const result = finishTutorialIntro(playing);
+
+    expect(result).toBe(playing);
+  });
+});
+
 describe("performTutorialAction", () => {
-  const started = startTutorial(fakeTutorial);
+  const introducing = startTutorial(fakeTutorial);
+  const started = finishTutorialIntro(introducing);
   const released = performAll(started, ["stepped", "stepped", "stepped"]);
   const solved = performAll(released, ["solved"]);
+
+  test("導入の間は手を受け付けないこと", () => {
+    const result = performTutorialAction(fakeTutorial, introducing, "stepped");
+
+    expect(result).toBe(introducing);
+  });
 
   test("盤面が変わらない手では同じ進行を返すこと", () => {
     const result = performTutorialAction(fakeTutorial, started, "ignored");
@@ -141,7 +170,7 @@ describe("performTutorialAction", () => {
 });
 
 describe("completeTutorial", () => {
-  const started = startTutorial(fakeTutorial);
+  const started = finishTutorialIntro(startTutorial(fakeTutorial));
   const solved = performAll(started, ["solved"]);
 
   test("解けた後に、終えたときの操作を待つこと", () => {
@@ -158,10 +187,17 @@ describe("completeTutorial", () => {
 });
 
 describe("getTutorialMessage", () => {
-  const started = startTutorial(fakeTutorial);
+  const introducing = startTutorial(fakeTutorial);
+  const started = finishTutorialIntro(introducing);
   const violated = performAll(started, ["stepped", "violated"]);
   const released = performAll(started, ["stepped", "stepped", "stepped"]);
   const solved = performAll(released, ["solved"]);
+
+  test("導入の間は、導入を終えて最初に出す一言を用意しておくこと", () => {
+    const result = getTutorialMessage(fakeTutorial, introducing, false);
+
+    expect(result).toBe(operationStep.message);
+  });
 
   test("今の手順の一言を出すこと", () => {
     const result = getTutorialMessage(fakeTutorial, started, false);

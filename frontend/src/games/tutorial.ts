@@ -72,6 +72,8 @@ export type Tutorial<
   /** 解き終えたときの一言。 */
   completion: TutorialMessage;
   start: () => BoardState;
+  /** 解き終えた盤面。導入で、何を目指すかを始めの盤面より先に見せる。 */
+  goal: () => BoardState;
   perform: (
     situation: TutorialSituation<RuleId, Step>,
     state: BoardState,
@@ -85,11 +87,12 @@ export type Tutorial<
 };
 
 /**
+ * - `intro`: 開いたときの導入を見せている。操作を受け付けず、導入を終えると最初の手順から手を引く。
  * - `playing`: 盤面を解いている。
  * - `solved`: 解けた。解けた盤面の演出を見せている間。
  * - `completed`: 演出を終え、終えたときの操作を待っている。
  */
-export type TutorialPhase = "playing" | "solved" | "completed";
+export type TutorialPhase = "intro" | "playing" | "solved" | "completed";
 
 /**
  * - `stepIndex`: 今の手順の位置。手順の数と同じなら手を離している。
@@ -149,13 +152,16 @@ export function startTutorial<
       stepIndex: 0,
       earnedRuleIds: [],
       violated: false,
-      phase: "playing",
+      phase: "intro",
     },
     0,
   );
 }
 
-/** 手を引いている手順。手を離した後と、解いている間でなければ `null`。 */
+/**
+ * 手を引いている手順。導入の間は、導入を終えたら手を引く手順を返す。
+ * 手を離した後と、解き終えた後は `null`。
+ */
 export function getCurrentTutorialStep<
   RuleId extends string,
   Step extends TutorialStep<RuleId>,
@@ -165,7 +171,7 @@ export function getCurrentTutorialStep<
   tutorial: Tutorial<RuleId, Step, BoardState, Action>,
   progress: TutorialProgress<RuleId, BoardState>,
 ): Step | null {
-  return progress.phase === "playing"
+  return progress.phase === "intro" || progress.phase === "playing"
     ? (tutorial.steps[progress.stepIndex] ?? null)
     : null;
 }
@@ -199,7 +205,7 @@ export function getTutorialMessage<
   progress: TutorialProgress<RuleId, BoardState>,
   violationSettled: boolean,
 ): TutorialMessage {
-  if (progress.phase !== "playing") {
+  if (progress.phase === "solved" || progress.phase === "completed") {
     return tutorial.completion;
   }
   const situation = getTutorialSituation(tutorial, progress);
@@ -246,6 +252,15 @@ export function performTutorialAction<
     case "solved":
       return { ...moved, phase: "solved" };
   }
+}
+
+/** 導入を終えて、最初の手順から手を引く。 */
+export function finishTutorialIntro<RuleId extends string, BoardState>(
+  progress: TutorialProgress<RuleId, BoardState>,
+): TutorialProgress<RuleId, BoardState> {
+  return progress.phase === "intro"
+    ? { ...progress, phase: "playing" }
+    : progress;
 }
 
 /** 解けた盤面の演出を終えて、終えたときの操作を出す。 */

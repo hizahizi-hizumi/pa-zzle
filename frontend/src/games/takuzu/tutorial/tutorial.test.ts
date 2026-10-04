@@ -15,6 +15,7 @@ import {
   takuzuTutorial,
 } from "@/games/takuzu/tutorial/tutorial";
 import {
+  finishTutorialIntro,
   getTutorialSituation,
   performTutorialAction,
   startTutorial,
@@ -69,7 +70,7 @@ function finishSteps(count: number): Progress {
     .slice(0, count)
     .reduce(
       (progress, step) => performAll(progress, placeSolution(step.cellIndices)),
-      startTutorial(takuzuTutorial),
+      finishTutorialIntro(startTutorial(takuzuTutorial)),
     );
 }
 
@@ -161,6 +162,12 @@ describe("takuzuTutorial の盤面", () => {
     expect(result).toEqual([solution.cells.join("")]);
   });
 
+  test("導入で見せる解き終えた盤面は、解であること", () => {
+    const result = takuzuTutorial.goal().board;
+
+    expect(result).toEqual(solution);
+  });
+
   test("操作の手順は、1つ目で1回タップした四角、2つ目で2回タップした丸を置くこと", () => {
     const result = takuzuTutorial.steps
       .slice(0, operationStepCount)
@@ -213,7 +220,7 @@ describe("takuzuTutorial の盤面", () => {
 });
 
 describe("takuzuTutorial.perform", () => {
-  const started = startTutorial(takuzuTutorial);
+  const started = finishTutorialIntro(startTutorial(takuzuTutorial));
   const afterFirstStep = finishSteps(1);
   const released = finishSteps(takuzuTutorial.steps.length);
 

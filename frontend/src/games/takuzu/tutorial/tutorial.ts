@@ -380,6 +380,10 @@ function startTakuzuTutorial(): TakuzuTutorialBoardState {
   return { board: givens, moveCount: 0, lastMove: null };
 }
 
+function getTakuzuTutorialGoal(): TakuzuTutorialBoardState {
+  return { board: solution, moveCount: 0, lastMove: null };
+}
+
 function performTakuzuTutorialAction(
   { step, earnedRuleIds }: TakuzuTutorialSituation,
   state: TakuzuTutorialBoardState,
@@ -640,6 +644,7 @@ export const takuzuTutorial: Tutorial<
     detail: "本番は 8×8 で、ルールは同じです",
   },
   start: startTakuzuTutorial,
+  goal: getTakuzuTutorialGoal,
   perform: performTakuzuTutorialAction,
   describeViolation: describeTakuzuTutorialViolation,
 };
