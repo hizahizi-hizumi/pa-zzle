@@ -1,5 +1,7 @@
 import {
   applyTsumeShogiMove,
+  canTsumeShogiMovePromote,
+  explainTsumeShogiIllegalMove,
   formatTsumeShogiMoveUsi,
   isTsumeShogiCheckmate,
   isTsumeShogiDefenderInCheck,
@@ -180,6 +182,84 @@ describe("打歩詰", () => {
       expect(checkmate).toBe(true);
     });
   });
+});
+
+describe("explainTsumeShogiIllegalMove", () => {
+  // 玉1一、攻方の金2三・桂3三・歩5七・香8四・桂7五・銀4六。持駒は歩・香・桂。
+  const position = createTsumeShogiPosition("8k/9/6NG1/1L7/2N6/5S3/4P4/9/9", {
+    pawn: 1,
+    lance: 1,
+    knight: 1,
+  });
+  const cases = [
+    ["合法手", "4f4e", null],
+    ["歩のある筋に歩を打つ", "P*5c", "double-pawn"],
+    ["歩を打って詰ませる", "P*1b", "pawn-drop-mate"],
+    ["桂を2段目に打つ", "N*5b", "dead-piece"],
+    ["香を1段目に打つ", "L*5a", "dead-piece"],
+    ["香が1段目へ成らずに進む", "8d8a", "dead-piece"],
+    ["桂が駒の動きで届かない升へ動く", "7e7d", "unreachable"],
+    ["駒のある升に打つ", "P*2c", "unreachable"],
+    ["銀が敵陣の外で成る", "4f4e+", "unreachable"],
+  ] as const;
+
+  test.each(cases)("%s手（%s）の理由を返すこと", (_, usi, expected) => {
+    const reason = explainTsumeShogiIllegalMove(
+      position,
+      parseTsumeShogiMoveUsi(usi),
+    );
+
+    expect(reason).toBe(expected);
+  });
+
+  describe("持駒に無い駒を打つ場合", () => {
+    const withoutHand = createTsumeShogiPosition(
+      "8k/9/6NG1/1L7/2N6/5S3/4P4/9/9",
+      {},
+    );
+    const dropCases = [
+      ["歩のある筋への歩", "P*5c"],
+      ["2段目への桂", "N*5b"],
+    ] as const;
+
+    test.each(dropCases)(
+      "%s（%s）も、駒が無いので打てない理由を返すこと",
+      (_, usi) => {
+        const reason = explainTsumeShogiIllegalMove(
+          withoutHand,
+          parseTsumeShogiMoveUsi(usi),
+        );
+
+        expect(reason).toBe("unreachable");
+      },
+    );
+  });
+});
+
+describe("canTsumeShogiMovePromote", () => {
+  const cases = [
+    ["攻方の銀が敵陣へ入る", "attacker", "silver", "4d4c", true],
+    ["攻方の銀が敵陣から出る", "attacker", "silver", "4c4d", true],
+    ["攻方の銀が敵陣の外で動く", "attacker", "silver", "4e4d", false],
+    ["攻方の金が敵陣へ入る", "attacker", "gold", "4d4c", false],
+    ["攻方の龍が敵陣で動く", "attacker", "dragon", "4c4b", false],
+    ["攻方が銀を敵陣に打つ", "attacker", "silver", "S*4c", false],
+    ["玉方の銀が攻方の陣へ入る", "defender", "silver", "4f4g", true],
+    ["玉方の銀が玉方の陣で動く", "defender", "silver", "4b4c", false],
+  ] as const;
+
+  test.each(cases)(
+    "%s手の成れるかどうかを返すこと",
+    (_, side, pieceType, usi, expected) => {
+      const promotable = canTsumeShogiMovePromote(
+        side,
+        pieceType,
+        parseTsumeShogiMoveUsi(usi),
+      );
+
+      expect(promotable).toBe(expected);
+    },
+  );
 });
 
 describe("listTsumeShogiAttackerChecks", () => {

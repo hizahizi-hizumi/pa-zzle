@@ -43,6 +43,16 @@ export const tsumeShogiPieceNames = {
 export const tsumeShogiHandPieceNames: Record<TsumeShogiHandPieceType, string> =
   tsumeShogiPieceNames;
 
+/** 成った駒の元の駒。棋譜で「成」と書くときに元の駒の名前を使う。 */
+export const tsumeShogiUnpromotedPieceTypes = {
+  dragon: "rook",
+  horse: "bishop",
+  promSilver: "silver",
+  promKnight: "knight",
+  promLance: "lance",
+  promPawn: "pawn",
+} as const satisfies Partial<Record<TsumeShogiPieceType, TsumeShogiPieceType>>;
+
 const rankKanji = ["一", "二", "三", "四", "五", "六", "七", "八", "九"];
 
 /** 段の漢数字。 */

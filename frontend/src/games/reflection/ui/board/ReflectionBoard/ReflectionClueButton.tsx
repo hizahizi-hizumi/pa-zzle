@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-
+import type { TapHandlers } from "@/components/touch-tap";
 import type {
   ReflectionClue,
   ReflectionEntry,
@@ -13,7 +13,6 @@ import {
   reflectionOutcomeToneClassNames,
   reflectionToneClassNames,
 } from "@/games/reflection/ui/reflection-tone";
-import type { TapHandlers } from "@/games/reflection/ui/touch-tap";
 import { cn } from "@/lib/utils";
 
 type ReflectionClueButtonProps = {

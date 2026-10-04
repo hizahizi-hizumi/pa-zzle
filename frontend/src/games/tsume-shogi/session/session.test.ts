@@ -9,7 +9,6 @@ import {
   canUndoTsumeShogiSession,
   chooseTsumeShogiSessionPromotion,
   createTsumeShogiSession,
-  getTsumeShogiSessionLastMove,
   getTsumeShogiSessionPhase,
   getTsumeShogiSessionPosition,
   getTsumeShogiSessionRemainingPlies,
@@ -96,9 +95,9 @@ describe("tapTsumeShogiSessionSquare", () => {
       expect(formatTsumeShogiMoveUsi(session.turns[0]!.defenderMove!)).toBe(
         "2a1b",
       );
-      expect(
-        formatTsumeShogiMoveUsi(getTsumeShogiSessionLastMove(session)!),
-      ).toBe("S*2b");
+      expect(formatTsumeShogiMoveUsi(session.turns[0]!.attackerMove)).toBe(
+        "S*2b",
+      );
       expect(getTsumeShogiSessionRemainingPlies(session)).toBe(2);
     });
   });
@@ -230,7 +229,7 @@ describe("tapTsumeShogiSessionSquare", () => {
       const session = tapTsumeShogiSessionSquare(selected, square(6, 5), 2_000);
 
       expect(session.turns).toHaveLength(0);
-      expect(session.rejection?.reason).toBe("illegal");
+      expect(session.rejection?.reason).toBe("unreachable");
       expect(session.illegalInputCount).toBe(1);
     });
   });
@@ -376,8 +375,12 @@ describe("playTsumeShogiSessionDefenderReply", () => {
 
       expect(getTsumeShogiSessionPhase(session)).toBe("attacker");
       expect(
-        formatTsumeShogiMoveUsi(getTsumeShogiSessionLastMove(session)!),
-      ).toBe("2a1b");
+        formatTsumeShogiPosition(getTsumeShogiSessionPosition(session)),
+      ).toBe(
+        formatTsumeShogiPosition(
+          afterCorrectCheck.turns[0]!.positionAfterDefense,
+        ),
+      );
       expect(session.refutationViewCount).toBe(0);
       expect(getTsumeShogiSessionRemainingPlies(session)).toBe(1);
     });
