@@ -169,7 +169,7 @@ export function GameSelectionGallery({
                       }`}
                     />
                   </svg>
-                  <span className="absolute inset-[22%]">
+                  <span className="absolute inset-[14%]">
                     <GamePictogram svg={game.pictogramSvg} />
                   </span>
                 </button>
