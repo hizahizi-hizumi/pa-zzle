@@ -1,10 +1,9 @@
 import {
-  getTakuzuGridLineCellIndices,
-  getTakuzuSquareShape,
-  listTakuzuGridLines,
+  getTakuzuLineCellIndices,
+  getTakuzuLineCells,
+  listTakuzuLines,
   type TakuzuBoard,
   type TakuzuCell,
-  type TakuzuGrid,
   type TakuzuLine,
   type TakuzuTile,
 } from "@/games/takuzu/puzzle/board";
@@ -49,11 +48,7 @@ function findRunCellIndicesInLine(
   return runCellIndices;
 }
 
-/** 同じ数のルールは偶数の長さの並びにだけ成り立つ。奇数になるのは1行だけのチュートリアル盤面に限る。 */
 function isLineOverfilled(cells: readonly TakuzuCell[]): boolean {
-  if (cells.length % 2 !== 0) {
-    return false;
-  }
   const capacity = cells.length / 2;
   return takuzuTiles.some(function exceedsCapacity(tile) {
     return cells.filter((cell) => cell === tile).length > capacity;
@@ -64,18 +59,10 @@ function isEveryCellFilled(cells: readonly TakuzuCell[]): boolean {
   return cells.every((cell) => cell !== null);
 }
 
-function getGridLineCells(grid: TakuzuGrid, line: TakuzuLine): TakuzuCell[] {
-  return getTakuzuGridLineCellIndices(grid.shape, line).map(
-    function getCell(cellIndex) {
-      return grid.cells[cellIndex] ?? null;
-    },
-  );
-}
-
-function findDuplicateLines(grid: TakuzuGrid): TakuzuLine[] {
+function findDuplicateLines(board: TakuzuBoard): TakuzuLine[] {
   const linesByPattern = new Map<string, TakuzuLine[]>();
-  for (const line of listTakuzuGridLines(grid.shape)) {
-    const cells = getGridLineCells(grid, line);
+  for (const line of listTakuzuLines(board.size)) {
+    const cells = getTakuzuLineCells(board, line);
     if (!isEveryCellFilled(cells)) {
       continue;
     }
@@ -87,15 +74,14 @@ function findDuplicateLines(grid: TakuzuGrid): TakuzuLine[] {
     .flat();
 }
 
-/** 正方形に限らないマスの並びのルール違反。`findTakuzuRuleViolations` と同じ規則で判定する。 */
-export function findTakuzuGridRuleViolations(
-  grid: TakuzuGrid,
+export function findTakuzuRuleViolations(
+  board: TakuzuBoard,
 ): TakuzuRuleViolations {
   const runCellIndices = new Set<number>();
   const overfilledLines: TakuzuLine[] = [];
-  for (const line of listTakuzuGridLines(grid.shape)) {
-    const cellIndices = getTakuzuGridLineCellIndices(grid.shape, line);
-    const cells = getGridLineCells(grid, line);
+  for (const line of listTakuzuLines(board.size)) {
+    const cellIndices = getTakuzuLineCellIndices(board.size, line);
+    const cells = getTakuzuLineCells(board, line);
     for (const cellIndex of findRunCellIndicesInLine(cells, cellIndices)) {
       runCellIndices.add(cellIndex);
     }
@@ -107,17 +93,8 @@ export function findTakuzuGridRuleViolations(
   return {
     runCellIndices: [...runCellIndices].sort((left, right) => left - right),
     overfilledLines,
-    duplicateLines: findDuplicateLines(grid),
+    duplicateLines: findDuplicateLines(board),
   };
-}
-
-export function findTakuzuRuleViolations(
-  board: TakuzuBoard,
-): TakuzuRuleViolations {
-  return findTakuzuGridRuleViolations({
-    shape: getTakuzuSquareShape(board.size),
-    cells: board.cells,
-  });
 }
 
 export function hasTakuzuRuleViolation(

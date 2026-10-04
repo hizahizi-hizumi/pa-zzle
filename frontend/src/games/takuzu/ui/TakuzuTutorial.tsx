@@ -252,8 +252,7 @@ export function TakuzuTutorial({
           onComplete={handleClearAnimationComplete}
         >
           <TakuzuBoard
-            rowCount={size}
-            columnCount={size}
+            size={size}
             cells={getTakuzuTutorialCellViews(situation, boardState)}
             lineViolations={getTakuzuTutorialLineViolations(
               situation,

@@ -130,8 +130,7 @@ export function TakuzuPlay({
             onComplete={onClearAnimationComplete}
           >
             <TakuzuBoard
-              rowCount={size}
-              columnCount={size}
+              size={size}
               cells={cells}
               lineViolations={lineViolations}
               disabled={progress !== "playing"}
