@@ -53,6 +53,7 @@ function renderAt(path: string): void {
           path="/puzzles/tsume-shogi/play/:difficulty"
           element={<TsumeShogiPlayView />}
         />
+        <Route path="/puzzles/tsume-shogi" element={<p>難易度選択画面</p>} />
         <Route path="/" element={<p>ホーム画面</p>} />
       </Routes>
     </MemoryRouter>,
@@ -183,6 +184,19 @@ describe("TsumeShogiPlayView", () => {
       expect(squares).toHaveLength(81);
     });
 
+    test("戻るボタンで難易度選択画面へ移ること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
+
+      expect(screen.getByText("難易度選択画面")).toBeTruthy();
+    });
+
+    test("メニューの難易度変更で難易度選択画面へ移ること", () => {
+      openMenu();
+      fireEvent.click(screen.getByRole("menuitem", { name: "難易度変更" }));
+
+      expect(screen.getByText("難易度選択画面")).toBeTruthy();
+    });
+
     test("メニューのホームでホームへ移ること", () => {
       openMenu();
       fireEvent.click(screen.getByRole("menuitem", { name: "ホーム" }));
@@ -210,12 +224,12 @@ describe("TsumeShogiPlayView", () => {
       renderAt("/puzzles/tsume-shogi/play/9");
     });
 
-    test("選べない難易度であることを示しホームへ戻る導線を出すこと", () => {
+    test("選べない難易度であることを示し難易度選択へ戻る導線を出すこと", () => {
       const message = screen.getByText("この難易度は選べません");
-      const backLink = screen.getByRole("link", { name: "ホームへ戻る" });
+      const backLink = screen.getByRole("link", { name: "難易度選択へ戻る" });
 
       expect(message).toBeTruthy();
-      expect(backLink.getAttribute("href")).toBe("/");
+      expect(backLink.getAttribute("href")).toBe("/puzzles/tsume-shogi");
     });
   });
 

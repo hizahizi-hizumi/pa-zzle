@@ -3,6 +3,7 @@
  * 流用しない。駒は盤の地の色によらず淡い地に濃い文字で描き、ダークでも同じ読みやすさにする。
  * - `boardSlab`: 盤の木の縁。筋・段の表記を載せ、少し影を落として盤の厚みを見せる。
  * - `boardGrain`: 升の地に重ねる淡い木目。罫線や駒より前に出ない濃さにする。
+ * - `boardEdge`: 盤の一部を切り出した図の、本当の盤の端。盤の外枠（`boardOutline`）と同じ色。
  * - `boardStar`: 星（盤の中央の3×3を囲む4点）。罫線と同じ色相で少し濃くする。
  * - `komadai`: 駒台。玉方・攻方の持駒を盤の外の台に載せて見せる。盤の縁より淡い木の色に、内側の影で窪みを付ける。
  * - `pieceFace*`: 駒の面。上を明るく下を少し濃くして、柘植の駒の面の丸みを見せる。
@@ -22,6 +23,7 @@ export const tsumeShogiToneClassNames = {
     "bg-[repeating-linear-gradient(90deg,rgb(140_90_40/0)_0_5px,rgb(140_90_40/0.05)_5px_6px,rgb(140_90_40/0)_6px_13px)] dark:bg-[repeating-linear-gradient(90deg,rgb(0_0_0/0)_0_5px,rgb(0_0_0/0.1)_5px_6px,rgb(0_0_0/0)_6px_13px)]",
   boardLine: "border-[#7a5228]/50 dark:border-[#d9b98c]/30",
   boardOutline: "outline-[#6b4520]/85 dark:outline-[#d9b98c]/60",
+  boardEdge: "border-[#6b4520]/85 dark:border-[#d9b98c]/60",
   boardStar: "bg-[#6b4520]/80 dark:bg-[#d9b98c]/60",
   coordinate: "text-[#5c3b1a] dark:text-[#d9b98c]/80",
   komadai:
