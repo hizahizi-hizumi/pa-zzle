@@ -78,18 +78,18 @@ type TakuzuDeduction = {
 };
 
 /**
- * 手順で四角と丸を2つずつ置いた後は、3つのルールで1つずつ決まっていき、解はこの1つになる。
+ * 最初に置かれたマスだけで、3つのルールの下で解はこの1つに決まる。
  *
  * ```text
  * 最初    解
  * .A..   AABB
- * ....   BAAB
- * B..A   BBAA
- * ..B.   ABBA
+ * ....   ABAB
+ * B..A   BABA
+ * BB..   BBAA
  * ```
  */
-const givens = parseTakuzuBoard([".A..", "....", "B..A", "..B."]);
-const solution = parseTakuzuBoard(["AABB", "BAAB", "BBAA", "ABBA"]);
+const givens = parseTakuzuBoard([".A..", "....", "B..A", "BB.."]);
+const solution = parseTakuzuBoard(["AABB", "ABAB", "BABA", "BBAA"]);
 
 /** 1始まりの行・列で書いたマス。 */
 function cellAt(row: number, column: number): number {
@@ -98,10 +98,10 @@ function cellAt(row: number, column: number): number {
 
 /**
  * 1行目の四角を自分で置いて四角を2つ並べ、その隣・行の残りと、ルールを1つずつ使って埋めていく。
- * 丸の練習で置く1列目の丸は、下の固定の丸と並び、縦に3つ続かないことで決まるマスを作る。
- * 同じ並びの行・列を作れないことは、4行目 `A.B.` を、そろった1行目 `AABB` と同じにしない入れ方で示す。
- * 4行目の2マスはどちらも、3つ続かないことと同じ数だけでは決まらない。
- * 手順を終えると2行目の3マスが残り、3つのルールで1つずつ決まる。
+ * 丸の練習で置く4列目の丸は、4列目の同じ数で決まるマスを作る。
+ * 同じ並びの行・列を作れないことは、2行目 `A..B` を、真上でそろった1行目 `AABB` と同じにしない入れ方で示す。
+ * 2行目の2マスはどちらも、3つ続かないことと同じ数だけでは決まらない。
+ * 手順を終えると3行目の2マスが残り、ルールで1つずつ決まる。
  */
 const steps: readonly TakuzuTutorialStep[] = [
   {
@@ -115,7 +115,7 @@ const steps: readonly TakuzuTutorialStep[] = [
   {
     message: { headline: "2回タップすると、丸になります", detail: null },
     introducedRuleId: null,
-    cellIndices: [cellAt(2, 1)],
+    cellIndices: [cellAt(2, 4)],
   },
   {
     message: { headline: "同じものは、3つ続けて並べられません", detail: null },
@@ -125,30 +125,33 @@ const steps: readonly TakuzuTutorialStep[] = [
   {
     message: { headline: "縦にも、3つ続けて並べられません", detail: null },
     introducedRuleId: null,
-    cellIndices: [cellAt(4, 1)],
+    cellIndices: [cellAt(2, 1)],
   },
   {
-    message: { headline: "1つの行の四角と丸は、同じ数ずつです", detail: null },
+    message: { headline: "行の四角と丸は、同じ数ずつです", detail: null },
     introducedRuleId: "count",
     cellIndices: [cellAt(1, 4)],
   },
   {
     message: { headline: "列も、四角と丸は同じ数ずつです", detail: null },
     introducedRuleId: null,
-    cellIndices: [cellAt(3, 3)],
+    cellIndices: [cellAt(4, 4)],
   },
   {
-    message: { headline: "ここまでのルールで、ここも決まります", detail: null },
+    message: {
+      headline: "このマスも、ここまでのルールで決まります",
+      detail: null,
+    },
     introducedRuleId: null,
-    cellIndices: [cellAt(3, 2)],
+    cellIndices: [cellAt(4, 3)],
   },
   {
     message: {
       headline: "同じ並びの行・列は作れません",
-      detail: "ルールはこれで全部です",
+      detail: "上の行と見比べてください",
     },
     introducedRuleId: "duplicate",
-    cellIndices: [cellAt(4, 2), cellAt(4, 4)],
+    cellIndices: [cellAt(2, 2), cellAt(2, 3)],
   },
 ];
 

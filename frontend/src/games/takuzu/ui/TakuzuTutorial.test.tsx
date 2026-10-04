@@ -14,23 +14,22 @@ type CellPlacement = readonly [row: number, column: number, tile: "A" | "B"];
 /** 手順ごとに印を付けるマスと、その解。四角は1回、丸は2回タップして置く。 */
 const stepPlacements: readonly (readonly CellPlacement[])[] = [
   [[1, 1, "A"]],
-  [[2, 1, "B"]],
+  [[2, 4, "B"]],
   [[1, 3, "B"]],
-  [[4, 1, "A"]],
+  [[2, 1, "A"]],
   [[1, 4, "B"]],
-  [[3, 3, "A"]],
-  [[3, 2, "B"]],
+  [[4, 4, "A"]],
+  [[4, 3, "A"]],
   [
-    [4, 2, "B"],
-    [4, 4, "A"],
+    [2, 2, "B"],
+    [2, 3, "A"],
   ],
 ];
 
 /** 手順を終えた後に残るマスと、その解。 */
 const remainingPlacements: readonly CellPlacement[] = [
-  [2, 2, "A"],
-  [2, 3, "A"],
-  [2, 4, "B"],
+  [3, 2, "A"],
+  [3, 3, "B"],
 ];
 
 /** ルールに合わない手に、揺れと違反の一言で応えるまでの間。 */
@@ -184,7 +183,7 @@ describe("TakuzuTutorial", () => {
 
       expect(label).toBe("1行1列 四角");
       expect(message).toBeTruthy();
-      expect(hinted).toEqual(["2行1列"]);
+      expect(hinted).toEqual(["2行4列"]);
     });
 
     test("印の無いマスを押しても、何も置かず、印を付け直すこと", () => {
@@ -271,7 +270,7 @@ describe("TakuzuTutorial", () => {
         const hinted = getHintedCellPositions();
 
         expect(hintedRightAfter).toEqual([]);
-        expect(hinted).toEqual(["4行1列"]);
+        expect(hinted).toEqual(["2行1列"]);
       });
     });
 
@@ -281,7 +280,7 @@ describe("TakuzuTutorial", () => {
       });
 
       test("ルールを示してチップに加え、今示しているルールとして目立たせること", () => {
-        const message = screen.getByText("1つの行の四角と丸は、同じ数ずつです");
+        const message = screen.getByText("行の四角と丸は、同じ数ずつです");
         const chips = getRuleChipTexts();
         const currentChips = getCurrentRuleChipTexts();
 
@@ -297,7 +296,7 @@ describe("TakuzuTutorial", () => {
         advanceTime(nextStepCueDelayMs);
       });
 
-      test("ルールを示してチップに加え、4行目の2マスに印を付けること", () => {
+      test("ルールを示してチップに加え、2行目の2マスに印を付けること", () => {
         const message = screen.getByText("同じ並びの行・列は作れません");
         const chips = getRuleChipTexts();
         const currentChips = getCurrentRuleChipTexts();
@@ -306,16 +305,16 @@ describe("TakuzuTutorial", () => {
         expect(message).toBeTruthy();
         expect(chips).toEqual(["3つ続かない", "同じ数", "同じ並びなし"]);
         expect(currentChips).toEqual(["同じ並びなし"]);
-        expect(hinted).toEqual(["4行2列", "4行4列"]);
+        expect(hinted).toEqual(["2行2列", "2行3列"]);
       });
 
-      test("1行目と同じ並びにすると、1行目と同じ並びになっていることを伝えること", () => {
-        tapCell(4, 2);
-        tapCell(4, 4);
-        tapCell(4, 4);
+      test("上の行と同じ並びにすると、上の行と同じ並びになっていることを伝えること", () => {
+        tapCell(2, 2);
+        tapCell(2, 3);
+        tapCell(2, 3);
         advanceTime(violationReactionDelayMs);
 
-        const message = screen.getByText("1行目と同じ並びになっています");
+        const message = screen.getByText("上の行と同じ並びになっています");
 
         expect(message).toBeTruthy();
       });
@@ -340,11 +339,11 @@ describe("TakuzuTutorial", () => {
       });
 
       test("どのマスにも置けること", () => {
-        tapCell(2, 2);
+        tapCell(3, 2);
 
-        const label = getCell(2, 2).getAttribute("aria-label");
+        const label = getCell(3, 2).getAttribute("aria-label");
 
-        expect(label).toBe("2行2列 四角");
+        expect(label).toBe("3行2列 四角");
       });
     });
 

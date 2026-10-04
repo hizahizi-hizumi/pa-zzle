@@ -142,7 +142,6 @@ const introducingStepCases = ruleStepCases.filter(
 );
 
 describe("takuzuTutorial の盤面", () => {
-  const operationBoard = finishSteps(operationStepCount).boardState.board;
   const releasedBoard = finishSteps(takuzuTutorial.steps.length).boardState
     .board;
 
@@ -156,8 +155,8 @@ describe("takuzuTutorial の盤面", () => {
     expect(changedGivens).toEqual([]);
   });
 
-  test("操作の手順で置くタイルを加えると、3つのルールに合う埋め方が解だけになること", () => {
-    const result = listSolutions(operationBoard);
+  test("最初のタイルだけで、3つのルールに合う埋め方が解だけになること", () => {
+    const result = listSolutions(givens);
 
     expect(result).toEqual([solution.cells.join("")]);
   });
@@ -238,8 +237,8 @@ describe("takuzuTutorial.perform", () => {
   });
 
   test("2つ目の手順のマスは、2回タップして丸にすると次の手順へ進むこと", () => {
-    const once = performAll(afterFirstStep, [tap(cellAt(2, 1))]);
-    const twice = performAll(once, [tap(cellAt(2, 1))]);
+    const once = performAll(afterFirstStep, [tap(cellAt(2, 4))]);
+    const twice = performAll(once, [tap(cellAt(2, 4))]);
 
     expect(once.stepIndex).toBe(1);
     expect(twice.stepIndex).toBe(2);
@@ -285,20 +284,20 @@ describe("takuzuTutorial.perform", () => {
     const duplicateStep = finishSteps(duplicateStepIndex);
 
     test("片方のマスを置いても進まず、もう片方に印を付け続けること", () => {
-      const result = performAll(duplicateStep, placeSolution([cellAt(4, 2)]));
+      const result = performAll(duplicateStep, placeSolution([cellAt(2, 2)]));
       const stepCellIndices = getTakuzuTutorialStepCellIndices(
         getTutorialSituation(takuzuTutorial, result),
         result.boardState,
       );
 
       expect(result.stepIndex).toBe(duplicateStepIndex);
-      expect(stepCellIndices).toEqual([cellAt(4, 4)]);
+      expect(stepCellIndices).toEqual([cellAt(2, 3)]);
     });
 
     test("1行目と同じ並びにすると、ルールに合わないとして重なった行を示すこと", () => {
       const result = performAll(duplicateStep, [
-        place(cellAt(4, 2), "a"),
-        place(cellAt(4, 4), "b"),
+        place(cellAt(2, 2), "a"),
+        place(cellAt(2, 3), "b"),
       ]);
       const lineViolations = getTakuzuTutorialLineViolations(
         getTutorialSituation(takuzuTutorial, result),
@@ -308,7 +307,7 @@ describe("takuzuTutorial.perform", () => {
       expect(result.violated).toBe(true);
       expect(lineViolations).toEqual([
         { axis: "row", index: 0, overfilled: false, duplicated: true },
-        { axis: "row", index: 3, overfilled: false, duplicated: true },
+        { axis: "row", index: 1, overfilled: false, duplicated: true },
       ]);
     });
   });
@@ -374,11 +373,11 @@ describe("takuzuTutorial.describeViolation", () => {
       },
     ],
     [
-      "離れた行と同じ並びにした",
+      "上の行と同じ並びにした",
       takuzuTutorial.steps.length - 1,
-      [place(cellAt(4, 2), "a"), place(cellAt(4, 4), "b")],
+      [place(cellAt(2, 2), "a"), place(cellAt(2, 3), "b")],
       {
-        headline: "1行目と同じ並びになっています",
+        headline: "上の行と同じ並びになっています",
         detail: "同じ並びの行・列は作れません",
       },
     ],
