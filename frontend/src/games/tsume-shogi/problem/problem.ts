@@ -97,10 +97,36 @@ export type TsumeShogiProblemIdentity = {
   conditions: TsumeShogiGenerationConditions;
 };
 
+/**
+ * 記録に残した問題の識別情報。
+ * 生成器の版が今と違う記録も読み戻せるよう、版と生成条件の形は今の生成器に限らない。
+ * 今の生成器で扱えるかは `isTsumeShogiProblemIdentity` で確かめる。
+ */
+export type TsumeShogiRecordedProblemIdentity = {
+  generatorVersion: string;
+  seed: ProblemSeed;
+  conditions: Readonly<Record<string, unknown>>;
+};
+
 /** 問題と、それを再現するための情報。 */
 export type TsumeShogiIdentifiedProblem = {
   problem: TsumeShogiProblem;
   identity: TsumeShogiProblemIdentity;
+};
+
+/**
+ * 問題を読み切る作業の量。速さの基準時間を問題ごとに決めるために使い、難易度そのものは表さない。
+ * 値は生成時の難易度分析（`analyzeTsumeShogiDifficulty`）の特徴で、問題集に持たせる。
+ * - `plies`: 手数。攻方が指す手の数は `(plies + 1) / 2`。
+ * - `rootChecks`: 初手の合法な王手の数（読み始めの候補）。
+ * - `plausibleWrong`: すべての判断地点の、もっともらしい誤王手（すぐには崩れない誤王手）の数の和。
+ * - `deepDecoyCount`: すべての判断地点の、深い紛れ（反証が4手目以降まで見えない誤王手）の数の和。
+ */
+export type TsumeShogiSolveWorkload = {
+  plies: number;
+  rootChecks: number;
+  plausibleWrong: number;
+  deepDecoyCount: number;
 };
 
 /**
@@ -278,6 +304,72 @@ export function isTsumeShogiProblemIdentity(
       isTsumeShogiBaseMate(value.conditions.baseMate)) &&
     (value.conditions.baseKingArea === undefined ||
       isTsumeShogiBaseKingArea(value.conditions.baseKingArea))
+  );
+}
+
+/**
+ * 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。
+ * 今の生成器の版なら、今の生成器で扱える識別情報であることまで確かめる。
+ */
+export function isTsumeShogiRecordedProblemIdentity(
+  value: unknown,
+): value is TsumeShogiRecordedProblemIdentity {
+  if (!isRecordObject(value) || !isRecordObject(value.conditions)) {
+    return false;
+  }
+
+  const { generatorVersion, seed } = value;
+  if (generatorVersion === TSUME_SHOGI_GENERATOR_VERSION) {
+    return isTsumeShogiProblemIdentity(value);
+  }
+  return (
+    typeof generatorVersion === "string" &&
+    generatorVersion.length > 0 &&
+    typeof seed === "string" &&
+    seed.length > 0
+  );
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
+/**
+ * 記録から読み戻した値が、作業の量として読めるかを確かめる。
+ * 手数は正の奇数で、初手の王手は作意の初手があるので1以上。深い紛れはもっともらしい誤王手に含まれ、
+ * もっともらしい誤王手は誤王手なので、どの判断地点でも王手の数より少ない（初手以外の判断地点の王手の数は持たないので、
+ * 和どうしの大小までは確かめない）。生成器の版が今と違う記録も読めるよう、手数は今の生成器の範囲に限らない。
+ */
+export function isTsumeShogiSolveWorkload(
+  value: unknown,
+): value is TsumeShogiSolveWorkload {
+  if (!isRecordObject(value)) {
+    return false;
+  }
+
+  const { plies, rootChecks, plausibleWrong, deepDecoyCount } = value;
+  return (
+    isNonNegativeInteger(plies) &&
+    plies % 2 === 1 &&
+    isNonNegativeInteger(rootChecks) &&
+    rootChecks >= 1 &&
+    isNonNegativeInteger(plausibleWrong) &&
+    isNonNegativeInteger(deepDecoyCount) &&
+    deepDecoyCount <= plausibleWrong
+  );
+}
+
+/** 作業の量が、識別情報の生成条件（手数と初手の王手の数の範囲）と食い違わないか。 */
+export function isTsumeShogiWorkloadOfIdentity(
+  workload: TsumeShogiSolveWorkload,
+  identity: TsumeShogiProblemIdentity,
+): boolean {
+  const { plies, rootChecks } = identity.conditions;
+  return (
+    workload.plies === plies &&
+    (rootChecks === undefined ||
+      (rootChecks.minimum <= workload.rootChecks &&
+        workload.rootChecks <= rootChecks.maximum))
   );
 }
 
