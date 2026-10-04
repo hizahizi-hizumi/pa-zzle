@@ -21,8 +21,8 @@ type PieceEdges = {
 
 // ピースは 100x100 の座標系で描き、凸(1)・凹(-1)・平ら(0)を辺ごとに指定する。
 const PIECE_SIZE = 100;
-const KNOB_RADIUS = 11.5;
-const KNOB_NECK = 7;
+const KNOB_RADIUS = 9;
+const KNOB_NECK = 5.5;
 
 // 隣同士の左右がかみ合い、上下の凹凸が交互になるジグソーの一列として並べる。
 function pieceEdges(index: number, count: number): PieceEdges {
@@ -140,7 +140,7 @@ export function GameSelectionGallery({
                 overflow.start ? "transparent, black 1.5rem" : "black, black"
               }, ${overflow.end ? "black calc(100% - 1.5rem), transparent" : "black, black"})`,
             }}
-            className="flex w-full scroll-px-4 snap-x snap-proximity overflow-x-auto px-4 py-[1.375rem] [scrollbar-width:none] sm:scroll-px-0 sm:px-0 [&::-webkit-scrollbar]:hidden"
+            className="flex w-full scroll-px-4 snap-x snap-proximity overflow-x-auto px-4 py-[1.125rem] [scrollbar-width:none] sm:scroll-px-0 sm:px-0 [&::-webkit-scrollbar]:hidden"
           >
             {games.map((game, index) => {
               const isSelected = index === selectedIndex;
@@ -169,7 +169,7 @@ export function GameSelectionGallery({
                       }`}
                     />
                   </svg>
-                  <span className="absolute inset-[14%]">
+                  <span className="absolute inset-[10%]">
                     <GamePictogram svg={game.pictogramSvg} />
                   </span>
                 </button>
