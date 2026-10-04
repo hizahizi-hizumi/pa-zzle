@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { createProblemSeed } from "@/games/problem-seed";
+import type { ProblemId } from "@/games/problem-id";
+import { selectProblemAvoiding } from "@/games/problem-selection";
 import type { TsumeShogiDifficulty } from "@/games/tsume-shogi/difficulty";
 import type { TsumeShogiProblemIdentity } from "@/games/tsume-shogi/problem/problem";
+import type { TsumeShogiPooledProblem } from "@/games/tsume-shogi/problem/problem-pool";
 import { selectTsumeShogiProblemForDifficulty } from "@/games/tsume-shogi/problem-selection";
 import {
   canTsumeShogiMovePromote,
@@ -121,11 +123,15 @@ type TsumeShogiPlayState = {
 function createPlayState(
   difficulty: TsumeShogiDifficulty,
   startedAt: number,
+  initialProblem?: TsumeShogiPooledProblem,
+  avoidedProblemId?: ProblemId,
 ): TsumeShogiPlayState {
-  const { problem, identity } = selectTsumeShogiProblemForDifficulty(
-    difficulty,
-    createProblemSeed(),
-  );
+  const { problem, identity } =
+    initialProblem ??
+    selectProblemAvoiding(
+      (seed) => selectTsumeShogiProblemForDifficulty(difficulty, seed),
+      avoidedProblemId,
+    ).problem;
 
   return {
     session: createTsumeShogiSession(problem, startedAt),
@@ -149,16 +155,21 @@ function withNextSession(
 }
 
 /**
- * 難易度のプレイを始める。
+ * 難易度のプレイを始める。`initialProblem` を渡すと、最初の1問だけその問題を出す。
+ * 渡さなければ、最初の1問は `avoidedProblemId` の問題を避けて選ぶ。
  * 攻方が王手を指すと、`TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS` の間を置いて玉方の応手（作意の応手、誤王手なら反証）を指す。
  * `undo`（待った）は攻方の1手を取り消し、誤王手の筋にいれば判断地点まで戻す。
  * `restart` は同じプレイのまま初期局面へ戻し、`replay` は同じ問題を新しいプレイとして始め、
  * `startNewProblem` は同じ難易度の別の問題を始める。詰むと `progress` が `clearing` になり、
  * 完成演出を終えたら `completeClearAnimation` で `result` に進める。
  */
-export function useTsumeShogiPlay(difficulty: TsumeShogiDifficulty) {
+export function useTsumeShogiPlay(
+  difficulty: TsumeShogiDifficulty,
+  initialProblem?: TsumeShogiPooledProblem,
+  avoidedProblemId?: ProblemId,
+) {
   const [play, setPlay] = useState<TsumeShogiPlayState>(() =>
-    createPlayState(difficulty, Date.now()),
+    createPlayState(difficulty, Date.now(), initialProblem, avoidedProblemId),
   );
   const [now, setNow] = useState(() => Date.now());
   const { session } = play;
