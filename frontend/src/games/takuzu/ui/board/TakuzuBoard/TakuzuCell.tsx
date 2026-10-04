@@ -130,9 +130,10 @@ export function TakuzuCell({
         固定マスを押したときの揺れと完成の波は、格子を崩さないよう中のタイルだけに掛ける。
         タイルは常に独立した合成レイヤーに置く。動くときだけレイヤーに上がると、後ろに描くマスがまとめて
         レイヤーに分け直され、ほかのタイルが小数ピクセルずれて描き直されるため、動きの始まりと終わりに盤面全体が揺れて見える。
+        固定か置いたものかは、チュートリアルの導入で置いたタイルだけを消して始めの盤面へ戻すのに使う。
       */}
       <span
-        data-takuzu-tile=""
+        data-takuzu-tile={view.given ? "given" : "placed"}
         data-clear-wave-step={row + column}
         className="relative size-[80%] will-change-transform"
       >

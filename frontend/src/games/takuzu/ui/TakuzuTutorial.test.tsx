@@ -41,9 +41,16 @@ const nextStepCueDelayMs = 900;
 /** 手を離した後、手が止まってから決まるマスを示すまでの間。 */
 const idleHintDelayMs = 4000;
 
+/** 名前を出してから、盤面の段に入るまでの間。 */
+const introBoardStartMs = 550;
+
+/** 導入を最後まで見せるのに十分な間。 */
+const introEnoughMs = 3000;
+
 afterEach(() => {
   cleanup();
   delete (HTMLElement.prototype as { animate?: Element["animate"] }).animate;
+  vi.unstubAllGlobals();
   vi.useRealTimers();
 });
 
@@ -66,6 +73,21 @@ function advanceTime(ms: number): void {
   act(() => {
     vi.advanceTimersByTime(ms);
   });
+}
+
+/** 導入の段ごとに次の段の時計を掛け直すので、細かく区切って進める。 */
+function advanceTimeInSlices(ms: number): void {
+  const sliceMs = 50;
+  for (let elapsed = 0; elapsed < ms; elapsed += sliceMs) {
+    advanceTime(sliceMs);
+  }
+}
+
+function stubReducedMotion(): void {
+  vi.stubGlobal(
+    "matchMedia",
+    vi.fn(() => ({ matches: true }) as MediaQueryList),
+  );
 }
 
 function getBoard(): HTMLElement {
@@ -118,6 +140,10 @@ function getRuleChips(): HTMLElement[] {
 
 function getRuleChipTexts(): string[] {
   return getRuleChips().map((item) => item.textContent ?? "");
+}
+
+function getCellLabel(row: number, column: number): string | null {
+  return getCell(row, column).getAttribute("aria-label");
 }
 
 /** 今の手順で示しているルールとして目立たせているチップ。 */
@@ -379,6 +405,130 @@ describe("TakuzuTutorial", () => {
 
       expect(onClose).toHaveBeenCalledOnce();
       expect(message).toBeTruthy();
+    });
+  });
+
+  describe("導入を見せる場合", () => {
+    beforeEach(() => {
+      installAnimate();
+      render(
+        <TakuzuTutorial
+          open={true}
+          onStartPlay={onStartPlay}
+          onClose={onClose}
+        />,
+      );
+    });
+
+    test("開くと、パズル選択と同じピクトグラムと名前を出し、解き終えた盤面を、印を付けずに見せること", () => {
+      const pictogram = screen.getByRole("img", {
+        name: "バイナリパズル",
+        hidden: true,
+      });
+      const title = screen.getByRole("heading", { name: "バイナリパズル" });
+      const labels = [getCellLabel(1, 1), getCellLabel(2, 2)];
+      const hinted = getHintedCellPositions();
+
+      expect(pictogram).toBeTruthy();
+      expect(title).toBeTruthy();
+      expect(labels).toEqual(["1行1列 四角", "2行2列 丸"]);
+      expect(hinted).toEqual([]);
+    });
+
+    test("最後まで見せると、始めの盤面で最初の手順の一言と印を出すこと", () => {
+      advanceTimeInSlices(introEnoughMs);
+
+      const headline = screen.getByText("四角と丸で、盤面を埋めていきます");
+      const labels = [getCellLabel(1, 1), getCellLabel(1, 2)];
+      const hinted = getHintedCellPositions();
+      const chips = getRuleChipTexts();
+
+      expect(headline).toBeTruthy();
+      expect(labels).toEqual(["1行1列 空き", "1行2列 四角 固定"]);
+      expect(hinted).toEqual(["1行1列"]);
+      expect(chips).toEqual(["？", "？", "？"]);
+    });
+
+    describe("盤面の段まで進んだ場合", () => {
+      beforeEach(() => {
+        advanceTimeInSlices(introBoardStartMs);
+      });
+
+      test("盤面を押しても、タイルを替えないこと", () => {
+        tapCell(2, 2);
+
+        const label = getCellLabel(2, 2);
+        const hinted = getHintedCellPositions();
+
+        expect(label).toBe("2行2列 丸");
+        expect(hinted).toEqual([]);
+      });
+
+      const skipCases = [
+        ["画面を押す", () => fireEvent.pointerDown(getBoard())],
+        [
+          "閉じるボタンにフォーカスがあるままキーを押す",
+          () =>
+            fireEvent.keyDown(screen.getByRole("button", { name: "閉じる" }), {
+              key: "Enter",
+            }),
+        ],
+      ] as const;
+
+      test.each(skipCases)(
+        "%sと、導入を飛ばして始めの盤面の最初の手順から始めること",
+        (_, skip) => {
+          skip();
+
+          const headline = screen.getByText("四角と丸で、盤面を埋めていきます");
+          const label = getCellLabel(1, 1);
+          const hinted = getHintedCellPositions();
+
+          expect(headline).toBeTruthy();
+          expect(label).toBe("1行1列 空き");
+          expect(hinted).toEqual(["1行1列"]);
+          expect(onClose).not.toHaveBeenCalled();
+        },
+      );
+    });
+
+    describe("解き終えた場合", () => {
+      beforeEach(() => {
+        advanceTimeInSlices(introEnoughMs);
+        solveAll();
+        advanceTimeInSlices(introEnoughMs);
+      });
+
+      test("もう一度で、置いたタイルを消してから最初の手順を始めること", () => {
+        fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
+        const labelWhileRewinding = getCellLabel(1, 1);
+        advanceTimeInSlices(introEnoughMs);
+
+        const label = getCellLabel(1, 1);
+        const hinted = getHintedCellPositions();
+
+        expect(labelWhileRewinding).toBe("1行1列 四角");
+        expect(label).toBe("1行1列 空き");
+        expect(hinted).toEqual(["1行1列"]);
+      });
+    });
+  });
+
+  describe("動きを減らす設定で開いた場合", () => {
+    beforeEach(() => {
+      installAnimate();
+      stubReducedMotion();
+      render(<TakuzuTutorial open={true} onClose={onClose} />);
+    });
+
+    test("導入を見せずに、始めの盤面の最初の手順から始めること", () => {
+      const headline = screen.getByText("四角と丸で、盤面を埋めていきます");
+      const label = getCellLabel(1, 1);
+      const hinted = getHintedCellPositions();
+
+      expect(headline).toBeTruthy();
+      expect(label).toBe("1行1列 空き");
+      expect(hinted).toEqual(["1行1列"]);
     });
   });
 
