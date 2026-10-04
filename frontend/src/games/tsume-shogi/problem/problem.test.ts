@@ -1,8 +1,10 @@
 import {
   assertTsumeShogiProblem,
   createTsumeShogiProblemIdentity,
+  formatTsumeShogiGenerationConditionsText,
   formatTsumeShogiProblemText,
   isTsumeShogiProblemIdentity,
+  parseTsumeShogiGenerationConditionsText,
   parseTsumeShogiProblemText,
   type TsumeShogiProblem,
 } from "@/games/tsume-shogi/problem/problem";
@@ -22,6 +24,105 @@ describe("createTsumeShogiProblemIdentity", () => {
       conditions: { plies: 5 },
     });
   });
+
+  test("初手の王手の数の範囲を条件と seed に含めること", () => {
+    const result = createTsumeShogiProblemIdentity(5, 3, {
+      minimum: 1,
+      maximum: 4,
+    });
+
+    expect(result).toEqual({
+      generatorVersion: "1",
+      seed: "ts-5-c1-4-3",
+      conditions: { plies: 5, rootChecks: { minimum: 1, maximum: 4 } },
+    });
+  });
+
+  test("起点の詰め手の種類を条件と seed に含めること", () => {
+    const result = createTsumeShogiProblemIdentity(
+      3,
+      7,
+      { minimum: 1, maximum: 4 },
+      "board-move",
+    );
+
+    expect(result).toEqual({
+      generatorVersion: "1",
+      seed: "ts-3-c1-4-move-7",
+      conditions: {
+        plies: 3,
+        rootChecks: { minimum: 1, maximum: 4 },
+        baseMate: "board-move",
+      },
+    });
+  });
+
+  test("起点の玉の範囲を条件と seed に含めること", () => {
+    const result = createTsumeShogiProblemIdentity(
+      3,
+      7,
+      { minimum: 1, maximum: 4 },
+      "board-move",
+      "middle",
+    );
+
+    expect(result).toEqual({
+      generatorVersion: "1",
+      seed: "ts-3-c1-4-move-mid-7",
+      conditions: {
+        plies: 3,
+        rootChecks: { minimum: 1, maximum: 4 },
+        baseMate: "board-move",
+        baseKingArea: "middle",
+      },
+    });
+  });
+});
+
+describe("parseTsumeShogiGenerationConditionsText", () => {
+  test.each([
+    ["5", { plies: 5 }],
+    ["5:1-4", { plies: 5, rootChecks: { minimum: 1, maximum: 4 } }],
+    [
+      "3:1-4:board-move",
+      {
+        plies: 3,
+        rootChecks: { minimum: 1, maximum: 4 },
+        baseMate: "board-move",
+      },
+    ],
+    [
+      "5:10-99:middle",
+      {
+        plies: 5,
+        rootChecks: { minimum: 10, maximum: 99 },
+        baseKingArea: "middle",
+      },
+    ],
+    [
+      "3:1-4:board-move:middle",
+      {
+        plies: 3,
+        rootChecks: { minimum: 1, maximum: 4 },
+        baseMate: "board-move",
+        baseKingArea: "middle",
+      },
+    ],
+  ] as const)("%s を読み、同じ文字列に書き戻せること", (text, expected) => {
+    const conditions = parseTsumeShogiGenerationConditionsText(text);
+
+    expect(conditions).toEqual(expected);
+    expect(formatTsumeShogiGenerationConditionsText(conditions)).toBe(text);
+  });
+
+  test.each(["7", "3:1-4:drop", "3-1-4", "3:1-4:middle:board-move"])(
+    "%s は読まずに RangeError を投げること",
+    (text) => {
+      expect(() => parseTsumeShogiGenerationConditionsText(text)).toThrow(
+        RangeError,
+      );
+    },
+  );
 });
 
 describe("isTsumeShogiProblemIdentity", () => {
@@ -40,6 +141,76 @@ describe("isTsumeShogiProblemIdentity", () => {
     [
       "seed の無い identity",
       { generatorVersion: "1", seed: "", conditions: { plies: 3 } },
+      false,
+    ],
+    [
+      "初手の王手の数の範囲のある identity",
+      createTsumeShogiProblemIdentity(3, 0, { minimum: 2, maximum: 10 }),
+      true,
+    ],
+    [
+      "起点の詰め手の種類のある identity",
+      createTsumeShogiProblemIdentity(
+        3,
+        0,
+        { minimum: 1, maximum: 4 },
+        "board-move",
+      ),
+      true,
+    ],
+    [
+      "起点の玉の範囲のある identity",
+      createTsumeShogiProblemIdentity(
+        5,
+        0,
+        { minimum: 10, maximum: 99 },
+        undefined,
+        "middle",
+      ),
+      true,
+    ],
+    [
+      "扱わない起点の玉の範囲の identity",
+      {
+        generatorVersion: "1",
+        seed: "ts-5-c10-99-top-0",
+        conditions: {
+          plies: 5,
+          rootChecks: { minimum: 10, maximum: 99 },
+          baseKingArea: "top",
+        },
+      },
+      false,
+    ],
+    [
+      "扱わない起点の詰め手の種類の identity",
+      {
+        generatorVersion: "1",
+        seed: "ts-3-c1-4-drop-0",
+        conditions: {
+          plies: 3,
+          rootChecks: { minimum: 1, maximum: 4 },
+          baseMate: "drop",
+        },
+      },
+      false,
+    ],
+    [
+      "初手の王手の数の範囲が逆転した identity",
+      {
+        generatorVersion: "1",
+        seed: "ts-3-c4-1-0",
+        conditions: { plies: 3, rootChecks: { minimum: 4, maximum: 1 } },
+      },
+      false,
+    ],
+    [
+      "初手の王手の数の下限が0の identity",
+      {
+        generatorVersion: "1",
+        seed: "ts-3-c0-1-0",
+        conditions: { plies: 3, rootChecks: { minimum: 0, maximum: 1 } },
+      },
       false,
     ],
   ] as const;

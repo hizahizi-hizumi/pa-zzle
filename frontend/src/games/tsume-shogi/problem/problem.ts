@@ -44,9 +44,50 @@ export type TsumeShogiGenerationPlies =
 /** 生成手順を変えて同じ identity から別の問題ができるようになったら上げる。 */
 export const TSUME_SHOGI_GENERATOR_VERSION = "1";
 
-/** 問題を作る条件。 */
+/** 初手の合法な王手の数の範囲（両端を含む）。 */
+export type TsumeShogiRootCheckRange = {
+  minimum: number;
+  maximum: number;
+};
+
+/**
+ * 逆算の起点にする1手詰の詰め手の種類。`board-move` は盤上の駒を動かして詰める1手詰だけを起点にする
+ * （乱数で作る起点の多くは駒打ちで詰むので、最終手が駒打ちの問題に偏らないようにする）。
+ */
+export const tsumeShogiBaseMates = ["board-move"] as const;
+
+export type TsumeShogiBaseMate = (typeof tsumeShogiBaseMates)[number];
+
+/** seed の中で起点の詰め手の種類を表す語。 */
+const baseMateSeedLabels = {
+  "board-move": "move",
+} as const satisfies Record<TsumeShogiBaseMate, string>;
+
+/**
+ * 逆算の起点にする1手詰で玉を置く範囲。省略すると玉を1〜3段目・1〜9筋に置く（盤の端や隅の詰み上がりが多くなる）。
+ * `middle` は2〜5段目・2〜8筋に置き、盤の中ほどの詰み上がりから逆算する（玉から見た攻方の手順が同じ問題に偏らないようにする）。
+ */
+export const tsumeShogiBaseKingAreas = ["middle"] as const;
+
+export type TsumeShogiBaseKingArea = (typeof tsumeShogiBaseKingAreas)[number];
+
+/** seed の中で起点の玉の範囲を表す語。 */
+const baseKingAreaSeedLabels = {
+  middle: "mid",
+} as const satisfies Record<TsumeShogiBaseKingArea, string>;
+
+/**
+ * 問題を作る条件。
+ * - `plies`: 手数。
+ * - `rootChecks`: 初手の合法な王手の数をこの範囲に絞る。難易度のレベルごとに候補の領域を寄せるために使う。省略すると絞らない。
+ * - `baseMate`: 逆算の起点にする1手詰の詰め手の種類。省略すると絞らない。
+ * - `baseKingArea`: 逆算の起点にする1手詰で玉を置く範囲。省略すると盤の上の端（1〜3段目）に置く。
+ */
 export type TsumeShogiGenerationConditions = {
   plies: TsumeShogiGenerationPlies;
+  rootChecks?: TsumeShogiRootCheckRange;
+  baseMate?: TsumeShogiBaseMate;
+  baseKingArea?: TsumeShogiBaseKingArea;
 };
 
 /** 同じ問題を再現するための情報。 */
@@ -64,17 +105,150 @@ export type TsumeShogiIdentifiedProblem = {
 
 /**
  * 生成条件と候補番号から identity を作る。seed は条件ごとに別の系列になるよう条件を含める。
- * 例: 5手・候補番号 3 は `ts-5-3`。
+ * 例: 5手・候補番号 3 は `ts-5-3`、5手・初手の王手 1〜4・候補番号 3 は `ts-5-c1-4-3`、
+ * 3手・初手の王手 1〜4・盤上の駒を動かす1手詰を起点・候補番号 3 は `ts-3-c1-4-move-3`、
+ * 5手・初手の王手 10 以上・起点の玉を盤の中ほどに置く・候補番号 3 は `ts-5-c10-99-mid-3`。
  */
 export function createTsumeShogiProblemIdentity(
   plies: TsumeShogiGenerationPlies,
   candidateIndex: number,
+  rootChecks?: TsumeShogiRootCheckRange,
+  baseMate?: TsumeShogiBaseMate,
+  baseKingArea?: TsumeShogiBaseKingArea,
 ): TsumeShogiProblemIdentity {
+  const seedParts = [
+    "ts",
+    plies,
+    ...(rootChecks === undefined
+      ? []
+      : [`c${rootChecks.minimum}`, rootChecks.maximum]),
+    ...(baseMate === undefined ? [] : [baseMateSeedLabels[baseMate]]),
+    ...(baseKingArea === undefined
+      ? []
+      : [baseKingAreaSeedLabels[baseKingArea]]),
+    candidateIndex,
+  ];
   return {
     generatorVersion: TSUME_SHOGI_GENERATOR_VERSION,
-    seed: `ts-${plies}-${candidateIndex}`,
-    conditions: { plies },
+    seed: seedParts.join("-"),
+    conditions: copyTsumeShogiGenerationConditions({
+      plies,
+      rootChecks,
+      baseMate,
+      baseKingArea,
+    }),
   };
+}
+
+/** 生成条件の項目だけを写した新しい値を作る。記録や診断に残すときに、ほかの値を持ち込まないために使う。 */
+export function copyTsumeShogiGenerationConditions({
+  plies,
+  rootChecks,
+  baseMate,
+  baseKingArea,
+}: TsumeShogiGenerationConditions): TsumeShogiGenerationConditions {
+  return {
+    plies,
+    ...(rootChecks === undefined ? {} : { rootChecks: { ...rootChecks } }),
+    ...(baseMate === undefined ? {} : { baseMate }),
+    ...(baseKingArea === undefined ? {} : { baseKingArea }),
+  };
+}
+
+/**
+ * 生成条件を1行の文字列にする（生成・分析スクリプトの引数と候補の記録に使う）。
+ * 例: `5`、`5:1-4`（初手の王手 1〜4）、`3:1-4:board-move`（さらに起点の詰め手の種類）、
+ * `5:10-99:middle`（起点の玉の範囲）、`3:1-4:board-move:middle`（起点の詰め手の種類と玉の範囲）。
+ */
+export function formatTsumeShogiGenerationConditionsText({
+  plies,
+  rootChecks,
+  baseMate,
+  baseKingArea,
+}: TsumeShogiGenerationConditions): string {
+  return [
+    String(plies),
+    ...(rootChecks === undefined
+      ? []
+      : [`${rootChecks.minimum}-${rootChecks.maximum}`]),
+    ...(baseMate === undefined ? [] : [baseMate]),
+    ...(baseKingArea === undefined ? [] : [baseKingArea]),
+  ].join(":");
+}
+
+/** `formatTsumeShogiGenerationConditionsText` の文字列を読む。読めなければ `RangeError` を投げる。 */
+export function parseTsumeShogiGenerationConditionsText(
+  text: string,
+): TsumeShogiGenerationConditions {
+  const match = text
+    .trim()
+    .match(/^(\d+)(?::(\d+)-(\d+))?(?::([a-z-]+))?(?::([a-z-]+))?$/);
+  const plies = Number(match?.[1]);
+  const [baseMate, baseKingArea] =
+    match?.[5] === undefined && isTsumeShogiBaseKingArea(match?.[4])
+      ? [undefined, match[4]]
+      : [match?.[4], match?.[5]];
+  if (
+    !match ||
+    !isTsumeShogiGenerationPlies(plies) ||
+    (baseMate !== undefined && !isTsumeShogiBaseMate(baseMate)) ||
+    (baseKingArea !== undefined && !isTsumeShogiBaseKingArea(baseKingArea))
+  ) {
+    throw new RangeError(`Invalid Tsume Shogi generation conditions: ${text}`);
+  }
+  return copyTsumeShogiGenerationConditions({
+    plies,
+    rootChecks:
+      match[2] === undefined
+        ? undefined
+        : { minimum: Number(match[2]), maximum: Number(match[3]) },
+    baseMate,
+    baseKingArea,
+  });
+}
+
+/** 2つの生成条件が同じか。 */
+export function isSameTsumeShogiGenerationConditions(
+  left: TsumeShogiGenerationConditions,
+  right: TsumeShogiGenerationConditions,
+): boolean {
+  return (
+    left.plies === right.plies &&
+    left.rootChecks?.minimum === right.rootChecks?.minimum &&
+    left.rootChecks?.maximum === right.rootChecks?.maximum &&
+    left.baseMate === right.baseMate &&
+    left.baseKingArea === right.baseKingArea
+  );
+}
+
+/** seed の中の起点の詰め手の種類を表す語から、種類を引く。 */
+export function parseTsumeShogiBaseMateSeedLabel(
+  label: string,
+): TsumeShogiBaseMate | undefined {
+  return tsumeShogiBaseMates.find(
+    (baseMate) => baseMateSeedLabels[baseMate] === label,
+  );
+}
+
+/** seed の中の起点の玉の範囲を表す語から、範囲を引く。 */
+export function parseTsumeShogiBaseKingAreaSeedLabel(
+  label: string,
+): TsumeShogiBaseKingArea | undefined {
+  return tsumeShogiBaseKingAreas.find(
+    (area) => baseKingAreaSeedLabels[area] === label,
+  );
+}
+
+export function isTsumeShogiBaseKingArea(
+  value: unknown,
+): value is TsumeShogiBaseKingArea {
+  return tsumeShogiBaseKingAreas.some((area) => area === value);
+}
+
+export function isTsumeShogiBaseMate(
+  value: unknown,
+): value is TsumeShogiBaseMate {
+  return tsumeShogiBaseMates.some((baseMate) => baseMate === value);
 }
 
 export function isTsumeShogiGenerationPlies(
@@ -97,7 +271,25 @@ export function isTsumeShogiProblemIdentity(
     value.generatorVersion === TSUME_SHOGI_GENERATOR_VERSION &&
     typeof value.seed === "string" &&
     value.seed.length > 0 &&
-    isTsumeShogiGenerationPlies(value.conditions.plies)
+    isTsumeShogiGenerationPlies(value.conditions.plies) &&
+    (value.conditions.rootChecks === undefined ||
+      isTsumeShogiRootCheckRange(value.conditions.rootChecks)) &&
+    (value.conditions.baseMate === undefined ||
+      isTsumeShogiBaseMate(value.conditions.baseMate)) &&
+    (value.conditions.baseKingArea === undefined ||
+      isTsumeShogiBaseKingArea(value.conditions.baseKingArea))
+  );
+}
+
+export function isTsumeShogiRootCheckRange(
+  value: unknown,
+): value is TsumeShogiRootCheckRange {
+  return (
+    isRecordObject(value) &&
+    Number.isInteger(value.minimum) &&
+    Number.isInteger(value.maximum) &&
+    (value.minimum as number) >= 1 &&
+    (value.minimum as number) <= (value.maximum as number)
   );
 }
 
