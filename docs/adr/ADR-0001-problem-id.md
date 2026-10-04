@@ -70,5 +70,5 @@ seed は生成の入力の一部にすぎず、seed だけでは問題が決ま�
 
 ## 補足
 
-- 現在の契約は `docs/プロダクト/仕様/ゲーム/SPEC-014.md`（問題ID）、`docs/プロダクト/仕様/アプリ/SPEC-001.md`、`docs/プロダクト/画面/SCR-003.md`・`SCR-005.md` を正とする。
+- 現在の契約は `docs/プロダクト/仕様/ゲーム/SPEC-014.md`（問題ID）、`docs/プロダクト/仕様/アプリ/SPEC-001.md` を正とする。
 - 問題IDの算出は `frontend/src/games/problem-id.ts`、URLの読み書きは `frontend/src/game-catalog/problem-id-query.ts` を正とする。
