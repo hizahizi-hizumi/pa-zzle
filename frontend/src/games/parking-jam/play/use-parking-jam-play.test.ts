@@ -148,7 +148,7 @@ describe("useParkingJamPlay", () => {
       expect(result.current.moveAttemptCount).toBe(0);
     });
 
-    test("盤面が進んだときだけやり直し可能になること", () => {
+    test("盤面が進んだときだけ盤面を戻せるようになること", () => {
       const firstMove = solution[0];
       if (!firstMove) throw new Error("Expected a solution move");
 

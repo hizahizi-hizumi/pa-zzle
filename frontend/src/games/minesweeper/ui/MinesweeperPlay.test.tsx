@@ -90,7 +90,7 @@ describe("MinesweeperPlay", () => {
       expect(onBackToHome).not.toHaveBeenCalled();
     });
 
-    test("メニューのリセットで同じ問題のやり直しを通知すること", () => {
+    test("メニューのリセットで同じ問題の新しいプレイの開始を通知すること", () => {
       openPlayMenu();
       fireEvent.click(screen.getByRole("menuitem", { name: "リセット" }));
 

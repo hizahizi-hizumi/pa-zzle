@@ -140,7 +140,7 @@ describe("restartParkingJamSession", () => {
       session = createParkingJamSession(problem, startedAt);
     });
 
-    test("やり直し可能として扱わないこと", () => {
+    test("盤面を戻せるものとして扱わないこと", () => {
       const restarted = restartParkingJamSession(session);
 
       expect(canRestartParkingJamSession(session)).toBe(false);
@@ -154,7 +154,7 @@ describe("restartParkingJamSession", () => {
     session = exitVehicleB(createParkingJamSession(problem, startedAt));
   });
 
-  test("同じ問題の初期盤面へ戻してやり直し回数を記録すること", () => {
+  test("同じ問題の初期盤面へ戻して盤面を戻した回数を記録すること", () => {
     const restarted = restartParkingJamSession(session);
 
     expect(restarted.puzzleState.remainingVehicleIds).toEqual(["a", "b"]);

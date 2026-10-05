@@ -150,7 +150,7 @@ describe("useWaterSortPlay", () => {
     expect(result.current.canUndo).toBe(false);
   });
 
-  test("プレイ中のやり直しは同じ問題へ戻し手数と経過時間を累積すること", () => {
+  test("プレイ中に盤面を戻すと同じ問題の初期状態へ戻し、手数と経過時間を累積すること", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-09-16T00:00:00Z"));
     const { result } = renderHook(() => useWaterSortPlay("1"));

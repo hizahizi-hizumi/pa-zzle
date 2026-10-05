@@ -92,7 +92,7 @@ describe("useMinesweeperPlay", () => {
         act(() => hook.result.current.revealCell(hiddenSafeCellIndex));
       });
 
-      test("リセットで同じ問題を初期状態からやり直すこと", () => {
+      test("リセットで同じ問題を初期状態の新しいプレイとして始めること", () => {
         act(() => hook.result.current.replay());
 
         const play = hook.result.current;
