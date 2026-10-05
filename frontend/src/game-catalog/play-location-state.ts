@@ -1,4 +1,5 @@
 import type { ProblemId } from "@/games/problem-id";
+import { isRecordObject } from "@/lib/type-guards";
 
 /** プレイ画面へ遷移するときに渡す location state。 */
 export type PlayLocationState = {
@@ -17,10 +18,7 @@ export function createPlayLocationState(
 
 /** location state から避ける問題の ID を読む。プレイ画面向けの state でなければ `undefined` を返す。 */
 export function readAvoidedProblemId(state: unknown): ProblemId | undefined {
-  return typeof state === "object" &&
-    state !== null &&
-    "avoidedProblemId" in state &&
-    typeof state.avoidedProblemId === "string"
+  return isRecordObject(state) && typeof state.avoidedProblemId === "string"
     ? state.avoidedProblemId
     : undefined;
 }

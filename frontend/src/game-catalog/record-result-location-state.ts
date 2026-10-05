@@ -1,3 +1,4 @@
+import { isRecordObject } from "@/lib/type-guards";
 import {
   isPlayRecordSaveOutcome,
   type PlayRecordSaveOutcome,
@@ -15,14 +16,12 @@ export function createRecordResultLocationState(
   return { recordSaveOutcome };
 }
 
-/** location state から記録の保存結果を読む。結果画面向けの state でなければ `null` を返す。 */
+/** location state から記録の保存結果を読む。結果画面向けの state でなければ `undefined` を返す。 */
 export function readRecordSaveOutcome(
   state: unknown,
-): PlayRecordSaveOutcome | null {
-  return typeof state === "object" &&
-    state !== null &&
-    "recordSaveOutcome" in state &&
+): PlayRecordSaveOutcome | undefined {
+  return isRecordObject(state) &&
     isPlayRecordSaveOutcome(state.recordSaveOutcome)
     ? state.recordSaveOutcome
-    : null;
+    : undefined;
 }
