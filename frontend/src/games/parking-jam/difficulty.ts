@@ -1,6 +1,8 @@
 import {
   type DifficultyLevel,
   difficultyLevels,
+  isInNumericRange,
+  type NumericRange,
   type RecordedDifficulty,
 } from "@/games/difficulty";
 import type {
@@ -137,11 +139,8 @@ export function calculateParkingJamChallengeLevers(
 type ParkingJamLevelLevers = {
   dependency: ParkingJamLeverStrength;
   misread: ParkingJamLeverStrength;
-  /** 規模は単独でレベルを決めないよう、隣のレベルと重なる範囲（両端を含む）で許す。 */
-  scale: {
-    minimum: ParkingJamLeverStrength;
-    maximum: ParkingJamLeverStrength;
-  };
+  /** 規模は単独でレベルを決めないよう、隣のレベルと重なる範囲で許す。 */
+  scale: NumericRange<ParkingJamLeverStrength>;
 };
 
 /**
@@ -184,8 +183,7 @@ function matchesLevelLevers(
   return (
     levers.dependency === level.dependency &&
     levers.misread === level.misread &&
-    level.scale.minimum <= levers.scale &&
-    levers.scale <= level.scale.maximum
+    isInNumericRange(levers.scale, level.scale)
   );
 }
 

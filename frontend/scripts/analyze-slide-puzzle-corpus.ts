@@ -547,11 +547,11 @@ function printPoolReport() {
     const upper = upperId ? slidePuzzleDifficultyCriteria[upperId] : undefined;
     return upper &&
       upper.boardSize === lower.boardSize &&
-      lower.maximumDetourMoveCount !== null
+      Number.isFinite(lower.detourMoveCount.maximum)
       ? [
           {
             boardSize: lower.boardSize,
-            lowerDetour: lower.maximumDetourMoveCount,
+            lowerDetour: lower.detourMoveCount.maximum,
           },
         ]
       : [];

@@ -1,5 +1,6 @@
 import {
   getDifficultyLabel,
+  isInNumericRange,
   parseDifficultyLevel,
   parseLegacyDifficulty,
   parseRecordedDifficulty,
@@ -73,6 +74,29 @@ describe("getDifficultyLabel", () => {
     "レベルと旧3段階の表示名を返すこと: %s",
     (difficulty, expected) => {
       const result = getDifficultyLabel(difficulty);
+
+      expect(result).toBe(expected);
+    },
+  );
+});
+
+describe("isInNumericRange", () => {
+  const cases = [
+    [1, { minimum: 1, maximum: 3 }, true],
+    [3, { minimum: 1, maximum: 3 }, true],
+    [0, { minimum: 1, maximum: 3 }, false],
+    [4, { minimum: 1, maximum: 3 }, false],
+    [1, { minimum: 1, maximum: 3, excludesMinimum: true }, false],
+    [1.5, { minimum: 1, maximum: 3, excludesMinimum: true }, true],
+    [3, { minimum: 1, maximum: 3, excludesMinimum: true }, true],
+    [1e9, { minimum: 1, maximum: Number.POSITIVE_INFINITY }, true],
+    [-1e9, { minimum: Number.NEGATIVE_INFINITY, maximum: 0 }, true],
+  ] as const;
+
+  test.each(cases)(
+    "%d が範囲 %o に入るかを返すこと",
+    (value, range, expected) => {
+      const result = isInNumericRange(value, range);
 
       expect(result).toBe(expected);
     },

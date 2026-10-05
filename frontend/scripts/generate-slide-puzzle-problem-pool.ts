@@ -57,8 +57,8 @@ function levelsUsing(
     .filter(
       (id) =>
         slidePuzzleDifficultyCriteria[id].boardSize === boardSize &&
-        slidePuzzleDifficultyCriteria[id].scrambleLengths.includes(
-          scrambleLength,
+        slidePuzzleDifficultyCriteria[id].scrambleLengths.some(
+          (length) => length === scrambleLength,
         ),
     );
 }

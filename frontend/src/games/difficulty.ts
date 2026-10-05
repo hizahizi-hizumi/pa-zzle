@@ -46,3 +46,23 @@ export function getDifficultyLabel(difficulty: RecordedDifficulty): string {
     )?.label ?? difficulty
   );
 }
+
+/**
+ * 難易度の基準に使う数値の範囲。両端を含む。
+ * `excludesMinimum` のときは下限ちょうどの値を含まず、その値は下のレベルの上限に属する。
+ * 片側に限りが無い範囲は、その端を無限大で表す。
+ */
+export type NumericRange<T extends number = number> = {
+  minimum: T;
+  maximum: T;
+  excludesMinimum?: true;
+};
+
+export function isInNumericRange(
+  value: number,
+  { minimum, maximum, excludesMinimum }: NumericRange,
+): boolean {
+  return (
+    (excludesMinimum ? minimum < value : minimum <= value) && value <= maximum
+  );
+}

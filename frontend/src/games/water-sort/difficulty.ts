@@ -1,6 +1,8 @@
 import {
   type DifficultyLevel,
   difficultyLevels,
+  isInNumericRange,
+  type NumericRange,
   type RecordedDifficulty,
 } from "@/games/difficulty";
 import type { WaterSortGenerationConditions } from "@/games/water-sort/problem/problem";
@@ -17,8 +19,8 @@ type WaterSortGenerationProfile = Pick<
 
 type WaterSortDifficultyCriteria = {
   generationProfiles: readonly WaterSortGenerationProfile[];
-  minimumExclusiveStuckRate: number | null;
-  maximumInclusiveStuckRate: number | null;
+  /** 下限ちょうどの詰み率は下のレベルに属する。 */
+  stuckRate: NumericRange;
 };
 
 function createProfiles(
@@ -35,45 +37,41 @@ function createProfiles(
   );
 }
 
-export const waterSortDifficultyCriteria: Record<
-  WaterSortDifficulty,
-  WaterSortDifficultyCriteria
-> = {
+export const waterSortDifficultyCriteria = {
   "1": {
     generationProfiles: createProfiles(4, 6, 2),
-    minimumExclusiveStuckRate: null,
-    maximumInclusiveStuckRate: 0.05,
+    stuckRate: { minimum: Number.NEGATIVE_INFINITY, maximum: 0.05 },
   },
   "2": {
     generationProfiles: createProfiles(5, 8, 2),
-    minimumExclusiveStuckRate: 0.05,
-    maximumInclusiveStuckRate: 0.35,
+    stuckRate: { minimum: 0.05, maximum: 0.35, excludesMinimum: true },
   },
   "3": {
     generationProfiles: [
       ...createProfiles(6, 9, 2),
       ...createProfiles(4, 5, 1),
     ],
-    minimumExclusiveStuckRate: 0.35,
-    maximumInclusiveStuckRate: 0.7,
+    stuckRate: { minimum: 0.35, maximum: 0.7, excludesMinimum: true },
   },
   "4": {
     generationProfiles: [
       ...createProfiles(8, 11, 2),
       ...createProfiles(4, 6, 1),
     ],
-    minimumExclusiveStuckRate: 0.7,
-    maximumInclusiveStuckRate: 0.9,
+    stuckRate: { minimum: 0.7, maximum: 0.9, excludesMinimum: true },
   },
   "5": {
     generationProfiles: [
       ...createProfiles(10, 12, 2),
       ...createProfiles(5, 7, 1),
     ],
-    minimumExclusiveStuckRate: 0.9,
-    maximumInclusiveStuckRate: null,
+    stuckRate: {
+      minimum: 0.9,
+      maximum: Number.POSITIVE_INFINITY,
+      excludesMinimum: true,
+    },
   },
-};
+} as const satisfies Record<WaterSortDifficulty, WaterSortDifficultyCriteria>;
 
 function hasGenerationProfile(
   criteria: WaterSortDifficultyCriteria,
@@ -83,18 +81,6 @@ function hasGenerationProfile(
     (profile) =>
       profile.colorCount === conditions.colorCount &&
       profile.emptyBottleCount === conditions.emptyBottleCount,
-  );
-}
-
-function isWithinStuckRate(
-  criteria: WaterSortDifficultyCriteria,
-  stuckRate: number,
-): boolean {
-  return (
-    (criteria.minimumExclusiveStuckRate === null ||
-      stuckRate > criteria.minimumExclusiveStuckRate) &&
-    (criteria.maximumInclusiveStuckRate === null ||
-      stuckRate <= criteria.maximumInclusiveStuckRate)
   );
 }
 
@@ -110,7 +96,7 @@ export function assessWaterSortDifficulty({
       const criteria = waterSortDifficultyCriteria[id];
       return (
         hasGenerationProfile(criteria, conditions) &&
-        isWithinStuckRate(criteria, stuckRate)
+        isInNumericRange(stuckRate, criteria.stuckRate)
       );
     })?.id ?? null
   );

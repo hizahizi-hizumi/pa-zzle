@@ -1,4 +1,9 @@
-import { type DifficultyLevel, difficultyLevels } from "@/games/difficulty";
+import {
+  type DifficultyLevel,
+  difficultyLevels,
+  isInNumericRange,
+  type NumericRange,
+} from "@/games/difficulty";
 import type {
   ReflectionDifficultyAnalysis,
   ReflectionReasoningFeatures,
@@ -14,9 +19,6 @@ export type ReflectionDifficulty = DifficultyLevel;
 
 type ReflectionReasoningLevel = ReflectionReasoningFeatures["highestLevel"];
 
-/** 両端を含む範囲。 */
-type InclusiveRange<T extends number> = { minimum: T; maximum: T };
-
 /**
  * 1つのレベルが求める組み合わせ。
  * - `reasoningLevel`: 置き場所を決め切るのに要る最も深い推論レベル。レベルの挑戦の中身を決める。
@@ -30,9 +32,9 @@ type InclusiveRange<T extends number> = { minimum: T; maximum: T };
  */
 export type ReflectionLevelCombination = {
   reasoningLevel: ReflectionReasoningLevel;
-  boardSize: InclusiveRange<ReflectionBoardSize>;
-  pieceCount: InclusiveRange<number>;
-  piecesPerClue?: InclusiveRange<number>;
+  boardSize: NumericRange<ReflectionBoardSize>;
+  pieceCount: NumericRange<number>;
+  piecesPerClue?: NumericRange<number>;
   minimumTrialRetryCount?: number;
 };
 
@@ -97,13 +99,6 @@ export type ReflectionDifficultyAssessment =
   | { status: "unsupported" }
   | { status: "invalid" };
 
-function isInRange(
-  value: number,
-  { minimum, maximum }: InclusiveRange<number>,
-) {
-  return minimum <= value && value <= maximum;
-}
-
 function resistsTrial(
   trial: ReflectionTrialFeatures,
   minimumTrialRetryCount: number | undefined,
@@ -121,10 +116,13 @@ export function coversReflectionGenerationCondition(
   condition: { size: number; pieceCount: number },
 ): boolean {
   return (
-    isInRange(condition.size, boardSize) &&
-    isInRange(condition.pieceCount, pieceCount) &&
+    isInNumericRange(condition.size, boardSize) &&
+    isInNumericRange(condition.pieceCount, pieceCount) &&
     (piecesPerClue === undefined ||
-      isInRange(condition.pieceCount / (condition.size * 4), piecesPerClue))
+      isInNumericRange(
+        condition.pieceCount / (condition.size * 4),
+        piecesPerClue,
+      ))
   );
 }
 
@@ -178,7 +176,7 @@ export function listReflectionGenerationConditions(
   const combination = reflectionLevelCombinations[difficulty];
   const { boardSize, pieceCount } = combination;
   return reflectionBoardSizes
-    .filter((size) => isInRange(size, boardSize))
+    .filter((size) => isInNumericRange(size, boardSize))
     .flatMap((size) =>
       Array.from(
         { length: pieceCount.maximum - pieceCount.minimum + 1 },

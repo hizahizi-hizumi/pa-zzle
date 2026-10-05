@@ -1,4 +1,8 @@
-import type { DifficultyLevel } from "@/games/difficulty";
+import {
+  type DifficultyLevel,
+  isInNumericRange,
+  type NumericRange,
+} from "@/games/difficulty";
 import type {
   MinesweeperDifficultyAnalysis,
   MinesweeperHumanSolveFeatures,
@@ -9,11 +13,8 @@ export type MinesweeperDifficulty = DifficultyLevel;
 
 export type MinesweeperBoardSize = { rows: number; columns: number };
 
-/** 地雷密度の範囲。浮動小数の誤差を避けるため百分率の整数で持ち、両端を含む。 */
-type MinesweeperMineDensityPercentRange = {
-  minimum: number;
-  maximum: number;
-};
+/** 地雷密度の範囲。浮動小数の誤差を避けるため百分率の整数で持つ。 */
+type MinesweeperMineDensityPercentRange = NumericRange;
 
 export type MinesweeperDifficultyBoardRange = {
   sizes: readonly MinesweeperBoardSize[];
@@ -63,10 +64,10 @@ function isMineCountInDensityRange(
   mineCount: number,
   { minimum, maximum }: MinesweeperMineDensityPercentRange,
 ): boolean {
-  return (
-    mineCount * 100 >= minimum * cellCount &&
-    mineCount * 100 <= maximum * cellCount
-  );
+  return isInNumericRange(mineCount * 100, {
+    minimum: minimum * cellCount,
+    maximum: maximum * cellCount,
+  });
 }
 
 function listMineCountsInDensityRange(
