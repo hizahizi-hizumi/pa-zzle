@@ -1,5 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ProblemId } from "@/games/problem-id";
+import { useCallback, useMemo, useRef, useState } from "react";
+import {
+  applyPlaySession,
+  completePlayClearAnimation,
+  type GamePlay,
+  type GameProgress,
+  type RestartableGamePlay,
+  startPlaySession,
+  useSessionElapsedMs,
+} from "@/games/play";
+import { createProblemId, type ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
@@ -23,8 +32,8 @@ import {
   type SlidePuzzlePlayScore,
 } from "@/games/slide-puzzle/score";
 import {
+  canRestartSlidePuzzleSession,
   createSlidePuzzleSession,
-  getSlidePuzzleSessionElapsedMs,
   getSlidePuzzleSessionResult,
   restartSlidePuzzleSession,
   type SlidePuzzleSession,
@@ -42,8 +51,6 @@ export type SlidePuzzleOperation =
       isClearingMove: boolean;
     }
   | { id: number; type: "invalid"; tileIndex: number };
-
-export type SlidePuzzleProgress = "playing" | "clearing" | "result";
 
 export type SlidePuzzleResult = SlidePuzzleSessionResult & {
   boardSize: SlidePuzzleBoardSize;
@@ -84,34 +91,51 @@ export function createSlidePuzzleResult(
   };
 }
 
+export type SlidePuzzlePlay = GamePlay<
+  SlidePuzzleDifficulty,
+  SlidePuzzleProblemIdentity,
+  SlidePuzzleSession,
+  SlidePuzzleResult
+> &
+  RestartableGamePlay & {
+    board: SlidePuzzleBoard;
+    moveCount: number;
+    restartCount: number;
+    optimalMoveCount: number;
+    operation: SlidePuzzleOperation | null;
+    slideTile: (tileIndex: number) => void;
+    slideByKeyboard: (direction: SlidePuzzleDirection) => void;
+  };
+
 type SlidePuzzlePlayState = {
   session: SlidePuzzleSession;
   problemIdentity: SlidePuzzleProblemIdentity;
   optimalMoveCount: number;
-  progress: SlidePuzzleProgress;
+  progress: GameProgress;
   operation: SlidePuzzleOperation | null;
 };
 
 function createPlayState(
-  difficulty: SlidePuzzleDifficulty,
+  { problem, identity, optimalMoveCount }: SlidePuzzlePooledProblem,
   startedAt: number,
-  initialProblem?: SlidePuzzlePooledProblem,
-  avoidedProblemId?: ProblemId,
 ): SlidePuzzlePlayState {
-  const generatedProblem =
-    initialProblem ??
-    selectProblemAvoiding(
-      (seed) => selectSlidePuzzleProblemForDifficulty(difficulty, seed),
-      avoidedProblemId,
-    ).problem;
-
   return {
-    session: createSlidePuzzleSession(generatedProblem.problem, startedAt),
-    problemIdentity: generatedProblem.identity,
-    optimalMoveCount: generatedProblem.optimalMoveCount,
+    session: createSlidePuzzleSession(problem, startedAt),
+    problemIdentity: identity,
+    optimalMoveCount,
     progress: "playing",
     operation: null,
   };
+}
+
+function selectProblem(
+  difficulty: SlidePuzzleDifficulty,
+  avoidedProblemId: ProblemId | undefined,
+): SlidePuzzlePooledProblem {
+  return selectProblemAvoiding(
+    (seed) => selectSlidePuzzleProblemForDifficulty(difficulty, seed),
+    avoidedProblemId,
+  ).problem;
 }
 
 function slideTileInPlay(
@@ -128,26 +152,23 @@ function slideTileInPlay(
   const { session } = current;
   const nextSession = slide
     ? slideSlidePuzzleSessionTile(session, tileIndex, movedAt)
-    : null;
-  if (!slide || !nextSession) {
+    : session;
+  if (!slide || nextSession === session) {
     return {
       ...current,
       operation: { id: operationId, type: "invalid", tileIndex },
     };
   }
 
-  const cleared = nextSession.status === "cleared";
   return {
-    ...current,
-    session: nextSession,
-    progress: cleared ? "clearing" : "playing",
+    ...applyPlaySession(current, nextSession),
     operation: {
       id: operationId,
       type: "slid",
       slide,
-      boardBefore: session.board,
-      boardAfter: nextSession.board,
-      isClearingMove: cleared,
+      boardBefore: session.puzzleState,
+      boardAfter: nextSession.puzzleState,
+      isClearingMove: nextSession.status === "cleared",
     },
   };
 }
@@ -157,33 +178,25 @@ export function useSlidePuzzlePlay(
   difficulty: SlidePuzzleDifficulty,
   initialProblem?: SlidePuzzlePooledProblem,
   avoidedProblemId?: ProblemId,
-) {
+): SlidePuzzlePlay {
   const [play, setPlay] = useState<SlidePuzzlePlayState>(() =>
-    createPlayState(difficulty, Date.now(), initialProblem, avoidedProblemId),
+    createPlayState(
+      initialProblem ?? selectProblem(difficulty, avoidedProblemId),
+      Date.now(),
+    ),
   );
-  const [now, setNow] = useState(() => Date.now());
+  const { session, problemIdentity, optimalMoveCount } = play;
+  const elapsedMs = useSessionElapsedMs(session);
   const nextOperationId = useRef(0);
-
-  useEffect(() => {
-    if (play.session.status !== "playing") {
-      return;
-    }
-
-    setNow(Date.now());
-    const timer = window.setInterval(() => setNow(Date.now()), 1000);
-
-    return () => window.clearInterval(timer);
-  }, [play.session.status]);
 
   const slideTile = useCallback((tileIndex: number) => {
     const movedAt = Date.now();
     const operationId = nextOperationId.current++;
-    setNow(movedAt);
     setPlay((current) =>
       slideTileInPlay(
         current,
         tileIndex,
-        getSlidePuzzleSlide(current.session.board, tileIndex),
+        getSlidePuzzleSlide(current.session.puzzleState, tileIndex),
         movedAt,
         operationId,
       ),
@@ -193,10 +206,9 @@ export function useSlidePuzzlePlay(
   const slideByKeyboard = useCallback((direction: SlidePuzzleDirection) => {
     const movedAt = Date.now();
     const operationId = nextOperationId.current++;
-    setNow(movedAt);
     setPlay((current) => {
       const slide = getSlidePuzzleKeyboardSlide(
-        current.session.board,
+        current.session.puzzleState,
         direction,
       );
       const tileIndex = slide?.movedTileIndices[0];
@@ -209,79 +221,71 @@ export function useSlidePuzzlePlay(
   }, []);
 
   const restart = useCallback(() => {
-    setNow(Date.now());
-    setPlay((current) =>
-      current.session.status === "playing"
-        ? {
-            ...current,
-            session: restartSlidePuzzleSession(current.session),
-            operation: null,
-          }
-        : current,
-    );
+    setPlay((current) => {
+      const next = applyPlaySession(
+        current,
+        restartSlidePuzzleSession(current.session),
+      );
+      return next === current ? current : { ...next, operation: null };
+    });
   }, []);
 
   const replay = useCallback(() => {
     const startedAt = Date.now();
-    setNow(startedAt);
     setPlay((current) => ({
-      ...current,
-      session: createSlidePuzzleSession(current.session.problem, startedAt),
-      progress: "playing",
+      ...startPlaySession(
+        current,
+        createSlidePuzzleSession(current.session.problem, startedAt),
+      ),
       operation: null,
     }));
   }, []);
 
   const startNewProblem = useCallback(() => {
-    const startedAt = Date.now();
-    const next = createPlayState(difficulty, startedAt);
-    setNow(startedAt);
-    setPlay(next);
-  }, [difficulty]);
-
-  const completeClearing = useCallback(() => {
-    setPlay((current) =>
-      current.progress === "clearing"
-        ? { ...current, progress: "result", operation: null }
-        : current,
+    setPlay(
+      createPlayState(
+        selectProblem(difficulty, createProblemId(problemIdentity)),
+        Date.now(),
+      ),
     );
+  }, [difficulty, problemIdentity]);
+
+  const completeClearAnimation = useCallback(() => {
+    setPlay((current) => {
+      const next = completePlayClearAnimation(current);
+      return next === current ? current : { ...next, operation: null };
+    });
   }, []);
 
-  const { session } = play;
-  const sessionResult = useMemo(
-    () => getSlidePuzzleSessionResult(session, now),
-    [now, session],
-  );
-  const optimalMoveCount = play.optimalMoveCount;
-  const boardSize = play.problemIdentity.conditions.size;
-  const result = useMemo<SlidePuzzleResult | null>(
-    () =>
-      sessionResult
-        ? createSlidePuzzleResult(sessionResult, boardSize, optimalMoveCount)
-        : null,
-    [boardSize, optimalMoveCount, sessionResult],
-  );
+  const boardSize = problemIdentity.conditions.size;
+  const result = useMemo(() => {
+    const sessionResult = getSlidePuzzleSessionResult(session);
+    return sessionResult
+      ? createSlidePuzzleResult(sessionResult, boardSize, optimalMoveCount)
+      : null;
+  }, [boardSize, optimalMoveCount, session]);
 
   return {
     difficulty,
-    problemIdentity: play.problemIdentity,
+    problemIdentity,
+    session,
     status: session.status,
     progress: play.progress,
-    board: session.board,
     startedAt: session.startedAt,
     completedAt: session.finishedAt,
-    session,
-    elapsedMs: getSlidePuzzleSessionElapsedMs(session, now),
+    elapsedMs,
+    result,
+    board: session.puzzleState,
     moveCount: session.moveCount,
     restartCount: session.restartCount,
     optimalMoveCount,
     operation: play.operation,
-    result,
+    canRestart: canRestartSlidePuzzleSession(session),
     slideTile,
     slideByKeyboard,
     restart,
     replay,
     startNewProblem,
-    completeClearing,
+    completeClearAnimation,
   };
 }

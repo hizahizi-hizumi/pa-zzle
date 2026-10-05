@@ -111,7 +111,7 @@ describe("useSlidePuzzlePlay", () => {
     });
 
     test("完成演出の完了で結果へ進むこと", () => {
-      act(() => result.current.completeClearing());
+      act(() => result.current.completeClearAnimation());
 
       expect(result.current.progress).toBe("result");
     });
