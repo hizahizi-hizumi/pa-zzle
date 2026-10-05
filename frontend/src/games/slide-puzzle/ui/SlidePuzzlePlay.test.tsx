@@ -33,7 +33,7 @@ afterEach(() => {
 describe("SlidePuzzlePlay", () => {
   const callbacks = {
     onSlideTile: vi.fn(),
-    onSlideByKeyboard: vi.fn(),
+    onSlideInDirection: vi.fn(),
     onRestart: vi.fn(),
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
@@ -47,7 +47,6 @@ describe("SlidePuzzlePlay", () => {
     render(
       <SlidePuzzlePlay
         difficulty="3"
-        status={progress === "playing" ? "playing" : "cleared"}
         progress={progress}
         board={board}
         elapsedMs={65_000}
@@ -166,14 +165,14 @@ describe("SlidePuzzlePlay", () => {
       (key, direction) => {
         fireEvent.keyDown(document.body, { key });
 
-        expect(callbacks.onSlideByKeyboard).toHaveBeenCalledWith(direction);
+        expect(callbacks.onSlideInDirection).toHaveBeenCalledWith(direction);
       },
     );
 
     test("修飾キー付きの矢印キーは盤面へ流さないこと", () => {
       fireEvent.keyDown(document.body, { key: "ArrowLeft", altKey: true });
 
-      expect(callbacks.onSlideByKeyboard).not.toHaveBeenCalled();
+      expect(callbacks.onSlideInDirection).not.toHaveBeenCalled();
     });
   });
 
@@ -195,7 +194,7 @@ describe("SlidePuzzlePlay", () => {
     test("矢印キーを盤面へ流さないこと", () => {
       fireEvent.keyDown(document.body, { key: "ArrowLeft" });
 
-      expect(callbacks.onSlideByKeyboard).not.toHaveBeenCalled();
+      expect(callbacks.onSlideInDirection).not.toHaveBeenCalled();
     });
 
     test("結果画面をまだ出さないこと", () => {

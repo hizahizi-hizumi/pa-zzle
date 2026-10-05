@@ -93,7 +93,6 @@ export function PlayableWaterSort({
     <>
       <WaterSortPlay
         difficulty={play.difficulty}
-        status={play.status}
         progress={play.progress}
         state={play.state}
         elapsedMs={play.elapsedMs}

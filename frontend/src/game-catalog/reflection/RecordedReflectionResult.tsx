@@ -1,6 +1,5 @@
 import { type ReactNode, useMemo, useState } from "react";
 import type { GameNavigation } from "@/game-catalog/game-catalog-entry";
-import { getDifficultyLabel } from "@/games/difficulty";
 import { createProblemId } from "@/games/problem-id";
 import { createReflectionDiagnosticSnapshot } from "@/games/reflection/diagnostics";
 import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
@@ -55,7 +54,7 @@ export function RecordedReflectionResult({
   return (
     <>
       <ReflectionResultScreen
-        difficultyLabel={getDifficultyLabel(difficulty)}
+        difficulty={difficulty}
         laserPathMode={reflectionLaserPathMode}
         result={result}
         recordOutcomeNotice={recordOutcomeNotice}

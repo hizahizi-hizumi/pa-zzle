@@ -6,7 +6,6 @@ import {
   useRequestedProblem,
 } from "@/game-catalog/problem-id-query";
 import { useRecordResultNavigation } from "@/game-catalog/record-result-navigation";
-import { getDifficultyLabel } from "@/games/difficulty";
 import { createParkingJamDiagnosticSnapshot } from "@/games/parking-jam/diagnostics";
 import type { ParkingJamDifficulty } from "@/games/parking-jam/difficulty";
 import { useParkingJamPlay } from "@/games/parking-jam/play/use-parking-jam-play";
@@ -102,8 +101,7 @@ export function PlayableParkingJam({
   return (
     <>
       <ParkingJamPlay
-        difficultyLabel={getDifficultyLabel(difficulty)}
-        status={play.status}
+        difficulty={difficulty}
         progress={play.progress}
         board={play.board}
         state={play.state}

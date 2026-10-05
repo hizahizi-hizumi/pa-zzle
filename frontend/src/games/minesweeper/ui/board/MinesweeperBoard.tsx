@@ -9,7 +9,7 @@ type MinesweeperBoardProps = {
   columns: number;
   cells: readonly MinesweeperVisibleCell[];
   mode: MinesweeperInputMode;
-  disabled: boolean;
+  interactionDisabled: boolean;
   onRevealCell: (cellIndex: number) => void;
   onToggleFlag: (cellIndex: number) => void;
   onChordCell: (cellIndex: number) => void;
@@ -26,7 +26,7 @@ export function MinesweeperBoard({
   columns,
   cells,
   mode,
-  disabled,
+  interactionDisabled,
   onRevealCell,
   onToggleFlag,
   onChordCell,
@@ -82,7 +82,7 @@ export function MinesweeperBoard({
             key={getCellKey(columns, cellIndex)}
             cellIndex={cellIndex}
             view={cell}
-            disabled={disabled}
+            disabled={interactionDisabled}
             onPress={handleCellPress}
             onFlagPress={handleCellFlagPress}
           />

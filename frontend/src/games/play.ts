@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import {
   type GameSession,
@@ -130,4 +130,52 @@ export type UndoableGamePlay = {
   canUndo: boolean;
   /** 直前の盤面操作を1つ取り消す。`canUndo` が `false` なら何もしない。 */
   undo: () => void;
+};
+
+/**
+ * 全ゲームの結果画面 `<Game>ResultScreen` が受け取る、難易度・評価と結果からの操作。
+ * 難易度は値で受け取り、表示名は結果画面が決める。
+ */
+export type GamePlayResultScreenProps<Difficulty, Result> = {
+  difficulty: Difficulty;
+  result: Result;
+  /** 記録を保存した直後の自己ベスト更新などの告知。 */
+  recordOutcomeNotice: ReactNode;
+  /** 同じ問題を遊び直す。省略すると押せない状態で出す。 */
+  onReplay?: () => void;
+  onStartNewProblem: () => void;
+  onOpenRecords: () => void;
+  onChangeDifficulty: () => void;
+  onBackToHome: () => void;
+  /** 省略すると検証情報を開く操作を出さない。 */
+  onOpenDiagnostics?: () => void;
+};
+
+/**
+ * 全ゲームのプレイ画面 `<Game>Play` が受け取る、1問のプレイの進行と共通の操作。
+ * 各ゲームはこれに盤面とゲーム固有の操作を足し、盤面を戻せるなら `RestartableGamePlayScreenProps`、
+ * 待ったがあるなら `UndoableGamePlayScreenProps` も足す。盤面は `progress` が `playing` の間だけ操作を受け付ける。
+ */
+export type GamePlayScreenProps<Difficulty, Result> = Omit<
+  GamePlayResultScreenProps<Difficulty, Result>,
+  "result" | "onReplay"
+> & {
+  progress: GameProgress;
+  elapsedMs: number;
+  /** クリアしたプレイの評価。`progress` が `result` でも `null` の間は結果画面を出さず、盤面を見せておく。 */
+  result: Result | null;
+  /** 同じ問題を新しいプレイとして始める（リセット）。 */
+  onReplay: () => void;
+};
+
+/** 盤面を戻せるゲームのプレイ画面が足す props。 */
+export type RestartableGamePlayScreenProps = {
+  canRestart: boolean;
+  onRestart: () => void;
+};
+
+/** 待ったのあるゲームのプレイ画面が足す props。 */
+export type UndoableGamePlayScreenProps = {
+  canUndo: boolean;
+  onUndo: () => void;
 };

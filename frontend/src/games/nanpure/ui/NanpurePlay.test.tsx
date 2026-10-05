@@ -23,7 +23,6 @@ function emptyNotes() {
 function createProps(): ComponentProps<typeof NanpurePlay> {
   return {
     difficulty: "3",
-    status: "playing",
     progress: "playing",
     clues: emptyBoard(),
     board: emptyBoard(),
@@ -245,14 +244,7 @@ describe("NanpurePlay", () => {
 
     beforeEach(() => {
       const props = createProps();
-      render(
-        <NanpurePlay
-          {...props}
-          status="cleared"
-          progress="clearing"
-          result={result}
-        />,
-      );
+      render(<NanpurePlay {...props} progress="clearing" result={result} />);
       board = screen.getByRole("main");
       digitInput = screen.getByRole("group", { name: "数字入力" });
     });
@@ -279,7 +271,6 @@ describe("NanpurePlay", () => {
       render(
         <NanpurePlay
           {...props}
-          status="cleared"
           progress="result"
           result={{
             elapsedMs: 125_000,
@@ -340,7 +331,6 @@ describe("NanpurePlay", () => {
       render(
         <NanpurePlay
           {...props}
-          status="cleared"
           progress="result"
           result={{
             elapsedMs: 120_000,
@@ -437,7 +427,6 @@ describe("NanpurePlay", () => {
       render(
         <NanpurePlay
           {...createProps()}
-          status="cleared"
           progress="result"
           result={{
             elapsedMs: 125_000,

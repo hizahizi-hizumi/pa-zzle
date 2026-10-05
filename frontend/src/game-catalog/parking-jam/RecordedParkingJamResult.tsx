@@ -1,6 +1,5 @@
 import { type ReactNode, useMemo, useState } from "react";
 import type { GameNavigation } from "@/game-catalog/game-catalog-entry";
-import { getDifficultyLabel } from "@/games/difficulty";
 import { createParkingJamDiagnosticSnapshot } from "@/games/parking-jam/diagnostics";
 import type { ParkingJamDifficulty } from "@/games/parking-jam/difficulty";
 import type { ParkingJamResult } from "@/games/parking-jam/play/use-parking-jam-play";
@@ -52,7 +51,7 @@ export function RecordedParkingJamResult({
   return (
     <>
       <ParkingJamResultScreen
-        difficultyLabel={getDifficultyLabel(difficulty)}
+        difficulty={difficulty}
         result={result}
         recordOutcomeNotice={recordOutcomeNotice}
         onReplay={onReplay}

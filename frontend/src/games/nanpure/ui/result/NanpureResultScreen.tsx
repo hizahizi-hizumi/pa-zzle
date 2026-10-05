@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { GameResultScreen } from "@/components/GameResultScreen";
 import {
   createCountMetric,
@@ -14,19 +13,12 @@ import { NANPURE_DISPLAY_NAME } from "@/games/nanpure/display-name";
 import type { NanpureResult } from "@/games/nanpure/play/use-nanpure-play";
 import { NANPURE_SCORE_MAXIMUMS } from "@/games/nanpure/score";
 import { getNanpureScoreCriteria } from "@/games/nanpure/ui/result/NanpureResultScreen/score-criteria";
+import type { GamePlayResultScreenProps } from "@/games/play";
 
-type NanpureResultScreenProps = {
-  difficulty: NanpureDifficulty;
-  result: NanpureResult;
-  recordOutcomeNotice: ReactNode;
-  /** 省略すると同じ問題を遊び直す操作を押せない状態で出す。 */
-  onReplay?: () => void;
-  onStartNewProblem: () => void;
-  onOpenRecords: () => void;
-  onChangeDifficulty: () => void;
-  onBackToHome: () => void;
-  onOpenDiagnostics?: () => void;
-};
+type NanpureResultScreenProps = GamePlayResultScreenProps<
+  NanpureDifficulty,
+  NanpureResult
+>;
 
 export function NanpureResultScreen({
   difficulty,

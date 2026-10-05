@@ -104,7 +104,6 @@ export function PlayableMinesweeper({
         mistakeCount={play.mistakeCount}
         elapsedMs={play.elapsedMs}
         visibleCells={play.visibleCells}
-        status={play.status}
         progress={play.progress}
         // 記録の結果画面へ遷移する間は、その場の結果画面を出さず盤面を見せておく。
         result={navigatesToRecordResult ? null : play.result}

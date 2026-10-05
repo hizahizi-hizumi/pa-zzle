@@ -2,22 +2,23 @@ import { Fragment } from "react";
 
 import { MetricSeparator } from "@/components/PlayHeader/PlayHeaderSummary/MetricSeparator";
 import { PlayMetric } from "@/components/PlayHeader/PlayHeaderSummary/PlayMetric";
+import type { PlayHeaderMetric } from "@/components/play-header-metric";
+import { formatElapsedTime } from "@/lib/format-elapsed-time";
 import { cn } from "@/lib/utils";
 
-export type PlayHeaderMetric = {
-  label: string;
-  value: string;
-  /** 値がこの桁数に満たなくても、この桁数分の幅を取る。桁が増えても周りの計測値を動かさない。 */
-  reservedDigits?: number;
-};
-
 /** 狭い幅で行を分けるときも、同じ行に残す計測値のまとまり。 */
-export type PlayHeaderMetricGroup = readonly PlayHeaderMetric[];
+type PlayHeaderMetricGroup = readonly PlayHeaderMetric[];
 
 type PlayHeaderSummaryProps = {
   title: string;
-  metricGroups: readonly PlayHeaderMetricGroup[];
+  metrics: readonly PlayHeaderMetric[];
 };
+
+/** 狭い幅で行を分けるとき、計測値を前から2つずつ同じ行に残す。 */
+const metricsPerGroup = 2;
+
+/** 回数は2桁分の幅を取り、10回目で周りの計測値が横へ動かないようにする。 */
+const countReservedDigits = 2;
 
 type MetricRowLayout = { row: string; groupSeparator: string };
 
@@ -35,6 +36,20 @@ const singleLineLayout: MetricRowLayout = {
   groupSeparator: "inline",
 };
 
+function groupMetrics(
+  metrics: readonly PlayHeaderMetric[],
+): PlayHeaderMetricGroup[] {
+  const groups: PlayHeaderMetricGroup[] = [];
+  for (let start = 0; start < metrics.length; start += metricsPerGroup) {
+    groups.push(metrics.slice(start, start + metricsPerGroup));
+  }
+  return groups;
+}
+
+function getMetricLabel(metric: PlayHeaderMetric): string {
+  return metric.type === "count" ? metric.label : "時間";
+}
+
 function selectLayout(
   metricGroups: readonly PlayHeaderMetricGroup[],
 ): MetricRowLayout {
@@ -46,10 +61,8 @@ function selectLayout(
   return metricCount <= 3 ? threeMetricsLayout : fourMetricsLayout;
 }
 
-export function PlayHeaderSummary({
-  title,
-  metricGroups,
-}: PlayHeaderSummaryProps) {
+export function PlayHeaderSummary({ title, metrics }: PlayHeaderSummaryProps) {
+  const metricGroups = groupMetrics(metrics);
   const layout = selectLayout(metricGroups);
 
   return (
@@ -62,7 +75,7 @@ export function PlayHeaderSummary({
         )}
       >
         {metricGroups.map((group, groupIndex) => (
-          <Fragment key={group.map((metric) => metric.label).join("/")}>
+          <Fragment key={group.map(getMetricLabel).join("/")}>
             {groupIndex > 0 && (
               <span className={layout.groupSeparator}>
                 <MetricSeparator />
@@ -70,13 +83,20 @@ export function PlayHeaderSummary({
             )}
             <div className="flex items-center justify-center gap-2">
               {group.map((metric, metricIndex) => (
-                <Fragment key={metric.label}>
+                <Fragment key={getMetricLabel(metric)}>
                   {metricIndex > 0 && <MetricSeparator />}
-                  <PlayMetric
-                    label={metric.label}
-                    value={metric.value}
-                    reservedDigits={metric.reservedDigits}
-                  />
+                  {metric.type === "count" ? (
+                    <PlayMetric
+                      label={metric.label}
+                      value={String(metric.count)}
+                      reservedDigits={countReservedDigits}
+                    />
+                  ) : (
+                    <PlayMetric
+                      label={getMetricLabel(metric)}
+                      value={formatElapsedTime(metric.elapsedMs)}
+                    />
+                  )}
                 </Fragment>
               ))}
             </div>

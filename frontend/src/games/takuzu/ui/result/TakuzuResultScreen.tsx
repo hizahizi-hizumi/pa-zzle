@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { GameResultScreen } from "@/components/GameResultScreen";
 import {
   createCountMetric,
@@ -8,6 +7,7 @@ import {
   listScoreBreakdownMetrics,
 } from "@/components/game-result-metrics";
 import { getDifficultyLabel } from "@/games/difficulty";
+import type { GamePlayResultScreenProps } from "@/games/play";
 import takuzuPictogramSvg from "@/games/takuzu/assets/pictogram.svg?raw";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import { TAKUZU_DISPLAY_NAME } from "@/games/takuzu/display-name";
@@ -15,18 +15,10 @@ import type { TakuzuResult } from "@/games/takuzu/play/use-takuzu-play";
 import { TAKUZU_SCORE_MAXIMUMS } from "@/games/takuzu/score";
 import { getTakuzuScoreCriteria } from "@/games/takuzu/ui/result/TakuzuResultScreen/score-criteria";
 
-type TakuzuResultScreenProps = {
-  difficulty: TakuzuDifficulty;
-  result: TakuzuResult;
-  recordOutcomeNotice: ReactNode;
-  /** 省略すると同じ問題を遊び直す操作を押せない状態で出す。 */
-  onReplay?: () => void;
-  onStartNewProblem: () => void;
-  onOpenRecords: () => void;
-  onChangeDifficulty: () => void;
-  onBackToHome: () => void;
-  onOpenDiagnostics?: () => void;
-};
+type TakuzuResultScreenProps = GamePlayResultScreenProps<
+  TakuzuDifficulty,
+  TakuzuResult
+>;
 
 export function TakuzuResultScreen({
   difficulty,

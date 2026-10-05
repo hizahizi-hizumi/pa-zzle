@@ -82,9 +82,9 @@ export type ReflectionPlay = GamePlay<
     stock: ReflectionInventory;
     selection: ReflectionSelection | null;
     laser: ReflectionLaserView | null;
-    tapStock: (piece: ReflectionPiece) => void;
-    tapCell: (cellIndex: number) => void;
-    tapClue: (entry: ReflectionEntry) => void;
+    selectStockPiece: (piece: ReflectionPiece) => void;
+    selectCell: (cellIndex: number) => void;
+    selectClue: (entry: ReflectionEntry) => void;
     removePiece: (cellIndex: number) => void;
     clearSelection: () => void;
   };
@@ -141,7 +141,7 @@ export function createReflectionResult(
 /**
  * 難易度のプレイを始める。`initialProblem` を渡すと、最初の1問だけその問題を出す。
  * 渡さなければ、最初の1問は `avoidedProblemId` の問題を避けて選ぶ。
- * `tapClue` は外周ヒントの光路を表示し、盤面が揃うと `progress` が `clearing` になる。
+ * `selectClue` は外周ヒントの光路を表示し、盤面が揃うと `progress` が `clearing` になる。
  * クリアすると `result` に評価を返す。
  */
 export function useReflectionPlay(
@@ -165,7 +165,7 @@ export function useReflectionPlay(
     [],
   );
 
-  const tapStock = useCallback(
+  const selectStockPiece = useCallback(
     (piece: ReflectionPiece) => {
       const operatedAt = Date.now();
       updateSession((current) =>
@@ -175,7 +175,7 @@ export function useReflectionPlay(
     [updateSession],
   );
 
-  const tapCell = useCallback(
+  const selectCell = useCallback(
     (cellIndex: number) => {
       const operatedAt = Date.now();
       updateSession((current) =>
@@ -185,7 +185,7 @@ export function useReflectionPlay(
     [updateSession],
   );
 
-  const tapClue = useCallback(
+  const selectClue = useCallback(
     (entry: ReflectionEntry) => {
       updateSession((current) => tapReflectionSessionClue(current, entry));
     },
@@ -265,9 +265,9 @@ export function useReflectionPlay(
     selection: session.selection,
     laser,
     canRestart: canRestartReflectionSession(session),
-    tapStock,
-    tapCell,
-    tapClue,
+    selectStockPiece,
+    selectCell,
+    selectClue,
     removePiece,
     clearSelection,
     restart,

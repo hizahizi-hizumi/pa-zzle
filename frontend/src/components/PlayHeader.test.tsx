@@ -15,11 +15,9 @@ function openPlayMenu(): void {
 function createProps(): ComponentProps<typeof PlayHeader> {
   return {
     title: "テストパズル",
-    metricGroups: [
-      [
-        { label: "ミス", value: "2" },
-        { label: "時間", value: "1:05" },
-      ],
+    metrics: [
+      { type: "count", label: "ミス", count: 2 },
+      { type: "elapsed-time", elapsedMs: 65_000 },
     ],
     onRestart: vi.fn(),
     onReplay: vi.fn(),
@@ -42,7 +40,7 @@ describe("PlayHeader", () => {
 
     test("ゲーム名と計測値を表示すること", () => {
       const title = screen.getByRole("heading", { name: "テストパズル" });
-      const elapsed = screen.getByText("1:05");
+      const elapsed = screen.getByText("01:05");
 
       expect(title).toBeTruthy();
       expect(elapsed).toBeTruthy();

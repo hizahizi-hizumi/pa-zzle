@@ -27,7 +27,7 @@ type ReflectionCellProps = {
   focusable: boolean;
   onElementChange: (key: string, element: HTMLButtonElement | null) => void;
   /** 押したときの受け口。タッチは押した位置のマスで受ける（`useTouchTap`）。 */
-  tapHandlers: TapHandlers;
+  selectHandlers: TapHandlers;
   onFocus: (key: string) => void;
   focusKey: string;
 };
@@ -40,7 +40,7 @@ export function ReflectionCell({
   disabled,
   focusable,
   onElementChange,
-  tapHandlers,
+  selectHandlers,
   onFocus,
   focusKey,
 }: ReflectionCellProps) {
@@ -60,8 +60,8 @@ export function ReflectionCell({
       aria-pressed={selected}
       disabled={disabled}
       tabIndex={focusable ? 0 : -1}
-      onPointerUp={tapHandlers.onPointerUp}
-      onClick={tapHandlers.onClick}
+      onPointerUp={selectHandlers.onPointerUp}
+      onClick={selectHandlers.onClick}
       onFocus={() => onFocus(focusKey)}
       className="relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center text-foreground outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent"
     >

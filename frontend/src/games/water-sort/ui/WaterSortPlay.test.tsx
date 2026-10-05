@@ -18,7 +18,6 @@ afterEach(() => {
 
 const baseProps = {
   difficulty: "3" as const,
-  status: "playing" as const,
   progress: "playing" as const,
   state: [[0, 1], []] as const,
   elapsedMs: 5000,
@@ -348,7 +347,6 @@ describe("WaterSortPlay", () => {
     render(
       <WaterSortPlay
         {...baseProps}
-        status="cleared"
         progress="result"
         result={createResult()}
       />,
@@ -383,7 +381,6 @@ describe("WaterSortPlay", () => {
     render(
       <WaterSortPlay
         {...baseProps}
-        status="cleared"
         progress="result"
         result={createResult()}
         onOpenDiagnostics={onOpenDiagnostics}
@@ -399,7 +396,6 @@ describe("WaterSortPlay", () => {
     render(
       <WaterSortPlay
         {...baseProps}
-        status="cleared"
         progress="result"
         result={createResult({
           elapsedMs: 42_000,
@@ -463,7 +459,6 @@ describe("WaterSortPlay", () => {
     rerender(
       <WaterSortPlay
         {...baseProps}
-        status="cleared"
         progress="clearing"
         state={[[], [0, 0, 0, 0]]}
         sourceBottleIndex={null}
@@ -496,7 +491,6 @@ describe("WaterSortPlay", () => {
     render(
       <WaterSortPlay
         {...baseProps}
-        status="cleared"
         progress="result"
         result={createResult()}
         onReplay={replay}
@@ -520,7 +514,6 @@ describe("WaterSortPlay", () => {
     render(
       <WaterSortPlay
         {...baseProps}
-        status="cleared"
         progress="result"
         result={createResult({
           elapsedMs: 55_000,

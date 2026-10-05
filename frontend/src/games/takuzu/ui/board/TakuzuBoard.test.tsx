@@ -51,7 +51,7 @@ describe("TakuzuBoard", () => {
           size={2}
           cells={cells}
           lineViolations={lineViolations}
-          disabled={false}
+          interactionDisabled={false}
           onCycleCell={onCycleCell}
           onPlaceCell={onPlaceCell}
         />,
@@ -205,7 +205,7 @@ describe("TakuzuBoard", () => {
           size={2}
           cells={cells}
           lineViolations={lineViolations}
-          disabled={true}
+          interactionDisabled={true}
           onCycleCell={onCycleCell}
           onPlaceCell={onPlaceCell}
         />,

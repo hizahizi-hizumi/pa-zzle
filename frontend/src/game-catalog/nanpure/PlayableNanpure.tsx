@@ -93,7 +93,6 @@ export function PlayableNanpure({
     <>
       <NanpurePlay
         difficulty={difficulty}
-        status={play.status}
         progress={play.progress}
         clues={play.clues}
         board={play.board}

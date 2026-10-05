@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { GameResultScreen } from "@/components/GameResultScreen";
 import {
   createCountMetric,
@@ -7,7 +6,10 @@ import {
   createSpeedFullScoreMetric,
   listScoreBreakdownMetrics,
 } from "@/components/game-result-metrics";
+import { getDifficultyLabel } from "@/games/difficulty";
+import type { GamePlayResultScreenProps } from "@/games/play";
 import reflectionPictogramSvg from "@/games/reflection/assets/pictogram.svg?raw";
+import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import {
   getReflectionLaserPathPolicy,
@@ -17,18 +19,11 @@ import type { ReflectionResult } from "@/games/reflection/play/use-reflection-pl
 import { REFLECTION_SCORE_MAXIMUMS } from "@/games/reflection/score";
 import { getReflectionScoreCriteria } from "@/games/reflection/ui/result/ReflectionResultScreen/score-criteria";
 
-type ReflectionResultScreenProps = {
-  difficultyLabel: string;
+type ReflectionResultScreenProps = GamePlayResultScreenProps<
+  ReflectionDifficulty,
+  ReflectionResult
+> & {
   laserPathMode: ReflectionLaserPathMode;
-  result: ReflectionResult;
-  recordOutcomeNotice: ReactNode;
-  /** 省略すると同じ問題を遊び直す操作を押せない状態で出す。 */
-  onReplay?: () => void;
-  onStartNewProblem: () => void;
-  onOpenRecords: () => void;
-  onChangeDifficulty: () => void;
-  onBackToHome: () => void;
-  onOpenDiagnostics?: () => void;
 };
 
 function listScoreBreakdown(
@@ -54,7 +49,7 @@ function listScoreBreakdown(
 }
 
 export function ReflectionResultScreen({
-  difficultyLabel,
+  difficulty,
   laserPathMode,
   result,
   recordOutcomeNotice,
@@ -71,7 +66,7 @@ export function ReflectionResultScreen({
   return (
     <GameResultScreen
       gameName={REFLECTION_DISPLAY_NAME}
-      difficultyLabel={difficultyLabel}
+      difficultyLabel={getDifficultyLabel(difficulty)}
       pictogramSvg={reflectionPictogramSvg}
       metrics={[
         createElapsedTimeMetric(result),

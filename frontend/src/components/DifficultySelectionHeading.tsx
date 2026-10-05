@@ -1,12 +1,8 @@
 import { CircleHelp } from "lucide-react";
 import { type ReactNode, useState } from "react";
 
+import type { HowToPlayDialogControl } from "@/components/HowToPlayDialog";
 import { Button } from "@/components/ui/button";
-
-type HowToPlayDialogControl = {
-  open: boolean;
-  onClose: () => void;
-};
 
 type DifficultySelectionHeadingProps = {
   title: string;

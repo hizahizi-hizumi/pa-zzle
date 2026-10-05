@@ -120,6 +120,14 @@ frontend/src/games/
 - 最初の問題と「別の問題」は `games/problem-selection.ts` の `selectProblemAvoiding` で選ぶ。「別の問題」は今の問題の ID（`createProblemId(problemIdentity)`）を避ける。
 - リセットはプレイ中もクリア後も使える。`canUndo`・`canRestart` はプレイフックが返し、UI は合成せずそのまま使う。
 
+## プレイ画面と結果画面の共通契約
+
+- `ui/<Game>Play.tsx` の props は `games/play.ts` の `GamePlayScreenProps<Difficulty, Result>` に、盤面を戻せるなら `RestartableGamePlayScreenProps`、待ったがあるなら `UndoableGamePlayScreenProps` と、ゲーム固有の値・操作を足して作る。`ui/result/<Game>ResultScreen.tsx` の props は `GamePlayResultScreenProps<Difficulty, Result>` で作る。難易度は値で受け取り、表示名は UI が決める。
+- プレイ画面は `components/GamePlayFrame.tsx` に盤面（`main`）とゲーム固有の操作（`footer`）を渡して作り、外枠・ブランドの帯・見出し・遊び方の開閉・結果画面への切り替えを各ゲームで書かない。結果画面は `progress` が `result` で評価があるときだけ出る。
+- 見出しの計測値は `PlayHeaderMetric` の回数（`count`）と経過時間（`elapsed-time`）で渡し、書式・桁の確保・行の分け方は共通部品に任せる。
+- 盤面は `progress` が `playing` の間だけ操作を受け付け、受け付けないことを `interactionDisabled` で受け取る。
+- 操作の callback props は、タップ・キーボードなどの入力手段ではなく操作の意味で名付ける。
+
 ## 依存方向
 
 - `frontend/src/games/` 直下のゲーム共通契約は React に依存しない。プレイフックの共通部分を置く `games/play.ts` だけは React に依存できる。

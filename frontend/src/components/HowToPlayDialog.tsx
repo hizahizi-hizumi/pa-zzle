@@ -11,6 +11,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+/** 遊び方ダイアログを開く側が持つ、開閉の状態と閉じる操作。 */
+export type HowToPlayDialogControl = {
+  open: boolean;
+  onClose: () => void;
+};
+
 type HowToPlayDialogProps = {
   open: boolean;
   /** ゲームの目的を一文で示す。 */

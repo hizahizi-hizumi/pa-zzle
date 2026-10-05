@@ -6,7 +6,6 @@ import {
 } from "@/game-catalog/problem-id-query";
 import { useRecordResultNavigation } from "@/game-catalog/record-result-navigation";
 import { reflectionCatalogEntry } from "@/game-catalog/reflection/reflection-catalog-entry";
-import { getDifficultyLabel } from "@/games/difficulty";
 import type { ProblemId } from "@/games/problem-id";
 import { createReflectionDiagnosticSnapshot } from "@/games/reflection/diagnostics";
 import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
@@ -104,7 +103,7 @@ export function PlayableReflection({
   return (
     <>
       <ReflectionPlay
-        difficultyLabel={getDifficultyLabel(difficulty)}
+        difficulty={difficulty}
         laserPathMode={reflectionLaserPathMode}
         progress={play.progress}
         board={play.board}
@@ -123,9 +122,9 @@ export function PlayableReflection({
             display={reflectionPlayRecordDisplay}
           />
         }
-        onTapCell={play.tapCell}
-        onTapStock={play.tapStock}
-        onTapClue={play.tapClue}
+        onSelectCell={play.selectCell}
+        onSelectStockPiece={play.selectStockPiece}
+        onSelectClue={play.selectClue}
         onRemovePiece={play.removePiece}
         onClearSelection={play.clearSelection}
         onRestart={play.restart}

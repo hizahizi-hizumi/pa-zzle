@@ -97,7 +97,6 @@ export function PlayableSlidePuzzle({
     <>
       <SlidePuzzlePlay
         difficulty={play.difficulty}
-        status={play.status}
         progress={play.progress}
         board={play.board}
         elapsedMs={play.elapsedMs}
@@ -112,7 +111,7 @@ export function PlayableSlidePuzzle({
           />
         }
         onSlideTile={play.slideTile}
-        onSlideByKeyboard={play.slideByKeyboard}
+        onSlideInDirection={play.slideInDirection}
         canRestart={play.canRestart}
         onRestart={play.restart}
         onReplay={play.replay}

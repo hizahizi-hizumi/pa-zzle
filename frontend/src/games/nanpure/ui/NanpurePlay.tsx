@@ -1,6 +1,4 @@
-import { type ReactNode, useState } from "react";
-import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
-import { PlayHeader } from "@/components/PlayHeader";
+import { GamePlayFrame } from "@/components/GamePlayFrame";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import { NANPURE_DISPLAY_NAME } from "@/games/nanpure/display-name";
 import type { NanpureResult } from "@/games/nanpure/play/use-nanpure-play";
@@ -14,47 +12,38 @@ import { NanpureBoard } from "@/games/nanpure/ui/board/NanpureBoard";
 import { NanpureHowToPlayDialog } from "@/games/nanpure/ui/NanpureHowToPlayDialog";
 import { NanpureInputPanel } from "@/games/nanpure/ui/play/NanpureInputPanel";
 import { NanpureResultScreen } from "@/games/nanpure/ui/result/NanpureResultScreen";
-import type { GameProgress } from "@/games/play";
-import { formatElapsedTime } from "@/lib/format-elapsed-time";
+import type {
+  GamePlayScreenProps,
+  RestartableGamePlayScreenProps,
+  UndoableGamePlayScreenProps,
+} from "@/games/play";
 
-type NanpurePlayProps = {
-  difficulty: NanpureDifficulty;
-  status: "playing" | "cleared";
-  progress: GameProgress;
-  clues: NanpureBoardState;
-  board: NanpureBoardState;
-  notes: NanpureNotes;
-  selectedCellIndex: number | null;
-  conflictCellIndices: readonly number[];
-  mistakeCellIndices: readonly number[];
-  completedDigits: readonly NanpureDigit[];
-  notesMode: boolean;
-  elapsedMs: number;
-  mistakeCount: number;
-  undoCount: number;
-  canUndo: boolean;
-  result: NanpureResult | null;
-  recordOutcomeNotice: ReactNode;
-  onSelectCell: (cellIndex: number) => void;
-  onInputDigit: (digit: NanpureDigit) => void;
-  onErase: () => void;
-  onToggleNotesMode: () => void;
-  onUndo: () => void;
-  canRestart: boolean;
-  onRestart: () => void;
-  onReplay: () => void;
-  onStartNewProblem: () => void;
-  onOpenRecords: () => void;
-  onChangeDifficulty: () => void;
-  onBackToHome: () => void;
-  onClearAnimationComplete: () => void;
-  onOpenDiagnostics?: () => void;
-};
+type NanpurePlayProps = GamePlayScreenProps<NanpureDifficulty, NanpureResult> &
+  RestartableGamePlayScreenProps &
+  UndoableGamePlayScreenProps & {
+    clues: NanpureBoardState;
+    board: NanpureBoardState;
+    notes: NanpureNotes;
+    selectedCellIndex: number | null;
+    conflictCellIndices: readonly number[];
+    mistakeCellIndices: readonly number[];
+    completedDigits: readonly NanpureDigit[];
+    notesMode: boolean;
+    mistakeCount: number;
+    undoCount: number;
+    onSelectCell: (cellIndex: number) => void;
+    onInputDigit: (digit: NanpureDigit) => void;
+    onErase: () => void;
+    onToggleNotesMode: () => void;
+    onClearAnimationComplete: () => void;
+  };
 
 export function NanpurePlay({
   difficulty,
-  status,
   progress,
+  elapsedMs,
+  result,
+  recordOutcomeNotice,
   clues,
   board,
   notes,
@@ -63,12 +52,9 @@ export function NanpurePlay({
   mistakeCellIndices,
   completedDigits,
   notesMode,
-  elapsedMs,
   mistakeCount,
   undoCount,
   canUndo,
-  result,
-  recordOutcomeNotice,
   onSelectCell,
   onInputDigit,
   onErase,
@@ -84,25 +70,7 @@ export function NanpurePlay({
   onClearAnimationComplete,
   onOpenDiagnostics,
 }: NanpurePlayProps) {
-  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
-
-  if (progress === "result" && status === "cleared" && result) {
-    return (
-      <NanpureResultScreen
-        difficulty={difficulty}
-        result={result}
-        recordOutcomeNotice={recordOutcomeNotice}
-        onReplay={onReplay}
-        onStartNewProblem={onStartNewProblem}
-        onOpenRecords={onOpenRecords}
-        onChangeDifficulty={onChangeDifficulty}
-        onBackToHome={onBackToHome}
-        onOpenDiagnostics={onOpenDiagnostics}
-      />
-    );
-  }
-
-  const interactionEnabled = status === "playing" && progress === "playing";
+  const interactionEnabled = progress === "playing";
   const selectedIsEditable =
     selectedCellIndex !== null && clues[selectedCellIndex] === null;
   const selectedHasAnswer =
@@ -111,31 +79,39 @@ export function NanpurePlay({
     selectedCellIndex !== null && (notes[selectedCellIndex]?.length ?? 0) > 0;
 
   return (
-    <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
-      <BrandIdentityHeader />
-      <PlayHeader
-        title={NANPURE_DISPLAY_NAME}
-        metricGroups={[
-          [
-            { label: "ミス", value: String(mistakeCount) },
-            { label: "時間", value: formatElapsedTime(elapsedMs) },
-            { label: "待った", value: String(undoCount) },
-          ],
-        ]}
-        canRestart={canRestart}
-        onRestart={onRestart}
-        onReplay={onReplay}
-        onStartNewProblem={onStartNewProblem}
-        onChangeDifficulty={onChangeDifficulty}
-        onBackToHome={onBackToHome}
-        onOpenHowToPlay={() => setHowToPlayOpen(true)}
-        onOpenDiagnostics={onOpenDiagnostics}
-      />
-      <NanpureHowToPlayDialog
-        open={howToPlayOpen}
-        onClose={() => setHowToPlayOpen(false)}
-      />
-
+    <GamePlayFrame
+      progress={progress}
+      result={result}
+      title={NANPURE_DISPLAY_NAME}
+      metrics={[
+        { type: "count", label: "ミス", count: mistakeCount },
+        { type: "elapsed-time", elapsedMs },
+        { type: "count", label: "待った", count: undoCount },
+      ]}
+      canRestart={canRestart}
+      onRestart={onRestart}
+      onReplay={onReplay}
+      onStartNewProblem={onStartNewProblem}
+      onChangeDifficulty={onChangeDifficulty}
+      onBackToHome={onBackToHome}
+      onOpenDiagnostics={onOpenDiagnostics}
+      renderHowToPlayDialog={({ open, onClose }) => (
+        <NanpureHowToPlayDialog open={open} onClose={onClose} />
+      )}
+      renderResultScreen={(clearedResult) => (
+        <NanpureResultScreen
+          difficulty={difficulty}
+          result={clearedResult}
+          recordOutcomeNotice={recordOutcomeNotice}
+          onReplay={onReplay}
+          onStartNewProblem={onStartNewProblem}
+          onOpenRecords={onOpenRecords}
+          onChangeDifficulty={onChangeDifficulty}
+          onBackToHome={onBackToHome}
+          onOpenDiagnostics={onOpenDiagnostics}
+        />
+      )}
+    >
       <main className="flex shrink-0 justify-center px-2 pt-1 sm:px-6 sm:pt-3">
         <NanpureClearAnimation
           active={progress === "clearing"}
@@ -167,6 +143,6 @@ export function NanpurePlay({
         onToggleNotesMode={onToggleNotesMode}
         onInputDigit={onInputDigit}
       />
-    </section>
+    </GamePlayFrame>
   );
 }

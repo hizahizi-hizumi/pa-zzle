@@ -104,7 +104,7 @@ export type SlidePuzzlePlay = GamePlay<
     optimalMoveCount: number;
     operation: SlidePuzzleOperation | null;
     slideTile: (tileIndex: number) => void;
-    slideByKeyboard: (direction: SlidePuzzleDirection) => void;
+    slideInDirection: (direction: SlidePuzzleDirection) => void;
   };
 
 type SlidePuzzlePlayState = {
@@ -203,7 +203,7 @@ export function useSlidePuzzlePlay(
     );
   }, []);
 
-  const slideByKeyboard = useCallback((direction: SlidePuzzleDirection) => {
+  const slideInDirection = useCallback((direction: SlidePuzzleDirection) => {
     const movedAt = Date.now();
     const operationId = nextOperationId.current++;
     setPlay((current) => {
@@ -282,7 +282,7 @@ export function useSlidePuzzlePlay(
     operation: play.operation,
     canRestart: canRestartSlidePuzzleSession(session),
     slideTile,
-    slideByKeyboard,
+    slideInDirection,
     restart,
     replay,
     startNewProblem,

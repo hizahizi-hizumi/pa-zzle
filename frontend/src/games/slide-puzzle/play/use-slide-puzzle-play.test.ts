@@ -72,7 +72,7 @@ describe("useSlidePuzzlePlay", () => {
   });
 
   test("矢印キーの方向へ空白の隣のタイルを 1 枚滑らせること", () => {
-    act(() => result.current.slideByKeyboard("left"));
+    act(() => result.current.slideInDirection("left"));
 
     expect(result.current.board).toEqual([
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 0, 14, 15,
@@ -81,7 +81,7 @@ describe("useSlidePuzzlePlay", () => {
   });
 
   test("タイルが無い方向の矢印キーでは何もしないこと", () => {
-    act(() => result.current.slideByKeyboard("right"));
+    act(() => result.current.slideInDirection("right"));
 
     expect(result.current.board).toEqual(initialBoard);
     expect(result.current.operation).toBeNull();
@@ -188,7 +188,7 @@ describe("useSlidePuzzlePlay", () => {
       });
 
       test("矢印キーの方向へ空白の隣のタイルを 1 枚滑らせること", () => {
-        act(() => sized.current.slideByKeyboard("left"));
+        act(() => sized.current.slideInDirection("left"));
 
         expect(sized.current.board).toEqual(boardAfterLeftKey);
       });
