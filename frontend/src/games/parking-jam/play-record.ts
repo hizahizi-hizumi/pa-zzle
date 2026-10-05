@@ -20,7 +20,6 @@ import {
 import {
   calculateParkingJamPlayScore,
   calculateParkingJamSpeedFullScoreMs,
-  PARKING_JAM_LEGACY_SPEED_FULL_SCORE_MS,
   PARKING_JAM_SCORE_MODEL_VERSION,
   type ParkingJamSpeedReference,
 } from "@/games/parking-jam/score";
@@ -43,6 +42,7 @@ type ParkingJamProblemFacts = {
 };
 
 // payloadVersion 2 は play-quality-v1 で採点し、難易度モデル版・採点版を持たない。
+// 今の採点規則の基準時間を求める問題の事実を持たないので、記録一覧に残すだけで評価・自己ベストには使わない。
 // payloadVersion 2・3 は3段階（easy / normal / hard）の難易度で、レベル1〜5へ読み替えず旧区分のまま扱う。
 // problemIdentity は生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
 type ParkingJamPlayRecordPayloadV2 = {
@@ -253,24 +253,30 @@ export function restoreParkingJamRecordedResult(
   };
 }
 
-function getSpeedFullScoreMs(record: RecognizedParkingJamPlayRecord): number {
-  if (record.payloadVersion === 2) {
-    return PARKING_JAM_LEGACY_SPEED_FULL_SCORE_MS[record.payload.difficulty];
-  }
+type EvaluableParkingJamPlayRecord =
+  | ParkingJamPlayRecordV3
+  | ParkingJamPlayRecord;
 
-  return calculateParkingJamSpeedFullScoreMs({
-    vehicleCount: record.payload.problemIdentity.conditions.vehicleCount,
-    initialBlockedVehicleCount:
-      record.payload.problemFacts.initialBlockedVehicleCount,
-  });
+function isEvaluableParkingJamPlayRecord(
+  record: PlayRecord,
+): record is EvaluableParkingJamPlayRecord {
+  return isParkingJamPlayRecord(record) && record.payloadVersion !== 2;
 }
 
+/** 今の採点規則で求めた評価点。採点に要る問題の事実を持たない記録は `null`。 */
 export function getParkingJamPlayRecordScore(
-  record: RecognizedParkingJamPlayRecord,
-): number {
-  const { performance } = record.payload;
+  record: PlayRecord,
+): number | null {
+  if (!isEvaluableParkingJamPlayRecord(record)) {
+    return null;
+  }
+
+  const { performance, problemIdentity, problemFacts } = record.payload;
   return calculateParkingJamPlayScore({
-    speedFullScoreMs: getSpeedFullScoreMs(record),
+    speedFullScoreMs: calculateParkingJamSpeedFullScoreMs({
+      vehicleCount: problemIdentity.conditions.vehicleCount,
+      initialBlockedVehicleCount: problemFacts.initialBlockedVehicleCount,
+    }),
     elapsedMs: performance.elapsedMs,
     failedMoveCount: performance.failedMoveCount,
     undoCount: performance.undoCount,
@@ -293,17 +299,13 @@ export const parkingJamPlayRecordDefinition = {
     {
       id: "play-score",
       direction: "higher",
-      getValue(record) {
-        return isParkingJamPlayRecord(record)
-          ? getParkingJamPlayRecordScore(record)
-          : null;
-      },
+      getValue: getParkingJamPlayRecordScore,
     },
     {
       id: "elapsed-ms",
       direction: "lower",
       getValue(record) {
-        return isParkingJamPlayRecord(record)
+        return isEvaluableParkingJamPlayRecord(record)
           ? record.payload.performance.elapsedMs
           : null;
       },
@@ -312,7 +314,7 @@ export const parkingJamPlayRecordDefinition = {
       id: "failed-move-count",
       direction: "lower",
       getValue(record) {
-        return isParkingJamPlayRecord(record)
+        return isEvaluableParkingJamPlayRecord(record)
           ? record.payload.performance.failedMoveCount
           : null;
       },

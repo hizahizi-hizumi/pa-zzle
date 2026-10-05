@@ -176,31 +176,26 @@ describe("isParkingJamPlayRecord", () => {
 
 describe("getParkingJamPlayRecordScore", () => {
   const cases = [
-    ["現在の形式は問題ごとの基準時間65秒で採点する", record, 78],
-    [
-      "payloadVersion 2 は当時の難易度別基準時間90秒で採点する",
-      legacyRecord,
-      93,
-    ],
-    [
-      "payloadVersion 3 は現在と同じ問題ごとの基準時間65秒で採点する",
-      threeLevelRecord,
-      78,
-    ],
+    ["現在の形式", record],
+    ["payloadVersion 3", threeLevelRecord],
   ] as const;
 
   test.each(cases)(
-    "保存済み事実から記録の採点版で評価点を再計算すること: %s",
-    (_label, candidate, expected) => {
-      if (!isParkingJamPlayRecord(candidate)) {
-        throw new Error("Expected a parking jam record");
-      }
-
+    "保存済み事実から問題ごとの基準時間65秒で評価点を再計算すること: %s",
+    (_label, candidate) => {
       const score = getParkingJamPlayRecordScore(candidate);
 
-      expect(score).toBe(expected);
+      expect(score).toBe(78);
     },
   );
+
+  describe("基準時間を求める問題の事実を持たない payloadVersion 2 の記録の場合", () => {
+    test("評価点を推測しないこと", () => {
+      const score = getParkingJamPlayRecordScore(legacyRecord);
+
+      expect(score).toBeNull();
+    });
+  });
 });
 
 describe("parkingJamPlayRecordDefinition", () => {
@@ -230,6 +225,16 @@ describe("parkingJamPlayRecordDefinition", () => {
       "elapsed-ms",
       "failed-move-count",
     ]);
+  });
+
+  describe("payloadVersion 2 の記録の場合", () => {
+    test("自己ベストの比較に使う値を持たないこと", () => {
+      const values = parkingJamPlayRecordDefinition.personalBestMetrics.map(
+        (metric) => metric.getValue(legacyRecord),
+      );
+
+      expect(values).toEqual([null, null, null]);
+    });
   });
 });
 
