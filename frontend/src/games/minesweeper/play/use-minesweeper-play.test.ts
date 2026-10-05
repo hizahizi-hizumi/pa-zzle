@@ -32,7 +32,7 @@ describe("useMinesweeperPlay", () => {
     test("seedを生成してその難易度の問題集から選んだ問題を始めること", () => {
       const play = hook.result.current;
 
-      expect(play.seed).not.toBe("");
+      expect(play.problemIdentity.seed).not.toBe("");
       expect(
         isInMinesweeperDifficultyBoardRange(
           "3",
@@ -77,7 +77,6 @@ describe("useMinesweeperPlay", () => {
       const play = hook.result.current;
 
       expect(play.problemIdentity).toEqual(identity);
-      expect(play.seed).toBe(identity.seed);
       expect(
         play.visibleCells.flatMap((cell, cellIndex) =>
           cell.state === "revealed" ? [cellIndex] : [],
@@ -178,7 +177,6 @@ describe("useMinesweeperPlay", () => {
       const play = hook.result.current;
 
       expect(play.problemIdentity.seed).not.toBe(identity.seed);
-      expect(play.seed).not.toBe(identity.seed);
       expect(
         isInMinesweeperDifficultyBoardRange(
           "5",

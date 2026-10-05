@@ -2,7 +2,6 @@ import type { MinesweeperProblem } from "@/games/minesweeper/problem/problem";
 import {
   chordMinesweeperSessionCell,
   createMinesweeperSession,
-  getMinesweeperSessionElapsedMs,
   getMinesweeperSessionResult,
   getMinesweeperSessionVisibleCells,
   revealMinesweeperSessionCell,
@@ -127,33 +126,6 @@ describe("MinesweeperSession operations", () => {
   });
 });
 
-describe("getMinesweeperSessionElapsedMs", () => {
-  const problem: MinesweeperProblem = {
-    board: {
-      rows: 2,
-      columns: 3,
-      mineCellIndices: [0],
-    },
-    initialRevealedCellIndices: [1],
-  };
-
-  test("プレイ中は現在時刻までの経過時間を返すこと", () => {
-    const session = createMinesweeperSession(problem, 1_000);
-
-    expect(getMinesweeperSessionElapsedMs(session, 4_500)).toBe(3_500);
-  });
-
-  test("クリア後はクリア時点で経過時間を止めること", () => {
-    const cleared = chordMinesweeperSessionCell(
-      toggleMinesweeperSessionFlag(createMinesweeperSession(problem, 1_000), 0),
-      1,
-      3_000,
-    );
-
-    expect(getMinesweeperSessionElapsedMs(cleared, 9_000)).toBe(2_000);
-  });
-});
-
 describe("getMinesweeperSessionResult", () => {
   // 0 1 * 1 0
   const problem: MinesweeperProblem = {
@@ -164,10 +136,10 @@ describe("getMinesweeperSessionResult", () => {
   test("クリア前は結果を返さないこと", () => {
     const session = createMinesweeperSession(problem, 1_000);
 
-    expect(getMinesweeperSessionResult(session, 5_000)).toBeNull();
+    expect(getMinesweeperSessionResult(session)).toBeNull();
   });
 
-  test("クリアしたプレイの経過時間・ミス数・開く操作の最小回数を返すこと", () => {
+  test("クリアしたプレイの経過時間・ミス数を返すこと", () => {
     const stepped = revealMinesweeperSessionCell(
       createMinesweeperSession(problem, 1_000),
       2,
@@ -175,10 +147,9 @@ describe("getMinesweeperSessionResult", () => {
     );
     const cleared = revealMinesweeperSessionCell(stepped, 4, 4_000);
 
-    expect(getMinesweeperSessionResult(cleared, 9_000)).toEqual({
+    expect(getMinesweeperSessionResult(cleared)).toEqual({
       elapsedMs: 3_000,
       mistakeCount: 1,
-      minimumOpenCount: 1,
     });
   });
 });

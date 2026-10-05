@@ -3,14 +3,8 @@ import { type ReactNode, useState } from "react";
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { PlayHeader } from "@/components/PlayHeader";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
-import type {
-  MinesweeperProgress,
-  MinesweeperResult,
-} from "@/games/minesweeper/play/use-minesweeper-play";
-import type {
-  MinesweeperSessionStatus,
-  MinesweeperVisibleCell,
-} from "@/games/minesweeper/session/session";
+import type { MinesweeperResult } from "@/games/minesweeper/play/use-minesweeper-play";
+import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
 import { MinesweeperClearAnimation } from "@/games/minesweeper/ui/board/clear/MinesweeperClearAnimation";
 import {
   MinesweeperBoard,
@@ -19,6 +13,8 @@ import {
 import { MinesweeperHowToPlayDialog } from "@/games/minesweeper/ui/MinesweeperHowToPlayDialog";
 import { InputModeToggle } from "@/games/minesweeper/ui/MinesweeperPlay/InputModeToggle";
 import { MinesweeperResultScreen } from "@/games/minesweeper/ui/result/MinesweeperResultScreen";
+import type { GameProgress } from "@/games/play";
+import type { GameSessionStatus } from "@/games/session";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type MinesweeperPlayProps = {
@@ -30,8 +26,8 @@ type MinesweeperPlayProps = {
   mistakeCount: number;
   elapsedMs: number;
   visibleCells: readonly MinesweeperVisibleCell[];
-  status: MinesweeperSessionStatus;
-  progress: MinesweeperProgress;
+  status: GameSessionStatus;
+  progress: GameProgress;
   result: MinesweeperResult | null;
   recordOutcomeNotice: ReactNode;
   onRevealCell: (cellIndex: number) => void;
