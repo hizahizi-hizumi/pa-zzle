@@ -38,7 +38,6 @@ function swapTiles(rows: readonly string[]): string[] {
 
 describe("analyzeTakuzuDifficulty", () => {
   describe("手筋で解き切れる一意解の問題", () => {
-    // 難易度文書 §9 の問題の初期配置。
     const cases: readonly [
       string,
       readonly string[],

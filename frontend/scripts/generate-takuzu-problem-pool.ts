@@ -48,7 +48,7 @@ const outputPath = new URL(
 /**
  * 問題集に採る空きマスの数の範囲。全難易度で共通にする。
  * 空きマスの数（作業量）でレベルが決まらないよう、どのレベルも同じ範囲から採る。
- * 範囲は、各レベルの主な生成条件の分布が重なる帯（タクズ難易度.md §7.3・§14.3）から決めた。
+ * 範囲は、各レベルの主な生成条件の分布が重なる帯から決めた。
  */
 const emptyCellRange = { minimum: 40, maximum: 48 } as const;
 
@@ -58,7 +58,7 @@ type Condition = {
 };
 
 /**
- * 難易度ごとに、その難易度が現れやすい生成条件（タクズ難易度.md §7.1）。
+ * 難易度ごとに、その難易度が現れやすい生成条件。
  * 生成条件は候補を作る領域を決めるだけで、採るかどうかは分析・分類の結果で決める。
  */
 const levelConditions: Record<TakuzuDifficulty, readonly Condition[]> = {

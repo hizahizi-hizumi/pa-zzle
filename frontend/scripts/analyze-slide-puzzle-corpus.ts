@@ -32,7 +32,7 @@ import {
   type SlidePuzzleBoardSize,
 } from "@/games/slide-puzzle/puzzle/state";
 
-// 5×5 は撹拌 80 手を超えると最短手数を求められない候補が増える（難易度再設計調査 §4.3）。
+// 5×5 は撹拌 80 手を超えると最短手数を求められない候補が増える。
 const corpusScrambleLengthsByBoardSize: Record<
   SlidePuzzleBoardSize,
   readonly number[]

@@ -54,7 +54,7 @@ export function getSlidePuzzleDifficultyLabel(
 
 /**
  * 盤面サイズごとの提供範囲の下限（最短手数）。無作為に「近づける手」を選び続けるだけで
- * 5% 以上完成してしまう層を外す（難易度再設計調査 §6.2）。
+ * 5% 以上完成してしまう層を外す。
  */
 export const slidePuzzleMinimumOptimalMoveCountByBoardSize: Record<
   SlidePuzzleBoardSize,
