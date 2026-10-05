@@ -2,6 +2,7 @@ import { PARKING_JAM_DIFFICULTY_MODEL_VERSION } from "@/games/parking-jam/diffic
 import {
   createParkingJamPlayRecord,
   getParkingJamPlayRecordScore,
+  getParkingJamPlayRecordTimeDelta,
   isParkingJamPlayRecord,
   parkingJamPlayRecordDefinition,
   restoreParkingJamRecordedResult,
@@ -198,6 +199,22 @@ describe("getParkingJamPlayRecordScore", () => {
   });
 });
 
+describe("getParkingJamPlayRecordTimeDelta", () => {
+  test("問題ごとの基準時間65秒との差を求めること", () => {
+    const timeDelta = getParkingJamPlayRecordTimeDelta(record);
+
+    expect(timeDelta).toBe(25_000);
+  });
+
+  describe("基準時間を求める問題の事実を持たない payloadVersion 2 の記録の場合", () => {
+    test("基準時間との差を推測しないこと", () => {
+      const timeDelta = getParkingJamPlayRecordTimeDelta(legacyRecord);
+
+      expect(timeDelta).toBeNull();
+    });
+  });
+});
+
 describe("parkingJamPlayRecordDefinition", () => {
   const comparisonCases = [
     ["レベル1〜5の記録はレベル", record, "3"],
@@ -215,14 +232,14 @@ describe("parkingJamPlayRecordDefinition", () => {
     },
   );
 
-  test("スコア・時間・不成立操作数を自己ベスト指標にすること", () => {
+  test("スコア・基準時間との差・不成立操作数を自己ベスト指標にすること", () => {
     const metricIds = parkingJamPlayRecordDefinition.personalBestMetrics.map(
       (metric) => metric.id,
     );
 
     expect(metricIds).toEqual([
       "play-score",
-      "elapsed-ms",
+      "time-delta-ms",
       "failed-move-count",
     ]);
   });
@@ -253,6 +270,7 @@ describe("restoreParkingJamRecordedResult", () => {
           problemIdentity,
           speedReference,
           speedRule: calculateParkingJamSpeedScoreRule(speedReference),
+          timeDeltaMs: getParkingJamPlayRecordTimeDelta(record),
           score: { total: getParkingJamPlayRecordScore(record) },
         },
       });

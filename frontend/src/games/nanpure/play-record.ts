@@ -14,7 +14,10 @@ import {
   type NanpureProblemIdentity,
   type NanpureRecordedProblemIdentity,
 } from "@/games/nanpure/problem/problem";
-import { calculateNanpurePlayScore } from "@/games/nanpure/score";
+import {
+  calculateNanpurePlayScore,
+  calculateNanpureTimeDeltaMs,
+} from "@/games/nanpure/score";
 import type { NanpureSessionResult } from "@/games/nanpure/session/session";
 import {
   isNonNegativeFiniteNumber,
@@ -173,7 +176,7 @@ export function getNanpurePlayRecordScore(
 
 export type NanpurePlayRecordMetricId =
   | "play-score"
-  | "elapsed-ms"
+  | "time-delta-ms"
   | "mistake-count";
 
 export const nanpurePlayRecordDefinition = {
@@ -193,11 +196,11 @@ export const nanpurePlayRecordDefinition = {
       },
     },
     {
-      id: "elapsed-ms",
+      id: "time-delta-ms",
       direction: "lower",
       getValue(record) {
         return isNanpurePlayRecord(record)
-          ? record.payload.performance.elapsedMs
+          ? calculateNanpureTimeDeltaMs(record.payload.performance)
           : null;
       },
     },

@@ -377,9 +377,9 @@ describe("NanpurePlay", () => {
                 status: "updated",
                 updates: [
                   {
-                    metricId: "elapsed-ms",
-                    previousValue: 150_000,
-                    currentValue: 120_000,
+                    metricId: "time-delta-ms",
+                    previousValue: -750_000,
+                    currentValue: -780_000,
                   },
                 ],
               }}
@@ -395,9 +395,10 @@ describe("NanpurePlay", () => {
       fireEvent.click(screen.getByRole("button", { name: "記録を確認" }));
       const bestUpdate = screen.getByRole("region", { name: "自己ベスト更新" });
 
-      expect(bestUpdate.textContent).toContain("クリア時間");
-      expect(bestUpdate.textContent).toContain("02:30");
-      expect(bestUpdate.textContent).toContain("02:00");
+      expect(bestUpdate.textContent).toContain("基準時間との差");
+      expect(bestUpdate.textContent).toContain("-12:30");
+      expect(bestUpdate.textContent).toContain("-13:00");
+      expect(bestUpdate.textContent).toContain("30秒短縮");
       expect(onOpenRecords).toHaveBeenCalledOnce();
     });
   });

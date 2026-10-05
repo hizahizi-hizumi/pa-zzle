@@ -4,15 +4,12 @@ import {
 } from "@/games/difficulty";
 import { nanpurePlayRecordDefinition } from "@/games/nanpure/play-record";
 import {
-  formatDurationInWords,
-  formatElapsedTime,
-} from "@/lib/format-elapsed-time";
-import {
   createCountMetricPresentation,
   createCountProgressDisplay,
   createPlayRecordDisplay,
   elapsedTimeProgressDisplay,
   playScoreMetricPresentation,
+  timeDeltaMetricPresentation,
 } from "@/records/ui/play-record-display";
 
 export const nanpurePlayRecordDisplay = createPlayRecordDisplay({
@@ -23,16 +20,7 @@ export const nanpurePlayRecordDisplay = createPlayRecordDisplay({
   },
   metrics: {
     "play-score": playScoreMetricPresentation,
-    "elapsed-ms": {
-      label: "クリア時間",
-      historyLabel: "時間",
-      formatValue: formatElapsedTime,
-      formatImprovement(amount: number) {
-        const wholeSecondsMs = Math.floor(amount / 1_000) * 1_000;
-        return `${formatDurationInWords(wholeSecondsMs)}短縮`;
-      },
-      axis: { kind: "duration-ms", minimum: 0 },
-    },
+    "time-delta-ms": timeDeltaMetricPresentation,
     "mistake-count": createCountMetricPresentation("ミス", "回"),
   },
   progress: {

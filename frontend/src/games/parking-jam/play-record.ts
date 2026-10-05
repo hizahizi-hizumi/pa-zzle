@@ -19,6 +19,7 @@ import {
 } from "@/games/parking-jam/problem/problem";
 import {
   calculateParkingJamPlayScore,
+  calculateParkingJamTimeDeltaMs,
   PARKING_JAM_SCORE_MODEL_VERSION,
   type ParkingJamSpeedReference,
 } from "@/games/parking-jam/score";
@@ -289,9 +290,22 @@ export function getParkingJamPlayRecordScore(
   }).total;
 }
 
+export function getParkingJamPlayRecordTimeDelta(
+  record: PlayRecord,
+): number | null {
+  if (!isEvaluableParkingJamPlayRecord(record)) {
+    return null;
+  }
+
+  return calculateParkingJamTimeDeltaMs({
+    elapsedMs: record.payload.performance.elapsedMs,
+    speedReference: getSpeedReference(record),
+  });
+}
+
 export type ParkingJamPlayRecordMetricId =
   | "play-score"
-  | "elapsed-ms"
+  | "time-delta-ms"
   | "failed-move-count";
 
 export const parkingJamPlayRecordDefinition = {
@@ -307,13 +321,9 @@ export const parkingJamPlayRecordDefinition = {
       getValue: getParkingJamPlayRecordScore,
     },
     {
-      id: "elapsed-ms",
+      id: "time-delta-ms",
       direction: "lower",
-      getValue(record) {
-        return isEvaluableParkingJamPlayRecord(record)
-          ? record.payload.performance.elapsedMs
-          : null;
-      },
+      getValue: getParkingJamPlayRecordTimeDelta,
     },
     {
       id: "failed-move-count",
