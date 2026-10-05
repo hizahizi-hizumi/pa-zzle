@@ -5,6 +5,12 @@ import type {
   ParkingJamVehicleId,
 } from "@/games/parking-jam/puzzle/board";
 import type { ProblemSeed } from "@/games/problem-seed";
+import {
+  isNonEmptyString,
+  isNonNegativeInteger,
+  isPositiveInteger,
+  isRecordObject,
+} from "@/lib/type-guards";
 
 export const PARKING_JAM_GENERATOR_VERSION = "2";
 
@@ -29,6 +35,39 @@ export type ParkingJamProblemIdentity = {
   conditions: ParkingJamGenerationConditions;
   generationAttempt: number;
 };
+
+function isUnitInterval(value: unknown): value is number {
+  return (
+    typeof value === "number" &&
+    Number.isFinite(value) &&
+    value >= 0 &&
+    value <= 1
+  );
+}
+
+/** 記録・診断など外部から読み戻した値が、現在の生成器で復元できる識別情報かを確かめる。 */
+export function isParkingJamProblemIdentity(
+  value: unknown,
+): value is ParkingJamProblemIdentity {
+  if (!isRecordObject(value) || !isRecordObject(value.conditions)) {
+    return false;
+  }
+
+  const { conditions } = value;
+  return (
+    value.generatorVersion === PARKING_JAM_GENERATOR_VERSION &&
+    isNonEmptyString(value.seed) &&
+    isPositiveInteger(conditions.width) &&
+    isPositiveInteger(conditions.height) &&
+    isPositiveInteger(conditions.vehicleCount) &&
+    isPositiveInteger(conditions.roadOpeningCount) &&
+    isPositiveInteger(conditions.roadOpeningSpan) &&
+    isNonNegativeInteger(conditions.fixedAreaCount) &&
+    isPositiveInteger(conditions.fixedAreaLength) &&
+    isUnitInterval(conditions.blockingPlacementProbability) &&
+    isPositiveInteger(value.generationAttempt)
+  );
+}
 
 export type ParkingJamSolvabilityAnalysis = {
   status: "solvable" | "unsolvable";
