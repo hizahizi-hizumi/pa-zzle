@@ -8,6 +8,11 @@ import {
   type TakuzuBoard,
 } from "@/games/takuzu/puzzle/board";
 import { isTakuzuSolved } from "@/games/takuzu/puzzle/rules";
+import {
+  isNonEmptyString,
+  isNonNegativeInteger,
+  isRecordObject,
+} from "@/lib/type-guards";
 
 /**
  * 1問を遊ぶためのデータ。
@@ -115,14 +120,6 @@ export function assertTakuzuProblem(problem: TakuzuProblem): void {
   }
 }
 
-function isRecordObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isNonNegativeInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0;
-}
-
 function isRemovalTechniqueLimit(
   value: unknown,
 ): value is TakuzuTechnique | null {
@@ -142,8 +139,7 @@ export function isTakuzuProblemIdentity(
   const { size, removalTechniqueLimit, extraGivenCount } = value.conditions;
   return (
     value.generatorVersion === TAKUZU_GENERATOR_VERSION &&
-    typeof value.seed === "string" &&
-    value.seed.length > 0 &&
+    isNonEmptyString(value.seed) &&
     size === TAKUZU_BOARD_SIZE &&
     isRemovalTechniqueLimit(removalTechniqueLimit) &&
     isNonNegativeInteger(extraGivenCount)

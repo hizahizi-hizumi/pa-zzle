@@ -13,6 +13,11 @@ import {
   calculateMinesweeperTimeDeltaMs,
 } from "@/games/minesweeper/score";
 import type { MinesweeperSessionResult } from "@/games/minesweeper/session/session";
+import {
+  isNonNegativeFiniteNumber,
+  isNonNegativeInteger,
+  isRecordObject,
+} from "@/lib/type-guards";
 import type { PlayRecord } from "@/records/play-record";
 import { createPlayRecordId } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
@@ -40,24 +45,14 @@ type CreateMinesweeperPlayRecordInput = {
   result: MinesweeperSessionResult;
 };
 
-function isNonNegativeInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0;
-}
-
 function isMinesweeperPerformance(
   value: unknown,
 ): value is MinesweeperSessionResult {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const performance = value as Partial<MinesweeperSessionResult>;
   return (
-    typeof performance.elapsedMs === "number" &&
-    Number.isFinite(performance.elapsedMs) &&
-    performance.elapsedMs >= 0 &&
-    isNonNegativeInteger(performance.mistakeCount) &&
-    isNonNegativeInteger(performance.minimumOpenCount)
+    isRecordObject(value) &&
+    isNonNegativeFiniteNumber(value.elapsedMs) &&
+    isNonNegativeInteger(value.mistakeCount) &&
+    isNonNegativeInteger(value.minimumOpenCount)
   );
 }
 
@@ -67,17 +62,17 @@ export function isMinesweeperPlayRecord(
   if (
     record.gameId !== MINESWEEPER_GAME_ID ||
     record.payloadVersion !== MINESWEEPER_PLAY_RECORD_PAYLOAD_VERSION ||
-    !record.payload ||
-    typeof record.payload !== "object"
+    !isRecordObject(record.payload)
   ) {
     return false;
   }
 
-  const payload = record.payload as Partial<MinesweeperPlayRecordPayload>;
+  const { difficulty, problemIdentity, performance } = record.payload;
   return (
-    parseDifficultyLevel(payload.difficulty) !== undefined &&
-    isMinesweeperProblemIdentity(payload.problemIdentity) &&
-    isMinesweeperPerformance(payload.performance)
+    typeof difficulty === "string" &&
+    parseDifficultyLevel(difficulty) !== undefined &&
+    isMinesweeperProblemIdentity(problemIdentity) &&
+    isMinesweeperPerformance(performance)
   );
 }
 

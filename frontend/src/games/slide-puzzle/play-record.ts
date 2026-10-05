@@ -16,6 +16,12 @@ import {
   calculateSlidePuzzlePlayScore,
   calculateSlidePuzzleTimeDeltaMs,
 } from "@/games/slide-puzzle/score";
+import {
+  isNonNegativeFiniteNumber,
+  isNonNegativeInteger,
+  isPositiveInteger,
+  isRecordObject,
+} from "@/lib/type-guards";
 import { createPlayRecordId, type PlayRecord } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
@@ -54,26 +60,12 @@ type CreateSlidePuzzlePlayRecordInput = {
   result: SlidePuzzlePlayPerformance;
 };
 
-function isRecordObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isNonNegativeInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0;
-}
-
-function isPositiveInteger(value: unknown): value is number {
-  return isNonNegativeInteger(value) && value > 0;
-}
-
 function isSlidePuzzlePerformance(
   value: unknown,
 ): value is SlidePuzzlePlayPerformance {
   return (
     isRecordObject(value) &&
-    typeof value.elapsedMs === "number" &&
-    Number.isFinite(value.elapsedMs) &&
-    value.elapsedMs >= 0 &&
+    isNonNegativeFiniteNumber(value.elapsedMs) &&
     isPositiveInteger(value.moveCount) &&
     isPositiveInteger(value.completionMoveCount) &&
     value.completionMoveCount <= value.moveCount &&

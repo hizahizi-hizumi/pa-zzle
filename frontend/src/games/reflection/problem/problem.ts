@@ -11,6 +11,11 @@ import {
   computeReflectionClues,
   type ReflectionClue,
 } from "@/games/reflection/puzzle/laser";
+import {
+  isNonEmptyString,
+  isNonNegativeInteger,
+  isRecordObject,
+} from "@/lib/type-guards";
 
 /**
  * 1問を遊ぶためのデータ。
@@ -137,10 +142,6 @@ export function assertReflectionProblem(problem: ReflectionProblem): void {
   }
 }
 
-function isRecordObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
 /** 記録など外部から読み戻した値が、現在の生成器で扱える識別情報かを確かめる。 */
 export function isReflectionProblemIdentity(
   value: unknown,
@@ -152,15 +153,10 @@ export function isReflectionProblemIdentity(
   const { size, pieceCount } = value.conditions;
   return (
     value.generatorVersion === REFLECTION_GENERATOR_VERSION &&
-    typeof value.seed === "string" &&
-    value.seed.length > 0 &&
+    isNonEmptyString(value.seed) &&
     isReflectionBoardSize(size) &&
     isReflectionPieceCount(size, pieceCount)
   );
-}
-
-function isNonNegativeInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0;
 }
 
 /**

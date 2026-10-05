@@ -1,3 +1,9 @@
+import type { ProblemIdentity } from "@/games/problem-id";
+import {
+  isFiniteNumber,
+  isNonNegativeFiniteNumber,
+  isRecordObject,
+} from "@/lib/type-guards";
 import type { PlayRecord } from "@/records/play-record";
 
 /**
@@ -6,7 +12,7 @@ import type { PlayRecord } from "@/records/play-record";
  */
 export type PlayAttemptStart = {
   difficulty: string;
-  problemIdentity: Readonly<Record<string, unknown>>;
+  problemIdentity: ProblemIdentity;
 };
 
 /** 離れた時点までの実測値。経過時間や操作回数を、名前付きの0以上の数値で持つ。 */
@@ -59,19 +65,11 @@ export function getAbandonedPlayAttempts(
   );
 }
 
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isFiniteNumber(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value);
-}
-
 function isPlayAttemptStart(value: unknown): value is PlayAttemptStart {
   return (
-    isObject(value) &&
+    isRecordObject(value) &&
     typeof value.difficulty === "string" &&
-    isObject(value.problemIdentity)
+    isRecordObject(value.problemIdentity)
   );
 }
 
@@ -80,19 +78,17 @@ function isPlayAttemptAbandonment(
   startedAt: number,
 ): value is PlayAttemptAbandonment {
   return (
-    isObject(value) &&
+    isRecordObject(value) &&
     isFiniteNumber(value.abandonedAt) &&
     value.abandonedAt >= startedAt &&
-    isObject(value.progress) &&
-    Object.values(value.progress).every(
-      (progress) => isFiniteNumber(progress) && progress >= 0,
-    )
+    isRecordObject(value.progress) &&
+    Object.values(value.progress).every(isNonNegativeFiniteNumber)
   );
 }
 
 export function isPlayAttempt(value: unknown): value is PlayAttempt {
   return (
-    isObject(value) &&
+    isRecordObject(value) &&
     typeof value.gameId === "string" &&
     value.gameId.length > 0 &&
     isFiniteNumber(value.startedAt) &&

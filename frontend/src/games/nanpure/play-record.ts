@@ -16,6 +16,11 @@ import {
 } from "@/games/nanpure/problem/problem";
 import { calculateNanpurePlayScore } from "@/games/nanpure/score";
 import type { NanpureSessionResult } from "@/games/nanpure/session/session";
+import {
+  isNonNegativeFiniteNumber,
+  isNonNegativeInteger,
+  isRecordObject,
+} from "@/lib/type-guards";
 import type { PlayRecord } from "@/records/play-record";
 import { createPlayRecordId } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
@@ -64,51 +69,35 @@ type CreateNanpurePlayRecordInput = {
   result: NanpureSessionResult;
 };
 
-function isNonNegativeInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0;
-}
-
 function isNanpurePerformance(value: unknown): value is NanpureSessionResult {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const performance = value as Partial<NanpureSessionResult>;
   return (
-    typeof performance.elapsedMs === "number" &&
-    Number.isFinite(performance.elapsedMs) &&
-    performance.elapsedMs >= 0 &&
-    isNonNegativeInteger(performance.mistakeCount) &&
-    isNonNegativeInteger(performance.undoCount) &&
-    isNonNegativeInteger(performance.restartCount)
+    isRecordObject(value) &&
+    isNonNegativeFiniteNumber(value.elapsedMs) &&
+    isNonNegativeInteger(value.mistakeCount) &&
+    isNonNegativeInteger(value.undoCount) &&
+    isNonNegativeInteger(value.restartCount)
   );
 }
 
 export function isNanpurePlayRecord(
   record: PlayRecord,
 ): record is RecognizedNanpurePlayRecord {
-  if (
-    record.gameId !== NANPURE_GAME_ID ||
-    !record.payload ||
-    typeof record.payload !== "object"
-  ) {
+  if (record.gameId !== NANPURE_GAME_ID || !isRecordObject(record.payload)) {
     return false;
   }
 
-  const payload = record.payload as Partial<
-    Record<keyof NanpurePlayRecordPayload, unknown>
-  >;
-  const difficulty =
-    typeof payload.difficulty === "string" ? payload.difficulty : undefined;
+  const { difficulty, problemIdentity, performance } = record.payload;
+  const recordedDifficulty =
+    typeof difficulty === "string" ? difficulty : undefined;
   const hasExpectedDifficulty =
     record.payloadVersion === 1
-      ? parseLegacyDifficulty(difficulty) !== undefined
+      ? parseLegacyDifficulty(recordedDifficulty) !== undefined
       : record.payloadVersion === NANPURE_PLAY_RECORD_PAYLOAD_VERSION &&
-        parseDifficultyLevel(difficulty) !== undefined;
+        parseDifficultyLevel(recordedDifficulty) !== undefined;
   return (
     hasExpectedDifficulty &&
-    isNanpureRecordedProblemIdentity(payload.problemIdentity) &&
-    isNanpurePerformance(payload.performance)
+    isNanpureRecordedProblemIdentity(problemIdentity) &&
+    isNanpurePerformance(performance)
   );
 }
 

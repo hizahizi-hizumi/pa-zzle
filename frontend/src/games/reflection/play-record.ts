@@ -18,6 +18,11 @@ import {
   calculateReflectionTimeDeltaMs,
 } from "@/games/reflection/score";
 import type { ReflectionSessionResult } from "@/games/reflection/session/session";
+import {
+  isNonNegativeFiniteNumber,
+  isNonNegativeInteger,
+  isRecordObject,
+} from "@/lib/type-guards";
 import { createPlayRecordId, type PlayRecord } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
@@ -53,14 +58,6 @@ type CreateReflectionPlayRecordInput = {
   result: ReflectionSessionResult;
 };
 
-function isRecordObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isNonNegativeInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0;
-}
-
 /**
  * 置き直しは盤面を変える入力で起きるので、入力回数を超えない。
  * 以前の記録にある `undoCount` のような評価に使わない項目は、読み込みで無視する。
@@ -70,9 +67,7 @@ function isReflectionPerformance(
 ): value is ReflectionSessionResult {
   return (
     isRecordObject(value) &&
-    typeof value.elapsedMs === "number" &&
-    Number.isFinite(value.elapsedMs) &&
-    value.elapsedMs >= 0 &&
+    isNonNegativeFiniteNumber(value.elapsedMs) &&
     isNonNegativeInteger(value.relocationCount) &&
     isNonNegativeInteger(value.restartCount) &&
     isNonNegativeInteger(value.laserCheckCount) &&

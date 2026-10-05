@@ -1,3 +1,10 @@
+import {
+  isFiniteNumber,
+  isNonEmptyString,
+  isPositiveInteger,
+  isRecordObject,
+} from "@/lib/type-guards";
+
 export type PlayRecord = {
   id: string;
   gameId: string;
@@ -14,24 +21,14 @@ export function createPlayRecordId(
 }
 
 export function isPlayRecord(value: unknown): value is PlayRecord {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const record = value as Partial<PlayRecord>;
   return (
-    typeof record.id === "string" &&
-    record.id.length > 0 &&
-    typeof record.gameId === "string" &&
-    record.gameId.length > 0 &&
-    typeof record.startedAt === "number" &&
-    Number.isFinite(record.startedAt) &&
-    typeof record.completedAt === "number" &&
-    Number.isFinite(record.completedAt) &&
-    record.completedAt >= record.startedAt &&
-    typeof record.payloadVersion === "number" &&
-    Number.isInteger(record.payloadVersion) &&
-    record.payloadVersion > 0 &&
-    Object.hasOwn(record, "payload")
+    isRecordObject(value) &&
+    isNonEmptyString(value.id) &&
+    isNonEmptyString(value.gameId) &&
+    isFiniteNumber(value.startedAt) &&
+    isFiniteNumber(value.completedAt) &&
+    value.completedAt >= value.startedAt &&
+    isPositiveInteger(value.payloadVersion) &&
+    Object.hasOwn(value, "payload")
   );
 }

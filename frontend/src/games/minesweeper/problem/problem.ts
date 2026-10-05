@@ -10,6 +10,11 @@ import {
   isMinesweeperMine,
 } from "@/games/minesweeper/puzzle/rules";
 import type { ProblemSeed } from "@/games/problem-seed";
+import {
+  isNonEmptyString,
+  isPositiveInteger,
+  isRecordObject,
+} from "@/lib/type-guards";
 
 export const MINESWEEPER_GENERATOR_VERSION = "1";
 
@@ -53,7 +58,7 @@ export function isMinesweeperProblemIdentity(
 
   return (
     value.generatorVersion === MINESWEEPER_GENERATOR_VERSION &&
-    typeof value.seed === "string" &&
+    isNonEmptyString(value.seed) &&
     isPositiveInteger(value.conditions.rows) &&
     isPositiveInteger(value.conditions.columns) &&
     isPositiveInteger(value.conditions.mineCount) &&
@@ -117,12 +122,4 @@ export function countMinesweeperMinimumOpenCount(
   }
 
   return openCount;
-}
-
-function isRecordObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isPositiveInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value > 0;
 }

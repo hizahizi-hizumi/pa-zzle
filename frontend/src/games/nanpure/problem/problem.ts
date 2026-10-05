@@ -9,6 +9,7 @@ import {
 } from "@/games/nanpure/puzzle/board";
 import { isNanpureSolved } from "@/games/nanpure/puzzle/rules";
 import type { ProblemSeed } from "@/games/problem-seed";
+import { isNonEmptyString, isRecordObject } from "@/lib/type-guards";
 
 /**
  * 1問を遊ぶためのデータ。
@@ -88,10 +89,6 @@ export function createNanpureProblemIdentity(
   };
 }
 
-function isRecordObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
 /** 記録など外部から読み戻した値が、現在の生成器で扱える識別情報かを確かめる。 */
 export function isNanpureProblemIdentity(
   value: unknown,
@@ -102,8 +99,7 @@ export function isNanpureProblemIdentity(
   const { removalTechniqueLimit } = value.conditions;
   return (
     value.generatorVersion === NANPURE_GENERATOR_VERSION &&
-    typeof value.seed === "string" &&
-    value.seed.length > 0 &&
+    isNonEmptyString(value.seed) &&
     (removalTechniqueLimit === null ||
       nanpureTechniques.some(
         (technique) => technique === removalTechniqueLimit,

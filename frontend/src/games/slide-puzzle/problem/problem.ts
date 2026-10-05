@@ -4,6 +4,11 @@ import {
   type SlidePuzzleBoard,
   type SlidePuzzleBoardSize,
 } from "@/games/slide-puzzle/puzzle/state";
+import {
+  isNonEmptyString,
+  isPositiveInteger,
+  isRecordObject,
+} from "@/lib/type-guards";
 
 export const SLIDE_PUZZLE_GENERATOR_VERSION = "1";
 
@@ -38,17 +43,10 @@ export function isSlidePuzzleProblemIdentity(
     return false;
   }
 
-  const { scrambleLength } = value.conditions;
   return (
     value.generatorVersion === SLIDE_PUZZLE_GENERATOR_VERSION &&
-    typeof value.seed === "string" &&
+    isNonEmptyString(value.seed) &&
     isSlidePuzzleBoardSize(value.conditions.size) &&
-    typeof scrambleLength === "number" &&
-    Number.isInteger(scrambleLength) &&
-    scrambleLength > 0
+    isPositiveInteger(value.conditions.scrambleLength)
   );
-}
-
-function isRecordObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

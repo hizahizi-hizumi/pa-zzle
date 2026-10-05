@@ -17,6 +17,11 @@ import {
   calculateTakuzuTimeDeltaMs,
 } from "@/games/takuzu/score";
 import type { TakuzuSessionResult } from "@/games/takuzu/session/session";
+import {
+  isNonNegativeFiniteNumber,
+  isNonNegativeInteger,
+  isRecordObject,
+} from "@/lib/type-guards";
 import { createPlayRecordId, type PlayRecord } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
@@ -55,23 +60,13 @@ type CreateTakuzuPlayRecordInput = {
   result: TakuzuSessionResult;
 };
 
-function isRecordObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isNonNegativeInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0;
-}
-
 /** 置き直しと待ったは、どちらも1回ごとに1回以上の入力を伴うので、入力回数を超えない。 */
 function isTakuzuPerformance(
   value: unknown,
 ): value is TakuzuRecordedPerformance {
   return (
     isRecordObject(value) &&
-    typeof value.elapsedMs === "number" &&
-    Number.isFinite(value.elapsedMs) &&
-    value.elapsedMs >= 0 &&
+    isNonNegativeFiniteNumber(value.elapsedMs) &&
     isNonNegativeInteger(value.correctionCount) &&
     isNonNegativeInteger(value.restartCount) &&
     isNonNegativeInteger(value.inputCount) &&
