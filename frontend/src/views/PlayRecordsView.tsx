@@ -5,9 +5,9 @@ import {
   findAttemptProblemPlayDestination,
   findRecordProblemPlayDestination,
   gameCatalog,
-  type RecordProblemPlayDestination,
 } from "@/game-catalog/game-catalog";
-import { createProblemIdSearch } from "@/game-catalog/problem-id-query";
+import type { RecordProblemPlayDestination } from "@/game-catalog/game-catalog-entry";
+import { openRecordProblemPlay } from "@/game-catalog/game-navigation";
 import {
   readPlayAttemptsSnapshot,
   subscribePlayAttempts,
@@ -26,16 +26,9 @@ export function PlayRecordsView() {
   const navigate = useNavigate();
 
   function openProblemPlay(destination: RecordProblemPlayDestination | null) {
-    if (!destination) {
-      return;
+    if (destination) {
+      openRecordProblemPlay(navigate, destination);
     }
-    navigate(
-      {
-        pathname: destination.playPath,
-        search: createProblemIdSearch(destination.problemId),
-      },
-      { params: { difficulty: destination.difficulty } },
-    );
   }
 
   return (

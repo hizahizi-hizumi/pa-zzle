@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
+import { useGameNavigation } from "@/game-catalog/game-navigation";
 import {
   useProblemIdQuerySync,
   useRequestedProblem,
 } from "@/game-catalog/problem-id-query";
 import { useRecordResultNavigation } from "@/game-catalog/record-result-navigation";
+import { waterSortCatalogEntry } from "@/game-catalog/water-sort/water-sort-catalog-entry";
 import type { ProblemId } from "@/games/problem-id";
 import { createWaterSortDiagnosticSnapshot } from "@/games/water-sort/diagnostics";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
@@ -24,7 +26,6 @@ import {
 import { usePlayAttemptRecord } from "@/records/hooks/use-play-attempt-record";
 import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
-import { useNavigate } from "@/router";
 
 type PlayableWaterSortProps = {
   difficulty: WaterSortDifficulty;
@@ -41,7 +42,7 @@ export function PlayableWaterSort({
   );
   const play = useWaterSortPlay(difficulty, requestedProblem, avoidedProblemId);
   useProblemIdQuerySync(play.problemIdentity);
-  const navigate = useNavigate();
+  const navigation = useGameNavigation(waterSortCatalogEntry);
   const playRecord = useMemo(
     () =>
       play.result && play.completedAt !== null
@@ -116,10 +117,10 @@ export function PlayableWaterSort({
         onRestart={play.restart}
         onReplay={play.replay}
         onStartNewProblem={play.startNewProblem}
-        onOpenRecords={() => navigate("/records")}
+        onOpenRecords={navigation.openRecords}
         onClearingPourComplete={play.completeClearAnimation}
-        onChangeDifficulty={() => navigate("/puzzles/water-sort")}
-        onBackToHome={() => navigate("/")}
+        onChangeDifficulty={navigation.changeDifficulty}
+        onBackToHome={navigation.backToHome}
         onOpenDiagnostics={
           diagnostics ? () => setDiagnosticsOpen(true) : undefined
         }

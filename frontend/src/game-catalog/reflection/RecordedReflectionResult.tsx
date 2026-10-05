@@ -1,5 +1,5 @@
 import { type ReactNode, useMemo, useState } from "react";
-import { createPlayLocationState } from "@/game-catalog/play-location-state";
+import type { GameNavigation } from "@/game-catalog/game-catalog-entry";
 import { getDifficultyLabel } from "@/games/difficulty";
 import { createProblemId } from "@/games/problem-id";
 import { createReflectionDiagnosticSnapshot } from "@/games/reflection/diagnostics";
@@ -14,7 +14,6 @@ import {
   buildRevision,
   internalDiagnosticsAvailable,
 } from "@/lib/internal-diagnostics";
-import { useNavigate } from "@/router";
 
 type RecordedReflectionResultProps = {
   difficulty: ReflectionDifficulty;
@@ -22,9 +21,7 @@ type RecordedReflectionResultProps = {
   result: ReflectionResult;
   recordOutcomeNotice: ReactNode;
   onReplay: (() => void) | undefined;
-  onOpenRecords: () => void;
-  onChangeDifficulty: () => void;
-  onBackToHome: () => void;
+  navigation: GameNavigation;
 };
 
 /** 記録から作り直したリフレクションの結果画面。次の問題は記録と同じ難易度で、記録の問題を避けて始める。 */
@@ -34,11 +31,8 @@ export function RecordedReflectionResult({
   result,
   recordOutcomeNotice,
   onReplay,
-  onOpenRecords,
-  onChangeDifficulty,
-  onBackToHome,
+  navigation,
 }: RecordedReflectionResultProps) {
-  const navigate = useNavigate();
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   // 検証情報は問題集の中の位置から難易度分析を引くので、開いたときだけ問題集から問題を探して作る。
   const diagnostics = useMemo(() => {
@@ -55,10 +49,7 @@ export function RecordedReflectionResult({
   }, [difficulty, diagnosticsOpen, problemIdentity]);
 
   function startNewProblem() {
-    navigate("/puzzles/reflection/play/:difficulty", {
-      params: { difficulty },
-      state: createPlayLocationState(createProblemId(problemIdentity)),
-    });
+    navigation.startNewProblem(difficulty, createProblemId(problemIdentity));
   }
 
   return (
@@ -70,9 +61,9 @@ export function RecordedReflectionResult({
         recordOutcomeNotice={recordOutcomeNotice}
         onReplay={onReplay}
         onStartNewProblem={startNewProblem}
-        onOpenRecords={onOpenRecords}
-        onChangeDifficulty={onChangeDifficulty}
-        onBackToHome={onBackToHome}
+        onOpenRecords={navigation.openRecords}
+        onChangeDifficulty={navigation.changeDifficulty}
+        onBackToHome={navigation.backToHome}
         onOpenDiagnostics={
           internalDiagnosticsAvailable
             ? () => setDiagnosticsOpen(true)

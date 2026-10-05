@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from "react";
 
-import { createPlayLocationState } from "@/game-catalog/play-location-state";
+import type { GameNavigation } from "@/game-catalog/game-catalog-entry";
 import { createMinesweeperDiagnosticSnapshot } from "@/games/minesweeper/diagnostics";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import type { MinesweeperResult } from "@/games/minesweeper/play/use-minesweeper-play";
@@ -12,7 +12,6 @@ import {
   buildRevision,
   internalDiagnosticsAvailable,
 } from "@/lib/internal-diagnostics";
-import { useNavigate } from "@/router";
 
 type RecordedMinesweeperResultProps = {
   difficulty: MinesweeperDifficulty;
@@ -20,9 +19,7 @@ type RecordedMinesweeperResultProps = {
   result: MinesweeperResult;
   recordOutcomeNotice: ReactNode;
   onReplay: (() => void) | undefined;
-  onOpenRecords: () => void;
-  onChangeDifficulty: () => void;
-  onBackToHome: () => void;
+  navigation: GameNavigation;
 };
 
 /** 記録から作り直したマインスイーパーの結果画面。次の問題は記録と同じ難易度で、記録の問題を避けて始める。 */
@@ -32,11 +29,8 @@ export function RecordedMinesweeperResult({
   result,
   recordOutcomeNotice,
   onReplay,
-  onOpenRecords,
-  onChangeDifficulty,
-  onBackToHome,
+  navigation,
 }: RecordedMinesweeperResultProps) {
-  const navigate = useNavigate();
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const diagnostics = internalDiagnosticsAvailable
     ? createMinesweeperDiagnosticSnapshot({
@@ -47,10 +41,7 @@ export function RecordedMinesweeperResult({
     : null;
 
   function startNewProblem() {
-    navigate("/puzzles/minesweeper/play/:difficulty", {
-      params: { difficulty },
-      state: createPlayLocationState(createProblemId(problemIdentity)),
-    });
+    navigation.startNewProblem(difficulty, createProblemId(problemIdentity));
   }
 
   return (
@@ -61,9 +52,9 @@ export function RecordedMinesweeperResult({
         recordOutcomeNotice={recordOutcomeNotice}
         onReplay={onReplay}
         onStartNewProblem={startNewProblem}
-        onOpenRecords={onOpenRecords}
-        onChangeDifficulty={onChangeDifficulty}
-        onBackToHome={onBackToHome}
+        onOpenRecords={navigation.openRecords}
+        onChangeDifficulty={navigation.changeDifficulty}
+        onBackToHome={navigation.backToHome}
         onOpenDiagnostics={
           diagnostics ? () => setDiagnosticsOpen(true) : undefined
         }

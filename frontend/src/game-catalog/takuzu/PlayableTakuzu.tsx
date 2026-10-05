@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
+import { useGameNavigation } from "@/game-catalog/game-navigation";
 import {
   useProblemIdQuerySync,
   useRequestedProblem,
 } from "@/game-catalog/problem-id-query";
 import { useRecordResultNavigation } from "@/game-catalog/record-result-navigation";
+import { takuzuCatalogEntry } from "@/game-catalog/takuzu/takuzu-catalog-entry";
 import type { ProblemId } from "@/games/problem-id";
 import { createTakuzuDiagnosticSnapshot } from "@/games/takuzu/diagnostics";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
@@ -24,7 +26,6 @@ import {
 import { usePlayAttemptRecord } from "@/records/hooks/use-play-attempt-record";
 import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
-import { useNavigate } from "@/router";
 
 type PlayableTakuzuProps = {
   difficulty: TakuzuDifficulty;
@@ -41,7 +42,7 @@ export function PlayableTakuzu({
   );
   const play = useTakuzuPlay(difficulty, requestedProblem, avoidedProblemId);
   useProblemIdQuerySync(play.problemIdentity);
-  const navigate = useNavigate();
+  const navigation = useGameNavigation(takuzuCatalogEntry);
   const playRecord = useMemo(
     () =>
       play.result && play.completedAt !== null
@@ -116,10 +117,10 @@ export function PlayableTakuzu({
         onRestart={play.restart}
         onReplay={play.replay}
         onStartNewProblem={play.startNewProblem}
-        onOpenRecords={() => navigate("/records")}
+        onOpenRecords={navigation.openRecords}
         onClearAnimationComplete={play.completeClearAnimation}
-        onChangeDifficulty={() => navigate("/puzzles/takuzu")}
-        onBackToHome={() => navigate("/")}
+        onChangeDifficulty={navigation.changeDifficulty}
+        onBackToHome={navigation.backToHome}
         onOpenDiagnostics={
           diagnostics ? () => setDiagnosticsOpen(true) : undefined
         }

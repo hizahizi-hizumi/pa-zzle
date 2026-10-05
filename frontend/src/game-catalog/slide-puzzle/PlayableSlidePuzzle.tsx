@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
+import { useGameNavigation } from "@/game-catalog/game-navigation";
 import {
   useProblemIdQuerySync,
   useRequestedProblem,
 } from "@/game-catalog/problem-id-query";
 import { useRecordResultNavigation } from "@/game-catalog/record-result-navigation";
+import { slidePuzzleCatalogEntry } from "@/game-catalog/slide-puzzle/slide-puzzle-catalog-entry";
 import type { ProblemId } from "@/games/problem-id";
 import { createSlidePuzzleDiagnosticSnapshot } from "@/games/slide-puzzle/diagnostics";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
@@ -24,7 +26,6 @@ import {
 import { usePlayAttemptRecord } from "@/records/hooks/use-play-attempt-record";
 import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
-import { useNavigate } from "@/router";
 
 type PlayableSlidePuzzleProps = {
   difficulty: SlidePuzzleDifficulty;
@@ -45,7 +46,7 @@ export function PlayableSlidePuzzle({
     avoidedProblemId,
   );
   useProblemIdQuerySync(play.problemIdentity);
-  const navigate = useNavigate();
+  const navigation = useGameNavigation(slidePuzzleCatalogEntry);
   const playRecord = useMemo(
     () =>
       play.result && play.completedAt !== null
@@ -116,10 +117,10 @@ export function PlayableSlidePuzzle({
         onRestart={play.restart}
         onReplay={play.replay}
         onStartNewProblem={play.startNewProblem}
-        onOpenRecords={() => navigate("/records")}
+        onOpenRecords={navigation.openRecords}
         onClearingComplete={play.completeClearAnimation}
-        onChangeDifficulty={() => navigate("/puzzles/slide-puzzle")}
-        onBackToHome={() => navigate("/")}
+        onChangeDifficulty={navigation.changeDifficulty}
+        onBackToHome={navigation.backToHome}
         onOpenDiagnostics={
           diagnostics ? () => setDiagnosticsOpen(true) : undefined
         }

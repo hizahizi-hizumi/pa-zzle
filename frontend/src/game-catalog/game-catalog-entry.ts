@@ -10,6 +10,12 @@ import type { PlayRecord } from "@/records/play-record";
 import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
 import type { Path } from "@/router";
 
+/** ゲームの入口（難易度選択）のパス。 */
+export type GameEntryPath = Exclude<
+  Extract<Path, `/puzzles/${string}`>,
+  `${string}/:${string}`
+>;
+
 /** 難易度を `:difficulty` に入れて開くプレイ画面のパス。 */
 export type GamePlayPath = Extract<Path, `/puzzles/${string}/play/:difficulty`>;
 
@@ -19,15 +25,28 @@ export type RecordProblemPlayTarget = {
   problemId: ProblemId;
 };
 
-/** 記録から描く結果画面へ、ゲームの外側が渡す告知と操作。次の問題・検証情報はゲームが記録から用意する。 */
+/** 完了記録や離脱した試行の問題を遊び直すプレイ画面。 */
+export type RecordProblemPlayDestination = RecordProblemPlayTarget & {
+  playPath: GamePlayPath;
+};
+
+/** ゲームのプレイ画面・結果画面から、ゲームの外や同じゲームの別のプレイへ移る操作。 */
+export type GameNavigation = {
+  openRecords: () => void;
+  /** ゲームの入口（難易度選択）へ移る。 */
+  changeDifficulty: () => void;
+  backToHome: () => void;
+  /** その難易度のプレイ画面を開き、最初の問題として `avoidedProblemId` の問題を避ける。 */
+  startNewProblem: (difficulty: string, avoidedProblemId: ProblemId) => void;
+};
+
+/** 記録から描く結果画面へ、ゲームの外側が渡す告知と操作。検証情報はゲームが記録から用意する。 */
 export type RecordResultContext = {
   /** 記録を保存した直後の自己ベスト更新などの告知。 */
   recordOutcomeNotice: ReactNode;
   /** 記録の問題を遊び直す。遊び直せない記録では `undefined`。 */
   onReplay: (() => void) | undefined;
-  onOpenRecords: () => void;
-  onChangeDifficulty: () => void;
-  onBackToHome: () => void;
+  navigation: GameNavigation;
 };
 
 /** アプリが提供する1つのゲームの、入口・プレイ画面・記録・離脱したプレイ・それらの問題の遊び直し先・記録の結果画面。 */
@@ -36,7 +55,7 @@ export type GameCatalogEntry = {
   id: string;
   name: string;
   pictogramSvg: string;
-  entryPath: Path;
+  entryPath: GameEntryPath;
   playPath: GamePlayPath;
   playRecordDisplay: PlayRecordDisplayDefinition;
   /**

@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from "react";
 
-import { createPlayLocationState } from "@/game-catalog/play-location-state";
+import type { GameNavigation } from "@/game-catalog/game-catalog-entry";
 import { createProblemId } from "@/games/problem-id";
 import { createTakuzuDiagnosticSnapshot } from "@/games/takuzu/diagnostics";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
@@ -12,7 +12,6 @@ import {
   buildRevision,
   internalDiagnosticsAvailable,
 } from "@/lib/internal-diagnostics";
-import { useNavigate } from "@/router";
 
 type RecordedTakuzuResultProps = {
   difficulty: TakuzuDifficulty;
@@ -20,9 +19,7 @@ type RecordedTakuzuResultProps = {
   result: TakuzuResult;
   recordOutcomeNotice: ReactNode;
   onReplay: (() => void) | undefined;
-  onOpenRecords: () => void;
-  onChangeDifficulty: () => void;
-  onBackToHome: () => void;
+  navigation: GameNavigation;
 };
 
 /** 記録から作り直したバイナリパズルの結果画面。次の問題は記録と同じ難易度で、記録の問題を避けて始める。 */
@@ -32,11 +29,8 @@ export function RecordedTakuzuResult({
   result,
   recordOutcomeNotice,
   onReplay,
-  onOpenRecords,
-  onChangeDifficulty,
-  onBackToHome,
+  navigation,
 }: RecordedTakuzuResultProps) {
-  const navigate = useNavigate();
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const diagnostics = internalDiagnosticsAvailable
     ? createTakuzuDiagnosticSnapshot({
@@ -47,10 +41,7 @@ export function RecordedTakuzuResult({
     : null;
 
   function startNewProblem() {
-    navigate("/puzzles/takuzu/play/:difficulty", {
-      params: { difficulty },
-      state: createPlayLocationState(createProblemId(problemIdentity)),
-    });
+    navigation.startNewProblem(difficulty, createProblemId(problemIdentity));
   }
 
   return (
@@ -61,9 +52,9 @@ export function RecordedTakuzuResult({
         recordOutcomeNotice={recordOutcomeNotice}
         onReplay={onReplay}
         onStartNewProblem={startNewProblem}
-        onOpenRecords={onOpenRecords}
-        onChangeDifficulty={onChangeDifficulty}
-        onBackToHome={onBackToHome}
+        onOpenRecords={navigation.openRecords}
+        onChangeDifficulty={navigation.changeDifficulty}
+        onBackToHome={navigation.backToHome}
         onOpenDiagnostics={
           diagnostics ? () => setDiagnosticsOpen(true) : undefined
         }

@@ -5,7 +5,10 @@ import {
   findGameCatalogEntry,
   findRecordProblemPlayDestination,
 } from "@/game-catalog/game-catalog";
-import { createProblemIdSearch } from "@/game-catalog/problem-id-query";
+import {
+  createGameNavigation,
+  openRecordProblemPlay,
+} from "@/game-catalog/game-navigation";
 import { readRecordSaveOutcome } from "@/game-catalog/record-result-location-state";
 import { findPlayRecord } from "@/records/storage";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
@@ -31,18 +34,9 @@ export function PlayResultView() {
             />
           ),
           onReplay: replayDestination
-            ? () =>
-                navigate(
-                  {
-                    pathname: replayDestination.playPath,
-                    search: createProblemIdSearch(replayDestination.problemId),
-                  },
-                  { params: { difficulty: replayDestination.difficulty } },
-                )
+            ? () => openRecordProblemPlay(navigate, replayDestination)
             : undefined,
-          onOpenRecords: () => navigate("/records"),
-          onChangeDifficulty: () => navigate(game.entryPath),
-          onBackToHome: () => navigate("/"),
+          navigation: createGameNavigation(navigate, game),
         })
       : null;
 

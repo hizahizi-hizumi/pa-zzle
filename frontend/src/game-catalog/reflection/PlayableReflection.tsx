@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
+import { useGameNavigation } from "@/game-catalog/game-navigation";
 import {
   useProblemIdQuerySync,
   useRequestedProblem,
 } from "@/game-catalog/problem-id-query";
 import { useRecordResultNavigation } from "@/game-catalog/record-result-navigation";
+import { reflectionCatalogEntry } from "@/game-catalog/reflection/reflection-catalog-entry";
 import { getDifficultyLabel } from "@/games/difficulty";
 import type { ProblemId } from "@/games/problem-id";
 import { createReflectionDiagnosticSnapshot } from "@/games/reflection/diagnostics";
@@ -26,7 +28,6 @@ import {
 import { usePlayAttemptRecord } from "@/records/hooks/use-play-attempt-record";
 import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
-import { useNavigate } from "@/router";
 
 type PlayableReflectionProps = {
   difficulty: ReflectionDifficulty;
@@ -47,7 +48,7 @@ export function PlayableReflection({
     avoidedProblemId,
   );
   useProblemIdQuerySync(play.problemIdentity);
-  const navigate = useNavigate();
+  const navigation = useGameNavigation(reflectionCatalogEntry);
   const playRecord = useMemo(
     () =>
       play.result && play.completedAt !== null
@@ -131,9 +132,9 @@ export function PlayableReflection({
         onReplay={play.replay}
         onClearAnimationComplete={play.completeClearAnimation}
         onStartNewProblem={play.startNewProblem}
-        onOpenRecords={() => navigate("/records")}
-        onChangeDifficulty={() => navigate("/puzzles/reflection")}
-        onBackToHome={() => navigate("/")}
+        onOpenRecords={navigation.openRecords}
+        onChangeDifficulty={navigation.changeDifficulty}
+        onBackToHome={navigation.backToHome}
         onOpenDiagnostics={
           internalDiagnosticsAvailable
             ? () => setDiagnosticsOpen(true)

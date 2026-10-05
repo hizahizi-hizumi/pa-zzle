@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { useGameNavigation } from "@/game-catalog/game-navigation";
+import { parkingJamCatalogEntry } from "@/game-catalog/parking-jam/parking-jam-catalog-entry";
 import {
   useProblemIdQuerySync,
   useRequestedProblem,
@@ -25,7 +27,6 @@ import {
 import { usePlayAttemptRecord } from "@/records/hooks/use-play-attempt-record";
 import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
-import { useNavigate } from "@/router";
 
 type PlayableParkingJamProps = {
   difficulty: ParkingJamDifficulty;
@@ -46,7 +47,7 @@ export function PlayableParkingJam({
     avoidedProblemId,
   );
   useProblemIdQuerySync(play.problemIdentity);
-  const navigate = useNavigate();
+  const navigation = useGameNavigation(parkingJamCatalogEntry);
   const playRecord = useMemo(
     () =>
       play.result && play.completedAt !== null
@@ -127,9 +128,9 @@ export function PlayableParkingJam({
         onRestart={play.restart}
         onReplay={play.replay}
         onStartNewProblem={play.startNewProblem}
-        onOpenRecords={() => navigate("/records")}
-        onChangeDifficulty={() => navigate("/puzzles/parking-jam")}
-        onBackToHome={() => navigate("/")}
+        onOpenRecords={navigation.openRecords}
+        onChangeDifficulty={navigation.changeDifficulty}
+        onBackToHome={navigation.backToHome}
         onClearAnimationComplete={play.completeClearAnimation}
         onOpenDiagnostics={
           internalDiagnosticsAvailable

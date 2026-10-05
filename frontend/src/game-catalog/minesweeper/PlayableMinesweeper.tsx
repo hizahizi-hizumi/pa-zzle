@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { useGameNavigation } from "@/game-catalog/game-navigation";
+import { minesweeperCatalogEntry } from "@/game-catalog/minesweeper/minesweeper-catalog-entry";
 import {
   useProblemIdQuerySync,
   useRequestedProblem,
@@ -24,7 +26,6 @@ import {
 import { usePlayAttemptRecord } from "@/records/hooks/use-play-attempt-record";
 import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
-import { useNavigate } from "@/router";
 
 type PlayableMinesweeperProps = {
   difficulty: MinesweeperDifficulty;
@@ -45,7 +46,7 @@ export function PlayableMinesweeper({
     avoidedProblemId,
   );
   useProblemIdQuerySync(play.problemIdentity);
-  const navigate = useNavigate();
+  const navigation = useGameNavigation(minesweeperCatalogEntry);
   const playRecord = useMemo(
     () =>
       play.result && play.completedAt !== null
@@ -118,9 +119,9 @@ export function PlayableMinesweeper({
         onChordCell={play.chordCell}
         onReplay={play.replay}
         onStartNewProblem={play.startNewProblem}
-        onOpenRecords={() => navigate("/records")}
-        onChangeDifficulty={() => navigate("/puzzles/minesweeper")}
-        onBackToHome={() => navigate("/")}
+        onOpenRecords={navigation.openRecords}
+        onChangeDifficulty={navigation.changeDifficulty}
+        onBackToHome={navigation.backToHome}
         onClearAnimationComplete={play.completeClearAnimation}
         onOpenDiagnostics={
           diagnostics ? () => setDiagnosticsOpen(true) : undefined

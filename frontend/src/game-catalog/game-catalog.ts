@@ -1,7 +1,6 @@
 import type {
   GameCatalogEntry,
-  GamePlayPath,
-  RecordProblemPlayTarget,
+  RecordProblemPlayDestination,
 } from "@/game-catalog/game-catalog-entry";
 import { minesweeperCatalogEntry } from "@/game-catalog/minesweeper/minesweeper-catalog-entry";
 import { nanpureCatalogEntry } from "@/game-catalog/nanpure/nanpure-catalog-entry";
@@ -29,11 +28,6 @@ export function findGameCatalogEntry(
 ): GameCatalogEntry | undefined {
   return gameCatalog.find((game) => game.id === gameId);
 }
-
-/** 完了記録や離脱した試行の問題を遊び直すプレイ画面。 */
-export type RecordProblemPlayDestination = RecordProblemPlayTarget & {
-  playPath: GamePlayPath;
-};
 
 /** 記録の問題を遊び直すプレイ画面を求める。今のアプリに無いゲームの記録や、遊び直せない記録には `null` を返す。 */
 export function findRecordProblemPlayDestination(
