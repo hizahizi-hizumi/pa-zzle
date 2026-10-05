@@ -37,6 +37,7 @@ function createProps(): ComponentProps<typeof NanpurePlay> {
     mistakeCount: 2,
     undoCount: 1,
     canUndo: true,
+    canRestart: true,
     result: null,
     recordOutcomeNotice: null,
     onSelectCell: vi.fn(),
@@ -295,13 +296,6 @@ describe("NanpurePlay", () => {
               total: 79,
               breakdown: { accuracy: 30, speed: 40, stability: 9 },
             },
-            problemIdentity: {
-              generatorVersion: "2",
-              seed: "np-locked-candidates-740",
-              conditions: {
-                removalTechniqueLimit: "locked-candidates" as const,
-              },
-            },
           }}
           onStartNewProblem={onStartNewProblem}
         />,
@@ -362,13 +356,6 @@ describe("NanpurePlay", () => {
             score: {
               total: 100,
               breakdown: { accuracy: 40, speed: 40, stability: 20 },
-            },
-            problemIdentity: {
-              generatorVersion: "2",
-              seed: "np-locked-candidates-740",
-              conditions: {
-                removalTechniqueLimit: "locked-candidates" as const,
-              },
             },
           }}
           recordOutcomeNotice={
@@ -466,13 +453,6 @@ describe("NanpurePlay", () => {
             score: {
               total: 100,
               breakdown: { accuracy: 40, speed: 40, stability: 20 },
-            },
-            problemIdentity: {
-              generatorVersion: "2",
-              seed: "np-locked-candidates-740",
-              conditions: {
-                removalTechniqueLimit: "locked-candidates" as const,
-              },
             },
           }}
           onOpenDiagnostics={onOpenDiagnostics}

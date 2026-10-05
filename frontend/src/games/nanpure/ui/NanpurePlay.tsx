@@ -3,10 +3,7 @@ import { type ReactNode, useState } from "react";
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { PlayHeader } from "@/components/PlayHeader";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
-import type {
-  NanpureProgress,
-  NanpureResult,
-} from "@/games/nanpure/play/use-nanpure-play";
+import type { NanpureResult } from "@/games/nanpure/play/use-nanpure-play";
 import type {
   NanpureBoard as NanpureBoardState,
   NanpureDigit,
@@ -17,12 +14,13 @@ import { NanpureBoard } from "@/games/nanpure/ui/board/NanpureBoard";
 import { NanpureHowToPlayDialog } from "@/games/nanpure/ui/NanpureHowToPlayDialog";
 import { NanpureInputPanel } from "@/games/nanpure/ui/play/NanpureInputPanel";
 import { NanpureResultScreen } from "@/games/nanpure/ui/result/NanpureResultScreen";
+import type { GameProgress } from "@/games/play";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type NanpurePlayProps = {
   difficulty: NanpureDifficulty;
   status: "playing" | "cleared";
-  progress: NanpureProgress;
+  progress: GameProgress;
   clues: NanpureBoardState;
   board: NanpureBoardState;
   notes: NanpureNotes;
@@ -42,6 +40,7 @@ type NanpurePlayProps = {
   onErase: () => void;
   onToggleNotesMode: () => void;
   onUndo: () => void;
+  canRestart: boolean;
   onRestart: () => void;
   onReplay: () => void;
   onStartNewProblem: () => void;
@@ -75,6 +74,7 @@ export function NanpurePlay({
   onErase,
   onToggleNotesMode,
   onUndo,
+  canRestart,
   onRestart,
   onReplay,
   onStartNewProblem,
@@ -122,6 +122,7 @@ export function NanpurePlay({
             { label: "待った", value: String(undoCount) },
           ],
         ]}
+        canRestart={canRestart}
         onRestart={onRestart}
         onReplay={onReplay}
         onStartNewProblem={onStartNewProblem}
