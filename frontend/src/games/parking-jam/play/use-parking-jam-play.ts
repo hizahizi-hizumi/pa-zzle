@@ -223,7 +223,7 @@ export function useParkingJamPlay(
     });
   }, []);
 
-  // 不成立・待った・やり直しの計数を捨てて同じ問題を始め直すと採点を回避できるため、
+  // 不成立・待った・盤面を戻した回数を捨てて同じ問題を始め直すと採点を回避できるため、
   // 同じ問題の新しいプレイはクリア後だけ始められる。プレイ中は restart を使う。
   const canReplay = play.session.status === "cleared";
   const replay = useCallback(() => {

@@ -242,7 +242,7 @@ export function canUndoTakuzuSession(session: TakuzuSession): boolean {
   return session.status === "playing" && session.history.length > 0;
 }
 
-/** 同じ問題を新しいプレイとして始める（やり直し）。 */
+/** 同じ問題を新しいプレイとして始める（リセット）。 */
 export function replayTakuzuSession(
   session: TakuzuSession,
   startedAt: number,
