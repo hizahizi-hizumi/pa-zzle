@@ -1,3 +1,7 @@
+import {
+  isRecordedProblemIdentity,
+  type RecordedProblemIdentity,
+} from "@/games/problem-id";
 import type { ProblemSeed } from "@/games/problem-seed";
 import {
   countEmptyWaterSortBottles,
@@ -60,6 +64,23 @@ export function isWaterSortProblemIdentity(
     value.conditions.capacity === WATER_SORT_BOTTLE_CAPACITY &&
     isPositiveInteger(value.conditions.emptyBottleCount) &&
     isPositiveInteger(value.generationAttempt)
+  );
+}
+
+/** 記録に残した問題の識別情報。生成器の版が今と違う記録も、採点に使う色数が読めれば読み込む。 */
+export type WaterSortRecordedProblemIdentity = RecordedProblemIdentity<{
+  colorCount: number;
+}>;
+
+/** 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。 */
+export function isWaterSortRecordedProblemIdentity(
+  value: unknown,
+): value is WaterSortRecordedProblemIdentity {
+  return (
+    isRecordedProblemIdentity(value, {
+      generatorVersion: WATER_SORT_GENERATOR_VERSION,
+      isProblemIdentity: isWaterSortProblemIdentity,
+    }) && isPositiveInteger(value.conditions.colorCount)
   );
 }
 

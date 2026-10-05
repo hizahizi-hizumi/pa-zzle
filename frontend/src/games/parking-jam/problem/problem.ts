@@ -5,6 +5,10 @@ import {
   type ParkingJamVehicleId,
   validateParkingJamBoard,
 } from "@/games/parking-jam/puzzle/board";
+import {
+  isRecordedProblemIdentity,
+  type RecordedProblemIdentity,
+} from "@/games/problem-id";
 import type { ProblemSeed } from "@/games/problem-seed";
 import {
   isNonEmptyString,
@@ -71,6 +75,23 @@ export function isParkingJamProblemIdentity(
     isPositiveInteger(conditions.fixedAreaLength) &&
     isUnitInterval(conditions.blockingPlacementProbability) &&
     isPositiveInteger(value.generationAttempt)
+  );
+}
+
+/** 記録に残した問題の識別情報。生成器の版が今と違う記録も、採点に使う車両数が読めれば読み込む。 */
+export type ParkingJamRecordedProblemIdentity = RecordedProblemIdentity<{
+  vehicleCount: number;
+}>;
+
+/** 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。 */
+export function isParkingJamRecordedProblemIdentity(
+  value: unknown,
+): value is ParkingJamRecordedProblemIdentity {
+  return (
+    isRecordedProblemIdentity(value, {
+      generatorVersion: PARKING_JAM_GENERATOR_VERSION,
+      isProblemIdentity: isParkingJamProblemIdentity,
+    }) && isPositiveInteger(value.conditions.vehicleCount)
   );
 }
 

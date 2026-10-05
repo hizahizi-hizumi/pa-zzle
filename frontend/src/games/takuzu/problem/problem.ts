@@ -1,3 +1,7 @@
+import {
+  isRecordedProblemIdentity,
+  type RecordedProblemIdentity,
+} from "@/games/problem-id";
 import type { ProblemSeed } from "@/games/problem-seed";
 import {
   type TakuzuTechnique,
@@ -61,16 +65,8 @@ export type TakuzuSolveWorkload = {
   lineReadingRoundCount: number;
 };
 
-/**
- * 記録に残した問題の識別情報。
- * 生成器の版が今と違う記録も評価し続けられるよう、版と生成条件の形は今の生成器に限らない。
- * 今の生成器で扱えるかは `isTakuzuProblemIdentity` で確かめる。
- */
-export type TakuzuRecordedProblemIdentity = {
-  generatorVersion: string;
-  seed: ProblemSeed;
-  conditions: Readonly<Record<string, unknown>>;
-};
+/** 記録に残した問題の識別情報。生成器の版が今と違う記録も読み込む。 */
+export type TakuzuRecordedProblemIdentity = RecordedProblemIdentity;
 
 /** 問題と、それを再現するための情報。難易度分析を伴わない。 */
 export type TakuzuIdentifiedProblem = {
@@ -146,27 +142,14 @@ export function isTakuzuProblemIdentity(
   );
 }
 
-/**
- * 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。
- * 今の生成器の版なら、今の生成器で扱える識別情報であることまで確かめる。
- */
+/** 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。 */
 export function isTakuzuRecordedProblemIdentity(
   value: unknown,
 ): value is TakuzuRecordedProblemIdentity {
-  if (!isRecordObject(value) || !isRecordObject(value.conditions)) {
-    return false;
-  }
-
-  const { generatorVersion, seed } = value;
-  if (generatorVersion === TAKUZU_GENERATOR_VERSION) {
-    return isTakuzuProblemIdentity(value);
-  }
-  return (
-    typeof generatorVersion === "string" &&
-    generatorVersion.length > 0 &&
-    typeof seed === "string" &&
-    seed.length > 0
-  );
+  return isRecordedProblemIdentity(value, {
+    generatorVersion: TAKUZU_GENERATOR_VERSION,
+    isProblemIdentity: isTakuzuProblemIdentity,
+  });
 }
 
 /** 記録など外部から読み戻した値が、8×8 の問題で成り立つ作業の量かを確かめる。 */

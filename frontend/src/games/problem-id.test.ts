@@ -2,6 +2,7 @@ import {
   _private,
   createProblemId,
   createProblemPoolIdLookup,
+  isRecordedProblemIdentity,
 } from "@/games/problem-id";
 
 const { canonicalizeProblemIdentity } = _private;
@@ -118,4 +119,58 @@ describe("createProblemPoolIdLookup", () => {
 
     expect(position).toBeNull();
   });
+});
+
+describe("isRecordedProblemIdentity", () => {
+  const current = {
+    generatorVersion: "2",
+    isProblemIdentity(value: unknown): value is { generatorVersion: "2" } {
+      return (
+        typeof value === "object" &&
+        value !== null &&
+        "conditions" in value &&
+        typeof value.conditions === "object" &&
+        value.conditions !== null &&
+        "size" in value.conditions &&
+        value.conditions.size === 4
+      );
+    },
+  };
+  const cases = [
+    [
+      "今の版で今の生成器が扱える identity",
+      { generatorVersion: "2", seed: "s", conditions: { size: 4 } },
+      true,
+    ],
+    [
+      "今の版で今の生成器が扱えない identity",
+      { generatorVersion: "2", seed: "s", conditions: { size: 5 } },
+      false,
+    ],
+    [
+      "別の版の identity",
+      { generatorVersion: "1", seed: "s", conditions: { clueCount: 30 } },
+      true,
+    ],
+    [
+      "版の無い identity",
+      { generatorVersion: "", seed: "s", conditions: {} },
+      false,
+    ],
+    [
+      "seed の無い identity",
+      { generatorVersion: "1", seed: "", conditions: {} },
+      false,
+    ],
+    ["生成条件の無い identity", { generatorVersion: "1", seed: "s" }, false],
+  ] as const;
+
+  test.each(cases)(
+    "記録の identity として読めるかを返すこと: %s",
+    (_, value, expected) => {
+      const result = isRecordedProblemIdentity(value, current);
+
+      expect(result).toBe(expected);
+    },
+  );
 });

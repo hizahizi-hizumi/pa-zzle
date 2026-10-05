@@ -242,3 +242,31 @@ describe("restoreSlidePuzzleRecordedResult", () => {
     });
   });
 });
+
+describe("生成器の版が今と違う記録の場合", () => {
+  const olderRecord: PlayRecord = {
+    ...record,
+    payload: {
+      ...record.payload,
+      problemIdentity: {
+        generatorVersion: "0",
+        seed: "older-generator-seed",
+        conditions: { size: 4 },
+      },
+    },
+  };
+
+  test("記録として読み込み、今の評価規則で評価すること", () => {
+    const accepted = isSlidePuzzlePlayRecord(olderRecord);
+    const score = getSlidePuzzlePlayRecordScore(olderRecord);
+
+    expect(accepted).toBe(true);
+    expect(score).toBe(getSlidePuzzlePlayRecordScore(record));
+  });
+
+  test("結果画面に出す内容を作り直さないこと", () => {
+    const restored = restoreSlidePuzzleRecordedResult(olderRecord);
+
+    expect(restored).toBeNull();
+  });
+});

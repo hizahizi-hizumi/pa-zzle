@@ -1,3 +1,7 @@
+import {
+  isRecordedProblemIdentity,
+  type RecordedProblemIdentity,
+} from "@/games/problem-id";
 import type { ProblemSeed } from "@/games/problem-seed";
 import {
   getSlidePuzzleBoardSize,
@@ -66,5 +70,22 @@ export function isSlidePuzzleProblemIdentity(
     isNonEmptyString(value.seed) &&
     isSlidePuzzleBoardSize(value.conditions.size) &&
     isPositiveInteger(value.conditions.scrambleLength)
+  );
+}
+
+/** 記録に残した問題の識別情報。生成器の版が今と違う記録も、採点に使う盤面サイズが読めれば読み込む。 */
+export type SlidePuzzleRecordedProblemIdentity = RecordedProblemIdentity<{
+  size: SlidePuzzleBoardSize;
+}>;
+
+/** 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。 */
+export function isSlidePuzzleRecordedProblemIdentity(
+  value: unknown,
+): value is SlidePuzzleRecordedProblemIdentity {
+  return (
+    isRecordedProblemIdentity(value, {
+      generatorVersion: SLIDE_PUZZLE_GENERATOR_VERSION,
+      isProblemIdentity: isSlidePuzzleProblemIdentity,
+    }) && isSlidePuzzleBoardSize(value.conditions.size)
   );
 }

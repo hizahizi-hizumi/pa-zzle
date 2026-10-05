@@ -13,7 +13,9 @@ import {
 } from "@/games/parking-jam/play/use-parking-jam-play";
 import {
   isParkingJamProblemIdentity,
+  isParkingJamRecordedProblemIdentity,
   type ParkingJamProblemIdentity,
+  type ParkingJamRecordedProblemIdentity,
 } from "@/games/parking-jam/problem/problem";
 import {
   calculateParkingJamPlayScore,
@@ -42,9 +44,10 @@ type ParkingJamProblemFacts = {
 
 // payloadVersion 2 は play-quality-v1 で採点し、難易度モデル版・採点版を持たない。
 // payloadVersion 2・3 は3段階（easy / normal / hard）の難易度で、レベル1〜5へ読み替えず旧区分のまま扱う。
+// problemIdentity は生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
 type ParkingJamPlayRecordPayloadV2 = {
   difficulty: LegacyDifficulty;
-  problemIdentity: ParkingJamProblemIdentity;
+  problemIdentity: ParkingJamRecordedProblemIdentity;
   performance: ParkingJamSessionResult;
 };
 
@@ -138,7 +141,7 @@ export function isParkingJamPlayRecord(
     performance,
   } = record.payload;
   if (
-    !isParkingJamProblemIdentity(problemIdentity) ||
+    !isParkingJamRecordedProblemIdentity(problemIdentity) ||
     !isParkingJamPerformance(performance) ||
     // 待った・やり直しで戻した車も再び出庫するため、成功出庫数は車両数以上になる。
     performance.successfulMoveCount < problemIdentity.conditions.vehicleCount
@@ -225,14 +228,15 @@ export type ParkingJamRecordedResult = {
 
 /**
  * 記録から結果画面に出す内容を作り直す。
- * 今の版（レベル1〜5の難易度）の記録のときだけ作れる。それ以外は `null` を返す。
+ * 今の版（レベル1〜5の難易度）の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
  */
 export function restoreParkingJamRecordedResult(
   record: PlayRecord,
 ): ParkingJamRecordedResult | null {
   if (
     !isParkingJamPlayRecord(record) ||
-    record.payloadVersion !== PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION
+    record.payloadVersion !== PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION ||
+    !isParkingJamProblemIdentity(record.payload.problemIdentity)
   ) {
     return null;
   }

@@ -131,3 +131,49 @@ describe("restoreMinesweeperRecordedResult", () => {
     });
   });
 });
+
+describe("生成器の版が今と違う記録の場合", () => {
+  const current = createRecord();
+  const record: PlayRecord = {
+    ...current,
+    payload: {
+      ...current.payload,
+      problemIdentity: {
+        generatorVersion: "0",
+        seed: "older-generator-seed",
+        conditions: { mineCount: 16 },
+      },
+    },
+  };
+  const withoutMineCount: PlayRecord = {
+    ...current,
+    payload: {
+      ...current.payload,
+      problemIdentity: {
+        generatorVersion: "0",
+        seed: "older-generator-seed",
+        conditions: {},
+      },
+    },
+  };
+
+  test("記録として読み込み、今の評価規則で評価すること", () => {
+    const accepted = isMinesweeperPlayRecord(record);
+    const score = getMinesweeperPlayRecordScore(record);
+
+    expect(accepted).toBe(true);
+    expect(score).toBe(getMinesweeperPlayRecordScore(current));
+  });
+
+  test("結果画面に出す内容を作り直さないこと", () => {
+    const restored = restoreMinesweeperRecordedResult(record);
+
+    expect(restored).toBeNull();
+  });
+
+  test("評価に使う地雷数が読めない記録は読み込まないこと", () => {
+    const accepted = isMinesweeperPlayRecord(withoutMineCount);
+
+    expect(accepted).toBe(false);
+  });
+});

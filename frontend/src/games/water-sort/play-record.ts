@@ -12,7 +12,9 @@ import {
 } from "@/games/water-sort/play/use-water-sort-play";
 import {
   isWaterSortProblemIdentity,
+  isWaterSortRecordedProblemIdentity,
   type WaterSortProblemIdentity,
+  type WaterSortRecordedProblemIdentity,
 } from "@/games/water-sort/problem/problem";
 import {
   calculateWaterSortMoveDelta,
@@ -45,13 +47,17 @@ type WaterSortPlayPerformance = WaterSortPlayPerformanceV1 & {
 
 type WaterSortPlayRecordPayloadV1 = {
   difficulty: WaterSortRecordedDifficulty;
-  problemIdentity: WaterSortProblemIdentity;
+  problemIdentity: WaterSortRecordedProblemIdentity;
   performance: WaterSortPlayPerformanceV1;
 };
 
+/**
+ * - `problemIdentity`: 再プレイで問題集から同じ問題を引くのに使う。生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
+ * - `performance`: そのプレイで起きた事実。評価点・評価段階・基準との差は保存せず、現在の評価規則で導出する。
+ */
 type WaterSortPlayRecordPayload = {
   difficulty: WaterSortRecordedDifficulty;
-  problemIdentity: WaterSortProblemIdentity;
+  problemIdentity: WaterSortRecordedProblemIdentity;
   performance: WaterSortPlayPerformance;
 };
 
@@ -114,7 +120,7 @@ export function isWaterSortPlayRecord(
   if (
     typeof difficulty !== "string" ||
     parseRecordedDifficulty(difficulty) === undefined ||
-    !isWaterSortProblemIdentity(problemIdentity)
+    !isWaterSortRecordedProblemIdentity(problemIdentity)
   ) {
     return false;
   }
@@ -145,7 +151,8 @@ export function restoreWaterSortRecordedResult(
 ): WaterSortRecordedResult | null {
   if (
     !isWaterSortPlayRecord(record) ||
-    record.payloadVersion !== WATER_SORT_PLAY_RECORD_PAYLOAD_VERSION
+    record.payloadVersion !== WATER_SORT_PLAY_RECORD_PAYLOAD_VERSION ||
+    !isWaterSortProblemIdentity(record.payload.problemIdentity)
   ) {
     return null;
   }

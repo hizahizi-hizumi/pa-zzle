@@ -6,7 +6,9 @@ import {
 } from "@/games/minesweeper/play/use-minesweeper-play";
 import {
   isMinesweeperProblemIdentity,
+  isMinesweeperRecordedProblemIdentity,
   type MinesweeperProblemIdentity,
+  type MinesweeperRecordedProblemIdentity,
 } from "@/games/minesweeper/problem/problem";
 import {
   calculateMinesweeperPlayScore,
@@ -25,9 +27,13 @@ import type { PlayRecordDefinition } from "@/records/play-record-definition";
 const MINESWEEPER_PLAY_RECORD_PAYLOAD_VERSION = 1;
 const MINESWEEPER_GAME_ID = "minesweeper";
 
+/**
+ * - `problemIdentity`: 再プレイで問題集から同じ問題を引くのに使う。生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
+ * - `performance`: そのプレイで起きた事実。評価点・評価段階・基準時間との差は保存せず、現在の評価規則で導出する。
+ */
 type MinesweeperPlayRecordPayload = {
   difficulty: MinesweeperDifficulty;
-  problemIdentity: MinesweeperProblemIdentity;
+  problemIdentity: MinesweeperRecordedProblemIdentity;
   performance: MinesweeperSessionResult;
 };
 
@@ -71,7 +77,7 @@ export function isMinesweeperPlayRecord(
   return (
     typeof difficulty === "string" &&
     parseDifficultyLevel(difficulty) !== undefined &&
-    isMinesweeperProblemIdentity(problemIdentity) &&
+    isMinesweeperRecordedProblemIdentity(problemIdentity) &&
     isMinesweeperPerformance(performance)
   );
 }
@@ -124,7 +130,10 @@ export type MinesweeperRecordedResult = {
 export function restoreMinesweeperRecordedResult(
   record: PlayRecord,
 ): MinesweeperRecordedResult | null {
-  if (!isMinesweeperPlayRecord(record)) {
+  if (
+    !isMinesweeperPlayRecord(record) ||
+    !isMinesweeperProblemIdentity(record.payload.problemIdentity)
+  ) {
     return null;
   }
 

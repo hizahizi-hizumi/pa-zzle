@@ -8,6 +8,10 @@ import {
   type NanpureSolution,
 } from "@/games/nanpure/puzzle/board";
 import { isNanpureSolved } from "@/games/nanpure/puzzle/rules";
+import {
+  isRecordedProblemIdentity,
+  type RecordedProblemIdentity,
+} from "@/games/problem-id";
 import type { ProblemSeed } from "@/games/problem-seed";
 import { isNonEmptyString, isRecordObject } from "@/lib/type-guards";
 
@@ -57,16 +61,8 @@ export type NanpureProblemIdentity = {
   conditions: NanpureGenerationConditions;
 };
 
-/**
- * 記録に残した問題の識別情報。
- * 生成器の版が今と違う記録（3段階の生成器の版 "1" など）も読み込めるよう、版と生成条件の形は今の生成器に限らない。
- * 今の生成器で扱えるかは `isNanpureProblemIdentity` で確かめる。
- */
-export type NanpureRecordedProblemIdentity = {
-  generatorVersion: string;
-  seed: ProblemSeed;
-  conditions: Readonly<Record<string, unknown>>;
-};
+/** 記録に残した問題の識別情報。生成器の版が今と違う記録も読み込む。 */
+export type NanpureRecordedProblemIdentity = RecordedProblemIdentity;
 
 /** 問題と、それを再現するための情報。難易度分析を伴わない。 */
 export type NanpureIdentifiedProblem = {
@@ -107,25 +103,12 @@ export function isNanpureProblemIdentity(
   );
 }
 
-/**
- * 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。
- * 今の生成器の版なら、今の生成器で扱える識別情報であることまで確かめる。
- */
+/** 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。 */
 export function isNanpureRecordedProblemIdentity(
   value: unknown,
 ): value is NanpureRecordedProblemIdentity {
-  if (!isRecordObject(value) || !isRecordObject(value.conditions)) {
-    return false;
-  }
-
-  const { generatorVersion, seed } = value;
-  if (generatorVersion === NANPURE_GENERATOR_VERSION) {
-    return isNanpureProblemIdentity(value);
-  }
-  return (
-    typeof generatorVersion === "string" &&
-    generatorVersion.length > 0 &&
-    typeof seed === "string" &&
-    seed.length > 0
-  );
+  return isRecordedProblemIdentity(value, {
+    generatorVersion: NANPURE_GENERATOR_VERSION,
+    isProblemIdentity: isNanpureProblemIdentity,
+  });
 }

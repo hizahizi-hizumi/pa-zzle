@@ -1,3 +1,7 @@
+import {
+  isRecordedProblemIdentity,
+  type RecordedProblemIdentity,
+} from "@/games/problem-id";
 import type { ProblemSeed } from "@/games/problem-seed";
 import {
   assertReflectionBoard,
@@ -53,16 +57,8 @@ export type ReflectionProblemIdentity = {
   conditions: ReflectionGenerationConditions;
 };
 
-/**
- * 記録に残した問題の識別情報。
- * 生成器の版が今と違う記録も読み戻せるよう、版と生成条件の形は今の生成器に限らない。
- * 今の生成器で扱えるかは `isReflectionProblemIdentity` で確かめる。
- */
-export type ReflectionRecordedProblemIdentity = {
-  generatorVersion: string;
-  seed: ProblemSeed;
-  conditions: Readonly<Record<string, unknown>>;
-};
+/** 記録に残した問題の識別情報。生成器の版が今と違う記録も読み込む。 */
+export type ReflectionRecordedProblemIdentity = RecordedProblemIdentity;
 
 /** 問題と、それを再現するための情報。 */
 export type ReflectionIdentifiedProblem = {
@@ -205,25 +201,12 @@ export function isReflectionWorkloadOfIdentity(
   );
 }
 
-/**
- * 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。
- * 今の生成器の版なら、今の生成器で扱える識別情報であることまで確かめる。
- */
+/** 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。 */
 export function isReflectionRecordedProblemIdentity(
   value: unknown,
 ): value is ReflectionRecordedProblemIdentity {
-  if (!isRecordObject(value) || !isRecordObject(value.conditions)) {
-    return false;
-  }
-
-  const { generatorVersion, seed } = value;
-  if (generatorVersion === REFLECTION_GENERATOR_VERSION) {
-    return isReflectionProblemIdentity(value);
-  }
-  return (
-    typeof generatorVersion === "string" &&
-    generatorVersion.length > 0 &&
-    typeof seed === "string" &&
-    seed.length > 0
-  );
+  return isRecordedProblemIdentity(value, {
+    generatorVersion: REFLECTION_GENERATOR_VERSION,
+    isProblemIdentity: isReflectionProblemIdentity,
+  });
 }

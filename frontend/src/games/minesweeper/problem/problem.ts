@@ -9,6 +9,10 @@ import {
   getAdjacentMinesweeperMineCount,
   isMinesweeperMine,
 } from "@/games/minesweeper/puzzle/rules";
+import {
+  isRecordedProblemIdentity,
+  type RecordedProblemIdentity,
+} from "@/games/problem-id";
 import type { ProblemSeed } from "@/games/problem-seed";
 import {
   isNonEmptyString,
@@ -66,6 +70,23 @@ export function isMinesweeperProblemIdentity(
       value.conditions.startCellPlacement as MinesweeperStartCellPlacement,
     ) &&
     isPositiveInteger(value.generationAttempt)
+  );
+}
+
+/** 記録に残した問題の識別情報。生成器の版が今と違う記録も、採点に使う地雷数が読めれば読み込む。 */
+export type MinesweeperRecordedProblemIdentity = RecordedProblemIdentity<{
+  mineCount: number;
+}>;
+
+/** 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。 */
+export function isMinesweeperRecordedProblemIdentity(
+  value: unknown,
+): value is MinesweeperRecordedProblemIdentity {
+  return (
+    isRecordedProblemIdentity(value, {
+      generatorVersion: MINESWEEPER_GENERATOR_VERSION,
+      isProblemIdentity: isMinesweeperProblemIdentity,
+    }) && isPositiveInteger(value.conditions.mineCount)
   );
 }
 
