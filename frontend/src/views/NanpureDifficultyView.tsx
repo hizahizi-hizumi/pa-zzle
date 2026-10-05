@@ -1,9 +1,11 @@
+import { DifficultyOption } from "@/components/DifficultyOption";
 import { DifficultySelectionHeading } from "@/components/DifficultySelectionHeading";
 import { HomeBackLink } from "@/components/HomeBackLink";
+import { nanpureCatalogEntry } from "@/game-catalog/nanpure/nanpure-catalog-entry";
 import { difficultyLevels } from "@/games/difficulty";
 import { NANPURE_DISPLAY_NAME } from "@/games/nanpure/display-name";
+import { NanpureDifficultyPreview } from "@/games/nanpure/ui/NanpureDifficultyPreview";
 import { NanpureHowToPlayDialog } from "@/games/nanpure/ui/NanpureHowToPlayDialog";
-import { NanpureDifficultyOption } from "@/views/NanpureDifficultyView/NanpureDifficultyOption";
 
 export function NanpureDifficultyView() {
   return (
@@ -20,11 +22,14 @@ export function NanpureDifficultyView() {
 
       <div className="grid gap-2 sm:gap-4 lg:grid-cols-5">
         {difficultyLevels.map((difficulty) => (
-          <NanpureDifficultyOption
+          <DifficultyOption
             key={difficulty.id}
+            playPath={nanpureCatalogEntry.playPath}
             difficulty={difficulty.id}
             label={difficulty.label}
-          />
+          >
+            <NanpureDifficultyPreview difficulty={difficulty.id} />
+          </DifficultyOption>
         ))}
       </div>
     </section>

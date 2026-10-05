@@ -1,9 +1,11 @@
+import { DifficultyOption } from "@/components/DifficultyOption";
 import { DifficultySelectionHeading } from "@/components/DifficultySelectionHeading";
 import { HomeBackLink } from "@/components/HomeBackLink";
+import { parkingJamCatalogEntry } from "@/game-catalog/parking-jam/parking-jam-catalog-entry";
 import { difficultyLevels } from "@/games/difficulty";
 import { PARKING_JAM_DISPLAY_NAME } from "@/games/parking-jam/display-name";
+import { ParkingJamDifficultyPreview } from "@/games/parking-jam/ui/ParkingJamDifficultyPreview";
 import { ParkingJamHowToPlayDialog } from "@/games/parking-jam/ui/ParkingJamHowToPlayDialog";
-import { ParkingJamDifficultyOption } from "@/views/ParkingJamDifficultyView/ParkingJamDifficultyOption";
 
 export function ParkingJamDifficultyView() {
   return (
@@ -20,11 +22,14 @@ export function ParkingJamDifficultyView() {
 
       <div className="grid gap-2 sm:gap-4 lg:grid-cols-5">
         {difficultyLevels.map((difficulty) => (
-          <ParkingJamDifficultyOption
+          <DifficultyOption
             key={difficulty.id}
+            playPath={parkingJamCatalogEntry.playPath}
             difficulty={difficulty.id}
             label={difficulty.label}
-          />
+          >
+            <ParkingJamDifficultyPreview difficulty={difficulty.id} />
+          </DifficultyOption>
         ))}
       </div>
     </section>
