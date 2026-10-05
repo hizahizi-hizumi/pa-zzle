@@ -26,7 +26,7 @@ function formatInteger(value: number | null): string {
 const outOfRangeReasonLabels = {
   "too-light": "提供範囲外（軽すぎ）",
   "too-heavy": "提供範囲外（重すぎ）",
-  "unlisted-levers": "提供範囲外（組合せ外）",
+  "unlisted-combination": "提供範囲外（組合せ外）",
 } as const;
 
 function formatAssessment(assessment: ParkingJamDifficultyAssessment): string {

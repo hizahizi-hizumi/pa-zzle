@@ -32,11 +32,15 @@ describe("問題集", () => {
           identity.seed,
           identity.conditions,
         );
-        return isSolvableSlidePuzzleBoard(board)
-          ? assessSlidePuzzleDifficulty(
-              analyzeSlidePuzzleDifficulty(board, optimalMoveCount),
-            )
-          : null;
+        if (!isSolvableSlidePuzzleBoard(board)) {
+          return null;
+        }
+        const assessment = assessSlidePuzzleDifficulty(
+          analyzeSlidePuzzleDifficulty(board, optimalMoveCount),
+        );
+        return assessment.status === "classified"
+          ? assessment.difficulty
+          : assessment.status;
       });
 
       expect(levels.length).toBeGreaterThanOrEqual(100);

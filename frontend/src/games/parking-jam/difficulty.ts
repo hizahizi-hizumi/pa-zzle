@@ -1,7 +1,9 @@
 import {
+  type DifficultyAssessment,
   type DifficultyLevel,
   difficultyLevels,
   isInNumericRange,
+  type NoAssessmentDetail,
   type NumericRange,
   type RecordedDifficulty,
 } from "@/games/difficulty";
@@ -159,22 +161,17 @@ export const parkingJamLevelLevers = {
  * 分析結果を難易度へ分類した結果。
  * - `classified`: 提供範囲内で、レバーの組合せがいずれかのレベルにちょうど当たった。
  * - `out-of-range`: 評価できるが提供しない。出す順序を読む挑戦がほぼない（`too-light`）、
- *   依存が深すぎて確かめていない（`too-heavy`）、レバーの組合せがどのレベルにも当たらない（`unlisted-levers`）。
+ *   依存が深すぎて確かめていない（`too-heavy`）、レバーの組合せがどのレベルにも当たらない（`unlisted-combination`）。
  * - `unsupported`: 車両数が厳密解析の上限を超え、評価できない。
  */
-export type ParkingJamDifficultyAssessment =
-  | {
-      status: "classified";
-      difficulty: ParkingJamDifficulty;
-      levers: ParkingJamChallengeLevers;
-    }
-  | { status: "out-of-range"; reason: "too-light" | "too-heavy" }
-  | {
-      status: "out-of-range";
-      reason: "unlisted-levers";
-      levers: ParkingJamChallengeLevers;
-    }
-  | { status: "unsupported" };
+export type ParkingJamDifficultyAssessment = DifficultyAssessment<{
+  classified: { levers: ParkingJamChallengeLevers };
+  outOfRange:
+    | { reason: "too-light" | "too-heavy" }
+    | { reason: "unlisted-combination"; levers: ParkingJamChallengeLevers };
+  unsupported: NoAssessmentDetail;
+  invalid: never;
+}>;
 
 function matchesLevelLevers(
   levers: ParkingJamChallengeLevers,
@@ -213,5 +210,5 @@ export function assessParkingJamDifficulty(
   )?.id;
   return difficulty
     ? { status: "classified", difficulty, levers }
-    : { status: "out-of-range", reason: "unlisted-levers", levers };
+    : { status: "out-of-range", reason: "unlisted-combination", levers };
 }

@@ -170,10 +170,11 @@ function isGreedyPlayCompleted(
 }
 
 function levelOf(sample: SlidePuzzleDifficultyFeatures) {
-  return assessSlidePuzzleDifficulty({
+  const assessment = assessSlidePuzzleDifficulty({
     status: "analyzed",
     features: sample,
   });
+  return assessment.status === "classified" ? assessment.difficulty : null;
 }
 
 function formatBoard(board: SlidePuzzleBoard): string {

@@ -23,7 +23,7 @@ describe("問題集", () => {
             conditions: identity.conditions,
             stuckRate,
           }),
-        ).toBe(difficulty);
+        ).toEqual({ status: "classified", difficulty });
       }
     },
   );

@@ -66,3 +66,33 @@ export function isInNumericRange(
     (excludesMinimum ? minimum < value : minimum <= value) && value <= maximum
   );
 }
+
+/** 判定結果の状態に、状態名のほかに添える値が無いこと。 */
+export type NoAssessmentDetail = Record<never, never>;
+
+/**
+ * 各状態に添える値。そのゲームで起こらない状態は `never` にする。
+ * - `classified`: 分類できたときに、レベルのほかに添える値。
+ * - `outOfRange`: 提供しない理由（`reason`）と、それに添える値。
+ * - `unsupported`: 評価できなかったときに添える値。
+ * - `invalid`: 問題として成立しないときに添える値。
+ */
+type DifficultyAssessmentDetails = {
+  classified: object;
+  outOfRange: { reason: string };
+  unsupported: object;
+  invalid: object;
+};
+
+/**
+ * 問題を難易度へ分類した結果。全ゲームの分類関数がこの形で返す。
+ * - `classified`: 提供範囲内で、難易度が決まった。
+ * - `out-of-range`: 評価できるが、どのレベルにも当たらないので提供しない。
+ * - `unsupported`: 問題としては成立するが、挑戦の強さを評価できない。
+ * - `invalid`: 問題として成立しない。
+ */
+export type DifficultyAssessment<T extends DifficultyAssessmentDetails> =
+  | ({ status: "classified"; difficulty: DifficultyLevel } & T["classified"])
+  | ({ status: "out-of-range" } & T["outOfRange"])
+  | ({ status: "unsupported" } & T["unsupported"])
+  | ({ status: "invalid" } & T["invalid"]);

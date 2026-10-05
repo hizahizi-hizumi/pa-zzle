@@ -96,10 +96,11 @@ function listProfiles(): Profile[] {
 
 function levelOf(entry: WaterSortProblemPoolEntry): WaterSortDifficulty | null {
   const [, colorCount, emptyBottleCount, , , stuckRate] = entry;
-  return assessWaterSortDifficulty({
+  const assessment = assessWaterSortDifficulty({
     conditions: { colorCount, emptyBottleCount },
     stuckRate,
   });
+  return assessment.status === "classified" ? assessment.difficulty : null;
 }
 
 async function runBatch(

@@ -1,7 +1,9 @@
 import {
+  type DifficultyAssessment,
   type DifficultyLevel,
   difficultyLevels,
   isInNumericRange,
+  type NoAssessmentDetail,
   type NumericRange,
 } from "@/games/difficulty";
 import type {
@@ -85,19 +87,15 @@ export const reflectionLevelCombinations = {
  * - `unsupported`: 一意解だが、推論レベル5まで使っても置き場所が決まらず、挑戦の強さを評価できない。
  * - `invalid`: 解が無い、または2つ以上あり、問題として成立しない。
  */
-export type ReflectionDifficultyAssessment =
-  | {
-      status: "classified";
-      difficulty: ReflectionDifficulty;
-      reasoningLevel: ReflectionReasoningLevel;
-    }
-  | {
-      status: "out-of-range";
-      reason: "unlisted-combination";
-      reasoningLevel: ReflectionReasoningLevel;
-    }
-  | { status: "unsupported" }
-  | { status: "invalid" };
+export type ReflectionDifficultyAssessment = DifficultyAssessment<{
+  classified: { reasoningLevel: ReflectionReasoningLevel };
+  outOfRange: {
+    reason: "unlisted-combination";
+    reasoningLevel: ReflectionReasoningLevel;
+  };
+  unsupported: NoAssessmentDetail;
+  invalid: NoAssessmentDetail;
+}>;
 
 function resistsTrial(
   trial: ReflectionTrialFeatures,

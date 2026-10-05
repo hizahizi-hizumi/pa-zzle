@@ -1,4 +1,9 @@
-import type { DifficultyLevel, RecordedDifficulty } from "@/games/difficulty";
+import type {
+  DifficultyAssessment,
+  DifficultyLevel,
+  NoAssessmentDetail,
+  RecordedDifficulty,
+} from "@/games/difficulty";
 import type {
   NanpureDifficultyAnalysis,
   NanpureHumanSolveFeatures,
@@ -17,11 +22,12 @@ export type NanpureRecordedDifficulty = RecordedDifficulty;
  * - `unsupported`: 一意解だが、対応した手筋では解き切れず、挑戦の強さを評価できない。
  * - `invalid`: 解が無い、または2つ以上あり、問題として成立しない。
  */
-export type NanpureDifficultyAssessment =
-  | { status: "classified"; difficulty: NanpureDifficulty }
-  | { status: "out-of-range"; reason: "too-light" }
-  | { status: "unsupported" }
-  | { status: "invalid" };
+export type NanpureDifficultyAssessment = DifficultyAssessment<{
+  classified: NoAssessmentDetail;
+  outOfRange: { reason: "too-light" };
+  unsupported: NoAssessmentDetail;
+  invalid: NoAssessmentDetail;
+}>;
 
 const difficultyByDeepestTechnique = {
   "full-house": "1",

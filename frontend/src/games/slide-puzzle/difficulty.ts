@@ -1,7 +1,9 @@
 import {
+  type DifficultyAssessment,
   type DifficultyLevel,
   difficultyLevels,
   isInNumericRange,
+  type NoAssessmentDetail,
   type NumericRange,
 } from "@/games/difficulty";
 import type { SlidePuzzleDifficultyAnalysis } from "@/games/slide-puzzle/problem/difficulty-analysis";
@@ -67,33 +69,44 @@ export const slidePuzzleDifficultyCriteria = {
 >;
 
 /**
- * 盤面サイズと遠回り手数（タイルを一時的にゴールから遠ざける必要がある手の数）の組でレベルを決める。
- * 最短手数が分からない問題、盤面サイズごとの提供範囲の下限より短い問題、
- * どのレベルの組にも入らない問題は分類しない。
+ * 分析結果を難易度へ分類した結果。
+ * - `classified`: 提供範囲内で、盤面サイズと遠回り手数の組がいずれかのレベルに当たった。
+ * - `out-of-range`: 評価できるが提供しない。最短手数が盤面サイズごとの提供範囲の下限より短い（`too-light`）か、
+ *   盤面サイズと遠回り手数の組がどのレベルにも当たらない（`unlisted-combination`）。
+ * - `unsupported`: 最短手数が分からず、評価できない。
  */
+export type SlidePuzzleDifficultyAssessment = DifficultyAssessment<{
+  classified: NoAssessmentDetail;
+  outOfRange: { reason: "too-light" | "unlisted-combination" };
+  unsupported: NoAssessmentDetail;
+  invalid: never;
+}>;
+
+/** 盤面サイズと遠回り手数（タイルを一時的にゴールから遠ざける必要がある手の数）の組でレベルを決める。 */
 export function assessSlidePuzzleDifficulty(
   analysis: SlidePuzzleDifficultyAnalysis,
-): SlidePuzzleDifficulty | null {
+): SlidePuzzleDifficultyAssessment {
   if (analysis.status !== "analyzed") {
-    return null;
+    return { status: "unsupported" };
   }
 
   const { boardSize, optimalMoveCount, detourMoveCount } = analysis.features;
   if (
     optimalMoveCount < slidePuzzleMinimumOptimalMoveCountByBoardSize[boardSize]
   ) {
-    return null;
+    return { status: "out-of-range", reason: "too-light" };
   }
 
-  return (
-    difficultyLevels.find(({ id }) => {
-      const criteria = slidePuzzleDifficultyCriteria[id];
-      return (
-        criteria.boardSize === boardSize &&
-        isInNumericRange(detourMoveCount, criteria.detourMoveCount)
-      );
-    })?.id ?? null
-  );
+  const difficulty = difficultyLevels.find(({ id }) => {
+    const criteria = slidePuzzleDifficultyCriteria[id];
+    return (
+      criteria.boardSize === boardSize &&
+      isInNumericRange(detourMoveCount, criteria.detourMoveCount)
+    );
+  })?.id;
+  return difficulty
+    ? { status: "classified", difficulty }
+    : { status: "out-of-range", reason: "unlisted-combination" };
 }
 
 /** 記録・診断から読み戻した問題が、そのレベルで遊ぶ盤面サイズで作られているかを確かめる。 */

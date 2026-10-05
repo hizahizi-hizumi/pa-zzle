@@ -135,7 +135,9 @@ function runMain() {
           unsupportedCount += 1;
           continue;
         }
-        const level = assessSlidePuzzleDifficulty(analysis);
+        const assessment = assessSlidePuzzleDifficulty(analysis);
+        const level =
+          assessment.status === "classified" ? assessment.difficulty : null;
         const count = level === null ? undefined : counts.get(level);
         if (level === null || count === undefined || count >= needOf(level)) {
           continue;

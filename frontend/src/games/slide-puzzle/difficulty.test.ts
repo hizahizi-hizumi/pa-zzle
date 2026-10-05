@@ -43,23 +43,54 @@ describe("assessSlidePuzzleDifficulty", () => {
         createAnalysis(boardSize, optimalMoveCount, detourMoveCount),
       );
 
-      expect(result).toBe(expected);
+      expect(result).toEqual({ status: "classified", difficulty: expected });
     },
   );
 
-  const outOfRangeCases = [
-    ["3×3 で最短 12 手より短い問題", createAnalysis(3, 11, 0)],
-    ["4×4 で最短 16 手より短い問題", createAnalysis(4, 15, 2)],
-    ["5×5 で最短 24 手より短い問題", createAnalysis(5, 23, 6)],
-    ["3×3 で遠回りが 4 手以上の問題", createAnalysis(3, 24, 4)],
-    ["4×4 で遠回りが 2 手より少ない問題", createAnalysis(4, 30, 1)],
-    ["5×5 で遠回りが 5 手より少ない問題", createAnalysis(5, 40, 4)],
-    ["最短手数が分からない問題", { status: "unsupported" } as const],
+  const notClassifiedCases = [
+    [
+      "3×3 で最短 12 手より短い問題",
+      createAnalysis(3, 11, 0),
+      { status: "out-of-range", reason: "too-light" },
+    ],
+    [
+      "4×4 で最短 16 手より短い問題",
+      createAnalysis(4, 15, 2),
+      { status: "out-of-range", reason: "too-light" },
+    ],
+    [
+      "5×5 で最短 24 手より短い問題",
+      createAnalysis(5, 23, 6),
+      { status: "out-of-range", reason: "too-light" },
+    ],
+    [
+      "3×3 で遠回りが 4 手以上の問題",
+      createAnalysis(3, 24, 4),
+      { status: "out-of-range", reason: "unlisted-combination" },
+    ],
+    [
+      "4×4 で遠回りが 2 手より少ない問題",
+      createAnalysis(4, 30, 1),
+      { status: "out-of-range", reason: "unlisted-combination" },
+    ],
+    [
+      "5×5 で遠回りが 5 手より少ない問題",
+      createAnalysis(5, 40, 4),
+      { status: "out-of-range", reason: "unlisted-combination" },
+    ],
+    [
+      "最短手数が分からない問題",
+      { status: "unsupported" },
+      { status: "unsupported" },
+    ],
   ] as const;
 
-  test.each(outOfRangeCases)("%s を分類しないこと", (_label, analysis) => {
-    const result = assessSlidePuzzleDifficulty(analysis);
+  test.each(notClassifiedCases)(
+    "%s を分類しないこと",
+    (_label, analysis, expected) => {
+      const result = assessSlidePuzzleDifficulty(analysis);
 
-    expect(result).toBeNull();
-  });
+      expect(result).toEqual(expected);
+    },
+  );
 });

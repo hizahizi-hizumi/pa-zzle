@@ -54,7 +54,7 @@ const baseFeatures: ParkingJamDifficultyFeatures = {
 function toAnalysis(
   features: Partial<ParkingJamDifficultyFeatures>,
 ): ParkingJamDifficultyAnalysis {
-  return { status: "supported", features: { ...baseFeatures, ...features } };
+  return { status: "analyzed", features: { ...baseFeatures, ...features } };
 }
 
 describe("calculateParkingJamChallengeLevers", () => {
@@ -250,12 +250,12 @@ describe("assessParkingJamDifficulty", () => {
     [
       "深い依存で読み違いを誘う車がない",
       { dependencyDepth: 4, maximumPrerequisiteVehicleCount: 5 },
-      "unlisted-levers",
+      "unlisted-combination",
     ],
     [
       "浅い依存で読み違いを誘う車が半分以上",
       { misreadInducingVehicleCount: 4 },
-      "unlisted-levers",
+      "unlisted-combination",
     ],
     [
       "レベル5のレバーで規模が小さい",
@@ -264,7 +264,7 @@ describe("assessParkingJamDifficulty", () => {
         maximumPrerequisiteVehicleCount: 5,
         misreadInducingVehicleCount: 4,
       },
-      "unlisted-levers",
+      "unlisted-combination",
     ],
   ] as const;
 

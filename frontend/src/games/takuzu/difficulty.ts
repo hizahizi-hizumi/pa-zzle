@@ -1,4 +1,8 @@
-import type { DifficultyLevel } from "@/games/difficulty";
+import type {
+  DifficultyAssessment,
+  DifficultyLevel,
+  NoAssessmentDetail,
+} from "@/games/difficulty";
 import type {
   TakuzuDifficultyAnalysis,
   TakuzuHumanSolveFeatures,
@@ -13,11 +17,12 @@ export type TakuzuDifficulty = DifficultyLevel;
  * - `unsupported`: 一意解だが、1本の行・列を読む手筋では解き切れず、挑戦の強さを評価できない。
  * - `invalid`: 解が無い、または2つ以上あり、問題として成立しない。
  */
-export type TakuzuDifficultyAssessment =
-  | { status: "classified"; difficulty: TakuzuDifficulty }
-  | { status: "out-of-range"; reason: "too-light" }
-  | { status: "unsupported" }
-  | { status: "invalid" };
+export type TakuzuDifficultyAssessment = DifficultyAssessment<{
+  classified: NoAssessmentDetail;
+  outOfRange: { reason: "too-light" };
+  unsupported: NoAssessmentDetail;
+  invalid: NoAssessmentDetail;
+}>;
 
 const minimumProvidedRoundCount = 4;
 const minimumDuplicateAvoidanceRoundCountForDifficulty5 = 2;

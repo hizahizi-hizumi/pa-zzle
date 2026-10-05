@@ -1,7 +1,9 @@
 import {
+  type DifficultyAssessment,
   type DifficultyLevel,
   difficultyLevels,
   isInNumericRange,
+  type NoAssessmentDetail,
   type NumericRange,
   type RecordedDifficulty,
 } from "@/games/difficulty";
@@ -84,20 +86,33 @@ function hasGenerationProfile(
   );
 }
 
+/**
+ * 問題を難易度へ分類した結果。
+ * - `classified`: 生成条件と自然詰み率の組がいずれかのレベルに当たった。
+ * - `out-of-range`: 生成条件と自然詰み率の組がどのレベルにも当たらないので提供しない。
+ */
+export type WaterSortDifficultyAssessment = DifficultyAssessment<{
+  classified: NoAssessmentDetail;
+  outOfRange: { reason: "unlisted-combination" };
+  unsupported: never;
+  invalid: never;
+}>;
+
 export function assessWaterSortDifficulty({
   conditions,
   stuckRate,
 }: {
   conditions: WaterSortGenerationProfile;
   stuckRate: number;
-}): WaterSortDifficulty | null {
-  return (
-    difficultyLevels.find(({ id }) => {
-      const criteria = waterSortDifficultyCriteria[id];
-      return (
-        hasGenerationProfile(criteria, conditions) &&
-        isInNumericRange(stuckRate, criteria.stuckRate)
-      );
-    })?.id ?? null
-  );
+}): WaterSortDifficultyAssessment {
+  const difficulty = difficultyLevels.find(({ id }) => {
+    const criteria = waterSortDifficultyCriteria[id];
+    return (
+      hasGenerationProfile(criteria, conditions) &&
+      isInNumericRange(stuckRate, criteria.stuckRate)
+    );
+  })?.id;
+  return difficulty
+    ? { status: "classified", difficulty }
+    : { status: "out-of-range", reason: "unlisted-combination" };
 }

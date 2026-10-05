@@ -138,8 +138,8 @@ function formatAssessment(record: SupplyRecord): string {
       return `out-of-range:${assessment.reason}:inference${record.inferenceDifficulty}`;
     case "unsupported":
       return `unsupported:${assessment.reason}`;
-    case "unsolvable":
-      return "unsolvable";
+    case "invalid":
+      return "invalid";
   }
 }
 

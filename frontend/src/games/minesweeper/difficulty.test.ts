@@ -343,14 +343,14 @@ describe("assessMinesweeperDifficulty", () => {
 
   describe("推測が必要な問題の場合", () => {
     const analysis: MinesweeperDifficultyAnalysis = {
-      status: "unsolvable",
+      status: "invalid",
       scale: providedScale,
     };
 
     test("成立しない問題として返すこと", () => {
       const result = assessMinesweeperDifficulty(analysis, providedBoardSize);
 
-      expect(result).toEqual({ status: "unsolvable" });
+      expect(result).toEqual({ status: "invalid" });
     });
   });
 });
