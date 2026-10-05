@@ -1,3 +1,4 @@
+import { type ProblemRandom, shuffleProblemValues } from "@/games/problem-seed";
 import {
   getTakuzuLinePatternTile,
   isTakuzuLinePatternConsistent,
@@ -5,7 +6,6 @@ import {
   readTakuzuLineKnowledge,
   type TakuzuLinePattern,
 } from "@/games/takuzu/problem/generation/line-patterns";
-import { shuffle } from "@/games/takuzu/problem/generation/shuffle";
 import {
   getTakuzuLineCells,
   type TakuzuBoard,
@@ -25,12 +25,12 @@ export type TakuzuSolutionSearchResult = {
 
 type SearchOptions = {
   solutionLimit: 1 | 2;
-  random?: () => number;
+  random?: ProblemRandom;
 };
 
 function listRowCandidates(
   givens: TakuzuBoard,
-  random: (() => number) | undefined,
+  random: ProblemRandom | undefined,
 ): TakuzuLinePattern[][] {
   const legalPatterns = listLegalTakuzuLinePatterns(givens.size);
   return Array.from({ length: givens.size }, function listCandidates(_, row) {
@@ -40,7 +40,7 @@ function listRowCandidates(
     const candidates = legalPatterns.filter((pattern) =>
       isTakuzuLinePatternConsistent(pattern, knowledge),
     );
-    return random ? shuffle(candidates, random) : candidates;
+    return random ? shuffleProblemValues(candidates, random) : candidates;
   });
 }
 
@@ -154,7 +154,7 @@ export function countTakuzuSolutions(
 /** 初期配置に合う完成盤を、`random` で決まる順に探して1つ返す。完成盤の生成に使う。 */
 export function findRandomTakuzuSolution(
   givens: TakuzuBoard,
-  random: () => number,
+  random: ProblemRandom,
 ): TakuzuBoard | null {
   return searchSolutions(givens, { solutionLimit: 1, random }).firstSolution;
 }

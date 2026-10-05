@@ -9,6 +9,7 @@ import {
   type NanpureDigit,
   type NanpureSolution,
 } from "@/games/nanpure/puzzle/board";
+import { type ProblemRandom, shuffleProblemValues } from "@/games/problem-seed";
 
 const ALL_DIGITS_MASK = 0b11_1111_1110;
 
@@ -18,7 +19,7 @@ export type NanpureSolutionClassification =
   | { status: "multiple" };
 
 export type NanpureSolveOptions = {
-  random?: () => number;
+  random?: ProblemRandom;
 };
 
 type SearchState = {
@@ -130,17 +131,6 @@ function digitsFromMask(mask: number): NanpureDigit[] {
   return digits;
 }
 
-function shuffled<T>(values: readonly T[], random: () => number): T[] {
-  const result = [...values];
-
-  for (let index = result.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(random() * (index + 1));
-    [result[index], result[swapIndex]] = [result[swapIndex]!, result[index]!];
-  }
-
-  return result;
-}
-
 function placeDigit(
   state: SearchState,
   cellIndex: number,
@@ -180,7 +170,7 @@ function toSolution(cells: readonly number[]): NanpureSolution {
 function searchSolutions(
   state: SearchState,
   maximumSolutions: number,
-  random: (() => number) | undefined,
+  random: ProblemRandom | undefined,
   solutions: NanpureSolution[],
 ): void {
   if (solutions.length >= maximumSolutions) {
@@ -198,7 +188,9 @@ function searchSolutions(
   }
 
   const candidates = digitsFromMask(emptyCell.candidateMask);
-  const orderedCandidates = random ? shuffled(candidates, random) : candidates;
+  const orderedCandidates = random
+    ? shuffleProblemValues(candidates, random)
+    : candidates;
 
   for (const digit of orderedCandidates) {
     placeDigit(state, emptyCell.cellIndex, digit);
@@ -214,7 +206,7 @@ function searchSolutions(
 function findSolutions(
   board: NanpureBoard,
   maximumSolutions: number,
-  random?: () => number,
+  random?: ProblemRandom,
 ): NanpureSolution[] {
   assertNanpureBoard(board);
 

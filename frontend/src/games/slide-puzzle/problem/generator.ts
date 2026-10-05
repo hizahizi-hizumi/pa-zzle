@@ -1,5 +1,6 @@
 import {
   createProblemSeededRandom,
+  type ProblemRandom,
   type ProblemSeed,
 } from "@/games/problem-seed";
 import {
@@ -38,7 +39,7 @@ function validateGenerationConditions(
 function createGeneratorRandom(
   seed: ProblemSeed,
   conditions: SlidePuzzleGenerationConditions,
-): () => number {
+): ProblemRandom {
   return createProblemSeededRandom(
     [
       SLIDE_PUZZLE_GENERATOR_VERSION,

@@ -24,6 +24,7 @@ import {
 } from "@/games/nanpure/puzzle/board";
 import {
   createProblemSeededRandom,
+  type ProblemRandom,
   shuffleProblemValues,
 } from "@/games/problem-seed";
 
@@ -52,7 +53,7 @@ function createCluesAcceptance(
 function removeClues(
   solution: NanpureSolution,
   acceptsClues: CluesAcceptance,
-  random: () => number,
+  random: ProblemRandom,
 ): NanpureBoard {
   const clues: NanpureCell[] = [...solution];
   const removalOrder = shuffleProblemValues(

@@ -17,7 +17,9 @@ import {
 import { collectMinesweeperRevealCellIndices } from "@/games/minesweeper/puzzle/rules";
 import {
   createProblemSeededRandom,
+  type ProblemRandom,
   type ProblemSeed,
+  shuffleProblemValues,
 } from "@/games/problem-seed";
 
 export const MINESWEEPER_MINIMUM_BOARD_LENGTH = 5;
@@ -61,7 +63,7 @@ export class MinesweeperGenerationExhaustedError extends Error {
 function createGeneratorRandom(
   seed: ProblemSeed,
   conditions: MinesweeperGenerationConditions,
-): () => number {
+): ProblemRandom {
   return createProblemSeededRandom(
     [
       MINESWEEPER_GENERATOR_VERSION,
@@ -72,20 +74,6 @@ function createGeneratorRandom(
       conditions.startCellPlacement,
     ].join(":"),
   );
-}
-
-function shuffle<T>(values: readonly T[], random: () => number): T[] {
-  const shuffled = [...values];
-
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(random() * (index + 1));
-    [shuffled[index], shuffled[swapIndex]] = [
-      shuffled[swapIndex]!,
-      shuffled[index]!,
-    ];
-  }
-
-  return shuffled;
 }
 
 function validateIntegerInRange(
@@ -154,7 +142,7 @@ function validateProblemIdentity(identity: MinesweeperProblemIdentity): void {
 
 function chooseStartCellIndex(
   conditions: MinesweeperGenerationConditions,
-  random: () => number,
+  random: ProblemRandom,
 ): number {
   if (conditions.startCellPlacement === "center") {
     return (
@@ -167,7 +155,7 @@ function chooseStartCellIndex(
 
 function createProblemCandidate(
   conditions: MinesweeperGenerationConditions,
-  random: () => number,
+  random: ProblemRandom,
 ): MinesweeperProblem {
   const { rows, columns, mineCount } = conditions;
   const emptyBoard: MinesweeperBoard = { rows, columns, mineCellIndices: [] };
@@ -183,7 +171,7 @@ function createProblemCandidate(
   const board: MinesweeperBoard = {
     rows,
     columns,
-    mineCellIndices: shuffle(mineCandidateCells, random)
+    mineCellIndices: shuffleProblemValues(mineCandidateCells, random)
       .slice(0, mineCount)
       .sort((left, right) => left - right),
   };

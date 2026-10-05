@@ -1,5 +1,6 @@
 import {
   createProblemSeededRandom,
+  type ProblemRandom,
   type ProblemSeed,
   shuffleProblemValues,
 } from "@/games/problem-seed";
@@ -58,7 +59,7 @@ function createGeneratorRandom(
   seed: ProblemSeed,
   colorCount: number,
   emptyBottleCount: number,
-): () => number {
+): ProblemRandom {
   return createProblemSeededRandom(
     [
       WATER_SORT_GENERATOR_VERSION,
@@ -73,7 +74,7 @@ function createGeneratorRandom(
 function createStandardCandidate(
   colorCount: number,
   emptyBottleCount: number,
-  random: () => number,
+  random: ProblemRandom,
 ): WaterSortState {
   const units = Array.from(
     { length: colorCount * WATER_SORT_BOTTLE_CAPACITY },
