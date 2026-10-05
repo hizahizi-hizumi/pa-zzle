@@ -105,7 +105,22 @@ frontend/src/games/
 - 結果画面の指標は `components/game-result-metrics.ts`、採点基準の文は `components/game-result-score-criteria.ts` で組み立てる。数には単位を付け、採点基準の文は常体で書く。丸めの注記は共通の結果画面が出す。
 - 記録表示の指標は `records/ui/play-record-display.ts` の共通の指標表示を使う。自己ベストの改善量の書き方は指標表示の `formatImprovement` が持つ。
 
+## session と play の共通契約
+
+- `<Game>Session` は `games/session.ts` の `GameSession<Problem, PuzzleState>` にプレイの事実を足して作る。今の盤面は `puzzleState`、状態は `GameSessionStatus` で表す。
+- 経過時間は `games/session.ts` の `getSessionElapsedMs`・`getClearedSessionElapsedMs` で求め、ゲームごとに作らない。
+- session の操作は `<動詞><Game>Session<対象>` と名付け、新しい session を返す。受け付けない操作（プレイ中でない・成立しない）は受け取った session をそのまま返し、`null` を返さない。操作の結果を併せて返す操作も、受け付けないときは session を変えない結果を返す。
+- 盤面を戻す `restart<Game>Session` は、`canRestart<Game>Session` が偽（盤面が初期状態、またはクリア後）なら何もせず、回数も数えない。
+- 同じ問題の新しいプレイ（リセット）は `create<Game>Session(session.problem, startedAt)` で作る。
+- 結果の事実は `get<Game>SessionResult(session)` がクリア時刻までで返す。評価に使う問題の事実は session の結果に含めず、`create<Game>Result` の引数として問題側から渡す。
+- `use<Game>Play` は `games/play.ts` の `GamePlay` に、盤面を戻せるなら `RestartableGamePlay`、待ったがあるなら `UndoableGamePlay` とゲーム固有の値を足した `<Game>Play` を返り値型として注釈する。
+- 進行は `GameProgress`、state の更新は `applyPlaySession`・`startPlaySession`・`completePlayClearAnimation`、表示する経過時間は `useSessionElapsedMs` を使う。
+- 最初の問題と「別の問題」は `games/problem-selection.ts` の `selectProblemAvoiding` で選ぶ。「別の問題」は今の問題の ID（`createProblemId(problemIdentity)`）を避ける。
+- リセットはプレイ中もクリア後も使える。`canUndo`・`canRestart` はプレイフックが返し、UI は合成せずそのまま使う。
+
 ## 依存方向
+
+- `frontend/src/games/` 直下のゲーム共通契約は React に依存しない。プレイフックの共通部分を置く `games/play.ts` だけは React に依存できる。
 
 - `puzzle/` は `problem/`、`session/`、`play/`、`ui/` を知らない。
 - `problem/` は `puzzle/` とゲーム共通契約へ依存できるが、`session/`、`play/`、`ui/` を知らない。
