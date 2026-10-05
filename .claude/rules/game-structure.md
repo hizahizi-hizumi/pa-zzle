@@ -163,6 +163,9 @@ frontend/src/game-catalog/
 ├── game-catalog-entry.ts
 ├── game-catalog.ts
 ├── game-navigation.ts
+├── playable-game.tsx
+├── recorded-game-result.ts
+├── internal-diagnostics-dialog.ts
 ├── problem-id-query.ts
 ├── play-location-state.ts
 ├── record-result-location-state.ts
@@ -176,13 +179,16 @@ frontend/src/game-catalog/
 - `game-catalog-entry.ts`: 1ゲーム分のカタログ項目 `GameCatalogEntry` と、記録や離脱したプレイの問題を遊び直すプレイ画面・記録から描く結果画面（`RecordResultContext`）の契約を置く。
 - `game-catalog.ts`: 全ゲームを表示順に並べた `gameCatalog` を置く。パズル選択・記録・結果の画面は、ゲームを列挙せずこれを回す。
 - `game-navigation.ts`: 記録・入口（難易度選択）・ホーム・同じゲームの次の問題へ移る `GameNavigation` と、記録の問題を遊び直すプレイ画面を開く `openRecordProblemPlay` を置く。ゲームの画面からの遷移はこれを使い、パスを直書きしない。入口とプレイ画面のパスはカタログ項目の `entryPath`・`playPath` を正とする。
+- `playable-game.tsx`: 1問のプレイを URL の問題 ID・完了記録の保存と記録の結果画面への遷移・離脱の記録・画面遷移・検証情報へつなぐ `usePlayableGame` を置く。返す `screenProps` をプレイ画面へそのまま渡す。
+- `recorded-game-result.ts`: 記録から作り直した結果を、次の問題（記録と同じ難易度で記録の問題を避ける）・画面遷移・検証情報へつなぐ `useRecordedGameResult` と、`Recorded<Game>Result` の props `RecordedGameResultProps` を置く。
+- `internal-diagnostics-dialog.ts`: 検証情報のダイアログを開いたときだけ診断スナップショットを作る `useInternalDiagnosticsDialog` を置く。検証情報を開く操作は内部診断を使えるビルドでだけ出し、ダイアログはスナップショットがあるときだけ描く。
 - `problem-id-query.ts`: プレイ画面の URL の `problem` クエリ（問題 ID）の読み書きを置く。
 - `play-location-state.ts`: プレイ画面へ渡す location state（最初に避ける問題の ID）の作成と読み取りを置く。location state を読めないときは、どの読み取りも `undefined` を返す。
 - `record-result-location-state.ts`: 結果画面へ渡す location state（記録の保存結果）の作成と、形を確かめた読み取りを置く。
 - `record-result-navigation.ts`: クリアして記録を保存できたプレイを、記録の結果画面 `/puzzles/<game>/result/<記録ID>` へ履歴を置き換えて移す共通フックを置く。
 - `<game>-catalog-entry.tsx`: ID（記録の `gameId`）、表示名、ピクトグラム、入口パス、プレイ画面のパス、記録表示、記録や離脱したプレイの問題を遊び直す難易度と問題 ID、記録から描く結果画面を持つ。遊び直し先は記録一覧の全行で求めるので、問題を復元せず問題集の索引で引けるかだけを確かめる。結果画面は今の版の記録からだけ描き、描けない記録には `null` を返す。
-- `Playable<Game>.tsx`: `play/`・`ui/`・記録保存・診断・画面遷移を合成し、1問を遊べるプレイ画面にする。記録を保存できたクリアは記録の結果画面へ移し、その場の結果画面は記録の保存に失敗したプレイでだけ出す。
-- `Recorded<Game>Result.tsx`: 記録から作り直した結果を `ui/result/<Game>ResultScreen.tsx` で描き、次の問題（記録と同じ難易度で記録の問題を避ける）と診断をつなぐ。
+- `Playable<Game>.tsx`: URL の問題 ID で最初の問題を引いて `play/` を始め、`usePlayableGame` に完了記録・離脱の進み具合・診断スナップショットの作り方を渡し、`ui/<Game>Play.tsx` と診断ダイアログを描く。記録を保存できたクリアは記録の結果画面へ移し、その場の結果画面は記録の保存に失敗したプレイでだけ出す。
+- `Recorded<Game>Result.tsx`: `useRecordedGameResult` に診断スナップショットの作り方を渡し、記録から作り直した結果を `ui/result/<Game>ResultScreen.tsx` と診断ダイアログで描く。
 
 ## ゲームを追加するとき
 

@@ -1,10 +1,5 @@
-import { useMemo, useState } from "react";
-import { useGameNavigation } from "@/game-catalog/game-navigation";
-import {
-  useProblemIdQuerySync,
-  useRequestedProblem,
-} from "@/game-catalog/problem-id-query";
-import { useRecordResultNavigation } from "@/game-catalog/record-result-navigation";
+import { usePlayableGame } from "@/game-catalog/playable-game";
+import { useRequestedProblem } from "@/game-catalog/problem-id-query";
 import { waterSortCatalogEntry } from "@/game-catalog/water-sort/water-sort-catalog-entry";
 import type { ProblemId } from "@/games/problem-id";
 import { createWaterSortDiagnosticSnapshot } from "@/games/water-sort/diagnostics";
@@ -16,16 +11,8 @@ import {
   waterSortPlayRecordDefinition,
 } from "@/games/water-sort/play-record";
 import { selectWaterSortProblemById } from "@/games/water-sort/problem-selection";
-import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 import { WaterSortDiagnostics } from "@/games/water-sort/ui/WaterSortDiagnostics";
 import { WaterSortPlay } from "@/games/water-sort/ui/WaterSortPlay";
-import {
-  buildRevision,
-  internalDiagnosticsAvailable,
-} from "@/lib/internal-diagnostics";
-import { usePlayAttemptRecord } from "@/records/hooks/use-play-attempt-record";
-import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
-import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
 
 type PlayableWaterSortProps = {
   difficulty: WaterSortDifficulty;
@@ -41,93 +28,42 @@ export function PlayableWaterSort({
     selectWaterSortProblemById(difficulty, problemId),
   );
   const play = useWaterSortPlay(difficulty, requestedProblem, avoidedProblemId);
-  useProblemIdQuerySync(play.problemIdentity);
-  const navigation = useGameNavigation(waterSortCatalogEntry);
-  const playRecord = useMemo(
-    () =>
-      play.result && play.completedAt !== null
-        ? createWaterSortPlayRecord({
-            difficulty,
-            problemIdentity: play.problemIdentity,
-            startedAt: play.startedAt,
-            completedAt: play.completedAt,
-            result: play.result,
-          })
-        : null,
-    [
-      difficulty,
-      play.completedAt,
-      play.problemIdentity,
-      play.result,
-      play.startedAt,
-    ],
-  );
-  const recordOutcome = useSavePlayRecord(
-    playRecord,
-    waterSortPlayRecordDefinition,
-  );
-  const navigatesToRecordResult = useRecordResultNavigation(
-    play.progress === "result",
-    playRecord,
-    recordOutcome,
-  );
-  usePlayAttemptRecord({
-    gameId: waterSortPlayRecordDefinition.gameId,
-    startedAt: play.startedAt,
-    start: { difficulty, problemIdentity: play.problemIdentity },
-    finished: play.completedAt !== null,
-    getProgress(abandonedAt) {
-      return createWaterSortPlayAttemptProgress(play.session, abandonedAt);
-    },
-  });
-  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
-  const diagnostics = internalDiagnosticsAvailable
-    ? createWaterSortDiagnosticSnapshot({
-        difficulty: play.difficulty,
+  const { screenProps, diagnostics } = usePlayableGame({
+    game: waterSortCatalogEntry,
+    play,
+    playRecordDefinition: waterSortPlayRecordDefinition,
+    createPlayRecord: createWaterSortPlayRecord,
+    createPlayAttemptProgress: createWaterSortPlayAttemptProgress,
+    createDiagnosticSnapshot(buildRevision) {
+      return createWaterSortDiagnosticSnapshot({
+        difficulty,
         problemIdentity: play.problemIdentity,
         buildRevision,
-      })
-    : null;
+      });
+    },
+  });
 
   return (
     <>
       <WaterSortPlay
-        difficulty={play.difficulty}
-        progress={play.progress}
+        {...screenProps}
         state={play.state}
-        elapsedMs={play.elapsedMs}
         moveCount={play.moveCount}
         undoCount={play.undoCount}
         canUndo={play.canUndo}
         isDeadlocked={play.isDeadlocked}
         sourceBottleIndex={play.sourceBottleIndex}
         operation={play.operation}
-        // 記録の結果画面へ遷移する間は、その場の結果画面を出さず盤面を見せておく。
-        result={navigatesToRecordResult ? null : play.result}
-        recordOutcomeNotice={
-          <PlayRecordOutcomeNotice
-            outcome={recordOutcome}
-            display={waterSortPlayRecordDisplay}
-          />
-        }
         onSelectBottle={play.selectBottle}
         onUndo={play.undo}
         canRestart={play.canRestart}
         onRestart={play.restart}
-        onReplay={play.replay}
-        onStartNewProblem={play.startNewProblem}
-        onOpenRecords={navigation.openRecords}
         onClearingPourComplete={play.completeClearAnimation}
-        onChangeDifficulty={navigation.changeDifficulty}
-        onBackToHome={navigation.backToHome}
-        onOpenDiagnostics={
-          diagnostics ? () => setDiagnosticsOpen(true) : undefined
-        }
       />
-      {diagnostics && diagnosticsOpen && (
+      {diagnostics.snapshot && (
         <WaterSortDiagnostics
-          snapshot={diagnostics}
-          onClose={() => setDiagnosticsOpen(false)}
+          snapshot={diagnostics.snapshot}
+          onClose={diagnostics.close}
         />
       )}
     </>
