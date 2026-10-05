@@ -1,11 +1,15 @@
 import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
 import {
+  _private,
   createTakuzuDiagnosticSnapshot,
-  parseTakuzuDiagnosticSnapshot,
-  restoreTakuzuProblemFromDiagnosticSnapshot,
 } from "@/games/takuzu/diagnostics";
 import { createTakuzuProblemIdentity } from "@/games/takuzu/problem/problem";
 import { selectTakuzuProblemForDifficulty } from "@/games/takuzu/problem-selection";
+
+const {
+  parseTakuzuDiagnosticSnapshot,
+  restoreTakuzuProblemFromDiagnosticSnapshot,
+} = _private;
 
 describe("TakuzuDiagnosticSnapshot", () => {
   const selected = selectTakuzuProblemForDifficulty("4", "diagnostic-seed");
@@ -60,6 +64,6 @@ describe("TakuzuDiagnosticSnapshot", () => {
       return parseTakuzuDiagnosticSnapshot(JSON.stringify(value));
     }
 
-    expect(act).toThrow("Invalid Takuzu diagnostic snapshot");
+    expect(act).toThrow("Invalid takuzu diagnostic snapshot");
   });
 });

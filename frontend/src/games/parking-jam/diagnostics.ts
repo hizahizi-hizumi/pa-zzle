@@ -1,60 +1,105 @@
 import {
+  createInternalDiagnosticSnapshot,
+  type InternalDiagnosticFormat,
+  type InternalDiagnosticSnapshot,
+  parseInternalDiagnosticSnapshot,
+} from "@/games/diagnostics";
+import { parseDifficultyLevel } from "@/games/difficulty";
+import {
   assessParkingJamDifficulty,
   PARKING_JAM_DIFFICULTY_MODEL_VERSION,
   type ParkingJamDifficulty,
   type ParkingJamDifficultyAssessment,
 } from "@/games/parking-jam/difficulty";
 import type { ParkingJamDifficultyAnalysis } from "@/games/parking-jam/problem/difficulty-analysis";
-import { restoreParkingJamProblem } from "@/games/parking-jam/problem/generator";
-import type { ParkingJamProblemIdentity } from "@/games/parking-jam/problem/problem";
+import {
+  type ParkingJamRestoredProblem,
+  restoreParkingJamProblem,
+  restoreParkingJamProblemWithoutAnalysis,
+} from "@/games/parking-jam/problem/generator";
+import {
+  isParkingJamProblemIdentity,
+  type ParkingJamProblemIdentity,
+} from "@/games/parking-jam/problem/problem";
+import { isRecordObject } from "@/lib/type-guards";
 
-export const PARKING_JAM_DIAGNOSTIC_FORMAT_VERSION = 2;
-
-export type ParkingJamDiagnosticSnapshot = {
-  formatVersion: typeof PARKING_JAM_DIAGNOSTIC_FORMAT_VERSION;
-  game: "parking-jam";
-  difficulty: ParkingJamDifficulty;
-  problemIdentity: ParkingJamProblemIdentity;
+/**
+ * - `difficultyModelVersion` / `difficultyAssessment`: 診断を開いたときの判定モデルの版と、その問題の判定。
+ * - `difficultyAnalysis`: 判定の元にした問題の特徴。
+ */
+export type ParkingJamDiagnosticSnapshot = InternalDiagnosticSnapshot<
+  "parking-jam",
+  ParkingJamDifficulty,
+  ParkingJamProblemIdentity
+> & {
   difficultyModelVersion: typeof PARKING_JAM_DIFFICULTY_MODEL_VERSION;
   difficultyAssessment: ParkingJamDifficultyAssessment;
   difficultyAnalysis: ParkingJamDifficultyAnalysis;
-  buildRevision: string | null;
 };
+
+const parkingJamDiagnosticFormat: InternalDiagnosticFormat<ParkingJamDiagnosticSnapshot> =
+  {
+    game: "parking-jam",
+    parseDifficulty: parseDifficultyLevel,
+    isProblemIdentity: isParkingJamProblemIdentity,
+    // 判定と特徴は診断を開いたときの写しで、問題の再現には identity だけを使う。読み戻しでは形の大枠だけを確かめる。
+    readDetails({
+      difficultyModelVersion,
+      difficultyAssessment,
+      difficultyAnalysis,
+    }) {
+      return difficultyModelVersion === PARKING_JAM_DIFFICULTY_MODEL_VERSION &&
+        isRecordObject(difficultyAssessment) &&
+        typeof difficultyAssessment.status === "string" &&
+        isRecordObject(difficultyAnalysis) &&
+        isRecordObject(difficultyAnalysis.features)
+        ? {
+            difficultyModelVersion,
+            difficultyAssessment:
+              difficultyAssessment as ParkingJamDifficultyAssessment,
+            difficultyAnalysis:
+              difficultyAnalysis as ParkingJamDifficultyAnalysis,
+          }
+        : undefined;
+    },
+  };
 
 /**
  * 遊んでいる問題を identity から解析し直して内部診断の snapshot を作る。
  * プレイ時には解析しないため、診断を開いたときだけ呼ぶ。
  */
-export function createParkingJamDiagnosticSnapshot({
-  difficulty,
-  problemIdentity,
-  buildRevision,
-}: {
+export function createParkingJamDiagnosticSnapshot(input: {
   difficulty: ParkingJamDifficulty;
   problemIdentity: ParkingJamProblemIdentity;
   buildRevision: string | null;
 }): ParkingJamDiagnosticSnapshot {
-  const { difficultyAnalysis } = restoreParkingJamProblem(problemIdentity);
+  const { difficultyAnalysis } = restoreParkingJamProblem(
+    input.problemIdentity,
+  );
   return {
-    formatVersion: PARKING_JAM_DIAGNOSTIC_FORMAT_VERSION,
-    game: "parking-jam",
-    difficulty,
-    problemIdentity: {
-      ...problemIdentity,
-      conditions: { ...problemIdentity.conditions },
-    },
+    ...createInternalDiagnosticSnapshot(parkingJamDiagnosticFormat, input),
     difficultyModelVersion: PARKING_JAM_DIFFICULTY_MODEL_VERSION,
     difficultyAssessment: assessParkingJamDifficulty(difficultyAnalysis),
-    difficultyAnalysis: {
-      ...difficultyAnalysis,
-      features: { ...difficultyAnalysis.features },
-    },
-    buildRevision,
+    difficultyAnalysis: structuredClone(difficultyAnalysis),
   };
 }
 
-export function serializeParkingJamDiagnosticSnapshot(
-  snapshot: ParkingJamDiagnosticSnapshot,
-): string {
-  return JSON.stringify(snapshot, null, 2);
+function parseParkingJamDiagnosticSnapshot(
+  serialized: string,
+): ParkingJamDiagnosticSnapshot {
+  return parseInternalDiagnosticSnapshot(
+    serialized,
+    parkingJamDiagnosticFormat,
+  );
 }
+
+function restoreParkingJamProblemFromDiagnosticSnapshot(
+  snapshot: ParkingJamDiagnosticSnapshot,
+): ParkingJamRestoredProblem {
+  return restoreParkingJamProblemWithoutAnalysis(snapshot.problemIdentity);
+}
+
+export const _private = {
+  parseParkingJamDiagnosticSnapshot,
+  restoreParkingJamProblemFromDiagnosticSnapshot,
+};

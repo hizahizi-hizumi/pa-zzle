@@ -1,11 +1,15 @@
 import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
 import {
+  _private,
   createNanpureDiagnosticSnapshot,
-  parseNanpureDiagnosticSnapshot,
-  restoreNanpureProblemFromDiagnosticSnapshot,
 } from "@/games/nanpure/diagnostics";
 import { createNanpureProblemIdentity } from "@/games/nanpure/problem/problem";
 import { selectNanpureProblemForDifficulty } from "@/games/nanpure/problem-selection";
+
+const {
+  parseNanpureDiagnosticSnapshot,
+  restoreNanpureProblemFromDiagnosticSnapshot,
+} = _private;
 
 describe("NanpureDiagnosticSnapshot", () => {
   const selected = selectNanpureProblemForDifficulty("5", "diagnostic-seed");
@@ -64,6 +68,6 @@ describe("NanpureDiagnosticSnapshot", () => {
       return parseNanpureDiagnosticSnapshot(JSON.stringify(value));
     }
 
-    expect(act).toThrow("Invalid Nanpure diagnostic snapshot");
+    expect(act).toThrow("Invalid nanpure diagnostic snapshot");
   });
 });

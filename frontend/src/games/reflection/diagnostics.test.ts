@@ -1,10 +1,14 @@
 import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
 import {
+  _private,
   createReflectionDiagnosticSnapshot,
-  parseReflectionDiagnosticSnapshot,
-  restoreReflectionProblemFromDiagnosticSnapshot,
 } from "@/games/reflection/diagnostics";
 import { selectReflectionProblemForDifficulty } from "@/games/reflection/problem-selection";
+
+const {
+  parseReflectionDiagnosticSnapshot,
+  restoreReflectionProblemFromDiagnosticSnapshot,
+} = _private;
 
 describe("ReflectionDiagnosticSnapshot", () => {
   const selected = selectReflectionProblemForDifficulty("4", "diagnostic-seed");
@@ -70,6 +74,6 @@ describe("ReflectionDiagnosticSnapshot", () => {
       return parseReflectionDiagnosticSnapshot(JSON.stringify(value));
     }
 
-    expect(act).toThrow("Invalid Reflection diagnostic snapshot");
+    expect(act).toThrow("Invalid reflection diagnostic snapshot");
   });
 });

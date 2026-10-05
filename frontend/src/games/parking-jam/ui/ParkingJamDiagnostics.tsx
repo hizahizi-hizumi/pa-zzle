@@ -1,9 +1,7 @@
 import { InternalDiagnosticsDialog } from "@/components/InternalDiagnosticsDialog";
+import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
 import { getDifficultyLabel } from "@/games/difficulty";
-import {
-  type ParkingJamDiagnosticSnapshot,
-  serializeParkingJamDiagnosticSnapshot,
-} from "@/games/parking-jam/diagnostics";
+import type { ParkingJamDiagnosticSnapshot } from "@/games/parking-jam/diagnostics";
 import type { ParkingJamDifficultyAssessment } from "@/games/parking-jam/difficulty";
 
 type ParkingJamDiagnosticsProps = {
@@ -208,7 +206,7 @@ export function ParkingJamDiagnostics({
           ],
         },
       ]}
-      serializedSnapshot={serializeParkingJamDiagnosticSnapshot(snapshot)}
+      serializedSnapshot={serializeInternalDiagnosticSnapshot(snapshot)}
       onClose={onClose}
     />
   );

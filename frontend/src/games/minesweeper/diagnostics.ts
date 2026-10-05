@@ -1,6 +1,8 @@
 import {
-  INTERNAL_DIAGNOSTIC_FORMAT_VERSION,
+  createInternalDiagnosticSnapshot,
+  type InternalDiagnosticFormat,
   type InternalDiagnosticSnapshot,
+  parseInternalDiagnosticSnapshot,
 } from "@/games/diagnostics";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
@@ -19,64 +21,37 @@ export type MinesweeperDiagnosticSnapshot = InternalDiagnosticSnapshot<
   MinesweeperProblemIdentity
 >;
 
-export function createMinesweeperDiagnosticSnapshot({
-  difficulty,
-  problemIdentity,
-  buildRevision,
-}: {
+const minesweeperDiagnosticFormat: InternalDiagnosticFormat<MinesweeperDiagnosticSnapshot> =
+  {
+    game: "minesweeper",
+    parseDifficulty: parseDifficultyLevel,
+    isProblemIdentity: isMinesweeperProblemIdentity,
+  };
+
+export function createMinesweeperDiagnosticSnapshot(input: {
   difficulty: MinesweeperDifficulty;
   problemIdentity: MinesweeperProblemIdentity;
   buildRevision: string | null;
 }): MinesweeperDiagnosticSnapshot {
-  return {
-    formatVersion: INTERNAL_DIAGNOSTIC_FORMAT_VERSION,
-    game: "minesweeper",
-    difficulty,
-    problemIdentity: {
-      ...problemIdentity,
-      conditions: { ...problemIdentity.conditions },
-    },
-    buildRevision,
-  };
+  return createInternalDiagnosticSnapshot(minesweeperDiagnosticFormat, input);
 }
 
-export function parseMinesweeperDiagnosticSnapshot(
+function parseMinesweeperDiagnosticSnapshot(
   serialized: string,
 ): MinesweeperDiagnosticSnapshot {
-  const value: unknown = JSON.parse(serialized);
-  if (!isRecord(value)) {
-    throw new TypeError("Minesweeper diagnostic snapshot must be an object");
-  }
-
-  const difficulty =
-    typeof value.difficulty === "string"
-      ? parseDifficultyLevel(value.difficulty)
-      : undefined;
-  if (
-    value.formatVersion !== INTERNAL_DIAGNOSTIC_FORMAT_VERSION ||
-    value.game !== "minesweeper" ||
-    !difficulty ||
-    !isMinesweeperProblemIdentity(value.problemIdentity) ||
-    !(typeof value.buildRevision === "string" || value.buildRevision === null)
-  ) {
-    throw new TypeError("Invalid minesweeper diagnostic snapshot");
-  }
-
-  return {
-    formatVersion: INTERNAL_DIAGNOSTIC_FORMAT_VERSION,
-    game: "minesweeper",
-    difficulty,
-    problemIdentity: value.problemIdentity,
-    buildRevision: value.buildRevision,
-  };
+  return parseInternalDiagnosticSnapshot(
+    serialized,
+    minesweeperDiagnosticFormat,
+  );
 }
 
-export function restoreMinesweeperProblemFromDiagnosticSnapshot(
+function restoreMinesweeperProblemFromDiagnosticSnapshot(
   snapshot: MinesweeperDiagnosticSnapshot,
 ): MinesweeperRestoredProblem {
   return restoreMinesweeperProblemWithoutAnalysis(snapshot.problemIdentity);
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
+export const _private = {
+  parseMinesweeperDiagnosticSnapshot,
+  restoreMinesweeperProblemFromDiagnosticSnapshot,
+};
