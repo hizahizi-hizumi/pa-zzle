@@ -46,7 +46,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash(python3 .claude/skills/design
 - `references/method.md` — 探索とふるい分けで使う評価方法
 - `examples/README.md` — レビュー済み完成見本と品質観点
 
-評価軸の外部根拠が必要な場合だけ `references/research.md` を参照する。PoC の途中経緯が必要な場合だけ `docs/立ち上げ/ゲーム選択ピクトグラムPoC.md` を参照する。
+評価軸の外部根拠が必要な場合だけ `references/research.md` を参照する。
 
 ## 動作原則
 
