@@ -245,11 +245,7 @@ export function restoreParkingJamRecordedResult(
   return {
     difficulty,
     problemIdentity,
-    result: createParkingJamResult(
-      performance,
-      problemIdentity,
-      getSpeedReference(record),
-    ),
+    result: createParkingJamResult(performance, getSpeedReference(record)),
   };
 }
 

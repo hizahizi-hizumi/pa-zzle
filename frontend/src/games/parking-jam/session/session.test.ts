@@ -46,7 +46,7 @@ function exitVehicleB(session: ParkingJamSession): ParkingJamSession {
     { vehicleId: "b", direction: "up" },
     2_000,
   );
-  if (attempt?.outcome !== "exited") {
+  if (attempt.outcome !== "exited") {
     throw new Error("Expected vehicle b to exit");
   }
   return attempt.session;
@@ -67,10 +67,10 @@ describe("attemptParkingJamSessionMove", () => {
         1_500,
       );
 
-      expect(attempt?.outcome).toBe("blocked");
-      expect(attempt?.session.state).toEqual(session.state);
-      expect(attempt?.session.moveAttemptCount).toBe(1);
-      expect(attempt?.session.failedMoveCount).toBe(1);
+      expect(attempt.outcome).toBe("blocked");
+      expect(attempt.session.puzzleState).toEqual(session.puzzleState);
+      expect(attempt.session.moveAttemptCount).toBe(1);
+      expect(attempt.session.failedMoveCount).toBe(1);
     });
   });
 
@@ -82,11 +82,11 @@ describe("attemptParkingJamSessionMove", () => {
         2_000,
       );
 
-      expect(attempt?.outcome).toBe("exited");
-      expect(attempt?.session.state.remainingVehicleIds).toEqual(["a"]);
-      expect(attempt?.session.moveAttemptCount).toBe(1);
-      expect(attempt?.session.successfulMoveCount).toBe(1);
-      expect(attempt?.session.failedMoveCount).toBe(0);
+      expect(attempt.outcome).toBe("exited");
+      expect(attempt.session.puzzleState.remainingVehicleIds).toEqual(["a"]);
+      expect(attempt.session.moveAttemptCount).toBe(1);
+      expect(attempt.session.successfulMoveCount).toBe(1);
+      expect(attempt.session.failedMoveCount).toBe(0);
     });
   });
 
@@ -101,11 +101,9 @@ describe("attemptParkingJamSessionMove", () => {
         { vehicleId: "a", direction: "right" },
         4_000,
       );
-      const result = attempt
-        ? getParkingJamSessionResult(attempt.session, 9_000)
-        : null;
+      const result = getParkingJamSessionResult(attempt.session);
 
-      expect(attempt?.session.status).toBe("cleared");
+      expect(attempt.session.status).toBe("cleared");
       expect(result).toEqual({
         elapsedMs: 3_000,
         moveAttemptCount: 2,
@@ -128,7 +126,7 @@ describe("undoParkingJamSession", () => {
   test("直前に出庫した車を盤面へ戻すこと", () => {
     const restored = undoParkingJamSession(session);
 
-    expect(restored.state.remainingVehicleIds).toEqual(["a", "b"]);
+    expect(restored.puzzleState.remainingVehicleIds).toEqual(["a", "b"]);
     expect(restored.undoCount).toBe(1);
     expect(canUndoParkingJamSession(restored)).toBe(false);
   });
@@ -159,7 +157,7 @@ describe("restartParkingJamSession", () => {
   test("同じ問題の初期盤面へ戻してやり直し回数を記録すること", () => {
     const restarted = restartParkingJamSession(session);
 
-    expect(restarted.state.remainingVehicleIds).toEqual(["a", "b"]);
+    expect(restarted.puzzleState.remainingVehicleIds).toEqual(["a", "b"]);
     expect(restarted.history).toEqual([]);
     expect(restarted.restartCount).toBe(1);
     expect(canRestartParkingJamSession(session)).toBe(true);

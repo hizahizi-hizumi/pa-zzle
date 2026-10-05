@@ -99,12 +99,11 @@ describe("ParkingJamPlay", () => {
     expect(props.onRestart).toHaveBeenCalledOnce();
   });
 
-  test("メニューにリセットを出さないこと", () => {
+  test("メニューからリセットできること", () => {
     openPlayMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "リセット" }));
 
-    const replayItem = screen.queryByRole("menuitem", { name: "リセット" });
-
-    expect(replayItem).toBeNull();
+    expect(props.onReplay).toHaveBeenCalledOnce();
   });
 
   test("盤面下の待ったから直前の出庫を戻せること", () => {

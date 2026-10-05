@@ -5,7 +5,6 @@ import { PlayHeader } from "@/components/PlayHeader";
 import { UndoButton } from "@/components/UndoButton";
 import type {
   ParkingJamOperation,
-  ParkingJamProgress,
   ParkingJamResult,
 } from "@/games/parking-jam/play/use-parking-jam-play";
 import type {
@@ -17,13 +16,15 @@ import type {
 import { ParkingJamBoard } from "@/games/parking-jam/ui/board/ParkingJamBoard";
 import { ParkingJamHowToPlayDialog } from "@/games/parking-jam/ui/ParkingJamHowToPlayDialog";
 import { ParkingJamResultScreen } from "@/games/parking-jam/ui/result/ParkingJamResultScreen";
+import type { GameProgress } from "@/games/play";
+import type { GameSessionStatus } from "@/games/session";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
 type ParkingJamPlayProps = {
   /** 結果画面に出す難易度の表示名。 */
   difficultyLabel: string;
-  status: "playing" | "cleared";
-  progress: ParkingJamProgress;
+  status: GameSessionStatus;
+  progress: GameProgress;
   board: ParkingJamBoardDefinition;
   state: ParkingJamState;
   selectedVehicleId: ParkingJamVehicleId | null;
@@ -110,6 +111,7 @@ export function ParkingJamPlay({
         ]}
         canRestart={canRestart}
         onRestart={onRestart}
+        onReplay={onReplay}
         onStartNewProblem={onStartNewProblem}
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
@@ -134,10 +136,7 @@ export function ParkingJamPlay({
       </main>
       <footer className="grid h-28 shrink-0 items-end px-4 pb-2">
         <div className="flex h-14 items-center justify-center">
-          <UndoButton
-            disabled={!canUndo || status !== "playing"}
-            onUndo={onUndo}
-          />
+          <UndoButton disabled={!canUndo} onUndo={onUndo} />
         </div>
       </footer>
     </section>
