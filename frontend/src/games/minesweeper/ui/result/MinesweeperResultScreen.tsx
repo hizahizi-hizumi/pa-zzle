@@ -9,6 +9,7 @@ import {
 import { getDifficultyLabel } from "@/games/difficulty";
 import minesweeperPictogramSvg from "@/games/minesweeper/assets/pictogram.svg?raw";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
+import { MINESWEEPER_DISPLAY_NAME } from "@/games/minesweeper/display-name";
 import type { MinesweeperResult } from "@/games/minesweeper/play/use-minesweeper-play";
 import { MINESWEEPER_SCORE_MAXIMUMS } from "@/games/minesweeper/score";
 import { getMinesweeperScoreCriteria } from "@/games/minesweeper/ui/result/MinesweeperResultScreen/score-criteria";
@@ -39,7 +40,7 @@ export function MinesweeperResultScreen({
 }: MinesweeperResultScreenProps) {
   return (
     <GameResultScreen
-      gameName="マインスイーパー"
+      gameName={MINESWEEPER_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
       pictogramSvg={minesweeperPictogramSvg}
       score={result.score.total}

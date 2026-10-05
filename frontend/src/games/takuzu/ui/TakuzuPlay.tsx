@@ -1,10 +1,10 @@
 import { type ReactNode, useState } from "react";
-
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { PlayHeader } from "@/components/PlayHeader";
 import { UndoButton } from "@/components/UndoButton";
 import type { GameProgress } from "@/games/play";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
+import { TAKUZU_DISPLAY_NAME } from "@/games/takuzu/display-name";
 import type { TakuzuResult } from "@/games/takuzu/play/use-takuzu-play";
 import type { TakuzuCell } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
@@ -92,7 +92,7 @@ export function TakuzuPlay({
       <BrandIdentityHeader />
       {/* 置き直しと待ったは2桁分の幅を取っておき、10回目で計測値の並びが横へ動かないようにする。 */}
       <PlayHeader
-        title="バイナリパズル"
+        title={TAKUZU_DISPLAY_NAME}
         metricGroups={[
           [
             {

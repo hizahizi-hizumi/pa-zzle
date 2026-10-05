@@ -11,6 +11,7 @@ import {
 import { getDifficultyLabel } from "@/games/difficulty";
 import slidePuzzlePictogramSvg from "@/games/slide-puzzle/assets/pictogram.svg?raw";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
+import { SLIDE_PUZZLE_DISPLAY_NAME } from "@/games/slide-puzzle/display-name";
 import type { SlidePuzzleResult } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import { SLIDE_PUZZLE_SCORE_MAXIMUMS } from "@/games/slide-puzzle/score";
 import { getSlidePuzzleScoreCriteria } from "@/games/slide-puzzle/ui/result/SlidePuzzleResultScreen/score-criteria";
@@ -41,7 +42,7 @@ export function SlidePuzzleResultScreen({
 }: SlidePuzzleResultScreenProps) {
   return (
     <GameResultScreen
-      gameName="スライドパズル"
+      gameName={SLIDE_PUZZLE_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
       pictogramSvg={slidePuzzlePictogramSvg}
       score={result.score.total}

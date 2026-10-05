@@ -11,6 +11,7 @@ import {
 import { getDifficultyLabel } from "@/games/difficulty";
 import waterSortPictogramSvg from "@/games/water-sort/assets/pictogram.svg?raw";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
+import { WATER_SORT_DISPLAY_NAME } from "@/games/water-sort/display-name";
 import type { WaterSortResult } from "@/games/water-sort/play/use-water-sort-play";
 import { WATER_SORT_SCORE_MAXIMUMS } from "@/games/water-sort/score";
 import { getWaterSortScoreCriteria } from "@/games/water-sort/ui/result/WaterSortResultScreen/score-criteria";
@@ -41,7 +42,7 @@ export function WaterSortResultScreen({
 }: WaterSortResultScreenProps) {
   return (
     <GameResultScreen
-      gameName="ウォーターソート"
+      gameName={WATER_SORT_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
       pictogramSvg={waterSortPictogramSvg}
       score={result.score.total}

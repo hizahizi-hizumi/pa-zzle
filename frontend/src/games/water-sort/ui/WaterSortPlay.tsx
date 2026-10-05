@@ -1,10 +1,10 @@
 import { type ReactNode, useState } from "react";
-
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { PlayHeader } from "@/components/PlayHeader";
 import { UndoButton } from "@/components/UndoButton";
 import type { GameProgress } from "@/games/play";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
+import { WATER_SORT_DISPLAY_NAME } from "@/games/water-sort/display-name";
 import type {
   WaterSortOperation,
   WaterSortResult,
@@ -93,7 +93,7 @@ export function WaterSortPlay({
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
       <BrandIdentityHeader />
       <PlayHeader
-        title="ウォーターソート"
+        title={WATER_SORT_DISPLAY_NAME}
         metricGroups={[
           [
             { label: "手数", value: String(moveCount) },

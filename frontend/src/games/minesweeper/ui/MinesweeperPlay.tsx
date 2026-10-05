@@ -1,8 +1,8 @@
 import { type ReactNode, useState } from "react";
-
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { PlayHeader } from "@/components/PlayHeader";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
+import { MINESWEEPER_DISPLAY_NAME } from "@/games/minesweeper/display-name";
 import type { MinesweeperResult } from "@/games/minesweeper/play/use-minesweeper-play";
 import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
 import { MinesweeperClearAnimation } from "@/games/minesweeper/ui/board/clear/MinesweeperClearAnimation";
@@ -101,7 +101,7 @@ export function MinesweeperPlay({
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
       <BrandIdentityHeader />
       <PlayHeader
-        title="マインスイーパー"
+        title={MINESWEEPER_DISPLAY_NAME}
         metricGroups={[
           [
             { label: "地雷", value: String(mineCount) },

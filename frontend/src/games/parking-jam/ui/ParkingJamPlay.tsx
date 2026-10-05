@@ -1,8 +1,8 @@
 import { type ReactNode, useState } from "react";
-
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { PlayHeader } from "@/components/PlayHeader";
 import { UndoButton } from "@/components/UndoButton";
+import { PARKING_JAM_DISPLAY_NAME } from "@/games/parking-jam/display-name";
 import type {
   ParkingJamOperation,
   ParkingJamResult,
@@ -101,7 +101,7 @@ export function ParkingJamPlay({
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
       <BrandIdentityHeader />
       <PlayHeader
-        title="パーキングジャム"
+        title={PARKING_JAM_DISPLAY_NAME}
         metricGroups={[
           [
             { label: "ミス", value: String(failedMoveCount) },

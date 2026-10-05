@@ -1,8 +1,8 @@
 import { type ReactNode, useState } from "react";
-
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { PlayHeader } from "@/components/PlayHeader";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
+import { NANPURE_DISPLAY_NAME } from "@/games/nanpure/display-name";
 import type { NanpureResult } from "@/games/nanpure/play/use-nanpure-play";
 import type {
   NanpureBoard as NanpureBoardState,
@@ -114,7 +114,7 @@ export function NanpurePlay({
     <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
       <BrandIdentityHeader />
       <PlayHeader
-        title="ナンプレ"
+        title={NANPURE_DISPLAY_NAME}
         metricGroups={[
           [
             { label: "ミス", value: String(mistakeCount) },

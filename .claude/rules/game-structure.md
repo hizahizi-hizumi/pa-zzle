@@ -31,6 +31,7 @@ frontend/src/games/
     │   └── result/
     │       └── <Game>ResultScreen.tsx
     ├── assets/
+    ├── display-name.ts
     ├── difficulty.ts
     ├── score.ts
     ├── problem-selection.ts
@@ -46,6 +47,7 @@ frontend/src/games/
 - `session/session.ts`: 1問に対する1回のプレイ状態、操作、経過事実を置く。
 - `play/`: 問題供給、session、評価を組み合わせ、UIへプレイ状態と操作を提供する。
 - `ui/`: ゲーム固有の表示とユーザー操作を扱う。結果画面はプレイ画面と記録の結果画面の両方から使うので、プレイ画面の内部実装ではなく `ui/result/` に置く。
+- `display-name.ts`: 利用者に見せるゲーム名 `<GAME>_DISPLAY_NAME` を置く。カタログ・難易度選択・プレイ画面・盤面の読み上げ名・結果画面はこれを参照し、ゲーム名を直書きしない。
 - `difficulty.ts`: ゲームとしての難易度ラベルと分類方針を置く。
 - `score.ts`: 完了したプレイの事実をゲーム固有の評価へ変換する。
 - `problem-selection.ts`: 開始条件に合う問題を問題供給元と難易度方針から選ぶ。
@@ -139,7 +141,7 @@ frontend/src/games/
 
 ## ゲーム直下
 
-- ゲーム直下には `difficulty`、`score`、`problem-selection`、`play-record`、`play-attempt`、`diagnostics` のようなゲーム全体の責務だけを置く。
+- ゲーム直下には `display-name`、`difficulty`、`score`、`problem-selection`、`play-record`、`play-attempt`、`diagnostics` のようなゲーム全体の責務だけを置く。
 - `hooks`、`services`、`utils`、`manager`、`game` のような実装方式・汎用箱で責務を分類しない。
 - 同じ横断責務が複数ゲームに現れたら、同じ責務名と標準位置を使う。
 - 1責務が複数ファイルへ成長した場合は、責務名を保った同名ディレクトリへ分割する。

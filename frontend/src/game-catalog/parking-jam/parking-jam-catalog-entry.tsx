@@ -5,6 +5,7 @@ import {
 import { RecordedParkingJamResult } from "@/game-catalog/parking-jam/RecordedParkingJamResult";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/parking-jam/assets/pictogram.svg?raw";
+import { PARKING_JAM_DISPLAY_NAME } from "@/games/parking-jam/display-name";
 import {
   isParkingJamPlayRecord,
   parkingJamPlayRecordDefinition,
@@ -15,7 +16,7 @@ import { parkingJamPlayRecordDisplay } from "@/games/parking-jam/ui/play-record-
 
 export const parkingJamCatalogEntry = {
   id: parkingJamPlayRecordDefinition.gameId,
-  name: "パーキングジャム",
+  name: PARKING_JAM_DISPLAY_NAME,
   pictogramSvg,
   entryPath: "/puzzles/parking-jam",
   playPath: "/puzzles/parking-jam/play/:difficulty",

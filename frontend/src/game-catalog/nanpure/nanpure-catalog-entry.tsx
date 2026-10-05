@@ -5,6 +5,7 @@ import {
 import { RecordedNanpureResult } from "@/game-catalog/nanpure/RecordedNanpureResult";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/nanpure/assets/pictogram.svg?raw";
+import { NANPURE_DISPLAY_NAME } from "@/games/nanpure/display-name";
 import {
   isNanpurePlayRecord,
   nanpurePlayRecordDefinition,
@@ -15,7 +16,7 @@ import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display
 
 export const nanpureCatalogEntry = {
   id: nanpurePlayRecordDefinition.gameId,
-  name: "ナンプレ",
+  name: NANPURE_DISPLAY_NAME,
   pictogramSvg,
   entryPath: "/puzzles/nanpure",
   playPath: "/puzzles/nanpure/play/:difficulty",

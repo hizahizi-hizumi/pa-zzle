@@ -1,6 +1,7 @@
 import { DifficultySelectionHeading } from "@/components/DifficultySelectionHeading";
 import { HomeBackLink } from "@/components/HomeBackLink";
 import { difficultyLevels } from "@/games/difficulty";
+import { PARKING_JAM_DISPLAY_NAME } from "@/games/parking-jam/display-name";
 import { ParkingJamHowToPlayDialog } from "@/games/parking-jam/ui/ParkingJamHowToPlayDialog";
 import { ParkingJamDifficultyOption } from "@/views/ParkingJamDifficultyView/ParkingJamDifficultyOption";
 
@@ -10,7 +11,7 @@ export function ParkingJamDifficultyView() {
       <div className="space-y-2">
         <HomeBackLink />
         <DifficultySelectionHeading
-          title="パーキングジャム"
+          title={PARKING_JAM_DISPLAY_NAME}
           renderHowToPlayDialog={({ open, onClose }) => (
             <ParkingJamHowToPlayDialog open={open} onClose={onClose} />
           )}

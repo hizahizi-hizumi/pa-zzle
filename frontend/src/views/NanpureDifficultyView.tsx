@@ -1,6 +1,7 @@
 import { DifficultySelectionHeading } from "@/components/DifficultySelectionHeading";
 import { HomeBackLink } from "@/components/HomeBackLink";
 import { difficultyLevels } from "@/games/difficulty";
+import { NANPURE_DISPLAY_NAME } from "@/games/nanpure/display-name";
 import { NanpureHowToPlayDialog } from "@/games/nanpure/ui/NanpureHowToPlayDialog";
 import { NanpureDifficultyOption } from "@/views/NanpureDifficultyView/NanpureDifficultyOption";
 
@@ -10,7 +11,7 @@ export function NanpureDifficultyView() {
       <div className="space-y-2">
         <HomeBackLink />
         <DifficultySelectionHeading
-          title="ナンプレ"
+          title={NANPURE_DISPLAY_NAME}
           renderHowToPlayDialog={({ open, onClose }) => (
             <NanpureHowToPlayDialog open={open} onClose={onClose} />
           )}

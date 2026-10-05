@@ -5,6 +5,7 @@ import {
 import { RecordedSlidePuzzleResult } from "@/game-catalog/slide-puzzle/RecordedSlidePuzzleResult";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/slide-puzzle/assets/pictogram.svg?raw";
+import { SLIDE_PUZZLE_DISPLAY_NAME } from "@/games/slide-puzzle/display-name";
 import {
   isSlidePuzzlePlayRecord,
   restoreSlidePuzzleRecordedResult,
@@ -15,7 +16,7 @@ import { slidePuzzlePlayRecordDisplay } from "@/games/slide-puzzle/ui/play-recor
 
 export const slidePuzzleCatalogEntry = {
   id: slidePuzzlePlayRecordDefinition.gameId,
-  name: "スライドパズル",
+  name: SLIDE_PUZZLE_DISPLAY_NAME,
   pictogramSvg,
   entryPath: "/puzzles/slide-puzzle",
   playPath: "/puzzles/slide-puzzle/play/:difficulty",

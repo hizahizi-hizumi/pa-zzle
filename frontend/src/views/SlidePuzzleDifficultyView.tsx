@@ -1,6 +1,7 @@
 import { DifficultySelectionHeading } from "@/components/DifficultySelectionHeading";
 import { HomeBackLink } from "@/components/HomeBackLink";
 import { difficultyLevels } from "@/games/difficulty";
+import { SLIDE_PUZZLE_DISPLAY_NAME } from "@/games/slide-puzzle/display-name";
 import { SlidePuzzleHowToPlayDialog } from "@/games/slide-puzzle/ui/SlidePuzzleHowToPlayDialog";
 import { SlidePuzzleDifficultyOption } from "@/views/SlidePuzzleDifficultyView/SlidePuzzleDifficultyOption";
 
@@ -10,7 +11,7 @@ export function SlidePuzzleDifficultyView() {
       <div className="space-y-2">
         <HomeBackLink />
         <DifficultySelectionHeading
-          title="スライドパズル"
+          title={SLIDE_PUZZLE_DISPLAY_NAME}
           renderHowToPlayDialog={({ open, onClose }) => (
             <SlidePuzzleHowToPlayDialog open={open} onClose={onClose} />
           )}

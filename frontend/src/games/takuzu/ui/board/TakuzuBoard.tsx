@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { TAKUZU_DISPLAY_NAME } from "@/games/takuzu/display-name";
 
 import {
   getTakuzuCellPosition,
@@ -153,7 +154,7 @@ export function TakuzuBoard({
     <div className="size-full p-3">
       <div
         role="group"
-        aria-label="バイナリパズル盤面"
+        aria-label={`${TAKUZU_DISPLAY_NAME}盤面`}
         className="relative grid size-full border-2 border-foreground/55 bg-background"
         style={{
           gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,

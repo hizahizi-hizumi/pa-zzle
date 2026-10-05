@@ -1,9 +1,9 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
-
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { PlayHeader } from "@/components/PlayHeader";
 import type { GameProgress } from "@/games/play";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
+import { SLIDE_PUZZLE_DISPLAY_NAME } from "@/games/slide-puzzle/display-name";
 import type {
   SlidePuzzleOperation,
   SlidePuzzleResult,
@@ -125,7 +125,7 @@ export function SlidePuzzlePlay({
     >
       <BrandIdentityHeader />
       <PlayHeader
-        title="スライドパズル"
+        title={SLIDE_PUZZLE_DISPLAY_NAME}
         metricGroups={[
           [
             { label: "手数", value: String(moveCount) },

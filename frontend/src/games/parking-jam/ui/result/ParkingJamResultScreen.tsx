@@ -8,6 +8,7 @@ import {
   listScoreBreakdownMetrics,
 } from "@/components/game-result-metrics";
 import parkingJamPictogramSvg from "@/games/parking-jam/assets/pictogram.svg?raw";
+import { PARKING_JAM_DISPLAY_NAME } from "@/games/parking-jam/display-name";
 import type { ParkingJamResult } from "@/games/parking-jam/play/use-parking-jam-play";
 import { PARKING_JAM_SCORE_MAXIMUMS } from "@/games/parking-jam/score";
 import { getParkingJamScoreCriteria } from "@/games/parking-jam/ui/result/ParkingJamResultScreen/score-criteria";
@@ -38,7 +39,7 @@ export function ParkingJamResultScreen({
 }: ParkingJamResultScreenProps) {
   return (
     <GameResultScreen
-      gameName="パーキングジャム"
+      gameName={PARKING_JAM_DISPLAY_NAME}
       difficultyLabel={difficultyLabel}
       pictogramSvg={parkingJamPictogramSvg}
       score={result.score.total}

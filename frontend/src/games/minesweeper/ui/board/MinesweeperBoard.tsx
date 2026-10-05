@@ -1,3 +1,4 @@
+import { MINESWEEPER_DISPLAY_NAME } from "@/games/minesweeper/display-name";
 import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
 import { MinesweeperCell } from "@/games/minesweeper/ui/board/MinesweeperCell";
 
@@ -71,7 +72,7 @@ export function MinesweeperBoard({
   return (
     <div
       role="group"
-      aria-label="マインスイーパー盤面"
+      aria-label={`${MINESWEEPER_DISPLAY_NAME}盤面`}
       className="grid w-full border-l border-t border-slate-300 dark:border-slate-600"
       style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
     >

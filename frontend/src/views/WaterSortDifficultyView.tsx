@@ -1,6 +1,7 @@
 import { DifficultySelectionHeading } from "@/components/DifficultySelectionHeading";
 import { HomeBackLink } from "@/components/HomeBackLink";
 import { difficultyLevels } from "@/games/difficulty";
+import { WATER_SORT_DISPLAY_NAME } from "@/games/water-sort/display-name";
 import { WaterSortHowToPlayDialog } from "@/games/water-sort/ui/WaterSortHowToPlayDialog";
 import { WaterSortDifficultyOption } from "@/views/WaterSortDifficultyView/WaterSortDifficultyOption";
 
@@ -10,7 +11,7 @@ export function WaterSortDifficultyView() {
       <div className="space-y-2">
         <HomeBackLink />
         <DifficultySelectionHeading
-          title="ウォーターソート"
+          title={WATER_SORT_DISPLAY_NAME}
           renderHowToPlayDialog={({ open, onClose }) => (
             <WaterSortHowToPlayDialog open={open} onClose={onClose} />
           )}

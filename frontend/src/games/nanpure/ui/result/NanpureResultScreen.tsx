@@ -10,6 +10,7 @@ import {
 import { getDifficultyLabel } from "@/games/difficulty";
 import nanpurePictogramSvg from "@/games/nanpure/assets/pictogram.svg?raw";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
+import { NANPURE_DISPLAY_NAME } from "@/games/nanpure/display-name";
 import type { NanpureResult } from "@/games/nanpure/play/use-nanpure-play";
 import { NANPURE_SCORE_MAXIMUMS } from "@/games/nanpure/score";
 import { getNanpureScoreCriteria } from "@/games/nanpure/ui/result/NanpureResultScreen/score-criteria";
@@ -40,7 +41,7 @@ export function NanpureResultScreen({
 }: NanpureResultScreenProps) {
   return (
     <GameResultScreen
-      gameName="ナンプレ"
+      gameName={NANPURE_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
       pictogramSvg={nanpurePictogramSvg}
       score={result.score.total}
