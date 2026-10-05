@@ -48,7 +48,7 @@ export function PlayableTakuzu({
         ? createTakuzuPlayRecord({
             difficulty,
             problemIdentity: play.problemIdentity,
-            workload: play.workload,
+            workload: play.result.workload,
             startedAt: play.startedAt,
             completedAt: play.completedAt,
             result: play.result,
@@ -60,7 +60,6 @@ export function PlayableTakuzu({
       play.problemIdentity,
       play.result,
       play.startedAt,
-      play.workload,
     ],
   );
   const recordOutcome = useSavePlayRecord(
@@ -113,6 +112,7 @@ export function PlayableTakuzu({
         onCycleCell={play.cycleCell}
         onPlaceCell={play.placeCell}
         onUndo={play.undo}
+        canRestart={play.canRestart}
         onRestart={play.restart}
         onReplay={play.replay}
         onStartNewProblem={play.startNewProblem}

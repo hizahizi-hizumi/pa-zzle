@@ -9,7 +9,6 @@ import {
   getTakuzuSessionLineViolations,
   getTakuzuSessionResult,
   placeTakuzuSessionCell,
-  replayTakuzuSession,
   restartTakuzuSession,
   type TakuzuSession,
   undoTakuzuSession,
@@ -49,7 +48,7 @@ describe("createTakuzuSession", () => {
     const result = createTakuzuSession(problem, 100);
 
     expect(result.status).toBe("playing");
-    expect(result.board).toBe(problem.givens);
+    expect(result.puzzleState).toBe(problem.givens);
     expect(result.startedAt).toBe(100);
   });
 });
@@ -60,14 +59,14 @@ describe("cycleTakuzuSessionCell", () => {
   test("空きマスを押すとタイルを置いて入力回数を数えること", () => {
     const result = cycleTakuzuSessionCell(session, 1, "forward", 200);
 
-    expect(result.board.cells[1]).toBe("a");
+    expect(result.puzzleState.cells[1]).toBe("a");
     expect(result.inputCount).toBe(1);
   });
 
   test("逆順の巡回で空きマスへ B を置くこと", () => {
     const result = cycleTakuzuSessionCell(session, 1, "backward", 200);
 
-    expect(result.board.cells[1]).toBe("b");
+    expect(result.puzzleState.cells[1]).toBe("b");
   });
 
   test("固定マスを押しても何も記録しないこと", () => {
@@ -104,7 +103,7 @@ describe("placeTakuzuSessionCell", () => {
   test("空きマスへ B を直接置いて入力回数を数えること", () => {
     const result = placeTakuzuSessionCell(session, 1, "b", 200);
 
-    expect(result.board.cells[1]).toBe("b");
+    expect(result.puzzleState.cells[1]).toBe("b");
     expect(result.inputCount).toBe(1);
   });
 
@@ -167,7 +166,7 @@ describe("restartTakuzuSession", () => {
     test("盤面を初期配置へ戻して盤面を戻した回数を数えること", () => {
       const result = restartTakuzuSession(pressed);
 
-      expect(result.board).toBe(problem.givens);
+      expect(result.puzzleState).toBe(problem.givens);
       expect(result.restartCount).toBe(1);
       expect(result.startedAt).toBe(100);
     });
@@ -203,14 +202,14 @@ describe("undoTakuzuSession", () => {
 
     test("直前の1操作だけを取り消して待った回数を数えること", () => {
       const result = undoTakuzuSession(pressed);
-      expect(result.board.cells[1]).toBe("a");
+      expect(result.puzzleState.cells[1]).toBe("a");
       expect(result.undoCount).toBe(1);
       expect(result.inputCount).toBe(2);
     });
 
     test("操作をすべて取り消すと待ったできなくなること", () => {
       const result = undoTakuzuSession(undoTakuzuSession(pressed));
-      expect(result.board).toBe(problem.givens);
+      expect(result.puzzleState).toBe(problem.givens);
       expect(canUndoTakuzuSession(result)).toBe(false);
     });
   });
@@ -256,18 +255,6 @@ describe("undoTakuzuSession", () => {
   });
 });
 
-describe("replayTakuzuSession", () => {
-  const played = restartTakuzuSession(
-    pressCells(createTakuzuSession(problem, 100), [1, 2, 1], 200),
-  );
-
-  test("同じ問題を初期配置から新しいプレイとして始めること", () => {
-    const result = replayTakuzuSession(played, 900);
-
-    expect(result).toEqual(createTakuzuSession(problem, 900));
-  });
-});
-
 describe("getTakuzuSessionResult", () => {
   const session = createTakuzuSession(problem, 100);
 
@@ -282,7 +269,7 @@ describe("getTakuzuSessionResult", () => {
     const withCorrection = pressCells(restarted, [5, 6, 5], 300);
     const cleared = pressCells(
       withCorrection,
-      listSolvingPresses({ ...problem, givens: withCorrection.board }),
+      listSolvingPresses({ ...problem, givens: withCorrection.puzzleState }),
       2_100,
     );
 

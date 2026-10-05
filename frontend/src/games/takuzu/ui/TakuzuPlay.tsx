@@ -3,11 +3,9 @@ import { type ReactNode, useState } from "react";
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { PlayHeader } from "@/components/PlayHeader";
 import { UndoButton } from "@/components/UndoButton";
+import type { GameProgress } from "@/games/play";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
-import type {
-  TakuzuProgress,
-  TakuzuResult,
-} from "@/games/takuzu/play/use-takuzu-play";
+import type { TakuzuResult } from "@/games/takuzu/play/use-takuzu-play";
 import type { TakuzuCell } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import type {
@@ -25,7 +23,7 @@ type TakuzuPlayProps = {
   size: number;
   cells: readonly TakuzuCellView[];
   lineViolations: readonly TakuzuLineViolationView[];
-  progress: TakuzuProgress;
+  progress: GameProgress;
   correctionCount: number;
   undoCount: number;
   canUndo: boolean;
@@ -35,6 +33,7 @@ type TakuzuPlayProps = {
   onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
   onPlaceCell: (cellIndex: number, cell: TakuzuCell) => void;
   onUndo: () => void;
+  canRestart: boolean;
   onRestart: () => void;
   onReplay: () => void;
   onClearAnimationComplete: () => void;
@@ -60,6 +59,7 @@ export function TakuzuPlay({
   onCycleCell,
   onPlaceCell,
   onUndo,
+  canRestart,
   onRestart,
   onReplay,
   onClearAnimationComplete,
@@ -104,6 +104,7 @@ export function TakuzuPlay({
           ],
           [{ label: "待った", value: String(undoCount), reservedDigits: 2 }],
         ]}
+        canRestart={canRestart}
         onRestart={onRestart}
         onReplay={onReplay}
         onStartNewProblem={onStartNewProblem}
@@ -135,10 +136,7 @@ export function TakuzuPlay({
       </main>
       <footer className="grid h-28 shrink-0 items-end px-4 pb-2">
         <div className="flex h-14 items-center justify-center">
-          <UndoButton
-            disabled={progress !== "playing" || !canUndo}
-            onUndo={onUndo}
-          />
+          <UndoButton disabled={!canUndo} onUndo={onUndo} />
         </div>
       </footer>
     </section>

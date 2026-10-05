@@ -1,3 +1,4 @@
+import { type GameSession, getClearedSessionElapsedMs } from "@/games/session";
 import {
   assertTakuzuProblem,
   type TakuzuProblem,
@@ -19,8 +20,6 @@ import {
   type TakuzuCycleDirection,
 } from "@/games/takuzu/puzzle/transitions";
 
-export type TakuzuSessionStatus = "playing" | "cleared";
-
 /**
  * 同じマスを続けて押している間の記録。
  * 別のマスを押すまでは1回の入力とみなし、押し始める前の値と比べて置き直しかどうかを決める。
@@ -32,17 +31,12 @@ type TakuzuEditingCell = {
 
 /** 待ったで戻す先。盤面と、その盤面までの置き直しの記録を一緒に戻す。 */
 type TakuzuSessionSnapshot = {
-  board: TakuzuBoard;
+  puzzleState: TakuzuBoard;
   settledCorrectionCount: number;
   editingCell: TakuzuEditingCell | null;
 };
 
-export type TakuzuSession = {
-  status: TakuzuSessionStatus;
-  problem: TakuzuProblem;
-  board: TakuzuBoard;
-  startedAt: number;
-  finishedAt: number | null;
+export type TakuzuSession = GameSession<TakuzuProblem, TakuzuBoard> & {
   /** 固定マス以外のマスを押した回数。 */
   inputCount: number;
   /** 盤面を戻した回数。 */
@@ -90,7 +84,7 @@ function isCorrection(
 
 function takeSnapshot(session: TakuzuSession): TakuzuSessionSnapshot {
   return {
-    board: session.board,
+    puzzleState: session.puzzleState,
     settledCorrectionCount: session.settledCorrectionCount,
     editingCell: session.editingCell,
   };
@@ -113,7 +107,7 @@ export function createTakuzuSession(
   return {
     status: "playing",
     problem,
-    board: problem.givens,
+    puzzleState: problem.givens,
     startedAt,
     finishedAt: null,
     inputCount: 0,
@@ -138,11 +132,11 @@ export function placeTakuzuSessionCell(
 
   const board = placeTakuzuCell(
     session.problem.givens,
-    session.board,
+    session.puzzleState,
     cellIndex,
     cell,
   );
-  if (board === session.board) {
+  if (board === session.puzzleState) {
     return session;
   }
 
@@ -150,12 +144,12 @@ export function placeTakuzuSessionCell(
   const beforeInput = continuesEditing ? session : settleEditingCell(session);
   const next: TakuzuSession = {
     ...beforeInput,
-    board,
+    puzzleState: board,
     history: [...session.history, takeSnapshot(session)],
     inputCount: session.inputCount + 1,
     editingCell: beforeInput.editingCell ?? {
       cellIndex,
-      cellBeforeEditing: session.board.cells[cellIndex] ?? null,
+      cellBeforeEditing: session.puzzleState.cells[cellIndex] ?? null,
     },
   };
 
@@ -176,7 +170,7 @@ export function cycleTakuzuSessionCell(
   direction: TakuzuCycleDirection,
   operatedAt: number,
 ): TakuzuSession {
-  const cell = session.board.cells[cellIndex];
+  const cell = session.puzzleState.cells[cellIndex];
   if (cell === undefined) {
     return session;
   }
@@ -195,25 +189,26 @@ export function cycleTakuzuSessionCell(
  * 盤面を戻す前の操作は待ったで戻せない。
  */
 export function restartTakuzuSession(session: TakuzuSession): TakuzuSession {
-  if (session.status !== "playing") {
-    return session;
-  }
-
-  const hasPlacedTile = session.board.cells.some(
-    function differsFromGivens(cell, cellIndex) {
-      return cell !== session.problem.givens.cells[cellIndex];
-    },
-  );
-  if (!hasPlacedTile) {
+  if (!canRestartTakuzuSession(session)) {
     return session;
   }
 
   return {
     ...settleEditingCell(session),
-    board: session.problem.givens,
+    puzzleState: session.problem.givens,
     history: [],
     restartCount: session.restartCount + 1,
   };
+}
+
+/** 固定マス以外にタイルを置いたプレイ中だけ、盤面を戻せる。 */
+export function canRestartTakuzuSession(session: TakuzuSession): boolean {
+  return (
+    session.status === "playing" &&
+    session.puzzleState.cells.some(function differsFromGivens(cell, cellIndex) {
+      return cell !== session.problem.givens.cells[cellIndex];
+    })
+  );
 }
 
 /**
@@ -242,39 +237,25 @@ export function canUndoTakuzuSession(session: TakuzuSession): boolean {
   return session.status === "playing" && session.history.length > 0;
 }
 
-/** 同じ問題を新しいプレイとして始める（リセット）。 */
-export function replayTakuzuSession(
-  session: TakuzuSession,
-  startedAt: number,
-): TakuzuSession {
-  return createTakuzuSession(session.problem, startedAt);
-}
-
 export function getTakuzuSessionCorrectionCount(
   session: TakuzuSession,
 ): number {
   return (
     session.settledCorrectionCount +
-    (isCorrection(session.board, session.editingCell) ? 1 : 0)
+    (isCorrection(session.puzzleState, session.editingCell) ? 1 : 0)
   );
-}
-
-export function getTakuzuSessionElapsedMs(
-  session: TakuzuSession,
-  now: number,
-): number {
-  return Math.max(0, (session.finishedAt ?? now) - session.startedAt);
 }
 
 export function getTakuzuSessionResult(
   session: TakuzuSession,
 ): TakuzuSessionResult | null {
-  if (session.status !== "cleared" || session.finishedAt === null) {
+  const elapsedMs = getClearedSessionElapsedMs(session);
+  if (elapsedMs === null) {
     return null;
   }
 
   return {
-    elapsedMs: getTakuzuSessionElapsedMs(session, session.finishedAt),
+    elapsedMs,
     correctionCount: getTakuzuSessionCorrectionCount(session),
     restartCount: session.restartCount,
     undoCount: session.undoCount,
@@ -285,7 +266,7 @@ export function getTakuzuSessionResult(
 export function getTakuzuSessionCellViews(
   session: TakuzuSession,
 ): TakuzuCellView[] {
-  const { board, problem } = session;
+  const { puzzleState: board, problem } = session;
   const runCellIndices = new Set(
     findTakuzuRuleViolations(board).runCellIndices,
   );
@@ -308,10 +289,10 @@ export function getTakuzuSessionLineViolations(
   session: TakuzuSession,
 ): TakuzuLineViolationView[] {
   const { overfilledLines, duplicateLines } = findTakuzuRuleViolations(
-    session.board,
+    session.puzzleState,
   );
 
-  return listTakuzuLines(session.board.size).flatMap(
+  return listTakuzuLines(session.puzzleState.size).flatMap(
     function createLineViolation(line) {
       const overfilled = overfilledLines.some((other) =>
         isSameLine(line, other),

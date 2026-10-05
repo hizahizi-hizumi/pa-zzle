@@ -61,8 +61,7 @@ describe("useTakuzuPlay", () => {
     });
 
     test("seed で問題集から選んだ問題の 8×8 盤面でプレイを始めること", () => {
-      const { size, cells, progress, problemIdentity, workload } =
-        result.current;
+      const { size, cells, progress, problemIdentity } = result.current;
 
       expect(size).toBe(8);
       expect(cells.map(({ cell }) => cell)).toEqual(
@@ -71,7 +70,6 @@ describe("useTakuzuPlay", () => {
       expect(progress).toBe("playing");
       expect(result.current.difficulty).toBe(difficulty);
       expect(problemIdentity).toEqual(initial.identity);
-      expect(workload).toEqual(initial.workload);
     });
 
     test("空きマスを押すとタイルを置くこと", () => {
@@ -217,11 +215,10 @@ describe("useTakuzuPlay", () => {
     });
 
     test("seed を引かずにその問題でプレイを始めること", () => {
-      const { problemIdentity, workload } = result.current;
+      const { problemIdentity } = result.current;
 
       expect(createProblemSeed).not.toHaveBeenCalled();
       expect(problemIdentity).toEqual(other.identity);
-      expect(workload).toEqual(other.workload);
       expect(listCells(result)).toEqual(other.problem.givens.cells);
     });
   });

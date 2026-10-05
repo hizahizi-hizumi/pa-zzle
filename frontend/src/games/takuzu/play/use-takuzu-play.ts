@@ -1,7 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
-import type { ProblemId } from "@/games/problem-id";
-import { createProblemSeed } from "@/games/problem-seed";
+import {
+  applyPlaySession,
+  completePlayClearAnimation,
+  type GamePlay,
+  type GameProgress,
+  type RestartableGamePlay,
+  startPlaySession,
+  type UndoableGamePlay,
+  useSessionElapsedMs,
+} from "@/games/play";
+import { createProblemId, type ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
@@ -19,27 +28,22 @@ import {
   type TakuzuPlayScore,
 } from "@/games/takuzu/score";
 import {
+  canRestartTakuzuSession,
   canUndoTakuzuSession,
   createTakuzuSession,
   cycleTakuzuSessionCell,
   getTakuzuSessionCellViews,
   getTakuzuSessionCorrectionCount,
-  getTakuzuSessionElapsedMs,
   getTakuzuSessionLineViolations,
   getTakuzuSessionResult,
   placeTakuzuSessionCell,
-  replayTakuzuSession,
   restartTakuzuSession,
+  type TakuzuCellView,
+  type TakuzuLineViolationView,
   type TakuzuSession,
   type TakuzuSessionResult,
   undoTakuzuSession,
 } from "@/games/takuzu/session/session";
-
-/**
- * 画面の進行。`clearing` は盤面が完成してから完成演出を終えるまで。
- * 完成演出の間も session はクリア済みで、経過時間は止まっている。
- */
-export type TakuzuProgress = "playing" | "clearing" | "result";
 
 /** クリアしたプレイの事実と、それを遊んだ問題の作業の量から導いた評価。 */
 export type TakuzuResult = TakuzuSessionResult & {
@@ -48,85 +52,6 @@ export type TakuzuResult = TakuzuSessionResult & {
   timeDeltaMs: number;
   score: TakuzuPlayScore;
 };
-
-type TakuzuPlayState = {
-  problemIdentity: TakuzuProblemIdentity;
-  workload: TakuzuSolveWorkload;
-  session: TakuzuSession;
-  progress: TakuzuProgress;
-};
-
-const elapsedTimeTickMs = 1_000;
-
-// 問題集が小さい場合でも「別の問題」で同じ問題に戻らないよう、選び直す回数の上限。
-const maximumNewProblemSelectionAttempts = 8;
-
-function createPlayState(
-  { problem, identity, workload }: TakuzuPooledProblem,
-  startedAt: number,
-): TakuzuPlayState {
-  return {
-    problemIdentity: identity,
-    workload,
-    session: createTakuzuSession(problem, startedAt),
-    progress: "playing",
-  };
-}
-
-function createInitialPlayState(
-  difficulty: TakuzuDifficulty,
-  startedAt: number,
-  initialProblem: TakuzuPooledProblem | undefined,
-  avoidedProblemId: ProblemId | undefined,
-): TakuzuPlayState {
-  if (initialProblem) {
-    return createPlayState(initialProblem, startedAt);
-  }
-
-  const { problem } = selectProblemAvoiding(
-    (seed) => selectTakuzuProblemForDifficulty(difficulty, seed),
-    avoidedProblemId,
-  );
-  return createPlayState(problem, startedAt);
-}
-
-function createNewProblemPlayState(
-  difficulty: TakuzuDifficulty,
-  currentProblemIdentity: TakuzuProblemIdentity,
-  startedAt: number,
-): TakuzuPlayState {
-  let selected = selectTakuzuProblemForDifficulty(
-    difficulty,
-    createProblemSeed(),
-  );
-  for (
-    let attempt = 1;
-    attempt < maximumNewProblemSelectionAttempts &&
-    selected.identity.seed === currentProblemIdentity.seed;
-    attempt += 1
-  ) {
-    selected = selectTakuzuProblemForDifficulty(
-      difficulty,
-      createProblemSeed(),
-    );
-  }
-  return createPlayState(selected, startedAt);
-}
-
-function applySession(
-  current: TakuzuPlayState,
-  session: TakuzuSession,
-): TakuzuPlayState {
-  if (session === current.session) {
-    return current;
-  }
-
-  return {
-    ...current,
-    session,
-    progress: session.status === "cleared" ? "clearing" : current.progress,
-  };
-}
 
 /** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
 export function createTakuzuResult(
@@ -143,49 +68,76 @@ export function createTakuzuResult(
   };
 }
 
+export type TakuzuPlay = GamePlay<
+  TakuzuDifficulty,
+  TakuzuProblemIdentity,
+  TakuzuSession,
+  TakuzuResult
+> &
+  RestartableGamePlay &
+  UndoableGamePlay & {
+    size: number;
+    cells: TakuzuCellView[];
+    lineViolations: TakuzuLineViolationView[];
+    correctionCount: number;
+    undoCount: number;
+    cycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
+    placeCell: (cellIndex: number, cell: TakuzuCell) => void;
+  };
+
+type TakuzuPlayState = {
+  problemIdentity: TakuzuProblemIdentity;
+  workload: TakuzuSolveWorkload;
+  session: TakuzuSession;
+  progress: GameProgress;
+};
+
+function createPlayState(
+  { problem, identity, workload }: TakuzuPooledProblem,
+  startedAt: number,
+): TakuzuPlayState {
+  return {
+    problemIdentity: identity,
+    workload,
+    session: createTakuzuSession(problem, startedAt),
+    progress: "playing",
+  };
+}
+
+function selectProblem(
+  difficulty: TakuzuDifficulty,
+  avoidedProblemId: ProblemId | undefined,
+): TakuzuPooledProblem {
+  return selectProblemAvoiding(
+    (seed) => selectTakuzuProblemForDifficulty(difficulty, seed),
+    avoidedProblemId,
+  ).problem;
+}
+
 /**
  * 難易度の問題集から選んだ問題を遊ぶ。
  * `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。
  * 問題集から引けない記録を再プレイできないものとして呼び出し側で扱えるよう、identity ではなく引いた問題を受け取る。
- * `undo` は直前の盤面操作を1つ取り消し（待った）、`restart` は同じプレイのまま盤面を戻し、`replay` は同じ問題を新しいプレイとして始める（リセット）。
- * `startNewProblem` は問題集から別の問題を選び直す。
  */
 export function useTakuzuPlay(
   difficulty: TakuzuDifficulty,
   initialProblem?: TakuzuPooledProblem,
   avoidedProblemId?: ProblemId,
-) {
+): TakuzuPlay {
   const [play, setPlay] = useState(() =>
-    createInitialPlayState(
-      difficulty,
+    createPlayState(
+      initialProblem ?? selectProblem(difficulty, avoidedProblemId),
       Date.now(),
-      initialProblem,
-      avoidedProblemId,
     ),
   );
-  const [now, setNow] = useState(() => Date.now());
-  const { session, progress, workload } = play;
-
-  useEffect(() => {
-    if (session.status !== "playing") {
-      return;
-    }
-
-    setNow(Date.now());
-    const timer = window.setInterval(
-      () => setNow(Date.now()),
-      elapsedTimeTickMs,
-    );
-
-    return () => window.clearInterval(timer);
-  }, [session.status]);
+  const { session, progress, problemIdentity, workload } = play;
+  const elapsedMs = useSessionElapsedMs(session);
 
   const cycleCell = useCallback(
     (cellIndex: number, direction: TakuzuCycleDirection) => {
       const operatedAt = Date.now();
-      setNow(operatedAt);
       setPlay((current) =>
-        applySession(
+        applyPlaySession(
           current,
           cycleTakuzuSessionCell(
             current.session,
@@ -201,9 +153,8 @@ export function useTakuzuPlay(
 
   const placeCell = useCallback((cellIndex: number, cell: TakuzuCell) => {
     const operatedAt = Date.now();
-    setNow(operatedAt);
     setPlay((current) =>
-      applySession(
+      applyPlaySession(
         current,
         placeTakuzuSessionCell(current.session, cellIndex, cell, operatedAt),
       ),
@@ -212,40 +163,37 @@ export function useTakuzuPlay(
 
   const undo = useCallback(() => {
     setPlay((current) =>
-      applySession(current, undoTakuzuSession(current.session)),
+      applyPlaySession(current, undoTakuzuSession(current.session)),
     );
   }, []);
 
   const restart = useCallback(() => {
     setPlay((current) =>
-      applySession(current, restartTakuzuSession(current.session)),
+      applyPlaySession(current, restartTakuzuSession(current.session)),
     );
   }, []);
 
   const replay = useCallback(() => {
     const startedAt = Date.now();
-    setNow(startedAt);
-    setPlay((current) => ({
-      ...current,
-      session: replayTakuzuSession(current.session, startedAt),
-      progress: "playing",
-    }));
+    setPlay((current) =>
+      startPlaySession(
+        current,
+        createTakuzuSession(current.session.problem, startedAt),
+      ),
+    );
   }, []);
 
   const startNewProblem = useCallback(() => {
-    const startedAt = Date.now();
-    setNow(startedAt);
-    setPlay((current) =>
-      createNewProblemPlayState(difficulty, current.problemIdentity, startedAt),
+    setPlay(
+      createPlayState(
+        selectProblem(difficulty, createProblemId(problemIdentity)),
+        Date.now(),
+      ),
     );
-  }, [difficulty]);
+  }, [difficulty, problemIdentity]);
 
   const completeClearAnimation = useCallback(() => {
-    setPlay((current) =>
-      current.progress === "clearing"
-        ? { ...current, progress: "result" }
-        : current,
-    );
+    setPlay(completePlayClearAnimation);
   }, []);
 
   const cells = useMemo(() => getTakuzuSessionCellViews(session), [session]);
@@ -261,20 +209,21 @@ export function useTakuzuPlay(
 
   return {
     difficulty,
-    problemIdentity: play.problemIdentity,
-    workload,
+    problemIdentity,
+    session,
+    status: session.status,
+    progress,
     startedAt: session.startedAt,
     completedAt: session.finishedAt,
-    session,
-    size: session.board.size,
+    elapsedMs,
+    result,
+    size: session.puzzleState.size,
     cells,
     lineViolations,
-    progress,
     correctionCount: getTakuzuSessionCorrectionCount(session),
     undoCount: session.undoCount,
     canUndo: canUndoTakuzuSession(session),
-    elapsedMs: getTakuzuSessionElapsedMs(session, now),
-    result,
+    canRestart: canRestartTakuzuSession(session),
     cycleCell,
     placeCell,
     undo,
