@@ -17,8 +17,7 @@ import {
   type ReflectionEntry,
 } from "@/games/reflection/puzzle/laser";
 import { isReflectionSolved } from "@/games/reflection/puzzle/rules";
-
-export type ReflectionSessionStatus = "playing" | "cleared";
+import { type GameSession, getClearedSessionElapsedMs } from "@/games/session";
 
 /**
  * 選んでいる対象。
@@ -29,13 +28,11 @@ export type ReflectionSelection =
   | { type: "stock"; piece: ReflectionPiece }
   | { type: "cell"; cellIndex: number };
 
-export type ReflectionSession = {
-  status: ReflectionSessionStatus;
-  problem: ReflectionProblem;
-  board: ReflectionBoard;
+export type ReflectionSession = GameSession<
+  ReflectionProblem,
+  ReflectionBoard
+> & {
   selection: ReflectionSelection | null;
-  startedAt: number;
-  finishedAt: number | null;
   /** 盤面・ストックを押して状態が変わった回数。 */
   inputCount: number;
   /**
@@ -71,7 +68,7 @@ export function createReflectionSession(
   return {
     status: "playing",
     problem,
-    board: createEmptyReflectionBoard(problem.size),
+    puzzleState: createEmptyReflectionBoard(problem.size),
     selection: null,
     startedAt,
     finishedAt: null,
@@ -87,7 +84,7 @@ export function createReflectionSession(
 export function getReflectionSessionStock(
   session: ReflectionSession,
 ): ReflectionInventory {
-  const placed = countReflectionBoardPieces(session.board);
+  const placed = countReflectionBoardPieces(session.puzzleState);
   const stock = createEmptyReflectionInventory();
   for (const piece of reflectionPieces) {
     stock[piece] = session.problem.inventory[piece] - placed[piece];
@@ -142,7 +139,7 @@ function applyBoardChange(
 ): ReflectionSession {
   const next: ReflectionSession = {
     ...session,
-    board,
+    puzzleState: board,
     selection,
     inputCount: session.inputCount + 1,
     relocationCount: session.relocationCount + (relocated ? 1 : 0),
@@ -165,7 +162,10 @@ function selectionAfterPlacing(
   board: ReflectionBoard,
   piece: ReflectionPiece,
 ): ReflectionSelection | null {
-  const remaining = getReflectionSessionStock({ ...session, board })[piece];
+  const remaining = getReflectionSessionStock({
+    ...session,
+    puzzleState: board,
+  })[piece];
   return remaining > 0 ? { type: "stock", piece } : null;
 }
 
@@ -184,7 +184,7 @@ export function tapReflectionSessionStock(
 
   const { selection } = session;
   if (selection?.type === "cell") {
-    const selectedCell = session.board.cells[selection.cellIndex] ?? null;
+    const selectedCell = session.puzzleState.cells[selection.cellIndex] ?? null;
     if (
       selectedCell !== piece &&
       getReflectionSessionStock(session)[piece] <= 0
@@ -194,7 +194,7 @@ export function tapReflectionSessionStock(
     return applyBoardChange(
       session,
       withCell(
-        session.board,
+        session.puzzleState,
         selection.cellIndex,
         selectedCell === piece ? null : piece,
       ),
@@ -226,7 +226,7 @@ export function tapReflectionSessionCell(
 ): ReflectionSession {
   if (session.status !== "playing") return session;
 
-  const { board, selection } = session;
+  const { puzzleState: board, selection } = session;
   const tappedCell = board.cells[cellIndex];
   if (tappedCell === undefined) return session;
 
@@ -279,13 +279,13 @@ export function removeReflectionSessionPiece(
 ): ReflectionSession {
   if (session.status !== "playing") return session;
 
-  const cell = session.board.cells[cellIndex];
+  const cell = session.puzzleState.cells[cellIndex];
   if (cell === undefined || cell === null) return session;
 
   const { selection } = session;
   return applyBoardChange(
     session,
-    withCell(session.board, cellIndex, null),
+    withCell(session.puzzleState, cellIndex, null),
     selection?.type === "cell" ? null : selection,
     true,
     operatedAt,
@@ -333,7 +333,7 @@ export function restartReflectionSession(
 
   return {
     ...session,
-    board: createEmptyReflectionBoard(session.problem.size),
+    puzzleState: createEmptyReflectionBoard(session.problem.size),
     selection: null,
     laserEntry: null,
     restartCount: session.restartCount + 1,
@@ -345,34 +345,20 @@ export function canRestartReflectionSession(
 ): boolean {
   return (
     session.status === "playing" &&
-    session.board.cells.some((cell) => cell !== null)
+    session.puzzleState.cells.some((cell) => cell !== null)
   );
-}
-
-/** 同じ問題を新しいプレイとして始める（リセット）。 */
-export function replayReflectionSession(
-  session: ReflectionSession,
-  startedAt: number,
-): ReflectionSession {
-  return createReflectionSession(session.problem, startedAt);
-}
-
-export function getReflectionSessionElapsedMs(
-  session: ReflectionSession,
-  now: number,
-): number {
-  return Math.max(0, (session.finishedAt ?? now) - session.startedAt);
 }
 
 export function getReflectionSessionResult(
   session: ReflectionSession,
 ): ReflectionSessionResult | null {
-  if (session.status !== "cleared" || session.finishedAt === null) {
+  const elapsedMs = getClearedSessionElapsedMs(session);
+  if (elapsedMs === null) {
     return null;
   }
 
   return {
-    elapsedMs: getReflectionSessionElapsedMs(session, session.finishedAt),
+    elapsedMs,
     relocationCount: session.relocationCount,
     restartCount: session.restartCount,
     laserCheckCount: session.laserCheckCount,

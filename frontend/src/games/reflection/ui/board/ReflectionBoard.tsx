@@ -6,11 +6,9 @@ import {
   useState,
 } from "react";
 
+import type { GameProgress } from "@/games/play";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
-import type {
-  ReflectionLaserView,
-  ReflectionProgress,
-} from "@/games/reflection/play/use-reflection-play";
+import type { ReflectionLaserView } from "@/games/reflection/play/use-reflection-play";
 import type { ReflectionBoard as ReflectionBoardState } from "@/games/reflection/puzzle/board";
 import {
   isSameReflectionEntry,
@@ -40,7 +38,7 @@ type ReflectionBoardProps = {
   clueMatches: readonly boolean[];
   selection: ReflectionSelection | null;
   laser: ReflectionLaserView | null;
-  progress: ReflectionProgress;
+  progress: GameProgress;
   onTapCell: (cellIndex: number) => void;
   onTapClue: (entry: ReflectionEntry) => void;
   onRemovePiece: (cellIndex: number) => void;
