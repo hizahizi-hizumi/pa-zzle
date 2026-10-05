@@ -147,6 +147,13 @@ frontend/src/games/
 - 別ゲームの実装を直接 import しない。
 - 循環依存を作らない。例外を追加する前に責務の配置を見直す。
 
+## クリア演出
+
+- クリア演出は `@/lib/motion` の `playAnimations` で再生し、完了を通知する。演出の中身と長さ、演出後に盤面を見せておく時間はゲームが決める。
+- 動きを減らす設定では、クリア演出をせずにすぐ完了を通知する。
+- 演出の完了を受け取る盤面と Play の props は `onClearAnimationComplete` とする。
+- 演出の層はプレイ画面の中に描き、`document.body` へ portal しない。重なり順はプレイ画面の中の値で表す。
+
 ## ゲーム直下
 
 - ゲーム直下には `display-name`、`difficulty`、`score`、`problem-selection`、`play-record`、`play-attempt`、`diagnostics` のようなゲーム全体の責務だけを置く。
