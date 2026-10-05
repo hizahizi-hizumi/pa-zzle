@@ -1,11 +1,8 @@
 import type { ReactNode } from "react";
-
 import { GameResultScreen } from "@/components/GameResultScreen";
+import { getDifficultyLabel } from "@/games/difficulty";
 import slidePuzzlePictogramSvg from "@/games/slide-puzzle/assets/pictogram.svg?raw";
-import {
-  getSlidePuzzleDifficultyLabel,
-  type SlidePuzzleDifficulty,
-} from "@/games/slide-puzzle/difficulty";
+import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import type { SlidePuzzleResult } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import { SLIDE_PUZZLE_SCORE_MAXIMUMS } from "@/games/slide-puzzle/score";
 import { getSlidePuzzleScoreCriteria } from "@/games/slide-puzzle/ui/result/SlidePuzzleResultScreen/score-criteria";
@@ -45,7 +42,7 @@ export function SlidePuzzleResultScreen({
   return (
     <GameResultScreen
       gameName="スライドパズル"
-      difficultyLabel={getSlidePuzzleDifficultyLabel(difficulty)}
+      difficultyLabel={getDifficultyLabel(difficulty)}
       pictogramSvg={slidePuzzlePictogramSvg}
       score={result.score.total}
       metrics={[

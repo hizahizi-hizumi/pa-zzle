@@ -3,8 +3,8 @@ import {
   InternalDiagnosticsDialog,
 } from "@/components/InternalDiagnosticsDialog";
 import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
+import { getDifficultyLabel } from "@/games/difficulty";
 import type { ReflectionDiagnosticSnapshot } from "@/games/reflection/diagnostics";
-import { getReflectionDifficultyLabel } from "@/games/reflection/difficulty";
 import type { ReflectionGenerationConditions } from "@/games/reflection/problem/problem";
 import type { ReflectionProblemPoolReference } from "@/games/reflection/problem/problem-pool";
 
@@ -35,7 +35,7 @@ function listDetails({
     { label: "問題集", value: formatProblemPool(problemPool), mono: true },
     {
       label: "分類",
-      value: getReflectionDifficultyLabel(difficultyAssessment.difficulty),
+      value: getDifficultyLabel(difficultyAssessment.difficulty),
     },
     {
       label: "最高推論",
@@ -51,7 +51,7 @@ export function ReflectionDiagnostics({
 }: ReflectionDiagnosticsProps) {
   return (
     <InternalDiagnosticsDialog
-      difficultyLabel={getReflectionDifficultyLabel(snapshot.difficulty)}
+      difficultyLabel={getDifficultyLabel(snapshot.difficulty)}
       seed={snapshot.problemIdentity.seed}
       generatorVersion={snapshot.problemIdentity.generatorVersion}
       generationConditions={formatGenerationConditions(

@@ -2,8 +2,8 @@ import {
   INTERNAL_DIAGNOSTIC_FORMAT_VERSION,
   type InternalDiagnosticSnapshot,
 } from "@/games/diagnostics";
+import { parseDifficultyLevel } from "@/games/difficulty";
 import {
-  parseReflectionDifficulty,
   type ReflectionDifficulty,
   type ReflectionDifficultyAssessment,
   reflectionLevelCombinations,
@@ -30,7 +30,7 @@ type ReflectionDiagnosticAssessment = Extract<
 function assessPooledProblem(
   poolReference: ReflectionProblemPoolReference,
 ): ReflectionDiagnosticAssessment {
-  const difficulty = parseReflectionDifficulty(
+  const difficulty = parseDifficultyLevel(
     poolReference.problemId.split("-")[0],
   );
   if (difficulty === undefined) {
@@ -101,7 +101,7 @@ function isDifficultyAssessment(
     isRecord(value) &&
     value.status === "classified" &&
     typeof value.difficulty === "string" &&
-    parseReflectionDifficulty(value.difficulty) !== undefined &&
+    parseDifficultyLevel(value.difficulty) !== undefined &&
     typeof value.reasoningLevel === "number"
   );
 }
@@ -116,7 +116,7 @@ export function parseReflectionDiagnosticSnapshot(
 
   const difficulty =
     typeof value.difficulty === "string"
-      ? parseReflectionDifficulty(value.difficulty)
+      ? parseDifficultyLevel(value.difficulty)
       : undefined;
   if (
     value.formatVersion !== INTERNAL_DIAGNOSTIC_FORMAT_VERSION ||

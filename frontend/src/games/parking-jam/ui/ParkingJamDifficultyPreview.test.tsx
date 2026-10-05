@@ -1,9 +1,9 @@
 import { cleanup, render } from "@testing-library/react";
+import { difficultyLevels } from "@/games/difficulty";
 
 import {
   calculateParkingJamChallengeLevers,
   type ParkingJamDifficulty,
-  parkingJamDifficulties,
   parkingJamLevelLevers,
 } from "@/games/parking-jam/difficulty";
 import { analyzeParkingJamDifficulty } from "@/games/parking-jam/problem/difficulty-analysis";
@@ -18,7 +18,7 @@ const { createPreviewBoard } = _private;
 
 afterEach(cleanup);
 
-const difficulties = parkingJamDifficulties.map(function toId({ id }) {
+const difficulties = difficultyLevels.map(function toId({ id }) {
   return id;
 });
 const adjacentDifficulties = difficulties

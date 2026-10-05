@@ -1,7 +1,5 @@
-import {
-  assessWaterSortDifficulty,
-  waterSortDifficulties,
-} from "@/games/water-sort/difficulty";
+import { difficultyLevels } from "@/games/difficulty";
+import { assessWaterSortDifficulty } from "@/games/water-sort/difficulty";
 import {
   listWaterSortPoolEntries,
   toWaterSortPooledProblem,
@@ -9,7 +7,7 @@ import {
 import { selectWaterSortProblemForDifficulty } from "@/games/water-sort/problem-selection";
 import { isStandardWaterSortInitialState } from "@/games/water-sort/puzzle/state";
 
-const difficulties = waterSortDifficulties.map(({ id }) => id);
+const difficulties = difficultyLevels.map(({ id }) => id);
 
 describe("問題集", () => {
   test.each(difficulties)(

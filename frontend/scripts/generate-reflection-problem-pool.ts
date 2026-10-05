@@ -1,12 +1,12 @@
 import { writeFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
+import { difficultyLevels } from "@/games/difficulty";
 import {
   assessReflectionDifficulty,
   coversReflectionGenerationCondition,
   listReflectionGenerationConditions,
   type ReflectionDifficulty,
   type ReflectionLevelCombination,
-  reflectionDifficulties,
   reflectionLevelCombinations,
 } from "@/games/reflection/difficulty";
 import { analyzeReflectionDifficulty } from "@/games/reflection/problem/difficulty-analysis";
@@ -134,7 +134,7 @@ function conditionKeyOf({
 function findTrialPrefilter(
   condition: ReflectionGenerationConditions,
 ): number | null {
-  const minimums = reflectionDifficulties
+  const minimums = difficultyLevels
     .map(
       ({ id }): ReflectionLevelCombination => reflectionLevelCombinations[id],
     )
@@ -389,13 +389,13 @@ function formatCounts(values: readonly (string | number)[]): string {
 function formatPoolJson(
   levels: Record<ReflectionDifficulty, readonly ReflectionProblemPoolEntry[]>,
 ): string {
-  const lines = reflectionDifficulties.map(
+  const lines = difficultyLevels.map(
     ({ id }, levelIndex) =>
       `    ${JSON.stringify(id)}: [\n${levels[id]
         .map((entry) => `      ${JSON.stringify(entry)}`)
         .join(
           ",\n",
-        )}\n    ]${levelIndex < reflectionDifficulties.length - 1 ? "," : ""}`,
+        )}\n    ]${levelIndex < difficultyLevels.length - 1 ? "," : ""}`,
   );
   return `{\n  "poolVersion": ${JSON.stringify(poolVersion)},\n  "generatorVersion": ${JSON.stringify(REFLECTION_GENERATOR_VERSION)},\n  "levels": {\n${lines.join("\n")}\n  }\n}\n`;
 }
@@ -403,7 +403,7 @@ function formatPoolJson(
 function formatDetails(
   results: ReadonlyMap<ReflectionDifficulty, LevelSelection>,
 ): string {
-  const lines = reflectionDifficulties.flatMap(({ id: difficulty }) =>
+  const lines = difficultyLevels.flatMap(({ id: difficulty }) =>
     results
       .get(difficulty)!
       .selected.map(({ condition, candidate }, entryIndex) =>
@@ -471,7 +471,7 @@ async function runMain(): Promise<void> {
 
   const statesByKey = new Map<string, ConditionState>();
   const levelStates = Object.fromEntries(
-    reflectionDifficulties.map(({ id }) => [
+    difficultyLevels.map(({ id }) => [
       id,
       listReflectionGenerationConditions(id).map((condition) => {
         const key = conditionKeyOf(condition);
@@ -483,12 +483,12 @@ async function runMain(): Promise<void> {
   ) as Record<ReflectionDifficulty, ConditionState[]>;
 
   const prefixLengths = Object.fromEntries(
-    reflectionDifficulties.map(({ id }) => [id, 0]),
+    difficultyLevels.map(({ id }) => [id, 0]),
   ) as Record<ReflectionDifficulty, number>;
   const results = new Map<ReflectionDifficulty, LevelSelection>();
 
   for (;;) {
-    const pending = reflectionDifficulties
+    const pending = difficultyLevels
       .map(({ id }) => id)
       .filter((id) => !results.has(id));
     if (pending.length === 0) {
@@ -527,7 +527,7 @@ async function runMain(): Promise<void> {
       }
     }
     console.error(
-      `${Math.round((performance.now() - startedAt) / 1000)}s ${reflectionDifficulties
+      `${Math.round((performance.now() - startedAt) / 1000)}s ${difficultyLevels
         .map(
           ({ id }) =>
             `${id}:${results.has(id) ? "done" : `${prefixLengths[id]}/条件`}`,
@@ -541,7 +541,7 @@ async function runMain(): Promise<void> {
     ReflectionDifficulty,
     ReflectionProblemPoolEntry[]
   >;
-  for (const { id: difficulty } of reflectionDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     levels[difficulty] = results
       .get(difficulty)!
       .selected.map(({ candidate }) => [
@@ -554,7 +554,7 @@ async function runMain(): Promise<void> {
   }
 
   const report: string[] = [];
-  for (const { id: difficulty } of reflectionDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     const { selected, duplicateCount, examinedLengths } =
       results.get(difficulty)!;
     const examined = levelStates[difficulty].flatMap((state) =>
@@ -598,7 +598,7 @@ type VerifyFailure = {
 
 function runVerifyWorker(args: readonly string[]): void {
   const [jobIndex, jobCount] = args.map(Number);
-  for (const { id: difficulty } of reflectionDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     listReflectionPoolEntries(difficulty).forEach((entry, index) => {
       if (index % jobCount! !== jobIndex) {
         return;
@@ -646,7 +646,7 @@ function runVerifyWorker(args: readonly string[]): void {
 
 function measureSelection(): string {
   const durations: number[] = [];
-  for (const { id: difficulty } of reflectionDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     for (let index = 0; index < 2000; index += 1) {
       const startedAt = performance.now();
       selectReflectionProblemForDifficulty(difficulty, `measure-${index}`);
@@ -696,7 +696,7 @@ async function runVerify(): Promise<void> {
     ReflectionDifficulty,
     ReflectionProblemPoolEntry[]
   >;
-  for (const { id: difficulty } of reflectionDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     levels[difficulty] = [...listReflectionPoolEntries(difficulty)];
     for (const entry of levels[difficulty]) {
       total += 1;
@@ -720,7 +720,7 @@ async function runVerify(): Promise<void> {
       `  レベル ${failure.difficulty} の ${failure.index + 1}番: ${failure.reason}`,
     );
   }
-  for (const { id: difficulty } of reflectionDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     console.log(
       [
         `レベル ${difficulty}: ${levels[difficulty].length}問`,

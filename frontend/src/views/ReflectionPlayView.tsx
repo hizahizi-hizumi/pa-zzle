@@ -1,9 +1,8 @@
 import { useLocation } from "react-router";
-
 import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
 import { readAvoidedProblemId } from "@/game-catalog/play-location-state";
 import { PlayableReflection } from "@/game-catalog/reflection/PlayableReflection";
-import { parseReflectionDifficulty } from "@/games/reflection/difficulty";
+import { parseDifficultyLevel } from "@/games/difficulty";
 import { useParams } from "@/router";
 
 export function ReflectionPlayView() {
@@ -11,7 +10,7 @@ export function ReflectionPlayView() {
     "/puzzles/reflection/play/:difficulty",
   );
   const avoidedProblemId = readAvoidedProblemId(useLocation().state);
-  const difficulty = parseReflectionDifficulty(difficultyParam);
+  const difficulty = parseDifficultyLevel(difficultyParam);
 
   if (!difficulty) {
     return (

@@ -1,8 +1,10 @@
 import {
-  parseWaterSortDifficulty,
-  parseWaterSortRecordedDifficulty,
-  type WaterSortDifficulty,
-  type WaterSortRecordedDifficulty,
+  parseDifficultyLevel,
+  parseRecordedDifficulty,
+} from "@/games/difficulty";
+import type {
+  WaterSortDifficulty,
+  WaterSortRecordedDifficulty,
 } from "@/games/water-sort/difficulty";
 import {
   createWaterSortResult,
@@ -113,7 +115,7 @@ function hasValidPayloadBase(
   payload: Partial<WaterSortPlayRecordPayloadV1>,
 ): boolean {
   return (
-    parseWaterSortRecordedDifficulty(payload.difficulty) !== undefined &&
+    parseRecordedDifficulty(payload.difficulty) !== undefined &&
     isWaterSortProblemIdentity(payload.problemIdentity)
   );
 }
@@ -165,7 +167,7 @@ export function restoreWaterSortRecordedResult(
     return null;
   }
 
-  const difficulty = parseWaterSortDifficulty(record.payload.difficulty);
+  const difficulty = parseDifficultyLevel(record.payload.difficulty);
   if (difficulty === undefined) {
     return null;
   }

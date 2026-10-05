@@ -1,8 +1,8 @@
+import { difficultyLevels } from "@/games/difficulty";
 import {
   assessReflectionDifficulty,
   type ReflectionDifficulty,
   type ReflectionLevelCombination,
-  reflectionDifficulties,
   reflectionLevelCombinations,
 } from "@/games/reflection/difficulty";
 import { analyzeReflectionDifficulty } from "@/games/reflection/problem/difficulty-analysis";
@@ -26,7 +26,7 @@ import {
   listReflectionClueMatches,
 } from "@/games/reflection/puzzle/rules";
 
-const difficulties = reflectionDifficulties.map(({ id }) => id);
+const difficulties = difficultyLevels.map(({ id }) => id);
 
 // 全問の一意性確認・分析・再生成には数十分かかるため、テストでは等間隔に抜き出した問題だけを確かめる。
 // 人間向け解法器の分析はレベル5 の 9×9〜10×10 で1問数秒〜数十秒かかるので、レベル1〜4 だけで行う。

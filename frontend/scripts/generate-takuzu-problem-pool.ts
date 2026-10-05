@@ -1,9 +1,9 @@
 import { writeFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
+import { difficultyLevels } from "@/games/difficulty";
 import {
   assessTakuzuDifficulty,
   type TakuzuDifficulty,
-  takuzuDifficulties,
 } from "@/games/takuzu/difficulty";
 import { generateTakuzuProblem } from "@/games/takuzu/problem/generator";
 import {
@@ -381,13 +381,13 @@ function formatCounts(values: readonly (string | number)[]): string {
 function formatPoolJson(
   levels: Record<TakuzuDifficulty, TakuzuProblemPoolEntry[]>,
 ): string {
-  const lines = takuzuDifficulties.map(
+  const lines = difficultyLevels.map(
     ({ id }, levelIndex) =>
       `    ${JSON.stringify(id)}: [\n${levels[id]
         .map((entry) => `      ${JSON.stringify(entry)}`)
         .join(
           ",\n",
-        )}\n    ]${levelIndex < takuzuDifficulties.length - 1 ? "," : ""}`,
+        )}\n    ]${levelIndex < difficultyLevels.length - 1 ? "," : ""}`,
   );
   return `{\n  "generatorVersion": ${JSON.stringify(TAKUZU_GENERATOR_VERSION)},\n  "levels": {\n${lines.join("\n")}\n  }\n}\n`;
 }
@@ -416,7 +416,7 @@ async function runMain(): Promise<void> {
 
   const statesByKey = new Map<string, ConditionState>();
   const levelStates = Object.fromEntries(
-    takuzuDifficulties.map(({ id }) => [
+    difficultyLevels.map(({ id }) => [
       id,
       levelConditions[id].map((condition) => {
         const key = conditionKeyOf(condition);
@@ -428,12 +428,12 @@ async function runMain(): Promise<void> {
   ) as Record<TakuzuDifficulty, ConditionState[]>;
 
   const prefixLengths = Object.fromEntries(
-    takuzuDifficulties.map(({ id }) => [id, 0]),
+    difficultyLevels.map(({ id }) => [id, 0]),
   ) as Record<TakuzuDifficulty, number>;
   const results = new Map<TakuzuDifficulty, LevelSelection>();
 
   for (;;) {
-    const pending = takuzuDifficulties
+    const pending = difficultyLevels
       .map(({ id }) => id)
       .filter((id) => !results.has(id));
     if (pending.length === 0) {
@@ -472,7 +472,7 @@ async function runMain(): Promise<void> {
       }
     }
     console.error(
-      `${Math.round((performance.now() - startedAt) / 1000)}s ${takuzuDifficulties
+      `${Math.round((performance.now() - startedAt) / 1000)}s ${difficultyLevels
         .map(
           ({ id }) =>
             `${id}:${results.has(id) ? "done" : `${prefixLengths[id]}/条件`}`,
@@ -484,7 +484,7 @@ async function runMain(): Promise<void> {
 
   const levels = {} as Record<TakuzuDifficulty, TakuzuProblemPoolEntry[]>;
   const report: string[] = [];
-  for (const { id: difficulty } of takuzuDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     const { selected, duplicateCount, examinedLengths } =
       results.get(difficulty)!;
     levels[difficulty] = selected.map(({ condition, candidate }) => [
@@ -549,7 +549,7 @@ type VerifyFailure = {
 
 function runVerifyWorker(args: readonly string[]): void {
   const [jobIndex, jobCount] = args.map(Number);
-  for (const { id: difficulty } of takuzuDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     listTakuzuPoolEntries(difficulty).forEach((entry, index) => {
       if (index % jobCount! !== jobIndex) {
         return;
@@ -593,7 +593,7 @@ function runVerifyWorker(args: readonly string[]): void {
 
 function measureSelection(): string {
   const durations: number[] = [];
-  for (const { id: difficulty } of takuzuDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     for (let index = 0; index < 2000; index += 1) {
       const startedAt = performance.now();
       selectTakuzuProblemForDifficulty(difficulty, `measure-${index}`);
@@ -638,7 +638,7 @@ async function runVerify(): Promise<void> {
   let duplicateCount = 0;
   let total = 0;
   const levels = {} as Record<TakuzuDifficulty, TakuzuProblemPoolEntry[]>;
-  for (const { id: difficulty } of takuzuDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     levels[difficulty] = [...listTakuzuPoolEntries(difficulty)];
     for (const entry of levels[difficulty]) {
       total += 1;
@@ -658,7 +658,7 @@ async function runVerify(): Promise<void> {
       `  難易度 ${failure.difficulty} の ${failure.index}番: ${failure.reason}`,
     );
   }
-  for (const { id: difficulty } of takuzuDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     console.log(
       `難易度 ${difficulty}${describeSpeedFullScore(levels[difficulty].map((entry) => toTakuzuPooledProblem(entry)))}`,
     );

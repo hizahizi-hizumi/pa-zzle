@@ -1,30 +1,10 @@
+import type { DifficultyLevel } from "@/games/difficulty";
 import type {
   TakuzuDifficultyAnalysis,
   TakuzuHumanSolveFeatures,
 } from "@/games/takuzu/problem/difficulty-analysis";
 
-export const takuzuDifficulties = [
-  { id: "1", label: "レベル 1" },
-  { id: "2", label: "レベル 2" },
-  { id: "3", label: "レベル 3" },
-  { id: "4", label: "レベル 4" },
-  { id: "5", label: "レベル 5" },
-] as const;
-
-export type TakuzuDifficulty = (typeof takuzuDifficulties)[number]["id"];
-
-export function parseTakuzuDifficulty(
-  value: string | undefined,
-): TakuzuDifficulty | undefined {
-  return takuzuDifficulties.find((difficulty) => difficulty.id === value)?.id;
-}
-
-export function getTakuzuDifficultyLabel(difficulty: TakuzuDifficulty): string {
-  return (
-    takuzuDifficulties.find((option) => option.id === difficulty)?.label ??
-    difficulty
-  );
-}
+export type TakuzuDifficulty = DifficultyLevel;
 
 /**
  * 分析結果を難易度へ分類した結果。

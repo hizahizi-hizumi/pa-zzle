@@ -1,56 +1,9 @@
+import { type DifficultyLevel, difficultyLevels } from "@/games/difficulty";
 import type { SlidePuzzleDifficultyAnalysis } from "@/games/slide-puzzle/problem/difficulty-analysis";
 import type { SlidePuzzleProblemIdentity } from "@/games/slide-puzzle/problem/problem";
 import type { SlidePuzzleBoardSize } from "@/games/slide-puzzle/puzzle/state";
 
-export const slidePuzzleDifficulties = [
-  {
-    id: "1",
-    label: "レベル 1",
-    description: "小さな盤面で、ときどき回り込みながら揃えます",
-  },
-  {
-    id: "2",
-    label: "レベル 2",
-    description:
-      "盤面が広がり、ときどき揃えかけたタイルを一度どかす必要があります",
-  },
-  {
-    id: "3",
-    label: "レベル 3",
-    description: "タイル同士が道をふさぎ、回り込む順番を考える必要があります",
-  },
-  {
-    id: "4",
-    label: "レベル 4",
-    description:
-      "盤面がさらに広がり、外側から順に小さな盤面へ落とし込みながら、道をふさぐタイルを回り込ませます",
-  },
-  {
-    id: "5",
-    label: "レベル 5",
-    description:
-      "何枚ものタイルの退避と送り込みを組み合わせ、入り組んだ手順を読みます",
-  },
-] as const;
-
-export type SlidePuzzleDifficulty =
-  (typeof slidePuzzleDifficulties)[number]["id"];
-
-export function parseSlidePuzzleDifficulty(
-  value: string | undefined,
-): SlidePuzzleDifficulty | undefined {
-  return slidePuzzleDifficulties.find((difficulty) => difficulty.id === value)
-    ?.id;
-}
-
-export function getSlidePuzzleDifficultyLabel(
-  difficulty: SlidePuzzleDifficulty,
-): string {
-  return (
-    slidePuzzleDifficulties.find((option) => option.id === difficulty)?.label ??
-    difficulty
-  );
-}
+export type SlidePuzzleDifficulty = DifficultyLevel;
 
 /**
  * 盤面サイズごとの提供範囲の下限（最短手数）。無作為に「近づける手」を選び続けるだけで
@@ -137,7 +90,7 @@ export function assessSlidePuzzleDifficulty(
   }
 
   return (
-    slidePuzzleDifficulties.find(({ id }) => {
+    difficultyLevels.find(({ id }) => {
       const criteria = slidePuzzleDifficultyCriteria[id];
       return (
         criteria.boardSize === boardSize &&

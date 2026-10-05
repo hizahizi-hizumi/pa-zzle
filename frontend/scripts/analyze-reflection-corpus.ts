@@ -1,11 +1,11 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import { difficultyLevels } from "@/games/difficulty";
 import {
   assessReflectionDifficulty,
   listReflectionGenerationConditions,
   type ReflectionDifficulty,
   type ReflectionDifficultyAssessment,
-  reflectionDifficulties,
 } from "@/games/reflection/difficulty";
 import {
   analyzeReflectionDifficulty,
@@ -272,7 +272,7 @@ const reasoningOrder = [
   "invalid",
 ] as const;
 const levelOrder = [
-  ...reflectionDifficulties.map(({ id }) => id),
+  ...difficultyLevels.map(({ id }) => id),
   "out-of-range",
   "unsupported",
   "invalid",
@@ -325,7 +325,7 @@ function printConditionSummary(records: readonly FlatRecord[]): void {
 
 function printLevelScale(records: readonly FlatRecord[]): void {
   console.log("\n## レベルごとの盤面サイズ・ピース数の内訳（問題数）");
-  for (const { id } of reflectionDifficulties) {
+  for (const { id } of difficultyLevels) {
     const group = records.filter((record) => record.level === id);
     const bySize = [...Map.groupBy(group, (record) => String(record.size))]
       .map(([size, rows]) => `${size}x${size}:${rows.length}`)
@@ -354,11 +354,9 @@ const featureColumns = [
 
 function printFeaturesByLevel(records: readonly FlatRecord[]): void {
   console.log("\n## レベルごとの特徴量（中央値 (四分位)）");
-  console.log(
-    ["feature", ...reflectionDifficulties.map(({ id }) => id)].join("\t"),
-  );
+  console.log(["feature", ...difficultyLevels.map(({ id }) => id)].join("\t"));
   for (const column of featureColumns) {
-    const cells = reflectionDifficulties.map(({ id }) => {
+    const cells = difficultyLevels.map(({ id }) => {
       const values = records
         .filter((record) => record.level === id)
         .map((record) => Number(record[column]))
@@ -400,7 +398,7 @@ function printSupply(records: readonly FlatRecord[]): void {
   console.log(
     "\n## レベルごとの供給（規模の範囲内の候補のうち、そのレベルに分類された割合と、採用1問あたりの生成＋分析時間）",
   );
-  for (const { id } of reflectionDifficulties) {
+  for (const { id } of difficultyLevels) {
     const conditionKeys = new Set(
       listReflectionGenerationConditions(id).map(
         ({ size, pieceCount }) => `${size}x${size}/${pieceCount}`,
@@ -441,8 +439,8 @@ function printSharedScale(records: readonly FlatRecord[]): void {
   console.log(
     "\n## 隣り合うレベルが共有する規模（両方の範囲に入る盤面サイズ・ピース数）での分類の内訳",
   );
-  for (const [order, { id: lower }] of reflectionDifficulties.entries()) {
-    const upper = reflectionDifficulties[order + 1]?.id;
+  for (const [order, { id: lower }] of difficultyLevels.entries()) {
+    const upper = difficultyLevels[order + 1]?.id;
     if (upper === undefined) {
       continue;
     }

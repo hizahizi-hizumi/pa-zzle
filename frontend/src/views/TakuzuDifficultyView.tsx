@@ -1,6 +1,6 @@
 import { DifficultySelectionHeading } from "@/components/DifficultySelectionHeading";
 import { HomeBackLink } from "@/components/HomeBackLink";
-import { takuzuDifficulties } from "@/games/takuzu/difficulty";
+import { difficultyLevels } from "@/games/difficulty";
 import { TakuzuHowToPlayDialog } from "@/games/takuzu/ui/TakuzuHowToPlayDialog";
 import { TakuzuDifficultyOption } from "@/views/TakuzuDifficultyView/TakuzuDifficultyOption";
 
@@ -18,7 +18,7 @@ export function TakuzuDifficultyView() {
       </div>
 
       <div className="grid gap-2 sm:gap-4 lg:grid-cols-5">
-        {takuzuDifficulties.map((difficulty) => (
+        {difficultyLevels.map((difficulty) => (
           <TakuzuDifficultyOption
             key={difficulty.id}
             difficulty={difficulty.id}

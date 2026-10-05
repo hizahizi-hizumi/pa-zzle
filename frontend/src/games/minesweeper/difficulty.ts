@@ -1,35 +1,11 @@
+import type { DifficultyLevel } from "@/games/difficulty";
 import type {
   MinesweeperDifficultyAnalysis,
   MinesweeperHumanSolveFeatures,
   MinesweeperScaleMetrics,
 } from "@/games/minesweeper/problem/difficulty-analysis";
 
-export const minesweeperDifficulties = [
-  { id: "1", label: "レベル 1" },
-  { id: "2", label: "レベル 2" },
-  { id: "3", label: "レベル 3" },
-  { id: "4", label: "レベル 4" },
-  { id: "5", label: "レベル 5" },
-] as const;
-
-export type MinesweeperDifficulty =
-  (typeof minesweeperDifficulties)[number]["id"];
-
-export function parseMinesweeperDifficulty(
-  value: string | undefined,
-): MinesweeperDifficulty | undefined {
-  return minesweeperDifficulties.find((difficulty) => difficulty.id === value)
-    ?.id;
-}
-
-export function getMinesweeperDifficultyLabel(
-  difficulty: MinesweeperDifficulty,
-): string {
-  return (
-    minesweeperDifficulties.find((option) => option.id === difficulty)?.label ??
-    difficulty
-  );
-}
+export type MinesweeperDifficulty = DifficultyLevel;
 
 export type MinesweeperBoardSize = { rows: number; columns: number };
 

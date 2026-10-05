@@ -1,7 +1,7 @@
+import { difficultyLevels } from "@/games/difficulty";
 import {
   assessTakuzuDifficulty,
   type TakuzuDifficulty,
-  takuzuDifficulties,
 } from "@/games/takuzu/difficulty";
 import { analyzeTakuzuDifficulty } from "@/games/takuzu/problem/difficulty-analysis";
 import { generateTakuzuProblem } from "@/games/takuzu/problem/generator";
@@ -20,7 +20,7 @@ import {
   selectTakuzuProblemForDifficulty,
 } from "@/games/takuzu/problem-selection";
 
-const difficulties = takuzuDifficulties.map(({ id }) => id);
+const difficulties = difficultyLevels.map(({ id }) => id);
 
 // 全問の分析と再生成は数十秒かかるため、テストでは等間隔に抜き出した問題だけを確かめる。
 // 全問の検証は `bun run generate:takuzu-pool -- --verify` で行う。

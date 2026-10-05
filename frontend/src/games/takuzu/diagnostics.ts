@@ -2,10 +2,8 @@ import {
   INTERNAL_DIAGNOSTIC_FORMAT_VERSION,
   type InternalDiagnosticSnapshot,
 } from "@/games/diagnostics";
-import {
-  parseTakuzuDifficulty,
-  type TakuzuDifficulty,
-} from "@/games/takuzu/difficulty";
+import { parseDifficultyLevel } from "@/games/difficulty";
+import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import {
   isTakuzuProblemIdentity,
   type TakuzuIdentifiedProblem,
@@ -50,7 +48,7 @@ export function parseTakuzuDiagnosticSnapshot(
 
   const difficulty =
     typeof value.difficulty === "string"
-      ? parseTakuzuDifficulty(value.difficulty)
+      ? parseDifficultyLevel(value.difficulty)
       : undefined;
   if (
     value.formatVersion !== INTERNAL_DIAGNOSTIC_FORMAT_VERSION ||

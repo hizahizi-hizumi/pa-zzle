@@ -1,67 +1,19 @@
+import {
+  type DifficultyLevel,
+  difficultyLevels,
+  type RecordedDifficulty,
+} from "@/games/difficulty";
 import type {
   ParkingJamDifficultyAnalysis,
   ParkingJamDifficultyFeatures,
 } from "@/games/parking-jam/problem/difficulty-analysis";
 
-export const parkingJamDifficulties = [
-  { id: "1", label: "レベル 1" },
-  { id: "2", label: "レベル 2" },
-  { id: "3", label: "レベル 3" },
-  { id: "4", label: "レベル 4" },
-  { id: "5", label: "レベル 5" },
-] as const;
-
-export type ParkingJamDifficulty =
-  (typeof parkingJamDifficulties)[number]["id"];
+export type ParkingJamDifficulty = DifficultyLevel;
 
 // 3段階（visual-local-load-v1）時代の記録を、旧区分のまま読み込み表示するためだけに残す。
-const legacyParkingJamDifficulties = [
-  { id: "easy", label: "かんたん" },
-  { id: "normal", label: "ふつう" },
-  { id: "hard", label: "むずかしい" },
-] as const;
-
-export type LegacyParkingJamDifficulty =
-  (typeof legacyParkingJamDifficulties)[number]["id"];
-
-export type ParkingJamRecordedDifficulty =
-  | ParkingJamDifficulty
-  | LegacyParkingJamDifficulty;
+export type ParkingJamRecordedDifficulty = RecordedDifficulty;
 
 export const PARKING_JAM_DIFFICULTY_MODEL_VERSION = "challenge-levers-v1";
-
-export function parseParkingJamDifficulty(
-  value: string | undefined,
-): ParkingJamDifficulty | undefined {
-  return parkingJamDifficulties.find((difficulty) => difficulty.id === value)
-    ?.id;
-}
-
-export function parseLegacyParkingJamDifficulty(
-  value: string | undefined,
-): LegacyParkingJamDifficulty | undefined {
-  return legacyParkingJamDifficulties.find(
-    (difficulty) => difficulty.id === value,
-  )?.id;
-}
-
-export function parseParkingJamRecordedDifficulty(
-  value: string | undefined,
-): ParkingJamRecordedDifficulty | undefined {
-  return (
-    parseParkingJamDifficulty(value) ?? parseLegacyParkingJamDifficulty(value)
-  );
-}
-
-export function getParkingJamDifficultyLabel(
-  difficulty: ParkingJamRecordedDifficulty,
-): string {
-  return (
-    [...parkingJamDifficulties, ...legacyParkingJamDifficulties].find(
-      (option) => option.id === difficulty,
-    )?.label ?? difficulty
-  );
-}
 
 /** 挑戦を強めるレバーの強さ。1が最も弱い。 */
 export type ParkingJamLeverStrength = 1 | 2 | 3;
@@ -258,7 +210,7 @@ export function assessParkingJamDifficulty(
     return { status: "out-of-range", reason: "too-heavy" };
   }
 
-  const difficulty = parkingJamDifficulties.find(({ id }) =>
+  const difficulty = difficultyLevels.find(({ id }) =>
     matchesLevelLevers(levers, parkingJamLevelLevers[id]),
   )?.id;
   return difficulty

@@ -1,7 +1,5 @@
-import {
-  parseTakuzuDifficulty,
-  type TakuzuDifficulty,
-} from "@/games/takuzu/difficulty";
+import { parseDifficultyLevel } from "@/games/difficulty";
+import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import {
   createTakuzuResult,
   type TakuzuResult,
@@ -104,7 +102,7 @@ export function isTakuzuPlayRecord(
   const { difficulty, problemIdentity, workload, performance } = record.payload;
   return (
     typeof difficulty === "string" &&
-    parseTakuzuDifficulty(difficulty) !== undefined &&
+    parseDifficultyLevel(difficulty) !== undefined &&
     isTakuzuRecordedProblemIdentity(problemIdentity) &&
     isTakuzuSolveWorkload(workload) &&
     isTakuzuPerformance(performance)

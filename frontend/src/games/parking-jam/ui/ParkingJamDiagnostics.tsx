@@ -1,12 +1,10 @@
 import { InternalDiagnosticsDialog } from "@/components/InternalDiagnosticsDialog";
+import { getDifficultyLabel } from "@/games/difficulty";
 import {
   type ParkingJamDiagnosticSnapshot,
   serializeParkingJamDiagnosticSnapshot,
 } from "@/games/parking-jam/diagnostics";
-import {
-  getParkingJamDifficultyLabel,
-  type ParkingJamDifficultyAssessment,
-} from "@/games/parking-jam/difficulty";
+import type { ParkingJamDifficultyAssessment } from "@/games/parking-jam/difficulty";
 
 type ParkingJamDiagnosticsProps = {
   snapshot: ParkingJamDiagnosticSnapshot;
@@ -34,7 +32,7 @@ const outOfRangeReasonLabels = {
 function formatAssessment(assessment: ParkingJamDifficultyAssessment): string {
   switch (assessment.status) {
     case "classified":
-      return getParkingJamDifficultyLabel(assessment.difficulty);
+      return getDifficultyLabel(assessment.difficulty);
     case "out-of-range":
       return outOfRangeReasonLabels[assessment.reason];
     case "unsupported":
@@ -57,7 +55,7 @@ export function ParkingJamDiagnostics({
 
   return (
     <InternalDiagnosticsDialog
-      difficultyLabel={getParkingJamDifficultyLabel(snapshot.difficulty)}
+      difficultyLabel={getDifficultyLabel(snapshot.difficulty)}
       seed={snapshot.problemIdentity.seed}
       generatorVersion={snapshot.problemIdentity.generatorVersion}
       generationConditions={`${conditions.width}×${conditions.height} / 車 ${conditions.vehicleCount} / 開口 ${conditions.roadOpeningCount}×${conditions.roadOpeningSpan} / 固定物 ${conditions.fixedAreaCount}×${conditions.fixedAreaLength} / 遮断 ${conditions.blockingPlacementProbability}`}

@@ -1,7 +1,5 @@
-import {
-  type MinesweeperDifficulty,
-  parseMinesweeperDifficulty,
-} from "@/games/minesweeper/difficulty";
+import { parseDifficultyLevel } from "@/games/difficulty";
+import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import {
   createMinesweeperResult,
   type MinesweeperResult,
@@ -77,7 +75,7 @@ export function isMinesweeperPlayRecord(
 
   const payload = record.payload as Partial<MinesweeperPlayRecordPayload>;
   return (
-    parseMinesweeperDifficulty(payload.difficulty) !== undefined &&
+    parseDifficultyLevel(payload.difficulty) !== undefined &&
     isMinesweeperProblemIdentity(payload.problemIdentity) &&
     isMinesweeperPerformance(payload.performance)
   );

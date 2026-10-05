@@ -1,8 +1,8 @@
+import { difficultyLevels } from "@/games/difficulty";
 import {
   assessMinesweeperDifficulty,
   isInMinesweeperDifficultyBoardRange,
   type MinesweeperDifficulty,
-  minesweeperDifficulties,
 } from "@/games/minesweeper/difficulty";
 import {
   restoreMinesweeperProblem,
@@ -14,7 +14,7 @@ import {
 } from "@/games/minesweeper/problem/problem-pool";
 import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
 
-const difficulties = minesweeperDifficulties.map(({ id }) => id);
+const difficulties = difficultyLevels.map(({ id }) => id);
 
 // 全問の分析は1スレッドで20秒前後かかるため、テストでは等間隔に抜き出した問題だけを分析する。
 // 全問の検証は `bun run generate:minesweeper-pool -- --verify` で行う。

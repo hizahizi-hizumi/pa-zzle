@@ -1,5 +1,5 @@
+import { difficultyLevels } from "@/games/difficulty";
 import { createProblemId } from "@/games/problem-id";
-import { slidePuzzleDifficulties } from "@/games/slide-puzzle/difficulty";
 import {
   findSlidePuzzlePoolEntryByProblemId,
   listSlidePuzzlePoolEntries,
@@ -7,7 +7,7 @@ import {
 } from "@/games/slide-puzzle/problem/problem-pool";
 
 describe("findSlidePuzzlePoolEntryByProblemId", () => {
-  const poolEntries = slidePuzzleDifficulties.flatMap(({ id: difficulty }) =>
+  const poolEntries = difficultyLevels.flatMap(({ id: difficulty }) =>
     listSlidePuzzlePoolEntries(difficulty).map((entry) => ({
       difficulty,
       entry,

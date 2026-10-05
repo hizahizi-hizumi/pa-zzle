@@ -1,8 +1,6 @@
+import { difficultyLevels } from "@/games/difficulty";
 import { createProblemPoolIdLookup } from "@/games/problem-id";
-import {
-  type ReflectionDifficulty,
-  reflectionDifficulties,
-} from "@/games/reflection/difficulty";
+import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
 import {
   fromReflectionCellCode,
   type ReflectionCellCode,
@@ -212,7 +210,7 @@ let positionsBySeed: ReadonlyMap<string, PoolPosition> | undefined;
 
 function getPositionsBySeed(): ReadonlyMap<string, PoolPosition> {
   positionsBySeed ??= new Map(
-    reflectionDifficulties.flatMap(({ id: difficulty }) =>
+    difficultyLevels.flatMap(({ id: difficulty }) =>
       problemPool.levels[difficulty].map(
         (entry, entryIndex) =>
           [

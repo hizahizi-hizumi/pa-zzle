@@ -1,7 +1,7 @@
+import { difficultyLevels } from "@/games/difficulty";
 import { createProblemSeededRandom } from "@/games/problem-seed";
 import {
   assessSlidePuzzleDifficulty,
-  slidePuzzleDifficulties,
   slidePuzzleDifficultyCriteria,
   slidePuzzleMinimumOptimalMoveCountByBoardSize,
 } from "@/games/slide-puzzle/difficulty";
@@ -238,7 +238,7 @@ function printCorpusReport(
   const corpusScrambleLengths = corpusScrambleLengthsByBoardSize[boardSize];
   const minimumOptimalMoveCount =
     slidePuzzleMinimumOptimalMoveCountByBoardSize[boardSize];
-  const topLevel = slidePuzzleDifficulties.findLast(
+  const topLevel = difficultyLevels.findLast(
     ({ id }) => slidePuzzleDifficultyCriteria[id].boardSize === boardSize,
   )?.id;
   console.log("## 撹拌手数ごと\n");
@@ -290,7 +290,7 @@ function printCorpusReport(
       "最短手数",
       "問題数",
       "遠回り （最小 / 25% / 中央 / 75% / 最大）",
-      ...slidePuzzleDifficulties.map(({ label }) => label),
+      ...difficultyLevels.map(({ label }) => label),
     ],
     bands.map((band) => {
       const group = provided.filter(
@@ -300,7 +300,7 @@ function printCorpusReport(
         `${Math.max(band, minimumOptimalMoveCount)}〜${band + 4}`,
         String(group.length),
         summarize(group.map((sample) => sample.detourMoveCount)),
-        ...slidePuzzleDifficulties.map(({ id }) =>
+        ...difficultyLevels.map(({ id }) =>
           String(group.filter((sample) => levelOf(sample) === id).length),
         ),
       ];
@@ -315,7 +315,7 @@ function printCorpusReport(
       "最短 （最小 / 25% / 中央 / 75% / 最大）",
       "マンハッタン （最小 / 25% / 中央 / 75% / 最大）",
     ],
-    slidePuzzleDifficulties.map(({ id }) => {
+    difficultyLevels.map(({ id }) => {
       const group = provided.filter((sample) => levelOf(sample) === id);
       return [
         id,
@@ -400,7 +400,7 @@ function printCorpusReport(
     ]),
   );
 
-  const levelCounts = slidePuzzleDifficulties.map(
+  const levelCounts = difficultyLevels.map(
     ({ id }) => provided.filter((sample) => levelOf(sample) === id).length,
   );
   const byLength = [...provided].sort(
@@ -470,7 +470,7 @@ function printCorpusReport(
 }
 
 function printPoolReport() {
-  const levels = slidePuzzleDifficulties.map(({ id }) => ({
+  const levels = difficultyLevels.map(({ id }) => ({
     id,
     samples: listSlidePuzzlePoolEntries(id).map((entry) => {
       const { identity, optimalMoveCount } = toSlidePuzzlePooledProblem(entry);
@@ -541,25 +541,21 @@ function printPoolReport() {
     );
   }
   // 同じ盤面サイズの中で隣り合うレベルの境界（4×4 の 2|3、5×5 の 4|5）。
-  const sameSizeBoundaries = slidePuzzleDifficulties.flatMap(
-    ({ id }, index) => {
-      const lower = slidePuzzleDifficultyCriteria[id];
-      const upperId = slidePuzzleDifficulties[index + 1]?.id;
-      const upper = upperId
-        ? slidePuzzleDifficultyCriteria[upperId]
-        : undefined;
-      return upper &&
-        upper.boardSize === lower.boardSize &&
-        lower.maximumDetourMoveCount !== null
-        ? [
-            {
-              boardSize: lower.boardSize,
-              lowerDetour: lower.maximumDetourMoveCount,
-            },
-          ]
-        : [];
-    },
-  );
+  const sameSizeBoundaries = difficultyLevels.flatMap(({ id }, index) => {
+    const lower = slidePuzzleDifficultyCriteria[id];
+    const upperId = difficultyLevels[index + 1]?.id;
+    const upper = upperId ? slidePuzzleDifficultyCriteria[upperId] : undefined;
+    return upper &&
+      upper.boardSize === lower.boardSize &&
+      lower.maximumDetourMoveCount !== null
+      ? [
+          {
+            boardSize: lower.boardSize,
+            lowerDetour: lower.maximumDetourMoveCount,
+          },
+        ]
+      : [];
+  });
   for (const { boardSize, lowerDetour } of sameSizeBoundaries) {
     const lowerSide = all.filter(
       (sample) =>
@@ -604,7 +600,7 @@ function printPoolReport() {
       left.optimalMoveCount - right.optimalMoveCount ||
       left.detourMoveCount - right.detourMoveCount,
   );
-  for (const { id } of slidePuzzleDifficulties) {
+  for (const { id } of difficultyLevels) {
     const levelSamples = byDetourThenLength.filter(
       (sample) => sample.level === id,
     );

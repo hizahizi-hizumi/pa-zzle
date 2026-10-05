@@ -1,8 +1,7 @@
 import { useId } from "react";
 
 import { createJigsawStrip } from "@/components/DifficultyLevelPieces/jigsaw-strip";
-
-export type DifficultyLevel = "1" | "2" | "3" | "4" | "5";
+import type { DifficultyLevel } from "@/games/difficulty";
 
 type DifficultyLevelPiecesProps = {
   level: DifficultyLevel;

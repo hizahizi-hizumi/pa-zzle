@@ -1,8 +1,8 @@
+import { difficultyLevels } from "@/games/difficulty";
 import {
   assessParkingJamDifficulty,
   PARKING_JAM_DIFFICULTY_MODEL_VERSION,
   type ParkingJamDifficulty,
-  parkingJamDifficulties,
 } from "@/games/parking-jam/difficulty";
 import {
   restoreParkingJamProblem,
@@ -15,7 +15,7 @@ import {
 } from "@/games/parking-jam/problem/problem-pool";
 import { selectParkingJamProblemForDifficulty } from "@/games/parking-jam/problem-selection";
 
-const difficulties = parkingJamDifficulties.map(({ id }) => id);
+const difficulties = difficultyLevels.map(({ id }) => id);
 
 // 全問の分析は1スレッドで数十秒かかるため、テストでは等間隔に抜き出した問題だけを分析する。
 // 全問の検証は `bun run generate:parking-jam-pool -- --verify` で行う。

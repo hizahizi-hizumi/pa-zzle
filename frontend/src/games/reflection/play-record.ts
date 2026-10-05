@@ -1,7 +1,5 @@
-import {
-  parseReflectionDifficulty,
-  type ReflectionDifficulty,
-} from "@/games/reflection/difficulty";
+import { parseDifficultyLevel } from "@/games/difficulty";
+import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
 import {
   createReflectionResult,
   type ReflectionResult,
@@ -107,7 +105,7 @@ export function isReflectionPlayRecord(
   const { difficulty, problemIdentity, workload, performance } = record.payload;
   return (
     typeof difficulty === "string" &&
-    parseReflectionDifficulty(difficulty) !== undefined &&
+    parseDifficultyLevel(difficulty) !== undefined &&
     isReflectionRecordedProblemIdentity(problemIdentity) &&
     isReflectionSolveWorkload(workload) &&
     isWorkloadOfRecordedIdentity(workload, problemIdentity) &&

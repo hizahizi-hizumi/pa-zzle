@@ -1,4 +1,4 @@
-import { nanpureDifficulties } from "@/games/nanpure/difficulty";
+import { difficultyLevels } from "@/games/difficulty";
 import { generateNanpureProblem } from "@/games/nanpure/problem/generator";
 import { createNanpureProblemIdentity } from "@/games/nanpure/problem/problem";
 import {
@@ -76,7 +76,7 @@ describe("toNanpurePooledProblem", () => {
 });
 
 describe("findNanpurePoolEntryByProblemId", () => {
-  const poolEntries = nanpureDifficulties.flatMap(({ id: difficulty }) =>
+  const poolEntries = difficultyLevels.flatMap(({ id: difficulty }) =>
     listNanpurePoolEntries(difficulty).map((entry) => ({
       difficulty,
       entry,

@@ -1,27 +1,4 @@
-import {
-  assessWaterSortDifficulty,
-  parseWaterSortDifficulty,
-} from "@/games/water-sort/difficulty";
-
-describe("parseWaterSortDifficulty", () => {
-  test.each(["1", "2", "3", "4", "5"] as const)(
-    "%s を定義済みの難易度として受理すること",
-    (input) => {
-      const result = parseWaterSortDifficulty(input);
-
-      expect(result).toBe(input);
-    },
-  );
-
-  test.each([undefined, "", "easy", "normal", "hard", "6"])(
-    "%s を未定義の難易度として拒否すること",
-    (input) => {
-      const result = parseWaterSortDifficulty(input);
-
-      expect(result).toBeUndefined();
-    },
-  );
-});
+import { assessWaterSortDifficulty } from "@/games/water-sort/difficulty";
 
 describe("assessWaterSortDifficulty", () => {
   const cases = [

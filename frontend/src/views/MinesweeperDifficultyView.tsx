@@ -1,6 +1,6 @@
 import { DifficultySelectionHeading } from "@/components/DifficultySelectionHeading";
 import { HomeBackLink } from "@/components/HomeBackLink";
-import { minesweeperDifficulties } from "@/games/minesweeper/difficulty";
+import { difficultyLevels } from "@/games/difficulty";
 import { MinesweeperHowToPlayDialog } from "@/games/minesweeper/ui/MinesweeperHowToPlayDialog";
 import { MinesweeperDifficultyOption } from "@/views/MinesweeperDifficultyView/MinesweeperDifficultyOption";
 
@@ -18,7 +18,7 @@ export function MinesweeperDifficultyView() {
       </div>
 
       <div className="grid gap-2 sm:gap-4 lg:grid-cols-5">
-        {minesweeperDifficulties.map((difficulty) => (
+        {difficultyLevels.map((difficulty) => (
           <MinesweeperDifficultyOption
             key={difficulty.id}
             difficulty={difficulty.id}
