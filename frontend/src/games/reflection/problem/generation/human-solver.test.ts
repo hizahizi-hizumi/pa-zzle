@@ -65,7 +65,7 @@ function traceWithObservation(
 
 describe("traceReflectionHumanSolve", () => {
   describe("推論レベルごとの代表問題", () => {
-    // 代表問題（生成器の版 2 の seed）。
+    // 難易度文書の代表問題（生成器の版 2 の seed）。
     const cases: readonly [
       string,
       ReflectionBoard,

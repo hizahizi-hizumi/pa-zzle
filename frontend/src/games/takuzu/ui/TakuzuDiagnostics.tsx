@@ -15,7 +15,7 @@ function formatGenerationConditions({
   removalTechniqueLimit,
   extraGivenCount,
 }: TakuzuGenerationConditions): string {
-  // 手筋の上限は A〜E で示す。上限なしは、一意解であることだけを保って初期配置を減らした生成。
+  // 手筋の上限は難易度文書の A〜E で示す。上限なしは、一意解であることだけを保って初期配置を減らした生成。
   const techniqueLimit =
     removalTechniqueLimit === null
       ? "一意解のみ"

@@ -26,6 +26,7 @@ const noOtherRounds = {
 } as const;
 
 describe("analyzeNanpureDifficulty", () => {
+  // 難易度の検討記録 §9 の代表問題。
   const cases: readonly [string, NanpureBoard, NanpureDifficultyAnalysis][] = [
     [
       "ブロックのシングルだけで解ける問題（np-uniqueness-412）",

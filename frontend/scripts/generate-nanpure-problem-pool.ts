@@ -42,14 +42,14 @@ const outputPath = new URL(
 /**
  * 問題集に採るヒント数の範囲。全難易度で共通にする。
  * ヒント数（埋める作業の量）でレベルが決まらないよう、どのレベルも同じ範囲から採る。
- * 範囲は、各レベルのヒント数の分布が重なる帯から決めた。
+ * 範囲は、各レベルのヒント数の分布が重なる帯（ナンプレ5段階難易度.md §7.3）から決めた。
  */
 const clueCountRange = { minimum: 23, maximum: 27 } as const;
 
 type RemovalLimit = NanpureTechnique | null;
 
 /**
- * 難易度ごとに、その難易度が現れやすい生成条件。
+ * 難易度ごとに、その難易度が現れやすい生成条件（ナンプレ5段階難易度.md §7.1）。
  * 生成条件は候補を作る領域を決めるだけで、採るかどうかは分析・分類の結果で決める。
  */
 const levelConditions: Record<NanpureDifficulty, readonly RemovalLimit[]> = {

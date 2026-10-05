@@ -14,7 +14,7 @@ import problemPoolJson from "@/games/takuzu/problem/problem-pool.json";
 import type { TakuzuTechnique } from "@/games/takuzu/problem/technique";
 import type { TakuzuCell, TakuzuTile } from "@/games/takuzu/puzzle/board";
 
-/** 問題集で使う手筋の上限の1文字表記（A〜E）。 */
+/** 問題集で使う手筋の上限の1文字表記。前提調査・難易度文書の A〜E に合わせる。 */
 const removalTechniqueLimitByCode = {
   A: "adjacency",
   B: "count-completion",
