@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
+import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import type { WaterSortProblemIdentity } from "@/games/water-sort/problem/problem";
 import type { WaterSortPooledProblem } from "@/games/water-sort/problem/problem-pool";
@@ -12,8 +13,9 @@ import {
   type WaterSortState,
 } from "@/games/water-sort/puzzle/state";
 import {
-  calculateWaterSortPerformanceComparison,
+  calculateWaterSortMoveDelta,
   calculateWaterSortPlayScore,
+  calculateWaterSortSpeedScoreRule,
   type WaterSortPlayScore,
 } from "@/games/water-sort/score";
 import {
@@ -50,9 +52,9 @@ export type WaterSortProgress = "playing" | "clearing" | "result";
 export type WaterSortResult = WaterSortSessionResult & {
   optimalMoveCount: number;
   moveDelta: number;
+  speedRule: SpeedScoreRule;
   timeDeltaMs: number;
   backtrackMoveCount: number;
-  speedFullScoreMs: number;
   colorCount: number;
   score: WaterSortPlayScore;
 };
@@ -63,9 +65,7 @@ export function createWaterSortResult(
   optimalMoveCount: number,
   colorCount: number,
 ): WaterSortResult {
-  const comparison = calculateWaterSortPerformanceComparison({
-    elapsedMs: sessionResult.elapsedMs,
-    completionMoveCount: sessionResult.completionMoveCount,
+  const speedRule = calculateWaterSortSpeedScoreRule({
     optimalMoveCount,
     colorCount,
   });
@@ -73,11 +73,14 @@ export function createWaterSortResult(
   return {
     ...sessionResult,
     optimalMoveCount,
-    moveDelta: comparison.moveDelta,
-    timeDeltaMs: comparison.timeDeltaMs,
+    moveDelta: calculateWaterSortMoveDelta({
+      completionMoveCount: sessionResult.completionMoveCount,
+      optimalMoveCount,
+    }),
+    speedRule,
+    timeDeltaMs: calculateTimeDeltaMs(sessionResult.elapsedMs, speedRule),
     backtrackMoveCount:
       sessionResult.moveCount - sessionResult.completionMoveCount,
-    speedFullScoreMs: comparison.speedFullScoreMs,
     colorCount,
     score: calculateWaterSortPlayScore({
       elapsedMs: sessionResult.elapsedMs,

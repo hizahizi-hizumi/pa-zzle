@@ -28,8 +28,7 @@ const result: TakuzuResult = {
   undoCount: 3,
   inputCount: 70,
   workload: { emptyCellCount: 44, roundCount: 19, lineReadingRoundCount: 1 },
-  speedFullScoreMs: 165_000,
-  speedZeroScoreMs: 330_000,
+  speedRule: { fullScoreMs: 165_000, zeroScoreMs: 330_000 },
   timeDeltaMs: 15_000,
   score: { total: 65, breakdown: { accuracy: 29, speed: 36 } },
 };
@@ -284,7 +283,7 @@ describe("TakuzuPlay", () => {
         .map((definition) => definition.textContent);
 
       expect(terms).toEqual(["時間", "置き直し", "待った"]);
-      expect(definitions).toEqual(["03:00", "基準 +00:15", "2", "3"]);
+      expect(definitions).toEqual(["03:00", "基準 +00:15", "2回", "3回"]);
     });
 
     test("結果画面へフォーカスを移すこと", () => {
@@ -332,9 +331,9 @@ describe("TakuzuPlay", () => {
       });
 
       const detailLabels = [
-        "正確性",
+        "正確さ",
         "速さ",
-        "盤面戻し",
+        "盤面を戻す",
         "基準時間",
         "空きマス",
         "確定マスを探す局面",
@@ -350,7 +349,7 @@ describe("TakuzuPlay", () => {
         "1回",
       ];
 
-      test("観点ごとの点数と盤面戻しの回数と基準時間と作業の量を内訳に表示すること", () => {
+      test("観点ごとの点数と盤面を戻した回数と基準時間と作業の量を内訳に表示すること", () => {
         const terms = screen
           .getAllByRole("term")
           .map((term) => term.textContent);
@@ -366,15 +365,15 @@ describe("TakuzuPlay", () => {
         const criteria = screen.getByText(/基準時間は/);
 
         expect(criteria.textContent).toBe(
-          "基準時間02:45以内で40点、05:30以上で0点、その間は時間に応じて減点。基準時間は10秒 + 空きマス44 × 2秒 + 確定マスを探す局面19回 × 3秒 + 行・列を読む局面1回 × 10秒。局面の数は、この問題を推測なしに解くときに要る回数で、最初に探す1回も含みます。",
+          "基準時間02:45以内で40点、05:30以上で0点、その間は時間に応じて減らす。基準時間は盤面把握10秒 + 空きマス44マス × 2秒 + 確定マスを探す局面19回 × 3秒 + 行・列を読む局面1回 × 10秒。局面の数は、この問題を推測なしに解くときに要る回数で、最初に探す1回も含む。",
         );
       });
 
-      test("置き直しと盤面戻しと待ったの減点と数え方を表示すること", () => {
+      test("置き直しと盤面を戻した回数と待ったの減点と数え方を表示すること", () => {
         const criteria = screen.getByText(/置き直し1回につき/);
 
         expect(criteria.textContent).toBe(
-          "置き直し1回につき5点、盤面戻し1回につき15点、待った1回につき2点を減点（満点60点）。置き直しは、一度置いたタイルを別のマスへ移ってから変えた回数で、続けて押してタイルを選ぶ間と、待ったで取り消した操作は数えません。盤面戻しは、メニューの「盤面を戻す」を使った回数です。",
+          "60点から、置き直し1回につき5点、「盤面を戻す」1回につき15点、「待った」1回につき2点を減らす。置き直しは、一度置いたタイルを別のマスへ移ってから変えた回数で、続けて押してタイルを選ぶ間と、「待った」で取り消した操作は数えない。",
         );
       });
     });

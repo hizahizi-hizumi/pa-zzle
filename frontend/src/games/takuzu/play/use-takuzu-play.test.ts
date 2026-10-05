@@ -4,10 +4,7 @@ import { createProblemSeed } from "@/games/problem-seed";
 import { useTakuzuPlay } from "@/games/takuzu/play/use-takuzu-play";
 import type { TakuzuProblem } from "@/games/takuzu/problem/problem";
 import { selectTakuzuProblemForDifficulty } from "@/games/takuzu/problem-selection";
-import {
-  calculateTakuzuSpeedFullScoreMs,
-  calculateTakuzuSpeedZeroScoreMs,
-} from "@/games/takuzu/score";
+import { calculateTakuzuSpeedScoreRule } from "@/games/takuzu/score";
 
 vi.mock("@/games/problem-seed", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/games/problem-seed")>()),
@@ -145,14 +142,12 @@ describe("useTakuzuPlay", () => {
         const playResult = result.current.result;
 
         expect(playResult?.workload).toEqual(initial.workload);
-        expect(playResult?.speedFullScoreMs).toBe(
-          calculateTakuzuSpeedFullScoreMs(initial.workload),
-        );
-        expect(playResult?.speedZeroScoreMs).toBe(
-          calculateTakuzuSpeedZeroScoreMs(initial.workload),
+        expect(playResult?.speedRule).toEqual(
+          calculateTakuzuSpeedScoreRule(initial.workload),
         );
         expect(playResult?.timeDeltaMs).toBe(
-          (playResult?.elapsedMs ?? 0) - (playResult?.speedFullScoreMs ?? 0),
+          (playResult?.elapsedMs ?? 0) -
+            (playResult?.speedRule.fullScoreMs ?? 0),
         );
         expect(playResult?.score).toEqual({
           total: 100,

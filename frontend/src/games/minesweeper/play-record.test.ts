@@ -8,7 +8,7 @@ import {
 } from "@/games/minesweeper/play-record";
 import {
   calculateMinesweeperPlayScore,
-  calculateMinesweeperSpeedFullScoreMs,
+  calculateMinesweeperSpeedScoreRule,
   calculateMinesweeperTimeDeltaMs,
 } from "@/games/minesweeper/score";
 import type { PlayRecord } from "@/records/play-record";
@@ -104,7 +104,7 @@ describe("restoreMinesweeperRecordedResult", () => {
         result: {
           ...performance,
           mineCount: 16,
-          speedFullScoreMs: calculateMinesweeperSpeedFullScoreMs({
+          speedRule: calculateMinesweeperSpeedScoreRule({
             minimumOpenCount: 25,
             mineCount: 16,
           }),

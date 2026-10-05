@@ -19,7 +19,6 @@ import {
 } from "@/games/parking-jam/problem/problem";
 import {
   calculateParkingJamPlayScore,
-  calculateParkingJamSpeedFullScoreMs,
   PARKING_JAM_SCORE_MODEL_VERSION,
   type ParkingJamSpeedReference,
 } from "@/games/parking-jam/score";
@@ -143,7 +142,7 @@ export function isParkingJamPlayRecord(
   if (
     !isParkingJamRecordedProblemIdentity(problemIdentity) ||
     !isParkingJamPerformance(performance) ||
-    // 待った・やり直しで戻した車も再び出庫するため、成功出庫数は車両数以上になる。
+    // 待ったや盤面を戻す操作で戻した車も再び出庫するため、成功出庫数は車両数以上になる。
     performance.successfulMoveCount < problemIdentity.conditions.vehicleCount
   ) {
     return false;
@@ -241,15 +240,15 @@ export function restoreParkingJamRecordedResult(
     return null;
   }
 
-  const { difficulty, problemIdentity, problemFacts, performance } =
-    record.payload;
+  const { difficulty, problemIdentity, performance } = record.payload;
   return {
     difficulty,
     problemIdentity,
-    result: createParkingJamResult(performance, problemIdentity, {
-      vehicleCount: problemIdentity.conditions.vehicleCount,
-      initialBlockedVehicleCount: problemFacts.initialBlockedVehicleCount,
-    }),
+    result: createParkingJamResult(
+      performance,
+      problemIdentity,
+      getSpeedReference(record),
+    ),
   };
 }
 
@@ -263,6 +262,15 @@ function isEvaluableParkingJamPlayRecord(
   return isParkingJamPlayRecord(record) && record.payloadVersion !== 2;
 }
 
+function getSpeedReference({
+  payload,
+}: EvaluableParkingJamPlayRecord): ParkingJamSpeedReference {
+  return {
+    vehicleCount: payload.problemIdentity.conditions.vehicleCount,
+    initialBlockedVehicleCount: payload.problemFacts.initialBlockedVehicleCount,
+  };
+}
+
 /** 今の採点規則で求めた評価点。採点に要る問題の事実を持たない記録は `null`。 */
 export function getParkingJamPlayRecordScore(
   record: PlayRecord,
@@ -271,12 +279,9 @@ export function getParkingJamPlayRecordScore(
     return null;
   }
 
-  const { performance, problemIdentity, problemFacts } = record.payload;
+  const { performance } = record.payload;
   return calculateParkingJamPlayScore({
-    speedFullScoreMs: calculateParkingJamSpeedFullScoreMs({
-      vehicleCount: problemIdentity.conditions.vehicleCount,
-      initialBlockedVehicleCount: problemFacts.initialBlockedVehicleCount,
-    }),
+    speedReference: getSpeedReference(record),
     elapsedMs: performance.elapsedMs,
     failedMoveCount: performance.failedMoveCount,
     undoCount: performance.undoCount,

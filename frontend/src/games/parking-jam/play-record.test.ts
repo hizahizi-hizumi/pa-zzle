@@ -7,7 +7,7 @@ import {
   restoreParkingJamRecordedResult,
 } from "@/games/parking-jam/play-record";
 import {
-  calculateParkingJamSpeedFullScoreMs,
+  calculateParkingJamSpeedScoreRule,
   PARKING_JAM_SCORE_MODEL_VERSION,
 } from "@/games/parking-jam/score";
 import type { PlayRecord } from "@/records/play-record";
@@ -252,7 +252,7 @@ describe("restoreParkingJamRecordedResult", () => {
           ...performance,
           problemIdentity,
           speedReference,
-          speedFullScoreMs: calculateParkingJamSpeedFullScoreMs(speedReference),
+          speedRule: calculateParkingJamSpeedScoreRule(speedReference),
           score: { total: getParkingJamPlayRecordScore(record) },
         },
       });

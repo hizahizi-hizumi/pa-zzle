@@ -1,8 +1,8 @@
 import {
   calculateWaterSortMoveDelta,
-  calculateWaterSortPerformanceComparison,
   calculateWaterSortPlayScore,
   calculateWaterSortSpeedFullScoreMs,
+  calculateWaterSortSpeedScoreRule,
   calculateWaterSortTimeDeltaMs,
   WATER_SORT_SCORE_MAXIMUMS,
 } from "@/games/water-sort/score";
@@ -41,20 +41,14 @@ describe("calculateWaterSortMoveDelta", () => {
   });
 });
 
-describe("calculateWaterSortPerformanceComparison", () => {
-  test("結果と記録で共有する比較指標をまとめて算出すること", () => {
-    const result = calculateWaterSortPerformanceComparison({
-      elapsedMs: 65_000,
-      completionMoveCount: 12,
+describe("calculateWaterSortSpeedScoreRule", () => {
+  test("基準時間の2倍で0点になる規則を返すこと", () => {
+    const rule = calculateWaterSortSpeedScoreRule({
       colorCount: 6,
       optimalMoveCount: 10,
     });
 
-    expect(result).toEqual({
-      speedFullScoreMs: 64_000,
-      timeDeltaMs: 1_000,
-      moveDelta: 2,
-    });
+    expect(rule).toEqual({ fullScoreMs: 64_000, zeroScoreMs: 128_000 });
   });
 });
 
@@ -126,7 +120,7 @@ describe("calculateWaterSortPlayScore", () => {
     expect(score.breakdown.speed).toBe(0);
   });
 
-  test("手戻りが最短手数の半分なら正確性を半分にすること", () => {
+  test("手戻りが最短手数の半分なら正確さを半分にすること", () => {
     const score = calculateWaterSortPlayScore({
       elapsedMs: 64_000,
       moveCount: 15,
@@ -138,7 +132,7 @@ describe("calculateWaterSortPlayScore", () => {
     expect(score.breakdown.accuracy).toBe(10);
   });
 
-  test("手戻りが最短手数以上なら正確性を0点にすること", () => {
+  test("手戻りが最短手数以上なら正確さを0点にすること", () => {
     const score = calculateWaterSortPlayScore({
       elapsedMs: 64_000,
       moveCount: 20,

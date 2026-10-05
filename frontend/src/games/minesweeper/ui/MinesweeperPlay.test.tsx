@@ -391,7 +391,7 @@ describe("MinesweeperPlay", () => {
       expect(difficulty).toBeTruthy();
       expect(score).toBeTruthy();
       expect(timeMetric?.textContent).toBe("時間00:25基準 +00:04");
-      expect(mistakeMetric?.textContent).toBe("ミス1");
+      expect(mistakeMetric?.textContent).toBe("ミス1回");
     });
 
     test("スコアの内訳と採点基準を開けること", () => {
@@ -399,9 +399,11 @@ describe("MinesweeperPlay", () => {
 
       expect(screen.getByText("45 / 60")).toBeTruthy();
       expect(screen.getByText("32 / 40")).toBeTruthy();
-      expect(screen.getByText(/踏んだ地雷1つにつき15点減点/)).toBeTruthy();
+      expect(screen.getByText(/踏んだ地雷1個につき15点を減らす/)).toBeTruthy();
       expect(
-        screen.getByText(/5秒 \+ 開く操作の最小2回 × 2秒 \+ 地雷3個 × 4秒/),
+        screen.getByText(
+          /盤面把握5秒 \+ 開く操作の最小2回 × 2秒 \+ 地雷3個 × 4秒/,
+        ),
       ).toBeTruthy();
     });
 
@@ -509,7 +511,7 @@ function createResultProps(): ComponentProps<typeof MinesweeperPlay> {
       mistakeCount: 1,
       minimumOpenCount: 2,
       mineCount: 3,
-      speedFullScoreMs: 21_000,
+      speedRule: { fullScoreMs: 21_000, zeroScoreMs: 42_000 },
       timeDeltaMs: 4_000,
       score: { total: 77, breakdown: { accuracy: 45, speed: 32 } },
     },

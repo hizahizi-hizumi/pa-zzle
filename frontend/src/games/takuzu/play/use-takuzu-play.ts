@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ProblemId } from "@/games/problem-id";
 import { createProblemSeed } from "@/games/problem-seed";
 import { selectProblemAvoiding } from "@/games/problem-selection";
+import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import type {
   TakuzuProblemIdentity,
@@ -14,9 +15,7 @@ import type { TakuzuCell } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import {
   calculateTakuzuPlayScore,
-  calculateTakuzuSpeedFullScoreMs,
-  calculateTakuzuSpeedZeroScoreMs,
-  calculateTakuzuTimeDeltaMs,
+  calculateTakuzuSpeedScoreRule,
   type TakuzuPlayScore,
 } from "@/games/takuzu/score";
 import {
@@ -45,8 +44,7 @@ export type TakuzuProgress = "playing" | "clearing" | "result";
 /** クリアしたプレイの事実と、それを遊んだ問題の作業の量から導いた評価。 */
 export type TakuzuResult = TakuzuSessionResult & {
   workload: TakuzuSolveWorkload;
-  speedFullScoreMs: number;
-  speedZeroScoreMs: number;
+  speedRule: SpeedScoreRule;
   timeDeltaMs: number;
   score: TakuzuPlayScore;
 };
@@ -135,15 +133,12 @@ export function createTakuzuResult(
   sessionResult: TakuzuSessionResult,
   workload: TakuzuSolveWorkload,
 ): TakuzuResult {
+  const speedRule = calculateTakuzuSpeedScoreRule(workload);
   return {
     ...sessionResult,
     workload,
-    speedFullScoreMs: calculateTakuzuSpeedFullScoreMs(workload),
-    speedZeroScoreMs: calculateTakuzuSpeedZeroScoreMs(workload),
-    timeDeltaMs: calculateTakuzuTimeDeltaMs({
-      elapsedMs: sessionResult.elapsedMs,
-      workload,
-    }),
+    speedRule,
+    timeDeltaMs: calculateTimeDeltaMs(sessionResult.elapsedMs, speedRule),
     score: calculateTakuzuPlayScore({ ...sessionResult, workload }),
   };
 }

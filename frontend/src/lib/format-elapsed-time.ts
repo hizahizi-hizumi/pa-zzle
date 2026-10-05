@@ -29,3 +29,14 @@ export function formatElapsedTimeWithTenths(elapsedMs: number): string {
     : seconds.toFixed(1).padStart(4, "0");
   return `${padTwoDigits(minutes)}:${secondsText}`;
 }
+
+/** 時間の長さを「1分30秒」のような言葉で表す。秒の端数は小数で残す。 */
+export function formatDurationInWords(milliseconds: number): string {
+  const minutes = Math.floor(milliseconds / 60_000);
+  const seconds = (milliseconds - minutes * 60_000) / 1_000;
+  if (minutes === 0) {
+    return `${seconds}秒`;
+  }
+
+  return seconds === 0 ? `${minutes}分` : `${minutes}分${seconds}秒`;
+}

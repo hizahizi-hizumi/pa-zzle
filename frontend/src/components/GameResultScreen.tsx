@@ -18,6 +18,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { getGameResultLevel } from "@/games/result";
 
+export type { GameResultScoreCriteria };
+
 type GameResultMetrics =
   | readonly [GameResultMetric, GameResultMetric]
   | readonly [GameResultMetric, GameResultMetric, GameResultMetric];

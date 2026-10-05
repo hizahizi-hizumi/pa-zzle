@@ -156,7 +156,7 @@ describe("TakuzuPlayView", () => {
           .map((definition) => definition.textContent);
         const records = readPlayRecords();
 
-        expect(definitions.slice(2)).toEqual(["0", "1"]);
+        expect(definitions.slice(2)).toEqual(["0回", "1回"]);
         expect(records[0]).toMatchObject({
           payload: { performance: { correctionCount: 0, undoCount: 1 } },
         });
@@ -180,8 +180,8 @@ describe("TakuzuPlayView", () => {
         expect(definitions).toEqual([
           expect.any(String),
           expect.any(String),
-          "1",
-          "0",
+          "1回",
+          "0回",
         ]);
       });
 

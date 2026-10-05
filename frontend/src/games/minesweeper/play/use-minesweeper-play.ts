@@ -7,8 +7,7 @@ import type {
 import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
 import {
   calculateMinesweeperPlayScore,
-  calculateMinesweeperSpeedFullScoreMs,
-  calculateMinesweeperTimeDeltaMs,
+  calculateMinesweeperSpeedScoreRule,
   type MinesweeperPlayScore,
 } from "@/games/minesweeper/score";
 import {
@@ -26,13 +25,14 @@ import {
 import type { ProblemId } from "@/games/problem-id";
 import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
 import { selectProblemAvoiding } from "@/games/problem-selection";
+import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
 /** クリア後は最終操作の結果を見せる `clearing` を経て `result` へ進む。 */
 export type MinesweeperProgress = "playing" | "clearing" | "result";
 
 export type MinesweeperResult = MinesweeperSessionResult & {
   mineCount: number;
-  speedFullScoreMs: number;
+  speedRule: SpeedScoreRule;
   timeDeltaMs: number;
   score: MinesweeperPlayScore;
 };
@@ -42,17 +42,15 @@ export function createMinesweeperResult(
   sessionResult: MinesweeperSessionResult,
   mineCount: number,
 ): MinesweeperResult {
+  const speedRule = calculateMinesweeperSpeedScoreRule({
+    minimumOpenCount: sessionResult.minimumOpenCount,
+    mineCount,
+  });
   return {
     ...sessionResult,
     mineCount,
-    speedFullScoreMs: calculateMinesweeperSpeedFullScoreMs({
-      minimumOpenCount: sessionResult.minimumOpenCount,
-      mineCount,
-    }),
-    timeDeltaMs: calculateMinesweeperTimeDeltaMs({
-      ...sessionResult,
-      mineCount,
-    }),
+    speedRule,
+    timeDeltaMs: calculateTimeDeltaMs(sessionResult.elapsedMs, speedRule),
     score: calculateMinesweeperPlayScore({ ...sessionResult, mineCount }),
   };
 }

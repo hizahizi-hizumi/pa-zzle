@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
+import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import type { SlidePuzzleProblemIdentity } from "@/games/slide-puzzle/problem/problem";
 import type { SlidePuzzlePooledProblem } from "@/games/slide-puzzle/problem/problem-pool";
@@ -16,8 +17,9 @@ import type {
   SlidePuzzleBoardSize,
 } from "@/games/slide-puzzle/puzzle/state";
 import {
-  calculateSlidePuzzlePerformanceComparison,
+  calculateSlidePuzzleMoveDelta,
   calculateSlidePuzzlePlayScore,
+  calculateSlidePuzzleSpeedScoreRule,
   type SlidePuzzlePlayScore,
 } from "@/games/slide-puzzle/score";
 import {
@@ -47,8 +49,8 @@ export type SlidePuzzleResult = SlidePuzzleSessionResult & {
   boardSize: SlidePuzzleBoardSize;
   optimalMoveCount: number;
   moveDelta: number;
+  speedRule: SpeedScoreRule;
   timeDeltaMs: number;
-  speedFullScoreMs: number;
   score: SlidePuzzlePlayScore;
 };
 
@@ -58,9 +60,7 @@ export function createSlidePuzzleResult(
   boardSize: SlidePuzzleBoardSize,
   optimalMoveCount: number,
 ): SlidePuzzleResult {
-  const comparison = calculateSlidePuzzlePerformanceComparison({
-    elapsedMs: sessionResult.elapsedMs,
-    moveCount: sessionResult.moveCount,
+  const speedRule = calculateSlidePuzzleSpeedScoreRule({
     boardSize,
     optimalMoveCount,
   });
@@ -69,9 +69,12 @@ export function createSlidePuzzleResult(
     ...sessionResult,
     boardSize,
     optimalMoveCount,
-    moveDelta: comparison.moveDelta,
-    timeDeltaMs: comparison.timeDeltaMs,
-    speedFullScoreMs: comparison.speedFullScoreMs,
+    moveDelta: calculateSlidePuzzleMoveDelta({
+      moveCount: sessionResult.moveCount,
+      optimalMoveCount,
+    }),
+    speedRule,
+    timeDeltaMs: calculateTimeDeltaMs(sessionResult.elapsedMs, speedRule),
     score: calculateSlidePuzzlePlayScore({
       elapsedMs: sessionResult.elapsedMs,
       moveCount: sessionResult.moveCount,

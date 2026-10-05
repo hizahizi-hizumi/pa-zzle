@@ -223,6 +223,12 @@ describe("NanpurePlay", () => {
       mistakeCount: 0,
       undoCount: 0,
       restartCount: 0,
+      speedRule: {
+        fullScoreMs: 900_000,
+        zeroScoreMs: 3_300_000,
+        overtimeStepMs: 60_000,
+      },
+      timeDeltaMs: -775_000,
       score: {
         total: 100,
         breakdown: { accuracy: 40, speed: 40, stability: 20 },
@@ -279,6 +285,12 @@ describe("NanpurePlay", () => {
             mistakeCount: 2,
             undoCount: 3,
             restartCount: 1,
+            speedRule: {
+              fullScoreMs: 900_000,
+              zeroScoreMs: 3_300_000,
+              overtimeStepMs: 60_000,
+            },
+            timeDeltaMs: -775_000,
             score: {
               total: 79,
               breakdown: { accuracy: 30, speed: 40, stability: 9 },
@@ -317,7 +329,7 @@ describe("NanpurePlay", () => {
       expect(screen.getByText("9 / 20")).toBeTruthy();
       expect(screen.getByText(/ミス1回につき/)).toBeTruthy();
       expect(screen.getByText(/1分単位で切り上げ/)).toBeTruthy();
-      expect(screen.getByText(/待った1回につき/)).toBeTruthy();
+      expect(screen.getByText(/「待った」1回につき/)).toBeTruthy();
 
       fireEvent.click(playButton);
 
@@ -341,6 +353,12 @@ describe("NanpurePlay", () => {
             mistakeCount: 0,
             undoCount: 0,
             restartCount: 0,
+            speedRule: {
+              fullScoreMs: 900_000,
+              zeroScoreMs: 3_300_000,
+              overtimeStepMs: 60_000,
+            },
+            timeDeltaMs: -780_000,
             score: {
               total: 100,
               breakdown: { accuracy: 40, speed: 40, stability: 20 },
@@ -438,6 +456,12 @@ describe("NanpurePlay", () => {
             mistakeCount: 0,
             undoCount: 0,
             restartCount: 0,
+            speedRule: {
+              fullScoreMs: 900_000,
+              zeroScoreMs: 3_300_000,
+              overtimeStepMs: 60_000,
+            },
+            timeDeltaMs: -775_000,
             score: {
               total: 100,
               breakdown: { accuracy: 40, speed: 40, stability: 20 },

@@ -249,7 +249,7 @@ describe("restoreReflectionRecordedResult", () => {
           ...performance,
           workload,
           timeDeltaMs: 21_750,
-          score: getReflectionPlayRecordScore(record),
+          score: { total: getReflectionPlayRecordScore(record) },
         },
       });
     });

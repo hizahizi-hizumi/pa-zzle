@@ -9,6 +9,7 @@ import type { NanpureDigit } from "@/games/nanpure/puzzle/board";
 import { findNanpureConflictCellIndices } from "@/games/nanpure/puzzle/rules";
 import {
   calculateNanpurePlayScore,
+  calculateNanpureSpeedScoreRule,
   type NanpurePlayScore,
 } from "@/games/nanpure/score";
 import {
@@ -29,11 +30,14 @@ import {
 import type { ProblemId } from "@/games/problem-id";
 import { createProblemSeed } from "@/games/problem-seed";
 import { selectProblemAvoiding } from "@/games/problem-selection";
+import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
 export type NanpureProgress = "playing" | "clearing" | "result";
 
 export type NanpureResult = NanpureSessionResult & {
   problemIdentity: NanpureProblemIdentity;
+  speedRule: SpeedScoreRule;
+  timeDeltaMs: number;
   score: NanpurePlayScore;
 };
 
@@ -42,9 +46,12 @@ export function createNanpureResult(
   sessionResult: NanpureSessionResult,
   problemIdentity: NanpureProblemIdentity,
 ): NanpureResult {
+  const speedRule = calculateNanpureSpeedScoreRule();
   return {
     ...sessionResult,
     problemIdentity,
+    speedRule,
+    timeDeltaMs: calculateTimeDeltaMs(sessionResult.elapsedMs, speedRule),
     score: calculateNanpurePlayScore(sessionResult),
   };
 }

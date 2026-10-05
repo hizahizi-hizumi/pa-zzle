@@ -1,12 +1,18 @@
 import type { ReactNode } from "react";
 import { GameResultScreen } from "@/components/GameResultScreen";
+import {
+  createCountMetric,
+  createElapsedTimeMetric,
+  createOperationCountMetric,
+  createSpeedFullScoreMetric,
+  listScoreBreakdownMetrics,
+} from "@/components/game-result-metrics";
 import { getDifficultyLabel } from "@/games/difficulty";
 import nanpurePictogramSvg from "@/games/nanpure/assets/pictogram.svg?raw";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import type { NanpureResult } from "@/games/nanpure/play/use-nanpure-play";
 import { NANPURE_SCORE_MAXIMUMS } from "@/games/nanpure/score";
-import { nanpureScoreCriteria } from "@/games/nanpure/ui/result/NanpureResultScreen/score-criteria";
-import { formatElapsedTime } from "@/lib/format-elapsed-time";
+import { getNanpureScoreCriteria } from "@/games/nanpure/ui/result/NanpureResultScreen/score-criteria";
 
 type NanpureResultScreenProps = {
   difficulty: NanpureDifficulty;
@@ -39,27 +45,17 @@ export function NanpureResultScreen({
       pictogramSvg={nanpurePictogramSvg}
       score={result.score.total}
       metrics={[
-        { label: "時間", value: formatElapsedTime(result.elapsedMs) },
-        { label: "ミス", value: String(result.mistakeCount) },
-        { label: "待った", value: String(result.undoCount) },
+        createElapsedTimeMetric(result),
+        createCountMetric("ミス", result.mistakeCount, "回"),
+        createOperationCountMetric("undo", result.undoCount),
       ]}
       recordOutcomeNotice={recordOutcomeNotice}
       scoreBreakdown={[
-        {
-          label: "正確さ",
-          value: `${result.score.breakdown.accuracy} / ${NANPURE_SCORE_MAXIMUMS.accuracy}`,
-        },
-        {
-          label: "速さ",
-          value: `${result.score.breakdown.speed} / ${NANPURE_SCORE_MAXIMUMS.speed}`,
-        },
-        {
-          label: "安定性",
-          value: `${result.score.breakdown.stability} / ${NANPURE_SCORE_MAXIMUMS.stability}`,
-        },
-        { label: "やり直し", value: `${result.restartCount}回` },
+        ...listScoreBreakdownMetrics(result.score, NANPURE_SCORE_MAXIMUMS),
+        createSpeedFullScoreMetric(result.speedRule),
+        createOperationCountMetric("restart", result.restartCount),
       ]}
-      scoreCriteria={nanpureScoreCriteria}
+      scoreCriteria={getNanpureScoreCriteria(result)}
       onStartNewProblem={onStartNewProblem}
       onReplay={onReplay}
       onOpenRecords={onOpenRecords}

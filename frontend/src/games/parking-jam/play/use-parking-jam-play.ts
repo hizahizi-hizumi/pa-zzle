@@ -15,7 +15,7 @@ import {
 import { listParkingJamLegalMoves } from "@/games/parking-jam/puzzle/rules";
 import {
   calculateParkingJamPlayScore,
-  calculateParkingJamSpeedFullScoreMs,
+  calculateParkingJamSpeedScoreRule,
   type ParkingJamPlayScore,
   type ParkingJamSpeedReference,
 } from "@/games/parking-jam/score";
@@ -33,6 +33,7 @@ import {
 } from "@/games/parking-jam/session/session";
 import type { ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
+import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
 export type ParkingJamOperation = {
   id: number;
@@ -46,7 +47,8 @@ export type ParkingJamProgress = "playing" | "clearing" | "result";
 export type ParkingJamResult = ParkingJamSessionResult & {
   problemIdentity: ParkingJamProblemIdentity;
   speedReference: ParkingJamSpeedReference;
-  speedFullScoreMs: number;
+  speedRule: SpeedScoreRule;
+  timeDeltaMs: number;
   score: ParkingJamPlayScore;
 };
 
@@ -56,14 +58,15 @@ export function createParkingJamResult(
   problemIdentity: ParkingJamProblemIdentity,
   speedReference: ParkingJamSpeedReference,
 ): ParkingJamResult {
-  const speedFullScoreMs = calculateParkingJamSpeedFullScoreMs(speedReference);
+  const speedRule = calculateParkingJamSpeedScoreRule(speedReference);
   return {
     ...sessionResult,
     problemIdentity,
     speedReference,
-    speedFullScoreMs,
+    speedRule,
+    timeDeltaMs: calculateTimeDeltaMs(sessionResult.elapsedMs, speedRule),
     score: calculateParkingJamPlayScore({
-      speedFullScoreMs,
+      speedReference,
       elapsedMs: sessionResult.elapsedMs,
       failedMoveCount: sessionResult.failedMoveCount,
       undoCount: sessionResult.undoCount,

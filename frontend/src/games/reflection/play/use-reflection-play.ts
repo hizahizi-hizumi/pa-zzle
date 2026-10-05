@@ -20,9 +20,8 @@ import {
 } from "@/games/reflection/puzzle/laser";
 import {
   calculateReflectionPlayScore,
-  calculateReflectionSpeedFullScoreMs,
-  calculateReflectionSpeedZeroScoreMs,
-  calculateReflectionTimeDeltaMs,
+  calculateReflectionSpeedScoreRule,
+  type ReflectionPlayScore,
 } from "@/games/reflection/score";
 import {
   canRestartReflectionSession,
@@ -40,6 +39,7 @@ import {
   tapReflectionSessionClue,
   tapReflectionSessionStock,
 } from "@/games/reflection/session/session";
+import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
 const elapsedTimeTickMs = 1_000;
 
@@ -58,10 +58,9 @@ export type ReflectionProgress = "playing" | "clearing" | "result";
 /** クリアしたプレイの事実と、それを遊んだ問題の作業の量から導いた評価。 */
 export type ReflectionResult = ReflectionSessionResult & {
   workload: ReflectionSolveWorkload;
-  speedFullScoreMs: number;
-  speedZeroScoreMs: number;
+  speedRule: SpeedScoreRule;
   timeDeltaMs: number;
-  score: number;
+  score: ReflectionPlayScore;
 };
 
 type ReflectionPlayState = {
@@ -99,15 +98,12 @@ export function createReflectionResult(
   sessionResult: ReflectionSessionResult,
   workload: ReflectionSolveWorkload,
 ): ReflectionResult {
+  const speedRule = calculateReflectionSpeedScoreRule(workload);
   return {
     ...sessionResult,
     workload,
-    speedFullScoreMs: calculateReflectionSpeedFullScoreMs(workload),
-    speedZeroScoreMs: calculateReflectionSpeedZeroScoreMs(workload),
-    timeDeltaMs: calculateReflectionTimeDeltaMs({
-      elapsedMs: sessionResult.elapsedMs,
-      workload,
-    }),
+    speedRule,
+    timeDeltaMs: calculateTimeDeltaMs(sessionResult.elapsedMs, speedRule),
     score: calculateReflectionPlayScore({
       elapsedMs: sessionResult.elapsedMs,
       workload,

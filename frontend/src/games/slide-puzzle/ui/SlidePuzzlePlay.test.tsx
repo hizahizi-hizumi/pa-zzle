@@ -24,7 +24,7 @@ const result: SlidePuzzleResult = {
   optimalMoveCount: 30,
   moveDelta: 12,
   timeDeltaMs: 10_000,
-  speedFullScoreMs: 70_000,
+  speedRule: { fullScoreMs: 70_000, zeroScoreMs: 140_000 },
   score: { total: 77, breakdown: { efficiency: 43, speed: 34 } },
 };
 
@@ -215,7 +215,7 @@ describe("SlidePuzzlePlay", () => {
 
     test("スコアと手数・時間を基準との差つきで表示すること", () => {
       const score = screen.getByText("77");
-      const moveCount = screen.getByText("42");
+      const moveCount = screen.getByText("42手");
       const moveDelta = screen.getByText("最短 +12");
       const elapsedTime = screen.getByText("01:20");
       const timeDelta = screen.getByText("基準 +00:10");
