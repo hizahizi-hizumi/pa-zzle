@@ -112,11 +112,12 @@ export function PlayableWaterSort({
         }
         onSelectBottle={play.selectBottle}
         onUndo={play.undo}
+        canRestart={play.canRestart}
         onRestart={play.restart}
         onReplay={play.replay}
         onStartNewProblem={play.startNewProblem}
         onOpenRecords={() => navigate("/records")}
-        onClearingPourComplete={play.completeClearingPour}
+        onClearingPourComplete={play.completeClearAnimation}
         onChangeDifficulty={() => navigate("/puzzles/water-sort")}
         onBackToHome={() => navigate("/")}
         onOpenDiagnostics={

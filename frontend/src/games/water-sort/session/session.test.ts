@@ -25,7 +25,7 @@ function applySolution(session: ReturnType<typeof createWaterSortSession>) {
   let current = session;
   for (const [index, move] of solutionMoves.entries()) {
     const next = applyWaterSortSessionMove(current, move, 1_100 + index);
-    if (!next) {
+    if (next === current) {
       throw new Error("test solution move must be legal");
     }
     current = next;
@@ -43,10 +43,9 @@ describe("applyWaterSortSessionMove", () => {
 
     const result = applyWaterSortSessionMove(session, move, 1_100);
 
-    expect(result).not.toBeNull();
-    expect(result?.state).not.toEqual(problem.initialState);
-    expect(result?.moveCount).toBe(1);
-    expect(session.state).toEqual(problem.initialState);
+    expect(result.puzzleState).not.toEqual(problem.initialState);
+    expect(result.moveCount).toBe(1);
+    expect(session.puzzleState).toEqual(problem.initialState);
   });
 
   test("成立しない手ではセッションを変更しないこと", () => {
@@ -58,8 +57,7 @@ describe("applyWaterSortSessionMove", () => {
       1_100,
     );
 
-    expect(result).toBeNull();
-    expect(session.state).toEqual(problem.initialState);
+    expect(result).toBe(session);
   });
 });
 
@@ -71,13 +69,10 @@ describe("undoWaterSortSession", () => {
       throw new Error("test problem must have a solution move");
     }
     const moved = applyWaterSortSessionMove(initialSession, move, 1_100);
-    if (!moved) {
-      throw new Error("test solution move must be legal");
-    }
 
     const result = undoWaterSortSession(moved);
 
-    expect(result.state).toEqual(problem.initialState);
+    expect(result.puzzleState).toEqual(problem.initialState);
     expect(result.moveCount).toBe(1);
     expect(result.undoCount).toBe(1);
     expect(canUndoWaterSortSession(result)).toBe(false);
@@ -101,13 +96,10 @@ describe("restartWaterSortSession", () => {
       throw new Error("test problem must have a solution move");
     }
     const moved = applyWaterSortSessionMove(initialSession, move, 1_100);
-    if (!moved) {
-      throw new Error("test solution move must be legal");
-    }
 
     const result = restartWaterSortSession(moved);
 
-    expect(result.state).toEqual(problem.initialState);
+    expect(result.puzzleState).toEqual(problem.initialState);
     expect(result.startedAt).toBe(1_000);
     expect(result.moveCount).toBe(1);
     expect(result.restartCount).toBe(1);
@@ -121,6 +113,16 @@ describe("restartWaterSortSession", () => {
 
     expect(result).toBe(session);
   });
+
+  describe("盤面が初期状態のままの場合", () => {
+    const session = createWaterSortSession(problem, 1_000);
+
+    test("何もせず、盤面を戻した回数も数えないこと", () => {
+      const result = restartWaterSortSession(session);
+
+      expect(result).toBe(session);
+    });
+  });
 });
 
 test("Reactなしで操作・待った・やり直しを経て一局を完結できること", () => {
@@ -131,18 +133,16 @@ test("Reactなしで操作・待った・やり直しを経て一局を完結で
   }
 
   const firstMoved = applyWaterSortSessionMove(session, firstMove, 1_100);
-  if (!firstMoved) {
-    throw new Error("test solution move must be legal");
-  }
   session = undoWaterSortSession(firstMoved);
+  session = applyWaterSortSessionMove(session, firstMove, 1_200);
   session = restartWaterSortSession(session);
   session = applySolution(session);
-  const result = getWaterSortSessionResult(session, 9_999);
+  const result = getWaterSortSessionResult(session);
 
   expect(session.status).toBe("cleared");
   expect(result).toEqual({
     elapsedMs: expect.any(Number),
-    moveCount: solutionMoves.length + 1,
+    moveCount: solutionMoves.length + 2,
     completionMoveCount: solutionMoves.length,
     undoCount: 1,
     restartCount: 1,

@@ -3,10 +3,10 @@ import { type ReactNode, useState } from "react";
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { PlayHeader } from "@/components/PlayHeader";
 import { UndoButton } from "@/components/UndoButton";
+import type { GameProgress } from "@/games/play";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import type {
   WaterSortOperation,
-  WaterSortProgress,
   WaterSortResult,
 } from "@/games/water-sort/play/use-water-sort-play";
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
@@ -19,7 +19,7 @@ import { formatElapsedTime } from "@/lib/format-elapsed-time";
 type WaterSortPlayProps = {
   difficulty: WaterSortDifficulty;
   status: "playing" | "cleared";
-  progress: WaterSortProgress;
+  progress: GameProgress;
   state: WaterSortState;
   elapsedMs: number;
   moveCount: number;
@@ -32,6 +32,7 @@ type WaterSortPlayProps = {
   recordOutcomeNotice: ReactNode;
   onSelectBottle: (bottleIndex: number) => void;
   onUndo: () => void;
+  canRestart: boolean;
   onRestart: () => void;
   onReplay: () => void;
   onStartNewProblem: () => void;
@@ -58,6 +59,7 @@ export function WaterSortPlay({
   recordOutcomeNotice,
   onSelectBottle,
   onUndo,
+  canRestart,
   onRestart,
   onReplay,
   onStartNewProblem,
@@ -99,6 +101,7 @@ export function WaterSortPlay({
             { label: "待った", value: String(undoCount) },
           ],
         ]}
+        canRestart={canRestart}
         onRestart={onRestart}
         onReplay={onReplay}
         onStartNewProblem={onStartNewProblem}
