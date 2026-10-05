@@ -20,6 +20,7 @@ import type {
   RestartableGamePlayScreenProps,
   UndoableGamePlayScreenProps,
 } from "@/games/play";
+import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 
 type ParkingJamPlayProps = GamePlayScreenProps<
   ParkingJamDifficulty,
@@ -74,7 +75,7 @@ export function ParkingJamPlay({
       metrics={[
         { type: "count", label: "ミス", count: failedMoveCount },
         { type: "elapsed-time", elapsedMs },
-        { type: "count", label: "待った", count: undoCount },
+        { type: "count", label: PLAY_OPERATION_LABELS.undo, count: undoCount },
       ]}
       canRestart={canRestart}
       onRestart={onRestart}
