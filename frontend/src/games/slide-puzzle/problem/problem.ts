@@ -50,11 +50,10 @@ export type SlidePuzzleProblemIdentity = {
   conditions: SlidePuzzleGenerationConditions;
 };
 
-export type SlidePuzzleGeneratedProblem = {
+/** 問題と、それを再現するための情報。 */
+export type SlidePuzzleIdentifiedProblem = {
   problem: SlidePuzzleProblem;
   identity: SlidePuzzleProblemIdentity;
-  /** 問題集に保存した最短手数。 */
-  optimalMoveCount: number;
 };
 
 /** 記録・診断など外部から読み戻した値が、現在の生成器で復元できる識別情報かを確かめる。 */

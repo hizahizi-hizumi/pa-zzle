@@ -1,10 +1,9 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
-
 import { useSlidePuzzlePlay } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
-import { restoreSlidePuzzleProblemWithOptimalMoveCount } from "@/games/slide-puzzle/problem/generator";
+import { restoreSlidePuzzleProblem } from "@/games/slide-puzzle/problem/generator";
 import {
+  decodeSlidePuzzlePoolEntry,
   listSlidePuzzlePoolEntries,
-  toSlidePuzzlePooledProblem,
 } from "@/games/slide-puzzle/problem/problem-pool";
 
 // 最下段だけが 1 マスずつずれた盤面。右下のタイルをタップすると 3 枚まとめて滑って完成する。
@@ -206,13 +205,10 @@ describe("useSlidePuzzlePlay", () => {
   describe("最初の問題を渡した場合", () => {
     const pooledEntries = listSlidePuzzlePoolEntries("4").slice(0, 1);
     const initialProblems = pooledEntries.map((entry) => {
-      const { identity, optimalMoveCount } = toSlidePuzzlePooledProblem(entry);
+      const { identity, optimalMoveCount } = decodeSlidePuzzlePoolEntry(entry);
       return [
         entry[0],
-        restoreSlidePuzzleProblemWithOptimalMoveCount(
-          identity,
-          optimalMoveCount,
-        ),
+        { ...restoreSlidePuzzleProblem(identity), optimalMoveCount },
       ] as const;
     });
 

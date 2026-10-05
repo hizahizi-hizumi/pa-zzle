@@ -47,6 +47,12 @@ export type MinesweeperProblemIdentity = {
   generationAttempt: number;
 };
 
+/** 問題と、それを再現するための情報。難易度分析を伴わない。 */
+export type MinesweeperIdentifiedProblem = {
+  problem: MinesweeperProblem;
+  identity: MinesweeperProblemIdentity;
+};
+
 const startCellPlacements: readonly MinesweeperStartCellPlacement[] = [
   "random",
   "center",

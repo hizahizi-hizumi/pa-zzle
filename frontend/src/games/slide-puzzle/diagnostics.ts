@@ -11,9 +11,9 @@ import {
 } from "@/games/slide-puzzle/difficulty";
 import {
   isSlidePuzzleProblemIdentity,
-  type SlidePuzzleGeneratedProblem,
   type SlidePuzzleProblemIdentity,
 } from "@/games/slide-puzzle/problem/problem";
+import type { SlidePuzzlePooledProblem } from "@/games/slide-puzzle/problem/problem-pool";
 import { restoreSlidePuzzlePooledProblem } from "@/games/slide-puzzle/problem-selection";
 
 export type SlidePuzzleDiagnosticSnapshot = InternalDiagnosticSnapshot<
@@ -57,7 +57,7 @@ function parseSlidePuzzleDiagnosticSnapshot(
 /** 評価の基準になる最短手数は問題集にしか無いので、問題集に無い識別情報では `null` を返す。 */
 function restoreSlidePuzzleProblemFromDiagnosticSnapshot(
   snapshot: SlidePuzzleDiagnosticSnapshot,
-): SlidePuzzleGeneratedProblem | null {
+): SlidePuzzlePooledProblem | null {
   return restoreSlidePuzzlePooledProblem(snapshot.problemIdentity);
 }
 

@@ -1,9 +1,9 @@
 import { difficultyLevels } from "@/games/difficulty";
 import { createProblemId } from "@/games/problem-id";
 import {
+  decodeSlidePuzzlePoolEntry,
   findSlidePuzzlePoolEntryByProblemId,
   listSlidePuzzlePoolEntries,
-  toSlidePuzzlePooledProblem,
 } from "@/games/slide-puzzle/problem/problem-pool";
 
 describe("findSlidePuzzlePoolEntryByProblemId", () => {
@@ -11,7 +11,7 @@ describe("findSlidePuzzlePoolEntryByProblemId", () => {
     listSlidePuzzlePoolEntries(difficulty).map((entry) => ({
       difficulty,
       entry,
-      problemId: createProblemId(toSlidePuzzlePooledProblem(entry).identity),
+      problemId: createProblemId(decodeSlidePuzzlePoolEntry(entry).identity),
     })),
   );
 

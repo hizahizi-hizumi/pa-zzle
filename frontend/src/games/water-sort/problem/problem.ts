@@ -84,8 +84,8 @@ export function isWaterSortRecordedProblemIdentity(
   );
 }
 
-export type WaterSortGeneratedProblem = {
+/** 問題と、それを再現するための情報。 */
+export type WaterSortIdentifiedProblem = {
   problem: WaterSortProblem;
   identity: WaterSortProblemIdentity;
-  optimalMoveCount: number;
 };

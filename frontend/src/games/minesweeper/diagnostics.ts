@@ -6,12 +6,10 @@ import {
 } from "@/games/diagnostics";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
-import {
-  type MinesweeperRestoredProblem,
-  restoreMinesweeperProblemWithoutAnalysis,
-} from "@/games/minesweeper/problem/generator";
+import { restoreMinesweeperProblemWithoutAnalysis } from "@/games/minesweeper/problem/generator";
 import {
   isMinesweeperProblemIdentity,
+  type MinesweeperIdentifiedProblem,
   type MinesweeperProblemIdentity,
 } from "@/games/minesweeper/problem/problem";
 
@@ -47,7 +45,7 @@ function parseMinesweeperDiagnosticSnapshot(
 
 function restoreMinesweeperProblemFromDiagnosticSnapshot(
   snapshot: MinesweeperDiagnosticSnapshot,
-): MinesweeperRestoredProblem {
+): MinesweeperIdentifiedProblem {
   return restoreMinesweeperProblemWithoutAnalysis(snapshot.problemIdentity);
 }
 

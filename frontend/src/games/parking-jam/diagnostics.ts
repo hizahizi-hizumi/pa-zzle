@@ -13,12 +13,12 @@ import {
 } from "@/games/parking-jam/difficulty";
 import type { ParkingJamDifficultyAnalysis } from "@/games/parking-jam/problem/difficulty-analysis";
 import {
-  type ParkingJamRestoredProblem,
   restoreParkingJamProblem,
   restoreParkingJamProblemWithoutAnalysis,
 } from "@/games/parking-jam/problem/generator";
 import {
   isParkingJamProblemIdentity,
+  type ParkingJamIdentifiedProblem,
   type ParkingJamProblemIdentity,
 } from "@/games/parking-jam/problem/problem";
 import { isRecordObject } from "@/lib/type-guards";
@@ -95,7 +95,7 @@ function parseParkingJamDiagnosticSnapshot(
 
 function restoreParkingJamProblemFromDiagnosticSnapshot(
   snapshot: ParkingJamDiagnosticSnapshot,
-): ParkingJamRestoredProblem {
+): ParkingJamIdentifiedProblem {
   return restoreParkingJamProblemWithoutAnalysis(snapshot.problemIdentity);
 }
 

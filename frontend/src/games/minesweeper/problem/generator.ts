@@ -6,6 +6,7 @@ import type { MinesweeperHumanSolverOptions } from "@/games/minesweeper/problem/
 import {
   MINESWEEPER_GENERATOR_VERSION,
   type MinesweeperGenerationConditions,
+  type MinesweeperIdentifiedProblem,
   type MinesweeperProblem,
   type MinesweeperProblemIdentity,
 } from "@/games/minesweeper/problem/problem";
@@ -26,13 +27,7 @@ export const MINESWEEPER_MAXIMUM_BOARD_COLUMNS = 12;
 // 開始マスの位置によらず同じ地雷数を置けるよう、開始の3×3が盤面に収まる場合の9マスを常に空けておく。
 const START_AREA_CELL_COUNT = 9;
 
-/** 再現用情報から復元した問題。難易度分析を伴わない。 */
-export type MinesweeperRestoredProblem = {
-  problem: MinesweeperProblem;
-  identity: MinesweeperProblemIdentity;
-};
-
-export type MinesweeperGeneratedProblem = MinesweeperRestoredProblem & {
+export type MinesweeperGeneratedProblem = MinesweeperIdentifiedProblem & {
   difficultyAnalysis: MinesweeperDifficultyAnalysis;
 };
 
@@ -215,7 +210,7 @@ function findCandidateAtAttempt(
 /** 再現用情報から盤面だけを復元する。難易度分析を走らせないため、分類済みの問題を遊ぶときに使う。 */
 export function restoreMinesweeperProblemWithoutAnalysis(
   identity: MinesweeperProblemIdentity,
-): MinesweeperRestoredProblem {
+): MinesweeperIdentifiedProblem {
   validateProblemIdentity(identity);
 
   return { problem: findCandidateAtAttempt(identity), identity };

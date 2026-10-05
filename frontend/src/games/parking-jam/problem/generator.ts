@@ -1,9 +1,12 @@
-import { analyzeParkingJamDifficulty } from "@/games/parking-jam/problem/difficulty-analysis";
+import {
+  analyzeParkingJamDifficulty,
+  type ParkingJamDifficultyAnalysis,
+} from "@/games/parking-jam/problem/difficulty-analysis";
 import { analyzeParkingJamSolvability } from "@/games/parking-jam/problem/generation/solvability";
 import {
   PARKING_JAM_GENERATOR_VERSION,
-  type ParkingJamGeneratedProblem,
   type ParkingJamGenerationConditions,
+  type ParkingJamIdentifiedProblem,
   type ParkingJamProblemIdentity,
   type ParkingJamSolvabilityAnalysis,
 } from "@/games/parking-jam/problem/problem";
@@ -27,6 +30,11 @@ import {
   type ProblemSeed,
   shuffleProblemValues,
 } from "@/games/problem-seed";
+
+export type ParkingJamGeneratedProblem = ParkingJamIdentifiedProblem & {
+  solvabilityAnalysis: ParkingJamSolvabilityAnalysis;
+  difficultyAnalysis: ParkingJamDifficultyAnalysis;
+};
 
 export type ParkingJamGeneratedCandidate = {
   attempt: number;
@@ -452,18 +460,13 @@ export function restoreParkingJamProblem(
   return createGeneratedProblem(identity, restoreBoard(identity));
 }
 
-export type ParkingJamRestoredProblem = Pick<
-  ParkingJamGeneratedProblem,
-  "problem" | "identity"
->;
-
 /**
  * identity から盤面だけを復元する。可解性と難易度の解析は生成時に済んでいるため、
  * 問題集から選んだ問題や記録の問題を遊ぶときはこちらを使い、プレイ時に重い解析を走らせない。
  */
 export function restoreParkingJamProblemWithoutAnalysis(
   identity: ParkingJamProblemIdentity,
-): ParkingJamRestoredProblem {
+): ParkingJamIdentifiedProblem {
   return { problem: { board: restoreBoard(identity) }, identity };
 }
 

@@ -1,9 +1,9 @@
 import { difficultyLevels } from "@/games/difficulty";
 import { createProblemId } from "@/games/problem-id";
 import {
+  decodeWaterSortPoolEntry,
   findWaterSortPoolEntryByProblemId,
   listWaterSortPoolEntries,
-  toWaterSortPooledProblem,
 } from "@/games/water-sort/problem/problem-pool";
 
 describe("findWaterSortPoolEntryByProblemId", () => {
@@ -11,7 +11,7 @@ describe("findWaterSortPoolEntryByProblemId", () => {
     listWaterSortPoolEntries(difficulty).map((entry) => ({
       difficulty,
       entry,
-      problemId: createProblemId(toWaterSortPooledProblem(entry).identity),
+      problemId: createProblemId(decodeWaterSortPoolEntry(entry).identity),
     })),
   );
 

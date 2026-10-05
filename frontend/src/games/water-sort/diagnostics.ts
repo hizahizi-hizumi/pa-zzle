@@ -6,10 +6,12 @@ import {
 } from "@/games/diagnostics";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
-import { restoreWaterSortProblem } from "@/games/water-sort/problem/generator";
+import {
+  restoreWaterSortProblem,
+  type WaterSortGeneratedProblem,
+} from "@/games/water-sort/problem/generator";
 import {
   isWaterSortProblemIdentity,
-  type WaterSortGeneratedProblem,
   type WaterSortProblemIdentity,
 } from "@/games/water-sort/problem/problem";
 

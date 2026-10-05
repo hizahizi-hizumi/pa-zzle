@@ -1,8 +1,6 @@
 import type { ParkingJamDifficulty } from "@/games/parking-jam/difficulty";
-import {
-  type ParkingJamRestoredProblem,
-  restoreParkingJamProblemWithoutAnalysis,
-} from "@/games/parking-jam/problem/generator";
+import { restoreParkingJamProblemWithoutAnalysis } from "@/games/parking-jam/problem/generator";
+import type { ParkingJamIdentifiedProblem } from "@/games/parking-jam/problem/problem";
 import {
   findParkingJamPoolEntryByProblemId,
   listParkingJamPoolEntries,
@@ -15,7 +13,7 @@ import { selectProblemPoolEntry } from "@/games/problem-selection";
 // 問題集は生成時に難易度を判定済みのため、プレイ時には可解性・難易度の解析を走らせない。
 function restorePoolEntry(
   entry: ParkingJamProblemPoolEntry,
-): ParkingJamRestoredProblem {
+): ParkingJamIdentifiedProblem {
   return restoreParkingJamProblemWithoutAnalysis(
     toParkingJamPoolIdentity(entry),
   );
@@ -25,7 +23,7 @@ function restorePoolEntry(
 export function selectParkingJamProblemForDifficulty(
   difficulty: ParkingJamDifficulty,
   seed: ProblemSeed,
-): ParkingJamRestoredProblem {
+): ParkingJamIdentifiedProblem {
   const entry = selectProblemPoolEntry(
     listParkingJamPoolEntries(difficulty),
     seed,
@@ -38,7 +36,7 @@ export function selectParkingJamProblemForDifficulty(
 export function selectParkingJamProblemById(
   difficulty: ParkingJamDifficulty,
   problemId: string,
-): ParkingJamRestoredProblem | null {
+): ParkingJamIdentifiedProblem | null {
   const entry = findParkingJamPoolEntryByProblemId(difficulty, problemId);
   return entry ? restorePoolEntry(entry) : null;
 }

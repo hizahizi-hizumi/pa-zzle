@@ -2,18 +2,18 @@ import type { ProblemSeed } from "@/games/problem-seed";
 import { selectProblemPoolEntry } from "@/games/problem-selection";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import { restoreWaterSortProblemWithOptimalMoveCount } from "@/games/water-sort/problem/generator";
-import type { WaterSortGeneratedProblem } from "@/games/water-sort/problem/problem";
 import {
+  decodeWaterSortPoolEntry,
   findWaterSortPoolEntryByProblemId,
   listWaterSortPoolEntries,
-  toWaterSortPooledProblem,
+  type WaterSortPooledProblem,
   type WaterSortProblemPoolEntry,
 } from "@/games/water-sort/problem/problem-pool";
 
 function restorePoolEntry(
   entry: WaterSortProblemPoolEntry,
-): WaterSortGeneratedProblem {
-  const { identity, optimalMoveCount } = toWaterSortPooledProblem(entry);
+): WaterSortPooledProblem {
+  const { identity, optimalMoveCount } = decodeWaterSortPoolEntry(entry);
   return restoreWaterSortProblemWithOptimalMoveCount(
     identity,
     optimalMoveCount,
@@ -23,7 +23,7 @@ function restorePoolEntry(
 export function selectWaterSortProblemForDifficulty(
   difficulty: WaterSortDifficulty,
   seed: ProblemSeed,
-): WaterSortGeneratedProblem {
+): WaterSortPooledProblem {
   const entry = selectProblemPoolEntry(
     listWaterSortPoolEntries(difficulty),
     seed,
@@ -36,7 +36,7 @@ export function selectWaterSortProblemForDifficulty(
 export function selectWaterSortProblemById(
   difficulty: WaterSortDifficulty,
   problemId: string,
-): WaterSortGeneratedProblem | null {
+): WaterSortPooledProblem | null {
   const entry = findWaterSortPoolEntryByProblemId(difficulty, problemId);
   return entry ? restorePoolEntry(entry) : null;
 }

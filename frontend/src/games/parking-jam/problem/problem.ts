@@ -1,4 +1,3 @@
-import type { ParkingJamDifficultyAnalysis } from "@/games/parking-jam/problem/difficulty-analysis";
 import {
   type ParkingJamBoard,
   type ParkingJamMove,
@@ -43,6 +42,12 @@ export type ParkingJamProblemIdentity = {
   seed: ProblemSeed;
   conditions: ParkingJamGenerationConditions;
   generationAttempt: number;
+};
+
+/** 問題と、それを再現するための情報。可解性と難易度の解析を伴わない。 */
+export type ParkingJamIdentifiedProblem = {
+  problem: ParkingJamProblem;
+  identity: ParkingJamProblemIdentity;
 };
 
 function isUnitInterval(value: unknown): value is number {
@@ -99,11 +104,4 @@ export type ParkingJamSolvabilityAnalysis = {
   status: "solvable" | "unsolvable";
   solution: readonly ParkingJamMove[];
   removalLayers: readonly (readonly ParkingJamVehicleId[])[];
-};
-
-export type ParkingJamGeneratedProblem = {
-  problem: ParkingJamProblem;
-  identity: ParkingJamProblemIdentity;
-  solvabilityAnalysis: ParkingJamSolvabilityAnalysis;
-  difficultyAnalysis: ParkingJamDifficultyAnalysis;
 };

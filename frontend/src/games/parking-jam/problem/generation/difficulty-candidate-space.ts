@@ -1,8 +1,8 @@
-import { generateParkingJamProblem } from "@/games/parking-jam/problem/generator";
-import type {
-  ParkingJamGeneratedProblem,
-  ParkingJamGenerationConditions,
-} from "@/games/parking-jam/problem/problem";
+import {
+  generateParkingJamProblem,
+  type ParkingJamGeneratedProblem,
+} from "@/games/parking-jam/problem/generator";
+import type { ParkingJamGenerationConditions } from "@/games/parking-jam/problem/problem";
 import type { ProblemSeed } from "@/games/problem-seed";
 
 const MAXIMUM_CANDIDATE_GENERATION_ATTEMPTS = 100;
