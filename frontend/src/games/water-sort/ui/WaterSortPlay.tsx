@@ -32,7 +32,7 @@ type WaterSortPlayProps = GamePlayScreenProps<
     sourceBottleIndex: number | null;
     operation: WaterSortOperation | null;
     onSelectBottle: (bottleIndex: number) => void;
-    onClearingPourComplete: () => void;
+    onClearAnimationComplete: () => void;
   };
 
 export function WaterSortPlay({
@@ -55,7 +55,7 @@ export function WaterSortPlay({
   onReplay,
   onStartNewProblem,
   onOpenRecords,
-  onClearingPourComplete,
+  onClearAnimationComplete,
   onChangeDifficulty,
   onBackToHome,
   onOpenDiagnostics,
@@ -105,7 +105,7 @@ export function WaterSortPlay({
           onSelectBottle={onSelectBottle}
           interactionDisabled={progress !== "playing"}
           onPourAnimationActivityChange={setHasActivePourAnimation}
-          onClearingPourComplete={onClearingPourComplete}
+          onClearAnimationComplete={onClearAnimationComplete}
         />
       </main>
       <footer className="grid h-28 shrink-0 items-end px-4 pb-2">

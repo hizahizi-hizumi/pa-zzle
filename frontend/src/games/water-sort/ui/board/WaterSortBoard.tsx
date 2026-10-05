@@ -5,6 +5,7 @@ import { PourAnimationLayer } from "@/games/water-sort/ui/board/pour/PourAnimati
 import { usePourAnimations } from "@/games/water-sort/ui/board/pour/use-pour-animations";
 import { getWaterColorView } from "@/games/water-sort/ui/board/water-bottle/get-water-color-view";
 import { WaterBottle } from "@/games/water-sort/ui/board/water-bottle/WaterBottle";
+import { playRejectionShake } from "@/lib/motion";
 
 type WaterSortBoardProps = {
   state: WaterSortState;
@@ -13,8 +14,16 @@ type WaterSortBoardProps = {
   onSelectBottle: (bottleIndex: number) => void;
   interactionDisabled: boolean;
   onPourAnimationActivityChange?: (active: boolean) => void;
-  onClearingPourComplete?: () => void;
+  onClearAnimationComplete?: () => void;
 };
+
+const invalidBottleShakeKeyframes: Keyframe[] = [
+  { transform: "translateX(0)" },
+  { transform: "translateX(-4px)" },
+  { transform: "translateX(4px)" },
+  { transform: "translateX(-2px)" },
+  { transform: "translateX(0)" },
+];
 
 export function WaterSortBoard({
   state,
@@ -23,7 +32,7 @@ export function WaterSortBoard({
   onSelectBottle,
   interactionDisabled,
   onPourAnimationActivityChange,
-  onClearingPourComplete,
+  onClearAnimationComplete,
 }: WaterSortBoardProps) {
   const bottleRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const { animations, finishAnimation, interruptForBottleInteraction } =
@@ -31,12 +40,15 @@ export function WaterSortBoard({
       operation,
       bottleRefs,
       onActivityChange: onPourAnimationActivityChange,
-      onClearingPourComplete,
+      onClearAnimationComplete,
     });
 
   useLayoutEffect(() => {
     if (operation?.type === "invalid") {
-      animateInvalidBottle(bottleRefs.current[operation.bottleIndex]);
+      playRejectionShake(
+        bottleRefs.current[operation.bottleIndex],
+        invalidBottleShakeKeyframes,
+      );
     }
   }, [operation]);
 
@@ -141,21 +153,4 @@ function getBoardLayout(bottleCount: number) {
     columnGap: 18,
     rowGap: 44,
   };
-}
-
-function animateInvalidBottle(element: HTMLButtonElement | null | undefined) {
-  if (!element?.animate) {
-    return;
-  }
-
-  element.animate(
-    [
-      { transform: "translateX(0)" },
-      { transform: "translateX(-4px)" },
-      { transform: "translateX(4px)" },
-      { transform: "translateX(-2px)" },
-      { transform: "translateX(0)" },
-    ],
-    { duration: 220, easing: "ease-out" },
-  );
 }

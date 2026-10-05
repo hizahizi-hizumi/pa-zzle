@@ -20,7 +20,6 @@ describe("ReflectionClearLight", () => {
     const animate = vi.fn();
 
     beforeEach(() => {
-      vi.useFakeTimers();
       animate.mockClear();
       vi.stubGlobal(
         "matchMedia",
@@ -36,7 +35,6 @@ describe("ReflectionClearLight", () => {
     });
 
     afterEach(() => {
-      vi.useRealTimers();
       Reflect.deleteProperty(Element.prototype, "animate");
     });
 
@@ -46,12 +44,10 @@ describe("ReflectionClearLight", () => {
       expect(animated).toBe(0);
     });
 
-    test("全光路を見せる間を置いてから完了を通知すること", () => {
+    test("光路を見せる間を置かずにすぐ完了を通知すること", () => {
       const calledAtOnce = onComplete.mock.calls.length;
-      vi.runAllTimers();
-      const calledLater = onComplete.mock.calls.length;
 
-      expect([calledAtOnce, calledLater]).toEqual([0, 1]);
+      expect(calledAtOnce).toBe(1);
     });
   });
 

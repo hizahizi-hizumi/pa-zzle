@@ -1,11 +1,23 @@
 import { type ReactNode, useEffect, useRef } from "react";
 
+import { MOTION_EASING, playAnimations } from "@/lib/motion";
+
 type NanpureClearAnimationProps = {
   active: boolean;
   onComplete: () => void;
   children: ReactNode;
 };
 
+const CLEAR_PULSE_MS = 700;
+const CLEAR_HOLD_MS = 200;
+
+const clearPulseKeyframes: Keyframe[] = [
+  { transform: "scale(1)", filter: "saturate(1)" },
+  { transform: "scale(1.014)", filter: "saturate(1.24)", offset: 0.5 },
+  { transform: "scale(1)", filter: "saturate(1)" },
+];
+
+/** 埋まった盤面を小さく脈打たせてから結果へ進める。 */
 export function NanpureClearAnimation({
   active,
   onComplete,
@@ -18,39 +30,17 @@ export function NanpureClearAnimation({
       return;
     }
 
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-      onComplete();
-      return;
-    }
-
-    const animation = containerRef.current?.animate?.(
-      [
-        { transform: "scale(1)", filter: "saturate(1)" },
-        {
-          transform: "scale(1.014)",
-          filter: "saturate(1.24)",
-          offset: 0.5,
-        },
-        { transform: "scale(1)", filter: "saturate(1)" },
-      ],
-      { duration: 700, easing: "cubic-bezier(.2,.8,.2,1)" },
-    );
-
-    if (!animation) {
-      const timer = window.setTimeout(onComplete, 900);
-      return () => window.clearTimeout(timer);
-    }
-
-    let settleTimer: number | undefined;
-    animation.onfinish = () => {
-      settleTimer = window.setTimeout(onComplete, 200);
-    };
-    return () => {
-      animation.cancel();
-      if (settleTimer !== undefined) {
-        window.clearTimeout(settleTimer);
-      }
-    };
+    return playAnimations({
+      animate() {
+        const animation = containerRef.current?.animate?.(clearPulseKeyframes, {
+          duration: CLEAR_PULSE_MS,
+          easing: MOTION_EASING.celebrate,
+        });
+        return animation ? [animation] : [];
+      },
+      holdMs: CLEAR_HOLD_MS,
+      onFinished: onComplete,
+    });
   }, [active, onComplete]);
 
   return (

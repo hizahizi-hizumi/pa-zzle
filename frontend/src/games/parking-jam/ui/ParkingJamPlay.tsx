@@ -108,9 +108,10 @@ export function ParkingJamPlay({
           selectedVehicleId={selectedVehicleId}
           operation={operation}
           interactionDisabled={progress !== "playing"}
+          clearing={progress === "clearing"}
           onSelectVehicle={onSelectVehicle}
           onMove={onMove}
-          onExitAnimationComplete={onClearAnimationComplete}
+          onClearAnimationComplete={onClearAnimationComplete}
         />
       </main>
       <footer className="grid h-28 shrink-0 items-end px-4 pb-2">

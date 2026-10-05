@@ -38,7 +38,7 @@ describe("SlidePuzzlePlay", () => {
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
     onOpenRecords: vi.fn(),
-    onClearingComplete: vi.fn(),
+    onClearAnimationComplete: vi.fn(),
     onChangeDifficulty: vi.fn(),
     onBackToHome: vi.fn(),
   };

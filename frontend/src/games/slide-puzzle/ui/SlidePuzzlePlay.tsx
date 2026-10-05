@@ -27,7 +27,7 @@ type SlidePuzzlePlayProps = GamePlayScreenProps<
     operation: SlidePuzzleOperation | null;
     onSlideTile: (tileIndex: number) => void;
     onSlideInDirection: (direction: SlidePuzzleDirection) => void;
-    onClearingComplete: () => void;
+    onClearAnimationComplete: () => void;
   };
 
 const directionByArrowKey: Readonly<Record<string, SlidePuzzleDirection>> = {
@@ -53,7 +53,7 @@ export function SlidePuzzlePlay({
   onReplay,
   onStartNewProblem,
   onOpenRecords,
-  onClearingComplete,
+  onClearAnimationComplete,
   onChangeDifficulty,
   onBackToHome,
   onOpenDiagnostics,
@@ -134,7 +134,7 @@ export function SlidePuzzlePlay({
             interactionDisabled={progress !== "playing"}
             clearing={progress === "clearing"}
             onSlideTile={onSlideTile}
-            onClearingComplete={onClearingComplete}
+            onClearAnimationComplete={onClearAnimationComplete}
           />
         </div>
       </main>

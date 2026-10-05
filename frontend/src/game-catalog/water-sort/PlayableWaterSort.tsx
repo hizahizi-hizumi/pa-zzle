@@ -58,7 +58,7 @@ export function PlayableWaterSort({
         onUndo={play.undo}
         canRestart={play.canRestart}
         onRestart={play.restart}
-        onClearingPourComplete={play.completeClearAnimation}
+        onClearAnimationComplete={play.completeClearAnimation}
       />
       {diagnostics.snapshot && (
         <WaterSortDiagnostics
