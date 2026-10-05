@@ -12,6 +12,7 @@ paths:
 
 ```text
 frontend/src/games/
+├── difficulty.ts
 ├── result.ts
 └── <game>/
     ├── puzzle/
@@ -72,6 +73,9 @@ frontend/src/games/
 - 問題の特徴を求める処理と、その特徴を `1`〜`5` のレベル等へ分類するゲーム方針を分離する。
 - 特徴の解析は `problem/difficulty-analysis.ts`、分類方針は `difficulty.ts` が所有する。
 - `problem-selection.ts` が問題供給と `difficulty.ts` を組み合わせて、要求難易度に合う問題を選ぶ。
+- 難易度の共通契約は `games/difficulty.ts` が所有する。`<Game>Difficulty` は `DifficultyLevel` の別名にし、レベルの一覧・parse・表示名、旧3段階の区分（`<Game>RecordedDifficulty` は `RecordedDifficulty` の別名）はゲームごとに定義しない。
+- 分類関数は `DifficultyAssessment` を返す。状態は `classified`・`out-of-range`・`unsupported`・`invalid` だけを使い、起こらない状態は `never` にする。どのレベルの組にも当たらない理由は `unlisted-combination` とする。問題解析結果の状態名も `analyzed`・`unsupported`・`invalid` から選ぶ。
+- レベルごとの基準表は `as const satisfies Record<<Game>Difficulty, …>` で書き、範囲は `NumericRange` と `isInNumericRange` で表す。
 
 ## プレイ評価
 
