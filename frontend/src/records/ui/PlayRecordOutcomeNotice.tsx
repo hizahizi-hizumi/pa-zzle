@@ -2,6 +2,7 @@ import { Sparkles, Trophy } from "lucide-react";
 
 import { GameResultSurface } from "@/components/GameResultSurface";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import type { PersonalBestUpdate } from "@/records/personal-best";
 import type { PlayRecordSaveOutcome } from "@/records/save-play-record";
 import {
   getPlayRecordMetricDisplay,
@@ -13,58 +14,19 @@ type PlayRecordOutcomeNoticeProps = {
   display: PlayRecordDisplayDefinition;
 };
 
-function getMetricDirection(
+/** 自己ベストを良くなった向きに更新した幅。 */
+function getImprovementAmount(
   display: PlayRecordDisplayDefinition,
-  metricId: string,
-): "higher" | "lower" | null {
+  { metricId, previousValue, currentValue }: PersonalBestUpdate,
+): number {
   const metric = display.definition.personalBestMetrics.find(
     (personalBestMetric) => personalBestMetric.id === metricId,
   );
-
-  return metric?.direction ?? null;
-}
-
-function formatElapsedImprovement(milliseconds: number): string {
-  const totalSeconds = Math.floor(milliseconds / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-
-  if (minutes === 0) {
-    return `${seconds}秒短縮`;
-  }
-
-  return seconds === 0 ? `${minutes}分短縮` : `${minutes}分${seconds}秒短縮`;
-}
-
-function getImprovementLabel(
-  display: PlayRecordDisplayDefinition,
-  metricId: string,
-  previousValue: number,
-  currentValue: number,
-): string {
-  const improvementAmount = Math.max(
-    0,
-    getMetricDirection(display, metricId) === "higher"
+  const difference =
+    metric?.direction === "higher"
       ? currentValue - previousValue
-      : previousValue - currentValue,
-  );
-
-  switch (metricId) {
-    case "play-score":
-      return `+${improvementAmount}点`;
-    case "elapsed-ms":
-    case "time-delta-ms":
-      return formatElapsedImprovement(improvementAmount);
-    case "mistake-count":
-    case "failed-move-count":
-    case "correction-count":
-    case "relocation-count":
-      return `${improvementAmount}回減`;
-    case "move-delta":
-      return `${improvementAmount}手改善`;
-    default:
-      return "更新";
-  }
+      : previousValue - currentValue;
+  return Math.max(0, difference);
 }
 
 export function PlayRecordOutcomeNotice({
@@ -116,11 +78,8 @@ export function PlayRecordOutcomeNotice({
                     {metricDisplay.label}
                   </dt>
                   <dd className="rounded-full bg-amber-100 px-3 py-1 text-meta font-bold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
-                    {getImprovementLabel(
-                      display,
-                      update.metricId,
-                      update.previousValue,
-                      update.currentValue,
+                    {metricDisplay.formatImprovement(
+                      getImprovementAmount(display, update),
                     )}
                   </dd>
                 </div>

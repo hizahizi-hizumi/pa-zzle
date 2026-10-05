@@ -380,7 +380,7 @@ describe("PlayRecordsScreen", () => {
         within(row).getByRole("button", { name: "同じ問題をプレイ" }),
       );
 
-      expect(within(row).getByText("経過")).toBeTruthy();
+      expect(within(row).getByText("時間")).toBeTruthy();
       expect(within(row).getByText("00:30")).toBeTruthy();
       expect(within(row).getByText("5手")).toBeTruthy();
       expect(within(row).queryByText(/点$/)).toBeNull();
