@@ -48,7 +48,7 @@ frontend/src/games/
 - `play/`: 問題供給、session、評価を組み合わせ、UIへプレイ状態と操作を提供する。
 - `ui/`: ゲーム固有の表示とユーザー操作を扱う。結果画面はプレイ画面と記録の結果画面の両方から使うので、プレイ画面の内部実装ではなく `ui/result/` に置く。
 - `display-name.ts`: 利用者に見せるゲーム名 `<GAME>_DISPLAY_NAME` を置く。カタログ・難易度選択・プレイ画面・盤面の読み上げ名・結果画面はこれを参照し、ゲーム名を直書きしない。
-- `difficulty.ts`: ゲームとしての難易度ラベルと分類方針を置く。
+- `difficulty.ts`: ゲームとしての難易度の分類方針を置く。難易度レベルの一覧・表示名は `games/difficulty.ts` の共通契約を使う。
 - `score.ts`: 完了したプレイの事実をゲーム固有の評価へ変換する。
 - `problem-selection.ts`: 開始条件に合う問題を問題供給元と難易度方針から選ぶ。
 - `play-record.ts`: ゲーム固有の完了事実を共通記録機能へ接続する。今の版の記録から結果画面に出す内容を作り直す `restore<Game>RecordedResult` も置き、結果の計算は `play/` の `create<Game>Result` をプレイ中と共用する。
