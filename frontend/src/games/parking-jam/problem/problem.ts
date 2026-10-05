@@ -1,8 +1,9 @@
 import type { ParkingJamDifficultyAnalysis } from "@/games/parking-jam/problem/difficulty-analysis";
-import type {
-  ParkingJamBoard,
-  ParkingJamMove,
-  ParkingJamVehicleId,
+import {
+  type ParkingJamBoard,
+  type ParkingJamMove,
+  type ParkingJamVehicleId,
+  validateParkingJamBoard,
 } from "@/games/parking-jam/puzzle/board";
 import type { ProblemSeed } from "@/games/problem-seed";
 import {
@@ -28,6 +29,10 @@ export type ParkingJamGenerationConditions = {
 export type ParkingJamProblem = {
   board: ParkingJamBoard;
 };
+
+export function assertParkingJamProblem(problem: ParkingJamProblem): void {
+  validateParkingJamBoard(problem.board);
+}
 
 export type ParkingJamProblemIdentity = {
   generatorVersion: typeof PARKING_JAM_GENERATOR_VERSION;

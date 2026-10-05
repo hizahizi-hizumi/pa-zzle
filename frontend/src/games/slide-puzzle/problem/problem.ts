@@ -1,5 +1,6 @@
 import type { ProblemSeed } from "@/games/problem-seed";
 import {
+  getSlidePuzzleBoardSize,
   isSlidePuzzleBoardSize,
   type SlidePuzzleBoard,
   type SlidePuzzleBoardSize,
@@ -21,6 +22,23 @@ export type SlidePuzzleGenerationConditions = {
 export type SlidePuzzleProblem = {
   initialBoard: SlidePuzzleBoard;
 };
+
+/** 初期盤面は、扱う盤面サイズのマス数を持ち、空白と各タイルを1つずつ並べる。 */
+export function assertSlidePuzzleProblem(problem: SlidePuzzleProblem): void {
+  const { initialBoard } = problem;
+  getSlidePuzzleBoardSize(initialBoard);
+
+  const tiles = new Set(initialBoard);
+  const hasEveryTileOnce =
+    tiles.size === initialBoard.length &&
+    initialBoard.every(
+      (tile) =>
+        Number.isInteger(tile) && tile >= 0 && tile < initialBoard.length,
+    );
+  if (!hasEveryTileOnce) {
+    throw new Error("Slide puzzle board must place each tile exactly once");
+  }
+}
 
 export type SlidePuzzleProblemIdentity = {
   generatorVersion: typeof SLIDE_PUZZLE_GENERATOR_VERSION;

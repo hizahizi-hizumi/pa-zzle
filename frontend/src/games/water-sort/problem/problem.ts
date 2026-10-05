@@ -1,5 +1,8 @@
 import type { ProblemSeed } from "@/games/problem-seed";
 import {
+  countEmptyWaterSortBottles,
+  countWaterSortColors,
+  isStandardWaterSortInitialState,
   WATER_SORT_BOTTLE_CAPACITY,
   type WaterSortState,
 } from "@/games/water-sort/puzzle/state";
@@ -20,6 +23,20 @@ export type WaterSortGenerationConditions = {
 export type WaterSortProblem = {
   initialState: WaterSortState;
 };
+
+/** 初期状態は、色ごとに瓶の容量と同じ数のブロックがあり、空でない瓶は満杯で、空の瓶を1本以上持つ。 */
+export function assertWaterSortProblem(problem: WaterSortProblem): void {
+  const { initialState } = problem;
+  if (
+    !isStandardWaterSortInitialState(
+      initialState,
+      countWaterSortColors(initialState),
+      countEmptyWaterSortBottles(initialState),
+    )
+  ) {
+    throw new Error("Water sort initial state must be a standard puzzle");
+  }
+}
 
 export type WaterSortProblemIdentity = {
   generatorVersion: typeof WATER_SORT_GENERATOR_VERSION;

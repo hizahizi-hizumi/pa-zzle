@@ -1,4 +1,7 @@
-import type { ParkingJamProblem } from "@/games/parking-jam/problem/problem";
+import {
+  assertParkingJamProblem,
+  type ParkingJamProblem,
+} from "@/games/parking-jam/problem/problem";
 import {
   createParkingJamInitialState,
   isParkingJamCleared,
@@ -53,6 +56,8 @@ export function createParkingJamSession(
   problem: ParkingJamProblem,
   startedAt: number,
 ): ParkingJamSession {
+  assertParkingJamProblem(problem);
+
   return {
     status: "playing",
     problem,
