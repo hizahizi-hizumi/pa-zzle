@@ -29,7 +29,6 @@ type TakuzuPlayProps = GamePlayScreenProps<TakuzuDifficulty, TakuzuResult> &
     undoCount: number;
     onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
     onPlaceCell: (cellIndex: number, cell: TakuzuCell) => void;
-    onClearAnimationComplete: () => void;
   };
 
 export function TakuzuPlay({

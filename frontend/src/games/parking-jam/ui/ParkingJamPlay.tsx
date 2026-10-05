@@ -38,7 +38,6 @@ type ParkingJamPlayProps = GamePlayScreenProps<
       vehicleId: ParkingJamVehicleId,
       direction: ParkingJamDirection,
     ) => void;
-    onClearAnimationComplete: () => void;
   };
 
 export function ParkingJamPlay({

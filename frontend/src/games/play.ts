@@ -166,6 +166,8 @@ export type GamePlayScreenProps<Difficulty, Result> = Omit<
   result: Result | null;
   /** 同じ問題を新しいプレイとして始める（リセット）。 */
   onReplay: () => void;
+  /** 盤面のクリア演出が終わったことを知らせ、結果表示へ進める。 */
+  onClearAnimationComplete: () => void;
 };
 
 /** 盤面を戻せるゲームのプレイ画面が足す props。 */

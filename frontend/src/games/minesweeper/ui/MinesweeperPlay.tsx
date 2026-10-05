@@ -28,7 +28,6 @@ type MinesweeperPlayProps = GamePlayScreenProps<
   onRevealCell: (cellIndex: number) => void;
   onToggleFlag: (cellIndex: number) => void;
   onChordCell: (cellIndex: number) => void;
-  onClearAnimationComplete: () => void;
 };
 
 export function MinesweeperPlay({

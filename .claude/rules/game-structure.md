@@ -128,6 +128,13 @@ frontend/src/games/
 - 盤面は `progress` が `playing` の間だけ操作を受け付け、受け付けないことを `interactionDisabled` で受け取る。
 - 操作の callback props は、タップ・キーボードなどの入力手段ではなく操作の意味で名付ける。
 
+## クリア演出
+
+- クリア演出は `@/lib/motion` の `playAnimations` で再生し、完了を通知する。演出の中身と長さ、演出後に盤面を見せておく時間はゲームが決める。
+- 動きを減らす設定では、クリア演出をせずにすぐ完了を通知する。
+- 演出の完了を受け取る盤面の props は `onClearAnimationComplete` とする。Play へは `GamePlayScreenProps` の `onClearAnimationComplete` で渡り、`usePlayableGame` がプレイフックの `completeClearAnimation` へつなぐ。
+- 演出の層はプレイ画面の中に描き、`document.body` へ portal しない。重なり順はプレイ画面の中の値で表す。
+
 ## 依存方向
 
 - `frontend/src/games/` 直下のゲーム共通契約は React に依存しない。プレイフックの共通部分を置く `games/play.ts` だけは React に依存できる。
@@ -146,13 +153,6 @@ frontend/src/games/
 - ゲームカタログ（`frontend/src/game-catalog/`）へ依存しない。
 - 別ゲームの実装を直接 import しない。
 - 循環依存を作らない。例外を追加する前に責務の配置を見直す。
-
-## クリア演出
-
-- クリア演出は `@/lib/motion` の `playAnimations` で再生し、完了を通知する。演出の中身と長さ、演出後に盤面を見せておく時間はゲームが決める。
-- 動きを減らす設定では、クリア演出をせずにすぐ完了を通知する。
-- 演出の完了を受け取る盤面と Play の props は `onClearAnimationComplete` とする。
-- 演出の層はプレイ画面の中に描き、`document.body` へ portal しない。重なり順はプレイ画面の中の値で表す。
 
 ## ゲーム直下
 

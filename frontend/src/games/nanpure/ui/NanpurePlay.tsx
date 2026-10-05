@@ -35,7 +35,6 @@ type NanpurePlayProps = GamePlayScreenProps<NanpureDifficulty, NanpureResult> &
     onInputDigit: (digit: NanpureDigit) => void;
     onErase: () => void;
     onToggleNotesMode: () => void;
-    onClearAnimationComplete: () => void;
   };
 
 export function NanpurePlay({

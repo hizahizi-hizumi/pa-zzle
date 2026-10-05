@@ -27,7 +27,6 @@ type SlidePuzzlePlayProps = GamePlayScreenProps<
     operation: SlidePuzzleOperation | null;
     onSlideTile: (tileIndex: number) => void;
     onSlideInDirection: (direction: SlidePuzzleDirection) => void;
-    onClearAnimationComplete: () => void;
   };
 
 const directionByArrowKey: Readonly<Record<string, SlidePuzzleDirection>> = {

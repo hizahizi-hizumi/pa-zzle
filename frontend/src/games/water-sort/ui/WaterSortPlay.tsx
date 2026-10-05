@@ -32,7 +32,6 @@ type WaterSortPlayProps = GamePlayScreenProps<
     sourceBottleIndex: number | null;
     operation: WaterSortOperation | null;
     onSelectBottle: (bottleIndex: number) => void;
-    onClearAnimationComplete: () => void;
   };
 
 export function WaterSortPlay({

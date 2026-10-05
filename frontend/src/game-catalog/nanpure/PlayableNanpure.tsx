@@ -65,7 +65,6 @@ export function PlayableNanpure({
         onUndo={play.undo}
         canRestart={play.canRestart}
         onRestart={play.restart}
-        onClearAnimationComplete={play.completeClearAnimation}
       />
       {diagnostics.snapshot && (
         <NanpureDiagnostics

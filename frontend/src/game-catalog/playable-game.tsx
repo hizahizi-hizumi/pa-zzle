@@ -130,6 +130,7 @@ export function usePlayableGame<
         />
       ),
       onReplay: play.replay,
+      onClearAnimationComplete: play.completeClearAnimation,
       onStartNewProblem: play.startNewProblem,
       onOpenRecords: navigation.openRecords,
       onChangeDifficulty: navigation.changeDifficulty,
