@@ -13,6 +13,13 @@ paths:
 - 共通コンポーネントを利用するコードは、その公開APIを迂回して外観を変更しない。
 - UI・デザインを変更するときは `DESIGN.md` を読み、正確なデザイントークン値が必要な場合は `frontend/styles/globals.css` の `@theme` を参照する。
 
+## 動き
+
+- 共通UIの時間とイージングは `@theme` の動きのトークンから取る。Tailwind では `duration-(--duration-*)` と `ease-*`、TS（Web Animations API）では `@/lib/motion` の `MOTION_DURATION_MS` と `MOTION_EASING` を使う。
+- ゲームの演出と結果画面の演出の時間・イージングは、トークンかその演出の名前付き定数にする。トークンに合わせるために演出の値を変えない。
+- 動きを減らす設定は `@/lib/motion` の `prefersReducedMotion` で判定し、TS から動かす演出はその設定で動かさない。
+- 操作が通らなかったことを返す揺れは `@/lib/motion` の `playRejectionShake` で再生する。揺れ方・長さ・イージングはゲームが渡す。
+
 ## 適用除外
 
 - `frontend/src/components/ui/**` は shadcn/ui の上流形状を維持するため、本規約の適用対象外とする。

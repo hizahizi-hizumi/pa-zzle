@@ -58,7 +58,6 @@ export function PlayableSlidePuzzle({
         onSlideInDirection={play.slideInDirection}
         canRestart={play.canRestart}
         onRestart={play.restart}
-        onClearingComplete={play.completeClearAnimation}
       />
       {diagnostics.snapshot && (
         <SlidePuzzleDiagnostics

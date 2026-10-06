@@ -83,7 +83,6 @@ export function PlayableParkingJam({
         onMove={play.attemptMove}
         onUndo={play.undo}
         onRestart={play.restart}
-        onClearAnimationComplete={play.completeClearAnimation}
       />
       {diagnostics.snapshot && (
         <ParkingJamDiagnostics

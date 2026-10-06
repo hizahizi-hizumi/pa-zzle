@@ -5,6 +5,7 @@ import type {
   RestartableGamePlayScreenProps,
   UndoableGamePlayScreenProps,
 } from "@/games/play";
+import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import { TAKUZU_DISPLAY_NAME } from "@/games/takuzu/display-name";
 import type { TakuzuResult } from "@/games/takuzu/play/use-takuzu-play";
@@ -29,7 +30,6 @@ type TakuzuPlayProps = GamePlayScreenProps<TakuzuDifficulty, TakuzuResult> &
     undoCount: number;
     onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
     onPlaceCell: (cellIndex: number, cell: TakuzuCell) => void;
-    onClearAnimationComplete: () => void;
   };
 
 export function TakuzuPlay({
@@ -65,7 +65,7 @@ export function TakuzuPlay({
       metrics={[
         { type: "count", label: "置き直し", count: correctionCount },
         { type: "elapsed-time", elapsedMs },
-        { type: "count", label: "待った", count: undoCount },
+        { type: "count", label: PLAY_OPERATION_LABELS.undo, count: undoCount },
       ]}
       canRestart={canRestart}
       onRestart={onRestart}

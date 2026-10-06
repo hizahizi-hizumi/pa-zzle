@@ -60,7 +60,6 @@ export function PlayableMinesweeper({
         onRevealCell={play.revealCell}
         onToggleFlag={play.toggleFlag}
         onChordCell={play.chordCell}
-        onClearAnimationComplete={play.completeClearAnimation}
       />
       {diagnostics.snapshot && (
         <MinesweeperDiagnostics

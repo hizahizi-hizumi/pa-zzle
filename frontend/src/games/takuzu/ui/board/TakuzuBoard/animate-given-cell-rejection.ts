@@ -1,4 +1,9 @@
-const GIVEN_CELL_SHAKE_MS = 220;
+import { playRejectionShake, type RejectionShakeTiming } from "@/lib/motion";
+
+const givenCellShakeTiming: RejectionShakeTiming = {
+  durationMs: 220,
+  easing: "ease-out",
+};
 
 /** マスの幅に対する揺れ幅。1往復目を大きく、2往復目で収める。 */
 const givenCellShakeKeyframes: Keyframe[] = [
@@ -13,16 +18,9 @@ const givenCellShakeKeyframes: Keyframe[] = [
 export function animateGivenCellRejection(
   element: HTMLElement | undefined,
 ): void {
-  const tile = element?.querySelector<HTMLElement>("[data-takuzu-tile]");
-  if (
-    !tile?.animate ||
-    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
-  ) {
-    return;
-  }
-
-  tile.animate(givenCellShakeKeyframes, {
-    duration: GIVEN_CELL_SHAKE_MS,
-    easing: "ease-out",
-  });
+  playRejectionShake(
+    element?.querySelector<HTMLElement>("[data-takuzu-tile]"),
+    givenCellShakeKeyframes,
+    givenCellShakeTiming,
+  );
 }

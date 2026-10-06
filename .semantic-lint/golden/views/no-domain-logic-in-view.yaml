@@ -10,12 +10,6 @@ files:
       - lines: [9, 12]
       - lines: [13, 15]
       - lines: [17, 21]
-  - path: frontend/src/views/NanpurePlayView/PlayableNanpure.tsx
-    blob: 88fa3ea5d6f1c055c386c93d721021bce3e932c5
-    findings: []
-  - path: frontend/src/views/RecordedProblemReplayView.tsx
-    blob: cd5847600b9252c2f2b982eba2490f64375b77e2
-    findings: []
   - path: frontend/src/views/NanpurePlayView.tsx
     blob: eb7205c3fdcac08853f8297acb8fb9aee88583a9
     findings: []

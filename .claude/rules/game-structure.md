@@ -48,7 +48,7 @@ frontend/src/games/
 - `play/`: 問題供給、session、評価を組み合わせ、UIへプレイ状態と操作を提供する。
 - `ui/`: ゲーム固有の表示とユーザー操作を扱う。結果画面はプレイ画面と記録の結果画面の両方から使うので、プレイ画面の内部実装ではなく `ui/result/` に置く。
 - `display-name.ts`: 利用者に見せるゲーム名 `<GAME>_DISPLAY_NAME` を置く。カタログ・難易度選択・プレイ画面・盤面の読み上げ名・結果画面はこれを参照し、ゲーム名を直書きしない。
-- `difficulty.ts`: ゲームとしての難易度ラベルと分類方針を置く。
+- `difficulty.ts`: ゲームとしての難易度の分類方針を置く。難易度レベルの一覧・表示名は `games/difficulty.ts` の共通契約を使う。
 - `score.ts`: 完了したプレイの事実をゲーム固有の評価へ変換する。
 - `problem-selection.ts`: 開始条件に合う問題を問題供給元と難易度方針から選ぶ。
 - `play-record.ts`: ゲーム固有の完了事実を共通記録機能へ接続する。今の版の記録から結果画面に出す内容を作り直す `restore<Game>RecordedResult` も置き、結果の計算は `play/` の `create<Game>Result` をプレイ中と共用する。
@@ -100,6 +100,7 @@ frontend/src/games/
 - スコアから称賛段階などの意味的な評価段階を決める処理はゲーム層に置く。SPEC-006 の段階基準は全ゲーム共通なので `result.ts` の `getGameResultLevel` を使う。
 - 色、文言、演出など評価段階の視覚表現はUIが担当する。
 - 複数ゲームで同じ意味を持つ契約は `frontend/src/games/` 直下へ置く。例: `result.ts` の `GameResultLevel`。
+- 共通モジュールは仕組みを一つにする。演出の時間・量、採点の係数など、ゲームの表現に属する値はゲームが渡し、共通モジュールに固定しない。
 - `score.ts` の評価関数は `games/score.ts` の `PlayScore` を返す。評価項目は `ScoreItem` の名前を使い、満点は `ScoreMaximums` で結果画面に出す順に並べる。
 - 速さは `games/score.ts` の `SpeedScoreRule` と `calculateSpeedScore` で採点する。各ゲームは `calculate<Game>SpeedScoreRule` と `calculate<Game>TimeDeltaMs` を置き、結果に `speedRule` と `timeDeltaMs` を含める。
 - 時間の自己ベストは `time-delta-ms`（基準時間との差）で比べる。今の採点規則で評価できない記録は記録一覧に残し、評価と自己ベストの値を `null` にする。
@@ -124,9 +125,16 @@ frontend/src/games/
 
 - `ui/<Game>Play.tsx` の props は `games/play.ts` の `GamePlayScreenProps<Difficulty, Result>` に、盤面を戻せるなら `RestartableGamePlayScreenProps`、待ったがあるなら `UndoableGamePlayScreenProps` と、ゲーム固有の値・操作を足して作る。`ui/result/<Game>ResultScreen.tsx` の props は `GamePlayResultScreenProps<Difficulty, Result>` で作る。難易度は値で受け取り、表示名は UI が決める。
 - プレイ画面は `components/GamePlayFrame.tsx` に盤面（`main`）とゲーム固有の操作（`footer`）を渡して作り、外枠・ブランドの帯・見出し・遊び方の開閉・結果画面への切り替えを各ゲームで書かない。結果画面は `progress` が `result` で評価があるときだけ出る。
-- 見出しの計測値は `PlayHeaderMetric` の回数（`count`）と経過時間（`elapsed-time`）で渡し、書式・桁の確保・行の分け方は共通部品に任せる。
+- 見出しの計測値は `PlayHeaderMetric` の回数（`count`）と経過時間（`elapsed-time`）で渡し、書式・行の分け方は共通部品に任せる。回数の桁の確保は共通部品の既定に任せ、変えるときは `reservedDigits` で渡す。
 - 盤面は `progress` が `playing` の間だけ操作を受け付け、受け付けないことを `interactionDisabled` で受け取る。
 - 操作の callback props は、タップ・キーボードなどの入力手段ではなく操作の意味で名付ける。
+
+## クリア演出
+
+- クリア演出は `@/lib/motion` の `playAnimations` で再生し、完了を通知する。演出の中身と長さ、完了の決め方（`completion`）、動きを減らす設定と動かせない環境で完了するまでの時間（`reducedMotionHoldMs`・`unanimatedHoldMs`）はゲームが渡す。
+- 動きを減らす設定では、クリア演出を動かさない。
+- 演出の完了を受け取る盤面の props は `onClearAnimationComplete` とする。Play へは `GamePlayScreenProps` の `onClearAnimationComplete` で渡り、`usePlayableGame` がプレイフックの `completeClearAnimation` へつなぐ。
+- 演出の層はプレイ画面の中に描き、`document.body` へ portal しない。重なり順はプレイ画面の中の値で表す。
 
 ## 依存方向
 

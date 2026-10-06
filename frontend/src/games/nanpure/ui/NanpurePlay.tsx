@@ -17,6 +17,7 @@ import type {
   RestartableGamePlayScreenProps,
   UndoableGamePlayScreenProps,
 } from "@/games/play";
+import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 
 type NanpurePlayProps = GamePlayScreenProps<NanpureDifficulty, NanpureResult> &
   RestartableGamePlayScreenProps &
@@ -35,7 +36,6 @@ type NanpurePlayProps = GamePlayScreenProps<NanpureDifficulty, NanpureResult> &
     onInputDigit: (digit: NanpureDigit) => void;
     onErase: () => void;
     onToggleNotesMode: () => void;
-    onClearAnimationComplete: () => void;
   };
 
 export function NanpurePlay({
@@ -86,7 +86,7 @@ export function NanpurePlay({
       metrics={[
         { type: "count", label: "ミス", count: mistakeCount },
         { type: "elapsed-time", elapsedMs },
-        { type: "count", label: "待った", count: undoCount },
+        { type: "count", label: PLAY_OPERATION_LABELS.undo, count: undoCount },
       ]}
       canRestart={canRestart}
       onRestart={onRestart}

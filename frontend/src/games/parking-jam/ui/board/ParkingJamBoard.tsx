@@ -2,6 +2,7 @@ import {
   type CSSProperties,
   type KeyboardEvent,
   type PointerEvent,
+  useEffect,
   useRef,
 } from "react";
 import { PARKING_JAM_DISPLAY_NAME } from "@/games/parking-jam/display-name";
@@ -27,6 +28,7 @@ import {
   parkingJamBoardGeometry,
 } from "@/games/parking-jam/ui/board/parking-jam-board-geometry";
 import { useParkingJamBoardPaint } from "@/games/parking-jam/ui/board/parking-jam-board-paint";
+import { playAnimations } from "@/lib/motion";
 
 import "@/games/parking-jam/ui/board/parking-jam-board.css";
 
@@ -36,12 +38,14 @@ type ParkingJamBoardProps = {
   selectedVehicleId: ParkingJamVehicleId | null;
   operation: ParkingJamOperation | null;
   interactionDisabled: boolean;
+  /** 最後の車が出ていく演出の間だけ `true`。 */
+  clearing: boolean;
   onSelectVehicle: (vehicleId: ParkingJamVehicleId) => void;
   onMove: (
     vehicleId: ParkingJamVehicleId,
     direction: ParkingJamDirection,
   ) => void;
-  onExitAnimationComplete?: () => void;
+  onClearAnimationComplete: () => void;
 };
 
 const SWIPE_THRESHOLD = 18;
@@ -101,9 +105,10 @@ export function ParkingJamBoard({
   selectedVehicleId,
   operation,
   interactionDisabled,
+  clearing,
   onSelectVehicle,
   onMove,
-  onExitAnimationComplete,
+  onClearAnimationComplete,
 }: ParkingJamBoardProps) {
   const pointerStart = useRef<{
     vehicleId: string;
@@ -117,6 +122,23 @@ export function ParkingJamBoard({
   const selectedVehicle = board.vehicles.find(
     (vehicle) => vehicle.id === selectedVehicleId && remaining.has(vehicle.id),
   );
+  const exitingCarRef = useRef<SVGGElement>(null);
+
+  useEffect(() => {
+    if (!clearing) {
+      return;
+    }
+
+    return playAnimations({
+      // 出ていく動きは CSS アニメーションなので、要素に付いた Animation を待つ。
+      animate: () => exitingCarRef.current?.getAnimations?.() ?? [],
+      // 出ていき終えたらすぐ結果へ進める。動きを減らす設定の CSS は 1ms で出ていき終える。
+      completion: { type: "after-animations", holdMs: 0 },
+      reducedMotionHoldMs: 0,
+      unanimatedHoldMs: 0,
+      onFinished: onClearAnimationComplete,
+    });
+  }, [clearing, onClearAnimationComplete]);
 
   function handlePointerDown(
     event: PointerEvent<SVGGElement>,
@@ -201,6 +223,7 @@ export function ParkingJamBoard({
           return (
             <g
               key={targeted ? `${vehicle.id}-${operation?.id}` : vehicle.id}
+              ref={exiting ? exitingCarRef : undefined}
               role="button"
               tabIndex={interactionDisabled || exiting ? -1 : 0}
               aria-label={getVehicleLabel(vehicle)}
@@ -210,7 +233,6 @@ export function ParkingJamBoard({
               onPointerDown={(event) => handlePointerDown(event, vehicle)}
               onPointerUp={(event) => handlePointerUp(event, vehicle)}
               onKeyDown={(event) => handleKeyDown(event, vehicle)}
-              onAnimationEnd={exiting ? onExitAnimationComplete : undefined}
             >
               <ParkingJamCar vehicle={vehicle} glassFill={paint.glassFill} />
             </g>

@@ -7,6 +7,13 @@ import {
   type SlidePuzzleBoard as SlidePuzzleBoardState,
 } from "@/games/slide-puzzle/puzzle/state";
 import { SlidePuzzleTile } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard/SlidePuzzleTile";
+import {
+  MOTION_DURATION_MS,
+  MOTION_EASING,
+  playAnimations,
+  playRejectionShake,
+  type RejectionShakeTiming,
+} from "@/lib/motion";
 
 type SlidePuzzleBoardProps = {
   board: SlidePuzzleBoardState;
@@ -14,14 +21,37 @@ type SlidePuzzleBoardProps = {
   interactionDisabled: boolean;
   clearing: boolean;
   onSlideTile: (tileIndex: number) => void;
-  onClearingComplete: () => void;
+  onClearAnimationComplete: () => void;
 };
 
-/** タイルの滑りは `duration-normal` で終わる。完成演出は最後のタイルが収まってから始める。 */
-const SLIDE_DURATION_MS = 150;
+/** タイルの滑りは `--duration-normal` で終わる。完成演出は最後のタイルが収まってから始める。 */
+const SLIDE_DURATION_MS = MOTION_DURATION_MS.normal;
 const CLEAR_WAVE_STAGGER_MS = 32;
 const CLEAR_WAVE_DURATION_MS = 360;
-const CLEAR_SETTLE_MS = 240;
+const CLEAR_HOLD_MS = 240;
+
+const invalidTileShakeTiming: RejectionShakeTiming = {
+  durationMs: 220,
+  easing: "ease-out",
+};
+
+const invalidTileShakeKeyframes: Keyframe[] = [
+  { transform: "translateX(0)" },
+  { transform: "translateX(-5%)" },
+  { transform: "translateX(5%)" },
+  { transform: "translateX(-2.5%)" },
+  { transform: "translateX(0)" },
+];
+
+const clearWaveKeyframes: Keyframe[] = [
+  { transform: "translateY(0)" },
+  {
+    transform: "translateY(-6%)",
+    boxShadow: "0 6px 12px rgb(0 0 0 / 0.12)",
+    offset: 0.4,
+  },
+  { transform: "translateY(0)" },
+];
 
 export function SlidePuzzleBoard({
   board,
@@ -29,7 +59,7 @@ export function SlidePuzzleBoard({
   interactionDisabled,
   clearing,
   onSlideTile,
-  onClearingComplete,
+  onClearAnimationComplete,
 }: SlidePuzzleBoardProps) {
   const tileFaceRefs = useRef(new Map<number, HTMLSpanElement>());
   const boardSize = getSlidePuzzleBoardSize(board);
@@ -45,8 +75,10 @@ export function SlidePuzzleBoard({
     }
 
     const tile = board[operation.tileIndex];
-    animateInvalidTile(
+    playRejectionShake(
       tile === undefined ? undefined : tileFaceRefs.current.get(tile),
+      invalidTileShakeKeyframes,
+      invalidTileShakeTiming,
     );
   }, [board, operation]);
 
@@ -58,8 +90,14 @@ export function SlidePuzzleBoard({
     const facesInTileOrder = Array.from({ length: tileCount }, (_, index) =>
       tileFaceRefs.current.get(index + 1),
     );
-    return animateClear(facesInTileOrder, onClearingComplete);
-  }, [clearing, onClearingComplete, tileCount]);
+    return playAnimations({
+      animate: () => animateClearWave(facesInTileOrder),
+      completion: { type: "after-animations", holdMs: CLEAR_HOLD_MS },
+      reducedMotionHoldMs: 0,
+      unanimatedHoldMs: 0,
+      onFinished: onClearAnimationComplete,
+    });
+  }, [clearing, onClearAnimationComplete, tileCount]);
 
   return (
     <div
@@ -92,80 +130,16 @@ export function SlidePuzzleBoard({
   );
 }
 
-function prefersReducedMotion(): boolean {
-  return (
-    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
-  );
-}
-
-function animateInvalidTile(element: HTMLElement | undefined) {
-  if (!element?.animate || prefersReducedMotion()) {
-    return;
-  }
-
-  element.animate(
-    [
-      { transform: "translateX(0)" },
-      { transform: "translateX(-5%)" },
-      { transform: "translateX(5%)" },
-      { transform: "translateX(-2.5%)" },
-      { transform: "translateX(0)" },
-    ],
-    { duration: 220, easing: "ease-out" },
-  );
-}
-
 /** 1 から順にタイルを小さく持ち上げ、数字が並んだことを確かめる波を送る。 */
-function animateClear(
+function animateClearWave(
   elements: readonly (HTMLElement | undefined)[],
-  onComplete: () => void,
-): (() => void) | undefined {
-  if (
-    prefersReducedMotion() ||
-    elements.some((element) => typeof element?.animate !== "function")
-  ) {
-    onComplete();
-    return;
-  }
-
-  const animations = elements.map((element, order) =>
-    element?.animate(
-      [
-        { transform: "translateY(0)" },
-        {
-          transform: "translateY(-6%)",
-          boxShadow: "0 6px 12px rgb(0 0 0 / 0.12)",
-          offset: 0.4,
-        },
-        { transform: "translateY(0)" },
-      ],
-      {
+): Animation[] {
+  return elements.flatMap(
+    (element, order) =>
+      element?.animate?.(clearWaveKeyframes, {
         duration: CLEAR_WAVE_DURATION_MS,
         delay: SLIDE_DURATION_MS + order * CLEAR_WAVE_STAGGER_MS,
-        easing: "cubic-bezier(.2,.8,.2,1)",
-      },
-    ),
+        easing: MOTION_EASING.celebrate,
+      }) ?? [],
   );
-
-  let cancelled = false;
-  let settleTimer: number | undefined;
-  Promise.all(animations.map((animation) => animation?.finished))
-    .then(() => {
-      if (!cancelled) {
-        settleTimer = window.setTimeout(onComplete, CLEAR_SETTLE_MS);
-      }
-    })
-    .catch(() => {
-      // 取り消された演出は完了扱いにしない。
-    });
-
-  return () => {
-    cancelled = true;
-    for (const animation of animations) {
-      animation?.cancel();
-    }
-    if (settleTimer !== undefined) {
-      window.clearTimeout(settleTimer);
-    }
-  };
 }

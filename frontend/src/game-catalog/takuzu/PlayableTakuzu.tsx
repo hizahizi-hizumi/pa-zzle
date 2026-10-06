@@ -78,7 +78,6 @@ export function PlayableTakuzu({
         onUndo={play.undo}
         canRestart={play.canRestart}
         onRestart={play.restart}
-        onClearAnimationComplete={play.completeClearAnimation}
       />
       {diagnostics.snapshot && (
         <TakuzuDiagnostics

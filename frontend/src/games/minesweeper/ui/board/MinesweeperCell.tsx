@@ -42,7 +42,7 @@ function getAccessibleName(
 function getCellClassName(view: MinesweeperVisibleCell): string {
   const faceClassName = getMinesweeperCellFaceClassName(view, "board");
   const interactionClassName =
-    "min-w-0 touch-manipulation select-none outline-none transition-colors duration-fast focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
+    "min-w-0 touch-manipulation select-none outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
 
   if (view.state === "hidden" || view.state === "flagged") {
     return `${faceClassName} ${interactionClassName} hover:bg-slate-300 dark:hover:bg-slate-600`;

@@ -1,5 +1,4 @@
 import { useState } from "react";
-
 import { GamePlayFrame } from "@/components/GamePlayFrame";
 import { UndoButton } from "@/components/UndoButton";
 import type {
@@ -7,6 +6,7 @@ import type {
   RestartableGamePlayScreenProps,
   UndoableGamePlayScreenProps,
 } from "@/games/play";
+import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import { WATER_SORT_DISPLAY_NAME } from "@/games/water-sort/display-name";
 import type {
@@ -32,7 +32,6 @@ type WaterSortPlayProps = GamePlayScreenProps<
     sourceBottleIndex: number | null;
     operation: WaterSortOperation | null;
     onSelectBottle: (bottleIndex: number) => void;
-    onClearingPourComplete: () => void;
   };
 
 export function WaterSortPlay({
@@ -55,7 +54,7 @@ export function WaterSortPlay({
   onReplay,
   onStartNewProblem,
   onOpenRecords,
-  onClearingPourComplete,
+  onClearAnimationComplete,
   onChangeDifficulty,
   onBackToHome,
   onOpenDiagnostics,
@@ -71,7 +70,7 @@ export function WaterSortPlay({
       metrics={[
         { type: "count", label: "手数", count: moveCount },
         { type: "elapsed-time", elapsedMs },
-        { type: "count", label: "待った", count: undoCount },
+        { type: "count", label: PLAY_OPERATION_LABELS.undo, count: undoCount },
       ]}
       canRestart={canRestart}
       onRestart={onRestart}
@@ -105,7 +104,7 @@ export function WaterSortPlay({
           onSelectBottle={onSelectBottle}
           interactionDisabled={progress !== "playing"}
           onPourAnimationActivityChange={setHasActivePourAnimation}
-          onClearingPourComplete={onClearingPourComplete}
+          onClearAnimationComplete={onClearAnimationComplete}
         />
       </main>
       <footer className="grid h-28 shrink-0 items-end px-4 pb-2">

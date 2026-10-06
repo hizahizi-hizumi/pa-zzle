@@ -245,7 +245,7 @@ describe("WaterSortBoard", () => {
       "matchMedia",
       vi.fn(() => ({ matches: true }) as MediaQueryList),
     );
-    const onClearingPourComplete = vi.fn();
+    const onClearAnimationComplete = vi.fn();
 
     render(
       <WaterSortBoard
@@ -262,12 +262,12 @@ describe("WaterSortBoard", () => {
           isClearingMove: true,
         }}
         onSelectBottle={vi.fn()}
-        onClearingPourComplete={onClearingPourComplete}
+        onClearAnimationComplete={onClearAnimationComplete}
       />,
     );
 
     expect(animate).not.toHaveBeenCalled();
-    expect(onClearingPourComplete).toHaveBeenCalledOnce();
+    expect(onClearAnimationComplete).toHaveBeenCalledOnce();
   });
 
   test("注水対象のDOMを取得できなくても最終注水の進行を停止しないこと", () => {
@@ -275,7 +275,7 @@ describe("WaterSortBoard", () => {
       configurable: true,
       value: vi.fn(),
     });
-    const onClearingPourComplete = vi.fn();
+    const onClearAnimationComplete = vi.fn();
 
     render(
       <WaterSortBoard
@@ -292,10 +292,10 @@ describe("WaterSortBoard", () => {
           isClearingMove: true,
         }}
         onSelectBottle={vi.fn()}
-        onClearingPourComplete={onClearingPourComplete}
+        onClearAnimationComplete={onClearAnimationComplete}
       />,
     );
 
-    expect(onClearingPourComplete).toHaveBeenCalledOnce();
+    expect(onClearAnimationComplete).toHaveBeenCalledOnce();
   });
 });

@@ -87,7 +87,6 @@ export function PlayableReflection({
         onRemovePiece={play.removePiece}
         onClearSelection={play.clearSelection}
         onRestart={play.restart}
-        onClearAnimationComplete={play.completeClearAnimation}
       />
       {diagnostics.snapshot && (
         <ReflectionDiagnostics

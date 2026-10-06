@@ -36,7 +36,7 @@ const baseProps = {
   onReplay: vi.fn(),
   onStartNewProblem: vi.fn(),
   onOpenRecords: vi.fn(),
-  onClearingPourComplete: vi.fn(),
+  onClearAnimationComplete: vi.fn(),
   onChangeDifficulty: vi.fn(),
   onBackToHome: vi.fn(),
 };
@@ -480,7 +480,7 @@ describe("WaterSortPlay", () => {
       resolveAnimation?.();
       await animationFinished;
     });
-    expect(baseProps.onClearingPourComplete).toHaveBeenCalledOnce();
+    expect(baseProps.onClearAnimationComplete).toHaveBeenCalledOnce();
   });
 
   test("クリア後に次の問題・再挑戦・難易度変更・ホーム移動を通知すること", () => {

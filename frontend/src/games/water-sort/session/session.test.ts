@@ -106,7 +106,7 @@ describe("restartWaterSortSession", () => {
     expect(canUndoWaterSortSession(result)).toBe(false);
   });
 
-  test("クリア済みのセッションはやり直さないこと", () => {
+  test("クリア済みのセッションでは盤面を戻さないこと", () => {
     const session = applySolution(createWaterSortSession(problem, 1_000));
 
     const result = restartWaterSortSession(session);
@@ -125,7 +125,7 @@ describe("restartWaterSortSession", () => {
   });
 });
 
-test("Reactなしで操作・待った・やり直しを経て一局を完結できること", () => {
+test("Reactなしで操作・待った・盤面を戻すを経て一局を完結できること", () => {
   let session = createWaterSortSession(problem, 1_000);
   const firstMove = solutionMoves[0];
   if (!firstMove) {

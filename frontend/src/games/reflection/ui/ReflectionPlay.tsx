@@ -48,7 +48,6 @@ type ReflectionPlayProps = GamePlayScreenProps<
     onSelectClue: (entry: ReflectionEntry) => void;
     onRemovePiece: (cellIndex: number) => void;
     onClearSelection: () => void;
-    onClearAnimationComplete: () => void;
   };
 
 /** 数字キーの `1` から順に、ストックに並ぶ種類を選ぶ。 */

@@ -20,6 +20,7 @@ import type {
   RestartableGamePlayScreenProps,
   UndoableGamePlayScreenProps,
 } from "@/games/play";
+import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 
 type ParkingJamPlayProps = GamePlayScreenProps<
   ParkingJamDifficulty,
@@ -38,7 +39,6 @@ type ParkingJamPlayProps = GamePlayScreenProps<
       vehicleId: ParkingJamVehicleId,
       direction: ParkingJamDirection,
     ) => void;
-    onClearAnimationComplete: () => void;
   };
 
 export function ParkingJamPlay({
@@ -75,7 +75,7 @@ export function ParkingJamPlay({
       metrics={[
         { type: "count", label: "ミス", count: failedMoveCount },
         { type: "elapsed-time", elapsedMs },
-        { type: "count", label: "待った", count: undoCount },
+        { type: "count", label: PLAY_OPERATION_LABELS.undo, count: undoCount },
       ]}
       canRestart={canRestart}
       onRestart={onRestart}
@@ -108,9 +108,10 @@ export function ParkingJamPlay({
           selectedVehicleId={selectedVehicleId}
           operation={operation}
           interactionDisabled={progress !== "playing"}
+          clearing={progress === "clearing"}
           onSelectVehicle={onSelectVehicle}
           onMove={onMove}
-          onExitAnimationComplete={onClearAnimationComplete}
+          onClearAnimationComplete={onClearAnimationComplete}
         />
       </main>
       <footer className="grid h-28 shrink-0 items-end px-4 pb-2">

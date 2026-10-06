@@ -14,19 +14,20 @@ import {
   interruptPourAnimationsForBottle,
   type PourAnimation,
 } from "@/games/water-sort/ui/board/pour/pour-animation";
+import { prefersReducedMotion } from "@/lib/motion";
 
 type UsePourAnimationsOptions = {
   operation: WaterSortOperation | null;
   bottleRefs: RefObject<Array<HTMLButtonElement | null>>;
   onActivityChange?: (active: boolean) => void;
-  onClearingPourComplete?: () => void;
+  onClearAnimationComplete?: () => void;
 };
 
 export function usePourAnimations({
   operation,
   bottleRefs,
   onActivityChange,
-  onClearingPourComplete,
+  onClearAnimationComplete,
 }: UsePourAnimationsOptions) {
   const [animations, setAnimations] = useState<readonly PourAnimation[]>([]);
   const animationsRef = useRef<readonly PourAnimation[]>([]);
@@ -57,10 +58,10 @@ export function usePourAnimations({
 
       replaceAnimations(current.filter(({ id }) => id !== animationId));
       if (animation.isClearingMove) {
-        onClearingPourComplete?.();
+        onClearAnimationComplete?.();
       }
     },
-    [onClearingPourComplete, replaceAnimations],
+    [onClearAnimationComplete, replaceAnimations],
   );
 
   const interruptForBottleInteraction = useCallback(
@@ -93,11 +94,11 @@ export function usePourAnimations({
       !sourceBottle ||
       !destinationBottle ||
       typeof sourceBottle.animate !== "function" ||
-      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      prefersReducedMotion();
 
     if (cannotAnimate) {
       if (operation.isClearingMove) {
-        onClearingPourComplete?.();
+        onClearAnimationComplete?.();
       }
       return;
     }
@@ -106,7 +107,7 @@ export function usePourAnimations({
     const destinationRect = captureRect(destinationBottle);
     if (!sourceRect || !destinationRect) {
       if (operation.isClearingMove) {
-        onClearingPourComplete?.();
+        onClearAnimationComplete?.();
       }
       return;
     }
@@ -118,13 +119,13 @@ export function usePourAnimations({
     );
     if (!animation) {
       if (operation.isClearingMove) {
-        onClearingPourComplete?.();
+        onClearAnimationComplete?.();
       }
       return;
     }
 
     replaceAnimations(addPourAnimation(animationsRef.current, animation));
-  }, [bottleRefs, onClearingPourComplete, operation, replaceAnimations]);
+  }, [bottleRefs, onClearAnimationComplete, operation, replaceAnimations]);
 
   return {
     animations,
