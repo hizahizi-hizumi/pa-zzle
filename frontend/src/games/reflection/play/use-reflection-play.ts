@@ -20,9 +20,8 @@ import {
 } from "@/games/reflection/puzzle/laser";
 import {
   calculateReflectionPlayScore,
-  calculateReflectionSpeedFullScoreMs,
-  calculateReflectionSpeedZeroScoreMs,
-  calculateReflectionTimeDeltaMs,
+  calculateReflectionSpeedScoreRule,
+  type ReflectionPlayScore,
 } from "@/games/reflection/score";
 import {
   canRestartReflectionSession,
@@ -40,6 +39,7 @@ import {
   tapReflectionSessionClue,
   tapReflectionSessionStock,
 } from "@/games/reflection/session/session";
+import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
 const elapsedTimeTickMs = 1_000;
 
@@ -58,10 +58,9 @@ export type ReflectionProgress = "playing" | "clearing" | "result";
 /** クリアしたプレイの事実と、それを遊んだ問題の作業の量から導いた評価。 */
 export type ReflectionResult = ReflectionSessionResult & {
   workload: ReflectionSolveWorkload;
-  speedFullScoreMs: number;
-  speedZeroScoreMs: number;
+  speedRule: SpeedScoreRule;
   timeDeltaMs: number;
-  score: number;
+  score: ReflectionPlayScore;
 };
 
 type ReflectionPlayState = {
@@ -99,15 +98,12 @@ export function createReflectionResult(
   sessionResult: ReflectionSessionResult,
   workload: ReflectionSolveWorkload,
 ): ReflectionResult {
+  const speedRule = calculateReflectionSpeedScoreRule(workload);
   return {
     ...sessionResult,
     workload,
-    speedFullScoreMs: calculateReflectionSpeedFullScoreMs(workload),
-    speedZeroScoreMs: calculateReflectionSpeedZeroScoreMs(workload),
-    timeDeltaMs: calculateReflectionTimeDeltaMs({
-      elapsedMs: sessionResult.elapsedMs,
-      workload,
-    }),
+    speedRule,
+    timeDeltaMs: calculateTimeDeltaMs(sessionResult.elapsedMs, speedRule),
     score: calculateReflectionPlayScore({
       elapsedMs: sessionResult.elapsedMs,
       workload,
@@ -119,7 +115,7 @@ export function createReflectionResult(
  * 難易度のプレイを始める。`initialProblem` を渡すと、最初の1問だけその問題を出す。
  * 渡さなければ、最初の1問は `avoidedProblemId` の問題を避けて選ぶ。
  * `restart` は同じプレイのまま全ピースをストックへ戻し（盤面を戻す）、
- * `replay` は同じ問題を新しいプレイとして始め（やり直す）、`startNewProblem` は同じ難易度の別の問題を始める。
+ * `replay` は同じ問題を新しいプレイとして始め（リセット）、`startNewProblem` は同じ難易度の別の問題を始める。
  * `tapClue` は外周ヒントの光路を表示し、盤面が揃うと `progress` が `clearing` になる。
  * クリアすると `result` に評価を返す。
  */

@@ -2,12 +2,13 @@ import { PARKING_JAM_DIFFICULTY_MODEL_VERSION } from "@/games/parking-jam/diffic
 import {
   createParkingJamPlayRecord,
   getParkingJamPlayRecordScore,
+  getParkingJamPlayRecordTimeDelta,
   isParkingJamPlayRecord,
   parkingJamPlayRecordDefinition,
   restoreParkingJamRecordedResult,
 } from "@/games/parking-jam/play-record";
 import {
-  calculateParkingJamSpeedFullScoreMs,
+  calculateParkingJamSpeedScoreRule,
   PARKING_JAM_SCORE_MODEL_VERSION,
 } from "@/games/parking-jam/score";
 import type { PlayRecord } from "@/records/play-record";
@@ -176,31 +177,42 @@ describe("isParkingJamPlayRecord", () => {
 
 describe("getParkingJamPlayRecordScore", () => {
   const cases = [
-    ["現在の形式は問題ごとの基準時間65秒で採点する", record, 78],
-    [
-      "payloadVersion 2 は当時の難易度別基準時間90秒で採点する",
-      legacyRecord,
-      93,
-    ],
-    [
-      "payloadVersion 3 は現在と同じ問題ごとの基準時間65秒で採点する",
-      threeLevelRecord,
-      78,
-    ],
+    ["現在の形式", record],
+    ["payloadVersion 3", threeLevelRecord],
   ] as const;
 
   test.each(cases)(
-    "保存済み事実から記録の採点版で評価点を再計算すること: %s",
-    (_label, candidate, expected) => {
-      if (!isParkingJamPlayRecord(candidate)) {
-        throw new Error("Expected a parking jam record");
-      }
-
+    "保存済み事実から問題ごとの基準時間65秒で評価点を再計算すること: %s",
+    (_label, candidate) => {
       const score = getParkingJamPlayRecordScore(candidate);
 
-      expect(score).toBe(expected);
+      expect(score).toBe(78);
     },
   );
+
+  describe("基準時間を求める問題の事実を持たない payloadVersion 2 の記録の場合", () => {
+    test("評価点を推測しないこと", () => {
+      const score = getParkingJamPlayRecordScore(legacyRecord);
+
+      expect(score).toBeNull();
+    });
+  });
+});
+
+describe("getParkingJamPlayRecordTimeDelta", () => {
+  test("問題ごとの基準時間65秒との差を求めること", () => {
+    const timeDelta = getParkingJamPlayRecordTimeDelta(record);
+
+    expect(timeDelta).toBe(25_000);
+  });
+
+  describe("基準時間を求める問題の事実を持たない payloadVersion 2 の記録の場合", () => {
+    test("基準時間との差を推測しないこと", () => {
+      const timeDelta = getParkingJamPlayRecordTimeDelta(legacyRecord);
+
+      expect(timeDelta).toBeNull();
+    });
+  });
 });
 
 describe("parkingJamPlayRecordDefinition", () => {
@@ -220,16 +232,26 @@ describe("parkingJamPlayRecordDefinition", () => {
     },
   );
 
-  test("スコア・時間・不成立操作数を自己ベスト指標にすること", () => {
+  test("スコア・基準時間との差・不成立操作数を自己ベスト指標にすること", () => {
     const metricIds = parkingJamPlayRecordDefinition.personalBestMetrics.map(
       (metric) => metric.id,
     );
 
     expect(metricIds).toEqual([
       "play-score",
-      "elapsed-ms",
+      "time-delta-ms",
       "failed-move-count",
     ]);
+  });
+
+  describe("payloadVersion 2 の記録の場合", () => {
+    test("自己ベストの比較に使う値を持たないこと", () => {
+      const values = parkingJamPlayRecordDefinition.personalBestMetrics.map(
+        (metric) => metric.getValue(legacyRecord),
+      );
+
+      expect(values).toEqual([null, null, null]);
+    });
   });
 });
 
@@ -247,7 +269,8 @@ describe("restoreParkingJamRecordedResult", () => {
           ...performance,
           problemIdentity,
           speedReference,
-          speedFullScoreMs: calculateParkingJamSpeedFullScoreMs(speedReference),
+          speedRule: calculateParkingJamSpeedScoreRule(speedReference),
+          timeDeltaMs: getParkingJamPlayRecordTimeDelta(record),
           score: { total: getParkingJamPlayRecordScore(record) },
         },
       });

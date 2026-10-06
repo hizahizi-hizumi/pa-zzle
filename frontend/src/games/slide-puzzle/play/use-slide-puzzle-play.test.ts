@@ -100,7 +100,7 @@ describe("useSlidePuzzlePlay", () => {
       restartCount: 0,
       optimalMoveCount: 3,
       moveDelta: 0,
-      speedFullScoreMs: 16_000,
+      speedRule: { fullScoreMs: 16_000, zeroScoreMs: 32_000 },
       score: { breakdown: { efficiency: 60 } },
     });
   });

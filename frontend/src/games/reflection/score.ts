@@ -1,5 +1,13 @@
 import type { ReflectionSolveWorkload } from "@/games/reflection/problem/problem";
-import { calculateLinearScore } from "@/games/score";
+import {
+  calculateSpeedScore,
+  calculateTimeDeltaMs,
+  createSpeedScoreRule,
+  type PlayScore,
+  type ScoreMaximums,
+  type SpeedScoreRule,
+  sumPlayScore,
+} from "@/games/score";
 
 /**
  * 解き切る速さを称える。問題ごとの基準時間と比べた速さだけで100点満点にする。
@@ -9,7 +17,9 @@ import { calculateLinearScore } from "@/games/score";
  * 0点になる倍率は仮置き。
  * どちらも実プレイを重ねて校正する（`リフレクション成績評価.md` §15）。
  */
-export const REFLECTION_SCORE_MAXIMUM = 100;
+export const REFLECTION_SCORE_MAXIMUMS = {
+  speed: 100,
+} as const satisfies ScoreMaximums<"speed">;
 
 /** 基準時間の係数（暫定）。外周ヒント1本ごとの盤面把握の時間。 */
 export const REFLECTION_SPEED_PER_CLUE_MS = 500;
@@ -32,6 +42,10 @@ export const REFLECTION_SPEED_PER_TRIAL_MOVE_MS = 5_000;
  * 基準時間の1.2倍以内で great、1.4倍以内で good に残る傾きにする。
  */
 export const REFLECTION_SPEED_ZERO_SCORE_RATIO = 3;
+
+export type ReflectionPlayScore = PlayScore<
+  keyof typeof REFLECTION_SCORE_MAXIMUMS
+>;
 
 type ReflectionPlayScoreInput = {
   elapsedMs: number;
@@ -84,13 +98,12 @@ export function calculateReflectionSpeedFullScoreMs(
   );
 }
 
-/** 0点になる時間。基準時間から、ここまで超過に応じて線形に減らす。 */
-export function calculateReflectionSpeedZeroScoreMs(
+export function calculateReflectionSpeedScoreRule(
   workload: ReflectionSolveWorkload,
-): number {
-  return (
-    calculateReflectionSpeedFullScoreMs(workload) *
-    REFLECTION_SPEED_ZERO_SCORE_RATIO
+): SpeedScoreRule {
+  return createSpeedScoreRule(
+    calculateReflectionSpeedFullScoreMs(workload),
+    REFLECTION_SPEED_ZERO_SCORE_RATIO,
   );
 }
 
@@ -99,21 +112,21 @@ export function calculateReflectionTimeDeltaMs({
   elapsedMs,
   workload,
 }: ReflectionPlayScoreInput): number {
-  return elapsedMs - calculateReflectionSpeedFullScoreMs(workload);
+  return calculateTimeDeltaMs(
+    elapsedMs,
+    calculateReflectionSpeedScoreRule(workload),
+  );
 }
 
-/**
- * 基準時間以内で満点、超過に応じて線形に減らし、0点になる時間（基準時間の3倍）で0点とする。1点単位に四捨五入する。
- */
 export function calculateReflectionPlayScore({
   elapsedMs,
   workload,
-}: ReflectionPlayScoreInput): number {
-  const speedFullScoreMs = calculateReflectionSpeedFullScoreMs(workload);
-  const speedZeroScoreMs = calculateReflectionSpeedZeroScoreMs(workload);
-  const overtimeMs = Math.max(0, elapsedMs - speedFullScoreMs);
-  return calculateLinearScore(
-    REFLECTION_SCORE_MAXIMUM,
-    1 - overtimeMs / (speedZeroScoreMs - speedFullScoreMs),
+}: ReflectionPlayScoreInput): ReflectionPlayScore {
+  const speed = calculateSpeedScore(
+    REFLECTION_SCORE_MAXIMUMS.speed,
+    elapsedMs,
+    calculateReflectionSpeedScoreRule(workload),
   );
+
+  return sumPlayScore({ speed });
 }

@@ -285,7 +285,7 @@ describe("PlayRecordsScreen", () => {
     const gameSelect = screen.getByRole("combobox", { name: "パズル" });
     fireEvent.change(gameSelect, { target: { value: "nanpure" } });
 
-    expect(screen.getAllByText("01:30").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("-13:30").length).toBeGreaterThan(0);
     expect(screen.getAllByText("ミス").length).toBeGreaterThan(0);
     expect(screen.getByText("1件")).toBeTruthy();
   });
@@ -300,7 +300,7 @@ describe("PlayRecordsScreen", () => {
 
     expect(comparisonSelect.textContent).toContain("レベル 2");
     expect(comparisonSelect.textContent).toContain("かんたん");
-    expect(screen.getAllByText("01:00").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("-14:00").length).toBeGreaterThan(0);
     expect(screen.getByText("1件")).toBeTruthy();
   });
 
@@ -380,7 +380,7 @@ describe("PlayRecordsScreen", () => {
         within(row).getByRole("button", { name: "同じ問題をプレイ" }),
       );
 
-      expect(within(row).getByText("経過")).toBeTruthy();
+      expect(within(row).getByText("時間")).toBeTruthy();
       expect(within(row).getByText("00:30")).toBeTruthy();
       expect(within(row).getByText("5手")).toBeTruthy();
       expect(within(row).queryByText(/点$/)).toBeNull();

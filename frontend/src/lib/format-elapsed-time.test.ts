@@ -1,4 +1,5 @@
 import {
+  formatDurationInWords,
   formatElapsedTime,
   formatElapsedTimeWithTenths,
 } from "@/lib/format-elapsed-time";
@@ -30,6 +31,24 @@ describe("formatElapsedTimeWithTenths", () => {
     "採点基準の時間を整形すること: %s",
     (_, elapsedMs, expected) => {
       const result = formatElapsedTimeWithTenths(elapsedMs);
+
+      expect(result).toBe(expected);
+    },
+  );
+});
+
+describe("formatDurationInWords", () => {
+  const cases = [
+    ["1分未満は秒で表す", 5_000, "5秒"],
+    ["秒の端数は小数で残す", 1_250, "1.25秒"],
+    ["分で割り切れれば分だけで表す", 60_000, "1分"],
+    ["分と秒を続けて表す", 90_000, "1分30秒"],
+  ] as const;
+
+  test.each(cases)(
+    "時間の長さを言葉で表すこと: %s",
+    (_, milliseconds, expected) => {
+      const result = formatDurationInWords(milliseconds);
 
       expect(result).toBe(expected);
     },

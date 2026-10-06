@@ -1,13 +1,17 @@
 import type { ReactNode } from "react";
 import { GameResultScreen } from "@/components/GameResultScreen";
+import {
+  createCountMetric,
+  createElapsedTimeMetric,
+  createSpeedFullScoreMetric,
+  listScoreBreakdownMetrics,
+} from "@/components/game-result-metrics";
 import { getDifficultyLabel } from "@/games/difficulty";
 import minesweeperPictogramSvg from "@/games/minesweeper/assets/pictogram.svg?raw";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import type { MinesweeperResult } from "@/games/minesweeper/play/use-minesweeper-play";
 import { MINESWEEPER_SCORE_MAXIMUMS } from "@/games/minesweeper/score";
 import { getMinesweeperScoreCriteria } from "@/games/minesweeper/ui/result/MinesweeperResultScreen/score-criteria";
-import { formatElapsedTime } from "@/lib/format-elapsed-time";
-import { formatElapsedTimeDelta } from "@/lib/format-performance-delta";
 
 type MinesweeperResultScreenProps = {
   difficulty: MinesweeperDifficulty;
@@ -40,32 +44,15 @@ export function MinesweeperResultScreen({
       pictogramSvg={minesweeperPictogramSvg}
       score={result.score.total}
       metrics={[
-        {
-          label: "時間",
-          value: formatElapsedTime(result.elapsedMs),
-          detail: `基準 ${formatElapsedTimeDelta(result.timeDeltaMs)}`,
-        },
-        { label: "ミス", value: String(result.mistakeCount) },
+        createElapsedTimeMetric(result),
+        createCountMetric("ミス", result.mistakeCount, "回"),
       ]}
       recordOutcomeNotice={recordOutcomeNotice}
       scoreBreakdown={[
-        {
-          label: "正確性",
-          value: `${result.score.breakdown.accuracy} / ${MINESWEEPER_SCORE_MAXIMUMS.accuracy}`,
-        },
-        {
-          label: "速さ",
-          value: `${result.score.breakdown.speed} / ${MINESWEEPER_SCORE_MAXIMUMS.speed}`,
-        },
-        {
-          label: "基準時間",
-          value: formatElapsedTime(result.speedFullScoreMs),
-        },
-        { label: "地雷", value: `${result.mineCount}個` },
-        {
-          label: "開く操作の最小回数",
-          value: `${result.minimumOpenCount}回`,
-        },
+        ...listScoreBreakdownMetrics(result.score, MINESWEEPER_SCORE_MAXIMUMS),
+        createSpeedFullScoreMetric(result.speedRule),
+        createCountMetric("地雷", result.mineCount, "個"),
+        createCountMetric("開く操作の最小回数", result.minimumOpenCount, "回"),
       ]}
       scoreCriteria={getMinesweeperScoreCriteria(result)}
       onStartNewProblem={onStartNewProblem}

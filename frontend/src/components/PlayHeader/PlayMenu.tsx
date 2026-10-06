@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 
 type PlayMenuProps = {
   onRestart?: () => void;
@@ -55,18 +56,18 @@ export function PlayMenu({
         {onRestart && (
           <DropdownMenuItem disabled={!canRestart} onSelect={onRestart}>
             <RotateCcw />
-            盤面を戻す
+            {PLAY_OPERATION_LABELS.restart}
           </DropdownMenuItem>
         )}
         {onReplay && (
           <DropdownMenuItem onSelect={onReplay}>
             <RefreshCw />
-            リセット
+            {PLAY_OPERATION_LABELS.replay}
           </DropdownMenuItem>
         )}
         <DropdownMenuItem onSelect={onStartNewProblem}>
           <Play />
-          別の問題
+          {PLAY_OPERATION_LABELS.startNewProblem}
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={onChangeDifficulty}>
           <SlidersHorizontal />

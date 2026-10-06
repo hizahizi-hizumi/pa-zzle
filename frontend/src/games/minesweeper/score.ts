@@ -1,11 +1,21 @@
-import { calculateLinearScore, subtractWithFloor } from "@/games/score";
+import {
+  calculateSpeedScore,
+  calculateTimeDeltaMs,
+  createSpeedScoreRule,
+  type PlayScore,
+  type ScoreMaximums,
+  type SpeedScoreRule,
+  subtractWithFloor,
+  sumPlayScore,
+} from "@/games/score";
+
 export const MINESWEEPER_SCORE_MAXIMUMS = {
   accuracy: 60,
   speed: 40,
-} as const;
+} as const satisfies ScoreMaximums<"accuracy" | "speed">;
 
 /**
- * 地雷を1つ踏むごとの正確性の減点。
+ * 地雷を1つ踏むごとの正確さの減点。
  * 1つでも踏めば速さによらず great に届かず、踏んだ後も解き切る価値は残る重さにする。
  */
 export const MINESWEEPER_MISTAKE_PENALTY = 15;
@@ -13,14 +23,12 @@ export const MINESWEEPER_MISTAKE_PENALTY = 15;
 export const MINESWEEPER_SPEED_INITIAL_RECOGNITION_MS = 5_000;
 export const MINESWEEPER_SPEED_PER_MINIMUM_OPEN_MS = 2_000;
 export const MINESWEEPER_SPEED_PER_MINE_MS = 4_000;
+/** 速さが0点になる時間の、基準時間に対する倍率。 */
+export const MINESWEEPER_SPEED_ZERO_SCORE_RATIO = 2;
 
-export type MinesweeperPlayScore = {
-  total: number;
-  breakdown: {
-    accuracy: number;
-    speed: number;
-  };
-};
+export type MinesweeperPlayScore = PlayScore<
+  keyof typeof MINESWEEPER_SCORE_MAXIMUMS
+>;
 
 type MinesweeperSpeedFullScoreInput = {
   minimumOpenCount: number;
@@ -48,14 +56,22 @@ export function calculateMinesweeperSpeedFullScoreMs({
   );
 }
 
+export function calculateMinesweeperSpeedScoreRule(
+  input: MinesweeperSpeedFullScoreInput,
+): SpeedScoreRule {
+  return createSpeedScoreRule(
+    calculateMinesweeperSpeedFullScoreMs(input),
+    MINESWEEPER_SPEED_ZERO_SCORE_RATIO,
+  );
+}
+
 export function calculateMinesweeperTimeDeltaMs({
   elapsedMs,
-  minimumOpenCount,
-  mineCount,
+  ...input
 }: MinesweeperSpeedFullScoreInput & { elapsedMs: number }): number {
-  return (
-    elapsedMs -
-    calculateMinesweeperSpeedFullScoreMs({ minimumOpenCount, mineCount })
+  return calculateTimeDeltaMs(
+    elapsedMs,
+    calculateMinesweeperSpeedScoreRule(input),
   );
 }
 
@@ -70,18 +86,11 @@ export function calculateMinesweeperPlayScore({
     mistakeCount * MINESWEEPER_MISTAKE_PENALTY,
   );
 
-  const speedFullScoreMs = calculateMinesweeperSpeedFullScoreMs({
-    minimumOpenCount,
-    mineCount,
-  });
-  const overtimeMs = Math.max(0, elapsedMs - speedFullScoreMs);
-  const speed = calculateLinearScore(
+  const speed = calculateSpeedScore(
     MINESWEEPER_SCORE_MAXIMUMS.speed,
-    1 - overtimeMs / speedFullScoreMs,
+    elapsedMs,
+    calculateMinesweeperSpeedScoreRule({ minimumOpenCount, mineCount }),
   );
 
-  return {
-    total: accuracy + speed,
-    breakdown: { accuracy, speed },
-  };
+  return sumPlayScore({ accuracy, speed });
 }

@@ -6,7 +6,11 @@ import {
   restoreNanpureRecordedResult,
 } from "@/games/nanpure/play-record";
 import { createNanpureProblemIdentity } from "@/games/nanpure/problem/problem";
-import { calculateNanpurePlayScore } from "@/games/nanpure/score";
+import {
+  calculateNanpurePlayScore,
+  calculateNanpureSpeedScoreRule,
+  calculateNanpureTimeDeltaMs,
+} from "@/games/nanpure/score";
 import type { PlayRecord } from "@/records/play-record";
 
 const performance = {
@@ -174,6 +178,8 @@ describe("restoreNanpureRecordedResult", () => {
         result: {
           ...performance,
           problemIdentity: record.payload.problemIdentity,
+          speedRule: calculateNanpureSpeedScoreRule(),
+          timeDeltaMs: calculateNanpureTimeDeltaMs(performance),
           score: calculateNanpurePlayScore(performance),
         },
       });

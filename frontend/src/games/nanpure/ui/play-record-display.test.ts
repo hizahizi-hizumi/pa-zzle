@@ -33,11 +33,11 @@ function getFormattedMetric(metricId: string): string | null {
 describe("nanpurePlayRecordDisplay", () => {
   test("履歴と推移に共通の比較指標を表示できること", () => {
     const score = getFormattedMetric("play-score");
-    const elapsed = getFormattedMetric("elapsed-ms");
+    const timeDelta = getFormattedMetric("time-delta-ms");
     const mistakes = getFormattedMetric("mistake-count");
 
     expect(score).toBe("91点");
-    expect(elapsed).toBe("02:00");
+    expect(timeDelta).toBe("-13:00");
     expect(mistakes).toBe("1回");
   });
 

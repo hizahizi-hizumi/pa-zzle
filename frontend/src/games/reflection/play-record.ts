@@ -199,7 +199,7 @@ export function getReflectionPlayRecordScore(
   return calculateReflectionPlayScore({
     elapsedMs: performance.elapsedMs,
     workload,
-  });
+  }).total;
 }
 
 export function getReflectionPlayRecordTimeDelta(

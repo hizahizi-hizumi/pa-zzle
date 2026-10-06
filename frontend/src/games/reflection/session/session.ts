@@ -349,7 +349,7 @@ export function canRestartReflectionSession(
   );
 }
 
-/** 同じ問題を新しいプレイとして始める（やり直す）。 */
+/** 同じ問題を新しいプレイとして始める（リセット）。 */
 export function replayReflectionSession(
   session: ReflectionSession,
   startedAt: number,

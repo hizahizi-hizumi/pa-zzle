@@ -1,5 +1,13 @@
-import type { LegacyDifficulty } from "@/games/difficulty";
-import { calculateLinearScore, subtractWithFloor } from "@/games/score";
+import {
+  calculateSpeedScore,
+  calculateTimeDeltaMs,
+  createSpeedScoreRule,
+  type PlayScore,
+  type ScoreMaximums,
+  type SpeedScoreRule,
+  subtractWithFloor,
+  sumPlayScore,
+} from "@/games/score";
 
 export const PARKING_JAM_SCORE_MODEL_VERSION = "play-quality-v2";
 
@@ -7,7 +15,7 @@ export const PARKING_JAM_SCORE_MAXIMUMS = {
   accuracy: 40,
   speed: 40,
   stability: 20,
-} as const;
+} as const satisfies ScoreMaximums<"accuracy" | "speed" | "stability">;
 
 export const PARKING_JAM_FAILED_MOVE_PENALTY = 5;
 export const PARKING_JAM_UNDO_PENALTY = 2;
@@ -16,35 +24,24 @@ export const PARKING_JAM_RESTART_PENALTY = 5;
 export const PARKING_JAM_SPEED_BOARD_READING_MS = 5_000;
 export const PARKING_JAM_SPEED_PER_VEHICLE_MS = 3_000;
 export const PARKING_JAM_SPEED_PER_INITIALLY_BLOCKED_VEHICLE_MS = 3_000;
-
-// play-quality-v1 は8×8・14台固定の問題に対して難易度ごとの基準時間を使っていた。
-// v1 時代の記録を当時の意味で再計算するためだけに残す。
-export const PARKING_JAM_LEGACY_SPEED_FULL_SCORE_MS: Record<
-  LegacyDifficulty,
-  number
-> = {
-  easy: 60_000,
-  normal: 90_000,
-  hard: 120_000,
-};
+/** 速さが0点になる時間の、基準時間に対する倍率。 */
+export const PARKING_JAM_SPEED_ZERO_SCORE_RATIO = 2;
 
 export type ParkingJamSpeedReference = {
   vehicleCount: number;
   initialBlockedVehicleCount: number;
 };
 
-export type ParkingJamPlayScore = {
-  total: number;
-  breakdown: {
-    accuracy: number;
-    speed: number;
-    stability: number;
-  };
+export type ParkingJamPlayScore = PlayScore<
+  keyof typeof PARKING_JAM_SCORE_MAXIMUMS
+>;
+
+type ParkingJamTimeDeltaInput = {
+  elapsedMs: number;
+  speedReference: ParkingJamSpeedReference;
 };
 
-export type ParkingJamPlayScoreInput = {
-  speedFullScoreMs: number;
-  elapsedMs: number;
+export type ParkingJamPlayScoreInput = ParkingJamTimeDeltaInput & {
   failedMoveCount: number;
   undoCount: number;
   restartCount: number;
@@ -62,8 +59,27 @@ export function calculateParkingJamSpeedFullScoreMs({
   );
 }
 
+export function calculateParkingJamSpeedScoreRule(
+  speedReference: ParkingJamSpeedReference,
+): SpeedScoreRule {
+  return createSpeedScoreRule(
+    calculateParkingJamSpeedFullScoreMs(speedReference),
+    PARKING_JAM_SPEED_ZERO_SCORE_RATIO,
+  );
+}
+
+export function calculateParkingJamTimeDeltaMs({
+  elapsedMs,
+  speedReference,
+}: ParkingJamTimeDeltaInput): number {
+  return calculateTimeDeltaMs(
+    elapsedMs,
+    calculateParkingJamSpeedScoreRule(speedReference),
+  );
+}
+
 export function calculateParkingJamPlayScore({
-  speedFullScoreMs,
+  speedReference,
   elapsedMs,
   failedMoveCount,
   undoCount,
@@ -74,10 +90,10 @@ export function calculateParkingJamPlayScore({
     failedMoveCount * PARKING_JAM_FAILED_MOVE_PENALTY,
   );
 
-  const overtimeMs = Math.max(0, elapsedMs - speedFullScoreMs);
-  const speed = calculateLinearScore(
+  const speed = calculateSpeedScore(
     PARKING_JAM_SCORE_MAXIMUMS.speed,
-    1 - overtimeMs / speedFullScoreMs,
+    elapsedMs,
+    calculateParkingJamSpeedScoreRule(speedReference),
   );
 
   const stability = subtractWithFloor(
@@ -86,8 +102,5 @@ export function calculateParkingJamPlayScore({
       restartCount * PARKING_JAM_RESTART_PENALTY,
   );
 
-  return {
-    total: accuracy + speed + stability,
-    breakdown: { accuracy, speed, stability },
-  };
+  return sumPlayScore({ accuracy, speed, stability });
 }

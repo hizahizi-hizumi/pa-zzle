@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 
 import {
   DetailMetric,
@@ -14,17 +14,13 @@ import {
 
 export type GameResultScoreCriterion = {
   label: string;
-  description: ReactNode;
+  description: string;
 };
 
-export type GameResultScoreCriteria = {
-  items: readonly GameResultScoreCriterion[];
-  /** 全項目に共通する丸めや下限の説明。見出しは読み上げにだけ使う。 */
-  note?: {
-    label: string;
-    description: string;
-  };
-};
+export type GameResultScoreCriteria = readonly GameResultScoreCriterion[];
+
+/** 全ゲームの全項目に共通する点の丸め方。 */
+const SCORE_ROUNDING_NOTE = "各項目は1点単位に四捨五入し、0点を下限とする。";
 
 type GameResultDetailsProps = {
   breakdown: readonly GameResultDetailMetric[];
@@ -60,7 +56,7 @@ export function GameResultDetails({
           </dl>
           <div className="mt-3 border-t-(length:--border-width-normal) pt-3">
             <dl className="mt-3 grid gap-3 text-meta">
-              {criteria.items.map((criterion) => (
+              {criteria.map((criterion) => (
                 <div key={criterion.label}>
                   <dt className="font-semibold text-foreground">
                     {criterion.label}
@@ -68,12 +64,10 @@ export function GameResultDetails({
                   <dd className="mt-1">{criterion.description}</dd>
                 </div>
               ))}
-              {criteria.note && (
-                <div>
-                  <dt className="sr-only">{criteria.note.label}</dt>
-                  <dd>{criteria.note.description}</dd>
-                </div>
-              )}
+              <div>
+                <dt className="sr-only">丸め</dt>
+                <dd>{SCORE_ROUNDING_NOTE}</dd>
+              </div>
             </dl>
           </div>
         </div>

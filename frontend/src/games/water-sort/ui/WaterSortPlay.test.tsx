@@ -54,7 +54,7 @@ function createResult(
     moveDelta: 2,
     timeDeltaMs: 1_000,
     backtrackMoveCount: 2,
-    speedFullScoreMs: 64_000,
+    speedRule: { fullScoreMs: 64_000, zeroScoreMs: 128_000 },
     colorCount: 6,
     score: {
       total: 87,
@@ -356,7 +356,7 @@ describe("WaterSortPlay", () => {
     expect(screen.getByText("ウォーターソート")).toBeTruthy();
     expect(screen.getByText("01:05")).toBeTruthy();
     expect(screen.getByText("手数")).toBeTruthy();
-    expect(screen.getByText("12")).toBeTruthy();
+    expect(screen.getByText("12手")).toBeTruthy();
     expect(screen.getByText("最短 +2")).toBeTruthy();
     expect(screen.getByText("基準 +00:01")).toBeTruthy();
     expect(screen.queryByText("手戻り")).toBeNull();
@@ -371,7 +371,7 @@ describe("WaterSortPlay", () => {
     expect(screen.getByText("待った")).toBeTruthy();
     expect(screen.getAllByText("効率")).toHaveLength(2);
     expect(screen.getAllByText("速さ")).toHaveLength(2);
-    expect(screen.getAllByText("正確性")).toHaveLength(2);
+    expect(screen.getAllByText("正確さ")).toHaveLength(2);
     expect(screen.getByText("01:04")).toBeTruthy();
     expect(screen.getByText(/6色 × 1.5秒/)).toBeTruthy();
     expect(screen.queryByText(/seed:/)).toBeNull();
@@ -443,7 +443,7 @@ describe("WaterSortPlay", () => {
       moveDelta: 0,
       timeDeltaMs: -9_000,
       backtrackMoveCount: 0,
-      speedFullScoreMs: 74_000,
+      speedRule: { fullScoreMs: 74_000, zeroScoreMs: 148_000 },
       score: {
         total: 100,
         breakdown: { efficiency: 40, speed: 40, accuracy: 20 },

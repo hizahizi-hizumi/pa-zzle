@@ -160,7 +160,7 @@ describe("useMinesweeperPlay", () => {
         expect(result?.mineCount).toBe(mineCount);
         expect(result?.score.breakdown.accuracy).toBe(45);
         expect(result?.timeDeltaMs).toBe(
-          (result?.elapsedMs ?? 0) - (result?.speedFullScoreMs ?? 0),
+          (result?.elapsedMs ?? 0) - (result?.speedRule.fullScoreMs ?? 0),
         );
       });
 

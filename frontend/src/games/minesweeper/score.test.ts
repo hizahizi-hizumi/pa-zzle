@@ -70,7 +70,7 @@ describe("calculateMinesweeperPlayScore", () => {
     { mistakeCount: 2, accuracy: 30 },
     { mistakeCount: 5, accuracy: 0 },
   ])(
-    "踏んだ地雷 $mistakeCount 個では正確性を $accuracy 点とすること",
+    "踏んだ地雷 $mistakeCount 個では正確さを $accuracy 点とすること",
     ({ mistakeCount, accuracy }) => {
       const result = calculateMinesweeperPlayScore({
         ...workload,

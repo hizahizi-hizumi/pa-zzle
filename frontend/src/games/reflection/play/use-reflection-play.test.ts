@@ -6,7 +6,7 @@ import type { ReflectionProblem } from "@/games/reflection/problem/problem";
 import { selectReflectionProblemForDifficulty } from "@/games/reflection/problem-selection";
 import {
   calculateReflectionPlayScore,
-  calculateReflectionSpeedFullScoreMs,
+  calculateReflectionSpeedScoreRule,
 } from "@/games/reflection/score";
 
 vi.mock("@/games/problem-seed", async (importOriginal) => ({
@@ -71,9 +71,7 @@ describe("useReflectionPlay", () => {
           relocationCount: 0,
           restartCount: 0,
           workload: pooled.workload,
-          speedFullScoreMs: calculateReflectionSpeedFullScoreMs(
-            pooled.workload,
-          ),
+          speedRule: calculateReflectionSpeedScoreRule(pooled.workload),
           score:
             playResult &&
             calculateReflectionPlayScore({

@@ -65,11 +65,11 @@ describe("parkingJamPlayRecordDisplay", () => {
 
   test("履歴と推移に共通の比較指標を表示できること", () => {
     const score = getFormattedMetric("play-score");
-    const elapsed = getFormattedMetric("elapsed-ms");
+    const timeDelta = getFormattedMetric("time-delta-ms");
     const failedMoves = getFormattedMetric("failed-move-count");
 
     expect(score).toBe("60点");
-    expect(elapsed).toBe("02:00");
+    expect(timeDelta).toBe("+00:49");
     expect(failedMoves).toBe("2回");
   });
 });

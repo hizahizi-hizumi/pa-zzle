@@ -1,6 +1,12 @@
 import type { ReactNode } from "react";
-
 import { GameResultScreen } from "@/components/GameResultScreen";
+import {
+  createCountMetric,
+  createElapsedTimeMetric,
+  createOperationCountMetric,
+  createSpeedFullScoreMetric,
+  listScoreBreakdownMetrics,
+} from "@/components/game-result-metrics";
 import reflectionPictogramSvg from "@/games/reflection/assets/pictogram.svg?raw";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import {
@@ -8,9 +14,8 @@ import {
   type ReflectionLaserPathMode,
 } from "@/games/reflection/laser-path-mode";
 import type { ReflectionResult } from "@/games/reflection/play/use-reflection-play";
+import { REFLECTION_SCORE_MAXIMUMS } from "@/games/reflection/score";
 import { getReflectionScoreCriteria } from "@/games/reflection/ui/result/ReflectionResultScreen/score-criteria";
-import { formatElapsedTime } from "@/lib/format-elapsed-time";
-import { formatElapsedTimeDelta } from "@/lib/format-performance-delta";
 
 type ReflectionResultScreenProps = {
   difficultyLabel: string;
@@ -32,28 +37,19 @@ function listScoreBreakdown(
 ) {
   const { workload } = result;
   return [
-    { label: "盤面戻し", value: `${result.restartCount}回` },
+    ...listScoreBreakdownMetrics(result.score, REFLECTION_SCORE_MAXIMUMS),
+    createOperationCountMetric("restart", result.restartCount),
     ...(showsCheckCount
-      ? [{ label: "光路の確認", value: `${result.laserCheckCount}回` }]
+      ? [createCountMetric("光路の確認", result.laserCheckCount, "回")]
       : []),
-    { label: "基準時間", value: formatElapsedTime(result.speedFullScoreMs) },
-    { label: "ピース", value: `${workload.pieceCount}個` },
-    { label: "外周ヒント", value: `${workload.clueCount}本` },
-    {
-      label: "照らし直す局面",
-      value: `${workload.propagationRoundCount}回`,
-    },
-    {
-      label: "仮に置いて確かめる",
-      value: `${workload.assumptionTestCount}回`,
-    },
-    {
-      label: "試し置き",
-      value:
-        workload.trialMoveCount === null
-          ? "試し置きでは解けない"
-          : `${workload.trialMoveCount}手`,
-    },
+    createSpeedFullScoreMetric(result.speedRule),
+    createCountMetric("ピース", workload.pieceCount, "個"),
+    createCountMetric("外周ヒント", workload.clueCount, "本"),
+    createCountMetric("照らし直す局面", workload.propagationRoundCount, "回"),
+    createCountMetric("仮に置いて確かめる", workload.assumptionTestCount, "回"),
+    workload.trialMoveCount === null
+      ? { label: "試し置き", value: "試し置きでは解けない" }
+      : createCountMetric("試し置き", workload.trialMoveCount, "手"),
   ];
 }
 
@@ -78,14 +74,10 @@ export function ReflectionResultScreen({
       difficultyLabel={difficultyLabel}
       pictogramSvg={reflectionPictogramSvg}
       metrics={[
-        {
-          label: "時間",
-          value: formatElapsedTime(result.elapsedMs),
-          detail: `基準 ${formatElapsedTimeDelta(result.timeDeltaMs)}`,
-        },
-        { label: "置き直し", value: String(result.relocationCount) },
+        createElapsedTimeMetric(result),
+        createCountMetric("置き直し", result.relocationCount, "回"),
       ]}
-      score={result.score}
+      score={result.score.total}
       scoreBreakdown={listScoreBreakdown(result, showsCheckCountInResult)}
       scoreCriteria={getReflectionScoreCriteria(result)}
       recordOutcomeNotice={recordOutcomeNotice}

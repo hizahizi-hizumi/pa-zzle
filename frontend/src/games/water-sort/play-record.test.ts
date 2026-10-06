@@ -73,7 +73,7 @@ test("同じ開始条件を自己ベストの比較単位として扱うこと",
   expect(comparisonKey).toBe("3");
 });
 
-test("やり直しのない旧記録は待った回数からクリア手数を復元して再評価すること", () => {
+test("盤面を戻していない旧記録は待った回数からクリア手数を復元して再評価すること", () => {
   const legacyRecord: PlayRecord = {
     id: "legacy-without-restart",
     gameId: "water-sort",
@@ -107,7 +107,7 @@ test("やり直しのない旧記録は待った回数からクリア手数を�
   expect(score).toBe(87);
 });
 
-test("やり直しで失われた手数を復元できない旧記録は評価を推測しないこと", () => {
+test("盤面を戻して失われた手数を復元できない旧記録は評価を推測しないこと", () => {
   const legacyRecord: PlayRecord = {
     id: "legacy-with-restart",
     gameId: "water-sort",
