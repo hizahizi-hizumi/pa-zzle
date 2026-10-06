@@ -1,5 +1,5 @@
+import { difficultyLevels } from "@/games/difficulty";
 import { createProblemId } from "@/games/problem-id";
-import { reflectionDifficulties } from "@/games/reflection/difficulty";
 import { generateReflectionProblem } from "@/games/reflection/problem/generator";
 import { createReflectionProblemIdentity } from "@/games/reflection/problem/problem";
 import {
@@ -120,7 +120,7 @@ describe("findReflectionPooledProblem", () => {
 });
 
 describe("findReflectionPooledProblemByProblemId", () => {
-  const poolEntries = reflectionDifficulties.flatMap(({ id: difficulty }) =>
+  const poolEntries = difficultyLevels.flatMap(({ id: difficulty }) =>
     listReflectionPoolEntries(difficulty).map((entry, entryIndex) => ({
       difficulty,
       poolProblemId: formatReflectionPoolProblemId(difficulty, entryIndex),

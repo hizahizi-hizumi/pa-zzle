@@ -1,43 +1,22 @@
+import {
+  type DifficultyAssessment,
+  type DifficultyLevel,
+  isInNumericRange,
+  type NoAssessmentDetail,
+  type NumericRange,
+} from "@/games/difficulty";
 import type {
   MinesweeperDifficultyAnalysis,
   MinesweeperHumanSolveFeatures,
   MinesweeperScaleMetrics,
 } from "@/games/minesweeper/problem/difficulty-analysis";
 
-export const minesweeperDifficulties = [
-  { id: "1", label: "レベル 1" },
-  { id: "2", label: "レベル 2" },
-  { id: "3", label: "レベル 3" },
-  { id: "4", label: "レベル 4" },
-  { id: "5", label: "レベル 5" },
-] as const;
-
-export type MinesweeperDifficulty =
-  (typeof minesweeperDifficulties)[number]["id"];
-
-export function parseMinesweeperDifficulty(
-  value: string | undefined,
-): MinesweeperDifficulty | undefined {
-  return minesweeperDifficulties.find((difficulty) => difficulty.id === value)
-    ?.id;
-}
-
-export function getMinesweeperDifficultyLabel(
-  difficulty: MinesweeperDifficulty,
-): string {
-  return (
-    minesweeperDifficulties.find((option) => option.id === difficulty)?.label ??
-    difficulty
-  );
-}
+export type MinesweeperDifficulty = DifficultyLevel;
 
 export type MinesweeperBoardSize = { rows: number; columns: number };
 
-/** 地雷密度の範囲。浮動小数の誤差を避けるため百分率の整数で持ち、両端を含む。 */
-type MinesweeperMineDensityPercentRange = {
-  minimum: number;
-  maximum: number;
-};
+/** 地雷密度の範囲。浮動小数の誤差を避けるため百分率の整数で持つ。 */
+type MinesweeperMineDensityPercentRange = NumericRange;
 
 export type MinesweeperDifficultyBoardRange = {
   sizes: readonly MinesweeperBoardSize[];
@@ -87,10 +66,10 @@ function isMineCountInDensityRange(
   mineCount: number,
   { minimum, maximum }: MinesweeperMineDensityPercentRange,
 ): boolean {
-  return (
-    mineCount * 100 >= minimum * cellCount &&
-    mineCount * 100 <= maximum * cellCount
-  );
+  return isInNumericRange(mineCount * 100, {
+    minimum: minimum * cellCount,
+    maximum: maximum * cellCount,
+  });
 }
 
 function listMineCountsInDensityRange(
@@ -142,21 +121,20 @@ export function isInMinesweeperDifficultyBoardRange(
  * - `classified`: 提供範囲内で、難易度が決まった。
  * - `out-of-range`: 推測なしで解けるが提供しない。挑戦が薄すぎる（`too-light`）か重すぎる（`too-heavy`）か、
  *   推論で決まる難易度 `inferenceDifficulty` の盤面範囲に盤面サイズ・地雷数が入らない（`outside-board-range`）。
- * - `unsupported` / `unsolvable`: 分析で難易度を評価できない、または推測が必要で成立しない。
+ * - `unsupported`: 分析で難易度を評価できない。
+ * - `invalid`: 推測が必要で、問題として成立しない。
  */
-export type MinesweeperDifficultyAssessment =
-  | { status: "classified"; difficulty: MinesweeperDifficulty }
-  | { status: "out-of-range"; reason: "too-light" | "too-heavy" }
-  | {
-      status: "out-of-range";
-      reason: "outside-board-range";
-      inferenceDifficulty: MinesweeperDifficulty;
-    }
-  | {
-      status: "unsupported";
-      reason: "technique-limit" | "computation-limit";
-    }
-  | { status: "unsolvable" };
+export type MinesweeperDifficultyAssessment = DifficultyAssessment<{
+  classified: NoAssessmentDetail;
+  outOfRange:
+    | { reason: "too-light" | "too-heavy" }
+    | {
+        reason: "outside-board-range";
+        inferenceDifficulty: MinesweeperDifficulty;
+      };
+  unsupported: { reason: "technique-limit" | "computation-limit" };
+  invalid: NoAssessmentDetail;
+}>;
 
 const minimumProvidedRoundCount = 6;
 const maximumProvidedInitialRevealedSafeCellRatio = 0.6;
@@ -236,8 +214,8 @@ export function assessMinesweeperDifficulty(
   switch (analysis.status) {
     case "unsupported":
       return { status: "unsupported", reason: analysis.reason };
-    case "unsolvable":
-      return { status: "unsolvable" };
+    case "invalid":
+      return { status: "invalid" };
     case "analyzed":
       return assessAnalyzedChallenge(
         analysis.scale,

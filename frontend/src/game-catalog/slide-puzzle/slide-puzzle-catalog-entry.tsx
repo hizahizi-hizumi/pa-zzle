@@ -3,8 +3,8 @@ import {
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
 import { RecordedSlidePuzzleResult } from "@/game-catalog/slide-puzzle/RecordedSlidePuzzleResult";
+import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/slide-puzzle/assets/pictogram.svg?raw";
-import { parseSlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import {
   isSlidePuzzlePlayRecord,
   restoreSlidePuzzleRecordedResult,
@@ -23,7 +23,7 @@ export const slidePuzzleCatalogEntry = {
   recordProblemPlayTarget(record) {
     return isSlidePuzzlePlayRecord(record)
       ? resolveRecordProblemPlayTarget(
-          parseSlidePuzzleDifficulty(record.payload.difficulty),
+          parseDifficultyLevel(record.payload.difficulty),
           record.payload.problemIdentity,
           canSelectSlidePuzzleProblemById,
         )
@@ -31,7 +31,7 @@ export const slidePuzzleCatalogEntry = {
   },
   attemptProblemPlayTarget({ start }) {
     return resolveRecordProblemPlayTarget(
-      parseSlidePuzzleDifficulty(start.difficulty),
+      parseDifficultyLevel(start.difficulty),
       start.problemIdentity,
       canSelectSlidePuzzleProblemById,
     );

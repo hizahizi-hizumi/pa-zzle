@@ -1,10 +1,8 @@
 import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 
-import {
-  type DifficultyLevel,
-  DifficultyLevelPieces,
-} from "@/components/DifficultyLevelPieces";
+import { DifficultyLevelPieces } from "@/components/DifficultyLevelPieces";
+import type { DifficultyLevel } from "@/games/difficulty";
 import { cn } from "@/lib/utils";
 
 type StartConditionOptionProps = {

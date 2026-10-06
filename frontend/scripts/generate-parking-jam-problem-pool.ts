@@ -1,10 +1,10 @@
 import { writeFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
+import { difficultyLevels } from "@/games/difficulty";
 import {
   assessParkingJamDifficulty,
   PARKING_JAM_DIFFICULTY_MODEL_VERSION,
   type ParkingJamDifficulty,
-  parkingJamDifficulties,
 } from "@/games/parking-jam/difficulty";
 import { listParkingJamProblemPoolCandidateConditions } from "@/games/parking-jam/problem/generation/difficulty-candidate-space";
 import {
@@ -232,13 +232,13 @@ function selectFromPrefix(
   perLevel: number,
 ): Selection & { satisfied: boolean } {
   const levels = Object.fromEntries(
-    parkingJamDifficulties.map(({ id }) => [id, [] as Candidate[]]),
+    difficultyLevels.map(({ id }) => [id, [] as Candidate[]]),
   ) as Record<ParkingJamDifficulty, Candidate[]>;
   const seenKeys = new Set<string>();
   let duplicateCount = 0;
   let roundCount = 0;
   const isSatisfied = () =>
-    parkingJamDifficulties.every(({ id }) => levels[id].length >= perLevel);
+    difficultyLevels.every(({ id }) => levels[id].length >= perLevel);
   for (;;) {
     if (isSatisfied()) break;
     const candidates = results.get(roundCount);
@@ -305,7 +305,7 @@ async function runMain(): Promise<void> {
       }
       const progress = selectFromPrefix(results, perLevel);
       console.error(
-        `周回 ${progress.roundCount}/${nextRound}: ${parkingJamDifficulties
+        `周回 ${progress.roundCount}/${nextRound}: ${difficultyLevels
           .map(({ id }) => `L${id}=${progress.levels[id].length}`)
           .join(
             " ",
@@ -319,7 +319,7 @@ async function runMain(): Promise<void> {
   const selection = selectFromPrefix(results, perLevel);
   if (!selection.satisfied) {
     throw new Error(
-      `Budget exhausted: ${parkingJamDifficulties
+      `Budget exhausted: ${difficultyLevels
         .map(({ id }) => `level ${id}=${selection.levels[id].length}`)
         .join(", ")}`,
     );
@@ -328,7 +328,7 @@ async function runMain(): Promise<void> {
   // 使われた生成条件だけを条件表に残し、定義順を保って番号を振り直す。
   const usedConditionIndexes = [
     ...new Set(
-      parkingJamDifficulties.flatMap(({ id }) =>
+      difficultyLevels.flatMap(({ id }) =>
         selection.levels[id].map((candidate) => candidate.conditionIndex),
       ),
     ),
@@ -344,13 +344,13 @@ async function runMain(): Promise<void> {
     candidate.round,
     candidate.accepted!.generationAttempt,
   ];
-  const levelLines = parkingJamDifficulties.map(
+  const levelLines = difficultyLevels.map(
     ({ id }, levelIndex) =>
       `    ${JSON.stringify(id)}: [\n${selection.levels[id]
         .map((candidate) => `      ${JSON.stringify(toEntry(candidate))}`)
         .join(
           ",\n",
-        )}\n    ]${levelIndex < parkingJamDifficulties.length - 1 ? "," : ""}`,
+        )}\n    ]${levelIndex < difficultyLevels.length - 1 ? "," : ""}`,
   );
   const json = `{\n  "generatorVersion": ${JSON.stringify(PARKING_JAM_GENERATOR_VERSION)},\n  "difficultyModelVersion": ${JSON.stringify(PARKING_JAM_DIFFICULTY_MODEL_VERSION)},\n  "conditions": [\n${usedConditionIndexes
     .map(
@@ -390,7 +390,7 @@ async function runMain(): Promise<void> {
   console.log(
     `候補1つの時間: mean=${(durations.reduce((sum, value) => sum + value, 0) / durations.length).toFixed(1)}ms p50=${quantile(durations, 0.5).toFixed(1)}ms p95=${quantile(durations, 0.95).toFixed(1)}ms max=${durations.at(-1)!.toFixed(1)}ms`,
   );
-  for (const { id } of parkingJamDifficulties) {
+  for (const { id } of difficultyLevels) {
     const entries = selection.levels[id];
     const lastRound = entries.at(-1)!.round;
     const yieldCount = acceptedCounts.get(id) ?? 0;
@@ -407,7 +407,7 @@ type VerifyFailure = { difficulty: ParkingJamDifficulty; index: number };
 
 function runVerifyWorker(args: readonly string[]): void {
   const [jobIndex, jobCount] = args.map(Number);
-  for (const { id: difficulty } of parkingJamDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     listParkingJamPoolEntries(difficulty).forEach((entry, index) => {
       if (index % jobCount! !== jobIndex) return;
       const assessment = assessParkingJamDifficulty(
@@ -426,7 +426,7 @@ function runVerifyWorker(args: readonly string[]): void {
 
 function measureSelection(): string {
   const durations: number[] = [];
-  for (const { id: difficulty } of parkingJamDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     for (let index = 0; index < 400; index += 1) {
       const startedAt = performance.now();
       selectParkingJamProblemForDifficulty(difficulty, `measure-${index}`);
@@ -470,7 +470,7 @@ async function runVerify(): Promise<void> {
   const keys = new Set<string>();
   let duplicateCount = 0;
   let total = 0;
-  for (const { id: difficulty } of parkingJamDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     for (const entry of listParkingJamPoolEntries(difficulty)) {
       total += 1;
       const key = createCanonicalProblemKey(

@@ -1,6 +1,6 @@
+import { parseDifficultyLevel } from "@/games/difficulty";
 import {
   isSlidePuzzleProblemIdentityOfDifficulty,
-  parseSlidePuzzleDifficulty,
   type SlidePuzzleDifficulty,
 } from "@/games/slide-puzzle/difficulty";
 import {
@@ -99,7 +99,7 @@ export function isSlidePuzzlePlayRecord(
   const { difficulty, problemIdentity, performance } = record.payload;
   const parsedDifficulty =
     typeof difficulty === "string"
-      ? parseSlidePuzzleDifficulty(difficulty)
+      ? parseDifficultyLevel(difficulty)
       : undefined;
   return (
     parsedDifficulty !== undefined &&

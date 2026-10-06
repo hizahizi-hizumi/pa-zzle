@@ -87,7 +87,7 @@ export type ParkingJamDifficultyFeatures = {
 };
 
 export type ParkingJamDifficultyAnalysis = {
-  status: "supported" | "unsupported";
+  status: "analyzed" | "unsupported";
   features: ParkingJamDifficultyFeatures;
 };
 
@@ -819,7 +819,7 @@ export function analyzeParkingJamDifficulty(
   };
 
   return {
-    status: orderSpace === null ? "unsupported" : "supported",
+    status: orderSpace === null ? "unsupported" : "analyzed",
     features,
   };
 }

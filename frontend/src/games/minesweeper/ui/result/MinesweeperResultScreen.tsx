@@ -1,11 +1,8 @@
 import type { ReactNode } from "react";
-
 import { GameResultScreen } from "@/components/GameResultScreen";
+import { getDifficultyLabel } from "@/games/difficulty";
 import minesweeperPictogramSvg from "@/games/minesweeper/assets/pictogram.svg?raw";
-import {
-  getMinesweeperDifficultyLabel,
-  type MinesweeperDifficulty,
-} from "@/games/minesweeper/difficulty";
+import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import type { MinesweeperResult } from "@/games/minesweeper/play/use-minesweeper-play";
 import { MINESWEEPER_SCORE_MAXIMUMS } from "@/games/minesweeper/score";
 import { getMinesweeperScoreCriteria } from "@/games/minesweeper/ui/result/MinesweeperResultScreen/score-criteria";
@@ -39,7 +36,7 @@ export function MinesweeperResultScreen({
   return (
     <GameResultScreen
       gameName="マインスイーパー"
-      difficultyLabel={getMinesweeperDifficultyLabel(difficulty)}
+      difficultyLabel={getDifficultyLabel(difficulty)}
       pictogramSvg={minesweeperPictogramSvg}
       score={result.score.total}
       metrics={[

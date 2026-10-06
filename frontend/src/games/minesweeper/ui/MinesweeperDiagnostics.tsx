@@ -1,7 +1,7 @@
 import { InternalDiagnosticsDialog } from "@/components/InternalDiagnosticsDialog";
 import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
+import { getDifficultyLabel } from "@/games/difficulty";
 import type { MinesweeperDiagnosticSnapshot } from "@/games/minesweeper/diagnostics";
-import { getMinesweeperDifficultyLabel } from "@/games/minesweeper/difficulty";
 
 type MinesweeperDiagnosticsProps = {
   snapshot: MinesweeperDiagnosticSnapshot;
@@ -17,7 +17,7 @@ export function MinesweeperDiagnostics({
 
   return (
     <InternalDiagnosticsDialog
-      difficultyLabel={getMinesweeperDifficultyLabel(snapshot.difficulty)}
+      difficultyLabel={getDifficultyLabel(snapshot.difficulty)}
       seed={snapshot.problemIdentity.seed}
       generatorVersion={snapshot.problemIdentity.generatorVersion}
       generationConditions={`${rows}行×${columns}列 / 地雷 ${mineCount} / 開始 ${startCellPlacement}`}

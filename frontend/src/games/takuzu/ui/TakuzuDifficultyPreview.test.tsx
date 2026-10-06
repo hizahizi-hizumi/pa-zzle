@@ -1,7 +1,5 @@
-import {
-  type TakuzuDifficulty,
-  takuzuDifficulties,
-} from "@/games/takuzu/difficulty";
+import { difficultyLevels } from "@/games/difficulty";
+import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import { traceTakuzuHumanSolve } from "@/games/takuzu/problem/generation/human-solver";
 import type { TakuzuTechnique } from "@/games/takuzu/problem/technique";
 import type { TakuzuBoard } from "@/games/takuzu/puzzle/board";
@@ -9,7 +7,7 @@ import { _private } from "@/games/takuzu/ui/TakuzuDifficultyPreview";
 
 const { previewMoments, createPreviewRows } = _private;
 
-const difficultyIds = takuzuDifficulties.map((difficulty) => difficulty.id);
+const difficultyIds = difficultyLevels.map((difficulty) => difficulty.id);
 
 // 各レベルで初めて要る読み。レベル5 はこの読み（D）が2つの局面で要ることで決まるが、図では2か所の見比べを1つの局面にまとめて描く。
 const expectedTechniques = {

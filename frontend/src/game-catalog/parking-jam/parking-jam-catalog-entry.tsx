@@ -3,8 +3,8 @@ import {
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
 import { RecordedParkingJamResult } from "@/game-catalog/parking-jam/RecordedParkingJamResult";
+import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/parking-jam/assets/pictogram.svg?raw";
-import { parseParkingJamDifficulty } from "@/games/parking-jam/difficulty";
 import {
   isParkingJamPlayRecord,
   parkingJamPlayRecordDefinition,
@@ -23,7 +23,7 @@ export const parkingJamCatalogEntry = {
   recordProblemPlayTarget(record) {
     return isParkingJamPlayRecord(record)
       ? resolveRecordProblemPlayTarget(
-          parseParkingJamDifficulty(record.payload.difficulty),
+          parseDifficultyLevel(record.payload.difficulty),
           record.payload.problemIdentity,
           canSelectParkingJamProblemById,
         )
@@ -31,7 +31,7 @@ export const parkingJamCatalogEntry = {
   },
   attemptProblemPlayTarget({ start }) {
     return resolveRecordProblemPlayTarget(
-      parseParkingJamDifficulty(start.difficulty),
+      parseDifficultyLevel(start.difficulty),
       start.problemIdentity,
       canSelectParkingJamProblemById,
     );

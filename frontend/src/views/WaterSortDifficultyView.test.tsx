@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
+import { difficultyLevels } from "@/games/difficulty";
 
-import { waterSortDifficulties } from "@/games/water-sort/difficulty";
 import { WaterSortDifficultyView } from "@/views/WaterSortDifficultyView";
 
 afterEach(() => {
@@ -9,7 +9,7 @@ afterEach(() => {
 });
 
 describe("WaterSortDifficultyView", () => {
-  const difficultyCases = waterSortDifficulties.map(({ id }) => id);
+  const difficultyCases = difficultyLevels.map(({ id }) => id);
 
   beforeEach(() => {
     render(

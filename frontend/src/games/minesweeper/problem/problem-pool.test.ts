@@ -1,4 +1,4 @@
-import { minesweeperDifficulties } from "@/games/minesweeper/difficulty";
+import { difficultyLevels } from "@/games/difficulty";
 import {
   findMinesweeperPoolEntryByProblemId,
   listMinesweeperPoolEntries,
@@ -7,7 +7,7 @@ import {
 import { createProblemId } from "@/games/problem-id";
 
 describe("findMinesweeperPoolEntryByProblemId", () => {
-  const poolEntries = minesweeperDifficulties.flatMap(({ id: difficulty }) =>
+  const poolEntries = difficultyLevels.flatMap(({ id: difficulty }) =>
     listMinesweeperPoolEntries(difficulty).map((entry) => ({
       difficulty,
       entry,

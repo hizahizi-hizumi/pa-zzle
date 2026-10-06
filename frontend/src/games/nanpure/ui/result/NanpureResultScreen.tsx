@@ -1,11 +1,8 @@
 import type { ReactNode } from "react";
-
 import { GameResultScreen } from "@/components/GameResultScreen";
+import { getDifficultyLabel } from "@/games/difficulty";
 import nanpurePictogramSvg from "@/games/nanpure/assets/pictogram.svg?raw";
-import {
-  getNanpureDifficultyLabel,
-  type NanpureDifficulty,
-} from "@/games/nanpure/difficulty";
+import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import type { NanpureResult } from "@/games/nanpure/play/use-nanpure-play";
 import { NANPURE_SCORE_MAXIMUMS } from "@/games/nanpure/score";
 import { nanpureScoreCriteria } from "@/games/nanpure/ui/result/NanpureResultScreen/score-criteria";
@@ -38,7 +35,7 @@ export function NanpureResultScreen({
   return (
     <GameResultScreen
       gameName="ナンプレ"
-      difficultyLabel={getNanpureDifficultyLabel(difficulty)}
+      difficultyLabel={getDifficultyLabel(difficulty)}
       pictogramSvg={nanpurePictogramSvg}
       score={result.score.total}
       metrics={[

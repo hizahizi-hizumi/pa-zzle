@@ -1,30 +1,14 @@
 import type {
+  DifficultyAssessment,
+  DifficultyLevel,
+  NoAssessmentDetail,
+} from "@/games/difficulty";
+import type {
   TakuzuDifficultyAnalysis,
   TakuzuHumanSolveFeatures,
 } from "@/games/takuzu/problem/difficulty-analysis";
 
-export const takuzuDifficulties = [
-  { id: "1", label: "レベル 1" },
-  { id: "2", label: "レベル 2" },
-  { id: "3", label: "レベル 3" },
-  { id: "4", label: "レベル 4" },
-  { id: "5", label: "レベル 5" },
-] as const;
-
-export type TakuzuDifficulty = (typeof takuzuDifficulties)[number]["id"];
-
-export function parseTakuzuDifficulty(
-  value: string | undefined,
-): TakuzuDifficulty | undefined {
-  return takuzuDifficulties.find((difficulty) => difficulty.id === value)?.id;
-}
-
-export function getTakuzuDifficultyLabel(difficulty: TakuzuDifficulty): string {
-  return (
-    takuzuDifficulties.find((option) => option.id === difficulty)?.label ??
-    difficulty
-  );
-}
+export type TakuzuDifficulty = DifficultyLevel;
 
 /**
  * 分析結果を難易度へ分類した結果。
@@ -33,11 +17,12 @@ export function getTakuzuDifficultyLabel(difficulty: TakuzuDifficulty): string {
  * - `unsupported`: 一意解だが、1本の行・列を読む手筋では解き切れず、挑戦の強さを評価できない。
  * - `invalid`: 解が無い、または2つ以上あり、問題として成立しない。
  */
-export type TakuzuDifficultyAssessment =
-  | { status: "classified"; difficulty: TakuzuDifficulty }
-  | { status: "out-of-range"; reason: "too-light" }
-  | { status: "unsupported" }
-  | { status: "invalid" };
+export type TakuzuDifficultyAssessment = DifficultyAssessment<{
+  classified: NoAssessmentDetail;
+  outOfRange: { reason: "too-light" };
+  unsupported: NoAssessmentDetail;
+  invalid: NoAssessmentDetail;
+}>;
 
 const minimumProvidedRoundCount = 4;
 const minimumDuplicateAvoidanceRoundCountForDifficulty5 = 2;

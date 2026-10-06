@@ -1,9 +1,8 @@
 import { useLocation } from "react-router";
-
 import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
 import { readAvoidedProblemId } from "@/game-catalog/play-location-state";
 import { PlayableWaterSort } from "@/game-catalog/water-sort/PlayableWaterSort";
-import { parseWaterSortDifficulty } from "@/games/water-sort/difficulty";
+import { parseDifficultyLevel } from "@/games/difficulty";
 import { useParams } from "@/router";
 
 export function WaterSortPlayView() {
@@ -11,7 +10,7 @@ export function WaterSortPlayView() {
     "/puzzles/water-sort/play/:difficulty",
   );
   const avoidedProblemId = readAvoidedProblemId(useLocation().state);
-  const difficulty = parseWaterSortDifficulty(difficultyParam);
+  const difficulty = parseDifficultyLevel(difficultyParam);
 
   if (!difficulty) {
     return (

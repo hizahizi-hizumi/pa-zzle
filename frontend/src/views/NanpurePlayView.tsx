@@ -1,9 +1,8 @@
 import { useLocation } from "react-router";
-
 import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
 import { PlayableNanpure } from "@/game-catalog/nanpure/PlayableNanpure";
 import { readAvoidedProblemId } from "@/game-catalog/play-location-state";
-import { parseNanpureDifficulty } from "@/games/nanpure/difficulty";
+import { parseDifficultyLevel } from "@/games/difficulty";
 import { useParams } from "@/router";
 
 export function NanpurePlayView() {
@@ -11,7 +10,7 @@ export function NanpurePlayView() {
     "/puzzles/nanpure/play/:difficulty",
   );
   const avoidedProblemId = readAvoidedProblemId(useLocation().state);
-  const difficulty = parseNanpureDifficulty(difficultyParam);
+  const difficulty = parseDifficultyLevel(difficultyParam);
 
   if (!difficulty) {
     return (

@@ -4,12 +4,10 @@ import {
   useRequestedProblem,
 } from "@/game-catalog/problem-id-query";
 import { useRecordResultNavigation } from "@/game-catalog/record-result-navigation";
+import { getDifficultyLabel } from "@/games/difficulty";
 import type { ProblemId } from "@/games/problem-id";
 import { createReflectionDiagnosticSnapshot } from "@/games/reflection/diagnostics";
-import {
-  getReflectionDifficultyLabel,
-  type ReflectionDifficulty,
-} from "@/games/reflection/difficulty";
+import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
 import { reflectionLaserPathMode } from "@/games/reflection/laser-path-mode";
 import { useReflectionPlay } from "@/games/reflection/play/use-reflection-play";
 import { createReflectionPlayAttemptProgress } from "@/games/reflection/play-attempt";
@@ -105,7 +103,7 @@ export function PlayableReflection({
   return (
     <>
       <ReflectionPlay
-        difficultyLabel={getReflectionDifficultyLabel(difficulty)}
+        difficultyLabel={getDifficultyLabel(difficulty)}
         laserPathMode={reflectionLaserPathMode}
         progress={play.progress}
         board={play.board}

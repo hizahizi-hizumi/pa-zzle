@@ -1,27 +1,4 @@
-import {
-  assessWaterSortDifficulty,
-  parseWaterSortDifficulty,
-} from "@/games/water-sort/difficulty";
-
-describe("parseWaterSortDifficulty", () => {
-  test.each(["1", "2", "3", "4", "5"] as const)(
-    "%s を定義済みの難易度として受理すること",
-    (input) => {
-      const result = parseWaterSortDifficulty(input);
-
-      expect(result).toBe(input);
-    },
-  );
-
-  test.each([undefined, "", "easy", "normal", "hard", "6"])(
-    "%s を未定義の難易度として拒否すること",
-    (input) => {
-      const result = parseWaterSortDifficulty(input);
-
-      expect(result).toBeUndefined();
-    },
-  );
-});
+import { assessWaterSortDifficulty } from "@/games/water-sort/difficulty";
 
 describe("assessWaterSortDifficulty", () => {
   const cases = [
@@ -40,9 +17,9 @@ describe("assessWaterSortDifficulty", () => {
   test.each(cases)(
     "%o で自然詰み率 %d の問題を難易度 %s と判定すること",
     (conditions, stuckRate, expected) => {
-      const difficulty = assessWaterSortDifficulty({ conditions, stuckRate });
+      const result = assessWaterSortDifficulty({ conditions, stuckRate });
 
-      expect(difficulty).toBe(expected);
+      expect(result).toEqual({ status: "classified", difficulty: expected });
     },
   );
 
@@ -53,9 +30,12 @@ describe("assessWaterSortDifficulty", () => {
   ] as const)(
     "%o で自然詰み率 %d の問題はどの難易度の候補領域にも含めないこと",
     (conditions, stuckRate) => {
-      const difficulty = assessWaterSortDifficulty({ conditions, stuckRate });
+      const result = assessWaterSortDifficulty({ conditions, stuckRate });
 
-      expect(difficulty).toBeNull();
+      expect(result).toEqual({
+        status: "out-of-range",
+        reason: "unlisted-combination",
+      });
     },
   );
 });

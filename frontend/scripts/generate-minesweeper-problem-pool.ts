@@ -1,11 +1,11 @@
 import { writeFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
+import { difficultyLevels } from "@/games/difficulty";
 import {
   assessMinesweeperDifficulty,
   listMinesweeperDifficultyBoardConditions,
   type MinesweeperDifficulty,
   type MinesweeperDifficultyBoardCondition,
-  minesweeperDifficulties,
 } from "@/games/minesweeper/difficulty";
 import {
   restoreMinesweeperProblem,
@@ -93,7 +93,7 @@ function conditionKeyOf(
 }
 
 function parseDifficulty(value: string): MinesweeperDifficulty {
-  const difficulty = minesweeperDifficulties.find(({ id }) => id === value);
+  const difficulty = difficultyLevels.find(({ id }) => id === value);
   if (!difficulty) {
     throw new RangeError(`Invalid difficulty: ${value}`);
   }
@@ -236,7 +236,7 @@ function extendPrefix(state: ConditionState): void {
 }
 
 function createSizeGroups(perLevel: number): SizeGroup[] {
-  return minesweeperDifficulties.flatMap(({ id: difficulty }) => {
+  return difficultyLevels.flatMap(({ id: difficulty }) => {
     const bySize = new Map<string, ConditionState[]>();
     for (const condition of listMinesweeperDifficultyBoardConditions(
       difficulty,
@@ -412,13 +412,10 @@ async function runMain(): Promise<void> {
   const wallSeconds = (performance.now() - startedAt) / 1000;
 
   const levels = Object.fromEntries(
-    minesweeperDifficulties.map(({ id }) => [
-      id,
-      [] as MinesweeperProblemPoolEntry[],
-    ]),
+    difficultyLevels.map(({ id }) => [id, [] as MinesweeperProblemPoolEntry[]]),
   ) as Record<MinesweeperDifficulty, MinesweeperProblemPoolEntry[]>;
   const report: string[] = [];
-  for (const { id: difficulty } of minesweeperDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     const levelGroups = groups.filter(
       (group) => group.difficulty === difficulty,
     );
@@ -493,13 +490,13 @@ async function runMain(): Promise<void> {
     );
   }
 
-  const lines = minesweeperDifficulties.map(
+  const lines = difficultyLevels.map(
     ({ id }, levelIndex) =>
       `    ${JSON.stringify(id)}: [\n${levels[id]
         .map((entry) => `      ${JSON.stringify(entry)}`)
         .join(
           ",\n",
-        )}\n    ]${levelIndex < minesweeperDifficulties.length - 1 ? "," : ""}`,
+        )}\n    ]${levelIndex < difficultyLevels.length - 1 ? "," : ""}`,
   );
   const json = `{\n  "generatorVersion": ${JSON.stringify(MINESWEEPER_GENERATOR_VERSION)},\n  "levels": {\n${lines.join("\n")}\n  }\n}\n`;
   writeFileSync(outputPath, json);
@@ -514,7 +511,7 @@ type VerifyFailure = { difficulty: MinesweeperDifficulty; index: number };
 
 function runVerifyWorker(args: readonly string[]): void {
   const [jobIndex, jobCount] = args.map(Number);
-  for (const { id: difficulty } of minesweeperDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     listMinesweeperPoolEntries(difficulty).forEach((entry, index) => {
       if (index % jobCount! !== jobIndex) {
         return;
@@ -536,7 +533,7 @@ function runVerifyWorker(args: readonly string[]): void {
 
 function measureSelection(): string {
   const durations: number[] = [];
-  for (const { id: difficulty } of minesweeperDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     for (let index = 0; index < 2000; index += 1) {
       const startedAt = performance.now();
       selectMinesweeperProblemForDifficulty(difficulty, `measure-${index}`);
@@ -580,7 +577,7 @@ async function runVerify(): Promise<void> {
   const keys = new Set<string>();
   let duplicateCount = 0;
   let total = 0;
-  for (const { id: difficulty } of minesweeperDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     for (const entry of listMinesweeperPoolEntries(difficulty)) {
       total += 1;
       const key = createCanonicalProblemKey(

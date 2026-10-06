@@ -1,6 +1,6 @@
 import { DifficultySelectionHeading } from "@/components/DifficultySelectionHeading";
 import { HomeBackLink } from "@/components/HomeBackLink";
-import { slidePuzzleDifficulties } from "@/games/slide-puzzle/difficulty";
+import { difficultyLevels } from "@/games/difficulty";
 import { SlidePuzzleHowToPlayDialog } from "@/games/slide-puzzle/ui/SlidePuzzleHowToPlayDialog";
 import { SlidePuzzleDifficultyOption } from "@/views/SlidePuzzleDifficultyView/SlidePuzzleDifficultyOption";
 
@@ -18,7 +18,7 @@ export function SlidePuzzleDifficultyView() {
       </div>
 
       <div className="grid gap-2 sm:gap-4 lg:grid-cols-5">
-        {slidePuzzleDifficulties.map((difficulty) => (
+        {difficultyLevels.map((difficulty) => (
           <SlidePuzzleDifficultyOption
             key={difficulty.id}
             difficulty={difficulty.id}

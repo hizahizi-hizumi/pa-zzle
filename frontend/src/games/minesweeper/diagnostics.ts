@@ -2,10 +2,8 @@ import {
   INTERNAL_DIAGNOSTIC_FORMAT_VERSION,
   type InternalDiagnosticSnapshot,
 } from "@/games/diagnostics";
-import {
-  type MinesweeperDifficulty,
-  parseMinesweeperDifficulty,
-} from "@/games/minesweeper/difficulty";
+import { parseDifficultyLevel } from "@/games/difficulty";
+import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import {
   type MinesweeperRestoredProblem,
   restoreMinesweeperProblemWithoutAnalysis,
@@ -52,7 +50,7 @@ export function parseMinesweeperDiagnosticSnapshot(
 
   const difficulty =
     typeof value.difficulty === "string"
-      ? parseMinesweeperDifficulty(value.difficulty)
+      ? parseDifficultyLevel(value.difficulty)
       : undefined;
   if (
     value.formatVersion !== INTERNAL_DIAGNOSTIC_FORMAT_VERSION ||

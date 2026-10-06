@@ -1,9 +1,11 @@
 import {
-  type LegacyParkingJamDifficulty,
+  type LegacyDifficulty,
+  parseDifficultyLevel,
+  parseLegacyDifficulty,
+} from "@/games/difficulty";
+import {
   PARKING_JAM_DIFFICULTY_MODEL_VERSION,
   type ParkingJamDifficulty,
-  parseLegacyParkingJamDifficulty,
-  parseParkingJamDifficulty,
 } from "@/games/parking-jam/difficulty";
 import {
   createParkingJamResult,
@@ -32,7 +34,7 @@ type ParkingJamProblemFacts = {
 // payloadVersion 2 は play-quality-v1 で採点し、難易度モデル版・採点版を持たない。
 // payloadVersion 2・3 は3段階（easy / normal / hard）の難易度で、レベル1〜5へ読み替えず旧区分のまま扱う。
 type ParkingJamPlayRecordPayloadV2 = {
-  difficulty: LegacyParkingJamDifficulty;
+  difficulty: LegacyDifficulty;
   problemIdentity: ParkingJamProblemIdentity;
   performance: ParkingJamSessionResult;
 };
@@ -192,8 +194,8 @@ export function isParkingJamPlayRecord(
   const isLegacyDifficultyRecord =
     record.payloadVersion === 2 || record.payloadVersion === 3;
   const hasExpectedDifficulty = isLegacyDifficultyRecord
-    ? parseLegacyParkingJamDifficulty(payload.difficulty) !== undefined
-    : parseParkingJamDifficulty(payload.difficulty) !== undefined;
+    ? parseLegacyDifficulty(payload.difficulty) !== undefined
+    : parseDifficultyLevel(payload.difficulty) !== undefined;
   if (!hasExpectedDifficulty) return false;
 
   if (record.payloadVersion === 2) return true;

@@ -1,5 +1,5 @@
+import { difficultyLevels } from "@/games/difficulty";
 import { createProblemId } from "@/games/problem-id";
-import { takuzuDifficulties } from "@/games/takuzu/difficulty";
 import { generateTakuzuProblem } from "@/games/takuzu/problem/generator";
 import { createTakuzuProblemIdentity } from "@/games/takuzu/problem/problem";
 import {
@@ -104,7 +104,7 @@ describe("toTakuzuPooledProblem", () => {
 });
 
 describe("findTakuzuPoolEntryByProblemId", () => {
-  const poolEntries = takuzuDifficulties.flatMap(({ id: difficulty }) =>
+  const poolEntries = difficultyLevels.flatMap(({ id: difficulty }) =>
     listTakuzuPoolEntries(difficulty).map((entry) => ({
       difficulty,
       entry,

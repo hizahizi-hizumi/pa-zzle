@@ -1,5 +1,5 @@
+import { difficultyLevels } from "@/games/difficulty";
 import { createProblemId } from "@/games/problem-id";
-import { waterSortDifficulties } from "@/games/water-sort/difficulty";
 import {
   findWaterSortPoolEntryByProblemId,
   listWaterSortPoolEntries,
@@ -7,7 +7,7 @@ import {
 } from "@/games/water-sort/problem/problem-pool";
 
 describe("findWaterSortPoolEntryByProblemId", () => {
-  const poolEntries = waterSortDifficulties.flatMap(({ id: difficulty }) =>
+  const poolEntries = difficultyLevels.flatMap(({ id: difficulty }) =>
     listWaterSortPoolEntries(difficulty).map((entry) => ({
       difficulty,
       entry,

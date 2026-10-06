@@ -3,8 +3,8 @@ import {
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
 import { RecordedMinesweeperResult } from "@/game-catalog/minesweeper/RecordedMinesweeperResult";
+import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/minesweeper/assets/pictogram.svg?raw";
-import { parseMinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import {
   isMinesweeperPlayRecord,
   minesweeperPlayRecordDefinition,
@@ -23,7 +23,7 @@ export const minesweeperCatalogEntry = {
   recordProblemPlayTarget(record) {
     return isMinesweeperPlayRecord(record)
       ? resolveRecordProblemPlayTarget(
-          parseMinesweeperDifficulty(record.payload.difficulty),
+          parseDifficultyLevel(record.payload.difficulty),
           record.payload.problemIdentity,
           canSelectMinesweeperProblemById,
         )
@@ -31,7 +31,7 @@ export const minesweeperCatalogEntry = {
   },
   attemptProblemPlayTarget({ start }) {
     return resolveRecordProblemPlayTarget(
-      parseMinesweeperDifficulty(start.difficulty),
+      parseDifficultyLevel(start.difficulty),
       start.problemIdentity,
       canSelectMinesweeperProblemById,
     );

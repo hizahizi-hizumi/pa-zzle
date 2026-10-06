@@ -1,9 +1,9 @@
 import {
-  type LegacyNanpureDifficulty,
-  type NanpureDifficulty,
-  parseLegacyNanpureDifficulty,
-  parseNanpureDifficulty,
-} from "@/games/nanpure/difficulty";
+  type LegacyDifficulty,
+  parseDifficultyLevel,
+  parseLegacyDifficulty,
+} from "@/games/difficulty";
+import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import {
   createNanpureResult,
   type NanpureResult,
@@ -39,7 +39,7 @@ type NanpurePlayRecordPayloadV1 = Omit<
   NanpurePlayRecordPayload,
   "difficulty"
 > & {
-  difficulty: LegacyNanpureDifficulty;
+  difficulty: LegacyDifficulty;
 };
 
 type NanpurePlayRecordV1 = PlayRecord & {
@@ -102,9 +102,9 @@ export function isNanpurePlayRecord(
     typeof payload.difficulty === "string" ? payload.difficulty : undefined;
   const hasExpectedDifficulty =
     record.payloadVersion === 1
-      ? parseLegacyNanpureDifficulty(difficulty) !== undefined
+      ? parseLegacyDifficulty(difficulty) !== undefined
       : record.payloadVersion === NANPURE_PLAY_RECORD_PAYLOAD_VERSION &&
-        parseNanpureDifficulty(difficulty) !== undefined;
+        parseDifficultyLevel(difficulty) !== undefined;
   return (
     hasExpectedDifficulty &&
     isNanpureRecordedProblemIdentity(payload.problemIdentity) &&

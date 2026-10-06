@@ -1,6 +1,6 @@
 import { DifficultySelectionHeading } from "@/components/DifficultySelectionHeading";
 import { HomeBackLink } from "@/components/HomeBackLink";
-import { waterSortDifficulties } from "@/games/water-sort/difficulty";
+import { difficultyLevels } from "@/games/difficulty";
 import { WaterSortHowToPlayDialog } from "@/games/water-sort/ui/WaterSortHowToPlayDialog";
 import { WaterSortDifficultyOption } from "@/views/WaterSortDifficultyView/WaterSortDifficultyOption";
 
@@ -18,7 +18,7 @@ export function WaterSortDifficultyView() {
       </div>
 
       <div className="grid gap-2 sm:gap-4 lg:grid-cols-5">
-        {waterSortDifficulties.map((difficulty) => (
+        {difficultyLevels.map((difficulty) => (
           <WaterSortDifficultyOption
             key={difficulty.id}
             difficulty={difficulty.id}

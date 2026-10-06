@@ -2,10 +2,8 @@ import {
   INTERNAL_DIAGNOSTIC_FORMAT_VERSION,
   type InternalDiagnosticSnapshot,
 } from "@/games/diagnostics";
-import {
-  parseWaterSortDifficulty,
-  type WaterSortDifficulty,
-} from "@/games/water-sort/difficulty";
+import { parseDifficultyLevel } from "@/games/difficulty";
+import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import { restoreWaterSortProblem } from "@/games/water-sort/problem/generator";
 import {
   isWaterSortProblemIdentity,
@@ -50,7 +48,7 @@ export function parseWaterSortDiagnosticSnapshot(
 
   const difficulty =
     typeof value.difficulty === "string"
-      ? parseWaterSortDifficulty(value.difficulty)
+      ? parseDifficultyLevel(value.difficulty)
       : undefined;
   if (
     value.formatVersion !== INTERNAL_DIAGNOSTIC_FORMAT_VERSION ||

@@ -1,7 +1,4 @@
-import {
-  getReflectionDifficultyLabel,
-  parseReflectionDifficulty,
-} from "@/games/reflection/difficulty";
+import { getDifficultyLabel, parseDifficultyLevel } from "@/games/difficulty";
 import { reflectionPlayRecordDefinition } from "@/games/reflection/play-record";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 import { formatElapsedTimeDelta } from "@/lib/format-performance-delta";
@@ -10,8 +7,8 @@ import { createPlayRecordDisplay } from "@/records/ui/play-record-display";
 export const reflectionPlayRecordDisplay = createPlayRecordDisplay({
   definition: reflectionPlayRecordDefinition,
   getComparisonLabel(comparisonKey: string) {
-    const difficulty = parseReflectionDifficulty(comparisonKey);
-    return difficulty ? getReflectionDifficultyLabel(difficulty) : null;
+    const difficulty = parseDifficultyLevel(comparisonKey);
+    return difficulty ? getDifficultyLabel(difficulty) : null;
   },
   metrics: {
     "play-score": {

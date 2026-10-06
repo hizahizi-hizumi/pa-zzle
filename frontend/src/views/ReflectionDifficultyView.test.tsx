@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
+import { difficultyLevels } from "@/games/difficulty";
 
-import { reflectionDifficulties } from "@/games/reflection/difficulty";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import { ReflectionDifficultyView } from "@/views/ReflectionDifficultyView";
 
@@ -11,7 +11,7 @@ afterEach(() => {
 });
 
 describe("ReflectionDifficultyView", () => {
-  const difficultyCases = reflectionDifficulties.map(({ id }) => id);
+  const difficultyCases = difficultyLevels.map(({ id }) => id);
 
   beforeEach(() => {
     render(

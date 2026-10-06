@@ -1,74 +1,18 @@
+import {
+  type DifficultyAssessment,
+  type DifficultyLevel,
+  difficultyLevels,
+  isInNumericRange,
+  type NoAssessmentDetail,
+  type NumericRange,
+  type RecordedDifficulty,
+} from "@/games/difficulty";
 import type { WaterSortGenerationConditions } from "@/games/water-sort/problem/problem";
 
-export const waterSortDifficulties = [
-  {
-    id: "1",
-    label: "レベル 1",
-    description: "同じ色をまとめていけば解けます",
-  },
-  {
-    id: "2",
-    label: "レベル 2",
-    description: "何も考えずに進めると、ときどき詰みます",
-  },
-  {
-    id: "3",
-    label: "レベル 3",
-    description: "空きボトルの使い方を考えないと詰みます",
-  },
-  {
-    id: "4",
-    label: "レベル 4",
-    description: "何度か先を読む必要があります",
-  },
-  {
-    id: "5",
-    label: "レベル 5",
-    description: "先を読まずに進めると、ほぼ確実に詰みます",
-  },
-] as const;
+export type WaterSortDifficulty = DifficultyLevel;
 
-export type WaterSortDifficulty = (typeof waterSortDifficulties)[number]["id"];
-
-const legacyWaterSortDifficulties = [
-  { id: "easy", label: "かんたん" },
-  { id: "normal", label: "ふつう" },
-  { id: "hard", label: "むずかしい" },
-] as const;
-
-export type LegacyWaterSortDifficulty =
-  (typeof legacyWaterSortDifficulties)[number]["id"];
-
-export type WaterSortRecordedDifficulty =
-  | WaterSortDifficulty
-  | LegacyWaterSortDifficulty;
-
-export function parseWaterSortDifficulty(
-  value: string | undefined,
-): WaterSortDifficulty | undefined {
-  return waterSortDifficulties.find((difficulty) => difficulty.id === value)
-    ?.id;
-}
-
-export function parseWaterSortRecordedDifficulty(
-  value: string | undefined,
-): WaterSortRecordedDifficulty | undefined {
-  return (
-    parseWaterSortDifficulty(value) ??
-    legacyWaterSortDifficulties.find((difficulty) => difficulty.id === value)
-      ?.id
-  );
-}
-
-export function getWaterSortDifficultyLabel(
-  difficulty: WaterSortRecordedDifficulty,
-): string {
-  return (
-    [...waterSortDifficulties, ...legacyWaterSortDifficulties].find(
-      (option) => option.id === difficulty,
-    )?.label ?? difficulty
-  );
-}
+// 3段階の時代の記録を、旧区分のまま読み込み表示するためだけに残す。
+export type WaterSortRecordedDifficulty = RecordedDifficulty;
 
 type WaterSortGenerationProfile = Pick<
   WaterSortGenerationConditions,
@@ -77,8 +21,8 @@ type WaterSortGenerationProfile = Pick<
 
 type WaterSortDifficultyCriteria = {
   generationProfiles: readonly WaterSortGenerationProfile[];
-  minimumExclusiveStuckRate: number | null;
-  maximumInclusiveStuckRate: number | null;
+  /** 下限ちょうどの詰み率は下のレベルに属する。 */
+  stuckRate: NumericRange;
 };
 
 function createProfiles(
@@ -95,45 +39,41 @@ function createProfiles(
   );
 }
 
-export const waterSortDifficultyCriteria: Record<
-  WaterSortDifficulty,
-  WaterSortDifficultyCriteria
-> = {
+export const waterSortDifficultyCriteria = {
   "1": {
     generationProfiles: createProfiles(4, 6, 2),
-    minimumExclusiveStuckRate: null,
-    maximumInclusiveStuckRate: 0.05,
+    stuckRate: { minimum: Number.NEGATIVE_INFINITY, maximum: 0.05 },
   },
   "2": {
     generationProfiles: createProfiles(5, 8, 2),
-    minimumExclusiveStuckRate: 0.05,
-    maximumInclusiveStuckRate: 0.35,
+    stuckRate: { minimum: 0.05, maximum: 0.35, excludesMinimum: true },
   },
   "3": {
     generationProfiles: [
       ...createProfiles(6, 9, 2),
       ...createProfiles(4, 5, 1),
     ],
-    minimumExclusiveStuckRate: 0.35,
-    maximumInclusiveStuckRate: 0.7,
+    stuckRate: { minimum: 0.35, maximum: 0.7, excludesMinimum: true },
   },
   "4": {
     generationProfiles: [
       ...createProfiles(8, 11, 2),
       ...createProfiles(4, 6, 1),
     ],
-    minimumExclusiveStuckRate: 0.7,
-    maximumInclusiveStuckRate: 0.9,
+    stuckRate: { minimum: 0.7, maximum: 0.9, excludesMinimum: true },
   },
   "5": {
     generationProfiles: [
       ...createProfiles(10, 12, 2),
       ...createProfiles(5, 7, 1),
     ],
-    minimumExclusiveStuckRate: 0.9,
-    maximumInclusiveStuckRate: null,
+    stuckRate: {
+      minimum: 0.9,
+      maximum: Number.POSITIVE_INFINITY,
+      excludesMinimum: true,
+    },
   },
-};
+} as const satisfies Record<WaterSortDifficulty, WaterSortDifficultyCriteria>;
 
 function hasGenerationProfile(
   criteria: WaterSortDifficultyCriteria,
@@ -146,17 +86,17 @@ function hasGenerationProfile(
   );
 }
 
-function isWithinStuckRate(
-  criteria: WaterSortDifficultyCriteria,
-  stuckRate: number,
-): boolean {
-  return (
-    (criteria.minimumExclusiveStuckRate === null ||
-      stuckRate > criteria.minimumExclusiveStuckRate) &&
-    (criteria.maximumInclusiveStuckRate === null ||
-      stuckRate <= criteria.maximumInclusiveStuckRate)
-  );
-}
+/**
+ * 問題を難易度へ分類した結果。
+ * - `classified`: 生成条件と自然詰み率の組がいずれかのレベルに当たった。
+ * - `out-of-range`: 生成条件と自然詰み率の組がどのレベルにも当たらないので提供しない。
+ */
+export type WaterSortDifficultyAssessment = DifficultyAssessment<{
+  classified: NoAssessmentDetail;
+  outOfRange: { reason: "unlisted-combination" };
+  unsupported: never;
+  invalid: never;
+}>;
 
 export function assessWaterSortDifficulty({
   conditions,
@@ -164,14 +104,15 @@ export function assessWaterSortDifficulty({
 }: {
   conditions: WaterSortGenerationProfile;
   stuckRate: number;
-}): WaterSortDifficulty | null {
-  return (
-    waterSortDifficulties.find(({ id }) => {
-      const criteria = waterSortDifficultyCriteria[id];
-      return (
-        hasGenerationProfile(criteria, conditions) &&
-        isWithinStuckRate(criteria, stuckRate)
-      );
-    })?.id ?? null
-  );
+}): WaterSortDifficultyAssessment {
+  const difficulty = difficultyLevels.find(({ id }) => {
+    const criteria = waterSortDifficultyCriteria[id];
+    return (
+      hasGenerationProfile(criteria, conditions) &&
+      isInNumericRange(stuckRate, criteria.stuckRate)
+    );
+  })?.id;
+  return difficulty
+    ? { status: "classified", difficulty }
+    : { status: "out-of-range", reason: "unlisted-combination" };
 }

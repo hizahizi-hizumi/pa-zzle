@@ -1,7 +1,7 @@
 import {
-  getParkingJamDifficultyLabel,
-  parseParkingJamRecordedDifficulty,
-} from "@/games/parking-jam/difficulty";
+  getDifficultyLabel,
+  parseRecordedDifficulty,
+} from "@/games/difficulty";
 import { parkingJamPlayRecordDefinition } from "@/games/parking-jam/play-record";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 import { createPlayRecordDisplay } from "@/records/ui/play-record-display";
@@ -9,8 +9,8 @@ import { createPlayRecordDisplay } from "@/records/ui/play-record-display";
 export const parkingJamPlayRecordDisplay = createPlayRecordDisplay({
   definition: parkingJamPlayRecordDefinition,
   getComparisonLabel(comparisonKey: string) {
-    const difficulty = parseParkingJamRecordedDifficulty(comparisonKey);
-    return difficulty ? getParkingJamDifficultyLabel(difficulty) : null;
+    const difficulty = parseRecordedDifficulty(comparisonKey);
+    return difficulty ? getDifficultyLabel(difficulty) : null;
   },
   metrics: {
     "play-score": {

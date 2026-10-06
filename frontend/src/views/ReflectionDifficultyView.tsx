@@ -1,6 +1,6 @@
 import { DifficultySelectionHeading } from "@/components/DifficultySelectionHeading";
 import { HomeBackLink } from "@/components/HomeBackLink";
-import { reflectionDifficulties } from "@/games/reflection/difficulty";
+import { difficultyLevels } from "@/games/difficulty";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import { reflectionLaserPathMode } from "@/games/reflection/laser-path-mode";
 import { ReflectionHowToPlayDialog } from "@/games/reflection/ui/ReflectionHowToPlayDialog";
@@ -24,7 +24,7 @@ export function ReflectionDifficultyView() {
       </div>
 
       <div className="grid gap-2 sm:gap-4 lg:grid-cols-5">
-        {reflectionDifficulties.map((difficulty) => (
+        {difficultyLevels.map((difficulty) => (
           <ReflectionDifficultyOption
             key={difficulty.id}
             difficulty={difficulty.id}

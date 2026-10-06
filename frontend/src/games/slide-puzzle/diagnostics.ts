@@ -2,9 +2,9 @@ import {
   INTERNAL_DIAGNOSTIC_FORMAT_VERSION,
   type InternalDiagnosticSnapshot,
 } from "@/games/diagnostics";
+import { parseDifficultyLevel } from "@/games/difficulty";
 import {
   isSlidePuzzleProblemIdentityOfDifficulty,
-  parseSlidePuzzleDifficulty,
   type SlidePuzzleDifficulty,
 } from "@/games/slide-puzzle/difficulty";
 import {
@@ -51,7 +51,7 @@ function parseSlidePuzzleDiagnosticSnapshot(
 
   const difficulty =
     typeof value.difficulty === "string"
-      ? parseSlidePuzzleDifficulty(value.difficulty)
+      ? parseDifficultyLevel(value.difficulty)
       : undefined;
   if (
     value.formatVersion !== INTERNAL_DIAGNOSTIC_FORMAT_VERSION ||

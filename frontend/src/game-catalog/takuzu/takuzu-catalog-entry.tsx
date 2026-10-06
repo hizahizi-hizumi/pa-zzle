@@ -3,8 +3,8 @@ import {
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
 import { RecordedTakuzuResult } from "@/game-catalog/takuzu/RecordedTakuzuResult";
+import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/takuzu/assets/pictogram.svg?raw";
-import { parseTakuzuDifficulty } from "@/games/takuzu/difficulty";
 import {
   isTakuzuPlayRecord,
   restoreTakuzuRecordedResult,
@@ -23,7 +23,7 @@ export const takuzuCatalogEntry = {
   recordProblemPlayTarget(record) {
     return isTakuzuPlayRecord(record)
       ? resolveRecordProblemPlayTarget(
-          parseTakuzuDifficulty(record.payload.difficulty),
+          parseDifficultyLevel(record.payload.difficulty),
           record.payload.problemIdentity,
           canSelectTakuzuProblemById,
         )
@@ -31,7 +31,7 @@ export const takuzuCatalogEntry = {
   },
   attemptProblemPlayTarget({ start }) {
     return resolveRecordProblemPlayTarget(
-      parseTakuzuDifficulty(start.difficulty),
+      parseDifficultyLevel(start.difficulty),
       start.problemIdentity,
       canSelectTakuzuProblemById,
     );

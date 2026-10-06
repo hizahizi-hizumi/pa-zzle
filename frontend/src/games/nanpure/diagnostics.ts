@@ -2,10 +2,8 @@ import {
   INTERNAL_DIAGNOSTIC_FORMAT_VERSION,
   type InternalDiagnosticSnapshot,
 } from "@/games/diagnostics";
-import {
-  type NanpureDifficulty,
-  parseNanpureDifficulty,
-} from "@/games/nanpure/difficulty";
+import { parseDifficultyLevel } from "@/games/difficulty";
+import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import {
   isNanpureProblemIdentity,
   type NanpureIdentifiedProblem,
@@ -50,7 +48,7 @@ export function parseNanpureDiagnosticSnapshot(
 
   const difficulty =
     typeof value.difficulty === "string"
-      ? parseNanpureDifficulty(value.difficulty)
+      ? parseDifficultyLevel(value.difficulty)
       : undefined;
   if (
     value.formatVersion !== INTERNAL_DIAGNOSTIC_FORMAT_VERSION ||

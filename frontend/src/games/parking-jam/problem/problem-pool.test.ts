@@ -1,4 +1,4 @@
-import { parkingJamDifficulties } from "@/games/parking-jam/difficulty";
+import { difficultyLevels } from "@/games/difficulty";
 import {
   findParkingJamPoolEntryByProblemId,
   listParkingJamPoolEntries,
@@ -7,7 +7,7 @@ import {
 import { createProblemId } from "@/games/problem-id";
 
 describe("findParkingJamPoolEntryByProblemId", () => {
-  const poolEntries = parkingJamDifficulties.flatMap(({ id: difficulty }) =>
+  const poolEntries = difficultyLevels.flatMap(({ id: difficulty }) =>
     listParkingJamPoolEntries(difficulty).map((entry) => ({
       difficulty,
       entry,

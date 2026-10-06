@@ -1,9 +1,8 @@
 import { useLocation } from "react-router";
-
 import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
 import { readAvoidedProblemId } from "@/game-catalog/play-location-state";
 import { PlayableSlidePuzzle } from "@/game-catalog/slide-puzzle/PlayableSlidePuzzle";
-import { parseSlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
+import { parseDifficultyLevel } from "@/games/difficulty";
 import { useParams } from "@/router";
 
 export function SlidePuzzlePlayView() {
@@ -11,7 +10,7 @@ export function SlidePuzzlePlayView() {
     "/puzzles/slide-puzzle/play/:difficulty",
   );
   const avoidedProblemId = readAvoidedProblemId(useLocation().state);
-  const difficulty = parseSlidePuzzleDifficulty(difficultyParam);
+  const difficulty = parseDifficultyLevel(difficultyParam);
 
   if (!difficulty) {
     return (

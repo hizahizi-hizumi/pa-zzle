@@ -1,12 +1,9 @@
 import { type ReactNode, useMemo, useState } from "react";
-
 import { createPlayLocationState } from "@/game-catalog/play-location-state";
+import { getDifficultyLabel } from "@/games/difficulty";
 import { createProblemId } from "@/games/problem-id";
 import { createReflectionDiagnosticSnapshot } from "@/games/reflection/diagnostics";
-import {
-  getReflectionDifficultyLabel,
-  type ReflectionDifficulty,
-} from "@/games/reflection/difficulty";
+import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
 import { reflectionLaserPathMode } from "@/games/reflection/laser-path-mode";
 import type { ReflectionResult } from "@/games/reflection/play/use-reflection-play";
 import type { ReflectionProblemIdentity } from "@/games/reflection/problem/problem";
@@ -67,7 +64,7 @@ export function RecordedReflectionResult({
   return (
     <>
       <ReflectionResultScreen
-        difficultyLabel={getReflectionDifficultyLabel(difficulty)}
+        difficultyLabel={getDifficultyLabel(difficulty)}
         laserPathMode={reflectionLaserPathMode}
         result={result}
         recordOutcomeNotice={recordOutcomeNotice}

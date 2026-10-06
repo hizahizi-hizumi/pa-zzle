@@ -1,7 +1,7 @@
 import {
-  getNanpureDifficultyLabel,
-  parseNanpureRecordedDifficulty,
-} from "@/games/nanpure/difficulty";
+  getDifficultyLabel,
+  parseRecordedDifficulty,
+} from "@/games/difficulty";
 import { nanpurePlayRecordDefinition } from "@/games/nanpure/play-record";
 
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
@@ -10,8 +10,8 @@ import { createPlayRecordDisplay } from "@/records/ui/play-record-display";
 export const nanpurePlayRecordDisplay = createPlayRecordDisplay({
   definition: nanpurePlayRecordDefinition,
   getComparisonLabel(comparisonKey: string) {
-    const difficulty = parseNanpureRecordedDifficulty(comparisonKey);
-    return difficulty ? getNanpureDifficultyLabel(difficulty) : null;
+    const difficulty = parseRecordedDifficulty(comparisonKey);
+    return difficulty ? getDifficultyLabel(difficulty) : null;
   },
   metrics: {
     "play-score": {

@@ -1,7 +1,4 @@
-import {
-  getSlidePuzzleDifficultyLabel,
-  parseSlidePuzzleDifficulty,
-} from "@/games/slide-puzzle/difficulty";
+import { getDifficultyLabel, parseDifficultyLevel } from "@/games/difficulty";
 import { slidePuzzlePlayRecordDefinition } from "@/games/slide-puzzle/play-record";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 import {
@@ -13,8 +10,8 @@ import { createPlayRecordDisplay } from "@/records/ui/play-record-display";
 export const slidePuzzlePlayRecordDisplay = createPlayRecordDisplay({
   definition: slidePuzzlePlayRecordDefinition,
   getComparisonLabel(comparisonKey: string) {
-    const difficulty = parseSlidePuzzleDifficulty(comparisonKey);
-    return difficulty ? getSlidePuzzleDifficultyLabel(difficulty) : null;
+    const difficulty = parseDifficultyLevel(comparisonKey);
+    return difficulty ? getDifficultyLabel(difficulty) : null;
   },
   metrics: {
     "play-score": {

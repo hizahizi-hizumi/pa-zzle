@@ -1,7 +1,7 @@
 import {
-  getWaterSortDifficultyLabel,
-  parseWaterSortRecordedDifficulty,
-} from "@/games/water-sort/difficulty";
+  getDifficultyLabel,
+  parseRecordedDifficulty,
+} from "@/games/difficulty";
 import { waterSortPlayRecordDefinition } from "@/games/water-sort/play-record";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 import {
@@ -13,8 +13,8 @@ import { createPlayRecordDisplay } from "@/records/ui/play-record-display";
 export const waterSortPlayRecordDisplay = createPlayRecordDisplay({
   definition: waterSortPlayRecordDefinition,
   getComparisonLabel(comparisonKey: string) {
-    const difficulty = parseWaterSortRecordedDifficulty(comparisonKey);
-    return difficulty ? getWaterSortDifficultyLabel(difficulty) : null;
+    const difficulty = parseRecordedDifficulty(comparisonKey);
+    return difficulty ? getDifficultyLabel(difficulty) : null;
   },
   metrics: {
     "play-score": {

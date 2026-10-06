@@ -1,11 +1,8 @@
 import type { ReactNode } from "react";
-
 import { GameResultScreen } from "@/components/GameResultScreen";
+import { getDifficultyLabel } from "@/games/difficulty";
 import takuzuPictogramSvg from "@/games/takuzu/assets/pictogram.svg?raw";
-import {
-  getTakuzuDifficultyLabel,
-  type TakuzuDifficulty,
-} from "@/games/takuzu/difficulty";
+import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import type { TakuzuResult } from "@/games/takuzu/play/use-takuzu-play";
 import { TAKUZU_SCORE_MAXIMUMS } from "@/games/takuzu/score";
 import { getTakuzuScoreCriteria } from "@/games/takuzu/ui/result/TakuzuResultScreen/score-criteria";
@@ -39,7 +36,7 @@ export function TakuzuResultScreen({
   return (
     <GameResultScreen
       gameName="バイナリパズル"
-      difficultyLabel={getTakuzuDifficultyLabel(difficulty)}
+      difficultyLabel={getDifficultyLabel(difficulty)}
       pictogramSvg={takuzuPictogramSvg}
       score={result.score.total}
       metrics={[

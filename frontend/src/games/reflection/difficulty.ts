@@ -1,3 +1,11 @@
+import {
+  type DifficultyAssessment,
+  type DifficultyLevel,
+  difficultyLevels,
+  isInNumericRange,
+  type NoAssessmentDetail,
+  type NumericRange,
+} from "@/games/difficulty";
 import type {
   ReflectionDifficultyAnalysis,
   ReflectionReasoningFeatures,
@@ -9,37 +17,9 @@ import {
   reflectionBoardSizes,
 } from "@/games/reflection/problem/problem";
 
-export const reflectionDifficulties = [
-  { id: "1", label: "レベル 1" },
-  { id: "2", label: "レベル 2" },
-  { id: "3", label: "レベル 3" },
-  { id: "4", label: "レベル 4" },
-  { id: "5", label: "レベル 5" },
-] as const;
-
-export type ReflectionDifficulty =
-  (typeof reflectionDifficulties)[number]["id"];
-
-export function parseReflectionDifficulty(
-  value: string | undefined,
-): ReflectionDifficulty | undefined {
-  return reflectionDifficulties.find((difficulty) => difficulty.id === value)
-    ?.id;
-}
-
-export function getReflectionDifficultyLabel(
-  difficulty: ReflectionDifficulty,
-): string {
-  return (
-    reflectionDifficulties.find((option) => option.id === difficulty)?.label ??
-    difficulty
-  );
-}
+export type ReflectionDifficulty = DifficultyLevel;
 
 type ReflectionReasoningLevel = ReflectionReasoningFeatures["highestLevel"];
-
-/** 両端を含む範囲。 */
-type InclusiveRange<T extends number> = { minimum: T; maximum: T };
 
 /**
  * 1つのレベルが求める組み合わせ。
@@ -54,9 +34,9 @@ type InclusiveRange<T extends number> = { minimum: T; maximum: T };
  */
 export type ReflectionLevelCombination = {
   reasoningLevel: ReflectionReasoningLevel;
-  boardSize: InclusiveRange<ReflectionBoardSize>;
-  pieceCount: InclusiveRange<number>;
-  piecesPerClue?: InclusiveRange<number>;
+  boardSize: NumericRange<ReflectionBoardSize>;
+  pieceCount: NumericRange<number>;
+  piecesPerClue?: NumericRange<number>;
   minimumTrialRetryCount?: number;
 };
 
@@ -107,26 +87,15 @@ export const reflectionLevelCombinations = {
  * - `unsupported`: 一意解だが、推論レベル5まで使っても置き場所が決まらず、挑戦の強さを評価できない。
  * - `invalid`: 解が無い、または2つ以上あり、問題として成立しない。
  */
-export type ReflectionDifficultyAssessment =
-  | {
-      status: "classified";
-      difficulty: ReflectionDifficulty;
-      reasoningLevel: ReflectionReasoningLevel;
-    }
-  | {
-      status: "out-of-range";
-      reason: "unlisted-combination";
-      reasoningLevel: ReflectionReasoningLevel;
-    }
-  | { status: "unsupported" }
-  | { status: "invalid" };
-
-function isInRange(
-  value: number,
-  { minimum, maximum }: InclusiveRange<number>,
-) {
-  return minimum <= value && value <= maximum;
-}
+export type ReflectionDifficultyAssessment = DifficultyAssessment<{
+  classified: { reasoningLevel: ReflectionReasoningLevel };
+  outOfRange: {
+    reason: "unlisted-combination";
+    reasoningLevel: ReflectionReasoningLevel;
+  };
+  unsupported: NoAssessmentDetail;
+  invalid: NoAssessmentDetail;
+}>;
 
 function resistsTrial(
   trial: ReflectionTrialFeatures,
@@ -145,10 +114,13 @@ export function coversReflectionGenerationCondition(
   condition: { size: number; pieceCount: number },
 ): boolean {
   return (
-    isInRange(condition.size, boardSize) &&
-    isInRange(condition.pieceCount, pieceCount) &&
+    isInNumericRange(condition.size, boardSize) &&
+    isInNumericRange(condition.pieceCount, pieceCount) &&
     (piecesPerClue === undefined ||
-      isInRange(condition.pieceCount / (condition.size * 4), piecesPerClue))
+      isInNumericRange(
+        condition.pieceCount / (condition.size * 4),
+        piecesPerClue,
+      ))
   );
 }
 
@@ -176,7 +148,7 @@ export function assessReflectionDifficulty(
     case "analyzed": {
       const { highestLevel } = analysis.features;
       const { size, pieceCount } = analysis.scale;
-      const difficulty = reflectionDifficulties.find(({ id }) =>
+      const difficulty = difficultyLevels.find(({ id }) =>
         matchesLevelCombination(
           highestLevel,
           { size, pieceCount },
@@ -202,7 +174,7 @@ export function listReflectionGenerationConditions(
   const combination = reflectionLevelCombinations[difficulty];
   const { boardSize, pieceCount } = combination;
   return reflectionBoardSizes
-    .filter((size) => isInRange(size, boardSize))
+    .filter((size) => isInNumericRange(size, boardSize))
     .flatMap((size) =>
       Array.from(
         { length: pieceCount.maximum - pieceCount.minimum + 1 },

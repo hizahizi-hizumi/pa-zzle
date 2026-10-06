@@ -1,61 +1,19 @@
 import type {
+  DifficultyAssessment,
+  DifficultyLevel,
+  NoAssessmentDetail,
+  RecordedDifficulty,
+} from "@/games/difficulty";
+import type {
   NanpureDifficultyAnalysis,
   NanpureHumanSolveFeatures,
 } from "@/games/nanpure/problem/difficulty-analysis";
 import type { NanpureTechnique } from "@/games/nanpure/problem/technique";
 
-export const nanpureDifficulties = [
-  { id: "1", label: "レベル 1" },
-  { id: "2", label: "レベル 2" },
-  { id: "3", label: "レベル 3" },
-  { id: "4", label: "レベル 4" },
-  { id: "5", label: "レベル 5" },
-] as const;
-
-export type NanpureDifficulty = (typeof nanpureDifficulties)[number]["id"];
+export type NanpureDifficulty = DifficultyLevel;
 
 // 3段階（dependency-v1）時代の記録を、旧区分のまま読み込み表示するためだけに残す。
-const legacyNanpureDifficulties = [
-  { id: "easy", label: "かんたん" },
-  { id: "normal", label: "ふつう" },
-  { id: "hard", label: "むずかしい" },
-] as const;
-
-export type LegacyNanpureDifficulty =
-  (typeof legacyNanpureDifficulties)[number]["id"];
-
-export type NanpureRecordedDifficulty =
-  | NanpureDifficulty
-  | LegacyNanpureDifficulty;
-
-export function parseNanpureDifficulty(
-  value: string | undefined,
-): NanpureDifficulty | undefined {
-  return nanpureDifficulties.find((difficulty) => difficulty.id === value)?.id;
-}
-
-export function parseLegacyNanpureDifficulty(
-  value: string | undefined,
-): LegacyNanpureDifficulty | undefined {
-  return legacyNanpureDifficulties.find((difficulty) => difficulty.id === value)
-    ?.id;
-}
-
-export function parseNanpureRecordedDifficulty(
-  value: string | undefined,
-): NanpureRecordedDifficulty | undefined {
-  return parseNanpureDifficulty(value) ?? parseLegacyNanpureDifficulty(value);
-}
-
-export function getNanpureDifficultyLabel(
-  difficulty: NanpureRecordedDifficulty,
-): string {
-  return (
-    [...nanpureDifficulties, ...legacyNanpureDifficulties].find(
-      (option) => option.id === difficulty,
-    )?.label ?? difficulty
-  );
-}
+export type NanpureRecordedDifficulty = RecordedDifficulty;
 
 /**
  * 分析結果を難易度へ分類した結果。
@@ -64,11 +22,12 @@ export function getNanpureDifficultyLabel(
  * - `unsupported`: 一意解だが、対応した手筋では解き切れず、挑戦の強さを評価できない。
  * - `invalid`: 解が無い、または2つ以上あり、問題として成立しない。
  */
-export type NanpureDifficultyAssessment =
-  | { status: "classified"; difficulty: NanpureDifficulty }
-  | { status: "out-of-range"; reason: "too-light" }
-  | { status: "unsupported" }
-  | { status: "invalid" };
+export type NanpureDifficultyAssessment = DifficultyAssessment<{
+  classified: NoAssessmentDetail;
+  outOfRange: { reason: "too-light" };
+  unsupported: NoAssessmentDetail;
+  invalid: NoAssessmentDetail;
+}>;
 
 const difficultyByDeepestTechnique = {
   "full-house": "1",

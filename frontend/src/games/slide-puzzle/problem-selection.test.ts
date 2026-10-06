@@ -1,8 +1,8 @@
 // @vitest-environment node
 
+import { difficultyLevels } from "@/games/difficulty";
 import {
   assessSlidePuzzleDifficulty,
-  slidePuzzleDifficulties,
   slidePuzzleDifficultyCriteria,
 } from "@/games/slide-puzzle/difficulty";
 import { analyzeSlidePuzzleDifficulty } from "@/games/slide-puzzle/problem/difficulty-analysis";
@@ -19,7 +19,7 @@ import {
 } from "@/games/slide-puzzle/problem-selection";
 import { isSolvableSlidePuzzleBoard } from "@/games/slide-puzzle/puzzle/rules";
 
-const difficulties = slidePuzzleDifficulties.map(({ id }) => id);
+const difficulties = difficultyLevels.map(({ id }) => id);
 
 describe("問題集", () => {
   test.each(difficulties)(
@@ -32,11 +32,15 @@ describe("問題集", () => {
           identity.seed,
           identity.conditions,
         );
-        return isSolvableSlidePuzzleBoard(board)
-          ? assessSlidePuzzleDifficulty(
-              analyzeSlidePuzzleDifficulty(board, optimalMoveCount),
-            )
-          : null;
+        if (!isSolvableSlidePuzzleBoard(board)) {
+          return null;
+        }
+        const assessment = assessSlidePuzzleDifficulty(
+          analyzeSlidePuzzleDifficulty(board, optimalMoveCount),
+        );
+        return assessment.status === "classified"
+          ? assessment.difficulty
+          : assessment.status;
       });
 
       expect(levels.length).toBeGreaterThanOrEqual(100);

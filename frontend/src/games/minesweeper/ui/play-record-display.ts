@@ -1,7 +1,4 @@
-import {
-  getMinesweeperDifficultyLabel,
-  parseMinesweeperDifficulty,
-} from "@/games/minesweeper/difficulty";
+import { getDifficultyLabel, parseDifficultyLevel } from "@/games/difficulty";
 import { minesweeperPlayRecordDefinition } from "@/games/minesweeper/play-record";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 import { formatElapsedTimeDelta } from "@/lib/format-performance-delta";
@@ -10,8 +7,8 @@ import { createPlayRecordDisplay } from "@/records/ui/play-record-display";
 export const minesweeperPlayRecordDisplay = createPlayRecordDisplay({
   definition: minesweeperPlayRecordDefinition,
   getComparisonLabel(comparisonKey: string) {
-    const difficulty = parseMinesweeperDifficulty(comparisonKey);
-    return difficulty ? getMinesweeperDifficultyLabel(difficulty) : null;
+    const difficulty = parseDifficultyLevel(comparisonKey);
+    return difficulty ? getDifficultyLabel(difficulty) : null;
   },
   metrics: {
     "play-score": {

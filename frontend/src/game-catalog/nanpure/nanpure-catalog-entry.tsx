@@ -3,8 +3,8 @@ import {
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
 import { RecordedNanpureResult } from "@/game-catalog/nanpure/RecordedNanpureResult";
+import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/nanpure/assets/pictogram.svg?raw";
-import { parseNanpureDifficulty } from "@/games/nanpure/difficulty";
 import {
   isNanpurePlayRecord,
   nanpurePlayRecordDefinition,
@@ -23,7 +23,7 @@ export const nanpureCatalogEntry = {
   recordProblemPlayTarget(record) {
     return isNanpurePlayRecord(record)
       ? resolveRecordProblemPlayTarget(
-          parseNanpureDifficulty(record.payload.difficulty),
+          parseDifficultyLevel(record.payload.difficulty),
           record.payload.problemIdentity,
           canSelectNanpureProblemById,
         )
@@ -31,7 +31,7 @@ export const nanpureCatalogEntry = {
   },
   attemptProblemPlayTarget({ start }) {
     return resolveRecordProblemPlayTarget(
-      parseNanpureDifficulty(start.difficulty),
+      parseDifficultyLevel(start.difficulty),
       start.problemIdentity,
       canSelectNanpureProblemById,
     );

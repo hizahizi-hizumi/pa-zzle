@@ -3,8 +3,8 @@ import {
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
 import { RecordedWaterSortResult } from "@/game-catalog/water-sort/RecordedWaterSortResult";
+import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/water-sort/assets/pictogram.svg?raw";
-import { parseWaterSortDifficulty } from "@/games/water-sort/difficulty";
 import {
   isWaterSortPlayRecord,
   restoreWaterSortRecordedResult,
@@ -23,7 +23,7 @@ export const waterSortCatalogEntry = {
   recordProblemPlayTarget(record) {
     return isWaterSortPlayRecord(record)
       ? resolveRecordProblemPlayTarget(
-          parseWaterSortDifficulty(record.payload.difficulty),
+          parseDifficultyLevel(record.payload.difficulty),
           record.payload.problemIdentity,
           canSelectWaterSortProblemById,
         )
@@ -31,7 +31,7 @@ export const waterSortCatalogEntry = {
   },
   attemptProblemPlayTarget({ start }) {
     return resolveRecordProblemPlayTarget(
-      parseWaterSortDifficulty(start.difficulty),
+      parseDifficultyLevel(start.difficulty),
       start.problemIdentity,
       canSelectWaterSortProblemById,
     );

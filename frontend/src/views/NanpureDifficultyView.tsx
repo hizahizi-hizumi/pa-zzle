@@ -1,6 +1,6 @@
 import { DifficultySelectionHeading } from "@/components/DifficultySelectionHeading";
 import { HomeBackLink } from "@/components/HomeBackLink";
-import { nanpureDifficulties } from "@/games/nanpure/difficulty";
+import { difficultyLevels } from "@/games/difficulty";
 import { NanpureHowToPlayDialog } from "@/games/nanpure/ui/NanpureHowToPlayDialog";
 import { NanpureDifficultyOption } from "@/views/NanpureDifficultyView/NanpureDifficultyOption";
 
@@ -18,7 +18,7 @@ export function NanpureDifficultyView() {
       </div>
 
       <div className="grid gap-2 sm:gap-4 lg:grid-cols-5">
-        {nanpureDifficulties.map((difficulty) => (
+        {difficultyLevels.map((difficulty) => (
           <NanpureDifficultyOption
             key={difficulty.id}
             difficulty={difficulty.id}

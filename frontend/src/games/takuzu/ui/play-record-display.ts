@@ -1,7 +1,4 @@
-import {
-  getTakuzuDifficultyLabel,
-  parseTakuzuDifficulty,
-} from "@/games/takuzu/difficulty";
+import { getDifficultyLabel, parseDifficultyLevel } from "@/games/difficulty";
 import { takuzuPlayRecordDefinition } from "@/games/takuzu/play-record";
 import { formatElapsedTime } from "@/lib/format-elapsed-time";
 import { formatElapsedTimeDelta } from "@/lib/format-performance-delta";
@@ -10,8 +7,8 @@ import { createPlayRecordDisplay } from "@/records/ui/play-record-display";
 export const takuzuPlayRecordDisplay = createPlayRecordDisplay({
   definition: takuzuPlayRecordDefinition,
   getComparisonLabel(comparisonKey: string) {
-    const difficulty = parseTakuzuDifficulty(comparisonKey);
-    return difficulty ? getTakuzuDifficultyLabel(difficulty) : null;
+    const difficulty = parseDifficultyLevel(comparisonKey);
+    return difficulty ? getDifficultyLabel(difficulty) : null;
   },
   metrics: {
     "play-score": {

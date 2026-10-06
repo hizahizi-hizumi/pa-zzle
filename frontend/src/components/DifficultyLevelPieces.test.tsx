@@ -1,9 +1,7 @@
 import { cleanup, render } from "@testing-library/react";
 
-import {
-  type DifficultyLevel,
-  DifficultyLevelPieces,
-} from "@/components/DifficultyLevelPieces";
+import { DifficultyLevelPieces } from "@/components/DifficultyLevelPieces";
+import type { DifficultyLevel } from "@/games/difficulty";
 
 afterEach(cleanup);
 

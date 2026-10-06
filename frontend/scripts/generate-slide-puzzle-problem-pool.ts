@@ -1,8 +1,8 @@
 import { writeFileSync } from "node:fs";
+import { difficultyLevels } from "@/games/difficulty";
 import {
   assessSlidePuzzleDifficulty,
   type SlidePuzzleDifficulty,
-  slidePuzzleDifficulties,
   slidePuzzleDifficultyCriteria,
 } from "@/games/slide-puzzle/difficulty";
 import { analyzeSlidePuzzleDifficulty } from "@/games/slide-puzzle/problem/difficulty-analysis";
@@ -52,13 +52,13 @@ function levelsUsing(
   boardSize: SlidePuzzleBoardSize,
   scrambleLength: number,
 ): SlidePuzzleDifficulty[] {
-  return slidePuzzleDifficulties
+  return difficultyLevels
     .map(({ id }) => id)
     .filter(
       (id) =>
         slidePuzzleDifficultyCriteria[id].boardSize === boardSize &&
-        slidePuzzleDifficultyCriteria[id].scrambleLengths.includes(
-          scrambleLength,
+        slidePuzzleDifficultyCriteria[id].scrambleLengths.some(
+          (length) => length === scrambleLength,
         ),
     );
 }
@@ -66,7 +66,7 @@ function levelsUsing(
 function scrambleLengthsFor(boardSize: SlidePuzzleBoardSize): number[] {
   return [
     ...new Set(
-      slidePuzzleDifficulties.flatMap(({ id }) =>
+      difficultyLevels.flatMap(({ id }) =>
         slidePuzzleDifficultyCriteria[id].boardSize === boardSize
           ? slidePuzzleDifficultyCriteria[id].scrambleLengths
           : [],
@@ -135,7 +135,9 @@ function runMain() {
           unsupportedCount += 1;
           continue;
         }
-        const level = assessSlidePuzzleDifficulty(analysis);
+        const assessment = assessSlidePuzzleDifficulty(analysis);
+        const level =
+          assessment.status === "classified" ? assessment.difficulty : null;
         const count = level === null ? undefined : counts.get(level);
         if (level === null || count === undefined || count >= needOf(level)) {
           continue;
@@ -165,7 +167,7 @@ function runMain() {
 
   const usedBoards = new Set<string>();
   const levels = Object.fromEntries(
-    slidePuzzleDifficulties.map(({ id }) => {
+    difficultyLevels.map(({ id }) => {
       const perProfile = slidePuzzleDifficultyCriteria[id].scrambleLengths.map(
         (scrambleLength) =>
           candidatesByProfile.get(`${id}:${scrambleLength}`) ?? [],
@@ -195,12 +197,12 @@ function runMain() {
     }),
   ) as Record<SlidePuzzleDifficulty, Candidate[]>;
 
-  const lines = slidePuzzleDifficulties.map(
+  const lines = difficultyLevels.map(
     ({ id }, levelIndex) =>
       `    ${JSON.stringify(id)}: [\n${levels[id]
         .map(({ entry }) => `      ${JSON.stringify(entry)}`)
         .join(",\n")}\n    ]${
-        levelIndex < slidePuzzleDifficulties.length - 1 ? "," : ""
+        levelIndex < difficultyLevels.length - 1 ? "," : ""
       }`,
   );
   writeFileSync(
@@ -208,7 +210,7 @@ function runMain() {
     `{\n  "generatorVersion": ${JSON.stringify(SLIDE_PUZZLE_GENERATOR_VERSION)},\n  "levels": {\n${lines.join("\n")}\n  }\n}\n`,
   );
 
-  for (const { id } of slidePuzzleDifficulties) {
+  for (const { id } of difficultyLevels) {
     const detours = levels[id].map(({ detourMoveCount }) => detourMoveCount);
     const optimalMoveCounts = levels[id].map(({ entry }) => entry[3]);
     console.error(

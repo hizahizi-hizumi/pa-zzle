@@ -1,9 +1,9 @@
 import { writeFileSync } from "node:fs";
+import { difficultyLevels } from "@/games/difficulty";
 import { createProblemSeededRandom } from "@/games/problem-seed";
 import {
   assessWaterSortDifficulty,
   type WaterSortDifficulty,
-  waterSortDifficulties,
   waterSortDifficultyCriteria,
 } from "@/games/water-sort/difficulty";
 import {
@@ -86,7 +86,7 @@ function readOption(name: string, fallback: number): number {
 
 function listProfiles(): Profile[] {
   const profiles = new Map<string, Profile>();
-  for (const { id } of waterSortDifficulties) {
+  for (const { id } of difficultyLevels) {
     for (const profile of waterSortDifficultyCriteria[id].generationProfiles) {
       profiles.set(profileKey(profile), profile);
     }
@@ -96,10 +96,11 @@ function listProfiles(): Profile[] {
 
 function levelOf(entry: WaterSortProblemPoolEntry): WaterSortDifficulty | null {
   const [, colorCount, emptyBottleCount, , , stuckRate] = entry;
-  return assessWaterSortDifficulty({
+  const assessment = assessWaterSortDifficulty({
     conditions: { colorCount, emptyBottleCount },
     stuckRate,
   });
+  return assessment.status === "classified" ? assessment.difficulty : null;
 }
 
 async function runBatch(
@@ -149,7 +150,7 @@ async function runMain() {
       perLevel / waterSortDifficultyCriteria[level].generationProfiles.length,
     );
   const levelsOf = (profile: Profile) =>
-    waterSortDifficulties
+    difficultyLevels
       .map(({ id }) => id)
       .filter((id) =>
         waterSortDifficultyCriteria[id].generationProfiles.some(
@@ -225,7 +226,7 @@ async function runMain() {
 
   const levels: Record<WaterSortDifficulty, WaterSortProblemPoolEntry[]> =
     Object.fromEntries(
-      waterSortDifficulties.map(({ id }) => {
+      difficultyLevels.map(({ id }) => {
         const perProfile = waterSortDifficultyCriteria[
           id
         ].generationProfiles.map((profile) =>
@@ -251,7 +252,7 @@ async function runMain() {
       }),
     ) as Record<WaterSortDifficulty, WaterSortProblemPoolEntry[]>;
 
-  const lines = waterSortDifficulties.map(
+  const lines = difficultyLevels.map(
     ({ id }, levelIndex) =>
       `    ${JSON.stringify(id)}: [\n${levels[id]
         .map(
@@ -260,14 +261,14 @@ async function runMain() {
         )
         .join(
           ",\n",
-        )}\n    ]${levelIndex < waterSortDifficulties.length - 1 ? "," : ""}`,
+        )}\n    ]${levelIndex < difficultyLevels.length - 1 ? "," : ""}`,
   );
   writeFileSync(
     outputPath,
     `{\n  "generatorVersion": ${JSON.stringify(WATER_SORT_GENERATOR_VERSION)},\n  "levels": {\n${lines.join("\n")}\n  }\n}\n`,
   );
 
-  for (const { id } of waterSortDifficulties) {
+  for (const { id } of difficultyLevels) {
     const counts = new Map<string, number>();
     for (const [, colorCount, emptyBottleCount] of levels[id]) {
       const key = `${colorCount}色/空${emptyBottleCount}`;
