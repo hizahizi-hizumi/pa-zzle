@@ -1,12 +1,8 @@
-import {
-  MOTION_EASING,
-  playRejectionShake,
-  type RejectionShakeTiming,
-} from "@/lib/motion";
+import { playRejectionShake, type RejectionShakeTiming } from "@/lib/motion";
 
 const givenCellShakeTiming: RejectionShakeTiming = {
   durationMs: 220,
-  easing: MOTION_EASING.enter,
+  easing: "ease-out",
 };
 
 /** マスの幅に対する揺れ幅。1往復目を大きく、2往復目で収める。 */

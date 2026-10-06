@@ -10,6 +10,8 @@ type MinesweeperClearAnimationProps = {
 
 const CLEAR_PULSE_MS = 700;
 const CLEAR_HOLD_MS = 200;
+/** 動かせない環境でも、脈打つ演出と同じ間を置いてから結果へ進める。 */
+const CLEAR_UNANIMATED_HOLD_MS = CLEAR_PULSE_MS + CLEAR_HOLD_MS;
 
 const clearPulseKeyframes: Keyframe[] = [
   { transform: "scale(1)", filter: "saturate(1)" },
@@ -40,7 +42,7 @@ export function MinesweeperClearAnimation({
       },
       completion: { type: "after-animations", holdMs: CLEAR_HOLD_MS },
       reducedMotionHoldMs: 0,
-      unanimatedHoldMs: 0,
+      unanimatedHoldMs: CLEAR_UNANIMATED_HOLD_MS,
       onFinished: onComplete,
     });
   }, [active, onComplete]);

@@ -32,7 +32,7 @@ const CLEAR_HOLD_MS = 240;
 
 const invalidTileShakeTiming: RejectionShakeTiming = {
   durationMs: 220,
-  easing: MOTION_EASING.enter,
+  easing: "ease-out",
 };
 
 const invalidTileShakeKeyframes: Keyframe[] = [
