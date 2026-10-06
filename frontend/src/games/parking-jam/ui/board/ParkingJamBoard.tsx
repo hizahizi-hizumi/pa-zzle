@@ -132,7 +132,10 @@ export function ParkingJamBoard({
     return playAnimations({
       // 出ていく動きは CSS アニメーションなので、要素に付いた Animation を待つ。
       animate: () => exitingCarRef.current?.getAnimations?.() ?? [],
-      holdMs: 0,
+      // 出ていき終えたらすぐ結果へ進める。動きを減らす設定の CSS は 1ms で出ていき終える。
+      completion: { type: "after-animations", holdMs: 0 },
+      reducedMotionHoldMs: 0,
+      unanimatedHoldMs: 0,
       onFinished: onClearAnimationComplete,
     });
   }, [clearing, onClearAnimationComplete]);

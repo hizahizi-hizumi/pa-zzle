@@ -5,7 +5,11 @@ import { PourAnimationLayer } from "@/games/water-sort/ui/board/pour/PourAnimati
 import { usePourAnimations } from "@/games/water-sort/ui/board/pour/use-pour-animations";
 import { getWaterColorView } from "@/games/water-sort/ui/board/water-bottle/get-water-color-view";
 import { WaterBottle } from "@/games/water-sort/ui/board/water-bottle/WaterBottle";
-import { playRejectionShake } from "@/lib/motion";
+import {
+  MOTION_EASING,
+  playRejectionShake,
+  type RejectionShakeTiming,
+} from "@/lib/motion";
 
 type WaterSortBoardProps = {
   state: WaterSortState;
@@ -24,6 +28,11 @@ const invalidBottleShakeKeyframes: Keyframe[] = [
   { transform: "translateX(-2px)" },
   { transform: "translateX(0)" },
 ];
+
+const invalidBottleShakeTiming: RejectionShakeTiming = {
+  durationMs: 220,
+  easing: MOTION_EASING.enter,
+};
 
 export function WaterSortBoard({
   state,
@@ -48,6 +57,7 @@ export function WaterSortBoard({
       playRejectionShake(
         bottleRefs.current[operation.bottleIndex],
         invalidBottleShakeKeyframes,
+        invalidBottleShakeTiming,
       );
     }
   }, [operation]);

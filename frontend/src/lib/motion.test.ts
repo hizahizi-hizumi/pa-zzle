@@ -33,6 +33,8 @@ function createFakeAnimation(): FakeAnimation {
     cancel: vi.fn(() => rejectFinished(new DOMException("", "AbortError"))),
     finish: () => resolveFinished(animation as unknown as Animation),
   };
+  // ブラウザと同じく、取り消しで拒否される finished を処理済みとして扱う。
+  animation.finished.catch(() => {});
   return animation as unknown as FakeAnimation;
 }
 
@@ -147,6 +149,9 @@ describe("waitForAnimations", () => {
 
 describe("playAnimations", () => {
   const holdMs = 240;
+  const durationMs = 1_760;
+  const reducedMotionHoldMs = 700;
+  const unanimatedHoldMs = 900;
   let animation: FakeAnimation;
   let animate: ReturnType<typeof vi.fn<() => readonly Animation[]>>;
   let onFinished: ReturnType<typeof vi.fn<() => void>>;
@@ -163,12 +168,55 @@ describe("playAnimations", () => {
       animate = vi.fn(() => [animation]);
     });
 
-    test("演出せずにすぐ通知すること", () => {
-      playAnimations({ animate, holdMs, onFinished });
+    test("演出せずに、ゲームが渡した時間だけ止まった姿を見せてから一度だけ通知すること", async () => {
+      playAnimations({
+        animate,
+        completion: { type: "after-animations", holdMs },
+        reducedMotionHoldMs,
+        unanimatedHoldMs,
+        onFinished,
+      });
+      await vi.advanceTimersByTimeAsync(reducedMotionHoldMs - 1);
+      const calledBeforeHold = onFinished.mock.calls.length;
+      await vi.advanceTimersByTimeAsync(1);
+      const calledAfterHold = onFinished.mock.calls.length;
 
-      expect([animate.mock.calls.length, onFinished.mock.calls.length]).toEqual(
-        [0, 1],
-      );
+      expect([
+        animate.mock.calls.length,
+        calledBeforeHold,
+        calledAfterHold,
+      ]).toEqual([0, 0, 1]);
+    });
+
+    test("見せておく時間が0ならすぐ通知すること", () => {
+      playAnimations({
+        animate,
+        completion: { type: "after-animations", holdMs },
+        reducedMotionHoldMs: 0,
+        unanimatedHoldMs,
+        onFinished,
+      });
+
+      expect(onFinished).toHaveBeenCalledOnce();
+    });
+
+    describe("取り消した場合", () => {
+      beforeEach(() => {
+        const cancel = playAnimations({
+          animate,
+          completion: { type: "after-animations", holdMs },
+          reducedMotionHoldMs,
+          unanimatedHoldMs,
+          onFinished,
+        });
+        cancel();
+      });
+
+      test("見せておく時間が経っても通知しないこと", async () => {
+        await vi.advanceTimersByTimeAsync(reducedMotionHoldMs);
+
+        expect(onFinished).not.toHaveBeenCalled();
+      });
     });
   });
 
@@ -178,21 +226,49 @@ describe("playAnimations", () => {
       animate = vi.fn(() => []);
     });
 
-    test("すぐ通知すること", () => {
-      playAnimations({ animate, holdMs, onFinished });
+    test("ゲームが渡した時間が経ってから一度だけ通知すること", async () => {
+      playAnimations({
+        animate,
+        completion: { type: "after-animations", holdMs },
+        reducedMotionHoldMs,
+        unanimatedHoldMs,
+        onFinished,
+      });
+      await vi.advanceTimersByTimeAsync(unanimatedHoldMs - 1);
+      const calledBeforeHold = onFinished.mock.calls.length;
+      await vi.advanceTimersByTimeAsync(1);
+      const calledAfterHold = onFinished.mock.calls.length;
+
+      expect([calledBeforeHold, calledAfterHold]).toEqual([0, 1]);
+    });
+
+    test("待つ時間が0ならすぐ通知すること", () => {
+      playAnimations({
+        animate,
+        completion: { type: "after-animations", holdMs },
+        reducedMotionHoldMs,
+        unanimatedHoldMs: 0,
+        onFinished,
+      });
 
       expect(onFinished).toHaveBeenCalledOnce();
     });
   });
 
-  describe("演出できる場合", () => {
+  describe("演出が終わってから完了する場合", () => {
     beforeEach(() => {
       stubReducedMotion(false);
       animate = vi.fn(() => [animation]);
     });
 
     test("演出が終わって見せておく時間が経ってから一度だけ通知すること", async () => {
-      playAnimations({ animate, holdMs, onFinished });
+      playAnimations({
+        animate,
+        completion: { type: "after-animations", holdMs },
+        reducedMotionHoldMs,
+        unanimatedHoldMs,
+        onFinished,
+      });
       animation.finish();
       await vi.advanceTimersByTimeAsync(holdMs - 1);
       const calledBeforeHold = onFinished.mock.calls.length;
@@ -202,9 +278,28 @@ describe("playAnimations", () => {
       expect([calledBeforeHold, calledAfterHold]).toEqual([0, 1]);
     });
 
+    test("演出が終わるまでは通知しないこと", async () => {
+      playAnimations({
+        animate,
+        completion: { type: "after-animations", holdMs },
+        reducedMotionHoldMs,
+        unanimatedHoldMs,
+        onFinished,
+      });
+      await vi.advanceTimersByTimeAsync(durationMs);
+
+      expect(onFinished).not.toHaveBeenCalled();
+    });
+
     describe("取り消した場合", () => {
       beforeEach(async () => {
-        const cancel = playAnimations({ animate, holdMs, onFinished });
+        const cancel = playAnimations({
+          animate,
+          completion: { type: "after-animations", holdMs },
+          reducedMotionHoldMs,
+          unanimatedHoldMs,
+          onFinished,
+        });
         animation.finish();
         await vi.advanceTimersByTimeAsync(0);
         cancel();
@@ -212,6 +307,55 @@ describe("playAnimations", () => {
 
       test("見せておく時間が経っても通知しないこと", async () => {
         await vi.advanceTimersByTimeAsync(holdMs);
+
+        expect(onFinished).not.toHaveBeenCalled();
+      });
+
+      test("演出を止めること", () => {
+        const cancelled = animation.cancel;
+
+        expect(cancelled).toHaveBeenCalledOnce();
+      });
+    });
+  });
+
+  describe("始めてから決まった時間で完了する場合", () => {
+    beforeEach(() => {
+      stubReducedMotion(false);
+      animate = vi.fn(() => [animation]);
+    });
+
+    test("演出の終わりによらず、ゲームが渡した時間が経ってから一度だけ通知すること", async () => {
+      playAnimations({
+        animate,
+        completion: { type: "after-duration", durationMs },
+        reducedMotionHoldMs,
+        unanimatedHoldMs,
+        onFinished,
+      });
+      animation.finish();
+      await vi.advanceTimersByTimeAsync(durationMs - 1);
+      const calledBeforeDuration = onFinished.mock.calls.length;
+      await vi.advanceTimersByTimeAsync(1);
+      const calledAfterDuration = onFinished.mock.calls.length;
+
+      expect([calledBeforeDuration, calledAfterDuration]).toEqual([0, 1]);
+    });
+
+    describe("取り消した場合", () => {
+      beforeEach(() => {
+        const cancel = playAnimations({
+          animate,
+          completion: { type: "after-duration", durationMs },
+          reducedMotionHoldMs,
+          unanimatedHoldMs,
+          onFinished,
+        });
+        cancel();
+      });
+
+      test("時間が経っても通知しないこと", async () => {
+        await vi.advanceTimersByTimeAsync(durationMs);
 
         expect(onFinished).not.toHaveBeenCalled();
       });
@@ -231,6 +375,7 @@ describe("playRejectionShake", () => {
     { transform: "translateX(4px)" },
     { transform: "translateX(0)" },
   ];
+  const timing = { durationMs: 220, easing: "ease-out" };
   let element: HTMLElement;
   let animate: ReturnType<typeof vi.fn>;
 
@@ -246,7 +391,7 @@ describe("playRejectionShake", () => {
     });
 
     test("揺らさないこと", () => {
-      playRejectionShake(element, keyframes);
+      playRejectionShake(element, keyframes, timing);
 
       expect(animate).not.toHaveBeenCalled();
     });
@@ -257,13 +402,13 @@ describe("playRejectionShake", () => {
       stubReducedMotion(false);
     });
 
-    test("ゲームが決めた揺れ方で揺らすこと", () => {
-      playRejectionShake(element, keyframes);
+    test("ゲームが渡した揺れ方・長さ・緩急で揺らすこと", () => {
+      playRejectionShake(element, keyframes, timing);
 
-      expect(animate).toHaveBeenCalledWith(
-        keyframes,
-        expect.objectContaining({ easing: MOTION_EASING.enter }),
-      );
+      expect(animate).toHaveBeenCalledWith(keyframes, {
+        duration: 220,
+        easing: "ease-out",
+      });
     });
   });
 });

@@ -12,6 +12,7 @@ import {
   MOTION_EASING,
   playAnimations,
   playRejectionShake,
+  type RejectionShakeTiming,
 } from "@/lib/motion";
 
 type SlidePuzzleBoardProps = {
@@ -28,6 +29,11 @@ const SLIDE_DURATION_MS = MOTION_DURATION_MS.normal;
 const CLEAR_WAVE_STAGGER_MS = 32;
 const CLEAR_WAVE_DURATION_MS = 360;
 const CLEAR_HOLD_MS = 240;
+
+const invalidTileShakeTiming: RejectionShakeTiming = {
+  durationMs: 220,
+  easing: MOTION_EASING.enter,
+};
 
 const invalidTileShakeKeyframes: Keyframe[] = [
   { transform: "translateX(0)" },
@@ -72,6 +78,7 @@ export function SlidePuzzleBoard({
     playRejectionShake(
       tile === undefined ? undefined : tileFaceRefs.current.get(tile),
       invalidTileShakeKeyframes,
+      invalidTileShakeTiming,
     );
   }, [board, operation]);
 
@@ -85,7 +92,9 @@ export function SlidePuzzleBoard({
     );
     return playAnimations({
       animate: () => animateClearWave(facesInTileOrder),
-      holdMs: CLEAR_HOLD_MS,
+      completion: { type: "after-animations", holdMs: CLEAR_HOLD_MS },
+      reducedMotionHoldMs: 0,
+      unanimatedHoldMs: 0,
       onFinished: onClearAnimationComplete,
     });
   }, [clearing, onClearAnimationComplete, tileCount]);

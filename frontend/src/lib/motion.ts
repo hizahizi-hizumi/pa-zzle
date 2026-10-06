@@ -16,9 +16,6 @@ export const MOTION_EASING = {
   celebrate: "cubic-bezier(0.2, 0.8, 0.2, 1)",
 } as const;
 
-/** 操作が通らなかったことを返す揺れの長さ。 */
-const REJECTION_SHAKE_MS = 220;
-
 export function prefersReducedMotion(): boolean {
   return (
     window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
@@ -51,63 +48,99 @@ export function waitForAnimations(
   };
 }
 
+/**
+ * 演出の完了の決め方。
+ * - `after-animations`: すべての Animation が終わってから `holdMs` 経って完了する。
+ * - `after-duration`: 演出を始めてから `durationMs` 経って完了する。Animation の終わりは待たない。
+ */
+export type AnimationCompletion =
+  | { type: "after-animations"; holdMs: number }
+  | { type: "after-duration"; durationMs: number };
+
 type PlayAnimationsOptions = {
   /** 演出を始め、終わりを待つ Animation を返す。動かせない環境では空の配列を返す。 */
   animate: () => readonly Animation[];
-  /** 演出を終えてから `onFinished` を呼ぶまで、止まった姿を見せておく時間。 */
-  holdMs: number;
+  /** 演出したときの完了の決め方。 */
+  completion: AnimationCompletion;
+  /** 動きを減らす設定で、演出せずに止まった姿を見せてから完了するまでの時間。`0` ならすぐ完了する。 */
+  reducedMotionHoldMs: number;
+  /** 動かせる要素が無い環境で、完了するまでの時間。`0` ならすぐ完了する。 */
+  unanimatedHoldMs: number;
   onFinished: () => void;
 };
 
+/** `delayMs` 経ってから一度だけ `onFinished` を呼ぶ。`0` ならすぐ呼ぶ。戻り値は呼ぶのをやめる関数。 */
+function finishAfter(delayMs: number, onFinished: () => void): () => void {
+  if (delayMs <= 0) {
+    onFinished();
+    return function cancelNothing() {};
+  }
+
+  const timer = window.setTimeout(onFinished, delayMs);
+  return function cancelTimer() {
+    window.clearTimeout(timer);
+  };
+}
+
 /**
- * 演出を再生し、すべての Animation が終わって `holdMs` 経ってから一度だけ `onFinished` を呼ぶ。
- * 動きを減らす設定と、動かせる要素が無い環境では、演出せずにすぐ呼ぶ。
+ * 演出を再生し、`completion` の決め方で完了したら一度だけ `onFinished` を呼ぶ。
+ * 動きを減らす設定では演出せず `reducedMotionHoldMs`、動かせる要素が無い環境では `unanimatedHoldMs` 経ってから呼ぶ。
+ * 完了までの時間はゲームが渡し、この関数は値を決めない。
  * 戻り値は演出を取り消す関数で、取り消した後は呼ばない。
  */
 export function playAnimations({
   animate,
-  holdMs,
+  completion,
+  reducedMotionHoldMs,
+  unanimatedHoldMs,
   onFinished,
 }: PlayAnimationsOptions): () => void {
   if (prefersReducedMotion()) {
-    onFinished();
-    return function cancelNothing() {};
+    return finishAfter(reducedMotionHoldMs, onFinished);
   }
 
   const animations = animate();
   if (animations.length === 0) {
-    onFinished();
-    return function cancelNothing() {};
+    return finishAfter(unanimatedHoldMs, onFinished);
   }
 
-  let holdTimer: number | undefined;
-  const stopWaiting = waitForAnimations(animations, function hold() {
-    holdTimer = window.setTimeout(onFinished, holdMs);
-  });
+  let cancelFinish: () => void = function cancelNothing() {};
+  let stopWaiting: () => void = function stopNothing() {};
+  if (completion.type === "after-duration") {
+    cancelFinish = finishAfter(completion.durationMs, onFinished);
+  } else {
+    stopWaiting = waitForAnimations(animations, function hold() {
+      cancelFinish = finishAfter(completion.holdMs, onFinished);
+    });
+  }
 
   return function cancel() {
     stopWaiting();
-    window.clearTimeout(holdTimer);
+    cancelFinish();
     for (const animation of animations) {
       animation.cancel();
     }
   };
 }
 
+/** 操作が通らなかったことを返す揺れの長さと緩急。 */
+export type RejectionShakeTiming = {
+  durationMs: number;
+  easing: string;
+};
+
 /**
- * 操作が通らなかったことを、対象の小さな揺れで返す。揺れ方は `keyframes` でゲームが決める。
+ * 操作が通らなかったことを、対象の小さな揺れで返す。揺れ方 `keyframes` と長さ・緩急 `timing` はゲームが渡す。
  * 動きを減らす設定と、動かせない環境では揺らさない。
  */
 export function playRejectionShake(
   element: Element | null | undefined,
   keyframes: Keyframe[],
+  { durationMs, easing }: RejectionShakeTiming,
 ): void {
   if (typeof element?.animate !== "function" || prefersReducedMotion()) {
     return;
   }
 
-  element.animate(keyframes, {
-    duration: REJECTION_SHAKE_MS,
-    easing: MOTION_EASING.enter,
-  });
+  element.animate(keyframes, { duration: durationMs, easing });
 }

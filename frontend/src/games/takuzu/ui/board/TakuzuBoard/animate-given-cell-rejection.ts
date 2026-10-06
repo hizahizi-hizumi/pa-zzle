@@ -1,4 +1,13 @@
-import { playRejectionShake } from "@/lib/motion";
+import {
+  MOTION_EASING,
+  playRejectionShake,
+  type RejectionShakeTiming,
+} from "@/lib/motion";
+
+const givenCellShakeTiming: RejectionShakeTiming = {
+  durationMs: 220,
+  easing: MOTION_EASING.enter,
+};
 
 /** マスの幅に対する揺れ幅。1往復目を大きく、2往復目で収める。 */
 const givenCellShakeKeyframes: Keyframe[] = [
@@ -16,5 +25,6 @@ export function animateGivenCellRejection(
   playRejectionShake(
     element?.querySelector<HTMLElement>("[data-takuzu-tile]"),
     givenCellShakeKeyframes,
+    givenCellShakeTiming,
   );
 }

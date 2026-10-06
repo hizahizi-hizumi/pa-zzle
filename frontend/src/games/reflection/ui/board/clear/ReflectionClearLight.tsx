@@ -74,7 +74,9 @@ export function ReflectionClearLight({
           ].filter((animation) => animation !== undefined);
         });
       },
-      holdMs: CLEAR_LIGHT_HOLD_MS,
+      completion: { type: "after-animations", holdMs: CLEAR_LIGHT_HOLD_MS },
+      reducedMotionHoldMs: 0,
+      unanimatedHoldMs: 0,
       onFinished: onComplete,
     });
   }, [active, onComplete]);

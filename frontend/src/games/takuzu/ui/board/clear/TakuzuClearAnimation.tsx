@@ -54,7 +54,9 @@ export function TakuzuClearAnimation({
           );
         });
       },
-      holdMs: CLEAR_HOLD_MS,
+      completion: { type: "after-animations", holdMs: CLEAR_HOLD_MS },
+      reducedMotionHoldMs: 0,
+      unanimatedHoldMs: 0,
       onFinished: onComplete,
     });
   }, [active, onComplete]);
