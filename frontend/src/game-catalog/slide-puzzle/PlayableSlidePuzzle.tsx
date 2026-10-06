@@ -112,11 +112,12 @@ export function PlayableSlidePuzzle({
         }
         onSlideTile={play.slideTile}
         onSlideByKeyboard={play.slideByKeyboard}
+        canRestart={play.canRestart}
         onRestart={play.restart}
         onReplay={play.replay}
         onStartNewProblem={play.startNewProblem}
         onOpenRecords={() => navigate("/records")}
-        onClearingComplete={play.completeClearing}
+        onClearingComplete={play.completeClearAnimation}
         onChangeDifficulty={() => navigate("/puzzles/slide-puzzle")}
         onBackToHome={() => navigate("/")}
         onOpenDiagnostics={

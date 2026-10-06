@@ -1,3 +1,4 @@
+import { type GameSession, getClearedSessionElapsedMs } from "@/games/session";
 import {
   assertWaterSortProblem,
   type WaterSortProblem,
@@ -12,15 +13,8 @@ import {
   type WaterSortState,
 } from "@/games/water-sort/puzzle/state";
 
-export type WaterSortSessionStatus = "playing" | "cleared";
-
-export type WaterSortSession = {
-  status: WaterSortSessionStatus;
-  problem: WaterSortProblem;
-  state: WaterSortState;
+export type WaterSortSession = GameSession<WaterSortProblem, WaterSortState> & {
   history: readonly WaterSortState[];
-  startedAt: number;
-  finishedAt: number | null;
   moveCount: number;
   undoCount: number;
   restartCount: number;
@@ -43,7 +37,7 @@ export function createWaterSortSession(
   return {
     status: "playing",
     problem,
-    state: problem.initialState,
+    puzzleState: problem.initialState,
     history: [],
     startedAt,
     finishedAt: null,
@@ -57,30 +51,31 @@ export function listWaterSortSessionLegalMoves(
   session: WaterSortSession,
 ): WaterSortMove[] {
   return session.status === "playing"
-    ? listWaterSortLegalMoves(session.state)
+    ? listWaterSortLegalMoves(session.puzzleState)
     : [];
 }
 
+/** 注ぐ。注げない組み合わせなら何もしない。 */
 export function applyWaterSortSessionMove(
   session: WaterSortSession,
   move: WaterSortMove,
   movedAt: number,
-): WaterSortSession | null {
+): WaterSortSession {
   if (session.status !== "playing") {
-    return null;
+    return session;
   }
 
-  const nextState = applyWaterSortMove(session.state, move);
-  if (!nextState) {
-    return null;
+  const puzzleState = applyWaterSortMove(session.puzzleState, move);
+  if (!puzzleState) {
+    return session;
   }
 
-  const cleared = isWaterSortCleared(nextState);
+  const cleared = isWaterSortCleared(puzzleState);
   return {
     ...session,
     status: cleared ? "cleared" : "playing",
-    state: nextState,
-    history: [...session.history, session.state],
+    puzzleState,
+    history: [...session.history, session.puzzleState],
     finishedAt: cleared ? movedAt : null,
     moveCount: session.moveCount + 1,
   };
@@ -100,22 +95,23 @@ export function undoWaterSortSession(
 
   return {
     ...session,
-    state: previousState,
+    puzzleState: previousState,
     history: session.history.slice(0, -1),
     undoCount: session.undoCount + 1,
   };
 }
 
+/** 同じプレイのまま初期状態へ戻す（盤面を戻す）。経過時間と記録は引き継ぐ。 */
 export function restartWaterSortSession(
   session: WaterSortSession,
 ): WaterSortSession {
-  if (session.status !== "playing") {
+  if (!canRestartWaterSortSession(session)) {
     return session;
   }
 
   return {
     ...session,
-    state: session.problem.initialState,
+    puzzleState: session.problem.initialState,
     history: [],
     restartCount: session.restartCount + 1,
   };
@@ -125,23 +121,31 @@ export function canUndoWaterSortSession(session: WaterSortSession): boolean {
   return session.status === "playing" && session.history.length > 0;
 }
 
-export function getWaterSortSessionElapsedMs(
-  session: WaterSortSession,
-  now: number,
-): number {
-  return Math.max(0, (session.finishedAt ?? now) - session.startedAt);
+/** 瓶の中身が初期状態と違うプレイ中だけ、盤面を戻せる。 */
+export function canRestartWaterSortSession(session: WaterSortSession): boolean {
+  const { initialState } = session.problem;
+  return (
+    session.status === "playing" &&
+    session.puzzleState.some((bottle, bottleIndex) => {
+      const initialBottle = initialState[bottleIndex] ?? [];
+      return (
+        bottle.length !== initialBottle.length ||
+        bottle.some((color, layerIndex) => color !== initialBottle[layerIndex])
+      );
+    })
+  );
 }
 
 export function getWaterSortSessionResult(
   session: WaterSortSession,
-  now: number,
 ): WaterSortSessionResult | null {
-  if (session.status !== "cleared") {
+  const elapsedMs = getClearedSessionElapsedMs(session);
+  if (elapsedMs === null) {
     return null;
   }
 
   return {
-    elapsedMs: getWaterSortSessionElapsedMs(session, now),
+    elapsedMs,
     moveCount: session.moveCount,
     completionMoveCount: session.history.length,
     undoCount: session.undoCount,

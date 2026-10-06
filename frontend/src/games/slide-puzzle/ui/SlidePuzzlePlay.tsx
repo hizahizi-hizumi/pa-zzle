@@ -2,10 +2,10 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { PlayHeader } from "@/components/PlayHeader";
+import type { GameProgress } from "@/games/play";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import type {
   SlidePuzzleOperation,
-  SlidePuzzleProgress,
   SlidePuzzleResult,
 } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import type { SlidePuzzleDirection } from "@/games/slide-puzzle/puzzle/rules";
@@ -18,7 +18,7 @@ import { formatElapsedTime } from "@/lib/format-elapsed-time";
 type SlidePuzzlePlayProps = {
   difficulty: SlidePuzzleDifficulty;
   status: "playing" | "cleared";
-  progress: SlidePuzzleProgress;
+  progress: GameProgress;
   board: SlidePuzzleBoardState;
   elapsedMs: number;
   moveCount: number;
@@ -27,6 +27,7 @@ type SlidePuzzlePlayProps = {
   recordOutcomeNotice: ReactNode;
   onSlideTile: (tileIndex: number) => void;
   onSlideByKeyboard: (direction: SlidePuzzleDirection) => void;
+  canRestart: boolean;
   onRestart: () => void;
   onReplay: () => void;
   onStartNewProblem: () => void;
@@ -56,6 +57,7 @@ export function SlidePuzzlePlay({
   recordOutcomeNotice,
   onSlideTile,
   onSlideByKeyboard,
+  canRestart,
   onRestart,
   onReplay,
   onStartNewProblem,
@@ -130,6 +132,7 @@ export function SlidePuzzlePlay({
             { label: "時間", value: formatElapsedTime(elapsedMs) },
           ],
         ]}
+        canRestart={canRestart}
         onRestart={onRestart}
         onReplay={onReplay}
         onStartNewProblem={onStartNewProblem}

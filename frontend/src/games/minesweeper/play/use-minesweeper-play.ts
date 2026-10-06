@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
-import type {
-  MinesweeperIdentifiedProblem,
-  MinesweeperProblemIdentity,
+import {
+  countMinesweeperMinimumOpenCount,
+  type MinesweeperIdentifiedProblem,
+  type MinesweeperProblemIdentity,
 } from "@/games/minesweeper/problem/problem";
 import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
 import {
@@ -13,133 +14,104 @@ import {
 import {
   chordMinesweeperSessionCell,
   createMinesweeperSession,
-  getMinesweeperSessionElapsedMs,
   getMinesweeperSessionResult,
   getMinesweeperSessionVisibleCells,
   type MinesweeperSession,
   type MinesweeperSessionResult,
-  replayMinesweeperSession,
+  type MinesweeperVisibleCell,
   revealMinesweeperSessionCell,
   toggleMinesweeperSessionFlag,
 } from "@/games/minesweeper/session/session";
-import type { ProblemId } from "@/games/problem-id";
-import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import {
+  applyPlaySession,
+  completePlayClearAnimation,
+  type GamePlay,
+  type GameProgress,
+  getProgressAfterSessionChange,
+  startPlaySession,
+  useSessionElapsedMs,
+} from "@/games/play";
+import { createProblemId, type ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
-/** クリア後は最終操作の結果を見せる `clearing` を経て `result` へ進む。 */
-export type MinesweeperProgress = "playing" | "clearing" | "result";
-
-export type MinesweeperResult = MinesweeperSessionResult & {
+/** 評価に使う、問題の事実。 */
+export type MinesweeperResultProblemFacts = {
   mineCount: number;
-  speedRule: SpeedScoreRule;
-  timeDeltaMs: number;
-  score: MinesweeperPlayScore;
+  // 問題の初期開示状態から安全なマスをすべて開くのに要る、開く操作の最小回数。速さの基準時間に使う。
+  minimumOpenCount: number;
 };
+
+export type MinesweeperResult = MinesweeperSessionResult &
+  MinesweeperResultProblemFacts & {
+    speedRule: SpeedScoreRule;
+    timeDeltaMs: number;
+    score: MinesweeperPlayScore;
+  };
 
 /** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
 export function createMinesweeperResult(
   sessionResult: MinesweeperSessionResult,
-  mineCount: number,
+  problemFacts: MinesweeperResultProblemFacts,
 ): MinesweeperResult {
-  const speedRule = calculateMinesweeperSpeedScoreRule({
-    minimumOpenCount: sessionResult.minimumOpenCount,
-    mineCount,
-  });
+  const facts = { ...sessionResult, ...problemFacts };
+  const speedRule = calculateMinesweeperSpeedScoreRule(problemFacts);
   return {
-    ...sessionResult,
-    mineCount,
+    ...facts,
     speedRule,
     timeDeltaMs: calculateTimeDeltaMs(sessionResult.elapsedMs, speedRule),
-    score: calculateMinesweeperPlayScore({ ...sessionResult, mineCount }),
+    score: calculateMinesweeperPlayScore(facts),
   };
 }
 
-type MinesweeperPlayState = {
-  seed: ProblemSeed;
-  problemIdentity: MinesweeperProblemIdentity;
-  session: MinesweeperSession;
-  progress: MinesweeperProgress;
+export type MinesweeperPlay = GamePlay<
+  MinesweeperDifficulty,
+  MinesweeperProblemIdentity,
+  MinesweeperSession,
+  MinesweeperResult
+> & {
+  rows: number;
+  columns: number;
+  mineCount: number;
+  flagCount: number;
+  mistakeCount: number;
+  visibleCells: MinesweeperVisibleCell[];
+  revealCell: (cellIndex: number) => void;
+  toggleFlag: (cellIndex: number) => void;
+  chordCell: (cellIndex: number) => void;
 };
 
-function getProgressAfterOperation(
-  session: MinesweeperSession,
-  current: MinesweeperProgress,
-): MinesweeperProgress {
-  return session.status === "cleared" && current === "playing"
-    ? "clearing"
-    : current;
-}
-
-function applySession(
-  current: MinesweeperPlayState,
-  session: MinesweeperSession,
-): MinesweeperPlayState {
-  return session === current.session
-    ? current
-    : {
-        ...current,
-        session,
-        progress: getProgressAfterOperation(session, current.progress),
-      };
-}
-
-// 問題集が小さい場合でも「別の問題」で同じ問題に戻らないよう、選び直す回数の上限。
-const maximumNewProblemSelectionAttempts = 8;
+type MinesweeperPlayState = {
+  problemIdentity: MinesweeperProblemIdentity;
+  problemFacts: MinesweeperResultProblemFacts;
+  session: MinesweeperSession;
+  progress: GameProgress;
+};
 
 function createPlayState(
-  seed: ProblemSeed,
   { problem, identity }: MinesweeperIdentifiedProblem,
   startedAt: number,
 ): MinesweeperPlayState {
   const session = createMinesweeperSession(problem, startedAt);
   return {
-    seed,
     problemIdentity: identity,
+    problemFacts: {
+      mineCount: problem.board.mineCellIndices.length,
+      minimumOpenCount: countMinesweeperMinimumOpenCount(problem),
+    },
     session,
-    progress: getProgressAfterOperation(session, "playing"),
+    progress: getProgressAfterSessionChange("playing", session.status),
   };
 }
 
-function createInitialPlayState(
+function selectProblem(
   difficulty: MinesweeperDifficulty,
-  initialProblem: MinesweeperIdentifiedProblem | undefined,
   avoidedProblemId: ProblemId | undefined,
-  startedAt: number,
-): MinesweeperPlayState {
-  if (initialProblem) {
-    return createPlayState(
-      initialProblem.identity.seed,
-      initialProblem,
-      startedAt,
-    );
-  }
-
-  const { seed, problem } = selectProblemAvoiding(
-    (candidateSeed) =>
-      selectMinesweeperProblemForDifficulty(difficulty, candidateSeed),
+): MinesweeperIdentifiedProblem {
+  return selectProblemAvoiding(
+    (seed) => selectMinesweeperProblemForDifficulty(difficulty, seed),
     avoidedProblemId,
-  );
-  return createPlayState(seed, problem, startedAt);
-}
-
-function createNewProblemPlayState(
-  difficulty: MinesweeperDifficulty,
-  currentProblemIdentity: MinesweeperProblemIdentity,
-  startedAt: number,
-): MinesweeperPlayState {
-  let seed = createProblemSeed();
-  let selected = selectMinesweeperProblemForDifficulty(difficulty, seed);
-  for (
-    let attempt = 1;
-    attempt < maximumNewProblemSelectionAttempts &&
-    selected.identity.seed === currentProblemIdentity.seed;
-    attempt += 1
-  ) {
-    seed = createProblemSeed();
-    selected = selectMinesweeperProblemForDifficulty(difficulty, seed);
-  }
-  return createPlayState(seed, selected, startedAt);
+  ).problem;
 }
 
 /**
@@ -150,33 +122,20 @@ export function useMinesweeperPlay(
   difficulty: MinesweeperDifficulty,
   initialProblem?: MinesweeperIdentifiedProblem,
   avoidedProblemId?: ProblemId,
-) {
+): MinesweeperPlay {
   const [play, setPlay] = useState(() =>
-    createInitialPlayState(
-      difficulty,
-      initialProblem,
-      avoidedProblemId,
+    createPlayState(
+      initialProblem ?? selectProblem(difficulty, avoidedProblemId),
       Date.now(),
     ),
   );
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    if (play.session.status !== "playing") {
-      return;
-    }
-
-    setNow(Date.now());
-    const timer = window.setInterval(() => setNow(Date.now()), 1_000);
-
-    return () => window.clearInterval(timer);
-  }, [play.session.status]);
+  const { session, problemIdentity, problemFacts } = play;
+  const elapsedMs = useSessionElapsedMs(session);
 
   const revealCell = useCallback((cellIndex: number) => {
     const revealedAt = Date.now();
-    setNow(revealedAt);
     setPlay((current) =>
-      applySession(
+      applyPlaySession(
         current,
         revealMinesweeperSessionCell(current.session, cellIndex, revealedAt),
       ),
@@ -185,7 +144,7 @@ export function useMinesweeperPlay(
 
   const toggleFlag = useCallback((cellIndex: number) => {
     setPlay((current) =>
-      applySession(
+      applyPlaySession(
         current,
         toggleMinesweeperSessionFlag(current.session, cellIndex),
       ),
@@ -194,9 +153,8 @@ export function useMinesweeperPlay(
 
   const chordCell = useCallback((cellIndex: number) => {
     const chordedAt = Date.now();
-    setNow(chordedAt);
     setPlay((current) =>
-      applySession(
+      applyPlaySession(
         current,
         chordMinesweeperSessionCell(current.session, cellIndex, chordedAt),
       ),
@@ -205,62 +163,50 @@ export function useMinesweeperPlay(
 
   const replay = useCallback(() => {
     const startedAt = Date.now();
-    setNow(startedAt);
-    setPlay((current) => {
-      const session = replayMinesweeperSession(current.session, startedAt);
-      return {
-        ...current,
-        session,
-        progress: getProgressAfterOperation(session, "playing"),
-      };
-    });
+    setPlay((current) =>
+      startPlaySession(
+        current,
+        createMinesweeperSession(current.session.problem, startedAt),
+      ),
+    );
   }, []);
 
   const startNewProblem = useCallback(() => {
-    const startedAt = Date.now();
-    setNow(startedAt);
-    setPlay((current) =>
-      createNewProblemPlayState(difficulty, current.problemIdentity, startedAt),
+    setPlay(
+      createPlayState(
+        selectProblem(difficulty, createProblemId(problemIdentity)),
+        Date.now(),
+      ),
     );
-  }, [difficulty]);
+  }, [difficulty, problemIdentity]);
 
   const completeClearAnimation = useCallback(() => {
-    setPlay((current) =>
-      current.session.status === "cleared" && current.progress === "clearing"
-        ? { ...current, progress: "result" }
-        : current,
-    );
+    setPlay(completePlayClearAnimation);
   }, []);
 
-  const { session } = play;
-  const mineCount = session.problem.board.mineCellIndices.length;
-  const sessionResult = useMemo(
-    () => getMinesweeperSessionResult(session, now),
-    [now, session],
-  );
-  const result = useMemo<MinesweeperResult | null>(
-    () =>
-      sessionResult ? createMinesweeperResult(sessionResult, mineCount) : null,
-    [mineCount, sessionResult],
-  );
+  const result = useMemo(() => {
+    const sessionResult = getMinesweeperSessionResult(session);
+    return sessionResult
+      ? createMinesweeperResult(sessionResult, problemFacts)
+      : null;
+  }, [problemFacts, session]);
 
   return {
     difficulty,
-    seed: play.seed,
-    problemIdentity: play.problemIdentity,
+    problemIdentity,
+    session,
+    status: session.status,
+    progress: play.progress,
     startedAt: session.startedAt,
     completedAt: session.finishedAt,
-    session,
-    progress: play.progress,
+    elapsedMs,
+    result,
     rows: session.problem.board.rows,
     columns: session.problem.board.columns,
-    mineCount,
+    mineCount: problemFacts.mineCount,
     flagCount: session.puzzleState.flaggedCellIndices.length,
     mistakeCount: session.mistakeCount,
-    elapsedMs: getMinesweeperSessionElapsedMs(session, now),
     visibleCells: getMinesweeperSessionVisibleCells(session),
-    status: session.status,
-    result,
     revealCell,
     toggleFlag,
     chordCell,

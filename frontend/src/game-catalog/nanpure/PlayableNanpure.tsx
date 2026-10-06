@@ -119,6 +119,7 @@ export function PlayableNanpure({
         onErase={play.erase}
         onToggleNotesMode={play.toggleNotesMode}
         onUndo={play.undo}
+        canRestart={play.canRestart}
         onRestart={play.restart}
         onReplay={play.replay}
         onStartNewProblem={play.startNewProblem}

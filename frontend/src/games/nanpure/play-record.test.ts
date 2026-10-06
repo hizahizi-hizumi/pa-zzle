@@ -177,7 +177,6 @@ describe("restoreNanpureRecordedResult", () => {
         problemIdentity: record.payload.problemIdentity,
         result: {
           ...performance,
-          problemIdentity: record.payload.problemIdentity,
           speedRule: calculateNanpureSpeedScoreRule(),
           timeDeltaMs: calculateNanpureTimeDeltaMs(performance),
           score: calculateNanpurePlayScore(performance),

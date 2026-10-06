@@ -267,7 +267,6 @@ describe("restoreParkingJamRecordedResult", () => {
         problemIdentity,
         result: {
           ...performance,
-          problemIdentity,
           speedReference,
           speedRule: calculateParkingJamSpeedScoreRule(speedReference),
           timeDeltaMs: getParkingJamPlayRecordTimeDelta(record),

@@ -1,4 +1,5 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
+import * as problemSeed from "@/games/problem-seed";
 import { useWaterSortPlay } from "@/games/water-sort/play/use-water-sort-play";
 import {
   applyWaterSortMove,
@@ -30,6 +31,7 @@ const solutionMoves: readonly WaterSortMove[] = [
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 type HookResult = ReturnType<typeof useWaterSortPlay>;
@@ -49,6 +51,24 @@ function solveCurrentProblem(result: { current: HookResult }) {
 }
 
 describe("useWaterSortPlay", () => {
+  describe("別の問題で最初に引いた seed が今と同じ問題を指す場合", () => {
+    let result: { current: HookResult };
+
+    beforeEach(() => {
+      vi.spyOn(problemSeed, "createProblemSeed")
+        .mockReturnValueOnce("water-sort-current")
+        .mockReturnValueOnce("water-sort-current")
+        .mockReturnValueOnce("water-sort-other");
+      ({ result } = renderHook(() => useWaterSortPlay("1")));
+    });
+
+    test("seed を引き直して今と別の問題を始めること", () => {
+      act(() => result.current.startNewProblem());
+
+      expect(result.current.problemIdentity.seed).toBe("water-sort-other");
+    });
+  });
+
   test.each(["1", "2", "3", "4", "5"] as const)(
     "難易度 %s の問題の実盤面と最短手数をプレイ開始時から保持すること",
     (difficulty) => {
@@ -135,7 +155,7 @@ describe("useWaterSortPlay", () => {
     vi.setSystemTime(new Date("2026-09-16T00:00:00Z"));
     const { result } = renderHook(() => useWaterSortPlay("1"));
     const initialState = result.current.state;
-    const initialSeed = result.current.seed;
+    const initialSeed = result.current.problemIdentity.seed;
     const initialProblemIdentity = result.current.problemIdentity;
     const move = listWaterSortLegalMoves(initialState)[0];
     expect(move).toBeDefined();
@@ -146,7 +166,7 @@ describe("useWaterSortPlay", () => {
     act(() => result.current.restart());
 
     expect(result.current.state).toEqual(initialState);
-    expect(result.current.seed).toBe(initialSeed);
+    expect(result.current.problemIdentity.seed).toBe(initialSeed);
     expect(result.current.problemIdentity).toEqual(initialProblemIdentity);
     expect(result.current.moveCount).toBe(1);
     expect(result.current.restartCount).toBe(1);
@@ -156,7 +176,7 @@ describe("useWaterSortPlay", () => {
 
   test("新しい問題では別シードへ切り替えてプレイ成績を初期化すること", () => {
     const { result } = renderHook(() => useWaterSortPlay("1"));
-    const initialSeed = result.current.seed;
+    const initialSeed = result.current.problemIdentity.seed;
     const initialProblemIdentity = result.current.problemIdentity;
     const move = listWaterSortLegalMoves(result.current.state)[0];
     expect(move).toBeDefined();
@@ -167,9 +187,8 @@ describe("useWaterSortPlay", () => {
 
     act(() => result.current.startNewProblem());
 
-    expect(result.current.seed).not.toBe(initialSeed);
+    expect(result.current.problemIdentity.seed).not.toBe(initialSeed);
     expect(result.current.problemIdentity).not.toEqual(initialProblemIdentity);
-    expect(result.current.problemIdentity.seed).toBe(result.current.seed);
     expect(result.current.moveCount).toBe(0);
     expect(result.current.undoCount).toBe(0);
     expect(result.current.restartCount).toBe(0);
@@ -202,14 +221,14 @@ describe("useWaterSortPlay", () => {
         breakdown: { efficiency: 40, speed: 40, accuracy: 20 },
       },
     });
-    act(() => result.current.completeClearingPour());
+    act(() => result.current.completeClearAnimation());
     expect(result.current.progress).toBe("result");
   });
 
   test("クリア後に同じ問題へ再挑戦すると同じシードで別プレイとして計測すること", () => {
     const { result } = renderHook(() => useWaterSortPlay("1"));
     const initialState = result.current.state;
-    const initialSeed = result.current.seed;
+    const initialSeed = result.current.problemIdentity.seed;
     solveCurrentProblem(result);
     expect(result.current.status).toBe("cleared");
 
@@ -218,7 +237,7 @@ describe("useWaterSortPlay", () => {
     expect(result.current.status).toBe("playing");
     expect(result.current.progress).toBe("playing");
     expect(result.current.state).toEqual(initialState);
-    expect(result.current.seed).toBe(initialSeed);
+    expect(result.current.problemIdentity.seed).toBe(initialSeed);
     expect(result.current.moveCount).toBe(0);
     expect(result.current.undoCount).toBe(0);
     expect(result.current.restartCount).toBe(0);

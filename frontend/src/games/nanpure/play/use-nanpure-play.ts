@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import type {
   NanpureIdentifiedProblem,
   NanpureProblemIdentity,
 } from "@/games/nanpure/problem/problem";
 import { selectNanpureProblemForDifficulty } from "@/games/nanpure/problem-selection";
-import type { NanpureDigit } from "@/games/nanpure/puzzle/board";
+import type { NanpureBoard, NanpureDigit } from "@/games/nanpure/puzzle/board";
 import { findNanpureConflictCellIndices } from "@/games/nanpure/puzzle/rules";
 import {
   calculateNanpurePlayScore,
@@ -13,29 +13,36 @@ import {
   type NanpurePlayScore,
 } from "@/games/nanpure/score";
 import {
+  canRestartNanpureSession,
   canUndoNanpureSession,
-  clearNanpureCell,
+  clearNanpureSessionCell,
   createNanpureSession,
-  enterNanpureDigit,
-  findCompletedNanpureDigits,
-  findNanpureMistakeCellIndices,
-  getNanpureSessionElapsedMs,
+  enterNanpureSessionDigit,
+  findNanpureSessionCompletedDigits,
+  findNanpureSessionMistakeCellIndices,
   getNanpureSessionResult,
+  type NanpureNotes,
   type NanpureSession,
   type NanpureSessionResult,
   restartNanpureSession,
-  toggleNanpureNote,
+  toggleNanpureSessionNote,
   undoNanpureSession,
 } from "@/games/nanpure/session/session";
-import type { ProblemId } from "@/games/problem-id";
-import { createProblemSeed } from "@/games/problem-seed";
+import {
+  applyPlaySession,
+  completePlayClearAnimation,
+  type GamePlay,
+  type GameProgress,
+  type RestartableGamePlay,
+  startPlaySession,
+  type UndoableGamePlay,
+  useSessionElapsedMs,
+} from "@/games/play";
+import { createProblemId, type ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
-export type NanpureProgress = "playing" | "clearing" | "result";
-
 export type NanpureResult = NanpureSessionResult & {
-  problemIdentity: NanpureProblemIdentity;
   speedRule: SpeedScoreRule;
   timeDeltaMs: number;
   score: NanpurePlayScore;
@@ -44,28 +51,48 @@ export type NanpureResult = NanpureSessionResult & {
 /** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
 export function createNanpureResult(
   sessionResult: NanpureSessionResult,
-  problemIdentity: NanpureProblemIdentity,
 ): NanpureResult {
   const speedRule = calculateNanpureSpeedScoreRule();
   return {
     ...sessionResult,
-    problemIdentity,
     speedRule,
     timeDeltaMs: calculateTimeDeltaMs(sessionResult.elapsedMs, speedRule),
     score: calculateNanpurePlayScore(sessionResult),
   };
 }
 
+export type NanpurePlay = GamePlay<
+  NanpureDifficulty,
+  NanpureProblemIdentity,
+  NanpureSession,
+  NanpureResult
+> &
+  RestartableGamePlay &
+  UndoableGamePlay & {
+    clues: NanpureBoard;
+    board: NanpureBoard;
+    notes: NanpureNotes;
+    selectedCellIndex: number | null;
+    conflictCellIndices: number[];
+    mistakeCellIndices: number[];
+    completedDigits: NanpureDigit[];
+    notesMode: boolean;
+    mistakeCount: number;
+    undoCount: number;
+    restartCount: number;
+    selectCell: (cellIndex: number) => void;
+    inputDigit: (digit: NanpureDigit) => void;
+    erase: () => void;
+    toggleNotesMode: () => void;
+  };
+
 type NanpurePlayState = {
   session: NanpureSession;
   problemIdentity: NanpureProblemIdentity;
   selectedCellIndex: number | null;
   notesMode: boolean;
-  progress: NanpureProgress;
+  progress: GameProgress;
 };
-
-// 問題集が小さい場合でも「別の問題」で同じ問題に戻らないよう、選び直す回数の上限。
-const maximumNewProblemSelectionAttempts = 8;
 
 function createPlayState(
   { problem, identity }: NanpureIdentifiedProblem,
@@ -80,27 +107,14 @@ function createPlayState(
   };
 }
 
-function createNewProblemPlayState(
+function selectProblem(
   difficulty: NanpureDifficulty,
-  currentProblemIdentity: NanpureProblemIdentity,
-  startedAt: number,
-): NanpurePlayState {
-  let selected = selectNanpureProblemForDifficulty(
-    difficulty,
-    createProblemSeed(),
-  );
-  for (
-    let attempt = 1;
-    attempt < maximumNewProblemSelectionAttempts &&
-    selected.identity.seed === currentProblemIdentity.seed;
-    attempt += 1
-  ) {
-    selected = selectNanpureProblemForDifficulty(
-      difficulty,
-      createProblemSeed(),
-    );
-  }
-  return createPlayState(selected, startedAt);
+  avoidedProblemId: ProblemId | undefined,
+): NanpureIdentifiedProblem {
+  return selectProblemAvoiding(
+    (seed) => selectNanpureProblemForDifficulty(difficulty, seed),
+    avoidedProblemId,
+  ).problem;
 }
 
 /**
@@ -111,29 +125,15 @@ export function useNanpurePlay(
   difficulty: NanpureDifficulty,
   initialProblem?: NanpureIdentifiedProblem,
   avoidedProblemId?: ProblemId,
-) {
+): NanpurePlay {
   const [play, setPlay] = useState<NanpurePlayState>(() =>
     createPlayState(
-      initialProblem ??
-        selectProblemAvoiding(
-          (seed) => selectNanpureProblemForDifficulty(difficulty, seed),
-          avoidedProblemId,
-        ).problem,
+      initialProblem ?? selectProblem(difficulty, avoidedProblemId),
       Date.now(),
     ),
   );
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    if (play.session.status !== "playing") {
-      return;
-    }
-
-    setNow(Date.now());
-    const timer = window.setInterval(() => setNow(Date.now()), 1_000);
-
-    return () => window.clearInterval(timer);
-  }, [play.session.status]);
+  const { session, problemIdentity } = play;
+  const elapsedMs = useSessionElapsedMs(session);
 
   const selectCell = useCallback((cellIndex: number) => {
     setPlay((current) => ({ ...current, selectedCellIndex: cellIndex }));
@@ -141,25 +141,23 @@ export function useNanpurePlay(
 
   const inputDigit = useCallback((digit: NanpureDigit) => {
     const enteredAt = Date.now();
-    setNow(enteredAt);
     setPlay((current) => {
       const cellIndex = current.selectedCellIndex;
       if (cellIndex === null) {
         return current;
       }
 
-      const session = current.notesMode
-        ? toggleNanpureNote(current.session, cellIndex, digit)
-        : enterNanpureDigit(current.session, cellIndex, digit, enteredAt);
-
-      return session === current.session
-        ? current
-        : {
-            ...current,
-            session,
-            progress:
-              session.status === "cleared" ? "clearing" : current.progress,
-          };
+      return applyPlaySession(
+        current,
+        current.notesMode
+          ? toggleNanpureSessionNote(current.session, cellIndex, digit)
+          : enterNanpureSessionDigit(
+              current.session,
+              cellIndex,
+              digit,
+              enteredAt,
+            ),
+      );
     });
   }, []);
 
@@ -170,8 +168,10 @@ export function useNanpurePlay(
         return current;
       }
 
-      const session = clearNanpureCell(current.session, cellIndex);
-      return session === current.session ? current : { ...current, session };
+      return applyPlaySession(
+        current,
+        clearNanpureSessionCell(current.session, cellIndex),
+      );
     });
   }, []);
 
@@ -180,98 +180,88 @@ export function useNanpurePlay(
   }, []);
 
   const undo = useCallback(() => {
-    setPlay((current) => {
-      const session = undoNanpureSession(current.session);
-      return session === current.session ? current : { ...current, session };
-    });
+    setPlay((current) =>
+      applyPlaySession(current, undoNanpureSession(current.session)),
+    );
   }, []);
 
   const restart = useCallback(() => {
-    setPlay((current) => ({
-      ...current,
-      session: restartNanpureSession(current.session),
-      selectedCellIndex: null,
-      notesMode: false,
-      progress: "playing",
-    }));
+    setPlay((current) => {
+      const next = applyPlaySession(
+        current,
+        restartNanpureSession(current.session),
+      );
+      return next === current
+        ? current
+        : { ...next, selectedCellIndex: null, notesMode: false };
+    });
   }, []);
 
   const replay = useCallback(() => {
     const startedAt = Date.now();
-    setNow(startedAt);
     setPlay((current) => ({
-      ...current,
-      session: createNanpureSession(current.session.problem, startedAt),
+      ...startPlaySession(
+        current,
+        createNanpureSession(current.session.problem, startedAt),
+      ),
       selectedCellIndex: null,
       notesMode: false,
-      progress: "playing",
     }));
   }, []);
 
   const startNewProblem = useCallback(() => {
-    const startedAt = Date.now();
-    setNow(startedAt);
-    setPlay((current) =>
-      createNewProblemPlayState(difficulty, current.problemIdentity, startedAt),
+    setPlay(
+      createPlayState(
+        selectProblem(difficulty, createProblemId(problemIdentity)),
+        Date.now(),
+      ),
     );
-  }, [difficulty]);
+  }, [difficulty, problemIdentity]);
 
   const completeClearAnimation = useCallback(() => {
-    setPlay((current) =>
-      current.session.status === "cleared" && current.progress === "clearing"
-        ? { ...current, progress: "result" }
-        : current,
-    );
+    setPlay(completePlayClearAnimation);
   }, []);
 
-  const { session } = play;
   const conflictCellIndices = useMemo(
-    () => findNanpureConflictCellIndices(session.board),
-    [session.board],
+    () => findNanpureConflictCellIndices(session.puzzleState),
+    [session.puzzleState],
   );
   const mistakeCellIndices = useMemo(
-    () => findNanpureMistakeCellIndices(session),
+    () => findNanpureSessionMistakeCellIndices(session),
     [session],
   );
   const completedDigits = useMemo(
-    () => findCompletedNanpureDigits(session),
+    () => findNanpureSessionCompletedDigits(session),
     [session],
   );
-  const elapsedMs = getNanpureSessionElapsedMs(session, now);
-  const sessionResult = useMemo(
-    () => getNanpureSessionResult(session, now),
-    [now, session],
-  );
-  const result = useMemo<NanpureResult | null>(
-    () =>
-      sessionResult
-        ? createNanpureResult(sessionResult, play.problemIdentity)
-        : null,
-    [play.problemIdentity, sessionResult],
-  );
+  const result = useMemo(() => {
+    const sessionResult = getNanpureSessionResult(session);
+    return sessionResult ? createNanpureResult(sessionResult) : null;
+  }, [session]);
 
   return {
     difficulty,
+    problemIdentity,
+    session,
     status: session.status,
+    progress: play.progress,
     startedAt: session.startedAt,
     completedAt: session.finishedAt,
-    session,
-    progress: play.progress,
+    elapsedMs,
+    result,
     clues: session.problem.clues,
-    board: session.board,
+    board: session.puzzleState,
     notes: session.notes,
-    problemIdentity: play.problemIdentity,
     selectedCellIndex: play.selectedCellIndex,
     conflictCellIndices,
     mistakeCellIndices,
     completedDigits,
     notesMode: play.notesMode,
-    elapsedMs,
     mistakeCount: session.mistakeCount,
     undoCount: session.undoCount,
     restartCount: session.restartCount,
     canUndo: canUndoNanpureSession(session),
-    result,
+    canRestart: canRestartNanpureSession(session),
     selectCell,
     inputDigit,
     erase,

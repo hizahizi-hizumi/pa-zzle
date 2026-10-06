@@ -27,6 +27,11 @@ import type { PlayRecordDefinition } from "@/records/play-record-definition";
 const MINESWEEPER_PLAY_RECORD_PAYLOAD_VERSION = 1;
 const MINESWEEPER_GAME_ID = "minesweeper";
 
+/** 記録するプレイの事実。速さの基準に使う問題の `minimumOpenCount` も一緒に残す。 */
+type MinesweeperRecordedPerformance = MinesweeperSessionResult & {
+  minimumOpenCount: number;
+};
+
 /**
  * - `problemIdentity`: 再プレイで問題集から同じ問題を引くのに使う。生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
  * - `performance`: そのプレイで起きた事実。評価点・評価段階・基準時間との差は保存せず、現在の評価規則で導出する。
@@ -34,7 +39,7 @@ const MINESWEEPER_GAME_ID = "minesweeper";
 type MinesweeperPlayRecordPayload = {
   difficulty: MinesweeperDifficulty;
   problemIdentity: MinesweeperRecordedProblemIdentity;
-  performance: MinesweeperSessionResult;
+  performance: MinesweeperRecordedPerformance;
 };
 
 export type MinesweeperPlayRecord = PlayRecord & {
@@ -48,12 +53,12 @@ type CreateMinesweeperPlayRecordInput = {
   problemIdentity: MinesweeperProblemIdentity;
   startedAt: number;
   completedAt: number;
-  result: MinesweeperSessionResult;
+  result: MinesweeperRecordedPerformance;
 };
 
 function isMinesweeperPerformance(
   value: unknown,
-): value is MinesweeperSessionResult {
+): value is MinesweeperRecordedPerformance {
   return (
     isRecordObject(value) &&
     isNonNegativeFiniteNumber(value.elapsedMs) &&
@@ -142,8 +147,14 @@ export function restoreMinesweeperRecordedResult(
     difficulty,
     problemIdentity,
     result: createMinesweeperResult(
-      performance,
-      problemIdentity.conditions.mineCount,
+      {
+        elapsedMs: performance.elapsedMs,
+        mistakeCount: performance.mistakeCount,
+      },
+      {
+        mineCount: problemIdentity.conditions.mineCount,
+        minimumOpenCount: performance.minimumOpenCount,
+      },
     ),
   };
 }

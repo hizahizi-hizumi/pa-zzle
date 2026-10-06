@@ -2,11 +2,11 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 import { PlayHeader } from "@/components/PlayHeader";
+import type { GameProgress } from "@/games/play";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import type { ReflectionLaserPathMode } from "@/games/reflection/laser-path-mode";
 import type {
   ReflectionLaserView,
-  ReflectionProgress,
   ReflectionResult,
 } from "@/games/reflection/play/use-reflection-play";
 import type {
@@ -32,7 +32,7 @@ import { formatElapsedTime } from "@/lib/format-elapsed-time";
 type ReflectionPlayProps = {
   difficultyLabel: string;
   laserPathMode: ReflectionLaserPathMode;
-  progress: ReflectionProgress;
+  progress: GameProgress;
   board: ReflectionBoardState;
   clues: readonly ReflectionClue[];
   inventory: ReflectionInventory;

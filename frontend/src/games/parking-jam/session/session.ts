@@ -13,16 +13,13 @@ import {
   listParkingJamMoveBlockers,
   type ParkingJamMoveBlocker,
 } from "@/games/parking-jam/puzzle/rules";
+import { type GameSession, getClearedSessionElapsedMs } from "@/games/session";
 
-export type ParkingJamSessionStatus = "playing" | "cleared";
-
-export type ParkingJamSession = {
-  status: ParkingJamSessionStatus;
-  problem: ParkingJamProblem;
-  state: ParkingJamState;
+export type ParkingJamSession = GameSession<
+  ParkingJamProblem,
+  ParkingJamState
+> & {
   history: readonly ParkingJamState[];
-  startedAt: number;
-  finishedAt: number | null;
   moveAttemptCount: number;
   successfulMoveCount: number;
   failedMoveCount: number;
@@ -30,7 +27,13 @@ export type ParkingJamSession = {
   restartCount: number;
 };
 
+/** 車を動かそうとした結果。`ignored` は受け付けなかった操作で、session は変わらない。 */
 export type ParkingJamSessionMoveAttempt =
+  | {
+      outcome: "ignored";
+      move: ParkingJamMove;
+      session: ParkingJamSession;
+    }
   | {
       outcome: "exited";
       move: ParkingJamMove;
@@ -61,7 +64,7 @@ export function createParkingJamSession(
   return {
     status: "playing",
     problem,
-    state: createParkingJamInitialState(problem.board),
+    puzzleState: createParkingJamInitialState(problem.board),
     history: [],
     startedAt,
     finishedAt: null,
@@ -77,12 +80,14 @@ export function attemptParkingJamSessionMove(
   session: ParkingJamSession,
   move: ParkingJamMove,
   attemptedAt: number,
-): ParkingJamSessionMoveAttempt | null {
-  if (session.status !== "playing") return null;
+): ParkingJamSessionMoveAttempt {
+  if (session.status !== "playing") {
+    return { outcome: "ignored", move, session };
+  }
 
   const blockers = listParkingJamMoveBlockers(
     session.problem.board,
-    session.state,
+    session.puzzleState,
     move,
   );
   if (blockers.length > 0) {
@@ -98,18 +103,24 @@ export function attemptParkingJamSessionMove(
     };
   }
 
-  const state = applyParkingJamMove(session.problem.board, session.state, move);
-  if (!state) return null;
+  const puzzleState = applyParkingJamMove(
+    session.problem.board,
+    session.puzzleState,
+    move,
+  );
+  if (!puzzleState) {
+    return { outcome: "ignored", move, session };
+  }
 
-  const cleared = isParkingJamCleared(state);
+  const cleared = isParkingJamCleared(puzzleState);
   return {
     outcome: "exited",
     move,
     session: {
       ...session,
       status: cleared ? "cleared" : "playing",
-      state,
-      history: [...session.history, session.state],
+      puzzleState,
+      history: [...session.history, session.puzzleState],
       finishedAt: cleared ? attemptedAt : null,
       moveAttemptCount: session.moveAttemptCount + 1,
       successfulMoveCount: session.successfulMoveCount + 1,
@@ -127,12 +138,13 @@ export function undoParkingJamSession(
 
   return {
     ...session,
-    state: previousState,
+    puzzleState: previousState,
     history: session.history.slice(0, -1),
     undoCount: session.undoCount + 1,
   };
 }
 
+/** 同じプレイのまま盤面を初期状態へ戻す（盤面を戻す）。経過時間と記録は引き継ぐ。 */
 export function restartParkingJamSession(
   session: ParkingJamSession,
 ): ParkingJamSession {
@@ -140,7 +152,7 @@ export function restartParkingJamSession(
 
   return {
     ...session,
-    state: createParkingJamInitialState(session.problem.board),
+    puzzleState: createParkingJamInitialState(session.problem.board),
     history: [],
     restartCount: session.restartCount + 1,
   };
@@ -150,27 +162,21 @@ export function canUndoParkingJamSession(session: ParkingJamSession): boolean {
   return session.status === "playing" && session.history.length > 0;
 }
 
+/** 車が出た後のプレイ中だけ、盤面を戻せる。車は戻らないので、履歴があれば初期状態ではない。 */
 export function canRestartParkingJamSession(
   session: ParkingJamSession,
 ): boolean {
   return session.status === "playing" && session.history.length > 0;
 }
 
-export function getParkingJamSessionElapsedMs(
-  session: ParkingJamSession,
-  now: number,
-): number {
-  return Math.max(0, (session.finishedAt ?? now) - session.startedAt);
-}
-
 export function getParkingJamSessionResult(
   session: ParkingJamSession,
-  now: number,
 ): ParkingJamSessionResult | null {
-  if (session.status !== "cleared") return null;
+  const elapsedMs = getClearedSessionElapsedMs(session);
+  if (elapsedMs === null) return null;
 
   return {
-    elapsedMs: getParkingJamSessionElapsedMs(session, now),
+    elapsedMs,
     moveAttemptCount: session.moveAttemptCount,
     successfulMoveCount: session.successfulMoveCount,
     failedMoveCount: session.failedMoveCount,

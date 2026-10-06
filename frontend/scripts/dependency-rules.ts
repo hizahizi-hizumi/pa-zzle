@@ -55,6 +55,16 @@ function restrictImports(
   };
 }
 
+const gamesCommonBoundaryImports = [
+  "@/components/**",
+  "@/game-catalog/**",
+  "@/games/*/**",
+  "@/records/**",
+  "@/views/**",
+  "@/pages/**",
+  "@/router",
+];
+
 function createApplicationLayerOverrides(): BiomeOverride[] {
   return [
     restrictImports(["src/**/*.{ts,tsx}"], []),
@@ -120,21 +130,22 @@ function createApplicationLayerOverrides(): BiomeOverride[] {
       ],
     ),
     restrictImports(
-      ["src/games/*.{ts,tsx}"],
+      ["src/games/*.{ts,tsx}", "!src/games/play.ts"],
       [
         {
-          group: [
-            "@/components/**",
-            "@/game-catalog/**",
-            "@/games/*/**",
-            "@/records/**",
-            "@/views/**",
-            "@/pages/**",
-            "@/router",
-            "react*",
-          ],
+          group: [...gamesCommonBoundaryImports, "react*"],
           message:
             "[dependency/games-common-boundary] ゲーム共通契約は具体ゲーム・記録・React・UI合成へ依存しない。",
+        },
+      ],
+    ),
+    restrictImports(
+      ["src/games/play.ts"],
+      [
+        {
+          group: gamesCommonBoundaryImports,
+          message:
+            "[dependency/games-common-play-boundary] ゲーム共通のプレイ進行は React へだけ依存でき、具体ゲーム・記録・UI合成へ依存しない。",
         },
       ],
     ),

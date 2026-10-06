@@ -3,7 +3,6 @@
 import type { SlidePuzzleProblem } from "@/games/slide-puzzle/problem/problem";
 import {
   createSlidePuzzleSession,
-  getSlidePuzzleSessionElapsedMs,
   getSlidePuzzleSessionResult,
   restartSlidePuzzleSession,
   type SlidePuzzleSession,
@@ -22,7 +21,7 @@ function slideOrThrow(
   movedAt: number,
 ): SlidePuzzleSession {
   const next = slideSlidePuzzleSessionTile(session, tileIndex, movedAt);
-  if (!next) {
+  if (next === session) {
     throw new Error("test slide must be legal");
   }
   return next;
@@ -34,27 +33,27 @@ describe("slideSlidePuzzleSessionTile", () => {
   test("一括スライドで動いたタイルの枚数だけ手数を増やしスライド回数を 1 増やすこと", () => {
     const result = slideSlidePuzzleSessionTile(session, 14, 1_100);
 
-    expect(result?.board).toEqual([
+    expect(result.puzzleState).toEqual([
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 0, 15,
     ]);
-    expect(result?.moveCount).toBe(2);
-    expect(result?.completionMoveCount).toBe(2);
-    expect(result?.slideCount).toBe(1);
-    expect(result?.status).toBe("playing");
+    expect(result.moveCount).toBe(2);
+    expect(result.completionMoveCount).toBe(2);
+    expect(result.slideCount).toBe(1);
+    expect(result.status).toBe("playing");
   });
 
   test("最後の手で完成し終了時刻を決めること", () => {
     const result = slideSlidePuzzleSessionTile(session, 15, 1_500);
 
-    expect(result?.board).toEqual(solvedBoard);
-    expect(result?.status).toBe("cleared");
-    expect(result?.finishedAt).toBe(1_500);
+    expect(result.puzzleState).toEqual(solvedBoard);
+    expect(result.status).toBe("cleared");
+    expect(result.finishedAt).toBe(1_500);
   });
 
-  test("空白と同じ行・列にないタイルでは null を返すこと", () => {
+  test("空白と同じ行・列にないタイルでは同じ session を返すこと", () => {
     const result = slideSlidePuzzleSessionTile(session, 1, 1_100);
 
-    expect(result).toBeNull();
+    expect(result).toBe(session);
   });
 
   describe("完成した場合", () => {
@@ -63,7 +62,7 @@ describe("slideSlidePuzzleSessionTile", () => {
     test("操作を受け付けないこと", () => {
       const result = slideSlidePuzzleSessionTile(cleared, 14, 1_600);
 
-      expect(result).toBeNull();
+      expect(result).toBe(cleared);
     });
   });
 
@@ -90,8 +89,8 @@ describe("slideSlidePuzzleSessionTile", () => {
           1_500,
         );
 
-        expect(result?.status).toBe("cleared");
-        expect(result?.moveCount).toBe(movedTileCount);
+        expect(result.status).toBe("cleared");
+        expect(result.moveCount).toBe(movedTileCount);
       });
     },
   );
@@ -112,7 +111,7 @@ describe("restartSlidePuzzleSession", () => {
   test("初期盤面へ戻し総手数を残して完成時手数を 0 にすること", () => {
     const result = restartSlidePuzzleSession(moved);
 
-    expect(result.board).toEqual(problem.initialBoard);
+    expect(result.puzzleState).toEqual(problem.initialBoard);
     expect(result.moveCount).toBe(1);
     expect(result.completionMoveCount).toBe(0);
     expect(result.restartCount).toBe(1);
@@ -124,20 +123,15 @@ describe("restartSlidePuzzleSession", () => {
 
     expect(result).toBe(cleared);
   });
-});
 
-describe("getSlidePuzzleSessionElapsedMs", () => {
-  const playing = createSlidePuzzleSession(problem, 1_000);
-  const cleared = slideOrThrow(playing, 15, 4_000);
-  const cases = [
-    ["プレイ中は現在時刻まで", playing, 2_500],
-    ["完成後は完成時刻まで", cleared, 3_000],
-  ] as const;
+  describe("盤面が初期盤面と同じ場合", () => {
+    const movedBack = slideOrThrow(moved, 12, 1_200);
 
-  test.each(cases)("経過時間を返すこと: %s", (_, session, expected) => {
-    const result = getSlidePuzzleSessionElapsedMs(session, 3_500);
+    test("何もせず、盤面を戻した回数も数えないこと", () => {
+      const result = restartSlidePuzzleSession(movedBack);
 
-    expect(result).toBe(expected);
+      expect(result).toBe(movedBack);
+    });
   });
 });
 
@@ -150,7 +144,7 @@ describe("getSlidePuzzleSessionResult", () => {
   );
 
   test("完成したプレイの事実を返すこと", () => {
-    const result = getSlidePuzzleSessionResult(cleared, 9_000);
+    const result = getSlidePuzzleSessionResult(cleared);
 
     expect(result).toEqual({
       elapsedMs: 3_000,
@@ -162,7 +156,7 @@ describe("getSlidePuzzleSessionResult", () => {
   });
 
   test("完成していないプレイでは null を返すこと", () => {
-    const result = getSlidePuzzleSessionResult(playing, 9_000);
+    const result = getSlidePuzzleSessionResult(playing);
 
     expect(result).toBeNull();
   });

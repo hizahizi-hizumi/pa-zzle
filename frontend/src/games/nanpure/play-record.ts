@@ -164,7 +164,7 @@ export function restoreNanpureRecordedResult(
   return {
     difficulty,
     problemIdentity,
-    result: createNanpureResult(performance, problemIdentity),
+    result: createNanpureResult(performance),
   };
 }
 

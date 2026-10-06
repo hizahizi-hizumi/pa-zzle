@@ -32,6 +32,7 @@ const baseProps = {
   recordOutcomeNotice: null,
   onSelectBottle: vi.fn(),
   onUndo: vi.fn(),
+  canRestart: true,
   onRestart: vi.fn(),
   onReplay: vi.fn(),
   onStartNewProblem: vi.fn(),

@@ -6,10 +6,8 @@ import {
   within,
 } from "@testing-library/react";
 
-import type {
-  SlidePuzzleProgress,
-  SlidePuzzleResult,
-} from "@/games/slide-puzzle/play/use-slide-puzzle-play";
+import type { GameProgress } from "@/games/play";
+import type { SlidePuzzleResult } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import { SlidePuzzlePlay } from "@/games/slide-puzzle/ui/SlidePuzzlePlay";
 
 const playingBoard = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 13, 14, 15];
@@ -45,7 +43,7 @@ describe("SlidePuzzlePlay", () => {
     onBackToHome: vi.fn(),
   };
 
-  function renderPlay(progress: SlidePuzzleProgress, board: readonly number[]) {
+  function renderPlay(progress: GameProgress, board: readonly number[]) {
     render(
       <SlidePuzzlePlay
         difficulty="3"
@@ -54,6 +52,7 @@ describe("SlidePuzzlePlay", () => {
         board={board}
         elapsedMs={65_000}
         moveCount={7}
+        canRestart
         operation={null}
         result={progress === "playing" ? null : result}
         recordOutcomeNotice={null}

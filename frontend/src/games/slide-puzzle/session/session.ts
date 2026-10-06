@@ -1,3 +1,4 @@
+import { type GameSession, getClearedSessionElapsedMs } from "@/games/session";
 import {
   assertSlidePuzzleProblem,
   type SlidePuzzleProblem,
@@ -11,14 +12,10 @@ import {
   type SlidePuzzleBoard,
 } from "@/games/slide-puzzle/puzzle/state";
 
-type SlidePuzzleSessionStatus = "playing" | "cleared";
-
-export type SlidePuzzleSession = {
-  status: SlidePuzzleSessionStatus;
-  problem: SlidePuzzleProblem;
-  board: SlidePuzzleBoard;
-  startedAt: number;
-  finishedAt: number | null;
+export type SlidePuzzleSession = GameSession<
+  SlidePuzzleProblem,
+  SlidePuzzleBoard
+> & {
   /** 動いたタイルの枚数。盤面を戻す前の手も含む。 */
   moveCount: number;
   /** 最後に盤面を戻してから動いたタイルの枚数。 */
@@ -45,7 +42,7 @@ export function createSlidePuzzleSession(
   return {
     status: "playing",
     problem,
-    board: problem.initialBoard,
+    puzzleState: problem.initialBoard,
     startedAt,
     finishedAt: null,
     moveCount: 0,
@@ -55,27 +52,28 @@ export function createSlidePuzzleSession(
   };
 }
 
+/** `tileIndex` のタイルを空白へ向けて滑らせる。滑らせられないタイルなら何もしない。 */
 export function slideSlidePuzzleSessionTile(
   session: SlidePuzzleSession,
   tileIndex: number,
   movedAt: number,
-): SlidePuzzleSession | null {
+): SlidePuzzleSession {
   if (session.status !== "playing") {
-    return null;
+    return session;
   }
 
-  const slide = getSlidePuzzleSlide(session.board, tileIndex);
+  const slide = getSlidePuzzleSlide(session.puzzleState, tileIndex);
   if (!slide) {
-    return null;
+    return session;
   }
 
-  const board = applySlidePuzzleSlide(session.board, slide);
-  const cleared = isSlidePuzzleSolved(board);
+  const puzzleState = applySlidePuzzleSlide(session.puzzleState, slide);
+  const cleared = isSlidePuzzleSolved(puzzleState);
   const movedTileCount = slide.movedTileIndices.length;
   return {
     ...session,
     status: cleared ? "cleared" : "playing",
-    board,
+    puzzleState,
     finishedAt: cleared ? movedAt : null,
     moveCount: session.moveCount + movedTileCount,
     completionMoveCount: session.completionMoveCount + movedTileCount,
@@ -83,39 +81,43 @@ export function slideSlidePuzzleSessionTile(
   };
 }
 
-/** 同じプレイのまま初期盤面へ戻す。経過時間と総手数は引き継ぐ。 */
+/** 同じプレイのまま初期盤面へ戻す（盤面を戻す）。経過時間と総手数は引き継ぐ。 */
 export function restartSlidePuzzleSession(
   session: SlidePuzzleSession,
 ): SlidePuzzleSession {
-  if (session.status !== "playing") {
+  if (!canRestartSlidePuzzleSession(session)) {
     return session;
   }
 
   return {
     ...session,
-    board: session.problem.initialBoard,
+    puzzleState: session.problem.initialBoard,
     completionMoveCount: 0,
     restartCount: session.restartCount + 1,
   };
 }
 
-export function getSlidePuzzleSessionElapsedMs(
+/** 盤面が初期盤面と違うプレイ中だけ、盤面を戻せる。 */
+export function canRestartSlidePuzzleSession(
   session: SlidePuzzleSession,
-  now: number,
-): number {
-  return Math.max(0, (session.finishedAt ?? now) - session.startedAt);
+): boolean {
+  const { initialBoard } = session.problem;
+  return (
+    session.status === "playing" &&
+    session.puzzleState.some((tile, index) => tile !== initialBoard[index])
+  );
 }
 
 export function getSlidePuzzleSessionResult(
   session: SlidePuzzleSession,
-  now: number,
 ): SlidePuzzleSessionResult | null {
-  if (session.status !== "cleared") {
+  const elapsedMs = getClearedSessionElapsedMs(session);
+  if (elapsedMs === null) {
     return null;
   }
 
   return {
-    elapsedMs: getSlidePuzzleSessionElapsedMs(session, now),
+    elapsedMs,
     moveCount: session.moveCount,
     completionMoveCount: session.completionMoveCount,
     slideCount: session.slideCount,

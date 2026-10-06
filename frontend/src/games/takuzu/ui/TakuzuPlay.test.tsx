@@ -6,10 +6,8 @@ import {
   within,
 } from "@testing-library/react";
 
-import type {
-  TakuzuProgress,
-  TakuzuResult,
-} from "@/games/takuzu/play/use-takuzu-play";
+import type { GameProgress } from "@/games/play";
+import type { TakuzuResult } from "@/games/takuzu/play/use-takuzu-play";
 import type { TakuzuCellView } from "@/games/takuzu/session/session";
 import { TakuzuPlay } from "@/games/takuzu/ui/TakuzuPlay";
 
@@ -62,7 +60,7 @@ describe("TakuzuPlay", () => {
   };
 
   function renderPlay(
-    progress: TakuzuProgress,
+    progress: GameProgress,
     {
       playResult = null,
       canUndo = true,
@@ -83,6 +81,7 @@ describe("TakuzuPlay", () => {
         correctionCount={3}
         undoCount={4}
         canUndo={canUndo}
+        canRestart
         elapsedMs={65_000}
         result={playResult}
         recordOutcomeNotice={null}
@@ -229,7 +228,7 @@ describe("TakuzuPlay", () => {
 
   describe("完成演出中の場合", () => {
     beforeEach(() => {
-      renderPlay("clearing", { playResult: result });
+      renderPlay("clearing", { playResult: result, canUndo: false });
     });
 
     test("盤面のマスを操作できないこと", () => {

@@ -132,9 +132,10 @@ describe("useParkingJamPlay", () => {
       });
     });
 
-    test("クリア前は同じ問題の新しいプレイを始めず計数を保つこと", () => {
+    test("クリア前のリセットで同じ問題を計数なしの新しいプレイとして始めること", () => {
       const firstMove = solution[0];
       if (!firstMove) throw new Error("Expected a solution move");
+      const { problemIdentity } = result.current;
       act(() =>
         result.current.attemptMove(firstMove.vehicleId, firstMove.direction),
       );
@@ -142,8 +143,9 @@ describe("useParkingJamPlay", () => {
 
       act(() => result.current.replay());
 
-      expect(result.current.undoCount).toBe(1);
-      expect(result.current.moveAttemptCount).toBe(1);
+      expect(result.current.problemIdentity).toEqual(problemIdentity);
+      expect(result.current.undoCount).toBe(0);
+      expect(result.current.moveAttemptCount).toBe(0);
     });
 
     test("盤面が進んだときだけやり直し可能になること", () => {
