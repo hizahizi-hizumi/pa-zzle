@@ -31,6 +31,7 @@ describe("WaterSortBoard", () => {
     const onSelectBottle = vi.fn();
     const { rerender } = render(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[0], [], [1], []]}
         sourceBottleIndex={0}
         operation={null}
@@ -41,6 +42,7 @@ describe("WaterSortBoard", () => {
     fireEvent.click(screen.getByRole("button", { name: "ボトル 2: 空" }));
     rerender(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[], [0], [1], []]}
         sourceBottleIndex={2}
         operation={{
@@ -66,6 +68,7 @@ describe("WaterSortBoard", () => {
     const onSelectBottle = vi.fn();
     render(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[], [0, 0, 0, 0]]}
         sourceBottleIndex={null}
         operation={{
@@ -104,6 +107,7 @@ describe("WaterSortBoard", () => {
     const onSelectBottle = vi.fn();
     const { rerender } = render(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[], [0]]}
         sourceBottleIndex={null}
         operation={{
@@ -121,6 +125,7 @@ describe("WaterSortBoard", () => {
 
     rerender(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[0], []]}
         sourceBottleIndex={null}
         operation={null}
@@ -145,6 +150,7 @@ describe("WaterSortBoard", () => {
     const onSelectBottle = vi.fn();
     const { rerender } = render(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[], [0], [0], []]}
         sourceBottleIndex={null}
         operation={{
@@ -163,6 +169,7 @@ describe("WaterSortBoard", () => {
 
     rerender(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[], [], [0, 0], []]}
         sourceBottleIndex={null}
         operation={{
@@ -190,6 +197,7 @@ describe("WaterSortBoard", () => {
     const onSelectBottle = vi.fn();
     const { rerender } = render(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[], [0], []]}
         sourceBottleIndex={null}
         operation={{
@@ -207,6 +215,7 @@ describe("WaterSortBoard", () => {
 
     rerender(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[], [0], []]}
         sourceBottleIndex={null}
         operation={{ id: 2, type: "invalid", bottleIndex: 2 }}
@@ -240,6 +249,7 @@ describe("WaterSortBoard", () => {
 
     render(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[], [0, 0, 0, 0]]}
         sourceBottleIndex={null}
         operation={{
@@ -269,6 +279,7 @@ describe("WaterSortBoard", () => {
 
     render(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[]]}
         sourceBottleIndex={null}
         operation={{

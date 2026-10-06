@@ -1,8 +1,11 @@
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
-import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
-import { PlayHeader } from "@/components/PlayHeader";
-import type { GameProgress } from "@/games/play";
+import { GamePlayFrame } from "@/components/GamePlayFrame";
+import type {
+  GamePlayScreenProps,
+  RestartableGamePlayScreenProps,
+} from "@/games/play";
+import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import type { ReflectionLaserPathMode } from "@/games/reflection/laser-path-mode";
 import type {
@@ -27,38 +30,26 @@ import {
   ReflectionStock,
 } from "@/games/reflection/ui/ReflectionPlay/ReflectionStock";
 import { ReflectionResultScreen } from "@/games/reflection/ui/result/ReflectionResultScreen";
-import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
-type ReflectionPlayProps = {
-  difficultyLabel: string;
-  laserPathMode: ReflectionLaserPathMode;
-  progress: GameProgress;
-  board: ReflectionBoardState;
-  clues: readonly ReflectionClue[];
-  inventory: ReflectionInventory;
-  stock: ReflectionInventory;
-  selection: ReflectionSelection | null;
-  laser: ReflectionLaserView | null;
-  elapsedMs: number;
-  canRestart: boolean;
-  /** クリアしたプレイの評価。クリアするまでは `null`。 */
-  result: ReflectionResult | null;
-  recordOutcomeNotice: ReactNode;
-  onTapCell: (cellIndex: number) => void;
-  onTapStock: (piece: ReflectionPiece) => void;
-  onTapClue: (entry: ReflectionEntry) => void;
-  onRemovePiece: (cellIndex: number) => void;
-  onClearSelection: () => void;
-  onRestart: () => void;
-  onReplay: () => void;
-  onClearAnimationComplete: () => void;
-  onStartNewProblem: () => void;
-  onOpenRecords: () => void;
-  onChangeDifficulty: () => void;
-  onBackToHome: () => void;
-  /** 内部診断が有効なときだけ渡し、メニューに検証情報を出す。 */
-  onOpenDiagnostics?: () => void;
-};
+type ReflectionPlayProps = GamePlayScreenProps<
+  ReflectionDifficulty,
+  ReflectionResult
+> &
+  RestartableGamePlayScreenProps & {
+    laserPathMode: ReflectionLaserPathMode;
+    board: ReflectionBoardState;
+    clues: readonly ReflectionClue[];
+    inventory: ReflectionInventory;
+    stock: ReflectionInventory;
+    selection: ReflectionSelection | null;
+    laser: ReflectionLaserView | null;
+    onSelectCell: (cellIndex: number) => void;
+    onSelectStockPiece: (piece: ReflectionPiece) => void;
+    onSelectClue: (entry: ReflectionEntry) => void;
+    onRemovePiece: (cellIndex: number) => void;
+    onClearSelection: () => void;
+    onClearAnimationComplete: () => void;
+  };
 
 /** 数字キーの `1` から順に、ストックに並ぶ種類を選ぶ。 */
 function getStockKeyIndex(key: string): number | null {
@@ -66,22 +57,22 @@ function getStockKeyIndex(key: string): number | null {
 }
 
 export function ReflectionPlay({
-  difficultyLabel,
-  laserPathMode,
+  difficulty,
   progress,
+  elapsedMs,
+  result,
+  recordOutcomeNotice,
+  laserPathMode,
   board,
   clues,
   inventory,
   stock,
   selection,
   laser,
-  elapsedMs,
   canRestart,
-  result,
-  recordOutcomeNotice,
-  onTapCell,
-  onTapStock,
-  onTapClue,
+  onSelectCell,
+  onSelectStockPiece,
+  onSelectClue,
   onRemovePiece,
   onClearSelection,
   onRestart,
@@ -93,7 +84,6 @@ export function ReflectionPlay({
   onBackToHome,
   onOpenDiagnostics,
 }: ReflectionPlayProps) {
-  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
   const playing = progress === "playing";
   const clueMatches = useMemo(
     () => listReflectionClueMatches(board, clues),
@@ -135,58 +125,51 @@ export function ReflectionPlay({
           : listReflectionStockPieces(inventory)[stockIndex];
       if (piece) {
         event.preventDefault();
-        onTapStock(piece);
+        onSelectStockPiece(piece);
       }
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [playing, inventory, onClearSelection, onTapStock]);
-
-  // 完成演出の間は揃った盤面と全光路をそのまま見せ、演出を終えてから結果画面に切り替える。
-  if (progress === "result" && result) {
-    return (
-      <ReflectionResultScreen
-        difficultyLabel={difficultyLabel}
-        laserPathMode={laserPathMode}
-        result={result}
-        recordOutcomeNotice={recordOutcomeNotice}
-        onReplay={onReplay}
-        onStartNewProblem={onStartNewProblem}
-        onOpenRecords={onOpenRecords}
-        onChangeDifficulty={onChangeDifficulty}
-        onBackToHome={onBackToHome}
-        onOpenDiagnostics={onOpenDiagnostics}
-      />
-    );
-  }
+  }, [playing, inventory, onClearSelection, onSelectStockPiece]);
 
   return (
-    <section
+    <GamePlayFrame
       ref={playAreaRef}
-      className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]"
+      progress={progress}
+      result={result}
+      title={REFLECTION_DISPLAY_NAME}
+      // 置き直しは点に入らないので、プレイ中は時間だけを示す。置き直しの回数は結果と記録に出す。
+      metrics={[{ type: "elapsed-time", elapsedMs }]}
+      canRestart={canRestart}
+      onRestart={onRestart}
+      onReplay={onReplay}
+      onStartNewProblem={onStartNewProblem}
+      onChangeDifficulty={onChangeDifficulty}
+      onBackToHome={onBackToHome}
+      onOpenDiagnostics={onOpenDiagnostics}
+      renderHowToPlayDialog={({ open, onClose }) => (
+        <ReflectionHowToPlayDialog
+          open={open}
+          laserPathMode={laserPathMode}
+          onClose={onClose}
+        />
+      )}
+      renderResultScreen={(clearedResult) => (
+        <ReflectionResultScreen
+          difficulty={difficulty}
+          laserPathMode={laserPathMode}
+          result={clearedResult}
+          recordOutcomeNotice={recordOutcomeNotice}
+          onReplay={onReplay}
+          onStartNewProblem={onStartNewProblem}
+          onOpenRecords={onOpenRecords}
+          onChangeDifficulty={onChangeDifficulty}
+          onBackToHome={onBackToHome}
+          onOpenDiagnostics={onOpenDiagnostics}
+        />
+      )}
     >
-      <BrandIdentityHeader />
-      {/* 置き直しは点に入らないので、プレイ中は時間だけを示す。置き直しの回数は結果と記録に出す。 */}
-      <PlayHeader
-        title={REFLECTION_DISPLAY_NAME}
-        metricGroups={[
-          [{ label: "時間", value: formatElapsedTime(elapsedMs) }],
-        ]}
-        canRestart={canRestart}
-        onRestart={onRestart}
-        onReplay={onReplay}
-        onStartNewProblem={onStartNewProblem}
-        onChangeDifficulty={onChangeDifficulty}
-        onBackToHome={onBackToHome}
-        onOpenDiagnostics={onOpenDiagnostics}
-        onOpenHowToPlay={() => setHowToPlayOpen(true)}
-      />
-      <ReflectionHowToPlayDialog
-        open={howToPlayOpen}
-        laserPathMode={laserPathMode}
-        onClose={() => setHowToPlayOpen(false)}
-      />
       <main className="flex min-h-0 flex-1 items-center justify-center px-1 py-2 [container-type:size] sm:px-3">
         <div className="relative aspect-square w-[min(100cqw,100cqh,44rem)]">
           <ReflectionBoard
@@ -195,9 +178,10 @@ export function ReflectionPlay({
             clueMatches={clueMatches}
             selection={selection}
             laser={laser}
+            interactionDisabled={!playing}
             progress={progress}
-            onTapCell={onTapCell}
-            onTapClue={onTapClue}
+            onSelectCell={onSelectCell}
+            onSelectClue={onSelectClue}
             onRemovePiece={onRemovePiece}
             onClearAnimationComplete={onClearAnimationComplete}
           />
@@ -215,9 +199,9 @@ export function ReflectionPlay({
               : null
           }
           disabled={!playing}
-          onTapStock={onTapStock}
+          onSelectStockPiece={onSelectStockPiece}
         />
       </footer>
-    </section>
+    </GamePlayFrame>
   );
 }

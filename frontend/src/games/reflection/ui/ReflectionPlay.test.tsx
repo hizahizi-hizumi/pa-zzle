@@ -84,9 +84,9 @@ describe("ReflectionPlay", () => {
   const leftMiddle = { side: "left", index: 1 } as const;
 
   const callbacks = {
-    onTapCell: vi.fn(),
-    onTapStock: vi.fn(),
-    onTapClue: vi.fn(),
+    onSelectCell: vi.fn(),
+    onSelectStockPiece: vi.fn(),
+    onSelectClue: vi.fn(),
     onRemovePiece: vi.fn(),
     onClearSelection: vi.fn(),
     onRestart: vi.fn(),
@@ -99,7 +99,7 @@ describe("ReflectionPlay", () => {
   };
 
   const baseProps: ComponentProps<typeof ReflectionPlay> = {
-    difficultyLabel: "レベル 1",
+    difficulty: "1",
     laserPathMode: "assist",
     progress: "playing",
     board: emptyBoard,
@@ -196,7 +196,7 @@ describe("ReflectionPlay", () => {
         screen.getByRole("button", { name: "左2行 退出 3マス 一致" }),
       );
 
-      expect(callbacks.onTapClue).toHaveBeenCalledWith(leftMiddle);
+      expect(callbacks.onSelectClue).toHaveBeenCalledWith(leftMiddle);
     });
 
     test.each([
@@ -207,7 +207,7 @@ describe("ReflectionPlay", () => {
       (_, getTarget) => {
         fireEvent.keyDown(getTarget() as HTMLElement, { key: "2" });
 
-        expect(callbacks.onTapStock).toHaveBeenCalledWith("black-hole");
+        expect(callbacks.onSelectStockPiece).toHaveBeenCalledWith("black-hole");
       },
     );
 
@@ -217,7 +217,7 @@ describe("ReflectionPlay", () => {
 
       fireEvent.keyDown(menu, { key: "1" });
 
-      expect(callbacks.onTapStock).not.toHaveBeenCalled();
+      expect(callbacks.onSelectStockPiece).not.toHaveBeenCalled();
     });
 
     test("Escape で選択の解除を求めること", () => {
@@ -317,7 +317,7 @@ describe("ReflectionPlay", () => {
         fireEvent.pointerUp(getCell("2行3列 空き"), touch);
         fireEvent.click(getCell("2行3列 空き"), { detail: 1 });
 
-        expect(callbacks.onTapCell.mock.calls).toEqual([[5]]);
+        expect(callbacks.onSelectCell.mock.calls).toEqual([[5]]);
       });
 
       test("隣のマスを続けて押すと、前に押したマスへ届く click ではなく指を離したマスを知らせること", () => {
@@ -327,7 +327,7 @@ describe("ReflectionPlay", () => {
         fireEvent.pointerUp(getCell("2行3列 空き"), touch);
         fireEvent.click(getCell("2行2列 ブラックホール"), { detail: 2 });
 
-        expect(callbacks.onTapCell.mock.calls).toEqual([[4], [5]]);
+        expect(callbacks.onSelectCell.mock.calls).toEqual([[4], [5]]);
       });
 
       test("ストックも指を離した種類を1回だけ知らせること", () => {
@@ -338,7 +338,7 @@ describe("ReflectionPlay", () => {
         fireEvent.pointerUp(stockButton, touch);
         fireEvent.click(stockButton, { detail: 1 });
 
-        expect(callbacks.onTapStock.mock.calls).toEqual([["slash"]]);
+        expect(callbacks.onSelectStockPiece.mock.calls).toEqual([["slash"]]);
       });
     });
   });

@@ -5,6 +5,7 @@ import {
 import { RecordedWaterSortResult } from "@/game-catalog/water-sort/RecordedWaterSortResult";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/water-sort/assets/pictogram.svg?raw";
+import { WATER_SORT_DISPLAY_NAME } from "@/games/water-sort/display-name";
 import {
   isWaterSortPlayRecord,
   restoreWaterSortRecordedResult,
@@ -15,7 +16,7 @@ import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-di
 
 export const waterSortCatalogEntry = {
   id: waterSortPlayRecordDefinition.gameId,
-  name: "ウォーターソート",
+  name: WATER_SORT_DISPLAY_NAME,
   pictogramSvg,
   entryPath: "/puzzles/water-sort",
   playPath: "/puzzles/water-sort/play/:difficulty",

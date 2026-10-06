@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { TAKUZU_DISPLAY_NAME } from "@/games/takuzu/display-name";
 
 import {
   getTakuzuCellPosition,
@@ -24,7 +25,7 @@ type TakuzuBoardProps = {
   size: number;
   cells: readonly TakuzuCellView[];
   lineViolations: readonly TakuzuLineViolationView[];
-  disabled: boolean;
+  interactionDisabled: boolean;
   onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
   onPlaceCell: (cellIndex: number, cell: TakuzuCellValue) => void;
 };
@@ -78,7 +79,7 @@ export function TakuzuBoard({
   size,
   cells,
   lineViolations,
-  disabled,
+  interactionDisabled,
   onCycleCell,
   onPlaceCell,
 }: TakuzuBoardProps) {
@@ -124,7 +125,7 @@ export function TakuzuBoard({
   }
 
   function handleKeyDown(event: ReactKeyboardEvent<HTMLDivElement>): void {
-    if (disabled || hasModifierKey(event)) {
+    if (interactionDisabled || hasModifierKey(event)) {
       return;
     }
 
@@ -153,7 +154,7 @@ export function TakuzuBoard({
     <div className="size-full p-3">
       <div
         role="group"
-        aria-label="バイナリパズル盤面"
+        aria-label={`${TAKUZU_DISPLAY_NAME}盤面`}
         className="relative grid size-full border-2 border-foreground/55 bg-background"
         style={{
           gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,
@@ -181,7 +182,7 @@ export function TakuzuBoard({
                   ),
                 ),
               ]}
-              disabled={disabled}
+              disabled={interactionDisabled}
               focusable={cellIndex === focusableCellIndex}
               onElementChange={handleCellElementChange}
               onCycle={handleCycle}

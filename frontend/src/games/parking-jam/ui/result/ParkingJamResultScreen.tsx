@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { GameResultScreen } from "@/components/GameResultScreen";
 import {
   createCountMetric,
@@ -7,26 +6,22 @@ import {
   createSpeedFullScoreMetric,
   listScoreBreakdownMetrics,
 } from "@/components/game-result-metrics";
+import { getDifficultyLabel } from "@/games/difficulty";
 import parkingJamPictogramSvg from "@/games/parking-jam/assets/pictogram.svg?raw";
+import type { ParkingJamDifficulty } from "@/games/parking-jam/difficulty";
+import { PARKING_JAM_DISPLAY_NAME } from "@/games/parking-jam/display-name";
 import type { ParkingJamResult } from "@/games/parking-jam/play/use-parking-jam-play";
 import { PARKING_JAM_SCORE_MAXIMUMS } from "@/games/parking-jam/score";
 import { getParkingJamScoreCriteria } from "@/games/parking-jam/ui/result/ParkingJamResultScreen/score-criteria";
+import type { GamePlayResultScreenProps } from "@/games/play";
 
-type ParkingJamResultScreenProps = {
-  difficultyLabel: string;
-  result: ParkingJamResult;
-  recordOutcomeNotice: ReactNode;
-  /** 省略すると同じ問題を遊び直す操作を押せない状態で出す。 */
-  onReplay?: () => void;
-  onStartNewProblem: () => void;
-  onOpenRecords: () => void;
-  onChangeDifficulty: () => void;
-  onBackToHome: () => void;
-  onOpenDiagnostics?: () => void;
-};
+type ParkingJamResultScreenProps = GamePlayResultScreenProps<
+  ParkingJamDifficulty,
+  ParkingJamResult
+>;
 
 export function ParkingJamResultScreen({
-  difficultyLabel,
+  difficulty,
   result,
   recordOutcomeNotice,
   onReplay,
@@ -38,8 +33,8 @@ export function ParkingJamResultScreen({
 }: ParkingJamResultScreenProps) {
   return (
     <GameResultScreen
-      gameName="パーキングジャム"
-      difficultyLabel={difficultyLabel}
+      gameName={PARKING_JAM_DISPLAY_NAME}
+      difficultyLabel={getDifficultyLabel(difficulty)}
       pictogramSvg={parkingJamPictogramSvg}
       score={result.score.total}
       metrics={[

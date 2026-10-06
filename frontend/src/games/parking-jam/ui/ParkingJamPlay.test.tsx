@@ -14,8 +14,7 @@ function openPlayMenu(): void {
 
 function createProps(): ComponentProps<typeof ParkingJamPlay> {
   return {
-    difficultyLabel: "レベル 3",
-    status: "playing",
+    difficulty: "3",
     progress: "playing",
     board: {
       width: 5,
@@ -165,7 +164,6 @@ describe("クリア演出中の場合", () => {
     render(
       <ParkingJamPlay
         {...createProps()}
-        status="cleared"
         progress="clearing"
         state={{ remainingVehicleIds: [] }}
       />,

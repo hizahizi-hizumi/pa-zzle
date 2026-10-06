@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { GameResultScreen } from "@/components/GameResultScreen";
 import {
   createCountMetric,
@@ -9,24 +8,18 @@ import {
   listScoreBreakdownMetrics,
 } from "@/components/game-result-metrics";
 import { getDifficultyLabel } from "@/games/difficulty";
+import type { GamePlayResultScreenProps } from "@/games/play";
 import slidePuzzlePictogramSvg from "@/games/slide-puzzle/assets/pictogram.svg?raw";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
+import { SLIDE_PUZZLE_DISPLAY_NAME } from "@/games/slide-puzzle/display-name";
 import type { SlidePuzzleResult } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import { SLIDE_PUZZLE_SCORE_MAXIMUMS } from "@/games/slide-puzzle/score";
 import { getSlidePuzzleScoreCriteria } from "@/games/slide-puzzle/ui/result/SlidePuzzleResultScreen/score-criteria";
 
-type SlidePuzzleResultScreenProps = {
-  difficulty: SlidePuzzleDifficulty;
-  result: SlidePuzzleResult;
-  recordOutcomeNotice: ReactNode;
-  /** 省略すると同じ問題を遊び直す操作を押せない状態で出す。 */
-  onReplay?: () => void;
-  onStartNewProblem: () => void;
-  onOpenRecords: () => void;
-  onChangeDifficulty: () => void;
-  onBackToHome: () => void;
-  onOpenDiagnostics?: () => void;
-};
+type SlidePuzzleResultScreenProps = GamePlayResultScreenProps<
+  SlidePuzzleDifficulty,
+  SlidePuzzleResult
+>;
 
 export function SlidePuzzleResultScreen({
   difficulty,
@@ -41,7 +34,7 @@ export function SlidePuzzleResultScreen({
 }: SlidePuzzleResultScreenProps) {
   return (
     <GameResultScreen
-      gameName="スライドパズル"
+      gameName={SLIDE_PUZZLE_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
       pictogramSvg={slidePuzzlePictogramSvg}
       score={result.score.total}

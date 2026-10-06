@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { GameResultScreen } from "@/components/GameResultScreen";
 import {
   createCountMetric,
@@ -9,24 +8,18 @@ import {
   listScoreBreakdownMetrics,
 } from "@/components/game-result-metrics";
 import { getDifficultyLabel } from "@/games/difficulty";
+import type { GamePlayResultScreenProps } from "@/games/play";
 import waterSortPictogramSvg from "@/games/water-sort/assets/pictogram.svg?raw";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
+import { WATER_SORT_DISPLAY_NAME } from "@/games/water-sort/display-name";
 import type { WaterSortResult } from "@/games/water-sort/play/use-water-sort-play";
 import { WATER_SORT_SCORE_MAXIMUMS } from "@/games/water-sort/score";
 import { getWaterSortScoreCriteria } from "@/games/water-sort/ui/result/WaterSortResultScreen/score-criteria";
 
-type WaterSortResultScreenProps = {
-  difficulty: WaterSortDifficulty;
-  result: WaterSortResult;
-  recordOutcomeNotice: ReactNode;
-  /** 省略すると同じ問題を遊び直す操作を押せない状態で出す。 */
-  onReplay?: () => void;
-  onStartNewProblem: () => void;
-  onOpenRecords: () => void;
-  onChangeDifficulty: () => void;
-  onBackToHome: () => void;
-  onOpenDiagnostics?: () => void;
-};
+type WaterSortResultScreenProps = GamePlayResultScreenProps<
+  WaterSortDifficulty,
+  WaterSortResult
+>;
 
 export function WaterSortResultScreen({
   difficulty,
@@ -41,7 +34,7 @@ export function WaterSortResultScreen({
 }: WaterSortResultScreenProps) {
   return (
     <GameResultScreen
-      gameName="ウォーターソート"
+      gameName={WATER_SORT_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
       pictogramSvg={waterSortPictogramSvg}
       score={result.score.total}

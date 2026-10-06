@@ -27,9 +27,9 @@ function placeSolution(result: HookResult, problem: ReflectionProblem): void {
 
     const { selection } = result.current;
     if (selection?.type !== "stock" || selection.piece !== piece) {
-      act(() => result.current.tapStock(piece));
+      act(() => result.current.selectStockPiece(piece));
     }
-    act(() => result.current.tapCell(cellIndex));
+    act(() => result.current.selectCell(cellIndex));
   });
 }
 

@@ -1,8 +1,11 @@
+import { DifficultyOption } from "@/components/DifficultyOption";
 import { DifficultySelectionHeading } from "@/components/DifficultySelectionHeading";
 import { HomeBackLink } from "@/components/HomeBackLink";
+import { minesweeperCatalogEntry } from "@/game-catalog/minesweeper/minesweeper-catalog-entry";
 import { difficultyLevels } from "@/games/difficulty";
+import { MINESWEEPER_DISPLAY_NAME } from "@/games/minesweeper/display-name";
+import { MinesweeperDifficultyPreview } from "@/games/minesweeper/ui/MinesweeperDifficultyPreview";
 import { MinesweeperHowToPlayDialog } from "@/games/minesweeper/ui/MinesweeperHowToPlayDialog";
-import { MinesweeperDifficultyOption } from "@/views/MinesweeperDifficultyView/MinesweeperDifficultyOption";
 
 export function MinesweeperDifficultyView() {
   return (
@@ -10,7 +13,7 @@ export function MinesweeperDifficultyView() {
       <div className="space-y-2">
         <HomeBackLink />
         <DifficultySelectionHeading
-          title="マインスイーパー"
+          title={MINESWEEPER_DISPLAY_NAME}
           renderHowToPlayDialog={({ open, onClose }) => (
             <MinesweeperHowToPlayDialog open={open} onClose={onClose} />
           )}
@@ -19,11 +22,14 @@ export function MinesweeperDifficultyView() {
 
       <div className="grid gap-2 sm:gap-4 lg:grid-cols-5">
         {difficultyLevels.map((difficulty) => (
-          <MinesweeperDifficultyOption
+          <DifficultyOption
             key={difficulty.id}
+            playPath={minesweeperCatalogEntry.playPath}
             difficulty={difficulty.id}
             label={difficulty.label}
-          />
+          >
+            <MinesweeperDifficultyPreview difficulty={difficulty.id} />
+          </DifficultyOption>
         ))}
       </div>
     </section>

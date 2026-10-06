@@ -2,12 +2,13 @@ import { useLocation } from "react-router";
 import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
 import { readAvoidedProblemId } from "@/game-catalog/play-location-state";
 import { PlayableTakuzu } from "@/game-catalog/takuzu/PlayableTakuzu";
+import { takuzuCatalogEntry } from "@/game-catalog/takuzu/takuzu-catalog-entry";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import { useParams } from "@/router";
 
 export function TakuzuPlayView() {
   const { difficulty: difficultyParam } = useParams(
-    "/puzzles/takuzu/play/:difficulty",
+    takuzuCatalogEntry.playPath,
   );
   const avoidedProblemId = readAvoidedProblemId(useLocation().state);
   const difficulty = parseDifficultyLevel(difficultyParam);
@@ -16,7 +17,7 @@ export function TakuzuPlayView() {
     return (
       <PlayUnavailableNotice
         title="この難易度は選べません"
-        backTo="/puzzles/takuzu"
+        backTo={takuzuCatalogEntry.entryPath}
       />
     );
   }

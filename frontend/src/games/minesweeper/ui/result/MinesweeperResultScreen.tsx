@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { GameResultScreen } from "@/components/GameResultScreen";
 import {
   createCountMetric,
@@ -9,22 +8,16 @@ import {
 import { getDifficultyLabel } from "@/games/difficulty";
 import minesweeperPictogramSvg from "@/games/minesweeper/assets/pictogram.svg?raw";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
+import { MINESWEEPER_DISPLAY_NAME } from "@/games/minesweeper/display-name";
 import type { MinesweeperResult } from "@/games/minesweeper/play/use-minesweeper-play";
 import { MINESWEEPER_SCORE_MAXIMUMS } from "@/games/minesweeper/score";
 import { getMinesweeperScoreCriteria } from "@/games/minesweeper/ui/result/MinesweeperResultScreen/score-criteria";
+import type { GamePlayResultScreenProps } from "@/games/play";
 
-type MinesweeperResultScreenProps = {
-  difficulty: MinesweeperDifficulty;
-  result: MinesweeperResult;
-  recordOutcomeNotice: ReactNode;
-  /** 省略すると同じ問題を遊び直す操作を押せない状態で出す。 */
-  onReplay?: () => void;
-  onStartNewProblem: () => void;
-  onOpenRecords: () => void;
-  onChangeDifficulty: () => void;
-  onBackToHome: () => void;
-  onOpenDiagnostics?: () => void;
-};
+type MinesweeperResultScreenProps = GamePlayResultScreenProps<
+  MinesweeperDifficulty,
+  MinesweeperResult
+>;
 
 export function MinesweeperResultScreen({
   difficulty,
@@ -39,7 +32,7 @@ export function MinesweeperResultScreen({
 }: MinesweeperResultScreenProps) {
   return (
     <GameResultScreen
-      gameName="マインスイーパー"
+      gameName={MINESWEEPER_DISPLAY_NAME}
       difficultyLabel={getDifficultyLabel(difficulty)}
       pictogramSvg={minesweeperPictogramSvg}
       score={result.score.total}

@@ -5,6 +5,7 @@ import {
 import { RecordedMinesweeperResult } from "@/game-catalog/minesweeper/RecordedMinesweeperResult";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/minesweeper/assets/pictogram.svg?raw";
+import { MINESWEEPER_DISPLAY_NAME } from "@/games/minesweeper/display-name";
 import {
   isMinesweeperPlayRecord,
   minesweeperPlayRecordDefinition,
@@ -15,7 +16,7 @@ import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record
 
 export const minesweeperCatalogEntry = {
   id: minesweeperPlayRecordDefinition.gameId,
-  name: "マインスイーパー",
+  name: MINESWEEPER_DISPLAY_NAME,
   pictogramSvg,
   entryPath: "/puzzles/minesweeper",
   playPath: "/puzzles/minesweeper/play/:difficulty",

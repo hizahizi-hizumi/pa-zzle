@@ -46,7 +46,6 @@ describe("MinesweeperPlay", () => {
           mistakeCount={0}
           elapsedMs={0}
           visibleCells={visibleCells}
-          status="playing"
           progress="playing"
           result={null}
           recordOutcomeNotice={null}
@@ -213,7 +212,6 @@ describe("MinesweeperPlay", () => {
             { state: "hidden" },
             { state: "hidden" },
           ]}
-          status="playing"
           progress="playing"
           result={null}
           recordOutcomeNotice={null}
@@ -262,7 +260,6 @@ describe("MinesweeperPlay", () => {
           mistakeCount={1}
           elapsedMs={65_000}
           visibleCells={visibleCells}
-          status="playing"
           progress="playing"
           result={null}
           recordOutcomeNotice={null}
@@ -504,7 +501,6 @@ function createResultProps(): ComponentProps<typeof MinesweeperPlay> {
       { state: "revealed", adjacentMineCount: 1 },
       { state: "revealed", adjacentMineCount: 1 },
     ],
-    status: "cleared",
     progress: "result",
     result: {
       elapsedMs: 25_000,

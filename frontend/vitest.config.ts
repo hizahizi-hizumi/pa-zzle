@@ -7,6 +7,11 @@ const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [react()],
+  // vite.config.ts がビルド時に埋め込む値。テストでは内部診断を出さない。
+  define: {
+    __PA_ZZLE_INTERNAL_DIAGNOSTICS__: "false",
+    __PA_ZZLE_BUILD_REVISION__: "null",
+  },
   resolve: {
     alias: {
       "@": path.resolve(rootDir, "./src"),

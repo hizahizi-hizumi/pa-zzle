@@ -1,17 +1,15 @@
 import type { ReactNode } from "react";
 
-import {
-  type PlayHeaderMetricGroup,
-  PlayHeaderSummary,
-} from "@/components/PlayHeader/PlayHeaderSummary";
+import { PlayHeaderSummary } from "@/components/PlayHeader/PlayHeaderSummary";
 import { PlayMenu } from "@/components/PlayHeader/PlayMenu";
 import { PuzzleBackIcon } from "@/components/PuzzleBackIcon";
+import type { PlayHeaderMetric } from "@/components/play-header-metric";
 import { Button } from "@/components/ui/button";
 
 type PlayHeaderProps = {
   title: string;
-  /** 1群なら常に1行に並べる。複数群なら、1行に収まらない幅で群ごとに行を分ける。 */
-  metricGroups: readonly PlayHeaderMetricGroup[];
+  /** 2つまでは常に1行に並べる。3つ以上は、1行に収まらない幅で前から2つずつ行を分ける。 */
+  metrics: readonly PlayHeaderMetric[];
   /**
    * メニューの手前に置くゲーム固有の操作。
    * 渡すと、`null` で一時的に隠す間も見出しが動かないよう、両端の幅を広げて確保する。
@@ -31,7 +29,7 @@ type PlayHeaderProps = {
 
 export function PlayHeader({
   title,
-  metricGroups,
+  metrics,
   trailingAction,
   onRestart,
   canRestart = true,
@@ -73,7 +71,7 @@ export function PlayHeader({
       >
         <PuzzleBackIcon />
       </Button>
-      <PlayHeaderSummary title={title} metricGroups={metricGroups} />
+      <PlayHeaderSummary title={title} metrics={metrics} />
       {hasTrailingAction ? (
         <div className="flex justify-end gap-1">
           {trailingAction}

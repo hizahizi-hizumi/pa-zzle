@@ -9,22 +9,17 @@ export function PlayMetric({ label, value, reservedDigits }: PlayMetricProps) {
   return (
     <span className="flex items-baseline gap-1 whitespace-nowrap">
       <span>{label}</span>
-      {reservedDigits === undefined ? (
-        <span className="font-mono font-medium tabular-nums text-foreground/80">
-          {value}
-        </span>
-      ) : (
-        // 見えない「0」の並びと値を同じ位置に重ね、幅を桁の幅そのもので確保する。
-        <span className="grid text-left font-mono font-medium tabular-nums text-foreground/80">
-          <span
-            aria-hidden="true"
-            className="invisible col-start-1 row-start-1"
-          >
-            {"0".repeat(reservedDigits)}
-          </span>
-          <span className="col-start-1 row-start-1">{value}</span>
-        </span>
-      )}
+      {/* 等幅の数字なので、`ch`（「0」の幅）で桁の幅そのものを確保できる。 */}
+      <span
+        className="text-left font-mono font-medium tabular-nums text-foreground/80"
+        style={
+          reservedDigits === undefined
+            ? undefined
+            : { minWidth: `${reservedDigits}ch` }
+        }
+      >
+        {value}
+      </span>
     </span>
   );
 }

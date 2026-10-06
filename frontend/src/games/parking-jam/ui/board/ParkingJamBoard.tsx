@@ -4,6 +4,7 @@ import {
   type PointerEvent,
   useRef,
 } from "react";
+import { PARKING_JAM_DISPLAY_NAME } from "@/games/parking-jam/display-name";
 
 import type { ParkingJamOperation } from "@/games/parking-jam/play/use-parking-jam-play";
 import type {
@@ -166,7 +167,7 @@ export function ParkingJamBoard({
   return (
     <svg
       role="group"
-      aria-label="パーキングジャム盤面"
+      aria-label={`${PARKING_JAM_DISPLAY_NAME}盤面`}
       viewBox={`${-PARKING_JAM_MARGIN} ${-PARKING_JAM_MARGIN} ${width + PARKING_JAM_MARGIN * 2} ${height + PARKING_JAM_MARGIN * 2}`}
       className="parking-jam-board"
     >

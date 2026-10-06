@@ -11,7 +11,7 @@ type WaterSortBoardProps = {
   sourceBottleIndex: number | null;
   operation: WaterSortOperation | null;
   onSelectBottle: (bottleIndex: number) => void;
-  interactionDisabled?: boolean;
+  interactionDisabled: boolean;
   onPourAnimationActivityChange?: (active: boolean) => void;
   onClearingPourComplete?: () => void;
 };
@@ -21,7 +21,7 @@ export function WaterSortBoard({
   sourceBottleIndex,
   operation,
   onSelectBottle,
-  interactionDisabled = false,
+  interactionDisabled,
   onPourAnimationActivityChange,
   onClearingPourComplete,
 }: WaterSortBoardProps) {

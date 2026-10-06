@@ -1,9 +1,6 @@
-import { useMemo, useState } from "react";
-import {
-  useProblemIdQuerySync,
-  useRequestedProblem,
-} from "@/game-catalog/problem-id-query";
-import { useRecordResultNavigation } from "@/game-catalog/record-result-navigation";
+import { nanpureCatalogEntry } from "@/game-catalog/nanpure/nanpure-catalog-entry";
+import { usePlayableGame } from "@/game-catalog/playable-game";
+import { useRequestedProblem } from "@/game-catalog/problem-id-query";
 import { createNanpureDiagnosticSnapshot } from "@/games/nanpure/diagnostics";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import { useNanpurePlay } from "@/games/nanpure/play/use-nanpure-play";
@@ -15,16 +12,7 @@ import {
 import { selectNanpureProblemById } from "@/games/nanpure/problem-selection";
 import { NanpureDiagnostics } from "@/games/nanpure/ui/NanpureDiagnostics";
 import { NanpurePlay } from "@/games/nanpure/ui/NanpurePlay";
-import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
 import type { ProblemId } from "@/games/problem-id";
-import {
-  buildRevision,
-  internalDiagnosticsAvailable,
-} from "@/lib/internal-diagnostics";
-import { usePlayAttemptRecord } from "@/records/hooks/use-play-attempt-record";
-import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
-import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
-import { useNavigate } from "@/router";
 
 type PlayableNanpureProps = {
   difficulty: NanpureDifficulty;
@@ -40,60 +28,25 @@ export function PlayableNanpure({
     selectNanpureProblemById(difficulty, problemId),
   );
   const play = useNanpurePlay(difficulty, requestedProblem, avoidedProblemId);
-  useProblemIdQuerySync(play.problemIdentity);
-  const navigate = useNavigate();
-  const playRecord = useMemo(
-    () =>
-      play.result && play.completedAt !== null
-        ? createNanpurePlayRecord({
-            difficulty,
-            problemIdentity: play.problemIdentity,
-            startedAt: play.startedAt,
-            completedAt: play.completedAt,
-            result: play.result,
-          })
-        : null,
-    [
-      difficulty,
-      play.completedAt,
-      play.problemIdentity,
-      play.result,
-      play.startedAt,
-    ],
-  );
-  const recordOutcome = useSavePlayRecord(
-    playRecord,
-    nanpurePlayRecordDefinition,
-  );
-  const navigatesToRecordResult = useRecordResultNavigation(
-    play.progress === "result",
-    playRecord,
-    recordOutcome,
-  );
-  usePlayAttemptRecord({
-    gameId: nanpurePlayRecordDefinition.gameId,
-    startedAt: play.startedAt,
-    start: { difficulty, problemIdentity: play.problemIdentity },
-    finished: play.completedAt !== null,
-    getProgress(abandonedAt) {
-      return createNanpurePlayAttemptProgress(play.session, abandonedAt);
-    },
-  });
-  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
-  const diagnostics = internalDiagnosticsAvailable
-    ? createNanpureDiagnosticSnapshot({
-        difficulty: play.difficulty,
+  const { screenProps, diagnostics } = usePlayableGame({
+    game: nanpureCatalogEntry,
+    play,
+    playRecordDefinition: nanpurePlayRecordDefinition,
+    createPlayRecord: createNanpurePlayRecord,
+    createPlayAttemptProgress: createNanpurePlayAttemptProgress,
+    createDiagnosticSnapshot(buildRevision) {
+      return createNanpureDiagnosticSnapshot({
+        difficulty,
         problemIdentity: play.problemIdentity,
         buildRevision,
-      })
-    : null;
+      });
+    },
+  });
 
   return (
     <>
       <NanpurePlay
-        difficulty={difficulty}
-        status={play.status}
-        progress={play.progress}
+        {...screenProps}
         clues={play.clues}
         board={play.board}
         notes={play.notes}
@@ -102,18 +55,9 @@ export function PlayableNanpure({
         mistakeCellIndices={play.mistakeCellIndices}
         completedDigits={play.completedDigits}
         notesMode={play.notesMode}
-        elapsedMs={play.elapsedMs}
         mistakeCount={play.mistakeCount}
         undoCount={play.undoCount}
         canUndo={play.canUndo}
-        // 記録の結果画面へ遷移する間は、その場の結果画面を出さず盤面を見せておく。
-        result={navigatesToRecordResult ? null : play.result}
-        recordOutcomeNotice={
-          <PlayRecordOutcomeNotice
-            outcome={recordOutcome}
-            display={nanpurePlayRecordDisplay}
-          />
-        }
         onSelectCell={play.selectCell}
         onInputDigit={play.inputDigit}
         onErase={play.erase}
@@ -121,20 +65,12 @@ export function PlayableNanpure({
         onUndo={play.undo}
         canRestart={play.canRestart}
         onRestart={play.restart}
-        onReplay={play.replay}
-        onStartNewProblem={play.startNewProblem}
-        onOpenRecords={() => navigate("/records")}
-        onChangeDifficulty={() => navigate("/puzzles/nanpure")}
-        onBackToHome={() => navigate("/")}
         onClearAnimationComplete={play.completeClearAnimation}
-        onOpenDiagnostics={
-          diagnostics ? () => setDiagnosticsOpen(true) : undefined
-        }
       />
-      {diagnostics && diagnosticsOpen && (
+      {diagnostics.snapshot && (
         <NanpureDiagnostics
-          snapshot={diagnostics}
-          onClose={() => setDiagnosticsOpen(false)}
+          snapshot={diagnostics.snapshot}
+          onClose={diagnostics.close}
         />
       )}
     </>
