@@ -15,10 +15,10 @@ paths:
 
 ## 動き
 
-- 時間とイージングは `@theme` の動きのトークンから取る。Tailwind では `duration-(--duration-*)` と `ease-*`、TS（Web Animations API）では `@/lib/motion` の `MOTION_DURATION_MS` と `MOTION_EASING` を使う。
-- トークンに無い、その演出だけの長さは、UPPER_SNAKE の名前付き定数にする。
+- 共通UIの時間とイージングは `@theme` の動きのトークンから取る。Tailwind では `duration-(--duration-*)` と `ease-*`、TS（Web Animations API）では `@/lib/motion` の `MOTION_DURATION_MS` と `MOTION_EASING` を使う。
+- ゲームの演出と結果画面の演出の時間・イージングは、トークンかその演出の名前付き定数にする。トークンに合わせるために演出の値を変えない。
 - 動きを減らす設定は `@/lib/motion` の `prefersReducedMotion` で判定し、TS から動かす演出はその設定で動かさない。
-- 操作が通らなかったことを返す揺れは `@/lib/motion` の `playRejectionShake` で再生する。
+- 操作が通らなかったことを返す揺れは `@/lib/motion` の `playRejectionShake` で再生する。揺れ方・長さ・イージングはゲームが渡す。
 
 ## 適用除外
 
