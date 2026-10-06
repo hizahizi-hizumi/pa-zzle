@@ -17,8 +17,8 @@ type PlayHeaderSummaryProps = {
 /** 狭い幅で行を分けるとき、計測値を前から2つずつ同じ行に残す。 */
 const metricsPerGroup = 2;
 
-/** 回数は2桁分の幅を取り、10回目で周りの計測値が横へ動かないようにする。 */
-const countReservedDigits = 2;
+/** ゲームが桁数を渡さない回数は2桁分の幅を取り、10回目で周りの計測値が横へ動かないようにする。 */
+const defaultCountReservedDigits = 2;
 
 type MetricRowLayout = { row: string; groupSeparator: string };
 
@@ -89,7 +89,9 @@ export function PlayHeaderSummary({ title, metrics }: PlayHeaderSummaryProps) {
                     <PlayMetric
                       label={metric.label}
                       value={String(metric.count)}
-                      reservedDigits={countReservedDigits}
+                      reservedDigits={
+                        metric.reservedDigits ?? defaultCountReservedDigits
+                      }
                     />
                   ) : (
                     <PlayMetric
