@@ -3,10 +3,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
-import type {
-  WaterSortGeneratedProblem,
-  WaterSortProblemIdentity,
-} from "@/games/water-sort/problem/problem";
+import type { WaterSortProblemIdentity } from "@/games/water-sort/problem/problem";
+import type { WaterSortPooledProblem } from "@/games/water-sort/problem/problem-pool";
 import { selectWaterSortProblemForDifficulty } from "@/games/water-sort/problem-selection";
 import { classifyWaterSortDeadlock } from "@/games/water-sort/puzzle/deadlock";
 import {
@@ -103,7 +101,7 @@ type WaterSortPlayState = {
 function generateProblem(
   difficulty: WaterSortDifficulty,
   avoidedProblemId: ProblemId | undefined,
-): WaterSortGeneratedProblem {
+): WaterSortPooledProblem {
   return selectProblemAvoiding(
     (seed) => selectWaterSortProblemForDifficulty(difficulty, seed),
     avoidedProblemId,
@@ -113,7 +111,7 @@ function generateProblem(
 function createPlayState(
   difficulty: WaterSortDifficulty,
   startedAt: number,
-  initialProblem?: WaterSortGeneratedProblem,
+  initialProblem?: WaterSortPooledProblem,
   avoidedProblemId?: ProblemId,
 ): WaterSortPlayState {
   const generatedProblem =
@@ -132,7 +130,7 @@ function createPlayState(
 /** `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。 */
 export function useWaterSortPlay(
   difficulty: WaterSortDifficulty,
-  initialProblem?: WaterSortGeneratedProblem,
+  initialProblem?: WaterSortPooledProblem,
   avoidedProblemId?: ProblemId,
 ) {
   const [play, setPlay] = useState<WaterSortPlayState>(() =>

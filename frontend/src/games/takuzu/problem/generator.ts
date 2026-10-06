@@ -1,10 +1,13 @@
-import { createProblemSeededRandom } from "@/games/problem-seed";
+import {
+  createProblemSeededRandom,
+  type ProblemRandom,
+  shuffleProblemValues,
+} from "@/games/problem-seed";
 import {
   analyzeTakuzuDifficulty,
   type TakuzuDifficultyAnalysis,
 } from "@/games/takuzu/problem/difficulty-analysis";
 import { traceTakuzuHumanSolve } from "@/games/takuzu/problem/generation/human-solver";
-import { shuffle } from "@/games/takuzu/problem/generation/shuffle";
 import {
   countTakuzuSolutions,
   findRandomTakuzuSolution,
@@ -53,11 +56,11 @@ function createEmptyBoard(size: number): TakuzuBoard {
 function removeGivens(
   solution: TakuzuBoard,
   acceptsGivens: GivensAcceptance,
-  random: () => number,
+  random: ProblemRandom,
 ): { givens: TakuzuBoard; removedCellIndices: number[] } {
   const cells: TakuzuCell[] = [...solution.cells];
   const removedCellIndices: number[] = [];
-  const removalOrder = shuffle(
+  const removalOrder = shuffleProblemValues(
     cells.map((_, cellIndex) => cellIndex),
     random,
   );
@@ -125,10 +128,10 @@ export function generateTakuzuProblem(
     createGivensAcceptance(conditions.removalTechniqueLimit),
     random,
   );
-  const restoredCellIndices = shuffle(removedCellIndices, random).slice(
-    0,
-    conditions.extraGivenCount,
-  );
+  const restoredCellIndices = shuffleProblemValues(
+    removedCellIndices,
+    random,
+  ).slice(0, conditions.extraGivenCount);
   const problem = {
     givens: restoreGivens(minimalGivens, solution, restoredCellIndices),
     solution,

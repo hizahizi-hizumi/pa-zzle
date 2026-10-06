@@ -1,5 +1,6 @@
 import {
   createProblemSeededRandom,
+  type ProblemRandom,
   type ProblemSeed,
   shuffleProblemValues,
 } from "@/games/problem-seed";
@@ -9,8 +10,8 @@ import {
 } from "@/games/water-sort/problem/generation/solver";
 import {
   WATER_SORT_GENERATOR_VERSION,
-  type WaterSortGeneratedProblem,
   type WaterSortGenerationConditions,
+  type WaterSortIdentifiedProblem,
   type WaterSortProblemIdentity,
 } from "@/games/water-sort/problem/problem";
 import {
@@ -20,6 +21,11 @@ import {
   WATER_SORT_EMPTY_BOTTLE_COUNT,
   type WaterSortState,
 } from "@/games/water-sort/puzzle/state";
+
+/** 生成した問題。解いて求めた最短手数を伴う。 */
+export type WaterSortGeneratedProblem = WaterSortIdentifiedProblem & {
+  optimalMoveCount: number;
+};
 
 export type WaterSortGeneratedCandidate = {
   attempt: number;
@@ -53,7 +59,7 @@ function createGeneratorRandom(
   seed: ProblemSeed,
   colorCount: number,
   emptyBottleCount: number,
-): () => number {
+): ProblemRandom {
   return createProblemSeededRandom(
     [
       WATER_SORT_GENERATOR_VERSION,
@@ -68,7 +74,7 @@ function createGeneratorRandom(
 function createStandardCandidate(
   colorCount: number,
   emptyBottleCount: number,
-  random: () => number,
+  random: ProblemRandom,
 ): WaterSortState {
   const units = Array.from(
     { length: colorCount * WATER_SORT_BOTTLE_CAPACITY },

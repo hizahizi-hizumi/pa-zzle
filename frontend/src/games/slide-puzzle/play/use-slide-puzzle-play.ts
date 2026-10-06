@@ -2,10 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
-import type {
-  SlidePuzzleGeneratedProblem,
-  SlidePuzzleProblemIdentity,
-} from "@/games/slide-puzzle/problem/problem";
+import type { SlidePuzzleProblemIdentity } from "@/games/slide-puzzle/problem/problem";
+import type { SlidePuzzlePooledProblem } from "@/games/slide-puzzle/problem/problem-pool";
 import { selectSlidePuzzleProblemForDifficulty } from "@/games/slide-puzzle/problem-selection";
 import {
   getSlidePuzzleKeyboardSlide,
@@ -94,7 +92,7 @@ type SlidePuzzlePlayState = {
 function createPlayState(
   difficulty: SlidePuzzleDifficulty,
   startedAt: number,
-  initialProblem?: SlidePuzzleGeneratedProblem,
+  initialProblem?: SlidePuzzlePooledProblem,
   avoidedProblemId?: ProblemId,
 ): SlidePuzzlePlayState {
   const generatedProblem =
@@ -154,7 +152,7 @@ function slideTileInPlay(
 /** `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。 */
 export function useSlidePuzzlePlay(
   difficulty: SlidePuzzleDifficulty,
-  initialProblem?: SlidePuzzleGeneratedProblem,
+  initialProblem?: SlidePuzzlePooledProblem,
   avoidedProblemId?: ProblemId,
 ) {
   const [play, setPlay] = useState<SlidePuzzlePlayState>(() =>

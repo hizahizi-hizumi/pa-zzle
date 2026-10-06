@@ -1,3 +1,6 @@
+import type { ProblemSeed } from "@/games/problem-seed";
+import { isNonEmptyString, isRecordObject } from "@/lib/type-guards";
+
 /**
  * 問題を指す短い ID。生成器の版・生成条件・seed・生成試行など、問題を作るのに要る identity 全体から求める。
  * 一方向のハッシュなので、ID から問題へは問題集の索引（`createProblemPoolIdLookup`）で引く。
@@ -6,6 +9,44 @@ export type ProblemId = string;
 
 /** 各ゲームの `<Game>ProblemIdentity` と、記録に残した identity の共通の形。 */
 export type ProblemIdentity = Readonly<Record<string, unknown>>;
+
+/**
+ * 記録に残した問題の識別情報。生成器の版が今と違う記録も読み込めるよう、版と生成条件の形は今の生成器に限らない。
+ * `RecordedConditions` は、記録の採点などで版を問わず読む生成条件。
+ */
+export type RecordedProblemIdentity<
+  RecordedConditions extends object = object,
+> = {
+  generatorVersion: string;
+  seed: ProblemSeed;
+  conditions: Readonly<Record<string, unknown>> & Readonly<RecordedConditions>;
+};
+
+/** 今の生成器の版と、その版の identity を確かめる型ガード。 */
+export type CurrentProblemIdentity<Identity extends ProblemIdentity> = {
+  generatorVersion: string;
+  isProblemIdentity: (value: unknown) => value is Identity;
+};
+
+/**
+ * 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。
+ * 今の生成器の版なら今の生成器で扱える識別情報であることまで、別の版なら版と seed と生成条件の形だけを確かめる。
+ */
+export function isRecordedProblemIdentity<Identity extends ProblemIdentity>(
+  value: unknown,
+  current: CurrentProblemIdentity<Identity>,
+): value is RecordedProblemIdentity {
+  if (!isRecordObject(value) || !isRecordObject(value.conditions)) {
+    return false;
+  }
+
+  if (value.generatorVersion === current.generatorVersion) {
+    return current.isProblemIdentity(value);
+  }
+  return (
+    isNonEmptyString(value.generatorVersion) && isNonEmptyString(value.seed)
+  );
+}
 
 const lane1Seed = 0xdeadbeef;
 const lane2Seed = 0x41c6ce57;

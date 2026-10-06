@@ -16,8 +16,8 @@ import {
 } from "@/games/slide-puzzle/problem/generation/optimal-move-count";
 import { generateSlidePuzzleBoard } from "@/games/slide-puzzle/problem/generator";
 import {
+  decodeSlidePuzzlePoolEntry,
   listSlidePuzzlePoolEntries,
-  toSlidePuzzlePooledProblem,
 } from "@/games/slide-puzzle/problem/problem-pool";
 import {
   applySlidePuzzleSlide,
@@ -474,7 +474,7 @@ function printPoolReport() {
   const levels = difficultyLevels.map(({ id }) => ({
     id,
     samples: listSlidePuzzlePoolEntries(id).map((entry) => {
-      const { identity, optimalMoveCount } = toSlidePuzzlePooledProblem(entry);
+      const { identity, optimalMoveCount } = decodeSlidePuzzlePoolEntry(entry);
       const board = generateSlidePuzzleBoard(
         identity.seed,
         identity.conditions,

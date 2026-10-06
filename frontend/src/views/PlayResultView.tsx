@@ -26,7 +26,7 @@ export function PlayResultView() {
       ? game.renderRecordResult(record, {
           recordOutcomeNotice: (
             <PlayRecordOutcomeNotice
-              outcome={recordSaveOutcome}
+              outcome={recordSaveOutcome ?? null}
               display={game.playRecordDisplay}
             />
           ),

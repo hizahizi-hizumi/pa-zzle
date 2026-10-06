@@ -12,13 +12,20 @@ import {
 } from "@/games/water-sort/play/use-water-sort-play";
 import {
   isWaterSortProblemIdentity,
+  isWaterSortRecordedProblemIdentity,
   type WaterSortProblemIdentity,
+  type WaterSortRecordedProblemIdentity,
 } from "@/games/water-sort/problem/problem";
 import {
   calculateWaterSortMoveDelta,
   calculateWaterSortPlayScore,
   calculateWaterSortTimeDeltaMs,
 } from "@/games/water-sort/score";
+import {
+  isNonNegativeFiniteNumber,
+  isNonNegativeInteger,
+  isRecordObject,
+} from "@/lib/type-guards";
 import type { PlayRecord } from "@/records/play-record";
 import { createPlayRecordId } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
@@ -40,13 +47,17 @@ type WaterSortPlayPerformance = WaterSortPlayPerformanceV1 & {
 
 type WaterSortPlayRecordPayloadV1 = {
   difficulty: WaterSortRecordedDifficulty;
-  problemIdentity: WaterSortProblemIdentity;
+  problemIdentity: WaterSortRecordedProblemIdentity;
   performance: WaterSortPlayPerformanceV1;
 };
 
+/**
+ * - `problemIdentity`: 再プレイで問題集から同じ問題を引くのに使う。生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
+ * - `performance`: そのプレイで起きた事実。評価点・評価段階・基準との差は保存せず、現在の評価規則で導出する。
+ */
 type WaterSortPlayRecordPayload = {
   difficulty: WaterSortRecordedDifficulty;
-  problemIdentity: WaterSortProblemIdentity;
+  problemIdentity: WaterSortRecordedProblemIdentity;
   performance: WaterSortPlayPerformance;
 };
 
@@ -74,75 +85,53 @@ type CreateWaterSortPlayRecordInput = {
   result: WaterSortPlayPerformance;
 };
 
-function isNonNegativeInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0;
-}
-
 function isWaterSortPerformanceV1(
   value: unknown,
 ): value is WaterSortPlayPerformanceV1 {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const performance = value as Partial<WaterSortPlayPerformanceV1>;
   return (
-    typeof performance.elapsedMs === "number" &&
-    Number.isFinite(performance.elapsedMs) &&
-    performance.elapsedMs >= 0 &&
-    isNonNegativeInteger(performance.moveCount) &&
-    isNonNegativeInteger(performance.undoCount) &&
-    isNonNegativeInteger(performance.restartCount) &&
-    isNonNegativeInteger(performance.optimalMoveCount)
+    isRecordObject(value) &&
+    isNonNegativeFiniteNumber(value.elapsedMs) &&
+    isNonNegativeInteger(value.moveCount) &&
+    isNonNegativeInteger(value.undoCount) &&
+    isNonNegativeInteger(value.restartCount) &&
+    isNonNegativeInteger(value.optimalMoveCount)
   );
 }
 
 function isWaterSortPerformance(
   value: unknown,
 ): value is WaterSortPlayPerformance {
-  if (!isWaterSortPerformanceV1(value)) {
-    return false;
-  }
-
-  const performance = value as Partial<WaterSortPlayPerformance>;
   return (
-    isNonNegativeInteger(performance.completionMoveCount) &&
-    performance.completionMoveCount <= (performance.moveCount ?? 0)
-  );
-}
-
-function hasValidPayloadBase(
-  payload: Partial<WaterSortPlayRecordPayloadV1>,
-): boolean {
-  return (
-    parseRecordedDifficulty(payload.difficulty) !== undefined &&
-    isWaterSortProblemIdentity(payload.problemIdentity)
+    isWaterSortPerformanceV1(value) &&
+    "completionMoveCount" in value &&
+    isNonNegativeInteger(value.completionMoveCount) &&
+    value.completionMoveCount <= value.moveCount
   );
 }
 
 export function isWaterSortPlayRecord(
   record: PlayRecord,
 ): record is RecognizedWaterSortPlayRecord {
+  if (record.gameId !== WATER_SORT_GAME_ID || !isRecordObject(record.payload)) {
+    return false;
+  }
+
+  const { difficulty, problemIdentity, performance } = record.payload;
   if (
-    record.gameId !== WATER_SORT_GAME_ID ||
-    !record.payload ||
-    typeof record.payload !== "object"
+    typeof difficulty !== "string" ||
+    parseRecordedDifficulty(difficulty) === undefined ||
+    !isWaterSortRecordedProblemIdentity(problemIdentity)
   ) {
     return false;
   }
 
-  const payload = record.payload as Partial<WaterSortPlayRecordPayload>;
-  if (!hasValidPayloadBase(payload)) {
-    return false;
-  }
-
   if (record.payloadVersion === 1) {
-    return isWaterSortPerformanceV1(payload.performance);
+    return isWaterSortPerformanceV1(performance);
   }
 
   return (
     record.payloadVersion === WATER_SORT_PLAY_RECORD_PAYLOAD_VERSION &&
-    isWaterSortPerformance(payload.performance)
+    isWaterSortPerformance(performance)
   );
 }
 
@@ -162,7 +151,8 @@ export function restoreWaterSortRecordedResult(
 ): WaterSortRecordedResult | null {
   if (
     !isWaterSortPlayRecord(record) ||
-    record.payloadVersion !== WATER_SORT_PLAY_RECORD_PAYLOAD_VERSION
+    record.payloadVersion !== WATER_SORT_PLAY_RECORD_PAYLOAD_VERSION ||
+    !isWaterSortProblemIdentity(record.payload.problemIdentity)
   ) {
     return null;
   }

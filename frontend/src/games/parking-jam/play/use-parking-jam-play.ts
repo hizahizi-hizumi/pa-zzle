@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { ParkingJamDifficulty } from "@/games/parking-jam/difficulty";
-import type { ParkingJamRestoredProblem } from "@/games/parking-jam/problem/generator";
-import type { ParkingJamProblemIdentity } from "@/games/parking-jam/problem/problem";
+import type {
+  ParkingJamIdentifiedProblem,
+  ParkingJamProblemIdentity,
+} from "@/games/parking-jam/problem/problem";
 import { selectParkingJamProblemForDifficulty } from "@/games/parking-jam/problem-selection";
 import {
   createParkingJamInitialState,
@@ -95,7 +97,7 @@ function getSpeedReference(board: ParkingJamBoard): ParkingJamSpeedReference {
 function createPlayState(
   difficulty: ParkingJamDifficulty,
   startedAt: number,
-  initialProblem?: ParkingJamRestoredProblem,
+  initialProblem?: ParkingJamIdentifiedProblem,
   avoidedProblemId?: ProblemId,
 ): ParkingJamPlayState {
   const restored =
@@ -118,7 +120,7 @@ function createPlayState(
 /** `initialProblem` を渡すと、指定された問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。 */
 export function useParkingJamPlay(
   difficulty: ParkingJamDifficulty,
-  initialProblem?: ParkingJamRestoredProblem,
+  initialProblem?: ParkingJamIdentifiedProblem,
   avoidedProblemId?: ProblemId,
 ) {
   const [play, setPlay] = useState<ParkingJamPlayState>(() =>

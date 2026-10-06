@@ -1,4 +1,7 @@
-import type { SlidePuzzleProblem } from "@/games/slide-puzzle/problem/problem";
+import {
+  assertSlidePuzzleProblem,
+  type SlidePuzzleProblem,
+} from "@/games/slide-puzzle/problem/problem";
 import {
   applySlidePuzzleSlide,
   getSlidePuzzleSlide,
@@ -37,6 +40,8 @@ export function createSlidePuzzleSession(
   problem: SlidePuzzleProblem,
   startedAt: number,
 ): SlidePuzzleSession {
+  assertSlidePuzzleProblem(problem);
+
   return {
     status: "playing",
     problem,

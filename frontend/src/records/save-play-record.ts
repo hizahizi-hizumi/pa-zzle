@@ -1,3 +1,4 @@
+import { isRecordObject } from "@/lib/type-guards";
 import {
   isBetterPersonalBestValue,
   type PersonalBestUpdate,
@@ -108,13 +109,9 @@ export function savePlayRecord(
 
 function isPersonalBestUpdate(value: unknown): value is PersonalBestUpdate {
   return (
-    typeof value === "object" &&
-    value !== null &&
-    "metricId" in value &&
+    isRecordObject(value) &&
     typeof value.metricId === "string" &&
-    "previousValue" in value &&
     typeof value.previousValue === "number" &&
-    "currentValue" in value &&
     typeof value.currentValue === "number"
   );
 }
@@ -123,7 +120,7 @@ function isPersonalBestUpdate(value: unknown): value is PersonalBestUpdate {
 export function isPlayRecordSaveOutcome(
   value: unknown,
 ): value is PlayRecordSaveOutcome {
-  if (typeof value !== "object" || value === null || !("status" in value)) {
+  if (!isRecordObject(value)) {
     return false;
   }
 
@@ -134,7 +131,6 @@ export function isPlayRecordSaveOutcome(
       return true;
     case "updated":
       return (
-        "updates" in value &&
         Array.isArray(value.updates) &&
         value.updates.every(isPersonalBestUpdate)
       );

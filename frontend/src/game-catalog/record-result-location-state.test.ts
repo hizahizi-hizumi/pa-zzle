@@ -25,9 +25,9 @@ describe("readRecordSaveOutcome", () => {
     ["保存結果の形をしていない state", { recordSaveOutcome: { status: 1 } }],
   ] as const;
 
-  test.each(otherStates)("%sには null を返すこと", (_, state) => {
+  test.each(otherStates)("%sには undefined を返すこと", (_, state) => {
     const outcome = readRecordSaveOutcome(state);
 
-    expect(outcome).toBeNull();
+    expect(outcome).toBeUndefined();
   });
 });

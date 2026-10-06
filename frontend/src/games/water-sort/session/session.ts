@@ -1,4 +1,7 @@
-import type { WaterSortProblem } from "@/games/water-sort/problem/problem";
+import {
+  assertWaterSortProblem,
+  type WaterSortProblem,
+} from "@/games/water-sort/problem/problem";
 import {
   applyWaterSortMove,
   listWaterSortLegalMoves,
@@ -35,6 +38,8 @@ export function createWaterSortSession(
   problem: WaterSortProblem,
   startedAt: number,
 ): WaterSortSession {
+  assertWaterSortProblem(problem);
+
   return {
     status: "playing",
     problem,

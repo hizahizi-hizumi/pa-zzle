@@ -1,8 +1,8 @@
 import { difficultyLevels } from "@/games/difficulty";
 import { assessWaterSortDifficulty } from "@/games/water-sort/difficulty";
 import {
+  decodeWaterSortPoolEntry,
   listWaterSortPoolEntries,
-  toWaterSortPooledProblem,
 } from "@/games/water-sort/problem/problem-pool";
 import { selectWaterSortProblemForDifficulty } from "@/games/water-sort/problem-selection";
 import { isStandardWaterSortInitialState } from "@/games/water-sort/puzzle/state";
@@ -17,7 +17,7 @@ describe("問題集", () => {
 
       expect(entries.length).toBeGreaterThan(0);
       for (const entry of entries) {
-        const { identity, stuckRate } = toWaterSortPooledProblem(entry);
+        const { identity, stuckRate } = decodeWaterSortPoolEntry(entry);
         expect(
           assessWaterSortDifficulty({
             conditions: identity.conditions,

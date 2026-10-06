@@ -182,3 +182,32 @@ describe("restoreWaterSortRecordedResult", () => {
     });
   });
 });
+
+describe("生成器の版が今と違う記録の場合", () => {
+  const current = createRecord();
+  const record: PlayRecord = {
+    ...current,
+    payload: {
+      ...current.payload,
+      problemIdentity: {
+        generatorVersion: "0",
+        seed: "older-generator-seed",
+        conditions: { colorCount: 6 },
+      },
+    },
+  };
+
+  test("記録として読み込み、今の評価規則で評価すること", () => {
+    const accepted = isWaterSortPlayRecord(record);
+    const score = getWaterSortPlayRecordScore(record);
+
+    expect(accepted).toBe(true);
+    expect(score).toBe(getWaterSortPlayRecordScore(current));
+  });
+
+  test("結果画面に出す内容を作り直さないこと", () => {
+    const restored = restoreWaterSortRecordedResult(record);
+
+    expect(restored).toBeNull();
+  });
+});

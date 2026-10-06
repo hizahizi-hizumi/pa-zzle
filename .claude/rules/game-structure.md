@@ -52,19 +52,31 @@ frontend/src/games/
 
 これらを省略するのは、`APP.md` / `GAME.md` 上、そのゲームだけ当該体験を持たないと説明できる場合に限る。
 
+## 記録
+
+- 記録の identity は `<Game>RecordedProblemIdentity`（`games/problem-id.ts` の `RecordedProblemIdentity`）として生成器の版を問わず読み込み、記録一覧と自己ベストに残す。採点に identity の生成条件を使うゲームは、その条件を `RecordedProblemIdentity` の型引数に書き、読めることを確かめる。
+- 結果画面の作り直し（`restore<Game>RecordedResult`）は、今の版の記録で、今の生成器の identity のときだけ行う。
+- 記録の payload の項目を足す・消す・意味を変えるときは `payloadVersion` を上げ、前の版の記録も読み続ける。
+- 記録・試行・診断・location state など外部から読み戻した値は、`@/lib/type-guards` の型ガードと `isRecordObject` による絞り込みで確かめる。型ガードを各モジュールに書き写さない。
+
 ## 条件付きの責務
 
 - `problem/generator.ts`: 実行時に問題を生成するゲームに置く。固定問題集や外部問題を選ぶだけなら置かない。
 - `problem/difficulty-analysis.ts`: 問題から難易度判定用の特徴を導出するゲームに置く。難易度が問題データの既知情報なら置かない。
 - `problem/generation/`: 問題生成・検証の内部でだけ使う解探索、手筋解析などを置く。通常プレイから直接参照しない。
-- `diagnostics.ts`: ゲーム固有の内部診断を提供する場合に置く。
+- `diagnostics.ts`: ゲーム固有の内部診断を提供する場合に置く。`games/diagnostics.ts` の `InternalDiagnosticFormat` を定義し、snapshot の作成と読み戻しは共通の `createInternalDiagnosticSnapshot` / `parseInternalDiagnosticSnapshot` を使う。公開するのは `<Game>DiagnosticSnapshot` と `create<Game>DiagnosticSnapshot` だけで、読み戻しと問題の復元はテスト用に `_private` で公開する。
 - `assets/`: ゲーム固有の静的資産がある場合に置く。
 
 ## 問題契約
 
 - `<Game>Problem` は、その1問を遊ぶために必要な情報だけを持つ。
 - seed、生成器の版、生成条件、生成試行回数など再現用情報は `<Game>ProblemIdentity` として分離する。
-- 生成結果は `<Game>GeneratedProblem` として、`problem`、`identity`、問題解析結果、下流で必要な派生情報をまとめてよい。
+- 問題に付随情報を添えた型は、役割で名前と置き場所を決める。
+  - `<Game>IdentifiedProblem`（`problem/problem.ts`）: `problem` と `identity` だけを持つ。
+  - `<Game>GeneratedProblem`（`problem/generator.ts`）: 生成器が返す問題。生成時の解析結果や下流で必要な派生情報を添える。
+  - `<Game>PooledProblem`（`problem/problem-pool.ts`）: 問題集から復元した問題。問題集が持つ派生情報（作業の量、最短手数など）を添える。問題を含まない問題集項目の読み解き結果は `<Game>DecodedPoolEntry` と呼ぶ。
+- `problem/problem.ts` は、今の生成器で扱える identity かを確かめる `is<Game>ProblemIdentity`、記録の identity として読めるかを確かめる `is<Game>RecordedProblemIdentity`、問題の形を確かめる `assert<Game>Problem` を置く。`session/` は問題を受け取るときに `assert<Game>Problem` で確かめる。
+- 問題生成の乱数は `games/problem-seed.ts` の `ProblemRandom` で受け、並べ替えは `shuffleProblemValues` を使う。
 - 解探索の手順や探索履歴は生成内部に閉じる。下流で必要なら `optimalMoveCount` のような意味のある派生値へ縮約する。
 - `session/` は `<Game>Problem` に依存し、生成・診断専用情報を保持しない。
 
@@ -130,7 +142,7 @@ frontend/src/game-catalog/
 - `game-catalog-entry.ts`: 1ゲーム分のカタログ項目 `GameCatalogEntry` と、記録や離脱したプレイの問題を遊び直すプレイ画面・記録から描く結果画面（`RecordResultContext`）の契約を置く。
 - `game-catalog.ts`: 全ゲームを表示順に並べた `gameCatalog` を置く。パズル選択・記録・結果の画面は、ゲームを列挙せずこれを回す。
 - `problem-id-query.ts`: プレイ画面の URL の `problem` クエリ（問題 ID）の読み書きを置く。
-- `play-location-state.ts`: プレイ画面へ渡す location state（最初に避ける問題の ID）の作成と読み取りを置く。
+- `play-location-state.ts`: プレイ画面へ渡す location state（最初に避ける問題の ID）の作成と読み取りを置く。location state を読めないときは、どの読み取りも `undefined` を返す。
 - `record-result-location-state.ts`: 結果画面へ渡す location state（記録の保存結果）の作成と、形を確かめた読み取りを置く。
 - `record-result-navigation.ts`: クリアして記録を保存できたプレイを、記録の結果画面 `/puzzles/<game>/result/<記録ID>` へ履歴を置き換えて移す共通フックを置く。
 - `<game>-catalog-entry.tsx`: ID（記録の `gameId`）、表示名、ピクトグラム、入口パス、プレイ画面のパス、記録表示、記録や離脱したプレイの問題を遊び直す難易度と問題 ID、記録から描く結果画面を持つ。遊び直し先は記録一覧の全行で求めるので、問題を復元せず問題集の索引で引けるかだけを確かめる。結果画面は今の版の記録からだけ描き、描けない記録には `null` を返す。

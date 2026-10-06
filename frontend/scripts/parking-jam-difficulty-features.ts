@@ -15,7 +15,7 @@ import {
   type ParkingJamDifficultyAnalysis,
 } from "@/games/parking-jam/problem/difficulty-analysis";
 import { analyzeParkingJamSolvability } from "@/games/parking-jam/problem/generation/solvability";
-import type { ParkingJamGeneratedProblem } from "@/games/parking-jam/problem/problem";
+import type { ParkingJamGeneratedProblem } from "@/games/parking-jam/problem/generator";
 import {
   createParkingJamInitialState,
   listParkingJamFixedAreaCells,

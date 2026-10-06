@@ -11,7 +11,12 @@ import {
   createParkingJamResult,
   type ParkingJamResult,
 } from "@/games/parking-jam/play/use-parking-jam-play";
-import type { ParkingJamProblemIdentity } from "@/games/parking-jam/problem/problem";
+import {
+  isParkingJamProblemIdentity,
+  isParkingJamRecordedProblemIdentity,
+  type ParkingJamProblemIdentity,
+  type ParkingJamRecordedProblemIdentity,
+} from "@/games/parking-jam/problem/problem";
 import {
   calculateParkingJamPlayScore,
   calculateParkingJamSpeedFullScoreMs,
@@ -20,6 +25,12 @@ import {
   type ParkingJamSpeedReference,
 } from "@/games/parking-jam/score";
 import type { ParkingJamSessionResult } from "@/games/parking-jam/session/session";
+import {
+  isNonEmptyString,
+  isNonNegativeFiniteNumber,
+  isNonNegativeInteger,
+  isRecordObject,
+} from "@/lib/type-guards";
 import type { PlayRecord } from "@/records/play-record";
 import { createPlayRecordId } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
@@ -33,9 +44,10 @@ type ParkingJamProblemFacts = {
 
 // payloadVersion 2 は play-quality-v1 で採点し、難易度モデル版・採点版を持たない。
 // payloadVersion 2・3 は3段階（easy / normal / hard）の難易度で、レベル1〜5へ読み替えず旧区分のまま扱う。
+// problemIdentity は生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
 type ParkingJamPlayRecordPayloadV2 = {
   difficulty: LegacyDifficulty;
-  problemIdentity: ParkingJamProblemIdentity;
+  problemIdentity: ParkingJamRecordedProblemIdentity;
   performance: ParkingJamSessionResult;
 };
 
@@ -84,65 +96,18 @@ type CreateParkingJamPlayRecordInput = {
   result: ParkingJamSessionResult;
 };
 
-function isNonNegativeInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0;
-}
-
-function isPositiveInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value > 0;
-}
-
-function isFiniteUnitInterval(value: unknown): value is number {
-  return (
-    typeof value === "number" &&
-    Number.isFinite(value) &&
-    value >= 0 &&
-    value <= 1
-  );
-}
-
-function isParkingJamProblemIdentity(
-  value: unknown,
-): value is ParkingJamProblemIdentity {
-  if (!value || typeof value !== "object") return false;
-
-  const identity = value as Partial<ParkingJamProblemIdentity>;
-  const conditions = identity.conditions;
-  return (
-    identity.generatorVersion === "2" &&
-    typeof identity.seed === "string" &&
-    !!conditions &&
-    typeof conditions === "object" &&
-    isPositiveInteger(conditions.width) &&
-    isPositiveInteger(conditions.height) &&
-    isPositiveInteger(conditions.vehicleCount) &&
-    isPositiveInteger(conditions.roadOpeningCount) &&
-    isPositiveInteger(conditions.roadOpeningSpan) &&
-    isNonNegativeInteger(conditions.fixedAreaCount) &&
-    isPositiveInteger(conditions.fixedAreaLength) &&
-    isFiniteUnitInterval(conditions.blockingPlacementProbability) &&
-    isPositiveInteger(identity.generationAttempt)
-  );
-}
-
 function isParkingJamPerformance(
   value: unknown,
 ): value is ParkingJamSessionResult {
-  if (!value || typeof value !== "object") return false;
-
-  const performance = value as Partial<ParkingJamSessionResult>;
   return (
-    typeof performance.elapsedMs === "number" &&
-    Number.isFinite(performance.elapsedMs) &&
-    performance.elapsedMs >= 0 &&
-    isNonNegativeInteger(performance.moveAttemptCount) &&
-    isNonNegativeInteger(performance.successfulMoveCount) &&
-    isNonNegativeInteger(performance.failedMoveCount) &&
-    isNonNegativeInteger(performance.undoCount) &&
-    isNonNegativeInteger(performance.restartCount) &&
-    performance.moveAttemptCount ===
-      (performance.successfulMoveCount ?? 0) +
-        (performance.failedMoveCount ?? 0)
+    isRecordObject(value) &&
+    isNonNegativeFiniteNumber(value.elapsedMs) &&
+    isNonNegativeInteger(value.moveAttemptCount) &&
+    isNonNegativeInteger(value.successfulMoveCount) &&
+    isNonNegativeInteger(value.failedMoveCount) &&
+    isNonNegativeInteger(value.undoCount) &&
+    isNonNegativeInteger(value.restartCount) &&
+    value.moveAttemptCount === value.successfulMoveCount + value.failedMoveCount
   );
 }
 
@@ -150,29 +115,10 @@ function isParkingJamProblemFacts(
   value: unknown,
   vehicleCount: number,
 ): value is ParkingJamProblemFacts {
-  if (!value || typeof value !== "object") return false;
-
-  const facts = value as Partial<ParkingJamProblemFacts>;
   return (
-    isNonNegativeInteger(facts.initialBlockedVehicleCount) &&
-    facts.initialBlockedVehicleCount < vehicleCount
-  );
-}
-
-type ParkingJamPlayRecordPayloadBase = Omit<
-  ParkingJamPlayRecordPayloadV2,
-  "difficulty"
->;
-
-function hasValidPayloadBase<
-  Payload extends Partial<ParkingJamPlayRecordPayloadBase>,
->(payload: Payload): payload is Payload & ParkingJamPlayRecordPayloadBase {
-  return (
-    isParkingJamProblemIdentity(payload.problemIdentity) &&
-    isParkingJamPerformance(payload.performance) &&
-    // 待った・やり直しで戻した車も再び出庫するため、成功出庫数は車両数以上になる。
-    payload.performance.successfulMoveCount >=
-      payload.problemIdentity.conditions.vehicleCount
+    isRecordObject(value) &&
+    isNonNegativeInteger(value.initialBlockedVehicleCount) &&
+    value.initialBlockedVehicleCount < vehicleCount
   );
 }
 
@@ -181,34 +127,51 @@ export function isParkingJamPlayRecord(
 ): record is RecognizedParkingJamPlayRecord {
   if (
     record.gameId !== PARKING_JAM_GAME_ID ||
-    !record.payload ||
-    typeof record.payload !== "object"
+    !isRecordObject(record.payload)
   ) {
     return false;
   }
 
-  const payload = record.payload as Partial<ParkingJamPlayRecordPayloadV3> &
-    Partial<Pick<ParkingJamPlayRecordPayload, "difficulty">>;
-  if (!hasValidPayloadBase(payload)) return false;
+  const {
+    difficulty,
+    difficultyModelVersion,
+    scoreModelVersion,
+    problemIdentity,
+    problemFacts,
+    performance,
+  } = record.payload;
+  if (
+    !isParkingJamRecordedProblemIdentity(problemIdentity) ||
+    !isParkingJamPerformance(performance) ||
+    // 待った・やり直しで戻した車も再び出庫するため、成功出庫数は車両数以上になる。
+    performance.successfulMoveCount < problemIdentity.conditions.vehicleCount
+  ) {
+    return false;
+  }
 
+  const recordedDifficulty =
+    typeof difficulty === "string" ? difficulty : undefined;
   const isLegacyDifficultyRecord =
     record.payloadVersion === 2 || record.payloadVersion === 3;
   const hasExpectedDifficulty = isLegacyDifficultyRecord
-    ? parseLegacyDifficulty(payload.difficulty) !== undefined
-    : parseDifficultyLevel(payload.difficulty) !== undefined;
-  if (!hasExpectedDifficulty) return false;
+    ? parseLegacyDifficulty(recordedDifficulty) !== undefined
+    : parseDifficultyLevel(recordedDifficulty) !== undefined;
+  if (!hasExpectedDifficulty) {
+    return false;
+  }
 
-  if (record.payloadVersion === 2) return true;
+  if (record.payloadVersion === 2) {
+    return true;
+  }
 
   return (
     (record.payloadVersion === 3 ||
       record.payloadVersion === PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION) &&
-    typeof payload.difficultyModelVersion === "string" &&
-    payload.difficultyModelVersion.length > 0 &&
-    payload.scoreModelVersion === PARKING_JAM_SCORE_MODEL_VERSION &&
+    isNonEmptyString(difficultyModelVersion) &&
+    scoreModelVersion === PARKING_JAM_SCORE_MODEL_VERSION &&
     isParkingJamProblemFacts(
-      payload.problemFacts,
-      payload.problemIdentity.conditions.vehicleCount,
+      problemFacts,
+      problemIdentity.conditions.vehicleCount,
     )
   );
 }
@@ -265,14 +228,15 @@ export type ParkingJamRecordedResult = {
 
 /**
  * 記録から結果画面に出す内容を作り直す。
- * 今の版（レベル1〜5の難易度）の記録のときだけ作れる。それ以外は `null` を返す。
+ * 今の版（レベル1〜5の難易度）の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
  */
 export function restoreParkingJamRecordedResult(
   record: PlayRecord,
 ): ParkingJamRecordedResult | null {
   if (
     !isParkingJamPlayRecord(record) ||
-    record.payloadVersion !== PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION
+    record.payloadVersion !== PARKING_JAM_PLAY_RECORD_PAYLOAD_VERSION ||
+    !isParkingJamProblemIdentity(record.payload.problemIdentity)
   ) {
     return null;
   }

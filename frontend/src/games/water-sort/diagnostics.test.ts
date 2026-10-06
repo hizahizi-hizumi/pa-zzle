@@ -1,10 +1,14 @@
 import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
 import {
+  _private,
   createWaterSortDiagnosticSnapshot,
-  parseWaterSortDiagnosticSnapshot,
-  restoreWaterSortProblemFromDiagnosticSnapshot,
 } from "@/games/water-sort/diagnostics";
 import { generateWaterSortProblem } from "@/games/water-sort/problem/generator";
+
+const {
+  parseWaterSortDiagnosticSnapshot,
+  restoreWaterSortProblemFromDiagnosticSnapshot,
+} = _private;
 
 describe("WaterSortDiagnosticSnapshot", () => {
   const problem = generateWaterSortProblem({
@@ -41,6 +45,6 @@ describe("WaterSortDiagnosticSnapshot", () => {
       return parseWaterSortDiagnosticSnapshot(invalidSerialized);
     }
 
-    expect(act).toThrow("Invalid water sort diagnostic snapshot");
+    expect(act).toThrow("Invalid water-sort diagnostic snapshot");
   });
 });

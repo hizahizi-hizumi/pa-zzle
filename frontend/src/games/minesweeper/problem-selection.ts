@@ -1,8 +1,6 @@
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
-import {
-  type MinesweeperRestoredProblem,
-  restoreMinesweeperProblemWithoutAnalysis,
-} from "@/games/minesweeper/problem/generator";
+import { restoreMinesweeperProblemWithoutAnalysis } from "@/games/minesweeper/problem/generator";
+import type { MinesweeperIdentifiedProblem } from "@/games/minesweeper/problem/problem";
 import {
   findMinesweeperPoolEntryByProblemId,
   listMinesweeperPoolEntries,
@@ -16,7 +14,7 @@ import { selectProblemPoolEntry } from "@/games/problem-selection";
 function restorePoolEntry(
   difficulty: MinesweeperDifficulty,
   entry: MinesweeperProblemPoolEntry,
-): MinesweeperRestoredProblem {
+): MinesweeperIdentifiedProblem {
   return restoreMinesweeperProblemWithoutAnalysis(
     toMinesweeperPoolIdentity(difficulty, entry),
   );
@@ -26,7 +24,7 @@ function restorePoolEntry(
 export function selectMinesweeperProblemForDifficulty(
   difficulty: MinesweeperDifficulty,
   seed: ProblemSeed,
-): MinesweeperRestoredProblem {
+): MinesweeperIdentifiedProblem {
   const entry = selectProblemPoolEntry(
     listMinesweeperPoolEntries(difficulty),
     seed,
@@ -39,7 +37,7 @@ export function selectMinesweeperProblemForDifficulty(
 export function selectMinesweeperProblemById(
   difficulty: MinesweeperDifficulty,
   problemId: string,
-): MinesweeperRestoredProblem | null {
+): MinesweeperIdentifiedProblem | null {
   const entry = findMinesweeperPoolEntryByProblemId(difficulty, problemId);
   return entry ? restorePoolEntry(difficulty, entry) : null;
 }

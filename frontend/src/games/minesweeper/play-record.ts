@@ -6,13 +6,20 @@ import {
 } from "@/games/minesweeper/play/use-minesweeper-play";
 import {
   isMinesweeperProblemIdentity,
+  isMinesweeperRecordedProblemIdentity,
   type MinesweeperProblemIdentity,
+  type MinesweeperRecordedProblemIdentity,
 } from "@/games/minesweeper/problem/problem";
 import {
   calculateMinesweeperPlayScore,
   calculateMinesweeperTimeDeltaMs,
 } from "@/games/minesweeper/score";
 import type { MinesweeperSessionResult } from "@/games/minesweeper/session/session";
+import {
+  isNonNegativeFiniteNumber,
+  isNonNegativeInteger,
+  isRecordObject,
+} from "@/lib/type-guards";
 import type { PlayRecord } from "@/records/play-record";
 import { createPlayRecordId } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
@@ -20,9 +27,13 @@ import type { PlayRecordDefinition } from "@/records/play-record-definition";
 const MINESWEEPER_PLAY_RECORD_PAYLOAD_VERSION = 1;
 const MINESWEEPER_GAME_ID = "minesweeper";
 
+/**
+ * - `problemIdentity`: 再プレイで問題集から同じ問題を引くのに使う。生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
+ * - `performance`: そのプレイで起きた事実。評価点・評価段階・基準時間との差は保存せず、現在の評価規則で導出する。
+ */
 type MinesweeperPlayRecordPayload = {
   difficulty: MinesweeperDifficulty;
-  problemIdentity: MinesweeperProblemIdentity;
+  problemIdentity: MinesweeperRecordedProblemIdentity;
   performance: MinesweeperSessionResult;
 };
 
@@ -40,24 +51,14 @@ type CreateMinesweeperPlayRecordInput = {
   result: MinesweeperSessionResult;
 };
 
-function isNonNegativeInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0;
-}
-
 function isMinesweeperPerformance(
   value: unknown,
 ): value is MinesweeperSessionResult {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const performance = value as Partial<MinesweeperSessionResult>;
   return (
-    typeof performance.elapsedMs === "number" &&
-    Number.isFinite(performance.elapsedMs) &&
-    performance.elapsedMs >= 0 &&
-    isNonNegativeInteger(performance.mistakeCount) &&
-    isNonNegativeInteger(performance.minimumOpenCount)
+    isRecordObject(value) &&
+    isNonNegativeFiniteNumber(value.elapsedMs) &&
+    isNonNegativeInteger(value.mistakeCount) &&
+    isNonNegativeInteger(value.minimumOpenCount)
   );
 }
 
@@ -67,17 +68,17 @@ export function isMinesweeperPlayRecord(
   if (
     record.gameId !== MINESWEEPER_GAME_ID ||
     record.payloadVersion !== MINESWEEPER_PLAY_RECORD_PAYLOAD_VERSION ||
-    !record.payload ||
-    typeof record.payload !== "object"
+    !isRecordObject(record.payload)
   ) {
     return false;
   }
 
-  const payload = record.payload as Partial<MinesweeperPlayRecordPayload>;
+  const { difficulty, problemIdentity, performance } = record.payload;
   return (
-    parseDifficultyLevel(payload.difficulty) !== undefined &&
-    isMinesweeperProblemIdentity(payload.problemIdentity) &&
-    isMinesweeperPerformance(payload.performance)
+    typeof difficulty === "string" &&
+    parseDifficultyLevel(difficulty) !== undefined &&
+    isMinesweeperRecordedProblemIdentity(problemIdentity) &&
+    isMinesweeperPerformance(performance)
   );
 }
 
@@ -129,7 +130,10 @@ export type MinesweeperRecordedResult = {
 export function restoreMinesweeperRecordedResult(
   record: PlayRecord,
 ): MinesweeperRecordedResult | null {
-  if (!isMinesweeperPlayRecord(record)) {
+  if (
+    !isMinesweeperPlayRecord(record) ||
+    !isMinesweeperProblemIdentity(record.payload.problemIdentity)
+  ) {
     return null;
   }
 

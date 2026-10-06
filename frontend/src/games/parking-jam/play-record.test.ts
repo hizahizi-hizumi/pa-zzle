@@ -264,3 +264,33 @@ describe("restoreParkingJamRecordedResult", () => {
     });
   });
 });
+
+describe("生成器の版が今と違う記録の場合", () => {
+  const olderRecord: PlayRecord = {
+    ...record,
+    payload: {
+      ...record.payload,
+      problemIdentity: {
+        generatorVersion: "1",
+        seed: "older-generator-seed",
+        conditions: { vehicleCount: 14 },
+      },
+    },
+  };
+
+  test("記録として読み込み、今の評価規則で評価すること", () => {
+    const accepted = isParkingJamPlayRecord(olderRecord);
+    const score = isParkingJamPlayRecord(olderRecord)
+      ? getParkingJamPlayRecordScore(olderRecord)
+      : null;
+
+    expect(accepted).toBe(true);
+    expect(score).toBe(getParkingJamPlayRecordScore(record));
+  });
+
+  test("結果画面に出す内容を作り直さないこと", () => {
+    const restored = restoreParkingJamRecordedResult(olderRecord);
+
+    expect(restored).toBeNull();
+  });
+});

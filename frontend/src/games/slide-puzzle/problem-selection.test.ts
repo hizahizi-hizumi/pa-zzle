@@ -10,8 +10,8 @@ import { solveSlidePuzzleOptimally } from "@/games/slide-puzzle/problem/generati
 import { generateSlidePuzzleBoard } from "@/games/slide-puzzle/problem/generator";
 import type { SlidePuzzleProblemIdentity } from "@/games/slide-puzzle/problem/problem";
 import {
+  decodeSlidePuzzlePoolEntry,
   listSlidePuzzlePoolEntries,
-  toSlidePuzzlePooledProblem,
 } from "@/games/slide-puzzle/problem/problem-pool";
 import {
   restoreSlidePuzzlePooledProblem,
@@ -27,7 +27,7 @@ describe("問題集", () => {
     (difficulty) => {
       const levels = listSlidePuzzlePoolEntries(difficulty).map((entry) => {
         const { identity, optimalMoveCount } =
-          toSlidePuzzlePooledProblem(entry);
+          decodeSlidePuzzlePoolEntry(entry);
         const board = generateSlidePuzzleBoard(
           identity.seed,
           identity.conditions,
@@ -113,7 +113,7 @@ describe("selectSlidePuzzleProblemForDifficulty", () => {
 describe("restoreSlidePuzzlePooledProblem", () => {
   const pooledProblems = listSlidePuzzlePoolEntries("3")
     .slice(0, 3)
-    .map((entry) => [entry[0], toSlidePuzzlePooledProblem(entry)] as const);
+    .map((entry) => [entry[0], decodeSlidePuzzlePoolEntry(entry)] as const);
   const unmatchedIdentities: readonly [string, SlidePuzzleProblemIdentity][] = [
     [
       "問題集に無い seed",

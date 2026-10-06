@@ -9,13 +9,21 @@ import {
 } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import {
   isSlidePuzzleProblemIdentity,
+  isSlidePuzzleRecordedProblemIdentity,
   type SlidePuzzleProblemIdentity,
+  type SlidePuzzleRecordedProblemIdentity,
 } from "@/games/slide-puzzle/problem/problem";
 import {
   calculateSlidePuzzleMoveDelta,
   calculateSlidePuzzlePlayScore,
   calculateSlidePuzzleTimeDeltaMs,
 } from "@/games/slide-puzzle/score";
+import {
+  isNonNegativeFiniteNumber,
+  isNonNegativeInteger,
+  isPositiveInteger,
+  isRecordObject,
+} from "@/lib/type-guards";
 import { createPlayRecordId, type PlayRecord } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
@@ -34,9 +42,13 @@ type SlidePuzzlePlayPerformance = {
   optimalMoveCount: number;
 };
 
+/**
+ * - `problemIdentity`: 再プレイで問題集から同じ問題を引くのに使う。生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
+ * - `performance`: そのプレイで起きた事実。評価点・評価段階・基準との差は保存せず、現在の評価規則で導出する。
+ */
 type SlidePuzzlePlayRecordPayload = {
   difficulty: SlidePuzzleDifficulty;
-  problemIdentity: SlidePuzzleProblemIdentity;
+  problemIdentity: SlidePuzzleRecordedProblemIdentity;
   performance: SlidePuzzlePlayPerformance;
 };
 
@@ -54,26 +66,12 @@ type CreateSlidePuzzlePlayRecordInput = {
   result: SlidePuzzlePlayPerformance;
 };
 
-function isRecordObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isNonNegativeInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0;
-}
-
-function isPositiveInteger(value: unknown): value is number {
-  return isNonNegativeInteger(value) && value > 0;
-}
-
 function isSlidePuzzlePerformance(
   value: unknown,
 ): value is SlidePuzzlePlayPerformance {
   return (
     isRecordObject(value) &&
-    typeof value.elapsedMs === "number" &&
-    Number.isFinite(value.elapsedMs) &&
-    value.elapsedMs >= 0 &&
+    isNonNegativeFiniteNumber(value.elapsedMs) &&
     isPositiveInteger(value.moveCount) &&
     isPositiveInteger(value.completionMoveCount) &&
     value.completionMoveCount <= value.moveCount &&
@@ -82,6 +80,16 @@ function isSlidePuzzlePerformance(
     isNonNegativeInteger(value.restartCount) &&
     isPositiveInteger(value.optimalMoveCount) &&
     value.optimalMoveCount <= value.completionMoveCount
+  );
+}
+
+function isRecordedIdentityOfDifficulty(
+  identity: SlidePuzzleRecordedProblemIdentity,
+  difficulty: SlidePuzzleDifficulty,
+): boolean {
+  return (
+    !isSlidePuzzleProblemIdentity(identity) ||
+    isSlidePuzzleProblemIdentityOfDifficulty(identity, difficulty)
   );
 }
 
@@ -103,11 +111,8 @@ export function isSlidePuzzlePlayRecord(
       : undefined;
   return (
     parsedDifficulty !== undefined &&
-    isSlidePuzzleProblemIdentity(problemIdentity) &&
-    isSlidePuzzleProblemIdentityOfDifficulty(
-      problemIdentity,
-      parsedDifficulty,
-    ) &&
+    isSlidePuzzleRecordedProblemIdentity(problemIdentity) &&
+    isRecordedIdentityOfDifficulty(problemIdentity, parsedDifficulty) &&
     isSlidePuzzlePerformance(performance)
   );
 }
@@ -162,7 +167,10 @@ export type SlidePuzzleRecordedResult = {
 export function restoreSlidePuzzleRecordedResult(
   record: PlayRecord,
 ): SlidePuzzleRecordedResult | null {
-  if (!isSlidePuzzlePlayRecord(record)) {
+  if (
+    !isSlidePuzzlePlayRecord(record) ||
+    !isSlidePuzzleProblemIdentity(record.payload.problemIdentity)
+  ) {
     return null;
   }
 
