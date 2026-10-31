@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="氷の床迷路">
+  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <path fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" stroke-linecap="round" d="M30 54H48M24 60H48M34 66H48"/>
+  <circle cx="60" cy="60" r="7" fill="var(--game-pictogram-strong)"/>
+  <rect x="69" y="52.5" width="15" height="15" rx="3" fill="var(--game-pictogram-strong)"/>
+</svg>
