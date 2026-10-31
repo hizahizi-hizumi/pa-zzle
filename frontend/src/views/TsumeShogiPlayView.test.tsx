@@ -22,6 +22,7 @@ vi.mock("@/games/problem-seed", async (importOriginal) => ({
 
 afterEach(() => {
   cleanup();
+  window.localStorage.clear();
   vi.useRealTimers();
 });
 
@@ -134,16 +135,75 @@ describe("TsumeShogiPlayView", () => {
       ).toBeTruthy();
     });
 
+    describe("王手を指して玉方の応手を待っている場合", () => {
+      beforeEach(() => {
+        tapHand("銀");
+        const destination = within(getBoard()).getByRole("button", {
+          name: /^2二$/,
+        });
+        destination.focus();
+        fireEvent.click(destination);
+      });
+
+      test("指した升のフォーカスを残したまま、盤の升を押せなくすること", () => {
+        const playedSquare = within(getBoard()).getByRole("button", {
+          name: "2二 攻方の銀",
+        });
+
+        expect(document.activeElement).toBe(playedSquare);
+        expect(playedSquare.getAttribute("aria-disabled")).toBe("true");
+      });
+    });
+
     test("王手にならない手は着手させないこと", () => {
       tapSquare(/^4三 攻方の龍$/);
       tapSquare(/^4四$/);
 
-      const status = screen.getByRole("status");
-
-      expect(status.textContent).toBe("王手になる手だけ指せます");
+      expect(screen.getByRole("status").textContent).toBe("");
       expect(
-        within(getBoard()).getByRole("button", { name: "4三 攻方の龍" }),
+        within(getBoard())
+          .getByRole("button", { name: "4三 攻方の龍" })
+          .getAttribute("aria-pressed"),
+      ).toBe("true");
+      expect(
+        within(getBoard()).getByRole("button", { name: "4四" }),
       ).toBeTruthy();
+      expect(screen.getByText("指せません")).toBeTruthy();
+    });
+
+    describe("成・不成のどちらも指せる移動を選んだ場合", () => {
+      beforeEach(() => {
+        tapSquare(/^1一 攻方の銀$/);
+        tapSquare(/^2二$/);
+      });
+
+      test("成・不成を選ぶまで駒を動かさないこと", () => {
+        const picker = screen.getByRole("group", { name: "成・不成" });
+
+        expect(picker).toBeTruthy();
+        expect(
+          within(getBoard()).getByRole("button", { name: "1一 攻方の銀" }),
+        ).toBeTruthy();
+      });
+
+      const choices = [
+        ["成", "2二 攻方の成銀"],
+        ["不成", "2二 攻方の銀"],
+      ] as const;
+
+      test.each(choices)("%sを選ぶとその駒で指すこと", (choice, label) => {
+        fireEvent.click(
+          within(screen.getByRole("group", { name: "成・不成" })).getByRole(
+            "button",
+            { name: choice },
+          ),
+        );
+
+        expect(screen.queryByRole("group", { name: "成・不成" })).toBeNull();
+        expect(
+          within(getBoard()).getByRole("button", { name: label }),
+        ).toBeTruthy();
+      });
     });
   });
 });

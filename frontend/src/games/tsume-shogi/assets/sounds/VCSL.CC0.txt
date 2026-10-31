@@ -1,0 +1,63 @@
+詰将棋の効果音（このディレクトリの *.flac）の素材と加工
+
+■ 素材
+
+Versilian Community Sample Library（VCSL）
+https://github.com/sgossner/VCSL
+コミット c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e
+使用許諾: CC0 1.0 Universal（https://creativecommons.org/publicdomain/zero/1.0/）
+
+CC0 1.0 により著作権と関連する権利が放棄された録音で、加工・再配布に表示の義務はないが、出典としてここに記す。
+録音はリポジトリに同梱しない。
+
+使った録音（VCSL の中の場所とファイル名）:
+
+Idiophones/Struck Idiophones/Slapstick/（スラップスティック。堅木の板2枚を打ち合わせる）
+  slapstick_quiet_rr1.wav
+  slapstick_quiet_rr2.wav
+  slapstick_rr1.wav
+Idiophones/Struck Idiophones/Cajon/（カホン。木の箱の胴）
+  Cajon_hit2_f_rr1.wav
+  Cajon_hit2_f_rr2.wav
+  Cajon_hit3_mp_rr1.wav
+
+■ 加工
+
+録音の取り出し方と加工は scripts/assets/tsume_shogi_sounds.py にある。乱数は使わず、同じ版の numpy・scipy・ffmpeg なら
+同じ音を書き出す。発振器や雑音で音を足さず、どの音も録音の切り出し・重ね・フィルタだけで作る。
+以下、フィルタは特記のない限り 2 次のバターワース、棚は RBJ の式（S=0.8）、山・谷は RBJ のピーキング、
+「切る」は先頭から指定の長さで切り、最後の指定の長さを cos² で閉じること。
+
+1. 読み込み
+   ffmpeg で 48kHz のモノラルにし、45Hz の高域通過を 2 回掛ける。ピークから -30dB を超える最初の点の 0.6ms 前から始め、
+   ピークを 1 にそろえる。
+
+2. 駒を打つ音（打音）
+   スラップスティックを 160ms で切り（40ms で閉じる）、カホンに 900Hz の低域通過と 110Hz の高域通過を掛けて 140ms で切った
+   もの（50ms で閉じる）を、指定の大きさで 0.4ms 遅らせて重ねる。
+
+   piece-moved       slapstick_quiet_rr1 ＋ Cajon_hit2_f_rr1（-17dB）
+   piece-moved-2     slapstick_quiet_rr2 ＋ Cajon_hit2_f_rr2（-17dB）
+   piece-moved-3     slapstick_rr1 を先に 120ms で切ったもの（40ms で閉じる）＋ Cajon_hit3_mp_rr1（-16dB）
+   piece-replied     slapstick_quiet_rr2 ＋ Cajon_hit3_mp_rr1（-18dB）に、3.5kHz の高域の棚 -3dB
+   piece-replied-2   slapstick_quiet_rr1 ＋ Cajon_hit2_f_rr2（-18dB）に、3.5kHz の高域の棚 -3dB
+
+3. rejected
+   slapstick_quiet_rr1 に 160Hz の高域通過、1.5kHz の低域通過を 2 回、700Hz の山（+2dB・Q 1.0）を掛け、
+   時定数 35ms の指数で減衰させる。
+
+4. refuted
+   piece-moved（ラウドネスを合わせる前）に、Cajon_hit2_f_rr1 に 500Hz の低域通過を 2 回掛けたカホンの低い鳴りを、
+   -2dB で 2ms 遅らせて重ねる。
+
+5. 仕上げ（すべての音）
+   末尾に 30ms の無音を足し、400ms 窓の最大ラウドネス（ITU-R BS.1770 の K 特性、前後に 400ms の無音を足して測る）を目標に合わせる。
+   2ms の RMS の包絡がピークから指定の大きさだけ下がった点に、閉じる長さを足したところで切り、cos² で閉じる。
+   ピークから -50dB を超える最初の点の 0.5ms 前から始め、もう一度ラウドネスを目標に合わせる。
+   ffmpeg で 16bit・48kHz・モノラルの FLAC にし、メタデータの PADDING のブロックを外す。
+
+                       目標        切る点       閉じる長さ
+   piece-moved（1〜3）  -46.5 LUFS  -62dB        20ms
+   piece-replied（1〜2）-49.5 LUFS  -60dB        20ms
+   rejected            -50.5 LUFS  -50dB        12ms
+   refuted             -40.4 LUFS  -60dB        40ms

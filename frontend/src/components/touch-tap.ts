@@ -15,6 +15,11 @@ export type TapHandlers = {
   onClick: (event: ReactMouseEvent<HTMLElement>) => void;
 };
 
+/** 押せないボタン。`aria-disabled` のボタンはフォーカスを残したまま押せなくしているので、`disabled` と同じく押さなかったことにする。 */
+function isDisabled(element: HTMLElement): boolean {
+  return element.matches(':disabled, [aria-disabled="true"]');
+}
+
 function isInsideElement(event: ReactPointerEvent<HTMLElement>): boolean {
   const rect = event.currentTarget.getBoundingClientRect();
   return (
@@ -43,13 +48,14 @@ export function useTouchTap(): {
         return {
           onPointerUp(event) {
             if (event.pointerType === "mouse" || !event.isPrimary) return;
-            if (event.currentTarget.matches(":disabled")) return;
+            if (isDisabled(event.currentTarget)) return;
             // 押したまま指を外へずらして離したときは、click と同じく押さなかったことにする。
             if (!isInsideElement(event)) return;
             lastTouchTapAtRef.current = event.timeStamp;
             onTap();
           },
           onClick(event) {
+            if (isDisabled(event.currentTarget)) return;
             const lastTouchTapAt = lastTouchTapAtRef.current;
             if (
               event.detail !== 0 &&

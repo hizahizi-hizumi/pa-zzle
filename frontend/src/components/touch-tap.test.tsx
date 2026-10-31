@@ -4,14 +4,24 @@ import { useTouchTap } from "@/components/touch-tap";
 
 type TapTargetProps = {
   disabled?: boolean;
+  ariaDisabled?: boolean;
   onTap: () => void;
 };
 
-function TapTarget({ disabled = false, onTap }: TapTargetProps) {
+function TapTarget({
+  disabled = false,
+  ariaDisabled = false,
+  onTap,
+}: TapTargetProps) {
   const { getTapHandlers } = useTouchTap();
 
   return (
-    <button type="button" disabled={disabled} {...getTapHandlers(onTap)}>
+    <button
+      type="button"
+      disabled={disabled}
+      aria-disabled={ariaDisabled}
+      {...getTapHandlers(onTap)}
+    >
       押す
     </button>
   );
@@ -73,6 +83,23 @@ describe("useTouchTap の受け口を押せないボタンに付けた場合", (
 
   test("タッチで離しても受けないこと", () => {
     fireEvent.pointerUp(screen.getByText("押す"), touch);
+
+    expect(onTap).not.toHaveBeenCalled();
+  });
+});
+
+describe("useTouchTap の受け口をフォーカスを残したまま押せなくしたボタンに付けた場合", () => {
+  const onTap = vi.fn();
+
+  beforeEach(() => {
+    onTap.mockReset();
+    render(<TapTarget ariaDisabled onTap={onTap} />);
+  });
+
+  test("タッチで離しても、click でも受けないこと", () => {
+    const button = screen.getByText("押す");
+    fireEvent.pointerUp(button, touch);
+    fireEvent.click(button, { detail: 1 });
 
     expect(onTap).not.toHaveBeenCalled();
   });
