@@ -3,7 +3,10 @@ import { useState } from "react";
 import { GamePlayFrame } from "@/components/GamePlayFrame";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import { MINESWEEPER_DISPLAY_NAME } from "@/games/minesweeper/display-name";
-import type { MinesweeperResult } from "@/games/minesweeper/play/use-minesweeper-play";
+import type {
+  MinesweeperOperation,
+  MinesweeperResult,
+} from "@/games/minesweeper/play/use-minesweeper-play";
 import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
 import { MinesweeperClearAnimation } from "@/games/minesweeper/ui/board/clear/MinesweeperClearAnimation";
 import {
@@ -12,6 +15,7 @@ import {
 } from "@/games/minesweeper/ui/board/MinesweeperBoard";
 import { MinesweeperHowToPlayDialog } from "@/games/minesweeper/ui/MinesweeperHowToPlayDialog";
 import { InputModeToggle } from "@/games/minesweeper/ui/MinesweeperPlay/InputModeToggle";
+import { useMinesweeperSoundEffects } from "@/games/minesweeper/ui/MinesweeperPlay/use-minesweeper-sound-effects";
 import { MinesweeperResultScreen } from "@/games/minesweeper/ui/result/MinesweeperResultScreen";
 import type { GamePlayScreenProps } from "@/games/play";
 
@@ -25,6 +29,7 @@ type MinesweeperPlayProps = GamePlayScreenProps<
   flagCount: number;
   mistakeCount: number;
   visibleCells: readonly MinesweeperVisibleCell[];
+  operation: MinesweeperOperation | null;
   onRevealCell: (cellIndex: number) => void;
   onToggleFlag: (cellIndex: number) => void;
   onChordCell: (cellIndex: number) => void;
@@ -42,6 +47,7 @@ export function MinesweeperPlay({
   flagCount,
   mistakeCount,
   visibleCells,
+  operation,
   onRevealCell,
   onToggleFlag,
   onChordCell,
@@ -55,6 +61,7 @@ export function MinesweeperPlay({
 }: MinesweeperPlayProps) {
   const [mode, setMode] = useState<MinesweeperInputMode>("reveal");
   const interactionEnabled = progress === "playing";
+  useMinesweeperSoundEffects(operation, progress);
 
   function handleReplay(): void {
     setMode("reveal");

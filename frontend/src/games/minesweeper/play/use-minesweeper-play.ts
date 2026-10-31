@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
 import {
   countMinesweeperMinimumOpenCount,
@@ -6,6 +6,7 @@ import {
   type MinesweeperProblemIdentity,
 } from "@/games/minesweeper/problem/problem";
 import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
+import type { MinesweeperPuzzleState } from "@/games/minesweeper/puzzle/state";
 import {
   calculateMinesweeperPlayScore,
   calculateMinesweeperSpeedScoreRule,
@@ -34,6 +35,28 @@ import {
 import { createProblemId, type ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
+
+/**
+ * 盤面が変わった操作の知らせ。`cellIndex` は押したマス。
+ * - `cells-opened`: 安全なマスを開いた。数字マスを押して周りをまとめて開いたときも含む。`openedCellCount` は連鎖して開いた数も含む。
+ * - `mine-stepped`: 地雷を踏んだ。同じ操作で安全なマスも開いたときは `openedCellCount` に数える。
+ * - `flag-placed`・`flag-removed`: 旗を立てた・外した。
+ */
+export type MinesweeperOperation =
+  | {
+      id: number;
+      type: "cells-opened";
+      cellIndex: number;
+      openedCellCount: number;
+    }
+  | {
+      id: number;
+      type: "mine-stepped";
+      cellIndex: number;
+      steppedMineCount: number;
+      openedCellCount: number;
+    }
+  | { id: number; type: "flag-placed" | "flag-removed"; cellIndex: number };
 
 /** 評価に使う、問題の事実。 */
 export type MinesweeperResultProblemFacts = {
@@ -76,6 +99,7 @@ export type MinesweeperPlay = GamePlay<
   flagCount: number;
   mistakeCount: number;
   visibleCells: MinesweeperVisibleCell[];
+  operation: MinesweeperOperation | null;
   revealCell: (cellIndex: number) => void;
   toggleFlag: (cellIndex: number) => void;
   chordCell: (cellIndex: number) => void;
@@ -86,6 +110,7 @@ type MinesweeperPlayState = {
   problemFacts: MinesweeperResultProblemFacts;
   session: MinesweeperSession;
   progress: GameProgress;
+  operation: MinesweeperOperation | null;
 };
 
 function createPlayState(
@@ -101,7 +126,64 @@ function createPlayState(
     },
     session,
     progress: getProgressAfterSessionChange("playing", session.status),
+    operation: null,
   };
+}
+
+function createOpeningOperation(
+  id: number,
+  cellIndex: number,
+  previous: MinesweeperPuzzleState,
+  next: MinesweeperPuzzleState,
+): MinesweeperOperation {
+  const openedCellCount =
+    next.revealedCellIndices.length - previous.revealedCellIndices.length;
+  const steppedMineCount =
+    next.steppedMineCellIndices.length - previous.steppedMineCellIndices.length;
+  return steppedMineCount > 0
+    ? {
+        id,
+        type: "mine-stepped",
+        cellIndex,
+        steppedMineCount,
+        openedCellCount,
+      }
+    : { id, type: "cells-opened", cellIndex, openedCellCount };
+}
+
+function createFlagOperation(
+  id: number,
+  cellIndex: number,
+  next: MinesweeperPuzzleState,
+): MinesweeperOperation {
+  return {
+    id,
+    type: next.flaggedCellIndices.includes(cellIndex)
+      ? "flag-placed"
+      : "flag-removed",
+    cellIndex,
+  };
+}
+
+/** 操作で盤面が変わったときだけ、session と操作の知らせを反映する。 */
+function applyOperation(
+  current: MinesweeperPlayState,
+  session: MinesweeperSession,
+  createOperation: (
+    previous: MinesweeperPuzzleState,
+    next: MinesweeperPuzzleState,
+  ) => MinesweeperOperation,
+): MinesweeperPlayState {
+  const next = applyPlaySession(current, session);
+  return next === current
+    ? current
+    : {
+        ...next,
+        operation: createOperation(
+          current.session.puzzleState,
+          session.puzzleState,
+        ),
+      };
 }
 
 function selectProblem(
@@ -131,44 +213,54 @@ export function useMinesweeperPlay(
   );
   const { session, problemIdentity, problemFacts } = play;
   const elapsedMs = useSessionElapsedMs(session);
+  const nextOperationId = useRef(0);
 
   const revealCell = useCallback((cellIndex: number) => {
     const revealedAt = Date.now();
+    const operationId = nextOperationId.current++;
     setPlay((current) =>
-      applyPlaySession(
+      applyOperation(
         current,
         revealMinesweeperSessionCell(current.session, cellIndex, revealedAt),
+        (previous, next) =>
+          createOpeningOperation(operationId, cellIndex, previous, next),
       ),
     );
   }, []);
 
   const toggleFlag = useCallback((cellIndex: number) => {
+    const operationId = nextOperationId.current++;
     setPlay((current) =>
-      applyPlaySession(
+      applyOperation(
         current,
         toggleMinesweeperSessionFlag(current.session, cellIndex),
+        (_previous, next) => createFlagOperation(operationId, cellIndex, next),
       ),
     );
   }, []);
 
   const chordCell = useCallback((cellIndex: number) => {
     const chordedAt = Date.now();
+    const operationId = nextOperationId.current++;
     setPlay((current) =>
-      applyPlaySession(
+      applyOperation(
         current,
         chordMinesweeperSessionCell(current.session, cellIndex, chordedAt),
+        (previous, next) =>
+          createOpeningOperation(operationId, cellIndex, previous, next),
       ),
     );
   }, []);
 
   const replay = useCallback(() => {
     const startedAt = Date.now();
-    setPlay((current) =>
-      startPlaySession(
+    setPlay((current) => ({
+      ...startPlaySession(
         current,
         createMinesweeperSession(current.session.problem, startedAt),
       ),
-    );
+      operation: null,
+    }));
   }, []);
 
   const startNewProblem = useCallback(() => {
@@ -207,6 +299,7 @@ export function useMinesweeperPlay(
     flagCount: session.puzzleState.flaggedCellIndices.length,
     mistakeCount: session.mistakeCount,
     visibleCells: getMinesweeperSessionVisibleCells(session),
+    operation: play.operation,
     revealCell,
     toggleFlag,
     chordCell,

@@ -59,6 +59,68 @@ describe("useReflectionPlay", () => {
       expect(playResult).toBeNull();
     });
 
+    describe("ピースを置いた場合", () => {
+      const solutionCells = pooled.problem.solution.cells;
+      const placedCellIndex = solutionCells.findIndex((cell) => cell !== null);
+      const placedPiece = solutionCells[placedCellIndex]!;
+      const emptyCellIndex = solutionCells.indexOf(null);
+
+      beforeEach(() => {
+        act(() => result.current.selectStockPiece(placedPiece));
+        act(() => result.current.selectCell(placedCellIndex));
+      });
+
+      test("置いたことを操作の知らせとして返すこと", () => {
+        expect(result.current.operation?.type).toBe("piece-placed");
+      });
+
+      test("盤面のピースを選ぶと選んだことを知らせること", () => {
+        act(() => result.current.clearSelection());
+        act(() => result.current.selectCell(placedCellIndex));
+
+        expect(result.current.operation?.type).toBe("selected");
+      });
+
+      test("選択を解くと選択を解いたことを知らせること", () => {
+        act(() => result.current.clearSelection());
+
+        expect(result.current.operation?.type).toBe("deselected");
+      });
+
+      test("別のマスへ移すと移したことを知らせること", () => {
+        act(() => result.current.clearSelection());
+        act(() => result.current.selectCell(placedCellIndex));
+        act(() => result.current.selectCell(emptyCellIndex));
+
+        expect(result.current.operation?.type).toBe("piece-moved");
+      });
+
+      test("手持ちへ戻すと戻したことを知らせること", () => {
+        act(() => result.current.removePiece(placedCellIndex));
+
+        expect(result.current.operation?.type).toBe("piece-returned");
+      });
+
+      test("外周ヒントを押すと光路を表示したことを知らせ、閉じても知らせないこと", () => {
+        const entry = { side: "top", index: 0 } as const;
+
+        act(() => result.current.selectClue(entry));
+        expect(result.current.operation).toMatchObject({
+          type: "laser-shown",
+          entry,
+        });
+
+        act(() => result.current.selectClue(entry));
+        expect(result.current.operation).toBeNull();
+      });
+
+      test("盤面を戻しても知らせないこと", () => {
+        act(() => result.current.restart());
+
+        expect(result.current.operation).toBeNull();
+      });
+    });
+
     describe("解を置き切った場合", () => {
       beforeEach(() => {
         placeSolution(result, pooled.problem);
