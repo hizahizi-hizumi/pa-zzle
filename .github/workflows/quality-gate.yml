@@ -26,6 +26,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      # vite / vitest / tsc はNodeで動くため、ランナー既定ではなくChatGPT実行環境と同じNodeに固定する。
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
