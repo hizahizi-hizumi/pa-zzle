@@ -46,10 +46,11 @@ function tapSquare(name: RegExp): void {
   fireEvent.click(within(getBoard()).getByRole("button", { name }));
 }
 
-function tapHand(character: string): void {
+function tapHand(pieceName: string): void {
   fireEvent.click(
-    within(screen.getByRole("group", { name: "攻方の持駒" })).getByText(
-      character,
+    within(screen.getByRole("group", { name: "攻方の持駒" })).getByRole(
+      "button",
+      { name: new RegExp(`^${pieceName} `) },
     ),
   );
 }
