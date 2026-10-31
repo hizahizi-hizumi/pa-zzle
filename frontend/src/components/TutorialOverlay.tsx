@@ -64,9 +64,10 @@ export function TutorialOverlay({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
+      {/* 動きを減らす設定では、画面を現れる動きを付けずに出す。導入の名前と一文をすぐ止めて見せるので、後ろの画面と重ねない。 */}
       <DialogContent
         showCloseButton={false}
-        className="top-0 left-0 flex h-svh max-h-none w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 p-0 pb-[env(safe-area-inset-bottom)] shadow-none sm:max-w-none"
+        className="top-0 left-0 flex h-svh max-h-none w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 p-0 pb-[env(safe-area-inset-bottom)] shadow-none motion-reduce:animate-none! sm:max-w-none"
       >
         <TutorialScreen
           title={title}

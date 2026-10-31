@@ -411,6 +411,7 @@ export function TutorialScreen({
     tagline.style.top = `${taglineTop}px`;
     if (!animated) {
       // 名前と一文、解き終えた盤面、始めの盤面を、それぞれ一言を読める間だけ止めて見せる。
+      // 動きを減らす設定では画面が現れる動きも省く（`TutorialOverlay`）ので、名前と一文はすぐ見せる。
       tagline.style.opacity = "1";
       for (const [element, transform] of [
         [pictogram, transforms.pictogram],
