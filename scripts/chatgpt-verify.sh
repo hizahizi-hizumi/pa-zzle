@@ -21,18 +21,20 @@ fail() {
 archive="$(realpath "$1")"
 repo_root="$(realpath "${2:-.}")"
 [[ -f "$archive" ]] || fail "Artifact archive not found: $archive"
-[[ -f "$repo_root/.bun-version" && -f "$repo_root/frontend/bun.lock" ]] || fail "Repository Snapshot is incomplete: $repo_root"
+[[ -f "$repo_root/.bun-version" && -f "$repo_root/.node-version" && -f "$repo_root/frontend/bun.lock" ]] || fail "Repository Snapshot is incomplete: $repo_root"
 
 # shellcheck disable=SC1091
 source "$repo_root/.github/actions/offline-dependencies/inputs.env"
 expected_schema="$OFFLINE_DEPENDENCIES_SCHEMA"
+expected_node_version="$(tr -d '[:space:]' < "$repo_root/.node-version")"
+expected_node_major="${expected_node_version%%.*}"
 
 actual_node_major="$(node -p 'process.versions.node.split(".")[0]')"
 actual_platform="$(uname -s | tr '[:upper:]' '[:lower:]')"
 actual_arch="$(uname -m)"
 actual_libc="$(getconf GNU_LIBC_VERSION 2>/dev/null | awk '{print $1}')"
 
-[[ "$actual_node_major" == "$NODE_MAJOR" ]] || fail "Node $NODE_MAJOR is required, got $actual_node_major"
+[[ "$actual_node_major" == "$expected_node_major" ]] || fail "Node $expected_node_major is required, got $actual_node_major"
 [[ "$actual_platform" == "$PLATFORM" ]] || fail "platform $PLATFORM is required, got $actual_platform"
 [[ "$actual_arch" == "$ARCH" ]] || fail "architecture $ARCH is required, got $actual_arch"
 [[ "$actual_libc" == "$LIBC" ]] || fail "libc $LIBC is required, got ${actual_libc:-unknown}"
