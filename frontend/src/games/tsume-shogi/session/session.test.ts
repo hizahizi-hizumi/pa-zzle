@@ -9,7 +9,6 @@ import {
   canUndoTsumeShogiSession,
   chooseTsumeShogiSessionPromotion,
   createTsumeShogiSession,
-  getTsumeShogiSessionLastMove,
   getTsumeShogiSessionPhase,
   getTsumeShogiSessionRemainingPlies,
   getTsumeShogiSessionResult,
@@ -94,9 +93,9 @@ describe("tapTsumeShogiSessionSquare", () => {
       expect(formatTsumeShogiMoveUsi(session.turns[0]!.defenderMove!)).toBe(
         "2a1b",
       );
-      expect(
-        formatTsumeShogiMoveUsi(getTsumeShogiSessionLastMove(session)!),
-      ).toBe("S*2b");
+      expect(formatTsumeShogiMoveUsi(session.turns[0]!.attackerMove)).toBe(
+        "S*2b",
+      );
       expect(getTsumeShogiSessionRemainingPlies(session)).toBe(2);
     });
   });
@@ -349,9 +348,11 @@ describe("playTsumeShogiSessionDefenderReply", () => {
       const session = playTsumeShogiSessionDefenderReply(afterCorrectCheck);
 
       expect(getTsumeShogiSessionPhase(session)).toBe("attacker");
-      expect(
-        formatTsumeShogiMoveUsi(getTsumeShogiSessionLastMove(session)!),
-      ).toBe("2a1b");
+      expect(formatTsumeShogiPosition(session.puzzleState)).toBe(
+        formatTsumeShogiPosition(
+          afterCorrectCheck.turns[0]!.positionAfterDefense,
+        ),
+      );
       expect(session.refutationViewCount).toBe(0);
       expect(getTsumeShogiSessionRemainingPlies(session)).toBe(1);
     });

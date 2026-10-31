@@ -61,12 +61,29 @@ export const tsumeShogiToneClassNames = {
   squareSelected: "bg-[#8a5a24]/14",
   /** 直前の手の移動先。低い濃さの暖色の焼け色。 */
   squareLastMove: "bg-[#c8742a]/22",
+  /** 誤王手への玉方の反証。直前の手より濃い焦げ茶の焼け色を升の縁へ向けて濃くし、直前の手と見分ける。 */
+  squareRefutation:
+    "bg-[radial-gradient(circle_at_50%_50%,rgb(110_60_20/0.18),rgb(80_40_10/0.42)_95%)]",
+  /** 動きを減らす設定で、着手させなかった入力を返す間だけ、選んだ駒の地を変える色。 */
+  squareRejected: "bg-[#8a3a18]/25",
   handSelected: "bg-[#8a5a24]/14",
+  /** 動きを減らす設定で着手させなかった入力を返す間の、選んだ持駒の地。`squareRejected` と同じ色。 */
+  handRejected: "bg-[#8a3a18]/25",
   /** 駒台の持駒を指したときの地。選んだ持駒の地（`handSelected`）は上書きしない。 */
   handHover: "not-aria-disabled:not-aria-pressed:hover:bg-[#3b230b]/10",
+  /** 棋譜の行は木の外の地に書く。反証は赤字にせず、墨の淡い色で示す。 */
+  refutationText: "text-[#6b5a48] dark:text-[#b8a690]",
   /** キーボード操作の枠。暗い線と明るい線の二重線にし、どの木目の上でも見えるようにする。升の地は上書きしない。 */
   focusRing:
     "focus-visible:outline-[#1a1410] focus-visible:shadow-[0_0_0_2px_rgb(255_248_232)]",
+  /**
+   * 成・不成の選択肢。白い札を出さず、2枚の駒を浮かせて影で盤から離し、駒の下に墨の小さな字を添える。
+   * 覆った升の駒が透けて紛れないよう、盤と同じ木の色の地を敷く。
+   */
+  promotionPicker:
+    "bg-[#e5b86a] shadow-[0_6px_14px_-4px_rgb(45_22_5/0.45),0_1px_2px_rgb(45_22_5/0.3)]",
+  promotionLabel:
+    "font-medium text-[#2a1b10] [text-shadow:0_0_2px_rgb(255_240_210),0_0_2px_rgb(255_240_210)]",
   /** 選んだ駒を升の約 18% 持ち上げる（390px の画面で 6px ほど）。 */
   pieceLift: "-translate-y-[18%]",
   /** 詰んだ玉は傾いたまま残す。 */

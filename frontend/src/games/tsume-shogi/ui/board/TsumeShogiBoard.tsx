@@ -1,31 +1,49 @@
-import type { CSSProperties } from "react";
+import { type CSSProperties, useRef } from "react";
 
-import type { TsumeShogiMove } from "@/games/tsume-shogi/puzzle/moves";
+import { useTouchTap } from "@/components/touch-tap";
+import {
+  formatTsumeShogiSquareKey,
+  type TsumeShogiPlayedMove,
+} from "@/games/tsume-shogi/play/use-tsume-shogi-play";
 import {
   isSameTsumeShogiSquare,
   type TsumeShogiBoardPiece,
   type TsumeShogiSquare,
 } from "@/games/tsume-shogi/puzzle/position";
-import type { TsumeShogiSelection } from "@/games/tsume-shogi/session/session";
+import type {
+  TsumeShogiPromotionChoice,
+  TsumeShogiRejection,
+  TsumeShogiSelection,
+} from "@/games/tsume-shogi/session/session";
 import { TsumeShogiBoardWood } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard/TsumeShogiBoardWood";
 import { TsumeShogiCoordinateLabel } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard/TsumeShogiCoordinateLabel";
+import { TsumeShogiPromotionPicker } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard/TsumeShogiPromotionPicker";
 import {
   TsumeShogiSquareButton,
   type TsumeShogiSquareHighlight,
 } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard/TsumeShogiSquareButton";
 import { formatTsumeShogiRank } from "@/games/tsume-shogi/ui/piece-label";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
+import { useRejectedPieceFeedback } from "@/games/tsume-shogi/ui/use-rejected-piece-feedback";
 import { cn } from "@/lib/utils";
 
 type TsumeShogiBoardProps = {
   boardPieces: readonly TsumeShogiBoardPiece[];
+  /** 盤上の駒ごとの、指し手で変わらない識別（`formatTsumeShogiSquareKey` の升から）。駒ごとの木目の位置を決める。 */
+  boardPieceIds: ReadonlyMap<string, string>;
   selection: TsumeShogiSelection | null;
-  /** 盤面に見せている最後の手。移動先の地を変える。 */
-  lastMove: TsumeShogiMove | null;
+  /** 盤面に見せている最後の組の手。最後の手の移動先の地を変え、その駒を動かして見せる。 */
+  shownMoves: readonly TsumeShogiPlayedMove[];
+  /** `shownMoves` が、待ったなどで盤面に戻ってきた手か。指した手ではないので駒を動かして見せない。 */
+  shownMovesRestored: boolean;
+  promotionChoice: TsumeShogiPromotionChoice | null;
+  /** 直前の入力を着手させなかった。選んでいる盤上の駒で返す。 */
+  rejection: TsumeShogiRejection | null;
   /** 詰み上がり。詰んだ玉を傾ける。 */
   mated: boolean;
   interactionDisabled: boolean;
   onSelectSquare: (square: TsumeShogiSquare) => void;
+  onChoosePromotion: (promote: boolean) => void;
 };
 
 /** 左が9筋、上が1段目。攻方（利用者）から見た向き。 */
@@ -46,6 +64,8 @@ export const tsumeShogiBoardFrameStyle = {
   "--komadai-height": "3.75rem",
   "--komadai-gap": "10px",
 } as CSSProperties;
+
+const selectedPieceGlyphSelector = "[data-selected-piece] > svg";
 
 /** 星。3筋と4筋・6筋と7筋の境、三段と四段・六段と七段の境が交わる4点。 */
 const starPoints = [
@@ -72,12 +92,30 @@ function findPiece(
  */
 export function TsumeShogiBoard({
   boardPieces,
+  boardPieceIds,
   selection,
-  lastMove,
+  shownMoves,
+  shownMovesRestored,
+  promotionChoice,
+  rejection,
   mated,
   interactionDisabled,
   onSelectSquare,
+  onChoosePromotion,
 }: TsumeShogiBoardProps) {
+  const { getTapHandlers } = useTouchTap();
+  const squaresRef = useRef<HTMLDivElement>(null);
+  const lastMove = shownMoves.at(-1) ?? null;
+  const promotingPiece = promotionChoice
+    ? findPiece(boardPieces, promotionChoice.from)
+    : null;
+
+  const rejectedPieceFlashing = useRejectedPieceFeedback(
+    rejection,
+    squaresRef,
+    selectedPieceGlyphSelector,
+  );
+
   function getHighlight(
     square: TsumeShogiSquare,
   ): TsumeShogiSquareHighlight | null {
@@ -87,10 +125,12 @@ export function TsumeShogiBoard({
       selection?.type === "board" &&
       isSameTsumeShogiSquare(selection.square, square)
     ) {
-      return "selected";
+      return rejectedPieceFlashing ? "rejected" : "selected";
     }
-    if (lastMove && isSameTsumeShogiSquare(lastMove.to, square)) {
-      return "last-move";
+    if (lastMove && isSameTsumeShogiSquare(lastMove.move.to, square)) {
+      return lastMove.side === "defender" && lastMove.line === "wrong"
+        ? "refutation"
+        : "last-move";
     }
     return null;
   }
@@ -110,6 +150,7 @@ export function TsumeShogiBoard({
         ))}
       </div>
       <div
+        ref={squaresRef}
         data-board-squares=""
         role="group"
         aria-label="盤"
@@ -121,14 +162,24 @@ export function TsumeShogiBoard({
         {ranks.map((rank) =>
           files.map((file) => {
             const square = { file, rank };
+            const arrivedMove =
+              lastMove &&
+              !shownMovesRestored &&
+              isSameTsumeShogiSquare(lastMove.move.to, square)
+                ? lastMove
+                : null;
             return (
               <TsumeShogiSquareButton
                 key={`${file}-${rank}`}
                 square={square}
                 piece={findPiece(boardPieces, square)}
+                pieceId={
+                  boardPieceIds.get(formatTsumeShogiSquareKey(square)) ?? null
+                }
+                arrivedMove={arrivedMove}
                 highlight={getHighlight(square)}
                 disabled={interactionDisabled}
-                onSelect={() => onSelectSquare(square)}
+                tapHandlers={getTapHandlers(() => onSelectSquare(square))}
                 isLastFile={file === 1}
                 isLastRank={rank === 9}
               />
@@ -146,6 +197,16 @@ export function TsumeShogiBoard({
             style={{ left, top }}
           />
         ))}
+        {promotionChoice && promotingPiece && (
+          <TsumeShogiPromotionPicker
+            to={promotionChoice.to}
+            pieceType={promotingPiece.type}
+            optionTapHandlers={{
+              promote: getTapHandlers(() => onChoosePromotion(true)),
+              keep: getTapHandlers(() => onChoosePromotion(false)),
+            }}
+          />
+        )}
       </div>
       <div
         aria-hidden="true"
