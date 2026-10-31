@@ -20,6 +20,8 @@ type SlidePuzzleTileProps = {
   cellIndex: number;
   boardSize: SlidePuzzleBoardSize;
   disabled: boolean;
+  /** 押すタイルとして示すときの印の `id`。示さなければ `null`。 */
+  hintId: number | null;
   slideAnimated: boolean;
   faceRef: Ref<HTMLSpanElement>;
   onPress: (cellIndex: number) => void;
@@ -30,6 +32,7 @@ export function SlidePuzzleTile({
   cellIndex,
   boardSize,
   disabled,
+  hintId,
   slideAnimated,
   faceRef,
   onPress,
@@ -50,6 +53,14 @@ export function SlidePuzzleTile({
       style={{ transform: `translate(${column * 100}%, ${row * 100}%)` }}
     >
       <SlidePuzzleTileFace tile={tile} boardSize={boardSize} ref={faceRef} />
+      {hintId !== null && (
+        <span
+          key={hintId}
+          aria-hidden="true"
+          data-tile-cue="hint"
+          className="pointer-events-none absolute inset-[3cqw] rounded-[1.2cqw] border-2 border-sky-600/60 border-dashed animate-in fade-in-0 duration-500 motion-reduce:animate-none dark:border-sky-300/60"
+        />
+      )}
     </button>
   );
 }

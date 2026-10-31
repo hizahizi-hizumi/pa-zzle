@@ -15,11 +15,15 @@ import {
   type RejectionShakeTiming,
 } from "@/lib/motion";
 
+export type SlidePuzzleTileHint = { cellIndex: number; id: number };
+
 type SlidePuzzleBoardProps = {
   board: SlidePuzzleBoardState;
   operation: SlidePuzzleOperation | null;
   interactionDisabled: boolean;
   clearing: boolean;
+  /** 押すタイルを控えめに示す印。`id` が変わると、同じタイルでも印を付け直す。 */
+  hint?: SlidePuzzleTileHint | null;
   onSlideTile: (tileIndex: number) => void;
   onClearAnimationComplete: () => void;
 };
@@ -58,6 +62,7 @@ export function SlidePuzzleBoard({
   operation,
   interactionDisabled,
   clearing,
+  hint = null,
   onSlideTile,
   onClearAnimationComplete,
 }: SlidePuzzleBoardProps) {
@@ -113,6 +118,7 @@ export function SlidePuzzleBoard({
             cellIndex={cellIndex}
             boardSize={boardSize}
             disabled={interactionDisabled}
+            hintId={hint?.cellIndex === cellIndex ? hint.id : null}
             // 盤面を戻す・別の問題などの置き換えでは、タイル同士が交差して滑らないよう即座に並べ替える。
             slideAnimated={operation !== null}
             faceRef={(element) => {
