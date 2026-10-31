@@ -72,7 +72,7 @@ frontend/src/games/
 - `problem/generation/`: 問題生成・検証の内部でだけ使う解探索、手筋解析などを置く。通常プレイから直接参照しない。
 - `diagnostics.ts`: ゲーム固有の内部診断を提供する場合に置く。`games/diagnostics.ts` の `InternalDiagnosticFormat` を定義し、snapshot の作成と読み戻しは共通の `createInternalDiagnosticSnapshot` / `parseInternalDiagnosticSnapshot` を使う。公開するのは `<Game>DiagnosticSnapshot` と `create<Game>DiagnosticSnapshot` だけで、読み戻しと問題の復元はテスト用に `_private` で公開する。
 - `assets/`: ゲーム固有の静的資産がある場合に置く。
-- `tutorial/`: 1つの固定盤面を、ルールを1つずつ示しながら一緒に埋めて操作とルールを身につけるチュートリアルを提供する場合に置く。盤面、手を引く手順、手の判定、決め手やヒントの導出を、`games/tutorial.ts` の契約に沿って純粋な TypeScript で持つ。
+- `tutorial/`: 1つの固定盤面を、ルールを1つずつ示しながら一緒に解いて操作とルールを身につけるチュートリアルを提供する場合に置く。盤面、手を引く手順、手の判定、決め手やヒントの導出を、`games/tutorial.ts` の契約に沿って純粋な TypeScript で持つ。
 
 ## 問題契約
 
