@@ -8,16 +8,23 @@ import {
   SlidersHorizontal,
   Wrench,
 } from "lucide-react";
+import { useSyncExternalStore } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
+import {
+  isSoundEffectsEnabled,
+  setSoundEffectsEnabled,
+  subscribeSoundEffectsEnabled,
+} from "@/lib/sound-effects-setting";
 
 type PlayMenuProps = {
   onRestart?: () => void;
@@ -40,6 +47,11 @@ export function PlayMenu({
   onOpenHowToPlay,
   onOpenDiagnostics,
 }: PlayMenuProps) {
+  const soundEffectsEnabled = useSyncExternalStore(
+    subscribeSoundEffectsEnabled,
+    isSoundEffectsEnabled,
+  );
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -86,6 +98,14 @@ export function PlayMenu({
             </DropdownMenuItem>
           </>
         )}
+        <DropdownMenuSeparator />
+        <DropdownMenuCheckboxItem
+          checked={soundEffectsEnabled}
+          onCheckedChange={setSoundEffectsEnabled}
+          onSelect={keepMenuOpen}
+        >
+          効果音
+        </DropdownMenuCheckboxItem>
         {onOpenDiagnostics && (
           <>
             <DropdownMenuSeparator />
@@ -98,4 +118,9 @@ export function PlayMenu({
       </DropdownMenuContent>
     </DropdownMenu>
   );
+}
+
+/** 切り替えた結果をその場で確かめられるよう、メニューを開いたままにする。 */
+function keepMenuOpen(event: Event) {
+  event.preventDefault();
 }

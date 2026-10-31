@@ -8,14 +8,21 @@ import {
 } from "@/game-catalog/internal-diagnostics-dialog";
 import { useProblemIdQuerySync } from "@/game-catalog/problem-id-query";
 import { useRecordResultNavigation } from "@/game-catalog/record-result-navigation";
+import { useResultRewardSound } from "@/game-catalog/result-reward-sound";
 import type { GamePlay, GamePlayScreenProps } from "@/games/play";
 import type { ProblemIdentity } from "@/games/problem-id";
+import type { PlayScore, ScoreItem } from "@/games/score";
 import { usePlayAttemptRecord } from "@/records/hooks/use-play-attempt-record";
 import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
 import type { PlayAttemptProgress } from "@/records/play-attempt";
 import type { PlayRecord } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
+
+/** 結果画面と報酬の音が評価段階を決めるのに使う、プレイの評価点。 */
+type ScoredResult = {
+  score: Pick<PlayScore<ScoreItem>, "total">;
+};
 
 /** クリアした1回のプレイ。完了記録の元になる。 */
 export type CompletedGamePlay<Difficulty, Identity, Result> = {
@@ -30,7 +37,7 @@ type PlayableGameSource<
   Difficulty extends string,
   Identity extends ProblemIdentity,
   Session,
-  Result,
+  Result extends ScoredResult,
   Snapshot,
 > = {
   game: Pick<GameCatalogEntry, "entryPath" | "playPath" | "playRecordDisplay">;
@@ -54,14 +61,14 @@ export type PlayableGame<Difficulty, Result, Snapshot> = {
 };
 
 /**
- * 1問のプレイを、URL の問題 ID・完了記録の保存と記録の結果画面への遷移・離脱の記録・画面遷移・検証情報へつなぐ。
+ * 1問のプレイを、URL の問題 ID・完了記録の保存と記録の結果画面への遷移・結果の報酬の音・離脱の記録・画面遷移・検証情報へつなぐ。
  * 記録を保存できたクリアは記録の結果画面へ移すので、その間はその場の結果画面を出さない（`result` を `null` にする）。
  */
 export function usePlayableGame<
   Difficulty extends string,
   Identity extends ProblemIdentity,
   Session,
-  Result,
+  Result extends ScoredResult,
   Snapshot,
 >({
   game,
@@ -105,6 +112,7 @@ export function usePlayableGame<
     playRecord,
     recordOutcome,
   );
+  useResultRewardSound(play.progress, result?.score.total ?? null);
   usePlayAttemptRecord({
     gameId: playRecordDefinition.gameId,
     startedAt,
