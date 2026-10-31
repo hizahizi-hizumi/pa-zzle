@@ -293,3 +293,13 @@ export function completeTutorial<RuleId extends string, BoardState>(
     ? { ...progress, phase: "completed" }
     : progress;
 }
+
+/**
+ * 違反の一言を下げて、今の手順の一言に戻す。違反が盤面に残らず、動かせないところを押した手だけが違反になるゲームで、
+ * 受け付けなかった次の手のあとに、前の手の違反の一言が残らないようにする。違反していなければ、同じ進行をそのまま返す。
+ */
+export function dismissTutorialViolation<RuleId extends string, BoardState>(
+  progress: TutorialProgress<RuleId, BoardState>,
+): TutorialProgress<RuleId, BoardState> {
+  return progress.violated ? { ...progress, violated: false } : progress;
+}

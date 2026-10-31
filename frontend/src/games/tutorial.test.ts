@@ -1,5 +1,6 @@
 import {
   completeTutorial,
+  dismissTutorialViolation,
   finishTutorialIntro,
   getCurrentTutorialStep,
   getTutorialMessage,
@@ -187,6 +188,28 @@ describe("completeTutorial", () => {
     const result = completeTutorial(started);
 
     expect(result).toBe(started);
+  });
+});
+
+describe("dismissTutorialViolation", () => {
+  const started = finishTutorialIntro(startTutorial(fakeTutorial));
+  const stepped = performAll(started, ["stepped"]);
+  const violated = performAll(stepped, ["violated"]);
+
+  test("違反を下げて、今の手順の一言に戻すこと", () => {
+    const result = dismissTutorialViolation(violated);
+
+    expect(result.violated).toBe(false);
+    expect(result.boardState).toBe(violated.boardState);
+    expect(getTutorialMessage(fakeTutorial, result, true, "selection")).toBe(
+      firstRuleStep.message,
+    );
+  });
+
+  test("違反していなければ、同じ進行を返すこと", () => {
+    const result = dismissTutorialViolation(stepped);
+
+    expect(result).toBe(stepped);
   });
 });
 
