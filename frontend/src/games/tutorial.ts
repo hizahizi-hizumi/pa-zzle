@@ -1,5 +1,5 @@
 /**
- * 1つの盤面を、ルールを1つずつ示しながら一緒に埋めていくチュートリアルの、ゲームに依存しない契約。
+ * 1つの盤面を、ルールを1つずつ示しながら一緒に解いていくチュートリアルの、ゲームに依存しない契約。
  * 最初は手順ごとに一言と操作するところを示して手を引き、手順を終えたら手を離して残りを解かせる。
  * 手順の進行、手に入れたルール、盤面の上に出す一言を扱い、盤面と判定はゲームが持つ。
  * - `RuleId`: ゲームのルールの識別子。
@@ -44,10 +44,10 @@ export type TutorialSituation<
 
 /**
  * ゲームが判定した1手の結果。
- * - `ignored`: 盤面が変わらなかった。手を引いている間に、手順で操作させていないところを押した場合も含む。
+ * - `ignored`: 盤面が変わらず、手にも応えない。手を引いている間に、手順で操作させていないところを押した場合も含む。
  * - `continued`: 盤面が変わった。ルールに合わないところは無く、手順もまだ終えていない。
  * - `stepped`: 手順で操作させたところを、手順どおりにした。次の手順へ進む。
- * - `violated`: 手に入れたルールに合わないところができた。
+ * - `violated`: 手に入れたルールに合わない手だった。盤面にルールに合わないところができた場合と、ルールで動かせないところを動かそうとして盤面が変わらなかった場合がある。
  * - `solved`: 解けた。
  */
 export type TutorialMoveOutcome =
@@ -79,7 +79,7 @@ export type Tutorial<
     state: BoardState,
     action: Action,
   ) => { state: BoardState; outcome: TutorialMoveOutcome };
-  /** ルールに合わないところが続いたときの一言。どのルールに当たったかを、今の盤面から具体的に言う。 */
+  /** ルールに合わない手への一言。どのルールに当たったかを、今の盤面から具体的に言う。 */
   describeViolation: (
     situation: TutorialSituation<RuleId, Step>,
     state: BoardState,
@@ -96,7 +96,7 @@ export type TutorialPhase = "intro" | "playing" | "solved" | "completed";
 
 /**
  * - `stepIndex`: 今の手順の位置。手順の数と同じなら手を離している。
- * - `violated`: 最後の手でルールに合わないところができている。違反の一言は、違反がしばらく続いたときに出す側が出す。
+ * - `violated`: 最後の手がルールに合わなかった。違反の一言をいつ出すかは、出す側が決める。
  */
 export type TutorialProgress<RuleId extends string, BoardState> = {
   boardState: BoardState;
@@ -193,7 +193,8 @@ export function getTutorialSituation<
 
 /**
  * 盤面の上に出す一言。
- * 違反の一言は、切り替えの途中で一瞬だけ違反になった手で文言がちらつかないよう、出す側が違反の続いたこと（`violationSettled`）を確かめてから出す。
+ * 違反の一言は `violationSettled` のときだけ出す。切り替えの途中で一瞬だけ違反になる手があるゲームは、違反が続いたことを確かめてから渡し、
+ * 動かせないところを押したなど手がすぐ確定するゲームは、そのまま渡す。
  */
 export function getTutorialMessage<
   RuleId extends string,
