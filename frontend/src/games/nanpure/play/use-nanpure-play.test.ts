@@ -80,6 +80,101 @@ describe("useNanpurePlay", () => {
     });
   });
 
+  describe("空きマスを選んだ場合", () => {
+    const { problem } = selectNanpureProblemForDifficulty(
+      "2",
+      "nanpure-selection-2",
+    );
+    const emptyCellIndex = problem.clues.indexOf(null);
+    const correctDigit = problem.solution[emptyCellIndex] ?? 1;
+    const wrongDigit = correctDigit === 1 ? 2 : 1;
+    let result: { current: HookResult };
+
+    beforeEach(() => {
+      vi.spyOn(problemSeed, "createProblemSeed").mockReturnValue(
+        "nanpure-selection-2",
+      );
+      ({ result } = renderHook(() => useNanpurePlay("2")));
+      act(() => result.current.selectCell(emptyCellIndex));
+    });
+
+    test("操作する前は操作を知らせないこと", () => {
+      const { operation } = result.current;
+
+      expect(operation).toBeNull();
+    });
+
+    test("解の数字の入力を数字の入力として知らせること", () => {
+      act(() => result.current.inputDigit(correctDigit));
+
+      expect(result.current.operation?.type).toBe("digit-entered");
+    });
+
+    test("解と異なる数字の入力をミスに数えた入力として知らせること", () => {
+      act(() => result.current.inputDigit(wrongDigit));
+
+      expect(result.current.operation?.type).toBe("mistake-entered");
+      expect(result.current.mistakeCount).toBe(1);
+    });
+
+    describe("解の数字を入れた場合", () => {
+      let enteredOperation: HookResult["operation"];
+
+      beforeEach(() => {
+        act(() => result.current.inputDigit(correctDigit));
+        enteredOperation = result.current.operation;
+      });
+
+      test("同じ数字の入力を操作として知らせないこと", () => {
+        act(() => result.current.inputDigit(correctDigit));
+
+        expect(result.current.operation).toBe(enteredOperation);
+      });
+
+      test("別の数字の入力に別の id を付けること", () => {
+        act(() => result.current.inputDigit(wrongDigit));
+
+        expect(result.current.operation?.id).not.toBe(enteredOperation?.id);
+      });
+
+      test("数字を消すと消去として知らせること", () => {
+        act(() => result.current.erase());
+
+        expect(result.current.operation?.type).toBe("erased");
+      });
+
+      test("待ったで操作の知らせを消すこと", () => {
+        act(() => result.current.undo());
+
+        expect(result.current.operation).toBeNull();
+      });
+    });
+
+    describe("メモの入力に切り替えた場合", () => {
+      beforeEach(() => {
+        act(() => result.current.toggleNotesMode());
+      });
+
+      test("メモの書き込みをメモの追加として知らせること", () => {
+        act(() => result.current.inputDigit(correctDigit));
+
+        expect(result.current.operation?.type).toBe("note-added");
+      });
+
+      describe("メモを書いた場合", () => {
+        beforeEach(() => {
+          act(() => result.current.inputDigit(correctDigit));
+        });
+
+        test("同じ数字をもう一度押すとメモの削除として知らせること", () => {
+          act(() => result.current.inputDigit(correctDigit));
+
+          expect(result.current.operation?.type).toBe("note-removed");
+        });
+      });
+    });
+  });
+
   describe("盤面を完成させる場合", () => {
     const { solution } = selectNanpureProblemForDifficulty(
       "2",

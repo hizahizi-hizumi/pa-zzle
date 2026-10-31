@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import type {
   NanpureIdentifiedProblem,
@@ -42,6 +42,20 @@ import { createProblemId, type ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
+/**
+ * 盤面を変えた操作の知らせ。効果音を鳴らすため、操作ごとに増える `id` を付ける。
+ * `mistake-entered` は完成解と異なる数字を入れてミスに数えた入力、`digit-entered` はそれ以外の数字の入力。
+ */
+export type NanpureOperation = {
+  id: number;
+  type:
+    | "digit-entered"
+    | "mistake-entered"
+    | "note-added"
+    | "note-removed"
+    | "erased";
+};
+
 export type NanpureResult = NanpureSessionResult & {
   speedRule: SpeedScoreRule;
   timeDeltaMs: number;
@@ -77,6 +91,7 @@ export type NanpurePlay = GamePlay<
     mistakeCellIndices: number[];
     completedDigits: NanpureDigit[];
     notesMode: boolean;
+    operation: NanpureOperation | null;
     mistakeCount: number;
     undoCount: number;
     restartCount: number;
@@ -92,6 +107,7 @@ type NanpurePlayState = {
   selectedCellIndex: number | null;
   notesMode: boolean;
   progress: GameProgress;
+  operation: NanpureOperation | null;
 };
 
 function createPlayState(
@@ -104,7 +120,26 @@ function createPlayState(
     selectedCellIndex: null,
     notesMode: false,
     progress: "playing",
+    operation: null,
   };
+}
+
+/** session を進め、盤面が変わったときだけ操作の知らせを添える。 */
+function applyOperatedSession(
+  state: NanpurePlayState,
+  session: NanpureSession,
+  operation: NanpureOperation,
+): NanpurePlayState {
+  const next = applyPlaySession(state, session);
+  return next === state ? state : { ...next, operation };
+}
+
+function getNoteOperationType(
+  notes: NanpureNotes,
+  cellIndex: number,
+  digit: NanpureDigit,
+): NanpureOperation["type"] {
+  return notes[cellIndex]?.includes(digit) ? "note-removed" : "note-added";
 }
 
 function selectProblem(
@@ -134,6 +169,7 @@ export function useNanpurePlay(
   );
   const { session, problemIdentity } = play;
   const elapsedMs = useSessionElapsedMs(session);
+  const nextOperationId = useRef(0);
 
   const selectCell = useCallback((cellIndex: number) => {
     setPlay((current) => ({ ...current, selectedCellIndex: cellIndex }));
@@ -141,36 +177,52 @@ export function useNanpurePlay(
 
   const inputDigit = useCallback((digit: NanpureDigit) => {
     const enteredAt = Date.now();
+    const operationId = nextOperationId.current++;
     setPlay((current) => {
       const cellIndex = current.selectedCellIndex;
       if (cellIndex === null) {
         return current;
       }
 
-      return applyPlaySession(
-        current,
-        current.notesMode
-          ? toggleNanpureSessionNote(current.session, cellIndex, digit)
-          : enterNanpureSessionDigit(
-              current.session,
-              cellIndex,
-              digit,
-              enteredAt,
-            ),
+      if (current.notesMode) {
+        return applyOperatedSession(
+          current,
+          toggleNanpureSessionNote(current.session, cellIndex, digit),
+          {
+            id: operationId,
+            type: getNoteOperationType(current.session.notes, cellIndex, digit),
+          },
+        );
+      }
+
+      const session = enterNanpureSessionDigit(
+        current.session,
+        cellIndex,
+        digit,
+        enteredAt,
       );
+      return applyOperatedSession(current, session, {
+        id: operationId,
+        type:
+          session.mistakeCount > current.session.mistakeCount
+            ? "mistake-entered"
+            : "digit-entered",
+      });
     });
   }, []);
 
   const erase = useCallback(() => {
+    const operationId = nextOperationId.current++;
     setPlay((current) => {
       const cellIndex = current.selectedCellIndex;
       if (cellIndex === null) {
         return current;
       }
 
-      return applyPlaySession(
+      return applyOperatedSession(
         current,
         clearNanpureSessionCell(current.session, cellIndex),
+        { id: operationId, type: "erased" },
       );
     });
   }, []);
@@ -180,9 +232,13 @@ export function useNanpurePlay(
   }, []);
 
   const undo = useCallback(() => {
-    setPlay((current) =>
-      applyPlaySession(current, undoNanpureSession(current.session)),
-    );
+    setPlay((current) => {
+      const next = applyPlaySession(
+        current,
+        undoNanpureSession(current.session),
+      );
+      return next === current ? current : { ...next, operation: null };
+    });
   }, []);
 
   const restart = useCallback(() => {
@@ -193,7 +249,12 @@ export function useNanpurePlay(
       );
       return next === current
         ? current
-        : { ...next, selectedCellIndex: null, notesMode: false };
+        : {
+            ...next,
+            selectedCellIndex: null,
+            notesMode: false,
+            operation: null,
+          };
     });
   }, []);
 
@@ -206,6 +267,7 @@ export function useNanpurePlay(
       ),
       selectedCellIndex: null,
       notesMode: false,
+      operation: null,
     }));
   }, []);
 
@@ -257,6 +319,7 @@ export function useNanpurePlay(
     mistakeCellIndices,
     completedDigits,
     notesMode: play.notesMode,
+    operation: play.operation,
     mistakeCount: session.mistakeCount,
     undoCount: session.undoCount,
     restartCount: session.restartCount,
