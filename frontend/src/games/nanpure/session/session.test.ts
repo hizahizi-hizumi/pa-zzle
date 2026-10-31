@@ -3,15 +3,14 @@ import type { NanpureCell } from "@/games/nanpure/puzzle/board";
 import { findNanpureConflictCellIndices } from "@/games/nanpure/puzzle/rules";
 import {
   canUndoNanpureSession,
-  clearNanpureCell,
+  clearNanpureSessionCell,
   createNanpureSession,
-  enterNanpureDigit,
-  findCompletedNanpureDigits,
-  findNanpureMistakeCellIndices,
-  getNanpureSessionElapsedMs,
+  enterNanpureSessionDigit,
+  findNanpureSessionCompletedDigits,
+  findNanpureSessionMistakeCellIndices,
   getNanpureSessionResult,
   restartNanpureSession,
-  toggleNanpureNote,
+  toggleNanpureSessionNote,
   undoNanpureSession,
 } from "@/games/nanpure/session/session";
 
@@ -48,7 +47,7 @@ describe("createNanpureSession", () => {
 
     const session = createNanpureSession(problem, 1_000);
 
-    expect(session.board).toEqual(problem.clues);
+    expect(session.puzzleState).toEqual(problem.clues);
     expect(session.notes).toHaveLength(81);
     expect(session.status).toBe("playing");
     expect(session.mistakeCount).toBe(0);
@@ -66,18 +65,18 @@ describe("createNanpureSession", () => {
   });
 });
 
-describe("enterNanpureDigit", () => {
+describe("enterNanpureSessionDigit", () => {
   test("競合しない誤答も完成解との不一致からミスとして記録すること", () => {
     const problem = createProblem();
     const clues = [...problem.clues];
     clues[72] = null;
     const session = createNanpureSession({ ...problem, clues }, 1_000);
 
-    const next = enterNanpureDigit(session, 0, 3, 2_000);
-    const conflicts = findNanpureConflictCellIndices(next.board);
-    const mistakes = findNanpureMistakeCellIndices(next);
+    const next = enterNanpureSessionDigit(session, 0, 3, 2_000);
+    const conflicts = findNanpureConflictCellIndices(next.puzzleState);
+    const mistakes = findNanpureSessionMistakeCellIndices(next);
 
-    expect(next.board[0]).toBe(3);
+    expect(next.puzzleState[0]).toBe(3);
     expect(conflicts).toEqual([]);
     expect(mistakes).toEqual([0]);
     expect(next.mistakeCount).toBe(1);
@@ -87,7 +86,7 @@ describe("enterNanpureDigit", () => {
   test("初期ヒントを変更しないこと", () => {
     const session = createNanpureSession(createProblem(), 1_000);
 
-    const next = enterNanpureDigit(session, 2, 4, 2_000);
+    const next = enterNanpureSessionDigit(session, 2, 4, 2_000);
 
     expect(next).toBe(session);
   });
@@ -97,9 +96,9 @@ describe("enterNanpureDigit", () => {
     const clues = [...problem.clues];
     clues[9] = null;
     let session = createNanpureSession({ ...problem, clues }, 1_000);
-    session = toggleNanpureNote(session, 9, 3);
+    session = toggleNanpureSessionNote(session, 9, 3);
 
-    const answered = enterNanpureDigit(session, 0, 3, 2_000);
+    const answered = enterNanpureSessionDigit(session, 0, 3, 2_000);
 
     expect(answered.notes[9]).toEqual([3]);
     expect(answered.mistakeCount).toBe(1);
@@ -108,21 +107,21 @@ describe("enterNanpureDigit", () => {
   test("最後の正解入力で自動的にクリアすること", () => {
     const problem = createProblem();
     let session = createNanpureSession(problem, 1_000);
-    session = enterNanpureDigit(session, 0, 5, 2_000);
+    session = enterNanpureSessionDigit(session, 0, 5, 2_000);
 
-    const cleared = enterNanpureDigit(session, 1, 3, 2_500);
+    const cleared = enterNanpureSessionDigit(session, 1, 3, 2_500);
 
     expect(cleared.status).toBe("cleared");
     expect(cleared.finishedAt).toBe(2_500);
   });
 });
 
-describe("toggleNanpureNote", () => {
+describe("toggleNanpureSessionNote", () => {
   test("空きマスの手動メモを追加して削除できること", () => {
     const session = createNanpureSession(createProblem(), 1_000);
 
-    const added = toggleNanpureNote(session, 0, 4);
-    const removed = toggleNanpureNote(added, 0, 4);
+    const added = toggleNanpureSessionNote(session, 0, 4);
+    const removed = toggleNanpureSessionNote(added, 0, 4);
 
     expect(added.notes[0]).toEqual([4]);
     expect(removed.notes[0]).toEqual([]);
@@ -136,16 +135,16 @@ describe("toggleNanpureNote", () => {
     clues[10] = null;
     clues[40] = null;
     let session = createNanpureSession({ ...problem, clues }, 1_000);
-    session = toggleNanpureNote(session, 0, 4);
-    session = toggleNanpureNote(session, 1, 5);
-    session = toggleNanpureNote(session, 1, 8);
-    session = toggleNanpureNote(session, 9, 5);
-    session = toggleNanpureNote(session, 9, 7);
-    session = toggleNanpureNote(session, 10, 2);
-    session = toggleNanpureNote(session, 10, 5);
-    session = toggleNanpureNote(session, 40, 5);
+    session = toggleNanpureSessionNote(session, 0, 4);
+    session = toggleNanpureSessionNote(session, 1, 5);
+    session = toggleNanpureSessionNote(session, 1, 8);
+    session = toggleNanpureSessionNote(session, 9, 5);
+    session = toggleNanpureSessionNote(session, 9, 7);
+    session = toggleNanpureSessionNote(session, 10, 2);
+    session = toggleNanpureSessionNote(session, 10, 5);
+    session = toggleNanpureSessionNote(session, 40, 5);
 
-    const answered = enterNanpureDigit(session, 0, 5, 2_000);
+    const answered = enterNanpureSessionDigit(session, 0, 5, 2_000);
 
     expect(answered.notes[0]).toEqual([]);
     expect(answered.notes[1]).toEqual([8]);
@@ -155,17 +154,17 @@ describe("toggleNanpureNote", () => {
   });
 });
 
-describe("findCompletedNanpureDigits", () => {
+describe("findNanpureSessionCompletedDigits", () => {
   test("誤答を含めて9個見えても正解が揃っていない数字は完了扱いにしないこと", () => {
     const problem = createProblem();
     const clues = [...problem.clues];
     clues[6] = null;
     let session = createNanpureSession({ ...problem, clues }, 1_000);
 
-    session = enterNanpureDigit(session, 0, 9, 2_000);
-    const beforeCorrectEntry = findCompletedNanpureDigits(session);
-    session = enterNanpureDigit(session, 6, 9, 2_500);
-    const afterCorrectEntry = findCompletedNanpureDigits(session);
+    session = enterNanpureSessionDigit(session, 0, 9, 2_000);
+    const beforeCorrectEntry = findNanpureSessionCompletedDigits(session);
+    session = enterNanpureSessionDigit(session, 6, 9, 2_500);
+    const afterCorrectEntry = findNanpureSessionCompletedDigits(session);
 
     expect(beforeCorrectEntry).not.toContain(9);
     expect(afterCorrectEntry).toContain(9);
@@ -175,12 +174,12 @@ describe("findCompletedNanpureDigits", () => {
 describe("undoNanpureSession", () => {
   test("盤面と手動メモを戻してミス履歴は減らさないこと", () => {
     let session = createNanpureSession(createProblem(), 1_000);
-    session = toggleNanpureNote(session, 0, 4);
-    session = enterNanpureDigit(session, 0, 4, 2_000);
+    session = toggleNanpureSessionNote(session, 0, 4);
+    session = enterNanpureSessionDigit(session, 0, 4, 2_000);
 
     const undone = undoNanpureSession(session);
 
-    expect(undone.board[0]).toBeNull();
+    expect(undone.puzzleState[0]).toBeNull();
     expect(undone.notes[0]).toEqual([4]);
     expect(undone.mistakeCount).toBe(1);
     expect(undone.undoCount).toBe(1);
@@ -188,7 +187,7 @@ describe("undoNanpureSession", () => {
 
   test("正解入力を戻すと待っただけを増やすこと", () => {
     let session = createNanpureSession(createProblem(), 1_000);
-    session = enterNanpureDigit(session, 0, 5, 2_000);
+    session = enterNanpureSessionDigit(session, 0, 5, 2_000);
 
     const undone = undoNanpureSession(session);
 
@@ -206,44 +205,44 @@ describe("undoNanpureSession", () => {
   });
 });
 
-describe("clearNanpureCell", () => {
+describe("clearNanpureSessionCell", () => {
   test("プレイヤーが入力した回答を削除できること", () => {
-    const session = enterNanpureDigit(
+    const session = enterNanpureSessionDigit(
       createNanpureSession(createProblem(), 1_000),
       0,
       4,
       2_000,
     );
 
-    const erased = clearNanpureCell(session, 0);
+    const erased = clearNanpureSessionCell(session, 0);
 
-    expect(erased.board[0]).toBeNull();
+    expect(erased.puzzleState[0]).toBeNull();
   });
 });
 
 test("手動メモだけのマスを空にできること", () => {
-  const session = toggleNanpureNote(
+  const session = toggleNanpureSessionNote(
     createNanpureSession(createProblem(), 1_000),
     0,
     4,
   );
 
-  const cleared = clearNanpureCell(session, 0);
+  const cleared = clearNanpureSessionCell(session, 0);
 
-  expect(cleared.board[0]).toBeNull();
+  expect(cleared.puzzleState[0]).toBeNull();
   expect(cleared.notes[0]).toEqual([]);
 });
 
 describe("restartNanpureSession", () => {
   test("同じプレイの計測を保ったまま初期盤面へ戻すこと", () => {
     let session = createNanpureSession(createProblem(), 1_000);
-    session = enterNanpureDigit(session, 0, 4, 2_000);
+    session = enterNanpureSessionDigit(session, 0, 4, 2_000);
     session = undoNanpureSession(session);
-    session = toggleNanpureNote(session, 0, 4);
+    session = toggleNanpureSessionNote(session, 0, 4);
 
     const restarted = restartNanpureSession(session);
 
-    expect(restarted.board).toEqual(session.problem.clues);
+    expect(restarted.puzzleState).toEqual(session.problem.clues);
     expect(restarted.notes[0]).toEqual([]);
     expect(restarted.history).toEqual([]);
     expect(restarted.mistakeCount).toBe(1);
@@ -251,18 +250,33 @@ describe("restartNanpureSession", () => {
     expect(restarted.restartCount).toBe(1);
     expect(restarted.startedAt).toBe(1_000);
   });
+
+  describe("盤面が初期状態のままの場合", () => {
+    const enteredAndUndone = undoNanpureSession(
+      enterNanpureSessionDigit(
+        createNanpureSession(createProblem(), 1_000),
+        0,
+        4,
+        2_000,
+      ),
+    );
+
+    test("何もせず、盤面を戻した回数も数えないこと", () => {
+      const restarted = restartNanpureSession(enteredAndUndone);
+
+      expect(restarted).toBe(enteredAndUndone);
+    });
+  });
 });
 
 describe("getNanpureSessionResult", () => {
   test("クリア時点の経過時間と成績生データを返すこと", () => {
     let session = createNanpureSession(createProblem(), 1_000);
-    session = enterNanpureDigit(session, 0, 5, 2_000);
-    session = enterNanpureDigit(session, 1, 3, 4_500);
+    session = enterNanpureSessionDigit(session, 0, 5, 2_000);
+    session = enterNanpureSessionDigit(session, 1, 3, 4_500);
 
-    const elapsedMs = getNanpureSessionElapsedMs(session, 9_000);
-    const result = getNanpureSessionResult(session, 9_000);
+    const result = getNanpureSessionResult(session);
 
-    expect(elapsedMs).toBe(3_500);
     expect(result).toEqual({
       elapsedMs: 3_500,
       mistakeCount: 0,

@@ -1,23 +1,19 @@
 import { CircleHelp, Pointer } from "lucide-react";
 import { type ReactNode, useState } from "react";
 
+import type { HowToPlayDialogControl } from "@/components/HowToPlayDialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-type OpenControl = {
-  open: boolean;
-  onClose: () => void;
-};
 
 type DifficultySelectionHeadingProps = {
   title: string;
   /** ゲーム固有の遊び方ダイアログを描く。開閉の状態は見出しが持ち、引数で渡す。 */
-  renderHowToPlayDialog: (control: OpenControl) => ReactNode;
+  renderHowToPlayDialog: (control: HowToPlayDialogControl) => ReactNode;
   /**
    * ゲーム固有のチュートリアルを描く。開閉の状態は見出しが持ち、引数で渡す。
    * 省略すると、チュートリアルを開く入口を出さない。
    */
-  renderTutorial?: (control: OpenControl) => ReactNode;
+  renderTutorial?: (control: HowToPlayDialogControl) => ReactNode;
 };
 
 /** 難易度選択画面の見出しとして、ゲーム名と、遊び方・チュートリアルを開く入口を並べる。 */

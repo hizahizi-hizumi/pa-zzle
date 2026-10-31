@@ -1,59 +1,46 @@
 import {
   type GameCatalogEntry,
-  type RecordReplayStart,
-  renderRecordReplay,
-  unavailableRecordReplay,
+  resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
-import { PlayableMinesweeper } from "@/game-catalog/minesweeper/PlayableMinesweeper";
+import { RecordedMinesweeperResult } from "@/game-catalog/minesweeper/RecordedMinesweeperResult";
+import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/minesweeper/assets/pictogram.svg?raw";
-import type { MinesweeperDifficulty } from "@/games/minesweeper/difficulty";
+import { MINESWEEPER_DISPLAY_NAME } from "@/games/minesweeper/display-name";
 import {
   isMinesweeperPlayRecord,
   minesweeperPlayRecordDefinition,
+  restoreMinesweeperRecordedResult,
 } from "@/games/minesweeper/play-record";
-import {
-  type MinesweeperRestoredProblem,
-  restoreMinesweeperProblemWithoutAnalysis,
-} from "@/games/minesweeper/problem/generator";
+import { canSelectMinesweeperProblemById } from "@/games/minesweeper/problem-selection";
 import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
-import { restoreProblemOrNull } from "@/games/problem-restoration";
-import type { PlayRecord } from "@/records/play-record";
-
-type MinesweeperReplayStart = {
-  difficulty: MinesweeperDifficulty;
-  initialProblem: MinesweeperRestoredProblem;
-};
-
-function resolveMinesweeperReplayStart(
-  record: PlayRecord,
-): RecordReplayStart<MinesweeperReplayStart> {
-  if (!isMinesweeperPlayRecord(record)) {
-    return unavailableRecordReplay("unsupported-record");
-  }
-
-  const { difficulty, problemIdentity } = record.payload;
-  const initialProblem = restoreProblemOrNull(() =>
-    restoreMinesweeperProblemWithoutAnalysis(problemIdentity),
-  );
-  if (!initialProblem) {
-    return unavailableRecordReplay("problem-not-restorable");
-  }
-
-  return { status: "available", start: { difficulty, initialProblem } };
-}
 
 export const minesweeperCatalogEntry = {
   id: minesweeperPlayRecordDefinition.gameId,
-  name: "マインスイーパー",
+  name: MINESWEEPER_DISPLAY_NAME,
   pictogramSvg,
   entryPath: "/puzzles/minesweeper",
+  playPath: "/puzzles/minesweeper/play/:difficulty",
   playRecordDisplay: minesweeperPlayRecordDisplay,
-  replayRecord(record) {
-    return renderRecordReplay(
-      resolveMinesweeperReplayStart(record),
-      (start) => <PlayableMinesweeper {...start} />,
+  recordProblemPlayTarget(record) {
+    return isMinesweeperPlayRecord(record)
+      ? resolveRecordProblemPlayTarget(
+          parseDifficultyLevel(record.payload.difficulty),
+          record.payload.problemIdentity,
+          canSelectMinesweeperProblemById,
+        )
+      : null;
+  },
+  attemptProblemPlayTarget({ start }) {
+    return resolveRecordProblemPlayTarget(
+      parseDifficultyLevel(start.difficulty),
+      start.problemIdentity,
+      canSelectMinesweeperProblemById,
     );
   },
+  renderRecordResult(record, context) {
+    const recorded = restoreMinesweeperRecordedResult(record);
+    return recorded ? (
+      <RecordedMinesweeperResult {...recorded} {...context} />
+    ) : null;
+  },
 } satisfies GameCatalogEntry;
-
-export const _private = { resolveMinesweeperReplayStart };

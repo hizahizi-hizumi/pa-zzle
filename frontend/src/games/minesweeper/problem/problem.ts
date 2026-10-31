@@ -9,7 +9,16 @@ import {
   getAdjacentMinesweeperMineCount,
   isMinesweeperMine,
 } from "@/games/minesweeper/puzzle/rules";
+import {
+  isRecordedProblemIdentity,
+  type RecordedProblemIdentity,
+} from "@/games/problem-id";
 import type { ProblemSeed } from "@/games/problem-seed";
+import {
+  isNonEmptyString,
+  isPositiveInteger,
+  isRecordObject,
+} from "@/lib/type-guards";
 
 export const MINESWEEPER_GENERATOR_VERSION = "1";
 
@@ -38,6 +47,12 @@ export type MinesweeperProblemIdentity = {
   generationAttempt: number;
 };
 
+/** 問題と、それを再現するための情報。難易度分析を伴わない。 */
+export type MinesweeperIdentifiedProblem = {
+  problem: MinesweeperProblem;
+  identity: MinesweeperProblemIdentity;
+};
+
 const startCellPlacements: readonly MinesweeperStartCellPlacement[] = [
   "random",
   "center",
@@ -53,7 +68,7 @@ export function isMinesweeperProblemIdentity(
 
   return (
     value.generatorVersion === MINESWEEPER_GENERATOR_VERSION &&
-    typeof value.seed === "string" &&
+    isNonEmptyString(value.seed) &&
     isPositiveInteger(value.conditions.rows) &&
     isPositiveInteger(value.conditions.columns) &&
     isPositiveInteger(value.conditions.mineCount) &&
@@ -61,6 +76,23 @@ export function isMinesweeperProblemIdentity(
       value.conditions.startCellPlacement as MinesweeperStartCellPlacement,
     ) &&
     isPositiveInteger(value.generationAttempt)
+  );
+}
+
+/** 記録に残した問題の識別情報。生成器の版が今と違う記録も、採点に使う地雷数が読めれば読み込む。 */
+export type MinesweeperRecordedProblemIdentity = RecordedProblemIdentity<{
+  mineCount: number;
+}>;
+
+/** 記録から読み戻した値が、問題の識別情報として読めるかを確かめる。 */
+export function isMinesweeperRecordedProblemIdentity(
+  value: unknown,
+): value is MinesweeperRecordedProblemIdentity {
+  return (
+    isRecordedProblemIdentity(value, {
+      generatorVersion: MINESWEEPER_GENERATOR_VERSION,
+      isProblemIdentity: isMinesweeperProblemIdentity,
+    }) && isPositiveInteger(value.conditions.mineCount)
   );
 }
 
@@ -117,12 +149,4 @@ export function countMinesweeperMinimumOpenCount(
   }
 
   return openCount;
-}
-
-function isRecordObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isPositiveInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value > 0;
 }

@@ -1,6 +1,6 @@
 import { cleanup, render } from "@testing-library/react";
+import { difficultyLevels } from "@/games/difficulty";
 
-import { minesweeperDifficulties } from "@/games/minesweeper/difficulty";
 import {
   _private,
   MinesweeperDifficultyPreview,
@@ -63,7 +63,7 @@ describe("previewMineLayouts", () => {
 });
 
 describe("createPreviewCells", () => {
-  const difficulties = minesweeperDifficulties.map(function toId({ id }) {
+  const difficulties = difficultyLevels.map(function toId({ id }) {
     return id;
   });
   const adjacentDifficulties = [

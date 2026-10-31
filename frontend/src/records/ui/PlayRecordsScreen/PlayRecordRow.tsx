@@ -1,14 +1,12 @@
-import { PlayIcon } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
 import {
   getPersonalBestMetricIdsForRecord,
   type PersonalBest,
 } from "@/records/personal-best";
 import type { PlayRecord } from "@/records/play-record";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
-import { formatRecordCompletedAt } from "@/records/ui/format";
+import { formatPlayedAt } from "@/records/ui/format";
 import { CopyPlayRecordsButton } from "@/records/ui/PlayRecordsScreen/CopyPlayRecordsButton";
+import { ReplayPlayButton } from "@/records/ui/PlayRecordsScreen/ReplayPlayButton";
 import { getPlayRecordGridTemplateColumns } from "@/records/ui/PlayRecordsScreen/record-grid";
 import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
 
@@ -16,13 +14,15 @@ type PlayRecordRowProps = {
   record: PlayRecord;
   display: PlayRecordDisplayDefinition;
   personalBests: readonly PersonalBest[];
-  onReplay: (recordId: string) => void;
+  replayable: boolean;
+  onReplay: (record: PlayRecord) => void;
 };
 
 export function PlayRecordRow({
   record,
   display,
   personalBests,
+  replayable,
   onReplay,
 }: PlayRecordRowProps) {
   const bestMetricIds = getPersonalBestMetricIdsForRecord(
@@ -41,7 +41,7 @@ export function PlayRecordRow({
       }}
     >
       <p className="text-meta text-muted-foreground tabular-nums">
-        {formatRecordCompletedAt(record.completedAt)}
+        {formatPlayedAt(record.completedAt)}
       </p>
       {display.metrics.map((metric, metricIndex) => {
         const value = getPlayRecordMetricValue(
@@ -73,16 +73,10 @@ export function PlayRecordRow({
           records={[record]}
           label="この記録をJSONでコピー"
         />
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="同じ問題をプレイ"
-          title="同じ問題をプレイ"
-          onClick={() => onReplay(record.id)}
-        >
-          <PlayIcon />
-        </Button>
+        <ReplayPlayButton
+          replayable={replayable}
+          onReplay={() => onReplay(record)}
+        />
       </div>
     </li>
   );

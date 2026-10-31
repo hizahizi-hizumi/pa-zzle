@@ -1,7 +1,7 @@
+import { difficultyLevels } from "@/games/difficulty";
 import {
   assessNanpureDifficulty,
   type NanpureDifficulty,
-  nanpureDifficulties,
 } from "@/games/nanpure/difficulty";
 import { analyzeNanpureDifficulty } from "@/games/nanpure/problem/difficulty-analysis";
 import { generateNanpureProblem } from "@/games/nanpure/problem/generator";
@@ -19,7 +19,7 @@ import {
   selectNanpureProblemForDifficulty,
 } from "@/games/nanpure/problem-selection";
 
-const difficulties = nanpureDifficulties.map(({ id }) => id);
+const difficulties = difficultyLevels.map(({ id }) => id);
 
 // 全問の分析と再生成は数十秒かかるため、テストでは等間隔に抜き出した問題だけを確かめる。
 // 全問の検証は `bun run generate:nanpure-pool -- --verify` で行う。

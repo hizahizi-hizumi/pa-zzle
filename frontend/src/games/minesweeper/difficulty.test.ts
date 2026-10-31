@@ -1,11 +1,10 @@
+import { difficultyLevels } from "@/games/difficulty";
 import {
   assessMinesweeperDifficulty,
   isInMinesweeperDifficultyBoardRange,
   listMinesweeperDifficultyBoardConditions,
   type MinesweeperBoardSize,
   type MinesweeperDifficulty,
-  minesweeperDifficulties,
-  parseMinesweeperDifficulty,
 } from "@/games/minesweeper/difficulty";
 import type {
   MinesweeperDifficultyAnalysis,
@@ -53,9 +52,7 @@ function analyzeCorpusProblem(seed: string): AnalyzedProblem {
   });
 }
 
-const difficultyIds = minesweeperDifficulties.map(
-  (difficulty) => difficulty.id,
-);
+const difficultyIds = difficultyLevels.map((difficulty) => difficulty.id);
 
 const providedScale: MinesweeperScaleMetrics = {
   cellCount: 100,
@@ -86,29 +83,6 @@ const level1Features: MinesweeperHumanSolveFeatures = {
   multiNumberTotalMineCountRoundCount: 0,
   chainedGroupRoundCount: 0,
 };
-
-describe("parseMinesweeperDifficulty", () => {
-  const definedCases = ["1", "2", "3", "4", "5"] as const;
-  const undefinedCases = [undefined, "", "0", "6", "easy"] as const;
-
-  test.each(definedCases)(
-    "%s を定義済みの難易度として受理すること",
-    (input) => {
-      const result = parseMinesweeperDifficulty(input);
-
-      expect(result).toBe(input);
-    },
-  );
-
-  test.each(undefinedCases)(
-    "%s を未定義の難易度として拒否すること",
-    (input) => {
-      const result = parseMinesweeperDifficulty(input);
-
-      expect(result).toBeUndefined();
-    },
-  );
-});
 
 describe("listMinesweeperDifficultyBoardConditions", () => {
   test("難易度1の盤面サイズごとに密度11〜13%に入る地雷数を並べること", () => {
@@ -221,7 +195,7 @@ describe("isInMinesweeperDifficultyBoardRange", () => {
 
 describe("assessMinesweeperDifficulty", () => {
   describe("推論で決まる難易度の盤面範囲に入る問題の場合", () => {
-    const cases = minesweeperDifficulties.map(({ id: difficulty }) => {
+    const cases = difficultyLevels.map(({ id: difficulty }) => {
       const identity = toMinesweeperPoolIdentity(
         difficulty,
         listMinesweeperPoolEntries(difficulty)[0]!,
@@ -369,14 +343,14 @@ describe("assessMinesweeperDifficulty", () => {
 
   describe("推測が必要な問題の場合", () => {
     const analysis: MinesweeperDifficultyAnalysis = {
-      status: "unsolvable",
+      status: "invalid",
       scale: providedScale,
     };
 
     test("成立しない問題として返すこと", () => {
       const result = assessMinesweeperDifficulty(analysis, providedBoardSize);
 
-      expect(result).toEqual({ status: "unsolvable" });
+      expect(result).toEqual({ status: "invalid" });
     });
   });
 });

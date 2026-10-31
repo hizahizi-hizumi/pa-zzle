@@ -1,6 +1,6 @@
 import { RotateCcw, Undo2 } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
+import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 
 type DeadlockNoticeProps = {
   canUndo: boolean;
@@ -29,11 +29,11 @@ export function DeadlockNotice({
           disabled={!canUndo}
         >
           <Undo2 />
-          待った
+          {PLAY_OPERATION_LABELS.undo}
         </Button>
         <Button type="button" variant="outline" onClick={onRestart}>
           <RotateCcw />
-          盤面を戻す
+          {PLAY_OPERATION_LABELS.restart}
         </Button>
       </div>
     </div>

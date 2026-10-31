@@ -6,10 +6,8 @@ import {
   within,
 } from "@testing-library/react";
 
-import type {
-  SlidePuzzleProgress,
-  SlidePuzzleResult,
-} from "@/games/slide-puzzle/play/use-slide-puzzle-play";
+import type { GameProgress } from "@/games/play";
+import type { SlidePuzzleResult } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import { SlidePuzzlePlay } from "@/games/slide-puzzle/ui/SlidePuzzlePlay";
 
 const playingBoard = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 13, 14, 15];
@@ -24,7 +22,7 @@ const result: SlidePuzzleResult = {
   optimalMoveCount: 30,
   moveDelta: 12,
   timeDeltaMs: 10_000,
-  speedFullScoreMs: 70_000,
+  speedRule: { fullScoreMs: 70_000, zeroScoreMs: 140_000 },
   score: { total: 77, breakdown: { efficiency: 43, speed: 34 } },
 };
 
@@ -35,25 +33,25 @@ afterEach(() => {
 describe("SlidePuzzlePlay", () => {
   const callbacks = {
     onSlideTile: vi.fn(),
-    onSlideByKeyboard: vi.fn(),
+    onSlideInDirection: vi.fn(),
     onRestart: vi.fn(),
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
     onOpenRecords: vi.fn(),
-    onClearingComplete: vi.fn(),
+    onClearAnimationComplete: vi.fn(),
     onChangeDifficulty: vi.fn(),
     onBackToHome: vi.fn(),
   };
 
-  function renderPlay(progress: SlidePuzzleProgress, board: readonly number[]) {
+  function renderPlay(progress: GameProgress, board: readonly number[]) {
     render(
       <SlidePuzzlePlay
         difficulty="3"
-        status={progress === "playing" ? "playing" : "cleared"}
         progress={progress}
         board={board}
         elapsedMs={65_000}
         moveCount={7}
+        canRestart
         operation={null}
         result={progress === "playing" ? null : result}
         recordOutcomeNotice={null}
@@ -167,14 +165,14 @@ describe("SlidePuzzlePlay", () => {
       (key, direction) => {
         fireEvent.keyDown(document.body, { key });
 
-        expect(callbacks.onSlideByKeyboard).toHaveBeenCalledWith(direction);
+        expect(callbacks.onSlideInDirection).toHaveBeenCalledWith(direction);
       },
     );
 
     test("修飾キー付きの矢印キーは盤面へ流さないこと", () => {
       fireEvent.keyDown(document.body, { key: "ArrowLeft", altKey: true });
 
-      expect(callbacks.onSlideByKeyboard).not.toHaveBeenCalled();
+      expect(callbacks.onSlideInDirection).not.toHaveBeenCalled();
     });
   });
 
@@ -196,7 +194,7 @@ describe("SlidePuzzlePlay", () => {
     test("矢印キーを盤面へ流さないこと", () => {
       fireEvent.keyDown(document.body, { key: "ArrowLeft" });
 
-      expect(callbacks.onSlideByKeyboard).not.toHaveBeenCalled();
+      expect(callbacks.onSlideInDirection).not.toHaveBeenCalled();
     });
 
     test("結果画面をまだ出さないこと", () => {
@@ -215,7 +213,7 @@ describe("SlidePuzzlePlay", () => {
 
     test("スコアと手数・時間を基準との差つきで表示すること", () => {
       const score = screen.getByText("77");
-      const moveCount = screen.getByText("42");
+      const moveCount = screen.getByText("42手");
       const moveDelta = screen.getByText("最短 +12");
       const elapsedTime = screen.getByText("01:20");
       const timeDelta = screen.getByText("基準 +00:10");

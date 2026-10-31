@@ -1,3 +1,4 @@
+import type { ProblemRandom } from "@/games/problem-seed";
 import {
   createWaterSortStateKey,
   isWaterSortCleared,
@@ -10,7 +11,7 @@ import {
 
 export type WaterSortNaturalPlayOptions = {
   trialCount?: number;
-  random: () => number;
+  random: ProblemRandom;
 };
 
 export type WaterSortNaturalPlayAnalysis = {
@@ -49,7 +50,7 @@ function listNaturalUnvisitedTransitions(
 
 function playNaturally(
   initialState: WaterSortState,
-  random: () => number,
+  random: ProblemRandom,
 ): boolean {
   let state = initialState;
   const visitedStateKeys = new Set([createWaterSortStateKey(state)]);

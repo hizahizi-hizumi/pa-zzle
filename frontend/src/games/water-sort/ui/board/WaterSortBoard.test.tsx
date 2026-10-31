@@ -31,6 +31,7 @@ describe("WaterSortBoard", () => {
     const onSelectBottle = vi.fn();
     const { rerender } = render(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[0], [], [1], []]}
         sourceBottleIndex={0}
         operation={null}
@@ -41,6 +42,7 @@ describe("WaterSortBoard", () => {
     fireEvent.click(screen.getByRole("button", { name: "ボトル 2: 空" }));
     rerender(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[], [0], [1], []]}
         sourceBottleIndex={2}
         operation={{
@@ -66,6 +68,7 @@ describe("WaterSortBoard", () => {
     const onSelectBottle = vi.fn();
     render(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[], [0, 0, 0, 0]]}
         sourceBottleIndex={null}
         operation={{
@@ -104,6 +107,7 @@ describe("WaterSortBoard", () => {
     const onSelectBottle = vi.fn();
     const { rerender } = render(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[], [0]]}
         sourceBottleIndex={null}
         operation={{
@@ -121,6 +125,7 @@ describe("WaterSortBoard", () => {
 
     rerender(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[0], []]}
         sourceBottleIndex={null}
         operation={null}
@@ -145,6 +150,7 @@ describe("WaterSortBoard", () => {
     const onSelectBottle = vi.fn();
     const { rerender } = render(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[], [0], [0], []]}
         sourceBottleIndex={null}
         operation={{
@@ -163,6 +169,7 @@ describe("WaterSortBoard", () => {
 
     rerender(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[], [], [0, 0], []]}
         sourceBottleIndex={null}
         operation={{
@@ -190,6 +197,7 @@ describe("WaterSortBoard", () => {
     const onSelectBottle = vi.fn();
     const { rerender } = render(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[], [0], []]}
         sourceBottleIndex={null}
         operation={{
@@ -207,6 +215,7 @@ describe("WaterSortBoard", () => {
 
     rerender(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[], [0], []]}
         sourceBottleIndex={null}
         operation={{ id: 2, type: "invalid", bottleIndex: 2 }}
@@ -236,10 +245,11 @@ describe("WaterSortBoard", () => {
       "matchMedia",
       vi.fn(() => ({ matches: true }) as MediaQueryList),
     );
-    const onClearingPourComplete = vi.fn();
+    const onClearAnimationComplete = vi.fn();
 
     render(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[], [0, 0, 0, 0]]}
         sourceBottleIndex={null}
         operation={{
@@ -252,12 +262,12 @@ describe("WaterSortBoard", () => {
           isClearingMove: true,
         }}
         onSelectBottle={vi.fn()}
-        onClearingPourComplete={onClearingPourComplete}
+        onClearAnimationComplete={onClearAnimationComplete}
       />,
     );
 
     expect(animate).not.toHaveBeenCalled();
-    expect(onClearingPourComplete).toHaveBeenCalledOnce();
+    expect(onClearAnimationComplete).toHaveBeenCalledOnce();
   });
 
   test("注水対象のDOMを取得できなくても最終注水の進行を停止しないこと", () => {
@@ -265,10 +275,11 @@ describe("WaterSortBoard", () => {
       configurable: true,
       value: vi.fn(),
     });
-    const onClearingPourComplete = vi.fn();
+    const onClearAnimationComplete = vi.fn();
 
     render(
       <WaterSortBoard
+        interactionDisabled={false}
         state={[[]]}
         sourceBottleIndex={null}
         operation={{
@@ -281,10 +292,10 @@ describe("WaterSortBoard", () => {
           isClearingMove: true,
         }}
         onSelectBottle={vi.fn()}
-        onClearingPourComplete={onClearingPourComplete}
+        onClearAnimationComplete={onClearAnimationComplete}
       />,
     );
 
-    expect(onClearingPourComplete).toHaveBeenCalledOnce();
+    expect(onClearAnimationComplete).toHaveBeenCalledOnce();
   });
 });

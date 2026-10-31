@@ -1,10 +1,10 @@
+import { difficultyLevels } from "@/games/difficulty";
 import {
   assessMinesweeperDifficulty,
   classifyMinesweeperInferenceDifficulty,
   listMinesweeperDifficultyBoardConditions,
   type MinesweeperDifficulty,
   type MinesweeperDifficultyAssessment,
-  minesweeperDifficulties,
 } from "@/games/minesweeper/difficulty";
 import { generateMinesweeperProblem } from "@/games/minesweeper/problem/generator";
 import { hashProblemSeed } from "@/games/problem-seed";
@@ -48,10 +48,10 @@ function readPositiveInteger(name: string, fallback: number): number {
 function readDifficulties(): MinesweeperDifficulty[] {
   const value = readOption("difficulties");
   if (value === undefined) {
-    return minesweeperDifficulties.map((difficulty) => difficulty.id);
+    return difficultyLevels.map((difficulty) => difficulty.id);
   }
   return value.split(",").map((id) => {
-    const difficulty = minesweeperDifficulties.find(
+    const difficulty = difficultyLevels.find(
       (candidate) => candidate.id === id.trim(),
     );
     if (!difficulty) {
@@ -138,8 +138,8 @@ function formatAssessment(record: SupplyRecord): string {
       return `out-of-range:${assessment.reason}:inference${record.inferenceDifficulty}`;
     case "unsupported":
       return `unsupported:${assessment.reason}`;
-    case "unsolvable":
-      return "unsolvable";
+    case "invalid":
+      return "invalid";
   }
 }
 

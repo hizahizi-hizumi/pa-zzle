@@ -5,6 +5,7 @@ import { components, hooks, utils } from '@generouted/react-router/client'
 
 export type Path =
   | `/`
+  | `/puzzles/:game/result/:recordId`
   | `/puzzles/minesweeper`
   | `/puzzles/minesweeper/play/:difficulty`
   | `/puzzles/nanpure`
@@ -20,9 +21,9 @@ export type Path =
   | `/puzzles/water-sort`
   | `/puzzles/water-sort/play/:difficulty`
   | `/records`
-  | `/records/replay/:recordId`
 
 export type Params = {
+  '/puzzles/:game/result/:recordId': { game: string; recordId: string }
   '/puzzles/minesweeper/play/:difficulty': { difficulty: string }
   '/puzzles/nanpure/play/:difficulty': { difficulty: string }
   '/puzzles/parking-jam/play/:difficulty': { difficulty: string }
@@ -30,7 +31,6 @@ export type Params = {
   '/puzzles/slide-puzzle/play/:difficulty': { difficulty: string }
   '/puzzles/takuzu/play/:difficulty': { difficulty: string }
   '/puzzles/water-sort/play/:difficulty': { difficulty: string }
-  '/records/replay/:recordId': { recordId: string }
 }
 
 export type ModalPath = never

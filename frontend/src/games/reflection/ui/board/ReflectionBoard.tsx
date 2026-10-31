@@ -6,11 +6,9 @@ import {
   useState,
 } from "react";
 
+import type { GameProgress } from "@/games/play";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
-import type {
-  ReflectionLaserView,
-  ReflectionProgress,
-} from "@/games/reflection/play/use-reflection-play";
+import type { ReflectionLaserView } from "@/games/reflection/play/use-reflection-play";
 import type { ReflectionBoard as ReflectionBoardState } from "@/games/reflection/puzzle/board";
 import {
   isSameReflectionEntry,
@@ -40,9 +38,11 @@ type ReflectionBoardProps = {
   clueMatches: readonly boolean[];
   selection: ReflectionSelection | null;
   laser: ReflectionLaserView | null;
-  progress: ReflectionProgress;
-  onTapCell: (cellIndex: number) => void;
-  onTapClue: (entry: ReflectionEntry) => void;
+  interactionDisabled: boolean;
+  /** 盤面が揃った後の完成演出に使う。 */
+  progress: GameProgress;
+  onSelectCell: (cellIndex: number) => void;
+  onSelectClue: (entry: ReflectionEntry) => void;
   onRemovePiece: (cellIndex: number) => void;
   onClearAnimationComplete: () => void;
 };
@@ -128,9 +128,10 @@ export function ReflectionBoard({
   clueMatches,
   selection,
   laser,
+  interactionDisabled,
   progress,
-  onTapCell,
-  onTapClue,
+  onSelectCell,
+  onSelectClue,
   onRemovePiece,
   onClearAnimationComplete,
 }: ReflectionBoardProps) {
@@ -143,7 +144,6 @@ export function ReflectionBoard({
   const extent = getReflectionFigureExtent(size);
   const tracks = getReflectionFigureTracks(size);
   const gridLines = listReflectionGridLines(size);
-  const playing = progress === "playing";
   const selectedCellIndex =
     selection?.type === "cell" ? selection.cellIndex : null;
 
@@ -170,7 +170,7 @@ export function ReflectionBoard({
   }
 
   function handleKeyDown(event: ReactKeyboardEvent<HTMLDivElement>): void {
-    if (!playing || hasModifierKey(event)) return;
+    if (interactionDisabled || hasModifierKey(event)) return;
 
     const offset = offsetByArrowKey[event.key];
     if (offset) {
@@ -241,7 +241,7 @@ export function ReflectionBoard({
             trace={laser.trace}
           />
         ) : null}
-        {playing ? null : (
+        {progress === "playing" ? null : (
           <ReflectionClearLight
             board={board}
             active={progress === "clearing"}
@@ -269,11 +269,11 @@ export function ReflectionBoard({
               cellIndex={cellIndex}
               cell={cell}
               selected={selectedCellIndex === cellIndex}
-              disabled={!playing}
+              disabled={interactionDisabled}
               focusable={focusKey === focusableKey}
               focusKey={focusKey}
               onElementChange={handleElementChange}
-              tapHandlers={getTapHandlers(() => onTapCell(cellIndex))}
+              selectHandlers={getTapHandlers(() => onSelectCell(cellIndex))}
               onFocus={setFocusableKey}
             />
           );
@@ -297,11 +297,11 @@ export function ReflectionBoard({
                 ? laser.trace
                 : null
             }
-            disabled={!playing}
+            disabled={interactionDisabled}
             focusable={focusKey === focusableKey}
             focusKey={focusKey}
             onElementChange={handleElementChange}
-            tapHandlers={getTapHandlers(() => onTapClue(entry))}
+            selectHandlers={getTapHandlers(() => onSelectClue(entry))}
             onFocus={setFocusableKey}
           />
         ) : null;

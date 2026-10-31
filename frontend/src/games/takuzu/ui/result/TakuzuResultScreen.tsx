@@ -1,28 +1,24 @@
-import type { ReactNode } from "react";
-
 import { GameResultScreen } from "@/components/GameResultScreen";
-import takuzuPictogramSvg from "@/games/takuzu/assets/pictogram.svg?raw";
 import {
-  getTakuzuDifficultyLabel,
-  type TakuzuDifficulty,
-} from "@/games/takuzu/difficulty";
+  createCountMetric,
+  createElapsedTimeMetric,
+  createOperationCountMetric,
+  createSpeedFullScoreMetric,
+  listScoreBreakdownMetrics,
+} from "@/components/game-result-metrics";
+import { getDifficultyLabel } from "@/games/difficulty";
+import type { GamePlayResultScreenProps } from "@/games/play";
+import takuzuPictogramSvg from "@/games/takuzu/assets/pictogram.svg?raw";
+import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
+import { TAKUZU_DISPLAY_NAME } from "@/games/takuzu/display-name";
 import type { TakuzuResult } from "@/games/takuzu/play/use-takuzu-play";
 import { TAKUZU_SCORE_MAXIMUMS } from "@/games/takuzu/score";
 import { getTakuzuScoreCriteria } from "@/games/takuzu/ui/result/TakuzuResultScreen/score-criteria";
-import { formatElapsedTime } from "@/lib/format-elapsed-time";
-import { formatElapsedTimeDelta } from "@/lib/format-performance-delta";
 
-type TakuzuResultScreenProps = {
-  difficulty: TakuzuDifficulty;
-  result: TakuzuResult;
-  recordOutcomeNotice: ReactNode;
-  onReplay: () => void;
-  onStartNewProblem: () => void;
-  onOpenRecords: () => void;
-  onChangeDifficulty: () => void;
-  onBackToHome: () => void;
-  onOpenDiagnostics?: () => void;
-};
+type TakuzuResultScreenProps = GamePlayResultScreenProps<
+  TakuzuDifficulty,
+  TakuzuResult
+>;
 
 export function TakuzuResultScreen({
   difficulty,
@@ -37,46 +33,31 @@ export function TakuzuResultScreen({
 }: TakuzuResultScreenProps) {
   return (
     <GameResultScreen
-      gameName="バイナリパズル"
-      difficultyLabel={getTakuzuDifficultyLabel(difficulty)}
+      gameName={TAKUZU_DISPLAY_NAME}
+      difficultyLabel={getDifficultyLabel(difficulty)}
       pictogramSvg={takuzuPictogramSvg}
       score={result.score.total}
       metrics={[
-        {
-          label: "時間",
-          value: formatElapsedTime(result.elapsedMs),
-          detail: `基準 ${formatElapsedTimeDelta(result.timeDeltaMs)}`,
-        },
-        { label: "置き直し", value: String(result.correctionCount) },
-        { label: "待った", value: String(result.undoCount) },
+        createElapsedTimeMetric(result),
+        createCountMetric("置き直し", result.correctionCount, "回"),
+        createOperationCountMetric("undo", result.undoCount),
       ]}
       recordOutcomeNotice={recordOutcomeNotice}
       scoreBreakdown={[
-        {
-          label: "正確性",
-          value: `${result.score.breakdown.accuracy} / ${TAKUZU_SCORE_MAXIMUMS.accuracy}`,
-        },
-        {
-          label: "速さ",
-          value: `${result.score.breakdown.speed} / ${TAKUZU_SCORE_MAXIMUMS.speed}`,
-        },
-        { label: "盤面戻し", value: `${result.restartCount}回` },
-        {
-          label: "基準時間",
-          value: formatElapsedTime(result.speedFullScoreMs),
-        },
-        {
-          label: "空きマス",
-          value: `${result.workload.emptyCellCount}マス`,
-        },
-        {
-          label: "確定マスを探す局面",
-          value: `${result.workload.roundCount}回`,
-        },
-        {
-          label: "行・列を読む局面",
-          value: `${result.workload.lineReadingRoundCount}回`,
-        },
+        ...listScoreBreakdownMetrics(result.score, TAKUZU_SCORE_MAXIMUMS),
+        createOperationCountMetric("restart", result.restartCount),
+        createSpeedFullScoreMetric(result.speedRule),
+        createCountMetric("空きマス", result.workload.emptyCellCount, "マス"),
+        createCountMetric(
+          "確定マスを探す局面",
+          result.workload.roundCount,
+          "回",
+        ),
+        createCountMetric(
+          "行・列を読む局面",
+          result.workload.lineReadingRoundCount,
+          "回",
+        ),
       ]}
       scoreCriteria={getTakuzuScoreCriteria(result)}
       onStartNewProblem={onStartNewProblem}

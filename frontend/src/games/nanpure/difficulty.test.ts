@@ -1,10 +1,7 @@
 import {
   assessNanpureDifficulty,
   classifyNanpureChallengeDifficulty,
-  getNanpureDifficultyLabel,
   type NanpureDifficulty,
-  parseNanpureDifficulty,
-  parseNanpureRecordedDifficulty,
 } from "@/games/nanpure/difficulty";
 import type {
   NanpureDifficultyAnalysis,
@@ -51,56 +48,6 @@ function createFeatures(
 }
 
 const scale = { clueCount: 25, emptyCellCount: 56 };
-
-describe("parseNanpureDifficulty", () => {
-  const definedCases = ["1", "2", "3", "4", "5"] as const;
-  const undefinedCases = [undefined, "", "0", "6", "easy"] as const;
-
-  test.each(definedCases)("%s を難易度として受理すること", (input) => {
-    const result = parseNanpureDifficulty(input);
-
-    expect(result).toBe(input);
-  });
-
-  test.each(undefinedCases)("%s を難易度として拒否すること", (input) => {
-    const result = parseNanpureDifficulty(input);
-
-    expect(result).toBeUndefined();
-  });
-});
-
-describe("parseNanpureRecordedDifficulty", () => {
-  const cases = [
-    ["3", "3"],
-    ["hard", "hard"],
-    ["expert", undefined],
-  ] as const;
-
-  test.each(cases)(
-    "記録の難易度をレベルと旧3段階の両方で読むこと: %s",
-    (value, expected) => {
-      const result = parseNanpureRecordedDifficulty(value);
-
-      expect(result).toBe(expected);
-    },
-  );
-});
-
-describe("getNanpureDifficultyLabel", () => {
-  const cases = [
-    ["3", "レベル 3"],
-    ["normal", "ふつう"],
-  ] as const;
-
-  test.each(cases)(
-    "レベルと旧3段階の表示名を返すこと: %s",
-    (difficulty, expected) => {
-      const result = getNanpureDifficultyLabel(difficulty);
-
-      expect(result).toBe(expected);
-    },
-  );
-});
 
 describe("classifyNanpureChallengeDifficulty", () => {
   const cases: readonly [

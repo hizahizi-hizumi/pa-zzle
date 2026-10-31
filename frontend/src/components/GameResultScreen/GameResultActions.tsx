@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 
 type GameResultActionsProps = {
   onStartNewProblem: () => void;
-  onReplay: () => void;
+  /** 省略すると「同じ問題」を押せない状態で出す。 */
+  onReplay?: () => void;
   onOpenRecords: () => void;
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
@@ -30,7 +31,7 @@ export function GameResultActions({
         プレイ！
       </Button>
       <div className="grid grid-cols-2 gap-2">
-        <Button variant="outline" onClick={onReplay}>
+        <Button variant="outline" disabled={!onReplay} onClick={onReplay}>
           <RotateCcw />
           同じ問題
         </Button>

@@ -9,12 +9,10 @@ import {
   canRestartReflectionSession,
   clearReflectionSessionSelection,
   createReflectionSession,
-  getReflectionSessionElapsedMs,
   getReflectionSessionResult,
   getReflectionSessionStock,
   type ReflectionSession,
   removeReflectionSessionPiece,
-  replayReflectionSession,
   restartReflectionSession,
   tapReflectionSessionCell,
   tapReflectionSessionClue,
@@ -67,7 +65,7 @@ function tapCells(
 }
 
 function isEmptyBoard(session: ReflectionSession): boolean {
-  return session.board.cells.every((cell) => cell === null);
+  return session.puzzleState.cells.every((cell) => cell === null);
 }
 
 /** 解と違う位置の 4 に `/` を置いた状態。 */
@@ -127,7 +125,7 @@ describe("tapReflectionSessionStock", () => {
     test("同じ種類を押すと、選んだピースをストックへ戻し置き直しに数えること", () => {
       const next = tapReflectionSessionStock(selected, "slash", startedAt);
 
-      expect(next.board.cells[4]).toBeNull();
+      expect(next.puzzleState.cells[4]).toBeNull();
       expect(getReflectionSessionStock(next).slash).toBe(1);
       expect(next.selection).toBeNull();
       expect(next.relocationCount).toBe(1);
@@ -136,7 +134,7 @@ describe("tapReflectionSessionStock", () => {
     test("別の種類を押すと、その種類に置き換えて選んでいたピースをストックへ戻し、置き直しに数えること", () => {
       const next = tapReflectionSessionStock(selected, "black-hole", startedAt);
 
-      expect(next.board.cells[4]).toBe("black-hole");
+      expect(next.puzzleState.cells[4]).toBe("black-hole");
       expect(getReflectionSessionStock(next)).toMatchObject({
         slash: 1,
         "black-hole": 0,
@@ -178,7 +176,7 @@ describe("tapReflectionSessionCell", () => {
     test("空きマスへ置き、残りが無くなれば選択を解除すること", () => {
       const next = tapReflectionSessionCell(selectedSlash, 4, startedAt);
 
-      expect(next.board.cells[4]).toBe("slash");
+      expect(next.puzzleState.cells[4]).toBe("slash");
       expect(getReflectionSessionStock(next).slash).toBe(0);
       expect(next.selection).toBeNull();
       expect(next.relocationCount).toBe(0);
@@ -197,7 +195,7 @@ describe("tapReflectionSessionCell", () => {
     test("ピースのあるマスでは置き換えず、そのピースを選ぶこと", () => {
       const next = tapReflectionSessionCell(selectedBlackHole, 4, startedAt);
 
-      expect(next.board).toBe(selectedBlackHole.board);
+      expect(next.puzzleState).toBe(selectedBlackHole.puzzleState);
       expect(next.selection).toEqual({ type: "cell", cellIndex: 4 });
       expect(next.relocationCount).toBe(0);
     });
@@ -228,8 +226,8 @@ describe("tapReflectionSessionCell", () => {
     test("空きマスへ移し、置き直しに数えること", () => {
       const next = tapReflectionSessionCell(selectedSlash, 1, startedAt);
 
-      expect(next.board.cells[4]).toBeNull();
-      expect(next.board.cells[1]).toBe("slash");
+      expect(next.puzzleState.cells[4]).toBeNull();
+      expect(next.puzzleState.cells[1]).toBe("slash");
       expect(next.selection).toBeNull();
       expect(next.relocationCount).toBe(1);
     });
@@ -241,8 +239,8 @@ describe("tapReflectionSessionCell", () => {
         startedAt,
       );
 
-      expect(next.board.cells[4]).toBe("black-hole");
-      expect(next.board.cells[1]).toBe("slash");
+      expect(next.puzzleState.cells[4]).toBe("black-hole");
+      expect(next.puzzleState.cells[1]).toBe("slash");
       expect(next.relocationCount).toBe(1);
     });
 
@@ -250,7 +248,7 @@ describe("tapReflectionSessionCell", () => {
       const next = tapReflectionSessionCell(selectedSlash, 4, startedAt);
 
       expect(next.selection).toBeNull();
-      expect(next.board).toBe(slashAtCenter.board);
+      expect(next.puzzleState).toBe(slashAtCenter.puzzleState);
     });
   });
 });
@@ -331,25 +329,6 @@ describe("restartReflectionSession", () => {
   });
 });
 
-describe("replayReflectionSession", () => {
-  test("同じ問題を記録なしの新しいプレイとして始めること", () => {
-    const next = replayReflectionSession(slashAtCenter, 5_000);
-
-    expect(next.problem).toBe(problem);
-    expect(next.startedAt).toBe(5_000);
-    expect(next.inputCount).toBe(0);
-    expect(isEmptyBoard(next)).toBe(true);
-  });
-});
-
-describe("getReflectionSessionElapsedMs", () => {
-  test("プレイ中は現在時刻までの経過時間を返すこと", () => {
-    const elapsedMs = getReflectionSessionElapsedMs(initial, 4_000);
-
-    expect(elapsedMs).toBe(3_000);
-  });
-});
-
 describe("tapReflectionSessionClue", () => {
   const topLeft = { side: "top", index: 0 } as const;
   const leftTop = { side: "left", index: 0 } as const;
@@ -360,7 +339,7 @@ describe("tapReflectionSessionClue", () => {
 
     expect(next.laserEntry).toEqual(topLeft);
     expect(next.laserCheckCount).toBe(1);
-    expect(next.board).toBe(slashAtCenter.board);
+    expect(next.puzzleState).toBe(slashAtCenter.puzzleState);
     expect(next.inputCount).toBe(slashAtCenter.inputCount);
   });
 
@@ -409,7 +388,7 @@ describe("removeReflectionSessionPiece", () => {
   test("マスのピースをストックへ戻し、置き直しに数えること", () => {
     const next = removeReflectionSessionPiece(slashAtCenter, 4, startedAt);
 
-    expect(next.board.cells[4]).toBeNull();
+    expect(next.puzzleState.cells[4]).toBeNull();
     expect(next.relocationCount).toBe(1);
   });
 

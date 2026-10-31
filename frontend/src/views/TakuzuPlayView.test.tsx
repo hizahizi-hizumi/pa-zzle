@@ -9,6 +9,7 @@ import { MemoryRouter, Route, Routes } from "react-router";
 
 import { selectTakuzuProblemForDifficulty } from "@/games/takuzu/problem-selection";
 import { readPlayRecords } from "@/records/storage";
+import { PlayResultView } from "@/views/PlayResultView";
 import { TakuzuPlayView } from "@/views/TakuzuPlayView";
 
 const internalDiagnostics = vi.hoisted(() => ({ available: false }));
@@ -42,6 +43,10 @@ function renderAt(path: string): void {
         />
         <Route path="/puzzles/takuzu" element={<p>難易度選択画面</p>} />
         <Route path="/records" element={<p>記録画面</p>} />
+        <Route
+          path="/puzzles/:game/result/:recordId"
+          element={<PlayResultView />}
+        />
       </Routes>
     </MemoryRouter>,
   );
@@ -151,7 +156,7 @@ describe("TakuzuPlayView", () => {
           .map((definition) => definition.textContent);
         const records = readPlayRecords();
 
-        expect(definitions.slice(2)).toEqual(["0", "1"]);
+        expect(definitions.slice(2)).toEqual(["0回", "1回"]);
         expect(records[0]).toMatchObject({
           payload: { performance: { correctionCount: 0, undoCount: 1 } },
         });
@@ -175,8 +180,8 @@ describe("TakuzuPlayView", () => {
         expect(definitions).toEqual([
           expect.any(String),
           expect.any(String),
-          "1",
-          "0",
+          "1回",
+          "0回",
         ]);
       });
 

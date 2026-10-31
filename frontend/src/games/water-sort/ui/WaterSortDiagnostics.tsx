@@ -1,7 +1,7 @@
 import { InternalDiagnosticsDialog } from "@/components/InternalDiagnosticsDialog";
 import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
+import { getDifficultyLabel } from "@/games/difficulty";
 import type { WaterSortDiagnosticSnapshot } from "@/games/water-sort/diagnostics";
-import { getWaterSortDifficultyLabel } from "@/games/water-sort/difficulty";
 
 type WaterSortDiagnosticsProps = {
   snapshot: WaterSortDiagnosticSnapshot;
@@ -14,7 +14,7 @@ export function WaterSortDiagnostics({
 }: WaterSortDiagnosticsProps) {
   return (
     <InternalDiagnosticsDialog
-      difficultyLabel={getWaterSortDifficultyLabel(snapshot.difficulty)}
+      difficultyLabel={getDifficultyLabel(snapshot.difficulty)}
       seed={snapshot.problemIdentity.seed}
       generatorVersion={snapshot.problemIdentity.generatorVersion}
       generationConditions={`色 ${snapshot.problemIdentity.conditions.colorCount} / 容量 ${snapshot.problemIdentity.conditions.capacity} / 空 ${snapshot.problemIdentity.conditions.emptyBottleCount}`}

@@ -1,67 +1,23 @@
+import {
+  type DifficultyAssessment,
+  type DifficultyLevel,
+  difficultyLevels,
+  isInNumericRange,
+  type NoAssessmentDetail,
+  type NumericRange,
+  type RecordedDifficulty,
+} from "@/games/difficulty";
 import type {
   ParkingJamDifficultyAnalysis,
   ParkingJamDifficultyFeatures,
 } from "@/games/parking-jam/problem/difficulty-analysis";
 
-export const parkingJamDifficulties = [
-  { id: "1", label: "レベル 1" },
-  { id: "2", label: "レベル 2" },
-  { id: "3", label: "レベル 3" },
-  { id: "4", label: "レベル 4" },
-  { id: "5", label: "レベル 5" },
-] as const;
-
-export type ParkingJamDifficulty =
-  (typeof parkingJamDifficulties)[number]["id"];
+export type ParkingJamDifficulty = DifficultyLevel;
 
 // 3段階（visual-local-load-v1）時代の記録を、旧区分のまま読み込み表示するためだけに残す。
-const legacyParkingJamDifficulties = [
-  { id: "easy", label: "かんたん" },
-  { id: "normal", label: "ふつう" },
-  { id: "hard", label: "むずかしい" },
-] as const;
-
-export type LegacyParkingJamDifficulty =
-  (typeof legacyParkingJamDifficulties)[number]["id"];
-
-export type ParkingJamRecordedDifficulty =
-  | ParkingJamDifficulty
-  | LegacyParkingJamDifficulty;
+export type ParkingJamRecordedDifficulty = RecordedDifficulty;
 
 export const PARKING_JAM_DIFFICULTY_MODEL_VERSION = "challenge-levers-v1";
-
-export function parseParkingJamDifficulty(
-  value: string | undefined,
-): ParkingJamDifficulty | undefined {
-  return parkingJamDifficulties.find((difficulty) => difficulty.id === value)
-    ?.id;
-}
-
-export function parseLegacyParkingJamDifficulty(
-  value: string | undefined,
-): LegacyParkingJamDifficulty | undefined {
-  return legacyParkingJamDifficulties.find(
-    (difficulty) => difficulty.id === value,
-  )?.id;
-}
-
-export function parseParkingJamRecordedDifficulty(
-  value: string | undefined,
-): ParkingJamRecordedDifficulty | undefined {
-  return (
-    parseParkingJamDifficulty(value) ?? parseLegacyParkingJamDifficulty(value)
-  );
-}
-
-export function getParkingJamDifficultyLabel(
-  difficulty: ParkingJamRecordedDifficulty,
-): string {
-  return (
-    [...parkingJamDifficulties, ...legacyParkingJamDifficulties].find(
-      (option) => option.id === difficulty,
-    )?.label ?? difficulty
-  );
-}
 
 /** 挑戦を強めるレバーの強さ。1が最も弱い。 */
 export type ParkingJamLeverStrength = 1 | 2 | 3;
@@ -185,11 +141,8 @@ export function calculateParkingJamChallengeLevers(
 type ParkingJamLevelLevers = {
   dependency: ParkingJamLeverStrength;
   misread: ParkingJamLeverStrength;
-  /** 規模は単独でレベルを決めないよう、隣のレベルと重なる範囲（両端を含む）で許す。 */
-  scale: {
-    minimum: ParkingJamLeverStrength;
-    maximum: ParkingJamLeverStrength;
-  };
+  /** 規模は単独でレベルを決めないよう、隣のレベルと重なる範囲で許す。 */
+  scale: NumericRange<ParkingJamLeverStrength>;
 };
 
 /**
@@ -208,22 +161,17 @@ export const parkingJamLevelLevers = {
  * 分析結果を難易度へ分類した結果。
  * - `classified`: 提供範囲内で、レバーの組合せがいずれかのレベルにちょうど当たった。
  * - `out-of-range`: 評価できるが提供しない。出す順序を読む挑戦がほぼない（`too-light`）、
- *   依存が深すぎて確かめていない（`too-heavy`）、レバーの組合せがどのレベルにも当たらない（`unlisted-levers`）。
+ *   依存が深すぎて確かめていない（`too-heavy`）、レバーの組合せがどのレベルにも当たらない（`unlisted-combination`）。
  * - `unsupported`: 車両数が厳密解析の上限を超え、評価できない。
  */
-export type ParkingJamDifficultyAssessment =
-  | {
-      status: "classified";
-      difficulty: ParkingJamDifficulty;
-      levers: ParkingJamChallengeLevers;
-    }
-  | { status: "out-of-range"; reason: "too-light" | "too-heavy" }
-  | {
-      status: "out-of-range";
-      reason: "unlisted-levers";
-      levers: ParkingJamChallengeLevers;
-    }
-  | { status: "unsupported" };
+export type ParkingJamDifficultyAssessment = DifficultyAssessment<{
+  classified: { levers: ParkingJamChallengeLevers };
+  outOfRange:
+    | { reason: "too-light" | "too-heavy" }
+    | { reason: "unlisted-combination"; levers: ParkingJamChallengeLevers };
+  unsupported: NoAssessmentDetail;
+  invalid: never;
+}>;
 
 function matchesLevelLevers(
   levers: ParkingJamChallengeLevers,
@@ -232,8 +180,7 @@ function matchesLevelLevers(
   return (
     levers.dependency === level.dependency &&
     levers.misread === level.misread &&
-    level.scale.minimum <= levers.scale &&
-    levers.scale <= level.scale.maximum
+    isInNumericRange(levers.scale, level.scale)
   );
 }
 
@@ -258,10 +205,10 @@ export function assessParkingJamDifficulty(
     return { status: "out-of-range", reason: "too-heavy" };
   }
 
-  const difficulty = parkingJamDifficulties.find(({ id }) =>
+  const difficulty = difficultyLevels.find(({ id }) =>
     matchesLevelLevers(levers, parkingJamLevelLevers[id]),
   )?.id;
   return difficulty
     ? { status: "classified", difficulty, levers }
-    : { status: "out-of-range", reason: "unlisted-levers", levers };
+    : { status: "out-of-range", reason: "unlisted-combination", levers };
 }

@@ -274,7 +274,7 @@ export function TakuzuTutorial({
                 situation,
                 shownBoardState,
               )}
-              disabled={progress.phase !== "playing"}
+              interactionDisabled={progress.phase !== "playing"}
               cues={getCellCues(
                 boardState,
                 violationSettled,

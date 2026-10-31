@@ -4,13 +4,21 @@ import type {
 } from "@/games/water-sort/ui/board/pour/pour-animation";
 import { getWaterColorView } from "@/games/water-sort/ui/board/water-bottle/get-water-color-view";
 
-export const pourAnimationDurationMs = 1600;
-export const pourTransferStartOffset = 0.38;
-export const pourTransferEndOffset = 0.72;
-export const sourcePourLayerZIndex = 70;
-export const destinationPourLayerZIndex = 65;
+export const POUR_ANIMATION_DURATION_MS = 1600;
+export const POUR_TRANSFER_START_OFFSET = 0.38;
+export const POUR_TRANSFER_END_OFFSET = 0.72;
+/** 傾けたボトルが向きを変えるときの動き。 */
+export const POUR_TILT_EASING = "cubic-bezier(.22,.61,.36,1)";
 
-const streamPourLayerZIndex = 69;
+/**
+ * 注ぐ演出の層の重なり順。プレイ画面の中で、盤面と操作部品より上に、注ぎ先・水の筋・注ぎ元の順で重ねる。
+ * 値はプレイ画面の重なりの中だけで使う。
+ */
+export const POUR_LAYER_ORDER = {
+  destination: 1,
+  stream: 2,
+  source: 3,
+} as const;
 
 export function getOverlayStyle(rect: BottleRect, zIndex: number) {
   return {
@@ -36,6 +44,6 @@ export function getPourStreamStyle(animation: PourAnimation) {
     height: `${streamHeight}px`,
     backgroundColor: color,
     boxShadow: `0 0 5px ${color}66`,
-    zIndex: streamPourLayerZIndex,
+    zIndex: POUR_LAYER_ORDER.stream,
   };
 }

@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { TutorialMessage } from "@/games/tutorial";
+import { MOTION_EASING, prefersReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 /**
@@ -142,17 +143,9 @@ const introStageViews = {
 /** 動きを減らす設定か、動きを描けない環境では、導入を見せずに始める。 */
 function canPlayIntro(elements: readonly (HTMLElement | null)[]): boolean {
   return (
-    !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches &&
+    !prefersReducedMotion() &&
     elements.every((element) => typeof element?.animate === "function")
   );
-}
-
-/** デザイントークンのイージング。読めなければ近い既定値を使う。 */
-function readEasing(name: string, fallback: string): string {
-  const value = getComputedStyle(document.documentElement)
-    .getPropertyValue(name)
-    .trim();
-  return value || fallback;
 }
 
 /**
@@ -279,7 +272,6 @@ export function TutorialScreen({
 
     const transforms = getIntroNameTransforms(region, pictogram, titleElement);
     nameTransformsRef.current = transforms;
-    const enterEasing = readEasing("--ease-enter", "ease-out");
     for (const [element, transform] of [
       [pictogram, transforms.pictogram],
       [titleElement, transforms.title],
@@ -289,7 +281,7 @@ export function TutorialScreen({
       animationsRef.current.push(
         element.animate([{ opacity: 0 }, { opacity: 1 }], {
           duration: NAME_APPEAR_MS,
-          easing: enterEasing,
+          easing: MOTION_EASING.enter,
           fill: "backwards",
         }),
       );
@@ -313,7 +305,6 @@ export function TutorialScreen({
       return;
     }
     setStage("header");
-    const standardEasing = readEasing("--ease-standard", "ease-in-out");
     for (const [element, transform, delay] of [
       [pictogramRef.current, transforms.pictogram, 0],
       [titleRef.current, transforms.title, TITLE_MOVE_DELAY_MS],
@@ -326,7 +317,7 @@ export function TutorialScreen({
         element.animate([{ transform }, { transform: "none" }], {
           duration: PICTOGRAM_MOVE_MS,
           delay,
-          easing: standardEasing,
+          easing: MOTION_EASING.standard,
           fill: "backwards",
         }),
       );

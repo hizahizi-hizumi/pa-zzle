@@ -1,6 +1,7 @@
 import {
   calculateParkingJamPlayScore,
   calculateParkingJamSpeedFullScoreMs,
+  calculateParkingJamTimeDeltaMs,
   PARKING_JAM_SCORE_MAXIMUMS,
   type ParkingJamPlayScoreInput,
 } from "@/games/parking-jam/score";
@@ -22,17 +23,30 @@ describe("calculateParkingJamSpeedFullScoreMs", () => {
   );
 });
 
+describe("calculateParkingJamTimeDeltaMs", () => {
+  test("問題ごとの基準時間とクリア時間との差を求めること", () => {
+    const timeDeltaMs = calculateParkingJamTimeDeltaMs({
+      elapsedMs: 30_000,
+      speedReference: { vehicleCount: 8, initialBlockedVehicleCount: 2 },
+    });
+
+    expect(timeDeltaMs).toBe(-5_000);
+  });
+});
+
 describe("calculateParkingJamPlayScore", () => {
+  // 基準時間は 5 秒 + 9台 × 3 秒 + 6台 × 3 秒 = 50 秒。
+  const speedReference = { vehicleCount: 9, initialBlockedVehicleCount: 6 };
   const speedFullScoreMs = 50_000;
   const perfectInput: ParkingJamPlayScoreInput = {
-    speedFullScoreMs,
+    speedReference,
     elapsedMs: speedFullScoreMs,
     failedMoveCount: 0,
     undoCount: 0,
     restartCount: 0,
   };
 
-  test("不成立操作も待ったもやり直しもなく基準時間内なら100点になること", () => {
+  test("不成立操作も待ったも盤面を戻した回数もなく基準時間内なら100点になること", () => {
     const score = calculateParkingJamPlayScore(perfectInput);
 
     expect(score).toEqual({
@@ -106,9 +120,30 @@ describe("calculateParkingJamPlayScore", () => {
 
   describe("基準時間が異なる問題の場合", () => {
     const cases = [
-      [{ ...perfectInput, speedFullScoreMs: 35_000, elapsedMs: 52_500 }, 20],
-      [{ ...perfectInput, speedFullScoreMs: 53_000, elapsedMs: 79_500 }, 20],
-      [{ ...perfectInput, speedFullScoreMs: 71_000, elapsedMs: 106_500 }, 20],
+      [
+        {
+          ...perfectInput,
+          speedReference: { vehicleCount: 8, initialBlockedVehicleCount: 2 },
+          elapsedMs: 52_500,
+        },
+        20,
+      ],
+      [
+        {
+          ...perfectInput,
+          speedReference: { vehicleCount: 11, initialBlockedVehicleCount: 5 },
+          elapsedMs: 79_500,
+        },
+        20,
+      ],
+      [
+        {
+          ...perfectInput,
+          speedReference: { vehicleCount: 14, initialBlockedVehicleCount: 8 },
+          elapsedMs: 106_500,
+        },
+        20,
+      ],
     ] as const satisfies readonly (readonly [
       ParkingJamPlayScoreInput,
       number,
@@ -124,7 +159,7 @@ describe("calculateParkingJamPlayScore", () => {
     );
   });
 
-  describe("待ったとやり直しを使った場合", () => {
+  describe("待ったと盤面を戻す操作を使った場合", () => {
     const input: ParkingJamPlayScoreInput = {
       ...perfectInput,
       undoCount: 3,

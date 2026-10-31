@@ -1,22 +1,29 @@
-import { calculateLinearScore } from "@/games/score";
+import {
+  calculateLinearScore,
+  calculateSpeedScore,
+  calculateTimeDeltaMs,
+  createSpeedScoreRule,
+  type PlayScore,
+  type ScoreMaximums,
+  type SpeedScoreRule,
+  sumPlayScore,
+} from "@/games/score";
+
 export const WATER_SORT_SCORE_MAXIMUMS = {
   efficiency: 40,
   speed: 40,
   accuracy: 20,
-} as const;
+} as const satisfies ScoreMaximums<"efficiency" | "speed" | "accuracy">;
 
 export const WATER_SORT_SPEED_INITIAL_RECOGNITION_MS = 5_000;
 export const WATER_SORT_SPEED_PER_COLOR_MS = 1_500;
 export const WATER_SORT_SPEED_PER_OPTIMAL_MOVE_MS = 5_000;
+/** 速さが0点になる時間の、基準時間に対する倍率。 */
+export const WATER_SORT_SPEED_ZERO_SCORE_RATIO = 2;
 
-export type WaterSortPlayScore = {
-  total: number;
-  breakdown: {
-    efficiency: number;
-    speed: number;
-    accuracy: number;
-  };
-};
+export type WaterSortPlayScore = PlayScore<
+  keyof typeof WATER_SORT_SCORE_MAXIMUMS
+>;
 
 type WaterSortPlayScoreInput = {
   elapsedMs: number;
@@ -31,11 +38,6 @@ type WaterSortSpeedFullScoreInput = {
   colorCount: number;
 };
 
-type WaterSortPerformanceComparisonInput = WaterSortSpeedFullScoreInput & {
-  elapsedMs: number;
-  completionMoveCount: number;
-};
-
 type WaterSortTimeDeltaInput = WaterSortSpeedFullScoreInput & {
   elapsedMs: number;
 };
@@ -43,12 +45,6 @@ type WaterSortTimeDeltaInput = WaterSortSpeedFullScoreInput & {
 type WaterSortMoveDeltaInput = {
   completionMoveCount: number;
   optimalMoveCount: number;
-};
-
-export type WaterSortPerformanceComparison = {
-  speedFullScoreMs: number;
-  timeDeltaMs: number;
-  moveDelta: number;
 };
 
 export function calculateWaterSortSpeedFullScoreMs({
@@ -62,14 +58,22 @@ export function calculateWaterSortSpeedFullScoreMs({
   );
 }
 
+export function calculateWaterSortSpeedScoreRule(
+  input: WaterSortSpeedFullScoreInput,
+): SpeedScoreRule {
+  return createSpeedScoreRule(
+    calculateWaterSortSpeedFullScoreMs(input),
+    WATER_SORT_SPEED_ZERO_SCORE_RATIO,
+  );
+}
+
 export function calculateWaterSortTimeDeltaMs({
   elapsedMs,
-  optimalMoveCount,
-  colorCount,
+  ...input
 }: WaterSortTimeDeltaInput): number {
-  return (
-    elapsedMs -
-    calculateWaterSortSpeedFullScoreMs({ optimalMoveCount, colorCount })
+  return calculateTimeDeltaMs(
+    elapsedMs,
+    calculateWaterSortSpeedScoreRule(input),
   );
 }
 
@@ -80,27 +84,6 @@ export function calculateWaterSortMoveDelta({
   return completionMoveCount - optimalMoveCount;
 }
 
-export function calculateWaterSortPerformanceComparison({
-  elapsedMs,
-  completionMoveCount,
-  optimalMoveCount,
-  colorCount,
-}: WaterSortPerformanceComparisonInput): WaterSortPerformanceComparison {
-  const speedFullScoreMs = calculateWaterSortSpeedFullScoreMs({
-    optimalMoveCount,
-    colorCount,
-  });
-
-  return {
-    speedFullScoreMs,
-    timeDeltaMs: elapsedMs - speedFullScoreMs,
-    moveDelta: calculateWaterSortMoveDelta({
-      completionMoveCount,
-      optimalMoveCount,
-    }),
-  };
-}
-
 export function calculateWaterSortPlayScore({
   elapsedMs,
   moveCount,
@@ -109,32 +92,22 @@ export function calculateWaterSortPlayScore({
   colorCount,
 }: WaterSortPlayScoreInput): WaterSortPlayScore {
   if (optimalMoveCount <= 0) {
-    return {
-      total: 100,
-      breakdown: {
-        efficiency: WATER_SORT_SCORE_MAXIMUMS.efficiency,
-        speed: WATER_SORT_SCORE_MAXIMUMS.speed,
-        accuracy: WATER_SORT_SCORE_MAXIMUMS.accuracy,
-      },
-    };
+    return sumPlayScore({ ...WATER_SORT_SCORE_MAXIMUMS });
   }
 
-  const comparison = calculateWaterSortPerformanceComparison({
-    elapsedMs,
-    completionMoveCount,
-    optimalMoveCount,
-    colorCount,
-  });
-  const completionOverage = Math.max(0, comparison.moveDelta);
+  const completionOverage = Math.max(
+    0,
+    calculateWaterSortMoveDelta({ completionMoveCount, optimalMoveCount }),
+  );
   const efficiency = calculateLinearScore(
     WATER_SORT_SCORE_MAXIMUMS.efficiency,
     1 - completionOverage / optimalMoveCount,
   );
 
-  const speedOvertimeMs = Math.max(0, comparison.timeDeltaMs);
-  const speed = calculateLinearScore(
+  const speed = calculateSpeedScore(
     WATER_SORT_SCORE_MAXIMUMS.speed,
-    1 - speedOvertimeMs / comparison.speedFullScoreMs,
+    elapsedMs,
+    calculateWaterSortSpeedScoreRule({ optimalMoveCount, colorCount }),
   );
 
   const backtrackMoveCount = Math.max(0, moveCount - completionMoveCount);
@@ -143,8 +116,5 @@ export function calculateWaterSortPlayScore({
     1 - backtrackMoveCount / optimalMoveCount,
   );
 
-  return {
-    total: efficiency + speed + accuracy,
-    breakdown: { efficiency, speed, accuracy },
-  };
+  return sumPlayScore({ efficiency, speed, accuracy });
 }

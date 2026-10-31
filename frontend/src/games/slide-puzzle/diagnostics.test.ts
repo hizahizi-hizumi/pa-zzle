@@ -48,7 +48,7 @@ describe("SlidePuzzleDiagnosticSnapshot", () => {
     (serialized) => {
       const act = () => parseSlidePuzzleDiagnosticSnapshot(serialized);
 
-      expect(act).toThrow("Invalid slide puzzle diagnostic snapshot");
+      expect(act).toThrow("Invalid slide-puzzle diagnostic snapshot");
     },
   );
 });

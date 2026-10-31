@@ -13,14 +13,11 @@ function createProps(): ComponentProps<typeof GameResultScreen> {
     score: 82,
     metrics: [
       { label: "時間", value: "01:05", detail: "基準 +00:10" },
-      { label: "ミス", value: "2" },
+      { label: "ミス", value: "2回" },
     ],
     recordOutcomeNotice: <p>記録を保存しました</p>,
     scoreBreakdown: [{ label: "速さ", value: "30 / 40" }],
-    scoreCriteria: {
-      items: [{ label: "速さ", description: "基準時間以内で満点。" }],
-      note: { label: "下限", description: "各項目は0点を下限とします。" },
-    },
+    scoreCriteria: [{ label: "速さ", description: "基準時間以内で満点。" }],
     onStartNewProblem: vi.fn(),
     onReplay: vi.fn(),
     onOpenRecords: vi.fn(),
@@ -66,13 +63,15 @@ describe("GameResultScreen", () => {
     ]);
   });
 
-  test("スコアの内訳と採点基準を開けること", () => {
+  test("スコアの内訳と、全ゲーム共通の丸め方を添えた採点基準を開けること", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
     );
 
     const criterion = screen.getByText("基準時間以内で満点。");
-    const note = screen.getByText("各項目は0点を下限とします。");
+    const note = screen.getByText(
+      "各項目は1点単位に四捨五入し、0点を下限とする。",
+    );
     expect(criterion).toBeTruthy();
     expect(note).toBeTruthy();
   });
@@ -81,37 +80,5 @@ describe("GameResultScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: "検証情報" }));
 
     expect(props.onOpenDiagnostics).toHaveBeenCalledOnce();
-  });
-});
-
-describe("スコアを出さないプレイの場合", () => {
-  beforeEach(() => {
-    const {
-      score: _score,
-      scoreBreakdown: _scoreBreakdown,
-      scoreCriteria: _scoreCriteria,
-      ...common
-    } = createProps();
-    render(
-      <GameResultScreen
-        {...common}
-        score={null}
-        unscoredReason="評価の材料が無いため、スコアは出しません。"
-      />,
-    );
-  });
-
-  test("スコアの代わりに理由を示し、内訳を開く操作を出さないこと", () => {
-    const reason = screen.getByText(
-      "評価の材料が無いため、スコアは出しません。",
-    );
-    const score = screen.queryByText("スコア");
-    const details = screen.queryByRole("button", {
-      name: "スコアの内訳・採点基準",
-    });
-
-    expect(reason).toBeTruthy();
-    expect(score).toBeNull();
-    expect(details).toBeNull();
   });
 });

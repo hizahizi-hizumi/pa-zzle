@@ -92,8 +92,8 @@ export function ReflectionDifficultyPreview({
   return (
     <span
       aria-hidden="true"
-      // 320px 幅では選択肢のラベルが折り返さないよう、マスを小さくして図の幅を抑える。
-      className="flex h-14 w-36 shrink-0 items-center [--preview-unit:12px] min-[360px]:w-44 min-[360px]:[--preview-unit:15px] lg:h-28 lg:w-full lg:justify-center lg:[--preview-unit:12px]"
+      // 最も広いレベルの帯がプレビュー枠（128px）に収まるマスの大きさにする。
+      className="flex h-14 w-full items-center [--preview-unit:11px] lg:h-28 lg:justify-center lg:[--preview-unit:12px]"
     >
       {/* マスの大きさをどのレベルでもそろえるため、図の幅を帯の列の数に比例させる。 */}
       <svg

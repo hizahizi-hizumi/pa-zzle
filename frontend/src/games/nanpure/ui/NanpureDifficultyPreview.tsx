@@ -39,7 +39,7 @@ export function NanpureDifficultyPreview({
   return (
     <span
       aria-hidden="true"
-      className="flex h-14 w-32 shrink-0 items-center lg:justify-center"
+      className="flex h-14 w-full items-center lg:w-32 lg:justify-center"
     >
       <span className="grid grid-cols-[repeat(7,18px)] auto-rows-[18px] border-t-2 border-r border-b-2 border-t-foreground/55 border-r-border/85 border-b-foreground/55 bg-background">
         {cellPositions.map(({ id, row, column, digit }) => {

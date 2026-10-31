@@ -1,10 +1,9 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
-
 import { useSlidePuzzlePlay } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
-import { restoreSlidePuzzleProblemWithOptimalMoveCount } from "@/games/slide-puzzle/problem/generator";
+import { restoreSlidePuzzleProblem } from "@/games/slide-puzzle/problem/generator";
 import {
+  decodeSlidePuzzlePoolEntry,
   listSlidePuzzlePoolEntries,
-  toSlidePuzzlePooledProblem,
 } from "@/games/slide-puzzle/problem/problem-pool";
 
 // 最下段だけが 1 マスずつずれた盤面。右下のタイルをタップすると 3 枚まとめて滑って完成する。
@@ -73,7 +72,7 @@ describe("useSlidePuzzlePlay", () => {
   });
 
   test("矢印キーの方向へ空白の隣のタイルを 1 枚滑らせること", () => {
-    act(() => result.current.slideByKeyboard("left"));
+    act(() => result.current.slideInDirection("left"));
 
     expect(result.current.board).toEqual([
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 0, 14, 15,
@@ -82,7 +81,7 @@ describe("useSlidePuzzlePlay", () => {
   });
 
   test("タイルが無い方向の矢印キーでは何もしないこと", () => {
-    act(() => result.current.slideByKeyboard("right"));
+    act(() => result.current.slideInDirection("right"));
 
     expect(result.current.board).toEqual(initialBoard);
     expect(result.current.operation).toBeNull();
@@ -101,7 +100,7 @@ describe("useSlidePuzzlePlay", () => {
       restartCount: 0,
       optimalMoveCount: 3,
       moveDelta: 0,
-      speedFullScoreMs: 16_000,
+      speedRule: { fullScoreMs: 16_000, zeroScoreMs: 32_000 },
       score: { breakdown: { efficiency: 60 } },
     });
   });
@@ -112,7 +111,7 @@ describe("useSlidePuzzlePlay", () => {
     });
 
     test("完成演出の完了で結果へ進むこと", () => {
-      act(() => result.current.completeClearing());
+      act(() => result.current.completeClearAnimation());
 
       expect(result.current.progress).toBe("result");
     });
@@ -189,7 +188,7 @@ describe("useSlidePuzzlePlay", () => {
       });
 
       test("矢印キーの方向へ空白の隣のタイルを 1 枚滑らせること", () => {
-        act(() => sized.current.slideByKeyboard("left"));
+        act(() => sized.current.slideInDirection("left"));
 
         expect(sized.current.board).toEqual(boardAfterLeftKey);
       });
@@ -206,13 +205,10 @@ describe("useSlidePuzzlePlay", () => {
   describe("最初の問題を渡した場合", () => {
     const pooledEntries = listSlidePuzzlePoolEntries("4").slice(0, 1);
     const initialProblems = pooledEntries.map((entry) => {
-      const { identity, optimalMoveCount } = toSlidePuzzlePooledProblem(entry);
+      const { identity, optimalMoveCount } = decodeSlidePuzzlePoolEntry(entry);
       return [
         entry[0],
-        restoreSlidePuzzleProblemWithOptimalMoveCount(
-          identity,
-          optimalMoveCount,
-        ),
+        { ...restoreSlidePuzzleProblem(identity), optimalMoveCount },
       ] as const;
     });
 

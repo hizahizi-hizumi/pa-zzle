@@ -20,8 +20,7 @@ import {
 } from "@/games/reflection/puzzle/laser";
 import {
   calculateReflectionPlayScore,
-  calculateReflectionSpeedFullScoreMs,
-  calculateReflectionSpeedZeroScoreMs,
+  calculateReflectionSpeedScoreRule,
   calculateReflectionTimeDeltaMs,
 } from "@/games/reflection/score";
 import type { ReflectionSessionResult } from "@/games/reflection/session/session";
@@ -52,8 +51,7 @@ function createResult(performance: ReflectionSessionResult): ReflectionResult {
   return {
     ...performance,
     workload,
-    speedFullScoreMs: calculateReflectionSpeedFullScoreMs(workload),
-    speedZeroScoreMs: calculateReflectionSpeedZeroScoreMs(workload),
+    speedRule: calculateReflectionSpeedScoreRule(workload),
     timeDeltaMs: calculateReflectionTimeDeltaMs({
       elapsedMs: performance.elapsedMs,
       workload,
@@ -65,7 +63,7 @@ function createResult(performance: ReflectionSessionResult): ReflectionResult {
   };
 }
 
-// 12秒超過で93点。置き直し2回・盤面戻し1回は点に入らない。
+// 12秒超過で93点。置き直し2回・盤面を戻した1回は点に入らない。
 const performance = {
   elapsedMs: 95_000,
   relocationCount: 2,
@@ -74,7 +72,7 @@ const performance = {
   inputCount: 20,
 };
 const result = createResult(performance);
-// 基準時間以内なら、置き直しや盤面戻しがあっても100点。
+// 基準時間以内なら、置き直しや盤面を戻した回数があっても100点。
 const perfectResult = createResult({ ...performance, elapsedMs: 68_000 });
 
 describe("ReflectionPlay", () => {
@@ -86,9 +84,9 @@ describe("ReflectionPlay", () => {
   const leftMiddle = { side: "left", index: 1 } as const;
 
   const callbacks = {
-    onTapCell: vi.fn(),
-    onTapStock: vi.fn(),
-    onTapClue: vi.fn(),
+    onSelectCell: vi.fn(),
+    onSelectStockPiece: vi.fn(),
+    onSelectClue: vi.fn(),
     onRemovePiece: vi.fn(),
     onClearSelection: vi.fn(),
     onRestart: vi.fn(),
@@ -101,7 +99,7 @@ describe("ReflectionPlay", () => {
   };
 
   const baseProps: ComponentProps<typeof ReflectionPlay> = {
-    difficultyLabel: "レベル 1",
+    difficulty: "1",
     laserPathMode: "assist",
     progress: "playing",
     board: emptyBoard,
@@ -112,7 +110,6 @@ describe("ReflectionPlay", () => {
     laser: null,
     elapsedMs: 65_000,
     canRestart: false,
-    sessionResult: null,
     result: null,
     recordOutcomeNotice: null,
     ...callbacks,
@@ -199,7 +196,7 @@ describe("ReflectionPlay", () => {
         screen.getByRole("button", { name: "左2行 退出 3マス 一致" }),
       );
 
-      expect(callbacks.onTapClue).toHaveBeenCalledWith(leftMiddle);
+      expect(callbacks.onSelectClue).toHaveBeenCalledWith(leftMiddle);
     });
 
     test.each([
@@ -210,7 +207,7 @@ describe("ReflectionPlay", () => {
       (_, getTarget) => {
         fireEvent.keyDown(getTarget() as HTMLElement, { key: "2" });
 
-        expect(callbacks.onTapStock).toHaveBeenCalledWith("black-hole");
+        expect(callbacks.onSelectStockPiece).toHaveBeenCalledWith("black-hole");
       },
     );
 
@@ -220,7 +217,7 @@ describe("ReflectionPlay", () => {
 
       fireEvent.keyDown(menu, { key: "1" });
 
-      expect(callbacks.onTapStock).not.toHaveBeenCalled();
+      expect(callbacks.onSelectStockPiece).not.toHaveBeenCalled();
     });
 
     test("Escape で選択の解除を求めること", () => {
@@ -320,7 +317,7 @@ describe("ReflectionPlay", () => {
         fireEvent.pointerUp(getCell("2行3列 空き"), touch);
         fireEvent.click(getCell("2行3列 空き"), { detail: 1 });
 
-        expect(callbacks.onTapCell.mock.calls).toEqual([[5]]);
+        expect(callbacks.onSelectCell.mock.calls).toEqual([[5]]);
       });
 
       test("隣のマスを続けて押すと、前に押したマスへ届く click ではなく指を離したマスを知らせること", () => {
@@ -330,7 +327,7 @@ describe("ReflectionPlay", () => {
         fireEvent.pointerUp(getCell("2行3列 空き"), touch);
         fireEvent.click(getCell("2行2列 ブラックホール"), { detail: 2 });
 
-        expect(callbacks.onTapCell.mock.calls).toEqual([[4], [5]]);
+        expect(callbacks.onSelectCell.mock.calls).toEqual([[4], [5]]);
       });
 
       test("ストックも指を離した種類を1回だけ知らせること", () => {
@@ -341,7 +338,7 @@ describe("ReflectionPlay", () => {
         fireEvent.pointerUp(stockButton, touch);
         fireEvent.click(stockButton, { detail: 1 });
 
-        expect(callbacks.onTapStock.mock.calls).toEqual([["slash"]]);
+        expect(callbacks.onSelectStockPiece.mock.calls).toEqual([["slash"]]);
       });
     });
   });
@@ -414,7 +411,6 @@ describe("ReflectionPlay", () => {
       renderPlay({
         board: solution,
         progress: "clearing",
-        sessionResult: performance,
         result,
       });
     });
@@ -435,7 +431,6 @@ describe("ReflectionPlay", () => {
       renderPlay({
         board: solution,
         progress: "result",
-        sessionResult: performance,
         result,
         ...props,
       });
@@ -471,7 +466,7 @@ describe("ReflectionPlay", () => {
           .map((definition) => definition.textContent);
 
         expect(terms).toEqual(["時間", "置き直し"]);
-        expect(definitions).toEqual(["01:35", "基準 +00:12", "2"]);
+        expect(definitions).toEqual(["01:35", "基準 +00:12", "2回"]);
       });
 
       test("結果画面へフォーカスを移すこと", () => {
@@ -520,7 +515,7 @@ describe("ReflectionPlay", () => {
           );
         });
 
-        test("盤面戻し・光路の確認・基準時間・作業の量を内訳に表示すること", () => {
+        test("速さの点・盤面を戻した回数・光路の確認・基準時間・作業の量を内訳に表示すること", () => {
           const terms = screen
             .getAllByRole("term")
             .map((term) => term.textContent);
@@ -530,7 +525,8 @@ describe("ReflectionPlay", () => {
 
           expect(terms).toEqual(
             expect.arrayContaining([
-              "盤面戻し",
+              "速さ",
+              "盤面を戻す",
               "光路の確認",
               "基準時間",
               "ピース",
@@ -558,15 +554,15 @@ describe("ReflectionPlay", () => {
           const criteria = screen.getByText(/基準時間は/);
 
           expect(criteria.textContent).toBe(
-            "基準時間01:23以内で100点、04:09以上で0点、その間は時間に応じて減点。基準時間は読んで解く時間01:27（外周ヒント28本 × 0.5秒 + ピース8個 × 3.5秒 + 照らし直す局面8回 × 1.25秒 + 仮に置いて確かめる10回 × 3.5秒）と、一致表示を見ながら試し置きで解く時間01:19（外周ヒント28本 × 0.5秒 + 試し置き13手 × 5秒）の中間です。局面と仮に置く回数は、この問題を外周ヒントから読んで解くときに要る回数です（仮に置く回数は10回まで数えます）。",
+            "基準時間01:23以内で100点、04:09以上で0点、その間は時間に応じて減らす。基準時間は読んで解く時間01:27（外周ヒント28本 × 0.5秒 + ピース8個 × 3.5秒 + 照らし直す局面8回 × 1.25秒 + 仮に置いて確かめる10回 × 3.5秒）と、一致表示を見ながら試し置きで解く時間01:19（外周ヒント28本 × 0.5秒 + 試し置き13手 × 5秒）の中間。局面と仮に置く回数は、この問題を外周ヒントから読んで解くときに要る回数（仮に置く回数は10回まで数える）。",
           );
         });
 
-        test("置き直し・盤面戻し・光路の確認を減点しないことを表示すること", () => {
-          const criteria = screen.getByText(/点に入りません/);
+        test("置き直し・盤面を戻した回数・光路の確認を減点しないことを表示すること", () => {
+          const criteria = screen.getByText(/回数は点に入らない/);
 
           expect(criteria.textContent).toBe(
-            "置き直し・盤面戻し・光路を確かめた回数は点に入りません。置いて確かめ、動かして直しても減点しません。",
+            "置き直し・「盤面を戻す」・光路を確かめた回数は点に入らない。置いて確かめ、動かして直しても減点しない。",
           );
         });
       });
@@ -589,7 +585,7 @@ describe("ReflectionPlay", () => {
 
     describe("100点で解いた場合", () => {
       beforeEach(() => {
-        renderResult({ sessionResult: perfectResult, result: perfectResult });
+        renderResult({ result: perfectResult });
       });
 
       test("最高段階として称えること", () => {
@@ -602,34 +598,6 @@ describe("ReflectionPlay", () => {
         const timeDelta = screen.getByText("基準 -00:15");
 
         expect(timeDelta).toBeTruthy();
-      });
-    });
-
-    describe("評価できない問題を解いた場合", () => {
-      beforeEach(() => {
-        renderResult({ difficultyLabel: "問題指定", result: null });
-      });
-
-      test("スコアを出さない理由と、プレイの事実を表示すること", () => {
-        const reason = screen.getByText(
-          "問題集に無い問題のため、スコアは出しません。",
-        );
-        const score = screen.queryByRole("region", { name: "スコア" });
-        const definitions = screen
-          .getAllByRole("definition")
-          .map((definition) => definition.textContent);
-
-        expect(reason).toBeTruthy();
-        expect(score).toBeNull();
-        expect(definitions).toEqual(["01:35", "2"]);
-      });
-
-      test("スコアの内訳を出さないこと", () => {
-        const button = screen.queryByRole("button", {
-          name: "スコアの内訳・採点基準",
-        });
-
-        expect(button).toBeNull();
       });
     });
 

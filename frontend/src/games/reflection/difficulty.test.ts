@@ -1,11 +1,9 @@
+import { difficultyLevels } from "@/games/difficulty";
 import {
   assessReflectionDifficulty,
-  getReflectionDifficultyLabel,
   listReflectionGenerationConditions,
-  parseReflectionDifficulty,
   type ReflectionDifficulty,
   type ReflectionLevelCombination,
-  reflectionDifficulties,
   reflectionLevelCombinations,
 } from "@/games/reflection/difficulty";
 import type {
@@ -48,7 +46,7 @@ function toAnalysis(
   };
 }
 
-const difficultyIds = reflectionDifficulties.map(({ id }) => id);
+const difficultyIds = difficultyLevels.map(({ id }) => id);
 
 const combinationCases = difficultyIds.map(
   (difficulty): readonly [ReflectionDifficulty, ReflectionLevelCombination] => [
@@ -336,27 +334,5 @@ describe("listReflectionGenerationConditions", () => {
       { size: 10, pieceCount: 19 },
       { size: 10, pieceCount: 20 },
     ]);
-  });
-});
-
-describe("parseReflectionDifficulty", () => {
-  const cases = [
-    ["3", "3"],
-    ["6", undefined],
-    [undefined, undefined],
-  ] as const;
-
-  test.each(cases)("%s を難易度として読むこと", (value, expected) => {
-    const result = parseReflectionDifficulty(value);
-
-    expect(result).toBe(expected);
-  });
-});
-
-describe("getReflectionDifficultyLabel", () => {
-  test("難易度のラベルを返すこと", () => {
-    const result = getReflectionDifficultyLabel("5");
-
-    expect(result).toBe("レベル 5");
   });
 });

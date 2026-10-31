@@ -75,11 +75,16 @@ function advanceTime(ms: number): void {
   });
 }
 
-/** 導入の段ごとに次の段の時計を掛け直すので、細かく区切って進める。 */
-function advanceTimeInSlices(ms: number): void {
+/**
+ * 導入の段ごとに次の段の時計を掛け直すので、細かく区切って進める。
+ * 演出の完了は Animation の `finished` を待つので、区切りごとに Promise も進める。
+ */
+async function advanceTimeInSlices(ms: number): Promise<void> {
   const sliceMs = 50;
   for (let elapsed = 0; elapsed < ms; elapsed += sliceMs) {
-    advanceTime(sliceMs);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(sliceMs);
+    });
   }
 }
 
@@ -435,8 +440,8 @@ describe("TakuzuTutorial", () => {
       expect(hinted).toEqual([]);
     });
 
-    test("最後まで見せると、始めの盤面で最初の手順の一言と印を出すこと", () => {
-      advanceTimeInSlices(introEnoughMs);
+    test("最後まで見せると、始めの盤面で最初の手順の一言と印を出すこと", async () => {
+      await advanceTimeInSlices(introEnoughMs);
 
       const headline = screen.getByText("四角と丸で、盤面を埋めていきます");
       const labels = [getCellLabel(1, 1), getCellLabel(1, 2)];
@@ -450,8 +455,8 @@ describe("TakuzuTutorial", () => {
     });
 
     describe("盤面の段まで進んだ場合", () => {
-      beforeEach(() => {
-        advanceTimeInSlices(introBoardStartMs);
+      beforeEach(async () => {
+        await advanceTimeInSlices(introBoardStartMs);
       });
 
       test("盤面を押しても、タイルを替えないこと", () => {
@@ -493,16 +498,16 @@ describe("TakuzuTutorial", () => {
     });
 
     describe("解き終えた場合", () => {
-      beforeEach(() => {
-        advanceTimeInSlices(introEnoughMs);
+      beforeEach(async () => {
+        await advanceTimeInSlices(introEnoughMs);
         solveAll();
-        advanceTimeInSlices(introEnoughMs);
+        await advanceTimeInSlices(introEnoughMs);
       });
 
-      test("もう一度で、置いたタイルを消してから最初の手順を始めること", () => {
+      test("もう一度で、置いたタイルを消してから最初の手順を始めること", async () => {
         fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
         const labelWhileRewinding = getCellLabel(1, 1);
-        advanceTimeInSlices(introEnoughMs);
+        await advanceTimeInSlices(introEnoughMs);
 
         const label = getCellLabel(1, 1);
         const hinted = getHintedCellPositions();

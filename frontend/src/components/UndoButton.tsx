@@ -1,5 +1,7 @@
 import { Undo2 } from "lucide-react";
 
+import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
+
 type UndoButtonProps = {
   disabled: boolean;
   onUndo: () => void;
@@ -10,7 +12,7 @@ export function UndoButton({ disabled, onUndo }: UndoButtonProps) {
     <button
       type="button"
       className="inline-flex size-12 items-center justify-center rounded-full border-(length:--border-width-normal) bg-background shadow-raised transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
-      aria-label="待った"
+      aria-label={PLAY_OPERATION_LABELS.undo}
       onClick={onUndo}
       disabled={disabled}
     >

@@ -1,14 +1,18 @@
 import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
 import {
+  _private,
   createMinesweeperDiagnosticSnapshot,
-  parseMinesweeperDiagnosticSnapshot,
-  restoreMinesweeperProblemFromDiagnosticSnapshot,
 } from "@/games/minesweeper/diagnostics";
 import { restoreMinesweeperProblemWithoutAnalysis } from "@/games/minesweeper/problem/generator";
 import {
   listMinesweeperPoolEntries,
   toMinesweeperPoolIdentity,
 } from "@/games/minesweeper/problem/problem-pool";
+
+const {
+  parseMinesweeperDiagnosticSnapshot,
+  restoreMinesweeperProblemFromDiagnosticSnapshot,
+} = _private;
 
 describe("MinesweeperDiagnosticSnapshot", () => {
   const identity = toMinesweeperPoolIdentity(

@@ -1,11 +1,9 @@
-import { type ReactNode, useState } from "react";
-
-import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
-import { PlayHeader } from "@/components/PlayHeader";
+import { GamePlayFrame } from "@/components/GamePlayFrame";
 import { UndoButton } from "@/components/UndoButton";
+import type { ParkingJamDifficulty } from "@/games/parking-jam/difficulty";
+import { PARKING_JAM_DISPLAY_NAME } from "@/games/parking-jam/display-name";
 import type {
   ParkingJamOperation,
-  ParkingJamProgress,
   ParkingJamResult,
 } from "@/games/parking-jam/play/use-parking-jam-play";
 import type {
@@ -16,56 +14,47 @@ import type {
 } from "@/games/parking-jam/puzzle/board";
 import { ParkingJamBoard } from "@/games/parking-jam/ui/board/ParkingJamBoard";
 import { ParkingJamHowToPlayDialog } from "@/games/parking-jam/ui/ParkingJamHowToPlayDialog";
-import { ParkingJamResultScreen } from "@/games/parking-jam/ui/ParkingJamPlay/ParkingJamResultScreen";
-import { formatElapsedTime } from "@/lib/format-elapsed-time";
+import { ParkingJamResultScreen } from "@/games/parking-jam/ui/result/ParkingJamResultScreen";
+import type {
+  GamePlayScreenProps,
+  RestartableGamePlayScreenProps,
+  UndoableGamePlayScreenProps,
+} from "@/games/play";
+import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 
-type ParkingJamPlayProps = {
-  /** 結果画面に出す難易度の表示名。 */
-  difficultyLabel: string;
-  status: "playing" | "cleared";
-  progress: ParkingJamProgress;
-  board: ParkingJamBoardDefinition;
-  state: ParkingJamState;
-  selectedVehicleId: ParkingJamVehicleId | null;
-  operation: ParkingJamOperation | null;
-  elapsedMs: number;
-  failedMoveCount: number;
-  undoCount: number;
-  canUndo: boolean;
-  canRestart: boolean;
-  result: ParkingJamResult | null;
-  recordOutcomeNotice: ReactNode;
-  onSelectVehicle: (vehicleId: ParkingJamVehicleId) => void;
-  onMove: (
-    vehicleId: ParkingJamVehicleId,
-    direction: ParkingJamDirection,
-  ) => void;
-  onUndo: () => void;
-  onRestart: () => void;
-  onReplay: () => void;
-  onStartNewProblem: () => void;
-  onOpenRecords: () => void;
-  onChangeDifficulty: () => void;
-  onBackToHome: () => void;
-  onClearAnimationComplete: () => void;
-  onOpenDiagnostics?: () => void;
-};
+type ParkingJamPlayProps = GamePlayScreenProps<
+  ParkingJamDifficulty,
+  ParkingJamResult
+> &
+  RestartableGamePlayScreenProps &
+  UndoableGamePlayScreenProps & {
+    board: ParkingJamBoardDefinition;
+    state: ParkingJamState;
+    selectedVehicleId: ParkingJamVehicleId | null;
+    operation: ParkingJamOperation | null;
+    failedMoveCount: number;
+    undoCount: number;
+    onSelectVehicle: (vehicleId: ParkingJamVehicleId) => void;
+    onMove: (
+      vehicleId: ParkingJamVehicleId,
+      direction: ParkingJamDirection,
+    ) => void;
+  };
 
 export function ParkingJamPlay({
-  difficultyLabel,
-  status,
+  difficulty,
   progress,
+  elapsedMs,
+  result,
+  recordOutcomeNotice,
   board,
   state,
   selectedVehicleId,
   operation,
-  elapsedMs,
   failedMoveCount,
   undoCount,
   canUndo,
   canRestart,
-  result,
-  recordOutcomeNotice,
   onSelectVehicle,
   onMove,
   onUndo,
@@ -78,68 +67,58 @@ export function ParkingJamPlay({
   onClearAnimationComplete,
   onOpenDiagnostics,
 }: ParkingJamPlayProps) {
-  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
-
-  if (progress === "result" && result) {
-    return (
-      <ParkingJamResultScreen
-        difficultyLabel={difficultyLabel}
-        result={result}
-        recordOutcomeNotice={recordOutcomeNotice}
-        onReplay={onReplay}
-        onStartNewProblem={onStartNewProblem}
-        onOpenRecords={onOpenRecords}
-        onChangeDifficulty={onChangeDifficulty}
-        onBackToHome={onBackToHome}
-        onOpenDiagnostics={onOpenDiagnostics}
-      />
-    );
-  }
-
   return (
-    <section className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">
-      <BrandIdentityHeader />
-      <PlayHeader
-        title="パーキングジャム"
-        metricGroups={[
-          [
-            { label: "ミス", value: String(failedMoveCount) },
-            { label: "時間", value: formatElapsedTime(elapsedMs) },
-            { label: "待った", value: String(undoCount) },
-          ],
-        ]}
-        canRestart={canRestart}
-        onRestart={onRestart}
-        onStartNewProblem={onStartNewProblem}
-        onChangeDifficulty={onChangeDifficulty}
-        onBackToHome={onBackToHome}
-        onOpenHowToPlay={() => setHowToPlayOpen(true)}
-        onOpenDiagnostics={onOpenDiagnostics}
-      />
-      <ParkingJamHowToPlayDialog
-        open={howToPlayOpen}
-        onClose={() => setHowToPlayOpen(false)}
-      />
+    <GamePlayFrame
+      progress={progress}
+      result={result}
+      title={PARKING_JAM_DISPLAY_NAME}
+      metrics={[
+        { type: "count", label: "ミス", count: failedMoveCount },
+        { type: "elapsed-time", elapsedMs },
+        { type: "count", label: PLAY_OPERATION_LABELS.undo, count: undoCount },
+      ]}
+      canRestart={canRestart}
+      onRestart={onRestart}
+      onReplay={onReplay}
+      onStartNewProblem={onStartNewProblem}
+      onChangeDifficulty={onChangeDifficulty}
+      onBackToHome={onBackToHome}
+      onOpenDiagnostics={onOpenDiagnostics}
+      renderHowToPlayDialog={({ open, onClose }) => (
+        <ParkingJamHowToPlayDialog open={open} onClose={onClose} />
+      )}
+      renderResultScreen={(clearedResult) => (
+        <ParkingJamResultScreen
+          difficulty={difficulty}
+          result={clearedResult}
+          recordOutcomeNotice={recordOutcomeNotice}
+          onReplay={onReplay}
+          onStartNewProblem={onStartNewProblem}
+          onOpenRecords={onOpenRecords}
+          onChangeDifficulty={onChangeDifficulty}
+          onBackToHome={onBackToHome}
+          onOpenDiagnostics={onOpenDiagnostics}
+        />
+      )}
+    >
       <main className="flex min-h-0 flex-1 items-center justify-center overflow-hidden px-3 py-2 sm:px-6">
         <ParkingJamBoard
           board={board}
           state={state}
           selectedVehicleId={selectedVehicleId}
           operation={operation}
-          interactionDisabled={status !== "playing"}
+          interactionDisabled={progress !== "playing"}
+          clearing={progress === "clearing"}
           onSelectVehicle={onSelectVehicle}
           onMove={onMove}
-          onExitAnimationComplete={onClearAnimationComplete}
+          onClearAnimationComplete={onClearAnimationComplete}
         />
       </main>
       <footer className="grid h-28 shrink-0 items-end px-4 pb-2">
         <div className="flex h-14 items-center justify-center">
-          <UndoButton
-            disabled={!canUndo || status !== "playing"}
-            onUndo={onUndo}
-          />
+          <UndoButton disabled={!canUndo} onUndo={onUndo} />
         </div>
       </footer>
-    </section>
+    </GamePlayFrame>
   );
 }

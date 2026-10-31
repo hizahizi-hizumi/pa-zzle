@@ -52,7 +52,7 @@ export function SlidePuzzleDifficultyPreview({
   return (
     <span
       aria-hidden="true"
-      className="flex h-14 w-36 shrink-0 items-start lg:h-28 lg:w-full lg:items-center lg:justify-center"
+      className="flex h-14 w-full items-start lg:h-28 lg:items-center lg:justify-center"
     >
       {/* 下側の角を丸めず、盤面が下へ続く切り出しに見せる。 */}
       <span

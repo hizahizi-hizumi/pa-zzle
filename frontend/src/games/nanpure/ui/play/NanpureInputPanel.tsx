@@ -4,6 +4,7 @@ import {
   type NanpureDigit,
 } from "@/games/nanpure/puzzle/board";
 import { PlayActionButton } from "@/games/nanpure/ui/play/NanpureInputPanel/PlayActionButton";
+import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 import { cn } from "@/lib/utils";
 
 type NanpureInputPanelProps = {
@@ -45,7 +46,7 @@ export function NanpureInputPanel({
         <div className="grid grid-cols-3">
           <PlayActionButton
             icon={<Undo2 />}
-            label="待った"
+            label={PLAY_OPERATION_LABELS.undo}
             onClick={onUndo}
             disabled={!interactionEnabled || !canUndo}
           />

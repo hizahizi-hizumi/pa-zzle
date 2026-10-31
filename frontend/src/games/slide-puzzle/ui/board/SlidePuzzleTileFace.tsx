@@ -30,7 +30,7 @@ export function SlidePuzzleTileFace({
   return (
     <span
       ref={ref}
-      className={`flex size-full items-center justify-center rounded-[1.6cqw] border border-border bg-card font-sans ${tileNumberClassByBoardSize[boardSize]} leading-none font-semibold text-card-foreground tabular-nums shadow-raised transition-colors duration-fast group-active:bg-accent group-focus-visible:ring-2 group-focus-visible:ring-ring`}
+      className={`flex size-full items-center justify-center rounded-[1.6cqw] border border-border bg-card font-sans ${tileNumberClassByBoardSize[boardSize]} leading-none font-semibold text-card-foreground tabular-nums shadow-raised transition-colors duration-(--duration-fast) group-active:bg-accent group-focus-visible:ring-2 group-focus-visible:ring-ring`}
     >
       {tile}
     </span>

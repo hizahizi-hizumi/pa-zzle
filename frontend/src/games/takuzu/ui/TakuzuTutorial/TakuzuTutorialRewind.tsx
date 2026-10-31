@@ -1,5 +1,7 @@
 import { type ReactNode, useEffect, useRef } from "react";
 
+import { MOTION_EASING, playAnimations } from "@/lib/motion";
+
 type TakuzuTutorialRewindProps = {
   /** `true` の間、置いたタイルを消したまま保つ。`false` に戻ると消す動きを外す。 */
   active: boolean;
@@ -13,7 +15,6 @@ const placedTileSelector = '[data-takuzu-tile="placed"]';
 const REWIND_STAGGER_MS = 20;
 const REWIND_DURATION_MS = 220;
 const REWIND_SETTLE_MS = 80;
-const REWIND_EASING = "cubic-bezier(0.4, 0, 1, 1)";
 
 const rewindKeyframes: Keyframe[] = [
   { opacity: 1, transform: "scale(1)" },
@@ -40,39 +41,28 @@ export function TakuzuTutorialRewind({
       return;
     }
 
-    const tileElements = Array.from(
-      containerRef.current?.querySelectorAll<HTMLElement>(placedTileSelector) ??
-        [],
-    );
-    if (
-      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ||
-      tileElements.length === 0 ||
-      tileElements.some((element) => typeof element.animate !== "function")
-    ) {
-      onComplete();
-      return;
-    }
-
-    const animations = tileElements.map(function animateTile(element) {
-      return element.animate(rewindKeyframes, {
-        duration: REWIND_DURATION_MS,
-        delay: getWaveStep(element) * REWIND_STAGGER_MS,
-        easing: REWIND_EASING,
-        fill: "both",
-      });
+    return playAnimations({
+      animate() {
+        const tileElements =
+          containerRef.current?.querySelectorAll<HTMLElement>(
+            placedTileSelector,
+          ) ?? [];
+        return Array.from(tileElements).flatMap(function animateTile(element) {
+          return (
+            element.animate?.(rewindKeyframes, {
+              duration: REWIND_DURATION_MS,
+              delay: getWaveStep(element) * REWIND_STAGGER_MS,
+              easing: MOTION_EASING.exit,
+              fill: "both",
+            }) ?? []
+          );
+        });
+      },
+      completion: { type: "after-animations", holdMs: REWIND_SETTLE_MS },
+      reducedMotionHoldMs: 0,
+      unanimatedHoldMs: 0,
+      onFinished: onComplete,
     });
-    const lastStep = Math.max(...tileElements.map(getWaveStep));
-    const timer = window.setTimeout(
-      onComplete,
-      lastStep * REWIND_STAGGER_MS + REWIND_DURATION_MS + REWIND_SETTLE_MS,
-    );
-
-    return () => {
-      window.clearTimeout(timer);
-      for (const animation of animations) {
-        animation.cancel();
-      }
-    };
   }, [active, onComplete]);
 
   return (

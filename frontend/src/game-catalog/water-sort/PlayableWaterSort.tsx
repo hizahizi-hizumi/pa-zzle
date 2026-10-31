@@ -1,105 +1,68 @@
-import { useMemo, useState } from "react";
-
+import { usePlayableGame } from "@/game-catalog/playable-game";
+import { useRequestedProblem } from "@/game-catalog/problem-id-query";
+import { waterSortCatalogEntry } from "@/game-catalog/water-sort/water-sort-catalog-entry";
+import type { ProblemId } from "@/games/problem-id";
 import { createWaterSortDiagnosticSnapshot } from "@/games/water-sort/diagnostics";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import { useWaterSortPlay } from "@/games/water-sort/play/use-water-sort-play";
+import { createWaterSortPlayAttemptProgress } from "@/games/water-sort/play-attempt";
 import {
   createWaterSortPlayRecord,
   waterSortPlayRecordDefinition,
 } from "@/games/water-sort/play-record";
-import type { WaterSortGeneratedProblem } from "@/games/water-sort/problem/problem";
-import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
+import { selectWaterSortProblemById } from "@/games/water-sort/problem-selection";
 import { WaterSortDiagnostics } from "@/games/water-sort/ui/WaterSortDiagnostics";
 import { WaterSortPlay } from "@/games/water-sort/ui/WaterSortPlay";
-import {
-  buildRevision,
-  internalDiagnosticsAvailable,
-} from "@/lib/internal-diagnostics";
-import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
-import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
-import { useNavigate } from "@/router";
 
 type PlayableWaterSortProps = {
   difficulty: WaterSortDifficulty;
-  initialProblem?: WaterSortGeneratedProblem;
+  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
+  avoidedProblemId?: ProblemId;
 };
 
 export function PlayableWaterSort({
   difficulty,
-  initialProblem,
+  avoidedProblemId,
 }: PlayableWaterSortProps) {
-  const play = useWaterSortPlay(difficulty, initialProblem);
-  const navigate = useNavigate();
-  const playRecord = useMemo(
-    () =>
-      play.result && play.completedAt !== null
-        ? createWaterSortPlayRecord({
-            difficulty,
-            problemIdentity: play.problemIdentity,
-            startedAt: play.startedAt,
-            completedAt: play.completedAt,
-            result: play.result,
-          })
-        : null,
-    [
-      difficulty,
-      play.completedAt,
-      play.problemIdentity,
-      play.result,
-      play.startedAt,
-    ],
+  const requestedProblem = useRequestedProblem((problemId) =>
+    selectWaterSortProblemById(difficulty, problemId),
   );
-  const recordOutcome = useSavePlayRecord(
-    playRecord,
-    waterSortPlayRecordDefinition,
-  );
-  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
-  const diagnostics = internalDiagnosticsAvailable
-    ? createWaterSortDiagnosticSnapshot({
-        difficulty: play.difficulty,
+  const play = useWaterSortPlay(difficulty, requestedProblem, avoidedProblemId);
+  const { screenProps, diagnostics } = usePlayableGame({
+    game: waterSortCatalogEntry,
+    play,
+    playRecordDefinition: waterSortPlayRecordDefinition,
+    createPlayRecord: createWaterSortPlayRecord,
+    createPlayAttemptProgress: createWaterSortPlayAttemptProgress,
+    createDiagnosticSnapshot(buildRevision) {
+      return createWaterSortDiagnosticSnapshot({
+        difficulty,
         problemIdentity: play.problemIdentity,
         buildRevision,
-      })
-    : null;
+      });
+    },
+  });
 
   return (
     <>
       <WaterSortPlay
-        difficulty={play.difficulty}
-        status={play.status}
-        progress={play.progress}
+        {...screenProps}
         state={play.state}
-        elapsedMs={play.elapsedMs}
         moveCount={play.moveCount}
         undoCount={play.undoCount}
         canUndo={play.canUndo}
         isDeadlocked={play.isDeadlocked}
         sourceBottleIndex={play.sourceBottleIndex}
         operation={play.operation}
-        result={play.result}
-        recordOutcomeNotice={
-          <PlayRecordOutcomeNotice
-            outcome={recordOutcome}
-            display={waterSortPlayRecordDisplay}
-          />
-        }
         onSelectBottle={play.selectBottle}
         onUndo={play.undo}
+        canRestart={play.canRestart}
         onRestart={play.restart}
-        onReplay={play.replay}
-        onStartNewProblem={play.startNewProblem}
-        onOpenRecords={() => navigate("/records")}
-        onClearingPourComplete={play.completeClearingPour}
-        onChangeDifficulty={() => navigate("/puzzles/water-sort")}
-        onBackToHome={() => navigate("/")}
-        onOpenDiagnostics={
-          diagnostics ? () => setDiagnosticsOpen(true) : undefined
-        }
       />
-      {diagnostics && diagnosticsOpen && (
+      {diagnostics.snapshot && (
         <WaterSortDiagnostics
-          snapshot={diagnostics}
-          onClose={() => setDiagnosticsOpen(false)}
+          snapshot={diagnostics.snapshot}
+          onClose={diagnostics.close}
         />
       )}
     </>

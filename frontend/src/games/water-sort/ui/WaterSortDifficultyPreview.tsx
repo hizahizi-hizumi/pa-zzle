@@ -29,7 +29,7 @@ export function WaterSortDifficultyPreview({
   );
 
   return (
-    <span aria-hidden="true" className="relative h-12 w-32 shrink-0">
+    <span aria-hidden="true" className="relative h-12 w-full lg:w-32">
       <span className="absolute top-0 left-0 flex h-24 w-64 origin-top-left scale-50 items-end gap-2 lg:justify-center">
         {bottles.map(({ id, contents }) => (
           <span key={id} className="relative h-full aspect-[0.36]">

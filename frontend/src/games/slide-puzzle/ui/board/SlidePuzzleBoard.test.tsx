@@ -18,11 +18,11 @@ afterEach(() => {
 
 describe("SlidePuzzleBoard", () => {
   let onSlideTile: ReturnType<typeof vi.fn<(tileIndex: number) => void>>;
-  let onClearingComplete: ReturnType<typeof vi.fn<() => void>>;
+  let onClearAnimationComplete: ReturnType<typeof vi.fn<() => void>>;
 
   beforeEach(() => {
     onSlideTile = vi.fn<(tileIndex: number) => void>();
-    onClearingComplete = vi.fn<() => void>();
+    onClearAnimationComplete = vi.fn<() => void>();
   });
 
   describe("プレイ中の場合", () => {
@@ -36,7 +36,7 @@ describe("SlidePuzzleBoard", () => {
           interactionDisabled={false}
           clearing={false}
           onSlideTile={onSlideTile}
-          onClearingComplete={onClearingComplete}
+          onClearAnimationComplete={onClearAnimationComplete}
         />,
       );
       boardGroup = screen.getByRole("group", { name: "盤面" });
@@ -92,7 +92,7 @@ describe("SlidePuzzleBoard", () => {
             interactionDisabled={false}
             clearing={false}
             onSlideTile={onSlideTile}
-            onClearingComplete={onClearingComplete}
+            onClearAnimationComplete={onClearAnimationComplete}
           />,
         );
         boardGroup = screen.getByRole("group", { name: "盤面" });
@@ -125,7 +125,7 @@ describe("SlidePuzzleBoard", () => {
           interactionDisabled
           clearing={false}
           onSlideTile={onSlideTile}
-          onClearingComplete={onClearingComplete}
+          onClearAnimationComplete={onClearAnimationComplete}
         />,
       ));
     });
@@ -139,11 +139,11 @@ describe("SlidePuzzleBoard", () => {
             interactionDisabled
             clearing
             onSlideTile={onSlideTile}
-            onClearingComplete={onClearingComplete}
+            onClearAnimationComplete={onClearAnimationComplete}
           />,
         );
 
-        expect(onClearingComplete).toHaveBeenCalledOnce();
+        expect(onClearAnimationComplete).toHaveBeenCalledOnce();
       });
     });
   });

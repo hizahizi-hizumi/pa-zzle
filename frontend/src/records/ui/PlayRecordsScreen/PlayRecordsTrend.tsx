@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/native-select";
 import type { PlayRecord } from "@/records/play-record";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
-import { formatRecordCompletedAt } from "@/records/ui/format";
+import { formatPlayedAt } from "@/records/ui/format";
 import { getTrendValueAxis } from "@/records/ui/PlayRecordsScreen/trend-value-axis";
 import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
 
@@ -123,7 +123,7 @@ export function PlayRecordsTrend({
             axisLine={false}
             tickMargin={8}
             minTickGap={36}
-            tickFormatter={(value) => formatRecordCompletedAt(Number(value))}
+            tickFormatter={(value) => formatPlayedAt(Number(value))}
           />
           <YAxis
             domain={valueAxis.domain}
@@ -140,7 +140,7 @@ export function PlayRecordsTrend({
                 labelFormatter={(_label, payload) => {
                   const completedAt = payload[0]?.payload?.completedAt;
                   return typeof completedAt === "number"
-                    ? formatRecordCompletedAt(completedAt)
+                    ? formatPlayedAt(completedAt)
                     : null;
                 }}
                 formatter={(value) => metric.formatValue(Number(value))}

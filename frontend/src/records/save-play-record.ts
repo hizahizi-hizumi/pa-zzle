@@ -1,7 +1,9 @@
+import { isRecordObject } from "@/lib/type-guards";
 import {
   isBetterPersonalBestValue,
   type PersonalBestUpdate,
 } from "@/records/personal-best";
+import { removeClearedPlayAttempts } from "@/records/play-attempt-storage";
 import type { PlayRecord } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
 import {
@@ -97,6 +99,42 @@ export function savePlayRecord(
 
   const outcome = getPlayRecordSaveOutcome(previousRecords, record, definition);
   const saveStatus = appendPlayRecord(record, storage);
+  if (saveStatus === "failed") {
+    return { status: "failed" };
+  }
 
-  return saveStatus === "failed" ? { status: "failed" } : outcome;
+  removeClearedPlayAttempts(storage);
+  return outcome;
+}
+
+function isPersonalBestUpdate(value: unknown): value is PersonalBestUpdate {
+  return (
+    isRecordObject(value) &&
+    typeof value.metricId === "string" &&
+    typeof value.previousValue === "number" &&
+    typeof value.currentValue === "number"
+  );
+}
+
+/** 履歴の state など外部から読み戻した値が、保存結果の形をしているかを確かめる。 */
+export function isPlayRecordSaveOutcome(
+  value: unknown,
+): value is PlayRecordSaveOutcome {
+  if (!isRecordObject(value)) {
+    return false;
+  }
+
+  switch (value.status) {
+    case "first-record":
+    case "recorded":
+    case "failed":
+      return true;
+    case "updated":
+      return (
+        Array.isArray(value.updates) &&
+        value.updates.every(isPersonalBestUpdate)
+      );
+    default:
+      return false;
+  }
 }

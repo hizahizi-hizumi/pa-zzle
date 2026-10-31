@@ -1,8 +1,8 @@
 // @vitest-environment node
 
+import { difficultyLevels } from "@/games/difficulty";
 import {
   assessSlidePuzzleDifficulty,
-  slidePuzzleDifficulties,
   slidePuzzleDifficultyCriteria,
 } from "@/games/slide-puzzle/difficulty";
 import { analyzeSlidePuzzleDifficulty } from "@/games/slide-puzzle/problem/difficulty-analysis";
@@ -10,8 +10,8 @@ import { solveSlidePuzzleOptimally } from "@/games/slide-puzzle/problem/generati
 import { generateSlidePuzzleBoard } from "@/games/slide-puzzle/problem/generator";
 import type { SlidePuzzleProblemIdentity } from "@/games/slide-puzzle/problem/problem";
 import {
+  decodeSlidePuzzlePoolEntry,
   listSlidePuzzlePoolEntries,
-  toSlidePuzzlePooledProblem,
 } from "@/games/slide-puzzle/problem/problem-pool";
 import {
   restoreSlidePuzzlePooledProblem,
@@ -19,7 +19,7 @@ import {
 } from "@/games/slide-puzzle/problem-selection";
 import { isSolvableSlidePuzzleBoard } from "@/games/slide-puzzle/puzzle/rules";
 
-const difficulties = slidePuzzleDifficulties.map(({ id }) => id);
+const difficulties = difficultyLevels.map(({ id }) => id);
 
 describe("問題集", () => {
   test.each(difficulties)(
@@ -27,16 +27,20 @@ describe("問題集", () => {
     (difficulty) => {
       const levels = listSlidePuzzlePoolEntries(difficulty).map((entry) => {
         const { identity, optimalMoveCount } =
-          toSlidePuzzlePooledProblem(entry);
+          decodeSlidePuzzlePoolEntry(entry);
         const board = generateSlidePuzzleBoard(
           identity.seed,
           identity.conditions,
         );
-        return isSolvableSlidePuzzleBoard(board)
-          ? assessSlidePuzzleDifficulty(
-              analyzeSlidePuzzleDifficulty(board, optimalMoveCount),
-            )
-          : null;
+        if (!isSolvableSlidePuzzleBoard(board)) {
+          return null;
+        }
+        const assessment = assessSlidePuzzleDifficulty(
+          analyzeSlidePuzzleDifficulty(board, optimalMoveCount),
+        );
+        return assessment.status === "classified"
+          ? assessment.difficulty
+          : assessment.status;
       });
 
       expect(levels.length).toBeGreaterThanOrEqual(100);
@@ -109,7 +113,7 @@ describe("selectSlidePuzzleProblemForDifficulty", () => {
 describe("restoreSlidePuzzlePooledProblem", () => {
   const pooledProblems = listSlidePuzzlePoolEntries("3")
     .slice(0, 3)
-    .map((entry) => [entry[0], toSlidePuzzlePooledProblem(entry)] as const);
+    .map((entry) => [entry[0], decodeSlidePuzzlePoolEntry(entry)] as const);
   const unmatchedIdentities: readonly [string, SlidePuzzleProblemIdentity][] = [
     [
       "問題集に無い seed",

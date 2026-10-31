@@ -17,24 +17,18 @@ import {
   type NanpureNotes,
   toggleNanpureNoteDigit,
 } from "@/games/nanpure/session/notes";
+import { type GameSession, getClearedSessionElapsedMs } from "@/games/session";
 
 export type { NanpureNotes } from "@/games/nanpure/session/notes";
 
-export type NanpureSessionStatus = "playing" | "cleared";
-
 type NanpureSessionSnapshot = {
-  board: NanpureBoard;
+  puzzleState: NanpureBoard;
   notes: NanpureNotes;
 };
 
-export type NanpureSession = {
-  status: NanpureSessionStatus;
-  problem: NanpureProblem;
-  board: NanpureBoard;
+export type NanpureSession = GameSession<NanpureProblem, NanpureBoard> & {
   notes: NanpureNotes;
   history: readonly NanpureSessionSnapshot[];
-  startedAt: number;
-  finishedAt: number | null;
   mistakeCount: number;
   undoCount: number;
   restartCount: number;
@@ -53,15 +47,15 @@ function isEditableCell(session: NanpureSession, cellIndex: number): boolean {
 
 function withHistory(
   session: NanpureSession,
-  board: NanpureBoard,
+  puzzleState: NanpureBoard,
   notes: NanpureNotes,
-): Pick<NanpureSession, "board" | "notes" | "history"> {
+): Pick<NanpureSession, "puzzleState" | "notes" | "history"> {
   return {
-    board,
+    puzzleState,
     notes,
     history: [
       ...session.history,
-      { board: session.board, notes: session.notes },
+      { puzzleState: session.puzzleState, notes: session.notes },
     ],
   };
 }
@@ -75,7 +69,7 @@ export function createNanpureSession(
   return {
     status: "playing",
     problem,
-    board: [...problem.clues],
+    puzzleState: [...problem.clues],
     notes: createEmptyNanpureNotes(),
     history: [],
     startedAt,
@@ -86,7 +80,7 @@ export function createNanpureSession(
   };
 }
 
-export function enterNanpureDigit(
+export function enterNanpureSessionDigit(
   session: NanpureSession,
   cellIndex: number,
   digit: NanpureDigit,
@@ -97,12 +91,12 @@ export function enterNanpureDigit(
   if (
     session.status !== "playing" ||
     !isEditableCell(session, cellIndex) ||
-    session.board[cellIndex] === digit
+    session.puzzleState[cellIndex] === digit
   ) {
     return session;
   }
 
-  const board = [...session.board];
+  const board = [...session.puzzleState];
   board[cellIndex] = digit;
   const isCorrect = session.problem.solution[cellIndex] === digit;
   const notes = isCorrect
@@ -119,7 +113,7 @@ export function enterNanpureDigit(
   };
 }
 
-export function clearNanpureCell(
+export function clearNanpureSessionCell(
   session: NanpureSession,
   cellIndex: number,
 ): NanpureSession {
@@ -130,11 +124,11 @@ export function clearNanpureCell(
   }
 
   const cellNotes = session.notes[cellIndex] ?? [];
-  if (session.board[cellIndex] === null && cellNotes.length === 0) {
+  if (session.puzzleState[cellIndex] === null && cellNotes.length === 0) {
     return session;
   }
 
-  const board = [...session.board];
+  const board = [...session.puzzleState];
   board[cellIndex] = null;
   const notes = clearNanpureCellNotes(session.notes, cellIndex);
 
@@ -144,7 +138,7 @@ export function clearNanpureCell(
   };
 }
 
-export function toggleNanpureNote(
+export function toggleNanpureSessionNote(
   session: NanpureSession,
   cellIndex: number,
   digit: NanpureDigit,
@@ -154,7 +148,7 @@ export function toggleNanpureNote(
   if (
     session.status !== "playing" ||
     !isEditableCell(session, cellIndex) ||
-    session.board[cellIndex] !== null
+    session.puzzleState[cellIndex] !== null
   ) {
     return session;
   }
@@ -163,7 +157,7 @@ export function toggleNanpureNote(
 
   return {
     ...session,
-    ...withHistory(session, session.board, notes),
+    ...withHistory(session, session.puzzleState, notes),
   };
 }
 
@@ -179,43 +173,44 @@ export function undoNanpureSession(session: NanpureSession): NanpureSession {
 
   return {
     ...session,
-    board: previous.board,
+    puzzleState: previous.puzzleState,
     notes: previous.notes,
     history: session.history.slice(0, -1),
     undoCount: session.undoCount + 1,
   };
 }
 
+/** 同じプレイのまま盤面を初期状態へ戻す（盤面を戻す）。経過時間と記録は引き継ぐ。 */
 export function restartNanpureSession(session: NanpureSession): NanpureSession {
-  if (session.status !== "playing") {
+  if (!canRestartNanpureSession(session)) {
     return session;
   }
 
   return {
     ...session,
-    board: [...session.problem.clues],
+    puzzleState: [...session.problem.clues],
     notes: createEmptyNanpureNotes(),
     history: [],
     restartCount: session.restartCount + 1,
   };
 }
 
-export function findNanpureMistakeCellIndices(
+export function findNanpureSessionMistakeCellIndices(
   session: NanpureSession,
 ): number[] {
-  return session.board.flatMap((cell, cellIndex) =>
+  return session.puzzleState.flatMap((cell, cellIndex) =>
     cell !== null && cell !== session.problem.solution[cellIndex]
       ? [cellIndex]
       : [],
   );
 }
 
-export function findCompletedNanpureDigits(
+export function findNanpureSessionCompletedDigits(
   session: NanpureSession,
 ): NanpureDigit[] {
   return NANPURE_DIGITS.filter(
     (digit) =>
-      session.board.filter(
+      session.puzzleState.filter(
         (cell, cellIndex) =>
           cell === digit && session.problem.solution[cellIndex] === digit,
       ).length === NANPURE_SIZE,
@@ -226,23 +221,27 @@ export function canUndoNanpureSession(session: NanpureSession): boolean {
   return session.status === "playing" && session.history.length > 0;
 }
 
-export function getNanpureSessionElapsedMs(
-  session: NanpureSession,
-  now: number,
-): number {
-  return Math.max(0, (session.finishedAt ?? now) - session.startedAt);
+/** 盤面に数字かメモがあるプレイ中だけ、盤面を戻せる。 */
+export function canRestartNanpureSession(session: NanpureSession): boolean {
+  return (
+    session.status === "playing" &&
+    (session.puzzleState.some(
+      (cell, cellIndex) => cell !== session.problem.clues[cellIndex],
+    ) ||
+      session.notes.some((cellNotes) => cellNotes.length > 0))
+  );
 }
 
 export function getNanpureSessionResult(
   session: NanpureSession,
-  now: number,
 ): NanpureSessionResult | null {
-  if (session.status !== "cleared") {
+  const elapsedMs = getClearedSessionElapsedMs(session);
+  if (elapsedMs === null) {
     return null;
   }
 
   return {
-    elapsedMs: getNanpureSessionElapsedMs(session, now),
+    elapsedMs,
     mistakeCount: session.mistakeCount,
     undoCount: session.undoCount,
     restartCount: session.restartCount,

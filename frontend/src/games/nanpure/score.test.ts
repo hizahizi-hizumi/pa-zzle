@@ -4,7 +4,7 @@ import {
 } from "@/games/nanpure/score";
 
 describe("calculateNanpurePlayScore", () => {
-  test("ミスも超過時間も待ったもやり直しもなければ100点になること", () => {
+  test("ミスも超過時間も待ったも盤面を戻した回数もなければ100点になること", () => {
     const score = calculateNanpurePlayScore({
       elapsedMs: NANPURE_SPEED_FULL_SCORE_MS,
       mistakeCount: 0,
@@ -48,7 +48,7 @@ describe("calculateNanpurePlayScore", () => {
     expect(twoMinutesOver.breakdown.speed).toBe(38);
   });
 
-  test("待ったとやり直しを安定性からそれぞれ減点すること", () => {
+  test("待ったと盤面を戻した回数を安定性からそれぞれ減点すること", () => {
     const score = calculateNanpurePlayScore({
       elapsedMs: NANPURE_SPEED_FULL_SCORE_MS,
       mistakeCount: 0,

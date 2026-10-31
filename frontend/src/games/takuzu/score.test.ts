@@ -3,7 +3,7 @@ import type { TakuzuSolveWorkload } from "@/games/takuzu/problem/problem";
 import {
   calculateTakuzuPlayScore,
   calculateTakuzuSpeedFullScoreMs,
-  calculateTakuzuSpeedZeroScoreMs,
+  calculateTakuzuSpeedScoreRule,
   calculateTakuzuTimeDeltaMs,
 } from "@/games/takuzu/score";
 
@@ -73,11 +73,14 @@ describe("calculateTakuzuSpeedFullScoreMs", () => {
   });
 });
 
-describe("calculateTakuzuSpeedZeroScoreMs", () => {
-  test("基準時間の2倍を返すこと", () => {
-    const speedZeroScoreMs = calculateTakuzuSpeedZeroScoreMs(lightWorkload);
+describe("calculateTakuzuSpeedScoreRule", () => {
+  test("基準時間の2倍で0点になる規則を返すこと", () => {
+    const rule = calculateTakuzuSpeedScoreRule(lightWorkload);
 
-    expect(speedZeroScoreMs).toBe(lightFullScoreMs * 2);
+    expect(rule).toEqual({
+      fullScoreMs: lightFullScoreMs,
+      zeroScoreMs: lightFullScoreMs * 2,
+    });
   });
 });
 
@@ -110,7 +113,7 @@ describe("calculateTakuzuPlayScore", () => {
       workload: lightWorkload,
     };
 
-    test("正確性60点と速さ40点の満点にすること", () => {
+    test("正確さ60点と速さ40点の満点にすること", () => {
       const score = calculateTakuzuPlayScore(play);
 
       expect(score).toEqual({

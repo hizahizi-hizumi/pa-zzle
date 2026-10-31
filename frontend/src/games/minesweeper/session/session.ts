@@ -1,6 +1,5 @@
 import {
   assertMinesweeperProblem,
-  countMinesweeperMinimumOpenCount,
   type MinesweeperProblem,
 } from "@/games/minesweeper/problem/problem";
 import { getMinesweeperCellCount } from "@/games/minesweeper/puzzle/board";
@@ -15,8 +14,11 @@ import {
   revealMinesweeperCell,
   toggleMinesweeperFlag,
 } from "@/games/minesweeper/puzzle/transitions";
-
-export type MinesweeperSessionStatus = "playing" | "cleared";
+import {
+  type GameSession,
+  type GameSessionStatus,
+  getClearedSessionElapsedMs,
+} from "@/games/session";
 
 export type MinesweeperVisibleCell =
   | { state: "hidden" }
@@ -25,12 +27,10 @@ export type MinesweeperVisibleCell =
   | { state: "mine" }
   | { state: "steppedMine" };
 
-export type MinesweeperSession = {
-  status: MinesweeperSessionStatus;
-  problem: MinesweeperProblem;
-  puzzleState: MinesweeperPuzzleState;
-  startedAt: number;
-  finishedAt: number | null;
+export type MinesweeperSession = GameSession<
+  MinesweeperProblem,
+  MinesweeperPuzzleState
+> & {
   // 踏んだ地雷の数。1回の操作で複数の地雷を踏んだ場合は、その数だけ数える。
   mistakeCount: number;
 };
@@ -39,14 +39,12 @@ export type MinesweeperSession = {
 export type MinesweeperSessionResult = {
   elapsedMs: number;
   mistakeCount: number;
-  // 問題の初期開示状態から安全なマスをすべて開くのに要る、開く操作の最小回数。速さの基準時間に使う。
-  minimumOpenCount: number;
 };
 
 function getSessionStatus(
   problem: MinesweeperProblem,
   puzzleState: MinesweeperPuzzleState,
-): MinesweeperSessionStatus {
+): GameSessionStatus {
   return isMinesweeperCleared(problem.board, puzzleState)
     ? "cleared"
     : "playing";
@@ -186,33 +184,15 @@ export function chordMinesweeperSessionCell(
   );
 }
 
-export function replayMinesweeperSession(
-  session: MinesweeperSession,
-  startedAt: number,
-): MinesweeperSession {
-  return createMinesweeperSession(session.problem, startedAt);
-}
-
-export function getMinesweeperSessionElapsedMs(
-  session: MinesweeperSession,
-  now: number,
-): number {
-  return Math.max(0, (session.finishedAt ?? now) - session.startedAt);
-}
-
 export function getMinesweeperSessionResult(
   session: MinesweeperSession,
-  now: number,
 ): MinesweeperSessionResult | null {
-  if (session.status !== "cleared") {
+  const elapsedMs = getClearedSessionElapsedMs(session);
+  if (elapsedMs === null) {
     return null;
   }
 
-  return {
-    elapsedMs: getMinesweeperSessionElapsedMs(session, now),
-    mistakeCount: session.mistakeCount,
-    minimumOpenCount: countMinesweeperMinimumOpenCount(session.problem),
-  };
+  return { elapsedMs, mistakeCount: session.mistakeCount };
 }
 
 export function getMinesweeperSessionVisibleCells(

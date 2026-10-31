@@ -27,7 +27,7 @@ describe("analyzeParkingJamDifficulty", () => {
     test("依存がなく解順自由度が最大になること", () => {
       const analysis = analyzeParkingJamDifficulty(board, solvability);
 
-      expect(analysis.status).toBe("supported");
+      expect(analysis.status).toBe("analyzed");
       expect(analysis.features.vehicleCount).toBe(3);
       expect(analysis.features.dependencyDepth).toBe(1);
       expect(analysis.features.initialLegalVehicleCount).toBe(3);

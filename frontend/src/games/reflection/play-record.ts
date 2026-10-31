@@ -1,7 +1,9 @@
+import { parseDifficultyLevel } from "@/games/difficulty";
+import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
 import {
-  parseReflectionDifficulty,
-  type ReflectionDifficulty,
-} from "@/games/reflection/difficulty";
+  createReflectionResult,
+  type ReflectionResult,
+} from "@/games/reflection/play/use-reflection-play";
 import {
   isReflectionProblemIdentity,
   isReflectionRecordedProblemIdentity,
@@ -16,6 +18,11 @@ import {
   calculateReflectionTimeDeltaMs,
 } from "@/games/reflection/score";
 import type { ReflectionSessionResult } from "@/games/reflection/session/session";
+import {
+  isNonNegativeFiniteNumber,
+  isNonNegativeInteger,
+  isRecordObject,
+} from "@/lib/type-guards";
 import { createPlayRecordId, type PlayRecord } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
@@ -51,14 +58,6 @@ type CreateReflectionPlayRecordInput = {
   result: ReflectionSessionResult;
 };
 
-function isRecordObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isNonNegativeInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0;
-}
-
 /**
  * 置き直しは盤面を変える入力で起きるので、入力回数を超えない。
  * 以前の記録にある `undoCount` のような評価に使わない項目は、読み込みで無視する。
@@ -68,9 +67,7 @@ function isReflectionPerformance(
 ): value is ReflectionSessionResult {
   return (
     isRecordObject(value) &&
-    typeof value.elapsedMs === "number" &&
-    Number.isFinite(value.elapsedMs) &&
-    value.elapsedMs >= 0 &&
+    isNonNegativeFiniteNumber(value.elapsedMs) &&
     isNonNegativeInteger(value.relocationCount) &&
     isNonNegativeInteger(value.restartCount) &&
     isNonNegativeInteger(value.laserCheckCount) &&
@@ -103,12 +100,49 @@ export function isReflectionPlayRecord(
   const { difficulty, problemIdentity, workload, performance } = record.payload;
   return (
     typeof difficulty === "string" &&
-    parseReflectionDifficulty(difficulty) !== undefined &&
+    parseDifficultyLevel(difficulty) !== undefined &&
     isReflectionRecordedProblemIdentity(problemIdentity) &&
     isReflectionSolveWorkload(workload) &&
     isWorkloadOfRecordedIdentity(workload, problemIdentity) &&
     isReflectionPerformance(performance)
   );
+}
+
+/** 記録から作り直した、結果画面に出す内容。 */
+export type ReflectionRecordedResult = {
+  difficulty: ReflectionDifficulty;
+  problemIdentity: ReflectionProblemIdentity;
+  result: ReflectionResult;
+};
+
+/**
+ * 記録から結果画面に出す内容を作り直す。
+ * 今の版の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
+ */
+export function restoreReflectionRecordedResult(
+  record: PlayRecord,
+): ReflectionRecordedResult | null {
+  if (
+    !isReflectionPlayRecord(record) ||
+    !isReflectionProblemIdentity(record.payload.problemIdentity)
+  ) {
+    return null;
+  }
+
+  const { difficulty, problemIdentity, workload, performance } = record.payload;
+  // 以前の記録にある評価に使わない項目を結果へ持ち込まない。
+  const sessionResult: ReflectionSessionResult = {
+    elapsedMs: performance.elapsedMs,
+    relocationCount: performance.relocationCount,
+    restartCount: performance.restartCount,
+    laserCheckCount: performance.laserCheckCount,
+    inputCount: performance.inputCount,
+  };
+  return {
+    difficulty,
+    problemIdentity,
+    result: createReflectionResult(sessionResult, workload),
+  };
 }
 
 export function createReflectionPlayRecord({
@@ -165,7 +199,7 @@ export function getReflectionPlayRecordScore(
   return calculateReflectionPlayScore({
     elapsedMs: performance.elapsedMs,
     workload,
-  });
+  }).total;
 }
 
 export function getReflectionPlayRecordTimeDelta(

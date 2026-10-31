@@ -31,7 +31,7 @@ type ReflectionClueButtonProps = {
   focusKey: string;
   onElementChange: (key: string, element: HTMLButtonElement | null) => void;
   /** 押したときの受け口。タッチは押した位置のボタンで受ける（`useTouchTap`）。 */
-  tapHandlers: TapHandlers;
+  selectHandlers: TapHandlers;
   onFocus: (key: string) => void;
 };
 
@@ -72,7 +72,7 @@ export function ReflectionClueButton({
   focusable,
   focusKey,
   onElementChange,
-  tapHandlers,
+  selectHandlers,
   onFocus,
 }: ReflectionClueButtonProps) {
   const { row, column } = getReflectionClueGridPosition(size, entry);
@@ -102,8 +102,8 @@ export function ReflectionClueButton({
       data-matched={matched}
       disabled={disabled}
       tabIndex={focusable ? 0 : -1}
-      onPointerUp={tapHandlers.onPointerUp}
-      onClick={tapHandlers.onClick}
+      onPointerUp={selectHandlers.onPointerUp}
+      onClick={selectHandlers.onClick}
       onFocus={() => onFocus(focusKey)}
       style={{ gridRow: row, gridColumn: column }}
       className="group relative flex min-h-0 min-w-0 touch-manipulation select-none flex-col items-center justify-center gap-[calc(var(--reflection-unit)*0.05)] leading-none text-foreground outline-none focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent"

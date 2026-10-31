@@ -1,10 +1,13 @@
+import { DifficultyOption } from "@/components/DifficultyOption";
 import { DifficultySelectionHeading } from "@/components/DifficultySelectionHeading";
 import { HomeBackLink } from "@/components/HomeBackLink";
-import { takuzuDifficulties } from "@/games/takuzu/difficulty";
+import { takuzuCatalogEntry } from "@/game-catalog/takuzu/takuzu-catalog-entry";
+import { difficultyLevels } from "@/games/difficulty";
+import { TAKUZU_DISPLAY_NAME } from "@/games/takuzu/display-name";
+import { TakuzuDifficultyPreview } from "@/games/takuzu/ui/TakuzuDifficultyPreview";
 import { TakuzuHowToPlayDialog } from "@/games/takuzu/ui/TakuzuHowToPlayDialog";
 import { TakuzuTutorial } from "@/games/takuzu/ui/TakuzuTutorial";
 import { useNavigate } from "@/router";
-import { TakuzuDifficultyOption } from "@/views/TakuzuDifficultyView/TakuzuDifficultyOption";
 
 export function TakuzuDifficultyView() {
   const navigate = useNavigate();
@@ -20,7 +23,7 @@ export function TakuzuDifficultyView() {
       <div className="space-y-2">
         <HomeBackLink />
         <DifficultySelectionHeading
-          title="バイナリパズル"
+          title={TAKUZU_DISPLAY_NAME}
           renderHowToPlayDialog={({ open, onClose }) => (
             <TakuzuHowToPlayDialog open={open} onClose={onClose} />
           )}
@@ -35,12 +38,15 @@ export function TakuzuDifficultyView() {
       </div>
 
       <div className="grid gap-2 sm:gap-4 lg:grid-cols-5">
-        {takuzuDifficulties.map((difficulty) => (
-          <TakuzuDifficultyOption
+        {difficultyLevels.map((difficulty) => (
+          <DifficultyOption
             key={difficulty.id}
+            playPath={takuzuCatalogEntry.playPath}
             difficulty={difficulty.id}
             label={difficulty.label}
-          />
+          >
+            <TakuzuDifficultyPreview difficulty={difficulty.id} />
+          </DifficultyOption>
         ))}
       </div>
     </section>

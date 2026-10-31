@@ -14,8 +14,7 @@ function openPlayMenu(): void {
 
 function createProps(): ComponentProps<typeof ParkingJamPlay> {
   return {
-    difficultyLabel: "レベル 3",
-    status: "playing",
+    difficulty: "3",
     progress: "playing",
     board: {
       width: 5,
@@ -99,12 +98,11 @@ describe("ParkingJamPlay", () => {
     expect(props.onRestart).toHaveBeenCalledOnce();
   });
 
-  test("メニューにリセットを出さないこと", () => {
+  test("メニューからリセットできること", () => {
     openPlayMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "リセット" }));
 
-    const replayItem = screen.queryByRole("menuitem", { name: "リセット" });
-
-    expect(replayItem).toBeNull();
+    expect(props.onReplay).toHaveBeenCalledOnce();
   });
 
   test("盤面下の待ったから直前の出庫を戻せること", () => {
@@ -166,7 +164,6 @@ describe("クリア演出中の場合", () => {
     render(
       <ParkingJamPlay
         {...createProps()}
-        status="cleared"
         progress="clearing"
         state={{ remainingVehicleIds: [] }}
       />,

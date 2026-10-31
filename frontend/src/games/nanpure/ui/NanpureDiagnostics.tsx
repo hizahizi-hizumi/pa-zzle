@@ -1,7 +1,7 @@
 import { InternalDiagnosticsDialog } from "@/components/InternalDiagnosticsDialog";
 import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
+import { getDifficultyLabel } from "@/games/difficulty";
 import type { NanpureDiagnosticSnapshot } from "@/games/nanpure/diagnostics";
-import { getNanpureDifficultyLabel } from "@/games/nanpure/difficulty";
 import type { NanpureGenerationConditions } from "@/games/nanpure/problem/problem";
 
 type NanpureDiagnosticsProps = {
@@ -22,7 +22,7 @@ export function NanpureDiagnostics({
 }: NanpureDiagnosticsProps) {
   return (
     <InternalDiagnosticsDialog
-      difficultyLabel={getNanpureDifficultyLabel(snapshot.difficulty)}
+      difficultyLabel={getDifficultyLabel(snapshot.difficulty)}
       seed={snapshot.problemIdentity.seed}
       generatorVersion={snapshot.problemIdentity.generatorVersion}
       generationConditions={formatGenerationConditions(

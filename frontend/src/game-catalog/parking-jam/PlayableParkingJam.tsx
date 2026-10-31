@@ -1,139 +1,95 @@
-import { useMemo, useState } from "react";
-
-import { createParkingJamDiagnosticSnapshot } from "@/games/parking-jam/diagnostics";
+import { parkingJamCatalogEntry } from "@/game-catalog/parking-jam/parking-jam-catalog-entry";
 import {
-  getParkingJamDifficultyLabel,
-  type ParkingJamDifficulty,
-} from "@/games/parking-jam/difficulty";
-import { useParkingJamPlay } from "@/games/parking-jam/play/use-parking-jam-play";
+  type CompletedGamePlay,
+  usePlayableGame,
+} from "@/game-catalog/playable-game";
+import { useRequestedProblem } from "@/game-catalog/problem-id-query";
+import { createParkingJamDiagnosticSnapshot } from "@/games/parking-jam/diagnostics";
+import type { ParkingJamDifficulty } from "@/games/parking-jam/difficulty";
+import {
+  type ParkingJamResult,
+  useParkingJamPlay,
+} from "@/games/parking-jam/play/use-parking-jam-play";
+import { createParkingJamPlayAttemptProgress } from "@/games/parking-jam/play-attempt";
 import {
   createParkingJamPlayRecord,
   parkingJamPlayRecordDefinition,
 } from "@/games/parking-jam/play-record";
-import type { ParkingJamRestoredProblem } from "@/games/parking-jam/problem/generator";
+import type { ParkingJamProblemIdentity } from "@/games/parking-jam/problem/problem";
+import { selectParkingJamProblemById } from "@/games/parking-jam/problem-selection";
 import { ParkingJamDiagnostics } from "@/games/parking-jam/ui/ParkingJamDiagnostics";
 import { ParkingJamPlay } from "@/games/parking-jam/ui/ParkingJamPlay";
-import { parkingJamPlayRecordDisplay } from "@/games/parking-jam/ui/play-record-display";
-import {
-  buildRevision,
-  internalDiagnosticsAvailable,
-} from "@/lib/internal-diagnostics";
-import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
-import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
-import { useNavigate } from "@/router";
-
-/**
- * 最初に遊ぶ問題を指定する。
- * - `replay`: 記録の問題を、その記録の難易度として遊び直す。記録は通常どおり保存する。
- * - `blind-comparison`: 人間の遊び比べ用に指定した問題。難易度を伏せ、記録を保存しない。
- */
-type ParkingJamInitialProblem = {
-  restored: ParkingJamRestoredProblem;
-  purpose: "replay" | "blind-comparison";
-};
+import type { ProblemId } from "@/games/problem-id";
 
 type PlayableParkingJamProps = {
   difficulty: ParkingJamDifficulty;
-  initialProblem?: ParkingJamInitialProblem;
+  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
+  avoidedProblemId?: ProblemId;
 };
 
-const BLIND_COMPARISON_DIFFICULTY_LABEL = "問題指定";
+function createPlayRecord(
+  completed: CompletedGamePlay<
+    ParkingJamDifficulty,
+    ParkingJamProblemIdentity,
+    ParkingJamResult
+  >,
+) {
+  return createParkingJamPlayRecord({
+    ...completed,
+    speedReference: completed.result.speedReference,
+  });
+}
 
 export function PlayableParkingJam({
   difficulty,
-  initialProblem,
+  avoidedProblemId,
 }: PlayableParkingJamProps) {
-  const play = useParkingJamPlay(difficulty, initialProblem?.restored);
-  const navigate = useNavigate();
-  const isBlindComparison =
-    initialProblem?.purpose === "blind-comparison" &&
-    play.problemSource === "given";
-  const playRecord = useMemo(
-    () =>
-      !isBlindComparison && play.result && play.completedAt !== null
-        ? createParkingJamPlayRecord({
-            difficulty,
-            problemIdentity: play.problemIdentity,
-            speedReference: play.result.speedReference,
-            startedAt: play.startedAt,
-            completedAt: play.completedAt,
-            result: play.result,
-          })
-        : null,
-    [
-      difficulty,
-      isBlindComparison,
-      play.completedAt,
-      play.problemIdentity,
-      play.result,
-      play.startedAt,
-    ],
+  const requestedProblem = useRequestedProblem((problemId) =>
+    selectParkingJamProblemById(difficulty, problemId),
   );
-  const recordOutcome = useSavePlayRecord(
-    playRecord,
-    parkingJamPlayRecordDefinition,
+  const play = useParkingJamPlay(
+    difficulty,
+    requestedProblem,
+    avoidedProblemId,
   );
-  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
-  const diagnostics = useMemo(
-    () =>
-      internalDiagnosticsAvailable && diagnosticsOpen
-        ? createParkingJamDiagnosticSnapshot({
-            difficulty,
-            problemIdentity: play.problemIdentity,
-            buildRevision,
-          })
-        : null,
-    [difficulty, diagnosticsOpen, play.problemIdentity],
-  );
+  const { screenProps, diagnostics } = usePlayableGame({
+    game: parkingJamCatalogEntry,
+    play,
+    playRecordDefinition: parkingJamPlayRecordDefinition,
+    createPlayRecord,
+    createPlayAttemptProgress: createParkingJamPlayAttemptProgress,
+    createDiagnosticSnapshot(buildRevision) {
+      return createParkingJamDiagnosticSnapshot({
+        difficulty,
+        problemIdentity: play.problemIdentity,
+        buildRevision,
+      });
+    },
+  });
 
   return (
     <>
       <ParkingJamPlay
-        difficultyLabel={
-          isBlindComparison
-            ? BLIND_COMPARISON_DIFFICULTY_LABEL
-            : getParkingJamDifficultyLabel(difficulty)
-        }
-        status={play.status}
-        progress={play.progress}
+        {...screenProps}
         board={play.board}
         state={play.state}
         selectedVehicleId={play.selectedVehicleId}
         operation={play.operation}
-        elapsedMs={play.elapsedMs}
         failedMoveCount={play.failedMoveCount}
         undoCount={play.undoCount}
         canUndo={play.canUndo}
         canRestart={play.canRestart}
-        result={play.result}
-        recordOutcomeNotice={
-          <PlayRecordOutcomeNotice
-            outcome={recordOutcome}
-            display={parkingJamPlayRecordDisplay}
-          />
-        }
         onSelectVehicle={play.selectVehicle}
         onMove={play.attemptMove}
         onUndo={play.undo}
         onRestart={play.restart}
-        onReplay={play.replay}
-        onStartNewProblem={play.startNewProblem}
-        onOpenRecords={() => navigate("/records")}
-        onChangeDifficulty={() => navigate("/puzzles/parking-jam")}
-        onBackToHome={() => navigate("/")}
-        onClearAnimationComplete={play.completeClearAnimation}
-        onOpenDiagnostics={
-          internalDiagnosticsAvailable
-            ? () => setDiagnosticsOpen(true)
-            : undefined
-        }
       />
-      {diagnostics ? (
+      {diagnostics.snapshot && (
         <ParkingJamDiagnostics
-          snapshot={diagnostics}
-          onClose={() => setDiagnosticsOpen(false)}
+          snapshot={diagnostics.snapshot}
+          onClose={diagnostics.close}
         />
-      ) : null}
+      )}
     </>
   );
 }

@@ -4,7 +4,7 @@ import { Link, type Path } from "@/router";
 
 type DifficultySelectionPath = Exclude<
   Extract<Path, `/puzzles/${string}`>,
-  `${string}/play/${string}`
+  `${string}/:${string}`
 >;
 
 type PlayUnavailableNoticeProps = {

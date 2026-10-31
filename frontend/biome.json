@@ -200,7 +200,7 @@
       }
     },
     {
-      "includes": ["src/games/*.{ts,tsx}"],
+      "includes": ["src/games/*.{ts,tsx}", "!src/games/play.ts"],
       "linter": {
         "rules": {
           "style": {
@@ -224,6 +224,38 @@
                       "react*"
                     ],
                     "message": "[dependency/games-common-boundary] ゲーム共通契約は具体ゲーム・記録・React・UI合成へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/play.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/components/**",
+                      "@/game-catalog/**",
+                      "@/games/*/**",
+                      "@/records/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/games-common-play-boundary] ゲーム共通のプレイ進行は React へだけ依存でき、具体ゲーム・記録・UI合成へ依存しない。"
                   }
                 ]
               }

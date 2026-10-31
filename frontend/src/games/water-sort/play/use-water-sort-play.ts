@@ -1,11 +1,21 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
-import { createProblemSeed, type ProblemSeed } from "@/games/problem-seed";
+import {
+  applyPlaySession,
+  completePlayClearAnimation,
+  type GamePlay,
+  type GameProgress,
+  type RestartableGamePlay,
+  startPlaySession,
+  type UndoableGamePlay,
+  useSessionElapsedMs,
+} from "@/games/play";
+import { createProblemId, type ProblemId } from "@/games/problem-id";
+import { selectProblemAvoiding } from "@/games/problem-selection";
+import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
-import type {
-  WaterSortGeneratedProblem,
-  WaterSortProblemIdentity,
-} from "@/games/water-sort/problem/problem";
+import type { WaterSortProblemIdentity } from "@/games/water-sort/problem/problem";
+import type { WaterSortPooledProblem } from "@/games/water-sort/problem/problem-pool";
 import { selectWaterSortProblemForDifficulty } from "@/games/water-sort/problem-selection";
 import { classifyWaterSortDeadlock } from "@/games/water-sort/puzzle/deadlock";
 import {
@@ -13,15 +23,16 @@ import {
   type WaterSortState,
 } from "@/games/water-sort/puzzle/state";
 import {
-  calculateWaterSortPerformanceComparison,
+  calculateWaterSortMoveDelta,
   calculateWaterSortPlayScore,
+  calculateWaterSortSpeedScoreRule,
   type WaterSortPlayScore,
 } from "@/games/water-sort/score";
 import {
   applyWaterSortSessionMove,
+  canRestartWaterSortSession,
   canUndoWaterSortSession,
   createWaterSortSession,
-  getWaterSortSessionElapsedMs,
   getWaterSortSessionResult,
   listWaterSortSessionLegalMoves,
   restartWaterSortSession,
@@ -47,90 +58,128 @@ export type WaterSortOperation =
       isClearingMove: boolean;
     };
 
-export type WaterSortProgress = "playing" | "clearing" | "result";
 export type WaterSortResult = WaterSortSessionResult & {
   optimalMoveCount: number;
   moveDelta: number;
+  speedRule: SpeedScoreRule;
   timeDeltaMs: number;
   backtrackMoveCount: number;
-  speedFullScoreMs: number;
   colorCount: number;
   score: WaterSortPlayScore;
 };
+
+/** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
+export function createWaterSortResult(
+  sessionResult: WaterSortSessionResult,
+  optimalMoveCount: number,
+  colorCount: number,
+): WaterSortResult {
+  const speedRule = calculateWaterSortSpeedScoreRule({
+    optimalMoveCount,
+    colorCount,
+  });
+
+  return {
+    ...sessionResult,
+    optimalMoveCount,
+    moveDelta: calculateWaterSortMoveDelta({
+      completionMoveCount: sessionResult.completionMoveCount,
+      optimalMoveCount,
+    }),
+    speedRule,
+    timeDeltaMs: calculateTimeDeltaMs(sessionResult.elapsedMs, speedRule),
+    backtrackMoveCount:
+      sessionResult.moveCount - sessionResult.completionMoveCount,
+    colorCount,
+    score: calculateWaterSortPlayScore({
+      elapsedMs: sessionResult.elapsedMs,
+      moveCount: sessionResult.moveCount,
+      completionMoveCount: sessionResult.completionMoveCount,
+      optimalMoveCount,
+      colorCount,
+    }),
+  };
+}
+
+export type WaterSortPlay = GamePlay<
+  WaterSortDifficulty,
+  WaterSortProblemIdentity,
+  WaterSortSession,
+  WaterSortResult
+> &
+  RestartableGamePlay &
+  UndoableGamePlay & {
+    state: WaterSortState;
+    moveCount: number;
+    undoCount: number;
+    restartCount: number;
+    optimalMoveCount: number;
+    isDeadlocked: boolean;
+    sourceBottleIndex: number | null;
+    operation: WaterSortOperation | null;
+    selectBottle: (bottleIndex: number) => void;
+  };
 
 type WaterSortPlayState = {
   session: WaterSortSession;
   sourceBottleIndex: number | null;
   problemIdentity: WaterSortProblemIdentity;
   optimalMoveCount: number;
-  progress: WaterSortProgress;
+  progress: GameProgress;
   operation: WaterSortOperation | null;
 };
 
-function generateProblem(
-  difficulty: WaterSortDifficulty,
-  seed: ProblemSeed,
-): WaterSortGeneratedProblem {
-  return selectWaterSortProblemForDifficulty(difficulty, seed);
-}
-
 function createPlayState(
-  difficulty: WaterSortDifficulty,
-  seed: ProblemSeed,
+  { problem, identity, optimalMoveCount }: WaterSortPooledProblem,
   startedAt: number,
-  initialProblem?: WaterSortGeneratedProblem,
 ): WaterSortPlayState {
-  const generatedProblem = initialProblem ?? generateProblem(difficulty, seed);
-
   return {
-    session: createWaterSortSession(generatedProblem.problem, startedAt),
-    problemIdentity: generatedProblem.identity,
-    optimalMoveCount: generatedProblem.optimalMoveCount,
+    session: createWaterSortSession(problem, startedAt),
+    problemIdentity: identity,
+    optimalMoveCount,
     sourceBottleIndex: null,
     progress: "playing",
     operation: null,
   };
 }
 
-/** `initialProblem` を渡すと、記録から復元したその問題で始める。 */
+function selectProblem(
+  difficulty: WaterSortDifficulty,
+  avoidedProblemId: ProblemId | undefined,
+): WaterSortPooledProblem {
+  return selectProblemAvoiding(
+    (seed) => selectWaterSortProblemForDifficulty(difficulty, seed),
+    avoidedProblemId,
+  ).problem;
+}
+
+/** `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。 */
 export function useWaterSortPlay(
   difficulty: WaterSortDifficulty,
-  initialProblem?: WaterSortGeneratedProblem,
-) {
+  initialProblem?: WaterSortPooledProblem,
+  avoidedProblemId?: ProblemId,
+): WaterSortPlay {
   const [play, setPlay] = useState<WaterSortPlayState>(() =>
     createPlayState(
-      difficulty,
-      createProblemSeed(),
+      initialProblem ?? selectProblem(difficulty, avoidedProblemId),
       Date.now(),
-      initialProblem,
     ),
   );
-  const [now, setNow] = useState(() => Date.now());
+  const { session, problemIdentity, optimalMoveCount } = play;
+  const elapsedMs = useSessionElapsedMs(session);
   const nextOperationId = useRef(0);
-
-  useEffect(() => {
-    if (play.session.status !== "playing") {
-      return;
-    }
-
-    setNow(Date.now());
-    const timer = window.setInterval(() => setNow(Date.now()), 1000);
-
-    return () => window.clearInterval(timer);
-  }, [play.session.status]);
 
   const selectBottle = useCallback((bottleIndex: number) => {
     const selectedAt = Date.now();
     const operationId = nextOperationId.current++;
-    setNow(selectedAt);
     setPlay((current) => {
       const { session } = current;
-      if (current.progress !== "playing" || !session.state[bottleIndex]) {
+      if (current.progress !== "playing" || !session.puzzleState[bottleIndex]) {
         return current;
       }
 
       if (current.sourceBottleIndex === null) {
-        const bottle = session.state[bottleIndex];
+        const bottle = session.puzzleState[bottleIndex];
         const hasLegalMove = listWaterSortSessionLegalMoves(session).some(
           (move) => move.sourceBottleIndex === bottleIndex,
         );
@@ -173,27 +222,24 @@ export function useWaterSortPlay(
         },
         selectedAt,
       );
-      if (!nextSession) {
+      if (nextSession === session) {
         return {
           ...current,
           operation: { id: operationId, type: "invalid", bottleIndex },
         };
       }
 
-      const cleared = nextSession.status === "cleared";
       return {
-        ...current,
-        session: nextSession,
-        progress: cleared ? "clearing" : "playing",
+        ...applyPlaySession(current, nextSession),
         sourceBottleIndex: null,
         operation: {
           id: operationId,
           type: "poured",
           sourceBottleIndex,
           destinationBottleIndex: bottleIndex,
-          stateBefore: session.state,
-          stateAfter: nextSession.state,
-          isClearingMove: cleared,
+          stateBefore: session.puzzleState,
+          stateAfter: nextSession.puzzleState,
+          isClearingMove: nextSession.status === "cleared",
         },
       };
     });
@@ -201,134 +247,95 @@ export function useWaterSortPlay(
 
   const undo = useCallback(() => {
     setPlay((current) => {
-      const session = undoWaterSortSession(current.session);
-      if (session === current.session) {
-        return current;
-      }
-
-      return {
-        ...current,
-        session,
-        sourceBottleIndex: null,
-        operation: null,
-      };
+      const next = applyPlaySession(
+        current,
+        undoWaterSortSession(current.session),
+      );
+      return next === current
+        ? current
+        : { ...next, sourceBottleIndex: null, operation: null };
     });
   }, []);
 
   const restart = useCallback(() => {
-    const restartedAt = Date.now();
-    setNow(restartedAt);
-    setPlay((current) => ({
-      ...current,
-      session: restartWaterSortSession(current.session),
-      sourceBottleIndex: null,
-      progress: "playing",
-      operation: null,
-    }));
+    setPlay((current) => {
+      const next = applyPlaySession(
+        current,
+        restartWaterSortSession(current.session),
+      );
+      return next === current
+        ? current
+        : { ...next, sourceBottleIndex: null, operation: null };
+    });
   }, []);
 
   const replay = useCallback(() => {
     const startedAt = Date.now();
-    setNow(startedAt);
     setPlay((current) => ({
-      ...current,
-      session: createWaterSortSession(current.session.problem, startedAt),
+      ...startPlaySession(
+        current,
+        createWaterSortSession(current.session.problem, startedAt),
+      ),
       sourceBottleIndex: null,
-      progress: "playing",
       operation: null,
     }));
   }, []);
 
   const startNewProblem = useCallback(() => {
-    const startedAt = Date.now();
-    const next = createPlayState(difficulty, createProblemSeed(), startedAt);
-    setNow(startedAt);
-    setPlay(next);
-  }, [difficulty]);
-
-  const completeClearingPour = useCallback(() => {
-    setPlay((current) =>
-      current.progress === "clearing"
-        ? { ...current, progress: "result", operation: null }
-        : current,
+    setPlay(
+      createPlayState(
+        selectProblem(difficulty, createProblemId(problemIdentity)),
+        Date.now(),
+      ),
     );
+  }, [difficulty, problemIdentity]);
+
+  const completeClearAnimation = useCallback(() => {
+    setPlay((current) => {
+      const next = completePlayClearAnimation(current);
+      return next === current ? current : { ...next, operation: null };
+    });
   }, []);
 
-  const { session } = play;
-  const elapsedMs = getWaterSortSessionElapsedMs(session, now);
-  const optimalMoveCount = play.optimalMoveCount;
   const isDeadlocked = useMemo(
     () =>
-      play.progress === "playing" &&
-      classifyWaterSortDeadlock(session.state) === "deadlocked",
-    [play.progress, session.state],
+      session.status === "playing" &&
+      classifyWaterSortDeadlock(session.puzzleState) === "deadlocked",
+    [session.status, session.puzzleState],
   );
-  const sessionResult = useMemo(
-    () => getWaterSortSessionResult(session, now),
-    [now, session],
-  );
-  const result = useMemo<WaterSortResult | null>(() => {
-    if (!sessionResult) {
-      return null;
-    }
-
-    const colorCount = play.problemIdentity.conditions.colorCount;
-    const comparison = calculateWaterSortPerformanceComparison({
-      elapsedMs: sessionResult.elapsedMs,
-      completionMoveCount: sessionResult.completionMoveCount,
-      optimalMoveCount,
-      colorCount,
-    });
-
-    return {
-      ...sessionResult,
-      optimalMoveCount,
-      moveDelta: comparison.moveDelta,
-      timeDeltaMs: comparison.timeDeltaMs,
-      backtrackMoveCount:
-        sessionResult.moveCount - sessionResult.completionMoveCount,
-      speedFullScoreMs: comparison.speedFullScoreMs,
-      colorCount,
-      score: calculateWaterSortPlayScore({
-        elapsedMs: sessionResult.elapsedMs,
-        moveCount: sessionResult.moveCount,
-        completionMoveCount: sessionResult.completionMoveCount,
-        optimalMoveCount,
-        colorCount,
-      }),
-    };
-  }, [
-    optimalMoveCount,
-    play.problemIdentity.conditions.colorCount,
-    sessionResult,
-  ]);
-
-  const problemIdentity = play.problemIdentity;
+  const colorCount = problemIdentity.conditions.colorCount;
+  const result = useMemo(() => {
+    const sessionResult = getWaterSortSessionResult(session);
+    return sessionResult
+      ? createWaterSortResult(sessionResult, optimalMoveCount, colorCount)
+      : null;
+  }, [colorCount, optimalMoveCount, session]);
 
   return {
     difficulty,
-    seed: problemIdentity.seed,
     problemIdentity,
+    session,
     status: session.status,
+    progress: play.progress,
     startedAt: session.startedAt,
     completedAt: session.finishedAt,
-    progress: play.progress,
-    state: session.state,
     elapsedMs,
+    result,
+    state: session.puzzleState,
     moveCount: session.moveCount,
     undoCount: session.undoCount,
     restartCount: session.restartCount,
     optimalMoveCount,
-    canUndo: play.progress === "playing" && canUndoWaterSortSession(session),
+    canUndo: canUndoWaterSortSession(session),
+    canRestart: canRestartWaterSortSession(session),
     isDeadlocked,
     sourceBottleIndex: play.sourceBottleIndex,
     operation: play.operation,
-    result,
     selectBottle,
     undo,
     restart,
     replay,
     startNewProblem,
-    completeClearingPour,
+    completeClearAnimation,
   };
 }

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef } from "react";
 import type { ReflectionBoard } from "@/games/reflection/puzzle/board";
 import { listDistinctReflectionLaserTraces } from "@/games/reflection/ui/board/board-geometry";
 import { ReflectionLaserPath } from "@/games/reflection/ui/board/ReflectionLaserPath";
+import { MOTION_EASING, playAnimations } from "@/lib/motion";
 
 type ReflectionClearLightProps = {
   board: ReflectionBoard;
@@ -21,7 +22,9 @@ const CLEAR_LIGHT_DRAW_MS = 420;
  * 揃った光路の形がこのゲームの報酬なので、伸ばし終えた後や動きを減らす設定でも、静止した全光路を読める間を残す。
  */
 const CLEAR_LIGHT_HOLD_MS = 700;
-const CLEAR_LIGHT_EASING = "cubic-bezier(.2,.8,.2,1)";
+/** 演出を始めてから結果へ進めるまでの時間。光路の本数によらず、全光路を伸ばし切る時間に見せておく時間を足した長さにする。 */
+const CLEAR_LIGHT_TOTAL_MS =
+  CLEAR_LIGHT_SPREAD_MS + CLEAR_LIGHT_DRAW_MS + CLEAR_LIGHT_HOLD_MS;
 
 const lineKeyframes: Keyframe[] = [
   { strokeDashoffset: 1 },
@@ -51,52 +54,37 @@ export function ReflectionClearLight({
   useEffect(() => {
     if (!active) return;
 
-    const steps = Array.from(
-      groupRef.current?.querySelectorAll(stepSelector) ?? [],
-    );
-    if (
-      steps.length === 0 ||
-      steps.some((element) => typeof element.animate !== "function")
-    ) {
-      onComplete();
-      return;
-    }
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-      const timer = window.setTimeout(onComplete, CLEAR_LIGHT_HOLD_MS);
-      return () => window.clearTimeout(timer);
-    }
-
-    const lastStep = Math.max(...steps.map(getStep));
-    const staggerMs = lastStep > 0 ? CLEAR_LIGHT_SPREAD_MS / lastStep : 0;
-    const animations = steps.flatMap(function animateStep(element) {
-      const delay = getStep(element) * staggerMs;
-      const line = element.querySelector("[data-laser-line]");
-      const arrow = element.querySelector("[data-laser-arrow]");
-      return [
-        line?.animate(lineKeyframes, {
-          duration: CLEAR_LIGHT_DRAW_MS,
-          delay,
-          easing: CLEAR_LIGHT_EASING,
-          fill: "backwards",
-        }),
-        arrow?.animate(arrowKeyframes, {
-          duration: CLEAR_LIGHT_DRAW_MS / 2,
-          delay: delay + CLEAR_LIGHT_DRAW_MS / 2,
-          fill: "backwards",
-        }),
-      ].filter((animation) => animation !== undefined);
+    return playAnimations({
+      animate() {
+        const steps = Array.from(
+          groupRef.current?.querySelectorAll(stepSelector) ?? [],
+        );
+        const lastStep = Math.max(0, ...steps.map(getStep));
+        const staggerMs = lastStep > 0 ? CLEAR_LIGHT_SPREAD_MS / lastStep : 0;
+        return steps.flatMap(function animateStep(element) {
+          const delay = getStep(element) * staggerMs;
+          const line = element.querySelector("[data-laser-line]");
+          const arrow = element.querySelector("[data-laser-arrow]");
+          return [
+            line?.animate?.(lineKeyframes, {
+              duration: CLEAR_LIGHT_DRAW_MS,
+              delay,
+              easing: MOTION_EASING.celebrate,
+              fill: "backwards",
+            }),
+            arrow?.animate?.(arrowKeyframes, {
+              duration: CLEAR_LIGHT_DRAW_MS / 2,
+              delay: delay + CLEAR_LIGHT_DRAW_MS / 2,
+              fill: "backwards",
+            }),
+          ].filter((animation) => animation !== undefined);
+        });
+      },
+      completion: { type: "after-duration", durationMs: CLEAR_LIGHT_TOTAL_MS },
+      reducedMotionHoldMs: CLEAR_LIGHT_HOLD_MS,
+      unanimatedHoldMs: 0,
+      onFinished: onComplete,
     });
-    const timer = window.setTimeout(
-      onComplete,
-      CLEAR_LIGHT_SPREAD_MS + CLEAR_LIGHT_DRAW_MS + CLEAR_LIGHT_HOLD_MS,
-    );
-
-    return () => {
-      window.clearTimeout(timer);
-      for (const animation of animations) {
-        animation.cancel();
-      }
-    };
   }, [active, onComplete]);
 
   return (

@@ -5,6 +5,7 @@ import {
   type ParkingJamProblemIdentity,
 } from "@/games/parking-jam/problem/problem";
 import problemPoolJson from "@/games/parking-jam/problem/problem-pool.json";
+import { createProblemPoolIdLookup } from "@/games/problem-id";
 
 /** 問題集が参照する生成条件。`ParkingJamGenerationConditions` の各値を定義順に並べる。 */
 export type ParkingJamProblemPoolConditions = readonly [
@@ -112,6 +113,22 @@ export function listParkingJamPoolEntries(
   difficulty: ParkingJamDifficulty,
 ): readonly ParkingJamProblemPoolEntry[] {
   return problemPool.levels[difficulty];
+}
+
+const findPoolPositionByProblemId = createProblemPoolIdLookup(
+  problemPool.levels,
+  (entry) => toParkingJamPoolIdentity(entry),
+);
+
+/**
+ * 難易度の問題集から問題 ID で1問を探す。問題集に無い ID・別の難易度の ID には `null` を返す。
+ * seed（`pj-pool-<候補番号>`）は生成条件ごとの系列なので問題集の中で一意でなく、問題 ID は生成条件も含む identity 全体から求める。
+ */
+export function findParkingJamPoolEntryByProblemId(
+  difficulty: ParkingJamDifficulty,
+  problemId: string,
+): ParkingJamProblemPoolEntry | null {
+  return findPoolPositionByProblemId(difficulty, problemId)?.entry ?? null;
 }
 
 export function getParkingJamProblemPoolDifficultyModelVersion(): string {

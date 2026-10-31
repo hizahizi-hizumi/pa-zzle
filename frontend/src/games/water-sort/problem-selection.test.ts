@@ -1,15 +1,13 @@
+import { difficultyLevels } from "@/games/difficulty";
+import { assessWaterSortDifficulty } from "@/games/water-sort/difficulty";
 import {
-  assessWaterSortDifficulty,
-  waterSortDifficulties,
-} from "@/games/water-sort/difficulty";
-import {
+  decodeWaterSortPoolEntry,
   listWaterSortPoolEntries,
-  toWaterSortPooledProblem,
 } from "@/games/water-sort/problem/problem-pool";
 import { selectWaterSortProblemForDifficulty } from "@/games/water-sort/problem-selection";
 import { isStandardWaterSortInitialState } from "@/games/water-sort/puzzle/state";
 
-const difficulties = waterSortDifficulties.map(({ id }) => id);
+const difficulties = difficultyLevels.map(({ id }) => id);
 
 describe("問題集", () => {
   test.each(difficulties)(
@@ -19,13 +17,13 @@ describe("問題集", () => {
 
       expect(entries.length).toBeGreaterThan(0);
       for (const entry of entries) {
-        const { identity, stuckRate } = toWaterSortPooledProblem(entry);
+        const { identity, stuckRate } = decodeWaterSortPoolEntry(entry);
         expect(
           assessWaterSortDifficulty({
             conditions: identity.conditions,
             stuckRate,
           }),
-        ).toBe(difficulty);
+        ).toEqual({ status: "classified", difficulty });
       }
     },
   );

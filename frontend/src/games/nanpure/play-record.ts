@@ -1,16 +1,29 @@
 import {
-  type LegacyNanpureDifficulty,
-  type NanpureDifficulty,
-  parseLegacyNanpureDifficulty,
-  parseNanpureDifficulty,
-} from "@/games/nanpure/difficulty";
+  type LegacyDifficulty,
+  parseDifficultyLevel,
+  parseLegacyDifficulty,
+} from "@/games/difficulty";
+import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import {
+  createNanpureResult,
+  type NanpureResult,
+} from "@/games/nanpure/play/use-nanpure-play";
+import {
+  isNanpureProblemIdentity,
   isNanpureRecordedProblemIdentity,
   type NanpureProblemIdentity,
   type NanpureRecordedProblemIdentity,
 } from "@/games/nanpure/problem/problem";
-import { calculateNanpurePlayScore } from "@/games/nanpure/score";
+import {
+  calculateNanpurePlayScore,
+  calculateNanpureTimeDeltaMs,
+} from "@/games/nanpure/score";
 import type { NanpureSessionResult } from "@/games/nanpure/session/session";
+import {
+  isNonNegativeFiniteNumber,
+  isNonNegativeInteger,
+  isRecordObject,
+} from "@/lib/type-guards";
 import type { PlayRecord } from "@/records/play-record";
 import { createPlayRecordId } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
@@ -34,7 +47,7 @@ type NanpurePlayRecordPayloadV1 = Omit<
   NanpurePlayRecordPayload,
   "difficulty"
 > & {
-  difficulty: LegacyNanpureDifficulty;
+  difficulty: LegacyDifficulty;
 };
 
 type NanpurePlayRecordV1 = PlayRecord & {
@@ -59,51 +72,35 @@ type CreateNanpurePlayRecordInput = {
   result: NanpureSessionResult;
 };
 
-function isNonNegativeInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0;
-}
-
 function isNanpurePerformance(value: unknown): value is NanpureSessionResult {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const performance = value as Partial<NanpureSessionResult>;
   return (
-    typeof performance.elapsedMs === "number" &&
-    Number.isFinite(performance.elapsedMs) &&
-    performance.elapsedMs >= 0 &&
-    isNonNegativeInteger(performance.mistakeCount) &&
-    isNonNegativeInteger(performance.undoCount) &&
-    isNonNegativeInteger(performance.restartCount)
+    isRecordObject(value) &&
+    isNonNegativeFiniteNumber(value.elapsedMs) &&
+    isNonNegativeInteger(value.mistakeCount) &&
+    isNonNegativeInteger(value.undoCount) &&
+    isNonNegativeInteger(value.restartCount)
   );
 }
 
 export function isNanpurePlayRecord(
   record: PlayRecord,
 ): record is RecognizedNanpurePlayRecord {
-  if (
-    record.gameId !== NANPURE_GAME_ID ||
-    !record.payload ||
-    typeof record.payload !== "object"
-  ) {
+  if (record.gameId !== NANPURE_GAME_ID || !isRecordObject(record.payload)) {
     return false;
   }
 
-  const payload = record.payload as Partial<
-    Record<keyof NanpurePlayRecordPayload, unknown>
-  >;
-  const difficulty =
-    typeof payload.difficulty === "string" ? payload.difficulty : undefined;
+  const { difficulty, problemIdentity, performance } = record.payload;
+  const recordedDifficulty =
+    typeof difficulty === "string" ? difficulty : undefined;
   const hasExpectedDifficulty =
     record.payloadVersion === 1
-      ? parseLegacyNanpureDifficulty(difficulty) !== undefined
+      ? parseLegacyDifficulty(recordedDifficulty) !== undefined
       : record.payloadVersion === NANPURE_PLAY_RECORD_PAYLOAD_VERSION &&
-        parseNanpureDifficulty(difficulty) !== undefined;
+        parseDifficultyLevel(recordedDifficulty) !== undefined;
   return (
     hasExpectedDifficulty &&
-    isNanpureRecordedProblemIdentity(payload.problemIdentity) &&
-    isNanpurePerformance(payload.performance)
+    isNanpureRecordedProblemIdentity(problemIdentity) &&
+    isNanpurePerformance(performance)
   );
 }
 
@@ -141,6 +138,36 @@ export function createNanpurePlayRecord({
   };
 }
 
+/** 記録から作り直した、結果画面に出す内容。 */
+export type NanpureRecordedResult = {
+  difficulty: NanpureDifficulty;
+  problemIdentity: NanpureProblemIdentity;
+  result: NanpureResult;
+};
+
+/**
+ * 記録から結果画面に出す内容を作り直す。
+ * 今の版の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
+ */
+export function restoreNanpureRecordedResult(
+  record: PlayRecord,
+): NanpureRecordedResult | null {
+  if (
+    !isNanpurePlayRecord(record) ||
+    record.payloadVersion !== NANPURE_PLAY_RECORD_PAYLOAD_VERSION ||
+    !isNanpureProblemIdentity(record.payload.problemIdentity)
+  ) {
+    return null;
+  }
+
+  const { difficulty, problemIdentity, performance } = record.payload;
+  return {
+    difficulty,
+    problemIdentity,
+    result: createNanpureResult(performance),
+  };
+}
+
 export function getNanpurePlayRecordScore(
   record: RecognizedNanpurePlayRecord,
 ): number {
@@ -149,7 +176,7 @@ export function getNanpurePlayRecordScore(
 
 export type NanpurePlayRecordMetricId =
   | "play-score"
-  | "elapsed-ms"
+  | "time-delta-ms"
   | "mistake-count";
 
 export const nanpurePlayRecordDefinition = {
@@ -169,11 +196,11 @@ export const nanpurePlayRecordDefinition = {
       },
     },
     {
-      id: "elapsed-ms",
+      id: "time-delta-ms",
       direction: "lower",
       getValue(record) {
         return isNanpurePlayRecord(record)
-          ? record.payload.performance.elapsedMs
+          ? calculateNanpureTimeDeltaMs(record.payload.performance)
           : null;
       },
     },

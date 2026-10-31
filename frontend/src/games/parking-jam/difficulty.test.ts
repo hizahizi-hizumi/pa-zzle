@@ -1,12 +1,9 @@
+import { difficultyLevels } from "@/games/difficulty";
 import {
   assessParkingJamDifficulty,
   calculateParkingJamChallengeLevers,
-  getParkingJamDifficultyLabel,
   type ParkingJamDifficulty,
-  parkingJamDifficulties,
   parkingJamLevelLevers,
-  parseParkingJamDifficulty,
-  parseParkingJamRecordedDifficulty,
 } from "@/games/parking-jam/difficulty";
 import type {
   ParkingJamDifficultyAnalysis,
@@ -57,61 +54,8 @@ const baseFeatures: ParkingJamDifficultyFeatures = {
 function toAnalysis(
   features: Partial<ParkingJamDifficultyFeatures>,
 ): ParkingJamDifficultyAnalysis {
-  return { status: "supported", features: { ...baseFeatures, ...features } };
+  return { status: "analyzed", features: { ...baseFeatures, ...features } };
 }
-
-describe("parseParkingJamDifficulty", () => {
-  const cases = [
-    ["1", "1"],
-    ["5", "5"],
-    ["6", undefined],
-    ["easy", undefined],
-    [undefined, undefined],
-  ] as const;
-
-  test.each(cases)(
-    "URL の難易度をレベル1〜5だけに変換すること: %s",
-    (value, expected) => {
-      const difficulty = parseParkingJamDifficulty(value);
-
-      expect(difficulty).toBe(expected);
-    },
-  );
-});
-
-describe("parseParkingJamRecordedDifficulty", () => {
-  const cases = [
-    ["3", "3"],
-    ["hard", "hard"],
-    ["expert", undefined],
-  ] as const;
-
-  test.each(cases)(
-    "記録の難易度をレベルと旧3段階の両方で読むこと: %s",
-    (value, expected) => {
-      const difficulty = parseParkingJamRecordedDifficulty(value);
-
-      expect(difficulty).toBe(expected);
-    },
-  );
-});
-
-describe("getParkingJamDifficultyLabel", () => {
-  const cases = [
-    ["1", "レベル 1"],
-    ["5", "レベル 5"],
-    ["easy", "かんたん"],
-  ] as const;
-
-  test.each(cases)(
-    "レベルと旧3段階の表示名を返すこと: %s",
-    (difficulty, expected) => {
-      const label = getParkingJamDifficultyLabel(difficulty);
-
-      expect(label).toBe(expected);
-    },
-  );
-});
 
 describe("calculateParkingJamChallengeLevers", () => {
   const dependencyCases = [
@@ -208,10 +152,10 @@ describe("calculateParkingJamChallengeLevers", () => {
 });
 
 describe("parkingJamLevelLevers", () => {
-  const adjacentLevels = parkingJamDifficulties
+  const adjacentLevels = difficultyLevels
     .slice(1)
     .map(({ id }, index) => [
-      parkingJamDifficulties[index]?.id as ParkingJamDifficulty,
+      difficultyLevels[index]?.id as ParkingJamDifficulty,
       id,
     ]);
 
@@ -238,7 +182,7 @@ describe("parkingJamLevelLevers", () => {
   );
 
   test("規模レバー2の問題がどのレベルにも入れること", () => {
-    const levelsAcceptingScale2 = parkingJamDifficulties.filter(
+    const levelsAcceptingScale2 = difficultyLevels.filter(
       ({ id }) =>
         parkingJamLevelLevers[id].scale.minimum <= 2 &&
         parkingJamLevelLevers[id].scale.maximum >= 2,
@@ -306,12 +250,12 @@ describe("assessParkingJamDifficulty", () => {
     [
       "深い依存で読み違いを誘う車がない",
       { dependencyDepth: 4, maximumPrerequisiteVehicleCount: 5 },
-      "unlisted-levers",
+      "unlisted-combination",
     ],
     [
       "浅い依存で読み違いを誘う車が半分以上",
       { misreadInducingVehicleCount: 4 },
-      "unlisted-levers",
+      "unlisted-combination",
     ],
     [
       "レベル5のレバーで規模が小さい",
@@ -320,7 +264,7 @@ describe("assessParkingJamDifficulty", () => {
         maximumPrerequisiteVehicleCount: 5,
         misreadInducingVehicleCount: 4,
       },
-      "unlisted-levers",
+      "unlisted-combination",
     ],
   ] as const;
 

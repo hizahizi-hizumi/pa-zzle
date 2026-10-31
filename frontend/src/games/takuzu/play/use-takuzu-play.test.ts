@@ -4,10 +4,7 @@ import { createProblemSeed } from "@/games/problem-seed";
 import { useTakuzuPlay } from "@/games/takuzu/play/use-takuzu-play";
 import type { TakuzuProblem } from "@/games/takuzu/problem/problem";
 import { selectTakuzuProblemForDifficulty } from "@/games/takuzu/problem-selection";
-import {
-  calculateTakuzuSpeedFullScoreMs,
-  calculateTakuzuSpeedZeroScoreMs,
-} from "@/games/takuzu/score";
+import { calculateTakuzuSpeedScoreRule } from "@/games/takuzu/score";
 
 vi.mock("@/games/problem-seed", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/games/problem-seed")>()),
@@ -64,8 +61,7 @@ describe("useTakuzuPlay", () => {
     });
 
     test("seed で問題集から選んだ問題の 8×8 盤面でプレイを始めること", () => {
-      const { size, cells, progress, problemIdentity, workload } =
-        result.current;
+      const { size, cells, progress, problemIdentity } = result.current;
 
       expect(size).toBe(8);
       expect(cells.map(({ cell }) => cell)).toEqual(
@@ -74,7 +70,6 @@ describe("useTakuzuPlay", () => {
       expect(progress).toBe("playing");
       expect(result.current.difficulty).toBe(difficulty);
       expect(problemIdentity).toEqual(initial.identity);
-      expect(workload).toEqual(initial.workload);
     });
 
     test("空きマスを押すとタイルを置くこと", () => {
@@ -145,14 +140,12 @@ describe("useTakuzuPlay", () => {
         const playResult = result.current.result;
 
         expect(playResult?.workload).toEqual(initial.workload);
-        expect(playResult?.speedFullScoreMs).toBe(
-          calculateTakuzuSpeedFullScoreMs(initial.workload),
-        );
-        expect(playResult?.speedZeroScoreMs).toBe(
-          calculateTakuzuSpeedZeroScoreMs(initial.workload),
+        expect(playResult?.speedRule).toEqual(
+          calculateTakuzuSpeedScoreRule(initial.workload),
         );
         expect(playResult?.timeDeltaMs).toBe(
-          (playResult?.elapsedMs ?? 0) - (playResult?.speedFullScoreMs ?? 0),
+          (playResult?.elapsedMs ?? 0) -
+            (playResult?.speedRule.fullScoreMs ?? 0),
         );
         expect(playResult?.score).toEqual({
           total: 100,
@@ -222,11 +215,10 @@ describe("useTakuzuPlay", () => {
     });
 
     test("seed を引かずにその問題でプレイを始めること", () => {
-      const { problemIdentity, workload } = result.current;
+      const { problemIdentity } = result.current;
 
       expect(createProblemSeed).not.toHaveBeenCalled();
       expect(problemIdentity).toEqual(other.identity);
-      expect(workload).toEqual(other.workload);
       expect(listCells(result)).toEqual(other.problem.givens.cells);
     });
   });

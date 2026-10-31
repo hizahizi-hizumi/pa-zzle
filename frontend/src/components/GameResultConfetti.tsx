@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 
 import { getGameResultStyle } from "@/components/game-result-style";
 import type { GameResultLevel } from "@/games/result";
+import { prefersReducedMotion } from "@/lib/motion";
 
 const confettiPieces = [
   [-130, -170, -210, "#f59e0b"],
@@ -30,6 +31,15 @@ const confettiPieces = [
   [154, -196, 240, "#a78bfa"],
 ] as const;
 
+/** 紙片ごとに長さと出だしを4段にずらし、一斉に動かないようにする。 */
+const CONFETTI_FLIGHT_MS = 650;
+const CONFETTI_FLIGHT_STEP_MS = 50;
+const CONFETTI_DELAY_MS = 40;
+const CONFETTI_DELAY_STEP_MS = 25;
+const CONFETTI_TIMING_STEP_COUNT = 4;
+/** 紙片が勢いよく飛び出し、ゆっくり舞い落ちる緩急。 */
+const CONFETTI_FLIGHT_EASING = "cubic-bezier(.2,.7,.2,1)";
+
 type GameResultConfettiProps = {
   level: GameResultLevel;
 };
@@ -43,10 +53,7 @@ export function GameResultConfetti({ level }: GameResultConfettiProps) {
       return;
     }
 
-    const reduced = window.matchMedia?.(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    if (reduced) {
+    if (prefersReducedMotion()) {
       return;
     }
 
@@ -58,6 +65,7 @@ export function GameResultConfetti({ level }: GameResultConfettiProps) {
 
     for (const [index, piece] of pieces.entries()) {
       const [x, y, rotation] = confettiPieces[index] ?? [0, -100, 180];
+      const timingStep = index % CONFETTI_TIMING_STEP_COUNT;
       piece.animate?.(
         [
           { transform: "translate(0, 0)", opacity: 0 },
@@ -77,9 +85,9 @@ export function GameResultConfetti({ level }: GameResultConfettiProps) {
           },
         ],
         {
-          duration: 650 + (index % 4) * 50,
-          delay: 40 + (index % 4) * 25,
-          easing: "cubic-bezier(.2,.7,.2,1)",
+          duration: CONFETTI_FLIGHT_MS + timingStep * CONFETTI_FLIGHT_STEP_MS,
+          delay: CONFETTI_DELAY_MS + timingStep * CONFETTI_DELAY_STEP_MS,
+          easing: CONFETTI_FLIGHT_EASING,
         },
       );
     }

@@ -1,6 +1,8 @@
+import { createProblemPoolIdLookup } from "@/games/problem-id";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import {
   SLIDE_PUZZLE_GENERATOR_VERSION,
+  type SlidePuzzleIdentifiedProblem,
   type SlidePuzzleProblemIdentity,
 } from "@/games/slide-puzzle/problem/problem";
 import problemPoolJson from "@/games/slide-puzzle/problem/problem-pool.json";
@@ -18,19 +20,25 @@ type SlidePuzzleProblemPool = {
   levels: Record<SlidePuzzleDifficulty, readonly SlidePuzzleProblemPoolEntry[]>;
 };
 
-type SlidePuzzlePooledProblem = {
+/** 問題集の1項目を読み解いた値。問題は生成器で復元する。 */
+type SlidePuzzleDecodedPoolEntry = {
   identity: SlidePuzzleProblemIdentity;
+  optimalMoveCount: number;
+};
+
+/** 問題集から復元した1問。評価の基準になる最短手数を伴う。 */
+export type SlidePuzzlePooledProblem = SlidePuzzleIdentifiedProblem & {
   optimalMoveCount: number;
 };
 
 const problemPool = problemPoolJson as unknown as SlidePuzzleProblemPool;
 
-export function toSlidePuzzlePooledProblem([
+export function decodeSlidePuzzlePoolEntry([
   seed,
   boardSize,
   scrambleLength,
   optimalMoveCount,
-]: SlidePuzzleProblemPoolEntry): SlidePuzzlePooledProblem {
+]: SlidePuzzleProblemPoolEntry): SlidePuzzleDecodedPoolEntry {
   return {
     identity: {
       generatorVersion: SLIDE_PUZZLE_GENERATOR_VERSION,
@@ -47,7 +55,20 @@ export function listSlidePuzzlePoolEntries(
   return problemPool.levels[difficulty];
 }
 
-/** 再プレイ・診断用。問題集に無い識別情報なら `null` を返す。 */
+const findPoolPositionByProblemId = createProblemPoolIdLookup(
+  problemPool.levels,
+  (entry) => decodeSlidePuzzlePoolEntry(entry).identity,
+);
+
+/** 難易度の問題集から問題 ID で1問を探す。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+export function findSlidePuzzlePoolEntryByProblemId(
+  difficulty: SlidePuzzleDifficulty,
+  problemId: string,
+): SlidePuzzleProblemPoolEntry | null {
+  return findPoolPositionByProblemId(difficulty, problemId)?.entry ?? null;
+}
+
+/** 診断用。問題集に無い識別情報なら `null` を返す。 */
 export function findSlidePuzzlePooledOptimalMoveCount(
   identity: SlidePuzzleProblemIdentity,
 ): number | null {

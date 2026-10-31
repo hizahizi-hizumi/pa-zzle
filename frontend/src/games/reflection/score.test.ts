@@ -2,7 +2,7 @@ import type { ReflectionSolveWorkload } from "@/games/reflection/problem/problem
 import {
   calculateReflectionPlayScore,
   calculateReflectionSpeedFullScoreMs,
-  calculateReflectionSpeedZeroScoreMs,
+  calculateReflectionSpeedScoreRule,
   calculateReflectionTimeDeltaMs,
 } from "@/games/reflection/score";
 import { getGameResultLevel } from "@/games/result";
@@ -33,7 +33,7 @@ function scoreAtRatio(
   return calculateReflectionPlayScore({
     elapsedMs: calculateReflectionSpeedFullScoreMs(workload) * elapsedRatio,
     workload,
-  });
+  }).total;
 }
 
 describe("calculateReflectionSpeedFullScoreMs", () => {
@@ -100,11 +100,14 @@ describe("calculateReflectionSpeedFullScoreMs", () => {
   });
 });
 
-describe("calculateReflectionSpeedZeroScoreMs", () => {
-  test("基準時間の3倍を返すこと", () => {
-    const speedZeroScoreMs = calculateReflectionSpeedZeroScoreMs(lightWorkload);
+describe("calculateReflectionSpeedScoreRule", () => {
+  test("基準時間の3倍で0点になる規則を返すこと", () => {
+    const rule = calculateReflectionSpeedScoreRule(lightWorkload);
 
-    expect(speedZeroScoreMs).toBe(lightFullScoreMs * 3);
+    expect(rule).toEqual({
+      fullScoreMs: lightFullScoreMs,
+      zeroScoreMs: lightFullScoreMs * 3,
+    });
   });
 });
 

@@ -23,7 +23,6 @@ function emptyNotes() {
 function createProps(): ComponentProps<typeof NanpurePlay> {
   return {
     difficulty: "3",
-    status: "playing",
     progress: "playing",
     clues: emptyBoard(),
     board: emptyBoard(),
@@ -37,6 +36,7 @@ function createProps(): ComponentProps<typeof NanpurePlay> {
     mistakeCount: 2,
     undoCount: 1,
     canUndo: true,
+    canRestart: true,
     result: null,
     recordOutcomeNotice: null,
     onSelectCell: vi.fn(),
@@ -223,6 +223,12 @@ describe("NanpurePlay", () => {
       mistakeCount: 0,
       undoCount: 0,
       restartCount: 0,
+      speedRule: {
+        fullScoreMs: 900_000,
+        zeroScoreMs: 3_300_000,
+        overtimeStepMs: 60_000,
+      },
+      timeDeltaMs: -775_000,
       score: {
         total: 100,
         breakdown: { accuracy: 40, speed: 40, stability: 20 },
@@ -238,14 +244,7 @@ describe("NanpurePlay", () => {
 
     beforeEach(() => {
       const props = createProps();
-      render(
-        <NanpurePlay
-          {...props}
-          status="cleared"
-          progress="clearing"
-          result={result}
-        />,
-      );
+      render(<NanpurePlay {...props} progress="clearing" result={result} />);
       board = screen.getByRole("main");
       digitInput = screen.getByRole("group", { name: "数字入力" });
     });
@@ -272,23 +271,21 @@ describe("NanpurePlay", () => {
       render(
         <NanpurePlay
           {...props}
-          status="cleared"
           progress="result"
           result={{
             elapsedMs: 125_000,
             mistakeCount: 2,
             undoCount: 3,
             restartCount: 1,
+            speedRule: {
+              fullScoreMs: 900_000,
+              zeroScoreMs: 3_300_000,
+              overtimeStepMs: 60_000,
+            },
+            timeDeltaMs: -775_000,
             score: {
               total: 79,
               breakdown: { accuracy: 30, speed: 40, stability: 9 },
-            },
-            problemIdentity: {
-              generatorVersion: "2",
-              seed: "np-locked-candidates-740",
-              conditions: {
-                removalTechniqueLimit: "locked-candidates" as const,
-              },
             },
           }}
           onStartNewProblem={onStartNewProblem}
@@ -317,7 +314,7 @@ describe("NanpurePlay", () => {
       expect(screen.getByText("9 / 20")).toBeTruthy();
       expect(screen.getByText(/ミス1回につき/)).toBeTruthy();
       expect(screen.getByText(/1分単位で切り上げ/)).toBeTruthy();
-      expect(screen.getByText(/待った1回につき/)).toBeTruthy();
+      expect(screen.getByText(/「待った」1回につき/)).toBeTruthy();
 
       fireEvent.click(playButton);
 
@@ -334,23 +331,21 @@ describe("NanpurePlay", () => {
       render(
         <NanpurePlay
           {...props}
-          status="cleared"
           progress="result"
           result={{
             elapsedMs: 120_000,
             mistakeCount: 0,
             undoCount: 0,
             restartCount: 0,
+            speedRule: {
+              fullScoreMs: 900_000,
+              zeroScoreMs: 3_300_000,
+              overtimeStepMs: 60_000,
+            },
+            timeDeltaMs: -780_000,
             score: {
               total: 100,
               breakdown: { accuracy: 40, speed: 40, stability: 20 },
-            },
-            problemIdentity: {
-              generatorVersion: "2",
-              seed: "np-locked-candidates-740",
-              conditions: {
-                removalTechniqueLimit: "locked-candidates" as const,
-              },
             },
           }}
           recordOutcomeNotice={
@@ -359,9 +354,9 @@ describe("NanpurePlay", () => {
                 status: "updated",
                 updates: [
                   {
-                    metricId: "elapsed-ms",
-                    previousValue: 150_000,
-                    currentValue: 120_000,
+                    metricId: "time-delta-ms",
+                    previousValue: -750_000,
+                    currentValue: -780_000,
                   },
                 ],
               }}
@@ -377,9 +372,10 @@ describe("NanpurePlay", () => {
       fireEvent.click(screen.getByRole("button", { name: "記録を確認" }));
       const bestUpdate = screen.getByRole("region", { name: "自己ベスト更新" });
 
-      expect(bestUpdate.textContent).toContain("クリア時間");
-      expect(bestUpdate.textContent).toContain("02:30");
-      expect(bestUpdate.textContent).toContain("02:00");
+      expect(bestUpdate.textContent).toContain("基準時間との差");
+      expect(bestUpdate.textContent).toContain("-12:30");
+      expect(bestUpdate.textContent).toContain("-13:00");
+      expect(bestUpdate.textContent).toContain("30秒短縮");
       expect(onOpenRecords).toHaveBeenCalledOnce();
     });
   });
@@ -431,23 +427,21 @@ describe("NanpurePlay", () => {
       render(
         <NanpurePlay
           {...createProps()}
-          status="cleared"
           progress="result"
           result={{
             elapsedMs: 125_000,
             mistakeCount: 0,
             undoCount: 0,
             restartCount: 0,
+            speedRule: {
+              fullScoreMs: 900_000,
+              zeroScoreMs: 3_300_000,
+              overtimeStepMs: 60_000,
+            },
+            timeDeltaMs: -775_000,
             score: {
               total: 100,
               breakdown: { accuracy: 40, speed: 40, stability: 20 },
-            },
-            problemIdentity: {
-              generatorVersion: "2",
-              seed: "np-locked-candidates-740",
-              conditions: {
-                removalTechniqueLimit: "locked-candidates" as const,
-              },
             },
           }}
           onOpenDiagnostics={onOpenDiagnostics}

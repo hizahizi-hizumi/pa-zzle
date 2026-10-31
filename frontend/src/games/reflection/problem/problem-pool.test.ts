@@ -1,11 +1,14 @@
+import { difficultyLevels } from "@/games/difficulty";
+import { createProblemId } from "@/games/problem-id";
 import { generateReflectionProblem } from "@/games/reflection/problem/generator";
 import { createReflectionProblemIdentity } from "@/games/reflection/problem/problem";
 import {
   decodeReflectionPoolSolution,
   encodeReflectionPoolSolution,
   findReflectionPooledProblem,
-  findReflectionPooledProblemByReference,
-  getReflectionProblemPoolVersion,
+  findReflectionPooledProblemByProblemId,
+  formatReflectionPoolProblemId,
+  listReflectionPoolEntries,
   restoreReflectionPoolEntry,
   toReflectionPooledProblem,
   toReflectionPoolIdentity,
@@ -116,30 +119,30 @@ describe("findReflectionPooledProblem", () => {
   });
 });
 
-describe("findReflectionPooledProblemByReference", () => {
-  const pooled = toReflectionPooledProblem("5", 0);
+describe("findReflectionPooledProblemByProblemId", () => {
+  const poolEntries = difficultyLevels.flatMap(({ id: difficulty }) =>
+    listReflectionPoolEntries(difficulty).map((entry, entryIndex) => ({
+      difficulty,
+      poolProblemId: formatReflectionPoolProblemId(difficulty, entryIndex),
+      problemId: createProblemId(toReflectionPoolIdentity(entry)),
+    })),
+  );
 
-  test("問題集の版と問題番号から同じ問題を引くこと", () => {
-    const found = findReflectionPooledProblemByReference({
-      poolVersion: getReflectionProblemPoolVersion(),
-      problemId: "5-1",
-    });
+  test("問題集の全項目の問題IDが互いに異なること", () => {
+    const distinctProblemIds = new Set(
+      poolEntries.map(({ problemId }) => problemId),
+    );
 
-    expect(pooled.poolReference.problemId).toBe("5-1");
-    expect(found).toEqual(pooled);
+    expect(distinctProblemIds.size).toBe(poolEntries.length);
   });
 
-  const unknownReferences = [
-    ["今と違う問題集の版", { poolVersion: "0", problemId: "5-1" }],
-    ["無いレベル", { poolVersion: "1", problemId: "6-1" }],
-    ["0番", { poolVersion: "1", problemId: "5-0" }],
-    ["範囲外の番号", { poolVersion: "1", problemId: "5-100000" }],
-    ["形の違う番号", { poolVersion: "1", problemId: "rf-5-2-0" }],
-  ] as const;
+  test("問題集の全項目をその難易度と問題IDで引けること", () => {
+    const unresolvedEntries = poolEntries.filter(
+      ({ difficulty, poolProblemId, problemId }) =>
+        findReflectionPooledProblemByProblemId(difficulty, problemId)
+          ?.poolReference.problemId !== poolProblemId,
+    );
 
-  test.each(unknownReferences)("%s には null を返すこと", (_, reference) => {
-    const found = findReflectionPooledProblemByReference(reference);
-
-    expect(found).toBeNull();
+    expect(unresolvedEntries).toEqual([]);
   });
 });

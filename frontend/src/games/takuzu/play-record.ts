@@ -1,8 +1,11 @@
+import { parseDifficultyLevel } from "@/games/difficulty";
+import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import {
-  parseTakuzuDifficulty,
-  type TakuzuDifficulty,
-} from "@/games/takuzu/difficulty";
+  createTakuzuResult,
+  type TakuzuResult,
+} from "@/games/takuzu/play/use-takuzu-play";
 import {
+  isTakuzuProblemIdentity,
   isTakuzuRecordedProblemIdentity,
   isTakuzuSolveWorkload,
   type TakuzuProblemIdentity,
@@ -14,6 +17,11 @@ import {
   calculateTakuzuTimeDeltaMs,
 } from "@/games/takuzu/score";
 import type { TakuzuSessionResult } from "@/games/takuzu/session/session";
+import {
+  isNonNegativeFiniteNumber,
+  isNonNegativeInteger,
+  isRecordObject,
+} from "@/lib/type-guards";
 import { createPlayRecordId, type PlayRecord } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
@@ -52,23 +60,13 @@ type CreateTakuzuPlayRecordInput = {
   result: TakuzuSessionResult;
 };
 
-function isRecordObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isNonNegativeInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0;
-}
-
 /** 置き直しと待ったは、どちらも1回ごとに1回以上の入力を伴うので、入力回数を超えない。 */
 function isTakuzuPerformance(
   value: unknown,
 ): value is TakuzuRecordedPerformance {
   return (
     isRecordObject(value) &&
-    typeof value.elapsedMs === "number" &&
-    Number.isFinite(value.elapsedMs) &&
-    value.elapsedMs >= 0 &&
+    isNonNegativeFiniteNumber(value.elapsedMs) &&
     isNonNegativeInteger(value.correctionCount) &&
     isNonNegativeInteger(value.restartCount) &&
     isNonNegativeInteger(value.inputCount) &&
@@ -99,11 +97,40 @@ export function isTakuzuPlayRecord(
   const { difficulty, problemIdentity, workload, performance } = record.payload;
   return (
     typeof difficulty === "string" &&
-    parseTakuzuDifficulty(difficulty) !== undefined &&
+    parseDifficultyLevel(difficulty) !== undefined &&
     isTakuzuRecordedProblemIdentity(problemIdentity) &&
     isTakuzuSolveWorkload(workload) &&
     isTakuzuPerformance(performance)
   );
+}
+
+/** 記録から作り直した、結果画面に出す内容。 */
+export type TakuzuRecordedResult = {
+  difficulty: TakuzuDifficulty;
+  problemIdentity: TakuzuProblemIdentity;
+  result: TakuzuResult;
+};
+
+/**
+ * 記録から結果画面に出す内容を作り直す。
+ * 今の版の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
+ */
+export function restoreTakuzuRecordedResult(
+  record: PlayRecord,
+): TakuzuRecordedResult | null {
+  if (
+    !isTakuzuPlayRecord(record) ||
+    !isTakuzuProblemIdentity(record.payload.problemIdentity)
+  ) {
+    return null;
+  }
+
+  const { difficulty, problemIdentity, workload, performance } = record.payload;
+  return {
+    difficulty,
+    problemIdentity,
+    result: createTakuzuResult(readTakuzuPerformance(performance), workload),
+  };
 }
 
 export function createTakuzuPlayRecord({

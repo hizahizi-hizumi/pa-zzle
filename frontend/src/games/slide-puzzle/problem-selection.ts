@@ -1,32 +1,43 @@
 import type { ProblemSeed } from "@/games/problem-seed";
 import { selectProblemPoolEntry } from "@/games/problem-selection";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
-import { restoreSlidePuzzleProblemWithOptimalMoveCount } from "@/games/slide-puzzle/problem/generator";
-import type {
-  SlidePuzzleGeneratedProblem,
-  SlidePuzzleProblemIdentity,
-} from "@/games/slide-puzzle/problem/problem";
+import { restoreSlidePuzzleProblem } from "@/games/slide-puzzle/problem/generator";
+import type { SlidePuzzleProblemIdentity } from "@/games/slide-puzzle/problem/problem";
 import {
+  decodeSlidePuzzlePoolEntry,
+  findSlidePuzzlePoolEntryByProblemId,
   findSlidePuzzlePooledOptimalMoveCount,
   listSlidePuzzlePoolEntries,
-  toSlidePuzzlePooledProblem,
+  type SlidePuzzlePooledProblem,
+  type SlidePuzzleProblemPoolEntry,
 } from "@/games/slide-puzzle/problem/problem-pool";
+
+function restorePoolEntry(
+  entry: SlidePuzzleProblemPoolEntry,
+): SlidePuzzlePooledProblem {
+  const { identity, optimalMoveCount } = decodeSlidePuzzlePoolEntry(entry);
+  return { ...restoreSlidePuzzleProblem(identity), optimalMoveCount };
+}
 
 export function selectSlidePuzzleProblemForDifficulty(
   difficulty: SlidePuzzleDifficulty,
   seed: ProblemSeed,
-): SlidePuzzleGeneratedProblem {
+): SlidePuzzlePooledProblem {
   const entry = selectProblemPoolEntry(
     listSlidePuzzlePoolEntries(difficulty),
     seed,
     `level ${difficulty} slide puzzle`,
   );
+  return restorePoolEntry(entry);
+}
 
-  const { identity, optimalMoveCount } = toSlidePuzzlePooledProblem(entry);
-  return restoreSlidePuzzleProblemWithOptimalMoveCount(
-    identity,
-    optimalMoveCount,
-  );
+/** 難易度の問題集から問題 ID で1問を引いて復元する。引けない ID には `null` を返す。 */
+export function selectSlidePuzzleProblemById(
+  difficulty: SlidePuzzleDifficulty,
+  problemId: string,
+): SlidePuzzlePooledProblem | null {
+  const entry = findSlidePuzzlePoolEntryByProblemId(difficulty, problemId);
+  return entry ? restorePoolEntry(entry) : null;
 }
 
 /**
@@ -35,9 +46,17 @@ export function selectSlidePuzzleProblemForDifficulty(
  */
 export function restoreSlidePuzzlePooledProblem(
   identity: SlidePuzzleProblemIdentity,
-): SlidePuzzleGeneratedProblem | null {
+): SlidePuzzlePooledProblem | null {
   const optimalMoveCount = findSlidePuzzlePooledOptimalMoveCount(identity);
   return optimalMoveCount === null
     ? null
-    : restoreSlidePuzzleProblemWithOptimalMoveCount(identity, optimalMoveCount);
+    : { ...restoreSlidePuzzleProblem(identity), optimalMoveCount };
+}
+
+/** 難易度の問題集から問題 ID で1問を引けるかを、問題を復元せずに確かめる。 */
+export function canSelectSlidePuzzleProblemById(
+  difficulty: SlidePuzzleDifficulty,
+  problemId: string,
+): boolean {
+  return findSlidePuzzlePoolEntryByProblemId(difficulty, problemId) !== null;
 }

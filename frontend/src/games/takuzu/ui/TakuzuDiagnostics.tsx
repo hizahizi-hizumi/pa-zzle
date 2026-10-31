@@ -1,7 +1,7 @@
 import { InternalDiagnosticsDialog } from "@/components/InternalDiagnosticsDialog";
 import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
+import { getDifficultyLabel } from "@/games/difficulty";
 import type { TakuzuDiagnosticSnapshot } from "@/games/takuzu/diagnostics";
-import { getTakuzuDifficultyLabel } from "@/games/takuzu/difficulty";
 import type { TakuzuGenerationConditions } from "@/games/takuzu/problem/problem";
 import { getTakuzuRemovalTechniqueLimitCode } from "@/games/takuzu/problem/problem-pool";
 
@@ -29,7 +29,7 @@ export function TakuzuDiagnostics({
 }: TakuzuDiagnosticsProps) {
   return (
     <InternalDiagnosticsDialog
-      difficultyLabel={getTakuzuDifficultyLabel(snapshot.difficulty)}
+      difficultyLabel={getDifficultyLabel(snapshot.difficulty)}
       seed={snapshot.problemIdentity.seed}
       generatorVersion={snapshot.problemIdentity.generatorVersion}
       generationConditions={formatGenerationConditions(

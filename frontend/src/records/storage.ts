@@ -4,7 +4,7 @@ const PLAY_RECORDS_STORAGE_KEY = "pa-zzle.play-records.v1";
 
 export type PlayRecordStorage = Pick<Storage, "getItem" | "setItem">;
 
-function getDefaultStorage(): PlayRecordStorage | null {
+export function getDefaultStorage(): PlayRecordStorage | null {
   if (typeof window === "undefined") {
     return null;
   }
@@ -66,4 +66,14 @@ export function appendPlayRecord(
   }
 
   return writePlayRecords([...records, record], storage) ? "saved" : "failed";
+}
+
+/** 記録 ID の記録を1件引く。無ければ `null` を返す。 */
+export function findPlayRecord(
+  recordId: string,
+  storage: PlayRecordStorage | null = getDefaultStorage(),
+): PlayRecord | null {
+  return (
+    readPlayRecords(storage).find((record) => record.id === recordId) ?? null
+  );
 }

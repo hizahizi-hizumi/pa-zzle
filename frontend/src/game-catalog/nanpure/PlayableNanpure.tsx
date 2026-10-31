@@ -1,73 +1,52 @@
-import { useMemo, useState } from "react";
-
+import { nanpureCatalogEntry } from "@/game-catalog/nanpure/nanpure-catalog-entry";
+import { usePlayableGame } from "@/game-catalog/playable-game";
+import { useRequestedProblem } from "@/game-catalog/problem-id-query";
 import { createNanpureDiagnosticSnapshot } from "@/games/nanpure/diagnostics";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import { useNanpurePlay } from "@/games/nanpure/play/use-nanpure-play";
+import { createNanpurePlayAttemptProgress } from "@/games/nanpure/play-attempt";
 import {
   createNanpurePlayRecord,
   nanpurePlayRecordDefinition,
 } from "@/games/nanpure/play-record";
-import type { NanpureIdentifiedProblem } from "@/games/nanpure/problem/problem";
+import { selectNanpureProblemById } from "@/games/nanpure/problem-selection";
 import { NanpureDiagnostics } from "@/games/nanpure/ui/NanpureDiagnostics";
 import { NanpurePlay } from "@/games/nanpure/ui/NanpurePlay";
-import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
-import {
-  buildRevision,
-  internalDiagnosticsAvailable,
-} from "@/lib/internal-diagnostics";
-import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
-import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
-import { useNavigate } from "@/router";
+import type { ProblemId } from "@/games/problem-id";
 
 type PlayableNanpureProps = {
   difficulty: NanpureDifficulty;
-  initialProblem?: NanpureIdentifiedProblem;
+  /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
+  avoidedProblemId?: ProblemId;
 };
 
 export function PlayableNanpure({
   difficulty,
-  initialProblem,
+  avoidedProblemId,
 }: PlayableNanpureProps) {
-  const play = useNanpurePlay(difficulty, initialProblem);
-  const navigate = useNavigate();
-  const playRecord = useMemo(
-    () =>
-      play.result && play.completedAt !== null
-        ? createNanpurePlayRecord({
-            difficulty,
-            problemIdentity: play.problemIdentity,
-            startedAt: play.startedAt,
-            completedAt: play.completedAt,
-            result: play.result,
-          })
-        : null,
-    [
-      difficulty,
-      play.completedAt,
-      play.problemIdentity,
-      play.result,
-      play.startedAt,
-    ],
+  const requestedProblem = useRequestedProblem((problemId) =>
+    selectNanpureProblemById(difficulty, problemId),
   );
-  const recordOutcome = useSavePlayRecord(
-    playRecord,
-    nanpurePlayRecordDefinition,
-  );
-  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
-  const diagnostics = internalDiagnosticsAvailable
-    ? createNanpureDiagnosticSnapshot({
-        difficulty: play.difficulty,
+  const play = useNanpurePlay(difficulty, requestedProblem, avoidedProblemId);
+  const { screenProps, diagnostics } = usePlayableGame({
+    game: nanpureCatalogEntry,
+    play,
+    playRecordDefinition: nanpurePlayRecordDefinition,
+    createPlayRecord: createNanpurePlayRecord,
+    createPlayAttemptProgress: createNanpurePlayAttemptProgress,
+    createDiagnosticSnapshot(buildRevision) {
+      return createNanpureDiagnosticSnapshot({
+        difficulty,
         problemIdentity: play.problemIdentity,
         buildRevision,
-      })
-    : null;
+      });
+    },
+  });
 
   return (
     <>
       <NanpurePlay
-        difficulty={difficulty}
-        status={play.status}
-        progress={play.progress}
+        {...screenProps}
         clues={play.clues}
         board={play.board}
         notes={play.notes}
@@ -76,37 +55,21 @@ export function PlayableNanpure({
         mistakeCellIndices={play.mistakeCellIndices}
         completedDigits={play.completedDigits}
         notesMode={play.notesMode}
-        elapsedMs={play.elapsedMs}
         mistakeCount={play.mistakeCount}
         undoCount={play.undoCount}
         canUndo={play.canUndo}
-        result={play.result}
-        recordOutcomeNotice={
-          <PlayRecordOutcomeNotice
-            outcome={recordOutcome}
-            display={nanpurePlayRecordDisplay}
-          />
-        }
         onSelectCell={play.selectCell}
         onInputDigit={play.inputDigit}
         onErase={play.erase}
         onToggleNotesMode={play.toggleNotesMode}
         onUndo={play.undo}
+        canRestart={play.canRestart}
         onRestart={play.restart}
-        onReplay={play.replay}
-        onStartNewProblem={play.startNewProblem}
-        onOpenRecords={() => navigate("/records")}
-        onChangeDifficulty={() => navigate("/puzzles/nanpure")}
-        onBackToHome={() => navigate("/")}
-        onClearAnimationComplete={play.completeClearAnimation}
-        onOpenDiagnostics={
-          diagnostics ? () => setDiagnosticsOpen(true) : undefined
-        }
       />
-      {diagnostics && diagnosticsOpen && (
+      {diagnostics.snapshot && (
         <NanpureDiagnostics
-          snapshot={diagnostics}
-          onClose={() => setDiagnosticsOpen(false)}
+          snapshot={diagnostics.snapshot}
+          onClose={diagnostics.close}
         />
       )}
     </>

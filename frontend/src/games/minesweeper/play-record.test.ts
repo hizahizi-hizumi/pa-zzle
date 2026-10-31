@@ -4,8 +4,13 @@ import {
   getMinesweeperPlayRecordTimeDelta,
   isMinesweeperPlayRecord,
   minesweeperPlayRecordDefinition,
+  restoreMinesweeperRecordedResult,
 } from "@/games/minesweeper/play-record";
-import { calculateMinesweeperPlayScore } from "@/games/minesweeper/score";
+import {
+  calculateMinesweeperPlayScore,
+  calculateMinesweeperSpeedScoreRule,
+  calculateMinesweeperTimeDeltaMs,
+} from "@/games/minesweeper/score";
 import type { PlayRecord } from "@/records/play-record";
 
 function createRecord() {
@@ -83,4 +88,92 @@ test("解釈できない記録を評価しないこと", () => {
   expect(isMinesweeperPlayRecord(record)).toBe(false);
   expect(getMinesweeperPlayRecordScore(record)).toBeNull();
   expect(getMinesweeperPlayRecordTimeDelta(record)).toBeNull();
+});
+
+describe("restoreMinesweeperRecordedResult", () => {
+  const record = createRecord();
+  const { performance } = record.payload;
+
+  describe("今の版の記録の場合", () => {
+    test("記録の難易度・問題・成績から結果を作り直すこと", () => {
+      const recorded = restoreMinesweeperRecordedResult(record);
+
+      expect(recorded).toEqual({
+        difficulty: "3",
+        problemIdentity: record.payload.problemIdentity,
+        result: {
+          ...performance,
+          mineCount: 16,
+          speedRule: calculateMinesweeperSpeedScoreRule({
+            minimumOpenCount: 25,
+            mineCount: 16,
+          }),
+          timeDeltaMs: calculateMinesweeperTimeDeltaMs({
+            ...performance,
+            mineCount: 16,
+          }),
+          score: calculateMinesweeperPlayScore({
+            ...performance,
+            mineCount: 16,
+          }),
+        },
+      });
+    });
+  });
+
+  describe("別の版の記録の場合", () => {
+    const unrestorableRecord = { ...record, payloadVersion: 2 };
+
+    test("null を返すこと", () => {
+      const recorded = restoreMinesweeperRecordedResult(unrestorableRecord);
+
+      expect(recorded).toBeNull();
+    });
+  });
+});
+
+describe("生成器の版が今と違う記録の場合", () => {
+  const current = createRecord();
+  const record: PlayRecord = {
+    ...current,
+    payload: {
+      ...current.payload,
+      problemIdentity: {
+        generatorVersion: "0",
+        seed: "older-generator-seed",
+        conditions: { mineCount: 16 },
+      },
+    },
+  };
+  const withoutMineCount: PlayRecord = {
+    ...current,
+    payload: {
+      ...current.payload,
+      problemIdentity: {
+        generatorVersion: "0",
+        seed: "older-generator-seed",
+        conditions: {},
+      },
+    },
+  };
+
+  test("記録として読み込み、今の評価規則で評価すること", () => {
+    const accepted = isMinesweeperPlayRecord(record);
+    const score = getMinesweeperPlayRecordScore(record);
+
+    expect(accepted).toBe(true);
+    expect(score).toBe(getMinesweeperPlayRecordScore(current));
+  });
+
+  test("結果画面に出す内容を作り直さないこと", () => {
+    const restored = restoreMinesweeperRecordedResult(record);
+
+    expect(restored).toBeNull();
+  });
+
+  test("評価に使う地雷数が読めない記録は読み込まないこと", () => {
+    const accepted = isMinesweeperPlayRecord(withoutMineCount);
+
+    expect(accepted).toBe(false);
+  });
 });

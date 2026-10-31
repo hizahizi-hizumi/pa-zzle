@@ -150,7 +150,7 @@ function classifyByProduction(
     case "classified":
       return level(Number(assessment.difficulty) as 1 | 2 | 3 | 4 | 5);
     case "out-of-range":
-      return assessment.reason === "unlisted-levers"
+      return assessment.reason === "unlisted-combination"
         ? { status: "unplaced" }
         : { status: assessment.reason };
     case "unsupported":

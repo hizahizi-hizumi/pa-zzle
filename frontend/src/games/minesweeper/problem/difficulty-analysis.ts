@@ -54,7 +54,7 @@ export type MinesweeperHumanSolveFeatures = {
 /**
  * - `analyzed`: 人間向け推論モデルで推測なしに解き切れた。
  * - `unsupported`: 推測は不要だが人間向け推論モデルの範囲外（`technique-limit`）か、計算量上限で評価できない（`computation-limit`）。
- * - `unsolvable`: 可視情報だけでは確定できない局面が残り、推測が必要。
+ * - `invalid`: 可視情報だけでは確定できない局面が残り、推測が必要（問題として成立しない）。
  */
 export type MinesweeperDifficultyAnalysis =
   | {
@@ -68,7 +68,7 @@ export type MinesweeperDifficultyAnalysis =
       scale: MinesweeperScaleMetrics;
     }
   | {
-      status: "unsolvable";
+      status: "invalid";
       scale: MinesweeperScaleMetrics;
     };
 
@@ -206,6 +206,6 @@ export function analyzeMinesweeperDifficulty(
     case "unsupported":
       return { status: "unsupported", reason: solve.reason, scale };
     case "guess-required":
-      return { status: "unsolvable", scale };
+      return { status: "invalid", scale };
   }
 }

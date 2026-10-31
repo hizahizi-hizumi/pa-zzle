@@ -32,7 +32,7 @@ describe("useMinesweeperPlay", () => {
     test("seedを生成してその難易度の問題集から選んだ問題を始めること", () => {
       const play = hook.result.current;
 
-      expect(play.seed).not.toBe("");
+      expect(play.problemIdentity.seed).not.toBe("");
       expect(
         isInMinesweeperDifficultyBoardRange(
           "3",
@@ -77,7 +77,6 @@ describe("useMinesweeperPlay", () => {
       const play = hook.result.current;
 
       expect(play.problemIdentity).toEqual(identity);
-      expect(play.seed).toBe(identity.seed);
       expect(
         play.visibleCells.flatMap((cell, cellIndex) =>
           cell.state === "revealed" ? [cellIndex] : [],
@@ -93,7 +92,7 @@ describe("useMinesweeperPlay", () => {
         act(() => hook.result.current.revealCell(hiddenSafeCellIndex));
       });
 
-      test("リセットで同じ問題を初期状態からやり直すこと", () => {
+      test("リセットで同じ問題を初期状態の新しいプレイとして始めること", () => {
         act(() => hook.result.current.replay());
 
         const play = hook.result.current;
@@ -160,7 +159,7 @@ describe("useMinesweeperPlay", () => {
         expect(result?.mineCount).toBe(mineCount);
         expect(result?.score.breakdown.accuracy).toBe(45);
         expect(result?.timeDeltaMs).toBe(
-          (result?.elapsedMs ?? 0) - (result?.speedFullScoreMs ?? 0),
+          (result?.elapsedMs ?? 0) - (result?.speedRule.fullScoreMs ?? 0),
         );
       });
 
@@ -178,7 +177,6 @@ describe("useMinesweeperPlay", () => {
       const play = hook.result.current;
 
       expect(play.problemIdentity.seed).not.toBe(identity.seed);
-      expect(play.seed).not.toBe(identity.seed);
       expect(
         isInMinesweeperDifficultyBoardRange(
           "5",

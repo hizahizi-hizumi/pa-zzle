@@ -76,7 +76,7 @@ export function ParkingJamDifficultyPreview({
   return (
     <span
       aria-hidden="true"
-      className="flex h-12 w-32 shrink-0 items-center lg:justify-center"
+      className="flex h-12 w-full items-center lg:w-32 lg:justify-center"
     >
       <ParkingJamBoardFigure board={createPreviewBoard(difficulty)} />
     </span>

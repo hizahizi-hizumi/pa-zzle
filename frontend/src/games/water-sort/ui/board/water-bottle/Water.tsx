@@ -18,7 +18,7 @@ export function Water({ contents }: WaterProps) {
     return (
       <span
         key={`${slotIndex}-${colorIndex}-${contents.length}`}
-        className="absolute inset-x-0 h-1/4 transition-[background-color] duration-200"
+        className="absolute inset-x-0 h-1/4 transition-[background-color] duration-(--duration-slow)"
         style={{
           bottom: `${slotIndex * 25}%`,
           backgroundColor: getWaterColorView(colorIndex).color,

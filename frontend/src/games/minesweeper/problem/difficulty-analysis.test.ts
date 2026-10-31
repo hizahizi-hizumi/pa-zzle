@@ -228,7 +228,7 @@ describe("analyzeMinesweeperDifficulty", () => {
     test("成立しない問題として返すこと", () => {
       const result = analyzeMinesweeperDifficulty(problem);
 
-      expect(result.status).toBe("unsolvable");
+      expect(result.status).toBe("invalid");
     });
   });
 

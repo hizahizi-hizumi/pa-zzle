@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
 
 import {
-  pourAnimationDurationMs,
-  pourTransferEndOffset,
-  pourTransferStartOffset,
+  POUR_ANIMATION_DURATION_MS,
+  POUR_TRANSFER_END_OFFSET,
+  POUR_TRANSFER_START_OFFSET,
 } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/animation-view";
 import { TransferLiquidView } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/TransferLiquidView";
 import type { PourAnimation } from "@/games/water-sort/ui/board/pour/pour-animation";
@@ -21,11 +21,15 @@ export function AnimatedDestinationTransfer({
     const transferAnimation = transferRef.current?.animate?.(
       [
         { transform: "scaleY(0)", offset: 0 },
-        { transform: "scaleY(0)", offset: pourTransferStartOffset },
-        { transform: "scaleY(1)", offset: pourTransferEndOffset },
+        { transform: "scaleY(0)", offset: POUR_TRANSFER_START_OFFSET },
+        { transform: "scaleY(1)", offset: POUR_TRANSFER_END_OFFSET },
         { transform: "scaleY(1)", offset: 1 },
       ],
-      { duration: pourAnimationDurationMs, easing: "linear", fill: "forwards" },
+      {
+        duration: POUR_ANIMATION_DURATION_MS,
+        easing: "linear",
+        fill: "forwards",
+      },
     );
 
     return () => transferAnimation?.cancel();

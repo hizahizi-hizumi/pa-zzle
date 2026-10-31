@@ -18,7 +18,6 @@ afterEach(() => {
 
 const baseProps = {
   difficulty: "3" as const,
-  status: "playing" as const,
   progress: "playing" as const,
   state: [[0, 1], []] as const,
   elapsedMs: 5000,
@@ -32,11 +31,12 @@ const baseProps = {
   recordOutcomeNotice: null,
   onSelectBottle: vi.fn(),
   onUndo: vi.fn(),
+  canRestart: true,
   onRestart: vi.fn(),
   onReplay: vi.fn(),
   onStartNewProblem: vi.fn(),
   onOpenRecords: vi.fn(),
-  onClearingPourComplete: vi.fn(),
+  onClearAnimationComplete: vi.fn(),
   onChangeDifficulty: vi.fn(),
   onBackToHome: vi.fn(),
 };
@@ -54,7 +54,7 @@ function createResult(
     moveDelta: 2,
     timeDeltaMs: 1_000,
     backtrackMoveCount: 2,
-    speedFullScoreMs: 64_000,
+    speedRule: { fullScoreMs: 64_000, zeroScoreMs: 128_000 },
     colorCount: 6,
     score: {
       total: 87,
@@ -347,7 +347,6 @@ describe("WaterSortPlay", () => {
     render(
       <WaterSortPlay
         {...baseProps}
-        status="cleared"
         progress="result"
         result={createResult()}
       />,
@@ -356,7 +355,7 @@ describe("WaterSortPlay", () => {
     expect(screen.getByText("ウォーターソート")).toBeTruthy();
     expect(screen.getByText("01:05")).toBeTruthy();
     expect(screen.getByText("手数")).toBeTruthy();
-    expect(screen.getByText("12")).toBeTruthy();
+    expect(screen.getByText("12手")).toBeTruthy();
     expect(screen.getByText("最短 +2")).toBeTruthy();
     expect(screen.getByText("基準 +00:01")).toBeTruthy();
     expect(screen.queryByText("手戻り")).toBeNull();
@@ -371,7 +370,7 @@ describe("WaterSortPlay", () => {
     expect(screen.getByText("待った")).toBeTruthy();
     expect(screen.getAllByText("効率")).toHaveLength(2);
     expect(screen.getAllByText("速さ")).toHaveLength(2);
-    expect(screen.getAllByText("正確性")).toHaveLength(2);
+    expect(screen.getAllByText("正確さ")).toHaveLength(2);
     expect(screen.getByText("01:04")).toBeTruthy();
     expect(screen.getByText(/6色 × 1.5秒/)).toBeTruthy();
     expect(screen.queryByText(/seed:/)).toBeNull();
@@ -382,7 +381,6 @@ describe("WaterSortPlay", () => {
     render(
       <WaterSortPlay
         {...baseProps}
-        status="cleared"
         progress="result"
         result={createResult()}
         onOpenDiagnostics={onOpenDiagnostics}
@@ -398,7 +396,6 @@ describe("WaterSortPlay", () => {
     render(
       <WaterSortPlay
         {...baseProps}
-        status="cleared"
         progress="result"
         result={createResult({
           elapsedMs: 42_000,
@@ -443,7 +440,7 @@ describe("WaterSortPlay", () => {
       moveDelta: 0,
       timeDeltaMs: -9_000,
       backtrackMoveCount: 0,
-      speedFullScoreMs: 74_000,
+      speedRule: { fullScoreMs: 74_000, zeroScoreMs: 148_000 },
       score: {
         total: 100,
         breakdown: { efficiency: 40, speed: 40, accuracy: 20 },
@@ -462,7 +459,6 @@ describe("WaterSortPlay", () => {
     rerender(
       <WaterSortPlay
         {...baseProps}
-        status="cleared"
         progress="clearing"
         state={[[], [0, 0, 0, 0]]}
         sourceBottleIndex={null}
@@ -484,7 +480,7 @@ describe("WaterSortPlay", () => {
       resolveAnimation?.();
       await animationFinished;
     });
-    expect(baseProps.onClearingPourComplete).toHaveBeenCalledOnce();
+    expect(baseProps.onClearAnimationComplete).toHaveBeenCalledOnce();
   });
 
   test("クリア後に次の問題・再挑戦・難易度変更・ホーム移動を通知すること", () => {
@@ -495,7 +491,6 @@ describe("WaterSortPlay", () => {
     render(
       <WaterSortPlay
         {...baseProps}
-        status="cleared"
         progress="result"
         result={createResult()}
         onReplay={replay}
@@ -519,7 +514,6 @@ describe("WaterSortPlay", () => {
     render(
       <WaterSortPlay
         {...baseProps}
-        status="cleared"
         progress="result"
         result={createResult({
           elapsedMs: 55_000,

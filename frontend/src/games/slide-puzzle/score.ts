@@ -1,10 +1,19 @@
-import { calculateLinearScore } from "@/games/score";
+import {
+  calculateLinearScore,
+  calculateSpeedScore,
+  calculateTimeDeltaMs,
+  createSpeedScoreRule,
+  type PlayScore,
+  type ScoreMaximums,
+  type SpeedScoreRule,
+  sumPlayScore,
+} from "@/games/score";
 import type { SlidePuzzleBoardSize } from "@/games/slide-puzzle/puzzle/state";
 
 export const SLIDE_PUZZLE_SCORE_MAXIMUMS = {
   efficiency: 60,
   speed: 40,
-} as const;
+} as const satisfies ScoreMaximums<"efficiency" | "speed">;
 
 /**
  * 基準時間のうち盤面把握にあてる時間。盤面が大きいほど把握に掛かるとみなし、
@@ -20,14 +29,12 @@ export const slidePuzzleSpeedInitialRecognitionMsByBoardSize: Record<
 };
 /** 基準時間のうち最短 1 手あたりの時間。盤面サイズによらず共通の仮値。 */
 export const SLIDE_PUZZLE_SPEED_PER_OPTIMAL_MOVE_MS = 2_000;
+/** 速さが0点になる時間の、基準時間に対する倍率。 */
+export const SLIDE_PUZZLE_SPEED_ZERO_SCORE_RATIO = 2;
 
-export type SlidePuzzlePlayScore = {
-  total: number;
-  breakdown: {
-    efficiency: number;
-    speed: number;
-  };
-};
+export type SlidePuzzlePlayScore = PlayScore<
+  keyof typeof SLIDE_PUZZLE_SCORE_MAXIMUMS
+>;
 
 type SlidePuzzleSpeedFullScoreInput = {
   boardSize: SlidePuzzleBoardSize;
@@ -47,13 +54,7 @@ type SlidePuzzleMoveDeltaInput = {
 type SlidePuzzlePlayScoreInput = SlidePuzzleTimeDeltaInput &
   SlidePuzzleMoveDeltaInput;
 
-type SlidePuzzlePerformanceComparison = {
-  speedFullScoreMs: number;
-  timeDeltaMs: number;
-  moveDelta: number;
-};
-
-function calculateSlidePuzzleSpeedFullScoreMs({
+export function calculateSlidePuzzleSpeedFullScoreMs({
   boardSize,
   optimalMoveCount,
 }: SlidePuzzleSpeedFullScoreInput): number {
@@ -63,14 +64,22 @@ function calculateSlidePuzzleSpeedFullScoreMs({
   );
 }
 
+export function calculateSlidePuzzleSpeedScoreRule(
+  input: SlidePuzzleSpeedFullScoreInput,
+): SpeedScoreRule {
+  return createSpeedScoreRule(
+    calculateSlidePuzzleSpeedFullScoreMs(input),
+    SLIDE_PUZZLE_SPEED_ZERO_SCORE_RATIO,
+  );
+}
+
 export function calculateSlidePuzzleTimeDeltaMs({
   elapsedMs,
-  boardSize,
-  optimalMoveCount,
+  ...input
 }: SlidePuzzleTimeDeltaInput): number {
-  return (
-    elapsedMs -
-    calculateSlidePuzzleSpeedFullScoreMs({ boardSize, optimalMoveCount })
+  return calculateTimeDeltaMs(
+    elapsedMs,
+    calculateSlidePuzzleSpeedScoreRule(input),
   );
 }
 
@@ -81,35 +90,10 @@ export function calculateSlidePuzzleMoveDelta({
   return moveCount - optimalMoveCount;
 }
 
-export function calculateSlidePuzzlePerformanceComparison({
-  elapsedMs,
-  moveCount,
-  boardSize,
-  optimalMoveCount,
-}: SlidePuzzlePlayScoreInput): SlidePuzzlePerformanceComparison {
-  const speedFullScoreMs = calculateSlidePuzzleSpeedFullScoreMs({
-    boardSize,
-    optimalMoveCount,
-  });
-
-  return {
-    speedFullScoreMs,
-    timeDeltaMs: calculateSlidePuzzleTimeDeltaMs({
-      elapsedMs,
-      boardSize,
-      optimalMoveCount,
-    }),
-    moveDelta: calculateSlidePuzzleMoveDelta({
-      moveCount,
-      optimalMoveCount,
-    }),
-  };
-}
-
 /**
  * 効率は「最短手数 ÷ 総手数」の比で評価する。人の手数は最短の数倍になりやすく、
  * 超過分で線形に減らすと中位の上達差が 0 点に潰れるため。
- * 総手数は盤面を戻す前の手も含むので、やり直しを別に減点しない。
+ * 総手数は盤面を戻す前の手も含むので、盤面を戻した回数を別に減点しない。
  */
 export function calculateSlidePuzzlePlayScore({
   elapsedMs,
@@ -117,13 +101,6 @@ export function calculateSlidePuzzlePlayScore({
   boardSize,
   optimalMoveCount,
 }: SlidePuzzlePlayScoreInput): SlidePuzzlePlayScore {
-  const comparison = calculateSlidePuzzlePerformanceComparison({
-    boardSize,
-    elapsedMs,
-    moveCount,
-    optimalMoveCount,
-  });
-
   const efficiency =
     optimalMoveCount <= 0 || moveCount <= optimalMoveCount
       ? SLIDE_PUZZLE_SCORE_MAXIMUMS.efficiency
@@ -132,16 +109,11 @@ export function calculateSlidePuzzlePlayScore({
           optimalMoveCount / moveCount,
         );
 
-  const speedOvertimeMs = Math.max(0, comparison.timeDeltaMs);
-  const speed = calculateLinearScore(
+  const speed = calculateSpeedScore(
     SLIDE_PUZZLE_SCORE_MAXIMUMS.speed,
-    1 - speedOvertimeMs / comparison.speedFullScoreMs,
+    elapsedMs,
+    calculateSlidePuzzleSpeedScoreRule({ boardSize, optimalMoveCount }),
   );
 
-  return {
-    total: efficiency + speed,
-    breakdown: { efficiency, speed },
-  };
+  return sumPlayScore({ efficiency, speed });
 }
-
-export const _private = { calculateSlidePuzzleSpeedFullScoreMs };

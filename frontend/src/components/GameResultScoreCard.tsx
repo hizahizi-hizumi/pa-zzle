@@ -3,11 +3,22 @@ import { useEffect, useRef } from "react";
 import { GameResultSurface } from "@/components/GameResultSurface";
 import { getGameResultStyle } from "@/components/game-result-style";
 import type { GameResultLevel } from "@/games/result";
+import { MOTION_EASING, prefersReducedMotion } from "@/lib/motion";
 
 type GameResultScoreCardProps = {
   score: number;
   level: GameResultLevel;
 };
+
+const SCORE_REVEAL_MS = 620;
+/** 結果の印が出始めてから、スコアを出し始めるまでの間。 */
+const SCORE_REVEAL_DELAY_MS = 120;
+
+const scoreRevealKeyframes: Keyframe[] = [
+  { transform: "scale(0.94)", opacity: 0 },
+  { transform: "scale(1.025)", opacity: 1, offset: 0.72 },
+  { transform: "scale(1)", opacity: 1 },
+];
 
 export function GameResultScoreCard({
   score,
@@ -17,21 +28,15 @@ export function GameResultScoreCard({
   const style = getGameResultStyle(level);
 
   useEffect(() => {
-    const reduced = window.matchMedia?.(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    if (reduced) {
+    if (prefersReducedMotion()) {
       return;
     }
 
-    cardRef.current?.animate?.(
-      [
-        { transform: "scale(0.94)", opacity: 0 },
-        { transform: "scale(1.025)", opacity: 1, offset: 0.72 },
-        { transform: "scale(1)", opacity: 1 },
-      ],
-      { duration: 620, easing: "cubic-bezier(.2,.8,.2,1)", delay: 120 },
-    );
+    cardRef.current?.animate?.(scoreRevealKeyframes, {
+      duration: SCORE_REVEAL_MS,
+      delay: SCORE_REVEAL_DELAY_MS,
+      easing: MOTION_EASING.celebrate,
+    });
   }, []);
 
   return (

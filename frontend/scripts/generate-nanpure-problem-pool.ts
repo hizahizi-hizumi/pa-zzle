@@ -1,9 +1,9 @@
 import { writeFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
+import { difficultyLevels } from "@/games/difficulty";
 import {
   assessNanpureDifficulty,
   type NanpureDifficulty,
-  nanpureDifficulties,
 } from "@/games/nanpure/difficulty";
 import { generateNanpureProblem } from "@/games/nanpure/problem/generator";
 import {
@@ -296,13 +296,13 @@ function formatCounts(values: readonly (string | number)[]): string {
 function formatPoolJson(
   levels: Record<NanpureDifficulty, NanpureProblemPoolEntry[]>,
 ): string {
-  const lines = nanpureDifficulties.map(
+  const lines = difficultyLevels.map(
     ({ id }, levelIndex) =>
       `    ${JSON.stringify(id)}: [\n${levels[id]
         .map((entry) => `      ${JSON.stringify(entry)}`)
         .join(
           ",\n",
-        )}\n    ]${levelIndex < nanpureDifficulties.length - 1 ? "," : ""}`,
+        )}\n    ]${levelIndex < difficultyLevels.length - 1 ? "," : ""}`,
   );
   return `{\n  "generatorVersion": ${JSON.stringify(NANPURE_GENERATOR_VERSION)},\n  "levels": {\n${lines.join("\n")}\n  }\n}\n`;
 }
@@ -320,7 +320,7 @@ async function runMain(): Promise<void> {
 
   const statesByKey = new Map<string, ConditionState>();
   const levelStates = Object.fromEntries(
-    nanpureDifficulties.map(({ id }) => [
+    difficultyLevels.map(({ id }) => [
       id,
       levelConditions[id].map((removalLimit) => {
         const key = conditionKeyOf(removalLimit);
@@ -332,12 +332,12 @@ async function runMain(): Promise<void> {
   ) as Record<NanpureDifficulty, ConditionState[]>;
 
   const prefixLengths = Object.fromEntries(
-    nanpureDifficulties.map(({ id }) => [id, 0]),
+    difficultyLevels.map(({ id }) => [id, 0]),
   ) as Record<NanpureDifficulty, number>;
   const results = new Map<NanpureDifficulty, LevelSelection>();
 
   for (;;) {
-    const pending = nanpureDifficulties
+    const pending = difficultyLevels
       .map(({ id }) => id)
       .filter((id) => !results.has(id));
     if (pending.length === 0) {
@@ -383,7 +383,7 @@ async function runMain(): Promise<void> {
       }
     }
     console.error(
-      `${Math.round((performance.now() - startedAt) / 1000)}s ${nanpureDifficulties
+      `${Math.round((performance.now() - startedAt) / 1000)}s ${difficultyLevels
         .map(
           ({ id }) =>
             `${id}:${results.has(id) ? "done" : `${prefixLengths[id]}/条件`}`,
@@ -395,7 +395,7 @@ async function runMain(): Promise<void> {
 
   const levels = {} as Record<NanpureDifficulty, NanpureProblemPoolEntry[]>;
   const report: string[] = [];
-  for (const { id: difficulty } of nanpureDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     const { selected, duplicateCount, examinedLengths } =
       results.get(difficulty)!;
     levels[difficulty] = selected.map(({ removalLimit, candidate }) => [
@@ -448,7 +448,7 @@ type VerifyFailure = {
 
 function runVerifyWorker(args: readonly string[]): void {
   const [jobIndex, jobCount] = args.map(Number);
-  for (const { id: difficulty } of nanpureDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     listNanpurePoolEntries(difficulty).forEach((entry, index) => {
       if (index % jobCount! !== jobIndex) {
         return;
@@ -486,7 +486,7 @@ function runVerifyWorker(args: readonly string[]): void {
 
 function measureSelection(): string {
   const durations: number[] = [];
-  for (const { id: difficulty } of nanpureDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     for (let index = 0; index < 2000; index += 1) {
       const startedAt = performance.now();
       selectNanpureProblemForDifficulty(difficulty, `measure-${index}`);
@@ -531,7 +531,7 @@ async function runVerify(): Promise<void> {
   let duplicateCount = 0;
   let total = 0;
   const levels = {} as Record<NanpureDifficulty, NanpureProblemPoolEntry[]>;
-  for (const { id: difficulty } of nanpureDifficulties) {
+  for (const { id: difficulty } of difficultyLevels) {
     levels[difficulty] = [...listNanpurePoolEntries(difficulty)];
     for (const entry of levels[difficulty]) {
       total += 1;

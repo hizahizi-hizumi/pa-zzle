@@ -1,6 +1,7 @@
 import type { PlayRecord } from "@/records/play-record";
 import {
   appendPlayRecord,
+  findPlayRecord,
   type PlayRecordStorage,
   readPlayRecords,
 } from "@/records/storage";
@@ -72,4 +73,21 @@ test("保存領域へアクセスできなくても画面用の読み出しを�
 
   expect(records).toEqual([]);
   localStorage.mockRestore();
+});
+
+describe("findPlayRecord", () => {
+  const records = [createRecord("record-1"), createRecord("record-2")];
+  const storage = createMemoryStorage(JSON.stringify(records));
+
+  test("記録 ID の記録を返すこと", () => {
+    const record = findPlayRecord("record-2", storage);
+
+    expect(record).toEqual(records[1]);
+  });
+
+  test("保存されていない記録 ID には null を返すこと", () => {
+    const record = findPlayRecord("record-3", storage);
+
+    expect(record).toBeNull();
+  });
 });

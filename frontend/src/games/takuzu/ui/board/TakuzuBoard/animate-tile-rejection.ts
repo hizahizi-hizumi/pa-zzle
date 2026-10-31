@@ -1,4 +1,9 @@
-const TILE_REJECTION_SHAKE_MS = 220;
+import { playRejectionShake, type RejectionShakeTiming } from "@/lib/motion";
+
+const tileRejectionShakeTiming: RejectionShakeTiming = {
+  durationMs: 220,
+  easing: "ease-out",
+};
 
 /** マスの幅に対する揺れ幅。1往復目を大きく、2往復目で収める。 */
 const tileRejectionShakeKeyframes: Keyframe[] = [
@@ -16,16 +21,9 @@ const tileRejectionShakeKeyframes: Keyframe[] = [
 export function animateTakuzuTileRejection(
   element: HTMLElement | undefined,
 ): void {
-  const tile = element?.querySelector<HTMLElement>("[data-takuzu-tile]");
-  if (
-    !tile?.animate ||
-    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
-  ) {
-    return;
-  }
-
-  tile.animate(tileRejectionShakeKeyframes, {
-    duration: TILE_REJECTION_SHAKE_MS,
-    easing: "ease-out",
-  });
+  playRejectionShake(
+    element?.querySelector<HTMLElement>("[data-takuzu-tile]"),
+    tileRejectionShakeKeyframes,
+    tileRejectionShakeTiming,
+  );
 }

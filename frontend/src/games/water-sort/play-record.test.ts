@@ -4,6 +4,7 @@ import {
   getWaterSortPlayRecordScore,
   getWaterSortPlayRecordTimeDelta,
   isWaterSortPlayRecord,
+  restoreWaterSortRecordedResult,
   waterSortPlayRecordDefinition,
 } from "@/games/water-sort/play-record";
 import type { PlayRecord } from "@/records/play-record";
@@ -72,7 +73,7 @@ test("同じ開始条件を自己ベストの比較単位として扱うこと",
   expect(comparisonKey).toBe("3");
 });
 
-test("やり直しのない旧記録は待った回数からクリア手数を復元して再評価すること", () => {
+test("盤面を戻していない旧記録は待った回数からクリア手数を復元して再評価すること", () => {
   const legacyRecord: PlayRecord = {
     id: "legacy-without-restart",
     gameId: "water-sort",
@@ -106,7 +107,7 @@ test("やり直しのない旧記録は待った回数からクリア手数を�
   expect(score).toBe(87);
 });
 
-test("やり直しで失われた手数を復元できない旧記録は評価を推測しないこと", () => {
+test("盤面を戻して失われた手数を復元できない旧記録は評価を推測しないこと", () => {
   const legacyRecord: PlayRecord = {
     id: "legacy-with-restart",
     gameId: "water-sort",
@@ -140,4 +141,73 @@ test("やり直しで失われた手数を復元できない旧記録は評価�
   expect(isWaterSortPlayRecord(legacyRecord)).toBe(true);
   expect(score).toBeNull();
   expect(metricValue).toBeNull();
+});
+
+describe("restoreWaterSortRecordedResult", () => {
+  const record = createRecord();
+
+  describe("今の版の記録の場合", () => {
+    test("記録の成績・最短手数・色数から結果を作り直すこと", () => {
+      const recorded = restoreWaterSortRecordedResult(record);
+
+      expect(recorded).toMatchObject({
+        difficulty: "3",
+        problemIdentity: record.payload.problemIdentity,
+        result: {
+          elapsedMs: 65_000,
+          moveCount: 14,
+          completionMoveCount: 12,
+          undoCount: 2,
+          restartCount: 0,
+          optimalMoveCount: 10,
+          backtrackMoveCount: 2,
+          timeDeltaMs: 1_000,
+          colorCount: 6,
+          score: { total: 87 },
+        },
+      });
+    });
+  });
+
+  describe("以前の難易度区分の記録の場合", () => {
+    const unrestorableRecord = {
+      ...record,
+      payload: { ...record.payload, difficulty: "normal" },
+    };
+
+    test("null を返すこと", () => {
+      const recorded = restoreWaterSortRecordedResult(unrestorableRecord);
+
+      expect(recorded).toBeNull();
+    });
+  });
+});
+
+describe("生成器の版が今と違う記録の場合", () => {
+  const current = createRecord();
+  const record: PlayRecord = {
+    ...current,
+    payload: {
+      ...current.payload,
+      problemIdentity: {
+        generatorVersion: "0",
+        seed: "older-generator-seed",
+        conditions: { colorCount: 6 },
+      },
+    },
+  };
+
+  test("記録として読み込み、今の評価規則で評価すること", () => {
+    const accepted = isWaterSortPlayRecord(record);
+    const score = getWaterSortPlayRecordScore(record);
+
+    expect(accepted).toBe(true);
+    expect(score).toBe(getWaterSortPlayRecordScore(current));
+  });
+
+  test("結果画面に出す内容を作り直さないこと", () => {
+    const restored = restoreWaterSortRecordedResult(record);
+
+    expect(restored).toBeNull();
+  });
 });

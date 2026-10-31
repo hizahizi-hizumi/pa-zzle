@@ -1,8 +1,8 @@
 import { cleanup, render } from "@testing-library/react";
+import { difficultyLevels } from "@/games/difficulty";
 
 import {
   type ReflectionDifficulty,
-  reflectionDifficulties,
   reflectionLevelCombinations,
 } from "@/games/reflection/difficulty";
 import {
@@ -17,7 +17,7 @@ import {
 
 const { previewStrip, createPreviewStrip } = _private;
 
-const difficultyIds = reflectionDifficulties.map(({ id }) => id);
+const difficultyIds = difficultyLevels.map(({ id }) => id);
 
 afterEach(cleanup);
 

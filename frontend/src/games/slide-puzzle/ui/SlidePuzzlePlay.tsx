@@ -1,41 +1,33 @@
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
-import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
-import { PlayHeader } from "@/components/PlayHeader";
+import { GamePlayFrame } from "@/components/GamePlayFrame";
+import type {
+  GamePlayScreenProps,
+  RestartableGamePlayScreenProps,
+} from "@/games/play";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
+import { SLIDE_PUZZLE_DISPLAY_NAME } from "@/games/slide-puzzle/display-name";
 import type {
   SlidePuzzleOperation,
-  SlidePuzzleProgress,
   SlidePuzzleResult,
 } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import type { SlidePuzzleDirection } from "@/games/slide-puzzle/puzzle/rules";
 import type { SlidePuzzleBoard as SlidePuzzleBoardState } from "@/games/slide-puzzle/puzzle/state";
 import { SlidePuzzleBoard } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard";
+import { SlidePuzzleResultScreen } from "@/games/slide-puzzle/ui/result/SlidePuzzleResultScreen";
 import { SlidePuzzleHowToPlayDialog } from "@/games/slide-puzzle/ui/SlidePuzzleHowToPlayDialog";
-import { SlidePuzzleResultScreen } from "@/games/slide-puzzle/ui/SlidePuzzlePlay/SlidePuzzleResultScreen";
-import { formatElapsedTime } from "@/lib/format-elapsed-time";
 
-type SlidePuzzlePlayProps = {
-  difficulty: SlidePuzzleDifficulty;
-  status: "playing" | "cleared";
-  progress: SlidePuzzleProgress;
-  board: SlidePuzzleBoardState;
-  elapsedMs: number;
-  moveCount: number;
-  operation: SlidePuzzleOperation | null;
-  result: SlidePuzzleResult | null;
-  recordOutcomeNotice: ReactNode;
-  onSlideTile: (tileIndex: number) => void;
-  onSlideByKeyboard: (direction: SlidePuzzleDirection) => void;
-  onRestart: () => void;
-  onReplay: () => void;
-  onStartNewProblem: () => void;
-  onOpenRecords: () => void;
-  onClearingComplete: () => void;
-  onChangeDifficulty: () => void;
-  onBackToHome: () => void;
-  onOpenDiagnostics?: () => void;
-};
+type SlidePuzzlePlayProps = GamePlayScreenProps<
+  SlidePuzzleDifficulty,
+  SlidePuzzleResult
+> &
+  RestartableGamePlayScreenProps & {
+    board: SlidePuzzleBoardState;
+    moveCount: number;
+    operation: SlidePuzzleOperation | null;
+    onSlideTile: (tileIndex: number) => void;
+    onSlideInDirection: (direction: SlidePuzzleDirection) => void;
+  };
 
 const directionByArrowKey: Readonly<Record<string, SlidePuzzleDirection>> = {
   ArrowUp: "up",
@@ -46,27 +38,26 @@ const directionByArrowKey: Readonly<Record<string, SlidePuzzleDirection>> = {
 
 export function SlidePuzzlePlay({
   difficulty,
-  status,
   progress,
-  board,
   elapsedMs,
-  moveCount,
-  operation,
   result,
   recordOutcomeNotice,
+  board,
+  moveCount,
+  operation,
   onSlideTile,
-  onSlideByKeyboard,
+  onSlideInDirection,
+  canRestart,
   onRestart,
   onReplay,
   onStartNewProblem,
   onOpenRecords,
-  onClearingComplete,
+  onClearAnimationComplete,
   onChangeDifficulty,
   onBackToHome,
   onOpenDiagnostics,
 }: SlidePuzzlePlayProps) {
   const playAreaRef = useRef<HTMLElement>(null);
-  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
 
   useEffect(() => {
     if (progress !== "playing") {
@@ -93,55 +84,47 @@ export function SlidePuzzlePlay({
       }
 
       event.preventDefault();
-      onSlideByKeyboard(direction);
+      onSlideInDirection(direction);
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onSlideByKeyboard, progress]);
-
-  if (progress === "result" && status === "cleared" && result) {
-    return (
-      <SlidePuzzleResultScreen
-        difficulty={difficulty}
-        result={result}
-        recordOutcomeNotice={recordOutcomeNotice}
-        onReplay={onReplay}
-        onStartNewProblem={onStartNewProblem}
-        onOpenRecords={onOpenRecords}
-        onChangeDifficulty={onChangeDifficulty}
-        onBackToHome={onBackToHome}
-        onOpenDiagnostics={onOpenDiagnostics}
-      />
-    );
-  }
+  }, [onSlideInDirection, progress]);
 
   return (
-    <section
+    <GamePlayFrame
       ref={playAreaRef}
-      className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]"
+      progress={progress}
+      result={result}
+      title={SLIDE_PUZZLE_DISPLAY_NAME}
+      metrics={[
+        { type: "count", label: "手数", count: moveCount },
+        { type: "elapsed-time", elapsedMs },
+      ]}
+      canRestart={canRestart}
+      onRestart={onRestart}
+      onReplay={onReplay}
+      onStartNewProblem={onStartNewProblem}
+      onChangeDifficulty={onChangeDifficulty}
+      onBackToHome={onBackToHome}
+      onOpenDiagnostics={onOpenDiagnostics}
+      renderHowToPlayDialog={({ open, onClose }) => (
+        <SlidePuzzleHowToPlayDialog open={open} onClose={onClose} />
+      )}
+      renderResultScreen={(clearedResult) => (
+        <SlidePuzzleResultScreen
+          difficulty={difficulty}
+          result={clearedResult}
+          recordOutcomeNotice={recordOutcomeNotice}
+          onReplay={onReplay}
+          onStartNewProblem={onStartNewProblem}
+          onOpenRecords={onOpenRecords}
+          onChangeDifficulty={onChangeDifficulty}
+          onBackToHome={onBackToHome}
+          onOpenDiagnostics={onOpenDiagnostics}
+        />
+      )}
     >
-      <BrandIdentityHeader />
-      <PlayHeader
-        title="スライドパズル"
-        metricGroups={[
-          [
-            { label: "手数", value: String(moveCount) },
-            { label: "時間", value: formatElapsedTime(elapsedMs) },
-          ],
-        ]}
-        onRestart={onRestart}
-        onReplay={onReplay}
-        onStartNewProblem={onStartNewProblem}
-        onChangeDifficulty={onChangeDifficulty}
-        onBackToHome={onBackToHome}
-        onOpenHowToPlay={() => setHowToPlayOpen(true)}
-        onOpenDiagnostics={onOpenDiagnostics}
-      />
-      <SlidePuzzleHowToPlayDialog
-        open={howToPlayOpen}
-        onClose={() => setHowToPlayOpen(false)}
-      />
       <main className="flex min-h-0 flex-1 items-center justify-center px-3 pt-2 pb-6 [container-type:size] sm:px-6 sm:pb-8">
         <div className="relative aspect-square w-[min(100cqw,100cqh,40rem)]">
           <SlidePuzzleBoard
@@ -150,10 +133,10 @@ export function SlidePuzzlePlay({
             interactionDisabled={progress !== "playing"}
             clearing={progress === "clearing"}
             onSlideTile={onSlideTile}
-            onClearingComplete={onClearingComplete}
+            onClearAnimationComplete={onClearAnimationComplete}
           />
         </div>
       </main>
-    </section>
+    </GamePlayFrame>
   );
 }

@@ -44,7 +44,7 @@ export function SlidePuzzleTile({
       onClick={() => onPress(cellIndex)}
       className={`group absolute top-0 left-0 ${tileSizeClassByBoardSize[boardSize]} cursor-pointer touch-manipulation select-none p-[1cqw] outline-none [-webkit-tap-highlight-color:transparent] ${
         slideAnimated
-          ? "transition-transform duration-normal ease-enter motion-reduce:transition-none"
+          ? "transition-transform duration-(--duration-normal) ease-enter motion-reduce:transition-none"
           : ""
       }`}
       style={{ transform: `translate(${column * 100}%, ${row * 100}%)` }}

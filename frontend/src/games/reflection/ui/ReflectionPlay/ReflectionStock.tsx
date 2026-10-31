@@ -17,7 +17,7 @@ type ReflectionStockProps = {
   /** 盤面で選んでいるマスのピース。盤面のピースを選んでいないときは `null`。 */
   selectedCell: ReflectionPiece | null;
   disabled: boolean;
-  onTapStock: (piece: ReflectionPiece) => void;
+  onSelectStockPiece: (piece: ReflectionPiece) => void;
 };
 
 /** 問題に含まれる種類だけを、決まった順で並べる。キーボードの数字キーもこの順に対応する。 */
@@ -37,7 +37,7 @@ export function ReflectionStock({
   selection,
   selectedCell,
   disabled,
-  onTapStock,
+  onSelectStockPiece,
 }: ReflectionStockProps) {
   const returning = !disabled && selection?.type === "cell";
   // 盤面のピースを選んでいる間、そのピースと同じ種類（押すと戻す）と、残りのある種類（押すと置き換える）を押せる。
@@ -68,7 +68,7 @@ export function ReflectionStock({
             disabled={
               disabled || (remaining === 0 && piece !== selectedCellPiece)
             }
-            {...getTapHandlers(() => onTapStock(piece))}
+            {...getTapHandlers(() => onSelectStockPiece(piece))}
             className={cn(
               "relative flex h-11 min-w-0 max-w-16 flex-1 touch-manipulation select-none items-center justify-center text-foreground outline-none transition-[background-color,color,opacity] duration-(--duration-fast) focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset enabled:hover:bg-accent/60 enabled:active:bg-accent disabled:opacity-40",
             )}

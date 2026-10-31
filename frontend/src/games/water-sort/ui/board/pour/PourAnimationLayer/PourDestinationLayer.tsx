@@ -1,8 +1,6 @@
-import { createPortal } from "react-dom";
-
 import {
-  destinationPourLayerZIndex,
   getOverlayStyle,
+  POUR_LAYER_ORDER,
 } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/animation-view";
 import { AnimatedDestinationTransfer } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/PourDestinationLayer/AnimatedDestinationTransfer";
 import type { PourAnimation } from "@/games/water-sort/ui/board/pour/pour-animation";
@@ -20,13 +18,13 @@ export function PourDestinationLayer({
     return null;
   }
 
-  return createPortal(
+  return (
     <div
       aria-hidden="true"
       className="pointer-events-none fixed aspect-[0.36] rounded-b-[1.45rem]"
       style={getOverlayStyle(
         firstAnimation.destination.rect,
-        destinationPourLayerZIndex,
+        POUR_LAYER_ORDER.destination,
       )}
     >
       <WaterBottle
@@ -38,7 +36,6 @@ export function PourDestinationLayer({
           />
         ))}
       />
-    </div>,
-    document.body,
+    </div>
   );
 }

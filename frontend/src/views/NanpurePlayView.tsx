@@ -1,22 +1,32 @@
+import { useLocation } from "react-router";
 import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
+import { nanpureCatalogEntry } from "@/game-catalog/nanpure/nanpure-catalog-entry";
 import { PlayableNanpure } from "@/game-catalog/nanpure/PlayableNanpure";
-import { parseNanpureDifficulty } from "@/games/nanpure/difficulty";
+import { readAvoidedProblemId } from "@/game-catalog/play-location-state";
+import { parseDifficultyLevel } from "@/games/difficulty";
 import { useParams } from "@/router";
 
 export function NanpurePlayView() {
   const { difficulty: difficultyParam } = useParams(
-    "/puzzles/nanpure/play/:difficulty",
+    nanpureCatalogEntry.playPath,
   );
-  const difficulty = parseNanpureDifficulty(difficultyParam);
+  const avoidedProblemId = readAvoidedProblemId(useLocation().state);
+  const difficulty = parseDifficultyLevel(difficultyParam);
 
   if (!difficulty) {
     return (
       <PlayUnavailableNotice
         title="この難易度は選べません"
-        backTo="/puzzles/nanpure"
+        backTo={nanpureCatalogEntry.entryPath}
       />
     );
   }
 
-  return <PlayableNanpure key={difficulty} difficulty={difficulty} />;
+  return (
+    <PlayableNanpure
+      key={difficulty}
+      difficulty={difficulty}
+      avoidedProblemId={avoidedProblemId}
+    />
+  );
 }
