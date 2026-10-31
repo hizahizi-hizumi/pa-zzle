@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -7,7 +8,7 @@ import {
 } from "@testing-library/react";
 
 import type {
-  IceFloorMazeOperation,
+  IceFloorMazeLastSlide,
   IceFloorMazeResult,
 } from "@/games/ice-floor-maze/play/use-ice-floor-maze-play";
 import { parseIceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
@@ -43,6 +44,7 @@ const result: IceFloorMazeResult = {
 
 afterEach(() => {
   cleanup();
+  delete (Element.prototype as { animate?: Element["animate"] }).animate;
 });
 
 describe("IceFloorMazePlay", () => {
@@ -61,15 +63,15 @@ describe("IceFloorMazePlay", () => {
   type RenderOptions = {
     progress?: GameProgress;
     isTrapped?: boolean;
-    operation?: IceFloorMazeOperation | null;
+    lastSlide?: IceFloorMazeLastSlide | null;
   };
 
-  function renderPlay({
+  function createPlay({
     progress = "playing",
     isTrapped = false,
-    operation = null,
+    lastSlide = null,
   }: RenderOptions = {}) {
-    render(
+    return (
       <IceFloorMazePlay
         difficulty="4"
         progress={progress}
@@ -81,12 +83,17 @@ describe("IceFloorMazePlay", () => {
         position={17}
         moveCount={7}
         isTrapped={isTrapped}
-        operation={operation}
+        lastSlide={lastSlide}
+        blockedInput={null}
         canUndo
         canRestart
         {...callbacks}
-      />,
+      />
     );
+  }
+
+  function renderPlay(options?: RenderOptions) {
+    return render(createPlay(options));
   }
 
   beforeEach(() => {
@@ -280,20 +287,99 @@ describe("IceFloorMazePlay", () => {
     });
   });
 
+  describe("駒が滑って見えている場合", () => {
+    let finishSlideAnimation: () => void;
+    let rerenderPlay: (options: RenderOptions) => void;
+
+    beforeEach(() => {
+      const slideAnimationFinished = new Promise<void>((resolve) => {
+        finishSlideAnimation = resolve;
+      });
+      Object.defineProperty(Element.prototype, "animate", {
+        configurable: true,
+        value: vi.fn(
+          () =>
+            ({
+              finished: slideAnimationFinished,
+              cancel: vi.fn(),
+            }) as unknown as Animation,
+        ),
+      });
+    });
+
+    describe("閉じ込めの外から閉じ込めへ滑り込む場合", () => {
+      const lastSlide: IceFloorMazeLastSlide = {
+        id: 1,
+        direction: "right",
+        from: 17,
+        to: 19,
+        path: [18, 19],
+        passedGoal: true,
+        isClearingMove: false,
+        entersTrap: true,
+      };
+
+      beforeEach(() => {
+        const { rerender } = renderPlay();
+        rerenderPlay = (options) => rerender(createPlay(options));
+      });
+
+      test("駒が滑り着くまで知らせず、滑り着いてから知らせること", async () => {
+        rerenderPlay({ isTrapped: true, lastSlide });
+        const noticeWhileSliding = screen.queryByText("閉じ込められた");
+        await act(async () => finishSlideAnimation());
+
+        const noticeAfterSliding = screen.queryByText("閉じ込められた");
+
+        expect(noticeWhileSliding).toBeNull();
+        expect(noticeAfterSliding).not.toBeNull();
+      });
+    });
+
+    describe("閉じ込めの中で滑る場合", () => {
+      const lastSlide: IceFloorMazeLastSlide = {
+        id: 2,
+        direction: "left",
+        from: 19,
+        to: 15,
+        path: [18, 17, 16, 15],
+        passedGoal: true,
+        isClearingMove: false,
+        entersTrap: false,
+      };
+      let notice: HTMLElement;
+
+      beforeEach(() => {
+        const { rerender } = renderPlay({ isTrapped: true });
+        rerenderPlay = (options) => rerender(createPlay(options));
+        notice = screen.getByRole("status");
+      });
+
+      test("閉じ込めの知らせを出し続けること", () => {
+        rerenderPlay({ isTrapped: true, lastSlide });
+
+        const noticeWhileSliding = screen.getByRole("status");
+
+        expect(noticeWhileSliding).toBe(notice);
+        expect(Element.prototype.animate).toHaveBeenCalled();
+      });
+    });
+  });
+
   describe("直前に滑らせた場合", () => {
-    const operation: IceFloorMazeOperation = {
+    const lastSlide: IceFloorMazeLastSlide = {
       id: 1,
-      type: "slid",
       direction: "right",
       from: 15,
       to: 17,
       path: [16, 17],
       passedGoal: false,
       isClearingMove: false,
+      entersTrap: false,
     };
 
     beforeEach(() => {
-      renderPlay({ operation });
+      renderPlay({ lastSlide });
     });
 
     test("通った跡を盤面に残すこと", () => {

@@ -1,6 +1,9 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 
-import type { IceFloorMazeOperation } from "@/games/ice-floor-maze/play/use-ice-floor-maze-play";
+import type {
+  IceFloorMazeBlockedInput,
+  IceFloorMazeLastSlide,
+} from "@/games/ice-floor-maze/play/use-ice-floor-maze-play";
 import type { IceFloorMazeBoard as IceFloorMazeBoardState } from "@/games/ice-floor-maze/puzzle/board";
 import {
   getIceFloorMazeBoardViewBox,
@@ -25,8 +28,10 @@ type IceFloorMazeBoardProps = {
   goal: number;
   /** 駒のいるマス。 */
   position: number;
-  /** 直前の滑り。跡を描き、滑りや押し戻しを動かす。 */
-  operation: IceFloorMazeOperation | null;
+  /** 直前の成立した滑り。跡を描き、滑りを動かす。 */
+  lastSlide: IceFloorMazeLastSlide | null;
+  /** 直前の成立しなかった入力。押し戻しを動かす。跡には関わらない。 */
+  blockedInput: IceFloorMazeBlockedInput | null;
   /** ゴールで止まってから完成演出を終えるまでの間だけ `true`。 */
   clearing: boolean;
   /** 駒が滑って見えている間だけ `true` を知らせる。 */
@@ -75,7 +80,8 @@ export function IceFloorMazeBoard({
   board,
   goal,
   position,
-  operation,
+  lastSlide,
+  blockedInput,
   clearing,
   onSlideAnimationActivityChange,
   onClearAnimationComplete,
@@ -90,18 +96,18 @@ export function IceFloorMazeBoard({
   const aspectRatio = viewBox.width / viewBox.height;
   const piece = getIceFloorMazeCellCenter(board, position);
   const goalCenter = getIceFloorMazeCellCenter(board, goal);
-  const slid = operation?.type === "slid" ? operation : null;
 
-  // 次の入力が来たら、表示中の滑りを止めて駒を終点（次の滑りの始点）へ飛ばしてから次の滑りを始める。
+  // 次の滑りが来たら、表示中の滑りを止めて駒を終点（次の滑りの始点）へ飛ばしてから次の滑りを始める。
+  // 成立しない向きの入力では止めず、押し戻しを重ねる。
   useLayoutEffect(() => {
-    if (operation?.type !== "slid" || prefersReducedMotion()) {
+    if (!lastSlide || prefersReducedMotion()) {
       return;
     }
 
     const animations = animateSlide(
       pieceSlideRef.current,
       trailRef.current,
-      operation,
+      lastSlide,
       board,
     );
     if (animations.length === 0) {
@@ -119,14 +125,14 @@ export function IceFloorMazeBoard({
       }
       onSlideAnimationActivityChange(false);
     };
-  }, [board, onSlideAnimationActivityChange, operation]);
+  }, [board, lastSlide, onSlideAnimationActivityChange]);
 
   useLayoutEffect(() => {
-    if (operation?.type !== "blocked") {
+    if (!blockedInput) {
       return;
     }
 
-    const vector = iceFloorMazeDirectionVectors[operation.direction];
+    const vector = iceFloorMazeDirectionVectors[blockedInput.direction];
     const unitsPerPixel = measureUnitsPerPixel(svgRef.current, viewBox.width);
     const push = BLOCKED_PUSH_PX * unitsPerPixel;
     playRejectionShake(
@@ -145,10 +151,10 @@ export function IceFloorMazeBoard({
       ],
       blockedShakeTiming,
     );
-  }, [operation, viewBox.width]);
+  }, [blockedInput, viewBox.width]);
 
   const clearingSlideDistance =
-    slid?.isClearingMove === true ? slid.path.length : 0;
+    lastSlide?.isClearingMove === true ? lastSlide.path.length : 0;
   useEffect(() => {
     if (!clearing) {
       return;
@@ -194,14 +200,14 @@ export function IceFloorMazeBoard({
         }}
       >
         <IceFloorMazeTerrain board={board} goal={goal} />
-        {slid ? (
+        {lastSlide ? (
           <IceFloorMazeTrail
-            key={slid.id}
+            key={lastSlide.id}
             ref={trailRef}
             board={board}
-            direction={slid.direction}
-            from={slid.from}
-            to={slid.to}
+            direction={lastSlide.direction}
+            from={lastSlide.from}
+            to={lastSlide.to}
           />
         ) : null}
         <g transform={`translate(${goalCenter.x} ${goalCenter.y})`}>
@@ -234,13 +240,13 @@ export function IceFloorMazeBoard({
 function animateSlide(
   piece: SVGGElement | null,
   trail: SVGRectElement | null,
-  operation: Extract<IceFloorMazeOperation, { type: "slid" }>,
+  slide: IceFloorMazeLastSlide,
   board: IceFloorMazeBoardState,
 ): Animation[] {
-  const from = getIceFloorMazeCellCenter(board, operation.from);
-  const to = getIceFloorMazeCellCenter(board, operation.to);
+  const from = getIceFloorMazeCellCenter(board, slide.from);
+  const to = getIceFloorMazeCellCenter(board, slide.to);
   const timing: KeyframeAnimationOptions = {
-    duration: getIceFloorMazeSlideDurationMs(operation.path.length),
+    duration: getIceFloorMazeSlideDurationMs(slide.path.length),
     easing: "linear",
   };
   const scaleAxis = from.y === to.y ? "scaleX" : "scaleY";

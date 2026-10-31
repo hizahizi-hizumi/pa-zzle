@@ -5,7 +5,8 @@ import { UndoButton } from "@/components/UndoButton";
 import type { IceFloorMazeDifficulty } from "@/games/ice-floor-maze/difficulty";
 import { ICE_FLOOR_MAZE_DISPLAY_NAME } from "@/games/ice-floor-maze/display-name";
 import type {
-  IceFloorMazeOperation,
+  IceFloorMazeBlockedInput,
+  IceFloorMazeLastSlide,
   IceFloorMazeResult,
 } from "@/games/ice-floor-maze/play/use-ice-floor-maze-play";
 import type { IceFloorMazeBoard as IceFloorMazeBoardState } from "@/games/ice-floor-maze/puzzle/board";
@@ -34,7 +35,8 @@ type IceFloorMazePlayProps = GamePlayScreenProps<
     position: number;
     moveCount: number;
     isTrapped: boolean;
-    operation: IceFloorMazeOperation | null;
+    lastSlide: IceFloorMazeLastSlide | null;
+    blockedInput: IceFloorMazeBlockedInput | null;
     onSlide: (direction: IceFloorMazeDirection) => void;
   };
 
@@ -56,7 +58,8 @@ export function IceFloorMazePlay({
   position,
   moveCount,
   isTrapped,
-  operation,
+  lastSlide,
+  blockedInput,
   onSlide,
   canUndo,
   onUndo,
@@ -73,8 +76,9 @@ export function IceFloorMazePlay({
   const playAreaRef = useRef<HTMLElement>(null);
   const [slideAnimating, setSlideAnimating] = useState(false);
   const playing = progress === "playing";
-  // 駒が閉じ込めの位置へ滑り着いてから知らせる。
-  const showTrappedNotice = isTrapped && !slideAnimating;
+  // 閉じ込めへ入る滑りでは、駒が滑り着いてから知らせる。閉じ込めの中での滑りでは知らせを出したままにする。
+  const showTrappedNotice =
+    isTrapped && !(slideAnimating && lastSlide?.entersTrap === true);
 
   useEffect(() => {
     if (!playing) {
@@ -150,7 +154,8 @@ export function IceFloorMazePlay({
           board={board}
           goal={goal}
           position={position}
-          operation={operation}
+          lastSlide={lastSlide}
+          blockedInput={blockedInput}
           clearing={progress === "clearing"}
           onSlideAnimationActivityChange={setSlideAnimating}
           onClearAnimationComplete={onClearAnimationComplete}

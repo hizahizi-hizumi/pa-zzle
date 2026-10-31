@@ -70,7 +70,7 @@ describe("useIceFloorMazePlay", () => {
   });
 
   test("駒を開始位置に置き、盤面・ゴール・最短手数を持って始めること", () => {
-    const { board, goal, position, optimalMoveCount, operation } =
+    const { board, goal, position, optimalMoveCount, lastSlide, blockedInput } =
       result.current;
 
     expect({ width: board.width, height: board.height }).toEqual({
@@ -80,30 +80,30 @@ describe("useIceFloorMazePlay", () => {
     expect(goal).toBe(18);
     expect(position).toBe(17);
     expect(optimalMoveCount).toBe(3);
-    expect(operation).toBeNull();
+    expect(lastSlide).toBeNull();
+    expect(blockedInput).toBeNull();
   });
 
-  test("滑らせると駒を止まった位置へ動かし、通ったマスを操作の結果として渡すこと", () => {
+  test("滑らせると駒を止まった位置へ動かし、通ったマスを直前の滑りとして渡すこと", () => {
     act(() => result.current.slide("down"));
 
     expect(result.current.position).toBe(22);
     expect(result.current.moveCount).toBe(1);
-    expect(result.current.operation).toMatchObject({
-      type: "slid",
+    expect(result.current.lastSlide).toMatchObject({
       direction: "down",
       from: 17,
       to: 22,
       path: [22],
       passedGoal: false,
       isClearingMove: false,
+      entersTrap: false,
     });
   });
 
-  test("ゴールを通り過ぎた滑りを操作の結果で知らせること", () => {
+  test("ゴールを通り過ぎた滑りを直前の滑りで知らせること", () => {
     act(() => result.current.slide("right"));
 
-    expect(result.current.operation).toMatchObject({
-      type: "slid",
+    expect(result.current.lastSlide).toMatchObject({
       to: 19,
       path: [18, 19],
       passedGoal: true,
@@ -116,20 +116,47 @@ describe("useIceFloorMazePlay", () => {
 
     expect(result.current.position).toBe(17);
     expect(result.current.moveCount).toBe(0);
-    expect(result.current.operation).toMatchObject({
-      type: "blocked",
+    expect(result.current.blockedInput).toMatchObject({
       direction: "up",
       from: 17,
     });
+    expect(result.current.lastSlide).toBeNull();
   });
 
-  test("続けて成立しない向きを選んでも、入力ごとに別の操作として渡すこと", () => {
+  test("続けて成立しない向きを選んでも、入力ごとに別の入力として渡すこと", () => {
     act(() => result.current.slide("up"));
-    const firstOperationId = result.current.operation?.id;
+    const firstInputId = result.current.blockedInput?.id;
 
     act(() => result.current.slide("up"));
 
-    expect(result.current.operation?.id).not.toBe(firstOperationId);
+    expect(result.current.blockedInput?.id).not.toBe(firstInputId);
+  });
+
+  describe("滑った後に成立しない向きを選んだ場合", () => {
+    let lastSlide: HookResult["lastSlide"];
+
+    beforeEach(() => {
+      slideInOrder(result, ["down"]);
+      lastSlide = result.current.lastSlide;
+    });
+
+    test("直前の滑りを跡の元として残し、成立しなかった向きを別に渡すこと", () => {
+      act(() => result.current.slide("down"));
+
+      expect(result.current.lastSlide).toBe(lastSlide);
+      expect(result.current.blockedInput).toMatchObject({
+        direction: "down",
+        from: 22,
+      });
+      expect(result.current.moveCount).toBe(1);
+    });
+
+    test("次に滑ると、成立しなかった入力を消すこと", () => {
+      slideInOrder(result, ["down", "right"]);
+
+      expect(result.current.blockedInput).toBeNull();
+      expect(result.current.lastSlide).toMatchObject({ from: 22, to: 23 });
+    });
   });
 
   test("同じ描画の間に続けて入力した滑りを入力の順にすべて適用すること", () => {
@@ -150,10 +177,28 @@ describe("useIceFloorMazePlay", () => {
     expect(result.current.isTrapped).toBe(false);
   });
 
-  test("閉じ込められたら知らせること", () => {
-    act(() => result.current.slide("right"));
+  describe("閉じ込めの外から閉じ込めへ滑り込んだ場合", () => {
+    beforeEach(() => {
+      slideInOrder(result, ["right"]);
+    });
 
-    expect(result.current.isTrapped).toBe(true);
+    test("閉じ込めを知らせ、閉じ込めへ入った滑りとして渡すこと", () => {
+      const { isTrapped, lastSlide } = result.current;
+
+      expect(isTrapped).toBe(true);
+      expect(lastSlide).toMatchObject({ to: 19, entersTrap: true });
+    });
+
+    test("閉じ込めの中で滑っても閉じ込めを知らせ続け、閉じ込めへ入った滑りとはしないこと", () => {
+      act(() => result.current.slide("left"));
+
+      expect(result.current.isTrapped).toBe(true);
+      expect(result.current.lastSlide).toMatchObject({
+        from: 19,
+        to: 15,
+        entersTrap: false,
+      });
+    });
   });
 
   test("待ったで直前の位置へ戻し、総手数を減らさず待ったを数えること", () => {
@@ -165,7 +210,7 @@ describe("useIceFloorMazePlay", () => {
     expect(result.current.moveCount).toBe(1);
     expect(result.current.undoCount).toBe(1);
     expect(result.current.isTrapped).toBe(false);
-    expect(result.current.operation).toBeNull();
+    expect(result.current.lastSlide).toBeNull();
   });
 
   test("盤面を戻すで駒を開始位置へ戻し、総手数を引き継いで回数を数えること", () => {
@@ -199,12 +244,12 @@ describe("useIceFloorMazePlay", () => {
       slideInOrder(result, solution);
     });
 
-    test("クリアして完成演出へ進み、クリアした手を操作の結果で知らせること", () => {
-      const { status, progress, operation } = result.current;
+    test("クリアして完成演出へ進み、クリアした手を直前の滑りで知らせること", () => {
+      const { status, progress, lastSlide } = result.current;
 
       expect(status).toBe("cleared");
       expect(progress).toBe("clearing");
-      expect(operation).toMatchObject({ type: "slid", isClearingMove: true });
+      expect(lastSlide).toMatchObject({ isClearingMove: true });
     });
 
     test("取り消した手も含む総手数と最短手数を結果に含めること", () => {
@@ -230,12 +275,13 @@ describe("useIceFloorMazePlay", () => {
     });
 
     test("それ以上の入力を受け付けないこと", () => {
-      const { operation } = result.current;
+      const { lastSlide, blockedInput } = result.current;
 
       act(() => result.current.slide("down"));
 
       expect(result.current.position).toBe(18);
-      expect(result.current.operation).toBe(operation);
+      expect(result.current.lastSlide).toBe(lastSlide);
+      expect(result.current.blockedInput).toBe(blockedInput);
     });
 
     test("完成演出を終えると結果表示へ進むこと", () => {
