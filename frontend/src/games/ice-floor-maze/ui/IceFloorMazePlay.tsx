@@ -15,16 +15,16 @@ import { IceFloorMazeHowToPlayDialog } from "@/games/ice-floor-maze/ui/IceFloorM
 import { IceFloorMazeDirectionPad } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeDirectionPad";
 import { IceFloorMazeSwipeArea } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeSwipeArea";
 import { IceFloorMazeTrappedNotice } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeTrappedNotice";
+import { IceFloorMazeResultScreen } from "@/games/ice-floor-maze/ui/result/IceFloorMazeResultScreen";
 import type {
   GamePlayScreenProps,
   RestartableGamePlayScreenProps,
   UndoableGamePlayScreenProps,
 } from "@/games/play";
 
-/** 評価と結果画面が無いので、結果に関わる props は受け取らず、クリアした後も盤面を見せる。 */
-type IceFloorMazePlayProps = Omit<
-  GamePlayScreenProps<IceFloorMazeDifficulty, IceFloorMazeResult>,
-  "difficulty" | "result" | "recordOutcomeNotice" | "onOpenRecords"
+type IceFloorMazePlayProps = GamePlayScreenProps<
+  IceFloorMazeDifficulty,
+  IceFloorMazeResult
 > &
   RestartableGamePlayScreenProps &
   UndoableGamePlayScreenProps & {
@@ -46,8 +46,11 @@ const directionByArrowKey: Readonly<Record<string, IceFloorMazeDirection>> = {
 };
 
 export function IceFloorMazePlay({
+  difficulty,
   progress,
   elapsedMs,
+  result,
+  recordOutcomeNotice,
   board,
   goal,
   position,
@@ -61,6 +64,7 @@ export function IceFloorMazePlay({
   onRestart,
   onReplay,
   onStartNewProblem,
+  onOpenRecords,
   onClearAnimationComplete,
   onChangeDifficulty,
   onBackToHome,
@@ -111,7 +115,7 @@ export function IceFloorMazePlay({
     <GamePlayFrame
       ref={playAreaRef}
       progress={progress}
-      result={null}
+      result={result}
       title={ICE_FLOOR_MAZE_DISPLAY_NAME}
       metrics={[
         { type: "count", label: "手数", count: moveCount },
@@ -127,7 +131,19 @@ export function IceFloorMazePlay({
       renderHowToPlayDialog={({ open, onClose }) => (
         <IceFloorMazeHowToPlayDialog open={open} onClose={onClose} />
       )}
-      renderResultScreen={() => null}
+      renderResultScreen={(clearedResult) => (
+        <IceFloorMazeResultScreen
+          difficulty={difficulty}
+          result={clearedResult}
+          recordOutcomeNotice={recordOutcomeNotice}
+          onReplay={onReplay}
+          onStartNewProblem={onStartNewProblem}
+          onOpenRecords={onOpenRecords}
+          onChangeDifficulty={onChangeDifficulty}
+          onBackToHome={onBackToHome}
+          onOpenDiagnostics={onOpenDiagnostics}
+        />
+      )}
     >
       <IceFloorMazeSwipeArea disabled={!playing} onSwipe={onSlide}>
         <IceFloorMazeBoard

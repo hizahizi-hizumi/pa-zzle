@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -13,10 +14,19 @@ import {
 
 import { createPlayLocationState } from "@/game-catalog/play-location-state";
 import { ICE_FLOOR_MAZE_DISPLAY_NAME } from "@/games/ice-floor-maze/display-name";
+import type { IceFloorMazeProblem } from "@/games/ice-floor-maze/problem/problem";
 import { selectIceFloorMazeProblemForDifficulty } from "@/games/ice-floor-maze/problem-selection";
+import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";
+import {
+  exploreIceFloorMazeStops,
+  listIceFloorMazeStopMoves,
+} from "@/games/ice-floor-maze/puzzle/stop-graph";
 import { createProblemId } from "@/games/problem-id";
 import * as problemSeed from "@/games/problem-seed";
+import { readPlayAttempts } from "@/records/play-attempt-storage";
+import { readPlayRecords } from "@/records/storage";
 import { IceFloorMazePlayView } from "@/views/IceFloorMazePlayView";
+import { PlayResultView } from "@/views/PlayResultView";
 
 const internalDiagnostics = vi.hoisted(() => ({ available: false }));
 
@@ -31,6 +41,7 @@ afterEach(() => {
   cleanup();
   internalDiagnostics.available = false;
   vi.restoreAllMocks();
+  window.localStorage.clear();
 });
 
 type PlayRouter = ReturnType<typeof createMemoryRouter>;
@@ -43,6 +54,11 @@ function renderAt(entry: InitialEntry): PlayRouter {
         element: <IceFloorMazePlayView />,
       },
       { path: "/puzzles/ice-floor-maze", element: <p>難易度選択画面</p> },
+      {
+        path: "/puzzles/:game/result/:recordId",
+        element: <PlayResultView />,
+      },
+      { path: "/records", element: <p>記録画面</p> },
       { path: "/", element: <p>ホーム画面</p> },
     ],
     { initialEntries: [entry] },
@@ -62,6 +78,46 @@ function readBoardShape(): string {
     .split(" ")
     .map(Number);
   return `${Math.round(viewWidth ?? 0)}×${Math.round(viewHeight ?? 0)}`;
+}
+
+const arrowKeyByDirection = {
+  up: "ArrowUp",
+  right: "ArrowRight",
+  down: "ArrowDown",
+  left: "ArrowLeft",
+} as const satisfies Record<IceFloorMazeDirection, string>;
+
+/** 開始位置からゴールで止まる最少手数の向きの並び。 */
+function findSolution({
+  board,
+  start,
+  goal,
+}: IceFloorMazeProblem): IceFloorMazeDirection[] {
+  const graph = exploreIceFloorMazeStops(board, start);
+  const directions: IceFloorMazeDirection[] = [];
+  let stop = goal;
+  while (stop !== start) {
+    const remaining = graph.moveCounts.get(stop)!;
+    const previous = graph.stops.find(
+      (candidate) =>
+        graph.moveCounts.get(candidate) === remaining - 1 &&
+        listIceFloorMazeStopMoves(graph, candidate).some(
+          (move) => move.to === stop,
+        ),
+    )!;
+    const move = listIceFloorMazeStopMoves(graph, previous).find(
+      (candidate) => candidate.to === stop,
+    )!;
+    directions.unshift(move.direction);
+    stop = previous;
+  }
+  return directions;
+}
+
+function slide(directions: readonly IceFloorMazeDirection[]): void {
+  for (const direction of directions) {
+    fireEvent.keyDown(document.body, { key: arrowKeyByDirection[direction] });
+  }
 }
 
 function openMenu(): void {
@@ -127,6 +183,8 @@ describe("IceFloorMazePlayView", () => {
   describe("内部診断を使えるビルドの場合", () => {
     beforeEach(() => {
       internalDiagnostics.available = true;
+      // 方針別の計画深さが同じ値になる問題では、計画深さの表示が複数になるので、問題を固定する。
+      vi.spyOn(problemSeed, "createProblemSeed").mockReturnValue("diagnostics");
       renderAt("/puzzles/ice-floor-maze/play/3");
       openMenu();
     });
@@ -140,6 +198,98 @@ describe("IceFloorMazePlayView", () => {
       expect(dialog.getAllByText("レベル 3")).toHaveLength(2);
       expect(dialog.getByText(/^(9×12|10×13)$/)).toBeTruthy();
       expect(dialog.getByText(/^3（/)).toBeTruthy();
+    });
+  });
+
+  describe("通常の出題を解き終えた場合", () => {
+    const seed = "ice-floor-maze-play-view";
+    const selected = selectIceFloorMazeProblemForDifficulty("1", seed);
+    const solution = findSolution(selected.problem);
+    let router: PlayRouter;
+
+    beforeEach(async () => {
+      vi.spyOn(problemSeed, "createProblemSeed").mockReturnValue(seed);
+      router = renderAt("/puzzles/ice-floor-maze/play/1");
+      slide(solution);
+      await screen.findByRole("region", { name: "プレイ結果" });
+    });
+
+    test("記録の結果画面へ移り、難易度とスコアを示すこと", () => {
+      const resultScreen = within(
+        screen.getByRole("region", { name: "プレイ結果" }),
+      );
+
+      expect(router.state.location.pathname).toMatch(
+        /^\/puzzles\/ice-floor-maze\/result\//,
+      );
+      expect(resultScreen.getByText("レベル 1")).toBeTruthy();
+      expect(resultScreen.getByRole("region", { name: "スコア" })).toBeTruthy();
+      expect(resultScreen.getByText("最短 ±0")).toBeTruthy();
+    });
+
+    test("遊んだ問題とプレイの事実と最短手数を記録へ保存すること", () => {
+      const records = readPlayRecords();
+
+      expect(records).toHaveLength(1);
+      expect(records[0]).toMatchObject({
+        gameId: "ice-floor-maze",
+        payload: {
+          difficulty: "1",
+          problemIdentity: selected.identity,
+          performance: {
+            moveCount: solution.length,
+            undoCount: 0,
+            restartCount: 0,
+            optimalMoveCount: selected.optimalMoveCount,
+          },
+        },
+      });
+    });
+
+    test("記録を確認で記録画面へ移ること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "記録を確認" }));
+
+      expect(screen.getByText("記録画面")).toBeTruthy();
+    });
+
+    describe("同じ問題を選んだ場合", () => {
+      beforeEach(() => {
+        fireEvent.click(screen.getByRole("button", { name: "同じ問題" }));
+      });
+
+      test("同じ問題IDのプレイ画面で新しいプレイを始めること", () => {
+        const problemId = readProblemId(router);
+
+        expect(router.state.location.pathname).toBe(
+          "/puzzles/ice-floor-maze/play/1",
+        );
+        expect(problemId).toBe(createProblemId(selected.identity));
+        expect(screen.getByText("手数").parentElement?.textContent).toBe(
+          "手数0",
+        );
+      });
+    });
+  });
+
+  describe("途中でプレイを離れた場合", () => {
+    beforeEach(async () => {
+      renderAt("/puzzles/ice-floor-maze/play/2");
+      slide(["up", "left", "down", "right"]);
+      fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
+      await act(async () => {
+        await Promise.resolve();
+      });
+    });
+
+    test("離れた時点までの手数を進み具合として記録すること", () => {
+      const [attempt] = readPlayAttempts();
+
+      expect(attempt).toMatchObject({
+        gameId: "ice-floor-maze",
+        start: { difficulty: "2" },
+        abandonment: { progress: { undoCount: 0, restartCount: 0 } },
+      });
+      expect(attempt?.abandonment?.progress.moveCount).toBeGreaterThan(0);
     });
   });
 

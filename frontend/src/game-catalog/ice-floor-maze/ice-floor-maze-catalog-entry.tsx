@@ -1,17 +1,46 @@
-import type { GameCatalogEntry } from "@/game-catalog/game-catalog-entry";
+import {
+  type GameCatalogEntry,
+  resolveRecordProblemPlayTarget,
+} from "@/game-catalog/game-catalog-entry";
+import { RecordedIceFloorMazeResult } from "@/game-catalog/ice-floor-maze/RecordedIceFloorMazeResult";
+import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/ice-floor-maze/assets/pictogram.svg?raw";
 import { ICE_FLOOR_MAZE_DISPLAY_NAME } from "@/games/ice-floor-maze/display-name";
+import {
+  iceFloorMazePlayRecordDefinition,
+  isIceFloorMazePlayRecord,
+  restoreIceFloorMazeRecordedResult,
+} from "@/games/ice-floor-maze/play-record";
+import { canSelectIceFloorMazeProblemById } from "@/games/ice-floor-maze/problem-selection";
+import { iceFloorMazePlayRecordDisplay } from "@/games/ice-floor-maze/ui/play-record-display";
 
-/**
- * ゲーム選択への掲載と、入口・プレイ画面の間の遷移に要る分だけのカタログ項目。
- * 記録の定義と記録の結果画面が無いので `gameCatalog` には載せず、ゲーム選択は `PuzzleSelectionView` が末尾に足す。
- */
 export const iceFloorMazeCatalogEntry = {
+  id: iceFloorMazePlayRecordDefinition.gameId,
   name: ICE_FLOOR_MAZE_DISPLAY_NAME,
   pictogramSvg,
   entryPath: "/puzzles/ice-floor-maze",
   playPath: "/puzzles/ice-floor-maze/play/:difficulty",
-} satisfies Pick<
-  GameCatalogEntry,
-  "name" | "pictogramSvg" | "entryPath" | "playPath"
->;
+  playRecordDisplay: iceFloorMazePlayRecordDisplay,
+  recordProblemPlayTarget(record) {
+    return isIceFloorMazePlayRecord(record)
+      ? resolveRecordProblemPlayTarget(
+          parseDifficultyLevel(record.payload.difficulty),
+          record.payload.problemIdentity,
+          canSelectIceFloorMazeProblemById,
+        )
+      : null;
+  },
+  attemptProblemPlayTarget({ start }) {
+    return resolveRecordProblemPlayTarget(
+      parseDifficultyLevel(start.difficulty),
+      start.problemIdentity,
+      canSelectIceFloorMazeProblemById,
+    );
+  },
+  renderRecordResult(record, context) {
+    const recorded = restoreIceFloorMazeRecordedResult(record);
+    return recorded ? (
+      <RecordedIceFloorMazeResult {...recorded} {...context} />
+    ) : null;
+  },
+} satisfies GameCatalogEntry;
