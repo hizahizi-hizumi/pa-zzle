@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-
+import type { TapHandlers } from "@/components/touch-tap";
 import {
   getReflectionCellPosition,
   type ReflectionCell as ReflectionCellState,
@@ -7,7 +7,6 @@ import {
 import { ReflectionPieceIcon } from "@/games/reflection/ui/board/ReflectionPieceIcon";
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
 import { reflectionPieceToneClassNames } from "@/games/reflection/ui/reflection-tone";
-import type { TapHandlers } from "@/games/reflection/ui/touch-tap";
 
 /**
  * 選んだピースのマスの四隅に置く鉤形の印。ピースの色（`currentColor`）で描き、マスの地や枠は変えない。
