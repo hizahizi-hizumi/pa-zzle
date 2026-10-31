@@ -45,12 +45,18 @@ import { createProblemId, type ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
-export type ParkingJamOperation = {
-  id: number;
-  type: "blocked" | "exited";
-  vehicleId: ParkingJamVehicleId;
-  direction: ParkingJamDirection;
-};
+export type ParkingJamOperation =
+  | {
+      id: number;
+      type: "selected" | "deselected";
+      vehicleId: ParkingJamVehicleId;
+    }
+  | {
+      id: number;
+      type: "blocked" | "exited";
+      vehicleId: ParkingJamVehicleId;
+      direction: ParkingJamDirection;
+    };
 
 export type ParkingJamResult = ParkingJamSessionResult & {
   speedReference: ParkingJamSpeedReference;
@@ -167,6 +173,7 @@ export function useParkingJamPlay(
   const nextOperationId = useRef(0);
 
   const selectVehicle = useCallback((vehicleId: ParkingJamVehicleId) => {
+    const operationId = nextOperationId.current++;
     setPlay((current) => {
       if (
         current.session.status !== "playing" ||
@@ -175,11 +182,15 @@ export function useParkingJamPlay(
         return current;
       }
 
+      const deselected = current.selectedVehicleId === vehicleId;
       return {
         ...current,
-        selectedVehicleId:
-          current.selectedVehicleId === vehicleId ? null : vehicleId,
-        operation: null,
+        selectedVehicleId: deselected ? null : vehicleId,
+        operation: {
+          id: operationId,
+          type: deselected ? "deselected" : "selected",
+          vehicleId,
+        },
       };
     });
   }, []);

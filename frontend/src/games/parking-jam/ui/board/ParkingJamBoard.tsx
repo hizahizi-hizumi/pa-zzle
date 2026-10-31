@@ -123,6 +123,11 @@ export function ParkingJamBoard({
     (vehicle) => vehicle.id === selectedVehicleId && remaining.has(vehicle.id),
   );
   const exitingCarRef = useRef<SVGGElement>(null);
+  // 車を選ぶ知らせは車を動かさないので、ぶつかる・出ていく動きだけを車に描く。
+  const vehicleMotion =
+    operation?.type === "blocked" || operation?.type === "exited"
+      ? operation
+      : null;
 
   useEffect(() => {
     if (!clearing) {
@@ -198,20 +203,20 @@ export function ParkingJamBoard({
       <g clipPath={paint.vehicleSpaceClipPath}>
         {board.vehicles.map((vehicle) => {
           const isRemaining = remaining.has(vehicle.id);
-          const targeted = operation?.vehicleId === vehicle.id;
-          const exiting = targeted && operation?.type === "exited";
+          const targeted = vehicleMotion?.vehicleId === vehicle.id;
+          const exiting = targeted && vehicleMotion?.type === "exited";
           if (!isRemaining && !exiting) return null;
           const selected = selectedVehicleId === vehicle.id;
           const feedbackClass =
-            targeted && operation
-              ? ` parking-jam-car--${operation.type === "exited" ? "exit" : "blocked"}-${operation.direction}`
+            targeted && vehicleMotion
+              ? ` parking-jam-car--${vehicleMotion.type === "exited" ? "exit" : "blocked"}-${vehicleMotion.direction}`
               : "";
           const exitTranslation =
-            exiting && operation
+            exiting && vehicleMotion
               ? parkingJamBoardGeometry.getVehicleExitTranslation(
                   board,
                   vehicle,
-                  operation.direction,
+                  vehicleMotion.direction,
                 )
               : null;
           const exitStyle = exitTranslation
@@ -222,7 +227,7 @@ export function ParkingJamBoard({
             : undefined;
           return (
             <g
-              key={targeted ? `${vehicle.id}-${operation?.id}` : vehicle.id}
+              key={targeted ? `${vehicle.id}-${vehicleMotion?.id}` : vehicle.id}
               ref={exiting ? exitingCarRef : undefined}
               role="button"
               tabIndex={interactionDisabled || exiting ? -1 : 0}

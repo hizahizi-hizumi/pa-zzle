@@ -148,6 +148,28 @@ describe("useParkingJamPlay", () => {
       expect(result.current.moveAttemptCount).toBe(0);
     });
 
+    test("車を選ぶと選んだことを、同じ車をもう一度選ぶと解除したことを通知すること", () => {
+      const firstMove = solution[0];
+      if (!firstMove) throw new Error("Expected a solution move");
+
+      act(() => result.current.selectVehicle(firstMove.vehicleId));
+      const selected = result.current.operation;
+
+      expect(result.current.selectedVehicleId).toBe(firstMove.vehicleId);
+      expect(selected).toMatchObject({
+        type: "selected",
+        vehicleId: firstMove.vehicleId,
+      });
+      act(() => result.current.selectVehicle(firstMove.vehicleId));
+
+      expect(result.current.selectedVehicleId).toBeNull();
+      expect(result.current.operation).toMatchObject({
+        type: "deselected",
+        vehicleId: firstMove.vehicleId,
+      });
+      expect(result.current.operation?.id).not.toBe(selected?.id);
+    });
+
     test("盤面が進んだときだけ盤面を戻せるようになること", () => {
       const firstMove = solution[0];
       if (!firstMove) throw new Error("Expected a solution move");
