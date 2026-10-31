@@ -6,6 +6,15 @@
 @layer base {
   :root {
     @apply font-sans;
+    /* スクロールの有無が変わるページ遷移で、中央寄せの内容が左右にずれないようにする。 */
+    scrollbar-gutter: stable;
+  }
+
+  /* ダイアログのスクロールロックはスクロールバー幅を body の margin で補うが、
+     ガターを常に確保しているため補う必要がない。layer 内の !important は
+     ライブラリが注入する非 layer の !important より優先される。 */
+  body[data-scroll-locked] {
+    margin-right: 0 !important;
   }
 
   body {
