@@ -106,7 +106,7 @@ function cellAt(row: number, column: number): number {
 const steps: readonly TakuzuTutorialStep[] = [
   {
     message: {
-      headline: "四角と丸で、盤面を埋めていきます",
+      headline: "1回タップすると、四角になります",
       detail: "印のマスをタップしてください",
     },
     introducedRuleId: null,

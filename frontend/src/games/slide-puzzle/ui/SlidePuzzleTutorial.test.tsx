@@ -179,13 +179,11 @@ describe("SlidePuzzleTutorial", () => {
         );
     });
 
-    test("パズルの名前と3×3の盤面を出し、何を目指すかと最初に押すタイルを示すこと", () => {
+    test("パズルの名前と3×3の盤面を出し、タイルの滑り方と最初に押すタイルを示すこと", () => {
       const title = screen.getByRole("heading", { name: "スライドパズル" });
       const tiles = within(getBoard()).getAllByRole("button");
-      const headline = screen.getByText("左上から1〜8と並べ、右下を空けます");
-      const detail = screen.getByText(
-        "空白の隣のタイルは、タップで空白へ滑ります",
-      );
+      const headline = screen.getByText("空白の隣のタイルは、空白へ滑ります");
+      const detail = screen.getByText("印のタイルをタップしてください");
       const hinted = getHintedTiles();
       const chips = getRuleChipTexts();
       const currentChips = getCurrentRuleChipTexts();
@@ -334,7 +332,7 @@ describe("SlidePuzzleTutorial", () => {
       solveAll();
       fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
 
-      const message = screen.getByText("左上から1〜8と並べ、右下を空けます");
+      const message = screen.getByText("空白の隣のタイルは、空白へ滑ります");
       const position = getTilePosition(6);
       const chips = getRuleChipTexts();
 
@@ -349,7 +347,7 @@ describe("SlidePuzzleTutorial", () => {
       rerenderTutorial(false);
       rerenderTutorial(true);
 
-      const message = screen.getByText("左上から1〜8と並べ、右下を空けます");
+      const message = screen.getByText("空白の隣のタイルは、空白へ滑ります");
 
       expect(onClose).toHaveBeenCalledOnce();
       expect(message).toBeTruthy();
@@ -392,7 +390,7 @@ describe("SlidePuzzleTutorial", () => {
     test("最後まで見せると、始めの盤面で最初の手順の一言と印を出すこと", async () => {
       await advanceTimeInSlices(introEnoughMs);
 
-      const headline = screen.getByText("左上から1〜8と並べ、右下を空けます");
+      const headline = screen.getByText("空白の隣のタイルは、空白へ滑ります");
       const positions = [getTilePosition(1), getTilePosition(6)];
       const hinted = getHintedTiles();
 
@@ -452,7 +450,7 @@ describe("SlidePuzzleTutorial", () => {
           skip();
 
           const headline = screen.getByText(
-            "左上から1〜8と並べ、右下を空けます",
+            "空白の隣のタイルは、空白へ滑ります",
           );
           const position = getTilePosition(6);
           const hinted = getHintedTiles();
@@ -495,7 +493,7 @@ describe("SlidePuzzleTutorial", () => {
     });
 
     test("導入を見せずに、始めの盤面の最初の手順から始めること", () => {
-      const headline = screen.getByText("左上から1〜8と並べ、右下を空けます");
+      const headline = screen.getByText("空白の隣のタイルは、空白へ滑ります");
       const position = getTilePosition(6);
       const hinted = getHintedTiles();
 

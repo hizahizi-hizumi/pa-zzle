@@ -81,8 +81,8 @@ const goal = createSolvedSlidePuzzleBoard(3);
 const steps: readonly SlidePuzzleTutorialStep[] = [
   {
     message: {
-      headline: "左上から1〜8と並べ、右下を空けます",
-      detail: "空白の隣のタイルは、タップで空白へ滑ります",
+      headline: "空白の隣のタイルは、空白へ滑ります",
+      detail: "印のタイルをタップしてください",
     },
     introducedRuleId: "slide",
     cellIndex: 2,

@@ -192,10 +192,10 @@ describe("TakuzuTutorial", () => {
         );
     });
 
-    test("パズルの名前と4×4の盤面を出し、何をするかと最初に押すマスを示して、ルールを伏せておくこと", () => {
+    test("パズルの名前と4×4の盤面を出し、四角の置き方と最初に押すマスを示して、ルールを伏せておくこと", () => {
       const title = screen.getByRole("heading", { name: "バイナリパズル" });
       const cells = within(getBoard()).getAllByRole("button");
-      const headline = screen.getByText("四角と丸で、盤面を埋めていきます");
+      const headline = screen.getByText("1回タップすると、四角になります");
       const detail = screen.getByText("印のマスをタップしてください");
       const hinted = getHintedCellPositions();
       const chips = getRuleChipTexts();
@@ -394,7 +394,7 @@ describe("TakuzuTutorial", () => {
       solveAll();
       fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
 
-      const message = screen.getByText("四角と丸で、盤面を埋めていきます");
+      const message = screen.getByText("1回タップすると、四角になります");
       const label = getCell(1, 1).getAttribute("aria-label");
       const chips = getRuleChipTexts();
 
@@ -409,7 +409,7 @@ describe("TakuzuTutorial", () => {
       rerenderTutorial(false);
       rerenderTutorial(true);
 
-      const message = screen.getByText("四角と丸で、盤面を埋めていきます");
+      const message = screen.getByText("1回タップすると、四角になります");
 
       expect(onClose).toHaveBeenCalledOnce();
       expect(message).toBeTruthy();
@@ -450,7 +450,7 @@ describe("TakuzuTutorial", () => {
     test("最後まで見せると、始めの盤面で最初の手順の一言と印を出すこと", async () => {
       await advanceTimeInSlices(introEnoughMs);
 
-      const headline = screen.getByText("四角と丸で、盤面を埋めていきます");
+      const headline = screen.getByText("1回タップすると、四角になります");
       const labels = [getCellLabel(1, 1), getCellLabel(1, 2)];
       const hinted = getHintedCellPositions();
       const chips = getRuleChipTexts();
@@ -511,7 +511,7 @@ describe("TakuzuTutorial", () => {
         (_, skip) => {
           skip();
 
-          const headline = screen.getByText("四角と丸で、盤面を埋めていきます");
+          const headline = screen.getByText("1回タップすると、四角になります");
           const label = getCellLabel(1, 1);
           const hinted = getHintedCellPositions();
 
@@ -553,7 +553,7 @@ describe("TakuzuTutorial", () => {
     });
 
     test("導入を見せずに、始めの盤面の最初の手順から始めること", () => {
-      const headline = screen.getByText("四角と丸で、盤面を埋めていきます");
+      const headline = screen.getByText("1回タップすると、四角になります");
       const label = getCellLabel(1, 1);
       const hinted = getHintedCellPositions();
 
