@@ -67,6 +67,37 @@ function tapCell(cell: number): void {
   fireEvent.click(listCells()[cell] as HTMLElement);
 }
 
+/** 盤面を一辺 `boardWidth` px の正方形として置き、マスの中心の座標を返す。 */
+const boardWidth = 300;
+
+function getCellCenter(size: number, cell: number) {
+  const cellWidth = boardWidth / size;
+  return {
+    clientX: ((cell % size) + 0.5) * cellWidth,
+    clientY: (Math.floor(cell / size) + 0.5) * cellWidth,
+  };
+}
+
+/** `cells` の先頭のマスを指で押し、残りのマスを順になぞって離す。 */
+function dragThrough(size: number, [pressed, ...cells]: readonly number[]) {
+  const surface = screen.getByRole("group", { name: "ハミルトン路盤面" });
+  const touch = { pointerId: 1, pointerType: "touch", isPrimary: true };
+  fireEvent.pointerDown(surface, {
+    ...touch,
+    ...getCellCenter(size, pressed!),
+  });
+  for (const cell of cells) {
+    fireEvent.pointerMove(surface, { ...touch, ...getCellCenter(size, cell) });
+  }
+  fireEvent.pointerUp(surface, touch);
+}
+
+function getHeadCell(): number {
+  return listCells().findIndex((cell) =>
+    cell.getAttribute("aria-label")?.includes("先端"),
+  );
+}
+
 describe("HamiltonianPathPlayView", () => {
   describe("定義済みの難易度の場合", () => {
     const { problem, identity } = selectHamiltonianPathProblemForDifficulty(
@@ -115,6 +146,29 @@ describe("HamiltonianPathPlayView", () => {
         expect(
           listCells()[problem.start]?.getAttribute("aria-label"),
         ).toContain("先端");
+      });
+    });
+
+    describe("盤面を指でなぞった場合", () => {
+      beforeEach(() => {
+        vi.spyOn(
+          screen.getByRole("group", { name: "ハミルトン路盤面" }),
+          "getBoundingClientRect",
+        ).mockReturnValue(new DOMRect(0, 0, boardWidth, boardWidth));
+        dragThrough(problem.size, solution.slice(0, 5));
+      });
+
+      test("指の通ったマスへ道を延ばすこと", () => {
+        const head = getHeadCell();
+
+        expect(head).toBe(solution[4]);
+      });
+
+      test("待った1回で、なぞる前の道へ戻すこと", () => {
+        fireEvent.click(screen.getByRole("button", { name: "待った" }));
+        const head = getHeadCell();
+
+        expect(head).toBe(problem.start);
       });
     });
 

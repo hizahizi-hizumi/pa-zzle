@@ -1,59 +1,178 @@
+import {
+  type PointerEvent as ReactPointerEvent,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+} from "react";
+
 import { HAMILTONIAN_PATH_DISPLAY_NAME } from "@/games/hamiltonian-path/display-name";
+import type { HamiltonianPathBlockedMove } from "@/games/hamiltonian-path/play/use-hamiltonian-path-play";
 import {
   type HamiltonianPathBoard as HamiltonianPathBoardState,
   listHamiltonianPathCells,
 } from "@/games/hamiltonian-path/puzzle/board";
-import { HamiltonianPathBoardFigure } from "@/games/hamiltonian-path/ui/board/HamiltonianPathBoard/HamiltonianPathBoardFigure";
+import type { HamiltonianPathTraceStep } from "@/games/hamiltonian-path/puzzle/transitions";
+import {
+  type BoardPoint,
+  findCellAt,
+  listFingerSteps,
+} from "@/games/hamiltonian-path/ui/board/finger-trace";
+import { animateBlockedMove } from "@/games/hamiltonian-path/ui/board/HamiltonianPathBoard/animate-blocked-move";
 import {
   HamiltonianPathCell,
   type HamiltonianPathCellState,
 } from "@/games/hamiltonian-path/ui/board/HamiltonianPathBoard/HamiltonianPathCell";
+import { playClearTrace } from "@/games/hamiltonian-path/ui/board/HamiltonianPathBoard/play-clear-trace";
+import { HamiltonianPathFigure } from "@/games/hamiltonian-path/ui/board/HamiltonianPathFigure";
 
 type HamiltonianPathBoardProps = {
   board: HamiltonianPathBoardState;
   /** 始点から先端までに通ったマスの番号。 */
   path: readonly number[];
+  isDeadEnd: boolean;
+  blockedMove: HamiltonianPathBlockedMove | null;
+  /** 道が全マスを通り終えたか。 */
+  solved: boolean;
+  /** クリアしてから演出を終えるまで `true`。 */
+  clearing: boolean;
   interactionDisabled: boolean;
-  onExtendPath: (cell: number) => void;
-  onRewindPath: (cell: number) => void;
+  onBeginStroke: (cell: number) => void;
+  onTraceStroke: (step: HamiltonianPathTraceStep) => void;
+  onEndStroke: () => void;
+  onClearAnimationComplete: () => void;
+};
+
+type FingerDrag = {
+  pointerId: number;
+  point: BoardPoint;
+  /** 指が今いるとみなすマス。 */
+  cell: number;
 };
 
 /**
- * 盤面。マスを押すと、道の途中のマス（始点を含む）ならそこまで巻き戻し、それ以外は先端からそのマスへ延ばす。
- * 延ばせないマス（離れたマス・壁・仕切りの向こう・先端そのもの）を押しても道は変わらない。
+ * 盤面。指・マウスでなぞると道が延び、直前のマスへ戻ると縮む。マスを押すと、道のマスならそこまで巻き戻し、
+ * 先端の隣のマスなら延ばして、そのままなぞり続けられる。押してから離すまでが待ったの1単位になる。
+ * 盤面は Pointer Events だけで受け、ページのスクロールや長押しのメニューに指を奪わせない。
+ * マスのボタンはキーボードと支援技術から押す受け口で、ポインターの押下は受けない。
  */
 export function HamiltonianPathBoard({
   board,
   path,
+  isDeadEnd,
+  blockedMove,
+  solved,
+  clearing,
   interactionDisabled,
-  onExtendPath,
-  onRewindPath,
+  onBeginStroke,
+  onTraceStroke,
+  onEndStroke,
+  onClearAnimationComplete,
 }: HamiltonianPathBoardProps) {
   const { size } = board;
+  const figureRef = useRef<SVGSVGElement>(null);
+  const dragRef = useRef<FingerDrag | null>(null);
   const walls = new Set(board.walls);
   const visited = new Set(path);
   const head = path.at(-1);
+  const pathLength = path.length;
+
+  useLayoutEffect(() => {
+    if (blockedMove !== null) {
+      animateBlockedMove(figureRef.current, size, blockedMove);
+    }
+  }, [blockedMove, size]);
+
+  useEffect(() => {
+    if (!clearing) {
+      return;
+    }
+    return playClearTrace(
+      figureRef.current,
+      pathLength,
+      onClearAnimationComplete,
+    );
+  }, [clearing, onClearAnimationComplete, pathLength]);
 
   function getCellState(cell: number): HamiltonianPathCellState {
     if (walls.has(cell)) return "wall";
     return visited.has(cell) ? "visited" : "unvisited";
   }
 
-  function selectCell(cell: number): void {
-    if (visited.has(cell) && cell !== head) {
-      onRewindPath(cell);
-    } else {
-      onExtendPath(cell);
+  function toBoardPoint(event: ReactPointerEvent<HTMLElement>): BoardPoint {
+    const rect = event.currentTarget.getBoundingClientRect();
+    return {
+      x: ((event.clientX - rect.left) / rect.width) * size,
+      y: ((event.clientY - rect.top) / rect.height) * size,
+    };
+  }
+
+  function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    const isMainButton = event.pointerType !== "mouse" || event.button === 0;
+    if (
+      interactionDisabled ||
+      !event.isPrimary ||
+      !isMainButton ||
+      dragRef.current
+    ) {
+      return;
     }
+    const point = toBoardPoint(event);
+    const cell = findCellAt(size, point);
+    if (cell === null) {
+      return;
+    }
+    // 押したマスのボタンへ focus を移さず、マウスの選択やドラッグも始めない。
+    event.preventDefault();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    dragRef.current = { pointerId: event.pointerId, point, cell };
+    onBeginStroke(cell);
+  }
+
+  function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    const drag = dragRef.current;
+    if (drag === null || drag.pointerId !== event.pointerId) {
+      return;
+    }
+    const point = toBoardPoint(event);
+    const { steps, cell } = listFingerSteps(size, drag.point, point, drag.cell);
+    dragRef.current = { ...drag, point, cell };
+    for (const step of steps) {
+      onTraceStroke(step);
+    }
+  }
+
+  function handlePointerEnd(event: ReactPointerEvent<HTMLDivElement>) {
+    if (dragRef.current?.pointerId !== event.pointerId) {
+      return;
+    }
+    dragRef.current = null;
+    onEndStroke();
+  }
+
+  function pressCell(cell: number) {
+    onBeginStroke(cell);
+    onEndStroke();
   }
 
   return (
     <div
       role="group"
       aria-label={`${HAMILTONIAN_PATH_DISPLAY_NAME}盤面`}
-      className="relative size-full"
+      className="relative size-full touch-none select-none [-webkit-touch-callout:none]"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerEnd}
+      onPointerCancel={handlePointerEnd}
+      onLostPointerCapture={handlePointerEnd}
+      onContextMenu={(event) => event.preventDefault()}
     >
-      <HamiltonianPathBoardFigure board={board} path={path} />
+      <HamiltonianPathFigure
+        ref={figureRef}
+        board={board}
+        path={path}
+        isDeadEnd={isDeadEnd}
+        solved={solved}
+      />
       <div
         className="relative grid size-full"
         style={{
@@ -69,8 +188,9 @@ export function HamiltonianPathBoard({
             state={getCellState(cell)}
             isStart={cell === board.start}
             isHead={cell === head}
+            isDeadEnd={cell === head && isDeadEnd}
             disabled={interactionDisabled}
-            onSelect={selectCell}
+            onPress={pressCell}
           />
         ))}
       </div>
