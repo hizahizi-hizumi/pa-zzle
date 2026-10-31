@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 
 import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
+import { ICE_FLOOR_MAZE_DISPLAY_NAME } from "@/games/ice-floor-maze/display-name";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import { TSUME_SHOGI_DISPLAY_NAME } from "@/games/tsume-shogi/display-name";
 import { PuzzleSelectionView } from "@/views/PuzzleSelectionView";
@@ -24,6 +25,7 @@ describe("PuzzleSelectionView", () => {
     [REFLECTION_DISPLAY_NAME, "/puzzles/reflection"],
     [HITOFUDE_PUZZLE_DISPLAY_NAME, "/puzzles/hitofude-puzzle"],
     [TSUME_SHOGI_DISPLAY_NAME, "/puzzles/tsume-shogi"],
+    [ICE_FLOOR_MAZE_DISPLAY_NAME, "/puzzles/ice-floor-maze"],
   ] as const;
 
   beforeEach(() => {

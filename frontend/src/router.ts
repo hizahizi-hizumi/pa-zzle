@@ -9,6 +9,7 @@ export type Path =
   | `/puzzles/:game/zukan`
   | `/puzzles/hitofude-puzzle`
   | `/puzzles/hitofude-puzzle/play/:difficulty`
+  | `/puzzles/ice-floor-maze`
   | `/puzzles/ice-floor-maze/play/:difficulty`
   | `/puzzles/minesweeper`
   | `/puzzles/minesweeper/play/:difficulty`
