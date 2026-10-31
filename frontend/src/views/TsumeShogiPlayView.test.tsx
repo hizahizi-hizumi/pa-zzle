@@ -39,6 +39,13 @@ function renderAt(path: string): void {
   );
 }
 
+function openMenu(): void {
+  fireEvent.pointerDown(screen.getByRole("button", { name: "その他の操作" }), {
+    button: 0,
+    ctrlKey: false,
+  });
+}
+
 function getBoard(): HTMLElement {
   return screen.getByRole("group", { name: "盤" });
 }
@@ -66,6 +73,12 @@ describe("TsumeShogiPlayView", () => {
   describe("定義済みの難易度の場合", () => {
     beforeEach(() => {
       renderAt("/puzzles/tsume-shogi/play/1");
+    });
+
+    test("遊び方を自動では開かないこと", () => {
+      const dialog = screen.queryByRole("dialog");
+
+      expect(dialog).toBeNull();
     });
 
     test("9×9の盤を表示すること", () => {
@@ -152,6 +165,25 @@ describe("TsumeShogiPlayView", () => {
 
         expect(document.activeElement).toBe(playedSquare);
         expect(playedSquare.getAttribute("aria-disabled")).toBe("true");
+      });
+    });
+
+    describe("駒を選んでから遊び方を開いた場合", () => {
+      beforeEach(() => {
+        tapSquare(/^4三 攻方の龍$/);
+        openMenu();
+        fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+      });
+
+      test("遊び方を閉じる Escape で駒の選択を解除しないこと", () => {
+        fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+
+        const dragon = within(getBoard()).getByRole("button", {
+          name: "4三 攻方の龍",
+        });
+
+        expect(screen.queryByRole("dialog")).toBeNull();
+        expect(dragon.getAttribute("aria-pressed")).toBe("true");
       });
     });
 

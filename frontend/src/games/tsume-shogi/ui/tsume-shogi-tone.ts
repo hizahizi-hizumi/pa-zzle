@@ -25,6 +25,9 @@ export const tsumeShogiToneClassNames = {
   boardStar: "bg-[#2a1b10]",
   /** 筋・段は盤の木の縁に墨で書く。 */
   coordinate: "text-[#4a3220]",
+  /** 遊び方の駒の動きの図の、罫線と、動ける先の印。 */
+  figureLine: "stroke-[#2a1b10]/55",
+  figureMark: "fill-[#2a1b10] stroke-[#2a1b10]",
   /** プレイ領域の地。座卓の面のような低彩度の色で、ライトとダークで明度だけ変える。盤が白い地から切り抜かれて見えないようにする。 */
   tableSurface: "bg-[#ddd6cb] dark:bg-[#2b2723]",
   /** 駒台の天面の、木目の画像の平均の色。 */
