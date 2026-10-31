@@ -20,6 +20,7 @@ ARTIFACT_PREFIX: Final = "offline-dependencies-"
 INPUT_PATHS: Final = (
     ".github/actions/offline-dependencies/inputs.env",
     ".bun-version",
+    ".node-version",
     "frontend/bun.lock",
 )
 MAX_ACTIVE_KEYS: Final = 3
