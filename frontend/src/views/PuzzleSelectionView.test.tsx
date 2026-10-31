@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 
+import { ICE_FLOOR_MAZE_DISPLAY_NAME } from "@/games/ice-floor-maze/display-name";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import { PuzzleSelectionView } from "@/views/PuzzleSelectionView";
 
@@ -20,6 +21,7 @@ describe("PuzzleSelectionView", () => {
     ["スライドパズル", "/puzzles/slide-puzzle"],
     ["バイナリパズル", "/puzzles/takuzu"],
     [REFLECTION_DISPLAY_NAME, "/puzzles/reflection"],
+    [ICE_FLOOR_MAZE_DISPLAY_NAME, "/puzzles/ice-floor-maze"],
   ] as const;
 
   beforeEach(() => {
