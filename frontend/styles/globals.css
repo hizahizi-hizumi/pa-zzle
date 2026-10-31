@@ -4,7 +4,11 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-ui: "Zen Kaku Gothic New", ui-sans-serif, system-ui, sans-serif;
+  /* 先頭はビルド時に使用文字だけを切り出したもの（vite.config.ts の uiFontSubsetFamily）。
+     収録されない文字は Fontsource の Zen Kaku Gothic New が受け持つ。 */
+  --font-ui:
+    "Zen Kaku Gothic New Subset", "Zen Kaku Gothic New", ui-sans-serif,
+    system-ui, sans-serif;
   --spacing: 0.25rem;
   --border-width-normal: 1px;
   --border-width-strong: 2px;

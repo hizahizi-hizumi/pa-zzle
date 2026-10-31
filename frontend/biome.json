@@ -5,6 +5,7 @@
       "**",
       "!node_modules",
       "!dist",
+      "!generated",
       "!src/router.ts",
       "!src/components/ui",
       "!src/games/minesweeper/problem/problem-pool.json",
