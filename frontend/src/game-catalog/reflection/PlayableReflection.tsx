@@ -80,6 +80,7 @@ export function PlayableReflection({
         stock={play.stock}
         selection={play.selection}
         laser={play.laser}
+        operation={play.operation}
         canRestart={play.canRestart}
         onSelectCell={play.selectCell}
         onSelectStockPiece={play.selectStockPiece}

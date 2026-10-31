@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import {
   applyPlaySession,
@@ -60,6 +60,26 @@ export type ReflectionLaserView = {
   trace: ReflectionLaserTrace;
 };
 
+/**
+ * 盤面・選択・光路の表示を変えた操作の知らせ。盤面を戻す・リセット・光路を閉じる操作では知らせない。
+ * - `piece-placed`: 手持ちのピースを盤面へ置いた。
+ * - `piece-moved`: 盤面のピースを別のマスへ移した・入れ替えた・別の種類で置き換えた。
+ * - `piece-returned`: 盤面のピースを手持ちへ戻した。
+ * - `selected`・`deselected`: ストックの種類か盤面のピースを選んだ・選択を解いた。
+ * - `laser-shown`: 外周ヒントを押して光路を表示した。
+ */
+export type ReflectionOperation =
+  | {
+      id: number;
+      type:
+        | "piece-placed"
+        | "piece-moved"
+        | "piece-returned"
+        | "selected"
+        | "deselected";
+    }
+  | { id: number; type: "laser-shown"; entry: ReflectionEntry };
+
 /** クリアしたプレイの事実と、それを遊んだ問題の作業の量から導いた評価。 */
 export type ReflectionResult = ReflectionSessionResult & {
   workload: ReflectionSolveWorkload;
@@ -82,6 +102,7 @@ export type ReflectionPlay = GamePlay<
     stock: ReflectionInventory;
     selection: ReflectionSelection | null;
     laser: ReflectionLaserView | null;
+    operation: ReflectionOperation | null;
     selectStockPiece: (piece: ReflectionPiece) => void;
     selectCell: (cellIndex: number) => void;
     selectClue: (entry: ReflectionEntry) => void;
@@ -95,6 +116,7 @@ type ReflectionPlayState = {
   problemIdentity: ReflectionProblemIdentity;
   poolReference: ReflectionProblemPoolReference;
   workload: ReflectionSolveWorkload;
+  operation: ReflectionOperation | null;
 };
 
 function createPlayState(
@@ -107,7 +129,35 @@ function createPlayState(
     problemIdentity: identity,
     poolReference,
     workload,
+    operation: null,
   };
+}
+
+function countPlacedPieces(board: ReflectionBoard): number {
+  return board.cells.filter((cell) => cell !== null).length;
+}
+
+/** 操作の前後の session から、何が変わった操作かを知らせる。光路を閉じただけなら知らせない。 */
+function createOperation(
+  id: number,
+  previous: ReflectionSession,
+  next: ReflectionSession,
+): ReflectionOperation | null {
+  if (next.puzzleState !== previous.puzzleState) {
+    const placedDifference =
+      countPlacedPieces(next.puzzleState) -
+      countPlacedPieces(previous.puzzleState);
+    if (placedDifference > 0) return { id, type: "piece-placed" };
+    if (placedDifference < 0) return { id, type: "piece-returned" };
+    return { id, type: "piece-moved" };
+  }
+  if (next.laserEntry && next.laserCheckCount > previous.laserCheckCount) {
+    return { id, type: "laser-shown", entry: next.laserEntry };
+  }
+  if (next.selection !== previous.selection) {
+    return { id, type: next.selection ? "selected" : "deselected" };
+  }
+  return null;
 }
 
 function selectProblem(
@@ -157,10 +207,24 @@ export function useReflectionPlay(
   );
   const { session, progress, problemIdentity, workload } = play;
   const elapsedMs = useSessionElapsedMs(session);
+  const nextOperationId = useRef(0);
 
   const updateSession = useCallback(
     (update: (current: ReflectionSession) => ReflectionSession) => {
-      setPlay((current) => applyPlaySession(current, update(current.session)));
+      const operationId = nextOperationId.current++;
+      setPlay((current) => {
+        const next = applyPlaySession(current, update(current.session));
+        return next === current
+          ? current
+          : {
+              ...next,
+              operation: createOperation(
+                operationId,
+                current.session,
+                next.session,
+              ),
+            };
+      });
     },
     [],
   );
@@ -207,17 +271,24 @@ export function useReflectionPlay(
   }, [updateSession]);
 
   const restart = useCallback(() => {
-    updateSession(restartReflectionSession);
-  }, [updateSession]);
+    setPlay((current) => {
+      const next = applyPlaySession(
+        current,
+        restartReflectionSession(current.session),
+      );
+      return next === current ? current : { ...next, operation: null };
+    });
+  }, []);
 
   const replay = useCallback(() => {
     const startedAt = Date.now();
-    setPlay((current) =>
-      startPlaySession(
+    setPlay((current) => ({
+      ...startPlaySession(
         current,
         createReflectionSession(current.session.problem, startedAt),
       ),
-    );
+      operation: null,
+    }));
   }, []);
 
   const completeClearAnimation = useCallback(() => {
@@ -264,6 +335,7 @@ export function useReflectionPlay(
     stock,
     selection: session.selection,
     laser,
+    operation: play.operation,
     canRestart: canRestartReflectionSession(session),
     selectStockPiece,
     selectCell,
