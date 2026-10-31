@@ -19,12 +19,9 @@ jobs:
         with:
           persist-credentials: false
       - run: gh extension install github/gh-actions-lock --pin v0.4.0
-      - run: >-
+      - run: |
+          git rm -q .github/workflows/tmp-generate-actions-lock.yml
           gh actions-lock --migrate-local-actions
-          .github/workflows/quality-gate.yml
-          .github/workflows/repository-snapshot.yml
-          .github/workflows/shadcn-fetch.yml
-          .github/workflows/verify-actions-lock.yml
       - run: |
           git add -A
           git status --short
