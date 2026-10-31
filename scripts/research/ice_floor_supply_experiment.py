@@ -399,9 +399,34 @@ def transform(board: Board, start: int, goal: int, which: int) -> tuple[str, int
     return "".join(cells), map_index(start), map_index(goal)
 
 
+def transform_rectangle(board: Board, start: int, goal: int, which: int) -> tuple[str, int, int]:
+    """長方形の盤面で形を保つ4種類（恒等・左右反転・上下反転・180度回転）。
+    which の1ビット目が左右反転、2ビット目が上下反転。90度回転は縦横が入れ替わるので含めない。"""
+    width, height = board.width, board.height
+    mirror_tile = {">": "<", "<": ">"}
+    flip_tile = {"^": "v", "v": "^"}
+
+    def map_index(index: int) -> int:
+        x, y = index % width, index // width
+        if which & 1:
+            x = width - 1 - x
+        if which & 2:
+            y = height - 1 - y
+        return y * width + x
+
+    cells = [ICE] * (width * height)
+    for index, tile in enumerate(board.cells):
+        if which & 1:
+            tile = mirror_tile.get(tile, tile)
+        if which & 2:
+            tile = flip_tile.get(tile, tile)
+        cells[map_index(index)] = tile
+    return "".join(cells), map_index(start), map_index(goal)
+
+
 def canonical_key(board: Board, start: int, goal: int) -> tuple[str, int, int]:
     if board.width != board.height:
-        return board.cells, start, goal
+        return min(transform_rectangle(board, start, goal, which) for which in range(4))
     return min(transform(board, start, goal, which) for which in range(8))
 
 
