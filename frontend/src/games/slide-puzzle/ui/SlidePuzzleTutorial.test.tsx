@@ -276,6 +276,23 @@ describe("SlidePuzzleTutorial", () => {
       expect(getHintedTiles()).toEqual(["6"]);
     });
 
+    test("動かないタイルを押した後に印の無い動くタイルを押すと、違反の一言を下げて手順の一言に戻し、印を付け直すこと", () => {
+      tapTile(5);
+      const hintCueBefore = getTile(6).querySelector('[data-tile-cue="hint"]');
+      tapTile(4);
+
+      const headline = screen.getByText(firstHeadline);
+      const violation = screen.queryByText(
+        "このタイルは、空白の隣にありません",
+      );
+      const hintCueAfter = getTile(6).querySelector('[data-tile-cue="hint"]');
+
+      expect(headline).toBeTruthy();
+      expect(violation).toBeNull();
+      expect(getHintedTiles()).toEqual(["6"]);
+      expect(hintCueAfter).not.toBe(hintCueBefore);
+    });
+
     describe("まとめて滑ることを示す手順に進んだ場合", () => {
       beforeEach(() => {
         finishSteps(1);
@@ -339,16 +356,18 @@ describe("SlidePuzzleTutorial", () => {
         expect(message).toBeTruthy();
       });
 
-      test("動かないタイルを押すと、空白と同じ行・列のタイルが滑ることを伝えること", () => {
+      test("動かないタイルを押すと、空白と同じ行・列のタイルが滑ることを伝え、手が止まるのを待たずに空白に入るタイルに印を付けること", () => {
         tapTile(8);
 
         const headline = screen.getByText("空白の行にも列にもないタイルです");
         const detail = screen.getByText(
           "空白と同じ行・列のタイルがスライドします",
         );
+        const hinted = getHintedTiles();
 
         expect(headline).toBeTruthy();
         expect(detail).toBeTruthy();
+        expect(hinted).toEqual(["1"]);
       });
     });
 

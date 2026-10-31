@@ -25,6 +25,7 @@ import { SlidePuzzleBoard } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard
 import { SlidePuzzleTutorialScramble } from "@/games/slide-puzzle/ui/SlidePuzzleTutorial/SlidePuzzleTutorialScramble";
 import {
   completeTutorial,
+  dismissTutorialViolation,
   finishTutorialIntro,
   getTutorialMessage,
   getTutorialSituation,
@@ -56,7 +57,7 @@ const goalBoardState = slidePuzzleTutorial.goal();
 /**
  * 印を付けるまでの間。0 ならすぐ付け、`null` なら付けない。
  * ルールを示す手順では、滑らせた直後だけ待ってから付ける。
- * 自分で読ませる手順と手を離した後は、手が止まったときだけ付ける。
+ * 自分で読ませる手順と手を離した後は、手が止まったときだけ付ける。手を引いている間に印のタイル以外を押したときは、押した側ですぐ付ける。
  */
 function getCueDelayMs(
   progress: SlidePuzzleTutorialProgress,
@@ -130,7 +131,7 @@ export function SlidePuzzleTutorial({
   );
   const [idleProgress, setIdleProgress] =
     useState<SlidePuzzleTutorialProgress | null>(null);
-  // 手を引いている間に印の無いタイルを押されたら、印を付け直す。自分で読ませる手順では、そこで初めて印を付ける。
+  // 手を引いている間に印の無いタイルや動かないタイルを押されたら、印を付け直す。自分で読ませる手順では、そこで初めて印を付ける。
   const [hintCueId, setHintCueId] = useState(0);
   const situation = getTutorialSituation(slidePuzzleTutorial, progress);
   const guiding = situation.step !== null;
@@ -168,18 +169,22 @@ export function SlidePuzzleTutorial({
   }
 
   function handleSlideTile(cellIndex: number): void {
-    const next = performTutorialAction(slidePuzzleTutorial, progress, {
+    const performed = performTutorialAction(slidePuzzleTutorial, progress, {
       type: "tap",
       cellIndex,
     });
-    if (next === progress) {
-      if (guiding) {
-        setHintCueId((id) => id + 1);
-        setIdleProgress(progress);
-      }
-      return;
+    const ignored = performed === progress;
+    // 受け付けなかった手では、前の手の違反の一言を下げて、今の手順の一言に戻す。
+    const next = ignored ? dismissTutorialViolation(performed) : performed;
+    // 手を引いている間に、印の無いタイルや動かないタイルを押されたら、すぐ印を付け直す。
+    // 自分で読ませる手順でも、そこで印を付け、また手が止まるまで待たせない。
+    if (guiding && (ignored || next.violated)) {
+      setHintCueId((id) => id + 1);
+      setIdleProgress(next);
     }
-    setProgress(next);
+    if (next !== progress) {
+      setProgress(next);
+    }
   }
 
   function restart(): void {
