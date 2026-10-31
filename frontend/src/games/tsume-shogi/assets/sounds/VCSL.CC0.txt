@@ -16,15 +16,24 @@ Idiophones/Struck Idiophones/Slapstick/（スラップスティック。堅木�
   slapstick_quiet_rr1.wav
   slapstick_quiet_rr2.wav
   slapstick_rr1.wav
+  slapstick_rr3.wav
 Idiophones/Struck Idiophones/Cajon/（カホン。木の箱の胴）
+  Cajon_hit1_fff_rr1.wav
   Cajon_hit2_f_rr1.wav
   Cajon_hit2_f_rr2.wav
   Cajon_hit3_mp_rr1.wav
+Idiophones/Struck Idiophones/Slit Drum/（スリットドラム。くり抜いた木）
+  LogDrumHi_MedM_v1_rr1_Sum.wav
+  LogDrumHi_MedM_v2_rr1_Sum.wav
+  LogDrumHi_MedM_v3_rr1_Sum.wav
+  LogDrumLo_MedM_v1_rr1_Sum.wav
+  LogDrumLo_MedM_v2_rr1_Sum.wav
+  LogDrumLo_MedM_v3_rr1_Sum.wav
 
 ■ 加工
 
 録音の取り出し方と加工は scripts/assets/tsume_shogi_sounds.py にある。乱数は使わず、同じ版の numpy・scipy・ffmpeg なら
-同じ音を書き出す。発振器や雑音で音を足さず、どの音も録音の切り出し・重ね・フィルタだけで作る。
+同じ音を書き出す。発振器や雑音で音を足さず、どの音も録音の切り出し・重ね・畳み込み・フィルタ・速さの変更だけで作る。
 以下、フィルタは特記のない限り 2 次のバターワース、棚は RBJ の式（S=0.8）、山・谷は RBJ のピーキング、
 「切る」は先頭から指定の長さで切り、最後の指定の長さを cos² で閉じること。
 
@@ -50,7 +59,25 @@ Idiophones/Struck Idiophones/Cajon/（カホン。木の箱の胴）
    piece-moved（ラウドネスを合わせる前）に、Cajon_hit2_f_rr1 に 500Hz の低域通過を 2 回掛けたカホンの低い鳴りを、
    -2dB で 2ms 遅らせて重ねる。
 
-5. 仕上げ（すべての音）
+5. 盤の響き（畳み込み）
+   打音とくり抜いた木・カホンの録音を畳み込んでピークを 1 にし、指定の周波数の高域通過と低域通過をそれぞれ 2 回、
+   300Hz の低域の棚（指定の大きさ）、420Hz の山（+2dB・Q 0.9）、2.5kHz の谷（-3dB・Q 0.8）を掛ける。
+   ポリフェーズの再標本化で指定の速さで鳴らした音にし（速さは分母 200 までの分数に丸める）、立ち上がりを指定の長さの sin² で丸める。
+
+                     打音                  木の録音（切る長さ／閉じる長さ）          通過域          速さ  立ち上がり  低域の棚
+   cleared-strike の下  slapstick_quiet_rr2  Cajon_hit2_f_rr2（400／150ms）             170Hz〜2.2kHz   1.00  2ms         +3dB
+   cleared-wave-1       slapstick_quiet_rr2  LogDrumHi_MedM_v1_rr1_Sum（500／150ms）    170Hz〜1.8kHz   1.00  7ms         +2dB
+   cleared-wave-2       slapstick_quiet_rr1  LogDrumHi_MedM_v2_rr1_Sum（500／150ms）    170Hz〜1.7kHz   1.02  7ms         +2dB
+   cleared-wave-3       slapstick_quiet_rr2  LogDrumLo_MedM_v2_rr1_Sum（500／150ms）    170Hz〜1.6kHz   1.04  7ms         +2dB
+   cleared-wave-4       slapstick_quiet_rr1  LogDrumHi_MedM_v3_rr1_Sum（500／150ms）    170Hz〜1.5kHz   1.06  7ms         +2dB
+   cleared-wave-5       slapstick_quiet_rr2  LogDrumLo_MedM_v3_rr1_Sum（500／150ms）    170Hz〜1.4kHz   1.08  7ms         +2dB
+   cleared-resonance    slapstick_quiet_rr1  LogDrumLo_MedM_v1_rr1_Sum（800／300ms）    150Hz〜1.1kHz   0.97  12ms        +3dB
+
+6. cleared-strike
+   slapstick_rr3 に、Cajon_hit1_fff_rr1 に 1.2kHz の低域通過と 100Hz の高域通過を掛けたものを -12dB で 0.4ms 遅らせて重ね、
+   200Hz の低域の棚 +1.5dB を掛ける。その下に、5. の cleared-strike の下の盤の響きを -16dB で 1ms 遅らせて重ねる。
+
+7. 仕上げ（すべての音）
    末尾に 30ms の無音を足し、400ms 窓の最大ラウドネス（ITU-R BS.1770 の K 特性、前後に 400ms の無音を足して測る）を目標に合わせる。
    2ms の RMS の包絡がピークから指定の大きさだけ下がった点に、閉じる長さを足したところで切り、cos² で閉じる。
    ピークから -50dB を超える最初の点の 0.5ms 前から始め、もう一度ラウドネスを目標に合わせる。
@@ -61,3 +88,6 @@ Idiophones/Struck Idiophones/Cajon/（カホン。木の箱の胴）
    piece-replied（1〜2）-49.5 LUFS  -60dB        20ms
    rejected            -50.5 LUFS  -50dB        12ms
    refuted             -40.4 LUFS  -60dB        40ms
+   cleared-strike      -35.6 LUFS  -60dB        60ms
+   cleared-wave-1〜5   -48.5・-48.1・-47.7・-47.3・-46.9 LUFS  -56dB  60ms
+   cleared-resonance   -40.0 LUFS  -52dB        150ms

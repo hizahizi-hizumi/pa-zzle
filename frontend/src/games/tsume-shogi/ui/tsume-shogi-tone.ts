@@ -89,6 +89,9 @@ export const tsumeShogiToneClassNames = {
     "font-medium text-[#2a1b10] [text-shadow:0_0_2px_rgb(255_240_210),0_0_2px_rgb(255_240_210)]",
   /** 選んだ駒を升の約 18% 持ち上げる（390px の画面で 6px ほど）。 */
   pieceLift: "-translate-y-[18%]",
+  /** 詰みの波で、升に一度だけ差す盤の照り。 */
+  clearGlow:
+    "bg-[radial-gradient(circle_at_45%_40%,rgb(255_246_214/0.75),rgb(255_236_180/0)_80%)]",
   /** 詰んだ玉は傾いたまま残す。 */
   matedPieceTilt: "-rotate-[9deg]",
 } as const;

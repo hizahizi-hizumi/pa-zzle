@@ -1,12 +1,13 @@
 """詰将棋の効果音（frontend/src/games/tsume-shogi/assets/sounds/*.flac）を、VCSL の録音を加工して書き出す。
 
-素材は sgossner/VCSL（CC0 1.0）のコミット c1ea7bcc の、スラップスティック・カホンの録音。
+素材は sgossner/VCSL（CC0 1.0）のコミット c1ea7bcc の、スラップスティック・カホン・スリットドラムの録音。
 出典と加工の手順は、書き出し先の `VCSL.CC0.txt` にある。録音はリポジトリに同梱しないので、次のように取り出して、
 そのディレクトリを渡す。ffmpeg（6.1）が要る。
 
     git clone --filter=blob:none --no-checkout https://github.com/sgossner/VCSL.git vcsl
     git -C vcsl checkout c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e -- \\
-        "Idiophones/Struck Idiophones/Slapstick" "Idiophones/Struck Idiophones/Cajon"
+        "Idiophones/Struck Idiophones/Slapstick" "Idiophones/Struck Idiophones/Cajon" \\
+        "Idiophones/Struck Idiophones/Slit Drum"
     uv run --python 3.13 --with numpy==2.5.3 --with scipy==1.18.1 \\
         python scripts/assets/tsume_shogi_sounds.py --vcsl vcsl
 
@@ -19,11 +20,12 @@ import argparse
 import hashlib
 import subprocess
 from dataclasses import dataclass
+from fractions import Fraction
 from pathlib import Path
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.signal import butter, lfilter, sosfilt
+from scipy.signal import butter, fftconvolve, lfilter, resample_poly, sosfilt
 
 REPOSITORY = Path(__file__).resolve().parents[2]
 SOUND_DIRECTORY = REPOSITORY / "frontend/src/games/tsume-shogi/assets/sounds"
@@ -35,9 +37,17 @@ RECORDINGS = {
     "slapstick_quiet_rr1": ("Slapstick", "e183168c1b9085ba2ab922e9e93eecbfc8f37a43803634827f37826cbe773325"),
     "slapstick_quiet_rr2": ("Slapstick", "d16ad5182b72ff6ab409d5cf9538a3086132f524d896998d5dfc694ccbf01fa8"),
     "slapstick_rr1": ("Slapstick", "e73b38bf43b385d95e2c790e7424526a91af8d1cdf484002912a4a8eabe73300"),
+    "slapstick_rr3": ("Slapstick", "ff174981835a265ad48c922d5bd5914d1a1a45c8d13e0f4ad979f8b7e1335731"),
+    "Cajon_hit1_fff_rr1": ("Cajon", "d8e232031e14e0f15ac3d1d92ca5e7c18ebe9a1120c0055a661da6d89729cc31"),
     "Cajon_hit2_f_rr1": ("Cajon", "ad85e345189439370fb54676813affba0e46f5d9f502aa63e995a2ea7a831960"),
     "Cajon_hit2_f_rr2": ("Cajon", "263ecb8dd1789dd67ad00e1383d04b052c3177af6d6e98fc32c34c896e55a868"),
     "Cajon_hit3_mp_rr1": ("Cajon", "9ec7c1b08b7e93a7f117a752ae168e23824a7d6e88e36c9d9e20f4b6672542b0"),
+    "LogDrumHi_MedM_v1_rr1_Sum": ("Slit Drum", "6ca70964e7d1dd80daf6c67cff226db6e0cadbff3234944de9055c3ef1d7f4eb"),
+    "LogDrumHi_MedM_v2_rr1_Sum": ("Slit Drum", "8c4f61b36a13a8559f1777845ee9795bec52e07d2e86f05d50097bee6abd08b0"),
+    "LogDrumHi_MedM_v3_rr1_Sum": ("Slit Drum", "e56b10659b821bbf4eeb3cc371f42ea60414adcbd66ad0ead9e7a62cdd11fe3f"),
+    "LogDrumLo_MedM_v1_rr1_Sum": ("Slit Drum", "cb77b9a6e7fc560d03b45102632ee0be5d08158cb03f59d63dd6fd2c4443ba4f"),
+    "LogDrumLo_MedM_v2_rr1_Sum": ("Slit Drum", "609a9ae5441a007371e0dc3120d7e6d4ad5d23073f5f4fb3f16d0dc08823dfc4"),
+    "LogDrumLo_MedM_v3_rr1_Sum": ("Slit Drum", "1428c9b05398c3b08aac4c36c5c5f57c52bca3c89627d693f3ecc00759c43fea"),
 }
 
 
@@ -60,6 +70,13 @@ FINISHES = {
     "piece-replied-2": REPLY_FINISH,
     "rejected": Finish(loudness=-50.5, floor_db=-50, fade_ms=12),
     "refuted": Finish(loudness=-40.4, floor_db=-60, fade_ms=40),
+    "cleared-strike": Finish(loudness=-35.6, floor_db=-60, fade_ms=60),
+    "cleared-wave-1": Finish(loudness=-48.5, floor_db=-56, fade_ms=60),
+    "cleared-wave-2": Finish(loudness=-48.1, floor_db=-56, fade_ms=60),
+    "cleared-wave-3": Finish(loudness=-47.7, floor_db=-56, fade_ms=60),
+    "cleared-wave-4": Finish(loudness=-47.3, floor_db=-56, fade_ms=60),
+    "cleared-wave-5": Finish(loudness=-46.9, floor_db=-56, fade_ms=60),
+    "cleared-resonance": Finish(loudness=-40.0, floor_db=-52, fade_ms=150),
 }
 
 
@@ -123,8 +140,21 @@ def cut(signal: Signal, length_ms: float, fade_ms: float) -> Signal:
     return result
 
 
+def fade_in(signal: Signal, length_ms: float) -> Signal:
+    result = signal.copy()
+    fade = samples(length_ms)
+    result[:fade] *= np.sin(np.linspace(0, np.pi / 2, fade)) ** 2
+    return result
+
+
 def decay(signal: Signal, time_constant_ms: float) -> Signal:
     return signal * np.exp(-np.arange(len(signal)) / (time_constant_ms / 1000 * SAMPLE_RATE))
+
+
+def change_speed(signal: Signal, speed: float) -> Signal:
+    """`speed` 倍の速さで鳴らした音にする。1 より小さいと低く長くなる。"""
+    ratio = Fraction(speed).limit_denominator(200)
+    return resample_poly(signal, ratio.denominator, ratio.numerator)
 
 
 def mix(*layers: tuple[Signal, float, float]) -> Signal:
@@ -135,6 +165,14 @@ def mix(*layers: tuple[Signal, float, float]) -> Signal:
         start = samples(offset_ms)
         result[start : start + len(signal)] += signal * 10 ** (gain_db / 20)
     return result
+
+
+def convolve(*signals: Signal) -> Signal:
+    """録音どうしを畳み込み、打音を木の胴の鳴りに通した音にする。"""
+    result = signals[0]
+    for signal in signals[1:]:
+        result = fftconvolve(result, signal)
+    return result / np.abs(result).max()
 
 
 def k_weight(signal: Signal) -> Signal:
@@ -236,6 +274,19 @@ def piece_hit(slapstick: Signal, cajon: Signal, cajon_db: float = -17) -> Signal
     return mix((cut(slapstick, 160, 40), 0, 0), (body, cajon_db, 0.4))
 
 
+def board_resonance(
+    hit: Signal, wood: Signal, *, low_cut: float, high_cut: float, speed: float, attack_ms: float, low_shelf_db: float
+) -> Signal:
+    """打音をくり抜いた木やカホンの胴の録音に畳み込んで、盤が響く音にする。打撃が立たないよう立ち上がりを丸める。"""
+    resonance = convolve(hit, wood)
+    resonance = high_pass(high_pass(resonance, low_cut), low_cut)
+    resonance = low_pass(low_pass(resonance, high_cut), high_cut)
+    resonance = shelf(resonance, 300, low_shelf_db, high=False)
+    resonance = peaking(resonance, 420, 2.0, 0.9)
+    resonance = peaking(resonance, 2500, -3, 0.8)
+    return fade_in(change_speed(resonance, speed), attack_ms)
+
+
 def operation_sounds(recordings: Recordings) -> dict[str, Signal]:
     quiet_1, quiet_2 = recordings["slapstick_quiet_rr1"], recordings["slapstick_quiet_rr2"]
     full = recordings["slapstick_rr1"]
@@ -254,6 +305,51 @@ def operation_sounds(recordings: Recordings) -> dict[str, Signal]:
         "rejected": rejected,
         "refuted": mix((moved, 0, 0), (low_pass(low_pass(cajon_f_1, 500), 500), -2, 2)),
     }
+
+
+def cleared_sounds(recordings: Recordings) -> dict[str, Signal]:
+    quiet_1, quiet_2 = recordings["slapstick_quiet_rr1"], recordings["slapstick_quiet_rr2"]
+    strike = mix(
+        (recordings["slapstick_rr3"], 0, 0),
+        (high_pass(low_pass(recordings["Cajon_hit1_fff_rr1"], 1200), 100), -12, 0.4),
+    )
+    strike_tail = board_resonance(
+        quiet_2,
+        cut(recordings["Cajon_hit2_f_rr2"], 400, 150),
+        low_cut=170,
+        high_cut=2200,
+        speed=1.0,
+        attack_ms=2,
+        low_shelf_db=3,
+    )
+    sounds = {"cleared-strike": mix((shelf(strike, 200, 1.5, high=False), 0, 0), (strike_tail, -16, 1))}
+    logs = [
+        "LogDrumHi_MedM_v1_rr1_Sum",
+        "LogDrumHi_MedM_v2_rr1_Sum",
+        "LogDrumLo_MedM_v2_rr1_Sum",
+        "LogDrumHi_MedM_v3_rr1_Sum",
+        "LogDrumLo_MedM_v3_rr1_Sum",
+    ]
+    for index, log in enumerate(logs):
+        sounds[f"cleared-wave-{index + 1}"] = board_resonance(
+            quiet_1 if index % 2 else quiet_2,
+            cut(recordings[log], 500, 150),
+            low_cut=170,
+            high_cut=1800 - 100 * index,
+            speed=1.0 + 0.02 * index,
+            attack_ms=7,
+            low_shelf_db=2.0,
+        )
+    sounds["cleared-resonance"] = board_resonance(
+        quiet_1,
+        cut(recordings["LogDrumLo_MedM_v1_rr1_Sum"], 800, 300),
+        low_cut=150,
+        high_cut=1100,
+        speed=0.97,
+        attack_ms=12,
+        low_shelf_db=3,
+    )
+    return sounds
 
 
 def without_padding(flac: bytes) -> bytes:
@@ -319,7 +415,8 @@ def main() -> None:
     arguments = parser.parse_args()
 
     recordings = Recordings(arguments.vcsl)
-    write_sounds(operation_sounds(recordings), arguments.output)
+    sounds = operation_sounds(recordings) | cleared_sounds(recordings)
+    write_sounds(sounds, arguments.output)
 
 
 if __name__ == "__main__":

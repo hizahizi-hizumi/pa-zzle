@@ -34,7 +34,7 @@ const highlightClassNames = {
   rejected: tsumeShogiToneClassNames.squareRejected,
   "last-move": tsumeShogiToneClassNames.squareLastMove,
   refutation: tsumeShogiToneClassNames.squareRefutation,
-  // 詰みは升の地を変えず、玉の傾き（`matedPieceTilt`）で示す。
+  // 詰みは升の地を変えず、玉の傾き（`matedPieceTilt`）と盤の照りの波で示す。
   mated: "",
 } as const satisfies Record<TsumeShogiSquareHighlight, string>;
 
@@ -47,6 +47,8 @@ type TsumeShogiSquareButtonProps = {
   piece: TsumeShogiPiece | null;
   /** 駒の、指し手で変わらない識別。駒ごとの木目の位置を決める。 */
   pieceId: string | null;
+  /** 詰みの波で一度だけ光る層を置く。 */
+  clearGlow: boolean;
   /** この升へ指した手。駒を移動元から滑らせる（打った駒は浮かび上がらせる）。 */
   arrivedMove: TsumeShogiPlayedMove | null;
   highlight: TsumeShogiSquareHighlight | null;
@@ -99,6 +101,7 @@ export function TsumeShogiSquareButton({
   square,
   piece,
   pieceId,
+  clearGlow,
   arrivedMove,
   highlight,
   disabled,
@@ -120,6 +123,8 @@ export function TsumeShogiSquareButton({
       aria-label={`${formatTsumeShogiSquare(square)}${pieceLabel}`}
       aria-pressed={selectable ? selected : undefined}
       aria-disabled={disabled || undefined}
+      data-file={square.file}
+      data-rank={square.rank}
       data-mated-king={highlight === "mated" ? "" : undefined}
       onPointerUp={tapHandlers.onPointerUp}
       onClick={tapHandlers.onClick}
@@ -132,11 +137,22 @@ export function TsumeShogiSquareButton({
         highlight && highlightClassNames[highlight],
       )}
     >
+      {clearGlow && (
+        // 詰みの波で一度だけ光る層。ふだんは見えない。
+        <span
+          data-clear-glow=""
+          className={cn(
+            "pointer-events-none absolute inset-0 opacity-0",
+            tsumeShogiToneClassNames.clearGlow,
+          )}
+        />
+      )}
       {piece && (
         <span
           // 指した手ごとに作り直し、到着の動きを1回だけ流す。
           key={arrivedMove ? JSON.stringify(arrivedMove.move) : "still"}
           ref={pieceRef}
+          data-piece=""
           data-selected-piece={selected ? "" : undefined}
           className={cn(
             "absolute inset-0 flex items-center justify-center transition-transform duration-(--duration-fast)",
