@@ -1,4 +1,8 @@
-import { analyzeHamiltonianPathDifficulty } from "@/games/hamiltonian-path/problem/difficulty-analysis";
+import {
+  analyzeHamiltonianPathDifficulty,
+  getHamiltonianPathSolveWorkload,
+  type HamiltonianPathAnalyzedDifficulty,
+} from "@/games/hamiltonian-path/problem/difficulty-analysis";
 import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
 
 describe("analyzeHamiltonianPathDifficulty", () => {
@@ -102,6 +106,48 @@ describe("analyzeHamiltonianPathDifficulty", () => {
         status: "invalid",
         reason: "no-solution",
       });
+    });
+  });
+});
+
+describe("getHamiltonianPathSolveWorkload", () => {
+  const analysis = {
+    status: "analyzed",
+    scale: {
+      size: 8,
+      cellCount: 64,
+      openCellCount: 64,
+      wallCount: 0,
+      partitionCount: 15,
+    },
+    reasoning: {
+      localReasoningSuffices: false,
+      regionalReasoningUsed: false,
+      assumptionCount: 3,
+      deepAssumptionCount: 0,
+      longestRefutationLength: 11,
+      refutationLengths: [8, 11, 4],
+      stallCount: 2,
+      firstStallDecidedEdgeRatio: 0.4,
+      firingCountByStage: { 1: 60, 2: 8, 3: 0, 4: 0, 5: 3, 6: 0 },
+    },
+    drawing: {
+      branchCount: 12,
+      fatalBranchCount: 10,
+      fatalBranchCountByStage: { 2: 9, 3: 0, 4: 0, 5: 1, 6: 0 },
+      longestTrapLength: 40,
+    },
+  } as const satisfies HamiltonianPathAnalyzedDifficulty;
+
+  test("なぞる長さ・先読みの回数と量・迷う分岐の数を取り出すこと", () => {
+    const workload = getHamiltonianPathSolveWorkload(analysis);
+
+    expect(workload).toEqual({
+      openCellCount: 64,
+      assumptionCount: 3,
+      refutationStepCount: 23,
+      longestRefutationLength: 11,
+      fatalBranchCount: 10,
     });
   });
 });
