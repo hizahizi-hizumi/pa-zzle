@@ -1,7 +1,10 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 
 import { useIceFloorMazePlay } from "@/games/ice-floor-maze/play/use-ice-floor-maze-play";
+import type { IceFloorMazePooledProblem } from "@/games/ice-floor-maze/problem/problem-pool";
+import { parseIceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
 import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";
+import { createProblemId } from "@/games/problem-id";
 import * as problemSeed from "@/games/problem-seed";
 
 // #  1  #  3  4
@@ -228,6 +231,65 @@ describe("useIceFloorMazePlay", () => {
       act(() => result.current.completeClearAnimation());
 
       expect(result.current.progress).toBe("result");
+    });
+  });
+
+  describe("最初の問題を渡した場合", () => {
+    const initialProblem: IceFloorMazePooledProblem = {
+      problem: {
+        board: parseIceFloorMazeBoard(["..#.", "....", "....", "...."]),
+        start: 0,
+        goal: 1,
+      },
+      identity: {
+        generatorVersion: "1",
+        seed: "ice-floor-maze-requested",
+        conditions: { width: 4, height: 4 },
+      },
+      optimalMoveCount: 1,
+    };
+
+    test("渡した問題の盤面・identity・最短手数で始めること", () => {
+      const requested = renderHook(() =>
+        useIceFloorMazePlay("1", initialProblem),
+      );
+
+      const { board, goal, position, problemIdentity, optimalMoveCount } =
+        requested.result.current;
+
+      expect({
+        board,
+        goal,
+        position,
+        problemIdentity,
+        optimalMoveCount,
+      }).toEqual({
+        board: initialProblem.problem.board,
+        goal: 1,
+        position: 0,
+        problemIdentity: initialProblem.identity,
+        optimalMoveCount: 1,
+      });
+    });
+  });
+
+  describe("最初に避ける問題を渡し、最初に引いた seed がその問題を指す場合", () => {
+    beforeEach(() => {
+      vi.spyOn(problemSeed, "createProblemSeed")
+        .mockReturnValueOnce("ice-floor-maze-avoided")
+        .mockReturnValueOnce("ice-floor-maze-other");
+      const avoidedProblemId = createProblemId({
+        generatorVersion: "1",
+        seed: "ice-floor-maze-avoided",
+        conditions: { width: 5, height: 5 },
+      });
+      ({ result } = renderHook(() =>
+        useIceFloorMazePlay("1", undefined, avoidedProblemId),
+      ));
+    });
+
+    test("seed を引き直して避ける問題と別の問題で始めること", () => {
+      expect(result.current.problemIdentity.seed).toBe("ice-floor-maze-other");
     });
   });
 
