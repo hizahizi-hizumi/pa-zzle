@@ -20,7 +20,11 @@ import {
   listHamiltonianPathOpenCells,
   normalizeHamiltonianPathPartitions,
 } from "@/games/hamiltonian-path/puzzle/board";
-import { createProblemPoolIndex } from "@/games/problem-id";
+import {
+  createBoardSizeFeatureValue,
+  type ProblemFeatureAxis,
+} from "@/games/problem-feature";
+import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 
 /**
  * 事前生成した問題集の1問。
@@ -274,3 +278,37 @@ export function findHamiltonianPathPoolEntry(
     ? entry
     : null;
 }
+
+/** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。 */
+export function listHamiltonianPathPoolProblemIds(
+  difficulty: HamiltonianPathDifficulty,
+): readonly ProblemId[] {
+  return poolIndex.listProblemIds(difficulty);
+}
+
+/** 始めたときの盤面を見れば分かる、問題の特徴。 */
+export type HamiltonianPathProblemFeatures = {
+  size: number;
+};
+
+/** 難易度の問題集の1問の特徴を、問題を復元せず問題集の項目から求める。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+export function findHamiltonianPathPoolProblemFeatures(
+  difficulty: HamiltonianPathDifficulty,
+  problemId: string,
+): HamiltonianPathProblemFeatures | null {
+  const entry = findHamiltonianPathPoolEntryByProblemId(difficulty, problemId);
+  return entry ? { size: entry[0] } : null;
+}
+
+/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
+export const hamiltonianPathProblemFeatureAxes = [
+  {
+    id: "board-size",
+    getValue({ size }) {
+      return createBoardSizeFeatureValue(size, size);
+    },
+  },
+] as const satisfies readonly ProblemFeatureAxis<HamiltonianPathProblemFeatures>[];
+
+export type HamiltonianPathProblemFeatureAxisId =
+  (typeof hamiltonianPathProblemFeatureAxes)[number]["id"];

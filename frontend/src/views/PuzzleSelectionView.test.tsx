@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 
+import { HAMILTONIAN_PATH_DISPLAY_NAME } from "@/games/hamiltonian-path/display-name";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import { PuzzleSelectionView } from "@/views/PuzzleSelectionView";
 
@@ -20,6 +21,7 @@ describe("PuzzleSelectionView", () => {
     ["スライドパズル", "/puzzles/slide-puzzle"],
     ["バイナリパズル", "/puzzles/takuzu"],
     [REFLECTION_DISPLAY_NAME, "/puzzles/reflection"],
+    [HAMILTONIAN_PATH_DISPLAY_NAME, "/puzzles/hamiltonian-path"],
   ] as const;
 
   beforeEach(() => {
