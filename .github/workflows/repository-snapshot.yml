@@ -168,6 +168,8 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
+          # ランナーのツールキャッシュは更新が週次のため、Nodeのセキュリティリリースを待たずに使う。
+          check-latest: true
           package-manager-cache: false
 
       - name: Re-plan Offline Dependencies under pool lock
