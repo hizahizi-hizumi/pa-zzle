@@ -56,7 +56,8 @@ export function PlayableIceFloorMaze({
         position={play.position}
         moveCount={play.moveCount}
         isTrapped={play.isTrapped}
-        operation={play.operation}
+        lastSlide={play.lastSlide}
+        blockedInput={play.blockedInput}
         onSlide={play.slide}
         canUndo={play.canUndo}
         onUndo={play.undo}

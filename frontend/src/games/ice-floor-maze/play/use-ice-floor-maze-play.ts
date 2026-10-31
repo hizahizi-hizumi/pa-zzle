@@ -45,27 +45,31 @@ import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
 /**
- * 盤面へ伝える直前の滑りの結果。`id` は入力ごとに変わり、同じ向きを続けて選んでも別の操作として見分けられる。
- * - `slid`: `from` から `path` のマスを順に通り、最後のマス `to` で止まった。`passedGoal` はゴールを止まらずに通り過ぎたか。
- * - `blocked`: すぐ隣が岩か外壁で、1マスも動けなかった。盤面は変わらない。
+ * 直前の成立した滑り。盤面はこれで跡を描き、滑りを動かす。`id` は滑りごとに変わる。
+ * `from` から `path` のマスを順に通り、最後のマス `to` で止まった。`passedGoal` はゴールを止まらずに通り過ぎたか。
+ * `entersTrap` は閉じ込めでない位置から閉じ込めへ入ったか。閉じ込めの中での滑りでは `false`。
+ * 成立しない向きの入力では変わらず、待った・盤面を戻す・リセット・別の問題で消える。
  */
-export type IceFloorMazeOperation =
-  | {
-      id: number;
-      type: "slid";
-      direction: IceFloorMazeDirection;
-      from: number;
-      to: number;
-      path: readonly number[];
-      passedGoal: boolean;
-      isClearingMove: boolean;
-    }
-  | {
-      id: number;
-      type: "blocked";
-      direction: IceFloorMazeDirection;
-      from: number;
-    };
+export type IceFloorMazeLastSlide = {
+  id: number;
+  direction: IceFloorMazeDirection;
+  from: number;
+  to: number;
+  path: readonly number[];
+  passedGoal: boolean;
+  isClearingMove: boolean;
+  entersTrap: boolean;
+};
+
+/**
+ * 直前の入力が、すぐ隣が岩か外壁で1マスも動けなかったこと。盤面はこれで押し戻しを動かす。盤面と直前の滑りは変わらない。
+ * `id` は入力ごとに変わり、同じ向きを続けて選んでも別の入力として見分けられる。
+ */
+export type IceFloorMazeBlockedInput = {
+  id: number;
+  direction: IceFloorMazeDirection;
+  from: number;
+};
 
 export type IceFloorMazeResult = IceFloorMazeSessionResult & {
   boardShape: IceFloorMazeBoardShape;
@@ -124,7 +128,9 @@ export type IceFloorMazePlay = GamePlay<
     optimalMoveCount: number;
     /** 今の位置から行けるどの位置も今の位置へ戻れ、その中にゴールが無い（閉じ込め）プレイ中だけ `true`。 */
     isTrapped: boolean;
-    operation: IceFloorMazeOperation | null;
+    lastSlide: IceFloorMazeLastSlide | null;
+    /** 直前の入力が成立しなかったときだけ値を持つ。次に滑ったときや盤面が戻ったときに消える。 */
+    blockedInput: IceFloorMazeBlockedInput | null;
     /** 入力した時点で駒を滑らせる。表示中の滑りの終わりを待たない。 */
     slide: (direction: IceFloorMazeDirection) => void;
   };
@@ -134,8 +140,15 @@ type IceFloorMazePlayState = {
   problemIdentity: IceFloorMazeProblemIdentity;
   optimalMoveCount: number;
   progress: GameProgress;
-  operation: IceFloorMazeOperation | null;
+  lastSlide: IceFloorMazeLastSlide | null;
+  blockedInput: IceFloorMazeBlockedInput | null;
 };
+
+/** プレイを始めたときと待った・盤面を戻すの後の、直前の滑りも成立しなかった入力も無い状態。 */
+const clearedInputs = {
+  lastSlide: null,
+  blockedInput: null,
+} as const satisfies Pick<IceFloorMazePlayState, "lastSlide" | "blockedInput">;
 
 function createPlayState(
   { problem, identity, optimalMoveCount }: IceFloorMazePooledProblem,
@@ -146,7 +159,7 @@ function createPlayState(
     problemIdentity: identity,
     optimalMoveCount,
     progress: "playing",
-    operation: null,
+    ...clearedInputs,
   };
 }
 
@@ -164,7 +177,7 @@ function slideInPlay(
   current: IceFloorMazePlayState,
   direction: IceFloorMazeDirection,
   movedAt: number,
-  operationId: number,
+  inputId: number,
 ): IceFloorMazePlayState {
   if (current.progress !== "playing") {
     return current;
@@ -183,28 +196,35 @@ function slideInPlay(
   if (slide.status === "blocked") {
     return {
       ...current,
-      operation: {
-        id: operationId,
-        type: "blocked",
-        direction,
-        from: slide.from,
-      },
+      blockedInput: { id: inputId, direction, from: slide.from },
     };
   }
 
+  const { board, goal } = session.problem;
   return {
     ...applyPlaySession(current, session),
-    operation: {
-      id: operationId,
-      type: "slid",
+    lastSlide: {
+      id: inputId,
       direction,
       from: slide.from,
       to: slide.to,
       path: slide.path,
-      passedGoal: doesIceFloorMazeSlidePassGoal(slide, session.problem.goal),
+      passedGoal: doesIceFloorMazeSlidePassGoal(slide, goal),
       isClearingMove: session.status === "cleared",
+      entersTrap:
+        isTrappedAt(board, slide.to, goal) &&
+        !isTrappedAt(board, slide.from, goal),
     },
+    blockedInput: null,
   };
+}
+
+function isTrappedAt(
+  board: IceFloorMazeBoard,
+  position: number,
+  goal: number,
+): boolean {
+  return classifyIceFloorMazeDeadlock(board, position, goal) === "trapped";
 }
 
 /** `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。 */
@@ -221,12 +241,12 @@ export function useIceFloorMazePlay(
   );
   const { session, problemIdentity, optimalMoveCount } = play;
   const elapsedMs = useSessionElapsedMs(session);
-  const nextOperationId = useRef(0);
+  const nextInputId = useRef(0);
 
   const slide = useCallback((direction: IceFloorMazeDirection) => {
     const movedAt = Date.now();
-    const operationId = nextOperationId.current++;
-    setPlay((current) => slideInPlay(current, direction, movedAt, operationId));
+    const inputId = nextInputId.current++;
+    setPlay((current) => slideInPlay(current, direction, movedAt, inputId));
   }, []);
 
   const undo = useCallback(() => {
@@ -235,7 +255,7 @@ export function useIceFloorMazePlay(
         current,
         undoIceFloorMazeSession(current.session),
       );
-      return next === current ? current : { ...next, operation: null };
+      return next === current ? current : { ...next, ...clearedInputs };
     });
   }, []);
 
@@ -245,7 +265,7 @@ export function useIceFloorMazePlay(
         current,
         restartIceFloorMazeSession(current.session),
       );
-      return next === current ? current : { ...next, operation: null };
+      return next === current ? current : { ...next, ...clearedInputs };
     });
   }, []);
 
@@ -256,7 +276,7 @@ export function useIceFloorMazePlay(
         current,
         createIceFloorMazeSession(current.session.problem, startedAt),
       ),
-      operation: null,
+      ...clearedInputs,
     }));
   }, []);
 
@@ -276,9 +296,7 @@ export function useIceFloorMazePlay(
   const { board, goal } = session.problem;
   const position = session.puzzleState;
   const isTrapped = useMemo(
-    () =>
-      session.status === "playing" &&
-      classifyIceFloorMazeDeadlock(board, position, goal) === "trapped",
+    () => session.status === "playing" && isTrappedAt(board, position, goal),
     [board, goal, position, session.status],
   );
   const result = useMemo(() => {
@@ -310,7 +328,8 @@ export function useIceFloorMazePlay(
     restartCount: session.restartCount,
     optimalMoveCount,
     isTrapped,
-    operation: play.operation,
+    lastSlide: play.lastSlide,
+    blockedInput: play.blockedInput,
     canUndo: canUndoIceFloorMazeSession(session),
     canRestart: canRestartIceFloorMazeSession(session),
     slide,
