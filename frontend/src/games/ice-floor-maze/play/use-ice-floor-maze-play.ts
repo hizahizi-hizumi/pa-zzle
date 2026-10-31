@@ -1,7 +1,10 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import type { IceFloorMazeDifficulty } from "@/games/ice-floor-maze/difficulty";
-import type { IceFloorMazeProblemIdentity } from "@/games/ice-floor-maze/problem/problem";
+import type {
+  IceFloorMazeBoardShape,
+  IceFloorMazeProblemIdentity,
+} from "@/games/ice-floor-maze/problem/problem";
 import type { IceFloorMazePooledProblem } from "@/games/ice-floor-maze/problem/problem-pool";
 import { selectIceFloorMazeProblemForDifficulty } from "@/games/ice-floor-maze/problem-selection";
 import type { IceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
@@ -10,6 +13,12 @@ import {
   doesIceFloorMazeSlidePassGoal,
   type IceFloorMazeDirection,
 } from "@/games/ice-floor-maze/puzzle/rules";
+import {
+  calculateIceFloorMazeMoveDelta,
+  calculateIceFloorMazePlayScore,
+  calculateIceFloorMazeSpeedScoreRule,
+  type IceFloorMazePlayScore,
+} from "@/games/ice-floor-maze/score";
 import {
   canRestartIceFloorMazeSession,
   canUndoIceFloorMazeSession,
@@ -33,6 +42,7 @@ import {
 } from "@/games/play";
 import { createProblemId, type ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
+import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
 /**
  * 盤面へ伝える直前の滑りの結果。`id` は入力ごとに変わり、同じ向きを続けて選んでも別の操作として見分けられる。
@@ -57,17 +67,43 @@ export type IceFloorMazeOperation =
       from: number;
     };
 
-/** クリアしたプレイの事実と、評価に使う問題の事実。 */
 export type IceFloorMazeResult = IceFloorMazeSessionResult & {
+  boardShape: IceFloorMazeBoardShape;
   optimalMoveCount: number;
+  moveDelta: number;
+  speedRule: SpeedScoreRule;
+  timeDeltaMs: number;
+  score: IceFloorMazePlayScore;
 };
 
-/** 完了したプレイの事実から結果を作る。 */
+/** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
 export function createIceFloorMazeResult(
   sessionResult: IceFloorMazeSessionResult,
+  boardShape: IceFloorMazeBoardShape,
   optimalMoveCount: number,
 ): IceFloorMazeResult {
-  return { ...sessionResult, optimalMoveCount };
+  const speedRule = calculateIceFloorMazeSpeedScoreRule({
+    boardShape,
+    optimalMoveCount,
+  });
+
+  return {
+    ...sessionResult,
+    boardShape,
+    optimalMoveCount,
+    moveDelta: calculateIceFloorMazeMoveDelta({
+      moveCount: sessionResult.moveCount,
+      optimalMoveCount,
+    }),
+    speedRule,
+    timeDeltaMs: calculateTimeDeltaMs(sessionResult.elapsedMs, speedRule),
+    score: calculateIceFloorMazePlayScore({
+      elapsedMs: sessionResult.elapsedMs,
+      moveCount: sessionResult.moveCount,
+      boardShape,
+      optimalMoveCount,
+    }),
+  };
 }
 
 export type IceFloorMazePlay = GamePlay<
@@ -248,9 +284,13 @@ export function useIceFloorMazePlay(
   const result = useMemo(() => {
     const sessionResult = getIceFloorMazeSessionResult(session);
     return sessionResult
-      ? createIceFloorMazeResult(sessionResult, optimalMoveCount)
+      ? createIceFloorMazeResult(
+          sessionResult,
+          problemIdentity.conditions,
+          optimalMoveCount,
+        )
       : null;
-  }, [optimalMoveCount, session]);
+  }, [optimalMoveCount, problemIdentity, session]);
 
   return {
     difficulty,
