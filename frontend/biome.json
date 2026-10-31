@@ -381,6 +381,304 @@
       }
     },
     {
+      "includes": ["src/games/ice-floor-maze/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/ice-floor-maze/ui/play-record-display.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "!@/records/ui/play-record-display",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/ice-floor-maze/puzzle/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/ice-floor-maze/problem/**",
+                      "@/games/ice-floor-maze/session/**",
+                      "@/games/ice-floor-maze/play/**",
+                      "@/games/ice-floor-maze/ui/**"
+                    ],
+                    "message": "[dependency/game-puzzle-layer] puzzle は problem・session・play・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/ice-floor-maze/problem/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/ice-floor-maze/session/**",
+                      "@/games/ice-floor-maze/play/**",
+                      "@/games/ice-floor-maze/ui/**"
+                    ],
+                    "message": "[dependency/game-problem-layer] problem は session・play・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/ice-floor-maze/session/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/ice-floor-maze/problem/generation/**",
+                      "@/games/ice-floor-maze/difficulty",
+                      "@/games/ice-floor-maze/score",
+                      "@/games/ice-floor-maze/play/**",
+                      "@/games/ice-floor-maze/ui/**",
+                      "@/games/ice-floor-maze/play-record",
+                      "@/records/**",
+                      "react*"
+                    ],
+                    "message": "[dependency/game-session-layer] session は生成内部・難易度分類・採点・play・保存・React・ui へ依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/games/ice-floor-maze/play/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": [
+                      "@/game-catalog/**",
+                      "@/records/hooks/**",
+                      "@/records/ui/**",
+                      "@/views/**",
+                      "@/pages/**",
+                      "@/router"
+                    ],
+                    "message": "[dependency/concrete-game-boundary] concrete game はゲームカタログ・記録UI・画面合成・pages・router へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/games/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/ice-floor-maze/ui/**",
+                      "@/games/ice-floor-maze/problem/generation/**",
+                      "@/games/ice-floor-maze/play-record",
+                      "@/games/ice-floor-maze/diagnostics"
+                    ],
+                    "message": "[dependency/game-play-layer] play は ui・生成内部・記録接続・診断接続へ逆依存しない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/games/minesweeper/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
@@ -406,6 +704,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -449,6 +748,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -491,6 +791,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -542,6 +843,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -592,6 +894,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -647,6 +950,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -698,6 +1002,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -741,6 +1046,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -783,6 +1089,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -834,6 +1141,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -884,6 +1192,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -939,6 +1248,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/parking-jam/**",
                       "@/games/reflection/**",
@@ -990,6 +1300,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/reflection/**",
@@ -1033,6 +1344,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/reflection/**",
@@ -1075,6 +1387,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/reflection/**",
@@ -1126,6 +1439,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/reflection/**",
@@ -1176,6 +1490,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/reflection/**",
@@ -1231,6 +1546,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/reflection/**",
@@ -1282,6 +1598,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1325,6 +1642,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1367,6 +1685,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1418,6 +1737,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1468,6 +1788,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1523,6 +1844,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1574,6 +1896,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1617,6 +1940,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1659,6 +1983,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1710,6 +2035,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1760,6 +2086,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1815,6 +2142,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1866,6 +2194,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1909,6 +2238,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -1951,6 +2281,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2002,6 +2333,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2052,6 +2384,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2107,6 +2440,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2158,6 +2492,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2201,6 +2536,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2243,6 +2579,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2294,6 +2631,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2344,6 +2682,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2399,6 +2738,7 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/games/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2449,6 +2789,49 @@
       }
     },
     {
+      "includes": ["src/game-catalog/ice-floor-maze/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./**", "../**"],
+                    "message": "[dependency/absolute-import] frontend/src 内の内部参照は @/... の絶対 import を使う。"
+                  },
+                  {
+                    "group": ["@/views/**", "@/pages/**"],
+                    "message": "[dependency/game-catalog-boundary] ゲームカタログは画面合成・pages へ逆依存しない。"
+                  },
+                  {
+                    "group": [
+                      "@/games/minesweeper/**",
+                      "@/game-catalog/minesweeper/**",
+                      "@/games/nanpure/**",
+                      "@/game-catalog/nanpure/**",
+                      "@/games/parking-jam/**",
+                      "@/game-catalog/parking-jam/**",
+                      "@/games/reflection/**",
+                      "@/game-catalog/reflection/**",
+                      "@/games/slide-puzzle/**",
+                      "@/game-catalog/slide-puzzle/**",
+                      "@/games/takuzu/**",
+                      "@/game-catalog/takuzu/**",
+                      "@/games/water-sort/**",
+                      "@/game-catalog/water-sort/**"
+                    ],
+                    "message": "[dependency/cross-game-boundary] concrete game 同士を直接依存させない。"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/game-catalog/minesweeper/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
@@ -2467,6 +2850,8 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
+                      "@/game-catalog/ice-floor-maze/**",
                       "@/games/nanpure/**",
                       "@/game-catalog/nanpure/**",
                       "@/games/parking-jam/**",
@@ -2508,6 +2893,8 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
+                      "@/game-catalog/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/game-catalog/minesweeper/**",
                       "@/games/parking-jam/**",
@@ -2549,6 +2936,8 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
+                      "@/game-catalog/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/game-catalog/minesweeper/**",
                       "@/games/nanpure/**",
@@ -2590,6 +2979,8 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
+                      "@/game-catalog/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/game-catalog/minesweeper/**",
                       "@/games/nanpure/**",
@@ -2631,6 +3022,8 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
+                      "@/game-catalog/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/game-catalog/minesweeper/**",
                       "@/games/nanpure/**",
@@ -2672,6 +3065,8 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
+                      "@/game-catalog/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/game-catalog/minesweeper/**",
                       "@/games/nanpure/**",
@@ -2713,6 +3108,8 @@
                   },
                   {
                     "group": [
+                      "@/games/ice-floor-maze/**",
+                      "@/game-catalog/ice-floor-maze/**",
                       "@/games/minesweeper/**",
                       "@/game-catalog/minesweeper/**",
                       "@/games/nanpure/**",
