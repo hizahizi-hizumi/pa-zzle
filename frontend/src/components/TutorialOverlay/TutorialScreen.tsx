@@ -41,14 +41,19 @@ export type TutorialFinishAction = {
 /**
  * 導入のうち、盤面が受け持つ段。名前を見せた後に、何を目指すかと始めの盤面をゲームの盤面で見せる。
  * - `stage`: 盤面に見せさせるもの。
- *   - `goal`: 解き終えた盤面を見せる。見せ終えたら `onGoalShown` を呼ぶ。その後もしばらく `goal` のまま、目指す形だという一言を添えて見せておく。
- *   - `start`: 解き終えた盤面から始めの盤面へ移す。移し終えたら `onEnd` を呼ぶ。その後も導入を終えるまで `start` のまま保つ。
+ *   - `goal`: 解き終えた盤面を見せる。
+ *   - `start`: 始めの盤面を見せる。
  *   - `null`: 盤面の段の前と、導入を終えた後。盤面の動きを止める。
+ * - `animated`: 動きを付けて見せるか。
+ *   - `true`: `goal` では解き終えた盤面を現す動きを付け、見せ終えたら `onGoalShown` を呼ぶ。その後もしばらく `goal` のまま、目指す形だという一言を添えて見せておく。
+ *     `start` では解き終えた盤面から始めの盤面へ移し、移し終えたら `onEnd` を呼ぶ。その後も導入を終えるまで `start` のまま保つ。
+ *   - `false`: 動きを付けずに、その段の盤面をそのまま見せる。どちらも呼ばない。段を進めるのは画面の側が受け持つ。
  * - `onGoalShown`: 解き終えた盤面を見せ終えた。
  * - `onEnd`: 始めの盤面へ移し終えた。名前を上部へ移して導入を終える。
  */
 export type TutorialBoardIntro = {
   stage: "goal" | "start" | null;
+  animated: boolean;
   onGoalShown: () => void;
   onEnd: () => void;
 };
@@ -111,6 +116,9 @@ const TITLE_MOVE_DELAY_MS = 80;
 const REVEAL_AFTER_NAME_DELAY_MS = 350;
 const REVEAL_MS = 300;
 
+/** 動きを減らす設定などで、名前と一文、解き終えた盤面、始めの盤面を止めて見せるそれぞれの間。一言を読める長さを取る。 */
+const STILL_STAGE_MS = 1500;
+
 /** 上部での大きさに対する、導入の間の大きさ。一文を添えても上部の領域に収まる大きさにする。 */
 const INTRO_PICTOGRAM_SCALE = 2;
 const INTRO_TITLE_SCALE = 1.5;
@@ -152,6 +160,7 @@ const introStageViews = {
     boardStage: "goal",
     caption: null,
   },
+  // 動きを止めて見せるときは、盤面を出すと同時に一言を添える。
   goalHold: {
     rulesClassName: hiddenRulesClassName,
     boardAreaClassName: "",
@@ -186,11 +195,11 @@ const introStageViews = {
   },
 } as const satisfies Record<IntroStage, IntroStageView>;
 
-/** 動きを減らす設定か、動きを描けない環境では、導入を見せずに始める。 */
-function canPlayIntro(elements: readonly (HTMLElement | null)[]): boolean {
+/** 動きを減らす設定か、動きを描けない環境では、導入の各段を動かさずに止めて見せる。 */
+function canAnimateIntro(): boolean {
   return (
     !prefersReducedMotion() &&
-    elements.every((element) => typeof element?.animate === "function")
+    typeof document.documentElement.animate === "function"
   );
 }
 
@@ -256,7 +265,7 @@ function getIntroNameLayout(
 /**
  * 開いたときに、パズルの名前と何をするパズルか、目指す盤面、始めの盤面を順に見せてから、1つの盤面を解きながらルールを1つずつ身につけていく画面。
  * 盤面を主役にし、上部にパズルの名前と手に入れたルール、盤面の直上に短い一言だけを出す。
- * 導入はどこを押しても、どのキーでも飛ばせる。
+ * 導入はどこを押しても、どのキーでも飛ばせる。動きを減らす設定などでは、各段を動かさずに一言を読める間だけ止めて見せる。
  */
 export function TutorialScreen({
   title,
@@ -272,6 +281,8 @@ export function TutorialScreen({
   onRestart,
 }: TutorialScreenProps) {
   const [stage, setStage] = useState<IntroStage>(introducing ? "name" : "done");
+  // 導入に動きを付けるか。開いたときと、もう一度始めたときに決める。
+  const [animated, setAnimated] = useState(canAnimateIntro);
   const regionRef = useRef<HTMLDivElement>(null);
   const pictogramRef = useRef<HTMLSpanElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -304,6 +315,7 @@ export function TutorialScreen({
       element?.style.removeProperty("transform-origin");
     }
     taglineRef.current?.style.removeProperty("top");
+    taglineRef.current?.style.removeProperty("opacity");
   }, []);
 
   const finishIntro = useCallback(() => {
@@ -324,13 +336,7 @@ export function TutorialScreen({
     if (!introducing) {
       return;
     }
-    if (
-      !region ||
-      !pictogram ||
-      !titleElement ||
-      !tagline ||
-      !canPlayIntro([pictogram, titleElement, tagline])
-    ) {
+    if (!region || !pictogram || !titleElement || !tagline) {
       finishIntro();
       return;
     }
@@ -343,6 +349,21 @@ export function TutorialScreen({
     );
     nameTransformsRef.current = transforms;
     tagline.style.top = `${taglineTop}px`;
+    if (!animated) {
+      // 名前と一文、解き終えた盤面、始めの盤面を、それぞれ一言を読める間だけ止めて見せる。
+      tagline.style.opacity = "1";
+      for (const [element, transform] of [
+        [pictogram, transforms.pictogram],
+        [titleElement, transforms.title],
+      ] as const) {
+        element.style.transformOrigin = "0 0";
+        element.style.transform = transform;
+      }
+      schedule(() => setStage("goalHold"), STILL_STAGE_MS);
+      schedule(() => setStage("start"), STILL_STAGE_MS * 2);
+      schedule(finishIntro, STILL_STAGE_MS * 3);
+      return;
+    }
     animationsRef.current.push(
       tagline.animate([{ opacity: 0 }, { opacity: 1 }], {
         duration: TAGLINE_APPEAR_MS,
@@ -442,14 +463,15 @@ export function TutorialScreen({
   }
 
   // もう一度始めるときは、名前と解き終えた盤面はもう見えているので、盤面を始めの盤面へ戻すところから見せる。
+  // 動きを付けないときは、始めの盤面を一言と一緒に止めて見せてから始める。
   function handleRestart(): void {
     stopIntroMotion();
     onRestart();
-    if (canPlayIntro([regionRef.current])) {
-      setStage("start");
-    } else {
-      setStage("done");
-      onIntroEndRef.current();
+    const nextAnimated = canAnimateIntro();
+    setAnimated(nextAnimated);
+    setStage("start");
+    if (!nextAnimated) {
+      schedule(finishIntro, STILL_STAGE_MS);
     }
   }
 
@@ -564,6 +586,7 @@ export function TutorialScreen({
       >
         {renderBoard({
           stage: stageView.boardStage,
+          animated,
           onGoalShown: handleGoalShown,
           onEnd: handleBoardIntroEnd,
         })}
@@ -578,7 +601,7 @@ export function TutorialScreen({
               "mt-3 self-start text-balance text-center text-heading [word-break:auto-phrase]",
               caption.leaving
                 ? "animate-out fade-out-0 fill-mode-forwards duration-200 ease-(--ease-exit)"
-                : "animate-in fade-in-0 slide-in-from-bottom-1 duration-300 ease-(--ease-enter)",
+                : "animate-in fade-in-0 slide-in-from-bottom-1 duration-300 ease-(--ease-enter) motion-reduce:animate-none",
             )}
           >
             {intro[caption.kind]}

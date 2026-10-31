@@ -235,17 +235,28 @@ export function TakuzuTutorial({
   /**
    * 導入では、解き終えた盤面を解けたときと同じ波で見せ、置いたタイルを消して始めの盤面へ戻す。
    * もう一度始めたときは解き終えた盤面がもう見えているので、戻すところから見せる。
+   * 動きを付けないときは、解き終えた盤面と始めの盤面を、そのまま見せる。
    */
-  function renderBoard({ stage, onGoalShown, onEnd }: TutorialBoardIntro) {
+  function renderBoard({
+    stage,
+    animated,
+    onGoalShown,
+    onEnd,
+  }: TutorialBoardIntro) {
     const introducing = progress.phase === "intro";
-    const shownBoardState = introducing ? goalBoardState : boardState;
+    // 戻す動きの間は、置いたタイルを消し終えるまで解き終えた盤面を見せておく。
+    const goalShown = introducing && !(stage === "start" && !animated);
+    const shownBoardState = goalShown ? goalBoardState : boardState;
     return (
       <div className="aspect-square w-[min(100cqw,100cqh,28rem)]">
         <TakuzuClearAnimation
-          active={progress.phase === "solved" || stage === "goal"}
+          active={progress.phase === "solved" || (stage === "goal" && animated)}
           onComplete={introducing ? onGoalShown : handleClearAnimationComplete}
         >
-          <TakuzuTutorialRewind active={stage === "start"} onComplete={onEnd}>
+          <TakuzuTutorialRewind
+            active={stage === "start" && animated}
+            onComplete={onEnd}
+          >
             <TakuzuBoard
               size={shownBoardState.board.size}
               cells={getTakuzuTutorialCellViews(situation, shownBoardState)}

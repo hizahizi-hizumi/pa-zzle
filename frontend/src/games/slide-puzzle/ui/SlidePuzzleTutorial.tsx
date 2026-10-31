@@ -201,13 +201,21 @@ export function SlidePuzzleTutorial({
   /**
    * 導入では、空の盤面にタイルを番号順に降ろして完成した盤面を作り、1手ずつ崩して始めの盤面へ戻す。
    * もう一度始めたときは完成した盤面がもう見えているので、崩すところから見せる。
+   * 動きを付けないときは、完成した盤面と始めの盤面を、そのまま見せる。
    */
-  function renderBoard({ stage, onGoalShown, onEnd }: TutorialBoardIntro) {
+  function renderBoard({
+    stage,
+    animated,
+    onGoalShown,
+    onEnd,
+  }: TutorialBoardIntro) {
     const introducing = progress.phase === "intro";
+    // 崩す動きの間は、崩し始めるまで完成した盤面を見せておく。
+    const goalShown = introducing && !(stage === "start" && !animated);
     return (
       <div className="aspect-square w-[min(100cqw,100cqh,28rem)]">
         <SlidePuzzleTutorialScramble
-          active={stage === "start"}
+          active={stage === "start" && animated}
           boards={slidePuzzleTutorialScrambleBoards}
           onComplete={onEnd}
         >
@@ -216,7 +224,7 @@ export function SlidePuzzleTutorial({
               frameIndex !== null
                 ? (slidePuzzleTutorialScrambleBoards[frameIndex] ??
                   boardState.board)
-                : introducing
+                : goalShown
                   ? goalBoardState.board
                   : boardState.board;
             return (
@@ -232,7 +240,7 @@ export function SlidePuzzleTutorial({
                 interactionDisabled={progress.phase !== "playing"}
                 clearing={progress.phase === "solved"}
                 tileEntrance={
-                  stage === "goal"
+                  stage === "goal" && animated
                     ? "settling"
                     : introducing && stage === null
                       ? "concealed"

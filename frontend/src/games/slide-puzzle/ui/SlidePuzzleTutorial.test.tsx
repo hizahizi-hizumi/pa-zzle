@@ -30,6 +30,14 @@ const introGoalHoldMs = 1000;
 /** 導入を最後まで見せるのに十分な間。 */
 const introEnoughMs = 5000;
 
+/** 動きを付けない導入で、名前と一文、完成した盤面、始めの盤面をそれぞれ止めて見せる間。 */
+const stillIntroStageMs = 1500;
+
+const tagline = "番号が書かれたタイルをスライドさせて、順番に並べるパズルです";
+const goalCaption = "この形がゴールです";
+const startCaption = "最初はこのように崩れています";
+const firstHeadline = "空白の隣のタイルを空白にスライドします";
+
 afterEach(() => {
   cleanup();
   delete (HTMLElement.prototype as { animate?: Element["animate"] }).animate;
@@ -77,6 +85,11 @@ function stubReducedMotion(): void {
 
 function getBoard(): HTMLElement {
   return screen.getByRole("group", { name: "盤面" });
+}
+
+/** 画面を押して導入を飛ばす。 */
+function skipIntro(): void {
+  fireEvent.pointerDown(getBoard());
 }
 
 function getTile(tile: number): HTMLElement {
@@ -169,6 +182,7 @@ describe("SlidePuzzleTutorial", () => {
             onClose={onClose}
           />,
         );
+      skipIntro();
     });
 
     test("パズルの名前と3×3の盤面を出し、タイルの滑り方と最初に押すタイルを示すこと", () => {
@@ -354,33 +368,40 @@ describe("SlidePuzzleTutorial", () => {
       expect(onStartPlay).toHaveBeenCalledOnce();
     });
 
-    test("終えた後のもう一度で、最初から始めること", () => {
+    test("終えた後のもう一度で、始めの盤面を一言と一緒に止めて見せてから、最初から始めること", () => {
       solveAll();
       fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
+      const captionWhileStill = screen.getByText(startCaption);
+      const positionWhileStill = getTilePosition(6);
+      const hintedWhileStill = getHintedTiles();
+      advanceTime(stillIntroStageMs);
 
-      const message = screen.getByText(
-        "空白の隣のタイルを空白にスライドします",
-      );
-      const position = getTilePosition(6);
+      const message = screen.getByText(firstHeadline);
+      const hinted = getHintedTiles();
       const chips = getRuleChipTexts();
 
+      expect(captionWhileStill).toBeTruthy();
+      expect(positionWhileStill).toBe("1行3列");
+      expect(hintedWhileStill).toEqual([]);
       expect(message).toBeTruthy();
-      expect(position).toBe("1行3列");
+      expect(screen.queryByText(startCaption)).toBeNull();
+      expect(hinted).toEqual(["6"]);
       expect(chips).toEqual(["空白にスライド", "？"]);
     });
 
-    test("閉じてから開き直すと、最初から始まること", () => {
+    test("閉じてから開き直すと、導入から始まること", () => {
       finishSteps(2);
       fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
       rerenderTutorial(false);
       rerenderTutorial(true);
 
-      const message = screen.getByText(
-        "空白の隣のタイルを空白にスライドします",
-      );
+      const shownTagline = screen.getByText(tagline);
+      skipIntro();
+      const position = getTilePosition(6);
 
       expect(onClose).toHaveBeenCalledOnce();
-      expect(message).toBeTruthy();
+      expect(shownTagline).toBeTruthy();
+      expect(position).toBe("1行3列");
     });
   });
 
@@ -524,15 +545,66 @@ describe("SlidePuzzleTutorial", () => {
       render(<SlidePuzzleTutorial open={true} onClose={onClose} />);
     });
 
-    test("導入を見せずに、始めの盤面の最初の手順から始めること", () => {
-      const headline = screen.getByText(
-        "空白の隣のタイルを空白にスライドします",
-      );
+    test("名前と一文、完成した盤面、始めの盤面を、それぞれ一言と一緒に止めて順に見せてから、最初の手順を始めること", () => {
+      const nameStage = {
+        tagline: screen.queryByText(tagline) !== null,
+        caption:
+          screen.queryByText(goalCaption) ?? screen.queryByText(startCaption),
+      };
+      advanceTime(stillIntroStageMs);
+      const goalStage = {
+        caption: screen.queryByText(goalCaption) !== null,
+        position: getTilePosition(6),
+      };
+      advanceTime(stillIntroStageMs);
+      const startStage = {
+        caption: screen.queryByText(startCaption) !== null,
+        position: getTilePosition(6),
+        hinted: getHintedTiles(),
+      };
+      advanceTime(stillIntroStageMs);
+
+      const headline = screen.getByText(firstHeadline);
+      const hinted = getHintedTiles();
+
+      expect(nameStage).toEqual({ tagline: true, caption: null });
+      expect(goalStage).toEqual({ caption: true, position: "2行3列" });
+      expect(startStage).toEqual({
+        caption: true,
+        position: "1行3列",
+        hinted: [],
+      });
+      expect(headline).toBeTruthy();
+      expect(screen.queryByText(tagline)).toBeNull();
+      expect(screen.queryByText(startCaption)).toBeNull();
+      expect(hinted).toEqual(["6"]);
+    });
+
+    test("画面を押すと、止めて見せている途中でも導入を飛ばすこと", () => {
+      advanceTime(stillIntroStageMs);
+      skipIntro();
+
       const position = getTilePosition(6);
       const hinted = getHintedTiles();
 
-      expect(headline).toBeTruthy();
+      expect(screen.queryByText(goalCaption)).toBeNull();
       expect(position).toBe("1行3列");
+      expect(hinted).toEqual(["6"]);
+    });
+
+    test("解き終えた後のもう一度で、始めの盤面を一言と一緒に止めて見せてから、最初の手順を始めること", () => {
+      skipIntro();
+      solveAll();
+      fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
+      const captionWhileStill = screen.getByText(startCaption);
+      const positionWhileStill = getTilePosition(6);
+      advanceTime(stillIntroStageMs);
+
+      const hinted = getHintedTiles();
+
+      expect(captionWhileStill).toBeTruthy();
+      expect(positionWhileStill).toBe("1行3列");
+      expect(screen.queryByText(startCaption)).toBeNull();
       expect(hinted).toEqual(["6"]);
     });
   });
@@ -540,6 +612,7 @@ describe("SlidePuzzleTutorial", () => {
   describe("プレイ中に開いた場合", () => {
     beforeEach(() => {
       render(<SlidePuzzleTutorial open={true} onClose={onClose} />);
+      skipIntro();
     });
 
     test("解き終えると、プレイ中の盤面につなぐ一言を出し、プレイに戻る操作で閉じること", () => {

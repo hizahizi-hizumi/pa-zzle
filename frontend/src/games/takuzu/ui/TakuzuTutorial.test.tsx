@@ -50,6 +50,14 @@ const introGoalHoldMs = 1000;
 /** 導入を最後まで見せるのに十分な間。 */
 const introEnoughMs = 5000;
 
+/** 動きを付けない導入で、名前と一文、解き終えた盤面、始めの盤面をそれぞれ止めて見せる間。 */
+const stillIntroStageMs = 1500;
+
+const tagline = "マスを四角か丸で埋めるパズルです";
+const goalCaption = "この形がゴールです";
+const startCaption = "最初はいくつかのマスが空いています";
+const firstHeadline = "1回タップすると、四角になります";
+
 afterEach(() => {
   cleanup();
   delete (HTMLElement.prototype as { animate?: Element["animate"] }).animate;
@@ -100,6 +108,11 @@ function stubReducedMotion(): void {
 
 function getBoard(): HTMLElement {
   return screen.getByRole("group", { name: "バイナリパズル盤面" });
+}
+
+/** 画面を押して導入を飛ばす。 */
+function skipIntro(): void {
+  fireEvent.pointerDown(getBoard());
 }
 
 function getCell(row: number, column: number): HTMLElement {
@@ -190,6 +203,7 @@ describe("TakuzuTutorial", () => {
             onClose={onClose}
           />,
         );
+      skipIntro();
     });
 
     test("パズルの名前と4×4の盤面を出し、四角の置き方と最初に押すマスを示して、ルールを伏せておくこと", () => {
@@ -392,29 +406,40 @@ describe("TakuzuTutorial", () => {
       expect(onStartPlay).toHaveBeenCalledOnce();
     });
 
-    test("終えた後のもう一度で、最初から始めること", () => {
+    test("終えた後のもう一度で、始めの盤面を一言と一緒に止めて見せてから、最初から始めること", () => {
       solveAll();
       fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
+      const captionWhileStill = screen.getByText(startCaption);
+      const labelWhileStill = getCellLabel(1, 1);
+      const hintedWhileStill = getHintedCellPositions();
+      advanceTime(stillIntroStageMs);
 
-      const message = screen.getByText("1回タップすると、四角になります");
-      const label = getCell(1, 1).getAttribute("aria-label");
+      const message = screen.getByText(firstHeadline);
+      const hinted = getHintedCellPositions();
       const chips = getRuleChipTexts();
 
+      expect(captionWhileStill).toBeTruthy();
+      expect(labelWhileStill).toBe("1行1列 空き");
+      expect(hintedWhileStill).toEqual([]);
       expect(message).toBeTruthy();
-      expect(label).toBe("1行1列 空き");
+      expect(screen.queryByText(startCaption)).toBeNull();
+      expect(hinted).toEqual(["1行1列"]);
       expect(chips).toEqual(["？", "？", "？"]);
     });
 
-    test("閉じてから開き直すと、最初から始まること", () => {
+    test("閉じてから開き直すと、導入から始まること", () => {
       finishSteps(3);
       fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
       rerenderTutorial(false);
       rerenderTutorial(true);
 
-      const message = screen.getByText("1回タップすると、四角になります");
+      const shownTagline = screen.getByText(tagline);
+      skipIntro();
+      const label = getCellLabel(1, 1);
 
       expect(onClose).toHaveBeenCalledOnce();
-      expect(message).toBeTruthy();
+      expect(shownTagline).toBeTruthy();
+      expect(label).toBe("1行1列 空き");
     });
   });
 
@@ -554,13 +579,67 @@ describe("TakuzuTutorial", () => {
       render(<TakuzuTutorial open={true} onClose={onClose} />);
     });
 
-    test("導入を見せずに、始めの盤面の最初の手順から始めること", () => {
-      const headline = screen.getByText("1回タップすると、四角になります");
+    test("名前と一文、解き終えた盤面、始めの盤面を、それぞれ一言と一緒に止めて順に見せてから、最初の手順を始めること", () => {
+      const nameStage = {
+        tagline: screen.queryByText(tagline) !== null,
+        caption:
+          screen.queryByText(goalCaption) ?? screen.queryByText(startCaption),
+      };
+      advanceTime(stillIntroStageMs);
+      const goalStage = {
+        caption: screen.queryByText(goalCaption) !== null,
+        label: getCellLabel(1, 1),
+      };
+      advanceTime(stillIntroStageMs);
+      const startStage = {
+        caption: screen.queryByText(startCaption) !== null,
+        label: getCellLabel(1, 1),
+        hinted: getHintedCellPositions(),
+      };
+      advanceTime(stillIntroStageMs);
+
+      const headline = screen.getByText(firstHeadline);
+      const hinted = getHintedCellPositions();
+
+      expect(nameStage).toEqual({ tagline: true, caption: null });
+      expect(goalStage).toEqual({ caption: true, label: "1行1列 四角" });
+      expect(startStage).toEqual({
+        caption: true,
+        label: "1行1列 空き",
+        hinted: [],
+      });
+      expect(headline).toBeTruthy();
+      expect(screen.queryByText(tagline)).toBeNull();
+      expect(screen.queryByText(startCaption)).toBeNull();
+      expect(hinted).toEqual(["1行1列"]);
+    });
+
+    test("画面を押すと、止めて見せている途中でも導入を飛ばすこと", () => {
+      advanceTime(stillIntroStageMs);
+      skipIntro();
+
       const label = getCellLabel(1, 1);
       const hinted = getHintedCellPositions();
 
-      expect(headline).toBeTruthy();
+      expect(screen.queryByText(goalCaption)).toBeNull();
       expect(label).toBe("1行1列 空き");
+      expect(hinted).toEqual(["1行1列"]);
+    });
+
+    test("解き終えた後のもう一度で、始めの盤面を一言と一緒に止めて見せてから、最初の手順を始めること", async () => {
+      skipIntro();
+      solveAll();
+      await advanceTimeInSlices(introEnoughMs);
+      fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
+      const captionWhileStill = screen.getByText(startCaption);
+      const labelWhileStill = getCellLabel(1, 1);
+      advanceTime(stillIntroStageMs);
+
+      const hinted = getHintedCellPositions();
+
+      expect(captionWhileStill).toBeTruthy();
+      expect(labelWhileStill).toBe("1行1列 空き");
+      expect(screen.queryByText(startCaption)).toBeNull();
       expect(hinted).toEqual(["1行1列"]);
     });
   });
@@ -568,6 +647,7 @@ describe("TakuzuTutorial", () => {
   describe("プレイ中に開いた場合", () => {
     beforeEach(() => {
       render(<TakuzuTutorial open={true} onClose={onClose} />);
+      skipIntro();
     });
 
     test("解き終えると、プレイ中の盤面につなぐ一言を出し、プレイに戻る操作で閉じること", () => {
