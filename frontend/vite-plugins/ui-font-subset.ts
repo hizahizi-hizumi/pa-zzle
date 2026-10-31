@@ -4,7 +4,7 @@ import path from "node:path";
 import { convert } from "fontverter";
 import { Blob, Face } from "harfbuzzjs";
 import subsetFont from "subset-font";
-import type { Plugin } from "vite";
+import type { Plugin, Rolldown } from "vite";
 
 const FONT_FAMILY = "Zen Kaku Gothic New";
 const FONT_WEIGHTS = [400, 500, 700] as const;
@@ -60,6 +60,7 @@ export function uiFontSubset({ root, outputDir }: UiFontSubsetOptions): Plugin {
     "files",
   );
   let pending: Promise<void> = Promise.resolve();
+  let base = "/";
 
   function regenerate(): Promise<void> {
     // 失敗した生成のあとも、次の変更で作り直せるようにする。
@@ -84,6 +85,33 @@ export function uiFontSubset({ root, outputDir }: UiFontSubsetOptions): Plugin {
         }
       });
     },
+    configResolved(config) {
+      base = config.base;
+    },
+    // 書体は描画で使われてから読まれるため、そのままでは JS の実行後に取りに行き、
+    // 初回表示が代替書体で描かれてから差し替わる。HTML から JS と並行して取りに行かせる。
+    transformIndexHtml: {
+      order: "post",
+      async handler(_html, { bundle }) {
+        if (!bundle) {
+          await pending.catch(() => undefined);
+        }
+        const fontUrls = bundle
+          ? listBundledFontUrls(bundle, { root, outputDir, base })
+          : await listGeneratedFontUrls({ root, outputDir, base });
+        return fontUrls.map((href) => ({
+          tag: "link",
+          attrs: {
+            rel: "preload",
+            href,
+            as: "font",
+            type: "font/woff2",
+            crossorigin: "",
+          },
+          injectTo: "head-prepend",
+        }));
+      },
+    },
   };
 }
 
@@ -95,6 +123,40 @@ function isTextSource(relativePath: string): boolean {
     relativePath.startsWith(`${TEXT_SOURCE_DIR}${path.sep}`) &&
     TEXT_SOURCE_EXTENSION_PATTERN.test(relativePath) &&
     !TEST_SOURCE_PATTERN.test(relativePath)
+  );
+}
+
+type FontUrlContext = {
+  root: string;
+  outputDir: string;
+  base: string;
+};
+
+/** ビルドでは CSS から参照されたフォントだけが出力される。インライン化されたものは含まない。 */
+function listBundledFontUrls(
+  bundle: Rolldown.OutputBundle,
+  { root, outputDir, base }: FontUrlContext,
+): string[] {
+  return Object.values(bundle)
+    .filter(
+      (output): output is Rolldown.OutputAsset =>
+        output.type === "asset" &&
+        output.originalFileNames.some((fileName) =>
+          path.resolve(root, fileName).startsWith(outputDir),
+        ),
+    )
+    .map((asset) => `${base}${asset.fileName}`);
+}
+
+async function listGeneratedFontUrls({
+  root,
+  outputDir,
+  base,
+}: FontUrlContext): Promise<string[]> {
+  const manifest = await readManifest(outputDir);
+  const urlDir = path.relative(root, outputDir).split(path.sep).join("/");
+  return (manifest?.files ?? []).map(
+    (file) => `${base}${urlDir}/${file.fileName}`,
   );
 }
 
