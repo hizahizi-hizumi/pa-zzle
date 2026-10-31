@@ -13,8 +13,11 @@ type SlidePuzzleTutorialScrambleProps = {
   children: (frameIndex: number | null) => ReactNode;
 };
 
-/** 1手ごとの間。タイルの滑り（`--duration-normal`）より短くし、続けて崩れていくように見せる。 */
-const SCRAMBLE_STEP_MS = 100;
+/**
+ * 1手ごとの間。タイルの滑り（`--duration-normal`）が止まってから次のタイルを動かし、
+ * 1手ずつ目で追えて、滑っている途中のタイルが重なって見えないようにする。
+ */
+const SCRAMBLE_STEP_MS = 180;
 /** 最後の手から、名前を上部へ移すまでの間。最後のタイルが滑り終えるのを待つ。 */
 const SCRAMBLE_SETTLE_MS = MOTION_DURATION_MS.normal;
 

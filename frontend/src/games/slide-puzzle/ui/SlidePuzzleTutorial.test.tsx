@@ -25,13 +25,13 @@ const idleHintDelayMs = 4000;
 const introBoardStartMs = 850;
 
 /** 解き終えた盤面を見せ終えてから、始めの盤面へ移すまでの間。 */
-const introGoalHoldMs = 1000;
+const introGoalHoldMs = 1500;
 
 /** 導入を最後まで見せるのに十分な間。 */
 const introEnoughMs = 7000;
 
 /** 完成した盤面を1手ずつ崩し始めてから、始めの盤面へ崩し終えるまでの間。 */
-const introStartTransitionMs = 650;
+const introStartTransitionMs = 1050;
 
 /** 始めの盤面へ移し終えてから、名前を上部へ移すまでの間。 */
 const introStartHoldMs = 900;
