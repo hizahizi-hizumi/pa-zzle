@@ -6,7 +6,10 @@ import {
   within,
 } from "@testing-library/react";
 
-import type { IceFloorMazeOperation } from "@/games/ice-floor-maze/play/use-ice-floor-maze-play";
+import type {
+  IceFloorMazeOperation,
+  IceFloorMazeResult,
+} from "@/games/ice-floor-maze/play/use-ice-floor-maze-play";
 import { parseIceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
 import { IceFloorMazePlay } from "@/games/ice-floor-maze/ui/IceFloorMazePlay";
 import type { GameProgress } from "@/games/play";
@@ -24,6 +27,20 @@ const board = parseIceFloorMazeBoard([
   "#...#",
 ]);
 
+// 10×13 で最短6手の問題。基準時間は 130マス × 0.2秒 + 6手 × 2.5秒 = 41秒。
+const result: IceFloorMazeResult = {
+  elapsedMs: 51_000,
+  moveCount: 9,
+  undoCount: 2,
+  restartCount: 1,
+  boardShape: { width: 10, height: 13 },
+  optimalMoveCount: 6,
+  moveDelta: 3,
+  speedRule: { fullScoreMs: 41_000, zeroScoreMs: 82_000 },
+  timeDeltaMs: 10_000,
+  score: { total: 70, breakdown: { efficiency: 40, speed: 30 } },
+};
+
 afterEach(() => {
   cleanup();
 });
@@ -35,6 +52,7 @@ describe("IceFloorMazePlay", () => {
     onRestart: vi.fn(),
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
+    onOpenRecords: vi.fn(),
     onClearAnimationComplete: vi.fn(),
     onChangeDifficulty: vi.fn(),
     onBackToHome: vi.fn(),
@@ -53,7 +71,10 @@ describe("IceFloorMazePlay", () => {
   }: RenderOptions = {}) {
     render(
       <IceFloorMazePlay
+        difficulty="4"
         progress={progress}
+        result={progress === "result" ? result : null}
+        recordOutcomeNotice={null}
         elapsedMs={65_000}
         board={board}
         goal={18}
@@ -307,10 +328,65 @@ describe("IceFloorMazePlay", () => {
       renderPlay({ progress: "result" });
     });
 
-    test("盤面を見せ続けること", () => {
-      const boardImage = screen.getByRole("img", { name: "盤面" });
+    test("スコアと手数・時間を基準との差つきで表示すること", () => {
+      const score = screen.getByText("70");
+      const moveCount = screen.getByText("9手");
+      const moveDelta = screen.getByText("最短 +3");
+      const elapsedTime = screen.getByText("00:51");
+      const timeDelta = screen.getByText("基準 +00:10");
 
-      expect(boardImage).toBeTruthy();
+      expect(score).toBeTruthy();
+      expect(moveCount).toBeTruthy();
+      expect(moveDelta).toBeTruthy();
+      expect(elapsedTime).toBeTruthy();
+      expect(timeDelta).toBeTruthy();
+    });
+
+    test("盤面を表示しないこと", () => {
+      const boardImage = screen.queryByRole("img", { name: "盤面" });
+
+      expect(boardImage).toBeNull();
+    });
+
+    const actionCases = [
+      ["プレイ！", "onStartNewProblem"],
+      ["同じ問題", "onReplay"],
+      ["記録を確認", "onOpenRecords"],
+      ["難易度変更", "onChangeDifficulty"],
+      ["ホーム", "onBackToHome"],
+    ] as const;
+
+    test.each(actionCases)(
+      "%s ボタンで対応する操作を通知すること",
+      (buttonName, callbackName) => {
+        fireEvent.click(screen.getByRole("button", { name: buttonName }));
+
+        expect(callbacks[callbackName]).toHaveBeenCalledOnce();
+      },
+    );
+
+    test("スコアの内訳と、待った・盤面を戻すの回数、採点基準を開けること", () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
+      );
+
+      const efficiency = screen.getByText("40 / 60");
+      const speed = screen.getByText("30 / 40");
+      const undoCount = screen.getByText("待った").parentElement;
+      const restartCount = screen.getByText("盤面を戻す").parentElement;
+      const efficiencyCriteria = screen.getByText(
+        /最短6手で60点.*12手で30点。総手数には「待った」で取り消した手と「盤面を戻す」前の手も含む/,
+      );
+      const speedCriteria = screen.getByText(
+        /基準時間は盤面130マス × 0\.2秒 \+ 最短6手 × 2\.5秒/,
+      );
+
+      expect(efficiency).toBeTruthy();
+      expect(speed).toBeTruthy();
+      expect(undoCount?.textContent).toContain("2回");
+      expect(restartCount?.textContent).toContain("1回");
+      expect(efficiencyCriteria).toBeTruthy();
+      expect(speedCriteria).toBeTruthy();
     });
   });
 });

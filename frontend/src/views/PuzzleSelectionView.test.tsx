@@ -24,8 +24,8 @@ describe("PuzzleSelectionView", () => {
     ["バイナリパズル", "/puzzles/takuzu"],
     [REFLECTION_DISPLAY_NAME, "/puzzles/reflection"],
     [HITOFUDE_PUZZLE_DISPLAY_NAME, "/puzzles/hitofude-puzzle"],
-    [TSUME_SHOGI_DISPLAY_NAME, "/puzzles/tsume-shogi"],
     [ICE_FLOOR_MAZE_DISPLAY_NAME, "/puzzles/ice-floor-maze"],
+    [TSUME_SHOGI_DISPLAY_NAME, "/puzzles/tsume-shogi"],
   ] as const;
 
   beforeEach(() => {
