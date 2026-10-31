@@ -80,13 +80,13 @@ const goal = createSolvedSlidePuzzleBoard(3);
 /**
  * 空白の場所に入る番号のタイルを、1手ずつ滑らせていく。
  * 1手目の 6 で空白が右上に移り、上の行の 2 と 3 をまとめて滑らせられるようになる。
- * 3手目は、空白が左上に来たので 1 が入ると、完成の形から自分で読ませる。
+ * 3手目は、空白が左上に来たので 1 が入ると、ゴールの形から自分で読ませる。
  * 手順を終えると 4・5・8 が残り、どれも空白の場所の番号を探せば決まる。
  */
 const steps: readonly SlidePuzzleTutorialStep[] = [
   {
     message: {
-      headline: "隣のタイルを、空白にスライドさせます",
+      headline: "空白の隣のタイルは、スライドできます",
       detail: "印のタイルをタップしてください",
     },
     introducedRuleId: "slide",
@@ -95,8 +95,8 @@ const steps: readonly SlidePuzzleTutorialStep[] = [
   },
   {
     message: {
-      headline: "空白と同じ行なら、まとめて動かせます",
-      detail: "列でも同じです。間のタイルごとスライドします",
+      headline: "空白の行なら、まとめてスライドできます",
+      detail: "間のタイルごとスライドします。列でも同じです",
     },
     introducedRuleId: "line",
     cellIndex: 0,
@@ -104,7 +104,7 @@ const steps: readonly SlidePuzzleTutorialStep[] = [
   },
   {
     message: {
-      headline: "空白に入るのは、完成の形から分かります",
+      headline: "空白に入る番号を、ゴールの形で探します",
       detail: "迷ったら、少し待つと印が出ます",
     },
     introducedRuleId: null,
@@ -184,8 +184,8 @@ function performSlidePuzzleTutorialAction(
 
 /** 違反の一言の補足に添える、当たったルールそのもの。 */
 const ruleStatements = {
-  slide: "空白の隣のタイルだけが、空白にスライドします",
-  line: "空白と同じ行・列のタイルだけがスライドします",
+  slide: "空白の隣のタイルが、空白にスライドします",
+  line: "空白と同じ行・列のタイルがスライドします",
 } as const satisfies Record<SlidePuzzleTutorialRuleId, string>;
 
 /** 動かないタイルを押したときの一言。まとめて滑ることを示す前は、空白の隣かどうかで言う。 */
@@ -194,7 +194,7 @@ function describeSlidePuzzleTutorialViolation({
 }: SlidePuzzleTutorialSituation): TutorialMessage {
   return earnedRuleIds.includes("line")
     ? {
-        headline: "このタイルは、今は動かせません",
+        headline: "空白の行にも列にもないタイルです",
         detail: ruleStatements.line,
       }
     : {
@@ -304,11 +304,11 @@ export const slidePuzzleTutorial: Tutorial<
   completion: {
     selection: {
       headline: "完成です",
-      detail: "レベル1も、同じ 3×3 の盤面です",
+      detail: "レベル1は、少し回り道が要る盤面です",
     },
     play: {
       headline: "完成です",
-      detail: "この動かし方で、プレイ中の盤面も並べられます",
+      detail: "プレイ中の盤面も、同じ動かし方で並べます",
     },
   },
   start: startSlidePuzzleTutorial,
