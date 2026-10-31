@@ -39,7 +39,7 @@ type TsumeShogiBoardProps = {
   promotionChoice: TsumeShogiPromotionChoice | null;
   /** 直前の入力を着手させなかった。選んでいる盤上の駒で返す。 */
   rejection: TsumeShogiRejection | null;
-  /** 詰み上がり。詰んだ玉を傾ける。 */
+  /** 詰み上がり。詰んだ玉を傾け、詰みの波で光る層を升に置く。 */
   mated: boolean;
   interactionDisabled: boolean;
   onSelectSquare: (square: TsumeShogiSquare) => void;
@@ -176,6 +176,7 @@ export function TsumeShogiBoard({
                 pieceId={
                   boardPieceIds.get(formatTsumeShogiSquareKey(square)) ?? null
                 }
+                clearGlow={mated}
                 arrivedMove={arrivedMove}
                 highlight={getHighlight(square)}
                 disabled={interactionDisabled}
