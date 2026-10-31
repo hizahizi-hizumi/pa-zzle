@@ -28,6 +28,7 @@ import {
   tsumeShogiBoardFrameStyle,
 } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard";
 import { TsumeShogiPieceDefs } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceDefs";
+import { TsumeShogiHowToPlayDialog } from "@/games/tsume-shogi/ui/TsumeShogiHowToPlayDialog";
 import { TsumeShogiClearedPanel } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiClearedPanel";
 import {
   TsumeShogiHand,
@@ -180,8 +181,9 @@ export function TsumeShogiPlay({
       onChangeDifficulty={onChangeDifficulty}
       onBackToHome={onBackToHome}
       onOpenDiagnostics={onOpenDiagnostics}
-      // 遊び方は盤面の操作が出来上がってから足す。
-      renderHowToPlayDialog={() => null}
+      renderHowToPlayDialog={({ open, onClose }) => (
+        <TsumeShogiHowToPlayDialog open={open} onClose={onClose} />
+      )}
       renderResultScreen={(clearedResult) => (
         <TsumeShogiClearedPanel
           plies={plies}
