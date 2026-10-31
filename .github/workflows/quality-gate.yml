@@ -26,12 +26,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      # vite / vitest / tsc はNodeで動くため、ランナー既定ではなくChatGPT実行環境に合わせた.node-versionに固定する。
+      # vite / vitest / tsc はNodeで動くため、ランナー既定ではなくChatGPT実行環境と同じNodeに固定する。
       - name: Setup Node
-        uses: actions/setup-node@v7
-        with:
-          node-version-file: .node-version
-          package-manager-cache: false
+        uses: ./.github/actions/setup-node
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2

@@ -9,7 +9,6 @@ Biome、Tailwind CSS、shadcn/ui の設定と既存 UI 部品は、後続実装�
 ## セットアップ
 
 Bun はリポジトリルートの `.bun-version` に固定している。
-Node はリポジトリルートの `.node-version` にメジャーバージョンを固定している。ChatGPT実行環境の Node に合わせるため、その環境が上がるまで変えない。
 
 ```sh
 bun install

@@ -163,12 +163,9 @@ jobs:
           ref: ${{ needs.snapshot.outputs.target-sha }}
           fetch-depth: 1
 
-      # 依存の生成と検証を、ランナー既定ではなくChatGPT実行環境に合わせた.node-versionのNodeで動かす。
+      # 依存の生成と検証を、ランナー既定ではなくChatGPT実行環境と同じNodeで動かす。
       - name: Setup Node
-        uses: actions/setup-node@v7
-        with:
-          node-version-file: .node-version
-          package-manager-cache: false
+        uses: ./.github/actions/setup-node
 
       - name: Re-plan Offline Dependencies under pool lock
         id: dependencies
