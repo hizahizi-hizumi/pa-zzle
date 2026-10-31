@@ -11,10 +11,13 @@
  * - `pieceSide`: 駒の側面。面より濃い木の色で、面の下にのぞかせて駒の厚みを見せる。
  * - `pieceFill`: 塗りを重ねない駒の面。駒箱の駒の山や、駒の塗りを参照できない所に使う。
  * - `pieceShadow`: 駒の下に落とす影。駒を盤や駒台の上に置いた厚みを見せる。
- * - `square*`: 升の地。選んだ駒・最後の手を地の色で示し、駒や罫線は変えない。
+ * - `square*`: 升の地。選んだ駒・最後の手・反証を地の色で示し、駒や罫線は変えない。`squareRejected` は、動きを減らす設定で
+ *   着手させなかった入力を返す間だけ、選んだ駒の地を変える色。
+ * - `handRejected`: 動きを減らす設定で着手させなかった入力を返す間の、選んだ持駒の地。`squareRejected` と同じ色。
  * - `handHover`: 駒台の持駒を指したときの地。駒台の木の色に合わせ、選んだ持駒の地（`handSelected`）は上書きしない。
  * - `pieceText`: 駒の文字。
  * - `promoted`: 成った駒の文字。将棋の駒の慣例どおり赤くする。
+ * - `refutation`: 誤王手への玉方の反証。最後の手の地とは色相を分け、「この筋では逃れられた」ことを示す。
  */
 export const tsumeShogiToneClassNames = {
   boardSurface: "bg-[#f0d6a2] dark:bg-[#3a2e24]",
@@ -42,8 +45,12 @@ export const tsumeShogiToneClassNames = {
   promotedText: "fill-red-700",
   squareSelected: "bg-sky-200 dark:bg-sky-900",
   squareLastMove: "bg-[#dcae66] dark:bg-[#6b4a26]",
+  squareRefutation: "bg-rose-200 dark:bg-rose-900/80",
+  squareRejected: "bg-rose-300 dark:bg-rose-800",
   squareMated: "bg-amber-400 dark:bg-amber-600",
   handSelected: "bg-sky-200 dark:bg-sky-900",
+  handRejected: "bg-rose-300 dark:bg-rose-800",
   handHover:
     "not-aria-disabled:not-aria-pressed:hover:bg-[#5c3b1a]/10 dark:not-aria-disabled:not-aria-pressed:hover:bg-white/10",
+  refutationText: "text-rose-700 dark:text-rose-300",
 } as const;

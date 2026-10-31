@@ -2,7 +2,6 @@ import { type CSSProperties, useEffect, useRef } from "react";
 
 import { GamePlayFrame } from "@/components/GamePlayFrame";
 import { UndoButton } from "@/components/UndoButton";
-import { Button } from "@/components/ui/button";
 import type {
   GamePlayScreenProps,
   RestartableGamePlayScreenProps,
@@ -10,7 +9,7 @@ import type {
 } from "@/games/play";
 import type { TsumeShogiDifficulty } from "@/games/tsume-shogi/difficulty";
 import { TSUME_SHOGI_DISPLAY_NAME } from "@/games/tsume-shogi/display-name";
-import type { TsumeShogiMove } from "@/games/tsume-shogi/puzzle/moves";
+import type { TsumeShogiPlayedMove } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
 import type {
   TsumeShogiBoardPiece,
   TsumeShogiHand as TsumeShogiHandCounts,
@@ -30,8 +29,12 @@ import {
 } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard";
 import { TsumeShogiPieceDefs } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceDefs";
 import { TsumeShogiClearedPanel } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiClearedPanel";
-import { TsumeShogiHand } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiHand";
+import {
+  TsumeShogiHand,
+  type TsumeShogiHandAvailability,
+} from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiHand";
 import { TsumeShogiPieceBox } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiPieceBox";
+import { TsumeShogiPlayStatus } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiPlayStatus";
 import { useShortPlayArea } from "@/games/tsume-shogi/ui/TsumeShogiPlay/use-short-play-area";
 
 type TsumeShogiPlayProps = GamePlayScreenProps<
@@ -42,36 +45,19 @@ type TsumeShogiPlayProps = GamePlayScreenProps<
   UndoableGamePlayScreenProps & {
     plies: number;
     phase: TsumeShogiSessionPhase;
-    onWrongLine: boolean;
-    remainingPlies: number;
     boardPieces: readonly TsumeShogiBoardPiece[];
     attackerHand: TsumeShogiHandCounts;
-    lastMove: TsumeShogiMove | null;
+    shownMoves: readonly TsumeShogiPlayedMove[];
+    shownMovesRestored: boolean;
     selection: TsumeShogiSelection | null;
     promotionChoice: TsumeShogiPromotionChoice | null;
     rejection: TsumeShogiRejection | null;
-    onTapSquare: (square: TsumeShogiSquare) => void;
-    onTapHand: (pieceType: TsumeShogiHandPieceType) => void;
+    onSelectSquare: (square: TsumeShogiSquare) => void;
+    onSelectHandPiece: (pieceType: TsumeShogiHandPieceType) => void;
     onChoosePromotion: (promote: boolean) => void;
     onCancelPromotion: () => void;
+    onClearSelection: () => void;
   };
-
-const rejectionMessages = {
-  "not-check": "王手になる手だけ指せます",
-  illegal: "その手は指せません",
-} as const satisfies Record<TsumeShogiRejection["reason"], string>;
-
-function describePhase(
-  phase: TsumeShogiSessionPhase,
-  onWrongLine: boolean,
-  plies: number,
-  remainingPlies: number,
-): string {
-  if (phase === "defender") return "玉方が考えています";
-  if (phase === "refuted") return `${plies}手では詰みません`;
-  if (onWrongLine) return `${plies}手では詰みません（残り${remainingPlies}手）`;
-  return `攻方の番（残り${remainingPlies}手）`;
-}
 
 /**
  * 盤の幅。盤の縁と表記（`tsumeShogiBoardFrameStyle`）を含め、升は実物の盤と同じ縦長（横 35.2 : 縦 38.6）。
@@ -87,26 +73,41 @@ const boardSizeStyle = {
     "min(calc(100cqw - 2 * var(--board-gutter)), calc((100cqh - var(--board-chrome) - var(--board-file-band) - var(--board-frame)) * 352 / 386 + var(--board-frame) + var(--board-rank-band)), 40rem)",
 } as CSSProperties;
 
+/**
+ * 着手させなかった入力ごとの読み上げの key。同じ文でも入力ごとに読み上げ直すよう、入力ごとに要素を作り直す。
+ */
+const rejectionAnnouncementKeys = new WeakMap<TsumeShogiRejection, number>();
+let nextRejectionAnnouncementKey = 0;
+
+function getRejectionAnnouncementKey(rejection: TsumeShogiRejection): number {
+  let key = rejectionAnnouncementKeys.get(rejection);
+  if (key === undefined) {
+    key = nextRejectionAnnouncementKey++;
+    rejectionAnnouncementKeys.set(rejection, key);
+  }
+  return key;
+}
+
 export function TsumeShogiPlay({
   progress,
   elapsedMs,
   result,
   plies,
   phase,
-  onWrongLine,
-  remainingPlies,
   boardPieces,
   attackerHand,
-  lastMove,
+  shownMoves,
+  shownMovesRestored,
   selection,
   promotionChoice,
   rejection,
   canUndo,
   canRestart,
-  onTapSquare,
-  onTapHand,
+  onSelectSquare,
+  onSelectHandPiece,
   onChoosePromotion,
   onCancelPromotion,
+  onClearSelection,
   onUndo,
   onRestart,
   onReplay,
@@ -116,7 +117,14 @@ export function TsumeShogiPlay({
   onBackToHome,
   onOpenDiagnostics,
 }: TsumeShogiPlayProps) {
-  const acceptsInput = progress === "playing" && phase === "attacker";
+  const playing = progress === "playing";
+  const acceptsInput = playing && phase === "attacker";
+  const handAvailability: TsumeShogiHandAvailability = acceptsInput
+    ? "available"
+    : playing && phase === "defender"
+      ? "waiting"
+      : "unavailable";
+  const playAreaRef = useRef<HTMLElement>(null);
   const boardAreaRef = useRef<HTMLElement>(null);
   const boardGroupRef = useRef<HTMLDivElement>(null);
   const shortPlayArea = useShortPlayArea(boardAreaRef, boardGroupRef);
@@ -127,8 +135,37 @@ export function TsumeShogiPlay({
     if (progress === "clearing") onClearAnimationComplete();
   }, [progress, onClearAnimationComplete]);
 
+  useEffect(() => {
+    if (!playing) return;
+
+    function handleKeyDown(event: KeyboardEvent): void {
+      // 遊び方などのダイアログはプレイ画面の外へ描かれる。そこでの Esc はダイアログを閉じる操作なので、盤の選択には効かせない。
+      const { target } = event;
+      const targetsPlayArea =
+        target === document.body ||
+        (target instanceof Node && playAreaRef.current?.contains(target));
+      if (
+        !targetsPlayArea ||
+        event.key !== "Escape" ||
+        event.defaultPrevented
+      ) {
+        return;
+      }
+
+      if (promotionChoice) {
+        onCancelPromotion();
+      } else {
+        onClearSelection();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [playing, promotionChoice, onCancelPromotion, onClearSelection]);
+
   return (
     <GamePlayFrame
+      ref={playAreaRef}
       progress={progress}
       result={result}
       title={TSUME_SHOGI_DISPLAY_NAME}
@@ -174,10 +211,14 @@ export function TsumeShogiPlay({
               <TsumeShogiBoard
                 boardPieces={boardPieces}
                 selection={selection}
-                lastMove={lastMove}
-                mated={progress !== "playing"}
+                shownMoves={shownMoves}
+                shownMovesRestored={shownMovesRestored}
+                promotionChoice={promotionChoice}
+                rejection={rejection}
+                mated={!playing}
                 interactionDisabled={!acceptsInput}
-                onSelectSquare={onTapSquare}
+                onSelectSquare={onSelectSquare}
+                onChoosePromotion={onChoosePromotion}
               />
             </div>
             <div className="h-12">
@@ -186,42 +227,29 @@ export function TsumeShogiPlay({
                 selectedPieceType={
                   selection?.type === "hand" ? selection.pieceType : null
                 }
-                disabled={!acceptsInput}
+                availability={handAvailability}
+                rejection={rejection}
                 // 背の低い画面では、待ったの欄の高さを盤に回し、待ったを駒台の右端に置く。
                 trailingAction={shortPlayArea ? undoButton : undefined}
-                onSelectHandPiece={onTapHand}
+                onSelectHandPiece={onSelectHandPiece}
               />
             </div>
             <div className="h-5 px-(--board-frame)">
-              {promotionChoice ? (
-                <div role="group" aria-label="成・不成" className="flex gap-2">
-                  <Button type="button" onClick={() => onChoosePromotion(true)}>
-                    成る
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => onChoosePromotion(false)}
-                  >
-                    成らない
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={onCancelPromotion}
-                  >
-                    やめる
-                  </Button>
-                </div>
-              ) : (
-                <p role="status" className="truncate text-supporting">
-                  {rejection
-                    ? rejectionMessages[rejection.reason]
-                    : describePhase(phase, onWrongLine, plies, remainingPlies)}
-                </p>
-              )}
+              <TsumeShogiPlayStatus
+                plies={plies}
+                phase={phase}
+                shownMoves={shownMoves}
+              />
             </div>
           </div>
+          {/* 画面では駒で返し、理由は文で示さない。読み上げでも指せなかったことだけを伝える。 */}
+          <p aria-live="polite" className="sr-only">
+            {rejection && (
+              <span key={getRejectionAnnouncementKey(rejection)}>
+                指せません
+              </span>
+            )}
+          </p>
         </main>
         {!shortPlayArea && (
           <footer className="grid h-28 shrink-0 items-end px-4 pb-2">

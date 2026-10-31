@@ -20,27 +20,27 @@ export function PlayableTsumeShogi({ difficulty }: PlayableTsumeShogiProps) {
       recordOutcomeNotice={null}
       plies={play.plies}
       phase={play.phase}
-      onWrongLine={play.onWrongLine}
-      remainingPlies={play.remainingPlies}
       boardPieces={play.boardPieces}
       attackerHand={play.attackerHand}
-      lastMove={play.lastMove}
+      shownMoves={play.shownMoves}
+      shownMovesRestored={play.shownMovesRestored}
       selection={play.selection}
       promotionChoice={play.promotionChoice}
       rejection={play.rejection}
       canUndo={play.canUndo}
       canRestart={play.canRestart}
-      onTapSquare={play.tapSquare}
-      onTapHand={play.tapHand}
+      onSelectSquare={play.selectSquare}
+      onSelectHandPiece={play.selectHandPiece}
       onChoosePromotion={play.choosePromotion}
       onCancelPromotion={play.cancelPromotion}
+      onClearSelection={play.clearSelection}
       onUndo={play.undo}
       onRestart={play.restart}
       onReplay={play.replay}
       onClearAnimationComplete={play.completeClearAnimation}
       onStartNewProblem={play.startNewProblem}
-      // 難易度選択はまだ無いので、ホームへ戻す。
       onOpenRecords={() => navigate("/records")}
+      // 難易度選択はまだ無いので、ホームへ戻す。
       onChangeDifficulty={() => navigate("/")}
       onBackToHome={() => navigate("/")}
     />

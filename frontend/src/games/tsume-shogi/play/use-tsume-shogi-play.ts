@@ -18,13 +18,20 @@ import type {
   TsumeShogiProblemIdentity,
 } from "@/games/tsume-shogi/problem/problem";
 import { selectTsumeShogiProblemForDifficulty } from "@/games/tsume-shogi/problem-selection";
-import type { TsumeShogiMove } from "@/games/tsume-shogi/puzzle/moves";
+import {
+  canTsumeShogiMovePromote,
+  type TsumeShogiMove,
+} from "@/games/tsume-shogi/puzzle/moves";
 import {
   getTsumeShogiHand,
+  getTsumeShogiPieceAt,
   listTsumeShogiBoardPieces,
   type TsumeShogiBoardPiece,
   type TsumeShogiHand,
   type TsumeShogiHandPieceType,
+  type TsumeShogiPieceType,
+  type TsumeShogiPosition,
+  type TsumeShogiSide,
   type TsumeShogiSquare,
 } from "@/games/tsume-shogi/puzzle/position";
 import {
@@ -34,11 +41,8 @@ import {
   chooseTsumeShogiSessionPromotion,
   clearTsumeShogiSessionSelection,
   createTsumeShogiSession,
-  getTsumeShogiSessionLastMove,
   getTsumeShogiSessionPhase,
-  getTsumeShogiSessionRemainingPlies,
   getTsumeShogiSessionResult,
-  isTsumeShogiSessionOnWrongLine,
   playTsumeShogiSessionDefenderReply,
   restartTsumeShogiSession,
   type TsumeShogiPromotionChoice,
@@ -47,6 +51,8 @@ import {
   type TsumeShogiSession,
   type TsumeShogiSessionPhase,
   type TsumeShogiSessionResult,
+  type TsumeShogiSessionTurn,
+  type TsumeShogiTurnLine,
   tapTsumeShogiSessionHand,
   tapTsumeShogiSessionSquare,
   undoTsumeShogiSession,
@@ -58,6 +64,61 @@ import {
  */
 export const TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS = 600;
 
+/**
+ * 盤面に見せている最後の組の手。`pieceType` は指した後の駒（成った手は成った駒）、`line` はその手の筋。
+ * `promotable` は成ることを選べた手か（成った手と、成れたのに成らなかった手）。
+ */
+export type TsumeShogiPlayedMove = {
+  side: TsumeShogiSide;
+  move: TsumeShogiMove;
+  pieceType: TsumeShogiPieceType;
+  promotable: boolean;
+  line: TsumeShogiTurnLine;
+};
+
+function toPlayedMove(
+  side: TsumeShogiSide,
+  move: TsumeShogiMove,
+  positionAfterMove: TsumeShogiPosition,
+  line: TsumeShogiTurnLine,
+): TsumeShogiPlayedMove {
+  const pieceType = getTsumeShogiPieceAt(positionAfterMove, move.to)!.type;
+  return {
+    side,
+    move,
+    pieceType,
+    promotable:
+      move.kind === "board" &&
+      (move.promote || canTsumeShogiMovePromote(side, pieceType, move)),
+    line,
+  };
+}
+
+function listShownMoves(
+  turn: TsumeShogiSessionTurn | undefined,
+  defenderReplyPending: boolean,
+): TsumeShogiPlayedMove[] {
+  if (!turn) return [];
+
+  const attacker = toPlayedMove(
+    "attacker",
+    turn.attackerMove,
+    turn.positionAfterAttack,
+    turn.line,
+  );
+  if (defenderReplyPending || turn.defenderMove === null) return [attacker];
+
+  return [
+    attacker,
+    toPlayedMove(
+      "defender",
+      turn.defenderMove,
+      turn.positionAfterDefense,
+      turn.line,
+    ),
+  ];
+}
+
 export type TsumeShogiPlay = GamePlay<
   TsumeShogiDifficulty,
   TsumeShogiProblemIdentity,
@@ -68,23 +129,27 @@ export type TsumeShogiPlay = GamePlay<
   UndoableGamePlay & {
     plies: number;
     phase: TsumeShogiSessionPhase;
-    onWrongLine: boolean;
-    remainingPlies: number;
     boardPieces: readonly TsumeShogiBoardPiece[];
     attackerHand: TsumeShogiHand;
-    lastMove: TsumeShogiMove | null;
+    shownMoves: readonly TsumeShogiPlayedMove[];
+    /** 待った・盤面を戻すで、最後の組として盤面に戻ってきた手を見せている。指し直したときのように動かして見せない。 */
+    shownMovesRestored: boolean;
     selection: TsumeShogiSelection | null;
     promotionChoice: TsumeShogiPromotionChoice | null;
     rejection: TsumeShogiRejection | null;
-    tapSquare: (square: TsumeShogiSquare) => void;
-    tapHand: (pieceType: TsumeShogiHandPieceType) => void;
+    selectSquare: (square: TsumeShogiSquare) => void;
+    selectHandPiece: (pieceType: TsumeShogiHandPieceType) => void;
     choosePromotion: (promote: boolean) => void;
     cancelPromotion: () => void;
     clearSelection: () => void;
   };
 
+/**
+ * - `restoredTurn`: 待った・盤面を戻すで、最後の組として盤面に戻ってきた手。指し直したときのように動かして見せない。
+ */
 type TsumeShogiPlayState = {
   session: TsumeShogiSession;
+  restoredTurn: TsumeShogiSessionTurn | null;
   progress: GameProgress;
   problemIdentity: TsumeShogiProblemIdentity;
 };
@@ -95,9 +160,24 @@ function createPlayState(
 ): TsumeShogiPlayState {
   return {
     session: createTsumeShogiSession(problem, startedAt),
+    restoredTurn: null,
     progress: "playing",
     problemIdentity: identity,
   };
+}
+
+/** 操作で変わった session を反映し、手を戻したなら盤面に戻ってきた最後の組を覚える。 */
+function applySession(
+  current: TsumeShogiPlayState,
+  next: TsumeShogiSession,
+): TsumeShogiPlayState {
+  const applied = applyPlaySession(current, next);
+  if (applied === current) return current;
+
+  const rewound = next.turns.length < current.session.turns.length;
+  return rewound
+    ? { ...applied, restoredTurn: next.turns.at(-1) ?? null }
+    : applied;
 }
 
 function selectProblem(
@@ -114,7 +194,8 @@ function selectProblem(
  * 難易度のプレイを始める。
  * 攻方が王手を指すと、`TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS` の間を置いて玉方の応手（作意の応手、誤王手なら反証）を指す。
  * `undo`（待った）は攻方の1手を取り消し、誤王手の筋にいれば判断地点まで戻す。
- * 詰むと `progress` が `clearing` になり、クリアしたプレイの事実を `result` に返す。
+ * 詰むと `progress` が `clearing` になり、完成演出を終えたら `completeClearAnimation` で `result` に進める。
+ * クリアしたプレイの事実を `result` に返す。
  */
 export function useTsumeShogiPlay(
   difficulty: TsumeShogiDifficulty,
@@ -127,7 +208,7 @@ export function useTsumeShogiPlay(
 
   const updateSession = useCallback(
     (update: (current: TsumeShogiSession) => TsumeShogiSession) => {
-      setPlay((current) => applyPlaySession(current, update(current.session)));
+      setPlay((current) => applySession(current, update(current.session)));
     },
     [],
   );
@@ -140,13 +221,13 @@ export function useTsumeShogiPlay(
       if (next === session) return;
 
       setPlay((current) =>
-        current.session === session ? applyPlaySession(current, next) : current,
+        current.session === session ? applySession(current, next) : current,
       );
     },
     [session],
   );
 
-  // 元に戻した後に別の手を指したときも、その手の応手を待ち直すよう、応手を待つ手ごとに間を置く。
+  // 待ったで戻した後に別の手を指したときも、その手の応手を待ち直すよう、応手を待つ手ごとに間を置く。
   const turnAwaitingReply = session.defenderReplyPending
     ? session.turns.at(-1)
     : undefined;
@@ -160,7 +241,7 @@ export function useTsumeShogiPlay(
     return () => window.clearTimeout(timer);
   }, [turnAwaitingReply, updateSession]);
 
-  const tapSquare = useCallback(
+  const selectSquare = useCallback(
     (square: TsumeShogiSquare) => {
       const operatedAt = Date.now();
       playAttackerOperation((current) =>
@@ -170,7 +251,7 @@ export function useTsumeShogiPlay(
     [playAttackerOperation],
   );
 
-  const tapHand = useCallback(
+  const selectHandPiece = useCallback(
     (pieceType: TsumeShogiHandPieceType) => {
       updateSession((current) => tapTsumeShogiSessionHand(current, pieceType));
     },
@@ -205,12 +286,13 @@ export function useTsumeShogiPlay(
 
   const replay = useCallback(() => {
     const startedAt = Date.now();
-    setPlay((current) =>
-      startPlaySession(
+    setPlay((current) => ({
+      ...startPlaySession(
         current,
         createTsumeShogiSession(current.session.problem, startedAt),
       ),
-    );
+      restoredTurn: null,
+    }));
   }, []);
 
   const completeClearAnimation = useCallback(() => {
@@ -235,6 +317,11 @@ export function useTsumeShogiPlay(
     () => getTsumeShogiHand(position, "attacker"),
     [position],
   );
+  const lastTurn = session.turns.at(-1);
+  const shownMoves = useMemo(
+    () => listShownMoves(lastTurn, session.defenderReplyPending),
+    [lastTurn, session.defenderReplyPending],
+  );
   const result = useMemo(() => getTsumeShogiSessionResult(session), [session]);
 
   return {
@@ -249,18 +336,18 @@ export function useTsumeShogiPlay(
     result,
     plies: session.problem.plies,
     phase: getTsumeShogiSessionPhase(session),
-    onWrongLine: isTsumeShogiSessionOnWrongLine(session),
-    remainingPlies: getTsumeShogiSessionRemainingPlies(session),
     boardPieces,
     attackerHand,
-    lastMove: getTsumeShogiSessionLastMove(session),
+    shownMoves,
+    shownMovesRestored:
+      lastTurn !== undefined && lastTurn === play.restoredTurn,
     selection: session.selection,
     promotionChoice: session.promotionChoice,
     rejection: session.rejection,
     canUndo: canUndoTsumeShogiSession(session),
     canRestart: canRestartTsumeShogiSession(session),
-    tapSquare,
-    tapHand,
+    selectSquare,
+    selectHandPiece,
     choosePromotion,
     cancelPromotion,
     clearSelection,
