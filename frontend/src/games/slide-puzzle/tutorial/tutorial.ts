@@ -95,7 +95,7 @@ const steps: readonly SlidePuzzleTutorialStep[] = [
   },
   {
     message: {
-      headline: "空白の行なら、まとめてスライドできます",
+      headline: "空白と同じ行のタイルもスライドできます",
       detail: "間のタイルごとスライドします。列でも同じです",
     },
     introducedRuleId: "line",
@@ -104,7 +104,7 @@ const steps: readonly SlidePuzzleTutorialStep[] = [
   },
   {
     message: {
-      headline: "空白に入る番号を、ゴールの形で探します",
+      headline: "空白に入る番号は、ゴールで分かります",
       detail: "迷ったら、少し待つと印が出ます",
     },
     introducedRuleId: null,
@@ -181,6 +181,10 @@ function performSlidePuzzleTutorialAction(
   }
   return { state: next, outcome: step !== null ? "stepped" : "continued" };
 }
+
+/** 手を引いている間に、印の無い動くタイルを押したときの補足。 */
+export const slidePuzzleTutorialOffMarkDetail =
+  "今は印のタイルをタップしてください";
 
 /** 違反の一言の補足に添える、当たったルールそのもの。 */
 const ruleStatements = {
@@ -304,11 +308,11 @@ export const slidePuzzleTutorial: Tutorial<
   completion: {
     selection: {
       headline: "完成です",
-      detail: "レベル1は、少し回り道が要る盤面です",
+      detail: "レベル1は、ここより手数が多い盤面です",
     },
     play: {
       headline: "完成です",
-      detail: "プレイ中の盤面も、同じ動かし方で並べます",
+      detail: "プレイ中の盤面も、同じように動かして並べます",
     },
   },
   start: startSlidePuzzleTutorial,

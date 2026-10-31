@@ -237,7 +237,7 @@ describe("SlidePuzzleTutorial", () => {
 
       const position = getTilePosition(6);
       const message = screen.getByText(
-        "空白の行なら、まとめてスライドできます",
+        "空白と同じ行のタイルもスライドできます",
       );
       const hinted = getHintedTiles();
 
@@ -257,6 +257,14 @@ describe("SlidePuzzleTutorial", () => {
       expect(position).toBe("2行2列");
       expect(getHintedTiles()).toEqual(["6"]);
       expect(hintCueAfter).not.toBe(hintCueBefore);
+    });
+
+    test("印の無い動くタイルを押すと、今は印のタイルを押すことを添えること", () => {
+      tapTile(4);
+
+      const detail = screen.getByText("今は印のタイルをタップしてください");
+
+      expect(detail).toBeTruthy();
     });
 
     test("動かないタイルを押すと、滑らせずに揺らし、空白の隣のタイルが滑ることを伝えること", () => {
@@ -318,7 +326,7 @@ describe("SlidePuzzleTutorial", () => {
 
       test("空白に入るタイルをゴールの形から読ませ、手が止まるまで印を付けないこと", () => {
         const headline = screen.getByText(
-          "空白に入る番号を、ゴールの形で探します",
+          "空白に入る番号は、ゴールで分かります",
         );
         const detail = screen.getByText("迷ったら、少し待つと印が出ます");
         const currentChips = getCurrentRuleChipTexts();
@@ -402,7 +410,7 @@ describe("SlidePuzzleTutorial", () => {
     test("解き終えると、レベル1につなぐ一言を出し、レベル1を遊ぶで本番を始めること", () => {
       solveAll();
       const headline = screen.getByText("完成です");
-      const detail = screen.getByText("レベル1は、少し回り道が要る盤面です");
+      const detail = screen.getByText("レベル1は、ここより手数が多い盤面です");
       fireEvent.click(screen.getByRole("button", { name: "レベル1を遊ぶ" }));
 
       expect(headline).toBeTruthy();
@@ -695,10 +703,10 @@ describe("SlidePuzzleTutorial", () => {
     test("解き終えると、プレイ中の盤面につなぐ一言を出し、プレイに戻る操作で閉じること", () => {
       solveAll();
       const detail = screen.getByText(
-        "プレイ中の盤面も、同じ動かし方で並べます",
+        "プレイ中の盤面も、同じように動かして並べます",
       );
       const levelDetail = screen.queryByText(
-        "レベル1は、少し回り道が要る盤面です",
+        "レベル1は、ここより手数が多い盤面です",
       );
       fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
 

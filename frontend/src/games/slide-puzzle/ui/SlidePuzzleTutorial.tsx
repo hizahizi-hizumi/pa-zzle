@@ -19,6 +19,7 @@ import {
   type SlidePuzzleTutorialRuleId,
   type SlidePuzzleTutorialStep,
   slidePuzzleTutorial,
+  slidePuzzleTutorialOffMarkDetail,
   slidePuzzleTutorialScrambleBoards,
 } from "@/games/slide-puzzle/tutorial/tutorial";
 import { SlidePuzzleBoard } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard";
@@ -31,6 +32,7 @@ import {
   getTutorialSituation,
   performTutorialAction,
   startTutorial,
+  type TutorialMessage,
   type TutorialProgress,
 } from "@/games/tutorial";
 
@@ -133,6 +135,9 @@ export function SlidePuzzleTutorial({
     useState<SlidePuzzleTutorialProgress | null>(null);
   // 手を引いている間に印の無いタイルや動かないタイルを押されたら、印を付け直す。自分で読ませる手順では、そこで初めて印を付ける。
   const [hintCueId, setHintCueId] = useState(0);
+  // 手を引いている間に印の無い動くタイルを押されたら、ルールの見出しと食い違って見えないよう、今は印のタイルを押すことを添える。
+  const [offMarkProgress, setOffMarkProgress] =
+    useState<SlidePuzzleTutorialProgress | null>(null);
   const situation = getTutorialSituation(slidePuzzleTutorial, progress);
   const guiding = situation.step !== null;
   const { boardState } = progress;
@@ -182,6 +187,7 @@ export function SlidePuzzleTutorial({
       setHintCueId((id) => id + 1);
       setIdleProgress(next);
     }
+    setOffMarkProgress(guiding && ignored ? next : null);
     if (next !== progress) {
       setProgress(next);
     }
@@ -189,6 +195,7 @@ export function SlidePuzzleTutorial({
 
   function restart(): void {
     setIdleProgress(null);
+    setOffMarkProgress(null);
     setProgress(startTutorial(slidePuzzleTutorial));
   }
 
@@ -201,6 +208,20 @@ export function SlidePuzzleTutorial({
   function handleStartPlay(): void {
     restart();
     onStartPlay?.();
+  }
+
+  function getMessage(): TutorialMessage {
+    // 手を離した後に止まって印を出したら、残っている違反の一言を下げて、残りを並べる一言に戻す。
+    const freePlayHintShown = !guiding && hintCellIndex !== null;
+    const message = getTutorialMessage(
+      slidePuzzleTutorial,
+      progress,
+      !freePlayHintShown,
+      onStartPlay ? "selection" : "play",
+    );
+    return offMarkProgress === progress
+      ? { ...message, detail: slidePuzzleTutorialOffMarkDetail }
+      : message;
   }
 
   /**
@@ -278,12 +299,7 @@ export function SlidePuzzleTutorial({
         earned: progress.earnedRuleIds.includes(rule.id),
         current: situation.step?.introducedRuleId === rule.id,
       }))}
-      message={getTutorialMessage(
-        slidePuzzleTutorial,
-        progress,
-        true,
-        onStartPlay ? "selection" : "play",
-      )}
+      message={getMessage()}
       introducing={progress.phase === "intro"}
       completed={progress.phase === "completed"}
       finishAction={
