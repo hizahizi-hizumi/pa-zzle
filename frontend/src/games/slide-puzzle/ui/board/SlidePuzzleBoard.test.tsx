@@ -114,51 +114,23 @@ describe("SlidePuzzleBoard", () => {
     },
   );
 
-  describe("並べ終えたときの場所を見せる場合", () => {
-    const onTileEntranceComplete = vi.fn<() => void>();
-
-    function renderGoalShownBoard(
-      tileEntrance: "concealed" | "settling" | null,
-    ): void {
+  describe("演出を再生できない環境でタイルを降ろす場合", () => {
+    test("すぐに降ろし終えたことを通知すること", () => {
+      const onTileEntranceComplete = vi.fn<() => void>();
       render(
         <SlidePuzzleBoard
           board={board}
           operation={null}
           interactionDisabled={false}
           clearing={false}
-          goalShown
-          tileEntrance={tileEntrance}
+          tileEntrance="settling"
           onTileEntranceComplete={onTileEntranceComplete}
           onSlideTile={onSlideTile}
           onClearAnimationComplete={onClearAnimationComplete}
         />,
       );
-    }
 
-    afterEach(() => {
-      onTileEntranceComplete.mockClear();
-    });
-
-    test("各マスにそこへ入る番号を出すこと", () => {
-      renderGoalShownBoard(null);
-      const boardGroup = screen.getByRole("group", { name: "盤面" });
-
-      const slotNumbers = Array.from(
-        boardGroup.querySelectorAll("[data-goal-slot]"),
-        (slot) => slot.textContent,
-      );
-
-      expect(slotNumbers).toEqual(
-        Array.from({ length: 15 }, (_, index) => String(index + 1)),
-      );
-    });
-
-    describe("演出を再生できない環境でタイルを降ろす場合", () => {
-      test("すぐに降ろし終えたことを通知すること", () => {
-        renderGoalShownBoard("settling");
-
-        expect(onTileEntranceComplete).toHaveBeenCalledOnce();
-      });
+      expect(onTileEntranceComplete).toHaveBeenCalledOnce();
     });
   });
 

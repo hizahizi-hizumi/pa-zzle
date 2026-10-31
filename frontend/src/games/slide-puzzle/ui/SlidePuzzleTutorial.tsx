@@ -116,8 +116,7 @@ function toScrambleOperation(frameIndex: number): SlidePuzzleOperation | null {
 
 /**
  * 3×3 の盤面を、一言と印に沿って1手ずつ一緒に並べ、タイルの動き方を1つずつ使って身につけさせる。
- * 手順を終えたら手を離し、残りを自分で並べさせる。盤面・滑り・揺れ・解けたときの波は本番と同じ部品を使い、
- * どこを目指すかが見えるよう、各マスに入る番号を盤面に薄く示す。
+ * 手順を終えたら手を離し、残りを自分で並べさせる。盤面・滑り・揺れ・解けたときの波は本番と同じ部品を使う。
  */
 export function SlidePuzzleTutorial({
   open,
@@ -197,7 +196,7 @@ export function SlidePuzzleTutorial({
   }
 
   /**
-   * 導入では、各マスに入る番号を先に見せ、そこへタイルを番号順に降ろして完成した盤面を作り、1手ずつ崩して始めの盤面へ戻す。
+   * 導入では、空の盤面にタイルを番号順に降ろして完成した盤面を作り、1手ずつ崩して始めの盤面へ戻す。
    * もう一度始めたときは完成した盤面がもう見えているので、崩すところから見せる。
    */
   function renderBoard({ stage, onGoalShown, onEnd }: TutorialBoardIntro) {
@@ -229,7 +228,6 @@ export function SlidePuzzleTutorial({
                 }
                 interactionDisabled={progress.phase !== "playing"}
                 clearing={progress.phase === "solved"}
-                goalShown={true}
                 tileEntrance={
                   stage === "goal"
                     ? "settling"
