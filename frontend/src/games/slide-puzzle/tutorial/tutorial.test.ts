@@ -271,7 +271,7 @@ describe("slidePuzzleTutorial", () => {
       [
         "まとめて滑ることを示した後",
         createRejectedCase(2),
-        "空白と同じ行にも列にもありません",
+        "このタイルは、空白と行も列も違います",
         "空白と同じ行・列のタイルだけがスライドします",
       ],
     ] as const;

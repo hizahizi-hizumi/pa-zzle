@@ -21,7 +21,7 @@ import type {
 } from "@/games/tutorial";
 
 /**
- * - `slide`: 空白の隣のタイルが、空白へスライドする。
+ * - `slide`: 空白の隣のタイルが、空白にスライドする。
  * - `line`: 空白と同じ行・列のタイルは、間のタイルごとまとめてスライドする。
  */
 export type SlidePuzzleTutorialRuleId = "slide" | "line";
@@ -81,7 +81,7 @@ const goal = createSolvedSlidePuzzleBoard(3);
 const steps: readonly SlidePuzzleTutorialStep[] = [
   {
     message: {
-      headline: "タイルを空白にスライドさせます",
+      headline: "空白の隣のタイルを空白にスライドします",
       detail: "印のタイルをタップしてください",
     },
     introducedRuleId: "slide",
@@ -89,8 +89,8 @@ const steps: readonly SlidePuzzleTutorialStep[] = [
   },
   {
     message: {
-      headline: "空白と同じ行なら、まとめて動きます",
-      detail: "間のタイルも一緒にスライドします",
+      headline: "空白と同じ行のタイルも、スライドします",
+      detail: "列でも同じです。間のタイルも一緒に動きます",
     },
     introducedRuleId: "line",
     cellIndex: 0,
@@ -186,7 +186,7 @@ function describeSlidePuzzleTutorialViolation({
 }: SlidePuzzleTutorialSituation): TutorialMessage {
   return earnedRuleIds.includes("line")
     ? {
-        headline: "空白と同じ行にも列にもありません",
+        headline: "このタイルは、空白と行も列も違います",
         detail: ruleStatements.line,
       }
     : {
@@ -285,7 +285,7 @@ export const slidePuzzleTutorial: Tutorial<
     start: "最初はこのように崩れています",
   },
   rules: [
-    { id: "slide", label: "空白へスライド" },
+    { id: "slide", label: "空白にスライド" },
     { id: "line", label: "まとめてスライド" },
   ],
   steps,

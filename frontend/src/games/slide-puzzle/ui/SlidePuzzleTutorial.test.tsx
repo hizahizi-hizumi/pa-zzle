@@ -182,7 +182,9 @@ describe("SlidePuzzleTutorial", () => {
     test("パズルの名前と3×3の盤面を出し、タイルの滑り方と最初に押すタイルを示すこと", () => {
       const title = screen.getByRole("heading", { name: "スライドパズル" });
       const tiles = within(getBoard()).getAllByRole("button");
-      const headline = screen.getByText("タイルを空白にスライドさせます");
+      const headline = screen.getByText(
+        "空白の隣のタイルを空白にスライドします",
+      );
       const detail = screen.getByText("印のタイルをタップしてください");
       const hinted = getHintedTiles();
       const chips = getRuleChipTexts();
@@ -193,8 +195,8 @@ describe("SlidePuzzleTutorial", () => {
       expect(headline).toBeTruthy();
       expect(detail).toBeTruthy();
       expect(hinted).toEqual(["6"]);
-      expect(chips).toEqual(["空白へスライド", "？"]);
-      expect(currentChips).toEqual(["空白へスライド"]);
+      expect(chips).toEqual(["空白にスライド", "？"]);
+      expect(currentChips).toEqual(["空白にスライド"]);
     });
 
     test("各マスにそこへ入る番号を薄く出すこと", () => {
@@ -209,7 +211,9 @@ describe("SlidePuzzleTutorial", () => {
       advanceTime(nextStepCueDelayMs);
 
       const position = getTilePosition(6);
-      const message = screen.getByText("空白と同じ行なら、まとめて動きます");
+      const message = screen.getByText(
+        "空白と同じ行のタイルも、スライドします",
+      );
       const hinted = getHintedTiles();
 
       expect(position).toBe("2行3列");
@@ -259,7 +263,7 @@ describe("SlidePuzzleTutorial", () => {
 
         const positions = [getTilePosition(2), getTilePosition(3)];
 
-        expect(chips).toEqual(["空白へスライド", "まとめてスライド"]);
+        expect(chips).toEqual(["空白にスライド", "まとめてスライド"]);
         expect(currentChips).toEqual(["まとめてスライド"]);
         expect(positions).toEqual(["1行2列", "1行3列"]);
       });
@@ -283,7 +287,9 @@ describe("SlidePuzzleTutorial", () => {
       test("動かないタイルを押すと、空白と同じ行・列のタイルだけが滑ることを伝えること", () => {
         tapTile(8);
 
-        const headline = screen.getByText("空白と同じ行にも列にもありません");
+        const headline = screen.getByText(
+          "このタイルは、空白と行も列も違います",
+        );
         const detail = screen.getByText(
           "空白と同じ行・列のタイルだけがスライドします",
         );
@@ -334,13 +340,15 @@ describe("SlidePuzzleTutorial", () => {
       solveAll();
       fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
 
-      const message = screen.getByText("タイルを空白にスライドさせます");
+      const message = screen.getByText(
+        "空白の隣のタイルを空白にスライドします",
+      );
       const position = getTilePosition(6);
       const chips = getRuleChipTexts();
 
       expect(message).toBeTruthy();
       expect(position).toBe("1行3列");
-      expect(chips).toEqual(["空白へスライド", "？"]);
+      expect(chips).toEqual(["空白にスライド", "？"]);
     });
 
     test("閉じてから開き直すと、最初から始まること", () => {
@@ -349,7 +357,9 @@ describe("SlidePuzzleTutorial", () => {
       rerenderTutorial(false);
       rerenderTutorial(true);
 
-      const message = screen.getByText("タイルを空白にスライドさせます");
+      const message = screen.getByText(
+        "空白の隣のタイルを空白にスライドします",
+      );
 
       expect(onClose).toHaveBeenCalledOnce();
       expect(message).toBeTruthy();
@@ -392,7 +402,9 @@ describe("SlidePuzzleTutorial", () => {
     test("最後まで見せると、始めの盤面で最初の手順の一言と印を出すこと", async () => {
       await advanceTimeInSlices(introEnoughMs);
 
-      const headline = screen.getByText("タイルを空白にスライドさせます");
+      const headline = screen.getByText(
+        "空白の隣のタイルを空白にスライドします",
+      );
       const positions = [getTilePosition(1), getTilePosition(6)];
       const hinted = getHintedTiles();
 
@@ -453,7 +465,9 @@ describe("SlidePuzzleTutorial", () => {
         (_, skip) => {
           skip();
 
-          const headline = screen.getByText("タイルを空白にスライドさせます");
+          const headline = screen.getByText(
+            "空白の隣のタイルを空白にスライドします",
+          );
           const position = getTilePosition(6);
           const hinted = getHintedTiles();
 
@@ -495,7 +509,9 @@ describe("SlidePuzzleTutorial", () => {
     });
 
     test("導入を見せずに、始めの盤面の最初の手順から始めること", () => {
-      const headline = screen.getByText("タイルを空白にスライドさせます");
+      const headline = screen.getByText(
+        "空白の隣のタイルを空白にスライドします",
+      );
       const position = getTilePosition(6);
       const hinted = getHintedTiles();
 
