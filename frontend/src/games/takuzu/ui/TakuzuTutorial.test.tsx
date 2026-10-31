@@ -48,7 +48,16 @@ const introBoardStartMs = 1050;
 const introGoalHoldMs = 1000;
 
 /** 導入を最後まで見せるのに十分な間。 */
-const introEnoughMs = 5000;
+const introEnoughMs = 7000;
+
+/** 置いたタイルを消し始めてから、始めの盤面へ戻し終えるまでの間。演出を描けるように差し替えた環境では、消す動きはすぐ終わる。 */
+const introStartTransitionMs = 80;
+
+/** 始めの盤面へ移し終えてから、名前を上部へ移すまでの間。 */
+const introStartHoldMs = 900;
+
+/** もう一度始めるときに、始めの盤面の一言を出してから盤面を戻し始めるまでの間。 */
+const restartCaptionLeadMs = 500;
 
 /** 動きを付けない導入で、名前と一文、解き終えた盤面、始めの盤面をそれぞれ止めて見せる間。 */
 const stillIntroStageMs = 1500;
@@ -97,6 +106,24 @@ async function advanceTimeInSlices(ms: number): Promise<void> {
       await vi.advanceTimersByTimeAsync(sliceMs);
     });
   }
+}
+
+/** 文言が出るまで、細かく区切って時間を進める。 */
+async function advanceTimeUntilShown(text: string): Promise<void> {
+  for (
+    let elapsed = 0;
+    elapsed < introEnoughMs && screen.queryByText(text) === null;
+    elapsed += 50
+  ) {
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(50);
+    });
+  }
+}
+
+/** 名前を上部の外の中央で大きく見せているか。導入の間だけ、名前に変形を付けて動かす。 */
+function isTitleCentered(): boolean {
+  return screen.getByRole("heading").style.transform !== "";
 }
 
 function stubReducedMotion(): void {
@@ -507,6 +534,22 @@ describe("TakuzuTutorial", () => {
       expect(goalCaptionAfter).toBeNull();
     });
 
+    test("始めの盤面へ戻し終えた後も、始めの一言を読める間は名前を中央に置いたままにすること", async () => {
+      await advanceTimeUntilShown(startCaption);
+      await advanceTimeInSlices(
+        introStartTransitionMs + introStartHoldMs - 100,
+      );
+      const centeredWhileHolding = isTitleCentered();
+      const captionWhileHolding = screen.queryByText(startCaption);
+      await advanceTimeInSlices(200);
+
+      const centeredAfterHolding = isTitleCentered();
+
+      expect(centeredWhileHolding).toBe(true);
+      expect(captionWhileHolding).not.toBeNull();
+      expect(centeredAfterHolding).toBe(false);
+    });
+
     describe("盤面の段まで進んだ場合", () => {
       beforeEach(async () => {
         await advanceTimeInSlices(introBoardStartMs);
@@ -557,17 +600,37 @@ describe("TakuzuTutorial", () => {
         await advanceTimeInSlices(introEnoughMs);
       });
 
-      test("もう一度で、置いたタイルを消してから最初の手順を始めること", async () => {
+      test("もう一度で、始めの一言を先に出してから置いたタイルを消し、最初の手順を始めること", async () => {
         fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
-        const labelWhileRewinding = getCellLabel(1, 1);
+        const captionAtFirst = screen.queryByText(startCaption);
+        await advanceTimeInSlices(restartCaptionLeadMs - 50);
+        const labelBeforeRewind = getCellLabel(1, 1);
         await advanceTimeInSlices(introEnoughMs);
 
         const label = getCellLabel(1, 1);
         const hinted = getHintedCellPositions();
 
-        expect(labelWhileRewinding).toBe("1行1列 四角");
+        expect(captionAtFirst).not.toBeNull();
+        expect(labelBeforeRewind).toBe("1行1列 四角");
         expect(label).toBe("1行1列 空き");
         expect(hinted).toEqual(["1行1列"]);
+      });
+
+      test("もう一度で戻し終えた後も、始めの一言を読める間だけ残すこと", async () => {
+        fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
+        await advanceTimeInSlices(
+          restartCaptionLeadMs +
+            introStartTransitionMs +
+            introStartHoldMs -
+            100,
+        );
+        const captionWhileHolding = screen.queryByText(startCaption);
+        const hintedWhileHolding = getHintedCellPositions();
+        await advanceTimeInSlices(introEnoughMs);
+
+        expect(captionWhileHolding).not.toBeNull();
+        expect(hintedWhileHolding).toEqual([]);
+        expect(screen.queryByText(startCaption)).toBeNull();
       });
     });
   });

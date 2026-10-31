@@ -84,7 +84,9 @@ type TutorialScreenProps = {
  * - `boardAppearing`: 名前の下に盤面を出す。
  * - `goal`: 盤面に、解き終えた盤面を見せさせる。
  * - `goalHold`: 解き終えた盤面を、目指す形だという一言を添えて見せておく。
+ * - `startLead`: もう一度始めるときに、解き終えた盤面を止めたまま、始めの盤面の一言を先に出す。
  * - `start`: 盤面に、始めの盤面へ移させる。
+ * - `startHold`: 始めの盤面へ移し終えた後も、始めの盤面の一言を読める間だけ見せておく。
  * - `header`: 名前を上部へ移し、移し終える頃にルールと一言を出す。
  * - `reveal`: 名前がもう上部にあるときに、ルールと一言を出す。
  * - `done`: 導入を終えた。
@@ -94,7 +96,9 @@ type IntroStage =
   | "boardAppearing"
   | "goal"
   | "goalHold"
+  | "startLead"
   | "start"
+  | "startHold"
   | "header"
   | "reveal"
   | "done";
@@ -109,6 +113,10 @@ const BOARD_APPEAR_DELAY_MS = 800;
 const BOARD_APPEAR_MS = 250;
 /** 解き終えた盤面を見せ終えてから、始めの盤面へ移すまで。目指す形だという一言を読める間を取る。 */
 const GOAL_HOLD_MS = 1000;
+/** もう一度始めるときに、始めの盤面の一言を出してから盤面を戻し始めるまで。一言に目を向けてから戻す動きを見せる。 */
+const RESTART_CAPTION_LEAD_MS = 500;
+/** 始めの盤面へ移し終えてから、名前を上部へ移すまで。動きが止まった後に、始めの盤面の一言を読める間を取る。 */
+const START_HOLD_MS = 900;
 /** 名前を上部へ移す間。名前はピクトグラムを追って少し遅れて動き、通り道で重ならないようにする。 */
 const PICTOGRAM_MOVE_MS = 400;
 const TITLE_MOVE_DELAY_MS = 80;
@@ -130,12 +138,14 @@ const INTRO_NAME_GAP_PX = 6;
  * - `rulesClassName`: ルールと一言。導入を終えた後は動かさない。
  * - `boardAreaClassName`: 盤面の領域。
  * - `boardStage`: 盤面に見せさせるもの。
+ * - `boardStill`: 導入に動きを付けるときも、盤面には動きを付けずに見せさせる。
  * - `caption`: 盤面の下に添える導入の一言。`leaving` は、ルールと一言を出すのに合わせて消していく。
  */
 type IntroStageView = {
   rulesClassName: string;
   boardAreaClassName: string;
   boardStage: TutorialBoardIntro["stage"];
+  boardStill?: true;
   caption: { kind: "goal" | "start"; leaving: boolean } | null;
 };
 
@@ -160,14 +170,26 @@ const introStageViews = {
     boardStage: "goal",
     caption: null,
   },
-  // 動きを止めて見せるときは、盤面を出すと同時に一言を添える。
   goalHold: {
     rulesClassName: hiddenRulesClassName,
     boardAreaClassName: "",
     boardStage: "goal",
     caption: { kind: "goal", leaving: false },
   },
+  startLead: {
+    rulesClassName: hiddenRulesClassName,
+    boardAreaClassName: "",
+    boardStage: "goal",
+    boardStill: true,
+    caption: { kind: "start", leaving: false },
+  },
   start: {
+    rulesClassName: hiddenRulesClassName,
+    boardAreaClassName: "",
+    boardStage: "start",
+    caption: { kind: "start", leaving: false },
+  },
+  startHold: {
     rulesClassName: hiddenRulesClassName,
     boardAreaClassName: "",
     boardStage: "start",
@@ -360,7 +382,7 @@ export function TutorialScreen({
         element.style.transform = transform;
       }
       schedule(() => setStage("goalHold"), STILL_STAGE_MS);
-      schedule(() => setStage("start"), STILL_STAGE_MS * 2);
+      schedule(() => setStage("startHold"), STILL_STAGE_MS * 2);
       schedule(finishIntro, STILL_STAGE_MS * 3);
       return;
     }
@@ -402,8 +424,8 @@ export function TutorialScreen({
     schedule(() => setStage("start"), GOAL_HOLD_MS);
   }, [schedule]);
 
-  // 盤面の段を終えたら、名前を上部へ戻し、ルールと一言を出してから手を引き始める。
-  const handleBoardIntroEnd = useCallback(() => {
+  // 名前を上部へ戻し、ルールと一言を出してから手を引き始める。
+  const moveNameToHeader = useCallback(() => {
     const transforms = nameTransformsRef.current;
     if (!transforms) {
       setStage("reveal");
@@ -447,6 +469,12 @@ export function TutorialScreen({
     );
   }, [finishIntro, schedule]);
 
+  // 始めの盤面へ移し終えたら、始めの盤面の一言を読める間だけ見せておいてから、名前を上部へ戻す。
+  const handleStartShown = useCallback(() => {
+    setStage("startHold");
+    schedule(moveNameToHeader, START_HOLD_MS);
+  }, [moveNameToHeader, schedule]);
+
   function skipIntro(): void {
     if (introPlaying) {
       finishIntro();
@@ -462,15 +490,18 @@ export function TutorialScreen({
     finishIntro();
   }
 
-  // もう一度始めるときは、名前と解き終えた盤面はもう見えているので、盤面を始めの盤面へ戻すところから見せる。
+  // もう一度始めるときは、名前と解き終えた盤面はもう見えているので、始めの盤面の一言を先に出し、盤面を始めの盤面へ戻すところから見せる。
   // 動きを付けないときは、始めの盤面を一言と一緒に止めて見せてから始める。
   function handleRestart(): void {
     stopIntroMotion();
     onRestart();
     const nextAnimated = canAnimateIntro();
     setAnimated(nextAnimated);
-    setStage("start");
-    if (!nextAnimated) {
+    if (nextAnimated) {
+      setStage("startLead");
+      schedule(() => setStage("start"), RESTART_CAPTION_LEAD_MS);
+    } else {
+      setStage("startHold");
       schedule(finishIntro, STILL_STAGE_MS);
     }
   }
@@ -586,9 +617,9 @@ export function TutorialScreen({
       >
         {renderBoard({
           stage: stageView.boardStage,
-          animated,
+          animated: animated && !stageView.boardStill,
           onGoalShown: handleGoalShown,
-          onEnd: handleBoardIntroEnd,
+          onEnd: handleStartShown,
         })}
       </main>
 

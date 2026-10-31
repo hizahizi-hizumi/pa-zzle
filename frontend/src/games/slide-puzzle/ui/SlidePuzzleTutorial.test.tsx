@@ -28,7 +28,16 @@ const introBoardStartMs = 1050;
 const introGoalHoldMs = 1000;
 
 /** 導入を最後まで見せるのに十分な間。 */
-const introEnoughMs = 5000;
+const introEnoughMs = 7000;
+
+/** 完成した盤面を1手ずつ崩し始めてから、始めの盤面へ崩し終えるまでの間。 */
+const introStartTransitionMs = 650;
+
+/** 始めの盤面へ移し終えてから、名前を上部へ移すまでの間。 */
+const introStartHoldMs = 900;
+
+/** もう一度始めるときに、始めの盤面の一言を出してから盤面を戻し始めるまでの間。 */
+const restartCaptionLeadMs = 500;
 
 /** 動きを付けない導入で、名前と一文、完成した盤面、始めの盤面をそれぞれ止めて見せる間。 */
 const stillIntroStageMs = 1500;
@@ -74,6 +83,24 @@ async function advanceTimeInSlices(ms: number): Promise<void> {
       await vi.advanceTimersByTimeAsync(sliceMs);
     });
   }
+}
+
+/** 文言が出るまで、細かく区切って時間を進める。 */
+async function advanceTimeUntilShown(text: string): Promise<void> {
+  for (
+    let elapsed = 0;
+    elapsed < introEnoughMs && screen.queryByText(text) === null;
+    elapsed += 50
+  ) {
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(50);
+    });
+  }
+}
+
+/** 名前を上部の外の中央で大きく見せているか。導入の間だけ、名前に変形を付けて動かす。 */
+function isTitleCentered(): boolean {
+  return screen.getByRole("heading").style.transform !== "";
 }
 
 function stubReducedMotion(): void {
@@ -471,6 +498,22 @@ describe("SlidePuzzleTutorial", () => {
       expect(goalCaptionAfter).toBeNull();
     });
 
+    test("始めの盤面へ崩し終えた後も、始めの一言を読める間は名前を中央に置いたままにすること", async () => {
+      await advanceTimeUntilShown(startCaption);
+      await advanceTimeInSlices(
+        introStartTransitionMs + introStartHoldMs - 100,
+      );
+      const centeredWhileHolding = isTitleCentered();
+      const captionWhileHolding = screen.queryByText(startCaption);
+      await advanceTimeInSlices(200);
+
+      const centeredAfterHolding = isTitleCentered();
+
+      expect(centeredWhileHolding).toBe(true);
+      expect(captionWhileHolding).not.toBeNull();
+      expect(centeredAfterHolding).toBe(false);
+    });
+
     describe("盤面の段まで進んだ場合", () => {
       beforeEach(async () => {
         await advanceTimeInSlices(introBoardStartMs);
@@ -523,17 +566,38 @@ describe("SlidePuzzleTutorial", () => {
         await advanceTimeInSlices(introEnoughMs);
       });
 
-      test("もう一度で、完成した盤面を崩してから最初の手順を始めること", async () => {
+      test("もう一度で、始めの一言を先に出してから完成した盤面を崩し、最初の手順を始めること", async () => {
         fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
-        const positionWhileScrambling = getTilePosition(6);
+        const captionAtFirst = screen.queryByText(startCaption);
+        await advanceTimeInSlices(restartCaptionLeadMs - 50);
+        // 崩すときに最初に動くタイル。
+        const positionBeforeScramble = getTilePosition(8);
         await advanceTimeInSlices(introEnoughMs);
 
         const position = getTilePosition(6);
         const hinted = getHintedTiles();
 
-        expect(positionWhileScrambling).toBe("2行3列");
+        expect(captionAtFirst).not.toBeNull();
+        expect(positionBeforeScramble).toBe("3行2列");
         expect(position).toBe("1行3列");
         expect(hinted).toEqual(["6"]);
+      });
+
+      test("もう一度で崩し終えた後も、始めの一言を読める間だけ残すこと", async () => {
+        fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
+        await advanceTimeInSlices(
+          restartCaptionLeadMs +
+            introStartTransitionMs +
+            introStartHoldMs -
+            100,
+        );
+        const captionWhileHolding = screen.queryByText(startCaption);
+        const hintedWhileHolding = getHintedTiles();
+        await advanceTimeInSlices(introEnoughMs);
+
+        expect(captionWhileHolding).not.toBeNull();
+        expect(hintedWhileHolding).toEqual([]);
+        expect(screen.queryByText(startCaption)).toBeNull();
       });
     });
   });
