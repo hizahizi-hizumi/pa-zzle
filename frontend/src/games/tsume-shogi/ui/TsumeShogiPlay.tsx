@@ -23,6 +23,7 @@ import type {
   TsumeShogiSessionPhase,
   TsumeShogiSessionResult,
 } from "@/games/tsume-shogi/session/session";
+import { TsumeShogiClearAnimation } from "@/games/tsume-shogi/ui/board/clear/TsumeShogiClearAnimation";
 import {
   TsumeShogiBoard,
   tsumeShogiBoardFrameStyle,
@@ -90,6 +91,7 @@ function getRejectionAnnouncementKey(rejection: TsumeShogiRejection): number {
 }
 
 export function TsumeShogiPlay({
+  difficulty,
   progress,
   elapsedMs,
   result,
@@ -130,11 +132,6 @@ export function TsumeShogiPlay({
   const boardGroupRef = useRef<HTMLDivElement>(null);
   const shortPlayArea = useShortPlayArea(boardAreaRef, boardGroupRef);
   const undoButton = <UndoButton disabled={!canUndo} onUndo={onUndo} />;
-
-  // 完成演出ができるまでは、詰んだらすぐ結果へ進める。
-  useEffect(() => {
-    if (progress === "clearing") onClearAnimationComplete();
-  }, [progress, onClearAnimationComplete]);
 
   useEffect(() => {
     if (!playing) return;
@@ -186,6 +183,7 @@ export function TsumeShogiPlay({
       )}
       renderResultScreen={(clearedResult) => (
         <TsumeShogiClearedPanel
+          difficulty={difficulty}
           plies={plies}
           result={clearedResult}
           onReplay={onReplay}
@@ -210,18 +208,23 @@ export function TsumeShogiPlay({
               <TsumeShogiPieceBox />
             </div>
             <div className="relative h-[calc((var(--board-width)-var(--board-frame)-var(--board-rank-band))*386/352+var(--board-file-band)+var(--board-frame))]">
-              <TsumeShogiBoard
-                boardPieces={boardPieces}
-                selection={selection}
-                shownMoves={shownMoves}
-                shownMovesRestored={shownMovesRestored}
-                promotionChoice={promotionChoice}
-                rejection={rejection}
-                mated={!playing}
-                interactionDisabled={!acceptsInput}
-                onSelectSquare={onSelectSquare}
-                onChoosePromotion={onChoosePromotion}
-              />
+              <TsumeShogiClearAnimation
+                active={progress === "clearing"}
+                onClearAnimationComplete={onClearAnimationComplete}
+              >
+                <TsumeShogiBoard
+                  boardPieces={boardPieces}
+                  selection={selection}
+                  shownMoves={shownMoves}
+                  shownMovesRestored={shownMovesRestored}
+                  promotionChoice={promotionChoice}
+                  rejection={rejection}
+                  mated={!playing}
+                  interactionDisabled={!acceptsInput}
+                  onSelectSquare={onSelectSquare}
+                  onChoosePromotion={onChoosePromotion}
+                />
+              </TsumeShogiClearAnimation>
             </div>
             <div className="h-12">
               <TsumeShogiHand

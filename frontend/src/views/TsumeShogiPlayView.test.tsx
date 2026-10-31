@@ -116,16 +116,19 @@ describe("TsumeShogiPlayView", () => {
       expect(silverOn1a).toBeTruthy();
     });
 
-    test("作意どおりに指すと玉方が応手し、詰めると詰みを示すこと", () => {
+    test("作意どおりに指すと玉方が応手し、詰めると完成演出の後に詰みを示すこと", () => {
       tapHand("銀");
       tapSquare(/^2二$/);
       waitForDefenderReply();
       tapSquare(/^4三 攻方の龍$/);
       tapSquare(/^1三$/);
+      act(() => {
+        vi.runAllTimers();
+      });
 
       const cleared = screen.getByRole("region", { name: "詰み" });
 
-      expect(cleared).toBeTruthy();
+      expect(within(cleared).getByText(/^3手詰 ・ レベル 1 ・ /)).toBeTruthy();
     });
 
     test("詰まない王手には玉方の反証を指し、待ったで判断地点へ戻れること", () => {
