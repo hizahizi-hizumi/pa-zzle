@@ -6,13 +6,47 @@ import {
   screen,
   within,
 } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router";
+import {
+  createMemoryRouter,
+  MemoryRouter,
+  Route,
+  RouterProvider,
+  Routes,
+} from "react-router";
 
+import { difficultyLevels } from "@/games/difficulty";
 import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
+import { createProblemId } from "@/games/problem-id";
 import { TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
+import type { TsumeShogiProblem } from "@/games/tsume-shogi/problem/problem";
+import {
+  listTsumeShogiPoolEntries,
+  storeTsumeShogiProblemPool,
+  toTsumeShogiPooledProblem,
+} from "@/games/tsume-shogi/problem/problem-pool";
+import problemPoolJson from "@/games/tsume-shogi/problem/problem-pool.json";
+import { selectTsumeShogiProblemForDifficulty } from "@/games/tsume-shogi/problem-selection";
+import {
+  applyTsumeShogiMove,
+  formatTsumeShogiMoveUsi,
+  listTsumeShogiAttackerChecks,
+  listTsumeShogiLegalMoves,
+  type TsumeShogiMove,
+} from "@/games/tsume-shogi/puzzle/moves";
+import {
+  getTsumeShogiPieceAt,
+  type TsumeShogiSquare,
+} from "@/games/tsume-shogi/puzzle/position";
+import {
+  formatTsumeShogiSquare,
+  tsumeShogiHandPieceNames,
+  tsumeShogiPieceNames,
+} from "@/games/tsume-shogi/ui/piece-label";
 import { TsumeShogiPlayView } from "@/views/TsumeShogiPlayView";
 
-// 仮の問題のうち、3手詰 `ts-3-14`（▲2二銀打 △1二玉 ▲1三龍）を選ぶ seed。
+// 問題集の本体は画面を開いたときに読み込むので、テストではファイルの内容を先に置いておく。
+storeTsumeShogiProblemPool(problemPoolJson);
+
 const problemSeed = "tsume-shogi-play-view";
 
 vi.mock("@/games/problem-seed", async (importOriginal) => ({
@@ -20,10 +54,19 @@ vi.mock("@/games/problem-seed", async (importOriginal) => ({
   createProblemSeed: () => problemSeed,
 }));
 
+const problemPool = vi.hoisted(() => ({
+  status: "loaded" as "loading" | "loaded" | "failed",
+}));
+
+vi.mock("@/games/tsume-shogi/play/use-tsume-shogi-problem-pool", () => ({
+  useTsumeShogiProblemPool: () => problemPool.status,
+}));
+
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
   vi.useRealTimers();
+  problemPool.status = "loaded";
 });
 
 function renderAt(path: string): void {
@@ -34,9 +77,30 @@ function renderAt(path: string): void {
           path="/puzzles/tsume-shogi/play/:difficulty"
           element={<TsumeShogiPlayView />}
         />
+        <Route path="/" element={<p>ホーム画面</p>} />
       </Routes>
     </MemoryRouter>,
   );
+}
+
+type PlayRouter = ReturnType<typeof createMemoryRouter>;
+
+function renderRouterAt(path: string): PlayRouter {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/puzzles/tsume-shogi/play/:difficulty",
+        element: <TsumeShogiPlayView />,
+      },
+    ],
+    { initialEntries: [path] },
+  );
+  render(<RouterProvider router={router} />);
+  return router;
+}
+
+function readProblemId(router: PlayRouter): string | null {
+  return new URLSearchParams(router.state.location.search).get("problem");
 }
 
 function openMenu(): void {
@@ -50,23 +114,100 @@ function getBoard(): HTMLElement {
   return screen.getByRole("group", { name: "盤" });
 }
 
-function tapSquare(name: RegExp): void {
-  fireEvent.click(within(getBoard()).getByRole("button", { name }));
-}
-
-function tapHand(pieceName: string): void {
-  fireEvent.click(
-    within(screen.getByRole("group", { name: "攻方の持駒" })).getByRole(
-      "button",
-      { name: new RegExp(`^${pieceName} `) },
-    ),
-  );
-}
-
 function waitForDefenderReply(): void {
   act(() => {
     vi.advanceTimersByTime(TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS);
   });
+}
+
+function getSquare(square: TsumeShogiSquare): HTMLElement {
+  return within(getBoard()).getByRole("button", {
+    name: new RegExp(`^${formatTsumeShogiSquare(square)}( |$)`),
+  });
+}
+
+/** 攻方の手を、盤の升か持駒を押してから行き先の升を押して指す。成・不成を選ぶときは手のとおりに選ぶ。 */
+function playAttackerMove(move: TsumeShogiMove): void {
+  fireEvent.click(
+    move.kind === "drop"
+      ? within(screen.getByRole("group", { name: "攻方の持駒" })).getByRole(
+          "button",
+          {
+            name: new RegExp(`^${tsumeShogiHandPieceNames[move.pieceType]} `),
+          },
+        )
+      : getSquare(move.from),
+  );
+  fireEvent.click(getSquare(move.to));
+  const promotionPicker = screen.queryByRole("group", { name: "成・不成" });
+  if (promotionPicker && move.kind === "board") {
+    fireEvent.click(
+      within(promotionPicker).getByRole("button", {
+        name: move.promote ? "成" : "不成",
+      }),
+    );
+  }
+}
+
+/** 作意の攻方の手を指し、玉方の応手と完成演出の間を進める。 */
+function playMainLine({ mainLine }: TsumeShogiProblem): void {
+  mainLine.forEach((move, index) => {
+    if (index % 2 === 1) return;
+
+    playAttackerMove(move);
+    waitForDefenderReply();
+  });
+  act(() => {
+    vi.runAllTimers();
+  });
+}
+
+const selected = selectTsumeShogiProblemForDifficulty("1", problemSeed);
+const initialPosition = selected.problem.initialPosition;
+const [firstMove] = selected.problem.mainLine as [TsumeShogiMove];
+const checkUsis = new Set(
+  listTsumeShogiAttackerChecks(initialPosition).map(formatTsumeShogiMoveUsi),
+);
+// 攻方の正解は1つなので、初手の作意以外の王手はどれも誤王手。
+const wrongCheck = listTsumeShogiAttackerChecks(initialPosition).find(
+  (move) =>
+    formatTsumeShogiMoveUsi(move) !== formatTsumeShogiMoveUsi(firstMove),
+) as TsumeShogiMove;
+const nonCheck = listTsumeShogiLegalMoves(initialPosition).find(
+  (move) => !checkUsis.has(formatTsumeShogiMoveUsi(move)),
+) as TsumeShogiMove;
+
+/** 初期局面に、成・不成のどちらで指しても王手になる盤上の駒の移動がある問題集の問題と、その成る手。 */
+function findPromotableCheck() {
+  for (const { id: difficulty } of difficultyLevels) {
+    for (const [index] of listTsumeShogiPoolEntries(difficulty).entries()) {
+      const pooled = toTsumeShogiPooledProblem(difficulty, index);
+      const checks = listTsumeShogiAttackerChecks(
+        pooled.problem.initialPosition,
+      );
+      const usis = new Set(checks.map(formatTsumeShogiMoveUsi));
+      const move = checks.find(
+        (check) =>
+          check.kind === "board" &&
+          check.promote &&
+          usis.has(formatTsumeShogiMoveUsi({ ...check, promote: false })),
+      );
+      if (move?.kind === "board") return { ...pooled, difficulty, move };
+    }
+  }
+  throw new Error("No pooled problem has a promotable check");
+}
+
+/** 指す前の駒がある升（打つ手は持駒）の要素。 */
+function getMoveSource(move: TsumeShogiMove): HTMLElement {
+  return move.kind === "drop"
+    ? within(screen.getByRole("group", { name: "攻方の持駒" })).getByRole(
+        "button",
+        {
+          name: new RegExp(`^${tsumeShogiHandPieceNames[move.pieceType]} `),
+        },
+      )
+    : getSquare(move.from);
 }
 
 describe("TsumeShogiPlayView", () => {
@@ -86,6 +227,61 @@ describe("TsumeShogiPlayView", () => {
 
       expect(squares).toHaveLength(81);
     });
+
+    test("メニューのホームでホームへ移ること", () => {
+      openMenu();
+      fireEvent.click(screen.getByRole("menuitem", { name: "ホーム" }));
+
+      expect(screen.getByText("ホーム画面")).toBeTruthy();
+    });
+  });
+
+  describe("通常の出題を詰ませた場合", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      renderAt("/puzzles/tsume-shogi/play/1");
+      playMainLine(selected.problem);
+    });
+
+    test("完成演出の後に詰みを示すこと", () => {
+      const cleared = screen.getByRole("region", { name: "詰み" });
+
+      expect(within(cleared).getByText(/手詰 ・ レベル 1 ・ /)).toBeTruthy();
+    });
+  });
+
+  describe("問題集を読み込んでいる場合", () => {
+    beforeEach(() => {
+      problemPool.status = "loading";
+      renderAt("/puzzles/tsume-shogi/play/1");
+    });
+
+    test("盤も案内も出さないこと", () => {
+      const board = screen.queryByRole("group", { name: "盤" });
+      const alert = screen.queryByRole("alert");
+
+      expect(board).toBeNull();
+      expect(alert).toBeNull();
+    });
+  });
+
+  describe("問題集を読み込めなかった場合", () => {
+    beforeEach(() => {
+      problemPool.status = "failed";
+      renderAt("/puzzles/tsume-shogi/play/1");
+    });
+
+    test("盤を出さず、読み込めなかったことと開き直す案内を出すこと", () => {
+      const board = screen.queryByRole("group", { name: "盤" });
+      const message = screen.getByText("問題を読み込めませんでした");
+      const guide = screen.getByText(
+        "通信できることを確かめて、もう一度開いてください。",
+      );
+
+      expect(board).toBeNull();
+      expect(message).toBeTruthy();
+      expect(guide).toBeTruthy();
+    });
   });
 
   describe("未定義の難易度の場合", () => {
@@ -102,69 +298,64 @@ describe("TsumeShogiPlayView", () => {
     });
   });
 
-  describe("問題を遊ぶ場合", () => {
+  describe("指している途中の場合", () => {
     beforeEach(() => {
       vi.useFakeTimers();
       renderAt("/puzzles/tsume-shogi/play/1");
     });
 
-    test("選んだ問題の初期局面を出すこと", () => {
-      const silverOn1a = within(getBoard()).getByRole("button", {
-        name: "1一 攻方の銀",
-      });
-
-      expect(silverOn1a).toBeTruthy();
-    });
-
-    test("作意どおりに指すと玉方が応手し、詰めると完成演出の後に詰みを示すこと", () => {
-      tapHand("銀");
-      tapSquare(/^2二$/);
+    test("作意どおりに指すと玉方が応手すること", () => {
+      const [, defenderMove] = selected.problem.mainLine as [
+        TsumeShogiMove,
+        TsumeShogiMove,
+      ];
+      playAttackerMove(firstMove);
       waitForDefenderReply();
-      tapSquare(/^4三 攻方の龍$/);
-      tapSquare(/^1三$/);
-      act(() => {
-        vi.runAllTimers();
-      });
 
-      const cleared = screen.getByRole("region", { name: "詰み" });
-
-      expect(within(cleared).getByText(/^3手詰 ・ レベル 1 ・ /)).toBeTruthy();
+      expect(getSquare(defenderMove.to).getAttribute("aria-label")).toMatch(
+        / 玉方の/,
+      );
     });
 
     test("詰まない王手には玉方の反証を指し、待ったで判断地点へ戻れること", () => {
-      tapSquare(/^4三 攻方の龍$/);
-      tapSquare(/^4一$/);
+      const sourceLabel = getMoveSource(wrongCheck).getAttribute("aria-label");
+      playAttackerMove(wrongCheck);
       waitForDefenderReply();
-      const refutedKing = within(getBoard()).getByRole("button", {
-        name: "1二 玉方の玉",
-      });
       fireEvent.click(
         screen.getByRole("button", { name: PLAY_OPERATION_LABELS.undo }),
       );
 
-      expect(refutedKing).toBeTruthy();
+      expect(getMoveSource(wrongCheck).getAttribute("aria-label")).toBe(
+        sourceLabel,
+      );
       expect(
-        within(getBoard()).getByRole("button", { name: "4三 攻方の龍" }),
-      ).toBeTruthy();
-      expect(
-        within(getBoard()).getByRole("button", { name: "2一 玉方の玉" }),
-      ).toBeTruthy();
+        screen
+          .getByRole("button", { name: PLAY_OPERATION_LABELS.undo })
+          .hasAttribute("disabled"),
+      ).toBe(true);
     });
 
     describe("王手を指して玉方の応手を待っている場合", () => {
       beforeEach(() => {
-        tapHand("銀");
-        const destination = within(getBoard()).getByRole("button", {
-          name: /^2二$/,
-        });
+        fireEvent.click(getMoveSource(firstMove));
+        const destination = getSquare(firstMove.to);
         destination.focus();
         fireEvent.click(destination);
+        const promotionPicker = screen.queryByRole("group", {
+          name: "成・不成",
+        });
+        if (promotionPicker && firstMove.kind === "board") {
+          fireEvent.click(
+            within(promotionPicker).getByRole("button", {
+              name: firstMove.promote ? "成" : "不成",
+            }),
+          );
+          getSquare(firstMove.to).focus();
+        }
       });
 
       test("指した升のフォーカスを残したまま、盤の升を押せなくすること", () => {
-        const playedSquare = within(getBoard()).getByRole("button", {
-          name: "2二 攻方の銀",
-        });
+        const playedSquare = getSquare(firstMove.to);
 
         expect(document.activeElement).toBe(playedSquare);
         expect(playedSquare.getAttribute("aria-disabled")).toBe("true");
@@ -173,7 +364,7 @@ describe("TsumeShogiPlayView", () => {
 
     describe("駒を選んでから遊び方を開いた場合", () => {
       beforeEach(() => {
-        tapSquare(/^4三 攻方の龍$/);
+        fireEvent.click(getMoveSource(firstMove));
         openMenu();
         fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
       });
@@ -181,64 +372,131 @@ describe("TsumeShogiPlayView", () => {
       test("遊び方を閉じる Escape で駒の選択を解除しないこと", () => {
         fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
 
-        const dragon = within(getBoard()).getByRole("button", {
-          name: "4三 攻方の龍",
-        });
-
         expect(screen.queryByRole("dialog")).toBeNull();
-        expect(dragon.getAttribute("aria-pressed")).toBe("true");
+        expect(getMoveSource(firstMove).getAttribute("aria-pressed")).toBe(
+          "true",
+        );
       });
     });
 
     test("王手にならない手は着手させないこと", () => {
-      tapSquare(/^4三 攻方の龍$/);
-      tapSquare(/^4四$/);
+      const sourceLabel = getMoveSource(nonCheck).getAttribute("aria-label");
+      playAttackerMove(nonCheck);
 
       expect(screen.getByRole("status").textContent).toBe("");
-      expect(
-        within(getBoard())
-          .getByRole("button", { name: "4三 攻方の龍" })
-          .getAttribute("aria-pressed"),
-      ).toBe("true");
-      expect(
-        within(getBoard()).getByRole("button", { name: "4四" }),
-      ).toBeTruthy();
+      expect(getMoveSource(nonCheck).getAttribute("aria-label")).toBe(
+        sourceLabel,
+      );
+      expect(getMoveSource(nonCheck).getAttribute("aria-pressed")).toBe("true");
       expect(screen.getByText("指せません")).toBeTruthy();
     });
+  });
 
-    describe("成・不成のどちらも指せる移動を選んだ場合", () => {
+  describe("成・不成のどちらも王手になる移動を選んだ場合", () => {
+    const promotable = findPromotableCheck();
+
+    function getLabelAfterMove(promote: boolean): string {
+      const position = applyTsumeShogiMove(promotable.problem.initialPosition, {
+        ...promotable.move,
+        promote,
+      });
+      const piece = getTsumeShogiPieceAt(position, promotable.move.to);
+      return `${formatTsumeShogiSquare(promotable.move.to)} 攻方の${tsumeShogiPieceNames[piece?.type ?? "king"]}`;
+    }
+
+    beforeEach(() => {
+      renderAt(
+        `/puzzles/tsume-shogi/play/${promotable.difficulty}?problem=${createProblemId(promotable.identity)}`,
+      );
+      fireEvent.click(getSquare(promotable.move.from));
+      fireEvent.click(getSquare(promotable.move.to));
+    });
+
+    test("成・不成を選ぶまで駒を動かさないこと", () => {
+      const picker = screen.getByRole("group", { name: "成・不成" });
+
+      expect(picker).toBeTruthy();
+      expect(
+        getSquare(promotable.move.from).getAttribute("aria-label"),
+      ).toMatch(/ 攻方の/);
+    });
+
+    const choices = [
+      ["成", true],
+      ["不成", false],
+    ] as const;
+
+    test.each(choices)("%sを選ぶとその駒で指すこと", (choice, promote) => {
+      fireEvent.click(
+        within(screen.getByRole("group", { name: "成・不成" })).getByRole(
+          "button",
+          { name: choice },
+        ),
+      );
+
+      expect(screen.queryByRole("group", { name: "成・不成" })).toBeNull();
+      expect(getSquare(promotable.move.to).getAttribute("aria-label")).toBe(
+        getLabelAfterMove(promote),
+      );
+    });
+  });
+
+  describe("問題IDのクエリ", () => {
+    const requested = toTsumeShogiPooledProblem("3", 4);
+    const requestedProblemId = createProblemId(requested.identity);
+    let router: PlayRouter;
+
+    describe("問題IDの無いURLで開いた場合", () => {
       beforeEach(() => {
-        tapSquare(/^1一 攻方の銀$/);
-        tapSquare(/^2二$/);
+        router = renderRouterAt("/puzzles/tsume-shogi/play/1");
       });
 
-      test("成・不成を選ぶまで駒を動かさないこと", () => {
-        const picker = screen.getByRole("group", { name: "成・不成" });
+      test("出題した問題のIDを履歴を増やさずにURLへ反映すること", () => {
+        const problemId = readProblemId(router);
 
-        expect(picker).toBeTruthy();
-        expect(
-          within(getBoard()).getByRole("button", { name: "1一 攻方の銀" }),
-        ).toBeTruthy();
-      });
-
-      const choices = [
-        ["成", "2二 攻方の成銀"],
-        ["不成", "2二 攻方の銀"],
-      ] as const;
-
-      test.each(choices)("%sを選ぶとその駒で指すこと", (choice, label) => {
-        fireEvent.click(
-          within(screen.getByRole("group", { name: "成・不成" })).getByRole(
-            "button",
-            { name: choice },
-          ),
-        );
-
-        expect(screen.queryByRole("group", { name: "成・不成" })).toBeNull();
-        expect(
-          within(getBoard()).getByRole("button", { name: label }),
-        ).toBeTruthy();
+        expect(problemId).toBe(createProblemId(selected.identity));
+        expect(router.state.historyAction).toBe("REPLACE");
       });
     });
+
+    describe("問題集にある問題IDで開いた場合", () => {
+      beforeEach(() => {
+        router = renderRouterAt(
+          `/puzzles/tsume-shogi/play/3?problem=${requestedProblemId}`,
+        );
+      });
+
+      test("その問題で始めURLを置き換えないこと", () => {
+        const problemId = readProblemId(router);
+        const plies = screen.getByText("手数").parentElement?.textContent;
+
+        expect(problemId).toBe(requestedProblemId);
+        expect(router.state.historyAction).toBe("POP");
+        expect(plies).toBe(`手数${requested.problem.plies}`);
+      });
+    });
+
+    const unresolvedCases = [
+      ["形式の違う問題ID", "1", "invalid"],
+      ["別の難易度の問題ID", "1", requestedProblemId],
+    ] as const;
+
+    describe.each(unresolvedCases)(
+      "%sで開いた場合",
+      (_, difficulty, problemIdInUrl) => {
+        beforeEach(() => {
+          router = renderRouterAt(
+            `/puzzles/tsume-shogi/play/${difficulty}?problem=${problemIdInUrl}`,
+          );
+        });
+
+        test("知らせずに新しい問題を出し、そのIDへURLを置き換えること", () => {
+          const problemId = readProblemId(router);
+
+          expect(problemId).toBe(createProblemId(selected.identity));
+          expect(router.state.historyAction).toBe("REPLACE");
+        });
+      },
+    );
   });
 });

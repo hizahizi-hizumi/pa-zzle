@@ -13,10 +13,8 @@ import {
 import { createProblemId, type ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import type { TsumeShogiDifficulty } from "@/games/tsume-shogi/difficulty";
-import type {
-  TsumeShogiIdentifiedProblem,
-  TsumeShogiProblemIdentity,
-} from "@/games/tsume-shogi/problem/problem";
+import type { TsumeShogiProblemIdentity } from "@/games/tsume-shogi/problem/problem";
+import type { TsumeShogiPooledProblem } from "@/games/tsume-shogi/problem/problem-pool";
 import { selectTsumeShogiProblemForDifficulty } from "@/games/tsume-shogi/problem-selection";
 import {
   canTsumeShogiMovePromote,
@@ -155,7 +153,7 @@ type TsumeShogiPlayState = {
 };
 
 function createPlayState(
-  { problem, identity }: TsumeShogiIdentifiedProblem,
+  { problem, identity }: TsumeShogiPooledProblem,
   startedAt: number,
 ): TsumeShogiPlayState {
   return {
@@ -183,7 +181,7 @@ function applySession(
 function selectProblem(
   difficulty: TsumeShogiDifficulty,
   avoidedProblemId: ProblemId | undefined,
-): TsumeShogiIdentifiedProblem {
+): TsumeShogiPooledProblem {
   return selectProblemAvoiding(
     (seed) => selectTsumeShogiProblemForDifficulty(difficulty, seed),
     avoidedProblemId,
@@ -191,7 +189,8 @@ function selectProblem(
 }
 
 /**
- * 難易度のプレイを始める。
+ * 難易度のプレイを始める。`initialProblem` を渡すと、最初の1問だけその問題を出す。
+ * 渡さなければ、最初の1問は `avoidedProblemId` の問題を避けて選ぶ。
  * 攻方が王手を指すと、`TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS` の間を置いて玉方の応手（作意の応手、誤王手なら反証）を指す。
  * `undo`（待った）は攻方の1手を取り消し、誤王手の筋にいれば判断地点まで戻す。
  * 詰むと `progress` が `clearing` になり、完成演出を終えたら `completeClearAnimation` で `result` に進める。
@@ -199,9 +198,14 @@ function selectProblem(
  */
 export function useTsumeShogiPlay(
   difficulty: TsumeShogiDifficulty,
+  initialProblem?: TsumeShogiPooledProblem,
+  avoidedProblemId?: ProblemId,
 ): TsumeShogiPlay {
   const [play, setPlay] = useState<TsumeShogiPlayState>(() =>
-    createPlayState(selectProblem(difficulty, undefined), Date.now()),
+    createPlayState(
+      initialProblem ?? selectProblem(difficulty, avoidedProblemId),
+      Date.now(),
+    ),
   );
   const { session, progress, problemIdentity } = play;
   const elapsedMs = useSessionElapsedMs(session);
