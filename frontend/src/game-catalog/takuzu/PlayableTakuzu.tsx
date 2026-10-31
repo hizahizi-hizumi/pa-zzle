@@ -72,6 +72,7 @@ export function PlayableTakuzu({
         lineViolations={play.lineViolations}
         correctionCount={play.correctionCount}
         undoCount={play.undoCount}
+        operation={play.operation}
         canUndo={play.canUndo}
         onCycleCell={play.cycleCell}
         onPlaceCell={play.placeCell}
