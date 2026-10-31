@@ -22,6 +22,10 @@ type SlidePuzzleTileProps = {
   disabled: boolean;
   /** 押すタイルとして示すときの印の `id`。示さなければ `null`。 */
   hintId: number | null;
+  /** 番号の場所に収まっているとして示すか。 */
+  inPlace: boolean;
+  /** 現れる前で、まだ見せないか。 */
+  concealed: boolean;
   slideAnimated: boolean;
   faceRef: Ref<HTMLSpanElement>;
   onPress: (cellIndex: number) => void;
@@ -33,6 +37,8 @@ export function SlidePuzzleTile({
   boardSize,
   disabled,
   hintId,
+  inPlace,
+  concealed,
   slideAnimated,
   faceRef,
   onPress,
@@ -44,15 +50,21 @@ export function SlidePuzzleTile({
     <button
       type="button"
       disabled={disabled}
+      data-in-place={inPlace || undefined}
       onClick={() => onPress(cellIndex)}
       className={`group absolute top-0 left-0 ${tileSizeClassByBoardSize[boardSize]} cursor-pointer touch-manipulation select-none p-[1cqw] outline-none [-webkit-tap-highlight-color:transparent] ${
         slideAnimated
           ? "transition-transform duration-(--duration-normal) ease-enter motion-reduce:transition-none"
           : ""
-      }`}
+      } ${concealed ? "opacity-0" : ""}`}
       style={{ transform: `translate(${column * 100}%, ${row * 100}%)` }}
     >
-      <SlidePuzzleTileFace tile={tile} boardSize={boardSize} ref={faceRef} />
+      <SlidePuzzleTileFace
+        tile={tile}
+        boardSize={boardSize}
+        inPlace={inPlace}
+        ref={faceRef}
+      />
       {hintId !== null && (
         <span
           key={hintId}
