@@ -125,7 +125,7 @@ frontend/src/games/
 
 - `ui/<Game>Play.tsx` の props は `games/play.ts` の `GamePlayScreenProps<Difficulty, Result>` に、盤面を戻せるなら `RestartableGamePlayScreenProps`、待ったがあるなら `UndoableGamePlayScreenProps` と、ゲーム固有の値・操作を足して作る。`ui/result/<Game>ResultScreen.tsx` の props は `GamePlayResultScreenProps<Difficulty, Result>` で作る。難易度は値で受け取り、表示名は UI が決める。
 - プレイ画面は `components/GamePlayFrame.tsx` に盤面（`main`）とゲーム固有の操作（`footer`）を渡して作り、外枠・ブランドの帯・見出し・遊び方の開閉・結果画面への切り替えを各ゲームで書かない。結果画面は `progress` が `result` で評価があるときだけ出る。
-- 見出しの計測値は `PlayHeaderMetric` の回数（`count`）と経過時間（`elapsed-time`）で渡し、書式・行の分け方は共通部品に任せる。回数の桁の確保は共通部品の既定に任せ、変えるときは `reservedDigits` で渡す。
+- 見出しの計測値は `PlayHeaderMetric` の回数（`count`）と経過時間（`elapsed-time`）で渡し、書式・行の分け方は共通部品に任せる。プレイで変わらない問題そのものの条件（例: 詰将棋の「5手詰」）は、数え上げる回数と混同しないよう `problem-fact` の文言で渡す。回数の桁の確保は共通部品の既定に任せ、変えるときは `reservedDigits` で渡す。
 - 盤面は `progress` が `playing` の間だけ操作を受け付け、受け付けないことを `interactionDisabled` で受け取る。
 - 操作の callback props は、タップ・キーボードなどの入力手段ではなく操作の意味で名付ける。
 
