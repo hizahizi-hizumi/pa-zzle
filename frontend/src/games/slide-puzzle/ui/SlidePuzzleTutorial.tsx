@@ -52,7 +52,7 @@ const IDLE_HINT_DELAY_MS = 4000;
 
 /**
  * 導入で盤面が見せるもの。
- * - `goal`: 完成した盤面を、解けたときと同じ波で見せる。
+ * - `goal`: 各マスに入る番号を先に見せ、そこへタイルを番号順に降ろして完成した盤面を作る。
  * - `scramble`: 完成した盤面を、1手ずつ崩して始めの盤面へ戻す。
  */
 type SlidePuzzleTutorialBoardIntroStage = "goal" | "scramble";
@@ -123,7 +123,8 @@ function toScrambleOperation(frameIndex: number): SlidePuzzleOperation | null {
 
 /**
  * 3×3 の盤面を、一言と印に沿って1手ずつ一緒に並べ、タイルの動き方を1つずつ使って身につけさせる。
- * 手順を終えたら手を離し、残りを自分で並べさせる。盤面・滑り・揺れ・解けたときの波は本番と同じ部品を使う。
+ * 手順を終えたら手を離し、残りを自分で並べさせる。盤面・滑り・揺れ・解けたときの波は本番と同じ部品を使い、
+ * どこを目指すかが見えるよう、各マスに入る番号と、番号の場所に収まったタイルを盤面に示す。
  */
 export function SlidePuzzleTutorial({
   open,
@@ -133,7 +134,7 @@ export function SlidePuzzleTutorial({
   const [progress, setProgress] = useState<SlidePuzzleTutorialProgress>(() =>
     startTutorial(slidePuzzleTutorial),
   );
-  // 開いたときは完成した盤面から見せる。もう一度始めたときは完成した盤面がもう見えているので、崩すところから見せる。
+  // 開いたときは完成した盤面を作るところから見せる。もう一度始めたときは完成した盤面がもう見えているので、崩すところから見せる。
   const [boardIntroStage, setBoardIntroStage] =
     useState<SlidePuzzleTutorialBoardIntroStage>("goal");
   const [idleProgress, setIdleProgress] =
@@ -216,7 +217,7 @@ export function SlidePuzzleTutorial({
 
   function renderBoard({ playing, onEnd }: TutorialBoardIntro) {
     const introducing = progress.phase === "intro";
-    const goalShowing = playing && boardIntroStage === "goal";
+    const goalIntro = introducing && boardIntroStage === "goal";
     return (
       <div className="aspect-square w-[min(100cqw,100cqh,28rem)]">
         <SlidePuzzleTutorialScramble
@@ -243,16 +244,19 @@ export function SlidePuzzleTutorial({
                       : boardOperation
                 }
                 interactionDisabled={progress.phase !== "playing"}
-                clearing={progress.phase === "solved" || goalShowing}
+                clearing={progress.phase === "solved"}
+                goalShown={true}
+                tileEntrance={
+                  goalIntro ? (playing ? "settling" : "concealed") : null
+                }
+                onTileEntranceComplete={handleGoalShown}
                 hint={
                   hintCellIndex === null
                     ? null
                     : { cellIndex: hintCellIndex, id: hintCueId }
                 }
                 onSlideTile={handleSlideTile}
-                onClearAnimationComplete={
-                  introducing ? handleGoalShown : handleClearAnimationComplete
-                }
+                onClearAnimationComplete={handleClearAnimationComplete}
               />
             );
           }}
