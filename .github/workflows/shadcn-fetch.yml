@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout request
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.1.0
         with:
           fetch-depth: 1
           path: request
@@ -50,14 +50,14 @@ jobs:
           echo "target-sha=$target_sha" >> "$GITHUB_OUTPUT"
 
       - name: Checkout target
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.1.0
         with:
           ref: ${{ steps.request.outputs.target-sha }}
           fetch-depth: 1
           path: work
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@v2.2.0
         with:
           bun-version-file: work/.bun-version
 
@@ -116,7 +116,7 @@ jobs:
           git -C work diff --cached --name-status
 
       - name: Upload patch
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ steps.patch.outputs.name }}
           path: ${{ steps.patch.outputs.name }}

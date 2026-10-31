@@ -70,7 +70,7 @@ jobs:
           echo "base_sha=$snapshot_base_sha" >> "$GITHUB_OUTPUT"
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.1.0
         with:
           ref: ${{ steps.target.outputs.sha }}
           fetch-depth: 1
@@ -78,14 +78,14 @@ jobs:
 
       - name: Build snapshot
         id: snapshot
-        uses: ./.github/actions/repository-snapshot
+        uses: $/.github/actions/repository-snapshot
         with:
           target: ${{ steps.target.outputs.target }}
           sha: ${{ steps.target.outputs.sha }}
 
       - name: Build git bundle
         id: bundle
-        uses: ./.github/actions/repository-bundle
+        uses: $/.github/actions/repository-bundle
         with:
           target: ${{ steps.target.outputs.target }}
           sha: ${{ steps.target.outputs.sha }}
@@ -93,7 +93,7 @@ jobs:
 
       - name: Upload snapshot
         id: upload-snapshot
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           # With archive=false, upload-artifact uses this file name as the artifact name.
           name: ${{ steps.snapshot.outputs.archive }}
@@ -104,7 +104,7 @@ jobs:
 
       - name: Upload git bundle
         id: upload-bundle
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ steps.bundle.outputs.bundle }}
           path: ${{ steps.bundle.outputs.bundle }}
@@ -158,14 +158,14 @@ jobs:
       cancel-in-progress: false
     steps:
       - name: Checkout dependency target
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.1.0
         with:
           ref: ${{ needs.snapshot.outputs.target-sha }}
           fetch-depth: 1
 
       # 依存の生成と検証を、ランナー既定ではなくChatGPT実行環境に合わせた.node-versionのNodeで動かす。
       - name: Setup Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v7.1.0
         with:
           node-version-file: .node-version
           # ランナーのツールキャッシュは更新が週次のため、Nodeのセキュリティリリースを待たずに使う。
@@ -196,7 +196,7 @@ jobs:
       - name: Build Offline Dependencies
         if: steps.dependencies.outputs.build == 'true'
         id: dependencies-build
-        uses: ./.github/actions/offline-dependencies
+        uses: $/.github/actions/offline-dependencies
         with:
           repo-root: ${{ github.workspace }}
           sha: ${{ needs.snapshot.outputs.target-sha }}
@@ -224,7 +224,7 @@ jobs:
 
       - name: Upload Offline Dependencies
         if: steps.dependencies.outputs.build == 'true'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ steps.dependencies.outputs.artifact-name }}
           path: ${{ steps.dependencies-build.outputs.archive }}
@@ -257,7 +257,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout snapshot target
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.1.0
         with:
           ref: ${{ needs.snapshot.outputs.target-sha }}
           fetch-depth: 1
@@ -306,7 +306,7 @@ jobs:
           echo "manifest=$manifest" >> "$GITHUB_OUTPUT"
 
       - name: Upload environment manifest
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ steps.manifest.outputs.manifest }}
           path: ${{ steps.manifest.outputs.manifest }}
@@ -320,7 +320,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout closed PR head
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.1.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 1
@@ -341,7 +341,7 @@ jobs:
       cancel-in-progress: false
     steps:
       - name: Checkout main
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.1.0
         with:
           ref: main
           fetch-depth: 1
