@@ -171,11 +171,17 @@ function slideInPlay(
   };
 }
 
+/** `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。 */
 export function useIceFloorMazePlay(
   difficulty: IceFloorMazeDifficulty,
+  initialProblem?: IceFloorMazePooledProblem,
+  avoidedProblemId?: ProblemId,
 ): IceFloorMazePlay {
   const [play, setPlay] = useState<IceFloorMazePlayState>(() =>
-    createPlayState(selectProblem(difficulty, undefined), Date.now()),
+    createPlayState(
+      initialProblem ?? selectProblem(difficulty, avoidedProblemId),
+      Date.now(),
+    ),
   );
   const { session, problemIdentity, optimalMoveCount } = play;
   const elapsedMs = useSessionElapsedMs(session);
