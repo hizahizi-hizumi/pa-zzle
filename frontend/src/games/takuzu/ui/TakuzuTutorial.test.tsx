@@ -41,8 +41,8 @@ const nextStepCueDelayMs = 900;
 /** 手を離した後、手が止まってから決まるマスを示すまでの間。 */
 const idleHintDelayMs = 4000;
 
-/** 名前を出してから、盤面の段に入るまでの間。 */
-const introBoardStartMs = 1050;
+/** 開いてから、盤面の段に入るまでの間。 */
+const introBoardStartMs = 850;
 
 /** 解き終えた盤面を見せ終えてから、始めの盤面へ移すまでの間。 */
 const introGoalHoldMs = 1000;

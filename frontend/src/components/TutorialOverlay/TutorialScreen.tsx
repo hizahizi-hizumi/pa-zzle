@@ -103,13 +103,15 @@ type IntroStage =
   | "reveal"
   | "done";
 
+/** 開いてから名前を出すまで。画面が現れる動き（`DialogContent` の `duration-100`）を終えてから出し、後ろの画面と重ねない。 */
+const NAME_APPEAR_DELAY_MS = 100;
 const NAME_APPEAR_MS = 300;
 /** 何をするパズルかの一文は、名前に少し遅れて出す。 */
-const TAGLINE_APPEAR_DELAY_MS = 200;
+const TAGLINE_APPEAR_DELAY_MS = NAME_APPEAR_DELAY_MS + 200;
 const TAGLINE_APPEAR_MS = 300;
 const TAGLINE_LEAVE_MS = 200;
-/** 名前が現れてから盤面を出すまで。盤面に目が移る前に、名前と一文を読み始められる間を取る。 */
-const BOARD_APPEAR_DELAY_MS = 800;
+/** 開いてから盤面を出すまで。一文が現れ終えたらすぐ出し、何も動かない間を作らない。一文は導入の間ずっと見せておく。 */
+const BOARD_APPEAR_DELAY_MS = TAGLINE_APPEAR_DELAY_MS + TAGLINE_APPEAR_MS;
 const BOARD_APPEAR_MS = 250;
 /** 解き終えた盤面を見せ終えてから、始めの盤面へ移すまで。目指す形だという一言を読める間を取る。 */
 const GOAL_HOLD_MS = 1000;
@@ -117,21 +119,28 @@ const GOAL_HOLD_MS = 1000;
 const RESTART_CAPTION_LEAD_MS = 500;
 /** 始めの盤面へ移し終えてから、名前を上部へ移すまで。動きが止まった後に、始めの盤面の一言を読める間を取る。 */
 const START_HOLD_MS = 900;
-/** 名前を上部へ移す間。名前はピクトグラムを追って少し遅れて動き、通り道で重ならないようにする。 */
+/**
+ * 名前を上部へ移す間。名前はピクトグラムを追って遅れて動く。
+ * ピクトグラムが名前の通り道を抜けてから名前が上がり始めるだけ遅らせ、途中で重ならないようにする。
+ */
 const PICTOGRAM_MOVE_MS = 400;
-const TITLE_MOVE_DELAY_MS = 80;
-/** ルールと一言は、名前がその行を通り過ぎてから出す。`header` の見せ方の `delay-350` と同じ値。 */
-const REVEAL_AFTER_NAME_DELAY_MS = 350;
+const TITLE_MOVE_DELAY_MS = 200;
+/** ルールと一言は、名前がその行を通り過ぎてから出す。`header` の見せ方の `delay-500` と同じ値。 */
+const REVEAL_AFTER_NAME_DELAY_MS = 500;
 const REVEAL_MS = 300;
 
 /** 動きを減らす設定などで、名前と一文、解き終えた盤面、始めの盤面を止めて見せるそれぞれの間。一言を読める長さを取る。 */
 const STILL_STAGE_MS = 1500;
 
-/** 上部での大きさに対する、導入の間の大きさ。一文を添えても上部の領域に収まる大きさにする。 */
+/** 上部での大きさに対する、導入の間の大きさ。収まらないときは、ピクトグラムと名前をそろって縮める。 */
 const INTRO_PICTOGRAM_SCALE = 2;
 const INTRO_TITLE_SCALE = 1.5;
 /** 導入の間の、ピクトグラムと名前の間と、名前と一文の間（px）。 */
 const INTRO_NAME_GAP_PX = 6;
+/** 導入の間の、ピクトグラムと画面の上端の間と、一文と盤面の間の最小（px）。 */
+const INTRO_NAME_MARGIN_PX = 16;
+/** 縮めるときの下限。これより小さくすると、名前として読みにくくなる。 */
+const INTRO_NAME_MIN_FIT = 0.5;
 
 /**
  * 段ごとの見せ方。
@@ -197,7 +206,7 @@ const introStageViews = {
   },
   header: {
     rulesClassName:
-      "animate-in fade-in-0 slide-in-from-bottom-1 duration-300 delay-350 fill-mode-backwards ease-(--ease-enter)",
+      "animate-in fade-in-0 slide-in-from-bottom-1 duration-300 delay-500 fill-mode-backwards ease-(--ease-enter)",
     boardAreaClassName: "",
     boardStage: "start",
     caption: { kind: "start", leaving: true },
@@ -226,12 +235,14 @@ function canAnimateIntro(): boolean {
 }
 
 /**
- * 上部のピクトグラムと名前を、上部の領域の中央に縦に重ねて大きく見せる変形と、その下に添える一文の位置。
+ * 上部のピクトグラムと名前を、盤面より上の中央に縦に重ねて大きく見せる変形と、その下に添える一文の位置。
  * 上部に置いた要素そのものを変形し、導入の終わりに変形を外して上部へ戻す（FLIP）。
+ * 一文が折り返して収まらないときは、ピクトグラムと名前をそろって縮め、上端と盤面から離す。
  * 一文は導入の間だけ見せるので、上部の領域の中の位置（px）だけを返す。
  */
 function getIntroNameLayout(
   region: HTMLElement,
+  boardTop: number,
   pictogram: HTMLElement,
   title: HTMLElement,
   tagline: HTMLElement,
@@ -240,16 +251,31 @@ function getIntroNameLayout(
   const pictogramRect = pictogram.getBoundingClientRect();
   const titleRect = title.getBoundingClientRect();
   const taglineHeight = tagline.getBoundingClientRect().height;
-  const pictogramSize = pictogramRect.width * INTRO_PICTOGRAM_SCALE;
-  const titleWidth = titleRect.width * INTRO_TITLE_SCALE;
-  const titleHeight = titleRect.height * INTRO_TITLE_SCALE;
+  const areaHeight = Math.max(boardTop, regionRect.bottom) - regionRect.top;
+  const nameHeight =
+    pictogramRect.height * INTRO_PICTOGRAM_SCALE +
+    titleRect.height * INTRO_TITLE_SCALE;
+  const nameRoom =
+    areaHeight -
+    INTRO_NAME_MARGIN_PX * 2 -
+    INTRO_NAME_GAP_PX * 2 -
+    taglineHeight;
+  const fit =
+    nameHeight > 0
+      ? Math.min(1, Math.max(INTRO_NAME_MIN_FIT, nameRoom / nameHeight))
+      : 1;
+  const pictogramScale = INTRO_PICTOGRAM_SCALE * fit;
+  const titleScale = INTRO_TITLE_SCALE * fit;
+  const pictogramSize = pictogramRect.width * pictogramScale;
+  const titleWidth = titleRect.width * titleScale;
+  const titleHeight = titleRect.height * titleScale;
   const stackHeight =
     pictogramSize +
     INTRO_NAME_GAP_PX +
     titleHeight +
     INTRO_NAME_GAP_PX +
     taglineHeight;
-  const stackTop = regionRect.top + (regionRect.height - stackHeight) / 2;
+  const stackTop = regionRect.top + (areaHeight - stackHeight) / 2;
   const centerX = regionRect.left + regionRect.width / 2;
 
   function toTransform(
@@ -266,13 +292,13 @@ function getIntroNameLayout(
       pictogramRect,
       centerX - pictogramSize / 2,
       stackTop,
-      INTRO_PICTOGRAM_SCALE,
+      pictogramScale,
     ),
     title: toTransform(
       titleRect,
       centerX - titleWidth / 2,
       stackTop + pictogramSize + INTRO_NAME_GAP_PX,
-      INTRO_TITLE_SCALE,
+      titleScale,
     ),
     taglineTop:
       stackTop -
@@ -282,6 +308,15 @@ function getIntroNameLayout(
       titleHeight +
       INTRO_NAME_GAP_PX,
   };
+}
+
+/** 盤面の領域の中身の上端。導入の間、名前と一文はこれより上に収める。 */
+function getContentTop(element: HTMLElement): number {
+  const paddingTop = Number.parseFloat(getComputedStyle(element).paddingTop);
+  return (
+    element.getBoundingClientRect().top +
+    (Number.isFinite(paddingTop) ? paddingTop : 0)
+  );
 }
 
 /**
@@ -306,6 +341,7 @@ export function TutorialScreen({
   // 導入に動きを付けるか。開いたときと、もう一度始めたときに決める。
   const [animated, setAnimated] = useState(canAnimateIntro);
   const regionRef = useRef<HTMLDivElement>(null);
+  const boardAreaRef = useRef<HTMLElement>(null);
   const pictogramRef = useRef<HTMLSpanElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const taglineRef = useRef<HTMLParagraphElement>(null);
@@ -352,19 +388,21 @@ export function TutorialScreen({
 
   const startOpeningIntro = useEffectEvent(() => {
     const region = regionRef.current;
+    const boardArea = boardAreaRef.current;
     const pictogram = pictogramRef.current;
     const titleElement = titleRef.current;
     const tagline = taglineRef.current;
     if (!introducing) {
       return;
     }
-    if (!region || !pictogram || !titleElement || !tagline) {
+    if (!region || !boardArea || !pictogram || !titleElement || !tagline) {
       finishIntro();
       return;
     }
 
     const { taglineTop, ...transforms } = getIntroNameLayout(
       region,
+      getContentTop(boardArea),
       pictogram,
       titleElement,
       tagline,
@@ -403,6 +441,7 @@ export function TutorialScreen({
       animationsRef.current.push(
         element.animate([{ opacity: 0 }, { opacity: 1 }], {
           duration: NAME_APPEAR_MS,
+          delay: NAME_APPEAR_DELAY_MS,
           easing: MOTION_EASING.enter,
           fill: "backwards",
         }),
@@ -609,6 +648,7 @@ export function TutorialScreen({
       </div>
 
       <main
+        ref={boardAreaRef}
         inert={introPlaying}
         className={cn(
           "flex min-h-0 flex-1 justify-center px-4 pt-6 pb-2 [container-type:size]",
