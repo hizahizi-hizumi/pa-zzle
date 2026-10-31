@@ -26,6 +26,7 @@
     "generate:slide-puzzle-pool": "bun scripts/generate-slide-puzzle-problem-pool.ts",
     "analyze:slide-puzzle": "bun scripts/analyze-slide-puzzle-corpus.ts",
     "analyze:reflection": "bun scripts/analyze-reflection-corpus.ts",
+    "analyze:hamiltonian-path": "bun scripts/analyze-hamiltonian-path-corpus.ts",
     "generate:reflection-pool": "bun scripts/generate-reflection-problem-pool.ts"
   },
   "dependencies": {
