@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useLayoutEffect, useRef } from "react";
 
 import type { GameProgress } from "@/games/play";
+import { prefersReducedMotion } from "@/lib/motion";
 import { prepareSoundEffects } from "@/lib/sound-effects";
 
 /**
@@ -53,11 +54,21 @@ export function useOperationSound<Operation extends SoundOperation>(
   }, [operation]);
 }
 
+type ClearSoundOptions = {
+  /**
+   * 動きを減らす設定で鳴らすクリア音。完成演出の代わりに、完成した盤面を止まった姿で保持して見せるゲームだけ渡す。
+   * 渡さなければ、動きを減らす設定では完成演出が無くすぐ結果へ進むものとして、クリア音を鳴らさない。
+   */
+  playReducedMotionClearSound?: () => void;
+};
+
 /**
  * 盤面の完成演出の始まり（`progress` が `playing` から `clearing` へ移るとき）に、ゲームのクリア音を鳴らす。
  * プレイ画面 `<Game>Play` で呼ぶ。
  *
  * - クリア音はゲームの題材から作り、完成演出に合わせる。演出の途中に合わせるなら `playSound` の `delayMs` で遅らせる。
+ * - 動きを減らす設定では `playClearSound` を呼ばない。完成した盤面を保持して見せるゲームは、
+ *   その姿に合わせた音を `playReducedMotionClearSound` で渡す。渡さなければ鳴らさず、報酬の音だけになる。
  * - 結果を受け取る瞬間の報酬の音はアプリが鳴らすので、ゲームは鳴らさない。
  * - 画面を出した時点の進行は鳴らし済みとして扱う。リセットして解き直したら、またクリアしたときに鳴らす。
  *
@@ -65,13 +76,28 @@ export function useOperationSound<Operation extends SoundOperation>(
  * useClearSound(progress, function playClearSound() {
  *   playSound(clearedSound, { delayMs: CLEAR_SOUND_DELAY_MS });
  * });
+ *
+ * @example
+ * // 動きを減らす設定でも完成した盤面を保持して見せるゲーム
+ * useClearSound(progress, playClearSound, {
+ *   playReducedMotionClearSound() {
+ *     playSound(heldBoardSound);
+ *   },
+ * });
  */
 export function useClearSound(
   progress: GameProgress,
   playClearSound: () => void,
+  { playReducedMotionClearSound }: ClearSoundOptions = {},
 ): void {
   const previousProgressRef = useRef(progress);
-  const play = useEffectEvent(playClearSound);
+  const play = useEffectEvent(function playForMotionPreference() {
+    if (prefersReducedMotion()) {
+      playReducedMotionClearSound?.();
+    } else {
+      playClearSound();
+    }
+  });
 
   useEffect(() => {
     prepareSoundEffects();

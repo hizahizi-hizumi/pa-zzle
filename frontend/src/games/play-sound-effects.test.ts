@@ -5,6 +5,10 @@ import { useClearSound, useOperationSound } from "@/games/play-sound-effects";
 
 vi.mock("@/lib/sound-effects", () => ({ prepareSoundEffects: vi.fn() }));
 
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 type TestOperation = { id: number; type: "placed" };
 
 function createOperation(id: number): TestOperation {
@@ -103,4 +107,57 @@ describe("useClearSound", () => {
       });
     },
   );
+
+  describe("動きを減らす設定の場合", () => {
+    const playingProps: { progress: GameProgress } = { progress: "playing" };
+    let playClearSound: () => void;
+    let playReducedMotionClearSound: () => void;
+
+    beforeEach(() => {
+      vi.stubGlobal(
+        "matchMedia",
+        vi.fn(() => ({ matches: true }) as MediaQueryList),
+      );
+      playClearSound = vi.fn();
+      playReducedMotionClearSound = vi.fn();
+    });
+
+    describe("完成した盤面を保持して見せる音を渡さない場合", () => {
+      let rerender: (props: { progress: GameProgress }) => void;
+
+      beforeEach(() => {
+        ({ rerender } = renderHook(
+          ({ progress }) => useClearSound(progress, playClearSound),
+          { initialProps: playingProps },
+        ));
+      });
+
+      test("クリア音を鳴らさないこと", () => {
+        rerender({ progress: "clearing" });
+
+        expect(playClearSound).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("完成した盤面を保持して見せる音を渡した場合", () => {
+      let rerender: (props: { progress: GameProgress }) => void;
+
+      beforeEach(() => {
+        ({ rerender } = renderHook(
+          ({ progress }) =>
+            useClearSound(progress, playClearSound, {
+              playReducedMotionClearSound,
+            }),
+          { initialProps: playingProps },
+        ));
+      });
+
+      test("渡した音だけを一度鳴らすこと", () => {
+        rerender({ progress: "clearing" });
+
+        expect(playReducedMotionClearSound).toHaveBeenCalledOnce();
+        expect(playClearSound).not.toHaveBeenCalled();
+      });
+    });
+  });
 });

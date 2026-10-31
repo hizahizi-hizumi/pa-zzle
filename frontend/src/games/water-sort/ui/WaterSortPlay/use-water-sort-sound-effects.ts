@@ -135,7 +135,10 @@ function playOperationSound(operation: WaterSortOperation) {
       });
       return;
     case "invalid":
-      playSound(invalidSound);
+      // 動きを減らす設定ではボトルを揺らさず、画面が何も変わらないので鳴らさない。
+      if (!prefersReducedMotion()) {
+        playSound(invalidSound);
+      }
       return;
     case "poured":
       playSound(pouredSound, {

@@ -119,9 +119,9 @@ export function useSlidePuzzleSoundEffects(
 ) {
   useOperationSound(operation, playOperationSound);
   useClearSound(progress, function playClearSound() {
-    // 波は最後のタイルが滑り終えてから始まる。動きを減らす設定では波が無いので待たない。
+    // 波は最後のタイルが滑り終えてから始まる。
     playSound(createClearedSound(tileCount), {
-      delayMs: prefersReducedMotion() ? 0 : getClearWaveTileDelayMs(0),
+      delayMs: getClearWaveTileDelayMs(0),
     });
   });
 }

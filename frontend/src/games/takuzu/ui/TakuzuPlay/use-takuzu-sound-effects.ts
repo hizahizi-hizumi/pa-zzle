@@ -124,16 +124,17 @@ function playOperationSound(operation: TakuzuOperation) {
       playSound(emptiedSound, { variation: REPEATED_SOUND_VARIATION });
       return;
     case "invalid":
-      playSound(invalidSound);
+      // 動きを減らす設定では固定マスを揺らさず、画面が何も変わらないので鳴らさない。
+      if (!prefersReducedMotion()) {
+        playSound(invalidSound);
+      }
       return;
   }
 }
 
-/** 左上のタイルがいちばん膨らむのに合わせて鳴らし始める。動きを減らす設定では波が無いので待たない。 */
+/** 左上のタイルがいちばん膨らむのに合わせて鳴らし始める。 */
 function playClearSound() {
-  playSound(clearedSound, {
-    delayMs: prefersReducedMotion() ? 0 : CLEAR_WAVE_PEAK_MS,
-  });
+  playSound(clearedSound, { delayMs: CLEAR_WAVE_PEAK_MS });
 }
 
 /** マスへの操作と、盤面を完成させた瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。 */

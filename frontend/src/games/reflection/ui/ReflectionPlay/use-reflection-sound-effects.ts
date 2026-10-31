@@ -6,7 +6,6 @@ import {
   CLEAR_LIGHT_HOLD_MS,
   CLEAR_LIGHT_SPREAD_MS,
 } from "@/games/reflection/ui/board/clear/ReflectionClearLight";
-import { prefersReducedMotion } from "@/lib/motion";
 import {
   playSound,
   REPEATED_SOUND_VARIATION,
@@ -145,7 +144,7 @@ const clearedSound: readonly SoundTone[] = [
   ...createClearRingSound(CLEAR_LIGHT_SPREAD_MS + CLEAR_LIGHT_DRAW_MS),
 ];
 
-/** 動きを減らす設定では、光路を伸ばさず全光路を一度に出すので、点ききった和音だけを鳴らす。 */
+/** 動きを減らす設定では、光路を伸ばさず全光路を一度に出して見せておくので、点ききった和音だけを鳴らす。 */
 const reducedMotionClearedSound = createClearRingSound(0);
 
 function playOperationSound(operation: ReflectionOperation) {
@@ -170,7 +169,11 @@ function playOperationSound(operation: ReflectionOperation) {
 }
 
 function playClearSound() {
-  playSound(prefersReducedMotion() ? reducedMotionClearedSound : clearedSound);
+  playSound(clearedSound);
+}
+
+function playReducedMotionClearSound() {
+  playSound(reducedMotionClearedSound);
 }
 
 /** プレイ中の操作と、盤面を完成させた瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。 */
@@ -179,5 +182,5 @@ export function useReflectionSoundEffects(
   progress: GameProgress,
 ) {
   useOperationSound(operation, playOperationSound);
-  useClearSound(progress, playClearSound);
+  useClearSound(progress, playClearSound, { playReducedMotionClearSound });
 }
