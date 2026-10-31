@@ -86,7 +86,7 @@ const goal = createSolvedSlidePuzzleBoard(3);
 const steps: readonly SlidePuzzleTutorialStep[] = [
   {
     message: {
-      headline: "空白の隣のタイルを空白にスライドします",
+      headline: "隣のタイルを、空白にスライドさせます",
       detail: "印のタイルをタップしてください",
     },
     introducedRuleId: "slide",
@@ -95,8 +95,8 @@ const steps: readonly SlidePuzzleTutorialStep[] = [
   },
   {
     message: {
-      headline: "空白と同じ行のタイルも、スライドします",
-      detail: "列でも同じです。間のタイルも一緒に動きます",
+      headline: "空白と同じ行なら、まとめて動かせます",
+      detail: "列でも同じです。間のタイルごとスライドします",
     },
     introducedRuleId: "line",
     cellIndex: 0,
@@ -194,7 +194,7 @@ function describeSlidePuzzleTutorialViolation({
 }: SlidePuzzleTutorialSituation): TutorialMessage {
   return earnedRuleIds.includes("line")
     ? {
-        headline: "このタイルは、空白と行も列も違います",
+        headline: "このタイルは、今は動かせません",
         detail: ruleStatements.line,
       }
     : {
