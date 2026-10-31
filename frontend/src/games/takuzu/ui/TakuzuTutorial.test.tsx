@@ -381,12 +381,14 @@ describe("TakuzuTutorial", () => {
       });
     });
 
-    test("解き終えると、終わりの一言を出し、レベル1を遊ぶで本番を始めること", () => {
+    test("解き終えると、本番につなぐ一言を出し、レベル1を遊ぶで本番を始めること", () => {
       solveAll();
-      const message = screen.getByText("完成です");
+      const headline = screen.getByText("完成です");
+      const detail = screen.getByText("本番は 8×8 で、ルールは同じです");
       fireEvent.click(screen.getByRole("button", { name: "レベル1を遊ぶ" }));
 
-      expect(message).toBeTruthy();
+      expect(headline).toBeTruthy();
+      expect(detail).toBeTruthy();
       expect(onStartPlay).toHaveBeenCalledOnce();
     });
 
@@ -568,10 +570,18 @@ describe("TakuzuTutorial", () => {
       render(<TakuzuTutorial open={true} onClose={onClose} />);
     });
 
-    test("解き終えると、プレイに戻る操作で閉じること", () => {
+    test("解き終えると、プレイ中の盤面につなぐ一言を出し、プレイに戻る操作で閉じること", () => {
       solveAll();
+      const detail = screen.getByText(
+        "このルールで、プレイ中の盤面も埋められます",
+      );
+      const selectionDetail = screen.queryByText(
+        "本番は 8×8 で、ルールは同じです",
+      );
       fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
 
+      expect(detail).toBeTruthy();
+      expect(selectionDetail).toBeNull();
       expect(onClose).toHaveBeenCalledOnce();
     });
   });

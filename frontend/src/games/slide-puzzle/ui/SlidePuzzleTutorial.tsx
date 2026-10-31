@@ -265,7 +265,12 @@ export function SlidePuzzleTutorial({
         earned: progress.earnedRuleIds.includes(rule.id),
         current: situation.step?.introducedRuleId === rule.id,
       }))}
-      message={getTutorialMessage(slidePuzzleTutorial, progress, true)}
+      message={getTutorialMessage(
+        slidePuzzleTutorial,
+        progress,
+        true,
+        onStartPlay ? "selection" : "play",
+      )}
       introducing={progress.phase === "intro"}
       completed={progress.phase === "completed"}
       finishAction={

@@ -343,12 +343,14 @@ describe("SlidePuzzleTutorial", () => {
       });
     });
 
-    test("解き終えると、終わりの一言を出し、レベル1を遊ぶで本番を始めること", () => {
+    test("解き終えると、レベル1につなぐ一言を出し、レベル1を遊ぶで本番を始めること", () => {
       solveAll();
-      const message = screen.getByText("完成です");
+      const headline = screen.getByText("完成です");
+      const detail = screen.getByText("レベル1も、同じ 3×3 の盤面です");
       fireEvent.click(screen.getByRole("button", { name: "レベル1を遊ぶ" }));
 
-      expect(message).toBeTruthy();
+      expect(headline).toBeTruthy();
+      expect(detail).toBeTruthy();
       expect(onStartPlay).toHaveBeenCalledOnce();
     });
 
@@ -540,10 +542,16 @@ describe("SlidePuzzleTutorial", () => {
       render(<SlidePuzzleTutorial open={true} onClose={onClose} />);
     });
 
-    test("解き終えると、プレイに戻る操作で閉じること", () => {
+    test("解き終えると、プレイ中の盤面につなぐ一言を出し、プレイに戻る操作で閉じること", () => {
       solveAll();
+      const detail = screen.getByText(
+        "この動かし方で、プレイ中の盤面も並べられます",
+      );
+      const levelDetail = screen.queryByText("レベル1も、同じ 3×3 の盤面です");
       fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
 
+      expect(detail).toBeTruthy();
+      expect(levelDetail).toBeNull();
       expect(onClose).toHaveBeenCalledOnce();
     });
   });

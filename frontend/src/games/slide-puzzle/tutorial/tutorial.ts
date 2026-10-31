@@ -302,8 +302,14 @@ export const slidePuzzleTutorial: Tutorial<
     detail: "迷ったら、少し待つと印が出ます",
   },
   completion: {
-    headline: "完成です",
-    detail: "レベル1も、同じ 3×3 の盤面です",
+    selection: {
+      headline: "完成です",
+      detail: "レベル1も、同じ 3×3 の盤面です",
+    },
+    play: {
+      headline: "完成です",
+      detail: "この動かし方で、プレイ中の盤面も並べられます",
+    },
   },
   start: startSlidePuzzleTutorial,
   goal: getSlidePuzzleTutorialGoal,

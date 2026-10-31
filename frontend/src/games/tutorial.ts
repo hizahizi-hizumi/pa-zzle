@@ -25,6 +25,13 @@ export type TutorialIntroMessages = {
   start: string;
 };
 
+/**
+ * どこから開いたか。解き終えた後に、どの盤面へつなぐかが変わる。
+ * - `selection`: 難易度選択から開いた。解き終えたらレベル1を始められる。
+ * - `play`: プレイ中に開いた。解き終えたらプレイに戻る。
+ */
+export type TutorialEntry = "selection" | "play";
+
 /** 手に入れると、チュートリアルの上部に並ぶルール。 */
 export type TutorialRule<RuleId extends string> = {
   id: RuleId;
@@ -82,8 +89,8 @@ export type Tutorial<
   steps: readonly Step[];
   /** 手を離した後、解き終えるまでの一言。 */
   freePlay: TutorialMessage;
-  /** 解き終えたときの一言。 */
-  completion: TutorialMessage;
+  /** 解き終えたときの一言。次に遊ぶ盤面へつなぐ言い方を、開いたところごとに持つ。 */
+  completion: Readonly<Record<TutorialEntry, TutorialMessage>>;
   start: () => BoardState;
   /** 解き終えた盤面。導入で、何を目指すかを始めの盤面より先に見せる。 */
   goal: () => BoardState;
@@ -205,7 +212,7 @@ export function getTutorialSituation<
 }
 
 /**
- * 盤面の上に出す一言。
+ * 盤面の上に出す一言。解き終えた後は、開いたところ（`entry`）に合わせた一言を出す。
  * 違反の一言は `violationSettled` のときだけ出す。切り替えの途中で一瞬だけ違反になる手があるゲームは、違反が続いたことを確かめてから渡し、
  * 動かせないところを押したなど手がすぐ確定するゲームは、そのまま渡す。
  */
@@ -218,9 +225,10 @@ export function getTutorialMessage<
   tutorial: Tutorial<RuleId, Step, BoardState, Action>,
   progress: TutorialProgress<RuleId, BoardState>,
   violationSettled: boolean,
+  entry: TutorialEntry,
 ): TutorialMessage {
   if (progress.phase === "solved" || progress.phase === "completed") {
-    return tutorial.completion;
+    return tutorial.completion[entry];
   }
   const situation = getTutorialSituation(tutorial, progress);
   if (progress.violated && violationSettled) {

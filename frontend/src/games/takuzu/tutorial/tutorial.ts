@@ -645,8 +645,14 @@ export const takuzuTutorial: Tutorial<
     detail: "迷ったら、少し待つと印が出ます",
   },
   completion: {
-    headline: "完成です",
-    detail: "本番は 8×8 で、ルールは同じです",
+    selection: {
+      headline: "完成です",
+      detail: "本番は 8×8 で、ルールは同じです",
+    },
+    play: {
+      headline: "完成です",
+      detail: "このルールで、プレイ中の盤面も埋められます",
+    },
   },
   start: startTakuzuTutorial,
   goal: getTakuzuTutorialGoal,

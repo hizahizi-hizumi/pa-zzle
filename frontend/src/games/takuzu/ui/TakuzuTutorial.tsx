@@ -280,7 +280,12 @@ export function TakuzuTutorial({
         earned: progress.earnedRuleIds.includes(rule.id),
         current: situation.step?.introducedRuleId === rule.id,
       }))}
-      message={getTutorialMessage(takuzuTutorial, progress, violationSettled)}
+      message={getTutorialMessage(
+        takuzuTutorial,
+        progress,
+        violationSettled,
+        onStartPlay ? "selection" : "play",
+      )}
       introducing={progress.phase === "intro"}
       completed={progress.phase === "completed"}
       finishAction={
