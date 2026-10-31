@@ -1,29 +1,42 @@
 import type { IceFloorMazeDifficulty } from "@/games/ice-floor-maze/difficulty";
 import {
-  generateIceFloorMazeProblem,
-  type IceFloorMazeGeneratedProblem,
-} from "@/games/ice-floor-maze/problem/generator";
-import type { IceFloorMazeBoardShape } from "@/games/ice-floor-maze/problem/problem";
+  findIceFloorMazePoolEntryByProblemId,
+  type IceFloorMazePooledProblem,
+  listIceFloorMazePoolEntries,
+  restoreIceFloorMazePoolEntry,
+} from "@/games/ice-floor-maze/problem/problem-pool";
 import type { ProblemSeed } from "@/games/problem-seed";
+import { selectProblemPoolEntry } from "@/games/problem-selection";
 
 /**
- * 難易度ごとの仮の盤面の形。難易度分析と問題集が無いので、ゴールは計画深さを問わず選び、レベルの難しさは保証しない。
- * 形は、レベルごとに許す盤面の形の範囲（実装前提調査 §11）から1つずつ選んだもの。
+ * 難易度の問題集から seed で1問を選ぶ。
+ * 問題集は生成時に難易度を判定済みで、盤面そのものと最少手数を持つため、プレイ時には生成・難易度分析を走らせない。
  */
-const provisionalBoardShapeByDifficulty = {
-  "1": { width: 8, height: 8 },
-  "2": { width: 8, height: 10 },
-  "3": { width: 9, height: 12 },
-  "4": { width: 10, height: 13 },
-  "5": { width: 12, height: 14 },
-} as const satisfies Record<IceFloorMazeDifficulty, IceFloorMazeBoardShape>;
-
-/** 難易度の仮の盤面の形で、seed から問題を作る。 */
 export function selectIceFloorMazeProblemForDifficulty(
   difficulty: IceFloorMazeDifficulty,
   seed: ProblemSeed,
-): IceFloorMazeGeneratedProblem {
-  return generateIceFloorMazeProblem(seed, {
-    ...provisionalBoardShapeByDifficulty[difficulty],
-  });
+): IceFloorMazePooledProblem {
+  const entry = selectProblemPoolEntry(
+    listIceFloorMazePoolEntries(difficulty),
+    seed,
+    `level ${difficulty} ice floor maze`,
+  );
+  return restoreIceFloorMazePoolEntry(entry);
+}
+
+/** 難易度の問題集から問題 ID で1問を引いて復元する。引けない ID には `null` を返す。 */
+export function selectIceFloorMazeProblemById(
+  difficulty: IceFloorMazeDifficulty,
+  problemId: string,
+): IceFloorMazePooledProblem | null {
+  const entry = findIceFloorMazePoolEntryByProblemId(difficulty, problemId);
+  return entry ? restoreIceFloorMazePoolEntry(entry) : null;
+}
+
+/** 難易度の問題集から問題 ID で1問を引けるかを、問題を復元せずに確かめる。 */
+export function canSelectIceFloorMazeProblemById(
+  difficulty: IceFloorMazeDifficulty,
+  problemId: string,
+): boolean {
+  return findIceFloorMazePoolEntryByProblemId(difficulty, problemId) !== null;
 }

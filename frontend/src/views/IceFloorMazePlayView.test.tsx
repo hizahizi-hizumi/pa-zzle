@@ -22,18 +22,19 @@ function renderAt(path: string): void {
 
 describe("IceFloorMazePlayView", () => {
   const boardShapeCases = [
-    ["1", 8, 8],
-    ["5", 12, 14],
+    ["1", ["8×8", "8×10"]],
+    ["3", ["9×12", "10×13"]],
+    ["5", ["12×14"]],
   ] as const;
 
   describe.each(boardShapeCases)(
     "レベル %s の場合",
-    (difficulty, width, height) => {
+    (difficulty, levelShapes) => {
       beforeEach(() => {
         renderAt(`/puzzles/ice-floor-maze/play/${difficulty}`);
       });
 
-      test("難易度の仮の盤面の形（外壁の枠を除いた列数・行数）で問題を作ってプレイ画面を表示すること", () => {
+      test("問題集からそのレベルの盤面の形（外壁の枠を除いた列数・行数）の問題を選んでプレイ画面を表示すること", () => {
         const board = screen.getByRole("img", { name: "盤面" });
         const [, , viewWidth, viewHeight] = (
           board.getAttribute("viewBox") ?? ""
@@ -44,8 +45,9 @@ describe("IceFloorMazePlayView", () => {
         expect(
           screen.getByRole("heading", { name: "氷の床迷路" }),
         ).toBeTruthy();
-        expect(Math.round(viewWidth!)).toBe(width);
-        expect(Math.round(viewHeight!)).toBe(height);
+        expect(levelShapes).toContain(
+          `${Math.round(viewWidth!)}×${Math.round(viewHeight!)}`,
+        );
       });
     },
   );

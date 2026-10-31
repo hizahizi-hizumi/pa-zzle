@@ -30,7 +30,8 @@
     "generate:reflection-pool": "bun scripts/generate-reflection-problem-pool.ts",
     "generate:hitofude-puzzle-pool": "bun scripts/generate-hitofude-puzzle-problem-pool.ts",
     "analyze:tsume-shogi": "bun scripts/analyze-tsume-shogi-corpus.ts",
-    "generate:tsume-shogi-pool": "bun scripts/generate-tsume-shogi-problem-pool.ts"
+    "generate:tsume-shogi-pool": "bun scripts/generate-tsume-shogi-problem-pool.ts",
+    "generate:ice-floor-maze-pool": "bun scripts/generate-ice-floor-maze-problem-pool.ts"
   },
   "dependencies": {
     "@fontsource/zen-kaku-gothic-new": "5.3.0",

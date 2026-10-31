@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import type { IceFloorMazeDifficulty } from "@/games/ice-floor-maze/difficulty";
-import type { IceFloorMazeGeneratedProblem } from "@/games/ice-floor-maze/problem/generator";
 import type { IceFloorMazeProblemIdentity } from "@/games/ice-floor-maze/problem/problem";
+import type { IceFloorMazePooledProblem } from "@/games/ice-floor-maze/problem/problem-pool";
 import { selectIceFloorMazeProblemForDifficulty } from "@/games/ice-floor-maze/problem-selection";
 import type { IceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
 import { classifyIceFloorMazeDeadlock } from "@/games/ice-floor-maze/puzzle/deadlock";
@@ -102,7 +102,7 @@ type IceFloorMazePlayState = {
 };
 
 function createPlayState(
-  { problem, identity, optimalMoveCount }: IceFloorMazeGeneratedProblem,
+  { problem, identity, optimalMoveCount }: IceFloorMazePooledProblem,
   startedAt: number,
 ): IceFloorMazePlayState {
   return {
@@ -117,7 +117,7 @@ function createPlayState(
 function selectProblem(
   difficulty: IceFloorMazeDifficulty,
   avoidedProblemId: ProblemId | undefined,
-): IceFloorMazeGeneratedProblem {
+): IceFloorMazePooledProblem {
   return selectProblemAvoiding(
     (seed) => selectIceFloorMazeProblemForDifficulty(difficulty, seed),
     avoidedProblemId,

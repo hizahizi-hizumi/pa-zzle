@@ -15,6 +15,7 @@
       "!src/games/takuzu/problem/problem-pool.json",
       "!src/games/reflection/problem/problem-pool.json",
       "!src/games/hitofude-puzzle/problem/problem-pool.json",
+      "!src/games/ice-floor-maze/problem/problem-pool.json",
       "!src/games/tsume-shogi/problem/problem-pool.json"
     ]
   },
