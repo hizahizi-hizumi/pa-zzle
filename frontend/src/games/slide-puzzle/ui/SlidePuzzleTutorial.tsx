@@ -124,7 +124,7 @@ function toScrambleOperation(frameIndex: number): SlidePuzzleOperation | null {
 /**
  * 3×3 の盤面を、一言と印に沿って1手ずつ一緒に並べ、タイルの動き方を1つずつ使って身につけさせる。
  * 手順を終えたら手を離し、残りを自分で並べさせる。盤面・滑り・揺れ・解けたときの波は本番と同じ部品を使い、
- * どこを目指すかが見えるよう、各マスに入る番号と、番号の場所に収まったタイルを盤面に示す。
+ * どこを目指すかが見えるよう、各マスに入る番号を盤面に薄く示す。
  */
 export function SlidePuzzleTutorial({
   open,

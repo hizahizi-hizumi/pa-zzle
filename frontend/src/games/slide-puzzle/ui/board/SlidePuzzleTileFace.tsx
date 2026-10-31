@@ -15,8 +15,6 @@ const tileNumberClassByBoardSize: Record<SlidePuzzleBoardSize, string> = {
 type SlidePuzzleTileFaceProps = {
   tile: SlidePuzzleTile;
   boardSize: SlidePuzzleBoardSize;
-  /** 番号の場所に収まっていることを示す。影を落として盤面に沈め、まだ動かすタイルと見分けられるようにする。 */
-  inPlace?: boolean;
   ref?: Ref<HTMLSpanElement>;
 };
 
@@ -27,13 +25,12 @@ type SlidePuzzleTileFaceProps = {
 export function SlidePuzzleTileFace({
   tile,
   boardSize,
-  inPlace = false,
   ref,
 }: SlidePuzzleTileFaceProps) {
   return (
     <span
       ref={ref}
-      className={`flex size-full items-center justify-center rounded-[1.6cqw] border border-border font-sans ${tileNumberClassByBoardSize[boardSize]} leading-none font-semibold tabular-nums text-card-foreground ${inPlace ? "bg-muted shadow-none" : "bg-card shadow-raised"} transition-[color,background-color,box-shadow] duration-(--duration-fast) group-active:bg-accent group-focus-visible:ring-2 group-focus-visible:ring-ring`}
+      className={`flex size-full items-center justify-center rounded-[1.6cqw] border border-border bg-card font-sans ${tileNumberClassByBoardSize[boardSize]} leading-none font-semibold text-card-foreground tabular-nums shadow-raised transition-colors duration-(--duration-fast) group-active:bg-accent group-focus-visible:ring-2 group-focus-visible:ring-ring`}
     >
       {tile}
     </span>

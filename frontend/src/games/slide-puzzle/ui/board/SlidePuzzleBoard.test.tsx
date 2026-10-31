@@ -139,7 +139,7 @@ describe("SlidePuzzleBoard", () => {
       onTileEntranceComplete.mockClear();
     });
 
-    test("各マスにそこへ入る番号を出し、番号の場所にあるタイルだけを収まったとして示すこと", () => {
+    test("各マスにそこへ入る番号を出すこと", () => {
       renderGoalShownBoard(null);
       const boardGroup = screen.getByRole("group", { name: "盤面" });
 
@@ -147,16 +147,9 @@ describe("SlidePuzzleBoard", () => {
         boardGroup.querySelectorAll("[data-goal-slot]"),
         (slot) => slot.textContent,
       );
-      const inPlace = within(boardGroup)
-        .getAllByRole("button")
-        .filter((tile) => tile.hasAttribute("data-in-place"))
-        .map((tile) => tile.textContent);
 
       expect(slotNumbers).toEqual(
         Array.from({ length: 15 }, (_, index) => String(index + 1)),
-      );
-      expect(inPlace).toEqual(
-        Array.from({ length: 12 }, (_, index) => String(index + 1)),
       );
     });
 

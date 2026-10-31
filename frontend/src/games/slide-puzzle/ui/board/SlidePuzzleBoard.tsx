@@ -35,7 +35,7 @@ type SlidePuzzleBoardProps = {
   /** 押すタイルを控えめに示す印。`id` が変わると、同じタイルでも印を付け直す。 */
   hint?: SlidePuzzleTileHint | null;
   /**
-   * 並べ終えたときの場所を見せる。各マスにそこへ入る番号を薄く出し、番号の場所に収まったタイルを控えめに示す。
+   * 並べ終えたときの場所を見せる。各マスにそこへ入る番号を薄く出す。
    * ルールを知らない人に、どこを目指すかを盤面の上で見せるときに使う。
    */
   goalShown?: boolean;
@@ -173,7 +173,6 @@ export function SlidePuzzleBoard({
             boardSize={boardSize}
             disabled={interactionDisabled}
             hintId={hint?.cellIndex === cellIndex ? hint.id : null}
-            inPlace={goalShown && tile === cellIndex + 1}
             concealed={tileEntrance === "concealed"}
             // 盤面を戻す・別の問題などの置き換えでは、タイル同士が交差して滑らないよう即座に並べ替える。
             slideAnimated={operation !== null}

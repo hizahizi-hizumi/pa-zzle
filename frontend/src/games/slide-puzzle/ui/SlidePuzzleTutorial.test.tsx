@@ -120,15 +120,6 @@ function getHintedTiles(): string[] {
     .map((tile) => tile.textContent ?? "");
 }
 
-/** 番号の場所に収まっているとして示しているタイル。 */
-function getInPlaceTiles(): string[] {
-  return within(getBoard())
-    .getAllByRole("button")
-    .filter((tile) => tile.hasAttribute("data-in-place"))
-    .map((tile) => tile.textContent ?? "")
-    .sort();
-}
-
 /** 各マスに薄く出している、そこへ入る番号。 */
 function getGoalSlotNumbers(): string[] {
   return Array.from(
@@ -205,16 +196,10 @@ describe("SlidePuzzleTutorial", () => {
       expect(currentChips).toEqual(["空白へ滑る"]);
     });
 
-    test("各マスにそこへ入る番号を薄く出し、番号の場所にあるタイルを収まったとして示すこと", () => {
+    test("各マスにそこへ入る番号を薄く出すこと", () => {
       const slotNumbers = getGoalSlotNumbers();
-      const inPlaceBefore = getInPlaceTiles();
-      tapTile(6);
-
-      const inPlaceAfter = getInPlaceTiles();
 
       expect(slotNumbers).toEqual(["1", "2", "3", "4", "5", "6", "7", "8"]);
-      expect(inPlaceBefore).toEqual(["7"]);
-      expect(inPlaceAfter).toEqual(["6", "7"]);
     });
 
     test("印のタイルを押すと空白へ滑り、滑り終えてから次のタイルに印を付けること", () => {
@@ -388,14 +373,12 @@ describe("SlidePuzzleTutorial", () => {
       const title = screen.getByRole("heading", { name: "スライドパズル" });
       const slotNumbers = getGoalSlotNumbers();
       const positions = [getTilePosition(1), getTilePosition(6)];
-      const inPlace = getInPlaceTiles();
       const hinted = getHintedTiles();
 
       expect(pictogram).toBeTruthy();
       expect(title).toBeTruthy();
       expect(slotNumbers).toEqual(["1", "2", "3", "4", "5", "6", "7", "8"]);
       expect(positions).toEqual(["1行1列", "2行3列"]);
-      expect(inPlace).toEqual(["1", "2", "3", "4", "5", "6", "7", "8"]);
       expect(hinted).toEqual([]);
     });
 
