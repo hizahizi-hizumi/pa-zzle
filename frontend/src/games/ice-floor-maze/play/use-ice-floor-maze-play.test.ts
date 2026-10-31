@@ -37,8 +37,6 @@ vi.mock("@/games/ice-floor-maze/problem-selection", async () => {
         conditions: { width: 5, height: 5 },
       },
       optimalMoveCount: 3,
-      symmetryKey: "",
-      generationAttemptCount: 1,
     }),
   };
 });
