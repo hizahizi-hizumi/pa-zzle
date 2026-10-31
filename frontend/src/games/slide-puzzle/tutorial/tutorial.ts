@@ -21,8 +21,8 @@ import type {
 } from "@/games/tutorial";
 
 /**
- * - `slide`: 空白の隣のタイルが、空白へ滑る。
- * - `line`: 空白と同じ行・列のタイルは、間のタイルごとまとめて滑る。
+ * - `slide`: 空白の隣のタイルが、空白へスライドする。
+ * - `line`: 空白と同じ行・列のタイルは、間のタイルごとまとめてスライドする。
  */
 export type SlidePuzzleTutorialRuleId = "slide" | "line";
 
@@ -81,7 +81,7 @@ const goal = createSolvedSlidePuzzleBoard(3);
 const steps: readonly SlidePuzzleTutorialStep[] = [
   {
     message: {
-      headline: "空白の隣のタイルは、空白へ滑ります",
+      headline: "タイルを空白にスライドさせます",
       detail: "印のタイルをタップしてください",
     },
     introducedRuleId: "slide",
@@ -89,8 +89,8 @@ const steps: readonly SlidePuzzleTutorialStep[] = [
   },
   {
     message: {
-      headline: "空白と同じ行なら、遠くても滑ります",
-      detail: "間のタイルごと、まとめて動きます",
+      headline: "空白と同じ行なら、まとめて動きます",
+      detail: "間のタイルも一緒にスライドします",
     },
     introducedRuleId: "line",
     cellIndex: 0,
@@ -176,8 +176,8 @@ function performSlidePuzzleTutorialAction(
 
 /** 違反の一言の補足に添える、当たったルールそのもの。 */
 const ruleStatements = {
-  slide: "空白の隣のタイルが、空白へ滑ります",
-  line: "空白と同じ行・列のタイルだけが滑ります",
+  slide: "空白の隣のタイルだけが、空白にスライドします",
+  line: "空白と同じ行・列のタイルだけがスライドします",
 } as const satisfies Record<SlidePuzzleTutorialRuleId, string>;
 
 /** 動かないタイルを押したときの一言。まとめて滑ることを示す前は、空白の隣かどうかで言う。 */
@@ -280,13 +280,13 @@ export const slidePuzzleTutorial: Tutorial<
   SlidePuzzleTutorialAction
 > = {
   intro: {
-    tagline: "タイルを滑らせて、番号順に並べるパズルです",
-    goal: "この並びが完成です",
-    start: "崩した盤面から始めます",
+    tagline: "番号が書かれたタイルをスライドさせて、順番に並べるパズルです",
+    goal: "この形がゴールです",
+    start: "最初はこのように崩れています",
   },
   rules: [
-    { id: "slide", label: "空白へ滑る" },
-    { id: "line", label: "まとめて滑る" },
+    { id: "slide", label: "空白へスライド" },
+    { id: "line", label: "まとめてスライド" },
   ],
   steps,
   freePlay: {

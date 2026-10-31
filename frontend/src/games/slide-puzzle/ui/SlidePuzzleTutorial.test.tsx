@@ -182,7 +182,7 @@ describe("SlidePuzzleTutorial", () => {
     test("パズルの名前と3×3の盤面を出し、タイルの滑り方と最初に押すタイルを示すこと", () => {
       const title = screen.getByRole("heading", { name: "スライドパズル" });
       const tiles = within(getBoard()).getAllByRole("button");
-      const headline = screen.getByText("空白の隣のタイルは、空白へ滑ります");
+      const headline = screen.getByText("タイルを空白にスライドさせます");
       const detail = screen.getByText("印のタイルをタップしてください");
       const hinted = getHintedTiles();
       const chips = getRuleChipTexts();
@@ -193,8 +193,8 @@ describe("SlidePuzzleTutorial", () => {
       expect(headline).toBeTruthy();
       expect(detail).toBeTruthy();
       expect(hinted).toEqual(["6"]);
-      expect(chips).toEqual(["空白へ滑る", "？"]);
-      expect(currentChips).toEqual(["空白へ滑る"]);
+      expect(chips).toEqual(["空白へスライド", "？"]);
+      expect(currentChips).toEqual(["空白へスライド"]);
     });
 
     test("各マスにそこへ入る番号を薄く出すこと", () => {
@@ -209,7 +209,7 @@ describe("SlidePuzzleTutorial", () => {
       advanceTime(nextStepCueDelayMs);
 
       const position = getTilePosition(6);
-      const message = screen.getByText("空白と同じ行なら、遠くても滑ります");
+      const message = screen.getByText("空白と同じ行なら、まとめて動きます");
       const hinted = getHintedTiles();
 
       expect(position).toBe("2行3列");
@@ -236,7 +236,9 @@ describe("SlidePuzzleTutorial", () => {
 
       const position = getTilePosition(5);
       const headline = screen.getByText("このタイルは、空白の隣にありません");
-      const detail = screen.getByText("空白の隣のタイルが、空白へ滑ります");
+      const detail = screen.getByText(
+        "空白の隣のタイルだけが、空白にスライドします",
+      );
 
       expect(position).toBe("3行2列");
       expect(headline).toBeTruthy();
@@ -257,8 +259,8 @@ describe("SlidePuzzleTutorial", () => {
 
         const positions = [getTilePosition(2), getTilePosition(3)];
 
-        expect(chips).toEqual(["空白へ滑る", "まとめて滑る"]);
-        expect(currentChips).toEqual(["まとめて滑る"]);
+        expect(chips).toEqual(["空白へスライド", "まとめてスライド"]);
+        expect(currentChips).toEqual(["まとめてスライド"]);
         expect(positions).toEqual(["1行2列", "1行3列"]);
       });
     });
@@ -283,7 +285,7 @@ describe("SlidePuzzleTutorial", () => {
 
         const headline = screen.getByText("空白と同じ行にも列にもありません");
         const detail = screen.getByText(
-          "空白と同じ行・列のタイルだけが滑ります",
+          "空白と同じ行・列のタイルだけがスライドします",
         );
 
         expect(headline).toBeTruthy();
@@ -332,13 +334,13 @@ describe("SlidePuzzleTutorial", () => {
       solveAll();
       fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
 
-      const message = screen.getByText("空白の隣のタイルは、空白へ滑ります");
+      const message = screen.getByText("タイルを空白にスライドさせます");
       const position = getTilePosition(6);
       const chips = getRuleChipTexts();
 
       expect(message).toBeTruthy();
       expect(position).toBe("1行3列");
-      expect(chips).toEqual(["空白へ滑る", "？"]);
+      expect(chips).toEqual(["空白へスライド", "？"]);
     });
 
     test("閉じてから開き直すと、最初から始まること", () => {
@@ -347,7 +349,7 @@ describe("SlidePuzzleTutorial", () => {
       rerenderTutorial(false);
       rerenderTutorial(true);
 
-      const message = screen.getByText("空白の隣のタイルは、空白へ滑ります");
+      const message = screen.getByText("タイルを空白にスライドさせます");
 
       expect(onClose).toHaveBeenCalledOnce();
       expect(message).toBeTruthy();
@@ -373,7 +375,7 @@ describe("SlidePuzzleTutorial", () => {
       });
       const title = screen.getByRole("heading", { name: "スライドパズル" });
       const tagline = screen.getByText(
-        "タイルを滑らせて、番号順に並べるパズルです",
+        "番号が書かれたタイルをスライドさせて、順番に並べるパズルです",
       );
       const slotNumbers = getGoalSlotNumbers();
       const positions = [getTilePosition(1), getTilePosition(6)];
@@ -390,7 +392,7 @@ describe("SlidePuzzleTutorial", () => {
     test("最後まで見せると、始めの盤面で最初の手順の一言と印を出すこと", async () => {
       await advanceTimeInSlices(introEnoughMs);
 
-      const headline = screen.getByText("空白の隣のタイルは、空白へ滑ります");
+      const headline = screen.getByText("タイルを空白にスライドさせます");
       const positions = [getTilePosition(1), getTilePosition(6)];
       const hinted = getHintedTiles();
 
@@ -398,19 +400,21 @@ describe("SlidePuzzleTutorial", () => {
       expect(positions).toEqual(["2行1列", "1行3列"]);
       expect(hinted).toEqual(["6"]);
       expect(
-        screen.queryByText("タイルを滑らせて、番号順に並べるパズルです"),
+        screen.queryByText(
+          "番号が書かれたタイルをスライドさせて、順番に並べるパズルです",
+        ),
       ).toBeNull();
-      expect(screen.queryByText("崩した盤面から始めます")).toBeNull();
+      expect(screen.queryByText("最初はこのように崩れています")).toBeNull();
     });
 
     test("完成した盤面を見せ終えると、それが完成だと添えてから、崩した盤面から始めると添えて崩すこと", async () => {
       await advanceTimeInSlices(introBoardStartMs + 100);
-      const goalCaption = screen.getByText("この並びが完成です");
+      const goalCaption = screen.getByText("この形がゴールです");
       const positionWhileGoal = getTilePosition(6);
       await advanceTimeInSlices(introGoalHoldMs);
 
-      const startCaption = screen.getByText("崩した盤面から始めます");
-      const goalCaptionAfter = screen.queryByText("この並びが完成です");
+      const startCaption = screen.getByText("最初はこのように崩れています");
+      const goalCaptionAfter = screen.queryByText("この形がゴールです");
 
       expect(goalCaption).toBeTruthy();
       expect(positionWhileGoal).toBe("2行3列");
@@ -449,9 +453,7 @@ describe("SlidePuzzleTutorial", () => {
         (_, skip) => {
           skip();
 
-          const headline = screen.getByText(
-            "空白の隣のタイルは、空白へ滑ります",
-          );
+          const headline = screen.getByText("タイルを空白にスライドさせます");
           const position = getTilePosition(6);
           const hinted = getHintedTiles();
 
@@ -493,7 +495,7 @@ describe("SlidePuzzleTutorial", () => {
     });
 
     test("導入を見せずに、始めの盤面の最初の手順から始めること", () => {
-      const headline = screen.getByText("空白の隣のタイルは、空白へ滑ります");
+      const headline = screen.getByText("タイルを空白にスライドさせます");
       const position = getTilePosition(6);
       const hinted = getHintedTiles();
 

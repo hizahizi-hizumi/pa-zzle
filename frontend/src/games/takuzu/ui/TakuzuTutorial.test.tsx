@@ -434,9 +434,7 @@ describe("TakuzuTutorial", () => {
         hidden: true,
       });
       const title = screen.getByRole("heading", { name: "バイナリパズル" });
-      const tagline = screen.getByText(
-        "四角と丸で、ルールどおりに埋めるパズルです",
-      );
+      const tagline = screen.getByText("マスを四角か丸で埋めるパズルです");
       const labels = [getCellLabel(1, 1), getCellLabel(2, 2)];
       const hinted = getHintedCellPositions();
 
@@ -459,20 +457,22 @@ describe("TakuzuTutorial", () => {
       expect(labels).toEqual(["1行1列 空き", "1行2列 四角 固定"]);
       expect(hinted).toEqual(["1行1列"]);
       expect(chips).toEqual(["？", "？", "？"]);
+      expect(screen.queryByText("マスを四角か丸で埋めるパズルです")).toBeNull();
       expect(
-        screen.queryByText("四角と丸で、ルールどおりに埋めるパズルです"),
+        screen.queryByText("最初はいくつかのマスが空いています"),
       ).toBeNull();
-      expect(screen.queryByText("いくつかのマスを空けて始めます")).toBeNull();
     });
 
     test("解き終えた盤面を見せ終えると、それが完成だと添えてから、マスを空けて始めると添えて戻すこと", async () => {
       await advanceTimeInSlices(introBoardStartMs + 400);
-      const goalCaption = screen.getByText("こう埋まれば完成です");
+      const goalCaption = screen.getByText("この形がゴールです");
       const labelWhileGoal = getCellLabel(1, 1);
       await advanceTimeInSlices(introGoalHoldMs);
 
-      const startCaption = screen.getByText("いくつかのマスを空けて始めます");
-      const goalCaptionAfter = screen.queryByText("こう埋まれば完成です");
+      const startCaption = screen.getByText(
+        "最初はいくつかのマスが空いています",
+      );
+      const goalCaptionAfter = screen.queryByText("この形がゴールです");
 
       expect(goalCaption).toBeTruthy();
       expect(labelWhileGoal).toBe("1行1列 四角");
