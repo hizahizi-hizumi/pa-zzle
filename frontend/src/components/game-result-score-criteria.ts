@@ -9,7 +9,15 @@ import type { ScoreItem, SpeedScoreRule } from "@/games/score";
 import { formatDurationInWords } from "@/lib/format-elapsed-time";
 
 /** 採点基準の文で数を示すときの単位。 */
-type ScoreCriterionUnit = "回" | "手" | "個" | "本" | "台" | "マス" | "色";
+type ScoreCriterionUnit =
+  | "回"
+  | "手"
+  | "個"
+  | "本"
+  | "台"
+  | "マス"
+  | "色"
+  | "か所";
 
 /** 1単位ごとに決まった点を減らす減点。 */
 export type ScorePenalty = {
