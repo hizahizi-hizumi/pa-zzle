@@ -15,6 +15,7 @@ const uiFontDir = fileURLToPath(
   new URL("./generated/ui-font/", import.meta.url),
 );
 const internalDiagnosticsEnabled = env.PA_ZZLE_INTERNAL_DIAGNOSTICS === "true";
+const uiFontSubsetFamily = "Zen Kaku Gothic New Subset";
 const buildRevision = env.WORKERS_CI_COMMIT_SHA ?? env.GITHUB_SHA ?? null;
 
 export default defineConfig({
@@ -22,7 +23,11 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    uiFontSubset({ root: frontendRoot, outputDir: uiFontDir }),
+    uiFontSubset({
+      root: frontendRoot,
+      outputDir: uiFontDir,
+      fontFamily: uiFontSubsetFamily,
+    }),
     generouted({
       source: {
         routes: `${pagesRoot}**/[\\w[-]*.{jsx,tsx,mdx}`,
@@ -36,6 +41,7 @@ export default defineConfig({
       internalDiagnosticsEnabled,
     ),
     __PA_ZZLE_BUILD_REVISION__: JSON.stringify(buildRevision),
+    __PA_ZZLE_UI_FONT_SUBSET_FAMILY__: JSON.stringify(uiFontSubsetFamily),
   },
   resolve: {
     alias: {

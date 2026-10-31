@@ -10,10 +10,3 @@ declare module "subset-font" {
     options?: SubsetFontOptions,
   ): Promise<Buffer>;
 }
-
-declare module "fontverter" {
-  export function convert(
-    font: Uint8Array,
-    toFormat: "sfnt" | "woff" | "woff2",
-  ): Promise<Buffer>;
-}

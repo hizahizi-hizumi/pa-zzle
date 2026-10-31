@@ -29,8 +29,6 @@
         "@types/react": "^19",
         "@types/react-dom": "^19",
         "@vitejs/plugin-react": "^6.1.1",
-        "fontverter": "^2.0.0",
-        "harfbuzzjs": "^1.6.4",
         "jsdom": "^30.0.1",
         "subset-font": "^2.9.0",
         "tailwindcss": "^4.1.11",
