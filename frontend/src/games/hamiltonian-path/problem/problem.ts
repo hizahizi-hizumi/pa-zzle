@@ -8,7 +8,12 @@ import {
   type RecordedProblemIdentity,
 } from "@/games/problem-id";
 import type { ProblemSeed } from "@/games/problem-seed";
-import { isNonEmptyString, isRecordObject } from "@/lib/type-guards";
+import {
+  isNonEmptyString,
+  isNonNegativeInteger,
+  isPositiveInteger,
+  isRecordObject,
+} from "@/lib/type-guards";
 
 /**
  * 1問を遊ぶためのデータ。盤面（壁マス・仕切り・始点）だけを持ち、解の道は持たない。
@@ -67,6 +72,53 @@ export type HamiltonianPathSolveWorkload = {
   longestRefutationLength: number;
   fatalBranchCount: number;
 };
+
+/** 生成条件の盤面で道が通るマスの数。壁率の分だけ壁マスにし、残りを通る。 */
+export function countHamiltonianPathOpenCells({
+  size,
+  wallRatio,
+}: HamiltonianPathGenerationConditions): number {
+  return Math.round(size * size * (1 - wallRatio));
+}
+
+/**
+ * 記録など外部から読み戻した値が、問題を解き切る作業の量として読めるかを確かめる。
+ * 最も長い先読みは先読みの手数の合計の一部なので、合計を超えない。
+ */
+export function isHamiltonianPathSolveWorkload(
+  value: unknown,
+): value is HamiltonianPathSolveWorkload {
+  if (!isRecordObject(value)) {
+    return false;
+  }
+
+  const {
+    openCellCount,
+    assumptionCount,
+    refutationStepCount,
+    longestRefutationLength,
+    fatalBranchCount,
+  } = value;
+  return (
+    isPositiveInteger(openCellCount) &&
+    isNonNegativeInteger(assumptionCount) &&
+    isNonNegativeInteger(refutationStepCount) &&
+    isNonNegativeInteger(longestRefutationLength) &&
+    isNonNegativeInteger(fatalBranchCount) &&
+    longestRefutationLength <= refutationStepCount
+  );
+}
+
+/** 作業の量のなぞる長さが、identity の生成条件の盤面で道が通るマスの数と合うか。 */
+export function isHamiltonianPathWorkloadOfIdentity(
+  workload: HamiltonianPathSolveWorkload,
+  identity: HamiltonianPathProblemIdentity,
+): boolean {
+  return (
+    workload.openCellCount ===
+    countHamiltonianPathOpenCells(identity.conditions)
+  );
+}
 
 /**
  * 生成条件と候補番号から identity を作る。seed は条件ごとに別の系列になるよう条件を含める。
