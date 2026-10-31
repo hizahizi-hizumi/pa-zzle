@@ -108,6 +108,7 @@ describe("ReflectionPlay", () => {
     stock: inventory,
     selection: null,
     laser: null,
+    operation: null,
     elapsedMs: 65_000,
     canRestart: false,
     result: null,
