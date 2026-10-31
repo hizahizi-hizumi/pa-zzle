@@ -1,12 +1,13 @@
 import type { SoundTone } from "@/lib/sound-effects";
 
 type SoundEffects = typeof import("@/lib/sound-effects");
+type SoundEffectsSetting = typeof import("@/lib/sound-effects-setting");
 
 function createFakeOscillator() {
   return {
     type: "sine" as OscillatorType,
     frequency: {
-      setValueAtTime: vi.fn(),
+      setValueAtTime: vi.fn<(value: number, time: number) => void>(),
       exponentialRampToValueAtTime: vi.fn(),
     },
     connect: vi.fn(),
@@ -37,17 +38,38 @@ class FakeAudioContext {
     return oscillator;
   }
 
+  gains: ReturnType<typeof createFakeGain>[] = [];
+
   createGain() {
+    const gain = createFakeGain();
+    this.gains.push(gain);
+    return gain;
+  }
+
+  createDynamicsCompressor() {
     return {
-      gain: {
-        setValueAtTime: vi.fn(),
-        linearRampToValueAtTime: vi.fn(),
-        exponentialRampToValueAtTime: vi.fn(),
-      },
+      threshold: { value: 0 },
+      knee: { value: 0 },
+      ratio: { value: 0 },
+      attack: { value: 0 },
+      release: { value: 0 },
       connect: vi.fn(),
-      disconnect: vi.fn(),
     };
   }
+}
+
+function createFakeGain() {
+  return {
+    gain: {
+      setValueAtTime: vi.fn(),
+      setTargetAtTime: vi.fn<(target: number, time: number) => void>(),
+      cancelScheduledValues: vi.fn(),
+      linearRampToValueAtTime: vi.fn<(value: number, time: number) => void>(),
+      exponentialRampToValueAtTime: vi.fn(),
+    },
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+  };
 }
 
 const tones: SoundTone[] = [
@@ -61,15 +83,26 @@ const tones: SoundTone[] = [
   },
 ];
 
-/** AudioContext を一つだけ持つモジュールの状態を、テストごとに作り直して読み込む。 */
-async function importSoundEffects(): Promise<SoundEffects> {
+/** AudioContext と設定を一つだけ持つモジュールの状態を、テストごとに作り直して読み込む。 */
+async function importSoundEffects(): Promise<
+  SoundEffects & Pick<SoundEffectsSetting, "setSoundEffectsEnabled">
+> {
   vi.resetModules();
-  return import("@/lib/sound-effects");
+  const [soundEffects, setting] = await Promise.all([
+    import("@/lib/sound-effects"),
+    import("@/lib/sound-effects-setting"),
+  ]);
+  return {
+    ...soundEffects,
+    setSoundEffectsEnabled: setting.setSoundEffectsEnabled,
+  };
 }
 
 afterEach(() => {
   FakeAudioContext.instances = [];
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+  window.localStorage.clear();
 });
 
 describe("playSound", () => {
@@ -113,8 +146,34 @@ describe("playSound", () => {
     });
   });
 
-  describe("鳴らさない設定の場合", () => {
+  describe("揺らぎを付けた場合", () => {
     let soundEffects: SoundEffects;
+
+    beforeEach(async () => {
+      vi.stubGlobal("AudioContext", FakeAudioContext);
+      vi.spyOn(Math, "random").mockReturnValue(1);
+      soundEffects = await importSoundEffects();
+    });
+
+    test("一つの効果音の音すべてを、同じ幅だけ高く大きくして鳴らすこと", () => {
+      soundEffects.playSound(tones, {
+        variation: { pitchCents: 1200, volumeRatio: 0.5 },
+      });
+
+      const [context] = FakeAudioContext.instances;
+      const frequencies = context?.oscillators.map(
+        ({ frequency }) => frequency.setValueAtTime.mock.calls[0]?.[0],
+      );
+      const peakVolumes = context?.gains
+        .slice(1)
+        .map(({ gain }) => gain.linearRampToValueAtTime.mock.calls[0]?.[0]);
+      expect(frequencies).toEqual([880, 1320]);
+      expect(peakVolumes).toEqual([expect.closeTo(0.15), expect.closeTo(0.15)]);
+    });
+  });
+
+  describe("鳴らさない設定の場合", () => {
+    let soundEffects: Awaited<ReturnType<typeof importSoundEffects>>;
 
     beforeEach(async () => {
       vi.stubGlobal("AudioContext", FakeAudioContext);
@@ -126,6 +185,27 @@ describe("playSound", () => {
       soundEffects.playSound(tones);
 
       expect(FakeAudioContext.instances).toEqual([]);
+    });
+  });
+
+  describe("鳴らしている間に鳴らさない設定へ切り替えた場合", () => {
+    let soundEffects: Awaited<ReturnType<typeof importSoundEffects>>;
+
+    beforeEach(async () => {
+      vi.stubGlobal("AudioContext", FakeAudioContext);
+      soundEffects = await importSoundEffects();
+      soundEffects.playSound(tones);
+    });
+
+    test("鳴っている音を出口で消すこと", () => {
+      soundEffects.setSoundEffectsEnabled(false);
+
+      const master = FakeAudioContext.instances[0]?.gains[0];
+      expect(master?.gain.setTargetAtTime).toHaveBeenCalledWith(
+        0,
+        10,
+        expect.any(Number),
+      );
     });
   });
 });

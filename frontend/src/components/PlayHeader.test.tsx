@@ -2,8 +2,16 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 
 import { PlayHeader } from "@/components/PlayHeader";
+import {
+  isSoundEffectsEnabled,
+  setSoundEffectsEnabled,
+} from "@/lib/sound-effects-setting";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  setSoundEffectsEnabled(true);
+  window.localStorage.clear();
+});
 
 function openPlayMenu(): void {
   fireEvent.pointerDown(screen.getByRole("button", { name: "その他の操作" }), {
@@ -89,6 +97,31 @@ describe("PlayHeader", () => {
         expect(props[callbackName]).toHaveBeenCalledOnce();
       },
     );
+  });
+
+  describe("効果音を鳴らす設定の場合", () => {
+    beforeEach(() => {
+      render(<PlayHeader {...createProps()} />);
+      openPlayMenu();
+    });
+
+    test("メニューに効果音を鳴らす設定として示すこと", () => {
+      const soundEffects = screen.getByRole("menuitemcheckbox", {
+        name: "効果音",
+      });
+
+      expect(soundEffects.getAttribute("aria-checked")).toBe("true");
+    });
+
+    test("メニューの効果音で鳴らさない設定に切り替え、メニューを開いたままにすること", () => {
+      fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "効果音" }));
+
+      const soundEffects = screen.getByRole("menuitemcheckbox", {
+        name: "効果音",
+      });
+      expect(soundEffects.getAttribute("aria-checked")).toBe("false");
+      expect(isSoundEffectsEnabled()).toBe(false);
+    });
   });
 
   describe("省略できる補助操作を渡さない場合", () => {

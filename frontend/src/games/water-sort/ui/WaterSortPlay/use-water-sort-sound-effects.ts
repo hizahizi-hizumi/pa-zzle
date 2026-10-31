@@ -1,5 +1,5 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
 import type { GameProgress } from "@/games/play";
+import { useClearSound, useOperationSound } from "@/games/play-sound-effects";
 import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
 import {
   POUR_ANIMATION_DURATION_MS,
@@ -9,7 +9,7 @@ import {
 import { prefersReducedMotion } from "@/lib/motion";
 import {
   playSound,
-  prepareSoundEffects,
+  REPEATED_SOUND_VARIATION,
   type SoundTone,
 } from "@/lib/sound-effects";
 
@@ -74,68 +74,90 @@ const pouredSound: readonly SoundTone[] = POUR_BUBBLE_TIMINGS.map(
   },
 );
 
-/** クリアの、上がっていく短い和音の分散。 */
-const clearedSound: readonly SoundTone[] = [523.25, 659.25, 783.99, 1046.5].map(
-  function createArpeggioNote(frequency, index, frequencies) {
-    const isLast = index === frequencies.length - 1;
-    return {
-      waveform: "triangle",
-      frequency,
-      offsetMs: index * 90,
-      durationMs: isLast ? 360 : 140,
-      volume: 0.1,
-      attackMs: 6,
-    };
+/** 満ちていく水の、泡が駆け上がる短い連なり。 */
+const FILLED_BUBBLE_FREQUENCIES = [700, 900, 1150, 1450];
+const FILLED_BUBBLE_STEP_MS = 40;
+/** 泡が上がりきった後に、満ちたボトルが澄んで鳴る音の鳴り始め。 */
+const FILLED_RING_OFFSET_MS =
+  FILLED_BUBBLE_FREQUENCIES.length * FILLED_BUBBLE_STEP_MS;
+
+/**
+ * クリアの、最後のボトルが満ちる音。泡が駆け上がり、満ちたグラスのように澄んで鳴って終わる。
+ * 続けて鳴る結果の報酬の音と濁らないよう、短くし、同じ調の音で鳴らす。
+ */
+const clearedSound: readonly SoundTone[] = [
+  ...FILLED_BUBBLE_FREQUENCIES.map(
+    function createFilledBubble(frequency, index): SoundTone {
+      return {
+        waveform: "sine",
+        frequency,
+        endFrequency: frequency * 1.6,
+        offsetMs: index * FILLED_BUBBLE_STEP_MS,
+        durationMs: 55,
+        volume: 0.1,
+        attackMs: 3,
+      };
+    },
+  ),
+  {
+    waveform: "sine",
+    frequency: 1318.51,
+    offsetMs: FILLED_RING_OFFSET_MS,
+    durationMs: 380,
+    volume: 0.07,
+    attackMs: 4,
   },
-);
+  {
+    waveform: "sine",
+    frequency: 2637.02,
+    offsetMs: FILLED_RING_OFFSET_MS,
+    durationMs: 220,
+    volume: 0.025,
+    attackMs: 3,
+  },
+];
+
+/** 注いだ水が注ぎ先へ流れ込み終わるまでの時間。動きを減らす設定では注ぐ動きが無いので待たない。 */
+function getPourTransferDelayMs(transferOffset: number): number {
+  return prefersReducedMotion()
+    ? 0
+    : POUR_ANIMATION_DURATION_MS * transferOffset;
+}
 
 function playOperationSound(operation: WaterSortOperation) {
   switch (operation.type) {
     case "source-selected":
-      playSound(sourceSelectedSound);
+      playSound(sourceSelectedSound, { variation: REPEATED_SOUND_VARIATION });
       return;
     case "source-deselected":
-      playSound(sourceDeselectedSound);
+      playSound(sourceDeselectedSound, {
+        variation: REPEATED_SOUND_VARIATION,
+      });
       return;
     case "invalid":
       playSound(invalidSound);
       return;
     case "poured":
       playSound(pouredSound, {
-        delayMs: prefersReducedMotion()
-          ? 0
-          : POUR_ANIMATION_DURATION_MS * POUR_TRANSFER_START_OFFSET,
+        delayMs: getPourTransferDelayMs(POUR_TRANSFER_START_OFFSET),
+        variation: REPEATED_SOUND_VARIATION,
       });
       return;
   }
 }
 
-/** プレイ中の操作と、クリアして結果を見せる瞬間に効果音を鳴らす。 */
+/** 最後の注水で水が流れ込み終わるのに合わせて、クリア音を鳴らす。 */
+function playClearSound() {
+  playSound(clearedSound, {
+    delayMs: getPourTransferDelayMs(POUR_TRANSFER_END_OFFSET),
+  });
+}
+
+/** プレイ中の操作と、盤面を完成させた瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。 */
 export function useWaterSortSoundEffects(
   operation: WaterSortOperation | null,
   progress: GameProgress,
 ) {
-  // 画面を出した時点の操作と進行は、鳴らし済みとして扱う。
-  const playedOperationIdRef = useRef(operation?.id ?? null);
-  const previousProgressRef = useRef(progress);
-
-  useEffect(() => {
-    prepareSoundEffects();
-  }, []);
-
-  useLayoutEffect(() => {
-    if (!operation || playedOperationIdRef.current === operation.id) {
-      return;
-    }
-    playedOperationIdRef.current = operation.id;
-    playOperationSound(operation);
-  }, [operation]);
-
-  useEffect(() => {
-    const previousProgress = previousProgressRef.current;
-    previousProgressRef.current = progress;
-    if (previousProgress === "clearing" && progress === "result") {
-      playSound(clearedSound);
-    }
-  }, [progress]);
+  useOperationSound(operation, playOperationSound);
+  useClearSound(progress, playClearSound);
 }
