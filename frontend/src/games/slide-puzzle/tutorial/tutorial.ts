@@ -30,12 +30,16 @@ export type SlidePuzzleTutorialRuleId = "slide" | "line";
 export type SlidePuzzleTutorialAction = { type: "tap"; cellIndex: number };
 
 /**
- * `cellIndex`: 印を付け、手順の間だけ受け付けるタイルのマス。押して滑らせたら次の手順へ進む。
- * どの手順の印も、押すとタイルが番号順の場所に収まる。
+ * - `cellIndex`: 印を付け、手順の間だけ受け付けるタイルのマス。押して滑らせたら次の手順へ進む。
+ *   どの手順の印も、押すとタイルが番号順の場所に収まる。
+ * - `cue`: 印を付ける時。
+ *   - `immediate`: 手順を始めたらすぐ付ける。ルールを示して、すぐ使わせる手順。
+ *   - `whenStuck`: 手が止まったときか、印のタイル以外を押したときだけ付ける。知っていることから、どのタイルかを自分で読ませる手順。
  */
 export type SlidePuzzleTutorialStep =
   TutorialStep<SlidePuzzleTutorialRuleId> & {
     cellIndex: number;
+    cue: "immediate" | "whenStuck";
   };
 
 /**
@@ -76,6 +80,7 @@ const goal = createSolvedSlidePuzzleBoard(3);
 /**
  * 空白の場所に入る番号のタイルを、1手ずつ滑らせていく。
  * 1手目の 6 で空白が右上に移り、上の行の 2 と 3 をまとめて滑らせられるようになる。
+ * 3手目は、空白が左上に来たので 1 が入ると、完成の形から自分で読ませる。
  * 手順を終えると 4・5・8 が残り、どれも空白の場所の番号を探せば決まる。
  */
 const steps: readonly SlidePuzzleTutorialStep[] = [
@@ -86,6 +91,7 @@ const steps: readonly SlidePuzzleTutorialStep[] = [
     },
     introducedRuleId: "slide",
     cellIndex: 2,
+    cue: "immediate",
   },
   {
     message: {
@@ -94,14 +100,16 @@ const steps: readonly SlidePuzzleTutorialStep[] = [
     },
     introducedRuleId: "line",
     cellIndex: 0,
+    cue: "immediate",
   },
   {
     message: {
-      headline: "空白には、その場所の番号が入ります",
-      detail: null,
+      headline: "空白に入るのは、完成の形から分かります",
+      detail: "迷ったら、少し待つと印が出ます",
     },
     introducedRuleId: null,
     cellIndex: 3,
+    cue: "whenStuck",
   },
 ];
 

@@ -200,6 +200,19 @@ describe("slidePuzzleTutorial", () => {
       },
     );
 
+    test("ルールを示す手順はすぐ印を付け、知っているルールだけで読む手順は手が止まるまで印を付けないこと", () => {
+      const cues = slidePuzzleTutorial.steps.map((step) => ({
+        introducesRule: step.introducedRuleId !== null,
+        cue: step.cue,
+      }));
+
+      expect(cues).toEqual([
+        { introducesRule: true, cue: "immediate" },
+        { introducesRule: true, cue: "immediate" },
+        { introducesRule: false, cue: "whenStuck" },
+      ]);
+    });
+
     const lineStepIndex = slidePuzzleTutorial.steps.findIndex(
       (step) => step.introducedRuleId === "line",
     );

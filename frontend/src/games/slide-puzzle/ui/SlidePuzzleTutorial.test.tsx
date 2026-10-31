@@ -260,14 +260,44 @@ describe("SlidePuzzleTutorial", () => {
         finishSteps(2);
       });
 
-      test("空白に入る番号のことを伝えて、その番号のタイルに印を付けること", () => {
-        const message = screen.getByText("空白には、その場所の番号が入ります");
+      test("空白に入るタイルを完成の形から読ませ、手が止まるまで印を付けないこと", () => {
+        const headline = screen.getByText(
+          "空白に入るのは、完成の形から分かります",
+        );
+        const detail = screen.getByText("迷ったら、少し待つと印が出ます");
         const currentChips = getCurrentRuleChipTexts();
+        // 前の手順を終えてから、次の印を付けるまでの間はもう進めてある。
+        advanceTime(idleHintDelayMs - nextStepCueDelayMs - 1);
+        const hintedBeforeIdle = getHintedTiles();
+        advanceTime(1);
+
         const hinted = getHintedTiles();
 
-        expect(message).toBeTruthy();
+        expect(headline).toBeTruthy();
+        expect(detail).toBeTruthy();
         expect(currentChips).toEqual([]);
+        expect(hintedBeforeIdle).toEqual([]);
         expect(hinted).toEqual(["1"]);
+      });
+
+      test("印の無い動くタイルを押すと、滑らせずに空白に入るタイルに印を付けること", () => {
+        tapTile(2);
+
+        const position = getTilePosition(2);
+        const hinted = getHintedTiles();
+
+        expect(position).toBe("1行2列");
+        expect(hinted).toEqual(["1"]);
+      });
+
+      test("読んだタイルを押すと、印が無くても空白に滑らせて手を離すこと", () => {
+        tapTile(1);
+
+        const position = getTilePosition(1);
+        const message = screen.getByText("残りを並べると完成です");
+
+        expect(position).toBe("1行1列");
+        expect(message).toBeTruthy();
       });
 
       test("動かないタイルを押すと、空白と同じ行・列のタイルだけが滑ることを伝えること", () => {

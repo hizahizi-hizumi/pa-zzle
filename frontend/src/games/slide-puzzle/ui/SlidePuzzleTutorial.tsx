@@ -17,6 +17,7 @@ import {
   getSlidePuzzleTutorialStepCellIndex,
   type SlidePuzzleTutorialBoardState,
   type SlidePuzzleTutorialRuleId,
+  type SlidePuzzleTutorialStep,
   slidePuzzleTutorial,
   slidePuzzleTutorialScrambleBoards,
 } from "@/games/slide-puzzle/tutorial/tutorial";
@@ -47,23 +48,24 @@ type SlidePuzzleTutorialProgress = TutorialProgress<
 /** 手順どおりに滑らせてから次の印を付けるまでの間。タイルが滑り終えるのを見届けてから示す。 */
 const NEXT_STEP_CUE_DELAY_MS = 400;
 
-/** 手を離した後、手が止まってから次に滑らせるタイルを示すまでの間。 */
+/** 自分で読ませる手順と手を離した後に、手が止まってから次に滑らせるタイルを示すまでの間。 */
 const IDLE_HINT_DELAY_MS = 4000;
 
 const goalBoardState = slidePuzzleTutorial.goal();
 
 /**
  * 印を付けるまでの間。0 ならすぐ付け、`null` なら付けない。
- * 手を引いている間は、滑らせた直後だけ待ってから付ける。手を離した後は手が止まったときだけ付ける。
+ * ルールを示す手順では、滑らせた直後だけ待ってから付ける。
+ * 自分で読ませる手順と手を離した後は、手が止まったときだけ付ける。
  */
 function getCueDelayMs(
   progress: SlidePuzzleTutorialProgress,
-  guiding: boolean,
+  step: SlidePuzzleTutorialStep | null,
 ): number | null {
   if (progress.phase !== "playing") {
     return null;
   }
-  if (!guiding) {
+  if (step === null || step.cue === "whenStuck") {
     return IDLE_HINT_DELAY_MS;
   }
   return progress.boardState.lastMove?.type === "slid"
@@ -128,12 +130,12 @@ export function SlidePuzzleTutorial({
   );
   const [idleProgress, setIdleProgress] =
     useState<SlidePuzzleTutorialProgress | null>(null);
-  // 手を引いている間に印の無いタイルを押されたら、印を付け直す。
+  // 手を引いている間に印の無いタイルを押されたら、印を付け直す。自分で読ませる手順では、そこで初めて印を付ける。
   const [hintCueId, setHintCueId] = useState(0);
   const situation = getTutorialSituation(slidePuzzleTutorial, progress);
   const guiding = situation.step !== null;
   const { boardState } = progress;
-  const cueDelayMs = getCueDelayMs(progress, guiding);
+  const cueDelayMs = getCueDelayMs(progress, situation.step);
   const cueShown =
     cueDelayMs === 0 || (cueDelayMs !== null && idleProgress === progress);
   const hintCellIndex = !cueShown
@@ -173,6 +175,7 @@ export function SlidePuzzleTutorial({
     if (next === progress) {
       if (guiding) {
         setHintCueId((id) => id + 1);
+        setIdleProgress(progress);
       }
       return;
     }
