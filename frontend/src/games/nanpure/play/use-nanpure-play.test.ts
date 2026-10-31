@@ -137,10 +137,10 @@ describe("useNanpurePlay", () => {
         expect(result.current.operation?.id).not.toBe(enteredOperation?.id);
       });
 
-      test("数字を消すと消去として知らせること", () => {
+      test("数字を消すと操作の知らせを消すこと", () => {
         act(() => result.current.erase());
 
-        expect(result.current.operation?.type).toBe("erased");
+        expect(result.current.operation).toBeNull();
       });
 
       test("待ったで操作の知らせを消すこと", () => {

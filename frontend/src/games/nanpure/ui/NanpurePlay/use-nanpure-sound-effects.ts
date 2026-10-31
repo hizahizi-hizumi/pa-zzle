@@ -69,30 +69,15 @@ const noteAddedSound: readonly SoundTone[] = [
   },
 ];
 
-/** 消しゴムでこする一往復の、低く柔らかい音。 */
-const eraserStrokeTone: SoundTone = {
-  waveform: "triangle",
-  frequency: 700,
-  endFrequency: 520,
-  durationMs: 45,
-  volume: 0.05,
-  attackMs: 8,
-};
-
-/** メモを消す、消しゴムで一度だけ軽くこする音。 */
+/** メモを消す、消しゴムで一度だけ軽くこする低く柔らかい音。 */
 const noteRemovedSound: readonly SoundTone[] = [
-  { ...eraserStrokeTone, durationMs: 35, volume: 0.035 },
-];
-
-/** マスを消す、消しゴムで二度こする音。 */
-const erasedSound: readonly SoundTone[] = [
-  eraserStrokeTone,
   {
-    ...eraserStrokeTone,
-    frequency: 600,
-    endFrequency: 450,
-    offsetMs: 50,
-    volume: 0.04,
+    waveform: "triangle",
+    frequency: 700,
+    endFrequency: 520,
+    durationMs: 35,
+    volume: 0.035,
+    attackMs: 8,
   },
 ];
 
@@ -152,9 +137,6 @@ function playOperationSound(operation: NanpureOperation) {
     case "note-removed":
       playSound(noteRemovedSound, { variation: REPEATED_SOUND_VARIATION });
       return;
-    case "erased":
-      playSound(erasedSound, { variation: REPEATED_SOUND_VARIATION });
-      return;
   }
 }
 
@@ -164,8 +146,8 @@ function playClearSound() {
 }
 
 /**
- * 盤面を変えた操作と、盤面を完成させた瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。
- * マスの選択は、考えながら盤面を見渡すための操作なので鳴らさない。
+ * 数字の入力、メモの書き込み・削除と、盤面を完成させた瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。
+ * マスの選択と、数字やメモを消すボタンでは鳴らさない。
  */
 export function useNanpureSoundEffects(
   operation: NanpureOperation | null,

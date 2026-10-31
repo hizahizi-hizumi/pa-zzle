@@ -43,17 +43,12 @@ import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
 /**
- * 盤面を変えた操作の知らせ。効果音を鳴らすため、操作ごとに増える `id` を付ける。
+ * 数字の入力と、メモの書き込み・削除の知らせ。効果音を鳴らすため、操作ごとに増える `id` を付ける。
  * `mistake-entered` は完成解と異なる数字を入れてミスに数えた入力、`digit-entered` はそれ以外の数字の入力。
  */
 export type NanpureOperation = {
   id: number;
-  type:
-    | "digit-entered"
-    | "mistake-entered"
-    | "note-added"
-    | "note-removed"
-    | "erased";
+  type: "digit-entered" | "mistake-entered" | "note-added" | "note-removed";
 };
 
 export type NanpureResult = NanpureSessionResult & {
@@ -212,18 +207,17 @@ export function useNanpurePlay(
   }, []);
 
   const erase = useCallback(() => {
-    const operationId = nextOperationId.current++;
     setPlay((current) => {
       const cellIndex = current.selectedCellIndex;
       if (cellIndex === null) {
         return current;
       }
 
-      return applyOperatedSession(
+      const next = applyPlaySession(
         current,
         clearNanpureSessionCell(current.session, cellIndex),
-        { id: operationId, type: "erased" },
       );
+      return next === current ? current : { ...next, operation: null };
     });
   }, []);
 

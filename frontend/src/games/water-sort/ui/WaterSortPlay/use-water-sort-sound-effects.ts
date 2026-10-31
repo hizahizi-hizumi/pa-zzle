@@ -13,28 +13,6 @@ import {
   type SoundTone,
 } from "@/lib/sound-effects";
 
-/** ボトルを持ち上げる、上がる短い音。 */
-const sourceSelectedSound: readonly SoundTone[] = [
-  {
-    waveform: "triangle",
-    frequency: 740,
-    endFrequency: 1110,
-    durationMs: 70,
-    volume: 0.12,
-  },
-];
-
-/** ボトルを置き直す、下がる控えめな音。 */
-const sourceDeselectedSound: readonly SoundTone[] = [
-  {
-    waveform: "triangle",
-    frequency: 1110,
-    endFrequency: 740,
-    durationMs: 60,
-    volume: 0.07,
-  },
-];
-
 /** 通らない操作の、低く短い音。端末のスピーカーでも聞こえるよう倍音の多い波形を小さく鳴らす。 */
 const invalidSound: readonly SoundTone[] = [
   {
@@ -126,14 +104,6 @@ function getPourTransferDelayMs(transferOffset: number): number {
 
 function playOperationSound(operation: WaterSortOperation) {
   switch (operation.type) {
-    case "source-selected":
-      playSound(sourceSelectedSound, { variation: REPEATED_SOUND_VARIATION });
-      return;
-    case "source-deselected":
-      playSound(sourceDeselectedSound, {
-        variation: REPEATED_SOUND_VARIATION,
-      });
-      return;
     case "invalid":
       // 動きを減らす設定ではボトルを揺らさず、画面が何も変わらないので鳴らさない。
       if (!prefersReducedMotion()) {
@@ -156,7 +126,10 @@ function playClearSound() {
   });
 }
 
-/** プレイ中の操作と、盤面を完成させた瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。 */
+/**
+ * 注ぐ操作と通らない操作、盤面を完成させた瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。
+ * ボトルの選択とその解除では鳴らさない。
+ */
 export function useWaterSortSoundEffects(
   operation: WaterSortOperation | null,
   progress: GameProgress,

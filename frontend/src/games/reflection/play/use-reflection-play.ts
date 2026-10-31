@@ -61,24 +61,11 @@ export type ReflectionLaserView = {
 };
 
 /**
- * 盤面・選択・光路の表示を変えた操作の知らせ。盤面を戻す・リセット・光路を閉じる操作では知らせない。
- * - `piece-placed`: 手持ちのピースを盤面へ置いた。
- * - `piece-moved`: 盤面のピースを別のマスへ移した・入れ替えた・別の種類で置き換えた。
- * - `piece-returned`: 盤面のピースを手持ちへ戻した。
- * - `selected`・`deselected`: ストックの種類か盤面のピースを選んだ・選択を解いた。
- * - `laser-shown`: 外周ヒントを押して光路を表示した。
+ * ピースを盤面に置いた操作の知らせ。効果音を鳴らすため、操作ごとに増える `id` を付ける。
+ * 手持ちのピースを置く、盤面のピースを別のマスへ移す・入れ替える・別の種類で置き換えるときに知らせる。
+ * 選択とその解除、手持ちへ戻す、光路の表示、盤面を戻す・リセットでは知らせない。
  */
-export type ReflectionOperation =
-  | {
-      id: number;
-      type:
-        | "piece-placed"
-        | "piece-moved"
-        | "piece-returned"
-        | "selected"
-        | "deselected";
-    }
-  | { id: number; type: "laser-shown"; entry: ReflectionEntry };
+export type ReflectionOperation = { id: number; type: "piece-placed" };
 
 /** クリアしたプレイの事実と、それを遊んだ問題の作業の量から導いた評価。 */
 export type ReflectionResult = ReflectionSessionResult & {
@@ -137,27 +124,20 @@ function countPlacedPieces(board: ReflectionBoard): number {
   return board.cells.filter((cell) => cell !== null).length;
 }
 
-/** 操作の前後の session から、何が変わった操作かを知らせる。光路を閉じただけなら知らせない。 */
+/** 操作の前後の session から、ピースを盤面に置いた操作なら知らせる。盤面のピースが減った操作は手持ちへ戻す操作なので知らせない。 */
 function createOperation(
   id: number,
   previous: ReflectionSession,
   next: ReflectionSession,
 ): ReflectionOperation | null {
-  if (next.puzzleState !== previous.puzzleState) {
-    const placedDifference =
-      countPlacedPieces(next.puzzleState) -
-      countPlacedPieces(previous.puzzleState);
-    if (placedDifference > 0) return { id, type: "piece-placed" };
-    if (placedDifference < 0) return { id, type: "piece-returned" };
-    return { id, type: "piece-moved" };
+  if (
+    next.puzzleState === previous.puzzleState ||
+    countPlacedPieces(next.puzzleState) <
+      countPlacedPieces(previous.puzzleState)
+  ) {
+    return null;
   }
-  if (next.laserEntry && next.laserCheckCount > previous.laserCheckCount) {
-    return { id, type: "laser-shown", entry: next.laserEntry };
-  }
-  if (next.selection !== previous.selection) {
-    return { id, type: next.selection ? "selected" : "deselected" };
-  }
-  return null;
+  return { id, type: "piece-placed" };
 }
 
 function selectProblem(

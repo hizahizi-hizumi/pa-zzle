@@ -74,43 +74,33 @@ describe("useReflectionPlay", () => {
         expect(result.current.operation?.type).toBe("piece-placed");
       });
 
-      test("盤面のピースを選ぶと選んだことを知らせること", () => {
-        act(() => result.current.clearSelection());
-        act(() => result.current.selectCell(placedCellIndex));
-
-        expect(result.current.operation?.type).toBe("selected");
-      });
-
-      test("選択を解くと選択を解いたことを知らせること", () => {
-        act(() => result.current.clearSelection());
-
-        expect(result.current.operation?.type).toBe("deselected");
-      });
-
-      test("別のマスへ移すと移したことを知らせること", () => {
+      test("別のマスへ移すと置いたことを知らせること", () => {
+        const placed = result.current.operation;
         act(() => result.current.clearSelection());
         act(() => result.current.selectCell(placedCellIndex));
         act(() => result.current.selectCell(emptyCellIndex));
 
-        expect(result.current.operation?.type).toBe("piece-moved");
+        expect(result.current.operation?.type).toBe("piece-placed");
+        expect(result.current.operation?.id).not.toBe(placed?.id);
       });
 
-      test("手持ちへ戻すと戻したことを知らせること", () => {
+      test("選択を解く・盤面のピースを選ぶ操作は知らせないこと", () => {
+        act(() => result.current.clearSelection());
+        expect(result.current.operation).toBeNull();
+
+        act(() => result.current.selectCell(placedCellIndex));
+        expect(result.current.operation).toBeNull();
+      });
+
+      test("手持ちへ戻しても知らせないこと", () => {
         act(() => result.current.removePiece(placedCellIndex));
 
-        expect(result.current.operation?.type).toBe("piece-returned");
+        expect(result.current.operation).toBeNull();
       });
 
-      test("外周ヒントを押すと光路を表示したことを知らせ、閉じても知らせないこと", () => {
-        const entry = { side: "top", index: 0 } as const;
+      test("外周ヒントを押して光路を表示しても知らせないこと", () => {
+        act(() => result.current.selectClue({ side: "top", index: 0 }));
 
-        act(() => result.current.selectClue(entry));
-        expect(result.current.operation).toMatchObject({
-          type: "laser-shown",
-          entry,
-        });
-
-        act(() => result.current.selectClue(entry));
         expect(result.current.operation).toBeNull();
       });
 

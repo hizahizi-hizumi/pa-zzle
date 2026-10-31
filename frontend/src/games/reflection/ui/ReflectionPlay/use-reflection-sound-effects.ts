@@ -12,33 +12,11 @@ import {
   type SoundTone,
 } from "@/lib/sound-effects";
 
-/** ストックの種類や盤面のピースを選ぶ、ガラスに触れるような高く小さな音。 */
-const selectedSound: readonly SoundTone[] = [
-  {
-    waveform: "triangle",
-    frequency: 1568,
-    endFrequency: 2093,
-    durationMs: 45,
-    volume: 0.06,
-  },
-];
-
-/** 選択を解く、下がる控えめな音。 */
-const deselectedSound: readonly SoundTone[] = [
-  {
-    waveform: "triangle",
-    frequency: 2093,
-    endFrequency: 1568,
-    durationMs: 40,
-    volume: 0.045,
-  },
-];
-
 /**
  * ピースを盤面に置く、ガラスの鏡を置いたような澄んだ音。移す・入れ替える・置き換えるときも、ピースが現れるので同じ音にする。
  * 整数倍から外した高い音を重ねて、鐘ではなくガラスの響きにする。
  */
-const pieceSetSound: readonly SoundTone[] = [
+const piecePlacedSound: readonly SoundTone[] = [
   {
     waveform: "sine",
     frequency: 1318.51,
@@ -52,36 +30,6 @@ const pieceSetSound: readonly SoundTone[] = [
     durationMs: 70,
     volume: 0.025,
     attackMs: 2,
-  },
-];
-
-/** ピースを手持ちへ戻す、下がって消える音。 */
-const pieceReturnedSound: readonly SoundTone[] = [
-  {
-    waveform: "sine",
-    frequency: 1318.51,
-    endFrequency: 987.77,
-    durationMs: 100,
-    volume: 0.06,
-    attackMs: 2,
-  },
-];
-
-/** 光路を表示する、光が走るように駆け上がる控えめな音。光の結果によらず同じ音にする。 */
-const laserShownSound: readonly SoundTone[] = [
-  {
-    waveform: "sine",
-    frequency: 880,
-    endFrequency: 1760,
-    durationMs: 90,
-    volume: 0.05,
-  },
-  {
-    waveform: "sine",
-    frequency: 1760,
-    endFrequency: 3520,
-    durationMs: 60,
-    volume: 0.015,
   },
 ];
 
@@ -147,25 +95,8 @@ const clearedSound: readonly SoundTone[] = [
 /** 動きを減らす設定では、光路を伸ばさず全光路を一度に出して見せておくので、点ききった和音だけを鳴らす。 */
 const reducedMotionClearedSound = createClearRingSound(0);
 
-function playOperationSound(operation: ReflectionOperation) {
-  switch (operation.type) {
-    case "selected":
-      playSound(selectedSound, { variation: REPEATED_SOUND_VARIATION });
-      return;
-    case "deselected":
-      playSound(deselectedSound, { variation: REPEATED_SOUND_VARIATION });
-      return;
-    case "piece-placed":
-    case "piece-moved":
-      playSound(pieceSetSound, { variation: REPEATED_SOUND_VARIATION });
-      return;
-    case "piece-returned":
-      playSound(pieceReturnedSound, { variation: REPEATED_SOUND_VARIATION });
-      return;
-    case "laser-shown":
-      playSound(laserShownSound, { variation: REPEATED_SOUND_VARIATION });
-      return;
-  }
+function playPiecePlacedSound() {
+  playSound(piecePlacedSound, { variation: REPEATED_SOUND_VARIATION });
 }
 
 function playClearSound() {
@@ -176,11 +107,14 @@ function playReducedMotionClearSound() {
   playSound(reducedMotionClearedSound);
 }
 
-/** プレイ中の操作と、盤面を完成させた瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。 */
+/**
+ * ピースを盤面に置いた操作と、盤面を完成させた瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。
+ * 選択とその解除、手持ちへ戻す操作、光路の表示では鳴らさない。
+ */
 export function useReflectionSoundEffects(
   operation: ReflectionOperation | null,
   progress: GameProgress,
 ) {
-  useOperationSound(operation, playOperationSound);
+  useOperationSound(operation, playPiecePlacedSound);
   useClearSound(progress, playClearSound, { playReducedMotionClearSound });
 }

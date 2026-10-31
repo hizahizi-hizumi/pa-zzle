@@ -13,35 +13,6 @@ const BLOCKED_IMPACT_MS = 80;
 /** `parking-jam-board.css` の出ていく動き（`pj-exit`）の長さ。 */
 const EXIT_DURATION_MS = 520;
 
-/** 車を選ぶ、キーのリモコンのような短く高い音。 */
-const selectedSound: readonly SoundTone[] = [
-  {
-    waveform: "sine",
-    frequency: 1174.66,
-    durationMs: 45,
-    volume: 0.07,
-    attackMs: 2,
-  },
-  {
-    waveform: "triangle",
-    frequency: 587.33,
-    durationMs: 45,
-    volume: 0.03,
-    attackMs: 2,
-  },
-];
-
-/** 選んだ車を戻す、選ぶ音より低く控えめな音。 */
-const deselectedSound: readonly SoundTone[] = [
-  {
-    waveform: "sine",
-    frequency: 880,
-    durationMs: 40,
-    volume: 0.05,
-    attackMs: 2,
-  },
-];
-
 /**
  * ミスとして数える、塞がれた車がこつんと当たる音。
  * 鈍い車体の音に小さな当たりの音を重ね、不成立より重く、罰に聞こえない柔らかさにする。
@@ -129,12 +100,6 @@ function getMotionDelayMs(delayMs: number): number {
 
 function playOperationSound(operation: ParkingJamOperation) {
   switch (operation.type) {
-    case "selected":
-      playSound(selectedSound, { variation: REPEATED_SOUND_VARIATION });
-      return;
-    case "deselected":
-      playSound(deselectedSound, { variation: REPEATED_SOUND_VARIATION });
-      return;
     case "blocked":
       playSound(blockedSound, {
         delayMs: getMotionDelayMs(BLOCKED_IMPACT_MS),
@@ -152,7 +117,10 @@ function playClearSound() {
   });
 }
 
-/** プレイ中の操作と、最後の車が出ていく瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。 */
+/**
+ * 車を動かす操作と、最後の車が出ていく瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。
+ * 車の選択とその解除では鳴らさない。
+ */
 export function useParkingJamSoundEffects(
   operation: ParkingJamOperation | null,
   progress: GameProgress,
