@@ -279,6 +279,11 @@ export const slidePuzzleTutorial: Tutorial<
   SlidePuzzleTutorialBoardState,
   SlidePuzzleTutorialAction
 > = {
+  intro: {
+    tagline: "タイルを滑らせて、番号順に並べるパズルです",
+    goal: "この並びが完成です",
+    start: "崩した盤面から始めます",
+  },
   rules: [
     { id: "slide", label: "空白へ滑る" },
     { id: "line", label: "まとめて滑る" },

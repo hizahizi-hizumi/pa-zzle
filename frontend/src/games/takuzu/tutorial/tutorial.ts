@@ -629,6 +629,11 @@ export const takuzuTutorial: Tutorial<
   TakuzuTutorialBoardState,
   TakuzuTutorialAction
 > = {
+  intro: {
+    tagline: "四角と丸で、ルールどおりに埋めるパズルです",
+    goal: "こう埋まれば完成です",
+    start: "いくつかのマスを空けて始めます",
+  },
   rules: [
     { id: "run", label: "3つ続かない" },
     { id: "count", label: "同じ数" },

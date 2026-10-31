@@ -41,6 +41,7 @@ const fakeTutorial: Tutorial<
   number,
   FakeAction
 > = {
+  intro: { tagline: "目的", goal: "完成", start: "開始" },
   rules: [
     { id: "first", label: "1つ目" },
     { id: "second", label: "2つ目" },

@@ -50,13 +50,6 @@ const NEXT_STEP_CUE_DELAY_MS = 400;
 /** 手を離した後、手が止まってから次に滑らせるタイルを示すまでの間。 */
 const IDLE_HINT_DELAY_MS = 4000;
 
-/**
- * 導入で盤面が見せるもの。
- * - `goal`: 各マスに入る番号を先に見せ、そこへタイルを番号順に降ろして完成した盤面を作る。
- * - `scramble`: 完成した盤面を、1手ずつ崩して始めの盤面へ戻す。
- */
-type SlidePuzzleTutorialBoardIntroStage = "goal" | "scramble";
-
 const goalBoardState = slidePuzzleTutorial.goal();
 
 /**
@@ -134,9 +127,6 @@ export function SlidePuzzleTutorial({
   const [progress, setProgress] = useState<SlidePuzzleTutorialProgress>(() =>
     startTutorial(slidePuzzleTutorial),
   );
-  // 開いたときは完成した盤面を作るところから見せる。もう一度始めたときは完成した盤面がもう見えているので、崩すところから見せる。
-  const [boardIntroStage, setBoardIntroStage] =
-    useState<SlidePuzzleTutorialBoardIntroStage>("goal");
   const [idleProgress, setIdleProgress] =
     useState<SlidePuzzleTutorialProgress | null>(null);
   // 手を引いている間に印の無いタイルを押されたら、印を付け直す。
@@ -172,10 +162,6 @@ export function SlidePuzzleTutorial({
     setProgress(completeTutorial);
   }, []);
 
-  const handleGoalShown = useCallback(() => {
-    setBoardIntroStage("scramble");
-  }, []);
-
   function handleIntroEnd(): void {
     setProgress(finishTutorialIntro);
   }
@@ -194,34 +180,32 @@ export function SlidePuzzleTutorial({
     setProgress(next);
   }
 
-  function restart(introStage: SlidePuzzleTutorialBoardIntroStage): void {
+  function restart(): void {
     setIdleProgress(null);
     setProgress(startTutorial(slidePuzzleTutorial));
-    setBoardIntroStage(introStage);
-  }
-
-  function handleRestart(): void {
-    restart("scramble");
   }
 
   // 終えたかどうかは残さないので、閉じたら次に開いたとき最初から始まるようにする。
   function handleClose(): void {
-    restart("goal");
+    restart();
     onClose();
   }
 
   function handleStartPlay(): void {
-    restart("goal");
+    restart();
     onStartPlay?.();
   }
 
-  function renderBoard({ playing, onEnd }: TutorialBoardIntro) {
+  /**
+   * 導入では、各マスに入る番号を先に見せ、そこへタイルを番号順に降ろして完成した盤面を作り、1手ずつ崩して始めの盤面へ戻す。
+   * もう一度始めたときは完成した盤面がもう見えているので、崩すところから見せる。
+   */
+  function renderBoard({ stage, onGoalShown, onEnd }: TutorialBoardIntro) {
     const introducing = progress.phase === "intro";
-    const goalIntro = introducing && boardIntroStage === "goal";
     return (
       <div className="aspect-square w-[min(100cqw,100cqh,28rem)]">
         <SlidePuzzleTutorialScramble
-          active={playing && boardIntroStage === "scramble"}
+          active={stage === "start"}
           boards={slidePuzzleTutorialScrambleBoards}
           onComplete={onEnd}
         >
@@ -247,9 +231,13 @@ export function SlidePuzzleTutorial({
                 clearing={progress.phase === "solved"}
                 goalShown={true}
                 tileEntrance={
-                  goalIntro ? (playing ? "settling" : "concealed") : null
+                  stage === "goal"
+                    ? "settling"
+                    : introducing && stage === null
+                      ? "concealed"
+                      : null
                 }
-                onTileEntranceComplete={handleGoalShown}
+                onTileEntranceComplete={onGoalShown}
                 hint={
                   hintCellIndex === null
                     ? null
@@ -270,6 +258,7 @@ export function SlidePuzzleTutorial({
       open={open}
       title={SLIDE_PUZZLE_DISPLAY_NAME}
       pictogramSvg={pictogramSvg}
+      intro={slidePuzzleTutorial.intro}
       rules={slidePuzzleTutorial.rules.map((rule) => ({
         ...rule,
         earned: progress.earnedRuleIds.includes(rule.id),
@@ -285,7 +274,7 @@ export function SlidePuzzleTutorial({
       }
       renderBoard={renderBoard}
       onIntroEnd={handleIntroEnd}
-      onRestart={handleRestart}
+      onRestart={restart}
       onClose={handleClose}
     />
   );

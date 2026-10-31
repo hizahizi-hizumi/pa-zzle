@@ -22,10 +22,13 @@ const nextStepCueDelayMs = 400;
 const idleHintDelayMs = 4000;
 
 /** 名前を出してから、盤面の段に入るまでの間。 */
-const introBoardStartMs = 550;
+const introBoardStartMs = 1050;
+
+/** 解き終えた盤面を見せ終えてから、始めの盤面へ移すまでの間。 */
+const introGoalHoldMs = 1000;
 
 /** 導入を最後まで見せるのに十分な間。 */
-const introEnoughMs = 3500;
+const introEnoughMs = 5000;
 
 afterEach(() => {
   cleanup();
@@ -365,18 +368,22 @@ describe("SlidePuzzleTutorial", () => {
       );
     });
 
-    test("開くと、パズル選択と同じピクトグラムと名前を出し、各マスに入る番号と完成した盤面を、印を付けずに見せること", () => {
+    test("開くと、パズル選択と同じピクトグラムと名前に何をするパズルかを添え、各マスに入る番号と完成した盤面を、印を付けずに見せること", () => {
       const pictogram = screen.getByRole("img", {
         name: "スライドパズル",
         hidden: true,
       });
       const title = screen.getByRole("heading", { name: "スライドパズル" });
+      const tagline = screen.getByText(
+        "タイルを滑らせて、番号順に並べるパズルです",
+      );
       const slotNumbers = getGoalSlotNumbers();
       const positions = [getTilePosition(1), getTilePosition(6)];
       const hinted = getHintedTiles();
 
       expect(pictogram).toBeTruthy();
       expect(title).toBeTruthy();
+      expect(tagline).toBeTruthy();
       expect(slotNumbers).toEqual(["1", "2", "3", "4", "5", "6", "7", "8"]);
       expect(positions).toEqual(["1行1列", "2行3列"]);
       expect(hinted).toEqual([]);
@@ -392,6 +399,25 @@ describe("SlidePuzzleTutorial", () => {
       expect(headline).toBeTruthy();
       expect(positions).toEqual(["2行1列", "1行3列"]);
       expect(hinted).toEqual(["6"]);
+      expect(
+        screen.queryByText("タイルを滑らせて、番号順に並べるパズルです"),
+      ).toBeNull();
+      expect(screen.queryByText("崩した盤面から始めます")).toBeNull();
+    });
+
+    test("完成した盤面を見せ終えると、それが完成だと添えてから、崩した盤面から始めると添えて崩すこと", async () => {
+      await advanceTimeInSlices(introBoardStartMs + 100);
+      const goalCaption = screen.getByText("この並びが完成です");
+      const positionWhileGoal = getTilePosition(6);
+      await advanceTimeInSlices(introGoalHoldMs);
+
+      const startCaption = screen.getByText("崩した盤面から始めます");
+      const goalCaptionAfter = screen.queryByText("この並びが完成です");
+
+      expect(goalCaption).toBeTruthy();
+      expect(positionWhileGoal).toBe("2行3列");
+      expect(startCaption).toBeTruthy();
+      expect(goalCaptionAfter).toBeNull();
     });
 
     describe("盤面の段まで進んだ場合", () => {

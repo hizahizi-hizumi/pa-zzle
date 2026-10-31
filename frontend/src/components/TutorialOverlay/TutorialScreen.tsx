@@ -17,7 +17,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { TutorialMessage } from "@/games/tutorial";
+import type { TutorialIntroMessages, TutorialMessage } from "@/games/tutorial";
 import { MOTION_EASING, prefersReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -40,11 +40,16 @@ export type TutorialFinishAction = {
 
 /**
  * 導入のうち、盤面が受け持つ段。名前を見せた後に、何を目指すかと始めの盤面をゲームの盤面で見せる。
- * - `playing`: 盤面の段に入ってから導入を終えるまで `true`。`false` に戻ったら盤面の動きを止め、始めの盤面を見せる。
- * - `onEnd`: 盤面の段の動きを終えたら呼ぶ。名前を上部へ移して導入を終える。
+ * - `stage`: 盤面に見せさせるもの。
+ *   - `goal`: 解き終えた盤面を見せる。見せ終えたら `onGoalShown` を呼ぶ。その後もしばらく `goal` のまま、目指す形だという一言を添えて見せておく。
+ *   - `start`: 解き終えた盤面から始めの盤面へ移す。移し終えたら `onEnd` を呼ぶ。その後も導入を終えるまで `start` のまま保つ。
+ *   - `null`: 盤面の段の前と、導入を終えた後。盤面の動きを止める。
+ * - `onGoalShown`: 解き終えた盤面を見せ終えた。
+ * - `onEnd`: 始めの盤面へ移し終えた。名前を上部へ移して導入を終える。
  */
 export type TutorialBoardIntro = {
-  playing: boolean;
+  stage: "goal" | "start" | null;
+  onGoalShown: () => void;
   onEnd: () => void;
 };
 
@@ -53,6 +58,8 @@ type TutorialScreenProps = {
   title: string;
   /** パズル選択と同じピクトグラム。名前と一緒に見せる。 */
   pictogramSvg: string;
+  /** 導入で、手を引く前に何のパズルかを伝える言葉。 */
+  intro: TutorialIntroMessages;
   rules: readonly TutorialRuleChip[];
   message: TutorialMessage;
   /** 導入を見せている間。開いたときと、もう一度始めたときに導入から始まる。 */
@@ -68,9 +75,11 @@ type TutorialScreenProps = {
 
 /**
  * 導入の段。
- * - `name`: 上部の領域の中央に、ピクトグラムと名前を大きく出す。
+ * - `name`: 上部の領域の中央に、ピクトグラムと名前を大きく出し、その下に何をするパズルかの一文を添える。
  * - `boardAppearing`: 名前の下に盤面を出す。
- * - `board`: 盤面の段をゲームに任せる。
+ * - `goal`: 盤面に、解き終えた盤面を見せさせる。
+ * - `goalHold`: 解き終えた盤面を、目指す形だという一言を添えて見せておく。
+ * - `start`: 盤面に、始めの盤面へ移させる。
  * - `header`: 名前を上部へ移し、移し終える頃にルールと一言を出す。
  * - `reveal`: 名前がもう上部にあるときに、ルールと一言を出す。
  * - `done`: 導入を終えた。
@@ -78,15 +87,23 @@ type TutorialScreenProps = {
 type IntroStage =
   | "name"
   | "boardAppearing"
-  | "board"
+  | "goal"
+  | "goalHold"
+  | "start"
   | "header"
   | "reveal"
   | "done";
 
 const NAME_APPEAR_MS = 300;
-/** 名前が現れてから盤面を出すまで。 */
-const BOARD_APPEAR_DELAY_MS = 300;
+/** 何をするパズルかの一文は、名前に少し遅れて出す。 */
+const TAGLINE_APPEAR_DELAY_MS = 200;
+const TAGLINE_APPEAR_MS = 300;
+const TAGLINE_LEAVE_MS = 200;
+/** 名前が現れてから盤面を出すまで。盤面に目が移る前に、名前と一文を読み始められる間を取る。 */
+const BOARD_APPEAR_DELAY_MS = 800;
 const BOARD_APPEAR_MS = 250;
+/** 解き終えた盤面を見せ終えてから、始めの盤面へ移すまで。目指す形だという一言を読める間を取る。 */
+const GOAL_HOLD_MS = 1000;
 /** 名前を上部へ移す間。名前はピクトグラムを追って少し遅れて動き、通り道で重ならないようにする。 */
 const PICTOGRAM_MOVE_MS = 400;
 const TITLE_MOVE_DELAY_MS = 80;
@@ -94,51 +111,80 @@ const TITLE_MOVE_DELAY_MS = 80;
 const REVEAL_AFTER_NAME_DELAY_MS = 350;
 const REVEAL_MS = 300;
 
-/** 上部での大きさに対する、導入の間の大きさ。 */
-const INTRO_PICTOGRAM_SCALE = 2.5;
+/** 上部での大きさに対する、導入の間の大きさ。一文を添えても上部の領域に収まる大きさにする。 */
+const INTRO_PICTOGRAM_SCALE = 2;
 const INTRO_TITLE_SCALE = 1.5;
-/** 導入の間の、ピクトグラムと名前の間（px）。 */
-const INTRO_NAME_GAP_PX = 8;
+/** 導入の間の、ピクトグラムと名前の間と、名前と一文の間（px）。 */
+const INTRO_NAME_GAP_PX = 6;
 
 /**
  * 段ごとの見せ方。
  * - `rulesClassName`: ルールと一言。導入を終えた後は動かさない。
  * - `boardAreaClassName`: 盤面の領域。
- * - `boardPlaying`: 盤面の段に入ってから導入を終えるまで。
+ * - `boardStage`: 盤面に見せさせるもの。
+ * - `caption`: 盤面の下に添える導入の一言。`leaving` は、ルールと一言を出すのに合わせて消していく。
  */
+type IntroStageView = {
+  rulesClassName: string;
+  boardAreaClassName: string;
+  boardStage: TutorialBoardIntro["stage"];
+  caption: { kind: "goal" | "start"; leaving: boolean } | null;
+};
+
+const hiddenRulesClassName = "opacity-0";
+
 const introStageViews = {
   name: {
-    rulesClassName: "opacity-0",
+    rulesClassName: hiddenRulesClassName,
     boardAreaClassName: "opacity-0",
-    boardPlaying: false,
+    boardStage: null,
+    caption: null,
   },
   boardAppearing: {
-    rulesClassName: "opacity-0",
+    rulesClassName: hiddenRulesClassName,
     boardAreaClassName: "animate-in fade-in-0 duration-250 ease-(--ease-enter)",
-    boardPlaying: false,
+    boardStage: null,
+    caption: null,
   },
-  board: {
-    rulesClassName: "opacity-0",
+  goal: {
+    rulesClassName: hiddenRulesClassName,
     boardAreaClassName: "",
-    boardPlaying: true,
+    boardStage: "goal",
+    caption: null,
+  },
+  goalHold: {
+    rulesClassName: hiddenRulesClassName,
+    boardAreaClassName: "",
+    boardStage: "goal",
+    caption: { kind: "goal", leaving: false },
+  },
+  start: {
+    rulesClassName: hiddenRulesClassName,
+    boardAreaClassName: "",
+    boardStage: "start",
+    caption: { kind: "start", leaving: false },
   },
   header: {
     rulesClassName:
       "animate-in fade-in-0 slide-in-from-bottom-1 duration-300 delay-350 fill-mode-backwards ease-(--ease-enter)",
     boardAreaClassName: "",
-    boardPlaying: true,
+    boardStage: "start",
+    caption: { kind: "start", leaving: true },
   },
   reveal: {
     rulesClassName:
       "animate-in fade-in-0 slide-in-from-bottom-1 duration-300 ease-(--ease-enter)",
     boardAreaClassName: "",
-    boardPlaying: true,
+    boardStage: "start",
+    caption: { kind: "start", leaving: true },
   },
-  done: { rulesClassName: "", boardAreaClassName: "", boardPlaying: false },
-} as const satisfies Record<
-  IntroStage,
-  { rulesClassName: string; boardAreaClassName: string; boardPlaying: boolean }
->;
+  done: {
+    rulesClassName: "",
+    boardAreaClassName: "",
+    boardStage: null,
+    caption: null,
+  },
+} as const satisfies Record<IntroStage, IntroStageView>;
 
 /** 動きを減らす設定か、動きを描けない環境では、導入を見せずに始める。 */
 function canPlayIntro(elements: readonly (HTMLElement | null)[]): boolean {
@@ -149,23 +195,30 @@ function canPlayIntro(elements: readonly (HTMLElement | null)[]): boolean {
 }
 
 /**
- * 上部のピクトグラムと名前を、上部の領域の中央に縦に重ねて大きく見せる変形。
+ * 上部のピクトグラムと名前を、上部の領域の中央に縦に重ねて大きく見せる変形と、その下に添える一文の位置。
  * 上部に置いた要素そのものを変形し、導入の終わりに変形を外して上部へ戻す（FLIP）。
+ * 一文は導入の間だけ見せるので、上部の領域の中の位置（px）だけを返す。
  */
-function getIntroNameTransforms(
+function getIntroNameLayout(
   region: HTMLElement,
   pictogram: HTMLElement,
   title: HTMLElement,
-): { pictogram: string; title: string } {
+  tagline: HTMLElement,
+): { pictogram: string; title: string; taglineTop: number } {
   const regionRect = region.getBoundingClientRect();
   const pictogramRect = pictogram.getBoundingClientRect();
   const titleRect = title.getBoundingClientRect();
+  const taglineHeight = tagline.getBoundingClientRect().height;
   const pictogramSize = pictogramRect.width * INTRO_PICTOGRAM_SCALE;
   const titleWidth = titleRect.width * INTRO_TITLE_SCALE;
   const titleHeight = titleRect.height * INTRO_TITLE_SCALE;
-  const stackTop =
-    regionRect.top +
-    (regionRect.height - pictogramSize - INTRO_NAME_GAP_PX - titleHeight) / 2;
+  const stackHeight =
+    pictogramSize +
+    INTRO_NAME_GAP_PX +
+    titleHeight +
+    INTRO_NAME_GAP_PX +
+    taglineHeight;
+  const stackTop = regionRect.top + (regionRect.height - stackHeight) / 2;
   const centerX = regionRect.left + regionRect.width / 2;
 
   function toTransform(
@@ -190,17 +243,25 @@ function getIntroNameTransforms(
       stackTop + pictogramSize + INTRO_NAME_GAP_PX,
       INTRO_TITLE_SCALE,
     ),
+    taglineTop:
+      stackTop -
+      regionRect.top +
+      pictogramSize +
+      INTRO_NAME_GAP_PX +
+      titleHeight +
+      INTRO_NAME_GAP_PX,
   };
 }
 
 /**
- * 開いたときに、パズルの名前、目指す盤面、始めの盤面を順に見せてから、1つの盤面を解きながらルールを1つずつ身につけていく画面。
+ * 開いたときに、パズルの名前と何をするパズルか、目指す盤面、始めの盤面を順に見せてから、1つの盤面を解きながらルールを1つずつ身につけていく画面。
  * 盤面を主役にし、上部にパズルの名前と手に入れたルール、盤面の直上に短い一言だけを出す。
  * 導入はどこを押しても、どのキーでも飛ばせる。
  */
 export function TutorialScreen({
   title,
   pictogramSvg,
+  intro,
   rules,
   message,
   introducing,
@@ -214,6 +275,7 @@ export function TutorialScreen({
   const regionRef = useRef<HTMLDivElement>(null);
   const pictogramRef = useRef<HTMLSpanElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const taglineRef = useRef<HTMLParagraphElement>(null);
   // 名前を上部の外で見せている間の変形。上部へ戻すときの始まりになる。
   const nameTransformsRef = useRef<{ pictogram: string; title: string } | null>(
     null,
@@ -241,6 +303,7 @@ export function TutorialScreen({
       element?.style.removeProperty("transform");
       element?.style.removeProperty("transform-origin");
     }
+    taglineRef.current?.style.removeProperty("top");
   }, []);
 
   const finishIntro = useCallback(() => {
@@ -257,6 +320,7 @@ export function TutorialScreen({
     const region = regionRef.current;
     const pictogram = pictogramRef.current;
     const titleElement = titleRef.current;
+    const tagline = taglineRef.current;
     if (!introducing) {
       return;
     }
@@ -264,14 +328,29 @@ export function TutorialScreen({
       !region ||
       !pictogram ||
       !titleElement ||
-      !canPlayIntro([pictogram, titleElement])
+      !tagline ||
+      !canPlayIntro([pictogram, titleElement, tagline])
     ) {
       finishIntro();
       return;
     }
 
-    const transforms = getIntroNameTransforms(region, pictogram, titleElement);
+    const { taglineTop, ...transforms } = getIntroNameLayout(
+      region,
+      pictogram,
+      titleElement,
+      tagline,
+    );
     nameTransformsRef.current = transforms;
+    tagline.style.top = `${taglineTop}px`;
+    animationsRef.current.push(
+      tagline.animate([{ opacity: 0 }, { opacity: 1 }], {
+        duration: TAGLINE_APPEAR_MS,
+        delay: TAGLINE_APPEAR_DELAY_MS,
+        easing: MOTION_EASING.enter,
+        fill: "both",
+      }),
+    );
     for (const [element, transform] of [
       [pictogram, transforms.pictogram],
       [titleElement, transforms.title],
@@ -287,7 +366,7 @@ export function TutorialScreen({
       );
     }
     schedule(() => setStage("boardAppearing"), BOARD_APPEAR_DELAY_MS);
-    schedule(() => setStage("board"), BOARD_APPEAR_DELAY_MS + BOARD_APPEAR_MS);
+    schedule(() => setStage("goal"), BOARD_APPEAR_DELAY_MS + BOARD_APPEAR_MS);
   });
 
   // 開くたびにこの画面を作り直すので、作ったときに導入を始める。名前の位置は描く前に決める。
@@ -295,6 +374,12 @@ export function TutorialScreen({
     startOpeningIntro();
     return stopIntroMotion;
   }, [stopIntroMotion]);
+
+  // 解き終えた盤面を見せ終えたら、目指す形だという一言を読める間だけ見せておいてから、始めの盤面へ移させる。
+  const handleGoalShown = useCallback(() => {
+    setStage("goalHold");
+    schedule(() => setStage("start"), GOAL_HOLD_MS);
+  }, [schedule]);
 
   // 盤面の段を終えたら、名前を上部へ戻し、ルールと一言を出してから手を引き始める。
   const handleBoardIntroEnd = useCallback(() => {
@@ -322,6 +407,16 @@ export function TutorialScreen({
         }),
       );
     }
+    const tagline = taglineRef.current;
+    if (tagline) {
+      animationsRef.current.push(
+        tagline.animate([{ opacity: 1 }, { opacity: 0 }], {
+          duration: TAGLINE_LEAVE_MS,
+          easing: MOTION_EASING.exit,
+          fill: "forwards",
+        }),
+      );
+    }
     schedule(
       finishIntro,
       Math.max(
@@ -346,19 +441,20 @@ export function TutorialScreen({
     finishIntro();
   }
 
-  // もう一度始めるときは、名前はもう上部にあるので、盤面を始めの盤面へ戻すところから見せる。
+  // もう一度始めるときは、名前と解き終えた盤面はもう見えているので、盤面を始めの盤面へ戻すところから見せる。
   function handleRestart(): void {
     stopIntroMotion();
     onRestart();
     if (canPlayIntro([regionRef.current])) {
-      setStage("board");
+      setStage("start");
     } else {
       setStage("done");
       onIntroEndRef.current();
     }
   }
 
-  const stageView = introStageViews[stage];
+  const stageView: IntroStageView = introStageViews[stage];
+  const caption = stageView.caption;
   return (
     // 導入の間は、どこを押しても、どのキーでも導入を飛ばす。
     <div
@@ -367,7 +463,7 @@ export function TutorialScreen({
       onKeyDownCapture={handleKeyDownCapture}
     >
       <DialogDescription className="sr-only">チュートリアル</DialogDescription>
-      <div ref={regionRef} className="flex shrink-0 flex-col">
+      <div ref={regionRef} className="relative flex shrink-0 flex-col">
         <header className="flex min-h-14 shrink-0 items-center gap-2 pt-2 pr-3 pl-4">
           <span ref={pictogramRef} className="size-8 shrink-0">
             <GamePictogram svg={pictogramSvg} />
@@ -429,6 +525,16 @@ export function TutorialScreen({
           })}
         </ul>
 
+        {/* 名前の下に添える、何をするパズルかの一文。導入の間だけ、位置と現れ方を導入の動きで決める。 */}
+        {introPlaying && (
+          <p
+            ref={taglineRef}
+            className="pointer-events-none absolute inset-x-0 top-0 px-4 text-balance text-center text-body opacity-0 [word-break:auto-phrase]"
+          >
+            {intro.tagline}
+          </p>
+        )}
+
         {/* 一言が差し替わっても盤面が上下に動かないよう、見出し2行と補足1行が収まる高さに固定する。 */}
         <div
           aria-live="polite"
@@ -457,12 +563,27 @@ export function TutorialScreen({
         )}
       >
         {renderBoard({
-          playing: stageView.boardPlaying,
+          stage: stageView.boardStage,
+          onGoalShown: handleGoalShown,
           onEnd: handleBoardIntroEnd,
         })}
       </main>
 
       <footer className="flex h-28 shrink-0 items-center justify-center gap-2 px-4 pb-2">
+        {caption && (
+          // 一言が替わるたびに作り直して、現れる動きを付け直す。盤面についての一言なので、盤面のすぐ下に寄せる。
+          <p
+            key={caption.kind}
+            className={cn(
+              "mt-3 self-start text-balance text-center text-heading [word-break:auto-phrase]",
+              caption.leaving
+                ? "animate-out fade-out-0 fill-mode-forwards duration-200 ease-(--ease-exit)"
+                : "animate-in fade-in-0 slide-in-from-bottom-1 duration-300 ease-(--ease-enter)",
+            )}
+          >
+            {intro[caption.kind]}
+          </p>
+        )}
         {completed && (
           <>
             <Button type="button" size="lg" onClick={finishAction.onSelect}>

@@ -56,13 +56,6 @@ const NEXT_STEP_CUE_DELAY_MS = 900;
 /** 手を離した後、手が止まってから決まるマスを示すまでの間。 */
 const IDLE_HINT_DELAY_MS = 4000;
 
-/**
- * 導入で盤面が見せるもの。
- * - `goal`: 解き終えた盤面を、解けたときと同じ波で見せる。
- * - `rewind`: 置いたタイルを消して、始めの盤面へ戻す。
- */
-type TakuzuTutorialBoardIntroStage = "goal" | "rewind";
-
 const goalBoardState = takuzuTutorial.goal();
 
 /**
@@ -131,9 +124,6 @@ export function TakuzuTutorial({
   const [progress, setProgress] = useState<TakuzuTutorialProgress>(() =>
     startTutorial(takuzuTutorial),
   );
-  // 開いたときは解き終えた盤面から見せる。もう一度始めたときは解き終えた盤面がもう見えているので、戻すところから見せる。
-  const [boardIntroStage, setBoardIntroStage] =
-    useState<TakuzuTutorialBoardIntroStage>("goal");
   const [idleProgress, setIdleProgress] =
     useState<TakuzuTutorialProgress | null>(null);
   const [settledViolationProgress, setSettledViolationProgress] =
@@ -190,10 +180,6 @@ export function TakuzuTutorial({
     setProgress(completeTutorial);
   }, []);
 
-  const handleGoalShown = useCallback(() => {
-    setBoardIntroStage("rewind");
-  }, []);
-
   function handleIntroEnd(): void {
     setProgress(finishTutorialIntro);
   }
@@ -228,45 +214,38 @@ export function TakuzuTutorial({
     perform({ type: "place", cellIndex, cell });
   }
 
-  function restart(introStage: TakuzuTutorialBoardIntroStage): void {
+  function restart(): void {
     cancelViolationReaction();
     setIdleProgress(null);
     setSettledViolationProgress(null);
     setProgress(startTutorial(takuzuTutorial));
-    setBoardIntroStage(introStage);
-  }
-
-  function handleRestart(): void {
-    restart("rewind");
   }
 
   // 終えたかどうかは残さないので、閉じたら次に開いたとき最初から始まるようにする。
   function handleClose(): void {
-    restart("goal");
+    restart();
     onClose();
   }
 
   function handleStartPlay(): void {
-    restart("goal");
+    restart();
     onStartPlay?.();
   }
 
-  function renderBoard({ playing, onEnd }: TutorialBoardIntro) {
+  /**
+   * 導入では、解き終えた盤面を解けたときと同じ波で見せ、置いたタイルを消して始めの盤面へ戻す。
+   * もう一度始めたときは解き終えた盤面がもう見えているので、戻すところから見せる。
+   */
+  function renderBoard({ stage, onGoalShown, onEnd }: TutorialBoardIntro) {
     const introducing = progress.phase === "intro";
     const shownBoardState = introducing ? goalBoardState : boardState;
-    const goalShowing = playing && boardIntroStage === "goal";
     return (
       <div className="aspect-square w-[min(100cqw,100cqh,28rem)]">
         <TakuzuClearAnimation
-          active={progress.phase === "solved" || goalShowing}
-          onComplete={
-            introducing ? handleGoalShown : handleClearAnimationComplete
-          }
+          active={progress.phase === "solved" || stage === "goal"}
+          onComplete={introducing ? onGoalShown : handleClearAnimationComplete}
         >
-          <TakuzuTutorialRewind
-            active={playing && boardIntroStage === "rewind"}
-            onComplete={onEnd}
-          >
+          <TakuzuTutorialRewind active={stage === "start"} onComplete={onEnd}>
             <TakuzuBoard
               size={shownBoardState.board.size}
               cells={getTakuzuTutorialCellViews(situation, shownBoardState)}
@@ -295,6 +274,7 @@ export function TakuzuTutorial({
       open={open}
       title="バイナリパズル"
       pictogramSvg={pictogramSvg}
+      intro={takuzuTutorial.intro}
       rules={takuzuTutorial.rules.map((rule) => ({
         ...rule,
         earned: progress.earnedRuleIds.includes(rule.id),
@@ -310,7 +290,7 @@ export function TakuzuTutorial({
       }
       renderBoard={renderBoard}
       onIntroEnd={handleIntroEnd}
-      onRestart={handleRestart}
+      onRestart={restart}
       onClose={handleClose}
     />
   );

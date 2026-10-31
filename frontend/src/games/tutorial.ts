@@ -13,6 +13,18 @@ export type TutorialMessage = {
   detail: string | null;
 };
 
+/**
+ * 開いたときの導入で、手を引く前に何のパズルかを伝える言葉。
+ * - `tagline`: 名前の下に添える、何をするパズルかの一文。名前と一緒に、導入の間ずっと見せる。
+ * - `goal`: 解き終えた盤面を見せている間の一言。その盤面が目指す形だと伝える。
+ * - `start`: 解き終えた盤面から始めの盤面へ移している間の一言。
+ */
+export type TutorialIntroMessages = {
+  tagline: string;
+  goal: string;
+  start: string;
+};
+
 /** 手に入れると、チュートリアルの上部に並ぶルール。 */
 export type TutorialRule<RuleId extends string> = {
   id: RuleId;
@@ -63,6 +75,7 @@ export type Tutorial<
   BoardState,
   Action,
 > = {
+  intro: TutorialIntroMessages;
   /** 上部に並べる順。 */
   rules: readonly TutorialRule<RuleId>[];
   /** 手を引く順。最後の手順を終えると手を離す。 */

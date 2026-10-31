@@ -7,7 +7,7 @@ import {
   TutorialScreen,
 } from "@/components/TutorialOverlay/TutorialScreen";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import type { TutorialMessage } from "@/games/tutorial";
+import type { TutorialIntroMessages, TutorialMessage } from "@/games/tutorial";
 
 export type {
   TutorialBoardIntro,
@@ -21,6 +21,8 @@ type TutorialOverlayProps = {
   title: string;
   /** パズル選択と同じピクトグラム。導入で名前と一緒に見せ、その後も上部で名前に添える。 */
   pictogramSvg: string;
+  /** 導入で、手を引く前に何のパズルかを伝える言葉。 */
+  intro: TutorialIntroMessages;
   rules: readonly TutorialRuleChip[];
   message: TutorialMessage;
   /** 導入を見せている間。開いたときと、もう一度始めたときは導入から始まる。 */
@@ -43,6 +45,7 @@ export function TutorialOverlay({
   open,
   title,
   pictogramSvg,
+  intro,
   rules,
   message,
   introducing,
@@ -68,6 +71,7 @@ export function TutorialOverlay({
         <TutorialScreen
           title={title}
           pictogramSvg={pictogramSvg}
+          intro={intro}
           rules={rules}
           message={message}
           introducing={introducing}
