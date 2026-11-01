@@ -29,6 +29,11 @@ const stateNames = {
   crossed: "バツ",
 } as const satisfies Record<NonogramCellState, string>;
 
+/**
+ * クリア後の塗り。隣の塗りへ半画素ずつ重ね、図柄を膨らませる途中でも塗りの間に地の色の細い線を出さない。
+ */
+const revealedFillClassName = "inset-[-0.5px]";
+
 export function NonogramCell({
   cellIndex,
   row,
@@ -72,12 +77,10 @@ export function NonogramCell({
     >
       <span
         data-nonogram-clear-fade={state === "crossed" || undefined}
-        data-nonogram-clear-wave={
-          state === "filled" ? `${row + column}` : undefined
-        }
         className={cn(
           "pointer-events-none absolute inset-0",
           revealed && state === "crossed" && "opacity-0",
+          revealed && state === "filled" && revealedFillClassName,
         )}
       >
         <NonogramCellFace state={state} />

@@ -278,6 +278,7 @@ export function NonogramBoard({
       <div
         role="group"
         aria-label={`${NONOGRAM_DISPLAY_NAME}盤面`}
+        data-nonogram-clear-swell=""
         className="relative grid bg-background"
         style={{
           gridTemplateColumns: `repeat(${width}, minmax(0, 1fr))`,

@@ -27,7 +27,7 @@ describe("NonogramClearAnimation", () => {
       );
       render(
         <NonogramClearAnimation active onComplete={onComplete}>
-          <span data-nonogram-clear-wave="0" />
+          <span data-nonogram-clear-swell="" />
         </NonogramClearAnimation>,
       );
     });
@@ -48,7 +48,7 @@ describe("NonogramClearAnimation", () => {
       vi.useFakeTimers();
       render(
         <NonogramClearAnimation active={false} onComplete={onComplete}>
-          <span data-nonogram-clear-wave="0" />
+          <span data-nonogram-clear-swell="" />
         </NonogramClearAnimation>,
       );
     });
