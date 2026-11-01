@@ -61,6 +61,9 @@ function makeAdapter(ctx: Ctx): Adapter<S, M> & { ctx: Ctx } {
     fillCount: 0,
   };
   const all = Array.from({ length: n }, (_, i) => i);
+  // 素朴なプレイヤーは塗るだけで消さない。消す手を合法手に入れると、試し置きのプレイヤーが常に未訪問の盤面を
+  // 見つけて行き詰まらず、一度も戻らなくなる。塗りが黒の数に達して解けていなければ行き詰まりとして戻る。
+  const fillMoves = (s: S): M[] => (s.fillCount >= ctx.blackCount ? [] : all.filter((i) => s.filled[i] === 0));
   const apply = (s: S, i: M): S => {
     const filled = s.filled.slice();
     filled[i] = filled[i] ? 0 : 1;
@@ -77,8 +80,8 @@ function makeAdapter(ctx: Ctx): Adapter<S, M> & { ctx: Ctx } {
     ctx,
     initial,
     minMoves: ctx.blackCount,
-    legalMoves: () => all,
-    blindMoves: () => all,
+    legalMoves: fillMoves,
+    blindMoves: fillMoves,
     apply,
     isCleared: (s) => s.filled.every((v, i) => (v === 1) === ctx.solution[i]),
     key: (s) => s.filled.join(""),
