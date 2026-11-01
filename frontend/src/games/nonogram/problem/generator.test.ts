@@ -7,7 +7,6 @@ import { countNonogramSolutions } from "@/games/nonogram/problem/generation/solu
 import { getNonogramSymmetryKey } from "@/games/nonogram/problem/generation/symmetry";
 import {
   _private,
-  createNonogramCandidateIdentity,
   generateNonogramProblem,
   type NonogramGeneratedProblem,
 } from "@/games/nonogram/problem/generator";
@@ -36,7 +35,11 @@ function readFromUnknownGrid(problem: NonogramProblem) {
 function generateCandidates() {
   return nonogramBoardSizes.flatMap((size) =>
     Array.from({ length: candidatesPerSize }, (_, candidateIndex) => {
-      const identity = createNonogramCandidateIdentity(size, candidateIndex);
+      const identity = createNonogramProblemIdentity(
+        size,
+        nonogramPatternStyles[candidateIndex % nonogramPatternStyles.length]!,
+        candidateIndex,
+      );
       return { identity, result: generateNonogramProblem(identity) };
     }),
   );
@@ -204,8 +207,9 @@ describe("generateNonogramProblem", () => {
   });
 
   describe("同じ identity の場合", () => {
-    const identity = createNonogramCandidateIdentity(
+    const identity = createNonogramProblemIdentity(
       { width: 10, height: 12 },
+      nonogramPatternStyles[7]!,
       7,
     );
 
@@ -221,7 +225,11 @@ describe("generateNonogramProblem", () => {
   });
 
   describe("今の生成器で扱えない identity の場合", () => {
-    const valid = createNonogramCandidateIdentity({ width: 8, height: 8 }, 0);
+    const valid = createNonogramProblemIdentity(
+      { width: 8, height: 8 },
+      nonogramPatternStyles[0]!,
+      0,
+    );
     const cases: readonly [string, NonogramProblemIdentity][] = [
       [
         "横長の盤面",
@@ -251,47 +259,6 @@ describe("generateNonogramProblem", () => {
       const act = () => generateNonogramProblem(identity);
 
       expect(act).toThrow();
-    });
-  });
-});
-
-describe("createNonogramCandidateIdentity", () => {
-  const size = { width: 9, height: 9 };
-  const identities = Array.from(
-    { length: nonogramPatternStyles.length },
-    (_, candidateIndex) =>
-      createNonogramCandidateIdentity(size, candidateIndex),
-  );
-
-  test("続く候補番号で、図柄の作り方を1つずつ順に使うこと", () => {
-    const styles = identities.map(
-      ({ conditions: { blackProbability, smoothingCount, mirrored } }) => ({
-        blackProbability,
-        smoothingCount,
-        mirrored,
-      }),
-    );
-
-    expect(styles).toEqual(nonogramPatternStyles);
-  });
-
-  test("候補番号ごとに別の seed を使うこと", () => {
-    const seeds = new Set(identities.map(({ seed }) => seed));
-
-    expect(seeds.size).toBe(identities.length);
-  });
-
-  describe("作り方を絞って渡した場合", () => {
-    const styles = nonogramPatternStyles.filter(
-      (style) => !style.mirrored && style.blackProbability === 0.45,
-    );
-
-    test("渡した作り方だけを巡回すること", () => {
-      const identity = createNonogramCandidateIdentity(size, 4, styles);
-
-      expect(identity).toEqual(
-        createNonogramProblemIdentity(size, styles[4 % styles.length]!, 4),
-      );
     });
   });
 });

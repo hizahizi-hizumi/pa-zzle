@@ -7,15 +7,11 @@ import { isNonogramLineSolvable } from "@/games/nonogram/problem/generation/prop
 import { getNonogramSymmetryKey } from "@/games/nonogram/problem/generation/symmetry";
 import {
   createNonogramProblem,
-  createNonogramProblemIdentity,
   isNonogramProblemIdentity,
   NONOGRAM_GENERATOR_VERSION,
   type NonogramIdentifiedProblem,
-  type NonogramPatternStyle,
   type NonogramProblemIdentity,
-  nonogramPatternStyles,
 } from "@/games/nonogram/problem/problem";
-import type { NonogramGridSize } from "@/games/nonogram/puzzle/board";
 import { computeNonogramClues } from "@/games/nonogram/puzzle/clue";
 import type { NonogramPattern } from "@/games/nonogram/puzzle/pattern";
 import { createProblemSeededRandom } from "@/games/problem-seed";
@@ -41,22 +37,6 @@ export type NonogramGenerationResult =
       reason: NonogramCandidateRejection;
       pattern: NonogramPattern;
     };
-
-/**
- * 候補番号で図柄の作り方を順に巡回した identity を作る。続く候補番号の候補は、作り方を均等に使う。
- * 問題集の生成で、採れる問題が特定の作り方に偏らないようにするために使う。
- */
-export function createNonogramCandidateIdentity(
-  size: NonogramGridSize,
-  candidateIndex: number,
-  styles: readonly NonogramPatternStyle[] = nonogramPatternStyles,
-): NonogramProblemIdentity {
-  const style = styles[candidateIndex % styles.length];
-  if (style === undefined) {
-    throw new RangeError("Nonogram pattern styles must not be empty");
-  }
-  return createNonogramProblemIdentity(size, style, candidateIndex);
-}
 
 function validateIdentity(identity: NonogramProblemIdentity): void {
   const { generatorVersion, conditions } = identity;
