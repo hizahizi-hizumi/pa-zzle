@@ -1,6 +1,14 @@
 import { HowToPlayDialog } from "@/components/HowToPlayDialog";
 import { HowToPlayTransition } from "@/components/HowToPlayTransition";
+import type { NonogramMark } from "@/games/nonogram/session/session";
 import { HowToPlayFigure } from "@/games/nonogram/ui/NonogramHowToPlayDialog/HowToPlayFigure";
+import { HowToPlayMarkChoice } from "@/games/nonogram/ui/NonogramHowToPlayDialog/HowToPlayMarkChoice";
+
+/** 選んだ印ごとの、押したマスに入る図の1文字（`HowToPlayFigure` の `rows` の表記）。 */
+const markFigures = [
+  { mark: "filled", cell: "#" },
+  { mark: "crossed", cell: "x" },
+] as const satisfies readonly { mark: NonogramMark; cell: string }[];
 
 type NonogramHowToPlayDialogProps = {
   open: boolean;
@@ -37,16 +45,19 @@ export function NonogramHowToPlayDialog({
         <HowToPlayFigure rows={["###x#x"]} rowClues={[[3, 1]]} />
       </li>
       <li className="space-y-2">
-        <p>
-          下のボタンで塗りと ×
-          を切り替え、マスを押して入れる。同じ印のマスを押すと消える。右クリックは、切り替えによらず
-          × を入れる・消す。
-        </p>
-        <HowToPlayTransition>
-          <HowToPlayFigure rows={["."]} />
-          <HowToPlayFigure rows={["#"]} />
-          <HowToPlayFigure rows={["."]} />
-        </HowToPlayTransition>
+        <p>下のボタンで選んだ印を、マスを押して入れる。同じ印なら消える。</p>
+        <div className="space-y-2">
+          {markFigures.map(({ mark, cell }) => (
+            <div key={mark} className="flex items-center gap-3">
+              <HowToPlayMarkChoice mark={mark} />
+              <HowToPlayTransition>
+                <HowToPlayFigure rows={["."]} />
+                <HowToPlayFigure rows={[cell]} />
+                <HowToPlayFigure rows={["."]} />
+              </HowToPlayTransition>
+            </div>
+          ))}
+        </div>
       </li>
       <li className="space-y-2">
         <p>なぞると、同じ行・列のマスにまとめて入れる。</p>
@@ -79,6 +90,11 @@ export function NonogramHowToPlayDialog({
           matchedRows={[true, true, true]}
           matchedColumns={[true, true, true]}
         />
+      </li>
+      <li className="hidden pointer-fine:list-item">
+        <p className="text-muted-foreground">
+          マウス: 右クリックで、選んだ印によらず × を入れる・消す。
+        </p>
       </li>
     </HowToPlayDialog>
   );
