@@ -2,6 +2,7 @@ import { placeHamiltonianPathPartitions } from "@/games/hamiltonian-path/problem
 import { createRandomSelfAvoidingWalk } from "@/games/hamiltonian-path/problem/generation/self-avoiding-walk";
 import { getHamiltonianPathSymmetryKey } from "@/games/hamiltonian-path/problem/generation/symmetry";
 import {
+  countHamiltonianPathOpenCells,
   HAMILTONIAN_PATH_GENERATOR_VERSION,
   type HamiltonianPathIdentifiedProblem,
   type HamiltonianPathProblemIdentity,
@@ -52,10 +53,10 @@ export function generateHamiltonianPathProblem(
 ): HamiltonianPathGeneratedProblem {
   validateIdentity(identity);
   const { seed, conditions } = identity;
-  const { size, wallRatio } = conditions;
+  const { size } = conditions;
   const random = createProblemSeededRandom(`hamiltonian-path:${seed}`);
   const cellCount = size * size;
-  const openCellCount = Math.round(cellCount * (1 - wallRatio));
+  const openCellCount = countHamiltonianPathOpenCells(conditions);
 
   for (let attempt = 1; attempt <= MAXIMUM_GENERATION_ATTEMPTS; attempt += 1) {
     const solution = createRandomSelfAvoidingWalk(size, openCellCount, random);
