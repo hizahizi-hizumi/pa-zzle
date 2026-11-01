@@ -20,7 +20,12 @@ import {
 } from "@/games/nonogram/problem/difficulty-analysis";
 import { measureNonogramPatternQuality } from "@/games/nonogram/problem/generation/pattern-quality";
 import { countNonogramSolutions } from "@/games/nonogram/problem/generation/solution-count";
-import { getNonogramSymmetryKey } from "@/games/nonogram/problem/generation/symmetry";
+import {
+  areNonogramPatternsNear,
+  getNonogramSymmetryKey,
+  listNonogramNearPatternPairs,
+  nonogramNearPatternMaximumDistance,
+} from "@/games/nonogram/problem/generation/symmetry";
 import {
   generateNonogramProblem,
   type NonogramCandidateRejection,
@@ -45,6 +50,7 @@ import {
 import { selectNonogramProblemForDifficulty } from "@/games/nonogram/problem-selection";
 import type { NonogramGridSize } from "@/games/nonogram/puzzle/board";
 import { computeNonogramClues } from "@/games/nonogram/puzzle/clue";
+import type { NonogramPattern } from "@/games/nonogram/puzzle/pattern";
 
 const defaultPerLevel = 500;
 
@@ -91,8 +97,8 @@ const levelPatternStyles: Record<
 const usage = `Usage: bun run generate:nonogram-pool -- [options]
 
 レベルごとに、組み合わせ定義（nonogramLevelCombinations）の盤面の大きさとレベルの図柄の作り方の組（生成条件）で、
-決定的な seed の候補を番号順に生成・分析する。そのレベルに分類された候補を、回転・反転の同型の重複を除きながら
-生成条件を巡回して問題集へ採る。
+決定的な seed の候補を番号順に生成・分析する。そのレベルに分類された候補を、同じレベルに採った図柄と回転・反転の同型か、
+回転・反転込みで${nonogramNearPatternMaximumDistance}マス以下しか違わない近い図柄を除きながら、生成条件を巡回して問題集へ採る。
 
 Options:
   --per-level <n>  レベルごとの問題数 (default: ${defaultPerLevel})
@@ -102,7 +108,7 @@ Options:
   --cache <dir>    候補の評価結果（線の読みの特徴まで。塊の分かれ方とレベルの分類は含めない）を生成条件ごとに書き足す。
                    同じ dir で実行し直すと、評価済みの候補を読んで今の分類の境界で分類し直し、続きから進める
   --verify         生成せず、同梱の問題集の全問を identity から再生成→解の数え上げ→分析→分類し、特徴・同型の重複・
-                   JSON の大きさ・選択時間を確かめる`;
+                   近い図柄（レベルをまたいでも）・JSON の大きさ・選択時間を確かめる`;
 
 const outputPath = new URL(
   "../src/games/nonogram/problem/problem-pool.json",
@@ -460,6 +466,7 @@ type LevelSelection =
       status: "selected";
       selected: SelectedCandidate[];
       duplicateCount: number;
+      nearPatternCount: number;
       /** 生成条件ごとの、採る問題を決めるまでに調べた候補数。 */
       examinedLengths: Map<ConditionState, number>;
     }
@@ -467,7 +474,9 @@ type LevelSelection =
   | { status: "needs-more"; round: number };
 
 /**
- * 生成条件を巡回し、各条件の採れる候補を番号順に1つずつ採る。同型の重複は飛ばす。
+ * 生成条件を巡回し、各条件の採れる候補を番号順に1つずつ採る。そのレベルに採った図柄と同型の候補と、近い図柄
+ * （`areNonogramPatternsNear`）の候補は飛ばす。レベルをまたぐ同型・近い図柄は、各レベルの採る問題が他のレベルに
+ * 左右されないよう選ぶときには見ず、`--verify` で無いことを確かめる。
  * 採る問題は各条件の候補の番号順の並びだけで決まり、ワーカー数・一度に調べる候補数・キャッシュに依存しない。
  * 候補が上限まで尽きた条件は飛ばし、残りの条件で埋める。
  */
@@ -490,7 +499,9 @@ function selectLevel(
     states.map((state) => [state, 0]),
   );
   const seenKeys = new Set<string>();
+  const selectedPatterns: NonogramPattern[] = [];
   let duplicateCount = 0;
+  let nearPatternCount = 0;
   for (let round = 0; selected.length < perLevel; round += 1) {
     let hasCandidate = false;
     for (const [conditionIndex, state] of states.entries()) {
@@ -510,7 +521,20 @@ function selectLevel(
         duplicateCount += 1;
         continue;
       }
+      const pattern = decodeNonogramPoolSolution(
+        state.condition.size,
+        candidate.classified.encodedSolution,
+      );
+      if (
+        selectedPatterns.some((selectedPattern) =>
+          areNonogramPatternsNear(selectedPattern, pattern),
+        )
+      ) {
+        nearPatternCount += 1;
+        continue;
+      }
       seenKeys.add(candidate.classified.symmetryKey);
+      selectedPatterns.push(pattern);
       selected.push({ condition: state.condition, candidate });
     }
     if (!hasCandidate) {
@@ -519,7 +543,13 @@ function selectLevel(
       );
     }
   }
-  return { status: "selected", selected, duplicateCount, examinedLengths };
+  return {
+    status: "selected",
+    selected,
+    duplicateCount,
+    nearPatternCount,
+    examinedLengths,
+  };
 }
 
 function countClassified(
@@ -777,7 +807,7 @@ async function runMain(): Promise<void> {
 
   const report: string[] = [];
   for (const { id: difficulty } of difficultyLevels) {
-    const { selected, duplicateCount, examinedLengths } =
+    const { selected, duplicateCount, nearPatternCount, examinedLengths } =
       results.get(difficulty)!;
     const examined = levelStates[difficulty].flatMap((state) =>
       state.results.slice(0, examinedLengths.get(state)),
@@ -793,7 +823,7 @@ async function runMain(): Promise<void> {
     );
     report.push(
       `## レベル ${difficulty}: ${selected.length}問（生成条件 ${levelStates[difficulty].length}）`,
-      `  候補 ${examined.length} / 分類一致 ${classifiedCount} (${formatPercent(classifiedCount, examined.length)}) / 同型重複 ${duplicateCount} / 候補の計算 ${cpuSeconds.toFixed(1)}s (CPU)`,
+      `  候補 ${examined.length} / 分類一致 ${classifiedCount} (${formatPercent(classifiedCount, examined.length)}) / 同型重複 ${duplicateCount} / 近い図柄 ${nearPatternCount} / 候補の計算 ${cpuSeconds.toFixed(1)}s (CPU)`,
       `  調べた候補の結果: ${formatCounts(examined.map((candidate) => candidate.outcome))}`,
       `  1問も採らなかった生成条件: ${exhaustedConditions.length === 0 ? "なし" : exhaustedConditions.map(({ condition }) => `${describeSize(condition.size)}/${describeStyle(getStyle(condition.styleIndex))}`).join(" ")}`,
       ...describeLevelEntries(difficulty, levels[difficulty]),
@@ -913,35 +943,48 @@ async function runVerify(): Promise<void> {
     .filter((line) => line.length > 0)
     .map((line) => JSON.parse(line) as VerifyFailure);
 
-  // 同型の重複と seed の重複は、レベルをまたいで確かめる。
+  // 同型の重複・seed の重複・近い図柄は、レベルをまたいで確かめる。
   const keys = new Set<string>();
   const seeds = new Set<string>();
   let duplicateCount = 0;
-  let total = 0;
+  const pooledPatterns: { problemId: string; pattern: NonogramPattern }[] = [];
   const levels = {} as Record<NonogramDifficulty, NonogramProblemPoolEntry[]>;
   for (const { id: difficulty } of difficultyLevels) {
     levels[difficulty] = [...listNonogramPoolEntries(difficulty)];
-    for (const entry of levels[difficulty]) {
-      total += 1;
+    for (const [entryIndex, entry] of levels[difficulty].entries()) {
       const [width, height, , , encodedSolution] = entry;
-      const key = getNonogramSymmetryKey(
-        decodeNonogramPoolSolution({ width, height }, encodedSolution),
+      const pattern = decodeNonogramPoolSolution(
+        { width, height },
+        encodedSolution,
       );
+      const key = getNonogramSymmetryKey(pattern);
       const { seed } = decodeNonogramPoolEntry(entry).identity;
       if (keys.has(key) || seeds.has(seed)) {
         duplicateCount += 1;
       }
       keys.add(key);
       seeds.add(seed);
+      pooledPatterns.push({
+        problemId: formatNonogramPoolProblemId(difficulty, entryIndex),
+        pattern,
+      });
     }
   }
+  const nearPatternPairs = listNonogramNearPatternPairs(
+    pooledPatterns.map(({ pattern }) => pattern),
+  ).map((pair) => pair.map((index) => pooledPatterns[index]!.problemId));
 
   console.log(
-    `${total}問を検証 (${((performance.now() - startedAt) / 1000).toFixed(1)}s, jobs=${jobs}): 不合格 ${failures.length} / 同型・seed の重複 ${duplicateCount}`,
+    `${pooledPatterns.length}問を検証 (${((performance.now() - startedAt) / 1000).toFixed(1)}s, jobs=${jobs}): 不合格 ${failures.length} / 同型・seed の重複 ${duplicateCount} / 近い図柄 ${nearPatternPairs.length}組`,
   );
   for (const failure of failures) {
     console.log(
       `  レベル ${failure.difficulty} の ${failure.index + 1}番: ${failure.reason}`,
+    );
+  }
+  for (const [first, second] of nearPatternPairs) {
+    console.log(
+      `  ${first} と ${second}: 回転・反転込みで${nonogramNearPatternMaximumDistance}マス以下しか違わない`,
     );
   }
   for (const { id: difficulty } of difficultyLevels) {
@@ -954,7 +997,11 @@ async function runVerify(): Promise<void> {
   }
   console.log(describeJsonSize(formatPoolJson(levels)));
   console.log(measureSelection());
-  if (failures.length > 0 || duplicateCount > 0) {
+  if (
+    failures.length > 0 ||
+    duplicateCount > 0 ||
+    nearPatternPairs.length > 0
+  ) {
     process.exitCode = 1;
   }
 }

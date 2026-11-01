@@ -1,4 +1,8 @@
-import { getNonogramSymmetryKey } from "@/games/nonogram/problem/generation/symmetry";
+import {
+  areNonogramPatternsNear,
+  getNonogramSymmetryKey,
+  listNonogramNearPatternPairs,
+} from "@/games/nonogram/problem/generation/symmetry";
 import { parseNonogramPattern } from "@/games/nonogram/puzzle/pattern";
 
 function reverseText(text: string): string {
@@ -158,5 +162,63 @@ describe("getNonogramSymmetryKey", () => {
 
       expect(symmetryKey).toBe("000/000/001");
     });
+  });
+});
+
+describe("areNonogramPatternsNear", () => {
+  const rows = ["##...", "#....", "..#..", "...##", "....."];
+  const pattern = parseNonogramPattern(rows);
+  function parseCases(
+    cases: readonly (readonly [string, readonly string[]])[],
+  ) {
+    return cases.map(
+      ([name, other]) => [name, parseNonogramPattern(other)] as const,
+    );
+  }
+  const nearCases = parseCases([
+    ["同じ向きで2マス違う図柄", ["##...", "#....", "..#..", "....#", "#...."]],
+    [
+      "90度回すと2マス違う図柄",
+      rotateClockwise(["##...", "#....", ".....", "...##", "....#"]),
+    ],
+    ["回転・反転で重なる図柄", mirrorLeftRight(rows)],
+  ]);
+  const farCases = parseCases([
+    [
+      "どう重ねても3マス以上違う図柄",
+      ["##...", "#....", ".....", "...#.", "#...."],
+    ],
+    ["大きさの違う図柄", ["##...", "#....", "..#..", "...##"]],
+  ]);
+
+  test.each(nearCases)("%s を近いとみなすこと", (_, other) => {
+    const near = areNonogramPatternsNear(pattern, other);
+
+    expect(near).toBe(true);
+  });
+
+  test.each(farCases)("%s を近いとみなさないこと", (_, other) => {
+    const near = areNonogramPatternsNear(pattern, other);
+
+    expect(near).toBe(false);
+  });
+});
+
+describe("listNonogramNearPatternPairs", () => {
+  const patterns = [
+    ["##..", "#...", "....", "...."],
+    ["##..", "#...", "...."],
+    ["####", "####", "....", "...."],
+    ["....", "....", "...#", "..#."],
+    ["####", "###.", "....", "...."],
+  ].map((rows) => parseNonogramPattern(rows));
+
+  test("大きさが同じで回転・反転込みで2マス以下しか違わない図柄の位置の組を、前の位置の順に返すこと", () => {
+    const pairs = listNonogramNearPatternPairs(patterns);
+
+    expect(pairs).toEqual([
+      [0, 3],
+      [2, 4],
+    ]);
   });
 });

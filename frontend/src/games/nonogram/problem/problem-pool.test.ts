@@ -5,7 +5,7 @@ import {
   measureNonogramClueShape,
   toNonogramAnalyzedDifficulty,
 } from "@/games/nonogram/problem/difficulty-analysis";
-import { getNonogramSymmetryKey } from "@/games/nonogram/problem/generation/symmetry";
+import { listNonogramNearPatternPairs } from "@/games/nonogram/problem/generation/symmetry";
 import { generateNonogramProblem } from "@/games/nonogram/problem/generator";
 import {
   createNonogramProblemIdentity,
@@ -302,12 +302,14 @@ describe("listNonogramPoolEntries", () => {
     },
   );
 
-  test("回転・反転で重なる図柄を、レベルをまたいでも持たないこと", () => {
-    const symmetryKeys = new Set(
-      allPooled.map(({ problem }) => getNonogramSymmetryKey(problem.solution)),
+  test("回転・反転で重なる図柄も、回転・反転込みで2マス以下しか違わない近い図柄も、レベルをまたいで持たないこと", () => {
+    const nearPairs = listNonogramNearPatternPairs(
+      allPooled.map(({ problem }) => problem.solution),
+    ).map((pair) =>
+      pair.map((index) => allPooled[index]!.poolReference.problemId),
     );
 
-    expect(symmetryKeys.size).toBe(allPooled.length);
+    expect(nearPairs).toEqual([]);
   });
 
   describe("隣り合うレベルの特徴の中央値", () => {
