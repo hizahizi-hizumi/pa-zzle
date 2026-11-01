@@ -16,6 +16,7 @@ import type { SlidePuzzleBoard as SlidePuzzleBoardState } from "@/games/slide-pu
 import { SlidePuzzleBoard } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard";
 import { SlidePuzzleResultScreen } from "@/games/slide-puzzle/ui/result/SlidePuzzleResultScreen";
 import { SlidePuzzleHowToPlayDialog } from "@/games/slide-puzzle/ui/SlidePuzzleHowToPlayDialog";
+import { SlidePuzzleTutorial } from "@/games/slide-puzzle/ui/SlidePuzzleTutorial";
 
 type SlidePuzzlePlayProps = GamePlayScreenProps<
   SlidePuzzleDifficulty,
@@ -110,6 +111,9 @@ export function SlidePuzzlePlay({
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
         <SlidePuzzleHowToPlayDialog open={open} onClose={onClose} />
+      )}
+      renderTutorial={({ open, onClose }) => (
+        <SlidePuzzleTutorial open={open} onClose={onClose} />
       )}
       renderResultScreen={(clearedResult) => (
         <SlidePuzzleResultScreen

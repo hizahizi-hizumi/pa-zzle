@@ -6,8 +6,18 @@ import { difficultyLevels } from "@/games/difficulty";
 import { SLIDE_PUZZLE_DISPLAY_NAME } from "@/games/slide-puzzle/display-name";
 import { SlidePuzzleDifficultyPreview } from "@/games/slide-puzzle/ui/SlidePuzzleDifficultyPreview";
 import { SlidePuzzleHowToPlayDialog } from "@/games/slide-puzzle/ui/SlidePuzzleHowToPlayDialog";
+import { SlidePuzzleTutorial } from "@/games/slide-puzzle/ui/SlidePuzzleTutorial";
+import { useNavigate } from "@/router";
 
 export function SlidePuzzleDifficultyView() {
+  const navigate = useNavigate();
+
+  function startLevelOne(): void {
+    navigate("/puzzles/slide-puzzle/play/:difficulty", {
+      params: { difficulty: "1" },
+    });
+  }
+
   return (
     <section className="space-y-6 sm:space-y-8">
       <div className="space-y-2">
@@ -16,6 +26,13 @@ export function SlidePuzzleDifficultyView() {
           title={SLIDE_PUZZLE_DISPLAY_NAME}
           renderHowToPlayDialog={({ open, onClose }) => (
             <SlidePuzzleHowToPlayDialog open={open} onClose={onClose} />
+          )}
+          renderTutorial={({ open, onClose }) => (
+            <SlidePuzzleTutorial
+              open={open}
+              onStartPlay={startLevelOne}
+              onClose={onClose}
+            />
           )}
         />
       </div>
