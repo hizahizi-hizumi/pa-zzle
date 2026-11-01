@@ -12,6 +12,7 @@ import {
   NONOGRAM_REPAINT_PENALTY,
   NONOGRAM_SCORE_MAXIMUMS,
   NONOGRAM_SPEED_INITIAL_RECOGNITION_MS,
+  NONOGRAM_SPEED_PER_BLOCK_MS,
   NONOGRAM_SPEED_PER_FILLED_CELL_MS,
   NONOGRAM_SPEED_PER_LINE_MS,
   NONOGRAM_SPEED_PER_ROUND_MS,
@@ -27,6 +28,12 @@ function listSpeedFormula(
       count: countNonogramLines(workload),
       unit: "本",
       durationMsPerUnit: NONOGRAM_SPEED_PER_LINE_MS,
+    },
+    {
+      label: "ヒントの数字",
+      count: workload.blockCount,
+      unit: "個",
+      durationMsPerUnit: NONOGRAM_SPEED_PER_BLOCK_MS,
     },
     {
       label: "塗るマス",
@@ -54,6 +61,7 @@ export function getNonogramScoreCriteria(
         rule: result.speedRule,
         formula: listSpeedFormula(result.workload),
         notes: [
+          "ヒントの数字は、行と列のヒントに並ぶ数字の数の合計で、1本の行・列に塊が多いほど読む時間を長くする。",
           "連鎖の段は、決まったマスを使って次の行・列を読み進める回数で、この問題を仮置きなしに解くときに要る数。最初に読む1回も含む。",
         ],
       }),

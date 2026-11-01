@@ -12,17 +12,19 @@ const lightWorkload: NonogramSolveWorkload = {
   width: 8,
   height: 8,
   filledCellCount: 33,
+  blockCount: 20,
   roundCount: 3,
 };
 const heavyWorkload: NonogramSolveWorkload = {
   width: 10,
   height: 13,
   filledCellCount: 58,
+  blockCount: 70,
   roundCount: 14,
 };
 
-const lightFullScoreMs = 81_750;
-const heavyFullScoreMs = 169_500;
+const lightFullScoreMs = 72_750;
+const heavyFullScoreMs = 167_500;
 
 type PlayExample = {
   elapsedRatio: number;
@@ -47,13 +49,24 @@ describe("calculateNonogramSpeedFullScoreMs", () => {
   ] as const;
 
   test.each(cases)(
-    "%s で、盤面把握10秒に行・列1本2秒・塗るマス1つ0.75秒・連鎖の1段5秒を足すこと",
+    "%s で、盤面把握10秒に行・列1本1秒・ヒントの数字1つ0.5秒・塗るマス1つ0.75秒・連鎖の1段4秒を足すこと",
     (_, workload, expected) => {
       const speedFullScoreMs = calculateNonogramSpeedFullScoreMs(workload);
 
       expect(speedFullScoreMs).toBe(expected);
     },
   );
+
+  describe("ヒントの数字の数だけが違う問題の場合", () => {
+    const fewerBlocks = { ...heavyWorkload, blockCount: 60 };
+
+    test("数字の多い方の基準時間を長くすること", () => {
+      const moreBlocksMs = calculateNonogramSpeedFullScoreMs(heavyWorkload);
+      const fewerBlocksMs = calculateNonogramSpeedFullScoreMs(fewerBlocks);
+
+      expect(moreBlocksMs).toBeGreaterThan(fewerBlocksMs);
+    });
+  });
 
   describe("連鎖の段の数だけが違う問題の場合", () => {
     const shallow = { ...heavyWorkload, roundCount: 12 };

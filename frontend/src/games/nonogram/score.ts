@@ -26,17 +26,19 @@ export const NONOGRAM_SCORE_MAXIMUMS = {
  */
 export const NONOGRAM_REPAINT_PENALTY = 3;
 
-/** 基準時間の係数（暫定）。盤面とヒント全体を見渡す時間。 */
+/** 盤面とヒント全体を見渡す時間。 */
 export const NONOGRAM_SPEED_INITIAL_RECOGNITION_MS = 10_000;
-/** 基準時間の係数（暫定）。行・列1本のヒントを読む時間。 */
-export const NONOGRAM_SPEED_PER_LINE_MS = 2_000;
-/** 基準時間の係数（暫定）。塗るマス1つを確かめて塗る時間。 */
+/** 行・列1本のヒントに目を移して読み始める時間。ヒントの数字の数によらない。 */
+export const NONOGRAM_SPEED_PER_LINE_MS = 1_000;
+/** ヒントの数字1つ（行・列の黒の塊1つ）を、その行・列の決まったマスと突き合わせて読む時間。 */
+export const NONOGRAM_SPEED_PER_BLOCK_MS = 500;
+/** 塗るマス1つを確かめて塗る時間。 */
 export const NONOGRAM_SPEED_PER_FILLED_CELL_MS = 750;
-/** 基準時間の係数（暫定）。決まったマスを使って次に読める行・列を探す、連鎖の1段ごとの時間。 */
-export const NONOGRAM_SPEED_PER_ROUND_MS = 5_000;
+/** 決まったマスを使って次に読める行・列を探す、連鎖の1段ごとの時間。 */
+export const NONOGRAM_SPEED_PER_ROUND_MS = 4_000;
 
 /**
- * 速さが0点になる時間の、基準時間に対する倍率（暫定）。
+ * 速さが0点になる時間の、基準時間に対する倍率。
  * 速さを主にするゲームなので、塗り直しなしなら基準時間の1.2倍ほどまでで great、1.4倍ほどまでで good に残る傾きにする。
  */
 export const NONOGRAM_SPEED_ZERO_SCORE_RATIO = 3;
@@ -62,10 +64,10 @@ export function countNonogramLines({
 
 /**
  * 問題ごとの速さ満点の基準時間。
- * 盤面把握の時間に、読む行・列の数、塗るマスの数、連鎖の段の数に応じた時間を足す。
+ * 盤面把握の時間に、読む行・列の数、ヒントの数字の数、塗るマスの数、連鎖の段の数に応じた時間を足す。
  * 問題を解き切る作業の量だけから決め、難易度そのものは使わない。
- * 係数は、問題集のどのレベルでも中央値でどの項も基準時間の半分を超えず、塗る操作だけにかかる時間
- * （塊ごとに1回のドラッグ）が基準時間の1割前後に収まるように決めた暫定値で、人間の実プレイで校正する。
+ * 係数は、問題集のどのレベルでも、どの項も中央値で基準時間の4割以下・最大で5割以下になり、
+ * 塗る操作だけにかかる時間（塊ごとに1回のドラッグ）が中央値で基準時間の15%以下に収まるように決める。
  */
 export function calculateNonogramSpeedFullScoreMs(
   workload: NonogramSolveWorkload,
@@ -73,6 +75,7 @@ export function calculateNonogramSpeedFullScoreMs(
   return (
     NONOGRAM_SPEED_INITIAL_RECOGNITION_MS +
     countNonogramLines(workload) * NONOGRAM_SPEED_PER_LINE_MS +
+    workload.blockCount * NONOGRAM_SPEED_PER_BLOCK_MS +
     workload.filledCellCount * NONOGRAM_SPEED_PER_FILLED_CELL_MS +
     workload.roundCount * NONOGRAM_SPEED_PER_ROUND_MS
   );

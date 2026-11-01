@@ -12,6 +12,7 @@ import {
 } from "@/games/nonogram/problem/problem";
 import problemPoolJson from "@/games/nonogram/problem/problem-pool.json";
 import type { NonogramGridSize } from "@/games/nonogram/puzzle/board";
+import type { NonogramClues } from "@/games/nonogram/puzzle/clue";
 import type { NonogramPattern } from "@/games/nonogram/puzzle/pattern";
 import { createProblemPoolIdLookup } from "@/games/problem-id";
 
@@ -159,6 +160,10 @@ export function formatNonogramPoolProblemId(
   return `${difficulty}-${entryIndex + 1}`;
 }
 
+function countNonogramClueBlocks({ rows, columns }: NonogramClues): number {
+  return [...rows, ...columns].reduce((sum, clue) => sum + clue.length, 0);
+}
+
 /** 問題集の1問を、問題集の中の位置 `poolReference` と、解と特徴から求めた作業の量を添えて復元する。 */
 export function restoreNonogramPoolEntry(
   entry: NonogramProblemPoolEntry,
@@ -170,14 +175,16 @@ export function restoreNonogramPoolEntry(
     encodedSolution,
   );
   const { identity, features } = decodeNonogramPoolEntry(entry);
+  const problem = createNonogramProblem(solution);
   return {
-    problem: createNonogramProblem(solution),
+    problem,
     identity,
     poolReference,
     workload: {
       width,
       height,
       filledCellCount: solution.black.filter(Boolean).length,
+      blockCount: countNonogramClueBlocks(problem.clues),
       roundCount: features.roundCount,
     },
   };

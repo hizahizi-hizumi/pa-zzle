@@ -28,20 +28,26 @@ const { clues } = createNonogramProblem(
 const board = parseNonogramBoard(["#.#", "x..", "..."]);
 
 /**
- * 基準時間 01:26（10秒 + 16本 × 2秒 + 32マス × 0.75秒 + 4回 × 5秒）の問題を 01:41 で、
+ * 基準時間 01:16（10秒 + 16本 × 1秒 + 20個 × 0.5秒 + 32マス × 0.75秒 + 4回 × 4秒）の問題を 01:31 で、
  * 塗り直し2マス・待った3回・盤面を戻した回数1回で解いた結果。
  */
 const result: NonogramResult = {
-  elapsedMs: 101_000,
+  elapsedMs: 91_000,
   repaintCount: 2,
   crossToggleCount: 9,
   undoCount: 3,
   restartCount: 1,
   inputCount: 40,
-  workload: { width: 8, height: 8, filledCellCount: 32, roundCount: 4 },
-  speedRule: { fullScoreMs: 86_000, zeroScoreMs: 258_000 },
+  workload: {
+    width: 8,
+    height: 8,
+    filledCellCount: 32,
+    blockCount: 20,
+    roundCount: 4,
+  },
+  speedRule: { fullScoreMs: 76_000, zeroScoreMs: 228_000 },
   timeDeltaMs: 15_000,
-  score: { total: 87, breakdown: { speed: 78, accuracy: 9 } },
+  score: { total: 86, breakdown: { speed: 77, accuracy: 9 } },
 };
 
 function createProps(overrides: Partial<NonogramPlayProps> = {}) {
@@ -243,7 +249,7 @@ describe("NonogramPlay", () => {
 
       expect(heading).toBeTruthy();
       expect(screen.getByText("レベル 1")).toBeTruthy();
-      expect(score.getByText("87")).toBeTruthy();
+      expect(score.getByText("86")).toBeTruthy();
       expect(boardGroup).toBeNull();
     });
 
@@ -254,7 +260,7 @@ describe("NonogramPlay", () => {
         .map((definition) => definition.textContent);
 
       expect(terms).toEqual(["時間", "塗り直し"]);
-      expect(definitions).toEqual(["01:41", "基準 +00:15", "2マス"]);
+      expect(definitions).toEqual(["01:31", "基準 +00:15", "2マス"]);
     });
 
     const actionCases = [
@@ -294,18 +300,20 @@ describe("NonogramPlay", () => {
             "盤面を戻す",
             "基準時間",
             "行・列",
+            "ヒントの数字",
             "塗るマス",
             "連鎖の段",
           ]),
         );
         expect(definitions).toEqual(
           expect.arrayContaining([
-            "78 / 85",
+            "77 / 85",
             "9 / 15",
             "3回",
             "1回",
-            "01:26",
+            "01:16",
             "16本",
+            "20個",
             "32マス",
             "4回",
           ]),
@@ -316,7 +324,7 @@ describe("NonogramPlay", () => {
         const criteria = screen.getByText(/基準時間は/);
 
         expect(criteria.textContent).toBe(
-          "基準時間01:26以内で85点、04:18以上で0点、その間は時間に応じて減らす。基準時間は盤面把握10秒 + 行・列16本 × 2秒 + 塗るマス32マス × 0.75秒 + 連鎖の段4回 × 5秒。連鎖の段は、決まったマスを使って次の行・列を読み進める回数で、この問題を仮置きなしに解くときに要る数。最初に読む1回も含む。",
+          "基準時間01:16以内で85点、03:48以上で0点、その間は時間に応じて減らす。基準時間は盤面把握10秒 + 行・列16本 × 1秒 + ヒントの数字20個 × 0.5秒 + 塗るマス32マス × 0.75秒 + 連鎖の段4回 × 4秒。ヒントの数字は、行と列のヒントに並ぶ数字の数の合計で、1本の行・列に塊が多いほど読む時間を長くする。連鎖の段は、決まったマスを使って次の行・列を読み進める回数で、この問題を仮置きなしに解くときに要る数。最初に読む1回も含む。",
         );
       });
 

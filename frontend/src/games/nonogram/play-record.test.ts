@@ -18,11 +18,12 @@ const problemIdentity = createNonogramProblemIdentity(
   3,
 );
 
-// 基準時間は 10 + 20×2 + 50×0.75 + 10×5 = 137.5秒。
+// 基準時間は 10 + 20×1 + 60×0.5 + 50×0.75 + 10×4 = 137.5秒。
 const workload = {
   width: 10,
   height: 10,
   filledCellCount: 50,
+  blockCount: 60,
   roundCount: 10,
 };
 
@@ -121,6 +122,14 @@ describe("isNonogramPlayRecord", () => {
     [
       "塗るマスが盤面より多い作業の量",
       withPayload({ workload: { ...workload, filledCellCount: 101 } }),
+    ],
+    [
+      "ヒントの数字の数が無い作業の量",
+      withPayload({ workload: { ...workload, blockCount: undefined } }),
+    ],
+    [
+      "ヒントの数字の数が塗るマスの2倍より多い作業の量",
+      withPayload({ workload: { ...workload, blockCount: 101 } }),
     ],
     [
       "連鎖の段が無い作業の量",

@@ -176,6 +176,9 @@ describe("restoreNonogramPoolEntry", () => {
         width: 8,
         height: 8,
         filledCellCount: problem.solution.black.filter(Boolean).length,
+        blockCount:
+          problem.clues.rows.flat().length +
+          problem.clues.columns.flat().length,
         roundCount: 5,
       },
     });

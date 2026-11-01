@@ -140,6 +140,9 @@ describe("NonogramPlayView", () => {
               width: problem.width,
               height: problem.height,
               filledCellCount: problem.solution.black.filter(Boolean).length,
+              blockCount:
+                problem.clues.rows.flat().length +
+                problem.clues.columns.flat().length,
             },
             performance: { repaintCount: 1, undoCount: 1, restartCount: 0 },
           },

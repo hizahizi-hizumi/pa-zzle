@@ -91,10 +91,12 @@ export type NonogramRecordedProblemIdentity = RecordedProblemIdentity;
  * 問題を解き切る作業の量。速さの基準時間に使う。
  * - `width` / `height`: 盤面の大きさ。読む行・列は幅と高さの和の本数。
  * - `filledCellCount`: 塗るマス（解の黒マス）の数。
+ * - `blockCount`: 行と列のヒントの数字の数の合計。行ごとと列ごとに数えた黒の塊の数で、多いほど1本ずつの読みが重い。
  * - `roundCount`: 連鎖の深さ。仮置きせずに、読める行・列をすべて読む段を重ねて解き終えるまでの段の数。
  */
 export type NonogramSolveWorkload = NonogramGridSize & {
   filledCellCount: number;
+  blockCount: number;
   roundCount: number;
 };
 
@@ -203,6 +205,7 @@ export function isNonogramRecordedProblemIdentity(
  * 記録など外部から読み戻した値が、成り立つ作業の量かを確かめる。
  * 生成器の版を問わず読むので、盤面の大きさは今の生成器の大きさに限らない。
  * 塗るマスは盤面のマスなので、その数は盤面のマスの数を超えない。
+ * 塊は1マス以上の黒で、黒マス1つは行と列の塊に1つずつ入るので、塊の数は塗るマスの数の2倍を超えない。
  * 段は1段ごとに1マス以上決まるので、段の数も盤面のマスの数を超えない。
  */
 export function isNonogramSolveWorkload(
@@ -212,7 +215,7 @@ export function isNonogramSolveWorkload(
     return false;
   }
 
-  const { width, height, filledCellCount, roundCount } = value;
+  const { width, height, filledCellCount, blockCount, roundCount } = value;
   if (!isPositiveInteger(width) || !isPositiveInteger(height)) {
     return false;
   }
@@ -220,6 +223,8 @@ export function isNonogramSolveWorkload(
   return (
     isPositiveInteger(filledCellCount) &&
     filledCellCount <= cellCount &&
+    isPositiveInteger(blockCount) &&
+    blockCount <= filledCellCount * 2 &&
     isPositiveInteger(roundCount) &&
     roundCount <= cellCount
   );

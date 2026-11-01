@@ -149,6 +149,7 @@ export function createNonogramPlayRecord({
         width: workload.width,
         height: workload.height,
         filledCellCount: workload.filledCellCount,
+        blockCount: workload.blockCount,
         roundCount: workload.roundCount,
       },
       performance: {

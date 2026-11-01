@@ -53,6 +53,7 @@ export function NonogramResultScreen({
         createOperationCountMetric("restart", result.restartCount),
         createSpeedFullScoreMetric(result.speedRule),
         createCountMetric("行・列", countNonogramLines(workload), "本"),
+        createCountMetric("ヒントの数字", workload.blockCount, "個"),
         createCountMetric("塗るマス", workload.filledCellCount, "マス"),
         createCountMetric("連鎖の段", workload.roundCount, "回"),
       ]}
