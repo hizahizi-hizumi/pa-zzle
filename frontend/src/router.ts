@@ -10,6 +10,8 @@ export type Path =
   | `/puzzles/minesweeper/play/:difficulty`
   | `/puzzles/nanpure`
   | `/puzzles/nanpure/play/:difficulty`
+  | `/puzzles/nonogram`
+  | `/puzzles/nonogram/play/:difficulty`
   | `/puzzles/parking-jam`
   | `/puzzles/parking-jam/play/:difficulty`
   | `/puzzles/reflection`
@@ -26,6 +28,7 @@ export type Params = {
   '/puzzles/:game/result/:recordId': { game: string; recordId: string }
   '/puzzles/minesweeper/play/:difficulty': { difficulty: string }
   '/puzzles/nanpure/play/:difficulty': { difficulty: string }
+  '/puzzles/nonogram/play/:difficulty': { difficulty: string }
   '/puzzles/parking-jam/play/:difficulty': { difficulty: string }
   '/puzzles/reflection/play/:difficulty': { difficulty: string }
   '/puzzles/slide-puzzle/play/:difficulty': { difficulty: string }
