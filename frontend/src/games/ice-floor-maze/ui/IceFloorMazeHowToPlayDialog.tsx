@@ -25,9 +25,9 @@ const stopAndPassGoal = 6;
 // 0 1 2 3
 // 4 5 6 b
 // 8 9 10 11
-// 4 から右へ滑らせると、もろい岩の手前の 6 で止まり、もろい岩が崩れて氷になる。
+// 4 から右へ滑らせると、もろい岩の手前の 6 で止まり、もろい岩が崩れて石くずの跡が残る氷になる。
 const brittleBeforeRows = ["....", "...b", "...."];
-const brittleAfterRows = ["....", "....", "...."];
+const brittleAfterRows = ["....", "...r", "...."];
 
 // 0 1 2 3
 // 4 c c 7
@@ -35,6 +35,20 @@ const brittleAfterRows = ["....", "....", "...."];
 // 4 から右へ滑らせると、薄い氷の上を滑り抜けて 7 で止まり、通った薄い氷が割れて水面になる。
 const thinBeforeRows = ["....", ".cc.", "...."];
 const thinAfterRows = ["....", ".ww.", "...."];
+
+// 0 1 2 3
+// 4 w G 7
+// 8 9 10 11
+// 割れてできた水面 5 は止め役になる。7 から左へ滑らせると、水面の手前のゴール 6 で止まる。
+const waterStopRows = ["....", ".w..", "...."];
+const waterStopGoal = 6;
+
+// 0 1 2 3
+// 4 r 6 G
+// 8 9 10 11
+// もろい岩の崩れた跡 5 は氷と同じく通り抜けられる。4 から右へ滑らせると、跡を抜けてゴール 7 で止まる。
+const rubblePassRows = ["....", ".r..", "...."];
+const rubblePassGoal = 7;
 
 /**
  * ルールと操作を、盤面と同じ見た目の小さな図と短い一文で示す。
@@ -92,7 +106,7 @@ export function IceFloorMazeHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>
-          割れ目の入った岩はもろい岩。岩と同じく駒を止め、滑ってきてぶつかると、止まった後に崩れて氷になる。すぐ隣から押しても崩れない。
+          割れ目の入った明るい岩はもろい岩。岩と同じく駒を止め、滑ってきてぶつかると、止まった後に崩れて氷になる。崩れた跡の石くずは通り抜けられる。すぐ隣から押しても崩れない。
         </p>
         <HowToPlayTransition>
           <HowToPlayFigure rows={brittleBeforeRows} piece={4} />
@@ -116,12 +130,43 @@ export function IceFloorMazeHowToPlayDialog({
           />
         </HowToPlayTransition>
       </li>
+      <li className="space-y-2">
+        <p>
+          変わった後の盤面も使える。割れてできた水面は駒を止める足場になり、もろい岩を崩すと通り道が開く。
+        </p>
+        <HowToPlayTransition>
+          <HowToPlayFigure
+            rows={waterStopRows}
+            goal={waterStopGoal}
+            piece={7}
+          />
+          <HowToPlayFigure
+            rows={waterStopRows}
+            goal={waterStopGoal}
+            piece={6}
+            trail={{ direction: "left", from: 7 }}
+          />
+        </HowToPlayTransition>
+        <HowToPlayTransition>
+          <HowToPlayFigure
+            rows={rubblePassRows}
+            goal={rubblePassGoal}
+            piece={4}
+          />
+          <HowToPlayFigure
+            rows={rubblePassRows}
+            goal={rubblePassGoal}
+            piece={7}
+            trail={{ direction: "right", from: 4 }}
+          />
+        </HowToPlayTransition>
+      </li>
       <li>
         <p>盤面をスワイプして、滑らせる向きを選ぶ。</p>
       </li>
       <li>
         <p>
-          待ったで1手ずつ戻せる。崩れた岩や割れた氷も元に戻る。ゴールへ行けず、崩す・割るほかは同じところを回るだけになったら知らせるので、待ったか盤面を戻すで続ける。
+          待ったで1手ずつ戻せる。崩れた岩や割れた氷も元に戻る。どう滑ってもゴールに止まれなくなったら知らせるので、待ったか盤面を戻すで、止まれるところまで戻る。
         </p>
       </li>
       <li className="hidden pointer-fine:list-item">
