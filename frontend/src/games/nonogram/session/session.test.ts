@@ -199,6 +199,26 @@ describe("extendNonogramSessionStroke", () => {
     });
   });
 
+  test("ドラッグで × を入れたマスの数だけ、× を付け外したマスの数を数えること", () => {
+    const session = endNonogramSessionStroke(drag(empty, [3, 5], "crossed"));
+
+    expect(formatBoard(session.puzzleState)).toEqual(["...", "xxx", "..."]);
+    expect(getNonogramSessionCrossToggleCount(session)).toBe(3);
+  });
+
+  describe("ドラッグで入れた × の行をドラッグで消した場合", () => {
+    const crossed = endNonogramSessionStroke(drag(empty, [3, 5], "crossed"));
+
+    test("消したマスの数も、× を付け外したマスの数に足すこと", () => {
+      const session = endNonogramSessionStroke(
+        drag(crossed, [3, 5], "crossed"),
+      );
+
+      expect(formatBoard(session.puzzleState)).toEqual(["...", "...", "..."]);
+      expect(getNonogramSessionCrossToggleCount(session)).toBe(6);
+    });
+  });
+
   test("印を入れる入力は別の印のマスを上書きしないこと", () => {
     const session = drag(withBoard(["..x", "...", "..."]), [0, 2], "filled");
 
@@ -329,6 +349,19 @@ describe("restartNonogramSession", () => {
       const next = restartNonogramSession(session);
 
       expect(getNonogramSessionRepaintCount(next)).toBe(1 + 3);
+    });
+  });
+
+  describe("ドラッグで × を複数マス入れた場合", () => {
+    const session = endNonogramSessionStroke(
+      drag(createNonogramSession(problem, startedAt), [0, 6], "crossed"),
+    );
+
+    test("戻して消えた × を、× を付け外したマスの数に足さず、それまでの数を引き継ぐこと", () => {
+      const next = restartNonogramSession(session);
+
+      expect(formatBoard(next.puzzleState)).toEqual(["...", "...", "..."]);
+      expect(getNonogramSessionCrossToggleCount(next)).toBe(3);
     });
   });
 
