@@ -94,13 +94,14 @@ describe("useNonogramPlay", () => {
     });
 
     describe("塗ったマスがある場合", () => {
+      let firstId: number | undefined;
+
       beforeEach(() => {
         tap(result, firstBlackCellIndex);
+        firstId = result.current.operation?.id;
       });
 
       test("同じ印で押すと印を消したことを、別の id で知らせること", () => {
-        const firstId = result.current.operation?.id;
-
         tap(result, firstBlackCellIndex);
 
         expect(result.current.operation?.type).toBe("erased");
