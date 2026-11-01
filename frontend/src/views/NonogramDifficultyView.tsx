@@ -4,6 +4,7 @@ import { HomeBackLink } from "@/components/HomeBackLink";
 import { nonogramCatalogEntry } from "@/game-catalog/nonogram/nonogram-catalog-entry";
 import { difficultyLevels } from "@/games/difficulty";
 import { NONOGRAM_DISPLAY_NAME } from "@/games/nonogram/display-name";
+import { NonogramDifficultyPreview } from "@/games/nonogram/ui/NonogramDifficultyPreview";
 import { NonogramHowToPlayDialog } from "@/games/nonogram/ui/NonogramHowToPlayDialog";
 
 export function NonogramDifficultyView() {
@@ -27,7 +28,7 @@ export function NonogramDifficultyView() {
             difficulty={difficulty.id}
             label={difficulty.label}
           >
-            {null}
+            <NonogramDifficultyPreview difficulty={difficulty.id} />
           </DifficultyOption>
         ))}
       </div>
