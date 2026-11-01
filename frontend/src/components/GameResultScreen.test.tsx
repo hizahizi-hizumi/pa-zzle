@@ -1,9 +1,17 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
-
+import { _private as appDecisionSound } from "@/components/app-decision-sound";
 import { GameResultScreen } from "@/components/GameResultScreen";
+import { playSound } from "@/lib/sound-effects";
 
-afterEach(cleanup);
+vi.mock("@/lib/sound-effects", () => ({
+  playSound: vi.fn(),
+}));
+
+afterEach(() => {
+  cleanup();
+  vi.mocked(playSound).mockClear();
+});
 
 function createProps(): ComponentProps<typeof GameResultScreen> {
   return {
@@ -81,4 +89,37 @@ describe("GameResultScreen", () => {
 
     expect(props.onOpenDiagnostics).toHaveBeenCalledOnce();
   });
+
+  const playStartActions = [
+    ["プレイ！", "onStartNewProblem"],
+    ["同じ問題", "onReplay"],
+  ] as const;
+
+  test.each(playStartActions)(
+    "%s でプレイを始める音を鳴らして操作を通知すること",
+    (buttonName, callbackName) => {
+      fireEvent.click(screen.getByRole("button", { name: buttonName }));
+
+      expect(playSound).toHaveBeenCalledExactlyOnceWith(
+        appDecisionSound.playStartSound,
+      );
+      expect(props[callbackName]).toHaveBeenCalledOnce();
+    },
+  );
+
+  const silentActions = [
+    ["記録を確認", "onOpenRecords"],
+    ["難易度変更", "onChangeDifficulty"],
+    ["ホーム", "onBackToHome"],
+  ] as const;
+
+  test.each(silentActions)(
+    "%s では音を鳴らさずに操作を通知すること",
+    (buttonName, callbackName) => {
+      fireEvent.click(screen.getByRole("button", { name: buttonName }));
+
+      expect(playSound).not.toHaveBeenCalled();
+      expect(props[callbackName]).toHaveBeenCalledOnce();
+    },
+  );
 });

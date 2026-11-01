@@ -1,6 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { playPlayStartSound } from "@/components/app-decision-sound";
 import { DifficultyLevelPieces } from "@/components/DifficultyLevelPieces";
 import type { DifficultyLevel } from "@/games/difficulty";
 import { Link, type Path } from "@/router";
@@ -18,7 +19,7 @@ type DifficultyOptionProps = {
 
 /**
  * 難易度選択の1つの選択肢。レベルをピースの帯で示し、ラベルはその補足に下げる。
- * スマートフォンでは横長の行、PC では縦長のカードにする。
+ * スマートフォンでは横長の行、PC では縦長のカードにする。選ぶとプレイを始める音を鳴らす。
  */
 export function DifficultyOption({
   playPath,
@@ -30,6 +31,7 @@ export function DifficultyOption({
     <Link
       to={playPath}
       params={{ difficulty }}
+      onClick={playPlayStartSound}
       className="group block rounded-xl focus-visible:outline-none"
     >
       <span className="relative flex h-16 flex-row items-center justify-start gap-4 rounded-xl border-(length:--border-width-normal) bg-background px-4 transition-colors group-hover:bg-accent/60 group-active:bg-accent group-focus-visible:ring-2 group-focus-visible:ring-ring lg:h-60 lg:flex-col lg:justify-center lg:gap-6 lg:py-8">
