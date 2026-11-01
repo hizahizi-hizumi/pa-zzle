@@ -54,7 +54,7 @@ argument-hint: "<パズル名> [最終レビューの指摘]"
 ## 実行役
 
 - 段の実装・直し: `puzzle-stage-implementer`
-- 試遊（遊べる段で軽く、作り込みで必ず）: `puzzle-playtester`
+- 試遊（遊べる段で軽く、難易度の段では各レベルの問題のプレイ画面を渡して手応えの差を、作り込みで必ず）: `puzzle-playtester`
 - AI レビュー（段ごと・作り込み）: `puzzle-code-reviewer`・`puzzle-experience-reviewer`・`puzzle-document-reviewer`
 - 失敗パターン集の自己点検（自己点検役）: 経緯を渡さない汎用サブエージェント（Opus）に、`references/pitfalls.md` とレビュー版の worktree・画面・素朴なプレイヤーの表・合意ファイルを渡して全行を当てさせる
 - ピクトグラム: `/design-game-pictogram`。理由を残す判断: `/adr-create`
