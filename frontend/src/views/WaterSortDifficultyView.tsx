@@ -6,8 +6,18 @@ import { difficultyLevels } from "@/games/difficulty";
 import { WATER_SORT_DISPLAY_NAME } from "@/games/water-sort/display-name";
 import { WaterSortDifficultyPreview } from "@/games/water-sort/ui/WaterSortDifficultyPreview";
 import { WaterSortHowToPlayDialog } from "@/games/water-sort/ui/WaterSortHowToPlayDialog";
+import { WaterSortTutorial } from "@/games/water-sort/ui/WaterSortTutorial";
+import { useNavigate } from "@/router";
 
 export function WaterSortDifficultyView() {
+  const navigate = useNavigate();
+
+  function startLevelOne(): void {
+    navigate("/puzzles/water-sort/play/:difficulty", {
+      params: { difficulty: "1" },
+    });
+  }
+
   return (
     <section className="space-y-6 sm:space-y-8">
       <div className="space-y-2">
@@ -16,6 +26,13 @@ export function WaterSortDifficultyView() {
           title={WATER_SORT_DISPLAY_NAME}
           renderHowToPlayDialog={({ open, onClose }) => (
             <WaterSortHowToPlayDialog open={open} onClose={onClose} />
+          )}
+          renderTutorial={({ open, onClose }) => (
+            <WaterSortTutorial
+              open={open}
+              onStartPlay={startLevelOne}
+              onClose={onClose}
+            />
           )}
         />
       </div>
