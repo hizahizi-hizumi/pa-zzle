@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 
 import type { NonogramGridSize } from "@/games/nonogram/puzzle/board";
+import { NONOGRAM_GRID_BLOCK_SIZE } from "@/games/nonogram/ui/grid-block";
 import { nonogramToneClassNames } from "@/games/nonogram/ui/nonogram-tone";
 import { cn } from "@/lib/utils";
 
@@ -8,9 +9,6 @@ type NonogramGridLinesProps = NonogramGridSize & {
   /** クリアして図柄を見せている。格子を消す。 */
   revealed: boolean;
 };
-
-/** 位置を数えやすくするため、この数のマスごとに太い線を引く。 */
-const BLOCK_SIZE = 5;
 
 /** マスの内側の境界。`offset` 本目の境界は、`offset + 1` 番目（1始まり）の列・行の始まり。 */
 type GridLine = { axis: "column" | "row"; offset: number };
@@ -29,7 +27,7 @@ function listInnerLines(width: number, height: number): GridLine[] {
 }
 
 function isBlockLine({ offset }: GridLine): boolean {
-  return offset % BLOCK_SIZE === 0;
+  return offset % NONOGRAM_GRID_BLOCK_SIZE === 0;
 }
 
 function placeLine({ axis, offset }: GridLine): CSSProperties {
