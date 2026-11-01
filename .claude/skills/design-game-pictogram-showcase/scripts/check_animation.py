@@ -23,6 +23,22 @@ VIEW_BOX = (0.0, 0.0, 120.0, 120.0)
 SMIL_ELEMENTS = {"animate", "animateMotion", "animateTransform", "animateColor", "set", "discard"}
 FORBIDDEN_ELEMENTS = {"script", "foreignObject", "image", "iframe", "video", "audio"}
 ALLOWED_VARIABLES = {"--game-pictogram-strong", "--game-pictogram-soft"}
+# Semantic color tokens of the app (frontend/styles/globals.css, defined in both :root and .dark).
+# The SVG is inlined into the page, so var(--token) takes the page value and follows the theme.
+# Use them only for an element whose play-screen counterpart uses the same token; they are colors.
+# observe_animation.cjs and make_review_gallery.py define them on their hosts from globals.css.
+APP_COLOR_TOKENS = (
+    "background", "foreground", "card", "card-foreground", "popover", "popover-foreground",
+    "primary", "primary-foreground", "secondary", "secondary-foreground", "muted",
+    "muted-foreground", "accent", "accent-foreground", "destructive", "border", "input", "ring",
+)
+APP_COLOR_VARIABLES = {f"--{token}" for token in APP_COLOR_TOKENS}
+# Color syntax that older WebKit (Safari / the iOS app web view) does not parse; the paint is then
+# dropped. Literal colors are written as hex or rgb() (resolve_color.py converts oklch).
+WEBKIT_RISKY_COLOR = re.compile(
+    r"(?<![\w-])(color-mix|oklch|oklab|lab|lch|color|light-dark)\(", re.IGNORECASE
+)
+TEXT_ELEMENTS = {"text", "tspan", "textPath"}
 PLAYBACK_VALUES = ("once", "cut", "seam")
 GAME_ID = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 REDUCED_MOTION_MEDIA = re.compile(
@@ -205,6 +221,19 @@ def candidates_from_manifest(path: Path) -> tuple[list[Candidate], str | None, l
             hint = " (loop was split into cut and seam)" if playback == "loop" else ""
             errors.append(f"{candidate_id}: playback must be once, cut, or seam{hint}")
             playback = None
+
+        overlap = entry.get("overlap")
+        if overlap is not None:
+            pairs = [overlap] if isinstance(overlap, str) else overlap
+            if not isinstance(pairs, list) or not all(
+                isinstance(pair, str)
+                and len(pair.split("|")) == 2
+                and all(part.strip() for part in pair.split("|"))
+                for pair in pairs
+            ):
+                errors.append(
+                    f"{candidate_id}: overlap must be '<selector>|<selector>' or a list of them"
+                )
 
         file_value = entry.get("file")
         if not non_empty_string(file_value):
@@ -495,11 +524,23 @@ def check_css_values(value: str, state: StyleState, where: str, *, property_name
         elif not target[1:].startswith(prefix):
             report.error(f"{where}: referenced id must start with {prefix}: {target}")
     for variable in VAR_REFERENCE.findall(value):
-        if variable not in ALLOWED_VARIABLES and not variable.startswith(f"--{prefix}"):
+        if variable in APP_COLOR_VARIABLES:
+            if property_name not in COLOR_PROPERTIES and not CUSTOM_PROPERTY_DECLARATION.match(
+                property_name
+            ):
+                report.error(f"{where}: app color token {variable} may only be used for colors: {property_name}")
+        elif variable not in ALLOWED_VARIABLES and not variable.startswith(f"--{prefix}"):
             report.error(
-                f"{where}: only --game-pictogram-strong/soft or --{prefix}* variables are allowed: {variable}"
+                f"{where}: only --game-pictogram-strong/soft, the app color tokens "
+                f"(--{', --'.join(APP_COLOR_TOKENS)}) or --{prefix}* variables are allowed: {variable}"
             )
         state.variable_usages.append((property_name, variable, where))
+    risky = WEBKIT_RISKY_COLOR.search(value)
+    if risky:
+        state.report.warn(
+            f"{where}: {risky.group(1)}() may not render in older WebKit (Safari); write literal colors "
+            "as hex or rgb() (resolve_color.py converts oklch) and app colors as var(--token)"
+        )
 
 
 def check_dark_variable_usage(state: StyleState) -> None:
@@ -535,6 +576,10 @@ def check_style_rule(block: CssBlock, state: StyleState, *, in_motion_media: boo
     if not selectors:
         report.error("<style>: empty selector")
         return False
+    if "{" in block.body or "&" in block.prelude:
+        report.error(
+            f"<style>: nested CSS rules are not allowed (older WebKit drops them); write flat rules: {block.prelude}"
+        )
 
     gated_flags: list[bool] = []
     dark = False
@@ -806,6 +851,17 @@ def check_stylesheet(css: str, state: StyleState) -> bool:
     return animated
 
 
+def has_font_family(element: ET.Element, parents: dict[ET.Element, ET.Element]) -> bool:
+    node: ET.Element | None = element
+    while node is not None:
+        if node.attrib.get("font-family", "").strip():
+            return True
+        if any(prop == "font-family" for prop, _ in declarations(node.attrib.get("style", ""))):
+            return True
+        node = parents.get(node)
+    return False
+
+
 def parse_view_box(value: str) -> tuple[float, ...] | None:
     try:
         return tuple(float(part) for part in re.split(r"[\s,]+", value.strip()))
@@ -832,6 +888,12 @@ def check_svg(candidate: Candidate, game_id: str, playback: str | None = None) -
     animated = False
     style_found = False
     uses_strong = False
+    parents = {child: parent for parent in root.iter() for child in parent}
+    stylesheet_sets_font = any(
+        local_name(element.tag) == "style"
+        and re.search(r"font-family\s*:", "".join(element.itertext()), re.IGNORECASE)
+        for element in root.iter()
+    )
 
     for element in root.iter():
         name = local_name(element.tag)
@@ -839,6 +901,11 @@ def check_svg(candidate: Candidate, game_id: str, playback: str | None = None) -
             report.error(f"SMIL <{name}> is forbidden; use gated CSS animation")
         if name in FORBIDDEN_ELEMENTS:
             report.error(f"<{name}> is forbidden")
+        if name in TEXT_ELEMENTS and not stylesheet_sets_font and not has_font_family(element, parents):
+            report.error(
+                f"<{name}> needs font-family (a system sans-serif stack such as "
+                "system-ui, sans-serif) on itself or an ancestor; otherwise it inherits the host page font"
+            )
 
         element_id = element.attrib.get("id")
         if element_id:

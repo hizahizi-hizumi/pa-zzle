@@ -47,7 +47,8 @@
 
 - `name`: ギャラリーに出す短い表示名（無ければ `id`）
 - `family`: 同じ方向をまとめる表示名
-- `notes`: 実装上の制約や比較時に残したい補足
+- `notes`: 実装上の制約や比較時に残したい補足（目安から外した理由、実表示で見えないために代えた色、WebKit を確かめていないことなど）
+- `overlap`: `observe_animation.cjs` で重なりを測る組。`"<動く対象のセレクタ>|<他の対象のセレクタ>"` か、その配列。候補ごとに動く対象が違うときに書く（`check_animation.py` が形式を検査する。`references/self-review.md`）
 
 パスは manifest からの相対パスまたは絶対パスで書く。
 
@@ -55,7 +56,7 @@
 
 `make_review_gallery.py` は読み手で形を分ける。候補の SVG はクラス名・keyframes 名が候補間で衝突するため、どちらも同じ文書へインライン展開しない。
 
-色は `frontend/styles/globals.css` から読んだ `--foreground` / `--muted-foreground` を `--game-pictogram-strong` / `--game-pictogram-soft` に、`--background` / `--muted` / `--ring` / `--border` を面・選択枠・未選択枠に使う。他ゲームの比較には `frontend/src/games/*/assets/pictogram.svg`（対象ゲームを除く）を使う（`--games-dir` で変更可）。
+色は `frontend/styles/globals.css` から読んだ `--foreground` / `--muted-foreground` を `--game-pictogram-strong` / `--game-pictogram-soft` に、`--background` / `--muted` / `--ring` / `--border` を面・選択枠・未選択枠に使う。SVG が `var()` で参照するアプリのトークン（`SKILL.md` の「色」）も、アプリと同じくライト/ダークの値で定義する（セルフレビュー用はテーマごとの区画に、人間レビュー用は各 `<img>` の外側の `<svg>` に）。他ゲームの比較には `frontend/src/games/*/assets/pictogram.svg`（対象ゲームを除く）を使う（`--games-dir` で変更可）。
 
 ### セルフレビュー用（`--audience self`）
 
@@ -84,6 +85,7 @@
 - 「レビューJSON」でレビュー結果を表示してクリップボードへコピーする
 - `--db-doc <id>` を付けると、artifact の DB の `reviews/<id>` にも `{ review, updatedAt }` で保存する。`window.claude` が無い、または DB を使えない環境では「DB 未接続」と出して端末保存だけにする。端末に記録が無ければ DB の内容を読み込んで表示する
 - `<img>` の SVG には OS の動きを減らす設定が届かない場合がある。動きを減らす設定の確認はセルフレビュー（`observe_animation.cjs`）で行う
+- 人間は iOS の Claude アプリ（WebKit）で見ることがある。`<img>` の SVG 文書にはページの変数・フォントが届かず、古い WebKit が解釈しない記法はそこで崩れる（`references/motion.md` の 6 節）。生成後は `check_gallery.cjs --device "iPhone 13"` で崩れと `pageerror` を確かめる。これは Chromium での確認なので、WebKit を確かめられなかったことは人間への報告に書く
 
 レビュー結果の形式:
 
