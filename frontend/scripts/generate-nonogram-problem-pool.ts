@@ -19,7 +19,10 @@ import {
 import { measureNonogramPatternQuality } from "@/games/nonogram/problem/generation/pattern-quality";
 import { countNonogramSolutions } from "@/games/nonogram/problem/generation/solution-count";
 import { getNonogramSymmetryKey } from "@/games/nonogram/problem/generation/symmetry";
-import { generateNonogramProblem } from "@/games/nonogram/problem/generator";
+import {
+  generateNonogramProblem,
+  type NonogramCandidateRejection,
+} from "@/games/nonogram/problem/generator";
 import {
   createNonogramProblemIdentity,
   NONOGRAM_GENERATOR_VERSION,
@@ -80,7 +83,8 @@ Options:
   --jobs <n>       並列ワーカー数 (default: 4)
   --block <n>      生成条件ごとに一度に増やす候補数 (default: 500)
   --budget <n>     生成条件ごとに調べる候補数の上限 (default: 30000)
-  --cache <dir>    候補の評価結果を生成条件ごとに書き足す。同じ dir で実行し直すと、評価済みの候補を読んで続きから進める
+  --cache <dir>    候補の評価結果（難易度の特徴まで。レベルの分類は含めない）を生成条件ごとに書き足す。
+                   同じ dir で実行し直すと、評価済みの候補を読んで今の分類の境界で分類し直し、続きから進める
   --verify         生成せず、同梱の問題集の全問を identity から再生成→解の数え上げ→分析→分類し、特徴・同型の重複・
                    JSON の大きさ・選択時間を確かめる`;
 
@@ -91,26 +95,47 @@ const outputPath = new URL(
 
 type Condition = { size: NonogramGridSize; styleIndex: number };
 
+/** 特徴を測れた候補の、分類と問題集に採るための値。 */
+type AnalyzedCandidate = {
+  symmetryKey: string;
+  encodedSolution: string;
+  features: NonogramReadingFeatures;
+};
+
 /**
- * 1つの候補を評価した結果。`outcome` は生成器が除いた理由、どのレベルにも当たらない `out-of-range`、
+ * 1つの候補を生成・分析した結果。キャッシュにはこの形で書く。
+ * `outcome` は生成器が除いた理由、分析で特徴を測れなかった理由、または特徴を測れた `analyzed`。
+ * レベルの分類は持たず、読むたびに `classifyCandidate` で今の分類の境界から求める。
+ */
+type CandidateEvaluation = {
+  index: number;
+  milliseconds: number;
+} & (
+  | { outcome: NonogramCandidateRejection | "unsupported" | "invalid" }
+  | { outcome: "analyzed"; analyzed: AnalyzedCandidate }
+);
+
+const unanalyzedOutcomes: ReadonlySet<unknown> = new Set([
+  "pattern-requirements",
+  "not-line-solvable",
+  "unsupported",
+  "invalid",
+] satisfies (NonogramCandidateRejection | "unsupported" | "invalid")[]);
+
+/**
+ * 評価を分類した候補。`outcome` は評価で特徴を測れなかった理由、どのレベルにも当たらない `out-of-range`、
  * または分類されたレベル。分類された候補だけが問題集に採るための値（`classified`）を持つ。
  */
 type Candidate = {
   index: number;
   milliseconds: number;
   outcome:
-    | "pattern-requirements"
-    | "not-line-solvable"
-    | "out-of-range"
+    | NonogramCandidateRejection
     | "unsupported"
     | "invalid"
+    | "out-of-range"
     | `L${NonogramDifficulty}`;
-  classified?: {
-    difficulty: NonogramDifficulty;
-    symmetryKey: string;
-    encodedSolution: string;
-    features: NonogramReadingFeatures;
-  };
+  classified?: AnalyzedCandidate & { difficulty: NonogramDifficulty };
 };
 
 type ConditionState = {
@@ -156,7 +181,10 @@ function conditionKeyOf({ size, styleIndex }: Condition): string {
   return `${size.width}x${size.height}-${styleIndex}`;
 }
 
-function evaluateCandidate(condition: Condition, index: number): Candidate {
+function evaluateCandidate(
+  condition: Condition,
+  index: number,
+): CandidateEvaluation {
   const startedAt = performance.now();
   const generated = generateNonogramProblem(
     createNonogramProblemIdentity(
@@ -174,11 +202,35 @@ function evaluateCandidate(condition: Condition, index: number): Candidate {
   }
   const { problem, symmetryKey } = generated.generated;
   const analysis = analyzeNonogramDifficulty(problem);
-  const assessment = assessNonogramDifficulty(analysis);
   const milliseconds = performance.now() - startedAt;
   if (analysis.status !== "analyzed") {
     return { index, milliseconds, outcome: analysis.status };
   }
+  return {
+    index,
+    milliseconds,
+    outcome: "analyzed",
+    analyzed: {
+      symmetryKey,
+      encodedSolution: encodeNonogramPoolSolution(problem.solution),
+      features: analysis.features,
+    },
+  };
+}
+
+function classifyCandidate(
+  { size: { width, height } }: Condition,
+  evaluation: CandidateEvaluation,
+): Candidate {
+  const { index, milliseconds } = evaluation;
+  if (evaluation.outcome !== "analyzed") {
+    return { index, milliseconds, outcome: evaluation.outcome };
+  }
+  const assessment = assessNonogramDifficulty({
+    status: "analyzed",
+    scale: { width, height, cellCount: width * height },
+    features: evaluation.analyzed.features,
+  });
   if (assessment.status !== "classified") {
     return { index, milliseconds, outcome: assessment.status };
   }
@@ -186,13 +238,28 @@ function evaluateCandidate(condition: Condition, index: number): Candidate {
     index,
     milliseconds,
     outcome: `L${assessment.difficulty}`,
-    classified: {
-      difficulty: assessment.difficulty,
-      symmetryKey,
-      encodedSolution: encodeNonogramPoolSolution(problem.solution),
-      features: analysis.features,
-    },
+    classified: { ...evaluation.analyzed, difficulty: assessment.difficulty },
   };
+}
+
+/** キャッシュの1行を読む。書きかけの行・形の違う行には `null` を返す。 */
+function parseCandidateEvaluation(line: string): CandidateEvaluation | null {
+  let value: {
+    index?: unknown;
+    outcome?: unknown;
+    analyzed?: { features?: unknown };
+  };
+  try {
+    value = JSON.parse(line);
+  } catch {
+    return null;
+  }
+  const isEvaluation =
+    typeof value.index === "number" &&
+    (value.outcome === "analyzed"
+      ? value.analyzed?.features !== undefined
+      : unanalyzedOutcomes.has(value.outcome));
+  return isEvaluation ? (value as CandidateEvaluation) : null;
 }
 
 function runWorker(args: readonly string[]): void {
@@ -209,7 +276,11 @@ function runWorker(args: readonly string[]): void {
 
 type Batch = { state: ConditionState; start: number; count: number };
 
-async function runBatch({ state, start, count }: Batch): Promise<Candidate[]> {
+async function runBatch({
+  state,
+  start,
+  count,
+}: Batch): Promise<CandidateEvaluation[]> {
   const { size, styleIndex } = state.condition;
   const worker = Bun.spawn(
     [
@@ -228,18 +299,35 @@ async function runBatch({ state, start, count }: Batch): Promise<Candidate[]> {
   if ((await worker.exited) !== 0) {
     throw new Error(`Worker failed for ${conditionKeyOf(state.condition)}`);
   }
-  return output
+  const evaluations = output
     .trim()
     .split("\n")
     .filter((line) => line.length > 0)
-    .map((line) => JSON.parse(line) as Candidate);
+    .map((line) => JSON.parse(line) as CandidateEvaluation);
+  if (evaluations.length !== count) {
+    throw new Error(
+      `Worker for ${conditionKeyOf(state.condition)} returned ${evaluations.length} of ${count} candidates`,
+    );
+  }
+  return evaluations;
 }
 
-/** 評価済みの候補を生成条件ごとのファイルに書き足し、実行し直したときに読み戻す。 */
+/** 候補の評価を生成条件ごとのファイルに書き足し、実行し直したときに読み戻して分類する。 */
 type CandidateCache = {
   load(state: ConditionState): void;
-  append(state: ConditionState, candidates: readonly Candidate[]): void;
+  append(
+    state: ConditionState,
+    evaluations: readonly CandidateEvaluation[],
+  ): void;
 };
+
+function formatEvaluationLines(
+  evaluations: readonly CandidateEvaluation[],
+): string {
+  return evaluations
+    .map((evaluation) => `${JSON.stringify(evaluation)}\n`)
+    .join("");
+}
 
 function createCandidateCache(directory: string | undefined): CandidateCache {
   if (directory === undefined) {
@@ -260,36 +348,27 @@ function createCandidateCache(directory: string | undefined): CandidateCache {
       } catch {
         return;
       }
+      const evaluations: CandidateEvaluation[] = [];
       for (const line of text.split("\n")) {
         if (line.length === 0) {
           continue;
         }
-        let candidate: Candidate;
-        try {
-          candidate = JSON.parse(line) as Candidate;
-        } catch {
+        const evaluation = parseCandidateEvaluation(line);
+        if (evaluation?.index !== evaluations.length) {
           break;
         }
-        if (candidate.index !== state.results.length) {
-          break;
-        }
-        state.results.push(candidate);
+        evaluations.push(evaluation);
       }
       // 書いている途中で止めた行があれば、そこから先を捨てて書き直し、続きを評価し直す。
-      writeFileSync(
-        pathOf(state),
-        state.results
-          .map((candidate) => `${JSON.stringify(candidate)}\n`)
-          .join(""),
+      writeFileSync(pathOf(state), formatEvaluationLines(evaluations));
+      state.results.push(
+        ...evaluations.map((evaluation) =>
+          classifyCandidate(state.condition, evaluation),
+        ),
       );
     },
-    append(state, candidates) {
-      appendFileSync(
-        pathOf(state),
-        candidates
-          .map((candidate) => `${JSON.stringify(candidate)}\n`)
-          .join(""),
-      );
+    append(state, evaluations) {
+      appendFileSync(pathOf(state), formatEvaluationLines(evaluations));
     },
   };
 }
@@ -315,21 +394,39 @@ async function runBatches(
       }),
     ),
   );
-  const pieces = [...queue];
-  const results = new Map<Batch, Candidate[]>();
+  // 生成条件ごとに、終わったバッチを開始の候補番号で待たせる。
+  const finished = new Map<ConditionState, Map<number, CandidateEvaluation[]>>(
+    batches.map(({ state }) => [state, new Map()]),
+  );
+  /**
+   * 完了順ではなく候補番号の順に積む。次に積む番号から途切れず揃ったバッチをその都度積んでキャッシュへ書き足すので、
+   * 途中で止めても、そこまでに揃った評価は次の実行で読み戻せる。
+   */
+  function appendContiguous(state: ConditionState): void {
+    const waiting = finished.get(state)!;
+    for (
+      let evaluations = waiting.get(state.results.length);
+      evaluations !== undefined;
+      evaluations = waiting.get(state.results.length)
+    ) {
+      waiting.delete(state.results.length);
+      state.results.push(
+        ...evaluations.map((evaluation) =>
+          classifyCandidate(state.condition, evaluation),
+        ),
+      );
+      cache.append(state, evaluations);
+    }
+  }
   await Promise.all(
     Array.from({ length: jobs }, async () => {
       for (let batch = queue.shift(); batch; batch = queue.shift()) {
-        results.set(batch, await runBatch(batch));
+        const evaluations = await runBatch(batch);
+        finished.get(batch.state)!.set(batch.start, evaluations);
+        appendContiguous(batch.state);
       }
     }),
   );
-  // 完了順ではなく候補番号の順に積む。
-  for (const batch of pieces.sort((left, right) => left.start - right.start)) {
-    const candidates = results.get(batch)!;
-    batch.state.results.push(...candidates);
-    cache.append(batch.state, candidates);
-  }
 }
 
 type SelectedCandidate = {
