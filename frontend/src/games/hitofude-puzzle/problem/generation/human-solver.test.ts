@@ -1,4 +1,5 @@
 import {
+  _private,
   createHitofudePuzzleRefuter,
   traceHitofudePuzzleHumanSolve,
 } from "@/games/hitofude-puzzle/problem/generation/human-solver";
@@ -34,6 +35,17 @@ function createRandomBoard(seed: string): HitofudePuzzleBoard {
   };
 }
 
+const { deduceHitofudePuzzleEdges } = _private;
+
+/** 解の道が使う辺を、両端のマスの組（小さい方が先）で挙げる。 */
+function listPathEdges(path: readonly number[]): string[] {
+  return path
+    .slice(1)
+    .map((cell, index) =>
+      [Math.min(cell, path[index]!), Math.max(cell, path[index]!)].join("-"),
+    );
+}
+
 /** 解のある無作為盤面と、その解を2本まで。 */
 const solvableRandomCases = Array.from({ length: 80 }, (_, index) => {
   const board = createRandomBoard(`human-solver-property-${index}`);
@@ -44,13 +56,13 @@ const solvableRandomCases = Array.from({ length: 80 }, (_, index) => {
 }).filter(([, , solutions]) => solutions.length > 0);
 
 /**
- * 研究用 Python（`scripts/research/hamiltonian_path_experiment.py`）の `HumanSolver.solve` が、同じ盤面に返した推論の経過。
- * 盤面は TypeScript の生成器で作った穴だけの問題から、レベル1〜5・迷う分岐の無い問題・20手を超える先読みを含むように選び、
+ * 製品の解法器が同じ盤面に返した推論の経過（回帰の確認）。推論や数え方を意図して変えたら取り直す。
+ * 盤面は穴の問題から、局所の推論だけ・迷う分岐の無い問題・2辺カット・仮置き・20手を超える先読みを含むように選び、
  * 同型の正規化キーの向きで書いた。
  */
-const pythonFixtures = [
+const regressionFixtures = [
   {
-    name: "6×6・局所の推論だけで決まる（レベル1）",
+    name: "6×6・局所の推論だけで決まる",
     rows: [
       "# . # . . .",
       ". . . . . .",
@@ -72,7 +84,7 @@ const pythonFixtures = [
     },
   },
   {
-    name: "5×5・迷う分岐が無い（提供範囲外）",
+    name: "5×5・迷う分岐が無い",
     rows: ["# . # . .", ". . . . .", ". . . . .", ". . # . .", "# S . . ."],
     expected: {
       firingCountByStage: [20, 0, 0, 0, 0, 0],
@@ -87,7 +99,7 @@ const pythonFixtures = [
     },
   },
   {
-    name: "7×7・仮置き1回（レベル2）",
+    name: "7×7・2辺カットで止まりを抜ける",
     rows: [
       "# . . . # . .",
       ". . # S . . #",
@@ -98,19 +110,19 @@ const pythonFixtures = [
       ". . . . . . .",
     ],
     expected: {
-      firingCountByStage: [40, 0, 0, 0, 1, 0],
-      decidedEdgeCountByStage: [58, 0, 0, 0, 1, 0],
-      assumptionCount: 1,
+      firingCountByStage: [39, 0, 1, 0, 0, 0],
+      decidedEdgeCountByStage: [57, 0, 2, 0, 0, 0],
+      assumptionCount: 0,
       deepAssumptionCount: 0,
-      refutationLengths: [6],
+      refutationLengths: [],
       stallCount: 1,
       firstStallDecidedEdgeRatio: 0.5932203389830508,
-      firstAssumptionDecidedEdgeRatio: 0.5932203389830508,
+      firstAssumptionDecidedEdgeRatio: 1,
       edgeCount: 59,
     },
   },
   {
-    name: "7×7・仮置き2回（レベル3）",
+    name: "7×7・仮置き1回",
     rows: [
       ". . # . . . .",
       ". . . # . . .",
@@ -121,19 +133,19 @@ const pythonFixtures = [
       ". S . . . . .",
     ],
     expected: {
-      firingCountByStage: [45, 3, 0, 0, 2, 0],
-      decidedEdgeCountByStage: [65, 3, 0, 0, 2, 0],
-      assumptionCount: 2,
+      firingCountByStage: [43, 2, 2, 0, 1, 0],
+      decidedEdgeCountByStage: [63, 2, 4, 0, 1, 0],
+      assumptionCount: 1,
       deepAssumptionCount: 0,
-      refutationLengths: [5, 8],
+      refutationLengths: [5],
       stallCount: 2,
-      firstStallDecidedEdgeRatio: 0.35714285714285715,
-      firstAssumptionDecidedEdgeRatio: 0.35714285714285715,
+      firstStallDecidedEdgeRatio: 0.3571428571428571,
+      firstAssumptionDecidedEdgeRatio: 0.3571428571428571,
       edgeCount: 70,
     },
   },
   {
-    name: "7×7・仮置き5回（レベル4）",
+    name: "7×7・閉路の禁止と2辺カットだけで決まる",
     rows: [
       ". # . . . . .",
       ". . . . . . .",
@@ -144,19 +156,19 @@ const pythonFixtures = [
       ". . # . . . .",
     ],
     expected: {
-      firingCountByStage: [41, 6, 0, 0, 5, 0],
-      decidedEdgeCountByStage: [49, 6, 0, 0, 5, 0],
-      assumptionCount: 5,
+      firingCountByStage: [40, 10, 1, 0, 0, 0],
+      decidedEdgeCountByStage: [48, 10, 2, 0, 0, 0],
+      assumptionCount: 0,
       deepAssumptionCount: 0,
-      refutationLengths: [13, 20, 13, 19, 20],
-      stallCount: 5,
-      firstStallDecidedEdgeRatio: 0.4166666666666667,
-      firstAssumptionDecidedEdgeRatio: 0.4166666666666667,
+      refutationLengths: [],
+      stallCount: 1,
+      firstStallDecidedEdgeRatio: 0.41666666666666663,
+      firstAssumptionDecidedEdgeRatio: 1,
       edgeCount: 60,
     },
   },
   {
-    name: "8×8・仮置き8回（レベル5）",
+    name: "8×8・仮置き6回",
     rows: [
       ". # . . . . . .",
       ". . . . . . # .",
@@ -168,12 +180,12 @@ const pythonFixtures = [
       ". . . S . . . .",
     ],
     expected: {
-      firingCountByStage: [55, 2, 0, 0, 8, 0],
-      decidedEdgeCountByStage: [79, 2, 0, 0, 8, 0],
-      assumptionCount: 8,
+      firingCountByStage: [53, 2, 2, 0, 6, 0],
+      decidedEdgeCountByStage: [77, 2, 4, 0, 6, 0],
+      assumptionCount: 6,
       deepAssumptionCount: 0,
-      refutationLengths: [5, 8, 6, 7, 6, 18, 3, 8],
-      stallCount: 8,
+      refutationLengths: [5, 8, 7, 7, 7, 6],
+      stallCount: 7,
       firstStallDecidedEdgeRatio: 0.3595505617977528,
       firstAssumptionDecidedEdgeRatio: 0.3595505617977528,
       edgeCount: 89,
@@ -197,17 +209,17 @@ const pythonFixtures = [
       deepAssumptionCount: 0,
       refutationLengths: [8, 5, 6, 8, 14, 13, 12, 23, 3],
       stallCount: 9,
-      firstStallDecidedEdgeRatio: 0.30985915492957744,
-      firstAssumptionDecidedEdgeRatio: 0.30985915492957744,
+      firstStallDecidedEdgeRatio: 0.3098591549295775,
+      firstAssumptionDecidedEdgeRatio: 0.3098591549295775,
       edgeCount: 71,
     },
   },
 ] as const;
 
 describe("traceHitofudePuzzleHumanSolve", () => {
-  describe("研究用 Python が出力した固定盤面の場合", () => {
-    test.each(pythonFixtures)(
-      "$name で研究用 Python と同じ推論の経過をたどること",
+  describe("推論の経過を取った固定盤面の場合", () => {
+    test.each(regressionFixtures)(
+      "$name で取ったときと同じ推論の経過をたどること",
       ({ rows, expected }) => {
         const trace = traceHitofudePuzzleHumanSolve(
           parseHitofudePuzzleBoard(rows),
@@ -266,13 +278,113 @@ describe("traceHitofudePuzzleHumanSolve", () => {
   });
 
   describe("推論を進めた回数が上限に達した場合", () => {
-    const board = parseHitofudePuzzleBoard(pythonFixtures[4].rows);
+    const board = parseHitofudePuzzleBoard(regressionFixtures[4].rows);
 
     test("評価不能として打ち切ること", () => {
       const trace = traceHitofudePuzzleHumanSolve(board, { workLimit: 10 });
 
       expect(trace.status).toBe("work-limit-reached");
     });
+  });
+});
+
+describe("deduceHitofudePuzzleEdges", () => {
+  describe("2本の辺だけで残りとつながる、端も終点候補も無い領域がある盤面の場合", () => {
+    // 右の袋小路（14・24 が穴）で終点が 19 に決まる。上の領域は 5-10 と 12-17 の2本だけで残りとつながり、端を含まない。
+    const board = parseHitofudePuzzleBoard([
+      ". . . . .",
+      ". . . . .",
+      "S # . . #",
+      ". . . . .",
+      ". . . . #",
+    ]);
+    const cutEdges = [
+      [5, 10],
+      [12, 17],
+    ] as const;
+
+    test("局所の推論（段階2まで）では2本を決めないこと", () => {
+      const deduced = deduceHitofudePuzzleEdges(board, [board.start], 2);
+
+      expect(deduced?.used).not.toEqual(expect.arrayContaining([cutEdges[0]]));
+      expect(deduced?.used).not.toEqual(expect.arrayContaining([cutEdges[1]]));
+    });
+
+    test("分断の推論（段階3）で、通り抜けるために2本とも使うと決めること", () => {
+      const deduced = deduceHitofudePuzzleEdges(board, [board.start], 3);
+
+      expect(deduced?.used).toEqual(expect.arrayContaining([...cutEdges]));
+    });
+  });
+
+  describe("2本の辺だけで残りとつながる領域に終点があり、1本を使うと決まった盤面の場合", () => {
+    // 左下の袋小路（31 が穴）で終点が 30 に決まる。下の領域は 13-19 と 17-23 の2本だけで残りとつながり、終点を含む。
+    // 17 は隣が2つしかないので 17-23 を使う。
+    const board = parseHitofudePuzzleBoard([
+      ". . . . . .",
+      ". . S . . .",
+      ". . # # # .",
+      "# . . . . .",
+      ". . . . . .",
+      ". # . . . .",
+    ]);
+    const enteringEdge = [17, 23] as const;
+    const otherEdge = [13, 19] as const;
+
+    test("局所の推論（段階2まで）では、もう1本を決めないこと", () => {
+      const deduced = deduceHitofudePuzzleEdges(board, [board.start], 2);
+
+      expect(deduced?.used).toEqual(expect.arrayContaining([enteringEdge]));
+      expect([...deduced!.used, ...deduced!.unused]).not.toEqual(
+        expect.arrayContaining([otherEdge]),
+      );
+    });
+
+    test("分断の推論（段階3）で、入って終わるのでもう1本を使わないと決めること", () => {
+      const deduced = deduceHitofudePuzzleEdges(board, [board.start], 3);
+
+      expect(deduced?.unused).toEqual(expect.arrayContaining([otherEdge]));
+    });
+  });
+
+  describe("一意解の小さな無作為盤面の解の道の場合", () => {
+    const cases = solvableRandomCases.flatMap(([index, board, solutions]) =>
+      solutions.length === 1
+        ? [
+            [
+              index,
+              board,
+              solutions[0]!,
+              new Set(listPathEdges(solutions[0]!)),
+            ] as const,
+          ]
+        : [],
+    );
+
+    test.each(cases)(
+      "盤面 %i の解の道のどの途中からも、段階1〜4で解と食い違う辺を決めないこと",
+      (_, board, solution, solutionEdges) => {
+        const disagreements = solution.flatMap((_, index) => {
+          const deduced = deduceHitofudePuzzleEdges(
+            board,
+            solution.slice(0, index + 1),
+            4,
+          );
+          return deduced === null
+            ? ["矛盾"]
+            : [
+                ...deduced.used
+                  .map((edge) => edge.join("-"))
+                  .filter((edge) => !solutionEdges.has(edge)),
+                ...deduced.unused
+                  .map((edge) => edge.join("-"))
+                  .filter((edge) => solutionEdges.has(edge)),
+              ];
+        });
+
+        expect(disagreements).toEqual([]);
+      },
+    );
   });
 });
 

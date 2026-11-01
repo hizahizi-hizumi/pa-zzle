@@ -11,7 +11,8 @@ import {
  *   使い切ったマスの残りは使わない。入れる隣が1つだけのマスは終点になる。
  * - `2` 閉路・端点連結禁止: 決まった道片の両端を結んで輪にしない。始点と終点の道片を、全マスを通る前に結ばない。
  * - `3` 分断・到達: 通れる辺だけで盤面がつながらなくなる辺（橋）は必ず使う。関節点で分かれる領域は高々2つで、
- *   端のない側は道が入って出られないので成り立たない。
+ *   端のない側は道が入って出られないので成り立たない。2本の辺だけで残りとつながる領域（2辺カット）は、端も終点候補も
+ *   無ければ2本とも使って通り抜け、端が1つなら1本だけ使う。
  * - `4` パリティ: 市松模様の色の数から終点の色を決める。関節点で分かれる領域の色の数が、通り抜けられる数と合うかを見る。
  * - `5` 1段仮置き: 1本の辺を使う・使わないと仮に決め、1〜4を進めた先で矛盾が出たら逆に決める。
  * - `6` 2段仮置き: 5の仮置きの中で、さらに5を重ねて矛盾を探す。
@@ -98,6 +99,18 @@ const innerAssumptionBudgets = [4, 12] as const;
 const REFUTATION_ASSUMPTION_ROUNDS = 8;
 const refutationAssumptionBudgets = [8, 30] as const;
 
+/**
+ * 取り除くと盤面が2つに分かれる2本の辺と、始点を含まない側の端・終点候補の数。
+ */
+type TwoEdgeCut = {
+  edges: readonly [number, number];
+  endCount: number;
+  endCandidateCount: number;
+};
+
+/** 2辺カットを探すときの辺。`below` は木の辺の下のマス（部分木の根）で、木でない辺は `null`。 */
+type TwoEdgeCutMember = { edge: number; below: number | null };
+
 class ContradictionSignal extends Error {}
 class BudgetExceededSignal extends Error {}
 class WorkLimitSignal extends Error {}
@@ -175,10 +188,9 @@ class StepTracker {
 }
 
 /**
- * 辺ごとに「使う・使わない・未定」を決めていく、人間向けの解法器。
- * 研究用 Python（`scripts/research/hamiltonian_path_experiment.py` の `HumanSolver`）と同じ推論・同じ適用順・同じ数え方で、
- * 同じ盤面には同じ推論の経過を返す。時間による打ち切りだけを、推論を進めた回数による打ち切りに置き換えている。
- * 終点は与えず、始点だけから推論する。
+ * 辺ごとに「使う・使わない・未定」を決めていく、人間向けの解法器。終点は与えず、始点だけから推論する。
+ * 研究用 Python（`scripts/research/hamiltonian_path_experiment.py` の `HumanSolver`）は2辺カットを持たない解法器として
+ * 凍結しており、この解法器とは経過が一致しない。
  */
 class HumanSolver {
   readonly #cellCount: number;
@@ -188,6 +200,7 @@ class HumanSolver {
   readonly #edgeByCells = new Map<number, number>();
   readonly #start: number;
   readonly #cellIdByBoardCell: Map<number, number>;
+  readonly #boardCells: readonly number[];
   readonly #workLimit: number;
   #work = 0;
 
@@ -197,6 +210,7 @@ class HumanSolver {
     this.#cellIdByBoardCell = new Map(
       openCells.map((cell, index) => [cell, index]),
     );
+    this.#boardCells = openCells;
     this.#cellCount = openCells.length;
     this.#colors = Uint8Array.from(openCells, (cell) => {
       const { row, column } = getHitofudePuzzleCellPosition(board.size, cell);
@@ -267,6 +281,18 @@ class HumanSolver {
     return state;
   }
 
+  /** 使う・使わないと決まった辺を、両端の盤面のマスの組（小さい方が先）で挙げる。 */
+  listDecidedEdges(
+    state: SolverState,
+    value: typeof USED | typeof UNUSED,
+  ): (readonly [number, number])[] {
+    return this.#edgeEnds.flatMap(([left, right], edge) =>
+      state.edges[edge] === value
+        ? [[this.#boardCells[left]!, this.#boardCells[right]!] as const]
+        : [],
+    );
+  }
+
   setEdge(state: SolverState, edge: number, value: EdgeState): boolean {
     const current = state.edges[edge]!;
     if (current === value) {
@@ -323,7 +349,7 @@ class HumanSolver {
       for (let cell = 0; cell < this.#cellCount; cell += 1) {
         const used = state.usedCounts[cell]!;
         const unknown = state.unknownCounts[cell]!;
-        // 終点候補が途中のマスと分かっても、このマスの以降の判定は候補のときの次数で行う（研究用 Python と同じ）。
+        // 終点候補が途中のマスと分かっても、このマスの以降の判定は候補のときの次数で行う。
         const role = state.roles[cell]! as CellRole;
         const maximumDegree = role === END ? 1 : 2;
         const minimumDegree = role === MIDDLE ? 2 : 1;
@@ -482,6 +508,21 @@ class HumanSolver {
       : this.#colors[secondEnd]!;
   }
 
+  /** マスごとの、使わないと決まっていない辺でつながる隣のマスとその辺。 */
+  #passableNeighbors(state: SolverState): [number, number][][] {
+    const passable: [number, number][][] = Array.from(
+      { length: this.#cellCount },
+      () => [],
+    );
+    for (const [edge, [left, right]] of this.#edgeEnds.entries()) {
+      if (state.edges[edge] !== UNUSED) {
+        passable[left]!.push([right, edge]);
+        passable[right]!.push([left, edge]);
+      }
+    }
+    return passable;
+  }
+
   #applyRegionAndParity(
     state: SolverState,
     tracker: StepTracker,
@@ -495,16 +536,7 @@ class HumanSolver {
       }
     }
     const cellCount = this.#cellCount;
-    const passable: [number, number][][] = Array.from(
-      { length: cellCount },
-      () => [],
-    );
-    for (const [edge, [left, right]] of this.#edgeEnds.entries()) {
-      if (state.edges[edge] !== UNUSED) {
-        passable[left]!.push([right, edge]);
-        passable[right]!.push([left, edge]);
-      }
-    }
+    const passable = this.#passableNeighbors(state);
     const discovery = new Int32Array(cellCount).fill(-1);
     const low = new Int32Array(cellCount);
     const summaries: RegionSummary[] = [];
@@ -629,6 +661,160 @@ class HumanSolver {
     }
   }
 
+  /**
+   * 2辺カットを、始点を根にした通れる辺の深さ優先の全域木で一度に見つける。木の辺には、その辺の下の部分木から外へ出る
+   * 木でない辺の集合を、木でない辺にはその辺だけの集合を付ける。空でない集合が等しい2辺がちょうど2辺カットで、
+   * 等しい木の辺どうしは根からの同じ道の上に並ぶ。空の集合の木の辺は橋なので、2辺カットに含めない。
+   */
+  #findTwoEdgeCuts(state: SolverState): TwoEdgeCut[] {
+    const cellCount = this.#cellCount;
+    const passable = this.#passableNeighbors(state);
+    const discovery = new Int32Array(cellCount).fill(-1);
+    const parentEdges = new Int32Array(cellCount).fill(-1);
+    const order: number[] = [];
+
+    function visit(cell: number): void {
+      discovery[cell] = order.length;
+      order.push(cell);
+      for (const [neighbor, edge] of passable[cell]!) {
+        if (discovery[neighbor] === -1) {
+          parentEdges[neighbor] = edge;
+          visit(neighbor);
+        }
+      }
+    }
+
+    visit(this.#start);
+    if (order.length !== cellCount) {
+      throw contradiction;
+    }
+    const isTreeEdge = new Uint8Array(this.#edgeEnds.length);
+    for (const edge of parentEdges) {
+      if (edge !== -1) {
+        isTreeEdge[edge] = 1;
+      }
+    }
+    const nonTreeEdges = this.#edgeEnds.flatMap((_, edge) =>
+      state.edges[edge] !== UNUSED && isTreeEdge[edge] === 0 ? [edge] : [],
+    );
+    const wordCount = Math.max(1, Math.ceil(nonTreeEdges.length / 32));
+    const crossingSets = new Uint32Array(cellCount * wordCount);
+    for (const [index, edge] of nonTreeEdges.entries()) {
+      for (const cell of this.#edgeEnds[edge]!) {
+        const word = cell * wordCount + (index >> 5);
+        crossingSets[word] = crossingSets[word]! ^ (1 << (index & 31));
+      }
+    }
+    const endsBelow = Int32Array.from(state.roles, (role) =>
+      role === END ? 1 : 0,
+    );
+    const candidatesBelow = Int32Array.from(state.roles, (role) =>
+      role === END_CANDIDATE ? 1 : 0,
+    );
+    for (const cell of order.toReversed()) {
+      const parentEdge = parentEdges[cell]!;
+      if (parentEdge === -1) {
+        continue;
+      }
+      const [left, right] = this.#edgeEnds[parentEdge]!;
+      const parent = left === cell ? right : left;
+      for (let word = 0; word < wordCount; word += 1) {
+        const parentWord = parent * wordCount + word;
+        crossingSets[parentWord] =
+          crossingSets[parentWord]! ^ crossingSets[cell * wordCount + word]!;
+      }
+      endsBelow[parent] = endsBelow[parent]! + endsBelow[cell]!;
+      candidatesBelow[parent] =
+        candidatesBelow[parent]! + candidatesBelow[cell]!;
+    }
+
+    const groups = new Map<string, TwoEdgeCutMember[]>();
+    function addMember(key: string, member: TwoEdgeCutMember): void {
+      const members = groups.get(key) ?? [];
+      members.push(member);
+      groups.set(key, members);
+    }
+    for (const cell of order) {
+      const edge = parentEdges[cell]!;
+      const crossingSet = crossingSets.subarray(
+        cell * wordCount,
+        (cell + 1) * wordCount,
+      );
+      if (edge !== -1 && crossingSet.some((word) => word !== 0)) {
+        addMember(crossingSet.join(","), { edge, below: cell });
+      }
+    }
+    for (const [index, edge] of nonTreeEdges.entries()) {
+      const crossingSet = new Uint32Array(wordCount);
+      crossingSet[index >> 5] = 1 << (index & 31);
+      addMember(crossingSet.join(","), { edge, below: null });
+    }
+
+    const cuts: TwoEdgeCut[] = [];
+    for (const members of groups.values()) {
+      // 木の辺を根に近い順に並べ、木でない辺（高々1本）を最後に置く。
+      members.sort(
+        (left, right) =>
+          (left.below === null ? cellCount : discovery[left.below]!) -
+          (right.below === null ? cellCount : discovery[right.below]!),
+      );
+      for (const [index, upper] of members.entries()) {
+        for (const lower of members.slice(index + 1)) {
+          const inside = upper.below!;
+          const excluded = lower.below;
+          cuts.push({
+            edges: [upper.edge, lower.edge],
+            endCount:
+              endsBelow[inside]! -
+              (excluded === null ? 0 : endsBelow[excluded]!),
+            endCandidateCount:
+              candidatesBelow[inside]! -
+              (excluded === null ? 0 : candidatesBelow[excluded]!),
+          });
+        }
+      }
+    }
+    return cuts;
+  }
+
+  /**
+   * 2辺カットの、始点を含まない側の領域を道が何回出入りするかを、その領域の端の数から決める。道は全マスを通るので、
+   * 端の無い領域には入って出る（2本とも使う）。端が1つの領域には入って終わる（1本だけ使う）。
+   * 終点候補が残る領域は、端の数が決まらないので決めない。
+   */
+  #applyTwoEdgeCuts(state: SolverState, tracker: StepTracker): boolean {
+    let progressed = false;
+    for (const { edges, endCount, endCandidateCount } of this.#findTwoEdgeCuts(
+      state,
+    )) {
+      if (endCandidateCount > 0) {
+        continue;
+      }
+      const [first, second] = edges;
+      if (endCount === 0) {
+        const decided =
+          Number(this.setEdge(state, first, USED)) +
+          Number(this.setEdge(state, second, USED));
+        if (decided > 0) {
+          tracker.fire(3, decided);
+          progressed = true;
+        }
+        continue;
+      }
+      const unusedEdge =
+        state.edges[first] === USED
+          ? second
+          : state.edges[second] === USED
+            ? first
+            : null;
+      if (unusedEdge !== null && this.setEdge(state, unusedEdge, UNUSED)) {
+        tracker.fire(3, 1);
+        progressed = true;
+      }
+    }
+    return progressed;
+  }
+
   propagate(
     state: SolverState,
     tracker: StepTracker,
@@ -647,7 +833,8 @@ class HumanSolver {
       }
       if (
         highestStage >= 3 &&
-        this.#applyRegionAndParity(state, tracker, highestStage >= 4)
+        (this.#applyRegionAndParity(state, tracker, highestStage >= 4) ||
+          this.#applyTwoEdgeCuts(state, tracker))
       ) {
         continue;
       }
@@ -944,3 +1131,33 @@ export function createHitofudePuzzleRefuter(
     },
   };
 }
+
+/**
+ * 盤面に始点から道 `path` を引いた状態から、段階 `highestStage` までの推論（仮置き無し）を進め、使う・使わないと決まった辺を
+ * 返す。矛盾したら `null`。推論ごとの導き方を小さな盤面で確かめるために使う。
+ */
+function deduceHitofudePuzzleEdges(
+  board: HitofudePuzzleBoard,
+  path: readonly number[],
+  highestStage: 2 | 3 | 4,
+): {
+  used: (readonly [number, number])[];
+  unused: (readonly [number, number])[];
+} | null {
+  const solver = new HumanSolver(board, HITOFUDE_PUZZLE_HUMAN_SOLVE_WORK_LIMIT);
+  const state = solver.stateWithPath(path);
+  try {
+    solver.propagate(state, new StepTracker(), highestStage);
+  } catch (error) {
+    if (error === contradiction) {
+      return null;
+    }
+    throw error;
+  }
+  return {
+    used: solver.listDecidedEdges(state, USED),
+    unused: solver.listDecidedEdges(state, UNUSED),
+  };
+}
+
+export const _private = { deduceHitofudePuzzleEdges };

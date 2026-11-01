@@ -3,11 +3,10 @@ import { countHitofudePuzzleSolutions } from "@/games/hitofude-puzzle/problem/ge
 import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
 
 /**
- * 研究用 Python（`scripts/research/hamiltonian_path_experiment.py`）の `decision_profile`（一意解）が、同じ盤面に返した分岐。
+ * 製品の分析が同じ盤面に返した分岐（回帰の確認）。人間向け解法器の推論を意図して変えたら取り直す。
  * 盤面は TypeScript の生成器で作った穴だけの問題を、同型の正規化キーの向きで書いた。
- * `longestTrapLength` の `null` は、Python が探索の上限で打ち切ったときの `99`。
  */
-const pythonFixtures = [
+const regressionFixtures = [
   {
     name: "5×5・迷う分岐が無い（提供範囲外）",
     rows: ["# . # . .", ". . . . .", ". . . . .", ". . # . .", "# S . . ."],
@@ -19,7 +18,7 @@ const pythonFixtures = [
     },
   },
   {
-    name: "7×7・1段仮置きで退ける誤り手がある（レベル3）",
+    name: "7×7・2辺カットで退ける誤り手がある",
     rows: [
       ". . # . . . .",
       ". . . # # . .",
@@ -32,12 +31,12 @@ const pythonFixtures = [
     expected: {
       branchCount: 8,
       fatalBranchCount: 8,
-      fatalBranchCountByStage: { 2: 7, 3: 0, 4: 0, 5: 1, 6: 0 },
+      fatalBranchCountByStage: { 2: 7, 3: 1, 4: 0, 5: 0, 6: 0 },
       longestTrapLength: 30,
     },
   },
   {
-    name: "8×8・仮置き8回・誤進入が探索の上限に達する（レベル5）",
+    name: "8×8・1段仮置きで退ける誤り手があり、誤進入が探索の上限に達する",
     rows: [
       ". # . . . . . .",
       ". . . . . . # .",
@@ -75,7 +74,7 @@ const pythonFixtures = [
     },
   },
   {
-    name: "7×7・分岐が2つだけ（レベル4）",
+    name: "7×7・分岐が2つだけ",
     rows: [
       "# # # . . . .",
       ". . . . . . #",
@@ -88,22 +87,22 @@ const pythonFixtures = [
     expected: {
       branchCount: 2,
       fatalBranchCount: 2,
-      fatalBranchCountByStage: { 2: 1, 3: 0, 4: 0, 5: 1, 6: 0 },
+      fatalBranchCountByStage: { 2: 1, 3: 1, 4: 0, 5: 0, 6: 0 },
       longestTrapLength: 28,
     },
   },
 ] as const;
 
 describe("analyzeHitofudePuzzleDrawingBranches", () => {
-  describe("研究用 Python が出力した固定盤面の場合", () => {
-    const cases = pythonFixtures.map(({ name, rows, expected }) => {
+  describe("分岐を数えた固定盤面の場合", () => {
+    const cases = regressionFixtures.map(({ name, rows, expected }) => {
       const board = parseHitofudePuzzleBoard(rows);
       const solution = countHitofudePuzzleSolutions(board).firstSolutions[0]!;
       return { name, board, solution, expected };
     });
 
     test.each(cases)(
-      "$name で研究用 Python と同じ分岐を数えること",
+      "$name で数えたときと同じ分岐を数えること",
       ({ board, solution, expected }) => {
         const branches = analyzeHitofudePuzzleDrawingBranches(board, solution);
 
@@ -113,7 +112,7 @@ describe("analyzeHitofudePuzzleDrawingBranches", () => {
   });
 
   describe("推論を進めた回数が上限に達した場合", () => {
-    const board = parseHitofudePuzzleBoard(pythonFixtures[2].rows);
+    const board = parseHitofudePuzzleBoard(regressionFixtures[2].rows);
     const solution = countHitofudePuzzleSolutions(board).firstSolutions[0]!;
 
     test("作業量の上限に達したことを返すこと", () => {
