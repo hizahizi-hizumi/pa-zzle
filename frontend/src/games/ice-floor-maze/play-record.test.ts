@@ -76,6 +76,16 @@ test("難易度を自己ベストの比較単位として扱うこと", () => {
   expect(comparisonKey).toBe("4");
 });
 
+test("クリアの成績として、経過時間と、取り消した手も含む総手数と最短手数を読むこと", () => {
+  const performance =
+    iceFloorMazePlayRecordDefinition.getClearPerformance(record);
+
+  expect(performance).toEqual({
+    elapsedMs: 123_500,
+    moves: { completionMoveCount: 20, optimalMoveCount: 15 },
+  });
+});
+
 describe("isIceFloorMazePlayRecord", () => {
   test("保存用記録を氷の床迷路の記録として認めること", () => {
     const recognized = isIceFloorMazePlayRecord(record);

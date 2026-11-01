@@ -1,4 +1,5 @@
 import {
+  createProblemFeatureFilter,
   type GameCatalogEntry,
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
@@ -11,8 +12,17 @@ import {
   isIceFloorMazePlayRecord,
   restoreIceFloorMazeRecordedResult,
 } from "@/games/ice-floor-maze/play-record";
+import { listIceFloorMazePoolProblemIds } from "@/games/ice-floor-maze/problem/problem-pool";
+import {
+  findIceFloorMazePoolProblemFeatures,
+  iceFloorMazeProblemFeatureAxes,
+} from "@/games/ice-floor-maze/problem-features";
 import { canSelectIceFloorMazeProblemById } from "@/games/ice-floor-maze/problem-selection";
 import { iceFloorMazePlayRecordDisplay } from "@/games/ice-floor-maze/ui/play-record-display";
+import {
+  formatIceFloorMazeProblemFeatures,
+  iceFloorMazeProblemFeatureAxisDisplays,
+} from "@/games/ice-floor-maze/ui/problem-features";
 
 export const iceFloorMazeCatalogEntry = {
   id: iceFloorMazePlayRecordDefinition.gameId,
@@ -37,10 +47,20 @@ export const iceFloorMazeCatalogEntry = {
       canSelectIceFloorMazeProblemById,
     );
   },
+  listPoolProblemIds: listIceFloorMazePoolProblemIds,
   renderRecordResult(record, context) {
     const recorded = restoreIceFloorMazeRecordedResult(record);
     return recorded ? (
       <RecordedIceFloorMazeResult {...recorded} {...context} />
     ) : null;
   },
+  describePoolProblem(difficulty, problemId) {
+    const features = findIceFloorMazePoolProblemFeatures(difficulty, problemId);
+    return features ? formatIceFloorMazeProblemFeatures(features) : null;
+  },
+  problemFeatureFilter: createProblemFeatureFilter(
+    findIceFloorMazePoolProblemFeatures,
+    iceFloorMazeProblemFeatureAxes,
+    iceFloorMazeProblemFeatureAxisDisplays,
+  ),
 } satisfies GameCatalogEntry;
