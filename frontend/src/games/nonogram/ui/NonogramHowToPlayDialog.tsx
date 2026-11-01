@@ -50,8 +50,8 @@ export function NonogramHowToPlayDialog({
       <li className="space-y-2">
         <p>なぞると、同じ行・列のマスにまとめて入れる。</p>
         <HowToPlayTransition>
-          <HowToPlayFigure rows={["....."]} />
-          <HowToPlayFigure rows={["####."]} />
+          <HowToPlayFigure rows={[".", ".", ".", "."]} />
+          <HowToPlayFigure rows={["#", "#", "#", "."]} />
         </HowToPlayTransition>
       </li>
       <li className="space-y-2">
