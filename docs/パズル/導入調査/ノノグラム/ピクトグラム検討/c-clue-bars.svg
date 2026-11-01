@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ノノグラム">
+  <path fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" d="M58 36v66M80 36v66M36 58h66M36 80h66"/>
+  <path fill="var(--game-pictogram-strong)" d="M39.5 39.5h15v15h-15ZM61.5 39.5h15v15h-15ZM61.5 61.5h15v15h-15ZM83.5 61.5h15v15h-15ZM83.5 83.5h15v15h-15Z"/>
+  <rect x="36" y="36" width="66" height="66" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <path fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" d="M28 47h-12M28 69h-12M28 91h-5M47 28v-5M69 28v-12M91 28v-12"/>
+</svg>

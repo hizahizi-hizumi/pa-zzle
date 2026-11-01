@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ノノグラム">
+  <path fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" d="M39 18v84M60 18v84M81 18v84M18 39h84M18 60h84M18 81h84"/>
+  <path fill="var(--game-pictogram-strong)" d="M21.5 21.5h14v14h-14ZM84.5 21.5h14v14h-14ZM42.5 42.5h14v14h-14ZM63.5 42.5h14v14h-14ZM42.5 63.5h14v14h-14ZM63.5 63.5h14v14h-14ZM21.5 84.5h14v14h-14ZM84.5 84.5h14v14h-14Z"/>
+  <path fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2" stroke-linecap="round" d="M42.78 21.78L56.22 35.22M56.22 21.78L42.78 35.22M63.78 21.78L77.22 35.22M77.22 21.78L63.78 35.22M42.78 84.78L56.22 98.22M56.22 84.78L42.78 98.22M63.78 84.78L77.22 98.22M77.22 84.78L63.78 98.22"/>
+  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+</svg>
