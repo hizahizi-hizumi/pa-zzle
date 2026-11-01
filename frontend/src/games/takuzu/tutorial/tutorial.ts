@@ -120,35 +120,32 @@ function cellAt(row: number, column: number): number {
  */
 const steps: readonly TakuzuTutorialStep[] = [
   {
-    message: {
-      headline: "四角と丸で、盤面を埋めていきます",
-      detail: "印のマスをタップしてください",
-    },
+    message: { headline: "印のマスをタップすると四角が入ります", detail: null },
     introducedRuleId: null,
     cellIndices: [cellAt(1, 1)],
     lesson: null,
   },
   {
-    message: { headline: "2回タップすると、丸になります", detail: null },
+    message: { headline: "2回タップすると丸が入ります", detail: null },
     introducedRuleId: null,
     cellIndices: [cellAt(1, 4)],
     lesson: null,
   },
   {
-    message: { headline: "同じものは、3つ続けて並べられません", detail: null },
+    message: { headline: "同じものは、3つ続けられません", detail: null },
     introducedRuleId: "run",
     cellIndices: [cellAt(1, 3)],
     lesson: { ruleId: "run", axis: "row" },
   },
   {
-    message: { headline: "縦にも、3つ続けて並べられません", detail: null },
+    message: { headline: "縦にも、3つ続けられません", detail: null },
     introducedRuleId: null,
     cellIndices: [cellAt(4, 1)],
     lesson: { ruleId: "run", axis: "column" },
   },
   {
     message: {
-      headline: "行の四角と丸は、同じ数ずつです",
+      headline: "どの行にも四角と丸が同じ数ずつ入ります",
       detail: null,
     },
     introducedRuleId: "count",
@@ -156,14 +153,14 @@ const steps: readonly TakuzuTutorialStep[] = [
     lesson: { ruleId: "count", axis: "row" },
   },
   {
-    message: { headline: "列も、四角と丸は同じ数ずつです", detail: null },
+    message: { headline: "列にも同じ数ずつ入ります", detail: null },
     introducedRuleId: null,
     cellIndices: [cellAt(3, 4)],
     lesson: { ruleId: "count", axis: "column" },
   },
   {
     message: {
-      headline: "このマスも、ここまでのルールで決まります",
+      headline: "ここまでのルールで、このマスも分かります",
       detail: null,
     },
     introducedRuleId: null,
@@ -172,8 +169,8 @@ const steps: readonly TakuzuTutorialStep[] = [
   },
   {
     message: {
-      headline: "同じ並びの行・列は作れません",
-      detail: "上の行と見比べてください",
+      headline: "同じ並びの行や列は作れません",
+      detail: "上の行と見比べると分かります",
     },
     introducedRuleId: "duplicate",
     cellIndices: [cellAt(3, 2), cellAt(3, 3)],
@@ -574,9 +571,9 @@ const lineNames = { row: "行", column: "列" } as const satisfies Record<
 
 /** 違反の一言の補足に添える、当たったルールそのもの。 */
 const ruleStatements = {
-  run: "同じものは、3つ続けて並べられません",
-  count: "行も列も、四角と丸は同じ数ずつです",
-  duplicate: "同じ並びの行・列は作れません",
+  run: "同じものは、3つ続けられません",
+  count: "行にも列にも、四角と丸が同じ数ずつ入ります",
+  duplicate: "同じ並びの行や列は作れません",
 } as const satisfies Record<TakuzuTutorialRuleId, string>;
 
 /** 隣り合う行・列は向きで、離れた行・列は何番目かで言う。 */

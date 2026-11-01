@@ -416,7 +416,7 @@ describe("takuzuTutorial.describeViolation", () => {
       [place(cellAt(1, 3), "a")],
       {
         headline: "四角が3つ続いています",
-        detail: "同じものは、3つ続けて並べられません",
+        detail: "同じものは、3つ続けられません",
       },
     ],
     [
@@ -425,7 +425,7 @@ describe("takuzuTutorial.describeViolation", () => {
       [place(cellAt(2, 4), "b")],
       {
         headline: "丸が多すぎる行があります",
-        detail: "行も列も、四角と丸は同じ数ずつです",
+        detail: "行にも列にも、四角と丸が同じ数ずつ入ります",
       },
     ],
     [
@@ -434,7 +434,7 @@ describe("takuzuTutorial.describeViolation", () => {
       [place(cellAt(3, 2), "b"), place(cellAt(3, 3), "a")],
       {
         headline: "上の行と同じ並びになっています",
-        detail: "同じ並びの行・列は作れません",
+        detail: "同じ並びの行や列は作れません",
       },
     ],
     [
@@ -443,7 +443,7 @@ describe("takuzuTutorial.describeViolation", () => {
       [place(cellAt(4, 2), "a")],
       {
         headline: "四角が多すぎる列があります",
-        detail: "行も列も、四角と丸は同じ数ずつです",
+        detail: "行にも列にも、四角と丸が同じ数ずつ入ります",
       },
     ],
   ] as const;
