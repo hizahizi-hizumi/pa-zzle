@@ -11,8 +11,13 @@ import {
   restoreWaterSortRecordedResult,
   waterSortPlayRecordDefinition,
 } from "@/games/water-sort/play-record";
+import {
+  findWaterSortPoolProblemFeatures,
+  listWaterSortPoolProblemIds,
+} from "@/games/water-sort/problem/problem-pool";
 import { canSelectWaterSortProblemById } from "@/games/water-sort/problem-selection";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
+import { formatWaterSortProblemFeatures } from "@/games/water-sort/ui/problem-features";
 
 export const waterSortCatalogEntry = {
   id: waterSortPlayRecordDefinition.gameId,
@@ -37,10 +42,15 @@ export const waterSortCatalogEntry = {
       canSelectWaterSortProblemById,
     );
   },
+  listPoolProblemIds: listWaterSortPoolProblemIds,
   renderRecordResult(record, context) {
     const recorded = restoreWaterSortRecordedResult(record);
     return recorded ? (
       <RecordedWaterSortResult {...recorded} {...context} />
     ) : null;
+  },
+  describePoolProblem(difficulty, problemId) {
+    const features = findWaterSortPoolProblemFeatures(difficulty, problemId);
+    return features ? formatWaterSortProblemFeatures(features) : null;
   },
 } satisfies GameCatalogEntry;

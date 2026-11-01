@@ -3,6 +3,7 @@ import { createProblemId } from "@/games/problem-id";
 import {
   decodeSlidePuzzlePoolEntry,
   findSlidePuzzlePoolEntryByProblemId,
+  findSlidePuzzlePoolProblemFeatures,
   listSlidePuzzlePoolEntries,
 } from "@/games/slide-puzzle/problem/problem-pool";
 
@@ -30,5 +31,27 @@ describe("findSlidePuzzlePoolEntryByProblemId", () => {
     );
 
     expect(unresolvedEntries).toEqual([]);
+  });
+});
+
+describe("findSlidePuzzlePoolProblemFeatures", () => {
+  const [entry] = listSlidePuzzlePoolEntries("3");
+  if (!entry) {
+    throw new Error("No level 3 slide puzzle pool entry");
+  }
+  const problemId = createProblemId(decodeSlidePuzzlePoolEntry(entry).identity);
+
+  test("問題集の1問の特徴を、項目の盤面の大きさで返すこと", () => {
+    const features = findSlidePuzzlePoolProblemFeatures("3", problemId);
+
+    expect(features).toEqual({ boardSize: entry[1] });
+  });
+
+  test("問題集に無い ID と、別の難易度の ID には null を返すこと", () => {
+    const unknown = findSlidePuzzlePoolProblemFeatures("3", "unknown");
+    const otherDifficulty = findSlidePuzzlePoolProblemFeatures("1", problemId);
+
+    expect(unknown).toBeNull();
+    expect(otherDifficulty).toBeNull();
   });
 });

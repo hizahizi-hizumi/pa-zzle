@@ -1,5 +1,5 @@
 import { difficultyLevels } from "@/games/difficulty";
-import { createProblemPoolIdLookup } from "@/games/problem-id";
+import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
 import {
   fromReflectionCellCode,
@@ -180,17 +180,24 @@ export function listReflectionPoolEntries(
   return problemPool.levels[difficulty];
 }
 
-const findPoolPositionByProblemId = createProblemPoolIdLookup(
+const poolIndex = createProblemPoolIndex(
   problemPool.levels,
   toReflectionPoolIdentity,
 );
+
+/** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。 */
+export function listReflectionPoolProblemIds(
+  difficulty: ReflectionDifficulty,
+): readonly ProblemId[] {
+  return poolIndex.listProblemIds(difficulty);
+}
 
 /** 難易度の問題集に問題 ID の問題があるかを返す。 */
 export function hasReflectionPoolProblemId(
   difficulty: ReflectionDifficulty,
   problemId: string,
 ): boolean {
-  return findPoolPositionByProblemId(difficulty, problemId) !== null;
+  return poolIndex.findPositionById(difficulty, problemId) !== null;
 }
 
 /** 難易度の問題集から問題 ID で1問を探して復元する。問題集に無い ID・別の難易度の ID には `null` を返す。 */
@@ -198,7 +205,7 @@ export function findReflectionPooledProblemByProblemId(
   difficulty: ReflectionDifficulty,
   problemId: string,
 ): ReflectionPooledProblem | null {
-  const position = findPoolPositionByProblemId(difficulty, problemId);
+  const position = poolIndex.findPositionById(difficulty, problemId);
   return position
     ? toReflectionPooledProblem(difficulty, position.entryIndex)
     : null;
@@ -243,4 +250,28 @@ export function findReflectionPooledProblem(
     conditions.pieceCount === identity.conditions.pieceCount
     ? pooled
     : null;
+}
+
+/** 始めたときの盤面を見れば分かる、問題の特徴。ピースの数は手持ちのピースの数。 */
+export type ReflectionProblemFeatures = {
+  size: number;
+  pieceCount: number;
+};
+
+/** 難易度の問題集の1問の特徴を、外周ヒントを求めずに解の盤面から求める。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+export function findReflectionPoolProblemFeatures(
+  difficulty: ReflectionDifficulty,
+  problemId: string,
+): ReflectionProblemFeatures | null {
+  const entry = poolIndex.findPositionById(difficulty, problemId)?.entry;
+  if (!entry) {
+    return null;
+  }
+  const solution = decodeReflectionPoolSolution(entry[1]);
+  return {
+    size: solution.size,
+    pieceCount: getReflectionInventoryPieceCount(
+      countReflectionBoardPieces(solution),
+    ),
+  };
 }

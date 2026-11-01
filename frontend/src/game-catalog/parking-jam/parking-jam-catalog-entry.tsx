@@ -11,8 +11,13 @@ import {
   parkingJamPlayRecordDefinition,
   restoreParkingJamRecordedResult,
 } from "@/games/parking-jam/play-record";
+import {
+  findParkingJamPoolProblemFeatures,
+  listParkingJamPoolProblemIds,
+} from "@/games/parking-jam/problem/problem-pool";
 import { canSelectParkingJamProblemById } from "@/games/parking-jam/problem-selection";
 import { parkingJamPlayRecordDisplay } from "@/games/parking-jam/ui/play-record-display";
+import { formatParkingJamProblemFeatures } from "@/games/parking-jam/ui/problem-features";
 
 export const parkingJamCatalogEntry = {
   id: parkingJamPlayRecordDefinition.gameId,
@@ -37,10 +42,15 @@ export const parkingJamCatalogEntry = {
       canSelectParkingJamProblemById,
     );
   },
+  listPoolProblemIds: listParkingJamPoolProblemIds,
   renderRecordResult(record, context) {
     const recorded = restoreParkingJamRecordedResult(record);
     return recorded ? (
       <RecordedParkingJamResult {...recorded} {...context} />
     ) : null;
+  },
+  describePoolProblem(difficulty, problemId) {
+    const features = findParkingJamPoolProblemFeatures(difficulty, problemId);
+    return features ? formatParkingJamProblemFeatures(features) : null;
   },
 } satisfies GameCatalogEntry;

@@ -124,6 +124,16 @@ test("難易度を自己ベストの比較単位として扱うこと", () => {
   expect(comparisonKey).toBe("3");
 });
 
+test("クリアの成績として、経過時間と、最後に盤面を戻してから完成までの手数と最短手数を読むこと", () => {
+  const performance =
+    slidePuzzlePlayRecordDefinition.getClearPerformance(record);
+
+  expect(performance).toEqual({
+    elapsedMs: 80_000,
+    moves: { completionMoveCount: 34, optimalMoveCount: 30 },
+  });
+});
+
 describe("isSlidePuzzlePlayRecord", () => {
   test("保存用記録をスライドパズルの記録として認めること", () => {
     const recognized = isSlidePuzzlePlayRecord(record);

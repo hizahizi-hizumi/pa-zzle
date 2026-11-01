@@ -7,10 +7,12 @@ import {
   findRecordProblemPlayDestination,
   gameCatalog,
 } from "@/game-catalog/game-catalog";
+import { difficultyLevels } from "@/games/difficulty";
 import { createMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
 import { selectMinesweeperProblemForDifficulty } from "@/games/minesweeper/problem-selection";
 import { createProblemId } from "@/games/problem-id";
 import type { PlayAttempt } from "@/records/play-attempt";
+import { PLAY_SCORE_METRIC_ID } from "@/records/play-record-definition";
 
 vi.mock("@/lib/internal-diagnostics", () => ({
   internalDiagnosticsAvailable: false,
@@ -31,6 +33,44 @@ describe("gameCatalog", () => {
 
     expect(gameIds).toEqual(concreteGames);
   });
+
+  test("どのゲームの記録定義も、高いほど良い評価点の指標を持つこと", () => {
+    const scoreMetricDirections = gameCatalog.map(
+      (game) =>
+        game.playRecordDisplay.definition.personalBestMetrics.find(
+          (metric) => metric.id === PLAY_SCORE_METRIC_ID,
+        )?.direction,
+    );
+
+    expect(scoreMetricDirections).toEqual(gameCatalog.map(() => "higher"));
+  });
+
+  test.each(gameCatalog.map((game) => [game.id, game] as const))(
+    "%s が、全難易度の問題集の問題IDを重複なく返すこと",
+    (_, game) => {
+      const problemIds = difficultyLevels.flatMap(({ id }) =>
+        game.listPoolProblemIds(id),
+      );
+
+      expect(new Set(problemIds).size).toBe(problemIds.length);
+    },
+  );
+
+  test.each(gameCatalog.map((game) => [game.id, game] as const))(
+    "%s が、各難易度の問題集の問題に特徴を返し、問題集に無い問題 ID には null を返すこと",
+    (_, game) => {
+      const featureCounts = difficultyLevels.map(({ id }) => {
+        const [problemId] = game.listPoolProblemIds(id);
+        return problemId === undefined
+          ? 0
+          : (game.describePoolProblem(id, problemId)?.length ?? 0);
+      });
+      const unknown = game.describePoolProblem("1", "unknown");
+
+      expect(featureCounts.every((count) => count > 0)).toBe(true);
+      expect(unknown).toBeNull();
+    },
+  );
 });
 
 describe("findRecordProblemPlayDestination", () => {

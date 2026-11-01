@@ -11,8 +11,13 @@ import {
   minesweeperPlayRecordDefinition,
   restoreMinesweeperRecordedResult,
 } from "@/games/minesweeper/play-record";
+import {
+  findMinesweeperPoolProblemFeatures,
+  listMinesweeperPoolProblemIds,
+} from "@/games/minesweeper/problem/problem-pool";
 import { canSelectMinesweeperProblemById } from "@/games/minesweeper/problem-selection";
 import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
+import { formatMinesweeperProblemFeatures } from "@/games/minesweeper/ui/problem-features";
 
 export const minesweeperCatalogEntry = {
   id: minesweeperPlayRecordDefinition.gameId,
@@ -37,10 +42,15 @@ export const minesweeperCatalogEntry = {
       canSelectMinesweeperProblemById,
     );
   },
+  listPoolProblemIds: listMinesweeperPoolProblemIds,
   renderRecordResult(record, context) {
     const recorded = restoreMinesweeperRecordedResult(record);
     return recorded ? (
       <RecordedMinesweeperResult {...recorded} {...context} />
     ) : null;
+  },
+  describePoolProblem(difficulty, problemId) {
+    const features = findMinesweeperPoolProblemFeatures(difficulty, problemId);
+    return features ? formatMinesweeperProblemFeatures(features) : null;
   },
 } satisfies GameCatalogEntry;

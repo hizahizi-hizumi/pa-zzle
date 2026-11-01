@@ -11,8 +11,13 @@ import {
   nanpurePlayRecordDefinition,
   restoreNanpureRecordedResult,
 } from "@/games/nanpure/play-record";
+import {
+  findNanpurePoolProblemFeatures,
+  listNanpurePoolProblemIds,
+} from "@/games/nanpure/problem/problem-pool";
 import { canSelectNanpureProblemById } from "@/games/nanpure/problem-selection";
 import { nanpurePlayRecordDisplay } from "@/games/nanpure/ui/play-record-display";
+import { formatNanpureProblemFeatures } from "@/games/nanpure/ui/problem-features";
 
 export const nanpureCatalogEntry = {
   id: nanpurePlayRecordDefinition.gameId,
@@ -37,10 +42,15 @@ export const nanpureCatalogEntry = {
       canSelectNanpureProblemById,
     );
   },
+  listPoolProblemIds: listNanpurePoolProblemIds,
   renderRecordResult(record, context) {
     const recorded = restoreNanpureRecordedResult(record);
     return recorded ? (
       <RecordedNanpureResult {...recorded} {...context} />
     ) : null;
+  },
+  describePoolProblem(difficulty, problemId) {
+    const features = findNanpurePoolProblemFeatures(difficulty, problemId);
+    return features ? formatNanpureProblemFeatures(features) : null;
   },
 } satisfies GameCatalogEntry;

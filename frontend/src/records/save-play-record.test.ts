@@ -41,6 +41,11 @@ const definition: PlayRecordDefinition = {
       },
     },
   ],
+  getClearPerformance(record) {
+    return record.gameId === "test-game"
+      ? { elapsedMs: record.completedAt - record.startedAt }
+      : null;
+  },
 };
 
 test("最初のプレイを初記録として扱うこと", () => {

@@ -11,8 +11,13 @@ import {
   reflectionPlayRecordDefinition,
   restoreReflectionRecordedResult,
 } from "@/games/reflection/play-record";
+import {
+  findReflectionPoolProblemFeatures,
+  listReflectionPoolProblemIds,
+} from "@/games/reflection/problem/problem-pool";
 import { canSelectReflectionProblemById } from "@/games/reflection/problem-selection";
 import { reflectionPlayRecordDisplay } from "@/games/reflection/ui/play-record-display";
+import { formatReflectionProblemFeatures } from "@/games/reflection/ui/problem-features";
 
 export const reflectionCatalogEntry = {
   id: reflectionPlayRecordDefinition.gameId,
@@ -37,10 +42,15 @@ export const reflectionCatalogEntry = {
       canSelectReflectionProblemById,
     );
   },
+  listPoolProblemIds: listReflectionPoolProblemIds,
   renderRecordResult(record, context) {
     const recorded = restoreReflectionRecordedResult(record);
     return recorded ? (
       <RecordedReflectionResult {...recorded} {...context} />
     ) : null;
+  },
+  describePoolProblem(difficulty, problemId) {
+    const features = findReflectionPoolProblemFeatures(difficulty, problemId);
+    return features ? formatReflectionProblemFeatures(features) : null;
   },
 } satisfies GameCatalogEntry;

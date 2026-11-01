@@ -1,4 +1,4 @@
-import { createProblemPoolIdLookup } from "@/games/problem-id";
+import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import {
   SLIDE_PUZZLE_GENERATOR_VERSION,
@@ -55,17 +55,24 @@ export function listSlidePuzzlePoolEntries(
   return problemPool.levels[difficulty];
 }
 
-const findPoolPositionByProblemId = createProblemPoolIdLookup(
+const poolIndex = createProblemPoolIndex(
   problemPool.levels,
   (entry) => decodeSlidePuzzlePoolEntry(entry).identity,
 );
+
+/** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。 */
+export function listSlidePuzzlePoolProblemIds(
+  difficulty: SlidePuzzleDifficulty,
+): readonly ProblemId[] {
+  return poolIndex.listProblemIds(difficulty);
+}
 
 /** 難易度の問題集から問題 ID で1問を探す。問題集に無い ID・別の難易度の ID には `null` を返す。 */
 export function findSlidePuzzlePoolEntryByProblemId(
   difficulty: SlidePuzzleDifficulty,
   problemId: string,
 ): SlidePuzzleProblemPoolEntry | null {
-  return findPoolPositionByProblemId(difficulty, problemId)?.entry ?? null;
+  return poolIndex.findPositionById(difficulty, problemId)?.entry ?? null;
 }
 
 /** 診断用。問題集に無い識別情報なら `null` を返す。 */
@@ -88,4 +95,18 @@ export function findSlidePuzzlePooledOptimalMoveCount(
     }
   }
   return null;
+}
+
+/** 始めたときの盤面を見れば分かる、問題の特徴。 */
+export type SlidePuzzleProblemFeatures = {
+  boardSize: SlidePuzzleBoardSize;
+};
+
+/** 難易度の問題集の1問の特徴を、問題を復元せずに問題集の項目から求める。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+export function findSlidePuzzlePoolProblemFeatures(
+  difficulty: SlidePuzzleDifficulty,
+  problemId: string,
+): SlidePuzzleProblemFeatures | null {
+  const entry = findSlidePuzzlePoolEntryByProblemId(difficulty, problemId);
+  return entry ? { boardSize: entry[1] } : null;
 }

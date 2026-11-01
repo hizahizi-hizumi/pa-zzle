@@ -1,7 +1,7 @@
 import {
   _private,
   createProblemId,
-  createProblemPoolIdLookup,
+  createProblemPoolIndex,
   isRecordedProblemIdentity,
 } from "@/games/problem-id";
 
@@ -91,15 +91,14 @@ describe("createProblemId", () => {
   );
 });
 
-describe("createProblemPoolIdLookup", () => {
+describe("createProblemPoolIndex", () => {
   type Entry = readonly [seed: string];
   const levels: Record<"1" | "2", readonly Entry[]> = {
     "1": [["a"], ["b"]],
     "2": [["c"]],
   };
-  const findPosition = createProblemPoolIdLookup(levels, ([seed]) => ({
-    seed,
-  }));
+  const { findPositionById: findPosition, listProblemIds } =
+    createProblemPoolIndex(levels, ([seed]) => ({ seed }));
   const secondEntryId = createProblemId({ seed: "b" });
 
   test("難易度と問題IDから項目と並び順を引けること", () => {
@@ -118,6 +117,12 @@ describe("createProblemPoolIdLookup", () => {
     const position = findPosition("1", createProblemId({ seed: "z" }));
 
     expect(position).toBeNull();
+  });
+
+  test("難易度の全問の問題IDを問題集の並び順で返すこと", () => {
+    const problemIds = listProblemIds("1");
+
+    expect(problemIds).toEqual([createProblemId({ seed: "a" }), secondEntryId]);
   });
 });
 
