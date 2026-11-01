@@ -1,7 +1,7 @@
 ---
 name: puzzle-stage-implementer
-description: 新しいパズルの実装スタックの1段を、worktree のパス・段カード・brief のパス・手本の参照を入力に、渡された worktree の中で実装して検証とコミットまで行い、変更ファイル・コミット・検証結果・画面の所見・決めたことを報告する Agent。`/add-puzzle` Skill の実装と指摘の反映で、メインエージェントが段ごとに起動する。
-tools: Read, Write, Edit, Glob, Grep, Skill, TaskStop, Bash(bun *), Bash(git -C * status*), Bash(git -C * add *), Bash(git -C * commit *), Bash(git -C * diff *), Bash(git -C * log *), Bash(git -C * show *), Bash(*/scripts/verify.sh*), Bash(node */.claude/skills/add-puzzle/scripts/*), Bash(node .claude/skills/add-puzzle/scripts/*), Bash(python3 .claude/skills/design-game-pictogram/scripts/*), Bash(python3 */scripts/research/*), Bash(timeout * bun *), Bash(timeout * node *)
+description: 新しいパズルの実装スタックの1段を、worktree のパス・段カード・brief のパス・手本の参照・失敗パターン集のパスを入力に、渡された worktree の中で実装して検証とコミットまで行い、変更ファイル・コミット・検証結果・画面の所見・決めたことを報告する Agent。`/add-puzzle` Skill の実装と指摘の反映で、メインエージェントが段ごとに起動する。
+tools: Read, Write, Edit, Glob, Grep, Skill, TaskStop, Bash(bun *), Bash(git -C * status*), Bash(git -C * add *), Bash(git -C * commit *), Bash(git -C * diff *), Bash(git -C * log *), Bash(git -C * show *), Bash(*/scripts/verify.sh*), Bash(node */.claude/skills/add-puzzle/scripts/*), Bash(node .claude/skills/add-puzzle/scripts/*), Bash(python3 .claude/skills/design-game-pictogram/scripts/*), Bash(python3 */scripts/research/*), Bash(timeout * bun *), Bash(timeout * node *), Bash(timeout * python3 */scripts/research/*)
 model: opus
 ---
 
@@ -15,7 +15,7 @@ model: opus
 
 - 入力（起動側のプロンプトで受け取る。すべて必須）
   - worktree のパス: メインが用意した作業ツリー（新しい段では前段から切ったもの、直しでは原因の段のもの）。この中だけを書き換える
-  - 段カード（段の範囲と完成条件）のパス: 段の番号と topic、前段のブランチ、触ってよい範囲、完成条件、開発サーバーのポート、その段に効く失敗パターン。レビューや最終レビューの指摘を直す起動では、直す指摘も完成条件に含まれる
+  - 段カード（段の範囲と完成条件）のパス: 段の番号と topic、前段のブランチ、触ってよい範囲、完成条件、開発サーバーのポート、その段に効く失敗パターン。spec の段では各段の PR 本文の「AI が決めたこと」も入る。レビューや最終レビューの指摘を直す起動では、直す指摘も完成条件に含まれる
   - brief のパス: 全段に共通する前提（識別表、作業ディレクトリ、認識合わせの合意と人間の判断、作業の決まり）
   - 手本の参照: 直近パズルの同じ段のコミット・ブランチ・パスなど
   - 失敗パターン集の絶対パス
@@ -51,7 +51,7 @@ Bash は呼び出しごとに作業ディレクトリが戻るので、コマン
    env -C <worktree> ./scripts/verify.sh
    ```
 
-5. UI のある段は画面を確かめる（`.claude/skills/add-puzzle/scripts/capture-screens.mjs` で撮って自分で見る）。
+5. UI が変わる段は画面を確かめる（`.claude/skills/add-puzzle/scripts/capture-screens.mjs` で撮って自分で見る）。
    - 開発サーバー: `bun run --cwd <worktree>/frontend dev -- --port <段カードのポート> --strictPort` を `run_in_background` で起動し、終わったら TaskStop でそのタスクを止める
    - 撮影: `node .claude/skills/add-puzzle/scripts/capture-screens.mjs`（使い方はスクリプト冒頭）。出力先は brief の作業ディレクトリの下。出力の `browser-check.txt` の problems を確かめる
    - 操作してクリアまで進める確認・操作途中の状態の撮影: `node .claude/skills/add-puzzle/scripts/playtest-driver.mjs`（使い方はスクリプト冒頭）
