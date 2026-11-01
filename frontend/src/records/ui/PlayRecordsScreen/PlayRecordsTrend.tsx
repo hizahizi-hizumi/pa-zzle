@@ -18,9 +18,9 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
+import { formatPlayedAt } from "@/lib/format-played-at";
 import type { PlayRecord } from "@/records/play-record";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
-import { formatPlayedAt } from "@/records/ui/format";
 import { getTrendValueAxis } from "@/records/ui/PlayRecordsScreen/trend-value-axis";
 import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
 

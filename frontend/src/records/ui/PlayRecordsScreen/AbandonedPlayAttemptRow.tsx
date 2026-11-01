@@ -1,5 +1,5 @@
+import { formatPlayedAt } from "@/lib/format-played-at";
 import type { AbandonedPlayAttempt } from "@/records/play-attempt";
-import { formatPlayedAt } from "@/records/ui/format";
 import { ReplayPlayButton } from "@/records/ui/PlayRecordsScreen/ReplayPlayButton";
 import { getPlayRecordGridTemplateColumns } from "@/records/ui/PlayRecordsScreen/record-grid";
 import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";

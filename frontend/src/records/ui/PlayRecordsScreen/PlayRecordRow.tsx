@@ -1,10 +1,10 @@
+import { formatPlayedAt } from "@/lib/format-played-at";
 import {
   getPersonalBestMetricIdsForRecord,
   type PersonalBest,
 } from "@/records/personal-best";
 import type { PlayRecord } from "@/records/play-record";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
-import { formatPlayedAt } from "@/records/ui/format";
 import { CopyPlayRecordsButton } from "@/records/ui/PlayRecordsScreen/CopyPlayRecordsButton";
 import { ReplayPlayButton } from "@/records/ui/PlayRecordsScreen/ReplayPlayButton";
 import { getPlayRecordGridTemplateColumns } from "@/records/ui/PlayRecordsScreen/record-grid";
