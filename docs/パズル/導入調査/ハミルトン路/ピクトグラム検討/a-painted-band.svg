@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ハミルトン路">
+  <path d="M60 60v42M81 18v84M81 39h21M60 60h42M60 81h42" fill="none" stroke="var(--game-pictogram-soft)" stroke-width="2"/>
+  <path d="M22.5 22.5V97.5H55.5V34.5H64.5V55.5H76.5V22.5H43.5V85.5H34.5V22.5Z" fill="var(--game-pictogram-soft)"/>
+  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <path d="M28.5 28.5V91.5H49.5V28.5H70.5V49.5" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="28.5" cy="28.5" r="6.5" fill="var(--game-pictogram-strong)"/>
+</svg>
