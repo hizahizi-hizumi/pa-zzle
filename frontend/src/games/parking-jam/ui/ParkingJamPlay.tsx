@@ -14,6 +14,7 @@ import type {
 } from "@/games/parking-jam/puzzle/board";
 import { ParkingJamBoard } from "@/games/parking-jam/ui/board/ParkingJamBoard";
 import { ParkingJamHowToPlayDialog } from "@/games/parking-jam/ui/ParkingJamHowToPlayDialog";
+import { useParkingJamSoundEffects } from "@/games/parking-jam/ui/ParkingJamPlay/use-parking-jam-sound-effects";
 import { ParkingJamResultScreen } from "@/games/parking-jam/ui/result/ParkingJamResultScreen";
 import type {
   GamePlayScreenProps,
@@ -67,6 +68,8 @@ export function ParkingJamPlay({
   onClearAnimationComplete,
   onOpenDiagnostics,
 }: ParkingJamPlayProps) {
+  useParkingJamSoundEffects(operation, progress);
+
   return (
     <GamePlayFrame
       progress={progress}
