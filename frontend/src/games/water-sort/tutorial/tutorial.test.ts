@@ -272,7 +272,20 @@ describe("performTutorialAction", () => {
       expect(rejected.violated).toBe(true);
       expect(rejected.boardState.bottles).toEqual(pouredOut.boardState.bottles);
       expect(rejected.boardState.sourceBottleIndex).toBe(1);
-      expect(message.headline).toBe("上の色が違うと\n注げません");
+      expect(message.headline).toBe("上の色が違うと注げません");
+    });
+
+    test("上の色が違う・満杯・そろったボトルへの一言を、手を離す前の手順の補足で同じ文のまま言い切っていること", () => {
+      const headlines = [
+        rejected,
+        tapBottles(released, [1, 0]),
+        tapBottles(released, [3]),
+      ].map((progress) => getMessage(progress).headline);
+      const details = steps.flatMap(
+        ({ message }) => message.detail?.split("\n") ?? [],
+      );
+
+      expect(details).toEqual(expect.arrayContaining(headlines));
     });
 
     test("満杯のボトルへ注ごうとすると、そのわけを言うこと", () => {
@@ -291,7 +304,7 @@ describe("performTutorialAction", () => {
     });
 
     const unselectableCases = [
-      ["そろったボトル", 3, "このボトルはもうそろっています"],
+      ["そろったボトル", 3, "そろったボトルは選べません"],
       ["空のボトル", 4, "空のボトルからは注げません"],
     ] as const;
 

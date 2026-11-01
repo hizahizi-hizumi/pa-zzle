@@ -121,7 +121,9 @@ const goalBottles: WaterSortState = [
   [],
 ];
 
-/** 満杯のボトルに注ごうとしたときの一言。容量の手順でも、手を離す前に同じ文で言い切る。 */
+/** 注げない手への一言。手を離す前の手順でも、同じ文で言い切る。 */
+const DIFFERENT_COLOR_REJECTION_MESSAGE = "上の色が違うと注げません";
+const COMPLETE_REJECTION_MESSAGE = "そろったボトルは選べません";
 const FULL_REJECTION_MESSAGE = "満杯のボトルには注げません";
 
 /**
@@ -145,7 +147,7 @@ const steps: readonly WaterSortTutorialStep[] = [
   {
     message: {
       headline: "上が同じ色なら\n重ねて注げます",
-      detail: null,
+      detail: DIFFERENT_COLOR_REJECTION_MESSAGE,
     },
     introducedRuleId: "same-color",
     move: { sourceBottleIndex: 1, destinationBottleIndex: 3 },
@@ -162,8 +164,9 @@ const steps: readonly WaterSortTutorialStep[] = [
   },
   {
     message: {
-      headline: "空きが足りないときは\n入るだけ移ります",
-      detail: FULL_REJECTION_MESSAGE,
+      headline: "入るだけ移ります",
+      // 3手目でそろって光った緑のボトルを見ながら、選べないことも言い切る。
+      detail: `${COMPLETE_REJECTION_MESSAGE}\n${FULL_REJECTION_MESSAGE}`,
     },
     introducedRuleId: "capacity",
     move: { sourceBottleIndex: 1, destinationBottleIndex: 0 },
@@ -315,9 +318,9 @@ function performWaterSortTutorialAction(
 
 const rejectionMessages = {
   empty: "空のボトルからは注げません",
-  complete: "このボトルはもうそろっています",
+  complete: COMPLETE_REJECTION_MESSAGE,
   "no-destination": "このボトルはどこにも注げません",
-  "different-color": "上の色が違うと\n注げません",
+  "different-color": DIFFERENT_COLOR_REJECTION_MESSAGE,
   full: FULL_REJECTION_MESSAGE,
 } as const satisfies Record<WaterSortTutorialRejection, string>;
 
@@ -429,7 +432,7 @@ export const waterSortTutorial: Tutorial<
 > = {
   intro: {
     purpose: "液体を注ぎ分けて\n色をそろえるパズルです",
-    goalCaption: "1本ずつ同じ色になればゴールです",
+    goalCaption: "色ごとに1本にそろえばゴールです",
     startCaption: "最初は色が混ざっています",
   },
   rules: [

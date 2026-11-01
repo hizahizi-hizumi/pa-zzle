@@ -158,11 +158,13 @@ describe("WaterSortTutorial", () => {
 
       const contents = [getBottleContents(0), getBottleContents(3)];
       const headline = screen.getByText("上が同じ色なら 重ねて注げます");
+      const detail = screen.getByText("上の色が違うと注げません");
       const cued = getCuedBottles();
       const rules = getRuleTexts();
 
       expect(contents).toEqual(["赤、赤、青", "緑"]);
       expect(headline).toBeTruthy();
+      expect(detail).toBeTruthy();
       expect(cued).toEqual([2]);
       expect(rules).toEqual(["空のボトルへ", "同じ色の上へ", "？", "？"]);
     });
@@ -172,10 +174,10 @@ describe("WaterSortTutorial", () => {
 
       const contents = [getBottleContents(2), getBottleContents(3)];
       const sorted = getCuedBottles("sorted");
-      const headline = screen.getByText(
-        "空きが足りないときは 入るだけ移ります",
+      const headline = screen.getByText("入るだけ移ります");
+      const detail = screen.getByText(
+        "そろったボトルは選べません 満杯のボトルには注げません",
       );
-      const detail = screen.getByText("満杯のボトルには注げません");
       const rules = getRuleTexts();
 
       expect(contents).toEqual(["赤、青", "緑、緑、緑、緑"]);
@@ -228,7 +230,7 @@ describe("WaterSortTutorial", () => {
 
       test("上の色が違うボトルへ注ごうとすると、わけを伝え、次に注ぐと一言を戻すこと", () => {
         tapBottles([1, 4, 2, 4, 1, 4]);
-        const headline = screen.getByText("上の色が違うと 注げません");
+        const headline = screen.getByText("上の色が違うと注げません");
         tapBottles([2]);
 
         const restored = screen.getByText(freePlayHeadline);
@@ -289,7 +291,7 @@ describe("WaterSortTutorial", () => {
       const purpose = screen.getByText(
         "液体を注ぎ分けて 色をそろえるパズルです",
       );
-      const caption = screen.getByText("1本ずつ同じ色になればゴールです");
+      const caption = screen.getByText("色ごとに1本にそろえばゴールです");
       const contents = getBottleContents(0);
 
       expect(purpose).toBeTruthy();
