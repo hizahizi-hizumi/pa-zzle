@@ -139,7 +139,7 @@ const steps: readonly MinesweeperTutorialStep[] = [
   {
     message: {
       headline: "地雷のマスには旗を置きます",
-      detail: "上のボタンで旗に切り替えます",
+      detail: "盤面の右上のボタンで旗に切り替えます",
     },
     introducedRuleId: null,
     operation: "change-mode",
@@ -160,7 +160,8 @@ const steps: readonly MinesweeperTutorialStep[] = [
   },
   {
     message: {
-      headline: "この1の地雷は旗のマスなので\n残りのマスに地雷はありません",
+      headline:
+        "1の周りの地雷は旗のマスだけなので\n残りのマスは開いても大丈夫です",
       detail: null,
     },
     introducedRuleId: null,
@@ -171,7 +172,7 @@ const steps: readonly MinesweeperTutorialStep[] = [
   },
   {
     message: {
-      headline: "周りに地雷がないマスを開くと\n周りも続けて開きます",
+      headline: "周りに地雷がないマスを開くと\nその周りも続けて開きます",
       detail: null,
     },
     introducedRuleId: "cascade",
@@ -193,8 +194,8 @@ const steps: readonly MinesweeperTutorialStep[] = [
   },
   {
     message: {
-      headline: "旗が数字の数だけあるとき\n数字を押すと残りをまとめて開きます",
-      detail: "旗が違っていると地雷を踏みます",
+      headline: "旗の数が数字と同じなら\n数字を押すと残りをまとめて開きます",
+      detail: "旗が間違っていると地雷を踏みます",
     },
     introducedRuleId: "chord",
     operation: "chord",
@@ -205,7 +206,8 @@ const steps: readonly MinesweeperTutorialStep[] = [
   {
     message: {
       headline: "ここも数字から地雷だと分かります",
-      detail: "旗はもう一度押すと外せます\n旗のマスは押しても開きません",
+      detail:
+        "旗に切り替えてもう一度押すと外せます\n旗を置いたマスは開きません",
     },
     introducedRuleId: null,
     operation: "flag",
@@ -215,7 +217,7 @@ const steps: readonly MinesweeperTutorialStep[] = [
   },
   {
     message: {
-      headline: "上の地雷の数は\n盤面全体の地雷の数です",
+      headline: "上の「地雷」は\n盤面全体の地雷の数です",
       detail: "見つけた地雷は3つなので\n残りは1つです",
     },
     introducedRuleId: "total",
@@ -228,8 +230,8 @@ const steps: readonly MinesweeperTutorialStep[] = [
 
 /** 手順の操作に合わない切り替えのとき、補足の代わりに出す、切り替え方。 */
 const modeChangeDetails = {
-  reveal: "上のボタンをもう一度押して戻します",
-  flag: "上のボタンで旗に切り替えます",
+  reveal: "ボタンをもう一度押すと開くに戻ります",
+  flag: "盤面の右上のボタンで旗に切り替えます",
 } as const satisfies Record<MinesweeperTutorialInputMode, string>;
 
 /** 手順の操作に要る切り替え。切り替える手順は、切り替えを決めない。 */
@@ -487,7 +489,8 @@ function performMinesweeperTutorialAction(
 function describeMinesweeperTutorialViolation(): TutorialMessage {
   return {
     headline: "地雷を踏みました",
-    detail: "踏んだ地雷は\nまとめて開くときに旗と同じに数えます",
+    detail:
+      "そのまま続けられます\n踏んだ地雷もまとめて開くとき旗として数えます",
   };
 }
 
@@ -555,8 +558,8 @@ export function getMinesweeperTutorialCue(
 }
 
 /**
- * 手順の一言。補足の無い手順で、手順の操作に合わない切り替えのときは、補足の場所で切り替え方を言う。
- * 補足のある手順では、補足を読ませるのを優先し、切り替えはボタンの印だけで示す。
+ * 手順の一言。手順の操作に合わない切り替えのときは、補足の場所で切り替え方を言う。
+ * 開く手順は切り替えないと進めないので、切り替えた後に手順の補足を読める。
  */
 export function adjustMinesweeperTutorialMessage(
   { step }: MinesweeperTutorialSituation,
@@ -567,7 +570,9 @@ export function adjustMinesweeperTutorialMessage(
     return message;
   }
   const mode = getStepMode(step);
-  return mode === null || mode === state.mode || message.detail !== null
+  // 旗は長押しでも置けて切り替えずに進めるので、旗の手順では補足を読ませるのを優先する。
+  const detailKept = step.operation === "flag" && message.detail !== null;
+  return mode === null || mode === state.mode || detailKept
     ? message
     : { headline: message.headline, detail: modeChangeDetails[mode] };
 }
@@ -598,7 +603,7 @@ export const minesweeperTutorial: Tutorial<
 > = {
   intro: {
     purpose: "数字を手がかりに\n地雷ではないマスをすべて開くパズルです",
-    goalCaption: "この盤面がゴールです",
+    goalCaption: "この形になれば完成です",
     startCaption: "最初は一部のマスだけ開いています",
   },
   rules: [
@@ -610,12 +615,12 @@ export const minesweeperTutorial: Tutorial<
   steps,
   freePlay: {
     headline: "残りのマスを開くと完成です",
-    detail: "地雷を踏んでもミスになるだけで続けられます",
+    detail: "地雷を踏んでもミスが増えるだけで続けられます",
   },
   completion: {
     selection: {
       headline: "完成です",
-      detail: "レベル1も同じルールで\n盤面は 9×9 ほどです",
+      detail: "レベル1も同じルールで\n9×9 から 10×10 の盤面です",
     },
     play: {
       headline: "完成です",

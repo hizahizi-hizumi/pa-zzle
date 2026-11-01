@@ -59,7 +59,7 @@ export function MinesweeperHowToPlayDialog({
       </li>
       <li>
         <p>
-          旗は自分用の印で、正しいかは判定しない。旗を置いたマスは開かない。
+          旗は自分用の目印で、正しいかは判定しない。旗を置いたマスは開かない。
         </p>
       </li>
       <li className="space-y-2">
