@@ -18,6 +18,7 @@ import {
 import pictogramSvg from "@/games/water-sort/assets/pictogram.svg?raw";
 import { WATER_SORT_DISPLAY_NAME } from "@/games/water-sort/display-name";
 import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
+import { isCompleteWaterSortBottle } from "@/games/water-sort/puzzle/state";
 import {
   findWaterSortTutorialHintBottle,
   getWaterSortTutorialStepBottle,
@@ -84,6 +85,22 @@ function createOperation(
   }
 }
 
+/** 注いだ先が1色で満杯にそろったら、そのボトルを一瞬光らせる。 */
+function getSortedCues({
+  bottles,
+  lastMove,
+  moveCount,
+}: WaterSortTutorialBoardState): WaterSortBottleCue[] {
+  if (lastMove?.type !== "poured") {
+    return [];
+  }
+  const { destinationBottleIndex } = lastMove.move;
+  const destination = bottles[destinationBottleIndex];
+  return destination && isCompleteWaterSortBottle(destination)
+    ? [{ bottleIndex: destinationBottleIndex, kind: "sorted", id: moveCount }]
+    : [];
+}
+
 /**
  * 3色の盤面を、一言と印に沿って1手ずつ注がせ、ルールを1つずつ使って身につけさせる。
  * 手順を終えたら手を離し、残りを自分でそろえさせる。盤面・注ぐ動き・揺れは本番と同じ部品を使う。
@@ -104,6 +121,11 @@ export function WaterSortTutorial({
     useState<WaterSortTutorialProgress | null>(null);
   // 手を引いている間に印の無いボトルを押されたら、印を付け直す。
   const [hintCueId, setHintCueId] = useState(0);
+  // 手順どおりに注いだときの、その手順の一言。注ぐ動きを終えて次の印を付けるまで出し続ける。
+  const [steppedAnswer, setSteppedAnswer] = useState<{
+    progress: WaterSortTutorialProgress;
+    message: TutorialMessage;
+  } | null>(null);
   const situation = getTutorialSituation(waterSortTutorial, progress);
   const guiding = situation.step !== null;
   const { boardState } = progress;
@@ -149,6 +171,11 @@ export function WaterSortTutorial({
     }
     setProgress(next);
     setOperation(createOperation(next));
+    setSteppedAnswer(
+      situation.step && next.stepIndex !== progress.stepIndex
+        ? { progress: next, message: situation.step.message }
+        : null,
+    );
     // 示した注ぎ元を選んだら、待たせずに注ぎ先も示す。
     if (idleHintShown && next.boardState.sourceBottleIndex === hintBottle) {
       setIdleProgress(next);
@@ -157,6 +184,7 @@ export function WaterSortTutorial({
 
   function restart(): void {
     setIdleProgress(null);
+    setSteppedAnswer(null);
     setOperation(null);
     setPouring(false);
     setProgress(startTutorial(waterSortTutorial));
@@ -177,8 +205,17 @@ export function WaterSortTutorial({
     ? { entry: "selection", onStartPlay: handleStartPlay }
     : { entry: "play", onReturnToPlay: handleClose };
 
-  /** 手を離した後に止まって印が出たら、前の違反の一言は下げて、残りをそろえる一言に戻す。 */
+  /**
+   * 注いでいる間は、注ぐ前の一言を残す。次の手順の一言は次の印と一緒に、完成の一言は最後の注ぐ動きを終えてから出す。
+   * 手を離した後に止まって印が出たら、前の違反の一言は下げて、残りをそろえる一言に戻す。
+   */
   function getMessage(): TutorialMessage {
+    if (progress.phase === "solved") {
+      return waterSortTutorial.freePlay;
+    }
+    if (pouring && steppedAnswer?.progress === progress) {
+      return steppedAnswer.message;
+    }
     if (idleHintShown && hintBottle !== null) {
       return waterSortTutorial.freePlay;
     }
@@ -189,10 +226,16 @@ export function WaterSortTutorial({
     });
   }
 
+  // そろった合図は、注ぐ動きを終えてボトルが戻ってから光らせる。
+  const sortedCues =
+    pouring || progress.phase === "solved" ? [] : getSortedCues(boardState);
   const cues: WaterSortBottleCue[] =
     hintBottle === null
-      ? []
-      : [{ bottleIndex: hintBottle, kind: "hint", id: hintCueId }];
+      ? sortedCues
+      : [
+          ...sortedCues,
+          { bottleIndex: hintBottle, kind: "hint", id: hintCueId },
+        ];
 
   /** 導入の間はゴールの盤面を見せ、始めの盤面の場面で、始めの盤面へ替える。 */
   function renderBoard({

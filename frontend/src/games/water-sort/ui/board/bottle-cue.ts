@@ -1,8 +1,9 @@
 /**
- * ボトルに一時的に重ねる合図。チュートリアルで、次に押すボトルを説明文に頼らず盤面の上で示すのに使う。
+ * ボトルに一時的に重ねる合図。チュートリアルで、手の結果や次に押すボトルを説明文に頼らず盤面の上で示すのに使う。
+ * - `sorted`: 注いだ先が1色で満杯にそろったことを、一瞬光らせて示す。
  * - `hint`: 次に押すボトルを、出た瞬間から分かる強さで示す。
  */
-export type WaterSortBottleCueKind = "hint";
+export type WaterSortBottleCueKind = "sorted" | "hint";
 
 /** `id` が変わると、同じボトルの同じ合図でもやり直す。 */
 export type WaterSortBottleCue = {

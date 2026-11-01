@@ -165,16 +165,18 @@ describe("WaterSortTutorial", () => {
       expect(rules).toEqual(["空のボトルへ", "同じ色の上へ", "？", "？"]);
     });
 
-    test("重なった同じ色をまとめて注ぎ、緑をそろえて、次のルールを示すこと", () => {
+    test("重なった同じ色をまとめて注ぎ、そろった緑のボトルを光らせて、次のルールを示すこと", () => {
       tapBottles(stepTaps.slice(0, 6));
 
       const contents = [getBottleContents(2), getBottleContents(3)];
+      const sorted = getCuedBottles("sorted");
       const headline = screen.getByText(
         "空きが足りないときは 入るだけ移ります",
       );
       const rules = getRuleTexts();
 
       expect(contents).toEqual(["赤、青", "緑、緑、緑、緑"]);
+      expect(sorted).toEqual([4]);
       expect(headline).toBeTruthy();
       expect(rules).toEqual([
         "空のボトルへ",

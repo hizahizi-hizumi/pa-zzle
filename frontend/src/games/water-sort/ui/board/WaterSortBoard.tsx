@@ -130,6 +130,14 @@ export function WaterSortBoard({
               >
                 <WaterBottle contents={bottle} selected={isSource} />
               </span>
+              {cue?.kind === "sorted" && (
+                <span
+                  key={cue.id}
+                  aria-hidden="true"
+                  data-bottle-cue={cue.kind}
+                  className="pointer-events-none absolute inset-x-[4px] top-3 bottom-[4px] rounded-b-[1.15rem] bg-sky-100/60 ring-2 ring-sky-500/50 ring-inset fill-mode-forwards animate-out fade-out-0 duration-900 ease-in dark:bg-sky-900/50 dark:ring-sky-300/50"
+                />
+              )}
               {cue?.kind === "hint" && (
                 <span
                   key={cue.id}
