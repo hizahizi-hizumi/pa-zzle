@@ -1,5 +1,6 @@
 import { parseIceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
 import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";
+import type { IceFloorMazeStateCell } from "@/games/ice-floor-maze/puzzle/state";
 import {
   getIceFloorMazeBoardViewBox,
   getIceFloorMazeCellCenter,
@@ -10,14 +11,21 @@ import { IceFloorMazeTerrain } from "@/games/ice-floor-maze/ui/board/IceFloorMaz
 import { IceFloorMazeTrail } from "@/games/ice-floor-maze/ui/board/IceFloorMazeTrail";
 
 type HowToPlayFigureProps = {
-  /** 1行を1文字列とした盤面。`.` が氷、`#` が岩。 */
+  /**
+   * 1行を1文字列とした盤面。`.` が氷、`#` が岩、`b` がもろい岩、`c` が薄い氷、`x` が盤面の外、
+   * `w` が薄い氷の割れた後の水面。
+   */
   rows: readonly string[];
-  goal: number;
+  /** ゴールのマス。要素の働きだけを示す図では渡さない。 */
+  goal?: number;
   /** 駒のいるマス。 */
   piece: number;
   /** 駒がここまで滑ってきた跡。 */
   trail?: { direction: IceFloorMazeDirection; from: number };
 };
+
+/** 水面は初期盤面に現れないので、盤面の記法には無い。図では割れた後の薄い氷として描く。 */
+const WATER_NOTATION = "w";
 
 /** 盤面と同じ見た目で描く、遊び方の小さな盤面。 */
 export function HowToPlayFigure({
@@ -26,9 +34,18 @@ export function HowToPlayFigure({
   piece,
   trail,
 }: HowToPlayFigureProps) {
-  const board = parseIceFloorMazeBoard(rows);
+  const board = parseIceFloorMazeBoard(
+    rows.map((row) => row.replaceAll(WATER_NOTATION, "c")),
+  );
+  const cells = rows
+    .flatMap((row) => Array.from(row))
+    .map(
+      (notation, cellIndex): IceFloorMazeStateCell =>
+        notation === WATER_NOTATION ? "water" : board.cells[cellIndex]!,
+    );
   const viewBox = getIceFloorMazeBoardViewBox(board);
-  const goalCenter = getIceFloorMazeCellCenter(board, goal);
+  const goalCenter =
+    goal === undefined ? null : getIceFloorMazeCellCenter(board, goal);
   const pieceCenter = getIceFloorMazeCellCenter(board, piece);
 
   return (
@@ -38,7 +55,7 @@ export function HowToPlayFigure({
       viewBox={`${viewBox.minX} ${viewBox.minY} ${viewBox.width} ${viewBox.height}`}
       className="h-20 w-auto shrink-0"
     >
-      <IceFloorMazeTerrain board={board} goal={goal} />
+      <IceFloorMazeTerrain board={board} cells={cells} goal={goal} />
       {trail ? (
         <IceFloorMazeTrail
           board={board}
@@ -47,9 +64,11 @@ export function HowToPlayFigure({
           to={piece}
         />
       ) : null}
-      <g transform={`translate(${goalCenter.x} ${goalCenter.y})`}>
-        <IceFloorMazeGoalMark />
-      </g>
+      {goalCenter ? (
+        <g transform={`translate(${goalCenter.x} ${goalCenter.y})`}>
+          <IceFloorMazeGoalMark />
+        </g>
+      ) : null}
       <g transform={`translate(${pieceCenter.x} ${pieceCenter.y})`}>
         <IceFloorMazePieceMark />
       </g>

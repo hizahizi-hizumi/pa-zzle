@@ -14,7 +14,6 @@ import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules"
 import type { IceFloorMazeStateCell } from "@/games/ice-floor-maze/puzzle/state";
 import { IceFloorMazeBoard } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard";
 import { IceFloorMazeHowToPlayDialog } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog";
-import { IceFloorMazeDirectionPad } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeDirectionPad";
 import { IceFloorMazeSwipeArea } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeSwipeArea";
 import { IceFloorMazeTrappedNotice } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeTrappedNotice";
 import { IceFloorMazeResultScreen } from "@/games/ice-floor-maze/ui/result/IceFloorMazeResultScreen";
@@ -174,11 +173,8 @@ export function IceFloorMazePlay({
             onRestart={onRestart}
           />
         ) : (
-          <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-4">
-            <div className="justify-self-end">
-              <UndoButton disabled={!canUndo} onUndo={onUndo} />
-            </div>
-            <IceFloorMazeDirectionPad disabled={!playing} onSlide={onSlide} />
+          <div className="flex h-14 items-center justify-center">
+            <UndoButton disabled={!canUndo} onUndo={onUndo} />
           </div>
         )}
       </footer>
