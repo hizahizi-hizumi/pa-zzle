@@ -338,7 +338,7 @@ describe("TakuzuTutorial", () => {
       });
 
       test("ルールを示してルールの並びに加え、今示しているルールとして目立たせること", () => {
-        const message = screen.getByText("どの行も四角と丸は同じ数です");
+        const message = screen.getByText("どの行も四角と丸の数が同じです");
         const rules = getRuleTexts();
         const currentRules = getCurrentRuleTexts();
 

@@ -375,7 +375,7 @@ describe("takuzuTutorial.describeViolation", () => {
       4,
       [place(cellAt(1, 4), "a")],
       {
-        headline: "四角が多すぎる行があります",
+        headline: "この行は四角が多すぎます",
         detail: null,
       },
     ],

@@ -130,12 +130,12 @@ const steps: readonly TakuzuTutorialStep[] = [
     cellIndices: [cellAt(2, 1)],
   },
   {
-    message: { headline: "どの行も四角と丸は同じ数です", detail: null },
+    message: { headline: "どの行も四角と丸の数が同じです", detail: null },
     introducedRuleId: "count",
     cellIndices: [cellAt(1, 4)],
   },
   {
-    message: { headline: "どの列も四角と丸は同じ数です", detail: null },
+    message: { headline: "どの列も四角と丸の数が同じです", detail: null },
     introducedRuleId: null,
     cellIndices: [cellAt(4, 4)],
   },
@@ -562,7 +562,7 @@ function listViolationDescriptions(
           {
             cellIndices,
             message: {
-              headline: `${tileNames[tile]}が多すぎる${lineNames[line.axis]}があります`,
+              headline: `この${lineNames[line.axis]}は${tileNames[tile]}が多すぎます`,
               detail: null,
             },
           },

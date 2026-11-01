@@ -85,7 +85,7 @@ const goalBoard = createSolvedSlidePuzzleBoard(3);
 const steps: readonly SlidePuzzleTutorialStep[] = [
   {
     message: {
-      headline: "空白の隣のタイルは\nタップでスライドします",
+      headline: "空白の隣のタイルは\nタップするとスライドします",
       detail: "印のタイルをタップしてください",
     },
     introducedRuleId: "slide",
@@ -347,7 +347,7 @@ export const slidePuzzleTutorial: Tutorial<
   ],
   steps,
   freePlay: {
-    headline: "残りを収めれば完成です",
+    headline: "残りを収めると完成です",
     detail: null,
   },
   completion: {

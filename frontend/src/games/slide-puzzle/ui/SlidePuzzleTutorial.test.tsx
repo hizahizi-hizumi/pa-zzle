@@ -126,7 +126,7 @@ describe("SlidePuzzleTutorial", () => {
 
     test("崩れた始めの盤面で、空白の隣のタイルのタップを示し、まだ示していないルールを伏せておくこと", () => {
       const headline = screen.getByText(
-        "空白の隣のタイルは タップでスライドします",
+        "空白の隣のタイルは タップするとスライドします",
       );
       const positions = [getTilePosition(4), getTilePosition(5)];
       const hinted = getCuedTiles("hint");
@@ -143,7 +143,7 @@ describe("SlidePuzzleTutorial", () => {
 
       const position = getTilePosition(7);
       const headline = screen.getByText(
-        "空白の隣のタイルは タップでスライドします",
+        "空白の隣のタイルは タップするとスライドします",
       );
       const hinted = getCuedTiles("hint");
 
@@ -218,7 +218,7 @@ describe("SlidePuzzleTutorial", () => {
       });
 
       test("残りを並べることを伝え、手が止まったときだけ次にスライドさせるタイルを示すこと", () => {
-        const headline = screen.getByText("残りを収めれば完成です");
+        const headline = screen.getByText("残りを収めると完成です");
         const hintedBeforeIdle = getCuedTiles("hint");
         advanceTime(idleHintDelayMs);
 
@@ -237,7 +237,7 @@ describe("SlidePuzzleTutorial", () => {
         );
         tapTiles([1]);
 
-        const restored = screen.getByText("残りを収めれば完成です");
+        const restored = screen.getByText("残りを収めると完成です");
 
         expect(position).toBe("2行3列");
         expect(headline).toBeTruthy();
@@ -248,7 +248,7 @@ describe("SlidePuzzleTutorial", () => {
         tapTiles([3]);
         advanceTime(idleHintDelayMs);
 
-        const headline = screen.getByText("残りを収めれば完成です");
+        const headline = screen.getByText("残りを収めると完成です");
         const hinted = getCuedTiles("hint");
 
         expect(headline).toBeTruthy();
@@ -342,7 +342,7 @@ describe("SlidePuzzleTutorial", () => {
       advanceTime(introEnoughMs);
 
       const headline = screen.getByText(
-        "空白の隣のタイルは タップでスライドします",
+        "空白の隣のタイルは タップするとスライドします",
       );
       const hinted = getCuedTiles("hint");
 
