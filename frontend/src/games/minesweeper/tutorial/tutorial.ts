@@ -51,12 +51,12 @@ export type MinesweeperTutorialAction =
  * 手順で印を付けて受け付ける1手。
  * - `operation`: `change-mode` なら `mode` へ切り替える。ほかは `cellIndex` のマスを開く・旗を置く・まとめて開く。
  * - `focusCellIndices`: 印のマスを決める数字。手順の間、見るところとして目立たせる。
- * - `focusMineCount`: 盤面全体の地雷の数を、見るところとして目立たせる。
+ * - `focusCounts`: 盤面全体の地雷の数と旗の数を、見るところとして目立たせる。
  */
 export type MinesweeperTutorialStep =
   TutorialStep<MinesweeperTutorialRuleId> & {
     focusCellIndices: readonly number[];
-    focusMineCount: boolean;
+    focusCounts: boolean;
   } & (
       | { operation: "change-mode"; mode: MinesweeperTutorialInputMode }
       | { operation: "reveal" | "flag" | "chord"; cellIndex: number }
@@ -134,7 +134,7 @@ const steps: readonly MinesweeperTutorialStep[] = [
     operation: "reveal",
     cellIndex: cellAt(1, 1),
     focusCellIndices: [],
-    focusMineCount: false,
+    focusCounts: false,
   },
   {
     message: {
@@ -145,7 +145,7 @@ const steps: readonly MinesweeperTutorialStep[] = [
     operation: "change-mode",
     mode: "flag",
     focusCellIndices: [],
-    focusMineCount: false,
+    focusCounts: false,
   },
   {
     message: {
@@ -156,18 +156,18 @@ const steps: readonly MinesweeperTutorialStep[] = [
     operation: "flag",
     cellIndex: cellAt(2, 1),
     focusCellIndices: [cellAt(1, 1)],
-    focusMineCount: false,
+    focusCounts: false,
   },
   {
     message: {
-      headline: "旗の数が数字と同じなら\n残りのマスは開けます",
-      detail: "旗のマスは押しても開きません",
+      headline: "数字の数だけ旗があれば\n残りのマスに地雷はありません",
+      detail: null,
     },
     introducedRuleId: null,
     operation: "reveal",
     cellIndex: cellAt(3, 1),
     focusCellIndices: [cellAt(2, 2)],
-    focusMineCount: false,
+    focusCounts: false,
   },
   {
     message: {
@@ -178,57 +178,57 @@ const steps: readonly MinesweeperTutorialStep[] = [
     operation: "reveal",
     cellIndex: cellAt(4, 1),
     focusCellIndices: [cellAt(3, 1)],
-    focusMineCount: false,
+    focusCounts: false,
   },
   {
     message: {
-      headline: "このマスも\n数字から地雷だと分かります",
-      detail: "旗は自分用の目印で 正しいかは判定しません",
+      headline: "ここも数字から地雷だと分かります",
+      detail: "旗は自分用の目印です\n合っているかは判定されません",
     },
     introducedRuleId: null,
     operation: "flag",
     cellIndex: cellAt(3, 4),
     focusCellIndices: [cellAt(2, 4)],
-    focusMineCount: false,
+    focusCounts: false,
   },
   {
     message: {
-      headline: "旗の数が数字と同じなら\n数字を押すと残りをまとめて開けます",
+      headline: "旗が数字の数だけあるとき\n数字を押すと残りをまとめて開きます",
       detail: "旗が違っていると地雷を踏みます",
     },
     introducedRuleId: "chord",
     operation: "chord",
     cellIndex: cellAt(4, 3),
     focusCellIndices: [],
-    focusMineCount: false,
+    focusCounts: false,
   },
   {
     message: {
-      headline: "このマスも\n数字から地雷だと分かります",
-      detail: "旗はもう一度押すと外せます",
+      headline: "ここも数字から地雷だと分かります",
+      detail: "旗はもう一度押すと外せます\n旗のマスは押しても開きません",
     },
     introducedRuleId: null,
     operation: "flag",
     cellIndex: cellAt(6, 4),
     focusCellIndices: [cellAt(6, 3)],
-    focusMineCount: false,
+    focusCounts: false,
   },
   {
     message: {
       headline: "上の地雷の数は\n盤面全体の地雷の数です",
-      detail: "残りの1つは この1の周りにあります",
+      detail: "旗は3つなので残りの地雷は1つです",
     },
     introducedRuleId: "total",
     operation: "reveal",
     cellIndex: cellAt(6, 5),
     focusCellIndices: [cellAt(3, 6)],
-    focusMineCount: true,
+    focusCounts: true,
   },
 ];
 
 /** 手順の操作に合わない切り替えのとき、補足の代わりに出す、切り替え方。 */
 const modeChangeDetails = {
-  reveal: "上のボタンで開くに戻します",
+  reveal: "上のボタンをもう一度押して戻します",
   flag: "上のボタンで旗に切り替えます",
 } as const satisfies Record<MinesweeperTutorialInputMode, string>;
 
@@ -397,8 +397,38 @@ function isStepDone(
   }
 }
 
+/** 後の手順で旗を置かせるマス。先に置かれると、その手順で置く手が残らない。 */
+function listLaterFlagCellIndices(step: MinesweeperTutorialStep): number[] {
+  return steps
+    .slice(steps.indexOf(step) + 1)
+    .flatMap((later) => (later.operation === "flag" ? [later.cellIndex] : []));
+}
+
 /**
- * 手を引いている間は、印のマスへの手順どおりの操作だけを受け付ける。開く・まとめて開くは切り替えが開くのとき、
+ * 手を引いている間に受け付ける操作。印のマスへの手順どおりの操作のほか、旗は自分用の目印なので、
+ * 旗を置けると教えた後は、開かせるマスと後の手順で旗を置かせるマスを除いて、どこにでも置き・外しできるようにする。
+ */
+function isAcceptedWhileGuiding(
+  step: MinesweeperTutorialStep,
+  action: { type: "reveal" | "flag" | "chord"; cellIndex: number },
+): boolean {
+  if (step.operation === "change-mode") {
+    return false;
+  }
+  if (action.type === step.operation && action.cellIndex === step.cellIndex) {
+    return true;
+  }
+  return (
+    action.type === "flag" &&
+    steps.indexOf(step) >=
+      steps.findIndex((candidate) => candidate.operation === "flag") &&
+    action.cellIndex !== step.cellIndex &&
+    !listLaterFlagCellIndices(step).includes(action.cellIndex)
+  );
+}
+
+/**
+ * 手を引いている間は、印のマスへの手順どおりの操作と、旗の置き・外しだけを受け付ける。開く・まとめて開くは切り替えが開くのとき、
  * 旗は切り替えが旗のときか長押し・右クリックで届くので、届いた操作の種類だけを見る。
  * 手を離した後は本番と同じく受け付け、地雷を踏んだ手をルールに合わない手として返す。
  */
@@ -416,12 +446,7 @@ function performMinesweeperTutorialAction(
       step?.operation === "change-mode" && step.mode === action.mode;
     return { state: changed, outcome: stepDone ? "stepped" : "continued" };
   }
-  if (
-    step !== null &&
-    (step.operation === "change-mode" ||
-      action.type !== step.operation ||
-      action.cellIndex !== step.cellIndex)
-  ) {
+  if (step !== null && !isAcceptedWhileGuiding(step, action)) {
     return { state, outcome: "ignored" };
   }
 
@@ -450,7 +475,10 @@ function performMinesweeperTutorialAction(
 }
 
 function describeMinesweeperTutorialViolation(): TutorialMessage {
-  return { headline: "地雷を踏みました", detail: "ミスとして数えます" };
+  return {
+    headline: "地雷を踏みました",
+    detail: "踏んだ地雷は\nまとめて開くときに旗と同じに数えます",
+  };
 }
 
 /** 本番の盤面と同じ見え方。解き終えたら、旗を置いた地雷も含めてすべての地雷を見せ、答え合わせの盤面にする。 */
@@ -516,7 +544,10 @@ export function getMinesweeperTutorialCue(
   };
 }
 
-/** 手順の一言。手順の操作に合わない切り替えのときは、補足の代わりに切り替え方を言う。 */
+/**
+ * 手順の一言。補足の無い手順で、手順の操作に合わない切り替えのときは、補足の場所で切り替え方を言う。
+ * 補足のある手順では、補足を読ませるのを優先し、切り替えはボタンの印だけで示す。
+ */
 export function adjustMinesweeperTutorialMessage(
   { step }: MinesweeperTutorialSituation,
   state: MinesweeperTutorialBoardState,
@@ -526,7 +557,7 @@ export function adjustMinesweeperTutorialMessage(
     return message;
   }
   const mode = getStepMode(step);
-  return mode === null || mode === state.mode
+  return mode === null || mode === state.mode || message.detail !== null
     ? message
     : { headline: message.headline, detail: modeChangeDetails[mode] };
 }
@@ -569,12 +600,12 @@ export const minesweeperTutorial: Tutorial<
   steps,
   freePlay: {
     headline: "残りのマスを開くと完成です",
-    detail: "地雷を踏むとミスですが 続けられます",
+    detail: "地雷を踏んでもミスになるだけで続けられます",
   },
   completion: {
     selection: {
       headline: "完成です",
-      detail: "レベル1は 9×9 ほどの盤面です",
+      detail: "レベル1も同じルールで\n盤面は 9×9 ほどです",
     },
     play: {
       headline: "完成です",

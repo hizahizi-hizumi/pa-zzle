@@ -7,8 +7,8 @@ type MinesweeperTutorialStatusProps = {
   flagCount: number;
   mistakeCount: number;
   mode: MinesweeperInputMode;
-  /** 盤面全体の地雷の数を、見るところとして目立たせる。 */
-  mineCountFocused: boolean;
+  /** 盤面全体の地雷の数と旗の数を、見るところとして目立たせる。 */
+  countsFocused: boolean;
   /** 切り替えのボタンに、次に押すところとして印を付ける。 */
   modeCued: boolean;
   modeCueId: number;
@@ -23,15 +23,15 @@ export function MinesweeperTutorialStatus({
   flagCount,
   mistakeCount,
   mode,
-  mineCountFocused,
+  countsFocused,
   modeCued,
   modeCueId,
   modeHidden,
   onModeChange,
 }: MinesweeperTutorialStatusProps) {
   const counts = [
-    { label: "地雷", count: mineCount, focused: mineCountFocused },
-    { label: "旗", count: flagCount, focused: false },
+    { label: "地雷", count: mineCount, focused: countsFocused },
+    { label: "旗", count: flagCount, focused: countsFocused },
     { label: "ミス", count: mistakeCount, focused: false },
   ];
   return (

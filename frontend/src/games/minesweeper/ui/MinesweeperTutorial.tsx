@@ -74,8 +74,7 @@ export function MinesweeperTutorial({
   const situation = getTutorialSituation(minesweeperTutorial, progress);
   const { boardState } = progress;
   const guiding = situation.step !== null;
-  const idleHintWaiting =
-    progress.phase === "playing" && !guiding && !progress.violated;
+  const idleHintWaiting = progress.phase === "playing" && !guiding;
   const cue = getMinesweeperTutorialCue(situation, boardState);
   const idleHintCellIndex =
     idleHintWaiting && idleProgress === progress
@@ -182,9 +181,7 @@ export function MinesweeperTutorial({
           flagCount={counts.flagCount}
           mistakeCount={counts.mistakeCount}
           mode={shownBoardState.mode}
-          mineCountFocused={
-            cuesShown && (situation.step?.focusMineCount ?? false)
-          }
+          countsFocused={cuesShown && (situation.step?.focusCounts ?? false)}
           modeCued={cuesShown && (cue?.modeCued ?? false)}
           modeCueId={hintCueId}
           modeHidden={!interactive}

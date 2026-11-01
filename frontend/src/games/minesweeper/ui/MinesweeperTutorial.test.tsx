@@ -206,7 +206,7 @@ describe("MinesweeperTutorial", () => {
     test("旗を置くと、旗の数を数えて次の手順へ進むこと", () => {
       fireEvent.click(getCell(2, 1));
 
-      const next = screen.getByText(/旗の数が数字と同じなら/);
+      const next = screen.getByText(/数字の数だけ旗があれば/);
       const flags = screen.getByText("旗").nextElementSibling?.textContent;
 
       expect(getCellLabel(2, 1)).toBe("旗");
@@ -218,7 +218,7 @@ describe("MinesweeperTutorial", () => {
       setFlagMode(false);
       fireEvent.contextMenu(getCell(2, 1));
 
-      const next = screen.getByText(/旗の数が数字と同じなら/);
+      const next = screen.getByText(/数字の数だけ旗があれば/);
 
       expect(next).toBeTruthy();
     });

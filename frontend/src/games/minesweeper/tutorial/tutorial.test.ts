@@ -288,13 +288,29 @@ describe("minesweeperTutorial.perform", () => {
       progress = finishSteps(2);
     });
 
-    test("印のマスでないマスへの操作と、手順と違う操作を受け付けないこと", () => {
+    test("印のマスでないマスを開く手、手順と違う操作、後の手順で旗を置かせるマスへの旗を受け付けないこと", () => {
       const result = performAll(progress, [
-        { type: "flag", cellIndex: cellAt(3, 1) },
+        { type: "reveal", cellIndex: cellAt(3, 1) },
         { type: "reveal", cellIndex: cellAt(2, 1) },
+        { type: "flag", cellIndex: cellAt(3, 4) },
       ]);
 
       expect(result).toBe(progress);
+    });
+
+    test("後の手順に関わらないマスには旗を置いて外せ、手順は進まないこと", () => {
+      const placed = performAll(progress, [
+        { type: "flag", cellIndex: cellAt(5, 5) },
+      ]);
+      const removed = performAll(placed, [
+        { type: "flag", cellIndex: cellAt(5, 5) },
+      ]);
+
+      expect(placed.boardState.puzzle.flaggedCellIndices).toEqual([
+        cellAt(5, 5),
+      ]);
+      expect(removed.boardState.puzzle.flaggedCellIndices).toEqual([]);
+      expect(removed.stepIndex).toBe(2);
     });
 
     test("切り替えは受け付け、開くに戻してから長押しで印のマスに旗を置いても次の手順へ進むこと", () => {
@@ -377,7 +393,7 @@ describe("getMinesweeperTutorialCue", () => {
     ]);
     const situation = getTutorialSituation(minesweeperTutorial, progress);
 
-    test("切り替えのボタンと印のマスに印を付け、補足で切り替え方を言うこと", () => {
+    test("切り替えのボタンと印のマスに印を付け、手順の補足はそのまま言うこと", () => {
       const cue = getMinesweeperTutorialCue(situation, progress.boardState);
       const message = adjustMinesweeperTutorialMessage(
         situation,
@@ -389,7 +405,7 @@ describe("getMinesweeperTutorialCue", () => {
       );
 
       expect(cue).toEqual({ modeCued: true, cellIndex: cellAt(2, 1) });
-      expect(message.detail).toBe("上のボタンで旗に切り替えます");
+      expect(message.detail).toBe("長押しでも旗を置けます");
     });
   });
 
