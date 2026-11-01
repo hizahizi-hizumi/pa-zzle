@@ -96,7 +96,7 @@ const steps: readonly SlidePuzzleTutorialStep[] = [
   {
     message: {
       headline: "5 のタイルが、\n自分の場所に収まりました",
-      detail: "この空白は 8 の場所です。8 も収めましょう",
+      detail: "この空白は、8 のタイルの場所です",
     },
     introducedRuleId: null,
     tile: 8,
