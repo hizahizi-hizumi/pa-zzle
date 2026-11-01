@@ -236,6 +236,17 @@ export const iceFloorMazePlayRecordDefinition = {
   getComparisonKey(record) {
     return isIceFloorMazePlayRecord(record) ? record.payload.difficulty : null;
   },
+  getClearPerformance(record) {
+    if (!isIceFloorMazePlayRecord(record)) {
+      return null;
+    }
+    const { elapsedMs, moveCount, optimalMoveCount } =
+      record.payload.performance;
+    return {
+      elapsedMs,
+      moves: { completionMoveCount: moveCount, optimalMoveCount },
+    };
+  },
   personalBestMetrics: [
     {
       id: "play-score",

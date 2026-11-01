@@ -14,6 +14,7 @@ export function IceFloorMazeDifficultyView() {
         <HomeBackLink />
         <DifficultySelectionHeading
           title={ICE_FLOOR_MAZE_DISPLAY_NAME}
+          gameId={iceFloorMazeCatalogEntry.id}
           renderHowToPlayDialog={({ open, onClose }) => (
             <IceFloorMazeHowToPlayDialog open={open} onClose={onClose} />
           )}
