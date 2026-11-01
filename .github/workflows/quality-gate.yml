@@ -24,10 +24,17 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.1.0
+
+      # vite / vitest / tsc はNodeで動くため、ランナー既定ではなくChatGPT実行環境に合わせた.node-versionに固定する。
+      - name: Setup Node
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@v2.2.0
         with:
           bun-version-file: .bun-version
 
@@ -45,7 +52,7 @@ jobs:
       # semantic lintはprovider課金を抑えるため、mainへのpushと手動実行でだけ動かす。
       - name: Restore semantic lint cache
         if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@v6.1.0
         with:
           path: .semantic-lint/.cache
           key: semantic-lint-v2-${{ github.run_id }}-${{ github.run_attempt }}
@@ -61,7 +68,7 @@ jobs:
       # provider応答ごとに追記した判定を、lintが失敗した実行でも次回へ引き継ぐ。
       - name: Save semantic lint cache
         if: ${{ !cancelled() && github.event_name != 'pull_request' }}
-        uses: actions/cache/save@v6
+        uses: actions/cache/save@v6.1.0
         with:
           path: .semantic-lint/.cache
           key: semantic-lint-v2-${{ github.run_id }}-${{ github.run_attempt }}

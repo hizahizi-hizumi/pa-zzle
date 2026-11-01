@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import {
   applyPlaySession,
@@ -20,8 +20,11 @@ import type {
 } from "@/games/takuzu/problem/problem";
 import type { TakuzuPooledProblem } from "@/games/takuzu/problem/problem-pool";
 import { selectTakuzuProblemForDifficulty } from "@/games/takuzu/problem-selection";
-import type { TakuzuCell } from "@/games/takuzu/puzzle/board";
-import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
+import type { TakuzuCell, TakuzuTile } from "@/games/takuzu/puzzle/board";
+import {
+  isTakuzuGivenCell,
+  type TakuzuCycleDirection,
+} from "@/games/takuzu/puzzle/transitions";
 import {
   calculateTakuzuPlayScore,
   calculateTakuzuSpeedScoreRule,
@@ -44,6 +47,15 @@ import {
   type TakuzuSessionResult,
   undoTakuzuSession,
 } from "@/games/takuzu/session/session";
+
+/**
+ * マスへの操作の知らせ。効果音と盤面の反応のため、操作ごとに増える `id` を付ける。
+ * `placed` はマスにタイルを置いた操作、`emptied` はマスを空きに戻した操作、`invalid` は固定マスを変えようとした操作。
+ */
+export type TakuzuOperation =
+  | { id: number; type: "placed"; tile: TakuzuTile }
+  | { id: number; type: "emptied" }
+  | { id: number; type: "invalid"; cellIndex: number };
 
 /** クリアしたプレイの事実と、それを遊んだ問題の作業の量から導いた評価。 */
 export type TakuzuResult = TakuzuSessionResult & {
@@ -81,6 +93,7 @@ export type TakuzuPlay = GamePlay<
     lineViolations: TakuzuLineViolationView[];
     correctionCount: number;
     undoCount: number;
+    operation: TakuzuOperation | null;
     cycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
     placeCell: (cellIndex: number, cell: TakuzuCell) => void;
   };
@@ -90,6 +103,7 @@ type TakuzuPlayState = {
   workload: TakuzuSolveWorkload;
   session: TakuzuSession;
   progress: GameProgress;
+  operation: TakuzuOperation | null;
 };
 
 function createPlayState(
@@ -101,6 +115,41 @@ function createPlayState(
     workload,
     session: createTakuzuSession(problem, startedAt),
     progress: "playing",
+    operation: null,
+  };
+}
+
+/**
+ * マスへの操作で session を進め、操作の知らせを添える。固定マスへの操作は盤面を変えず、通らない操作として知らせる。
+ * 盤面が変わらない操作（同じ中身を置く、プレイ中でない）は何も知らせない。
+ */
+function applyCellOperation(
+  state: TakuzuPlayState,
+  cellIndex: number,
+  operationId: number,
+  operate: (session: TakuzuSession) => TakuzuSession,
+): TakuzuPlayState {
+  if (state.progress !== "playing") {
+    return state;
+  }
+  if (isTakuzuGivenCell(state.session.problem.givens, cellIndex)) {
+    return {
+      ...state,
+      operation: { id: operationId, type: "invalid", cellIndex },
+    };
+  }
+
+  const next = applyPlaySession(state, operate(state.session));
+  if (next === state) {
+    return state;
+  }
+  const tile = next.session.puzzleState.cells[cellIndex] ?? null;
+  return {
+    ...next,
+    operation:
+      tile === null
+        ? { id: operationId, type: "emptied" }
+        : { id: operationId, type: "placed", tile },
   };
 }
 
@@ -112,6 +161,14 @@ function selectProblem(
     (seed) => selectTakuzuProblemForDifficulty(difficulty, seed),
     avoidedProblemId,
   ).problem;
+}
+
+/** 待ったや盤面を戻すで盤面が変わったら、前の操作の知らせを消す。 */
+function clearOperationIfChanged(
+  current: TakuzuPlayState,
+  next: TakuzuPlayState,
+): TakuzuPlayState {
+  return next === current ? current : { ...next, operation: null };
 }
 
 /**
@@ -132,19 +189,15 @@ export function useTakuzuPlay(
   );
   const { session, progress, problemIdentity, workload } = play;
   const elapsedMs = useSessionElapsedMs(session);
+  const nextOperationId = useRef(0);
 
   const cycleCell = useCallback(
     (cellIndex: number, direction: TakuzuCycleDirection) => {
       const operatedAt = Date.now();
+      const operationId = nextOperationId.current++;
       setPlay((current) =>
-        applyPlaySession(
-          current,
-          cycleTakuzuSessionCell(
-            current.session,
-            cellIndex,
-            direction,
-            operatedAt,
-          ),
+        applyCellOperation(current, cellIndex, operationId, (session) =>
+          cycleTakuzuSessionCell(session, cellIndex, direction, operatedAt),
         ),
       );
     },
@@ -153,34 +206,41 @@ export function useTakuzuPlay(
 
   const placeCell = useCallback((cellIndex: number, cell: TakuzuCell) => {
     const operatedAt = Date.now();
+    const operationId = nextOperationId.current++;
     setPlay((current) =>
-      applyPlaySession(
-        current,
-        placeTakuzuSessionCell(current.session, cellIndex, cell, operatedAt),
+      applyCellOperation(current, cellIndex, operationId, (session) =>
+        placeTakuzuSessionCell(session, cellIndex, cell, operatedAt),
       ),
     );
   }, []);
 
   const undo = useCallback(() => {
     setPlay((current) =>
-      applyPlaySession(current, undoTakuzuSession(current.session)),
+      clearOperationIfChanged(
+        current,
+        applyPlaySession(current, undoTakuzuSession(current.session)),
+      ),
     );
   }, []);
 
   const restart = useCallback(() => {
     setPlay((current) =>
-      applyPlaySession(current, restartTakuzuSession(current.session)),
+      clearOperationIfChanged(
+        current,
+        applyPlaySession(current, restartTakuzuSession(current.session)),
+      ),
     );
   }, []);
 
   const replay = useCallback(() => {
     const startedAt = Date.now();
-    setPlay((current) =>
-      startPlaySession(
+    setPlay((current) => ({
+      ...startPlaySession(
         current,
         createTakuzuSession(current.session.problem, startedAt),
       ),
-    );
+      operation: null,
+    }));
   }, []);
 
   const startNewProblem = useCallback(() => {
@@ -222,6 +282,7 @@ export function useTakuzuPlay(
     lineViolations,
     correctionCount: getTakuzuSessionCorrectionCount(session),
     undoCount: session.undoCount,
+    operation: play.operation,
     canUndo: canUndoTakuzuSession(session),
     canRestart: canRestartTakuzuSession(session),
     cycleCell,
