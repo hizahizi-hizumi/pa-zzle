@@ -23,6 +23,7 @@ import {
 import {
   canSelectHitofudePuzzleProblemById,
   restoreHitofudePuzzleProblem,
+  selectHitofudePuzzlePreviewProblem,
   selectHitofudePuzzleProblemById,
   selectHitofudePuzzleProblemForDifficulty,
 } from "@/games/hitofude-puzzle/problem-selection";
@@ -273,5 +274,23 @@ describe("canSelectHitofudePuzzleProblemById", () => {
     const result = canSelectHitofudePuzzleProblemById(difficulty, id);
 
     expect(result).toBe(expected);
+  });
+});
+
+describe("selectHitofudePuzzlePreviewProblem", () => {
+  describe.each(difficulties)("レベル %s の場合", (difficulty) => {
+    const problems = listHitofudePuzzlePoolEntries(difficulty).map(
+      (entry) => toHitofudePuzzlePooledProblem(entry).problem,
+    );
+    const largestSize = Math.max(...problems.map(({ size }) => size));
+
+    test("問題集から、そのレベルの最も大きい盤面の問題を毎回同じに選ぶこと", () => {
+      const first = selectHitofudePuzzlePreviewProblem(difficulty);
+      const second = selectHitofudePuzzlePreviewProblem(difficulty);
+
+      expect(problems).toContainEqual(first);
+      expect(first.size).toBe(largestSize);
+      expect(second).toEqual(first);
+    });
   });
 });

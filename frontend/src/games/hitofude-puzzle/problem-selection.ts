@@ -1,9 +1,11 @@
 import type { HitofudePuzzleDifficulty } from "@/games/hitofude-puzzle/difficulty";
+import type { HitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/problem";
 import {
   type HitofudePuzzleRecordedProblemIdentity,
   isHitofudePuzzleProblemIdentity,
 } from "@/games/hitofude-puzzle/problem/problem";
 import {
+  decodeHitofudePuzzlePoolProblem,
   findHitofudePuzzlePoolEntry,
   findHitofudePuzzlePoolEntryByProblemId,
   type HitofudePuzzlePooledProblem,
@@ -58,4 +60,29 @@ export function canSelectHitofudePuzzleProblemById(
   problemId: string,
 ): boolean {
   return findHitofudePuzzlePoolEntryByProblemId(difficulty, problemId) !== null;
+}
+
+/**
+ * 難易度選択の見本にする、そのレベルの代表の1問。問題集から決定的に選ぶ。
+ * レベルで遊ぶ最も大きい盤面の問題のうち、穴の数が真ん中（同じ数なら問題集の先）のもの。
+ * 大きさの違いと、そのレベルでよく見る穴の量を見せる。
+ */
+export function selectHitofudePuzzlePreviewProblem(
+  difficulty: HitofudePuzzleDifficulty,
+): HitofudePuzzleProblem {
+  const entries = listHitofudePuzzlePoolEntries(difficulty);
+  const largestSize = Math.max(...entries.map(([size]) => size));
+  const problems = entries
+    .filter(([size]) => size === largestSize)
+    .map(([size, , , start, encodedHoles]) =>
+      decodeHitofudePuzzlePoolProblem(size, start, encodedHoles),
+    )
+    .sort((left, right) => left.holes.length - right.holes.length);
+  const median = problems[Math.floor((problems.length - 1) / 2)];
+  if (median === undefined) {
+    throw new RangeError(
+      `No level ${difficulty} Hitofude puzzle in the problem pool`,
+    );
+  }
+  return median;
 }
