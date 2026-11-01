@@ -2,6 +2,7 @@ import {
   type NonogramLineSolver,
   type NonogramSolveCell,
   nonogramSolveCell,
+  solveNonogramLineByEdges,
   solveNonogramLineFully,
 } from "@/games/nonogram/problem/generation/line-solver";
 import {
@@ -181,4 +182,61 @@ export function traceNonogramReadingRounds(
     rounds.push({ progressedLineCount, fixedCellCount: fixedValues.size });
   }
   return { status: "complete", rounds };
+}
+
+/** 1本を完全な線の読みで読み、新しく決まったマスを `grid` へ書き込む。決まったマスがあったか。 */
+function readLineFullyInto(
+  grid: NonogramSolveGrid,
+  clueLine: ClueLine,
+): boolean {
+  const cells = readLineCells(grid, clueLine.cellIndices);
+  const solved = solveNonogramLineFully(clueLine.clue, cells);
+  if (solved === null) {
+    throw new Error("Nonogram clues must have a solution");
+  }
+  let progressed = false;
+  for (const [position, cellIndex] of clueLine.cellIndices.entries()) {
+    const value = solved[position]!;
+    if (
+      cells[position] === nonogramSolveCell.unknown &&
+      value !== nonogramSolveCell.unknown
+    ) {
+      grid.cells[cellIndex] = value;
+      progressed = true;
+    }
+  }
+  return progressed;
+}
+
+/**
+ * 端寄せの読みだけでは止まり、完全な線の読みで初めて進む読みが何回要るか。
+ * 端寄せの読みを止まるまで進め、止まったら完全な線の読みで進む最初の1本（行を上から、続けて列を左から）だけを読む、を解き終えるまで繰り返す。
+ * 完全な線の読みでも止まる（仮置きが要るか、解が複数ある）なら `null`。
+ */
+export function countNonogramReadingsBeyondEdges(
+  clues: NonogramClues,
+): number | null {
+  const clueLines = listClueLines(clues);
+  const grid = createUnknownNonogramSolveGrid(getGridSize(clues));
+  let readingCount = 0;
+  for (;;) {
+    const status = propagateNonogramLineReadings(
+      clues,
+      grid,
+      solveNonogramLineByEdges,
+    );
+    if (status === "contradicted") {
+      throw new Error("Nonogram clues must have a solution");
+    }
+    if (status === "complete") {
+      return readingCount;
+    }
+    const progressed = clueLines.some((clueLine) =>
+      readLineFullyInto(grid, clueLine),
+    );
+    if (!progressed) {
+      return null;
+    }
+    readingCount += 1;
+  }
 }

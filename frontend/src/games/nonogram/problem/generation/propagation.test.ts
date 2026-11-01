@@ -4,6 +4,7 @@ import {
   solveNonogramLineByEdges,
 } from "@/games/nonogram/problem/generation/line-solver";
 import {
+  countNonogramReadingsBeyondEdges,
   createUnknownNonogramSolveGrid,
   isNonogramLineSolvable,
   type NonogramReadingTrace,
@@ -614,4 +615,39 @@ describe("traceNonogramReadingRounds", () => {
       });
     });
   });
+});
+
+describe("countNonogramReadingsBeyondEdges", () => {
+  // 研究用 Python の count_full_only_lines が返した回数（止まるときは -1）。
+  const cases = (
+    [
+      [
+        "5×5 がすべて黒の図柄",
+        ["#####", "#####", "#####", "#####", "#####"],
+        0,
+      ],
+      [
+        "端寄せの読みでは止まる図柄",
+        [".###.", "##...", ".####", "#...#", "....#"],
+        1,
+      ],
+      ["2×2 の対角の図柄", ["#.", ".#"], null],
+    ] as const
+  ).map(
+    ([name, pattern, expected]) =>
+      [
+        name,
+        computeNonogramClues(parseNonogramPattern(pattern)),
+        expected,
+      ] as const,
+  );
+
+  test.each(cases)(
+    "%sで、完全な線の読みで初めて進む読みの回数を返すこと",
+    (_, clues, expected) => {
+      const count = countNonogramReadingsBeyondEdges(clues);
+
+      expect(count).toBe(expected);
+    },
+  );
 });
