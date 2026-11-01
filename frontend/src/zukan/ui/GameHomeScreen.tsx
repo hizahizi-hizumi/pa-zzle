@@ -141,11 +141,11 @@ const noLevelFilter: LevelFilter = {
  * 位置は台紙に番号の順で置いた中の位置。
  */
 function findSelectedProblem(
-  difficulty: DifficultyLevel | null,
+  difficulty: DifficultyLevel,
   problems: readonly ZukanProblem[],
   key: SelectedProblemKey | null,
 ): SelectedProblem | null {
-  if (difficulty === null || difficulty !== key?.difficulty) {
+  if (difficulty !== key?.difficulty) {
     return null;
   }
   const index = problems.findIndex(
@@ -191,18 +191,23 @@ function listFilterFeatureAxes(
 }
 
 /**
- * 開いている台紙。選ぶまでは、そのゲームで最後にクリアまたは離脱したレベルを開き、そのゲームを遊んだことが無ければどのレベルも開かない。
+ * 開いている台紙。選ぶまでは、そのゲームで最後にクリアまたは離脱したレベルを開き、そのゲームを遊んだことが無ければ最も低いレベルを開く。
  * 離脱はこの画面を描いたあとに保存されることがあるので、選ぶまでは図鑑から求め直す。
  */
 function findOpenSection(
   sections: readonly ZukanDifficultySection[],
   chosenDifficulty: DifficultyLevel | null,
   latestPlayedDifficulty: DifficultyLevel | null,
-): ZukanDifficultySection | undefined {
-  return (
+): ZukanDifficultySection {
+  const openSection =
     sections.find(({ difficulty }) => difficulty === chosenDifficulty) ??
-    sections.find(({ difficulty }) => difficulty === latestPlayedDifficulty)
-  );
+    sections.find(({ difficulty }) => difficulty === latestPlayedDifficulty) ??
+    sections[0];
+  // どのゲームも難易度1〜5のそれぞれに問題を供給するので（難易度提供の採用条件）、問題のあるレベルが無いのは問題集の誤りである。
+  if (openSection === undefined) {
+    throw new Error("ゲームのホームを開くには、問題のあるレベルが要る");
+  }
+  return openSection;
 }
 
 /** 図鑑の問題を問題 ID で引き、選ぶ問題として持つ形にする。図鑑に無ければ `null`。 */
@@ -287,8 +292,8 @@ function listPendingChanges(
 /**
  * 1ゲームのホーム。遊ぶレベルを選んでプレイを始める操作と、そのゲームの図鑑を1画面にまとめる。
  * 上から、ホームへ戻る導線、ゲーム名の見出し、レベルのカード、開いているレベルで遊ぶ「ランダムに遊ぶ」、開いているレベルの台紙を置く。
- * 開いたときは、選んでおく問題があればそのレベル、無ければそのゲームで最後にクリアまたは離脱したレベルを開く。そのゲームを遊んだことが無ければどのレベルも開かず、
- * 台紙の場所を使ってレベルのカードを大きく並べ、「ランダムに遊ぶ」と台紙はカードを選んでから出す。製品からレベルを初期選択・推奨しない。
+ * 開いたときは、選んでおく問題があればそのレベル、無ければそのゲームで最後にクリアまたは離脱したレベル、そのゲームを遊んだことが無ければ最も低いレベルを開く。
+ * 最も低いレベルのカードもほかのカードと同じ姿で示し、推奨として強調しない。
  * 開いたときは、ほかの画面から移ってきてもフォーカスを見失わないよう、選んでおいた問題のマス、無ければゲーム名の見出しへフォーカスを置く。
  *
  * 図鑑は、難易度ごとの全問をマス目の台紙にし、レベルのカードで1枚ずつ切り替えて見せる。カードには各レベルの解いた数を添え、全レベルの進み具合を切り替えずに分かるようにする。
@@ -356,16 +361,15 @@ export function GameHomeScreen({
     chosenDifficulty,
     zukan.latestPlayedDifficulty,
   );
-  const openDifficulty = openSection?.difficulty ?? null;
-  const openRevealStatus =
-    openDifficulty === null ? undefined : revealStatuses.get(openDifficulty);
+  const openDifficulty = openSection.difficulty;
+  const openRevealStatus = revealStatuses.get(openDifficulty);
   const openChanges =
-    openDifficulty === null || openRevealStatus === "done"
+    openRevealStatus === "done"
       ? undefined
       : changes.byDifficulty[openDifficulty];
-  const openProblems = openSection?.problems ?? noProblems;
+  const openProblems = openSection.problems;
   const filterConditions =
-    openDifficulty !== null && levelFilter.difficulty === openDifficulty
+    levelFilter.difficulty === openDifficulty
       ? levelFilter.conditions
       : noZukanFilterConditions;
   const needsLevelFeatures =
@@ -376,9 +380,9 @@ export function GameHomeScreen({
   );
   const levelFeatures = useMemo(
     () =>
-      openDifficulty === null || !needsLevelFeatures
-        ? null
-        : findLevelFeatures(openDifficulty, openProblems),
+      needsLevelFeatures
+        ? findLevelFeatures(openDifficulty, openProblems)
+        : null,
     [openDifficulty, openProblems, needsLevelFeatures, findLevelFeatures],
   );
   const isFiltering = countZukanFilterConditions(filterConditions) > 0;
@@ -489,15 +493,9 @@ export function GameHomeScreen({
     (total, { solvedCount }) => total + solvedCount,
     0,
   );
-  const openStatusCounts =
-    openSection === undefined
-      ? undefined
-      : countZukanProblemsByStatus(openSection.problems, (problem) =>
-          getZukanShownProblemStatus(
-            problem,
-            pendingChanges.get(problem.problemId),
-          ),
-        );
+  const openStatusCounts = countZukanProblemsByStatus(openProblems, (problem) =>
+    getZukanShownProblemStatus(problem, pendingChanges.get(problem.problemId)),
+  );
   const selected = findSelectedProblem(
     openDifficulty,
     openProblems,
@@ -561,11 +559,7 @@ export function GameHomeScreen({
 
   /** 押している途中でやめたときは、飛ばしたときと同じく見せ終えたものとする。 */
   function finishOpenLevelReveal() {
-    if (
-      openDifficulty !== null &&
-      openChanges !== undefined &&
-      openRevealStatus === undefined
-    ) {
+    if (openChanges !== undefined && openRevealStatus === undefined) {
       finishLevelReveal(openDifficulty, "done");
     }
   }
@@ -599,10 +593,9 @@ export function GameHomeScreen({
     }
   }
 
-  const handlePlayRandom =
-    openDifficulty === null
-      ? undefined
-      : withPlayStartSound(() => onPlayRandom(openDifficulty));
+  const handlePlayRandom = withPlayStartSound(() =>
+    onPlayRandom(openDifficulty),
+  );
 
   return (
     <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 pt-4 sm:px-6 sm:pt-6 lg:pb-8">
@@ -620,7 +613,6 @@ export function GameHomeScreen({
       >
         <ZukanLegend />
         <ZukanFilter
-          disabled={openSection === undefined}
           conditions={filterConditions}
           matchedCount={arrangement.matchedCount}
           featureAxes={listFilterFeatureAxes(levelFeatures, featureAxes)}
@@ -633,9 +625,8 @@ export function GameHomeScreen({
         />
       </GameHomeHeading>
 
-      {/* どのレベルも開いていない間は、どのカードも選ばない。 */}
       <Tabs
-        value={openDifficulty ?? ""}
+        value={openDifficulty}
         onValueChange={handleLevelChange}
         activationMode="manual"
         className="mt-3 min-h-0 flex-1"
@@ -643,18 +634,14 @@ export function GameHomeScreen({
         <GameLevelCards
           levels={levelCards}
           openDifficulty={openDifficulty}
-          arrangement={openSection === undefined ? "list" : "row"}
           renderLevelPreview={renderLevelPreview}
         />
-        {/* どのレベルも開いていない間は、カードを選ぶことだけを示し、押せない操作を並べない。 */}
-        {handlePlayRandom !== undefined && (
-          <div className="grid sm:grid-cols-[--spacing(64)]">
-            <Button ref={playRandomRef} size="lg" onClick={handlePlayRandom}>
-              <Shuffle aria-hidden="true" />
-              ランダムに遊ぶ
-            </Button>
-          </div>
-        )}
+        <div className="grid sm:grid-cols-[--spacing(64)]">
+          <Button ref={playRandomRef} size="lg" onClick={handlePlayRandom}>
+            <Shuffle aria-hidden="true" />
+            ランダムに遊ぶ
+          </Button>
+        </div>
         {hasChanges && (
           <ZukanChangeSummary
             newlySolvedCount={changes.newlySolvedCount}
@@ -664,42 +651,36 @@ export function GameHomeScreen({
 
         <div className="relative flex min-h-0 flex-1 flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_--spacing(64)] lg:grid-rows-[minmax(0,1fr)] lg:gap-8">
           <div className="flex min-h-0 flex-1 flex-col">
-            {openSection && (
-              <TabsContent
-                value={openSection.difficulty}
-                // 台紙のマスへ Tab で入れるので、見えない囲みを Tab の止まり先にしない。
-                tabIndex={-1}
-                className="flex min-h-0 flex-col"
-              >
-                {openStatusCounts && (
-                  // 当たった数は条件が無い間も場所を取っておくので、条件を付け外ししても状態ごとの数の折り返し方は変わらない。
-                  // 状態ごとの数がレベルによって2行に折り返す狭い画面では、レベルを切り替えても台紙が動かないよう、常に2行分を取っておく。
-                  <div className="flex items-start justify-between gap-x-3 max-[359px]:min-h-9">
-                    <ZukanProblemStatusCounts counts={openStatusCounts} />
-                    <ZukanMatchedCount
-                      matchedCount={
-                        isFiltering ? arrangement.matchedCount : null
-                      }
-                      problemCount={openSection.problems.length}
-                    />
-                  </div>
-                )}
-                <ZukanProblemSheet
-                  difficulty={openSection.difficulty}
-                  problems={openProblems}
-                  arrangedProblems={arrangement.problems}
+            <TabsContent
+              value={openDifficulty}
+              // 台紙のマスへ Tab で入れるので、見えない囲みを Tab の止まり先にしない。
+              tabIndex={-1}
+              className="flex min-h-0 flex-col"
+            >
+              {/* 当たった数は条件が無い間も場所を取っておくので、条件を付け外ししても状態ごとの数の折り返し方は変わらない。
+                  状態ごとの数がレベルによって2行に折り返す狭い画面では、レベルを切り替えても台紙が動かないよう、常に2行分を取っておく。 */}
+              <div className="flex items-start justify-between gap-x-3 max-[359px]:min-h-9">
+                <ZukanProblemStatusCounts counts={openStatusCounts} />
+                <ZukanMatchedCount
                   matchedCount={isFiltering ? arrangement.matchedCount : null}
-                  numberDigitCount={numberDigitCount}
-                  selectedProblemId={selected?.problem.problemId ?? null}
-                  changes={openChanges}
-                  changeStages={changeStages}
-                  scrollerRef={scrollerRef}
-                  coveredBottomHeight={detailOverlayHeight}
-                  onSelect={handleSelect}
-                  onDeselect={handleDeselect}
+                  problemCount={openProblems.length}
                 />
-              </TabsContent>
-            )}
+              </div>
+              <ZukanProblemSheet
+                difficulty={openDifficulty}
+                problems={openProblems}
+                arrangedProblems={arrangement.problems}
+                matchedCount={isFiltering ? arrangement.matchedCount : null}
+                numberDigitCount={numberDigitCount}
+                selectedProblemId={selected?.problem.problemId ?? null}
+                changes={openChanges}
+                changeStages={changeStages}
+                scrollerRef={scrollerRef}
+                coveredBottomHeight={detailOverlayHeight}
+                onSelect={handleSelect}
+                onDeselect={handleDeselect}
+              />
+            </TabsContent>
           </div>
           <ZukanProblemDetail
             ref={detailRef}

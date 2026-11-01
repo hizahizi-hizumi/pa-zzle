@@ -2269,70 +2269,55 @@ describe("GameHomeScreen", () => {
       renderScreen({ ...zukan, latestPlayedDifficulty: null });
     });
 
-    test("どのレベルのカードも選ばず、台紙を示さないこと", () => {
-      const selectedTab = screen.queryByRole("tab", { selected: true });
-      const sheet = screen.queryByRole("tabpanel");
+    test("最も低いレベルのカードを選び、そのレベルの台紙を示すこと", () => {
+      const selectedTab = screen.getByRole("tab", { selected: true });
+      const sheetNames = getShownSheetNames();
 
-      expect(selectedTab).toBeNull();
-      expect(sheet).toBeNull();
+      expect(selectedTab).toBe(getLevelTab("レベル 1"));
+      expect(sheetNames).toEqual(["レベル 1の問題"]);
     });
 
-    test("カードを縦に並べ、ランダムに遊ぶを出さないこと", () => {
-      const arrangement = screen.getByRole("tablist", { name: "レベル" })
-        .dataset.cardArrangement;
-      const playRandom = screen.queryByRole("button", {
-        name: "ランダムに遊ぶ",
-      });
+    test("最も低いレベルのカードに、ほかのカードに無い印や要素を足さないこと", () => {
+      const cardStructures = within(
+        screen.getByRole("tablist", { name: "レベル" }),
+      )
+        .getAllByRole("tab")
+        .map(describeElementStructure);
 
-      expect(arrangement).toBe("list");
-      expect(playRandom).toBeNull();
+      expect(new Set(cardStructures).size).toBe(1);
     });
 
-    test("絞り込みを押せない姿にすること", () => {
-      const filterButton = getFilterButton();
+    test("ランダムに遊ぶを押すと、最も低いレベルでプレイを始めること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
 
-      expect(filterButton.hasAttribute("disabled")).toBe(true);
+      expect(onPlayRandom.mock.calls).toEqual([["1"]]);
     });
 
-    test("Tab でカードに入っても、レベルを選ばないこと", () => {
+    test("Tab でカードに入っても、別のレベルを選ばないこと", () => {
       const tab = getLevelTab("レベル 2");
 
       fireEvent.focus(tab);
-      const selectedTab = screen.queryByRole("tab", { selected: true });
+      const selectedTab = screen.getByRole("tab", { selected: true });
 
-      expect(selectedTab).toBeNull();
+      expect(selectedTab).toBe(getLevelTab("レベル 1"));
+    });
+  });
+
+  describe("最も低いレベルに問題が無いゲームを遊んだことが無い場合", () => {
+    beforeEach(() => {
+      renderScreen({
+        ...zukan,
+        sections: zukan.sections.map((section) =>
+          section.difficulty === "1" ? { ...section, problems: [] } : section,
+        ),
+        latestPlayedDifficulty: null,
+      });
     });
 
-    describe("カードを選んだ場合", () => {
-      beforeEach(() => {
-        scrollIntoView.mockClear();
-        chooseLevel("レベル 2");
-      });
+    test("問題のある最も低いレベルを開くこと", () => {
+      const selectedTab = screen.getByRole("tab", { selected: true });
 
-      test("そのレベルの台紙を示すこと", () => {
-        const sheetNames = getShownSheetNames();
-
-        expect(sheetNames).toEqual(["レベル 2の問題"]);
-      });
-
-      test("カードを1行に並べ直し、選んだカードを見える位置へすぐ送ること", () => {
-        const arrangement = screen.getByRole("tablist", { name: "レベル" })
-          .dataset.cardArrangement;
-
-        expect(arrangement).toBe("scroll");
-        expect(scrollIntoView.mock.contexts).toEqual([getLevelTab("レベル 2")]);
-        expect(scrollIntoView).toHaveBeenCalledWith({
-          behavior: "instant",
-          block: "nearest",
-          inline: "nearest",
-        });
-      });
-
-      test("ランダムに遊ぶを押すと、選んだレベルでプレイを始めること", () => {
-        fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
-
-        expect(onPlayRandom.mock.calls).toEqual([["2"]]);
-      });
+      expect(selectedTab).toBe(getLevelTab("レベル 2"));
     });
   });
 

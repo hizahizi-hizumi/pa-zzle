@@ -325,13 +325,13 @@ describe("useGameHome", () => {
       renderAt("/puzzles/nanpure?problem=unknown-problem");
     });
 
-    test("どのレベルも開かず、詳細を出さないこと", () => {
-      const selectedTab = screen.queryByRole("tab", { selected: true });
+    test("最も低いレベルを開き、詳細を出さないこと", () => {
+      const selectedTab = screen.getByRole("tab", { selected: true });
       const detail = screen.queryByRole("complementary", {
         name: "選んだ問題",
       });
 
-      expect(selectedTab).toBeNull();
+      expect(selectedTab.textContent).toMatch(/^レベル 1/);
       expect(detail).toBeNull();
     });
   });
@@ -505,23 +505,23 @@ describe("useGameHome", () => {
   });
 
   describe("記録が無い場合", () => {
+    let router: ReturnType<typeof renderAt>;
+
     beforeEach(() => {
-      renderAt("/puzzles/nanpure");
+      router = renderAt("/puzzles/nanpure");
     });
 
-    test("解いた問題が無いことを全問の数と並べて示し、どのレベルも開かないこと", () => {
+    test("解いた問題が無いことを全問の数と並べて示し、最も低いレベルを開くこと", () => {
       const solvedCount = screen.getByText(
         `解いた問題 0 / ${nanpureProblemCount}`,
       );
-      const selectedTab = screen.queryByRole("tab", { selected: true });
+      const selectedTab = screen.getByRole("tab", { selected: true });
 
       expect(solvedCount).toBeTruthy();
-      expect(selectedTab).toBeNull();
+      expect(selectedTab.textContent).toMatch(/^レベル 1/);
     });
 
-    test("レベルを選ぶと、そのレベルの台紙を1番の空きマスから並べること", () => {
-      chooseLevel("レベル 1");
-
+    test("最も低いレベルの台紙を1番の空きマスから並べること", () => {
       const firstSquare = within(getSheet("レベル 1の問題")).getAllByRole(
         "button",
       )[0];
@@ -529,6 +529,12 @@ describe("useGameHome", () => {
       expect(firstSquare?.getAttribute("aria-label")).toBe(
         "No.0001 レベル 1 未挑戦",
       );
+    });
+
+    test("ランダムに遊ぶを押すと、最も低いレベルのプレイ画面を開くこと", () => {
+      fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
+
+      expect(router.state.location.pathname).toBe("/puzzles/nanpure/play/1");
     });
   });
 });

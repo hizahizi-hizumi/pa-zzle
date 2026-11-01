@@ -31,8 +31,6 @@ import {
 } from "@/zukan/zukan-filter";
 
 type ZukanFilterProps = {
-  /** どのレベルも開いていないなど、絞り込む台紙が無いとき。押せない姿にする。 */
-  disabled: boolean;
   conditions: ZukanFilterConditions;
   /** 開いているレベルの、条件に当たる問題の数。 */
   matchedCount: number;
@@ -66,7 +64,6 @@ function readSheetMedia(): boolean {
  * 選んだ条件はすぐ台紙に映し、当たる問題の数を並びの下に示す。条件をかけている間は、ボタンに条件の数を添え、並びの「解除」で全部外せる。
  */
 export function ZukanFilter({
-  disabled,
   conditions,
   matchedCount,
   featureAxes,
@@ -84,7 +81,6 @@ export function ZukanFilter({
 
   const trigger = (
     <ZukanHeaderButton
-      disabled={disabled}
       aria-label={
         isFiltering ? `絞り込み、条件${conditionCount}つ` : "絞り込み"
       }
