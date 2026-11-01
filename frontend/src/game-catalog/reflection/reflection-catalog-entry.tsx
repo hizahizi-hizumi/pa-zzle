@@ -6,6 +6,7 @@ import {
 import { RecordedReflectionResult } from "@/game-catalog/reflection/RecordedReflectionResult";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/reflection/assets/pictogram.svg?raw";
+import pictogramShowcaseSvg from "@/games/reflection/assets/pictogram-showcase.svg?raw";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import {
   isReflectionPlayRecord,
@@ -28,6 +29,7 @@ export const reflectionCatalogEntry = {
   id: reflectionPlayRecordDefinition.gameId,
   name: REFLECTION_DISPLAY_NAME,
   pictogramSvg,
+  pictogramShowcaseSvg,
   homePath: "/puzzles/reflection",
   playPath: "/puzzles/reflection/play/:difficulty",
   playRecordDisplay: reflectionPlayRecordDisplay,
