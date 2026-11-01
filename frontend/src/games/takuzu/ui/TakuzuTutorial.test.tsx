@@ -14,22 +14,22 @@ type CellPlacement = readonly [row: number, column: number, tile: "A" | "B"];
 /** 手順ごとに印を付けるマスと、その解。四角は1回、丸は2回タップして置く。 */
 const stepPlacements: readonly (readonly CellPlacement[])[] = [
   [[1, 1, "A"]],
-  [[2, 4, "B"]],
-  [[1, 3, "B"]],
-  [[2, 1, "A"]],
   [[1, 4, "B"]],
-  [[4, 4, "A"]],
-  [[4, 3, "A"]],
+  [[1, 3, "B"]],
+  [[4, 1, "A"]],
+  [[2, 4, "A"]],
+  [[3, 4, "A"]],
+  [[2, 3, "A"]],
   [
-    [2, 2, "B"],
-    [2, 3, "A"],
+    [3, 2, "A"],
+    [3, 3, "B"],
   ],
 ];
 
 /** 手順を終えた後に残るマスと、その解。 */
 const remainingPlacements: readonly CellPlacement[] = [
-  [3, 2, "A"],
-  [3, 3, "B"],
+  [4, 2, "B"],
+  [4, 3, "A"],
 ];
 
 /** ルールに合わない手に、揺れと違反の一言で応えるまでの間。 */
@@ -214,7 +214,7 @@ describe("TakuzuTutorial", () => {
 
       expect(label).toBe("1行1列 四角");
       expect(message).toBeTruthy();
-      expect(hinted).toEqual(["2行4列"]);
+      expect(hinted).toEqual(["1行4列"]);
     });
 
     test("印の無いマスを押しても、何も置かず、印を付け直すこと", () => {
@@ -223,16 +223,16 @@ describe("TakuzuTutorial", () => {
       );
       tapCell(1, 3);
       act(() => {
-        getCell(2, 2).focus();
+        getCell(2, 3).focus();
       });
-      fireEvent.keyDown(getCell(2, 2), { key: "1" });
+      fireEvent.keyDown(getCell(2, 3), { key: "1" });
 
       const hintCueAfter = getCell(1, 1).querySelector(
         '[data-cell-cue="hint"]',
       );
 
       expect(getCell(1, 3).getAttribute("aria-label")).toBe("1行3列 空き");
-      expect(getCell(2, 2).getAttribute("aria-label")).toBe("2行2列 空き");
+      expect(getCell(2, 3).getAttribute("aria-label")).toBe("2行3列 空き");
       expect(getHintedCellPositions()).toEqual(["1行1列"]);
       expect(hintCueAfter).not.toBe(hintCueBefore);
     });
@@ -301,7 +301,7 @@ describe("TakuzuTutorial", () => {
         const hinted = getHintedCellPositions();
 
         expect(hintedRightAfter).toEqual([]);
-        expect(hinted).toEqual(["2行1列"]);
+        expect(hinted).toEqual(["4行1列"]);
       });
     });
 
@@ -327,7 +327,7 @@ describe("TakuzuTutorial", () => {
         advanceTime(nextStepCueDelayMs);
       });
 
-      test("ルールを示してチップに加え、2行目の2マスに印を付けること", () => {
+      test("ルールを示してチップに加え、3行目の2マスに印を付けること", () => {
         const message = screen.getByText("同じ並びの行・列は作れません");
         const chips = getRuleChipTexts();
         const currentChips = getCurrentRuleChipTexts();
@@ -336,13 +336,13 @@ describe("TakuzuTutorial", () => {
         expect(message).toBeTruthy();
         expect(chips).toEqual(["3つ続かない", "同じ数", "同じ並びなし"]);
         expect(currentChips).toEqual(["同じ並びなし"]);
-        expect(hinted).toEqual(["2行2列", "2行3列"]);
+        expect(hinted).toEqual(["3行2列", "3行3列"]);
       });
 
       test("上の行と同じ並びにすると、上の行と同じ並びになっていることを伝えること", () => {
-        tapCell(2, 2);
-        tapCell(2, 3);
-        tapCell(2, 3);
+        tapCell(3, 2);
+        tapCell(3, 2);
+        tapCell(3, 3);
         advanceTime(violationReactionDelayMs);
 
         const message = screen.getByText("上の行と同じ並びになっています");
@@ -370,11 +370,11 @@ describe("TakuzuTutorial", () => {
       });
 
       test("どのマスにも置けること", () => {
-        tapCell(3, 2);
+        tapCell(4, 2);
 
-        const label = getCell(3, 2).getAttribute("aria-label");
+        const label = getCell(4, 2).getAttribute("aria-label");
 
-        expect(label).toBe("3行2列 四角");
+        expect(label).toBe("4行2列 四角 列の個数超過");
       });
     });
 
@@ -431,12 +431,12 @@ describe("TakuzuTutorial", () => {
         hidden: true,
       });
       const title = screen.getByRole("heading", { name: "バイナリパズル" });
-      const labels = [getCellLabel(1, 1), getCellLabel(2, 2)];
+      const labels = [getCellLabel(1, 1), getCellLabel(3, 3)];
       const hinted = getHintedCellPositions();
 
       expect(pictogram).toBeTruthy();
       expect(title).toBeTruthy();
-      expect(labels).toEqual(["1行1列 四角", "2行2列 丸"]);
+      expect(labels).toEqual(["1行1列 四角", "3行3列 丸"]);
       expect(hinted).toEqual([]);
     });
 
@@ -460,12 +460,12 @@ describe("TakuzuTutorial", () => {
       });
 
       test("盤面を押しても、タイルを替えないこと", () => {
-        tapCell(2, 2);
+        tapCell(3, 3);
 
-        const label = getCellLabel(2, 2);
+        const label = getCellLabel(3, 3);
         const hinted = getHintedCellPositions();
 
-        expect(label).toBe("2行2列 丸");
+        expect(label).toBe("3行3列 丸");
         expect(hinted).toEqual([]);
       });
 

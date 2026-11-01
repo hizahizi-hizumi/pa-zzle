@@ -11,6 +11,7 @@ import {
   getTakuzuTutorialStepCellIndices,
   type TakuzuTutorialAction,
   type TakuzuTutorialBoardState,
+  type TakuzuTutorialLesson,
   type TakuzuTutorialRuleId,
   takuzuTutorial,
 } from "@/games/takuzu/tutorial/tutorial";
@@ -22,18 +23,14 @@ import {
   type TutorialProgress,
 } from "@/games/tutorial";
 
-const { givens, solution, deduceCell } = _private;
+const { givens, solution, deduceCell, listLessons } = _private;
 
 type Progress = TutorialProgress<
   TakuzuTutorialRuleId,
   TakuzuTutorialBoardState
 >;
 
-const allRuleIds = [
-  "run",
-  "count",
-  "duplicate",
-] as const satisfies readonly TakuzuTutorialRuleId[];
+const allLessons = listLessons(["run", "count", "duplicate"]);
 
 /** 1始まりの行・列で書いたマス。 */
 function cellAt(row: number, column: number): number {
@@ -100,7 +97,7 @@ function listSolutions(board: TakuzuBoard): string[] {
 /** 決まるマスを、決まらなくなるまで1つずつ埋める。 */
 function fillByDeduction(
   board: TakuzuBoard,
-  ruleIds: readonly TakuzuTutorialRuleId[],
+  lessons: readonly TakuzuTutorialLesson[],
 ): TakuzuCell[] {
   const cells = [...board.cells];
   for (;;) {
@@ -108,7 +105,7 @@ function fillByDeduction(
     const deduced = cells
       .map((_, cellIndex) => ({
         cellIndex,
-        deduction: deduceCell(current, ruleIds, cellIndex),
+        deduction: deduceCell(current, lessons, cellIndex),
       }))
       .find(({ deduction }) => deduction !== null);
     if (!deduced?.deduction) {
@@ -121,7 +118,7 @@ function fillByDeduction(
 const operationStepCount = takuzuTutorial.steps.findIndex(
   (step) => step.introducedRuleId !== null,
 );
-/** 手順ごとの、始めた盤面と手に入れたルール、印のマスの解。 */
+/** 手順ごとの、始めた盤面と手に入れたルール、前の手順までに使わせた見方、印のマスの解。 */
 const ruleStepCases = takuzuTutorial.steps
   .map(function createStepCase(step, stepIndex) {
     const progress = finishSteps(stepIndex);
@@ -131,6 +128,9 @@ const ruleStepCases = takuzuTutorial.steps
         step,
         board: progress.boardState.board,
         earnedRuleIds: progress.earnedRuleIds,
+        earlierLessons: takuzuTutorial.steps
+          .slice(0, stepIndex)
+          .flatMap((earlier) => (earlier.lesson ? [earlier.lesson] : [])),
         expected: step.cellIndices.map(
           (cellIndex) => solution.cells[cellIndex] ?? null,
         ),
@@ -138,8 +138,10 @@ const ruleStepCases = takuzuTutorial.steps
     ] as const;
   })
   .slice(operationStepCount);
-const introducingStepCases = ruleStepCases.filter(
-  ([, { step }]) => step.introducedRuleId !== null,
+const lessonStepCases = ruleStepCases.flatMap(([stepIndex, stepCase]) =>
+  stepCase.step.lesson
+    ? [[stepIndex, { ...stepCase, lesson: stepCase.step.lesson }] as const]
+    : [],
 );
 
 describe("takuzuTutorial の盤面", () => {
@@ -179,40 +181,61 @@ describe("takuzuTutorial の盤面", () => {
   test.each(ruleStepCases)(
     "手順 %i の印のマスは、始めた盤面で、手に入れたルールだけで解のタイルに決まること",
     (_, { step, board, earnedRuleIds, expected }) => {
+      const lessons = listLessons(earnedRuleIds);
+
       const result = step.cellIndices.map(
-        (cellIndex) =>
-          deduceCell(board, earnedRuleIds, cellIndex)?.tile ?? null,
+        (cellIndex) => deduceCell(board, lessons, cellIndex)?.tile ?? null,
       );
 
       expect(result).toEqual(expected);
     },
   );
 
-  test.each(introducingStepCases)(
-    "手順 %i の印のマスは、その手順で示すルールで決まり、それまでのルールでは決まらないこと",
-    (_, { step, board, earnedRuleIds, expected }) => {
-      const introducedRuleIds = earnedRuleIds.filter(
-        (ruleId) => ruleId === step.introducedRuleId,
-      );
-      const earlierRuleIds = earnedRuleIds.filter(
-        (ruleId) => ruleId !== step.introducedRuleId,
-      );
+  test("新しいルールを伝える手順は、そのルールで決まるマスを打たせること", () => {
+    const result = takuzuTutorial.steps
+      .filter((step) => step.introducedRuleId !== null)
+      .map((step) => step.lesson?.ruleId);
 
-      const byIntroduced = step.cellIndices.map(
-        (cellIndex) =>
-          deduceCell(board, introducedRuleIds, cellIndex)?.tile ?? null,
+    const expected = takuzuTutorial.steps.flatMap(
+      (step) => step.introducedRuleId ?? [],
+    );
+
+    expect(result).toEqual(expected);
+  });
+
+  test.each(lessonStepCases)(
+    "手順 %i の印のマスは、その手順で使わせる見方で決まり、前の手順までに使わせた見方では決まらないこと",
+    (_, { step, board, lesson, earlierLessons, expected }) => {
+      const byLesson = step.cellIndices.map(
+        (cellIndex) => deduceCell(board, [lesson], cellIndex)?.tile ?? null,
       );
       const byEarlier = step.cellIndices.map((cellIndex) =>
-        deduceCell(board, earlierRuleIds, cellIndex),
+        deduceCell(board, earlierLessons, cellIndex),
       );
 
-      expect(byIntroduced).toEqual(expected);
+      expect(byLesson).toEqual(expected);
       expect(byEarlier).toEqual(step.cellIndices.map(() => null));
     },
   );
 
+  test.each(lessonStepCases)(
+    "手順 %i の印のマスに解を置くと、その手順で使わせる見方の決め手を示すこと",
+    (stepIndex, { step, board, lesson }) => {
+      const [cellIndex = -1] = step.cellIndices;
+      const progress = performAll(finishSteps(stepIndex), [
+        place(cellIndex, solution.cells[cellIndex] ?? null),
+      ]);
+
+      const result = progress.boardState.lastMove?.reasonCellIndices;
+
+      expect(result).toEqual(
+        deduceCell(board, [lesson], cellIndex)?.reasonCellIndices,
+      );
+    },
+  );
+
   test("手順を終えると空きが残り、3つのルールで決まるマスを順に埋めて解き切れること", () => {
-    const result = fillByDeduction(releasedBoard, allRuleIds);
+    const result = fillByDeduction(releasedBoard, allLessons);
 
     expect(getEmptyCellIndices(releasedBoard).length).toBeGreaterThan(0);
     expect(result).toEqual(solution.cells);
@@ -244,8 +267,8 @@ describe("takuzuTutorial.perform", () => {
   });
 
   test("2つ目の手順のマスは、2回タップして丸にすると次の手順へ進むこと", () => {
-    const once = performAll(afterFirstStep, [tap(cellAt(2, 4))]);
-    const twice = performAll(once, [tap(cellAt(2, 4))]);
+    const once = performAll(afterFirstStep, [tap(cellAt(1, 4))]);
+    const twice = performAll(once, [tap(cellAt(1, 4))]);
 
     expect(once.stepIndex).toBe(1);
     expect(twice.stepIndex).toBe(2);
@@ -289,32 +312,32 @@ describe("takuzuTutorial.perform", () => {
   describe("同じ並びを示す手順で", () => {
     const duplicateStepIndex = takuzuTutorial.steps.length - 1;
     const duplicateStep = finishSteps(duplicateStepIndex);
+    const sameAsAbove = performAll(duplicateStep, [
+      place(cellAt(3, 2), "b"),
+      place(cellAt(3, 3), "a"),
+    ]);
 
     test("片方のマスを置いても進まず、もう片方に印を付け続けること", () => {
-      const result = performAll(duplicateStep, placeSolution([cellAt(2, 2)]));
+      const result = performAll(duplicateStep, placeSolution([cellAt(3, 2)]));
       const stepCellIndices = getTakuzuTutorialStepCellIndices(
         getTutorialSituation(takuzuTutorial, result),
         result.boardState,
       );
 
       expect(result.stepIndex).toBe(duplicateStepIndex);
-      expect(stepCellIndices).toEqual([cellAt(2, 3)]);
+      expect(stepCellIndices).toEqual([cellAt(3, 3)]);
     });
 
-    test("1行目と同じ並びにすると、ルールに合わないとして重なった行を示すこと", () => {
-      const result = performAll(duplicateStep, [
-        place(cellAt(2, 2), "a"),
-        place(cellAt(2, 3), "b"),
-      ]);
+    test("上の行と同じ並びにすると、ルールに合わないとして重なった行を示すこと", () => {
       const lineViolations = getTakuzuTutorialLineViolations(
-        getTutorialSituation(takuzuTutorial, result),
-        result.boardState,
+        getTutorialSituation(takuzuTutorial, sameAsAbove),
+        sameAsAbove.boardState,
       );
 
-      expect(result.violated).toBe(true);
+      expect(sameAsAbove.violated).toBe(true);
       expect(lineViolations).toEqual([
-        { axis: "row", index: 0, overfilled: false, duplicated: true },
         { axis: "row", index: 1, overfilled: false, duplicated: true },
+        { axis: "row", index: 2, overfilled: false, duplicated: true },
       ]);
     });
   });
@@ -340,7 +363,7 @@ describe("takuzuTutorial.perform", () => {
 
       const deduction = deduceCell(
         released.boardState.board,
-        allRuleIds,
+        allLessons,
         cellIndex ?? -1,
       );
 
@@ -364,28 +387,37 @@ describe("takuzuTutorial.describeViolation", () => {
     [
       "四角が3つ続いた",
       2,
-      [tap(cellAt(1, 3))],
+      [place(cellAt(1, 3), "a")],
       {
         headline: "四角が3つ続いています",
         detail: "同じものは、3つ続けて並べられません",
       },
     ],
     [
-      "四角が多すぎる行ができた",
+      "丸が多すぎる行ができた",
       4,
-      [place(cellAt(1, 4), "a")],
+      [place(cellAt(2, 4), "b")],
       {
-        headline: "四角が多すぎる行があります",
+        headline: "丸が多すぎる行があります",
         detail: "行も列も、四角と丸は同じ数ずつです",
       },
     ],
     [
       "上の行と同じ並びにした",
       takuzuTutorial.steps.length - 1,
-      [place(cellAt(2, 2), "a"), place(cellAt(2, 3), "b")],
+      [place(cellAt(3, 2), "b"), place(cellAt(3, 3), "a")],
       {
         headline: "上の行と同じ並びになっています",
         detail: "同じ並びの行・列は作れません",
+      },
+    ],
+    [
+      "手を離した後に、四角が多すぎる列ができた",
+      takuzuTutorial.steps.length,
+      [place(cellAt(4, 2), "a")],
+      {
+        headline: "四角が多すぎる列があります",
+        detail: "行も列も、四角と丸は同じ数ずつです",
       },
     ],
   ] as const;

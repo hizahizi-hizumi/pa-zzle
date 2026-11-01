@@ -1,4 +1,5 @@
 import {
+  getTakuzuCellPosition,
   getTakuzuLineCellIndices,
   getTakuzuLineCells,
   listTakuzuLines,
@@ -44,17 +45,25 @@ export type TakuzuTutorialAction =
   | { type: "cycle"; cellIndex: number; direction: TakuzuCycleDirection }
   | { type: "place"; cellIndex: number; cell: TakuzuCell };
 
+/** 空きマスのタイルを決める見方。どのルールを、行と列のどちらの並びに当てはめるか。 */
+export type TakuzuTutorialLesson = {
+  ruleId: TakuzuTutorialRuleId;
+  axis: TakuzuLine["axis"];
+};
+
 /**
- * `cellIndices`: 印を付け、手順の間だけ操作を受け付けるマス。すべて解と同じタイルになったら次の手順へ進む。
- * ルールを示す手順では、示したルールで決まるマスにする。
+ * - `cellIndices`: 印を付け、手順の間だけ操作を受け付けるマス。すべて解と同じタイルになったら次の手順へ進む。
+ * - `lesson`: この手順で初めて使わせる見方。印のマスはこの見方で決まり、前の手順までに使わせた見方だけでは決まらないようにする。
+ *   操作を教える手順と、使わせた見方をおさらいする手順では `null`。
  */
 export type TakuzuTutorialStep = TutorialStep<TakuzuTutorialRuleId> & {
   cellIndices: readonly number[];
+  lesson: TakuzuTutorialLesson | null;
 };
 
 /**
  * 直前の手。盤面の上の合図に使う。
- * - `violated`: 置いたマスが、ルールに合わないところに入っている。
+ * - `violated`: 置いたマスが、見せているルールに合わないところに入っている。
  * - `reasonCellIndices`: 置いたタイルが手前の盤面だけで決まっていたときの決め手のマス。決まっていなければ空。
  */
 export type TakuzuTutorialMove = {
@@ -87,13 +96,13 @@ type TakuzuDeduction = {
  * ```text
  * 最初    解
  * .A..   AABB
- * ....   ABAB
- * B..A   BABA
  * BB..   BBAA
+ * B...   BABA
+ * ...B   ABAB
  * ```
  */
-const givens = parseTakuzuBoard([".A..", "....", "B..A", "BB.."]);
-const solution = parseTakuzuBoard(["AABB", "ABAB", "BABA", "BBAA"]);
+const givens = parseTakuzuBoard([".A..", "BB..", "B...", "...B"]);
+const solution = parseTakuzuBoard(["AABB", "BBAA", "BABA", "ABAB"]);
 
 /** 1始まりの行・列で書いたマス。 */
 function cellAt(row: number, column: number): number {
@@ -101,11 +110,11 @@ function cellAt(row: number, column: number): number {
 }
 
 /**
- * 1行目の四角を自分で置いて四角を2つ並べ、その隣・行の残りと、ルールを1つずつ使って埋めていく。
- * 丸の練習で置く4列目の丸は、4列目の同じ数で決まるマスを作る。
- * 同じ並びの行・列を作れないことは、2行目 `A..B` を、真上でそろった1行目 `AABB` と同じにしない入れ方で示す。
- * 2行目の2マスはどちらも、3つ続かないことと同じ数だけでは決まらない。
- * 手順を終えると3行目の2マスが残り、ルールで1つずつ決まる。
+ * 1行目に四角と丸を自分で置き、ルールを1つずつ、まず行に、次に列に当てはめて埋めていく。
+ * - 3つ続かない: 1行目で自分で置いた四角の隣を、続いて1列目の丸2つの下を埋める。
+ * - 同じ数: 2行目の丸2つから2行目の4列目を、続いて4列目の丸2つ（1つは自分で置いた丸）から4列目の3行目を埋める。
+ * - 同じ並び: 3行目 `B..A` を、真上でそろった2行目 `BBAA` と同じにしない入れ方で埋める。3行目の2マスは、3つ続かないことと同じ数だけでは決まらない。
+ * 手順を終えると4行目の2マスが残り、列の同じ数で1つずつ決まる。
  */
 const steps: readonly TakuzuTutorialStep[] = [
   {
@@ -115,31 +124,40 @@ const steps: readonly TakuzuTutorialStep[] = [
     },
     introducedRuleId: null,
     cellIndices: [cellAt(1, 1)],
+    lesson: null,
   },
   {
     message: { headline: "2回タップすると、丸になります", detail: null },
     introducedRuleId: null,
-    cellIndices: [cellAt(2, 4)],
+    cellIndices: [cellAt(1, 4)],
+    lesson: null,
   },
   {
     message: { headline: "同じものは、3つ続けて並べられません", detail: null },
     introducedRuleId: "run",
     cellIndices: [cellAt(1, 3)],
+    lesson: { ruleId: "run", axis: "row" },
   },
   {
     message: { headline: "縦にも、3つ続けて並べられません", detail: null },
     introducedRuleId: null,
-    cellIndices: [cellAt(2, 1)],
+    cellIndices: [cellAt(4, 1)],
+    lesson: { ruleId: "run", axis: "column" },
   },
   {
-    message: { headline: "行の四角と丸は、同じ数ずつです", detail: null },
+    message: {
+      headline: "行の四角と丸は、同じ数ずつです",
+      detail: null,
+    },
     introducedRuleId: "count",
-    cellIndices: [cellAt(1, 4)],
+    cellIndices: [cellAt(2, 4)],
+    lesson: { ruleId: "count", axis: "row" },
   },
   {
     message: { headline: "列も、四角と丸は同じ数ずつです", detail: null },
     introducedRuleId: null,
-    cellIndices: [cellAt(4, 4)],
+    cellIndices: [cellAt(3, 4)],
+    lesson: { ruleId: "count", axis: "column" },
   },
   {
     message: {
@@ -147,7 +165,8 @@ const steps: readonly TakuzuTutorialStep[] = [
       detail: null,
     },
     introducedRuleId: null,
-    cellIndices: [cellAt(4, 3)],
+    cellIndices: [cellAt(2, 3)],
+    lesson: null,
   },
   {
     message: {
@@ -155,7 +174,8 @@ const steps: readonly TakuzuTutorialStep[] = [
       detail: "上の行と見比べてください",
     },
     introducedRuleId: "duplicate",
-    cellIndices: [cellAt(2, 2), cellAt(2, 3)],
+    cellIndices: [cellAt(3, 2), cellAt(3, 3)],
+    lesson: { ruleId: "duplicate", axis: "row" },
   },
 ];
 
@@ -264,27 +284,50 @@ function deduceByDuplicate(
   return null;
 }
 
+const takuzuAxes = [
+  "row",
+  "column",
+] as const satisfies readonly TakuzuLine["axis"][];
+
+/** 手に入れたルールを、行と列の両方に当てはめる見方。ルールの順に並べる。 */
+function listLessons(
+  ruleIds: readonly TakuzuTutorialRuleId[],
+): TakuzuTutorialLesson[] {
+  return ruleIds.flatMap((ruleId) =>
+    takuzuAxes.map((axis) => ({ ruleId, axis })),
+  );
+}
+
+function getCellLine(
+  size: number,
+  cellIndex: number,
+  axis: TakuzuLine["axis"],
+): TakuzuLine {
+  const { row, column } = getTakuzuCellPosition(size, cellIndex);
+  return { axis, index: axis === "row" ? row : column };
+}
+
+/** 空きマスに入るタイルを、`lessons` の見方を前から順に当てはめて決める。 */
 function deduceCell(
   board: TakuzuBoard,
-  ruleIds: readonly TakuzuTutorialRuleId[],
+  lessons: readonly TakuzuTutorialLesson[],
   cellIndex: number,
 ): TakuzuDeduction | null {
   if (board.cells[cellIndex] !== null) {
     return null;
   }
 
-  for (const line of listTakuzuLines(board.size)) {
+  for (const { ruleId, axis } of lessons) {
+    const line = getCellLine(board.size, cellIndex, axis);
     const cellIndices = getTakuzuLineCellIndices(board.size, line);
     const position = cellIndices.indexOf(cellIndex);
-    if (position < 0) {
-      continue;
-    }
     const cells = getTakuzuLineCells(board, line);
     const deduction =
-      (ruleIds.includes("run") && deduceByRun(cells, cellIndices, position)) ||
-      (ruleIds.includes("count") && deduceByCount(cells, cellIndices)) ||
-      (ruleIds.includes("duplicate") &&
-        deduceByDuplicate(board, line, cells, position));
+      ruleId === "run"
+        ? deduceByRun(cells, cellIndices, position)
+        : ruleId === "count"
+          ? deduceByCount(cells, cellIndices)
+          : deduceByDuplicate(board, line, cells, position);
     if (deduction) {
       return deduction;
     }
@@ -298,8 +341,9 @@ function findDeducibleCellIndex(
   ruleIds: readonly TakuzuTutorialRuleId[],
 ): number | null {
   for (const ruleId of ruleIds) {
+    const lessons = listLessons([ruleId]);
     const cellIndex = board.cells.findIndex(
-      (_, index) => deduceCell(board, [ruleId], index) !== null,
+      (_, index) => deduceCell(board, lessons, index) !== null,
     );
     if (cellIndex >= 0) {
       return cellIndex;
@@ -348,14 +392,19 @@ function getPlacedCell(
     : action.cell;
 }
 
+/** 置いたタイルが手前の盤面で決まっていたときの決め手。手順で使わせる見方の決め手を先に探す。 */
 function getPlacementReason(
+  { step, earnedRuleIds }: TakuzuTutorialSituation,
   before: TakuzuBoard,
-  ruleIds: readonly TakuzuTutorialRuleId[],
   cellIndex: number,
   placed: TakuzuCell,
 ): readonly number[] {
   const emptied = placeTakuzuCell(givens, before, cellIndex, null);
-  const deduction = deduceCell(emptied, ruleIds, cellIndex);
+  const lessons = [
+    ...(step?.lesson ? [step.lesson] : []),
+    ...listLessons(earnedRuleIds),
+  ];
+  const deduction = deduceCell(emptied, lessons, cellIndex);
   return deduction && deduction.tile === placed
     ? deduction.reasonCellIndices
     : [];
@@ -376,10 +425,11 @@ function getTakuzuTutorialGoal(): TakuzuTutorialBoardState {
 }
 
 function performTakuzuTutorialAction(
-  { step, earnedRuleIds }: TakuzuTutorialSituation,
+  situation: TakuzuTutorialSituation,
   state: TakuzuTutorialBoardState,
   action: TakuzuTutorialAction,
 ): { state: TakuzuTutorialBoardState; outcome: TutorialMoveOutcome } {
+  const { step, earnedRuleIds } = situation;
   const { cellIndex } = action;
   const current = state.board.cells[cellIndex];
   const outsideStep = step !== null && !step.cellIndices.includes(cellIndex);
@@ -392,24 +442,24 @@ function performTakuzuTutorialAction(
     return { state, outcome: "ignored" };
   }
 
-  const visibleViolations = findVisibleViolations(board, earnedRuleIds);
+  const shownViolations = findVisibleViolations(board, earnedRuleIds);
   const next: TakuzuTutorialBoardState = {
     board,
     moveCount: state.moveCount + 1,
     lastMove: {
       cellIndex,
-      violated: isCellInViolation(board, visibleViolations, cellIndex),
+      violated: isCellInViolation(board, shownViolations, cellIndex),
       reasonCellIndices:
         placed === null
           ? []
-          : getPlacementReason(state.board, earnedRuleIds, cellIndex, placed),
+          : getPlacementReason(situation, state.board, cellIndex, placed),
     },
   };
 
   if (isTakuzuSolved(board)) {
     return { state: next, outcome: "solved" };
   }
-  if (hasTakuzuRuleViolation(visibleViolations)) {
+  if (hasTakuzuRuleViolation(shownViolations)) {
     return { state: next, outcome: "violated" };
   }
   if (step !== null && isStepDone(step, board)) {
@@ -633,4 +683,4 @@ export const takuzuTutorial: Tutorial<
   describeViolation: describeTakuzuTutorialViolation,
 };
 
-export const _private = { givens, solution, deduceCell };
+export const _private = { givens, solution, deduceCell, listLessons };
