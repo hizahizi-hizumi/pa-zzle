@@ -18,6 +18,7 @@ model: opus
   - 段カード（段の範囲と完成条件）のパス: 段の番号と topic、前段のブランチ、触ってよい範囲、完成条件、開発サーバーのポート、その段に効く失敗パターン。レビューや最終レビューの指摘を直す起動では、直す指摘も完成条件に含まれる
   - brief のパス: 全段に共通する前提（識別表、作業ディレクトリ、認識合わせの合意と人間の判断、作業の決まり）
   - 手本の参照: 直近パズルの同じ段のコミット・ブランチ・パスなど
+  - 失敗パターン集の絶対パス
 - 出力: 「出力形式」節の報告を返答で返す
 
 始める前に brief と段カードを Read で読み、手本の参照を `git -C <worktree> show` / `git -C <worktree> diff` で読む。手本は責務の置き方・テストの粒度をそろえるために使い、コードや経緯のコメントを写さない。認識合わせの合意内容と人間の判断は守る前提として扱い、それと逆の実装をしない。
@@ -27,7 +28,7 @@ model: opus
 - 作業の決まり: `AGENTS.md`、`CLAUDE.md`、`.claude/rules/`（特に `game-structure.md`、`typescript*.md`、`react-hooks.md`、`component-styling.md`、`views.md`、`pages.md`、`vitest.md`、`self-documenting-code.md`）
 - 振る舞いと文書: `GAME.md`、`APP.md`、`DESIGN.md`（値は `frontend/styles/globals.css` の `@theme`）、`docs/README.md`、`docs/プロダクト/仕様/`
 - ゲームの置き場所と追加時に触る場所: `.claude/rules/game-structure.md`
-- 失敗パターンと予防: 段カードの失敗パターン。全体は `.claude/skills/add-puzzle/references/pitfalls.md`
+- 失敗パターンと予防: 段カードの失敗パターン。全体は起動側が渡す失敗パターン集の絶対パス
 - 作り方の Skill: 段の範囲に作り方の Skill があるもの（例: ピクトグラムは `/design-game-pictogram`）は Skill ツールで起動する。`/add-puzzle` から呼ばれたことを Skill に伝える
 - コミットの粒度とメッセージ: `.claude/skills/commit/references/commit.md`
 
