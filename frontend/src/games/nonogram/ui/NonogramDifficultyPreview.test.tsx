@@ -108,15 +108,17 @@ describe("createPreviewChain", () => {
   );
 
   test.each(difficultyIds)(
-    "レベル %s の決まるマスは、どれも盤面の中にあって重ならないこと",
+    "レベル %s の決まるマスは、どれも盤面の外周のマスより内側にあって重ならないこと",
     (difficulty) => {
       const { size, cells } = createPreviewChain(difficulty);
       const cellKeys = cells.map(({ row, column }) => `${row}:${column}`);
 
       expect(new Set(cellKeys).size).toBe(cells.length);
       for (const { row, column } of cells) {
-        expect(row).toBeLessThan(size.height);
-        expect(column).toBeLessThan(size.width);
+        expect(row).toBeGreaterThan(0);
+        expect(row).toBeLessThan(size.height - 1);
+        expect(column).toBeGreaterThan(0);
+        expect(column).toBeLessThan(size.width - 1);
       }
     },
   );
