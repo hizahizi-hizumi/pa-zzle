@@ -93,7 +93,6 @@ export function HitofudePuzzlePlay({
       if (
         !direction ||
         !targetsPlayArea ||
-        event.defaultPrevented ||
         event.altKey ||
         event.ctrlKey ||
         event.metaKey ||
@@ -106,8 +105,8 @@ export function HitofudePuzzlePlay({
       onMoveHeadToward(direction);
     }
 
-    // プレイ画面の中では、フォーカスがどこにあっても矢印キーで先端を動かす。見出しのメニューのボタンは
-    // 下向きの矢印キーでメニューを開くので、ボタンより先に（捕捉の段階で）受けて既定の動作を止める。
+    // プレイ画面の中では、フォーカスがどこにあっても矢印キーを常に盤面が受け、先端を動かす。見出しのメニューのボタンは
+    // 下向きの矢印キーでメニューを開くので、どの部品よりも先に（捕捉の段階で）受けて既定の動作を止める。
     window.addEventListener("keydown", handleKeyDown, { capture: true });
     return () =>
       window.removeEventListener("keydown", handleKeyDown, { capture: true });

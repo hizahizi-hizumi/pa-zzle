@@ -315,18 +315,6 @@ describe("HitofudePuzzlePlay", () => {
       },
     );
 
-    test("ほかの部品が先に扱った矢印キーは盤面へ流さないこと", () => {
-      const event = new KeyboardEvent("keydown", {
-        key: "ArrowRight",
-        bubbles: true,
-        cancelable: true,
-      });
-      event.preventDefault();
-      document.body.dispatchEvent(event);
-
-      expect(callbacks.onMoveHeadToward).not.toHaveBeenCalled();
-    });
-
     describe("プレイ画面の外の要素で矢印キーを押した場合", () => {
       let outside: HTMLButtonElement;
 
