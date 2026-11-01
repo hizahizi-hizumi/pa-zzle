@@ -4,7 +4,7 @@ import {
   createNonogramProblem,
   createNonogramProblemIdentity,
   isNonogramBoardSize,
-  type NONOGRAM_GENERATOR_VERSION,
+  NONOGRAM_GENERATOR_VERSION,
   type NonogramIdentifiedProblem,
   type NonogramProblemIdentity,
   nonogramPatternStyles,
@@ -198,11 +198,17 @@ const findPoolPositionByProblemId = createProblemPoolIdLookup(
   (entry) => decodeNonogramPoolEntry(entry).identity,
 );
 
-/** 難易度の問題集から問題 ID で1問を探して復元する。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+/**
+ * 難易度の問題集から問題 ID で1問を探して復元する。問題集に無い ID・別の難易度の ID には `null` を返す。
+ * 問題 ID は今の生成器の版の identity から求めるので、生成器の版が今と違う問題集からは引かない。
+ */
 export function findNonogramPooledProblemByProblemId(
   difficulty: NonogramDifficulty,
   problemId: string,
 ): NonogramPooledProblem | null {
+  if (problemPool.generatorVersion !== NONOGRAM_GENERATOR_VERSION) {
+    return null;
+  }
   const position = findPoolPositionByProblemId(difficulty, problemId);
   return position
     ? toNonogramPooledProblem(difficulty, position.entryIndex)

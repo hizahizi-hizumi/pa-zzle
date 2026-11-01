@@ -186,6 +186,36 @@ describe("findNonogramPooledProblemByProblemId", () => {
 
     expect(unresolvedEntries).toEqual([]);
   });
+
+  describe("生成器の版が今と違う問題集の場合", () => {
+    const { difficulty, problemId } = poolEntries[0]!;
+    let findInOtherVersionPool: typeof findNonogramPooledProblemByProblemId;
+
+    beforeEach(async () => {
+      vi.resetModules();
+      vi.doMock(
+        "@/games/nonogram/problem/problem-pool.json",
+        async (importOriginal) => ({
+          default: {
+            ...(await importOriginal<{ default: object }>()).default,
+            generatorVersion: "0",
+          },
+        }),
+      );
+      ({ findNonogramPooledProblemByProblemId: findInOtherVersionPool } =
+        await import("@/games/nonogram/problem/problem-pool"));
+    });
+
+    afterEach(() => {
+      vi.doUnmock("@/games/nonogram/problem/problem-pool.json");
+    });
+
+    test("問題集にある問題IDでも引かないこと", () => {
+      const result = findInOtherVersionPool(difficulty, problemId);
+
+      expect(result).toBeNull();
+    });
+  });
 });
 
 describe("listNonogramPoolEntries", () => {
