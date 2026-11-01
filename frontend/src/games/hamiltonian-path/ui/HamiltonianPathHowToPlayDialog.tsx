@@ -1,5 +1,4 @@
 import { HowToPlayDialog } from "@/components/HowToPlayDialog";
-import { HowToPlayRuleMark } from "@/components/HowToPlayRuleMark";
 import { HowToPlayTransition } from "@/components/HowToPlayTransition";
 import { difficultyLevels } from "@/games/difficulty";
 import type { HamiltonianPathDifficulty } from "@/games/hamiltonian-path/difficulty";
@@ -82,10 +81,22 @@ export function HamiltonianPathHowToPlayDialog({
         <HowToPlayFigure board={openBoard} path={[0, 1, 2, 5, 4, 3, 6, 7, 8]} />
       </li>
       <li className="space-y-2">
-        <p>暗いマスと、マスの間の短い棒の向こうへは進めない。</p>
+        <p>
+          暗いマスと、マスの間の短い棒の向こうへは進めない。進もうとすると、そのマスに×が出る。
+        </p>
         <div className="flex items-center gap-2">
-          <HowToPlayFigure board={blockedBoard} path={[0, 1]} fingerCell={2} />
-          <HowToPlayRuleMark allowed={false} />
+          <HowToPlayFigure
+            board={blockedBoard}
+            path={[0, 1]}
+            blockedCell={2}
+            fingerCell={2}
+          />
+          <HowToPlayFigure
+            board={blockedBoard}
+            path={[0, 1]}
+            blockedCell={4}
+            fingerCell={4}
+          />
         </div>
       </li>
       <li className="space-y-2">

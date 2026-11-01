@@ -28,6 +28,15 @@ const partitionHaloKeyframes: Keyframe[] = [
   { opacity: 0 },
 ];
 
+/** 進もうとしたマスの×。すぐ点け、読める間を置いてから消す。動きを減らす設定でも、動かない印として返す。 */
+const BLOCKED_MARK_DURATION_MS = 600;
+const blockedMarkKeyframes: Keyframe[] = [
+  { opacity: 0 },
+  { opacity: 1, offset: 0.1 },
+  { opacity: 1, offset: 0.6 },
+  { opacity: 0 },
+];
+
 const directionVectors = {
   up: { x: 0, y: -1 },
   right: { x: 1, y: 0 },
@@ -77,8 +86,9 @@ function findBlockingPartitionKey(
 }
 
 /**
- * 道を延ばせなかったことを盤面で返す。先端を進もうとした向きへ小さく揺らし、仕切りに阻まれたときはその仕切りを短く光らせる。
- * 先端の揺れは動きを減らす設定では出さず（`playRejectionShake`）、仕切りの光だけを返す。
+ * 道を延ばせなかったことを盤面で返す。進もうとしたマスに×を短く点け、先端を進もうとした向きへ小さく揺らし、
+ * 仕切りに阻まれたときはその仕切りを短く光らせる。指で隠れやすい先端だけでなく、押した・なぞった先でも拒まれたと分かるようにする。
+ * 先端の揺れは動きを減らす設定では出さず（`playRejectionShake`）、×と仕切りの光だけを返す。
  */
 export function animateBlockedMove(
   figure: SVGSVGElement | null,
@@ -90,6 +100,14 @@ export function animateBlockedMove(
     createHeadShakeKeyframes(blockedMove.direction),
     headShakeTiming,
   );
+  if (blockedMove.cell !== null) {
+    figure
+      ?.querySelector(`[${hamiltonianPathFigureParts.blockedMark}]`)
+      ?.animate?.(blockedMarkKeyframes, {
+        duration: BLOCKED_MARK_DURATION_MS,
+        easing: "ease-out",
+      });
+  }
   const partitionKey = findBlockingPartitionKey(size, blockedMove);
   if (partitionKey === null) {
     return;

@@ -14,6 +14,7 @@ import type { HamiltonianPathPooledProblem } from "@/games/hamiltonian-path/prob
 import { selectHamiltonianPathProblemForDifficulty } from "@/games/hamiltonian-path/problem-selection";
 import {
   findHamiltonianPathDirection,
+  getHamiltonianPathNeighborCell,
   type HamiltonianPathDirection,
 } from "@/games/hamiltonian-path/puzzle/board";
 import { isHamiltonianPathDeadEnd } from "@/games/hamiltonian-path/puzzle/rules";
@@ -65,7 +66,7 @@ export type HamiltonianPathResult = HamiltonianPathSessionResult & {
 };
 
 /**
- * 道を延ばせなかった操作。盤面が先端を揺らし、阻んだ仕切りを強調して返すために持つ。
+ * 道を延ばせなかった操作。盤面が先端を揺らし、進もうとしたマスと阻んだ仕切りを強調して返すために持つ。
  * `id` は操作ごとに変わり、同じ理由で続けて阻まれても別の操作として返せるようにする。
  */
 export type HamiltonianPathBlockedMove = {
@@ -75,7 +76,15 @@ export type HamiltonianPathBlockedMove = {
   head: number;
   /** 先端から進もうとした向き。先端に隣り合わないマスを押したときは `null`。 */
   direction: HamiltonianPathDirection | null;
+  /** 進もうとしたマス（押したマス・指が入ったマス・矢印キーの向きの隣のマス）。盤面の外へ進もうとしたときは `null`。 */
+  cell: number | null;
 };
+
+/** 操作が進もうとした先。 */
+type HamiltonianPathMoveTarget = Pick<
+  HamiltonianPathBlockedMove,
+  "direction" | "cell"
+>;
 
 export type HamiltonianPathPlay = GamePlay<
   HamiltonianPathDifficulty,
@@ -149,7 +158,7 @@ function applyPathChange(
   current: HamiltonianPathPlayState,
   { session, rejection }: HamiltonianPathSessionPathChange,
   blockedMoveId: number,
-  direction: HamiltonianPathDirection | null,
+  target: HamiltonianPathMoveTarget,
 ): HamiltonianPathPlayState {
   const applied = applyPlaySession(current, session);
   if (rejection === null) {
@@ -161,21 +170,39 @@ function applyPathChange(
       id: blockedMoveId,
       reason: rejection,
       head: getHamiltonianPathHead(current.session.puzzleState),
-      direction,
+      ...target,
     },
   };
 }
 
-/** 今の先端から `cell` へ進む向き。隣り合わなければ `null`。 */
-function findDirectionFromHead(
+/** 今の先端から `cell` へ進む操作の行き先。隣り合わなければ向きは `null`。 */
+function targetCell(
   session: HamiltonianPathSession,
   cell: number,
-): HamiltonianPathDirection | null {
-  return findHamiltonianPathDirection(
-    session.problem.size,
-    getHamiltonianPathHead(session.puzzleState),
+): HamiltonianPathMoveTarget {
+  return {
+    direction: findHamiltonianPathDirection(
+      session.problem.size,
+      getHamiltonianPathHead(session.puzzleState),
+      cell,
+    ),
     cell,
-  );
+  };
+}
+
+/** 今の先端から `direction` の向きへ進む操作の行き先。 */
+function targetDirection(
+  session: HamiltonianPathSession,
+  direction: HamiltonianPathDirection,
+): HamiltonianPathMoveTarget {
+  return {
+    direction,
+    cell: getHamiltonianPathNeighborCell(
+      session.problem.size,
+      getHamiltonianPathHead(session.puzzleState),
+      direction,
+    ),
+  };
 }
 
 function selectProblem(
@@ -225,7 +252,7 @@ export function useHamiltonianPathPlay(
         current,
         beginHamiltonianPathSessionStroke(current.session, cell, operatedAt),
         blockedMoveId,
-        findDirectionFromHead(current.session, cell),
+        targetCell(current.session, cell),
       ),
     );
   }, []);
@@ -238,7 +265,7 @@ export function useHamiltonianPathPlay(
         current,
         traceHamiltonianPathSessionStroke(current.session, step, operatedAt),
         blockedMoveId,
-        findDirectionFromHead(current.session, step.to),
+        targetCell(current.session, step.to),
       ),
     );
   }, []);
@@ -264,7 +291,7 @@ export function useHamiltonianPathPlay(
           operatedAt,
         ),
         blockedMoveId,
-        direction,
+        targetDirection(current.session, direction),
       ),
     );
   }, []);

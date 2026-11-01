@@ -198,6 +198,7 @@ export function HamiltonianPathBoard({
         isDeadEnd={isDeadEnd}
         solved={solved}
         strandedCells={strandedCells}
+        blockedCell={blockedMove?.cell ?? null}
       />
       <div
         className="relative grid size-full"

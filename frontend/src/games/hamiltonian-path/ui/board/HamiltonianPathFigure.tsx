@@ -24,6 +24,10 @@ type HamiltonianPathFigureProps = {
   solved: boolean;
   /** 取り残しとして斜線を引くマス。 */
   strandedCells?: readonly number[];
+  /** 最後に道を延ばせなかった操作が進もうとしたマス。×の印を置き、阻まれたときだけ盤面の反応で点ける。 */
+  blockedCell?: number | null;
+  /** ×の印を点けたまま描くか。遊び方の図で、阻まれたときの盤面の反応を見せるときに使う。 */
+  showsBlockedMark?: boolean;
   /**
    * 上から何行を描くか。省略すると全行を描く。難易度プレビューで、盤面の上の帯だけを切り出すときに使う。
    * 描かない行のマスと、そこに掛かる仕切りは描かない。道・始点・先端は描く行の中に置く。
@@ -48,9 +52,31 @@ const PARTITION_END_INSET = 0.18;
 /** 阻んだ仕切りを強調する光の、仕切りからのはみ出し。 */
 const PARTITION_HALO_SPREAD = 0.1;
 const CLEAR_TRACE_WIDTH = 0.1;
+/** 阻まれたマスの×の、中心から端までの長さと太さ。下に敷くマスの地の色の縁で、壁マスの上でも読めるようにする。 */
+const BLOCKED_MARK_REACH = 0.2;
+const BLOCKED_MARK_WIDTH = 0.1;
+const BLOCKED_MARK_OUTLINE_WIDTH = 0.2;
 /** 取り残しのマスの斜線の間隔と太さ。マス幅に4本ほど入り、未通過のマスの地と見分けられる密度にする。 */
 const STRANDED_HATCH_GAP = 0.25;
 const STRANDED_HATCH_WIDTH = 0.06;
+
+/** 阻まれたマスの×の2本の線。マスの中心を原点に描く。 */
+const blockedMarkStrokes = (
+  <>
+    <line
+      x1={-BLOCKED_MARK_REACH}
+      y1={-BLOCKED_MARK_REACH}
+      x2={BLOCKED_MARK_REACH}
+      y2={BLOCKED_MARK_REACH}
+    />
+    <line
+      x1={-BLOCKED_MARK_REACH}
+      y1={BLOCKED_MARK_REACH}
+      x2={BLOCKED_MARK_REACH}
+      y2={-BLOCKED_MARK_REACH}
+    />
+  </>
+);
 
 function getCellCenter(size: number, cell: number): { x: number; y: number } {
   const { row, column } = getHamiltonianPathCellPosition(size, cell);
@@ -87,6 +113,7 @@ export const hamiltonianPathFigureParts = {
   partitionHalo: "data-partition-halo",
   clearTrace: "data-clear-trace",
   strandedCell: "data-stranded-cell",
+  blockedMark: "data-blocked-mark",
 } as const;
 
 export function getPartitionKey([left, right]: HamiltonianPathPartition) {
@@ -104,6 +131,8 @@ export function HamiltonianPathFigure({
   isDeadEnd,
   solved,
   strandedCells = [],
+  blockedCell = null,
+  showsBlockedMark = false,
   visibleRowCount,
   ref,
 }: HamiltonianPathFigureProps) {
@@ -128,6 +157,8 @@ export function HamiltonianPathFigure({
   const head = getCellCenter(size, path[headIndex] ?? board.start);
   const headColor = getPathColor(progressAt(headIndex));
   const centers = path.map((cell) => getCellCenter(size, cell));
+  const blockedMarkCenter =
+    blockedCell === null ? null : getCellCenter(size, blockedCell);
 
   return (
     <svg
@@ -275,6 +306,24 @@ export function HamiltonianPathFigure({
           />
         </g>
       </g>
+      {blockedMarkCenter === null ? null : (
+        <g
+          {...{ [hamiltonianPathFigureParts.blockedMark]: "" }}
+          transform={`translate(${blockedMarkCenter.x} ${blockedMarkCenter.y})`}
+          opacity={showsBlockedMark ? 1 : 0}
+          strokeLinecap="round"
+        >
+          <g
+            strokeWidth={BLOCKED_MARK_OUTLINE_WIDTH}
+            className={hamiltonianPathToneClassNames.blockedMarkOutline}
+          >
+            {blockedMarkStrokes}
+          </g>
+          <g strokeWidth={BLOCKED_MARK_WIDTH} style={{ stroke: headColor }}>
+            {blockedMarkStrokes}
+          </g>
+        </g>
+      )}
     </svg>
   );
 }

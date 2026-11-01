@@ -64,6 +64,7 @@ describe("animateBlockedMove", () => {
         path,
         isDeadEnd: false,
         solved: false,
+        blockedCell: 5,
       }),
     );
     figure = container.querySelector("svg")!;
@@ -75,10 +76,18 @@ describe("animateBlockedMove", () => {
       reason: "partition",
       head: 4,
       direction: "right",
+      cell: 5,
     };
     const blockingPartitionKey = getPartitionKey(
       createHamiltonianPathPartition(4, 5),
     );
+
+    test("進もうとしたマスの×を点けること", () => {
+      animateBlockedMove(figure, board.size, blockedMove);
+
+      const marks = findCalls(hamiltonianPathFigureParts.blockedMark);
+      expect(marks).toHaveLength(1);
+    });
 
     test("先端を進もうとした向きへだけ揺らして戻し、阻んだ仕切りだけを光らせること", () => {
       animateBlockedMove(figure, board.size, blockedMove);
@@ -102,6 +111,7 @@ describe("animateBlockedMove", () => {
       reason: "wall",
       head: 4,
       direction: "down",
+      cell: 7,
     };
 
     test("先端を進もうとした向きへ揺らし、仕切りは光らせないこと", () => {
@@ -121,6 +131,7 @@ describe("animateBlockedMove", () => {
       reason: "not-adjacent",
       head: 4,
       direction: null,
+      cell: 0,
     };
 
     test("先端を左右に揺らして元の位置へ戻すこと", () => {
@@ -134,12 +145,32 @@ describe("animateBlockedMove", () => {
     });
   });
 
+  describe("盤面の外へ進もうとした場合", () => {
+    const blockedMove: HamiltonianPathBlockedMove = {
+      id: 0,
+      reason: "outside-board",
+      head: 2,
+      direction: "up",
+      cell: null,
+    };
+
+    test("×は点けず、先端だけを揺らすこと", () => {
+      animateBlockedMove(figure, board.size, blockedMove);
+
+      const heads = findCalls(hamiltonianPathFigureParts.head);
+      const marks = findCalls(hamiltonianPathFigureParts.blockedMark);
+      expect(heads).toHaveLength(1);
+      expect(marks).toEqual([]);
+    });
+  });
+
   describe("動きを減らす設定の場合", () => {
     const blockedMove: HamiltonianPathBlockedMove = {
       id: 0,
       reason: "partition",
       head: 4,
       direction: "right",
+      cell: 5,
     };
 
     beforeEach(() => {
@@ -149,12 +180,14 @@ describe("animateBlockedMove", () => {
       );
     });
 
-    test("先端は揺らさず、阻んだ仕切りの光だけを返すこと", () => {
+    test("先端は揺らさず、×と阻んだ仕切りの光だけを返すこと", () => {
       animateBlockedMove(figure, board.size, blockedMove);
 
       const heads = findCalls(hamiltonianPathFigureParts.head);
+      const marks = findCalls(hamiltonianPathFigureParts.blockedMark);
       const halos = findCalls(hamiltonianPathFigureParts.partitionHalo);
       expect(heads).toEqual([]);
+      expect(marks).toHaveLength(1);
       expect(halos).toHaveLength(1);
     });
   });
