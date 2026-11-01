@@ -38,7 +38,7 @@ export type NonogramProblemPoolEntry = readonly [
 
 /**
  * 問題集の中の1問を指す識別情報。
- * - `poolVersion`: 問題集を作り直して問題の並びが変わったら上げる。
+ * - `poolVersion`: 公開後に問題集を作り直して問題の並びが変わったら上げる。公開前は、問題 ID を保存した記録がまだ無いので上げない。
  * - `problemId`: `<レベル>-<番号>`（番号はレベルの中の1始まりの並び順）。例: `4-17`。
  */
 export type NonogramProblemPoolReference = {
