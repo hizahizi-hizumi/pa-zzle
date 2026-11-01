@@ -6,6 +6,7 @@ import {
   nonogramLevelCombinations,
 } from "@/games/nonogram/difficulty";
 import type {
+  NonogramClueShape,
   NonogramDifficultyAnalysis,
   NonogramReadingFeatures,
 } from "@/games/nonogram/problem/difficulty-analysis";
@@ -13,14 +14,19 @@ import type { NonogramGridSize } from "@/games/nonogram/puzzle/board";
 
 function toAnalysis(
   { width, height }: NonogramGridSize,
-  features: Pick<
+  {
+    blockCountPerLine,
+    ...features
+  }: Pick<
     NonogramReadingFeatures,
     "roundCount" | "entryLineCount" | "narrowRoundCount"
-  >,
+  > &
+    NonogramClueShape,
 ): NonogramDifficultyAnalysis {
   return {
     status: "analyzed",
     scale: { width, height, cellCount: width * height },
+    clueShape: { blockCountPerLine },
     features: {
       firstRoundFixedCellCount: 10,
       minimumProgressedLineCount: 1,
@@ -60,7 +66,7 @@ describe("nonogramLevelCombinations", () => {
   );
 
   test.each(adjacentPairs)(
-    "レベル %s で、上のレベルが盤面の面積・細い段の数の下限を下げず、入口の広さの上限を上げないこと",
+    "レベル %s で、上のレベルが盤面の面積・細い段の数の下限・塊の数の範囲を下げず、入口の広さの上限を上げないこと",
     (_, lower, upper) => {
       const lowerAreas = lower.boardSizes.map(getArea);
       const upperAreas = upper.boardSizes.map(getArea);
@@ -71,6 +77,10 @@ describe("nonogramLevelCombinations", () => {
           upper.entryLineCount.maximum > lower.entryLineCount.maximum,
         narrowRoundCount:
           upper.narrowRoundCount.minimum < lower.narrowRoundCount.minimum,
+        minimumBlockCountPerLine:
+          upper.blockCountPerLine.minimum < lower.blockCountPerLine.minimum,
+        maximumBlockCountPerLine:
+          upper.blockCountPerLine.maximum < lower.blockCountPerLine.maximum,
       };
 
       expect(loosened).toEqual({
@@ -78,7 +88,25 @@ describe("nonogramLevelCombinations", () => {
         largestArea: false,
         entryLineCount: false,
         narrowRoundCount: false,
+        minimumBlockCountPerLine: false,
+        maximumBlockCountPerLine: false,
       });
+    },
+  );
+
+  test.each(adjacentPairs)(
+    "レベル %s で、塊の数の範囲が上のレベルほど多い側へ動き、重なりが下のレベルの範囲の半分より狭いこと",
+    (_, lower, upper) => {
+      const overlap =
+        lower.blockCountPerLine.maximum - upper.blockCountPerLine.minimum;
+      const lowerWidth =
+        lower.blockCountPerLine.maximum - lower.blockCountPerLine.minimum;
+
+      expect({
+        raisesMinimum:
+          upper.blockCountPerLine.minimum > lower.blockCountPerLine.minimum,
+        narrowOverlap: overlap < lowerWidth / 2,
+      }).toEqual({ raisesMinimum: true, narrowOverlap: true });
     },
   );
 
@@ -101,12 +129,18 @@ describe("assessNonogramDifficulty", () => {
     const cases = combinationCases.flatMap(
       ([
         difficulty,
-        { boardSizes, roundCount, entryLineCount, narrowRoundCount },
+        {
+          boardSizes,
+          roundCount,
+          entryLineCount,
+          narrowRoundCount,
+          blockCountPerLine,
+        },
       ]) =>
         [
           [
             difficulty,
-            "最も小さい盤面で連鎖が最も浅く入口が最も広い",
+            "最も小さい盤面で連鎖が最も浅く入口が最も広く、塊が最も少ない",
             toAnalysis(boardSizes[0]!, {
               roundCount: roundCount.minimum,
               entryLineCount: Math.min(
@@ -114,15 +148,19 @@ describe("assessNonogramDifficulty", () => {
                 boardSizes[0]!.width + boardSizes[0]!.height,
               ),
               narrowRoundCount: narrowRoundCount.minimum,
+              blockCountPerLine: blockCountPerLine.minimum,
             }),
           ],
           [
             difficulty,
-            "最も大きい盤面で連鎖が最も深く入口が最も狭い",
+            "最も大きい盤面で連鎖が最も深く入口が最も狭く、塊が最も多い",
             toAnalysis(boardSizes.at(-1)!, {
               roundCount: roundCount.maximum,
               entryLineCount: entryLineCount.minimum,
               narrowRoundCount: roundCount.maximum,
+              blockCountPerLine: Number.isFinite(blockCountPerLine.maximum)
+                ? blockCountPerLine.maximum
+                : blockCountPerLine.minimum + 1,
             }),
           ],
         ] as const,
@@ -146,7 +184,13 @@ describe("assessNonogramDifficulty", () => {
       .map(
         ([
           difficulty,
-          { boardSizes, roundCount, entryLineCount, narrowRoundCount },
+          {
+            boardSizes,
+            roundCount,
+            entryLineCount,
+            narrowRoundCount,
+            blockCountPerLine,
+          },
         ]) =>
           [
             difficulty,
@@ -154,6 +198,7 @@ describe("assessNonogramDifficulty", () => {
               roundCount: roundCount.minimum,
               entryLineCount: entryLineCount.maximum + 1,
               narrowRoundCount: narrowRoundCount.minimum,
+              blockCountPerLine: blockCountPerLine.minimum,
             }),
           ] as const,
       );
@@ -175,13 +220,17 @@ describe("assessNonogramDifficulty", () => {
     const cases = combinationCases
       .filter(([, { narrowRoundCount }]) => narrowRoundCount.minimum > 0)
       .map(
-        ([difficulty, { boardSizes, roundCount, narrowRoundCount }]) =>
+        ([
+          difficulty,
+          { boardSizes, roundCount, narrowRoundCount, blockCountPerLine },
+        ]) =>
           [
             difficulty,
             toAnalysis(boardSizes[0]!, {
               roundCount: roundCount.minimum,
               entryLineCount: 0,
               narrowRoundCount: narrowRoundCount.minimum - 1,
+              blockCountPerLine: blockCountPerLine.minimum,
             }),
           ] as const,
       );
@@ -196,10 +245,61 @@ describe("assessNonogramDifficulty", () => {
     );
   });
 
+  describe("連鎖の深さは合うが塊の数が範囲の外の問題", () => {
+    const cases = combinationCases.flatMap(
+      ([difficulty, { boardSizes, roundCount, blockCountPerLine }]) => {
+        const toOutside = (outsideBlockCountPerLine: number) =>
+          toAnalysis(boardSizes[0]!, {
+            roundCount: roundCount.minimum,
+            entryLineCount: 0,
+            narrowRoundCount: roundCount.minimum,
+            blockCountPerLine: outsideBlockCountPerLine,
+          });
+        return [
+          ...(blockCountPerLine.minimum > 0
+            ? [
+                [
+                  difficulty,
+                  "下限より少ない",
+                  toOutside(blockCountPerLine.minimum - 0.05),
+                ] as const,
+              ]
+            : []),
+          ...(Number.isFinite(blockCountPerLine.maximum)
+            ? [
+                [
+                  difficulty,
+                  "上限より多い",
+                  toOutside(blockCountPerLine.maximum + 0.05),
+                ] as const,
+              ]
+            : []),
+        ];
+      },
+    );
+
+    test.each(cases)(
+      "レベル %s の連鎖の深さで塊の数が%s問題を、提供範囲外とすること",
+      (_, __, analysis) => {
+        const result = assessNonogramDifficulty(analysis);
+
+        expect(result).toEqual({
+          status: "out-of-range",
+          reason: "unlisted-combination",
+        });
+      },
+    );
+  });
+
   describe("盤面はレベル5の大きさだが連鎖が浅い問題", () => {
     const analysis = toAnalysis(
       { width: 10, height: 15 },
-      { roundCount: 6, entryLineCount: 4, narrowRoundCount: 3 },
+      {
+        roundCount: 6,
+        entryLineCount: 4,
+        narrowRoundCount: 3,
+        blockCountPerLine: 2.8,
+      },
     );
 
     test("上のレベルにも下のレベルにも押し込まず提供範囲外とすること", () => {
@@ -213,11 +313,13 @@ describe("assessNonogramDifficulty", () => {
   });
 
   describe("連鎖の深さが最上位の上限より深い問題", () => {
-    const { boardSizes, roundCount } = nonogramLevelCombinations["5"];
+    const { boardSizes, roundCount, blockCountPerLine } =
+      nonogramLevelCombinations["5"];
     const analysis = toAnalysis(boardSizes[0], {
       roundCount: roundCount.maximum + 1,
       entryLineCount: 3,
       narrowRoundCount: 5,
+      blockCountPerLine: blockCountPerLine.minimum,
     });
 
     test("レベル5に押し込まず提供範囲外とすること", () => {

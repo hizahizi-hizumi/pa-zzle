@@ -1,5 +1,6 @@
 import { difficultyLevels } from "@/games/difficulty";
 import { assessNonogramDifficulty } from "@/games/nonogram/difficulty";
+import { measureNonogramClueShape } from "@/games/nonogram/problem/difficulty-analysis";
 import { getNonogramSymmetryKey } from "@/games/nonogram/problem/generation/symmetry";
 import { generateNonogramProblem } from "@/games/nonogram/problem/generator";
 import {
@@ -205,7 +206,7 @@ describe("listNonogramPoolEntries", () => {
     expect(shortLevels).toEqual([]);
   });
 
-  test("各問題を、問題集に持つ特徴でそのレベルに分類すること", () => {
+  test("各問題を、問題集に持つ特徴と解から求めた塊の分かれ方でそのレベルに分類すること", () => {
     const misclassified = pooledByLevel.flatMap(({ difficulty, pooled }) =>
       pooled.filter(({ problem, features }) => {
         const assessment = assessNonogramDifficulty({
@@ -215,6 +216,7 @@ describe("listNonogramPoolEntries", () => {
             height: problem.height,
             cellCount: problem.width * problem.height,
           },
+          clueShape: measureNonogramClueShape(problem.clues),
           features,
         });
         return (
@@ -246,6 +248,8 @@ describe("listNonogramPoolEntries", () => {
       area: ({ problem }) => problem.width * problem.height,
       roundCount: ({ features }) => features.roundCount,
       narrowRoundCount: ({ features }) => features.narrowRoundCount,
+      blockCountPerLine: ({ problem }) =>
+        measureNonogramClueShape(problem.clues).blockCountPerLine,
       negatedEntryLineCount: ({ features }) => -features.entryLineCount,
       negatedFirstRoundFixedRatio: ({ problem, features }) =>
         -features.firstRoundFixedCellCount / (problem.width * problem.height),

@@ -5,12 +5,22 @@ import {
 } from "@/games/nonogram/problem/generation/propagation";
 import { countNonogramSolutions } from "@/games/nonogram/problem/generation/solution-count";
 import type { NonogramProblem } from "@/games/nonogram/problem/problem";
+import type { NonogramClues } from "@/games/nonogram/puzzle/clue";
 
 /** 難易度特徴と比べるための盤面の規模。挑戦ではなく、見渡す範囲の側の値。 */
 export type NonogramScaleMetrics = {
   width: number;
   height: number;
   cellCount: number;
+};
+
+/**
+ * ヒントの並びから読む、1本ずつの行・列の読みやすさ。線の読みの経過には依らない。
+ * - `blockCountPerLine`: 行・列あたりの塊の数（ヒントの数字の数）の平均。黒の無い行・列は0個と数える。
+ *   塊が1つの行・列は重ね合わせだけで読めるので、小さいほど1本ずつの読みが軽い。
+ */
+export type NonogramClueShape = {
+  blockCountPerLine: number;
 };
 
 /**
@@ -43,6 +53,7 @@ export type NonogramDifficultyAnalysis =
   | {
       status: "analyzed";
       scale: NonogramScaleMetrics;
+      clueShape: NonogramClueShape;
       features: NonogramReadingFeatures;
     }
   | { status: "unsupported"; scale: NonogramScaleMetrics }
@@ -60,6 +71,15 @@ function measureScale({
   height,
 }: NonogramProblem): NonogramScaleMetrics {
   return { width, height, cellCount: width * height };
+}
+
+export function measureNonogramClueShape({
+  rows,
+  columns,
+}: NonogramClues): NonogramClueShape {
+  const lines = [...rows, ...columns];
+  const blockCount = lines.reduce((sum, clue) => sum + clue.length, 0);
+  return { blockCountPerLine: blockCount / lines.length };
 }
 
 function summarizeRounds(
@@ -116,6 +136,7 @@ export function analyzeNonogramDifficulty(
   return {
     status: "analyzed",
     scale,
+    clueShape: measureNonogramClueShape(problem.clues),
     features: summarizeRounds(trace.rounds, readingsBeyondEdgesCount),
   };
 }

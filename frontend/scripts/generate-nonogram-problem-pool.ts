@@ -14,6 +14,7 @@ import {
 } from "@/games/nonogram/difficulty";
 import {
   analyzeNonogramDifficulty,
+  measureNonogramClueShape,
   type NonogramReadingFeatures,
 } from "@/games/nonogram/problem/difficulty-analysis";
 import { measureNonogramPatternQuality } from "@/games/nonogram/problem/generation/pattern-quality";
@@ -42,6 +43,7 @@ import {
 } from "@/games/nonogram/problem/problem-pool";
 import { selectNonogramProblemForDifficulty } from "@/games/nonogram/problem-selection";
 import type { NonogramGridSize } from "@/games/nonogram/puzzle/board";
+import { computeNonogramClues } from "@/games/nonogram/puzzle/clue";
 
 const defaultPerLevel = 500;
 
@@ -53,22 +55,32 @@ const poolVersion = "1";
 
 /**
  * レベルごとに候補を作る図柄の作り方。生成条件は候補を作る領域を決めるだけで、採るかどうかは分析・分類で決める。
- * レベル5は、黒の確率 0.55 以上・平滑化2回・左右対称で平滑化した作り方では連鎖の深い問題がほとんどできず、
- * 候補の上限まで調べても採れないので、黒の確率 0.45〜0.50・平滑化0〜1回（左右対称は平滑化なしだけ）に絞る。
+ * 行・列あたりの塊の数は平滑化の回数でほぼ決まる（各レベルの連鎖の深さの帯に入る候補の p10〜p90 で、
+ * 平滑化2回は 1.0〜1.8、1回は 1.1〜2.1、なしは 1.8〜3.3）。レベルの塊の数の範囲に当たる候補がほとんどできない
+ * 平滑化の回数は、候補の上限まで調べても採れないので除く。レベル1・2は平滑化1〜2回、レベル3は0〜1回、
+ * レベル4・5は平滑化なしにする。
+ * レベル5は、黒の確率 0.60 以上では連鎖の深い問題が候補1000個に1問ほどしかできないので 0.45〜0.55 に絞り、
+ * 左右対称だと決めつけて推論を飛ばせるので左右対称を除く。
  */
 const levelPatternStyles: Record<
   NonogramDifficulty,
   readonly NonogramPatternStyle[]
 > = {
-  "1": nonogramPatternStyles,
-  "2": nonogramPatternStyles,
-  "3": nonogramPatternStyles,
-  "4": nonogramPatternStyles,
+  "1": nonogramPatternStyles.filter(
+    ({ smoothingCount }) => smoothingCount >= 1,
+  ),
+  "2": nonogramPatternStyles.filter(
+    ({ smoothingCount }) => smoothingCount >= 1,
+  ),
+  "3": nonogramPatternStyles.filter(
+    ({ smoothingCount }) => smoothingCount <= 1,
+  ),
+  "4": nonogramPatternStyles.filter(
+    ({ smoothingCount }) => smoothingCount === 0,
+  ),
   "5": nonogramPatternStyles.filter(
     ({ blackProbability, smoothingCount, mirrored }) =>
-      blackProbability <= 0.5 &&
-      smoothingCount <= 1 &&
-      !(mirrored && smoothingCount > 0),
+      blackProbability <= 0.55 && smoothingCount === 0 && !mirrored,
   ),
 };
 
@@ -83,7 +95,7 @@ Options:
   --jobs <n>       並列ワーカー数 (default: 4)
   --block <n>      生成条件ごとに一度に増やす候補数 (default: 500)
   --budget <n>     生成条件ごとに調べる候補数の上限 (default: 30000)
-  --cache <dir>    候補の評価結果（難易度の特徴まで。レベルの分類は含めない）を生成条件ごとに書き足す。
+  --cache <dir>    候補の評価結果（線の読みの特徴まで。塊の分かれ方とレベルの分類は含めない）を生成条件ごとに書き足す。
                    同じ dir で実行し直すと、評価済みの候補を読んで今の分類の境界で分類し直し、続きから進める
   --verify         生成せず、同梱の問題集の全問を identity から再生成→解の数え上げ→分析→分類し、特徴・同型の重複・
                    JSON の大きさ・選択時間を確かめる`;
@@ -105,7 +117,7 @@ type AnalyzedCandidate = {
 /**
  * 1つの候補を生成・分析した結果。キャッシュにはこの形で書く。
  * `outcome` は生成器が除いた理由、分析で特徴を測れなかった理由、または特徴を測れた `analyzed`。
- * レベルの分類は持たず、読むたびに `classifyCandidate` で今の分類の境界から求める。
+ * レベルの分類は持たず、読むたびに `classifyCandidate` で今の分類の境界から求める。塊の分かれ方は解から求まるので持たない。
  */
 type CandidateEvaluation = {
   index: number;
@@ -226,9 +238,14 @@ function classifyCandidate(
   if (evaluation.outcome !== "analyzed") {
     return { index, milliseconds, outcome: evaluation.outcome };
   }
+  const solution = decodeNonogramPoolSolution(
+    { width, height },
+    evaluation.analyzed.encodedSolution,
+  );
   const assessment = assessNonogramDifficulty({
     status: "analyzed",
     scale: { width, height, cellCount: width * height },
+    clueShape: measureNonogramClueShape(computeNonogramClues(solution)),
     features: evaluation.analyzed.features,
   });
   if (assessment.status !== "classified") {
@@ -568,7 +585,7 @@ function describeJsonSize(json: string): string {
   return `JSON ${json.length} bytes, gzip ${gzipSync(json).length} bytes`;
 }
 
-/** 問題集の1レベルの内訳（盤面の大きさ・図柄の作り方・難易度の特徴・図柄の見た目の量）。 */
+/** 問題集の1レベルの内訳（盤面の大きさ・図柄の作り方・難易度の特徴・塊の分かれ方・図柄の見た目の量）。 */
 function describeLevelEntries(
   difficulty: NonogramDifficulty,
   entries: readonly NonogramProblemPoolEntry[],
@@ -583,6 +600,10 @@ function describeLevelEntries(
   const qualities = pooled.map(({ problem }) =>
     measureNonogramPatternQuality(problem.solution),
   );
+  const clueLines = pooled.map(({ problem }) => [
+    ...problem.clues.rows,
+    ...problem.clues.columns,
+  ]);
   function featureOf(
     select: (features: NonogramReadingFeatures) => number,
   ): number[] {
@@ -605,6 +626,20 @@ function describeLevelEntries(
     )}`,
     `  細い段の数: ${describeDistribution(featureOf(({ narrowRoundCount }) => narrowRoundCount))}`,
     `  進められる行・列の最小: ${describeDistribution(featureOf(({ minimumProgressedLineCount }) => minimumProgressedLineCount))}`,
+    `  行・列あたりの塊の数: ${describeDistribution(
+      pooled.map(
+        ({ problem }) =>
+          measureNonogramClueShape(problem.clues).blockCountPerLine,
+      ),
+      2,
+    )}`,
+    `  塊が1つだけの行・列の割合: ${describeDistribution(
+      clueLines.map(
+        (lines) =>
+          lines.filter((clue) => clue.length === 1).length / lines.length,
+      ),
+      2,
+    )}`,
     `  端寄せでは進まない読みを含む: ${formatPercent(featureOf(({ readingsBeyondEdgesCount }) => readingsBeyondEdgesCount).filter((count) => count > 0).length, pooled.length)}`,
     `  黒の割合: ${describeDistribution(
       qualities.map(({ blackRatio }) => blackRatio),

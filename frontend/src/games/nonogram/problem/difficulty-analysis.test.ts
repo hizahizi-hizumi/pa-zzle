@@ -6,6 +6,7 @@ describe("analyzeNonogramDifficulty", () => {
   describe("研究用 Python の analyze と同じ図柄", () => {
     // scripts/research/nonogram_core.py の generate_pattern で作った図柄と、analyze が返した特徴。
     // firstRoundFixedCellCount は first_round_ratio × area、readingsBeyondEdgesCount は full_only_lines。
+    // clueShape は analyze に無いので、ヒントの塊の総数 / 行・列の本数を手で数えた値。
     const cases = [
       {
         name: "8×8・端寄せの読みだけで解ける",
@@ -21,6 +22,7 @@ describe("analyzeNonogramDifficulty", () => {
         ],
         expected: {
           scale: { width: 8, height: 8, cellCount: 64 },
+          clueShape: { blockCountPerLine: 17 / 16 },
           features: {
             roundCount: 7,
             entryLineCount: 13,
@@ -47,6 +49,7 @@ describe("analyzeNonogramDifficulty", () => {
         ],
         expected: {
           scale: { width: 10, height: 10, cellCount: 100 },
+          clueShape: { blockCountPerLine: 56 / 20 },
           features: {
             roundCount: 13,
             entryLineCount: 6,
@@ -75,6 +78,7 @@ describe("analyzeNonogramDifficulty", () => {
         ],
         expected: {
           scale: { width: 10, height: 12, cellCount: 120 },
+          clueShape: { blockCountPerLine: 38 / 22 },
           features: {
             roundCount: 12,
             entryLineCount: 7,
@@ -104,6 +108,7 @@ describe("analyzeNonogramDifficulty", () => {
         ],
         expected: {
           scale: { width: 10, height: 13, cellCount: 130 },
+          clueShape: { blockCountPerLine: 73 / 23 },
           features: {
             roundCount: 18,
             entryLineCount: 8,
@@ -135,6 +140,7 @@ describe("analyzeNonogramDifficulty", () => {
         ],
         expected: {
           scale: { width: 10, height: 15, cellCount: 150 },
+          clueShape: { blockCountPerLine: 73 / 25 },
           features: {
             roundCount: 11,
             entryLineCount: 7,
@@ -172,6 +178,7 @@ describe("analyzeNonogramDifficulty", () => {
       expect(result).toEqual({
         status: "analyzed",
         scale: { width: 5, height: 5, cellCount: 25 },
+        clueShape: { blockCountPerLine: 1 },
         features: {
           roundCount: 1,
           entryLineCount: 10,
@@ -180,6 +187,22 @@ describe("analyzeNonogramDifficulty", () => {
           narrowRoundCount: 0,
           readingsBeyondEdgesCount: 0,
         },
+      });
+    });
+  });
+
+  describe("黒の無い行と、塊が2つの行・列がある図柄", () => {
+    // 行ヒントは [1 1]・[]・[3]、列ヒントは [1 1]・[1]・[1 1] で、6本に塊が計8個。
+    const problem = createNonogramProblem(
+      parseNonogramPattern(["#.#", "...", "###"]),
+    );
+
+    test("黒の無い行を塊0個と数えて、行・列あたりの塊の数を測ること", () => {
+      const result = analyzeNonogramDifficulty(problem);
+
+      expect(result).toMatchObject({
+        status: "analyzed",
+        clueShape: { blockCountPerLine: 8 / 6 },
       });
     });
   });
