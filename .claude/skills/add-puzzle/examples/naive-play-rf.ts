@@ -1,20 +1,20 @@
-// リフレクション: 陽性 429a2e43^（一致表示あり・旧難易度・問題集 v1）と陰性 origin/main（問題集 v4）
+// リフレクション: 盤面にピースを置き、外周のヒントと光の道筋を一致させる。補助（一致表示）を使う貪欲・試し置きと、
+// 補助なしの当てずっぽうで比べる。
+// 使い方は scripts/naive-play-core.ts の冒頭。引数は frontend/src/games/reflection のパス（版ごとに複数可）。
 import {
   type Adapter,
   fmt,
   greedy,
   greedyBacktrack,
   randomBlind,
+  readNaivePlayOptions,
   runLevel,
   sampleEvenly,
   type Summary,
   tableHeader,
 } from "../scripts/naive-play-core.ts";
 
-const N = Number(process.env.N ?? 30);
-const PLAYS = Number(process.env.PLAYS ?? 3);
-const which = process.argv[2] ?? "both";
-const levelsArg = process.env.LEVELS ? process.env.LEVELS.split(",").map(Number) : [1, 3, 5];
+const options = readNaivePlayOptions({ n: 30, plays: 3, levels: [1, 3, 5] });
 
 const PIECES = ["slash", "backslash", "vertical-double", "horizontal-double", "reflector", "black-hole"] as const;
 type Cell = (typeof PIECES)[number] | null;
@@ -139,12 +139,11 @@ function makeAdapter(ctx: Ctx): Adapter<St, M> {
   };
 }
 
-async function loadVersion(root: string, matchKind: "old" | "new") {
+async function loadVersion(root: string) {
   const laser = await import(`${root}/puzzle/laser.ts`);
   const rules = await import(`${root}/puzzle/rules.ts`);
   const boardMod = await import(`${root}/puzzle/board.ts`);
   const pool = await import(`${root}/problem/problem-pool.ts`);
-  const json = (await import(`${root}/problem/problem-pool.json`)).default;
   return (encoded: string): Ctx => {
     const solution = pool.decodeReflectionPoolSolution(encoded);
     const size = solution.size;
@@ -159,15 +158,10 @@ async function loadVersion(root: string, matchKind: "old" | "new") {
       entries,
       inventory,
       trace: (cells, e) => laser.traceReflectionLaser({ size, cells }, entries[e]),
-      match: (e, tr) =>
-        matchKind === "old"
-          ? laser.isSameReflectionClue(tr, clues[e])
-          : rules.isReflectionClueMatch(clues, e, tr, tr.exit === null ? null : entryIndex(tr.exit)),
+      match: (e, tr) => rules.isReflectionClueMatch(clues, e, tr, tr.exit === null ? null : entryIndex(tr.exit)),
       solved: (cells) => rules.isReflectionSolved({ size, cells }, { inventory, clues }),
     };
   };
-  // biome-ignore lint: unreachable
-  void json;
 }
 
 function players(pieces: number) {
@@ -179,39 +173,28 @@ function players(pieces: number) {
   ];
 }
 
-const POS = "/tmp/naive/rf-pos/frontend/src/games/reflection";
-const MAIN = "/tmp/naive/main/frontend/src/games/reflection";
-const versions = [
-  { name: "pos 429a2e43^", root: POS, pool: POS, kind: "old" as const, w: "pos" },
-  { name: "neg main", root: MAIN, pool: MAIN, kind: "new" as const, w: "neg" },
-  // 交差: 問題集と一致表示の定義のどちらが効いているか
-  { name: "pos pool + main rules(new match)", root: MAIN, pool: POS, kind: "new" as const, w: "cross1" },
-  { name: "main pool + pos rules(old match)", root: POS, pool: MAIN, kind: "old" as const, w: "cross2" },
-];
-
 const out: Summary[] = [];
-for (const v of versions) {
-  if (which !== "both" && which !== v.w) continue;
-  const toCtx = await loadVersion(v.root, v.kind);
-  const json = (await import(`${v.pool}/problem/problem-pool.json`)).default as {
+for (const root of options.roots) {
+  const toCtx = await loadVersion(root);
+  const json = (await import(`${root}/problem/problem-pool.json`)).default as {
     levels: Record<string, [number, string, ...number[]][]>;
   };
-  for (const level of levelsArg) {
+  for (const level of options.levels) {
     const t0 = Date.now();
-    const entries = sampleEvenly(json.levels[String(level)]!, N);
+    const entries = sampleEvenly(json.levels[String(level)]!, options.n);
     const ctxs = entries.map((e) => toCtx(e[1]));
     const pieces = Math.max(...ctxs.map((c) => Object.values(c.inventory).reduce((a, b) => a + b, 0)));
     const sizes = [...new Set(ctxs.map((c) => c.size))].join("/");
     out.push(
       ...runLevel(
-        { game: "reflection", version: v.name, level: `${level} (${sizes}, ≤${pieces}p)` },
+        { game: "reflection", version: root, level: `${level} (${sizes}, ≤${pieces}p)` },
         ctxs,
         makeAdapter,
         players(pieces),
-        PLAYS,
+        options.plays,
       ),
     );
-    console.error(`${v.name} ${level} ${Date.now() - t0}ms`);
+    console.error(`${root} ${level} ${Date.now() - t0}ms`);
   }
 }
 console.log(tableHeader);

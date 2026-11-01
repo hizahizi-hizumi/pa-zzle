@@ -1,7 +1,58 @@
 // 素朴なプレイヤーのシミュレーション: ゲームに依存しない部分。
-// ゲームごとに Adapter を書き、players と runLevel で表を作る。
+//
+// 素朴なプレイヤー（補助なしの当てずっぽう・合法手のランダム・貪欲・試し置きして戻す）に各レベルの問題を解かせ、
+// 解ける割合と手数の表を出す。最上位を補助ありの素朴なプレイヤーがほぼ必ず・最短に近い手数で解くなら「簡単すぎる」候補。
+// 素朴なプレイヤーが苦労しても熟練者に難しいとは限らないので、止める向き（簡単すぎるの検出）にだけ使い、
+// 難しいことの根拠にしない。
+//
+// アダプタの書き方（`examples/naive-play-*.ts` が手本）:
+//   - ゲームのディレクトリ（`frontend/src/games/<game>`）を引数で受け、`readNaivePlayOptions()` で読む。
+//     ルール・状態・問題集のモジュールは `await import(`${root}/puzzle/rules.ts`)` のように動的に読む。
+//     ディレクトリを複数渡すと、版ごと（main と作業中の worktree など）の行が並ぶ。
+//   - 1問ぶんの `Adapter` を作る。legalMoves は合意した補助表示のもとでプレイヤーに見える手、
+//     blindMoves は補助なしで入力できる手、progress は盤面が見せる進み具合（一致表示の数など）にする。
+//     補助表示を変えたら、それに合わせて legalMoves・progress を変えて測り直す。
+//   - レベルごとに問題集から `sampleEvenly` で N 問を抜き、`runLevel` に players を渡す。
+//     最後に `tableHeader` と `fmt` で表を標準出力へ書く。進み具合のログは標準エラーへ書く。
+//
+// 実行（リポジトリのルートで。`@/` の解決に対象の版の `frontend/tsconfig.json` が使われる）:
+//   N=30 PLAYS=3 LEVELS=1,3,5 bun .claude/skills/add-puzzle/examples/naive-play-ws.ts <worktree>/frontend/src/games/water-sort
+//   - N: レベルごとに抜く問題数
+//   - PLAYS: 1問を同じプレイヤーが遊ぶ回数（乱数の種を変える）
+//   - LEVELS: 測るレベルをカンマ区切りで
+//
+// 表の読み方（1行 = 版 × レベル × プレイヤー）:
+//   - solved 1st try: 最初の試行で解けた割合。solved (all tries): 試行の上限までに解けた割合
+//   - solved w/o failure: 不成立の入力なしで解けた割合（補助なしのプレイヤーで意味を持つ）
+//   - moves(med, solved): 解けたときの手数の中央値。moves/min: 最短手数との比（1 に近いほど迷っていない）
+//   - failures・attempts・undos: 不成立の入力・試行・1手戻しの回数
+//   上位のレベルほど解ける割合が下がり手数の比が上がるか、最上位で補助ありの行が 1 に近い比でほぼ解いていないかを見る。
+
+import { resolve } from "node:path";
 
 export type Rng = () => number;
+
+export type NaivePlayOptions = {
+  roots: string[];
+  n: number;
+  plays: number;
+  levels: number[];
+};
+
+/** 引数のゲームのディレクトリと、環境変数 N / PLAYS / LEVELS を読む。 */
+export function readNaivePlayOptions(defaults: { n: number; plays: number; levels: number[] }): NaivePlayOptions {
+  const roots = process.argv.slice(2);
+  if (roots.length === 0) {
+    console.error("使い方: [N=..] [PLAYS=..] [LEVELS=1,3,5] bun <アダプタ>.ts <frontend/src/games/<game> のパス>...");
+    process.exit(2);
+  }
+  return {
+    roots: roots.map((root) => resolve(root)),
+    n: Number(process.env.N ?? defaults.n),
+    plays: Number(process.env.PLAYS ?? defaults.plays),
+    levels: process.env.LEVELS ? process.env.LEVELS.split(",").map(Number) : defaults.levels,
+  };
+}
 
 export function makeRng(seed: string): Rng {
   let h = 0x811c9dc5;
@@ -324,4 +375,4 @@ export function fmt(s: Summary): string {
 }
 
 export const tableHeader =
-  "| game | version | level | player | plays | solved 1st try | solved ≤5 tries | solved w/o failure | moves(med, solved) | moves/min(med, solved) | failures(mean) | attempts(mean) | undos(med) |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|";
+  "| game | version | level | player | plays | solved 1st try | solved (all tries) | solved w/o failure | moves(med, solved) | moves/min(med, solved) | failures(mean) | attempts(mean) | undos(med) |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|";
