@@ -10,6 +10,7 @@ import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import type { ReflectionLaserPathMode } from "@/games/reflection/laser-path-mode";
 import type {
   ReflectionLaserView,
+  ReflectionOperation,
   ReflectionResult,
 } from "@/games/reflection/play/use-reflection-play";
 import type {
@@ -29,6 +30,7 @@ import {
   listReflectionStockPieces,
   ReflectionStock,
 } from "@/games/reflection/ui/ReflectionPlay/ReflectionStock";
+import { useReflectionSoundEffects } from "@/games/reflection/ui/ReflectionPlay/use-reflection-sound-effects";
 import { ReflectionResultScreen } from "@/games/reflection/ui/result/ReflectionResultScreen";
 
 type ReflectionPlayProps = GamePlayScreenProps<
@@ -43,6 +45,7 @@ type ReflectionPlayProps = GamePlayScreenProps<
     stock: ReflectionInventory;
     selection: ReflectionSelection | null;
     laser: ReflectionLaserView | null;
+    operation: ReflectionOperation | null;
     onSelectCell: (cellIndex: number) => void;
     onSelectStockPiece: (piece: ReflectionPiece) => void;
     onSelectClue: (entry: ReflectionEntry) => void;
@@ -68,6 +71,7 @@ export function ReflectionPlay({
   stock,
   selection,
   laser,
+  operation,
   canRestart,
   onSelectCell,
   onSelectStockPiece,
@@ -89,6 +93,7 @@ export function ReflectionPlay({
     [board, clues],
   );
   const playAreaRef = useRef<HTMLElement>(null);
+  useReflectionSoundEffects(operation, progress);
 
   // 数字キーと Esc は盤面のどこにフォーカスがあっても効かせる。クリックでボタンへフォーカスが移らないブラウザや、
   // 開いた直後のようにフォーカスが body にある場合も受けるため、window で受ける。

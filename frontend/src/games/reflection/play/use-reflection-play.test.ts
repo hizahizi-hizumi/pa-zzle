@@ -59,6 +59,58 @@ describe("useReflectionPlay", () => {
       expect(playResult).toBeNull();
     });
 
+    describe("ピースを置いた場合", () => {
+      const solutionCells = pooled.problem.solution.cells;
+      const placedCellIndex = solutionCells.findIndex((cell) => cell !== null);
+      const placedPiece = solutionCells[placedCellIndex]!;
+      const emptyCellIndex = solutionCells.indexOf(null);
+
+      beforeEach(() => {
+        act(() => result.current.selectStockPiece(placedPiece));
+        act(() => result.current.selectCell(placedCellIndex));
+      });
+
+      test("置いたことを操作の知らせとして返すこと", () => {
+        expect(result.current.operation?.type).toBe("piece-placed");
+      });
+
+      test("別のマスへ移すと置いたことを知らせること", () => {
+        const placed = result.current.operation;
+        act(() => result.current.clearSelection());
+        act(() => result.current.selectCell(placedCellIndex));
+        act(() => result.current.selectCell(emptyCellIndex));
+
+        expect(result.current.operation?.type).toBe("piece-placed");
+        expect(result.current.operation?.id).not.toBe(placed?.id);
+      });
+
+      test("選択を解く・盤面のピースを選ぶ操作は知らせないこと", () => {
+        act(() => result.current.clearSelection());
+        expect(result.current.operation).toBeNull();
+
+        act(() => result.current.selectCell(placedCellIndex));
+        expect(result.current.operation).toBeNull();
+      });
+
+      test("手持ちへ戻しても知らせないこと", () => {
+        act(() => result.current.removePiece(placedCellIndex));
+
+        expect(result.current.operation).toBeNull();
+      });
+
+      test("外周ヒントを押して光路を表示しても知らせないこと", () => {
+        act(() => result.current.selectClue({ side: "top", index: 0 }));
+
+        expect(result.current.operation).toBeNull();
+      });
+
+      test("盤面を戻しても知らせないこと", () => {
+        act(() => result.current.restart());
+
+        expect(result.current.operation).toBeNull();
+      });
+    });
+
     describe("解を置き切った場合", () => {
       beforeEach(() => {
         placeSolution(result, pooled.problem);
