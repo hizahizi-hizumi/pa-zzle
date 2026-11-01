@@ -3,7 +3,7 @@ import { Link } from "react-router";
 
 import { playGameSelectSound } from "@/components/app-decision-sound";
 import { GamePictogram } from "@/components/GamePictogram";
-import { SettingsButton } from "@/components/GameSelectionGallery/SettingsButton";
+import { SettingsButton } from "@/components/SettingsButton";
 import type { Path } from "@/router";
 
 type GameSelectionGame = {
