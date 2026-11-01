@@ -10,7 +10,9 @@ updates:
     # 公開直後に侵害されたリリースを取り込まないよう、公開から1週間待つ。セキュリティ更新には効かない。
     cooldown:
       default-days: 7
+    # major は自動マージの対象外なので、minor・patch とは別の PR にする。
     groups:
       github-actions:
-        patterns:
-          - "*"
+        update-types:
+          - minor
+          - patch
