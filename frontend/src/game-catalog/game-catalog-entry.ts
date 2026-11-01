@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import type { ProblemFeature } from "@/components/problem-features";
+import type { DifficultyLevel } from "@/games/difficulty";
 import {
   createProblemId,
   type ProblemId,
@@ -49,7 +51,7 @@ export type RecordResultContext = {
   navigation: GameNavigation;
 };
 
-/** アプリが提供する1つのゲームの、入口・プレイ画面・記録・離脱したプレイ・それらの問題の遊び直し先・記録の結果画面。 */
+/** アプリが提供する1つのゲームの、入口・プレイ画面・記録・離脱したプレイ・それらの問題の遊び直し先・問題集の全問・記録の結果画面。 */
 export type GameCatalogEntry = {
   /** 記録の `gameId` と同じ値。 */
   id: string;
@@ -72,6 +74,16 @@ export type GameCatalogEntry = {
   attemptProblemPlayTarget: (
     attempt: PlayAttempt,
   ) => RecordProblemPlayTarget | null;
+  /** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。図鑑はこれで問題集の全問を枠として並べる。 */
+  listPoolProblemIds: (difficulty: DifficultyLevel) => readonly ProblemId[];
+  /**
+   * 難易度の問題集の1問の、始めたときの盤面を見れば分かる特徴を返す。問題集に無い ID・別の難易度の ID には `null` を返す。
+   * 図鑑で選んだ1問について求めるので、重い生成・解析をせず問題集の項目から求める。
+   */
+  describePoolProblem: (
+    difficulty: DifficultyLevel,
+    problemId: ProblemId,
+  ) => readonly ProblemFeature[] | null;
   /**
    * 記録から結果画面を描く。今の版の記録でなく結果を作れないときは `null` を返す。
    * 呼び出し側は記録の `gameId` がこのゲームの `id` と一致することを確かめてから渡す。

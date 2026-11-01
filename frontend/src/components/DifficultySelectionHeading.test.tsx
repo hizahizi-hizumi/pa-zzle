@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 
 import { DifficultySelectionHeading } from "@/components/DifficultySelectionHeading";
 import { HowToPlayDialog } from "@/components/HowToPlayDialog";
@@ -10,18 +11,21 @@ describe("DifficultySelectionHeading", () => {
 
   beforeEach(() => {
     render(
-      <DifficultySelectionHeading
-        title={title}
-        renderHowToPlayDialog={({ open, onClose }) => (
-          <HowToPlayDialog
-            open={open}
-            description="すべてのマスを埋める。"
-            onClose={onClose}
-          >
-            <li>ルール</li>
-          </HowToPlayDialog>
-        )}
-      />,
+      <MemoryRouter>
+        <DifficultySelectionHeading
+          title={title}
+          gameId="nanpure"
+          renderHowToPlayDialog={({ open, onClose }) => (
+            <HowToPlayDialog
+              open={open}
+              description="すべてのマスを埋める。"
+              onClose={onClose}
+            >
+              <li>ルール</li>
+            </HowToPlayDialog>
+          )}
+        />
+      </MemoryRouter>,
     );
   });
 
@@ -29,6 +33,12 @@ describe("DifficultySelectionHeading", () => {
     const heading = screen.getByRole("heading", { level: 1, name: title });
 
     expect(heading).toBeTruthy();
+  });
+
+  test("そのゲームの図鑑への導線を出すこと", () => {
+    const zukanLink = screen.getByRole("link", { name: "図鑑" });
+
+    expect(zukanLink.getAttribute("href")).toBe("/puzzles/nanpure/zukan");
   });
 
   test("遊び方を最初は開かないこと", () => {

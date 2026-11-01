@@ -11,8 +11,13 @@ import {
   restoreTakuzuRecordedResult,
   takuzuPlayRecordDefinition,
 } from "@/games/takuzu/play-record";
+import {
+  findTakuzuPoolProblemFeatures,
+  listTakuzuPoolProblemIds,
+} from "@/games/takuzu/problem/problem-pool";
 import { canSelectTakuzuProblemById } from "@/games/takuzu/problem-selection";
 import { takuzuPlayRecordDisplay } from "@/games/takuzu/ui/play-record-display";
+import { formatTakuzuProblemFeatures } from "@/games/takuzu/ui/problem-features";
 
 export const takuzuCatalogEntry = {
   id: takuzuPlayRecordDefinition.gameId,
@@ -37,10 +42,15 @@ export const takuzuCatalogEntry = {
       canSelectTakuzuProblemById,
     );
   },
+  listPoolProblemIds: listTakuzuPoolProblemIds,
   renderRecordResult(record, context) {
     const recorded = restoreTakuzuRecordedResult(record);
     return recorded ? (
       <RecordedTakuzuResult {...recorded} {...context} />
     ) : null;
+  },
+  describePoolProblem(difficulty, problemId) {
+    const features = findTakuzuPoolProblemFeatures(difficulty, problemId);
+    return features ? formatTakuzuProblemFeatures(features) : null;
   },
 } satisfies GameCatalogEntry;

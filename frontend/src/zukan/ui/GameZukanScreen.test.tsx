@@ -1,0 +1,1443 @@
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+
+import { type DifficultyLevel, difficultyLevels } from "@/games/difficulty";
+import { GameZukanScreen } from "@/zukan/ui/GameZukanScreen";
+import type {
+  GameZukan,
+  ZukanDifficultySection,
+  ZukanProblem,
+} from "@/zukan/zukan-collection";
+import { noZukanChanges, type ZukanChanges } from "@/zukan/zukan-last-viewed";
+
+function createUntouchedProblems(
+  difficulty: DifficultyLevel,
+  firstNumber: number,
+  count: number,
+): ZukanProblem[] {
+  return Array.from({ length: count }, (_, index) => ({
+    kind: "unsolved",
+    number: firstNumber + index,
+    difficulty,
+    problemId: `p-${difficulty}-${index}`,
+    attempted: false,
+  }));
+}
+
+const levelOneProblems = createUntouchedProblems("1", 1, 3);
+
+const levelThreeProblems: ZukanProblem[] = [
+  {
+    kind: "solved",
+    number: 5,
+    difficulty: "3",
+    problemId: "p-a",
+    bestScore: 92,
+    fastestElapsedMs: 83_000,
+    fewestMoves: { completionMoveCount: 21, optimalMoveCount: 20 },
+    fewestMistakes: 0,
+    firstClearedAt: new Date(2026, 9, 30, 12).getTime(),
+  },
+  {
+    kind: "unsolved",
+    number: 6,
+    difficulty: "3",
+    problemId: "p-b",
+    attempted: true,
+  },
+  {
+    kind: "solved",
+    number: 7,
+    difficulty: "3",
+    problemId: "p-c",
+    bestScore: 70,
+    fastestElapsedMs: 3_725_000,
+    fewestMoves: null,
+    fewestMistakes: null,
+    firstClearedAt: new Date(2026, 9, 31, 12).getTime(),
+  },
+  {
+    kind: "unsolved",
+    number: 8,
+    difficulty: "3",
+    problemId: "p-d",
+    attempted: false,
+  },
+];
+
+const problemsByDifficulty: Record<DifficultyLevel, readonly ZukanProblem[]> = {
+  "1": levelOneProblems,
+  "2": createUntouchedProblems("2", 4, 1),
+  "3": levelThreeProblems,
+  "4": createUntouchedProblems("4", 9, 1),
+  "5": createUntouchedProblems("5", 10, 1),
+};
+
+function createSection(
+  difficulty: DifficultyLevel,
+  problems: readonly ZukanProblem[],
+): ZukanDifficultySection {
+  return {
+    difficulty,
+    problems,
+    solvedCount: problems.filter(({ kind }) => kind === "solved").length,
+  };
+}
+
+const zukan: GameZukan = {
+  sections: difficultyLevels.map(({ id }) =>
+    createSection(id, problemsByDifficulty[id]),
+  ),
+  problemCount: 1200,
+  solvedCount: 2,
+  latestPlayedDifficulty: "3",
+};
+
+const onPlayProblem = vi.fn();
+const onLevelChangesShown = vi.fn();
+/** 特徴を求められない問題を除き、問題ごとに違う特徴を返す。 */
+const describeProblem = vi.fn(({ problemId }: ZukanProblem) =>
+  problemId === "p-1-0"
+    ? null
+    : [
+        { label: "盤面", value: "9×9" },
+        { label: "地雷", value: `${problemId.at(-1)?.charCodeAt(0)}個` },
+      ],
+);
+
+function renderScreen(
+  shownZukan: GameZukan = zukan,
+  changes: ZukanChanges = noZukanChanges,
+) {
+  return render(
+    <MemoryRouter>
+      <GameZukanScreen
+        gameTitle="ナンプレ"
+        zukan={shownZukan}
+        changes={changes}
+        entryPath="/puzzles/nanpure"
+        onPlayProblem={onPlayProblem}
+        onLevelChangesShown={onLevelChangesShown}
+        describeProblem={describeProblem}
+      />
+    </MemoryRouter>,
+  );
+}
+
+function getSheet(name: string): HTMLElement {
+  return screen.getByRole("group", { name });
+}
+
+function getSquare(sheetName: string, numberLabel: string): HTMLElement {
+  return within(getSheet(sheetName)).getByRole("button", {
+    name: new RegExp(`^${numberLabel} `),
+  });
+}
+
+function getDetail(): HTMLElement {
+  return screen.getByRole("complementary", { name: "選んだ問題" });
+}
+
+/** 詳細に名前と値の組で示した、問題の特徴と成績。 */
+function listDetailFacts(detail: HTMLElement) {
+  return within(detail)
+    .queryAllByRole("term")
+    .map((term) => [term.textContent, term.nextSibling?.textContent]);
+}
+
+function queryDetail(): HTMLElement | null {
+  return screen.queryByRole("complementary", { name: "選んだ問題" });
+}
+
+function getSheetScroller(name: string): HTMLElement {
+  const scroller = getSheet(name).parentElement;
+  if (scroller === null) {
+    throw new Error("台紙のスクロール領域が無い");
+  }
+  return scroller;
+}
+
+function getLevelTab(label: string): HTMLElement {
+  return screen.getByRole("tab", { name: new RegExp(`^${label}`) });
+}
+
+function chooseLevel(label: string) {
+  fireEvent.mouseDown(getLevelTab(label), { button: 0, ctrlKey: false });
+}
+
+function getShownSheetNames(): (string | null)[] {
+  return within(screen.getByRole("tabpanel"))
+    .getAllByRole("group")
+    .map((sheet) => sheet.getAttribute("aria-label"));
+}
+
+function getStatusCounts(): HTMLElement {
+  return within(screen.getByRole("tabpanel")).getByRole("list", {
+    name: "状態ごとの問題の数",
+  });
+}
+
+function getStatusCountNames(): (string | null)[] {
+  return within(getStatusCounts())
+    .getAllByRole("listitem")
+    .map((item) => item.getAttribute("aria-label"));
+}
+
+let scrollIntoView: ReturnType<typeof vi.fn>;
+let scrollTo: ReturnType<typeof vi.fn>;
+let resizeCallbacks: Set<ResizeObserverCallback>;
+
+/** 見ている要素の大きさが変わったと、ResizeObserver の購読者へ知らせる。 */
+function resizeObservedElements(blockSize: number) {
+  const entry = {
+    borderBoxSize: [{ blockSize, inlineSize: 0 }],
+  } as unknown as ResizeObserverEntry;
+  act(() => {
+    for (const callback of resizeCallbacks) {
+      callback([entry], {} as ResizeObserver);
+    }
+  });
+}
+
+function createResizeObserver(callback: ResizeObserverCallback) {
+  return {
+    observe: () => resizeCallbacks.add(callback),
+    unobserve: () => resizeCallbacks.delete(callback),
+    disconnect: () => resizeCallbacks.delete(callback),
+  };
+}
+
+beforeEach(() => {
+  scrollIntoView = vi.fn();
+  scrollTo = vi.fn();
+  resizeCallbacks = new Set();
+  Element.prototype.scrollIntoView =
+    scrollIntoView as unknown as Element["scrollIntoView"];
+  Element.prototype.scrollTo = scrollTo as unknown as Element["scrollTo"];
+  window.ResizeObserver = vi.fn(function ResizeObserver(
+    callback: ResizeObserverCallback,
+  ) {
+    return createResizeObserver(callback);
+  }) as unknown as typeof ResizeObserver;
+});
+
+afterEach(() => {
+  cleanup();
+  Reflect.deleteProperty(Element.prototype, "scrollIntoView");
+  Reflect.deleteProperty(Element.prototype, "scrollTo");
+  Reflect.deleteProperty(window, "ResizeObserver");
+});
+
+describe("GameZukanScreen", () => {
+  beforeEach(() => {
+    onPlayProblem.mockClear();
+    onLevelChangesShown.mockClear();
+  });
+
+  describe("最後に遊んだレベルがある場合", () => {
+    beforeEach(() => {
+      renderScreen();
+    });
+
+    test("ゲーム名の図鑑の見出しと、解いた問題の数を全問の数と並べて示すこと", () => {
+      const heading = screen.getByRole("heading", { level: 1 });
+      const solvedCount = screen.getByText("解いた問題 2 / 1200");
+
+      expect(heading.textContent).toBe("ナンプレの図鑑");
+      expect(solvedCount).toBeTruthy();
+    });
+
+    test("レベルごとのタブを並べ、それぞれにそのレベルの解いた問題の数を添えること", () => {
+      const tabNames = within(screen.getByRole("tablist", { name: "レベル" }))
+        .getAllByRole("tab")
+        .map((tab) => tab.textContent);
+
+      expect(tabNames).toEqual([
+        "レベル 1、解いた問題 0 / 3",
+        "レベル 2、解いた問題 0 / 1",
+        "レベル 3、解いた問題 2 / 4",
+        "レベル 4、解いた問題 0 / 1",
+        "レベル 5、解いた問題 0 / 1",
+      ]);
+    });
+
+    test("最後に遊んだレベルのタブを選び、そのレベルの台紙だけを示すこと", () => {
+      const selectedTab = screen.getByRole("tab", { selected: true });
+      const sheetNames = getShownSheetNames();
+
+      expect(selectedTab.textContent).toMatch(/^レベル 3/);
+      expect(sheetNames).toEqual(["レベル 3の問題"]);
+    });
+
+    test("タブを選ぶと、そのレベルの台紙に切り替えること", () => {
+      chooseLevel("レベル 1");
+      const sheetNames = getShownSheetNames();
+
+      expect(sheetNames).toEqual(["レベル 1の問題"]);
+    });
+
+    test("タブで右矢印キーを押すと、次のレベルのタブへ移って台紙を切り替えること", async () => {
+      const tab = getLevelTab("レベル 3");
+      tab.focus();
+
+      fireEvent.keyDown(tab, { key: "ArrowRight" });
+      await waitFor(() => {
+        expect(document.activeElement).toBe(getLevelTab("レベル 4"));
+      });
+      const sheetNames = getShownSheetNames();
+
+      expect(sheetNames).toEqual(["レベル 4の問題"]);
+    });
+
+    test("レベルを切り替えると、選んでいたマスの選択を解くこと", () => {
+      fireEvent.click(getSquare("レベル 3の問題", "No.0005"));
+
+      chooseLevel("レベル 1");
+      const detailAfterSwitch = queryDetail();
+      chooseLevel("レベル 3");
+      const currentSquares = screen.queryAllByRole("button", { current: true });
+
+      expect(detailAfterSwitch).toBeNull();
+      expect(currentSquares).toEqual([]);
+    });
+
+    test("台紙のマスを番号の順に並べ、それぞれの状態を読み上げ名で示すこと", () => {
+      const squareNames = within(getSheet("レベル 3の問題"))
+        .getAllByRole("button")
+        .map((square) => square.getAttribute("aria-label"));
+
+      expect(squareNames).toEqual([
+        "No.0005 レベル 3 最高スコア92点",
+        "No.0006 レベル 3 挑戦中",
+        "No.0007 レベル 3 最高スコア70点",
+        "No.0008 レベル 3 未挑戦",
+      ]);
+    });
+
+    test("台紙の最初のマスだけを Tab で止まるマスにすること", () => {
+      const tabStops = within(getSheet("レベル 3の問題"))
+        .getAllByRole("button")
+        .filter((square) => square.tabIndex === 0)
+        .map((square) => square.getAttribute("aria-label")?.split(" ")[0]);
+
+      expect(tabStops).toEqual(["No.0005"]);
+    });
+
+    test("マスの見方を常には示さないこと", () => {
+      const legend = screen.queryByRole("list", { name: "マスの見方" });
+
+      expect(legend).toBeNull();
+    });
+
+    test("見方を押すと、評価段階の高い順に続けて挑戦中・未挑戦のマスの見方を示すこと", async () => {
+      fireEvent.click(screen.getByRole("button", { name: "見方" }));
+      const legend = await screen.findByRole("list", { name: "マスの見方" });
+
+      const items = within(legend)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent);
+
+      expect(items).toEqual([
+        "perfect",
+        "great",
+        "good",
+        "clear",
+        "挑戦中",
+        "未挑戦",
+      ]);
+    });
+
+    test("開いているレベルの問題の数を、状態の名前を出さずに数だけ、評価段階の高い順に続けて挑戦中・未挑戦の順に、数の無い状態も含めて示すこと", () => {
+      const counts = within(getStatusCounts())
+        .getAllByRole("listitem")
+        .map((item) => item.textContent);
+
+      expect(counts).toEqual(["0", "1", "0", "1", "1", "1"]);
+    });
+
+    test("状態ごとの数の読み上げ名に、状態の名前を含めること", () => {
+      const names = getStatusCountNames();
+
+      expect(names).toEqual([
+        "perfect 0問",
+        "great 1問",
+        "good 0問",
+        "clear 1問",
+        "挑戦中 1問",
+        "未挑戦 1問",
+      ]);
+    });
+
+    test("解いた問題の無いレベルでも、状態ごとの数を示すこと", () => {
+      chooseLevel("レベル 1");
+      const names = getStatusCountNames();
+
+      expect(names).toEqual([
+        "perfect 0問",
+        "great 0問",
+        "good 0問",
+        "clear 0問",
+        "挑戦中 0問",
+        "未挑戦 3問",
+      ]);
+    });
+
+    test("前回からの変化が無ければ、変化を示さないこと", () => {
+      const summary = screen.queryAllByText(/新しく解いた|段階が上がった/);
+      const changedSquares = within(getSheet("レベル 3の問題"))
+        .getAllByRole("button")
+        .filter((square) =>
+          square.getAttribute("aria-label")?.includes("前回から"),
+        );
+
+      expect(summary).toEqual([]);
+      expect(changedSquares).toEqual([]);
+    });
+
+    test("マスを選ぶまで、詳細を出さないこと", () => {
+      const detail = queryDetail();
+
+      expect(detail).toBeNull();
+    });
+
+    test("解いた問題のマスを選ぶと、番号・難易度と、その問題の特徴に続けて、最高スコア・最速タイム・最短手数を添えた最少手数・最少ミス・初めてクリアした日を詳細に示すこと", () => {
+      fireEvent.click(getSquare("レベル 3の問題", "No.0005"));
+      const detail = getDetail();
+      const facts = within(detail)
+        .getAllByRole("term")
+        .map((term) => [term.textContent, term.nextSibling?.textContent]);
+
+      expect(within(detail).getByText("No.0005")).toBeTruthy();
+      expect(within(detail).getByText("レベル 3")).toBeTruthy();
+      expect(facts).toEqual([
+        ["盤面", "9×9"],
+        ["地雷", "97個"],
+        ["最高スコア", "92点"],
+        ["最速タイム", "01:23"],
+        ["最少手数", "21手（最短 20手）"],
+        ["最少ミス", "0回"],
+        ["初クリア", "10/30"],
+      ]);
+    });
+
+    test("手数もミスも数えないゲームの解いた問題には、問題の特徴と、最高スコア・最速タイム・初めてクリアした日だけを示すこと", () => {
+      fireEvent.click(getSquare("レベル 3の問題", "No.0007"));
+      const facts = within(getDetail())
+        .getAllByRole("term")
+        .map((term) => [term.textContent, term.nextSibling?.textContent]);
+
+      expect(facts).toEqual([
+        ["盤面", "9×9"],
+        ["地雷", "99個"],
+        ["最高スコア", "70点"],
+        ["最速タイム", "1:02:05"],
+        ["初クリア", "10/31"],
+      ]);
+    });
+
+    test("途中でやめた問題のマスを選ぶと、その問題の特徴と、挑戦中であることを詳細に示すこと", () => {
+      fireEvent.click(getSquare("レベル 3の問題", "No.0006"));
+      const detail = getDetail();
+
+      expect(listDetailFacts(detail)).toEqual([
+        ["盤面", "9×9"],
+        ["地雷", "98個"],
+      ]);
+      expect(within(detail).getByText("挑戦中")).toBeTruthy();
+    });
+
+    test("まだ挑んでいない問題のマスを選ぶと、その問題の特徴と、未挑戦であることを詳細に示すこと", () => {
+      fireEvent.click(getSquare("レベル 3の問題", "No.0008"));
+      const detail = getDetail();
+
+      expect(listDetailFacts(detail)).toEqual([
+        ["盤面", "9×9"],
+        ["地雷", "100個"],
+      ]);
+      expect(within(detail).getByText("未挑戦")).toBeTruthy();
+    });
+
+    describe("特徴を求めた問題を数え始めた場合", () => {
+      beforeEach(() => {
+        describeProblem.mockClear();
+      });
+
+      test("マスを選ぶと、選んだ問題の特徴だけを求めること", () => {
+        fireEvent.click(getSquare("レベル 3の問題", "No.0008"));
+        const describedProblemIds = new Set(
+          describeProblem.mock.calls.map(([{ problemId }]) => problemId),
+        );
+
+        expect(describedProblemIds).toEqual(new Set(["p-d"]));
+      });
+    });
+
+    test("特徴を求められない問題では、特徴を示さないこと", () => {
+      chooseLevel("レベル 1");
+      fireEvent.click(getSquare("レベル 1の問題", "No.0001"));
+      const detail = getDetail();
+
+      expect(listDetailFacts(detail)).toEqual([]);
+      expect(within(detail).getByText("未挑戦")).toBeTruthy();
+    });
+
+    test("選んだマスを、選んでいることが分かる状態にすること", () => {
+      fireEvent.click(getSquare("レベル 3の問題", "No.0007"));
+      const currentSquares = screen
+        .getAllByRole("button", { current: true })
+        .map((square) => square.getAttribute("aria-label"));
+
+      expect(currentSquares).toEqual(["No.0007 レベル 3 最高スコア70点"]);
+    });
+
+    test("詳細の遊ぶを押すと、選んだ問題を始めること", () => {
+      fireEvent.click(getSquare("レベル 3の問題", "No.0008"));
+      fireEvent.click(
+        within(getDetail()).getByRole("button", { name: "遊ぶ" }),
+      );
+
+      expect(onPlayProblem).toHaveBeenCalledWith(levelThreeProblems[3]);
+    });
+
+    test("マスで右矢印キーを押すと、次のマスへフォーカスを移して選び、Tab で止まるマスにすること", () => {
+      const square = getSquare("レベル 3の問題", "No.0005");
+      square.focus();
+
+      fireEvent.keyDown(square, { key: "ArrowRight" });
+      const focused = document.activeElement;
+      const detailNumber = within(getDetail()).getByText("No.0006");
+
+      expect(focused?.getAttribute("aria-label")).toBe(
+        "No.0006 レベル 3 挑戦中",
+      );
+      expect(focused?.getAttribute("tabindex")).toBe("0");
+      expect(square.getAttribute("tabindex")).toBe("-1");
+      expect(detailNumber).toBeTruthy();
+    });
+
+    test("マスを矢印キーで移ると、移った先のマスを台紙のスクロール領域の見える範囲へ寄せること", () => {
+      const square = getSquare("レベル 3の問題", "No.0005");
+      square.focus();
+
+      fireEvent.keyDown(square, { key: "ArrowRight" });
+      const scrolledSquares = scrollIntoView.mock.contexts.map((context) =>
+        (context as Element).getAttribute("aria-label"),
+      );
+
+      expect(scrolledSquares).toEqual(["No.0006 レベル 3 挑戦中"]);
+      expect(scrollIntoView).toHaveBeenCalledWith({
+        block: "nearest",
+        inline: "nearest",
+      });
+    });
+
+    describe("マスを選んでいる場合", () => {
+      beforeEach(() => {
+        fireEvent.click(getSquare("レベル 3の問題", "No.0007"));
+      });
+
+      test("選んでいるマスをもう一度押すと、詳細を閉じて選択を解くこと", () => {
+        fireEvent.click(getSquare("レベル 3の問題", "No.0007"));
+        const detail = queryDetail();
+        const currentSquares = screen.queryAllByRole("button", {
+          current: true,
+        });
+
+        expect(detail).toBeNull();
+        expect(currentSquares).toEqual([]);
+      });
+
+      test("閉じるボタンを押すと、詳細を閉じること", () => {
+        fireEvent.click(
+          within(getDetail()).getByRole("button", { name: "閉じる" }),
+        );
+        const detail = queryDetail();
+
+        expect(detail).toBeNull();
+      });
+
+      test("Escape を押すと、詳細を閉じること", () => {
+        fireEvent.keyDown(document.body, { key: "Escape" });
+        const detail = queryDetail();
+
+        expect(detail).toBeNull();
+      });
+
+      test("別のマスを押すと、詳細をそのマスの問題に切り替えること", () => {
+        fireEvent.click(getSquare("レベル 3の問題", "No.0008"));
+        const detail = getDetail();
+
+        expect(within(detail).getByText("No.0008")).toBeTruthy();
+        expect(within(detail).queryByText("No.0007")).toBeNull();
+      });
+
+      describe("閉じるボタンにフォーカスがある場合", () => {
+        beforeEach(() => {
+          within(getDetail()).getByRole("button", { name: "閉じる" }).focus();
+        });
+
+        test("閉じるボタンで閉じると、フォーカスを選んでいたマスへ戻すこと", () => {
+          fireEvent.click(
+            within(getDetail()).getByRole("button", { name: "閉じる" }),
+          );
+          const focused = document.activeElement;
+
+          expect(focused).toBe(getSquare("レベル 3の問題", "No.0007"));
+        });
+      });
+
+      describe("見方を開いている場合", () => {
+        beforeEach(async () => {
+          fireEvent.click(screen.getByRole("button", { name: "見方" }));
+          await screen.findByRole("list", { name: "マスの見方" });
+        });
+
+        test("Escape では見方だけを閉じ、詳細を閉じないこと", async () => {
+          fireEvent.keyDown(screen.getByRole("list", { name: "マスの見方" }), {
+            key: "Escape",
+          });
+          await waitFor(() => {
+            expect(
+              screen.queryByRole("list", { name: "マスの見方" }),
+            ).toBeNull();
+          });
+          const detailNumber = within(getDetail()).getByText("No.0007");
+
+          expect(detailNumber).toBeTruthy();
+        });
+      });
+    });
+
+    describe("詳細を台紙に重ねる幅で、マスを選んだ場合", () => {
+      const detailHeight = 140;
+
+      beforeEach(() => {
+        vi.stubGlobal(
+          "matchMedia",
+          vi.fn(
+            (query: string) =>
+              ({
+                matches: query === "(width < 64rem)",
+                addEventListener: () => {},
+                removeEventListener: () => {},
+              }) as unknown as MediaQueryList,
+          ),
+        );
+        fireEvent.click(getSquare("レベル 3の問題", "No.0008"));
+        scrollIntoView.mockClear();
+      });
+
+      afterEach(() => {
+        vi.unstubAllGlobals();
+      });
+
+      test("詳細の高さが分かると、台紙の下端に詳細の高さのスクロール余白を取り、選んだマスを見える範囲へ寄せ直すこと", () => {
+        resizeObservedElements(detailHeight);
+        const coveredBottom =
+          getSheetScroller("レベル 3の問題").style.getPropertyValue(
+            "--covered-bottom",
+          );
+        const scrolledSquares = scrollIntoView.mock.contexts.map((context) =>
+          (context as Element).getAttribute("aria-label"),
+        );
+
+        expect(coveredBottom).toBe(`${detailHeight}px`);
+        expect(scrolledSquares).toEqual(["No.0008 レベル 3 未挑戦"]);
+        expect(scrollIntoView).toHaveBeenCalledWith({
+          block: "nearest",
+          inline: "nearest",
+        });
+      });
+
+      describe("詳細の高さが分かったあと", () => {
+        beforeEach(() => {
+          resizeObservedElements(detailHeight);
+        });
+
+        test("詳細を閉じると、台紙の下端のスクロール余白を無くすこと", () => {
+          fireEvent.keyDown(document.body, { key: "Escape" });
+          const coveredBottom =
+            getSheetScroller("レベル 3の問題").style.getPropertyValue(
+              "--covered-bottom",
+            );
+
+          expect(coveredBottom).toBe("0px");
+        });
+      });
+    });
+
+    describe("詳細を台紙の横に置く幅で、マスを選んだ場合", () => {
+      beforeEach(() => {
+        fireEvent.click(getSquare("レベル 3の問題", "No.0008"));
+      });
+
+      test("詳細の高さが分かっても、台紙の下端にスクロール余白を取らないこと", () => {
+        resizeObservedElements(140);
+        const coveredBottom =
+          getSheetScroller("レベル 3の問題").style.getPropertyValue(
+            "--covered-bottom",
+          );
+
+        expect(coveredBottom).toBe("0px");
+      });
+    });
+
+    test("難易度選択へ戻る導線を示すこと", () => {
+      const backLink = screen.getByRole("link", { name: "戻る" });
+
+      expect(backLink.getAttribute("href")).toBe("/puzzles/nanpure");
+    });
+  });
+
+  describe("前回図鑑を見たときから変化がある場合", () => {
+    const levelOneSolvedProblem: ZukanProblem = {
+      kind: "solved",
+      number: 1,
+      difficulty: "1",
+      problemId: "p-1-0",
+      bestScore: 85,
+      fastestElapsedMs: 120_000,
+      fewestMoves: null,
+      fewestMistakes: 1,
+      firstClearedAt: new Date(2026, 9, 31, 18).getTime(),
+    };
+    const changedZukan: GameZukan = {
+      ...zukan,
+      sections: zukan.sections.map((section) =>
+        section.difficulty === "1"
+          ? createSection("1", [
+              levelOneSolvedProblem,
+              ...levelOneProblems.slice(1),
+            ])
+          : section,
+      ),
+      solvedCount: 3,
+    };
+    const changes: ZukanChanges = {
+      byDifficulty: {
+        "1": new Map([
+          ["p-1-0", { kind: "newly-solved", previousStatus: "attempted" }],
+        ]),
+        "3": new Map([
+          ["p-a", { kind: "raised", previousStatus: "good" }],
+          ["p-c", { kind: "newly-solved", previousStatus: "untouched" }],
+        ]),
+      },
+      newlySolvedCount: 2,
+      raisedCount: 1,
+    };
+    const finalSummary = "新しく解いた 2問・段階が上がった 1問";
+
+    function getChangedSquareNames(sheetName: string): (string | null)[] {
+      return within(getSheet(sheetName))
+        .getAllByRole("button")
+        .map((square) => square.getAttribute("aria-label"))
+        .filter((name) => name?.includes("前回から"));
+    }
+
+    function getChangeStages(sheetName: string): (string | null)[] {
+      return within(getSheet(sheetName))
+        .getAllByRole("button")
+        .map((square) => square.getAttribute("data-change-stage"));
+    }
+
+    function getMarkedTabNames(): (string | undefined)[] {
+      return within(screen.getByRole("tablist", { name: "レベル" }))
+        .getAllByRole("tab")
+        .filter((tab) => tab.textContent?.includes("前回から変化あり"))
+        .map((tab) => tab.textContent?.split("、")[0]);
+    }
+
+    function getTabCounts(): (string | undefined)[] {
+      return within(screen.getByRole("tablist", { name: "レベル" }))
+        .getAllByRole("tab")
+        .map((tab) => tab.textContent?.match(/\d+ \/ \d+/)?.[0]);
+    }
+
+    function sumTabSolvedCounts(): number {
+      return getTabCounts().reduce(
+        (total, count) => total + Number(count?.split(" / ")[0]),
+        0,
+      );
+    }
+
+    function getSummaryText(): string | null | undefined {
+      return screen.getAllByText(/新しく解いた|段階が上がった/)[0]?.closest("p")
+        ?.textContent;
+    }
+
+    function getSolvedCountText(): string | null {
+      return screen.getByText(/^解いた問題 \d+ \/ 1200$/).textContent;
+    }
+
+    function getShownSolvedCount(): number {
+      return Number(getSolvedCountText()?.match(/(\d+) \//)?.[1]);
+    }
+
+    /** 押していく途中の姿も描かれるよう、時刻を少しずつ進める。Animation の終わりもこの時刻で来る。 */
+    async function advanceStamps(durationMs: number) {
+      for (let elapsedMs = 0; elapsedMs < durationMs; elapsedMs += 20) {
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(20);
+        });
+      }
+    }
+
+    async function finishStamps() {
+      await advanceStamps(1600);
+    }
+
+    function tap(target: Element, { x, y }: { x: number; y: number }) {
+      fireEvent.pointerDown(target, { pointerId: 1, clientX: x, clientY: y });
+      fireEvent.pointerUp(target, { pointerId: 1, clientX: x, clientY: y });
+    }
+
+    let animate: ReturnType<typeof vi.fn>;
+    let reducedMotionListeners: Set<() => void>;
+    let prefersReduced: boolean;
+
+    /** 渡された長さが経つと終わる Animation を作る。取り消すと終わらない。 */
+    function createTimedAnimation(
+      options: number | KeyframeAnimationOptions | undefined,
+    ): Animation {
+      const durationMs =
+        typeof options === "number" ? options : Number(options?.duration ?? 0);
+      let timer = 0;
+      let rejectFinished: (reason: unknown) => void = () => {};
+      const animation = {
+        finished: new Promise<Animation>((resolve, reject) => {
+          rejectFinished = reject;
+          timer = window.setTimeout(
+            () => resolve(animation as unknown as Animation),
+            durationMs,
+          );
+        }),
+        cancel: vi.fn(() => {
+          window.clearTimeout(timer);
+          rejectFinished(new DOMException("", "AbortError"));
+        }),
+      };
+      animation.finished.catch(() => {});
+      return animation as unknown as Animation;
+    }
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      prefersReduced = false;
+      reducedMotionListeners = new Set();
+      vi.stubGlobal(
+        "matchMedia",
+        vi.fn(
+          () =>
+            ({
+              get matches() {
+                return prefersReduced;
+              },
+              addEventListener: (_: string, listener: () => void) =>
+                reducedMotionListeners.add(listener),
+              removeEventListener: (_: string, listener: () => void) =>
+                reducedMotionListeners.delete(listener),
+            }) as unknown as MediaQueryList,
+        ),
+      );
+      animate = vi.fn((_: Keyframe[], options?: KeyframeAnimationOptions) =>
+        createTimedAnimation(options),
+      );
+      HTMLElement.prototype.animate =
+        animate as unknown as HTMLElement["animate"];
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+      Reflect.deleteProperty(HTMLElement.prototype, "animate");
+    });
+
+    describe("動きを減らさない設定の場合", () => {
+      beforeEach(() => {
+        renderScreen(changedZukan, changes);
+      });
+
+      describe("開いた直後", () => {
+        test("変化したマスを、押す前の姿で描くこと", () => {
+          const stages = getChangeStages("レベル 3の問題");
+
+          expect(stages).toEqual(["waiting", null, "waiting", null]);
+        });
+
+        test("1行には、全レベルを合わせた前回からの変化の数を最初から示すこと", () => {
+          const summary = getSummaryText();
+
+          expect(summary).toBe(finalSummary);
+        });
+
+        test("開いているレベルの状態ごとの数とタブの数を前回の数から始め、画面全体の解いた数をタブの数の合計にすること", () => {
+          const levelCounts = getStatusCountNames();
+          const tabCounts = getTabCounts();
+          const solvedCount = getSolvedCountText();
+
+          expect(levelCounts).toEqual([
+            "perfect 0問",
+            "great 0問",
+            "good 1問",
+            "clear 0問",
+            "挑戦中 1問",
+            "未挑戦 2問",
+          ]);
+          expect(tabCounts).toEqual([
+            "0 / 3",
+            "0 / 1",
+            "1 / 4",
+            "0 / 1",
+            "0 / 1",
+          ]);
+          expect(solvedCount).toBe("解いた問題 1 / 1200");
+        });
+
+        test("マスの読み上げ名は、変化とともに今の状態を示すこと", () => {
+          const names = getChangedSquareNames("レベル 3の問題");
+
+          expect(names).toEqual([
+            "No.0005 レベル 3 最高スコア92点 前回から段階が上がった",
+            "No.0007 レベル 3 最高スコア70点 前回から新しく解いた",
+          ]);
+        });
+
+        test("開いていないレベルのうち、変化のあるレベルのタブにだけ印を付けること", () => {
+          const markedTabs = getMarkedTabNames();
+
+          expect(markedTabs).toEqual(["レベル 1"]);
+        });
+
+        test("まだ変化を見せ終えたと知らせないこと", () => {
+          const shownDifficulties = onLevelChangesShown.mock.calls;
+
+          expect(shownDifficulties).toEqual([]);
+        });
+      });
+
+      describe("最初のマスを押し終え、次のマスを押している場合", () => {
+        beforeEach(async () => {
+          await advanceStamps(520);
+        });
+
+        test("押し終えたマスを今の姿で、押しているマスを押す姿で描くこと", () => {
+          const stages = getChangeStages("レベル 3の問題");
+
+          expect(stages).toEqual(["landed", null, "stamping", null]);
+        });
+
+        test("マスに着いた変化の分だけ状態ごとの数を数え、押している新しく解いたマスを未挑戦の数と解いた数に残すこと", () => {
+          const levelCounts = getStatusCountNames();
+          const solvedCount = getSolvedCountText();
+
+          expect(levelCounts).toEqual([
+            "perfect 0問",
+            "great 1問",
+            "good 0問",
+            "clear 0問",
+            "挑戦中 1問",
+            "未挑戦 2問",
+          ]);
+          expect(solvedCount).toBe("解いた問題 1 / 1200");
+        });
+
+        test("段階が上がったマスを押しても、1行の数を変えないこと", () => {
+          const summary = getSummaryText();
+
+          expect(summary).toBe(finalSummary);
+        });
+      });
+
+      describe("押し終えた場合", () => {
+        beforeEach(async () => {
+          await finishStamps();
+        });
+
+        test("変化したマスを、1マスごとに押す姿・浮いた影・戻り・輪の4つずつ動かしたこと", () => {
+          const animatedCount = animate.mock.calls.length;
+
+          expect(animatedCount).toBe(8);
+        });
+
+        test("マスを今の姿で描き、変化の段階を残さないこと", () => {
+          const stages = getChangeStages("レベル 3の問題");
+
+          expect(stages).toEqual([null, null, null, null]);
+        });
+
+        test("開いているレベルの数を今の数まで数え上げて未挑戦の数を減らし、まだ開いていないレベルのタブは前回の数のまま印を残すこと", () => {
+          const levelCounts = getStatusCountNames();
+          const tabCounts = getTabCounts();
+          const markedTabs = getMarkedTabNames();
+
+          expect(levelCounts).toEqual([
+            "perfect 0問",
+            "great 1問",
+            "good 0問",
+            "clear 1問",
+            "挑戦中 1問",
+            "未挑戦 1問",
+          ]);
+          expect(tabCounts).toEqual([
+            "0 / 3",
+            "0 / 1",
+            "2 / 4",
+            "0 / 1",
+            "0 / 1",
+          ]);
+          expect(markedTabs).toEqual(["レベル 1"]);
+        });
+
+        test("画面全体の解いた数を、タブの数の合計に合わせること", () => {
+          const solvedCount = getShownSolvedCount();
+
+          expect(solvedCount).toBe(sumTabSolvedCounts());
+        });
+
+        test("開いているレベルの変化だけを見せ終えたと知らせること", () => {
+          const shownDifficulties = onLevelChangesShown.mock.calls;
+
+          expect(shownDifficulties).toEqual([["3"]]);
+        });
+
+        test("マスを選べること", () => {
+          fireEvent.click(getSquare("レベル 3の問題", "No.0007"));
+          const detailNumber = within(getDetail()).getByText("No.0007");
+
+          expect(detailNumber).toBeTruthy();
+        });
+      });
+
+      describe("押している途中でタップした場合", () => {
+        beforeEach(async () => {
+          await advanceStamps(400);
+          tap(document.body, { x: 10, y: 10 });
+        });
+
+        test("最後の姿まで飛ばし、見せ終えたと知らせること", () => {
+          const stages = getChangeStages("レベル 3の問題");
+          const tabCounts = getTabCounts();
+
+          expect(stages).toEqual([null, null, null, null]);
+          expect(tabCounts).toEqual([
+            "0 / 3",
+            "0 / 1",
+            "2 / 4",
+            "0 / 1",
+            "0 / 1",
+          ]);
+          expect(onLevelChangesShown.mock.calls).toEqual([["3"]]);
+        });
+
+        test("飛ばしたタップに続くクリックではマスを選ばず、次のタップから選べること", () => {
+          fireEvent.click(getSquare("レベル 3の問題", "No.0007"));
+          const detailAfterSkip = queryDetail();
+          fireEvent.pointerDown(getSquare("レベル 3の問題", "No.0007"), {
+            pointerId: 1,
+          });
+          fireEvent.click(getSquare("レベル 3の問題", "No.0007"));
+          const detailNumber = within(getDetail()).queryByText("No.0007");
+
+          expect(detailAfterSkip).toBeNull();
+          expect(detailNumber).toBeTruthy();
+        });
+      });
+
+      describe("押している途中で台紙をドラッグした場合", () => {
+        beforeEach(async () => {
+          await advanceStamps(400);
+        });
+
+        test("押し離すまでに大きく動かしたときは飛ばさないこと", () => {
+          const sheet = getSheet("レベル 3の問題");
+          fireEvent.pointerDown(sheet, {
+            pointerId: 1,
+            clientX: 10,
+            clientY: 200,
+          });
+          fireEvent.pointerUp(sheet, {
+            pointerId: 1,
+            clientX: 12,
+            clientY: 120,
+          });
+          const stages = getChangeStages("レベル 3の問題");
+
+          expect(stages).not.toEqual([null, null, null, null]);
+          expect(onLevelChangesShown).not.toHaveBeenCalled();
+        });
+
+        test("ブラウザがスクロールに切り替えたときは飛ばさないこと", () => {
+          const sheet = getSheet("レベル 3の問題");
+          fireEvent.pointerDown(sheet, {
+            pointerId: 1,
+            clientX: 10,
+            clientY: 200,
+          });
+          fireEvent.pointerCancel(sheet, { pointerId: 1 });
+          fireEvent.pointerUp(sheet, {
+            pointerId: 1,
+            clientX: 10,
+            clientY: 200,
+          });
+          const stages = getChangeStages("レベル 3の問題");
+
+          expect(stages).not.toEqual([null, null, null, null]);
+        });
+      });
+
+      describe("押している途中でキーを押した場合", () => {
+        beforeEach(async () => {
+          await advanceStamps(400);
+        });
+
+        test("最後の姿まで飛ばすこと", () => {
+          fireEvent.keyDown(document.body, { key: "Escape" });
+          const stages = getChangeStages("レベル 3の問題");
+
+          expect(stages).toEqual([null, null, null, null]);
+        });
+      });
+
+      describe("押している途中で画面を離れた場合", () => {
+        let addedListeners: unknown[][];
+        let removedListeners: unknown[][];
+
+        beforeEach(async () => {
+          await advanceStamps(400);
+          addedListeners = [];
+          removedListeners = [];
+          vi.spyOn(document, "removeEventListener").mockImplementation(
+            function track(this: Document, ...args) {
+              removedListeners.push(args);
+              return EventTarget.prototype.removeEventListener.apply(
+                this,
+                args,
+              );
+            },
+          );
+          vi.spyOn(document, "addEventListener").mockImplementation(
+            function track(this: Document, ...args) {
+              addedListeners.push(args);
+              return EventTarget.prototype.addEventListener.apply(this, args);
+            },
+          );
+        });
+
+        afterEach(() => {
+          vi.restoreAllMocks();
+        });
+
+        test("押していく途中の動きと待ちと、飛ばすための操作の受け付けをやめ、見せ終えたと知らせないこと", async () => {
+          cleanup();
+          const animatedCountAfterUnmount = animate.mock.calls.length;
+          await vi.advanceTimersByTimeAsync(2000);
+          const removedTypes = removedListeners.map(([type]) => type);
+
+          expect(removedTypes).toEqual(
+            expect.arrayContaining([
+              "pointerdown",
+              "pointerup",
+              "pointercancel",
+              "wheel",
+              "keydown",
+            ]),
+          );
+          expect(addedListeners).toEqual([]);
+          expect(animate.mock.calls.length).toBe(animatedCountAfterUnmount);
+          expect(onLevelChangesShown).not.toHaveBeenCalled();
+        });
+      });
+
+      describe("押している途中で、変化をまだ見せていないレベルへ切り替えた場合", () => {
+        beforeEach(async () => {
+          await advanceStamps(400);
+          animate.mockClear();
+          chooseLevel("レベル 1");
+        });
+
+        test("切り替える前のレベルの変化を見せ終えたと知らせること", () => {
+          const shownDifficulties = onLevelChangesShown.mock.calls;
+
+          expect(shownDifficulties).toEqual([["3"]]);
+        });
+
+        test("そのレベルの台紙と数を前回の姿から始め、前回挑戦中だったマスを挑戦中として数えること", () => {
+          const stages = getChangeStages("レベル 1の問題");
+          const levelCounts = getStatusCountNames();
+          const tabCounts = getTabCounts();
+          const solvedCount = getShownSolvedCount();
+
+          expect(stages).toEqual(["waiting", null, null]);
+          expect(levelCounts).toEqual([
+            "perfect 0問",
+            "great 0問",
+            "good 0問",
+            "clear 0問",
+            "挑戦中 1問",
+            "未挑戦 2問",
+          ]);
+          expect(tabCounts).toEqual([
+            "0 / 3",
+            "0 / 1",
+            "2 / 4",
+            "0 / 1",
+            "0 / 1",
+          ]);
+          expect(solvedCount).toBe(sumTabSolvedCounts());
+        });
+
+        test("そのレベルの変化を押して数え上げて挑戦中の数を減らし、印を外して見せ終えたと知らせること", async () => {
+          await finishStamps();
+          const levelCounts = getStatusCountNames();
+          const tabCounts = getTabCounts();
+          const markedTabs = getMarkedTabNames();
+
+          expect(animate.mock.calls.length).toBe(4);
+          expect(levelCounts).toEqual([
+            "perfect 0問",
+            "great 0問",
+            "good 1問",
+            "clear 0問",
+            "挑戦中 0問",
+            "未挑戦 2問",
+          ]);
+          expect(tabCounts).toEqual([
+            "1 / 3",
+            "0 / 1",
+            "2 / 4",
+            "0 / 1",
+            "0 / 1",
+          ]);
+          expect(markedTabs).toEqual([]);
+          expect(getShownSolvedCount()).toBe(3);
+          expect(onLevelChangesShown.mock.calls).toEqual([["3"], ["1"]]);
+        });
+
+        test("見せ終えたレベルへ戻っても、変化を見せ直さないこと", async () => {
+          await finishStamps();
+          chooseLevel("レベル 3");
+          const stages = getChangeStages("レベル 3の問題");
+
+          expect(stages).toEqual([null, null, null, null]);
+        });
+      });
+    });
+
+    describe("ページが裏にある間に開いた場合", () => {
+      let visibilityState: DocumentVisibilityState;
+
+      beforeEach(async () => {
+        visibilityState = "hidden";
+        vi.spyOn(document, "visibilityState", "get").mockImplementation(
+          () => visibilityState,
+        );
+        renderScreen(changedZukan, changes);
+        await advanceStamps(2000);
+      });
+
+      afterEach(() => {
+        vi.restoreAllMocks();
+      });
+
+      test("押し始めず、見せ終えたとも知らせないこと", () => {
+        const stages = getChangeStages("レベル 3の問題");
+
+        expect(stages).toEqual(["waiting", null, "waiting", null]);
+        expect(animate).not.toHaveBeenCalled();
+        expect(onLevelChangesShown).not.toHaveBeenCalled();
+      });
+
+      test("ページが見えてから押し始め、見せ終えたと知らせること", async () => {
+        visibilityState = "visible";
+        act(() => {
+          document.dispatchEvent(new Event("visibilitychange"));
+        });
+        await finishStamps();
+        const stages = getChangeStages("レベル 3の問題");
+
+        expect(animate).toHaveBeenCalled();
+        expect(stages).toEqual([null, null, null, null]);
+        expect(onLevelChangesShown.mock.calls).toEqual([["3"]]);
+      });
+    });
+
+    describe("変化したマスが13個以上ある場合", () => {
+      const manyProblems = createUntouchedProblems("2", 4, 15).map(
+        (problem): ZukanProblem => ({
+          kind: "solved",
+          number: problem.number,
+          difficulty: "2",
+          problemId: problem.problemId,
+          bestScore: 60,
+          fastestElapsedMs: 60_000,
+          fewestMoves: null,
+          fewestMistakes: null,
+          firstClearedAt: 0,
+        }),
+      );
+      const manyZukan: GameZukan = {
+        ...zukan,
+        sections: zukan.sections.map((section) =>
+          section.difficulty === "2"
+            ? createSection("2", manyProblems)
+            : section,
+        ),
+        latestPlayedDifficulty: "2",
+      };
+      const manyChanges: ZukanChanges = {
+        byDifficulty: {
+          "2": new Map(
+            manyProblems.map(({ problemId }) => [
+              problemId,
+              { kind: "newly-solved", previousStatus: "untouched" },
+            ]),
+          ),
+        },
+        newlySolvedCount: 15,
+        raisedCount: 0,
+      };
+      let samples: { untouched: number; solved: number; total: number }[];
+
+      function readUntouchedCount(): number {
+        const name = getStatusCountNames().find((item) =>
+          item?.startsWith("未挑戦"),
+        );
+        return Number(name?.match(/\d+/)?.[0]);
+      }
+
+      beforeEach(async () => {
+        renderScreen(manyZukan, manyChanges);
+        samples = [];
+        for (let elapsedMs = 0; elapsedMs < 1800; elapsedMs += 20) {
+          samples.push({
+            untouched: readUntouchedCount(),
+            solved: Number(getTabCounts()[1]?.split(" / ")[0]),
+            total: getShownSolvedCount(),
+          });
+          await advanceStamps(20);
+        }
+        samples.push({
+          untouched: readUntouchedCount(),
+          solved: Number(getTabCounts()[1]?.split(" / ")[0]),
+          total: getShownSolvedCount(),
+        });
+      });
+
+      test("未挑戦の数を一度も増やさずに減らしていき、最後に0にすること", () => {
+        const untouchedCounts = samples.map(({ untouched }) => untouched);
+        const isNonIncreasing = untouchedCounts.every(
+          (count, index) =>
+            index === 0 || count <= (untouchedCounts[index - 1] ?? 0),
+        );
+
+        expect(untouchedCounts[0]).toBe(15);
+        expect(isNonIncreasing).toBe(true);
+        expect(untouchedCounts.at(-1)).toBe(0);
+      });
+
+      test("12マス目までを1つずつ数え、残りの3マスをまとめて押して最後に今の数に着くこと", () => {
+        const solvedCounts = [...new Set(samples.map(({ solved }) => solved))];
+
+        expect(solvedCounts).toEqual([
+          0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15,
+        ]);
+      });
+
+      test("画面全体の解いた数を、常にタブの数の合計に合わせること", () => {
+        const mismatches = samples.filter(
+          ({ solved, total }) => total !== solved + 2,
+        );
+
+        expect(mismatches).toEqual([]);
+      });
+    });
+
+    describe("動きを減らす設定の場合", () => {
+      beforeEach(() => {
+        prefersReduced = true;
+        renderScreen(changedZukan, changes);
+      });
+
+      test("マスを動かさず、変化したマスにだけ印を載せること", () => {
+        const markedSquares = within(getSheet("レベル 3の問題"))
+          .getAllByRole("button")
+          .filter((square) => square.querySelector("[data-change-mark]"))
+          .map((square) => square.getAttribute("aria-label")?.split(" ")[0]);
+        const animatedCount = animate.mock.calls.length;
+
+        expect(markedSquares).toEqual(["No.0005", "No.0007"]);
+        expect(animatedCount).toBe(0);
+      });
+
+      test("数え上げずに、画面全体の解いた数・タブの数を今の数で示すこと", () => {
+        const solvedCount = getSolvedCountText();
+        const tabCounts = getTabCounts();
+
+        expect(solvedCount).toBe("解いた問題 3 / 1200");
+        expect(tabCounts).toEqual([
+          "1 / 3",
+          "0 / 1",
+          "2 / 4",
+          "0 / 1",
+          "0 / 1",
+        ]);
+      });
+
+      test("印を載せた台紙を見せたところで、開いているレベルの変化を見せ終えたと知らせること", () => {
+        const shownDifficulties = onLevelChangesShown.mock.calls;
+
+        expect(shownDifficulties).toEqual([["3"]]);
+      });
+
+      test("まだ見せていない変化のあるレベルのタブに印を付けること", () => {
+        const markedTabs = getMarkedTabNames();
+
+        expect(markedTabs).toEqual(["レベル 1"]);
+      });
+    });
+
+    describe("押している途中で動きを減らす設定に変えた場合", () => {
+      beforeEach(async () => {
+        renderScreen(changedZukan, changes);
+        await advanceStamps(400);
+        prefersReduced = true;
+        act(() => {
+          for (const listener of reducedMotionListeners) {
+            listener();
+          }
+        });
+      });
+
+      test("押すのをやめて今の姿に印を載せ、見せ終えたと知らせること", async () => {
+        const animatedCount = animate.mock.calls.length;
+        await advanceStamps(1000);
+        const stages = getChangeStages("レベル 3の問題");
+
+        expect(stages).toEqual(["marked", null, "marked", null]);
+        expect(animate.mock.calls.length).toBe(animatedCount);
+        expect(onLevelChangesShown.mock.calls).toEqual([["3"]]);
+      });
+    });
+  });
+
+  describe("最後に遊んだレベルが無い場合", () => {
+    test("レベル 1 のタブを選び、レベル 1 の台紙を示すこと", () => {
+      renderScreen({ ...zukan, latestPlayedDifficulty: null });
+
+      const selectedTab = screen.getByRole("tab", { selected: true });
+      const sheetNames = getShownSheetNames();
+
+      expect(selectedTab.textContent).toMatch(/^レベル 1/);
+      expect(sheetNames).toEqual(["レベル 1の問題"]);
+    });
+  });
+});

@@ -167,6 +167,13 @@ describe("nanpurePlayRecordDefinition", () => {
   );
 });
 
+test("クリアの成績として、経過時間とミスの数を読み、手数は読まないこと", () => {
+  const clearPerformance =
+    nanpurePlayRecordDefinition.getClearPerformance(record);
+
+  expect(clearPerformance).toEqual({ elapsedMs: 120_000, mistakeCount: 1 });
+});
+
 describe("restoreNanpureRecordedResult", () => {
   describe("今の版の記録の場合", () => {
     test("記録の難易度・問題・成績から結果を作り直すこと", () => {

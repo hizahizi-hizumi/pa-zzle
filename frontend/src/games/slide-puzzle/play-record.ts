@@ -234,6 +234,17 @@ export const slidePuzzlePlayRecordDefinition = {
   getComparisonKey(record) {
     return isSlidePuzzlePlayRecord(record) ? record.payload.difficulty : null;
   },
+  getClearPerformance(record) {
+    if (!isSlidePuzzlePlayRecord(record)) {
+      return null;
+    }
+    const { elapsedMs, completionMoveCount, optimalMoveCount } =
+      record.payload.performance;
+    return {
+      elapsedMs,
+      moves: { completionMoveCount, optimalMoveCount },
+    };
+  },
   personalBestMetrics: [
     {
       id: "play-score",

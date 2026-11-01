@@ -11,8 +11,13 @@ import {
   restoreSlidePuzzleRecordedResult,
   slidePuzzlePlayRecordDefinition,
 } from "@/games/slide-puzzle/play-record";
+import {
+  findSlidePuzzlePoolProblemFeatures,
+  listSlidePuzzlePoolProblemIds,
+} from "@/games/slide-puzzle/problem/problem-pool";
 import { canSelectSlidePuzzleProblemById } from "@/games/slide-puzzle/problem-selection";
 import { slidePuzzlePlayRecordDisplay } from "@/games/slide-puzzle/ui/play-record-display";
+import { formatSlidePuzzleProblemFeatures } from "@/games/slide-puzzle/ui/problem-features";
 
 export const slidePuzzleCatalogEntry = {
   id: slidePuzzlePlayRecordDefinition.gameId,
@@ -37,10 +42,15 @@ export const slidePuzzleCatalogEntry = {
       canSelectSlidePuzzleProblemById,
     );
   },
+  listPoolProblemIds: listSlidePuzzlePoolProblemIds,
   renderRecordResult(record, context) {
     const recorded = restoreSlidePuzzleRecordedResult(record);
     return recorded ? (
       <RecordedSlidePuzzleResult {...recorded} {...context} />
     ) : null;
+  },
+  describePoolProblem(difficulty, problemId) {
+    const features = findSlidePuzzlePoolProblemFeatures(difficulty, problemId);
+    return features ? formatSlidePuzzleProblemFeatures(features) : null;
   },
 } satisfies GameCatalogEntry;

@@ -3,7 +3,7 @@ import { isNonEmptyString, isRecordObject } from "@/lib/type-guards";
 
 /**
  * 問題を指す短い ID。生成器の版・生成条件・seed・生成試行など、問題を作るのに要る identity 全体から求める。
- * 一方向のハッシュなので、ID から問題へは問題集の索引（`createProblemPoolIdLookup`）で引く。
+ * 一方向のハッシュなので、ID から問題へは問題集の索引（`createProblemPoolIndex`）で引く。
  */
 export type ProblemId = string;
 
@@ -124,44 +124,60 @@ export type ProblemPoolPosition<Entry> = {
   entryIndex: number;
 };
 
-export type ProblemPoolIdLookup<Difficulty extends string, Entry> = (
-  difficulty: Difficulty,
-  problemId: string,
-) => ProblemPoolPosition<Entry> | null;
+/** 問題集の全項目の問題 ID の索引。 */
+export type ProblemPoolIndex<Difficulty extends string, Entry> = {
+  /** 難易度と問題 ID から問題集の中の位置を引く。別の難易度の問題集にある ID や、問題集に無い ID には `null` を返す。 */
+  findPositionById: (
+    difficulty: Difficulty,
+    problemId: string,
+  ) => ProblemPoolPosition<Entry> | null;
+  /** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。 */
+  listProblemIds: (difficulty: Difficulty) => readonly ProblemId[];
+};
 
-/**
- * 問題集の全項目を問題 ID で引く関数を作る。索引は最初に引くときに作る。
- * 別の難易度の問題集にある ID や、問題集に無い ID には `null` を返す。
- */
-export function createProblemPoolIdLookup<Difficulty extends string, Entry>(
+/** 問題集の全項目の問題 ID の索引を作る。索引は最初に使うときに作る。 */
+export function createProblemPoolIndex<Difficulty extends string, Entry>(
   levels: Readonly<Record<Difficulty, readonly Entry[]>>,
   toIdentity: (entry: Entry, difficulty: Difficulty) => ProblemIdentity,
-): ProblemPoolIdLookup<Difficulty, Entry> {
+): ProblemPoolIndex<Difficulty, Entry> {
   type IndexedPosition = ProblemPoolPosition<Entry> & {
     difficulty: Difficulty;
   };
-  let index: ReadonlyMap<ProblemId, IndexedPosition> | undefined;
+  type Index = {
+    positionsById: ReadonlyMap<ProblemId, IndexedPosition>;
+    idsByDifficulty: Readonly<Record<Difficulty, readonly ProblemId[]>>;
+  };
+  let index: Index | undefined;
 
-  function getIndex(): ReadonlyMap<ProblemId, IndexedPosition> {
-    index ??= new Map(
-      (Object.keys(levels) as Difficulty[]).flatMap((difficulty) =>
-        levels[difficulty].map(
-          (entry, entryIndex) =>
-            [
-              createProblemId(toIdentity(entry, difficulty)),
-              { difficulty, entry, entryIndex },
-            ] as const,
-        ),
-      ),
-    );
+  function getIndex(): Index {
+    if (index) {
+      return index;
+    }
+    const positionsById = new Map<ProblemId, IndexedPosition>();
+    const idsByDifficulty = {} as Record<Difficulty, ProblemId[]>;
+    for (const difficulty of Object.keys(levels) as Difficulty[]) {
+      idsByDifficulty[difficulty] = levels[difficulty].map(
+        (entry, entryIndex) => {
+          const problemId = createProblemId(toIdentity(entry, difficulty));
+          positionsById.set(problemId, { difficulty, entry, entryIndex });
+          return problemId;
+        },
+      );
+    }
+    index = { positionsById, idsByDifficulty };
     return index;
   }
 
-  return function findProblemPoolPositionById(difficulty, problemId) {
-    const position = getIndex().get(problemId);
-    return position?.difficulty === difficulty
-      ? { entry: position.entry, entryIndex: position.entryIndex }
-      : null;
+  return {
+    findPositionById(difficulty, problemId) {
+      const position = getIndex().positionsById.get(problemId);
+      return position?.difficulty === difficulty
+        ? { entry: position.entry, entryIndex: position.entryIndex }
+        : null;
+    },
+    listProblemIds(difficulty) {
+      return getIndex().idsByDifficulty[difficulty];
+    },
   };
 }
 

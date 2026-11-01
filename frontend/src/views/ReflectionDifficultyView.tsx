@@ -15,6 +15,7 @@ export function ReflectionDifficultyView() {
         <HomeBackLink />
         <DifficultySelectionHeading
           title={REFLECTION_DISPLAY_NAME}
+          gameId={reflectionCatalogEntry.id}
           renderHowToPlayDialog={({ open, onClose }) => (
             <ReflectionHowToPlayDialog
               open={open}

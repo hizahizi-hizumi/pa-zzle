@@ -3,6 +3,7 @@ paths:
   - "frontend/src/components/*.tsx"
   - "frontend/src/games/*/ui/**/*.tsx"
   - "frontend/src/records/ui/**/*.tsx"
+  - "frontend/src/zukan/ui/**/*.tsx"
   - "frontend/src/views/**/*.tsx"
 ---
 

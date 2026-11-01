@@ -14,6 +14,7 @@ export function SlidePuzzleDifficultyView() {
         <HomeBackLink />
         <DifficultySelectionHeading
           title={SLIDE_PUZZLE_DISPLAY_NAME}
+          gameId={slidePuzzleCatalogEntry.id}
           renderHowToPlayDialog={({ open, onClose }) => (
             <SlidePuzzleHowToPlayDialog open={open} onClose={onClose} />
           )}

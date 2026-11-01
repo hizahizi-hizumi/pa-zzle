@@ -244,6 +244,13 @@ describe("parkingJamPlayRecordDefinition", () => {
     ]);
   });
 
+  test("クリアの成績として、経過時間と、出せなかった出庫の数をミスとして読み、手数は読まないこと", () => {
+    const clearPerformance =
+      parkingJamPlayRecordDefinition.getClearPerformance(record);
+
+    expect(clearPerformance).toEqual({ elapsedMs: 90_000, mistakeCount: 1 });
+  });
+
   describe("payloadVersion 2 の記録の場合", () => {
     test("自己ベストの比較に使う値を持たないこと", () => {
       const values = parkingJamPlayRecordDefinition.personalBestMetrics.map(

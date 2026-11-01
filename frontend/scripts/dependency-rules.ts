@@ -213,6 +213,41 @@ function createApplicationLayerOverrides(): BiomeOverride[] {
         },
       ],
     ),
+    restrictImports(
+      ["src/zukan/**/*.{ts,tsx}", "!src/zukan/ui/**"],
+      [
+        {
+          group: [
+            "@/components/**",
+            "@/game-catalog/**",
+            "@/games/*/**",
+            "@/records/hooks/**",
+            "@/records/ui/**",
+            "@/views/**",
+            "@/pages/**",
+            "@/router",
+            "react*",
+          ],
+          message:
+            "[dependency/zukan-core-boundary] 図鑑の中核は具体ゲーム・ゲームカタログ・React・UI・画面合成へ依存しない。",
+        },
+      ],
+    ),
+    restrictImports(
+      ["src/zukan/ui/**/*.{ts,tsx}"],
+      [
+        {
+          group: [
+            "@/game-catalog/**",
+            "@/games/*/**",
+            "@/views/**",
+            "@/pages/**",
+          ],
+          message:
+            "[dependency/zukan-ui-boundary] 図鑑 UI は具体ゲーム・ゲームカタログ・画面合成・pages へ逆依存しない。",
+        },
+      ],
+    ),
     {
       includes: [
         "src/pages/**/*.{ts,tsx}",

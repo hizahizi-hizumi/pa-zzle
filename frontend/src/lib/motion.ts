@@ -16,10 +16,27 @@ export const MOTION_EASING = {
   celebrate: "cubic-bezier(0.2, 0.8, 0.2, 1)",
 } as const;
 
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+
 export function prefersReducedMotion(): boolean {
-  return (
-    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
-  );
+  return window.matchMedia?.(REDUCED_MOTION_QUERY).matches ?? false;
+}
+
+/**
+ * 動きを減らす設定が変わるたびに `onChange` を呼ぶ。設定の変化を知らせない環境では呼ばない。
+ * 戻り値は購読をやめる関数。
+ */
+export function subscribePrefersReducedMotion(
+  onChange: () => void,
+): () => void {
+  const query = window.matchMedia?.(REDUCED_MOTION_QUERY);
+  if (typeof query?.addEventListener !== "function") {
+    return function unsubscribeNothing() {};
+  }
+  query.addEventListener("change", onChange);
+  return function unsubscribe() {
+    query.removeEventListener("change", onChange);
+  };
 }
 
 /**

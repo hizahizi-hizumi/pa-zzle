@@ -224,6 +224,11 @@ export const reflectionPlayRecordDefinition = {
   getComparisonKey(record) {
     return isReflectionPlayRecord(record) ? record.payload.difficulty : null;
   },
+  getClearPerformance(record) {
+    return isReflectionPlayRecord(record)
+      ? { elapsedMs: record.payload.performance.elapsedMs }
+      : null;
+  },
   personalBestMetrics: [
     {
       id: "play-score",

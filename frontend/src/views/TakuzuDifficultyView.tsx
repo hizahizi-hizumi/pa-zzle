@@ -14,6 +14,7 @@ export function TakuzuDifficultyView() {
         <HomeBackLink />
         <DifficultySelectionHeading
           title={TAKUZU_DISPLAY_NAME}
+          gameId={takuzuCatalogEntry.id}
           renderHowToPlayDialog={({ open, onClose }) => (
             <TakuzuHowToPlayDialog open={open} onClose={onClose} />
           )}
