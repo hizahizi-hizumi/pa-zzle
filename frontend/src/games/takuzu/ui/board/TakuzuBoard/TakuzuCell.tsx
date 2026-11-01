@@ -123,7 +123,7 @@ export function TakuzuCell({
           key={cue.id}
           aria-hidden="true"
           data-cell-cue={cue.kind}
-          className="pointer-events-none absolute inset-1 rounded-sm border-2 border-sky-600/60 border-dashed animate-in fade-in-0 duration-500 motion-reduce:animate-none dark:border-sky-300/60"
+          className="pointer-events-none absolute inset-1 rounded-sm border-[3px] border-sky-600 border-dashed animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none dark:border-sky-400"
         />
       )}
       {/*

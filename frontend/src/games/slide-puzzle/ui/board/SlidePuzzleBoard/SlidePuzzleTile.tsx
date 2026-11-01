@@ -66,7 +66,7 @@ export function SlidePuzzleTile({
           key={cue.id}
           aria-hidden="true"
           data-tile-cue={cue.kind}
-          className="pointer-events-none absolute inset-0 rounded-[2.2cqw] border-2 border-sky-600/70 border-dashed animate-in fade-in-0 duration-500 motion-reduce:animate-none dark:border-sky-300/70"
+          className="pointer-events-none absolute inset-[1cqw] rounded-[1.6cqw] border-[3px] border-sky-600 border-dashed animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none dark:border-sky-400"
         />
       )}
     </button>
