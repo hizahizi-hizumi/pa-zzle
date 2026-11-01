@@ -88,6 +88,11 @@ const checkLines = [];
 let problemCount = 0;
 const browser = await chromium.launch();
 try {
+  // 開発サーバーは初回の読み込みで依存を最適化し直し、その間の要求に 504 (Outdated Optimize Dep) を返すことがある。
+  // 撮る前に全画面を一度開いて落ち着かせ、そのエラーを撮影の結果に混ぜない。
+  const warmUpPage = await browser.newPage();
+  for (const screen of screens) await warmUpPage.goto(baseUrl + screen.path, { waitUntil: "networkidle" });
+  await warmUpPage.close();
   for (const width of widths) {
     for (const theme of themes) {
       const context = await browser.newContext(contextOptionsFor(width, theme));
