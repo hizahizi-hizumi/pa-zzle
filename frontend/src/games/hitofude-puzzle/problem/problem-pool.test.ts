@@ -5,7 +5,9 @@ import {
   encodeHitofudePuzzlePoolHoles,
   findHitofudePuzzlePoolEntry,
   findHitofudePuzzlePoolEntryByProblemId,
+  findHitofudePuzzlePoolProblemFeatures,
   listHitofudePuzzlePoolEntries,
+  listHitofudePuzzlePoolProblemIds,
   toHitofudePuzzlePooledProblem,
   toHitofudePuzzlePoolIdentity,
 } from "@/games/hitofude-puzzle/problem/problem-pool";
@@ -159,6 +161,45 @@ describe("findHitofudePuzzlePoolEntryByProblemId", () => {
 
       expect(found).toBeNull();
     });
+  });
+});
+
+describe("listHitofudePuzzlePoolProblemIds", () => {
+  const difficulty = "3";
+  const expectedProblemIds = listHitofudePuzzlePoolEntries(difficulty).map(
+    (entry) => createProblemId(toHitofudePuzzlePoolIdentity(entry)),
+  );
+
+  test("難易度の問題集の全問の問題IDを、問題集の並び順で返すこと", () => {
+    const problemIds = listHitofudePuzzlePoolProblemIds(difficulty);
+
+    expect(problemIds).toEqual(expectedProblemIds);
+  });
+});
+
+describe("findHitofudePuzzlePoolProblemFeatures", () => {
+  const [entry] = listHitofudePuzzlePoolEntries("3");
+  const pooled = toHitofudePuzzlePooledProblem(entry!);
+  const problemId = createProblemId(pooled.identity);
+
+  test("問題集の1問の特徴を、復元した問題の盤面の一辺のマスの数と穴の数で返すこと", () => {
+    const features = findHitofudePuzzlePoolProblemFeatures("3", problemId);
+
+    expect(features).toEqual({
+      size: pooled.problem.size,
+      holeCount: pooled.problem.holes.length,
+    });
+  });
+
+  test("問題集に無い ID と、別の難易度の ID には null を返すこと", () => {
+    const unknown = findHitofudePuzzlePoolProblemFeatures("3", "unknown");
+    const otherDifficulty = findHitofudePuzzlePoolProblemFeatures(
+      "1",
+      problemId,
+    );
+
+    expect(unknown).toBeNull();
+    expect(otherDifficulty).toBeNull();
   });
 });
 

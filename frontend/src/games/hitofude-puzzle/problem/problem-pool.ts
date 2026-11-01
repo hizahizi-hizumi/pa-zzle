@@ -18,6 +18,7 @@ import {
 } from "@/games/hitofude-puzzle/puzzle/board";
 import {
   createBoardSizeFeatureValue,
+  createCountFeatureValue,
   type ProblemFeatureAxis,
 } from "@/games/problem-feature";
 import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
@@ -229,18 +230,24 @@ export function listHitofudePuzzlePoolProblemIds(
   return poolIndex.listProblemIds(difficulty);
 }
 
-/** 始めたときの盤面を見れば分かる、問題の特徴。 */
+/** 始めたときの盤面を見れば分かる、問題の特徴。`size` は盤面の一辺のマスの数。 */
 export type HitofudePuzzleProblemFeatures = {
   size: number;
+  holeCount: number;
 };
 
-/** 難易度の問題集の1問の特徴を、問題を復元せず問題集の項目から求める。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+/** 難易度の問題集の1問の特徴を、作業の量を使わず問題集の項目の盤面から求める。問題集に無い ID・別の難易度の ID には `null` を返す。 */
 export function findHitofudePuzzlePoolProblemFeatures(
   difficulty: HitofudePuzzleDifficulty,
   problemId: string,
 ): HitofudePuzzleProblemFeatures | null {
   const entry = findHitofudePuzzlePoolEntryByProblemId(difficulty, problemId);
-  return entry ? { size: entry[0] } : null;
+  if (!entry) {
+    return null;
+  }
+  const [size, , , start, encodedHoles] = entry;
+  const { holes } = decodeHitofudePuzzlePoolProblem(size, start, encodedHoles);
+  return { size, holeCount: holes.length };
 }
 
 /** 図鑑の絞り込みで問題を分ける特徴の軸。 */
@@ -249,6 +256,12 @@ export const hitofudePuzzleProblemFeatureAxes = [
     id: "board-size",
     getValue({ size }) {
       return createBoardSizeFeatureValue(size, size);
+    },
+  },
+  {
+    id: "hole-count",
+    getValue({ holeCount }) {
+      return createCountFeatureValue(holeCount);
     },
   },
 ] as const satisfies readonly ProblemFeatureAxis<HitofudePuzzleProblemFeatures>[];
