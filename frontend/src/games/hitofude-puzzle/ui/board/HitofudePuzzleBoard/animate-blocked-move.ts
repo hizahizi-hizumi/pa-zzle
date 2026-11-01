@@ -13,12 +13,15 @@ const HEAD_BUMP_DISTANCE = 0.14;
 /** 向きの無い（先端から離れたマスを押した）ときの、左右の揺れの幅（マス幅に対する割合）。 */
 const HEAD_SHAKE_DISTANCE = 0.08;
 
-/** 進もうとしたマスの×。すぐ点け、読める間を置いてから消す。動きを減らす設定でも、動かない印として返す。 */
-const BLOCKED_MARK_DURATION_MS = 600;
+/**
+ * 進もうとしたマスの×。すぐ点け、目を向けてから読める間（0.7秒ほど）を置いてゆっくり消す。
+ * 次の操作の邪魔にならないよう、1秒で消し切る。動きを減らす設定でも、動かない印として返す。
+ */
+const BLOCKED_MARK_DURATION_MS = 1_000;
 const blockedMarkKeyframes: Keyframe[] = [
   { opacity: 0 },
-  { opacity: 1, offset: 0.1 },
-  { opacity: 1, offset: 0.6 },
+  { opacity: 1, offset: 0.05 },
+  { opacity: 1, offset: 0.7 },
   { opacity: 0 },
 ];
 

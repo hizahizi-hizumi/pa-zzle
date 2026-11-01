@@ -53,10 +53,13 @@ const DEAD_END_HEAD_RADIUS = HEAD_RING_RADIUS + HEAD_RING_WIDTH / 2;
 const DEAD_END_BAR_HALF_LENGTH = 0.24;
 const DEAD_END_BAR_WIDTH = 0.12;
 const CLEAR_TRACE_WIDTH = 0.1;
-/** 阻まれたマスの×の、中心から端までの長さと太さ。下に敷くマスの地の色の縁で、道の上でも読めるようにする。 */
-const BLOCKED_MARK_REACH = 0.2;
-const BLOCKED_MARK_WIDTH = 0.1;
-const BLOCKED_MARK_OUTLINE_WIDTH = 0.2;
+/**
+ * 阻まれたマスの×の、中心から端までの長さと太さ。マスの半分ほどに広げ、短く点いても見落とされない大きさにする。
+ * 下に敷くマスの地の色の縁で、道の上でも読めるようにする。
+ */
+const BLOCKED_MARK_REACH = 0.26;
+const BLOCKED_MARK_WIDTH = 0.13;
+const BLOCKED_MARK_OUTLINE_WIDTH = 0.25;
 /** 取り残しのマスの斜線の間隔と太さ。マス幅に4本ほど入り、未通過のマスの地と見分けられる密度にする。 */
 const STRANDED_HATCH_GAP = 0.25;
 const STRANDED_HATCH_WIDTH = 0.06;
