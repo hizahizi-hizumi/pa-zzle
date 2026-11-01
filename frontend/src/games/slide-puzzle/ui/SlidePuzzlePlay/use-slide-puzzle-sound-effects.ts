@@ -1,100 +1,70 @@
 import type { GameProgress } from "@/games/play";
-import { useClearSound, useOperationSound } from "@/games/play-sound-effects";
+import {
+  useClearSound,
+  useOperationSound,
+  usePrepareSoundEffects,
+} from "@/games/play-sound-effects";
+import clearNoteA5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-a5.flac";
+import clearNoteB5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-b5.flac";
+import clearNoteC5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-c5.flac";
+import clearNoteC6SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-c6.flac";
+import clearNoteD5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-d5.flac";
+import clearNoteE5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-e5.flac";
+import clearNoteF5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-f5.flac";
+import clearNoteG5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-g5.flac";
+import invalidSoundUrl from "@/games/slide-puzzle/assets/sounds/invalid.flac";
+import slidSoundUrl from "@/games/slide-puzzle/assets/sounds/slid.flac";
 import type { SlidePuzzleOperation } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import { getClearWaveTileDelayMs } from "@/games/slide-puzzle/ui/board/clear-wave";
 import { prefersReducedMotion } from "@/lib/motion";
 import {
+  defineSoundEffect,
+  playLayeredSound,
   playSound,
   REPEATED_SOUND_VARIATION,
-  type SoundTone,
+  type SoundEffect,
+  type SoundLayer,
 } from "@/lib/sound-effects";
 
-/**
- * タイルが滑る、小さく乾いた「コト」という音。
- * 1プレイで百回を超えて続けて鳴るので、短く小さくし、何枚まとめて滑っても同じ音にする。
- */
-const slidSound: readonly SoundTone[] = [
-  {
-    waveform: "triangle",
-    frequency: 1400,
-    endFrequency: 900,
-    durationMs: 22,
-    volume: 0.05,
-    attackMs: 1,
-  },
-  {
-    waveform: "sine",
-    frequency: 520,
-    endFrequency: 420,
-    durationMs: 50,
-    volume: 0.05,
-    attackMs: 2,
-  },
+/** タイルが滑る音。何枚まとめて滑っても同じ音で鳴らす。 */
+const slidSound = defineSoundEffect(slidSoundUrl);
+
+const invalidSound = defineSoundEffect(invalidSoundUrl);
+
+/** 完成演出の波でタイルが持ち上がるたびに鳴らす1音。低い順に並べ、盤面の大きさによらず最初から最後まで駆け上がる。 */
+const clearScaleSounds = [
+  clearNoteC5SoundUrl,
+  clearNoteD5SoundUrl,
+  clearNoteE5SoundUrl,
+  clearNoteF5SoundUrl,
+  clearNoteG5SoundUrl,
+  clearNoteA5SoundUrl,
+  clearNoteB5SoundUrl,
+  clearNoteC6SoundUrl,
+].map(defineSoundEffect);
+
+const slidePuzzleSounds: readonly SoundEffect[] = [
+  slidSound,
+  invalidSound,
+  ...clearScaleSounds,
 ];
-
-/** 滑らせられないタイルが枠の中でがたつく、低く短い2回の音。端末のスピーカーでも聞こえるよう倍音の多い波形を小さく鳴らす。 */
-const invalidSound: readonly SoundTone[] = [
-  {
-    waveform: "square",
-    frequency: 233,
-    endFrequency: 208,
-    durationMs: 40,
-    volume: 0.03,
-    attackMs: 2,
-  },
-  {
-    waveform: "square",
-    frequency: 208,
-    endFrequency: 185,
-    offsetMs: 60,
-    durationMs: 40,
-    volume: 0.022,
-    attackMs: 2,
-  },
-];
-
-/**
- * 完成演出の波でタイルが持ち上がるたびに鳴らす、木琴のような音の高さ。
- * 盤面の大きさによらず C から1オクターブ上の C まで駆け上がり、続けて鳴る結果の報酬の音（C の調）へ濁らずにつなぐ。
- */
-const CLEAR_SCALE_FREQUENCIES = [
-  523.25, 587.33, 659.25, 698.46, 783.99, 880, 987.77, 1046.5,
-] as const;
-
-function createClearWaveNote(frequency: number, offsetMs: number): SoundTone[] {
-  return [
-    {
-      waveform: "sine",
-      frequency,
-      offsetMs,
-      durationMs: 90,
-      volume: 0.06,
-      attackMs: 2,
-    },
-    {
-      waveform: "sine",
-      frequency: frequency * 4,
-      offsetMs,
-      durationMs: 30,
-      volume: 0.012,
-      attackMs: 1,
-    },
-  ];
-}
 
 /** 1番から順にタイルが持ち上がるのに合わせて、音を1枚ずつ上げていくクリア音。 */
-function createClearedSound(tileCount: number): readonly SoundTone[] {
-  const lastScaleIndex = CLEAR_SCALE_FREQUENCIES.length - 1;
+function createClearedSoundLayers(tileCount: number): SoundLayer[] {
+  const lastScaleIndex = clearScaleSounds.length - 1;
   const firstTileDelayMs = getClearWaveTileDelayMs(0);
   return Array.from({ length: tileCount }, function createTileNote(_, order) {
     const scaleIndex = Math.round(
       (order * lastScaleIndex) / Math.max(tileCount - 1, 1),
     );
-    return createClearWaveNote(
-      CLEAR_SCALE_FREQUENCIES[scaleIndex] ?? CLEAR_SCALE_FREQUENCIES[0],
-      getClearWaveTileDelayMs(order) - firstTileDelayMs,
+    const sound = clearScaleSounds[scaleIndex];
+    return (
+      sound && {
+        sound,
+        offsetMs: getClearWaveTileDelayMs(order) - firstTileDelayMs,
+      }
     );
-  }).flat();
+  }).filter((layer) => layer !== undefined);
 }
 
 function playOperationSound(operation: SlidePuzzleOperation) {
@@ -117,10 +87,11 @@ export function useSlidePuzzleSoundEffects(
   progress: GameProgress,
   tileCount: number,
 ) {
+  usePrepareSoundEffects(slidePuzzleSounds);
   useOperationSound(operation, playOperationSound);
   useClearSound(progress, function playClearSound() {
     // 波は最後のタイルが滑り終えてから始まる。
-    playSound(createClearedSound(tileCount), {
+    playLayeredSound(createClearedSoundLayers(tileCount), {
       delayMs: getClearWaveTileDelayMs(0),
     });
   });

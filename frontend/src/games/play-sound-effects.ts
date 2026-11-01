@@ -2,7 +2,18 @@ import { useEffect, useEffectEvent, useLayoutEffect, useRef } from "react";
 
 import type { GameProgress } from "@/games/play";
 import { prefersReducedMotion } from "@/lib/motion";
-import { prepareSoundEffects } from "@/lib/sound-effects";
+import { prepareSoundEffects, type SoundEffect } from "@/lib/sound-effects";
+
+/**
+ * 効果音を鳴らしうる画面を出したときに、その効果音の読み込みを始め、次の操作で音を出せるようにする。
+ * ゲームの効果音のフック（`use<Game>SoundEffects`）は、そのゲームの効果音すべてを渡して呼ぶ。
+ * アプリの画面の音と結果の報酬の音も、それを鳴らす画面の上位で呼ぶ。
+ */
+export function usePrepareSoundEffects(sounds: readonly SoundEffect[]): void {
+  useEffect(() => {
+    prepareSoundEffects(sounds);
+  }, [sounds]);
+}
 
 /**
  * 効果音を鳴らす盤面操作の知らせ。プレイフックが操作ごとに増える `id` を付けて返す。
@@ -38,10 +49,6 @@ export function useOperationSound<Operation extends SoundOperation>(
 ): void {
   const playedOperationIdRef = useRef(operation?.id ?? null);
   const play = useEffectEvent(playOperationSound);
-
-  useEffect(() => {
-    prepareSoundEffects();
-  }, []);
 
   // 操作が成立したかは、プレイフックが session を更新した後の描画で初めて分かるので、
   // 盤面の操作のイベントハンドラでは鳴らせない。盤面の変化を描くのと同じ時に鳴らす。
@@ -98,10 +105,6 @@ export function useClearSound(
       playClearSound();
     }
   });
-
-  useEffect(() => {
-    prepareSoundEffects();
-  }, []);
 
   // クリアは盤面操作の結果として session が変わった描画で初めて分かるので、イベントハンドラでは鳴らせない。
   useLayoutEffect(() => {

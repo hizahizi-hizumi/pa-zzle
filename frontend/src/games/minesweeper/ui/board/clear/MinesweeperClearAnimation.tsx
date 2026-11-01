@@ -8,7 +8,8 @@ type MinesweeperClearAnimationProps = {
   children: ReactNode;
 };
 
-export const CLEAR_PULSE_MS = 700;
+/** クリア音（`assets/sounds/cleared.flac`）は、脈打ち終わるときに鳴り終える長さで作っているので、変えるなら作り直す。 */
+const CLEAR_PULSE_MS = 700;
 const CLEAR_HOLD_MS = 200;
 /** 動かせない環境でも、脈打つ演出と同じ間を置いてから結果へ進める。 */
 const CLEAR_UNANIMATED_HOLD_MS = CLEAR_PULSE_MS + CLEAR_HOLD_MS;

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { usePrepareAppDecisionSounds } from "@/components/app-decision-sound";
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 
 type AppShellProps = {
@@ -22,6 +23,7 @@ export function AppShell({
   children,
   contentLayout = "contained",
 }: AppShellProps) {
+  usePrepareAppDecisionSounds();
   return (
     <div className="flex min-h-screen flex-col bg-muted/30 font-ui">
       <BrandIdentityHeader linkToHome size="regular" />

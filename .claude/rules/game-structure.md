@@ -138,7 +138,7 @@ frontend/src/games/
 
 ## 効果音
 
-- ゲームの効果音は `@/lib/sound-effects` の `SoundTone` で題材から作り、`playSound` で鳴らす。回数の多い操作の音には `REPEATED_SOUND_VARIATION` を渡す。
+- ゲームの効果音は題材から作った音声ファイルを `assets/` に同梱し、`@/lib/sound-effects` の `playSound` で鳴らす。音の中身をコードで合成しない。回数の多い操作の音には `REPEATED_SOUND_VARIATION` を渡す。
 - プレイ画面は、盤面操作の音を `games/play-sound-effects.ts` の `useOperationSound` で、プレイフックが返す `id` 付きの操作の知らせから鳴らす。クリア音は `useClearSound` で完成演出の始まりに鳴らす。
 - 動きを減らす設定では、不成立の動きが出ず画面が何も変わらない操作の音と、完成演出が無くすぐ結果へ進むときのクリア音を鳴らさない。完成した盤面を保持して見せるゲームだけ、その姿に合わせたクリア音を `useClearSound` へ渡す。
 - 結果を受け取る瞬間の報酬の音はアプリが `usePlayableGame` で鳴らすので、ゲームは鳴らさない。

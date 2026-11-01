@@ -1,5 +1,17 @@
 import type { GameProgress } from "@/games/play";
-import { useClearSound, useOperationSound } from "@/games/play-sound-effects";
+import {
+  useClearSound,
+  useOperationSound,
+  usePrepareSoundEffects,
+} from "@/games/play-sound-effects";
+import clearedSoundUrl from "@/games/water-sort/assets/sounds/cleared.flac";
+import invalidSoundUrl from "@/games/water-sort/assets/sounds/invalid.flac";
+import pouredBubble1SoundUrl from "@/games/water-sort/assets/sounds/poured-bubble-1.flac";
+import pouredBubble2SoundUrl from "@/games/water-sort/assets/sounds/poured-bubble-2.flac";
+import pouredBubble3SoundUrl from "@/games/water-sort/assets/sounds/poured-bubble-3.flac";
+import pouredBubble4SoundUrl from "@/games/water-sort/assets/sounds/poured-bubble-4.flac";
+import pouredBubble5SoundUrl from "@/games/water-sort/assets/sounds/poured-bubble-5.flac";
+import pouredBubble6SoundUrl from "@/games/water-sort/assets/sounds/poured-bubble-6.flac";
 import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
 import {
   POUR_ANIMATION_DURATION_MS,
@@ -8,91 +20,41 @@ import {
 } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/animation-view";
 import { prefersReducedMotion } from "@/lib/motion";
 import {
+  defineSoundEffect,
+  playLayeredSound,
   playSound,
   REPEATED_SOUND_VARIATION,
-  type SoundTone,
+  type SoundEffect,
+  type SoundLayer,
 } from "@/lib/sound-effects";
 
-/** 通らない操作の、低く短い音。端末のスピーカーでも聞こえるよう倍音の多い波形を小さく鳴らす。 */
-const invalidSound: readonly SoundTone[] = [
-  {
-    waveform: "square",
-    frequency: 220,
-    endFrequency: 185,
-    durationMs: 130,
-    volume: 0.035,
-  },
-];
+const invalidSound = defineSoundEffect(invalidSoundUrl);
 
 const POUR_TRANSFER_DURATION_MS =
   POUR_ANIMATION_DURATION_MS *
   (POUR_TRANSFER_END_OFFSET - POUR_TRANSFER_START_OFFSET);
 
-/** 泡の鳴り始め。水が流れている間を均等にせず、こぽこぽと揺らぐ間隔で埋める。 */
-const POUR_BUBBLE_TIMINGS = [0, 0.16, 0.3, 0.48, 0.64, 0.82];
-const POUR_BUBBLE_START_FREQUENCY = 420;
-const POUR_BUBBLE_END_FREQUENCY = 700;
+/** 注いだ水が流れている間を、均等でない間隔で埋めて鳴らす泡の音。`transferProgress` は流れている時間の中での鳴り始め。 */
+const pouredSoundLayers = [
+  { url: pouredBubble1SoundUrl, transferProgress: 0 },
+  { url: pouredBubble2SoundUrl, transferProgress: 0.16 },
+  { url: pouredBubble3SoundUrl, transferProgress: 0.3 },
+  { url: pouredBubble4SoundUrl, transferProgress: 0.48 },
+  { url: pouredBubble5SoundUrl, transferProgress: 0.64 },
+  { url: pouredBubble6SoundUrl, transferProgress: 0.82 },
+].map(function createBubbleLayer({ url, transferProgress }): SoundLayer {
+  return {
+    sound: defineSoundEffect(url),
+    offsetMs: POUR_TRANSFER_DURATION_MS * transferProgress,
+  };
+});
 
-/** 注ぐ水の、泡が弾けるような音の連なり。注ぎ先が満ちていくように少しずつ高くする。 */
-const pouredSound: readonly SoundTone[] = POUR_BUBBLE_TIMINGS.map(
-  function createBubble(timing, index) {
-    const progress = index / (POUR_BUBBLE_TIMINGS.length - 1);
-    const frequency =
-      POUR_BUBBLE_START_FREQUENCY +
-      (POUR_BUBBLE_END_FREQUENCY - POUR_BUBBLE_START_FREQUENCY) * progress;
-    return {
-      waveform: "sine",
-      frequency,
-      endFrequency: frequency * 1.9,
-      offsetMs: POUR_TRANSFER_DURATION_MS * timing,
-      durationMs: 60,
-      volume: 0.13,
-      attackMs: 3,
-    };
-  },
-);
+const clearedSound = defineSoundEffect(clearedSoundUrl);
 
-/** 満ちていく水の、泡が駆け上がる短い連なり。 */
-const FILLED_BUBBLE_FREQUENCIES = [700, 900, 1150, 1450];
-const FILLED_BUBBLE_STEP_MS = 40;
-/** 泡が上がりきった後に、満ちたボトルが澄んで鳴る音の鳴り始め。 */
-const FILLED_RING_OFFSET_MS =
-  FILLED_BUBBLE_FREQUENCIES.length * FILLED_BUBBLE_STEP_MS;
-
-/**
- * クリアの、最後のボトルが満ちる音。泡が駆け上がり、満ちたグラスのように澄んで鳴って終わる。
- * 続けて鳴る結果の報酬の音と濁らないよう、短くし、同じ調の音で鳴らす。
- */
-const clearedSound: readonly SoundTone[] = [
-  ...FILLED_BUBBLE_FREQUENCIES.map(
-    function createFilledBubble(frequency, index): SoundTone {
-      return {
-        waveform: "sine",
-        frequency,
-        endFrequency: frequency * 1.6,
-        offsetMs: index * FILLED_BUBBLE_STEP_MS,
-        durationMs: 55,
-        volume: 0.1,
-        attackMs: 3,
-      };
-    },
-  ),
-  {
-    waveform: "sine",
-    frequency: 1318.51,
-    offsetMs: FILLED_RING_OFFSET_MS,
-    durationMs: 380,
-    volume: 0.07,
-    attackMs: 4,
-  },
-  {
-    waveform: "sine",
-    frequency: 2637.02,
-    offsetMs: FILLED_RING_OFFSET_MS,
-    durationMs: 220,
-    volume: 0.025,
-    attackMs: 3,
-  },
+const waterSortSounds: readonly SoundEffect[] = [
+  invalidSound,
+  ...pouredSoundLayers.map(({ sound }) => sound),
+  clearedSound,
 ];
 
 /** 注いだ水が注ぎ先へ流れ込み終わるまでの時間。動きを減らす設定では注ぐ動きが無いので待たない。 */
@@ -111,7 +73,7 @@ function playOperationSound(operation: WaterSortOperation) {
       }
       return;
     case "poured":
-      playSound(pouredSound, {
+      playLayeredSound(pouredSoundLayers, {
         delayMs: getPourTransferDelayMs(POUR_TRANSFER_START_OFFSET),
         variation: REPEATED_SOUND_VARIATION,
       });
@@ -134,6 +96,7 @@ export function useWaterSortSoundEffects(
   operation: WaterSortOperation | null,
   progress: GameProgress,
 ) {
+  usePrepareSoundEffects(waterSortSounds);
   useOperationSound(operation, playOperationSound);
   useClearSound(progress, playClearSound);
 }

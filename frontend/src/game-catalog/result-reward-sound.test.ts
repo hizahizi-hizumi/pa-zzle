@@ -6,6 +6,7 @@ import type { GameProgress } from "@/games/play";
 import { playSound } from "@/lib/sound-effects";
 
 vi.mock("@/lib/sound-effects", () => ({
+  defineSoundEffect: (url: string) => ({ url }),
   playSound: vi.fn(),
   prepareSoundEffects: vi.fn(),
 }));

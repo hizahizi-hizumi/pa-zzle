@@ -3,8 +3,6 @@ import { renderHook } from "@testing-library/react";
 import type { GameProgress } from "@/games/play";
 import { useClearSound, useOperationSound } from "@/games/play-sound-effects";
 
-vi.mock("@/lib/sound-effects", () => ({ prepareSoundEffects: vi.fn() }));
-
 afterEach(() => {
   vi.unstubAllGlobals();
 });

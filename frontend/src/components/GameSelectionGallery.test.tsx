@@ -10,6 +10,7 @@ import {
 } from "@/lib/sound-effects-setting";
 
 vi.mock("@/lib/sound-effects", () => ({
+  defineSoundEffect: (url: string) => ({ url }),
   playSound: vi.fn(),
 }));
 

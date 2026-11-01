@@ -1,9 +1,13 @@
 import { useEffect, useRef } from "react";
 
-import { getGameResultSound } from "@/components/game-result-sound";
+import {
+  gameResultSoundList,
+  getGameResultSound,
+} from "@/components/game-result-sound";
 import type { GameProgress } from "@/games/play";
+import { usePrepareSoundEffects } from "@/games/play-sound-effects";
 import { getGameResultLevel } from "@/games/result";
-import { playSound, prepareSoundEffects } from "@/lib/sound-effects";
+import { playSound } from "@/lib/sound-effects";
 
 /**
  * プレイを終えて結果を受け取る瞬間（完成演出を終えて `progress` が `clearing` から `result` へ移るとき）に、
@@ -17,9 +21,7 @@ export function useResultRewardSound(
 ): void {
   const previousProgressRef = useRef(progress);
 
-  useEffect(() => {
-    prepareSoundEffects();
-  }, []);
+  usePrepareSoundEffects(gameResultSoundList);
 
   // 完成演出の完了は盤面の演出から届き、重ねて届くこともあるので、進行が結果へ移ったことを見て一度だけ鳴らす。
   useEffect(() => {

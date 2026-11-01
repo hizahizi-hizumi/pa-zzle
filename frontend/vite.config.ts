@@ -51,5 +51,8 @@ export default defineConfig({
   build: {
     outDir: outputDir,
     emptyOutDir: true,
+    // 効果音は鳴らす設定のときだけ読み込むので、小さくても JS に埋め込まず別のファイルにする。
+    assetsInlineLimit: (filePath) =>
+      filePath.endsWith(".flac") ? false : undefined,
   },
 });

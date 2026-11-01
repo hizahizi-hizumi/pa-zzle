@@ -1,140 +1,71 @@
+import clearedSoundUrl from "@/games/minesweeper/assets/sounds/cleared.flac";
+import flagPlacedSoundUrl from "@/games/minesweeper/assets/sounds/flag-placed.flac";
+import flagRemovedSoundUrl from "@/games/minesweeper/assets/sounds/flag-removed.flac";
+import mineSteppedSoundUrl from "@/games/minesweeper/assets/sounds/mine-stepped.flac";
+import openingTick1SoundUrl from "@/games/minesweeper/assets/sounds/opening-tick-1.flac";
+import openingTick2SoundUrl from "@/games/minesweeper/assets/sounds/opening-tick-2.flac";
+import openingTick3SoundUrl from "@/games/minesweeper/assets/sounds/opening-tick-3.flac";
+import openingTick4SoundUrl from "@/games/minesweeper/assets/sounds/opening-tick-4.flac";
 import type { MinesweeperOperation } from "@/games/minesweeper/play/use-minesweeper-play";
-import { CLEAR_PULSE_MS } from "@/games/minesweeper/ui/board/clear/MinesweeperClearAnimation";
 import type { GameProgress } from "@/games/play";
-import { useClearSound, useOperationSound } from "@/games/play-sound-effects";
 import {
+  useClearSound,
+  useOperationSound,
+  usePrepareSoundEffects,
+} from "@/games/play-sound-effects";
+import {
+  defineSoundEffect,
+  playLayeredSound,
   playSound,
   REPEATED_SOUND_VARIATION,
-  type SoundTone,
+  type SoundEffect,
+  type SoundLayer,
 } from "@/lib/sound-effects";
 
-/**
- * マスをめくる、軽く乾いた音の粒。1粒目が押したマスで、一度に多く開くほど続く粒を足す。
- * 続く粒ほど小さくし、全部鳴らしても1つの効果音の大きさに収める。
- */
-const OPENING_TICKS: readonly SoundTone[] = [
-  {
-    waveform: "triangle",
-    frequency: 620,
-    endFrequency: 420,
-    durationMs: 45,
-    volume: 0.09,
-    attackMs: 2,
-  },
-  {
-    waveform: "triangle",
-    frequency: 740,
-    endFrequency: 500,
-    offsetMs: 28,
-    durationMs: 40,
-    volume: 0.05,
-    attackMs: 2,
-  },
-  {
-    waveform: "triangle",
-    frequency: 680,
-    endFrequency: 460,
-    offsetMs: 56,
-    durationMs: 40,
-    volume: 0.035,
-    attackMs: 2,
-  },
-  {
-    waveform: "triangle",
-    frequency: 800,
-    endFrequency: 540,
-    offsetMs: 84,
-    durationMs: 40,
-    volume: 0.025,
-    attackMs: 2,
-  },
-];
+/** マスを開く音の粒。1粒目が押したマスで、一度に多く開くほど続く粒を足す。 */
+const openingTickSounds = [
+  openingTick1SoundUrl,
+  openingTick2SoundUrl,
+  openingTick3SoundUrl,
+  openingTick4SoundUrl,
+].map(defineSoundEffect);
+/** 続く粒を鳴らし始める間隔。 */
+const OPENING_TICK_STEP_MS = 28;
 
 /** 粒を1つずつ足す、一度に開いたマスの数の下限。同じ瞬間に盤面で多く開いて見える分だけ音を豊かにする。 */
 const OPENING_TICK_THRESHOLDS = [1, 2, 6, 16] as const;
 
-function getOpeningSound(openedCellCount: number): readonly SoundTone[] {
+function getOpeningSoundLayers(openedCellCount: number): SoundLayer[] {
   const tickCount = OPENING_TICK_THRESHOLDS.filter(
     (threshold) => openedCellCount >= threshold,
   ).length;
-  return OPENING_TICKS.slice(0, Math.max(1, tickCount));
+  return openingTickSounds
+    .slice(0, Math.max(1, tickCount))
+    .map(function createTickLayer(sound, index) {
+      return { sound, offsetMs: index * OPENING_TICK_STEP_MS };
+    });
 }
 
-/** 旗を立てる、上がる短い音。 */
-const flagPlacedSound: readonly SoundTone[] = [
-  {
-    waveform: "triangle",
-    frequency: 980,
-    endFrequency: 1470,
-    durationMs: 55,
-    volume: 0.08,
-  },
+const flagPlacedSound = defineSoundEffect(flagPlacedSoundUrl);
+
+const flagRemovedSound = defineSoundEffect(flagRemovedSoundUrl);
+
+const mineSteppedSound = defineSoundEffect(mineSteppedSoundUrl);
+
+const clearedSound = defineSoundEffect(clearedSoundUrl);
+
+const minesweeperSounds: readonly SoundEffect[] = [
+  ...openingTickSounds,
+  flagPlacedSound,
+  flagRemovedSound,
+  mineSteppedSound,
+  clearedSound,
 ];
-
-/** 旗を外す、下がる控えめな音。 */
-const flagRemovedSound: readonly SoundTone[] = [
-  {
-    waveform: "triangle",
-    frequency: 1470,
-    endFrequency: 980,
-    durationMs: 50,
-    volume: 0.06,
-  },
-];
-
-/**
- * 地雷を踏んだ、こもった低い音。ミスとして数えるので不成立より重くするが、プレイは続くので爆発のようにはしない。
- * 一度に踏んだ数によらず同じ音にする。
- */
-const mineSteppedSound: readonly SoundTone[] = [
-  {
-    waveform: "sine",
-    frequency: 150,
-    endFrequency: 55,
-    durationMs: 260,
-    volume: 0.13,
-    attackMs: 4,
-  },
-  {
-    waveform: "triangle",
-    frequency: 320,
-    endFrequency: 110,
-    durationMs: 90,
-    volume: 0.045,
-    attackMs: 3,
-  },
-];
-
-const CLEAR_CHORD_STEP_MS = 70;
-const CLEAR_CHORD_NOTES = [
-  { frequency: 523.25, volume: 0.06 },
-  { frequency: 659.25, volume: 0.05 },
-  { frequency: 783.99, volume: 0.05 },
-  { frequency: 1046.5, volume: 0.03 },
-] as const;
-
-/**
- * クリアの、盤面が脈打つのに合わせて下から開いていく和音。脈打ち終わるときに消える。
- * 続けて鳴る結果の報酬の音と濁らないよう、短くし、同じ調の音で鳴らす。
- */
-const clearedSound: readonly SoundTone[] = CLEAR_CHORD_NOTES.map(
-  function createChordTone({ frequency, volume }, index): SoundTone {
-    const offsetMs = index * CLEAR_CHORD_STEP_MS;
-    return {
-      waveform: "sine",
-      frequency,
-      offsetMs,
-      durationMs: CLEAR_PULSE_MS - offsetMs,
-      volume,
-      attackMs: 30,
-    };
-  },
-);
 
 function playOperationSound(operation: MinesweeperOperation) {
   switch (operation.type) {
     case "cells-opened":
-      playSound(getOpeningSound(operation.openedCellCount), {
+      playLayeredSound(getOpeningSoundLayers(operation.openedCellCount), {
         variation: REPEATED_SOUND_VARIATION,
       });
       return;
@@ -159,6 +90,7 @@ export function useMinesweeperSoundEffects(
   operation: MinesweeperOperation | null,
   progress: GameProgress,
 ) {
+  usePrepareSoundEffects(minesweeperSounds);
   useOperationSound(operation, playOperationSound);
   useClearSound(progress, playClearSound);
 }
