@@ -11,8 +11,6 @@ type HitofudePuzzleCellProps = {
   isHead: boolean;
   /** 先端から延ばせるマスが無いか。 */
   isDeadEnd: boolean;
-  /** 取り残しとして知らせるマスか。 */
-  isStranded: boolean;
   disabled: boolean;
   /** 盤面の Tab の止まり先か。 */
   focusable: boolean;
@@ -43,13 +41,11 @@ function describeCell(
   isStart: boolean,
   isHead: boolean,
   isDeadEnd: boolean,
-  isStranded: boolean,
 ): string {
   const marks = [
     isStart && "始点",
     isHead && "先端",
     isDeadEnd && "行き止まり",
-    isStranded && "取り残し",
   ].filter(Boolean);
   return marks.length > 0 ? marks.join(" ") : cellStateLabels[state];
 }
@@ -65,7 +61,6 @@ export function HitofudePuzzleCell({
   isStart,
   isHead,
   isDeadEnd,
-  isStranded,
   disabled,
   focusable,
   onPress,
@@ -74,7 +69,7 @@ export function HitofudePuzzleCell({
   const { row, column } = getHitofudePuzzleCellPosition(size, cell);
   const label = [
     `${row + 1}行${column + 1}列`,
-    describeCell(state, isStart, isHead, isDeadEnd, isStranded),
+    describeCell(state, isStart, isHead, isDeadEnd),
   ].join(" ");
 
   return (

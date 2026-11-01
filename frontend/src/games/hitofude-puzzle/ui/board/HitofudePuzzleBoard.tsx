@@ -36,8 +36,6 @@ type HitofudePuzzleBoardProps = {
   /** 始点から先端までに通ったマスの番号。 */
   path: readonly number[];
   isDeadEnd: boolean;
-  /** 取り残しとして知らせるマス。 */
-  strandedCells: readonly number[];
   blockedMove: HitofudePuzzleBlockedMove | null;
   /** 道が全マスを通り終えたか。 */
   solved: boolean;
@@ -80,7 +78,6 @@ export function HitofudePuzzleBoard({
   board,
   path,
   isDeadEnd,
-  strandedCells,
   blockedMove,
   solved,
   clearing,
@@ -95,7 +92,6 @@ export function HitofudePuzzleBoard({
   const dragRef = useRef<FingerDrag | null>(null);
   const holes = new Set(board.holes);
   const visited = new Set(path);
-  const stranded = new Set(strandedCells);
   const head = path.at(-1) ?? board.start;
   const pathLength = path.length;
   const boardRef = useRef<HTMLDivElement>(null);
@@ -247,7 +243,6 @@ export function HitofudePuzzleBoard({
         path={path}
         isDeadEnd={isDeadEnd}
         solved={solved}
-        strandedCells={strandedCells}
         blockedCell={blockedMove?.cell ?? null}
       />
       <div
@@ -266,7 +261,6 @@ export function HitofudePuzzleBoard({
             isStart={cell === board.start}
             isHead={cell === head}
             isDeadEnd={cell === head && isDeadEnd}
-            isStranded={stranded.has(cell)}
             disabled={interactionDisabled}
             focusable={cell === focusableCell}
             onPress={pressCell}

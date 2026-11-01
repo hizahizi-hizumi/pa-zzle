@@ -66,7 +66,6 @@ describe("HitofudePuzzlePlay", () => {
     board,
     path: [0, 1, 2, 5, 4, 3, 6, 7, 8],
     isDeadEnd: false,
-    strandedCells: [],
     blockedMove: null,
     pathNotice: null,
     backtrackCount: 2,
@@ -488,23 +487,6 @@ describe("HitofudePuzzlePlay", () => {
     });
   });
 
-  describe("取り残しのマスを渡した場合", () => {
-    beforeEach(() => {
-      renderResult({
-        progress: "playing",
-        result: null,
-        path: [0, 1],
-        strandedCells: [2],
-      });
-    });
-
-    test("そのマスの読み上げ名で取り残しを知らせること", () => {
-      const cells = within(getBoardGroup()).getAllByRole("button");
-
-      expect(cells[2]?.getAttribute("aria-label")).toBe("1行3列 取り残し");
-    });
-  });
-
   describe("盤面の変化の読み上げ", () => {
     const playingProps = { progress: "playing", result: null } as const;
     const cases = [
@@ -537,7 +519,6 @@ describe("HitofudePuzzlePlay", () => {
             id: 2,
             change: "shortened",
             head: 1,
-            newlyStranded: false,
           },
         },
         "1行2列まで縮めた",
@@ -547,29 +528,13 @@ describe("HitofudePuzzlePlay", () => {
         {
           path: [0, 1, 4, 5, 2],
           isDeadEnd: true,
-          strandedCells: [3, 6, 7, 8],
           pathNotice: {
             id: 3,
             change: "extended",
             head: 2,
-            newlyStranded: true,
           },
         },
         "行き止まり。先端から進めるマスが無い",
-      ],
-      [
-        "取り残しが出た",
-        {
-          path: [0, 1, 4, 7],
-          strandedCells: [2, 3],
-          pathNotice: {
-            id: 4,
-            change: "extended",
-            head: 7,
-            newlyStranded: true,
-          },
-        },
-        "取り残し2マス。今の道のままでは通れない",
       ],
       [
         "道を延ばしただけの",
@@ -579,7 +544,6 @@ describe("HitofudePuzzlePlay", () => {
             id: 5,
             change: "extended",
             head: 1,
-            newlyStranded: false,
           },
         },
         "",

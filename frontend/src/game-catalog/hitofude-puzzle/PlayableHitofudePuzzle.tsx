@@ -75,7 +75,6 @@ export function PlayableHitofudePuzzle({
         board={play.board}
         path={play.path}
         isDeadEnd={play.isDeadEnd}
-        strandedCells={play.strandedCells}
         blockedMove={play.blockedMove}
         pathNotice={play.pathNotice}
         backtrackCount={play.backtrackCount}

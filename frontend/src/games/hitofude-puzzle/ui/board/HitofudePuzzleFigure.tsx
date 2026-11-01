@@ -1,4 +1,4 @@
-import { type Ref, useId } from "react";
+import type { Ref } from "react";
 
 import {
   getHitofudePuzzleCellPosition,
@@ -24,8 +24,6 @@ type HitofudePuzzleFigureProps = {
   isDeadEnd: boolean;
   /** 道が全マスを通り終えたか。始点から終点へ道をなぞる光を描く。 */
   solved: boolean;
-  /** 取り残しとして斜線を引くマス。 */
-  strandedCells?: readonly number[];
   /** 最後に道を延ばせなかった操作が進もうとしたマス。×の印を置き、阻まれたときだけ盤面の反応で点ける。 */
   blockedCell?: number | null;
   /** ×の印を点けたまま描くか。遊び方の図で、阻まれたときの盤面の反応を見せるときに使う。 */
@@ -63,9 +61,6 @@ const END_MARK_RADIUS = 0.26;
 const BLOCKED_MARK_REACH = 0.26;
 const BLOCKED_MARK_WIDTH = 0.13;
 const BLOCKED_MARK_OUTLINE_WIDTH = 0.25;
-/** 取り残しのマスの斜線の間隔と太さ。マス幅に4本ほど入り、未通過のマスの地と見分けられる密度にする。 */
-const STRANDED_HATCH_GAP = 0.25;
-const STRANDED_HATCH_WIDTH = 0.06;
 
 /** 阻まれたマスの×の2本の線。マスの中心を原点に描く。 */
 const blockedMarkStrokes = (
@@ -96,12 +91,11 @@ export const hitofudePuzzleFigureParts = {
   head: "data-head",
   clearTrace: "data-clear-trace",
   endMark: "data-end-mark",
-  strandedCell: "data-stranded-cell",
   blockedMark: "data-blocked-mark",
 } as const;
 
 /**
- * 盤面の絵。マスの塗り・取り残しの斜線・盤面の外形・道・始点・先端を、下から順にこの層で描く。
+ * 盤面の絵。マスの塗り・盤面の外形・道・始点・先端を、下から順にこの層で描く。
  * 道が全マスを通り終えたら、先端の輪に代えて終点の印を置き、始点から終点へなぞる光を重ねる。
  * 穴は描かず、盤面の外と同じ地を見せる。外形が、外周の穴を盤面の欠けとして、内側の穴を盤面に開いた穴として縁取る。
  * 道とマスの塗りは、通った順に色を移す（`getPathColor`）。
@@ -111,13 +105,11 @@ export function HitofudePuzzleFigure({
   path,
   isDeadEnd,
   solved,
-  strandedCells = [],
   blockedCell = null,
   showsBlockedMark = false,
   visibleRowCount,
   ref,
 }: HitofudePuzzleFigureProps) {
-  const strandedHatchId = useId();
   const { size } = board;
   const rowCount = visibleRowCount ?? size;
   function isVisibleCell(cell: number): boolean {
@@ -147,24 +139,6 @@ export function HitofudePuzzleFigure({
         hitofudePuzzleToneClassNames.pathColorVariables,
       )}
     >
-      <defs>
-        <pattern
-          id={strandedHatchId}
-          width={STRANDED_HATCH_GAP}
-          height={STRANDED_HATCH_GAP}
-          patternUnits="userSpaceOnUse"
-          patternTransform="rotate(45)"
-        >
-          <line
-            x1={0}
-            y1={0}
-            x2={0}
-            y2={STRANDED_HATCH_GAP}
-            strokeWidth={STRANDED_HATCH_WIDTH}
-            className={hitofudePuzzleToneClassNames.strandedHatch}
-          />
-        </pattern>
-      </defs>
       {listHitofudePuzzleOpenCells(board)
         .filter(isVisibleCell)
         .map((cell) => {
@@ -191,20 +165,6 @@ export function HitofudePuzzleFigure({
             />
           );
         })}
-      {strandedCells.filter(isVisibleCell).map((cell) => {
-        const { row, column } = getHitofudePuzzleCellPosition(size, cell);
-        return (
-          <rect
-            key={`stranded-${cell}`}
-            {...{ [hitofudePuzzleFigureParts.strandedCell]: cell }}
-            x={column}
-            y={row}
-            width={1}
-            height={1}
-            fill={`url(#${strandedHatchId})`}
-          />
-        );
-      })}
       <path
         {...{ [hitofudePuzzleFigureParts.outline]: "" }}
         d={formatHitofudePuzzleOutlinePath(

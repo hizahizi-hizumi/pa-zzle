@@ -36,7 +36,6 @@ type HitofudePuzzlePlayProps = GamePlayScreenProps<
     board: HitofudePuzzleBoardState;
     path: readonly number[];
     isDeadEnd: boolean;
-    strandedCells: readonly number[];
     blockedMove: HitofudePuzzleBlockedMove | null;
     pathNotice: HitofudePuzzlePathNotice | null;
     backtrackCount: number;
@@ -56,7 +55,6 @@ export function HitofudePuzzlePlay({
   board,
   path,
   isDeadEnd,
-  strandedCells,
   blockedMove,
   pathNotice,
   backtrackCount,
@@ -135,11 +133,7 @@ export function HitofudePuzzlePlay({
       onBackToHome={onBackToHome}
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
-        <HitofudePuzzleHowToPlayDialog
-          open={open}
-          difficulty={difficulty}
-          onClose={onClose}
-        />
+        <HitofudePuzzleHowToPlayDialog open={open} onClose={onClose} />
       )}
       renderResultScreen={(clearedResult) => (
         <HitofudePuzzleResultScreen
@@ -162,7 +156,6 @@ export function HitofudePuzzlePlay({
             board={board}
             path={path}
             isDeadEnd={isDeadEnd}
-            strandedCells={strandedCells}
             blockedMove={blockedMove}
             solved={progress !== "playing"}
             clearing={progress === "clearing"}
@@ -177,7 +170,6 @@ export function HitofudePuzzlePlay({
           board={board}
           notice={pathNotice}
           isDeadEnd={isDeadEnd}
-          strandedCellCount={strandedCells.length}
         />
       </main>
       <footer className="grid h-28 shrink-0 items-end px-4 pb-2">

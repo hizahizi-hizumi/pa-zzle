@@ -1,22 +1,11 @@
 import { HowToPlayDialog } from "@/components/HowToPlayDialog";
 import { HowToPlayTransition } from "@/components/HowToPlayTransition";
-import { difficultyLevels } from "@/games/difficulty";
-import type { HitofudePuzzleDifficulty } from "@/games/hitofude-puzzle/difficulty";
-import {
-  listHitofudePuzzleStrandedCells,
-  showsHitofudePuzzleStranding,
-} from "@/games/hitofude-puzzle/play/stranding-notice";
 import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
 import { HowToPlayFigure } from "@/games/hitofude-puzzle/ui/HitofudePuzzleHowToPlayDialog/HowToPlayFigure";
 import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 
 type HitofudePuzzleHowToPlayDialogProps = {
   open: boolean;
-  /**
-   * 遊んでいる難易度。渡すと、その難易度で取り残しを知らせるときだけ説明する。
-   * 難易度を選ぶ前は、取り残しを知らせるレベルを添えて説明する。
-   */
-  difficulty?: HitofudePuzzleDifficulty;
   onClose: () => void;
 };
 
@@ -30,36 +19,14 @@ const openBoard = parseHitofudePuzzleBoard(["S . .", ". . .", ". . ."]);
 /** 真ん中に穴が開き、右下の角が欠けた盤面。 */
 const holedBoard = parseHitofudePuzzleBoard(["S . .", ". # .", ". . #"]);
 
-/** 真ん中の列を縦に通って、左右の列が両方とも端になれなくなった道。 */
-const strandingPath = [0, 1, 4, 7];
-
-function describeStrandingLevels(): string {
-  const levels = difficultyLevels
-    .map((level) => level.id)
-    .filter(showsHitofudePuzzleStranding);
-  return `レベル${levels[0]}〜${levels.at(-1)}`;
-}
-
-function describeStrandingScope(
-  difficulty: HitofudePuzzleDifficulty | undefined,
-): string | null {
-  if (difficulty === undefined) {
-    return describeStrandingLevels();
-  }
-  return showsHitofudePuzzleStranding(difficulty) ? "このレベル" : null;
-}
-
 /**
  * ルールと操作を、盤面と同じ見た目の小さな図と短い一文で示す。
  * 最初に、なぞって全マスを1回ずつ通ること、穴は通らないことを置き、戻す操作は1か所にまとめる。
  */
 export function HitofudePuzzleHowToPlayDialog({
   open,
-  difficulty,
   onClose,
 }: HitofudePuzzleHowToPlayDialogProps) {
-  const strandingScope = describeStrandingScope(difficulty);
-
   return (
     <HowToPlayDialog
       open={open}
@@ -109,22 +76,6 @@ export function HitofudePuzzleHowToPlayDialog({
         </p>
         <HowToPlayFigure board={openBoard} path={[0, 1, 4, 5, 2]} isDeadEnd />
       </li>
-      {strandingScope === null ? null : (
-        <li className="space-y-2">
-          <p>
-            {strandingScope}
-            では、今の道のままではもう通れないマスに斜線が付く。
-          </p>
-          <HowToPlayFigure
-            board={openBoard}
-            path={strandingPath}
-            strandedCells={listHitofudePuzzleStrandedCells(
-              openBoard,
-              strandingPath,
-            )}
-          />
-        </li>
-      )}
       <li className="hidden pointer-fine:list-item">
         <p className="text-muted-foreground">
           キーボード:

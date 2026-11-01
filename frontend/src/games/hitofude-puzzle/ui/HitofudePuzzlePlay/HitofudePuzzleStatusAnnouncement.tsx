@@ -9,7 +9,6 @@ type HitofudePuzzleStatusAnnouncementProps = {
   board: HitofudePuzzleBoard;
   notice: HitofudePuzzlePathNotice | null;
   isDeadEnd: boolean;
-  strandedCellCount: number;
 };
 
 function describeCellPosition(size: number, cell: number): string {
@@ -29,7 +28,6 @@ function describeNotice(
   { size }: HitofudePuzzleBoard,
   notice: HitofudePuzzlePathNotice | null,
   isDeadEnd: boolean,
-  strandedCellCount: number,
 ): string {
   if (notice === null) {
     return "";
@@ -45,29 +43,23 @@ function describeNotice(
       ? `${describeCellPosition(size, notice.head)}まで縮めた`
       : null,
     isDeadEnd ? "行き止まり。先端から進めるマスが無い" : null,
-    !isDeadEnd && notice.newlyStranded
-      ? `取り残し${strandedCellCount}マス。今の道のままでは通れない`
-      : null,
   ].filter((sentence) => sentence !== null);
   return sentences.join("。");
 }
 
 /**
- * 盤面の操作で起きた変化（阻まれた・縮めた・行き止まり・取り残し）を、画面には出さずに読み上げで知らせる。
+ * 盤面の操作で起きた変化（阻まれた・縮めた・行き止まり）を、画面には出さずに読み上げで知らせる。
  * 盤面の印や動きで知らせていることを、見えない人にも同じ時に伝える。
  */
 export function HitofudePuzzleStatusAnnouncement({
   board,
   notice,
   isDeadEnd,
-  strandedCellCount,
 }: HitofudePuzzleStatusAnnouncementProps) {
   return (
     <p role="status" className="sr-only">
       {/* 同じ文が続いても読み上げ直されるよう、操作ごとに文の要素を作り直す。 */}
-      <span key={notice?.id}>
-        {describeNotice(board, notice, isDeadEnd, strandedCellCount)}
-      </span>
+      <span key={notice?.id}>{describeNotice(board, notice, isDeadEnd)}</span>
     </p>
   );
 }

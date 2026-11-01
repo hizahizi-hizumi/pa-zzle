@@ -10,7 +10,6 @@ type HowToPlayFigureProps = {
   board: HitofudePuzzleBoard;
   path: readonly number[];
   isDeadEnd?: boolean;
-  strandedCells?: readonly number[];
   /** 進もうとして阻まれたマス。盤面と同じ×の印を点けたまま描く。 */
   blockedCell?: number;
   /** 指を置いているマス。指の印を添える。 */
@@ -22,7 +21,6 @@ export function HowToPlayFigure({
   board,
   path,
   isDeadEnd = false,
-  strandedCells,
   blockedCell,
   fingerCell,
 }: HowToPlayFigureProps) {
@@ -38,7 +36,6 @@ export function HowToPlayFigure({
         path={path}
         isDeadEnd={isDeadEnd}
         solved={false}
-        strandedCells={strandedCells}
         blockedCell={blockedCell}
         showsBlockedMark
       />

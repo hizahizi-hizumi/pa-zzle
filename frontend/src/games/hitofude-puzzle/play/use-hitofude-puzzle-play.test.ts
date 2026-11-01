@@ -204,7 +204,6 @@ describe("useHitofudePuzzlePlay", () => {
       expect(result.current.pathNotice).toMatchObject({
         change: "extended",
         head: solution[3],
-        newlyStranded: false,
       });
     });
 
