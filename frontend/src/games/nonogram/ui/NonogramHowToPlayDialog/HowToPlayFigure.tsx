@@ -49,7 +49,7 @@ export function HowToPlayFigure({
         className={cn(
           "inline-grid gap-px border-2",
           nonogramToneClassNames.gridLineSurface,
-          nonogramToneClassNames.blockLineBorder,
+          nonogramToneClassNames.blockLine,
         )}
         style={{ gridTemplateColumns: `repeat(${board.width}, 1.5rem)` }}
       >
