@@ -81,7 +81,10 @@ function playOperationSound(operation: SlidePuzzleOperation) {
   }
 }
 
-/** プレイ中の操作と、完成演出の波に合わせて効果音を鳴らす。結果の報酬の音はアプリが鳴らす。 */
+/**
+ * 盤面の操作と、完成演出の波に合わせて効果音を鳴らす。結果の報酬の音はアプリが鳴らす。
+ * チュートリアルも本番と同じ盤面で同じ音を鳴らすので、プレイ画面とチュートリアルの両方から呼ぶ。
+ */
 export function useSlidePuzzleSoundEffects(
   operation: SlidePuzzleOperation | null,
   progress: GameProgress,

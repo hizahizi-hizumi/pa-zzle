@@ -8,6 +8,13 @@ import {
 } from "@testing-library/react";
 
 import { SlidePuzzleTutorial } from "@/games/slide-puzzle/ui/SlidePuzzleTutorial";
+import { playLayeredSound, playSound } from "@/lib/sound-effects";
+
+vi.mock("@/lib/sound-effects", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/sound-effects")>()),
+  playSound: vi.fn(),
+  playLayeredSound: vi.fn(),
+}));
 
 /** 手順ごとに印を付けるタイル。 */
 const stepTiles = [5, 8, 4] as const;
@@ -29,6 +36,8 @@ const introEnoughMs = 8000;
 
 afterEach(() => {
   cleanup();
+  vi.mocked(playSound).mockClear();
+  vi.mocked(playLayeredSound).mockClear();
   delete (HTMLElement.prototype as { animate?: Element["animate"] }).animate;
   vi.unstubAllGlobals();
   vi.useRealTimers();
@@ -77,6 +86,13 @@ function tapTiles(tiles: readonly number[]): void {
 /** 導入を飛ばして、最初の手順から始める。 */
 function skipIntro(): void {
   fireEvent.pointerDown(getBoard());
+}
+
+/** 鳴らした効果音の音声ファイル名。 */
+function getPlayedSoundNames(): string[] {
+  return vi
+    .mocked(playSound)
+    .mock.calls.map(([sound]) => sound.url.split("/").at(-1) ?? "");
 }
 
 /** 盤面の上の、行・列（1始まり）。 */
@@ -169,6 +185,14 @@ describe("SlidePuzzleTutorial", () => {
       expect(hinted).toEqual(["8"]);
     });
 
+    test("印のタイルをタップすると、本番と同じスライドの音を鳴らすこと", () => {
+      tapTiles([5]);
+
+      const sounds = getPlayedSoundNames();
+
+      expect(sounds).toEqual(["slid.flac"]);
+    });
+
     describe("同じ行・列のルールを示す手順に進んだ場合", () => {
       beforeEach(() => {
         tapTiles(stepTiles.slice(0, 2));
@@ -253,6 +277,22 @@ describe("SlidePuzzleTutorial", () => {
 
         expect(headline).toBeTruthy();
         expect(hinted).toEqual(["1"]);
+      });
+
+      test("並べ終えると、本番と同じ完成の音を、完成の波に合わせて鳴らすこと", () => {
+        tapTiles(remainingTiles);
+
+        const clearSounds = vi.mocked(playLayeredSound).mock.calls.length;
+
+        expect(clearSounds).toBe(1);
+      });
+
+      test("空白と同じ行・列にないタイルをタップすると、本番と同じく、スライドしなかった音を鳴らすこと", () => {
+        tapTiles([3]);
+
+        const lastSound = getPlayedSoundNames().at(-1);
+
+        expect(lastSound).toBe("invalid.flac");
       });
 
       test("並べ終えると、レベル1とのつながりを伝え、レベル1を遊ぶでレベル1を始めること", () => {

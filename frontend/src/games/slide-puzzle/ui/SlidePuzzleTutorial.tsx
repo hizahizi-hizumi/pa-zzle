@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   type TutorialBoardIntro,
   type TutorialFinish,
   TutorialOverlay,
 } from "@/components/TutorialOverlay";
+import type { GameProgress } from "@/games/play";
 import pictogramSvg from "@/games/slide-puzzle/assets/pictogram.svg?raw";
 import { SLIDE_PUZZLE_DISPLAY_NAME } from "@/games/slide-puzzle/display-name";
 import type { SlidePuzzleOperation } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
@@ -20,6 +21,7 @@ import {
 import { SlidePuzzleBoard } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard";
 import type { SlidePuzzleTileCue } from "@/games/slide-puzzle/ui/board/tile-cue";
 import { SlidePuzzleTutorialScramble } from "@/games/slide-puzzle/ui/SlidePuzzleTutorial/SlidePuzzleTutorialScramble";
+import { useSlidePuzzleSoundEffects } from "@/games/slide-puzzle/ui/use-slide-puzzle-sound-effects";
 import {
   completeTutorial,
   finishTutorialIntro,
@@ -28,6 +30,7 @@ import {
   performTutorialAction,
   startTutorial,
   type TutorialMessage,
+  type TutorialPhase,
   type TutorialProgress,
 } from "@/games/tutorial";
 
@@ -51,18 +54,32 @@ const IDLE_HINT_DELAY_MS = 4000;
 
 const goalBoard = slidePuzzleTutorial.goal().board;
 
+/** 本番の効果音を鳴らすための進行。導入でゴールを見せる波は完成ではないので、解いたときだけ完成演出として鳴らす。 */
+function getSoundProgress(phase: TutorialPhase): GameProgress {
+  switch (phase) {
+    case "intro":
+    case "playing":
+      return "playing";
+    case "solved":
+      return "clearing";
+    case "completed":
+      return "result";
+  }
+}
+
 /** 手の結果を、盤面のスライドか揺れの動きにする。 */
 function createOperation(
+  id: number,
   before: SlidePuzzleBoardState,
   next: SlidePuzzleTutorialProgress,
 ): SlidePuzzleOperation | null {
-  const { lastMove, moveCount, board } = next.boardState;
+  const { lastMove, board } = next.boardState;
   switch (lastMove?.type) {
     case "rejected":
-      return { id: moveCount, type: "invalid", tileIndex: lastMove.cellIndex };
+      return { id, type: "invalid", tileIndex: lastMove.cellIndex };
     case "slid":
       return {
-        id: moveCount,
+        id,
         type: "slid",
         slide: lastMove.slide,
         boardBefore: before,
@@ -129,6 +146,8 @@ export function SlidePuzzleTutorial({
   );
   // 盤面の動き。手のたびにイベントハンドラで作り、盤面がスライドや揺れで応える。
   const [operation, setOperation] = useState<SlidePuzzleOperation | null>(null);
+  // 効果音は同じ `id` の動きで一度しか鳴らないので、最初からやり直しても前の回と重ならない `id` を振る。
+  const operationIdRef = useRef(0);
   const [idleProgress, setIdleProgress] =
     useState<SlidePuzzleTutorialProgress | null>(null);
   // 手を引いている間に印の無いタイルを押されたら、印を付け直す。
@@ -149,6 +168,12 @@ export function SlidePuzzleTutorial({
     : guiding
       ? getSlidePuzzleTutorialStepTile(situation)
       : findSlidePuzzleTutorialHintTile(boardState);
+
+  useSlidePuzzleSoundEffects(
+    operation,
+    getSoundProgress(progress.phase),
+    goalBoard.length - 1,
+  );
 
   useEffect(() => {
     if (!open || cueDelayMs === null || cueDelayMs === 0) {
@@ -186,7 +211,10 @@ export function SlidePuzzleTutorial({
       return;
     }
     setProgress(next);
-    setOperation(createOperation(progress.boardState.board, next));
+    operationIdRef.current += 1;
+    setOperation(
+      createOperation(operationIdRef.current, progress.boardState.board, next),
+    );
   }
 
   function restart(): void {

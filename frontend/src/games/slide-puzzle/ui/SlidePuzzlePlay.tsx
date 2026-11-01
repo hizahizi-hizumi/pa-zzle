@@ -16,8 +16,8 @@ import type { SlidePuzzleBoard as SlidePuzzleBoardState } from "@/games/slide-pu
 import { SlidePuzzleBoard } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard";
 import { SlidePuzzleResultScreen } from "@/games/slide-puzzle/ui/result/SlidePuzzleResultScreen";
 import { SlidePuzzleHowToPlayDialog } from "@/games/slide-puzzle/ui/SlidePuzzleHowToPlayDialog";
-import { useSlidePuzzleSoundEffects } from "@/games/slide-puzzle/ui/SlidePuzzlePlay/use-slide-puzzle-sound-effects";
 import { SlidePuzzleTutorial } from "@/games/slide-puzzle/ui/SlidePuzzleTutorial";
+import { useSlidePuzzleSoundEffects } from "@/games/slide-puzzle/ui/use-slide-puzzle-sound-effects";
 
 type SlidePuzzlePlayProps = GamePlayScreenProps<
   SlidePuzzleDifficulty,
