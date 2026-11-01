@@ -14,6 +14,7 @@ import { NanpureClearAnimation } from "@/games/nanpure/ui/board/clear/NanpureCle
 import { NanpureBoard } from "@/games/nanpure/ui/board/NanpureBoard";
 import { NanpureHowToPlayDialog } from "@/games/nanpure/ui/NanpureHowToPlayDialog";
 import { useNanpureSoundEffects } from "@/games/nanpure/ui/NanpurePlay/use-nanpure-sound-effects";
+import { NanpureTutorial } from "@/games/nanpure/ui/NanpureTutorial";
 import { NanpureInputPanel } from "@/games/nanpure/ui/play/NanpureInputPanel";
 import { NanpureResultScreen } from "@/games/nanpure/ui/result/NanpureResultScreen";
 import type {
@@ -105,6 +106,9 @@ export function NanpurePlay({
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
         <NanpureHowToPlayDialog open={open} onClose={onClose} />
+      )}
+      renderTutorial={({ open, onClose }) => (
+        <NanpureTutorial open={open} onClose={onClose} />
       )}
       renderResultScreen={(clearedResult) => (
         <NanpureResultScreen

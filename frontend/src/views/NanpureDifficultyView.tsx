@@ -6,8 +6,18 @@ import { difficultyLevels } from "@/games/difficulty";
 import { NANPURE_DISPLAY_NAME } from "@/games/nanpure/display-name";
 import { NanpureDifficultyPreview } from "@/games/nanpure/ui/NanpureDifficultyPreview";
 import { NanpureHowToPlayDialog } from "@/games/nanpure/ui/NanpureHowToPlayDialog";
+import { NanpureTutorial } from "@/games/nanpure/ui/NanpureTutorial";
+import { useNavigate } from "@/router";
 
 export function NanpureDifficultyView() {
+  const navigate = useNavigate();
+
+  function startLevelOne(): void {
+    navigate("/puzzles/nanpure/play/:difficulty", {
+      params: { difficulty: "1" },
+    });
+  }
+
   return (
     <section className="space-y-6 sm:space-y-8">
       <div className="space-y-2">
@@ -16,6 +26,13 @@ export function NanpureDifficultyView() {
           title={NANPURE_DISPLAY_NAME}
           renderHowToPlayDialog={({ open, onClose }) => (
             <NanpureHowToPlayDialog open={open} onClose={onClose} />
+          )}
+          renderTutorial={({ open, onClose }) => (
+            <NanpureTutorial
+              open={open}
+              onStartPlay={startLevelOne}
+              onClose={onClose}
+            />
           )}
         />
       </div>

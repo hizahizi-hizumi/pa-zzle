@@ -1,11 +1,8 @@
 import { Eraser, Pencil, Undo2 } from "lucide-react";
-import {
-  NANPURE_DIGITS,
-  type NanpureDigit,
-} from "@/games/nanpure/puzzle/board";
+import type { NanpureDigit } from "@/games/nanpure/puzzle/board";
+import { NanpureDigitPad } from "@/games/nanpure/ui/play/NanpureDigitPad";
 import { PlayActionButton } from "@/games/nanpure/ui/play/NanpureInputPanel/PlayActionButton";
 import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
-import { cn } from "@/lib/utils";
 
 type NanpureInputPanelProps = {
   notesMode: boolean;
@@ -34,7 +31,6 @@ export function NanpureInputPanel({
   onToggleNotesMode,
   onInputDigit,
 }: NanpureInputPanelProps) {
-  const completedDigitSet = new Set(completedDigits);
   const canEnterDigit =
     interactionEnabled &&
     selectedIsEditable &&
@@ -68,25 +64,12 @@ export function NanpureInputPanel({
             disabled={!interactionEnabled}
           />
         </div>
-        <fieldset className="grid grid-cols-9 gap-x-1">
-          <legend className="sr-only">数字入力</legend>
-          {NANPURE_DIGITS.map((digit) => (
-            <button
-              key={digit}
-              type="button"
-              className={cn(
-                "h-14 min-w-0 rounded-lg px-0 font-sans text-[clamp(1.5rem,7vw,2.25rem)] tabular-nums transition-colors hover:bg-accent/60 focus-visible:bg-accent focus-visible:outline-none disabled:pointer-events-none disabled:text-muted-foreground/20",
-                notesMode
-                  ? "font-medium text-violet-400/75 dark:text-violet-400/70"
-                  : "font-medium text-violet-600 dark:text-violet-300",
-              )}
-              onClick={() => onInputDigit(digit)}
-              disabled={!canEnterDigit || completedDigitSet.has(digit)}
-            >
-              {digit}
-            </button>
-          ))}
-        </fieldset>
+        <NanpureDigitPad
+          notesMode={notesMode}
+          canEnterDigit={canEnterDigit}
+          completedDigits={completedDigits}
+          onInputDigit={onInputDigit}
+        />
       </div>
     </footer>
   );

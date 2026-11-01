@@ -6,6 +6,7 @@ import {
 import type { NanpureNotes } from "@/games/nanpure/session/session";
 
 import { NanpureCell } from "@/games/nanpure/ui/board/NanpureCell";
+import { cn } from "@/lib/utils";
 
 const NANPURE_CELL_INDICES = Array.from(
   { length: NANPURE_SIZE * NANPURE_SIZE },
@@ -20,6 +21,8 @@ type NanpureBoardProps = {
   conflictCellIndices: readonly number[];
   mistakeCellIndices: readonly number[];
   interactionDisabled?: boolean;
+  /** 盤面の幅。渡さなければ、プレイ画面に合わせて画面の幅と高さから決める。 */
+  sizeClassName?: string;
   onSelectCell: (cellIndex: number) => void;
 };
 
@@ -31,6 +34,7 @@ export function NanpureBoard({
   conflictCellIndices,
   mistakeCellIndices,
   interactionDisabled = false,
+  sizeClassName = "w-[min(96vw,calc(100svh-12rem),38rem)]",
   onSelectCell,
 }: NanpureBoardProps) {
   const conflictCells = new Set(conflictCellIndices);
@@ -39,7 +43,12 @@ export function NanpureBoard({
     selectedCellIndex === null ? null : (board[selectedCellIndex] ?? null);
 
   return (
-    <div className="grid aspect-square w-[min(96vw,calc(100svh-12rem),38rem)] grid-cols-9 overflow-hidden border-2 border-foreground/55 bg-background">
+    <div
+      className={cn(
+        "grid aspect-square grid-cols-9 overflow-hidden border-2 border-foreground/55 bg-background",
+        sizeClassName,
+      )}
+    >
       {NANPURE_CELL_INDICES.map((cellIndex) => {
         const value = board[cellIndex] ?? null;
         const selected = selectedCellIndex === cellIndex;

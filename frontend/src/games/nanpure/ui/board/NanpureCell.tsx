@@ -104,7 +104,9 @@ export function NanpureCell({
       )}
       onClick={() => onSelect(cellIndex)}
     >
-      {value ?? (
+      {value !== null ? (
+        <span data-nanpure-digit={clue ? "clue" : "entered"}>{value}</span>
+      ) : (
         <NanpureCellNotes
           notes={notes}
           selectedValue={selectedValue}
