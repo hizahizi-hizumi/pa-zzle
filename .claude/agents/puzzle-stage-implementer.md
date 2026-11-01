@@ -25,7 +25,7 @@ model: opus
 
 ## 参照する正本
 
-- 作業の決まり: `AGENTS.md`、`CLAUDE.md`、`.claude/rules/`（特に `game-structure.md`、`typescript*.md`、`react-hooks.md`、`component-styling.md`、`views.md`、`pages.md`、`vitest.md`、`self-documenting-code.md`）
+- 作業の決まり: `AGENTS.md`、`CLAUDE.md`、`.claude/rules/`（特に `typescript*.md`、`react-hooks.md`、`component-styling.md`、`views.md`、`pages.md`、`vitest.md`、`self-documenting-code.md`）
 - 振る舞いと文書: `GAME.md`、`APP.md`、`DESIGN.md`（値は `frontend/styles/globals.css` の `@theme`）、`docs/README.md`、`docs/プロダクト/仕様/`
 - ゲームの置き場所と追加時に触る場所: `.claude/rules/game-structure.md`
 - 失敗パターンと予防: 段カードの失敗パターン。全体は起動側が渡す失敗パターン集の絶対パス
@@ -55,7 +55,7 @@ Bash は呼び出しごとに作業ディレクトリが戻るので、コマン
    - 開発サーバー: `bun run --cwd <worktree>/frontend dev -- --port <段カードのポート> --strictPort` を `run_in_background` で起動し、終わったら TaskStop でそのタスクを止める
    - 撮影: `node .claude/skills/add-puzzle/scripts/capture-screens.mjs`（使い方はスクリプト冒頭）。出力先は brief の作業ディレクトリの下。出力の `browser-check.txt` の problems を確かめる
    - 操作してクリアまで進める確認・操作途中の状態の撮影: `node .claude/skills/add-puzzle/scripts/playtest-driver.mjs`（使い方はスクリプト冒頭）
-6. 段で決めたこと（データの形、元の調査コードとの違い、打ち切りの上限とその理由など）は、報告の「決めたこと」に漏れなく書く。実装前提調査の仮決定一覧と台帳の行は、SPEC の段でだけ、段カードにある各段の決めたことから書く。
+6. 段で決めたこと（データの形、元の調査コードとの違い、打ち切りの上限とその理由など）は、報告の「決めたこと」に漏れなく書く。実装前提調査の仮決定一覧・「実装で確定した差分」と台帳の行は、spec の段でだけ、段カードにある各段の決めたことから書く。
 7. 変更を論理単位でコミットする（`git -C <worktree> add <パス>`、`git -C <worktree> commit -F <作業ディレクトリのメッセージファイル>`）。既存のコミットは書き換えず、直しも新しいコミットとして足す。
 8. `git -C <worktree> status --short` が空であることと、`git -C <worktree> log --stat <前段>..HEAD` を確かめてから報告する。
 
