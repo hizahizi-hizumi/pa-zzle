@@ -5,7 +5,9 @@ import {
   screen,
   within,
 } from "@testing-library/react";
+import type { ReactNode } from "react";
 
+import type { TakuzuOperation } from "@/games/takuzu/play/use-takuzu-play";
 import type { TakuzuCell } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import type {
@@ -51,6 +53,7 @@ describe("TakuzuBoard", () => {
           size={2}
           cells={cells}
           lineViolations={lineViolations}
+          operation={null}
           interactionDisabled={false}
           onCycleCell={onCycleCell}
           onPlaceCell={onPlaceCell}
@@ -107,15 +110,12 @@ describe("TakuzuBoard", () => {
       expect(onCycleCell).not.toHaveBeenCalled();
     });
 
-    test("固定マスを押しても通知しないこと", () => {
-      const givenCell = within(board).getByRole("button", {
-        name: "1行1列 四角 固定",
-      });
+    test("固定マスへのタップも巡回として通知し、通るかをプレイに任せること", () => {
+      fireEvent.click(
+        within(board).getByRole("button", { name: "1行1列 四角 固定" }),
+      );
 
-      fireEvent.click(givenCell);
-      fireEvent.contextMenu(givenCell);
-
-      expect(onCycleCell).not.toHaveBeenCalled();
+      expect(onCycleCell).toHaveBeenCalledWith(0, "forward");
     });
 
     describe("左上のマスにフォーカスがある場合", () => {
@@ -140,10 +140,10 @@ describe("TakuzuBoard", () => {
         },
       );
 
-      test("固定マスへのキー入力を通知しないこと", () => {
+      test("固定マスへのキー入力も通知し、通るかをプレイに任せること", () => {
         fireEvent.keyDown(document.activeElement ?? board, { key: "2" });
 
-        expect(onPlaceCell).not.toHaveBeenCalled();
+        expect(onPlaceCell).toHaveBeenCalledWith(0, "b");
       });
     });
 
@@ -198,6 +198,52 @@ describe("TakuzuBoard", () => {
     });
   });
 
+  describe("固定マスへの操作が通らなかった場合", () => {
+    let animate: ReturnType<typeof vi.fn>;
+    let rerender: (ui: ReactNode) => void;
+
+    function renderBoard(operation: TakuzuOperation | null) {
+      return (
+        <TakuzuBoard
+          size={2}
+          cells={cells}
+          lineViolations={lineViolations}
+          operation={operation}
+          interactionDisabled={false}
+          onCycleCell={onCycleCell}
+          onPlaceCell={onPlaceCell}
+        />
+      );
+    }
+
+    beforeEach(() => {
+      animate = vi.fn();
+      Object.defineProperty(HTMLElement.prototype, "animate", {
+        configurable: true,
+        value: animate,
+      });
+      ({ rerender } = render(renderBoard(null)));
+      board = screen.getByRole("group", { name: "バイナリパズル盤面" });
+    });
+
+    afterEach(() => {
+      delete (HTMLElement.prototype as { animate?: Element["animate"] })
+        .animate;
+    });
+
+    test("そのマスのタイルだけを揺らすこと", () => {
+      rerender(renderBoard({ id: 1, type: "invalid", cellIndex: 0 }));
+      const givenCell = within(board).getByRole("button", {
+        name: "1行1列 四角 固定",
+      });
+
+      expect(animate).toHaveBeenCalledOnce();
+      expect(animate.mock.contexts[0]).toBe(
+        givenCell.querySelector("[data-takuzu-tile]"),
+      );
+    });
+  });
+
   describe("操作できない場合", () => {
     beforeEach(() => {
       render(
@@ -205,6 +251,7 @@ describe("TakuzuBoard", () => {
           size={2}
           cells={cells}
           lineViolations={lineViolations}
+          operation={null}
           interactionDisabled={true}
           onCycleCell={onCycleCell}
           onPlaceCell={onPlaceCell}

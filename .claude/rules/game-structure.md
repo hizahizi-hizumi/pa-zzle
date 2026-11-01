@@ -139,9 +139,17 @@ frontend/src/games/
 - 演出の完了を受け取る盤面の props は `onClearAnimationComplete` とする。Play へは `GamePlayScreenProps` の `onClearAnimationComplete` で渡り、`usePlayableGame` がプレイフックの `completeClearAnimation` へつなぐ。
 - 演出の層はプレイ画面の中に描き、`document.body` へ portal しない。重なり順はプレイ画面の中の値で表す。
 
+## 効果音
+
+- ゲームの効果音は題材から作った音声ファイルを `assets/` に同梱し、`@/lib/sound-effects` の `playSound` で鳴らす。音の中身をコードで合成しない。回数の多い操作の音には `REPEATED_SOUND_VARIATION` を渡す。
+- プレイ画面は、盤面操作の音を `games/play-sound-effects.ts` の `useOperationSound` で、プレイフックが返す `id` 付きの操作の知らせから鳴らす。クリア音は `useClearSound` で完成演出の始まりに鳴らす。
+- 動きを減らす設定では、不成立の動きが出ず画面が何も変わらない操作の音と、完成演出が無くすぐ結果へ進むときのクリア音を鳴らさない。完成した盤面を保持して見せるゲームだけ、その姿に合わせたクリア音を `useClearSound` へ渡す。
+- 結果を受け取る瞬間の報酬の音はアプリが `usePlayableGame` で鳴らすので、ゲームは鳴らさない。
+- ゲームを選ぶ・プレイを始める音はアプリの共通部品（難易度の選択肢、結果画面、プレイ中のメニュー）が `@/components/app-decision-sound` で鳴らすので、ゲームは鳴らさない。
+
 ## 依存方向
 
-- `frontend/src/games/` 直下のゲーム共通契約は React に依存しない。プレイフックの共通部分を置く `games/play.ts` だけは React に依存できる。
+- `frontend/src/games/` 直下のゲーム共通契約は React に依存しない。プレイフックの共通部分を置く `games/play.ts` と、プレイ画面の効果音のフックを置く `games/play-sound-effects.ts` だけは React に依存できる。
 
 - `puzzle/` は `problem/`、`session/`、`play/`、`ui/` を知らない。
 - `problem/` は `puzzle/` とゲーム共通契約へ依存できるが、`session/`、`play/`、`ui/` を知らない。
@@ -182,6 +190,7 @@ frontend/src/game-catalog/
 ├── play-location-state.ts
 ├── record-result-location-state.ts
 ├── record-result-navigation.ts
+├── result-reward-sound.ts
 └── <game>/
     ├── <game>-catalog-entry.tsx
     ├── Playable<Game>.tsx
@@ -198,6 +207,7 @@ frontend/src/game-catalog/
 - `play-location-state.ts`: プレイ画面へ渡す location state（最初に避ける問題の ID）の作成と読み取りを置く。location state を読めないときは、どの読み取りも `undefined` を返す。
 - `record-result-location-state.ts`: 結果画面へ渡す location state（記録の保存結果）の作成と、形を確かめた読み取りを置く。
 - `record-result-navigation.ts`: クリアして記録を保存できたプレイを、記録の結果画面 `/puzzles/<game>/result/<記録ID>` へ履歴を置き換えて移す共通フックを置く。
+- `result-reward-sound.ts`: プレイを終えて結果を受け取る瞬間に、評価段階に応じた報酬の音を鳴らす共通フックを置く。記録から開いた結果画面では鳴らさない。
 - `<game>-catalog-entry.tsx`: ID（記録の `gameId`）、表示名、ピクトグラム、入口パス、プレイ画面のパス、記録表示、記録や離脱したプレイの問題を遊び直す難易度と問題 ID、記録から描く結果画面を持つ。遊び直し先は記録一覧の全行で求めるので、問題を復元せず問題集の索引で引けるかだけを確かめる。結果画面は今の版の記録からだけ描き、描けない記録には `null` を返す。
 - `Playable<Game>.tsx`: URL の問題 ID で最初の問題を引いて `play/` を始め、`usePlayableGame` に完了記録・離脱の進み具合・診断スナップショットの作り方を渡し、`ui/<Game>Play.tsx` と診断ダイアログを描く。記録を保存できたクリアは記録の結果画面へ移し、その場の結果画面は記録の保存に失敗したプレイでだけ出す。
 - `Recorded<Game>Result.tsx`: `useRecordedGameResult` に診断スナップショットの作り方を渡し、記録から作り直した結果を `ui/result/<Game>ResultScreen.tsx` と診断ダイアログで描く。
