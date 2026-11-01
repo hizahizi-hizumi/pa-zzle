@@ -27,7 +27,8 @@ model: opus
 - 作業の決まり: `AGENTS.md`、`CLAUDE.md`、`.claude/rules/`（特に `game-structure.md`、`typescript*.md`、`react-hooks.md`、`component-styling.md`、`views.md`、`pages.md`、`vitest.md`、`self-documenting-code.md`）
 - 振る舞いと文書: `GAME.md`、`APP.md`、`DESIGN.md`（値は `frontend/styles/globals.css` の `@theme`）、`docs/README.md`、`docs/プロダクト/仕様/`
 - 失敗パターンと予防: `.claude/skills/add-puzzle/references/pitfalls.md` の、段の範囲に関わる領域
-- 段の進め方の詳細: `.claude/skills/add-puzzle/references/implementation.md`（標準スタック・段ごとの注意・画面確認・触る場所チェックリスト）
+- ゲームの置き場所と追加時に触る場所: `.claude/rules/game-structure.md`
+- 段で起きやすい失敗: `.claude/skills/add-puzzle/references/pitfalls.md`
 - 作り方の Skill: 段の範囲に作り方の Skill があるもの（例: ピクトグラムは `/design-game-pictogram`）は Skill ツールで起動する。`/add-puzzle` から呼ばれたことを Skill に伝える
 - コミットの粒度とメッセージ: `.claude/skills/commit/references/commit.md`
 
@@ -50,7 +51,7 @@ Bash は呼び出しごとに作業ディレクトリが戻るので、コマン
    env -C <worktree> ./scripts/verify.sh
    ```
 
-5. UI のある段は画面を確かめる（詳細は `references/implementation.md` の「画面確認」）。
+5. UI のある段は画面を確かめる（`.claude/skills/add-puzzle/scripts/capture-screens.mjs` で撮って自分で見る）。
    - 開発サーバー: `bun run --cwd <worktree>/frontend dev -- --port <段カードのポート> --strictPort` を `run_in_background` で起動し、終わったら TaskStop でそのタスクを止める
    - 撮影: `node .claude/skills/add-puzzle/scripts/capture-screens.mjs`（使い方はスクリプト冒頭）。出力先は brief の作業ディレクトリの下。出力の `browser-check.txt` の problems を確かめる
    - 操作してクリアまで進める確認・操作途中の状態の撮影: `node .claude/skills/add-puzzle/scripts/playtest-driver.mjs`（使い方はスクリプト冒頭）か、作業ディレクトリに書いた Playwright のスクリプト。スマホは `devices['iPhone 13']`（390×664）、PC は 1280×800
