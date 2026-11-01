@@ -14,21 +14,23 @@ describe("hitofudePuzzlePlayRecordDisplay", () => {
     expect(metricIds).toEqual(personalBestMetricIds);
   });
 
-  test("引き直しの回数を単位付きで表示すること", () => {
+  describe("引き直しの指標", () => {
     const backtrack = hitofudePuzzlePlayRecordDisplay.metrics.find(
       ({ id }) => id === "backtrack-count",
     );
 
-    expect(backtrack?.label).toBe("引き直し");
-    expect(backtrack?.formatValue(3)).toBe("3回");
-  });
+    test("引き直しの回数を単位付きで表示すること", () => {
+      const value = backtrack?.formatValue(3);
 
-  test("引き直しの自己ベストの更新幅を、少なくなった回数として表示すること", () => {
-    const backtrack = hitofudePuzzlePlayRecordDisplay.metrics.find(
-      ({ id }) => id === "backtrack-count",
-    );
+      expect(backtrack?.label).toBe("引き直し");
+      expect(value).toBe("3回");
+    });
 
-    expect(backtrack?.formatImprovement(3)).toBe("3回少ない");
+    test("自己ベストの更新幅を、回数の指標に共通の書き方で表示すること", () => {
+      const improvement = backtrack?.formatImprovement(3);
+
+      expect(improvement).toBe("3回減");
+    });
   });
 
   test("離脱の進み具合を時間・通ったマス・引き直しの順に単位付きで表示すること", () => {
