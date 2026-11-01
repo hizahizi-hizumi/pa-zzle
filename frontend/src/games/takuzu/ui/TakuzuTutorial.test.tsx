@@ -399,9 +399,7 @@ describe("TakuzuTutorial", () => {
     test("終えた後のもう一度で、始まりの盤面を見せてから最初から始めること", () => {
       solveAll();
       fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
-      const caption = screen.getByText(
-        "最初は、いくつかのマスだけが埋まっています",
-      );
+      const caption = screen.getByText("最初は、一部のマスだけ埋まっています");
       advanceTime(introEnoughMs);
 
       const message = screen.getByText("四角と丸で、盤面を埋めていきます");
@@ -447,7 +445,7 @@ describe("TakuzuTutorial", () => {
       });
       const title = screen.getByRole("heading", { name: "バイナリパズル" });
       const purpose = screen.getByText(
-        "ルールに合うように、四角と丸ですべてのマスを埋めるパズルです",
+        "四角と丸で、ルールに合うようにすべてのマスを埋めるパズルです",
       );
       const labels = [getCellLabel(1, 1), getCellLabel(2, 2)];
       const hinted = getHintedCellPositions();
@@ -547,7 +545,7 @@ describe("TakuzuTutorial", () => {
 
     test("最初の画面で、何をするパズルかとゴールの盤面を、ゴールの一言と一緒に見せること", () => {
       const purpose = screen.getByText(
-        "ルールに合うように、四角と丸ですべてのマスを埋めるパズルです",
+        "四角と丸で、ルールに合うようにすべてのマスを埋めるパズルです",
       );
       const caption = screen.getByText("この形がゴールです");
       const label = getCellLabel(1, 1);
@@ -560,9 +558,7 @@ describe("TakuzuTutorial", () => {
     test("ゴールを見せた後に、始まりの一言を添えて始めの盤面を見せること", () => {
       advanceTime(stillGoalHoldMs);
 
-      const caption = screen.getByText(
-        "最初は、いくつかのマスだけが埋まっています",
-      );
+      const caption = screen.getByText("最初は、一部のマスだけ埋まっています");
       const label = getCellLabel(1, 1);
 
       expect(caption).toBeTruthy();

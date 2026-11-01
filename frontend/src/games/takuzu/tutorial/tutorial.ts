@@ -630,9 +630,9 @@ export const takuzuTutorial: Tutorial<
   TakuzuTutorialAction
 > = {
   intro: {
-    purpose: "ルールに合うように、四角と丸ですべてのマスを埋めるパズルです",
+    purpose: "四角と丸で、ルールに合うようにすべてのマスを埋めるパズルです",
     goalCaption: "この形がゴールです",
-    startCaption: "最初は、いくつかのマスだけが埋まっています",
+    startCaption: "最初は、一部のマスだけ埋まっています",
   },
   rules: [
     { id: "run", label: "3つ続かない" },

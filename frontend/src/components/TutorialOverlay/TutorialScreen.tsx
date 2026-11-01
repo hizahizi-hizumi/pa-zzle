@@ -81,7 +81,7 @@ type TutorialScreenProps = {
 
 /**
  * 導入の段。開いたときは `name` から、もう一度始めたときは `start` から進む。
- * - `name`: 上部の領域の中央に、ピクトグラムと名前と、何をするパズルかの一文を大きく出す。
+ * - `name`: 上部の領域の中央に、ピクトグラムと名前を大きく、その下に何をするパズルかの一文を出す。
  * - `goalAppearing`: その下に、解き終えた盤面とゴールの一言を出す。
  * - `goal`: 解き終えた盤面の動きを盤面に任せ、終えたら読む間だけ待つ。
  * - `start`: 始めの盤面へ移る動きを盤面に任せ、始まりの一言を添えて、終えたら読む間だけ待つ。
@@ -102,9 +102,8 @@ const NAME_APPEAR_MS = 300;
 /** 名前が現れてから盤面を出すまで。 */
 const BOARD_APPEAR_DELAY_MS = 300;
 const BOARD_APPEAR_MS = 250;
-/** 名前を上部へ移す間。名前はピクトグラムを追って少し遅れて動き、通り道で重ならないようにする。 */
-const PICTOGRAM_MOVE_MS = 400;
-const TITLE_MOVE_DELAY_MS = 80;
+/** 名前を上部へ移す間。ピクトグラムと名前は並んだまま一緒に動く。 */
+const NAME_MOVE_MS = 400;
 /** ルールと一言は、名前がその行を通り過ぎてから出す。`header` の見せ方の `delay-350` と同じ値。 */
 const REVEAL_AFTER_NAME_DELAY_MS = 350;
 const REVEAL_MS = 300;
@@ -121,11 +120,12 @@ const sceneHoldMs = {
   Record<TutorialIntroScene, number>
 >;
 
-/** 上部での大きさに対する、導入の間の大きさ。 */
-const INTRO_PICTOGRAM_SCALE = 2;
-const INTRO_TITLE_SCALE = 1.5;
-/** 導入の間の、ピクトグラム・名前・一文の間（px）。 */
-const INTRO_NAME_GAP_PX = 8;
+/** 上部での大きさに対する、導入の間の名前の大きさ。幅に収まらなければ収まるまで小さくする。 */
+const INTRO_NAME_SCALE = 1.5;
+/** 導入の間の、名前と一文の間（px）。 */
+const INTRO_PURPOSE_GAP_PX = 12;
+/** 導入の間の名前を、画面の左右の端から離す幅（px）。 */
+const INTRO_NAME_INSET_PX = 16;
 
 /**
  * 段ごとの見せ方。
@@ -246,11 +246,13 @@ type IntroNameLayout = {
 };
 
 /**
- * 上部のピクトグラムと名前を、何をするパズルかの一文と一緒に、上部の領域の中央へ縦に重ねて大きく見せる配置。
+ * 上部のピクトグラムと名前を、並びを保ったまま大きくし、何をするパズルかの一文と一緒に、上部の領域のうち見出しの行より下の中央へ置く配置。
+ * 見出しの行には閉じるボタンが残るので、重ならないよう下へ置く。
  * 上部に置いた要素そのものを変形し、導入の終わりに変形を外して上部へ戻す（FLIP）。
  */
 function getIntroNameLayout(
   region: HTMLElement,
+  header: HTMLElement,
   pictogram: HTMLElement,
   title: HTMLElement,
   purpose: HTMLElement,
@@ -259,42 +261,31 @@ function getIntroNameLayout(
   const pictogramRect = pictogram.getBoundingClientRect();
   const titleRect = title.getBoundingClientRect();
   const purposeHeight = purpose.getBoundingClientRect().height;
-  const pictogramSize = pictogramRect.width * INTRO_PICTOGRAM_SCALE;
-  const titleWidth = titleRect.width * INTRO_TITLE_SCALE;
-  const titleHeight = titleRect.height * INTRO_TITLE_SCALE;
-  const stackHeight =
-    pictogramSize +
-    INTRO_NAME_GAP_PX +
-    titleHeight +
-    INTRO_NAME_GAP_PX +
-    purposeHeight;
-  const stackTop = regionRect.top + (regionRect.height - stackHeight) / 2;
-  const centerX = regionRect.left + regionRect.width / 2;
-  const titleTop = stackTop + pictogramSize + INTRO_NAME_GAP_PX;
+  const rowLeft = Math.min(pictogramRect.left, titleRect.left);
+  const rowTop = Math.min(pictogramRect.top, titleRect.top);
+  const rowWidth = Math.max(pictogramRect.right, titleRect.right) - rowLeft;
+  const rowHeight = Math.max(pictogramRect.bottom, titleRect.bottom) - rowTop;
+  const scale = Math.min(
+    INTRO_NAME_SCALE,
+    (regionRect.width - INTRO_NAME_INSET_PX * 2) / rowWidth,
+  );
+  const stackHeight = rowHeight * scale + INTRO_PURPOSE_GAP_PX + purposeHeight;
+  const areaTop = header.getBoundingClientRect().bottom;
+  const stackTop =
+    areaTop + Math.max(0, (regionRect.bottom - areaTop - stackHeight) / 2);
+  const stackLeft = regionRect.left + (regionRect.width - rowWidth * scale) / 2;
 
-  function toTransform(
-    rect: DOMRect,
-    left: number,
-    top: number,
-    scale: number,
-  ) {
+  function toTransform(rect: DOMRect) {
+    const left = stackLeft + (rect.left - rowLeft) * scale;
+    const top = stackTop + (rect.top - rowTop) * scale;
     return `translate(${left - rect.left}px, ${top - rect.top}px) scale(${scale})`;
   }
 
   return {
-    pictogram: toTransform(
-      pictogramRect,
-      centerX - pictogramSize / 2,
-      stackTop,
-      INTRO_PICTOGRAM_SCALE,
-    ),
-    title: toTransform(
-      titleRect,
-      centerX - titleWidth / 2,
-      titleTop,
-      INTRO_TITLE_SCALE,
-    ),
-    purposeTop: titleTop + titleHeight + INTRO_NAME_GAP_PX - regionRect.top,
+    pictogram: toTransform(pictogramRect),
+    title: toTransform(titleRect),
+    purposeTop:
+      stackTop + rowHeight * scale + INTRO_PURPOSE_GAP_PX - regionRect.top,
   };
 }
 
@@ -321,6 +312,7 @@ export function TutorialScreen({
   // 名前を上部の外で大きく見せている間。何をするパズルかの一文は、この間だけ名前の下に出す。
   const [nameCentered, setNameCentered] = useState(introducing);
   const regionRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const pictogramRef = useRef<HTMLSpanElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const purposeRef = useRef<HTMLParagraphElement>(null);
@@ -377,20 +369,27 @@ export function TutorialScreen({
 
   const startOpeningIntro = useEffectEvent(() => {
     const region = regionRef.current;
+    const header = headerRef.current;
     const pictogram = pictogramRef.current;
     const titleElement = titleRef.current;
     const purpose = purposeRef.current;
     if (!introducing) {
       return;
     }
-    if (!region || !pictogram || !titleElement || !purpose) {
+    if (!region || !header || !pictogram || !titleElement || !purpose) {
       finishIntro();
       return;
     }
 
     const animated = canAnimateIntro([pictogram, titleElement]);
     animatedRef.current = animated;
-    const layout = getIntroNameLayout(region, pictogram, titleElement, purpose);
+    const layout = getIntroNameLayout(
+      region,
+      header,
+      pictogram,
+      titleElement,
+      purpose,
+    );
     nameLayoutRef.current = layout;
     setPurposeTop(layout.purposeTop);
     for (const [element, transform] of [
@@ -440,9 +439,9 @@ export function TutorialScreen({
       return;
     }
     changeStage("header");
-    for (const [element, transform, delay] of [
-      [pictogramRef.current, layout.pictogram, 0],
-      [titleRef.current, layout.title, TITLE_MOVE_DELAY_MS],
+    for (const [element, transform] of [
+      [pictogramRef.current, layout.pictogram],
+      [titleRef.current, layout.title],
     ] as const) {
       if (!element) {
         continue;
@@ -450,8 +449,7 @@ export function TutorialScreen({
       element.style.removeProperty("transform");
       animationsRef.current.push(
         element.animate([{ transform }, { transform: "none" }], {
-          duration: PICTOGRAM_MOVE_MS,
-          delay,
+          duration: NAME_MOVE_MS,
           easing: MOTION_EASING.standard,
           fill: "backwards",
         }),
@@ -459,10 +457,7 @@ export function TutorialScreen({
     }
     schedule(
       finishIntro,
-      Math.max(
-        TITLE_MOVE_DELAY_MS + PICTOGRAM_MOVE_MS,
-        REVEAL_AFTER_NAME_DELAY_MS + REVEAL_MS,
-      ),
+      Math.max(NAME_MOVE_MS, REVEAL_AFTER_NAME_DELAY_MS + REVEAL_MS),
     );
   }, [changeStage, finishIntro, schedule]);
 
@@ -532,7 +527,10 @@ export function TutorialScreen({
     >
       <DialogDescription className="sr-only">チュートリアル</DialogDescription>
       <div ref={regionRef} className="relative flex shrink-0 flex-col">
-        <header className="flex min-h-14 shrink-0 items-center gap-2 pt-2 pr-3 pl-4">
+        <header
+          ref={headerRef}
+          className="flex min-h-14 shrink-0 items-center gap-2 pt-2 pr-3 pl-4"
+        >
           <span ref={pictogramRef} className="size-8 shrink-0">
             <GamePictogram svg={pictogramSvg} />
           </span>
