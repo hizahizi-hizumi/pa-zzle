@@ -103,6 +103,7 @@ frontend/src/games/
 - 共通モジュールは仕組みを一つにする。演出の時間・量、採点の係数など、ゲームの表現に属する値はゲームが渡し、共通モジュールに固定しない。
 - `score.ts` の評価関数は `games/score.ts` の `PlayScore` を返す。評価項目は `ScoreItem` の名前を使い、満点は `ScoreMaximums` で結果画面に出す順に並べる。
 - 速さは `games/score.ts` の `SpeedScoreRule` と `calculateSpeedScore` で採点する。各ゲームは `calculate<Game>SpeedScoreRule` と `calculate<Game>TimeDeltaMs` を置き、結果に `speedRule` と `timeDeltaMs` を含める。
+- 記録定義の自己ベストの指標には、評価点を `records/play-record-definition.ts` の `PLAY_SCORE_METRIC_ID`（`play-score`）の高いほど良い指標として含める。図鑑は、この指標で問題ごとの最高スコアを求める。
 - 時間の自己ベストは `time-delta-ms`（基準時間との差）で比べる。今の採点規則で評価できない記録は記録一覧に残し、評価と自己ベストの値を `null` にする。
 - 操作（待った・盤面を戻す・リセット・別の問題）と評価項目の呼び名は `games/play-vocabulary.ts` から使い、文字列で書かない。
 - 結果画面の指標は `components/game-result-metrics.ts`、採点基準の文は `components/game-result-score-criteria.ts` で組み立てる。数には単位を付け、採点基準の文は常体で書く。丸めの注記は共通の結果画面が出す。
