@@ -207,10 +207,14 @@ describe("useHitofudePuzzlePlay", () => {
       });
     });
 
-    test("待ったで、残した変化を消すこと", () => {
+    test("待ったで、戻した後の先端と道のマス数の増減を残すこと", () => {
       act(() => result.current.undo());
 
-      expect(result.current.pathNotice).toBeNull();
+      expect(result.current.pathNotice).toMatchObject({
+        change: "undone",
+        head: solution[2],
+        lengthChange: -1,
+      });
     });
 
     test("引き直しの回数と待ったの回数を返すこと", () => {

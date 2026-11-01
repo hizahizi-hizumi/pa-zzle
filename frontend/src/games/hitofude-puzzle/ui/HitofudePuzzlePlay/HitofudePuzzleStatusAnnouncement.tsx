@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import type { HitofudePuzzlePathNotice } from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
 import {
   getHitofudePuzzleCellPosition,
@@ -9,6 +11,13 @@ type HitofudePuzzleStatusAnnouncementProps = {
   board: HitofudePuzzleBoard;
   notice: HitofudePuzzlePathNotice | null;
   isDeadEnd: boolean;
+  /** 道が全マスを通り終えたか。 */
+  solved: boolean;
+  /**
+   * 盤面のマスにフォーカスがあるか。あれば先端が動くとフォーカスが先端のマスへ移り、マスの読み上げ名が先端の位置を伝えるので、
+   * 読み上げ欄は何が起きたかだけを伝える。
+   */
+  boardFocused: boolean;
 };
 
 function describeCellPosition(size: number, cell: number): string {
@@ -23,11 +32,44 @@ const blockedReasonTexts = {
   visited: "通ったマスへは進めない",
 } as const satisfies Record<HitofudePuzzleExtensionRejection, string>;
 
+function describeUndoneLength(lengthChange: number): string {
+  if (lengthChange < 0) {
+    return `待ったで道を${-lengthChange}マス縮めた`;
+  }
+  if (lengthChange > 0) {
+    return `待ったで道を${lengthChange}マス延ばした`;
+  }
+  return "待ったで道を戻した";
+}
+
+/** 道が変わった操作で、何が起きたかを伝える文。先端の位置は `headPosition` が `null` でなければ添える。 */
+function describePathChange(
+  notice: Exclude<HitofudePuzzlePathNotice, { change: "blocked" }>,
+  headPosition: string | null,
+  solved: boolean,
+): string {
+  if (solved) {
+    return "完成。すべてのマスを通った";
+  }
+  switch (notice.change) {
+    case "extended":
+      return headPosition === null ? "延ばした" : `${headPosition}へ延ばした`;
+    case "shortened":
+      return headPosition === null ? "縮めた" : `${headPosition}まで縮めた`;
+    case "undone": {
+      const undone = describeUndoneLength(notice.lengthChange);
+      return headPosition === null
+        ? undone
+        : `${undone}。先端は${headPosition}`;
+    }
+  }
+}
+
 /** 盤面の変化を読み上げる文。知らせる変化が無ければ空文字。 */
 function describeNotice(
   { size }: HitofudePuzzleBoard,
   notice: HitofudePuzzlePathNotice | null,
-  isDeadEnd: boolean,
+  { isDeadEnd, solved, boardFocused }: HitofudePuzzleStatusAnnouncementProps,
 ): string {
   if (notice === null) {
     return "";
@@ -38,28 +80,40 @@ function describeNotice(
       ? reason
       : `${describeCellPosition(size, notice.cell)}、${reason}`;
   }
-  const sentences = [
-    notice.change === "shortened"
-      ? `${describeCellPosition(size, notice.head)}まで縮めた`
-      : null,
+  const headPosition = boardFocused
+    ? null
+    : describeCellPosition(size, notice.head);
+  return [
+    describePathChange(notice, headPosition, solved),
     isDeadEnd ? "行き止まり。先端から進めるマスが無い" : null,
-  ].filter((sentence) => sentence !== null);
-  return sentences.join("。");
+  ]
+    .filter((sentence) => sentence !== null)
+    .join("。");
 }
 
 /**
- * 盤面の操作で起きた変化（阻まれた・縮めた・行き止まり）を、画面には出さずに読み上げで知らせる。
+ * 盤面の操作で起きた変化（延ばした・縮めた・待った・阻まれた・行き止まり・完成）を、画面には出さずに読み上げで知らせる。
  * 盤面の印や動きで知らせていることを、見えない人にも同じ時に伝える。
+ * マスの読み上げ名はマスの位置と状態を、この欄は操作で何が起きたかを伝える。
  */
-export function HitofudePuzzleStatusAnnouncement({
-  board,
-  notice,
-  isDeadEnd,
-}: HitofudePuzzleStatusAnnouncementProps) {
+export function HitofudePuzzleStatusAnnouncement(
+  props: HitofudePuzzleStatusAnnouncementProps,
+) {
+  const { board, notice } = props;
+  const noticeId = notice?.id ?? null;
+  const text = describeNotice(board, notice, props);
+  // 文は操作の時点の状態で決め、後でフォーカスが移っても書き換えない。書き換えると同じ操作を読み上げ直す。
+  const [announcement, setAnnouncement] = useState({ noticeId, text });
+  if (announcement.noticeId !== noticeId) {
+    setAnnouncement({ noticeId, text });
+  }
+  const announcedText =
+    announcement.noticeId === noticeId ? announcement.text : text;
+
   return (
     <p role="status" className="sr-only">
       {/* 同じ文が続いても読み上げ直されるよう、操作ごとに文の要素を作り直す。 */}
-      <span key={notice?.id}>{describeNotice(board, notice, isDeadEnd)}</span>
+      <span key={noticeId}>{announcedText}</span>
     </p>
   );
 }

@@ -500,41 +500,46 @@ describe("HitofudePuzzlePlay", () => {
         "盤面の外へは進めない",
       ],
       [
+        "道を延ばした",
+        {
+          path: [0, 1],
+          pathNotice: { id: 2, change: "extended", head: 1 },
+        },
+        "1行2列へ延ばした",
+      ],
+      [
         "道を縮めた",
         {
           path: [0, 1],
-          pathNotice: {
-            id: 2,
-            change: "shortened",
-            head: 1,
-          },
+          pathNotice: { id: 2, change: "shortened", head: 1 },
         },
         "1行2列まで縮めた",
+      ],
+      [
+        "待ったで道を戻した",
+        {
+          path: [0, 1],
+          pathNotice: { id: 4, change: "undone", head: 1, lengthChange: -2 },
+        },
+        "待ったで道を2マス縮めた。先端は1行2列",
       ],
       [
         "行き止まりになった",
         {
           path: [0, 1, 4, 5, 2],
           isDeadEnd: true,
-          pathNotice: {
-            id: 3,
-            change: "extended",
-            head: 2,
-          },
+          pathNotice: { id: 3, change: "extended", head: 2 },
         },
-        "行き止まり。先端から進めるマスが無い",
+        "1行3列へ延ばした。行き止まり。先端から進めるマスが無い",
       ],
       [
-        "道を延ばしただけの",
+        "全マスを通って完成した",
         {
-          path: [0, 1],
-          pathNotice: {
-            id: 5,
-            change: "extended",
-            head: 1,
-          },
+          progress: "clearing",
+          path: [0, 1, 2, 5, 4, 3, 6, 7, 8],
+          pathNotice: { id: 6, change: "extended", head: 8 },
         },
-        "",
+        "完成。すべてのマスを通った",
       ],
     ] as const;
 
@@ -546,6 +551,38 @@ describe("HitofudePuzzlePlay", () => {
         expect(screen.getByRole("status").textContent).toBe(expected);
       },
     );
+
+    describe("盤面のマスにフォーカスがある場合", () => {
+      let rerender: ReturnType<typeof render>["rerender"];
+
+      beforeEach(() => {
+        ({ rerender } = renderResult({ ...playingProps, path: [0] }));
+        within(getBoardGroup()).getAllByRole("button")[0]!.focus();
+        rerender(
+          <HitofudePuzzlePlay
+            {...baseProps}
+            {...playingProps}
+            path={[0, 1]}
+            pathNotice={{ id: 2, change: "extended", head: 1 }}
+          />,
+        );
+      });
+
+      test("先端の位置はマスの読み上げ名に任せ、何が起きたかだけを読み上げの領域に出すこと", () => {
+        const status = screen.getByRole("status");
+        const focusedCellName =
+          document.activeElement?.getAttribute("aria-label");
+
+        expect(status.textContent).toBe("延ばした");
+        expect(focusedCellName).toBe("1行2列 先端");
+      });
+
+      test("その後フォーカスが盤面を離れても、読み上げた文を書き換えないこと", () => {
+        screen.getByRole("button", { name: "待った" }).focus();
+
+        expect(screen.getByRole("status").textContent).toBe("延ばした");
+      });
+    });
   });
 
   describe("プレイを終えて完成演出中の場合", () => {

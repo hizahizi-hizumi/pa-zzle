@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { GamePlayFrame } from "@/components/GamePlayFrame";
 import { UndoButton } from "@/components/UndoButton";
@@ -76,6 +76,7 @@ export function HitofudePuzzlePlay({
   onOpenDiagnostics,
 }: HitofudePuzzlePlayProps) {
   const playAreaRef = useRef<HTMLElement>(null);
+  const [boardFocused, setBoardFocused] = useState(false);
   useHitofudePuzzleSoundEffects(pathNotice, progress, path.length);
 
   useEffect(() => {
@@ -150,7 +151,15 @@ export function HitofudePuzzlePlay({
     >
       {/* 画面端から始まるタッチはブラウザの戻る操作に取られるので、盤面の左右に余白を残す。 */}
       <main className="flex min-h-0 flex-1 items-center justify-center px-4 py-2 [container-type:size] sm:px-6">
-        <div className="relative aspect-square w-[min(100cqw,100cqh,40rem)]">
+        <div
+          className="relative aspect-square w-[min(100cqw,100cqh,40rem)]"
+          onFocus={() => setBoardFocused(true)}
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget)) {
+              setBoardFocused(false);
+            }
+          }}
+        >
           <HitofudePuzzleBoard
             board={board}
             path={path}
@@ -169,6 +178,8 @@ export function HitofudePuzzlePlay({
           board={board}
           notice={pathNotice}
           isDeadEnd={isDeadEnd}
+          solved={progress !== "playing"}
+          boardFocused={boardFocused}
         />
       </main>
       <footer className="grid h-28 shrink-0 items-end px-4 pb-2">

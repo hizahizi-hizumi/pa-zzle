@@ -79,6 +79,7 @@ export type HitofudePuzzleBlockedMove = {
  * - `blocked`: 道を延ばせなかった。`cell` と `reason` は進もうとしたマスとその理由。
  * - `shortened`: 道が縮んだ（来た向きへ戻った・道の途中のマスを押した）。`head` は縮んだ後の先端。
  * - `extended`: 道が延びた。`head` は延びた後の先端。
+ * - `undone`: 待ったで1つ前の道へ戻した。`head` は戻した後の先端、`lengthChange` は道のマス数の増減。
  */
 export type HitofudePuzzlePathNotice = { id: number } & (
   | {
@@ -89,6 +90,11 @@ export type HitofudePuzzlePathNotice = { id: number } & (
   | {
       change: "shortened" | "extended";
       head: number;
+    }
+  | {
+      change: "undone";
+      head: number;
+      lengthChange: number;
     }
 );
 
@@ -113,7 +119,7 @@ export type HitofudePuzzlePlay = GamePlay<
     isDeadEnd: boolean;
     /** 最後に道を延ばせなかった操作。 */
     blockedMove: HitofudePuzzleBlockedMove | null;
-    /** 最後の盤面操作（なぞり・矢印キー・マスを押す）で道に起きた変化。待った・盤面を戻すの後は `null`。 */
+    /** 最後の操作（なぞり・矢印キー・マスを押す・待った）で道に起きた変化。盤面を戻すの後は `null`。 */
     pathNotice: HitofudePuzzlePathNotice | null;
     /** ここまでの引き直しの回数。なぞりを離したとき・矢印キー・待った・盤面を戻すの後に数える。 */
     backtrackCount: number;
@@ -338,14 +344,25 @@ export function useHitofudePuzzlePlay(
   }, []);
 
   const undo = useCallback(() => {
+    const operationId = nextOperationId.current++;
     setPlay((current) => {
-      const next = applyPlaySession(
-        current,
-        undoHitofudePuzzleSession(current.session),
-      );
-      return next === current
-        ? current
-        : { ...next, blockedMove: null, pathNotice: null };
+      const session = undoHitofudePuzzleSession(current.session);
+      const next = applyPlaySession(current, session);
+      if (next === current) {
+        return current;
+      }
+      const before = current.session.puzzleState.path;
+      const after = session.puzzleState.path;
+      return {
+        ...next,
+        blockedMove: null,
+        pathNotice: {
+          id: operationId,
+          change: "undone",
+          head: getHitofudePuzzleHead(session.puzzleState),
+          lengthChange: after.length - before.length,
+        },
+      };
     });
   }, []);
 
