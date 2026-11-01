@@ -7,6 +7,9 @@ updates:
       - /.github/actions/*
     schedule:
       interval: weekly
+    # 公開直後に侵害されたリリースを取り込まないよう、公開から1週間待つ。セキュリティ更新には効かない。
+    cooldown:
+      default-days: 7
     groups:
       github-actions:
         patterns:
