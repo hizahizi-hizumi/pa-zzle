@@ -255,6 +255,36 @@ describe("traceHitofudePuzzle", () => {
     });
   });
 
+  describe("指が先端から斜めに2つ前のマスへ移った場合", () => {
+    // 0 → 1 → 4 の L 字の先端 4 から、角の 1 を挟んだ 0 へ戻る。
+    const path = [0, 1, 4];
+
+    test.each([true, false])(
+      "角のマスを通って戻ったとみなし2マス縮めること（横の動きが大きいか: %s）",
+      (horizontalFirst) => {
+        const trace = traceHitofudePuzzle(
+          openBoard,
+          { path },
+          { from: 4, to: 0, horizontalFirst },
+        );
+
+        expect(trace).toEqual({ kind: "retracted", state: { path: [0] } });
+      },
+    );
+  });
+
+  describe("道から外れた指が先端の2つ前のマスへ移った場合", () => {
+    test("道を変えないこと", () => {
+      const trace = traceHitofudePuzzle(
+        openBoard,
+        { path: [0, 1, 4] },
+        { from: 3, to: 0, horizontalFirst: false },
+      );
+
+      expect(trace).toEqual({ kind: "unchanged" });
+    });
+  });
+
   describe("指が先端から一直線に2マス先へ移った場合", () => {
     test("間のマスを通って延ばすこと", () => {
       const trace = traceHitofudePuzzle(
@@ -264,6 +294,24 @@ describe("traceHitofudePuzzle", () => {
       );
 
       expect(trace).toEqual({ kind: "extended", state: { path: [0, 3, 6] } });
+    });
+
+    // 0 1 2
+    // 3 # 5
+    // 6 7 8
+    const cases = [
+      ["間のマスが穴", board, [0, 1], 7],
+      ["間のマスが通過済み", openBoard, [0, 1, 4, 3], 5],
+    ] as const;
+
+    test.each(cases)("%sなら延ばさないこと", (_, blockingBoard, path, to) => {
+      const trace = traceHitofudePuzzle(
+        blockingBoard,
+        { path },
+        { from: path.at(-1)!, to, horizontalFirst: false },
+      );
+
+      expect(trace).toEqual({ kind: "unchanged" });
     });
   });
 });

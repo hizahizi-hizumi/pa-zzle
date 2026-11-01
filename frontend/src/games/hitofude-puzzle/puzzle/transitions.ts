@@ -110,7 +110,7 @@ export function moveHitofudePuzzleHead(
 /**
  * なぞる指が隣のマスへ移ったときの道の変化。
  * - `extended`: 道が1マス以上延びた。
- * - `retracted`: 直前のマスへ戻って道が1マス縮んだ。
+ * - `retracted`: 来た道を戻って道が縮んだ。
  * - `unchanged`: 道を変えない（先端・道の途中のマスに入った、道から外れた指が動いた、など）。
  * - `rejected`: 先端から進もうとした指が穴に阻まれた。
  */
@@ -178,7 +178,8 @@ function extendThrough(
 
 /**
  * なぞる指が `from` のマスから `to` のマスへ移ったときに道を変える。
- * - 直前のマスへ入ると1マス縮める。道の途中のそれ以外のマスへ入っても巻き戻さない。
+ * - 直前のマスへ入ると1マス縮める。先端から2つ前のマスへ移ったときは、延ばすときに角や間のマスを通るのと同じく
+ *   直前のマスを通って戻ったとみなし、2マス縮める。道の途中のそれ以外のマスへ入っても巻き戻さない。
  * - 先端に隣り合う未通過マスへ入ると延ばす。指が道から外れていても、先端の隣へ戻れば延ばす。
  * - 先端から離れたマスへは、指が先端から移ったときだけ、通り越したマスを通って延ばす。
  *   斜めは穴でない角のマスを通り、通れる道筋が無ければ延ばさない。
@@ -194,6 +195,9 @@ export function traceHitofudePuzzle(
   const movedFromHead = from === head;
   if (state.path.length >= 2 && state.path.at(-2) === to) {
     return { kind: "retracted", state: retractHitofudePuzzle(state) };
+  }
+  if (movedFromHead && state.path.length >= 3 && state.path.at(-3) === to) {
+    return { kind: "retracted", state: { path: state.path.slice(0, -2) } };
   }
   if (!isHitofudePuzzleCellOnBoard(board.size, to) || state.path.includes(to)) {
     return { kind: "unchanged" };
