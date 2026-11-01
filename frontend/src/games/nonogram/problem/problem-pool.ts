@@ -7,6 +7,7 @@ import {
   NONOGRAM_GENERATOR_VERSION,
   type NonogramIdentifiedProblem,
   type NonogramProblemIdentity,
+  type NonogramSolveWorkload,
   nonogramPatternStyles,
 } from "@/games/nonogram/problem/problem";
 import problemPoolJson from "@/games/nonogram/problem/problem-pool.json";
@@ -52,9 +53,10 @@ export type NonogramDecodedPoolEntry = {
   features: NonogramReadingFeatures;
 };
 
-/** 問題集から復元した1問。問題集の中の位置を伴う。 */
+/** 問題集から復元した1問。問題集の中の位置と、基準時間に使う作業の量を伴う。 */
 export type NonogramPooledProblem = NonogramIdentifiedProblem & {
   poolReference: NonogramProblemPoolReference;
+  workload: NonogramSolveWorkload;
 };
 
 export type NonogramProblemPool = {
@@ -157,18 +159,27 @@ export function formatNonogramPoolProblemId(
   return `${difficulty}-${entryIndex + 1}`;
 }
 
-/** 問題集の1問を、問題集の中の位置 `poolReference` を添えて復元する。 */
+/** 問題集の1問を、問題集の中の位置 `poolReference` と、解と特徴から求めた作業の量を添えて復元する。 */
 export function restoreNonogramPoolEntry(
   entry: NonogramProblemPoolEntry,
   poolReference: NonogramProblemPoolReference,
 ): NonogramPooledProblem {
   const [width, height, , , encodedSolution] = entry;
+  const solution = decodeNonogramPoolSolution(
+    { width, height },
+    encodedSolution,
+  );
+  const { identity, features } = decodeNonogramPoolEntry(entry);
   return {
-    problem: createNonogramProblem(
-      decodeNonogramPoolSolution({ width, height }, encodedSolution),
-    ),
-    identity: decodeNonogramPoolEntry(entry).identity,
+    problem: createNonogramProblem(solution),
+    identity,
     poolReference,
+    workload: {
+      width,
+      height,
+      filledCellCount: solution.black.filter(Boolean).length,
+      roundCount: features.roundCount,
+    },
   };
 }
 
@@ -197,6 +208,20 @@ const findPoolPositionByProblemId = createProblemPoolIdLookup(
   problemPool.levels,
   (entry) => decodeNonogramPoolEntry(entry).identity,
 );
+
+/**
+ * 難易度の問題集に問題 ID の問題があるかを、問題を復元せずに確かめる。
+ * `findNonogramPooledProblemByProblemId` と同じく、生成器の版が今と違う問題集には無いとする。
+ */
+export function hasNonogramPoolProblemId(
+  difficulty: NonogramDifficulty,
+  problemId: string,
+): boolean {
+  return (
+    problemPool.generatorVersion === NONOGRAM_GENERATOR_VERSION &&
+    findPoolPositionByProblemId(difficulty, problemId) !== null
+  );
+}
 
 /**
  * 難易度の問題集から問題 ID で1問を探して復元する。問題集に無い ID・別の難易度の ID には `null` を返す。

@@ -10,7 +10,8 @@ import { selectProblemPoolEntry } from "@/games/problem-selection";
 
 /**
  * 難易度の問題集から seed で1問を選ぶ。
- * 問題集は生成時に難易度を判定済みで解も持つため、プレイ時には生成・線の読み・難易度分析を走らせない。
+ * 問題集は生成時に難易度を判定済みで、解と基準時間に使う作業の量も持つため、
+ * プレイ時には生成・線の読み・難易度分析を走らせない。
  */
 export function selectNonogramProblemForDifficulty(
   difficulty: NonogramDifficulty,

@@ -50,13 +50,14 @@ describe("selectNonogramProblemForDifficulty", () => {
     expect(selected.poolReference.problemId).toMatch(/^3-\d+$/);
   });
 
-  test("選んだ結果に難易度分析を含めず、問題と identity と問題集の中の位置だけを伴うこと", () => {
+  test("選んだ結果に難易度分析を含めず、問題と identity と問題集の中の位置と作業の量だけを伴うこと", () => {
     const selected = selectNonogramProblemForDifficulty("1", seed);
 
     expect(Object.keys(selected).sort()).toEqual([
       "identity",
       "poolReference",
       "problem",
+      "workload",
     ]);
   });
 });

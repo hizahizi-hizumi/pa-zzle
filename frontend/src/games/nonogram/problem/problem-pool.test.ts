@@ -150,7 +150,7 @@ describe("restoreNonogramPoolEntry", () => {
   const { problem, identity } = generated.generated;
   const reference = { poolVersion: "1", problemId: "2-9" };
 
-  test("解からヒントを求めた問題と identity に、問題集の中の位置を添えること", () => {
+  test("解からヒントを求めた問題と identity に、問題集の中の位置と作業の量を添えること", () => {
     const pooled = restoreNonogramPoolEntry(
       [
         8,
@@ -168,7 +168,17 @@ describe("restoreNonogramPoolEntry", () => {
       reference,
     );
 
-    expect(pooled).toEqual({ problem, identity, poolReference: reference });
+    expect(pooled).toEqual({
+      problem,
+      identity,
+      poolReference: reference,
+      workload: {
+        width: 8,
+        height: 8,
+        filledCellCount: problem.solution.black.filter(Boolean).length,
+        roundCount: 5,
+      },
+    });
   });
 });
 
