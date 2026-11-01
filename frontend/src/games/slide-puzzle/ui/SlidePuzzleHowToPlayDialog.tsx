@@ -30,7 +30,7 @@ export function SlidePuzzleHowToPlayDialog({
   return (
     <HowToPlayDialog
       open={open}
-      description="タイルを空白へ滑らせて、番号順に並べる。"
+      description="タイルを空白にスライドさせて、番号順に並べる。"
       onClose={onClose}
     >
       <li className="space-y-2">
@@ -38,7 +38,7 @@ export function SlidePuzzleHowToPlayDialog({
         <HowToPlayFigure board={solvedBoard} />
       </li>
       <li className="space-y-2">
-        <p>空白の隣のタイルを押すと、空白へ滑る。</p>
+        <p>空白の隣のタイルをタップすると、空白にスライドする。</p>
         <HowToPlayTransition>
           <HowToPlayFigure
             board={singleSlide.before}
@@ -49,7 +49,7 @@ export function SlidePuzzleHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>
-          空白と同じ行・列のタイルを押すと、間のタイルごとまとめて滑る。手数は動いたタイルの枚数で数える。
+          空白と同じ行・列のタイルをタップすると、間のタイルごとまとめてスライドする。手数は動いたタイルの枚数で数える。
         </p>
         <HowToPlayTransition>
           <HowToPlayFigure
@@ -60,11 +60,11 @@ export function SlidePuzzleHowToPlayDialog({
         </HowToPlayTransition>
       </li>
       <li>
-        <p>空白と同じ行・列にないタイルは動かない。</p>
+        <p>空白と同じ行・列にないタイルはスライドしない。</p>
       </li>
       <li className="hidden pointer-fine:list-item">
         <p className="text-muted-foreground">
-          キーボード: 矢印キーで、空白の隣のタイルを矢印の向きへ滑らせる。
+          キーボード: 矢印キーで、空白の隣のタイルを矢印の向きにスライドさせる。
         </p>
       </li>
     </HowToPlayDialog>

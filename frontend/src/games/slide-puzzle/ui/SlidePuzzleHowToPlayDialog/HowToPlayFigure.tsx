@@ -18,7 +18,7 @@ const gridClassByBoardSize: Record<SlidePuzzleBoardSize, string> = {
 
 type HowToPlayFigureProps = {
   board: SlidePuzzleBoard;
-  /** 押すタイルの番号。指の印を添える。 */
+  /** タップするタイルの番号。指の印を添える。 */
   pressedTile?: SlidePuzzleTile;
 };
 
