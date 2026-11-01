@@ -23,6 +23,9 @@
 #
 # 衝突: rerere で解けない衝突で止まったら、出力された worktree で解いて git add し、
 # 同じ引数に --continue を付けて再実行する。
+# 複数の段を直したときや、下の段の直しで上の段も直す必要があるとき（問題集を作り直してプレビューのテストが変わる等）:
+# 下の段から順に git rebase --onto <直した下の段> <下の段の旧先端> <段> で一本につなぎ、上の段の直しを足してから、
+# 最下段を原因の段にして実行する。すべての段がすでに下の段の上にあれば、載せ直さずに検証と push だけを行う。
 # 検証に落ちたら --abort で戻し、原因の段で直してから積み直しをやり直す。積み直した後の段にコミットを
 # 足して --continue すると、その上の段が直しを含まないので、祖先の確認で止まる。
 # --abort: 途中の積み直しを捨て、段のブランチを積み直す前のコミットへ戻す。
@@ -145,7 +148,7 @@ check_preconditions() {
   git rev-parse --verify --quiet "$new_base^{commit}" >/dev/null || fail "積み直す先 $new_base がない"
   git rev-parse --verify --quiet "$old_base^{commit}" >/dev/null ||
     fail "積み直す前の土台 $old_base がない。git fetch するか --old-base で指定する"
-  [[ "$(sha_of "$new_base")" != "$(sha_of "$old_base")" ]] ||
+  $already_stacked || [[ "$(sha_of "$new_base")" != "$(sha_of "$old_base")" ]] ||
     fail "$new_base が $old_base から動いていない。原因の段を直してコミットしてから実行する（--onto では、すでに $new_base の上にある）"
 
   previous="$old_base"
@@ -401,6 +404,27 @@ fi
 readonly new_base
 # origin へ push すると <remote>/<原因の段> が動くので、積み直す前の土台はコミット ID で持つ。
 old_base="$(git rev-parse --verify --quiet "$old_base^{commit}" || echo "$old_base")"
+
+# 段を手でつなぎ直した後は、すべての段がすでに下の段の上にある。載せ直すコミットは無く、検証と push だけを行う。
+already_stacked=false
+if [[ -z "$onto" ]] && ! $resume && ! $abort &&
+  git rev-parse --verify --quiet "$old_base^{commit}" >/dev/null &&
+  git merge-base --is-ancestor "$old_base" "$new_base" 2>/dev/null; then
+  already_stacked=true
+  previous="$new_base"
+  for branch in "${upper_branches[@]}"; do
+    if ! git merge-base --is-ancestor "$previous" "$branch" 2>/dev/null; then
+      already_stacked=false
+      break
+    fi
+    previous="$branch"
+  done
+  if $already_stacked; then
+    old_base="$(git rev-parse "$new_base")"
+    echo "すべての段がすでに下の段の上にある。載せ直さずに、各段の検証と push だけを行う。"
+  fi
+fi
+readonly already_stacked
 
 if $abort; then
   run_abort
