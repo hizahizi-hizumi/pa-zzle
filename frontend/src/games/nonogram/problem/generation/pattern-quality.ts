@@ -27,6 +27,7 @@ export type NonogramPatternQuality = {
  * 条件は図柄の見た目と候補の供給を動かし、難易度の分布はほとんど変えない。
  * - `minimumBlackRatio` / `maximumBlackRatio`: 黒マスの割合の下限と上限（どちらも含む）。
  * - `maximumBlankLineCount`: 黒の無い行・列の数（縦横合わせて）の上限。
+ * - `maximumIsolatedBlackRatio`: 上下左右に黒の無い黒マスの割合（`isolatedBlackRatio`）の上限。
  */
 export const nonogramPatternRequirements = {
   minimumBlackRatio: 0.35,
