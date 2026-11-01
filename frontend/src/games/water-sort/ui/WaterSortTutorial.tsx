@@ -312,7 +312,6 @@ export function WaterSortTutorial({
     scene,
     playing: scenePlaying,
     onSceneEnd,
-    onStillSceneEnd,
     messageShown,
   }: TutorialBoardIntro) {
     return (
@@ -320,7 +319,6 @@ export function WaterSortTutorial({
         scene={scene}
         playing={scenePlaying}
         onSceneEnd={onSceneEnd}
-        onStillSceneEnd={onStillSceneEnd}
       >
         {(showsGoal) => (
           // 端から2本目へ注ぐとき、傾けたボトルは注ぎ先の中心から画面の端の側へ、ボトルの幅の約2.76倍はみ出す。

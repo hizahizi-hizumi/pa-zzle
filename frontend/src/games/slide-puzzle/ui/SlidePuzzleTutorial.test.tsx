@@ -21,10 +21,7 @@ const nextStepCueDelayMs = 450;
 /** 手を離した後、手が止まってから次のタイルを示すまでの間。 */
 const idleHintDelayMs = 4000;
 
-/** 動きを減らす設定で、ゴールの盤面を見せる間。 */
-const stillGoalHoldMs = 2800;
-
-/** 導入を最後まで見せるのに十分な間。 */
+/** 導入の場面の動きを見せ終えるのに十分な間。 */
 const introEnoughMs = 8000;
 
 afterEach(() => {
@@ -58,6 +55,24 @@ function advanceTime(ms: number): void {
   act(() => {
     vi.advanceTimersByTime(ms);
   });
+}
+
+/** 導入の「次へ」を押す。導入は自動では先へ進まない。 */
+function pressNext(): void {
+  fireEvent.click(screen.getByRole("button", { name: "次へ" }));
+}
+
+/** 場面の動きを待っては「次へ」を押し、導入を最後まで進める。 */
+function goThroughIntroSync(): void {
+  for (let press = 0; press < 3; press += 1) {
+    advanceTime(introEnoughMs);
+    const next = screen.queryByRole("button", { name: "次へ" });
+    if (!next) {
+      return;
+    }
+    fireEvent.click(next);
+  }
+  advanceTime(introEnoughMs);
 }
 
 function getBoard(): HTMLElement {
@@ -270,7 +285,7 @@ describe("SlidePuzzleTutorial", () => {
         tapTiles(remainingTiles);
         fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
         const caption = screen.getByText("最初はこのように崩れています");
-        advanceTime(introEnoughMs);
+        goThroughIntroSync();
 
         const position = getTilePosition(5);
         const hinted = getCuedTiles("hint");
@@ -327,8 +342,8 @@ describe("SlidePuzzleTutorial", () => {
       expect(position).toBe("1行1列");
     });
 
-    test("ゴールを見せた後に、始まりの一言を添えて崩れた始めの盤面を見せること", () => {
-      advanceTime(stillGoalHoldMs);
+    test("ゴールで次へを押すと、始まりの一言を添えて崩れた始めの盤面を見せること", () => {
+      pressNext();
 
       const caption = screen.getByText("最初はこのように崩れています");
       const position = getTilePosition(1);
@@ -337,9 +352,9 @@ describe("SlidePuzzleTutorial", () => {
       expect(position).toBe("1行2列");
     });
 
-    test("最後まで見せると、最初の手順の一言と印を出すこと", () => {
-      advanceTime(stillGoalHoldMs);
-      advanceTime(introEnoughMs);
+    test("次へで最後まで進めると、最初の手順の一言と印を出すこと", () => {
+      pressNext();
+      goThroughIntroSync();
 
       const headline = screen.getByText(
         "空白の隣のタイルは タップするとスライドします",

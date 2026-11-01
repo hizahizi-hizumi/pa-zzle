@@ -62,13 +62,13 @@ export type MinesweeperTutorialStep =
  * - `cellIndex`: 操作したマス。
  * - `steppedMine`: 地雷を踏んだ。
  * - `reasonCellIndices`: 開いたマスか旗を置いたマスが手前の盤面だけで決まっていたときの、決め手の数字のマス。決まっていなければ空。
- * - `fitsStep`: 手を引いている手順の印のマスに、手順どおりの操作をした。手を離した後は常に `false`。
+ * - `fittedCellIndices`: この手で手順どおりになった、手順の印のマス。開いた数字を押してまとめて開いたときは、押した数字ではなく開いた印のマス。手を離した後は常に空。
  */
 export type MinesweeperTutorialMove = {
   cellIndex: number;
   steppedMine: boolean;
   reasonCellIndices: readonly number[];
-  fitsStep: boolean;
+  fittedCellIndices: readonly number[];
 };
 
 /** `moveCount`: 盤面を変えた手の数。同じマスへの合図をやり直す目印に使う。 */
@@ -150,7 +150,7 @@ const steps: readonly MinesweeperTutorialStep[] = [
   },
   {
     message: {
-      headline: "この1の地雷は旗のマスなので、\n周りのほかのマスは開けます",
+      headline: "この1の周りの地雷は旗だけです。\n残りのマスに地雷はありません",
       detail: "印のマスを押してください",
     },
     introducedRuleId: null,
@@ -162,7 +162,7 @@ const steps: readonly MinesweeperTutorialStep[] = [
   {
     message: {
       headline: "地雷は全部で3つ。\n残りの2つはこの3の周りです",
-      detail: "3から離れたマスは開けます",
+      detail: "3から離れた印のマスを押してください",
     },
     introducedRuleId: "total",
     cellIndices: [cellAt(4, 5), cellAt(5, 1), cellAt(5, 5)],
@@ -175,7 +175,7 @@ const steps: readonly MinesweeperTutorialStep[] = [
 /** 手を引いている間、盤面の切り替えが手順の操作に合っていないときの補足。 */
 export const minesweeperTutorialModeSwitchDetails = {
   flag: "旗に切り替えて、印のマスを押してください",
-  reveal: "旗の切り替えを戻して、印のマスを押してください",
+  reveal: "旗から戻して、印のマスを押してください",
 } as const satisfies Record<MinesweeperTutorialOperation, string>;
 
 /** 数字の決まりで、まだ決まっていないマスが決まるもの。決め手は、そう決めた数字のマス。 */
@@ -442,7 +442,14 @@ function performMinesweeperTutorialAction(
       reasonCellIndices: steppedMine
         ? []
         : getMoveReason(state.puzzle, puzzle, earnedRuleIds, action),
-      fitsStep: step !== null,
+      fittedCellIndices:
+        step === null
+          ? []
+          : step.cellIndices.filter(
+              (cellIndex) =>
+                !isStepCellDone(step, state.puzzle, cellIndex) &&
+                isStepCellDone(step, puzzle, cellIndex),
+            ),
     },
   };
 
@@ -462,7 +469,7 @@ function performMinesweeperTutorialAction(
 function describeMinesweeperTutorialViolation(): TutorialMessage {
   return {
     headline: "地雷を踏みました",
-    detail: "踏んでも、そのまま続けられます",
+    detail: "このまま続けられます",
   };
 }
 
@@ -532,9 +539,9 @@ export const minesweeperTutorial: Tutorial<
   MinesweeperTutorialAction
 > = {
   intro: {
-    purpose: "数字を手がかりに、\n地雷ではないマスをすべて開くパズルです",
+    purpose: "数字を手がかりに\n地雷ではないマスをすべて開くパズルです",
     goalCaption: "この盤面がゴールです",
-    startCaption: "最初は一部のマスだけ開いています",
+    startCaption: "最初から一部のマスが開いています",
   },
   rules: [
     { id: "number", label: "数字は周りの地雷の数" },
@@ -548,11 +555,12 @@ export const minesweeperTutorial: Tutorial<
   completion: {
     selection: {
       headline: "完成です",
-      detail: "レベル1は 9×9 ほどの盤面です",
+      detail:
+        "レベル1は9×9ほどの盤面です\n地雷を踏んでも、ミスに数えて続けられます",
     },
     play: {
       headline: "完成です",
-      detail: "プレイ中の盤面も同じルールで解けます",
+      detail: "地雷を踏んでも、ミスに数えて続けられます",
     },
   },
   start: startMinesweeperTutorial,

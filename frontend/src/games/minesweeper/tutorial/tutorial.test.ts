@@ -154,13 +154,15 @@ const introducingStepCases = ruleStepCases.filter(
 describe("minesweeperTutorial の盤面", () => {
   const releasedPuzzle = finishSteps(minesweeperTutorial.steps.length)
     .boardState.puzzle;
+  const startPuzzle = minesweeperTutorial.start().puzzle;
+  const revealedFromCorner = collectMinesweeperRevealCellIndices(board, [
+    cellAt(1, 1),
+  ]);
 
   test("始まりの盤面は、本番と同じく1マスから続けて開いた形であること", () => {
-    const result = collectMinesweeperRevealCellIndices(board, [cellAt(1, 1)]);
+    const result = minesweeperTutorial.start().puzzle.revealedCellIndices;
 
-    expect(minesweeperTutorial.start().puzzle.revealedCellIndices).toEqual(
-      result,
-    );
+    expect(result).toEqual(revealedFromCorner);
   });
 
   test("どの置き方でも地雷でないマスを開いていくと、推測せずに地雷の置き方が1つに決まること", () => {
@@ -199,19 +201,19 @@ describe("minesweeperTutorial の盤面", () => {
 
   test("導入で見せる解き終えた盤面は、地雷でないマスがすべて開き、地雷を明かしていること", () => {
     const goal = minesweeperTutorial.goal();
-    const result = getMinesweeperTutorialVisibleCells(goal);
+    const cleared = isMinesweeperCleared(board, goal.puzzle);
+    const visibleCells = getMinesweeperTutorialVisibleCells(goal);
+    const mineStates = board.mineCellIndices.map(
+      (cellIndex) => visibleCells[cellIndex]?.state,
+    );
 
-    expect(isMinesweeperCleared(board, goal.puzzle)).toBe(true);
-    expect(
-      board.mineCellIndices.map((cellIndex) => result[cellIndex]?.state),
-    ).toEqual(["mine", "mine", "mine"]);
+    expect(cleared).toBe(true);
+    expect(mineStates).toEqual(["mine", "mine", "mine"]);
   });
 
   test("数字の決まりだけでは解き切れず、地雷の総数の決まりも使うと解き切れること", () => {
-    const start = minesweeperTutorial.start().puzzle;
-
-    const byNumber = revealByDeduction(start, ["number"]);
-    const byAll = revealByDeduction(start, allRuleIds);
+    const byNumber = revealByDeduction(startPuzzle, ["number"]);
+    const byAll = revealByDeduction(startPuzzle, allRuleIds);
 
     expect(isMinesweeperCleared(board, byNumber)).toBe(false);
     expect(byNumber.steppedMineCellIndices).toEqual([]);
@@ -295,6 +297,7 @@ describe("minesweeperTutorial の盤面", () => {
 describe("minesweeperTutorial.perform", () => {
   const started = finishTutorialIntro(startTutorial(minesweeperTutorial));
   const afterFirstStep = finishSteps(1);
+  const afterSecondStep = finishSteps(2);
   const released = finishSteps(minesweeperTutorial.steps.length);
 
   test("手を引いている間は、印の無いマスへの操作で盤面を変えないこと", () => {
@@ -321,7 +324,7 @@ describe("minesweeperTutorial.perform", () => {
       cellIndex: cellAt(3, 3),
       steppedMine: false,
       reasonCellIndices: [cellAt(2, 2), cellAt(2, 3), cellAt(2, 4)],
-      fitsStep: true,
+      fittedCellIndices: [cellAt(3, 3)],
     });
   });
 
@@ -331,13 +334,16 @@ describe("minesweeperTutorial.perform", () => {
     expect(result).toBe(afterFirstStep);
   });
 
-  test("旗で数がそろった1を押して、印のマスをまとめて開いても次の手順へ進むこと", () => {
+  test("旗で数がそろった1を押して、印のマスをまとめて開いても次の手順へ進み、手順どおりになったのは押した1ではなく開いた印のマスとすること", () => {
     const result = performAll(afterFirstStep, [chord(cellAt(3, 2))]);
 
     expect(result.stepIndex).toBe(2);
     expect(result.boardState.puzzle.revealedCellIndices).toContain(
       cellAt(4, 3),
     );
+    expect(result.boardState.lastMove?.fittedCellIndices).toEqual([
+      cellAt(4, 3),
+    ]);
   });
 
   test("旗の数がそろっていない数字を押しても、盤面を変えないこと", () => {
@@ -357,9 +363,7 @@ describe("minesweeperTutorial.perform", () => {
   });
 
   test("地雷の総数で決まる3マスは、3つとも開くまで手順を進めず、決め手の3を返すこと", () => {
-    const afterSecond = finishSteps(2);
-
-    const once = performAll(afterSecond, [reveal(cellAt(4, 5))]);
+    const once = performAll(afterSecondStep, [reveal(cellAt(4, 5))]);
     const all = performAll(once, [reveal(cellAt(5, 1)), reveal(cellAt(5, 5))]);
 
     expect(once.stepIndex).toBe(2);
@@ -380,6 +384,10 @@ describe("minesweeperTutorial.perform", () => {
 
   test("手を離した後に地雷を踏むと、違反として盤面に残し、続けて解き切れること", () => {
     const stepped = performAll(released, [reveal(cellAt(4, 4))]);
+    const message = getTutorialMessage(minesweeperTutorial, stepped, {
+      entry: "selection",
+      violationSettled: true,
+    });
     const solved = performAll(stepped, [
       reveal(cellAt(5, 3)),
       reveal(cellAt(5, 4)),
@@ -389,12 +397,7 @@ describe("minesweeperTutorial.perform", () => {
     expect(stepped.boardState.puzzle.steppedMineCellIndices).toEqual([
       cellAt(4, 4),
     ]);
-    expect(
-      getTutorialMessage(minesweeperTutorial, stepped, {
-        entry: "selection",
-        violationSettled: true,
-      }).headline,
-    ).toBe("地雷を踏みました");
+    expect(message.headline).toBe("地雷を踏みました");
     expect(solved.phase).toBe("solved");
   });
 
@@ -420,9 +423,11 @@ describe("minesweeperTutorial.perform", () => {
 });
 
 describe("findMinesweeperTutorialHintCellIndex", () => {
-  test("手を離した盤面では、数字で決まる地雷でないマスを返すこと", () => {
-    const released = finishSteps(minesweeperTutorial.steps.length);
+  const released = finishSteps(minesweeperTutorial.steps.length);
+  const flaggedSafe = performAll(released, [flag(cellAt(5, 3))]);
+  const flaggedAllSafe = performAll(flaggedSafe, [flag(cellAt(5, 4))]);
 
+  test("手を離した盤面では、数字で決まる地雷でないマスを返すこと", () => {
     const result = findMinesweeperTutorialHintCellIndex(
       getTutorialSituation(minesweeperTutorial, released),
       released.boardState,
@@ -430,30 +435,33 @@ describe("findMinesweeperTutorialHintCellIndex", () => {
 
     expect([cellAt(5, 3), cellAt(5, 4)]).toContain(result);
   });
-});
 
-describe("findMinesweeperTutorialHintCellIndex で旗を置いたマス", () => {
   test("地雷でないマスに旗を置いても、ほかに決まるマスがあればそちらを返すこと", () => {
-    const released = finishSteps(minesweeperTutorial.steps.length);
-    const flagged = performAll(released, [flag(cellAt(5, 3))]);
-
     const result = findMinesweeperTutorialHintCellIndex(
-      getTutorialSituation(minesweeperTutorial, flagged),
-      flagged.boardState,
+      getTutorialSituation(minesweeperTutorial, flaggedSafe),
+      flaggedSafe.boardState,
     );
 
     expect(result).toBe(cellAt(5, 4));
   });
+
+  test("決まるマスがすべて旗の下にあれば、旗のマスを返すこと", () => {
+    const result = findMinesweeperTutorialHintCellIndex(
+      getTutorialSituation(minesweeperTutorial, flaggedAllSafe),
+      flaggedAllSafe.boardState,
+    );
+
+    expect([cellAt(5, 3), cellAt(5, 4)]).toContain(result);
+  });
 });
 
 describe("getMinesweeperTutorialStepCellIndices", () => {
-  test("手順の印のうち、まだ手順どおりになっていないマスを返すこと", () => {
-    const afterSecond = finishSteps(2);
-    const once = performAll(afterSecond, [reveal(cellAt(5, 1))]);
+  const partlyOpened = performAll(finishSteps(2), [reveal(cellAt(5, 1))]);
 
+  test("手順の印のうち、まだ手順どおりになっていないマスを返すこと", () => {
     const result = getMinesweeperTutorialStepCellIndices(
-      getTutorialSituation(minesweeperTutorial, once),
-      once.boardState,
+      getTutorialSituation(minesweeperTutorial, partlyOpened),
+      partlyOpened.boardState,
     );
 
     expect(result).toEqual([cellAt(4, 5), cellAt(5, 5)]);

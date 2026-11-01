@@ -52,8 +52,11 @@ type MinesweeperTutorialProgress = TutorialProgress<
   MinesweeperTutorialBoardState
 >;
 
-/** 手を離した後、手が止まってから地雷でないと決まるマスを示すまでの間。 */
-const IDLE_HINT_DELAY_MS = 4000;
+/**
+ * 手を離した後、手が止まってから地雷でないと決まるマスを示すまでの間。
+ * 数字を見比べて考えている間は先回りしないよう、ほかのチュートリアル（4秒）より長く待つ。
+ */
+const IDLE_HINT_DELAY_MS = 10_000;
 
 const goalBoardState = minesweeperTutorial.goal();
 
@@ -97,8 +100,8 @@ function getMoveCues({
   if (!lastMove) {
     return [];
   }
-  if (lastMove.fitsStep) {
-    return [{ cellIndex: lastMove.cellIndex, kind: "fitted", id: moveCount }];
+  if (lastMove.fittedCellIndices.length > 0) {
+    return createCues("fitted", lastMove.fittedCellIndices, moveCount);
   }
   return lastMove.reasonCellIndices.map(
     (cellIndex): MinesweeperCellCue => ({
@@ -155,11 +158,15 @@ export function MinesweeperTutorial({
   // 手順の操作に切り替えが合っていない。一言の補足と切り替えの印で、切り替えさせる。
   const modeMismatched =
     step !== null && stepOperationModes[step.operation] !== mode;
-  // 手がかりの印を付けた旗のマスは、開くままでは押しても開かないので、切り替えにも印を付けて旗を外させる。
-  const flaggedHintShown =
-    idleHintCellIndex !== null &&
-    mode === "reveal" &&
-    isMinesweeperTutorialCellFlagged(boardState, idleHintCellIndex);
+  // 手がかりの印のマスを今の切り替えで押しても進めないときは、切り替えにも印を付ける。
+  // 旗のマスは旗にして押すと旗を外せ、旗の無いマスは開くにして押すと開ける。
+  const idleHintMode: MinesweeperInputMode | null =
+    idleHintCellIndex === null
+      ? null
+      : isMinesweeperTutorialCellFlagged(boardState, idleHintCellIndex)
+        ? "flag"
+        : "reveal";
+  const idleHintNeedsSwitch = idleHintMode !== null && idleHintMode !== mode;
   const tutorialMessage = getTutorialMessage(minesweeperTutorial, progress, {
     entry: onStartPlay ? "selection" : "play",
     violationSettled: true,
@@ -279,7 +286,7 @@ export function MinesweeperTutorial({
           mineCountCued={stepMarksShown && step?.reasonMineCount === true}
           mode={mode}
           toggleCueId={
-            (stepMarksShown && modeMismatched) || flaggedHintShown
+            (stepMarksShown && modeMismatched) || idleHintNeedsSwitch
               ? hintCueId
               : null
           }
