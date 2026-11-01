@@ -103,8 +103,7 @@ const steps: readonly SlidePuzzleTutorialStep[] = [
   },
   {
     message: {
-      headline:
-        "空白と同じ行・列のタイルだけが、\n離れていてもまとめてスライドします",
+      headline: "空白と同じ行・列のタイルは、\n間のタイルごとスライドします",
       detail: "4 をタップすると、7 と 4 が一度に収まります",
     },
     introducedRuleId: "line",
@@ -112,8 +111,8 @@ const steps: readonly SlidePuzzleTutorialStep[] = [
     alternative: {
       tile: 7,
       message: {
-        headline: "7 だけを収めることもできます",
-        detail: "4 をタップすると、7 と 4 が一度に収まります",
+        headline: "4 なら、7 も一緒に収まります",
+        detail: "今は印の 4 をタップしてください",
       },
     },
   },
@@ -278,23 +277,31 @@ function performSlidePuzzleTutorialAction(
   return { state: next, outcome: step !== null ? "stepped" : "continued" };
 }
 
+function describeOffLineTile(tile: SlidePuzzleTile | null): TutorialMessage {
+  return {
+    headline:
+      tile === null
+        ? "空白と同じ行・列にないタイルは、スライドしません"
+        : `${tile} のタイルは、\n空白と同じ行・列にありません`,
+    detail: "空白と同じ行・列のタイルだけがスライドします",
+  };
+}
+
 /** 空白と同じ行・列にないタイルをタップしたとき。手を離した後にだけ起き、それまでに2つのルールを示している。 */
 function describeSlidePuzzleTutorialViolation(
   _situation: SlidePuzzleTutorialSituation,
   { lastMove }: SlidePuzzleTutorialBoardState,
 ): TutorialMessage {
-  return {
-    headline:
-      lastMove?.type === "rejected"
-        ? `${lastMove.tile} のタイルは、\n空白と同じ行・列にありません`
-        : "空白と同じ行・列にないタイルは、スライドしません",
-    detail: "空白と同じ行・列のタイルだけがスライドします",
-  };
+  return describeOffLineTile(
+    lastMove?.type === "rejected" ? lastMove.tile : null,
+  );
 }
 
 /**
  * 手を引いている間に、印の無いタイルをタップしたときの一言。手を離した後と、タイルの無いところでは `null`。
- * それまでの読みでも収まるタイルなら、印のタイルを選ぶわけを言う。それ以外は、手順の見出しのまま印のタイルへ向かわせる。
+ * それまでの読みでも収まるタイルなら、印のタイルを選ぶわけを言う。
+ * 同じ行・列のルールを示している手順で、空白と同じ行・列にないタイルなら、手を離した後の違反と同じわけを言う。
+ * それ以外は、手順の見出しのまま印のタイルへ向かわせる。
  */
 export function describeSlidePuzzleTutorialOffStepTap(
   { step }: SlidePuzzleTutorialSituation,
@@ -310,8 +317,12 @@ export function describeSlidePuzzleTutorialOffStepTap(
   ) {
     return null;
   }
-  return tile === step.alternative?.tile
-    ? step.alternative.message
+  if (tile === step.alternative?.tile) {
+    return step.alternative.message;
+  }
+  return step.introducedRuleId === "line" &&
+    getSlidePuzzleSlide(state.board, cellIndex) === null
+    ? describeOffLineTile(tile)
     : {
         headline: step.message.headline,
         detail: "今は印のタイルをタップしてください",
@@ -365,7 +376,8 @@ export const slidePuzzleTutorial: Tutorial<
     },
     play: {
       headline: "完成です",
-      detail: "プレイ中の盤面も、同じルールで並べられます",
+      detail:
+        "プレイ中の盤面も同じルールで、\nほかのタイルをどかしながら並べます",
     },
   },
   start: startSlidePuzzleTutorial,

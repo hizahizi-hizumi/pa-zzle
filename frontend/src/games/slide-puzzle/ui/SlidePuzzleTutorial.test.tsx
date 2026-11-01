@@ -175,16 +175,28 @@ describe("SlidePuzzleTutorial", () => {
         advanceTime(nextStepCueDelayMs);
       });
 
-      test("隣にある 7 をタップすると、スライドさせずに、4 なら 7 と 4 が一度に入ることを伝えること", () => {
+      test("隣にある 7 をタップすると、スライドさせずに、4 なら 7 も一緒に収まることを伝えること", () => {
         tapTiles([7]);
 
         const position = getTilePosition(7);
-        const headline = screen.getByText("7 だけを収めることもできます");
+        const headline = screen.getByText("4 なら、7 も一緒に収まります");
         const hinted = getCuedTiles("hint");
 
         expect(position).toBe("2行1列");
         expect(headline).toBeTruthy();
         expect(hinted).toEqual(["4"]);
+      });
+
+      test("空白と同じ行・列にないタイルをタップすると、スライドさせずにわけを伝えること", () => {
+        tapTiles([5]);
+
+        const position = getTilePosition(5);
+        const headline = screen.getByText(
+          "5 のタイルは、 空白と同じ行・列にありません",
+        );
+
+        expect(position).toBe("2行2列");
+        expect(headline).toBeTruthy();
       });
 
       test("ルールをチップに加え、離れたタイルをタップすると間のタイルもまとめてスライドさせること", () => {
@@ -348,7 +360,7 @@ describe("SlidePuzzleTutorial", () => {
     test("並べ終えると、プレイに戻ることを伝え、プレイに戻る操作で閉じること", () => {
       tapTiles([...stepTiles, ...remainingTiles]);
       const detail = screen.getByText(
-        "プレイ中の盤面も、同じルールで並べられます",
+        "プレイ中の盤面も同じルールで、 ほかのタイルをどかしながら並べます",
       );
       fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
 
