@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from ice_floor_supply_experiment import (  # noqa: E402
     BEST_DENSITY,
     DIR_NAMES,
+    FLOOR,
     ROCK,
     STOP,
     VARIANT_DENSITY,
@@ -123,7 +124,7 @@ def line_of_sight(board: Board, a: int, b: int) -> bool:
         return False
     cell = a + step
     while cell != b:
-        if board.cells[cell] == ROCK:
+        if board.cells[cell] in (ROCK, FLOOR):
             return False
         cell += step
     return True
