@@ -211,6 +211,9 @@ describe("performTutorialAction", () => {
     steps.map((step) => step.tile),
   );
 
+  // 1手目の空白は真ん中にあり、4 は同じ行・列にない。
+  const offLineCellIndex = startBoard.indexOf(4);
+
   test("手を引いている間は、印のタイルだけをスライドさせて次の手順へ進むこと", () => {
     const ignored = getProgressAfter(started, [otherSlidableCellIndex]);
     const stepped = getProgressAfter(started, [firstStepCellIndex]);
@@ -221,6 +224,47 @@ describe("performTutorialAction", () => {
       type: "slid",
       landedTiles: [5],
     });
+  });
+
+  test("同じ行・列のルールを示す前は、空白と同じ行・列にないタイルをタップしても、ルールに合わない手にしないこと", () => {
+    const tapped = getProgressAfter(started, [offLineCellIndex]);
+
+    expect(tapped).toBe(started);
+  });
+
+  describe("同じ行・列のルールを示した手順の場合", () => {
+    const lineStep = tapTiles(started, [5, 8]);
+    // 空白は左下。5 は同じ行・列になく、7 と 6 は同じ行・列にあるが印が無い。
+    const unmarkedSlidableTiles = [7, 6];
+
+    test("空白と同じ行・列にないタイルをタップすると、手を離した後と同じく、盤面を変えずにルールに合わない手として応えること", () => {
+      const rejected = tapTiles(lineStep, [5]);
+      const message = getTutorialMessage(slidePuzzleTutorial, rejected, {
+        entry: "selection",
+        violationSettled: true,
+      });
+
+      expect(rejected.stepIndex).toBe(2);
+      expect(rejected.violated).toBe(true);
+      expect(rejected.boardState.board).toEqual(lineStep.boardState.board);
+      expect(rejected.boardState.lastMove).toMatchObject({
+        type: "rejected",
+        tile: 5,
+      });
+      expect(message).toEqual({
+        headline: "5 は空白と同じ行にも列にもありません",
+        detail: null,
+      });
+    });
+
+    test.each(unmarkedSlidableTiles)(
+      "空白と同じ行・列にある印の無い %i をタップしても、スライドさせないこと",
+      (tile) => {
+        const tapped = tapTiles(lineStep, [tile]);
+
+        expect(tapped).toBe(lineStep);
+      },
+    );
   });
 
   test("手順を進めるたびに、示したルールを手に入れること", () => {

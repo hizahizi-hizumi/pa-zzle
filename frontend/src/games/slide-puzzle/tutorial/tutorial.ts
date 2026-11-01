@@ -42,7 +42,7 @@ export type SlidePuzzleTutorialStep =
 /**
  * 直前の手。盤面の上の合図に使う。
  * - `slid`: スライドした。`landedTiles` は、この手で自分の場所に収まったタイル。
- * - `rejected`: 空白と同じ行・列にないタイルをタップし、スライドしなかった。
+ * - `rejected`: 同じ行・列のルールを示した後に、空白と同じ行・列にないタイルをタップし、スライドしなかった。
  */
 export type SlidePuzzleTutorialMove =
   | {
@@ -221,35 +221,34 @@ function getSlidePuzzleTutorialGoal(): SlidePuzzleTutorialBoardState {
 }
 
 /**
- * 手を引いている間は、印のタイルだけをスライドさせる。手を離した後は本番と同じく、
- * 空白と同じ行・列のタイルはスライドし、それ以外は手に入れたルールに合わない手として返す。
+ * 手を引いている間は、印のタイルだけをスライドさせる。手を離した後は本番と同じく、空白と同じ行・列のタイルはスライドする。
+ * 空白と同じ行・列にないタイルは、同じ行・列のルールを示した後なら、手を引いている間も本番と同じくルールに合わない手として返す。
  */
 function performSlidePuzzleTutorialAction(
-  { step }: SlidePuzzleTutorialSituation,
+  { step, earnedRuleIds }: SlidePuzzleTutorialSituation,
   state: SlidePuzzleTutorialBoardState,
   { cellIndex }: SlidePuzzleTutorialAction,
 ): { state: SlidePuzzleTutorialBoardState; outcome: TutorialMoveOutcome } {
   const tile = state.board[cellIndex];
-  if (
-    tile === undefined ||
-    tile === SLIDE_PUZZLE_BLANK ||
-    (step !== null && tile !== step.tile)
-  ) {
+  if (tile === undefined || tile === SLIDE_PUZZLE_BLANK) {
     return { state, outcome: "ignored" };
   }
 
   const slide = getSlidePuzzleSlide(state.board, cellIndex);
   if (!slide) {
-    return step !== null
-      ? { state, outcome: "ignored" }
-      : {
+    return earnedRuleIds.includes("line")
+      ? {
           state: {
             ...state,
             moveCount: state.moveCount + 1,
             lastMove: { type: "rejected", tile, cellIndex },
           },
           outcome: "violated",
-        };
+        }
+      : { state, outcome: "ignored" };
+  }
+  if (step !== null && tile !== step.tile) {
+    return { state, outcome: "ignored" };
   }
 
   const board = applySlidePuzzleSlide(state.board, slide);
@@ -268,46 +267,18 @@ function performSlidePuzzleTutorialAction(
   return { state: next, outcome: step !== null ? "stepped" : "continued" };
 }
 
-function describeOffLineTile(tile: SlidePuzzleTile | null): TutorialMessage {
-  return {
-    headline:
-      tile === null
-        ? "空白と同じ行・列にないタイルはスライドしません"
-        : `${tile} は空白と同じ行にも列にもありません`,
-    detail: null,
-  };
-}
-
-/** 空白と同じ行・列にないタイルをタップしたとき。手を離した後にだけ起き、それまでに2つのルールを示している。 */
+/** 空白と同じ行・列にないタイルをタップしたとき。同じ行・列のルールを示した後にだけ起きる。 */
 function describeSlidePuzzleTutorialViolation(
   _situation: SlidePuzzleTutorialSituation,
   { lastMove }: SlidePuzzleTutorialBoardState,
 ): TutorialMessage {
-  return describeOffLineTile(
-    lastMove?.type === "rejected" ? lastMove.tile : null,
-  );
-}
-
-/**
- * 手を引いている間に、印の無いタイルをタップしたときの一言。
- * 同じ行・列のルールを示している手順で、空白と同じ行・列にないタイルなら、手を離した後の違反と同じわけを言う。
- * それ以外は `null` で、手順の一言のまま、印を付け直して印のタイルへ向かわせる。
- */
-export function describeSlidePuzzleTutorialOffStepTap(
-  { step }: SlidePuzzleTutorialSituation,
-  state: SlidePuzzleTutorialBoardState,
-  cellIndex: number,
-): TutorialMessage | null {
-  const tile = state.board[cellIndex];
-  if (
-    step?.introducedRuleId !== "line" ||
-    tile === undefined ||
-    tile === SLIDE_PUZZLE_BLANK ||
-    getSlidePuzzleSlide(state.board, cellIndex) !== null
-  ) {
-    return null;
-  }
-  return describeOffLineTile(tile);
+  return {
+    headline:
+      lastMove?.type === "rejected"
+        ? `${lastMove.tile} は空白と同じ行にも列にもありません`
+        : "空白と同じ行・列にないタイルはスライドしません",
+    detail: null,
+  };
 }
 
 /** 手順で印を付けるタイル。手を離した後は `null`。 */

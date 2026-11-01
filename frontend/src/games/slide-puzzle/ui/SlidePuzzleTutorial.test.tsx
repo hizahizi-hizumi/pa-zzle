@@ -105,7 +105,7 @@ function getTilePosition(tile: number): string {
     : "";
 }
 
-function getCuedTiles(kind: "hint" | "landed"): string[] {
+function getCuedTiles(kind: "hint" | "landed" | "reminder"): string[] {
   return within(getBoard())
     .getAllByRole("button")
     .filter((tile) => tile.querySelector(`[data-tile-cue="${kind}"]`))
@@ -154,7 +154,7 @@ describe("SlidePuzzleTutorial", () => {
       expect(rules).toEqual(["空白にスライド", "？"]);
     });
 
-    test("印の無いタイルを押しても、スライドさせずに、一言を変えずに印を付け直すこと", () => {
+    test("空白の隣でも印の無いタイルを押すと、スライドさせず音も鳴らさずに、一言を変えずに印のタイルを光らせ直すこと", () => {
       tapTiles([7]);
 
       const position = getTilePosition(7);
@@ -162,10 +162,27 @@ describe("SlidePuzzleTutorial", () => {
         "空白の隣のタイルは タップするとスライドします",
       );
       const hinted = getCuedTiles("hint");
+      const reminded = getCuedTiles("reminder");
 
       expect(position).toBe("2行1列");
       expect(headline).toBeTruthy();
       expect(hinted).toEqual(["5"]);
+      expect(reminded).toEqual(["5"]);
+      expect(playSound).not.toHaveBeenCalled();
+    });
+
+    test("印の無いタイルを続けて押すたびに、印のタイルを光らせ直すこと", () => {
+      tapTiles([7]);
+      const firstFlash = getTile(5).querySelector('[data-tile-cue="reminder"]');
+      tapTiles([3]);
+
+      const secondFlash = getTile(5).querySelector(
+        '[data-tile-cue="reminder"]',
+      );
+
+      expect(firstFlash).not.toBeNull();
+      expect(secondFlash).not.toBeNull();
+      expect(secondFlash).not.toBe(firstFlash);
     });
 
     test("印のタイルをタップすると、空白にスライドして収まり、収まってから次の印を付けること", () => {
@@ -199,28 +216,51 @@ describe("SlidePuzzleTutorial", () => {
         advanceTime(nextStepCueDelayMs);
       });
 
-      test("隣にある 7 をタップしても、スライドさせずに、手順の一言のまま印を付け直すこと", () => {
+      test("隣にある 7 をタップしても、スライドさせずに、手順の一言のまま印のタイルを光らせ直すこと", () => {
         tapTiles([7]);
 
         const position = getTilePosition(7);
-        const headline = screen.getByText("4 をタップすると2枚とも収まります");
-        const hinted = getCuedTiles("hint");
+        const detail = screen.getByText("4 をタップすると2枚とも収まります");
+        const reminded = getCuedTiles("reminder");
 
         expect(position).toBe("2行1列");
-        expect(headline).toBeTruthy();
-        expect(hinted).toEqual(["4"]);
+        expect(detail).toBeTruthy();
+        expect(reminded).toEqual(["4"]);
       });
 
-      test("空白と同じ行・列にないタイルをタップすると、スライドさせずにわけを伝えること", () => {
-        tapTiles([5]);
+      describe("タイルを揺らせる環境の場合", () => {
+        beforeEach(() => {
+          installAnimate();
+        });
 
-        const position = getTilePosition(5);
-        const headline = screen.getByText(
-          "5 は空白と同じ行にも列にもありません",
-        );
+        test("空白と同じ行・列にないタイルをタップすると、本番と同じく揺らして音を鳴らし、スライドさせずにわけを伝えること", () => {
+          tapTiles([5]);
 
-        expect(position).toBe("2行2列");
-        expect(headline).toBeTruthy();
+          const position = getTilePosition(5);
+          const headline = screen.getByText(
+            "5 は空白と同じ行にも列にもありません",
+          );
+          const shakeCount = vi.mocked(HTMLElement.prototype.animate).mock.calls
+            .length;
+          const sounds = getPlayedSoundNames();
+          const reminded = getCuedTiles("reminder");
+
+          expect(position).toBe("2行2列");
+          expect(headline).toBeTruthy();
+          expect(shakeCount).toBe(1);
+          expect(sounds).toEqual(["slid.flac", "slid.flac", "invalid.flac"]);
+          expect(reminded).toEqual([]);
+        });
+      });
+
+      test("わけを伝えた後に印の無い 7 をタップすると、印のタイルを光らせ直して、手順の一言に戻すこと", () => {
+        tapTiles([5, 7]);
+
+        const detail = screen.getByText("4 をタップすると2枚とも収まります");
+        const reminded = getCuedTiles("reminder");
+
+        expect(detail).toBeTruthy();
+        expect(reminded).toEqual(["4"]);
       });
 
       test("ルールをルールの並びに加え、離れたタイルをタップすると間のタイルもまとめてスライドさせること", () => {
@@ -388,6 +428,15 @@ describe("SlidePuzzleTutorial", () => {
 
       expect(headline).toBeTruthy();
       expect(hinted).toEqual(["5"]);
+    });
+
+    test("印の無いタイルを押すと、動きを減らす設定でも印のタイルを光らせ直すこと", () => {
+      skipIntro();
+      tapTiles([7]);
+
+      const reminded = getCuedTiles("reminder");
+
+      expect(reminded).toEqual(["5"]);
     });
   });
 

@@ -61,12 +61,19 @@ export function SlidePuzzleTile({
           className="pointer-events-none absolute inset-[1cqw] rounded-[1.6cqw] bg-sky-100/60 ring-2 ring-sky-500/50 ring-inset fill-mode-forwards animate-out fade-out-0 duration-900 ease-in dark:bg-sky-900/50 dark:ring-sky-300/50"
         />
       )}
-      {cue?.kind === "hint" && (
+      {(cue?.kind === "hint" || cue?.kind === "reminder") && (
+        <span
+          aria-hidden="true"
+          data-tile-cue="hint"
+          className="pointer-events-none absolute inset-[1cqw] rounded-[1.6cqw] border-[3px] border-sky-600 border-dashed animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none dark:border-sky-400"
+        />
+      )}
+      {cue?.kind === "reminder" && (
         <span
           key={cue.id}
           aria-hidden="true"
           data-tile-cue={cue.kind}
-          className="pointer-events-none absolute inset-[1cqw] rounded-[1.6cqw] border-[3px] border-sky-600 border-dashed animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none dark:border-sky-400"
+          className="pointer-events-none absolute inset-[1cqw] rounded-[1.6cqw] bg-sky-300/55 fill-mode-forwards animate-out fade-out-0 duration-1200 ease-in dark:bg-sky-600/55"
         />
       )}
     </button>
