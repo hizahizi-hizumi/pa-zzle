@@ -52,6 +52,15 @@ uv run --directory backend mypy . # mypy の型チェック
 uv run --directory backend ruff check . # Ruff の静的解析
 ```
 
+### GitHub Actions
+
+外部アクションは `.github/workflows/actions.lock` でコミットに固定する。`uses:` を追加・変更したら lockfile を更新する。
+
+```sh
+gh extension install github/gh-actions-lock # 初回のみ
+gh actions-lock # 全ワークフローを走査して actions.lock を更新
+```
+
 ## 検証
 
 - 恒久的な検証には、既存のテスト基盤・静的解析・ビルドツールなどの汎用的な検証手段を用いること。
