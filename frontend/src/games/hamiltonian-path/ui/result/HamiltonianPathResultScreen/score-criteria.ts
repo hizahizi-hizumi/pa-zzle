@@ -18,7 +18,7 @@ import {
   HAMILTONIAN_PATH_SPEED_REFUTATION_STEP_LIMIT,
 } from "@/games/hamiltonian-path/score";
 
-/** 基準時間の式。その問題で0の項は省く。先読みの手数は上限で打ち切った値を示す。 */
+/** 基準時間の式。その問題で0の項は省く。読む手数は上限で打ち切った値を示す。 */
 function listSpeedFormula({
   openCellCount,
   fatalBranchCount,
@@ -31,7 +31,7 @@ function listSpeedFormula({
       durationMs: HAMILTONIAN_PATH_SPEED_INITIAL_RECOGNITION_MS,
     },
     {
-      label: "なぞるマス",
+      label: "通るマス",
       count: openCellCount,
       unit: "マス",
       durationMsPerUnit: HAMILTONIAN_PATH_SPEED_PER_OPEN_CELL_MS,
@@ -39,7 +39,7 @@ function listSpeedFormula({
     ...(fatalBranchCount > 0
       ? [
           {
-            label: "迷う分岐",
+            label: "分かれ道",
             count: fatalBranchCount,
             unit: "か所",
             durationMsPerUnit: HAMILTONIAN_PATH_SPEED_PER_FATAL_BRANCH_MS,
@@ -49,7 +49,7 @@ function listSpeedFormula({
     ...(assumptionCount > 0
       ? [
           {
-            label: "先読み",
+            label: "数手先を読む",
             count: assumptionCount,
             unit: "回",
             durationMsPerUnit: HAMILTONIAN_PATH_SPEED_PER_ASSUMPTION_MS,
@@ -59,7 +59,7 @@ function listSpeedFormula({
     ...(refutationStepCount > 0
       ? [
           {
-            label: "先読みの手数",
+            label: "読む手数",
             count: Math.min(
               refutationStepCount,
               HAMILTONIAN_PATH_SPEED_REFUTATION_STEP_LIMIT,
@@ -83,7 +83,7 @@ export function getHamiltonianPathScoreCriteria(
         rule: result.speedRule,
         formula: listSpeedFormula(result.workload),
         notes: [
-          `迷う分岐は、始点から引き進めると全マスを通れなくなる向きを含む分岐。先読みの回数と手数は、この問題を盤面から読んで解くときに要る数（手数は${HAMILTONIAN_PATH_SPEED_REFUTATION_STEP_LIMIT}手まで数える）。`,
+          `式の数はこの問題で決まり、プレイでは変わらない。分かれ道は、進む向きを誤ると全マスを通れなくなる所。数手先を読む回数と読む手数は、この問題を盤面から読んで解くのに要る量（読む手数は${HAMILTONIAN_PATH_SPEED_REFUTATION_STEP_LIMIT}手まで数える）。`,
         ],
       }),
     ),
@@ -99,7 +99,7 @@ export function getHamiltonianPathScoreCriteria(
           },
         ],
         [
-          `引き直しは、一度引いた道を戻して前と別のマスへ引いた回数で、戻して同じマスへ引き直したときは数えない。${formatOperationName("undo")}・${formatOperationName("restart")}で戻した後も同じに数え、${formatOperationName("undo")}で引き直す前の道筋へ戻したことも引き直しに数える。`,
+          `引き直しは、道を戻して前と違うマスへ引いた回数。戻して同じマスへ引いたときは数えない。${formatOperationName("undo")}・${formatOperationName("restart")}で戻したときも同じに数え、${formatOperationName("undo")}で前の道筋へ戻したときも1回と数える。`,
         ],
       ),
     ),

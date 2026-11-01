@@ -20,17 +20,16 @@ type HamiltonianPathResultScreenProps = GamePlayResultScreenProps<
   HamiltonianPathResult
 >;
 
+/**
+ * 内訳はこのプレイの点と操作の回数、基準時間だけにする。問題の作業の量（通るマス・分かれ道・先読み）は、
+ * 成績と並べると自分の成績と読み違えられるので、採点基準の基準時間の式の中で、この問題の値として示す。
+ */
 function listScoreBreakdown(result: HamiltonianPathResult) {
-  const { workload } = result;
   return [
     ...listScoreBreakdownMetrics(result.score, HAMILTONIAN_PATH_SCORE_MAXIMUMS),
     createOperationCountMetric("undo", result.undoCount),
     createOperationCountMetric("restart", result.restartCount),
     createSpeedFullScoreMetric(result.speedRule),
-    createCountMetric("なぞるマス", workload.openCellCount, "マス"),
-    createCountMetric("迷う分岐", workload.fatalBranchCount, "か所"),
-    createCountMetric("先読み", workload.assumptionCount, "回"),
-    createCountMetric("先読みの手数", workload.refutationStepCount, "手"),
   ];
 }
 
