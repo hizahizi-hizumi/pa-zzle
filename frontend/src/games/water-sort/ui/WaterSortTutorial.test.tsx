@@ -78,7 +78,7 @@ function tapBottles(bottleIndices: readonly number[]): void {
 
 /** 合図を付けたボトルの番号（1始まり）。既定は、次に押すボトルの印。 */
 function getCuedBottles(
-  kind: "hint" | "sorted" | "sorted-held" = "hint",
+  kind: "hint" | "sorted" | "sorted-held" | "rejected" = "hint",
 ): number[] {
   return getBottles().flatMap((bottle, bottleIndex) =>
     bottle.querySelector(`[data-bottle-cue="${kind}"]`)
@@ -138,12 +138,14 @@ describe("WaterSortTutorial", () => {
       const pressed = getBottle(0).getAttribute("aria-pressed");
       const cued = getCuedBottles();
       const headline = screen.getByText("空のボトルに注げます");
+      const detail = screen.getByText("もう一度押すと選び直せます");
       const rules = getRuleTexts();
 
       expect(pressed).toBe("true");
       expect(cued).toEqual([4]);
       expect(headline).toBeTruthy();
-      expect(rules).toEqual(["空へ", "？", "？", "？", "？"]);
+      expect(detail).toBeTruthy();
+      expect(rules).toEqual(["空ボトルへ", "？", "？", "？", "？"]);
     });
 
     test("選んだ注ぎ元をもう一度押して選び直すと、選ぶ一言と注ぎ元の印に戻すこと", () => {
@@ -183,7 +185,7 @@ describe("WaterSortTutorial", () => {
       expect(contents).toEqual(["赤、赤、青", "緑"]);
       expect(headline).toBeTruthy();
       expect(cued).toEqual([2]);
-      expect(rules).toEqual(["空へ", "同じ色へ", "？", "？", "？"]);
+      expect(rules).toEqual(["空ボトルへ", "同じ色へ", "？", "？", "？"]);
     });
 
     test("重なった同じ色をまとめて注いで緑をそろえ、そろった緑のボトルを光らせて、そのボトルを押させること", () => {
@@ -200,10 +202,10 @@ describe("WaterSortTutorial", () => {
       expect(cued).toEqual([4]);
       expect(headline).toBeTruthy();
       expect(rules).toEqual([
-        "空へ",
+        "空ボトルへ",
         "同じ色へ",
         "まとめて",
-        "そろったら",
+        "固定",
         "？",
       ]);
     });
@@ -225,10 +227,10 @@ describe("WaterSortTutorial", () => {
       expect(headline).toBeTruthy();
       expect(cued).toEqual([2]);
       expect(rules).toEqual([
-        "空へ",
+        "空ボトルへ",
         "同じ色へ",
         "まとめて",
-        "そろったら",
+        "固定",
         "入るだけ",
       ]);
     });
@@ -335,7 +337,7 @@ describe("WaterSortTutorial", () => {
         "液体を注ぎ分けて 色をそろえるパズルです",
       );
       const caption = screen.getByText("色ごとに1本にそろえばゴールです");
-      const contents = getBottleContents(0);
+      const contents = getBottleContents(2);
 
       expect(purpose).toBeTruthy();
       expect(caption).toBeTruthy();
@@ -361,6 +363,16 @@ describe("WaterSortTutorial", () => {
 
       expect(headline).toBeTruthy();
       expect(cued).toEqual([1]);
+    });
+
+    test("そろったボトルを押すと、揺れの代わりにそのボトルの縁で受け付けなかったことを返すこと", () => {
+      advanceTime(stillGoalHoldMs);
+      advanceTime(introEnoughMs);
+      tapBottles(stepTaps.slice(0, 7));
+
+      const rejected = getCuedBottles("rejected");
+
+      expect(rejected).toEqual([4]);
     });
   });
 

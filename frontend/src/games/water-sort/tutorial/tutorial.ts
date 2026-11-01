@@ -119,12 +119,13 @@ const startBottles: WaterSortState = [
   [],
 ];
 
+/** 手順を終えた後、手が止まって示されるボトルのとおりに注いだときにそろう並び。 */
 const goalBottles: WaterSortState = [
+  [],
+  [],
   [RED, RED, RED, RED],
-  [BLUE, BLUE, BLUE, BLUE],
-  [],
   [GREEN, GREEN, GREEN, GREEN],
-  [],
+  [BLUE, BLUE, BLUE, BLUE],
 ];
 
 /** そろったボトルを選ぼうとしたときの一言。手順でも、そろったボトルを押させる前に同じ文で言い切る。 */
@@ -144,7 +145,10 @@ const steps: readonly WaterSortTutorialStep[] = [
     endsWhen: "selected",
   },
   {
-    message: { headline: "空のボトルに注げます", detail: null },
+    message: {
+      headline: "空のボトルに注げます",
+      detail: "もう一度押すと選び直せます",
+    },
     introducedRuleId: "empty",
     move: { sourceBottleIndex: 0, destinationBottleIndex: 3 },
     endsWhen: "poured",
@@ -484,10 +488,10 @@ export const waterSortTutorial: Tutorial<
     startCaption: "最初は色が混ざっています",
   },
   rules: [
-    { id: "empty", label: "空へ" },
+    { id: "empty", label: "空ボトルへ" },
     { id: "same-color", label: "同じ色へ" },
     { id: "together", label: "まとめて" },
-    { id: "sorted", label: "そろったら" },
+    { id: "sorted", label: "固定" },
     { id: "capacity", label: "入るだけ" },
   ],
   steps,

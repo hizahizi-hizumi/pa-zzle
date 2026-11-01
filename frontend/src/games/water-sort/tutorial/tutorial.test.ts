@@ -404,7 +404,7 @@ describe("getWaterSortTutorialStepBottle", () => {
 describe("findWaterSortTutorialHintBottle", () => {
   const released = playSteps(steps.length);
 
-  test("示されたボトルを押し続けると、そろえ終えること", () => {
+  test("示されたボトルを押し続けると、入口で見せたゴールの並びにそろえ終えること", () => {
     let progress = released;
     for (let turn = 0; turn < 20 && progress.phase === "playing"; turn += 1) {
       const hint = findWaterSortTutorialHintBottle(progress.boardState);
@@ -412,6 +412,7 @@ describe("findWaterSortTutorialHintBottle", () => {
     }
 
     expect(progress.phase).toBe("solved");
+    expect(progress.boardState.bottles).toEqual(goalBottles);
     // 最も少ない5手を、注ぎ元と注ぎ先の2回ずつ押して注ぐ。
     expect(progress.boardState.moveCount - released.boardState.moveCount).toBe(
       10,

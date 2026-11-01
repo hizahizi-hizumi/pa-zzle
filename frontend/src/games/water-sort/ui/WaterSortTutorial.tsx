@@ -34,6 +34,7 @@ import {
 } from "@/games/water-sort/ui/board/pour/pour-animation";
 import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
 import { WaterSortTutorialIntroScene } from "@/games/water-sort/ui/WaterSortTutorial/WaterSortTutorialIntroScene";
+import { prefersReducedMotion } from "@/lib/motion";
 
 type WaterSortTutorialProps = {
   open: boolean;
@@ -117,6 +118,16 @@ function getSortedCues(
     kind: completed ? "sorted-held" : "sorted",
     id: moveCount,
   }));
+}
+
+/** 動きを減らす設定では受け付けなかったボトルが揺れないので、縁の色で受け付けなかったことを返す。 */
+function getRejectedCues({
+  lastMove,
+  moveCount,
+}: WaterSortTutorialBoardState): WaterSortBottleCue[] {
+  return lastMove?.type === "rejected" && prefersReducedMotion()
+    ? [{ bottleIndex: lastMove.bottleIndex, kind: "rejected", id: moveCount }]
+    : [];
 }
 
 /**
@@ -291,12 +302,10 @@ export function WaterSortTutorial({
           ? getWaterSortTutorialStepBottle(situation, boardState)
           : null
         : hintBottle;
+    const cues = [...sortedCues, ...getRejectedCues(boardState)];
     return cueBottle === null
-      ? sortedCues
-      : [
-          ...sortedCues,
-          { bottleIndex: cueBottle, kind: "hint", id: hintCueId },
-        ];
+      ? cues
+      : [...cues, { bottleIndex: cueBottle, kind: "hint", id: hintCueId }];
   }
 
   /** 導入の間はゴールの盤面を見せ、始めの盤面の場面で、始めの盤面へ替える。 */
