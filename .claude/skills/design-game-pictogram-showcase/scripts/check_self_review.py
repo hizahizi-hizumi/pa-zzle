@@ -36,7 +36,6 @@ COMMON_CHECKS = (
 )
 # Each playback form adds its own end / hold / seam checks; the other forms' checks are unknown.
 PLAYBACK_CHECKS = {
-    "once": ("once_end_matches_static",),
     "cut": ("cut_hold_matches_static", "cut_switch_is_instant"),
     "seam": ("seam_matches_static",),
 }
@@ -77,7 +76,7 @@ def manifest_candidate_playbacks(manifest: dict[str, Any]) -> dict[str, str]:
             raise ValueError(f"candidate[{index}].id must be a non-empty string")
         playback = candidate.get("playback")
         if playback not in PLAYBACK_CHECKS:
-            raise ValueError(f"{candidate_id}: playback must be once, cut, or seam")
+            raise ValueError(f"{candidate_id}: playback must be cut or seam")
         playbacks[candidate_id] = playback
     return playbacks
 

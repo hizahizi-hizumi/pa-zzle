@@ -40,15 +40,15 @@
 - `hypothesis`: 何が起きる案か
 - `aim_play`: 目的 A。中心の操作をどう見せるか
 - `aim_payoff`: 目的 B。どの瞬間の気持ちよさをどう見せるか
-- `static_pose`: 静止状態はどの瞬間の姿か（`once` の終点、`cut` の止まり、`seam` の継ぎ目になる）
-- `playback`: `once` / `cut` / `seam`（`SKILL.md` の「再生形式」）
+- `static_pose`: 静止状態はどの瞬間の姿か（`cut` の止まり、`seam` の継ぎ目になる）
+- `playback`: `cut` / `seam`（`SKILL.md` の「再生形式」）
 
 任意項目:
 
 - `name`: ギャラリーに出す短い表示名（無ければ `id`）
 - `family`: 同じ方向をまとめる表示名
 - `notes`: 実装上の制約や比較時に残したい補足（目安から外した理由、実表示で見えないために代えた色、WebKit を確かめていないことなど）
-- `overlap`: `observe_animation.cjs` で重なりを測る組。`"<動く対象のセレクタ>|<他の対象のセレクタ>"` か、その配列。候補ごとに動く対象が違うときに書く（`check_animation.py` が形式を検査する。`references/self-review.md`）
+- `overlap`: `observe_animation.cjs` で重なりを測る組。`"<動く対象のセレクタ>|<他の対象のセレクタ>"` か、その配列。両側に同じセレクタを書くと、そのセレクタに当たる要素どうしを調べる。候補ごとに動く対象が違うときに書く（`check_animation.py` が形式を検査する。`references/self-review.md`）
 
 パスは manifest からの相対パスまたは絶対パスで書く。
 
@@ -68,7 +68,7 @@
 サイズは `--hero-sizes` / `--list-sizes`（カンマ区切り）で変えられる。JavaScript が有効な環境では次の操作を追加する。
 
 - 全候補 / 候補ごとの最初からの再生、全候補の一時停止 / 再開
-- 候補ごとの時刻スライダー（全アニメーションを止め、指定時刻へ移す。最大値は周期 - 1ms で、`cut` / `seam` の 100% 直前、`once` の終点を指す）
+- 候補ごとの時刻スライダー（全アニメーションを止め、指定時刻へ移す。最大値は周期 - 1ms で、`cut` / `seam` の 100% 直前を指す）
 - 候補ごとの再生属性の切り替え（属性を外した静止状態と見比べる）
 
 判定やメモの入力欄は置かない。セルフレビューの結果は `self-review.json` に記録する（`references/self-review.md`）。
@@ -78,14 +78,14 @@
 人間がスマホを含む手元の端末で見るためのページ。外部参照のない単体 HTML で、固定ヘッダーを持たないモバイル優先の 1 カラムにする。
 
 - 各 SVG は `<img src="data:image/svg+xml;base64,…">` で表示する。候補の SVG を外側の `<svg viewBox="0 0 120 120">` で包み、外側に `style="--game-pictogram-strong:…;--game-pictogram-soft:…"`、ダークなら `class="dark"`、ヒーローなら `data-pictogram-motion="play"` を付けて、アプリと同じく祖先条件として当てる。iframe を使わないため、端末で高さが合わず見切れることがない
-- 各 `<img>` に `data-view`（`hero` = ヒーロー再生、`list` = 一覧の選択中の静止、`other` = 他ゲーム、`base` = 白黒版）と `data-theme`（`light` / `dark`）を付ける。ブラウザで確かめるスクリプトはこれで対象を選ぶ
+- 各 `<img>` に `data-view`（`hero` = ヒーロー再生、`list` = 一覧の選択中の静止、`other` = 他ゲーム、`base` = 白黒版）と `data-theme`（`light` / `dark`）を付け、候補の `<img>` には `data-candidate`（候補の `id`）も付ける。ブラウザで確かめるスクリプトはこれで対象を選ぶ
 - 候補ごとに「ヒーロー（再生）」と「一覧の選択中（静止）」を、端末の画面幅に応じてアプリと同じ大きさ（幅 640px 未満はヒーロー 138px、以上は 177px。一覧の選択中もアプリと同じ枠・余白）で並べる。その下に一覧の選択中を他ゲームの白黒ピクトグラムと並べた比較列を置く
 - ライト/ダーク切り替え、全候補 / 候補ごとの最初からの再生（`<img>` の SVG は読み込み直しでしか最初に戻らないため、画像を読み込み直す）
 - 判定 4 種（候補 / 掘る / 一部 / 除外）と候補ごとのメモ、最下部に全体メモ。入力は端末の localStorage に自動保存する
 - 「レビューJSON」でレビュー結果を表示してクリップボードへコピーする
 - `--db-doc <id>` を付けると、artifact の DB の `reviews/<id>` にも `{ review, updatedAt }` で保存する。`window.claude` が無い、または DB を使えない環境では「DB 未接続」と出して端末保存だけにする。端末に記録が無ければ DB の内容を読み込んで表示する
 - `<img>` の SVG には OS の動きを減らす設定が届かない場合がある。動きを減らす設定の確認はセルフレビュー（`observe_animation.cjs`）で行う
-- 人間は iOS の Claude アプリ（WebKit）で見ることがある。`<img>` の SVG 文書にはページの変数・フォントが届かず、古い WebKit が解釈しない記法はそこで崩れる（`references/motion.md` の 6 節）。生成後は `check_gallery.cjs --device "iPhone 13"` で崩れと `pageerror` を確かめる。これは Chromium での確認なので、WebKit を確かめられなかったことは人間への報告に書く
+- 人間は iOS の Claude アプリ（WebKit）で見ることがある。`<img>` の SVG 文書にはページの変数・フォントが届かず、古い WebKit が解釈しない記法はそこで崩れる（`references/motion.md` の 6 節）。生成後は `check_gallery.cjs --device "iPhone 13"` で崩れと `pageerror`、全候補のヒーローが時間とともに変化する（動いている）ことを確かめる。これは Chromium での確認なので、WebKit を確かめられなかったことは人間への報告に書く
 
 レビュー結果の形式:
 

@@ -21,18 +21,18 @@ node .claude/skills/design-game-pictogram-showcase/scripts/observe_animation.cjs
 
 Playwright は `scripts/playwright_resolve.cjs` が探す（`require('playwright')`、環境変数 `PLAYWRIGHT_NODE_PATH`、`/opt/node-tools/node_modules`、グローバルの `node_modules` の順）ので、`NODE_PATH` は要らない。見つからなければ `PLAYWRIGHT_NODE_PATH=<playwright を含む node_modules>` を付ける。全オプションは `--help`。
 
-各候補を単独のページにヒーロー 177px / 138px（再生）と一覧 46px で描画し、次を報告する（`observe-report.json` と、開始・終点・静止状態のスクリーンショットを `--out` に書く。ダーク側は `-dark-` 付きの名前）。違反があれば `FAIL` と終了コード 1、人間の判断が要るものは `WARN`、目安との比較は `NOTE`。テーマの色は `frontend/styles/globals.css` の `:root` / `.dark` から読み、アプリのトークン（`--background` 等）もアプリと同じくページに定義する。ダークはアプリと同じく `<html class="dark">` で描く。
+各候補を単独のページにヒーロー 177px / 138px（再生）と一覧 46px で描画し、次を報告する（`observe-report.json` と、開始・終点・静止状態のスクリーンショットを `--out` に書く。ダーク側は `-dark-` 付きの名前）。違反があれば `FAIL` と終了コード 1、人間の判断が要るものは `WARN`、目安との比較は `NOTE`。manifest の `playback` が `cut` / `seam` でない候補と、`infinite` でない animation は `FAIL` にする。テーマの色は `frontend/styles/globals.css` の `:root` / `.dark` から読み、アプリのトークン（`--background` 等）もアプリと同じくページに定義する。ダークはアプリと同じく `<html class="dark">` で描く。
 
 | 項目 | テーマ | 内容 |
 |---|---|---|
-| 静止状態との一致 | ライト/ダーク | 再生属性なしの姿（静止状態）と、`once` は各 animation をそれぞれの終点直前へ、`cut` / `seam` は各 animation を 1 周目の 100% 直前へ移した姿を、全要素の computed style（transform、opacity、fill、stroke、d など）で比べる。`seam` は 0%（各 animation の遅延の終わり）も比べる。祖先を含めて見えない要素（opacity 0、`display: none` 等）は両方で見えなければ比べない |
+| 静止状態との一致 | ライト/ダーク | 再生属性なしの姿（静止状態）と、各 animation を 1 周目の 100% 直前へ移した姿を、全要素の computed style（transform、opacity、fill、stroke、d など）で比べる。`seam` は 0%（各 animation の遅延の終わり）も比べる。祖先を含めて見えない要素（opacity 0、`display: none` 等）は両方で見えなければ比べない |
 | 動きを減らす設定 | ライト/ダーク | `reducedMotion: 'reduce'` でアニメーションが 0 件、姿が静止状態と一致するか |
 | `cut` の止まりと間 | ライト | 1 周目（遅延の後）を時刻を止めて測った止まり（`hold`）と開始の間（`start beat`）、1 周の静止割合（`still ratio`、周期は `animation-duration`）。0% が静止状態と同じなら `FAIL` |
-| 実フレーム | ライト | SVG を挿入した瞬間から requestAnimationFrame で毎フレームの姿を記録する（`cut` は `--cycles`（既定 3.3）周ぶん）。遅延中の要素が、開始の姿（0%）と違うのに静止状態を見せていれば `FAIL`（`backwards` / `both` の付け忘れ）。`once` / `cut` で開始の姿が静止状態と違うのに最初のフレームが静止状態なら `FAIL` |
+| 実フレーム | ライト | SVG を挿入した瞬間から requestAnimationFrame で毎フレームの姿を記録する（`cut` は `--cycles`（既定 3.3）周ぶん）。遅延中の要素が、開始の姿（0%）と違うのに静止状態を見せていれば `FAIL`（`backwards` / `both` の付け忘れ）。`cut` で開始の姿が静止状態と違うのに最初のフレームが静止状態なら `FAIL` |
 | `cut` の切り替え | ライト | 周の境界（基準 animation の `currentIteration` が増えたフレーム。遅延があってもずれない）ごとに、直前フレームが静止状態（S）、直後が 0% の姿（P0）か、その間に途中のフレームが何枚あるかを報告する。直前が S でない、途中のフレームがあるなら `FAIL`。直後が P0 でなければ開始の間が無いと `NOTE` |
 | viewBox | ライト | 1 周を 20ms ごとに止め、見えている図形（線幅込み）と viewBox の端の最小余白（`min viewBox margin`、負ならはみ出し） |
-| 速度の連続性 | ライト | 動く図形ごとに外接矩形の四隅と中心の画面座標（`getScreenCTM`、CSS の transform を含む）を 2ms ごとに時刻を止めて読み、隣り合う速度の差をその図形のピーク速度で割った値（`worst jump`）を出す。`--smooth-threshold`（既定 0.15）を超えた図形を `WARN` にする。`once` / `cut` は 1 周（`cut` の切り替えは除く）、`seam` は継ぎ目をまたいで走査する |
-| 重なり（任意） | ライト | `--overlap 'A|B'`（全候補）か manifest の候補の `overlap`（その候補だけ）があるとき、1 周を 20ms ごとに止め、A と B の見えている図形の外接矩形が交わる範囲を 1px 格子で図形の内側判定（`isPointInFill` / `isPointInStroke`）し、重なりの面積（viewBox 単位²）の最大と時刻を出す。0.25 以上なら `WARN` とその時刻のスクリーンショット（`<id>-overlap-<n>.png`） |
+| 速度の連続性 | ライト | 動く図形ごとに外接矩形の四隅と中心の画面座標（`getScreenCTM`、CSS の transform を含む）を 2ms ごとに時刻を止めて読み、隣り合う速度の差をその図形のピーク速度で割った値（`worst jump`）を出す。`--smooth-threshold`（既定 0.15）を超えた図形を `WARN` にする。`<text>` は外接矩形が描画の大きさに応じて画素単位で変わるため、最初に見えた外接矩形を transform で動かした位置で測る（字の大きさ自体の変化は測らない）。`cut` は 1 周（切り替えは除く）、`seam` は継ぎ目をまたいで走査する |
+| 重なり（任意） | ライト | `--overlap 'A|B'`（全候補）か manifest の候補の `overlap`（その候補だけ）があるとき、1 周を 20ms ごとに止め、A と B の見えている図形の外接矩形が交わる範囲を 1px 格子で図形の内側判定（塗りが `none` でなければ `isPointInFill`、線が `none` でなければ `isPointInStroke`。`<text>` は外接矩形で近似し `NOTE` を出す）し、重なりの面積（viewBox 単位²）の最大と時刻を出す。0.25 以上なら `WARN` とその時刻のスクリーンショット（`<id>-overlap-<n>.png`） |
 | 大きさと位置 | ライト | 静止状態の見えている図形の外接矩形（線幅込み、viewBox 単位）と中心・下端。`base_pictogram` との中心のずれと大きさの比、他ゲームの `pictogram.svg` の中央値との大きさの比と中心・下端の中央値を出す（判定はしない。目安は `references/motion.md` の 4 節） |
 | インク量 | ライト | 一覧 46px の静止状態の塗りと線の被覆率（`ink coverage`）。白黒版との比、他ゲームの白黒版の中央値との比と範囲。範囲を外れたら `NOTE` |
 | フィルムストリップ（任意） | ライト | `--filmstrip` を付けたとき、SVG を挿入した瞬間からヒーロー 138px を実時間で連続して撮り（間隔は `--filmstrip-interval`、既定 100ms）、アニメーションの時刻を添えて 1 枚に並べる（`<id>-filmstrip.png`）。`cut` は最初の切り替えの後まで撮る |
@@ -45,8 +45,9 @@ Playwright は `scripts/playwright_resolve.cjs` が探す（`require('playwright
 
 - 実フレームの `hold` / `start beat` は、時刻を止めて測った値より最大 2 フレーム（約 33ms）短く出る。境界の直後のフレームは境界から 0〜1 フレーム遅れて描かれ、間の最後のフレームも次の変化の手前のフレームになるため。例: 開始の間 300ms が実フレームでは 283ms。目安との比較は時刻を止めて測った値で行う。
 - 速度の急変の `WARN` は、同じ時刻（±4ms）に急変した図形をまとめて 1 行で出す（`speed jump at <時刻>: <n> shapes at once, worst ...`）。複数の図形が同時に急変していれば、1 つの区間の継ぎ目がそれらを一緒に動かしている（同じ原因）ことが多い。時刻ごとに 1 つの原因として判断する。
-- 速度の急変は、衝突（落ちた物が止まる）、出現・消失、意図して速度を上げて始まる動きでも出る。報告の時刻をギャラリーの時刻スライダーで止め、意図した不連続か区間の継ぎ目のかくつきかを判断し、`notes` に書く。区間ごとのイージングで書いた滑らかな動きは 0.05 未満に収まる（これまでの試作で 0.02〜0.04）。
-- 重なりのセレクタは SVG 内のクラスや構造で書く。動く対象と、それが近づく対象を組にする。例: 動く要素 `.pz-<game>-moving` と盤の他の要素 `.pz-<game>-board` なら `--overlap '.pz-<game>-moving|.pz-<game>-board'`。同じクラスの中で 1 つだけが動くなら、動く方に別のクラスを足して分けるか、兄弟結合子（`'.pz-<game>-moving|.pz-<game>-moving ~ .pz-<game>-cell'`）で残りを指す。B 側から A 側の図形は除かれる。接触を意図した組（手渡し、着地）も出るため、スクリーンショットで判断する。
+- 速度の急変は、衝突（落ちた物が止まる）、出現・消失、意図して速度を上げて始まる動きでも出る。報告の時刻をギャラリーの時刻スライダーで止め、意図した不連続か区間の継ぎ目のかくつきかを判断し、`notes` に書く。区間ごとのイージングで書いた滑らかな動きは 0.05 未満に収まる（これまでの試作で 0.02〜0.04）。この値は動きの長さに依存し、短く速い動きでは大きめに出る（数百 ms の移動・拡縮で 0.06〜0.09）。
+- `<text>` だけに速度の急変が出るなら、`<text>` を含む要素を `transform-box: fill-box` で拡縮・回転していないかを見る（`references/motion.md` の 7 節）。
+- 重なりのセレクタは SVG 内のクラスや構造で書く。動く対象と、それが近づく対象を組にする。例: 動く要素 `.pz-<game>-moving` と盤の他の要素 `.pz-<game>-board` なら `--overlap '.pz-<game>-moving|.pz-<game>-board'`。同じクラスの中で 1 つだけが動くなら、動く方に別のクラスを足して分けるか、兄弟結合子（`'.pz-<game>-moving|.pz-<game>-moving ~ .pz-<game>-cell'`）で残りを指す。B 側から A 側の図形は除かれる。全要素が時間差で動くなど、動く側と相手側が同じ集合なら、同じセレクタを両側に書く（`'.pz-<game>-tile|.pz-<game>-tile'`）。セレクタに当たる要素どうしを調べ、同じ要素の中の図形どうし（駒の枠とその数字など）と入れ子の要素どうしは調べない。接触を意図した組（手渡し、着地）も出るため、スクリーンショットで判断する。
 - 候補ごとに動く対象が違うなら、manifest の候補に `"overlap": "<A>|<B>"`（複数なら配列）を書く。`--overlap` は全候補に効く。
 - `ink coverage` の `NOTE` は判定ではない。比較列で重さが突出していないかを見る合図にする（`references/motion.md` の 4 節）。
 - `NOTE: WebKit was not checked` が出たら、Safari での表示を確かめていないことを `self-review.json` の `notes` と人間への報告に書く。`references/motion.md` の 6 節の書き方を守っているかは `check_animation.py` の `WARN` で確かめる。
@@ -64,7 +65,7 @@ Playwright は `scripts/playwright_resolve.cjs` が探す（`require('playwright
 
 実ブラウザは次の手段で開く。
 
-- Claude Code 環境: まず `scripts/check_gallery.cjs` でギャラリーを開き、崩れを機械的に確かめる。`pageerror` / `console.error`、横方向のはみ出し、`<img>` の読み込み失敗（人間用）、iframe の高さと中身のずれ（セルフレビュー用）を `FAIL` にし、全体のスクリーンショットを撮る。
+- Claude Code 環境: まず `scripts/check_gallery.cjs` でギャラリーを開き、崩れを機械的に確かめる。`pageerror` / `console.error`、横方向のはみ出し、`<img>` の読み込み失敗（人間用）、時間とともに変化しないヒーロー（人間用。数フレームを撮って比べ、`--motion-window`（既定 7000ms）の間に変化しなければ動いていない）、iframe の高さと中身のずれ（セルフレビュー用）を `FAIL` にし、全体のスクリーンショットを撮る。
 
   ```sh
   node .claude/skills/design-game-pictogram-showcase/scripts/check_gallery.cjs /tmp/pictogram-showcase-<game>/self-review.html
@@ -77,9 +78,9 @@ Playwright は `scripts/playwright_resolve.cjs` が探す（`require('playwright
 
 観察の手順:
 
-1. ヒーローサイズで再生を観察する。`once` なら開始から終了後の静止まで、`cut` / `seam` なら周の境界を 2 回以上またいで見る。実時間の流れは 1.1 の `--filmstrip` の 1 枚（`<id>-filmstrip.png`）で見る。コマ間の変化で、動き出しの遅れ、止まりの長さ、見せ場が読める間があるか、動きの量が 138px で読めるか（`references/motion.md` の 5 節）を確かめる。
+1. ヒーローサイズで再生を観察する。周の境界を 2 回以上またいで見る。実時間の流れは 1.1 の `--filmstrip` の 1 枚（`<id>-filmstrip.png`）で見る。コマ間の変化で、動き出しの遅れ、止まりの長さ、見せ場が読める間があるか、動きの量が 138px で読めるか（`references/motion.md` の 5 節）を確かめる。
 2. 時刻スライダーで始点・見せ場・終点（スライダーの最大値 = 周期 - 1ms）を止め、拡大表示でも確認する。必要なら途中フレームを複数時点でキャプチャし、一瞬だけの破綻を見落とさない。
-3. 1.1 の報告で、静止状態との一致と `cut` の切り替えを確かめる。`once` は終了して静止状態へ戻る瞬間に跳ばないことも再生で確かめる。
+3. 1.1 の報告で、静止状態との一致と `cut` の切り替えを確かめる。
 4. 始点が静止状態と異なり `animation-delay` を使う候補は、遅延中のちらつきを 1.1 の実フレームの報告で確かめる。
 5. 動きが滑らかかを、1.1 の速度の連続性の報告と実時間の再生で見る。区間の継ぎ目で速度が急に変わる、止まりかけて再び動くなどの「かくつき」がないか。`WARN` の時刻は時刻スライダーで止めて、意図した不連続かを判断する。`check_animation.py` の線形サンプリングの `WARN` が出ている候補は特に注意する（`references/motion.md`）。
 6. 動く対象が他の対象（隣のマス・駒・盤の枠など、動かない要素）と重ならないかを見る。1.1 の `--overlap` か manifest の `overlap` に動く対象と他の対象のセレクタを渡して時刻走査で重なりの最大と時刻を出し、その時刻のスクリーンショットを見る。セレクタで分けにくい構造なら、時刻スライダーで動きの全期間を細かく止め、外接矩形が交わる時刻を拡大表示で確かめる。
@@ -96,7 +97,7 @@ Playwright は `scripts/playwright_resolve.cjs` が探す（`require('playwright
 
 ### 観察
 
-- `observed_hero_play_full_cycle`: ヒーローサイズ（177px / 138px）で、`once` は開始から終了後の静止まで、`cut` / `seam` は周の境界を 2 回以上またいで再生を観察した
+- `observed_hero_play_full_cycle`: ヒーローサイズ（177px / 138px）で、周の境界を 2 回以上またいで再生を観察した
 - `observed_key_moments_zoomed`: 始点・見せ場・終点（継ぎ目）を拡大表示でも確認した
 - `observed_list_selected_static`: 一覧選択中サイズ（56px / 46px）で静止状態を確認した
 - `observed_light_and_dark`: ライト/ダーク両方で、ギャラリーの見た目と 1.1 の静止状態との一致を確認した
@@ -121,10 +122,6 @@ Playwright は `scripts/playwright_resolve.cjs` が探す（`require('playwright
 - `delayed_start_has_no_static_flash`: 始点が静止状態と異なり `animation-delay` を使う場合、`animation-fill-mode: backwards` または `both` により遅延中に静止状態がちらつかない。遅延を使わない、または始点が静止状態と同じなら `true`
 
 ### 継ぎ目（形式ごと）
-
-`once`:
-
-- `once_end_matches_static`: 終点が静止状態と同じ姿で、終了後に静止状態へ戻るとき跳ばない
 
 `cut`:
 

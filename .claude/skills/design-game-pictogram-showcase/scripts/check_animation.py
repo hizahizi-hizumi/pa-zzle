@@ -3,7 +3,7 @@
 
 The checks are deterministic only: SVG structure, naming prefix, CSS selector
 scope, play gating, dark-theme color switching, forbidden features, and the
-structure of the declared playback form (once / cut / seam). They do not judge
+structure of the declared playback form (cut / seam; every animation loops). They do not judge
 whether the motion conveys the game, whether the rendered end, hold, or seam
 matches the static state, or whether it is good; observe_animation.cjs measures
 the rendered poses in a real browser.
@@ -39,7 +39,11 @@ WEBKIT_RISKY_COLOR = re.compile(
     r"(?<![\w-])(color-mix|oklch|oklab|lab|lch|color|light-dark)\(", re.IGNORECASE
 )
 TEXT_ELEMENTS = {"text", "tspan", "textPath"}
-PLAYBACK_VALUES = ("once", "cut", "seam")
+PLAYBACK_VALUES = ("cut", "seam")
+PLAYBACK_HINTS = {
+    "loop": " (loop was split into cut and seam)",
+    "once": " (a one-shot play moves only at the moment of selection and is easily missed; use cut)",
+}
 GAME_ID = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 REDUCED_MOTION_MEDIA = re.compile(
     r"^\(\s*prefers-reduced-motion\s*:\s*no-preference\s*\)$", re.IGNORECASE
@@ -218,8 +222,8 @@ def candidates_from_manifest(path: Path) -> tuple[list[Candidate], str | None, l
                 errors.append(f"{candidate_id}: {key} must be a non-empty string")
         playback = entry.get("playback")
         if playback not in PLAYBACK_VALUES:
-            hint = " (loop was split into cut and seam)" if playback == "loop" else ""
-            errors.append(f"{candidate_id}: playback must be once, cut, or seam{hint}")
+            hint = PLAYBACK_HINTS.get(playback, "") if isinstance(playback, str) else ""
+            errors.append(f"{candidate_id}: playback must be cut or seam{hint}")
             playback = None
 
         overlap = entry.get("overlap")
@@ -729,38 +733,33 @@ def motion_start(track: list[tuple[float, str]]) -> float | None:
     return 100.0
 
 
+def check_iterations(state: StyleState) -> None:
+    for use in state.animations:
+        if use.iterations != "infinite":
+            state.report.error(
+                f"{use.where}: every animation loops (cut or seam), so animation-iteration-count must "
+                f"be infinite: {use.name} has {use.iterations}"
+            )
+
+
 def check_playback(state: StyleState, playback: str) -> None:
     report = state.report
     uses = state.animations
     if not uses:
         return
-    if playback == "once":
-        for use in uses:
-            if use.iterations != "1":
-                report.error(
-                    f"{use.where}: playback once plays each animation one time "
-                    f"(animation-iteration-count 1): {use.name} has {use.iterations}"
-                )
-    else:
-        for use in uses:
-            if use.iterations != "infinite":
-                report.error(
-                    f"{use.where}: playback {playback} loops, so animation-iteration-count must be "
-                    f"infinite: {use.name} has {use.iterations}"
-                )
-        timings = sorted({(use.duration_ms, use.delay_ms) for use in uses})
-        if len(timings) > 1:
-            listed = ", ".join(f"{duration:g}ms delay {delay:g}ms" for duration, delay in timings)
-            if playback == "cut":
-                report.error(
-                    "playback cut: every animation must share one duration and delay so that all "
-                    f"elements switch to the start pose at the same cycle boundary: {listed}"
-                )
-            else:
-                report.warn(
-                    "playback seam: animations do not share one duration and delay, so the whole "
-                    f"picture repeats only at their common multiple; confirm the seam: {listed}"
-                )
+    timings = sorted({(use.duration_ms, use.delay_ms) for use in uses})
+    if len(timings) > 1:
+        listed = ", ".join(f"{duration:g}ms delay {delay:g}ms" for duration, delay in timings)
+        if playback == "cut":
+            report.error(
+                "playback cut: every animation must share one duration and delay so that all "
+                f"elements switch to the start pose at the same cycle boundary: {listed}"
+            )
+        else:
+            report.warn(
+                "playback seam: animations do not share one duration and delay, so the whole "
+                f"picture repeats only at their common multiple; confirm the seam: {listed}"
+            )
 
     durations = {use.name: use.duration_ms for use in uses}
     holds: list[float | None] = []
@@ -973,6 +972,7 @@ def check_svg(candidate: Candidate, game_id: str, playback: str | None = None) -
             "stops with a per-segment animation-timing-function instead: "
             + ", ".join(state.sampled_keyframes)
         )
+    check_iterations(state)
     if playback:
         check_playback(state, playback)
     if not style_found:
@@ -1020,7 +1020,7 @@ def main() -> int:
         report = check_svg(candidate, game_id, candidate.playback)
         print(f"candidate: {candidate.candidate_id}")
         print(f"file: {candidate.path}")
-        print(f"playback: {candidate.playback or '(not given; playback checks skipped)'}")
+        print(f"playback: {candidate.playback or '(not given; cut / seam checks skipped)'}")
         for warning in report.warnings:
             print(f"WARN: {warning}")
         if report.errors:
