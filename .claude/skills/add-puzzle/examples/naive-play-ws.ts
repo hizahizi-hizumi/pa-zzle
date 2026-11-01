@@ -1,4 +1,5 @@
-// ウォーターソート: 陽性 489bd6a1（easy/normal/hard を生成）と陰性 origin/main（問題集 1〜5）
+// ウォーターソート: 瓶の間で注ぐ。補助なし・合法手のランダム・貪欲・試し置きして戻すの4人で比べる。
+// 使い方は scripts/naive-play-core.ts の冒頭。引数は frontend/src/games/water-sort のパス（版ごとに複数可）。
 import {
   type Adapter,
   fmt,
@@ -6,6 +7,7 @@ import {
   greedyBacktrack,
   randomBlind,
   randomLegal,
+  readNaivePlayOptions,
   runLevel,
   sampleEvenly,
   type Summary,
@@ -15,9 +17,7 @@ import {
 type S = readonly (readonly number[])[];
 type M = { sourceBottleIndex: number; destinationBottleIndex: number };
 
-const N = Number(process.env.N ?? 30);
-const PLAYS = Number(process.env.PLAYS ?? 3);
-const which = process.argv[2] ?? "both";
+const options = readNaivePlayOptions({ n: 30, plays: 3, levels: [1, 2, 3, 4, 5] });
 
 function players() {
   return [
@@ -67,48 +67,14 @@ function makeAdapter(
 
 const out: Summary[] = [];
 
-if (which === "both" || which === "pos") {
-  const root = "/tmp/naive/ws-pos/frontend/src/games/water-sort/game";
-  const rules = await import(`${root}/rules.ts`);
-  const state = await import(`${root}/state.ts`);
-  const gen = await import(`${root}/generator.ts`);
-  const diff = await import(`${root}/difficulty.ts`);
-  const colors: Record<string, number> = { easy: 4, normal: 6, hard: 8 };
-  for (const level of ["easy", "normal", "hard"]) {
-    const t0 = Date.now();
-    const problems: [S, number][] = [];
-    for (let i = 0; i < N; i += 1) {
-      const p = gen.generateWaterSortProblem({
-        seed: `naive-${level}-${i}`,
-        colorCount: colors[level],
-        acceptCandidate: ({ solveResult }: { solveResult: { features: unknown } }) =>
-          solveResult.features !== null &&
-          diff.assessWaterSortDifficulty(solveResult.features).difficulty === level,
-      });
-      problems.push([p.initialState, p.solutionMoves.length]);
-    }
-    out.push(
-      ...runLevel(
-        { game: "water-sort", version: "pos 489bd6a1", level },
-        problems,
-        (p) => makeAdapter(p, rules, state),
-        players(),
-        PLAYS,
-      ),
-    );
-    console.error(`pos ${level} ${Date.now() - t0}ms`);
-  }
-}
-
-if (which === "both" || which === "neg") {
-  const root = "/tmp/naive/main/frontend/src/games/water-sort";
+for (const root of options.roots) {
   const rules = await import(`${root}/puzzle/rules.ts`);
   const state = await import(`${root}/puzzle/state.ts`);
   const pool = await import(`${root}/problem/problem-pool.ts`);
   const gen = await import(`${root}/problem/generator.ts`);
-  for (const level of [1, 2, 3, 4, 5]) {
+  for (const level of options.levels) {
     const t0 = Date.now();
-    const entries = sampleEvenly(pool.listWaterSortPoolEntries(level), N);
+    const entries = sampleEvenly(pool.listWaterSortPoolEntries(level), options.n);
     const problems: [S, number][] = entries.map((e: unknown) => {
       const d = pool.decodeWaterSortPoolEntry(e);
       return [
@@ -118,14 +84,14 @@ if (which === "both" || which === "neg") {
     });
     out.push(
       ...runLevel(
-        { game: "water-sort", version: "neg main", level: String(level) },
+        { game: "water-sort", version: root, level: String(level) },
         problems,
         (p) => makeAdapter(p, rules, state),
         players(),
-        PLAYS,
+        options.plays,
       ),
     );
-    console.error(`neg ${level} ${Date.now() - t0}ms`);
+    console.error(`${root} ${level} ${Date.now() - t0}ms`);
   }
 }
 

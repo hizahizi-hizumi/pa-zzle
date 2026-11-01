@@ -1,9 +1,11 @@
-// パーキングジャム: 陽性 origin/main（challenge-levers-v1。PR #457 の前と同じ問題集）と、作り直し案 PR #457 head c7024212（dependency-choice-v2）
+// パーキングジャム: 盤面の外へ車を出していく。補助なし（向きだけ見て押す）・出口だけ見える・合法手を読むの3段で比べる。
+// 使い方は scripts/naive-play-core.ts の冒頭。引数は frontend/src/games/parking-jam のパス（版ごとに複数可）。
 import {
   type Adapter,
   fmt,
   randomBlind,
   randomLegal,
+  readNaivePlayOptions,
   runLevel,
   sampleEvenly,
   type Summary,
@@ -13,25 +15,19 @@ import {
 type S = { remainingVehicleIds: readonly string[] };
 type M = { vehicleId: string; direction: "up" | "right" | "down" | "left" };
 
-const N = Number(process.env.N ?? 30);
-const PLAYS = Number(process.env.PLAYS ?? 5);
-
-const versions = [
-  { name: "pos main(challenge-levers-v1)", root: "/tmp/naive/main/frontend/src/games/parking-jam" },
-  { name: "after #457 head(dependency-choice-v2)", root: "/tmp/naive/pj-new/frontend/src/games/parking-jam" },
-];
+const options = readNaivePlayOptions({ n: 30, plays: 5, levels: [1, 2, 3, 4, 5] });
 
 const out: Summary[] = [];
 const extra: string[] = [];
 
-for (const v of versions) {
-  const rules = await import(`${v.root}/puzzle/rules.ts`);
-  const boardMod = await import(`${v.root}/puzzle/board.ts`);
-  const pool = await import(`${v.root}/problem/problem-pool.ts`);
-  const gen = await import(`${v.root}/problem/generator.ts`);
-  for (const level of [1, 2, 3, 4, 5]) {
+for (const root of options.roots) {
+  const rules = await import(`${root}/puzzle/rules.ts`);
+  const boardMod = await import(`${root}/puzzle/board.ts`);
+  const pool = await import(`${root}/problem/problem-pool.ts`);
+  const gen = await import(`${root}/problem/generator.ts`);
+  for (const level of options.levels) {
     const t0 = Date.now();
-    const entries = sampleEvenly(pool.listParkingJamPoolEntries(level), N);
+    const entries = sampleEvenly(pool.listParkingJamPoolEntries(level), options.n);
     // biome-ignore lint: any
     const boards: any[] = entries.map(
       (e: unknown) => gen.restoreParkingJamProblemWithoutAnalysis(pool.toParkingJamPoolIdentity(e)).problem.board,
@@ -54,24 +50,28 @@ for (const v of versions) {
       }
       return ms;
     };
-    // biome-ignore lint: any
-    const adapter = (wallAware: boolean) => (board: any): Adapter<S, M> => ({
-      initial: boardMod.createParkingJamInitialState(board),
-      minMoves: board.vehicles.length,
-      legalMoves: (s) => rules.listParkingJamLegalMoves(board, s),
-      blindMoves: (s) => axisMoves(board, s, wallAware),
-      apply: (s, m) => rules.applyParkingJamMove(board, s, m),
-      isCleared: (s) => s.remainingVehicleIds.length === 0,
-      key: (s) => [...s.remainingVehicleIds].sort().join(","),
-      progress: (s) => -s.remainingVehicleIds.length,
-    });
+    const adapter =
+      (wallAware: boolean) =>
+      // biome-ignore lint: any
+      (board: any): Adapter<S, M> => ({
+        initial: boardMod.createParkingJamInitialState(board),
+        minMoves: board.vehicles.length,
+        legalMoves: (s) => rules.listParkingJamLegalMoves(board, s),
+        blindMoves: (s) => axisMoves(board, s, wallAware),
+        apply: (s, m) => rules.applyParkingJamMove(board, s, m),
+        isCleared: (s) => s.remainingVehicleIds.length === 0,
+        key: (s) => [...s.remainingVehicleIds].sort().join(","),
+        progress: (s) => -s.remainingVehicleIds.length,
+      });
     const budget = { maxMovesPerAttempt: 100, maxAttempts: 1 };
-    const meta = { game: "parking-jam", version: v.name, level: String(level) };
-    out.push(...runLevel(meta, boards, adapter(false), [randomBlind(budget, "blind-random(no reading)")], PLAYS));
-    out.push(...runLevel(meta, boards, adapter(true), [randomBlind(budget, "blind-wall-aware(sees exits only)")], PLAYS));
-    out.push(...runLevel(meta, boards, adapter(false), [randomLegal(budget, "random-legal(reads paths)")], PLAYS));
+    const meta = { game: "parking-jam", version: root, level: String(level) };
+    out.push(...runLevel(meta, boards, adapter(false), [randomBlind(budget, "blind-random(no reading)")], options.plays));
+    out.push(
+      ...runLevel(meta, boards, adapter(true), [randomBlind(budget, "blind-wall-aware(sees exits only)")], options.plays),
+    );
+    out.push(...runLevel(meta, boards, adapter(false), [randomLegal(budget, "random-legal(reads paths)")], options.plays));
 
-    // 合法な車の割合（今出せる車 / 残りの車）を、ランダムな合法手順に沿って平均する
+    // 合法な車の割合（今出せる車 / 残りの車）を、決まった合法手順に沿って平均する。入口の広さの代理
     let sumFrac = 0;
     let steps = 0;
     let minFracSum = 0;
@@ -95,13 +95,15 @@ for (const v of versions) {
       minFracSum += minFrac;
     }
     extra.push(
-      `| ${v.name} | ${level} | ${(carCount / boards.length).toFixed(1)} | ${(sumFrac / steps).toFixed(2)} | ${(minFracSum / boards.length).toFixed(2)} |`,
+      `| ${root} | ${level} | ${(carCount / boards.length).toFixed(1)} | ${(sumFrac / steps).toFixed(2)} | ${(minFracSum / boards.length).toFixed(2)} |`,
     );
-    console.error(`${v.name} ${level} ${Date.now() - t0}ms`);
+    console.error(`${root} ${level} ${Date.now() - t0}ms`);
   }
 }
 
 console.log(tableHeader);
 for (const s of out) console.log(fmt(s));
-console.log("\n| version | level | cars(mean) | legal-car fraction (mean over steps) | min legal-car fraction (mean over problems) |\n|---|---|---|---|---|");
+console.log(
+  "\n| version | level | cars(mean) | legal-car fraction (mean over steps) | min legal-car fraction (mean over problems) |\n|---|---|---|---|---|",
+);
 for (const e of extra) console.log(e);

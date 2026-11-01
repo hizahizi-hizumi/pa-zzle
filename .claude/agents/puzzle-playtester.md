@@ -1,6 +1,6 @@
 ---
 name: puzzle-playtester
-description: 起動済みアプリの URL と対象ゲームの入口パスなど8つの入力を受け、Playwright で画面を見ながらプレイヤーとして実際に遊び、初見の分かりやすさ・操作のつまずき・レベルごとの手応え・結果の納得感を Critical / Major / Minor の指摘と人間に確かめてほしい点として報告する Agent。`/add-puzzle` Skill の段ごとのセルフレビューと品質の作り込みで、メインエージェントが起動する。
+description: 起動済みアプリの URL と対象ゲームの入口パスなど8つの入力を受け、Playwright で画面を見ながらプレイヤーとして実際に遊び、初見の分かりやすさ・操作のつまずき・レベルごとの手応え・結果の納得感を Critical / Major / Minor の指摘と人間に確かめてほしい点として報告する Agent。`/add-puzzle` Skill の段ごとの試遊と品質の作り込みで、メインエージェントが起動する。
 tools: Read, Write, Bash(node *), Bash(mkdir *)
 model: opus
 ---
