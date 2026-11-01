@@ -32,6 +32,9 @@ PLAY_ATTRIBUTE = re.compile(
     r"\[\s*data-pictogram-motion\s*=\s*(?:\"play\"|'play'|play)\s*\]", re.IGNORECASE
 )
 MOTION_ATTRIBUTE = re.compile(r"data-pictogram-motion", re.IGNORECASE)
+# The host conditions sit on an ancestor at any depth (a span, or html for .dark), so they are
+# followed only by the descendant combinator; `>`, `+`, `~` after them depend on the host markup.
+PLAY_ATTRIBUTE_NOT_DESCENDANT = re.compile(PLAY_ATTRIBUTE.pattern + r"\s*[>+~]", re.IGNORECASE)
 CLASS_TOKEN = re.compile(r"\.(-?[_a-zA-Z][\w-]*)")
 VAR_REFERENCE = re.compile(r"var\(\s*(--[\w-]+)")
 CUSTOM_PROPERTY_DECLARATION = re.compile(r"^--[\w-]+$")
@@ -43,6 +46,9 @@ COMBINATORS = set(" \t\n\r>+~")
 DARK_LEADING_ANCESTOR = re.compile(r"^\.dark\s+(?=[^\s>+~])")
 DARK_IS_ANCESTOR = re.compile(r":(?:is|where)\(\s*\.dark\s+\*\s*\)")
 DARK_WORD = re.compile(r"(?<![\w-])dark(?![\w-])")
+DARK_NOT_DESCENDANT = re.compile(r"\.dark\s*[>+~]")
+# Paint values that a .dark rule cannot override while keyframes hold them literally.
+PAINT_PROPERTIES = {"color", "fill", "stroke", "stop-color", "flood-color", "lighting-color"}
 COLOR_PROPERTIES = {
     "color",
     "fill",
@@ -115,6 +121,8 @@ class StyleState:
     prefix: str
     report: Report
     dark_variables: set[str] = field(default_factory=set)
+    has_dark_rule: bool = False
+    literal_keyframe_paints: list[str] = field(default_factory=list)
     variable_usages: list[tuple[str, str, str]] = field(default_factory=list)
     animations: list[AnimationUse] = field(default_factory=list)
     # keyframes name -> {offset percent -> {property -> normalized value}}
@@ -320,6 +328,11 @@ def declarations(body: str) -> list[tuple[str, str]]:
 
 def strip_dark_condition(selector: str, prefix: str, report: Report) -> tuple[str, bool]:
     """Remove the dark-theme ancestor condition and report whether it was present."""
+    if DARK_NOT_DESCENDANT.search(selector):
+        report.error(
+            "<style>: the .dark ancestor condition must be followed by the descendant combinator "
+            f"(a space), not >, + or ~: {selector}"
+        )
     stripped, pseudo_count = DARK_IS_ANCESTOR.subn("", selector.strip())
     stripped, leading_count = DARK_LEADING_ANCESTOR.subn("", stripped.strip())
     without_own_classes = re.sub(rf"\.{re.escape(prefix)}[\w-]*", "", stripped)
@@ -541,6 +554,11 @@ def check_style_rule(block: CssBlock, state: StyleState, *, in_motion_media: boo
         for name in class_names(selector):
             if not name.startswith(prefix):
                 report.error(f"<style>: class name must start with {prefix}: .{name}")
+        if PLAY_ATTRIBUTE_NOT_DESCENDANT.search(selector):
+            report.error(
+                '<style>: [data-pictogram-motion="play"] must be followed by the descendant combinator '
+                f"(a space), not >, + or ~: {original}"
+            )
         if MOTION_ATTRIBUTE.search(subject):
             report.error(
                 f'<style>: [data-pictogram-motion="play"] must be on an ancestor, not the target: {original}'
@@ -561,6 +579,7 @@ def check_style_rule(block: CssBlock, state: StyleState, *, in_motion_media: boo
         gated_flags.append(gated)
 
     play_gated = in_motion_media and bool(gated_flags) and all(gated_flags)
+    state.has_dark_rule |= dark
     return check_declarations(
         block.body, state, play_gated=play_gated, dark=dark, where=f"<style> {block.prelude}"
     )
@@ -569,6 +588,8 @@ def check_style_rule(block: CssBlock, state: StyleState, *, in_motion_media: boo
 def check_keyframes(block: CssBlock, state: StyleState) -> None:
     prefix = state.prefix
     report = state.report
+    if block.prelude.lower().startswith("@-webkit-keyframes"):
+        report.error(f"<style>: use @keyframes, not @-webkit-keyframes: {block.prelude}")
     name = block.prelude.split(None, 1)[1].strip() if " " in block.prelude.strip() else ""
     name = name.strip("\"'")
     if not name.startswith(prefix):
@@ -594,6 +615,8 @@ def check_keyframes(block: CssBlock, state: StyleState) -> None:
                 has_segment_easing = True
             else:
                 pose[prop] = normalize_value(value)
+                if prop in PAINT_PROPERTIES and "var(" not in value:
+                    state.literal_keyframe_paints.append(f"{name} {prop}: {value.strip()}")
             check_css_values(value, state, f"@keyframes {name}", property_name=prop)
         for offset in offsets:
             stops.setdefault(offset, {}).update(pose)
@@ -870,6 +893,12 @@ def check_svg(candidate: Candidate, game_id: str, playback: str | None = None) -
             animated |= check_stylesheet(text, state)
 
     check_dark_variable_usage(state)
+    if state.has_dark_rule and state.literal_keyframe_paints:
+        report.warn(
+            "keyframes write paint colors as literal values while .dark rules switch colors; during "
+            "play a keyframes value wins over the .dark rule, so a color that changes with the theme "
+            f"must be var(--{prefix}...) switched by .dark: " + ", ".join(state.literal_keyframe_paints)
+        )
     if state.sampled_keyframes:
         report.warn(
             "many keyframe stops without animation-timing-function look like an easing sampled into "

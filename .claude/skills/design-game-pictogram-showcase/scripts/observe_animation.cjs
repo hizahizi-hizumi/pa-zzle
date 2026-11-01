@@ -1,33 +1,59 @@
 #!/usr/bin/env node
 // Observe showcase pictogram candidates in a real browser (Playwright Chromium) and report:
-//   (a) the static state against the end (once), the hold before the switch (cut) or the seam (seam),
-//       by computed style of every visible element
-//   (b) for cut, real frames around each cycle boundary: the frame before / after the switch and the
-//       number of in-between frames
-//   (c) that the hero stays in the static state under prefers-reduced-motion: reduce
-//   (d) how far any visible shape goes outside the 0 0 120 120 viewBox over one cycle
-//   (e) pageerror / console.error
+//   (a) the static state against the end (once: every animation at its own end), the hold before the
+//       switch (cut) or the seam (seam), by computed style of every visible element, in light and dark
+//   (b) for cut, real frames around each cycle boundary (detected by currentIteration, so a delay is
+//       allowed): the frame before / after the switch and the number of in-between frames
+//   (c) real frames from the moment the SVG is inserted: an element that shows the static state while
+//       its animation is still in its delay, and (once / cut) a first frame equal to the static state
+//   (d) that the hero stays in the static state under prefers-reduced-motion: reduce, in light and dark
+//   (e) how far any visible shape goes outside the 0 0 120 120 viewBox over one cycle
+//   (f) speed continuity: every moving shape is scanned with paused time every 2ms and the jump of its
+//       velocity between neighbouring steps (relative to its peak speed) is reported (WARN only)
+//   (g) optional: overlap between the shapes of two selectors over one cycle (--overlap A|B, WARN only)
+//   (h) the static state's visible bounds (viewBox units, stroke included) against the base pictogram and
+//       the median of the other games' pictogram.svg (NOTE only; references/motion.md)
+//   (i) pageerror / console.error
 // Each candidate is rendered alone in its own page (never in a srcdoc iframe; see references/self-review.md).
+// Theme colors come from frontend/styles/globals.css (:root and .dark), as make_review_gallery.py does.
 //
-// node observe_animation.cjs --manifest <manifest.json> [--only id,id] [--out <dir>] [--cycles 3.3] [--pixels]
+// Playwright is loaded with require('playwright'); run where it resolves (e.g. NODE_PATH holds a global
+// install). If it does not, run with NODE_PATH=<dir containing playwright> or install it there.
+//
+// node observe_animation.cjs --manifest <manifest.json> [--only id,id] [--out <dir>] [--cycles 3.3]
+//   [--pixels] [--overlap '<selector>|<selector>' ...] [--smooth-threshold 0.15] [--globals-css <file>]
+//   [--games-dir <dir>]
 'use strict';
 
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
 
+const REPOSITORY_ROOT = path.resolve(__dirname, '../../../..');
+const DEFAULT_GLOBALS_CSS = path.join(REPOSITORY_ROOT, 'frontend/styles/globals.css');
+const DEFAULT_GAMES_DIR = path.join(REPOSITORY_ROOT, 'frontend/src/games');
+const THEME_SELECTORS = { light: ':root', dark: '.dark' };
+const THEME_TOKENS = ['foreground', 'muted-foreground', 'background'];
+const FALLBACK_THEMES = {
+  light: { foreground: 'oklch(0.145 0 0)', 'muted-foreground': 'oklch(0.556 0 0)', background: 'oklch(1 0 0)' },
+  dark: { foreground: 'oklch(0.985 0 0)', 'muted-foreground': 'oklch(0.708 0 0)', background: 'oklch(0.145 0 0)' },
+};
 const HERO_SIZES = [177, 138];
-const LIST_SIZE = 50;
-const THEME = { strong: 'oklch(0.145 0 0)', soft: 'oklch(0.556 0 0)', background: '#ffffff' };
+// The selected list pictogram in the app is about 46px (phone) / 56px (desktop).
+const LIST_SIZE = 46;
 const NUMBER_TOLERANCE = 0.01;
 const END_OFFSET_MS = 0.01;
 const OVERFLOW_STEP_MS = 20;
 const HOLD_STEP_MS = 10;
+const SMOOTH_STEP_MS = 2;
+const SEAM_SCAN_PAST_MS = 200;
+const FLASH_MIN_RECORD_MS = 300;
 const PIXEL_CHANNEL_THRESHOLD = 24;
+const OVERLAP_MIN_AREA = 0.25;
 const PLAYBACKS = new Set(['once', 'cut', 'seam']);
 
 function parseArgs(argv) {
-  const args = { cycles: 3.3, only: [], pixels: false };
+  const args = { cycles: 3.3, only: [], pixels: false, overlap: [], smoothThreshold: 0.15, globalsCss: DEFAULT_GLOBALS_CSS, gamesDir: DEFAULT_GAMES_DIR };
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i];
     if (flag === '--manifest') args.manifest = argv[++i];
@@ -35,24 +61,59 @@ function parseArgs(argv) {
     else if (flag === '--only') args.only = argv[++i].split(',').filter(Boolean);
     else if (flag === '--cycles') args.cycles = Number(argv[++i]);
     else if (flag === '--pixels') args.pixels = true;
-    else throw new Error(`unknown argument: ${flag}`);
+    else if (flag === '--smooth-threshold') args.smoothThreshold = Number(argv[++i]);
+    else if (flag === '--globals-css') args.globalsCss = argv[++i];
+    else if (flag === '--games-dir') args.gamesDir = argv[++i];
+    else if (flag === '--overlap') {
+      const pair = argv[++i].split('|').map((part) => part.trim());
+      if (pair.length !== 2 || !pair[0] || !pair[1]) throw new Error(`--overlap takes '<selector>|<selector>': ${argv[i]}`);
+      args.overlap.push(pair);
+    } else throw new Error(`unknown argument: ${flag}`);
   }
-  if (!args.manifest) throw new Error('usage: observe_animation.cjs --manifest <manifest.json> [--only id,id] [--out dir] [--cycles 3.3] [--pixels]');
+  if (!args.manifest) {
+    throw new Error("usage: observe_animation.cjs --manifest <manifest.json> [--only id,id] [--out dir] [--cycles 3.3] [--pixels] [--overlap 'A|B'] [--smooth-threshold 0.15] [--globals-css file] [--games-dir dir]");
+  }
   return args;
 }
 
-function hostPage(svg, play) {
-  const motion = play ? ' data-pictogram-motion="play"' : '';
-  const heroes = HERO_SIZES.map((size) => `<span class="host hero"${motion} style="width:${size}px;height:${size}px">${svg}</span>`).join('');
-  return `<!doctype html><html><head><style>
-html,body{margin:0;background:${THEME.background}}
-body{display:flex;gap:8px;align-items:flex-start;padding:8px}
-.host{display:block;--game-pictogram-strong:${THEME.strong};--game-pictogram-soft:${THEME.soft}}
-.host>svg{display:block;width:100%;height:100%}
-</style></head><body>${heroes}<span class="host list" style="width:${LIST_SIZE}px;height:${LIST_SIZE}px">${svg}</span></body></html>`;
+function loadThemes(file) {
+  let css;
+  try {
+    css = fs.readFileSync(file, 'utf8');
+  } catch (error) {
+    console.error(`WARN: cannot read ${file}; using fallback theme values: ${error.message}`);
+    return FALLBACK_THEMES;
+  }
+  const themes = {};
+  for (const [theme, selector] of Object.entries(THEME_SELECTORS)) {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const block = (css.match(new RegExp(`^${escaped}\\s*\\{([\\s\\S]*?)^\\}`, 'm')) || [])[1] || '';
+    themes[theme] = {};
+    for (const token of THEME_TOKENS) {
+      const match = block.match(new RegExp(`--${token}\\s*:\\s*([^;]+);`));
+      if (!match) console.error(`WARN: --${token} not found in ${selector} of ${file}; using fallback`);
+      themes[theme][token] = match ? match[1].trim() : FALLBACK_THEMES[theme][token];
+    }
+  }
+  return themes;
 }
 
-// Runs in the page. Collects the computed style that decides how each element looks.
+// The host page: play attribute on an ancestor span, .dark on <html>, like the app. With deferred the
+// hosts are empty and the SVG is inserted later by __pz.live() so that its very first frames are seen.
+function hostPage(svg, { play, theme, themes, deferred }) {
+  const colors = themes[theme];
+  const motion = play ? ' data-pictogram-motion="play"' : '';
+  const content = deferred ? '' : svg;
+  const heroes = HERO_SIZES.map((size) => `<span class="host hero"${motion} style="width:${size}px;height:${size}px">${content}</span>`).join('');
+  return `<!doctype html><html${theme === 'dark' ? ' class="dark"' : ''}><head><style>
+html,body{margin:0;background:${colors.background}}
+body{display:flex;gap:8px;align-items:flex-start;padding:8px}
+.host{display:block;--game-pictogram-strong:${colors.foreground};--game-pictogram-soft:${colors['muted-foreground']}}
+.host>svg{display:block;width:100%;height:100%}
+</style></head><body>${heroes}<span class="host list" style="width:${LIST_SIZE}px;height:${LIST_SIZE}px">${content}</span></body></html>`;
+}
+
+// Runs in the page. Collects the computed style that decides how each element looks, and seeks / scans.
 const IN_PAGE = `
 window.__pz = (() => {
   const PROPS = ['transform', 'translate', 'rotate', 'scale', 'opacity', 'fill', 'stroke', 'fill-opacity',
@@ -63,6 +124,7 @@ window.__pz = (() => {
   const firstHero = () => document.querySelector('.host.hero');
   const elementsOf = (host) => [...host.querySelector('svg').querySelectorAll('*')]
     .filter((el) => !SKIP.has(el.localName) && !el.closest('defs'));
+  const keyOf = (el, index) => index + ':' + el.localName + (el.getAttribute('class') ? '.' + el.getAttribute('class') : '');
   const effectiveOpacity = (el, svg) => {
     let value = 1;
     for (let node = el; node && node !== svg.parentElement; node = node.parentElement) {
@@ -78,16 +140,48 @@ window.__pz = (() => {
       const style = getComputedStyle(el);
       const props = {};
       for (const prop of PROPS) props[prop] = style.getPropertyValue(prop);
-      return { key: index + ':' + el.localName + (el.getAttribute('class') ? '.' + el.getAttribute('class') : ''), visible: effectiveOpacity(el, svg) > 0.001, props };
+      return { key: keyOf(el, index), visible: effectiveOpacity(el, svg) > 0.001, props };
     });
   };
   const animations = (host) => host ? host.getAnimations({ subtree: true }) : document.getAnimations();
-  const cycle = () => animations().reduce((longest, animation) => {
+  const timings = () => animations(firstHero()).map((animation) => {
     const timing = animation.effect.getComputedTiming();
-    const iterations = Number.isFinite(timing.iterations) ? timing.iterations : 1;
-    return Math.max(longest, (timing.delay || 0) + Number(timing.duration || 0) * iterations);
-  }, 0);
+    return { delay: timing.delay || 0, duration: Number(timing.duration) || 0, finite: Number.isFinite(timing.iterations),
+      endTime: Number.isFinite(timing.endTime) ? timing.endTime : null };
+  });
+  // Seek every animation to one absolute time.
   const seek = (time) => animations().forEach((animation) => { animation.pause(); animation.currentTime = time; });
+  // Seek every animation to its own start (its delay, the 0% keyframe) or its own end: just before the end
+  // of a one-shot animation, or just before the end of the first iteration of a loop.
+  const seekEach = (where, epsilon) => animations().forEach((animation) => {
+    const timing = animation.effect.getComputedTiming();
+    const delay = timing.delay || 0;
+    const end = Number.isFinite(timing.endTime) ? timing.endTime : delay + Number(timing.duration || 0);
+    animation.pause();
+    animation.currentTime = where === 'start' ? delay : end - epsilon;
+  });
+  // Union of the visible shapes (stroke included) in viewBox units.
+  const bounds = () => {
+    const host = firstHero();
+    const svg = host.querySelector('svg');
+    const box = svg.getBoundingClientRect();
+    const unit = 120 / box.width;
+    let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+    elementsOf(host).forEach((el) => {
+      if (!SHAPES.has(el.localName) || effectiveOpacity(el, svg) <= 0.001) return;
+      const rect = el.getBoundingClientRect();
+      if (rect.width === 0 && rect.height === 0) return;
+      const style = getComputedStyle(el);
+      const screen = el.getScreenCTM();
+      const half = style.stroke !== 'none' ? (parseFloat(style.strokeWidth) || 0) * (screen ? Math.hypot(screen.a, screen.b) : 1) / 2 : 0;
+      left = Math.min(left, rect.left - half); top = Math.min(top, rect.top - half);
+      right = Math.max(right, rect.right + half); bottom = Math.max(bottom, rect.bottom + half);
+    });
+    if (!Number.isFinite(left)) return null;
+    const round = (value) => Number(value.toFixed(1));
+    const width = (right - left) * unit, height = (bottom - top) * unit;
+    return { width: round(width), height: round(height), centerX: round(((left + right) / 2 - box.left) * unit), centerY: round(((top + bottom) / 2 - box.top) * unit) };
+  };
   const overflow = () => {
     const host = firstHero();
     const svg = host.querySelector('svg');
@@ -105,21 +199,127 @@ window.__pz = (() => {
         strokePx = (parseFloat(style.strokeWidth) || 0) * (screen ? Math.hypot(screen.a, screen.b) : 1) / 2;
       }
       const margin = (Math.min(rect.left - box.left, box.right - rect.right, rect.top - box.top, box.bottom - rect.bottom) - strokePx) * unit;
-      if (margin < worst.margin) worst = { margin, key: index + ':' + el.localName + (el.getAttribute('class') ? '.' + el.getAttribute('class') : '') };
+      if (margin < worst.margin) worst = { margin, key: keyOf(el, index) };
     });
     return worst;
   };
-  const record = (durationMs) => new Promise((resolve) => {
-    const anim = animations(firstHero())[0];
+  // Area (viewBox units^2) covered by a visible shape of both selectors: bounding boxes first, then a
+  // 1px grid tested with isPointInFill / isPointInStroke in each shape's own coordinates.
+  const overlap = (pairs) => {
+    const host = firstHero();
+    const svg = host.querySelector('svg');
+    const unit = 120 / svg.getBoundingClientRect().width;
+    const shapesOf = (selector) => [...svg.querySelectorAll(selector)]
+      .flatMap((el) => [el, ...el.querySelectorAll('*')])
+      .filter((el) => SHAPES.has(el.localName) && effectiveOpacity(el, svg) > 0.001);
+    const inside = (el, x, y) => {
+      const matrix = el.getScreenCTM();
+      if (!matrix) return false;
+      const point = new DOMPoint(x, y).matrixTransform(matrix.inverse());
+      if (el.isPointInFill(point)) return true;
+      return getComputedStyle(el).stroke !== 'none' && el.isPointInStroke(point);
+    };
+    return pairs.map(([selectorA, selectorB]) => {
+      const groupA = shapesOf(selectorA);
+      const groupB = shapesOf(selectorB).filter((el) => !groupA.includes(el));
+      let hits = 0;
+      const counted = new Set();
+      for (const a of groupA) {
+        const ra = a.getBoundingClientRect();
+        for (const b of groupB) {
+          const rb = b.getBoundingClientRect();
+          const left = Math.max(ra.left, rb.left), right = Math.min(ra.right, rb.right);
+          const top = Math.max(ra.top, rb.top), bottom = Math.min(ra.bottom, rb.bottom);
+          if (right <= left || bottom <= top) continue;
+          for (let x = Math.floor(left) + 0.5; x < right; x += 1) {
+            for (let y = Math.floor(top) + 0.5; y < bottom; y += 1) {
+              const key = x + ',' + y;
+              if (counted.has(key)) continue;
+              if (inside(a, x, y) && inside(b, x, y)) { counted.add(key); hits++; }
+            }
+          }
+        }
+      }
+      return hits * unit * unit;
+    });
+  };
+  // Speed continuity: positions (viewBox units) of the bounding-box corners and centre of every shape,
+  // through getScreenCTM (it includes the CSS transforms), at paused times from..to every step ms.
+  const smoothness = (from, to, step) => {
+    const host = firstHero();
+    const svg = host.querySelector('svg');
+    const unit = 120 / svg.getBoundingClientRect().width;
+    const shapes = elementsOf(host).map((el, index) => ({ el, key: keyOf(el, index) })).filter(({ el }) => SHAPES.has(el.localName));
+    const series = shapes.map(() => []);
+    const times = [];
+    for (let time = from; time < to; time += step) {
+      seek(time);
+      times.push(time);
+      shapes.forEach(({ el }, k) => {
+        const matrix = el.getScreenCTM();
+        let box = null;
+        try { box = el.getBBox(); } catch {}
+        if (!matrix || !box || effectiveOpacity(el, svg) <= 0.001) { series[k].push(null); return; }
+        const corners = [[box.x, box.y], [box.x + box.width, box.y], [box.x, box.y + box.height],
+          [box.x + box.width, box.y + box.height], [box.x + box.width / 2, box.y + box.height / 2]];
+        series[k].push(corners.map(([x, y]) => { const p = new DOMPoint(x, y).matrixTransform(matrix); return [p.x * unit, p.y * unit]; }));
+      });
+    }
+    const results = [];
+    shapes.forEach(({ key }, k) => {
+      const samples = series[k];
+      const velocities = [];
+      let peak = 0;
+      let extent = 0;
+      for (let i = 1; i < samples.length; i++) {
+        if (!samples[i] || !samples[i - 1]) { velocities.push(null); continue; }
+        const v = samples[i].map((p, j) => [(p[0] - samples[i - 1][j][0]) / step, (p[1] - samples[i - 1][j][1]) / step]);
+        velocities.push(v);
+        v.forEach(([vx, vy]) => { peak = Math.max(peak, Math.hypot(vx, vy)); });
+      }
+      const visible = samples.filter(Boolean);
+      if (visible.length) {
+        visible[0].forEach((_, j) => {
+          const xs = visible.map((s) => s[j][0]); const ys = visible.map((s) => s[j][1]);
+          extent = Math.max(extent, Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+        });
+      }
+      if (extent < 0.5 || peak === 0) return;
+      let worst = 0, at = null;
+      for (let i = 1; i < velocities.length; i++) {
+        const a = velocities[i - 1], b = velocities[i];
+        if (!a || !b) continue;
+        a.forEach(([ax, ay], j) => {
+          const [bx, by] = b[j];
+          if (Math.max(Math.hypot(ax, ay), Math.hypot(bx, by)) < peak * 0.02) return;
+          const jump = Math.hypot(bx - ax, by - ay) / peak;
+          if (jump > worst) { worst = jump; at = times[i]; }
+        });
+      }
+      results.push({ element: key, peakUnitsPerSecond: Number((peak * 1000).toFixed(1)), worstJump: Number(worst.toFixed(3)), atMs: at });
+    });
+    return results;
+  };
+  // Insert the SVG into every (empty) host and record real frames from the first one. Each frame keeps
+  // the reference animation time and iteration, the state, and which elements are still in their delay.
+  const live = (svg, durationMs) => new Promise((resolve) => {
+    document.querySelectorAll('.host').forEach((host) => { host.innerHTML = svg; });
     const frames = [];
     const start = performance.now();
     const tick = () => {
-      frames.push({ time: anim ? anim.currentTime : null, state: state() });
+      const host = firstHero();
+      const reference = animations(host)[0];
+      const timing = reference ? reference.effect.getComputedTiming() : null;
+      const delayed = elementsOf(host).map((el) => {
+        const own = el.getAnimations();
+        return own.length > 0 && own.every((animation) => (animation.currentTime || 0) < (animation.effect.getComputedTiming().delay || 0));
+      });
+      frames.push({ time: reference ? reference.currentTime || 0 : null, iteration: timing ? timing.currentIteration : null, state: state(), delayed });
       if (performance.now() - start < durationMs) requestAnimationFrame(tick); else resolve(frames);
     };
     requestAnimationFrame(tick);
   });
-  return { state, cycle, seek, overflow, record, count: () => animations().length };
+  return { state, timings, seek, seekEach, bounds, overflow, overlap, smoothness, live, count: () => animations().length };
 })();
 `;
 
@@ -141,24 +341,17 @@ function sameValue(prop, a, b) {
   return leftNumbers.every((n, i) => Math.abs(Number(n) - Number(rightNumbers[i])) <= NUMBER_TOLERANCE);
 }
 
-// Differences between two states; an element invisible in both is ignored (its transform or color
-// does not show).
+// Differences of one element; an element invisible in both is ignored (its transform or color does not show).
+function elementDifferences(element, other) {
+  if (!element.visible && !other.visible) return [];
+  if (element.visible !== other.visible) return [`${element.key} visible ${element.visible} / ${other.visible}`];
+  return Object.keys(element.props)
+    .filter((prop) => !sameValue(prop, element.props[prop], other.props[prop]))
+    .map((prop) => `${element.key} ${prop}: ${element.props[prop]} / ${other.props[prop]}`);
+}
+
 function differences(a, b) {
-  const result = [];
-  a.forEach((element, index) => {
-    const other = b[index];
-    if (!element.visible && !other.visible) return;
-    if (element.visible !== other.visible) {
-      result.push(`${element.key} visible ${element.visible} / ${other.visible}`);
-      return;
-    }
-    for (const prop of Object.keys(element.props)) {
-      if (!sameValue(prop, element.props[prop], other.props[prop])) {
-        result.push(`${element.key} ${prop}: ${element.props[prop]} / ${other.props[prop]}`);
-      }
-    }
-  });
-  return result;
+  return a.flatMap((element, index) => elementDifferences(element, b[index]));
 }
 
 async function pixelDifference(page, a, b) {
@@ -181,12 +374,12 @@ async function pixelDifference(page, a, b) {
   }, [a.toString('base64'), b.toString('base64'), PIXEL_CHANNEL_THRESHOLD]);
 }
 
-async function render(context, svg, play) {
+async function render(context, svg, options) {
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (error) => errors.push('pageerror: ' + error.message));
   page.on('console', (message) => { if (message.type() === 'error') errors.push('console.error: ' + message.text()); });
-  await page.setContent(hostPage(svg, play));
+  await page.setContent(hostPage(svg, options));
   await page.addScriptTag({ content: IN_PAGE });
   return { page, errors };
 }
@@ -198,12 +391,15 @@ function classify(state, references) {
   return 'M';
 }
 
-// Reads the rAF record around every cycle boundary of a cut loop.
-function cutBoundaries(frames, period, references) {
+// Reads the rAF record around every cycle boundary of a cut loop. A boundary is where the iteration of
+// the reference animation goes up, so an animation-delay before the first iteration does not shift it.
+function cutBoundaries(frames, references) {
   const classes = frames.map((frame) => classify(frame.state, references));
   const boundaries = [];
   for (let i = 1; i < frames.length; i++) {
-    if (Math.floor(frames[i - 1].time / period) === Math.floor(frames[i].time / period)) continue;
+    const previous = frames[i - 1].iteration;
+    const current = frames[i].iteration;
+    if (previous == null || current == null || current <= previous) continue;
     let before = i - 1;
     while (before >= 0 && classes[before] !== 'S') before--;
     const intermediateBefore = i - 1 - before;
@@ -227,119 +423,257 @@ function cutBoundaries(frames, period, references) {
   return { boundaries, firstFrame: classes[0] };
 }
 
+// Elements that show the static state in real frames while their animation is still in its delay,
+// although their start pose (0% keyframe) differs from it: animation-fill-mode backwards / both is missing.
+function delayFlashes(frames, startState, staticState) {
+  const flashes = new Map();
+  frames.forEach((frame, index) => {
+    frame.delayed.forEach((delayed, k) => {
+      if (!delayed || flashes.has(k)) return;
+      if (!elementDifferences(startState[k], staticState[k]).length) return;
+      if (!elementDifferences(frame.state[k], staticState[k]).length) flashes.set(k, { element: frame.state[k].key, frame: index, atMs: Math.round(frame.time || 0) });
+    });
+  });
+  return [...flashes.values()];
+}
+
+async function staticBounds(context, svg, themes) {
+  const { page } = await render(context, svg, { play: false, theme: 'light', themes });
+  const result = await page.evaluate(() => window.__pz.bounds());
+  await page.close();
+  return result;
+}
+
+const size = (bounds) => Math.sqrt(bounds.width * bounds.height);
+const median = (values) => { const sorted = [...values].sort((a, b) => a - b); const mid = Math.floor(sorted.length / 2); return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2; };
+
+// Bounds of the base pictogram and of the other games' pictogram.svg, measured once.
+async function referenceBounds(browser, manifest, manifestPath, options) {
+  const context = await browser.newContext({ viewport: { width: 420, height: 200 }, deviceScaleFactor: 1 });
+  const result = { base: null, others: [] };
+  if (manifest.base_pictogram) {
+    const file = path.isAbsolute(manifest.base_pictogram) ? manifest.base_pictogram : path.join(path.dirname(manifestPath), manifest.base_pictogram);
+    if (fs.existsSync(file)) result.base = await staticBounds(context, fs.readFileSync(file, 'utf8'), options.themes);
+  }
+  if (fs.existsSync(options.gamesDir)) {
+    for (const game of fs.readdirSync(options.gamesDir).sort()) {
+      const file = path.join(options.gamesDir, game, 'assets/pictogram.svg');
+      if (game === manifest.game_id || !fs.existsSync(file)) continue;
+      const bounds = await staticBounds(context, fs.readFileSync(file, 'utf8'), options.themes);
+      if (bounds) result.others.push({ game, ...bounds });
+    }
+  }
+  await context.close();
+  return result;
+}
+
+// Static state, start pose and end pose in one theme; compares the end (and the seam start) with the static state.
+async function poses(context, svg, candidate, theme, options, report) {
+  const suffix = theme === 'light' ? '' : `-${theme}`;
+  const rest = await render(context, svg, { play: false, theme, themes: options.themes });
+  const staticState = await rest.page.evaluate(() => window.__pz.state());
+  const staticShot = await rest.page.locator('.host.hero').first().screenshot();
+  fs.writeFileSync(path.join(options.out, `${candidate.id}${suffix}-static.png`), staticShot);
+
+  const play = await render(context, svg, { play: true, theme, themes: options.themes });
+  const timings = await play.page.evaluate(() => window.__pz.timings());
+  const result = { rest, play, staticState, timings };
+  if (!timings.length) return result;
+  const shot = async (name) => {
+    const buffer = await play.page.locator('.host.hero').first().screenshot();
+    fs.writeFileSync(path.join(options.out, `${candidate.id}${suffix}-${name}.png`), buffer);
+    return buffer;
+  };
+  await play.page.evaluate(() => window.__pz.seekEach('start', 0));
+  result.startState = await play.page.evaluate(() => window.__pz.state());
+  await shot('start');
+  await play.page.evaluate((epsilon) => window.__pz.seekEach('end', epsilon), END_OFFSET_MS);
+  result.endState = await play.page.evaluate(() => window.__pz.state());
+  const endShot = await shot('end');
+  const label = { once: 'end', cut: 'hold (100%)', seam: 'seam (100%)' }[candidate.playback];
+  const endDiff = differences(result.endState, staticState);
+  report.themes[theme].endVsStatic = endDiff;
+  if (endDiff.length) report.failures.push(`${theme}: ${label} differs from the static state: ${endDiff.slice(0, 5).join(' | ')}`);
+  if (candidate.playback === 'seam') {
+    const startDiff = differences(result.startState, staticState);
+    report.themes[theme].startVsStatic = startDiff;
+    if (startDiff.length) report.failures.push(`${theme}: seam (0%) differs from the static state: ${startDiff.slice(0, 5).join(' | ')}`);
+  }
+  if (options.pixels) report.themes[theme].endVsStaticPixels = await pixelDifference(play.page, endShot, staticShot);
+  return result;
+}
+
+async function reducedMotion(browser, svg, theme, staticState, options, report) {
+  const reduced = await browser.newContext({ viewport: { width: 420, height: 200 }, reducedMotion: 'reduce' });
+  const page = await render(reduced, svg, { play: true, theme, themes: options.themes });
+  const count = await page.page.evaluate(() => window.__pz.count());
+  const diff = differences(await page.page.evaluate(() => window.__pz.state()), staticState);
+  report.themes[theme].reducedMotion = { animations: count, differences: diff };
+  if (count || diff.length) report.failures.push(`${theme}: reduced motion is not the static state: ${count} animation(s), ${diff.length} difference(s)`);
+  await reduced.close();
+  return page.errors;
+}
+
 async function observe(browser, candidate, options) {
-  const report = { id: candidate.id, playback: candidate.playback, failures: [], notes: [] };
+  const report = { id: candidate.id, playback: candidate.playback, failures: [], warnings: [], notes: [], themes: { light: {}, dark: {} } };
   const fail = (message) => report.failures.push(message);
   const svg = fs.readFileSync(candidate.file, 'utf8');
   const context = await browser.newContext({ viewport: { width: 420, height: 200 }, deviceScaleFactor: 1 });
+  const errors = [];
 
-  const rest = await render(context, svg, false);
-  const staticState = await rest.page.evaluate(() => window.__pz.state());
-  const staticShot = await rest.page.locator('.host.hero').first().screenshot();
-  fs.writeFileSync(path.join(options.out, `${candidate.id}-static.png`), staticShot);
-
-  const play = await render(context, svg, true);
-  const period = await play.page.evaluate(() => window.__pz.cycle());
-  report.periodMs = Math.round(period);
-  if (!period) fail('no running animation with the play attribute');
-  const at = async (time) => { await play.page.evaluate((t) => window.__pz.seek(t), time); return play.page.evaluate(() => window.__pz.state()); };
-  const shot = async (name) => {
-    const buffer = await play.page.locator('.host.hero').first().screenshot();
-    fs.writeFileSync(path.join(options.out, `${candidate.id}-${name}.png`), buffer);
-    return buffer;
-  };
-
-  if (period) {
-    const startState = await at(0);
-    await shot('start');
-    const endState = await at(period - END_OFFSET_MS);
-    const endShot = await shot('end');
-    const endDiff = differences(endState, staticState);
-    const label = { once: 'end', cut: 'hold (100%)', seam: 'seam (100%)' }[candidate.playback];
-    report.endVsStatic = endDiff;
-    if (endDiff.length) fail(`${label} differs from the static state: ${endDiff.slice(0, 5).join(' | ')}`);
-    if (candidate.playback === 'seam') {
-      const startDiff = differences(startState, staticState);
-      report.startVsStatic = startDiff;
-      if (startDiff.length) fail(`seam (0%) differs from the static state: ${startDiff.slice(0, 5).join(' | ')}`);
+  const dark = await poses(context, svg, candidate, 'dark', options, report);
+  errors.push(...dark.rest.errors, ...dark.play.errors, ...(await reducedMotion(browser, svg, 'dark', dark.staticState, options, report)));
+  const light = await poses(context, svg, candidate, 'light', options, report);
+  errors.push(...(await reducedMotion(browser, svg, 'light', light.staticState, options, report)));
+  const { play, staticState, startState, timings } = light;
+  const bounds = await light.rest.page.evaluate(() => window.__pz.bounds());
+  if (bounds) {
+    const references = options.references;
+    report.staticBounds = { ...bounds };
+    if (references.base) {
+      report.staticBounds.vsBase = { dx: Number((bounds.centerX - references.base.centerX).toFixed(1)), dy: Number((bounds.centerY - references.base.centerY).toFixed(1)), sizeRatio: Number((size(bounds) / size(references.base)).toFixed(2)) };
     }
+    if (references.others.length) {
+      report.staticBounds.vsOthers = { games: references.others.length, sizeRatioToMedian: Number((size(bounds) / median(references.others.map(size))).toFixed(2)),
+        centerYMedian: Number(median(references.others.map((b) => b.centerY)).toFixed(1)) };
+    }
+  }
+  if (!timings.length) fail('no running animation with the play attribute');
+
+  if (timings.length) {
+    const loop = candidate.playback !== 'once';
+    const reference = timings[0];
+    const windowEnd = Math.max(...timings.map((t) => (t.finite && t.endTime != null ? t.endTime : t.delay + t.duration)));
+    report.periodMs = Math.round(loop ? reference.duration : windowEnd);
+    report.delayMs = Math.round(Math.max(...timings.map((t) => t.delay)));
+    const at = async (time) => { await play.page.evaluate((t) => window.__pz.seek(t), time); return play.page.evaluate(() => window.__pz.state()); };
+
     if (candidate.playback === 'cut') {
+      if (timings.some((t) => t.duration !== reference.duration || t.delay !== reference.delay)) {
+        report.notes.push('animations do not share one duration and delay; hold and start beat follow the first animation');
+      }
       if (differences(startState, staticState).length === 0) {
         fail('0% equals the static state: a cut loop starts from a different pose; if 0% = 100% declare seam');
       }
-      let holdStart = period - END_OFFSET_MS;
-      for (let time = period - END_OFFSET_MS; time >= 0; time -= HOLD_STEP_MS) {
+      const cycleStart = reference.delay;
+      const cycleEnd = reference.delay + reference.duration - END_OFFSET_MS;
+      let holdStart = cycleEnd;
+      for (let time = cycleEnd; time >= cycleStart; time -= HOLD_STEP_MS) {
         if (differences(await at(time), staticState).length) break;
         holdStart = time;
       }
-      report.holdMs = Math.round(period - holdStart);
+      report.holdMs = Math.round(cycleEnd + END_OFFSET_MS - holdStart);
       let beatEnd = 0;
-      for (let time = 0; time < period; time += HOLD_STEP_MS) {
+      for (let time = cycleStart; time < cycleEnd; time += HOLD_STEP_MS) {
         if (differences(await at(time), startState).length) break;
-        beatEnd = time;
+        beatEnd = time - cycleStart;
       }
       report.startBeatMs = beatEnd;
-      report.stillRatio = Number(((report.holdMs + report.startBeatMs) / period).toFixed(3));
-    }
-    if (options.pixels) {
-      report.endVsStaticPixels = await pixelDifference(play.page, endShot, staticShot);
+      report.stillRatio = Number(((report.holdMs + report.startBeatMs) / reference.duration).toFixed(3));
     }
 
     let worst = { margin: Infinity, key: null, atMs: 0 };
-    for (let time = 0; time < period; time += OVERFLOW_STEP_MS) {
+    const overlaps = options.overlap.map((pair) => ({ pair: pair.join(' | '), maxArea: 0, atMs: null }));
+    for (let time = 0; time < windowEnd; time += OVERFLOW_STEP_MS) {
       await play.page.evaluate((t) => window.__pz.seek(t), time);
       const sample = await play.page.evaluate(() => window.__pz.overflow());
       if (sample.margin < worst.margin) worst = { ...sample, atMs: time };
+      if (overlaps.length) {
+        const areas = await play.page.evaluate((pairs) => window.__pz.overlap(pairs), options.overlap);
+        areas.forEach((area, i) => { if (area > overlaps[i].maxArea) { overlaps[i].maxArea = area; overlaps[i].atMs = time; } });
+      }
     }
     report.minViewBoxMargin = { margin: Number(worst.margin.toFixed(2)), element: worst.key, atMs: worst.atMs };
     if (worst.margin < 0) fail(`goes outside the viewBox by ${(-worst.margin).toFixed(2)} at ${worst.atMs}ms (${worst.key})`);
+    for (const [i, entry] of overlaps.entries()) {
+      entry.maxArea = Number(entry.maxArea.toFixed(2));
+      if (entry.maxArea >= OVERLAP_MIN_AREA) {
+        await play.page.evaluate((t) => window.__pz.seek(t), entry.atMs);
+        fs.writeFileSync(path.join(options.out, `${candidate.id}-overlap-${i + 1}.png`), await play.page.locator('.host.hero').first().screenshot());
+        report.warnings.push(`overlap ${entry.pair}: ${entry.maxArea} viewBox units^2 at ${entry.atMs}ms (${candidate.id}-overlap-${i + 1}.png); judge whether it is intended`);
+      }
+    }
+    report.overlaps = overlaps;
 
+    // One iteration for once / cut (the cut switch is intended), one iteration plus the wrap for seam.
+    const scanFrom = loop ? Math.min(...timings.map((t) => t.delay)) : 0;
+    const scanTo = candidate.playback === 'seam' ? reference.delay + reference.duration + SEAM_SCAN_PAST_MS : (loop ? reference.delay + reference.duration : windowEnd);
+    const smooth = await play.page.evaluate(([from, to, step]) => window.__pz.smoothness(from, to, step), [scanFrom, scanTo, SMOOTH_STEP_MS]);
+    smooth.sort((a, b) => b.worstJump - a.worstJump);
+    report.smoothness = { stepMs: SMOOTH_STEP_MS, threshold: options.smoothThreshold, movingShapes: smooth.length, shapes: smooth };
+    smooth.filter((entry) => entry.worstJump > options.smoothThreshold).forEach((entry) => {
+      report.warnings.push(`speed jumps ${entry.worstJump} of peak at ${entry.atMs}ms (${entry.element}); a stutter unless it is an intended collision or appearance`);
+    });
+
+    const live = await render(context, svg, { play: true, theme: 'light', themes: options.themes, deferred: true });
+    const recordMs = candidate.playback === 'cut'
+      ? reference.delay + reference.duration * options.cycles
+      : report.delayMs + FLASH_MIN_RECORD_MS;
+    const frames = await live.page.evaluate(([markup, ms]) => window.__pz.live(markup, ms), [svg, recordMs]);
+    const flashes = delayFlashes(frames, startState, staticState);
+    report.delayFlashes = flashes;
+    flashes.forEach((flash) => fail(`static state shows during animation-delay (${flash.element}, frame ${flash.frame}); add animation-fill-mode backwards or both`));
+    const startsAwayFromStatic = differences(startState, staticState).length > 0;
+    const firstFrame = classify(frames[0].state, { S: staticState, P0: startState });
+    report.firstFrame = firstFrame;
+    if (candidate.playback !== 'seam' && startsAwayFromStatic && firstFrame === 'S') {
+      fail(candidate.playback === 'cut'
+        ? 'the first frame of the first play shows the static (payoff) pose; the switch is not at the cycle boundary, or the delay has no backwards fill'
+        : 'the first frame of the play shows the static state although the start pose differs; the delay has no backwards fill');
+    }
     if (candidate.playback === 'cut') {
-      const live = await render(context, svg, true);
-      const frames = await live.page.evaluate((ms) => window.__pz.record(ms), period * options.cycles);
-      const { boundaries, firstFrame } = cutBoundaries(frames, period, { S: staticState, P0: startState });
+      const { boundaries } = cutBoundaries(frames, { S: staticState, P0: startState });
       report.realFrames = { frames: frames.length, firstFrame, boundaries };
-      if (firstFrame === 'S') fail('the first frame of the first play shows the static (payoff) pose; the switch is not at the cycle boundary');
       if (!boundaries.length) fail('no cycle boundary was crossed while recording');
       for (const boundary of boundaries) {
         if (boundary.frameBefore !== 'S') fail(`frame before the switch at ${boundary.atMs}ms is not the static state (${boundary.frameBefore})`);
         if (boundary.intermediateFrames > 0) fail(`${boundary.intermediateFrames} in-between frame(s) around the switch at ${boundary.atMs}ms`);
         if (boundary.frameAfter !== 'P0') report.notes.push(`frame after the switch at ${boundary.atMs}ms is ${boundary.frameAfter}: motion starts without a start beat`);
       }
-      report.errors = live.errors;
     }
+    errors.push(...live.errors);
   }
 
-  const reduced = await browser.newContext({ viewport: { width: 420, height: 200 }, reducedMotion: 'reduce' });
-  const reducedPage = await render(reduced, svg, true);
-  const reducedCount = await reducedPage.page.evaluate(() => window.__pz.count());
-  const reducedDiff = differences(await reducedPage.page.evaluate(() => window.__pz.state()), staticState);
-  report.reducedMotion = { animations: reducedCount, differences: reducedDiff };
-  if (reducedCount || reducedDiff.length) fail(`reduced motion is not the static state: ${reducedCount} animation(s), ${reducedDiff.length} difference(s)`);
-
-  report.errors = [...(report.errors || []), ...rest.errors, ...play.errors, ...reducedPage.errors];
-  if (report.errors.length) fail(`page errors: ${report.errors.join(' | ')}`);
-  await reduced.close();
+  errors.push(...light.rest.errors, ...play.errors);
+  report.errors = errors;
+  if (errors.length) fail(`page errors: ${errors.join(' | ')}`);
   await context.close();
   return report;
 }
 
 function printReport(report) {
-  const lines = [`candidate: ${report.id} (${report.playback}, period ${report.periodMs}ms)`];
+  const lines = [`candidate: ${report.id} (${report.playback}, period ${report.periodMs}ms, delay ${report.delayMs}ms)`];
+  for (const [theme, result] of Object.entries(report.themes)) {
+    const parts = [`end vs static ${result.endVsStatic ? result.endVsStatic.length : '-'} difference(s)`];
+    if (result.reducedMotion) parts.push(`reduced motion ${result.reducedMotion.animations} animation(s) / ${result.reducedMotion.differences.length} difference(s)`);
+    if (result.endVsStaticPixels) parts.push(`end vs static pixels ${result.endVsStaticPixels.pixels} (${(result.endVsStaticPixels.ratio * 100).toFixed(2)}%), max channel diff ${result.endVsStaticPixels.max}`);
+    lines.push(`  ${theme}: ${parts.join(', ')}`);
+  }
   if (report.playback === 'cut') {
-    lines.push(`  hold ${report.holdMs}ms, start beat ${report.startBeatMs}ms, still ratio ${report.stillRatio}`);
+    lines.push(`  hold ${report.holdMs}ms, start beat ${report.startBeatMs}ms, still ratio ${report.stillRatio} (paused-time scan)`);
     if (report.realFrames) {
-      lines.push(`  real frames ${report.realFrames.frames}, first frame ${report.realFrames.firstFrame}`);
+      lines.push(`  real frames ${report.realFrames.frames}, first frame ${report.realFrames.firstFrame} (hold / start beat in real frames read up to 2 frames short)`);
       report.realFrames.boundaries.forEach((b) => lines.push(`  switch @${b.atMs}ms: ${b.frameBefore} -> ${b.frameAfter}, in-between frames ${b.intermediateFrames}, hold ${b.holdMs}ms, start beat ${b.startBeatMs}ms`));
     }
+  } else if (report.firstFrame) {
+    lines.push(`  first frame ${report.firstFrame}`);
   }
-  if (report.endVsStaticPixels) {
-    const p = report.endVsStaticPixels;
-    lines.push(`  end vs static pixels: ${p.pixels} (${(p.ratio * 100).toFixed(2)}%), max channel diff ${p.max}`);
+  if (report.staticBounds) {
+    const b = report.staticBounds;
+    const parts = [`${b.width}x${b.height} centre (${b.centerX}, ${b.centerY})`];
+    if (b.vsBase) parts.push(`vs base centre ${b.vsBase.dx >= 0 ? '+' : ''}${b.vsBase.dx}, ${b.vsBase.dy >= 0 ? '+' : ''}${b.vsBase.dy} size x${b.vsBase.sizeRatio}`);
+    if (b.vsOthers) parts.push(`size x${b.vsOthers.sizeRatioToMedian} of the median of ${b.vsOthers.games} other game(s) (their centre y ${b.vsOthers.centerYMedian})`);
+    lines.push(`  static bounds: ${parts.join(', ')}`);
   }
-  lines.push(`  min viewBox margin ${report.minViewBoxMargin ? `${report.minViewBoxMargin.margin} at ${report.minViewBoxMargin.atMs}ms (${report.minViewBoxMargin.element})` : '-'}`);
-  lines.push(`  reduced motion: ${report.reducedMotion.animations} animation(s), ${report.reducedMotion.differences.length} difference(s)`);
+  if (report.minViewBoxMargin) lines.push(`  min viewBox margin ${report.minViewBoxMargin.margin} at ${report.minViewBoxMargin.atMs}ms (${report.minViewBoxMargin.element})`);
+  if (report.smoothness) {
+    const top = report.smoothness.shapes[0];
+    lines.push(`  smoothness (${report.smoothness.stepMs}ms scan, threshold ${report.smoothness.threshold}): ${report.smoothness.movingShapes} moving shape(s)` +
+      (top ? `, worst jump ${top.worstJump} at ${top.atMs}ms (${top.element})` : ''));
+  }
+  (report.overlaps || []).forEach((entry) => lines.push(`  overlap ${entry.pair}: ${entry.atMs == null ? 'none' : `max ${entry.maxArea} viewBox units^2 at ${entry.atMs}ms`}`));
   report.notes.forEach((note) => lines.push(`  NOTE: ${note}`));
+  report.warnings.forEach((warning) => lines.push(`  WARN: ${warning}`));
   report.failures.forEach((failure) => lines.push(`  FAIL: ${failure}`));
   if (!report.failures.length) lines.push('  PASS');
   console.log(lines.join('\n'));
@@ -350,15 +684,17 @@ function printReport(report) {
   const manifestPath = path.resolve(options.manifest);
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   options.out = path.resolve(options.out || path.join(path.dirname(manifestPath), 'observe'));
+  options.themes = loadThemes(options.globalsCss);
   fs.mkdirSync(options.out, { recursive: true });
   const candidates = manifest.candidates
     .filter((candidate) => !options.only.length || options.only.includes(candidate.id))
     .map((candidate) => ({ ...candidate, file: path.isAbsolute(candidate.file) ? candidate.file : path.join(path.dirname(manifestPath), candidate.file) }));
   const browser = await chromium.launch();
+  options.references = await referenceBounds(browser, manifest, manifestPath, options);
   const reports = [];
   for (const candidate of candidates) {
     if (!PLAYBACKS.has(candidate.playback)) {
-      reports.push({ id: candidate.id, playback: candidate.playback, failures: ['playback must be once, cut, or seam'], notes: [] });
+      reports.push({ id: candidate.id, playback: candidate.playback, failures: ['playback must be once, cut, or seam'], warnings: [], notes: [] });
       console.log(`candidate: ${candidate.id}\n  FAIL: playback must be once, cut, or seam`);
       continue;
     }
