@@ -5,6 +5,8 @@ import {
   hasStaticShortcut,
   type LooksReading,
   measureElementMetrics,
+  type SolutionTexture,
+  summarizeSolutionMoves,
 } from "@/games/ice-floor-maze/problem/generation/element-features";
 import {
   STATE_READING_DEPTH_CAP,
@@ -52,6 +54,8 @@ export type IceFloorMazeTacticTag = StaticTacticTag;
  * - `tags`: 手筋のタグ。
  * - `readingDepth`: 前向き・逆向き・両方向の先読みのうち最も楽な方向で解ける読み手数。上限まで読めなければ `null`。
  * - `nearPathCount`: 最少手数+2手以内で、同じ停止点を二度通らない道筋の数（近い別解）。
+ * - `shortSlideCount` / `averageSlideLength` / `longestChoicelessStair`: 最短の道筋の1マスだけの滑りの数、滑りの長さの平均、
+ *   もっともらしい別の手が無い手だけで直交する2つの向きを交互に続けた最も長い連なり（選択肢の無い階段）。
  * - そのほかは手筋のタグの元になった数。
  */
 export type IceFloorMazeTacticFeatures = {
@@ -70,6 +74,9 @@ export type IceFloorMazeTacticFeatures = {
   detourCount: number;
   funnelDepth: number;
   forkCount: number;
+  shortSlideCount: number;
+  averageSlideLength: number;
+  longestChoicelessStair: number;
 };
 
 /**
@@ -85,6 +92,11 @@ export type IceFloorMazeTacticFeatures = {
  * - `solutionRepeatCount` / `nearRepeatCount` / `brittleChainCount`: 同じ向きが続く手（条件1）。最短解で同じ向きが続く手、
  *   最短+2手以内の道筋に乗る同じ向きが続く2手、もろい岩を崩した直後に同じ向きでもう一度もろい岩を崩せる2手。
  * - `looksReading`: 見た目どおりに読んだ盤面の結果。`staticShortcut` は、見た目どおりかもう一方の読みで短く解ける。
+ *   `looksShortest` は見た目どおりの盤面の最少手数（解なしは `null`）、`looksPassingMoveCount` はその近い解のうちこの規則でも
+ *   ゴールで止まるものの、この規則での最少手数（通るものが無ければ `null`）。
+ * - `lingeringDecoyCount`: おとりのうち、もっともらしい手で変化させた直後が閉じ込めにならない（遠回りか、まだ動き回れる詰み）もの。
+ * - `rockShare`: 盤面として描くマスのうち岩の割合。
+ * - `texture`: 最短解の手触り（滑りの長さ・階段・読みどころの無い区間・自分で作った地形の使い方・変わるマスの散らばり）。
  * - `stateReadingDepth`: 規則を知って先を読む人が状態のグラフで解ける読み手数。上限まで読めなければ `null`。
  * - `hardness`: 難しさの点（研究用 v4 の点に状態の読み深さを足したもの。大きいほど難しい）。
  */
@@ -111,6 +123,11 @@ export type IceFloorMazeElementFeatures = {
   brittleChainCount: number;
   looksReading: LooksReading;
   staticShortcut: boolean;
+  looksShortest: number | null;
+  looksPassingMoveCount: number | null;
+  lingeringDecoyCount: number;
+  rockShare: number;
+  texture: SolutionTexture;
   stateReadingDepth: number | null;
   hardness: number;
 };
@@ -183,6 +200,9 @@ function analyzeTactics(
     detourCount: tactics.detourCount,
     funnelDepth: tactics.funnelDepth,
     forkCount: tactics.forkCount,
+    shortSlideCount: tactics.shortSlideCount,
+    averageSlideLength: tactics.averageSlideLength,
+    longestChoicelessStair: tactics.longestChoicelessStair,
   };
 }
 
@@ -224,6 +244,11 @@ function analyzeElements(
     brittleChainCount: metrics.brittleChainCount,
     looksReading: classifyLooksReading(metrics),
     staticShortcut: hasStaticShortcut(metrics),
+    looksShortest: metrics.looks.shortest,
+    looksPassingMoveCount: metrics.looks.passingMoveCount,
+    lingeringDecoyCount: metrics.lingeringDecoyCount,
+    rockShare: metrics.rockShare,
+    texture: summarizeSolutionMoves(metrics.moves, board.width),
     stateReadingDepth:
       readingDepth > STATE_READING_DEPTH_CAP ? null : readingDepth,
     hardness: scoreElementHardnessWithReading(metrics, readingDepth),

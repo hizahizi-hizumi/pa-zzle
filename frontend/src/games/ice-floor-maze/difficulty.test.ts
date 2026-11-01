@@ -30,6 +30,9 @@ const baseTactics: IceFloorMazeTacticFeatures = {
   detourCount: 1,
   funnelDepth: 1,
   forkCount: 1,
+  shortSlideCount: 1,
+  averageSlideLength: 3,
+  longestChoicelessStair: 2,
 };
 
 const baseElements: IceFloorMazeElementFeatures = {
@@ -55,6 +58,26 @@ const baseElements: IceFloorMazeElementFeatures = {
   brittleChainCount: 0,
   looksReading: "unsolvable",
   staticShortcut: false,
+  looksShortest: null,
+  looksPassingMoveCount: null,
+  lingeringDecoyCount: 0,
+  rockShare: 0.2,
+  texture: {
+    shortSlideCount: 2,
+    averageSlideLength: 3,
+    longestStair: 3,
+    longestChoicelessStair: 2,
+    longestIdleRun: 2,
+    selfMadeUseCount: 3,
+    selfMadeMaximumGap: 4,
+    selfMadeTotalGap: 7,
+    quickReturnCount: 1,
+    variedUseCount: 2,
+    changedCellCount: 4,
+    maximumChangedPerMove: 2,
+    maximumChangeSpread: 1,
+    changedAreaSpan: 6,
+  },
   stateReadingDepth: 6,
   hardness: 40,
 };

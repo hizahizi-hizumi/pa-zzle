@@ -492,29 +492,6 @@ export function countShortestSolutions(
   return total;
 }
 
-/** 手を順に入力し、駒がゴールで止まればクリア。動かない入力は何も起こさない（v3 の `replay`）。 */
-export function replaySolution(
-  rules: ElementRules,
-  start: number,
-  moves: readonly number[],
-  goal: number,
-): boolean {
-  let position = start;
-  let mask = 0;
-  for (const direction of moves) {
-    const end = findSlideEnd(rules, position, mask, direction);
-    if (end === position) {
-      continue;
-    }
-    mask = maskAfterSlide(rules, position, end, mask, direction);
-    position = end;
-    if (position === goal) {
-      return true;
-    }
-  }
-  return false;
-}
-
 /** 到達できる全状態で、駒が通過・停止するマス（v3 の `used_cells`）。 */
 export function findUsedCells(space: StateSpace): Uint8Array {
   const { rules, count, positions, targets } = space;
@@ -545,6 +522,38 @@ export function findTouchedElements(space: StateSpace): number {
     touched |= space.masks[state]!;
   }
   return touched;
+}
+
+/**
+ * 手の向きの列のうち、`included` の手だけからなる階段（直交する2つの向きを交互に続けた手）の最も長い連なり。
+ * 1手だけでも1と数える。
+ */
+export function measureLongestStair(
+  directions: readonly number[],
+  included: readonly boolean[],
+): number {
+  let longest = 0;
+  let length = 0;
+  directions.forEach((direction, index) => {
+    if (!included[index]) {
+      length = 0;
+      return;
+    }
+    const previous = directions[index - 1];
+    if (
+      length === 0 ||
+      previous === undefined ||
+      previous % 2 === direction % 2
+    ) {
+      length = 1;
+    } else if (length >= 2 && directions[index - 2] !== direction) {
+      length = 2;
+    } else {
+      length += 1;
+    }
+    longest = Math.max(longest, length);
+  });
+  return longest;
 }
 
 export function countBits(value: number): number {

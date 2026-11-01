@@ -42,7 +42,6 @@ from ice_floor_dynamic_generation_experiment import (  # noqa: E402
     DIRECTION_WORDS,
     Graph,
     Puzzle,
-    StaticResult,
     canonical_solution,
     count_plans,
     dynamic_depth,
@@ -65,7 +64,7 @@ VARIANT_TILES = {"brittle": (BRITTLE,), "thin": (THIN,), "mixed": (BRITTLE, THIN
 VARIANT_LABEL = {"brittle": "もろい岩", "thin": "薄い氷", "mixed": "両方"}
 STOPPERS = (ROCK, OUTSIDE, BRITTLE, WATER)
 NEAR_SLACK = 2
-# 見た目どおりの読みの解が元の規則でも通るとき、これ以上長ければ「大きく遠回り」
+# 見た目どおりの読みの解が元の規則でも通るとき、元の規則での手数が最短よりこれ以上長ければ「大きく遠回り」
 DETOUR = 4
 # 最短解の上の選択肢が、最短より FALSE_LEAD_COST 手以上の遠回りになれば「遠回り」（v2 と同じ）
 FALSE_LEAD_COST = 3
@@ -326,6 +325,20 @@ def option_profile(steps: list[tuple[int, list[Option]]] | None) -> tuple | None
 
 
 @dataclass(frozen=True)
+class StaticReading:
+    """要素を変化しないマスに置き換えた盤面（静的な盤面）の解を、元の規則で試した結果。"""
+
+    shortest: int | None  # 静的な盤面の最少手数。None は解なし
+    # 静的な盤面の最短+NEAR_SLACK 手以内の解のうち、元の規則でもゴールで止まるものの、元の規則での最少手数
+    # （途中でゴールに止まればそこで数え、動かない入力は数えない）。通るものが無ければ None
+    passing: int | None
+
+    @property
+    def passes(self) -> bool:
+        return self.passing is not None
+
+
+@dataclass(frozen=True)
 class Effect:
     """要素1つを中立の形に置き換えたときに変わるもの。"""
 
@@ -367,8 +380,8 @@ class Metrics:
     chains: int  # 崩した直後に同じ向きでもう一度もろい岩を崩せる2手の組（全状態）
     repeat_moves: int  # 同じ向きが続けられる2手の組（全状態）
     repeat_live: int  # そのうち、続けた後もゴールへ行ける組
-    looks: StaticResult  # 見た目どおり（もろい岩→岩、薄い氷→氷）の盤面
-    other: StaticResult  # もう一方（もろい岩→氷、薄い氷→岩）の盤面
+    looks: StaticReading  # 見た目どおり（もろい岩→岩、薄い氷→氷）の盤面
+    other: StaticReading  # もう一方（もろい岩→氷、薄い氷→岩）の盤面
     solution: tuple[int, ...]
 
     @property
@@ -388,9 +401,9 @@ class Metrics:
         looks = self.looks
         if looks.shortest is None:
             return "unsolvable"
-        if not looks.canonical_valid:
+        if looks.passing is None:
             return "misleading"
-        if looks.shortest >= self.shortest + DETOUR:
+        if looks.passing >= self.shortest + DETOUR:
             return "detour"
         return "shortcut"
 
@@ -398,21 +411,49 @@ class Metrics:
     def static_shortcut(self) -> bool:
         other = self.other
         return self.looks_class == "shortcut" or (
-            other.shortest is not None
-            and other.canonical_valid
-            and other.shortest <= self.shortest + NEAR_SLACK
+            other.passing is not None and other.passing <= self.shortest + NEAR_SLACK
         )
 
 
-def static_result(free: Graph | None, goal: int, rules: Rules, start: int) -> StaticResult:
+def static_result(free: Graph | None, goal: int, g: Graph) -> StaticReading:
+    """静的な盤面の最短+NEAR_SLACK 手以内の解を、元の規則の BFS g で入力して試す。静的な盤面の状態と元の規則の
+    状態の組を手数の層ごとにたどり、組ごとに元の規則での最少手数を持つ。すぐ前の停止点へ戻る手を除けば、近い解は
+    同じ停止点を二度通らない（二度通る解は最短より3手以上長い）。"""
     if free is None:
-        return StaticResult(None, False)
-    g = with_goal(free, goal)
-    to_goal = reverse_layers(g)
-    if g.start not in to_goal:
-        return StaticResult(None, False)
-    moves = canonical_solution(g, to_goal)
-    return StaticResult(len(moves), replay(rules, start, moves, goal))
+        return StaticReading(None, None)
+    sg = with_goal(free, goal)
+    to_goal = reverse_layers(sg)
+    if sg.start not in to_goal:
+        return StaticReading(None, None)
+    shortest = to_goal[sg.start]
+    budget = shortest + NEAR_SLACK
+    n = g.rules.n
+    frontier: dict[tuple[int | None, int, int], int] = {(None, sg.start, g.start): 0}
+    passing: int | None = None
+    for step in range(1, budget + 1):
+        nxt: dict[tuple[int | None, int, int], int] = {}
+        for (previous, current, real), count in frontier.items():
+            real_moves = dict(g.succ[real])
+            for d, target in sg.succ[current]:
+                if target == previous:
+                    continue
+                left = to_goal.get(target)
+                if left is None or step + left > budget:
+                    continue
+                moved = real_moves.get(d)
+                if moved is not None and moved % n == goal:
+                    passing = count + 1 if passing is None else min(passing, count + 1)
+                    continue
+                if left == 0:
+                    continue
+                key = (current, target, real if moved is None else moved)
+                value = count if moved is None else count + 1
+                if key not in nxt or value < nxt[key]:
+                    nxt[key] = value
+        frontier = nxt
+        if not frontier:
+            break
+    return StaticReading(shortest, passing)
 
 
 def repeat_stats(g: Graph, to_goal: dict[int, int], shortest: int, brittle_bits: int):
@@ -616,8 +657,8 @@ def measure(
         chains=chains,
         repeat_moves=rep_moves,
         repeat_live=rep_live,
-        looks=static_result(looks_free, p.goal, rules, start),
-        other=static_result(other_free, p.goal, rules, start),
+        looks=static_result(looks_free, p.goal, g),
+        other=static_result(other_free, p.goal, g),
         solution=tuple(solution),
     )
 
@@ -1354,7 +1395,7 @@ LOOKS_LABEL = {
 def looks_label(m: Metrics) -> str:
     if m.looks.shortest is None:
         return "解なし"
-    return f"{m.looks.shortest}手・{'通る' if m.looks.canonical_valid else '通らない'}"
+    return f"{m.looks.shortest}手・{'通る' if m.looks.passes else '通らない'}"
 
 
 def verify_candidate(made: Made) -> dict:
@@ -1421,11 +1462,11 @@ def candidate_entry(made: Made) -> dict:
             "dead_options": m.dead_options,
             "looks": m.looks_class,
             "static_looks": m.looks.shortest,
-            "static_looks_valid": m.looks.canonical_valid,
+            "static_looks_valid": m.looks.passes,
             "static_looks_valid_solutions": [valid, len(sols)],
             "static_looks_depth": static_depth(p),
             "static_other": m.other.shortest,
-            "static_other_valid": m.other.canonical_valid,
+            "static_other_valid": m.other.passes,
             "dynamic_depth": made.dyn_depth,
             "plans": m.plans,
             "states": m.states,

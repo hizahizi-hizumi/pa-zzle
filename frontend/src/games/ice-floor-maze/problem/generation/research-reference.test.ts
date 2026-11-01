@@ -40,6 +40,17 @@ const { defaultTacticWeights, evaluateTacticBoard, scoreTactics } =
   tacticSearch;
 
 // 期待値は scripts/research/ice_floor_generation_port_reference.py が研究用の生成 v2・v4 から書き出した値。
+// 研究用に無い特徴量（手触りなど）は比べない。
+
+/** `expected` にある項目だけを `measured` から取り出す。 */
+function pickReferenceKeys<T extends object>(
+  measured: T,
+  expected: object,
+): Partial<T> {
+  return Object.fromEntries(
+    Object.keys(expected).map((key) => [key, measured[key as keyof T]]),
+  ) as Partial<T>;
+}
 
 const [v4Shortest, v4ElementsMinimum, v4ElementsMaximum] = [
   reference.v4.recipe.shortest,
@@ -107,7 +118,9 @@ describe("もろい岩・薄い氷の特徴量（研究用の生成 v4）", () =
   test.each(reference.v4.candidates.map((entry) => [entry.id, entry] as const))(
     "試遊候補 %s の特徴量・難しさの点・目的関数・採用条件・状態の読み深さが一致すること",
     (_, entry) => {
-      expect(measureElementEntry(entry)).toEqual(entry.metrics);
+      const metrics = measureElementEntry(entry);
+
+      expect(pickReferenceKeys(metrics, entry.metrics)).toEqual(entry.metrics);
     },
   );
 
@@ -126,7 +139,7 @@ describe("もろい岩・薄い氷の特徴量（研究用の生成 v4）", () =
       );
 
       expect({
-        metrics: measureElementEntry(entry),
+        metrics: pickReferenceKeys(measureElementEntry(entry), entry.metrics),
         outside: {
           width: outside.board.width,
           rows: formatGenerationBoardRows(outside.board),
@@ -177,7 +190,7 @@ function measureStaticEntry(entry: StaticEntry) {
     read: 0,
   };
   return {
-    tactics,
+    tactics: pickReferenceKeys(tactics, entry.tactics as object),
     tags: listStaticTacticTags(tactics),
     shallowDepth: measureStaticReadingDepth(graph, entry.start, entry.goal, 3),
     humanDepth: measureStaticReadingDepth(

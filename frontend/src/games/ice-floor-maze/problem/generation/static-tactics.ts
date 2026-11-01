@@ -11,6 +11,7 @@ import {
   CELL_ROCK,
   DIRECTION_COUNT,
   type GenerationBoard,
+  measureLongestStair,
 } from "@/games/ice-floor-maze/problem/generation/state-space";
 
 /**
@@ -306,6 +307,8 @@ function isConfined(graph: StaticBoardGraph, state: number): boolean {
 /**
  * 最短の道筋（方向番号の小さい手を優先）と盤面から測る手筋。
  * 「もっともらしい手」は、滑った先がゴールへ近づく、ゴールと見通しで揃う、滑りがゴールを通過する、のどれかに当たる手。
+ * `shortSlideCount`・`averageSlideLength`・`longestChoicelessStair` は最短の道筋の滑りの手触り（1マスだけの滑りの数、滑りの長さの平均、
+ * もっともらしい別の手が無い手だけで直交する2つの向きを交互に続けた最も長い連なり）。研究用 v2 には無い。
  */
 export type StaticTactics = {
   shortest: number;
@@ -331,6 +334,9 @@ export type StaticTactics = {
   goalRockStop: boolean;
   rockStopCount: number;
   relevantRockCount: number;
+  shortSlideCount: number;
+  averageSlideLength: number;
+  longestChoicelessStair: number;
 };
 
 export function measureStaticTactics(
@@ -443,6 +449,10 @@ export function measureStaticTactics(
   let falseLeadCount = 0;
   let silentTrapLureCount = 0;
   const lured: boolean[] = [];
+  const pathDirections: number[] = [];
+  const choiceless: boolean[] = [];
+  let shortSlideCount = 0;
+  let slideLengthTotal = 0;
   let lastDirection = -1;
   while (state !== goal) {
     const remaining = toGoal[state]!;
@@ -471,6 +481,15 @@ export function measureStaticTactics(
       forkCount += 1;
     }
     lured.push(good.length > 0 && !plausible(state, nextDirection, nextState));
+    pathDirections.push(nextDirection);
+    choiceless.push(good.every(([direction]) => direction === nextDirection));
+    const slideLength =
+      Math.abs((nextState % width) - (state % width)) +
+      Math.abs(Math.floor(nextState / width) - Math.floor(state / width));
+    slideLengthTotal += slideLength;
+    if (slideLength === 1) {
+      shortSlideCount += 1;
+    }
     for (const [direction, end] of options) {
       const after = toGoal[end]!;
       const isPlausible = plausible(state, direction, end);
@@ -575,6 +594,9 @@ export function measureStaticTactics(
       graph.stopper[beyondGoalY * width + beyondGoalX] === 1,
     rockStopCount,
     relevantRockCount: graph.relevantRockCount,
+    shortSlideCount,
+    averageSlideLength: slideLengthTotal / Math.max(1, shortest),
+    longestChoicelessStair: measureLongestStair(pathDirections, choiceless),
   };
 }
 
