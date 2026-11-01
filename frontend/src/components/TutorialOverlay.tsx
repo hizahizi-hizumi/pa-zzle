@@ -9,6 +9,7 @@ import {
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { TutorialIntro, TutorialMessage } from "@/games/tutorial";
 
+export { TutorialCrossFadeIntroScene } from "@/components/TutorialOverlay/TutorialCrossFadeIntroScene";
 export type {
   TutorialBoardIntro,
   TutorialFinish,
