@@ -1,8 +1,10 @@
 import {
   assertIceFloorMazeBoard,
+  countIceFloorMazeDrawnCells,
   getIceFloorMazeCellPosition,
   type IceFloorMazeBoard,
   isIceFloorMazeIceCell,
+  isIceFloorMazeStaticBoard,
   parseIceFloorMazeBoard,
 } from "@/games/ice-floor-maze/puzzle/board";
 
@@ -24,6 +26,12 @@ describe("parseIceFloorMazeBoard", () => {
     ]);
   });
 
+  test("もろい岩・薄い氷・盤面の外の記号を読むこと", () => {
+    const board = parseIceFloorMazeBoard(["bcx"]);
+
+    expect(board.cells).toEqual(["brittle-rock", "thin-ice", "outside"]);
+  });
+
   const invalidCases = [
     ["行の長さが揃わない", ["...", ".."]],
     ["知らない記号がある", ["..o", "..."]],
@@ -43,7 +51,8 @@ describe("assertIceFloorMazeBoard", () => {
   const invalidCases = [
     ["マス数が幅×高さと合わない", { width: 2, height: 2, cells: ["ice"] }],
     ["幅が整数でない", { width: 1.5, height: 2, cells: ["ice", "ice"] }],
-    ["氷と岩以外のマスがある", { width: 1, height: 1, cells: ["floor"] }],
+    ["知らない種類のマスがある", { width: 1, height: 1, cells: ["floor"] }],
+    ["初期盤面に水面がある", { width: 1, height: 1, cells: ["water"] }],
   ] as const;
 
   test.each(invalidCases)("%s盤面を拒否すること", (_, board) => {
@@ -56,11 +65,13 @@ describe("assertIceFloorMazeBoard", () => {
 });
 
 describe("isIceFloorMazeIceCell", () => {
-  const board = parseIceFloorMazeBoard([".#", ".."]);
+  const board = parseIceFloorMazeBoard([".#", "cx"]);
   const cases = [
     ["氷のマス", 0, true],
     ["岩のマス", 1, false],
-    ["盤面の外", 4, false],
+    ["薄い氷のマス", 2, false],
+    ["盤面の外のマス", 3, false],
+    ["番号の範囲の外", 4, false],
     ["負の番号", -1, false],
   ] as const;
 
@@ -78,5 +89,29 @@ describe("getIceFloorMazeCellPosition", () => {
     const position = getIceFloorMazeCellPosition(board, 7);
 
     expect(position).toEqual({ x: 1, y: 2 });
+  });
+});
+
+describe("isIceFloorMazeStaticBoard", () => {
+  const cases = [
+    ["氷・岩・盤面の外だけの盤面", [".#", ".x"], true],
+    ["もろい岩のある盤面", [".b", ".."], false],
+    ["薄い氷のある盤面", [".c", ".."], false],
+  ] as const;
+
+  test.each(cases)("%sを見分けること", (_, rows, expected) => {
+    const result = isIceFloorMazeStaticBoard(parseIceFloorMazeBoard(rows));
+
+    expect(result).toBe(expected);
+  });
+});
+
+describe("countIceFloorMazeDrawnCells", () => {
+  const board = parseIceFloorMazeBoard(["x#b", ".cx", "..."]);
+
+  test("盤面の外を除いたマスを数えること", () => {
+    const count = countIceFloorMazeDrawnCells(board);
+
+    expect(count).toBe(7);
   });
 });

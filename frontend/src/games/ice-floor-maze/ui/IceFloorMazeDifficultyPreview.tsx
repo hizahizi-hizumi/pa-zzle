@@ -8,9 +8,11 @@ import type {
   IceFloorMazeCell,
 } from "@/games/ice-floor-maze/puzzle/board";
 import {
+  applyIceFloorMazeSlide,
   type IceFloorMazeDirection,
   slideIceFloorMazePiece,
 } from "@/games/ice-floor-maze/puzzle/rules";
+import { createIceFloorMazeInitialState } from "@/games/ice-floor-maze/puzzle/state";
 import {
   getIceFloorMazeBoardViewBox,
   getIceFloorMazeCellCenter,
@@ -106,16 +108,16 @@ function createPreviewRoute(difficulty: IceFloorMazeDifficulty): PreviewRoute {
   const start = toCellIndex(previewStrip.start);
 
   const slides: PreviewSlide[] = [];
-  let position = start;
+  let state = createIceFloorMazeInitialState(board, start);
   for (const { direction } of plannedSlides) {
-    const slide = slideIceFloorMazePiece(board, position, direction);
+    const slide = slideIceFloorMazePiece(board, state, direction);
     if (slide.status === "blocked") {
       throw new Error("Ice floor maze preview slides must move the piece");
     }
     slides.push({ direction, from: slide.from, to: slide.to });
-    position = slide.to;
+    state = applyIceFloorMazeSlide(state, slide);
   }
-  return { board, start, goal: position, slides };
+  return { board, start, goal: state.position, slides };
 }
 
 type IceFloorMazeDifficultyPreviewProps = {

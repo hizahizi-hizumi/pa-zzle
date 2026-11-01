@@ -5,6 +5,7 @@ import type {
   IceFloorMazeLastSlide,
 } from "@/games/ice-floor-maze/play/use-ice-floor-maze-play";
 import type { IceFloorMazeBoard as IceFloorMazeBoardState } from "@/games/ice-floor-maze/puzzle/board";
+import type { IceFloorMazeStateCell } from "@/games/ice-floor-maze/puzzle/state";
 import {
   getIceFloorMazeBoardViewBox,
   getIceFloorMazeCellCenter,
@@ -25,6 +26,8 @@ import {
 
 type IceFloorMazeBoardProps = {
   board: IceFloorMazeBoardState;
+  /** 今の盤面のマス。 */
+  cells: readonly IceFloorMazeStateCell[];
   goal: number;
   /** 駒のいるマス。 */
   position: number;
@@ -78,6 +81,7 @@ function getIceFloorMazeSlideDurationMs(distance: number): number {
 /** 盤面の外壁・岩・氷・ゴール・駒と直前の滑りの跡を描き、滑り・押し戻し・完成演出を動かす。入力は受けない。 */
 export function IceFloorMazeBoard({
   board,
+  cells,
   goal,
   position,
   lastSlide,
@@ -199,7 +203,7 @@ export function IceFloorMazeBoard({
           width: `min(100cqw, min(100cqh, 44rem) * ${aspectRatio})`,
         }}
       >
-        <IceFloorMazeTerrain board={board} goal={goal} />
+        <IceFloorMazeTerrain board={board} cells={cells} goal={goal} />
         {lastSlide ? (
           <IceFloorMazeTrail
             key={lastSlide.id}

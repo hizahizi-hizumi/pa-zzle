@@ -20,8 +20,8 @@ const snapshot: IceFloorMazeDiagnosticSnapshot = {
   game: "ice-floor-maze",
   difficulty: "5",
   problemIdentity: {
-    generatorVersion: "1",
-    seed: "8000000000000000000000000000000000000000002-9-63",
+    generatorVersion: "2",
+    seed: "500000000000000000000000000000000000000000000000000000000000000000000000000000000005-9-63",
     conditions: { width: 12, height: 14 },
   },
   difficultyAssessment: {

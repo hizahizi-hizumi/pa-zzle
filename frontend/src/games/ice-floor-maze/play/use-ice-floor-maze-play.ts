@@ -13,6 +13,10 @@ import {
   doesIceFloorMazeSlidePassGoal,
   type IceFloorMazeDirection,
 } from "@/games/ice-floor-maze/puzzle/rules";
+import type {
+  IceFloorMazeState,
+  IceFloorMazeStateCell,
+} from "@/games/ice-floor-maze/puzzle/state";
 import {
   calculateIceFloorMazeMoveDelta,
   calculateIceFloorMazePlayScore,
@@ -47,7 +51,8 @@ import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 /**
  * 直前の成立した滑り。盤面はこれで跡を描き、滑りを動かす。`id` は滑りごとに変わる。
  * `from` から `path` のマスを順に通り、最後のマス `to` で止まった。`passedGoal` はゴールを止まらずに通り過ぎたか。
- * `entersTrap` は閉じ込めでない位置から閉じ込めへ入ったか。閉じ込めの中での滑りでは `false`。
+ * `crumbledRock` はこの滑りで崩れたもろい岩、`crackedIce` は割れて水面になった薄い氷のマス。
+ * `entersTrap` は閉じ込めでない状態から閉じ込めへ入ったか。閉じ込めの中での滑りでは `false`。
  * 成立しない向きの入力では変わらず、待った・盤面を戻す・リセット・別の問題で消える。
  */
 export type IceFloorMazeLastSlide = {
@@ -56,13 +61,15 @@ export type IceFloorMazeLastSlide = {
   from: number;
   to: number;
   path: readonly number[];
+  crumbledRock: number | null;
+  crackedIce: readonly number[];
   passedGoal: boolean;
   isClearingMove: boolean;
   entersTrap: boolean;
 };
 
 /**
- * 直前の入力が、すぐ隣が岩か外壁で1マスも動けなかったこと。盤面はこれで押し戻しを動かす。盤面と直前の滑りは変わらない。
+ * 直前の入力が、すぐ隣が止め役か外壁で1マスも動けなかったこと。盤面はこれで押し戻しを動かす。盤面と直前の滑りは変わらない。
  * `id` は入力ごとに変わり、同じ向きを続けて選んでも別の入力として見分けられる。
  */
 export type IceFloorMazeBlockedInput = {
@@ -122,11 +129,13 @@ export type IceFloorMazePlay = GamePlay<
     goal: number;
     /** 駒のいるマス。 */
     position: number;
+    /** 今の盤面のマス。崩れたもろい岩は氷に、割れた薄い氷は水面に変わっている。 */
+    cells: readonly IceFloorMazeStateCell[];
     moveCount: number;
     undoCount: number;
     restartCount: number;
     optimalMoveCount: number;
-    /** 今の位置から行けるどの位置も今の位置へ戻れ、その中にゴールが無い（閉じ込め）プレイ中だけ `true`。 */
+    /** 今の状態から行けるどの状態も今の状態へ戻れ、その中にゴールが無い（閉じ込め）プレイ中だけ `true`。 */
     isTrapped: boolean;
     lastSlide: IceFloorMazeLastSlide | null;
     /** 直前の入力が成立しなかったときだけ値を持つ。次に滑ったときや盤面が戻ったときに消える。 */
@@ -209,22 +218,38 @@ function slideInPlay(
       from: slide.from,
       to: slide.to,
       path: slide.path,
+      crumbledRock: slide.crumbledRock,
+      crackedIce: slide.crackedIce,
       passedGoal: doesIceFloorMazeSlidePassGoal(slide, goal),
       isClearingMove: session.status === "cleared",
       entersTrap:
-        isTrappedAt(board, slide.to, goal) &&
-        !isTrappedAt(board, slide.from, goal),
+        isTrappedAt(board, session.puzzleState, goal) &&
+        !isTrappedAt(board, current.session.puzzleState, goal),
     },
     blockedInput: null,
   };
 }
 
+/**
+ * 閉じ込めの判定は状態のグラフをたどるので、同じ状態を何度も判定しない。状態のオブジェクトは1つの問題のプレイの中で
+ * 作られて使い回され（滑った先・待ったで戻る先）、別の問題の状態と共有されないので、状態だけを鍵にする。
+ */
+const trappedByState = new WeakMap<IceFloorMazeState, boolean>();
+
 function isTrappedAt(
   board: IceFloorMazeBoard,
-  position: number,
+  state: IceFloorMazeState,
   goal: number,
 ): boolean {
-  return classifyIceFloorMazeDeadlock(board, position, goal) === "trapped";
+  const cached = trappedByState.get(state);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const trapped =
+    classifyIceFloorMazeDeadlock(board, state, goal) === "trapped";
+  trappedByState.set(state, trapped);
+  return trapped;
 }
 
 /** `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。 */
@@ -294,10 +319,10 @@ export function useIceFloorMazePlay(
   }, []);
 
   const { board, goal } = session.problem;
-  const position = session.puzzleState;
+  const { puzzleState } = session;
   const isTrapped = useMemo(
-    () => session.status === "playing" && isTrappedAt(board, position, goal),
-    [board, goal, position, session.status],
+    () => session.status === "playing" && isTrappedAt(board, puzzleState, goal),
+    [board, goal, puzzleState, session.status],
   );
   const result = useMemo(() => {
     const sessionResult = getIceFloorMazeSessionResult(session);
@@ -322,7 +347,8 @@ export function useIceFloorMazePlay(
     result,
     board,
     goal,
-    position,
+    position: puzzleState.position,
+    cells: puzzleState.cells,
     moveCount: session.moveCount,
     undoCount: session.undoCount,
     restartCount: session.restartCount,

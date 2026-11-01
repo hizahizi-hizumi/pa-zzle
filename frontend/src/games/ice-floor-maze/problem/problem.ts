@@ -1,10 +1,13 @@
 import {
   assertIceFloorMazeBoard,
+  countIceFloorMazeDrawnCells,
   type IceFloorMazeBoard,
   type IceFloorMazeCell,
+  iceFloorMazeCells,
   isIceFloorMazeIceCell,
 } from "@/games/ice-floor-maze/puzzle/board";
-import { exploreIceFloorMazeStops } from "@/games/ice-floor-maze/puzzle/stop-graph";
+import { createIceFloorMazeInitialState } from "@/games/ice-floor-maze/puzzle/state";
+import { exploreIceFloorMazeStates } from "@/games/ice-floor-maze/puzzle/state-graph";
 import {
   isRecordedProblemIdentity,
   type RecordedProblemIdentity,
@@ -12,7 +15,10 @@ import {
 import type { ProblemSeed } from "@/games/problem-seed";
 import { isPositiveInteger, isRecordObject } from "@/lib/type-guards";
 
-/** 1問を遊ぶためのデータ。駒は `start` から動き出し、`goal` で止まればクリア。 */
+/**
+ * 1問を遊ぶためのデータ。駒は `start` から動き出し、`goal` で止まればクリア。
+ * 盤面は盤面の外を切り落とした外接の長方形で、開始位置とゴールは氷のマス（薄い氷ではない）。
+ */
 export type IceFloorMazeProblem = {
   board: IceFloorMazeBoard;
   start: number;
@@ -35,12 +41,12 @@ const maximumBoardShape = {
   height: 14,
 } as const satisfies IceFloorMazeBoardShape;
 
-/** 盤面の中身（岩・開始位置・ゴール）の符号化が変わり、同じ identity から別の問題ができるようになったら上げる。 */
-export const ICE_FLOOR_MAZE_GENERATOR_VERSION = "1";
+/** 盤面の中身（マスの種類・開始位置・ゴール）の符号化が変わり、同じ identity から別の問題ができるようになったら上げる。 */
+export const ICE_FLOOR_MAZE_GENERATOR_VERSION = "2";
 
 /**
  * 同じ問題を再現するための情報。問題集に盤面そのものを持つので、`seed` は乱数の種ではなく、
- * 無関係な岩を除いた盤面と開始位置・ゴールの符号化（`createIceFloorMazeProblemIdentity`）。
+ * 盤面と開始位置・ゴールの符号化（`createIceFloorMazeProblemIdentity`）。
  */
 export type IceFloorMazeProblemIdentity = {
   generatorVersion: typeof ICE_FLOOR_MAZE_GENERATOR_VERSION;
@@ -48,7 +54,10 @@ export type IceFloorMazeProblemIdentity = {
   conditions: IceFloorMazeBoardShape;
 };
 
-/** 記録に残した問題の識別情報。生成器の版が今と違う記録も、盤面の形が読めれば読み込む。 */
+/**
+ * 記録に残した問題の識別情報。生成器の版が今と違う記録も、盤面の形が読めれば読み込む。
+ * 初期版（版 `"1"`）の記録は盤面の形と最短手数で評価し、結果画面の作り直しと再プレイはしない。
+ */
 export type IceFloorMazeRecordedProblemIdentity =
   RecordedProblemIdentity<IceFloorMazeBoardShape>;
 
@@ -87,6 +96,12 @@ export function assertIceFloorMazeProblem(problem: IceFloorMazeProblem): void {
     );
   }
 
+  if (!isCroppedToDrawnCells(board)) {
+    throw new RangeError(
+      "Ice floor maze board must be cropped to the drawn cells",
+    );
+  }
+
   if (
     !isIceFloorMazeIceCell(board, start) ||
     !isIceFloorMazeIceCell(board, goal)
@@ -98,42 +113,70 @@ export function assertIceFloorMazeProblem(problem: IceFloorMazeProblem): void {
     throw new RangeError("Ice floor maze goal must differ from the start");
   }
 
-  if (!exploreIceFloorMazeStops(board, start).moveCounts.has(goal)) {
+  const graph = exploreIceFloorMazeStates(
+    board,
+    createIceFloorMazeInitialState(board, start),
+    { goal },
+  );
+  if (!graph) {
+    throw new RangeError("Ice floor maze problem has too many states");
+  }
+  if (!graph.states.some(({ position }) => position === goal)) {
     throw new Error("Ice floor maze goal must be reachable from the start");
   }
 }
 
-const cellsPerHexDigit = 4;
-const seedPattern = /^([0-9a-f]+)-(0|[1-9][0-9]*)-(0|[1-9][0-9]*)$/;
+/** 外周の4辺のどれにも、盤面として描くマスがある。 */
+function isCroppedToDrawnCells(board: IceFloorMazeBoard): boolean {
+  const { width, height, cells } = board;
+  function hasDrawnCell(cellIndices: readonly number[]): boolean {
+    return cellIndices.some((cellIndex) => cells[cellIndex] !== "outside");
+  }
+  const columns = Array.from({ length: width }, (_, x) => x);
+  const rows = Array.from({ length: height }, (_, y) => y);
+  return (
+    hasDrawnCell(columns) &&
+    hasDrawnCell(columns.map((x) => (height - 1) * width + x)) &&
+    hasDrawnCell(rows.map((y) => y * width)) &&
+    hasDrawnCell(rows.map((y) => y * width + width - 1))
+  );
+}
 
-/** 岩を1、氷を0とした行優先のビット列を、先頭のマスを上位ビットにして4マスずつ16進の1桁にする。 */
-function encodeRocks(cells: readonly IceFloorMazeCell[]): string {
-  const digitCount = Math.ceil(cells.length / cellsPerHexDigit);
+/** マスの種類の番号は `iceFloorMazeCells` の順。2マスを `5 × 先のマス + 後のマス` として base32 の1桁にする。 */
+const cellKindCount = iceFloorMazeCells.length;
+const cellsPerDigit = 2;
+const digitRadix = 32;
+const seedPattern = /^([0-9a-o]+)-(0|[1-9][0-9]*)-(0|[1-9][0-9]*)$/;
+
+/** 行優先のマスを2マスずつ base32 の1桁にする。マス数が奇数なら、最後の桁の後のマスを氷で詰める。 */
+function encodeCells(cells: readonly IceFloorMazeCell[]): string {
+  const digitCount = Math.ceil(cells.length / cellsPerDigit);
   return Array.from({ length: digitCount }, (_, digitIndex) => {
-    let digit = 0;
-    for (let bit = 0; bit < cellsPerHexDigit; bit += 1) {
-      digit <<= 1;
-      if (cells[digitIndex * cellsPerHexDigit + bit] === "rock") {
-        digit |= 1;
-      }
-    }
-    return digit.toString(16);
+    const [first, second = "ice"] = cells.slice(
+      digitIndex * cellsPerDigit,
+      (digitIndex + 1) * cellsPerDigit,
+    );
+    const digit =
+      iceFloorMazeCells.indexOf(first!) * cellKindCount +
+      iceFloorMazeCells.indexOf(second);
+    return digit.toString(digitRadix);
   }).join("");
 }
 
-function decodeRocks(
+function decodeCells(
   encoded: string,
   cellCount: number,
 ): IceFloorMazeCell[] | null {
-  if (encoded.length !== Math.ceil(cellCount / cellsPerHexDigit)) {
+  if (encoded.length !== Math.ceil(cellCount / cellsPerDigit)) {
     return null;
   }
 
-  const cells = Array.from(encoded, (hexDigit) => {
-    const digit = Number.parseInt(hexDigit, 16);
-    return Array.from({ length: cellsPerHexDigit }, (_, bit) =>
-      (digit >> (cellsPerHexDigit - 1 - bit)) & 1 ? "rock" : "ice",
-    );
+  const cells = Array.from(encoded, (character) => {
+    const digit = Number.parseInt(character, digitRadix);
+    return [
+      iceFloorMazeCells[Math.floor(digit / cellKindCount)]!,
+      iceFloorMazeCells[digit % cellKindCount]!,
+    ];
   }).flat();
   const paddingIsIce = cells.slice(cellCount).every((cell) => cell === "ice");
   return paddingIsIce ? cells.slice(0, cellCount) : null;
@@ -141,7 +184,7 @@ function decodeRocks(
 
 /**
  * 盤面の形と `seed` から問題を復号する。形・符号化・開始位置とゴールの置き場所が正しくなければ `null`。
- * ゴールへ到達できるかは確かめない。
+ * 盤面の切り落としとゴールへ到達できるかは確かめない。
  */
 function decodeIceFloorMazeProblem(
   seed: string,
@@ -152,8 +195,8 @@ function decodeIceFloorMazeProblem(
     return null;
   }
 
-  const [, encodedRocks = "", encodedStart, encodedGoal] = matched;
-  const cells = decodeRocks(encodedRocks, shape.width * shape.height);
+  const [, encodedCells = "", encodedStart, encodedGoal] = matched;
+  const cells = decodeCells(encodedCells, shape.width * shape.height);
   if (!cells) {
     return null;
   }
@@ -169,8 +212,8 @@ function decodeIceFloorMazeProblem(
 }
 
 /**
- * 問題から identity を作る。`seed` は岩の配置の16進符号・開始位置・ゴールを `-` でつなぐ。
- * 例: 8×8 で岩が左上の1マスだけ、開始位置 9、ゴール 63 なら `8000000000000000-9-63`。
+ * 問題から identity を作る。`seed` はマスの種類の base32 符号・開始位置・ゴールを `-` でつなぐ。
+ * 例: 3×4 の盤面 `#.b` `.c.` `...` `x.x`（行ごと）で開始位置 3、ゴール 8 なら `5af044-3-8`。
  */
 export function createIceFloorMazeProblemIdentity(
   problem: IceFloorMazeProblem,
@@ -178,7 +221,7 @@ export function createIceFloorMazeProblemIdentity(
   const { board, start, goal } = problem;
   return {
     generatorVersion: ICE_FLOOR_MAZE_GENERATOR_VERSION,
-    seed: `${encodeRocks(board.cells)}-${start}-${goal}`,
+    seed: `${encodeCells(board.cells)}-${start}-${goal}`,
     conditions: { width: board.width, height: board.height },
   };
 }
@@ -230,6 +273,20 @@ export function isIceFloorMazeRecordedProblemIdentity(
     isPositiveInteger(value.conditions.width) &&
     isPositiveInteger(value.conditions.height)
   );
+}
+
+/**
+ * 記録の問題で、盤面として描くマスの数。速さの基準時間に使う。
+ * 今の版は seed の盤面から盤面の外を除いて数える。盤面の外を持たない初期版などは幅 × 高さ。
+ */
+export function countIceFloorMazeRecordedDrawnCells(
+  identity: IceFloorMazeRecordedProblemIdentity,
+): number {
+  const { width, height } = identity.conditions;
+  const problem = isIceFloorMazeProblemIdentity(identity)
+    ? decodeIceFloorMazeProblem(identity.seed, identity.conditions)
+    : null;
+  return problem ? countIceFloorMazeDrawnCells(problem.board) : width * height;
 }
 
 export const _private = {

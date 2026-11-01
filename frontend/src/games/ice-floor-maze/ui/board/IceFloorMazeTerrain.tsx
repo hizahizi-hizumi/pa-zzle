@@ -1,4 +1,5 @@
 import type { IceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
+import type { IceFloorMazeStateCell } from "@/games/ice-floor-maze/puzzle/state";
 import {
   getIceFloorMazeBoardViewBox,
   getIceFloorMazeCellCenter,
@@ -7,6 +8,8 @@ import { iceFloorMazeToneClassNames } from "@/games/ice-floor-maze/ui/ice-floor-
 
 type IceFloorMazeTerrainProps = {
   board: IceFloorMazeBoard;
+  /** 今の盤面のマス。渡さなければ初期盤面のマスを描く。 */
+  cells?: readonly IceFloorMazeStateCell[];
   goal: number;
 };
 
@@ -17,14 +20,21 @@ const ROCK_CORNER_RADIUS = 0.18;
 const ROCK_SHADOW_DEPTH = 0.08;
 
 /** 外壁・氷・岩と、ゴールのマスの地。駒・跡・ゴールの印より下の層に描く。 */
-export function IceFloorMazeTerrain({ board, goal }: IceFloorMazeTerrainProps) {
+export function IceFloorMazeTerrain({
+  board,
+  cells = board.cells,
+  goal,
+}: IceFloorMazeTerrainProps) {
   const viewBox = getIceFloorMazeBoardViewBox(board);
   const goalCenter = getIceFloorMazeCellCenter(board, goal);
-  const rockCells = board.cells.flatMap((cell, cellIndex) =>
-    cell === "rock"
-      ? [{ cellIndex, ...getIceFloorMazeCellCenter(board, cellIndex) }]
-      : [],
-  );
+  function listCells(kind: IceFloorMazeStateCell) {
+    return cells.flatMap((cell, cellIndex) =>
+      cell === kind
+        ? [{ cellIndex, ...getIceFloorMazeCellCenter(board, cellIndex) }]
+        : [],
+    );
+  }
+  const rockCells = listCells("rock");
 
   return (
     <g>
@@ -73,7 +83,85 @@ export function IceFloorMazeTerrain({ board, goal }: IceFloorMazeTerrainProps) {
           />
         </g>
       ))}
+      <ProvisionalElementCells
+        brittleRockCells={listCells("brittle-rock")}
+        thinIceCells={listCells("thin-ice")}
+        waterCells={listCells("water")}
+        outsideCells={listCells("outside")}
+      />
     </g>
+  );
+}
+
+type CellCenter = { cellIndex: number; x: number; y: number };
+
+/**
+ * もろい岩・薄い氷・水面・盤面の外の仮の描き方。要素を持つ問題はまだ出題しないので、見分けがつくだけの形にとどめる。
+ * もろい岩は薄い石、薄い氷は内側の枠、水面は濃い石の地、盤面の外は外壁と同じ石の地。
+ */
+function ProvisionalElementCells({
+  brittleRockCells,
+  thinIceCells,
+  waterCells,
+  outsideCells,
+}: {
+  brittleRockCells: readonly CellCenter[];
+  thinIceCells: readonly CellCenter[];
+  waterCells: readonly CellCenter[];
+  outsideCells: readonly CellCenter[];
+}) {
+  return (
+    <>
+      {outsideCells.map(({ cellIndex, x, y }) => (
+        <rect
+          key={cellIndex}
+          data-outside-cell={cellIndex}
+          x={x - 0.5}
+          y={y - 0.5}
+          width={1}
+          height={1}
+          className={iceFloorMazeToneClassNames.stoneFace}
+        />
+      ))}
+      {waterCells.map(({ cellIndex, x, y }) => (
+        <rect
+          key={cellIndex}
+          data-water-cell={cellIndex}
+          x={x - 0.5 + ROCK_INSET}
+          y={y - 0.5 + ROCK_INSET}
+          width={1 - ROCK_INSET * 2}
+          height={1 - ROCK_INSET * 2}
+          rx={ROCK_CORNER_RADIUS}
+          className={iceFloorMazeToneClassNames.stoneShadow}
+        />
+      ))}
+      {brittleRockCells.map(({ cellIndex, x, y }) => (
+        <rect
+          key={cellIndex}
+          data-brittle-rock-cell={cellIndex}
+          x={x - 0.5 + ROCK_INSET}
+          y={y - 0.5 + ROCK_INSET}
+          width={1 - ROCK_INSET * 2}
+          height={1 - ROCK_INSET * 2}
+          rx={ROCK_CORNER_RADIUS}
+          opacity={0.6}
+          className={iceFloorMazeToneClassNames.stoneFace}
+        />
+      ))}
+      {thinIceCells.map(({ cellIndex, x, y }) => (
+        <rect
+          key={cellIndex}
+          data-thin-ice-cell={cellIndex}
+          x={x - 0.5 + ROCK_INSET * 2}
+          y={y - 0.5 + ROCK_INSET * 2}
+          width={1 - ROCK_INSET * 4}
+          height={1 - ROCK_INSET * 4}
+          fill="none"
+          strokeWidth={ICE_JOINT_WIDTH * 2}
+          className={iceFloorMazeToneClassNames.iceJoint}
+        />
+      ))}
+    </>
   );
 }
 
