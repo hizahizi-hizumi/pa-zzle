@@ -122,13 +122,6 @@ describe("NonogramPlay", () => {
       expect(props.onEndStroke).toHaveBeenCalledOnce();
     });
 
-    test("× に切り替えてからマスを押すと、× の入力を始めること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "バツ" }));
-      press(getCell("1行2列 未確定"), { pointerType: "touch" });
-
-      expect(props.onStartStroke).toHaveBeenCalledWith(1, "crossed");
-    });
-
     test("マウスの右ボタンで押すと、× の入力を始めること", () => {
       press(getCell("1行2列 未確定"), { pointerType: "mouse", button: 2 });
 
@@ -142,7 +135,7 @@ describe("NonogramPlay", () => {
       expect(props.onEndStroke).toHaveBeenCalledOnce();
     });
 
-    test("指やマウスで押したときに届く click では入力しないこと", () => {
+    test("指やマウスの押下に続く click では入力しないこと", () => {
       fireEvent.click(getCell("1行2列 未確定"), { detail: 1 });
 
       expect(props.onStartStroke).not.toHaveBeenCalled();
@@ -153,9 +146,21 @@ describe("NonogramPlay", () => {
 
       expect(props.onUndo).toHaveBeenCalledOnce();
     });
+
+    describe("入れる印を × に切り替えた場合", () => {
+      beforeEach(() => {
+        fireEvent.click(screen.getByRole("button", { name: "バツ" }));
+      });
+
+      test("マスを押すと、× の入力を始めること", () => {
+        press(getCell("1行2列 未確定"), { pointerType: "touch" });
+
+        expect(props.onStartStroke).toHaveBeenCalledWith(1, "crossed");
+      });
+    });
   });
 
-  describe("押している間", () => {
+  describe("マスを押している場合", () => {
     beforeEach(() => {
       renderPlay(
         createProps({ strokeRange: { startCellIndex: 3, endCellIndex: 5 } }),
@@ -173,7 +178,7 @@ describe("NonogramPlay", () => {
     });
   });
 
-  describe("完成演出の間", () => {
+  describe("完成演出中の場合", () => {
     let props: ReturnType<typeof createProps>;
 
     beforeEach(() => {
@@ -182,10 +187,9 @@ describe("NonogramPlay", () => {
     });
 
     test("マスを押せず、入力を始めないこと", () => {
-      const cell = getCell("1行2列 未確定");
-      press(cell, { pointerType: "touch" });
+      press(getCell("1行2列 未確定"), { pointerType: "touch" });
 
-      expect(cell).toHaveProperty("disabled", true);
+      expect(getCell("1行2列 未確定")).toHaveProperty("disabled", true);
       expect(props.onStartStroke).not.toHaveBeenCalled();
     });
   });

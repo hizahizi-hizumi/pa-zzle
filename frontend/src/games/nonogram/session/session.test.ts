@@ -65,6 +65,15 @@ function drag(
   return next;
 }
 
+const clearedAt = 61_000;
+const almostSolved = withBoard(["#x#", "###", "x.."]);
+const cleared = startNonogramSessionStroke(
+  almostSolved,
+  7,
+  "filled",
+  clearedAt,
+);
+
 describe("createNonogramSession", () => {
   test("全マスが未確定のプレイ中の session を作ること", () => {
     const session = createNonogramSession(problem, startedAt);
@@ -120,6 +129,29 @@ describe("startNonogramSessionStroke", () => {
 
       expect(formatBoard(next.puzzleState)).toEqual(["##.", "...", "..#"]);
       expect(next.history).toHaveLength(2);
+    });
+  });
+
+  describe("塗りが図柄と一致した場合", () => {
+    test("× や未確定が残っていてもクリアにし、入力を終えること", () => {
+      const session = startNonogramSessionStroke(
+        almostSolved,
+        7,
+        "filled",
+        clearedAt,
+      );
+
+      expect(session.status).toBe("cleared");
+      expect(session.finishedAt).toBe(clearedAt);
+      expect(session.stroke).toBeNull();
+    });
+  });
+
+  describe("クリア済みの場合", () => {
+    test("入力を受け付けないこと", () => {
+      const next = startNonogramSessionStroke(cleared, 8, "filled", clearedAt);
+
+      expect(next).toBe(cleared);
     });
   });
 });
@@ -185,7 +217,7 @@ describe("extendNonogramSessionStroke", () => {
   });
 });
 
-describe("待った", () => {
+describe("undoNonogramSession", () => {
   describe("1回のドラッグで塗った場合", () => {
     const session = endNonogramSessionStroke(
       drag(createNonogramSession(problem, startedAt), [0, 1, 2], "filled"),
@@ -224,6 +256,14 @@ describe("待った", () => {
       expect(next).toBe(session);
     });
   });
+
+  describe("クリア済みの場合", () => {
+    test("取り消さないこと", () => {
+      const next = undoNonogramSession(cleared);
+
+      expect(next).toBe(cleared);
+    });
+  });
 });
 
 describe("restartNonogramSession", () => {
@@ -256,35 +296,20 @@ describe("restartNonogramSession", () => {
       expect(next).toBe(session);
     });
   });
+
+  describe("クリア済みの場合", () => {
+    test("盤面を戻さないこと", () => {
+      const next = restartNonogramSession(cleared);
+
+      expect(next).toBe(cleared);
+    });
+  });
 });
 
-describe("クリア", () => {
-  const clearedAt = 61_000;
-  const almostSolved = withBoard(["#x#", "###", "x.."]);
-
-  describe("塗りが図柄と一致した場合", () => {
-    test("× や未確定が残っていてもクリアにし、入力を終えること", () => {
-      const session = startNonogramSessionStroke(
-        almostSolved,
-        7,
-        "filled",
-        clearedAt,
-      );
-
-      expect(session.status).toBe("cleared");
-      expect(session.finishedAt).toBe(clearedAt);
-      expect(session.stroke).toBeNull();
-    });
-
+describe("getNonogramSessionResult", () => {
+  describe("クリア済みの場合", () => {
     test("クリアまでのプレイ事実を返すこと", () => {
-      const session = startNonogramSessionStroke(
-        almostSolved,
-        7,
-        "filled",
-        clearedAt,
-      );
-
-      const result = getNonogramSessionResult(session);
+      const result = getNonogramSessionResult(cleared);
 
       expect(result).toEqual({
         elapsedMs: clearedAt - startedAt,
@@ -293,25 +318,6 @@ describe("クリア", () => {
         restartCount: 0,
         inputCount: 1,
       });
-    });
-  });
-
-  describe("クリアした後", () => {
-    const cleared = startNonogramSessionStroke(
-      almostSolved,
-      7,
-      "filled",
-      clearedAt,
-    );
-
-    test("入力・待った・盤面を戻すを受け付けないこと", () => {
-      const results = [
-        startNonogramSessionStroke(cleared, 8, "filled", clearedAt),
-        undoNonogramSession(cleared),
-        restartNonogramSession(cleared),
-      ];
-
-      expect(results).toEqual([cleared, cleared, cleared]);
     });
   });
 

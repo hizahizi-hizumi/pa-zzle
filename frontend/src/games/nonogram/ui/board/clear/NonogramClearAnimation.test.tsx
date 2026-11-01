@@ -40,6 +40,7 @@ describe("NonogramClearAnimation", () => {
 
   describe("完成演出に入っていない場合", () => {
     beforeEach(() => {
+      vi.useFakeTimers();
       render(
         <NonogramClearAnimation active={false} onComplete={onComplete}>
           <span data-nonogram-clear-wave="0" />
@@ -47,10 +48,10 @@ describe("NonogramClearAnimation", () => {
       );
     });
 
-    test("完了を通知しないこと", () => {
-      const calls = onComplete.mock.calls.length;
+    test("時間が経っても完了を通知しないこと", () => {
+      vi.runAllTimers();
 
-      expect(calls).toBe(0);
+      expect(onComplete).not.toHaveBeenCalled();
     });
   });
 });

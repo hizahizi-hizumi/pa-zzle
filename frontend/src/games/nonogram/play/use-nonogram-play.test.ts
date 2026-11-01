@@ -62,39 +62,60 @@ describe("useNonogramPlay", () => {
     expect(problemIdentity).toEqual(initial.identity);
   });
 
-  test("押している間は入力の範囲を返し、離すと入力を終えること", () => {
-    act(() => result.current.startStroke(firstBlackCellIndex, "filled"));
-    const pressedRange = result.current.strokeRange;
-    act(() => result.current.endStroke());
-
-    expect(pressedRange).toEqual({
-      startCellIndex: firstBlackCellIndex,
-      endCellIndex: firstBlackCellIndex,
+  describe("マスを押した場合", () => {
+    beforeEach(() => {
+      act(() => result.current.startStroke(firstBlackCellIndex, "filled"));
     });
-    expect(result.current.strokeRange).toBeNull();
-    expect(result.current.board.cells[firstBlackCellIndex]).toBe("filled");
-    expect(result.current.canUndo).toBe(true);
-    expect(result.current.canRestart).toBe(true);
+
+    test("押している間は入力の範囲を返すこと", () => {
+      const { strokeRange } = result.current;
+
+      expect(strokeRange).toEqual({
+        startCellIndex: firstBlackCellIndex,
+        endCellIndex: firstBlackCellIndex,
+      });
+    });
+
+    test("離すと入力を終え、待ったと盤面を戻すを使えるようにすること", () => {
+      act(() => result.current.endStroke());
+
+      expect(result.current.strokeRange).toBeNull();
+      expect(result.current.board.cells[firstBlackCellIndex]).toBe("filled");
+      expect(result.current.canUndo).toBe(true);
+      expect(result.current.canRestart).toBe(true);
+    });
   });
 
-  test("塗りがヒントにちょうど合った行・列を返すこと", () => {
+  describe("1行の塗りをすべて入れた場合", () => {
     const row = Math.floor(firstBlackCellIndex / solution.width);
     const rowCells = listBlackCellIndices(solution).filter(
       (cellIndex) => Math.floor(cellIndex / solution.width) === row,
     );
-    for (const cellIndex of rowCells) {
-      tap(result, cellIndex);
-    }
 
-    expect(result.current.matchedLines.rows[row]).toBe(true);
+    beforeEach(() => {
+      for (const cellIndex of rowCells) {
+        tap(result, cellIndex);
+      }
+    });
+
+    test("その行をヒントにちょうど合った行として返すこと", () => {
+      const { matchedLines } = result.current;
+
+      expect(matchedLines.rows[row]).toBe(true);
+    });
   });
 
-  test("待ったで直前の入力を取り消すこと", () => {
-    tap(result, firstBlackCellIndex);
-    act(() => result.current.undo());
+  describe("塗った後の場合", () => {
+    beforeEach(() => {
+      tap(result, firstBlackCellIndex);
+    });
 
-    expect(result.current.board.cells[firstBlackCellIndex]).toBe("unknown");
-    expect(result.current.canUndo).toBe(false);
+    test("待ったで直前の入力を取り消すこと", () => {
+      act(() => result.current.undo());
+
+      expect(result.current.board.cells[firstBlackCellIndex]).toBe("unknown");
+      expect(result.current.canUndo).toBe(false);
+    });
   });
 
   describe("塗りが図柄と一致した場合", () => {
