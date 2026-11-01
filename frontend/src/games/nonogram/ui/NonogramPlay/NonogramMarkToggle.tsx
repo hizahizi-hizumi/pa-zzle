@@ -37,7 +37,7 @@ export function NonogramMarkToggle({
             disabled={disabled}
             onClick={() => onChange(option.mark)}
             className={cn(
-              "flex aspect-square h-full touch-manipulation items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+              "flex aspect-square h-full touch-manipulation items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
               selected
                 ? nonogramToneClassNames.selectedMark
                 : "hover:bg-accent",
@@ -45,10 +45,7 @@ export function NonogramMarkToggle({
           >
             <span
               aria-hidden="true"
-              className={cn(
-                "relative size-5 border-(length:--border-width-normal) border-foreground/40",
-                !selected && "opacity-40",
-              )}
+              className={cn("relative size-5", !selected && "opacity-40")}
             >
               <NonogramCellFace state={option.mark} />
             </span>
