@@ -55,7 +55,7 @@ model: opus
 - session / play: 命名 `<動詞><Game>Session<対象>`、受け付けない操作で session をそのまま返す、`restart` の条件、`applyPlaySession` などの共通関数、`selectProblemAvoiding`
 - 画面: `GamePlayScreenProps` 系の props、`GamePlayFrame` の利用、`interactionDisabled`、クリア演出の `playAnimations` と `onClearAnimationComplete`、portal しない
 - 記録: `RecordedProblemIdentity`、`payloadVersion`、`@/lib/type-guards` による読み戻しの検査、`restore<Game>RecordedResult`
-- 共通部品（`frontend/src/components/` の `UndoButton`・`HowToPlayDialog`・`DifficultyOption` など）があるのに同等物をゲーム内に書いていないか
+- 正本（`DESIGN.md`・`.claude/rules/game-structure.md`）が共通契約とする部品（`HowToPlayDialog`・`DifficultyOption` など）があるのに、同等物をゲーム内に書いていないか
 
 ### 3. 依存方向
 

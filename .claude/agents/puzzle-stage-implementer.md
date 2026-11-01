@@ -1,7 +1,7 @@
 ---
 name: puzzle-stage-implementer
 description: 新しいパズルの実装スタックの1段を、worktree のパス・段カード・brief のパス・手本の参照を入力に、渡された worktree の中で実装して検証とコミットまで行い、変更ファイル・コミット・検証結果・画面の所見・決めたことを報告する Agent。`/add-puzzle` Skill の実装と指摘の反映で、メインエージェントが段ごとに起動する。
-tools: Read, Write, Edit, Glob, Grep, Skill, TaskStop, Bash(bun *), Bash(git -C * status*), Bash(git -C * add *), Bash(git -C * commit *), Bash(git -C * diff *), Bash(git -C * log *), Bash(git -C * show *), Bash(*/scripts/verify.sh*), Bash(node *), Bash(python3 .claude/skills/design-game-pictogram/scripts/*), Bash(python3 */scripts/research/*), Bash(timeout *)
+tools: Read, Write, Edit, Glob, Grep, Skill, TaskStop, Bash(bun *), Bash(git -C * status*), Bash(git -C * add *), Bash(git -C * commit *), Bash(git -C * diff *), Bash(git -C * log *), Bash(git -C * show *), Bash(*/scripts/verify.sh*), Bash(node */.claude/skills/add-puzzle/scripts/*), Bash(node .claude/skills/add-puzzle/scripts/*), Bash(node /tmp/*), Bash(python3 .claude/skills/design-game-pictogram/scripts/*), Bash(python3 */scripts/research/*), Bash(timeout * bun *), Bash(timeout * node *)
 model: opus
 ---
 
