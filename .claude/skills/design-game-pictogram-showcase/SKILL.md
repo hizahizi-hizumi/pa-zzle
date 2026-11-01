@@ -70,12 +70,11 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash(python3 .claude/skills/design
   - `@media (prefers-color-scheme: …)` は使わない。アプリのテーマは OS 設定ではなく `.dark` クラスで決まる。
 - **静止状態**: SVG 内の基本スタイル（アニメーション指定なし）で描かれた姿が色付き静止画。下部一覧の選択中、OS の動きを減らす設定、再生しない場面ではこれが表示される。
 - **再生**: アニメーションは SVG 内 `<style>` の CSS animation で書く。animation 系プロパティを書くルールは、必ず `@media (prefers-reduced-motion: no-preference)` の内側に置き、祖先の `[data-pictogram-motion="play"]` を条件にする。この `@media` 内のルールはすべてこの条件を持つ。`data-pictogram-motion` は `="play"` の祖先条件としてだけ使い、対象自身に付けず、SVG 自身にも設定しない。
-- **再生形式**: 次の 3 種から選び、manifest の `playback` に書く。どれを選ぶかは探索で比べてよい（選び方と目安は `references/exploration.md` と `references/motion.md`）。
-  - `once`（1 回再生）: 終点を静止状態と同じ姿にし、終了後に静止状態へ戻るとき跳ばないこと。始点は静止状態と異なってよい（ヒーローは表示と同時に再生されるため）。各 animation は 1 回だけ再生する。
-  - `cut`（切り替えループ）: 100% の姿を静止状態（見せ場の姿）にし、各周の終わりにその姿で止まる区間を置く（目安 1.5〜2.5 秒）。0% は開始の姿にし、周の境界で瞬時に切り替える。CSS は周をまたいで補間しないので途中の絵は出ない。0% の後に開始の姿での短い間（目安 0.3 秒）を置く。全 animation を同じ周期・同じ遅延の `infinite` にする。
+- **再生形式**: 次の 2 種から選び、manifest の `playback` に書く。`cut` を基本とし、`seam` は継ぎ目が意味として自然に成立する場合の例外とする（選び方と目安は `references/exploration.md` と `references/motion.md`）。全 animation を `infinite` にする。1 回だけ再生して止まる形式は使わない（選んだ瞬間しか動かず、見逃すと A/B が伝わらない。D は `cut` の止まりで満たす）。
+  - `cut`（切り替えループ）: 100% の姿を静止状態（見せ場の姿）にし、各周の終わりにその姿で止まる区間を置く（目安 1.5〜2.5 秒）。0% は開始の姿にし、周の境界で瞬時に切り替える。CSS は周をまたいで補間しないので途中の絵は出ない。0% の後に開始の姿での短い間（目安 0.3 秒）を置く。始点は静止状態と異なってよい（ヒーローは表示と同時に再生されるため）。全 animation を同じ周期・同じ遅延にする。
     - 切り替えを周の途中に置かない（初回の最初のフレームに見せ場の姿が出て、動き出しも遅れる）。
     - フェードや巻き戻しで開始の姿へ戻す途中経過を見せない。
-  - `seam`（継ぎ目ループ）: 0% と 100% を同じ姿にし、その継ぎ目の姿を静止状態にする。全 animation を `infinite` にする。
+  - `seam`（継ぎ目ループ）: 0% と 100% を同じ姿にし、その継ぎ目の姿を静止状態にする。
   - 始点が静止状態と異なり `animation-delay` を使う場合は、遅延中に静止状態がちらつかないよう `animation-fill-mode: backwards` または `both` を付ける。
   - 再生途中で止まる場面（動きを減らす設定への切り替え、ゲームの切り替え、ギャラリーの再生属性の付け外し）で静止状態へ切り替わる跳びは契約の対象外とする。
   - 周期・止まり・開始の間の目安と、目安を超えてよい条件は `references/motion.md`。
@@ -86,7 +85,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash(python3 .claude/skills/design
   - `var()` で参照できるのは `--game-pictogram-strong` / `--game-pictogram-soft`、上の「色」に挙げたアプリのセマンティックトークン、`--pz-<game-id>-` 接頭辞の変数だけとする。
   - id 参照（gradient、clipPath 等）は原則使わない。使うなら接頭辞付き id への `#` 参照に限り、同時 2 表示で壊れないことをセルフレビューで確かめる。id の重複は不可。
 - **Safari（WebKit）で崩れない書き方**: 人間は iOS の Claude アプリ（WebKit）でもギャラリーを見る。古い WebKit が解釈しない記法は塗りやルールごと無視され、Chromium の確認では見つからない。リテラルの色は hex / `rgb()` で書き（`oklch()` などの定義元は `scripts/resolve_color.py` で変換する）、`color-mix()`・入れ子の CSS・相対色・`d` の CSS アニメーションを使わない。詳細は `references/motion.md` の 6 節。
-- **禁止**（ここと、上の座標系、`--game-pictogram-strong` の使用、テーマで変わる色の書き方と切り替えてよいプロパティ、再生条件と祖先条件の結合子、再生形式の回数と `cut` の周期・遅延の一致、同時 2 表示の接頭辞・`var()`・id の規則、アプリのトークンを色以外に使うこと、`<text>` の `font-family` の欠落、入れ子の CSS は `scripts/check_animation.py` が `FAIL` にする。keyframes の色を `var()` で書く規則・`seam` の周期と遅延の一致・id の使用・WebKit で崩れうる色の記法は `WARN`。描画した姿の一致と見た目は検査しない）:
+- **禁止**（ここと、上の座標系、`--game-pictogram-strong` の使用、テーマで変わる色の書き方と切り替えてよいプロパティ、再生条件と祖先条件の結合子、再生形式（`cut` / `seam` 以外の `playback`、`infinite` でない animation）と `cut` の周期・遅延の一致、同時 2 表示の接頭辞・`var()`・id の規則、アプリのトークンを色以外に使うこと、`<text>` の `font-family` の欠落、入れ子の CSS は `scripts/check_animation.py` が `FAIL` にする。keyframes の色を `var()` で書く規則・`seam` の周期と遅延の一致・id の使用・WebKit で崩れうる色の記法は `WARN`。描画した姿の一致と見た目は検査しない）:
   - 要素: `script`、`foreignObject`、`image`、`iframe`、`video`、`audio`、SMIL（`animate`、`animateMotion`、`animateTransform`、`animateColor`、`set`、`discard`）
   - 属性: イベント属性（`on*`）、外部参照（`href` / `src` / `url()` は接頭辞付き id への `#` 参照だけ）
   - CSS: `transition`（どこでも）、`style` 属性の `animation`、keyframes 内の `animation-timing-function` 以外の animation 系（`animation` 省略形を含む）。at-rule は `@media (prefers-reduced-motion: no-preference)` 1 種と `@keyframes` だけとし、`@-webkit-keyframes`、`@import`、`prefers-color-scheme` などその他の `@media`、入れ子の at-rule、ルール外の文は使わない
@@ -141,9 +140,9 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash(python3 .claude/skills/design
 - `aim_play`（A: 中心の操作をどう見せるか）
 - `aim_payoff`（B: どの瞬間の気持ちよさをどう見せるか）
 - `static_pose`（静止状態はどの瞬間の姿か。一覧選択中の色付き静止画になる）
-- `playback`（`once` / `cut` / `seam` の仮置き。まず `once` か `cut` を検討し、`seam` は継ぎ目が意味として自然に成立する場合だけにする。`references/exploration.md`）
+- `playback`（`cut` / `seam` の仮置き。基本は `cut` とし、`seam` は継ぎ目が意味として自然に成立する場合だけにする。`references/exploration.md`）
 
-静止状態は 1 回再生の終点・切り替えループの止まり・継ぎ目ループの継ぎ目を兼ねるため、動きと一緒に考える。速度・角度・量だけが違う案を別案として数えない。
+発散を独立させる方法は `references/exploration.md` の 4 節。静止状態は切り替えループの止まり・継ぎ目ループの継ぎ目を兼ねるため、動きと一緒に考える。速度・角度・量だけが違う案を別案として数えない。
 
 ### 3. 狙いで束ねて試作候補を選ぶ
 
@@ -170,7 +169,7 @@ python3 .claude/skills/design-game-pictogram-showcase/scripts/check_animation.py
   --manifest path/to/manifest.json
 ```
 
-受け口の契約のうち、viewBox、接頭辞、セレクタの漏れ、再生条件（祖先の `[data-pictogram-motion="play"]` と reduced-motion の両方）、祖先条件の後ろの `>`・`+`・`~`、`.dark` 条件で色以外を切り替えていないこと、禁止要素・属性・CSS（`@-webkit-keyframes`・入れ子の CSS を含む）、使える CSS 変数とアプリのトークンを色にだけ使うこと、`<text>` の `font-family`、manifest の `overlap` の形式、再生形式の構造（`once` は 1 回、`cut` / `seam` は `infinite`、`cut` は全 animation が同じ周期・遅延）を決定論的に検査し、違反を `FAIL` にする。次は `WARN` にする。
+受け口の契約のうち、viewBox、接頭辞、セレクタの漏れ、再生条件（祖先の `[data-pictogram-motion="play"]` と reduced-motion の両方）、祖先条件の後ろの `>`・`+`・`~`、`.dark` 条件で色以外を切り替えていないこと、禁止要素・属性・CSS（`@-webkit-keyframes`・入れ子の CSS を含む）、使える CSS 変数とアプリのトークンを色にだけ使うこと、`<text>` の `font-family`、manifest の `overlap` の形式、再生形式の構造（`playback` が `cut` / `seam`、全 animation が `infinite`、`cut` は全 animation が同じ周期・遅延）を決定論的に検査し、違反を `FAIL` にする。次は `WARN` にする。
 
 - `animation-delay` があるのに `animation-fill-mode` が `backwards` / `both` でない
 - 多数の keyframe に `animation-timing-function` が無い（線形サンプリングの疑い）
@@ -180,7 +179,7 @@ python3 .claude/skills/design-game-pictogram-showcase/scripts/check_animation.py
 - `.dark` で色を切り替える SVG で、keyframes が塗りの色を `var()` でなく値で書いている
 - `oklch()`・`color-mix()` など古い WebKit が解釈しない色の記法
 
-A/B/C/D、描画した終点・止まり・継ぎ目と静止状態の一致、遅延中のちらつき、かくつきは判定しない（Step 7 の `observe_animation.cjs` で測る）。`PASS` は人間へ提示できる品質を意味しない。
+A/B/C/D、描画した止まり・継ぎ目と静止状態の一致、遅延中のちらつき、かくつきは判定しない（Step 7 の `observe_animation.cjs` で測る）。`PASS` は人間へ提示できる品質を意味しない。
 
 ### 6. セルフレビュー用ギャラリーを作る
 
@@ -208,7 +207,7 @@ python3 .claude/skills/design-game-pictogram-showcase/scripts/make_review_galler
      --filmstrip --webkit [--overlap '<動く対象のセレクタ>|<他の対象のセレクタ>']
    ```
 
-   候補を 1 つずつ単独ページに実表示サイズで描画し、ライト/ダークそれぞれで静止状態と終点（`once`）・止まり（`cut`）・継ぎ目（`seam`）の一致と動きを減らす設定での静止を、ライトで `cut` の切り替えの実フレーム、遅延中のちらつき、viewBox からのはみ出し、速度の連続性（かくつき）、静止状態の大きさと位置、一覧サイズのインク量（塗りと線の被覆率）を測る。`--filmstrip` はヒーロー 138px の実時間の連続スクリーンショットを 1 枚にまとめ、`--webkit` は WebKit が起動できればその描画も撮る。違反は `FAIL`（終了コード 1）、人間の判断が要るもの（速度の急変、重なり）は `WARN` にする。候補ごとの重なりの組は manifest の `overlap` に書く（`references/review.md`）。Playwright は `scripts/playwright_resolve.cjs` が `NODE_PATH` なしで探す。全オプションは `--help`、報告の読み方は `references/self-review.md`。
+   候補を 1 つずつ単独ページに実表示サイズで描画し、ライト/ダークそれぞれで静止状態と止まり（`cut`）・継ぎ目（`seam`）の一致と動きを減らす設定での静止を、ライトで `cut` の切り替えの実フレーム、遅延中のちらつき、viewBox からのはみ出し、速度の連続性（かくつき）、静止状態の大きさと位置、一覧サイズのインク量（塗りと線の被覆率）を測る。`--filmstrip` はヒーロー 138px の実時間の連続スクリーンショットを 1 枚にまとめ、`--webkit` は WebKit が起動できればその描画も撮る。違反は `FAIL`（終了コード 1）、人間の判断が要るもの（速度の急変、重なり）は `WARN` にする。候補ごとの重なりの組は manifest の `overlap` に書く（`references/review.md`）。Playwright は `scripts/playwright_resolve.cjs` が `NODE_PATH` なしで探す。全オプションは `--help`、報告の読み方は `references/self-review.md`。
 2. セルフレビュー用ギャラリーを実ブラウザで開き、狙いと見た目を目視する。`scripts/check_gallery.cjs` で崩れと `pageerror` を確かめられる。開き方（Claude Code 環境 / ChatGPT 環境）と観察の手順は `references/self-review.md`。
 3. 結果を候補ごとに `self-review.json` へ記録する。
 4. ゲート検査を通す。
@@ -234,7 +233,7 @@ python3 .claude/skills/design-game-pictogram-showcase/scripts/make_review_galler
   --output /tmp/pictogram-showcase-<game>/review-human.html
 ```
 
-外部参照のない単体 HTML で、スマホを含む手元の端末で見られるモバイル優先の 1 カラムにする。渡す前に `scripts/check_gallery.cjs <HTML> --device "iPhone 13"`（`--dark` も）で崩れと `pageerror` が無いことを確かめる。候補ごとにヒーロー（再生）と一覧の選択中（静止）を実表示サイズで、一覧の選択中を他ゲームの白黒ピクトグラムと並べて見せ、判定（候補 / 掘る / 一部 / 除外）とメモ、最下部に全体メモを置く。
+外部参照のない単体 HTML で、スマホを含む手元の端末で見られるモバイル優先の 1 カラムにする。渡す前に `scripts/check_gallery.cjs <HTML> --device "iPhone 13"`（`--dark` も）で崩れと `pageerror` が無く、全候補のヒーローが動いていることを確かめる。候補ごとにヒーロー（再生）と一覧の選択中（静止）を実表示サイズで、一覧の選択中を他ゲームの白黒ピクトグラムと並べて見せ、判定（候補 / 掘る / 一部 / 除外）とメモ、最下部に全体メモを置く。
 
 人間は手元の端末でギャラリーを見る。受け渡しは環境で分ける（詳細は `references/review.md`）。
 
@@ -278,7 +277,7 @@ C が弱いという指摘は、A/B の見直し指示として扱う。
 
    ```sh
    python3 .claude/skills/design-game-pictogram-showcase/scripts/check_animation.py \
-     --game-id <game> --playback <once|cut|seam> frontend/src/games/<game>/assets/pictogram-showcase.svg
+     --game-id <game> --playback <cut|seam> frontend/src/games/<game>/assets/pictogram-showcase.svg
    ```
 
 2. `frontend/src/game-catalog/<game>/<game>-catalog-entry.tsx` で `?raw` import し、`pictogramShowcaseSvg` に渡す。
@@ -315,7 +314,7 @@ Skill 配下には特定ゲームの生成物を保存しない。再利用す�
 - `scripts/check_animation.py` — 受け口の契約と技術的破綻の決定論的検査
 - `scripts/observe_animation.cjs` — 実ブラウザでの静止状態・切り替え・遅延中のちらつき・reduced motion・はみ出し・速度の連続性・重なり・大きさと位置・インク量の観察、フィルムストリップ、WebKit での描画
 - `scripts/make_review_gallery.py` — セルフレビュー / 人間レビュー用ギャラリー生成
-- `scripts/check_gallery.cjs` — ギャラリーを端末エミュレーションで開き、`pageerror`・はみ出し・画像の読み込み・iframe の高さを確かめる
+- `scripts/check_gallery.cjs` — ギャラリーを端末エミュレーションで開き、`pageerror`・はみ出し・画像の読み込み・ヒーローが動いていること・iframe の高さを確かめる
 - `scripts/resolve_color.py` — Tailwind のクラス・アプリのトークン・`oklch()` を、SVG に書く値（hex か `var()`）へ引く
 - `scripts/playwright_resolve.cjs` — `NODE_PATH` なしで Playwright を読み込む（作業用スクリプトからも `require` して使う）
 - `frontend/node_modules/tailwindcss/theme.css` — Tailwind のパレット色の実値

@@ -1,16 +1,17 @@
 #!/usr/bin/env node
 // Observe showcase pictogram candidates in a real browser (Playwright Chromium) and report:
-//   (a) the static state against the end (once: every animation at its own end), the hold before the
-//       switch (cut) or the seam (seam), by computed style of every visible element, in light and dark
+//   (a) the static state against the hold before the switch (cut) or the seam (seam), by computed style
+//       of every visible element, in light and dark; every animation must loop (infinite)
 //   (b) for cut, real frames around each cycle boundary (detected by currentIteration, so a delay is
 //       allowed): the frame before / after the switch and the number of in-between frames
 //   (c) real frames from the moment the SVG is inserted: an element that shows the static state while
-//       its animation is still in its delay, and (once / cut) a first frame equal to the static state
+//       its animation is still in its delay, and (cut) a first frame equal to the static state
 //   (d) that the hero stays in the static state under prefers-reduced-motion: reduce, in light and dark
 //   (e) how far any visible shape goes outside the 0 0 120 120 viewBox over one cycle
 //   (f) speed continuity: every moving shape is scanned with paused time every 2ms and the jump of its
 //       velocity between neighbouring steps (relative to its peak speed) is reported (WARN only)
-//   (g) optional: overlap between the shapes of two selectors over one cycle (--overlap A|B, WARN only)
+//   (g) optional: overlap between the shapes of two selectors over one cycle (--overlap A|B, WARN only;
+//       A|A checks the matched elements of A against each other)
 //   (h) the static state's visible bounds (viewBox units, stroke included) against the base pictogram and
 //       the median of the other games' pictogram.svg, and its ink coverage at list size against theirs
 //       (NOTE only; references/motion.md)
@@ -32,7 +33,8 @@ const USAGE = `usage: node observe_animation.cjs --manifest <manifest.json> [opt
   --cycles <n>               cut: cycles of real frames to record (default 3.3)
   --pixels                   pixel difference between the end and the static screenshots
   --overlap '<sel>|<sel>'    overlap of two selectors over one cycle (repeatable; the manifest
-                             candidate field "overlap" adds pairs per candidate)
+                             candidate field "overlap" adds pairs per candidate). The same selector
+                             on both sides checks its matched elements against each other
   --smooth-threshold <x>     speed jump relative to peak that is a WARN (default 0.15)
   --filmstrip                real-time screenshots of the 138px hero over one cycle, in one image
   --filmstrip-interval <ms>  minimum time between filmstrip frames (default 100)
@@ -48,6 +50,7 @@ const THEME_SELECTORS = { light: ':root', dark: '.dark' };
 const THEME_TOKENS = ['foreground', 'muted-foreground', 'background'];
 const FILMSTRIP_HERO_INDEX = 1;
 const FILMSTRIP_COLUMNS = 8;
+const FILMSTRIP_PAST_CYCLE_MS = 600;
 const FALLBACK_THEMES = {
   light: { foreground: 'oklch(0.145 0 0)', 'muted-foreground': 'oklch(0.556 0 0)', background: 'oklch(1 0 0)' },
   dark: { foreground: 'oklch(0.985 0 0)', 'muted-foreground': 'oklch(0.708 0 0)', background: 'oklch(0.145 0 0)' },
@@ -64,7 +67,8 @@ const SEAM_SCAN_PAST_MS = 200;
 const FLASH_MIN_RECORD_MS = 300;
 const PIXEL_CHANNEL_THRESHOLD = 24;
 const OVERLAP_MIN_AREA = 0.25;
-const PLAYBACKS = new Set(['once', 'cut', 'seam']);
+const PLAYBACKS = new Set(['cut', 'seam']);
+const PLAYBACK_ERROR = 'playback must be cut or seam (once is not used: it moves only at the moment of selection and is easily missed)';
 
 function parseOverlap(value) {
   const pair = String(value).split('|').map((part) => part.trim());
@@ -174,19 +178,17 @@ window.__pz = (() => {
   const animations = (host) => host ? host.getAnimations({ subtree: true }) : document.getAnimations();
   const timings = () => animations(firstHero()).map((animation) => {
     const timing = animation.effect.getComputedTiming();
-    return { delay: timing.delay || 0, duration: Number(timing.duration) || 0, finite: Number.isFinite(timing.iterations),
-      endTime: Number.isFinite(timing.endTime) ? timing.endTime : null };
+    return { delay: timing.delay || 0, duration: Number(timing.duration) || 0, iterations: Number.isFinite(timing.iterations) ? timing.iterations : 'infinite' };
   });
   // Seek every animation to one absolute time.
   const seek = (time) => animations().forEach((animation) => { animation.pause(); animation.currentTime = time; });
-  // Seek every animation to its own start (its delay, the 0% keyframe) or its own end: just before the end
-  // of a one-shot animation, or just before the end of the first iteration of a loop.
+  // Seek every animation to its own start (its delay, the 0% keyframe) or to just before the end of its
+  // first iteration (100%).
   const seekEach = (where, epsilon) => animations().forEach((animation) => {
     const timing = animation.effect.getComputedTiming();
     const delay = timing.delay || 0;
-    const end = Number.isFinite(timing.endTime) ? timing.endTime : delay + Number(timing.duration || 0);
     animation.pause();
-    animation.currentTime = where === 'start' ? delay : end - epsilon;
+    animation.currentTime = where === 'start' ? delay : delay + Number(timing.duration || 0) - epsilon;
   });
   // Union of the visible shapes (stroke included) in viewBox units.
   const bounds = () => {
@@ -232,29 +234,48 @@ window.__pz = (() => {
     return worst;
   };
   // Area (viewBox units^2) covered by a visible shape of both selectors: bounding boxes first, then a
-  // 1px grid tested with isPointInFill / isPointInStroke in each shape's own coordinates.
+  // 1px grid tested in each shape's own coordinates. A paint of none is not part of the shape. <text> has
+  // no isPointInFill, so it is approximated by its bounding box (reported as textApproximated).
+  // With the same selector on both sides, the shapes of one matched element are tested against those of
+  // the other matched elements (not their own, nor an ancestor's or descendant's).
   const overlap = (pairs) => {
     const host = firstHero();
     const svg = host.querySelector('svg');
     const unit = 120 / svg.getBoundingClientRect().width;
-    const shapesOf = (selector) => [...svg.querySelectorAll(selector)]
-      .flatMap((el) => [el, ...el.querySelectorAll('*')])
-      .filter((el) => SHAPES.has(el.localName) && effectiveOpacity(el, svg) > 0.001);
+    const shapesOf = (selector) => {
+      const owners = new Map();
+      for (const owner of svg.querySelectorAll(selector)) {
+        for (const el of [owner, ...owner.querySelectorAll('*')]) {
+          if (!owners.has(el) && SHAPES.has(el.localName) && effectiveOpacity(el, svg) > 0.001) owners.set(el, owner);
+        }
+      }
+      return [...owners].map(([el, owner]) => ({ el, owner }));
+    };
+    const related = (a, b) => a === b || a.contains(b) || b.contains(a);
     const inside = (el, x, y) => {
       const matrix = el.getScreenCTM();
       if (!matrix) return false;
       const point = new DOMPoint(x, y).matrixTransform(matrix.inverse());
-      if (el.isPointInFill(point)) return true;
-      return getComputedStyle(el).stroke !== 'none' && el.isPointInStroke(point);
+      if (typeof el.isPointInFill !== 'function') {
+        const box = el.getBBox();
+        return point.x >= box.x && point.x <= box.x + box.width && point.y >= box.y && point.y <= box.y + box.height;
+      }
+      const style = getComputedStyle(el);
+      if (style.fill !== 'none' && el.isPointInFill(point)) return true;
+      return style.stroke !== 'none' && el.isPointInStroke(point);
     };
     return pairs.map(([selectorA, selectorB]) => {
+      const sameSet = selectorA === selectorB;
       const groupA = shapesOf(selectorA);
-      const groupB = shapesOf(selectorB).filter((el) => !groupA.includes(el));
+      const shapesA = new Set(groupA.map(({ el }) => el));
+      const groupB = sameSet ? groupA : shapesOf(selectorB).filter(({ el }) => !shapesA.has(el));
       let hits = 0;
+      const textApproximated = [...groupA, ...groupB].some(({ el }) => el.localName === 'text');
       const counted = new Set();
-      for (const a of groupA) {
+      for (const [i, { el: a, owner: ownerA }] of groupA.entries()) {
         const ra = a.getBoundingClientRect();
-        for (const b of groupB) {
+        for (const [j, { el: b, owner: ownerB }] of groupB.entries()) {
+          if (sameSet && (j <= i || related(ownerA, ownerB))) continue;
           const rb = b.getBoundingClientRect();
           const left = Math.max(ra.left, rb.left), right = Math.min(ra.right, rb.right);
           const top = Math.max(ra.top, rb.top), bottom = Math.min(ra.bottom, rb.bottom);
@@ -268,8 +289,16 @@ window.__pz = (() => {
           }
         }
       }
-      return hits * unit * unit;
+      return { area: hits * unit * unit, textApproximated };
     });
+  };
+  // Text is laid out at screen scale: its box edges snap to 1/128px and its ascent / descent to whole
+  // pixels, so its own box jumps while a transform scales it although the glyphs move smoothly. Its
+  // motion is measured by moving its first visible box with the transforms (a change of its own size is
+  // not measured).
+  const holdFirstBox = (samples) => {
+    const first = samples.find(Boolean);
+    if (first) samples.forEach((sample) => { if (sample) sample.box = first.box; });
   };
   // Speed continuity: positions (viewBox units) of the bounding-box corners and centre of every shape,
   // through getScreenCTM (it includes the CSS transforms), at paused times from..to every step ms.
@@ -278,7 +307,7 @@ window.__pz = (() => {
     const svg = host.querySelector('svg');
     const unit = 120 / svg.getBoundingClientRect().width;
     const shapes = elementsOf(host).map((el, index) => ({ el, key: keyOf(el, index) })).filter(({ el }) => SHAPES.has(el.localName));
-    const series = shapes.map(() => []);
+    const placements = shapes.map(() => []);
     const times = [];
     for (let time = from; time < to; time += step) {
       seek(time);
@@ -286,13 +315,18 @@ window.__pz = (() => {
       shapes.forEach(({ el }, k) => {
         const matrix = el.getScreenCTM();
         let box = null;
-        try { box = el.getBBox(); } catch {}
-        if (!matrix || !box || effectiveOpacity(el, svg) <= 0.001) { series[k].push(null); return; }
-        const corners = [[box.x, box.y], [box.x + box.width, box.y], [box.x, box.y + box.height],
-          [box.x + box.width, box.y + box.height], [box.x + box.width / 2, box.y + box.height / 2]];
-        series[k].push(corners.map(([x, y]) => { const p = new DOMPoint(x, y).matrixTransform(matrix); return [p.x * unit, p.y * unit]; }));
+        try { const { x, y, width, height } = el.getBBox(); box = { x, y, width, height }; } catch {}
+        placements[k].push(!matrix || !box || effectiveOpacity(el, svg) <= 0.001 ? null : { box, matrix });
       });
     }
+    shapes.forEach(({ el }, k) => { if (el.localName === 'text') holdFirstBox(placements[k]); });
+    const series = placements.map((samples) => samples.map((sample) => {
+      if (!sample) return null;
+      const { box, matrix } = sample;
+      const corners = [[box.x, box.y], [box.x + box.width, box.y], [box.x, box.y + box.height],
+        [box.x + box.width, box.y + box.height], [box.x + box.width / 2, box.y + box.height / 2]];
+      return corners.map(([x, y]) => { const p = new DOMPoint(x, y).matrixTransform(matrix); return [p.x * unit, p.y * unit]; });
+    }));
     const results = [];
     shapes.forEach(({ key }, k) => {
       const samples = series[k];
@@ -561,7 +595,7 @@ async function poses(context, svg, candidate, theme, options, report) {
   await play.page.evaluate((epsilon) => window.__pz.seekEach('end', epsilon), END_OFFSET_MS);
   result.endState = await play.page.evaluate(() => window.__pz.state());
   const endShot = await shot('end');
-  const label = { once: 'end', cut: 'hold (100%)', seam: 'seam (100%)' }[candidate.playback];
+  const label = { cut: 'hold (100%)', seam: 'seam (100%)' }[candidate.playback];
   const endDiff = differences(result.endState, staticState);
   report.themes[theme].endVsStatic = endDiff;
   if (endDiff.length) report.failures.push(`${theme}: ${label} differs from the static state: ${endDiff.slice(0, 5).join(' | ')}`);
@@ -626,10 +660,11 @@ async function observe(browser, candidate, options) {
   if (!timings.length) fail('no running animation with the play attribute');
 
   if (timings.length) {
-    const loop = candidate.playback !== 'once';
     const reference = timings[0];
-    const windowEnd = Math.max(...timings.map((t) => (t.finite && t.endTime != null ? t.endTime : t.delay + t.duration)));
-    report.periodMs = Math.round(loop ? reference.duration : windowEnd);
+    const firstCycleEnd = Math.max(...timings.map((t) => t.delay + t.duration));
+    const finite = timings.filter((t) => t.iterations !== 'infinite');
+    if (finite.length) fail(`${finite.length} animation(s) play a finite number of times (${finite.map((t) => t.iterations).join(', ')}); every animation loops (cut or seam), so animation-iteration-count must be infinite`);
+    report.periodMs = Math.round(reference.duration);
     report.delayMs = Math.round(Math.max(...timings.map((t) => t.delay)));
     const at = async (time) => { await play.page.evaluate((t) => window.__pz.seek(t), time); return play.page.evaluate(() => window.__pz.state()); };
 
@@ -660,19 +695,23 @@ async function observe(browser, candidate, options) {
     let worst = { margin: Infinity, key: null, atMs: 0 };
     const overlapPairs = candidateOverlaps(candidate, options.overlap);
     const overlaps = overlapPairs.map((pair) => ({ pair: pair.join(' | '), maxArea: 0, atMs: null }));
-    for (let time = 0; time < windowEnd; time += OVERFLOW_STEP_MS) {
+    for (let time = 0; time < firstCycleEnd; time += OVERFLOW_STEP_MS) {
       await play.page.evaluate((t) => window.__pz.seek(t), time);
       const sample = await play.page.evaluate(() => window.__pz.overflow());
       if (sample.margin < worst.margin) worst = { ...sample, atMs: time };
       if (overlaps.length) {
         const areas = await play.page.evaluate((pairs) => window.__pz.overlap(pairs), overlapPairs);
-        areas.forEach((area, i) => { if (area > overlaps[i].maxArea) { overlaps[i].maxArea = area; overlaps[i].atMs = time; } });
+        areas.forEach(({ area, textApproximated }, i) => {
+          if (textApproximated) overlaps[i].textApproximated = true;
+          if (area > overlaps[i].maxArea) { overlaps[i].maxArea = area; overlaps[i].atMs = time; }
+        });
       }
     }
     report.minViewBoxMargin = { margin: Number(worst.margin.toFixed(2)), element: worst.key, atMs: worst.atMs };
     if (worst.margin < 0) fail(`goes outside the viewBox by ${(-worst.margin).toFixed(2)} at ${worst.atMs}ms (${worst.key})`);
     for (const [i, entry] of overlaps.entries()) {
       entry.maxArea = Number(entry.maxArea.toFixed(2));
+      if (entry.textApproximated) report.notes.push(`overlap ${entry.pair}: <text> is measured by its bounding box, so it can read larger than the glyphs; judge by the screenshot`);
       if (entry.maxArea >= OVERLAP_MIN_AREA) {
         await play.page.evaluate((t) => window.__pz.seek(t), entry.atMs);
         fs.writeFileSync(path.join(options.out, `${candidate.id}-overlap-${i + 1}.png`), await play.page.locator('.host.hero').first().screenshot());
@@ -681,9 +720,9 @@ async function observe(browser, candidate, options) {
     }
     report.overlaps = overlaps;
 
-    // One iteration for once / cut (the cut switch is intended), one iteration plus the wrap for seam.
-    const scanFrom = loop ? Math.min(...timings.map((t) => t.delay)) : 0;
-    const scanTo = candidate.playback === 'seam' ? reference.delay + reference.duration + SEAM_SCAN_PAST_MS : (loop ? reference.delay + reference.duration : windowEnd);
+    // One iteration for cut (the cut switch is intended), one iteration plus the wrap for seam.
+    const scanFrom = Math.min(...timings.map((t) => t.delay));
+    const scanTo = reference.delay + reference.duration + (candidate.playback === 'seam' ? SEAM_SCAN_PAST_MS : 0);
     const smooth = await play.page.evaluate(([from, to, step]) => window.__pz.smoothness(from, to, step), [scanFrom, scanTo, SMOOTH_STEP_MS]);
     smooth.sort((a, b) => b.worstJump - a.worstJump);
     report.smoothness = { stepMs: SMOOTH_STEP_MS, threshold: options.smoothThreshold, movingShapes: smooth.length, shapes: smooth };
@@ -709,10 +748,8 @@ async function observe(browser, candidate, options) {
     const startsAwayFromStatic = differences(startState, staticState).length > 0;
     const firstFrame = classify(frames[0].state, { S: staticState, P0: startState });
     report.firstFrame = firstFrame;
-    if (candidate.playback !== 'seam' && startsAwayFromStatic && firstFrame === 'S') {
-      fail(candidate.playback === 'cut'
-        ? 'the first frame of the first play shows the static (payoff) pose; the switch is not at the cycle boundary, or the delay has no backwards fill'
-        : 'the first frame of the play shows the static state although the start pose differs; the delay has no backwards fill');
+    if (candidate.playback === 'cut' && startsAwayFromStatic && firstFrame === 'S') {
+      fail('the first frame of the first play shows the static (payoff) pose; the switch is not at the cycle boundary, or the delay has no backwards fill');
     }
     if (candidate.playback === 'cut') {
       const { boundaries } = cutBoundaries(frames, { S: staticState, P0: startState });
@@ -741,7 +778,7 @@ async function observe(browser, candidate, options) {
 // the first switch), laid out in one image with the animation time of each frame.
 async function filmstrip(context, svg, candidate, report, options) {
   const page = await render(context, svg, { play: true, theme: 'light', themes: options.themes, deferred: true });
-  const recordMs = report.delayMs + report.periodMs + (candidate.playback === 'once' ? 300 : 600);
+  const recordMs = report.delayMs + report.periodMs + FILMSTRIP_PAST_CYCLE_MS;
   await page.page.evaluate((markup) => document.querySelectorAll('.host').forEach((host) => { host.innerHTML = markup; }), svg);
   const hero = page.page.locator('.host.hero').nth(FILMSTRIP_HERO_INDEX);
   const frames = [];
@@ -874,8 +911,8 @@ function printReport(report) {
   const reports = [];
   for (const candidate of candidates) {
     if (!PLAYBACKS.has(candidate.playback)) {
-      reports.push({ id: candidate.id, playback: candidate.playback, failures: ['playback must be once, cut, or seam'], warnings: [], notes: [] });
-      console.log(`candidate: ${candidate.id}\n  FAIL: playback must be once, cut, or seam`);
+      reports.push({ id: candidate.id, playback: candidate.playback, failures: [PLAYBACK_ERROR], warnings: [], notes: [] });
+      console.log(`candidate: ${candidate.id}\n  FAIL: ${PLAYBACK_ERROR}`);
       continue;
     }
     const report = await observe(browser, candidate, options);

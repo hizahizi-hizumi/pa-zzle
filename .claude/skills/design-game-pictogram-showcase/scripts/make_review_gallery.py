@@ -7,7 +7,8 @@ self:  one sandboxed srcdoc iframe per candidate (candidates share class names, 
 human: a mobile-first single column page. Every SVG is shown through <img src="data:image/svg+xml...">
        wrapped in an outer <svg> that carries the host context (color variables, .dark,
        data-pictogram-motion) as an ancestor, as the app does, so candidates stay isolated without
-       iframes. Each <img> has data-view (hero / list / other / base) and data-theme. Decisions and
+       iframes. Each <img> has data-view (hero / list / other / base) and data-theme, and a candidate's
+       <img> also data-candidate (its id). Decisions and
        notes are kept in localStorage and, with --db-doc, in the artifact database.
 """
 
@@ -24,7 +25,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from check_animation import APP_COLOR_TOKENS
+from check_animation import APP_COLOR_TOKENS, PLAYBACK_VALUES
 from check_self_review import load_json as load_self_review_json
 from check_self_review import validate as validate_self_review
 
@@ -232,6 +233,8 @@ def candidate_fields(candidate: dict[str, Any]) -> tuple[str, dict[str, str]]:
     missing = [key for key, value in fields.items() if not value]
     if not candidate_id or missing:
         raise ValueError(f"candidate {candidate_id or '(unknown)'} is missing: {', '.join(missing) or 'id'}")
+    if fields["playback"] not in PLAYBACK_VALUES:
+        raise ValueError(f"candidate {candidate_id}: playback must be {' or '.join(PLAYBACK_VALUES)}")
     return candidate_id, fields
 
 
@@ -399,11 +402,10 @@ SELF_SCRIPT = """
 
   const frameOf = (card) => card.querySelector('.preview');
   const animationsOf = (card) => frameOf(card).contentDocument?.getAnimations() ?? [];
-  // One cycle: delay + duration (an infinite loop counts one iteration).
+  // One cycle: delay + duration of the first iteration.
   const cycleLength = (animations) => animations.reduce((longest, animation) => {
     const timing = animation.effect.getComputedTiming();
-    const iterations = Number.isFinite(timing.iterations) ? timing.iterations : 1;
-    return Math.max(longest, (timing.delay || 0) + Number(timing.duration || 0) * iterations);
+    return Math.max(longest, (timing.delay || 0) + Number(timing.duration || 0));
   }, 0);
 
   // The body's own height: the root's scrollHeight never drops below the iframe's current height.
@@ -416,7 +418,7 @@ SELF_SCRIPT = """
     const length = Math.round(cycleLength(animationsOf(card)));
     const scrubber = card.querySelector('.scrubber');
     if (!scrubber) return;
-    // The last frame of a cycle is length - 1: at length a loop is back at 0% and a one-shot has ended.
+    // The last frame of a cycle is length - 1: at length the loop is back at 0%.
     scrubber.max = String(Math.max(length - 1, 0));
     scrubber.value = '0';
     card.querySelector('.time').textContent = length ? `再生中 / 周期 ${length}ms` : 'アニメーションなし';
@@ -523,7 +525,7 @@ def build_self_document(
 <body>
 <header>
   <h1>{html.escape(title)}</h1>
-  <p class="hint">ヒーローは祖先に data-pictogram-motion="play" を付けて再生、一覧選択中は属性なしで静止。ダークは祖先に .dark クラスを付けて表示。時刻スライダーの最大値は周期 - 1ms（cut / seam の 100% 直前、once の終点）。静止状態との一致・切り替え・動きを減らす設定・速度の連続性は observe_animation.cjs で測る。判定は self-review.json に記録する。</p>
+  <p class="hint">ヒーローは祖先に data-pictogram-motion="play" を付けて再生、一覧選択中は属性なしで静止。ダークは祖先に .dark クラスを付けて表示。時刻スライダーの最大値は周期 - 1ms（cut / seam の 100% 直前）。静止状態との一致・切り替え・動きを減らす設定・速度の連続性は observe_animation.cjs で測る。判定は self-review.json に記録する。</p>
   <div class="toolbar">
     <button type="button" id="replay-all">すべて最初から再生</button>
     <button type="button" id="pause-all">一時停止</button>
@@ -565,16 +567,19 @@ def data_uri(svg: str) -> str:
     return "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode("ascii")
 
 
-def themed_images(svg: str, themes: dict[str, dict[str, str]], view: str) -> str:
+def themed_images(
+    svg: str, themes: dict[str, dict[str, str]], view: str, candidate_id: str | None = None
+) -> str:
     """One <img> per theme; view is hero (played) / list (the candidate still) / other / base."""
     play = view == "hero"
+    candidate = f' data-candidate="{html.escape(candidate_id)}"' if candidate_id else ""
     images = []
     for theme, values in themes.items():
         uri = data_uri(hosted(svg, values, theme, play))
         classes = f"th-{theme}{' anim' if play else ''}"
         source = f' data-src="{uri}"' if play else ""
         images.append(
-            f'<img class="{classes}" data-view="{view}" data-theme="{theme}" alt=""{source} src="{uri}">'
+            f'<img class="{classes}" data-view="{view}" data-theme="{theme}"{candidate} alt=""{source} src="{uri}">'
         )
     return "".join(images)
 
@@ -592,7 +597,7 @@ def human_card(
     subtitle = f"{escaped_id} · " if name else ""
     notes = text_field(candidate, "notes")
     notes_html = f"<p><b>補足:</b> {html.escape(notes)}</p>" if notes else ""
-    still = themed_images(svg, themes, "list")
+    still = themed_images(svg, themes, "list", candidate_id)
     compare = ""
     if others:
         tiles = "".join(
@@ -609,7 +614,7 @@ def human_card(
   <h3>{html.escape(name or candidate_id)} <small>{subtitle}{html.escape(fields["playback"])}</small></h3>
   <p class="meta">{html.escape(fields["hypothesis"])}</p>
   <div class="views">
-    <figure class="hero">{themed_images(svg, themes, "hero")}<figcaption>ヒーロー（再生）</figcaption></figure>
+    <figure class="hero">{themed_images(svg, themes, "hero", candidate_id)}<figcaption>ヒーロー（再生）</figcaption></figure>
     <figure><span class="tile selected">{still}</span><figcaption>一覧の選択中（静止）</figcaption></figure>
   </div>
   <button type="button" class="replay">最初から再生</button>
