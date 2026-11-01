@@ -95,43 +95,45 @@ function createRandomLines(count: number) {
   });
 }
 
-describe("研究用 Python の線の読みとの照合", () => {
-  // scripts/research/nonogram_core.py の solve_line_full と solve_line_lr が返した結果。
-  // 端寄せの読みが弱い線・同じ線・矛盾する線を8本ずつ含む。
-  const cases: readonly [
-    readonly number[],
-    string,
-    string | null,
-    string | null,
-  ][] = [
-    [[1, 2, 3, 2], "...#x#....#.", "#x##x###x.#.", "#x##x###x.#."],
-    [[2], "...", ".#.", ".#."],
-    [[4, 1], "........", "..##....", "..##...."],
-    [[1, 6], ".....##..", "...#####.", "...#####."],
-    [[1, 2], "x..#.x", "x#x##x", "x#x##x"],
-    [[2, 1, 2], ".##x....x", "x##x#x##x", "x##x#x##x"],
-    [[1], ".....#", "xxxxx#", "xxxxx#"],
-    [[1], ".", "#", "#"],
-    [[4, 1, 1], "..#...x#..", "..##..x#x.", "..##..x#.."],
-    [[1, 1, 1, 1], ".#....x.#.x.", "x#x...xx#xx.", "x#x...x.#.x."],
-    [[1, 2, 3], "..#..#....", ".x#..#.#..", "..#..#.#.."],
-    [[3, 2], "##...x.", null, null],
-    [[1], "xx", null, null],
-    [[1, 1, 1, 1], ".x#...x#..", ".x#x..x#x.", ".x#...x#.."],
-    [[2], ".#x#.", null, null],
-    [[1, 1, 2], ".x.xx.x", null, null],
-    [[1, 1, 4, 1], "x..x#...xx#.", null, null],
-    [[1, 1], "..#..", ".x#x.", "..#.."],
-    [[1, 1, 1, 2], "..#.......#.", ".x#x......#.", "..#.......#."],
-    [[1], "##.", null, null],
-    [[1, 3, 1], "#..x....", null, null],
-    [[1, 3, 1, 1], "..#........", ".x#.#......", "..#.#......"],
-    [[3, 1], "..##.##", null, null],
-    [[1, 1], ".xx#..x.x", ".xx#x.x.x", ".xx#..x.x"],
-  ];
+// scripts/research/nonogram_core.py の solve_line_full と solve_line_lr が返した結果。
+// 端寄せの読みが弱い線・同じ線・矛盾する線を8本ずつ含む。
+const pythonLineReadings: readonly [
+  readonly number[],
+  string,
+  string | null,
+  string | null,
+][] = [
+  [[1, 2, 3, 2], "...#x#....#.", "#x##x###x.#.", "#x##x###x.#."],
+  [[2], "...", ".#.", ".#."],
+  [[4, 1], "........", "..##....", "..##...."],
+  [[1, 6], ".....##..", "...#####.", "...#####."],
+  [[1, 2], "x..#.x", "x#x##x", "x#x##x"],
+  [[2, 1, 2], ".##x....x", "x##x#x##x", "x##x#x##x"],
+  [[1], ".....#", "xxxxx#", "xxxxx#"],
+  [[1], ".", "#", "#"],
+  [[4, 1, 1], "..#...x#..", "..##..x#x.", "..##..x#.."],
+  [[1, 1, 1, 1], ".#....x.#.x.", "x#x...xx#xx.", "x#x...x.#.x."],
+  [[1, 2, 3], "..#..#....", ".x#..#.#..", "..#..#.#.."],
+  [[3, 2], "##...x.", null, null],
+  [[1], "xx", null, null],
+  [[1, 1, 1, 1], ".x#...x#..", ".x#x..x#x.", ".x#...x#.."],
+  [[2], ".#x#.", null, null],
+  [[1, 1, 2], ".x.xx.x", null, null],
+  [[1, 1, 4, 1], "x..x#...xx#.", null, null],
+  [[1, 1], "..#..", ".x#x.", "..#.."],
+  [[1, 1, 1, 2], "..#.......#.", ".x#x......#.", "..#.......#."],
+  [[1], "##.", null, null],
+  [[1, 3, 1], "#..x....", null, null],
+  [[1, 3, 1, 1], "..#........", ".x#.#......", "..#.#......"],
+  [[3, 1], "..##.##", null, null],
+  [[1, 1], ".xx#..x.x", ".xx#x.x.x", ".xx#..x.x"],
+];
 
-  describe("solveNonogramLineFully", () => {
-    test.each(cases)(
+const randomLines = createRandomLines(1500);
+
+describe("solveNonogramLineFully", () => {
+  describe("研究用 Python の結果との照合", () => {
+    test.each(pythonLineReadings)(
       "ヒント %j・線 %s を同じ結果に読むこと",
       (clue, notation, expected) => {
         const solved = solveNonogramLineFully(clue, parseLine(notation));
@@ -141,24 +143,9 @@ describe("研究用 Python の線の読みとの照合", () => {
     );
   });
 
-  describe("solveNonogramLineByEdges", () => {
-    test.each(cases)(
-      "ヒント %j・線 %s を同じ結果に読むこと",
-      (clue, notation, _, expected) => {
-        const solved = solveNonogramLineByEdges(clue, parseLine(notation));
-
-        expect(formatLine(solved)).toBe(expected);
-      },
-    );
-  });
-});
-
-describe("総当たりとの照合", () => {
-  const lines = createRandomLines(1500);
-
-  describe("solveNonogramLineFully", () => {
+  describe("総当たりとの照合", () => {
     test("長さ1〜12の線で、黒白の全並びのうちヒントに合うものの共通部分と一致すること", () => {
-      const mismatches = lines.filter(
+      const mismatches = randomLines.filter(
         ({ clue, line }) =>
           formatLine(solveNonogramLineFully(clue, line)) !==
           formatLine(solveLineByEnumeration(clue, line)),
@@ -168,39 +155,6 @@ describe("総当たりとの照合", () => {
     });
   });
 
-  describe("solveNonogramLineByEdges", () => {
-    test("完全な線の読みと矛盾の有無が同じで、決めたマスが完全な線の読みと食い違わないこと", () => {
-      const unsound = lines.filter(function contradictsFullReading({
-        clue,
-        line,
-      }) {
-        const byEdges = solveNonogramLineByEdges(clue, line);
-        const fully = solveNonogramLineFully(clue, line);
-        if (byEdges === null || fully === null) {
-          return byEdges !== fully;
-        }
-        return byEdges.some(
-          (cell, cellIndex) =>
-            cell !== nonogramSolveCell.unknown && cell !== fully[cellIndex],
-        );
-      });
-
-      expect(unsound).toEqual([]);
-    });
-
-    test("完全な線の読みより決めるマスが少ない線があること", () => {
-      const weaker = lines.filter(
-        ({ clue, line }) =>
-          formatLine(solveNonogramLineByEdges(clue, line)) !==
-          formatLine(solveNonogramLineFully(clue, line)),
-      );
-
-      expect(weaker.length).toBeGreaterThan(0);
-    });
-  });
-});
-
-describe("solveNonogramLineFully", () => {
   describe("黒の無い行の場合", () => {
     const line = parseLine("....");
 
@@ -228,6 +182,50 @@ describe("solveNonogramLineFully", () => {
       solveNonogramLineFully([3], line);
 
       expect(formatLine(line)).toBe("...");
+    });
+  });
+});
+
+describe("solveNonogramLineByEdges", () => {
+  describe("研究用 Python の結果との照合", () => {
+    test.each(pythonLineReadings)(
+      "ヒント %j・線 %s を同じ結果に読むこと",
+      (clue, notation, _, expected) => {
+        const solved = solveNonogramLineByEdges(clue, parseLine(notation));
+
+        expect(formatLine(solved)).toBe(expected);
+      },
+    );
+  });
+
+  describe("完全な線の読みとの照合", () => {
+    test("完全な線の読みと矛盾の有無が同じで、決めたマスが完全な線の読みと食い違わないこと", () => {
+      const unsound = randomLines.filter(function contradictsFullReading({
+        clue,
+        line,
+      }) {
+        const byEdges = solveNonogramLineByEdges(clue, line);
+        const fully = solveNonogramLineFully(clue, line);
+        if (byEdges === null || fully === null) {
+          return byEdges !== fully;
+        }
+        return byEdges.some(
+          (cell, cellIndex) =>
+            cell !== nonogramSolveCell.unknown && cell !== fully[cellIndex],
+        );
+      });
+
+      expect(unsound).toEqual([]);
+    });
+
+    test("完全な線の読みより決めるマスが少ない線があること", () => {
+      const weaker = randomLines.filter(
+        ({ clue, line }) =>
+          formatLine(solveNonogramLineByEdges(clue, line)) !==
+          formatLine(solveNonogramLineFully(clue, line)),
+      );
+
+      expect(weaker.length).toBeGreaterThan(0);
     });
   });
 });

@@ -175,11 +175,14 @@ describe("generateNonogramPatternCandidate", () => {
       },
     ];
 
-    test.each(cases)(
-      "$name で、同じ図柄を作り、乱数を同じ数だけ使うこと",
-      ({ size, style, randoms, pattern }) => {
-        const replayed = replayRandoms(randoms);
+    describe.each(cases)("$name", ({ size, style, randoms, pattern }) => {
+      let replayed: ReplayedRandom;
 
+      beforeEach(() => {
+        replayed = replayRandoms(randoms);
+      });
+
+      test("同じ図柄を作り、乱数を同じ数だけ使うこと", () => {
         const generated = generateNonogramPatternCandidate(
           size,
           style,
@@ -188,8 +191,8 @@ describe("generateNonogramPatternCandidate", () => {
 
         expect(formatNonogramPattern(generated)).toEqual(pattern);
         expect(replayed.usedCount()).toBe(randoms.length);
-      },
-    );
+      });
+    });
   });
 
   describe("左右対称で平滑化しない場合", () => {
@@ -199,7 +202,11 @@ describe("generateNonogramPatternCandidate", () => {
       smoothingCount: 0,
       mirrored: true,
     } as const;
-    const replayed = replayRandoms([0.1, 0.9, 0.1, 0.9, 0.9, 0.1, 0.9, 0.1]);
+    let replayed: ReplayedRandom;
+
+    beforeEach(() => {
+      replayed = replayRandoms([0.1, 0.9, 0.1, 0.9, 0.9, 0.1, 0.9, 0.1]);
+    });
 
     test("左半分と中央の列を乱数で決め、右半分へ写すこと", () => {
       const generated = generateNonogramPatternCandidate(
