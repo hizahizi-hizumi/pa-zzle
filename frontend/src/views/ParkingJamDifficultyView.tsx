@@ -6,8 +6,18 @@ import { difficultyLevels } from "@/games/difficulty";
 import { PARKING_JAM_DISPLAY_NAME } from "@/games/parking-jam/display-name";
 import { ParkingJamDifficultyPreview } from "@/games/parking-jam/ui/ParkingJamDifficultyPreview";
 import { ParkingJamHowToPlayDialog } from "@/games/parking-jam/ui/ParkingJamHowToPlayDialog";
+import { ParkingJamTutorial } from "@/games/parking-jam/ui/ParkingJamTutorial";
+import { useNavigate } from "@/router";
 
 export function ParkingJamDifficultyView() {
+  const navigate = useNavigate();
+
+  function startLevelOne(): void {
+    navigate("/puzzles/parking-jam/play/:difficulty", {
+      params: { difficulty: "1" },
+    });
+  }
+
   return (
     <section className="space-y-6 sm:space-y-8">
       <div className="space-y-2">
@@ -16,6 +26,13 @@ export function ParkingJamDifficultyView() {
           title={PARKING_JAM_DISPLAY_NAME}
           renderHowToPlayDialog={({ open, onClose }) => (
             <ParkingJamHowToPlayDialog open={open} onClose={onClose} />
+          )}
+          renderTutorial={({ open, onClose }) => (
+            <ParkingJamTutorial
+              open={open}
+              onStartPlay={startLevelOne}
+              onClose={onClose}
+            />
           )}
         />
       </div>

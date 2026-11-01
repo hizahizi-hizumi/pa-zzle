@@ -28,6 +28,7 @@ import {
   parkingJamBoardGeometry,
 } from "@/games/parking-jam/ui/board/parking-jam-board-geometry";
 import { useParkingJamBoardPaint } from "@/games/parking-jam/ui/board/parking-jam-board-paint";
+import type { ParkingJamVehicleCue } from "@/games/parking-jam/ui/board/vehicle-cue";
 import { playAnimations } from "@/lib/motion";
 
 import "@/games/parking-jam/ui/board/parking-jam-board.css";
@@ -46,6 +47,8 @@ type ParkingJamBoardProps = {
     direction: ParkingJamDirection,
   ) => void;
   onClearAnimationComplete: () => void;
+  /** 車に重ねる合図。チュートリアルで使う。 */
+  cues?: readonly ParkingJamVehicleCue[];
 };
 
 const SWIPE_THRESHOLD = 18;
@@ -109,6 +112,7 @@ export function ParkingJamBoard({
   onSelectVehicle,
   onMove,
   onClearAnimationComplete,
+  cues = [],
 }: ParkingJamBoardProps) {
   const pointerStart = useRef<{
     vehicleId: string;
@@ -239,6 +243,21 @@ export function ParkingJamBoard({
           );
         })}
       </g>
+      {/* 車を動かすたびに作り直す車の要素とは分けて描き、印の光が手のたびにやり直されないようにする。警告の縁は印の上に重ねる。 */}
+      {[...cues]
+        .sort((left, right) => cueLayers[left.kind] - cueLayers[right.kind])
+        .map((cue) => {
+          const vehicle = board.vehicles.find(
+            (candidate) => candidate.id === cue.vehicleId,
+          );
+          return vehicle && remaining.has(vehicle.id) ? (
+            <ParkingJamVehicleCueMark
+              key={`${cue.vehicleId}-${cue.kind}-${cue.id}`}
+              vehicle={vehicle}
+              cue={cue}
+            />
+          ) : null;
+        })}
       {selectedVehicle && !interactionDisabled
         ? getParkingJamDirectionControls(selectedVehicle).map((control) => (
             <g
@@ -266,6 +285,55 @@ export function ParkingJamBoard({
           ))
         : null}
     </svg>
+  );
+}
+
+const cueLayers = {
+  hint: 0,
+  rejected: 1,
+} as const satisfies Record<ParkingJamVehicleCue["kind"], number>;
+
+/** 車体の外側に重ねる合図の枠。次に動かす車の印は、付け直すたびに中を一瞬光らせる。 */
+function ParkingJamVehicleCueMark({
+  vehicle,
+  cue,
+}: {
+  vehicle: ParkingJamVehicle;
+  cue: ParkingJamVehicleCue;
+}) {
+  const horizontal = vehicle.orientation === "horizontal";
+  const inset = 4;
+  const x = vehicle.column * PARKING_JAM_CELL + inset;
+  const y = vehicle.row * PARKING_JAM_CELL + inset;
+  const width =
+    (horizontal ? vehicle.length : 1) * PARKING_JAM_CELL - inset * 2;
+  const height =
+    (horizontal ? 1 : vehicle.length) * PARKING_JAM_CELL - inset * 2;
+  return (
+    <g
+      data-vehicle-cue={cue.kind}
+      data-vehicle-id={vehicle.id}
+      aria-hidden="true"
+    >
+      {cue.kind === "hint" && (
+        <rect
+          x={x}
+          y={y}
+          width={width}
+          height={height}
+          rx="24"
+          className="parking-jam-car-cue__flash"
+        />
+      )}
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        rx="24"
+        className={`parking-jam-car-cue parking-jam-car-cue--${cue.kind}`}
+      />
+    </g>
   );
 }
 

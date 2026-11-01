@@ -192,3 +192,39 @@
   .parking-jam-direction-control__surface {
   stroke-width: 6;
 }
+@keyframes pj-cue-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes pj-cue-out {
+  to {
+    opacity: 0;
+  }
+}
+.parking-jam-car-cue {
+  fill: none;
+  pointer-events: none;
+}
+.parking-jam-car-cue--hint {
+  stroke: #7dd3fc;
+  stroke-width: 7;
+  stroke-dasharray: 16 11;
+  stroke-linecap: round;
+  animation: pj-cue-in 150ms cubic-bezier(0, 0, 0.2, 1);
+}
+.parking-jam-car-cue__flash {
+  fill: rgb(186 230 253 / 0.55);
+  pointer-events: none;
+  animation: pj-cue-out 700ms ease-in forwards;
+}
+.parking-jam-car-cue--rejected {
+  stroke: var(--color-destructive);
+  stroke-width: 8;
+  animation: pj-cue-out 900ms ease-in forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .parking-jam-car-cue--hint {
+    animation: none;
+  }
+}
