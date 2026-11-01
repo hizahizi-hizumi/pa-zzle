@@ -4,7 +4,10 @@ import { GamePlayFrame } from "@/components/GamePlayFrame";
 import { UndoButton } from "@/components/UndoButton";
 import type { NonogramDifficulty } from "@/games/nonogram/difficulty";
 import { NONOGRAM_DISPLAY_NAME } from "@/games/nonogram/display-name";
-import type { NonogramResult } from "@/games/nonogram/play/use-nonogram-play";
+import type {
+  NonogramOperation,
+  NonogramResult,
+} from "@/games/nonogram/play/use-nonogram-play";
 import type { NonogramBoard as NonogramBoardState } from "@/games/nonogram/puzzle/board";
 import type { NonogramClues } from "@/games/nonogram/puzzle/clue";
 import type { NonogramLineFlags } from "@/games/nonogram/puzzle/rules";
@@ -16,6 +19,7 @@ import { NonogramClearAnimation } from "@/games/nonogram/ui/board/clear/Nonogram
 import { NonogramBoard } from "@/games/nonogram/ui/board/NonogramBoard";
 import { NonogramHowToPlayDialog } from "@/games/nonogram/ui/NonogramHowToPlayDialog";
 import { NonogramMarkToggle } from "@/games/nonogram/ui/NonogramPlay/NonogramMarkToggle";
+import { useNonogramSoundEffects } from "@/games/nonogram/ui/NonogramPlay/use-nonogram-sound-effects";
 import { NonogramResultScreen } from "@/games/nonogram/ui/result/NonogramResultScreen";
 import type {
   GamePlayScreenProps,
@@ -34,6 +38,7 @@ type NonogramPlayProps = GamePlayScreenProps<
     matchedLines: NonogramLineFlags;
     strokeRange: NonogramStrokeRange | null;
     repaintCount: number;
+    operation: NonogramOperation | null;
     onStartStroke: (cellIndex: number, mark: NonogramMark) => void;
     onExtendStroke: (cellIndex: number) => void;
     onEndStroke: () => void;
@@ -52,6 +57,7 @@ export function NonogramPlay({
   matchedLines,
   strokeRange,
   repaintCount,
+  operation,
   canUndo,
   canRestart,
   onStartStroke,
@@ -69,6 +75,7 @@ export function NonogramPlay({
 }: NonogramPlayProps) {
   const [mark, setMark] = useState<NonogramMark>(INITIAL_MARK);
   const playing = progress === "playing";
+  useNonogramSoundEffects(operation, progress, board);
 
   function handleReplay(): void {
     setMark(INITIAL_MARK);

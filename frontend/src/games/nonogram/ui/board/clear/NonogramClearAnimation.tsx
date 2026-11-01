@@ -15,8 +15,12 @@ const swellSelector = "[data-nonogram-clear-swell]";
 
 const CLEAR_FADE_DURATION_MS = 360;
 /** 格子が消え始めてから、図柄を膨らませ始めるまでの間。 */
-const CLEAR_SWELL_DELAY_MS = 240;
+export const CLEAR_SWELL_DELAY_MS = 240;
 const CLEAR_SWELL_DURATION_MS = 560;
+const CLEAR_SWELL_PEAK_OFFSET = 0.4;
+/** 図柄が膨らみ始めてから、いちばん膨らむまでの時間。 */
+export const CLEAR_SWELL_PEAK_MS =
+  CLEAR_SWELL_DURATION_MS * CLEAR_SWELL_PEAK_OFFSET;
 const CLEAR_HOLD_MS = 480;
 /** 動きを減らす設定で、完成した図柄を見せてから完了するまで。 */
 const REDUCED_MOTION_HOLD_MS = 900;
@@ -29,7 +33,7 @@ const fadeKeyframes: Keyframe[] = [{ opacity: 1 }, { opacity: 0 }];
  */
 const swellKeyframes: Keyframe[] = [
   { transform: "scale(1)" },
-  { transform: "scale(1.04)", offset: 0.4 },
+  { transform: "scale(1.04)", offset: CLEAR_SWELL_PEAK_OFFSET },
   { transform: "scale(1)" },
 ];
 

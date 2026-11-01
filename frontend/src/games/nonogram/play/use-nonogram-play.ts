@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import type { NonogramDifficulty } from "@/games/nonogram/difficulty";
 import type {
@@ -49,6 +49,14 @@ import { createProblemId, type ProblemId } from "@/games/problem-id";
 import { selectProblemAvoiding } from "@/games/problem-selection";
 import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
 
+/**
+ * マスを押して入力を始めた操作の知らせ。効果音のため、操作ごとに増える `id` を付ける。
+ * `marked` は印を入れる入力、`erased` は印を消す入力。押したまま広げた範囲は知らせない。
+ */
+export type NonogramOperation =
+  | { id: number; type: "marked"; mark: NonogramMark }
+  | { id: number; type: "erased" };
+
 /** クリアしたプレイの事実と、それを遊んだ問題の作業の量から導いた評価。 */
 export type NonogramResult = NonogramSessionResult & {
   workload: NonogramSolveWorkload;
@@ -87,6 +95,7 @@ export type NonogramPlay = GamePlay<
     strokeRange: NonogramStrokeRange | null;
     /** 塗りを未確定か × に変えたマスの数。待ったで消えた塗りも数え、盤面を戻しても0に戻さない。 */
     repaintCount: number;
+    operation: NonogramOperation | null;
     /** マスを押して入力を始める。押したマスに `mark` があれば消し、無ければ入れる。 */
     startStroke: (cellIndex: number, mark: NonogramMark) => void;
     /** 押したまま動かしたマスまで、始点と同じ行・列に入力を広げる。 */
@@ -100,6 +109,7 @@ type NonogramPlayState = {
   workload: NonogramSolveWorkload;
   session: NonogramSession;
   progress: GameProgress;
+  operation: NonogramOperation | null;
 };
 
 function createPlayState(
@@ -111,7 +121,40 @@ function createPlayState(
     workload,
     session: createNonogramSession(problem, startedAt),
     progress: "playing",
+    operation: null,
   };
+}
+
+/** マスを押して入力を始め、入れるか消すかを知らせる。入力を受け付けなければ何も知らせない。 */
+function applyStartStroke(
+  state: NonogramPlayState,
+  cellIndex: number,
+  mark: NonogramMark,
+  operationId: number,
+  operatedAt: number,
+): NonogramPlayState {
+  const next = applyPlaySession(
+    state,
+    startNonogramSessionStroke(state.session, cellIndex, mark, operatedAt),
+  );
+  if (next === state) {
+    return state;
+  }
+  const erasing = state.session.puzzleState.cells[cellIndex] === mark;
+  return {
+    ...next,
+    operation: erasing
+      ? { id: operationId, type: "erased" }
+      : { id: operationId, type: "marked", mark },
+  };
+}
+
+/** 待ったや盤面を戻すで盤面が変わったら、前の操作の知らせを消す。 */
+function clearOperationIfChanged(
+  current: NonogramPlayState,
+  next: NonogramPlayState,
+): NonogramPlayState {
+  return next === current ? current : { ...next, operation: null };
 }
 
 function selectProblem(
@@ -142,19 +185,13 @@ export function useNonogramPlay(
   );
   const { session, progress, problemIdentity, workload } = play;
   const elapsedMs = useSessionElapsedMs(session);
+  const nextOperationId = useRef(0);
 
   const startStroke = useCallback((cellIndex: number, mark: NonogramMark) => {
     const operatedAt = Date.now();
+    const operationId = nextOperationId.current++;
     setPlay((current) =>
-      applyPlaySession(
-        current,
-        startNonogramSessionStroke(
-          current.session,
-          cellIndex,
-          mark,
-          operatedAt,
-        ),
-      ),
+      applyStartStroke(current, cellIndex, mark, operationId, operatedAt),
     );
   }, []);
 
@@ -176,24 +213,31 @@ export function useNonogramPlay(
 
   const undo = useCallback(() => {
     setPlay((current) =>
-      applyPlaySession(current, undoNonogramSession(current.session)),
+      clearOperationIfChanged(
+        current,
+        applyPlaySession(current, undoNonogramSession(current.session)),
+      ),
     );
   }, []);
 
   const restart = useCallback(() => {
     setPlay((current) =>
-      applyPlaySession(current, restartNonogramSession(current.session)),
+      clearOperationIfChanged(
+        current,
+        applyPlaySession(current, restartNonogramSession(current.session)),
+      ),
     );
   }, []);
 
   const replay = useCallback(() => {
     const startedAt = Date.now();
-    setPlay((current) =>
-      startPlaySession(
+    setPlay((current) => ({
+      ...startPlaySession(
         current,
         createNonogramSession(current.session.problem, startedAt),
       ),
-    );
+      operation: null,
+    }));
   }, []);
 
   const startNewProblem = useCallback(() => {
@@ -236,6 +280,7 @@ export function useNonogramPlay(
     matchedLines,
     strokeRange: getNonogramSessionStrokeRange(session),
     repaintCount: getNonogramSessionRepaintCount(session),
+    operation: play.operation,
     canUndo: canUndoNonogramSession(session),
     canRestart: canRestartNonogramSession(session),
     startStroke,

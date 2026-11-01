@@ -72,6 +72,7 @@ export function PlayableNonogram({
         matchedLines={play.matchedLines}
         strokeRange={play.strokeRange}
         repaintCount={play.repaintCount}
+        operation={play.operation}
         canUndo={play.canUndo}
         canRestart={play.canRestart}
         onStartStroke={play.startStroke}

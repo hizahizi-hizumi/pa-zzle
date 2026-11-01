@@ -56,6 +56,7 @@ function createProps(overrides: Partial<NonogramPlayProps> = {}) {
     matchedLines: findNonogramMatchedLines(board, clues),
     strokeRange: null,
     repaintCount: 2,
+    operation: null,
     canUndo: true,
     canRestart: true,
     onStartStroke: vi.fn(),

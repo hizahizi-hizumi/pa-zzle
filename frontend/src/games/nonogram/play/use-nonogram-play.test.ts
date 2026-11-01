@@ -69,6 +69,55 @@ describe("useNonogramPlay", () => {
       expect(problemIdentity).toEqual(initial.identity);
     });
 
+    describe("操作の知らせ", () => {
+      test("操作する前は操作を知らせないこと", () => {
+        const { operation } = result.current;
+
+        expect(operation).toBeNull();
+      });
+
+      const markedCases = [["filled"], ["crossed"]] as const;
+
+      test.each(markedCases)(
+        "未確定のマスを %s の印で押すと、その印を入れたことを知らせること",
+        (mark) => {
+          tap(result, firstBlackCellIndex, mark);
+
+          expect(result.current.operation).toMatchObject({
+            type: "marked",
+            mark,
+          });
+        },
+      );
+
+      describe("塗ったマスがある場合", () => {
+        beforeEach(() => {
+          tap(result, firstBlackCellIndex);
+        });
+
+        test("同じ印で押すと印を消したことを、別の id で知らせること", () => {
+          const firstId = result.current.operation?.id;
+
+          tap(result, firstBlackCellIndex);
+
+          expect(result.current.operation?.type).toBe("erased");
+          expect(result.current.operation?.id).not.toBe(firstId);
+        });
+
+        test("待ったで操作の知らせを消すこと", () => {
+          act(() => result.current.undo());
+
+          expect(result.current.operation).toBeNull();
+        });
+
+        test("盤面を戻すで操作の知らせを消すこと", () => {
+          act(() => result.current.restart());
+
+          expect(result.current.operation).toBeNull();
+        });
+      });
+    });
+
     describe("マスを押した場合", () => {
       beforeEach(() => {
         act(() => result.current.startStroke(firstBlackCellIndex, "filled"));
