@@ -82,7 +82,7 @@ export function HamiltonianPathHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>
-          暗いマスと、マスの間の短い棒の向こうへは進めない。進もうとすると、そのマスに×が出る。
+          壁（暗いマス）と仕切り（マスの間の短い棒）の向こうへは進めない。進もうとすると、そのマスに×が出る。
         </p>
         <div className="flex items-center gap-2">
           <HowToPlayFigure
