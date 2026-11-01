@@ -7,7 +7,10 @@
  * - `Action`: 利用者の1回の操作。
  */
 
-/** 盤面の上に出す一言。`detail` は見出しを補う短い一文。 */
+/**
+ * 盤面の上に出す一言。`detail` は見出しを補う短い一文。
+ * 一言と導入の文の改行（`\n`）は、狭い画面でも意味の切れ目で折り返すために置き、そこで改行して見せる。
+ */
 export type TutorialMessage = {
   headline: string;
   detail: string | null;

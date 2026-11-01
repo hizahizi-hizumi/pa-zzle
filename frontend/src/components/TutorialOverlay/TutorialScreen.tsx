@@ -2,6 +2,8 @@ import { X } from "lucide-react";
 import {
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
+  type Ref,
+  type RefObject,
   useCallback,
   useEffectEvent,
   useLayoutEffect,
@@ -77,6 +79,8 @@ type TutorialScreenProps = {
   /** 導入を終えたか、飛ばした。 */
   onIntroEnd: () => void;
   onRestart: () => void;
+  /** 画面そのもの。開いたときのフォーカスを置く。 */
+  ref?: Ref<HTMLDivElement>;
 };
 
 /**
@@ -98,7 +102,6 @@ type IntroStage =
   | "reveal"
   | "done";
 
-const NAME_APPEAR_MS = 300;
 /** 名前が現れてから盤面を出すまで。 */
 const BOARD_APPEAR_DELAY_MS = 300;
 const BOARD_APPEAR_MS = 250;
@@ -120,16 +123,9 @@ const sceneHoldMs = {
   Record<TutorialIntroScene, number>
 >;
 
-/** 上部での大きさに対する、導入の間の名前の大きさ。幅に収まらなければ収まるまで小さくする。 */
-const INTRO_NAME_SCALE = 1.5;
-/** 導入の間の、名前と一文の間（px）。 */
-const INTRO_PURPOSE_GAP_PX = 12;
-/** 導入の間の名前を、画面の左右の端から離す幅（px）。 */
-const INTRO_NAME_INSET_PX = 16;
-
 /**
  * 段ごとの見せ方。
- * - `purposeClassName`: 何をするパズルかの一文。名前を大きく見せている間だけ出し、名前を上部へ移すときに消す。
+ * - `introNameClassName`: 導入の間に大きく見せる名前と、何をするパズルかの一文。名前を上部へ移すときに消す。
  * - `rulesClassName`: ルールと一言。導入を終えた後は動かさない。
  * - `boardAreaClassName`: 盤面の領域。
  * - `scene`: 盤面が見せる場面。
@@ -139,7 +135,7 @@ const INTRO_NAME_INSET_PX = 16;
  */
 const introStageViews = {
   name: {
-    purposeClassName:
+    introNameClassName:
       "animate-in fade-in-0 duration-300 ease-(--ease-enter) motion-reduce:animate-none",
     rulesClassName: "opacity-0",
     boardAreaClassName: "opacity-0",
@@ -149,7 +145,7 @@ const introStageViews = {
     captionClassName: "",
   },
   goalAppearing: {
-    purposeClassName: "",
+    introNameClassName: "",
     rulesClassName: "opacity-0",
     boardAreaClassName:
       "animate-in fade-in-0 duration-250 ease-(--ease-enter) motion-reduce:animate-none",
@@ -160,7 +156,7 @@ const introStageViews = {
       "animate-in fade-in-0 duration-250 ease-(--ease-enter) motion-reduce:animate-none",
   },
   goal: {
-    purposeClassName: "",
+    introNameClassName: "",
     rulesClassName: "opacity-0",
     boardAreaClassName: "",
     scene: "goal",
@@ -169,7 +165,7 @@ const introStageViews = {
     captionClassName: "",
   },
   start: {
-    purposeClassName: "",
+    introNameClassName: "",
     rulesClassName: "opacity-0",
     boardAreaClassName: "",
     scene: "start",
@@ -179,7 +175,7 @@ const introStageViews = {
       "animate-in fade-in-0 slide-in-from-bottom-1 duration-300 ease-(--ease-enter) motion-reduce:animate-none",
   },
   header: {
-    purposeClassName:
+    introNameClassName:
       "animate-out fade-out-0 duration-200 fill-mode-forwards ease-(--ease-exit)",
     rulesClassName:
       "animate-in fade-in-0 slide-in-from-bottom-1 duration-300 delay-350 fill-mode-backwards ease-(--ease-enter)",
@@ -191,7 +187,7 @@ const introStageViews = {
       "animate-out fade-out-0 duration-200 fill-mode-forwards ease-(--ease-exit)",
   },
   reveal: {
-    purposeClassName: "",
+    introNameClassName: "",
     rulesClassName:
       "animate-in fade-in-0 slide-in-from-bottom-1 duration-300 ease-(--ease-enter)",
     boardAreaClassName: "",
@@ -201,7 +197,7 @@ const introStageViews = {
     captionClassName: "",
   },
   done: {
-    purposeClassName: "",
+    introNameClassName: "",
     rulesClassName: "",
     boardAreaClassName: "",
     scene: null,
@@ -212,7 +208,7 @@ const introStageViews = {
 } as const satisfies Record<
   IntroStage,
   {
-    purposeClassName: string;
+    introNameClassName: string;
     rulesClassName: string;
     boardAreaClassName: string;
     scene: TutorialIntroScene | null;
@@ -238,55 +234,33 @@ function canAnimateIntro(elements: readonly (HTMLElement | null)[]): boolean {
   );
 }
 
-/** 導入の間の名前の配置。`purposeTop` は、何をするパズルかの一文の、上部の領域に対する上端（px）。 */
-type IntroNameLayout = {
-  pictogram: string;
-  title: string;
-  purposeTop: number;
-};
+/** 画面の中で使う参照と、開いた側へ渡す参照の両方に、同じ要素を渡す。 */
+function mergeRefs(
+  inner: RefObject<HTMLDivElement | null>,
+  outer: Ref<HTMLDivElement> | undefined,
+): (element: HTMLDivElement | null) => void {
+  return function setElement(element) {
+    inner.current = element;
+    if (typeof outer === "function") {
+      outer(element);
+    } else if (outer) {
+      outer.current = element;
+    }
+  };
+}
 
 /**
- * 上部のピクトグラムと名前を、並びを保ったまま大きくし、何をするパズルかの一文と一緒に、上部の領域のうち見出しの行より下の中央へ置く配置。
- * 見出しの行には閉じるボタンが残るので、重ならないよう下へ置く。
- * 上部に置いた要素そのものを変形し、導入の終わりに変形を外して上部へ戻す（FLIP）。
+ * 導入で大きく見せた名前の位置から、上部の名前の位置へ移す変形。
+ * 上部の要素そのものを、導入の名前の位置に重ねた変形から動かし始める（FLIP）。
  */
-function getIntroNameLayout(
-  region: HTMLElement,
-  header: HTMLElement,
-  pictogram: HTMLElement,
-  title: HTMLElement,
-  purpose: HTMLElement,
-): IntroNameLayout {
-  const regionRect = region.getBoundingClientRect();
-  const pictogramRect = pictogram.getBoundingClientRect();
-  const titleRect = title.getBoundingClientRect();
-  const purposeHeight = purpose.getBoundingClientRect().height;
-  const rowLeft = Math.min(pictogramRect.left, titleRect.left);
-  const rowTop = Math.min(pictogramRect.top, titleRect.top);
-  const rowWidth = Math.max(pictogramRect.right, titleRect.right) - rowLeft;
-  const rowHeight = Math.max(pictogramRect.bottom, titleRect.bottom) - rowTop;
-  const scale = Math.min(
-    INTRO_NAME_SCALE,
-    (regionRect.width - INTRO_NAME_INSET_PX * 2) / rowWidth,
-  );
-  const stackHeight = rowHeight * scale + INTRO_PURPOSE_GAP_PX + purposeHeight;
-  const areaTop = header.getBoundingClientRect().bottom;
-  const stackTop =
-    areaTop + Math.max(0, (regionRect.bottom - areaTop - stackHeight) / 2);
-  const stackLeft = regionRect.left + (regionRect.width - rowWidth * scale) / 2;
-
-  function toTransform(rect: DOMRect) {
-    const left = stackLeft + (rect.left - rowLeft) * scale;
-    const top = stackTop + (rect.top - rowTop) * scale;
-    return `translate(${left - rect.left}px, ${top - rect.top}px) scale(${scale})`;
-  }
-
-  return {
-    pictogram: toTransform(pictogramRect),
-    title: toTransform(titleRect),
-    purposeTop:
-      stackTop + rowHeight * scale + INTRO_PURPOSE_GAP_PX - regionRect.top,
-  };
+function getMoveFromIntroName(
+  target: HTMLElement,
+  source: HTMLElement,
+): string {
+  const targetRect = target.getBoundingClientRect();
+  const sourceRect = source.getBoundingClientRect();
+  const scale = sourceRect.width / targetRect.width;
+  return `translate(${sourceRect.left - targetRect.left}px, ${sourceRect.top - targetRect.top}px) scale(${scale})`;
 }
 
 /**
@@ -306,19 +280,18 @@ export function TutorialScreen({
   renderBoard,
   onIntroEnd,
   onRestart,
+  ref,
 }: TutorialScreenProps) {
   const [stage, setStage] = useState<IntroStage>(introducing ? "name" : "done");
-  const [purposeTop, setPurposeTop] = useState(0);
-  // 名前を上部の外で大きく見せている間。何をするパズルかの一文は、この間だけ名前の下に出す。
+  // 名前を上部の外で大きく見せている間。上部の名前は伏せ、大きな名前の下に何をするパズルかの一文を出す。
   const [nameCentered, setNameCentered] = useState(introducing);
-  const regionRef = useRef<HTMLDivElement>(null);
-  const headerRef = useRef<HTMLElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const pictogramRef = useRef<HTMLSpanElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
-  const purposeRef = useRef<HTMLParagraphElement>(null);
-  // 名前を上部の外で見せている間の変形。上部へ戻すときの始まりになる。
-  const nameLayoutRef = useRef<IntroNameLayout | null>(null);
+  const introPictogramRef = useRef<HTMLSpanElement>(null);
+  const introTitleRef = useRef<HTMLSpanElement>(null);
   const animatedRef = useRef(false);
+  const nameCenteredRef = useRef(nameCentered);
   const stageRef = useRef(stage);
   // 場面の終わりを一度だけ受け取るため、受け取った段を覚える。
   const endedStageRef = useRef<IntroStage | null>(null);
@@ -331,6 +304,7 @@ export function TutorialScreen({
   useLayoutEffect(() => {
     onIntroEndRef.current = onIntroEnd;
     stageRef.current = stage;
+    nameCenteredRef.current = nameCentered;
   });
 
   const stopIntroMotion = useCallback(() => {
@@ -342,7 +316,6 @@ export function TutorialScreen({
     }
     timersRef.current = [];
     animationsRef.current = [];
-    nameLayoutRef.current = null;
     for (const element of [pictogramRef.current, titleRef.current]) {
       element?.style.removeProperty("transform");
       element?.style.removeProperty("transform-origin");
@@ -368,46 +341,12 @@ export function TutorialScreen({
   }, []);
 
   const startOpeningIntro = useEffectEvent(() => {
-    const region = regionRef.current;
-    const header = headerRef.current;
-    const pictogram = pictogramRef.current;
-    const titleElement = titleRef.current;
-    const purpose = purposeRef.current;
     if (!introducing) {
       return;
     }
-    if (!region || !header || !pictogram || !titleElement || !purpose) {
-      finishIntro();
-      return;
-    }
 
-    const animated = canAnimateIntro([pictogram, titleElement]);
+    const animated = canAnimateIntro([rootRef.current]);
     animatedRef.current = animated;
-    const layout = getIntroNameLayout(
-      region,
-      header,
-      pictogram,
-      titleElement,
-      purpose,
-    );
-    nameLayoutRef.current = layout;
-    setPurposeTop(layout.purposeTop);
-    for (const [element, transform] of [
-      [pictogram, layout.pictogram],
-      [titleElement, layout.title],
-    ] as const) {
-      element.style.transformOrigin = "0 0";
-      element.style.transform = transform;
-      if (animated) {
-        animationsRef.current.push(
-          element.animate([{ opacity: 0 }, { opacity: 1 }], {
-            duration: NAME_APPEAR_MS,
-            easing: MOTION_EASING.enter,
-            fill: "backwards",
-          }),
-        );
-      }
-    }
     if (!animated) {
       // 名前・一文・ゴールの盤面とその一言を、最初の止まった画面にそろえて見せる。
       changeStage("goal");
@@ -420,7 +359,7 @@ export function TutorialScreen({
     );
   });
 
-  // 開くたびにこの画面を作り直すので、作ったときに導入を始める。名前の位置は描く前に決める。
+  // 開くたびにこの画面を作り直すので、作ったときに導入を始める。
   useLayoutEffect(() => {
     startOpeningIntro();
     return stopIntroMotion;
@@ -428,25 +367,27 @@ export function TutorialScreen({
 
   // 名前を上部へ戻し、ルールと一言を出してから手を引き始める。動かさないときは、そのまま切り替える。
   const finishScenes = useCallback(() => {
-    const layout = nameLayoutRef.current;
     if (!animatedRef.current) {
       finishIntro();
       return;
     }
-    if (!layout) {
+    if (!nameCenteredRef.current) {
       changeStage("reveal");
       schedule(finishIntro, REVEAL_MS);
       return;
     }
+    // 大きな名前の位置は、開く動きが終わった今測る。
+    const moves = [
+      [pictogramRef.current, introPictogramRef.current],
+      [titleRef.current, introTitleRef.current],
+    ].flatMap(([element, source]) =>
+      element && source
+        ? [[element, getMoveFromIntroName(element, source)] as const]
+        : [],
+    );
     changeStage("header");
-    for (const [element, transform] of [
-      [pictogramRef.current, layout.pictogram],
-      [titleRef.current, layout.title],
-    ] as const) {
-      if (!element) {
-        continue;
-      }
-      element.style.removeProperty("transform");
+    for (const [element, transform] of moves) {
+      element.style.transformOrigin = "0 0";
       animationsRef.current.push(
         element.animate([{ transform }, { transform: "none" }], {
           duration: NAME_MOVE_MS,
@@ -498,7 +439,7 @@ export function TutorialScreen({
   // もう一度始めるときは、名前はもう上部にあるので、盤面を始めの盤面へ戻すところから見せる。
   function handleRestart(): void {
     stopIntroMotion();
-    animatedRef.current = canAnimateIntro([regionRef.current]);
+    animatedRef.current = canAnimateIntro([rootRef.current]);
     onRestart();
     changeStage("start");
   }
@@ -512,6 +453,8 @@ export function TutorialScreen({
   }
 
   const stageView = introStageViews[stage];
+  // 名前を大きく見せている間は上部の名前を伏せ、上部へ移す段で大きな名前の位置から動かして見せる。
+  const headerNameHidden = nameCentered && stage !== "header";
   const caption =
     stageView.captionScene === "goal"
       ? intro.goalCaption
@@ -521,22 +464,27 @@ export function TutorialScreen({
   return (
     // 導入の間は、どこを押しても、どのキーでも導入を飛ばす。
     <div
-      className="flex min-h-0 flex-1 flex-col"
+      ref={mergeRefs(rootRef, ref)}
+      tabIndex={-1}
+      className="flex min-h-0 flex-1 flex-col outline-none"
       onPointerDownCapture={skipIntro}
       onKeyDownCapture={handleKeyDownCapture}
     >
       <DialogDescription className="sr-only">チュートリアル</DialogDescription>
-      <div ref={regionRef} className="relative flex shrink-0 flex-col">
-        <header
-          ref={headerRef}
-          className="flex min-h-14 shrink-0 items-center gap-2 pt-2 pr-3 pl-4"
-        >
-          <span ref={pictogramRef} className="size-8 shrink-0">
+      <div className="relative flex shrink-0 flex-col">
+        <header className="flex min-h-14 shrink-0 items-center gap-2 pt-2 pr-3 pl-4">
+          <span
+            ref={pictogramRef}
+            className={cn("size-8 shrink-0", headerNameHidden && "opacity-0")}
+          >
             <GamePictogram svg={pictogramSvg} />
           </span>
           <DialogTitle
             ref={titleRef}
-            className="min-w-0 truncate text-screen-title"
+            className={cn(
+              "min-w-0 truncate text-screen-title",
+              headerNameHidden && "opacity-0",
+            )}
           >
             {title}
           </DialogTitle>
@@ -591,17 +539,17 @@ export function TutorialScreen({
           })}
         </ul>
 
-        {/* 一言が差し替わっても盤面が上下に動かないよう、見出し2行と補足1行が収まる高さに固定する。 */}
+        {/* 一言が差し替わっても盤面が上下に動かないよう、見出し2行と補足1行がルールの行から離れて収まる高さに固定する。 */}
         <div
           aria-live="polite"
           className={cn(
-            "flex h-20 shrink-0 flex-col items-center justify-end px-4",
+            "flex h-24 shrink-0 flex-col items-center justify-end px-4",
             stageView.rulesClassName,
           )}
         >
           <p
             key={`${message.headline}\n${message.detail ?? ""}`}
-            className="flex animate-in flex-col items-center gap-0.5 text-balance text-center duration-300 ease-(--ease-enter) fade-in-0 slide-in-from-bottom-1 [word-break:auto-phrase] motion-reduce:animate-none"
+            className="flex animate-in flex-col items-center gap-0.5 text-balance text-center duration-300 ease-(--ease-enter) fade-in-0 slide-in-from-bottom-1 whitespace-pre-line [word-break:auto-phrase] motion-reduce:animate-none"
           >
             <span className="text-heading">{message.headline}</span>
             <span className="min-h-5 text-muted-foreground text-supporting">
@@ -610,23 +558,40 @@ export function TutorialScreen({
           </p>
         </div>
 
-        {/* 導入の間だけ、大きく見せた名前の下に置く。位置は名前の配置と一緒に決める。 */}
-        <p
-          ref={purposeRef}
-          style={{ top: purposeTop }}
-          className={cn(
-            "pointer-events-none absolute inset-x-6 text-balance text-center text-body [word-break:auto-phrase]",
-            nameCentered ? stageView.purposeClassName : "hidden",
-          )}
-        >
-          {intro.purpose}
-        </p>
+        {/* 導入の間だけ、見出しの行より下（閉じるボタンと重ならない所）に、名前を大きく、その下に何をするパズルかの一文を並べる。 */}
+        {nameCentered && (
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-x-0 top-14 bottom-0 flex flex-col items-center justify-center gap-3 px-6",
+              stageView.introNameClassName,
+            )}
+          >
+            {/* 上部の名前と同じ並びを1.5倍に見せる。大きさは見た目だけ変え、場所は拡大後の高さぶん空けておく。 */}
+            <div
+              aria-hidden="true"
+              className={cn(
+                "my-2 flex scale-150 items-center gap-2",
+                stage === "header" && "invisible",
+              )}
+            >
+              <span ref={introPictogramRef} className="size-8 shrink-0">
+                <GamePictogram svg={pictogramSvg} />
+              </span>
+              <span ref={introTitleRef} className="text-screen-title">
+                {title}
+              </span>
+            </div>
+            <p className="text-balance text-center text-body whitespace-pre-line [word-break:auto-phrase]">
+              {intro.purpose}
+            </p>
+          </div>
+        )}
       </div>
 
       <main
         inert={introPlaying}
         className={cn(
-          "flex min-h-0 flex-1 justify-center px-4 pt-6 pb-2 [container-type:size]",
+          "flex min-h-0 flex-1 justify-center px-4 pt-4 pb-2 [container-type:size]",
           stageView.boardAreaClassName,
         )}
       >
@@ -643,7 +608,7 @@ export function TutorialScreen({
             key={caption}
             aria-live="polite"
             className={cn(
-              "text-balance text-center text-heading [word-break:auto-phrase]",
+              "text-balance text-center text-heading whitespace-pre-line [word-break:auto-phrase]",
               stageView.captionClassName,
             )}
           >

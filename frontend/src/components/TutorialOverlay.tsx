@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useRef } from "react";
 
 import {
   type TutorialBoardIntro,
@@ -57,6 +57,14 @@ export function TutorialOverlay({
   onRestart,
   onClose,
 }: TutorialOverlayProps) {
+  const screenRef = useRef<HTMLDivElement>(null);
+
+  // 閉じるボタンに最初のフォーカスを置くと、導入の間ずっと枠が出るので、画面そのものに置く。
+  function handleOpenAutoFocus(event: Event) {
+    event.preventDefault();
+    screenRef.current?.focus();
+  }
+
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
       onClose();
@@ -67,9 +75,11 @@ export function TutorialOverlay({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         showCloseButton={false}
+        onOpenAutoFocus={handleOpenAutoFocus}
         className="top-0 left-0 flex h-svh max-h-none w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 p-0 pb-[env(safe-area-inset-bottom)] shadow-none sm:max-w-none"
       >
         <TutorialScreen
+          ref={screenRef}
           title={title}
           pictogramSvg={pictogramSvg}
           intro={intro}

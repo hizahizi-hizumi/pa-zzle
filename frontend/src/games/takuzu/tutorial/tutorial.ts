@@ -139,7 +139,7 @@ const steps: readonly TakuzuTutorialStep[] = [
   },
   {
     message: {
-      headline: "このマスも、ここまでのルールで決まります",
+      headline: "このマスも、\nここまでのルールで決まります",
       detail: null,
     },
     introducedRuleId: null,
@@ -630,7 +630,7 @@ export const takuzuTutorial: Tutorial<
   TakuzuTutorialAction
 > = {
   intro: {
-    purpose: "四角と丸で、ルールに合うようにすべてのマスを埋めるパズルです",
+    purpose: "四角と丸で、ルールに合うように\nすべてのマスを埋めるパズルです",
     goalCaption: "この形がゴールです",
     startCaption: "最初は、一部のマスだけ埋まっています",
   },
@@ -647,7 +647,7 @@ export const takuzuTutorial: Tutorial<
   completion: {
     selection: {
       headline: "完成です",
-      detail: "本番は 8×8 で、ルールは同じです",
+      detail: "レベル1は 8×8 で、ルールは同じです",
     },
     play: {
       headline: "完成です",

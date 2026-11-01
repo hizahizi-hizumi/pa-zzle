@@ -439,18 +439,18 @@ describe("TakuzuTutorial", () => {
     });
 
     test("開くと、パズル選択と同じピクトグラムと名前、何をするパズルかを出し、解き終えた盤面を、印を付けずに見せること", () => {
-      const pictogram = screen.getByRole("img", {
+      const pictograms = screen.getAllByRole("img", {
         name: "バイナリパズル",
         hidden: true,
       });
       const title = screen.getByRole("heading", { name: "バイナリパズル" });
       const purpose = screen.getByText(
-        "四角と丸で、ルールに合うようにすべてのマスを埋めるパズルです",
+        "四角と丸で、ルールに合うように すべてのマスを埋めるパズルです",
       );
       const labels = [getCellLabel(1, 1), getCellLabel(2, 2)];
       const hinted = getHintedCellPositions();
 
-      expect(pictogram).toBeTruthy();
+      expect(pictograms.length).toBeGreaterThan(0);
       expect(title).toBeTruthy();
       expect(purpose).toBeTruthy();
       expect(labels).toEqual(["1行1列 四角", "2行2列 丸"]);
@@ -545,7 +545,7 @@ describe("TakuzuTutorial", () => {
 
     test("最初の画面で、何をするパズルかとゴールの盤面を、ゴールの一言と一緒に見せること", () => {
       const purpose = screen.getByText(
-        "四角と丸で、ルールに合うようにすべてのマスを埋めるパズルです",
+        "四角と丸で、ルールに合うように すべてのマスを埋めるパズルです",
       );
       const caption = screen.getByText("この形がゴールです");
       const label = getCellLabel(1, 1);
