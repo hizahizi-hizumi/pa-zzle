@@ -28,7 +28,7 @@ import { HamiltonianPathFigure } from "@/games/hamiltonian-path/ui/board/Hamilto
 const previewStrip = {
   rowCount: 3,
   /** 迷わずに引ける所まで引いたマスの、帯の全マスに対する割合。 */
-  decidedRatios: { "1": 1, "2": 0.66, "3": 0.57, "4": 0.45, "5": 0.37 },
+  decidedRatios: { "1": 1, "2": 0.63, "3": 0.51, "4": 0.4, "5": 0.36 },
 } as const satisfies {
   rowCount: number;
   decidedRatios: Record<HamiltonianPathDifficulty, number>;
