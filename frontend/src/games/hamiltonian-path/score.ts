@@ -39,7 +39,7 @@ export const HAMILTONIAN_PATH_SPEED_PER_ASSUMPTION_MS = 3_000;
 export const HAMILTONIAN_PATH_SPEED_PER_REFUTATION_STEP_MS = 1_000;
 /**
  * 基準時間に数える先読みの手数の合計の上限（仮置き）。
- * 解法器は仮置きの候補を決まった順に試すので、手数の合計の裾が長い（問題集の最大287手）。
+ * 解法器は仮置きの候補を決まった順に試すので、手数の合計の裾が長い（問題集の最大199手）。
  * 人間は見込みの高い候補から読むとみなし、レベル5 の9割の問題が収まる手数で打ち切る。
  */
 export const HAMILTONIAN_PATH_SPEED_REFUTATION_STEP_LIMIT = 120;
