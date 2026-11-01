@@ -6,25 +6,13 @@ import {
   isHamiltonianPathSolved,
 } from "@/games/hamiltonian-path/puzzle/rules";
 
-// 0 1|2
+// 0 1 2
 // 3 # 5
-// 6 7 8   (5 と 8 の間に仕切り)
-const board = parseHamiltonianPathBoard([
-  "S .|.",
-  "     ",
-  ". # .",
-  "    -",
-  ". . .",
-]);
+// 6 7 #
+const board = parseHamiltonianPathBoard(["S . .", ". # .", ". . #"]);
 
 describe("isHamiltonianPathSolved", () => {
-  const openBoard = parseHamiltonianPathBoard([
-    "S . .",
-    "",
-    ". . .",
-    "",
-    ". . .",
-  ]);
+  const openBoard = parseHamiltonianPathBoard(["S . .", ". . .", ". . ."]);
   const solution = [0, 1, 2, 5, 4, 3, 6, 7, 8];
 
   test("始点から全有効マスを1回ずつ、隣り合うマスへ進んだ道を解とすること", () => {
@@ -47,10 +35,10 @@ describe("isHamiltonianPathSolved", () => {
     expect(solved).toBe(false);
   });
 
-  describe("壁と仕切りのある盤面の場合", () => {
-    const blockedPath = [0, 3, 6, 7, 8, 5, 2, 1];
+  describe("穴のある盤面の場合", () => {
+    const blockedPath = [0, 1, 2, 5, 4, 3, 6];
 
-    test("仕切りを越える道を解としないこと", () => {
+    test("穴を通る道を解としないこと", () => {
       const solved = isHamiltonianPathSolved(board, blockedPath);
 
       expect(solved).toBe(false);
@@ -60,9 +48,8 @@ describe("isHamiltonianPathSolved", () => {
 
 describe("isHamiltonianPathDeadEnd", () => {
   const cases: readonly [string, readonly number[], boolean][] = [
-    ["先端から未通過のマスへ延ばせない", [0, 1], true],
+    ["先端の隣が通過済みのマスか穴だけの", [0, 1, 2, 5], true],
     ["先端から未通過のマスへ延ばせる", [0, 3], false],
-    ["仕切りの向こうにしか未通過のマスが無い", [0, 3, 6, 7, 8], true],
   ];
 
   test.each(cases)(
@@ -75,7 +62,7 @@ describe("isHamiltonianPathDeadEnd", () => {
   );
 
   describe("全マスを通った場合", () => {
-    const openBoard = parseHamiltonianPathBoard(["S .", "", ". ."]);
+    const openBoard = parseHamiltonianPathBoard(["S .", ". ."]);
     const solution = [0, 1, 3, 2];
 
     test("行き止まりとしないこと", () => {
@@ -93,11 +80,8 @@ describe("findHamiltonianPathStranding", () => {
   // c d e f
   const openBoard = parseHamiltonianPathBoard([
     "S . . .",
-    "",
     ". . . .",
-    "",
     ". . . .",
-    "",
     ". . . .",
   ]);
 
@@ -135,16 +119,16 @@ describe("findHamiltonianPathStranding", () => {
 });
 
 describe("areHamiltonianPathOpenCellsConnected", () => {
-  const connected = parseHamiltonianPathBoard(["S .", "-", ". ."]);
-  const separated = parseHamiltonianPathBoard(["S|.", "-", ". ."]);
+  const connected = parseHamiltonianPathBoard(["S #", ". ."]);
+  const separated = parseHamiltonianPathBoard(["S #", "# ."]);
 
-  test("仕切りを回り込んでつながる盤面をつながっているとすること", () => {
+  test("穴を回り込んでつながる盤面をつながっているとすること", () => {
     const result = areHamiltonianPathOpenCellsConnected(connected);
 
     expect(result).toBe(true);
   });
 
-  test("仕切りで切り離された盤面をつながっていないとすること", () => {
+  test("穴で切り離された盤面をつながっていないとすること", () => {
     const result = areHamiltonianPathOpenCellsConnected(separated);
 
     expect(result).toBe(false);

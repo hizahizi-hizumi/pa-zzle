@@ -7,7 +7,7 @@ import {
 
 /**
  * 道が規則を満たして全有効マスを通ったか。道を作った入力処理を信頼せず、規則だけで確かめる。
- * 先頭が始点で、続く2マスが上下左右に隣り合って間に仕切りがなく、壁マスと同じマスを通らず、全有効マスを含むこと。
+ * 先頭が始点で、続く2マスが上下左右に隣り合い、穴と同じマスを通らず、穴でない全マスを含むこと。
  * 問題は一意解なので、保存した解との一致は要らない。
  */
 export function isHamiltonianPathSolved(
@@ -136,7 +136,7 @@ export function findHamiltonianPathStranding(
     : null;
 }
 
-/** 有効マスが、仕切りを通らない上下左右の隣接で1つにつながっているか。 */
+/** 穴でないマスが、上下左右の隣接で1つにつながっているか。 */
 export function areHamiltonianPathOpenCellsConnected(
   board: HamiltonianPathBoard,
 ): boolean {

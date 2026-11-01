@@ -17,18 +17,12 @@ import {
 } from "@/games/hamiltonian-path/session/session";
 
 /**
- * 左上が始点、右下が壁、中央とその下の間に仕切りがある 3×3 の盤面。
+ * 左上が始点、右下が穴の 3×3 の盤面。
  * 0 1 2
  * 3 4 5
  * 6 7 #
  */
-const problem = parseHamiltonianPathBoard([
-  "S . .",
-  "",
-  ". . .",
-  "  -",
-  ". . #",
-]);
+const problem = parseHamiltonianPathBoard(["S . .", ". . .", ". . #"]);
 const solution = [0, 1, 2, 5, 4, 3, 6, 7];
 const startedAt = 1_000;
 const clearedAt = 61_000;
@@ -46,7 +40,8 @@ function extendAll(
 }
 
 const initial = createHamiltonianPathSession(problem, startedAt);
-const halfway = extendAll(initial, [1, 2, 5, 4]);
+const besideHole = extendAll(initial, [1, 2, 5]);
+const halfway = extendAll(besideHole, [4]);
 const cleared = extendAll(halfway, [3, 6, 7], clearedAt);
 
 describe("createHamiltonianPathSession", () => {
@@ -61,7 +56,7 @@ describe("createHamiltonianPathSession", () => {
   });
 
   describe("有効マスがつながっていない問題の場合", () => {
-    const disconnected = parseHamiltonianPathBoard(["S #", "", "# ."]);
+    const disconnected = parseHamiltonianPathBoard(["S #", "# ."]);
 
     test("問題を受け付けないこと", () => {
       const act = () => createHamiltonianPathSession(disconnected, startedAt);
@@ -87,8 +82,7 @@ describe("extendHamiltonianPathSessionPath", () => {
   const rejectedCases = [
     ["先端から離れたマス", initial, 2, "not-adjacent"],
     ["先端そのもの", initial, 0, "not-adjacent"],
-    ["壁マス", extendAll(initial, [1, 2, 5]), 8, "wall"],
-    ["仕切りの向こうのマス", halfway, 7, "partition"],
+    ["穴", besideHole, 8, "hole"],
     ["通過済みのマス", halfway, 1, "visited"],
   ] as const;
 
@@ -227,20 +221,20 @@ describe("beginHamiltonianPathSessionStroke", () => {
   });
 
   test.each([
-    ["仕切りの向こうのマス", 7, "partition"],
-    ["先端から離れたマス", 6, "not-adjacent"],
-  ])(
+    ["先端の隣の穴", besideHole, 8, "hole"],
+    ["先端から離れたマス", halfway, 6, "not-adjacent"],
+  ] as const)(
     "%sを押すと理由を返し、道を変えずになぞり始めること",
-    (_, cell, reason) => {
+    (_, session, cell, reason) => {
       const result = beginHamiltonianPathSessionStroke(
-        halfway,
+        session,
         cell,
         startedAt,
       );
 
       expect(result.rejection).toBe(reason);
-      expect(result.session.puzzleState).toBe(halfway.puzzleState);
-      expect(result.session.strokeOrigin).toBe(halfway.puzzleState);
+      expect(result.session.puzzleState).toBe(session.puzzleState);
+      expect(result.session.strokeOrigin).toBe(session.puzzleState);
     },
   );
 
@@ -273,15 +267,23 @@ describe("traceHamiltonianPathSessionStroke", () => {
     expect(session.puzzleState.path).toEqual([0, 1, 2, 5, 4, 3]);
   });
 
-  test("先端から仕切りの向こうへ移ると理由を返すこと", () => {
-    const result = traceHamiltonianPathSessionStroke(
-      stroking,
-      { from: 4, to: 7, horizontalFirst: true },
+  describe("先端の隣に穴がある場合", () => {
+    const strokingBesideHole = beginHamiltonianPathSessionStroke(
+      besideHole,
+      5,
       startedAt,
-    );
+    ).session;
 
-    expect(result.rejection).toBe("partition");
-    expect(result.session).toBe(stroking);
+    test("先端から穴へ移ると理由を返すこと", () => {
+      const result = traceHamiltonianPathSessionStroke(
+        strokingBesideHole,
+        { from: 5, to: 8, horizontalFirst: true },
+        startedAt,
+      );
+
+      expect(result.rejection).toBe("hole");
+      expect(result.session).toBe(strokingBesideHole);
+    });
   });
 
   describe("なぞっていない場合", () => {

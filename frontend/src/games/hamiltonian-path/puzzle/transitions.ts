@@ -2,9 +2,8 @@ import {
   areHamiltonianPathCellsAdjacent,
   getHamiltonianPathCellPosition,
   type HamiltonianPathBoard,
-  hasHamiltonianPathPartition,
   isHamiltonianPathCellOnBoard,
-  isHamiltonianPathWall,
+  isHamiltonianPathHole,
 } from "@/games/hamiltonian-path/puzzle/board";
 import {
   getHamiltonianPathHead,
@@ -12,18 +11,16 @@ import {
 } from "@/games/hamiltonian-path/puzzle/state";
 
 /**
- * 道を延ばせなかった理由。盤面の反応（阻んだ仕切りの強調、先端の揺れ）を選ぶために返す。
- * - `outside-board`: 盤面の外のマス。
+ * 道を延ばせなかった理由。盤面の反応（先端の揺れ）を選ぶために返す。
+ * - `outside-board`: 枠の外のマス。
  * - `not-adjacent`: 先端の上下左右に隣り合わないマス（先端そのものを含む）。
- * - `wall`: 壁マス。
- * - `partition`: 先端との間に仕切りがある。
+ * - `hole`: 穴。
  * - `visited`: 道がもう通ったマス。
  */
 export type HamiltonianPathExtensionRejection =
   | "outside-board"
   | "not-adjacent"
-  | "wall"
-  | "partition"
+  | "hole"
   | "visited";
 
 export type HamiltonianPathExtension =
@@ -51,11 +48,8 @@ function findExtensionRejection(
   if (!areHamiltonianPathCellsAdjacent(board.size, head, cell)) {
     return "not-adjacent";
   }
-  if (isHamiltonianPathWall(board, cell)) {
-    return "wall";
-  }
-  if (hasHamiltonianPathPartition(board, head, cell)) {
-    return "partition";
+  if (isHamiltonianPathHole(board, cell)) {
+    return "hole";
   }
   if (state.path.includes(cell)) {
     return "visited";
@@ -118,7 +112,7 @@ export function moveHamiltonianPathHead(
  * - `extended`: 道が1マス以上延びた。
  * - `retracted`: 直前のマスへ戻って道が1マス縮んだ。
  * - `unchanged`: 道を変えない（先端・道の途中のマスに入った、道から外れた指が動いた、など）。
- * - `rejected`: 先端から進もうとした指が壁・仕切りに阻まれた。
+ * - `rejected`: 先端から進もうとした指が穴に阻まれた。
  */
 export type HamiltonianPathTrace =
   | { kind: "extended"; state: HamiltonianPathPuzzleState }
@@ -187,8 +181,8 @@ function extendThrough(
  * - 直前のマスへ入ると1マス縮める。道の途中のそれ以外のマスへ入っても巻き戻さない。
  * - 先端に隣り合う未通過マスへ入ると延ばす。指が道から外れていても、先端の隣へ戻れば延ばす。
  * - 先端から離れたマスへは、指が先端から移ったときだけ、通り越したマスを通って延ばす。
- *   斜めは仕切り・壁に塞がれていない角のマスを通り、通れる道筋が無ければ延ばさない。
- * - 阻まれたことを返すのは、指が先端から壁マス・仕切りの向こうへ移ったときだけ。
+ *   斜めは穴でない角のマスを通り、通れる道筋が無ければ延ばさない。
+ * - 阻まれたことを返すのは、指が先端から穴へ移ったときだけ。
  *   道から外れた指が動き続けても、同じ障害を何度も返さない。
  */
 export function traceHamiltonianPath(

@@ -12,9 +12,6 @@ import type { HamiltonianPathBlockedMove } from "@/games/hamiltonian-path/play/u
 import {
   getHamiltonianPathNeighborCell,
   type HamiltonianPathBoard as HamiltonianPathBoardState,
-  type HamiltonianPathDirection,
-  hamiltonianPathDirections,
-  hasHamiltonianPathPartition,
   listHamiltonianPathCells,
 } from "@/games/hamiltonian-path/puzzle/board";
 import type { HamiltonianPathTraceStep } from "@/games/hamiltonian-path/puzzle/transitions";
@@ -96,7 +93,7 @@ export function HamiltonianPathBoard({
   const { size } = board;
   const figureRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<FingerDrag | null>(null);
-  const walls = new Set(board.walls);
+  const holes = new Set(board.holes);
   const visited = new Set(path);
   const stranded = new Set(strandedCells);
   const head = path.at(-1) ?? board.start;
@@ -118,9 +115,9 @@ export function HamiltonianPathBoard({
 
   useLayoutEffect(() => {
     if (blockedMove !== null) {
-      animateBlockedMove(figureRef.current, size, blockedMove);
+      animateBlockedMove(figureRef.current, blockedMove);
     }
-  }, [blockedMove, size]);
+  }, [blockedMove]);
 
   useLayoutEffect(() => {
     if (isDeadEnd) {
@@ -140,17 +137,8 @@ export function HamiltonianPathBoard({
   }, [clearing, onClearAnimationComplete, pathLength]);
 
   function getCellState(cell: number): HamiltonianPathCellState {
-    if (walls.has(cell)) return "wall";
+    if (holes.has(cell)) return "wall";
     return visited.has(cell) ? "visited" : "unvisited";
-  }
-
-  function listPartitionDirections(cell: number): HamiltonianPathDirection[] {
-    return hamiltonianPathDirections.filter((direction) => {
-      const neighbor = getHamiltonianPathNeighborCell(size, cell, direction);
-      return (
-        neighbor !== null && hasHamiltonianPathPartition(board, cell, neighbor)
-      );
-    });
   }
 
   function toBoardPoint(event: ReactPointerEvent<HTMLElement>): BoardPoint {
@@ -279,7 +267,6 @@ export function HamiltonianPathBoard({
             isHead={cell === head}
             isDeadEnd={cell === head && isDeadEnd}
             isStranded={stranded.has(cell)}
-            partitionDirections={listPartitionDirections(cell)}
             disabled={interactionDisabled}
             focusable={cell === focusableCell}
             onPress={pressCell}

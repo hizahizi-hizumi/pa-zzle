@@ -37,9 +37,9 @@ function createSnapshot(
 
 describe("HamiltonianPathDiagnostics", () => {
   describe("迷う分岐の無い問題の場合", () => {
-    // hp-5-0-18: 5×5・壁なし・仕切り6本。始点から取り残しを避けるだけで道が1通りに決まる。
+    // hp-5-t0-4: 5×5・穴4。始点から取り残しを避けるだけで道が1通りに決まる。
     const snapshot = createSnapshot(
-      createHamiltonianPathProblemIdentity(5, 0, 18),
+      createHamiltonianPathProblemIdentity(5, 0, 4),
       "1",
     );
 
@@ -49,27 +49,22 @@ describe("HamiltonianPathDiagnostics", () => {
       );
     });
 
-    test("生成条件を盤面サイズと壁率で表示すること", () => {
+    test("生成条件を盤面サイズと仮置きの回数の目標で表示すること", () => {
       const value = getRowValue("生成条件");
 
-      expect(value).toBe("5×5 / 壁率 0%");
+      expect(value).toBe("5×5 / 仮置きの目標 0回");
     });
 
-    test("盤面の壁・仕切り・有効マスを単位付きで表示すること", () => {
-      const values = ["壁マス", "仕切り", "有効マス"].map((label) =>
-        getRowValue(label),
-      );
+    test("盤面の穴・有効マスを単位付きで表示すること", () => {
+      const values = ["穴", "有効マス"].map((label) => getRowValue(label));
 
-      expect(values).toEqual(["0マス", "6本", "25マス"]);
+      expect(values).toEqual(["4マス", "21マス"]);
     });
 
     test("一意性と、正解の道を始点から進む向きの矢印で表示すること", () => {
       const values = ["一意性", "正解の道"].map((label) => getRowValue(label));
 
-      expect(values).toEqual([
-        "一意（探索 24節点）",
-        "→↑←↑→↑←↑→→↓→↑→↓↓↓↓←←↑↑→↓",
-      ]);
+      expect(values).toEqual(["一意（探索 20節点）", "↑↑↑←↓←↑←←↓→↓→↓→↓←←↑←"]);
     });
 
     test("提供範囲外と表示し、レベルの条件の行を出さないこと", () => {
@@ -84,9 +79,9 @@ describe("HamiltonianPathDiagnostics", () => {
   });
 
   describe("レベル5に分類できた問題の場合", () => {
-    // hp-8-0-45: 8×8・壁なし。仮置き7回・最も長い先読み19手で、レベル5 の組み合わせに当たる。
+    // hp-8-t0-7: 8×8・穴7。仮置き8回・最も長い先読み18手で、レベル5 の組み合わせに当たる。
     const snapshot = createSnapshot(
-      createHamiltonianPathProblemIdentity(8, 0, 45),
+      createHamiltonianPathProblemIdentity(8, 0, 7),
       "5",
     );
 
@@ -110,9 +105,9 @@ describe("HamiltonianPathDiagnostics", () => {
       expect(values).toEqual([
         "レベル 5",
         "決まらない（条件 決まらない）",
-        "7回（条件 7回以上）",
+        "8回（条件 7回以上）",
         "8×8（条件 8）",
-        "19手（条件 9手以上）",
+        "18手（条件 9手以上）",
       ]);
     });
 
@@ -124,10 +119,10 @@ describe("HamiltonianPathDiagnostics", () => {
       );
 
       expect(values).toEqual([
-        "13か所",
-        "13か所",
-        "2: 9 / 3: 0 / 4: 0 / 5: 4 / 6: 0",
-        "32マス",
+        "12か所",
+        "12か所",
+        "2: 11 / 3: 0 / 4: 0 / 5: 1 / 6: 0",
+        "探索の上限超",
       ]);
     });
   });

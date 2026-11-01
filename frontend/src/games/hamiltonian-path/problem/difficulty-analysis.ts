@@ -24,14 +24,15 @@ import { listHamiltonianPathOpenCells } from "@/games/hamiltonian-path/puzzle/bo
 
 /**
  * 難易度特徴と比べるための問題の規模。挑戦ではなく、なぞる長さと盤面の広さの側の値。
+ * - `size`・`cellCount`: 穴を含む枠の一辺とマスの数。
  * - `openCellCount`: 道が通るマスの数（なぞる長さ）。
+ * - `holeCount`: 穴の数。
  */
 export type HamiltonianPathScaleMetrics = {
   size: number;
   cellCount: number;
   openCellCount: number;
-  wallCount: number;
-  partitionCount: number;
+  holeCount: number;
 };
 
 /**
@@ -113,8 +114,7 @@ function measureScale(
     size: problem.size,
     cellCount: problem.size * problem.size,
     openCellCount: listHamiltonianPathOpenCells(problem).length,
-    wallCount: problem.walls.length,
-    partitionCount: problem.partitions.length,
+    holeCount: problem.holes.length,
   };
 }
 

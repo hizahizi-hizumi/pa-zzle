@@ -7,13 +7,7 @@ import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board
 // 0 1 2
 // 3 4 5
 // 6 7 8
-const openBoard = parseHamiltonianPathBoard([
-  "S . .",
-  "",
-  ". . .",
-  "",
-  ". . .",
-]);
+const openBoard = parseHamiltonianPathBoard(["S . .", ". . .", ". . ."]);
 
 describe("showsHamiltonianPathStranding", () => {
   const cases = [

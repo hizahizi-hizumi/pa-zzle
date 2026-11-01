@@ -131,7 +131,7 @@ describe("createPreviewStrip", () => {
 
 describe("HamiltonianPathDifficultyPreview", () => {
   test.each(difficultyIds)(
-    "レベル %s では、帯の行のマスだけを描き、仕切りと壁マスを描かないこと",
+    "レベル %s では、帯の行のマスだけを描き、穴を描かないこと",
     (difficulty) => {
       const { board } = createPreviewStrip(difficulty);
       const { container } = render(

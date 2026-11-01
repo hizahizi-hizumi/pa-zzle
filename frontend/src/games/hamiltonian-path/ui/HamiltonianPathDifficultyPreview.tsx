@@ -22,8 +22,8 @@ import { HamiltonianPathFigure } from "@/games/hamiltonian-path/ui/board/Hamilto
  *   - 4: 開けた領域で、先読みを重ねて道筋を決める。帯の半分に届かずに止まる。
  *   - 5: 広い開けた盤面で、長い先読みを何度も重ねないと道筋が決まらない。帯の3分の1ほどで止まる。
  *   上のレベルは、下のレベルの帯を同じ位置に含み、引いた道は下のレベルの道の先頭の部分になる。
- * - 帯の外の行は壁マスにして描かない。道の色は、帯の全マスを通り終える所を紫として、プレイ画面と同じく通った順に移す。
- * - 仕切り・壁マスは描かない。描くのはマス・道・始点・先端だけにする。
+ * - 帯の外の行は穴にして描かない。道の色は、帯の全マスを通り終える所を紫として、プレイ画面と同じく通った順に移す。
+ * - 穴は描かない。描くのはマス・道・始点・先端だけにする。
  */
 const previewStrip = {
   rowCount: 3,
@@ -55,7 +55,7 @@ function createPreviewStrip(
 ): PreviewStrip {
   const size = hamiltonianPathLevelCombinations[difficulty].boardSize.maximum;
   const stripCellCount = size * previewStrip.rowCount;
-  const walls = listHamiltonianPathCells(size).filter(
+  const holes = listHamiltonianPathCells(size).filter(
     (cell) => cell >= stripCellCount,
   );
   const snake = listStripSnake(size);
@@ -63,7 +63,7 @@ function createPreviewStrip(
     stripCellCount * previewStrip.decidedRatios[difficulty],
   );
   return {
-    board: { size, walls, partitions: [], start: snake[0]! },
+    board: { size, holes, start: snake[0]! },
     path: snake.slice(0, decidedCellCount),
   };
 }

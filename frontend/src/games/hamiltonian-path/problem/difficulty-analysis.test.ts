@@ -10,23 +10,17 @@ import { createHamiltonianPathProblemIdentity } from "@/games/hamiltonian-path/p
 import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
 
 /**
- * 研究用 Python の HumanSolver で仮置き1回、decision_profile で分岐8（1段仮置きで退ける誤り手が1つ）の盤面。
- * 回転・反転すると、解法器は仮置き1回・2回・4回のいずれかで道を決める。
+ * 研究用 Python の HumanSolver で仮置き2回（先読み5手と8手）、decision_profile で分岐5の盤面（`hp-7-t4-1` を同型の正規化キーの向きで書いたもの）。
+ * 回転・反転すると、解法器は仮置き2回から7回で道を決める。
  */
 const pythonFixtureProblem = parseHamiltonianPathBoard([
-  ". . . .|. .|.",
-  "",
+  ". . # . . . .",
+  ". . . # . . .",
   ". . . . . . .",
-  "      -",
-  ".|. . . . . .",
-  "  -   -   -",
-  ".|. . . . . .",
-  "      -",
-  ". . . . .|. S",
-  "    -",
+  ". . . . . . #",
   ". . . . . . .",
-  "",
-  ". . . . . . .",
+  ". # . . . . .",
+  ". S . . . . .",
 ]);
 
 describe("analyzeHamiltonianPathDifficulty", () => {
@@ -41,26 +35,25 @@ describe("analyzeHamiltonianPathDifficulty", () => {
         scale: {
           size: 7,
           cellCount: 49,
-          openCellCount: 49,
-          wallCount: 0,
-          partitionCount: 11,
+          openCellCount: 45,
+          holeCount: 4,
         },
         reasoning: {
           localReasoningSuffices: false,
           regionalReasoningUsed: false,
-          assumptionCount: 1,
+          assumptionCount: 2,
           deepAssumptionCount: 0,
-          longestRefutationLength: 5,
-          refutationLengths: [5],
-          stallCount: 1,
-          firstStallDecidedEdgeRatio: 40 / 73,
-          firingCountByStage: { 1: 47, 2: 5, 3: 0, 4: 0, 5: 1, 6: 0 },
+          longestRefutationLength: 8,
+          refutationLengths: [5, 8],
+          stallCount: 2,
+          firstStallDecidedEdgeRatio: expect.closeTo(25 / 70, 12),
+          firingCountByStage: { 1: 45, 2: 3, 3: 0, 4: 0, 5: 2, 6: 0 },
         },
         drawing: {
-          branchCount: 8,
-          fatalBranchCount: 8,
-          fatalBranchCountByStage: { 2: 7, 3: 0, 4: 0, 5: 1, 6: 0 },
-          longestTrapLength: 38,
+          branchCount: 5,
+          fatalBranchCount: 5,
+          fatalBranchCountByStage: { 2: 5, 3: 0, 4: 0, 5: 0, 6: 0 },
+          longestTrapLength: 29,
         },
       });
     });
@@ -81,9 +74,9 @@ describe("analyzeHamiltonianPathDifficulty", () => {
     const cases = [
       ["研究用 Python の盤面", pythonFixtureProblem],
       [
-        "hp-7-0-782",
+        "hp-7-t0-19",
         generateHamiltonianPathProblem(
-          createHamiltonianPathProblemIdentity(7, 0, 782),
+          createHamiltonianPathProblemIdentity(7, 0, 19),
         ).problem,
       ],
     ] as const;
@@ -108,10 +101,10 @@ describe("analyzeHamiltonianPathDifficulty", () => {
       },
     );
 
-    test("仮置きの多い向きの盤面を、その向きだけで読むと仮置きが4回要ること", () => {
+    test("仮置きの多い向きの盤面を、その向きだけで読むと仮置きが7回要ること", () => {
       const trace = traceHamiltonianPathHumanSolve(heavilyReadOrientation);
 
-      expect(trace.assumptionCount).toBe(4);
+      expect(trace.assumptionCount).toBe(7);
     });
 
     test("仮置きの多い向きの盤面からも、最も仮置きの少ない向きの読み方を採ること", () => {
@@ -119,19 +112,16 @@ describe("analyzeHamiltonianPathDifficulty", () => {
 
       expect(result).toMatchObject({
         status: "analyzed",
-        reasoning: { assumptionCount: 1, refutationLengths: [5] },
+        reasoning: { assumptionCount: 2, refutationLengths: [5, 8] },
       });
     });
   });
 
-  describe("仕切りの無い全面盤の場合", () => {
+  describe("穴の無い全面盤の場合", () => {
     const problem = parseHamiltonianPathBoard([
       "S . . .",
-      "",
       ". . . .",
-      "",
       ". . . .",
-      "",
       ". . . .",
     ]);
 
@@ -147,13 +137,7 @@ describe("analyzeHamiltonianPathDifficulty", () => {
 
   describe("始点の色が多い側でない盤面の場合", () => {
     // 3×3 は市松模様の色が5マスと4マスで、道は5マスの色から始まり5マスの色で終わる。
-    const problem = parseHamiltonianPathBoard([
-      ". S .",
-      "",
-      ". . .",
-      "",
-      ". . .",
-    ]);
+    const problem = parseHamiltonianPathBoard([". S .", ". . .", ". . ."]);
 
     test("解が無いので成立しない問題とすること", () => {
       const result = analyzeHamiltonianPathDifficulty(problem);
@@ -173,8 +157,7 @@ describe("getHamiltonianPathSolveWorkload", () => {
       size: 8,
       cellCount: 64,
       openCellCount: 64,
-      wallCount: 0,
-      partitionCount: 15,
+      holeCount: 0,
     },
     reasoning: {
       localReasoningSuffices: false,

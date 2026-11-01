@@ -8,23 +8,25 @@ import {
 import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
 
 describe("rotateHamiltonianPathBoardClockwise", () => {
-  const board = parseHamiltonianPathBoard(["S|.", "", "# ."]);
+  const board = parseHamiltonianPathBoard(["S . .", ". . #", "# . ."]);
 
-  test("壁マス・始点を回し、左右の間の仕切りを上下の間の仕切りにすること", () => {
+  test("穴・始点を時計回りに回すこと", () => {
     const rotated = rotateHamiltonianPathBoardClockwise(board);
 
-    expect(rotated).toEqual(parseHamiltonianPathBoard(["# S", "  -", ". ."]));
+    expect(rotated).toEqual(
+      parseHamiltonianPathBoard(["# . S", ". . .", ". # ."]),
+    );
   });
 });
 
 describe("mirrorHamiltonianPathBoardLeftRight", () => {
-  const board = parseHamiltonianPathBoard(["S . .", "-", ". .|.", "", "# . ."]);
+  const board = parseHamiltonianPathBoard(["S . .", ". . #", "# . ."]);
 
-  test("壁マス・始点・仕切りを左右反転すること", () => {
+  test("穴・始点を左右反転すること", () => {
     const mirrored = mirrorHamiltonianPathBoardLeftRight(board);
 
     expect(mirrored).toEqual(
-      parseHamiltonianPathBoard([". . S", "    -", ".|. .", "", ". . #"]),
+      parseHamiltonianPathBoard([". . S", "# . .", ". . #"]),
     );
   });
 });
@@ -32,11 +34,8 @@ describe("mirrorHamiltonianPathBoardLeftRight", () => {
 describe("listHamiltonianPathBoardSymmetries", () => {
   const board = parseHamiltonianPathBoard([
     "S . . .",
-    "  -",
-    ". .|. .",
-    "",
+    ". . . #",
     ". # . .",
-    "",
     ". . . .",
   ]);
 
@@ -59,20 +58,8 @@ describe("listHamiltonianPathBoardSymmetries", () => {
 });
 
 describe("getHamiltonianPathSymmetryKey", () => {
-  const board = parseHamiltonianPathBoard([
-    "S . .",
-    "  -",
-    ". . .",
-    "",
-    ". . #",
-  ]);
-  const otherBoard = parseHamiltonianPathBoard([
-    "S . .",
-    "-",
-    ". . .",
-    "",
-    ". . #",
-  ]);
+  const board = parseHamiltonianPathBoard(["S . .", ". . .", ". . #"]);
+  const otherBoard = parseHamiltonianPathBoard(["S . .", ". . #", ". . ."]);
 
   test("回転・反転した盤面に同じキーを返すこと", () => {
     const keys = listHamiltonianPathBoardSymmetries(board).map(
@@ -82,7 +69,7 @@ describe("getHamiltonianPathSymmetryKey", () => {
     expect(new Set(keys).size).toBe(1);
   });
 
-  test("仕切りの位置が違う盤面に別のキーを返すこと", () => {
+  test("穴の位置が違う盤面に別のキーを返すこと", () => {
     const key = getHamiltonianPathSymmetryKey(board);
     const otherKey = getHamiltonianPathSymmetryKey(otherBoard);
 

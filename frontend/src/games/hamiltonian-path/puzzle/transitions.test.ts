@@ -9,16 +9,10 @@ import {
   traceHamiltonianPath,
 } from "@/games/hamiltonian-path/puzzle/transitions";
 
-// 0 1|2
-// 3 4 5    (4 は壁、5 と 8 の間に仕切り)
+// 0 1 2
+// 3 # 5
 // 6 7 8
-const board = parseHamiltonianPathBoard([
-  "S .|.",
-  "     ",
-  ". # .",
-  "    -",
-  ". . .",
-]);
+const board = parseHamiltonianPathBoard(["S . .", ". # .", ". . ."]);
 
 describe("createInitialHamiltonianPathState", () => {
   test("始点だけの道を作ること", () => {
@@ -46,8 +40,7 @@ describe("extendHamiltonianPath", () => {
     ["盤面の外", [0], -1, "outside-board"],
     ["先端から離れたマス", [0], 2, "not-adjacent"],
     ["先端そのもの", [0], 0, "not-adjacent"],
-    ["壁マス", [0, 1], 4, "wall"],
-    ["仕切りの向こう", [0, 1], 2, "partition"],
+    ["穴", [0, 1], 4, "hole"],
     ["通過済みのマス", [0, 3, 6, 7], 6, "visited"],
   ];
 
@@ -59,17 +52,6 @@ describe("extendHamiltonianPath", () => {
       expect(extension).toEqual({ kind: "rejected", reason });
     },
   );
-
-  describe("仕切りを挟んだ通過済みのマスの場合", () => {
-    const partitionedBoard = parseHamiltonianPathBoard(["S|.", "   ", ". ."]);
-    const state = { path: [0, 2, 3, 1] };
-
-    test("仕切りを理由に返すこと", () => {
-      const extension = extendHamiltonianPath(partitionedBoard, state, 0);
-
-      expect(extension).toEqual({ kind: "rejected", reason: "partition" });
-    });
-  });
 });
 
 describe("retractHamiltonianPath", () => {
@@ -130,7 +112,7 @@ describe("moveHamiltonianPathHead", () => {
   });
 
   describe("直前より前の通過済みのマスへ動かす場合", () => {
-    const openBoard = parseHamiltonianPathBoard(["S .", "   ", ". ."]);
+    const openBoard = parseHamiltonianPathBoard(["S .", ". ."]);
     const loopingState = { path: [0, 1, 3, 2] };
 
     test("巻き戻さず、通過済みを理由に返すこと", () => {
@@ -142,13 +124,7 @@ describe("moveHamiltonianPathHead", () => {
 });
 
 describe("traceHamiltonianPath", () => {
-  const openBoard = parseHamiltonianPathBoard([
-    "S . .",
-    "",
-    ". . .",
-    "",
-    ". . .",
-  ]);
+  const openBoard = parseHamiltonianPathBoard(["S . .", ". . .", ". . ."]);
 
   describe("指が先端から隣のマスへ移った場合", () => {
     const cases = [
@@ -165,16 +141,10 @@ describe("traceHamiltonianPath", () => {
         { kind: "retracted", state: { path: [0, 3] } },
       ],
       [
-        "壁マスへは延ばさず理由を返す",
+        "穴へは延ばさず理由を返す",
         [0, 1],
         4,
-        { kind: "rejected", reason: "wall" },
-      ],
-      [
-        "仕切りの向こうへは延ばさず理由を返す",
-        [0, 1],
-        2,
-        { kind: "rejected", reason: "partition" },
+        { kind: "rejected", reason: "hole" },
       ],
     ] as const;
 
@@ -212,11 +182,11 @@ describe("traceHamiltonianPath", () => {
       expect(trace).toEqual({ kind: "extended", state: { path: [0, 1, 2] } });
     });
 
-    test("仕切りの向こうの先端の隣へ入っても理由を返さないこと", () => {
+    test("先端の隣の穴へ入っても理由を返さないこと", () => {
       const trace = traceHamiltonianPath(
         board,
         { path: [0, 1] },
-        { from: 5, to: 2, horizontalFirst: true },
+        { from: 5, to: 4, horizontalFirst: true },
       );
 
       expect(trace).toEqual({ kind: "unchanged" });
@@ -249,18 +219,12 @@ describe("traceHamiltonianPath", () => {
       expect(trace).toEqual({ kind: "extended", state: { path } });
     });
 
-    describe("片方の角が仕切りに塞がれている場合", () => {
-      const partitionedBoard = parseHamiltonianPathBoard([
-        "S|. .",
-        "",
-        ". . .",
-        "",
-        ". . .",
-      ]);
+    describe("片方の角が穴の場合", () => {
+      const holedBoard = parseHamiltonianPathBoard(["S # .", ". . .", ". . ."]);
 
-      test("塞がれていない角を通って延ばすこと", () => {
+      test("穴でない角を通って延ばすこと", () => {
         const trace = traceHamiltonianPath(
-          partitionedBoard,
+          holedBoard,
           { path: [0] },
           { from: 0, to: 4, horizontalFirst: true },
         );
@@ -272,12 +236,10 @@ describe("traceHamiltonianPath", () => {
       });
     });
 
-    describe("両方の角が塞がれている場合", () => {
+    describe("両方の角が穴の場合", () => {
       const blockedBoard = parseHamiltonianPathBoard([
-        "S|. .",
-        "-",
-        ". . .",
-        "",
+        "S # .",
+        "# . .",
         ". . .",
       ]);
 

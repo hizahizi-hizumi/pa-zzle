@@ -26,20 +26,8 @@ type HamiltonianPathHowToPlayDialogProps = {
  * 3 4 5
  * 6 7 8
  */
-const openBoard = parseHamiltonianPathBoard([
-  "S . .",
-  "",
-  ". . .",
-  "",
-  ". . .",
-]);
-const blockedBoard = parseHamiltonianPathBoard([
-  "S .|.",
-  "",
-  ". # .",
-  "",
-  ". . .",
-]);
+const openBoard = parseHamiltonianPathBoard(["S . .", ". . .", ". . ."]);
+const blockedBoard = parseHamiltonianPathBoard(["S . .", ". # .", ". . ."]);
 
 /** ルールと操作を、盤面と同じ見た目の小さな図と短い一文で示す。 */
 /** 真ん中の列を縦に通って、左右の列が両方とも端になれなくなった道。 */

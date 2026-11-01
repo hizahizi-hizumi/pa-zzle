@@ -10,7 +10,6 @@ import {
   findHamiltonianPathDirection,
   getHamiltonianPathNeighborCell,
   hamiltonianPathDirections,
-  hasHamiltonianPathPartition,
 } from "@/games/hamiltonian-path/puzzle/board";
 import { createProblemId } from "@/games/problem-id";
 import { createProblemSeed } from "@/games/problem-seed";
@@ -58,14 +57,14 @@ function drag(
   });
 }
 
-/** 盤面の始点から上下左右に2マス以上離れた有効マス。 */
+/** 盤面の始点から上下左右に2マス以上離れた、穴でないマス。 */
 function findCellAwayFromStart(): number {
-  const { size, start, walls } = initial.problem;
+  const { size, start, holes } = initial.problem;
   const startRow = Math.floor(start / size);
   const startColumn = start % size;
   return Array.from({ length: size * size }, (_, cell) => cell).find(
     (cell) =>
-      !walls.includes(cell) &&
+      !holes.includes(cell) &&
       Math.abs(Math.floor(cell / size) - startRow) +
         Math.abs((cell % size) - startColumn) >=
         2,
@@ -138,11 +137,7 @@ describe("useHamiltonianPathPlay", () => {
     const { size, start } = initial.problem;
     const direction = hamiltonianPathDirections.find((candidate) => {
       const neighbor = getHamiltonianPathNeighborCell(size, start, candidate);
-      return (
-        neighbor === null ||
-        initial.problem.walls.includes(neighbor) ||
-        hasHamiltonianPathPartition(initial.problem, start, neighbor)
-      );
+      return neighbor === null || initial.problem.holes.includes(neighbor);
     })!;
     const neighbor = getHamiltonianPathNeighborCell(size, start, direction);
 

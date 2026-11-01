@@ -4,40 +4,28 @@ import {
 } from "@/games/hamiltonian-path/problem/generation/solver";
 import {
   createHamiltonianPathAdjacency,
-  createHamiltonianPathPartition,
   type HamiltonianPathBoard,
   listHamiltonianPathCells,
-  listHamiltonianPathGridNeighbors,
   listHamiltonianPathOpenCells,
-  normalizeHamiltonianPathPartitions,
   parseHamiltonianPathBoard,
 } from "@/games/hamiltonian-path/puzzle/board";
 import { isHamiltonianPathSolved } from "@/games/hamiltonian-path/puzzle/rules";
 import { createProblemSeededRandom } from "@/games/problem-seed";
 
 function createOpenBoard(size: number, start: number): HamiltonianPathBoard {
-  return { size, walls: [], partitions: [], start };
+  return { size, holes: [], start };
 }
 
-/** 4×4 か 5×5 に、壁マス・仕切り・始点を無作為に置いた盤面。有効マスがつながらない盤面・解の無い盤面も含む。 */
+/** 4×4 か 5×5 に、穴と始点を無作為に置いた盤面。穴でないマスがつながらない盤面・解の無い盤面も含む。 */
 function createRandomBoard(seed: string): HamiltonianPathBoard {
   const random = createProblemSeededRandom(seed);
   const size = random() < 0.5 ? 4 : 5;
   const cells = listHamiltonianPathCells(size);
-  const walls = cells.filter(() => random() < 0.06);
-  const openCells = cells.filter((cell) => !walls.includes(cell));
-  const partitions = openCells.flatMap((cell) =>
-    listHamiltonianPathGridNeighbors(size, cell)
-      .filter(
-        (neighbor) =>
-          neighbor > cell && openCells.includes(neighbor) && random() < 0.12,
-      )
-      .map((neighbor) => createHamiltonianPathPartition(cell, neighbor)),
-  );
+  const holes = cells.filter(() => random() < 0.15);
+  const openCells = cells.filter((cell) => !holes.includes(cell));
   return {
     size,
-    walls,
-    partitions: normalizeHamiltonianPathPartitions(partitions),
+    holes,
     start: openCells[Math.floor(random() * openCells.length)]!,
   };
 }
@@ -65,218 +53,193 @@ function countPathsByBruteForce(board: HamiltonianPathBoard): number {
 }
 
 /**
- * 研究用 Python（`scripts/research/hamiltonian_path_experiment.py`）の `gen_thin` で作った一意解の盤面と、
- * 同じ Python の `PathCounter.count` が返した結果。解の数・探索の節点の数・最初の解が一致することで移植を確かめる。
- * - `uniqueSearchStepCount`: 仕切りありで2解目まで探したときの節点の数。
- * - `withoutPartitions`: 仕切りを外し、64解まで探したとき。
- * - `allSolutionsWithoutPartitions`: 仕切りを外して全解を数えたとき（6×6 以下だけ）。
+ * 研究用 Python（`scripts/research/hamiltonian_path_experiment.py`）の `PathCounter.count` が、穴だけの盤面に返した結果。
+ * 解の数・探索の節点の数・最初の解が一致することで移植を確かめる。
+ * 一意解の盤面は TypeScript の生成器で作った問題を同型の正規化キーの向きで書き、2解目まで（20,000節点まで）探した。
  */
-const pythonFixtures = [
+const pythonUniqueFixtures = [
   {
-    name: "5×5・壁率0.0",
-    rows: [
-      ". . . . .",
-      "    -    ",
-      ". . .|. .",
-      "        -",
-      ".|. S .|.",
-      "         ",
-      ". . . . .",
-      "    -    ",
-      ". . . . .",
-    ],
+    name: "5×5・穴5",
+    rows: ["# # . . .", ". . # . .", ". . . . .", ". . . . .", "# S . . #"],
     solution: [
-      12, 7, 6, 11, 16, 17, 18, 13, 8, 9, 4, 3, 2, 1, 0, 5, 10, 15, 20, 21, 22,
-      23, 24, 19, 14,
+      21, 16, 15, 10, 5, 6, 11, 12, 17, 22, 23, 18, 19, 14, 13, 8, 9, 4, 3, 2,
     ],
-    uniqueSearchStepCount: 24,
-    withoutPartitions: { solutionCountUpTo64: 64, searchStepCount: 753 },
-    allSolutionsWithoutPartitions: {
-      solutionCount: 456,
-      searchStepCount: 5273,
-    },
+    searchStepCount: 22,
   },
   {
-    name: "5×5・壁率0.15",
+    name: "6×6・穴3",
     rows: [
-      "# # . . .",
-      "         ",
-      ". . . . .",
-      "         ",
-      ".|. # S .",
-      "         ",
-      ". # . . .",
-      "         ",
-      ". . . . .",
+      "# . # . . .",
+      ". . . . . .",
+      ". . . . . .",
+      ". . S . . .",
+      ". . . # . .",
+      ". . . . . .",
     ],
     solution: [
-      13, 8, 7, 2, 3, 4, 9, 14, 19, 24, 23, 18, 17, 22, 21, 20, 15, 10, 5, 6,
-      11,
+      20, 21, 15, 14, 8, 9, 3, 4, 5, 11, 10, 16, 17, 23, 22, 28, 29, 35, 34, 33,
+      32, 26, 25, 31, 30, 24, 18, 19, 13, 12, 6, 7, 1,
     ],
-    uniqueSearchStepCount: 26,
-    withoutPartitions: { solutionCountUpTo64: 2, searchStepCount: 30 },
-    allSolutionsWithoutPartitions: { solutionCount: 2, searchStepCount: 30 },
+    searchStepCount: 259,
   },
   {
-    name: "6×6・壁率0.0",
+    name: "7×7・穴8",
     rows: [
-      ". . . . . .",
-      "           ",
-      ". . . . . .",
-      "      -    ",
-      ". .|. . . .",
-      "  -        ",
-      ". . . .|. .",
-      "    -     -",
-      ". S .|. . .",
-      "  -        ",
-      ". .|. . . .",
+      "# . . . # . .",
+      ". . # S . . #",
+      ". . . . . . .",
+      ". . . . # . .",
+      "# . . # # . .",
+      ". . . . . . .",
+      ". . . . . . .",
     ],
     solution: [
-      25, 26, 32, 33, 34, 35, 29, 28, 27, 21, 15, 16, 22, 23, 17, 11, 5, 4, 10,
-      9, 3, 2, 1, 0, 6, 12, 13, 7, 8, 14, 20, 19, 18, 24, 30, 31,
+      10, 3, 2, 1, 8, 7, 14, 21, 22, 15, 16, 17, 24, 23, 30, 29, 36, 35, 42, 43,
+      44, 37, 38, 45, 46, 39, 40, 47, 48, 41, 34, 33, 26, 27, 20, 19, 18, 11,
+      12, 5, 6,
     ],
-    uniqueSearchStepCount: 39,
-    withoutPartitions: { solutionCountUpTo64: 64, searchStepCount: 533 },
-    allSolutionsWithoutPartitions: {
-      solutionCount: 17496,
-      searchStepCount: 189247,
-    },
+    searchStepCount: 44,
   },
   {
-    name: "6×6・壁率0.15",
+    name: "7×7・穴6",
+    rows: [
+      "# # . . . . .",
+      ". . . . . . .",
+      ". . . . . . .",
+      ". . . . S . #",
+      ". . . . . . #",
+      ". . . . . . .",
+      "# . . . . . #",
+    ],
+    solution: [
+      25, 18, 17, 10, 9, 2, 3, 4, 11, 12, 5, 6, 13, 20, 19, 26, 33, 32, 39, 38,
+      37, 30, 31, 24, 23, 16, 15, 8, 7, 14, 21, 22, 29, 28, 35, 36, 43, 44, 45,
+      46, 47, 40, 41,
+    ],
+    searchStepCount: 2135,
+  },
+  {
+    name: "8×8・穴7",
+    rows: [
+      ". # . . . . . .",
+      ". . . . . . # .",
+      "# # . . . . # .",
+      ". . . . . . . .",
+      ". . . . . # . .",
+      ". . . . . . . #",
+      ". . . . . . . .",
+      ". . . S . . . .",
+    ],
+    solution: [
+      59, 60, 61, 62, 63, 55, 54, 46, 45, 53, 52, 51, 50, 58, 57, 56, 48, 49,
+      41, 40, 32, 24, 25, 33, 34, 42, 43, 44, 36, 35, 27, 26, 18, 19, 11, 12,
+      13, 21, 20, 28, 29, 30, 38, 39, 31, 23, 15, 7, 6, 5, 4, 3, 2, 10, 9, 8, 0,
+    ],
+    searchStepCount: 5984,
+  },
+] as const;
+
+/**
+ * 研究用 Python の `PathCounter.count` が、解の多い穴だけの盤面に返した結果。
+ * - `upTo64`: 64解まで（200,000節点まで）探したとき。
+ * - `allSolutions`: 全解を数えたとき（6×6 以下だけ）。
+ */
+const pythonMultipleSolutionFixtures = [
+  {
+    name: "5×5・穴なし",
+    rows: [". . . . .", ". . . . .", ". . S . .", ". . . . .", ". . . . ."],
+    upTo64: { solutionCount: 64, searchStepCount: 753 },
+    allSolutions: { solutionCount: 456, searchStepCount: 5273 },
+  },
+  {
+    name: "5×5・穴4",
+    rows: ["# # . . .", ". . . . .", ". . # S .", ". # . . .", ". . . . ."],
+    upTo64: { solutionCount: 2, searchStepCount: 30 },
+    allSolutions: { solutionCount: 2, searchStepCount: 30 },
+  },
+  {
+    name: "6×6・穴なし",
     rows: [
       ". . . . . .",
-      "        -  ",
+      ". . . . . .",
+      ". . . . . .",
+      ". . . . . .",
+      ". S . . . .",
+      ". . . . . .",
+    ],
+    upTo64: { solutionCount: 64, searchStepCount: 533 },
+    allSolutions: { solutionCount: 17496, searchStepCount: 189247 },
+  },
+  {
+    name: "6×6・穴5",
+    rows: [
+      ". . . . . .",
       ". # # # . .",
-      "        -  ",
       ". . . . . #",
-      "-          ",
       ". . . . . .",
-      "           ",
       ". . . . . S",
-      "  -        ",
       ". . . . . #",
     ],
-    solution: [
-      29, 23, 22, 16, 15, 21, 27, 28, 34, 33, 32, 31, 30, 24, 18, 19, 25, 26,
-      20, 14, 13, 12, 6, 0, 1, 2, 3, 4, 5, 11, 10,
-    ],
-    uniqueSearchStepCount: 39,
-    withoutPartitions: { solutionCountUpTo64: 64, searchStepCount: 541 },
-    allSolutionsWithoutPartitions: {
-      solutionCount: 246,
-      searchStepCount: 2779,
-    },
+    upTo64: { solutionCount: 64, searchStepCount: 541 },
+    allSolutions: { solutionCount: 246, searchStepCount: 2779 },
   },
   {
-    name: "7×7・壁率0.0",
+    name: "7×7・穴なし",
     rows: [
       ". . . . . . .",
-      "      -      ",
-      ". .|.|.|.|. .",
-      "             ",
-      ". .|.|. . . .",
-      "             ",
       ". . . . . . .",
-      "  -         -",
+      ". . . . . . .",
+      ". . . . . . .",
       "S . . . . . .",
-      "    -        ",
       ". . . . . . .",
-      "        -    ",
       ". . . . . . .",
     ],
-    solution: [
-      28, 21, 14, 7, 0, 1, 8, 15, 22, 23, 16, 9, 2, 3, 4, 11, 18, 19, 12, 5, 6,
-      13, 20, 27, 26, 25, 32, 39, 40, 33, 34, 41, 48, 47, 46, 45, 38, 37, 44,
-      43, 42, 35, 36, 29, 30, 31, 24, 17, 10,
-    ],
-    uniqueSearchStepCount: 348,
-    withoutPartitions: { solutionCountUpTo64: 64, searchStepCount: 467 },
-    allSolutionsWithoutPartitions: null,
+    upTo64: { solutionCount: 64, searchStepCount: 467 },
+    allSolutions: null,
   },
   {
-    name: "7×7・壁率0.15",
+    name: "7×7・穴7",
     rows: [
       ". . . . # # #",
-      "             ",
       ". # # . . . .",
-      "          -  ",
       ". . . . . . .",
-      "  - -     -  ",
-      "S . .|.|. . .",
-      "      -      ",
+      "S . . . . . .",
       "# . . . . . .",
-      "            -",
       ". . # . . . .",
-      "        -    ",
       ". . . . . . .",
     ],
-    solution: [
-      21, 22, 23, 30, 29, 36, 35, 42, 43, 44, 45, 46, 47, 48, 41, 40, 39, 38,
-      31, 32, 33, 34, 27, 26, 25, 18, 19, 20, 13, 12, 11, 10, 3, 2, 1, 0, 7, 14,
-      15, 16, 17, 24,
-    ],
-    uniqueSearchStepCount: 49,
-    withoutPartitions: { solutionCountUpTo64: 64, searchStepCount: 687 },
-    allSolutionsWithoutPartitions: null,
+    upTo64: { solutionCount: 64, searchStepCount: 687 },
+    allSolutions: null,
   },
   {
-    name: "8×8・壁率0.0",
+    name: "8×8・穴なし",
     rows: [
       ". . . . . . . .",
-      "      - -   -  ",
-      ". . . . .|. S .",
-      "               ",
-      ".|. . . . . . .",
-      "      -       -",
-      ". . .|.|. . . .",
-      "  -            ",
-      ".|. . . . . . .",
-      "              -",
-      ".|. .|. .|. . .",
-      "      -        ",
+      ". . . . . . S .",
       ". . . . . . . .",
-      "            -  ",
+      ". . . . . . . .",
+      ". . . . . . . .",
+      ". . . . . . . .",
+      ". . . . . . . .",
       ". . . . . . . .",
     ],
-    solution: [
-      14, 13, 21, 22, 23, 15, 7, 6, 5, 4, 3, 2, 10, 11, 12, 20, 19, 18, 26, 25,
-      17, 9, 1, 0, 8, 16, 24, 32, 40, 48, 56, 57, 49, 41, 33, 34, 42, 50, 58,
-      59, 51, 52, 60, 61, 62, 63, 55, 47, 46, 54, 53, 45, 37, 38, 39, 31, 30,
-      29, 28, 36, 44, 43, 35, 27,
-    ],
-    uniqueSearchStepCount: 894,
-    withoutPartitions: { solutionCountUpTo64: 64, searchStepCount: 568 },
-    allSolutionsWithoutPartitions: null,
+    upTo64: { solutionCount: 64, searchStepCount: 568 },
+    allSolutions: null,
   },
   {
-    name: "8×8・壁率0.15",
+    name: "8×8・穴10",
     rows: [
-      "# S . . . .|. .",
-      "               ",
+      "# S . . . . . .",
       "# . . # . . . .",
-      "               ",
       ". . . # . # . .",
-      "               ",
       ". . . # . . . .",
-      "        -      ",
       "# # . . . . . .",
-      "               ",
-      "# . . . .|.|. .",
-      "          -    ",
+      "# . . . . . . .",
       ". . . . # . . .",
-      "               ",
       ". . . . . . . .",
     ],
-    solution: [
-      1, 9, 17, 16, 24, 25, 26, 18, 10, 2, 3, 4, 5, 13, 12, 20, 28, 29, 30, 22,
-      14, 6, 7, 15, 23, 31, 39, 38, 46, 47, 55, 63, 62, 54, 53, 61, 60, 59, 51,
-      50, 58, 57, 56, 48, 49, 41, 42, 34, 35, 43, 44, 36, 37, 45,
-    ],
-    uniqueSearchStepCount: 201,
-    withoutPartitions: { solutionCountUpTo64: 64, searchStepCount: 764 },
-    allSolutionsWithoutPartitions: null,
+    upTo64: { solutionCount: 64, searchStepCount: 764 },
+    allSolutions: null,
   },
 ] as const;
 
@@ -306,9 +269,9 @@ describe("countHamiltonianPathSolutions", () => {
   );
 
   describe("研究用 Python が出力した固定盤面の場合", () => {
-    test.each(pythonFixtures)(
+    test.each(pythonUniqueFixtures)(
       "$name の一意解を同じ道・同じ節点の数で見つけること",
-      ({ rows, solution, uniqueSearchStepCount }) => {
+      ({ rows, solution, searchStepCount }) => {
         const result = countHamiltonianPathSolutions(
           parseHamiltonianPathBoard(rows),
           { solutionLimit: 2, searchStepLimit: 20_000 },
@@ -317,33 +280,31 @@ describe("countHamiltonianPathSolutions", () => {
         expect(result.status).toBe("complete");
         expect(result.solutionCount).toBe(1);
         expect(result.firstSolutions).toEqual([solution]);
-        expect(result.searchStepCount).toBe(uniqueSearchStepCount);
+        expect(result.searchStepCount).toBe(searchStepCount);
       },
     );
 
-    test.each(pythonFixtures)(
-      "$name から仕切りを外した盤面の解を同じ数・同じ節点の数で数えること",
-      ({ rows, withoutPartitions, allSolutionsWithoutPartitions }) => {
-        const board = { ...parseHamiltonianPathBoard(rows), partitions: [] };
+    test.each(pythonMultipleSolutionFixtures)(
+      "$name の解を同じ数・同じ節点の数で数えること",
+      ({ rows, upTo64, allSolutions }) => {
+        const board = parseHamiltonianPathBoard(rows);
 
-        const upTo64 = countHamiltonianPathSolutions(board, {
+        const upTo64Result = countHamiltonianPathSolutions(board, {
           solutionLimit: 64,
           searchStepLimit: 200_000,
         });
-        const all =
-          allSolutionsWithoutPartitions === null
+        const allResult =
+          allSolutions === null
             ? null
             : countHamiltonianPathSolutions(board, unlimited);
 
-        expect(upTo64.solutionCount).toBe(
-          withoutPartitions.solutionCountUpTo64,
+        expect(upTo64Result.solutionCount).toBe(upTo64.solutionCount);
+        expect(upTo64Result.searchStepCount).toBe(upTo64.searchStepCount);
+        expect(allResult?.solutionCount ?? null).toBe(
+          allSolutions?.solutionCount ?? null,
         );
-        expect(upTo64.searchStepCount).toBe(withoutPartitions.searchStepCount);
-        expect(all?.solutionCount ?? null).toBe(
-          allSolutionsWithoutPartitions?.solutionCount ?? null,
-        );
-        expect(all?.searchStepCount ?? null).toBe(
-          allSolutionsWithoutPartitions?.searchStepCount ?? null,
+        expect(allResult?.searchStepCount ?? null).toBe(
+          allSolutions?.searchStepCount ?? null,
         );
       },
     );
@@ -399,8 +360,10 @@ describe("countHamiltonianPathSolutions", () => {
 });
 
 describe("isHamiltonianPathUniquelySolvable", () => {
-  const uniqueBoard = parseHamiltonianPathBoard(pythonFixtures[0].rows);
-  const ambiguousBoard = { ...uniqueBoard, partitions: [] };
+  const uniqueBoard = parseHamiltonianPathBoard(pythonUniqueFixtures[0].rows);
+  const ambiguousBoard = parseHamiltonianPathBoard(
+    pythonMultipleSolutionFixtures[1].rows,
+  );
 
   test("解がただ1つの盤面を一意とすること", () => {
     const unique = isHamiltonianPathUniquelySolvable(uniqueBoard);

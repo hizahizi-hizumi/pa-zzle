@@ -1,13 +1,6 @@
 import type { HamiltonianPathBlockedMove } from "@/games/hamiltonian-path/play/use-hamiltonian-path-play";
-import {
-  createHamiltonianPathPartition,
-  getHamiltonianPathNeighborCell,
-  type HamiltonianPathDirection,
-} from "@/games/hamiltonian-path/puzzle/board";
-import {
-  getPartitionKey,
-  hamiltonianPathFigureParts,
-} from "@/games/hamiltonian-path/ui/board/HamiltonianPathFigure";
+import type { HamiltonianPathDirection } from "@/games/hamiltonian-path/puzzle/board";
+import { hamiltonianPathFigureParts } from "@/games/hamiltonian-path/ui/board/HamiltonianPathFigure";
 import { playRejectionShake, type RejectionShakeTiming } from "@/lib/motion";
 
 const headShakeTiming: RejectionShakeTiming = {
@@ -19,14 +12,6 @@ const headShakeTiming: RejectionShakeTiming = {
 const HEAD_BUMP_DISTANCE = 0.14;
 /** 向きの無い（先端から離れたマスを押した）ときの、左右の揺れの幅（マス幅に対する割合）。 */
 const HEAD_SHAKE_DISTANCE = 0.08;
-
-/** 阻んだ仕切りの強調。点いてから消えるまで。動きを減らす設定でも、動かない光として返す。 */
-const PARTITION_HALO_DURATION_MS = 520;
-const partitionHaloKeyframes: Keyframe[] = [
-  { opacity: 0 },
-  { opacity: 0.85, offset: 0.2 },
-  { opacity: 0 },
-];
 
 /** 進もうとしたマスの×。すぐ点け、読める間を置いてから消す。動きを減らす設定でも、動かない印として返す。 */
 const BLOCKED_MARK_DURATION_MS = 600;
@@ -71,28 +56,13 @@ function createHeadShakeKeyframes(
   ];
 }
 
-/** 先端と、進もうとした向きの間にある仕切り。仕切りに阻まれたのでなければ `null`。 */
-function findBlockingPartitionKey(
-  size: number,
-  { reason, head, direction }: HamiltonianPathBlockedMove,
-): string | null {
-  if (reason !== "partition" || direction === null) {
-    return null;
-  }
-  const neighbor = getHamiltonianPathNeighborCell(size, head, direction);
-  return neighbor === null
-    ? null
-    : getPartitionKey(createHamiltonianPathPartition(head, neighbor));
-}
-
 /**
- * 道を延ばせなかったことを盤面で返す。進もうとしたマスに×を短く点け、先端を進もうとした向きへ小さく揺らし、
- * 仕切りに阻まれたときはその仕切りを短く光らせる。指で隠れやすい先端だけでなく、押した・なぞった先でも拒まれたと分かるようにする。
- * 先端の揺れは動きを減らす設定では出さず（`playRejectionShake`）、×と仕切りの光だけを返す。
+ * 道を延ばせなかったことを盤面で返す。進もうとしたマスに×を短く点け、先端を進もうとした向きへ小さく揺らす。
+ * 指で隠れやすい先端だけでなく、押した・なぞった先でも拒まれたと分かるようにする。
+ * 先端の揺れは動きを減らす設定では出さず（`playRejectionShake`）、×だけを返す。
  */
 export function animateBlockedMove(
   figure: SVGSVGElement | null,
-  size: number,
   blockedMove: HamiltonianPathBlockedMove,
 ): void {
   playRejectionShake(
@@ -108,16 +78,4 @@ export function animateBlockedMove(
         easing: "ease-out",
       });
   }
-  const partitionKey = findBlockingPartitionKey(size, blockedMove);
-  if (partitionKey === null) {
-    return;
-  }
-  figure
-    ?.querySelector(
-      `[${hamiltonianPathFigureParts.partitionHalo}="${partitionKey}"]`,
-    )
-    ?.animate?.(partitionHaloKeyframes, {
-      duration: PARTITION_HALO_DURATION_MS,
-      easing: "ease-out",
-    });
 }

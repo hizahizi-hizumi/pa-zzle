@@ -1,7 +1,4 @@
-import {
-  getHamiltonianPathCellPosition,
-  type HamiltonianPathDirection,
-} from "@/games/hamiltonian-path/puzzle/board";
+import { getHamiltonianPathCellPosition } from "@/games/hamiltonian-path/puzzle/board";
 
 /** マスの今の状態。`visited` は道が通ったマスで、始点と先端を含む。 */
 export type HamiltonianPathCellState = "wall" | "unvisited" | "visited";
@@ -16,8 +13,6 @@ type HamiltonianPathCellProps = {
   isDeadEnd: boolean;
   /** 取り残しとして知らせるマスか。 */
   isStranded: boolean;
-  /** 隣のマスとの間に仕切りがある向き。 */
-  partitionDirections: readonly HamiltonianPathDirection[];
   disabled: boolean;
   /** 盤面の Tab の止まり先か。 */
   focusable: boolean;
@@ -42,21 +37,6 @@ const cellStateLabels = {
   unvisited: "未通過",
   visited: "通過済み",
 } as const satisfies Record<HamiltonianPathCellState, string>;
-
-const directionLabels = {
-  up: "上",
-  right: "右",
-  down: "下",
-  left: "左",
-} as const satisfies Record<HamiltonianPathDirection, string>;
-
-function describePartitions(
-  directions: readonly HamiltonianPathDirection[],
-): string | null {
-  return directions.length > 0
-    ? `${directions.map((direction) => directionLabels[direction]).join("・")}に仕切り`
-    : null;
-}
 
 function describeCell(
   state: HamiltonianPathCellState,
@@ -86,7 +66,6 @@ export function HamiltonianPathCell({
   isHead,
   isDeadEnd,
   isStranded,
-  partitionDirections,
   disabled,
   focusable,
   onPress,
@@ -96,10 +75,7 @@ export function HamiltonianPathCell({
   const label = [
     `${row + 1}行${column + 1}列`,
     describeCell(state, isStart, isHead, isDeadEnd, isStranded),
-    describePartitions(partitionDirections),
-  ]
-    .filter(Boolean)
-    .join(" ");
+  ].join(" ");
 
   return (
     <button

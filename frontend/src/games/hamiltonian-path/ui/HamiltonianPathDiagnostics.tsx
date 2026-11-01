@@ -50,9 +50,9 @@ function formatPercent(ratio: number): string {
 
 function formatGenerationConditions({
   size,
-  wallRatio,
+  targetAssumptionCount,
 }: HamiltonianPathGenerationConditions): string {
-  return `${size}×${size} / 壁率 ${Math.round(wallRatio * 100)}%`;
+  return `${size}×${size} / 仮置きの目標 ${targetAssumptionCount}回`;
 }
 
 /** 段階ごとの数を「段階: 数」で並べる。 */
@@ -175,10 +175,9 @@ function listBoardItems({
   difficultyAnalysis: { scale },
   straightRatio,
 }: HamiltonianPathDiagnosticSnapshot): DiagnosticItems {
-  // 同型キーは盤面の記法（8×8 で15行）をつないだ長い文字列で、一覧では読めないので、再現用JSONにだけ収める。
+  // 同型キーは盤面の記法（8×8 で8行）をつないだ長い文字列で、一覧では読めないので、再現用JSONにだけ収める。
   return [
-    { label: "壁マス", value: `${scale.wallCount}マス`, mono: true },
-    { label: "仕切り", value: `${scale.partitionCount}本`, mono: true },
+    { label: "穴", value: `${scale.holeCount}マス`, mono: true },
     { label: "有効マス", value: `${scale.openCellCount}マス`, mono: true },
     {
       label: "直進率",

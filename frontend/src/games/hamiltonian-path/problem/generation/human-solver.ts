@@ -36,7 +36,7 @@ type StageCounts = [number, number, number, number, number, number];
  * - `stallCount`: 段階1〜2だけでは進めなくなった回数。
  * - `firstStallDecidedEdgeRatio` / `firstAssumptionDecidedEdgeRatio`: 最初に段階1〜2で止まった時点と、最初に仮置きへ進んだ
  *   時点で、使う・使わないが決まっていた辺の割合。止まらなかったら1。
- * - `edgeCount`: 道に使える辺（隣り合う有効マスの組で、間に仕切りの無いもの）の数。
+ * - `edgeCount`: 道に使える辺（上下左右に隣り合う、穴でないマスの組）の数。
  */
 export type HamiltonianPathHumanSolveTrace = {
   status: "solved" | "unresolved" | "work-limit-reached" | "contradiction";
@@ -60,7 +60,7 @@ export type HamiltonianPathHumanSolveOptions = {
 };
 
 /**
- * 推論を進めた回数の既定の上限。8×8・壁率0 の1,000問では、1回の解き進め・1本の道の反証とも1万回未満で終わる。
+ * 推論を進めた回数の既定の上限。仕切りのあるルールの 8×8 の1,000問では、1回の解き進め・1本の道の反証とも1万回未満で終わる。
  * 上限は人間の能力を測ったものではなく、分析が終わらない盤面を評価不能として扱うためのもの。
  */
 const HAMILTONIAN_PATH_HUMAN_SOLVE_WORK_LIMIT = 200_000;

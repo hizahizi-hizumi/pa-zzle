@@ -6,42 +6,30 @@ import { countHamiltonianPathSolutions } from "@/games/hamiltonian-path/problem/
 import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem/generator";
 import { createHamiltonianPathProblemIdentity } from "@/games/hamiltonian-path/problem/problem";
 import {
-  createHamiltonianPathPartition,
   type HamiltonianPathBoard,
   listHamiltonianPathCells,
-  listHamiltonianPathGridNeighbors,
-  normalizeHamiltonianPathPartitions,
   parseHamiltonianPathBoard,
 } from "@/games/hamiltonian-path/puzzle/board";
 import { createProblemSeededRandom } from "@/games/problem-seed";
 
 const generatedIdentities = [
-  createHamiltonianPathProblemIdentity(5, 0.15, 0),
+  createHamiltonianPathProblemIdentity(5, 0, 0),
   createHamiltonianPathProblemIdentity(6, 0, 0),
-  createHamiltonianPathProblemIdentity(7, 0.15, 1),
+  createHamiltonianPathProblemIdentity(7, 0, 1),
   createHamiltonianPathProblemIdentity(8, 0, 4),
-  createHamiltonianPathProblemIdentity(8, 0, 16),
+  createHamiltonianPathProblemIdentity(7, 4, 3),
 ];
 
-/** 4×4 か 5×5 に、壁マス・仕切り・始点を無作為に置いた盤面。解が2つ以上ある盤面も含む。 */
+/** 4×4 か 5×5 に、穴と始点を無作為に置いた盤面。解が2つ以上ある盤面も含む。 */
 function createRandomBoard(seed: string): HamiltonianPathBoard {
   const random = createProblemSeededRandom(seed);
   const size = random() < 0.5 ? 4 : 5;
   const cells = listHamiltonianPathCells(size);
-  const walls = cells.filter(() => random() < 0.06);
-  const openCells = cells.filter((cell) => !walls.includes(cell));
-  const partitions = openCells.flatMap((cell) =>
-    listHamiltonianPathGridNeighbors(size, cell)
-      .filter(
-        (neighbor) =>
-          neighbor > cell && openCells.includes(neighbor) && random() < 0.12,
-      )
-      .map((neighbor) => createHamiltonianPathPartition(cell, neighbor)),
-  );
+  const holes = cells.filter(() => random() < 0.15);
+  const openCells = cells.filter((cell) => !holes.includes(cell));
   return {
     size,
-    walls,
-    partitions: normalizeHamiltonianPathPartitions(partitions),
+    holes,
     start: openCells[Math.floor(random() * openCells.length)]!,
   };
 }
@@ -57,269 +45,161 @@ const solvableRandomCases = Array.from({ length: 80 }, (_, index) => {
 
 /**
  * 研究用 Python（`scripts/research/hamiltonian_path_experiment.py`）の `HumanSolver.solve` が、同じ盤面に返した推論の経過。
- * 盤面は Python の `gen_thin` で作ったものと、TypeScript の生成器で作った問題集合から、帯1〜5・分断の推論・
- * 20手を超える先読みを含むように選んだ。
+ * 盤面は TypeScript の生成器で作った穴だけの問題から、レベル1〜5・迷う分岐の無い問題・20手を超える先読みを含むように選び、
+ * 同型の正規化キーの向きで書いた。
  */
 const pythonFixtures = [
   {
-    name: "5×5・局所の推論だけで決まる（帯1）",
+    name: "6×6・局所の推論だけで決まる（レベル1）",
     rows: [
-      ". . . . .",
-      "      -",
-      ". . .|. .",
-      "    -",
-      ".|. . . .",
-      "",
-      ". . . . .",
-      "        -",
-      ". . S . .",
-    ],
-    expected: {
-      firingCountByStage: [25, 2, 0, 0, 0, 0],
-      decidedEdgeCountByStage: [33, 2, 0, 0, 0, 0],
-      assumptionCount: 0,
-      deepAssumptionCount: 0,
-      refutationLengths: [],
-      stallCount: 0,
-      firstStallDecidedEdgeRatio: 1,
-      firstAssumptionDecidedEdgeRatio: 1,
-      edgeCount: 35,
-    },
-  },
-  {
-    name: "5×5・壁率0.15・迷う分岐が無い（帯1）",
-    rows: [
-      ". .|. . .",
-      "    -",
-      ". . . . .",
-      "    -   -",
-      ". # S . .",
-      "",
-      ". # # . .",
-      "",
-      ". . . . #",
-    ],
-    expected: {
-      firingCountByStage: [20, 0, 0, 0, 0, 0],
-      decidedEdgeCountByStage: [24, 0, 0, 0, 0, 0],
-      assumptionCount: 0,
-      deepAssumptionCount: 0,
-      refutationLengths: [],
-      stallCount: 0,
-      firstStallDecidedEdgeRatio: 1,
-      firstAssumptionDecidedEdgeRatio: 1,
-      edgeCount: 24,
-    },
-  },
-  {
-    name: "6×6・仮置き5回（帯4）",
-    rows: [
-      ". . . . . S",
-      "",
-      ". . .|. . .",
-      "    -   -",
-      ". . . .|. .",
-      "    -   -",
-      ".|. . .|. .",
-      "",
-      ". .|. . . .",
-      "",
+      "# . # . . .",
+      ". . . . . .",
+      ". . . . . .",
+      ". . S . . .",
+      ". . . # . .",
       ". . . . . .",
     ],
     expected: {
-      firingCountByStage: [36, 0, 0, 0, 5, 0],
-      decidedEdgeCountByStage: [46, 0, 0, 0, 5, 0],
-      assumptionCount: 5,
+      firingCountByStage: [33, 0, 0, 0, 0, 0],
+      decidedEdgeCountByStage: [51, 0, 0, 0, 0, 0],
+      assumptionCount: 0,
       deepAssumptionCount: 0,
-      refutationLengths: [8, 6, 8, 16, 10],
-      stallCount: 5,
-      firstStallDecidedEdgeRatio: 0.4117647058823529,
-      firstAssumptionDecidedEdgeRatio: 0.4117647058823529,
+      refutationLengths: [],
+      stallCount: 0,
+      firstStallDecidedEdgeRatio: 1,
+      firstAssumptionDecidedEdgeRatio: 1,
       edgeCount: 51,
     },
   },
   {
-    name: "7×7・仮置き1回（帯2）",
-    rows: [
-      ". . . .|. .|.",
-      "",
-      ". . . . . . .",
-      "      -",
-      ".|. . . . . .",
-      "  -   -   -",
-      ".|. . . . . .",
-      "      -",
-      ". . . . .|. S",
-      "    -",
-      ". . . . . . .",
-      "",
-      ". . . . . . .",
-    ],
+    name: "5×5・迷う分岐が無い（提供範囲外）",
+    rows: ["# . # . .", ". . . . .", ". . . . .", ". . # . .", "# S . . ."],
     expected: {
-      firingCountByStage: [47, 5, 0, 0, 1, 0],
-      decidedEdgeCountByStage: [67, 5, 0, 0, 1, 0],
-      assumptionCount: 1,
-      deepAssumptionCount: 0,
-      refutationLengths: [5],
-      stallCount: 1,
-      firstStallDecidedEdgeRatio: 0.547945205479452,
-      firstAssumptionDecidedEdgeRatio: 0.547945205479452,
-      edgeCount: 73,
-    },
-  },
-  {
-    name: "8×8・仮置き7回（帯5）",
-    rows: [
-      ". .|. . . . . .",
-      "      -",
-      ". . . .|. . . .",
-      "            -",
-      ". . S . . . . .",
-      "        -",
-      ". . . .|.|. . .",
-      "    -",
-      ". . . . . .|. .",
-      "          -",
-      ". .|. . . . . .",
-      "  -     -",
-      ". . . . . .|. .",
-      "    -",
-      ". . . . . . . .",
-    ],
-    expected: {
-      firingCountByStage: [62, 10, 0, 0, 7, 0],
-      decidedEdgeCountByStage: [80, 10, 0, 0, 7, 0],
-      assumptionCount: 7,
-      deepAssumptionCount: 0,
-      refutationLengths: [8, 6, 5, 13, 20, 6, 6],
-      stallCount: 7,
-      firstStallDecidedEdgeRatio: 0.41237113402061853,
-      firstAssumptionDecidedEdgeRatio: 0.41237113402061853,
-      edgeCount: 97,
-    },
-  },
-  {
-    name: "8×8・分断の推論と仮置き7回（帯5）",
-    rows: [
-      ". . . . . . . .",
-      "",
-      ". S . .|. . .|.",
-      "-           -",
-      ". . .|. . . . .",
-      "",
-      ". . . . . . . .",
-      "    -",
-      ". . .|. . . . .",
-      "",
-      ". . . .|.|. . .",
-      "        - -   -",
-      ". .|. . . . . .",
-      "",
-      ". . . . . . . .",
-    ],
-    expected: {
-      firingCountByStage: [62, 7, 1, 0, 7, 0],
-      decidedEdgeCountByStage: [84, 7, 1, 0, 7, 0],
-      assumptionCount: 7,
-      deepAssumptionCount: 0,
-      refutationLengths: [3, 3, 3, 7, 4, 8, 6],
-      stallCount: 8,
-      firstStallDecidedEdgeRatio: 0.5959595959595959,
-      firstAssumptionDecidedEdgeRatio: 0.5959595959595959,
-      edgeCount: 99,
-    },
-  },
-  {
-    name: "8×8・壁率0.15・分断の推論で止まりを抜ける（帯2）",
-    rows: [
-      "# # # . . . . .",
-      "",
-      ". . . . .|. # .",
-      "",
-      ".|. .|.|.|.|.|.",
-      "",
-      ". . . . S . . .",
-      "",
-      ". . . . # .|. .",
-      "",
-      ".|. .|. # . . .",
-      "              -",
-      ". . . . . . . .",
-      "",
-      "# # # # . . . .",
-    ],
-    expected: {
-      firingCountByStage: [50, 6, 1, 0, 0, 0],
-      decidedEdgeCountByStage: [69, 6, 1, 0, 0, 0],
+      firingCountByStage: [20, 0, 0, 0, 0, 0],
+      decidedEdgeCountByStage: [29, 0, 0, 0, 0, 0],
       assumptionCount: 0,
       deepAssumptionCount: 0,
       refutationLengths: [],
-      stallCount: 1,
-      firstStallDecidedEdgeRatio: 0.6710526315789473,
+      stallCount: 0,
+      firstStallDecidedEdgeRatio: 1,
       firstAssumptionDecidedEdgeRatio: 1,
-      edgeCount: 76,
+      edgeCount: 29,
     },
   },
   {
-    name: "8×8・1段仮置きを重ねても退けられない誤り手がある（帯5）",
+    name: "7×7・仮置き1回（レベル2）",
     rows: [
-      ". . . .|. . . .",
-      "-",
-      ". . . . .|. . .",
-      "",
-      ". . .|.|. .|. .",
-      "",
-      ". .|. . . . . .",
-      "        -",
-      ".|. . . . .|. .",
-      "",
-      ". . . . . . . .",
-      "    -     -",
-      ". . . S . .|. .",
-      "",
-      ". . . . . . . .",
+      "# . . . # . .",
+      ". . # S . . #",
+      ". . . . . . .",
+      ". . . . # . .",
+      "# . . # # . .",
+      ". . . . . . .",
+      ". . . . . . .",
     ],
     expected: {
-      firingCountByStage: [62, 7, 0, 0, 7, 0],
-      decidedEdgeCountByStage: [85, 7, 0, 0, 7, 0],
-      assumptionCount: 7,
+      firingCountByStage: [40, 0, 0, 0, 1, 0],
+      decidedEdgeCountByStage: [58, 0, 0, 0, 1, 0],
+      assumptionCount: 1,
       deepAssumptionCount: 0,
-      refutationLengths: [3, 4, 5, 19, 5, 14, 8],
-      stallCount: 7,
-      firstStallDecidedEdgeRatio: 0.2222222222222222,
-      firstAssumptionDecidedEdgeRatio: 0.2222222222222222,
-      edgeCount: 99,
+      refutationLengths: [6],
+      stallCount: 1,
+      firstStallDecidedEdgeRatio: 0.5932203389830508,
+      firstAssumptionDecidedEdgeRatio: 0.5932203389830508,
+      edgeCount: 59,
     },
   },
   {
-    name: "8×8・仮置き13回・20手を超える先読み（帯5）",
+    name: "7×7・仮置き2回（レベル3）",
     rows: [
-      ". . . . . . . .",
-      "",
-      ". . . . . . . .",
-      "    -       -",
-      ". .|. . . . . .",
-      "",
-      ". . . .|. . . .",
-      "-       -     -",
-      ". . . . S . . .",
-      "        -",
-      ".|. . .|.|. . .",
-      "",
-      ". . . . . . .|.",
-      "    -     -",
-      ". . . . . . . .",
+      ". . # . . . .",
+      ". . . # . . .",
+      ". . . . . . .",
+      ". . . . . . #",
+      ". . . . . . .",
+      ". # . . . . .",
+      ". S . . . . .",
     ],
     expected: {
-      firingCountByStage: [63, 4, 0, 0, 13, 0],
-      decidedEdgeCountByStage: [81, 4, 0, 0, 13, 0],
-      assumptionCount: 13,
+      firingCountByStage: [45, 3, 0, 0, 2, 0],
+      decidedEdgeCountByStage: [65, 3, 0, 0, 2, 0],
+      assumptionCount: 2,
       deepAssumptionCount: 0,
-      refutationLengths: [3, 3, 7, 4, 8, 5, 7, 10, 8, 17, 32, 15, 20],
-      stallCount: 13,
+      refutationLengths: [5, 8],
+      stallCount: 2,
       firstStallDecidedEdgeRatio: 0.35714285714285715,
       firstAssumptionDecidedEdgeRatio: 0.35714285714285715,
-      edgeCount: 98,
+      edgeCount: 70,
+    },
+  },
+  {
+    name: "7×7・仮置き5回（レベル4）",
+    rows: [
+      ". # . . . . .",
+      ". . . . . . .",
+      ". . # S # . .",
+      ". . . . . . #",
+      ". . . . # . .",
+      ". . # . . . .",
+      ". . # . . . .",
+    ],
+    expected: {
+      firingCountByStage: [41, 6, 0, 0, 5, 0],
+      decidedEdgeCountByStage: [49, 6, 0, 0, 5, 0],
+      assumptionCount: 5,
+      deepAssumptionCount: 0,
+      refutationLengths: [13, 20, 13, 19, 20],
+      stallCount: 5,
+      firstStallDecidedEdgeRatio: 0.4166666666666667,
+      firstAssumptionDecidedEdgeRatio: 0.4166666666666667,
+      edgeCount: 60,
+    },
+  },
+  {
+    name: "8×8・仮置き8回（レベル5）",
+    rows: [
+      ". # . . . . . .",
+      ". . . . . . # .",
+      "# # . . . . # .",
+      ". . . . . . . .",
+      ". . . . . # . .",
+      ". . . . . . . #",
+      ". . . . . . . .",
+      ". . . S . . . .",
+    ],
+    expected: {
+      firingCountByStage: [55, 2, 0, 0, 8, 0],
+      decidedEdgeCountByStage: [79, 2, 0, 0, 8, 0],
+      assumptionCount: 8,
+      deepAssumptionCount: 0,
+      refutationLengths: [5, 8, 6, 7, 6, 18, 3, 8],
+      stallCount: 8,
+      firstStallDecidedEdgeRatio: 0.3595505617977528,
+      firstAssumptionDecidedEdgeRatio: 0.3595505617977528,
+      edgeCount: 89,
+    },
+  },
+  {
+    name: "7×7・仮置き9回・20手を超える先読み",
+    rows: [
+      "# # . . . . .",
+      ". . . . . . .",
+      ". . . . . . .",
+      ". . . . S . #",
+      ". . . . . . #",
+      ". . . . . . .",
+      "# . . . . . #",
+    ],
+    expected: {
+      firingCountByStage: [41, 6, 0, 0, 9, 0],
+      decidedEdgeCountByStage: [56, 6, 0, 0, 9, 0],
+      assumptionCount: 9,
+      deepAssumptionCount: 0,
+      refutationLengths: [8, 5, 6, 8, 14, 13, 12, 23, 3],
+      stallCount: 9,
+      firstStallDecidedEdgeRatio: 0.30985915492957744,
+      firstAssumptionDecidedEdgeRatio: 0.30985915492957744,
+      edgeCount: 71,
     },
   },
 ] as const;
@@ -376,7 +256,7 @@ describe("traceHamiltonianPathHumanSolve", () => {
   });
 
   describe("始点がどこへも進めない盤面の場合", () => {
-    const board = parseHamiltonianPathBoard(["S|.", "-  ", ". ."]);
+    const board = parseHamiltonianPathBoard(["S #", "# ."]);
 
     test("矛盾を返すこと", () => {
       const trace = traceHamiltonianPathHumanSolve(board);
@@ -386,7 +266,7 @@ describe("traceHamiltonianPathHumanSolve", () => {
   });
 
   describe("推論を進めた回数が上限に達した場合", () => {
-    const board = parseHamiltonianPathBoard(pythonFixtures[2].rows);
+    const board = parseHamiltonianPathBoard(pythonFixtures[4].rows);
 
     test("評価不能として打ち切ること", () => {
       const trace = traceHamiltonianPathHumanSolve(board, { workLimit: 10 });
@@ -416,13 +296,7 @@ describe("createHamiltonianPathRefuter", () => {
 
   describe("始点が関節点で、両側に領域が残る盤面の場合", () => {
     // 残りの6マスは右上と左下の2つの領域に分かれ、始点だけでつながる。始点は道の端なので、両方へは出られない。
-    const board = parseHamiltonianPathBoard([
-      "# . .",
-      "",
-      ". S .",
-      "",
-      ". . #",
-    ]);
+    const board = parseHamiltonianPathBoard(["# . .", ". S .", ". . #"]);
 
     test("分断・到達（段階3）で初めて反証すること", () => {
       const stage = createHamiltonianPathRefuter(board).findRefutationStage([
@@ -434,15 +308,12 @@ describe("createHamiltonianPathRefuter", () => {
   });
 
   describe("関節点で分かれた領域の色の数が、通り抜けに合わない盤面の場合", () => {
-    // 左下の隅は上を仕切りで塞がれて終点に決まり、その右のマスが関節点になる。始点の側の14マスを始点から
-    // 色を交互にたどると、最後のマスが関節点と同じ色になり、関節点へ入れない。
+    // 盤面全体の色の数は道に合う。始点の両隣はどちらも始点のほかに隣が1つしかなく、始点から出なかった側が終点に決まり、
+    // その手前のマスが関節点になる。関節点で分かれた領域の色の数が、領域を通り抜ける道に合わない。
     const board = parseHamiltonianPathBoard([
-      ". . . S",
-      "",
+      "# . S .",
+      "# . # .",
       ". . . .",
-      "",
-      ". . . .",
-      "-",
       ". . . .",
     ]);
 

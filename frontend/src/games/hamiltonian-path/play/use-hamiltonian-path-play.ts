@@ -66,7 +66,7 @@ export type HamiltonianPathResult = HamiltonianPathSessionResult & {
 };
 
 /**
- * 道を延ばせなかった操作。盤面が先端を揺らし、進もうとしたマスと阻んだ仕切りを強調して返すために持つ。
+ * 道を延ばせなかった操作。盤面が先端を揺らし、進もうとしたマスを強調して返すために持つ。
  * `id` は操作ごとに変わり、同じ理由で続けて阻まれても別の操作として返せるようにする。
  */
 export type HamiltonianPathBlockedMove = {

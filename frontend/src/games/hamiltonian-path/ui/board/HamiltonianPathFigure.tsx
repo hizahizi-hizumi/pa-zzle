@@ -3,7 +3,6 @@ import { type Ref, useId } from "react";
 import {
   getHamiltonianPathCellPosition,
   type HamiltonianPathBoard,
-  type HamiltonianPathPartition,
   listHamiltonianPathCells,
   listHamiltonianPathOpenCells,
 } from "@/games/hamiltonian-path/puzzle/board";
@@ -30,7 +29,7 @@ type HamiltonianPathFigureProps = {
   showsBlockedMark?: boolean;
   /**
    * 上から何行を描くか。省略すると全行を描く。難易度プレビューで、盤面の上の帯だけを切り出すときに使う。
-   * 描かない行のマスと、そこに掛かる仕切りは描かない。道・始点・先端は描く行の中に置く。
+   * 描かない行のマスは描かない。道・始点・先端は描く行の中に置く。
    */
   visibleRowCount?: number;
   ref?: Ref<SVGSVGElement>;
@@ -46,11 +45,6 @@ const HEAD_RING_WIDTH = 0.09;
 /** 行き止まりの先端は、通れないものと同じ色の太い輪を、はっきり分かれた4つの弧に欠けさせる。 */
 const DEAD_END_HEAD_RING_WIDTH = 0.13;
 const DEAD_END_HEAD_DASH = "0.36 0.22";
-/** 仕切りは辺いっぱいにせず、両端を空けた短い棒にする。辺いっぱいだと隣り合う仕切りがつながり迷路の壁に見える。 */
-const PARTITION_THICKNESS = 0.16;
-const PARTITION_END_INSET = 0.18;
-/** 阻んだ仕切りを強調する光の、仕切りからのはみ出し。 */
-const PARTITION_HALO_SPREAD = 0.1;
 const CLEAR_TRACE_WIDTH = 0.1;
 /** 阻まれたマスの×の、中心から端までの長さと太さ。下に敷くマスの地の色の縁で、壁マスの上でも読めるようにする。 */
 const BLOCKED_MARK_REACH = 0.2;
@@ -83,46 +77,16 @@ function getCellCenter(size: number, cell: number): { x: number; y: number } {
   return { x: column + 0.5, y: row + 0.5 };
 }
 
-function getPartitionRect(
-  size: number,
-  [left, right]: HamiltonianPathPartition,
-  spread = 0,
-): { x: number; y: number; width: number; height: number } {
-  const { row, column } = getHamiltonianPathCellPosition(size, left);
-  const length = 1 - PARTITION_END_INSET * 2 + spread * 2;
-  const thickness = PARTITION_THICKNESS + spread * 2;
-  const separatesColumns = right === left + 1;
-  return separatesColumns
-    ? {
-        x: column + 1 - thickness / 2,
-        y: row + PARTITION_END_INSET - spread,
-        width: thickness,
-        height: length,
-      }
-    : {
-        x: column + PARTITION_END_INSET - spread,
-        y: row + 1 - thickness / 2,
-        width: length,
-        height: thickness,
-      };
-}
-
 /** 盤面の要素を、盤面の反応や演出から探すための印。 */
 export const hamiltonianPathFigureParts = {
   head: "data-head",
-  partitionHalo: "data-partition-halo",
   clearTrace: "data-clear-trace",
   strandedCell: "data-stranded-cell",
   blockedMark: "data-blocked-mark",
 } as const;
 
-export function getPartitionKey([left, right]: HamiltonianPathPartition) {
-  return `${left}-${right}`;
-}
-
 /**
- * 盤面の絵。マスの塗り・道・仕切り・始点・先端を、下から順にこの層で描く。
- * 道が仕切りに沿って走っても隠れないよう、仕切りと始点・先端の印は道より上に描く。
+ * 盤面の絵。マスの塗り・道・始点・先端を、下から順にこの層で描く。始点・先端の印は道より上に描く。
  * 道とマスの塗りは、通った順に色を移す（`getPathColor`）。
  */
 export function HamiltonianPathFigure({
@@ -142,10 +106,7 @@ export function HamiltonianPathFigure({
   function isVisibleCell(cell: number): boolean {
     return getHamiltonianPathCellPosition(size, cell).row < rowCount;
   }
-  const visiblePartitions = board.partitions.filter((partition) =>
-    partition.every(isVisibleCell),
-  );
-  const walls = new Set(board.walls);
+  const holes = new Set(board.holes);
   const lastProgressIndex = Math.max(
     1,
     listHamiltonianPathOpenCells(board).length - 1,
@@ -202,7 +163,7 @@ export function HamiltonianPathFigure({
               height={1}
               vectorEffect="non-scaling-stroke"
               className={
-                walls.has(cell)
+                holes.has(cell)
                   ? hamiltonianPathToneClassNames.wallCell
                   : cn(
                       hamiltonianPathToneClassNames.gridLine,
@@ -262,27 +223,6 @@ export function HamiltonianPathFigure({
           className={hamiltonianPathToneClassNames.clearTrace}
         />
       ) : null}
-      {visiblePartitions.map((partition) => (
-        <rect
-          key={`halo-${getPartitionKey(partition)}`}
-          {...{
-            [hamiltonianPathFigureParts.partitionHalo]:
-              getPartitionKey(partition),
-          }}
-          {...getPartitionRect(size, partition, PARTITION_HALO_SPREAD)}
-          rx={PARTITION_THICKNESS / 2 + PARTITION_HALO_SPREAD}
-          opacity={0}
-          style={{ fill: headColor }}
-        />
-      ))}
-      {visiblePartitions.map((partition) => (
-        <rect
-          key={getPartitionKey(partition)}
-          {...getPartitionRect(size, partition)}
-          rx={PARTITION_THICKNESS / 2}
-          className={hamiltonianPathToneClassNames.partition}
-        />
-      ))}
       <circle
         cx={start.x}
         cy={start.y}

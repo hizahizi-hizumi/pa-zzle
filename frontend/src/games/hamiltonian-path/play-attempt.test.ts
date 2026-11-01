@@ -6,12 +6,12 @@ import {
 } from "@/games/hamiltonian-path/session/session";
 
 /**
- * 右下が壁の 3×3 の盤面。道が通るマスは8つ。
+ * 右下が穴の 3×3 の盤面。道が通るマスは8つ。
  * 0 1 2
  * 3 4 5
  * 6 7 #
  */
-const problem = parseHamiltonianPathBoard(["S . .", "", ". . .", "", ". . #"]);
+const problem = parseHamiltonianPathBoard(["S . .", ". . .", ". . #"]);
 const session = {
   ...extendHamiltonianPathSessionPath(
     createHamiltonianPathSession(problem, 1_000),

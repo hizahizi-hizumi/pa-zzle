@@ -9,7 +9,7 @@ import {
 } from "@/games/hamiltonian-path/ui/board/HamiltonianPathFigure";
 
 /** 先端（2）から延ばせるマスが無い 3×3 の盤面。 */
-const board = parseHamiltonianPathBoard(["S . .", "", ". . .", "", ". . ."]);
+const board = parseHamiltonianPathBoard(["S . .", ". . .", ". . ."]);
 const path = [0, 1, 4, 5, 2];
 
 afterEach(() => {

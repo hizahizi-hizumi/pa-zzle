@@ -1,32 +1,19 @@
 import {
-  createHamiltonianPathPartition,
   formatHamiltonianPathBoard,
   getHamiltonianPathCellPosition,
   type HamiltonianPathBoard,
-  normalizeHamiltonianPathPartitions,
 } from "@/games/hamiltonian-path/puzzle/board";
 
 type CellTransform = (cell: number) => number;
 
-/**
- * マスの写し方で盤面全体を写す。壁マス・始点は位置を、仕切りは両側のマスを写す。
- * 90度回転では、左右のマスの間の仕切りが上下のマスの間の仕切りになる。
- */
+/** マスの写し方で盤面全体（穴と始点の位置）を写す。 */
 function transformBoard(
   board: HamiltonianPathBoard,
   transformCell: CellTransform,
 ): HamiltonianPathBoard {
   return {
     size: board.size,
-    walls: board.walls.map(transformCell).sort((left, right) => left - right),
-    partitions: normalizeHamiltonianPathPartitions(
-      board.partitions.map(([left, right]) =>
-        createHamiltonianPathPartition(
-          transformCell(left),
-          transformCell(right),
-        ),
-      ),
-    ),
+    holes: board.holes.map(transformCell).sort((left, right) => left - right),
     start: transformCell(board.start),
   };
 }

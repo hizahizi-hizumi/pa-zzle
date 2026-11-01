@@ -8,7 +8,7 @@ import {
   hamiltonianPathFigureParts,
 } from "@/games/hamiltonian-path/ui/board/HamiltonianPathFigure";
 
-const board = parseHamiltonianPathBoard(["S . .", "", ". . .", "", ". . ."]);
+const board = parseHamiltonianPathBoard(["S . .", ". . .", ". . ."]);
 const path = [0, 1, 2, 5, 4, 3, 6, 7, 8];
 /** 光でなぞる演出とその後の間を十分に超える時間。 */
 const longEnoughMs = 10_000;

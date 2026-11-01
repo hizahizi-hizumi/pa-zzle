@@ -1,19 +1,11 @@
 /**
- * 隣り合う2つの有効マスの間にある仕切り。道はこの2マスの間を通れない。
- * マス番号は行優先で、小さい方を先に置く。
- */
-export type HamiltonianPathPartition = readonly [number, number];
-
-/**
- * 一辺 `size` の正方形盤面。マス番号は行優先（`row * size + column`）。
- * - `walls`: 壁マスの番号。昇順で重複しない。
- * - `partitions`: 仕切り。マス番号の組の昇順で重複しない。
+ * 一辺 `size` の正方形の枠に置いた盤面。マス番号は枠の行優先（`row * size + column`）。
+ * - `holes`: 穴の番号。穴は盤面に無いマスで、道は通れず、通らなくてよい。外周の穴は盤面の外形を欠く。昇順で重複しない。
  * - `start`: 道の始点のマス。
  */
 export type HamiltonianPathBoard = {
   size: number;
-  walls: readonly number[];
-  partitions: readonly HamiltonianPathPartition[];
+  holes: readonly number[];
   start: number;
 };
 
@@ -47,6 +39,7 @@ export function getHamiltonianPathCellPosition(
   return { row: Math.floor(cell / size), column: cell % size };
 }
 
+/** 枠の中のマス番号か。穴も枠の中にある。 */
 export function isHamiltonianPathCellOnBoard(
   size: number,
   cell: number,
@@ -54,7 +47,7 @@ export function isHamiltonianPathCellOnBoard(
   return Number.isInteger(cell) && cell >= 0 && cell < size * size;
 }
 
-/** `cell` から `direction` の向きに隣り合うマス。盤面の外なら `null`。 */
+/** `cell` から `direction` の向きに隣り合うマス。枠の外なら `null`。 */
 export function getHamiltonianPathNeighborCell(
   size: number,
   cell: number,
@@ -70,7 +63,7 @@ export function getHamiltonianPathNeighborCell(
   return nextRow * size + nextColumn;
 }
 
-/** 壁・仕切りを考えない、上下左右に隣り合うマス。並びは `hamiltonianPathDirections` に従う。 */
+/** 穴を考えない、枠の中で上下左右に隣り合うマス。並びは `hamiltonianPathDirections` に従う。 */
 export function listHamiltonianPathGridNeighbors(
   size: number,
   cell: number,
@@ -103,91 +96,44 @@ export function areHamiltonianPathCellsAdjacent(
   return listHamiltonianPathGridNeighbors(size, left).includes(right);
 }
 
-export function createHamiltonianPathPartition(
-  left: number,
-  right: number,
-): HamiltonianPathPartition {
-  return left < right ? [left, right] : [right, left];
-}
-
-function comparePartitions(
-  left: HamiltonianPathPartition,
-  right: HamiltonianPathPartition,
-): number {
-  return left[0] - right[0] || left[1] - right[1];
-}
-
-/** 仕切りを盤面の決まった並び（マス番号の組の昇順・重複なし）にする。 */
-export function normalizeHamiltonianPathPartitions(
-  partitions: Iterable<HamiltonianPathPartition>,
-): HamiltonianPathPartition[] {
-  const sorted = Array.from(partitions, function normalize([left, right]) {
-    return createHamiltonianPathPartition(left, right);
-  }).sort(comparePartitions);
-  return sorted.filter(function isFirstOccurrence(partition, index) {
-    const previous = sorted[index - 1];
-    return (
-      previous === undefined || comparePartitions(previous, partition) !== 0
-    );
-  });
-}
-
-function partitionKey(left: number, right: number): string {
-  return createHamiltonianPathPartition(left, right).join("-");
-}
-
-export function hasHamiltonianPathPartition(
-  board: HamiltonianPathBoard,
-  left: number,
-  right: number,
-): boolean {
-  const key = partitionKey(left, right);
-  return board.partitions.some(
-    (partition) => partitionKey(partition[0], partition[1]) === key,
-  );
-}
-
-export function isHamiltonianPathWall(
+export function isHamiltonianPathHole(
   board: HamiltonianPathBoard,
   cell: number,
 ): boolean {
-  return board.walls.includes(cell);
+  return board.holes.includes(cell);
 }
 
-/** 盤面の全マスの番号。壁マスを含む。 */
+/** 枠の全マスの番号。穴を含む。 */
 export function listHamiltonianPathCells(size: number): number[] {
   return Array.from({ length: size * size }, (_, cell) => cell);
 }
 
+/** 穴でない、道が通るマスの番号。 */
 export function listHamiltonianPathOpenCells(
   board: HamiltonianPathBoard,
 ): number[] {
-  const walls = new Set(board.walls);
+  const holes = new Set(board.holes);
   return listHamiltonianPathCells(board.size).filter(
-    (cell) => !walls.has(cell),
+    (cell) => !holes.has(cell),
   );
 }
 
 /**
- * マスごとの、道が次に進める隣のマス（有効マスで、間に仕切りがない）。
- * 壁マスの項は空。隣の並びは `hamiltonianPathDirections` に従う。
+ * マスごとの、道が次に進める隣のマス（上下左右に隣り合う、穴でないマス）。
+ * 穴の項は空。隣の並びは `hamiltonianPathDirections` に従う。
  */
 export function createHamiltonianPathAdjacency(
   board: HamiltonianPathBoard,
 ): readonly (readonly number[])[] {
-  const walls = new Set(board.walls);
-  const partitions = new Set(
-    board.partitions.map(([left, right]) => partitionKey(left, right)),
-  );
+  const holes = new Set(board.holes);
   return Array.from(
     { length: board.size * board.size },
     function passableNeighbors(_, cell) {
-      if (walls.has(cell)) {
+      if (holes.has(cell)) {
         return [];
       }
       return listHamiltonianPathGridNeighbors(board.size, cell).filter(
-        (neighbor) =>
-          !walls.has(neighbor) && !partitions.has(partitionKey(cell, neighbor)),
+        (neighbor) => !holes.has(neighbor),
       );
     },
   );
@@ -200,155 +146,77 @@ function isStrictlyIncreasing(values: readonly number[]): boolean {
 }
 
 export function assertHamiltonianPathBoard(board: HamiltonianPathBoard): void {
-  const { size, walls, partitions, start } = board;
+  const { size, holes, start } = board;
   if (!Number.isInteger(size) || size < 1) {
     throw new RangeError(
       "Hamiltonian path board size must be a positive integer",
     );
   }
   if (
-    !walls.every((cell) => isHamiltonianPathCellOnBoard(size, cell)) ||
-    !isStrictlyIncreasing(walls)
+    !holes.every((cell) => isHamiltonianPathCellOnBoard(size, cell)) ||
+    !isStrictlyIncreasing(holes)
   ) {
     throw new RangeError(
-      "Hamiltonian path walls must be ascending distinct cells on the board",
+      "Hamiltonian path holes must be ascending distinct cells on the board",
     );
   }
-  if (!isHamiltonianPathCellOnBoard(size, start) || walls.includes(start)) {
-    throw new RangeError("Hamiltonian path start must be an open cell");
-  }
-  for (const [left, right] of partitions) {
-    if (
-      !isHamiltonianPathCellOnBoard(size, left) ||
-      !isHamiltonianPathCellOnBoard(size, right) ||
-      left >= right ||
-      !areHamiltonianPathCellsAdjacent(size, left, right) ||
-      walls.includes(left) ||
-      walls.includes(right)
-    ) {
-      throw new RangeError(
-        "Hamiltonian path partitions must separate two adjacent open cells",
-      );
-    }
-  }
-  const normalized = normalizeHamiltonianPathPartitions(partitions);
-  if (
-    normalized.length !== partitions.length ||
-    normalized.some(
-      (partition, index) =>
-        comparePartitions(partition, partitions[index]!) !== 0,
-    )
-  ) {
-    throw new RangeError(
-      "Hamiltonian path partitions must be ascending and distinct",
-    );
+  if (!isHamiltonianPathCellOnBoard(size, start) || holes.includes(start)) {
+    throw new RangeError("Hamiltonian path start must not be a hole");
   }
 }
 
-const cellNotation = { open: ".", wall: "#", start: "S" } as const;
-const verticalPartitionNotation = "|";
-const horizontalPartitionNotation = "-";
+const cellNotation = { open: ".", hole: "#", start: "S" } as const;
+const cellSeparator = " ";
 
 /**
  * 盤面を記法の行で表す。固定問題・テスト・同型の正規化キーで盤面を読みやすく書くための記法。
- * 偶数行がマスの行で、偶数列にマス（`.` 有効マス、`#` 壁マス、`S` 始点）、奇数列に左右のマスの間の仕切り `|` を書く。
- * 奇数行は上下のマスの間の行で、偶数列に仕切り `-` を書く。仕切りのない所は空白。
- * 例: 2×2 で左上が始点、右下が壁、左の2マスの間に仕切り → `["S .", "-  ", ". #"]`。
+ * 1行が枠の1行で、マスを空白で区切って書く（`.` 道が通るマス、`#` 穴、`S` 始点）。
+ * 例: 2×2 で左上が始点、右下が穴 → `["S .", ". #"]`。
  */
 export function formatHamiltonianPathBoard(
   board: HamiltonianPathBoard,
 ): string[] {
   const { size } = board;
-  const walls = new Set(board.walls);
-  const rows: string[] = [];
-  for (let row = 0; row < size; row += 1) {
-    const cellRow: string[] = [];
-    const partitionRow: string[] = [];
-    for (let column = 0; column < size; column += 1) {
+  const holes = new Set(board.holes);
+  return Array.from({ length: size }, (_, row) =>
+    Array.from({ length: size }, (_, column) => {
       const cell = row * size + column;
-      cellRow.push(
-        cell === board.start
-          ? cellNotation.start
-          : walls.has(cell)
-            ? cellNotation.wall
-            : cellNotation.open,
-      );
-      partitionRow.push(
-        row + 1 < size && hasHamiltonianPathPartition(board, cell, cell + size)
-          ? horizontalPartitionNotation
-          : " ",
-      );
-      if (column + 1 < size) {
-        cellRow.push(
-          hasHamiltonianPathPartition(board, cell, cell + 1)
-            ? verticalPartitionNotation
-            : " ",
-        );
-        partitionRow.push(" ");
-      }
-    }
-    rows.push(cellRow.join(""));
-    if (row + 1 < size) {
-      rows.push(partitionRow.join(""));
-    }
-  }
-  return rows;
+      return cell === board.start
+        ? cellNotation.start
+        : holes.has(cell)
+          ? cellNotation.hole
+          : cellNotation.open;
+    }).join(cellSeparator),
+  );
 }
 
-/** `formatHamiltonianPathBoard` の記法から盤面を作る。行末の空白は省いてよい。 */
+/** `formatHamiltonianPathBoard` の記法から盤面を作る。 */
 export function parseHamiltonianPathBoard(
   rows: readonly string[],
 ): HamiltonianPathBoard {
-  if (rows.length % 2 === 0) {
-    throw new RangeError(
-      "Hamiltonian path notation must alternate cell rows and partition rows",
-    );
-  }
-  const size = (rows.length + 1) / 2;
-  const width = size * 2 - 1;
-  const walls: number[] = [];
-  const partitions: HamiltonianPathPartition[] = [];
+  const size = rows.length;
+  const holes: number[] = [];
   let start: number | null = null;
 
-  for (const [lineIndex, line] of rows.entries()) {
-    if (line.length > width) {
+  for (const [row, line] of rows.entries()) {
+    const notations = line.split(cellSeparator);
+    if (notations.length !== size) {
       throw new RangeError(
-        `Hamiltonian path notation row is too long: ${line}`,
+        `Hamiltonian path notation row must have ${size} cells: ${line}`,
       );
     }
-    const padded = line.padEnd(width, " ");
-    const row = Math.floor(lineIndex / 2);
-    const isCellRow = lineIndex % 2 === 0;
-    for (const [position, notation] of Array.from(padded).entries()) {
-      const column = Math.floor(position / 2);
+    for (const [column, notation] of notations.entries()) {
       const cell = row * size + column;
-      const isCellColumn = position % 2 === 0;
-      if (isCellRow && isCellColumn) {
-        if (notation === cellNotation.wall) {
-          walls.push(cell);
-        } else if (notation === cellNotation.start) {
-          if (start !== null) {
-            throw new RangeError(
-              "Hamiltonian path notation must have one start",
-            );
-          }
-          start = cell;
-        } else if (notation !== cellNotation.open) {
-          throw new RangeError(
-            `Unknown Hamiltonian path cell notation: ${notation}`,
-          );
+      if (notation === cellNotation.hole) {
+        holes.push(cell);
+      } else if (notation === cellNotation.start) {
+        if (start !== null) {
+          throw new RangeError("Hamiltonian path notation must have one start");
         }
-      } else if (isCellRow && notation === verticalPartitionNotation) {
-        partitions.push([cell, cell + 1]);
-      } else if (
-        !isCellRow &&
-        isCellColumn &&
-        notation === horizontalPartitionNotation
-      ) {
-        partitions.push([cell, cell + size]);
-      } else if (notation !== " ") {
+        start = cell;
+      } else if (notation !== cellNotation.open) {
         throw new RangeError(
-          `Unexpected Hamiltonian path notation: ${notation}`,
+          `Unknown Hamiltonian path cell notation: ${notation}`,
         );
       }
     }
@@ -356,12 +224,7 @@ export function parseHamiltonianPathBoard(
   if (start === null) {
     throw new RangeError("Hamiltonian path notation must have a start");
   }
-  const board = {
-    size,
-    walls,
-    partitions: normalizeHamiltonianPathPartitions(partitions),
-    start,
-  };
+  const board = { size, holes, start };
   assertHamiltonianPathBoard(board);
   return board;
 }
