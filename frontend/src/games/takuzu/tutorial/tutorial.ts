@@ -1,5 +1,6 @@
 import {
   getTakuzuLineCellIndices,
+  getTakuzuLineCells,
   listTakuzuLines,
   parseTakuzuBoard,
   type TakuzuBoard,
@@ -10,10 +11,13 @@ import {
 import {
   findTakuzuRuleViolations,
   hasTakuzuRuleViolation,
+  isTakuzuSolved,
   type TakuzuRuleViolations,
 } from "@/games/takuzu/puzzle/rules";
 import {
   getNextTakuzuCell,
+  isTakuzuGivenCell,
+  placeTakuzuCell,
   type TakuzuCycleDirection,
 } from "@/games/takuzu/puzzle/transitions";
 import type {
@@ -168,13 +172,6 @@ function getOtherTile(tile: TakuzuTile): TakuzuTile {
   return tile === "a" ? "b" : "a";
 }
 
-function getLineCells(
-  board: TakuzuBoard,
-  cellIndices: readonly number[],
-): TakuzuCell[] {
-  return cellIndices.map((cellIndex) => board.cells[cellIndex] ?? null);
-}
-
 function countTile(cells: readonly TakuzuCell[], tile: TakuzuTile): number {
   return cells.filter((cell) => cell === tile).length;
 }
@@ -234,18 +231,18 @@ function deduceByDuplicate(
     return null;
   }
 
-  const filledPeers = listTakuzuLines(board.size)
-    .filter((peer) => peer.axis === line.axis && peer.index !== line.index)
-    .map((peer) => getTakuzuLineCellIndices(board.size, peer))
-    .filter((peerCellIndices) =>
-      getLineCells(board, peerCellIndices).every((cell) => cell !== null),
-    );
-  function findTwin(tile: TakuzuTile): readonly number[] | undefined {
+  const filledPeers = listTakuzuLines(board.size).filter(
+    (peer) =>
+      peer.axis === line.axis &&
+      peer.index !== line.index &&
+      getTakuzuLineCells(board, peer).every((cell) => cell !== null),
+  );
+  function findTwin(tile: TakuzuTile): TakuzuLine | undefined {
     const filled = cells.map(
       (cell, index) => cell ?? (index === position ? tile : getOtherTile(tile)),
     );
-    return filledPeers.find((peerCellIndices) =>
-      getLineCells(board, peerCellIndices).every(
+    return filledPeers.find((peer) =>
+      getTakuzuLineCells(board, peer).every(
         (cell, index) => cell === filled[index],
       ),
     );
@@ -253,10 +250,16 @@ function deduceByDuplicate(
 
   const [first, second] = takuzuTiles.map(findTwin);
   if (first && !second) {
-    return { tile: "b", reasonCellIndices: first };
+    return {
+      tile: "b",
+      reasonCellIndices: getTakuzuLineCellIndices(board.size, first),
+    };
   }
   if (second && !first) {
-    return { tile: "a", reasonCellIndices: second };
+    return {
+      tile: "a",
+      reasonCellIndices: getTakuzuLineCellIndices(board.size, second),
+    };
   }
   return null;
 }
@@ -276,7 +279,7 @@ function deduceCell(
     if (position < 0) {
       continue;
     }
-    const cells = getLineCells(board, cellIndices);
+    const cells = getTakuzuLineCells(board, line);
     const deduction =
       (ruleIds.includes("run") && deduceByRun(cells, cellIndices, position)) ||
       (ruleIds.includes("count") && deduceByCount(cells, cellIndices)) ||
@@ -336,17 +339,6 @@ function isCellInViolation(
   );
 }
 
-function isGiven(cellIndex: number): boolean {
-  return (givens.cells[cellIndex] ?? null) !== null;
-}
-
-function isSolved(board: TakuzuBoard): boolean {
-  return (
-    board.cells.every((cell) => cell !== null) &&
-    !hasTakuzuRuleViolation(findTakuzuRuleViolations(board))
-  );
-}
-
 function getPlacedCell(
   current: TakuzuCell,
   action: TakuzuTutorialAction,
@@ -362,9 +354,8 @@ function getPlacementReason(
   cellIndex: number,
   placed: TakuzuCell,
 ): readonly number[] {
-  const cells = [...before.cells];
-  cells[cellIndex] = null;
-  const deduction = deduceCell({ ...before, cells }, ruleIds, cellIndex);
+  const emptied = placeTakuzuCell(givens, before, cellIndex, null);
+  const deduction = deduceCell(emptied, ruleIds, cellIndex);
   return deduction && deduction.tile === placed
     ? deduction.reasonCellIndices
     : [];
@@ -392,17 +383,15 @@ function performTakuzuTutorialAction(
   const { cellIndex } = action;
   const current = state.board.cells[cellIndex];
   const outsideStep = step !== null && !step.cellIndices.includes(cellIndex);
-  if (current === undefined || isGiven(cellIndex) || outsideStep) {
+  if (current === undefined || outsideStep) {
     return { state, outcome: "ignored" };
   }
   const placed = getPlacedCell(current, action);
-  if (placed === current) {
+  const board = placeTakuzuCell(givens, state.board, cellIndex, placed);
+  if (board === state.board) {
     return { state, outcome: "ignored" };
   }
 
-  const cells = [...state.board.cells];
-  cells[cellIndex] = placed;
-  const board = { ...state.board, cells };
   const visibleViolations = findVisibleViolations(board, earnedRuleIds);
   const next: TakuzuTutorialBoardState = {
     board,
@@ -417,7 +406,7 @@ function performTakuzuTutorialAction(
     },
   };
 
-  if (isSolved(board)) {
+  if (isTakuzuSolved(board)) {
     return { state: next, outcome: "solved" };
   }
   if (hasTakuzuRuleViolation(visibleViolations)) {
@@ -439,7 +428,7 @@ export function getTakuzuTutorialCellViews(
   return state.board.cells.map(function createCellView(cell, cellIndex) {
     return {
       cell,
-      given: isGiven(cellIndex),
+      given: isTakuzuGivenCell(givens, cellIndex),
       inViolatingRun: runCellIndices.has(cellIndex),
     };
   });
@@ -511,18 +500,13 @@ function describeTwinLine(
   duplicateLines: readonly TakuzuLine[],
   line: TakuzuLine,
 ): string {
-  const pattern = getLineCells(
-    board,
-    getTakuzuLineCellIndices(board.size, line),
-  ).join("");
+  const pattern = getTakuzuLineCells(board, line).join("");
   const twin = duplicateLines
     .filter(
       (other) =>
         other.axis === line.axis &&
         other.index !== line.index &&
-        getLineCells(board, getTakuzuLineCellIndices(board.size, other)).join(
-          "",
-        ) === pattern,
+        getTakuzuLineCells(board, other).join("") === pattern,
     )
     .sort(
       (left, right) =>
@@ -557,7 +541,7 @@ function listViolationDescriptions(
   });
   const overfilled = violations.overfilledLines.flatMap((line) => {
     const cellIndices = getTakuzuLineCellIndices(board.size, line);
-    const cells = getLineCells(board, cellIndices);
+    const cells = getTakuzuLineCells(board, line);
     const tile = takuzuTiles.find(
       (candidate) => countTile(cells, candidate) > cells.length / 2,
     );
