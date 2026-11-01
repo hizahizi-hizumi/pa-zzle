@@ -12,6 +12,7 @@ import {
 } from "@/games/parking-jam/puzzle/rules";
 import {
   findParkingJamTutorialBlocker,
+  findParkingJamTutorialContact,
   findParkingJamTutorialHintVehicle,
   getParkingJamTutorialStepVehicle,
   PARKING_JAM_TUTORIAL_BOARD,
@@ -84,19 +85,15 @@ function perform(
   });
 }
 
-/** 手順の車を、出られる向きへ出すか、手順の当たり方で当てて、`count` 個目の手順まで終える。 */
+/** 手順の車を出られる向きへ出して、`count` 個目の手順まで終える。 */
 function playSteps(count: number): Progress {
   return steps.slice(0, count).reduce((progress, step) => {
-    const direction = listDirections(step.vehicleId).find((candidate) =>
-      step.endsWhen === "exited"
-        ? findParkingJamTutorialBlocker(progress.boardState.puzzle, {
-            vehicleId: step.vehicleId,
-            direction: candidate,
-          }) === null
-        : findParkingJamTutorialBlocker(progress.boardState.puzzle, {
-            vehicleId: step.vehicleId,
-            direction: candidate,
-          }) === step.blocker,
+    const direction = listDirections(step.vehicleId).find(
+      (candidate) =>
+        findParkingJamTutorialBlocker(progress.boardState.puzzle, {
+          vehicleId: step.vehicleId,
+          direction: candidate,
+        }) === null,
     );
     if (!direction) {
       throw new Error(`手順の車 ${step.vehicleId} を動かす向きがない`);
@@ -236,26 +233,37 @@ describe("手順", () => {
         }),
       );
 
-      expect(step?.endsWhen).toBe("exited");
       expect(blockers).toEqual(expect.arrayContaining([null, ruleId]));
     },
   );
 
-  test("car を示す手順の車が、車に当たって出られず、次の手順で塞いでいる車を出すと出られるようになること", () => {
+  test("car を示す手順が、ほかの車を塞いでいる車を出させ、塞がれていた車をその向きへ出られるようにすること", () => {
     const index = steps.findIndex(
       ({ introducedRuleId }) => introducedRuleId === "car",
     );
-    const blockedStep = steps[index];
-    const openingStep = steps[index + 1];
+    const step = steps[index];
+    const waitingMove = step?.waitingMove;
     const before = playSteps(index).boardState.puzzle;
-    const after = playSteps(index + 2).boardState.puzzle;
-    const blockedVehicleId = blockedStep?.vehicleId ?? "";
+    const after = playSteps(index + 1).boardState.puzzle;
+    const contact =
+      waitingMove && findParkingJamTutorialContact(before, waitingMove);
 
-    expect(blockedStep?.endsWhen).toBe("blocked");
-    expect(canExit(before, blockedVehicleId)).toBe(false);
-    expect(openingStep?.endsWhen).toBe("exited");
-    expect(canExit(before, openingStep?.vehicleId ?? "")).toBe(true);
-    expect(canExit(after, blockedVehicleId)).toBe(true);
+    expect(contact?.blocker).toEqual({
+      kind: "vehicle",
+      vehicleId: step?.vehicleId,
+    });
+    expect(canExit(before, step?.vehicleId ?? "")).toBe(true);
+    expect(
+      waitingMove && findParkingJamTutorialContact(after, waitingMove),
+    ).toBeNull();
+  });
+
+  test("手順の間、出られない手でしか進まない手順が無いこと", () => {
+    const exitableSteps = steps.map((step, index) =>
+      canExit(playSteps(index).boardState.puzzle, step.vehicleId),
+    );
+
+    expect(exitableSteps).toEqual(steps.map(() => true));
   });
 
   test("手順を終えると、すべてのルールを示して手を離すこと", () => {
@@ -308,7 +316,7 @@ describe("performTutorialAction", () => {
     expect(exited.stepIndex).toBe(1);
   });
 
-  test("道路がない向きへ出そうとすると、盤面を変えずにそのわけを言い、手順に留まること", () => {
+  test("まっすぐ先に道路がない向きへ出そうとすると、盤面を変えずにそのわけを言い、手順に留まること", () => {
     const before = playSteps(1);
     const blocked = perform(before, secondVehicleId, "left");
 
@@ -316,46 +324,45 @@ describe("performTutorialAction", () => {
     expect(blocked.stepIndex).toBe(1);
     expect(blocked.boardState.puzzle).toEqual(before.boardState.puzzle);
     expect(getMessage(blocked).headline).toBe(
-      "道路がない向きへは\n出られません",
+      "まっすぐ先に道路がないと\n出られません",
     );
-  });
-
-  test("車に当てる手順で、道路がない向きへ出そうとしても、手順を進めないこと", () => {
-    const index = steps.findIndex(({ endsWhen }) => endsWhen === "blocked");
-    const vehicleId = steps[index]?.vehicleId ?? "";
-    const before = playSteps(index);
-    const roadDirection = listDirections(vehicleId).find(
-      (direction) =>
-        findParkingJamTutorialBlocker(before.boardState.puzzle, {
-          vehicleId,
-          direction,
-        }) === "road",
-    );
-    const blocked = perform(before, vehicleId, roadDirection ?? "right");
-
-    expect(roadDirection).toBeDefined();
-    expect(blocked.violated).toBe(true);
-    expect(blocked.stepIndex).toBe(index);
-  });
-
-  test("車に当てる手順で車に当てると、違反にせず次の手順へ進むこと", () => {
-    const index = steps.findIndex(({ endsWhen }) => endsWhen === "blocked");
-    const bumped = playSteps(index + 1);
-
-    expect(bumped.violated).toBe(false);
-    expect(bumped.stepIndex).toBe(index + 1);
-    expect(bumped.boardState.lastMove).toMatchObject({
+    expect(blocked.boardState.lastMove).toMatchObject({
       type: "blocked",
-      blocker: "car",
+      blocker: "road",
+      contact: { blocker: { kind: "wall" } },
     });
+  });
+
+  test("塞がれた車を示している手順で、その車を動かしても受け付けないこと", () => {
+    const index = steps.findIndex(({ waitingMove }) => waitingMove !== null);
+    const before = playSteps(index);
+    const waitingMove = steps[index]?.waitingMove;
+    const ignored = perform(
+      before,
+      waitingMove?.vehicleId ?? "",
+      waitingMove?.direction ?? "left",
+    );
+
+    expect(ignored).toBe(before);
   });
 
   describe("手を離した後の場合", () => {
     const released = playSteps(steps.length);
 
     const blockedCases = [
-      ["道路がない向き", "d", "left", "道路がない向きへは\n出られません"],
-      ["車がある向き", "d", "right", "車があると通れません"],
+      [
+        "まっすぐ先に道路がない向き",
+        "d",
+        "left",
+        "まっすぐ先に道路がないと\n出られません",
+      ],
+      ["ほかの車がある向き", "d", "right", "ほかの車があると\n通れません"],
+      [
+        "道路がない車線でも、手前のほかの車",
+        "f",
+        "left",
+        "ほかの車があると\n通れません",
+      ],
     ] as const;
 
     test.each(blockedCases)(
@@ -380,6 +387,7 @@ describe("performTutorialAction", () => {
                 direction: "left",
                 type: "blocked",
                 blocker,
+                contact: { blocker: { kind: "wall" }, freeCellCount: 0 },
               },
             },
           ).headline,

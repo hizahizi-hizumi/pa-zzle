@@ -11,12 +11,20 @@ import type { ParkingJamOperation } from "@/games/parking-jam/play/use-parking-j
 import type {
   ParkingJamBoard as ParkingJamBoardDefinition,
   ParkingJamDirection,
+  ParkingJamMove,
   ParkingJamState,
   ParkingJamVehicle,
   ParkingJamVehicleId,
 } from "@/games/parking-jam/puzzle/board";
+import { findParkingJamExitContact } from "@/games/parking-jam/puzzle/rules";
+import type {
+  ParkingJamContactCue,
+  ParkingJamVehicleCue,
+} from "@/games/parking-jam/ui/board/board-cue";
+import { ParkingJamBoardCues } from "@/games/parking-jam/ui/board/ParkingJamBoardCues";
 import { ParkingJamBoardDefs } from "@/games/parking-jam/ui/board/ParkingJamBoardDefs";
 import { ParkingJamCar } from "@/games/parking-jam/ui/board/ParkingJamCar";
+import { getParkingJamBumpTranslation } from "@/games/parking-jam/ui/board/ParkingJamContactMark";
 import {
   getParkingJamDirectionControls,
   ParkingJamDirectionMark,
@@ -28,7 +36,6 @@ import {
   parkingJamBoardGeometry,
 } from "@/games/parking-jam/ui/board/parking-jam-board-geometry";
 import { useParkingJamBoardPaint } from "@/games/parking-jam/ui/board/parking-jam-board-paint";
-import type { ParkingJamVehicleCue } from "@/games/parking-jam/ui/board/vehicle-cue";
 import { playAnimations } from "@/lib/motion";
 
 import "@/games/parking-jam/ui/board/parking-jam-board.css";
@@ -49,9 +56,31 @@ type ParkingJamBoardProps = {
   onClearAnimationComplete: () => void;
   /** 車に重ねる合図。チュートリアルで使う。 */
   cues?: readonly ParkingJamVehicleCue[];
+  /** 出られない手で進む先と当たるものを示す合図。チュートリアルで使う。 */
+  contacts?: readonly ParkingJamContactCue[];
+  /**
+   * 出られない手で、車を前の物に触れるまで進めてから戻す。渡さなければ本番と同じく、その場で小さく揺らす。
+   * チュートリアルで、何に当たったかを動きでも見せるのに使う。
+   */
+  bumpsToContact?: boolean;
+  /**
+   * 盤面に残っていない車を、`delayMs` だけ待ってからそれぞれの向きへ出ていかせる。
+   * チュートリアルの導入で、車が出ていって空になる駐車場をゴールとして見せるのに使う。
+   */
+  departures?: readonly ParkingJamDeparture[];
+  /** 盤面に残っていない車の、停まっていた場所を点線で示す。`ghostDelayMs` だけ待ってから浮かび上がらせる。 */
+  ghostVehicleIds?: readonly ParkingJamVehicleId[];
+  ghostDelayMs?: number;
 };
 
+export type ParkingJamDeparture = ParkingJamMove & { delayMs: number };
+
 const SWIPE_THRESHOLD = 18;
+
+/** 前の物に触れるまで進めてから戻す、当たる動きの長さ。進む距離が長いほど長くする。 */
+function getBumpDurationMs(freeCellCount: number): number {
+  return 200 + 90 * freeCellCount;
+}
 
 function getSwipeDirection(
   vehicle: ParkingJamVehicle,
@@ -113,6 +142,11 @@ export function ParkingJamBoard({
   onMove,
   onClearAnimationComplete,
   cues = [],
+  contacts = [],
+  bumpsToContact = false,
+  departures = [],
+  ghostVehicleIds = [],
+  ghostDelayMs = 0,
 }: ParkingJamBoardProps) {
   const pointerStart = useRef<{
     vehicleId: string;
@@ -204,32 +238,58 @@ export function ParkingJamBoard({
           const isRemaining = remaining.has(vehicle.id);
           const targeted = operation?.vehicleId === vehicle.id;
           const exiting = targeted && operation?.type === "exited";
-          if (!isRemaining && !exiting) return null;
+          const departure = isRemaining
+            ? undefined
+            : departures.find(({ vehicleId }) => vehicleId === vehicle.id);
+          if (!isRemaining && !exiting && !departure) return null;
           const selected = selectedVehicleId === vehicle.id;
-          const feedbackClass =
-            targeted && operation
-              ? ` parking-jam-car--${operation.type === "exited" ? "exit" : "blocked"}-${operation.direction}`
-              : "";
-          const exitTranslation =
-            exiting && operation
-              ? parkingJamBoardGeometry.getVehicleExitTranslation(
-                  board,
-                  vehicle,
-                  operation.direction,
-                )
+          const exitDirection = exiting
+            ? operation?.direction
+            : departure?.direction;
+          const bumpContact =
+            bumpsToContact && targeted && operation?.type === "blocked"
+              ? findParkingJamExitContact(board, state, operation)
+              : null;
+          const feedbackClass = bumpContact
+            ? " parking-jam-car--bump"
+            : exitDirection
+              ? ` parking-jam-car--exit-${exitDirection}`
+              : targeted && operation
+                ? ` parking-jam-car--blocked-${operation.direction}`
+                : "";
+          const exitTranslation = exitDirection
+            ? parkingJamBoardGeometry.getVehicleExitTranslation(
+                board,
+                vehicle,
+                exitDirection,
+              )
+            : null;
+          const bumpTranslation =
+            bumpContact && operation
+              ? getParkingJamBumpTranslation(operation.direction, bumpContact)
               : null;
           const exitStyle = exitTranslation
             ? ({
                 "--parking-jam-exit-x": `${exitTranslation.x}px`,
                 "--parking-jam-exit-y": `${exitTranslation.y}px`,
+                ...(departure && {
+                  animationDelay: `${departure.delayMs}ms`,
+                  animationFillMode: "both",
+                }),
               } as CSSProperties)
-            : undefined;
+            : bumpTranslation && bumpContact
+              ? ({
+                  "--parking-jam-bump-x": `${bumpTranslation.x}px`,
+                  "--parking-jam-bump-y": `${bumpTranslation.y}px`,
+                  "--parking-jam-bump-duration": `${getBumpDurationMs(bumpContact.freeCellCount)}ms`,
+                } as CSSProperties)
+              : undefined;
           return (
             <g
               key={targeted ? `${vehicle.id}-${operation?.id}` : vehicle.id}
               ref={exiting ? exitingCarRef : undefined}
               role="button"
-              tabIndex={interactionDisabled || exiting ? -1 : 0}
+              tabIndex={interactionDisabled || !isRemaining ? -1 : 0}
               aria-label={getVehicleLabel(vehicle)}
               aria-pressed={selected}
               className={`parking-jam-car${selected ? " parking-jam-car--selected" : ""}${feedbackClass}`}
@@ -243,21 +303,14 @@ export function ParkingJamBoard({
           );
         })}
       </g>
-      {/* 車を動かすたびに作り直す車の要素とは分けて描き、印の光が手のたびにやり直されないようにする。警告の縁は印の上に重ねる。 */}
-      {[...cues]
-        .sort((left, right) => cueLayers[left.kind] - cueLayers[right.kind])
-        .map((cue) => {
-          const vehicle = board.vehicles.find(
-            (candidate) => candidate.id === cue.vehicleId,
-          );
-          return vehicle && remaining.has(vehicle.id) ? (
-            <ParkingJamVehicleCueMark
-              key={`${cue.vehicleId}-${cue.kind}-${cue.id}`}
-              vehicle={vehicle}
-              cue={cue}
-            />
-          ) : null;
-        })}
+      <ParkingJamBoardCues
+        board={board}
+        remainingVehicleIds={state.remainingVehicleIds}
+        cues={cues}
+        contacts={contacts}
+        ghostVehicleIds={ghostVehicleIds}
+        ghostDelayMs={ghostDelayMs}
+      />
       {selectedVehicle && !interactionDisabled
         ? getParkingJamDirectionControls(selectedVehicle).map((control) => (
             <g
@@ -285,55 +338,6 @@ export function ParkingJamBoard({
           ))
         : null}
     </svg>
-  );
-}
-
-const cueLayers = {
-  hint: 0,
-  rejected: 1,
-} as const satisfies Record<ParkingJamVehicleCue["kind"], number>;
-
-/** 車体の外側に重ねる合図の枠。次に動かす車の印は、付け直すたびに中を一瞬光らせる。 */
-function ParkingJamVehicleCueMark({
-  vehicle,
-  cue,
-}: {
-  vehicle: ParkingJamVehicle;
-  cue: ParkingJamVehicleCue;
-}) {
-  const horizontal = vehicle.orientation === "horizontal";
-  const inset = 4;
-  const x = vehicle.column * PARKING_JAM_CELL + inset;
-  const y = vehicle.row * PARKING_JAM_CELL + inset;
-  const width =
-    (horizontal ? vehicle.length : 1) * PARKING_JAM_CELL - inset * 2;
-  const height =
-    (horizontal ? 1 : vehicle.length) * PARKING_JAM_CELL - inset * 2;
-  return (
-    <g
-      data-vehicle-cue={cue.kind}
-      data-vehicle-id={vehicle.id}
-      aria-hidden="true"
-    >
-      {cue.kind === "hint" && (
-        <rect
-          x={x}
-          y={y}
-          width={width}
-          height={height}
-          rx="24"
-          className="parking-jam-car-cue__flash"
-        />
-      )}
-      <rect
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        rx="24"
-        className={`parking-jam-car-cue parking-jam-car-cue--${cue.kind}`}
-      />
-    </g>
   );
 }
 

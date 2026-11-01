@@ -152,3 +152,63 @@ export function applyParkingJamMove(
     ),
   };
 }
+
+/**
+ * 出られない手で、車がまっすぐ進んで最初に当たるもの。
+ * - `wall`: 途中に何もなく、進んだ先の外周がその車線で道路につながっていない。
+ * - `fixed-area` / `vehicle`: 途中で最初に当たる植え込みのマスか車。
+ */
+export type ParkingJamExitContact = {
+  blocker:
+    | { kind: "wall" }
+    | { kind: "fixed-area"; cell: ParkingJamCell }
+    | { kind: "vehicle"; vehicleId: ParkingJamVehicleId };
+  /** 当たるまでに進めるマスの数。 */
+  freeCellCount: number;
+};
+
+/**
+ * 出られない手で、車がまっすぐ進んで最初に当たるものと、当たるまでに進めるマスの数。
+ * 出られる手と、車の向きに沿わない手は `null`。出られるかどうかは `listParkingJamMoveBlockers` と同じ判定による。
+ */
+export function findParkingJamExitContact(
+  board: ParkingJamBoard,
+  state: ParkingJamState,
+  move: ParkingJamMove,
+): ParkingJamExitContact | null {
+  const blockers = listParkingJamMoveBlockers(board, state, move);
+  const vehicle = board.vehicles.find(({ id }) => id === move.vehicleId);
+  if (
+    !vehicle ||
+    blockers.length === 0 ||
+    blockers.some(({ kind }) => kind === "invalid-direction")
+  ) {
+    return null;
+  }
+  const path = listParkingJamExitPathCells(board, vehicle, move.direction);
+  for (const [index, cell] of path.entries()) {
+    const fixedArea = board.fixedAreas.some((area) =>
+      listParkingJamFixedAreaCells(area).some((areaCell) =>
+        sameCell(areaCell, cell),
+      ),
+    );
+    if (fixedArea) {
+      return { blocker: { kind: "fixed-area", cell }, freeCellCount: index };
+    }
+    const other = board.vehicles.find(
+      (candidate) =>
+        candidate.id !== vehicle.id &&
+        state.remainingVehicleIds.includes(candidate.id) &&
+        listParkingJamVehicleCells(candidate).some((candidateCell) =>
+          sameCell(candidateCell, cell),
+        ),
+    );
+    if (other) {
+      return {
+        blocker: { kind: "vehicle", vehicleId: other.id },
+        freeCellCount: index,
+      };
+    }
+  }
+  return { blocker: { kind: "wall" }, freeCellCount: path.length };
+}

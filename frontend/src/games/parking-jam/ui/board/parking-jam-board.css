@@ -228,3 +228,75 @@
     animation: none;
   }
 }
+@keyframes pj-bump {
+  0% {
+    transform: translate(0, 0);
+    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
+  }
+  55% {
+    transform: translate(
+      var(--parking-jam-bump-x, 0),
+      var(--parking-jam-bump-y, 0)
+    );
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+.parking-jam-car--bump {
+  animation: pj-bump var(--parking-jam-bump-duration, 200ms) both;
+}
+.parking-jam-contact {
+  pointer-events: none;
+}
+.parking-jam-contact__path {
+  stroke-width: 6;
+  stroke-dasharray: 12 10;
+  stroke-linecap: round;
+}
+.parking-jam-contact__blocker {
+  fill: none;
+  stroke-width: 8;
+}
+.parking-jam-contact__wall {
+  stroke-width: 16;
+  stroke-linecap: round;
+}
+.parking-jam-contact--rejected {
+  animation: pj-cue-out 1600ms ease-in forwards;
+}
+.parking-jam-contact--rejected .parking-jam-contact__path,
+.parking-jam-contact--rejected .parking-jam-contact__blocker,
+.parking-jam-contact--rejected .parking-jam-contact__wall {
+  stroke: var(--color-destructive);
+}
+.parking-jam-contact--waiting {
+  animation: pj-cue-in 150ms cubic-bezier(0, 0, 0.2, 1);
+}
+.parking-jam-contact--waiting .parking-jam-contact__path {
+  stroke: rgb(255 255 255 / 0.85);
+}
+.parking-jam-contact--waiting .parking-jam-contact__blocker {
+  display: none;
+}
+.parking-jam-contact--waiting .parking-jam-contact__wall {
+  stroke: rgb(255 255 255 / 0.85);
+}
+.parking-jam-car-ghost {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.45);
+  stroke-width: 4;
+  stroke-dasharray: 10 8;
+  pointer-events: none;
+  animation: pj-cue-in 400ms ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .parking-jam-car--bump {
+    animation-duration: 1ms;
+  }
+  .parking-jam-contact--waiting,
+  .parking-jam-car-ghost {
+    animation: none;
+  }
+}

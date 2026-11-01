@@ -4,6 +4,7 @@ import {
 } from "@/games/parking-jam/puzzle/board";
 import {
   applyParkingJamMove,
+  findParkingJamExitContact,
   listParkingJamLegalMoves,
   listParkingJamMoveBlockers,
 } from "@/games/parking-jam/puzzle/rules";
@@ -122,5 +123,67 @@ describe("連続した道路開口の場合", () => {
       { vehicleId: "a", direction: "right" },
       { vehicleId: "b", direction: "right" },
     ]);
+  });
+});
+
+describe("findParkingJamExitContact", () => {
+  const board: ParkingJamBoard = {
+    width: 6,
+    height: 3,
+    vehicles: [
+      { id: "a", row: 1, column: 2, orientation: "horizontal", length: 2 },
+      { id: "b", row: 0, column: 0, orientation: "vertical", length: 2 },
+      { id: "c", row: 0, column: 4, orientation: "horizontal", length: 2 },
+    ],
+    fixedAreas: [{ row: 1, column: 5, width: 1, height: 1 }],
+    roadOpenings: [{ side: "left", startOffset: 0, length: 1 }],
+  };
+  const state = createParkingJamInitialState(board);
+
+  const cases = [
+    [
+      "道路がない車線でも、途中の車に先に当たる",
+      "left",
+      { blocker: { kind: "vehicle", vehicleId: "b" }, freeCellCount: 1 },
+    ],
+    [
+      "途中の植え込みに当たる",
+      "right",
+      {
+        blocker: { kind: "fixed-area", cell: { row: 1, column: 5 } },
+        freeCellCount: 1,
+      },
+    ],
+  ] as const;
+
+  test.each(cases)("%sこと", (_, direction, expected) => {
+    const contact = findParkingJamExitContact(board, state, {
+      vehicleId: "a",
+      direction,
+    });
+
+    expect(contact).toEqual(expected);
+  });
+
+  test("途中に何もなく道路につながっていない車線では、外周に当たること", () => {
+    const contact = findParkingJamExitContact(board, state, {
+      vehicleId: "c",
+      direction: "right",
+    });
+
+    expect(contact).toEqual({ blocker: { kind: "wall" }, freeCellCount: 0 });
+  });
+
+  test("出られる手では何も返さないこと", () => {
+    const contact = findParkingJamExitContact(
+      board,
+      { remainingVehicleIds: ["a", "c"] },
+      {
+        vehicleId: "c",
+        direction: "left",
+      },
+    );
+
+    expect(contact).toBeNull();
   });
 });
