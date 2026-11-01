@@ -72,6 +72,7 @@ describe("HamiltonianPathPlay", () => {
     board,
     path: [0, 1, 2, 5, 4, 3, 6, 7, 8],
     isDeadEnd: false,
+    strandedCells: [],
     blockedMove: null,
     canUndo: false,
     canRestart: false,
@@ -373,6 +374,23 @@ describe("HamiltonianPathPlay", () => {
 
       expect(callbacks.onBeginStroke).toHaveBeenCalledWith(0);
       expect(callbacks.onEndStroke).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("取り残しのマスを渡した場合", () => {
+    beforeEach(() => {
+      renderResult({
+        progress: "playing",
+        result: null,
+        path: [0, 1],
+        strandedCells: [2],
+      });
+    });
+
+    test("そのマスの読み上げ名で取り残しを知らせること", () => {
+      const cells = within(getBoardGroup()).getAllByRole("button");
+
+      expect(cells[2]?.getAttribute("aria-label")).toBe("1行3列 取り残し");
     });
   });
 

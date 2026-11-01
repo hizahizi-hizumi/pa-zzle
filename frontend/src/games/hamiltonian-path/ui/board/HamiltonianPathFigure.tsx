@@ -1,4 +1,4 @@
-import type { Ref } from "react";
+import { type Ref, useId } from "react";
 
 import {
   getHamiltonianPathCellPosition,
@@ -22,6 +22,8 @@ type HamiltonianPathFigureProps = {
   isDeadEnd: boolean;
   /** 道が全マスを通り終えたか。始点から終点へ道をなぞる光を描く。 */
   solved: boolean;
+  /** 取り残しとして斜線を引くマス。 */
+  strandedCells?: readonly number[];
   /**
    * 上から何行を描くか。省略すると全行を描く。難易度プレビューで、盤面の上の帯だけを切り出すときに使う。
    * 描かない行のマスと、そこに掛かる仕切りは描かない。道・始点・先端は描く行の中に置く。
@@ -45,6 +47,9 @@ const PARTITION_END_INSET = 0.18;
 /** 阻んだ仕切りを強調する光の、仕切りからのはみ出し。 */
 const PARTITION_HALO_SPREAD = 0.1;
 const CLEAR_TRACE_WIDTH = 0.1;
+/** 取り残しのマスの斜線の間隔と太さ。マス幅に4本ほど入り、未通過のマスの地と見分けられる密度にする。 */
+const STRANDED_HATCH_GAP = 0.25;
+const STRANDED_HATCH_WIDTH = 0.06;
 
 function getCellCenter(size: number, cell: number): { x: number; y: number } {
   const { row, column } = getHamiltonianPathCellPosition(size, cell);
@@ -80,6 +85,7 @@ export const hamiltonianPathFigureParts = {
   head: "data-head",
   partitionHalo: "data-partition-halo",
   clearTrace: "data-clear-trace",
+  strandedCell: "data-stranded-cell",
 } as const;
 
 export function getPartitionKey([left, right]: HamiltonianPathPartition) {
@@ -96,9 +102,11 @@ export function HamiltonianPathFigure({
   path,
   isDeadEnd,
   solved,
+  strandedCells = [],
   visibleRowCount,
   ref,
 }: HamiltonianPathFigureProps) {
+  const strandedHatchId = useId();
   const { size } = board;
   const rowCount = visibleRowCount ?? size;
   function isVisibleCell(cell: number): boolean {
@@ -130,6 +138,24 @@ export function HamiltonianPathFigure({
         hamiltonianPathToneClassNames.pathColorVariables,
       )}
     >
+      <defs>
+        <pattern
+          id={strandedHatchId}
+          width={STRANDED_HATCH_GAP}
+          height={STRANDED_HATCH_GAP}
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(45)"
+        >
+          <line
+            x1={0}
+            y1={0}
+            x2={0}
+            y2={STRANDED_HATCH_GAP}
+            strokeWidth={STRANDED_HATCH_WIDTH}
+            className={hamiltonianPathToneClassNames.strandedHatch}
+          />
+        </pattern>
+      </defs>
       {listHamiltonianPathCells(size)
         .filter(isVisibleCell)
         .map((cell) => {
@@ -160,6 +186,20 @@ export function HamiltonianPathFigure({
             />
           );
         })}
+      {strandedCells.filter(isVisibleCell).map((cell) => {
+        const { row, column } = getHamiltonianPathCellPosition(size, cell);
+        return (
+          <rect
+            key={`stranded-${cell}`}
+            {...{ [hamiltonianPathFigureParts.strandedCell]: cell }}
+            x={column}
+            y={row}
+            width={1}
+            height={1}
+            fill={`url(#${strandedHatchId})`}
+          />
+        );
+      })}
       {centers.slice(1).map((to, index) => {
         const from = centers[index]!;
         return (

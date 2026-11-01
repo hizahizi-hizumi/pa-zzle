@@ -34,6 +34,8 @@ type HamiltonianPathBoardProps = {
   /** 始点から先端までに通ったマスの番号。 */
   path: readonly number[];
   isDeadEnd: boolean;
+  /** 取り残しとして知らせるマス。 */
+  strandedCells: readonly number[];
   blockedMove: HamiltonianPathBlockedMove | null;
   /** 道が全マスを通り終えたか。 */
   solved: boolean;
@@ -64,6 +66,7 @@ export function HamiltonianPathBoard({
   board,
   path,
   isDeadEnd,
+  strandedCells,
   blockedMove,
   solved,
   clearing,
@@ -78,6 +81,7 @@ export function HamiltonianPathBoard({
   const dragRef = useRef<FingerDrag | null>(null);
   const walls = new Set(board.walls);
   const visited = new Set(path);
+  const stranded = new Set(strandedCells);
   const head = path.at(-1);
   const pathLength = path.length;
 
@@ -186,6 +190,7 @@ export function HamiltonianPathBoard({
         path={path}
         isDeadEnd={isDeadEnd}
         solved={solved}
+        strandedCells={strandedCells}
       />
       <div
         className="relative grid size-full"
@@ -203,6 +208,7 @@ export function HamiltonianPathBoard({
             isStart={cell === board.start}
             isHead={cell === head}
             isDeadEnd={cell === head && isDeadEnd}
+            isStranded={stranded.has(cell)}
             partitionDirections={listPartitionDirections(cell)}
             disabled={interactionDisabled}
             onPress={pressCell}

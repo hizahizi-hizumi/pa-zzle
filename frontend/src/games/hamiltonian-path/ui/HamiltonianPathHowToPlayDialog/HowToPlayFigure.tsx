@@ -10,6 +10,7 @@ type HowToPlayFigureProps = {
   board: HamiltonianPathBoard;
   path: readonly number[];
   isDeadEnd?: boolean;
+  strandedCells?: readonly number[];
   /** 指を置いているマス。指の印を添える。 */
   fingerCell?: number;
 };
@@ -19,6 +20,7 @@ export function HowToPlayFigure({
   board,
   path,
   isDeadEnd = false,
+  strandedCells,
   fingerCell,
 }: HowToPlayFigureProps) {
   const finger =
@@ -33,6 +35,7 @@ export function HowToPlayFigure({
         path={path}
         isDeadEnd={isDeadEnd}
         solved={false}
+        strandedCells={strandedCells}
       />
       {finger === null ? null : (
         <Pointer

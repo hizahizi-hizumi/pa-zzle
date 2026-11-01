@@ -31,6 +31,7 @@ type HamiltonianPathPlayProps = GamePlayScreenProps<
     board: HamiltonianPathBoardState;
     path: readonly number[];
     isDeadEnd: boolean;
+    strandedCells: readonly number[];
     blockedMove: HamiltonianPathBlockedMove | null;
     onBeginStroke: (cell: number) => void;
     onTraceStroke: (step: HamiltonianPathTraceStep) => void;
@@ -55,6 +56,7 @@ export function HamiltonianPathPlay({
   board,
   path,
   isDeadEnd,
+  strandedCells,
   blockedMove,
   canUndo,
   canRestart,
@@ -121,7 +123,11 @@ export function HamiltonianPathPlay({
       onBackToHome={onBackToHome}
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
-        <HamiltonianPathHowToPlayDialog open={open} onClose={onClose} />
+        <HamiltonianPathHowToPlayDialog
+          open={open}
+          difficulty={difficulty}
+          onClose={onClose}
+        />
       )}
       renderResultScreen={(clearedResult) => (
         <HamiltonianPathResultScreen
@@ -144,6 +150,7 @@ export function HamiltonianPathPlay({
             board={board}
             path={path}
             isDeadEnd={isDeadEnd}
+            strandedCells={strandedCells}
             blockedMove={blockedMove}
             solved={progress !== "playing"}
             clearing={progress === "clearing"}

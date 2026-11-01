@@ -14,6 +14,8 @@ type HamiltonianPathCellProps = {
   isHead: boolean;
   /** 先端から延ばせるマスが無いか。 */
   isDeadEnd: boolean;
+  /** 取り残しとして知らせるマスか。 */
+  isStranded: boolean;
   /** 隣のマスとの間に仕切りがある向き。 */
   partitionDirections: readonly HamiltonianPathDirection[];
   disabled: boolean;
@@ -46,11 +48,13 @@ function describeCell(
   isStart: boolean,
   isHead: boolean,
   isDeadEnd: boolean,
+  isStranded: boolean,
 ): string {
   const marks = [
     isStart && "始点",
     isHead && "先端",
     isDeadEnd && "行き止まり",
+    isStranded && "取り残し",
   ].filter(Boolean);
   return marks.length > 0 ? marks.join(" ") : cellStateLabels[state];
 }
@@ -66,6 +70,7 @@ export function HamiltonianPathCell({
   isStart,
   isHead,
   isDeadEnd,
+  isStranded,
   partitionDirections,
   disabled,
   onPress,
@@ -73,7 +78,7 @@ export function HamiltonianPathCell({
   const { row, column } = getHamiltonianPathCellPosition(size, cell);
   const label = [
     `${row + 1}行${column + 1}列`,
-    describeCell(state, isStart, isHead, isDeadEnd),
+    describeCell(state, isStart, isHead, isDeadEnd, isStranded),
     describePartitions(partitionDirections),
   ]
     .filter(Boolean)

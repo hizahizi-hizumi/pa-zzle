@@ -1,6 +1,10 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import type { HamiltonianPathDifficulty } from "@/games/hamiltonian-path/difficulty";
+import {
+  listHamiltonianPathStrandedCells,
+  showsHamiltonianPathStranding,
+} from "@/games/hamiltonian-path/play/stranding-notice";
 import type {
   HamiltonianPathProblem,
   HamiltonianPathProblemIdentity,
@@ -86,6 +90,8 @@ export type HamiltonianPathPlay = GamePlay<
     path: readonly number[];
     /** 全マスを通る前に、先端から延ばせるマスが無くなったか。 */
     isDeadEnd: boolean;
+    /** 盤面で知らせる取り残しのマス。取り残しを知らせない難易度では常に空。 */
+    strandedCells: readonly number[];
     /** 最後に道を延ばせなかった操作。 */
     blockedMove: HamiltonianPathBlockedMove | null;
     /** マスを押して道をなぞり始める。道のマスならそこまで巻き戻し、先端の隣なら延ばす。 */
@@ -200,6 +206,14 @@ export function useHamiltonianPathPlay(
   );
   const { session, progress, problemIdentity, workload, blockedMove } = play;
   const elapsedMs = useSessionElapsedMs(session);
+  const { problem, puzzleState } = session;
+  const strandedCells = useMemo(
+    () =>
+      showsHamiltonianPathStranding(difficulty)
+        ? listHamiltonianPathStrandedCells(problem, puzzleState.path)
+        : [],
+    [difficulty, problem, puzzleState],
+  );
 
   const nextBlockedMoveId = useRef(0);
 
@@ -316,12 +330,10 @@ export function useHamiltonianPathPlay(
     completedAt: session.finishedAt,
     elapsedMs,
     result,
-    board: session.problem,
-    path: session.puzzleState.path,
-    isDeadEnd: isHamiltonianPathDeadEnd(
-      session.problem,
-      session.puzzleState.path,
-    ),
+    board: problem,
+    path: puzzleState.path,
+    isDeadEnd: isHamiltonianPathDeadEnd(problem, puzzleState.path),
+    strandedCells,
     blockedMove,
     canUndo: canUndoHamiltonianPathSession(session),
     canRestart: canRestartHamiltonianPathSession(session),

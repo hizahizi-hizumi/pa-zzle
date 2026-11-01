@@ -6,6 +6,7 @@
  * - 壁マスと仕切りはどちらも「通れない」ことを示すので、ライトでは同じ系統の最も暗い色にする。
  *   ダークでは壁マスを盤面より暗い穴のままにし、仕切りは暗い地に埋もれないよう明るい棒にする。
  * - 行き止まりの先端は、道の色をやめて沈んだ無彩色にする。
+ * - 取り残しのマスは、通れないものと同じ系統の色の斜線を薄く引く。マスを塗りつぶさず、まだ通っていないマスだと分かるようにする。
  * 色の値は `pathColorVariables` の CSS 変数として盤面の根に置き、マスと道の色は `getPathColor` などで混ぜて作る。
  */
 export const hamiltonianPathToneClassNames = {
@@ -18,6 +19,7 @@ export const hamiltonianPathToneClassNames = {
   /** 始点の印の縁取り。道の上でも印として浮くよう、マスの地の色で囲む。 */
   startMarkOutline: "stroke-(--hamiltonian-path-cell)",
   deadEndHead: "stroke-stone-400 dark:stroke-stone-500",
+  strandedHatch: "stroke-stone-800/40 dark:stroke-stone-200/40",
   /** クリアしたとき、始点から終点へ道をなぞる光。 */
   clearTrace: "stroke-white/80 dark:stroke-white/70",
 } as const;
