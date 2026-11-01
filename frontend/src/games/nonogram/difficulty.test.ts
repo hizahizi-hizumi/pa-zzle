@@ -248,13 +248,16 @@ describe("assessNonogramDifficulty", () => {
   describe("連鎖の深さは合うが塊の数が範囲の外の問題", () => {
     const cases = combinationCases.flatMap(
       ([difficulty, { boardSizes, roundCount, blockCountPerLine }]) => {
-        const toOutside = (outsideBlockCountPerLine: number) =>
-          toAnalysis(boardSizes[0]!, {
+        function toOutside(
+          outsideBlockCountPerLine: number,
+        ): NonogramDifficultyAnalysis {
+          return toAnalysis(boardSizes[0]!, {
             roundCount: roundCount.minimum,
             entryLineCount: 0,
             narrowRoundCount: roundCount.minimum,
             blockCountPerLine: outsideBlockCountPerLine,
           });
+        }
         return [
           ...(blockCountPerLine.minimum > 0
             ? [
