@@ -11,7 +11,7 @@ import {
 } from "@/games/hamiltonian-path/puzzle/state";
 
 /**
- * 道を延ばせなかった理由。盤面の反応（先端の揺れ）を選ぶために返す。
+ * 道を延ばせなかった理由。
  * - `outside-board`: 枠の外のマス。
  * - `not-adjacent`: 先端の上下左右に隣り合わないマス（先端そのものを含む）。
  * - `hole`: 穴。

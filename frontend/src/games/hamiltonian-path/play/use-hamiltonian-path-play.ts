@@ -19,10 +19,7 @@ import {
 } from "@/games/hamiltonian-path/puzzle/board";
 import { isHamiltonianPathDeadEnd } from "@/games/hamiltonian-path/puzzle/rules";
 import { getHamiltonianPathHead } from "@/games/hamiltonian-path/puzzle/state";
-import type {
-  HamiltonianPathExtensionRejection,
-  HamiltonianPathTraceStep,
-} from "@/games/hamiltonian-path/puzzle/transitions";
+import type { HamiltonianPathTraceStep } from "@/games/hamiltonian-path/puzzle/transitions";
 import {
   calculateHamiltonianPathPlayScore,
   calculateHamiltonianPathSpeedScoreRule,
@@ -66,14 +63,11 @@ export type HamiltonianPathResult = HamiltonianPathSessionResult & {
 };
 
 /**
- * 道を延ばせなかった操作。盤面が先端を揺らし、進もうとしたマスを強調して返すために持つ。
- * `id` は操作ごとに変わり、同じ理由で続けて阻まれても別の操作として返せるようにする。
+ * 道を延ばせなかった操作。盤面が先端を揺らし、進もうとしたマスに×を点けて返すために持つ。
+ * `id` は操作ごとに変わり、同じ所で続けて阻まれても別の操作として返せるようにする。
  */
 export type HamiltonianPathBlockedMove = {
   id: number;
-  reason: HamiltonianPathExtensionRejection;
-  /** 阻まれたときの道の先端。 */
-  head: number;
   /** 先端から進もうとした向き。先端に隣り合わないマスを押したときは `null`。 */
   direction: HamiltonianPathDirection | null;
   /** 進もうとしたマス（押したマス・指が入ったマス・矢印キーの向きの隣のマス）。盤面の外へ進もうとしたときは `null`。 */
@@ -168,8 +162,6 @@ function applyPathChange(
     ...applied,
     blockedMove: {
       id: blockedMoveId,
-      reason: rejection,
-      head: getHamiltonianPathHead(current.session.puzzleState),
       ...target,
     },
   };

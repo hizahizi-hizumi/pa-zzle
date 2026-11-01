@@ -69,8 +69,6 @@ describe("animateBlockedMove", () => {
   describe("穴に阻まれた場合", () => {
     const blockedMove: HamiltonianPathBlockedMove = {
       id: 0,
-      reason: "hole",
-      head: 4,
       direction: "right",
       cell: 5,
     };
@@ -90,8 +88,6 @@ describe("animateBlockedMove", () => {
   describe("先端から離れたマスを押した場合", () => {
     const blockedMove: HamiltonianPathBlockedMove = {
       id: 0,
-      reason: "not-adjacent",
-      head: 4,
       direction: null,
       cell: 0,
     };
@@ -110,8 +106,6 @@ describe("animateBlockedMove", () => {
   describe("盤面の外へ進もうとした場合", () => {
     const blockedMove: HamiltonianPathBlockedMove = {
       id: 0,
-      reason: "outside-board",
-      head: 2,
       direction: "up",
       cell: null,
     };
@@ -129,8 +123,6 @@ describe("animateBlockedMove", () => {
   describe("動きを減らす設定の場合", () => {
     const blockedMove: HamiltonianPathBlockedMove = {
       id: 0,
-      reason: "hole",
-      head: 4,
       direction: "right",
       cell: 5,
     };

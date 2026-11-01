@@ -114,13 +114,11 @@ describe("useHamiltonianPathPlay", () => {
   describe("先端から離れたマスを押した場合", () => {
     const cell = findCellAwayFromStart();
 
-    test("道を変えず、阻まれた操作として先端・理由・押したマスを残すこと", () => {
+    test("道を変えず、阻まれた操作として押したマスを向き無しで残すこと", () => {
       tapAll(result, [cell]);
 
       expect(result.current.path).toEqual([initial.problem.start]);
       expect(result.current.blockedMove).toMatchObject({
-        reason: "not-adjacent",
-        head: initial.problem.start,
         direction: null,
         cell,
       });
@@ -145,7 +143,6 @@ describe("useHamiltonianPathPlay", () => {
       act(() => result.current.moveHeadToward(direction));
 
       expect(result.current.blockedMove).toMatchObject({
-        head: start,
         direction,
         cell: neighbor,
       });
