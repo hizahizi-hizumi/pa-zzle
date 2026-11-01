@@ -1,10 +1,12 @@
 import {
   type KeyboardEvent as ReactKeyboardEvent,
   useCallback,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
 import { TAKUZU_DISPLAY_NAME } from "@/games/takuzu/display-name";
+import type { TakuzuOperation } from "@/games/takuzu/play/use-takuzu-play";
 
 import {
   getTakuzuCellPosition,
@@ -25,6 +27,7 @@ type TakuzuBoardProps = {
   size: number;
   cells: readonly TakuzuCellView[];
   lineViolations: readonly TakuzuLineViolationView[];
+  operation: TakuzuOperation | null;
   interactionDisabled: boolean;
   onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
   onPlaceCell: (cellIndex: number, cell: TakuzuCellValue) => void;
@@ -79,6 +82,7 @@ export function TakuzuBoard({
   size,
   cells,
   lineViolations,
+  operation,
   interactionDisabled,
   onCycleCell,
   onPlaceCell,
@@ -88,6 +92,14 @@ export function TakuzuBoard({
   const lineViolationByKey = new Map(
     lineViolations.map((violation) => [getLineKey(violation), violation]),
   );
+
+  useLayoutEffect(() => {
+    if (operation?.type === "invalid") {
+      animateGivenCellRejection(
+        cellElementRefs.current.get(operation.cellIndex),
+      );
+    }
+  }, [operation]);
 
   const handleCellElementChange = useCallback(
     (cellIndex: number, element: HTMLButtonElement | null) => {
@@ -99,17 +111,6 @@ export function TakuzuBoard({
     },
     [],
   );
-
-  function handleCycle(
-    cellIndex: number,
-    direction: TakuzuCycleDirection,
-  ): void {
-    if (cells[cellIndex]?.given) {
-      animateGivenCellRejection(cellElementRefs.current.get(cellIndex));
-      return;
-    }
-    onCycleCell(cellIndex, direction);
-  }
 
   function moveFocus(
     cellIndex: number,
@@ -140,12 +141,6 @@ export function TakuzuBoard({
       return;
     }
     event.preventDefault();
-    if (cells[focusableCellIndex]?.given) {
-      animateGivenCellRejection(
-        cellElementRefs.current.get(focusableCellIndex),
-      );
-      return;
-    }
     onPlaceCell(focusableCellIndex, cellByInputKey[event.key] ?? null);
   }
 
@@ -185,7 +180,7 @@ export function TakuzuBoard({
               disabled={interactionDisabled}
               focusable={cellIndex === focusableCellIndex}
               onElementChange={handleCellElementChange}
-              onCycle={handleCycle}
+              onCycle={onCycleCell}
               onFocus={setFocusableCellIndex}
             />
           );
