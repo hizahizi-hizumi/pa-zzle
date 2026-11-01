@@ -224,24 +224,53 @@ describe("TakuzuTutorial", () => {
       expect(hinted).toEqual(["1行4列"]);
     });
 
-    test("印の無いマスを押しても、何も置かず、印を付け直すこと", () => {
-      const hintCueBefore = getCell(1, 1).querySelector(
-        '[data-cell-cue="hint"]',
-      );
+    const outsideCases = [
+      ["印の無い空きマスをタップする", () => tapCell(1, 3)],
+      [
+        "印の無い空きマスにキーで置く",
+        () => {
+          act(() => {
+            getCell(2, 3).focus();
+          });
+          fireEvent.keyDown(getCell(2, 3), { key: "1" });
+        },
+      ],
+      ["固定マスをタップする", () => tapCell(1, 2)],
+    ] as const;
+
+    test.each(outsideCases)(
+      "%sと、何も置かず、赤を使わずに印を光らせ直すこと",
+      (_, operate) => {
+        operate();
+        const firstRecall = getCell(1, 1).querySelector(
+          '[data-cell-cue="recall"]',
+        );
+        operate();
+        const secondRecall = getCell(1, 1).querySelector(
+          '[data-cell-cue="recall"]',
+        );
+
+        expect(getCell(1, 3).getAttribute("aria-label")).toBe("1行3列 空き");
+        expect(getCell(2, 3).getAttribute("aria-label")).toBe("2行3列 空き");
+        expect(getHintedCellPositions()).toEqual(["1行1列"]);
+        expect(firstRecall).not.toBeNull();
+        expect(secondRecall).not.toBeNull();
+        expect(secondRecall).not.toBe(firstRecall);
+        expect(screen.queryByText(/続いています|多すぎる/)).toBeNull();
+      },
+    );
+
+    test("手順どおりに置いた後は、印を光らせ直さないこと", () => {
       tapCell(1, 3);
-      act(() => {
-        getCell(2, 3).focus();
-      });
-      fireEvent.keyDown(getCell(2, 3), { key: "1" });
+      tapCell(1, 1);
+      advanceTime(nextStepCueDelayMs);
 
-      const hintCueAfter = getCell(1, 1).querySelector(
-        '[data-cell-cue="hint"]',
-      );
+      const recalled = within(getBoard())
+        .getAllByRole("button")
+        .filter((cell) => cell.querySelector('[data-cell-cue="recall"]'));
 
-      expect(getCell(1, 3).getAttribute("aria-label")).toBe("1行3列 空き");
-      expect(getCell(2, 3).getAttribute("aria-label")).toBe("2行3列 空き");
-      expect(getHintedCellPositions()).toEqual(["1行1列"]);
-      expect(hintCueAfter).not.toBe(hintCueBefore);
+      expect(getHintedCellPositions()).toEqual(["1行4列"]);
+      expect(recalled).toEqual([]);
     });
 
     describe("3つ続かないことを示す手順に進んだ場合", () => {

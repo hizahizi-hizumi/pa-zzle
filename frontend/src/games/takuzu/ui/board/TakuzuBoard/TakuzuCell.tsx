@@ -118,11 +118,20 @@ export function TakuzuCell({
           className="pointer-events-none absolute inset-0 bg-sky-100 ring-2 ring-sky-500/50 ring-inset fill-mode-forwards animate-out fade-out-0 duration-900 ease-in dark:bg-sky-900/60 dark:ring-sky-300/50"
         />
       )}
-      {cue?.kind === "hint" && (
+      {cue?.kind === "recall" && (
+        // 動きを減らす設定でも分かるよう、位置や大きさは変えず、色が引いていく光だけで示す。
         <span
           key={cue.id}
           aria-hidden="true"
           data-cell-cue={cue.kind}
+          className="pointer-events-none absolute inset-0 bg-sky-200 ring-[3px] ring-sky-600 ring-inset fill-mode-forwards animate-out fade-out-0 duration-1000 ease-in dark:bg-sky-800 dark:ring-sky-300"
+        />
+      )}
+      {(cue?.kind === "hint" || cue?.kind === "recall") && (
+        // 光らせ直しても印そのものは付け直さず、出ているまま光だけを重ねる。
+        <span
+          aria-hidden="true"
+          data-cell-cue="hint"
           className="pointer-events-none absolute inset-1 rounded-sm border-2 border-sky-600/60 border-dashed animate-in fade-in-0 duration-500 motion-reduce:animate-none dark:border-sky-300/60"
         />
       )}

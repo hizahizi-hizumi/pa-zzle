@@ -67,6 +67,16 @@ type TakuzuTutorialBoardIntroStage = "goal" | "rewind";
 const goalBoardState = takuzuTutorial.goal();
 
 /**
+ * 手を引いている間に印の無いマスを押されたときの、印の光らせ直し。
+ * - `id`: 押されるたびに増やし、続けて押されても光らせ直す。
+ * - `progress`: 押されたときの進行。手が進んだら光らせ直しを終える。
+ */
+type TakuzuTutorialRecall = {
+  id: number;
+  progress: TakuzuTutorialProgress;
+};
+
+/**
  * 印を付けるまでの間。0 ならすぐ付け、`null` なら付けない。
  * 手を引いている間は、印のマスにしか置けないので、違反があっても付け続ける。
  * 手を離した後は手が止まったときだけ付け、違反がある間は直すことに向かわせるため付けない。
@@ -88,13 +98,13 @@ function getCueDelayMs(
 
 /**
  * 違反の揺れは、違反が続いたとき（`violationSettled`）だけ返す。
- * 印の合図は `hintCueId` が変わったときだけやり直し、手を置くたびには付け直さない。
+ * 印は手を置くたびには付け直さず、光らせ直すとき（`recallId`）だけ光を重ねる。
  */
 function getCellCues(
   state: TakuzuTutorialBoardState,
   violationSettled: boolean,
   hintCellIndices: readonly number[],
-  hintCueId: number,
+  recallId: number | null,
 ): TakuzuCellCue[] {
   const { lastMove, moveCount } = state;
   const moveCues: TakuzuCellCue[] = !lastMove
@@ -111,11 +121,10 @@ function getCellCues(
   return [
     ...moveCues,
     ...hintCellIndices.map(
-      (cellIndex): TakuzuCellCue => ({
-        cellIndex,
-        kind: "hint",
-        id: hintCueId,
-      }),
+      (cellIndex): TakuzuCellCue =>
+        recallId === null
+          ? { cellIndex, kind: "hint", id: 0 }
+          : { cellIndex, kind: "recall", id: recallId },
     ),
   ];
 }
@@ -139,8 +148,7 @@ export function TakuzuTutorial({
     useState<TakuzuTutorialProgress | null>(null);
   const [settledViolationProgress, setSettledViolationProgress] =
     useState<TakuzuTutorialProgress | null>(null);
-  // 手を引いている間に印の無いマスを押されたら、印を付け直す。
-  const [hintCueId, setHintCueId] = useState(0);
+  const [recall, setRecall] = useState<TakuzuTutorialRecall | null>(null);
   // 固定マスへの操作は本番と同じく、通らない操作として盤面に知らせて揺らす。
   const [givenCellOperation, setGivenCellOperation] =
     useState<TakuzuOperation | null>(null);
@@ -150,9 +158,12 @@ export function TakuzuTutorial({
   const { boardState } = progress;
   const cellViews = getTakuzuTutorialCellViews(situation, boardState);
   const violationSettled = settledViolationProgress === progress;
+  const recallId = recall?.progress === progress ? recall.id : null;
   const cueDelayMs = getCueDelayMs(progress, guiding);
   const cueShown =
-    cueDelayMs === 0 || (cueDelayMs !== null && idleProgress === progress);
+    (guiding && recallId !== null) ||
+    cueDelayMs === 0 ||
+    (cueDelayMs !== null && idleProgress === progress);
   const idleHintCellIndex =
     cueShown && !guiding
       ? findTakuzuTutorialHintCellIndex(situation, boardState)
@@ -203,19 +214,30 @@ export function TakuzuTutorial({
     setProgress(finishTutorialIntro);
   }
 
+  /** 印の無いマスを押されたら、赤は使わず、印を光らせ直して目を向けさせる。 */
+  function recallHint(): void {
+    setRecall((current) => ({ id: (current?.id ?? 0) + 1, progress }));
+  }
+
   function perform(action: TakuzuTutorialAction): void {
+    if (progress.phase !== "playing") {
+      return;
+    }
     if (cellViews[action.cellIndex]?.given) {
       setGivenCellOperation((current) => ({
         id: (current?.id ?? 0) + 1,
         type: "invalid",
         cellIndex: action.cellIndex,
       }));
+      if (guiding) {
+        recallHint();
+      }
       return;
     }
     const next = performTutorialAction(takuzuTutorial, progress, action);
     if (next === progress) {
       if (guiding) {
-        setHintCueId((id) => id + 1);
+        recallHint();
       }
       return;
     }
@@ -245,6 +267,7 @@ export function TakuzuTutorial({
     cancelViolationReaction();
     setIdleProgress(null);
     setSettledViolationProgress(null);
+    setRecall(null);
     setGivenCellOperation(null);
     setProgress(startTutorial(takuzuTutorial));
     setBoardIntroStage(introStage);
@@ -294,7 +317,7 @@ export function TakuzuTutorial({
                 boardState,
                 violationSettled,
                 hintCellIndices,
-                hintCueId,
+                recallId,
               )}
               outlinesViolatedLines
               onCycleCell={handleCycleCell}
