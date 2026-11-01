@@ -28,6 +28,11 @@ type HitofudePuzzleFigureProps = {
   blockedCell?: number | null;
   /** ×の印を点けたまま描くか。遊び方の図で、阻まれたときの盤面の反応を見せるときに使う。 */
   showsBlockedMark?: boolean;
+  /**
+   * 上から何行を描くか。省略すると全行を描く。難易度選択の見本で、正方形の枠の上の帯だけを盤面として描くときに使う。
+   * 描かない行はすべて穴にしておく（穴は描かれず、外形は帯の下の縁で閉じる）。
+   */
+  visibleRowCount?: number;
   ref?: Ref<SVGSVGElement>;
 };
 
@@ -102,6 +107,7 @@ export function HitofudePuzzleFigure({
   solved,
   blockedCell = null,
   showsBlockedMark = false,
+  visibleRowCount,
   ref,
 }: HitofudePuzzleFigureProps) {
   const { size } = board;
@@ -122,7 +128,7 @@ export function HitofudePuzzleFigure({
   return (
     <svg
       ref={ref}
-      viewBox={`0 0 ${size} ${size}`}
+      viewBox={`0 0 ${size} ${visibleRowCount ?? size}`}
       aria-hidden="true"
       className={cn(
         "pointer-events-none absolute inset-0 size-full overflow-visible",

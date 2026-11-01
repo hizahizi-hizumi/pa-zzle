@@ -1,7 +1,6 @@
 import {
+  _private,
   createHitofudePuzzleRefuter,
-  deduceHitofudePuzzleEdges,
-  listHitofudePuzzleStalls,
   measureHitofudePuzzleLookaheadLoad,
   traceHitofudePuzzleHumanSolve,
 } from "@/games/hitofude-puzzle/problem/generation/human-solver";
@@ -12,7 +11,6 @@ import { createHitofudePuzzleProblemIdentity } from "@/games/hitofude-puzzle/pro
 import {
   type HitofudePuzzleBoard,
   listHitofudePuzzleCells,
-  listHitofudePuzzleOpenCells,
   parseHitofudePuzzleBoard,
 } from "@/games/hitofude-puzzle/puzzle/board";
 import { createProblemSeededRandom } from "@/games/problem-seed";
@@ -38,6 +36,8 @@ function createRandomBoard(seed: string): HitofudePuzzleBoard {
     start: openCells[Math.floor(random() * openCells.length)]!,
   };
 }
+
+const { deduceHitofudePuzzleEdges } = _private;
 
 /** 解の道が使う辺を、両端のマスの組（小さい方が先）で挙げる。 */
 function listPathEdges(path: readonly number[]): string[] {
@@ -310,36 +310,6 @@ describe("traceHitofudePuzzleHumanSolve", () => {
       const trace = traceHitofudePuzzleHumanSolve(board, { workLimit: 10 });
 
       expect(trace.status).toBe("work-limit-reached");
-    });
-  });
-});
-
-describe("listHitofudePuzzleStalls", () => {
-  describe.each(regressionFixtures)("$name の場合", ({ rows, expected }) => {
-    const board = parseHitofudePuzzleBoard(rows);
-    const stalls = listHitofudePuzzleStalls(board);
-    const openCells = new Set(listHitofudePuzzleOpenCells(board));
-
-    test("経過と同じ数だけ、局所の推論で止まった局面を挙げること", () => {
-      expect(stalls).toHaveLength(expected.stallCount);
-    });
-
-    test("仮置きで抜けた局面の先読みの手数を、経過と同じ順に持つこと", () => {
-      const refutationLengths = stalls
-        .map(({ refutationLength }) => refutationLength)
-        .filter((length) => length > 0);
-
-      expect(refutationLengths).toEqual(expected.refutationLengths);
-    });
-
-    test("局面ごとに、抜けるまでに決まった辺を盤面のマスの組で挙げること", () => {
-      for (const { decidedEdges } of stalls) {
-        expect(decidedEdges.length).toBeGreaterThan(0);
-        for (const [left, right] of decidedEdges) {
-          expect(openCells.has(left) && openCells.has(right)).toBe(true);
-          expect(left).toBeLessThan(right);
-        }
-      }
     });
   });
 });

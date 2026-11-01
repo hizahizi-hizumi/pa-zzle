@@ -15,7 +15,6 @@ import { generateHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/g
 import {
   HITOFUDE_PUZZLE_GENERATOR_VERSION,
   type HitofudePuzzleRecordedProblemIdentity,
-  type HitofudePuzzleSolveWorkload,
 } from "@/games/hitofude-puzzle/problem/problem";
 import {
   listHitofudePuzzlePoolEntries,
@@ -24,7 +23,6 @@ import {
 import {
   canSelectHitofudePuzzleProblemById,
   restoreHitofudePuzzleProblem,
-  selectHitofudePuzzlePreviewProblem,
   selectHitofudePuzzleProblemById,
   selectHitofudePuzzleProblemForDifficulty,
 } from "@/games/hitofude-puzzle/problem-selection";
@@ -275,51 +273,5 @@ describe("canSelectHitofudePuzzleProblemById", () => {
     const result = canSelectHitofudePuzzleProblemById(difficulty, id);
 
     expect(result).toBe(expected);
-  });
-});
-
-describe("selectHitofudePuzzlePreviewProblem", () => {
-  describe.each(difficulties)("レベル %s の場合", (difficulty) => {
-    const problems = listHitofudePuzzlePoolEntries(difficulty).map(
-      (entry) => toHitofudePuzzlePooledProblem(entry).problem,
-    );
-    const largestSize = Math.max(...problems.map(({ size }) => size));
-
-    test("問題集から、そのレベルの最も大きい盤面の問題を毎回同じに選ぶこと", () => {
-      const first = selectHitofudePuzzlePreviewProblem(difficulty);
-      const second = selectHitofudePuzzlePreviewProblem(difficulty);
-
-      expect(problems).toContainEqual(first);
-      expect(first.size).toBe(largestSize);
-      expect(second).toEqual(first);
-    });
-
-    test("最も大きい盤面の問題のうち、先読みの重さが真ん中の問題を選ぶこと", () => {
-      const loadOf = ({
-        assumptionCount,
-        longestRefutationLength,
-      }: HitofudePuzzleSolveWorkload) =>
-        measureHitofudePuzzleLookaheadLoad(
-          assumptionCount,
-          longestRefutationLength,
-        );
-      const candidates = listHitofudePuzzlePoolEntries(difficulty)
-        .map(toHitofudePuzzlePooledProblem)
-        .filter(({ problem }) => problem.size === largestSize);
-      const loads = candidates
-        .map(({ workload }) => loadOf(workload))
-        .sort((left, right) => left - right);
-      const selected = selectHitofudePuzzlePreviewProblem(difficulty);
-      const selectedCandidate = candidates.find(
-        ({ problem }) =>
-          problem.start === selected.start &&
-          problem.holes.join() === selected.holes.join(),
-      );
-
-      expect(selectedCandidate).toBeDefined();
-      expect(loadOf(selectedCandidate!.workload)).toBe(
-        loads[Math.floor((loads.length - 1) / 2)],
-      );
-    });
   });
 });
