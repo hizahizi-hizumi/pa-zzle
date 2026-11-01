@@ -583,11 +583,14 @@ export function TutorialScreen({
           })}
         </ul>
 
-        {/* 一言が差し替わっても盤面が上下に動かないよう、見出し2行と補足1行がルールの行から離れて収まる高さに固定する。 */}
+        {/*
+          一言が差し替わっても盤面が上下に動かないよう、見出し2行と補足1行、または見出し1行と補足2行が、ルールの行から離れて収まる高さに固定する。
+          上から詰めて、補足の行数で見出しの位置を動かさない。
+        */}
         <div
           aria-live="polite"
           className={cn(
-            "flex h-24 shrink-0 flex-col items-center justify-end px-4",
+            "flex h-24 shrink-0 flex-col items-center justify-start px-4 pt-3",
             stageView.rulesClassName,
           )}
         >
