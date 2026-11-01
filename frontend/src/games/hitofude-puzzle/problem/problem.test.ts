@@ -1,0 +1,167 @@
+import {
+  assertHitofudePuzzleProblem,
+  createHitofudePuzzleProblemIdentity,
+  HITOFUDE_PUZZLE_GENERATOR_VERSION,
+  type HitofudePuzzleProblem,
+  type HitofudePuzzleSolveWorkload,
+  isHitofudePuzzleProblemIdentity,
+  isHitofudePuzzleRecordedProblemIdentity,
+  isHitofudePuzzleSolveWorkload,
+  isHitofudePuzzleWorkloadOfIdentity,
+} from "@/games/hitofude-puzzle/problem/problem";
+import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
+
+describe("createHitofudePuzzleProblemIdentity", () => {
+  test("条件と候補番号を seed に含めた今の版の identity を作ること", () => {
+    const identity = createHitofudePuzzleProblemIdentity(8, 4, 3);
+
+    expect(identity).toEqual({
+      generatorVersion: HITOFUDE_PUZZLE_GENERATOR_VERSION,
+      seed: "hp-8-t4-3",
+      conditions: { size: 8, targetLookaheadLoad: 4 },
+    });
+  });
+});
+
+describe("isHitofudePuzzleProblemIdentity", () => {
+  const identity = createHitofudePuzzleProblemIdentity(6, 0, 1);
+  const invalidValues: readonly [string, unknown][] = [
+    ["オブジェクトでない値", "hp-6-t0-1"],
+    ["生成器の版が違う", { ...identity, generatorVersion: "0" }],
+    ["seed が空", { ...identity, seed: "" }],
+    [
+      "扱わない盤面サイズ",
+      { ...identity, conditions: { size: 10, targetLookaheadLoad: 0 } },
+    ],
+    [
+      "扱わない先読みの重さの目標",
+      { ...identity, conditions: { size: 6, targetLookaheadLoad: 7 } },
+    ],
+    [
+      "前の版の生成条件の",
+      { ...identity, conditions: { size: 6, wallRatio: 0 } },
+    ],
+    ["生成条件が無い", { ...identity, conditions: undefined }],
+  ];
+
+  test("今の生成器の identity を受け入れること", () => {
+    const result = isHitofudePuzzleProblemIdentity(identity);
+
+    expect(result).toBe(true);
+  });
+
+  test.each(invalidValues)("%s値を拒否すること", (_, value) => {
+    const result = isHitofudePuzzleProblemIdentity(value);
+
+    expect(result).toBe(false);
+  });
+});
+
+describe("isHitofudePuzzleRecordedProblemIdentity", () => {
+  const otherVersionIdentity = {
+    generatorVersion: "1",
+    seed: "hp-8-15-3",
+    conditions: { size: 8, wallRatio: 0.15 },
+  };
+  const brokenCurrentIdentity = {
+    ...createHitofudePuzzleProblemIdentity(6, 0, 1),
+    conditions: { size: 12, targetLookaheadLoad: 0 },
+  };
+
+  test("生成器の版が違う記録の identity も読めること", () => {
+    const result =
+      isHitofudePuzzleRecordedProblemIdentity(otherVersionIdentity);
+
+    expect(result).toBe(true);
+  });
+
+  test("今の版で生成条件が扱えない identity を拒否すること", () => {
+    const result = isHitofudePuzzleRecordedProblemIdentity(
+      brokenCurrentIdentity,
+    );
+
+    expect(result).toBe(false);
+  });
+});
+
+describe("assertHitofudePuzzleProblem", () => {
+  const problem: HitofudePuzzleProblem = parseHitofudePuzzleBoard([
+    "S . .",
+    ". # .",
+    ". . .",
+  ]);
+  const separatedProblem: HitofudePuzzleProblem = parseHitofudePuzzleBoard([
+    "S . #",
+    ". # .",
+    "# . .",
+  ]);
+
+  test("穴でないマスがつながった問題を受け入れること", () => {
+    const act = () => assertHitofudePuzzleProblem(problem);
+
+    expect(act).not.toThrow();
+  });
+
+  test("穴でないマスが穴で切り離された問題を拒否すること", () => {
+    const act = () => assertHitofudePuzzleProblem(separatedProblem);
+
+    expect(act).toThrow();
+  });
+});
+
+describe("isHitofudePuzzleSolveWorkload", () => {
+  const workload: HitofudePuzzleSolveWorkload = {
+    openCellCount: 64,
+    assumptionCount: 8,
+    refutationStepCount: 71,
+    longestRefutationLength: 18,
+    fatalBranchCount: 13,
+  };
+  const invalidValues: readonly [string, unknown][] = [
+    ["オブジェクトでない値", 64],
+    ["道が通るマスが無い", { ...workload, openCellCount: 0 }],
+    ["仮置きの回数が整数でない", { ...workload, assumptionCount: 1.5 }],
+    ["先読みの手数の合計が負の", { ...workload, refutationStepCount: -1 }],
+    [
+      "最も長い先読みが先読みの手数の合計を超える",
+      { ...workload, longestRefutationLength: 72 },
+    ],
+    ["迷う分岐の数が無い", { ...workload, fatalBranchCount: undefined }],
+  ];
+
+  test("作業の量を受け入れること", () => {
+    const result = isHitofudePuzzleSolveWorkload(workload);
+
+    expect(result).toBe(true);
+  });
+
+  test.each(invalidValues)("%s値を拒否すること", (_, value) => {
+    const result = isHitofudePuzzleSolveWorkload(value);
+
+    expect(result).toBe(false);
+  });
+});
+
+describe("isHitofudePuzzleWorkloadOfIdentity", () => {
+  const identity = createHitofudePuzzleProblemIdentity(7, 4, 2);
+  const workload: HitofudePuzzleSolveWorkload = {
+    openCellCount: 42,
+    assumptionCount: 4,
+    refutationStepCount: 26,
+    longestRefutationLength: 9,
+    fatalBranchCount: 7,
+  };
+  const oversized = { ...workload, openCellCount: 50 };
+
+  test("生成条件の枠に収まる作業の量を受け入れること", () => {
+    const result = isHitofudePuzzleWorkloadOfIdentity(workload, identity);
+
+    expect(result).toBe(true);
+  });
+
+  test("道が通るマスの数が生成条件の枠のマスの数を超える作業の量を拒否すること", () => {
+    const result = isHitofudePuzzleWorkloadOfIdentity(oversized, identity);
+
+    expect(result).toBe(false);
+  });
+});

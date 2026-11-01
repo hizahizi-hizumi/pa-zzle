@@ -1,0 +1,191 @@
+import type { HitofudePuzzleSolveWorkload } from "@/games/hitofude-puzzle/problem/problem";
+import {
+  calculateHitofudePuzzlePlayScore,
+  calculateHitofudePuzzleSpeedFullScoreMs,
+  calculateHitofudePuzzleSpeedScoreRule,
+  calculateHitofudePuzzleTimeDeltaMs,
+} from "@/games/hitofude-puzzle/score";
+import { getGameResultLevel } from "@/games/result";
+
+// レベル1 と レベル5 の問題集の中央値に近い作業の量。
+const lightWorkload: HitofudePuzzleSolveWorkload = {
+  openCellCount: 31,
+  assumptionCount: 0,
+  refutationStepCount: 0,
+  longestRefutationLength: 0,
+  fatalBranchCount: 4,
+};
+const heavyWorkload: HitofudePuzzleSolveWorkload = {
+  openCellCount: 55,
+  assumptionCount: 3,
+  refutationStepCount: 22,
+  longestRefutationLength: 9,
+  fatalBranchCount: 12,
+};
+
+const lightFullScoreMs = 32_500;
+const heavyFullScoreMs = 99_500;
+
+type PlayExample = {
+  elapsedRatio: number;
+  backtrackCount: number;
+};
+
+function scorePlay({ elapsedRatio, backtrackCount }: PlayExample): number {
+  return calculateHitofudePuzzlePlayScore({
+    elapsedMs: heavyFullScoreMs * elapsedRatio,
+    backtrackCount,
+    workload: heavyWorkload,
+  }).total;
+}
+
+describe("calculateHitofudePuzzleSpeedFullScoreMs", () => {
+  const cases = [
+    ["仮置きの要らない小さな盤面", lightWorkload, lightFullScoreMs],
+    ["仮置きを重ねる大きな盤面", heavyWorkload, heavyFullScoreMs],
+  ] as const;
+
+  test.each(cases)(
+    "%sで、見渡す5秒になぞるマス1つ0.5秒・迷う分岐1つ3秒・仮置きの局面1つ3秒・先読み1手1秒を足すこと",
+    (_, workload, expected) => {
+      const speedFullScoreMs =
+        calculateHitofudePuzzleSpeedFullScoreMs(workload);
+
+      expect(speedFullScoreMs).toBe(expected);
+    },
+  );
+
+  describe("先読みの手数の合計が上限を超える問題の場合", () => {
+    const atLimit = { ...heavyWorkload, refutationStepCount: 45 };
+    const overLimit = { ...heavyWorkload, refutationStepCount: 76 };
+
+    test("上限の45手までだけを数えること", () => {
+      const atLimitMs = calculateHitofudePuzzleSpeedFullScoreMs(atLimit);
+      const overLimitMs = calculateHitofudePuzzleSpeedFullScoreMs(overLimit);
+
+      expect(overLimitMs).toBe(atLimitMs);
+      expect(atLimitMs).toBe(122_500);
+    });
+  });
+});
+
+describe("calculateHitofudePuzzleSpeedScoreRule", () => {
+  test("基準時間の3倍で0点になる規則を返すこと", () => {
+    const rule = calculateHitofudePuzzleSpeedScoreRule(lightWorkload);
+
+    expect(rule).toEqual({
+      fullScoreMs: lightFullScoreMs,
+      zeroScoreMs: lightFullScoreMs * 3,
+    });
+  });
+});
+
+describe("calculateHitofudePuzzleTimeDeltaMs", () => {
+  const cases = [
+    ["基準時間より速い", lightFullScoreMs - 6_500, -6_500],
+    ["基準時間より遅い", lightFullScoreMs + 30_000, 30_000],
+  ] as const;
+
+  test.each(cases)(
+    "%sクリア時間から、基準時間との差を返すこと",
+    (_, elapsedMs, expected) => {
+      const timeDeltaMs = calculateHitofudePuzzleTimeDeltaMs({
+        elapsedMs,
+        workload: lightWorkload,
+      });
+
+      expect(timeDeltaMs).toBe(expected);
+    },
+  );
+});
+
+describe("calculateHitofudePuzzlePlayScore", () => {
+  describe("引き直しなしで基準時間内に解いた場合", () => {
+    const play = {
+      elapsedMs: heavyFullScoreMs,
+      backtrackCount: 0,
+      workload: heavyWorkload,
+    };
+
+    test("速さ60点と正確さ40点の満点にすること", () => {
+      const score = calculateHitofudePuzzlePlayScore(play);
+
+      expect(score).toEqual({
+        total: 100,
+        breakdown: { speed: 60, accuracy: 40 },
+      });
+    });
+  });
+
+  describe("基準時間の2倍かかり、引き直しを5回した場合", () => {
+    const play = {
+      elapsedMs: heavyFullScoreMs * 2,
+      backtrackCount: 5,
+      workload: heavyWorkload,
+    };
+
+    test("速さを超過時間に比例して減らし、正確さを引き直し1回3点ずつ減らすこと", () => {
+      const score = calculateHitofudePuzzlePlayScore(play);
+
+      expect(score).toEqual({
+        total: 55,
+        breakdown: { speed: 30, accuracy: 25 },
+      });
+    });
+  });
+
+  describe("基準時間の3倍以上かかり、引き直しを14回以上した場合", () => {
+    const play = {
+      elapsedMs: heavyFullScoreMs * 4,
+      backtrackCount: 20,
+      workload: heavyWorkload,
+    };
+
+    test("どちらも0点を下回らないこと", () => {
+      const score = calculateHitofudePuzzlePlayScore(play);
+
+      expect(score).toEqual({ total: 0, breakdown: { speed: 0, accuracy: 0 } });
+    });
+  });
+
+  describe("評価段階", () => {
+    const cases = [
+      [
+        "基準時間内で引き直しなし",
+        "perfect",
+        { elapsedRatio: 1, backtrackCount: 0 },
+      ],
+      [
+        "基準時間内で押し間違いを3回直した",
+        "great",
+        { elapsedRatio: 1, backtrackCount: 3 },
+      ],
+      [
+        "基準時間の1.2倍で引き直しなし",
+        "great",
+        { elapsedRatio: 1.2, backtrackCount: 0 },
+      ],
+      [
+        "基準時間の1.5倍で引き直し1回",
+        "good",
+        { elapsedRatio: 1.5, backtrackCount: 1 },
+      ],
+      [
+        "基準時間内で引き直し4回",
+        "good",
+        { elapsedRatio: 1, backtrackCount: 4 },
+      ],
+      [
+        "基準時間の2倍で引き直しなし",
+        "clear",
+        { elapsedRatio: 2, backtrackCount: 0 },
+      ],
+    ] as const;
+
+    test.each(cases)("%sのプレイを %s にすること", (_, expected, play) => {
+      const level = getGameResultLevel(scorePlay(play));
+
+      expect(level).toBe(expected);
+    });
+  });
+});
