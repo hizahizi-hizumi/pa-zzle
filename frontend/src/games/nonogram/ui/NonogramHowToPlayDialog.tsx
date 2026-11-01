@@ -2,7 +2,7 @@ import { HowToPlayDialog } from "@/components/HowToPlayDialog";
 import { HowToPlayTransition } from "@/components/HowToPlayTransition";
 import type { NonogramMark } from "@/games/nonogram/session/session";
 import { HowToPlayFigure } from "@/games/nonogram/ui/NonogramHowToPlayDialog/HowToPlayFigure";
-import { HowToPlayMarkChoice } from "@/games/nonogram/ui/NonogramHowToPlayDialog/HowToPlayMarkChoice";
+import { NonogramMarkChoiceFace } from "@/games/nonogram/ui/NonogramMarkChoiceFace";
 
 /** 選んだ印ごとの、押したマスに入る図の1文字（`HowToPlayFigure` の `rows` の表記）。 */
 const markFigures = [
@@ -49,7 +49,7 @@ export function NonogramHowToPlayDialog({
         <div className="space-y-2">
           {markFigures.map(({ mark, cell }) => (
             <div key={mark} className="flex items-center gap-3">
-              <HowToPlayMarkChoice mark={mark} />
+              <NonogramMarkChoiceFace mark={mark} selected size="compact" />
               <HowToPlayTransition>
                 <HowToPlayFigure rows={["."]} />
                 <HowToPlayFigure rows={[cell]} />
