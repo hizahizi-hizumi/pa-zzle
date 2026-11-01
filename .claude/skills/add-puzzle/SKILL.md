@@ -40,7 +40,7 @@ argument-hint: "<パズル名> [最終レビューの指摘]"
 - 試遊（遊べる段で軽く、作り込みで必ず）: `puzzle-playtester`
 - AI レビュー（段ごと・作り込み）: `puzzle-code-reviewer`・`puzzle-experience-reviewer`・`puzzle-document-reviewer`
 - ピクトグラム: `/design-game-pictogram`。理由を残す判断: `/adr-create`
-- この Skill の `scripts/`: `list-used-ids.sh`（調査開始時の番号予約と SPEC 直前の衝突確認）、`restack.sh`（直した後の積み直し、知らせる前に main と衝突していたときの rebase）、`capture-screens.mjs`（撮影とブラウザエラー確認）、`playtest-driver.mjs`（試遊役が使う）
+- この Skill の `scripts/`: `list-used-ids.sh`（調査開始時の番号予約と SPEC 直前の衝突確認）、`restack.sh`（直した後の積み直し、知らせる前に main と衝突していたときの rebase）、`capture-screens.mjs`（撮影とブラウザエラー確認）、`playtest-driver.mjs`（試遊役が使う）、`naive-play-core.ts`（素朴なプレイヤーで各レベルを解かせる検査。ゲームごとのアダプタは `examples/naive-play-*.ts` を手本に書く。最上位を補助ありの素朴なプレイヤーがほぼ必ず・最短に近い手数で解くなら「簡単すぎる」候補。素朴なプレイヤーが苦労しても熟練者に難しいとは限らないので、止める向きにだけ使う）
 
 ## 環境
 
