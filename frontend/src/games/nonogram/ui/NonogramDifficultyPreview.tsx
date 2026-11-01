@@ -53,13 +53,15 @@ const CHAIN_LEAD = 1.5;
 /** 連鎖の線の太さ（マス単位）。 */
 const CHAIN_WIDTH = 0.6;
 
-type ChainReading = { axis: "row" | "column"; index: number };
 type CellPosition = { row: number; column: number };
 
 type PreviewChain = {
   size: NonogramGridSize;
-  readings: ChainReading[];
-  /** 各読みで決まるマス。`readings` と同じ順。 */
+  /**
+   * 読む順に並べた、各読みで決まるマス。読む回数はこの長さ。
+   * 偶数番目（0始まり）の読みは行を、奇数番目の読みは列を読むので、2番目以降のマスは、
+   * 偶数番目なら前のマスと同じ行に、奇数番目なら前のマスと同じ列にある。
+   */
   cells: CellPosition[];
 };
 
@@ -73,24 +75,12 @@ function getPreviewBoardSize(difficulty: NonogramDifficulty): NonogramGridSize {
   return { width, height };
 }
 
-/** 偶数番目（0始まり）の読みは決まるマスの行を、奇数番目の読みはその列を読む。 */
-function toChainReading(
-  { row, column }: CellPosition,
-  readingIndex: number,
-): ChainReading {
-  return readingIndex % 2 === 0
-    ? { axis: "row", index: row }
-    : { axis: "column", index: column };
-}
-
 function createPreviewChain(difficulty: NonogramDifficulty): PreviewChain {
-  const cells = previewChain.decidedCells
-    .slice(0, previewChain.readingCounts[difficulty])
-    .map(([row, column]) => ({ row, column }));
   return {
     size: getPreviewBoardSize(difficulty),
-    readings: cells.map(toChainReading),
-    cells,
+    cells: previewChain.decidedCells
+      .slice(0, previewChain.readingCounts[difficulty])
+      .map(([row, column]) => ({ row, column })),
   };
 }
 

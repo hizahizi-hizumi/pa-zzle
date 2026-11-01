@@ -65,45 +65,37 @@ describe("createPreviewChain", () => {
   test.each(difficultyIds)(
     "レベル %s で読む回数は、問題集の連鎖の深さの中央値で、そのレベルの連鎖の深さの範囲に入ること",
     (difficulty) => {
-      const { readings } = createPreviewChain(difficulty);
+      const { cells } = createPreviewChain(difficulty);
       const { roundCount } = nonogramLevelCombinations[difficulty];
 
-      expect(readings).toHaveLength(getPoolMedianRoundCount(difficulty));
-      expect(readings.length).toBeGreaterThanOrEqual(roundCount.minimum);
-      expect(readings.length).toBeLessThanOrEqual(roundCount.maximum);
+      expect(cells).toHaveLength(getPoolMedianRoundCount(difficulty));
+      expect(cells.length).toBeGreaterThanOrEqual(roundCount.minimum);
+      expect(cells.length).toBeLessThanOrEqual(roundCount.maximum);
     },
   );
 
   test.each(difficultyIds)(
-    "レベル %s の連鎖は、行から始めて行と列を交互に読み、決まるマスが読んだ線の上にあること",
+    "レベル %s の連鎖は、行から始めて行と列を交互に読むよう、次に決まるマスが、偶数番目の読みでは前のマスと同じ行に、奇数番目の読みでは同じ列にあること",
     (difficulty) => {
-      const { readings, cells } = createPreviewChain(difficulty);
+      const { cells } = createPreviewChain(difficulty);
+      const steps = cells.slice(1).map((cell, index) => ({
+        readingIndex: index + 1,
+        cell,
+        previousCell: cells[index]!,
+      }));
+      const rowSteps = steps.filter(
+        ({ readingIndex }) => readingIndex % 2 === 0,
+      );
+      const columnSteps = steps.filter(
+        ({ readingIndex }) => readingIndex % 2 === 1,
+      );
 
-      readings.forEach((reading, readingIndex) => {
-        const cell = cells[readingIndex]!;
-
-        expect(reading.axis).toBe(readingIndex % 2 === 0 ? "row" : "column");
-        expect(reading.index).toBe(
-          reading.axis === "row" ? cell.row : cell.column,
-        );
-      });
-    },
-  );
-
-  test.each(difficultyIds)(
-    "レベル %s の連鎖は、次に読む線が、前の読みで決まったマスを通ること",
-    (difficulty) => {
-      const { readings, cells } = createPreviewChain(difficulty);
-      const followingReadings = readings.slice(1);
-      const decidedCells = cells.slice(0, -1);
-
-      followingReadings.forEach((reading, index) => {
-        const previousCell = decidedCells[index]!;
-
-        expect(reading.index).toBe(
-          reading.axis === "row" ? previousCell.row : previousCell.column,
-        );
-      });
+      expect(rowSteps.map(({ cell }) => cell.row)).toEqual(
+        rowSteps.map(({ previousCell }) => previousCell.row),
+      );
+      expect(columnSteps.map(({ cell }) => cell.column)).toEqual(
+        columnSteps.map(({ previousCell }) => previousCell.column),
+      );
     },
   );
 
@@ -138,15 +130,12 @@ describe("createPreviewChain", () => {
   );
 
   test.each(adjacentLevels)(
-    "レベル %s の連鎖が、レベル %s の連鎖の始めの部分と同じ読みと同じマスであること",
+    "レベル %s の連鎖が、レベル %s の連鎖の始めの部分と同じマスの並びであること",
     (lowerDifficulty, higherDifficulty) => {
       const lower = createPreviewChain(lowerDifficulty);
       const higher = createPreviewChain(higherDifficulty);
 
-      expect(higher.readings.length).toBeGreaterThan(lower.readings.length);
-      expect(higher.readings.slice(0, lower.readings.length)).toEqual(
-        lower.readings,
-      );
+      expect(higher.cells.length).toBeGreaterThan(lower.cells.length);
       expect(higher.cells.slice(0, lower.cells.length)).toEqual(lower.cells);
     },
   );
