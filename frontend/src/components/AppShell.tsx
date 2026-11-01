@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 
+import { useAppBackgroundMusic } from "@/components/app-background-music";
 import { usePrepareAppDecisionSounds } from "@/components/app-decision-sound";
+import { BgmAuditionSwitcher } from "@/components/BgmAuditionSwitcher";
+import { useBgmAuditionCandidate } from "@/components/BgmAuditionSwitcher/bgm-audition-candidates";
 import { BrandIdentityHeader } from "@/components/BrandIdentityHeader";
 
 type AppShellProps = {
@@ -24,10 +27,22 @@ export function AppShell({
   contentLayout = "contained",
 }: AppShellProps) {
   usePrepareAppDecisionSounds();
+  const [bgmAuditionCandidate, selectBgmAuditionCandidate] =
+    useBgmAuditionCandidate();
+  const backgroundMusicScene = useAppBackgroundMusic(
+    bgmAuditionCandidate.tracks,
+  );
+
   return (
     <div className="flex min-h-screen flex-col bg-muted/30 font-ui">
       <BrandIdentityHeader linkToHome size="regular" />
       <main className={mainClassNames[contentLayout]}>{children}</main>
+      <BgmAuditionSwitcher
+        candidate={bgmAuditionCandidate}
+        onSelect={selectBgmAuditionCandidate}
+        // プレイ画面と結果画面は、低いブランドの帯を持つ画面でページ全体を覆う。
+        band={backgroundMusicScene === "home" ? "regular" : "compact"}
+      />
     </div>
   );
 }
