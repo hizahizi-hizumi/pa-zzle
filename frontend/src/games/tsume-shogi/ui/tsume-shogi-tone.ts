@@ -1,3 +1,5 @@
+import { tsumeShogiBoardStyle } from "@/games/tsume-shogi/ui/board-style";
+
 /**
  * 詰将棋固有の色。盤と駒は木の盤・駒を思わせる色にし、共通UIの意味色（`primary`・`ring`・`success` など）は
  * 流用しない。駒は盤の地の色によらず淡い地に濃い文字で描き、ダークでも同じ読みやすさにする。
@@ -20,7 +22,7 @@
  * - `promoted`: 成った駒の文字。将棋の駒の慣例どおり赤くする。
  * - `refutation`: 誤王手への玉方の反証。最後の手の地とは色相を分け、「この筋では逃れられた」ことを示す。
  */
-export const tsumeShogiToneClassNames = {
+const currentToneClassNames = {
   boardSurface: "bg-[#f0d6a2] dark:bg-[#3a2e24]",
   boardSlab:
     "bg-[#e2bb7a] shadow-[0_2px_0_#b48546,0_6px_16px_rgb(90_55_20/0.22)] dark:bg-[#2a211a] dark:shadow-[0_2px_0_#140f0b,0_6px_16px_rgb(0_0_0/0.5)]",
@@ -55,4 +57,102 @@ export const tsumeShogiToneClassNames = {
   handHover:
     "not-aria-disabled:not-aria-pressed:hover:bg-[#5c3b1a]/10 dark:not-aria-disabled:not-aria-pressed:hover:bg-white/10",
   refutationText: "text-rose-700 dark:text-rose-300",
+  focusRing: "focus-visible:outline-foreground/70",
+  pieceLift: "-translate-y-[6%]",
 } as const;
+
+type TsumeShogiToneClassNames = Record<
+  keyof typeof currentToneClassNames,
+  string
+>;
+
+/**
+ * 案S「静か」。木の質感を捨て、共通UIの面と罫線の言葉で盤と駒を描く。駒は平らな五角形に細い輪郭だけ。
+ * 状態の地は他のゲームと同じく淡い色で示し、ダークでは共通UIの暗い面にそのまま載せる。
+ */
+const quietToneClassNames = {
+  boardSurface: "bg-background",
+  boardSlab: "",
+  boardGrain: "hidden",
+  boardLine: "border-foreground/15",
+  boardOutline: "outline-foreground/55",
+  boardEdge: "border-foreground/55",
+  boardStar: "bg-foreground/50",
+  coordinate: "text-muted-foreground",
+  komadai: "border border-foreground/15",
+  pieceFill: "fill-background",
+  pieceFaceTop: "",
+  pieceFaceBottom: "",
+  pieceBevelLight: "",
+  pieceBevelDark: "",
+  pieceGrain: "",
+  pieceSide: "",
+  pieceStroke: "stroke-foreground/60",
+  pieceShadow: "",
+  pieceText: "fill-foreground",
+  promotedText: "fill-red-700 dark:fill-red-400",
+  squareSelected: "bg-sky-100 dark:bg-sky-900/50",
+  squareLastMove: "bg-foreground/[0.08]",
+  squareRefutation: "bg-rose-100 dark:bg-rose-950/70",
+  squareRejected: "bg-rose-200 dark:bg-rose-900/60",
+  squareMated: "bg-amber-200/80 dark:bg-amber-800/50",
+  handSelected: "bg-sky-100 dark:bg-sky-900/50",
+  handRejected: "bg-rose-200 dark:bg-rose-900/60",
+  handHover: "not-aria-disabled:not-aria-pressed:hover:bg-foreground/5",
+  refutationText: "text-rose-700 dark:text-rose-300",
+  focusRing: "focus-visible:outline-foreground/70",
+  pieceLift: "-translate-y-[6%]",
+} as const satisfies TsumeShogiToneClassNames;
+
+/**
+ * 案R「リアル」。木の質感・駒の陰影は `board/real/real-tone.ts` が持ち、ここでは黒漆の罫線と、木の上で UI に見えない状態表示を持つ。
+ * ダークでも盤と駒は木のまま（周りだけ暗い）なので、筋段の色を除いて `dark:` を付けない。
+ */
+const realToneClassNames = {
+  boardSurface: "bg-[#e3b466]",
+  boardSlab: "",
+  boardGrain: "hidden",
+  boardLine: "border-[#1a1410]/90",
+  boardOutline: "outline-[#1a1410]/90",
+  boardEdge: "border-[#1a1410]/90",
+  boardStar: "bg-[#1a1410]",
+  coordinate: "text-[#6b4a2b] dark:text-[#c9ab85]",
+  komadai: "",
+  pieceFill: "fill-[#e8cc8a]",
+  pieceFaceTop: "",
+  pieceFaceBottom: "",
+  pieceBevelLight: "",
+  pieceBevelDark: "",
+  pieceGrain: "",
+  pieceSide: "",
+  pieceStroke: "stroke-[#7a5224]/45",
+  pieceShadow: "",
+  pieceText: "fill-[#111111]",
+  promotedText: "fill-[#bd4024]",
+  // 選んだ駒は持ち上げて示す（`TsumeShogiPieceGlyph` の `lifted`）。升の地は変えない。
+  squareSelected: "",
+  // 最後の手は、木を暖かく明るくする。
+  squareLastMove:
+    "bg-[radial-gradient(circle_at_50%_55%,rgb(255_240_178/0.9),rgb(255_208_112/0.55)_72%)]",
+  // 反証は朱の輪郭で、最後の手（明るい地）と形でも見分ける。
+  squareRefutation:
+    "bg-[#bd4024]/15 shadow-[inset_0_0_0_2px_rgb(176_52_28/0.85)]",
+  squareRejected: "bg-[#bd4024]/35",
+  // 詰みは木と別の色相（藍）にする。
+  squareMated: "bg-[#3b3aa0]/25 shadow-[inset_0_0_0_2px_rgb(52_50_150/0.85)]",
+  handSelected: "",
+  handRejected: "bg-[#bd4024]/35",
+  handHover: "not-aria-disabled:not-aria-pressed:hover:bg-[#3b230b]/10",
+  refutationText: "text-rose-700 dark:text-rose-300",
+  // 明るい木の上でもダークの周りでも見えるよう、墨色 2px の内側に明るい縁を添える。
+  focusRing:
+    "focus-visible:outline-[#1a1410] focus-visible:shadow-[inset_0_0_0_4px_rgb(255_250_235/0.95)]",
+  // 選んだ駒を 3px ほど持ち上げる。
+  pieceLift: "-translate-y-[9%]",
+} as const satisfies TsumeShogiToneClassNames;
+
+export const tsumeShogiToneClassNames: TsumeShogiToneClassNames = {
+  current: currentToneClassNames,
+  quiet: quietToneClassNames,
+  real: realToneClassNames,
+}[tsumeShogiBoardStyle];

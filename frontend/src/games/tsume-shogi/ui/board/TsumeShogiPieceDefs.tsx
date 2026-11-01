@@ -1,4 +1,9 @@
 import { createContext, type ReactNode, useContext, useId } from "react";
+import {
+  createTsumeShogiRealPieceDefIds,
+  RealPieceDefs,
+  type TsumeShogiRealPieceDefIds,
+} from "@/games/tsume-shogi/ui/board/TsumeShogiPieceDefs/RealPieceDefs";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
 
 /**
@@ -14,6 +19,9 @@ export type TsumeShogiPieceDefIds = {
   defenderFace: string;
   /** 面に淡く重ねる、縦に通る柾目。 */
   grain: string;
+  /** 案R: 面取りの縁、面の陰影、ぼかした影。 */
+  /** 案R の駒の塗り（`TsumeShogiPieceDefs/RealPieceDefs.tsx`）。 */
+  real: TsumeShogiRealPieceDefIds;
 };
 
 const TsumeShogiPieceDefsContext = createContext<TsumeShogiPieceDefIds | null>(
@@ -48,6 +56,7 @@ export function TsumeShogiPieceDefs({ children }: TsumeShogiPieceDefsProps) {
     face: `${id}face`,
     defenderFace: `${id}defender-face`,
     grain: `${id}grain`,
+    real: createTsumeShogiRealPieceDefIds(id),
   } satisfies TsumeShogiPieceDefIds;
 
   return (
@@ -112,6 +121,7 @@ export function TsumeShogiPieceDefs({ children }: TsumeShogiPieceDefsProps) {
               className={tsumeShogiToneClassNames.pieceGrain}
             />
           </pattern>
+          <RealPieceDefs ids={ids.real} />
         </defs>
       </svg>
       {children}

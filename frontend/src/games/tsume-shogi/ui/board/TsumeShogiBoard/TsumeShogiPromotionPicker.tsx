@@ -2,9 +2,11 @@ import { useEffect, useRef } from "react";
 
 import type { TapHandlers } from "@/components/touch-tap";
 import type {
+  TsumeShogiBoardPiece,
   TsumeShogiPieceType,
   TsumeShogiSquare,
 } from "@/games/tsume-shogi/puzzle/position";
+import { placeTsumeShogiPromotionPicker } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard/promotion-picker-placement";
 import { TsumeShogiPieceGlyph } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceGlyph";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
 import { cn } from "@/lib/utils";
@@ -23,6 +25,8 @@ const promotedPieceTypes: Partial<
 type TsumeShogiPromotionPickerProps = {
   to: TsumeShogiSquare;
   pieceType: TsumeShogiPieceType;
+  /** 盤上の駒。選択肢で隠す駒（特に玉）が少ない位置を選ぶ。 */
+  boardPieces: readonly TsumeShogiBoardPiece[];
   /** 成（`promote`）・不成（`keep`）を押したときの受け口。盤の升と同じ記録を共有し、続けて素早く押しても押した方で受ける。 */
   optionTapHandlers: { promote: TapHandlers; keep: TapHandlers };
 };
@@ -32,12 +36,13 @@ const squareRatio = 100 / 9;
 
 /**
  * 成・不成のどちらも指せる移動で、移動先の升のそばに成った駒と成らない駒を並べて選ばせる。
- * 移動先が盤の上半分なら升の下、下半分なら升の上に出し、移動先と駒を隠さない。
+ * 移動先を隠さず、盤上の駒（特に玉）をできるだけ隠さない位置に出す（`promotion-picker-placement.ts`）。
  * 出したら「成」へフォーカスを移し、閉じたら出す前にフォーカスのあった升へ戻す。
  */
 export function TsumeShogiPromotionPicker({
   to,
   pieceType,
+  boardPieces,
   optionTapHandlers,
 }: TsumeShogiPromotionPickerProps) {
   const groupRef = useRef<HTMLDivElement>(null);
@@ -62,10 +67,9 @@ export function TsumeShogiPromotionPicker({
     };
   }, []);
 
-  const column = 9 - to.file;
-  const left = Math.min(Math.max(column - 0.5, 0), 7) * squareRatio;
-  const placeBelow = to.rank <= 5;
-  const top = (placeBelow ? to.rank : to.rank - 2) * squareRatio;
+  const placement = placeTsumeShogiPromotionPicker(to, boardPieces);
+  const left = placement.column * squareRatio;
+  const top = placement.row * squareRatio;
   const options = [
     {
       type: promotedPieceTypes[pieceType] ?? pieceType,

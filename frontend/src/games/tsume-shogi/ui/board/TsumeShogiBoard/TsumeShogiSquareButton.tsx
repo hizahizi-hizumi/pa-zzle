@@ -120,10 +120,11 @@ export function TsumeShogiSquareButton({
       onPointerUp={tapHandlers.onPointerUp}
       onClick={tapHandlers.onClick}
       className={cn(
-        "relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 focus-visible:outline-foreground/70 aria-disabled:cursor-default",
+        "relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 aria-disabled:cursor-default",
         tsumeShogiToneClassNames.boardLine,
         !isLastFile && "border-r",
         !isLastRank && "border-b",
+        tsumeShogiToneClassNames.focusRing,
         highlight && highlightClassNames[highlight],
       )}
     >
@@ -135,13 +136,14 @@ export function TsumeShogiSquareButton({
           data-selected-piece={selected ? "" : undefined}
           className={cn(
             "absolute inset-0 flex items-center justify-center transition-transform duration-(--duration-fast)",
-            selected && "-translate-y-[6%]",
+            selected && tsumeShogiToneClassNames.pieceLift,
           )}
         >
           <TsumeShogiPieceGlyph
             type={piece.type}
             side={piece.side}
             size="board"
+            lifted={selected}
           />
         </span>
       )}

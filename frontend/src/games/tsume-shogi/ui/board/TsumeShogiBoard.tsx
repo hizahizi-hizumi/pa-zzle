@@ -12,11 +12,14 @@ import type {
   TsumeShogiRejection,
   TsumeShogiSelection,
 } from "@/games/tsume-shogi/session/session";
+import { RealBoardWood } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard/RealBoardWood";
+import { TsumeShogiCoordinateLabel } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard/TsumeShogiCoordinateLabel";
 import { TsumeShogiPromotionPicker } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard/TsumeShogiPromotionPicker";
 import {
   TsumeShogiSquareButton,
   type TsumeShogiSquareHighlight,
 } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard/TsumeShogiSquareButton";
+import { tsumeShogiBoardStyle } from "@/games/tsume-shogi/ui/board-style";
 import { formatTsumeShogiRank } from "@/games/tsume-shogi/ui/piece-label";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
 import { useRejectedPieceFeedback } from "@/games/tsume-shogi/ui/use-rejected-piece-feedback";
@@ -48,11 +51,41 @@ const ranks = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
  * 段を書く右の縁（`--board-rank-band`）。320px では左右の縁を合わせて 14px に収め、升を 34px に保つ。
  * 幅の広い画面ほど縁を太くする。盤を置く画面は、この寸法を含めて盤の大きさを決める。
  */
-export const tsumeShogiBoardFrameStyle = {
+const currentFrameStyle = {
   "--board-frame": "clamp(3px, calc(3px + (100cqw - 320px) / 20), 6px)",
   "--board-rank-band": "clamp(11px, calc(11px + (100cqw - 320px) / 14), 16px)",
   "--board-file-band": "1rem",
+  "--board-bottom": "var(--board-frame)",
 } as CSSProperties;
+
+/** 案S: 縁を持たない。外枠の線が画面の端にかからない分だけ空ける。 */
+const quietFrameStyle = {
+  "--board-frame": "2px",
+  "--board-rank-band": "clamp(13px, calc(13px + (100cqw - 320px) / 14), 18px)",
+  "--board-file-band": "0.875rem",
+  "--board-bottom": "var(--board-frame)",
+} as CSSProperties;
+
+/**
+ * 案R: 木の盤の縁（`--board-frame`）の外に筋・段を書き、盤の下に手前の側面（木口）をのぞかせる。
+ * 筋・段の帯と盤の下の欄は、縁と側面を含めた寸法。
+ */
+const realFrameStyle = {
+  // 320px でも盤を画面の縁に付けず、置いた盤に見える余白を左右に残す。
+  "--board-gutter": "clamp(6px, calc(6px + (100cqw - 320px) / 7), 12px)",
+  "--board-frame": "clamp(7px, calc(7px + (100cqw - 320px) / 16), 12px)",
+  "--board-rank-band":
+    "calc(var(--board-frame) + clamp(15px, calc(15px + (100cqw - 320px) / 14), 19px))",
+  "--board-file-band": "calc(var(--board-frame) + 0.9375rem)",
+  "--board-bottom":
+    "calc(var(--board-frame) + clamp(7px, calc(7px + (100cqw - 320px) / 16), 11px))",
+} as CSSProperties;
+
+export const tsumeShogiBoardFrameStyle = {
+  current: currentFrameStyle,
+  quiet: quietFrameStyle,
+  real: realFrameStyle,
+}[tsumeShogiBoardStyle];
 
 const selectedPieceGlyphSelector = "[data-selected-piece] > svg";
 
@@ -74,6 +107,12 @@ function findPiece(
     )?.piece ?? null
   );
 }
+
+const coordinateTextClassNames = {
+  current: "text-[0.6875rem]",
+  quiet: "text-[0.625rem]",
+  real: "text-[0.75rem]",
+} as const;
 
 /**
  * 9×9 の盤。木の縁の上に筋、右に段を書き、星を打つ。升全体を押せる。
@@ -126,19 +165,24 @@ export function TsumeShogiBoard({
   return (
     <div
       className={cn(
-        "grid size-full grid-cols-[var(--board-frame)_minmax(0,1fr)_var(--board-rank-band)] grid-rows-[var(--board-file-band)_minmax(0,1fr)_var(--board-frame)] rounded-[3px]",
+        "grid size-full grid-cols-[var(--board-frame)_minmax(0,1fr)_var(--board-rank-band)] grid-rows-[var(--board-file-band)_minmax(0,1fr)_var(--board-bottom)]",
+        tsumeShogiBoardStyle === "current" && "rounded-[3px]",
         tsumeShogiToneClassNames.boardSlab,
       )}
     >
+      {tsumeShogiBoardStyle === "real" && <RealBoardWood />}
       <div
         aria-hidden="true"
         className={cn(
-          "col-start-2 row-start-1 grid grid-cols-9 items-center text-center text-[0.6875rem] leading-none font-medium tabular-nums",
+          "col-start-2 row-start-1 grid grid-cols-9 items-center text-center leading-none font-medium tabular-nums",
+          coordinateTextClassNames[tsumeShogiBoardStyle],
+          tsumeShogiBoardStyle === "real" && "pb-(--board-frame)",
+          tsumeShogiBoardStyle === "quiet" && "pb-1",
           tsumeShogiToneClassNames.coordinate,
         )}
       >
         {files.map((file) => (
-          <span key={file}>{file}</span>
+          <TsumeShogiCoordinateLabel key={file} text={String(file)} />
         ))}
       </div>
       <div
@@ -147,8 +191,12 @@ export function TsumeShogiBoard({
         role="group"
         aria-label="盤"
         className={cn(
-          "relative col-start-2 row-start-2 grid grid-cols-9 grid-rows-9 outline-(length:--border-width-strong) outline-solid",
-          tsumeShogiToneClassNames.boardSurface,
+          "relative col-start-2 row-start-2 grid grid-cols-9 grid-rows-9 outline-solid",
+          tsumeShogiBoardStyle === "real"
+            ? "outline-1"
+            : "outline-(length:--border-width-strong)",
+          tsumeShogiBoardStyle !== "real" &&
+            tsumeShogiToneClassNames.boardSurface,
           tsumeShogiToneClassNames.boardOutline,
         )}
       >
@@ -188,7 +236,12 @@ export function TsumeShogiBoard({
             key={`${left}-${top}`}
             aria-hidden="true"
             className={cn(
-              "pointer-events-none absolute size-[5px] -translate-1/2 rounded-full",
+              "pointer-events-none absolute -translate-1/2 rounded-full",
+              {
+                current: "size-[5px]",
+                quiet: "size-1",
+                real: "size-[clamp(3px,calc(var(--board-width)*0.008),4px)]",
+              }[tsumeShogiBoardStyle],
               tsumeShogiToneClassNames.boardStar,
             )}
             style={{ left, top }}
@@ -198,6 +251,7 @@ export function TsumeShogiBoard({
           <TsumeShogiPromotionPicker
             to={promotionChoice.to}
             pieceType={promotingPiece.type}
+            boardPieces={boardPieces}
             optionTapHandlers={{
               promote: getTapHandlers(() => onChoosePromotion(true)),
               keep: getTapHandlers(() => onChoosePromotion(false)),
@@ -208,13 +262,15 @@ export function TsumeShogiBoard({
       <div
         aria-hidden="true"
         className={cn(
-          "col-start-3 row-start-2 grid grid-rows-9 text-[0.6875rem] leading-none font-medium",
+          "col-start-3 row-start-2 grid grid-rows-9 leading-none font-medium",
+          coordinateTextClassNames[tsumeShogiBoardStyle],
+          tsumeShogiBoardStyle === "real" && "pl-(--board-frame)",
           tsumeShogiToneClassNames.coordinate,
         )}
       >
         {ranks.map((rank) => (
           <span key={rank} className="flex items-center justify-center">
-            {formatTsumeShogiRank(rank)}
+            <TsumeShogiCoordinateLabel text={formatTsumeShogiRank(rank)} />
           </span>
         ))}
       </div>

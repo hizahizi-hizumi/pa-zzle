@@ -9,6 +9,14 @@ import {
 import type { TsumeShogiRejection } from "@/games/tsume-shogi/session/session";
 import { TsumeShogiPieceGlyph } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceGlyph";
 import { tsumeShogiHandPieceNames } from "@/games/tsume-shogi/ui/piece-label";
+import {
+  handCountClassName,
+  handPieceRadiusClassName,
+  komadaiClassName,
+  komadaiLabelClassName,
+  komadaiStyle,
+  showsKomadaiLabel,
+} from "@/games/tsume-shogi/ui/TsumeShogiPlay/komadai-surface";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
 import { useRejectedPieceFeedback } from "@/games/tsume-shogi/ui/use-rejected-piece-feedback";
 import { cn } from "@/lib/utils";
@@ -62,18 +70,16 @@ export function TsumeShogiHand({
   return (
     <div
       className={cn(
-        "flex size-full min-w-0 items-center gap-2 rounded-md px-2",
-        tsumeShogiToneClassNames.komadai,
+        "flex size-full min-w-0 items-center gap-2 px-2",
+        komadaiClassName,
       )}
+      style={komadaiStyle}
     >
-      <span
-        className={cn(
-          "shrink-0 text-play-meta",
-          tsumeShogiToneClassNames.coordinate,
-        )}
-      >
-        持駒
-      </span>
+      {showsKomadaiLabel && (
+        <span className={cn("shrink-0 text-play-meta", komadaiLabelClassName)}>
+          持駒
+        </span>
+      )}
       <div
         ref={piecesRef}
         role="group"
@@ -87,7 +93,8 @@ export function TsumeShogiHand({
           <span
             className={cn(
               "text-play-meta",
-              tsumeShogiToneClassNames.coordinate,
+              komadaiLabelClassName,
+              !showsKomadaiLabel && "sr-only",
             )}
           >
             なし
@@ -106,7 +113,9 @@ export function TsumeShogiHand({
               onPointerUp={tapHandlers.onPointerUp}
               onClick={tapHandlers.onClick}
               className={cn(
-                "relative flex h-10 min-w-10 touch-manipulation select-none items-center justify-center rounded-md px-1 outline-none transition-colors duration-(--duration-fast) focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-foreground/70 aria-disabled:cursor-default",
+                "relative flex h-10 min-w-10 touch-manipulation select-none items-center justify-center gap-0.5 px-1 outline-none transition-colors duration-(--duration-fast) focus-visible:outline-2 focus-visible:outline-solid aria-disabled:cursor-default",
+                handPieceRadiusClassName,
+                tsumeShogiToneClassNames.focusRing,
                 tsumeShogiToneClassNames.handHover,
                 selected &&
                   (rejectedPieceFlashing
@@ -120,10 +129,21 @@ export function TsumeShogiHand({
                   selected && "-translate-y-0.5",
                 )}
               >
-                <TsumeShogiPieceGlyph type={type} side="attacker" size="hand" />
+                <TsumeShogiPieceGlyph
+                  type={type}
+                  side="attacker"
+                  size="hand"
+                  lifted={selected}
+                />
               </span>
+              {/* 枚数は駒に重ねず、駒の右下の外に添える。 */}
               {hand[type] > 1 && (
-                <span className="absolute right-0 bottom-0 text-play-meta tabular-nums">
+                <span
+                  className={cn(
+                    "self-end text-play-meta tabular-nums",
+                    handCountClassName,
+                  )}
+                >
                   {hand[type]}
                 </span>
               )}

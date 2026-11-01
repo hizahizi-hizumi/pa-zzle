@@ -596,11 +596,11 @@ describe("TsumeShogiPlayView", () => {
 
       test("その問題で始めURLを置き換えないこと", () => {
         const problemId = readProblemId(router);
-        const plies = screen.getByText("手数").parentElement?.textContent;
+        const plies = screen.queryByText(`${requested.problem.plies}手詰`);
 
         expect(problemId).toBe(requestedProblemId);
         expect(router.state.historyAction).toBe("POP");
-        expect(plies).toBe(`手数${requested.problem.plies}`);
+        expect(plies).not.toBeNull();
       });
     });
 

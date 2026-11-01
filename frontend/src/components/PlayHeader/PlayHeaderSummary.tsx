@@ -47,7 +47,14 @@ function groupMetrics(
 }
 
 function getMetricLabel(metric: PlayHeaderMetric): string {
-  return metric.type === "count" ? metric.label : "時間";
+  switch (metric.type) {
+    case "count":
+      return metric.label;
+    case "problem-fact":
+      return metric.text;
+    case "elapsed-time":
+      return "時間";
+  }
 }
 
 function selectLayout(
@@ -93,6 +100,8 @@ export function PlayHeaderSummary({ title, metrics }: PlayHeaderSummaryProps) {
                         metric.reservedDigits ?? defaultCountReservedDigits
                       }
                     />
+                  ) : metric.type === "problem-fact" ? (
+                    <span className="whitespace-nowrap">{metric.text}</span>
                   ) : (
                     <PlayMetric
                       label={getMetricLabel(metric)}

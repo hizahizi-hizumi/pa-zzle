@@ -140,7 +140,7 @@ export function TsumeShogiDifficultyPreview({
                       <TsumeShogiPieceGlyph
                         type={boardPiece.piece.type}
                         side={boardPiece.piece.side}
-                        size="board"
+                        size="miniature"
                       />
                     )}
                   </span>
@@ -157,7 +157,7 @@ export function TsumeShogiDifficultyPreview({
                 <TsumeShogiPieceGlyph
                   type={type}
                   side="attacker"
-                  size="board"
+                  size="miniature"
                 />
               </span>
             ))}

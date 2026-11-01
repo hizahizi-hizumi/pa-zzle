@@ -1,5 +1,8 @@
 import type { TsumeShogiPieceType } from "@/games/tsume-shogi/puzzle/position";
-import { tsumeShogiPieceGlyphPaths } from "@/games/tsume-shogi/ui/board/piece-glyph-paths";
+import { tsumeShogiPieceShapes } from "@/games/tsume-shogi/ui/board/piece-shape";
+import { tsumeShogiRealToneClassNames as realTone } from "@/games/tsume-shogi/ui/board/real/real-tone";
+import { getTsumeShogiPieceGlyphPath } from "@/games/tsume-shogi/ui/board/real/selected-fonts";
+import { tsumeShogiBoardStyle } from "@/games/tsume-shogi/ui/board-style";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +66,8 @@ const cellSize = 10;
 const center = (gridSize * cellSize) / 2;
 /** 駒の字形（0.1mm 単位。玉の字の高さは約 18mm）を、升の中で字の高さが升の約9割になる大きさへ縮める。 */
 const glyphScale = 0.05;
+/** 案R では盤と同じ柘植の駒を置く。駒（玉で高さ約 31mm）が中央の升から大きくはみ出さない大きさにする。 */
+const realPieceScale = 0.038;
 
 function toPoint(dx: number, dy: number) {
   return { x: center + dx * cellSize, y: center + dy * cellSize };
@@ -75,19 +80,29 @@ type PieceMovementFigureProps = {
 /** 5×5 の升の中央に駒を置き、1升だけ動ける先に点、何升でも進める向きに矢印を描く。 */
 export function PieceMovementFigure({ type }: PieceMovementFigureProps) {
   const extent = gridSize * cellSize;
+  const real = tsumeShogiBoardStyle === "real";
+  const shape = tsumeShogiPieceShapes[type];
+  const promoted = type === "dragon" || type === "horse";
   return (
     <svg
       viewBox={`0 0 ${extent} ${extent}`}
       aria-hidden="true"
       className={cn(
         "size-12 rounded-sm",
-        tsumeShogiToneClassNames.boardSurface,
+        real ? realTone.miniatureBoard : tsumeShogiToneClassNames.boardSurface,
       )}
     >
       {Array.from({ length: gridSize - 1 }, (_, index) => {
         const offset = (index + 1) * cellSize;
         return (
-          <g key={offset} className="stroke-amber-900/20 dark:stroke-stone-600">
+          <g
+            key={offset}
+            className={
+              real
+                ? realTone.miniatureStroke
+                : "stroke-amber-900/20 dark:stroke-stone-600"
+            }
+          >
             <line
               x1={offset}
               y1={0}
@@ -114,7 +129,7 @@ export function PieceMovementFigure({ type }: PieceMovementFigureProps) {
               cx={x}
               cy={y}
               r={2.4}
-              className="fill-foreground"
+              className={real ? realTone.miniatureMark : "fill-foreground"}
             />
           );
         }
@@ -122,7 +137,14 @@ export function PieceMovementFigure({ type }: PieceMovementFigureProps) {
         const arrow = toPoint(dx * 1.85, dy * 1.85);
         const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
         return (
-          <g key={`${dx},${dy}`} className="fill-foreground stroke-foreground">
+          <g
+            key={`${dx},${dy}`}
+            className={
+              real
+                ? realTone.miniatureMark
+                : "fill-foreground stroke-foreground"
+            }
+          >
             <line
               x1={start.x}
               y1={start.y}
@@ -138,15 +160,36 @@ export function PieceMovementFigure({ type }: PieceMovementFigureProps) {
           </g>
         );
       })}
-      <path
-        d={tsumeShogiPieceGlyphPaths[type]}
-        transform={`translate(${center} ${center}) scale(${glyphScale})`}
-        className={
-          type === "dragon" || type === "horse"
-            ? tsumeShogiToneClassNames.promotedText
-            : "fill-foreground"
-        }
-      />
+      {real ? (
+        <g
+          transform={`translate(${center} ${center}) scale(${realPieceScale}) translate(0 ${-shape.height / 2})`}
+        >
+          <path
+            d={shape.outline}
+            transform={`translate(0 ${shape.height * (9 / 112)})`}
+            className={realTone.pieceSide}
+          />
+          <path
+            d={shape.outline}
+            strokeWidth={6}
+            strokeLinejoin="round"
+            className={cn(realTone.pieceFace, realTone.pieceOutline)}
+          />
+          <path
+            d={getTsumeShogiPieceGlyphPath(type)}
+            transform={`translate(0 ${shape.glyphCenterY})`}
+            className={promoted ? realTone.vermilionFlat : realTone.inkFlat}
+          />
+        </g>
+      ) : (
+        <path
+          d={getTsumeShogiPieceGlyphPath(type)}
+          transform={`translate(${center} ${center}) scale(${glyphScale})`}
+          className={
+            promoted ? tsumeShogiToneClassNames.promotedText : "fill-foreground"
+          }
+        />
+      )}
     </svg>
   );
 }

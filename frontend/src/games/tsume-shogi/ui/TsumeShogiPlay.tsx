@@ -70,11 +70,11 @@ type TsumeShogiPlayProps = GamePlayScreenProps<
  * 320px では余白を取らない。PC では 40rem まで広げる。
  */
 const boardSizeStyle = {
-  ...tsumeShogiBoardFrameStyle,
   "--board-gutter": "clamp(0px, calc((100cqw - 320px) / 3), 0.75rem)",
+  ...tsumeShogiBoardFrameStyle,
   "--board-chrome": "calc(2 * 3rem + 1.25rem + 3 * 0.25rem)",
   "--board-width":
-    "min(calc(100cqw - 2 * var(--board-gutter)), calc((100cqh - var(--board-chrome) - var(--board-file-band) - var(--board-frame)) * 352 / 386 + var(--board-frame) + var(--board-rank-band)), 40rem)",
+    "min(calc(100cqw - 2 * var(--board-gutter)), calc((100cqh - var(--board-chrome) - var(--board-file-band) - var(--board-bottom)) * 352 / 386 + var(--board-frame) + var(--board-rank-band)), 40rem)",
 } as CSSProperties;
 
 /**
@@ -172,7 +172,7 @@ export function TsumeShogiPlay({
       result={result}
       title={TSUME_SHOGI_DISPLAY_NAME}
       metrics={[
-        { type: "count", label: "手数", count: plies, reservedDigits: 1 },
+        { type: "problem-fact", text: `${plies}手詰` },
         { type: "elapsed-time", elapsedMs },
       ]}
       canRestart={canRestart}
@@ -214,7 +214,7 @@ export function TsumeShogiPlay({
             <div className="h-12">
               <TsumeShogiPieceBox />
             </div>
-            <div className="relative h-[calc((var(--board-width)-var(--board-frame)-var(--board-rank-band))*386/352+var(--board-file-band)+var(--board-frame))]">
+            <div className="relative h-[calc((var(--board-width)-var(--board-frame)-var(--board-rank-band))*386/352+var(--board-file-band)+var(--board-bottom))]">
               <TsumeShogiClearAnimation
                 active={progress === "clearing"}
                 onClearAnimationComplete={onClearAnimationComplete}
