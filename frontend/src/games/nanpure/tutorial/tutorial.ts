@@ -214,7 +214,7 @@ const steps: readonly NanpureTutorialStep[] = [
   {
     message: {
       headline: "マスを選んで、下の数字を押します",
-      detail: `印のマスに${getSolutionDigit(cellAt(6, 3))}を入れてください`,
+      detail: `印の付いたマスに${getSolutionDigit(cellAt(6, 3))}を入れてください`,
     },
     introducedRuleId: null,
     cellIndex: cellAt(6, 3),
@@ -224,7 +224,7 @@ const steps: readonly NanpureTutorialStep[] = [
   {
     message: {
       headline: "どの行にも\n1〜9が1つずつ入ります",
-      detail: "この行に無い数字を入れてください",
+      detail: "この行にない数字を入れてください",
     },
     introducedRuleId: "row",
     cellIndex: cellAt(6, 9),
@@ -234,7 +234,7 @@ const steps: readonly NanpureTutorialStep[] = [
   {
     message: {
       headline: "どの列にも\n1〜9が1つずつ入ります",
-      detail: "この列に無い数字を入れてください",
+      detail: "この列にない数字を入れてください",
     },
     introducedRuleId: "column",
     cellIndex: cellAt(7, 1),
@@ -243,8 +243,8 @@ const steps: readonly NanpureTutorialStep[] = [
   },
   {
     message: {
-      headline: "太線で囲んだブロックにも\n1〜9が1つずつ入ります",
-      detail: "このブロックに無い数字を入れてください",
+      headline: "太線で区切ったブロックにも\n1〜9が1つずつ入ります",
+      detail: "このブロックにない数字を入れてください",
     },
     introducedRuleId: "block",
     cellIndex: cellAt(4, 9),
@@ -254,7 +254,7 @@ const steps: readonly NanpureTutorialStep[] = [
   {
     message: {
       headline: "行・列・ブロックを合わせると\n入る数字が1つに決まります",
-      detail: null,
+      detail: "3つのどこにもない数字を入れてください",
     },
     introducedRuleId: null,
     cellIndex: cellAt(3, 6),
@@ -461,12 +461,12 @@ function describeNanpureTutorialViolation(
   if (!lastMove || !unit) {
     return {
       headline: "印のマスの数字が違います",
-      detail: "別の数字を押すと入れ替わります",
+      detail: "印のマスを選んで、別の数字を押してください",
     };
   }
   return {
     headline: `この${unitNames[unit.kind]}には、もう${lastMove.digit}があります`,
-    detail: "別の数字を押すと入れ替わります",
+    detail: "別の数字を押すと変わります",
   };
 }
 
@@ -579,7 +579,7 @@ export const nanpureTutorial: Tutorial<
   ],
   steps,
   freePlay: {
-    headline: "残りのマスを埋めると完成です",
+    headline: "あとは残りを埋めれば完成です",
     detail: null,
   },
   completion: {

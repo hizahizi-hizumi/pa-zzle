@@ -192,7 +192,7 @@ describe("NanpureTutorial", () => {
       const cells = document.querySelectorAll('button[aria-label*="行"]');
       const digitPad = screen.getByRole("group", { name: "数字入力" });
       const headline = screen.queryByText("マスを選んで、下の数字を押します");
-      const detail = screen.queryByText("印のマスに9を入れてください");
+      const detail = screen.queryByText("印の付いたマスに9を入れてください");
       const hinted = getCuedCellIndices("hint");
       const digitDisabled = getDigitButton(9).hasAttribute("disabled");
       const rules = getRuleTexts();
@@ -263,10 +263,10 @@ describe("NanpureTutorial", () => {
       expect(headline).not.toBeNull();
     });
 
-    test("ブロックのルールでは、太線で囲んだブロックを示すこと", () => {
+    test("ブロックのルールでは、太線で区切ったブロックを示すこと", () => {
       finishSteps(3);
 
-      const headline = screen.queryByText(/太線で囲んだブロックにも/);
+      const headline = screen.queryByText(/太線で区切ったブロックにも/);
       const clues = getCuedUnits("clue");
 
       expect(headline).not.toBeNull();
@@ -293,7 +293,7 @@ describe("NanpureTutorial", () => {
         const hintedWhileThinking = getCuedCellIndices("hint");
         advanceTime(1);
 
-        const headline = screen.queryByText("残りのマスを埋めると完成です");
+        const headline = screen.queryByText("あとは残りを埋めれば完成です");
         const hinted = getCuedCellIndices("hint");
         const clues = getCuedUnits("clue");
 
