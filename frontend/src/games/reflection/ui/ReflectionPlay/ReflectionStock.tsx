@@ -4,6 +4,11 @@ import {
   reflectionPieces,
 } from "@/games/reflection/puzzle/board";
 import type { ReflectionSelection } from "@/games/reflection/session/session";
+import {
+  filterReflectionCues,
+  type ReflectionCue,
+} from "@/games/reflection/ui/board/cue";
+import { ReflectionCueMarks } from "@/games/reflection/ui/board/ReflectionCueMark";
 import { ReflectionPieceIcon } from "@/games/reflection/ui/board/ReflectionPieceIcon";
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
 import { reflectionPieceBarClassNames } from "@/games/reflection/ui/reflection-tone";
@@ -18,6 +23,8 @@ type ReflectionStockProps = {
   selectedCell: ReflectionPiece | null;
   disabled: boolean;
   onSelectStockPiece: (piece: ReflectionPiece) => void;
+  /** 種類ごとのボタンに重ねる合図。チュートリアルで、次に選ぶ種類を示す。 */
+  cues?: readonly ReflectionCue[];
 };
 
 /** 問題に含まれる種類だけを、決まった順で並べる。キーボードの数字キーもこの順に対応する。 */
@@ -38,6 +45,7 @@ export function ReflectionStock({
   selectedCell,
   disabled,
   onSelectStockPiece,
+  cues = [],
 }: ReflectionStockProps) {
   const returning = !disabled && selection?.type === "cell";
   // 盤面のピースを選んでいる間、そのピースと同じ種類（押すと戻す）と、残りのある種類（押すと置き換える）を押せる。
@@ -73,6 +81,10 @@ export function ReflectionStock({
               "relative flex h-11 min-w-0 max-w-16 flex-1 touch-manipulation select-none items-center justify-center text-foreground outline-none transition-[background-color,color,opacity] duration-(--duration-fast) focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset enabled:hover:bg-accent/60 enabled:active:bg-accent disabled:opacity-40",
             )}
           >
+            <ReflectionCueMarks
+              cues={filterReflectionCues(cues, { type: "stock", piece })}
+              place="stock"
+            />
             {selected || piece === selectedCellPiece ? (
               <span
                 aria-hidden="true"

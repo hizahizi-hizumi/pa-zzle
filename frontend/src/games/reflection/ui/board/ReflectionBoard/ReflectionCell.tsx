@@ -4,6 +4,8 @@ import {
   getReflectionCellPosition,
   type ReflectionCell as ReflectionCellState,
 } from "@/games/reflection/puzzle/board";
+import type { ReflectionCue } from "@/games/reflection/ui/board/cue";
+import { ReflectionCueMarks } from "@/games/reflection/ui/board/ReflectionCueMark";
 import { ReflectionPieceIcon } from "@/games/reflection/ui/board/ReflectionPieceIcon";
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
 import { reflectionPieceToneClassNames } from "@/games/reflection/ui/reflection-tone";
@@ -30,6 +32,8 @@ type ReflectionCellProps = {
   selectHandlers: TapHandlers;
   onFocus: (key: string) => void;
   focusKey: string;
+  /** このマスに重ねる合図。チュートリアルで使う。 */
+  cues?: readonly ReflectionCue[];
 };
 
 export function ReflectionCell({
@@ -43,6 +47,7 @@ export function ReflectionCell({
   selectHandlers,
   onFocus,
   focusKey,
+  cues = [],
 }: ReflectionCellProps) {
   const { row, column } = getReflectionCellPosition(size, cellIndex);
   const content = cell === null ? "空き" : reflectionPieceLabels[cell];
@@ -65,6 +70,7 @@ export function ReflectionCell({
       onFocus={() => onFocus(focusKey)}
       className="relative flex min-h-0 min-w-0 touch-manipulation select-none items-center justify-center text-foreground outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:bg-accent/70 focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 focus-visible:outline-foreground/70 disabled:cursor-default enabled:hover:bg-accent/50 enabled:active:bg-accent"
     >
+      <ReflectionCueMarks cues={cues} place="cell" />
       {selected && cell !== null ? (
         <span
           aria-hidden="true"

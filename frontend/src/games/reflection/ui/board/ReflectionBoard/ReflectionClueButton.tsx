@@ -6,6 +6,8 @@ import type {
   ReflectionSide,
 } from "@/games/reflection/puzzle/laser";
 import { getReflectionClueGridPosition } from "@/games/reflection/ui/board/board-geometry";
+import type { ReflectionCue } from "@/games/reflection/ui/board/cue";
+import { ReflectionCueMarks } from "@/games/reflection/ui/board/ReflectionCueMark";
 import { ReflectionOutcomeMark } from "@/games/reflection/ui/board/ReflectionOutcomeMark";
 import { formatReflectionEntry } from "@/games/reflection/ui/format-entry";
 import { reflectionOutcomeLabels } from "@/games/reflection/ui/outcome-label";
@@ -33,6 +35,8 @@ type ReflectionClueButtonProps = {
   /** 押したときの受け口。タッチは押した位置のボタンで受ける（`useTouchTap`）。 */
   selectHandlers: TapHandlers;
   onFocus: (key: string) => void;
+  /** この外周ヒントに重ねる合図。チュートリアルで使う。 */
+  cues?: readonly ReflectionCue[];
 };
 
 /**
@@ -74,6 +78,7 @@ export function ReflectionClueButton({
   onElementChange,
   selectHandlers,
   onFocus,
+  cues = [],
 }: ReflectionClueButtonProps) {
   const { row, column } = getReflectionClueGridPosition(size, entry);
   // 一致しているときは緑の地で目標と同じと分かるので、今のマスの数は出さない。
@@ -112,6 +117,7 @@ export function ReflectionClueButton({
         一致の地・数字・結果の形の行は、一致や光路の表示が変わっても要素を出し入れせず、色と見え方だけを切り替える。
         要素の出し入れで行の組み方が変わると、ブラウザによっては記号の位置が動いて見えるため。
       */}
+      <ReflectionCueMarks cues={cues} place="clue" />
       <span
         aria-hidden="true"
         data-clue-match-surface=""
