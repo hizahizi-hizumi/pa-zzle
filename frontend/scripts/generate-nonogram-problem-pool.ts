@@ -16,6 +16,7 @@ import {
   analyzeNonogramDifficulty,
   measureNonogramClueShape,
   type NonogramReadingFeatures,
+  toNonogramAnalyzedDifficulty,
 } from "@/games/nonogram/problem/difficulty-analysis";
 import { measureNonogramPatternQuality } from "@/games/nonogram/problem/generation/pattern-quality";
 import { countNonogramSolutions } from "@/games/nonogram/problem/generation/solution-count";
@@ -242,12 +243,12 @@ function classifyCandidate(
     { width, height },
     evaluation.analyzed.encodedSolution,
   );
-  const assessment = assessNonogramDifficulty({
-    status: "analyzed",
-    scale: { width, height, cellCount: width * height },
-    clueShape: measureNonogramClueShape(computeNonogramClues(solution)),
-    features: evaluation.analyzed.features,
-  });
+  const assessment = assessNonogramDifficulty(
+    toNonogramAnalyzedDifficulty(
+      computeNonogramClues(solution),
+      evaluation.analyzed.features,
+    ),
+  );
   if (assessment.status !== "classified") {
     return { index, milliseconds, outcome: assessment.status };
   }

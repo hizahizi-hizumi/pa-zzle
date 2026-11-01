@@ -1,4 +1,7 @@
-import { analyzeNonogramDifficulty } from "@/games/nonogram/problem/difficulty-analysis";
+import {
+  analyzeNonogramDifficulty,
+  toNonogramAnalyzedDifficulty,
+} from "@/games/nonogram/problem/difficulty-analysis";
 import { createNonogramProblem } from "@/games/nonogram/problem/problem";
 import { parseNonogramPattern } from "@/games/nonogram/puzzle/pattern";
 
@@ -254,6 +257,34 @@ describe("analyzeNonogramDifficulty", () => {
         status: "invalid",
         reason: "multiple-solutions",
         scale: { width: 9, height: 9, cellCount: 81 },
+      });
+    });
+  });
+});
+
+describe("toNonogramAnalyzedDifficulty", () => {
+  describe("縦長の盤面のヒントと特徴", () => {
+    // 行ヒントは [1 1]・[]・[3]・[1]、列ヒントは [1 1]・[2]・[1 1] で、7本に塊が計9個。
+    const clues = createNonogramProblem(
+      parseNonogramPattern(["#.#", "...", "###", ".#."]),
+    ).clues;
+    const features = {
+      roundCount: 3,
+      entryLineCount: 4,
+      firstRoundFixedCellCount: 6,
+      minimumProgressedLineCount: 1,
+      narrowRoundCount: 1,
+      readingsBeyondEdgesCount: 0,
+    };
+
+    test("ヒントの本数から盤面の規模を、ヒントから塊の分かれ方を求めて特徴に添えること", () => {
+      const result = toNonogramAnalyzedDifficulty(clues, features);
+
+      expect(result).toEqual({
+        status: "analyzed",
+        scale: { width: 3, height: 4, cellCount: 12 },
+        clueShape: { blockCountPerLine: 9 / 7 },
+        features,
       });
     });
   });

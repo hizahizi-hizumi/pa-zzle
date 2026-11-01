@@ -1,6 +1,9 @@
 import { difficultyLevels } from "@/games/difficulty";
 import { assessNonogramDifficulty } from "@/games/nonogram/difficulty";
-import { measureNonogramClueShape } from "@/games/nonogram/problem/difficulty-analysis";
+import {
+  measureNonogramClueShape,
+  toNonogramAnalyzedDifficulty,
+} from "@/games/nonogram/problem/difficulty-analysis";
 import { getNonogramSymmetryKey } from "@/games/nonogram/problem/generation/symmetry";
 import { generateNonogramProblem } from "@/games/nonogram/problem/generator";
 import {
@@ -239,16 +242,9 @@ describe("listNonogramPoolEntries", () => {
   test("各問題を、問題集に持つ特徴と解から求めた塊の分かれ方でそのレベルに分類すること", () => {
     const misclassified = pooledByLevel.flatMap(({ difficulty, pooled }) =>
       pooled.filter(({ problem, features }) => {
-        const assessment = assessNonogramDifficulty({
-          status: "analyzed",
-          scale: {
-            width: problem.width,
-            height: problem.height,
-            cellCount: problem.width * problem.height,
-          },
-          clueShape: measureNonogramClueShape(problem.clues),
-          features,
-        });
+        const assessment = assessNonogramDifficulty(
+          toNonogramAnalyzedDifficulty(problem.clues, features),
+        );
         return (
           assessment.status !== "classified" ||
           assessment.difficulty !== difficulty

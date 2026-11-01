@@ -5,6 +5,7 @@ import {
 } from "@/games/nonogram/problem/generation/propagation";
 import { countNonogramSolutions } from "@/games/nonogram/problem/generation/solution-count";
 import type { NonogramProblem } from "@/games/nonogram/problem/problem";
+import type { NonogramGridSize } from "@/games/nonogram/puzzle/board";
 import type { NonogramClues } from "@/games/nonogram/puzzle/clue";
 
 /** 難易度特徴と比べるための盤面の規模。挑戦ではなく、見渡す範囲の側の値。 */
@@ -43,6 +44,13 @@ export type NonogramReadingFeatures = {
   readingsBeyondEdgesCount: number;
 };
 
+export type NonogramAnalyzedDifficulty = {
+  status: "analyzed";
+  scale: NonogramScaleMetrics;
+  clueShape: NonogramClueShape;
+  features: NonogramReadingFeatures;
+};
+
 /**
  * - `analyzed`: 1本ずつの線の読みだけで全マスが決まり、特徴を測れた（解はただ1つ）。
  * - `unsupported`: 解はただ1つだが、線の読みだけでは決まらないマスが残る。仮置きを要するので挑戦の強さを測らない。
@@ -50,12 +58,7 @@ export type NonogramReadingFeatures = {
  *   問題のヒントは解から求めるので、解が無いことは無い。
  */
 export type NonogramDifficultyAnalysis =
-  | {
-      status: "analyzed";
-      scale: NonogramScaleMetrics;
-      clueShape: NonogramClueShape;
-      features: NonogramReadingFeatures;
-    }
+  | NonogramAnalyzedDifficulty
   | { status: "unsupported"; scale: NonogramScaleMetrics }
   | {
       status: "invalid";
@@ -69,7 +72,7 @@ const NARROW_ROUND_MAXIMUM_LINE_COUNT = 2;
 function measureScale({
   width,
   height,
-}: NonogramProblem): NonogramScaleMetrics {
+}: NonogramGridSize): NonogramScaleMetrics {
   return { width, height, cellCount: width * height };
 }
 
@@ -116,6 +119,25 @@ function classifyUnreadableProblem(
   return { status: "unsupported", scale };
 }
 
+/**
+ * 線の読みの経過から求めた特徴に、ヒントから求める盤面の規模と塊の分かれ方を添えて、特徴を測れた分析結果にする。
+ * 問題集に持たせた特徴から分類し直すときにも使う。
+ */
+export function toNonogramAnalyzedDifficulty(
+  clues: NonogramClues,
+  features: NonogramReadingFeatures,
+): NonogramAnalyzedDifficulty {
+  return {
+    status: "analyzed",
+    scale: measureScale({
+      width: clues.columns.length,
+      height: clues.rows.length,
+    }),
+    clueShape: measureNonogramClueShape(clues),
+    features,
+  };
+}
+
 /** ヒントだけを読んで特徴を測る。解は使わない。 */
 export function analyzeNonogramDifficulty(
   problem: NonogramProblem,
@@ -133,10 +155,8 @@ export function analyzeNonogramDifficulty(
       "Nonogram readings beyond edges must finish when the reading rounds finish",
     );
   }
-  return {
-    status: "analyzed",
-    scale,
-    clueShape: measureNonogramClueShape(problem.clues),
-    features: summarizeRounds(trace.rounds, readingsBeyondEdgesCount),
-  };
+  return toNonogramAnalyzedDifficulty(
+    problem.clues,
+    summarizeRounds(trace.rounds, readingsBeyondEdgesCount),
+  );
 }
