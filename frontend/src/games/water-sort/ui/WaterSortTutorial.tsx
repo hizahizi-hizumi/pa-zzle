@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   type TutorialBoardIntro,
@@ -6,6 +6,7 @@ import {
   type TutorialFinish,
   TutorialOverlay,
 } from "@/components/TutorialOverlay";
+import type { GameProgress } from "@/games/play";
 import {
   completeTutorial,
   finishTutorialIntro,
@@ -29,6 +30,7 @@ import {
 } from "@/games/water-sort/tutorial/tutorial";
 import type { WaterSortBottleCue } from "@/games/water-sort/ui/board/bottle-cue";
 import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
+import { useWaterSortSoundEffects } from "@/games/water-sort/ui/use-water-sort-sound-effects";
 
 type WaterSortTutorialProps = {
   open: boolean;
@@ -42,6 +44,9 @@ type WaterSortTutorialProgress = TutorialProgress<
   WaterSortTutorialBoardState
 >;
 
+/** 印の無いボトルを押されたときに、印を強めて光らせ直す間。 */
+const HINT_AGAIN_MS = 600;
+
 /** 手を離した後、手が止まってから次にタップするボトルを示すまでの間。 */
 const IDLE_HINT_DELAY_MS = 4000;
 
@@ -53,33 +58,45 @@ const goalBottles = waterSortTutorial.goal().bottles;
  */
 const BOARD_WIDTH = "min(100cqw, calc(54cqh + 6px))";
 
-/** 手の結果を、盤面の選択・注ぐ動き・揺れにする。 */
+/** 本番の効果音のフックへ渡す、プレイの進行。解けた盤面の演出の間を完成演出として、完成の音を鳴らす。 */
+const gameProgressByPhase = {
+  intro: "playing",
+  playing: "playing",
+  solved: "clearing",
+  completed: "result",
+} as const satisfies Record<WaterSortTutorialProgress["phase"], GameProgress>;
+
+/**
+ * 手の結果を、盤面の選択・注ぐ動き・揺れにする。
+ * `id` は、もう一度始めても本番の効果音が同じ知らせとみなさないよう、開いている間ずっと増やす。
+ */
 function createOperation(
   next: WaterSortTutorialProgress,
+  id: number,
 ): WaterSortOperation | null {
-  const { lastMove, moveCount, bottles } = next.boardState;
+  const { lastMove, bottles } = next.boardState;
   switch (lastMove?.type) {
     case "selected":
       return {
-        id: moveCount,
+        id,
         type: "source-selected",
         bottleIndex: lastMove.bottleIndex,
       };
     case "deselected":
       return {
-        id: moveCount,
+        id,
         type: "source-deselected",
         bottleIndex: lastMove.bottleIndex,
       };
     case "rejected":
       return {
-        id: moveCount,
+        id,
         type: "invalid",
         bottleIndex: lastMove.bottleIndex,
       };
     case "poured":
       return {
-        id: moveCount,
+        id,
         type: "poured",
         sourceBottleIndex: lastMove.move.sourceBottleIndex,
         destinationBottleIndex: lastMove.move.destinationBottleIndex,
@@ -110,8 +127,11 @@ export function WaterSortTutorial({
   const [pouring, setPouring] = useState(false);
   const [idleProgress, setIdleProgress] =
     useState<WaterSortTutorialProgress | null>(null);
-  // 手を引いている間に印の無いボトルを押されたら、印を付け直す。
+  const nextOperationIdRef = useRef(1);
+  // 手を引いている間に印の無いボトルを押されたら、印を強めて光らせ直す。
   const [hintCueId, setHintCueId] = useState(0);
+  // 強めて光らせ直している印。押されるたびに数え直す。
+  const [hintAgainCueId, setHintAgainCueId] = useState<number | null>(null);
   // 手を引いている間に、印の無いボトルをタップしたときの一言。進行が変わるまで出す。
   const [offStepAnswer, setOffStepAnswer] = useState<{
     progress: WaterSortTutorialProgress;
@@ -130,6 +150,19 @@ export function WaterSortTutorial({
         : idleHintShown
           ? findWaterSortTutorialHintBottleIndex(boardState)
           : null;
+
+  useWaterSortSoundEffects(operation, gameProgressByPhase[progress.phase]);
+
+  useEffect(() => {
+    if (hintAgainCueId === null) {
+      return;
+    }
+    const timer = window.setTimeout(
+      () => setHintAgainCueId(null),
+      HINT_AGAIN_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [hintAgainCueId]);
 
   useEffect(() => {
     if (!open || !solving || guiding) {
@@ -156,7 +189,8 @@ export function WaterSortTutorial({
     });
     if (next === progress) {
       if (guiding) {
-        setHintCueId((id) => id + 1);
+        setHintCueId(hintCueId + 1);
+        setHintAgainCueId(hintCueId + 1);
         const answer = describeWaterSortTutorialOffStepTap(
           situation,
           boardState,
@@ -167,11 +201,13 @@ export function WaterSortTutorial({
       return;
     }
     setProgress(next);
-    setOperation(createOperation(next));
+    setHintAgainCueId(null);
+    setOperation(createOperation(next, nextOperationIdRef.current++));
   }
 
   function restart(): void {
     setIdleProgress(null);
+    setHintAgainCueId(null);
     setOffStepAnswer(null);
     setOperation(null);
     setProgress(startTutorial(waterSortTutorial));
@@ -213,7 +249,13 @@ export function WaterSortTutorial({
   const cues: WaterSortBottleCue[] =
     hintBottleIndex === null
       ? []
-      : [{ bottleIndex: hintBottleIndex, kind: "hint", id: hintCueId }];
+      : [
+          {
+            bottleIndex: hintBottleIndex,
+            kind: hintAgainCueId === null ? "hint" : "hint-again",
+            id: hintCueId,
+          },
+        ];
 
   /** 導入の間はゴールの盤面を見せ、始めの盤面の場面では、ゴールの盤面を薄くしながら始めの盤面に替える。 */
   function renderBoard({ scene, playing, onSceneEnd }: TutorialBoardIntro) {

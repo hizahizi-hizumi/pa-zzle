@@ -362,7 +362,6 @@ describe("findWaterSortTutorialHintBottleIndex", () => {
     let state: WaterSortTutorialBoardState = {
       bottles,
       sourceBottleIndex: null,
-      moveCount: 0,
       lastMove: null,
     };
     for (let taps = 0; taps < 40; taps += 1) {

@@ -8,6 +8,15 @@ import {
 } from "@testing-library/react";
 
 import { WaterSortTutorial } from "@/games/water-sort/ui/WaterSortTutorial";
+import { playLayeredSound, playSound } from "@/lib/sound-effects";
+
+vi.mock("@/lib/sound-effects", () => ({
+  defineSoundEffect: (url: string) => ({ url }),
+  playSound: vi.fn(),
+  playLayeredSound: vi.fn(),
+  prepareSoundEffects: vi.fn(),
+  REPEATED_SOUND_VARIATION: {},
+}));
 
 /** 手順ごとに、注ぎ元、注ぎ先の順に印を付けるボトル（1始まり）。 */
 const stepBottles = [
@@ -19,11 +28,15 @@ const stepBottles = [
 /** 手順を終えた後、同じ色を重ねていってそろえるボトル（1始まり）。 */
 const remainingBottles = [3, 1, 2, 3, 2, 1] as const;
 
+/** 印の無いボトルを押されてから、強めた印を元の印に戻すまでの間。 */
+const hintAgainMs = 600;
+
 /** 手を離した後、手が止まってから次のボトルを示すまでの間。 */
 const idleHintDelayMs = 4000;
 
 afterEach(() => {
   cleanup();
+  vi.clearAllMocks();
   vi.useRealTimers();
 });
 
@@ -55,9 +68,9 @@ function skipIntro(): void {
 }
 
 /** 印を付けているボトル（1始まり）。 */
-function getHintedBottles(): number[] {
+function getHintedBottles(kind: "hint" | "hint-again" = "hint"): number[] {
   return [1, 2, 3, 4, 5].filter((bottleNumber) =>
-    getBottle(bottleNumber).querySelector('[data-bottle-cue="hint"]'),
+    getBottle(bottleNumber).querySelector(`[data-bottle-cue="${kind}"]`),
   );
 }
 
@@ -103,17 +116,27 @@ describe("WaterSortTutorial", () => {
       expect(rules).toEqual(["伏せたルール", "伏せたルール"]);
     });
 
-    test("印の無いボトルを押しても、選ばずに、一言を変えずに印を付け直すこと", () => {
+    test("印の無いボトルを押しても、選ばずに、一言を変えずに印を強めて光らせ直すこと", () => {
       tapBottles([1]);
 
       const pressed = getBottle(1).getAttribute("aria-pressed");
       const headline = screen.getByText(
         "ボトルをタップして選び 注ぐ先をタップします",
       );
-      const hinted = getHintedBottles();
+      const hintedAgain = getHintedBottles("hint-again");
 
       expect(pressed).toBe("false");
       expect(headline).toBeTruthy();
+      expect(hintedAgain).toEqual([2]);
+      expect(playSound).not.toHaveBeenCalled();
+    });
+
+    test("光らせ直した印を、少しして元の印に戻すこと", () => {
+      tapBottles([1]);
+      advanceTime(hintAgainMs);
+
+      const hinted = getHintedBottles();
+
       expect(hinted).toEqual([2]);
     });
 
@@ -138,6 +161,7 @@ describe("WaterSortTutorial", () => {
       const rules = getRuleTexts();
 
       expect(destination).toBe("ボトル 4: 青");
+      expect(playLayeredSound).toHaveBeenCalledTimes(1);
       expect(headline).toBeTruthy();
       expect(hinted).toEqual([3]);
       expect(rules).toEqual(["空か同じ色の上に注ぐ", "伏せたルール"]);
@@ -213,6 +237,16 @@ describe("WaterSortTutorial", () => {
 
           expect(headline).toBeTruthy();
           expect(detail).toBeTruthy();
+        });
+
+        test("本番と同じ完成の音を鳴らすこと", () => {
+          const clearedSoundCalls = vi
+            .mocked(playSound)
+            .mock.calls.filter(([sound]) =>
+              String((sound as { url?: string }).url).includes("cleared"),
+            );
+
+          expect(clearedSoundCalls).toHaveLength(1);
         });
 
         test("レベル1を始められること", () => {

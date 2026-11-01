@@ -66,14 +66,10 @@ export type WaterSortTutorialMove =
       rejection: WaterSortTutorialRejection;
     };
 
-/**
- * - `sourceBottleIndex`: 注ぎ元に選んでいるボトル。
- * - `moveCount`: 盤面が応えた手の数。同じボトルへの動きをやり直す目印に使う。
- */
+/** `sourceBottleIndex`: 注ぎ元に選んでいるボトル。 */
 export type WaterSortTutorialBoardState = {
   bottles: WaterSortState;
   sourceBottleIndex: number | null;
-  moveCount: number;
   lastMove: WaterSortTutorialMove | null;
 };
 
@@ -248,7 +244,6 @@ function startWaterSortTutorial(): WaterSortTutorialBoardState {
   return {
     bottles: startState,
     sourceBottleIndex: null,
-    moveCount: 0,
     lastMove: null,
   };
 }
@@ -257,17 +252,8 @@ function getWaterSortTutorialGoal(): WaterSortTutorialBoardState {
   return {
     bottles: goalState,
     sourceBottleIndex: null,
-    moveCount: 0,
     lastMove: null,
   };
-}
-
-function respond(
-  state: WaterSortTutorialBoardState,
-  next: Pick<WaterSortTutorialBoardState, "sourceBottleIndex" | "lastMove"> &
-    Partial<Pick<WaterSortTutorialBoardState, "bottles">>,
-): WaterSortTutorialBoardState {
-  return { ...state, ...next, moveCount: state.moveCount + 1 };
 }
 
 function pour(
@@ -279,11 +265,11 @@ function pour(
   if (!bottles) {
     return { state, outcome: "ignored" };
   }
-  const next = respond(state, {
+  const next: WaterSortTutorialBoardState = {
     bottles,
     sourceBottleIndex: null,
     lastMove: { type: "poured", move, stateBefore: state.bottles },
-  });
+  };
   if (isWaterSortCleared(bottles)) {
     return { state: next, outcome: "solved" };
   }
@@ -299,10 +285,11 @@ function performStep(
   const { sourceBottleIndex, destinationBottleIndex } = step.move;
   if (state.sourceBottleIndex === null && bottleIndex === sourceBottleIndex) {
     return {
-      state: respond(state, {
+      state: {
+        bottles: state.bottles,
         sourceBottleIndex,
         lastMove: { type: "selected", bottleIndex },
-      }),
+      },
       outcome: "continued",
     };
   }
@@ -328,26 +315,29 @@ function performFreePlay(
     const rejection = findSourceRejection(state.bottles, bottleIndex);
     return rejection === null
       ? {
-          state: respond(state, {
+          state: {
+            bottles: state.bottles,
             sourceBottleIndex: bottleIndex,
             lastMove: { type: "selected", bottleIndex },
-          }),
+          },
           outcome: "continued",
         }
       : {
-          state: respond(state, {
+          state: {
+            bottles: state.bottles,
             sourceBottleIndex: null,
             lastMove: { type: "rejected", bottleIndex, rejection },
-          }),
+          },
           outcome: "violated",
         };
   }
   if (sourceBottleIndex === bottleIndex) {
     return {
-      state: respond(state, {
+      state: {
+        bottles: state.bottles,
         sourceBottleIndex: null,
         lastMove: { type: "deselected", bottleIndex },
-      }),
+      },
       outcome: "continued",
     };
   }
@@ -355,10 +345,11 @@ function performFreePlay(
   const rejection = findPourRejection(state.bottles, move);
   if (rejection !== null) {
     return {
-      state: respond(state, {
+      state: {
+        bottles: state.bottles,
         sourceBottleIndex,
         lastMove: { type: "rejected", bottleIndex, rejection },
-      }),
+      },
       outcome: "violated",
     };
   }

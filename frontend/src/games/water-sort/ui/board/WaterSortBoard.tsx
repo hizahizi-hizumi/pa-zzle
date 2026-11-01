@@ -7,6 +7,7 @@ import { usePourAnimations } from "@/games/water-sort/ui/board/pour/use-pour-ani
 import { getWaterColorView } from "@/games/water-sort/ui/board/water-bottle/get-water-color-view";
 import { WaterBottle } from "@/games/water-sort/ui/board/water-bottle/WaterBottle";
 import { playRejectionShake, type RejectionShakeTiming } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 
 type WaterSortBoardProps = {
   state: WaterSortState;
@@ -121,12 +122,17 @@ export function WaterSortBoard({
               >
                 <WaterBottle contents={bottle} selected={isSource} />
               </span>
-              {cue?.kind === "hint" && (
+              {cue && (
                 <span
-                  key={cue.id}
+                  key={`${cue.kind}-${cue.id}`}
                   aria-hidden="true"
                   data-bottle-cue={cue.kind}
-                  className="pointer-events-none absolute -inset-x-1.5 -top-1 -bottom-1.5 rounded-t-lg rounded-b-[1.8rem] border-[3px] border-sky-600 border-dashed animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none dark:border-sky-400"
+                  className={cn(
+                    "pointer-events-none absolute -inset-x-1.5 -top-1 -bottom-1.5 rounded-t-lg rounded-b-[1.8rem] border-[3px] border-sky-600 animate-in duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none dark:border-sky-400",
+                    cue.kind === "hint"
+                      ? "border-dashed fade-in-0"
+                      : "border-solid ring-4 ring-sky-500/35 zoom-in-90 fade-in-0 dark:ring-sky-300/35",
+                  )}
                 />
               )}
             </button>

@@ -16,9 +16,9 @@ import type {
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
 import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
 import { WaterSortResultScreen } from "@/games/water-sort/ui/result/WaterSortResultScreen";
+import { useWaterSortSoundEffects } from "@/games/water-sort/ui/use-water-sort-sound-effects";
 import { WaterSortHowToPlayDialog } from "@/games/water-sort/ui/WaterSortHowToPlayDialog";
 import { DeadlockNotice } from "@/games/water-sort/ui/WaterSortPlay/DeadlockNotice";
-import { useWaterSortSoundEffects } from "@/games/water-sort/ui/WaterSortPlay/use-water-sort-sound-effects";
 import { WaterSortTutorial } from "@/games/water-sort/ui/WaterSortTutorial";
 
 type WaterSortPlayProps = GamePlayScreenProps<

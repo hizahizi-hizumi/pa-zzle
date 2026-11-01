@@ -90,6 +90,7 @@ function playClearSound() {
 
 /**
  * 注ぐ操作と通らない操作、盤面を完成させた瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。
+ * チュートリアルも本番と同じ音を鳴らすため、プレイ画面とチュートリアルの両方が使う。
  * ボトルの選択とその解除では鳴らさない。
  */
 export function useWaterSortSoundEffects(
