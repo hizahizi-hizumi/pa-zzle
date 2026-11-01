@@ -53,23 +53,18 @@ const slidePuzzleSounds: readonly SoundEffect[] = [
 function createClearedSoundLayers(tileCount: number): SoundLayer[] {
   const lastScaleIndex = clearScaleSounds.length - 1;
   const firstTileDelayMs = getClearWaveTileDelayMs(0);
-  return Array.from(
-    { length: tileCount },
-    function createTileNote(_, order): SoundLayer[] {
-      const scaleIndex = Math.round(
-        (order * lastScaleIndex) / Math.max(tileCount - 1, 1),
-      );
-      const sound = clearScaleSounds[scaleIndex];
-      return sound
-        ? [
-            {
-              sound,
-              offsetMs: getClearWaveTileDelayMs(order) - firstTileDelayMs,
-            },
-          ]
-        : [];
-    },
-  ).flat();
+  return Array.from({ length: tileCount }, function createTileNote(_, order) {
+    const scaleIndex = Math.round(
+      (order * lastScaleIndex) / Math.max(tileCount - 1, 1),
+    );
+    const sound = clearScaleSounds[scaleIndex];
+    return (
+      sound && {
+        sound,
+        offsetMs: getClearWaveTileDelayMs(order) - firstTileDelayMs,
+      }
+    );
+  }).filter((layer) => layer !== undefined);
 }
 
 function playOperationSound(operation: SlidePuzzleOperation) {
