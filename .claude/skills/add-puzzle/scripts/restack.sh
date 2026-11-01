@@ -20,6 +20,7 @@
 #   - <old-base>（既定は <remote>/<原因の段>。--onto では <rev> と最下段の merge-base）が、
 #     積み直す最も下の段の祖先である。
 #   - 積み直す段のブランチは、どの worktree でも checkout していない（--update-refs が書き換えずに飛ばすため）。
+#   - 原因の段の直しは、まだ <remote> に push していない（既定の <old-base> が <remote>/<原因の段> のため）。
 #
 # 衝突: rerere で解けない衝突で止まったら、出力された worktree で解いて git add し、
 # 同じ引数に --continue を付けて再実行する。
