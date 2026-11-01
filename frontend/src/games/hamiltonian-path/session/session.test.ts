@@ -1,14 +1,18 @@
 import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
 import {
+  beginHamiltonianPathSessionStroke,
   canRestartHamiltonianPathSession,
   canUndoHamiltonianPathSession,
   createHamiltonianPathSession,
+  endHamiltonianPathSessionStroke,
   extendHamiltonianPathSessionPath,
   getHamiltonianPathSessionResult,
   type HamiltonianPathSession,
   moveHamiltonianPathSessionHead,
+  moveHamiltonianPathSessionHeadToward,
   restartHamiltonianPathSession,
   rewindHamiltonianPathSessionPath,
+  traceHamiltonianPathSessionStroke,
   undoHamiltonianPathSession,
 } from "@/games/hamiltonian-path/session/session";
 
@@ -141,6 +145,190 @@ describe("moveHamiltonianPathSessionHead", () => {
 
     expect(result.rejection).toBe("visited");
     expect(result.session).toBe(halfway);
+  });
+});
+
+describe("moveHamiltonianPathSessionHeadToward", () => {
+  test("先端からその向きの隣へ道を延ばすこと", () => {
+    const { session, rejection } = moveHamiltonianPathSessionHeadToward(
+      initial,
+      "right",
+      startedAt,
+    );
+
+    expect(rejection).toBeNull();
+    expect(session.puzzleState.path).toEqual([0, 1]);
+  });
+
+  test("盤面の外へは延ばさず理由を返すこと", () => {
+    const result = moveHamiltonianPathSessionHeadToward(
+      initial,
+      "up",
+      startedAt,
+    );
+
+    expect(result.rejection).toBe("outside-board");
+    expect(result.session).toBe(initial);
+  });
+
+  test("1回ごとに待ったの単位にすること", () => {
+    const session = undoHamiltonianPathSession(
+      moveHamiltonianPathSessionHeadToward(
+        moveHamiltonianPathSessionHeadToward(initial, "right", startedAt)
+          .session,
+        "right",
+        startedAt,
+      ).session,
+    );
+
+    expect(session.puzzleState.path).toEqual([0, 1]);
+  });
+});
+
+/** マスを押して、指を `cells` の順に動かし、離すまでの1回のなぞり。 */
+function stroke(
+  session: HamiltonianPathSession,
+  [pressed, ...cells]: readonly number[],
+  operatedAt = startedAt,
+): HamiltonianPathSession {
+  let current = beginHamiltonianPathSessionStroke(
+    session,
+    pressed!,
+    operatedAt,
+  ).session;
+  let from = pressed!;
+  for (const to of cells) {
+    current = traceHamiltonianPathSessionStroke(
+      current,
+      { from, to, horizontalFirst: true },
+      operatedAt,
+    ).session;
+    from = to;
+  }
+  return endHamiltonianPathSessionStroke(current);
+}
+
+describe("beginHamiltonianPathSessionStroke", () => {
+  test.each([
+    ["道の途中のマス", 2, [0, 1, 2]],
+    ["始点", 0, [0]],
+    ["先端", 4, [0, 1, 2, 5, 4]],
+    ["先端に隣り合う未通過マス", 3, [0, 1, 2, 5, 4, 3]],
+  ])("%sを押すとなぞり始めること", (_, cell, path) => {
+    const { session, rejection } = beginHamiltonianPathSessionStroke(
+      halfway,
+      cell,
+      startedAt,
+    );
+
+    expect(rejection).toBeNull();
+    expect(session.puzzleState.path).toEqual(path);
+    expect(session.strokeOrigin).toBe(halfway.puzzleState);
+  });
+
+  test.each([
+    ["仕切りの向こうのマス", 7, "partition"],
+    ["先端から離れたマス", 6, "not-adjacent"],
+  ])("%sを押すと理由を返し、なぞり始めないこと", (_, cell, reason) => {
+    const result = beginHamiltonianPathSessionStroke(halfway, cell, startedAt);
+
+    expect(result.rejection).toBe(reason);
+    expect(result.session).toBe(halfway);
+  });
+});
+
+describe("traceHamiltonianPathSessionStroke", () => {
+  const stroking = beginHamiltonianPathSessionStroke(
+    halfway,
+    4,
+    startedAt,
+  ).session;
+
+  test("指の移ったマスへ道を延ばすこと", () => {
+    const { session } = traceHamiltonianPathSessionStroke(
+      stroking,
+      { from: 4, to: 3, horizontalFirst: true },
+      startedAt,
+    );
+
+    expect(session.puzzleState.path).toEqual([0, 1, 2, 5, 4, 3]);
+  });
+
+  test("先端から仕切りの向こうへ移ると理由を返すこと", () => {
+    const result = traceHamiltonianPathSessionStroke(
+      stroking,
+      { from: 4, to: 7, horizontalFirst: true },
+      startedAt,
+    );
+
+    expect(result.rejection).toBe("partition");
+    expect(result.session).toBe(stroking);
+  });
+
+  describe("なぞっていない場合", () => {
+    test("道を変えないこと", () => {
+      const result = traceHamiltonianPathSessionStroke(
+        halfway,
+        { from: 4, to: 3, horizontalFirst: true },
+        startedAt,
+      );
+
+      expect(result.session).toBe(halfway);
+    });
+  });
+});
+
+describe("endHamiltonianPathSessionStroke", () => {
+  describe("押してから離すまでに道を何マスも変えた場合", () => {
+    const session = stroke(halfway, [4, 3, 6]);
+
+    test("待った1回で押す前の道へ戻すこと", () => {
+      const undone = undoHamiltonianPathSession(session);
+
+      expect(session.puzzleState.path).toEqual([0, 1, 2, 5, 4, 3, 6]);
+      expect(undone.puzzleState.path).toEqual(halfway.puzzleState.path);
+    });
+  });
+
+  describe("途中のマスを押してそのまま引き直した場合", () => {
+    const session = stroke(halfway, [1, 4, 3]);
+
+    test("待った1回で押す前の道へ戻すこと", () => {
+      const undone = undoHamiltonianPathSession(session);
+
+      expect(session.puzzleState.path).toEqual([0, 1, 4, 3]);
+      expect(undone.puzzleState.path).toEqual(halfway.puzzleState.path);
+    });
+  });
+
+  describe("延ばして同じなぞりで戻し、道が変わらなかった場合", () => {
+    const session = stroke(halfway, [4, 3, 4]);
+
+    test("待ったの単位を作らず、待ったでその前の操作を取り消すこと", () => {
+      const undone = undoHamiltonianPathSession(session);
+
+      expect(undone.puzzleState.path).toEqual([0, 1, 2, 5]);
+    });
+  });
+});
+
+describe("traceHamiltonianPathSessionStroke で全有効マスを通った場合", () => {
+  const stroking = traceHamiltonianPathSessionStroke(
+    beginHamiltonianPathSessionStroke(halfway, 3, startedAt).session,
+    { from: 3, to: 6, horizontalFirst: true },
+    startedAt,
+  ).session;
+
+  test("その時刻でクリアにしてなぞりを終えること", () => {
+    const { session } = traceHamiltonianPathSessionStroke(
+      stroking,
+      { from: 6, to: 7, horizontalFirst: true },
+      clearedAt,
+    );
+
+    expect(session.status).toBe("cleared");
+    expect(session.finishedAt).toBe(clearedAt);
+    expect(session.strokeOrigin).toBeNull();
   });
 });
 

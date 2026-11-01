@@ -1,3 +1,4 @@
+import { useTouchTap } from "@/components/touch-tap";
 import {
   type ReflectionInventory,
   type ReflectionPiece,
@@ -7,7 +8,6 @@ import type { ReflectionSelection } from "@/games/reflection/session/session";
 import { ReflectionPieceIcon } from "@/games/reflection/ui/board/ReflectionPieceIcon";
 import { reflectionPieceLabels } from "@/games/reflection/ui/piece-label";
 import { reflectionPieceBarClassNames } from "@/games/reflection/ui/reflection-tone";
-import { useTouchTap } from "@/games/reflection/ui/touch-tap";
 import { cn } from "@/lib/utils";
 
 type ReflectionStockProps = {

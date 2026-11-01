@@ -81,6 +81,20 @@ export function listHamiltonianPathGridNeighbors(
   });
 }
 
+/** `from` から見て、上下左右に隣り合う `to` がある向き。隣り合わなければ `null`。 */
+export function findHamiltonianPathDirection(
+  size: number,
+  from: number,
+  to: number,
+): HamiltonianPathDirection | null {
+  return (
+    hamiltonianPathDirections.find(
+      (direction) =>
+        getHamiltonianPathNeighborCell(size, from, direction) === to,
+    ) ?? null
+  );
+}
+
 export function areHamiltonianPathCellsAdjacent(
   size: number,
   left: number,

@@ -1,11 +1,37 @@
 import { HowToPlayDialog } from "@/components/HowToPlayDialog";
+import { HowToPlayRuleMark } from "@/components/HowToPlayRuleMark";
+import { HowToPlayTransition } from "@/components/HowToPlayTransition";
+import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
+import { HowToPlayFigure } from "@/games/hamiltonian-path/ui/HamiltonianPathHowToPlayDialog/HowToPlayFigure";
+import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 
 type HamiltonianPathHowToPlayDialogProps = {
   open: boolean;
   onClose: () => void;
 };
 
-/** ルールと操作を短い一文ずつで示す。 */
+/**
+ * 図のマス番号（3×3）
+ * 0 1 2
+ * 3 4 5
+ * 6 7 8
+ */
+const openBoard = parseHamiltonianPathBoard([
+  "S . .",
+  "",
+  ". . .",
+  "",
+  ". . .",
+]);
+const blockedBoard = parseHamiltonianPathBoard([
+  "S .|.",
+  "",
+  ". # .",
+  "",
+  ". . .",
+]);
+
+/** ルールと操作を、盤面と同じ見た目の小さな図と短い一文で示す。 */
 export function HamiltonianPathHowToPlayDialog({
   open,
   onClose,
@@ -16,10 +42,67 @@ export function HamiltonianPathHowToPlayDialog({
       description="丸い印のマスから、すべてのマスを1回ずつ通る1本の道を引く。"
       onClose={onClose}
     >
-      <li>道は上下左右に隣り合うマスへ進む。同じマスは2回通れない。</li>
-      <li>暗いマスと、マスの間の暗い棒の向こうへは進めない。</li>
-      <li>道の先端に隣り合うマスを押すと、道が1マス延びる。</li>
-      <li>道の途中のマスを押すと、そのマスまで道が戻る。</li>
+      <li className="space-y-2">
+        <p>
+          道は上下左右に隣り合うマスへ進む。同じマスは2回通れない。すべてのマスを通れば完成。
+        </p>
+        <HowToPlayFigure board={openBoard} path={[0, 1, 2, 5, 4, 3, 6, 7, 8]} />
+      </li>
+      <li className="space-y-2">
+        <p>暗いマスと、マスの間の短い棒の向こうへは進めない。</p>
+        <div className="flex items-center gap-2">
+          <HowToPlayFigure board={blockedBoard} path={[0, 1]} fingerCell={2} />
+          <HowToPlayRuleMark allowed={false} />
+        </div>
+      </li>
+      <li className="space-y-2">
+        <p>
+          輪の付いた道の先端から指でなぞると、道が延びる。1つ前のマスへ戻ると1マス縮む。
+        </p>
+        <HowToPlayTransition>
+          <HowToPlayFigure board={openBoard} path={[0]} fingerCell={0} />
+          <HowToPlayFigure
+            board={openBoard}
+            path={[0, 1, 2, 5]}
+            fingerCell={5}
+          />
+        </HowToPlayTransition>
+      </li>
+      <li className="space-y-2">
+        <p>
+          道の途中のマスを押すと、そこまで道が戻る。押したままなぞると、そこから引き直せる。
+        </p>
+        <HowToPlayTransition>
+          <HowToPlayFigure
+            board={openBoard}
+            path={[0, 1, 2, 5, 4]}
+            fingerCell={1}
+          />
+          <HowToPlayFigure board={openBoard} path={[0, 1]} fingerCell={1} />
+        </HowToPlayTransition>
+      </li>
+      <li>
+        <p>先端の隣のマスを押すだけでも、1マスずつ延ばせる。</p>
+      </li>
+      <li className="space-y-2">
+        <p>
+          先端から進めるマスが無くなると、先端の輪が欠ける。道のマスを押すか
+          {PLAY_OPERATION_LABELS.undo}で戻して引き直す。
+        </p>
+        <HowToPlayFigure board={openBoard} path={[0, 1, 4, 5, 2]} isDeadEnd />
+      </li>
+      <li>
+        <p>
+          {PLAY_OPERATION_LABELS.undo}
+          は、押してから離すまでのなぞり1回ずつを取り消す。
+        </p>
+      </li>
+      <li className="hidden pointer-fine:list-item">
+        <p className="text-muted-foreground">
+          キーボード:
+          矢印キーで、先端からその向きへ1マス延ばす。来た向きへ押すと1マス縮む。
+        </p>
+      </li>
     </HowToPlayDialog>
   );
 }

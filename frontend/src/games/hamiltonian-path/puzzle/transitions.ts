@@ -1,5 +1,6 @@
 import {
   areHamiltonianPathCellsAdjacent,
+  getHamiltonianPathCellPosition,
   type HamiltonianPathBoard,
   hasHamiltonianPathPartition,
   isHamiltonianPathCellOnBoard,
@@ -110,4 +111,117 @@ export function moveHamiltonianPathHead(
     return { kind: "retracted", state: retractHamiltonianPath(state) };
   }
   return extendHamiltonianPath(board, state, cell);
+}
+
+/**
+ * なぞる指が隣のマスへ移ったときの道の変化。
+ * - `extended`: 道が1マス以上延びた。
+ * - `retracted`: 直前のマスへ戻って道が1マス縮んだ。
+ * - `unchanged`: 道を変えない（先端・道の途中のマスに入った、道から外れた指が動いた、など）。
+ * - `rejected`: 先端から進もうとした指が壁・仕切りに阻まれた。
+ */
+export type HamiltonianPathTrace =
+  | { kind: "extended"; state: HamiltonianPathPuzzleState }
+  | { kind: "retracted"; state: HamiltonianPathPuzzleState }
+  | { kind: "unchanged" }
+  | { kind: "rejected"; reason: HamiltonianPathExtensionRejection };
+
+/** 指が `from` から `to` へ移った向き。斜めや一直線に離れたマスをつなぐ順を決める。 */
+export type HamiltonianPathTraceStep = {
+  from: number;
+  to: number;
+  /** 横の動きの方が大きいか。斜めに移ったとき、横に隣のマスを先に通る。 */
+  horizontalFirst: boolean;
+};
+
+/** 先端から `to` まで、指が通り越したマスを順に並べる。斜め1マスは角のマスを、一直線なら間のマスを通る。 */
+function listCellsTowards(
+  size: number,
+  head: number,
+  to: number,
+  horizontalFirst: boolean,
+): number[][] {
+  const { row: headRow, column: headColumn } = getHamiltonianPathCellPosition(
+    size,
+    head,
+  );
+  const { row, column } = getHamiltonianPathCellPosition(size, to);
+  const rowDelta = row - headRow;
+  const columnDelta = column - headColumn;
+  if (Math.abs(rowDelta) === 1 && Math.abs(columnDelta) === 1) {
+    const horizontalCorner = headRow * size + column;
+    const verticalCorner = row * size + headColumn;
+    const corners = horizontalFirst
+      ? [horizontalCorner, verticalCorner]
+      : [verticalCorner, horizontalCorner];
+    return corners.map((corner) => [corner, to]);
+  }
+  if (rowDelta !== 0 && columnDelta !== 0) {
+    return [];
+  }
+  const distance = Math.abs(rowDelta) + Math.abs(columnDelta);
+  const stride = Math.sign(rowDelta) * size + Math.sign(columnDelta);
+  return [
+    Array.from({ length: distance }, (_, index) => head + stride * (index + 1)),
+  ];
+}
+
+function extendThrough(
+  board: HamiltonianPathBoard,
+  state: HamiltonianPathPuzzleState,
+  cells: readonly number[],
+): HamiltonianPathPuzzleState | null {
+  let current = state;
+  for (const cell of cells) {
+    const extension = extendHamiltonianPath(board, current, cell);
+    if (extension.kind === "rejected") {
+      return null;
+    }
+    current = extension.state;
+  }
+  return current;
+}
+
+/**
+ * なぞる指が `from` のマスから `to` のマスへ移ったときに道を変える。
+ * - 直前のマスへ入ると1マス縮める。道の途中のそれ以外のマスへ入っても巻き戻さない。
+ * - 先端に隣り合う未通過マスへ入ると延ばす。指が道から外れていても、先端の隣へ戻れば延ばす。
+ * - 先端から離れたマスへは、指が先端から移ったときだけ、通り越したマスを通って延ばす。
+ *   斜めは仕切り・壁に塞がれていない角のマスを通り、通れる道筋が無ければ延ばさない。
+ * - 阻まれたことを返すのは、指が先端から壁マス・仕切りの向こうへ移ったときだけ。
+ *   道から外れた指が動き続けても、同じ障害を何度も返さない。
+ */
+export function traceHamiltonianPath(
+  board: HamiltonianPathBoard,
+  state: HamiltonianPathPuzzleState,
+  { from, to, horizontalFirst }: HamiltonianPathTraceStep,
+): HamiltonianPathTrace {
+  const head = getHamiltonianPathHead(state);
+  const movedFromHead = from === head;
+  if (state.path.length >= 2 && state.path.at(-2) === to) {
+    return { kind: "retracted", state: retractHamiltonianPath(state) };
+  }
+  if (
+    !isHamiltonianPathCellOnBoard(board.size, to) ||
+    state.path.includes(to)
+  ) {
+    return { kind: "unchanged" };
+  }
+  if (areHamiltonianPathCellsAdjacent(board.size, head, to)) {
+    const extension = extendHamiltonianPath(board, state, to);
+    if (extension.kind === "extended") {
+      return extension;
+    }
+    return movedFromHead ? extension : { kind: "unchanged" };
+  }
+  if (!movedFromHead) {
+    return { kind: "unchanged" };
+  }
+  for (const cells of listCellsTowards(board.size, head, to, horizontalFirst)) {
+    const extended = extendThrough(board, state, cells);
+    if (extended !== null) {
+      return { kind: "extended", state: extended };
+    }
+  }
+  return { kind: "unchanged" };
 }

@@ -44,10 +44,14 @@ export function PlayableHamiltonianPath({
       recordOutcomeNotice={null}
       board={play.board}
       path={play.path}
+      isDeadEnd={play.isDeadEnd}
+      blockedMove={play.blockedMove}
       canUndo={play.canUndo}
       canRestart={play.canRestart}
-      onExtendPath={play.extendPath}
-      onRewindPath={play.rewindPath}
+      onBeginStroke={play.beginStroke}
+      onTraceStroke={play.traceStroke}
+      onEndStroke={play.endStroke}
+      onMoveHeadToward={play.moveHeadToward}
       onUndo={play.undo}
       onRestart={play.restart}
       onReplay={play.replay}

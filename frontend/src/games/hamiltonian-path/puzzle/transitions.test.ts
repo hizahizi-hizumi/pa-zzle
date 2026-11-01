@@ -6,6 +6,7 @@ import {
   moveHamiltonianPathHead,
   retractHamiltonianPath,
   rewindHamiltonianPath,
+  traceHamiltonianPath,
 } from "@/games/hamiltonian-path/puzzle/transitions";
 
 // 0 1|2
@@ -136,6 +137,171 @@ describe("moveHamiltonianPathHead", () => {
       const move = moveHamiltonianPathHead(openBoard, loopingState, 0);
 
       expect(move).toEqual({ kind: "rejected", reason: "visited" });
+    });
+  });
+});
+
+describe("traceHamiltonianPath", () => {
+  const openBoard = parseHamiltonianPathBoard([
+    "S . .",
+    "",
+    ". . .",
+    "",
+    ". . .",
+  ]);
+
+  describe("指が先端から隣のマスへ移った場合", () => {
+    const cases = [
+      [
+        "未通過のマスへは延ばす",
+        [0, 3],
+        6,
+        { kind: "extended", state: { path: [0, 3, 6] } },
+      ],
+      [
+        "直前のマスへは縮める",
+        [0, 3, 6],
+        3,
+        { kind: "retracted", state: { path: [0, 3] } },
+      ],
+      [
+        "壁マスへは延ばさず理由を返す",
+        [0, 1],
+        4,
+        { kind: "rejected", reason: "wall" },
+      ],
+      [
+        "仕切りの向こうへは延ばさず理由を返す",
+        [0, 1],
+        2,
+        { kind: "rejected", reason: "partition" },
+      ],
+    ] as const;
+
+    test.each(cases)("%sこと", (_, path, to, expected) => {
+      const trace = traceHamiltonianPath(
+        board,
+        { path },
+        { from: path.at(-1)!, to, horizontalFirst: true },
+      );
+
+      expect(trace).toEqual(expected);
+    });
+  });
+
+  describe("指が先端から直前より前の通過済みのマスへ移った場合", () => {
+    test("巻き戻さず道を変えないこと", () => {
+      const trace = traceHamiltonianPath(
+        openBoard,
+        { path: [0, 1, 4, 3] },
+        { from: 3, to: 0, horizontalFirst: false },
+      );
+
+      expect(trace).toEqual({ kind: "unchanged" });
+    });
+  });
+
+  describe("道から外れた指が動いた場合", () => {
+    test("先端の隣の未通過マスへ入ると延ばすこと", () => {
+      const trace = traceHamiltonianPath(
+        openBoard,
+        { path: [0, 1] },
+        { from: 5, to: 2, horizontalFirst: true },
+      );
+
+      expect(trace).toEqual({ kind: "extended", state: { path: [0, 1, 2] } });
+    });
+
+    test("仕切りの向こうの先端の隣へ入っても理由を返さないこと", () => {
+      const trace = traceHamiltonianPath(
+        board,
+        { path: [0, 1] },
+        { from: 5, to: 2, horizontalFirst: true },
+      );
+
+      expect(trace).toEqual({ kind: "unchanged" });
+    });
+
+    test("先端から離れたマスへは延ばさないこと", () => {
+      const trace = traceHamiltonianPath(
+        openBoard,
+        { path: [0] },
+        { from: 1, to: 2, horizontalFirst: true },
+      );
+
+      expect(trace).toEqual({ kind: "unchanged" });
+    });
+  });
+
+  describe("指が先端から斜めのマスへ移った場合", () => {
+    const cases = [
+      ["横の動きが大きいと横の角", true, [0, 1, 4]],
+      ["縦の動きが大きいと縦の角", false, [0, 3, 4]],
+    ] as const;
+
+    test.each(cases)("%sを通って延ばすこと", (_, horizontalFirst, path) => {
+      const trace = traceHamiltonianPath(
+        openBoard,
+        { path: [0] },
+        { from: 0, to: 4, horizontalFirst },
+      );
+
+      expect(trace).toEqual({ kind: "extended", state: { path } });
+    });
+
+    describe("片方の角が仕切りに塞がれている場合", () => {
+      const partitionedBoard = parseHamiltonianPathBoard([
+        "S|. .",
+        "",
+        ". . .",
+        "",
+        ". . .",
+      ]);
+
+      test("塞がれていない角を通って延ばすこと", () => {
+        const trace = traceHamiltonianPath(
+          partitionedBoard,
+          { path: [0] },
+          { from: 0, to: 4, horizontalFirst: true },
+        );
+
+        expect(trace).toEqual({
+          kind: "extended",
+          state: { path: [0, 3, 4] },
+        });
+      });
+    });
+
+    describe("両方の角が塞がれている場合", () => {
+      const blockedBoard = parseHamiltonianPathBoard([
+        "S|. .",
+        "-",
+        ". . .",
+        "",
+        ". . .",
+      ]);
+
+      test("延ばさないこと", () => {
+        const trace = traceHamiltonianPath(
+          blockedBoard,
+          { path: [0] },
+          { from: 0, to: 4, horizontalFirst: true },
+        );
+
+        expect(trace).toEqual({ kind: "unchanged" });
+      });
+    });
+  });
+
+  describe("指が先端から一直線に2マス先へ移った場合", () => {
+    test("間のマスを通って延ばすこと", () => {
+      const trace = traceHamiltonianPath(
+        openBoard,
+        { path: [0] },
+        { from: 0, to: 6, horizontalFirst: false },
+      );
+
+      expect(trace).toEqual({ kind: "extended", state: { path: [0, 3, 6] } });
     });
   });
 });

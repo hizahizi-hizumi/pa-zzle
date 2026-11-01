@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import type { HamiltonianPathDifficulty } from "@/games/hamiltonian-path/difficulty";
 import type {
@@ -8,14 +8,26 @@ import type {
 } from "@/games/hamiltonian-path/problem/problem";
 import { selectHamiltonianPathProblemForDifficulty } from "@/games/hamiltonian-path/problem-selection";
 import {
+  findHamiltonianPathDirection,
+  type HamiltonianPathDirection,
+} from "@/games/hamiltonian-path/puzzle/board";
+import { isHamiltonianPathDeadEnd } from "@/games/hamiltonian-path/puzzle/rules";
+import { getHamiltonianPathHead } from "@/games/hamiltonian-path/puzzle/state";
+import type {
+  HamiltonianPathExtensionRejection,
+  HamiltonianPathTraceStep,
+} from "@/games/hamiltonian-path/puzzle/transitions";
+import {
+  beginHamiltonianPathSessionStroke,
   canRestartHamiltonianPathSession,
   canUndoHamiltonianPathSession,
   createHamiltonianPathSession,
-  extendHamiltonianPathSessionPath,
+  endHamiltonianPathSessionStroke,
   type HamiltonianPathSession,
-  moveHamiltonianPathSessionHead,
+  type HamiltonianPathSessionPathChange,
+  moveHamiltonianPathSessionHeadToward,
   restartHamiltonianPathSession,
-  rewindHamiltonianPathSessionPath,
+  traceHamiltonianPathSessionStroke,
   undoHamiltonianPathSession,
 } from "@/games/hamiltonian-path/session/session";
 import {
@@ -37,6 +49,19 @@ import { selectProblemAvoiding } from "@/games/problem-selection";
  */
 export type HamiltonianPathResult = never;
 
+/**
+ * 道を延ばせなかった操作。盤面が先端を揺らし、阻んだ仕切りを強調して返すために持つ。
+ * `id` は操作ごとに変わり、同じ理由で続けて阻まれても別の操作として返せるようにする。
+ */
+export type HamiltonianPathBlockedMove = {
+  id: number;
+  reason: HamiltonianPathExtensionRejection;
+  /** 阻まれたときの道の先端。 */
+  head: number;
+  /** 先端から進もうとした向き。先端に隣り合わないマスを押したときは `null`。 */
+  direction: HamiltonianPathDirection | null;
+};
+
 export type HamiltonianPathPlay = GamePlay<
   HamiltonianPathDifficulty,
   HamiltonianPathProblemIdentity,
@@ -48,18 +73,25 @@ export type HamiltonianPathPlay = GamePlay<
     board: HamiltonianPathProblem;
     /** 始点から先端までに通ったマスの番号。先頭は常に始点。 */
     path: readonly number[];
-    /** 道の先端から隣のマスへ道を1マス延ばす。 */
-    extendPath: (cell: number) => void;
-    /** 道の先端を隣のマスへ動かす。直前のマスへ動かすと1マス縮む。 */
-    moveHead: (cell: number) => void;
-    /** 道の途中のマス（始点を含む）まで道を巻き戻す。 */
-    rewindPath: (cell: number) => void;
+    /** 全マスを通る前に、先端から延ばせるマスが無くなったか。 */
+    isDeadEnd: boolean;
+    /** 最後に道を延ばせなかった操作。 */
+    blockedMove: HamiltonianPathBlockedMove | null;
+    /** マスを押して道をなぞり始める。道のマスならそこまで巻き戻し、先端の隣なら延ばす。 */
+    beginStroke: (cell: number) => void;
+    /** なぞっている指が隣のマスへ移ったときに道を変える。 */
+    traceStroke: (step: HamiltonianPathTraceStep) => void;
+    /** 指を離してなぞりを終える。押してから離すまでを待ったの1単位にする。 */
+    endStroke: () => void;
+    /** 先端からその向きの隣のマスへ先端を動かす。来た向きなら1マス縮む。 */
+    moveHeadToward: (direction: HamiltonianPathDirection) => void;
   };
 
 type HamiltonianPathPlayState = {
   problemIdentity: HamiltonianPathProblemIdentity;
   session: HamiltonianPathSession;
   progress: GameProgress;
+  blockedMove: HamiltonianPathBlockedMove | null;
 };
 
 function createPlayState(
@@ -70,7 +102,41 @@ function createPlayState(
     problemIdentity: identity,
     session: createHamiltonianPathSession(problem, startedAt),
     progress: "playing",
+    blockedMove: null,
   };
+}
+
+/** 道を変える操作の結果を反映する。延ばせなかったときは、阻まれた操作として残す。 */
+function applyPathChange(
+  current: HamiltonianPathPlayState,
+  { session, rejection }: HamiltonianPathSessionPathChange,
+  blockedMoveId: number,
+  direction: HamiltonianPathDirection | null,
+): HamiltonianPathPlayState {
+  if (rejection === null) {
+    return applyPlaySession(current, session);
+  }
+  return {
+    ...current,
+    blockedMove: {
+      id: blockedMoveId,
+      reason: rejection,
+      head: getHamiltonianPathHead(current.session.puzzleState),
+      direction,
+    },
+  };
+}
+
+/** 今の先端から `cell` へ進む向き。隣り合わなければ `null`。 */
+function findDirectionFromHead(
+  session: HamiltonianPathSession,
+  cell: number,
+): HamiltonianPathDirection | null {
+  return findHamiltonianPathDirection(
+    session.problem.size,
+    getHamiltonianPathHead(session.puzzleState),
+    cell,
+  );
 }
 
 function selectProblem(
@@ -98,36 +164,59 @@ export function useHamiltonianPathPlay(
       Date.now(),
     ),
   );
-  const { session, progress, problemIdentity } = play;
+  const { session, progress, problemIdentity, blockedMove } = play;
   const elapsedMs = useSessionElapsedMs(session);
 
-  const extendPath = useCallback((cell: number) => {
+  const nextBlockedMoveId = useRef(0);
+
+  const beginStroke = useCallback((cell: number) => {
     const operatedAt = Date.now();
+    const blockedMoveId = nextBlockedMoveId.current++;
     setPlay((current) =>
-      applyPlaySession(
+      applyPathChange(
         current,
-        extendHamiltonianPathSessionPath(current.session, cell, operatedAt)
-          .session,
+        beginHamiltonianPathSessionStroke(current.session, cell, operatedAt),
+        blockedMoveId,
+        findDirectionFromHead(current.session, cell),
       ),
     );
   }, []);
 
-  const moveHead = useCallback((cell: number) => {
+  const traceStroke = useCallback((step: HamiltonianPathTraceStep) => {
     const operatedAt = Date.now();
+    const blockedMoveId = nextBlockedMoveId.current++;
     setPlay((current) =>
-      applyPlaySession(
+      applyPathChange(
         current,
-        moveHamiltonianPathSessionHead(current.session, cell, operatedAt)
-          .session,
+        traceHamiltonianPathSessionStroke(current.session, step, operatedAt),
+        blockedMoveId,
+        findDirectionFromHead(current.session, step.to),
       ),
     );
   }, []);
 
-  const rewindPath = useCallback((cell: number) => {
+  const endStroke = useCallback(() => {
     setPlay((current) =>
       applyPlaySession(
         current,
-        rewindHamiltonianPathSessionPath(current.session, cell),
+        endHamiltonianPathSessionStroke(current.session),
+      ),
+    );
+  }, []);
+
+  const moveHeadToward = useCallback((direction: HamiltonianPathDirection) => {
+    const operatedAt = Date.now();
+    const blockedMoveId = nextBlockedMoveId.current++;
+    setPlay((current) =>
+      applyPathChange(
+        current,
+        moveHamiltonianPathSessionHeadToward(
+          current.session,
+          direction,
+          operatedAt,
+        ),
+        blockedMoveId,
+        direction,
       ),
     );
   }, []);
@@ -179,11 +268,17 @@ export function useHamiltonianPathPlay(
     result: null,
     board: session.problem,
     path: session.puzzleState.path,
+    isDeadEnd: isHamiltonianPathDeadEnd(
+      session.problem,
+      session.puzzleState.path,
+    ),
+    blockedMove,
     canUndo: canUndoHamiltonianPathSession(session),
     canRestart: canRestartHamiltonianPathSession(session),
-    extendPath,
-    moveHead,
-    rewindPath,
+    beginStroke,
+    traceStroke,
+    endStroke,
+    moveHeadToward,
     undo,
     restart,
     replay,
