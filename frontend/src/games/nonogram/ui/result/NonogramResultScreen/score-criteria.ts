@@ -8,6 +8,7 @@ import {
 } from "@/components/game-result-score-criteria";
 import type { NonogramResult } from "@/games/nonogram/play/use-nonogram-play";
 import {
+  countNonogramLines,
   NONOGRAM_REPAINT_PENALTY,
   NONOGRAM_SCORE_MAXIMUMS,
   NONOGRAM_SPEED_INITIAL_RECOGNITION_MS,
@@ -16,29 +17,26 @@ import {
   NONOGRAM_SPEED_PER_ROUND_MS,
 } from "@/games/nonogram/score";
 
-function listSpeedFormula({
-  width,
-  height,
-  filledCellCount,
-  roundCount,
-}: NonogramResult["workload"]): SpeedFormulaTerm[] {
+function listSpeedFormula(
+  workload: NonogramResult["workload"],
+): SpeedFormulaTerm[] {
   return [
     { label: "盤面把握", durationMs: NONOGRAM_SPEED_INITIAL_RECOGNITION_MS },
     {
       label: "行・列",
-      count: width + height,
+      count: countNonogramLines(workload),
       unit: "本",
       durationMsPerUnit: NONOGRAM_SPEED_PER_LINE_MS,
     },
     {
       label: "塗るマス",
-      count: filledCellCount,
+      count: workload.filledCellCount,
       unit: "マス",
       durationMsPerUnit: NONOGRAM_SPEED_PER_FILLED_CELL_MS,
     },
     {
       label: "連鎖の段",
-      count: roundCount,
+      count: workload.roundCount,
       unit: "回",
       durationMsPerUnit: NONOGRAM_SPEED_PER_ROUND_MS,
     },

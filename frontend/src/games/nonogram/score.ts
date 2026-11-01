@@ -52,6 +52,14 @@ type NonogramPlayScoreInput = NonogramTimeDeltaInput & {
   repaintCount: number;
 };
 
+/** ヒントを読む行と列の本数。 */
+export function countNonogramLines({
+  width,
+  height,
+}: Pick<NonogramSolveWorkload, "width" | "height">): number {
+  return width + height;
+}
+
 /**
  * 問題ごとの速さ満点の基準時間。
  * 盤面把握の時間に、読む行・列の数、塗るマスの数、連鎖の段の数に応じた時間を足す。
@@ -59,17 +67,14 @@ type NonogramPlayScoreInput = NonogramTimeDeltaInput & {
  * 係数は、問題集のどのレベルでも中央値でどの項も基準時間の半分を超えず、塗る操作だけにかかる時間
  * （塊ごとに1回のドラッグ）が基準時間の1割前後に収まるように決めた暫定値で、人間の実プレイで校正する。
  */
-export function calculateNonogramSpeedFullScoreMs({
-  width,
-  height,
-  filledCellCount,
-  roundCount,
-}: NonogramSolveWorkload): number {
+export function calculateNonogramSpeedFullScoreMs(
+  workload: NonogramSolveWorkload,
+): number {
   return (
     NONOGRAM_SPEED_INITIAL_RECOGNITION_MS +
-    (width + height) * NONOGRAM_SPEED_PER_LINE_MS +
-    filledCellCount * NONOGRAM_SPEED_PER_FILLED_CELL_MS +
-    roundCount * NONOGRAM_SPEED_PER_ROUND_MS
+    countNonogramLines(workload) * NONOGRAM_SPEED_PER_LINE_MS +
+    workload.filledCellCount * NONOGRAM_SPEED_PER_FILLED_CELL_MS +
+    workload.roundCount * NONOGRAM_SPEED_PER_ROUND_MS
   );
 }
 

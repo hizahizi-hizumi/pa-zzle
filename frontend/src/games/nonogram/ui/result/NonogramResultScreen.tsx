@@ -11,7 +11,10 @@ import nonogramPictogramSvg from "@/games/nonogram/assets/pictogram.svg?raw";
 import type { NonogramDifficulty } from "@/games/nonogram/difficulty";
 import { NONOGRAM_DISPLAY_NAME } from "@/games/nonogram/display-name";
 import type { NonogramResult } from "@/games/nonogram/play/use-nonogram-play";
-import { NONOGRAM_SCORE_MAXIMUMS } from "@/games/nonogram/score";
+import {
+  countNonogramLines,
+  NONOGRAM_SCORE_MAXIMUMS,
+} from "@/games/nonogram/score";
 import { getNonogramScoreCriteria } from "@/games/nonogram/ui/result/NonogramResultScreen/score-criteria";
 import type { GamePlayResultScreenProps } from "@/games/play";
 
@@ -49,7 +52,7 @@ export function NonogramResultScreen({
         createOperationCountMetric("undo", result.undoCount),
         createOperationCountMetric("restart", result.restartCount),
         createSpeedFullScoreMetric(result.speedRule),
-        createCountMetric("行・列", workload.width + workload.height, "本"),
+        createCountMetric("行・列", countNonogramLines(workload), "本"),
         createCountMetric("塗るマス", workload.filledCellCount, "マス"),
         createCountMetric("連鎖の段", workload.roundCount, "回"),
       ]}
