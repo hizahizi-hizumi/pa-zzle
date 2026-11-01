@@ -625,7 +625,8 @@ export function TutorialScreen({
             className="flex animate-in flex-col items-center gap-0.5 text-balance text-center duration-300 ease-(--ease-enter) fade-in-0 slide-in-from-bottom-1 whitespace-pre-line [word-break:auto-phrase] motion-reduce:animate-none"
           >
             <span className="text-heading">{message.headline}</span>
-            <span className="min-h-5 text-muted-foreground text-supporting">
+            {/* 補足を1行ぶんの高さに固定し、2行の補足は下へはみ出させて、見出しの位置を補足の行数で動かさない。 */}
+            <span className="h-5 text-muted-foreground text-supporting">
               {message.detail}
             </span>
           </p>
