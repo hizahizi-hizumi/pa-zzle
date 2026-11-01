@@ -53,6 +53,7 @@ type TsumeShogiPlayProps = GamePlayScreenProps<
     attackerHand: TsumeShogiHandCounts;
     shownMoves: readonly TsumeShogiPlayedMove[];
     shownMovesRestored: boolean;
+    precedingMoveTo: TsumeShogiSquare | null;
     selection: TsumeShogiSelection | null;
     promotionChoice: TsumeShogiPromotionChoice | null;
     rejection: TsumeShogiRejection | null;
@@ -104,6 +105,7 @@ export function TsumeShogiPlay({
   attackerHand,
   shownMoves,
   shownMovesRestored,
+  precedingMoveTo,
   selection,
   promotionChoice,
   rejection,
@@ -251,6 +253,7 @@ export function TsumeShogiPlay({
                 plies={plies}
                 phase={phase}
                 shownMoves={shownMoves}
+                precedingMoveTo={precedingMoveTo}
               />
             </div>
           </div>

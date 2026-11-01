@@ -85,6 +85,7 @@ export function PlayableTsumeShogi({
         attackerHand={play.attackerHand}
         shownMoves={play.shownMoves}
         shownMovesRestored={play.shownMovesRestored}
+        precedingMoveTo={play.precedingMoveTo}
         selection={play.selection}
         promotionChoice={play.promotionChoice}
         rejection={play.rejection}

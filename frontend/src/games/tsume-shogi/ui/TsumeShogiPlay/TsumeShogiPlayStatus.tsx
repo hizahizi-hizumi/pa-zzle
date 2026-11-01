@@ -1,4 +1,5 @@
 import type { TsumeShogiPlayedMove } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
+import type { TsumeShogiSquare } from "@/games/tsume-shogi/puzzle/position";
 import type { TsumeShogiSessionPhase } from "@/games/tsume-shogi/session/session";
 import { formatTsumeShogiMoveNotation } from "@/games/tsume-shogi/ui/move-notation";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
@@ -9,6 +10,8 @@ type TsumeShogiPlayStatusProps = {
   plies: number;
   phase: TsumeShogiSessionPhase;
   shownMoves: readonly TsumeShogiPlayedMove[];
+  /** `shownMoves` の最初の手の1つ前の手の移動先。棋譜の「同」に使う。 */
+  precedingMoveTo: TsumeShogiSquare | null;
 };
 
 /**
@@ -18,13 +21,14 @@ export function TsumeShogiPlayStatus({
   plies,
   phase,
   shownMoves,
+  precedingMoveTo,
 }: TsumeShogiPlayStatusProps) {
   return (
     <p
       role="status"
       className="flex min-w-0 items-baseline gap-2 text-supporting"
     >
-      {shownMoves.map((played) => {
+      {shownMoves.map((played, index) => {
         const refutation =
           played.side === "defender" && played.line === "wrong";
         return (
@@ -35,7 +39,10 @@ export function TsumeShogiPlayStatus({
               refutation && tsumeShogiToneClassNames.refutationText,
             )}
           >
-            {formatTsumeShogiMoveNotation(played)}
+            {formatTsumeShogiMoveNotation(
+              played,
+              index === 0 ? precedingMoveTo : shownMoves[index - 1]?.move.to,
+            )}
             {refutation && phase === "attacker" && "で逃れる"}
           </span>
         );

@@ -32,7 +32,12 @@ afterEach(() => {
 
 function renderStatus(phase: TsumeShogiSessionPhase): void {
   render(
-    <TsumeShogiPlayStatus plies={3} phase={phase} shownMoves={refutedMoves} />,
+    <TsumeShogiPlayStatus
+      plies={3}
+      phase={phase}
+      shownMoves={refutedMoves}
+      precedingMoveTo={null}
+    />,
   );
 }
 
@@ -45,7 +50,7 @@ describe("TsumeShogiPlayStatus", () => {
     test("反証と、その手数では詰まないことを示すこと", () => {
       const status = screen.getByRole("status").textContent;
 
-      expect(status).toContain("△2一玉");
+      expect(status).toContain("△同玉");
       expect(status).toContain("3手では詰みません");
     });
   });
@@ -58,7 +63,7 @@ describe("TsumeShogiPlayStatus", () => {
     test("反証で逃れたことだけを示すこと", () => {
       const status = screen.getByRole("status").textContent;
 
-      expect(status).toContain("△2一玉で逃れる");
+      expect(status).toContain("△同玉で逃れる");
       expect(status).not.toContain("詰みません");
     });
   });

@@ -152,6 +152,8 @@ export type TsumeShogiPlay = GamePlay<
     boardPieces: readonly TsumeShogiBoardPiece[];
     attackerHand: TsumeShogiHand;
     shownMoves: readonly TsumeShogiPlayedMove[];
+    /** `shownMoves` の最初の手の1つ前の手（前の組の玉方の応手）の移動先。棋譜の「同」に使う。無ければ `null`。 */
+    precedingMoveTo: TsumeShogiSquare | null;
     /** 待った・盤面を戻すで、最後の組として盤面に戻ってきた手を見せている。指し直したときのように動かして見せない。 */
     shownMovesRestored: boolean;
     selection: TsumeShogiSelection | null;
@@ -396,6 +398,7 @@ export function useTsumeShogiPlay(
     boardPieces,
     attackerHand,
     shownMoves,
+    precedingMoveTo: session.turns.at(-2)?.defenderMove?.to ?? null,
     shownMovesRestored:
       lastTurn !== undefined && lastTurn === play.restoredTurn,
     selection: session.selection,

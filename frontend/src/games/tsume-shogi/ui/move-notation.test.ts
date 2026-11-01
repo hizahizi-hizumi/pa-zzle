@@ -25,4 +25,50 @@ describe("formatTsumeShogiMoveNotation", () => {
       expect(notation).toBe(expected);
     },
   );
+
+  describe("直前の手と同じ升へ指した場合", () => {
+    const sameSquareCases = [
+      ["defender", "2a2b", "king", false, "△同玉"],
+      ["attacker", "3c2b", "promPawn", false, "▲同と"],
+      ["attacker", "3c2b+", "promSilver", true, "▲同銀成"],
+    ] as const;
+    const previousMoveTo = { file: 2, rank: 2 };
+
+    test.each(sameSquareCases)(
+      "%s の %s を「同」で書くこと",
+      (side, usi, pieceType, promotable, expected) => {
+        const notation = formatTsumeShogiMoveNotation(
+          {
+            side,
+            move: parseTsumeShogiMoveUsi(usi),
+            pieceType,
+            promotable,
+            line: "main",
+          },
+          previousMoveTo,
+        );
+
+        expect(notation).toBe(expected);
+      },
+    );
+  });
+
+  describe("直前の手と違う升へ指した場合", () => {
+    const previousMoveTo = { file: 3, rank: 3 };
+
+    test("升の名前で書くこと", () => {
+      const notation = formatTsumeShogiMoveNotation(
+        {
+          side: "defender",
+          move: parseTsumeShogiMoveUsi("2a2b"),
+          pieceType: "king",
+          promotable: false,
+          line: "main",
+        },
+        previousMoveTo,
+      );
+
+      expect(notation).toBe("△2二玉");
+    });
+  });
 });
