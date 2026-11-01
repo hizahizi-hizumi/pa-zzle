@@ -1,5 +1,6 @@
 import { MINESWEEPER_DISPLAY_NAME } from "@/games/minesweeper/display-name";
 import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
+import type { MinesweeperCellCue } from "@/games/minesweeper/ui/board/cell-cue";
 import { MinesweeperCell } from "@/games/minesweeper/ui/board/MinesweeperCell";
 
 export type MinesweeperInputMode = "reveal" | "flag";
@@ -10,6 +11,8 @@ type MinesweeperBoardProps = {
   cells: readonly MinesweeperVisibleCell[];
   mode: MinesweeperInputMode;
   interactionDisabled: boolean;
+  /** チュートリアルで重ねる合図。 */
+  cues?: readonly MinesweeperCellCue[];
   onRevealCell: (cellIndex: number) => void;
   onToggleFlag: (cellIndex: number) => void;
   onChordCell: (cellIndex: number) => void;
@@ -27,6 +30,7 @@ export function MinesweeperBoard({
   cells,
   mode,
   interactionDisabled,
+  cues = [],
   onRevealCell,
   onToggleFlag,
   onChordCell,
@@ -36,6 +40,8 @@ export function MinesweeperBoard({
       "Minesweeper visible cells must match the board dimensions",
     );
   }
+
+  const cueByCellIndex = new Map(cues.map((cue) => [cue.cellIndex, cue]));
 
   function handleCellPress(cellIndex: number): void {
     const cell = cells[cellIndex];
@@ -81,7 +87,9 @@ export function MinesweeperBoard({
           <MinesweeperCell
             key={getCellKey(columns, cellIndex)}
             cellIndex={cellIndex}
+            waveStep={Math.floor(cellIndex / columns) + (cellIndex % columns)}
             view={cell}
+            cue={cueByCellIndex.get(cellIndex)}
             disabled={interactionDisabled}
             onPress={handleCellPress}
             onFlagPress={handleCellFlagPress}

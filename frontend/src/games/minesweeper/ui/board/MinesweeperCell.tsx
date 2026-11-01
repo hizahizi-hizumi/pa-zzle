@@ -2,6 +2,7 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 import { useRef } from "react";
 
 import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
+import type { MinesweeperCellCue } from "@/games/minesweeper/ui/board/cell-cue";
 import {
   getMinesweeperCellFaceClassName,
   MinesweeperCellFace,
@@ -11,7 +12,10 @@ const LONG_PRESS_DELAY_MS = 450;
 
 type MinesweeperCellProps = {
   cellIndex: number;
+  /** 左上からの「行 + 列」。盤面全体に順に掛ける演出が、マスを並べる順に使う。 */
+  waveStep: number;
   view: MinesweeperVisibleCell;
+  cue: MinesweeperCellCue | undefined;
   disabled: boolean;
   onPress: (cellIndex: number) => void;
   onFlagPress: (cellIndex: number) => void;
@@ -42,7 +46,7 @@ function getAccessibleName(
 function getCellClassName(view: MinesweeperVisibleCell): string {
   const faceClassName = getMinesweeperCellFaceClassName(view, "board");
   const interactionClassName =
-    "min-w-0 touch-manipulation select-none outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
+    "relative min-w-0 touch-manipulation select-none outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
 
   if (view.state === "hidden" || view.state === "flagged") {
     return `${faceClassName} ${interactionClassName} hover:bg-slate-300 dark:hover:bg-slate-600`;
@@ -52,7 +56,9 @@ function getCellClassName(view: MinesweeperVisibleCell): string {
 
 export function MinesweeperCell({
   cellIndex,
+  waveStep,
   view,
+  cue,
   disabled,
   onPress,
   onFlagPress,
@@ -113,9 +119,29 @@ export function MinesweeperCell({
       onPointerUp={handlePointerEnd}
       onPointerCancel={handlePointerEnd}
       onPointerLeave={handlePointerEnd}
+      data-minesweeper-cell-index={cellIndex}
+      data-wave-step={waveStep}
       className={getCellClassName(view)}
     >
-      <MinesweeperCellFace view={view} size="board" />
+      {cue?.kind === "focus" && (
+        <span
+          key={cue.id}
+          aria-hidden="true"
+          data-cell-cue={cue.kind}
+          className="pointer-events-none absolute inset-0 bg-sky-100 ring-2 ring-sky-500/60 ring-inset animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none dark:bg-sky-900/60 dark:ring-sky-300/60"
+        />
+      )}
+      {cue?.kind === "hint" && (
+        <span
+          key={cue.id}
+          aria-hidden="true"
+          data-cell-cue={cue.kind}
+          className="pointer-events-none absolute inset-1 rounded-sm border-[3px] border-sky-600 border-dashed animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none dark:border-sky-400"
+        />
+      )}
+      <span className="relative flex size-full items-center justify-center">
+        <MinesweeperCellFace view={view} size="board" />
+      </span>
     </button>
   );
 }

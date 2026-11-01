@@ -16,7 +16,9 @@ describe("MinesweeperCell", () => {
     render(
       <MinesweeperCell
         cellIndex={0}
+        waveStep={0}
         view={{ state: "hidden" }}
+        cue={undefined}
         disabled={false}
         onPress={onPress}
         onFlagPress={onFlagPress}
