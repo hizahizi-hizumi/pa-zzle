@@ -17,7 +17,7 @@ afterEach(() => {
   cleanup();
 });
 
-// 基準時間 5 + 64 × 0.5 + 10 × 3 + 4 × 3 + min(130, 120) × 1 = 199秒（03:19）、0点になる時間 09:57。
+// 基準時間 5 + 64 × 0.5 + 10 × 3 + 4 × 3 + min(130, 45) × 1 = 124秒（02:04）、0点になる時間 06:12。
 const workload = {
   openCellCount: 64,
   fatalBranchCount: 10,
@@ -26,9 +26,9 @@ const workload = {
   longestRefutationLength: 20,
 };
 
-// 21秒超過で速さ57点、引き直し2回で正確さ34点。待った・盤面を戻すの回数は点に入らない。
+// 21秒超過で速さ55点、引き直し2回で正確さ34点。待った・盤面を戻すの回数は点に入らない。
 const performance: HitofudePuzzleSessionResult = {
-  elapsedMs: 220_000,
+  elapsedMs: 145_000,
   backtrackCount: 2,
   retractedCellCount: 9,
   undoCount: 3,
@@ -37,7 +37,7 @@ const performance: HitofudePuzzleSessionResult = {
 };
 const result = createHitofudePuzzleResult(performance, workload);
 const perfectResult = createHitofudePuzzleResult(
-  { ...performance, elapsedMs: 190_000, backtrackCount: 0 },
+  { ...performance, elapsedMs: 115_000, backtrackCount: 0 },
   workload,
 );
 
@@ -113,7 +113,7 @@ describe("HitofudePuzzlePlay", () => {
       expect(pictogram).toBeTruthy();
       expect(screen.getByText(HITOFUDE_PUZZLE_DISPLAY_NAME)).toBeTruthy();
       expect(screen.getByText("レベル 4")).toBeTruthy();
-      expect(score.getByText("91")).toBeTruthy();
+      expect(score.getByText("89")).toBeTruthy();
     });
 
     test("時間と基準時間との差・引き直しを主な成績として表示すること", () => {
@@ -123,7 +123,7 @@ describe("HitofudePuzzlePlay", () => {
         .map((definition) => definition.textContent);
 
       expect(terms).toEqual(["時間", "引き直し"]);
-      expect(definitions).toEqual(["03:40", "基準 +00:21", "2回"]);
+      expect(definitions).toEqual(["02:25", "基準 +00:21", "2回"]);
     });
 
     test("盤面を表示しないこと", () => {
@@ -167,11 +167,11 @@ describe("HitofudePuzzlePlay", () => {
 
         expect(items).toEqual(
           expect.arrayContaining([
-            "速さ 57 / 60",
+            "速さ 55 / 60",
             "正確さ 34 / 40",
             "待った 3回",
             "盤面を戻す 1回",
-            "基準時間 03:19",
+            "基準時間 02:04",
           ]),
         );
         expect(
@@ -185,10 +185,10 @@ describe("HitofudePuzzlePlay", () => {
       });
 
       test("速さの基準を、この問題の作業の量から求める式と0点になる時間で表示すること", () => {
-        const criteria = screen.getByText(/^基準時間03:19以内/);
+        const criteria = screen.getByText(/^基準時間02:04以内/);
 
         expect(criteria.textContent).toBe(
-          "基準時間03:19以内で60点、09:57以上で0点、その間は時間に応じて減らす。基準時間は盤面把握5秒 + 通るマス64マス × 0.5秒 + 分かれ道10か所 × 3秒 + 数手先を読む4回 × 3秒 + 読む手数120手 × 1秒。式の数はこの問題で決まり、プレイでは変わらない。分かれ道は、進む向きを誤ると全マスを通れなくなる所。数手先を読む回数と読む手数は、この問題を盤面から読んで解くのに要る量（読む手数は120手まで数える）。",
+          "基準時間02:04以内で60点、06:12以上で0点、その間は時間に応じて減らす。基準時間は盤面把握5秒 + 通るマス64マス × 0.5秒 + 分かれ道10か所 × 3秒 + 数手先を読む4回 × 3秒 + 読む手数45手 × 1秒。式の数はこの問題で決まり、プレイでは変わらない。分かれ道は、進む向きを誤ると全マスを通れなくなる所。数手先を読む回数と読む手数は、この問題を盤面から読んで解くのに要る量（読む手数は45手まで数える）。",
         );
       });
 

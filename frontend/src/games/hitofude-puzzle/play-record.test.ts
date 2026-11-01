@@ -12,25 +12,25 @@ import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 
 const problemIdentity = createHitofudePuzzleProblemIdentity(8, 4, 16);
 
-// 基準時間は 5 + 64×0.5 + 13×3 + 8×3 + 71×1 = 171秒。
+// 基準時間は 5 + 55×0.5 + 12×3 + 3×3 + 22×1 = 99.5秒。
 const workload = {
-  openCellCount: 64,
-  assumptionCount: 8,
-  refutationStepCount: 71,
-  longestRefutationLength: 18,
-  fatalBranchCount: 13,
+  openCellCount: 55,
+  assumptionCount: 3,
+  refutationStepCount: 22,
+  longestRefutationLength: 9,
+  fatalBranchCount: 12,
 };
 
-// 速さは 60 × (1 − 29秒 / 342秒) ≒ 55点、正確さは 40 − 3×3 = 31点。
+// 速さは 60 × (1 − 29秒 / 199秒) ≒ 51点、正確さは 40 − 3×3 = 31点。
 const performance = {
-  elapsedMs: 200_000,
+  elapsedMs: 128_500,
   backtrackCount: 3,
   retractedCellCount: 20,
   undoCount: 2,
   restartCount: 1,
   inputCount: 40,
 };
-const expectedScore = 86;
+const expectedScore = 82;
 const expectedTimeDeltaMs = 29_000;
 
 const record = createHitofudePuzzlePlayRecord({
@@ -38,7 +38,7 @@ const record = createHitofudePuzzlePlayRecord({
   problemIdentity,
   workload,
   startedAt: 1_000,
-  completedAt: 201_000,
+  completedAt: 129_500,
   result: performance,
 });
 
@@ -59,7 +59,7 @@ describe("createHitofudePuzzlePlayRecord", () => {
     const { id, gameId, payloadVersion, payload } = record;
 
     expect({ id, gameId, payloadVersion }).toEqual({
-      id: "hitofude-puzzle:1000:201000:hp-8-t4-16",
+      id: "hitofude-puzzle:1000:129500:hp-8-t4-16",
       gameId: "hitofude-puzzle",
       payloadVersion: 1,
     });
@@ -82,7 +82,7 @@ describe("createHitofudePuzzlePlayRecord", () => {
       problemIdentity,
       workload,
       startedAt: 1_000,
-      completedAt: 201_000,
+      completedAt: 129_500,
       result: createHitofudePuzzleResult(performance, workload),
     });
 
@@ -287,11 +287,11 @@ describe("restoreHitofudePuzzleRecordedResult", () => {
         result: {
           ...performance,
           workload,
-          speedRule: { fullScoreMs: 171_000, zeroScoreMs: 513_000 },
+          speedRule: { fullScoreMs: 99_500, zeroScoreMs: 298_500 },
           timeDeltaMs: expectedTimeDeltaMs,
           score: {
             total: expectedScore,
-            breakdown: { speed: 55, accuracy: 31 },
+            breakdown: { speed: 51, accuracy: 31 },
           },
         },
       });

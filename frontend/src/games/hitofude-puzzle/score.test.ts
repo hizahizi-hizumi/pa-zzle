@@ -9,22 +9,22 @@ import { getGameResultLevel } from "@/games/result";
 
 // レベル1 と レベル5 の問題集の中央値に近い作業の量。
 const lightWorkload: HitofudePuzzleSolveWorkload = {
-  openCellCount: 25,
+  openCellCount: 31,
   assumptionCount: 0,
   refutationStepCount: 0,
   longestRefutationLength: 0,
-  fatalBranchCount: 3,
+  fatalBranchCount: 4,
 };
 const heavyWorkload: HitofudePuzzleSolveWorkload = {
-  openCellCount: 64,
-  assumptionCount: 8,
-  refutationStepCount: 71,
-  longestRefutationLength: 18,
-  fatalBranchCount: 13,
+  openCellCount: 55,
+  assumptionCount: 3,
+  refutationStepCount: 22,
+  longestRefutationLength: 9,
+  fatalBranchCount: 12,
 };
 
-const lightFullScoreMs = 26_500;
-const heavyFullScoreMs = 171_000;
+const lightFullScoreMs = 32_500;
+const heavyFullScoreMs = 99_500;
 
 type PlayExample = {
   elapsedRatio: number;
@@ -46,7 +46,7 @@ describe("calculateHitofudePuzzleSpeedFullScoreMs", () => {
   ] as const;
 
   test.each(cases)(
-    "%sで、見渡す5秒になぞるマス1つ0.5秒・迷う分岐1つ3秒・仮置き1回3秒・先読み1手1秒を足すこと",
+    "%sで、見渡す5秒になぞるマス1つ0.5秒・迷う分岐1つ3秒・仮置きの局面1つ3秒・先読み1手1秒を足すこと",
     (_, workload, expected) => {
       const speedFullScoreMs =
         calculateHitofudePuzzleSpeedFullScoreMs(workload);
@@ -56,15 +56,15 @@ describe("calculateHitofudePuzzleSpeedFullScoreMs", () => {
   );
 
   describe("先読みの手数の合計が上限を超える問題の場合", () => {
-    const atLimit = { ...heavyWorkload, refutationStepCount: 120 };
-    const overLimit = { ...heavyWorkload, refutationStepCount: 287 };
+    const atLimit = { ...heavyWorkload, refutationStepCount: 45 };
+    const overLimit = { ...heavyWorkload, refutationStepCount: 76 };
 
-    test("上限の120手までだけを数えること", () => {
+    test("上限の45手までだけを数えること", () => {
       const atLimitMs = calculateHitofudePuzzleSpeedFullScoreMs(atLimit);
       const overLimitMs = calculateHitofudePuzzleSpeedFullScoreMs(overLimit);
 
       expect(overLimitMs).toBe(atLimitMs);
-      expect(atLimitMs).toBe(220_000);
+      expect(atLimitMs).toBe(122_500);
     });
   });
 });
