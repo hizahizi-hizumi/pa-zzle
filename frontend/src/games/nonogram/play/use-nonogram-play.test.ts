@@ -234,11 +234,11 @@ describe("useNonogramPlay", () => {
         fillSolution(result);
       });
 
-      test("盤面を戻す前の塗り直しを引き継ぎ、盤面を戻して消えた塗りと盤面を戻した回数では減点しないこと", () => {
+      test("盤面を戻す前に消した塗りと盤面を戻して消えた塗りを塗り直しに数え、盤面を戻した回数では減点しないこと", () => {
         const playResult = result.current.result;
 
-        expect(playResult).toMatchObject({ repaintCount: 1, restartCount: 1 });
-        expect(playResult?.score.breakdown).toEqual({ speed: 85, accuracy: 12 });
+        expect(playResult).toMatchObject({ repaintCount: 2, restartCount: 1 });
+        expect(playResult?.score.breakdown).toEqual({ speed: 85, accuracy: 9 });
       });
     });
 

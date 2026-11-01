@@ -379,7 +379,7 @@ export function restartNonogramSession(
     restartCount: settled.restartCount + 1,
     settledRepaintCount:
       settled.settledRepaintCount +
-      countRepaintedCells(settled.puzzleState, emptyBoard),
+      countChangedCells(settled.puzzleState, emptyBoard, isRepaint),
   };
 }
 
