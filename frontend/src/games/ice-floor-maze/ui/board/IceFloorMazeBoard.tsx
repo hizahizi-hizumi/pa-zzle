@@ -47,12 +47,23 @@ type IceFloorMazeBoardProps = {
   onClearAnimationComplete: () => void;
 };
 
-/** 成立しない向きへの押し戻しは、マスの大きさによらず画面上でこの距離だけ押す。 */
-const BLOCKED_PUSH_PX = 6;
+/**
+ * 成立しない向きへの押し戻し。駒が止め役へ2度ぶつかって跳ね返り、動けなかったとはっきり分かる量と長さにする。
+ * 押す距離はマスの割合で決め、マスの小さい狭い画面でも画面上で `BLOCKED_PUSH_MIN_PX` より小さくしない。
+ */
+const BLOCKED_PUSH_CELLS = 0.26;
+const BLOCKED_PUSH_MIN_PX = 8;
 const blockedShakeTiming: RejectionShakeTiming = {
-  durationMs: 200,
+  durationMs: 340,
   easing: "ease-out",
 };
+/** 押す距離に掛ける、ぶつかる向きへの動きの割合と、その時刻。負の値は跳ね返り。 */
+const blockedPushSteps = [
+  { ratio: 1, offset: 0.18 },
+  { ratio: -0.3, offset: 0.38 },
+  { ratio: 0.5, offset: 0.58 },
+  { ratio: -0.12, offset: 0.8 },
+] as const;
 
 /**
  * 隣のもろい岩へ押したときは、押された岩が小さく揺れて持ちこたえる。崩れるのは離れたところから滑ってきて
@@ -165,19 +176,18 @@ export function IceFloorMazeBoard({
 
     const vector = iceFloorMazeDirectionVectors[blockedInput.direction];
     const unitsPerPixel = measureUnitsPerPixel(svgRef.current, viewBox.width);
-    const push = BLOCKED_PUSH_PX * unitsPerPixel;
+    const push =
+      unitsPerPixel > 0
+        ? Math.max(BLOCKED_PUSH_CELLS, BLOCKED_PUSH_MIN_PX * unitsPerPixel)
+        : 0;
     playRejectionShake(
       piecePushRef.current,
       [
         { transform: "translate(0px, 0px)" },
-        {
-          transform: `translate(${vector.x * push}px, ${vector.y * push}px)`,
-          offset: 0.35,
-        },
-        {
-          transform: `translate(${-vector.x * push * 0.25}px, ${-vector.y * push * 0.25}px)`,
-          offset: 0.7,
-        },
+        ...blockedPushSteps.map(({ ratio, offset }) => ({
+          transform: `translate(${vector.x * push * ratio}px, ${vector.y * push * ratio}px)`,
+          offset,
+        })),
         { transform: "translate(0px, 0px)" },
       ],
       blockedShakeTiming,

@@ -14,6 +14,7 @@ import type {
 import { parseIceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
 import { IceFloorMazePlay } from "@/games/ice-floor-maze/ui/IceFloorMazePlay";
 import type { GameProgress } from "@/games/play";
+import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 
 // #  1  #  3  4
 // 5  6  7  #  #
@@ -199,6 +200,42 @@ describe("IceFloorMazePlay", () => {
           expect(callbacks.onSlide).toHaveBeenCalledExactlyOnceWith(direction);
         },
       );
+
+      function swipeRightFrom(target: Element): void {
+        fireEvent.pointerDown(target, {
+          pointerId: 1,
+          isPrimary: true,
+          button: 0,
+          clientX: 100,
+          clientY: 100,
+        });
+        fireEvent.pointerMove(target, {
+          pointerId: 1,
+          clientX: 140,
+          clientY: 100,
+        });
+        fireEvent.pointerUp(target, { pointerId: 1 });
+      }
+
+      test("盤面の下の操作欄から始めたスワイプでも滑らせること", () => {
+        const footer = screen
+          .getByRole("button", { name: PLAY_OPERATION_LABELS.undo })
+          .closest("footer")!;
+
+        swipeRightFrom(footer);
+
+        expect(callbacks.onSlide).toHaveBeenCalledExactlyOnceWith("right");
+      });
+
+      test("ボタンから始めた指の動きでは滑らせないこと", () => {
+        const undoButton = screen.getByRole("button", {
+          name: PLAY_OPERATION_LABELS.undo,
+        });
+
+        swipeRightFrom(undoButton);
+
+        expect(callbacks.onSlide).not.toHaveBeenCalled();
+      });
 
       test("閾値に届かない指の動きでは滑らせないこと", () => {
         const area = screen.getAllByRole("main").at(-1)!;
