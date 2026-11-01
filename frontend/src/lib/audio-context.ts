@@ -4,6 +4,7 @@
  *
  * ブラウザは利用者が操作するまで音を出させないため、AudioContext は利用者の操作の中で作り動かす。
  * 音を出したい側は `requestAudioContextUnlock` で操作を待ち、動き出したことは `subscribeAudioContextRunning` で受け取る。
+ * メディア要素の再生のように操作の中でしか許されないことは、`subscribeUserGesture` で同じ操作の中で行う。
  */
 
 /** 鳴っていない AudioContext を動かせる操作。 */
@@ -38,6 +39,7 @@ let unlockListening = false;
 /** AudioContext を動かしたいかを答える関数。どれかが動かしたいと答えたら、次の操作で動かす。 */
 const unlockWishes = new Set<() => boolean>();
 const runningListeners = new Set<() => void>();
+const gestureListeners = new Set<(context: AudioContext) => void>();
 
 /** 音を出せる環境か。Web Audio API が無い環境では、効果音も BGM も何もしない。 */
 export function canPlayAudio(): boolean {
@@ -152,6 +154,27 @@ function isHandlingUserGesture(): boolean {
   return navigator.userActivation?.isActive ?? false;
 }
 
+/**
+ * AudioContext を動かす利用者の操作の中で、AudioContext を動かし始めてから `onGesture` を呼ぶ。購読をやめる関数を返す。
+ * 渡す AudioContext は、まだ動き出していないことがある。
+ * AudioContext を動かしたい（`requestAudioContextUnlock` に渡した関数が真を返す）ものが無い操作では呼ばない。
+ */
+export function subscribeUserGesture(
+  onGesture: (context: AudioContext) => void,
+): () => void {
+  if (!getAudioContextClass()) {
+    return function unsubscribe() {};
+  }
+  gestureListeners.add(onGesture);
+  listenForUnlock();
+  return function unsubscribe() {
+    gestureListeners.delete(onGesture);
+    if (getRunningAudioContext() && gestureListeners.size === 0) {
+      stopListeningForUnlock();
+    }
+  };
+}
+
 function unlockOnUserGesture() {
   if (!wantsUnlock()) {
     return;
@@ -162,7 +185,10 @@ function unlockOnUserGesture() {
     return;
   }
   resumeAudioContext(context);
-  if (context.state === "running") {
+  for (const onGesture of gestureListeners) {
+    onGesture(context);
+  }
+  if (context.state === "running" && gestureListeners.size === 0) {
     stopListeningForUnlock();
   }
 }
@@ -202,6 +228,12 @@ export function decodeAudioFile(url: string): Promise<AudioBuffer> | null {
   return context ? fetchAndDecode(context, url) : null;
 }
 
+/** 取得済みの音声ファイルを読み解く。読み解けない環境では `null` を返す。 */
+export function decodeAudioBlob(file: Blob): Promise<AudioBuffer> | null {
+  const context = getDecodingContext();
+  return context ? decodeBlob(context, file) : null;
+}
+
 async function fetchAndDecode(
   context: BaseAudioContext,
   url: string,
@@ -211,6 +243,13 @@ async function fetchAndDecode(
     throw new Error(`HTTP ${response.status}`);
   }
   return context.decodeAudioData(await response.arrayBuffer());
+}
+
+async function decodeBlob(
+  context: BaseAudioContext,
+  file: Blob,
+): Promise<AudioBuffer> {
+  return context.decodeAudioData(await file.arrayBuffer());
 }
 
 function getDecodingContext(): OfflineAudioContext | null {
