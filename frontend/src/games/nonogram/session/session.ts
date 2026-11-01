@@ -43,12 +43,15 @@ export type NonogramSession = GameSession<NonogramProblem, NonogramBoard> & {
   restartCount: number;
   /** 終えた入力・待った・盤面を戻すで塗りを消したマスの数。入力中のマスは `stroke` から数える。 */
   settledRepaintCount: number;
+  /** 終えた入力で × を付けた・外したマスの数。入力中のマスは `stroke` から数える。 */
+  settledCrossToggleCount: number;
 };
 
 /** 評価に使うプレイ事実。採点はしない。 */
 export type NonogramSessionResult = {
   elapsedMs: number;
   repaintCount: number;
+  crossToggleCount: number;
   undoCount: number;
   restartCount: number;
   inputCount: number;
@@ -72,18 +75,47 @@ export function createNonogramSession(
     undoCount: 0,
     restartCount: 0,
     settledRepaintCount: 0,
+    settledCrossToggleCount: 0,
   };
 }
 
-/** `before` で塗ってあり、`after` で塗りでなくなったマスの数。 */
-function countRepaintedCells(
+type CellChange = (
+  before: NonogramCellState,
+  after: NonogramCellState,
+) => boolean;
+
+/** 塗りを未確定か × に変えた。 */
+function isRepaint(before: NonogramCellState, after: NonogramCellState) {
+  return before === "filled" && after !== "filled";
+}
+
+/** × を付けたか外した。 */
+function isCrossToggle(before: NonogramCellState, after: NonogramCellState) {
+  return (before === "crossed") !== (after === "crossed");
+}
+
+function countChangedCells(
   before: NonogramBoard,
   after: NonogramBoard,
+  changed: CellChange,
 ): number {
-  return before.cells.filter(
-    (state, cellIndex) =>
-      state === "filled" && after.cells[cellIndex] !== "filled",
+  return before.cells.filter((state, cellIndex) =>
+    changed(state, getCellState(after, cellIndex)),
   ).length;
+}
+
+/** 入力中のマスのうち、`changed` に当たるマスの数。入力中でなければ 0。 */
+function countStrokeChangedCells(
+  session: NonogramSession,
+  changed: CellChange,
+): number {
+  return session.stroke === null
+    ? 0
+    : countChangedCells(
+        session.stroke.boardBefore,
+        session.puzzleState,
+        changed,
+      );
 }
 
 function settleStroke(session: NonogramSession): NonogramSession {
@@ -94,6 +126,7 @@ function settleStroke(session: NonogramSession): NonogramSession {
     ...session,
     stroke: null,
     settledRepaintCount: getNonogramSessionRepaintCount(session),
+    settledCrossToggleCount: getNonogramSessionCrossToggleCount(session),
   };
 }
 
@@ -317,7 +350,7 @@ export function undoNonogramSession(session: NonogramSession): NonogramSession {
     undoCount: settled.undoCount + 1,
     settledRepaintCount:
       settled.settledRepaintCount +
-      countRepaintedCells(settled.puzzleState, previous),
+      countChangedCells(settled.puzzleState, previous, isRepaint),
   };
 }
 
@@ -362,12 +395,18 @@ export function canRestartNonogramSession(session: NonogramSession): boolean {
 export function getNonogramSessionRepaintCount(
   session: NonogramSession,
 ): number {
-  const { stroke } = session;
   return (
-    session.settledRepaintCount +
-    (stroke === null
-      ? 0
-      : countRepaintedCells(stroke.boardBefore, session.puzzleState))
+    session.settledRepaintCount + countStrokeChangedCells(session, isRepaint)
+  );
+}
+
+/** 入力で × を付けた・外したマスの数。待ったと盤面を戻すで変わった × は数えない。 */
+export function getNonogramSessionCrossToggleCount(
+  session: NonogramSession,
+): number {
+  return (
+    session.settledCrossToggleCount +
+    countStrokeChangedCells(session, isCrossToggle)
   );
 }
 
@@ -382,6 +421,7 @@ export function getNonogramSessionResult(
   return {
     elapsedMs,
     repaintCount: getNonogramSessionRepaintCount(session),
+    crossToggleCount: getNonogramSessionCrossToggleCount(session),
     undoCount: session.undoCount,
     restartCount: session.restartCount,
     inputCount: session.inputCount,

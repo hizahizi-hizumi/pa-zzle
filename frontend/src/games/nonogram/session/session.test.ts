@@ -10,6 +10,7 @@ import {
   createNonogramSession,
   endNonogramSessionStroke,
   extendNonogramSessionStroke,
+  getNonogramSessionCrossToggleCount,
   getNonogramSessionRepaintCount,
   getNonogramSessionResult,
   getNonogramSessionStrokeRange,
@@ -86,22 +87,25 @@ describe("createNonogramSession", () => {
 describe("startNonogramSessionStroke", () => {
   describe("1マスだけ押した場合", () => {
     const cases = [
-      ["未確定に塗り", "...", "filled", "#..", 0],
-      ["未確定に ×", "...", "crossed", "x..", 0],
-      ["塗りに塗り", "#..", "filled", "...", 1],
-      ["× に ×", "x..", "crossed", "...", 0],
-      ["× に塗り", "x..", "filled", "#..", 0],
-      ["塗りに ×", "#..", "crossed", "x..", 1],
+      ["未確定に塗り", "...", "filled", "#..", 0, 0],
+      ["未確定に ×", "...", "crossed", "x..", 0, 1],
+      ["塗りに塗り", "#..", "filled", "...", 1, 0],
+      ["× に ×", "x..", "crossed", "...", 0, 1],
+      ["× に塗り", "x..", "filled", "#..", 0, 1],
+      ["塗りに ×", "#..", "crossed", "x..", 1, 1],
     ] as const;
 
     test.each(cases)(
-      "%s を入れると、マスと塗り直しの数が変わること",
-      (_, firstRow, mark, expectedFirstRow, expectedRepaintCount) => {
+      "%s を入れると、マスと塗り直しの数と × を付け外したマスの数が変わること",
+      (_, firstRow, mark, expectedFirstRow, expectedRepaintCount, expectedCrossToggleCount) => {
         const session = tap(withBoard([firstRow, "...", "..."]), 0, mark);
 
         expect(formatBoard(session.puzzleState)[0]).toBe(expectedFirstRow);
         expect(getNonogramSessionRepaintCount(session)).toBe(
           expectedRepaintCount,
+        );
+        expect(getNonogramSessionCrossToggleCount(session)).toBe(
+          expectedCrossToggleCount,
         );
       },
     );
@@ -279,10 +283,11 @@ describe("undoNonogramSession", () => {
       "crossed",
     );
 
-    test("取り消しても塗り直しに数えないこと", () => {
+    test("取り消しても塗り直しに数えず、× を付け外したマスの数を増やさないこと", () => {
       const next = undoNonogramSession(session);
 
       expect(getNonogramSessionRepaintCount(next)).toBe(0);
+      expect(getNonogramSessionCrossToggleCount(next)).toBe(1);
     });
   });
 
@@ -355,6 +360,7 @@ describe("getNonogramSessionResult", () => {
       expect(result).toEqual({
         elapsedMs: clearedAt - startedAt,
         repaintCount: 0,
+        crossToggleCount: 0,
         undoCount: 0,
         restartCount: 0,
         inputCount: 1,
