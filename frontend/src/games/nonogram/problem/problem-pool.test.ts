@@ -1,6 +1,7 @@
 import { difficultyLevels } from "@/games/difficulty";
 import { assessNonogramDifficulty } from "@/games/nonogram/difficulty";
 import {
+  analyzeNonogramDifficulty,
   measureNonogramClueShape,
   toNonogramAnalyzedDifficulty,
 } from "@/games/nonogram/problem/difficulty-analysis";
@@ -22,6 +23,14 @@ import {
 } from "@/games/nonogram/problem/problem-pool";
 import { parseNonogramPattern } from "@/games/nonogram/puzzle/pattern";
 import { createProblemId } from "@/games/problem-id";
+
+// 全問の再生成・解の数え上げ・分析は `bun run generate:nonogram-pool -- --verify` で行い、テストでは等間隔に抜き出した問題だけを確かめる。
+const checkedEntryCountPerDifficulty = 25;
+
+function sampleEvenly<T>(values: readonly T[], count: number): T[] {
+  const step = Math.max(1, Math.floor(values.length / count));
+  return values.filter((_, index) => index % step === 0).slice(0, count);
+}
 
 describe("encodeNonogramPoolSolution", () => {
   const solution = parseNonogramPattern(["##....#", ".......", "#######"]);
@@ -230,6 +239,13 @@ describe("listNonogramPoolEntries", () => {
     })),
   }));
   const allPooled = pooledByLevel.flatMap(({ pooled }) => pooled);
+  const sampledByLevel = pooledByLevel.map(
+    ({ difficulty, pooled }) =>
+      [
+        difficulty,
+        sampleEvenly(pooled, checkedEntryCountPerDifficulty),
+      ] as const,
+  );
 
   test("各レベルが200問以上を持つこと", () => {
     const shortLevels = pooledByLevel.filter(
@@ -254,6 +270,37 @@ describe("listNonogramPoolEntries", () => {
 
     expect(misclassified).toEqual([]);
   });
+
+  test.each(sampledByLevel)(
+    "レベル %s から抜き出した問題を、identity から同じ問題に作り直せること",
+    (_, pooled) => {
+      const mismatched = pooled.filter(({ problem, identity }) => {
+        const generated = generateNonogramProblem(identity);
+        return (
+          generated.status !== "accepted" ||
+          JSON.stringify(generated.generated.problem) !==
+            JSON.stringify(problem)
+        );
+      });
+
+      expect(mismatched).toEqual([]);
+    },
+  );
+
+  test.each(sampledByLevel)(
+    "レベル %s から抜き出した問題の特徴が、分析の結果と一致すること",
+    (_, pooled) => {
+      const mismatched = pooled.filter(({ problem, features }) => {
+        const analysis = analyzeNonogramDifficulty(problem);
+        return (
+          analysis.status !== "analyzed" ||
+          JSON.stringify(analysis.features) !== JSON.stringify(features)
+        );
+      });
+
+      expect(mismatched).toEqual([]);
+    },
+  );
 
   test("回転・反転で重なる図柄を、レベルをまたいでも持たないこと", () => {
     const symmetryKeys = new Set(

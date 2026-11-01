@@ -1,6 +1,4 @@
 import { difficultyLevels } from "@/games/difficulty";
-import { analyzeNonogramDifficulty } from "@/games/nonogram/problem/difficulty-analysis";
-import { generateNonogramProblem } from "@/games/nonogram/problem/generator";
 import {
   decodeNonogramPoolEntry,
   listNonogramPoolEntries,
@@ -12,62 +10,7 @@ import {
 } from "@/games/nonogram/problem-selection";
 import { createProblemId } from "@/games/problem-id";
 
-// 全問の再生成・解の数え上げ・分析は `bun run generate:nonogram-pool -- --verify` で行い、テストでは等間隔に抜き出した問題だけを確かめる。
-const checkedEntryCountPerDifficulty = 25;
-
 const difficulties = difficultyLevels.map(({ id }) => id);
-
-function sampleEvenly<T>(values: readonly T[], count: number): T[] {
-  const step = Math.max(1, Math.floor(values.length / count));
-  return values.filter((_, index) => index % step === 0).slice(0, count);
-}
-
-describe("問題集", () => {
-  const cases = difficulties.map(
-    (difficulty) =>
-      [
-        difficulty,
-        sampleEvenly(
-          [...listNonogramPoolEntries(difficulty).entries()],
-          checkedEntryCountPerDifficulty,
-        ).map(([entryIndex, entry]) => ({
-          ...toNonogramPooledProblem(difficulty, entryIndex),
-          features: decodeNonogramPoolEntry(entry).features,
-        })),
-      ] as const,
-  );
-
-  test.each(cases)(
-    "レベル %s から抜き出した問題が、identity から同じ問題に作り直せること",
-    (_, pooled) => {
-      const mismatched = pooled.filter(({ problem, identity }) => {
-        const generated = generateNonogramProblem(identity);
-        return (
-          generated.status !== "accepted" ||
-          JSON.stringify(generated.generated.problem) !==
-            JSON.stringify(problem)
-        );
-      });
-
-      expect(mismatched).toEqual([]);
-    },
-  );
-
-  test.each(cases)(
-    "レベル %s から抜き出した問題の特徴が、分析の結果と一致すること",
-    (_, pooled) => {
-      const mismatched = pooled.filter(({ problem, features }) => {
-        const analysis = analyzeNonogramDifficulty(problem);
-        return (
-          analysis.status !== "analyzed" ||
-          JSON.stringify(analysis.features) !== JSON.stringify(features)
-        );
-      });
-
-      expect(mismatched).toEqual([]);
-    },
-  );
-});
 
 describe("selectNonogramProblemForDifficulty", () => {
   const seed = "nonogram-problem-selection";
