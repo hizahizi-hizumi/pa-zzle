@@ -18,14 +18,18 @@ export function createGameNavigation(
   game: GameNavigationTarget,
 ): GameNavigation {
   return {
-    openGameHome(selectedProblemId) {
-      navigate({
-        pathname: game.homePath,
-        search:
-          selectedProblemId === undefined
-            ? ""
-            : createProblemIdSearch(selectedProblemId),
-      });
+    openGameHome(selectedProblemId, options) {
+      navigate(
+        {
+          pathname: game.homePath,
+          search:
+            selectedProblemId === undefined
+              ? ""
+              : createProblemIdSearch(selectedProblemId),
+        },
+        // ゲームのホームは台紙のマスを一度に多く描くので、分けて描かずに一度に描き、開くまでの時間を縮める。
+        { replace: options?.replacesHistory ?? false, flushSync: true },
+      );
     },
     backToHome() {
       navigate("/");

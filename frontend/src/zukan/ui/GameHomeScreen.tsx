@@ -157,6 +157,15 @@ function findSelectedProblem(
 
 const noProblems: readonly ZukanProblem[] = [];
 
+function findSquareElement(
+  scroller: HTMLElement | null,
+  index: number,
+): HTMLElement | null {
+  return (
+    scroller?.querySelector<HTMLElement>(`[data-index="${index}"]`) ?? null
+  );
+}
+
 function arrangeOpenProblems(
   problems: readonly ZukanProblem[],
   conditions: ZukanFilterConditions,
@@ -279,7 +288,8 @@ function listPendingChanges(
  * 1ゲームのホーム。遊ぶレベルを選んでプレイを始める操作と、そのゲームの図鑑を1画面にまとめる。
  * 上から、ホームへ戻る導線、ゲーム名の見出し、レベルのカード、開いているレベルで遊ぶ「ランダムに遊ぶ」、開いているレベルの台紙を置く。
  * 開いたときは、選んでおく問題があればそのレベル、無ければそのゲームで最後にクリアまたは離脱したレベルを開く。そのゲームを遊んだことが無ければどのレベルも開かず、
- * 「ランダムに遊ぶ」を押せない姿で同じ場所に置き、台紙の場所も空けておく。製品からレベルを初期選択・推奨しない。
+ * 台紙の場所を使ってレベルのカードを大きく並べ、「ランダムに遊ぶ」と台紙はカードを選んでから出す。製品からレベルを初期選択・推奨しない。
+ * 開いたときは、ほかの画面から移ってきてもフォーカスを見失わないよう、選んでおいた問題のマス、無ければゲーム名の見出しへフォーカスを置く。
  *
  * 図鑑は、難易度ごとの全問をマス目の台紙にし、レベルのカードで1枚ずつ切り替えて見せる。カードには各レベルの解いた数を添え、全レベルの進み具合を切り替えずに分かるようにする。
  * 画面の高さに収め、台紙だけをスクロールさせる。台紙の上には、そのレベルの問題の数を評価段階ごとと挑戦中・未挑戦に分けて示す。
@@ -290,8 +300,9 @@ function listPendingChanges(
  * ページが見えるまでは見せ始めない。画面を押すかキーを押すと最後の姿まで飛ばす。
  * 絞り込みは開いているレベルの台紙にかけ、当たった問題を前に詰め、当たらなかった問題を薄くして後ろに並べる。条件は保存せず、開いたときは条件なしで始め、レベルを切り替えると外す。
  * 条件は、かけたレベルを添えて持ち、選ぶ前に最初に開くレベルが変わったときも、ほかのレベルには持ち越さない。条件を変えると台紙を先頭までスクロールし、前に集めた問題を見せる。
- * 変化は絞り込みの無い台紙で見せる。見せている途中で絞り込みを開くか条件を選ぶと、見せ終えたものとする。遊び方・見方・絞り込みのボタンを押したタップは、最後の姿まで飛ばしたうえでそのまま開く。
- * 状態ごとの数は、絞り込んでいても台紙の全問で数え、当たった問題の数はその横（狭い画面ではその下）に添える。
+ * 変化は絞り込みの無い台紙で見せる。見せている途中で絞り込みを開くか条件を選ぶと、見せ終えたものとする。
+ * 遊び方・見方・絞り込みのボタン、「ランダムに遊ぶ」、詳細の中の操作を押したタップは、最後の姿まで飛ばしたうえでそのまま操作する。
+ * 状態ごとの数は、絞り込んでいても台紙の全問で数え、当たった問題の数は同じ行の右に添える。
  */
 export function GameHomeScreen({
   gameTitle,
@@ -319,6 +330,8 @@ export function GameHomeScreen({
   );
   const [levelFilter, setLevelFilter] = useState<LevelFilter>(noLevelFilter);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  // 選択肢ごとの数は絞り込みを開くまで見せないので、開くまで数えず、ゲームのホームを開くまでの時間を縮める。閉じる動きの間も数を保つよう、一度開いたら数え続ける。
+  const [hasOpenedFilter, setHasOpenedFilter] = useState(false);
   const [revealStatuses, setRevealStatuses] = useState<
     ReadonlyMap<DifficultyLevel, LevelRevealStatus>
   >(() => new Map());
@@ -335,6 +348,8 @@ export function GameHomeScreen({
   const scrollerRef = useRef<HTMLDivElement>(null);
   const detailRef = useRef<HTMLElement>(null);
   const headerActionsRef = useRef<HTMLDivElement>(null);
+  const playRandomRef = useRef<HTMLButtonElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
   const sections = zukan.sections.filter(({ problems }) => problems.length > 0);
   const openSection = findOpenSection(
     sections,
@@ -375,19 +390,20 @@ export function GameHomeScreen({
     () => listZukanPerformanceAxes(zukan),
     [zukan],
   );
+  const countedProblems = hasOpenedFilter ? openProblems : noProblems;
   const filterOptionCounts = useMemo(
     () =>
-      countZukanFilterOptions(openProblems, filterConditions, levelFeatures),
-    [openProblems, filterConditions, levelFeatures],
+      countZukanFilterOptions(countedProblems, filterConditions, levelFeatures),
+    [countedProblems, filterConditions, levelFeatures],
   );
   const filterOptionCountLimits = useMemo(
     () =>
       countZukanFilterOptions(
-        openProblems,
+        countedProblems,
         noZukanFilterConditions,
         levelFeatures,
       ),
-    [openProblems, levelFeatures],
+    [countedProblems, levelFeatures],
   );
   const openAppearance: ZukanChangeAppearance =
     prefersReducedMotion || openRevealStatus === "marked"
@@ -422,7 +438,9 @@ export function GameHomeScreen({
     isClickThroughTarget(target) {
       return (
         target instanceof Node &&
-        headerActionsRef.current?.contains(target) === true
+        [headerActionsRef, playRandomRef, detailRef].some(
+          ({ current }) => current?.contains(target) === true,
+        )
       );
     },
     onShown(difficulty, appearance) {
@@ -507,12 +525,24 @@ export function GameHomeScreen({
       selected !== null &&
       detailRef.current?.contains(document.activeElement)
     ) {
-      scrollerRef.current
-        ?.querySelector<HTMLElement>(`[data-index="${selected.index}"]`)
-        ?.focus({ preventScroll: true });
+      findSquareElement(scrollerRef.current, selected.index)?.focus({
+        preventScroll: true,
+      });
     }
     setSelectedKey(null);
   }
+
+  // ほかの画面から移ってきたときにフォーカスを見失わないよう、選んでおいた問題があればそのマスへ、無ければ見出しへ置く。
+  const focusOnOpen = useEffectEvent(() => {
+    const target =
+      selected === null
+        ? titleRef.current
+        : findSquareElement(scrollerRef.current, selected.index);
+    target?.focus({ preventScroll: true });
+  });
+  useEffect(() => {
+    focusOnOpen();
+  }, []);
 
   const isDetailOpen = selected !== null;
   const closeDetailByEscape = useEffectEvent((event: KeyboardEvent) => {
@@ -555,6 +585,7 @@ export function GameHomeScreen({
   function handleFilterOpenChange(open: boolean) {
     if (open) {
       finishOpenLevelReveal();
+      setHasOpenedFilter(true);
     }
     setIsFilterOpen(open);
   }
@@ -583,11 +614,13 @@ export function GameHomeScreen({
         pictogramSvg={pictogramSvg}
         solvedCount={shownSolvedCount}
         problemCount={zukan.problemCount}
+        titleRef={titleRef}
         actionsRef={headerActionsRef}
         renderHowToPlayDialog={renderHowToPlayDialog}
       >
         <ZukanLegend />
         <ZukanFilter
+          disabled={openSection === undefined}
           conditions={filterConditions}
           matchedCount={arrangement.matchedCount}
           featureAxes={listFilterFeatureAxes(levelFeatures, featureAxes)}
@@ -604,22 +637,24 @@ export function GameHomeScreen({
       <Tabs
         value={openDifficulty ?? ""}
         onValueChange={handleLevelChange}
+        activationMode="manual"
         className="mt-3 min-h-0 flex-1"
       >
         <GameLevelCards
           levels={levelCards}
+          openDifficulty={openDifficulty}
+          arrangement={openSection === undefined ? "list" : "row"}
           renderLevelPreview={renderLevelPreview}
         />
-        <div className="grid sm:grid-cols-[--spacing(64)]">
-          <Button
-            size="lg"
-            disabled={handlePlayRandom === undefined}
-            onClick={handlePlayRandom}
-          >
-            <Shuffle aria-hidden="true" />
-            ランダムに遊ぶ
-          </Button>
-        </div>
+        {/* どのレベルも開いていない間は、カードを選ぶことだけを示し、押せない操作を並べない。 */}
+        {handlePlayRandom !== undefined && (
+          <div className="grid sm:grid-cols-[--spacing(64)]">
+            <Button ref={playRandomRef} size="lg" onClick={handlePlayRandom}>
+              <Shuffle aria-hidden="true" />
+              ランダムに遊ぶ
+            </Button>
+          </div>
+        )}
         {hasChanges && (
           <ZukanChangeSummary
             newlySolvedCount={changes.newlySolvedCount}
@@ -632,11 +667,14 @@ export function GameHomeScreen({
             {openSection && (
               <TabsContent
                 value={openSection.difficulty}
+                // 台紙のマスへ Tab で入れるので、見えない囲みを Tab の止まり先にしない。
+                tabIndex={-1}
                 className="flex min-h-0 flex-col"
               >
                 {openStatusCounts && (
-                  // 狭い画面では、レベルや条件で状態ごとの数の並びが折り返し方を変えて台紙が動かないよう、当たった数に1行を取っておく。
-                  <div className="flex flex-col gap-y-1 sm:flex-row sm:items-start sm:justify-between sm:gap-x-3">
+                  // 当たった数は条件が無い間も場所を取っておくので、条件を付け外ししても状態ごとの数の折り返し方は変わらない。
+                  // 状態ごとの数がレベルによって2行に折り返す狭い画面では、レベルを切り替えても台紙が動かないよう、常に2行分を取っておく。
+                  <div className="flex items-start justify-between gap-x-3 max-[359px]:min-h-9">
                     <ZukanProblemStatusCounts counts={openStatusCounts} />
                     <ZukanMatchedCount
                       matchedCount={
@@ -665,6 +703,7 @@ export function GameHomeScreen({
           </div>
           <ZukanProblemDetail
             ref={detailRef}
+            coverLimitRef={scrollerRef}
             problem={selected?.problem ?? null}
             numberDigitCount={numberDigitCount}
             describeProblem={describeProblem}

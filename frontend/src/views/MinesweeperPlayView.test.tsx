@@ -50,6 +50,7 @@ function renderRouterAt(entry: InitialEntry): PlayRouter {
         path: "/puzzles/minesweeper/play/:difficulty",
         element: <MinesweeperPlayView />,
       },
+      { path: "/puzzles/minesweeper", element: <p>ゲームのホーム画面</p> },
     ],
     { initialEntries: [entry] },
   );
@@ -146,6 +147,34 @@ describe("MinesweeperPlayView", () => {
 
         expect(problemId).toBe(poolProblemId);
         expect(router.state.historyAction).toBe("POP");
+      });
+
+      test("戻るボタンで、遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
+        fireEvent.click(
+          screen.getByRole("button", { name: "ゲームのホームへ戻る" }),
+        );
+        const { historyAction, location } = router.state;
+
+        expect(location.pathname).toBe("/puzzles/minesweeper");
+        expect(location.search).toBe(`?problem=${poolProblemId}`);
+        expect(historyAction).toBe("REPLACE");
+      });
+
+      describe("メニューからゲームのホームを選んだ場合", () => {
+        beforeEach(() => {
+          openMenu();
+        });
+
+        test("遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
+          fireEvent.click(
+            screen.getByRole("menuitem", { name: "ゲームのホーム" }),
+          );
+          const { historyAction, location } = router.state;
+
+          expect(location.pathname).toBe("/puzzles/minesweeper");
+          expect(location.search).toBe(`?problem=${poolProblemId}`);
+          expect(historyAction).toBe("REPLACE");
+        });
       });
 
       describe("メニューからリセットした場合", () => {

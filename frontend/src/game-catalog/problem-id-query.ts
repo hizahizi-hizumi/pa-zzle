@@ -18,10 +18,29 @@ export function createProblemIdSearch(problemId: ProblemId): string {
   return `?${new URLSearchParams({ [problemIdQueryKey]: problemId })}`;
 }
 
-/** ゲームのホームを開いたときの URL が指す問題 ID。指定が無ければ `null`。最初に選んでおく問題を決めるためだけに使い、以後 URL が変わっても読み直さない。 */
+/**
+ * ゲームのホームを開いたときの URL が指す問題 ID。指定が無ければ `null`。最初に選んでおく問題を決めるためだけに使い、以後 URL が変わっても読み直さない。
+ * 読んだら履歴を増やさずに URL から外し、選びを変えたあとの再読み込みやブックマークで、開いたときの問題を選び直さないようにする。
+ */
 export function useRequestedProblemId(): ProblemId | null {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [problemId] = useState(() => searchParams.get(problemIdQueryKey));
+  const hasProblemIdQuery = searchParams.has(problemIdQueryKey);
+
+  useEffect(() => {
+    if (!hasProblemIdQuery) {
+      return;
+    }
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.delete(problemIdQueryKey);
+        return next;
+      },
+      { replace: true },
+    );
+  }, [hasProblemIdQuery, setSearchParams]);
+
   return problemId;
 }
 

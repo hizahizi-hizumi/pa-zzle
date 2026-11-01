@@ -41,8 +41,14 @@ export type RecordProblemPlayDestination = RecordProblemPlayTarget & {
 
 /** ゲームのプレイ画面・結果画面から、ゲームの外や同じゲームの別のプレイへ移る操作。 */
 export type GameNavigation = {
-  /** ゲームのホームへ移る。問題 ID を渡すと、図鑑でその問題を選んだ状態で開く。 */
-  openGameHome: (selectedProblemId?: ProblemId) => void;
+  /**
+   * ゲームのホームへ移る。問題 ID を渡すと、図鑑でその問題を選んだ状態で開く。
+   * `replacesHistory` では今の画面の履歴を置き換え、ブラウザの戻るで今の画面へ戻らないようにする。
+   */
+  openGameHome: (
+    selectedProblemId?: ProblemId,
+    options?: { replacesHistory: boolean },
+  ) => void;
   /** アプリのホームへ移る。 */
   backToHome: () => void;
   /** その難易度のプレイ画面を開き、最初の問題として `avoidedProblemId` の問題を避ける。 */

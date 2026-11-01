@@ -1,6 +1,8 @@
-import { Routes } from "@generouted/react-router";
+import { routes } from "@generouted/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { createBrowserRouter } from "react-router";
+import { RouterProvider } from "react-router/dom";
 import "@/index.css";
 
 const root = document.getElementById("root");
@@ -24,8 +26,11 @@ function unquoteFontFamily(family: string): string {
   return family.replace(/^"(.*)"$/, "$1");
 }
 
+// 遷移の `flushSync` を使えるよう、generouted の `<Routes />` ではなく react-router/dom の `RouterProvider` で描く。
+const router = createBrowserRouter(routes);
+
 createRoot(root).render(
   <StrictMode>
-    <Routes />
+    <RouterProvider router={router} />
   </StrictMode>,
 );

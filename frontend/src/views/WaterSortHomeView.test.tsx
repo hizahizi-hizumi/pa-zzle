@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { waterSortCatalogEntry } from "@/game-catalog/water-sort/water-sort-catalog-entry";
@@ -71,6 +77,26 @@ describe("WaterSortHomeView", () => {
     const dialog = screen.getByRole("dialog", { name: "遊び方" });
 
     expect(dialog).toBeTruthy();
+  });
+
+  describe("遊び方を開いた場合", () => {
+    beforeEach(() => {
+      const howToPlayButton = screen.getByRole("button", { name: "遊び方" });
+      howToPlayButton.focus();
+      fireEvent.click(howToPlayButton);
+    });
+
+    test("閉じると、遊び方のボタンへフォーカスを戻すこと", () => {
+      fireEvent.click(
+        within(screen.getByRole("dialog", { name: "遊び方" })).getByRole(
+          "button",
+          { name: "閉じる" },
+        ),
+      );
+      const focused = document.activeElement;
+
+      expect(focused).toBe(screen.getByRole("button", { name: "遊び方" }));
+    });
   });
 
   test("戻るリンクでホームへ戻れること", () => {

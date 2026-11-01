@@ -1,6 +1,14 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router";
+import {
+  createMemoryRouter,
+  MemoryRouter,
+  Route,
+  RouterProvider,
+  Routes,
+} from "react-router";
 
+import { selectNanpureProblemForDifficulty } from "@/games/nanpure/problem-selection";
+import { createProblemId } from "@/games/problem-id";
 import { NanpurePlayView } from "@/views/NanpurePlayView";
 
 const internalDiagnostics = vi.hoisted(() => ({ available: false }));
@@ -35,6 +43,30 @@ function renderAt(path: string): void {
       </Routes>
     </MemoryRouter>,
   );
+}
+
+type PlayRouter = ReturnType<typeof createMemoryRouter>;
+
+function renderRouterAt(path: string): PlayRouter {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/puzzles/nanpure/play/:difficulty",
+        element: <NanpurePlayView />,
+      },
+      { path: "/puzzles/nanpure", element: <p>ゲームのホーム画面</p> },
+    ],
+    { initialEntries: [path] },
+  );
+  render(<RouterProvider router={router} />);
+  return router;
+}
+
+function openMenu(): void {
+  fireEvent.pointerDown(screen.getByRole("button", { name: "その他の操作" }), {
+    button: 0,
+    ctrlKey: false,
+  });
 }
 
 describe("NanpurePlayView", () => {
@@ -85,6 +117,47 @@ describe("NanpurePlayView", () => {
 
       expect(message).toBeTruthy();
       expect(backLink.getAttribute("href")).toBe("/puzzles/nanpure");
+    });
+  });
+
+  describe("問題集にある問題IDで開いた場合", () => {
+    const poolProblemId = createProblemId(
+      selectNanpureProblemForDifficulty("1", "game-home-navigation").identity,
+    );
+    let router: PlayRouter;
+
+    beforeEach(() => {
+      router = renderRouterAt(
+        `/puzzles/nanpure/play/1?problem=${poolProblemId}`,
+      );
+    });
+
+    test("戻るボタンで、遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "ゲームのホームへ戻る" }),
+      );
+      const { historyAction, location } = router.state;
+
+      expect(location.pathname).toBe("/puzzles/nanpure");
+      expect(location.search).toBe(`?problem=${poolProblemId}`);
+      expect(historyAction).toBe("REPLACE");
+    });
+
+    describe("メニューからゲームのホームを選んだ場合", () => {
+      beforeEach(() => {
+        openMenu();
+      });
+
+      test("遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
+        fireEvent.click(
+          screen.getByRole("menuitem", { name: "ゲームのホーム" }),
+        );
+        const { historyAction, location } = router.state;
+
+        expect(location.pathname).toBe("/puzzles/nanpure");
+        expect(location.search).toBe(`?problem=${poolProblemId}`);
+        expect(historyAction).toBe("REPLACE");
+      });
     });
   });
 });

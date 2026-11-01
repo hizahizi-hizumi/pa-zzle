@@ -11,6 +11,7 @@ function isNotFoundMatch(match: UIMatch | undefined): boolean {
 
 // generouted はページを持たないディレクトリ（`puzzles/[game]` など）にも ID の無いルートを作り、React Router が数字の ID を振る。
 // そこで終わる URL（今のアプリに無いゲームのホームなど）は、それ自体の画面が無いので見つからない画面にする。
+// 判定は React Router が ID の無いルートへ振る ID の形（位置の番号を `-` でつないだもの）に依るので、その形を変える React Router の更新で壊れる。
 function isPagelessMatch(match: UIMatch | undefined): boolean {
   return match !== undefined && /^\d+(-\d+)*$/.test(match.id);
 }
