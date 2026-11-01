@@ -486,13 +486,6 @@ const lineNames = { row: "行", column: "列" } as const satisfies Record<
   string
 >;
 
-/** 違反の一言の補足に添える、当たったルールそのもの。 */
-const ruleStatements = {
-  run: "同じ形は3つ続けられません",
-  count: "どの行・列も四角と丸は同じ数です",
-  duplicate: "同じ並びの行・列は作れません",
-} as const satisfies Record<TakuzuTutorialRuleId, string>;
-
 /** 隣り合う行・列は向きで、離れた行・列は何番目かで言う。 */
 function getLinePlaceName(line: TakuzuLine, twin: TakuzuLine): string {
   if (Math.abs(twin.index - line.index) > 1) {
@@ -552,7 +545,7 @@ function listViolationDescriptions(
             cellIndices: [cellIndex],
             message: {
               headline: `${tileNames[tile]}が3つ続いています`,
-              detail: ruleStatements.run,
+              detail: null,
             },
           },
         ]
@@ -570,7 +563,7 @@ function listViolationDescriptions(
             cellIndices,
             message: {
               headline: `${tileNames[tile]}が多すぎる${lineNames[line.axis]}があります`,
-              detail: ruleStatements.count,
+              detail: null,
             },
           },
         ]
@@ -580,7 +573,7 @@ function listViolationDescriptions(
     cellIndices: getTakuzuLineCellIndices(board.size, line),
     message: {
       headline: `${describeTwinLine(board, violations.duplicateLines, line)}と同じ並びになっています`,
-      detail: ruleStatements.duplicate,
+      detail: null,
     },
   }));
   return [...runs, ...overfilled, ...duplicates];
@@ -650,11 +643,11 @@ export const takuzuTutorial: Tutorial<
   completion: {
     selection: {
       headline: "完成です",
-      detail: "レベル1は 8×8 の盤面です\nルールは同じです",
+      detail: "レベル1は 8×8 の盤面です",
     },
     play: {
       headline: "完成です",
-      detail: "プレイ中の盤面も\n同じルールで埋めていきます",
+      detail: "プレイ中の盤面も同じルールで解けます",
     },
   },
   start: startTakuzuTutorial,

@@ -126,7 +126,7 @@ describe("SlidePuzzleTutorial", () => {
 
     test("崩れた始めの盤面で、空白の隣のタイルのタップを示し、まだ示していないルールを伏せておくこと", () => {
       const headline = screen.getByText(
-        "空白の隣のタイルは タップすると空白にスライドします",
+        "空白の隣のタイルは タップでスライドします",
       );
       const positions = [getTilePosition(4), getTilePosition(5)];
       const hinted = getCuedTiles("hint");
@@ -138,15 +138,17 @@ describe("SlidePuzzleTutorial", () => {
       expect(rules).toEqual(["空白にスライド", "？"]);
     });
 
-    test("印の無いタイルを押しても、スライドさせずに、印のタイルをタップするよう伝えて印を付け直すこと", () => {
+    test("印の無いタイルを押しても、スライドさせずに、一言を変えずに印を付け直すこと", () => {
       tapTiles([7]);
 
       const position = getTilePosition(7);
-      const detail = screen.getByText("まずは印のタイルをタップしてください");
+      const headline = screen.getByText(
+        "空白の隣のタイルは タップでスライドします",
+      );
       const hinted = getCuedTiles("hint");
 
       expect(position).toBe("2行1列");
-      expect(detail).toBeTruthy();
+      expect(headline).toBeTruthy();
       expect(hinted).toEqual(["5"]);
     });
 
@@ -154,7 +156,7 @@ describe("SlidePuzzleTutorial", () => {
       tapTiles([5]);
       const position = getTilePosition(5);
       const landed = getCuedTiles("landed");
-      const headline = screen.getByText("5 が正しい位置に収まりました");
+      const headline = screen.getByText("この空白には 8 が収まります");
       const hintedBeforeDelay = getCuedTiles("hint");
       advanceTime(nextStepCueDelayMs);
 
@@ -173,13 +175,11 @@ describe("SlidePuzzleTutorial", () => {
         advanceTime(nextStepCueDelayMs);
       });
 
-      test("隣にある 7 をタップすると、スライドさせずに、4 をタップすれば 7 もまとめて収まることを伝えること", () => {
+      test("隣にある 7 をタップしても、スライドさせずに、手順の一言のまま印を付け直すこと", () => {
         tapTiles([7]);
 
         const position = getTilePosition(7);
-        const headline = screen.getByText(
-          "4 をタップすれば 7 もまとめて収まります",
-        );
+        const headline = screen.getByText("4 をタップすると2枚とも収まります");
         const hinted = getCuedTiles("hint");
 
         expect(position).toBe("2行1列");
@@ -218,9 +218,7 @@ describe("SlidePuzzleTutorial", () => {
       });
 
       test("残りを並べることを伝え、手が止まったときだけ次にスライドさせるタイルを示すこと", () => {
-        const headline = screen.getByText(
-          "残りのタイルも 正しい位置に収めれば完成です",
-        );
+        const headline = screen.getByText("残りを収めれば完成です");
         const hintedBeforeIdle = getCuedTiles("hint");
         advanceTime(idleHintDelayMs);
 
@@ -239,9 +237,7 @@ describe("SlidePuzzleTutorial", () => {
         );
         tapTiles([1]);
 
-        const restored = screen.getByText(
-          "残りのタイルも 正しい位置に収めれば完成です",
-        );
+        const restored = screen.getByText("残りを収めれば完成です");
 
         expect(position).toBe("2行3列");
         expect(headline).toBeTruthy();
@@ -252,9 +248,7 @@ describe("SlidePuzzleTutorial", () => {
         tapTiles([3]);
         advanceTime(idleHintDelayMs);
 
-        const headline = screen.getByText(
-          "残りのタイルも 正しい位置に収めれば完成です",
-        );
+        const headline = screen.getByText("残りを収めれば完成です");
         const hinted = getCuedTiles("hint");
 
         expect(headline).toBeTruthy();
@@ -264,7 +258,7 @@ describe("SlidePuzzleTutorial", () => {
       test("並べ終えると、レベル1とのつながりを伝え、レベル1を遊ぶでレベル1を始めること", () => {
         tapTiles(remainingTiles);
         const detail = screen.getByText(
-          "レベル1も同じルールです じゃまなタイルをどかしながら並べます",
+          "レベル1はじゃまなタイルを どかしながら並べます",
         );
         fireEvent.click(screen.getByRole("button", { name: "レベル1を遊ぶ" }));
 
@@ -348,7 +342,7 @@ describe("SlidePuzzleTutorial", () => {
       advanceTime(introEnoughMs);
 
       const headline = screen.getByText(
-        "空白の隣のタイルは タップすると空白にスライドします",
+        "空白の隣のタイルは タップでスライドします",
       );
       const hinted = getCuedTiles("hint");
 
@@ -365,9 +359,7 @@ describe("SlidePuzzleTutorial", () => {
 
     test("並べ終えると、プレイに戻ることを伝え、プレイに戻る操作で閉じること", () => {
       tapTiles([...stepTiles, ...remainingTiles]);
-      const detail = screen.getByText(
-        "プレイ中の盤面も同じルールで解けます じゃまなタイルをどかしながら並べます",
-      );
+      const detail = screen.getByText("プレイ中の盤面も同じルールで解けます");
       fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
 
       expect(detail).toBeTruthy();

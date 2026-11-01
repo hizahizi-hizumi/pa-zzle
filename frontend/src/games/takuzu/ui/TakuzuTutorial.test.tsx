@@ -611,9 +611,7 @@ describe("TakuzuTutorial", () => {
 
     test("解き終えると、プレイに戻ることを伝え、プレイに戻る操作で閉じること", () => {
       solveAll();
-      const detail = screen.getByText(
-        "プレイ中の盤面も 同じルールで埋めていきます",
-      );
+      const detail = screen.getByText("プレイ中の盤面も同じルールで解けます");
       fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
 
       expect(detail).toBeTruthy();

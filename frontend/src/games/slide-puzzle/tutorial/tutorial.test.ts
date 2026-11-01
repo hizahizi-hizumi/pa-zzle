@@ -246,7 +246,7 @@ describe("performTutorialAction", () => {
       expect(rejected.boardState.board).toEqual(released.boardState.board);
       expect(message).toEqual({
         headline: "3 は空白と同じ行にも列にもありません",
-        detail: "空白と同じ行・列のタイルだけがスライドします",
+        detail: null,
       });
     });
 
