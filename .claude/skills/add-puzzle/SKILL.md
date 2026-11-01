@@ -47,7 +47,6 @@ argument-hint: "<パズル名> [最終レビューの指摘]"
 | レビュー版の worktree | レビューする版。ブランチを checkout せずに作る | レビューの起動ごと | レビュー役3種（リポジトリのルート）・自己点検役 |
 | 差分と変更ファイル一覧 | 比較基準のコミット範囲の差分本文と変更ファイル | レビューの起動ごと | コードレビュー役 |
 | 画面と browser-check.txt | `capture-screens.mjs` の出力と、比較用の既存ゲームの画面 | UI のある段のレビューと作り込み | 体験レビュー役・自己点検役（画面） |
-| 失敗パターン集のパス | この Skill の `references/pitfalls.md` の絶対パス（レビュー版の worktree に Skill が無いことがあるため） | レビューと自己点検の起動ごと | 体験レビュー役・自己点検役 |
 | 使用中の番号の一覧 | `list-used-ids.sh` の出力 | 文書レビューの直前（`git fetch --all --prune` の後） | 文書レビュー役 |
 
 試遊役には合意を渡さず、Agent の8つの入力だけを渡す。段ごとの試遊では「まだ作っていない画面・機能」を、品質の作り込みでは比較用の既存ゲームを渡す。
@@ -55,7 +54,7 @@ argument-hint: "<パズル名> [最終レビューの指摘]"
 ## 実行役
 
 - 段の実装・直し: `puzzle-stage-implementer`
-- 試遊（遊べる段で軽く、難易度の段では各レベルの問題のプレイ画面を渡して手応えの差を、作り込みで必ず）: `puzzle-playtester`
+- 試遊: `puzzle-playtester`。遊べる段ごとに軽く、作り込みでは必ず
 - AI レビュー（段ごと・作り込み）: `puzzle-code-reviewer`・`puzzle-experience-reviewer`・`puzzle-document-reviewer`
 - 失敗パターン集の自己点検（自己点検役）: 経緯を渡さない汎用サブエージェント（Opus）に、`references/pitfalls.md` とレビュー版の worktree・画面・素朴なプレイヤーの表・合意ファイルを渡して全行を当てさせる
 - ピクトグラム: `/design-game-pictogram`。理由を残す判断: `/adr-create`
