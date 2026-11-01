@@ -35,7 +35,7 @@ Options:
   --seed <text>     --input を省略したときの乱数の seed (default: oracle)
   --timeout <ms>    oracle の1局面あたりの制限時間 (default: 5000)
   --level <n>       oracle の探索レベル（shtsume の search_level）。低いと最短でも作意でもない詰み手順を返すことがある
-                    (default: 20)
+                    (default: 3)
   --verdict <v>     自作の判定がこの値（accepted / unsupported / invalid）の局面だけを照合する`;
 
 type Sample = { sfen: string; plies: number };
@@ -366,7 +366,7 @@ async function runMain(): Promise<void> {
       : readSamples(inputPath);
   const timeoutMilliseconds = readPositiveInteger("timeout", 5000);
 
-  const oracle = new UsiOracle(oraclePath, readPositiveInteger("level", 20));
+  const oracle = new UsiOracle(oraclePath, readPositiveInteger("level", 3));
   await oracle.start();
   const counts = new Map<string, number>();
   const mismatches: string[] = [];
