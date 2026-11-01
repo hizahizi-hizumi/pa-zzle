@@ -224,12 +224,18 @@ describe("extendNonogramSessionStroke", () => {
       expect(session.stroke).toBeNull();
     });
 
-    test("その後のなぞりを受け付けないこと", () => {
-      const session = extendNonogramSessionStroke(stroking, 5, clearedAt);
+    describe("クリアした後の場合", () => {
+      const clearedByStroke = extendNonogramSessionStroke(
+        stroking,
+        5,
+        clearedAt,
+      );
 
-      const next = extendNonogramSessionStroke(session, 3, clearedAt);
+      test("続けてなぞっても受け付けないこと", () => {
+        const next = extendNonogramSessionStroke(clearedByStroke, 3, clearedAt);
 
-      expect(next).toBe(session);
+        expect(next).toBe(clearedByStroke);
+      });
     });
   });
 
