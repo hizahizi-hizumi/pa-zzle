@@ -1,4 +1,5 @@
 import {
+  createProblemFeatureFilter,
   type GameCatalogEntry,
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
@@ -14,10 +15,14 @@ import {
 import {
   findParkingJamPoolProblemFeatures,
   listParkingJamPoolProblemIds,
+  parkingJamProblemFeatureAxes,
 } from "@/games/parking-jam/problem/problem-pool";
 import { canSelectParkingJamProblemById } from "@/games/parking-jam/problem-selection";
 import { parkingJamPlayRecordDisplay } from "@/games/parking-jam/ui/play-record-display";
-import { formatParkingJamProblemFeatures } from "@/games/parking-jam/ui/problem-features";
+import {
+  formatParkingJamProblemFeatures,
+  parkingJamProblemFeatureAxisDisplays,
+} from "@/games/parking-jam/ui/problem-features";
 
 export const parkingJamCatalogEntry = {
   id: parkingJamPlayRecordDefinition.gameId,
@@ -53,4 +58,9 @@ export const parkingJamCatalogEntry = {
     const features = findParkingJamPoolProblemFeatures(difficulty, problemId);
     return features ? formatParkingJamProblemFeatures(features) : null;
   },
+  problemFeatureFilter: createProblemFeatureFilter(
+    findParkingJamPoolProblemFeatures,
+    parkingJamProblemFeatureAxes,
+    parkingJamProblemFeatureAxisDisplays,
+  ),
 } satisfies GameCatalogEntry;

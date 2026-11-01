@@ -1,4 +1,5 @@
 import {
+  createProblemFeatureFilter,
   type GameCatalogEntry,
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
@@ -14,10 +15,14 @@ import {
 import {
   findWaterSortPoolProblemFeatures,
   listWaterSortPoolProblemIds,
+  waterSortProblemFeatureAxes,
 } from "@/games/water-sort/problem/problem-pool";
 import { canSelectWaterSortProblemById } from "@/games/water-sort/problem-selection";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
-import { formatWaterSortProblemFeatures } from "@/games/water-sort/ui/problem-features";
+import {
+  formatWaterSortProblemFeatures,
+  waterSortProblemFeatureAxisDisplays,
+} from "@/games/water-sort/ui/problem-features";
 
 export const waterSortCatalogEntry = {
   id: waterSortPlayRecordDefinition.gameId,
@@ -53,4 +58,9 @@ export const waterSortCatalogEntry = {
     const features = findWaterSortPoolProblemFeatures(difficulty, problemId);
     return features ? formatWaterSortProblemFeatures(features) : null;
   },
+  problemFeatureFilter: createProblemFeatureFilter(
+    findWaterSortPoolProblemFeatures,
+    waterSortProblemFeatureAxes,
+    waterSortProblemFeatureAxisDisplays,
+  ),
 } satisfies GameCatalogEntry;

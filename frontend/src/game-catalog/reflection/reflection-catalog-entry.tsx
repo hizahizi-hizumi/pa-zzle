@@ -1,4 +1,5 @@
 import {
+  createProblemFeatureFilter,
   type GameCatalogEntry,
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
@@ -14,10 +15,14 @@ import {
 import {
   findReflectionPoolProblemFeatures,
   listReflectionPoolProblemIds,
+  reflectionProblemFeatureAxes,
 } from "@/games/reflection/problem/problem-pool";
 import { canSelectReflectionProblemById } from "@/games/reflection/problem-selection";
 import { reflectionPlayRecordDisplay } from "@/games/reflection/ui/play-record-display";
-import { formatReflectionProblemFeatures } from "@/games/reflection/ui/problem-features";
+import {
+  formatReflectionProblemFeatures,
+  reflectionProblemFeatureAxisDisplays,
+} from "@/games/reflection/ui/problem-features";
 
 export const reflectionCatalogEntry = {
   id: reflectionPlayRecordDefinition.gameId,
@@ -53,4 +58,9 @@ export const reflectionCatalogEntry = {
     const features = findReflectionPoolProblemFeatures(difficulty, problemId);
     return features ? formatReflectionProblemFeatures(features) : null;
   },
+  problemFeatureFilter: createProblemFeatureFilter(
+    findReflectionPoolProblemFeatures,
+    reflectionProblemFeatureAxes,
+    reflectionProblemFeatureAxisDisplays,
+  ),
 } satisfies GameCatalogEntry;

@@ -15,6 +15,10 @@ import {
   type NanpureCell,
   type NanpureDigit,
 } from "@/games/nanpure/puzzle/board";
+import {
+  createCountFeatureValue,
+  type ProblemFeatureAxis,
+} from "@/games/problem-feature";
 import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 
 /**
@@ -179,7 +183,10 @@ export type NanpureProblemFeatures = {
   clueCount: number;
 };
 
-/** 難易度の問題集の1問の特徴を求める。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+/**
+ * 難易度の問題集の1問の特徴を、問題を復元せずにヒントの位置から求める。問題集に無い ID・別の難易度の ID には `null` を返す。
+ * 図鑑の絞り込みでレベルの全問について求めるので、解の読み解きと問題の検査をしない。
+ */
 export function findNanpurePoolProblemFeatures(
   difficulty: NanpureDifficulty,
   problemId: string,
@@ -188,6 +195,19 @@ export function findNanpurePoolProblemFeatures(
   if (!entry) {
     return null;
   }
-  const { clues } = decodeNanpurePoolProblem(entry[2]);
-  return { clueCount: clues.filter((cell) => cell !== null).length };
+  const clueMask = decodeMask(entry[2].slice(NANPURE_CELL_COUNT));
+  return { clueCount: clueMask.filter(Boolean).length };
 }
+
+/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
+export const nanpureProblemFeatureAxes = [
+  {
+    id: "clue-count",
+    getValue({ clueCount }) {
+      return createCountFeatureValue(clueCount);
+    },
+  },
+] as const satisfies readonly ProblemFeatureAxis<NanpureProblemFeatures>[];
+
+export type NanpureProblemFeatureAxisId =
+  (typeof nanpureProblemFeatureAxes)[number]["id"];

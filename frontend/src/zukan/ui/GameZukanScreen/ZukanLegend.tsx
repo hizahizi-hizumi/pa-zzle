@@ -1,11 +1,11 @@
 import { CircleQuestionMarkIcon } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ZukanHeaderButton } from "@/zukan/ui/GameZukanScreen/ZukanHeaderButton";
 import {
   getZukanProblemStatusClassName,
   zukanProblemStatusLabels,
@@ -19,10 +19,10 @@ export function ZukanLegend() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <CircleQuestionMarkIcon aria-hidden="true" />
-          見方
-        </Button>
+        <ZukanHeaderButton
+          icon={<CircleQuestionMarkIcon aria-hidden="true" />}
+          label="見方"
+        />
       </PopoverTrigger>
       <PopoverContent align="end">
         <ul

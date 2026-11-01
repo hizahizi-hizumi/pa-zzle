@@ -1,4 +1,5 @@
 import {
+  createProblemFeatureFilter,
   type GameCatalogEntry,
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
@@ -14,10 +15,14 @@ import {
 import {
   findTakuzuPoolProblemFeatures,
   listTakuzuPoolProblemIds,
+  takuzuProblemFeatureAxes,
 } from "@/games/takuzu/problem/problem-pool";
 import { canSelectTakuzuProblemById } from "@/games/takuzu/problem-selection";
 import { takuzuPlayRecordDisplay } from "@/games/takuzu/ui/play-record-display";
-import { formatTakuzuProblemFeatures } from "@/games/takuzu/ui/problem-features";
+import {
+  formatTakuzuProblemFeatures,
+  takuzuProblemFeatureAxisDisplays,
+} from "@/games/takuzu/ui/problem-features";
 
 export const takuzuCatalogEntry = {
   id: takuzuPlayRecordDefinition.gameId,
@@ -53,4 +58,9 @@ export const takuzuCatalogEntry = {
     const features = findTakuzuPoolProblemFeatures(difficulty, problemId);
     return features ? formatTakuzuProblemFeatures(features) : null;
   },
+  problemFeatureFilter: createProblemFeatureFilter(
+    findTakuzuPoolProblemFeatures,
+    takuzuProblemFeatureAxes,
+    takuzuProblemFeatureAxisDisplays,
+  ),
 } satisfies GameCatalogEntry;

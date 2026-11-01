@@ -8,9 +8,13 @@ import {
   useSyncExternalStore,
 } from "react";
 
-import type { ProblemFeature } from "@/components/problem-features";
+import type {
+  ProblemFeature,
+  ProblemFeatureAxisDisplay,
+} from "@/components/problem-features";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { type DifficultyLevel, parseDifficultyLevel } from "@/games/difficulty";
+import type { ProblemFeatureValue } from "@/games/problem-feature";
 import type { ProblemId } from "@/games/problem-id";
 import {
   isDocumentVisible as readDocumentVisible,
@@ -25,11 +29,13 @@ import {
   type ZukanStampProgress,
 } from "@/zukan/ui/GameZukanScreen/use-zukan-change-reveal";
 import { ZukanChangeSummary } from "@/zukan/ui/GameZukanScreen/ZukanChangeSummary";
+import { ZukanFilter } from "@/zukan/ui/GameZukanScreen/ZukanFilter";
 import { ZukanLegend } from "@/zukan/ui/GameZukanScreen/ZukanLegend";
 import {
   type ZukanLevelTab,
   ZukanLevelTabs,
 } from "@/zukan/ui/GameZukanScreen/ZukanLevelTabs";
+import { ZukanMatchedCount } from "@/zukan/ui/GameZukanScreen/ZukanMatchedCount";
 import { ZukanProblemDetail } from "@/zukan/ui/GameZukanScreen/ZukanProblemDetail";
 import { ZukanProblemSheet } from "@/zukan/ui/GameZukanScreen/ZukanProblemSheet";
 import { ZukanProblemStatusCounts } from "@/zukan/ui/GameZukanScreen/ZukanProblemStatusCounts";
@@ -40,6 +46,7 @@ import {
   type ZukanChangeAppearance,
   type ZukanChangeStage,
 } from "@/zukan/ui/GameZukanScreen/zukan-change-reveal";
+import type { ZukanFilterFeatureAxis } from "@/zukan/ui/GameZukanScreen/zukan-filter-appearance";
 import { getZukanNumberDigitCount } from "@/zukan/ui/GameZukanScreen/zukan-problem-appearance";
 import {
   ZukanBackLink,
@@ -51,10 +58,29 @@ import {
   type ZukanDifficultySection,
   type ZukanProblem,
 } from "@/zukan/zukan-collection";
+import {
+  arrangeZukanProblems,
+  countZukanFilterConditions,
+  countZukanFilterOptions,
+  createZukanFilterMatcher,
+  createZukanLevelFeaturesCache,
+  hasZukanFeatureConditions,
+  listZukanPerformanceAxes,
+  noZukanFilterConditions,
+  type ZukanArrangement,
+  type ZukanFeatureAxisSource,
+  type ZukanFilterConditions,
+  type ZukanLevelFeatures,
+} from "@/zukan/zukan-filter";
 import type {
   ZukanChanges,
   ZukanProblemChange,
 } from "@/zukan/zukan-last-viewed";
+
+/** 絞り込みで問題を分ける、問題の特徴の1つの軸と、その名前と値の書き方。 */
+export type ZukanFeatureAxis = ZukanFeatureAxisSource & {
+  display: ProblemFeatureAxisDisplay;
+};
 
 type GameZukanScreenProps = {
   /** 見出しに使うゲームの表示名。 */
@@ -73,25 +99,75 @@ type GameZukanScreenProps = {
   onPlayProblem: (problem: ZukanProblem) => void;
   /** 問題の、始めたときの盤面を見れば分かる特徴。詳細を出す1問についてだけ求める。求められなければ `null`。 */
   describeProblem: (problem: ZukanProblem) => readonly ProblemFeature[] | null;
+  /** 絞り込みに使う、問題の特徴の軸。示す順。 */
+  featureAxes: readonly ZukanFeatureAxis[];
+  /**
+   * 問題の、絞り込みに使う特徴の値を軸の ID ごとに返す。求められなければ `null`。
+   * 絞り込みを開いたときか特徴の条件をかけたときに、開いているレベルの全問について、レベルごとに一度だけ求める。
+   */
+  findProblemFeatureValues: (
+    problem: ZukanProblem,
+  ) => ReadonlyMap<string, ProblemFeatureValue> | null;
 };
 
 type SelectedProblemKey = { difficulty: DifficultyLevel; problemId: ProblemId };
 
 type SelectedProblem = { problem: ZukanProblem; index: number };
 
-/** 離脱の保存で図鑑が導き直されても選んだ問題を保つよう、選択は問題 ID で持ち、今の台紙から引き直す。 */
+/** 絞り込みの条件と、条件をかけたレベル。 */
+type LevelFilter = {
+  difficulty: DifficultyLevel | null;
+  conditions: ZukanFilterConditions;
+};
+
+const noLevelFilter: LevelFilter = {
+  difficulty: null,
+  conditions: noZukanFilterConditions,
+};
+
+/**
+ * 離脱の保存で図鑑が導き直されても、絞り込みで並びが変わっても選んだ問題を保つよう、選択は問題 ID で持ち、今の台紙の問題から引き直す。
+ * 位置は台紙に番号の順で置いた中の位置。
+ */
 function findSelectedProblem(
-  section: ZukanDifficultySection | undefined,
+  difficulty: DifficultyLevel | null,
+  problems: readonly ZukanProblem[],
   key: SelectedProblemKey | null,
 ): SelectedProblem | null {
-  if (section === undefined || section.difficulty !== key?.difficulty) {
+  if (difficulty === null || difficulty !== key?.difficulty) {
     return null;
   }
-  const index = section.problems.findIndex(
+  const index = problems.findIndex(
     ({ problemId }) => problemId === key.problemId,
   );
-  const problem = section.problems[index];
+  const problem = problems[index];
   return problem ? { problem, index } : null;
+}
+
+const noProblems: readonly ZukanProblem[] = [];
+
+function arrangeOpenProblems(
+  problems: readonly ZukanProblem[],
+  conditions: ZukanFilterConditions,
+  levelFeatures: ZukanLevelFeatures | null,
+): ZukanArrangement {
+  return countZukanFilterConditions(conditions) === 0
+    ? { problems, matchedCount: problems.length }
+    : arrangeZukanProblems(
+        problems,
+        createZukanFilterMatcher(conditions, levelFeatures),
+      );
+}
+
+/** 開いているレベルで選べる特徴の軸に、軸の名前と値の書き方を添える。 */
+function listFilterFeatureAxes(
+  levelFeatures: ZukanLevelFeatures | null,
+  featureAxes: readonly ZukanFeatureAxis[],
+): ZukanFilterFeatureAxis[] {
+  return (levelFeatures?.axes ?? []).flatMap(({ axisId, options }) => {
+    const axis = featureAxes.find(({ id }) => id === axisId);
+    return axis ? [{ axisId, display: axis.display, options }] : [];
+  });
 }
 
 /**
@@ -118,12 +194,12 @@ function findOpenSection(
  */
 type LevelRevealStatus = "marked" | "done";
 
-/** 押していく順に並べた、台紙で変化したマスの位置。番号の順。 */
+/** 押していく順（番号の順）に並べた、台紙で変化したマスの番号の順の位置。 */
 function listChangeIndices(
-  section: ZukanDifficultySection,
+  problems: readonly ZukanProblem[],
   changes: ReadonlyMap<ProblemId, ZukanProblemChange>,
 ): number[] {
-  return section.problems.flatMap(({ problemId }, index) =>
+  return problems.flatMap(({ problemId }, index) =>
     changes.has(problemId) ? [index] : [],
   );
 }
@@ -141,14 +217,14 @@ function getStampStage(
 
 /** 開いている台紙の変化したマスごとの、今見せている段階。 */
 function listChangeStages(
-  section: ZukanDifficultySection,
+  problems: readonly ZukanProblem[],
   changeIndices: readonly number[],
   appearance: ZukanChangeAppearance,
   progress: ZukanStampProgress,
 ): ReadonlyMap<ProblemId, ZukanChangeStage> {
   return new Map(
     changeIndices.flatMap((index, order) => {
-      const problem = section.problems[index];
+      const problem = problems[index];
       return problem === undefined
         ? []
         : [
@@ -184,6 +260,10 @@ function listPendingChanges(
  * 前回図鑑を見たときからの変化は、全レベルを合わせた1行の数と、変化をまだ見せていないレベルのタブの点で示し、各レベルの台紙を初めて開いたときに一度だけ見せる。
  * 見せるときは、台紙と数を前回の姿で描き始め、変化したマスを1つずつ押していき、押してマスに着くたびに、そのレベルのタブの数・状態ごとの数・解いた数を今の数へ数え上げる。
  * ページが見えるまでは見せ始めない。画面を押すかキーを押すと最後の姿まで飛ばす。
+ * 絞り込みは開いているレベルの台紙にかけ、当たった問題を前に詰め、当たらなかった問題を薄くして後ろに並べる。条件は保存せず、開いたときは条件なしで始め、レベルを切り替えると外す。
+ * 条件は、かけたレベルを添えて持ち、選ぶ前に最初に開くレベルが変わったときも、ほかのレベルには持ち越さない。条件を変えると台紙を先頭までスクロールし、前に集めた問題を見せる。
+ * 変化は絞り込みの無い台紙で見せる。見せている途中で絞り込みを開くか条件を選ぶと、見せ終えたものとする。見方・絞り込みのボタンを押したタップは、最後の姿まで飛ばしたうえでそのまま開く。
+ * 状態ごとの数は、絞り込んでいても台紙の全問で数え、当たった問題の数はその横（狭い画面ではその下）に添える。
  */
 export function GameZukanScreen({
   gameTitle,
@@ -193,12 +273,16 @@ export function GameZukanScreen({
   onPlayProblem,
   describeProblem,
   onLevelChangesShown,
+  featureAxes,
+  findProblemFeatureValues,
 }: GameZukanScreenProps) {
   const [chosenDifficulty, setChosenDifficulty] =
     useState<DifficultyLevel | null>(null);
   const [selectedKey, setSelectedKey] = useState<SelectedProblemKey | null>(
     null,
   );
+  const [levelFilter, setLevelFilter] = useState<LevelFilter>(noLevelFilter);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [revealStatuses, setRevealStatuses] = useState<
     ReadonlyMap<DifficultyLevel, LevelRevealStatus>
   >(() => new Map());
@@ -214,6 +298,7 @@ export function GameZukanScreen({
   const [detailOverlayHeight, setDetailOverlayHeight] = useState(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const detailRef = useRef<HTMLElement>(null);
+  const headerActionsRef = useRef<HTMLDivElement>(null);
   const sections = zukan.sections.filter(({ problems }) => problems.length > 0);
   const openSection = findOpenSection(
     sections,
@@ -227,16 +312,57 @@ export function GameZukanScreen({
     openDifficulty === null || openRevealStatus === "done"
       ? undefined
       : changes.byDifficulty[openDifficulty];
+  const openProblems = openSection?.problems ?? noProblems;
+  const filterConditions =
+    openDifficulty !== null && levelFilter.difficulty === openDifficulty
+      ? levelFilter.conditions
+      : noZukanFilterConditions;
+  const needsLevelFeatures =
+    isFilterOpen || hasZukanFeatureConditions(filterConditions);
+  const findLevelFeatures = useMemo(
+    () => createZukanLevelFeaturesCache(featureAxes, findProblemFeatureValues),
+    [featureAxes, findProblemFeatureValues],
+  );
+  const levelFeatures = useMemo(
+    () =>
+      openDifficulty === null || !needsLevelFeatures
+        ? null
+        : findLevelFeatures(openDifficulty, openProblems),
+    [openDifficulty, openProblems, needsLevelFeatures, findLevelFeatures],
+  );
+  const isFiltering = countZukanFilterConditions(filterConditions) > 0;
+  const arrangement = useMemo(
+    () => arrangeOpenProblems(openProblems, filterConditions, levelFeatures),
+    [openProblems, filterConditions, levelFeatures],
+  );
+  const performanceAxes = useMemo(
+    () => listZukanPerformanceAxes(zukan),
+    [zukan],
+  );
+  const filterOptionCounts = useMemo(
+    () =>
+      countZukanFilterOptions(openProblems, filterConditions, levelFeatures),
+    [openProblems, filterConditions, levelFeatures],
+  );
+  const filterOptionCountLimits = useMemo(
+    () =>
+      countZukanFilterOptions(
+        openProblems,
+        noZukanFilterConditions,
+        levelFeatures,
+      ),
+    [openProblems, levelFeatures],
+  );
   const openAppearance: ZukanChangeAppearance =
     prefersReducedMotion || openRevealStatus === "marked"
       ? "marked"
       : "animated";
   const changeIndices = useMemo(
     () =>
-      openSection === undefined || openChanges === undefined
+      openChanges === undefined
         ? []
-        : listChangeIndices(openSection, openChanges),
-    [openSection, openChanges],
+        : listChangeIndices(openProblems, openChanges),
+    [openProblems, openChanges],
   );
 
   function finishLevelReveal(
@@ -257,6 +383,12 @@ export function GameZukanScreen({
     appearance: openAppearance,
     changeIndices,
     scrollerRef,
+    isClickThroughTarget(target) {
+      return (
+        target instanceof Node &&
+        headerActionsRef.current?.contains(target) === true
+      );
+    },
     onShown(difficulty, appearance) {
       finishLevelReveal(
         difficulty,
@@ -266,15 +398,15 @@ export function GameZukanScreen({
   });
   const changeStages = useMemo(
     () =>
-      openSection === undefined || openChanges === undefined
+      openChanges === undefined
         ? undefined
         : listChangeStages(
-            openSection,
+            openProblems,
             changeIndices,
             openAppearance,
             stampProgress,
           ),
-    [openSection, openChanges, changeIndices, openAppearance, stampProgress],
+    [openProblems, openChanges, changeIndices, openAppearance, stampProgress],
   );
   const pendingChanges = listPendingChanges(openChanges, changeStages);
 
@@ -312,7 +444,11 @@ export function GameZukanScreen({
             pendingChanges.get(problem.problemId),
           ),
         );
-  const selected = findSelectedProblem(openSection, selectedKey);
+  const selected = findSelectedProblem(
+    openDifficulty,
+    openProblems,
+    selectedKey,
+  );
   const numberDigitCount = getZukanNumberDigitCount(zukan.problemCount);
   const hasChanges = changes.newlySolvedCount + changes.raisedCount > 0;
 
@@ -357,17 +493,43 @@ export function GameZukanScreen({
     return () => document.removeEventListener("keydown", closeDetailByEscape);
   }, [isDetailOpen]);
 
+  /** 押している途中でやめたときは、飛ばしたときと同じく見せ終えたものとする。 */
+  function finishOpenLevelReveal() {
+    if (
+      openDifficulty !== null &&
+      openChanges !== undefined &&
+      openRevealStatus === undefined
+    ) {
+      finishLevelReveal(openDifficulty, "done");
+    }
+  }
+
   function handleLevelChange(value: string) {
     const difficulty = parseDifficultyLevel(value);
     if (difficulty === undefined) {
       return;
     }
-    // 押している途中で切り替えたときは、飛ばしたときと同じく見せ終えたものとする。
-    if (openDifficulty !== null && openChanges !== undefined) {
-      finishLevelReveal(openDifficulty, "done");
-    }
+    finishOpenLevelReveal();
     setChosenDifficulty(difficulty);
     setSelectedKey(null);
+    // 特徴の選択肢はレベルの問題集にある値から作るので、レベルごとに選び直す。
+    setLevelFilter(noLevelFilter);
+  }
+
+  function handleFilterOpenChange(open: boolean) {
+    if (open) {
+      finishOpenLevelReveal();
+    }
+    setIsFilterOpen(open);
+  }
+
+  function handleFilterConditionsChange(conditions: ZukanFilterConditions) {
+    finishOpenLevelReveal();
+    setLevelFilter({ difficulty: openDifficulty, conditions });
+    // 並びの途中を見ていても、条件で前に集めた問題から見られるようにする。選んだマスへは寄せ直さない。
+    if (scrollerRef.current !== null) {
+      scrollerRef.current.scrollTop = 0;
+    }
   }
 
   return (
@@ -377,11 +539,25 @@ export function GameZukanScreen({
       </div>
       <header className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b-(length:--border-width-normal) pb-3">
         <h1 className="text-screen-title">{gameTitle}の図鑑</h1>
-        <div className="flex items-center gap-1">
+        <div
+          ref={headerActionsRef}
+          className="flex flex-wrap items-center justify-end gap-x-1"
+        >
           <p className="text-supporting text-muted-foreground tabular-nums">
             解いた問題 {shownSolvedCount} / {zukan.problemCount}
           </p>
           <ZukanLegend />
+          <ZukanFilter
+            conditions={filterConditions}
+            matchedCount={arrangement.matchedCount}
+            featureAxes={listFilterFeatureAxes(levelFeatures, featureAxes)}
+            performanceAxes={performanceAxes}
+            optionCounts={filterOptionCounts}
+            optionCountLimits={filterOptionCountLimits}
+            open={isFilterOpen}
+            onOpenChange={handleFilterOpenChange}
+            onConditionsChange={handleFilterConditionsChange}
+          />
         </div>
       </header>
       {hasChanges && (
@@ -407,14 +583,24 @@ export function GameZukanScreen({
                 className="flex min-h-0 flex-col"
               >
                 {openStatusCounts && (
-                  <div className="mt-1">
+                  // 狭い画面では、レベルや条件で状態ごとの数の並びが折り返し方を変えて台紙が動かないよう、当たった数に1行を取っておく。
+                  <div className="mt-1 flex flex-col gap-y-1 sm:flex-row sm:items-start sm:justify-between sm:gap-x-3">
                     <ZukanProblemStatusCounts counts={openStatusCounts} />
+                    <ZukanMatchedCount
+                      matchedCount={
+                        isFiltering ? arrangement.matchedCount : null
+                      }
+                      problemCount={openSection.problems.length}
+                    />
                   </div>
                 )}
                 <ZukanProblemSheet
-                  section={openSection}
+                  difficulty={openSection.difficulty}
+                  problems={openProblems}
+                  arrangedProblems={arrangement.problems}
+                  matchedCount={isFiltering ? arrangement.matchedCount : null}
                   numberDigitCount={numberDigitCount}
-                  selectedIndex={selected?.index ?? null}
+                  selectedProblemId={selected?.problem.problemId ?? null}
                   changes={openChanges}
                   changeStages={changeStages}
                   scrollerRef={scrollerRef}

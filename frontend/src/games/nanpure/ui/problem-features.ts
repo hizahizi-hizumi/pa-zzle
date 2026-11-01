@@ -1,11 +1,31 @@
 import {
-  createProblemCountFeature,
+  formatProblemFeatures,
   type ProblemFeature,
+  type ProblemFeatureAxisDisplay,
 } from "@/components/problem-features";
-import type { NanpureProblemFeatures } from "@/games/nanpure/problem/problem-pool";
+import {
+  type NanpureProblemFeatureAxisId,
+  type NanpureProblemFeatures,
+  nanpureProblemFeatureAxes,
+} from "@/games/nanpure/problem/problem-pool";
 
-export function formatNanpureProblemFeatures({
-  clueCount,
-}: NanpureProblemFeatures): ProblemFeature[] {
-  return [createProblemCountFeature("初期数字", clueCount, "個")];
+/** 絞り込みでは、レベルにある値の種類が多いとき、初期数字の数は3個ごとにまとめる。 */
+export const nanpureProblemFeatureAxisDisplays = {
+  "clue-count": {
+    label: "初期数字",
+    valueFormat: { kind: "count", unit: "個", rangeWidth: 3 },
+  },
+} as const satisfies Record<
+  NanpureProblemFeatureAxisId,
+  ProblemFeatureAxisDisplay
+>;
+
+export function formatNanpureProblemFeatures(
+  features: NanpureProblemFeatures,
+): ProblemFeature[] {
+  return formatProblemFeatures(
+    features,
+    nanpureProblemFeatureAxes,
+    nanpureProblemFeatureAxisDisplays,
+  );
 }

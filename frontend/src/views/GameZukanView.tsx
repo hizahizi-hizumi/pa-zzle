@@ -99,6 +99,14 @@ export function GameZukanView() {
     [game],
   );
 
+  const findProblemFeatureValues = useCallback(
+    ({ difficulty, problemId }: ZukanProblem) =>
+      game
+        ? game.problemFeatureFilter.findPoolProblemValues(difficulty, problemId)
+        : null,
+    [game],
+  );
+
   if (!game || !zukan || !changes) {
     return <ZukanNotFoundNotice />;
   }
@@ -113,6 +121,8 @@ export function GameZukanView() {
         entryPath={game.entryPath}
         onLevelChangesShown={handleLevelChangesShown}
         describeProblem={describeProblem}
+        featureAxes={game.problemFeatureFilter.axes}
+        findProblemFeatureValues={findProblemFeatureValues}
         onPlayProblem={({ difficulty, problemId }) =>
           openRecordProblemPlay(navigate, {
             playPath: game.playPath,

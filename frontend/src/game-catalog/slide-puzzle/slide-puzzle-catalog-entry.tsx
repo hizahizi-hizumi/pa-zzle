@@ -1,4 +1,5 @@
 import {
+  createProblemFeatureFilter,
   type GameCatalogEntry,
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
@@ -14,10 +15,14 @@ import {
 import {
   findSlidePuzzlePoolProblemFeatures,
   listSlidePuzzlePoolProblemIds,
+  slidePuzzleProblemFeatureAxes,
 } from "@/games/slide-puzzle/problem/problem-pool";
 import { canSelectSlidePuzzleProblemById } from "@/games/slide-puzzle/problem-selection";
 import { slidePuzzlePlayRecordDisplay } from "@/games/slide-puzzle/ui/play-record-display";
-import { formatSlidePuzzleProblemFeatures } from "@/games/slide-puzzle/ui/problem-features";
+import {
+  formatSlidePuzzleProblemFeatures,
+  slidePuzzleProblemFeatureAxisDisplays,
+} from "@/games/slide-puzzle/ui/problem-features";
 
 export const slidePuzzleCatalogEntry = {
   id: slidePuzzlePlayRecordDefinition.gameId,
@@ -53,4 +58,9 @@ export const slidePuzzleCatalogEntry = {
     const features = findSlidePuzzlePoolProblemFeatures(difficulty, problemId);
     return features ? formatSlidePuzzleProblemFeatures(features) : null;
   },
+  problemFeatureFilter: createProblemFeatureFilter(
+    findSlidePuzzlePoolProblemFeatures,
+    slidePuzzleProblemFeatureAxes,
+    slidePuzzleProblemFeatureAxisDisplays,
+  ),
 } satisfies GameCatalogEntry;

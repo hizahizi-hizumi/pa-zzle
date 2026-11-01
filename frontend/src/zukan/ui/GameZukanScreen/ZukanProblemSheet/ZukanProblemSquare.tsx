@@ -14,12 +14,14 @@ import type { ZukanProblemChange } from "@/zukan/zukan-last-viewed";
 
 type ZukanProblemSquareProps = {
   problem: ZukanProblem;
-  /** 台紙の中の位置。押した・矢印で動いたマスと、変化を押すマスを台紙が見分けるのに使う。 */
+  /** 台紙に番号の順で置いた中の位置。押した・矢印で動いたマスと、変化を押すマスを台紙が見分けるのに使う。 */
   index: number;
   numberDigitCount: number;
   /** 台紙へ Tab で入ったときにフォーカスを受けるマスか。 */
   isTabStop: boolean;
   isSelected: boolean;
+  /** 絞り込みの条件に当たらなかったか。台紙は、当たらなかったマスを `data-filtered-out` で見分けて後ろへ並べる。 */
+  isFilteredOut: boolean;
   /** この台紙を開いて見せる、前回からの変化。無ければ `null`。 */
   change: ZukanProblemChange | null;
   /** 変化を今どこまで見せたか。見せる変化が無ければ `null`。 */
@@ -31,6 +33,7 @@ type ZukanProblemSquareProps = {
  * 押す・矢印キーの操作は台紙がまとめて受けるので、マス自身はイベントを持たない。
  * 前回からの変化は、マスに着くまで前回の姿で描く。押していく演出が動かす押す姿・浮いた影・輪を、押し終えるまで重ねておく。
  * 動きを減らす設定では今の姿に印を載せる。
+ * 絞り込みの条件に当たらなかったマスは、色を変えずに薄くする。選んでいる間は、選んだことが分かるよう薄くしない。
  */
 function ZukanProblemSquareContent({
   problem,
@@ -38,6 +41,7 @@ function ZukanProblemSquareContent({
   numberDigitCount,
   isTabStop,
   isSelected,
+  isFilteredOut,
   change,
   changeStage,
 }: ZukanProblemSquareProps) {
@@ -56,6 +60,8 @@ function ZukanProblemSquareContent({
     : "hover:z-10 hover:outline-2 hover:outline-ring focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-ring";
   // 押す姿はマスより大きく浮くので、選んだマスも含めて周りのマスより手前に重ねる。
   const stampClassName = isLifted ? "z-30" : "";
+  const filteredOutClassName = isFilteredOut && !isSelected ? "opacity-30" : "";
+  const description = describeZukanProblem(problem, numberDigitCount, change);
   const ringColorClassName =
     status === "attempted" || status === "untouched"
       ? ""
@@ -66,10 +72,13 @@ function ZukanProblemSquareContent({
       type="button"
       data-index={index}
       data-change-stage={changeStage ?? undefined}
+      data-filtered-out={isFilteredOut ? "" : undefined}
       tabIndex={isTabStop ? 0 : -1}
-      aria-label={describeZukanProblem(problem, numberDigitCount, change)}
+      aria-label={
+        isFilteredOut ? `${description} 絞り込みの条件外` : description
+      }
       aria-current={isSelected ? "true" : undefined}
-      className={`relative size-3.5 scroll-m-3 outline-offset-1 sm:size-4 ${getZukanProblemStatusClassName(shownStatus)} ${selectionClassName} ${stampClassName}`}
+      className={`relative size-3.5 scroll-m-3 outline-offset-1 sm:size-4 ${getZukanProblemStatusClassName(shownStatus)} ${selectionClassName} ${stampClassName} ${filteredOutClassName}`}
     >
       {hasStamp && (
         <>

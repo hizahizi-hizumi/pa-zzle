@@ -1,0 +1,67 @@
+import { type MouseEvent, type ReactNode, useState } from "react";
+
+import { ToggleGroupItem } from "@/components/ui/toggle-group";
+
+type ZukanFilterOptionProps = {
+  value: string;
+  label: string;
+  /** 名前の前に添える見本。 */
+  sample?: ReactNode;
+  isSelected: boolean;
+  /** この選択肢に当たる問題の数。 */
+  count: number;
+  /** 条件をかけないときに、この選択肢に当たる問題の数。`count` はこれを超えない。 */
+  countLimit: number;
+};
+
+/**
+ * 絞り込みの1つの選択肢。名前に当たる問題の数を添え、当たる問題が無ければ押せなくする。選んでいれば0でも外せる。
+ * 押して外した選択肢の数が0になっても、フォーカスを見失わないよう、フォーカスがある間は押せない姿にするだけで押しても何もしない。フォーカスが離れたら押せなくする。
+ * 選んでも中身を足し引きせず、数には取りうる最大の桁の場所を取っておき、選んでも数が変わってもボタンの幅を変えない。
+ */
+export function ZukanFilterOption({
+  value,
+  label,
+  sample,
+  isSelected,
+  count,
+  countLimit,
+}: ZukanFilterOptionProps) {
+  const [isFocused, setIsFocused] = useState(false);
+  const isUnavailable = count === 0 && !isSelected;
+
+  function ignoreUnavailablePress(event: MouseEvent<HTMLButtonElement>) {
+    // 押したことを並びへ伝える前に止め、選ばない。
+    if (isUnavailable) {
+      event.preventDefault();
+    }
+  }
+
+  return (
+    <ToggleGroupItem
+      value={value}
+      aria-label={`${label}、${count}問`}
+      disabled={isUnavailable && !isFocused}
+      aria-disabled={isUnavailable || undefined}
+      onClick={ignoreUnavailablePress}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
+    >
+      {sample}
+      <span className="inline-flex items-baseline gap-1.5 tabular-nums">
+        {label}
+        <span
+          className={`inline-grid text-meta ${isSelected ? "text-primary-foreground/75" : "text-muted-foreground"}`}
+        >
+          <span
+            aria-hidden="true"
+            className="invisible col-start-1 row-start-1"
+          >
+            {"0".repeat(String(countLimit).length)}
+          </span>
+          <span className="col-start-1 row-start-1">{count}</span>
+        </span>
+      </span>
+    </ToggleGroupItem>
+  );
+}
