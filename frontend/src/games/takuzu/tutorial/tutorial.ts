@@ -645,7 +645,7 @@ export const takuzuTutorial: Tutorial<
   steps,
   freePlay: {
     headline: "残りを埋めると完成です",
-    detail: "迷ったら少し待つと印が出ます",
+    detail: "ここでは迷ったら少し待つと印が出ます",
   },
   completion: {
     selection: {

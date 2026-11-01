@@ -1,4 +1,4 @@
-import { Check, X } from "lucide-react";
+import { X } from "lucide-react";
 import {
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
@@ -566,13 +566,12 @@ export function TutorialScreen({
                     key="earned"
                     aria-current={rule.current ? "step" : undefined}
                     className={cn(
-                      "flex animate-in items-center gap-1 fade-in-0 zoom-in-75 duration-300 ease-(--ease-enter) motion-reduce:animate-none",
+                      "flex animate-in items-center fade-in-0 zoom-in-75 duration-300 ease-(--ease-enter) motion-reduce:animate-none",
                       rule.current
                         ? "text-foreground"
                         : "text-muted-foreground",
                     )}
                   >
-                    <Check aria-hidden="true" className="size-3.5 shrink-0" />
                     {/* 今のルールだけ太くしても並びがずれないよう、太い字の幅を先に取っておく。 */}
                     <span
                       data-label={rule.label}
@@ -585,13 +584,9 @@ export function TutorialScreen({
                     </span>
                   </span>
                 ) : (
-                  // 中身を伏せたルール。文字を伏せた跡のような、控えめな棒だけを置く。盤面の印の破線とは見分けられる形にする。
-                  <span key="hidden" className="flex h-5 items-center">
-                    <span className="sr-only">伏せたルール</span>
-                    <span
-                      aria-hidden="true"
-                      className="h-1.5 w-12 rounded-full bg-muted-foreground/25"
-                    />
+                  // 中身を伏せたルール。押せる部品に見えないよう、枠を付けずに文字の並びの一つとして置く。
+                  <span key="hidden" className="text-muted-foreground/60">
+                    ？
                   </span>
                 )}
               </li>

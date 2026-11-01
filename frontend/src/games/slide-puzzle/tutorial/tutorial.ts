@@ -367,7 +367,7 @@ export const slidePuzzleTutorial: Tutorial<
   steps,
   freePlay: {
     headline: "残りも正しい位置に収めると完成です",
-    detail: "迷ったら少し待つと印が出ます",
+    detail: "ここでは迷ったら少し待つと印が出ます",
   },
   completion: {
     selection: {
