@@ -17,7 +17,7 @@ export function MinesweeperPlayView() {
     return (
       <PlayUnavailableNotice
         title="この難易度は選べません"
-        backTo={minesweeperCatalogEntry.entryPath}
+        backTo={minesweeperCatalogEntry.homePath}
       />
     );
   }

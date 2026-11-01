@@ -19,9 +19,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { ZukanFilterPanel } from "@/zukan/ui/GameZukanScreen/ZukanFilter/ZukanFilterPanel";
-import { ZukanHeaderButton } from "@/zukan/ui/GameZukanScreen/ZukanHeaderButton";
-import type { ZukanFilterFeatureAxis } from "@/zukan/ui/GameZukanScreen/zukan-filter-appearance";
+import { ZukanFilterPanel } from "@/zukan/ui/GameHomeScreen/ZukanFilter/ZukanFilterPanel";
+import { ZukanHeaderButton } from "@/zukan/ui/GameHomeScreen/ZukanHeaderButton";
+import type { ZukanFilterFeatureAxis } from "@/zukan/ui/GameHomeScreen/zukan-filter-appearance";
 import {
   countZukanFilterConditions,
   noZukanFilterConditions,

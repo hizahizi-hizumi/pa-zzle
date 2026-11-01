@@ -31,7 +31,7 @@ function renderAt(path: string): void {
           path="/puzzles/nanpure/play/:difficulty"
           element={<NanpurePlayView />}
         />
-        <Route path="/puzzles/nanpure" element={<p>難易度選択画面</p>} />
+        <Route path="/puzzles/nanpure" element={<p>ゲームのホーム画面</p>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -77,9 +77,11 @@ describe("NanpurePlayView", () => {
       renderAt(`/puzzles/nanpure/play/${difficulty}`);
     });
 
-    test("選べない難易度であることを示し難易度選択へ戻る導線を出すこと", () => {
+    test("選べない難易度であることを示しゲームのホームへ戻る導線を出すこと", () => {
       const message = screen.getByText("この難易度は選べません");
-      const backLink = screen.getByRole("link", { name: "難易度選択へ戻る" });
+      const backLink = screen.getByRole("link", {
+        name: "ゲームのホームへ戻る",
+      });
 
       expect(message).toBeTruthy();
       expect(backLink.getAttribute("href")).toBe("/puzzles/nanpure");

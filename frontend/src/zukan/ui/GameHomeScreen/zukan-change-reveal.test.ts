@@ -7,7 +7,7 @@ import {
   planZukanStamps,
   playZukanStamp,
   type ZukanStampParts,
-} from "@/zukan/ui/GameZukanScreen/zukan-change-reveal";
+} from "@/zukan/ui/GameHomeScreen/zukan-change-reveal";
 
 describe("getZukanStampSlot", () => {
   const cases = [

@@ -1,1 +1,1 @@
-export { TakuzuDifficultyView as default } from "@/views/TakuzuDifficultyView";
+export { TakuzuHomeView as default } from "@/views/TakuzuHomeView";

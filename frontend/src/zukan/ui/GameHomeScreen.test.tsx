@@ -10,10 +10,11 @@ import {
 import { MemoryRouter } from "react-router";
 
 import { type DifficultyLevel, difficultyLevels } from "@/games/difficulty";
+import type { ProblemId } from "@/games/problem-id";
 import {
-  GameZukanScreen,
+  GameHomeScreen,
   type ZukanFeatureAxis,
-} from "@/zukan/ui/GameZukanScreen";
+} from "@/zukan/ui/GameHomeScreen";
 import type {
   GameZukan,
   ZukanDifficultySection,
@@ -105,6 +106,7 @@ const zukan: GameZukan = {
 };
 
 const onPlayProblem = vi.fn();
+const onPlayRandom = vi.fn();
 const onLevelChangesShown = vi.fn();
 /** 特徴を求められない問題を除き、問題ごとに違う特徴を返す。 */
 const describeProblem = vi.fn(({ problemId }: ZukanProblem) =>
@@ -137,25 +139,42 @@ const findProblemFeatureValues = vi.fn(
     ]),
 );
 
-function renderScreen(
+function createScreen(
   shownZukan: GameZukan = zukan,
   changes: ZukanChanges = noZukanChanges,
+  initialSelectedProblemId: ProblemId | null = null,
 ) {
-  return render(
+  return (
     <MemoryRouter>
-      <GameZukanScreen
+      <GameHomeScreen
         gameTitle="ナンプレ"
+        pictogramSvg="<svg></svg>"
         zukan={shownZukan}
         changes={changes}
-        entryPath="/puzzles/nanpure"
+        initialSelectedProblemId={initialSelectedProblemId}
+        onPlayRandom={onPlayRandom}
         onPlayProblem={onPlayProblem}
         onLevelChangesShown={onLevelChangesShown}
         describeProblem={describeProblem}
         featureAxes={featureAxes}
         findProblemFeatureValues={findProblemFeatureValues}
+        renderLevelPreview={(difficulty) => (
+          <span data-level-preview={difficulty} />
+        )}
+        renderHowToPlayDialog={({ open }) =>
+          open ? <p>遊び方のダイアログ</p> : null
+        }
       />
-    </MemoryRouter>,
+    </MemoryRouter>
   );
+}
+
+function renderScreen(
+  shownZukan: GameZukan = zukan,
+  changes: ZukanChanges = noZukanChanges,
+  initialSelectedProblemId: ProblemId | null = null,
+) {
+  return render(createScreen(shownZukan, changes, initialSelectedProblemId));
 }
 
 function getSheet(name: string): HTMLElement {
@@ -353,9 +372,10 @@ afterEach(() => {
   Reflect.deleteProperty(window, "ResizeObserver");
 });
 
-describe("GameZukanScreen", () => {
+describe("GameHomeScreen", () => {
   beforeEach(() => {
     onPlayProblem.mockClear();
+    onPlayRandom.mockClear();
     onLevelChangesShown.mockClear();
     findProblemFeatureValues.mockClear();
   });
@@ -365,15 +385,15 @@ describe("GameZukanScreen", () => {
       renderScreen();
     });
 
-    test("ゲーム名の図鑑の見出しと、解いた問題の数を全問の数と並べて示すこと", () => {
+    test("ゲーム名の見出しと、解いた問題の数を全問の数と並べて示すこと", () => {
       const heading = screen.getByRole("heading", { level: 1 });
       const solvedCount = screen.getByText("解いた問題 2 / 1200");
 
-      expect(heading.textContent).toBe("ナンプレの図鑑");
+      expect(heading.textContent).toBe("ナンプレ");
       expect(solvedCount).toBeTruthy();
     });
 
-    test("レベルごとのタブを並べ、それぞれにそのレベルの解いた問題の数を添えること", () => {
+    test("レベルごとのカードを並べ、それぞれにそのレベルの解いた問題の数を添えること", () => {
       const tabNames = within(screen.getByRole("tablist", { name: "レベル" }))
         .getAllByRole("tab")
         .map((tab) => tab.textContent);
@@ -387,7 +407,7 @@ describe("GameZukanScreen", () => {
       ]);
     });
 
-    test("最後に遊んだレベルのタブを選び、そのレベルの台紙だけを示すこと", () => {
+    test("最後に遊んだレベルのカードを選び、そのレベルの台紙だけを示すこと", () => {
       const selectedTab = screen.getByRole("tab", { selected: true });
       const sheetNames = getShownSheetNames();
 
@@ -395,14 +415,14 @@ describe("GameZukanScreen", () => {
       expect(sheetNames).toEqual(["レベル 3の問題"]);
     });
 
-    test("タブを選ぶと、そのレベルの台紙に切り替えること", () => {
+    test("カードを選ぶと、そのレベルの台紙に切り替えること", () => {
       chooseLevel("レベル 1");
       const sheetNames = getShownSheetNames();
 
       expect(sheetNames).toEqual(["レベル 1の問題"]);
     });
 
-    test("タブで右矢印キーを押すと、次のレベルのタブへ移って台紙を切り替えること", async () => {
+    test("カードで右矢印キーを押すと、次のレベルのカードへ移って台紙を切り替えること", async () => {
       const tab = getLevelTab("レベル 3");
       tab.focus();
 
@@ -808,10 +828,36 @@ describe("GameZukanScreen", () => {
       });
     });
 
-    test("難易度選択へ戻る導線を示すこと", () => {
+    test("ホームへ戻る導線を示すこと", () => {
       const backLink = screen.getByRole("link", { name: "戻る" });
 
-      expect(backLink.getAttribute("href")).toBe("/puzzles/nanpure");
+      expect(backLink.getAttribute("href")).toBe("/");
+    });
+
+    test("レベルのカードに、そのレベルの盤面の見本を描くこと", () => {
+      const previews = within(screen.getByRole("tablist", { name: "レベル" }))
+        .getAllByRole("tab")
+        .map((tab) =>
+          tab
+            .querySelector("[data-level-preview]")
+            ?.getAttribute("data-level-preview"),
+        );
+
+      expect(previews).toEqual(["1", "2", "3", "4", "5"]);
+    });
+
+    test("ランダムに遊ぶを押すと、開いているレベルでプレイを始めること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
+
+      expect(onPlayRandom.mock.calls).toEqual([["3"]]);
+    });
+
+    test("遊び方を押すと、ゲームの遊び方を開くこと", () => {
+      fireEvent.click(screen.getByRole("button", { name: "遊び方" }));
+
+      const dialog = screen.getByText("遊び方のダイアログ");
+
+      expect(dialog).toBeTruthy();
     });
 
     test("絞り込みを開くまで、問題の特徴の値を求めないこと", () => {
@@ -909,7 +955,7 @@ describe("GameZukanScreen", () => {
       expect(findProblemFeatureValues).toHaveBeenCalledTimes(callCount);
     });
 
-    test("条件を付け外ししても、見出し・タブ・台紙の上の並びの要素を足し引きしないこと", () => {
+    test("条件を付け外ししても、見出し・カード・台紙の上の並びの要素を足し引きしないこと", () => {
       const header = screen.getByRole("banner");
       const tabList = screen.getByRole("tablist", { name: "レベル" });
       const statusRow = getStatusCounts().parentElement as HTMLElement;
@@ -1046,7 +1092,7 @@ describe("GameZukanScreen", () => {
         ]);
       });
 
-      test("台紙の上と絞り込みに当たった数を、絞り込みボタンに条件の数を示し、タブは変えないこと", () => {
+      test("台紙の上と絞り込みに当たった数を、絞り込みボタンに条件の数を示し、カードは変えないこと", () => {
         const openTab = screen.getByRole("tab", { selected: true });
         const panelCount = within(panel).getByText(/^該当/).textContent;
         const filterButton = getFilterButton();
@@ -1305,21 +1351,7 @@ describe("GameZukanScreen", () => {
       fireEvent.click(getFilterButton());
       const panel = await screen.findByRole("dialog", { name: "絞り込み" });
       chooseFilterOption(panel, "状態", "未挑戦");
-      rerender(
-        <MemoryRouter>
-          <GameZukanScreen
-            gameTitle="ナンプレ"
-            zukan={zukan}
-            changes={noZukanChanges}
-            entryPath="/puzzles/nanpure"
-            onPlayProblem={onPlayProblem}
-            onLevelChangesShown={onLevelChangesShown}
-            describeProblem={describeProblem}
-            featureAxes={featureAxes}
-            findProblemFeatureValues={findProblemFeatureValues}
-          />
-        </MemoryRouter>,
-      );
+      rerender(createScreen());
     });
 
     test("前のレベルにかけた条件を、新しく開いたレベルにかけないこと", () => {
@@ -1516,7 +1548,7 @@ describe("GameZukanScreen", () => {
           expect(summary).toBe(finalSummary);
         });
 
-        test("開いているレベルの状態ごとの数とタブの数を前回の数から始め、画面全体の解いた数をタブの数の合計にすること", () => {
+        test("開いているレベルの状態ごとの数とカードの数を前回の数から始め、画面全体の解いた数をカードの数の合計にすること", () => {
           const levelCounts = getStatusCountNames();
           const tabCounts = getTabCounts();
           const solvedCount = getSolvedCountText();
@@ -1548,7 +1580,7 @@ describe("GameZukanScreen", () => {
           ]);
         });
 
-        test("開いていないレベルのうち、変化のあるレベルのタブにだけ印を付けること", () => {
+        test("開いていないレベルのうち、変化のあるレベルのカードにだけ印を付けること", () => {
           const markedTabs = getMarkedTabNames();
 
           expect(markedTabs).toEqual(["レベル 1"]);
@@ -1611,7 +1643,7 @@ describe("GameZukanScreen", () => {
           expect(stages).toEqual([null, null, null, null]);
         });
 
-        test("開いているレベルの数を今の数まで数え上げて未挑戦の数を減らし、まだ開いていないレベルのタブは前回の数のまま印を残すこと", () => {
+        test("開いているレベルの数を今の数まで数え上げて未挑戦の数を減らし、まだ開いていないレベルのカードは前回の数のまま印を残すこと", () => {
           const levelCounts = getStatusCountNames();
           const tabCounts = getTabCounts();
           const markedTabs = getMarkedTabNames();
@@ -1634,7 +1666,7 @@ describe("GameZukanScreen", () => {
           expect(markedTabs).toEqual(["レベル 1"]);
         });
 
-        test("画面全体の解いた数を、タブの数の合計に合わせること", () => {
+        test("画面全体の解いた数を、カードの数の合計に合わせること", () => {
           const solvedCount = getShownSolvedCount();
 
           expect(solvedCount).toBe(sumTabSolvedCounts());
@@ -2033,7 +2065,7 @@ describe("GameZukanScreen", () => {
         ]);
       });
 
-      test("画面全体の解いた数を、常にタブの数の合計に合わせること", () => {
+      test("画面全体の解いた数を、常にカードの数の合計に合わせること", () => {
         const mismatches = samples.filter(
           ({ solved, total }) => total !== solved + 2,
         );
@@ -2059,7 +2091,7 @@ describe("GameZukanScreen", () => {
         expect(animatedCount).toBe(0);
       });
 
-      test("数え上げずに、画面全体の解いた数・タブの数を今の数で示すこと", () => {
+      test("数え上げずに、画面全体の解いた数・カードの数を今の数で示すこと", () => {
         const solvedCount = getSolvedCountText();
         const tabCounts = getTabCounts();
 
@@ -2079,7 +2111,7 @@ describe("GameZukanScreen", () => {
         expect(shownDifficulties).toEqual([["3"]]);
       });
 
-      test("まだ見せていない変化のあるレベルのタブに印を付けること", () => {
+      test("まだ見せていない変化のあるレベルのカードに印を付けること", () => {
         const markedTabs = getMarkedTabNames();
 
         expect(markedTabs).toEqual(["レベル 1"]);
@@ -2110,15 +2142,77 @@ describe("GameZukanScreen", () => {
     });
   });
 
-  describe("最後に遊んだレベルが無い場合", () => {
-    test("レベル 1 のタブを選び、レベル 1 の台紙を示すこと", () => {
+  describe("そのゲームを遊んだことが無い場合", () => {
+    beforeEach(() => {
       renderScreen({ ...zukan, latestPlayedDifficulty: null });
+    });
 
+    test("どのレベルのカードも選ばず、台紙を示さないこと", () => {
+      const selectedTab = screen.queryByRole("tab", { selected: true });
+      const sheet = screen.queryByRole("tabpanel");
+
+      expect(selectedTab).toBeNull();
+      expect(sheet).toBeNull();
+    });
+
+    test("ランダムに遊ぶを押せない姿で出すこと", () => {
+      const playRandom = screen.getByRole("button", { name: "ランダムに遊ぶ" });
+
+      expect(playRandom.hasAttribute("disabled")).toBe(true);
+    });
+
+    describe("カードを選んだ場合", () => {
+      beforeEach(() => {
+        chooseLevel("レベル 2");
+      });
+
+      test("そのレベルの台紙を示すこと", () => {
+        const sheetNames = getShownSheetNames();
+
+        expect(sheetNames).toEqual(["レベル 2の問題"]);
+      });
+
+      test("ランダムに遊ぶを押すと、選んだレベルでプレイを始めること", () => {
+        fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
+
+        expect(onPlayRandom.mock.calls).toEqual([["2"]]);
+      });
+    });
+  });
+
+  describe("選んでおく問題を渡した場合", () => {
+    beforeEach(() => {
+      renderScreen(zukan, noZukanChanges, "p-1-1");
+    });
+
+    test("その問題のレベルを、最後に遊んだレベルより優先して開くこと", () => {
       const selectedTab = screen.getByRole("tab", { selected: true });
       const sheetNames = getShownSheetNames();
 
       expect(selectedTab.textContent).toMatch(/^レベル 1/);
       expect(sheetNames).toEqual(["レベル 1の問題"]);
+    });
+
+    test("その問題のマスを選び、詳細を出すこと", () => {
+      const square = getSquare("レベル 1の問題", "No.0002");
+      const detail = getDetail();
+
+      expect(square.getAttribute("aria-current")).toBe("true");
+      expect(within(detail).getByText("No.0002")).toBeTruthy();
+    });
+  });
+
+  describe("図鑑に無い問題を選んでおく問題として渡した場合", () => {
+    beforeEach(() => {
+      renderScreen(zukan, noZukanChanges, "unknown-problem");
+    });
+
+    test("最後に遊んだレベルを開き、どのマスも選ばないこと", () => {
+      const selectedTab = screen.getByRole("tab", { selected: true });
+      const detail = queryDetail();
+
+      expect(selectedTab.textContent).toMatch(/^レベル 3/);
+      expect(detail).toBeNull();
     });
   });
 });

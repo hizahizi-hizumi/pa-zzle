@@ -15,7 +15,7 @@ type GamePlayFrameProps<Result> = Pick<
   | "result"
   | "onReplay"
   | "onStartNewProblem"
-  | "onChangeDifficulty"
+  | "onOpenGameHome"
   | "onBackToHome"
   | "onOpenDiagnostics"
 > &
@@ -49,7 +49,7 @@ export function GamePlayFrame<Result>({
   onRestart,
   onReplay,
   onStartNewProblem,
-  onChangeDifficulty,
+  onOpenGameHome,
   onBackToHome,
   onOpenDiagnostics,
   renderResultScreen,
@@ -77,7 +77,7 @@ export function GamePlayFrame<Result>({
         onRestart={onRestart}
         onReplay={onReplay}
         onStartNewProblem={onStartNewProblem}
-        onChangeDifficulty={onChangeDifficulty}
+        onOpenGameHome={onOpenGameHome}
         onBackToHome={onBackToHome}
         onOpenHowToPlay={() => setHowToPlayOpen(true)}
         onOpenDiagnostics={onOpenDiagnostics}

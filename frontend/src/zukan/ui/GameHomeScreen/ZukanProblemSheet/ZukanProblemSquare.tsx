@@ -1,11 +1,11 @@
 import { memo } from "react";
 
 import { getGameResultStyle } from "@/components/game-result-style";
-import type { ZukanChangeStage } from "@/zukan/ui/GameZukanScreen/zukan-change-reveal";
+import type { ZukanChangeStage } from "@/zukan/ui/GameHomeScreen/zukan-change-reveal";
 import {
   describeZukanProblem,
   getZukanProblemStatusClassName,
-} from "@/zukan/ui/GameZukanScreen/zukan-problem-appearance";
+} from "@/zukan/ui/GameHomeScreen/zukan-problem-appearance";
 import {
   getZukanProblemStatus,
   type ZukanProblem,
@@ -54,7 +54,7 @@ function ZukanProblemSquareContent({
 
   // `ring` の明るさでは小さなマスの選択が塗りに紛れるので、選んだマスは前景色の輪郭で示す。
   // 輪郭はマスの間の隙間より外へ出て、後に描く右・下のマスに覆われるので、輪郭のあるマスを手前に重ねる。選んだマスの輪郭は、隣のマスのホバーより手前に置く。
-  // 重ね順は台紙の中に閉じ（台紙が `isolate`）、台紙の外の詳細やタブより手前には出ない。
+  // 重ね順は台紙の中に閉じ（台紙が `isolate`）、台紙の外の詳細やレベルのカードより手前には出ない。
   const selectionClassName = isSelected
     ? "z-20 outline-2 outline-foreground"
     : "hover:z-10 hover:outline-2 hover:outline-ring focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-ring";

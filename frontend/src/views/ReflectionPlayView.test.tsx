@@ -5,7 +5,7 @@ import {
   screen,
   within,
 } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import { selectReflectionProblemForDifficulty } from "@/games/reflection/problem-selection";
 import type { ReflectionBoard } from "@/games/reflection/puzzle/board";
@@ -35,6 +35,11 @@ afterEach(() => {
   window.localStorage.clear();
 });
 
+function GameHomeLocation() {
+  const { search } = useLocation();
+  return <p>ゲームのホーム画面{search}</p>;
+}
+
 function renderAt(path: string): void {
   render(
     <MemoryRouter initialEntries={[path]}>
@@ -43,7 +48,7 @@ function renderAt(path: string): void {
           path="/puzzles/reflection/play/:difficulty"
           element={<ReflectionPlayView />}
         />
-        <Route path="/puzzles/reflection" element={<p>難易度選択画面</p>} />
+        <Route path="/puzzles/reflection" element={<GameHomeLocation />} />
         <Route path="/records" element={<p>記録画面</p>} />
         <Route
           path="/puzzles/:game/result/:recordId"
@@ -101,17 +106,19 @@ describe("ReflectionPlayView", () => {
       expect(stock.length).toBeGreaterThan(0);
     });
 
-    test("戻るボタンで難易度選択画面へ移ること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
+    test("戻るボタンで、遊んでいる問題を選んだゲームのホームへ移ること", () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "ゲームのホームへ戻る" }),
+      );
 
-      expect(screen.getByText("難易度選択画面")).toBeTruthy();
+      expect(screen.getByText(/^ゲームのホーム画面\?problem=.+/)).toBeTruthy();
     });
 
-    test("メニューの難易度変更で難易度選択画面へ移ること", () => {
+    test("メニューのゲームのホームでゲームのホームへ移ること", () => {
       openMenu();
-      fireEvent.click(screen.getByRole("menuitem", { name: "難易度変更" }));
+      fireEvent.click(screen.getByRole("menuitem", { name: "ゲームのホーム" }));
 
-      expect(screen.getByText("難易度選択画面")).toBeTruthy();
+      expect(screen.getByText(/^ゲームのホーム画面/)).toBeTruthy();
     });
 
     test("内部診断を使えないビルドではメニューに検証情報を出さないこと", () => {
@@ -155,21 +162,15 @@ describe("ReflectionPlayView", () => {
       });
     });
 
-    test("記録を確認で記録画面へ移ること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "記録を確認" }));
+    test("ゲームのホームへで、解いた問題を選んだゲームのホームへ移ること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "ゲームのホームへ" }));
 
-      expect(screen.getByText("記録画面")).toBeTruthy();
-    });
-
-    test("難易度変更で難易度選択画面へ移ること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "難易度変更" }));
-
-      expect(screen.getByText("難易度選択画面")).toBeTruthy();
+      expect(screen.getByText(/^ゲームのホーム画面\?problem=.+/)).toBeTruthy();
     });
 
     describe("同じ問題をもう一度解いた場合", () => {
       beforeEach(() => {
-        fireEvent.click(screen.getByRole("button", { name: "同じ問題" }));
+        fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
         solve(selected.problem.solution);
       });
 
@@ -206,9 +207,11 @@ describe("ReflectionPlayView", () => {
       renderAt("/puzzles/reflection/play/9");
     });
 
-    test("選べない難易度であることを示し難易度選択へ戻る導線を出すこと", () => {
+    test("選べない難易度であることを示しゲームのホームへ戻る導線を出すこと", () => {
       const message = screen.getByText("この難易度は選べません");
-      const backLink = screen.getByRole("link", { name: "難易度選択へ戻る" });
+      const backLink = screen.getByRole("link", {
+        name: "ゲームのホームへ戻る",
+      });
 
       expect(message).toBeTruthy();
       expect(backLink.getAttribute("href")).toBe("/puzzles/reflection");

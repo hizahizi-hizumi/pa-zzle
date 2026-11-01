@@ -9,7 +9,7 @@ import {
 import { useNavigate } from "@/router";
 
 const game = {
-  entryPath: "/puzzles/minesweeper",
+  homePath: "/puzzles/minesweeper",
   playPath: "/puzzles/minesweeper/play/:difficulty",
 } as const;
 
@@ -38,18 +38,30 @@ describe("useGameNavigation", () => {
     }));
   });
 
-  const pathCases = [
-    ["openRecords", "/records"],
-    ["changeDifficulty", "/puzzles/minesweeper"],
-    ["backToHome", "/"],
-  ] as const;
-
-  test.each(pathCases)("%s で %s へ移ること", (operation, path) => {
-    act(() => result.current.navigation[operation]());
+  test("backToHome で / へ移ること", () => {
+    act(() => result.current.navigation.backToHome());
 
     const { pathname } = result.current.location;
 
-    expect(pathname).toBe(path);
+    expect(pathname).toBe("/");
+  });
+
+  test("openGameHome でゲームのホームへ移ること", () => {
+    act(() => result.current.navigation.openGameHome());
+
+    const { pathname, search } = result.current.location;
+
+    expect(pathname).toBe("/puzzles/minesweeper");
+    expect(search).toBe("");
+  });
+
+  test("openGameHome に問題 ID を渡すと、その問題 ID を URL に載せたゲームのホームへ移ること", () => {
+    act(() => result.current.navigation.openGameHome("problem-1"));
+
+    const { pathname, search } = result.current.location;
+
+    expect(pathname).toBe("/puzzles/minesweeper");
+    expect(search).toBe("?problem=problem-1");
   });
 
   test("startNewProblem で難易度のプレイ画面を開き、避ける問題の ID を state に渡すこと", () => {

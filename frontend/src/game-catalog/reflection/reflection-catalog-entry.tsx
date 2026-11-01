@@ -28,7 +28,7 @@ export const reflectionCatalogEntry = {
   id: reflectionPlayRecordDefinition.gameId,
   name: REFLECTION_DISPLAY_NAME,
   pictogramSvg,
-  entryPath: "/puzzles/reflection",
+  homePath: "/puzzles/reflection",
   playPath: "/puzzles/reflection/play/:difficulty",
   playRecordDisplay: reflectionPlayRecordDisplay,
   recordProblemPlayTarget(record) {

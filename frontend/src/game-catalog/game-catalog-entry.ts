@@ -19,8 +19,8 @@ import type { PlayRecord } from "@/records/play-record";
 import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
 import type { Path } from "@/router";
 
-/** ゲームの入口（難易度選択）のパス。 */
-export type GameEntryPath = Exclude<
+/** ゲームのホームのパス。アプリのホームからゲームを選ぶと開く。 */
+export type GameHomePath = Exclude<
   Extract<Path, `/puzzles/${string}`>,
   `${string}/:${string}`
 >;
@@ -41,9 +41,9 @@ export type RecordProblemPlayDestination = RecordProblemPlayTarget & {
 
 /** ゲームのプレイ画面・結果画面から、ゲームの外や同じゲームの別のプレイへ移る操作。 */
 export type GameNavigation = {
-  openRecords: () => void;
-  /** ゲームの入口（難易度選択）へ移る。 */
-  changeDifficulty: () => void;
+  /** ゲームのホームへ移る。問題 ID を渡すと、図鑑でその問題を選んだ状態で開く。 */
+  openGameHome: (selectedProblemId?: ProblemId) => void;
+  /** アプリのホームへ移る。 */
   backToHome: () => void;
   /** その難易度のプレイ画面を開き、最初の問題として `avoidedProblemId` の問題を避ける。 */
   startNewProblem: (difficulty: string, avoidedProblemId: ProblemId) => void;
@@ -80,13 +80,13 @@ export type ProblemFeatureFilter = {
   ) => ReadonlyMap<string, ProblemFeatureValue> | null;
 };
 
-/** アプリが提供する1つのゲームの、入口・プレイ画面・記録・離脱したプレイ・それらの問題の遊び直し先・問題集の全問・記録の結果画面。 */
+/** アプリが提供する1つのゲームの、ゲームのホーム・プレイ画面・記録・離脱したプレイ・それらの問題の遊び直し先・問題集の全問・記録の結果画面。 */
 export type GameCatalogEntry = {
   /** 記録の `gameId` と同じ値。 */
   id: string;
   name: string;
   pictogramSvg: string;
-  entryPath: GameEntryPath;
+  homePath: GameHomePath;
   playPath: GamePlayPath;
   playRecordDisplay: PlayRecordDisplayDefinition;
   /**

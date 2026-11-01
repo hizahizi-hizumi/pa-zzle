@@ -18,8 +18,8 @@ import {
   MOTION_EASING,
   prefersReducedMotion,
 } from "@/lib/motion";
-import { ZukanProblemSquare } from "@/zukan/ui/GameZukanScreen/ZukanProblemSheet/ZukanProblemSquare";
-import type { ZukanChangeStage } from "@/zukan/ui/GameZukanScreen/zukan-change-reveal";
+import { ZukanProblemSquare } from "@/zukan/ui/GameHomeScreen/ZukanProblemSheet/ZukanProblemSquare";
+import type { ZukanChangeStage } from "@/zukan/ui/GameHomeScreen/zukan-change-reveal";
 import type { ZukanProblem } from "@/zukan/zukan-collection";
 import type { ZukanProblemChange } from "@/zukan/zukan-last-viewed";
 
@@ -139,7 +139,7 @@ function listPositions(
 }
 
 /**
- * 1つの難易度の全問をマス目で並べた台紙。難易度の名前と解いた数は、台紙を切り替えるタブが示す。
+ * 1つの難易度の全問をマス目で並べた台紙。難易度の名前と解いた数は、台紙を切り替えるレベルのカードが示す。
  * 絞り込んでいるときは、当たった問題を前に、当たらなかった問題を薄くして区切りの線の後ろに、それぞれ番号の順で並べる。当たった問題が無ければ、その旨を前に示す。
  * 条件を変えるたびに多くのマスを置き直さないよう、マスは番号の順に置いたまま、当たらなかったマスを CSS の `order` で区切りの後ろへ並べて見せる。
  * 台紙は与えられた高さの中で自分だけスクロールし、選んだマスを、下端を覆うものに隠れない見える範囲へ寄せる。条件を変えても選んだマスへは寄せ直さない。
@@ -270,6 +270,7 @@ function ZukanProblemSheetContent({
     matchedCount !== null && matchedCount < arrangedProblems.length;
 
   // 押すときに大きく浮くマスと広がる輪が、台紙の端のマスでもスクロール領域で切れないよう、領域をページの余白へ広げ、内側に輪が収まる余白を取る。
+  // 覆われたところの余白は、領域の余白ではなく末尾の要素で取る。画面が低く、覆う高さが領域より高いときも、領域が縮めずにページをはみ出さないようにする。
   return (
     <div
       ref={scrollerRef}
@@ -277,7 +278,7 @@ function ZukanProblemSheetContent({
       style={
         { "--covered-bottom": `${coveredBottomHeight}px` } as CSSProperties
       }
-      className="-mx-4 min-h-0 flex-1 scroll-pb-(--covered-bottom) overflow-y-auto overscroll-contain px-4 pt-4 pb-[calc(--spacing(4)+var(--covered-bottom))]"
+      className="-mx-4 min-h-0 flex-1 scroll-pb-(--covered-bottom) overflow-y-auto overscroll-contain px-4 pt-4 pb-4"
     >
       <div
         ref={gridRef}
@@ -316,6 +317,7 @@ function ZukanProblemSheetContent({
           />
         )}
       </div>
+      <div aria-hidden="true" className="h-(--covered-bottom)" />
     </div>
   );
 }

@@ -28,7 +28,7 @@ export const parkingJamCatalogEntry = {
   id: parkingJamPlayRecordDefinition.gameId,
   name: PARKING_JAM_DISPLAY_NAME,
   pictogramSvg,
-  entryPath: "/puzzles/parking-jam",
+  homePath: "/puzzles/parking-jam",
   playPath: "/puzzles/parking-jam/play/:difficulty",
   playRecordDisplay: parkingJamPlayRecordDisplay,
   recordProblemPlayTarget(record) {

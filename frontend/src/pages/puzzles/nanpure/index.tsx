@@ -1,1 +1,1 @@
-export { NanpureDifficultyView as default } from "@/views/NanpureDifficultyView";
+export { NanpureHomeView as default } from "@/views/NanpureHomeView";

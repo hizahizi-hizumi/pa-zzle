@@ -37,7 +37,7 @@ function createProps(): ComponentProps<typeof PlayHeader> {
     onRestart: vi.fn(),
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
-    onChangeDifficulty: vi.fn(),
+    onOpenGameHome: vi.fn(),
     onBackToHome: vi.fn(),
     onOpenHowToPlay: vi.fn(),
     onOpenDiagnostics: vi.fn(),
@@ -61,10 +61,12 @@ describe("PlayHeader", () => {
       expect(elapsed).toBeTruthy();
     });
 
-    test("戻るボタンで難易度変更を通知すること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
+    test("戻るボタンでゲームのホームへ移る操作を通知すること", () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "ゲームのホームへ戻る" }),
+      );
 
-      expect(props.onChangeDifficulty).toHaveBeenCalledOnce();
+      expect(props.onOpenGameHome).toHaveBeenCalledOnce();
     });
 
     test("メニュー項目を補助操作・移動・説明・検証の順に並べること", () => {
@@ -78,7 +80,7 @@ describe("PlayHeader", () => {
         "盤面を戻す",
         "リセット",
         "別の問題",
-        "難易度変更",
+        "ゲームのホーム",
         "ホーム",
         "遊び方",
         "検証情報",
@@ -89,7 +91,7 @@ describe("PlayHeader", () => {
       ["盤面を戻す", "onRestart"],
       ["リセット", "onReplay"],
       ["別の問題", "onStartNewProblem"],
-      ["難易度変更", "onChangeDifficulty"],
+      ["ゲームのホーム", "onOpenGameHome"],
       ["ホーム", "onBackToHome"],
       ["遊び方", "onOpenHowToPlay"],
       ["検証情報", "onOpenDiagnostics"],
@@ -117,7 +119,7 @@ describe("PlayHeader", () => {
     const silentMenuItems = [
       "盤面を戻す",
       "リセット",
-      "難易度変更",
+      "ゲームのホーム",
       "ホーム",
       "遊び方",
       "検証情報",
@@ -134,7 +136,9 @@ describe("PlayHeader", () => {
     );
 
     test("戻るボタンでは音を鳴らさないこと", () => {
-      fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
+      fireEvent.click(
+        screen.getByRole("button", { name: "ゲームのホームへ戻る" }),
+      );
 
       expect(playSound).not.toHaveBeenCalled();
     });
@@ -184,7 +188,7 @@ describe("PlayHeader", () => {
         .getAllByRole("menuitem")
         .map((item) => item.textContent);
 
-      expect(itemNames).toEqual(["別の問題", "難易度変更", "ホーム"]);
+      expect(itemNames).toEqual(["別の問題", "ゲームのホーム", "ホーム"]);
     });
   });
 });

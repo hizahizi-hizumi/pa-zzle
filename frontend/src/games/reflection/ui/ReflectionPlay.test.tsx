@@ -1,11 +1,12 @@
 import {
   cleanup,
   fireEvent,
-  render,
+  render as renderWithoutRouter,
   screen,
   within,
 } from "@testing-library/react";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactElement } from "react";
+import { MemoryRouter } from "react-router";
 
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import type { ReflectionResult } from "@/games/reflection/play/use-reflection-play";
@@ -26,6 +27,11 @@ import {
 import type { ReflectionSessionResult } from "@/games/reflection/session/session";
 import { reflectionOutcomeLabels } from "@/games/reflection/ui/outcome-label";
 import { ReflectionPlay } from "@/games/reflection/ui/ReflectionPlay";
+
+/** 結果画面はブランドの帯からホームへ戻るリンクを持つので、ルーターの中で描く。 */
+function render(ui: ReactElement) {
+  return renderWithoutRouter(ui, { wrapper: MemoryRouter });
+}
 
 afterEach(() => {
   cleanup();
@@ -93,8 +99,7 @@ describe("ReflectionPlay", () => {
     onReplay: vi.fn(),
     onClearAnimationComplete: vi.fn(),
     onStartNewProblem: vi.fn(),
-    onOpenRecords: vi.fn(),
-    onChangeDifficulty: vi.fn(),
+    onOpenGameHome: vi.fn(),
     onBackToHome: vi.fn(),
   };
 
@@ -231,17 +236,19 @@ describe("ReflectionPlay", () => {
   });
 
   describe("ヘッダーの移動とメニューの場合", () => {
-    test("戻るボタンで難易度選択への移動を通知すること", () => {
+    test("戻るボタンでゲームのホームへの移動を通知すること", () => {
       renderPlay({});
 
-      fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
+      fireEvent.click(
+        screen.getByRole("button", { name: "ゲームのホームへ戻る" }),
+      );
 
-      expect(callbacks.onChangeDifficulty).toHaveBeenCalledOnce();
+      expect(callbacks.onOpenGameHome).toHaveBeenCalledOnce();
       expect(callbacks.onBackToHome).not.toHaveBeenCalled();
     });
 
     test.each([
-      ["難易度変更", "onChangeDifficulty"],
+      ["ゲームのホーム", "onOpenGameHome"],
       ["ホーム", "onBackToHome"],
     ] as const)("メニューの%sで移動を通知すること", (name, callbackName) => {
       renderPlay({});
@@ -487,11 +494,9 @@ describe("ReflectionPlay", () => {
       });
 
       const actionCases = [
-        ["プレイ！", "onStartNewProblem"],
-        ["同じ問題", "onReplay"],
-        ["記録を確認", "onOpenRecords"],
-        ["難易度変更", "onChangeDifficulty"],
-        ["ホーム", "onBackToHome"],
+        ["次の問題", "onStartNewProblem"],
+        ["もう一度", "onReplay"],
+        ["ゲームのホームへ", "onOpenGameHome"],
       ] as const;
 
       test.each(actionCases)(

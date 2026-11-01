@@ -1,18 +1,18 @@
 import { useId } from "react";
 
 import { ToggleGroup } from "@/components/ui/toggle-group";
-import { ZukanFilterOption } from "@/zukan/ui/GameZukanScreen/ZukanFilter/ZukanFilterPanel/ZukanFilterOption";
+import { ZukanFilterOption } from "@/zukan/ui/GameHomeScreen/ZukanFilter/ZukanFilterPanel/ZukanFilterOption";
 import {
   formatZukanFeatureOption,
   type ZukanFilterFeatureAxis,
   zukanPerformanceAxisLabels,
   zukanPerformanceConditionLabels,
-} from "@/zukan/ui/GameZukanScreen/zukan-filter-appearance";
+} from "@/zukan/ui/GameHomeScreen/zukan-filter-appearance";
 import {
   getZukanProblemStatusClassName,
   zukanProblemStatusLabels,
   zukanProblemStatusOrder,
-} from "@/zukan/ui/GameZukanScreen/zukan-problem-appearance";
+} from "@/zukan/ui/GameHomeScreen/zukan-problem-appearance";
 import type { ZukanProblemStatus } from "@/zukan/zukan-collection";
 import {
   getZukanFeatureOptionKey,
