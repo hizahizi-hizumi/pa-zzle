@@ -31,12 +31,14 @@ export type SlidePuzzleTutorialRuleId = "slide" | "line";
 export type SlidePuzzleTutorialAction = { cellIndex: number };
 
 /**
- * `tile`: 印を付け、手順の間だけタップを受け付けるタイル。スライドさせると次の手順へ進む。
- * どの手順のタイルも、スライドさせると動いたタイルがすべて自分の場所に収まる。
+ * - `tile`: 印を付け、手順の間だけタップを受け付けるタイル。スライドさせると次の手順へ進む。
+ *   どの手順のタイルも、スライドさせると動いたタイルがすべて自分の場所に収まる。
+ * - `alternative`: 印は無いが、それまでの読みでも空白に入るタイル。タップされたら、盤面は変えずに、印のタイルを選ぶわけを返す。
  */
 export type SlidePuzzleTutorialStep =
   TutorialStep<SlidePuzzleTutorialRuleId> & {
     tile: SlidePuzzleTile;
+    alternative?: { tile: SlidePuzzleTile; message: TutorialMessage };
   };
 
 /**
@@ -79,13 +81,13 @@ const startBoard: SlidePuzzleBoard = [4, 1, 2, 7, 0, 3, 8, 5, 6];
 const goalBoard = createSolvedSlidePuzzleBoard(3);
 
 /**
- * 5 を下から、8 を左から1枚ずつ入れ、左の列の 7 と 4 をまとめて入れる。
+ * 5 を下から、8 を左から1枚ずつ入れ、左の列の 7 と 4 をまとめて入れる。7 は隣にあり1枚でも入るが、4 なら2枚が一度に入る。
  * 手順を終えると、空白が左上に来て、上の行の 1・2 と右の列の 3・6 が残る。どちらも行・列ごとまとめても入れられる。
  */
 const steps: readonly SlidePuzzleTutorialStep[] = [
   {
     message: {
-      headline: "空白の隣のタイルをタップすると、空白にスライドします",
+      headline: "空白の隣のタイルをタップすると、\n空白にスライドします",
       detail: "印のタイルをタップしてください",
     },
     introducedRuleId: "slide",
@@ -93,19 +95,27 @@ const steps: readonly SlidePuzzleTutorialStep[] = [
   },
   {
     message: {
-      headline: "空白に入る番号を探して、スライドさせます",
-      detail: "今の空白には 8 が入ります",
+      headline: "空白に入るタイルが隣にあれば、\nそのタイルをスライドさせます",
+      detail: "ここには 8 のタイルが入ります",
     },
     introducedRuleId: null,
     tile: 8,
   },
   {
     message: {
-      headline: "空白と同じ行・列のタイルは、離れていてもスライドします",
-      detail: "4 をタップすると、7 もまとめてスライドします",
+      headline: "離れたタイルも、まとめてスライドします",
+      detail:
+        "空白と同じ行・列のタイルだけがスライドします。\n4 をタップすると、7 と 4 のタイルが一度に入ります",
     },
     introducedRuleId: "line",
     tile: 4,
+    alternative: {
+      tile: 7,
+      message: {
+        headline: "7 のタイルも、空白に入ります",
+        detail: "4 をタップすると、7 と 4 のタイルが一度に入ります",
+      },
+    },
   },
 ];
 
@@ -276,10 +286,25 @@ function describeSlidePuzzleTutorialViolation(
   return {
     headline:
       lastMove?.type === "rejected"
-        ? `${lastMove.tile} は、空白と同じ行・列にありません`
+        ? `${lastMove.tile} のタイルは、\n空白と同じ行・列にありません`
         : "空白と同じ行・列にないタイルは、スライドしません",
     detail: "空白と同じ行・列のタイルだけがスライドします",
   };
+}
+
+/**
+ * 手を引いている間に、印の無いタイルをタップしたときの一言。それまでの読みでも空白に入るタイルなら、印のタイルを選ぶわけを言う。
+ * それ以外は `null` で、印を付け直すだけにする。
+ */
+export function describeSlidePuzzleTutorialOffStepTap(
+  { step }: SlidePuzzleTutorialSituation,
+  state: SlidePuzzleTutorialBoardState,
+  cellIndex: number,
+): TutorialMessage | null {
+  const alternative = step?.alternative;
+  return alternative && state.board[cellIndex] === alternative.tile
+    ? alternative.message
+    : null;
 }
 
 /** 手順で印を付けるタイル。手を離した後は `null`。 */
@@ -325,7 +350,7 @@ export const slidePuzzleTutorial: Tutorial<
   completion: {
     selection: {
       headline: "完成です",
-      detail: "本番もルールは同じで、もっと崩れた盤面から始まります",
+      detail: "レベル1も同じルールで、\nほかのタイルをどかしながら並べます",
     },
     play: {
       headline: "完成です",

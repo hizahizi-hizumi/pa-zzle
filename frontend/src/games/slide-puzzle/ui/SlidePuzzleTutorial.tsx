@@ -10,6 +10,7 @@ import { SLIDE_PUZZLE_DISPLAY_NAME } from "@/games/slide-puzzle/display-name";
 import type { SlidePuzzleOperation } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import type { SlidePuzzleBoard as SlidePuzzleBoardState } from "@/games/slide-puzzle/puzzle/state";
 import {
+  describeSlidePuzzleTutorialOffStepTap,
   findSlidePuzzleTutorialHintTile,
   getSlidePuzzleTutorialStepTile,
   type SlidePuzzleTutorialBoardState,
@@ -26,6 +27,7 @@ import {
   getTutorialSituation,
   performTutorialAction,
   startTutorial,
+  type TutorialMessage,
   type TutorialProgress,
 } from "@/games/tutorial";
 
@@ -131,6 +133,11 @@ export function SlidePuzzleTutorial({
     useState<SlidePuzzleTutorialProgress | null>(null);
   // 手を引いている間に印の無いタイルを押されたら、印を付け直す。
   const [hintCueId, setHintCueId] = useState(0);
+  // 手を引いている間に、印の無いタイルをタップしたときの一言。進行が変わるまで出す。
+  const [offStepAnswer, setOffStepAnswer] = useState<{
+    progress: SlidePuzzleTutorialProgress;
+    message: TutorialMessage;
+  } | null>(null);
   const situation = getTutorialSituation(slidePuzzleTutorial, progress);
   const guiding = situation.step !== null;
   const { boardState } = progress;
@@ -169,6 +176,12 @@ export function SlidePuzzleTutorial({
     if (next === progress) {
       if (guiding) {
         setHintCueId((id) => id + 1);
+        const answer = describeSlidePuzzleTutorialOffStepTap(
+          situation,
+          boardState,
+          cellIndex,
+        );
+        setOffStepAnswer(answer && { progress, message: answer });
       }
       return;
     }
@@ -178,6 +191,7 @@ export function SlidePuzzleTutorial({
 
   function restart(): void {
     setIdleProgress(null);
+    setOffStepAnswer(null);
     setOperation(null);
     setProgress(startTutorial(slidePuzzleTutorial));
   }
@@ -246,11 +260,15 @@ export function SlidePuzzleTutorial({
         earned: progress.earnedRuleIds.includes(rule.id),
         current: situation.step?.introducedRuleId === rule.id,
       }))}
-      message={getTutorialMessage(slidePuzzleTutorial, progress, {
-        entry: finish.entry,
-        // 1回のタップで決まる手なので、一瞬だけ違反になる途中の状態は無い。
-        violationSettled: true,
-      })}
+      message={
+        offStepAnswer?.progress === progress
+          ? offStepAnswer.message
+          : getTutorialMessage(slidePuzzleTutorial, progress, {
+              entry: finish.entry,
+              // 1回のタップで決まる手なので、一瞬だけ違反になる途中の状態は無い。
+              violationSettled: true,
+            })
+      }
       introducing={progress.phase === "intro"}
       completed={progress.phase === "completed"}
       finish={finish}
