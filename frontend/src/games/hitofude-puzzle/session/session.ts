@@ -335,7 +335,7 @@ export function rewindHitofudePuzzleSessionPath(
 
 /**
  * 直前の盤面操作を1つ取り消す（待った）。巻き戻しも取り消せる。
- * 盤面を戻す前の操作は待ったで戻せない。待ったで前の道筋へ戻したときも、別のマスへ引いたのと同じに引き直しを数える。
+ * 盤面を戻す前の操作は待ったで戻せない。別の道筋へ引き直した後に、待ったで元の道筋へ戻したときも、別のマスへ引いたのと同じに引き直しを数える。
  */
 export function undoHitofudePuzzleSession(
   session: HitofudePuzzleSession,

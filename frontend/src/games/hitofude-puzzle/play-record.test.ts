@@ -43,7 +43,7 @@ const record = createHitofudePuzzlePlayRecord({
 });
 
 // 今の生成器の版でない identity は生成条件を確かめないので、作業の量の形だけを確かめられる。
-/** 仕切りのあるルールの生成器（版 1）の identity。 */
+/** 今の生成器より前の版（版 1）の identity。 */
 const pastProblemIdentity = {
   generatorVersion: "1",
   seed: "hp-8-0-16",
