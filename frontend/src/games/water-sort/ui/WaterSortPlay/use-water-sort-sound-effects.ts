@@ -21,16 +21,10 @@ import {
   type SoundEffect,
 } from "@/lib/sound-effects";
 
-/** 通らない操作の、低く短い音。 */
 const invalidSound = defineSoundEffect(invalidSoundUrl);
 
-/** 注ぐ水の、泡が弾けるような音の連なり。水が流れている間を、注ぎ先が満ちていくように少しずつ高くなる泡で埋める。 */
 const pouredSound = defineSoundEffect(pouredSoundUrl);
 
-/**
- * クリアの、最後のボトルが満ちる音。泡が駆け上がり、満ちたグラスのように澄んで鳴って終わる。
- * 続けて鳴る結果の報酬の音と濁らないよう、短く、同じ調の音で鳴る。
- */
 const clearedSound = defineSoundEffect(clearedSoundUrl);
 
 const waterSortSounds: readonly SoundEffect[] = [

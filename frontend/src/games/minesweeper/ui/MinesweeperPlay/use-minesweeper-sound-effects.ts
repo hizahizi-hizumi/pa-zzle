@@ -22,10 +22,7 @@ import {
   type SoundLayer,
 } from "@/lib/sound-effects";
 
-/**
- * マスをめくる、軽く乾いた音の粒。1粒目が押したマスで、一度に多く開くほど続く粒を足す。
- * 続く粒ほど小さく、全部鳴らしても1つの効果音の大きさに収まる。
- */
+/** マスを開く音の粒。1粒目が押したマスで、一度に多く開くほど続く粒を足す。 */
 const openingTickSounds = [
   openingTick1SoundUrl,
   openingTick2SoundUrl,
@@ -49,22 +46,12 @@ function getOpeningSoundLayers(openedCellCount: number): SoundLayer[] {
     });
 }
 
-/** 旗を立てる、上がる短い音。 */
 const flagPlacedSound = defineSoundEffect(flagPlacedSoundUrl);
 
-/** 旗を外す、下がる控えめな音。 */
 const flagRemovedSound = defineSoundEffect(flagRemovedSoundUrl);
 
-/**
- * 地雷を踏んだ、こもった低い音。ミスとして数えるので不成立より重いが、プレイは続くので爆発のようにはしていない。
- * 一度に踏んだ数によらず同じ音で鳴らす。
- */
 const mineSteppedSound = defineSoundEffect(mineSteppedSoundUrl);
 
-/**
- * クリアの、盤面が脈打つのに合わせて下から開いていく和音。脈打ち終わるときに消える。
- * 続けて鳴る結果の報酬の音と濁らないよう、短く、同じ調の音で鳴る。
- */
 const clearedSound = defineSoundEffect(clearedSoundUrl);
 
 const minesweeperSounds: readonly SoundEffect[] = [

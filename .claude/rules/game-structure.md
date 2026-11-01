@@ -69,7 +69,7 @@ frontend/src/games/
 - `problem/difficulty-analysis.ts`: 問題から難易度判定用の特徴を導出するゲームに置く。難易度が問題データの既知情報なら置かない。
 - `problem/generation/`: 問題生成・検証の内部でだけ使う解探索、手筋解析などを置く。通常プレイから直接参照しない。
 - `diagnostics.ts`: ゲーム固有の内部診断を提供する場合に置く。`games/diagnostics.ts` の `InternalDiagnosticFormat` を定義し、snapshot の作成と読み戻しは共通の `createInternalDiagnosticSnapshot` / `parseInternalDiagnosticSnapshot` を使う。公開するのは `<Game>DiagnosticSnapshot` と `create<Game>DiagnosticSnapshot` だけで、読み戻しと問題の復元はテスト用に `_private` で公開する。
-- `assets/`: ゲーム固有の静的資産（ピクトグラム、`sounds/` の効果音の音声ファイルなど）がある場合に置く。
+- `assets/`: ゲーム固有の静的資産がある場合に置く。
 
 ## 問題契約
 
@@ -138,11 +138,7 @@ frontend/src/games/
 
 ## 効果音
 
-- ゲームの効果音は題材から作った音声ファイルとして `assets/sounds/` に同梱し、音の中身をコードで合成しない。音声ファイルは WAV（モノラル・16bit・48kHz）で、頭に無音を入れない。
-- 音声ファイルは Vite のアセット import で URL として受け取り、`@/lib/sound-effects` の `defineSoundEffect` でモジュールの最上位に効果音として定義し、`playSound` で鳴らす。回数の多い操作の音には `REPEATED_SOUND_VARIATION` を渡す。
-- 効果音のフックは `games/play-sound-effects.ts` の `usePrepareSoundEffects` にそのゲームの効果音すべてを渡し、プレイ画面を出したときに読み込みを始める。読み込めていない音は鳴らないので、渡し漏れを作らない。
-- 条件や盤面で組み立てが変わる音は、組み立てをコードに残し、素材を音声ファイルにして `playLayeredSound` で時間をずらして重ねる。条件で違うだけの音は別の音声ファイルにする。
-- 効果音のフック（`use-<game>-sound-effects.ts`）は、どの知らせでどの音をいつ・どう鳴らすか（遅らせる、重ねる、揺らす）だけを持つ。
+- ゲームの効果音は題材から作った音声ファイルを `assets/` に同梱し、`@/lib/sound-effects` の `playSound` で鳴らす。音の中身をコードで合成しない。回数の多い操作の音には `REPEATED_SOUND_VARIATION` を渡す。
 - プレイ画面は、盤面操作の音を `games/play-sound-effects.ts` の `useOperationSound` で、プレイフックが返す `id` 付きの操作の知らせから鳴らす。クリア音は `useClearSound` で完成演出の始まりに鳴らす。
 - 動きを減らす設定では、不成立の動きが出ず画面が何も変わらない操作の音と、完成演出が無くすぐ結果へ進むときのクリア音を鳴らさない。完成した盤面を保持して見せるゲームだけ、その姿に合わせたクリア音を `useClearSound` へ渡す。
 - 結果を受け取る瞬間の報酬の音はアプリが `usePlayableGame` で鳴らすので、ゲームは鳴らさない。

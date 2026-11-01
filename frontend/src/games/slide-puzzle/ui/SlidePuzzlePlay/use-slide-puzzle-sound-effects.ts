@@ -26,19 +26,12 @@ import {
   type SoundLayer,
 } from "@/lib/sound-effects";
 
-/**
- * タイルが滑る、小さく乾いた「コト」という音。
- * 1プレイで百回を超えて続けて鳴るので短く小さく、何枚まとめて滑っても同じ音で鳴らす。
- */
+/** タイルが滑る音。何枚まとめて滑っても同じ音で鳴らす。 */
 const slidSound = defineSoundEffect(slidSoundUrl);
 
-/** 滑らせられないタイルが枠の中でがたつく、低く短い2回の音。 */
 const invalidSound = defineSoundEffect(invalidSoundUrl);
 
-/**
- * 完成演出の波でタイルが持ち上がるたびに鳴らす、木琴のような1音。低い順に並べる。
- * 盤面の大きさによらず C から1オクターブ上の C まで駆け上がり、続けて鳴る結果の報酬の音（C の調）へ濁らずにつなぐ。
- */
+/** 完成演出の波でタイルが持ち上がるたびに鳴らす1音。低い順に並べ、盤面の大きさによらず最初から最後まで駆け上がる。 */
 const clearScaleSounds = [
   clearNoteC5SoundUrl,
   clearNoteD5SoundUrl,

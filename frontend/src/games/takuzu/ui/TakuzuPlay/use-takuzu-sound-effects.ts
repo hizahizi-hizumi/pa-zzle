@@ -20,22 +20,16 @@ import {
   type SoundEffect,
 } from "@/lib/sound-effects";
 
-/** タイルを置く音。A の塗りの四角は詰まった低めの音、B の輪郭の丸は丸く弾む音で、形の違いに合わせてある。 */
+/** タイルを置く音。A と B で見た目が違うので音も分ける。 */
 const tilePlacedSounds: Record<TakuzuTile, SoundEffect> = {
   a: defineSoundEffect(tileAPlacedSoundUrl),
   b: defineSoundEffect(tileBPlacedSoundUrl),
 };
 
-/** タイルを取り除いてマスを空きに戻す、置く音より小さく下がる音。 */
 const emptiedSound = defineSoundEffect(emptiedSoundUrl);
 
-/** 固定マスを押したときの、低く短い音。 */
 const invalidSound = defineSoundEffect(invalidSoundUrl);
 
-/**
- * クリアの、タイルが斜めの波で膨らむのに合わせた音。膨らむタイルに合わせて小さく弾む音が上がっていき、
- * 波が右下の角に届いたところで澄んだ和音で終わる。続けて鳴る結果の報酬の音と同じ調の音で鳴る。
- */
 const clearedSound = defineSoundEffect(clearedSoundUrl);
 
 const takuzuSounds: readonly SoundEffect[] = [

@@ -17,25 +17,14 @@ import {
   type SoundEffect,
 } from "@/lib/sound-effects";
 
-/** 数字を書き込む音。鉛筆の先が紙に当たる高く短い音に、紙の下の机に響く低い音が重なる。 */
 const digitEnteredSound = defineSoundEffect(digitEnteredSoundUrl);
 
-/**
- * ミスに数えた数字を書き込む音。書き込む鉛筆の音に、低く丸い音が続く。
- * 通らない操作より重いが、ぶつかる音にせず罰に聞こえないようにしてある。
- */
 const mistakeEnteredSound = defineSoundEffect(mistakeEnteredSoundUrl);
 
-/** メモを小さく書き込む、数字の入力より軽い鉛筆の音。 */
 const noteAddedSound = defineSoundEffect(noteAddedSoundUrl);
 
-/** メモを消す、消しゴムで一度だけ軽くこする低く柔らかい音。 */
 const noteRemovedSound = defineSoundEffect(noteRemovedSoundUrl);
 
-/**
- * クリアの、埋まった盤面が脈打つのに合わせた音。上がる音で膨らみへ向かい、いちばん膨らむ時に和音へ着地する。
- * 続けて鳴る結果の報酬の音と濁らないよう、高い音域で短く鳴る。
- */
 const clearedSound = defineSoundEffect(clearedSoundUrl);
 
 const nanpureSounds: readonly SoundEffect[] = [

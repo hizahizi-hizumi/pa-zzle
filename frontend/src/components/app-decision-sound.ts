@@ -1,11 +1,4 @@
-/**
- * アプリの画面で、遊ぶゲームを選ぶ・プレイを始める決定の操作に鳴らす音。全ゲームで揃える。
- * 結果の報酬と同じ C メジャーの鐘の音色で、プレイ中の操作の音より小さく短い。
- * 選ぶ音は G5 の1音、始める音は G5 から C6 へ上がって主音に落ち着く。
- *
- * 決定の操作のイベントハンドラで鳴らす。戻る、メニューやダイアログの開閉、記録を見る、
- * 設定の切り替え、画面遷移そのもの、プレイ中のリセットでは鳴らさない。
- */
+/** アプリの画面で、遊ぶゲームを選ぶ・プレイを始める決定の操作に鳴らす音。決定の操作のイベントハンドラで鳴らす。 */
 
 import { useEffect } from "react";
 
@@ -17,10 +10,8 @@ import {
   prepareSoundEffects,
 } from "@/lib/sound-effects";
 
-/** 遊ぶゲームを選んだときの、ごく短く柔らかい1音。 */
 const gameSelectSound = defineSoundEffect(gameSelectSoundUrl);
 
-/** プレイを始めるときの、上がる2音。 */
 const playStartSound = defineSoundEffect(playStartSoundUrl);
 
 const appDecisionSounds = [gameSelectSound, playStartSound];

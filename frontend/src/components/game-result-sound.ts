@@ -5,10 +5,7 @@ import resultRewardPerfectSoundUrl from "@/assets/sounds/result-reward-perfect.f
 import type { GameResultLevel } from "@/games/result";
 import { defineSoundEffect, type SoundEffect } from "@/lib/sound-effects";
 
-/**
- * 結果の報酬の音。全ゲームで同じ鐘のような音色で、上がる分散和音から和音へ着地する。
- * 評価段階が高いほど音を重ね、長く響かせる。紙吹雪を出す段階（great 以上）では、高い煌めきを足す。
- */
+/** 評価段階ごとの、結果の報酬の音。 */
 const gameResultSounds: Record<GameResultLevel, SoundEffect> = {
   clear: defineSoundEffect(resultRewardClearSoundUrl),
   good: defineSoundEffect(resultRewardGoodSoundUrl),

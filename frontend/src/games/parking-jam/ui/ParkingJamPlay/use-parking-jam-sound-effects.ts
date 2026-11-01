@@ -21,19 +21,10 @@ const BLOCKED_IMPACT_MS = 80;
 /** `parking-jam-board.css` の出ていく動き（`pj-exit`）の長さ。 */
 const EXIT_DURATION_MS = 520;
 
-/**
- * ミスとして数える、塞がれた車がこつんと当たる音。
- * 鈍い車体の音に小さな当たりの音を重ね、不成立より重く、罰に聞こえない柔らかさにしてある。
- */
 const blockedSound = defineSoundEffect(blockedSoundUrl);
 
-/** 車が走り出して遠ざかる、上がっていくエンジンの音。走り去る間に消える。 */
 const exitedSound = defineSoundEffect(exitedSoundUrl);
 
-/**
- * クリアの、最後の車が走り去りながら鳴らす軽い2回のクラクション。
- * 続けて鳴る結果の報酬の音（C の調）へ濁らずにつながるよう、C と E の長三度で鳴る。
- */
 const clearedSound = defineSoundEffect(clearedSoundUrl);
 
 /** 最後の車が駐車場を半分ほど走り抜けたところでクラクションを鳴らし、出ていき終える前に鳴り終える。 */
