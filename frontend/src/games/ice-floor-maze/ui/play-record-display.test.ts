@@ -10,9 +10,9 @@ const record = createIceFloorMazePlayRecord({
     conditions: { width: 10, height: 10 },
   },
   startedAt: 1_000,
-  completedAt: 68_500,
+  completedAt: 124_500,
   result: {
-    elapsedMs: 67_500,
+    elapsedMs: 123_500,
     moveCount: 20,
     undoCount: 2,
     restartCount: 1,
@@ -40,7 +40,7 @@ describe("iceFloorMazePlayRecordDisplay", () => {
     const timeDelta = getFormattedMetric("time-delta-ms");
     const moveDelta = getFormattedMetric("move-delta");
 
-    expect(score).toBe("78点");
+    expect(score).toBe("86点");
     expect(timeDelta).toBe("+00:10");
     expect(moveDelta).toBe("+5");
   });

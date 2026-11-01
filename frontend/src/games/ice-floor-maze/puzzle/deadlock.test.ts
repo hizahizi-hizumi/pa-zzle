@@ -71,6 +71,11 @@ describe("classifyIceFloorMazeDeadlock", () => {
     const reachableBoard = parseIceFloorMazeBoard([".b..."]);
     // G 1 2 b 4
     const pushedBoard = parseIceFloorMazeBoard(["...b."]);
+    // G  #  2  3  4
+    // #  #  7  #  #
+    // #  #  b  #  #
+    // 2 と 4 の間は崩さずに往復でき、2 から下へ滑ればもろい岩を崩せるが、どちらへ進んでもゴールへは行けない。
+    const circlingBoard = parseIceFloorMazeBoard([".#...", "##.##", "##b##"]);
     const elementCases = [
       [
         "もろい岩を崩せばゴールで止まれる",
@@ -79,10 +84,10 @@ describe("classifyIceFloorMazeDeadlock", () => {
         "goal-reachable",
       ],
       [
-        "もろい岩を崩す手が残る間は、ゴールが無くても閉じ込めでない",
+        "ゴールへ行けず、崩す手のほかに動けなければ閉じ込め",
         brittleBoard,
         slideInOrder(brittleBoard, 6, []),
-        "goal-unreachable",
+        "trapped",
       ],
       [
         "崩した後に戻れない状態は閉じ込めでない",
@@ -97,15 +102,33 @@ describe("classifyIceFloorMazeDeadlock", () => {
         "trapped",
       ],
       [
-        "薄い氷を割る手が残る間は閉じ込めでない",
+        "ゴールへ行けず、割る手のほかに動けなければ閉じ込め",
         thinBoard,
         slideInOrder(thinBoard, 4, []),
-        "goal-unreachable",
+        "trapped",
       ],
       [
         "割れた水面に阻まれて動けなければ閉じ込め",
         thinBoard,
         slideInOrder(thinBoard, 4, ["left"]),
+        "trapped",
+      ],
+      [
+        "崩す手が残っていても、崩さない滑りでは往復するだけなら閉じ込め",
+        circlingBoard,
+        slideInOrder(circlingBoard, 2, []),
+        "trapped",
+      ],
+      [
+        "崩さない滑りで戻れない先へ進めるなら閉じ込めでない",
+        circlingBoard,
+        slideInOrder(circlingBoard, 2, ["down"]),
+        "goal-unreachable",
+      ],
+      [
+        "崩した後に崩さない滑りで回るだけになれば閉じ込め",
+        circlingBoard,
+        slideInOrder(circlingBoard, 2, ["down", "down"]),
         "trapped",
       ],
       [

@@ -17,6 +17,7 @@ import {
   calculateIceFloorMazeMoveDelta,
   calculateIceFloorMazePlayScore,
   calculateIceFloorMazeTimeDeltaMs,
+  getIceFloorMazeSpeedReference,
 } from "@/games/ice-floor-maze/score";
 import {
   isNonNegativeFiniteNumber,
@@ -41,7 +42,7 @@ type IceFloorMazePlayPerformance = {
 
 /**
  * - `problemIdentity`: 再プレイで問題集から同じ問題を引くのに使う。生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
- *   盤面の形（`conditions`）は速さの基準時間に使う。
+ *   速さの基準時間に使う描くマスと要素（もろい岩・薄い氷）の数も、ここから数え直す（版 `"1"` は幅 × 高さのマスと要素0）。
  * - `performance`: そのプレイで起きた事実と、問題集から外れても評価できるよう残す最短手数。
  *   評価点・評価段階・基準との差は保存せず、現在の評価規則で導出する。
  */
@@ -178,7 +179,7 @@ export function restoreIceFloorMazeRecordedResult(
     problemIdentity,
     result: createIceFloorMazeResult(
       sessionResult,
-      problemIdentity.conditions,
+      problemIdentity,
       optimalMoveCount,
     ),
   };
@@ -193,7 +194,9 @@ function getIceFloorMazePlayRecordScore(record: PlayRecord): number | null {
   return calculateIceFloorMazePlayScore({
     elapsedMs,
     moveCount,
-    boardShape: record.payload.problemIdentity.conditions,
+    speedReference: getIceFloorMazeSpeedReference(
+      record.payload.problemIdentity,
+    ),
     optimalMoveCount,
   }).total;
 }
@@ -206,7 +209,9 @@ function getIceFloorMazePlayRecordTimeDelta(record: PlayRecord): number | null {
   const { elapsedMs, optimalMoveCount } = record.payload.performance;
   return calculateIceFloorMazeTimeDeltaMs({
     elapsedMs,
-    boardShape: record.payload.problemIdentity.conditions,
+    speedReference: getIceFloorMazeSpeedReference(
+      record.payload.problemIdentity,
+    ),
     optimalMoveCount,
   });
 }

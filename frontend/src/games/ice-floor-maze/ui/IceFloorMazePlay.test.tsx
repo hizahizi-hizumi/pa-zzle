@@ -34,7 +34,7 @@ const result: IceFloorMazeResult = {
   moveCount: 9,
   undoCount: 2,
   restartCount: 1,
-  boardShape: { width: 10, height: 13 },
+  speedReference: { drawnCellCount: 130, elementCount: 0 },
   optimalMoveCount: 6,
   moveDelta: 3,
   speedRule: { fullScoreMs: 41_000, zeroScoreMs: 82_000 },
@@ -122,21 +122,13 @@ describe("IceFloorMazePlay", () => {
       expect(boardImage).toBeTruthy();
     });
 
-    const directionButtonCases = [
-      ["上へ滑らせる", "up"],
-      ["右へ滑らせる", "right"],
-      ["下へ滑らせる", "down"],
-      ["左へ滑らせる", "left"],
-    ] as const;
+    test("滑らせる向きを選ぶボタンを置かないこと", () => {
+      const directionButtons = screen.queryAllByRole("button", {
+        name: /滑らせる/,
+      });
 
-    test.each(directionButtonCases)(
-      "%s ボタンでその向きへ滑らせる操作を通知すること",
-      (name, direction) => {
-        fireEvent.click(screen.getByRole("button", { name }));
-
-        expect(callbacks.onSlide).toHaveBeenCalledWith(direction);
-      },
-    );
+      expect(directionButtons).toHaveLength(0);
+    });
 
     test("待ったボタンで待ったを通知すること", () => {
       fireEvent.click(screen.getByRole("button", { name: "待った" }));
@@ -256,16 +248,21 @@ describe("IceFloorMazePlay", () => {
       },
     );
 
-    test("メニューの 遊び方 で遊び方を開くこと", () => {
+    test("メニューの 遊び方 で、もろい岩・薄い氷とスワイプの操作を説明する遊び方を開くこと", () => {
       fireEvent.pointerDown(
         screen.getByRole("button", { name: "その他の操作" }),
         { button: 0, ctrlKey: false },
       );
       fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
 
-      const dialog = screen.getByRole("dialog", { name: "遊び方" });
+      const dialog = within(screen.getByRole("dialog", { name: "遊び方" }));
 
-      expect(within(dialog).queryByText(/スライド/)).toBeNull();
+      expect(
+        dialog.getByText(/もろい岩.*すぐ隣から押しても崩れない/),
+      ).toBeTruthy();
+      expect(dialog.getByText(/薄い氷.*割れて水面になる/)).toBeTruthy();
+      expect(dialog.getByText(/盤面をスワイプして/)).toBeTruthy();
+      expect(dialog.queryByText(/スライド|矢印ボタン/)).toBeNull();
     });
   });
 
@@ -403,10 +400,19 @@ describe("IceFloorMazePlay", () => {
       renderPlay({ progress: "clearing" });
     });
 
-    test("方向ボタンを押せないこと", () => {
-      const button = screen.getByRole("button", { name: "右へ滑らせる" });
+    test("スワイプを盤面へ流さないこと", () => {
+      const area = screen.getAllByRole("main").at(-1)!;
 
-      expect((button as HTMLButtonElement).disabled).toBe(true);
+      fireEvent.pointerDown(area, {
+        pointerId: 1,
+        isPrimary: true,
+        button: 0,
+        clientX: 100,
+        clientY: 100,
+      });
+      fireEvent.pointerMove(area, { pointerId: 1, clientX: 140, clientY: 100 });
+
+      expect(callbacks.onSlide).not.toHaveBeenCalled();
     });
 
     test("矢印キーを盤面へ流さないこと", () => {
@@ -468,7 +474,7 @@ describe("IceFloorMazePlay", () => {
       const undoCount = screen.getByText("待った").parentElement;
       const restartCount = screen.getByText("盤面を戻す").parentElement;
       const efficiencyCriteria = screen.getByText(
-        /最短6手で60点.*12手で30点。総手数には「待った」で取り消した手と「盤面を戻す」前の手も含む/,
+        /最短6手で60点.*22手で30点。総手数には「待った」で取り消した手と「盤面を戻す」前の手も含む/,
       );
       const speedCriteria = screen.getByText(
         /基準時間は盤面130マス × 0\.2秒 \+ 最短6手 × 2\.5秒/,

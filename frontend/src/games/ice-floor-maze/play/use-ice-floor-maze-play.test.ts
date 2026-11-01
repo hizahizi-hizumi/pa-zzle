@@ -119,6 +119,7 @@ describe("useIceFloorMazePlay", () => {
     expect(result.current.blockedInput).toMatchObject({
       direction: "up",
       from: 17,
+      stopper: 12,
     });
     expect(result.current.lastSlide).toBeNull();
   });
@@ -147,6 +148,7 @@ describe("useIceFloorMazePlay", () => {
       expect(result.current.blockedInput).toMatchObject({
         direction: "down",
         from: 22,
+        stopper: null,
       });
       expect(result.current.moveCount).toBe(1);
     });
@@ -264,13 +266,13 @@ describe("useIceFloorMazePlay", () => {
       });
     });
 
-    test("取り消した手も数えた総手数で効率を評価し、盤面の形から基準時間を求めること", () => {
+    test("取り消した手も数えた総手数で効率を評価し、描くマスと要素の数から基準時間を求めること", () => {
       const { result: playResult } = result.current;
 
       expect(playResult).toMatchObject({
-        boardShape: { width: 5, height: 5 },
+        speedReference: { drawnCellCount: 25, elementCount: 0 },
         speedRule: { fullScoreMs: 12_500, zeroScoreMs: 25_000 },
-        score: { breakdown: { efficiency: 45 } },
+        score: { breakdown: { efficiency: 56 } },
       });
     });
 
@@ -384,6 +386,100 @@ describe("useIceFloorMazePlay", () => {
 
       expect(position).toBe(0);
       expect(canRestart).toBe(true);
+    });
+  });
+
+  describe("隣のもろい岩へ押した場合", () => {
+    // 0  b  2
+    // 3  4  5
+    // 6  7  8
+    // 開始位置 0 から右は隣のもろい岩に阻まれて1マスも動けない。
+    const pushedProblem: IceFloorMazePooledProblem = {
+      problem: {
+        board: parseIceFloorMazeBoard([".b.", "...", "..."]),
+        start: 0,
+        goal: 8,
+      },
+      identity: {
+        generatorVersion: "2",
+        seed: "ice-floor-maze-pushed",
+        conditions: { width: 3, height: 3 },
+      },
+      optimalMoveCount: 2,
+    };
+
+    beforeEach(() => {
+      ({ result } = renderHook(() => useIceFloorMazePlay("3", pushedProblem)));
+    });
+
+    test("阻んだもろい岩のマスを渡し、もろい岩を崩さないこと", () => {
+      act(() => result.current.slide("right"));
+
+      const { blockedInput, cells } = result.current;
+
+      expect(blockedInput).toMatchObject({ direction: "right", stopper: 1 });
+      expect(cells[1]).toBe("brittle-rock");
+    });
+  });
+
+  describe("閉じ込めから崩す滑りで進んだ場合", () => {
+    // b  1  S  3
+    // #  5  6  7
+    // 8  9  10 11
+    // b  13 14 15
+    // 16 17 G  19
+    // 開始位置 2 から右へ滑ると、崩さない滑りでは 3・19・16 を回るだけになる（閉じ込め）。
+    // そこから左へ滑るともろい岩 0 を崩して 1 で止まり、詰みのまま崩さない滑りで戻れない先へ進めるようになる。
+    const circlingProblem: IceFloorMazePooledProblem = {
+      problem: {
+        board: parseIceFloorMazeBoard(["b...", "#...", "....", "b...", "...."]),
+        start: 2,
+        goal: 18,
+      },
+      identity: {
+        generatorVersion: "2",
+        seed: "ice-floor-maze-circling",
+        conditions: { width: 4, height: 5 },
+      },
+      optimalMoveCount: 1,
+    };
+
+    beforeEach(() => {
+      ({ result } = renderHook(() =>
+        useIceFloorMazePlay("3", circlingProblem),
+      ));
+      slideInOrder(result, ["right"]);
+    });
+
+    test("閉じ込めへ入った滑りとして知らせること", () => {
+      const { isTrapped, lastSlide } = result.current;
+
+      expect(isTrapped).toBe(true);
+      expect(lastSlide).toMatchObject({ to: 3, entersTrap: true });
+    });
+
+    test("詰みのまま閉じ込めでなくなっても知らせ続けること", () => {
+      slideInOrder(result, ["left"]);
+
+      const { isTrapped, lastSlide } = result.current;
+
+      expect(isTrapped).toBe(true);
+      expect(lastSlide).toMatchObject({
+        to: 1,
+        crumbledRock: 0,
+        entersTrap: false,
+      });
+    });
+
+    test("待ったで閉じ込めの前まで戻すと知らせをやめること", () => {
+      slideInOrder(result, ["left"]);
+
+      act(() => result.current.undo());
+      const trappedAfterFirstUndo = result.current.isTrapped;
+      act(() => result.current.undo());
+
+      expect(trappedAfterFirstUndo).toBe(true);
+      expect(result.current.isTrapped).toBe(false);
     });
   });
 

@@ -13,7 +13,7 @@ const {
   getIceFloorMazePlayRecordTimeDelta,
 } = _private;
 
-// 問題集のレベル4 の問題（10×10、最短15手）。基準時間は 100マス × 0.2秒 + 15手 × 2.5秒 = 57.5秒。
+// 問題集のレベル4 の問題（10×10、要素7個、最短15手）。基準時間は 100マス × 0.2秒 + 15手 × 2.5秒 + 7個 × 8秒 = 113.5秒。
 const seed = "0g050005000000i10f00g1051100ff15005100105016105060-32-48";
 const record = createIceFloorMazePlayRecord({
   difficulty: "4",
@@ -23,9 +23,9 @@ const record = createIceFloorMazePlayRecord({
     conditions: { width: 10, height: 10 },
   },
   startedAt: 1_000,
-  completedAt: 68_500,
+  completedAt: 124_500,
   result: {
-    elapsedMs: 67_500,
+    elapsedMs: 123_500,
     moveCount: 20,
     undoCount: 2,
     restartCount: 1,
@@ -46,10 +46,10 @@ function withPerformance(performance: Record<string, unknown>): PlayRecord {
 test("評価値を保存せず評価元の事実と最短手数だけを保存用記録へ写すこと", () => {
   const performance = record.payload.performance;
 
-  expect(record.id).toBe(`ice-floor-maze:1000:68500:${seed}`);
+  expect(record.id).toBe(`ice-floor-maze:1000:124500:${seed}`);
   expect(record.payloadVersion).toBe(1);
   expect(performance).toEqual({
-    elapsedMs: 67_500,
+    elapsedMs: 123_500,
     moveCount: 20,
     undoCount: 2,
     restartCount: 1,
@@ -64,7 +64,7 @@ test("保存した事実から現在のプレイ評価と比較指標を導出�
   const timeDelta = getIceFloorMazePlayRecordTimeDelta(record);
   const moveDelta = getIceFloorMazePlayRecordMoveDelta(record);
 
-  expect(score).toBe(78);
+  expect(score).toBe(86);
   expect(timeDelta).toBe(10_000);
   expect(moveDelta).toBe(5);
 });
@@ -124,23 +124,23 @@ describe("isIceFloorMazePlayRecord", () => {
 
 describe("restoreIceFloorMazeRecordedResult", () => {
   describe("今の版の記録の場合", () => {
-    test("記録の成績・盤面の形・最短手数から結果を作り直すこと", () => {
+    test("記録の成績・盤面の符号・最短手数から結果を作り直すこと", () => {
       const recorded = restoreIceFloorMazeRecordedResult(record);
 
       expect(recorded).toMatchObject({
         difficulty: "4",
         problemIdentity: record.payload.problemIdentity,
         result: {
-          elapsedMs: 67_500,
+          elapsedMs: 123_500,
           moveCount: 20,
           undoCount: 2,
           restartCount: 1,
-          boardShape: { width: 10, height: 10 },
+          speedReference: { drawnCellCount: 100, elementCount: 7 },
           optimalMoveCount: 15,
           moveDelta: 5,
-          speedRule: { fullScoreMs: 57_500, zeroScoreMs: 115_000 },
+          speedRule: { fullScoreMs: 113_500, zeroScoreMs: 227_000 },
           timeDeltaMs: 10_000,
-          score: { total: 78 },
+          score: { total: 86 },
         },
       });
     });
@@ -179,13 +179,13 @@ describe("初期版（氷と岩だけ）の生成器の記録の場合", () => {
     },
   };
 
-  test("記録として読み込み、記録の盤面の形で今の評価規則により評価すること", () => {
+  test("記録として読み込み、幅 × 高さのマスと要素0として今の評価規則により評価すること", () => {
     const accepted = isIceFloorMazePlayRecord(olderRecord);
     const score = getIceFloorMazePlayRecordScore(olderRecord);
     const timeDelta = getIceFloorMazePlayRecordTimeDelta(olderRecord);
 
     expect(accepted).toBe(true);
-    expect(score).toBe(70);
+    expect(score).toBe(81);
     expect(timeDelta).toBe(10_000);
   });
 
