@@ -22,7 +22,7 @@ import type {
 
 /**
  * - `straight`: 車は向きに沿って前か後ろへまっすぐ進み、道路まで一度で出る。
- * - `road`: まっすぐ先の外周が、その車線で道路につながっていないと出られない。
+ * - `road`: 進む先の外周が、その車線で道路につながっていないと出られない。
  * - `planter`: 途中に植え込みがあると出られない。
  * - `car`: 途中にほかの車があると出られない。先にその車を出すと通れる。
  */
@@ -32,8 +32,8 @@ export type ParkingJamTutorialRuleId = "straight" | "road" | "planter" | "car";
 export type ParkingJamTutorialAction = ParkingJamMove;
 
 /**
- * 出られなかったわけ。車がまっすぐ進んで最初に当たるもの。
- * - `road`: 途中に何もなく、まっすぐ先が道路につながっていない。
+ * 出られなかったわけ。
+ * - `road`: 進む先の外周が、その車線で道路につながっていない。途中に何があっても、これを先に言う（本番の判定と同じ優先）。
  * - `planter`: 植え込みに当たる。
  * - `car`: ほかの車に当たる。
  */
@@ -119,14 +119,14 @@ const board: ParkingJamBoard = {
 };
 
 const blockerMessages = {
-  road: "まっすぐ先に道路がないと\n出られません",
+  road: "進む先に道路がないと\n出られません",
   planter: "植え込みがあると\n通れません",
   car: "ほかの車があると\n通れません",
 } as const satisfies Record<ParkingJamTutorialBlocker, string>;
 
 /**
  * どちらへも出られる車を出させて、操作と、前か後ろへまっすぐ出ていくことを見せる。
- * 次に、まっすぐ先に道路がない向き・植え込みのある向きを避けて出させる。
+ * 次に、進む先に道路がない向き・植え込みのある向きを避けて出させる。
  * 最後に、ほかの車を塞いでいる車を先に出させる。塞がれた車は、手を離してから自分で出させる。
  */
 const steps: readonly ParkingJamTutorialStep[] = [
@@ -154,7 +154,7 @@ const steps: readonly ParkingJamTutorialStep[] = [
   {
     message: {
       headline: blockerMessages.car,
-      detail: "じゃまな車を先に出します",
+      detail: "じゃまな車から出します",
     },
     introducedRuleId: "car",
     vehicleId: "c",
@@ -188,7 +188,7 @@ const contactBlockers = {
   ParkingJamTutorialBlocker
 >;
 
-/** 出られない手で、車がまっすぐ進んで最初に当たるもの。出られる手と、車の向きに沿わない手は `null`。 */
+/** 出られない手で、出られないわけとして示すもの。本番の判定と同じ優先で選ぶ。出られる手と、車の向きに沿わない手は `null`。 */
 export function findParkingJamTutorialContact(
   puzzle: ParkingJamState,
   move: ParkingJamMove,
@@ -311,7 +311,7 @@ export const parkingJamTutorial: Tutorial<
   intro: {
     purpose: "駐車場の車を\nすべて道路へ出すパズルです",
     goalCaption: "駐車場が空になったらゴールです",
-    startCaption: "最初は車が詰まっています",
+    startCaption: "最初は車でいっぱいです",
   },
   rules: [
     { id: "straight", label: "前か後ろへ" },
@@ -328,11 +328,11 @@ export const parkingJamTutorial: Tutorial<
     selection: {
       headline: "完成です",
       detail:
-        "レベル1には長い車も停まっています\n出られない向きへ動かすと、ミスに数えます",
+        "長い車も同じルールで出せます\n出られない向きへ動かすとミスに数えます",
     },
     play: {
       headline: "完成です",
-      detail: "出られない向きへ動かすと、ミスに数えます",
+      detail: "出られない向きへ動かすとミスに数えます",
     },
   },
   start: startParkingJamTutorial,

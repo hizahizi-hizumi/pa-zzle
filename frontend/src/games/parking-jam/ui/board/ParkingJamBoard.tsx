@@ -16,7 +16,6 @@ import type {
   ParkingJamVehicle,
   ParkingJamVehicleId,
 } from "@/games/parking-jam/puzzle/board";
-import { findParkingJamExitContact } from "@/games/parking-jam/puzzle/rules";
 import type {
   ParkingJamContactCue,
   ParkingJamVehicleCue,
@@ -24,7 +23,6 @@ import type {
 import { ParkingJamBoardCues } from "@/games/parking-jam/ui/board/ParkingJamBoardCues";
 import { ParkingJamBoardDefs } from "@/games/parking-jam/ui/board/ParkingJamBoardDefs";
 import { ParkingJamCar } from "@/games/parking-jam/ui/board/ParkingJamCar";
-import { getParkingJamBumpTranslation } from "@/games/parking-jam/ui/board/ParkingJamContactMark";
 import {
   getParkingJamDirectionControls,
   ParkingJamDirectionMark,
@@ -59,11 +57,6 @@ type ParkingJamBoardProps = {
   /** 出られない手で進む先と当たるものを示す合図。チュートリアルで使う。 */
   contacts?: readonly ParkingJamContactCue[];
   /**
-   * 出られない手で、車を前の物に触れるまで進めてから戻す。渡さなければ本番と同じく、その場で小さく揺らす。
-   * チュートリアルで、何に当たったかを動きでも見せるのに使う。
-   */
-  bumpsToContact?: boolean;
-  /**
    * 盤面に残っていない車を、`delayMs` だけ待ってからそれぞれの向きへ出ていかせる。
    * チュートリアルの導入で、車が出ていって空になる駐車場をゴールとして見せるのに使う。
    */
@@ -76,11 +69,6 @@ type ParkingJamBoardProps = {
 export type ParkingJamDeparture = ParkingJamMove & { delayMs: number };
 
 const SWIPE_THRESHOLD = 18;
-
-/** 前の物に触れるまで進めてから戻す、当たる動きの長さ。進む距離が長いほど長くする。 */
-function getBumpDurationMs(freeCellCount: number): number {
-  return 200 + 90 * freeCellCount;
-}
 
 function getSwipeDirection(
   vehicle: ParkingJamVehicle,
@@ -143,7 +131,6 @@ export function ParkingJamBoard({
   onClearAnimationComplete,
   cues = [],
   contacts = [],
-  bumpsToContact = false,
   departures = [],
   ghostVehicleIds = [],
   ghostDelayMs = 0,
@@ -246,17 +233,11 @@ export function ParkingJamBoard({
           const exitDirection = exiting
             ? operation?.direction
             : departure?.direction;
-          const bumpContact =
-            bumpsToContact && targeted && operation?.type === "blocked"
-              ? findParkingJamExitContact(board, state, operation)
-              : null;
-          const feedbackClass = bumpContact
-            ? " parking-jam-car--bump"
-            : exitDirection
-              ? ` parking-jam-car--exit-${exitDirection}`
-              : targeted && operation
-                ? ` parking-jam-car--blocked-${operation.direction}`
-                : "";
+          const feedbackClass = exitDirection
+            ? ` parking-jam-car--exit-${exitDirection}`
+            : targeted && operation
+              ? ` parking-jam-car--blocked-${operation.direction}`
+              : "";
           const exitTranslation = exitDirection
             ? parkingJamBoardGeometry.getVehicleExitTranslation(
                 board,
@@ -264,10 +245,6 @@ export function ParkingJamBoard({
                 exitDirection,
               )
             : null;
-          const bumpTranslation =
-            bumpContact && operation
-              ? getParkingJamBumpTranslation(operation.direction, bumpContact)
-              : null;
           const exitStyle = exitTranslation
             ? ({
                 "--parking-jam-exit-x": `${exitTranslation.x}px`,
@@ -277,13 +254,7 @@ export function ParkingJamBoard({
                   animationFillMode: "both",
                 }),
               } as CSSProperties)
-            : bumpTranslation && bumpContact
-              ? ({
-                  "--parking-jam-bump-x": `${bumpTranslation.x}px`,
-                  "--parking-jam-bump-y": `${bumpTranslation.y}px`,
-                  "--parking-jam-bump-duration": `${getBumpDurationMs(bumpContact.freeCellCount)}ms`,
-                } as CSSProperties)
-              : undefined;
+            : undefined;
           return (
             <g
               key={targeted ? `${vehicle.id}-${operation?.id}` : vehicle.id}

@@ -11,8 +11,6 @@ import { PARKING_JAM_CELL } from "@/games/parking-jam/ui/board/parking-jam-board
 const BODY_INSET = 10;
 /** 外周の縁石の半分の太さ（`parking-jam-board.css` の縁石の線幅の半分）。 */
 const CURB_HALF_WIDTH = 7;
-/** 当たる動きで、前の物にほとんど触れているときにも進んで見える最小の距離。 */
-const MIN_BUMP_TRAVEL = 14;
 
 type Point = { x: number; y: number };
 
@@ -47,29 +45,12 @@ function getVehicleFront(
   }
 }
 
-/** 車体の先端から、最初に当たるものの表面までの距離。 */
+/** 車体の先端から、示すもの（外周では縁石の内側）の表面までの距離。 */
 function getContactDistance(contact: ParkingJamExitContact): number {
   const free = contact.freeCellCount * PARKING_JAM_CELL;
   return contact.blocker.kind === "wall"
     ? free + BODY_INSET - CURB_HALF_WIDTH
     : free + BODY_INSET * 2;
-}
-
-/** 当たる動きで、車が前へ進む距離。 */
-export function getParkingJamBumpTravel(
-  contact: ParkingJamExitContact,
-): number {
-  return Math.max(MIN_BUMP_TRAVEL, getContactDistance(contact));
-}
-
-/** 当たる動きで、車が前へ進む向きと距離を、CSS の平行移動で表す。 */
-export function getParkingJamBumpTranslation(
-  direction: ParkingJamDirection,
-  contact: ParkingJamExitContact,
-): Point {
-  const travel = getParkingJamBumpTravel(contact);
-  const vector = directionVectors[direction];
-  return { x: vector.x * travel, y: vector.y * travel };
 }
 
 function BlockerShape({

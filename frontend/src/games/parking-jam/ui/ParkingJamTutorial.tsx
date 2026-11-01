@@ -30,7 +30,9 @@ import {
   ParkingJamBoard,
   type ParkingJamDeparture,
 } from "@/games/parking-jam/ui/board/ParkingJamBoard";
+import { useParkingJamSoundEffects } from "@/games/parking-jam/ui/ParkingJamPlay/use-parking-jam-sound-effects";
 import { ParkingJamTutorialIntroScene } from "@/games/parking-jam/ui/ParkingJamTutorial/ParkingJamTutorialIntroScene";
+import type { GameProgress } from "@/games/play";
 import {
   completeTutorial,
   finishTutorialIntro,
@@ -39,6 +41,7 @@ import {
   performTutorialAction,
   startTutorial,
   type TutorialMessage,
+  type TutorialPhase,
   type TutorialProgress,
 } from "@/games/tutorial";
 import { prefersReducedMotion } from "@/lib/motion";
@@ -93,14 +96,25 @@ const GOAL_GHOST_DELAY_MS =
 
 const goalState = parkingJamTutorial.goal().puzzle;
 
-/** 直前の手を、本番の盤面と同じ出ていく動きや、当たる動きにする。 */
-function createOperation({
-  lastMove,
-  moveCount,
-}: ParkingJamTutorialBoardState): ParkingJamOperation | null {
+/** 本番のプレイ画面と同じ効果音を鳴らすための進行。最後の車が出ていく間を完成演出とする。 */
+const soundProgresses = {
+  intro: "playing",
+  playing: "playing",
+  solved: "clearing",
+  completed: "result",
+} as const satisfies Record<TutorialPhase, GameProgress>;
+
+/**
+ * 直前の手を、本番の盤面と同じ出ていく動きや、当たって揺れる動きにする。
+ * `id` は、もう一度始めても前の手と重ならないよう、開いている間通して数える。
+ */
+function createOperation(
+  { lastMove }: ParkingJamTutorialBoardState,
+  id: number,
+): ParkingJamOperation | null {
   return lastMove
     ? {
-        id: moveCount,
+        id,
         type: lastMove.type,
         vehicleId: lastMove.vehicleId,
         direction: lastMove.direction,
@@ -109,8 +123,8 @@ function createOperation({
 }
 
 /**
- * 出られなかった手には、車の縁の警告の色と、まっすぐ進む先と当たったものの合図で返す。
- * 動きを減らす設定で当たる動きが見えないときも、出られなかったことと、何に当たったかが盤面で伝わる。
+ * 出られなかった手には、本番と同じ揺れに加えて、車の縁の警告の色と、進む先と出られないわけ（ほかの車・植え込み・道路につながっていない縁石）の合図で返す。
+ * 動きを減らす設定で揺れが見えないときも、出られなかったことと、そのわけが盤面で伝わる。警告の色は、出られない手だけに使う。
  */
 function getRejectedCues({
   lastMove,
@@ -150,12 +164,9 @@ export function ParkingJamTutorial({
     useState<ParkingJamVehicleId | null>(null);
   const [idleProgress, setIdleProgress] =
     useState<ParkingJamTutorialProgress | null>(null);
-  // 手を引いている間に印の無い車を触ったら、その車の縁を一瞬警告の色にし、印を付け直して光らせる。
-  const [offStepTouch, setOffStepTouch] = useState<{
-    vehicleId: ParkingJamVehicleId;
-    id: number;
-  } | null>(null);
+  // 手を引いている間に印の無い車を触ったら、印を付け直して光らせ、目を向けさせる。
   const [hintCueId, setHintCueId] = useState(0);
+  const operationIdRef = useRef(0);
   // 手順どおりの手で次の手順へ進んだときの、進む前の進行。車が出ていき終えて次の印を付けるまで、一言とルールの並びをこちらで見せる。
   const [steppedHold, setSteppedHold] = useState<{
     progress: ParkingJamTutorialProgress;
@@ -187,6 +198,8 @@ export function ParkingJamTutorial({
           ? findParkingJamTutorialHintVehicle(boardState)
           : null;
 
+  useParkingJamSoundEffects(operation, soundProgresses[progress.phase]);
+
   useEffect(() => {
     if (!open || progress.phase !== "playing" || guiding) {
       return;
@@ -210,13 +223,15 @@ export function ParkingJamTutorial({
     setProgress(finishTutorialIntro);
   }
 
-  /** 手を引いている間に印の無い車を触ったら、受け付けずに、その車の縁と印で応える。 */
+  /**
+   * 手を引いている間に印の無い車を触ったら、受け付けずに印を光らせ直す。
+   * 本番なら出られる手もあるので、出られない手と同じ警告の色は使わない。
+   */
   function rejectsOffStepVehicle(vehicleId: ParkingJamVehicleId): boolean {
     if (!guiding || vehicleId === stepVehicleId) {
       return false;
     }
     setHintCueId((id) => id + 1);
-    setOffStepTouch((current) => ({ vehicleId, id: (current?.id ?? 0) + 1 }));
     return true;
   }
 
@@ -242,8 +257,8 @@ export function ParkingJamTutorial({
       return;
     }
     setProgress(next);
-    setOperation(createOperation(next.boardState));
-    setOffStepTouch(null);
+    operationIdRef.current += 1;
+    setOperation(createOperation(next.boardState, operationIdRef.current));
     const stepped = next.stepIndex !== progress.stepIndex;
     if (stepped || next.boardState.lastMove?.type === "exited") {
       setSelectedVehicleId(null);
@@ -264,7 +279,6 @@ export function ParkingJamTutorial({
     setSteppedHold(null);
     setOperation(null);
     setSelectedVehicleId(null);
-    setOffStepTouch(null);
     setProgress(startTutorial(parkingJamTutorial));
   }
 
@@ -313,15 +327,6 @@ export function ParkingJamTutorial({
           : null
         : hintVehicleId;
     const rejected = getRejectedCues(boardState);
-    const touched: ParkingJamVehicleCue[] = offStepTouch
-      ? [
-          {
-            vehicleId: offStepTouch.vehicleId,
-            kind: "rejected",
-            id: -offStepTouch.id,
-          },
-        ]
-      : [];
     const hint: ParkingJamVehicleCue[] =
       cueVehicleId === null
         ? []
@@ -343,7 +348,7 @@ export function ParkingJamTutorial({
           ]
         : [];
     return {
-      cues: [...hint, ...rejected.cues, ...touched],
+      cues: [...hint, ...rejected.cues],
       contacts: [...waiting, ...rejected.contacts],
     };
   }
@@ -376,7 +381,6 @@ export function ParkingJamTutorial({
               operation={scene === null ? operation : null}
               cues={cues}
               contacts={contacts}
-              bumpsToContact
               departures={showsGoal && departing ? goalDepartures : []}
               ghostVehicleIds={showsGoal ? PARKED_VEHICLE_IDS : []}
               ghostDelayMs={showsGoal && departing ? GOAL_GHOST_DELAY_MS : 0}

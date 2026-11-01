@@ -154,22 +154,22 @@ export function applyParkingJamMove(
 }
 
 /**
- * 出られない手で、車がまっすぐ進んで最初に当たるもの。
- * - `wall`: 途中に何もなく、進んだ先の外周がその車線で道路につながっていない。
- * - `fixed-area` / `vehicle`: 途中で最初に当たる植え込みのマスか車。
+ * 出られない手で、出られないわけとして示すもの。`listParkingJamMoveBlockers` と同じ優先で選ぶ。
+ * - `wall`: 進む先の外周が、その車線で道路につながっていない。途中に何があっても、これを先に示す。
+ * - `fixed-area` / `vehicle`: 車線は道路につながっているが、途中で最初に当たる植え込みのマスか車。
  */
 export type ParkingJamExitContact = {
   blocker:
     | { kind: "wall" }
     | { kind: "fixed-area"; cell: ParkingJamCell }
     | { kind: "vehicle"; vehicleId: ParkingJamVehicleId };
-  /** 当たるまでに進めるマスの数。 */
+  /** 示すものまでのマスの数。`wall` では、外周までのマスの数。 */
   freeCellCount: number;
 };
 
 /**
- * 出られない手で、車がまっすぐ進んで最初に当たるものと、当たるまでに進めるマスの数。
- * 出られる手と、車の向きに沿わない手は `null`。出られるかどうかは `listParkingJamMoveBlockers` と同じ判定による。
+ * 出られない手で、出られないわけとして示すものと、そこまでのマスの数。
+ * 出られる手と、車の向きに沿わない手は `null`。判定と優先は `listParkingJamMoveBlockers` と同じにする。
  */
 export function findParkingJamExitContact(
   board: ParkingJamBoard,
@@ -186,6 +186,9 @@ export function findParkingJamExitContact(
     return null;
   }
   const path = listParkingJamExitPathCells(board, vehicle, move.direction);
+  if (blockers.some(({ kind }) => kind === "wall")) {
+    return { blocker: { kind: "wall" }, freeCellCount: path.length };
+  }
   for (const [index, cell] of path.entries()) {
     const fixedArea = board.fixedAreas.some((area) =>
       listParkingJamFixedAreaCells(area).some((areaCell) =>
