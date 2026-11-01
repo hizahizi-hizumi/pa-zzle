@@ -2,6 +2,7 @@ import {
   _private,
   assertIceFloorMazeProblem,
   countIceFloorMazeRecordedDrawnCells,
+  countIceFloorMazeRecordedElements,
   createIceFloorMazeProblemIdentity,
   type IceFloorMazeProblem,
   isIceFloorMazeBoardShape,
@@ -339,6 +340,31 @@ describe("countIceFloorMazeRecordedDrawnCells", () => {
 
   test.each(cases)("%sこと", (_, identity, expected) => {
     const count = countIceFloorMazeRecordedDrawnCells(identity);
+
+    expect(count).toBe(expected);
+  });
+});
+
+describe("countIceFloorMazeRecordedElements", () => {
+  const cases = [
+    [
+      "今の版はもろい岩と薄い氷を数える",
+      createIceFloorMazeProblemIdentity(elementProblem),
+      2,
+    ],
+    [
+      "初期版は0とする",
+      {
+        generatorVersion: "1",
+        seed: "8000000000000000-9-63",
+        conditions: { width: 8, height: 10 },
+      },
+      0,
+    ],
+  ] as const;
+
+  test.each(cases)("%sこと", (_, identity, expected) => {
+    const count = countIceFloorMazeRecordedElements(identity);
 
     expect(count).toBe(expected);
   });

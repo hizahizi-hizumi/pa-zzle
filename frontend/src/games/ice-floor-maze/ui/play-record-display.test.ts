@@ -40,7 +40,7 @@ describe("iceFloorMazePlayRecordDisplay", () => {
     const timeDelta = getFormattedMetric("time-delta-ms");
     const moveDelta = getFormattedMetric("move-delta");
 
-    expect(score).toBe("70点");
+    expect(score).toBe("81点");
     expect(timeDelta).toBe("+00:10");
     expect(moveDelta).toBe("+3");
   });

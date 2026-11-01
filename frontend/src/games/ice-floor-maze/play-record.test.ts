@@ -13,7 +13,7 @@ const {
   getIceFloorMazePlayRecordTimeDelta,
 } = _private;
 
-// 問題集のレベル4 の代表問題（10×13、最短6手）。基準時間は 130マス × 0.2秒 + 6手 × 2.5秒 = 41秒。
+// 問題集のレベル4 の代表問題（盤面の外も要素も無い 10×13、最短6手）。基準時間は 130マス × 0.2秒 + 6手 × 2.5秒 = 41秒。
 const seed =
   "00105000110510101055100005000500605010000550005000150000550105015-90-103";
 const record = createIceFloorMazePlayRecord({
@@ -65,7 +65,7 @@ test("保存した事実から現在のプレイ評価と比較指標を導出�
   const timeDelta = getIceFloorMazePlayRecordTimeDelta(record);
   const moveDelta = getIceFloorMazePlayRecordMoveDelta(record);
 
-  expect(score).toBe(70);
+  expect(score).toBe(81);
   expect(timeDelta).toBe(10_000);
   expect(moveDelta).toBe(3);
 });
@@ -125,7 +125,7 @@ describe("isIceFloorMazePlayRecord", () => {
 
 describe("restoreIceFloorMazeRecordedResult", () => {
   describe("今の版の記録の場合", () => {
-    test("記録の成績・盤面の形・最短手数から結果を作り直すこと", () => {
+    test("記録の成績・盤面の符号・最短手数から結果を作り直すこと", () => {
       const recorded = restoreIceFloorMazeRecordedResult(record);
 
       expect(recorded).toMatchObject({
@@ -136,12 +136,12 @@ describe("restoreIceFloorMazeRecordedResult", () => {
           moveCount: 9,
           undoCount: 2,
           restartCount: 1,
-          boardShape: { width: 10, height: 13 },
+          speedReference: { drawnCellCount: 130, elementCount: 0 },
           optimalMoveCount: 6,
           moveDelta: 3,
           speedRule: { fullScoreMs: 41_000, zeroScoreMs: 82_000 },
           timeDeltaMs: 10_000,
-          score: { total: 70 },
+          score: { total: 81 },
         },
       });
     });
@@ -172,13 +172,13 @@ describe("初期版（氷と岩だけ）の生成器の記録の場合", () => {
     },
   };
 
-  test("記録として読み込み、記録の盤面の形で今の評価規則により評価すること", () => {
+  test("記録として読み込み、幅 × 高さのマスと要素0として今の評価規則により評価すること", () => {
     const accepted = isIceFloorMazePlayRecord(olderRecord);
     const score = getIceFloorMazePlayRecordScore(olderRecord);
     const timeDelta = getIceFloorMazePlayRecordTimeDelta(olderRecord);
 
     expect(accepted).toBe(true);
-    expect(score).toBe(70);
+    expect(score).toBe(81);
     expect(timeDelta).toBe(10_000);
   });
 

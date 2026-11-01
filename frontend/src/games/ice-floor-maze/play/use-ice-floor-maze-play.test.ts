@@ -264,13 +264,13 @@ describe("useIceFloorMazePlay", () => {
       });
     });
 
-    test("取り消した手も数えた総手数で効率を評価し、盤面の形から基準時間を求めること", () => {
+    test("取り消した手も数えた総手数で効率を評価し、描くマスと要素の数から基準時間を求めること", () => {
       const { result: playResult } = result.current;
 
       expect(playResult).toMatchObject({
-        boardShape: { width: 5, height: 5 },
+        speedReference: { drawnCellCount: 25, elementCount: 0 },
         speedRule: { fullScoreMs: 12_500, zeroScoreMs: 25_000 },
-        score: { breakdown: { efficiency: 45 } },
+        score: { breakdown: { efficiency: 56 } },
       });
     });
 

@@ -2,8 +2,8 @@ import { useCallback, useMemo, useRef, useState } from "react";
 
 import type { IceFloorMazeDifficulty } from "@/games/ice-floor-maze/difficulty";
 import type {
-  IceFloorMazeBoardShape,
   IceFloorMazeProblemIdentity,
+  IceFloorMazeRecordedProblemIdentity,
 } from "@/games/ice-floor-maze/problem/problem";
 import type { IceFloorMazePooledProblem } from "@/games/ice-floor-maze/problem/problem-pool";
 import { selectIceFloorMazeProblemForDifficulty } from "@/games/ice-floor-maze/problem-selection";
@@ -21,7 +21,9 @@ import {
   calculateIceFloorMazeMoveDelta,
   calculateIceFloorMazePlayScore,
   calculateIceFloorMazeSpeedScoreRule,
+  getIceFloorMazeSpeedReference,
   type IceFloorMazePlayScore,
+  type IceFloorMazeSpeedReference,
 } from "@/games/ice-floor-maze/score";
 import {
   canRestartIceFloorMazeSession,
@@ -79,7 +81,7 @@ export type IceFloorMazeBlockedInput = {
 };
 
 export type IceFloorMazeResult = IceFloorMazeSessionResult & {
-  boardShape: IceFloorMazeBoardShape;
+  speedReference: IceFloorMazeSpeedReference;
   optimalMoveCount: number;
   moveDelta: number;
   speedRule: SpeedScoreRule;
@@ -90,17 +92,18 @@ export type IceFloorMazeResult = IceFloorMazeSessionResult & {
 /** 完了したプレイの事実から結果を作る。プレイ中の結果と、記録から作り直す結果で共用する。 */
 export function createIceFloorMazeResult(
   sessionResult: IceFloorMazeSessionResult,
-  boardShape: IceFloorMazeBoardShape,
+  problemIdentity: IceFloorMazeRecordedProblemIdentity,
   optimalMoveCount: number,
 ): IceFloorMazeResult {
+  const speedReference = getIceFloorMazeSpeedReference(problemIdentity);
   const speedRule = calculateIceFloorMazeSpeedScoreRule({
-    boardShape,
+    speedReference,
     optimalMoveCount,
   });
 
   return {
     ...sessionResult,
-    boardShape,
+    speedReference,
     optimalMoveCount,
     moveDelta: calculateIceFloorMazeMoveDelta({
       moveCount: sessionResult.moveCount,
@@ -111,7 +114,7 @@ export function createIceFloorMazeResult(
     score: calculateIceFloorMazePlayScore({
       elapsedMs: sessionResult.elapsedMs,
       moveCount: sessionResult.moveCount,
-      boardShape,
+      speedReference,
       optimalMoveCount,
     }),
   };
@@ -329,7 +332,7 @@ export function useIceFloorMazePlay(
     return sessionResult
       ? createIceFloorMazeResult(
           sessionResult,
-          problemIdentity.conditions,
+          problemIdentity,
           optimalMoveCount,
         )
       : null;

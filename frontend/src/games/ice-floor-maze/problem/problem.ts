@@ -4,6 +4,7 @@ import {
   type IceFloorMazeBoard,
   type IceFloorMazeCell,
   iceFloorMazeCells,
+  isIceFloorMazeChangeableCell,
   isIceFloorMazeIceCell,
 } from "@/games/ice-floor-maze/puzzle/board";
 import { createIceFloorMazeInitialState } from "@/games/ice-floor-maze/puzzle/state";
@@ -287,6 +288,21 @@ export function countIceFloorMazeRecordedDrawnCells(
     ? decodeIceFloorMazeProblem(identity.seed, identity.conditions)
     : null;
   return problem ? countIceFloorMazeDrawnCells(problem.board) : width * height;
+}
+
+/**
+ * 記録の問題で、初期盤面の要素（もろい岩・薄い氷）の数。速さの基準時間に使う。
+ * 今の版は seed の盤面から数える。要素を持たない初期版などは0。
+ */
+export function countIceFloorMazeRecordedElements(
+  identity: IceFloorMazeRecordedProblemIdentity,
+): number {
+  const problem = isIceFloorMazeProblemIdentity(identity)
+    ? decodeIceFloorMazeProblem(identity.seed, identity.conditions)
+    : null;
+  return problem
+    ? problem.board.cells.filter(isIceFloorMazeChangeableCell).length
+    : 0;
 }
 
 export const _private = {
