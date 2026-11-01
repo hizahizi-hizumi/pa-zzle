@@ -82,7 +82,7 @@ describe("HamiltonianPathPlay", () => {
   function renderResult(
     props: Partial<ComponentProps<typeof HamiltonianPathPlay>> = {},
   ) {
-    render(<HamiltonianPathPlay {...baseProps} {...props} />);
+    return render(<HamiltonianPathPlay {...baseProps} {...props} />);
   }
 
   beforeEach(() => {
@@ -375,6 +375,63 @@ describe("HamiltonianPathPlay", () => {
 
       expect(callbacks.onBeginStroke).toHaveBeenCalledWith(0);
       expect(callbacks.onEndStroke).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("キーボードで盤面を操作する場合", () => {
+    const playingProps = {
+      progress: "playing",
+      result: null,
+      path: [0, 1],
+    } as const;
+    let rerender: ReturnType<typeof render>["rerender"];
+
+    function listFocusableCells(): number[] {
+      return within(getBoardGroup())
+        .getAllByRole("button")
+        .flatMap((cell, index) => (cell.tabIndex === 0 ? [index] : []));
+    }
+
+    beforeEach(() => {
+      ({ rerender } = renderResult(playingProps));
+    });
+
+    test("盤面の Tab の止まり先を先端のマス1つにすること", () => {
+      const focusableCells = listFocusableCells();
+
+      expect(focusableCells).toEqual([1]);
+    });
+
+    describe("先端のマスにフォーカスがある場合", () => {
+      beforeEach(() => {
+        within(getBoardGroup()).getAllByRole("button")[1]!.focus();
+      });
+
+      test("Shift と矢印キーで、先端を動かさずに隣のマスへフォーカスと止まり先を移すこと", () => {
+        fireEvent.keyDown(document.activeElement!, {
+          key: "ArrowRight",
+          shiftKey: true,
+        });
+
+        const cells = within(getBoardGroup()).getAllByRole("button");
+        expect(document.activeElement).toBe(cells[2]);
+        expect(listFocusableCells()).toEqual([2]);
+        expect(callbacks.onMoveHeadToward).not.toHaveBeenCalled();
+      });
+
+      test("先端が動くと、フォーカスと止まり先を新しい先端へ移すこと", () => {
+        rerender(
+          <HamiltonianPathPlay
+            {...baseProps}
+            {...playingProps}
+            path={[0, 1, 2]}
+          />,
+        );
+
+        const cells = within(getBoardGroup()).getAllByRole("button");
+        expect(document.activeElement).toBe(cells[2]);
+        expect(listFocusableCells()).toEqual([2]);
+      });
     });
   });
 

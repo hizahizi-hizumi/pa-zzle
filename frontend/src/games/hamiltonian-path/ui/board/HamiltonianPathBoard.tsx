@@ -1,8 +1,10 @@
 import {
+  type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
   useEffect,
   useLayoutEffect,
   useRef,
+  useState,
 } from "react";
 
 import { HAMILTONIAN_PATH_DISPLAY_NAME } from "@/games/hamiltonian-path/display-name";
@@ -16,6 +18,7 @@ import {
   listHamiltonianPathCells,
 } from "@/games/hamiltonian-path/puzzle/board";
 import type { HamiltonianPathTraceStep } from "@/games/hamiltonian-path/puzzle/transitions";
+import { findArrowKeyDirection } from "@/games/hamiltonian-path/ui/arrow-key-direction";
 import {
   type BoardPoint,
   findCellAt,
@@ -24,6 +27,7 @@ import {
 import { animateBlockedMove } from "@/games/hamiltonian-path/ui/board/HamiltonianPathBoard/animate-blocked-move";
 import { animateDeadEnd } from "@/games/hamiltonian-path/ui/board/HamiltonianPathBoard/animate-dead-end";
 import {
+  findCellButton,
   HamiltonianPathCell,
   type HamiltonianPathCellState,
 } from "@/games/hamiltonian-path/ui/board/HamiltonianPathBoard/HamiltonianPathCell";
@@ -49,6 +53,16 @@ type HamiltonianPathBoardProps = {
   onClearAnimationComplete: () => void;
 };
 
+/**
+ * キーボードで盤面に入ったときに止まるマス。盤面の Tab の止まり先は1つで、普段は道の先端にする。
+ * Shift と矢印キーで先端以外のマスへ移せ、先端が動くと先端へ戻る。
+ */
+type KeyboardFocus = {
+  /** 止まり先を決めたときの先端。 */
+  head: number;
+  cell: number;
+};
+
 type FingerDrag = {
   pointerId: number;
   point: BoardPoint;
@@ -62,6 +76,8 @@ type FingerDrag = {
  * 押してから離すまでが待ったの1単位になる。
  * 盤面は Pointer Events だけで受け、ページのスクロールや長押しのメニューに指を奪わせない。
  * マスのボタンはキーボードと支援技術から押す受け口で、ポインターの押下は受けない。
+ * 矢印キーは先端を動かす操作（プレイ画面が受ける）なので、Tab の止まり先は先端のマス1つにし、
+ * マスの間を移るのは Shift と矢印キーにする。先端が動くと、盤面にあるフォーカスも先端へ移す。
  */
 export function HamiltonianPathBoard({
   board,
@@ -83,8 +99,22 @@ export function HamiltonianPathBoard({
   const walls = new Set(board.walls);
   const visited = new Set(path);
   const stranded = new Set(strandedCells);
-  const head = path.at(-1);
+  const head = path.at(-1) ?? board.start;
   const pathLength = path.length;
+  const boardRef = useRef<HTMLDivElement>(null);
+  const [keyboardFocus, setKeyboardFocus] = useState<KeyboardFocus>({
+    head,
+    cell: head,
+  });
+  const focusableCell = keyboardFocus.head === head ? keyboardFocus.cell : head;
+
+  useEffect(() => {
+    const boardElement = boardRef.current;
+    if (!boardElement?.contains(document.activeElement)) {
+      return;
+    }
+    findCellButton(boardElement, head)?.focus();
+  }, [head]);
 
   useLayoutEffect(() => {
     if (blockedMove !== null) {
@@ -174,6 +204,36 @@ export function HamiltonianPathBoard({
     onEndStroke();
   }
 
+  function moveKeyboardFocus(cell: number) {
+    setKeyboardFocus({ head, cell });
+    if (boardRef.current) {
+      findCellButton(boardRef.current, cell)?.focus();
+    }
+  }
+
+  function handleKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    const direction = findArrowKeyDirection(event.key);
+    if (
+      interactionDisabled ||
+      direction === null ||
+      !event.shiftKey ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey
+    ) {
+      return;
+    }
+    event.preventDefault();
+    const neighbor = getHamiltonianPathNeighborCell(
+      size,
+      focusableCell,
+      direction,
+    );
+    if (neighbor !== null) {
+      moveKeyboardFocus(neighbor);
+    }
+  }
+
   function pressCell(cell: number) {
     onBeginStroke(cell);
     onEndStroke();
@@ -181,6 +241,7 @@ export function HamiltonianPathBoard({
 
   return (
     <div
+      ref={boardRef}
       role="group"
       aria-label={`${HAMILTONIAN_PATH_DISPLAY_NAME}盤面`}
       className="relative size-full touch-none select-none [-webkit-touch-callout:none]"
@@ -190,6 +251,7 @@ export function HamiltonianPathBoard({
       onPointerCancel={handlePointerEnd}
       onLostPointerCapture={handlePointerEnd}
       onContextMenu={(event) => event.preventDefault()}
+      onKeyDown={handleKeyDown}
     >
       <HamiltonianPathFigure
         ref={figureRef}
@@ -219,7 +281,11 @@ export function HamiltonianPathBoard({
             isStranded={stranded.has(cell)}
             partitionDirections={listPartitionDirections(cell)}
             disabled={interactionDisabled}
+            focusable={cell === focusableCell}
             onPress={pressCell}
+            onFocus={(focusedCell) =>
+              setKeyboardFocus({ head, cell: focusedCell })
+            }
           />
         ))}
       </div>

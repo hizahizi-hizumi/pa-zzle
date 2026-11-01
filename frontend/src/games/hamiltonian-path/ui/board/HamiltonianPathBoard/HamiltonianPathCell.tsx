@@ -19,8 +19,23 @@ type HamiltonianPathCellProps = {
   /** 隣のマスとの間に仕切りがある向き。 */
   partitionDirections: readonly HamiltonianPathDirection[];
   disabled: boolean;
+  /** 盤面の Tab の止まり先か。 */
+  focusable: boolean;
   onPress: (cell: number) => void;
+  onFocus: (cell: number) => void;
 };
+
+const CELL_ATTRIBUTE = "data-cell";
+
+/** 盤面の中から、マスのボタンを探す。 */
+export function findCellButton(
+  board: HTMLElement,
+  cell: number,
+): HTMLButtonElement | null {
+  return board.querySelector<HTMLButtonElement>(
+    `[${CELL_ATTRIBUTE}="${cell}"]`,
+  );
+}
 
 const cellStateLabels = {
   wall: "壁",
@@ -73,7 +88,9 @@ export function HamiltonianPathCell({
   isStranded,
   partitionDirections,
   disabled,
+  focusable,
   onPress,
+  onFocus,
 }: HamiltonianPathCellProps) {
   const { row, column } = getHamiltonianPathCellPosition(size, cell);
   const label = [
@@ -88,7 +105,10 @@ export function HamiltonianPathCell({
     <button
       type="button"
       aria-label={label}
+      {...{ [CELL_ATTRIBUTE]: cell }}
       disabled={disabled}
+      tabIndex={focusable ? 0 : -1}
+      onFocus={() => onFocus(cell)}
       onClick={(event) => {
         if (event.detail === 0) {
           onPress(cell);

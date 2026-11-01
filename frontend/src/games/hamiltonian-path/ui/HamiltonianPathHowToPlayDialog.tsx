@@ -160,7 +160,8 @@ export function HamiltonianPathHowToPlayDialog({
       <li className="hidden pointer-fine:list-item">
         <p className="text-muted-foreground">
           キーボード:
-          矢印キーで、先端からその向きへ1マス延ばす。来た向きへ押すと1マス縮む。
+          矢印キーで、先端からその向きへ1マス延ばす。来た向きへ押すと1マス縮む。Shift
+          と矢印キーでマスを選び、Enter で押せる。
         </p>
       </li>
     </HowToPlayDialog>
