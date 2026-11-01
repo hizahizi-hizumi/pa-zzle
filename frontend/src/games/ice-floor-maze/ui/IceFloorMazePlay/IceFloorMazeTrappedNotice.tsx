@@ -9,7 +9,7 @@ type IceFloorMazeTrappedNoticeProps = {
   onRestart: () => void;
 };
 
-/** 今の位置から行けるどこにもゴールが無く、どこからも今の位置へ戻るだけになったことを知らせ、戻る操作へ導く。 */
+/** ゴールへ行けず、崩す・割る滑りのほかは同じところを回るだけになったこと（閉じ込め）を知らせ、戻る操作へ導く。 */
 export function IceFloorMazeTrappedNotice({
   canUndo,
   onUndo,
