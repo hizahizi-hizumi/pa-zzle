@@ -25,15 +25,17 @@ export type NonogramClueShape = {
 };
 
 /**
- * 仮置きせずに、読める行・列をすべて同時に完全な線の読みで読む「段」を重ねて解いた経過から求めた特徴。
+ * 仮置きせずに線の読みだけで解いた経過から求めた特徴。
+ * `readingsBeyondEdgesCount` 以外は、読める行・列をすべて同時に完全な線の読みで読む「段」を重ねた経過から求めるので、
  * 読む順序に依らない。
  * - `roundCount`: 連鎖の深さ。解き終えるまでの段の数。
  * - `entryLineCount`: 入口の広さ。最初の段で新しく決まるマスがあった行・列の数。
  * - `firstRoundFixedCellCount`: 最初の段で決まったマスの数。
  * - `minimumProgressedLineCount`: 各段で進めた行・列の数の最小。
- * - `narrowRoundCount`: 進めた行・列が2本以下の段の数。手を付けられる場所が少ない局面の多さ。
+ * - `narrowRoundCount`: 進めた行・列が `NARROW_ROUND_MAXIMUM_LINE_COUNT` 本以下の段の数。手を付けられる場所が少ない局面の多さ。
  * - `readingsBeyondEdgesCount`: 端寄せの読み（各塊を両端に寄せた重なりと届かないマス）では止まり、
  *   完全な線の読みで初めて進む読みの回数。塊の置き方まで考える読みが要るか。
+ *   端寄せで止まるたびに完全な線の読みで進む最初の1本（行を上から、続けて列を左から）だけを読む、と決めた読み順で数える。
  */
 export type NonogramReadingFeatures = {
   roundCount: number;
