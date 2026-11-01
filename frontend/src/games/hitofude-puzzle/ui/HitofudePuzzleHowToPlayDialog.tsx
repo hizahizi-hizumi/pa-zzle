@@ -118,7 +118,7 @@ export function HitofudePuzzleHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>
-          先端から進めるマスが無くなると、先端の輪が欠ける。道のマスを押すか
+          先端から進めるマスが無くなると、先端が行き止まりの印（横棒の入った丸）に変わる。道のマスを押すか
           {PLAY_OPERATION_LABELS.undo}で戻して引き直す。
         </p>
         <HowToPlayFigure board={openBoard} path={[0, 1, 4, 5, 2]} isDeadEnd />

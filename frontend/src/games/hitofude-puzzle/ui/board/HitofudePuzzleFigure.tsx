@@ -45,9 +45,13 @@ const START_MARK_OUTLINE_WIDTH = 0.07;
 /** 先端は指に隠れるので、マス幅に対して大きめの輪にする。道が始点だけのときも、輪の内に始点の印が見える。 */
 const HEAD_RING_RADIUS = 0.37;
 const HEAD_RING_WIDTH = 0.09;
-/** 行き止まりの先端は、通れないものと同じ色の太い輪を、はっきり分かれた4つの弧に欠けさせる。 */
-const DEAD_END_HEAD_RING_WIDTH = 0.13;
-const DEAD_END_HEAD_DASH = "0.36 0.22";
+/**
+ * 行き止まりの先端は、通れないものと同じ色で塗った円に、マスの地の色の横棒を通す（進入禁止の標識の形）。
+ * 欠けた輪や回る形は読み込み中に見えるので使わない。
+ */
+const DEAD_END_HEAD_RADIUS = HEAD_RING_RADIUS + HEAD_RING_WIDTH / 2;
+const DEAD_END_BAR_HALF_LENGTH = 0.24;
+const DEAD_END_BAR_WIDTH = 0.12;
 const CLEAR_TRACE_WIDTH = 0.1;
 /** 阻まれたマスの×の、中心から端までの長さと太さ。下に敷くマスの地の色の縁で、道の上でも読めるようにする。 */
 const BLOCKED_MARK_REACH = 0.2;
@@ -245,16 +249,28 @@ export function HitofudePuzzleFigure({
       <g transform={`translate(${head.x} ${head.y})`}>
         {/* 揺れは CSS の transform で動かすので、位置の transform 属性とは別の要素に置く。 */}
         <g {...{ [hitofudePuzzleFigureParts.head]: "" }}>
-          <circle
-            r={HEAD_RING_RADIUS}
-            fill="none"
-            strokeWidth={isDeadEnd ? DEAD_END_HEAD_RING_WIDTH : HEAD_RING_WIDTH}
-            strokeDasharray={isDeadEnd ? DEAD_END_HEAD_DASH : undefined}
-            className={
-              isDeadEnd ? hitofudePuzzleToneClassNames.deadEndHead : undefined
-            }
-            style={isDeadEnd ? undefined : { stroke: headColor }}
-          />
+          {isDeadEnd ? (
+            <>
+              <circle
+                r={DEAD_END_HEAD_RADIUS}
+                className={hitofudePuzzleToneClassNames.deadEndHead}
+              />
+              <rect
+                x={-DEAD_END_BAR_HALF_LENGTH}
+                y={-DEAD_END_BAR_WIDTH / 2}
+                width={DEAD_END_BAR_HALF_LENGTH * 2}
+                height={DEAD_END_BAR_WIDTH}
+                className={hitofudePuzzleToneClassNames.deadEndBar}
+              />
+            </>
+          ) : (
+            <circle
+              r={HEAD_RING_RADIUS}
+              fill="none"
+              strokeWidth={HEAD_RING_WIDTH}
+              style={{ stroke: headColor }}
+            />
+          )}
         </g>
       </g>
       {blockedMarkCenter === null ? null : (
