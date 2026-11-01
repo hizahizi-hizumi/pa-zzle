@@ -15,8 +15,8 @@ const stepTaps = [0, 3, 1, 3, 2, 3, 3, 1, 0] as const;
 /** 手順を終えた後、残りの赤と青をそろえる注ぎ。 */
 const remainingTaps = [0, 4, 1, 4, 2, 4, 1, 0, 2, 0] as const;
 
-/** そろったボトルを押させる手順で、揺れを見届けてから次の手順へ進むまでの間。 */
-const rejectionStepHoldMs = 450;
+/** そろったボトルを押させる手順で、揺れと縁の色の合図を見届けてから次の手順へ進むまでの間。 */
+const rejectionStepHoldMs = 900;
 
 /** 手を離した後、手が止まってから次に押すボトルを示すまでの間。 */
 const idleHintDelayMs = 4000;
@@ -138,7 +138,9 @@ describe("WaterSortTutorial", () => {
       const pressed = getBottle(0).getAttribute("aria-pressed");
       const cued = getCuedBottles();
       const headline = screen.getByText("空のボトルに注げます");
-      const detail = screen.getByText("もう一度押すと選び直せます");
+      const detail = screen.getByText(
+        "選んだボトルをもう一度押すと選び直せます",
+      );
       const rules = getRuleTexts();
 
       expect(pressed).toBe("true");
@@ -178,7 +180,9 @@ describe("WaterSortTutorial", () => {
       tapBottles([0, 3]);
 
       const contents = [getBottleContents(0), getBottleContents(3)];
-      const headline = screen.getByText("上の色が同じときだけ 重ねて注げます");
+      const headline = screen.getByText(
+        "上の色が同じときだけ その上に注げます",
+      );
       const cued = getCuedBottles();
       const rules = getRuleTexts();
 
@@ -205,32 +209,37 @@ describe("WaterSortTutorial", () => {
         "空ボトル",
         "同じ色",
         "まとめて",
-        "そろい済",
+        "そろった",
         "？",
       ]);
     });
 
-    test("そろったボトルを押すと、選ばずに、揺れを見届けてから次のルールの一言と印へ進むこと", () => {
+    test("そろったボトルを押すと、選ばずに縁の色で受け付けなかったことを返し、その合図を見届けてから次のルールの一言と印へ進むこと", () => {
       tapBottles(stepTaps.slice(0, 7));
       const pressed = getBottle(3).getAttribute("aria-pressed");
+      const rejected = getCuedBottles("rejected");
       const heldHeadline = screen.getByText("そろったボトルからは注げません");
       const heldCued = getCuedBottles();
-      advanceTime(rejectionStepHoldMs);
+      advanceTime(rejectionStepHoldMs - 1);
+      const stillHeld = screen.queryByText("そろったボトルからは注げません");
+      advanceTime(1);
 
-      const headline = screen.getByText("入るだけ移ります");
+      const headline = screen.getByText("入る分だけ移ります");
       const cued = getCuedBottles();
       const rules = getRuleTexts();
 
       expect(pressed).toBe("false");
+      expect(rejected).toEqual([4]);
       expect(heldHeadline).toBeTruthy();
       expect(heldCued).toEqual([]);
+      expect(stillHeld).not.toBeNull();
       expect(headline).toBeTruthy();
       expect(cued).toEqual([2]);
       expect(rules).toEqual([
         "空ボトル",
         "同じ色",
         "まとめて",
-        "そろい済",
+        "そろった",
         "入るだけ",
       ]);
     });

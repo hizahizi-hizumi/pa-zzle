@@ -147,7 +147,7 @@ const steps: readonly WaterSortTutorialStep[] = [
   {
     message: {
       headline: "空のボトルに注げます",
-      detail: "もう一度押すと選び直せます",
+      detail: "選んだボトルをもう一度押すと選び直せます",
     },
     introducedRuleId: "empty",
     move: { sourceBottleIndex: 0, destinationBottleIndex: 3 },
@@ -155,7 +155,7 @@ const steps: readonly WaterSortTutorialStep[] = [
   },
   {
     message: {
-      headline: "上の色が同じときだけ\n重ねて注げます",
+      headline: "上の色が同じときだけ\nその上に注げます",
       detail: null,
     },
     introducedRuleId: "same-color",
@@ -179,7 +179,7 @@ const steps: readonly WaterSortTutorialStep[] = [
   },
   {
     message: {
-      headline: "入るだけ移ります",
+      headline: "入る分だけ移ります",
       detail: null,
     },
     introducedRuleId: "capacity",
@@ -491,7 +491,7 @@ export const waterSortTutorial: Tutorial<
     { id: "empty", label: "空ボトル" },
     { id: "same-color", label: "同じ色" },
     { id: "together", label: "まとめて" },
-    { id: "sorted", label: "そろい済" },
+    { id: "sorted", label: "そろった" },
     { id: "capacity", label: "入るだけ" },
   ],
   steps,

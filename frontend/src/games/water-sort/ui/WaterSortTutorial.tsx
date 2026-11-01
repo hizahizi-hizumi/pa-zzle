@@ -34,7 +34,6 @@ import {
 } from "@/games/water-sort/ui/board/pour/pour-animation";
 import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
 import { WaterSortTutorialIntroScene } from "@/games/water-sort/ui/WaterSortTutorial/WaterSortTutorialIntroScene";
-import { prefersReducedMotion } from "@/lib/motion";
 
 type WaterSortTutorialProps = {
   open: boolean;
@@ -48,8 +47,8 @@ type WaterSortTutorialProgress = TutorialProgress<
   WaterSortTutorialBoardState
 >;
 
-/** そろったボトルを押させる手順で、揺れを見届けてから次の手順の一言と印を出すまでの間。 */
-const REJECTION_STEP_HOLD_MS = 450;
+/** そろったボトルを押させる手順で、揺れと縁の色の合図を見届けてから次の手順の一言と印を出すまでの間。合図が消えきる長さに合わせる。 */
+const REJECTION_STEP_HOLD_MS = 900;
 
 /** 手を離した後、手が止まってから次に押すボトルを示すまでの間。 */
 const IDLE_HINT_DELAY_MS = 4000;
@@ -120,12 +119,12 @@ function getSortedCues(
   }));
 }
 
-/** 動きを減らす設定では受け付けなかったボトルが揺れないので、縁の色で受け付けなかったことを返す。 */
+/** 受け付けなかったボトルは、揺れに加えて縁の色でも返す。動きを減らす設定で揺れないときも、受け付けなかったことが伝わる。 */
 function getRejectedCues({
   lastMove,
   moveCount,
 }: WaterSortTutorialBoardState): WaterSortBottleCue[] {
-  return lastMove?.type === "rejected" && prefersReducedMotion()
+  return lastMove?.type === "rejected"
     ? [{ bottleIndex: lastMove.bottleIndex, kind: "rejected", id: moveCount }]
     : [];
 }
