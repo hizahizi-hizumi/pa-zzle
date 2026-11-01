@@ -34,9 +34,6 @@ const remainingCells: readonly CellPosition[] = [
   [5, 4],
 ];
 
-/** 手順どおりに操作してから、次の印を付けるまでの間。 */
-const nextStepCueDelayMs = 900;
-
 /** 手を離した後、手が止まってから決まるマスを示すまでの間。 */
 const idleHintDelayMs = 4000;
 
@@ -143,11 +140,17 @@ function solveAll(): void {
 }
 
 /** 合図を重ねているマスの番号。 */
-function getCuedCellNumbers(kind: "hint" | "fitted" | "reason"): string[] {
+function getCuedCellNumbers(
+  kind: "hint" | "fitted" | "reason" | "clue" | "rejected",
+): string[] {
   return within(getBoard())
     .getAllByRole("button")
     .filter((cell) => cell.querySelector(`[data-cell-cue="${kind}"]`))
     .map((cell) => cell.getAttribute("aria-label")?.split(" ")[1] ?? "");
+}
+
+function hasMineCountCue(): boolean {
+  return document.querySelector('[data-status-cue="clue"]') !== null;
 }
 
 function hasToggleCue(): boolean {
@@ -186,45 +189,73 @@ describe("MinesweeperTutorial", () => {
       skipIntro();
     });
 
-    test("5×5の盤面と地雷の数を出し、数字の決まりと旗を置くマス、旗への切り替えを示すこと", () => {
+    test("5×5の盤面と地雷の数を出し、数字の決まりと、決め手の1、旗を置くマス、旗への切り替えを示すこと", () => {
       const cells = within(getBoard()).getAllByRole("button");
       const headline = screen.getByText(/数字は、周りの8マスにある/);
+      const detail = screen.getByText(
+        "旗に切り替えて、印のマスを押してください",
+      );
       const mineMetric = screen.getByText("地雷").parentElement?.textContent;
 
       expect(cells).toHaveLength(25);
       expect(headline).toBeTruthy();
+      expect(detail).toBeTruthy();
       expect(mineMetric).toBe("地雷3");
+      expect(getCuedCellNumbers("clue")).toEqual(["7", "8", "9"]);
       expect(getCuedCellNumbers("hint")).toEqual(["13"]);
       expect(hasToggleCue()).toBe(true);
-      expect(getRuleTexts()).toEqual(["数字は周りの地雷の数", "？"]);
+      expect(hasMineCountCue()).toBe(false);
+      expect(getRuleTexts()).toEqual(["数字は周りの地雷の数", "伏せたルール"]);
     });
 
-    test("旗に切り替えると切り替えの印を外し、印のマスを押すと旗を置いて決め手の1を光らせること", () => {
+    test("旗に切り替えると、切り替えの印を外し、旗を置く一言に替えること", () => {
       fireEvent.click(getModeToggle());
-      const toggleCuedAfterSwitch = hasToggleCue();
-      fireEvent.click(getCell([3, 3]));
 
-      expect(toggleCuedAfterSwitch).toBe(false);
+      expect(hasToggleCue()).toBe(false);
+      expect(
+        screen.getByText("印のマスを押して、旗を置いてください"),
+      ).toBeTruthy();
+    });
+
+    test("印のマスに旗を置くと、そのマスを光らせ、次の決め手の1と開くマスをすぐ示すこと", () => {
+      operate("flag", [[3, 3]]);
+
       expect(getCellLabel([3, 3])).toBe("マス 13 旗");
       expect(getCuedCellNumbers("fitted")).toEqual(["13"]);
-      expect(getCuedCellNumbers("reason")).toEqual(["7", "8", "9"]);
+      expect(getCuedCellNumbers("clue")).toEqual(["12"]);
+      expect(getCuedCellNumbers("hint")).toEqual(["18"]);
     });
 
-    test("旗を置かせるマスを開こうとしても地雷を踏まず、印を付け直すこと", () => {
-      const cueBefore = getCell([3, 3]).querySelector('[data-cell-cue="hint"]');
+    test("旗を置かせるマスを開こうとしても地雷を踏まず、押したマスを縁取り、印と切り替えを光らせ直すこと", () => {
+      const hintBefore = getCell([3, 3]).querySelector(
+        '[data-cell-cue="hint"]',
+      );
+      const toggleBefore = document.querySelector('[data-toggle-cue="hint"]');
       fireEvent.click(getCell([3, 3]));
 
-      const cueAfter = getCell([3, 3]).querySelector('[data-cell-cue="hint"]');
+      const hintAfter = getCell([3, 3]).querySelector('[data-cell-cue="hint"]');
+      const toggleAfter = document.querySelector('[data-toggle-cue="hint"]');
 
       expect(getCellLabel([3, 3])).toBe("マス 13 未開示");
-      expect(cueAfter).not.toBe(cueBefore);
+      expect(getCuedCellNumbers("rejected")).toEqual(["13"]);
+      expect(hintAfter).not.toBe(hintBefore);
+      expect(toggleAfter).not.toBe(toggleBefore);
     });
 
-    test("長押しでも、印のマスに旗を置けること", () => {
+    test("印の無いマスを押すと、押したマスを縁取って何もしないこと", () => {
+      operate("flag", [[4, 3]]);
+
+      expect(getCellLabel([4, 3])).toBe("マス 18 未開示");
+      expect(getCuedCellNumbers("rejected")).toEqual(["18"]);
+    });
+
+    test("長押しで旗を置くと、開くままなので切り替えに触れずに、次のマスを押させること", () => {
       fireEvent.pointerDown(getCell([3, 3]), { button: 0 });
       advanceTime(450);
 
       expect(getCellLabel([3, 3])).toBe("マス 13 旗");
+      expect(screen.getByText("印のマスを押してください")).toBeTruthy();
+      expect(hasToggleCue()).toBe(false);
     });
 
     describe("旗を置いた後", () => {
@@ -232,12 +263,10 @@ describe("MinesweeperTutorial", () => {
         finishSteps(1);
       });
 
-      test("決め手が光った後に、開くマスと、切り替えを戻すことを示すこと", () => {
-        const hintedRightAfter = getCuedCellNumbers("hint");
-        advanceTime(nextStepCueDelayMs);
-
-        expect(hintedRightAfter).toEqual([]);
-        expect(getCuedCellNumbers("hint")).toEqual(["18"]);
+      test("旗のままなら、切り替えを戻すことを一言と印で示すこと", () => {
+        expect(
+          screen.getByText("旗の切り替えを戻して、印のマスを押してください"),
+        ).toBeTruthy();
         expect(hasToggleCue()).toBe(true);
       });
 
@@ -250,17 +279,26 @@ describe("MinesweeperTutorial", () => {
         expect(labelOnFlag).toBe("マス 18 未開示");
         expect(getCellLabel([4, 3])).toBe("マス 18 開示済み 3");
       });
+
+      test("旗で数がそろった1を押すと、本番と同じく周りの印のマスを開いて次へ進むこと", () => {
+        setMode("reveal");
+        fireEvent.click(getCell([3, 2]));
+
+        expect(getCellLabel([4, 3])).toBe("マス 18 開示済み 3");
+        expect(screen.getByText(/地雷は全部で3つ。/)).toBeTruthy();
+      });
     });
 
-    test("3を開くと地雷の総数のルールを示し、3から離れた3マスに印を付けること", () => {
+    test("3を開くと地雷の総数のルールを示し、上の地雷の数と3を示して、3から離れた3マスに印を付けること", () => {
       finishSteps(2);
-      advanceTime(nextStepCueDelayMs);
 
       expect(screen.getByText(/地雷は全部で3つ。/)).toBeTruthy();
       expect(getRuleTexts()).toEqual([
         "数字は周りの地雷の数",
         "地雷の総数は上に出る",
       ]);
+      expect(hasMineCountCue()).toBe(true);
+      expect(getCuedCellNumbers("clue")).toEqual(["18"]);
       expect(getCuedCellNumbers("hint")).toEqual(["20", "21", "25"]);
     });
 
@@ -276,6 +314,31 @@ describe("MinesweeperTutorial", () => {
         expect(screen.getByText(/すべて開くと完成です/)).toBeTruthy();
         expect(hintedRightAfter).toEqual([]);
         expect(getCuedCellNumbers("hint")).toHaveLength(1);
+      });
+
+      test("地雷でないマスに旗を置いて止まっても、手がかりの印は開けるマスに付けること", () => {
+        operate("flag", [[5, 3]]);
+        advanceTime(idleHintDelayMs);
+
+        expect(getCuedCellNumbers("hint")).toEqual(["24"]);
+      });
+
+      test("決まるマスにすべて旗を置いて止まると、旗のマスと切り替えに印を付けること", () => {
+        operate("flag", [
+          [5, 3],
+          [5, 4],
+        ]);
+        setMode("reveal");
+        advanceTime(idleHintDelayMs);
+
+        expect(getCuedCellNumbers("hint")).toHaveLength(1);
+        expect(hasToggleCue()).toBe(true);
+      });
+
+      test("手を離した後は、印の無いマスを押しても縁取らないこと", () => {
+        operate("reveal", [[1, 1]]);
+
+        expect(getCuedCellNumbers("rejected")).toEqual([]);
       });
 
       test("地雷を踏むと盤面に残して一言で知らせ、そのまま解き切れること", () => {

@@ -129,7 +129,13 @@ describe("WaterSortTutorial", () => {
       expect(headline).toBeTruthy();
       expect(contents).toBe("赤、赤、青、緑");
       expect(cued).toEqual([1]);
-      expect(rules).toEqual(["？", "？", "？", "？", "？"]);
+      expect(rules).toEqual([
+        "伏せたルール",
+        "伏せたルール",
+        "伏せたルール",
+        "伏せたルール",
+        "伏せたルール",
+      ]);
     });
 
     test("印の注ぎ元を押すと選び、印を空のボトルへ移して、空のボトルに注げることを示すこと", () => {
@@ -147,7 +153,13 @@ describe("WaterSortTutorial", () => {
       expect(cued).toEqual([4]);
       expect(headline).toBeTruthy();
       expect(detail).toBeTruthy();
-      expect(rules).toEqual(["空ボトル", "？", "？", "？", "？"]);
+      expect(rules).toEqual([
+        "空ボトル",
+        "伏せたルール",
+        "伏せたルール",
+        "伏せたルール",
+        "伏せたルール",
+      ]);
     });
 
     test("選んだ注ぎ元をもう一度押して選び直すと、選ぶ一言と注ぎ元の印に戻すこと", () => {
@@ -161,7 +173,13 @@ describe("WaterSortTutorial", () => {
       expect(pressed).toBe("false");
       expect(headline).toBeTruthy();
       expect(cued).toEqual([1]);
-      expect(rules).toEqual(["？", "？", "？", "？", "？"]);
+      expect(rules).toEqual([
+        "伏せたルール",
+        "伏せたルール",
+        "伏せたルール",
+        "伏せたルール",
+        "伏せたルール",
+      ]);
     });
 
     test("印の無いボトルを押しても、選ばずに、一言を変えずに印を付け直すこと", () => {
@@ -187,7 +205,13 @@ describe("WaterSortTutorial", () => {
       expect(contents).toEqual(["赤、赤、青", "緑"]);
       expect(headline).toBeTruthy();
       expect(cued).toEqual([2]);
-      expect(rules).toEqual(["空ボトル", "同じ色", "？", "？", "？"]);
+      expect(rules).toEqual([
+        "空ボトル",
+        "同じ色",
+        "伏せたルール",
+        "伏せたルール",
+        "伏せたルール",
+      ]);
     });
 
     test("重なった同じ色をまとめて注いで緑をそろえ、そろった緑のボトルを光らせて、そのボトルを押させること", () => {
@@ -208,7 +232,7 @@ describe("WaterSortTutorial", () => {
         "同じ色",
         "まとめて",
         "そろった",
-        "？",
+        "伏せたルール",
       ]);
     });
 
@@ -328,7 +352,13 @@ describe("WaterSortTutorial", () => {
         expect(caption).toBeTruthy();
         expect(contents).toBe("赤、赤、青、緑");
         expect(cued).toEqual([1]);
-        expect(rules).toEqual(["？", "？", "？", "？", "？"]);
+        expect(rules).toEqual([
+          "伏せたルール",
+          "伏せたルール",
+          "伏せたルール",
+          "伏せたルール",
+          "伏せたルール",
+        ]);
       });
     });
   });

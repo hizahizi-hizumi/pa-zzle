@@ -214,7 +214,9 @@ describe("minesweeperTutorial の盤面", () => {
     const byAll = revealByDeduction(start, allRuleIds);
 
     expect(isMinesweeperCleared(board, byNumber)).toBe(false);
+    expect(byNumber.steppedMineCellIndices).toEqual([]);
     expect(isMinesweeperCleared(board, byAll)).toBe(true);
+    expect(byAll.steppedMineCellIndices).toEqual([]);
   });
 
   test.each(ruleStepCases)(
@@ -231,6 +233,35 @@ describe("minesweeperTutorial の盤面", () => {
       );
     },
   );
+
+  test.each(ruleStepCases)(
+    "手順 %i の始まりから示す決め手は、印のマスを決める数字と同じであること",
+    (_, { step, puzzle, earnedRuleIds }) => {
+      const deductions = deduceCells(puzzle, earnedRuleIds);
+
+      const result = [
+        ...new Set(
+          step.cellIndices.flatMap(
+            (cellIndex) => deductions.get(cellIndex)?.reasonCellIndices ?? [],
+          ),
+        ),
+      ].sort((left, right) => left - right);
+
+      expect(result).toEqual(step.reasonCellIndices);
+    },
+  );
+
+  test("地雷の総数を示すのは、地雷の総数のルールを示す手順だけであること", () => {
+    const result = minesweeperTutorial.steps.map(
+      (step) => step.reasonMineCount,
+    );
+
+    expect(result).toEqual(
+      minesweeperTutorial.steps.map(
+        (step) => step.introducedRuleId === "total",
+      ),
+    );
+  });
 
   test.each(introducingStepCases)(
     "手順 %i の印のマスは、それまでのルールでは決まらないこと",
@@ -257,6 +288,7 @@ describe("minesweeperTutorial の盤面", () => {
 
     expect(remaining.length).toBeGreaterThan(1);
     expect(isMinesweeperCleared(board, result)).toBe(true);
+    expect(result.steppedMineCellIndices).toEqual([]);
   });
 });
 
@@ -293,11 +325,23 @@ describe("minesweeperTutorial.perform", () => {
     });
   });
 
-  test("開かせる印のマスは、旗を置く操作とまとめて開く操作を受け付けないこと", () => {
-    const result = performAll(afterFirstStep, [
-      flag(cellAt(4, 3)),
-      chord(cellAt(3, 2)),
-    ]);
+  test("開かせる印のマスは、旗を置く操作を受け付けないこと", () => {
+    const result = performAll(afterFirstStep, [flag(cellAt(4, 3))]);
+
+    expect(result).toBe(afterFirstStep);
+  });
+
+  test("旗で数がそろった1を押して、印のマスをまとめて開いても次の手順へ進むこと", () => {
+    const result = performAll(afterFirstStep, [chord(cellAt(3, 2))]);
+
+    expect(result.stepIndex).toBe(2);
+    expect(result.boardState.puzzle.revealedCellIndices).toContain(
+      cellAt(4, 3),
+    );
+  });
+
+  test("旗の数がそろっていない数字を押しても、盤面を変えないこと", () => {
+    const result = performAll(afterFirstStep, [chord(cellAt(3, 4))]);
 
     expect(result).toBe(afterFirstStep);
   });
@@ -385,6 +429,20 @@ describe("findMinesweeperTutorialHintCellIndex", () => {
     );
 
     expect([cellAt(5, 3), cellAt(5, 4)]).toContain(result);
+  });
+});
+
+describe("findMinesweeperTutorialHintCellIndex で旗を置いたマス", () => {
+  test("地雷でないマスに旗を置いても、ほかに決まるマスがあればそちらを返すこと", () => {
+    const released = finishSteps(minesweeperTutorial.steps.length);
+    const flagged = performAll(released, [flag(cellAt(5, 3))]);
+
+    const result = findMinesweeperTutorialHintCellIndex(
+      getTutorialSituation(minesweeperTutorial, flagged),
+      flagged.boardState,
+    );
+
+    expect(result).toBe(cellAt(5, 4));
   });
 });
 

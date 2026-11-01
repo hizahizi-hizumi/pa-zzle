@@ -43,13 +43,18 @@ export type MinesweeperTutorialAction = {
 export type MinesweeperTutorialOperation = "reveal" | "flag";
 
 /**
+ * - `message`: 盤面の切り替えが `operation` に合っているときの一言。合っていないときは、補足を `modeSwitchDetails` に替える。
  * - `cellIndices`: 印を付け、手順の間だけ `operation` を受け付けるマス。すべて開くか旗を置いたら次の手順へ進む。
  * - `operation`: 印のマスにさせる操作。地雷のマスには旗を置かせ、地雷でないマスは開かせる。
+ * - `reasonCellIndices`: 印のマスを決める数字のマス。手順の始まりから示し、操作する前にどの数字で決まるかを盤面で分からせる。
+ * - `reasonMineCount`: 印のマスを決めるのに、上の地雷の総数も使う。手順の間、地雷の総数を示す。
  */
 export type MinesweeperTutorialStep =
   TutorialStep<MinesweeperTutorialRuleId> & {
     cellIndices: readonly number[];
     operation: MinesweeperTutorialOperation;
+    reasonCellIndices: readonly number[];
+    reasonMineCount: boolean;
   };
 
 /**
@@ -135,20 +140,24 @@ const steps: readonly MinesweeperTutorialStep[] = [
   {
     message: {
       headline: "数字は、周りの8マスにある\n地雷の数です",
-      detail: "旗に切り替えて、印のマスに旗を置いてください",
+      detail: "印のマスを押して、旗を置いてください",
     },
     introducedRuleId: "number",
     cellIndices: [cellAt(3, 3)],
     operation: "flag",
+    reasonCellIndices: [cellAt(2, 2), cellAt(2, 3), cellAt(2, 4)],
+    reasonMineCount: false,
   },
   {
     message: {
-      headline: "旗で地雷の数がそろった1の周りは\nほかのマスを開けます",
-      detail: "切り替えを戻して、印のマスを押してください",
+      headline: "この1の地雷は旗のマスなので、\n周りのほかのマスは開けます",
+      detail: "印のマスを押してください",
     },
     introducedRuleId: null,
     cellIndices: [cellAt(4, 3)],
     operation: "reveal",
+    reasonCellIndices: [cellAt(3, 2)],
+    reasonMineCount: false,
   },
   {
     message: {
@@ -158,8 +167,16 @@ const steps: readonly MinesweeperTutorialStep[] = [
     introducedRuleId: "total",
     cellIndices: [cellAt(4, 5), cellAt(5, 1), cellAt(5, 5)],
     operation: "reveal",
+    reasonCellIndices: [cellAt(4, 3)],
+    reasonMineCount: true,
   },
 ];
+
+/** 手を引いている間、盤面の切り替えが手順の操作に合っていないときの補足。 */
+export const minesweeperTutorialModeSwitchDetails = {
+  flag: "旗に切り替えて、印のマスを押してください",
+  reveal: "旗の切り替えを戻して、印のマスを押してください",
+} as const satisfies Record<MinesweeperTutorialOperation, string>;
 
 /** 数字の決まりで、まだ決まっていないマスが決まるもの。決め手は、そう決めた数字のマス。 */
 function deduceByNumber(
@@ -365,7 +382,35 @@ function getMinesweeperTutorialGoal(): MinesweeperTutorialBoardState {
 }
 
 /**
- * 手を引いている間は、印のマスへの手順どおりの操作だけを受け付ける。地雷の印を開く手と、開く印に旗を置く手は受け付けない。
+ * 手を引いている間の手が、手順どおりか。印のマスへの手順の操作と、開かせる手順で、開いた数字を押して印のマスだけをまとめて開く手を受け付ける。
+ * 地雷の印を開く手と、開く印に旗を置く手は受け付けない。
+ */
+function fitsStep(
+  step: MinesweeperTutorialStep,
+  before: MinesweeperPuzzleState,
+  after: MinesweeperPuzzleState,
+  action: MinesweeperTutorialAction,
+): boolean {
+  if (action.type === "chord") {
+    const opened = after.revealedCellIndices.filter(
+      (cellIndex) => !before.revealedCellIndices.includes(cellIndex),
+    );
+    return (
+      step.operation === "reveal" &&
+      after.steppedMineCellIndices.length ===
+        before.steppedMineCellIndices.length &&
+      opened.every((cellIndex) => step.cellIndices.includes(cellIndex))
+    );
+  }
+  return (
+    action.type === step.operation &&
+    step.cellIndices.includes(action.cellIndex) &&
+    !isStepCellDone(step, before, action.cellIndex)
+  );
+}
+
+/**
+ * 手を引いている間は、手順どおりの手だけを受け付ける。
  * 手を離した後は本番と同じく、地雷を踏んでも続けられる。
  */
 function performMinesweeperTutorialAction(
@@ -376,12 +421,11 @@ function performMinesweeperTutorialAction(
   state: MinesweeperTutorialBoardState;
   outcome: TutorialMoveOutcome;
 } {
-  const outsideStep =
-    step !== null &&
-    (action.type !== step.operation ||
-      !step.cellIndices.includes(action.cellIndex) ||
-      isStepCellDone(step, state.puzzle, action.cellIndex));
-  const puzzle = outsideStep ? state.puzzle : applyAction(state.puzzle, action);
+  const applied = applyAction(state.puzzle, action);
+  const puzzle =
+    step !== null && !fitsStep(step, state.puzzle, applied, action)
+      ? state.puzzle
+      : applied;
   if (puzzle === state.puzzle) {
     return { state, outcome: "ignored" };
   }
@@ -451,7 +495,7 @@ export function getMinesweeperTutorialStepCellIndices(
 
 /**
  * 手を離した後、手が止まったときに示す、今の盤面と手に入れたルールだけで地雷でないと決まる、開いていないマス。
- * 前に決まったマスを使わずに決まるマスほど先に返し、旗を置いたマスは後にする。無ければ `null`。
+ * 前に決まったマスを使わずに決まるマスほど先に返す。旗を置いたマスは押しても開かないので、ほかに無いときだけ返す。無ければ `null`。
  */
 export function findMinesweeperTutorialHintCellIndex(
   { earnedRuleIds }: MinesweeperTutorialSituation,
@@ -461,15 +505,24 @@ export function findMinesweeperTutorialHintCellIndex(
     .filter(([, deduction]) => !deduction.mine)
     .map(([cellIndex, { round }]) => ({
       cellIndex,
-      order:
-        round * 2 +
-        (state.puzzle.flaggedCellIndices.includes(cellIndex) ? 1 : 0),
+      flagged: state.puzzle.flaggedCellIndices.includes(cellIndex),
+      round,
     }))
     .sort(
       (left, right) =>
-        left.order - right.order || left.cellIndex - right.cellIndex,
+        Number(left.flagged) - Number(right.flagged) ||
+        left.round - right.round ||
+        left.cellIndex - right.cellIndex,
     );
   return candidates[0]?.cellIndex ?? null;
+}
+
+/** 旗を置いたマス。手がかりの印が旗のマスに付いたとき、旗を外させるのに使う。 */
+export function isMinesweeperTutorialCellFlagged(
+  state: MinesweeperTutorialBoardState,
+  cellIndex: number,
+): boolean {
+  return state.puzzle.flaggedCellIndices.includes(cellIndex);
 }
 
 export const minesweeperTutorial: Tutorial<

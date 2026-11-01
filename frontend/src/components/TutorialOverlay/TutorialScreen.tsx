@@ -602,9 +602,13 @@ export function TutorialScreen({
                     </span>
                   </span>
                 ) : (
-                  // 中身を伏せたルール。押せる部品に見えないよう、枠を付けずに文字の並びの一つとして置く。
-                  <span key="hidden" className="text-muted-foreground/60">
-                    ？
+                  // 中身を伏せたルール。押せる部品や問いかけに見えないよう、記号も枠も付けず、伏せた文字の幅の薄い線だけを置く。
+                  <span key="hidden" className="flex items-center">
+                    <span
+                      aria-hidden="true"
+                      className="h-1 w-12 rounded-full bg-muted-foreground/20"
+                    />
+                    <span className="sr-only">伏せたルール</span>
                   </span>
                 )}
               </li>

@@ -41,8 +41,6 @@ export function MinesweeperBoard({
     );
   }
 
-  const cueByCellIndex = new Map(cues.map((cue) => [cue.cellIndex, cue]));
-
   function handleCellPress(cellIndex: number): void {
     const cell = cells[cellIndex];
     if (!cell) {
@@ -88,7 +86,7 @@ export function MinesweeperBoard({
             key={getCellKey(columns, cellIndex)}
             cellIndex={cellIndex}
             view={cell}
-            cue={cueByCellIndex.get(cellIndex)}
+            cues={cues.filter((cue) => cue.cellIndex === cellIndex)}
             disabled={interactionDisabled}
             onPress={handleCellPress}
             onFlagPress={handleCellFlagPress}
