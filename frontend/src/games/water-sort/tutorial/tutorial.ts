@@ -36,10 +36,12 @@ export type WaterSortTutorialAction = { bottleIndex: number };
 /**
  * - `move`: 印を付け、手順の間だけ受け付ける注ぎ。注ぎ元を押して選ぶと、印を注ぎ先へ移す。
  * - `endsWhen`: 次の手順へ進む手。`selected` は注ぎ元を選んだところで進み、選び方を教える手順に使う。`poured` は注いだところで進む。
+ * - `pointsAtSortedBottles`: 一言がそろったボトルを指すので、この手順の間はそろったボトルに合図を出し続ける。
  */
 export type WaterSortTutorialStep = TutorialStep<WaterSortTutorialRuleId> & {
   move: WaterSortMove;
   endsWhen: "selected" | "poured";
+  pointsAtSortedBottles: boolean;
 };
 
 /**
@@ -121,10 +123,8 @@ const goalBottles: WaterSortState = [
   [],
 ];
 
-/** 注げない手への一言。手を離す前の手順でも、同じ文で言い切る。 */
-const DIFFERENT_COLOR_REJECTION_MESSAGE = "上の色が違うと注げません";
-const COMPLETE_REJECTION_MESSAGE = "そろったボトルは選べません";
-const FULL_REJECTION_MESSAGE = "満杯のボトルには注げません";
+/** そろったボトルを選ぼうとしたときの一言。手を離す前の手順でも、そろったボトルを指して同じ文で言い切る。 */
+const COMPLETE_REJECTION_MESSAGE = "そろったボトルはもう動かせません";
 
 /**
  * まず1本目を押して選ばせ、選んだら空の4本目へ注がせる。
@@ -137,21 +137,24 @@ const steps: readonly WaterSortTutorialStep[] = [
     introducedRuleId: null,
     move: { sourceBottleIndex: 0, destinationBottleIndex: 3 },
     endsWhen: "selected",
+    pointsAtSortedBottles: false,
   },
   {
     message: { headline: "空のボトルに注げます", detail: null },
     introducedRuleId: "empty",
     move: { sourceBottleIndex: 0, destinationBottleIndex: 3 },
     endsWhen: "poured",
+    pointsAtSortedBottles: false,
   },
   {
     message: {
-      headline: "上が同じ色なら\n重ねて注げます",
-      detail: DIFFERENT_COLOR_REJECTION_MESSAGE,
+      headline: "上の色が同じときだけ\n重ねて注げます",
+      detail: null,
     },
     introducedRuleId: "same-color",
     move: { sourceBottleIndex: 1, destinationBottleIndex: 3 },
     endsWhen: "poured",
+    pointsAtSortedBottles: false,
   },
   {
     message: {
@@ -161,16 +164,17 @@ const steps: readonly WaterSortTutorialStep[] = [
     introducedRuleId: "together",
     move: { sourceBottleIndex: 2, destinationBottleIndex: 3 },
     endsWhen: "poured",
+    pointsAtSortedBottles: false,
   },
   {
     message: {
       headline: "入るだけ移ります",
-      // 3手目でそろって光った緑のボトルを見ながら、選べないことも言い切る。
-      detail: `${COMPLETE_REJECTION_MESSAGE}\n${FULL_REJECTION_MESSAGE}`,
+      detail: COMPLETE_REJECTION_MESSAGE,
     },
     introducedRuleId: "capacity",
     move: { sourceBottleIndex: 1, destinationBottleIndex: 0 },
     endsWhen: "poured",
+    pointsAtSortedBottles: true,
   },
 ];
 
@@ -320,8 +324,8 @@ const rejectionMessages = {
   empty: "空のボトルからは注げません",
   complete: COMPLETE_REJECTION_MESSAGE,
   "no-destination": "このボトルはどこにも注げません",
-  "different-color": DIFFERENT_COLOR_REJECTION_MESSAGE,
-  full: FULL_REJECTION_MESSAGE,
+  "different-color": "上の色が違うと注げません",
+  full: "満杯のボトルには注げません",
 } as const satisfies Record<WaterSortTutorialRejection, string>;
 
 /** 選べないボトルを押したか、注げない先を押したとき。手を離した後にだけ起き、それまでに4つのルールを示している。 */
@@ -392,6 +396,34 @@ function findShortestMove(
     }
   }
   return best?.move ?? null;
+}
+
+/**
+ * 一言とルールの並びで見せる手順の位置。選ぶ手順の次の手順で、選んだ注ぎ元を選び直したら、選ぶ手順に戻して見せる。
+ */
+export function getWaterSortTutorialShownStepIndex(
+  stepIndex: number,
+  { sourceBottleIndex }: WaterSortTutorialBoardState,
+): number {
+  const continuesSelection =
+    steps[stepIndex]?.endsWhen === "poured" &&
+    steps[stepIndex - 1]?.endsWhen === "selected";
+  return continuesSelection && sourceBottleIndex === null
+    ? stepIndex - 1
+    : stepIndex;
+}
+
+/** 手順の一言が指す、そろったボトル。 */
+export function listWaterSortTutorialPointedBottles(
+  { step }: WaterSortTutorialSituation,
+  { bottles }: WaterSortTutorialBoardState,
+): number[] {
+  if (!step?.pointsAtSortedBottles) {
+    return [];
+  }
+  return bottles.flatMap((bottle, bottleIndex) =>
+    isCompleteWaterSortBottle(bottle) ? [bottleIndex] : [],
+  );
 }
 
 /** 手順で印を付けるボトル。注ぎ元を選ぶ前は注ぎ元、選んだ後は注ぎ先。手を離した後は `null`。 */

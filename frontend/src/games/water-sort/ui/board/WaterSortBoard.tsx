@@ -130,12 +130,16 @@ export function WaterSortBoard({
               >
                 <WaterBottle contents={bottle} selected={isSource} />
               </span>
-              {cue?.kind === "sorted" && (
+              {(cue?.kind === "sorted" || cue?.kind === "pointed") && (
                 <span
-                  key={cue.id}
+                  key={`${cue.kind}-${cue.id}`}
                   aria-hidden="true"
                   data-bottle-cue={cue.kind}
-                  className="pointer-events-none absolute -inset-x-1 top-1 -bottom-1 rounded-b-[1.7rem] rounded-t-md shadow-[0_0_14px_3px] shadow-sky-400/70 ring-[3px] ring-sky-400/80 fill-mode-forwards animate-out fade-out-0 duration-900 ease-in dark:shadow-sky-300/60 dark:ring-sky-300/80"
+                  className={`pointer-events-none absolute -inset-x-1 top-1 -bottom-1 rounded-b-[1.7rem] rounded-t-md shadow-[0_0_14px_3px] shadow-sky-400/70 ring-[3px] ring-sky-400/80 dark:shadow-sky-300/60 dark:ring-sky-300/80 ${
+                    cue.kind === "sorted"
+                      ? "fill-mode-forwards animate-out fade-out-0 duration-900 ease-in"
+                      : "animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none"
+                  }`}
                 />
               )}
               {cue?.kind === "hint" && (

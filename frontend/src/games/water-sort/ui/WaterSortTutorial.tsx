@@ -21,7 +21,9 @@ import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-
 import { isCompleteWaterSortBottle } from "@/games/water-sort/puzzle/state";
 import {
   findWaterSortTutorialHintBottle,
+  getWaterSortTutorialShownStepIndex,
   getWaterSortTutorialStepBottle,
+  listWaterSortTutorialPointedBottles,
   type WaterSortTutorialBoardState,
   type WaterSortTutorialRuleId,
   waterSortTutorial,
@@ -90,19 +92,30 @@ function createOperation(
 }
 
 /** 注いだ先が1色で満杯にそろったら、そのボトルを一瞬光らせる。 */
-function getSortedCues({
-  bottles,
-  lastMove,
-  moveCount,
-}: WaterSortTutorialBoardState): WaterSortBottleCue[] {
+/**
+ * 注いだ先が1色で満杯にそろったら、そのボトルを一瞬光らせる。
+ * 完成したときは、そろったボトルをすべて同時に光らせる。
+ */
+function getSortedCues(
+  { bottles, lastMove, moveCount }: WaterSortTutorialBoardState,
+  completed: boolean,
+): WaterSortBottleCue[] {
   if (lastMove?.type !== "poured") {
     return [];
   }
-  const { destinationBottleIndex } = lastMove.move;
-  const destination = bottles[destinationBottleIndex];
-  return destination && isCompleteWaterSortBottle(destination)
-    ? [{ bottleIndex: destinationBottleIndex, kind: "sorted", id: moveCount }]
-    : [];
+  const sortedBottleIndices = completed
+    ? bottles.flatMap((bottle, bottleIndex) =>
+        isCompleteWaterSortBottle(bottle) ? [bottleIndex] : [],
+      )
+    : [lastMove.move.destinationBottleIndex].filter((bottleIndex) => {
+        const bottle = bottles[bottleIndex];
+        return bottle !== undefined && isCompleteWaterSortBottle(bottle);
+      });
+  return sortedBottleIndices.map((bottleIndex) => ({
+    bottleIndex,
+    kind: "sorted",
+    id: moveCount,
+  }));
 }
 
 /**
@@ -147,10 +160,17 @@ export function WaterSortTutorial({
         : idleHintShown
           ? findWaterSortTutorialHintBottle(boardState)
           : null;
-  const shownProgress =
+  const progressBeforePour =
     pouring && steppedPour?.progress === progress
       ? steppedPour.before
       : progress;
+  const shownProgress: WaterSortTutorialProgress = {
+    ...progressBeforePour,
+    stepIndex: getWaterSortTutorialShownStepIndex(
+      progressBeforePour.stepIndex,
+      progressBeforePour.boardState,
+    ),
+  };
   const shownSituation = getTutorialSituation(waterSortTutorial, shownProgress);
 
   useEffect(() => {
@@ -254,20 +274,25 @@ export function WaterSortTutorial({
    * 導入の終わりは、最初の手順の一言を出すのと同時に、最初の印を付ける。
    */
   function getCues(messageShown: boolean): WaterSortBottleCue[] {
+    const pointedCues: WaterSortBottleCue[] =
+      listWaterSortTutorialPointedBottles(shownSituation, boardState).map(
+        (bottleIndex) => ({ bottleIndex, kind: "pointed", id: 0 }),
+      );
     const sortedCues =
-      pouring || progress.phase === "solved" ? [] : getSortedCues(boardState);
+      pouring || progress.phase === "solved"
+        ? []
+        : getSortedCues(boardState, false);
     const cueBottle =
       progress.phase === "intro"
         ? messageShown
           ? getWaterSortTutorialStepBottle(situation, boardState)
           : null
         : hintBottle;
+    // 同じボトルに重なったら、指し続ける合図を一瞬の合図より先に置いて残す。
+    const cues = [...pointedCues, ...sortedCues];
     return cueBottle === null
-      ? sortedCues
-      : [
-          ...sortedCues,
-          { bottleIndex: cueBottle, kind: "hint", id: hintCueId },
-        ];
+      ? cues
+      : [...cues, { bottleIndex: cueBottle, kind: "hint", id: hintCueId }];
   }
 
   /** 導入の間はゴールの盤面を見せ、始めの盤面の場面で、始めの盤面へ替える。 */
