@@ -8,12 +8,10 @@ import crossedSoundUrl from "@/games/nonogram/assets/sounds/crossed.flac";
 import erasedSoundUrl from "@/games/nonogram/assets/sounds/erased.flac";
 import filledSoundUrl from "@/games/nonogram/assets/sounds/filled.flac";
 import type { NonogramOperation } from "@/games/nonogram/play/use-nonogram-play";
-import type { NonogramGridSize } from "@/games/nonogram/puzzle/board";
 import type { NonogramMark } from "@/games/nonogram/session/session";
 import {
-  CLEAR_WAVE_DELAY_MS,
-  CLEAR_WAVE_PEAK_MS,
-  CLEAR_WAVE_STAGGER_MS,
+  CLEAR_SWELL_DELAY_MS,
+  CLEAR_SWELL_PEAK_MS,
 } from "@/games/nonogram/ui/board/clear/NonogramClearAnimation";
 import type { GameProgress } from "@/games/play";
 import {
@@ -38,7 +36,7 @@ const markedSounds: Record<NonogramMark, SoundEffect> = {
 
 const erasedSound = defineSoundEffect(erasedSoundUrl);
 
-/** 膨らむ塗りの波に乗せて、順に鳴らす音。 */
+/** 図柄が膨らみ始めてからいちばん膨らむまでに、順に重ねていく音。 */
 const clearedWaveSounds = [
   clearedWave1SoundUrl,
   clearedWave2SoundUrl,
@@ -47,7 +45,7 @@ const clearedWaveSounds = [
   clearedWave5SoundUrl,
 ].map(defineSoundEffect);
 
-/** 波が右下の角に届いたところで鳴らす音。動きを減らす設定では、完成した図柄を見せるときにこれだけを鳴らす。 */
+/** 図柄がいちばん膨らんだところで鳴らす音。動きを減らす設定では、完成した図柄を見せるときにこれだけを鳴らす。 */
 const clearedChordSound = defineSoundEffect(clearedChordSoundUrl);
 
 const nonogramSounds: readonly SoundEffect[] = [
@@ -57,25 +55,26 @@ const nonogramSounds: readonly SoundEffect[] = [
   clearedChordSound,
 ];
 
-function getWaveStepOffsetMs(step: number): number {
-  return step * CLEAR_WAVE_STAGGER_MS;
+/** 膨らみ始めから頂点までを音の数で等分して駆け上がり、頂点で和音を鳴らす。 */
+const clearedSoundLayers: readonly SoundLayer[] = [
+  ...clearedWaveSounds.map(
+    function createRisingLayer(sound, index): SoundLayer {
+      return {
+        sound,
+        offsetMs: (CLEAR_SWELL_PEAK_MS * index) / clearedWaveSounds.length,
+      };
+    },
+  ),
+  { sound: clearedChordSound, offsetMs: CLEAR_SWELL_PEAK_MS },
+];
+
+/** 図柄が膨らみ始めるのに合わせて鳴らし始める。 */
+function playClearSound() {
+  playLayeredSound(clearedSoundLayers, { delayMs: CLEAR_SWELL_DELAY_MS });
 }
 
-/** 波の順番はマスの「行 + 列」なので、右下の角の順番は盤面の大きさで決まる。 */
-function listClearedSoundLayers({
-  width,
-  height,
-}: NonogramGridSize): SoundLayer[] {
-  const lastStep = width - 1 + (height - 1);
-  return [
-    ...clearedWaveSounds.map(
-      function createWaveLayer(sound, index): SoundLayer {
-        const step = (lastStep * index) / clearedWaveSounds.length;
-        return { sound, offsetMs: getWaveStepOffsetMs(step) };
-      },
-    ),
-    { sound: clearedChordSound, offsetMs: getWaveStepOffsetMs(lastStep) },
-  ];
+function playReducedMotionClearSound() {
+  playSound(clearedChordSound);
 }
 
 function playOperationSound(operation: NonogramOperation) {
@@ -98,22 +97,8 @@ function playOperationSound(operation: NonogramOperation) {
 export function useNonogramSoundEffects(
   operation: NonogramOperation | null,
   progress: GameProgress,
-  boardSize: NonogramGridSize,
 ) {
   usePrepareSoundEffects(nonogramSounds);
   useOperationSound(operation, playOperationSound);
-  useClearSound(
-    progress,
-    function playClearSound() {
-      // 左上の塗りがいちばん膨らむのに合わせて鳴らし始める。
-      playLayeredSound(listClearedSoundLayers(boardSize), {
-        delayMs: CLEAR_WAVE_DELAY_MS + CLEAR_WAVE_PEAK_MS,
-      });
-    },
-    {
-      playReducedMotionClearSound() {
-        playSound(clearedChordSound);
-      },
-    },
-  );
+  useClearSound(progress, playClearSound, { playReducedMotionClearSound });
 }

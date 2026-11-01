@@ -75,7 +75,7 @@ export function NonogramPlay({
 }: NonogramPlayProps) {
   const [mark, setMark] = useState<NonogramMark>(INITIAL_MARK);
   const playing = progress === "playing";
-  useNonogramSoundEffects(operation, progress, board);
+  useNonogramSoundEffects(operation, progress);
 
   function handleReplay(): void {
     setMark(INITIAL_MARK);
