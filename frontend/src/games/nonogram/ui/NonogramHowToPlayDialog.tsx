@@ -73,9 +73,11 @@ export function NonogramHowToPlayDialog({
       <li className="space-y-2">
         <p>すべての数字が薄くなるとクリア。× や空きが残っていてもよい。</p>
         <HowToPlayFigure
-          rows={["#x#", "###", "x#."]}
-          rowClues={[[1, 1], [3], [1]]}
+          rows={["##x", "x##", "#.#"]}
+          rowClues={[[2], [2], [1, 1]]}
+          columnClues={[[1, 1], [2], [2]]}
           matchedRows={[true, true, true]}
+          matchedColumns={[true, true, true]}
         />
       </li>
     </HowToPlayDialog>
