@@ -46,12 +46,12 @@
 | rules | ルール・判定・状態とそのテスト（画面なし） |
 | playable | 1問を最後まで遊べるプレイ画面（盤面・操作・クリア判定）と、入口とプレイ画面のパスだけのカタログエントリ。カタログの網羅テストからこのゲームを外す一時的な除外を足す（前例: `git log --all -S gamesNotInCatalogYet`）。固定問題を開く入口パス（レベルの値を含む）を報告に書く |
 | play-ui | 補助操作（待った・盤面を戻すなど）、状態の知らせ、遊び方、クリア演出 |
-| difficulty | 解法器・難易度の判定・生成器（`/design-game-difficulty`） |
-| problem-pool | 問題集と生成スクリプト（`--verify` で全問を再検証できる）。件数と全問の再検証で完了を確かめてからコミットする |
+| difficulty | 解法器・難易度の判定・生成器・`problem-selection.ts`、難易度の資料（`/design-game-difficulty`。報告は作業ディレクトリの `design-game-difficulty-report.md`） |
+| problem-pool | 問題集と生成スクリプト（`--verify` で全問を再検証できる）。件数と全問の再検証で完了を確かめてからコミットする。問題 ID で問題集の問題を開くレベルごとのプレイ画面のパスを報告に書く |
 | pictogram | ゲーム一覧のピクトグラム（`/design-game-pictogram`） |
 | difficulty-select | 難易度選択の画面と難易度プレビュー（`/design-game-difficulty-preview`） |
 | score | スコア（評価規則と基準時間） |
-| result-records | 結果画面・記録・記録からの遊び直し |
+| result-records | 結果画面・記録（`play-record.ts`・`play-attempt.ts`・`diagnostics.ts`）・記録からの遊び直し |
 | catalog | 一覧への掲載と並び。網羅テストの一時的な除外を消す |
 | spec | SPEC、ADR（作業カードの番号で `/adr-create`）、台帳の行（導入判断を正式採用にする。マージが決定）、実装前提調査の「実装で確定した差分」 |
 
@@ -61,11 +61,11 @@
 
 | 層 | 入るもの |
 |---|---|
-| 調査 | `docs/パズル/導入調査/<パズル名>/`、`scripts/research/<ゲーム ID>_*` |
+| 調査 | `docs/パズル/導入調査/<パズル名>/`（実装前提調査は「実装で確定した差分」を含む最終版）、`scripts/research/<ゲーム ID>_*` |
 | ルールと問題 | `frontend/src/games/<game>/` の `puzzle/`・`problem/`（生成と問題集）・`session/`・`difficulty.ts`・`problem-selection.ts`・`display-name.ts`、問題集の生成スクリプトと `package.json` の scripts、`frontend/biome.json`（問題集の除外と、`generate:dependency-rules` で作り直した依存規則） |
 | プレイと画面 | `play/`・`ui/`（難易度プレビュー・遊び方を含む）・`assets/`・`score.ts`・`play-record.ts`・`play-attempt.ts`・`diagnostics.ts` |
-| 掲載 | `frontend/src/game-catalog/<game>/` と `game-catalog.ts`、`frontend/src/pages/puzzles/<game>/` と View、一覧のテスト |
+| 掲載 | `frontend/src/game-catalog/<game>/` と `game-catalog.ts`、`frontend/src/pages/puzzles/<game>/` と View、generouted が作り直す `frontend/src/router.ts`、一覧のテスト |
 | 文書 | SPEC・ADR・台帳の行と候補ファイル・各 README の一覧 |
 
-- 掲載より下の層では、作業ブランチの playable と同じ一時的な除外をその層にだけ足し、掲載の層で消す。
-- 層のファイルは `git checkout <作業ブランチ> -- <パス>` で作業ブランチの版を取り込む。どの層にも入らないファイルが残ったら、表に足してから切り直す。
+- 一時的な除外: 作業ブランチの最終版には残っていないので、`frontend/src/games/<game>/` を最初に入れる層（ルールと問題）で `frontend/src/game-catalog/game-catalog.test.ts` に手で足し、掲載の層で消す。
+- 層のファイルは `git checkout <作業ブランチ> -- <パス>` で作業ブランチの版を取り込む。どの層にも入らないファイルが残ったら、実装前提調査の「PR の切り方」に足してから切り直す。
