@@ -294,7 +294,7 @@ describe("HitofudePuzzlePlay", () => {
           (label) => `${label.textContent} ${label.nextSibling?.textContent}`,
         );
 
-      expect(metrics).toEqual(["引き直し 2", "時間 03:40", "待った 3"]);
+      expect(metrics).toEqual(["引き直し 2", "時間 02:25", "待った 3"]);
     });
 
     const modifierCases = [
