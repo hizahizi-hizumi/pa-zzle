@@ -33,7 +33,7 @@ model: opus
 - ゲーム共通仕様 `docs/プロダクト/仕様/ゲーム/`: SPEC-003（概念・名前）、SPEC-004（開始条件）、SPEC-005（成立性と難易度）、SPEC-006（成績と評価）、SPEC-007（1プレイの区切りとやり直し）、SPEC-014（問題ID）、SPEC-016（遊び方）、SPEC-017（状態の知らせと補助）
 - 対象パズルの SPEC（`docs/プロダクト/仕様/パズル/` から対象ゲームのものを Grep で探す。無ければ導入調査の実装前提調査）
 - 前例: 既存ゲームの `ui/`（盤面、`<Game>DifficultyPreview.tsx`、`<Game>HowToPlayDialog.tsx`、待ったなどの補助操作）と共通部品 `frontend/src/components/`
-- `/add-puzzle` Skill の失敗パターン集（`.claude/skills/add-puzzle/references/pitfalls.md` の「プレイUI・プレビュー・見た目」。難易度プレビューの抽象化と、盤面の大きさの逆転なしを含む）: 正本ではない。観点4で Minor と人間に残す論点の根拠にだけ使う
+- `/add-puzzle` Skill の失敗パターン集（`.claude/skills/add-puzzle/references/pitfalls.md` の「プレイUI・プレビュー・見た目」。レビュー版の worktree に Skill が無いときは、起動側が渡した失敗パターン集のパスを読む。難易度プレビューの抽象化と、盤面の大きさの逆転なしを含む）: 正本ではない。観点4で Minor と人間に残す論点の根拠にだけ使う
 
 ## 観点
 
