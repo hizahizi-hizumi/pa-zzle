@@ -10,7 +10,10 @@ import {
 import { MemoryRouter } from "react-router";
 
 import { type DifficultyLevel, difficultyLevels } from "@/games/difficulty";
-import { GameZukanScreen } from "@/zukan/ui/GameZukanScreen";
+import {
+  GameZukanScreen,
+  type ZukanFeatureAxis,
+} from "@/zukan/ui/GameZukanScreen";
 import type {
   GameZukan,
   ZukanDifficultySection,
@@ -113,6 +116,27 @@ const describeProblem = vi.fn(({ problemId }: ZukanProblem) =>
       ],
 );
 
+const featureAxes: readonly ZukanFeatureAxis[] = [
+  {
+    id: "clues",
+    countRangeWidth: 3,
+    display: { label: "初期数字", valueFormat: { kind: "count", unit: "個" } },
+  },
+];
+/** レベル 3 の問題だけ初期数字の数を変え、ほかのレベルは同じ数にする。 */
+const clueCounts: Record<string, number> = {
+  "p-a": 24,
+  "p-b": 25,
+  "p-c": 24,
+  "p-d": 26,
+};
+const findProblemFeatureValues = vi.fn(
+  ({ problemId }: ZukanProblem) =>
+    new Map([
+      ["clues", { kind: "count", count: clueCounts[problemId] ?? 24 } as const],
+    ]),
+);
+
 function renderScreen(
   shownZukan: GameZukan = zukan,
   changes: ZukanChanges = noZukanChanges,
@@ -127,6 +151,8 @@ function renderScreen(
         onPlayProblem={onPlayProblem}
         onLevelChangesShown={onLevelChangesShown}
         describeProblem={describeProblem}
+        featureAxes={featureAxes}
+        findProblemFeatureValues={findProblemFeatureValues}
       />
     </MemoryRouter>,
   );
@@ -155,6 +181,34 @@ function listDetailFacts(detail: HTMLElement) {
 
 function queryDetail(): HTMLElement | null {
   return screen.queryByRole("complementary", { name: "選んだ問題" });
+}
+
+/** 台紙に並べた順の番号と、絞り込みの条件に当たらなかったマスの印。 */
+function listSquareOrder(sheetName: string): string[] {
+  return within(getSheet(sheetName))
+    .getAllByRole("button")
+    .map((square) => {
+      const name = square.getAttribute("aria-label") ?? "";
+      const number = name.split(" ")[0] ?? "";
+      return name.endsWith("絞り込みの条件外") ? `${number} 条件外` : number;
+    });
+}
+
+function getFilterButton(): HTMLElement {
+  return screen.getByRole("button", { name: /^絞り込み/ });
+}
+
+function chooseFilterOption(
+  panel: HTMLElement,
+  groupName: string,
+  optionName: string,
+) {
+  fireEvent.click(
+    within(within(panel).getByRole("toolbar", { name: groupName })).getByRole(
+      "button",
+      { name: optionName },
+    ),
+  );
 }
 
 function getSheetScroller(name: string): HTMLElement {
@@ -240,6 +294,7 @@ describe("GameZukanScreen", () => {
   beforeEach(() => {
     onPlayProblem.mockClear();
     onLevelChangesShown.mockClear();
+    findProblemFeatureValues.mockClear();
   });
 
   describe("最後に遊んだレベルがある場合", () => {
@@ -695,6 +750,234 @@ describe("GameZukanScreen", () => {
 
       expect(backLink.getAttribute("href")).toBe("/puzzles/nanpure");
     });
+
+    test("絞り込みを開くまで、問題の特徴の値を求めないこと", () => {
+      const calls = findProblemFeatureValues.mock.calls;
+
+      expect(calls).toEqual([]);
+    });
+
+    test("絞り込みの条件をかけるまで、マスを並べ替えず、当たった数を示さないこと", () => {
+      const order = listSquareOrder("レベル 3の問題");
+      const filterButton = getFilterButton();
+      const matchedTabs = screen.queryAllByText(/^該当/);
+
+      expect(order).toEqual(["No.0005", "No.0006", "No.0007", "No.0008"]);
+      expect(filterButton.getAttribute("aria-label")).toBe("絞り込み");
+      expect(matchedTabs).toEqual([]);
+    });
+  });
+
+  describe("絞り込みを開いた場合", () => {
+    let panel: HTMLElement;
+
+    beforeEach(async () => {
+      renderScreen();
+      fireEvent.click(getFilterButton());
+      panel = await screen.findByRole("dialog", { name: "絞り込み" });
+    });
+
+    test("状態・問題の特徴・成績の種類ごとに、開いているレベルで選べる選択肢を示すこと", () => {
+      const toolbarCount = within(panel).getAllByRole("toolbar").length;
+      const groups = ["状態", "初期数字", "ミス", "手数"].map((name) => [
+        name,
+        within(within(panel).getByRole("toolbar", { name }))
+          .getAllByRole("button")
+          .map((option) => option.textContent),
+      ]);
+
+      expect(toolbarCount).toBe(4);
+      expect(groups).toEqual([
+        ["状態", ["perfect", "great", "good", "clear", "挑戦中", "未挑戦"]],
+        ["初期数字", ["24個", "25個", "26個"]],
+        ["ミス", ["ミスなし", "ミスあり"]],
+        ["手数", ["最短手数", "最短より多い"]],
+      ]);
+    });
+
+    test("開いているレベルの全問の特徴の値だけを求めること", () => {
+      const problemIds = findProblemFeatureValues.mock.calls.map(
+        ([problem]) => problem.problemId,
+      );
+
+      expect(problemIds).toEqual(["p-a", "p-b", "p-c", "p-d"]);
+    });
+
+    test("条件が無い間は、解除を押せないこと", () => {
+      const clearButton = within(panel).getByRole("button", { name: "解除" });
+
+      expect(clearButton.hasAttribute("disabled")).toBe(true);
+    });
+
+    describe("状態で絞った場合", () => {
+      beforeEach(() => {
+        chooseFilterOption(panel, "状態", "挑戦中");
+        chooseFilterOption(panel, "状態", "未挑戦");
+      });
+
+      test("当たった問題を番号の順に前へ、当たらなかった問題を条件外として番号の順に後ろへ並べること", () => {
+        const order = listSquareOrder("レベル 3の問題");
+
+        expect(order).toEqual([
+          "No.0006",
+          "No.0008",
+          "No.0005 条件外",
+          "No.0007 条件外",
+        ]);
+      });
+
+      test("開いているレベルのタブと絞り込みに当たった数を、絞り込みボタンに条件の数を示すこと", () => {
+        const openTab = screen.getByRole("tab", { selected: true });
+        const panelCount = within(panel).getByText(/^該当/).textContent;
+        const filterButton = getFilterButton();
+
+        expect(openTab.textContent).toBe("レベル 3、解いた問題 2 / 4、該当 2");
+        expect(panelCount).toBe("該当 2問");
+        expect(filterButton.getAttribute("aria-label")).toBe(
+          "絞り込み、条件2つ",
+        );
+      });
+
+      test("状態ごとの数は、絞り込んでも台紙の全問で数えること", () => {
+        const levelCounts = getStatusCountNames();
+
+        expect(levelCounts).toEqual([
+          "perfect 0問",
+          "great 1問",
+          "good 0問",
+          "clear 1問",
+          "挑戦中 1問",
+          "未挑戦 1問",
+        ]);
+      });
+
+      test("当たらなかった問題と当たった問題の間に区切りを入れること", () => {
+        const boundaryIndex = [
+          ...getSheet("レベル 3の問題").children,
+        ].findIndex((child) => child.hasAttribute("data-filter-boundary"));
+
+        expect(boundaryIndex).toBe(2);
+      });
+
+      test("解除を押すと、条件を外して番号の順に戻すこと", () => {
+        fireEvent.click(within(panel).getByRole("button", { name: "解除" }));
+        const order = listSquareOrder("レベル 3の問題");
+        const filterButton = getFilterButton();
+
+        expect(order).toEqual(["No.0005", "No.0006", "No.0007", "No.0008"]);
+        expect(filterButton.getAttribute("aria-label")).toBe("絞り込み");
+      });
+
+      test("マスで右矢印キーを押すと、並べた順の次のマスへ移って選ぶこと", () => {
+        const first = getSquare("レベル 3の問題", "No.0006");
+        first.focus();
+
+        fireEvent.keyDown(first, { key: "ArrowRight" });
+        const focusedName = document.activeElement?.getAttribute("aria-label");
+        const detail = getDetail();
+
+        expect(focusedName).toBe("No.0008 レベル 3 未挑戦");
+        expect(within(detail).getByText("No.0008")).toBeTruthy();
+      });
+
+      test("当たらなかったマスも選んで詳細を出し、遊ぶでその問題を始められること", () => {
+        fireEvent.click(getSquare("レベル 3の問題", "No.0007"));
+        fireEvent.click(
+          within(getDetail()).getByRole("button", { name: "遊ぶ" }),
+        );
+        const startedProblemIds = onPlayProblem.mock.calls.map(
+          ([problem]) => problem.problemId,
+        );
+
+        expect(startedProblemIds).toEqual(["p-c"]);
+      });
+
+      test("レベルを切り替えると、条件を外すこと", () => {
+        chooseLevel("レベル 1");
+        const filterButton = getFilterButton();
+        const order = listSquareOrder("レベル 1の問題");
+
+        expect(filterButton.getAttribute("aria-label")).toBe("絞り込み");
+        expect(order).toEqual(["No.0001", "No.0002", "No.0003"]);
+      });
+    });
+
+    describe("問題の特徴で絞った場合", () => {
+      beforeEach(() => {
+        chooseFilterOption(panel, "初期数字", "24個");
+      });
+
+      test("その特徴の問題を前に並べること", () => {
+        const order = listSquareOrder("レベル 3の問題");
+
+        expect(order).toEqual([
+          "No.0005",
+          "No.0007",
+          "No.0006 条件外",
+          "No.0008 条件外",
+        ]);
+      });
+    });
+
+    describe("成績で絞った場合", () => {
+      beforeEach(() => {
+        chooseFilterOption(panel, "ミス", "ミスなし");
+      });
+
+      test("その成績で解いた問題だけを前に並べ、挑戦中と未挑戦を当てないこと", () => {
+        const order = listSquareOrder("レベル 3の問題");
+
+        expect(order).toEqual([
+          "No.0005",
+          "No.0006 条件外",
+          "No.0007 条件外",
+          "No.0008 条件外",
+        ]);
+      });
+    });
+
+    describe("状態と問題の特徴を組み合わせた場合", () => {
+      beforeEach(() => {
+        chooseFilterOption(panel, "状態", "great");
+        chooseFilterOption(panel, "状態", "挑戦中");
+        chooseFilterOption(panel, "初期数字", "25個");
+      });
+
+      test("種類の中はどれかに、種類をまたいではすべてに当たる問題だけを前に並べること", () => {
+        const order = listSquareOrder("レベル 3の問題");
+
+        expect(order).toEqual([
+          "No.0006",
+          "No.0005 条件外",
+          "No.0007 条件外",
+          "No.0008 条件外",
+        ]);
+      });
+    });
+
+    describe("当たる問題が無い場合", () => {
+      beforeEach(() => {
+        chooseFilterOption(panel, "状態", "未挑戦");
+        chooseFilterOption(panel, "ミス", "ミスなし");
+      });
+
+      test("当たる問題が無いことを示し、全問を条件外として番号の順に並べること", () => {
+        const notice = within(getSheet("レベル 3の問題")).getByText(
+          "条件に当たる問題はありません",
+        );
+        const order = listSquareOrder("レベル 3の問題");
+        const openTab = screen.getByRole("tab", { selected: true });
+
+        expect(notice).toBeTruthy();
+        expect(order).toEqual([
+          "No.0005 条件外",
+          "No.0006 条件外",
+          "No.0007 条件外",
+          "No.0008 条件外",
+        ]);
+        expect(openTab.textContent).toMatch(/該当 0$/);
+      });
+    });
   });
 
   describe("前回図鑑を見たときから変化がある場合", () => {
@@ -1104,6 +1387,21 @@ describe("GameZukanScreen", () => {
           const stages = getChangeStages("レベル 3の問題");
 
           expect(stages).toEqual([null, null, null, null]);
+        });
+      });
+
+      describe("押している途中で絞り込みを開いた場合", () => {
+        beforeEach(async () => {
+          await advanceStamps(400);
+        });
+
+        test("最後の姿まで飛ばし、見せ終えたと知らせること", () => {
+          fireEvent.click(getFilterButton());
+          const stages = getChangeStages("レベル 3の問題");
+          const shownDifficulties = onLevelChangesShown.mock.calls;
+
+          expect(stages).toEqual([null, null, null, null]);
+          expect(shownDifficulties).toEqual([["3"]]);
         });
       });
 

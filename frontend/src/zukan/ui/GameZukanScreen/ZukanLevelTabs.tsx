@@ -9,6 +9,8 @@ export type ZukanLevelTab = {
   solvedCount: number;
   /** 前回図鑑を見たときからの変化を、まだ見せていないか。 */
   hasUnseenChanges: boolean;
+  /** 絞り込みの条件に当たる問題の数。絞り込んでいる開いたレベルだけが持ち、ほかは `null`。 */
+  matchedCount: number | null;
 };
 
 type ZukanLevelTabsProps = {
@@ -20,12 +22,19 @@ type ZukanLevelTabsProps = {
  * 台紙を切り替えるレベルのタブ。各タブにレベルの解いた数を添え、切り替えずに全レベルの進み具合が分かるようにする。
  * スマートフォンの幅でも全レベルを1行に収めるよう、名前と数を2段に積む。
  * まだ見せていない変化のあるレベルには、名前の横に小さな点を付ける。
+ * 絞り込んでいる間は、開いているレベルのタブに条件に当たる問題の数を3段目に添える。
  */
 export function ZukanLevelTabs({ levels }: ZukanLevelTabsProps) {
   return (
     <TabsList layout="stacked" aria-label="レベル">
       {levels.map(
-        ({ difficulty, problemCount, solvedCount, hasUnseenChanges }) => (
+        ({
+          difficulty,
+          problemCount,
+          solvedCount,
+          hasUnseenChanges,
+          matchedCount,
+        }) => (
           <TabsTrigger key={difficulty} value={difficulty}>
             <span className="relative">
               {getDifficultyLabel(difficulty)}
@@ -44,6 +53,11 @@ export function ZukanLevelTabs({ levels }: ZukanLevelTabsProps) {
                 <span className="sr-only">、前回から変化あり</span>
               )}
             </span>
+            {matchedCount !== null && (
+              <span className="text-meta font-normal text-foreground tabular-nums">
+                <span className="sr-only">、</span>該当 {matchedCount}
+              </span>
+            )}
           </TabsTrigger>
         ),
       )}
