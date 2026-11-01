@@ -4,7 +4,6 @@ import {
   setNonogramCellState,
 } from "@/games/nonogram/puzzle/board";
 import {
-  areSameNonogramClue,
   computeNonogramClues,
   computeNonogramLineClue,
 } from "@/games/nonogram/puzzle/clue";
@@ -52,6 +51,14 @@ function createRandomLineStates(count: number) {
   });
 }
 
+/** 塗ったマスを `#`、ほかを `.` にした文字列で、`#` の続く長さを左から並べる。 */
+function measureFilledRuns(states: readonly NonogramCellState[]): number[] {
+  const notation = states
+    .map((state) => (state === "filled" ? "#" : "."))
+    .join("");
+  return (notation.match(/#+/g) ?? []).map((run) => run.length);
+}
+
 describe("isNonogramLineMatched", () => {
   const cases = [
     ["塗りがヒントにちょうど合う線", [2, 1], "##x#.", true],
@@ -72,14 +79,12 @@ describe("isNonogramLineMatched", () => {
 
   describe("無作為な線の場合", () => {
     const lines = createRandomLineStates(2000);
-    const expected = lines.map(({ clue, states }) =>
-      areSameNonogramClue(
-        clue,
-        computeNonogramLineClue(states.map((state) => state === "filled")),
-      ),
+    const expected = lines.map(
+      ({ clue, states }) =>
+        measureFilledRuns(states).join(",") === clue.join(","),
     );
 
-    test("塗ったマスだけで求めたヒントがちょうど同じ線を一致と判定すること", () => {
+    test("塗ったマスの塊の長さがヒントと同じ並びの線を一致と判定すること", () => {
       const matched = lines.map(({ clue, states }) =>
         isNonogramLineMatched(clue, states),
       );
