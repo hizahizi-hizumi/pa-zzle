@@ -215,5 +215,5 @@ frontend/src/game-catalog/
 
 1. `games/<game>/` を標準配置で実装する。
 2. `game-catalog/<game>/` に `Playable<Game>.tsx`、`Recorded<Game>Result.tsx`、`<game>-catalog-entry.tsx` を置き、`game-catalog.ts` の並びへ加える。
-3. `pages/puzzles/<game>/` と、そのルートの View（ゲームのホーム・プレイ）を置く。
+3. `pages/puzzles/<game>/` と、そのルートの View（ゲームのホーム・プレイ）を置く。ゲームのホームは `pages/puzzles/<game>/index.tsx` に置き、`pages/puzzles/[game]/` の動的ルートにまとめない（静的な `<game>/play/` を持つゲームでは静的な枝が優先され、ゲームのホームが開けなくなる）。
 4. `bun run --cwd frontend generate:dependency-rules` で `frontend/biome.json` の依存規則を生成し直す。規則は `src/games/` 直下のディレクトリから全ゲームに同じ形で作られ、生成結果との一致はテストで検査される。
