@@ -232,7 +232,10 @@ const steps: readonly NanpureTutorialStep[] = [
     cuedDigit: null,
   },
   {
-    message: { headline: "どの列にも\n1〜9が1つずつ入ります", detail: null },
+    message: {
+      headline: "どの列にも\n1〜9が1つずつ入ります",
+      detail: "この列に無い数字を入れてください",
+    },
     introducedRuleId: "column",
     cellIndex: cellAt(7, 1),
     reasonUnits: [getCellUnit(cellAt(7, 1), "column")],
@@ -241,7 +244,7 @@ const steps: readonly NanpureTutorialStep[] = [
   {
     message: {
       headline: "太線で囲んだブロックにも\n1〜9が1つずつ入ります",
-      detail: null,
+      detail: "このブロックに無い数字を入れてください",
     },
     introducedRuleId: "block",
     cellIndex: cellAt(4, 9),
@@ -329,16 +332,25 @@ function findVisibleConflictCellIndices(
   });
 }
 
-/** マスの数字が重なった、手に入れたルールのまとまりのうち最初のもの。行・列・ブロックの順に探す。 */
+/**
+ * マスの数字が重なった、手に入れたルールのまとまりのうち最初のもの。
+ * `preferredKind` を先に、残りは行・列・ブロックの順に探す。今示しているルールの重なりを先に言うため。
+ */
 function findConflictingUnit(
   board: NanpureBoard,
   earnedRuleIds: readonly NanpureTutorialRuleId[],
   cellIndex: number,
   digit: NanpureDigit,
+  preferredKind: NanpureTutorialRuleId | null = null,
 ): NanpureTutorialUnit | null {
+  const kinds = ruleIds
+    .filter((kind) => earnedRuleIds.includes(kind))
+    .sort(
+      (left, right) =>
+        Number(right === preferredKind) - Number(left === preferredKind),
+    );
   return (
-    ruleIds
-      .filter((kind) => earnedRuleIds.includes(kind))
+    kinds
       .map((kind) => getCellUnit(cellIndex, kind))
       .find((unit) => getUnitDigits(board, unit, cellIndex).includes(digit)) ??
     null
@@ -391,9 +403,10 @@ function performNanpureTutorialAction(
 
   const board = [...state.board];
   board[cellIndex] = digit;
-  const violated =
-    findConflictingUnit(board, earnedRuleIds, cellIndex, digit) !== null;
   const correct = digit === solution[cellIndex];
+  const violated =
+    !correct &&
+    findConflictingUnit(board, earnedRuleIds, cellIndex, digit) !== null;
   const next: NanpureTutorialBoardState = {
     board,
     moveCount: state.moveCount + 1,
@@ -411,8 +424,9 @@ function performNanpureTutorialAction(
   if (isNanpureSolved(board)) {
     return { state: next, outcome: "solved" };
   }
+  // 前に入れた違う数字との重なりが残っていれば、正しい手でも、重なりを直させる一言を続ける。
   if (findVisibleConflictCellIndices(board, earnedRuleIds).length > 0) {
-    return { state: next, outcome: violated ? "violated" : "continued" };
+    return { state: next, outcome: "violated" };
   }
   if (step !== null && correct) {
     return { state: next, outcome: "stepped" };
@@ -426,22 +440,29 @@ const unitNames = {
   block: "ブロック",
 } as const satisfies Record<NanpureTutorialRuleId, string>;
 
-/** 直前に入れた数字が重なったまとまりと数字を言う。 */
+/**
+ * 直前に入れた数字が違って重なったなら、重なったまとまりと数字を言う。今示しているルールのまとまりを先に言う。
+ * 直前の手は正しく、前に入れた違う数字との重なりが残っているなら、その違う数字のマスを直させる。マスには印を付ける。
+ */
 function describeNanpureTutorialViolation(
-  { earnedRuleIds }: NanpureTutorialSituation,
+  { step, earnedRuleIds }: NanpureTutorialSituation,
   state: NanpureTutorialBoardState,
 ): TutorialMessage {
   const { lastMove } = state;
   const unit =
-    lastMove &&
+    lastMove?.violated &&
     findConflictingUnit(
       state.board,
       earnedRuleIds,
       lastMove.cellIndex,
       lastMove.digit,
+      step?.introducedRuleId ?? null,
     );
   if (!lastMove || !unit) {
-    return { headline: "同じ数字が重なっています", detail: null };
+    return {
+      headline: "印のマスの数字が違います",
+      detail: "別の数字を押すと入れ替わります",
+    };
   }
   return {
     headline: `この${unitNames[unit.kind]}には、もう${lastMove.digit}があります`,
@@ -490,18 +511,42 @@ export function getNanpureTutorialStepCellIndex(
 }
 
 /**
+ * 直さなければならない、答えと違う数字のマス。重なりが見えているマスを先に返す。無ければ `null`。
+ * 重なった2つのマスのどちらが違うかは盤面だけでは分からないので、違反の一言と一緒に印で示す。
+ */
+export function findNanpureTutorialWrongCellIndex(
+  { earnedRuleIds }: NanpureTutorialSituation,
+  state: NanpureTutorialBoardState,
+): number | null {
+  const wrongCellIndices = allCellIndices.filter((cellIndex) => {
+    const digit = state.board[cellIndex];
+    return digit !== null && digit !== solution[cellIndex];
+  });
+  const conflictCellIndices = findVisibleConflictCellIndices(
+    state.board,
+    earnedRuleIds,
+  );
+  return (
+    wrongCellIndices.find((cellIndex) =>
+      conflictCellIndices.includes(cellIndex),
+    ) ??
+    wrongCellIndices[0] ??
+    null
+  );
+}
+
+/**
  * 手を離した後、手が止まったときに示すマス。
  * 答えと違う数字があれば、まずそれを直させる。無ければ、今の盤面と手に入れたルールだけで決まる空きマスを、
  * まとまりで最後に空いたマスから先に示す。無ければ `null`。
  */
 export function findNanpureTutorialHint(
-  { earnedRuleIds }: NanpureTutorialSituation,
+  situation: NanpureTutorialSituation,
   state: NanpureTutorialBoardState,
 ): NanpureTutorialHint | null {
-  const wrongCellIndex = state.board.findIndex(
-    (digit, cellIndex) => digit !== null && digit !== solution[cellIndex],
-  );
-  if (wrongCellIndex >= 0) {
+  const { earnedRuleIds } = situation;
+  const wrongCellIndex = findNanpureTutorialWrongCellIndex(situation, state);
+  if (wrongCellIndex !== null) {
     return { cellIndex: wrongCellIndex, reasonUnits: [] };
   }
   const deductions = allCellIndices.flatMap((cellIndex) => {

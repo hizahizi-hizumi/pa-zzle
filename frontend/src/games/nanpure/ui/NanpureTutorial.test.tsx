@@ -323,6 +323,17 @@ describe("NanpureTutorial", () => {
         expect(reasons).toEqual(["row:3"]);
       });
 
+      test("前に入れた違う数字と重なる正しい数字を入れると、違う数字のマスにすぐ印を付けること", () => {
+        enter([2, 2, 6]);
+        enter([2, 6, 6]);
+
+        const hinted = getCuedCellIndices("hint");
+        const headline = screen.queryByText("印のマスの数字が違います");
+
+        expect(hinted).toEqual([getCellIndex(2, 2)]);
+        expect(headline).not.toBeNull();
+      });
+
       test("違う数字を入れて止まると、そのマスを手がかりとして示すこと", () => {
         enter([4, 6, 4]);
         advanceTime(idleHintDelayMs);

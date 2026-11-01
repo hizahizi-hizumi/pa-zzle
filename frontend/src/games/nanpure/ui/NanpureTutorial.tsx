@@ -11,6 +11,7 @@ import type { NanpureDigit } from "@/games/nanpure/puzzle/board";
 import type { NanpureNotes } from "@/games/nanpure/session/session";
 import {
   findNanpureTutorialHint,
+  findNanpureTutorialWrongCellIndex,
   getNanpureTutorialCompletedDigits,
   getNanpureTutorialConflictCellIndices,
   getNanpureTutorialStepCellIndex,
@@ -120,9 +121,17 @@ export function NanpureTutorial({
   const { boardState } = progress;
   const playing = progress.phase === "playing";
   const idleHintShown = playing && !guiding && idleProgress === progress;
-  const idleHint = idleHintShown
-    ? findNanpureTutorialHint(situation, boardState)
-    : null;
+  // 正しい手が、前に入れた違う数字と重なったときは、直す数字のマスにすぐ印を付ける。
+  const wrongCellIndex =
+    playing && progress.violated && !boardState.lastMove?.violated
+      ? findNanpureTutorialWrongCellIndex(situation, boardState)
+      : null;
+  const idleHint =
+    wrongCellIndex !== null
+      ? { cellIndex: wrongCellIndex, reasonUnits: [] }
+      : idleHintShown
+        ? findNanpureTutorialHint(situation, boardState)
+        : null;
   const selectedIsEditable =
     selectedCellIndex !== null &&
     NANPURE_TUTORIAL_GIVENS[selectedCellIndex] === null;

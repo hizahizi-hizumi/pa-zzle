@@ -11,6 +11,7 @@ import {
 import {
   _private,
   findNanpureTutorialHint,
+  findNanpureTutorialWrongCellIndex,
   getNanpureTutorialCompletedDigits,
   getNanpureTutorialConflictCellIndices,
   getNanpureTutorialStepCellIndex,
@@ -350,6 +351,61 @@ describe("nanpureTutorial の進行", () => {
 
     expect(result.violated).toBe(true);
     expect(message.headline).toBe("この行には、もう9があります");
+  });
+
+  test("列のルールを示した後、行と列の両方で重なる数字を入れると、列の重なりを言うこと", () => {
+    const progress = finishSteps(2);
+
+    const result = performTutorialAction(
+      nanpureTutorial,
+      progress,
+      enter(cellAt(7, 1), 4),
+    );
+    const message = getTutorialMessage(nanpureTutorial, result, {
+      entry: "selection",
+      violationSettled: true,
+    });
+
+    expect(message.headline).toBe("この列には、もう4があります");
+  });
+
+  test("手を離した後、前に入れた違う数字と重なる正しい数字を入れると、正しい手として応え、違う数字のマスを直させること", () => {
+    const progress = performAll(finishSteps(nanpureTutorial.steps.length), [
+      enter(cellAt(2, 2), 6),
+      enter(cellAt(2, 6), 6),
+    ]);
+    const situation = getTutorialSituation(nanpureTutorial, progress);
+    const message = getTutorialMessage(nanpureTutorial, progress, {
+      entry: "selection",
+      violationSettled: true,
+    });
+
+    expect(progress.boardState.lastMove?.violated).toBe(false);
+    expect(progress.boardState.lastMove?.reasonUnits).not.toEqual([]);
+    expect(progress.violated).toBe(true);
+    expect(message.headline).toBe("印のマスの数字が違います");
+    expect(
+      findNanpureTutorialWrongCellIndex(situation, progress.boardState),
+    ).toBe(cellAt(2, 2));
+  });
+
+  test("違う数字を残したまま空きマスを埋めると、重なりを直させる一言を続けること", () => {
+    const released = finishSteps(nanpureTutorial.steps.length);
+    const remaining = getEmptyCellIndices(released.boardState.board);
+    const progress = performAll(released, [
+      enter(cellAt(6, 3), 5),
+      ...remaining.map((cellIndex) =>
+        enter(cellIndex, solutionDigit(cellIndex)),
+      ),
+    ]);
+    const message = getTutorialMessage(nanpureTutorial, progress, {
+      entry: "selection",
+      violationSettled: true,
+    });
+
+    expect(getEmptyCellIndices(progress.boardState.board)).toEqual([]);
+    expect(progress.phase).toBe("playing");
+    expect(message.headline).toBe("印のマスの数字が違います");
   });
 
   test("重なった数字を正しい数字に入れ替えると、次の手順へ進むこと", () => {
