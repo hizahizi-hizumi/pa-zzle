@@ -1,7 +1,7 @@
 /**
  * 同梱した音声ファイルを、効果音として Web Audio API で鳴らす。
  * どんな音かは音声ファイルが持ち、いつ・どう鳴らすか（遅らせる、重ねる、揺らす）はコードが持つ。
- * AudioContext は初めて要るときに作り、Web Audio API が無い環境と、鳴らさない設定では何もしない。
+ * AudioContext は BGM と共有し（`@/lib/audio-context`）、Web Audio API が無い環境と、鳴らさない設定では何もしない。
  *
  * 音声ファイルは Vite のアセット import で URL として受け取り、`defineSoundEffect` に渡して効果音にする。
  * その効果音を鳴らしうる画面を出したときに `prepareSoundEffects` で読み込みを始め、
@@ -11,6 +11,13 @@
  * プレイ画面の操作やクリアに合わせて鳴らすときは、`@/games/play-sound-effects` のフックを使う。
  */
 
+import {
+  canPlayAudio,
+  decodeAudioFile,
+  getAudioContext,
+  requestAudioContextUnlock,
+  resumeAudioContext,
+} from "@/lib/audio-context";
 import {
   isSoundEffectsEnabled,
   subscribeSoundEffectsEnabled,
@@ -55,8 +62,6 @@ type SoundOutput = {
   master: GainNode;
 };
 
-/** 鳴っていない AudioContext を動かせる操作。 */
-const UNLOCK_EVENTS = ["pointerdown", "pointerup", "touchend", "keydown"];
 /** 鳴らさない設定に切り替えたとき、鳴っている音を消す速さ。急に切って音が割れないよう、わずかに時間を掛ける。 */
 const MUTE_TIME_CONSTANT_SEC = 0.02;
 /**
@@ -70,26 +75,14 @@ const OUTPUT_COMPRESSION = {
   attack: 0.003,
   release: 0.15,
 } as const;
-/** 音声ファイルを読み解く速さ。同梱する音声ファイルと同じにし、読み解くときに速さを変えない。 */
-const DECODING_SAMPLE_RATE = 48000;
 
 let soundOutput: SoundOutput | null = null;
-let unlockListening = false;
-let decodingContext: OfflineAudioContext | null = null;
 /** 読み込みを頼まれた音声ファイルの URL。読み込み中と読み込み済みを含み、読み込みに失敗したら外して読み直せるようにする。 */
 const requestedSoundUrls = new Set<string>();
 const soundBuffers = new Map<string, AudioBuffer>();
 /** 鳴らさない設定の間に読み込みを頼まれた音声ファイルの URL。鳴らす設定に変わったら読み込む。 */
 const soundUrlsWaitingForEnabled = new Set<string>();
 let waitingForEnabled = false;
-
-function getAudioContextClass(): typeof AudioContext | undefined {
-  return typeof window === "undefined" ? undefined : window.AudioContext;
-}
-
-function getOfflineAudioContextClass(): typeof OfflineAudioContext | undefined {
-  return typeof window === "undefined" ? undefined : window.OfflineAudioContext;
-}
 
 /** 音声ファイルの URL から効果音を作る。読み込みは `prepareSoundEffects` で始める。 */
 export function defineSoundEffect(url: string): SoundEffect {
@@ -106,11 +99,11 @@ export function defineSoundEffect(url: string): SoundEffect {
  * - ブラウザは利用者が操作するまで音を出させないため、次の操作で AudioContext を作り動かせるよう待つ。
  */
 export function prepareSoundEffects(sounds: readonly SoundEffect[]): void {
-  if (!getAudioContextClass()) {
+  if (!canPlayAudio()) {
     return;
   }
   requestSoundEffects(sounds);
-  listenForUnlock();
+  requestAudioContextUnlock(isSoundEffectsEnabled);
 }
 
 function requestSoundEffects(sounds: readonly SoundEffect[]) {
@@ -149,11 +142,7 @@ function waitForEnabledToLoad(url: string) {
 }
 
 function loadSoundEffect(url: string) {
-  const context = getDecodingContext();
-  if (!context) {
-    return;
-  }
-  fetchAndDecode(context, url).then(
+  decodeAudioFile(url)?.then(
     function keepDecodedSound(buffer) {
       soundBuffers.set(url, buffer);
     },
@@ -166,44 +155,15 @@ function loadSoundEffect(url: string) {
   );
 }
 
-async function fetchAndDecode(
-  context: BaseAudioContext,
-  url: string,
-): Promise<AudioBuffer> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
-  }
-  return context.decodeAudioData(await response.arrayBuffer());
-}
-
-/**
- * 音声ファイルを読み解くための、音を出さない AudioContext。
- * 音を出す AudioContext は利用者が操作するまで作れないので、それより前に読み解いておくために使う。
- */
-function getDecodingContext(): OfflineAudioContext | null {
-  if (decodingContext) {
-    return decodingContext;
-  }
-  const OfflineAudioContextClass = getOfflineAudioContextClass();
-  if (!OfflineAudioContextClass) {
-    return null;
-  }
-  decodingContext = new OfflineAudioContextClass(1, 1, DECODING_SAMPLE_RATE);
-  return decodingContext;
-}
-
 function getSoundOutput(): SoundOutput | null {
   if (soundOutput) {
     return soundOutput;
   }
-  const AudioContextClass = getAudioContextClass();
-  if (!AudioContextClass) {
+  const context = getAudioContext();
+  if (!context) {
     return null;
   }
 
-  preferAmbientAudioSession();
-  const context = new AudioContextClass();
   const master = context.createGain();
   const compressor = context.createDynamicsCompressor();
   compressor.threshold.value = OUTPUT_COMPRESSION.threshold;
@@ -235,68 +195,19 @@ function applySoundEffectsEnabled() {
 }
 
 /**
- * 対応するブラウザで、効果音を他のアプリの音楽を止めない音として扱わせる。
- * 端末の消音設定にも従う。
- */
-function preferAmbientAudioSession() {
-  const audioSession = (
-    navigator as Navigator & { audioSession?: { type: string } }
-  ).audioSession;
-  if (audioSession) {
-    audioSession.type = "ambient";
-  }
-}
-
-function resumeAudioContext(context: AudioContext) {
-  if (context.state !== "running") {
-    context.resume().catch(function ignoreRejectedResume() {});
-  }
-}
-
-function unlockOnUserGesture() {
-  if (!isSoundEffectsEnabled()) {
-    return;
-  }
-  const output = getSoundOutput();
-  if (!output) {
-    stopListeningForUnlock();
-    return;
-  }
-
-  resumeAudioContext(output.context);
-  if (output.context.state === "running") {
-    stopListeningForUnlock();
-  }
-}
-
-function stopListeningForUnlock() {
-  for (const type of UNLOCK_EVENTS) {
-    window.removeEventListener(type, unlockOnUserGesture, true);
-  }
-  unlockListening = false;
-}
-
-function listenForUnlock() {
-  if (unlockListening || soundOutput?.context.state === "running") {
-    return;
-  }
-  unlockListening = true;
-  for (const type of UNLOCK_EVENTS) {
-    window.addEventListener(type, unlockOnUserGesture, true);
-  }
-}
-
-/**
  * 効果音を鳴らす。鳴らせない環境と、鳴らさない設定では何もしない。鳴らさない設定の間は AudioContext も作らない。
  *
  * まだ読み込めていない効果音は鳴らさない。読み込みを待ってから鳴らすと、操作や演出とずれた時に鳴るため待たない。
  * 読み込みを頼まれていない効果音と読み込みに失敗した効果音は、ここで読み込みを始め、次に鳴らすときから鳴らす。
+ *
+ * 鳴らしたときは、呼んでから鳴り終わるまでの時間（ms）を返す。鳴らさなかったときは `null` を返す。
+ * 鳴り終わるのを待って次の音（BGM など）を始めるときに使う。
  */
 export function playSound(
   sound: SoundEffect,
   options?: PlaySoundOptions,
-): void {
-  playLayeredSound([{ sound, offsetMs: 0 }], options);
+): number | null {
+  return playLayeredSound([{ sound, offsetMs: 0 }], options);
 }
 
 /**
@@ -306,24 +217,25 @@ export function playSound(
 export function playLayeredSound(
   layers: readonly SoundLayer[],
   { delayMs = 0, variation }: PlaySoundOptions = {},
-): void {
+): number | null {
   if (!isSoundEffectsEnabled() || layers.length === 0) {
-    return;
+    return null;
   }
   const output = getSoundOutput();
   if (!output) {
-    return;
+    return null;
   }
   resumeAudioContext(output.context);
   requestSoundEffects(layers.map(({ sound }) => sound));
 
   const loadedLayers = getLoadedLayers(layers);
   if (!loadedLayers) {
-    return;
+    return null;
   }
   const startTime = output.context.currentTime + delayMs / 1000;
   const scale = variation ? pickVariationScale(variation) : NO_VARIATION_SCALE;
   scheduleLayers(output, loadedLayers, startTime, scale);
+  return delayMs + getLayersDurationMs(loadedLayers, scale);
 }
 
 type LoadedLayer = {
@@ -342,6 +254,19 @@ function getLoadedLayers(layers: readonly SoundLayer[]): LoadedLayer[] | null {
     loadedLayers.push({ buffer, offsetMs });
   }
   return loadedLayers;
+}
+
+/** 重ねた素材すべてが鳴り終わるまでの時間。速さを揺らした分も含める。 */
+function getLayersDurationMs(
+  layers: readonly LoadedLayer[],
+  { playbackRate }: VariationScale,
+): number {
+  return Math.max(
+    ...layers.map(
+      ({ buffer, offsetMs }) =>
+        offsetMs + (buffer.duration * 1000) / playbackRate,
+    ),
+  );
 }
 
 type VariationScale = {

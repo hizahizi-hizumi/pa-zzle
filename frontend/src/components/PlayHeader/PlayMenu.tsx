@@ -22,6 +22,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 import {
+  isBackgroundMusicEnabled,
+  setBackgroundMusicEnabled,
+  subscribeBackgroundMusicEnabled,
+} from "@/lib/background-music-setting";
+import {
   isSoundEffectsEnabled,
   setSoundEffectsEnabled,
   subscribeSoundEffectsEnabled,
@@ -51,6 +56,10 @@ export function PlayMenu({
   const soundEffectsEnabled = useSyncExternalStore(
     subscribeSoundEffectsEnabled,
     isSoundEffectsEnabled,
+  );
+  const backgroundMusicEnabled = useSyncExternalStore(
+    subscribeBackgroundMusicEnabled,
+    isBackgroundMusicEnabled,
   );
 
   return (
@@ -106,6 +115,13 @@ export function PlayMenu({
           onSelect={keepMenuOpen}
         >
           効果音
+        </DropdownMenuCheckboxItem>
+        <DropdownMenuCheckboxItem
+          checked={backgroundMusicEnabled}
+          onCheckedChange={setBackgroundMusicEnabled}
+          onSelect={keepMenuOpen}
+        >
+          BGM
         </DropdownMenuCheckboxItem>
         {onOpenDiagnostics && (
           <>

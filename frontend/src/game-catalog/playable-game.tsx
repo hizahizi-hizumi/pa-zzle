@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import { useResultShownOnPlayScreen } from "@/components/app-background-music";
 import type { GameCatalogEntry } from "@/game-catalog/game-catalog-entry";
 import { useGameNavigation } from "@/game-catalog/game-navigation";
 import {
@@ -61,7 +62,7 @@ export type PlayableGame<Difficulty, Result, Snapshot> = {
 };
 
 /**
- * 1問のプレイを、URL の問題 ID・完了記録の保存と記録の結果画面への遷移・結果の報酬の音・離脱の記録・画面遷移・検証情報へつなぐ。
+ * 1問のプレイを、URL の問題 ID・完了記録の保存と記録の結果画面への遷移・結果の報酬の音と BGM・離脱の記録・画面遷移・検証情報へつなぐ。
  * 記録を保存できたクリアは記録の結果画面へ移すので、その間はその場の結果画面を出さない（`result` を `null` にする）。
  */
 export function usePlayableGame<
@@ -113,6 +114,9 @@ export function usePlayableGame<
     recordOutcome,
   );
   useResultRewardSound(play.progress, result?.score.total ?? null);
+  useResultShownOnPlayScreen(
+    play.progress === "result" && result !== null && !navigatesToRecordResult,
+  );
   usePlayAttemptRecord({
     gameId: playRecordDefinition.gameId,
     startedAt,

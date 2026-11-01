@@ -25,7 +25,7 @@ export function SoundEffectsToggle() {
       aria-pressed={enabled}
       title={enabled ? "効果音: オン" : "効果音: オフ"}
       onClick={() => setSoundEffectsEnabled(!enabled)}
-      className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="flex h-9 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-9"
     >
       <Icon className="size-4.5" aria-hidden="true" />
     </button>

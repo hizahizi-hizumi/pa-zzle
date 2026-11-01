@@ -2,6 +2,10 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { _private as appDecisionSound } from "@/components/app-decision-sound";
 import { PlayHeader } from "@/components/PlayHeader";
+import {
+  isBackgroundMusicEnabled,
+  setBackgroundMusicEnabled,
+} from "@/lib/background-music-setting";
 import { playSound } from "@/lib/sound-effects";
 import {
   isSoundEffectsEnabled,
@@ -17,6 +21,7 @@ afterEach(() => {
   cleanup();
   vi.mocked(playSound).mockClear();
   setSoundEffectsEnabled(true);
+  setBackgroundMusicEnabled(true);
   window.localStorage.clear();
 });
 
@@ -162,6 +167,24 @@ describe("PlayHeader", () => {
       });
       expect(soundEffects.getAttribute("aria-checked")).toBe("false");
       expect(isSoundEffectsEnabled()).toBe(false);
+    });
+  });
+
+  describe("BGM を流す設定の場合", () => {
+    beforeEach(() => {
+      render(<PlayHeader {...createProps()} />);
+      openPlayMenu();
+    });
+
+    test("メニューの BGM で流さない設定に切り替え、効果音の設定は変えずにメニューを開いたままにすること", () => {
+      fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "BGM" }));
+
+      const backgroundMusic = screen.getByRole("menuitemcheckbox", {
+        name: "BGM",
+      });
+      expect(backgroundMusic.getAttribute("aria-checked")).toBe("false");
+      expect(isBackgroundMusicEnabled()).toBe(false);
+      expect(isSoundEffectsEnabled()).toBe(true);
     });
   });
 

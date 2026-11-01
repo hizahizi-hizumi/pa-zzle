@@ -3,6 +3,10 @@ import { MemoryRouter } from "react-router";
 
 import { _private as appDecisionSound } from "@/components/app-decision-sound";
 import { GameSelectionGallery } from "@/components/GameSelectionGallery";
+import {
+  isBackgroundMusicEnabled,
+  setBackgroundMusicEnabled,
+} from "@/lib/background-music-setting";
 import { playSound } from "@/lib/sound-effects";
 import {
   isSoundEffectsEnabled,
@@ -31,6 +35,7 @@ afterEach(() => {
   cleanup();
   vi.mocked(playSound).mockClear();
   setSoundEffectsEnabled(true);
+  setBackgroundMusicEnabled(true);
   window.localStorage.clear();
 });
 
@@ -135,6 +140,32 @@ describe("効果音の切り替え", () => {
     expect(toggle.getAttribute("aria-pressed")).toBe("false");
     expect(isSoundEffectsEnabled()).toBe(false);
     expect(window.localStorage.getItem("pa-zzle.sound-effects.v1")).toBe(
+      JSON.stringify({ enabled: false }),
+    );
+    expect(playSound).not.toHaveBeenCalled();
+  });
+});
+
+describe("BGM の切り替え", () => {
+  beforeEach(() => {
+    renderGallery();
+  });
+
+  test("はじめは BGM を流す設定として示すこと", () => {
+    const toggle = screen.getByRole("button", { name: "BGM" });
+
+    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  test("押すと効果音の設定は変えずに流さない設定へ切り替えて保存し、切り替えでは音を鳴らさないこと", () => {
+    const toggle = screen.getByRole("button", { name: "BGM" });
+
+    fireEvent.click(toggle);
+
+    expect(toggle.getAttribute("aria-pressed")).toBe("false");
+    expect(isBackgroundMusicEnabled()).toBe(false);
+    expect(isSoundEffectsEnabled()).toBe(true);
+    expect(window.localStorage.getItem("pa-zzle.background-music.v1")).toBe(
       JSON.stringify({ enabled: false }),
     );
     expect(playSound).not.toHaveBeenCalled();

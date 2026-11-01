@@ -5,7 +5,7 @@ import type { SoundEffect, SoundLayer } from "@/lib/sound-effects";
 type SoundEffects = typeof import("@/lib/sound-effects");
 type SoundEffectsSetting = typeof import("@/lib/sound-effects-setting");
 
-type FakeAudioBuffer = { url: string };
+type FakeAudioBuffer = { url: string; duration: number };
 
 function createFakeBufferSource() {
   return {
@@ -70,10 +70,10 @@ class FakeAudioContext {
   }
 }
 
-/** 音声ファイルの中身として、取得した URL をそのまま持つ音のデータを返す。 */
+/** 音声ファイルの中身として、取得した URL をそのまま持つ 0.2 秒の音のデータを返す。 */
 class FakeOfflineAudioContext {
   async decodeAudioData(data: ArrayBuffer): Promise<FakeAudioBuffer> {
-    return { url: new TextDecoder().decode(data) };
+    return { url: new TextDecoder().decode(data), duration: 0.2 };
   }
 }
 
@@ -175,6 +175,12 @@ describe("playSound", () => {
       expect(getStartedSources()).toEqual([
         { url: "/tap.flac", playbackRate: 1, when: 10.5 },
       ]);
+    });
+
+    test("遅らせた時間を含め、鳴り終わるまでの時間を返すこと", () => {
+      const remainingMs = soundEffects.playSound(sound, { delayMs: 500 });
+
+      expect(remainingMs).toBe(700);
     });
   });
 
@@ -287,10 +293,11 @@ describe("playSound", () => {
       soundEffects.setSoundEffectsEnabled(false);
     });
 
-    test("AudioContext を作らないこと", () => {
-      soundEffects.playSound(sound);
+    test("AudioContext を作らず、鳴らさなかったことを返すこと", () => {
+      const remainingMs = soundEffects.playSound(sound);
 
       expect(FakeAudioContext.instances).toEqual([]);
+      expect(remainingMs).toBeNull();
     });
   });
 
