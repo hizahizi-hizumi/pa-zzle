@@ -4,29 +4,60 @@ import {
   useOperationSound,
   usePrepareSoundEffects,
 } from "@/games/play-sound-effects";
-import clearedSoundUrl from "@/games/reflection/assets/sounds/cleared.flac";
 import clearedChordSoundUrl from "@/games/reflection/assets/sounds/cleared-chord.flac";
+import clearedSpread1SoundUrl from "@/games/reflection/assets/sounds/cleared-spread-1.flac";
+import clearedSpread2SoundUrl from "@/games/reflection/assets/sounds/cleared-spread-2.flac";
+import clearedSpread3SoundUrl from "@/games/reflection/assets/sounds/cleared-spread-3.flac";
+import clearedSpread4SoundUrl from "@/games/reflection/assets/sounds/cleared-spread-4.flac";
+import clearedSpread5SoundUrl from "@/games/reflection/assets/sounds/cleared-spread-5.flac";
 import piecePlacedSoundUrl from "@/games/reflection/assets/sounds/piece-placed.flac";
 import type { ReflectionOperation } from "@/games/reflection/play/use-reflection-play";
 import {
+  CLEAR_LIGHT_DRAW_MS,
+  CLEAR_LIGHT_SPREAD_MS,
+} from "@/games/reflection/ui/board/clear/ReflectionClearLight";
+import {
   defineSoundEffect,
+  playLayeredSound,
   playSound,
   REPEATED_SOUND_VARIATION,
   type SoundEffect,
+  type SoundLayer,
 } from "@/lib/sound-effects";
 
 /** ピースを盤面に置く音。移す・入れ替える・置き換えるときも、ピースが現れるので同じ音で鳴らす。 */
 const piecePlacedSound = defineSoundEffect(piecePlacedSoundUrl);
 
-const clearedSound = defineSoundEffect(clearedSoundUrl);
+/** 光路が入口から順に伸びていくのに合わせて、順に鳴らす音。 */
+const clearedSpreadSounds = [
+  clearedSpread1SoundUrl,
+  clearedSpread2SoundUrl,
+  clearedSpread3SoundUrl,
+  clearedSpread4SoundUrl,
+  clearedSpread5SoundUrl,
+].map(defineSoundEffect);
+const CLEAR_SPREAD_STEP_MS =
+  CLEAR_LIGHT_SPREAD_MS / (clearedSpreadSounds.length - 1);
 
-/** 動きを減らす設定では、光路を伸ばさず全光路を一度に出して見せておくので、点ききった和音だけを鳴らす。 */
-const reducedMotionClearedSound = defineSoundEffect(clearedChordSoundUrl);
+/** 全光路が点ききったときの音。 */
+const clearedChordSound = defineSoundEffect(clearedChordSoundUrl);
+
+const clearedSoundLayers: readonly SoundLayer[] = [
+  ...clearedSpreadSounds.map(
+    function createSpreadLayer(sound, index): SoundLayer {
+      return { sound, offsetMs: index * CLEAR_SPREAD_STEP_MS };
+    },
+  ),
+  {
+    sound: clearedChordSound,
+    offsetMs: CLEAR_LIGHT_SPREAD_MS + CLEAR_LIGHT_DRAW_MS,
+  },
+];
 
 const reflectionSounds: readonly SoundEffect[] = [
   piecePlacedSound,
-  clearedSound,
-  reducedMotionClearedSound,
+  ...clearedSpreadSounds,
+  clearedChordSound,
 ];
 
 function playPiecePlacedSound() {
@@ -34,11 +65,12 @@ function playPiecePlacedSound() {
 }
 
 function playClearSound() {
-  playSound(clearedSound);
+  playLayeredSound(clearedSoundLayers);
 }
 
+/** 動きを減らす設定では、光路を伸ばさず全光路を一度に出して見せておくので、点ききったときの音だけを鳴らす。 */
 function playReducedMotionClearSound() {
-  playSound(reducedMotionClearedSound);
+  playSound(clearedChordSound);
 }
 
 /**

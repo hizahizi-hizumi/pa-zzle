@@ -12,7 +12,7 @@ type TakuzuClearAnimationProps = {
 const waveCellSelector = "[data-clear-wave-step]";
 
 /** 波の隣り合う順番のタイルが膨らみ始めるまでの間。 */
-const CLEAR_WAVE_STAGGER_MS = 35;
+export const CLEAR_WAVE_STAGGER_MS = 35;
 const CLEAR_WAVE_DURATION_MS = 380;
 const CLEAR_WAVE_PEAK_OFFSET = 0.4;
 /** 1枚のタイルが膨らみ始めてから、いちばん膨らむまでの時間。 */
