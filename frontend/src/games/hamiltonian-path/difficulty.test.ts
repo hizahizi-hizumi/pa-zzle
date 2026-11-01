@@ -31,8 +31,7 @@ function toAnalysis({
       size,
       cellCount: size * size,
       openCellCount: size * size,
-      wallCount: 0,
-      partitionCount: 10,
+      holeCount: 0,
     },
     reasoning: {
       localReasoningSuffices,
@@ -246,14 +245,16 @@ describe("assessHamiltonianPathDifficulty", () => {
 });
 
 describe("listHamiltonianPathGenerationConditions", () => {
-  test("レベルの盤面サイズの範囲の盤面を、すべての壁率で挙げること", () => {
+  test("レベルの盤面サイズの範囲の盤面を、すべての仮置きの回数の目標で挙げること", () => {
     const conditions = listHamiltonianPathGenerationConditions("1");
 
     expect(conditions).toEqual([
-      { size: 5, wallRatio: 0 },
-      { size: 5, wallRatio: 0.15 },
-      { size: 6, wallRatio: 0 },
-      { size: 6, wallRatio: 0.15 },
+      { size: 5, targetAssumptionCount: 0 },
+      { size: 5, targetAssumptionCount: 4 },
+      { size: 5, targetAssumptionCount: 7 },
+      { size: 6, targetAssumptionCount: 0 },
+      { size: 6, targetAssumptionCount: 4 },
+      { size: 6, targetAssumptionCount: 7 },
     ]);
   });
 });

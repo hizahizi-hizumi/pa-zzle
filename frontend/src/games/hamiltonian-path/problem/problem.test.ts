@@ -1,6 +1,5 @@
 import {
   assertHamiltonianPathProblem,
-  countHamiltonianPathOpenCells,
   createHamiltonianPathProblemIdentity,
   HAMILTONIAN_PATH_GENERATOR_VERSION,
   type HamiltonianPathProblem,
@@ -14,12 +13,12 @@ import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board
 
 describe("createHamiltonianPathProblemIdentity", () => {
   test("条件と候補番号を seed に含めた今の版の identity を作ること", () => {
-    const identity = createHamiltonianPathProblemIdentity(8, 0.15, 3);
+    const identity = createHamiltonianPathProblemIdentity(8, 7, 3);
 
     expect(identity).toEqual({
       generatorVersion: HAMILTONIAN_PATH_GENERATOR_VERSION,
-      seed: "hp-8-15-3",
-      conditions: { size: 8, wallRatio: 0.15 },
+      seed: "hp-8-t7-3",
+      conditions: { size: 8, targetAssumptionCount: 7 },
     });
   });
 });
@@ -27,14 +26,21 @@ describe("createHamiltonianPathProblemIdentity", () => {
 describe("isHamiltonianPathProblemIdentity", () => {
   const identity = createHamiltonianPathProblemIdentity(6, 0, 1);
   const invalidValues: readonly [string, unknown][] = [
-    ["オブジェクトでない値", "hp-6-0-1"],
+    ["オブジェクトでない値", "hp-6-t0-1"],
     ["生成器の版が違う", { ...identity, generatorVersion: "0" }],
     ["seed が空", { ...identity, seed: "" }],
     [
       "扱わない盤面サイズ",
-      { ...identity, conditions: { size: 10, wallRatio: 0 } },
+      { ...identity, conditions: { size: 10, targetAssumptionCount: 0 } },
     ],
-    ["扱わない壁率", { ...identity, conditions: { size: 6, wallRatio: 0.3 } }],
+    [
+      "扱わない仮置きの回数の目標",
+      { ...identity, conditions: { size: 6, targetAssumptionCount: 5 } },
+    ],
+    [
+      "前の版の生成条件の",
+      { ...identity, conditions: { size: 6, wallRatio: 0 } },
+    ],
     ["生成条件が無い", { ...identity, conditions: undefined }],
   ];
 
@@ -53,13 +59,13 @@ describe("isHamiltonianPathProblemIdentity", () => {
 
 describe("isHamiltonianPathRecordedProblemIdentity", () => {
   const otherVersionIdentity = {
-    generatorVersion: "0",
-    seed: "hp-old",
-    conditions: { size: 12 },
+    generatorVersion: "1",
+    seed: "hp-8-15-3",
+    conditions: { size: 8, wallRatio: 0.15 },
   };
   const brokenCurrentIdentity = {
     ...createHamiltonianPathProblemIdentity(6, 0, 1),
-    conditions: { size: 12, wallRatio: 0 },
+    conditions: { size: 12, targetAssumptionCount: 0 },
   };
 
   test("生成器の版が違う記録の identity も読めること", () => {
@@ -80,48 +86,27 @@ describe("isHamiltonianPathRecordedProblemIdentity", () => {
 
 describe("assertHamiltonianPathProblem", () => {
   const problem: HamiltonianPathProblem = parseHamiltonianPathBoard([
-    "S .|.",
-    "",
+    "S . .",
     ". # .",
-    "",
     ". . .",
   ]);
   const separatedProblem: HamiltonianPathProblem = parseHamiltonianPathBoard([
     "S . #",
-    "",
     ". # .",
-    "    -",
     "# . .",
   ]);
 
-  test("有効マスがつながった問題を受け入れること", () => {
+  test("穴でないマスがつながった問題を受け入れること", () => {
     const act = () => assertHamiltonianPathProblem(problem);
 
     expect(act).not.toThrow();
   });
 
-  test("有効マスが切り離された問題を拒否すること", () => {
+  test("穴でないマスが穴で切り離された問題を拒否すること", () => {
     const act = () => assertHamiltonianPathProblem(separatedProblem);
 
     expect(act).toThrow();
   });
-});
-
-describe("countHamiltonianPathOpenCells", () => {
-  const cases = [
-    [{ size: 8, wallRatio: 0 }, 64],
-    [{ size: 7, wallRatio: 0.15 }, 42],
-    [{ size: 5, wallRatio: 0.15 }, 21],
-  ] as const;
-
-  test.each(cases)(
-    "盤面のマスから壁率の分を除いた数にすること: %o",
-    (conditions, expected) => {
-      const openCellCount = countHamiltonianPathOpenCells(conditions);
-
-      expect(openCellCount).toBe(expected);
-    },
-  );
 });
 
 describe("isHamiltonianPathSolveWorkload", () => {
@@ -158,24 +143,24 @@ describe("isHamiltonianPathSolveWorkload", () => {
 });
 
 describe("isHamiltonianPathWorkloadOfIdentity", () => {
-  const identity = createHamiltonianPathProblemIdentity(7, 0.15, 2);
+  const identity = createHamiltonianPathProblemIdentity(7, 4, 2);
   const workload: HamiltonianPathSolveWorkload = {
     openCellCount: 42,
-    assumptionCount: 1,
-    refutationStepCount: 6,
-    longestRefutationLength: 6,
+    assumptionCount: 4,
+    refutationStepCount: 26,
+    longestRefutationLength: 9,
     fatalBranchCount: 7,
   };
-  const mismatched = { ...workload, openCellCount: 49 };
+  const oversized = { ...workload, openCellCount: 50 };
 
-  test("生成条件の盤面で道が通るマスの数と合う作業の量を受け入れること", () => {
+  test("生成条件の枠に収まる作業の量を受け入れること", () => {
     const result = isHamiltonianPathWorkloadOfIdentity(workload, identity);
 
     expect(result).toBe(true);
   });
 
-  test("道が通るマスの数が生成条件と食い違う作業の量を拒否すること", () => {
-    const result = isHamiltonianPathWorkloadOfIdentity(mismatched, identity);
+  test("道が通るマスの数が生成条件の枠のマスの数を超える作業の量を拒否すること", () => {
+    const result = isHamiltonianPathWorkloadOfIdentity(oversized, identity);
 
     expect(result).toBe(false);
   });

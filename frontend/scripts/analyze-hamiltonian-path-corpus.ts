@@ -15,9 +15,9 @@ import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem
 import {
   createHamiltonianPathProblemIdentity,
   type HamiltonianPathBoardSize,
-  type HamiltonianPathWallRatio,
+  type HamiltonianPathTargetAssumptionCount,
   isHamiltonianPathBoardSize,
-  isHamiltonianPathWallRatio,
+  isHamiltonianPathTargetAssumptionCount,
 } from "@/games/hamiltonian-path/problem/problem";
 import { formatHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
 
@@ -25,21 +25,21 @@ const usage = `Usage: bun run analyze:hamiltonian-path -- --output <path-prefix>
 
 Options:
   --sizes <n,...>        盤面の一辺 (default: 5,6,7,8)
-  --wall-ratios <r,...>  壁率 (default: 0,0.15)
+  --targets <n,...>      仮置きの回数の目標 (default: 0,4,7)
   --seeds <n>            条件ごとの seed 数 (default: 100)
   --jobs <n>             並列ワーカー数 (default: 1)
   --output <path-prefix> <path-prefix>.jsonl と <path-prefix>.csv へ出力する`;
 
 type CorpusTask = {
   size: HamiltonianPathBoardSize;
-  wallRatio: HamiltonianPathWallRatio;
+  targetAssumptionCount: HamiltonianPathTargetAssumptionCount;
   index: number;
 };
 
 type CorpusRecord = {
   seed: string;
   size: number;
-  wallRatio: number;
+  targetAssumptionCount: number;
   generationAttemptCount: number;
   generationMilliseconds: number;
   analysisMilliseconds: number;
@@ -81,8 +81,16 @@ function roundMilliseconds(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-function analyzeTask({ size, wallRatio, index }: CorpusTask): CorpusRecord {
-  const identity = createHamiltonianPathProblemIdentity(size, wallRatio, index);
+function analyzeTask({
+  size,
+  targetAssumptionCount,
+  index,
+}: CorpusTask): CorpusRecord {
+  const identity = createHamiltonianPathProblemIdentity(
+    size,
+    targetAssumptionCount,
+    index,
+  );
   const generationStartedAt = performance.now();
   const generated = generateHamiltonianPathProblem(identity);
   const analysisStartedAt = performance.now();
@@ -93,7 +101,7 @@ function analyzeTask({ size, wallRatio, index }: CorpusTask): CorpusRecord {
   return {
     seed: identity.seed,
     size,
-    wallRatio,
+    targetAssumptionCount,
     generationAttemptCount: generated.generationAttemptCount,
     generationMilliseconds: roundMilliseconds(
       analysisStartedAt - generationStartedAt,
@@ -144,9 +152,9 @@ function flattenRecord(record: CorpusRecord): FlatRecord {
   const flat: FlatRecord = {
     seed: record.seed,
     size: record.size,
-    wallRatio: record.wallRatio,
+    targetAssumptionCount: record.targetAssumptionCount,
     openCellCount: analysis.scale.openCellCount,
-    partitionCount: analysis.scale.partitionCount,
+    holeCount: analysis.scale.holeCount,
     generationAttemptCount: record.generationAttemptCount,
     generationMilliseconds: record.generationMilliseconds,
     analysisMilliseconds: record.analysisMilliseconds,
@@ -283,12 +291,15 @@ const levelOrder = [
   "invalid",
 ] as const;
 
-function formatConditionKey(size: unknown, wallRatio: unknown): string {
-  return `${size}x${size}/${wallRatio}`;
+function formatConditionKey(
+  size: unknown,
+  targetAssumptionCount: unknown,
+): string {
+  return `${size}x${size}/t${targetAssumptionCount}`;
 }
 
 function conditionKey(record: FlatRecord): string {
-  return formatConditionKey(record.size, record.wallRatio);
+  return formatConditionKey(record.size, record.targetAssumptionCount);
 }
 
 function printConditionSummary(records: readonly FlatRecord[]): void {
@@ -337,7 +348,7 @@ function printConditionSummary(records: readonly FlatRecord[]): void {
 
 const featureColumns = [
   "openCellCount",
-  "partitionCount",
+  "holeCount",
   "assumptionCount",
   "longestRefutationLength",
   "stallCount",
@@ -385,7 +396,9 @@ function printFeaturesBy(
 }
 
 function printLevelScale(records: readonly FlatRecord[]): void {
-  console.log("\n## レベルごとの盤面サイズ・壁率の内訳（問題数）");
+  console.log(
+    "\n## レベルごとの盤面サイズ・仮置きの回数の目標の内訳（問題数）",
+  );
   for (const { id } of difficultyLevels) {
     const group = records.filter((record) => record.level === id);
     const byCondition = [...Map.groupBy(group, conditionKey)]
@@ -443,13 +456,7 @@ function printScaleCorrelations(records: readonly FlatRecord[]): void {
   printCorrelations(
     "仮置きの回数と規模・他の特徴の Spearman 相関 (analyzed)",
     analyzed,
-    [
-      "size",
-      "openCellCount",
-      "partitionCount",
-      "branchCount",
-      "longestTrapLength",
-    ],
+    ["size", "openCellCount", "holeCount", "branchCount", "longestTrapLength"],
   );
   printCorrelations(
     "仮置きの回数と最も長い先読みの Spearman 相関 (仮置き1回以上)",
@@ -470,8 +477,9 @@ function printSupply(records: readonly FlatRecord[]): void {
   );
   for (const { id } of difficultyLevels) {
     const conditionKeys = new Set(
-      listHamiltonianPathGenerationConditions(id).map(({ size, wallRatio }) =>
-        formatConditionKey(size, wallRatio),
+      listHamiltonianPathGenerationConditions(id).map(
+        ({ size, targetAssumptionCount }) =>
+          formatConditionKey(size, targetAssumptionCount),
       ),
     );
     const candidates = records.filter((record) =>
@@ -511,8 +519,9 @@ function isInLevelScale(
   difficulty: HamiltonianPathDifficulty,
 ): boolean {
   return listHamiltonianPathGenerationConditions(difficulty).some(
-    ({ size, wallRatio }) =>
-      record.size === size && record.wallRatio === wallRatio,
+    ({ size, targetAssumptionCount }) =>
+      record.size === size &&
+      record.targetAssumptionCount === targetAssumptionCount,
   );
 }
 
@@ -542,17 +551,17 @@ function toBoardSize(value: unknown): value is HamiltonianPathBoardSize {
 
 function createTasks(): CorpusTask[] {
   const sizes = readList("sizes", "5,6,7,8", toBoardSize);
-  const wallRatios = readList(
-    "wall-ratios",
-    "0,0.15",
-    isHamiltonianPathWallRatio,
+  const targets = readList(
+    "targets",
+    "0,4,7",
+    isHamiltonianPathTargetAssumptionCount,
   );
   const seedCount = readPositiveInteger("seeds", 100);
   return sizes.flatMap((size) =>
-    wallRatios.flatMap((wallRatio) =>
+    targets.flatMap((targetAssumptionCount) =>
       Array.from({ length: seedCount }, (_, index) => ({
         size,
-        wallRatio,
+        targetAssumptionCount,
         index,
       })),
     ),
@@ -599,7 +608,7 @@ async function runJobInWorker(jobIndex: number): Promise<CorpusRecord[]> {
 function compareTasks(left: CorpusRecord, right: CorpusRecord): number {
   return (
     left.size - right.size ||
-    left.wallRatio - right.wallRatio ||
+    left.targetAssumptionCount - right.targetAssumptionCount ||
     left.seed.localeCompare(right.seed, "en", { numeric: true })
   );
 }

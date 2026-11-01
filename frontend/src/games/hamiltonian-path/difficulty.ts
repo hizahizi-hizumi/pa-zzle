@@ -14,7 +14,7 @@ import {
   type HamiltonianPathBoardSize,
   type HamiltonianPathGenerationConditions,
   hamiltonianPathBoardSizes,
-  hamiltonianPathWallRatios,
+  hamiltonianPathTargetAssumptionCounts,
 } from "@/games/hamiltonian-path/problem/problem";
 
 export type HamiltonianPathDifficulty = DifficultyLevel;
@@ -155,8 +155,8 @@ export function assessHamiltonianPathDifficulty(
 }
 
 /**
- * レベルの盤面サイズの範囲に入る生成条件（盤面サイズと壁率の組）をすべて挙げる。問題の候補を作る範囲に使う。
- * 壁率はレベルの判定条件ではなく、候補の分布を寄せる生成条件なので、どのレベルにも全ての値を挙げる。
+ * レベルの盤面サイズの範囲に入る生成条件（盤面サイズと仮置きの回数の目標の組）をすべて挙げる。問題の候補を作る範囲に使う。
+ * 仮置きの回数の目標はレベルの判定条件ではなく、候補の分布を寄せる生成条件なので、どのレベルにも全ての値を挙げる。
  */
 export function listHamiltonianPathGenerationConditions(
   difficulty: HamiltonianPathDifficulty,
@@ -165,6 +165,9 @@ export function listHamiltonianPathGenerationConditions(
   return hamiltonianPathBoardSizes
     .filter((size) => isInNumericRange(size, boardSize))
     .flatMap((size) =>
-      hamiltonianPathWallRatios.map((wallRatio) => ({ size, wallRatio })),
+      hamiltonianPathTargetAssumptionCounts.map((targetAssumptionCount) => ({
+        size,
+        targetAssumptionCount,
+      })),
     );
 }

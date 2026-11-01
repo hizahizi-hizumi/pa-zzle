@@ -12,6 +12,9 @@ const {
   restoreHamiltonianPathProblemFromDiagnosticSnapshot,
 } = _private;
 
+/** レベル3 の問題は難しさへ歩く条件で作るので、生成し直しに数秒〜数十秒かかる。 */
+const GENERATION_TIMEOUT_MS = 60_000;
+
 describe("HamiltonianPathDiagnosticSnapshot", () => {
   const selected = selectHamiltonianPathProblemForDifficulty(
     "3",
@@ -58,15 +61,19 @@ describe("HamiltonianPathDiagnosticSnapshot", () => {
     expect(restored?.problem).toEqual(selected.problem);
   });
 
-  test("一意解を確かめ、生成器と同じ正解の道を持つこと", () => {
-    const { solution } = generateHamiltonianPathProblem(selected.identity);
+  test(
+    "一意解を確かめ、生成器と同じ正解の道を持つこと",
+    () => {
+      const { solution } = generateHamiltonianPathProblem(selected.identity);
 
-    expect(snapshot.uniqueness).toMatchObject({
-      status: "complete",
-      solutionCount: 1,
-    });
-    expect(snapshot.solution).toEqual(solution);
-  });
+      expect(snapshot.uniqueness).toMatchObject({
+        status: "complete",
+        solutionCount: 1,
+      });
+      expect(snapshot.solution).toEqual(solution);
+    },
+    GENERATION_TIMEOUT_MS,
+  );
 
   test("問題集の問題を分析し直して、問題集と同じ作業の量とレベルを得ること", () => {
     const { difficultyAnalysis, difficultyAssessment } = snapshot;

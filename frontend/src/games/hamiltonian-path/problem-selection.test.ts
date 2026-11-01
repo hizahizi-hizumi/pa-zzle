@@ -8,6 +8,7 @@ import {
   analyzeHamiltonianPathDifficulty,
   getHamiltonianPathSolveWorkload,
 } from "@/games/hamiltonian-path/problem/difficulty-analysis";
+import { countHamiltonianPathHoleLayoutViolations } from "@/games/hamiltonian-path/problem/generation/hole-layout";
 import { getHamiltonianPathSymmetryKey } from "@/games/hamiltonian-path/problem/generation/symmetry";
 import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem/generator";
 import {
@@ -28,10 +29,10 @@ import { createProblemId } from "@/games/problem-id";
 
 const difficulties = difficultyLevels.map(({ id }) => id);
 
-// 全問の分析と再生成は数分かかるため、テストでは等間隔に抜き出した問題だけを確かめる。
-// 全問の検証は `bun run generate:hamiltonian-path-pool -- --verify` で行う。
+// 全問の分析は数分、難しさへ歩く条件の問題の生成し直しは1問に数秒〜数十秒かかるため、テストでは等間隔に抜き出した問題の
+// 分析と、穴の焼きなましだけで作る条件の問題の生成し直しを確かめる。全問の検証は `bun run generate:hamiltonian-path-pool -- --verify` で行う。
 const analyzedEntryCountPerDifficulty = 8;
-const regeneratedEntryCountPerDifficulty = 4;
+const regeneratedEntryCountPerDifficulty = 2;
 
 function listPooledProblems(difficulty: HamiltonianPathDifficulty) {
   return listHamiltonianPathPoolEntries(difficulty).map(
@@ -85,6 +86,17 @@ describe("問題集", () => {
     },
   );
 
+  test.each(difficulties)(
+    "難易度 %s の全問題の穴が見た目の基準を満たすこと",
+    (difficulty) => {
+      const violating = listPooledProblems(difficulty).filter(
+        ({ problem }) => countHamiltonianPathHoleLayoutViolations(problem) > 0,
+      );
+
+      expect(violating).toEqual([]);
+    },
+  );
+
   test("全難易度を通して同型の問題・同じ identity を含まないこと", () => {
     const pooled = difficulties.flatMap(listPooledProblems);
 
@@ -124,11 +136,19 @@ describe("問題集", () => {
     30_000,
   );
 
-  test.each(difficulties)(
-    "難易度 %s から抜き出した問題を、identity から生成し直せること",
+  const annealedOnlyDifficulties = difficulties.filter((difficulty) =>
+    listPooledProblems(difficulty).some(
+      ({ identity }) => identity.conditions.targetAssumptionCount === 0,
+    ),
+  );
+
+  test.each(annealedOnlyDifficulties)(
+    "難易度 %s から抜き出した、難しさへ歩かない条件の問題を、identity から生成し直せること",
     (difficulty) => {
       const sampled = sampleEvenly(
-        listPooledProblems(difficulty),
+        listPooledProblems(difficulty).filter(
+          ({ identity }) => identity.conditions.targetAssumptionCount === 0,
+        ),
         regeneratedEntryCountPerDifficulty,
       );
 
@@ -138,7 +158,7 @@ describe("問題集", () => {
 
       expect(regenerated).toEqual(sampled.map(({ problem }) => problem));
     },
-    30_000,
+    60_000,
   );
 });
 

@@ -1,3 +1,4 @@
+import { countHamiltonianPathHoleLayoutViolations } from "@/games/hamiltonian-path/problem/generation/hole-layout";
 import { countHamiltonianPathSolutions } from "@/games/hamiltonian-path/problem/generation/solver";
 import { getHamiltonianPathSymmetryKey } from "@/games/hamiltonian-path/problem/generation/symmetry";
 import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem/generator";
@@ -6,38 +7,37 @@ import {
   createHamiltonianPathProblemIdentity,
   type HamiltonianPathProblemIdentity,
   hamiltonianPathBoardSizes,
-  hamiltonianPathWallRatios,
 } from "@/games/hamiltonian-path/problem/problem";
 import { isHamiltonianPathSolved } from "@/games/hamiltonian-path/puzzle/rules";
 
+/** 8×8 の焼きなましと 7×7 の難しさへの歩行は1問に数秒かかる。 */
+const GENERATION_TIMEOUT_MS = 60_000;
+
 describe("generateHamiltonianPathProblem", () => {
-  const conditions = hamiltonianPathBoardSizes.flatMap((size) =>
-    hamiltonianPathWallRatios.map((wallRatio) => [size, wallRatio] as const),
-  );
+  const conditions = [
+    ...hamiltonianPathBoardSizes.map((size) => [size, 0] as const),
+    [7, 4] as const,
+  ];
   const identity = createHamiltonianPathProblemIdentity(6, 0, 0);
 
   test.each(conditions)(
-    "一辺 %i・壁率 %s で、条件どおりの壁マス数の一意解の問題を作ること",
-    (size, wallRatio) => {
+    "一辺 %i・仮置きの回数の目標 %i で、穴が見た目の基準を満たす一意解の問題を作ること",
+    (size, targetAssumptionCount) => {
       const { problem, solution } = generateHamiltonianPathProblem(
-        createHamiltonianPathProblemIdentity(size, wallRatio, 0),
+        createHamiltonianPathProblemIdentity(size, targetAssumptionCount, 0),
       );
       const search = countHamiltonianPathSolutions(problem);
       const assertProblem = () => assertHamiltonianPathProblem(problem);
 
       expect(assertProblem).not.toThrow();
       expect(problem.size).toBe(size);
-      expect(problem.walls).toHaveLength(
-        size * size - Math.round(size * size * (1 - wallRatio)),
-      );
-      expect(problem.walls.length + problem.partitions.length).toBeGreaterThan(
-        0,
-      );
+      expect(countHamiltonianPathHoleLayoutViolations(problem)).toBe(0);
       expect(isHamiltonianPathSolved(problem, solution)).toBe(true);
       expect(search.status).toBe("complete");
       expect(search.solutionCount).toBe(1);
       expect(search.firstSolutions[0]).toEqual(solution);
     },
+    GENERATION_TIMEOUT_MS,
   );
 
   test("問題の同型判定キーを返すこと", () => {
@@ -72,7 +72,7 @@ describe("generateHamiltonianPathProblem", () => {
         {
           ...identity,
           generatorVersion:
-            "0" as HamiltonianPathProblemIdentity["generatorVersion"],
+            "1" as HamiltonianPathProblemIdentity["generatorVersion"],
         },
       ],
       [
@@ -81,18 +81,18 @@ describe("generateHamiltonianPathProblem", () => {
           ...identity,
           conditions: {
             size: 10 as HamiltonianPathProblemIdentity["conditions"]["size"],
-            wallRatio: 0,
+            targetAssumptionCount: 0,
           },
         },
       ],
       [
-        "対応していない壁率",
+        "対応していない仮置きの回数の目標",
         {
           ...identity,
           conditions: {
             size: 6,
-            wallRatio:
-              0.3 as HamiltonianPathProblemIdentity["conditions"]["wallRatio"],
+            targetAssumptionCount:
+              5 as HamiltonianPathProblemIdentity["conditions"]["targetAssumptionCount"],
           },
         },
       ],

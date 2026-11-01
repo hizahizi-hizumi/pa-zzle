@@ -1,20 +1,18 @@
-import { placeHamiltonianPathPartitions } from "@/games/hamiltonian-path/problem/generation/partition-placement";
-import { createRandomSelfAvoidingWalk } from "@/games/hamiltonian-path/problem/generation/self-avoiding-walk";
+import { createHamiltonianPathHoleBoard } from "@/games/hamiltonian-path/problem/generation/hole-annealing";
 import { getHamiltonianPathSymmetryKey } from "@/games/hamiltonian-path/problem/generation/symmetry";
 import {
-  countHamiltonianPathOpenCells,
   HAMILTONIAN_PATH_GENERATOR_VERSION,
   type HamiltonianPathIdentifiedProblem,
   type HamiltonianPathProblemIdentity,
   isHamiltonianPathBoardSize,
-  isHamiltonianPathWallRatio,
+  isHamiltonianPathTargetAssumptionCount,
 } from "@/games/hamiltonian-path/problem/problem";
 import { createProblemSeededRandom } from "@/games/problem-seed";
 
 /**
  * - `solution`: 問題のただ1つの解の道。問題集の分析と検証に使い、プレイには渡さない。
  * - `symmetryKey`: 回転・反転の同型を問題集から除くための正規化キー。
- * - `generationAttemptCount`: 採用までに作った候補の道の数。
+ * - `generationAttemptCount`: 採用までに穴の焼きなましを始めた回数。
  */
 export type HamiltonianPathGeneratedProblem =
   HamiltonianPathIdentifiedProblem & {
@@ -23,7 +21,8 @@ export type HamiltonianPathGeneratedProblem =
     generationAttemptCount: number;
   };
 
-const MAXIMUM_GENERATION_ATTEMPTS = 100;
+/** 焼きなましを始め直す回数の上限。8×8 でも1回で一意解に着く割合は8割を超えるので、届けば生成器の不具合とみなす。 */
+const MAXIMUM_GENERATION_ATTEMPTS = 20;
 
 function validateIdentity(identity: HamiltonianPathProblemIdentity): void {
   if (identity.generatorVersion !== HAMILTONIAN_PATH_GENERATOR_VERSION) {
@@ -31,21 +30,20 @@ function validateIdentity(identity: HamiltonianPathProblemIdentity): void {
       `Unsupported Hamiltonian path generator version: ${identity.generatorVersion}`,
     );
   }
-  const { size, wallRatio } = identity.conditions;
+  const { size, targetAssumptionCount } = identity.conditions;
   if (!isHamiltonianPathBoardSize(size)) {
     throw new RangeError(`Unsupported Hamiltonian path board size: ${size}`);
   }
-  if (!isHamiltonianPathWallRatio(wallRatio)) {
+  if (!isHamiltonianPathTargetAssumptionCount(targetAssumptionCount)) {
     throw new RangeError(
-      `Unsupported Hamiltonian path wall ratio: ${wallRatio}`,
+      `Unsupported Hamiltonian path target assumption count: ${targetAssumptionCount}`,
     );
   }
 }
 
 /**
- * identity の seed から完成した解の道を先に作り、その道だけが解になるよう仕切りを置いて問題にする。
- * 解の道は、盤面のうち壁率を除いた数のマスを通る無作為な自己回避路で、通らないマスが壁マス、道の先頭が始点になる。
- * 探索量の上限で一意にし切れない候補は捨て、同じ乱数列で次の候補を作る。同じ identity からは同じ問題を作る。
+ * identity の seed から、穴だけで一意解にした問題を作る（`createHamiltonianPathHoleBoard`）。
+ * 焼きなましが一意解に着かなければ、同じ乱数列の続きで始め直す。同じ identity からは同じ問題を作る。
  * 回転・反転の同型除外は問題集の生成で `symmetryKey` を使って行う。
  */
 export function generateHamiltonianPathProblem(
@@ -53,28 +51,22 @@ export function generateHamiltonianPathProblem(
 ): HamiltonianPathGeneratedProblem {
   validateIdentity(identity);
   const { seed, conditions } = identity;
-  const { size } = conditions;
   const random = createProblemSeededRandom(`hamiltonian-path:${seed}`);
-  const cellCount = size * size;
-  const openCellCount = countHamiltonianPathOpenCells(conditions);
 
   for (let attempt = 1; attempt <= MAXIMUM_GENERATION_ATTEMPTS; attempt += 1) {
-    const solution = createRandomSelfAvoidingWalk(size, openCellCount, random);
-    const openCells = new Set(solution);
-    const walls = Array.from({ length: cellCount }, (_, cell) => cell).filter(
-      (cell) => !openCells.has(cell),
+    const generated = createHamiltonianPathHoleBoard(
+      conditions.size,
+      conditions.targetAssumptionCount,
+      random,
     );
-    const board = { size, walls, start: solution[0]! };
-    const partitions = placeHamiltonianPathPartitions(board, solution, random);
-    if (partitions === null) {
+    if (generated === null) {
       continue;
     }
-    const problem = { ...board, partitions };
     return {
-      problem,
+      problem: generated.board,
       identity,
-      solution,
-      symmetryKey: getHamiltonianPathSymmetryKey(problem),
+      solution: generated.solution,
+      symmetryKey: getHamiltonianPathSymmetryKey(generated.board),
       generationAttemptCount: attempt,
     };
   }

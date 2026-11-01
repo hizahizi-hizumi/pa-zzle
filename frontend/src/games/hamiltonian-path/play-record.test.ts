@@ -10,7 +10,7 @@ import {
 import { createHamiltonianPathProblemIdentity } from "@/games/hamiltonian-path/problem/problem";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 
-const problemIdentity = createHamiltonianPathProblemIdentity(8, 0, 16);
+const problemIdentity = createHamiltonianPathProblemIdentity(8, 7, 16);
 
 // 基準時間は 5 + 64×0.5 + 13×3 + 8×3 + 71×1 = 171秒。
 const workload = {
@@ -43,10 +43,11 @@ const record = createHamiltonianPathPlayRecord({
 });
 
 // 今の生成器の版でない identity は生成条件を確かめないので、作業の量の形だけを確かめられる。
+/** 仕切りのあるルールの生成器（版 1）の identity。 */
 const pastProblemIdentity = {
-  generatorVersion: "0",
-  seed: "hp-old",
-  conditions: { size: 10 },
+  generatorVersion: "1",
+  seed: "hp-8-0-16",
+  conditions: { size: 8, wallRatio: 0 },
 };
 
 function withPayload(overrides: Record<string, unknown>) {
@@ -58,16 +59,16 @@ describe("createHamiltonianPathPlayRecord", () => {
     const { id, gameId, payloadVersion, payload } = record;
 
     expect({ id, gameId, payloadVersion }).toEqual({
-      id: "hamiltonian-path:1000:201000:hp-8-0-16",
+      id: "hamiltonian-path:1000:201000:hp-8-t7-16",
       gameId: "hamiltonian-path",
       payloadVersion: 1,
     });
     expect(payload).toEqual({
       difficulty: "5",
       problemIdentity: {
-        generatorVersion: "1",
-        seed: "hp-8-0-16",
-        conditions: { size: 8, wallRatio: 0 },
+        generatorVersion: "2",
+        seed: "hp-8-t7-16",
+        conditions: { size: 8, targetAssumptionCount: 7 },
       },
       workload,
       performance,
@@ -139,7 +140,7 @@ describe("isHamiltonianPathPlayRecord", () => {
       withPayload({
         problemIdentity: {
           ...problemIdentity,
-          conditions: { size: 10, wallRatio: 0 },
+          conditions: { size: 10, targetAssumptionCount: 0 },
         },
       }),
     ],
@@ -163,8 +164,8 @@ describe("isHamiltonianPathPlayRecord", () => {
       withPayload({ workload: { ...workload, assumptionCount: 1.5 } }),
     ],
     [
-      "identity の盤面と道が通るマスの数が食い違う作業の量",
-      withPayload({ workload: { ...workload, openCellCount: 54 } }),
+      "道が通るマスの数が identity の枠のマスの数を超える作業の量",
+      withPayload({ workload: { ...workload, openCellCount: 65 } }),
     ],
     [
       "負の経過時間",

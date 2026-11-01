@@ -1,9 +1,8 @@
 import { difficultyLevels } from "@/games/difficulty";
-import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem/generator";
 import { createHamiltonianPathProblemIdentity } from "@/games/hamiltonian-path/problem/problem";
 import {
   decodeHamiltonianPathPoolProblem,
-  encodeHamiltonianPathPoolObstacles,
+  encodeHamiltonianPathPoolHoles,
   findHamiltonianPathPoolEntry,
   findHamiltonianPathPoolEntryByProblemId,
   listHamiltonianPathPoolEntries,
@@ -13,30 +12,30 @@ import {
 import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
 import { createProblemId } from "@/games/problem-id";
 
-describe("encodeHamiltonianPathPoolObstacles", () => {
-  // 壁マス9・左右の仕切り6・上下の仕切り6 の21ビットのうち、右下の壁（8番）・左上の左右の仕切り（9番）・
-  // 右上の上下の仕切り（17番）が立つ。
-  const board = parseHamiltonianPathBoard([
-    "S|. .",
-    "    -",
-    ". . .",
-    "",
-    ". . #",
-  ]);
+describe("encodeHamiltonianPathPoolHoles", () => {
+  // 9マスのビット列のうち、上の中央（1番）と右下（8番）が立つ。
+  const board = parseHamiltonianPathBoard(["S # .", ". . .", ". . #"]);
 
-  test("壁マス・左右の仕切り・上下の仕切りの順のビット列を16進で表すこと", () => {
-    const encoded = encodeHamiltonianPathPoolObstacles(board);
+  test("枠の全マスの順のビット列を16進で表すこと", () => {
+    const encoded = encodeHamiltonianPathPoolHoles(board);
 
-    expect(encoded).toBe("00c040");
+    expect(encoded).toBe("408");
   });
 });
 
 describe("decodeHamiltonianPathPoolProblem", () => {
-  describe("encodeHamiltonianPathPoolObstacles で表した問題", () => {
-    const { problem } = generateHamiltonianPathProblem(
-      createHamiltonianPathProblemIdentity(8, 0.15, 0),
-    );
-    const encoded = encodeHamiltonianPathPoolObstacles(problem);
+  describe("encodeHamiltonianPathPoolHoles で表した問題", () => {
+    const problem = parseHamiltonianPathBoard([
+      "# . . . . . . #",
+      ". . . # . . . .",
+      ". . . . . . . .",
+      ". # . . . S . .",
+      ". . . . . . # .",
+      ". . . . . . . .",
+      "# . . . # . . .",
+      ". . . . . . . .",
+    ]);
+    const encoded = encodeHamiltonianPathPoolHoles(problem);
 
     test("元の問題へ戻すこと", () => {
       const decoded = decodeHamiltonianPathPoolProblem(
@@ -50,18 +49,19 @@ describe("decodeHamiltonianPathPoolProblem", () => {
   });
 
   const invalidCases = [
-    ["扱わない盤面サイズ", 4, 0, "0".repeat(12)],
-    ["盤面サイズと合わない桁数", 5, 0, "0".repeat(16)],
-    ["16進でない文字", 5, 0, `${"0".repeat(16)}g`],
-    ["末尾の埋め草に立ったビット", 5, 0, `${"0".repeat(16)}7`],
-    ["壁マスの始点", 5, 0, `8${"0".repeat(16)}`],
+    ["扱わない盤面サイズ", 4, 0, "0".repeat(4)],
+    ["盤面サイズと合わない桁数", 5, 0, "0".repeat(8)],
+    ["16進でない文字", 5, 0, `${"0".repeat(6)}g`],
+    ["末尾の埋め草に立ったビット", 5, 0, `${"0".repeat(6)}7`],
+    ["穴の始点", 5, 0, `8${"0".repeat(6)}`],
+    ["穴で切り離された", 5, 0, `44${"0".repeat(5)}`],
   ] as const;
 
   test.each(invalidCases)(
     "%sを拒否すること",
-    (_, size, start, encodedObstacles) => {
+    (_, size, start, encodedHoles) => {
       const act = () =>
-        decodeHamiltonianPathPoolProblem(size, start, encodedObstacles);
+        decodeHamiltonianPathPoolProblem(size, start, encodedHoles);
 
       expect(act).toThrow();
     },
@@ -69,38 +69,41 @@ describe("decodeHamiltonianPathPoolProblem", () => {
 });
 
 describe("toHamiltonianPathPoolIdentity", () => {
-  test("盤面サイズ・壁率の百分率・候補番号から identity を作ること", () => {
+  test("盤面サイズ・仮置きの回数の目標・候補番号から identity を作ること", () => {
     const identity = toHamiltonianPathPoolIdentity([
       7,
-      15,
+      4,
       219,
       0,
-      "0".repeat(34),
-      1,
-      6,
-      6,
+      "0".repeat(13),
+      4,
+      26,
+      9,
       7,
     ]);
 
-    expect(identity).toEqual(
-      createHamiltonianPathProblemIdentity(7, 0.15, 219),
-    );
+    expect(identity).toEqual(createHamiltonianPathProblemIdentity(7, 4, 219));
   });
 });
 
 describe("toHamiltonianPathPooledProblem", () => {
-  const { problem, identity } = generateHamiltonianPathProblem(
-    createHamiltonianPathProblemIdentity(6, 0.15, 4),
-  );
-  const openCellCount = problem.size ** 2 - problem.walls.length;
+  const problem = parseHamiltonianPathBoard([
+    ". . # . . .",
+    ". . . . . .",
+    "# . . S . .",
+    ". . . . . #",
+    ". . . . . .",
+    ". # . . . .",
+  ]);
+  const identity = createHamiltonianPathProblemIdentity(6, 0, 4);
 
   test("問題集の作業の量と、盤面から数えたなぞる長さを伴うこと", () => {
     const pooled = toHamiltonianPathPooledProblem([
       6,
-      15,
+      0,
       4,
       problem.start,
-      encodeHamiltonianPathPoolObstacles(problem),
+      encodeHamiltonianPathPoolHoles(problem),
       2,
       13,
       7,
@@ -111,7 +114,7 @@ describe("toHamiltonianPathPooledProblem", () => {
       problem,
       identity,
       workload: {
-        openCellCount,
+        openCellCount: 32,
         assumptionCount: 2,
         refutationStepCount: 13,
         longestRefutationLength: 7,
@@ -163,7 +166,7 @@ describe("findHamiltonianPathPoolEntryByProblemId", () => {
 describe("findHamiltonianPathPoolEntry", () => {
   const entry = listHamiltonianPathPoolEntries("3")[0]!;
   const identity = toHamiltonianPathPoolIdentity(entry);
-  const otherWallRatio = identity.conditions.wallRatio === 0 ? 0.15 : 0;
+  const otherTarget = identity.conditions.targetAssumptionCount === 0 ? 4 : 0;
 
   test("問題集の identity から項目を引くこと", () => {
     const found = findHamiltonianPathPoolEntry(structuredClone(identity));
@@ -172,12 +175,15 @@ describe("findHamiltonianPathPoolEntry", () => {
   });
 
   const unknownIdentities = [
-    ["seed が問題集に無い", { ...identity, seed: "hp-8-0-999999" }],
+    ["seed が問題集に無い", { ...identity, seed: "hp-8-t7-999999" }],
     [
       "生成条件が seed と食い違う",
       {
         ...identity,
-        conditions: { ...identity.conditions, wallRatio: otherWallRatio },
+        conditions: {
+          ...identity.conditions,
+          targetAssumptionCount: otherTarget,
+        },
       },
     ],
   ] as const;

@@ -7,18 +7,14 @@ import {
   type HamiltonianPathProblem,
   type HamiltonianPathProblemIdentity,
   type HamiltonianPathSolveWorkload,
-  type HamiltonianPathWallRatio,
-  hamiltonianPathWallRatios,
   isHamiltonianPathBoardSize,
+  isHamiltonianPathTargetAssumptionCount,
 } from "@/games/hamiltonian-path/problem/problem";
 import problemPoolJson from "@/games/hamiltonian-path/problem/problem-pool.json";
 import {
-  createHamiltonianPathPartition,
   type HamiltonianPathBoard,
-  type HamiltonianPathPartition,
-  hasHamiltonianPathPartition,
+  listHamiltonianPathCells,
   listHamiltonianPathOpenCells,
-  normalizeHamiltonianPathPartitions,
 } from "@/games/hamiltonian-path/puzzle/board";
 import {
   createBoardSizeFeatureValue,
@@ -28,18 +24,18 @@ import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 
 /**
  * 事前生成した問題集の1問。
- * - `size`・`wallPercent`（壁率の百分率）・`candidateIndex` から `createHamiltonianPathProblemIdentity` で identity を再構成する。
- * - `start` と `encodedObstacles`（`encodeHamiltonianPathPoolObstacles`）で盤面を表す。解の道は持たない。
+ * - `size`・`targetAssumptionCount`・`candidateIndex` から `createHamiltonianPathProblemIdentity` で identity を再構成する。
+ * - `start` と `encodedHoles`（`encodeHamiltonianPathPoolHoles`）で盤面を表す。解の道は持たない。
  *   実行時に生成器・解探索を呼ばずに問題を復元するため、生成結果そのものを持つ。
  * - 残りは生成時の分析結果（`HamiltonianPathSolveWorkload`）。速さの基準時間に使う。
  *   プレイ時に解法器を動かさずに済むよう、問題集に持たせる。なぞる長さは盤面から求まるので持たない。
  */
 export type HamiltonianPathProblemPoolEntry = readonly [
   size: number,
-  wallPercent: number,
+  targetAssumptionCount: number,
   candidateIndex: number,
   start: number,
-  encodedObstacles: string,
+  encodedHoles: string,
   assumptionCount: number,
   refutationStepCount: number,
   longestRefutationLength: number,
@@ -63,53 +59,20 @@ const problemPool = problemPoolJson as unknown as HamiltonianPathProblemPool;
 
 const bitsPerHexDigit = 4;
 
-type ObstacleSlot =
-  | { kind: "wall"; cell: number }
-  | { kind: "partition"; partition: HamiltonianPathPartition };
-
-/**
- * 盤面の障害物を1列のビットに並べる順。壁マス（行優先の全マス）、左右に隣り合うマスの間の仕切り
- * （行優先で、各行の右端を除くマスとその右のマス）、上下に隣り合うマスの間の仕切り（行優先で、最下行を除くマスとその下のマス）。
- */
-function listObstacleSlots(size: number): readonly ObstacleSlot[] {
-  const cells = Array.from({ length: size * size }, (_, cell) => cell);
-  return [
-    ...cells.map((cell): ObstacleSlot => ({ kind: "wall", cell })),
-    ...cells
-      .filter((cell) => cell % size < size - 1)
-      .map(
-        (cell): ObstacleSlot => ({
-          kind: "partition",
-          partition: createHamiltonianPathPartition(cell, cell + 1),
-        }),
-      ),
-    ...cells
-      .filter((cell) => cell < size * (size - 1))
-      .map(
-        (cell): ObstacleSlot => ({
-          kind: "partition",
-          partition: createHamiltonianPathPartition(cell, cell + size),
-        }),
-      ),
-  ];
-}
-
-function countObstacleHexDigits(size: number): number {
-  return Math.ceil(listObstacleSlots(size).length / bitsPerHexDigit);
+function countHoleHexDigits(size: number): number {
+  return Math.ceil((size * size) / bitsPerHexDigit);
 }
 
 /**
- * 壁マスと仕切りを、`listObstacleSlots` の順のビット列（あれば 1）にして16進で表す。先頭のビットを最上位にし、末尾は 0 で埋める。
- * 例: 8×8 は 64 + 56 + 56 = 176 ビットで 44 桁。
+ * 穴を、枠の全マス（行優先）の順のビット列（穴なら 1）にして16進で表す。先頭のビットを最上位にし、末尾は 0 で埋める。
+ * 例: 8×8 は 64 ビットで 16 桁。
  */
-export function encodeHamiltonianPathPoolObstacles(
+export function encodeHamiltonianPathPoolHoles(
   board: HamiltonianPathBoard,
 ): string {
-  const walls = new Set(board.walls);
-  const bits = listObstacleSlots(board.size).map((slot) =>
-    slot.kind === "wall"
-      ? walls.has(slot.cell)
-      : hasHamiltonianPathPartition(board, ...slot.partition),
+  const holes = new Set(board.holes);
+  const bits = listHamiltonianPathCells(board.size).map((cell) =>
+    holes.has(cell),
   );
   let encoded = "";
   for (let offset = 0; offset < bits.length; offset += bitsPerHexDigit) {
@@ -122,74 +85,58 @@ export function encodeHamiltonianPathPoolObstacles(
   return encoded;
 }
 
-/** `encodeHamiltonianPathPoolObstacles` で表した障害物と始点から問題を作り、形を確かめる。 */
+/** `encodeHamiltonianPathPoolHoles` で表した穴と始点から問題を作り、形を確かめる。 */
 export function decodeHamiltonianPathPoolProblem(
   size: number,
   start: number,
-  encodedObstacles: string,
+  encodedHoles: string,
 ): HamiltonianPathProblem {
   if (!isHamiltonianPathBoardSize(size)) {
     throw new RangeError(`Unsupported Hamiltonian path board size: ${size}`);
   }
   if (
-    !/^[0-9a-f]+$/.test(encodedObstacles) ||
-    encodedObstacles.length !== countObstacleHexDigits(size)
+    !/^[0-9a-f]+$/.test(encodedHoles) ||
+    encodedHoles.length !== countHoleHexDigits(size)
   ) {
     throw new RangeError(
-      `Hamiltonian path pool obstacles must be ${countObstacleHexDigits(size)} lowercase hex digits`,
+      `Hamiltonian path pool holes must be ${countHoleHexDigits(size)} lowercase hex digits`,
     );
   }
-  const bits = Array.from(encodedObstacles).flatMap((character) => {
+  const bits = Array.from(encodedHoles).flatMap((character) => {
     const digit = Number.parseInt(character, 16);
     return Array.from(
       { length: bitsPerHexDigit },
       (_, bit) => ((digit >> (bitsPerHexDigit - 1 - bit)) & 1) === 1,
     );
   });
-  const slots = listObstacleSlots(size);
-  const presentSlots = slots.filter((_, index) => bits[index]);
+  if (bits.slice(size * size).some(Boolean)) {
+    throw new RangeError("Hamiltonian path pool holes have padding bits");
+  }
   const problem: HamiltonianPathProblem = {
     size,
-    walls: presentSlots.flatMap((slot) =>
-      slot.kind === "wall" ? [slot.cell] : [],
-    ),
-    partitions: normalizeHamiltonianPathPartitions(
-      presentSlots.flatMap((slot) =>
-        slot.kind === "partition" ? [slot.partition] : [],
-      ),
-    ),
+    holes: listHamiltonianPathCells(size).filter((cell) => bits[cell]),
     start,
   };
-  if (bits.slice(slots.length).some(Boolean)) {
-    throw new RangeError("Hamiltonian path pool obstacles have padding bits");
-  }
   assertHamiltonianPathProblem(problem);
   return problem;
 }
 
-function toWallRatio(wallPercent: number): HamiltonianPathWallRatio {
-  const wallRatio = hamiltonianPathWallRatios.find(
-    (ratio) => Math.round(ratio * 100) === wallPercent,
-  );
-  if (wallRatio === undefined) {
-    throw new RangeError(
-      `Unsupported Hamiltonian path wall percent: ${wallPercent}`,
-    );
-  }
-  return wallRatio;
-}
-
 export function toHamiltonianPathPoolIdentity([
   size,
-  wallPercent,
+  targetAssumptionCount,
   candidateIndex,
 ]: HamiltonianPathProblemPoolEntry): HamiltonianPathProblemIdentity {
   if (!isHamiltonianPathBoardSize(size)) {
     throw new RangeError(`Unsupported Hamiltonian path board size: ${size}`);
   }
+  if (!isHamiltonianPathTargetAssumptionCount(targetAssumptionCount)) {
+    throw new RangeError(
+      `Unsupported Hamiltonian path target assumption count: ${targetAssumptionCount}`,
+    );
+  }
   return createHamiltonianPathProblemIdentity(
     size,
-    toWallRatio(wallPercent),
+    targetAssumptionCount,
     candidateIndex,
   );
 }
@@ -202,17 +149,13 @@ export function toHamiltonianPathPooledProblem(
     ,
     ,
     start,
-    encodedObstacles,
+    encodedHoles,
     assumptionCount,
     refutationStepCount,
     longestRefutationLength,
     fatalBranchCount,
   ] = entry;
-  const problem = decodeHamiltonianPathPoolProblem(
-    size,
-    start,
-    encodedObstacles,
-  );
+  const problem = decodeHamiltonianPathPoolProblem(size, start, encodedHoles);
   return {
     problem,
     identity: toHamiltonianPathPoolIdentity(entry),
@@ -274,7 +217,8 @@ export function findHamiltonianPathPoolEntry(
   }
   const { conditions } = toHamiltonianPathPoolIdentity(entry);
   return conditions.size === identity.conditions.size &&
-    conditions.wallRatio === identity.conditions.wallRatio
+    conditions.targetAssumptionCount ===
+      identity.conditions.targetAssumptionCount
     ? entry
     : null;
 }

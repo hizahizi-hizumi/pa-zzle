@@ -9,7 +9,9 @@ import {
 import {
   analyzeHamiltonianPathDifficulty,
   getHamiltonianPathSolveWorkload,
+  searchHamiltonianPathSolutionsForAnalysis,
 } from "@/games/hamiltonian-path/problem/difficulty-analysis";
+import { countHamiltonianPathHoleLayoutViolations } from "@/games/hamiltonian-path/problem/generation/hole-layout";
 import { measureHamiltonianPathStraightRatio } from "@/games/hamiltonian-path/problem/generation/straightness";
 import { getHamiltonianPathSymmetryKey } from "@/games/hamiltonian-path/problem/generation/symmetry";
 import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem/generator";
@@ -19,10 +21,10 @@ import {
   type HamiltonianPathBoardSize,
   type HamiltonianPathGenerationConditions,
   type HamiltonianPathSolveWorkload,
-  type HamiltonianPathWallRatio,
+  type HamiltonianPathTargetAssumptionCount,
 } from "@/games/hamiltonian-path/problem/problem";
 import {
-  encodeHamiltonianPathPoolObstacles,
+  encodeHamiltonianPathPoolHoles,
   type HamiltonianPathProblemPoolEntry,
   listHamiltonianPathPoolEntries,
   toHamiltonianPathPooledProblem,
@@ -30,33 +32,30 @@ import {
 import { selectHamiltonianPathProblemForDifficulty } from "@/games/hamiltonian-path/problem-selection";
 
 const defaultPerLevel = 500;
+const defaultRegeneratePerLevel = 3;
 
 /**
- * レベルごとに候補を作る生成条件。並びは採用率の高い順。
- * レベルの盤面サイズの範囲にある条件のうち、採用率の低い条件（例: レベル4 の 7×7・壁率0.15 は 0.2%）を除き、
- * 候補の計算をそのレベルに分類されやすい条件へ寄せる（`docs/パズル/導入調査/ハミルトン路/ハミルトン路難易度.md` §9）。
- * 条件を巡回して1問ずつ採るので、レベルの中の盤面サイズ・壁率の混ざり方もこの一覧で決まる。
+ * レベルごとに候補を作る生成条件。並びは1問あたりの計算の少ない順。
+ * レベルの盤面サイズの範囲にある条件のうち、そのレベルの1問を安く作れる条件に寄せる
+ * （`docs/パズル/導入調査/ハミルトン路/ハミルトン路難易度.md` §16）。レベル1 は同型の重なりが多い 5×5 を使わない。
+ * 8×8・目標7 の候補はレベル5 のために多く作るので、その候補のうちレベル3・4 に分類されたものもそのレベルで使う。
+ * 条件を巡回して1問ずつ採るので、レベルの中の盤面サイズ・目標の混ざり方もこの一覧で決まる。
  */
 const poolConditionsByDifficulty = {
-  "1": [
-    { size: 5, wallRatio: 0 },
-    { size: 5, wallRatio: 0.15 },
-    { size: 6, wallRatio: 0.15 },
-  ],
+  "1": [{ size: 6, targetAssumptionCount: 0 }],
   "2": [
-    { size: 6, wallRatio: 0 },
-    { size: 7, wallRatio: 0 },
-    { size: 7, wallRatio: 0.15 },
+    { size: 7, targetAssumptionCount: 0 },
+    { size: 6, targetAssumptionCount: 0 },
   ],
   "3": [
-    { size: 7, wallRatio: 0 },
-    { size: 8, wallRatio: 0 },
+    { size: 7, targetAssumptionCount: 4 },
+    { size: 8, targetAssumptionCount: 7 },
   ],
   "4": [
-    { size: 8, wallRatio: 0 },
-    { size: 7, wallRatio: 0 },
+    { size: 7, targetAssumptionCount: 4 },
+    { size: 8, targetAssumptionCount: 7 },
   ],
-  "5": [{ size: 8, wallRatio: 0 }],
+  "5": [{ size: 8, targetAssumptionCount: 7 }],
 } as const satisfies Record<
   HamiltonianPathDifficulty,
   readonly HamiltonianPathGenerationConditions[]
@@ -67,14 +66,14 @@ const MONOTONOUS_STRAIGHT_RATIO = 0.6;
 
 /**
  * 各レベルで単調な道の問題が占めてよい割合の上限。問題集の先頭から数えたどの範囲でも超えないように採る。
- * 単調な道は候補のどのレベルにも 15〜30% あり、上位のレベルほど多い。除き切ると上位レベルの供給を削り、
- * 直進区間が読みの一部になっている問題まで落とすので、割合を抑えるだけにする。
+ * 穴だけで一意にした候補では単調な道は数%しかないが、直進区間が読みの一部になっている問題まで落とさないよう、
+ * 除き切らずに割合を抑えるだけにする。
  */
 const MAXIMUM_MONOTONOUS_SHARE = 0.1;
 
 const usage = `Usage: bun run generate:hamiltonian-path-pool -- [options]
 
-レベルごとに、採用率の高い生成条件（盤面サイズ×壁率）で、決定的な seed の候補を番号順に生成・分析する。
+レベルごとに、採用率の高い生成条件（盤面サイズ×仮置きの回数の目標）で、決定的な seed の候補を番号順に生成・分析する。
 そのレベルに分類された候補を、回転・反転（8通り）の同型の重複をレベルをまたいで除き、直進率 ${MONOTONOUS_STRAIGHT_RATIO} 以上の
 単調な道を ${MAXIMUM_MONOTONOUS_SHARE * 100}% 以下に抑えながら、生成条件を巡回して問題集へ採る。
 
@@ -83,8 +82,11 @@ Options:
   --jobs <n>       並列ワーカー数 (default: 4)
   --block <n>      生成条件ごとに一度に増やす候補数 (default: 400)
   --budget <n>     生成条件ごとに調べる候補数の上限 (default: 30000)
-  --verify         生成せず、同梱の問題集の全問を identity から再生成→一意性確認→分析→分類し、
-                   盤面・作業の量・直進率の割合・同型と seed の重複・JSON の大きさ・選択時間を確かめる`;
+  --verify         生成せず、同梱の問題集の全問を一意性確認→分析→分類し、穴の見た目の基準・作業の量・直進率の割合・
+                   同型と seed の重複・JSON の大きさ・選択時間を確かめる。identity からの生成し直しは抜き取りで確かめる
+  --regenerate-per-level <n>
+                   --verify で identity から生成し直して盤面の一致を確かめる、レベルごとの問題数。等間隔に抜き取る。
+                   問題数以上を渡すと全問 (default: ${defaultRegeneratePerLevel})`;
 
 const outputPath = new URL(
   "../src/games/hamiltonian-path/problem/problem-pool.json",
@@ -99,7 +101,7 @@ type Candidate = {
   difficulty: HamiltonianPathDifficulty | null;
   symmetryKey: string;
   start: number;
-  encodedObstacles: string;
+  encodedHoles: string;
   straightRatio: number;
   workload: HamiltonianPathSolveWorkload | null;
 };
@@ -125,9 +127,9 @@ function readPositiveInteger(name: string, fallback: number): number {
 
 function conditionKeyOf({
   size,
-  wallRatio,
+  targetAssumptionCount,
 }: HamiltonianPathGenerationConditions): string {
-  return `${size}×${size}/${wallRatio}`;
+  return `${size}×${size}/t${targetAssumptionCount}`;
 }
 
 function isMonotonous(straightRatio: number): boolean {
@@ -142,7 +144,7 @@ function evaluateCandidate(
   const { problem, solution, symmetryKey } = generateHamiltonianPathProblem(
     createHamiltonianPathProblemIdentity(
       condition.size,
-      condition.wallRatio,
+      condition.targetAssumptionCount,
       index,
     ),
   );
@@ -161,7 +163,7 @@ function evaluateCandidate(
       assessment.status === "classified" ? assessment.difficulty : null,
     symmetryKey,
     start: problem.start,
-    encodedObstacles: encodeHamiltonianPathPoolObstacles(problem),
+    encodedHoles: encodeHamiltonianPathPoolHoles(problem),
     straightRatio: measureHamiltonianPathStraightRatio(solution),
     workload:
       analysis.status === "analyzed"
@@ -171,10 +173,11 @@ function evaluateCandidate(
 }
 
 function runWorker(args: readonly string[]): void {
-  const [size, wallRatio, start, count] = args.map(Number);
+  const [size, targetAssumptionCount, start, count] = args.map(Number);
   const condition = {
     size: size as HamiltonianPathBoardSize,
-    wallRatio: wallRatio as HamiltonianPathWallRatio,
+    targetAssumptionCount:
+      targetAssumptionCount as HamiltonianPathTargetAssumptionCount,
   };
   const end = start! + count!;
   for (let index = start!; index < end; index += 1) {
@@ -192,7 +195,7 @@ async function runBatch({ state, start, count }: Batch): Promise<Candidate[]> {
       Bun.fileURLToPath(import.meta.url),
       "--worker",
       String(condition.size),
-      String(condition.wallRatio),
+      String(condition.targetAssumptionCount),
       String(start),
       String(count),
     ],
@@ -209,15 +212,23 @@ async function runBatch({ state, start, count }: Batch): Promise<Candidate[]> {
     .map((line) => JSON.parse(line) as Candidate);
 }
 
-/** 1つのワーカーに渡す候補数の上限。重い条件を細かく分け、ワーカーの手が空かないようにする。 */
-const maximumBatchSize = 50;
+/**
+ * 1つのワーカーに渡す候補数の上限。重い条件を細かく分け、ワーカーの手が空かないようにする。
+ * 難しさへ歩く条件は1候補が数秒〜数十秒かかるので、穴の焼きなましだけの条件より細かく分ける。
+ */
+function findMaximumBatchSize({
+  targetAssumptionCount,
+}: HamiltonianPathGenerationConditions): number {
+  return targetAssumptionCount === 0 ? 50 : 5;
+}
 
 async function runBatches(
   batches: readonly Batch[],
   jobs: number,
 ): Promise<void> {
-  const queue = batches.flatMap((batch) =>
-    Array.from(
+  const queue = batches.flatMap((batch) => {
+    const maximumBatchSize = findMaximumBatchSize(batch.state.condition);
+    return Array.from(
       { length: Math.ceil(batch.count / maximumBatchSize) },
       (_, part): Batch => ({
         state: batch.state,
@@ -227,8 +238,8 @@ async function runBatches(
           batch.count - part * maximumBatchSize,
         ),
       }),
-    ),
-  );
+    );
+  });
   const pieces = [...queue];
   const results = new Map<Batch, Candidate[]>();
   await Promise.all(
@@ -386,10 +397,10 @@ function toPoolEntry({
   const workload = candidate.workload!;
   return [
     condition.size,
-    Math.round(condition.wallRatio * 100),
+    condition.targetAssumptionCount,
     candidate.index,
     candidate.start,
-    candidate.encodedObstacles,
+    candidate.encodedHoles,
     workload.assumptionCount,
     workload.refutationStepCount,
     workload.longestRefutationLength,
@@ -425,9 +436,9 @@ function describeLevelEntries(
 ): string[] {
   const pooled = entries.map(toHamiltonianPathPooledProblem);
   return [
-    `  盤面/壁率: ${formatCounts(pooled.map(({ identity }) => conditionKeyOf(identity.conditions)))}`,
+    `  盤面/仮置きの目標: ${formatCounts(pooled.map(({ identity }) => conditionKeyOf(identity.conditions)))}`,
     `  有効マス: ${describeDistribution(pooled.map(({ workload }) => workload.openCellCount))}`,
-    `  仕切り: ${describeDistribution(pooled.map(({ problem }) => problem.partitions.length))}`,
+    `  穴: ${describeDistribution(pooled.map(({ problem }) => problem.holes.length))}`,
     `  仮置きの回数: ${describeDistribution(pooled.map(({ workload }) => workload.assumptionCount))}`,
     `  先読みの手数の合計: ${describeDistribution(pooled.map(({ workload }) => workload.refutationStepCount))}`,
     `  最も長い先読み: ${describeDistribution(pooled.map(({ workload }) => workload.longestRefutationLength))}`,
@@ -578,28 +589,46 @@ async function runMain(): Promise<void> {
 type VerifyResult = {
   difficulty: HamiltonianPathDifficulty;
   index: number;
+  regenerated: boolean;
   straightRatio: number;
   failures: string[];
 };
+
+/** 抜き取って identity から生成し直す問題の、レベルの中の位置。問題集の全体から等間隔に選ぶ。 */
+function listRegeneratedIndices(
+  entryCount: number,
+  regeneratePerLevel: number,
+): Set<number> {
+  const count = Math.min(entryCount, regeneratePerLevel);
+  return new Set(
+    Array.from({ length: count }, (_, sample) =>
+      Math.floor(((sample + 0.5) * entryCount) / count),
+    ),
+  );
+}
 
 function verifyEntry(
   difficulty: HamiltonianPathDifficulty,
   index: number,
   entry: HamiltonianPathProblemPoolEntry,
+  regenerates: boolean,
 ): VerifyResult {
   const failures: string[] = [];
   const pooled = toHamiltonianPathPooledProblem(entry);
-  const generated = generateHamiltonianPathProblem(pooled.identity);
-  if (
-    generated.problem.start !== entry[3] ||
-    encodeHamiltonianPathPoolObstacles(generated.problem) !== entry[4]
-  ) {
-    failures.push("identity から再生成した問題が問題集と違う");
+  if (countHamiltonianPathHoleLayoutViolations(pooled.problem) > 0) {
+    failures.push("穴の見た目の基準を満たさない");
   }
-  const analysis = analyzeHamiltonianPathDifficulty(pooled.problem);
+  const solutionSearch = searchHamiltonianPathSolutionsForAnalysis(
+    pooled.problem,
+  );
+  const analysis = analyzeHamiltonianPathDifficulty(
+    pooled.problem,
+    {},
+    solutionSearch,
+  );
   if (analysis.status !== "analyzed") {
     failures.push(
-      `一意解で解法器が解き切れない (${analysis.status}: ${analysis.reason})`,
+      `一意解で解法器が解き切れる問題でない (${analysis.status}: ${analysis.reason})`,
     );
   } else {
     const workload = getHamiltonianPathSolveWorkload(analysis);
@@ -616,21 +645,46 @@ function verifyEntry(
       failures.push(`レベルが一致しない (${JSON.stringify(assessment)})`);
     }
   }
+  if (regenerates) {
+    const generated = generateHamiltonianPathProblem(pooled.identity);
+    if (
+      generated.problem.start !== entry[3] ||
+      encodeHamiltonianPathPoolHoles(generated.problem) !== entry[4]
+    ) {
+      failures.push("identity から生成し直した問題が問題集と違う");
+    }
+  }
+  const solution = solutionSearch.firstSolutions[0];
   return {
     difficulty,
     index,
-    straightRatio: measureHamiltonianPathStraightRatio(generated.solution),
+    regenerated: regenerates,
+    straightRatio: solution ? measureHamiltonianPathStraightRatio(solution) : 0,
     failures,
   };
 }
 
 function runVerifyWorker(args: readonly string[]): void {
-  const [jobIndex, jobCount] = args.map(Number);
+  const [jobIndex, jobCount, regeneratePerLevel] = args.map(Number);
   let position = 0;
   for (const { id: difficulty } of difficultyLevels) {
-    listHamiltonianPathPoolEntries(difficulty).forEach((entry, index) => {
+    const entries = listHamiltonianPathPoolEntries(difficulty);
+    const regeneratedIndices = listRegeneratedIndices(
+      entries.length,
+      regeneratePerLevel!,
+    );
+    entries.forEach((entry, index) => {
       if (position++ % jobCount! === jobIndex) {
-        console.log(JSON.stringify(verifyEntry(difficulty, index, entry)));
+        console.log(
+          JSON.stringify(
+            verifyEntry(
+              difficulty,
+              index,
+              entry,
+              regeneratedIndices.has(index),
+            ),
+          ),
+        );
       }
     });
   }
@@ -662,6 +716,10 @@ function keepsMonotonousShare(straightRatios: readonly number[]): boolean {
 
 async function runVerify(): Promise<void> {
   const jobs = readPositiveInteger("jobs", 4);
+  const regeneratePerLevel = readPositiveInteger(
+    "regenerate-per-level",
+    defaultRegeneratePerLevel,
+  );
   const startedAt = performance.now();
   const outputs = await Promise.all(
     Array.from({ length: jobs }, async (_, jobIndex) => {
@@ -672,6 +730,7 @@ async function runVerify(): Promise<void> {
           "--verify-worker",
           String(jobIndex),
           String(jobs),
+          String(regeneratePerLevel),
         ],
         { stdout: "pipe", stderr: "inherit" },
       );
@@ -726,7 +785,7 @@ async function runVerify(): Promise<void> {
   }
 
   console.log(
-    `${total}問を検証 (${((performance.now() - startedAt) / 1000).toFixed(1)}s, jobs=${jobs}): 不合格 ${failures.length} / 同型・seed の重複 ${duplicateCount} / 単調な道の割合が上限を超えたレベル ${unbalancedLevels.length}`,
+    `${total}問を検証、うち ${verified.filter((result) => result.regenerated).length}問を identity から生成し直した (${((performance.now() - startedAt) / 1000).toFixed(1)}s, jobs=${jobs}): 不合格 ${failures.length} / 同型・seed の重複 ${duplicateCount} / 単調な道の割合が上限を超えたレベル ${unbalancedLevels.length}`,
   );
   for (const failure of failures) {
     console.log(
