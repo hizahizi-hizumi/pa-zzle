@@ -145,7 +145,7 @@ describe("WaterSortTutorial", () => {
       expect(cued).toEqual([4]);
       expect(headline).toBeTruthy();
       expect(detail).toBeTruthy();
-      expect(rules).toEqual(["空ボトルへ", "？", "？", "？", "？"]);
+      expect(rules).toEqual(["空ボトル", "？", "？", "？", "？"]);
     });
 
     test("選んだ注ぎ元をもう一度押して選び直すと、選ぶ一言と注ぎ元の印に戻すこと", () => {
@@ -185,7 +185,7 @@ describe("WaterSortTutorial", () => {
       expect(contents).toEqual(["赤、赤、青", "緑"]);
       expect(headline).toBeTruthy();
       expect(cued).toEqual([2]);
-      expect(rules).toEqual(["空ボトルへ", "同じ色へ", "？", "？", "？"]);
+      expect(rules).toEqual(["空ボトル", "同じ色", "？", "？", "？"]);
     });
 
     test("重なった同じ色をまとめて注いで緑をそろえ、そろった緑のボトルを光らせて、そのボトルを押させること", () => {
@@ -202,10 +202,10 @@ describe("WaterSortTutorial", () => {
       expect(cued).toEqual([4]);
       expect(headline).toBeTruthy();
       expect(rules).toEqual([
-        "空ボトルへ",
-        "同じ色へ",
+        "空ボトル",
+        "同じ色",
         "まとめて",
-        "固定",
+        "そろい済",
         "？",
       ]);
     });
@@ -227,10 +227,10 @@ describe("WaterSortTutorial", () => {
       expect(headline).toBeTruthy();
       expect(cued).toEqual([2]);
       expect(rules).toEqual([
-        "空ボトルへ",
-        "同じ色へ",
+        "空ボトル",
+        "同じ色",
         "まとめて",
-        "固定",
+        "そろい済",
         "入るだけ",
       ]);
     });

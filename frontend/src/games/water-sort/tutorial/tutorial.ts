@@ -488,10 +488,10 @@ export const waterSortTutorial: Tutorial<
     startCaption: "最初は色が混ざっています",
   },
   rules: [
-    { id: "empty", label: "空ボトルへ" },
-    { id: "same-color", label: "同じ色へ" },
+    { id: "empty", label: "空ボトル" },
+    { id: "same-color", label: "同じ色" },
     { id: "together", label: "まとめて" },
-    { id: "sorted", label: "固定" },
+    { id: "sorted", label: "そろい済" },
     { id: "capacity", label: "入るだけ" },
   ],
   steps,
