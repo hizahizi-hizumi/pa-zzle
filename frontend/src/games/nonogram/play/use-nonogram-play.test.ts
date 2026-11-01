@@ -69,17 +69,19 @@ describe("useNonogramPlay", () => {
       expect(problemIdentity).toEqual(initial.identity);
     });
 
-    describe("操作の知らせ", () => {
-      test("操作する前は操作を知らせないこと", () => {
+    describe("操作する前の場合", () => {
+      test("操作を知らせないこと", () => {
         const { operation } = result.current;
 
         expect(operation).toBeNull();
       });
+    });
 
+    describe("未確定のマスを押した場合", () => {
       const markedCases = [["filled"], ["crossed"]] as const;
 
       test.each(markedCases)(
-        "未確定のマスを %s の印で押すと、その印を入れたことを知らせること",
+        "%s の印で押すと、その印を入れたことを知らせること",
         (mark) => {
           tap(result, firstBlackCellIndex, mark);
 
@@ -89,32 +91,39 @@ describe("useNonogramPlay", () => {
           });
         },
       );
+    });
 
-      describe("塗ったマスがある場合", () => {
-        beforeEach(() => {
-          tap(result, firstBlackCellIndex);
-        });
+    describe("塗ったマスがある場合", () => {
+      beforeEach(() => {
+        tap(result, firstBlackCellIndex);
+      });
 
-        test("同じ印で押すと印を消したことを、別の id で知らせること", () => {
-          const firstId = result.current.operation?.id;
+      test("同じ印で押すと印を消したことを、別の id で知らせること", () => {
+        const firstId = result.current.operation?.id;
 
-          tap(result, firstBlackCellIndex);
+        tap(result, firstBlackCellIndex);
 
-          expect(result.current.operation?.type).toBe("erased");
-          expect(result.current.operation?.id).not.toBe(firstId);
-        });
+        expect(result.current.operation?.type).toBe("erased");
+        expect(result.current.operation?.id).not.toBe(firstId);
+      });
 
-        test("待ったで操作の知らせを消すこと", () => {
-          act(() => result.current.undo());
+      test("待ったで直前の入力を取り消すこと", () => {
+        act(() => result.current.undo());
 
-          expect(result.current.operation).toBeNull();
-        });
+        expect(result.current.board.cells[firstBlackCellIndex]).toBe("unknown");
+        expect(result.current.canUndo).toBe(false);
+      });
 
-        test("盤面を戻すで操作の知らせを消すこと", () => {
-          act(() => result.current.restart());
+      test("待ったで操作の知らせを消すこと", () => {
+        act(() => result.current.undo());
 
-          expect(result.current.operation).toBeNull();
-        });
+        expect(result.current.operation).toBeNull();
+      });
+
+      test("盤面を戻すで操作の知らせを消すこと", () => {
+        act(() => result.current.restart());
+
+        expect(result.current.operation).toBeNull();
       });
     });
 
@@ -158,19 +167,6 @@ describe("useNonogramPlay", () => {
         const { matchedLines } = result.current;
 
         expect(matchedLines.rows[row]).toBe(true);
-      });
-    });
-
-    describe("塗った後の場合", () => {
-      beforeEach(() => {
-        tap(result, firstBlackCellIndex);
-      });
-
-      test("待ったで直前の入力を取り消すこと", () => {
-        act(() => result.current.undo());
-
-        expect(result.current.board.cells[firstBlackCellIndex]).toBe("unknown");
-        expect(result.current.canUndo).toBe(false);
       });
     });
 
