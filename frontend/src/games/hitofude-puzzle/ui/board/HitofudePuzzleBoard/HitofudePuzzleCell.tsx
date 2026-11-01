@@ -90,7 +90,9 @@ export function HitofudePuzzleCell({
           onPress(cell);
         }
       }}
-      className="relative min-h-0 min-w-0 outline-none focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 focus-visible:outline-foreground/70 disabled:cursor-default"
+      // フォーカスの枠は穴の縁（マスの辺に沿う角張った濃い線）と見分けられるよう、マスの内側へ下げた角の丸い
+      // ring の色の太い枠にし、マスを ring の色で淡く染める。
+      className="relative m-[10%] min-h-0 min-w-0 rounded-[22%] outline-none focus-visible:z-10 focus-visible:bg-ring/25 focus-visible:outline-4 focus-visible:outline-solid focus-visible:outline-offset-0 focus-visible:outline-ring disabled:cursor-default"
     />
   );
 }

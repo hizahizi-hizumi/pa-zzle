@@ -253,6 +253,15 @@ describe("HitofudePuzzlePlay", () => {
       expect(callbacks.onMoveHeadToward).toHaveBeenCalledWith("right");
     });
 
+    test("見出しのメニューのボタンにフォーカスがあっても、下向きの矢印キーで先端を動かすこと", () => {
+      const menuButton = screen.getByRole("button", { name: "その他の操作" });
+      menuButton.focus();
+      fireEvent.keyDown(menuButton, { key: "ArrowDown" });
+
+      expect(callbacks.onMoveHeadToward).toHaveBeenCalledWith("down");
+      expect(menuButton.getAttribute("aria-expanded")).toBe("false");
+    });
+
     test("見出しに引き直しと待ったの回数を表示すること", () => {
       const header = screen.getByRole("heading", {
         name: HITOFUDE_PUZZLE_DISPLAY_NAME,
