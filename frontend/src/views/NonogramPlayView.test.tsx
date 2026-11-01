@@ -13,6 +13,7 @@ import { readPlayRecords } from "@/records/storage";
 import { NonogramPlayView } from "@/views/NonogramPlayView";
 import { PlayResultView } from "@/views/PlayResultView";
 
+const internalDiagnostics = vi.hoisted(() => ({ available: false }));
 const problemSeed = "nonogram-play-view";
 
 vi.mock("@/games/problem-seed", async (importOriginal) => ({
@@ -21,12 +22,15 @@ vi.mock("@/games/problem-seed", async (importOriginal) => ({
 }));
 
 vi.mock("@/lib/internal-diagnostics", () => ({
-  internalDiagnosticsAvailable: false,
+  get internalDiagnosticsAvailable() {
+    return internalDiagnostics.available;
+  },
   buildRevision: null,
 }));
 
 afterEach(() => {
   cleanup();
+  internalDiagnostics.available = false;
   window.localStorage.clear();
 });
 
@@ -185,6 +189,28 @@ describe("NonogramPlayView", () => {
         requested.problem.width * requested.problem.height,
       );
       expect(search.textContent).toBe(`?problem=${problemId}`);
+    });
+  });
+
+  describe("内部診断を使える環境の場合", () => {
+    const { identity } = selectNonogramProblemForDifficulty("2", problemSeed);
+
+    beforeEach(() => {
+      internalDiagnostics.available = true;
+      renderAt("/puzzles/nonogram/play/2");
+      fireEvent.pointerDown(
+        screen.getByRole("button", { name: "その他の操作" }),
+        { button: 0, ctrlKey: false },
+      );
+    });
+
+    test("メニューの検証情報から出題中の問題の検証情報を開けること", () => {
+      fireEvent.click(screen.getByRole("menuitem", { name: "検証情報" }));
+
+      const dialog = screen.getByRole("dialog", { name: "検証情報" });
+
+      expect(within(dialog).getByText("レベル 2")).toBeTruthy();
+      expect(within(dialog).getByText(identity.seed)).toBeTruthy();
     });
   });
 
