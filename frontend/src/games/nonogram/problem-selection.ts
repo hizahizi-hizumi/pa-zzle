@@ -1,10 +1,16 @@
 import type { NonogramDifficulty } from "@/games/nonogram/difficulty";
 import {
+  isNonogramProblemIdentity,
+  type NonogramRecordedProblemIdentity,
+} from "@/games/nonogram/problem/problem";
+import {
   findNonogramPooledProblemByProblemId,
+  hasNonogramPoolProblemId,
   listNonogramPoolEntries,
   type NonogramPooledProblem,
   toNonogramPooledProblem,
 } from "@/games/nonogram/problem/problem-pool";
+import { createProblemId } from "@/games/problem-id";
 import type { ProblemSeed } from "@/games/problem-seed";
 import { selectProblemPoolEntry } from "@/games/problem-selection";
 
@@ -32,4 +38,25 @@ export function selectNonogramProblemById(
   problemId: string,
 ): NonogramPooledProblem | null {
   return findNonogramPooledProblemByProblemId(difficulty, problemId);
+}
+
+/** 難易度の問題集から問題 ID で1問を引けるかを、問題を復元せずに確かめる。 */
+export function canSelectNonogramProblemById(
+  difficulty: NonogramDifficulty,
+  problemId: string,
+): boolean {
+  return hasNonogramPoolProblemId(difficulty, problemId);
+}
+
+/**
+ * 記録に残した identity から、その難易度の問題集の同じ問題を復元する。
+ * 問題集に無い identity（生成器の版が今と違う記録など）は復元できないので `null` を返す。
+ */
+export function restoreNonogramProblem(
+  difficulty: NonogramDifficulty,
+  identity: NonogramRecordedProblemIdentity,
+): NonogramPooledProblem | null {
+  return isNonogramProblemIdentity(identity)
+    ? selectNonogramProblemById(difficulty, createProblemId(identity))
+    : null;
 }

@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 
+import { NONOGRAM_DISPLAY_NAME } from "@/games/nonogram/display-name";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import { PuzzleSelectionView } from "@/views/PuzzleSelectionView";
 
@@ -20,6 +21,7 @@ describe("PuzzleSelectionView", () => {
     ["スライドパズル", "/puzzles/slide-puzzle"],
     ["バイナリパズル", "/puzzles/takuzu"],
     [REFLECTION_DISPLAY_NAME, "/puzzles/reflection"],
+    [NONOGRAM_DISPLAY_NAME, "/puzzles/nonogram"],
   ] as const;
 
   beforeEach(() => {

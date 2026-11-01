@@ -1,12 +1,23 @@
-import { useGameNavigation } from "@/game-catalog/game-navigation";
 import { nonogramCatalogEntry } from "@/game-catalog/nonogram/nonogram-catalog-entry";
 import {
-  useProblemIdQuerySync,
-  useRequestedProblem,
-} from "@/game-catalog/problem-id-query";
+  type CompletedGamePlay,
+  usePlayableGame,
+} from "@/game-catalog/playable-game";
+import { useRequestedProblem } from "@/game-catalog/problem-id-query";
+import { createNonogramDiagnosticSnapshot } from "@/games/nonogram/diagnostics";
 import type { NonogramDifficulty } from "@/games/nonogram/difficulty";
-import { useNonogramPlay } from "@/games/nonogram/play/use-nonogram-play";
+import {
+  type NonogramResult,
+  useNonogramPlay,
+} from "@/games/nonogram/play/use-nonogram-play";
+import { createNonogramPlayAttemptProgress } from "@/games/nonogram/play-attempt";
+import {
+  createNonogramPlayRecord,
+  nonogramPlayRecordDefinition,
+} from "@/games/nonogram/play-record";
+import type { NonogramProblemIdentity } from "@/games/nonogram/problem/problem";
 import { selectNonogramProblemById } from "@/games/nonogram/problem-selection";
+import { NonogramDiagnostics } from "@/games/nonogram/ui/NonogramDiagnostics";
 import { NonogramPlay } from "@/games/nonogram/ui/NonogramPlay";
 import type { ProblemId } from "@/games/problem-id";
 
@@ -16,10 +27,19 @@ type PlayableNonogramProps = {
   avoidedProblemId?: ProblemId;
 };
 
-/**
- * 1問のプレイを URL の問題 ID と画面遷移へつなぐ。
- * 評価・記録・検証情報が無いので、完了記録・離脱の記録・検証情報（`usePlayableGame`）にはつながない。
- */
+function createPlayRecord(
+  completed: CompletedGamePlay<
+    NonogramDifficulty,
+    NonogramProblemIdentity,
+    NonogramResult
+  >,
+) {
+  return createNonogramPlayRecord({
+    ...completed,
+    workload: completed.result.workload,
+  });
+}
+
 export function PlayableNonogram({
   difficulty,
   avoidedProblemId,
@@ -28,33 +48,44 @@ export function PlayableNonogram({
     selectNonogramProblemById(difficulty, problemId),
   );
   const play = useNonogramPlay(difficulty, requestedProblem, avoidedProblemId);
-  useProblemIdQuerySync(play.problemIdentity);
-  const navigation = useGameNavigation(nonogramCatalogEntry);
+  const { screenProps, diagnostics } = usePlayableGame({
+    game: nonogramCatalogEntry,
+    play,
+    playRecordDefinition: nonogramPlayRecordDefinition,
+    createPlayRecord,
+    createPlayAttemptProgress: createNonogramPlayAttemptProgress,
+    createDiagnosticSnapshot(buildRevision) {
+      return createNonogramDiagnosticSnapshot({
+        difficulty,
+        problemIdentity: play.problemIdentity,
+        buildRevision,
+      });
+    },
+  });
 
   return (
-    <NonogramPlay
-      difficulty={difficulty}
-      progress={play.progress}
-      elapsedMs={play.elapsedMs}
-      result={play.result}
-      recordOutcomeNotice={null}
-      board={play.board}
-      clues={play.clues}
-      matchedLines={play.matchedLines}
-      strokeRange={play.strokeRange}
-      canUndo={play.canUndo}
-      canRestart={play.canRestart}
-      onStartStroke={play.startStroke}
-      onExtendStroke={play.extendStroke}
-      onEndStroke={play.endStroke}
-      onUndo={play.undo}
-      onRestart={play.restart}
-      onReplay={play.replay}
-      onClearAnimationComplete={play.completeClearAnimation}
-      onStartNewProblem={play.startNewProblem}
-      onOpenRecords={navigation.openRecords}
-      onChangeDifficulty={navigation.changeDifficulty}
-      onBackToHome={navigation.backToHome}
-    />
+    <>
+      <NonogramPlay
+        {...screenProps}
+        board={play.board}
+        clues={play.clues}
+        matchedLines={play.matchedLines}
+        strokeRange={play.strokeRange}
+        repaintCount={play.repaintCount}
+        canUndo={play.canUndo}
+        canRestart={play.canRestart}
+        onStartStroke={play.startStroke}
+        onExtendStroke={play.extendStroke}
+        onEndStroke={play.endStroke}
+        onUndo={play.undo}
+        onRestart={play.restart}
+      />
+      {diagnostics.snapshot && (
+        <NonogramDiagnostics
+          snapshot={diagnostics.snapshot}
+          onClose={diagnostics.close}
+        />
+      )}
+    </>
   );
 }

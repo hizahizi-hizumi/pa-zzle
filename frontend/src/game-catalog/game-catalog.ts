@@ -4,6 +4,7 @@ import type {
 } from "@/game-catalog/game-catalog-entry";
 import { minesweeperCatalogEntry } from "@/game-catalog/minesweeper/minesweeper-catalog-entry";
 import { nanpureCatalogEntry } from "@/game-catalog/nanpure/nanpure-catalog-entry";
+import { nonogramCatalogEntry } from "@/game-catalog/nonogram/nonogram-catalog-entry";
 import { parkingJamCatalogEntry } from "@/game-catalog/parking-jam/parking-jam-catalog-entry";
 import { reflectionCatalogEntry } from "@/game-catalog/reflection/reflection-catalog-entry";
 import { slidePuzzleCatalogEntry } from "@/game-catalog/slide-puzzle/slide-puzzle-catalog-entry";
@@ -21,6 +22,7 @@ export const gameCatalog = [
   slidePuzzleCatalogEntry,
   takuzuCatalogEntry,
   reflectionCatalogEntry,
+  nonogramCatalogEntry,
 ] as const satisfies readonly [GameCatalogEntry, ...GameCatalogEntry[]];
 
 export function findGameCatalogEntry(

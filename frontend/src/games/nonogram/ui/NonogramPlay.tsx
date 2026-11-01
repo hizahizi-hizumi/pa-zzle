@@ -16,6 +16,7 @@ import { NonogramClearAnimation } from "@/games/nonogram/ui/board/clear/Nonogram
 import { NonogramBoard } from "@/games/nonogram/ui/board/NonogramBoard";
 import { NonogramHowToPlayDialog } from "@/games/nonogram/ui/NonogramHowToPlayDialog";
 import { NonogramMarkToggle } from "@/games/nonogram/ui/NonogramPlay/NonogramMarkToggle";
+import { NonogramResultScreen } from "@/games/nonogram/ui/result/NonogramResultScreen";
 import type {
   GamePlayScreenProps,
   RestartableGamePlayScreenProps,
@@ -32,6 +33,7 @@ type NonogramPlayProps = GamePlayScreenProps<
     clues: NonogramClues;
     matchedLines: NonogramLineFlags;
     strokeRange: NonogramStrokeRange | null;
+    repaintCount: number;
     onStartStroke: (cellIndex: number, mark: NonogramMark) => void;
     onExtendStroke: (cellIndex: number) => void;
     onEndStroke: () => void;
@@ -40,13 +42,16 @@ type NonogramPlayProps = GamePlayScreenProps<
 const INITIAL_MARK: NonogramMark = "filled";
 
 export function NonogramPlay({
+  difficulty,
   progress,
   elapsedMs,
   result,
+  recordOutcomeNotice,
   board,
   clues,
   matchedLines,
   strokeRange,
+  repaintCount,
   canUndo,
   canRestart,
   onStartStroke,
@@ -57,6 +62,7 @@ export function NonogramPlay({
   onReplay,
   onClearAnimationComplete,
   onStartNewProblem,
+  onOpenRecords,
   onChangeDifficulty,
   onBackToHome,
   onOpenDiagnostics,
@@ -79,7 +85,10 @@ export function NonogramPlay({
       progress={progress}
       result={result}
       title={NONOGRAM_DISPLAY_NAME}
-      metrics={[{ type: "elapsed-time", elapsedMs }]}
+      metrics={[
+        { type: "count", label: "塗り直し", count: repaintCount },
+        { type: "elapsed-time", elapsedMs },
+      ]}
       canRestart={canRestart}
       onRestart={onRestart}
       onReplay={handleReplay}
@@ -90,7 +99,19 @@ export function NonogramPlay({
       renderHowToPlayDialog={({ open, onClose }) => (
         <NonogramHowToPlayDialog open={open} onClose={onClose} />
       )}
-      renderResultScreen={() => null}
+      renderResultScreen={(clearedResult) => (
+        <NonogramResultScreen
+          difficulty={difficulty}
+          result={clearedResult}
+          recordOutcomeNotice={recordOutcomeNotice}
+          onReplay={handleReplay}
+          onStartNewProblem={handleStartNewProblem}
+          onOpenRecords={onOpenRecords}
+          onChangeDifficulty={onChangeDifficulty}
+          onBackToHome={onBackToHome}
+          onOpenDiagnostics={onOpenDiagnostics}
+        />
+      )}
     >
       <main className="flex min-h-0 flex-1 items-center justify-center px-2 py-2 [container-type:size] sm:px-4">
         <NonogramClearAnimation

@@ -5,6 +5,8 @@ import {
   toNonogramPooledProblem,
 } from "@/games/nonogram/problem/problem-pool";
 import {
+  canSelectNonogramProblemById,
+  restoreNonogramProblem,
   selectNonogramProblemById,
   selectNonogramProblemForDifficulty,
 } from "@/games/nonogram/problem-selection";
@@ -85,5 +87,44 @@ describe("selectNonogramProblemById", () => {
     const found = selectNonogramProblemById("5", levelOneProblemId);
 
     expect(found).toBeNull();
+  });
+});
+
+describe("canSelectNonogramProblemById", () => {
+  const selected = selectNonogramProblemForDifficulty(
+    "2",
+    "nonogram-can-select",
+  );
+  const problemId = createProblemId(selected.identity);
+
+  const cases = [
+    ["その難易度の問題集にある問題 ID", true, "2", problemId],
+    ["別の難易度の問題集だけにある問題 ID", false, "3", problemId],
+    ["問題集に無い問題 ID", false, "2", "0000000000"],
+  ] as const;
+
+  test.each(cases)("%s には %s を返すこと", (_, expected, difficulty, id) => {
+    const selectable = canSelectNonogramProblemById(difficulty, id);
+
+    expect(selectable).toBe(expected);
+  });
+});
+
+describe("restoreNonogramProblem", () => {
+  const selected = selectNonogramProblemForDifficulty("4", "nonogram-restore");
+
+  test("記録に残した identity から同じ問題を復元すること", () => {
+    const restored = restoreNonogramProblem("4", selected.identity);
+
+    expect(restored).toEqual(selected);
+  });
+
+  test("生成器の版が今と違う identity には null を返すこと", () => {
+    const restored = restoreNonogramProblem("4", {
+      ...selected.identity,
+      generatorVersion: "0",
+    });
+
+    expect(restored).toBeNull();
   });
 });

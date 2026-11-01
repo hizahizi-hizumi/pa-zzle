@@ -1,10 +1,46 @@
-import type { GameCatalogEntry } from "@/game-catalog/game-catalog-entry";
+import {
+  type GameCatalogEntry,
+  resolveRecordProblemPlayTarget,
+} from "@/game-catalog/game-catalog-entry";
+import { RecordedNonogramResult } from "@/game-catalog/nonogram/RecordedNonogramResult";
+import { parseDifficultyLevel } from "@/games/difficulty";
+import pictogramSvg from "@/games/nonogram/assets/pictogram.svg?raw";
+import { NONOGRAM_DISPLAY_NAME } from "@/games/nonogram/display-name";
+import {
+  isNonogramPlayRecord,
+  nonogramPlayRecordDefinition,
+  restoreNonogramRecordedResult,
+} from "@/games/nonogram/play-record";
+import { canSelectNonogramProblemById } from "@/games/nonogram/problem-selection";
+import { nonogramPlayRecordDisplay } from "@/games/nonogram/ui/play-record-display";
 
-/**
- * ノノグラムの入口とプレイ画面。記録・結果画面・ピクトグラムをつながないので `gameCatalog` には載せず、
- * パズル選択・記録の画面には出さない。入口とプレイ画面は URL で直接開ける。
- */
 export const nonogramCatalogEntry = {
+  id: nonogramPlayRecordDefinition.gameId,
+  name: NONOGRAM_DISPLAY_NAME,
+  pictogramSvg,
   entryPath: "/puzzles/nonogram",
   playPath: "/puzzles/nonogram/play/:difficulty",
-} as const satisfies Pick<GameCatalogEntry, "entryPath" | "playPath">;
+  playRecordDisplay: nonogramPlayRecordDisplay,
+  recordProblemPlayTarget(record) {
+    return isNonogramPlayRecord(record)
+      ? resolveRecordProblemPlayTarget(
+          parseDifficultyLevel(record.payload.difficulty),
+          record.payload.problemIdentity,
+          canSelectNonogramProblemById,
+        )
+      : null;
+  },
+  attemptProblemPlayTarget({ start }) {
+    return resolveRecordProblemPlayTarget(
+      parseDifficultyLevel(start.difficulty),
+      start.problemIdentity,
+      canSelectNonogramProblemById,
+    );
+  },
+  renderRecordResult(record, context) {
+    const recorded = restoreNonogramRecordedResult(record);
+    return recorded ? (
+      <RecordedNonogramResult {...recorded} {...context} />
+    ) : null;
+  },
+} satisfies GameCatalogEntry;

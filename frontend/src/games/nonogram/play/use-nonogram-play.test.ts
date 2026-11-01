@@ -3,6 +3,7 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { useNonogramPlay } from "@/games/nonogram/play/use-nonogram-play";
 import { selectNonogramProblemForDifficulty } from "@/games/nonogram/problem-selection";
 import type { NonogramPattern } from "@/games/nonogram/puzzle/pattern";
+import type { NonogramMark } from "@/games/nonogram/session/session";
 import { createProblemId } from "@/games/problem-id";
 import { createProblemSeed } from "@/games/problem-seed";
 
@@ -20,6 +21,7 @@ const initial = selectNonogramProblemForDifficulty(difficulty, initialSeed);
 const other = selectNonogramProblemForDifficulty(difficulty, otherSeed);
 const { solution } = initial.problem;
 const firstBlackCellIndex = solution.black.indexOf(true);
+const firstWhiteCellIndex = solution.black.indexOf(false);
 
 function listBlackCellIndices(pattern: NonogramPattern): number[] {
   return pattern.black.flatMap((isBlack, cellIndex) =>
@@ -27,8 +29,12 @@ function listBlackCellIndices(pattern: NonogramPattern): number[] {
   );
 }
 
-function tap(result: HookResult, cellIndex: number): void {
-  act(() => result.current.startStroke(cellIndex, "filled"));
+function tap(
+  result: HookResult,
+  cellIndex: number,
+  mark: NonogramMark = "filled",
+): void {
+  act(() => result.current.startStroke(cellIndex, mark));
   act(() => result.current.endStroke());
 }
 
@@ -124,7 +130,7 @@ describe("useNonogramPlay", () => {
         fillSolution(result);
       });
 
-      test("完成演出へ進み、経過時間を止め、評価を返さないこと", () => {
+      test("完成演出へ進み、経過時間を止め、問題の作業の量で評価した結果を返すこと", () => {
         const {
           progress,
           status,
@@ -135,14 +141,17 @@ describe("useNonogramPlay", () => {
         expect(progress).toBe("clearing");
         expect(status).toBe("cleared");
         expect(completedAt).not.toBeNull();
-        expect(playResult).toBeNull();
+        expect(playResult).toMatchObject({
+          repaintCount: 0,
+          workload: initial.workload,
+          score: { total: 100 },
+        });
       });
 
-      test("完成演出を終えても盤面を見せたままにすること", () => {
+      test("完成演出を終えると結果へ進むこと", () => {
         act(() => result.current.completeClearAnimation());
 
         expect(result.current.progress).toBe("result");
-        expect(result.current.board.cells[firstBlackCellIndex]).toBe("filled");
       });
 
       test("リセットで同じ問題を未確定の盤面から始め直すこと", () => {
@@ -153,6 +162,58 @@ describe("useNonogramPlay", () => {
         expect(
           result.current.board.cells.every((state) => state === "unknown"),
         ).toBe(true);
+      });
+    });
+
+    describe("塗りを待ったで取り消してから解いた場合", () => {
+      beforeEach(() => {
+        tap(result, firstBlackCellIndex);
+        act(() => result.current.undo());
+        fillSolution(result);
+      });
+
+      test("待ったで消えた塗りを塗り直しに数えて減点し、待ったの回数では減点しないこと", () => {
+        const playResult = result.current.result;
+
+        expect(playResult).toMatchObject({ repaintCount: 1, undoCount: 1 });
+        expect(playResult?.score.breakdown).toEqual({ speed: 85, accuracy: 12 });
+      });
+    });
+
+    describe("塗りを消してから盤面を戻して解いた場合", () => {
+      beforeEach(() => {
+        tap(result, firstBlackCellIndex);
+        tap(result, firstBlackCellIndex);
+        tap(result, firstBlackCellIndex);
+        act(() => result.current.restart());
+        fillSolution(result);
+      });
+
+      test("盤面を戻す前の塗り直しを引き継ぎ、盤面を戻して消えた塗りと盤面を戻した回数では減点しないこと", () => {
+        const playResult = result.current.result;
+
+        expect(playResult).toMatchObject({ repaintCount: 1, restartCount: 1 });
+        expect(playResult?.score.breakdown).toEqual({ speed: 85, accuracy: 12 });
+      });
+    });
+
+    describe("× を付け外ししてから解いた場合", () => {
+      beforeEach(() => {
+        tap(result, firstWhiteCellIndex, "crossed");
+        tap(result, firstWhiteCellIndex, "crossed");
+        tap(result, firstWhiteCellIndex, "crossed");
+        act(() => result.current.undo());
+        fillSolution(result);
+      });
+
+      test("× の付け外しを数えるが、減点しないこと", () => {
+        const playResult = result.current.result;
+
+        expect(playResult).toMatchObject({
+          repaintCount: 0,
+          crossToggleCount: 3,
+        });
+        expect(playResult?.score.breakdown).toEqual({ speed: 85, accuracy: 15 });
       });
     });
 
