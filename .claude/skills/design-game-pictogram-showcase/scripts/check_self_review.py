@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-REQUIRED_CHECKS = (
+COMMON_CHECKS = (
     "observed_hero_play_full_cycle",
     "observed_key_moments_zoomed",
     "observed_list_selected_static",
@@ -22,8 +22,8 @@ REQUIRED_CHECKS = (
     "static_colors_match_play_screen",
     "static_readable_at_list_size",
     "light_and_dark_both_hold",
-    "play_end_or_loop_seam_matches_static",
     "delayed_start_has_no_static_flash",
+    "motion_smooth_no_stutter",
     "parts_stay_attached",
     "no_unintended_overlap_or_overflow",
     "transform_and_clip_are_natural",
@@ -33,7 +33,17 @@ REQUIRED_CHECKS = (
     "no_unexpected_console_error",
     "no_obvious_unfinished_artifact",
 )
+# Each playback form adds its own end / hold / seam checks; the other forms' checks are unknown.
+PLAYBACK_CHECKS = {
+    "once": ("once_end_matches_static",),
+    "cut": ("cut_hold_matches_static", "cut_switch_is_instant"),
+    "seam": ("seam_matches_static",),
+}
 VALID_RESULTS = {"pass", "reject"}
+
+
+def required_checks(playback: str) -> tuple[str, ...]:
+    return (*COMMON_CHECKS, *PLAYBACK_CHECKS[playback])
 
 
 def parse_args() -> argparse.Namespace:
@@ -52,23 +62,26 @@ def load_json(path: Path) -> dict[str, Any]:
     return value
 
 
-def manifest_candidate_ids(manifest: dict[str, Any]) -> list[str]:
+def manifest_candidate_playbacks(manifest: dict[str, Any]) -> dict[str, str]:
     candidates = manifest.get("candidates")
     if not isinstance(candidates, list) or not candidates:
         raise ValueError("manifest candidates must be a non-empty array")
 
-    ids: list[str] = []
+    playbacks: dict[str, str] = {}
     for index, candidate in enumerate(candidates):
         if not isinstance(candidate, dict):
             raise ValueError(f"candidate[{index}] must be an object")
         candidate_id = candidate.get("id")
         if not isinstance(candidate_id, str) or not candidate_id.strip():
             raise ValueError(f"candidate[{index}].id must be a non-empty string")
-        ids.append(candidate_id)
-    return ids
+        playback = candidate.get("playback")
+        if playback not in PLAYBACK_CHECKS:
+            raise ValueError(f"{candidate_id}: playback must be once, cut, or seam")
+        playbacks[candidate_id] = playback
+    return playbacks
 
 
-def validate_candidate_review(candidate_id: str, review: Any) -> list[str]:
+def validate_candidate_review(candidate_id: str, playback: str, review: Any) -> list[str]:
     if not isinstance(review, dict):
         return [f"{candidate_id}: review must be an object"]
 
@@ -81,17 +94,18 @@ def validate_candidate_review(candidate_id: str, review: Any) -> list[str]:
     if not isinstance(checks, dict):
         return [*errors, f"{candidate_id}: checks must be an object"]
 
-    for check_name in REQUIRED_CHECKS:
+    required = required_checks(playback)
+    for check_name in required:
         value = checks.get(check_name)
         if not isinstance(value, bool):
             errors.append(f"{candidate_id}: {check_name} must be boolean")
 
-    unknown_checks = sorted(set(checks) - set(REQUIRED_CHECKS))
+    unknown_checks = sorted(set(checks) - set(required))
     for check_name in unknown_checks:
         errors.append(f"{candidate_id}: unknown check: {check_name}")
 
     if result == "pass":
-        failed_checks = [name for name in REQUIRED_CHECKS if checks.get(name) is not True]
+        failed_checks = [name for name in required if checks.get(name) is not True]
         if failed_checks:
             errors.append(
                 f"{candidate_id}: pass requires every check to be true: {', '.join(failed_checks)}"
@@ -101,7 +115,8 @@ def validate_candidate_review(candidate_id: str, review: Any) -> list[str]:
 
 
 def validate(manifest: dict[str, Any], self_review: dict[str, Any]) -> list[str]:
-    candidate_ids = manifest_candidate_ids(manifest)
+    playbacks = manifest_candidate_playbacks(manifest)
+    candidate_ids = list(playbacks)
     reviews = self_review.get("candidates")
     if not isinstance(reviews, dict):
         return ["self-review candidates must be an object"]
@@ -111,7 +126,9 @@ def validate(manifest: dict[str, Any], self_review: dict[str, Any]) -> list[str]
         if candidate_id not in reviews:
             errors.append(f"{candidate_id}: self-review is missing")
             continue
-        errors.extend(validate_candidate_review(candidate_id, reviews[candidate_id]))
+        errors.extend(
+            validate_candidate_review(candidate_id, playbacks[candidate_id], reviews[candidate_id])
+        )
 
     unknown_ids = sorted(set(reviews) - set(candidate_ids))
     for candidate_id in unknown_ids:
