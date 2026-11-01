@@ -54,7 +54,7 @@ export type TutorialIntroScene = "goal" | "start";
  * 導入のうち、盤面が受け持つ場面。
  * - `scene`: 今見せる場面。導入を終えた後は `null` で、解いている盤面を見せる。
  * - `playing`: 場面の動きを見せる間。盤面が見えるまでと、動きを終えた後は `false` で、場面の終わりの盤面を見せる。
- * - `onSceneEnd`: 場面の動きを終えたら呼ぶ。動きを減らす設定では、動かさずにすぐ呼ぶ。
+ * - `onSceneEnd`: 場面の動きを終えたら呼ぶ。動かさずに見せる場面と、動きを減らす設定では、すぐ呼ぶ。
  */
 export type TutorialBoardIntro = {
   scene: TutorialIntroScene | null;
@@ -87,8 +87,8 @@ type TutorialScreenProps = {
  * 導入の段。開いたときは `name` から、もう一度始めたときは `start` から進む。
  * - `name`: 上部の領域の中央に、ピクトグラムと名前を大きく、その下に何をするパズルかの一文を出す。
  * - `goalAppearing`: その下に、解き終えた盤面とゴールの一言を出す。
- * - `goal`: 解き終えた盤面の動きを盤面に任せ、終えたら読む間だけ待つ。
- * - `start`: 始めの盤面へ移る動きを盤面に任せ、始まりの一言を添えて、終えたら読む間だけ待つ。
+ * - `goal`: 解き終えた盤面の動きを盤面に任せ、終えたら「次へ」を待つ。
+ * - `start`: 始めの盤面へ移る動きを盤面に任せ、始まりの一言を添えて、終えたら「次へ」を待つ。
  * - `header`: 名前を上部へ移し、移し終える頃にルールと一言を出す。
  * - `reveal`: 名前がもう上部にあるときに、ルールと一言を出す。
  * - `done`: 導入を終えた。
@@ -110,18 +110,6 @@ const NAME_MOVE_MS = 400;
 /** ルールと一言は、名前がその行を通り過ぎてから出す。`header` の見せ方の `delay-350` と同じ値。 */
 const REVEAL_AFTER_NAME_DELAY_MS = 350;
 const REVEAL_MS = 300;
-
-/**
- * 盤面の場面を見せ終えてから、次へ進むまでの読む間。
- * 動きを減らす設定では、盤面の動きで場面を見せる間が無いので、そのぶん長く止めて読ませる。
- */
-const sceneHoldMs = {
-  animated: { goal: 1200, start: 1200 },
-  still: { goal: 2800, start: 2200 },
-} as const satisfies Record<
-  "animated" | "still",
-  Record<TutorialIntroScene, number>
->;
 
 /**
  * 段ごとの見せ方。
@@ -277,7 +265,7 @@ function getMoveFromIntroName(
 /**
  * 開いたときに、パズルの名前と何をするパズルか、ゴールの盤面、始めの盤面を順に見せてから、1つの盤面を埋めながらルールを1つずつ身につけていく画面。
  * 盤面を主役にし、上部にパズルの名前と手に入れたルール、盤面の直上に短い一言だけを出す。
- * 導入は自分のペースで進められるよう、自動で進むほかに「次へ」で次の場面へ進められ、ほかのどこを押しても、どのキーでも飛ばせる。
+ * 導入は自分のペースで進められるよう、ゴールと始まりの盤面は「次へ」で進め、ほかのどこを押しても、どのキーでも飛ばせる。
  */
 export function TutorialScreen({
   title,
@@ -414,7 +402,10 @@ export function TutorialScreen({
     );
   }, [changeStage, finishIntro, schedule]);
 
-  // 盤面が場面の動きを終えたら、読む間だけ待って次の場面へ進む。
+  /**
+   * 盤面が場面の動きを終えたら、終わりの盤面を見せたまま「次へ」を待つ。
+   * 盤面を見る速さは人によって違うので、ゴールと始まりの盤面は自動では先へ進めない。
+   */
   const handleSceneEnd = useCallback(() => {
     const current = stageRef.current;
     if (
@@ -425,15 +416,9 @@ export function TutorialScreen({
     }
     endedStageRef.current = current;
     setSceneEnded(true);
-    const holdMs =
-      sceneHoldMs[animatedRef.current ? "animated" : "still"][current];
-    schedule(
-      current === "goal" ? () => changeStage("start") : finishScenes,
-      holdMs,
-    );
-  }, [changeStage, finishScenes, schedule]);
+  }, []);
 
-  // 「次へ」は待たずに次の場面へ進める。最後の場面では、名前を上部へ戻してから最初の手順を始める。
+  // 「次へ」で次の場面へ進める。最後の場面では、名前を上部へ戻してから最初の手順を始める。
   function showNextScene(): void {
     const current = stageRef.current;
     stopIntroMotion();

@@ -44,11 +44,8 @@ const idleHintDelayMs = 4000;
 /** 名前を出してから、盤面の段に入るまでの間。 */
 const introBoardStartMs = 550;
 
-/** 導入を最後まで見せるのに十分な間。 */
+/** 導入の場面の動きを見せ終えるのに十分な間。 */
 const introEnoughMs = 8000;
-
-/** 動きを減らす設定で、ゴールの盤面を見せる間。 */
-const stillGoalHoldMs = 2800;
 
 afterEach(() => {
   cleanup();
@@ -89,6 +86,37 @@ async function advanceTimeInSlices(ms: number): Promise<void> {
       await vi.advanceTimersByTimeAsync(sliceMs);
     });
   }
+}
+
+/** 導入の「次へ」を押す。導入は自動では先へ進まない。 */
+function pressNext(): void {
+  fireEvent.click(screen.getByRole("button", { name: "次へ" }));
+}
+
+/** 場面の動きを待っては「次へ」を押し、導入を最後まで進める。 */
+function goThroughIntroSync(): void {
+  for (let press = 0; press < 3; press += 1) {
+    advanceTime(introEnoughMs);
+    const next = screen.queryByRole("button", { name: "次へ" });
+    if (!next) {
+      return;
+    }
+    fireEvent.click(next);
+  }
+  advanceTime(introEnoughMs);
+}
+
+/** 場面の動きと Animation の完了を待っては「次へ」を押し、導入を最後まで進める。 */
+async function goThroughIntro(): Promise<void> {
+  for (let press = 0; press < 3; press += 1) {
+    await advanceTimeInSlices(introEnoughMs);
+    const next = screen.queryByRole("button", { name: "次へ" });
+    if (!next) {
+      return;
+    }
+    fireEvent.click(next);
+  }
+  await advanceTimeInSlices(introEnoughMs);
 }
 
 /** 導入を飛ばして、最初の手順から始める。 */
@@ -424,7 +452,7 @@ describe("TakuzuTutorial", () => {
       solveAll();
       fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
       const caption = screen.getByText("最初は一部のマスだけ埋まっています");
-      advanceTime(introEnoughMs);
+      goThroughIntroSync();
 
       const message = screen.getByText("マスをタップすると四角になります");
       const label = getCell(1, 1).getAttribute("aria-label");
@@ -481,8 +509,8 @@ describe("TakuzuTutorial", () => {
       expect(hinted).toEqual([]);
     });
 
-    test("最後まで見せると、始めの盤面で最初の手順の一言と印を出すこと", async () => {
-      await advanceTimeInSlices(introEnoughMs);
+    test("次へで最後まで進めると、始めの盤面で最初の手順の一言と印を出すこと", async () => {
+      await goThroughIntro();
 
       const headline = screen.getByText("マスをタップすると四角になります");
       const labels = [getCellLabel(1, 1), getCellLabel(1, 2)];
@@ -540,15 +568,15 @@ describe("TakuzuTutorial", () => {
 
     describe("解き終えた場合", () => {
       beforeEach(async () => {
-        await advanceTimeInSlices(introEnoughMs);
+        await goThroughIntro();
         solveAll();
-        await advanceTimeInSlices(introEnoughMs);
+        await goThroughIntro();
       });
 
       test("もう一度で、置いたタイルを消してから最初の手順を始めること", async () => {
         fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
         const labelWhileRewinding = getCellLabel(1, 1);
-        await advanceTimeInSlices(introEnoughMs);
+        await goThroughIntro();
 
         const label = getCellLabel(1, 1);
         const hinted = getHintedCellPositions();
@@ -579,8 +607,8 @@ describe("TakuzuTutorial", () => {
       expect(label).toBe("1行1列 四角");
     });
 
-    test("ゴールを見せた後に、始まりの一言を添えて始めの盤面を見せること", () => {
-      advanceTime(stillGoalHoldMs);
+    test("ゴールで次へを押すと、始まりの一言を添えて始めの盤面を見せること", () => {
+      pressNext();
 
       const caption = screen.getByText("最初は一部のマスだけ埋まっています");
       const label = getCellLabel(1, 1);
@@ -589,9 +617,9 @@ describe("TakuzuTutorial", () => {
       expect(label).toBe("1行1列 空き");
     });
 
-    test("最後まで見せると、始めの盤面の最初の手順から始めること", () => {
-      advanceTime(stillGoalHoldMs);
-      advanceTime(introEnoughMs);
+    test("次へで最後まで進めると、始めの盤面の最初の手順から始めること", () => {
+      pressNext();
+      goThroughIntroSync();
 
       const headline = screen.getByText("マスをタップすると四角になります");
       const label = getCellLabel(1, 1);
