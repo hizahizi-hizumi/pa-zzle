@@ -93,7 +93,7 @@ export type NonogramPlay = GamePlay<
     /** 塗りがヒントにちょうど合っている行・列。今の盤面だけから決まり、解とは照らさない。 */
     matchedLines: NonogramLineFlags;
     strokeRange: NonogramStrokeRange | null;
-    /** 塗りを未確定か × に変えたマスの数。待ったで消えた塗りも数え、盤面を戻しても0に戻さない。 */
+    /** 塗りを未確定か × に変えたマスの数。待ったや盤面を戻すで消えた塗りも数え、盤面を戻しても0に戻さない。 */
     repaintCount: number;
     operation: NonogramOperation | null;
     /** マスを押して入力を始める。押したマスに `mark` があれば消し、無ければ入れる。 */

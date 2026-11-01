@@ -78,7 +78,7 @@ export function getNonogramScoreCriteria(
           },
         ],
         [
-          `塗り直しは、塗ったマスを未確定か × に変えたマスの数で、${formatOperationName("undo")}で消えた塗りも数え、${formatOperationName("restart")}で消えた塗りは数えない。× の付け外しと、${formatOperationName("undo")}${formatOperationName("restart")}の回数では点を減らさない。`,
+          `塗り直しは、塗ったマスを未確定か × に変えたマスの数で、${formatOperationName("undo")}や${formatOperationName("restart")}で消えた塗りも数える。× の付け外しと、${formatOperationName("undo")}${formatOperationName("restart")}の回数では点を減らさない。`,
         ],
       ),
     ),
