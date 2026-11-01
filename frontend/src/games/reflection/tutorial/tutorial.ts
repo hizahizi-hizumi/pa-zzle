@@ -177,7 +177,7 @@ const steps: readonly ReflectionTutorialStep[] = [
     message: {
       headline: "ブラックホールは光を吸い込みます",
       detail:
-        "この3は、3マス目で吸い込まれる光です\n選んで、印のマスに置いてください",
+        "点の付いた3は、3マス目で吸い込まれる光です\n選んで、印のマスに置いてください",
     },
     introducedRuleId: "black-hole",
     piece: "black-hole",
@@ -190,7 +190,8 @@ const steps: readonly ReflectionTutorialStep[] = [
     type: "place",
     message: {
       headline: "斜め鏡は、光を直角に曲げます",
-      detail: "この2は、2マス目で曲がって\nもう1つの2から出る光です",
+      detail:
+        "斜めの矢印は、外へ出る光です。この2は\n2マス目で曲がり、もう1つの2から出ます",
     },
     introducedRuleId: "mirror",
     piece: "slash",
@@ -206,7 +207,7 @@ const steps: readonly ReflectionTutorialStep[] = [
     type: "place",
     message: {
       headline: "反射体は、光をはね返します。\n戻る道のマスも数えます",
-      detail: "この3は、2マス目ではね返る光です",
+      detail: "折り返す矢印の3は、2マス目で戻る光です",
     },
     introducedRuleId: "reflector",
     piece: "reflector",
