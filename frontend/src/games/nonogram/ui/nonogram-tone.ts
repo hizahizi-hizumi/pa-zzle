@@ -11,6 +11,8 @@
  * - `activeLine`: 押している・キーボードで選んでいるマスの行・列のヒントの地。キーボードで選んでいるマスの輪郭
  *   （`focusOutline`）と、入れる印に選んでいるボタンの地（`selectedMark`）も同じ色相にする。
  * - `strokeTrace`: 遊び方の図で、指でなぞった道筋。押している行・列と同じ色相で、塗りの上でも見える濃さにする。
+ * - `previewChain`: 難易度プレビューで読む行・列のヒントの欄と、読んで決まるマス。`activeLine` と同じ色相で、小さな図でも
+ *   盤面の地と格子より先に目に入るよう濃くする。
  */
 export const nonogramToneClassNames = {
   filled: "bg-slate-800 dark:bg-slate-200",
@@ -24,4 +26,5 @@ export const nonogramToneClassNames = {
   focusOutline: "focus-visible:outline-sky-500",
   selectedMark: "bg-sky-100 dark:bg-sky-950",
   strokeTrace: "text-sky-500 dark:text-sky-400",
+  previewChain: "bg-sky-300 dark:bg-sky-600",
 } as const;

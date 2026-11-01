@@ -5,7 +5,10 @@ import {
   type NonogramDifficulty,
   nonogramLevelCombinations,
 } from "@/games/nonogram/difficulty";
-import { listNonogramPoolEntries } from "@/games/nonogram/problem/problem-pool";
+import {
+  decodeNonogramPoolEntry,
+  listNonogramPoolEntries,
+} from "@/games/nonogram/problem/problem-pool";
 import {
   _private,
   NonogramDifficultyPreview,
@@ -15,22 +18,10 @@ const { createPreviewChain } = _private;
 
 const difficultyIds = difficultyLevels.map(({ id }) => id);
 
-const adjacentLevels = [
-  ["1", "2"],
-  ["2", "3"],
-  ["3", "4"],
-  ["4", "5"],
-] as const satisfies readonly (readonly [
-  NonogramDifficulty,
-  NonogramDifficulty,
-])[];
-
-const ROUND_COUNT_POSITION = 5;
-
 /** 問題集のそのレベルの連鎖の深さ（段の数）の中央値。偶数個のときは小さい側。 */
 function getPoolMedianRoundCount(difficulty: NonogramDifficulty): number {
   const roundCounts = listNonogramPoolEntries(difficulty)
-    .map((entry) => entry[ROUND_COUNT_POSITION])
+    .map((entry) => decodeNonogramPoolEntry(entry).features.roundCount)
     .sort((left, right) => left - right);
   return roundCounts[Math.floor((roundCounts.length - 1) / 2)]!;
 }
@@ -38,21 +29,36 @@ function getPoolMedianRoundCount(difficulty: NonogramDifficulty): number {
 afterEach(cleanup);
 
 describe("createPreviewChain", () => {
-  test.each(difficultyIds)(
-    "レベル %s の盤面は、そのレベルで遊ぶ盤面の大きさのうち最も大きいものを、長い辺を横にしたものであること",
-    (difficulty) => {
-      const { size } = createPreviewChain(difficulty);
-      const { boardSizes } = nonogramLevelCombinations[difficulty];
-      const largest = boardSizes.reduce((current, candidate) =>
-        candidate.width * candidate.height > current.width * current.height
-          ? candidate
-          : current,
-      );
+  const adjacentLevels = [
+    ["1", "2"],
+    ["2", "3"],
+    ["3", "4"],
+    ["4", "5"],
+  ] as const satisfies readonly (readonly [
+    NonogramDifficulty,
+    NonogramDifficulty,
+  ])[];
 
-      expect(size).toEqual({
-        width: Math.max(largest.width, largest.height),
-        height: Math.min(largest.width, largest.height),
-      });
+  /** レベルごとの、そのレベルで遊ぶ盤面の大きさのうち面積が最も大きいもの。 */
+  const largestBoardSizes = difficultyIds.map((difficulty) => {
+    const { boardSizes } = nonogramLevelCombinations[difficulty];
+    const largest = boardSizes.reduce((current, candidate) =>
+      candidate.width * candidate.height > current.width * current.height
+        ? candidate
+        : current,
+    );
+    return [
+      difficulty,
+      { width: largest.width, height: largest.height },
+    ] as const;
+  });
+
+  test.each(largestBoardSizes)(
+    "レベル %s の盤面は、そのレベルで遊ぶ盤面の大きさのうち面積が最も大きいものを、同じ向きで描くこと",
+    (difficulty, expectedSize) => {
+      const { size } = createPreviewChain(difficulty);
+
+      expect(size).toEqual(expectedSize);
     },
   );
 
@@ -69,23 +75,34 @@ describe("createPreviewChain", () => {
   );
 
   test.each(difficultyIds)(
-    "レベル %s の連鎖は、行から始めて行と列を交互に読み、決まるマスが読んだ線と次に読む線の交わりにあること",
+    "レベル %s の連鎖は、行から始めて行と列を交互に読み、決まるマスが読んだ線の上にあること",
     (difficulty) => {
       const { readings, cells } = createPreviewChain(difficulty);
 
       readings.forEach((reading, readingIndex) => {
         const cell = cells[readingIndex]!;
-        const nextReading = readings[readingIndex + 1];
 
         expect(reading.axis).toBe(readingIndex % 2 === 0 ? "row" : "column");
         expect(reading.index).toBe(
           reading.axis === "row" ? cell.row : cell.column,
         );
-        if (nextReading) {
-          expect(nextReading.index).toBe(
-            nextReading.axis === "row" ? cell.row : cell.column,
-          );
-        }
+      });
+    },
+  );
+
+  test.each(difficultyIds)(
+    "レベル %s の連鎖は、次に読む線が、前の読みで決まったマスを通ること",
+    (difficulty) => {
+      const { readings, cells } = createPreviewChain(difficulty);
+      const followingReadings = readings.slice(1);
+      const decidedCells = cells.slice(0, -1);
+
+      followingReadings.forEach((reading, index) => {
+        const previousCell = decidedCells[index]!;
+
+        expect(reading.index).toBe(
+          reading.axis === "row" ? previousCell.row : previousCell.column,
+        );
       });
     },
   );
