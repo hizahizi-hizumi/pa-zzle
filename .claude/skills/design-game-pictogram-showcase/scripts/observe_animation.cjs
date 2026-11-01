@@ -10,12 +10,14 @@
 //   (e) how far any visible shape goes outside the 0 0 120 120 viewBox over one cycle
 //   (f) speed continuity: every moving shape is scanned with paused time every 2ms and the jump of its
 //       velocity between neighbouring steps (relative to its peak speed) is reported (WARN only)
-//   (g) optional: overlap between the shapes of two selectors over one cycle (--overlap A|B, WARN only;
-//       A|A checks the matched elements of A against each other)
+//   (g) optional: overlap between the painted shapes (stroke width included) of two selectors over one
+//       cycle (--overlap A|B, WARN only; A|A checks the matched elements of A against each other), and the
+//       smallest gap between their outer edges (--clearance A|B[|min], WARN below min)
 //   (h) the static state's visible bounds (viewBox units, stroke included) against the base pictogram and
 //       the median of the other games' pictogram.svg, and its ink coverage at list size against theirs
 //       (NOTE only; references/motion.md)
-//   (i) pageerror / console.error
+//   (i) pageerror / console.error, and animation rules of the SVG's <style> that run no animation in the
+//       played hero (no matched element, undefined @keyframes, or overridden)
 //   (j) optional: a filmstrip of real-time screenshots of the 138px hero over one cycle (--filmstrip)
 //   (k) optional: static / end screenshots and errors in WebKit when it can be launched (--webkit)
 // Each candidate is rendered alone in its own page (never in a srcdoc iframe; see references/self-review.md).
@@ -34,7 +36,15 @@ const USAGE = `usage: node observe_animation.cjs --manifest <manifest.json> [opt
   --pixels                   pixel difference between the end and the static screenshots
   --overlap '<sel>|<sel>'    overlap of two selectors over one cycle (repeatable; the manifest
                              candidate field "overlap" adds pairs per candidate). The same selector
-                             on both sides checks its matched elements against each other
+                             on both sides checks its matched elements against each other.
+                             Fill and stroke (computed stroke-width scaled by the transforms)
+                             are both the shape
+  --clearance '<sel>|<sel>[|<min>]'
+                             smallest gap (viewBox units) between the outer edges, stroke
+                             included, of the visible shapes of two selectors over one cycle
+                             and in the static state; WARN below min (default 0.5), negative
+                             when they cross (repeatable; the manifest candidate field
+                             "clearance" adds pairs per candidate)
   --smooth-threshold <x>     speed jump relative to peak that is a WARN (default 0.15)
   --filmstrip                real-time screenshots of the 138px hero over one cycle, in one image
   --filmstrip-interval <ms>  minimum time between filmstrip frames (default 100)
@@ -67,6 +77,11 @@ const SEAM_SCAN_PAST_MS = 200;
 const FLASH_MIN_RECORD_MS = 300;
 const PIXEL_CHANNEL_THRESHOLD = 24;
 const OVERLAP_MIN_AREA = 0.25;
+// Clearance: outline points every CLEARANCE_STEP viewBox units; gaps of CLEARANCE_RANGE or more are
+// reported as at least that; below the default minimum the edges read as touching at hero size.
+const CLEARANCE_STEP = 0.2;
+const CLEARANCE_RANGE = 8;
+const CLEARANCE_DEFAULT_MIN = 0.5;
 const PLAYBACKS = new Set(['cut', 'seam']);
 const PLAYBACK_ERROR = 'playback must be cut or seam (once is not used: it moves only at the moment of selection and is easily missed)';
 
@@ -76,8 +91,17 @@ function parseOverlap(value) {
   return pair;
 }
 
+function parseClearance(value) {
+  const parts = String(value).split('|').map((part) => part.trim());
+  const min = parts.length === 3 ? Number(parts[2]) : CLEARANCE_DEFAULT_MIN;
+  if (parts.length < 2 || parts.length > 3 || !parts[0] || !parts[1] || !Number.isFinite(min)) {
+    throw new Error(`clearance takes '<selector>|<selector>[|<min viewBox units>]': ${value}`);
+  }
+  return { pair: [parts[0], parts[1]], min };
+}
+
 function parseArgs(argv) {
-  const args = { cycles: 3.3, only: [], pixels: false, overlap: [], smoothThreshold: 0.15, globalsCss: DEFAULT_GLOBALS_CSS, gamesDir: DEFAULT_GAMES_DIR,
+  const args = { cycles: 3.3, only: [], pixels: false, overlap: [], clearance: [], smoothThreshold: 0.15, globalsCss: DEFAULT_GLOBALS_CSS, gamesDir: DEFAULT_GAMES_DIR,
     filmstrip: false, filmstripInterval: 100, webkit: false };
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i];
@@ -94,6 +118,7 @@ function parseArgs(argv) {
     else if (flag === '--filmstrip-interval') args.filmstripInterval = Number(argv[++i]);
     else if (flag === '--webkit') args.webkit = true;
     else if (flag === '--overlap') args.overlap.push(parseOverlap(argv[++i]));
+    else if (flag === '--clearance') args.clearance.push(parseClearance(argv[++i]));
     else throw new Error(`unknown argument: ${flag}\n${USAGE}`);
   }
   if (!args.manifest) throw new Error(USAGE);
@@ -103,6 +128,11 @@ function parseArgs(argv) {
 function candidateOverlaps(candidate, globalPairs) {
   const own = candidate.overlap == null ? [] : (Array.isArray(candidate.overlap) ? candidate.overlap : [candidate.overlap]);
   return [...globalPairs, ...own.map(parseOverlap)];
+}
+
+function candidateClearances(candidate, globalPairs) {
+  const own = candidate.clearance == null ? [] : (Array.isArray(candidate.clearance) ? candidate.clearance : [candidate.clearance]);
+  return [...globalPairs, ...own.map(parseClearance)];
 }
 
 function loadThemes(file) {
@@ -157,6 +187,36 @@ window.__pz = (() => {
   const elementsOf = (host) => [...host.querySelector('svg').querySelectorAll('*')]
     .filter((el) => !SKIP.has(el.localName) && !el.closest('defs'));
   const keyOf = (el, index) => index + ':' + el.localName + (el.getAttribute('class') ? '.' + el.getAttribute('class') : '');
+  const keyOfElement = (el) => keyOf(el, elementsOf(firstHero()).indexOf(el));
+  // Largest scale of a matrix in any direction (its larger singular value).
+  const maxScale = (m) => {
+    const sum = m.a * m.a + m.b * m.b + m.c * m.c + m.d * m.d;
+    const det = m.a * m.d - m.b * m.c;
+    return Math.sqrt((sum + Math.sqrt(Math.max(0, sum * sum - 4 * det * det))) / 2);
+  };
+  // Half the painted stroke width on screen (px): the computed stroke-width (a percentage resolves
+  // against the viewport diagonal) scaled by the element's transforms (not with non-scaling-stroke).
+  const strokeHalfPx = (el, style, matrix) => {
+    if (style.stroke === 'none' || !matrix) return 0;
+    const raw = style.strokeWidth.trim();
+    let width = parseFloat(raw) || 0;
+    if (raw.endsWith('%')) {
+      const viewport = el.viewportElement || el.ownerSVGElement;
+      const box = viewport && viewport.viewBox && viewport.viewBox.baseVal;
+      const diagonal = box && box.width ? Math.hypot(box.width, box.height) / Math.SQRT2 : 120;
+      width = width / 100 * diagonal;
+    }
+    if (style.vectorEffect === 'non-scaling-stroke') return width / 2;
+    return width / 2 * maxScale(matrix);
+  };
+  // How far the painted stroke can reach beyond the geometry's bounding box (px): miter joins up to
+  // stroke-miterlimit, square caps by sqrt 2, plus a pixel for antialiasing.
+  const strokeReachPx = (el, style, matrix) => {
+    const half = strokeHalfPx(el, style, matrix);
+    if (!half) return 0;
+    const miter = style.strokeLinejoin === 'miter' || style.strokeLinejoin === 'miter-clip' ? parseFloat(style.strokeMiterlimit) || 4 : 1;
+    return half * Math.max(Math.SQRT2, miter) + 1;
+  };
   const effectiveOpacity = (el, svg) => {
     let value = 1;
     for (let node = el; node && node !== svg.parentElement; node = node.parentElement) {
@@ -201,9 +261,7 @@ window.__pz = (() => {
       if (!SHAPES.has(el.localName) || effectiveOpacity(el, svg) <= 0.001) return;
       const rect = el.getBoundingClientRect();
       if (rect.width === 0 && rect.height === 0) return;
-      const style = getComputedStyle(el);
-      const screen = el.getScreenCTM();
-      const half = style.stroke !== 'none' ? (parseFloat(style.strokeWidth) || 0) * (screen ? Math.hypot(screen.a, screen.b) : 1) / 2 : 0;
+      const half = strokeHalfPx(el, getComputedStyle(el), el.getScreenCTM());
       left = Math.min(left, rect.left - half); top = Math.min(top, rect.top - half);
       right = Math.max(right, rect.right + half); bottom = Math.max(bottom, rect.bottom + half);
     });
@@ -222,61 +280,76 @@ window.__pz = (() => {
       if (!SHAPES.has(el.localName) || effectiveOpacity(el, svg) <= 0.001) return;
       const rect = el.getBoundingClientRect();
       if (rect.width === 0 && rect.height === 0) return;
-      const style = getComputedStyle(el);
-      let strokePx = 0;
-      if (style.stroke !== 'none') {
-        const screen = el.getScreenCTM();
-        strokePx = (parseFloat(style.strokeWidth) || 0) * (screen ? Math.hypot(screen.a, screen.b) : 1) / 2;
-      }
+      const strokePx = strokeHalfPx(el, getComputedStyle(el), el.getScreenCTM());
       const margin = (Math.min(rect.left - box.left, box.right - rect.right, rect.top - box.top, box.bottom - rect.bottom) - strokePx) * unit;
       if (margin < worst.margin) worst = { margin, key: keyOf(el, index) };
     });
     return worst;
   };
-  // Area (viewBox units^2) covered by a visible shape of both selectors: bounding boxes first, then a
-  // 1px grid tested in each shape's own coordinates. A paint of none is not part of the shape. <text> has
-  // no isPointInFill, so it is approximated by its bounding box (reported as textApproximated).
-  // With the same selector on both sides, the shapes of one matched element are tested against those of
-  // the other matched elements (not their own, nor an ancestor's or descendant's).
+  // Visible shapes inside the elements a selector matches, each with the matched element that owns it.
+  const shapesOf = (svg, selector) => {
+    const owners = new Map();
+    for (const owner of svg.querySelectorAll(selector)) {
+      for (const el of [owner, ...owner.querySelectorAll('*')]) {
+        if (!owners.has(el) && SHAPES.has(el.localName) && effectiveOpacity(el, svg) > 0.001) owners.set(el, owner);
+      }
+    }
+    return [...owners].map(([el, owner]) => ({ el, owner }));
+  };
+  const related = (a, b) => a === b || a.contains(b) || b.contains(a);
+  // The shapes of a selector pair: with the same selector on both sides, B is A (pairs of related owners
+  // are skipped by the caller); otherwise A's shapes are removed from B.
+  const pairShapes = (svg, selectorA, selectorB) => {
+    const groupA = shapesOf(svg, selectorA);
+    if (selectorA === selectorB) return { groupA, groupB: groupA, sameSet: true };
+    const shapesA = new Set(groupA.map(({ el }) => el));
+    return { groupA, groupB: shapesOf(svg, selectorB).filter(({ el }) => !shapesA.has(el)), sameSet: false };
+  };
+  // Area (viewBox units^2) covered by a visible shape of both selectors: bounding boxes widened by the
+  // reach of the painted stroke first, then a 1px grid tested in each shape's own coordinates
+  // (isPointInStroke uses the computed stroke-width; the transforms scale it). A paint of none is not part
+  // of the shape. <text> has no isPointInFill, so it is approximated by its bounding box (reported as
+  // textApproximated). With the same selector on both sides, the shapes of one matched element are tested
+  // against those of the other matched elements (not their own, nor an ancestor's or descendant's).
   const overlap = (pairs) => {
     const host = firstHero();
     const svg = host.querySelector('svg');
     const unit = 120 / svg.getBoundingClientRect().width;
-    const shapesOf = (selector) => {
-      const owners = new Map();
-      for (const owner of svg.querySelectorAll(selector)) {
-        for (const el of [owner, ...owner.querySelectorAll('*')]) {
-          if (!owners.has(el) && SHAPES.has(el.localName) && effectiveOpacity(el, svg) > 0.001) owners.set(el, owner);
-        }
-      }
-      return [...owners].map(([el, owner]) => ({ el, owner }));
+    const paintedBox = (el) => {
+      const rect = el.getBoundingClientRect();
+      const reach = strokeReachPx(el, getComputedStyle(el), el.getScreenCTM());
+      return { left: rect.left - reach, right: rect.right + reach, top: rect.top - reach, bottom: rect.bottom + reach };
     };
-    const related = (a, b) => a === b || a.contains(b) || b.contains(a);
-    const inside = (el, x, y) => {
+    const insideTest = (el) => {
       const matrix = el.getScreenCTM();
-      if (!matrix) return false;
-      const point = new DOMPoint(x, y).matrixTransform(matrix.inverse());
+      if (!matrix) return () => false;
+      const inverse = matrix.inverse();
       if (typeof el.isPointInFill !== 'function') {
         const box = el.getBBox();
-        return point.x >= box.x && point.x <= box.x + box.width && point.y >= box.y && point.y <= box.y + box.height;
+        return (x, y) => {
+          const point = new DOMPoint(x, y).matrixTransform(inverse);
+          return point.x >= box.x && point.x <= box.x + box.width && point.y >= box.y && point.y <= box.y + box.height;
+        };
       }
       const style = getComputedStyle(el);
-      if (style.fill !== 'none' && el.isPointInFill(point)) return true;
-      return style.stroke !== 'none' && el.isPointInStroke(point);
+      const fill = style.fill !== 'none', stroke = style.stroke !== 'none';
+      return (x, y) => {
+        const point = new DOMPoint(x, y).matrixTransform(inverse);
+        return (fill && el.isPointInFill(point)) || (stroke && el.isPointInStroke(point));
+      };
     };
     return pairs.map(([selectorA, selectorB]) => {
-      const sameSet = selectorA === selectorB;
-      const groupA = shapesOf(selectorA);
-      const shapesA = new Set(groupA.map(({ el }) => el));
-      const groupB = sameSet ? groupA : shapesOf(selectorB).filter(({ el }) => !shapesA.has(el));
+      const { groupA, groupB, sameSet } = pairShapes(svg, selectorA, selectorB);
       let hits = 0;
       const textApproximated = [...groupA, ...groupB].some(({ el }) => el.localName === 'text');
       const counted = new Set();
+      const boxes = new Map([...groupA, ...groupB].map(({ el }) => [el, paintedBox(el)]));
+      const inside = new Map([...groupA, ...groupB].map(({ el }) => [el, insideTest(el)]));
       for (const [i, { el: a, owner: ownerA }] of groupA.entries()) {
-        const ra = a.getBoundingClientRect();
+        const ra = boxes.get(a);
         for (const [j, { el: b, owner: ownerB }] of groupB.entries()) {
           if (sameSet && (j <= i || related(ownerA, ownerB))) continue;
-          const rb = b.getBoundingClientRect();
+          const rb = boxes.get(b);
           const left = Math.max(ra.left, rb.left), right = Math.min(ra.right, rb.right);
           const top = Math.max(ra.top, rb.top), bottom = Math.min(ra.bottom, rb.bottom);
           if (right <= left || bottom <= top) continue;
@@ -284,12 +357,121 @@ window.__pz = (() => {
             for (let y = Math.floor(top) + 0.5; y < bottom; y += 1) {
               const key = x + ',' + y;
               if (counted.has(key)) continue;
-              if (inside(a, x, y) && inside(b, x, y)) { counted.add(key); hits++; }
+              if (inside.get(a)(x, y) && inside.get(b)(x, y)) { counted.add(key); hits++; }
             }
           }
         }
       }
       return { area: hits * unit * unit, textApproximated };
+    });
+  };
+  // Outline of a visible shape on screen (px): points every step px along its geometry
+  // (getPointAtLength, through getScreenCTM so the CSS transforms apply) and the half stroke width on
+  // screen; its outer edge lies that far from the points (a butt cap or miter join reads as round).
+  // <text> uses its bounding box. A shape that paints neither fill nor stroke has no outline.
+  const outlineOf = (el, step) => {
+    const matrix = el.getScreenCTM();
+    if (!matrix) return null;
+    const style = getComputedStyle(el);
+    const fill = style.fill !== 'none';
+    const half = strokeHalfPx(el, style, matrix);
+    if (!fill && !half) return null;
+    let local = [];
+    if (el.localName !== 'text' && typeof el.getTotalLength === 'function') {
+      const total = el.getTotalLength();
+      const count = Math.min(4000, Math.max(1, Math.ceil(total * maxScale(matrix) / step)));
+      for (let i = 0; i <= count; i++) local.push(el.getPointAtLength(total * i / count));
+    } else {
+      const box = el.getBBox();
+      const corners = [[box.x, box.y], [box.x + box.width, box.y], [box.x + box.width, box.y + box.height], [box.x, box.y + box.height], [box.x, box.y]];
+      for (let k = 0; k < 4; k++) {
+        const [[x0, y0], [x1, y1]] = [corners[k], corners[k + 1]];
+        const count = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) * maxScale(matrix) / step));
+        for (let i = 0; i < count; i++) local.push({ x: x0 + (x1 - x0) * i / count, y: y0 + (y1 - y0) * i / count });
+      }
+    }
+    const points = local.map((p) => { const q = new DOMPoint(p.x, p.y).matrixTransform(matrix); return [q.x, q.y]; });
+    const xs = points.map((p) => p[0]), ys = points.map((p) => p[1]);
+    return { el, fill, half, points,
+      box: { left: Math.min(...xs) - half, right: Math.max(...xs) + half, top: Math.min(...ys) - half, bottom: Math.max(...ys) + half } };
+  };
+  // A point (screen px) inside the fill of a shape (its bounding box for <text>).
+  const insideFill = (el, x, y) => {
+    const matrix = el.getScreenCTM();
+    if (!matrix) return false;
+    const point = new DOMPoint(x, y).matrixTransform(matrix.inverse());
+    if (typeof el.isPointInFill !== 'function') {
+      const box = el.getBBox();
+      return point.x >= box.x && point.x <= box.x + box.width && point.y >= box.y && point.y <= box.y + box.height;
+    }
+    return el.isPointInFill(point);
+  };
+  // Smallest gap (viewBox units) between the outer edges of the visible shapes of both selectors:
+  // distance between outline points less both half stroke widths, negative where the strokes cross,
+  // and at most 0 where an outline point lies inside the other shape's fill. Gaps of range or more
+  // read as range. Same pairing rules as overlap.
+  const clearance = (pairs, step, range) => {
+    const host = firstHero();
+    const svg = host.querySelector('svg');
+    const unit = 120 / svg.getBoundingClientRect().width;
+    const stepPx = step / unit, rangePx = range / unit;
+    return pairs.map(([selectorA, selectorB]) => {
+      const { groupA, groupB, sameSet } = pairShapes(svg, selectorA, selectorB);
+      const outlines = new Map([...groupA, ...groupB].map(({ el }) => [el, outlineOf(el, stepPx)]));
+      let best = { gap: rangePx, a: null, b: null };
+      for (const [i, { el: elA, owner: ownerA }] of groupA.entries()) {
+        const a = outlines.get(elA);
+        if (!a) continue;
+        for (const [j, { el: elB, owner: ownerB }] of groupB.entries()) {
+          if (sameSet && (j <= i || related(ownerA, ownerB))) continue;
+          const b = outlines.get(elB);
+          if (!b) continue;
+          const apart = Math.max(a.box.left - b.box.right, b.box.left - a.box.right, a.box.top - b.box.bottom, b.box.top - a.box.bottom);
+          if (apart >= best.gap) continue;
+          const within = (box) => ([x, y]) => x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
+          const crossing = apart < 0 && ((a.fill && b.points.filter(within(a.box)).some(([x, y]) => insideFill(elA, x, y)))
+            || (b.fill && a.points.filter(within(b.box)).some(([x, y]) => insideFill(elB, x, y))));
+          let gap = crossing ? 0 : Infinity;
+          const reach = best.gap + a.half + b.half;
+          const near = b.points.filter(([x, y]) => x >= a.box.left - reach && x <= a.box.right + reach && y >= a.box.top - reach && y <= a.box.bottom + reach);
+          let distance = Infinity;
+          for (const [ax, ay] of a.points) {
+            for (const [bx, by] of near) {
+              const d = (ax - bx) * (ax - bx) + (ay - by) * (ay - by);
+              if (d < distance) distance = d;
+            }
+          }
+          gap = Math.min(gap, Math.sqrt(distance) - a.half - b.half);
+          if (gap < best.gap) best = { gap, a: elA, b: elB };
+        }
+      }
+      return { gap: best.gap * unit, a: best.a ? keyOfElement(best.a) : null, b: best.b ? keyOfElement(best.b) : null };
+    });
+  };
+  // Rules of the SVG's <style> (in media that match) that set an animation, with the number of hero
+  // elements each matches and, per animation name, whether @keyframes defines it and how many matched
+  // elements run it (getAnimations).
+  const animationRules = () => {
+    const host = firstHero();
+    const svg = host.querySelector('svg');
+    const keyframes = new Set();
+    const rules = [];
+    const walk = (list) => {
+      for (const rule of list) {
+        if (typeof CSSKeyframesRule !== 'undefined' && rule instanceof CSSKeyframesRule) keyframes.add(rule.name);
+        else if (rule instanceof CSSMediaRule) { if (window.matchMedia(rule.media.mediaText).matches) walk(rule.cssRules); }
+        else if (rule instanceof CSSStyleRule) {
+          const names = (rule.style.getPropertyValue('animation-name') || '').split(',').map((name) => name.trim().replace(/^["']|["']$/g, '')).filter((name) => name && name !== 'none');
+          if (names.length) rules.push({ selector: rule.selectorText, names });
+        }
+      }
+    };
+    for (const style of svg.querySelectorAll('style')) if (style.sheet) walk(style.sheet.cssRules);
+    return rules.map(({ selector, names }) => {
+      let matched = [];
+      try { matched = [...host.querySelectorAll(selector)]; } catch {}
+      return { selector, matched: matched.length, names: names.map((name) => ({ name, defined: keyframes.has(name),
+        running: matched.filter((el) => el.getAnimations().some((animation) => animation.animationName === name)).length })) };
     });
   };
   // Text is laid out at screen scale: its box edges snap to 1/128px and its ascent / descent to whole
@@ -381,7 +563,7 @@ window.__pz = (() => {
     };
     requestAnimationFrame(tick);
   });
-  return { state, timings, seek, seekEach, bounds, overflow, overlap, smoothness, live, count: () => animations().length };
+  return { state, timings, seek, seekEach, bounds, overflow, overlap, clearance, animationRules, smoothness, live, count: () => animations().length };
 })();
 `;
 
@@ -658,6 +840,7 @@ async function observe(browser, candidate, options) {
     }
   }
   if (!timings.length) fail('no running animation with the play attribute');
+  checkAnimationRules(await play.page.evaluate(() => window.__pz.animationRules()), report);
 
   if (timings.length) {
     const reference = timings[0];
@@ -695,6 +878,12 @@ async function observe(browser, candidate, options) {
     let worst = { margin: Infinity, key: null, atMs: 0 };
     const overlapPairs = candidateOverlaps(candidate, options.overlap);
     const overlaps = overlapPairs.map((pair) => ({ pair: pair.join(' | '), maxArea: 0, atMs: null }));
+    const clearanceSpecs = candidateClearances(candidate, options.clearance);
+    const clearancePairs = clearanceSpecs.map((spec) => spec.pair);
+    const measureClearance = (page) => page.evaluate(([pairs, step, range]) => window.__pz.clearance(pairs, step, range), [clearancePairs, CLEARANCE_STEP, CLEARANCE_RANGE]);
+    const staticClearance = clearancePairs.length ? await measureClearance(light.rest.page) : [];
+    const clearances = clearanceSpecs.map((spec, i) => ({ pair: spec.pair.join(' | '), min: spec.min, staticGap: staticClearance[i].gap,
+      minGap: Infinity, atMs: null, elements: null }));
     for (let time = 0; time < firstCycleEnd; time += OVERFLOW_STEP_MS) {
       await play.page.evaluate((t) => window.__pz.seek(t), time);
       const sample = await play.page.evaluate(() => window.__pz.overflow());
@@ -704,6 +893,11 @@ async function observe(browser, candidate, options) {
         areas.forEach(({ area, textApproximated }, i) => {
           if (textApproximated) overlaps[i].textApproximated = true;
           if (area > overlaps[i].maxArea) { overlaps[i].maxArea = area; overlaps[i].atMs = time; }
+        });
+      }
+      if (clearances.length) {
+        (await measureClearance(play.page)).forEach(({ gap, a, b }, i) => {
+          if (gap < clearances[i].minGap) Object.assign(clearances[i], { minGap: gap, atMs: time, elements: a && b ? [a, b] : null });
         });
       }
     }
@@ -719,6 +913,17 @@ async function observe(browser, candidate, options) {
       }
     }
     report.overlaps = overlaps;
+    for (const [i, entry] of clearances.entries()) {
+      entry.minGap = Number(entry.minGap.toFixed(2));
+      entry.staticGap = Number(entry.staticGap.toFixed(2));
+      if (entry.minGap < entry.min) {
+        await play.page.evaluate((t) => window.__pz.seek(t), entry.atMs);
+        fs.writeFileSync(path.join(options.out, `${candidate.id}-clearance-${i + 1}.png`), await play.page.locator('.host.hero').first().screenshot());
+        const how = entry.minGap < 0 ? `the outer edges cross by ${-entry.minGap}` : `gap ${entry.minGap}`;
+        report.warnings.push(`clearance ${entry.pair}: ${how} viewBox units at ${entry.atMs}ms (${entry.elements ? entry.elements.join(' / ') : '-'}), below ${entry.min}; static ${entry.staticGap} (${candidate.id}-clearance-${i + 1}.png); judge whether the edges should touch`);
+      }
+    }
+    report.clearances = clearances;
 
     // One iteration for cut (the cut switch is intended), one iteration plus the wrap for seam.
     const scanFrom = Math.min(...timings.map((t) => t.delay));
@@ -772,6 +977,22 @@ async function observe(browser, candidate, options) {
   if (errors.length) fail(`page errors: ${errors.join(' | ')}`);
   await context.close();
   return report;
+}
+
+// Animation rules that run nothing in the played hero. An undefined @keyframes name is a FAIL (the
+// animation never runs); a rule that matches no element or is overridden on all its elements is a WARN.
+function checkAnimationRules(rules, report) {
+  report.animationRules = rules;
+  for (const rule of rules) {
+    if (!rule.matched) {
+      report.warnings.push(`animation rule matches no element in the played hero, so its animation never runs: ${rule.selector} (check the class names in the selector and the class attributes)`);
+      continue;
+    }
+    for (const entry of rule.names) {
+      if (!entry.defined) report.failures.push(`animation ${entry.name} has no @keyframes, so it never runs: ${rule.selector}`);
+      else if (!entry.running) report.warnings.push(`animation ${entry.name} runs on none of the ${rule.matched} element(s) of ${rule.selector}; another rule overrides it`);
+    }
+  }
 }
 
 // Real-time screenshots of the 138px hero from the moment the SVG is inserted, over one cycle (cut: past
@@ -881,6 +1102,8 @@ function printReport(report) {
       : `  NOTE: WebKit was not checked (${report.webkit.reason}); record that Safari rendering is unverified`);
   }
   (report.overlaps || []).forEach((entry) => lines.push(`  overlap ${entry.pair}: ${entry.atMs == null ? 'none' : `max ${entry.maxArea} viewBox units^2 at ${entry.atMs}ms`}`));
+  (report.clearances || []).forEach((entry) => lines.push(`  clearance ${entry.pair}: min ${entry.minGap >= CLEARANCE_RANGE ? `>= ${CLEARANCE_RANGE}` : entry.minGap} at ${entry.atMs}ms` +
+    `${entry.elements ? ` (${entry.elements.join(' / ')})` : ''}, static ${entry.staticGap >= CLEARANCE_RANGE ? `>= ${CLEARANCE_RANGE}` : entry.staticGap} (viewBox units, stroke included)`));
   report.notes.forEach((note) => lines.push(`  NOTE: ${note}`));
   report.warnings.forEach((warning) => lines.push(`  WARN: ${warning}`));
   report.failures.forEach((failure) => lines.push(`  FAIL: ${failure}`));

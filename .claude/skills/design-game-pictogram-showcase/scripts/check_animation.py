@@ -2,8 +2,11 @@
 """Check showcase pictogram SVGs against the receiving contract.
 
 The checks are deterministic only: SVG structure, naming prefix, CSS selector
-scope, play gating, dark-theme color switching, forbidden features, and the
-structure of the declared playback form (cut / seam; every animation loops). They do not judge
+scope, play gating, dark-theme color switching, forbidden features, the
+structure of the declared playback form (cut / seam; every animation loops), and
+whether the stylesheet reaches the SVG (animation names against @keyframes,
+selector classes against the class attributes, class attributes missing a space).
+They do not judge
 whether the motion conveys the game, whether the rendered end, hold, or seam
 matches the static state, or whether it is good; observe_animation.cjs measures
 the rendered poses in a real browser.
@@ -56,6 +59,8 @@ MOTION_ATTRIBUTE = re.compile(r"data-pictogram-motion", re.IGNORECASE)
 # followed only by the descendant combinator; `>`, `+`, `~` after them depend on the host markup.
 PLAY_ATTRIBUTE_NOT_DESCENDANT = re.compile(PLAY_ATTRIBUTE.pattern + r"\s*[>+~]", re.IGNORECASE)
 CLASS_TOKEN = re.compile(r"\.(-?[_a-zA-Z][\w-]*)")
+# Functional pseudo-classes whose argument does not have to hold on the compound itself.
+FUNCTIONAL_PSEUDO = re.compile(r":(?:not|is|where|has|matches)\(", re.IGNORECASE)
 VAR_REFERENCE = re.compile(r"var\(\s*(--[\w-]+)")
 CUSTOM_PROPERTY_DECLARATION = re.compile(r"^--[\w-]+$")
 CSS_URL = re.compile(r"url\(\s*['\"]?([^'\")\s]*)", re.IGNORECASE)
@@ -134,6 +139,14 @@ class AnimationUse:
     where: str
 
 
+@dataclass(frozen=True)
+class SelectorClasses:
+    selector: str
+    # prefixed classes each compound requires of one element (outside :not() / :is() / ...)
+    per_compound: list[set[str]]
+    mentioned: set[str]
+
+
 @dataclass
 class StyleState:
     """Facts collected across one SVG that are checked after the whole file is read."""
@@ -148,6 +161,9 @@ class StyleState:
     # keyframes name -> {offset percent -> {property -> normalized value}}
     keyframes: dict[str, dict[float, dict[str, str]]] = field(default_factory=dict)
     sampled_keyframes: list[str] = field(default_factory=list)
+    # every animation name a rule refers to (gated or not), with where it is written
+    referenced_animations: list[tuple[str, str]] = field(default_factory=list)
+    selector_classes: list[SelectorClasses] = field(default_factory=list)
 
 
 def local_name(tag: str) -> str:
@@ -156,7 +172,13 @@ def local_name(tag: str) -> str:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Check showcase pictogram SVGs against the pa-zzle receiving contract."
+        description=(
+            "Check showcase pictogram SVGs against the pa-zzle receiving contract. Besides the "
+            "structure, prefix, gating, dark theme and playback form, it FAILs an animation whose "
+            "@keyframes is not defined and a class attribute word holding the pz-<game-id>- prefix "
+            "twice (a missing space), and WARNs on @keyframes no animation uses and on selector "
+            "classes that no element of the SVG has."
+        )
     )
     parser.add_argument("svgs", nargs="*", type=Path)
     parser.add_argument("--manifest", type=Path)
@@ -174,6 +196,18 @@ def parse_args() -> argparse.Namespace:
 
 def non_empty_string(value: object) -> bool:
     return isinstance(value, str) and bool(value.strip())
+
+
+def valid_clearance(spec: str) -> bool:
+    parts = [part.strip() for part in spec.split("|")]
+    if len(parts) not in (2, 3) or not parts[0] or not parts[1]:
+        return False
+    if len(parts) == 3:
+        try:
+            float(parts[2])
+        except ValueError:
+            return False
+    return True
 
 
 def candidates_from_manifest(path: Path) -> tuple[list[Candidate], str | None, list[str]]:
@@ -237,6 +271,15 @@ def candidates_from_manifest(path: Path) -> tuple[list[Candidate], str | None, l
             ):
                 errors.append(
                     f"{candidate_id}: overlap must be '<selector>|<selector>' or a list of them"
+                )
+        clearance = entry.get("clearance")
+        if clearance is not None:
+            specs = [clearance] if isinstance(clearance, str) else clearance
+            if not isinstance(specs, list) or not all(
+                isinstance(spec, str) and valid_clearance(spec) for spec in specs
+            ):
+                errors.append(
+                    f"{candidate_id}: clearance must be '<selector>|<selector>[|<min>]' or a list of them"
                 )
 
         file_value = entry.get("file")
@@ -347,6 +390,28 @@ def compounds(selector: str) -> list[str]:
 def class_names(selector: str) -> list[str]:
     without_attributes = re.sub(r"\[[^\]]*\]", "", strip_strings(selector))
     return CLASS_TOKEN.findall(without_attributes)
+
+
+def own_part(compound: str) -> str:
+    """The compound without the arguments of :not() / :is() / :where() / :has()."""
+    result: list[str] = []
+    index = 0
+    while index < len(compound):
+        match = FUNCTIONAL_PSEUDO.search(compound, index)
+        if not match:
+            result.append(compound[index:])
+            break
+        result.append(compound[index : match.start()])
+        depth = 1
+        cursor = match.end()
+        while cursor < len(compound) and depth:
+            if compound[cursor] == "(":
+                depth += 1
+            elif compound[cursor] == ")":
+                depth -= 1
+            cursor += 1
+        index = cursor
+    return "".join(result)
 
 
 def declarations(body: str) -> list[tuple[str, str]]:
@@ -509,6 +574,8 @@ def check_declarations(
                     f"({', '.join(sorted(COLOR_PROPERTIES))} or --{prefix}* color variables): {name}"
                 )
         check_css_values(value, state, where, property_name=name)
+    if animated:
+        state.referenced_animations.extend((use.name, where) for use in animation_uses(declared, where))
     if animated and play_gated:
         state.animations.extend(animation_uses(declared, where))
     if animated and has_positive_delay(declared) and not keeps_first_frame_during_delay(declared):
@@ -626,6 +693,16 @@ def check_style_rule(block: CssBlock, state: StyleState, *, in_motion_media: boo
                 f'[data-pictogram-motion="play"], or it changes the static state: {original}'
             )
         gated_flags.append(gated)
+        state.selector_classes.append(
+            SelectorClasses(
+                original,
+                [
+                    {name for name in class_names(own_part(part)) if name.startswith(prefix)}
+                    for part in parts
+                ],
+                {name for name in class_names(selector) if name.startswith(prefix)},
+            )
+        )
 
     play_gated = in_motion_media and bool(gated_flags) and all(gated_flags)
     state.has_dark_rule |= dark
@@ -731,6 +808,34 @@ def motion_start(track: list[tuple[float, str]]) -> float | None:
             return None if STATIC in (first, value) else start
         start = offset
     return 100.0
+
+
+def check_references(state: StyleState, element_classes: list[set[str]]) -> None:
+    """The stylesheet must reach the SVG: animation names against @keyframes, and selector classes
+    against the class attributes (a typo or a missing space leaves the rule matching nothing)."""
+    report = state.report
+    referenced = {name for name, _ in state.referenced_animations}
+    for name, where in state.referenced_animations:
+        if name not in state.keyframes:
+            report.error(f"{where}: animation {name} has no @keyframes {name}, so it never runs")
+    for name in state.keyframes:
+        if name not in referenced:
+            report.warn(f"@keyframes {name} is used by no animation; a rule meant to run it has another name")
+    present = set().union(*element_classes) if element_classes else set()
+    for entry in state.selector_classes:
+        missing = sorted(entry.mentioned - present)
+        if missing:
+            report.warn(
+                f"<style>: class {', '.join('.' + name for name in missing)} is on no element of the SVG, "
+                f"so the rule does not apply as written: {entry.selector}"
+            )
+            continue
+        for required in entry.per_compound:
+            if len(required) > 1 and not any(required <= classes for classes in element_classes):
+                report.warn(
+                    f"<style>: no element has all of {', '.join('.' + name for name in sorted(required))}, "
+                    f"so the rule matches nothing: {entry.selector}"
+                )
 
 
 def check_iterations(state: StyleState) -> None:
@@ -884,6 +989,7 @@ def check_svg(candidate: Candidate, game_id: str, playback: str | None = None) -
         report.error('viewBox must be "0 0 120 120"')
 
     ids: set[str] = set()
+    element_classes: list[set[str]] = []
     animated = False
     style_found = False
     uses_strong = False
@@ -932,9 +1038,15 @@ def check_svg(candidate: Candidate, game_id: str, playback: str | None = None) -
             if attribute_name == "data-pictogram-motion":
                 report.error("the SVG must not set data-pictogram-motion; the host page sets it")
             if attribute_name == "class":
+                element_classes.append(set(value.split()))
                 for token in value.split():
                     if not token.startswith(prefix):
                         report.error(f"class name must start with {prefix}: {token}")
+                    elif prefix in token[len(prefix) :]:
+                        report.error(
+                            f"class {token} holds the {prefix} prefix twice; a space between two "
+                            "class names is missing, so neither class applies"
+                        )
             if attribute_name == "style":
                 for prop, prop_value in declarations(value):
                     if prop.startswith("animation") or prop.startswith("transition"):
@@ -959,6 +1071,7 @@ def check_svg(candidate: Candidate, game_id: str, playback: str | None = None) -
             animated |= check_stylesheet(text, state)
 
     check_dark_variable_usage(state)
+    check_references(state, element_classes)
     if state.has_dark_rule and state.literal_keyframe_paints:
         report.warn(
             "keyframes write paint colors as literal values while .dark rules switch colors; during "
