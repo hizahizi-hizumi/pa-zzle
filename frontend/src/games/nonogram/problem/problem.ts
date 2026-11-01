@@ -202,7 +202,8 @@ export function isNonogramRecordedProblemIdentity(
 /**
  * 記録など外部から読み戻した値が、成り立つ作業の量かを確かめる。
  * 生成器の版を問わず読むので、盤面の大きさは今の生成器の大きさに限らない。
- * 段は1段ごとに1マス以上決まるので、塗るマスと段の数はどちらも盤面のマスの数を超えない。
+ * 塗るマスは盤面のマスなので、その数は盤面のマスの数を超えない。
+ * 段は1段ごとに1マス以上決まるので、段の数も盤面のマスの数を超えない。
  */
 export function isNonogramSolveWorkload(
   value: unknown,
