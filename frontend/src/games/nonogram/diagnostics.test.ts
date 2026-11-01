@@ -31,7 +31,7 @@ describe("NonogramDiagnosticSnapshot", () => {
     expect(restored?.problem).toEqual(selected.problem);
   });
 
-  test("問題集に無い identity は復元できないこと", () => {
+  describe("問題集に無い identity の場合", () => {
     const missing = createNonogramDiagnosticSnapshot({
       difficulty: "1",
       problemIdentity: createNonogramProblemIdentity(
@@ -42,9 +42,11 @@ describe("NonogramDiagnosticSnapshot", () => {
       buildRevision: null,
     });
 
-    const restored = restoreNonogramProblemFromDiagnosticSnapshot(missing);
+    test("問題を復元できないこと", () => {
+      const restored = restoreNonogramProblemFromDiagnosticSnapshot(missing);
 
-    expect(restored).toBeNull();
+      expect(restored).toBeNull();
+    });
   });
 
   const invalidCases = [
