@@ -1,6 +1,6 @@
 # 動きの作り方
 
-`/design-game-pictogram-showcase` の候補を試作・仕上げするときの、再生形式の組み立て、周期と静止の割合、緩急、構図の扱い、動きの量、Safari（WebKit）で崩れない書き方、入れ子の transform。どの形式を選ぶかは `references/exploration.md`、契約は `SKILL.md` の「受け口の契約」を正とする。
+`/design-game-pictogram-showcase` の候補を試作・仕上げするときの、再生形式の組み立て、周期と静止の割合、緩急、構図の扱い、動きの量、Safari（WebKit）で崩れない書き方、入れ子の transform。どの形式を選ぶかは `references/exploration.md`、契約は `references/contract.md` を正とする。
 
 ## 1. 再生形式の組み立て
 
