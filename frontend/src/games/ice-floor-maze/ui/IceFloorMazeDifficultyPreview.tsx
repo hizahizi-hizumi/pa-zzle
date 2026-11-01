@@ -1,11 +1,7 @@
+import type { IceFloorMazeDifficulty } from "@/games/ice-floor-maze/difficulty";
 import {
-  type IceFloorMazeDifficulty,
-  iceFloorMazeLevelCriteria,
-} from "@/games/ice-floor-maze/difficulty";
-import type {
-  IceFloorMazeBoard,
-  IceFloorMazeCell,
-  IceFloorMazeChangeableCell,
+  type IceFloorMazeBoard,
+  parseIceFloorMazeBoard,
 } from "@/games/ice-floor-maze/puzzle/board";
 import {
   applyIceFloorMazeSlide,
@@ -16,7 +12,6 @@ import { createIceFloorMazeInitialState } from "@/games/ice-floor-maze/puzzle/st
 import {
   getIceFloorMazeBoardViewBox,
   getIceFloorMazeCellCenter,
-  type IceFloorMazePoint,
 } from "@/games/ice-floor-maze/ui/board/board-geometry";
 import { IceFloorMazeGoalMark } from "@/games/ice-floor-maze/ui/board/IceFloorMazeGoalMark";
 import { IceFloorMazePieceMark } from "@/games/ice-floor-maze/ui/board/IceFloorMazePieceMark";
@@ -24,75 +19,78 @@ import { IceFloorMazeTerrain } from "@/games/ice-floor-maze/ui/board/IceFloorMaz
 import { IceFloorMazeTrail } from "@/games/ice-floor-maze/ui/board/IceFloorMazeTrail";
 
 /**
- * 難易度プレビューは、そのレベルで出す最も広い盤面の上の数行を切り出した「帯」を、駒が止め役で止まりながらゴールまで滑る模式図である。実際の問題ではない。
+ * 難易度プレビューは、どのレベルも同じ大きさの小さな盤面（8×4）に、開始位置からゴールまでの最短の道筋を描いた模式図である。実際の問題ではない。
+ * 盤面の広さと道筋の長さは難易度にしないので、盤面の大きさはレベルで変えず、そのレベルの挑戦（何を読めば解けるか）で違いを見せる。
+ * 道筋の手数は要素を使う手の分だけ上のレベルで増えるが、違いとして見せるのは下の挑戦である。
+ * 盤面を3行にすると、もろい岩を崩した跡を同じ向きを続けずに通る最短の道筋が作れないので、4行にする。
  *
- * - 帯の幅: そのレベルで出す最も広い盤面の形（`iceFloorMazeLevelCriteria` の `largestBoardShape`）。マスの大きさはどのレベルでもそろえる。
- *   帯の下は盤面が続く切り出しとし、下の外壁は描かない。
- * - 道筋: 左上の開始位置から、止まる位置を繋いでゴールへ向かう滑りの列。上のレベルの道筋は下のレベルの道筋の続きになる。
- * - 要素: 氷と岩だけのレベル（1・2）は岩だけで、道筋の長さで違いを表す。要素のあるレベルは、そのレベルの挑戦の型が置く要素を
- *   道筋の上に置く（レベル3 はもろい岩、レベル4 は薄い氷、レベル5 は両方）。もろい岩は滑りを止めて崩れ、薄い氷は通った後に割れる。
- * - 岩は道筋の止まりに効くものだけを置く（問題集の問題も、駒が通るマスに接しない岩を持たない）。
+ * - レベル1（止め石）: ゴールへ近づく滑りを重ね、ゴールの先の岩で止まる。
+ * - レベル2（通過の誘いと入り直し・回り込み）: 一度ゴールを通り過ぎ、回り込んで開始位置の側へ戻る向きで、ゴールの先の岩で止まる。
+ * - レベル3（もろい岩）: 一度止めてくれたもろい岩が崩れ、その跡を通り抜ける。レベル3 はもろい岩か薄い氷の一方だけを置くが、
+ *   図ではもろい岩を見せ、薄い氷はレベル4 で足す。
+ * - レベル4（両方）: 滑り出した薄い氷が割れ、その水面で止まる。
+ * - レベル5（両方の組み合わせ）: もろい岩と薄い氷を増やし、どれも道筋で使う。
+ *
+ * 開始位置とゴールはどのレベルも同じにし、レベル2 から上は下のレベルの岩・要素をすべて同じマスに残す。レベル1 の岩はレベル2 に残さない
+ * （止め石だけの道筋が残ると、レベル2 の通過と回り込みが最短の道筋にならない）。道筋はどのレベルでも、図の盤面のただ1つの最短の道筋で、
+ * 同じ向きへ続けて滑らない（問題集の問題と同じ）。
+ *
+ * 盤面は1行を1文字列で書く。`.` が氷、`#` が岩、`b` がもろい岩、`c` が薄い氷、`S` が開始位置、`G` がゴール（どちらも氷）。
+ * 道筋は滑らせる向きを矢印で並べる。
  */
-const previewStrip = {
-  rowCount: 5,
-  start: { x: 0, y: 0 },
-  /**
-   * 開始位置からの滑りの向きと、その滑りを止める岩。岩を持たない滑りは外壁で止まる。
-   * 帯の幅はレベルで変わるので、右へ滑る手は最も広い盤面の最後の手を除いて岩で止め、下へ滑る手は帯の中の岩で止める。
-   */
-  slides: [
-    { direction: "right", stopper: { x: 4, y: 0 } },
-    { direction: "down", stopper: { x: 3, y: 4 } },
-    { direction: "right", stopper: { x: 7, y: 3 } },
-    { direction: "up" },
-    { direction: "right", stopper: { x: 9, y: 0 } },
-    { direction: "down", stopper: { x: 8, y: 3 } },
-    { direction: "right" },
-  ],
-  /**
-   * レベルごとに、`slides` の先頭から何手を道筋にするかと、道筋の上に置く要素。
-   * もろい岩は2手目の滑りを止める岩に、薄い氷は3手目の滑りが通るマスに置く。
-   */
-  levels: {
-    "1": { slideCount: 3, elements: [] },
-    "2": { slideCount: 5, elements: [] },
-    "3": {
-      slideCount: 5,
-      elements: [{ cell: "brittle-rock", at: { x: 3, y: 4 } }],
-    },
-    "4": {
-      slideCount: 5,
-      elements: [{ cell: "thin-ice", at: { x: 4, y: 3 } }],
-    },
-    "5": {
-      slideCount: 6,
-      elements: [
-        { cell: "brittle-rock", at: { x: 3, y: 4 } },
-        { cell: "thin-ice", at: { x: 4, y: 3 } },
-      ],
-    },
+const previewLevelLayouts = {
+  "1": {
+    rows: ["S..#....", "...G#...", "..#.....", "........"],
+    route: "→↓→",
   },
-} as const satisfies {
-  rowCount: number;
-  start: IceFloorMazePoint;
-  slides: readonly {
-    direction: IceFloorMazeDirection;
-    stopper?: IceFloorMazePoint;
-  }[];
-  levels: Record<
-    IceFloorMazeDifficulty,
-    {
-      slideCount: number;
-      elements: readonly {
-        cell: IceFloorMazeChangeableCell;
-        at: IceFloorMazePoint;
-      }[];
-    }
-  >;
-};
+  "2": {
+    rows: ["S..#....", "...G....", "#.......", "..#....."],
+    route: "↓→↓←↑",
+  },
+  "3": {
+    rows: ["S..#....", "...G....", "#..b....", "..#....#"],
+    route: "↓→↓←↓←↑",
+  },
+  "4": {
+    rows: ["S..#....", "...G...#", "#..b....", "..#...c#"],
+    route: "↓→↓↑↓←↓←↑",
+  },
+  "5": {
+    rows: ["S..#....", "...G.c.#", "#..b....", "..#b..c#"],
+    route: "↓→↓←→↑←↓←↑",
+  },
+} as const satisfies Record<
+  IceFloorMazeDifficulty,
+  { rows: readonly string[]; route: string }
+>;
 
-/** 図の上と左右で、外壁の外に残す余白（マス単位）。 */
-const STRIP_PADDING = 0.08;
+const directionByArrow = {
+  "↑": "up",
+  "→": "right",
+  "↓": "down",
+  "←": "left",
+} as const satisfies Record<string, IceFloorMazeDirection>;
+
+function isDirectionArrow(
+  value: string,
+): value is keyof typeof directionByArrow {
+  return Object.hasOwn(directionByArrow, value);
+}
+
+function parseRoute(route: string): IceFloorMazeDirection[] {
+  return Array.from(route, (arrow) => {
+    if (!isDirectionArrow(arrow)) {
+      throw new RangeError(`Unknown ice floor maze preview arrow: ${arrow}`);
+    }
+    return directionByArrow[arrow];
+  });
+}
+
+const START_NOTATION = "S";
+const GOAL_NOTATION = "G";
+
+/** 図の上下左右で、外壁の外に残す余白（マス単位）。 */
+const FIGURE_PADDING = 0.08;
 
 type PreviewSlide = {
   direction: IceFloorMazeDirection;
@@ -108,31 +106,19 @@ type PreviewRoute = {
 };
 
 function createPreviewRoute(difficulty: IceFloorMazeDifficulty): PreviewRoute {
-  const { width, height } =
-    iceFloorMazeLevelCriteria[difficulty].largestBoardShape;
-  const level = previewStrip.levels[difficulty];
-  function toCellIndex({ x, y }: IceFloorMazePoint): number {
-    return y * width + x;
-  }
-  const plannedSlides = previewStrip.slides.slice(0, level.slideCount);
-  const cells: IceFloorMazeCell[] = Array.from(
-    { length: width * height },
-    () => "ice",
+  const { rows, route } = previewLevelLayouts[difficulty];
+  const notations = rows.join("");
+  const board = parseIceFloorMazeBoard(
+    rows.map((row) =>
+      row.replace(START_NOTATION, ".").replace(GOAL_NOTATION, "."),
+    ),
   );
-  for (const slide of plannedSlides) {
-    if ("stopper" in slide) {
-      cells[toCellIndex(slide.stopper)] = "rock";
-    }
-  }
-  for (const element of level.elements) {
-    cells[toCellIndex(element.at)] = element.cell;
-  }
-  const board = { width, height, cells };
-  const start = toCellIndex(previewStrip.start);
+  const start = notations.indexOf(START_NOTATION);
+  const goal = notations.indexOf(GOAL_NOTATION);
 
   const slides: PreviewSlide[] = [];
   let state = createIceFloorMazeInitialState(board, start);
-  for (const { direction } of plannedSlides) {
+  for (const direction of parseRoute(route)) {
     const slide = slideIceFloorMazePiece(board, state, direction);
     if (slide.status === "blocked") {
       throw new Error("Ice floor maze preview slides must move the piece");
@@ -140,7 +126,10 @@ function createPreviewRoute(difficulty: IceFloorMazeDifficulty): PreviewRoute {
     slides.push({ direction, from: slide.from, to: slide.to });
     state = applyIceFloorMazeSlide(state, slide);
   }
-  return { board, start, goal: state.position, slides };
+  if (state.position !== goal) {
+    throw new Error("Ice floor maze preview route must stop at the goal");
+  }
+  return { board, start, goal, slides };
 }
 
 type IceFloorMazeDifficultyPreviewProps = {
@@ -152,31 +141,26 @@ export function IceFloorMazeDifficultyPreview({
 }: IceFloorMazeDifficultyPreviewProps) {
   const { board, start, goal, slides } = createPreviewRoute(difficulty);
   const boardViewBox = getIceFloorMazeBoardViewBox(board);
-  const left = boardViewBox.minX - STRIP_PADDING;
-  const top = boardViewBox.minY - STRIP_PADDING;
-  const width = boardViewBox.width + STRIP_PADDING * 2;
-  const height = previewStrip.rowCount - top;
+  const left = boardViewBox.minX - FIGURE_PADDING;
+  const top = boardViewBox.minY - FIGURE_PADDING;
+  const width = boardViewBox.width + FIGURE_PADDING * 2;
+  const height = boardViewBox.height + FIGURE_PADDING * 2;
   const startCenter = getIceFloorMazeCellCenter(board, start);
   const goalCenter = getIceFloorMazeCellCenter(board, goal);
 
   return (
     <span
       aria-hidden="true"
-      // 最も広いレベルの帯がプレビュー枠（128px）に収まるマスの大きさにする。
-      className="flex h-14 w-full items-center [--preview-unit:10px] lg:h-28 lg:justify-center lg:[--preview-unit:12px]"
+      className="flex h-14 w-full items-center lg:h-28 lg:justify-center"
     >
-      {/* マスの大きさをどのレベルでもそろえるため、図の幅を帯の列の数に比例させる。 */}
       <svg
         viewBox={`${left} ${top} ${width} ${height}`}
-        style={{
-          width: `calc(var(--preview-unit) * ${width})`,
-          height: `calc(var(--preview-unit) * ${height})`,
-        }}
+        className="h-full w-auto max-w-full"
       >
         <IceFloorMazeTerrain board={board} goal={goal} />
         {slides.map(({ direction, from, to }) => (
           <IceFloorMazeTrail
-            key={from}
+            key={`${from}-${direction}`}
             board={board}
             direction={direction}
             from={from}
@@ -194,4 +178,4 @@ export function IceFloorMazeDifficultyPreview({
   );
 }
 
-export const _private = { previewStrip, createPreviewRoute };
+export const _private = { previewLevelLayouts, createPreviewRoute };
