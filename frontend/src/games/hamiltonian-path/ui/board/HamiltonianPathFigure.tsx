@@ -22,6 +22,11 @@ type HamiltonianPathFigureProps = {
   isDeadEnd: boolean;
   /** 道が全マスを通り終えたか。始点から終点へ道をなぞる光を描く。 */
   solved: boolean;
+  /**
+   * 上から何行を描くか。省略すると全行を描く。難易度プレビューで、盤面の上の帯だけを切り出すときに使う。
+   * 描かない行のマスと、そこに掛かる仕切りは描かない。道・始点・先端は描く行の中に置く。
+   */
+  visibleRowCount?: number;
   ref?: Ref<SVGSVGElement>;
 };
 
@@ -91,9 +96,17 @@ export function HamiltonianPathFigure({
   path,
   isDeadEnd,
   solved,
+  visibleRowCount,
   ref,
 }: HamiltonianPathFigureProps) {
   const { size } = board;
+  const rowCount = visibleRowCount ?? size;
+  function isVisibleCell(cell: number): boolean {
+    return getHamiltonianPathCellPosition(size, cell).row < rowCount;
+  }
+  const visiblePartitions = board.partitions.filter((partition) =>
+    partition.every(isVisibleCell),
+  );
   const walls = new Set(board.walls);
   const lastProgressIndex = Math.max(
     1,
@@ -110,41 +123,43 @@ export function HamiltonianPathFigure({
   return (
     <svg
       ref={ref}
-      viewBox={`0 0 ${size} ${size}`}
+      viewBox={`0 0 ${size} ${rowCount}`}
       aria-hidden="true"
       className={cn(
         "pointer-events-none absolute inset-0 size-full overflow-visible",
         hamiltonianPathToneClassNames.pathColorVariables,
       )}
     >
-      {listHamiltonianPathCells(size).map((cell) => {
-        const { row, column } = getHamiltonianPathCellPosition(size, cell);
-        const order = visitedOrder.get(cell);
-        return (
-          <rect
-            key={cell}
-            x={column}
-            y={row}
-            width={1}
-            height={1}
-            vectorEffect="non-scaling-stroke"
-            className={
-              walls.has(cell)
-                ? hamiltonianPathToneClassNames.wallCell
-                : cn(
-                    hamiltonianPathToneClassNames.gridLine,
-                    order === undefined &&
-                      hamiltonianPathToneClassNames.unvisitedCell,
-                  )
-            }
-            style={
-              order === undefined
-                ? undefined
-                : { fill: getVisitedCellColor(progressAt(order)) }
-            }
-          />
-        );
-      })}
+      {listHamiltonianPathCells(size)
+        .filter(isVisibleCell)
+        .map((cell) => {
+          const { row, column } = getHamiltonianPathCellPosition(size, cell);
+          const order = visitedOrder.get(cell);
+          return (
+            <rect
+              key={cell}
+              x={column}
+              y={row}
+              width={1}
+              height={1}
+              vectorEffect="non-scaling-stroke"
+              className={
+                walls.has(cell)
+                  ? hamiltonianPathToneClassNames.wallCell
+                  : cn(
+                      hamiltonianPathToneClassNames.gridLine,
+                      order === undefined &&
+                        hamiltonianPathToneClassNames.unvisitedCell,
+                    )
+              }
+              style={
+                order === undefined
+                  ? undefined
+                  : { fill: getVisitedCellColor(progressAt(order)) }
+              }
+            />
+          );
+        })}
       {centers.slice(1).map((to, index) => {
         const from = centers[index]!;
         return (
@@ -175,7 +190,7 @@ export function HamiltonianPathFigure({
           className={hamiltonianPathToneClassNames.clearTrace}
         />
       ) : null}
-      {board.partitions.map((partition) => (
+      {visiblePartitions.map((partition) => (
         <rect
           key={`halo-${getPartitionKey(partition)}`}
           {...{
@@ -188,7 +203,7 @@ export function HamiltonianPathFigure({
           style={{ fill: headColor }}
         />
       ))}
-      {board.partitions.map((partition) => (
+      {visiblePartitions.map((partition) => (
         <rect
           key={getPartitionKey(partition)}
           {...getPartitionRect(size, partition)}
