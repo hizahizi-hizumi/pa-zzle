@@ -1,3 +1,5 @@
+import type { MockInstance } from "vitest";
+
 import type { SoundEffect, SoundLayer } from "@/lib/sound-effects";
 
 type SoundEffects = typeof import("@/lib/sound-effects");
@@ -75,13 +77,15 @@ class FakeOfflineAudioContext {
   }
 }
 
-function stubFetch(failingUrls: readonly string[] = []) {
+/** `failingUrls` に入っている URL の取得は失敗させる。テストの途中で `failingUrls` を変えると、それ以降の取得に効く。 */
+function stubFetch(failingUrls: Iterable<string> = []) {
+  const failing = new Set(failingUrls);
   const fetch = vi.fn(async (url: string) => ({
-    ok: !failingUrls.includes(url),
+    ok: !failing.has(url),
     arrayBuffer: async () => new TextEncoder().encode(url).buffer,
   }));
   vi.stubGlobal("fetch", fetch);
-  return fetch;
+  return Object.assign(fetch, { failing });
 }
 
 function stubWebAudio() {
@@ -140,13 +144,11 @@ describe("playSound", () => {
       fetch = stubFetch();
       soundEffects = await importSoundEffects();
       sound = soundEffects.defineSoundEffect("/tap.flac");
+      soundEffects.prepareSoundEffects([sound]);
     });
 
     test("音声ファイルを読み込まず、何もせずに終わること", () => {
-      const act = () => {
-        soundEffects.prepareSoundEffects([sound]);
-        soundEffects.playSound(sound);
-      };
+      const act = () => soundEffects.playSound(sound);
 
       expect(act).not.toThrow();
       expect(fetch).not.toHaveBeenCalled();
@@ -172,6 +174,32 @@ describe("playSound", () => {
       expect(FakeAudioContext.instances[0]?.resume).toHaveBeenCalled();
       expect(getStartedSources()).toEqual([
         { url: "/tap.flac", playbackRate: 1, when: 10.5 },
+      ]);
+    });
+  });
+
+  describe("読み込みを終えた効果音と同じ URL から別に作った効果音の場合", () => {
+    let soundEffects: SoundEffects;
+    let fetch: ReturnType<typeof stubFetch>;
+    let sameUrlSound: SoundEffect;
+
+    beforeEach(async () => {
+      stubWebAudio();
+      fetch = stubFetch();
+      soundEffects = await importSoundEffects();
+      soundEffects.prepareSoundEffects([
+        soundEffects.defineSoundEffect("/tap.flac"),
+      ]);
+      await finishLoading();
+      sameUrlSound = soundEffects.defineSoundEffect("/tap.flac");
+    });
+
+    test("読み直さずに鳴らすこと", () => {
+      soundEffects.playSound(sameUrlSound);
+
+      expect(fetch).toHaveBeenCalledOnce();
+      expect(getStartedSources()).toEqual([
+        { url: "/tap.flac", playbackRate: 1, when: 10 },
       ]);
     });
   });
@@ -207,6 +235,41 @@ describe("playSound", () => {
       await finishLoading();
 
       expect(getStartedSources()).toEqual([]);
+    });
+  });
+
+  describe("読み込みを頼んでいない効果音の場合", () => {
+    let soundEffects: SoundEffects;
+    let fetch: ReturnType<typeof stubFetch>;
+    let sound: SoundEffect;
+
+    beforeEach(async () => {
+      stubWebAudio();
+      fetch = stubFetch();
+      soundEffects = await importSoundEffects();
+      sound = soundEffects.defineSoundEffect("/tap.flac");
+    });
+
+    test("鳴らさずに読み込みを始めること", () => {
+      soundEffects.playSound(sound);
+
+      expect(getStartedSources()).toEqual([]);
+      expect(fetch).toHaveBeenCalledExactlyOnceWith("/tap.flac");
+    });
+
+    describe("一度鳴らそうとして読み込みを終えた場合", () => {
+      beforeEach(async () => {
+        soundEffects.playSound(sound);
+        await finishLoading();
+      });
+
+      test("次は鳴らすこと", () => {
+        soundEffects.playSound(sound);
+
+        expect(getStartedSources()).toEqual([
+          { url: "/tap.flac", playbackRate: 1, when: 10 },
+        ]);
+      });
     });
   });
 
@@ -284,18 +347,20 @@ describe("playLayeredSound", () => {
       ]);
     });
 
-    test("揺らぎを付けると、素材すべてを同じ幅だけ高く大きくして鳴らすこと", () => {
-      soundEffects.playLayeredSound(layers, {
-        variation: { pitchCents: 1200, volumeRatio: 0.5 },
-      });
+    describe("揺らぎを付けた場合", () => {
+      const variation = { pitchCents: 1200, volumeRatio: 0.5 };
 
-      const effectVolumes = FakeAudioContext.instances[0]?.gains
-        .slice(1)
-        .map(({ gain }) => gain.value);
-      expect(
-        getStartedSources().map(({ playbackRate }) => playbackRate),
-      ).toEqual([2, 2]);
-      expect(effectVolumes).toEqual([1.5]);
+      test("素材すべてを同じ幅だけ高く大きくして鳴らすこと", () => {
+        soundEffects.playLayeredSound(layers, { variation });
+
+        const effectVolumes = FakeAudioContext.instances[0]?.gains
+          .slice(1)
+          .map(({ gain }) => gain.value);
+        expect(
+          getStartedSources().map(({ playbackRate }) => playbackRate),
+        ).toEqual([2, 2]);
+        expect(effectVolumes).toEqual([1.5]);
+      });
     });
   });
 
@@ -306,6 +371,7 @@ describe("playLayeredSound", () => {
     beforeEach(async () => {
       stubWebAudio();
       stubFetch(["/missing.flac"]);
+      vi.spyOn(console, "warn").mockImplementation(() => {});
       soundEffects = await importSoundEffects();
       layers = [
         { sound: soundEffects.defineSoundEffect("/tap.flac"), offsetMs: 0 },
@@ -343,18 +409,65 @@ describe("prepareSoundEffects", () => {
       expect(fetch).toHaveBeenCalledExactlyOnceWith("/tap.flac");
     });
 
-    test("何度呼んでも、同じ効果音を読み直さないこと", () => {
+    test("同じ URL の効果音を一度だけ読み込むこと", () => {
       soundEffects.prepareSoundEffects([sound]);
-      soundEffects.prepareSoundEffects([sound]);
+      soundEffects.prepareSoundEffects([
+        soundEffects.defineSoundEffect("/tap.flac"),
+      ]);
 
       expect(fetch).toHaveBeenCalledOnce();
     });
 
-    test("利用者の操作で AudioContext を作って動かすこと", () => {
-      soundEffects.prepareSoundEffects([sound]);
-      window.dispatchEvent(new Event("pointerdown"));
+    describe("呼んだ後に利用者が操作した場合", () => {
+      beforeEach(() => {
+        soundEffects.prepareSoundEffects([sound]);
+      });
 
-      expect(FakeAudioContext.instances[0]?.resume).toHaveBeenCalled();
+      test("AudioContext を作って動かすこと", () => {
+        window.dispatchEvent(new Event("pointerdown"));
+
+        expect(FakeAudioContext.instances[0]?.resume).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe("読み込みに失敗した効果音の場合", () => {
+    let soundEffects: SoundEffects;
+    let fetch: ReturnType<typeof stubFetch>;
+    let warn: MockInstance<typeof console.warn>;
+    let sound: SoundEffect;
+
+    beforeEach(async () => {
+      stubWebAudio();
+      fetch = stubFetch(["/tap.flac"]);
+      warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      soundEffects = await importSoundEffects();
+      sound = soundEffects.defineSoundEffect("/tap.flac");
+    });
+
+    test("読み込めなかった URL を警告すること", async () => {
+      soundEffects.prepareSoundEffects([sound]);
+      await finishLoading();
+
+      const warnedMessages = warn.mock.calls.map(([message]) => message);
+      expect(warnedMessages).toEqual(["効果音を読み込めない: /tap.flac"]);
+    });
+
+    describe("失敗した後に読み込めるようになった場合", () => {
+      beforeEach(async () => {
+        soundEffects.prepareSoundEffects([sound]);
+        await finishLoading();
+        fetch.failing.clear();
+      });
+
+      test("もう一度呼ぶと読み直し、鳴らせるようにすること", async () => {
+        soundEffects.prepareSoundEffects([sound]);
+        await finishLoading();
+        soundEffects.playSound(sound);
+
+        expect(fetch).toHaveBeenCalledTimes(2);
+        expect(getStartedSources()).toHaveLength(1);
+      });
     });
   });
 
@@ -377,14 +490,19 @@ describe("prepareSoundEffects", () => {
       expect(fetch).not.toHaveBeenCalled();
     });
 
-    test("鳴らす設定に変えたら読み込み、鳴らせるようにすること", async () => {
-      soundEffects.prepareSoundEffects([sound]);
-      soundEffects.setSoundEffectsEnabled(true);
-      await finishLoading();
-      soundEffects.playSound(sound);
+    describe("呼んだ後に鳴らす設定へ変えた場合", () => {
+      beforeEach(async () => {
+        soundEffects.prepareSoundEffects([sound]);
+        soundEffects.setSoundEffectsEnabled(true);
+        await finishLoading();
+      });
 
-      expect(fetch).toHaveBeenCalledExactlyOnceWith("/tap.flac");
-      expect(getStartedSources()).toHaveLength(1);
+      test("読み込み、鳴らせるようにすること", () => {
+        soundEffects.playSound(sound);
+
+        expect(fetch).toHaveBeenCalledExactlyOnceWith("/tap.flac");
+        expect(getStartedSources()).toHaveLength(1);
+      });
     });
   });
 });

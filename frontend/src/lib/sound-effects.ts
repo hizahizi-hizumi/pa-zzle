@@ -3,9 +3,10 @@
  * どんな音かは音声ファイルが持ち、いつ・どう鳴らすか（遅らせる、重ねる、揺らす）はコードが持つ。
  * AudioContext は初めて要るときに作り、Web Audio API が無い環境と、鳴らさない設定では何もしない。
  *
- * 音声ファイルは Vite のアセット import で URL として受け取り、モジュールの最上位で `defineSoundEffect` に渡して効果音にする。
+ * 音声ファイルは Vite のアセット import で URL として受け取り、`defineSoundEffect` に渡して効果音にする。
  * その効果音を鳴らしうる画面を出したときに `prepareSoundEffects` で読み込みを始め、
  * 鳴らすときは `playSound`、素材を時間をずらして重ねるときは `playLayeredSound` を使う。
+ * 効果音は音声ファイルの URL で見分けるので、同じ URL から作った効果音は同じ音として読み込み・鳴らす。
  * 回数の多い操作の音には `variation: REPEATED_SOUND_VARIATION` を渡し、同じ音の機械的な繰り返しにしない。
  * プレイ画面の操作やクリアに合わせて鳴らすときは、`@/games/play-sound-effects` のフックを使う。
  */
@@ -15,7 +16,7 @@ import {
   subscribeSoundEffectsEnabled,
 } from "@/lib/sound-effects-setting";
 
-/** 同梱した音声ファイル1つ分の効果音。`defineSoundEffect` で作る。 */
+/** 同梱した音声ファイル1つ分の効果音。 */
 export type SoundEffect = {
   readonly url: string;
 };
@@ -75,10 +76,11 @@ const DECODING_SAMPLE_RATE = 48000;
 let soundOutput: SoundOutput | null = null;
 let unlockListening = false;
 let decodingContext: OfflineAudioContext | null = null;
-const requestedSounds = new WeakSet<SoundEffect>();
-const soundBuffers = new WeakMap<SoundEffect, AudioBuffer>();
-/** 鳴らさない設定の間に読み込みを頼まれた効果音。鳴らす設定に変わったら読み込む。 */
-const soundsWaitingForEnabled = new Set<SoundEffect>();
+/** 読み込みを頼まれた音声ファイルの URL。読み込み中と読み込み済みを含み、読み込みに失敗したら外して読み直せるようにする。 */
+const requestedSoundUrls = new Set<string>();
+const soundBuffers = new Map<string, AudioBuffer>();
+/** 鳴らさない設定の間に読み込みを頼まれた音声ファイルの URL。鳴らす設定に変わったら読み込む。 */
+const soundUrlsWaitingForEnabled = new Set<string>();
 let waitingForEnabled = false;
 
 function getAudioContextClass(): typeof AudioContext | undefined {
@@ -89,7 +91,7 @@ function getOfflineAudioContextClass(): typeof OfflineAudioContext | undefined {
   return typeof window === "undefined" ? undefined : window.OfflineAudioContext;
 }
 
-/** 音声ファイルの URL から効果音を作る。モジュールの最上位で呼ぶ。読み込みは `prepareSoundEffects` で始める。 */
+/** 音声ファイルの URL から効果音を作る。読み込みは `prepareSoundEffects` で始める。 */
 export function defineSoundEffect(url: string): SoundEffect {
   return { url };
 }
@@ -97,35 +99,36 @@ export function defineSoundEffect(url: string): SoundEffect {
 /**
  * 効果音を鳴らしうる画面を出したときに、その画面で鳴らす効果音を渡して呼ぶ。何度呼んでもよい。
  *
- * - 渡した効果音の読み込みを始め、鳴らすときに待たせないようにする。読み込み始めた効果音は読み直さない。
+ * - 渡した効果音の読み込みを始め、鳴らすときに待たせないようにする。読み込み中と読み込み済みの効果音は読み直さない。
  *   鳴らさない設定の間は読み込まず、鳴らす設定に変わったときに読み込む。
- * - 読み込みに失敗した効果音は鳴らさない。効果音は操作に添えるものなので、失敗を利用者に知らせず、遊ぶのを妨げない。
+ * - 読み込みに失敗した効果音は、次に読み込みを頼まれたとき（この関数か、鳴らそうとしたとき）に読み直す。
+ *   効果音は操作に添えるものなので、失敗を利用者に知らせず、遊ぶのを妨げない。
  * - ブラウザは利用者が操作するまで音を出させないため、次の操作で AudioContext を作り動かせるよう待つ。
  */
 export function prepareSoundEffects(sounds: readonly SoundEffect[]): void {
   if (!getAudioContextClass()) {
     return;
   }
-  for (const sound of sounds) {
-    requestSoundEffect(sound);
-  }
+  requestSoundEffects(sounds);
   listenForUnlock();
 }
 
-function requestSoundEffect(sound: SoundEffect) {
-  if (requestedSounds.has(sound)) {
-    return;
-  }
-  requestedSounds.add(sound);
-  if (isSoundEffectsEnabled()) {
-    loadSoundEffect(sound);
-  } else {
-    waitForEnabledToLoad(sound);
+function requestSoundEffects(sounds: readonly SoundEffect[]) {
+  for (const { url } of sounds) {
+    if (requestedSoundUrls.has(url)) {
+      continue;
+    }
+    requestedSoundUrls.add(url);
+    if (isSoundEffectsEnabled()) {
+      loadSoundEffect(url);
+    } else {
+      waitForEnabledToLoad(url);
+    }
   }
 }
 
-function waitForEnabledToLoad(sound: SoundEffect) {
-  soundsWaitingForEnabled.add(sound);
+function waitForEnabledToLoad(url: string) {
+  soundUrlsWaitingForEnabled.add(url);
   if (waitingForEnabled) {
     return;
   }
@@ -137,24 +140,29 @@ function waitForEnabledToLoad(sound: SoundEffect) {
       }
       unsubscribe();
       waitingForEnabled = false;
-      for (const waitingSound of soundsWaitingForEnabled) {
-        loadSoundEffect(waitingSound);
+      for (const waitingUrl of soundUrlsWaitingForEnabled) {
+        loadSoundEffect(waitingUrl);
       }
-      soundsWaitingForEnabled.clear();
+      soundUrlsWaitingForEnabled.clear();
     },
   );
 }
 
-function loadSoundEffect(sound: SoundEffect) {
+function loadSoundEffect(url: string) {
   const context = getDecodingContext();
   if (!context) {
     return;
   }
-  fetchAndDecode(context, sound.url).then(
+  fetchAndDecode(context, url).then(
     function keepDecodedSound(buffer) {
-      soundBuffers.set(sound, buffer);
+      soundBuffers.set(url, buffer);
     },
-    function ignoreLoadFailure() {},
+    function forgetFailedRequest(error: unknown) {
+      requestedSoundUrls.delete(url);
+      if (import.meta.env.DEV) {
+        console.warn(`効果音を読み込めない: ${url}`, error);
+      }
+    },
   );
 }
 
@@ -164,7 +172,7 @@ async function fetchAndDecode(
 ): Promise<AudioBuffer> {
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(`効果音を読み込めない: ${url}`);
+    throw new Error(`HTTP ${response.status}`);
   }
   return context.decodeAudioData(await response.arrayBuffer());
 }
@@ -281,8 +289,8 @@ function listenForUnlock() {
 /**
  * 効果音を鳴らす。鳴らせない環境と、鳴らさない設定では何もしない。鳴らさない設定の間は AudioContext も作らない。
  *
- * まだ読み込めていない効果音と、読み込みに失敗した効果音は鳴らさない。読み込みを待ってから鳴らすと、
- * 操作や演出とずれた時に鳴るため待たない。
+ * まだ読み込めていない効果音は鳴らさない。読み込みを待ってから鳴らすと、操作や演出とずれた時に鳴るため待たない。
+ * 読み込みを頼まれていない効果音と読み込みに失敗した効果音は、ここで読み込みを始め、次に鳴らすときから鳴らす。
  */
 export function playSound(
   sound: SoundEffect,
@@ -307,6 +315,7 @@ export function playLayeredSound(
     return;
   }
   resumeAudioContext(output.context);
+  requestSoundEffects(layers.map(({ sound }) => sound));
 
   const loadedLayers = getLoadedLayers(layers);
   if (!loadedLayers) {
@@ -326,7 +335,7 @@ type LoadedLayer = {
 function getLoadedLayers(layers: readonly SoundLayer[]): LoadedLayer[] | null {
   const loadedLayers: LoadedLayer[] = [];
   for (const { sound, offsetMs } of layers) {
-    const buffer = soundBuffers.get(sound);
+    const buffer = soundBuffers.get(sound.url);
     if (!buffer) {
       return null;
     }
