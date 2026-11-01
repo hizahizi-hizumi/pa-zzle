@@ -2,7 +2,7 @@
 
 過去のパズル追加で、人間に指摘されてから直したもの。各行は「兆候 → 予防（いつ・何で確かめるか）」。誰がいつ当てるかは SKILL.md。
 
-「いつ」は段の種類か工程の名前で書く。段の種類: research（調査）・rules・playable・play-ui・difficulty・problem-pool・pictogram・difficulty-select・score・result-records・spec（SPEC）（実際のスタックではいくつかを1段にまとめる）。工程: 認識合わせ・実装・作り込み・反映（最終レビューの指摘の反映）・最終レビュー。全段に効くものは「全段」。
+「いつ」は段の種類か工程の名前で書く。段の種類（この並びで積む）: research（調査）・rules・playable・play-ui・difficulty・problem-pool・pictogram・difficulty-select・score・result-records・catalog（一覧への掲載）・spec（SPEC）。実際のスタックではいくつかを1段にまとめる。「A〜B」はこの並びの範囲。工程: 認識合わせ・実装・作り込み・反映（最終レビューの指摘の反映）・最終レビュー。全段に効くものは「全段」。
 
 ## 面白さ・問題の質
 
@@ -94,7 +94,7 @@
 | 進行中の同じパズルを見落とす | 別ブランチでほぼ完成した同じパズルがあるのに、作り始める | 認識合わせ: `alignment.md` の「先に調べるもの」 |
 | 積み直しの一部だけ直す | 検証に落ちた段だけを直して push し、上の段に直しが載らない | 作り込み・反映: `restack.sh` の冒頭（検証に落ちたら戻して原因の段で直す） |
 | main に取り残される | 衝突は無いのに共通契約が変わっている。滞留中に共通化が入る | 作り込み: 共通契約のずれは最終レビュー資料に書く |
-| 一覧に載る前に網羅テストが落ちる | カタログに載せる前の段で `frontend/src/game-catalog/game-catalog.test.ts` の「全ゲームを持つ」テストが落ちる | playable〜difficulty-select: 網羅テストからゲームを外す一覧を使い（前例: `git log --all -S gamesNotInCatalogYet`）、カタログに載せる段で外す |
+| 一覧に載る前に網羅テストが落ちる | catalog より前の段で `frontend/src/game-catalog/game-catalog.test.ts` の「全ゲームを持つ」テストが落ちる | playable〜catalog: 網羅テストからゲームを外す一覧を使い（前例: `git log --all -S gamesNotInCatalogYet`）、catalog の段で外す |
 | 生成が途中で止まる | バックグラウンド実行の上限（2時間）で打ち切られ、未完了の問題集をコミットする | problem-pool: 再開できる生成にし、件数と全問の再検証で完了を確かめてからコミットする。候補の比較は小さな仮の問題集で行う |
 | 候補ブランチの放置 | 積み直した後も古い別案の URL が資料に残る | 最終レビュー: `final-review.md` の「別案の出し方」 |
 | 資料が重くて着手されない | 見てほしい点が回ごとに増え、本文が長い | 最終レビュー: `final-review.md` の「資料に載せる中身」 |

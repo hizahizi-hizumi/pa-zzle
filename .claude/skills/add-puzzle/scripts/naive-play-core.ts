@@ -17,7 +17,8 @@
 //   - レベルごとに問題集から `sampleEvenly` で N 問を抜き、`runLevel` に players を渡す。
 //     最後に `tableHeader` と `fmt` で表を標準出力へ書く。進み具合のログは標準エラーへ書く。
 //
-// 実行（リポジトリのルートで。`@/` の解決に対象の版の `frontend/tsconfig.json` が使われる）:
+// 実行（アダプタのある版のルートで。新しいパズルのアダプタは段の worktree にあるので、worktree のルートで流す。
+// `@/` の解決に対象の版の `frontend/tsconfig.json` が使われる）:
 //   N=30 PLAYS=3 LEVELS=1,3,5 bun .claude/skills/add-puzzle/examples/naive-play-ws.ts <worktree>/frontend/src/games/water-sort
 //   - N: レベルごとに抜く問題数
 //   - PLAYS: 1問を同じプレイヤーが遊ぶ回数（乱数の種を変える）
