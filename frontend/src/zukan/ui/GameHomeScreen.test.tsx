@@ -305,6 +305,24 @@ function getLevelTab(label: string): HTMLElement {
   return screen.getByRole("tab", { name: new RegExp(`^${label}`) });
 }
 
+/** 読み上げる名前と同じく、見せるだけの要素を除いたカードの文字。 */
+function readLevelCardName(tab: Element): string | null {
+  const shown = tab.cloneNode(true) as Element;
+  for (const hidden of shown.querySelectorAll('[aria-hidden="true"]')) {
+    hidden.remove();
+  }
+  return shown.textContent;
+}
+
+/** カードに示した「解いた数 / 全問の数」。 */
+function readLevelCardCount(tab: Element): string | undefined {
+  const [, problemCount, solvedCount] =
+    readLevelCardName(tab)?.match(/(\d+)問中(\d+)問を解いた/) ?? [];
+  return problemCount === undefined
+    ? undefined
+    : `${solvedCount} / ${problemCount}`;
+}
+
 function chooseLevel(label: string) {
   fireEvent.mouseDown(getLevelTab(label), { button: 0, ctrlKey: false });
 }
@@ -396,14 +414,14 @@ describe("GameHomeScreen", () => {
     test("レベルごとのカードを並べ、それぞれにそのレベルの解いた問題の数を添えること", () => {
       const tabNames = within(screen.getByRole("tablist", { name: "レベル" }))
         .getAllByRole("tab")
-        .map((tab) => tab.textContent);
+        .map(readLevelCardName);
 
       expect(tabNames).toEqual([
-        "レベル 1、解いた問題 0 / 3",
-        "レベル 2、解いた問題 0 / 1",
-        "レベル 3、解いた問題 2 / 4",
-        "レベル 4、解いた問題 0 / 1",
-        "レベル 5、解いた問題 0 / 1",
+        "レベル 1、3問中0問を解いた",
+        "レベル 2、1問中0問を解いた",
+        "レベル 3、4問中2問を解いた",
+        "レベル 4、1問中0問を解いた",
+        "レベル 5、1問中0問を解いた",
       ]);
     });
 
@@ -422,7 +440,7 @@ describe("GameHomeScreen", () => {
       expect(sheetNames).toEqual(["レベル 1の問題"]);
     });
 
-    test("カードで右矢印キーを押すと、次のレベルのカードへ移って台紙を切り替えること", async () => {
+    test("カードで右矢印キーを押すと、次のレベルのカードへフォーカスだけを移し、台紙を切り替えないこと", async () => {
       const tab = getLevelTab("レベル 3");
       tab.focus();
 
@@ -431,8 +449,32 @@ describe("GameHomeScreen", () => {
         expect(document.activeElement).toBe(getLevelTab("レベル 4"));
       });
       const sheetNames = getShownSheetNames();
+      const selectedTab = screen.getByRole("tab", { selected: true });
+
+      expect(sheetNames).toEqual(["レベル 3の問題"]);
+      expect(selectedTab).toBe(getLevelTab("レベル 3"));
+    });
+
+    test("フォーカスのあるカードで Enter を押すと、そのレベルの台紙に切り替えること", () => {
+      const tab = getLevelTab("レベル 4");
+      tab.focus();
+
+      fireEvent.keyDown(tab, { key: "Enter" });
+      const sheetNames = getShownSheetNames();
 
       expect(sheetNames).toEqual(["レベル 4の問題"]);
+    });
+
+    test("台紙の囲みを Tab の止まり先にしないこと", () => {
+      const tabPanel = screen.getByRole("tabpanel");
+
+      expect(tabPanel.getAttribute("tabindex")).toBe("-1");
+    });
+
+    test("開いたときに、ゲーム名の見出しへフォーカスを置くこと", () => {
+      const focused = document.activeElement;
+
+      expect(focused).toBe(screen.getByRole("heading", { level: 1 }));
     });
 
     test("レベルを切り替えると、選んでいたマスの選択を解くこと", () => {
@@ -666,9 +708,9 @@ describe("GameHomeScreen", () => {
       square.focus();
 
       fireEvent.keyDown(square, { key: "ArrowRight" });
-      const scrolledSquares = scrollIntoView.mock.contexts.map((context) =>
-        (context as Element).getAttribute("aria-label"),
-      );
+      const scrolledSquares = scrollIntoView.mock.contexts
+        .filter((context) => getSheet("レベル 3の問題").contains(context))
+        .map((context) => (context as Element).getAttribute("aria-label"));
 
       expect(scrolledSquares).toEqual(["No.0006 レベル 3 挑戦中"]);
       expect(scrollIntoView).toHaveBeenCalledWith({
@@ -1097,7 +1139,7 @@ describe("GameHomeScreen", () => {
         const panelCount = within(panel).getByText(/^該当/).textContent;
         const filterButton = getFilterButton();
 
-        expect(openTab.textContent).toBe("レベル 3、解いた問題 2 / 4");
+        expect(readLevelCardName(openTab)).toBe("レベル 3、4問中2問を解いた");
         expect(getShownMatchedCount()).toBe("該当 2問");
         expect(panelCount).toBe("該当 2問");
         expect(filterButton.getAttribute("aria-label")).toBe(
@@ -1421,14 +1463,15 @@ describe("GameHomeScreen", () => {
     function getMarkedTabNames(): (string | undefined)[] {
       return within(screen.getByRole("tablist", { name: "レベル" }))
         .getAllByRole("tab")
-        .filter((tab) => tab.textContent?.includes("前回から変化あり"))
-        .map((tab) => tab.textContent?.split("、")[0]);
+        .map(readLevelCardName)
+        .filter((name) => name?.includes("前回から変化あり"))
+        .map((name) => name?.split("、")[0]);
     }
 
     function getTabCounts(): (string | undefined)[] {
       return within(screen.getByRole("tablist", { name: "レベル" }))
         .getAllByRole("tab")
-        .map((tab) => tab.textContent?.match(/\d+ \/ \d+/)?.[0]);
+        .map(readLevelCardCount);
     }
 
     function sumTabSolvedCounts(): number {
@@ -2118,6 +2161,44 @@ describe("GameHomeScreen", () => {
       });
     });
 
+    describe("選んでおく問題の詳細を出したまま押している途中の場合", () => {
+      beforeEach(async () => {
+        renderScreen(changedZukan, changes, "p-c");
+        await advanceStamps(400);
+      });
+
+      test("詳細の遊ぶを1回タップすると、最後の姿まで飛ばしてその問題を始めること", () => {
+        const playButton = within(getDetail()).getByRole("button", {
+          name: "遊ぶ",
+        });
+
+        tap(playButton, { x: 10, y: 10 });
+        fireEvent.click(playButton);
+        const startedProblemIds = onPlayProblem.mock.calls.map(
+          ([problem]) => problem.problemId,
+        );
+
+        expect(getChangeStages("レベル 3の問題")).toEqual([
+          null,
+          null,
+          null,
+          null,
+        ]);
+        expect(startedProblemIds).toEqual(["p-c"]);
+      });
+
+      test("ランダムに遊ぶを1回タップすると、最後の姿まで飛ばして開いているレベルで始めること", () => {
+        const playRandom = screen.getByRole("button", {
+          name: "ランダムに遊ぶ",
+        });
+
+        tap(playRandom, { x: 10, y: 10 });
+        fireEvent.click(playRandom);
+
+        expect(onPlayRandom.mock.calls).toEqual([["3"]]);
+      });
+    });
+
     describe("押している途中で動きを減らす設定に変えた場合", () => {
       beforeEach(async () => {
         renderScreen(changedZukan, changes);
@@ -2142,6 +2223,47 @@ describe("GameHomeScreen", () => {
     });
   });
 
+  describe("開いたあとに最後に遊んだレベルが変わった場合", () => {
+    let rerender: ReturnType<typeof render>["rerender"];
+
+    beforeEach(() => {
+      ({ rerender } = renderScreen());
+      scrollIntoView.mockClear();
+    });
+
+    test("新しく開いたレベルのカードを見える位置へ送ること", () => {
+      rerender(createScreen({ ...zukan, latestPlayedDifficulty: "5" }));
+      const scrolled = scrollIntoView.mock.contexts;
+
+      expect(scrolled).toEqual([getLevelTab("レベル 5")]);
+    });
+
+    test("カードを触ったあとは、開いたレベルのカードへ送らないこと", () => {
+      fireEvent.pointerDown(screen.getByRole("tablist", { name: "レベル" }));
+      rerender(createScreen({ ...zukan, latestPlayedDifficulty: "5" }));
+      const scrolled = scrollIntoView.mock.contexts;
+
+      expect(scrolled).toEqual([]);
+    });
+  });
+
+  describe("端で切れたカードを押した場合", () => {
+    beforeEach(() => {
+      renderScreen();
+      scrollIntoView.mockClear();
+    });
+
+    test("押したカードを見える位置へ送ること", () => {
+      fireEvent.click(getLevelTab("レベル 5"));
+      const scrolled = scrollIntoView.mock.contexts;
+
+      expect(scrolled).toEqual([getLevelTab("レベル 5")]);
+      expect(scrollIntoView).toHaveBeenCalledWith(
+        expect.objectContaining({ block: "nearest", inline: "nearest" }),
+      );
+    });
+  });
+
   describe("そのゲームを遊んだことが無い場合", () => {
     beforeEach(() => {
       renderScreen({ ...zukan, latestPlayedDifficulty: null });
@@ -2155,14 +2277,35 @@ describe("GameHomeScreen", () => {
       expect(sheet).toBeNull();
     });
 
-    test("ランダムに遊ぶを押せない姿で出すこと", () => {
-      const playRandom = screen.getByRole("button", { name: "ランダムに遊ぶ" });
+    test("カードを縦に並べ、ランダムに遊ぶを出さないこと", () => {
+      const arrangement = screen.getByRole("tablist", { name: "レベル" })
+        .dataset.cardArrangement;
+      const playRandom = screen.queryByRole("button", {
+        name: "ランダムに遊ぶ",
+      });
 
-      expect(playRandom.hasAttribute("disabled")).toBe(true);
+      expect(arrangement).toBe("list");
+      expect(playRandom).toBeNull();
+    });
+
+    test("絞り込みを押せない姿にすること", () => {
+      const filterButton = getFilterButton();
+
+      expect(filterButton.hasAttribute("disabled")).toBe(true);
+    });
+
+    test("Tab でカードに入っても、レベルを選ばないこと", () => {
+      const tab = getLevelTab("レベル 2");
+
+      fireEvent.focus(tab);
+      const selectedTab = screen.queryByRole("tab", { selected: true });
+
+      expect(selectedTab).toBeNull();
     });
 
     describe("カードを選んだ場合", () => {
       beforeEach(() => {
+        scrollIntoView.mockClear();
         chooseLevel("レベル 2");
       });
 
@@ -2170,6 +2313,19 @@ describe("GameHomeScreen", () => {
         const sheetNames = getShownSheetNames();
 
         expect(sheetNames).toEqual(["レベル 2の問題"]);
+      });
+
+      test("カードを1行に並べ直し、選んだカードを見える位置へすぐ送ること", () => {
+        const arrangement = screen.getByRole("tablist", { name: "レベル" })
+          .dataset.cardArrangement;
+
+        expect(arrangement).toBe("scroll");
+        expect(scrollIntoView.mock.contexts).toEqual([getLevelTab("レベル 2")]);
+        expect(scrollIntoView).toHaveBeenCalledWith({
+          behavior: "instant",
+          block: "nearest",
+          inline: "nearest",
+        });
       });
 
       test("ランダムに遊ぶを押すと、選んだレベルでプレイを始めること", () => {
@@ -2191,6 +2347,12 @@ describe("GameHomeScreen", () => {
 
       expect(selectedTab.textContent).toMatch(/^レベル 1/);
       expect(sheetNames).toEqual(["レベル 1の問題"]);
+    });
+
+    test("その問題のマスへフォーカスを置くこと", () => {
+      const focused = document.activeElement;
+
+      expect(focused).toBe(getSquare("レベル 1の問題", "No.0002"));
     });
 
     test("その問題のマスを選び、詳細を出すこと", () => {

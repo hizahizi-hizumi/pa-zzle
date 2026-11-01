@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { MemoryRouter, useLocation } from "react-router";
+import { MemoryRouter, useLocation, useNavigationType } from "react-router";
 
 import {
   openRecordProblemPlay,
@@ -26,6 +26,7 @@ function useNavigationWithLocation() {
     navigation: useGameNavigation(game),
     navigate: useNavigate(),
     location: useLocation(),
+    navigationType: useNavigationType(),
   };
 }
 
@@ -62,6 +63,27 @@ describe("useGameNavigation", () => {
 
     expect(pathname).toBe("/puzzles/minesweeper");
     expect(search).toBe("?problem=problem-1");
+  });
+
+  test("openGameHome は、履歴に積んでゲームのホームへ移ること", () => {
+    act(() => result.current.navigation.openGameHome("problem-1"));
+
+    const { navigationType } = result.current;
+
+    expect(navigationType).toBe("PUSH");
+  });
+
+  test("openGameHome に replacesHistory を渡すと、今の画面の履歴を置き換えてゲームのホームへ移ること", () => {
+    act(() =>
+      result.current.navigation.openGameHome("problem-1", {
+        replacesHistory: true,
+      }),
+    );
+
+    const { location, navigationType } = result.current;
+
+    expect(location.search).toBe("?problem=problem-1");
+    expect(navigationType).toBe("REPLACE");
   });
 
   test("startNewProblem で難易度のプレイ画面を開き、避ける問題の ID を state に渡すこと", () => {

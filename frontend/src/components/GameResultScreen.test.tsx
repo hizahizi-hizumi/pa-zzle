@@ -117,7 +117,7 @@ describe("GameResultScreen", () => {
   });
 
   test("ブランドの帯からホームへ戻れること", () => {
-    const homeLink = screen.getByRole("link", { name: "pa-zzle" });
+    const homeLink = screen.getByRole("link", { name: "pa-zzle ホーム" });
 
     const href = homeLink.getAttribute("href");
 

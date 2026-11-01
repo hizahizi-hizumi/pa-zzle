@@ -5,7 +5,16 @@ import {
   screen,
   within,
 } from "@testing-library/react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router";
+import {
+  createMemoryRouter,
+  MemoryRouter,
+  Route,
+  RouterProvider,
+  Routes,
+  useLocation,
+} from "react-router";
+
+import { createProblemId } from "@/games/problem-id";
 import { REFLECTION_DISPLAY_NAME } from "@/games/reflection/display-name";
 import { selectReflectionProblemForDifficulty } from "@/games/reflection/problem-selection";
 import type { ReflectionBoard } from "@/games/reflection/puzzle/board";
@@ -87,6 +96,23 @@ function solve(solution: ReflectionBoard): void {
     }
     fireEvent.click(cells[cellIndex] as HTMLElement);
   });
+}
+
+type PlayRouter = ReturnType<typeof createMemoryRouter>;
+
+function renderRouterAt(path: string): PlayRouter {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/puzzles/reflection/play/:difficulty",
+        element: <ReflectionPlayView />,
+      },
+      { path: "/puzzles/reflection", element: <p>ゲームのホーム画面</p> },
+    ],
+    { initialEntries: [path] },
+  );
+  render(<RouterProvider router={router} />);
+  return router;
 }
 
 describe("ReflectionPlayView", () => {
@@ -215,6 +241,48 @@ describe("ReflectionPlayView", () => {
 
       expect(message).toBeTruthy();
       expect(backLink.getAttribute("href")).toBe("/puzzles/reflection");
+    });
+  });
+
+  describe("問題集にある問題IDで開いた場合", () => {
+    const poolProblemId = createProblemId(
+      selectReflectionProblemForDifficulty("1", "game-home-navigation")
+        .identity,
+    );
+    let router: PlayRouter;
+
+    beforeEach(() => {
+      router = renderRouterAt(
+        `/puzzles/reflection/play/1?problem=${poolProblemId}`,
+      );
+    });
+
+    test("戻るボタンで、遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "ゲームのホームへ戻る" }),
+      );
+      const { historyAction, location } = router.state;
+
+      expect(location.pathname).toBe("/puzzles/reflection");
+      expect(location.search).toBe(`?problem=${poolProblemId}`);
+      expect(historyAction).toBe("REPLACE");
+    });
+
+    describe("メニューからゲームのホームを選んだ場合", () => {
+      beforeEach(() => {
+        openMenu();
+      });
+
+      test("遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
+        fireEvent.click(
+          screen.getByRole("menuitem", { name: "ゲームのホーム" }),
+        );
+        const { historyAction, location } = router.state;
+
+        expect(location.pathname).toBe("/puzzles/reflection");
+        expect(location.search).toBe(`?problem=${poolProblemId}`);
+        expect(historyAction).toBe("REPLACE");
+      });
     });
   });
 });

@@ -197,7 +197,7 @@ frontend/src/game-catalog/
 
 - `game-catalog-entry.ts`: 1ゲーム分のカタログ項目 `GameCatalogEntry` と、記録や離脱したプレイの問題を遊び直すプレイ画面・記録から描く結果画面（`RecordResultContext`）の契約を置く。
 - `game-catalog.ts`: 全ゲームを表示順に並べた `gameCatalog` を置く。パズル選択・記録・結果の画面は、ゲームを列挙せずこれを回す。
-- `game-navigation.ts`: ゲームのホーム（問題を選んだ状態でも開ける）・ホーム・同じゲームの次の問題へ移る `GameNavigation` と、記録の問題を遊び直すプレイ画面を開く `openRecordProblemPlay` を置く。ゲームの画面からの遷移はこれを使い、パスを直書きしない。ゲームのホームとプレイ画面のパスはカタログ項目の `homePath`・`playPath` を正とする。
+- `game-navigation.ts`: ゲームのホーム（問題を選んだ状態でも開ける。プレイから戻るときは履歴を置き換える `replacesHistory`）・ホーム・同じゲームの次の問題へ移る `GameNavigation` と、記録の問題を遊び直すプレイ画面を開く `openRecordProblemPlay` を置く。ゲームの画面からの遷移はこれを使い、パスを直書きしない。ゲームのホームとプレイ画面のパスはカタログ項目の `homePath`・`playPath` を正とする。
 - `game-home.tsx`: ゲームのホームを、そのゲームの図鑑・前回からの変化・URL の `problem` クエリで選ぶ問題・プレイ画面への遷移へつなぐ `useGameHome` を置く。返す `screenProps` をゲームのホームの画面へそのまま渡す。
 - `playable-game.tsx`: 1問のプレイを URL の問題 ID・完了記録の保存と記録の結果画面への遷移・離脱の記録・画面遷移・検証情報へつなぐ `usePlayableGame` を置く。返す `screenProps` をプレイ画面へそのまま渡す。
 - `recorded-game-result.ts`: 記録から作り直した結果を、次の問題（記録と同じ難易度で記録の問題を避ける）・画面遷移・検証情報へつなぐ `useRecordedGameResult` と、`Recorded<Game>Result` の props `RecordedGameResultProps` を置く。

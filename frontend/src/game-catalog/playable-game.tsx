@@ -140,8 +140,11 @@ export function usePlayableGame<
       onReplay: play.replay,
       onClearAnimationComplete: play.completeClearAnimation,
       onStartNewProblem: play.startNewProblem,
+      // やめた問題のプレイ画面は、ブラウザの戻るで開き直さないよう履歴に残さない。
       onOpenGameHome() {
-        navigation.openGameHome(createProblemId(problemIdentity));
+        navigation.openGameHome(createProblemId(problemIdentity), {
+          replacesHistory: true,
+        });
       },
       onBackToHome: navigation.backToHome,
       onOpenDiagnostics: diagnostics.open,

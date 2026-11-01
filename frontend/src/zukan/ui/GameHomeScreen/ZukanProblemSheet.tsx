@@ -271,6 +271,7 @@ function ZukanProblemSheetContent({
 
   // 押すときに大きく浮くマスと広がる輪が、台紙の端のマスでもスクロール領域で切れないよう、領域をページの余白へ広げ、内側に輪が収まる余白を取る。
   // 覆われたところの余白は、領域の余白ではなく末尾の要素で取る。画面が低く、覆う高さが領域より高いときも、領域が縮めずにページをはみ出さないようにする。
+  // スクロールした行が台紙の上の数の真下で途切れて見えないよう、上端の余白の中で薄れさせる。選んだマスはこの余白より内側へ寄せる。
   return (
     <div
       ref={scrollerRef}
@@ -278,7 +279,7 @@ function ZukanProblemSheetContent({
       style={
         { "--covered-bottom": `${coveredBottomHeight}px` } as CSSProperties
       }
-      className="-mx-4 min-h-0 flex-1 scroll-pb-(--covered-bottom) overflow-y-auto overscroll-contain px-4 pt-4 pb-4"
+      className="-mx-4 min-h-0 flex-1 scroll-pb-(--covered-bottom) overflow-y-auto overscroll-contain px-4 pt-4 pb-4 [mask-image:linear-gradient(to_bottom,transparent,#000_--spacing(3))]"
     >
       <div
         ref={gridRef}

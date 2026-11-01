@@ -197,7 +197,7 @@ describe("useGameHome", () => {
     test("最後にクリアまたは離脱したレベルのカードを選んで開くこと", () => {
       const selectedTab = screen.getByRole("tab", { selected: true });
 
-      expect(selectedTab.textContent).toMatch(/^レベル 4、/);
+      expect(selectedTab.textContent).toMatch(/^レベル 4/);
     });
 
     test("離脱した問題のマスを挑戦中として示すこと", () => {
@@ -292,8 +292,18 @@ describe("useGameHome", () => {
     const requestedProblem = selectFirstPoolProblem("2");
     const requestedProblemId = createProblemId(requestedProblem.identity);
 
+    let router: ReturnType<typeof renderAt>;
+
     beforeEach(() => {
-      renderAt(`/puzzles/nanpure?problem=${requestedProblemId}`);
+      router = renderAt(`/puzzles/nanpure?problem=${requestedProblemId}`);
+    });
+
+    test("読んだ問題 ID を、履歴を増やさずに URL から外すこと", () => {
+      const { location, historyAction } = router.state;
+
+      expect(location.pathname).toBe("/puzzles/nanpure");
+      expect(location.search).toBe("");
+      expect(historyAction).toBe("REPLACE");
     });
 
     test("その問題のレベルを開き、その問題を選んで詳細を出すこと", () => {
@@ -304,7 +314,7 @@ describe("useGameHome", () => {
       );
       const detail = getDetail();
 
-      expect(selectedTab.textContent).toMatch(/^レベル 2、/);
+      expect(selectedTab.textContent).toMatch(/^レベル 2/);
       expect(selectedSquare.getAttribute("data-index")).toBe("0");
       expect(detail).toBeTruthy();
     });

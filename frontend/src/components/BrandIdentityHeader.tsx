@@ -30,7 +30,7 @@ export function BrandIdentityHeader({
   return (
     <header className={brandIdentityHeaderClassNames[size]}>
       {linkToHome ? (
-        <Link to="/" className="flex">
+        <Link to="/" aria-label="pa-zzle ホーム" className="flex">
           {brandMark}
         </Link>
       ) : (
