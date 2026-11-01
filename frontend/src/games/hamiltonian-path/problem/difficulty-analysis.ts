@@ -8,7 +8,10 @@ import {
   type HamiltonianPathReasoningStage,
   traceHamiltonianPathHumanSolve,
 } from "@/games/hamiltonian-path/problem/generation/human-solver";
-import { countHamiltonianPathSolutions } from "@/games/hamiltonian-path/problem/generation/solver";
+import {
+  countHamiltonianPathSolutions,
+  type HamiltonianPathSolutionSearchResult,
+} from "@/games/hamiltonian-path/problem/generation/solver";
 import {
   type HamiltonianPathBoardOrientation,
   listHamiltonianPathBoardOrientations,
@@ -90,6 +93,18 @@ export type HamiltonianPathAnalyzedDifficulty = Extract<
  * 上限で退けないようにする。研究用 Python が分析前の最終確認に使った値（`node_limit * 5`）と同じ。
  */
 const UNIQUENESS_SEARCH_STEP_LIMIT = 100_000;
+
+/**
+ * 分析の前に、解を2つまで数えて一意性を確かめる。内部診断が分析と同じ探索の結果を見せられるよう、
+ * 分析とは別に呼べるようにしている。
+ */
+export function searchHamiltonianPathSolutionsForAnalysis(
+  problem: HamiltonianPathProblem,
+): HamiltonianPathSolutionSearchResult {
+  return countHamiltonianPathSolutions(problem, {
+    searchStepLimit: UNIQUENESS_SEARCH_STEP_LIMIT,
+  });
+}
 
 function measureScale(
   problem: HamiltonianPathProblem,
@@ -196,7 +211,8 @@ function readInEveryOrientation(
 
 /**
  * 一意性を確かめたうえで、人間向け解法器の経過を特徴へまとめ、解の道を引き進める視点の分岐も測る。
- * 解の道は分析の中で一意性の探索から求め直し、問題からは受け取らない。
+ * 解の道は一意性の探索（`searchHamiltonianPathSolutionsForAnalysis`）から求め、問題からは受け取らない。
+ * 探索を済ませた呼び出し元は、その結果を `solutionSearch` に渡す。
  *
  * 推論の特徴は、回転・反転した8通りの盤面のうち最も上手に読めた向きの読み方から求める（`compareReasoning`）。
  * 盤面の向きで難易度が変わらないようにするためで、「最も上手な読み順でも、少なくともこれだけ先読みが要る」を表す。
@@ -205,11 +221,9 @@ function readInEveryOrientation(
 export function analyzeHamiltonianPathDifficulty(
   problem: HamiltonianPathProblem,
   options: HamiltonianPathHumanSolveOptions = {},
+  solutionSearch = searchHamiltonianPathSolutionsForAnalysis(problem),
 ): HamiltonianPathDifficultyAnalysis {
   const scale = measureScale(problem);
-  const solutionSearch = countHamiltonianPathSolutions(problem, {
-    searchStepLimit: UNIQUENESS_SEARCH_STEP_LIMIT,
-  });
   if (solutionSearch.status === "search-limit-reached") {
     return { status: "invalid", reason: "search-limit-reached", scale };
   }
