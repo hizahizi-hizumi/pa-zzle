@@ -1,11 +1,30 @@
 import {
-  createProblemCountFeature,
+  formatProblemFeatures,
   type ProblemFeature,
+  type ProblemFeatureAxisDisplay,
 } from "@/components/problem-features";
-import type { TakuzuProblemFeatures } from "@/games/takuzu/problem/problem-pool";
+import {
+  type TakuzuProblemFeatureAxisId,
+  type TakuzuProblemFeatures,
+  takuzuProblemFeatureAxes,
+} from "@/games/takuzu/problem/problem-pool";
 
-export function formatTakuzuProblemFeatures({
-  givenCount,
-}: TakuzuProblemFeatures): ProblemFeature[] {
-  return [createProblemCountFeature("初期配置", givenCount, "マス")];
+export const takuzuProblemFeatureAxisDisplays = {
+  "given-count": {
+    label: "初期配置",
+    valueFormat: { kind: "count", unit: "マス" },
+  },
+} as const satisfies Record<
+  TakuzuProblemFeatureAxisId,
+  ProblemFeatureAxisDisplay
+>;
+
+export function formatTakuzuProblemFeatures(
+  features: TakuzuProblemFeatures,
+): ProblemFeature[] {
+  return formatProblemFeatures(
+    features,
+    takuzuProblemFeatureAxes,
+    takuzuProblemFeatureAxisDisplays,
+  );
 }

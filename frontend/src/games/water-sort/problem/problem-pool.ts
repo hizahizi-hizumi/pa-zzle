@@ -1,3 +1,7 @@
+import {
+  createCountFeatureValue,
+  type ProblemFeatureAxis,
+} from "@/games/problem-feature";
 import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import {
@@ -105,3 +109,24 @@ export function findWaterSortPoolProblemFeatures(
     decodeWaterSortPoolEntry(entry).identity.conditions;
   return { colorCount, emptyBottleCount };
 }
+
+/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
+export const waterSortProblemFeatureAxes = [
+  {
+    id: "color-count",
+    countRangeWidth: 3,
+    getValue({ colorCount }) {
+      return createCountFeatureValue(colorCount);
+    },
+  },
+  {
+    id: "empty-bottle-count",
+    countRangeWidth: 2,
+    getValue({ emptyBottleCount }) {
+      return createCountFeatureValue(emptyBottleCount);
+    },
+  },
+] as const satisfies readonly ProblemFeatureAxis<WaterSortProblemFeatures>[];
+
+export type WaterSortProblemFeatureAxisId =
+  (typeof waterSortProblemFeatureAxes)[number]["id"];

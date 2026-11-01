@@ -1,16 +1,31 @@
 import {
-  createProblemCountFeature,
-  createSquareBoardSizeFeature,
+  formatProblemFeatures,
   type ProblemFeature,
+  type ProblemFeatureAxisDisplay,
 } from "@/components/problem-features";
-import type { ReflectionProblemFeatures } from "@/games/reflection/problem/problem-pool";
+import {
+  type ReflectionProblemFeatureAxisId,
+  type ReflectionProblemFeatures,
+  reflectionProblemFeatureAxes,
+} from "@/games/reflection/problem/problem-pool";
 
-export function formatReflectionProblemFeatures({
-  size,
-  pieceCount,
-}: ReflectionProblemFeatures): ProblemFeature[] {
-  return [
-    createSquareBoardSizeFeature("盤面", size),
-    createProblemCountFeature("ピース", pieceCount, "個"),
-  ];
+export const reflectionProblemFeatureAxisDisplays = {
+  "board-size": { label: "盤面", valueFormat: { kind: "square-board-size" } },
+  "piece-count": {
+    label: "ピース",
+    valueFormat: { kind: "count", unit: "個" },
+  },
+} as const satisfies Record<
+  ReflectionProblemFeatureAxisId,
+  ProblemFeatureAxisDisplay
+>;
+
+export function formatReflectionProblemFeatures(
+  features: ReflectionProblemFeatures,
+): ProblemFeature[] {
+  return formatProblemFeatures(
+    features,
+    reflectionProblemFeatureAxes,
+    reflectionProblemFeatureAxisDisplays,
+  );
 }

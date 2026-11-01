@@ -1,4 +1,9 @@
 import { difficultyLevels } from "@/games/difficulty";
+import {
+  createBoardSizeFeatureValue,
+  createCountFeatureValue,
+  type ProblemFeatureAxis,
+} from "@/games/problem-feature";
 import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 import type { ReflectionDifficulty } from "@/games/reflection/difficulty";
 import {
@@ -275,3 +280,23 @@ export function findReflectionPoolProblemFeatures(
     ),
   };
 }
+
+/** 図鑑の絞り込みで問題を分ける特徴の軸。ピースの数は4個ごとにまとめる。 */
+export const reflectionProblemFeatureAxes = [
+  {
+    id: "board-size",
+    getValue({ size }) {
+      return createBoardSizeFeatureValue(size, size);
+    },
+  },
+  {
+    id: "piece-count",
+    countRangeWidth: 4,
+    getValue({ pieceCount }) {
+      return createCountFeatureValue(pieceCount);
+    },
+  },
+] as const satisfies readonly ProblemFeatureAxis<ReflectionProblemFeatures>[];
+
+export type ReflectionProblemFeatureAxisId =
+  (typeof reflectionProblemFeatureAxes)[number]["id"];

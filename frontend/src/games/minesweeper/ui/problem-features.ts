@@ -1,17 +1,28 @@
 import {
-  createBoardSizeFeature,
-  createProblemCountFeature,
+  formatProblemFeatures,
   type ProblemFeature,
+  type ProblemFeatureAxisDisplay,
 } from "@/components/problem-features";
-import type { MinesweeperProblemFeatures } from "@/games/minesweeper/problem/problem-pool";
+import {
+  type MinesweeperProblemFeatureAxisId,
+  type MinesweeperProblemFeatures,
+  minesweeperProblemFeatureAxes,
+} from "@/games/minesweeper/problem/problem-pool";
 
-export function formatMinesweeperProblemFeatures({
-  rows,
-  columns,
-  mineCount,
-}: MinesweeperProblemFeatures): ProblemFeature[] {
-  return [
-    createBoardSizeFeature("盤面", { rows, columns }),
-    createProblemCountFeature("地雷", mineCount, "個"),
-  ];
+export const minesweeperProblemFeatureAxisDisplays = {
+  "board-size": { label: "盤面", valueFormat: { kind: "board-size" } },
+  "mine-count": { label: "地雷", valueFormat: { kind: "count", unit: "個" } },
+} as const satisfies Record<
+  MinesweeperProblemFeatureAxisId,
+  ProblemFeatureAxisDisplay
+>;
+
+export function formatMinesweeperProblemFeatures(
+  features: MinesweeperProblemFeatures,
+): ProblemFeature[] {
+  return formatProblemFeatures(
+    features,
+    minesweeperProblemFeatureAxes,
+    minesweeperProblemFeatureAxisDisplays,
+  );
 }

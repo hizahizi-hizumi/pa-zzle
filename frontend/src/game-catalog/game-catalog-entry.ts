@@ -1,7 +1,14 @@
 import type { ReactNode } from "react";
 
-import type { ProblemFeature } from "@/components/problem-features";
+import type {
+  ProblemFeature,
+  ProblemFeatureAxisDisplay,
+} from "@/components/problem-features";
 import type { DifficultyLevel } from "@/games/difficulty";
+import type {
+  ProblemFeatureAxis,
+  ProblemFeatureValue,
+} from "@/games/problem-feature";
 import {
   createProblemId,
   type ProblemId,
@@ -51,6 +58,28 @@ export type RecordResultContext = {
   navigation: GameNavigation;
 };
 
+/** 図鑑の絞り込みで問題を分ける、問題の特徴の1つの軸と、その名前と値の書き方。 */
+export type ProblemFeatureFilterAxis = {
+  id: string;
+  /** 1つのレベルの問題集にある値の種類が多いとき、数をまとめる幅。数の軸だけが持つ。 */
+  countRangeWidth?: number;
+  display: ProblemFeatureAxisDisplay;
+};
+
+/** 図鑑の絞り込みに使う、問題の特徴の軸と、問題集の1問の特徴の値。 */
+export type ProblemFeatureFilter = {
+  /** 軸。示す順。 */
+  axes: readonly ProblemFeatureFilterAxis[];
+  /**
+   * 難易度の問題集の1問の、軸の ID ごとの特徴の値を返す。問題集に無い ID・別の難易度の ID には `null` を返す。
+   * 図鑑で開いているレベルの全問について求めるので、問題を復元せず問題集の項目から求める。
+   */
+  findPoolProblemValues: (
+    difficulty: DifficultyLevel,
+    problemId: ProblemId,
+  ) => ReadonlyMap<string, ProblemFeatureValue> | null;
+};
+
 /** アプリが提供する1つのゲームの、入口・プレイ画面・記録・離脱したプレイ・それらの問題の遊び直し先・問題集の全問・記録の結果画面。 */
 export type GameCatalogEntry = {
   /** 記録の `gameId` と同じ値。 */
@@ -84,6 +113,8 @@ export type GameCatalogEntry = {
     difficulty: DifficultyLevel,
     problemId: ProblemId,
   ) => readonly ProblemFeature[] | null;
+  /** 図鑑の絞り込みに使う、問題の特徴の軸と値。 */
+  problemFeatureFilter: ProblemFeatureFilter;
   /**
    * 記録から結果画面を描く。今の版の記録でなく結果を作れないときは `null` を返す。
    * 呼び出し側は記録の `gameId` がこのゲームの `id` と一致することを確かめてから渡す。
@@ -114,4 +145,28 @@ export function resolveRecordProblemPlayTarget<Difficulty extends string>(
   return canSelectProblemById(difficulty, problemId)
     ? { difficulty, problemId }
     : null;
+}
+
+/** ゲームの特徴の求め方・軸・軸の名前と値の書き方から、図鑑の絞り込みに使う特徴の軸と値の求め方を作る。 */
+export function createProblemFeatureFilter<Features, Id extends string>(
+  findPoolProblemFeatures: (
+    difficulty: DifficultyLevel,
+    problemId: ProblemId,
+  ) => Features | null,
+  axes: readonly ProblemFeatureAxis<Features, Id>[],
+  displays: Readonly<Record<Id, ProblemFeatureAxisDisplay>>,
+): ProblemFeatureFilter {
+  return {
+    axes: axes.map(({ id, countRangeWidth }) => ({
+      id,
+      countRangeWidth,
+      display: displays[id],
+    })),
+    findPoolProblemValues(difficulty, problemId) {
+      const features = findPoolProblemFeatures(difficulty, problemId);
+      return features === null
+        ? null
+        : new Map(axes.map((axis) => [axis.id, axis.getValue(features)]));
+    },
+  };
 }

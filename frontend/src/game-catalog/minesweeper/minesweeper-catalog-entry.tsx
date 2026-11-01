@@ -1,4 +1,5 @@
 import {
+  createProblemFeatureFilter,
   type GameCatalogEntry,
   resolveRecordProblemPlayTarget,
 } from "@/game-catalog/game-catalog-entry";
@@ -14,10 +15,14 @@ import {
 import {
   findMinesweeperPoolProblemFeatures,
   listMinesweeperPoolProblemIds,
+  minesweeperProblemFeatureAxes,
 } from "@/games/minesweeper/problem/problem-pool";
 import { canSelectMinesweeperProblemById } from "@/games/minesweeper/problem-selection";
 import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
-import { formatMinesweeperProblemFeatures } from "@/games/minesweeper/ui/problem-features";
+import {
+  formatMinesweeperProblemFeatures,
+  minesweeperProblemFeatureAxisDisplays,
+} from "@/games/minesweeper/ui/problem-features";
 
 export const minesweeperCatalogEntry = {
   id: minesweeperPlayRecordDefinition.gameId,
@@ -53,4 +58,9 @@ export const minesweeperCatalogEntry = {
     const features = findMinesweeperPoolProblemFeatures(difficulty, problemId);
     return features ? formatMinesweeperProblemFeatures(features) : null;
   },
+  problemFeatureFilter: createProblemFeatureFilter(
+    findMinesweeperPoolProblemFeatures,
+    minesweeperProblemFeatureAxes,
+    minesweeperProblemFeatureAxisDisplays,
+  ),
 } satisfies GameCatalogEntry;

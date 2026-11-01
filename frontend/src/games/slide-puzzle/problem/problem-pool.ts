@@ -1,3 +1,7 @@
+import {
+  createBoardSizeFeatureValue,
+  type ProblemFeatureAxis,
+} from "@/games/problem-feature";
 import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 import type { SlidePuzzleDifficulty } from "@/games/slide-puzzle/difficulty";
 import {
@@ -110,3 +114,16 @@ export function findSlidePuzzlePoolProblemFeatures(
   const entry = findSlidePuzzlePoolEntryByProblemId(difficulty, problemId);
   return entry ? { boardSize: entry[1] } : null;
 }
+
+/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
+export const slidePuzzleProblemFeatureAxes = [
+  {
+    id: "board-size",
+    getValue({ boardSize }) {
+      return createBoardSizeFeatureValue(boardSize, boardSize);
+    },
+  },
+] as const satisfies readonly ProblemFeatureAxis<SlidePuzzleProblemFeatures>[];
+
+export type SlidePuzzleProblemFeatureAxisId =
+  (typeof slidePuzzleProblemFeatureAxes)[number]["id"];

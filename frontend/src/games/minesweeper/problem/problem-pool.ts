@@ -7,6 +7,11 @@ import {
   type MinesweeperProblemIdentity,
 } from "@/games/minesweeper/problem/problem";
 import problemPoolJson from "@/games/minesweeper/problem/problem-pool.json";
+import {
+  createBoardSizeFeatureValue,
+  createCountFeatureValue,
+  type ProblemFeatureAxis,
+} from "@/games/problem-feature";
 import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 
 /**
@@ -110,3 +115,23 @@ export function findMinesweeperPoolProblemFeatures(
   const [rows, columns, mineCount] = entry;
   return { rows, columns, mineCount };
 }
+
+/** 図鑑の絞り込みで問題を分ける特徴の軸。地雷の数は5個ごとにまとめる。 */
+export const minesweeperProblemFeatureAxes = [
+  {
+    id: "board-size",
+    getValue({ rows, columns }) {
+      return createBoardSizeFeatureValue(rows, columns);
+    },
+  },
+  {
+    id: "mine-count",
+    countRangeWidth: 5,
+    getValue({ mineCount }) {
+      return createCountFeatureValue(mineCount);
+    },
+  },
+] as const satisfies readonly ProblemFeatureAxis<MinesweeperProblemFeatures>[];
+
+export type MinesweeperProblemFeatureAxisId =
+  (typeof minesweeperProblemFeatureAxes)[number]["id"];

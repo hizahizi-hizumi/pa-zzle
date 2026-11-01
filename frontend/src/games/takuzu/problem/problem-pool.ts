@@ -1,3 +1,7 @@
+import {
+  createCountFeatureValue,
+  type ProblemFeatureAxis,
+} from "@/games/problem-feature";
 import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import {
@@ -227,7 +231,10 @@ export type TakuzuProblemFeatures = {
   givenCount: number;
 };
 
-/** 難易度の問題集の1問の特徴を求める。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+/**
+ * 難易度の問題集の1問の特徴を、問題を復元せずに初期配置の位置から求める。問題集に無い ID・別の難易度の ID には `null` を返す。
+ * 図鑑の絞り込みでレベルの全問について求めるので、解の読み解きと問題の検査をしない。
+ */
 export function findTakuzuPoolProblemFeatures(
   difficulty: TakuzuDifficulty,
   problemId: string,
@@ -236,6 +243,20 @@ export function findTakuzuPoolProblemFeatures(
   if (!entry) {
     return null;
   }
-  const { givens } = decodeTakuzuPoolProblem(entry[3]);
-  return { givenCount: givens.cells.filter((cell) => cell !== null).length };
+  const givenMask = decodeBits(entry[3].slice(hexDigitCount));
+  return { givenCount: givenMask.filter(Boolean).length };
 }
+
+/** 図鑑の絞り込みで問題を分ける特徴の軸。初期配置のマスの数は3マスごとにまとめる。 */
+export const takuzuProblemFeatureAxes = [
+  {
+    id: "given-count",
+    countRangeWidth: 3,
+    getValue({ givenCount }) {
+      return createCountFeatureValue(givenCount);
+    },
+  },
+] as const satisfies readonly ProblemFeatureAxis<TakuzuProblemFeatures>[];
+
+export type TakuzuProblemFeatureAxisId =
+  (typeof takuzuProblemFeatureAxes)[number]["id"];

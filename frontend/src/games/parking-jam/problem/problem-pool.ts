@@ -5,6 +5,11 @@ import {
   type ParkingJamProblemIdentity,
 } from "@/games/parking-jam/problem/problem";
 import problemPoolJson from "@/games/parking-jam/problem/problem-pool.json";
+import {
+  createBoardSizeFeatureValue,
+  createCountFeatureValue,
+  type ProblemFeatureAxis,
+} from "@/games/problem-feature";
 import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 
 /** 問題集が参照する生成条件。`ParkingJamGenerationConditions` の各値を定義順に並べる。 */
@@ -162,3 +167,30 @@ export function findParkingJamPoolProblemFeatures(
     toParkingJamPoolIdentity(entry).conditions;
   return { rows: height, columns: width, vehicleCount, fixedAreaCount };
 }
+
+/** 図鑑の絞り込みで問題を分ける特徴の軸。車の台数は3台ごとにまとめる。 */
+export const parkingJamProblemFeatureAxes = [
+  {
+    id: "parking-lot-size",
+    getValue({ rows, columns }) {
+      return createBoardSizeFeatureValue(rows, columns);
+    },
+  },
+  {
+    id: "vehicle-count",
+    countRangeWidth: 3,
+    getValue({ vehicleCount }) {
+      return createCountFeatureValue(vehicleCount);
+    },
+  },
+  {
+    id: "fixed-area-count",
+    countRangeWidth: 2,
+    getValue({ fixedAreaCount }) {
+      return createCountFeatureValue(fixedAreaCount);
+    },
+  },
+] as const satisfies readonly ProblemFeatureAxis<ParkingJamProblemFeatures>[];
+
+export type ParkingJamProblemFeatureAxisId =
+  (typeof parkingJamProblemFeatureAxes)[number]["id"];
