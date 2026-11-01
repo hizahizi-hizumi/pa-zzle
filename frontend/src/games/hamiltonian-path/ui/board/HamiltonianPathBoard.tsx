@@ -22,6 +22,7 @@ import {
   listFingerSteps,
 } from "@/games/hamiltonian-path/ui/board/finger-trace";
 import { animateBlockedMove } from "@/games/hamiltonian-path/ui/board/HamiltonianPathBoard/animate-blocked-move";
+import { animateDeadEnd } from "@/games/hamiltonian-path/ui/board/HamiltonianPathBoard/animate-dead-end";
 import {
   HamiltonianPathCell,
   type HamiltonianPathCellState,
@@ -90,6 +91,12 @@ export function HamiltonianPathBoard({
       animateBlockedMove(figureRef.current, size, blockedMove);
     }
   }, [blockedMove, size]);
+
+  useLayoutEffect(() => {
+    if (isDeadEnd) {
+      animateDeadEnd(figureRef.current);
+    }
+  }, [isDeadEnd]);
 
   useEffect(() => {
     if (!clearing) {

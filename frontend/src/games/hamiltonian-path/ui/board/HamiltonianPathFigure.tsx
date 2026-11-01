@@ -39,8 +39,9 @@ const START_MARK_OUTLINE_WIDTH = 0.07;
 /** 先端は指に隠れるので、マス幅に対して大きめの輪にする。道が始点だけのときも、輪の内に始点の印が見える。 */
 const HEAD_RING_RADIUS = 0.37;
 const HEAD_RING_WIDTH = 0.09;
-/** 行き止まりの先端は、輪を欠けさせる。 */
-const DEAD_END_HEAD_DASH = "0.32 0.17";
+/** 行き止まりの先端は、通れないものと同じ色の太い輪を、はっきり分かれた4つの弧に欠けさせる。 */
+const DEAD_END_HEAD_RING_WIDTH = 0.13;
+const DEAD_END_HEAD_DASH = "0.36 0.22";
 /** 仕切りは辺いっぱいにせず、両端を空けた短い棒にする。辺いっぱいだと隣り合う仕切りがつながり迷路の壁に見える。 */
 const PARTITION_THICKNESS = 0.16;
 const PARTITION_END_INSET = 0.18;
@@ -265,7 +266,7 @@ export function HamiltonianPathFigure({
           <circle
             r={HEAD_RING_RADIUS}
             fill="none"
-            strokeWidth={HEAD_RING_WIDTH}
+            strokeWidth={isDeadEnd ? DEAD_END_HEAD_RING_WIDTH : HEAD_RING_WIDTH}
             strokeDasharray={isDeadEnd ? DEAD_END_HEAD_DASH : undefined}
             className={
               isDeadEnd ? hamiltonianPathToneClassNames.deadEndHead : undefined
