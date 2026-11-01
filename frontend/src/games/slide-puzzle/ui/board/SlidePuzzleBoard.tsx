@@ -7,6 +7,7 @@ import {
   type SlidePuzzleBoard as SlidePuzzleBoardState,
 } from "@/games/slide-puzzle/puzzle/state";
 import { SlidePuzzleTile } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard/SlidePuzzleTile";
+import type { SlidePuzzleTileCue } from "@/games/slide-puzzle/ui/board/tile-cue";
 import {
   MOTION_DURATION_MS,
   MOTION_EASING,
@@ -20,6 +21,8 @@ type SlidePuzzleBoardProps = {
   operation: SlidePuzzleOperation | null;
   interactionDisabled: boolean;
   clearing: boolean;
+  /** タイルに重ねる合図。1枚に1つまで。 */
+  cues?: readonly SlidePuzzleTileCue[];
   onSlideTile: (tileIndex: number) => void;
   onClearAnimationComplete: () => void;
 };
@@ -58,6 +61,7 @@ export function SlidePuzzleBoard({
   operation,
   interactionDisabled,
   clearing,
+  cues = [],
   onSlideTile,
   onClearAnimationComplete,
 }: SlidePuzzleBoardProps) {
@@ -113,6 +117,7 @@ export function SlidePuzzleBoard({
             cellIndex={cellIndex}
             boardSize={boardSize}
             disabled={interactionDisabled}
+            cue={cues.find((cue) => cue.tile === tile)}
             // 盤面を戻す・別の問題などの置き換えでは、タイル同士が交差して滑らないよう即座に並べ替える。
             slideAnimated={operation !== null}
             faceRef={(element) => {

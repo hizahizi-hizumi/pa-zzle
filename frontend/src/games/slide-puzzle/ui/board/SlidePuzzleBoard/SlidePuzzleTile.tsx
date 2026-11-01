@@ -7,6 +7,7 @@ import {
   type SlidePuzzleTile as SlidePuzzleTileNumber,
 } from "@/games/slide-puzzle/puzzle/state";
 import { SlidePuzzleTileFace } from "@/games/slide-puzzle/ui/board/SlidePuzzleTileFace";
+import type { SlidePuzzleTileCue } from "@/games/slide-puzzle/ui/board/tile-cue";
 
 /** 盤面の幅を一辺のマス数で等分する。 */
 const tileSizeClassByBoardSize: Record<SlidePuzzleBoardSize, string> = {
@@ -20,6 +21,7 @@ type SlidePuzzleTileProps = {
   cellIndex: number;
   boardSize: SlidePuzzleBoardSize;
   disabled: boolean;
+  cue: SlidePuzzleTileCue | undefined;
   slideAnimated: boolean;
   faceRef: Ref<HTMLSpanElement>;
   onPress: (cellIndex: number) => void;
@@ -30,6 +32,7 @@ export function SlidePuzzleTile({
   cellIndex,
   boardSize,
   disabled,
+  cue,
   slideAnimated,
   faceRef,
   onPress,
@@ -50,6 +53,22 @@ export function SlidePuzzleTile({
       style={{ transform: `translate(${column * 100}%, ${row * 100}%)` }}
     >
       <SlidePuzzleTileFace tile={tile} boardSize={boardSize} ref={faceRef} />
+      {cue?.kind === "landed" && (
+        <span
+          key={cue.id}
+          aria-hidden="true"
+          data-tile-cue={cue.kind}
+          className="pointer-events-none absolute inset-[1cqw] rounded-[1.6cqw] bg-sky-100/60 ring-2 ring-sky-500/50 ring-inset fill-mode-forwards animate-out fade-out-0 duration-900 ease-in dark:bg-sky-900/50 dark:ring-sky-300/50"
+        />
+      )}
+      {cue?.kind === "hint" && (
+        <span
+          key={cue.id}
+          aria-hidden="true"
+          data-tile-cue={cue.kind}
+          className="pointer-events-none absolute inset-0 rounded-[2.2cqw] border-2 border-sky-600/70 border-dashed animate-in fade-in-0 duration-500 motion-reduce:animate-none dark:border-sky-300/70"
+        />
+      )}
     </button>
   );
 }
