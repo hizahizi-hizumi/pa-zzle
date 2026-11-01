@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
  * - 決まるマスが塗りか空白かは描かない（答えを描かない）。ヒントの数字と × は描かない。
  */
 const previewChain = {
-  readingCounts: { "1": 3, "2": 5, "3": 7, "4": 10, "5": 14 },
+  readingCounts: { "1": 3, "2": 5, "3": 7, "4": 10, "5": 15 },
 } as const satisfies {
   readingCounts: Record<NonogramDifficulty, number>;
 };
