@@ -35,6 +35,8 @@ FALLBACK_THEMES = {
     },
 }
 THEME_SELECTORS = {"light": ":root", "dark": ".dark"}
+# Showcase SVGs switch dark-theme colors with an ancestor .dark selector, as the app does.
+THEME_ROOT_CLASSES = {"light": "", "dark": " dark"}
 THEME_LABELS = {"light": "ライト", "dark": "ダーク"}
 DECISIONS = (
     ("candidate", "候補"),
@@ -200,7 +202,7 @@ def preview_document(svg: str, themes: dict[str, dict[str, str]], sizes: Sizes, 
                 f'</div><span class="pzg-caption">一覧選択中 {size}px 静止</span></div>'
             )
         sections.append(
-            f'<section class="pzg-theme pzg-{theme}" aria-label="{THEME_LABELS[theme]}">{"".join(slots)}</section>'
+            f'<section class="pzg-theme pzg-{theme}{THEME_ROOT_CLASSES[theme]}" aria-label="{THEME_LABELS[theme]}">{"".join(slots)}</section>'
         )
     return f"<!doctype html><html><head>{style}</head><body>{''.join(sections)}</body></html>"
 
@@ -345,7 +347,7 @@ def build_document(
 <body>
 <header>
   <h1>{html.escape(title)}</h1>
-  <p class="hint">ヒーローは祖先に data-pictogram-motion="play" を付けて再生、一覧選択中は属性なしで静止。動きを減らす設定は Playwright の emulateMedia({{ reducedMotion: "reduce" }}) で確認する。</p>
+  <p class="hint">ヒーローは祖先に data-pictogram-motion="play" を付けて再生、一覧選択中は属性なしで静止。ダークは祖先に .dark クラスを付けて表示。動きを減らす設定は Playwright の emulateMedia({{ reducedMotion: "reduce" }}) で確認する。</p>
   <div class="toolbar">
     <button type="button" id="replay-all">すべて最初から再生</button>
     <button type="button" id="pause-all">一時停止</button>

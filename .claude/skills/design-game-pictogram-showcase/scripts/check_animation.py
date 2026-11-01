@@ -2,8 +2,9 @@
 """Check showcase pictogram SVGs against the receiving contract.
 
 The checks are deterministic only: SVG structure, naming prefix, CSS selector
-scope, play gating, and forbidden features. They do not judge whether the
-motion conveys the game, whether start/end frames match, or whether it is good.
+scope, play gating, dark-theme color switching, and forbidden features. They do
+not judge whether the motion conveys the game, whether the end or loop seam
+matches the static state, or whether it is good.
 """
 
 from __future__ import annotations
@@ -35,6 +36,25 @@ CUSTOM_PROPERTY_DECLARATION = re.compile(r"^--[\w-]+$")
 CSS_URL = re.compile(r"url\(\s*['\"]?([^'\")\s]*)", re.IGNORECASE)
 CSS_COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)
 COMBINATORS = set(" \t\n\r>+~")
+# The app marks dark theme with an ancestor .dark class (Tailwind
+# `@custom-variant dark (&:is(.dark *))`), so only these two spellings match it.
+DARK_LEADING_ANCESTOR = re.compile(r"^\.dark\s+(?=[^\s>+~])")
+DARK_IS_ANCESTOR = re.compile(r":(?:is|where)\(\s*\.dark\s+\*\s*\)")
+DARK_WORD = re.compile(r"(?<![\w-])dark(?![\w-])")
+COLOR_PROPERTIES = {
+    "color",
+    "fill",
+    "fill-opacity",
+    "stroke",
+    "stroke-opacity",
+    "stop-color",
+    "stop-opacity",
+    "flood-color",
+    "flood-opacity",
+    "lighting-color",
+    "opacity",
+}
+TIME_VALUE = re.compile(r"^(-?(?:\d+\.?\d*|\.\d+))(ms|s)$", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -61,6 +81,16 @@ class Report:
 class CssBlock:
     prelude: str
     body: str
+
+
+@dataclass
+class StyleState:
+    """Facts collected across one SVG that are checked after the whole file is read."""
+
+    prefix: str
+    report: Report
+    dark_variables: set[str] = field(default_factory=set)
+    variable_usages: list[tuple[str, str, str]] = field(default_factory=list)
 
 
 def local_name(tag: str) -> str:
@@ -251,11 +281,58 @@ def declarations(body: str) -> list[tuple[str, str]]:
     return result
 
 
+def strip_dark_condition(selector: str, prefix: str, report: Report) -> tuple[str, bool]:
+    """Remove the dark-theme ancestor condition and report whether it was present."""
+    stripped, pseudo_count = DARK_IS_ANCESTOR.subn("", selector.strip())
+    stripped, leading_count = DARK_LEADING_ANCESTOR.subn("", stripped.strip())
+    without_own_classes = re.sub(rf"\.{re.escape(prefix)}[\w-]*", "", stripped)
+    if DARK_WORD.search(without_own_classes):
+        report.error(
+            "<style>: dark theme must be matched only as a leading ancestor `.dark ` "
+            f"or `:is(.dark *)`: {selector}"
+        )
+    return stripped.strip(), bool(pseudo_count or leading_count)
+
+
+def time_in_ms(token: str) -> float | None:
+    match = TIME_VALUE.match(token)
+    if not match:
+        return None
+    value = float(match.group(1))
+    return value if match.group(2).lower() == "ms" else value * 1000
+
+
+def has_positive_delay(declared: list[tuple[str, str]]) -> bool:
+    for name, value in declared:
+        if name == "animation-delay":
+            times = [time_in_ms(token) for token in re.split(r"[\s,]+", value) if token]
+            if any(time is not None and time > 0 for time in times):
+                return True
+        if name == "animation":
+            for animation in split_top_level(value, ","):
+                times = [time_in_ms(token) for token in animation.split()]
+                durations_and_delays = [time for time in times if time is not None]
+                if len(durations_and_delays) >= 2 and durations_and_delays[1] > 0:
+                    return True
+    return False
+
+
+def keeps_first_frame_during_delay(declared: list[tuple[str, str]]) -> bool:
+    return any(
+        name in {"animation", "animation-fill-mode"}
+        and re.search(r"(?<![\w-])(?:backwards|both)(?![\w-])", value, re.IGNORECASE)
+        for name, value in declared
+    )
+
+
 def check_declarations(
-    body: str, prefix: str, report: Report, *, play_gated: bool, where: str
+    body: str, state: StyleState, *, play_gated: bool, dark: bool, where: str
 ) -> bool:
+    prefix = state.prefix
+    report = state.report
+    declared = declarations(body)
     animated = False
-    for name, value in declarations(body):
+    for name, value in declared:
         if name.startswith("transition"):
             report.error(f"{where}: transition is forbidden; use gated CSS animation")
         if name.startswith("animation"):
@@ -266,13 +343,29 @@ def check_declarations(
                     f"{where}: {name} must be inside @media (prefers-reduced-motion: no-preference) "
                     'and gated by an ancestor [data-pictogram-motion="play"]'
                 )
-        if CUSTOM_PROPERTY_DECLARATION.match(name) and not name.startswith(f"--{prefix}"):
+        is_custom_property = bool(CUSTOM_PROPERTY_DECLARATION.match(name))
+        if is_custom_property and not name.startswith(f"--{prefix}"):
             report.error(f"{where}: custom property must start with --{prefix}: {name}")
-        check_css_values(value, prefix, report, where)
+        if dark:
+            if is_custom_property:
+                state.dark_variables.add(name)
+            elif name not in COLOR_PROPERTIES:
+                report.error(
+                    f"{where}: a .dark rule may only switch colors "
+                    f"({', '.join(sorted(COLOR_PROPERTIES))} or --{prefix}* color variables): {name}"
+                )
+        check_css_values(value, state, where, property_name=name)
+    if animated and has_positive_delay(declared) and not keeps_first_frame_during_delay(declared):
+        report.warn(
+            f"{where}: animation-delay without animation-fill-mode backwards/both; if the first "
+            "keyframe differs from the static state, the static state flashes during the delay"
+        )
     return animated
 
 
-def check_css_values(value: str, prefix: str, report: Report, where: str) -> None:
+def check_css_values(value: str, state: StyleState, where: str, *, property_name: str) -> None:
+    prefix = state.prefix
+    report = state.report
     for target in CSS_URL.findall(value):
         if not target.startswith("#"):
             report.error(f"{where}: external CSS reference is forbidden: {target or '(empty)'}")
@@ -283,18 +376,48 @@ def check_css_values(value: str, prefix: str, report: Report, where: str) -> Non
             report.error(
                 f"{where}: only --game-pictogram-strong/soft or --{prefix}* variables are allowed: {variable}"
             )
+        state.variable_usages.append((property_name, variable, where))
 
 
-def check_style_rule(
-    block: CssBlock, prefix: str, report: Report, *, in_motion_media: bool
-) -> bool:
+def check_dark_variable_usage(state: StyleState) -> None:
+    """A variable switched by .dark must only feed colors, so .dark cannot change shape or motion."""
+    color_variables = set(state.dark_variables)
+    changed = True
+    while changed:
+        changed = False
+        for property_name, variable, _ in state.variable_usages:
+            if (
+                variable in color_variables
+                and CUSTOM_PROPERTY_DECLARATION.match(property_name)
+                and property_name not in color_variables
+            ):
+                color_variables.add(property_name)
+                changed = True
+    for property_name, variable, where in state.variable_usages:
+        if (
+            variable in color_variables
+            and property_name not in COLOR_PROPERTIES
+            and not CUSTOM_PROPERTY_DECLARATION.match(property_name)
+        ):
+            state.report.error(
+                f"{where}: {variable} is switched by a .dark rule, so it may only be used for colors: "
+                f"{property_name}"
+            )
+
+
+def check_style_rule(block: CssBlock, state: StyleState, *, in_motion_media: bool) -> bool:
+    prefix = state.prefix
+    report = state.report
     selectors = split_top_level(block.prelude, ",")
     if not selectors:
         report.error("<style>: empty selector")
         return False
 
     gated_flags: list[bool] = []
-    for selector in selectors:
+    dark = False
+    for original in selectors:
+        selector, dark_selector = strip_dark_condition(original, prefix, report)
+        dark |= dark_selector
         parts = compounds(selector)
         if not parts:
             report.error(f"<style>: empty selector in {block.prelude!r}")
@@ -303,37 +426,39 @@ def check_style_rule(
         subject_classes = class_names(subject)
         if not any(name.startswith(prefix) for name in subject_classes):
             report.error(
-                f"<style>: selector would leak outside the SVG; its target must have a {prefix}* class: {selector}"
+                f"<style>: selector would leak outside the SVG; its target must have a {prefix}* class: {original}"
             )
         for name in class_names(selector):
             if not name.startswith(prefix):
                 report.error(f"<style>: class name must start with {prefix}: .{name}")
         if MOTION_ATTRIBUTE.search(subject):
             report.error(
-                f'<style>: [data-pictogram-motion="play"] must be on an ancestor, not the target: {selector}'
+                f'<style>: [data-pictogram-motion="play"] must be on an ancestor, not the target: {original}'
             )
         gated = any(PLAY_ATTRIBUTE.search(part) for part in parts[:-1])
         if MOTION_ATTRIBUTE.search(selector) and not PLAY_ATTRIBUTE.search(selector):
-            report.error(f'<style>: data-pictogram-motion must be [data-pictogram-motion="play"]: {selector}')
+            report.error(f'<style>: data-pictogram-motion must be [data-pictogram-motion="play"]: {original}')
         if MOTION_ATTRIBUTE.search(selector) and not in_motion_media:
             report.error(
                 "<style>: rules using data-pictogram-motion must be inside "
-                f"@media (prefers-reduced-motion: no-preference): {selector}"
+                f"@media (prefers-reduced-motion: no-preference): {original}"
             )
         if in_motion_media and not gated:
             report.error(
                 "<style>: every rule inside the reduced-motion media must be gated by an ancestor "
-                f'[data-pictogram-motion="play"], or it changes the static state: {selector}'
+                f'[data-pictogram-motion="play"], or it changes the static state: {original}'
             )
         gated_flags.append(gated)
 
     play_gated = in_motion_media and bool(gated_flags) and all(gated_flags)
     return check_declarations(
-        block.body, prefix, report, play_gated=play_gated, where=f"<style> {block.prelude}"
+        block.body, state, play_gated=play_gated, dark=dark, where=f"<style> {block.prelude}"
     )
 
 
-def check_keyframes(block: CssBlock, prefix: str, report: Report) -> None:
+def check_keyframes(block: CssBlock, state: StyleState) -> None:
+    prefix = state.prefix
+    report = state.report
     name = block.prelude.split(None, 1)[1].strip() if " " in block.prelude.strip() else ""
     name = name.strip("\"'")
     if not name.startswith(prefix):
@@ -343,10 +468,11 @@ def check_keyframes(block: CssBlock, prefix: str, report: Report) -> None:
         for prop, value in declarations(frame.body):
             if prop.startswith("animation") or prop.startswith("transition"):
                 report.error(f"<style>: {prop} inside @keyframes {name} is not allowed")
-            check_css_values(value, prefix, report, f"@keyframes {name}")
+            check_css_values(value, state, f"@keyframes {name}", property_name=prop)
 
 
-def check_stylesheet(css: str, prefix: str, report: Report) -> bool:
+def check_stylesheet(css: str, state: StyleState) -> bool:
+    report = state.report
     css = CSS_COMMENT.sub("", css)
     blocks, loose = split_blocks(css)
     if loose:
@@ -360,8 +486,8 @@ def check_stylesheet(css: str, prefix: str, report: Report) -> bool:
             condition = prelude[len("@media") :].strip()
             if not REDUCED_MOTION_MEDIA.match(condition):
                 report.error(
-                    "<style>: only @media (prefers-reduced-motion: no-preference) is allowed: "
-                    f"{prelude}"
+                    "<style>: only @media (prefers-reduced-motion: no-preference) is allowed; "
+                    f"switch dark-theme colors with an ancestor .dark instead of prefers-color-scheme: {prelude}"
                 )
                 continue
             inner_blocks, inner_loose = split_blocks(block.body)
@@ -370,17 +496,17 @@ def check_stylesheet(css: str, prefix: str, report: Report) -> bool:
             for inner in inner_blocks:
                 inner_lowered = inner.prelude.lower()
                 if re.match(r"@(-webkit-)?keyframes\b", inner_lowered):
-                    check_keyframes(inner, prefix, report)
+                    check_keyframes(inner, state)
                 elif inner_lowered.startswith("@"):
                     report.error(f"<style>: nested at-rule is not allowed: {inner.prelude}")
                 else:
-                    animated |= check_style_rule(inner, prefix, report, in_motion_media=True)
+                    animated |= check_style_rule(inner, state, in_motion_media=True)
         elif re.match(r"@(-webkit-)?keyframes\b", lowered):
-            check_keyframes(block, prefix, report)
+            check_keyframes(block, state)
         elif lowered.startswith("@"):
             report.error(f"<style>: at-rule is not allowed: {prelude}")
         else:
-            animated |= check_style_rule(block, prefix, report, in_motion_media=False)
+            animated |= check_style_rule(block, state, in_motion_media=False)
     return animated
 
 
@@ -394,6 +520,7 @@ def parse_view_box(value: str) -> tuple[float, ...] | None:
 def check_svg(candidate: Candidate, game_id: str) -> Report:
     report = Report()
     prefix = f"pz-{game_id}-"
+    state = StyleState(prefix, report)
     try:
         root = ET.parse(candidate.path).getroot()
     except (OSError, ET.ParseError) as error:
@@ -452,9 +579,13 @@ def check_svg(candidate: Candidate, game_id: str) -> Report:
                         report.error(
                             f"{prop} in a style attribute cannot be gated; move it into <style>"
                         )
-                    check_css_values(prop_value, prefix, report, "style attribute")
+                    if CUSTOM_PROPERTY_DECLARATION.match(prop) and not prop.startswith(f"--{prefix}"):
+                        report.error(f"style attribute: custom property must start with --{prefix}: {prop}")
+                    check_css_values(prop_value, state, "style attribute", property_name=prop)
             elif attribute_name not in {"href", "src", "class", "id"}:
-                check_css_values(value, prefix, report, f"{name}@{attribute_name}")
+                check_css_values(
+                    value, state, f"{name}@{attribute_name}", property_name=attribute_name
+                )
 
         if name == "style":
             style_found = True
@@ -463,8 +594,9 @@ def check_svg(candidate: Candidate, game_id: str) -> Report:
                 uses_strong = True
             if re.search(r"@import\b", text, re.IGNORECASE):
                 report.error("<style>: @import is forbidden")
-            animated |= check_stylesheet(text, prefix, report)
+            animated |= check_stylesheet(text, state)
 
+    check_dark_variable_usage(state)
     if not style_found:
         report.error("no <style> element; animation must be written as CSS in <style>")
     if not animated:
