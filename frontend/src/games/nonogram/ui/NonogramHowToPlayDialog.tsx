@@ -91,9 +91,11 @@ export function NonogramHowToPlayDialog({
           matchedColumns={[true, true, true]}
         />
       </li>
-      <li className="hidden pointer-fine:list-item">
-        <p className="text-muted-foreground">
-          マウス: 右クリックで、選んだ印によらず × を入れる・消す。
+      <li className="hidden space-y-1 text-muted-foreground pointer-fine:list-item">
+        <p>マウス: 右クリックで、選んだ印によらず × を入れる・消す。</p>
+        <p>
+          キーボード: Tab で盤面へ移動、矢印キーでマスを選び、Enter か Space
+          で選んだ印を入れる・消す。
         </p>
       </li>
     </HowToPlayDialog>
