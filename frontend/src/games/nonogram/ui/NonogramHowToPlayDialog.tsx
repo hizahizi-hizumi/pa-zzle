@@ -39,7 +39,8 @@ export function NonogramHowToPlayDialog({
       <li className="space-y-2">
         <p>
           下のボタンで塗りと ×
-          を切り替え、マスを押して入れる。同じ印のマスを押すと消える。
+          を切り替え、マスを押して入れる。同じ印のマスを押すと消える。右クリックは、切り替えによらず
+          × を入れる・消す。
         </p>
         <HowToPlayTransition>
           <HowToPlayFigure rows={["."]} />
