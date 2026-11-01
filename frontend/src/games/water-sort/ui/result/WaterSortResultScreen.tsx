@@ -27,9 +27,7 @@ export function WaterSortResultScreen({
   recordOutcomeNotice,
   onReplay,
   onStartNewProblem,
-  onOpenRecords,
-  onChangeDifficulty,
-  onBackToHome,
+  onOpenGameHome,
   onOpenDiagnostics,
 }: WaterSortResultScreenProps) {
   return (
@@ -57,9 +55,7 @@ export function WaterSortResultScreen({
       scoreCriteria={getWaterSortScoreCriteria(result)}
       onStartNewProblem={onStartNewProblem}
       onReplay={onReplay}
-      onOpenRecords={onOpenRecords}
-      onChangeDifficulty={onChangeDifficulty}
-      onBackToHome={onBackToHome}
+      onOpenGameHome={onOpenGameHome}
       onOpenDiagnostics={onOpenDiagnostics}
     />
   );

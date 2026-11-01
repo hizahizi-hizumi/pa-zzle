@@ -1,4 +1,4 @@
-import { _private } from "@/zukan/ui/GameZukanScreen/ZukanProblemSheet";
+import { _private } from "@/zukan/ui/GameHomeScreen/ZukanProblemSheet";
 
 const { findNextSquareIndex } = _private;
 

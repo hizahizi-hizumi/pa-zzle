@@ -17,7 +17,7 @@ export function TakuzuPlayView() {
     return (
       <PlayUnavailableNotice
         title="この難易度は選べません"
-        backTo={takuzuCatalogEntry.entryPath}
+        backTo={takuzuCatalogEntry.homePath}
       />
     );
   }

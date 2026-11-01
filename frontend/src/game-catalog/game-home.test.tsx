@@ -8,6 +8,11 @@ import {
 } from "@testing-library/react";
 import { StrictMode } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
+
+import type { GameCatalogEntry } from "@/game-catalog/game-catalog-entry";
+import { useGameHome } from "@/game-catalog/game-home";
+import { minesweeperCatalogEntry } from "@/game-catalog/minesweeper/minesweeper-catalog-entry";
+import { nanpureCatalogEntry } from "@/game-catalog/nanpure/nanpure-catalog-entry";
 import { difficultyLevels } from "@/games/difficulty";
 import {
   createNanpurePlayRecord,
@@ -21,7 +26,7 @@ import {
   startPlayAttempt,
 } from "@/records/play-attempt-storage";
 import { writePlayRecords } from "@/records/storage";
-import { GameZukanView } from "@/views/GameZukanView";
+import { GameHomeScreen } from "@/zukan/ui/GameHomeScreen";
 
 function selectPoolProblem(difficulty: "2" | "4", index: number) {
   const problem = selectNanpureProblemById(
@@ -81,12 +86,34 @@ function getDetail(): HTMLElement {
   return screen.getByRole("complementary", { name: "選んだ問題" });
 }
 
+type GameHomeProps = {
+  game: GameCatalogEntry;
+};
+
+function GameHome({ game }: GameHomeProps) {
+  const { screenProps } = useGameHome(game);
+  return (
+    <GameHomeScreen
+      key={game.id}
+      {...screenProps}
+      renderLevelPreview={() => null}
+      renderHowToPlayDialog={() => null}
+    />
+  );
+}
+
 function renderAt(path: string, { strict = false } = {}) {
   const router = createMemoryRouter(
     [
-      { path: "/puzzles/:game/zukan", element: <GameZukanView /> },
+      {
+        path: "/puzzles/nanpure",
+        element: <GameHome game={nanpureCatalogEntry} />,
+      },
+      {
+        path: "/puzzles/minesweeper",
+        element: <GameHome game={minesweeperCatalogEntry} />,
+      },
       { path: "/puzzles/nanpure/play/:difficulty", element: <PlayLocation /> },
-      { path: "/records", element: <p>記録画面</p> },
     ],
     { initialEntries: [path] },
   );
@@ -108,7 +135,7 @@ function getChangeSummary(): string | null | undefined {
     ?.textContent;
 }
 
-describe("GameZukanView", () => {
+describe("useGameHome", () => {
   describe("クリアした記録と離脱した試行がある場合", () => {
     const solvedProblem = selectFirstPoolProblem("2");
     const abandonedProblem = selectFirstPoolProblem("4");
@@ -154,20 +181,20 @@ describe("GameZukanView", () => {
         { gameId: "nanpure", startedAt: 300_000 },
         { abandonedAt: 360_000, progress: { elapsedMs: 60_000 } },
       );
-      router = renderAt("/puzzles/nanpure/zukan");
+      router = renderAt("/puzzles/nanpure");
     });
 
-    test("ゲーム名の図鑑を見出しに出し、解いた問題の数を問題集の全問の数と並べて示すこと", () => {
+    test("ゲーム名を見出しに出し、解いた問題の数を問題集の全問の数と並べて示すこと", () => {
       const heading = screen.getByRole("heading", { level: 1 });
       const solvedCount = screen.getByText(
         `解いた問題 1 / ${nanpureProblemCount}`,
       );
 
-      expect(heading.textContent).toBe("ナンプレの図鑑");
+      expect(heading.textContent).toBe("ナンプレ");
       expect(solvedCount).toBeTruthy();
     });
 
-    test("最後にクリアまたは離脱したレベルのタブを選んで開くこと", () => {
+    test("最後にクリアまたは離脱したレベルのカードを選んで開くこと", () => {
       const selectedTab = screen.getByRole("tab", { selected: true });
 
       expect(selectedTab.textContent).toMatch(/^レベル 4、/);
@@ -253,10 +280,49 @@ describe("GameZukanView", () => {
       });
     });
 
-    test("難易度選択へ戻る導線を出すこと", () => {
-      const backLink = screen.getByRole("link", { name: "戻る" });
+    test("ランダムに遊ぶを押すと、開いているレベルのプレイ画面を開くこと", () => {
+      fireEvent.click(screen.getByRole("button", { name: "ランダムに遊ぶ" }));
 
-      expect(backLink.getAttribute("href")).toBe("/puzzles/nanpure");
+      expect(router.state.location.pathname).toBe("/puzzles/nanpure/play/4");
+      expect(router.state.location.search).toBe("");
+    });
+  });
+
+  describe("URL で問題を指した場合", () => {
+    const requestedProblem = selectFirstPoolProblem("2");
+    const requestedProblemId = createProblemId(requestedProblem.identity);
+
+    beforeEach(() => {
+      renderAt(`/puzzles/nanpure?problem=${requestedProblemId}`);
+    });
+
+    test("その問題のレベルを開き、その問題を選んで詳細を出すこと", () => {
+      const selectedTab = screen.getByRole("tab", { selected: true });
+      const selectedSquare = within(getSheet("レベル 2の問題")).getByRole(
+        "button",
+        { current: true },
+      );
+      const detail = getDetail();
+
+      expect(selectedTab.textContent).toMatch(/^レベル 2、/);
+      expect(selectedSquare.getAttribute("data-index")).toBe("0");
+      expect(detail).toBeTruthy();
+    });
+  });
+
+  describe("URL で問題集に無い問題を指した場合", () => {
+    beforeEach(() => {
+      renderAt("/puzzles/nanpure?problem=unknown-problem");
+    });
+
+    test("どのレベルも開かず、詳細を出さないこと", () => {
+      const selectedTab = screen.queryByRole("tab", { selected: true });
+      const detail = screen.queryByRole("complementary", {
+        name: "選んだ問題",
+      });
+
+      expect(selectedTab).toBeNull();
+      expect(detail).toBeNull();
     });
   });
 
@@ -317,7 +383,7 @@ describe("GameZukanView", () => {
 
     describe("開いた場合", () => {
       beforeEach(async () => {
-        renderAt("/puzzles/nanpure/zukan");
+        renderAt("/puzzles/nanpure");
         await finishReveal();
       });
 
@@ -343,10 +409,10 @@ describe("GameZukanView", () => {
 
     describe("変化のあるレベルを見せずに閉じて開き直した場合", () => {
       beforeEach(async () => {
-        renderAt("/puzzles/nanpure/zukan");
+        renderAt("/puzzles/nanpure");
         await finishReveal();
         cleanup();
-        renderAt("/puzzles/nanpure/zukan");
+        renderAt("/puzzles/nanpure");
       });
 
       test("そのレベルの変化をもう一度示すこと", () => {
@@ -362,7 +428,7 @@ describe("GameZukanView", () => {
 
     describe("変化のあるレベルを開いて見せ終えた場合", () => {
       beforeEach(async () => {
-        renderAt("/puzzles/nanpure/zukan");
+        renderAt("/puzzles/nanpure");
         await finishReveal();
         chooseLevel("レベル 2");
         await finishReveal();
@@ -376,7 +442,7 @@ describe("GameZukanView", () => {
 
       test("閉じて開き直すと、同じ変化を示さないこと", () => {
         cleanup();
-        renderAt("/puzzles/nanpure/zukan");
+        renderAt("/puzzles/nanpure");
         const summary = getChangeSummary();
 
         expect(summary).toBeUndefined();
@@ -385,7 +451,7 @@ describe("GameZukanView", () => {
 
     describe("StrictMode で開いた場合", () => {
       beforeEach(async () => {
-        renderAt("/puzzles/nanpure/zukan", { strict: true });
+        renderAt("/puzzles/nanpure", { strict: true });
         await finishReveal();
       });
 
@@ -398,10 +464,10 @@ describe("GameZukanView", () => {
 
     describe("前回の状態の無いゲームの図鑑から移ってきた場合", () => {
       beforeEach(async () => {
-        const router = renderAt("/puzzles/minesweeper/zukan");
+        const router = renderAt("/puzzles/minesweeper");
         await finishReveal();
         await act(async () => {
-          await router.navigate("/puzzles/nanpure/zukan");
+          await router.navigate("/puzzles/nanpure");
         });
         await finishReveal();
       });
@@ -410,7 +476,7 @@ describe("GameZukanView", () => {
         const heading = screen.getByRole("heading", { level: 1 });
         const summary = getChangeSummary();
 
-        expect(heading.textContent).toBe("ナンプレの図鑑");
+        expect(heading.textContent).toBe("ナンプレ");
         expect(summary).toBe("新しく解いた 1問");
       });
 
@@ -430,37 +496,29 @@ describe("GameZukanView", () => {
 
   describe("記録が無い場合", () => {
     beforeEach(() => {
-      renderAt("/puzzles/nanpure/zukan");
+      renderAt("/puzzles/nanpure");
     });
 
-    test("解いた問題が無いことを全問の数と並べて示し、レベル 1 の台紙を1番の空きマスから並べること", () => {
+    test("解いた問題が無いことを全問の数と並べて示し、どのレベルも開かないこと", () => {
       const solvedCount = screen.getByText(
         `解いた問題 0 / ${nanpureProblemCount}`,
       );
+      const selectedTab = screen.queryByRole("tab", { selected: true });
+
+      expect(solvedCount).toBeTruthy();
+      expect(selectedTab).toBeNull();
+    });
+
+    test("レベルを選ぶと、そのレベルの台紙を1番の空きマスから並べること", () => {
+      chooseLevel("レベル 1");
+
       const firstSquare = within(getSheet("レベル 1の問題")).getAllByRole(
         "button",
       )[0];
 
-      expect(solvedCount).toBeTruthy();
       expect(firstSquare?.getAttribute("aria-label")).toBe(
         "No.0001 レベル 1 未挑戦",
       );
-    });
-  });
-
-  describe("今のアプリに無いゲームの場合", () => {
-    beforeEach(() => {
-      renderAt("/puzzles/unknown-game/zukan");
-    });
-
-    test("図鑑が見つからないことを示し記録画面への導線を出すこと", () => {
-      const heading = screen.getByRole("heading", {
-        name: "図鑑が見つかりません",
-      });
-      const backLink = screen.getByRole("link", { name: "記録へ戻る" });
-
-      expect(heading).toBeTruthy();
-      expect(backLink.getAttribute("href")).toBe("/records");
     });
   });
 });

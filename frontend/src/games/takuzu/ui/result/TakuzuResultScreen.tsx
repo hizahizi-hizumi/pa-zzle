@@ -26,9 +26,7 @@ export function TakuzuResultScreen({
   recordOutcomeNotice,
   onReplay,
   onStartNewProblem,
-  onOpenRecords,
-  onChangeDifficulty,
-  onBackToHome,
+  onOpenGameHome,
   onOpenDiagnostics,
 }: TakuzuResultScreenProps) {
   return (
@@ -62,9 +60,7 @@ export function TakuzuResultScreen({
       scoreCriteria={getTakuzuScoreCriteria(result)}
       onStartNewProblem={onStartNewProblem}
       onReplay={onReplay}
-      onOpenRecords={onOpenRecords}
-      onChangeDifficulty={onChangeDifficulty}
-      onBackToHome={onBackToHome}
+      onOpenGameHome={onOpenGameHome}
       onOpenDiagnostics={onOpenDiagnostics}
     />
   );

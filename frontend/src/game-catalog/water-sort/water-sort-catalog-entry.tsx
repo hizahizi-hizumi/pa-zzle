@@ -28,7 +28,7 @@ export const waterSortCatalogEntry = {
   id: waterSortPlayRecordDefinition.gameId,
   name: WATER_SORT_DISPLAY_NAME,
   pictogramSvg,
-  entryPath: "/puzzles/water-sort",
+  homePath: "/puzzles/water-sort",
   playPath: "/puzzles/water-sort/play/:difficulty",
   playRecordDisplay: waterSortPlayRecordDisplay,
   recordProblemPlayTarget(record) {

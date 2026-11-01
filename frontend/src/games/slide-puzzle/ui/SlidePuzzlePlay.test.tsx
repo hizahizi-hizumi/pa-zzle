@@ -1,14 +1,21 @@
 import {
   cleanup,
   fireEvent,
-  render,
+  render as renderWithoutRouter,
   screen,
   within,
 } from "@testing-library/react";
+import type { ReactElement } from "react";
+import { MemoryRouter } from "react-router";
 
 import type { GameProgress } from "@/games/play";
 import type { SlidePuzzleResult } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import { SlidePuzzlePlay } from "@/games/slide-puzzle/ui/SlidePuzzlePlay";
+
+/** 結果画面はブランドの帯からホームへ戻るリンクを持つので、ルーターの中で描く。 */
+function render(ui: ReactElement) {
+  return renderWithoutRouter(ui, { wrapper: MemoryRouter });
+}
 
 const playingBoard = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 13, 14, 15];
 const solvedBoard = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0];
@@ -37,9 +44,8 @@ describe("SlidePuzzlePlay", () => {
     onRestart: vi.fn(),
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
-    onOpenRecords: vi.fn(),
     onClearAnimationComplete: vi.fn(),
-    onChangeDifficulty: vi.fn(),
+    onOpenGameHome: vi.fn(),
     onBackToHome: vi.fn(),
   };
 
@@ -95,17 +101,19 @@ describe("SlidePuzzlePlay", () => {
       expect(resultHeading).toBeNull();
     });
 
-    test("戻るボタンで難易度変更を通知すること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
+    test("戻るボタンでゲームのホームへ移る操作を通知すること", () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "ゲームのホームへ戻る" }),
+      );
 
-      expect(callbacks.onChangeDifficulty).toHaveBeenCalledOnce();
+      expect(callbacks.onOpenGameHome).toHaveBeenCalledOnce();
     });
 
     const menuCases = [
       ["盤面を戻す", "onRestart"],
       ["リセット", "onReplay"],
       ["別の問題", "onStartNewProblem"],
-      ["難易度変更", "onChangeDifficulty"],
+      ["ゲームのホーム", "onOpenGameHome"],
       ["ホーム", "onBackToHome"],
     ] as const;
 
@@ -232,11 +240,9 @@ describe("SlidePuzzlePlay", () => {
     });
 
     const actionCases = [
-      ["プレイ！", "onStartNewProblem"],
-      ["同じ問題", "onReplay"],
-      ["記録を確認", "onOpenRecords"],
-      ["難易度変更", "onChangeDifficulty"],
-      ["ホーム", "onBackToHome"],
+      ["次の問題", "onStartNewProblem"],
+      ["もう一度", "onReplay"],
+      ["ゲームのホームへ", "onOpenGameHome"],
     ] as const;
 
     test.each(actionCases)(

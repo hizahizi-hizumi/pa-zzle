@@ -34,6 +34,8 @@ const tabsListVariants = cva(
       layout: {
         default: "",
         stacked: "w-full group-data-[orientation=horizontal]/tabs:h-auto",
+        // card: 各タブを枠のあるカードにして並べる。収まらない幅では横に送る。
+        card: "w-full items-stretch justify-start gap-2 overflow-x-auto rounded-none bg-transparent p-1 [scrollbar-width:none] group-data-[orientation=horizontal]/tabs:h-auto [&::-webkit-scrollbar]:hidden",
       },
     },
     defaultVariants: {
@@ -69,10 +71,13 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        "relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap text-foreground/60 transition-all group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 group-data-[variant=default]/tabs-list:data-[state=active]:shadow-sm group-data-[variant=line]/tabs-list:data-[state=active]:shadow-none dark:text-muted-foreground dark:hover:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap text-foreground/60 transition-all group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 group-data-[variant=default]/tabs-list:data-[state=active]:shadow-sm group-data-[variant=line]/tabs-list:data-[state=active]:shadow-none dark:text-muted-foreground dark:hover:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        // card のカードは盤面の見本などの図を中に描くので、アイコンの大きさにそろえない。
+        "group-data-[layout=default]/tabs-list:[&_svg:not([class*='size-'])]:size-4 group-data-[layout=stacked]/tabs-list:[&_svg:not([class*='size-'])]:size-4",
         "group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:border-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent",
         "data-[state=active]:bg-background data-[state=active]:text-foreground dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 dark:data-[state=active]:text-foreground",
         "group-data-[layout=stacked]/tabs-list:h-auto group-data-[layout=stacked]/tabs-list:min-w-0 group-data-[layout=stacked]/tabs-list:flex-col group-data-[layout=stacked]/tabs-list:gap-0 group-data-[layout=stacked]/tabs-list:px-1 group-data-[layout=stacked]/tabs-list:py-1",
+        "group-data-[layout=card]/tabs-list:h-auto group-data-[layout=card]/tabs-list:min-w-36 group-data-[layout=card]/tabs-list:flex-col group-data-[layout=card]/tabs-list:items-stretch group-data-[layout=card]/tabs-list:justify-start group-data-[layout=card]/tabs-list:gap-1 group-data-[layout=card]/tabs-list:rounded-xl group-data-[layout=card]/tabs-list:border-(length:--border-width-normal) group-data-[layout=card]/tabs-list:border-border group-data-[layout=card]/tabs-list:bg-background group-data-[layout=card]/tabs-list:p-2 group-data-[layout=card]/tabs-list:text-left group-data-[layout=card]/tabs-list:text-foreground group-data-[layout=card]/tabs-list:hover:bg-accent group-data-[layout=card]/tabs-list:data-[state=active]:border-ring group-data-[layout=card]/tabs-list:data-[state=active]:bg-background group-data-[layout=card]/tabs-list:data-[state=active]:shadow-none group-data-[layout=card]/tabs-list:data-[state=active]:ring-1 group-data-[layout=card]/tabs-list:data-[state=active]:ring-ring group-data-[layout=card]/tabs-list:focus-visible:ring-[3px] group-data-[layout=card]/tabs-list:focus-visible:ring-ring/50",
         "after:absolute after:bg-foreground after:opacity-0 after:transition-opacity group-data-[orientation=horizontal]/tabs:after:inset-x-0 group-data-[orientation=horizontal]/tabs:after:bottom-[-5px] group-data-[orientation=horizontal]/tabs:after:h-0.5 group-data-[orientation=vertical]/tabs:after:inset-y-0 group-data-[orientation=vertical]/tabs:after:-right-1 group-data-[orientation=vertical]/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-[state=active]:after:opacity-100",
         className
       )}

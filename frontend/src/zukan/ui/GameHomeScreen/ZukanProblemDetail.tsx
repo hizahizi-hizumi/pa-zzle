@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 
+import { withPlayStartSound } from "@/components/app-decision-sound";
 import { DifficultyLevelPieces } from "@/components/DifficultyLevelPieces";
 import { getGameResultStyle } from "@/components/game-result-style";
 import type { ProblemFeature } from "@/components/problem-features";
@@ -20,7 +21,7 @@ import { formatPlayedDate } from "@/lib/format-played-at";
 import {
   formatZukanNumber,
   zukanProblemStatusLabels,
-} from "@/zukan/ui/GameZukanScreen/zukan-problem-appearance";
+} from "@/zukan/ui/GameHomeScreen/zukan-problem-appearance";
 import {
   getZukanProblemStatus,
   type ZukanProblem,
@@ -208,7 +209,7 @@ export function ZukanProblemDetail({
           )}
         </div>
         <div className="lg:order-last lg:grid">
-          <Button onClick={() => onPlay(shownProblem)}>
+          <Button onClick={withPlayStartSound(() => onPlay(shownProblem))}>
             <PlayIcon aria-hidden="true" />
             遊ぶ
           </Button>

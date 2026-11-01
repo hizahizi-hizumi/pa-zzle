@@ -1,58 +1,40 @@
-import {
-  BookOpen,
-  Home,
-  Play,
-  RotateCcw,
-  SlidersHorizontal,
-} from "lucide-react";
+import { Grid2x2, Play, RotateCcw } from "lucide-react";
 
 import { withPlayStartSound } from "@/components/app-decision-sound";
 import { Button } from "@/components/ui/button";
 
 type GameResultActionsProps = {
   onStartNewProblem: () => void;
-  /** 省略すると「同じ問題」を押せない状態で出す。 */
+  onOpenGameHome: () => void;
+  /** 省略すると「もう一度」を押せない状態で出す。 */
   onReplay?: () => void;
-  onOpenRecords: () => void;
-  onChangeDifficulty: () => void;
-  onBackToHome: () => void;
 };
 
+/** 結果を受け取ったあとの次の行動。次の問題を主とし、ゲームのホームへ移る・同じ問題をもう一度遊ぶを従として縦に並べる。 */
 export function GameResultActions({
   onStartNewProblem,
+  onOpenGameHome,
   onReplay,
-  onOpenRecords,
-  onChangeDifficulty,
-  onBackToHome,
 }: GameResultActionsProps) {
   return (
-    <div className="mt-4 grid gap-3">
+    <div className="mt-4 grid gap-2">
       <Button size="lg" onClick={withPlayStartSound(onStartNewProblem)}>
         <Play />
-        プレイ！
+        次の問題
       </Button>
-      <div className="grid grid-cols-2 gap-2">
-        <Button
-          variant="outline"
-          disabled={!onReplay}
-          onClick={onReplay && withPlayStartSound(onReplay)}
-        >
-          <RotateCcw />
-          同じ問題
-        </Button>
-        <Button variant="outline" onClick={onOpenRecords}>
-          <BookOpen />
-          記録を確認
-        </Button>
-        <Button variant="outline" onClick={onChangeDifficulty}>
-          <SlidersHorizontal />
-          難易度変更
-        </Button>
-        <Button variant="outline" onClick={onBackToHome}>
-          <Home />
-          ホーム
-        </Button>
-      </div>
+      <Button size="lg" variant="outline" onClick={onOpenGameHome}>
+        <Grid2x2 />
+        ゲームのホームへ
+      </Button>
+      <Button
+        size="lg"
+        variant="outline"
+        disabled={!onReplay}
+        onClick={onReplay && withPlayStartSound(onReplay)}
+      >
+        <RotateCcw />
+        もう一度
+      </Button>
     </div>
   );
 }

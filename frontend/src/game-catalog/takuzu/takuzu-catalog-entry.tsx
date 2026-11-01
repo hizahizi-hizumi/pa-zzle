@@ -28,7 +28,7 @@ export const takuzuCatalogEntry = {
   id: takuzuPlayRecordDefinition.gameId,
   name: TAKUZU_DISPLAY_NAME,
   pictogramSvg,
-  entryPath: "/puzzles/takuzu",
+  homePath: "/puzzles/takuzu",
   playPath: "/puzzles/takuzu/play/:difficulty",
   playRecordDisplay: takuzuPlayRecordDisplay,
   recordProblemPlayTarget(record) {

@@ -1,9 +1,20 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import type { ComponentProps } from "react";
+import {
+  cleanup,
+  fireEvent,
+  render as renderWithoutRouter,
+  screen,
+} from "@testing-library/react";
+import type { ComponentProps, ReactElement } from "react";
+import { MemoryRouter } from "react-router";
 import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
 import { MinesweeperPlay } from "@/games/minesweeper/ui/MinesweeperPlay";
 import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
+
+/** 結果画面はブランドの帯からホームへ戻るリンクを持つので、ルーターの中で描く。 */
+function render(ui: ReactElement) {
+  return renderWithoutRouter(ui, { wrapper: MemoryRouter });
+}
 
 afterEach(cleanup);
 
@@ -26,7 +37,7 @@ describe("MinesweeperPlay", () => {
     let onRevealCell: (cellIndex: number) => void;
     let onReplay: () => void;
     let onStartNewProblem: () => void;
-    let onChangeDifficulty: () => void;
+    let onOpenGameHome: () => void;
     let onBackToHome: () => void;
 
     beforeEach(() => {
@@ -34,7 +45,7 @@ describe("MinesweeperPlay", () => {
       onRevealCell = vi.fn();
       onReplay = vi.fn();
       onStartNewProblem = vi.fn();
-      onChangeDifficulty = vi.fn();
+      onOpenGameHome = vi.fn();
       onBackToHome = vi.fn();
       render(
         <MinesweeperPlay
@@ -55,8 +66,7 @@ describe("MinesweeperPlay", () => {
           onChordCell={vi.fn()}
           onReplay={onReplay}
           onStartNewProblem={onStartNewProblem}
-          onOpenRecords={vi.fn()}
-          onChangeDifficulty={onChangeDifficulty}
+          onOpenGameHome={onOpenGameHome}
           onBackToHome={onBackToHome}
           onClearAnimationComplete={vi.fn()}
         />,
@@ -73,21 +83,23 @@ describe("MinesweeperPlay", () => {
       expect(gameName).toBeTruthy();
     });
 
-    test("左上の戻る操作で難易度選択への移動を通知すること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
+    test("左上の戻る操作でゲームのホームへの移動を通知すること", () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "ゲームのホームへ戻る" }),
+      );
 
-      expect(onChangeDifficulty).toHaveBeenCalledOnce();
+      expect(onOpenGameHome).toHaveBeenCalledOnce();
       expect(onBackToHome).not.toHaveBeenCalled();
     });
 
-    test("メニューの難易度変更で難易度選択への移動を通知すること", () => {
+    test("メニューのゲームのホームでゲームのホームへの移動を通知すること", () => {
       fireEvent.pointerDown(
         screen.getByRole("button", { name: "その他の操作" }),
         { button: 0, ctrlKey: false },
       );
-      fireEvent.click(screen.getByRole("menuitem", { name: "難易度変更" }));
+      fireEvent.click(screen.getByRole("menuitem", { name: "ゲームのホーム" }));
 
-      expect(onChangeDifficulty).toHaveBeenCalledOnce();
+      expect(onOpenGameHome).toHaveBeenCalledOnce();
       expect(onBackToHome).not.toHaveBeenCalled();
     });
 
@@ -222,8 +234,7 @@ describe("MinesweeperPlay", () => {
           onChordCell={vi.fn()}
           onReplay={vi.fn()}
           onStartNewProblem={vi.fn()}
-          onOpenRecords={vi.fn()}
-          onChangeDifficulty={vi.fn()}
+          onOpenGameHome={vi.fn()}
           onBackToHome={vi.fn()}
           onClearAnimationComplete={vi.fn()}
           onOpenDiagnostics={onOpenDiagnostics}
@@ -271,8 +282,7 @@ describe("MinesweeperPlay", () => {
           onChordCell={vi.fn()}
           onReplay={vi.fn()}
           onStartNewProblem={vi.fn()}
-          onOpenRecords={vi.fn()}
-          onChangeDifficulty={vi.fn()}
+          onOpenGameHome={vi.fn()}
           onBackToHome={vi.fn()}
           onClearAnimationComplete={vi.fn()}
         />,
@@ -353,23 +363,20 @@ describe("MinesweeperPlay", () => {
   describe("採点結果を表示している場合", () => {
     let onReplay: () => void;
     let onStartNewProblem: () => void;
-    let onOpenRecords: () => void;
-    let onChangeDifficulty: () => void;
+    let onOpenGameHome: () => void;
     let onBackToHome: () => void;
 
     beforeEach(() => {
       onReplay = vi.fn();
       onStartNewProblem = vi.fn();
-      onOpenRecords = vi.fn();
-      onChangeDifficulty = vi.fn();
+      onOpenGameHome = vi.fn();
       onBackToHome = vi.fn();
       render(
         <MinesweeperPlay
           {...createResultProps()}
           onReplay={onReplay}
           onStartNewProblem={onStartNewProblem}
-          onOpenRecords={onOpenRecords}
-          onChangeDifficulty={onChangeDifficulty}
+          onOpenGameHome={onOpenGameHome}
           onBackToHome={onBackToHome}
         />,
       );
@@ -409,17 +416,14 @@ describe("MinesweeperPlay", () => {
     });
 
     test.each([
-      ["プレイ！", "onStartNewProblem"],
-      ["同じ問題", "onReplay"],
-      ["記録を確認", "onOpenRecords"],
-      ["難易度変更", "onChangeDifficulty"],
-      ["ホーム", "onBackToHome"],
+      ["次の問題", "onStartNewProblem"],
+      ["もう一度", "onReplay"],
+      ["ゲームのホームへ", "onOpenGameHome"],
     ] as const)("%sで対応する次の行動を通知すること", (name, handler) => {
       const handlers = {
         onStartNewProblem,
         onReplay,
-        onOpenRecords,
-        onChangeDifficulty,
+        onOpenGameHome,
         onBackToHome,
       };
 
@@ -522,8 +526,7 @@ function createResultProps(): ComponentProps<typeof MinesweeperPlay> {
     onChordCell: vi.fn(),
     onReplay: vi.fn(),
     onStartNewProblem: vi.fn(),
-    onOpenRecords: vi.fn(),
-    onChangeDifficulty: vi.fn(),
+    onOpenGameHome: vi.fn(),
     onBackToHome: vi.fn(),
     onClearAnimationComplete: vi.fn(),
   };

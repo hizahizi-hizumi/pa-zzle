@@ -21,7 +21,8 @@ type PlayHeaderProps = {
   /** 省略するとメニューに「リセット」を出さない。 */
   onReplay?: () => void;
   onStartNewProblem: () => void;
-  onChangeDifficulty: () => void;
+  /** ゲームのホームへ移る。見出しの戻るとメニューから。 */
+  onOpenGameHome: () => void;
   onBackToHome: () => void;
   onOpenHowToPlay?: () => void;
   onOpenDiagnostics?: () => void;
@@ -35,7 +36,7 @@ export function PlayHeader({
   canRestart = true,
   onReplay,
   onStartNewProblem,
-  onChangeDifficulty,
+  onOpenGameHome,
   onBackToHome,
   onOpenHowToPlay,
   onOpenDiagnostics,
@@ -47,7 +48,7 @@ export function PlayHeader({
       canRestart={canRestart}
       onReplay={onReplay}
       onStartNewProblem={onStartNewProblem}
-      onChangeDifficulty={onChangeDifficulty}
+      onOpenGameHome={onOpenGameHome}
       onBackToHome={onBackToHome}
       onOpenHowToPlay={onOpenHowToPlay}
       onOpenDiagnostics={onOpenDiagnostics}
@@ -66,8 +67,8 @@ export function PlayHeader({
         type="button"
         variant="ghost"
         size="icon-lg"
-        aria-label="難易度選択へ戻る"
-        onClick={onChangeDifficulty}
+        aria-label="ゲームのホームへ戻る"
+        onClick={onOpenGameHome}
       >
         <PuzzleBackIcon />
       </Button>

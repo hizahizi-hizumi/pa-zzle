@@ -11,18 +11,21 @@ import { useNavigate } from "@/router";
 
 type Navigate = ReturnType<typeof useNavigate>;
 
-type GameNavigationTarget = Pick<GameCatalogEntry, "entryPath" | "playPath">;
+type GameNavigationTarget = Pick<GameCatalogEntry, "homePath" | "playPath">;
 
 export function createGameNavigation(
   navigate: Navigate,
   game: GameNavigationTarget,
 ): GameNavigation {
   return {
-    openRecords() {
-      navigate("/records");
-    },
-    changeDifficulty() {
-      navigate(game.entryPath);
+    openGameHome(selectedProblemId) {
+      navigate({
+        pathname: game.homePath,
+        search:
+          selectedProblemId === undefined
+            ? ""
+            : createProblemIdSearch(selectedProblemId),
+      });
     },
     backToHome() {
       navigate("/");
@@ -38,10 +41,10 @@ export function createGameNavigation(
 
 export function useGameNavigation(game: GameNavigationTarget): GameNavigation {
   const navigate = useNavigate();
-  const { entryPath, playPath } = game;
+  const { homePath, playPath } = game;
   return useMemo(
-    () => createGameNavigation(navigate, { entryPath, playPath }),
-    [navigate, entryPath, playPath],
+    () => createGameNavigation(navigate, { homePath, playPath }),
+    [navigate, homePath, playPath],
   );
 }
 

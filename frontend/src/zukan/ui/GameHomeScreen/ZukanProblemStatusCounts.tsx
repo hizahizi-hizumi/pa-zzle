@@ -2,7 +2,7 @@ import {
   getZukanProblemStatusClassName,
   zukanProblemStatusLabels,
   zukanProblemStatusOrder,
-} from "@/zukan/ui/GameZukanScreen/zukan-problem-appearance";
+} from "@/zukan/ui/GameHomeScreen/zukan-problem-appearance";
 import type { ZukanProblemStatus } from "@/zukan/zukan-collection";
 
 type ZukanProblemStatusCountsProps = {

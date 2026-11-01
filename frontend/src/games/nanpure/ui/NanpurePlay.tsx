@@ -70,8 +70,7 @@ export function NanpurePlay({
   onRestart,
   onReplay,
   onStartNewProblem,
-  onOpenRecords,
-  onChangeDifficulty,
+  onOpenGameHome,
   onBackToHome,
   onClearAnimationComplete,
   onOpenDiagnostics,
@@ -100,7 +99,7 @@ export function NanpurePlay({
       onRestart={onRestart}
       onReplay={onReplay}
       onStartNewProblem={onStartNewProblem}
-      onChangeDifficulty={onChangeDifficulty}
+      onOpenGameHome={onOpenGameHome}
       onBackToHome={onBackToHome}
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
@@ -113,9 +112,7 @@ export function NanpurePlay({
           recordOutcomeNotice={recordOutcomeNotice}
           onReplay={onReplay}
           onStartNewProblem={onStartNewProblem}
-          onOpenRecords={onOpenRecords}
-          onChangeDifficulty={onChangeDifficulty}
-          onBackToHome={onBackToHome}
+          onOpenGameHome={onOpenGameHome}
           onOpenDiagnostics={onOpenDiagnostics}
         />
       )}

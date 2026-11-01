@@ -1,5 +1,5 @@
 import type { ProblemFeatureAxisDisplay } from "@/components/problem-features";
-import { formatZukanFeatureOption } from "@/zukan/ui/GameZukanScreen/zukan-filter-appearance";
+import { formatZukanFeatureOption } from "@/zukan/ui/GameHomeScreen/zukan-filter-appearance";
 import type { ZukanFeatureOption } from "@/zukan/zukan-filter";
 
 describe("formatZukanFeatureOption", () => {

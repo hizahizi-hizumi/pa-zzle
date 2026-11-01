@@ -144,9 +144,8 @@ export type GamePlayResultScreenProps<Difficulty, Result> = {
   /** 同じ問題を遊び直す。省略すると押せない状態で出す。 */
   onReplay?: () => void;
   onStartNewProblem: () => void;
-  onOpenRecords: () => void;
-  onChangeDifficulty: () => void;
-  onBackToHome: () => void;
+  /** ゲームのホームへ移る。図鑑で今の問題を選んだ状態で開く。 */
+  onOpenGameHome: () => void;
   /** 省略すると検証情報を開く操作を出さない。 */
   onOpenDiagnostics?: () => void;
 };
@@ -160,6 +159,8 @@ export type GamePlayScreenProps<Difficulty, Result> = Omit<
   GamePlayResultScreenProps<Difficulty, Result>,
   "result" | "onReplay"
 > & {
+  /** アプリのホームへ移る。 */
+  onBackToHome: () => void;
   progress: GameProgress;
   elapsedMs: number;
   /** クリアしたプレイの評価。`progress` が `result` でも `null` の間は結果画面を出さず、盤面を見せておく。 */

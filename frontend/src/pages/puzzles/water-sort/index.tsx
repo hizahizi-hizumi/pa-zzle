@@ -1,1 +1,1 @@
-export { WaterSortDifficultyView as default } from "@/views/WaterSortDifficultyView";
+export { WaterSortHomeView as default } from "@/views/WaterSortHomeView";

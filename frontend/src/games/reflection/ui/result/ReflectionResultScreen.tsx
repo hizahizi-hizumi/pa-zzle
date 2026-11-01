@@ -55,9 +55,7 @@ export function ReflectionResultScreen({
   recordOutcomeNotice,
   onReplay,
   onStartNewProblem,
-  onOpenRecords,
-  onChangeDifficulty,
-  onBackToHome,
+  onOpenGameHome,
   onOpenDiagnostics,
 }: ReflectionResultScreenProps) {
   const { showsCheckCountInResult } =
@@ -78,9 +76,7 @@ export function ReflectionResultScreen({
       recordOutcomeNotice={recordOutcomeNotice}
       onStartNewProblem={onStartNewProblem}
       onReplay={onReplay}
-      onOpenRecords={onOpenRecords}
-      onChangeDifficulty={onChangeDifficulty}
-      onBackToHome={onBackToHome}
+      onOpenGameHome={onOpenGameHome}
       onOpenDiagnostics={onOpenDiagnostics}
     />
   );

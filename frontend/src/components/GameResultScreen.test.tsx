@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
+import { MemoryRouter } from "react-router";
 import { _private as appDecisionSound } from "@/components/app-decision-sound";
 import { GameResultScreen } from "@/components/GameResultScreen";
 import { playSound } from "@/lib/sound-effects";
@@ -29,9 +30,7 @@ function createProps(): ComponentProps<typeof GameResultScreen> {
     scoreCriteria: [{ label: "速さ", description: "基準時間以内で満点。" }],
     onStartNewProblem: vi.fn(),
     onReplay: vi.fn(),
-    onOpenRecords: vi.fn(),
-    onChangeDifficulty: vi.fn(),
-    onBackToHome: vi.fn(),
+    onOpenGameHome: vi.fn(),
     onOpenDiagnostics: vi.fn(),
   };
 }
@@ -41,7 +40,11 @@ describe("GameResultScreen", () => {
 
   beforeEach(() => {
     props = createProps();
-    render(<GameResultScreen {...props} />);
+    render(
+      <MemoryRouter>
+        <GameResultScreen {...props} />
+      </MemoryRouter>,
+    );
   });
 
   test("評価・記録・主要成績を結果画面にまとめて表示すること", () => {
@@ -62,11 +65,9 @@ describe("GameResultScreen", () => {
       .map((button) => button.textContent);
 
     expect(buttonNames).toEqual([
-      "プレイ！",
-      "同じ問題",
-      "記録を確認",
-      "難易度変更",
-      "ホーム",
+      "次の問題",
+      "ゲームのホームへ",
+      "もう一度",
       "スコアの内訳・採点基準",
       "検証情報",
     ]);
@@ -92,8 +93,8 @@ describe("GameResultScreen", () => {
   });
 
   const playStartActions = [
-    ["プレイ！", "onStartNewProblem"],
-    ["同じ問題", "onReplay"],
+    ["次の問題", "onStartNewProblem"],
+    ["もう一度", "onReplay"],
   ] as const;
 
   test.each(playStartActions)(
@@ -108,19 +109,34 @@ describe("GameResultScreen", () => {
     },
   );
 
-  const silentActions = [
-    ["記録を確認", "onOpenRecords"],
-    ["難易度変更", "onChangeDifficulty"],
-    ["ホーム", "onBackToHome"],
-  ] as const;
+  test("ゲームのホームへ では音を鳴らさずに操作を通知すること", () => {
+    fireEvent.click(screen.getByRole("button", { name: "ゲームのホームへ" }));
 
-  test.each(silentActions)(
-    "%s では音を鳴らさずに操作を通知すること",
-    (buttonName, callbackName) => {
-      fireEvent.click(screen.getByRole("button", { name: buttonName }));
+    expect(playSound).not.toHaveBeenCalled();
+    expect(props.onOpenGameHome).toHaveBeenCalledOnce();
+  });
 
-      expect(playSound).not.toHaveBeenCalled();
-      expect(props[callbackName]).toHaveBeenCalledOnce();
-    },
-  );
+  test("ブランドの帯からホームへ戻れること", () => {
+    const homeLink = screen.getByRole("link", { name: "pa-zzle" });
+
+    const href = homeLink.getAttribute("href");
+
+    expect(href).toBe("/");
+  });
+});
+
+describe("GameResultScreen の遊び直せない記録", () => {
+  beforeEach(() => {
+    render(
+      <MemoryRouter>
+        <GameResultScreen {...createProps()} onReplay={undefined} />
+      </MemoryRouter>,
+    );
+  });
+
+  test("もう一度を押せない姿で出すこと", () => {
+    const replayButton = screen.getByRole("button", { name: "もう一度" });
+
+    expect(replayButton.hasAttribute("disabled")).toBe(true);
+  });
 });

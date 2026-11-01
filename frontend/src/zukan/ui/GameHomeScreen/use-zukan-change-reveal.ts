@@ -13,7 +13,7 @@ import {
   playZukanStamp,
   type ZukanChangeAppearance,
   type ZukanVerticalSpan,
-} from "@/zukan/ui/GameZukanScreen/zukan-change-reveal";
+} from "@/zukan/ui/GameHomeScreen/zukan-change-reveal";
 
 /** 変化したマスを押していく演出の進み。押す回の数で表す。 */
 export type ZukanStampProgress = {
