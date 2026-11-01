@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 
 import { GamePlayFrame } from "@/components/GamePlayFrame";
@@ -6,7 +6,20 @@ import type { GameProgress } from "@/games/play";
 
 afterEach(cleanup);
 
-function renderFrame(progress: GameProgress, result: string | null): void {
+function openPlayMenu(): void {
+  fireEvent.pointerDown(screen.getByRole("button", { name: "その他の操作" }), {
+    button: 0,
+    ctrlKey: false,
+  });
+}
+
+function renderFrame(
+  progress: GameProgress,
+  result: string | null,
+  renderTutorial?: ComponentProps<
+    typeof GamePlayFrame<string>
+  >["renderTutorial"],
+): void {
   const props: ComponentProps<typeof GamePlayFrame<string>> = {
     progress,
     result,
@@ -18,6 +31,7 @@ function renderFrame(progress: GameProgress, result: string | null): void {
     onBackToHome: vi.fn(),
     renderResultScreen: (clearedResult) => <p>結果 {clearedResult}</p>,
     renderHowToPlayDialog: () => null,
+    renderTutorial,
     children: <main>盤面</main>,
   };
   render(<GamePlayFrame {...props} />);
@@ -57,6 +71,57 @@ describe("GamePlayFrame", () => {
       expect(heading).not.toBeNull();
       expect(board).not.toBeNull();
       expect(resultScreen).toBeNull();
+    });
+  });
+
+  describe("チュートリアルを渡さない場合", () => {
+    beforeEach(() => {
+      renderFrame("playing", null);
+    });
+
+    test("メニューにチュートリアルの項目を出さないこと", () => {
+      openPlayMenu();
+
+      const item = screen.queryByRole("menuitem", { name: "チュートリアル" });
+
+      expect(item).toBeNull();
+    });
+  });
+
+  describe("チュートリアルを渡した場合", () => {
+    beforeEach(() => {
+      renderFrame("playing", null, ({ open, onClose }) =>
+        open ? (
+          <button type="button" onClick={onClose}>
+            チュートリアルを閉じる
+          </button>
+        ) : null,
+      );
+    });
+
+    test("チュートリアルを最初は開かないこと", () => {
+      const tutorial = screen.queryByRole("button", {
+        name: "チュートリアルを閉じる",
+      });
+
+      expect(tutorial).toBeNull();
+    });
+
+    test("メニューのチュートリアルで開き、閉じる操作で閉じること", () => {
+      openPlayMenu();
+      fireEvent.click(screen.getByRole("menuitem", { name: "チュートリアル" }));
+      const openedTutorial = screen.queryByRole("button", {
+        name: "チュートリアルを閉じる",
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: "チュートリアルを閉じる" }),
+      );
+      const closedTutorial = screen.queryByRole("button", {
+        name: "チュートリアルを閉じる",
+      });
+
+      expect(openedTutorial).not.toBeNull();
+      expect(closedTutorial).toBeNull();
     });
   });
 });

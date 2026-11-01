@@ -29,6 +29,11 @@ type GamePlayFrameProps<Result> = Pick<
     renderResultScreen: (result: Result) => ReactNode;
     /** ゲーム固有の遊び方ダイアログを描く。開閉の状態は外枠が持ち、引数で渡す。 */
     renderHowToPlayDialog: (control: HowToPlayDialogControl) => ReactNode;
+    /**
+     * ゲーム固有のチュートリアルを描く。開閉の状態は外枠が持ち、引数で渡す。
+     * 省略すると、メニューにチュートリアルを開く項目を出さない。
+     */
+    renderTutorial?: (control: HowToPlayDialogControl) => ReactNode;
     /** プレイ画面の範囲。盤面の外へ描かれるメニューやダイアログでの操作と見分けるために使う。 */
     ref?: Ref<HTMLElement>;
     /** 盤面（`main`）と、その下に置くゲーム固有の操作（`footer`）。 */
@@ -36,7 +41,7 @@ type GamePlayFrameProps<Result> = Pick<
   };
 
 /**
- * 全ゲームのプレイ画面の外枠。画面全体を覆い、ブランドの帯・見出し・遊び方を描き、その下に盤面と操作を置く。
+ * 全ゲームのプレイ画面の外枠。画面全体を覆い、ブランドの帯・見出し・遊び方・チュートリアルを描き、その下に盤面と操作を置く。
  * 結果表示へ進んで評価があれば、盤面の代わりに結果画面を描く。
  */
 export function GamePlayFrame<Result>({
@@ -54,10 +59,12 @@ export function GamePlayFrame<Result>({
   onOpenDiagnostics,
   renderResultScreen,
   renderHowToPlayDialog,
+  renderTutorial,
   ref,
   children,
 }: GamePlayFrameProps<Result>) {
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
 
   if (progress === "result" && result !== null) {
     return renderResultScreen(result);
@@ -80,11 +87,16 @@ export function GamePlayFrame<Result>({
         onChangeDifficulty={onChangeDifficulty}
         onBackToHome={onBackToHome}
         onOpenHowToPlay={() => setHowToPlayOpen(true)}
+        onOpenTutorial={renderTutorial && (() => setTutorialOpen(true))}
         onOpenDiagnostics={onOpenDiagnostics}
       />
       {renderHowToPlayDialog({
         open: howToPlayOpen,
         onClose: () => setHowToPlayOpen(false),
+      })}
+      {renderTutorial?.({
+        open: tutorialOpen,
+        onClose: () => setTutorialOpen(false),
       })}
       {children}
     </section>

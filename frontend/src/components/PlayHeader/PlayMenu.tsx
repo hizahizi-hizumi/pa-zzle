@@ -3,6 +3,7 @@ import {
   Home,
   MoreHorizontal,
   Play,
+  Pointer,
   RefreshCw,
   RotateCcw,
   SlidersHorizontal,
@@ -35,6 +36,8 @@ type PlayMenuProps = {
   onChangeDifficulty: () => void;
   onBackToHome: () => void;
   onOpenHowToPlay?: () => void;
+  /** 省略するとメニューに「チュートリアル」を出さない。 */
+  onOpenTutorial?: () => void;
   onOpenDiagnostics?: () => void;
 };
 
@@ -46,6 +49,7 @@ export function PlayMenu({
   onChangeDifficulty,
   onBackToHome,
   onOpenHowToPlay,
+  onOpenTutorial,
   onOpenDiagnostics,
 }: PlayMenuProps) {
   const soundEffectsEnabled = useSyncExternalStore(
@@ -90,14 +94,18 @@ export function PlayMenu({
           <Home />
           ホーム
         </DropdownMenuItem>
+        {(onOpenHowToPlay || onOpenTutorial) && <DropdownMenuSeparator />}
         {onOpenHowToPlay && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={onOpenHowToPlay}>
-              <CircleHelp />
-              遊び方
-            </DropdownMenuItem>
-          </>
+          <DropdownMenuItem onSelect={onOpenHowToPlay}>
+            <CircleHelp />
+            遊び方
+          </DropdownMenuItem>
+        )}
+        {onOpenTutorial && (
+          <DropdownMenuItem onSelect={onOpenTutorial}>
+            <Pointer />
+            チュートリアル
+          </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
         <DropdownMenuCheckboxItem

@@ -8,6 +8,7 @@ import {
 import { getTakuzuCellPosition } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import type { TakuzuCellView } from "@/games/takuzu/session/session";
+import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
 import { violationMarkTimingClassName } from "@/games/takuzu/ui/board/TakuzuBoard/violation-mark-timing";
 import { TakuzuCellFace } from "@/games/takuzu/ui/board/TakuzuCellFace";
 import { runViolationCellClassName } from "@/games/takuzu/ui/board/violation-mark-style";
@@ -20,6 +21,8 @@ type TakuzuCellProps = {
   /** このマスを含む行・列の違反の読み上げ名（例「行の個数超過」）。 */
   lineViolationNames: readonly string[];
   disabled: boolean;
+  /** 揺れの合図は盤面が掛けるので、マスは光と目印の合図だけを描く。 */
+  cue: TakuzuCellCue | undefined;
   focusable: boolean;
   onElementChange: (
     cellIndex: number,
@@ -53,6 +56,7 @@ export function TakuzuCell({
   view,
   lineViolationNames,
   disabled,
+  cue,
   focusable,
   onElementChange,
   onCycle,
@@ -106,13 +110,30 @@ export function TakuzuCell({
           runViolationCellClassName,
         )}
       />
+      {cue?.kind === "reason" && (
+        <span
+          key={cue.id}
+          aria-hidden="true"
+          data-cell-cue={cue.kind}
+          className="pointer-events-none absolute inset-0 bg-sky-100 ring-2 ring-sky-500/50 ring-inset fill-mode-forwards animate-out fade-out-0 duration-900 ease-in dark:bg-sky-900/60 dark:ring-sky-300/50"
+        />
+      )}
+      {cue?.kind === "hint" && (
+        <span
+          key={cue.id}
+          aria-hidden="true"
+          data-cell-cue={cue.kind}
+          className="pointer-events-none absolute inset-1 rounded-sm border-2 border-sky-600/60 border-dashed animate-in fade-in-0 duration-500 motion-reduce:animate-none dark:border-sky-300/60"
+        />
+      )}
       {/*
         固定マスを押したときの揺れと完成の波は、格子を崩さないよう中のタイルだけに掛ける。
         タイルは常に独立した合成レイヤーに置く。動くときだけレイヤーに上がると、後ろに描くマスがまとめて
         レイヤーに分け直され、ほかのタイルが小数ピクセルずれて描き直されるため、動きの始まりと終わりに盤面全体が揺れて見える。
+        固定か置いたものかは、チュートリアルの導入で置いたタイルだけを消して始めの盤面へ戻すのに使う。
       */}
       <span
-        data-takuzu-tile=""
+        data-takuzu-tile={view.given ? "given" : "placed"}
         data-clear-wave-step={row + column}
         className="relative size-[80%] will-change-transform"
       >
