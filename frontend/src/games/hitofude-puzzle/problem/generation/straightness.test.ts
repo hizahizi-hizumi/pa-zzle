@@ -1,6 +1,6 @@
-import { measureHamiltonianPathStraightRatio } from "@/games/hamiltonian-path/problem/generation/straightness";
+import { measureHitofudePuzzleStraightRatio } from "@/games/hitofude-puzzle/problem/generation/straightness";
 
-describe("measureHamiltonianPathStraightRatio", () => {
+describe("measureHitofudePuzzleStraightRatio", () => {
   // 4×4 の盤面のマス番号（行優先）で道を書く。
   const cases: readonly [string, readonly number[], number][] = [
     [
@@ -27,7 +27,7 @@ describe("measureHamiltonianPathStraightRatio", () => {
   ];
 
   test.each(cases)("%sこと", (_, path, expected) => {
-    const ratio = measureHamiltonianPathStraightRatio(path);
+    const ratio = measureHitofudePuzzleStraightRatio(path);
 
     expect(ratio).toBeCloseTo(expected);
   });

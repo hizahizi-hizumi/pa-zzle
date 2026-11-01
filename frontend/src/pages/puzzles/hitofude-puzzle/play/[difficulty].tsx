@@ -1,1 +1,1 @@
-export { HamiltonianPathPlayView as default } from "@/views/HamiltonianPathPlayView";
+export { HitofudePuzzlePlayView as default } from "@/views/HitofudePuzzlePlayView";

@@ -7,17 +7,17 @@ import {
   type NumericRange,
 } from "@/games/difficulty";
 import type {
-  HamiltonianPathDifficultyAnalysis,
-  HamiltonianPathReasoningFeatures,
-} from "@/games/hamiltonian-path/problem/difficulty-analysis";
+  HitofudePuzzleDifficultyAnalysis,
+  HitofudePuzzleReasoningFeatures,
+} from "@/games/hitofude-puzzle/problem/difficulty-analysis";
 import {
-  type HamiltonianPathBoardSize,
-  type HamiltonianPathGenerationConditions,
-  hamiltonianPathBoardSizes,
-  hamiltonianPathTargetAssumptionCounts,
-} from "@/games/hamiltonian-path/problem/problem";
+  type HitofudePuzzleBoardSize,
+  type HitofudePuzzleGenerationConditions,
+  hitofudePuzzleBoardSizes,
+  hitofudePuzzleTargetAssumptionCounts,
+} from "@/games/hitofude-puzzle/problem/problem";
 
-export type HamiltonianPathDifficulty = DifficultyLevel;
+export type HitofudePuzzleDifficulty = DifficultyLevel;
 
 /**
  * 1つのレベルが求める組み合わせ。
@@ -30,10 +30,10 @@ export type HamiltonianPathDifficulty = DifficultyLevel;
  *   解法器は先読みの手数の上限を3手・8手・20手・60手と広げながら仮置きを試すので、9以上は「どの辺を仮定しても
  *   8手以内には破綻が見えない局面が少なくとも1回あった」ことを表す。
  */
-export type HamiltonianPathLevelCombination = {
+export type HitofudePuzzleLevelCombination = {
   localReasoningSuffices: boolean;
   assumptionCount: NumericRange;
-  boardSize: NumericRange<HamiltonianPathBoardSize>;
+  boardSize: NumericRange<HitofudePuzzleBoardSize>;
   minimumLongestRefutationLength?: number;
 };
 
@@ -43,7 +43,7 @@ export type HamiltonianPathLevelCombination = {
  * レベル5だけは長い先読みも求め、短い先読みを何度も繰り返すだけで決まる問題と分ける。
  * 境界は人間の実プレイで確かめる前の暫定値。
  */
-export const hamiltonianPathLevelCombinations = {
+export const hitofudePuzzleLevelCombinations = {
   "1": {
     localReasoningSuffices: true,
     assumptionCount: { minimum: 0, maximum: 0 },
@@ -71,12 +71,12 @@ export const hamiltonianPathLevelCombinations = {
     minimumLongestRefutationLength: 9,
   },
 } as const satisfies Record<
-  HamiltonianPathDifficulty,
-  HamiltonianPathLevelCombination
+  HitofudePuzzleDifficulty,
+  HitofudePuzzleLevelCombination
 >;
 
-type HamiltonianPathAssessedReasoning = Pick<
-  HamiltonianPathReasoningFeatures,
+type HitofudePuzzleAssessedReasoning = Pick<
+  HitofudePuzzleReasoningFeatures,
   "assumptionCount" | "longestRefutationLength"
 >;
 
@@ -90,22 +90,22 @@ type HamiltonianPathAssessedReasoning = Pick<
  * - `unsupported`: 一意解だが、2段仮置きまで使っても道が決まらない、または分析の作業量の上限に達した。
  * - `invalid`: 解が無い、または2つ以上あり、問題として成立しない。
  */
-export type HamiltonianPathDifficultyAssessment = DifficultyAssessment<{
-  classified: { reasoning: HamiltonianPathAssessedReasoning };
+export type HitofudePuzzleDifficultyAssessment = DifficultyAssessment<{
+  classified: { reasoning: HitofudePuzzleAssessedReasoning };
   outOfRange:
     | { reason: "too-light" | "too-heavy" }
     | {
         reason: "unlisted-combination";
-        reasoning: HamiltonianPathAssessedReasoning;
+        reasoning: HitofudePuzzleAssessedReasoning;
       };
   unsupported: NoAssessmentDetail;
   invalid: NoAssessmentDetail;
 }>;
 
 function matchesLevelCombination(
-  reasoning: HamiltonianPathReasoningFeatures,
+  reasoning: HitofudePuzzleReasoningFeatures,
   size: number,
-  combination: HamiltonianPathLevelCombination,
+  combination: HitofudePuzzleLevelCombination,
 ): boolean {
   return (
     combination.localReasoningSuffices === reasoning.localReasoningSuffices &&
@@ -116,9 +116,9 @@ function matchesLevelCombination(
   );
 }
 
-export function assessHamiltonianPathDifficulty(
-  analysis: HamiltonianPathDifficultyAnalysis,
-): HamiltonianPathDifficultyAssessment {
+export function assessHitofudePuzzleDifficulty(
+  analysis: HitofudePuzzleDifficultyAnalysis,
+): HitofudePuzzleDifficultyAssessment {
   switch (analysis.status) {
     case "invalid":
       return { status: "invalid" };
@@ -140,7 +140,7 @@ export function assessHamiltonianPathDifficulty(
         matchesLevelCombination(
           reasoning,
           scale.size,
-          hamiltonianPathLevelCombinations[id],
+          hitofudePuzzleLevelCombinations[id],
         ),
       )?.id;
       return difficulty
@@ -158,14 +158,14 @@ export function assessHamiltonianPathDifficulty(
  * レベルの盤面サイズの範囲に入る生成条件（盤面サイズと仮置きの回数の目標の組）をすべて挙げる。問題の候補を作る範囲に使う。
  * 仮置きの回数の目標はレベルの判定条件ではなく、候補の分布を寄せる生成条件なので、どのレベルにも全ての値を挙げる。
  */
-export function listHamiltonianPathGenerationConditions(
-  difficulty: HamiltonianPathDifficulty,
-): HamiltonianPathGenerationConditions[] {
-  const { boardSize } = hamiltonianPathLevelCombinations[difficulty];
-  return hamiltonianPathBoardSizes
+export function listHitofudePuzzleGenerationConditions(
+  difficulty: HitofudePuzzleDifficulty,
+): HitofudePuzzleGenerationConditions[] {
+  const { boardSize } = hitofudePuzzleLevelCombinations[difficulty];
+  return hitofudePuzzleBoardSizes
     .filter((size) => isInNumericRange(size, boardSize))
     .flatMap((size) =>
-      hamiltonianPathTargetAssumptionCounts.map((targetAssumptionCount) => ({
+      hitofudePuzzleTargetAssumptionCounts.map((targetAssumptionCount) => ({
         size,
         targetAssumptionCount,
       })),

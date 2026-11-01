@@ -1,23 +1,23 @@
 import { parseDifficultyLevel } from "@/games/difficulty";
-import type { HamiltonianPathDifficulty } from "@/games/hamiltonian-path/difficulty";
+import type { HitofudePuzzleDifficulty } from "@/games/hitofude-puzzle/difficulty";
 import {
-  createHamiltonianPathResult,
-  type HamiltonianPathResult,
-} from "@/games/hamiltonian-path/play/use-hamiltonian-path-play";
+  createHitofudePuzzleResult,
+  type HitofudePuzzleResult,
+} from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
 import {
-  type HamiltonianPathProblemIdentity,
-  type HamiltonianPathRecordedProblemIdentity,
-  type HamiltonianPathSolveWorkload,
-  isHamiltonianPathProblemIdentity,
-  isHamiltonianPathRecordedProblemIdentity,
-  isHamiltonianPathSolveWorkload,
-  isHamiltonianPathWorkloadOfIdentity,
-} from "@/games/hamiltonian-path/problem/problem";
+  type HitofudePuzzleProblemIdentity,
+  type HitofudePuzzleRecordedProblemIdentity,
+  type HitofudePuzzleSolveWorkload,
+  isHitofudePuzzleProblemIdentity,
+  isHitofudePuzzleRecordedProblemIdentity,
+  isHitofudePuzzleSolveWorkload,
+  isHitofudePuzzleWorkloadOfIdentity,
+} from "@/games/hitofude-puzzle/problem/problem";
 import {
-  calculateHamiltonianPathPlayScore,
-  calculateHamiltonianPathTimeDeltaMs,
-} from "@/games/hamiltonian-path/score";
-import type { HamiltonianPathSessionResult } from "@/games/hamiltonian-path/session/session";
+  calculateHitofudePuzzlePlayScore,
+  calculateHitofudePuzzleTimeDeltaMs,
+} from "@/games/hitofude-puzzle/score";
+import type { HitofudePuzzleSessionResult } from "@/games/hitofude-puzzle/session/session";
 import {
   isNonNegativeFiniteNumber,
   isNonNegativeInteger,
@@ -26,8 +26,8 @@ import {
 import { createPlayRecordId, type PlayRecord } from "@/records/play-record";
 import type { PlayRecordDefinition } from "@/records/play-record-definition";
 
-const HAMILTONIAN_PATH_GAME_ID = "hamiltonian-path";
-const HAMILTONIAN_PATH_PLAY_RECORD_PAYLOAD_VERSION = 1;
+const HITOFUDE_PUZZLE_GAME_ID = "hitofude-puzzle";
+const HITOFUDE_PUZZLE_PLAY_RECORD_PAYLOAD_VERSION = 1;
 
 /**
  * - `problemIdentity`: 再プレイで問題集から同じ問題を引くのに使う。生成器の版が今と違う記録も読み込み、再プレイだけできないものとして扱う。
@@ -35,35 +35,35 @@ const HAMILTONIAN_PATH_PLAY_RECORD_PAYLOAD_VERSION = 1;
  * - `performance`: そのプレイで起きた事実。評価点・評価段階・基準時間との差は保存せず、現在の評価規則で導出する。
  *   戻したマスの数・待った・盤面を戻した回数・入力回数は評価に使わないが、評価規則を見直すときの材料として残す。
  */
-type HamiltonianPathPlayRecordPayload = {
-  difficulty: HamiltonianPathDifficulty;
-  problemIdentity: HamiltonianPathRecordedProblemIdentity;
-  workload: HamiltonianPathSolveWorkload;
-  performance: HamiltonianPathSessionResult;
+type HitofudePuzzlePlayRecordPayload = {
+  difficulty: HitofudePuzzleDifficulty;
+  problemIdentity: HitofudePuzzleRecordedProblemIdentity;
+  workload: HitofudePuzzleSolveWorkload;
+  performance: HitofudePuzzleSessionResult;
 };
 
-export type HamiltonianPathPlayRecord = PlayRecord & {
-  gameId: typeof HAMILTONIAN_PATH_GAME_ID;
-  payloadVersion: typeof HAMILTONIAN_PATH_PLAY_RECORD_PAYLOAD_VERSION;
-  payload: HamiltonianPathPlayRecordPayload;
+export type HitofudePuzzlePlayRecord = PlayRecord & {
+  gameId: typeof HITOFUDE_PUZZLE_GAME_ID;
+  payloadVersion: typeof HITOFUDE_PUZZLE_PLAY_RECORD_PAYLOAD_VERSION;
+  payload: HitofudePuzzlePlayRecordPayload;
 };
 
-type CreateHamiltonianPathPlayRecordInput = {
-  difficulty: HamiltonianPathDifficulty;
-  problemIdentity: HamiltonianPathProblemIdentity;
-  workload: HamiltonianPathSolveWorkload;
+type CreateHitofudePuzzlePlayRecordInput = {
+  difficulty: HitofudePuzzleDifficulty;
+  problemIdentity: HitofudePuzzleProblemIdentity;
+  workload: HitofudePuzzleSolveWorkload;
   startedAt: number;
   completedAt: number;
-  result: HamiltonianPathSessionResult;
+  result: HitofudePuzzleSessionResult;
 };
 
 /**
  * 待ったは入力1回ぶんを取り消すので、入力回数を超えない。
  * 引き直しは入力か待ったで道を変えたときに高々1回ずつ数えるので、その合計を超えない。
  */
-function isHamiltonianPathPerformance(
+function isHitofudePuzzlePerformance(
   value: unknown,
-): value is HamiltonianPathSessionResult {
+): value is HitofudePuzzleSessionResult {
   return (
     isRecordObject(value) &&
     isNonNegativeFiniteNumber(value.elapsedMs) &&
@@ -78,21 +78,21 @@ function isHamiltonianPathPerformance(
 }
 
 function isWorkloadOfRecordedIdentity(
-  workload: HamiltonianPathSolveWorkload,
-  identity: HamiltonianPathRecordedProblemIdentity,
+  workload: HitofudePuzzleSolveWorkload,
+  identity: HitofudePuzzleRecordedProblemIdentity,
 ): boolean {
   return (
-    !isHamiltonianPathProblemIdentity(identity) ||
-    isHamiltonianPathWorkloadOfIdentity(workload, identity)
+    !isHitofudePuzzleProblemIdentity(identity) ||
+    isHitofudePuzzleWorkloadOfIdentity(workload, identity)
   );
 }
 
-export function isHamiltonianPathPlayRecord(
+export function isHitofudePuzzlePlayRecord(
   record: PlayRecord,
-): record is HamiltonianPathPlayRecord {
+): record is HitofudePuzzlePlayRecord {
   if (
-    record.gameId !== HAMILTONIAN_PATH_GAME_ID ||
-    record.payloadVersion !== HAMILTONIAN_PATH_PLAY_RECORD_PAYLOAD_VERSION ||
+    record.gameId !== HITOFUDE_PUZZLE_GAME_ID ||
+    record.payloadVersion !== HITOFUDE_PUZZLE_PLAY_RECORD_PAYLOAD_VERSION ||
     !isRecordObject(record.payload)
   ) {
     return false;
@@ -102,10 +102,10 @@ export function isHamiltonianPathPlayRecord(
   return (
     typeof difficulty === "string" &&
     parseDifficultyLevel(difficulty) !== undefined &&
-    isHamiltonianPathRecordedProblemIdentity(problemIdentity) &&
-    isHamiltonianPathSolveWorkload(workload) &&
+    isHitofudePuzzleRecordedProblemIdentity(problemIdentity) &&
+    isHitofudePuzzleSolveWorkload(workload) &&
     isWorkloadOfRecordedIdentity(workload, problemIdentity) &&
-    isHamiltonianPathPerformance(performance)
+    isHitofudePuzzlePerformance(performance)
   );
 }
 
@@ -117,7 +117,7 @@ function copyPerformance({
   undoCount,
   restartCount,
   inputCount,
-}: HamiltonianPathSessionResult): HamiltonianPathSessionResult {
+}: HitofudePuzzleSessionResult): HitofudePuzzleSessionResult {
   return {
     elapsedMs,
     backtrackCount,
@@ -134,7 +134,7 @@ function copyWorkload({
   refutationStepCount,
   longestRefutationLength,
   fatalBranchCount,
-}: HamiltonianPathSolveWorkload): HamiltonianPathSolveWorkload {
+}: HitofudePuzzleSolveWorkload): HitofudePuzzleSolveWorkload {
   return {
     openCellCount,
     assumptionCount,
@@ -145,22 +145,22 @@ function copyWorkload({
 }
 
 /** 記録から作り直した、結果画面に出す内容。 */
-export type HamiltonianPathRecordedResult = {
-  difficulty: HamiltonianPathDifficulty;
-  problemIdentity: HamiltonianPathProblemIdentity;
-  result: HamiltonianPathResult;
+export type HitofudePuzzleRecordedResult = {
+  difficulty: HitofudePuzzleDifficulty;
+  problemIdentity: HitofudePuzzleProblemIdentity;
+  result: HitofudePuzzleResult;
 };
 
 /**
  * 記録から結果画面に出す内容を作り直す。
  * 今の版の記録で、今の生成器の問題のときだけ作れる。それ以外は `null` を返す。
  */
-export function restoreHamiltonianPathRecordedResult(
+export function restoreHitofudePuzzleRecordedResult(
   record: PlayRecord,
-): HamiltonianPathRecordedResult | null {
+): HitofudePuzzleRecordedResult | null {
   if (
-    !isHamiltonianPathPlayRecord(record) ||
-    !isHamiltonianPathProblemIdentity(record.payload.problemIdentity)
+    !isHitofudePuzzlePlayRecord(record) ||
+    !isHitofudePuzzleProblemIdentity(record.payload.problemIdentity)
   ) {
     return null;
   }
@@ -169,32 +169,32 @@ export function restoreHamiltonianPathRecordedResult(
   return {
     difficulty,
     problemIdentity,
-    result: createHamiltonianPathResult(
+    result: createHitofudePuzzleResult(
       copyPerformance(performance),
       copyWorkload(workload),
     ),
   };
 }
 
-export function createHamiltonianPathPlayRecord({
+export function createHitofudePuzzlePlayRecord({
   difficulty,
   problemIdentity,
   workload,
   startedAt,
   completedAt,
   result,
-}: CreateHamiltonianPathPlayRecordInput): HamiltonianPathPlayRecord {
+}: CreateHitofudePuzzlePlayRecordInput): HitofudePuzzlePlayRecord {
   return {
     id: createPlayRecordId([
-      HAMILTONIAN_PATH_GAME_ID,
+      HITOFUDE_PUZZLE_GAME_ID,
       startedAt,
       completedAt,
       problemIdentity.seed,
     ]),
-    gameId: HAMILTONIAN_PATH_GAME_ID,
+    gameId: HITOFUDE_PUZZLE_GAME_ID,
     startedAt,
     completedAt,
-    payloadVersion: HAMILTONIAN_PATH_PLAY_RECORD_PAYLOAD_VERSION,
+    payloadVersion: HITOFUDE_PUZZLE_PLAY_RECORD_PAYLOAD_VERSION,
     payload: {
       difficulty,
       problemIdentity: {
@@ -207,50 +207,50 @@ export function createHamiltonianPathPlayRecord({
   };
 }
 
-export function getHamiltonianPathPlayRecordScore(
+export function getHitofudePuzzlePlayRecordScore(
   record: PlayRecord,
 ): number | null {
-  if (!isHamiltonianPathPlayRecord(record)) {
+  if (!isHitofudePuzzlePlayRecord(record)) {
     return null;
   }
 
   const { workload, performance } = record.payload;
-  return calculateHamiltonianPathPlayScore({
+  return calculateHitofudePuzzlePlayScore({
     elapsedMs: performance.elapsedMs,
     backtrackCount: performance.backtrackCount,
     workload,
   }).total;
 }
 
-export function getHamiltonianPathPlayRecordTimeDelta(
+export function getHitofudePuzzlePlayRecordTimeDelta(
   record: PlayRecord,
 ): number | null {
-  if (!isHamiltonianPathPlayRecord(record)) {
+  if (!isHitofudePuzzlePlayRecord(record)) {
     return null;
   }
 
   const { workload, performance } = record.payload;
-  return calculateHamiltonianPathTimeDeltaMs({
+  return calculateHitofudePuzzleTimeDeltaMs({
     elapsedMs: performance.elapsedMs,
     workload,
   });
 }
 
-export type HamiltonianPathPlayRecordMetricId =
+export type HitofudePuzzlePlayRecordMetricId =
   | "play-score"
   | "time-delta-ms"
   | "backtrack-count";
 
-export const hamiltonianPathPlayRecordDefinition = {
-  gameId: HAMILTONIAN_PATH_GAME_ID,
-  isRecord: isHamiltonianPathPlayRecord,
+export const hitofudePuzzlePlayRecordDefinition = {
+  gameId: HITOFUDE_PUZZLE_GAME_ID,
+  isRecord: isHitofudePuzzlePlayRecord,
   getComparisonKey(record) {
-    return isHamiltonianPathPlayRecord(record)
+    return isHitofudePuzzlePlayRecord(record)
       ? record.payload.difficulty
       : null;
   },
   getClearPerformance(record) {
-    return isHamiltonianPathPlayRecord(record)
+    return isHitofudePuzzlePlayRecord(record)
       ? { elapsedMs: record.payload.performance.elapsedMs }
       : null;
   },
@@ -258,21 +258,21 @@ export const hamiltonianPathPlayRecordDefinition = {
     {
       id: "play-score",
       direction: "higher",
-      getValue: getHamiltonianPathPlayRecordScore,
+      getValue: getHitofudePuzzlePlayRecordScore,
     },
     {
       id: "time-delta-ms",
       direction: "lower",
-      getValue: getHamiltonianPathPlayRecordTimeDelta,
+      getValue: getHitofudePuzzlePlayRecordTimeDelta,
     },
     {
       id: "backtrack-count",
       direction: "lower",
       getValue(record) {
-        return isHamiltonianPathPlayRecord(record)
+        return isHitofudePuzzlePlayRecord(record)
           ? record.payload.performance.backtrackCount
           : null;
       },
     },
   ],
-} satisfies PlayRecordDefinition<HamiltonianPathPlayRecordMetricId>;
+} satisfies PlayRecordDefinition<HitofudePuzzlePlayRecordMetricId>;

@@ -1,32 +1,32 @@
-import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
-import { createInitialHamiltonianPathState } from "@/games/hamiltonian-path/puzzle/state";
+import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
+import { createInitialHitofudePuzzleState } from "@/games/hitofude-puzzle/puzzle/state";
 import {
-  extendHamiltonianPath,
-  type HamiltonianPathExtensionRejection,
-  moveHamiltonianPathHead,
-  retractHamiltonianPath,
-  rewindHamiltonianPath,
-  traceHamiltonianPath,
-} from "@/games/hamiltonian-path/puzzle/transitions";
+  extendHitofudePuzzle,
+  type HitofudePuzzleExtensionRejection,
+  moveHitofudePuzzleHead,
+  retractHitofudePuzzle,
+  rewindHitofudePuzzle,
+  traceHitofudePuzzle,
+} from "@/games/hitofude-puzzle/puzzle/transitions";
 
 // 0 1 2
 // 3 # 5
 // 6 7 8
-const board = parseHamiltonianPathBoard(["S . .", ". # .", ". . ."]);
+const board = parseHitofudePuzzleBoard(["S . .", ". # .", ". . ."]);
 
-describe("createInitialHamiltonianPathState", () => {
+describe("createInitialHitofudePuzzleState", () => {
   test("始点だけの道を作ること", () => {
-    const state = createInitialHamiltonianPathState(board);
+    const state = createInitialHitofudePuzzleState(board);
 
     expect(state.path).toEqual([0]);
   });
 });
 
-describe("extendHamiltonianPath", () => {
+describe("extendHitofudePuzzle", () => {
   const initialState = { path: [0] };
 
   test("先端に隣り合う未通過の有効マスへ1マス延ばすこと", () => {
-    const extension = extendHamiltonianPath(board, initialState, 1);
+    const extension = extendHitofudePuzzle(board, initialState, 1);
 
     expect(extension).toEqual({ kind: "extended", state: { path: [0, 1] } });
   });
@@ -35,7 +35,7 @@ describe("extendHamiltonianPath", () => {
     string,
     readonly number[],
     number,
-    HamiltonianPathExtensionRejection,
+    HitofudePuzzleExtensionRejection,
   ][] = [
     ["盤面の外", [0], -1, "outside-board"],
     ["先端から離れたマス", [0], 2, "not-adjacent"],
@@ -47,63 +47,63 @@ describe("extendHamiltonianPath", () => {
   test.each(rejections)(
     "%sへは延ばさず理由を返すこと",
     (_, path, cell, reason) => {
-      const extension = extendHamiltonianPath(board, { path }, cell);
+      const extension = extendHitofudePuzzle(board, { path }, cell);
 
       expect(extension).toEqual({ kind: "rejected", reason });
     },
   );
 });
 
-describe("retractHamiltonianPath", () => {
+describe("retractHitofudePuzzle", () => {
   const state = { path: [0, 3, 6] };
   const initialState = { path: [0] };
 
   test("先端を1マス戻すこと", () => {
-    const retracted = retractHamiltonianPath(state);
+    const retracted = retractHitofudePuzzle(state);
 
     expect(retracted.path).toEqual([0, 3]);
   });
 
   test("始点だけの道は変えないこと", () => {
-    const retracted = retractHamiltonianPath(initialState);
+    const retracted = retractHitofudePuzzle(initialState);
 
     expect(retracted).toBe(initialState);
   });
 });
 
-describe("rewindHamiltonianPath", () => {
+describe("rewindHitofudePuzzle", () => {
   const state = { path: [0, 3, 6, 7, 8] };
 
   test("道の途中のマスまで巻き戻すこと", () => {
-    const rewound = rewindHamiltonianPath(state, 6);
+    const rewound = rewindHitofudePuzzle(state, 6);
 
     expect(rewound.path).toEqual([0, 3, 6]);
   });
 
   test("始点まで巻き戻すと始点だけの道になること", () => {
-    const rewound = rewindHamiltonianPath(state, 0);
+    const rewound = rewindHitofudePuzzle(state, 0);
 
     expect(rewound.path).toEqual([0]);
   });
 
   test.each([8, 1])("先端や道に無いマス %i では変えないこと", (cell) => {
-    const rewound = rewindHamiltonianPath(state, cell);
+    const rewound = rewindHitofudePuzzle(state, cell);
 
     expect(rewound).toBe(state);
   });
 });
 
-describe("moveHamiltonianPathHead", () => {
+describe("moveHitofudePuzzleHead", () => {
   const state = { path: [0, 3, 6, 7] };
 
   test("直前のマスへ動かすと1マス縮むこと", () => {
-    const move = moveHamiltonianPathHead(board, state, 6);
+    const move = moveHitofudePuzzleHead(board, state, 6);
 
     expect(move).toEqual({ kind: "retracted", state: { path: [0, 3, 6] } });
   });
 
   test("未通過のマスへ動かすと延びること", () => {
-    const move = moveHamiltonianPathHead(board, state, 8);
+    const move = moveHitofudePuzzleHead(board, state, 8);
 
     expect(move).toEqual({
       kind: "extended",
@@ -112,19 +112,19 @@ describe("moveHamiltonianPathHead", () => {
   });
 
   describe("直前より前の通過済みのマスへ動かす場合", () => {
-    const openBoard = parseHamiltonianPathBoard(["S .", ". ."]);
+    const openBoard = parseHitofudePuzzleBoard(["S .", ". ."]);
     const loopingState = { path: [0, 1, 3, 2] };
 
     test("巻き戻さず、通過済みを理由に返すこと", () => {
-      const move = moveHamiltonianPathHead(openBoard, loopingState, 0);
+      const move = moveHitofudePuzzleHead(openBoard, loopingState, 0);
 
       expect(move).toEqual({ kind: "rejected", reason: "visited" });
     });
   });
 });
 
-describe("traceHamiltonianPath", () => {
-  const openBoard = parseHamiltonianPathBoard(["S . .", ". . .", ". . ."]);
+describe("traceHitofudePuzzle", () => {
+  const openBoard = parseHitofudePuzzleBoard(["S . .", ". . .", ". . ."]);
 
   describe("指が先端から隣のマスへ移った場合", () => {
     const cases = [
@@ -149,7 +149,7 @@ describe("traceHamiltonianPath", () => {
     ] as const;
 
     test.each(cases)("%sこと", (_, path, to, expected) => {
-      const trace = traceHamiltonianPath(
+      const trace = traceHitofudePuzzle(
         board,
         { path },
         { from: path.at(-1)!, to, horizontalFirst: true },
@@ -161,7 +161,7 @@ describe("traceHamiltonianPath", () => {
 
   describe("指が先端から直前より前の通過済みのマスへ移った場合", () => {
     test("巻き戻さず道を変えないこと", () => {
-      const trace = traceHamiltonianPath(
+      const trace = traceHitofudePuzzle(
         openBoard,
         { path: [0, 1, 4, 3] },
         { from: 3, to: 0, horizontalFirst: false },
@@ -173,7 +173,7 @@ describe("traceHamiltonianPath", () => {
 
   describe("道から外れた指が動いた場合", () => {
     test("先端の隣の未通過マスへ入ると延ばすこと", () => {
-      const trace = traceHamiltonianPath(
+      const trace = traceHitofudePuzzle(
         openBoard,
         { path: [0, 1] },
         { from: 5, to: 2, horizontalFirst: true },
@@ -183,7 +183,7 @@ describe("traceHamiltonianPath", () => {
     });
 
     test("先端の隣の穴へ入っても理由を返さないこと", () => {
-      const trace = traceHamiltonianPath(
+      const trace = traceHitofudePuzzle(
         board,
         { path: [0, 1] },
         { from: 5, to: 4, horizontalFirst: true },
@@ -193,7 +193,7 @@ describe("traceHamiltonianPath", () => {
     });
 
     test("先端から離れたマスへは延ばさないこと", () => {
-      const trace = traceHamiltonianPath(
+      const trace = traceHitofudePuzzle(
         openBoard,
         { path: [0] },
         { from: 1, to: 2, horizontalFirst: true },
@@ -210,7 +210,7 @@ describe("traceHamiltonianPath", () => {
     ] as const;
 
     test.each(cases)("%sを通って延ばすこと", (_, horizontalFirst, path) => {
-      const trace = traceHamiltonianPath(
+      const trace = traceHitofudePuzzle(
         openBoard,
         { path: [0] },
         { from: 0, to: 4, horizontalFirst },
@@ -220,10 +220,10 @@ describe("traceHamiltonianPath", () => {
     });
 
     describe("片方の角が穴の場合", () => {
-      const holedBoard = parseHamiltonianPathBoard(["S # .", ". . .", ". . ."]);
+      const holedBoard = parseHitofudePuzzleBoard(["S # .", ". . .", ". . ."]);
 
       test("穴でない角を通って延ばすこと", () => {
-        const trace = traceHamiltonianPath(
+        const trace = traceHitofudePuzzle(
           holedBoard,
           { path: [0] },
           { from: 0, to: 4, horizontalFirst: true },
@@ -237,14 +237,14 @@ describe("traceHamiltonianPath", () => {
     });
 
     describe("両方の角が穴の場合", () => {
-      const blockedBoard = parseHamiltonianPathBoard([
+      const blockedBoard = parseHitofudePuzzleBoard([
         "S # .",
         "# . .",
         ". . .",
       ]);
 
       test("延ばさないこと", () => {
-        const trace = traceHamiltonianPath(
+        const trace = traceHitofudePuzzle(
           blockedBoard,
           { path: [0] },
           { from: 0, to: 4, horizontalFirst: true },
@@ -257,7 +257,7 @@ describe("traceHamiltonianPath", () => {
 
   describe("指が先端から一直線に2マス先へ移った場合", () => {
     test("間のマスを通って延ばすこと", () => {
-      const trace = traceHamiltonianPath(
+      const trace = traceHitofudePuzzle(
         openBoard,
         { path: [0] },
         { from: 0, to: 6, horizontalFirst: false },

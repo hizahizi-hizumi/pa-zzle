@@ -1,30 +1,30 @@
 import {
-  assertHamiltonianPathProblem,
-  createHamiltonianPathProblemIdentity,
-  HAMILTONIAN_PATH_GENERATOR_VERSION,
-  type HamiltonianPathProblem,
-  type HamiltonianPathSolveWorkload,
-  isHamiltonianPathProblemIdentity,
-  isHamiltonianPathRecordedProblemIdentity,
-  isHamiltonianPathSolveWorkload,
-  isHamiltonianPathWorkloadOfIdentity,
-} from "@/games/hamiltonian-path/problem/problem";
-import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
+  assertHitofudePuzzleProblem,
+  createHitofudePuzzleProblemIdentity,
+  HITOFUDE_PUZZLE_GENERATOR_VERSION,
+  type HitofudePuzzleProblem,
+  type HitofudePuzzleSolveWorkload,
+  isHitofudePuzzleProblemIdentity,
+  isHitofudePuzzleRecordedProblemIdentity,
+  isHitofudePuzzleSolveWorkload,
+  isHitofudePuzzleWorkloadOfIdentity,
+} from "@/games/hitofude-puzzle/problem/problem";
+import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
 
-describe("createHamiltonianPathProblemIdentity", () => {
+describe("createHitofudePuzzleProblemIdentity", () => {
   test("条件と候補番号を seed に含めた今の版の identity を作ること", () => {
-    const identity = createHamiltonianPathProblemIdentity(8, 7, 3);
+    const identity = createHitofudePuzzleProblemIdentity(8, 7, 3);
 
     expect(identity).toEqual({
-      generatorVersion: HAMILTONIAN_PATH_GENERATOR_VERSION,
+      generatorVersion: HITOFUDE_PUZZLE_GENERATOR_VERSION,
       seed: "hp-8-t7-3",
       conditions: { size: 8, targetAssumptionCount: 7 },
     });
   });
 });
 
-describe("isHamiltonianPathProblemIdentity", () => {
-  const identity = createHamiltonianPathProblemIdentity(6, 0, 1);
+describe("isHitofudePuzzleProblemIdentity", () => {
+  const identity = createHitofudePuzzleProblemIdentity(6, 0, 1);
   const invalidValues: readonly [string, unknown][] = [
     ["オブジェクトでない値", "hp-6-t0-1"],
     ["生成器の版が違う", { ...identity, generatorVersion: "0" }],
@@ -45,38 +45,38 @@ describe("isHamiltonianPathProblemIdentity", () => {
   ];
 
   test("今の生成器の identity を受け入れること", () => {
-    const result = isHamiltonianPathProblemIdentity(identity);
+    const result = isHitofudePuzzleProblemIdentity(identity);
 
     expect(result).toBe(true);
   });
 
   test.each(invalidValues)("%s値を拒否すること", (_, value) => {
-    const result = isHamiltonianPathProblemIdentity(value);
+    const result = isHitofudePuzzleProblemIdentity(value);
 
     expect(result).toBe(false);
   });
 });
 
-describe("isHamiltonianPathRecordedProblemIdentity", () => {
+describe("isHitofudePuzzleRecordedProblemIdentity", () => {
   const otherVersionIdentity = {
     generatorVersion: "1",
     seed: "hp-8-15-3",
     conditions: { size: 8, wallRatio: 0.15 },
   };
   const brokenCurrentIdentity = {
-    ...createHamiltonianPathProblemIdentity(6, 0, 1),
+    ...createHitofudePuzzleProblemIdentity(6, 0, 1),
     conditions: { size: 12, targetAssumptionCount: 0 },
   };
 
   test("生成器の版が違う記録の identity も読めること", () => {
     const result =
-      isHamiltonianPathRecordedProblemIdentity(otherVersionIdentity);
+      isHitofudePuzzleRecordedProblemIdentity(otherVersionIdentity);
 
     expect(result).toBe(true);
   });
 
   test("今の版で生成条件が扱えない identity を拒否すること", () => {
-    const result = isHamiltonianPathRecordedProblemIdentity(
+    const result = isHitofudePuzzleRecordedProblemIdentity(
       brokenCurrentIdentity,
     );
 
@@ -84,33 +84,33 @@ describe("isHamiltonianPathRecordedProblemIdentity", () => {
   });
 });
 
-describe("assertHamiltonianPathProblem", () => {
-  const problem: HamiltonianPathProblem = parseHamiltonianPathBoard([
+describe("assertHitofudePuzzleProblem", () => {
+  const problem: HitofudePuzzleProblem = parseHitofudePuzzleBoard([
     "S . .",
     ". # .",
     ". . .",
   ]);
-  const separatedProblem: HamiltonianPathProblem = parseHamiltonianPathBoard([
+  const separatedProblem: HitofudePuzzleProblem = parseHitofudePuzzleBoard([
     "S . #",
     ". # .",
     "# . .",
   ]);
 
   test("穴でないマスがつながった問題を受け入れること", () => {
-    const act = () => assertHamiltonianPathProblem(problem);
+    const act = () => assertHitofudePuzzleProblem(problem);
 
     expect(act).not.toThrow();
   });
 
   test("穴でないマスが穴で切り離された問題を拒否すること", () => {
-    const act = () => assertHamiltonianPathProblem(separatedProblem);
+    const act = () => assertHitofudePuzzleProblem(separatedProblem);
 
     expect(act).toThrow();
   });
 });
 
-describe("isHamiltonianPathSolveWorkload", () => {
-  const workload: HamiltonianPathSolveWorkload = {
+describe("isHitofudePuzzleSolveWorkload", () => {
+  const workload: HitofudePuzzleSolveWorkload = {
     openCellCount: 64,
     assumptionCount: 8,
     refutationStepCount: 71,
@@ -130,21 +130,21 @@ describe("isHamiltonianPathSolveWorkload", () => {
   ];
 
   test("作業の量を受け入れること", () => {
-    const result = isHamiltonianPathSolveWorkload(workload);
+    const result = isHitofudePuzzleSolveWorkload(workload);
 
     expect(result).toBe(true);
   });
 
   test.each(invalidValues)("%s値を拒否すること", (_, value) => {
-    const result = isHamiltonianPathSolveWorkload(value);
+    const result = isHitofudePuzzleSolveWorkload(value);
 
     expect(result).toBe(false);
   });
 });
 
-describe("isHamiltonianPathWorkloadOfIdentity", () => {
-  const identity = createHamiltonianPathProblemIdentity(7, 4, 2);
-  const workload: HamiltonianPathSolveWorkload = {
+describe("isHitofudePuzzleWorkloadOfIdentity", () => {
+  const identity = createHitofudePuzzleProblemIdentity(7, 4, 2);
+  const workload: HitofudePuzzleSolveWorkload = {
     openCellCount: 42,
     assumptionCount: 4,
     refutationStepCount: 26,
@@ -154,13 +154,13 @@ describe("isHamiltonianPathWorkloadOfIdentity", () => {
   const oversized = { ...workload, openCellCount: 50 };
 
   test("生成条件の枠に収まる作業の量を受け入れること", () => {
-    const result = isHamiltonianPathWorkloadOfIdentity(workload, identity);
+    const result = isHitofudePuzzleWorkloadOfIdentity(workload, identity);
 
     expect(result).toBe(true);
   });
 
   test("道が通るマスの数が生成条件の枠のマスの数を超える作業の量を拒否すること", () => {
-    const result = isHamiltonianPathWorkloadOfIdentity(oversized, identity);
+    const result = isHitofudePuzzleWorkloadOfIdentity(oversized, identity);
 
     expect(result).toBe(false);
   });

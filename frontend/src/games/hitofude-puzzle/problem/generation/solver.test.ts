@@ -1,26 +1,26 @@
 import {
-  countHamiltonianPathSolutions,
-  isHamiltonianPathUniquelySolvable,
-} from "@/games/hamiltonian-path/problem/generation/solver";
+  countHitofudePuzzleSolutions,
+  isHitofudePuzzleUniquelySolvable,
+} from "@/games/hitofude-puzzle/problem/generation/solver";
 import {
-  createHamiltonianPathAdjacency,
-  type HamiltonianPathBoard,
-  listHamiltonianPathCells,
-  listHamiltonianPathOpenCells,
-  parseHamiltonianPathBoard,
-} from "@/games/hamiltonian-path/puzzle/board";
-import { isHamiltonianPathSolved } from "@/games/hamiltonian-path/puzzle/rules";
+  createHitofudePuzzleAdjacency,
+  type HitofudePuzzleBoard,
+  listHitofudePuzzleCells,
+  listHitofudePuzzleOpenCells,
+  parseHitofudePuzzleBoard,
+} from "@/games/hitofude-puzzle/puzzle/board";
+import { isHitofudePuzzleSolved } from "@/games/hitofude-puzzle/puzzle/rules";
 import { createProblemSeededRandom } from "@/games/problem-seed";
 
-function createOpenBoard(size: number, start: number): HamiltonianPathBoard {
+function createOpenBoard(size: number, start: number): HitofudePuzzleBoard {
   return { size, holes: [], start };
 }
 
 /** 4×4 か 5×5 に、穴と始点を無作為に置いた盤面。穴でないマスがつながらない盤面・解の無い盤面も含む。 */
-function createRandomBoard(seed: string): HamiltonianPathBoard {
+function createRandomBoard(seed: string): HitofudePuzzleBoard {
   const random = createProblemSeededRandom(seed);
   const size = random() < 0.5 ? 4 : 5;
-  const cells = listHamiltonianPathCells(size);
+  const cells = listHitofudePuzzleCells(size);
   const holes = cells.filter(() => random() < 0.15);
   const openCells = cells.filter((cell) => !holes.includes(cell));
   return {
@@ -31,9 +31,9 @@ function createRandomBoard(seed: string): HamiltonianPathBoard {
 }
 
 /** 枝刈りをせずに、始点から全ての有効マスを1回ずつ通る道を数える。 */
-function countPathsByBruteForce(board: HamiltonianPathBoard): number {
-  const adjacency = createHamiltonianPathAdjacency(board);
-  const openCellCount = listHamiltonianPathOpenCells(board).length;
+function countPathsByBruteForce(board: HitofudePuzzleBoard): number {
+  const adjacency = createHitofudePuzzleAdjacency(board);
+  const openCellCount = listHitofudePuzzleOpenCells(board).length;
   const visited = new Set([board.start]);
   function countFrom(head: number): number {
     if (visited.size === openCellCount) {
@@ -243,7 +243,7 @@ const pythonMultipleSolutionFixtures = [
   },
 ] as const;
 
-describe("countHamiltonianPathSolutions", () => {
+describe("countHitofudePuzzleSolutions", () => {
   const knownCornerPathCounts = [
     [4, 52, 369],
     [5, 824, 6553],
@@ -257,7 +257,7 @@ describe("countHamiltonianPathSolutions", () => {
   test.each(knownCornerPathCounts)(
     "%i×%i の全面盤の角から始まる道を既知の数 %i だけ、研究用 Python と同じ節点の数で数えること",
     (size, expectedCount, expectedSearchStepCount) => {
-      const result = countHamiltonianPathSolutions(
+      const result = countHitofudePuzzleSolutions(
         createOpenBoard(size, 0),
         unlimited,
       );
@@ -272,8 +272,8 @@ describe("countHamiltonianPathSolutions", () => {
     test.each(pythonUniqueFixtures)(
       "$name の一意解を同じ道・同じ節点の数で見つけること",
       ({ rows, solution, searchStepCount }) => {
-        const result = countHamiltonianPathSolutions(
-          parseHamiltonianPathBoard(rows),
+        const result = countHitofudePuzzleSolutions(
+          parseHitofudePuzzleBoard(rows),
           { solutionLimit: 2, searchStepLimit: 20_000 },
         );
 
@@ -287,16 +287,16 @@ describe("countHamiltonianPathSolutions", () => {
     test.each(pythonMultipleSolutionFixtures)(
       "$name の解を同じ数・同じ節点の数で数えること",
       ({ rows, upTo64, allSolutions }) => {
-        const board = parseHamiltonianPathBoard(rows);
+        const board = parseHitofudePuzzleBoard(rows);
 
-        const upTo64Result = countHamiltonianPathSolutions(board, {
+        const upTo64Result = countHitofudePuzzleSolutions(board, {
           solutionLimit: 64,
           searchStepLimit: 200_000,
         });
         const allResult =
           allSolutions === null
             ? null
-            : countHamiltonianPathSolutions(board, unlimited);
+            : countHitofudePuzzleSolutions(board, unlimited);
 
         expect(upTo64Result.solutionCount).toBe(upTo64.solutionCount);
         expect(upTo64Result.searchStepCount).toBe(upTo64.searchStepCount);
@@ -319,9 +319,9 @@ describe("countHamiltonianPathSolutions", () => {
     test.each(cases)(
       "盤面 %i の解を、枝刈りをしない総当たりと同じ数だけ数え、見つけた解が全マスを通る道であること",
       (_, board, expectedCount) => {
-        const result = countHamiltonianPathSolutions(board, unlimited);
+        const result = countHitofudePuzzleSolutions(board, unlimited);
         const solved = result.firstSolutions.map((solution) =>
-          isHamiltonianPathSolved(board, solution),
+          isHitofudePuzzleSolved(board, solution),
         );
 
         expect(result.status).toBe("complete");
@@ -335,7 +335,7 @@ describe("countHamiltonianPathSolutions", () => {
     const board = createOpenBoard(3, 1);
 
     test("解が無いと数えること", () => {
-      const result = countHamiltonianPathSolutions(board);
+      const result = countHitofudePuzzleSolutions(board);
 
       expect(result).toEqual({
         status: "complete",
@@ -351,7 +351,7 @@ describe("countHamiltonianPathSolutions", () => {
     const options = { solutionLimit: 100, searchStepLimit: 10 };
 
     test("打ち切ったことと、そこまでの節点の数を返すこと", () => {
-      const result = countHamiltonianPathSolutions(board, options);
+      const result = countHitofudePuzzleSolutions(board, options);
 
       expect(result.status).toBe("search-limit-reached");
       expect(result.searchStepCount).toBe(11);
@@ -359,26 +359,26 @@ describe("countHamiltonianPathSolutions", () => {
   });
 });
 
-describe("isHamiltonianPathUniquelySolvable", () => {
-  const uniqueBoard = parseHamiltonianPathBoard(pythonUniqueFixtures[0].rows);
-  const ambiguousBoard = parseHamiltonianPathBoard(
+describe("isHitofudePuzzleUniquelySolvable", () => {
+  const uniqueBoard = parseHitofudePuzzleBoard(pythonUniqueFixtures[0].rows);
+  const ambiguousBoard = parseHitofudePuzzleBoard(
     pythonMultipleSolutionFixtures[1].rows,
   );
 
   test("解がただ1つの盤面を一意とすること", () => {
-    const unique = isHamiltonianPathUniquelySolvable(uniqueBoard);
+    const unique = isHitofudePuzzleUniquelySolvable(uniqueBoard);
 
     expect(unique).toBe(true);
   });
 
   test("別解のある盤面を一意としないこと", () => {
-    const unique = isHamiltonianPathUniquelySolvable(ambiguousBoard);
+    const unique = isHitofudePuzzleUniquelySolvable(ambiguousBoard);
 
     expect(unique).toBe(false);
   });
 
   test("探索量の上限までに確かめ切れない盤面を一意としないこと", () => {
-    const unique = isHamiltonianPathUniquelySolvable(uniqueBoard, 1);
+    const unique = isHitofudePuzzleUniquelySolvable(uniqueBoard, 1);
 
     expect(unique).toBe(false);
   });

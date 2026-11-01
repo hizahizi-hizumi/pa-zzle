@@ -1,65 +1,65 @@
-import { hamiltonianPathCatalogEntry } from "@/game-catalog/hamiltonian-path/hamiltonian-path-catalog-entry";
+import { hitofudePuzzleCatalogEntry } from "@/game-catalog/hitofude-puzzle/hitofude-puzzle-catalog-entry";
 import {
   type CompletedGamePlay,
   usePlayableGame,
 } from "@/game-catalog/playable-game";
 import { useRequestedProblem } from "@/game-catalog/problem-id-query";
-import { createHamiltonianPathDiagnosticSnapshot } from "@/games/hamiltonian-path/diagnostics";
-import type { HamiltonianPathDifficulty } from "@/games/hamiltonian-path/difficulty";
+import { createHitofudePuzzleDiagnosticSnapshot } from "@/games/hitofude-puzzle/diagnostics";
+import type { HitofudePuzzleDifficulty } from "@/games/hitofude-puzzle/difficulty";
 import {
-  type HamiltonianPathResult,
-  useHamiltonianPathPlay,
-} from "@/games/hamiltonian-path/play/use-hamiltonian-path-play";
-import { createHamiltonianPathPlayAttemptProgress } from "@/games/hamiltonian-path/play-attempt";
+  type HitofudePuzzleResult,
+  useHitofudePuzzlePlay,
+} from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
+import { createHitofudePuzzlePlayAttemptProgress } from "@/games/hitofude-puzzle/play-attempt";
 import {
-  createHamiltonianPathPlayRecord,
-  hamiltonianPathPlayRecordDefinition,
-} from "@/games/hamiltonian-path/play-record";
-import type { HamiltonianPathProblemIdentity } from "@/games/hamiltonian-path/problem/problem";
-import { selectHamiltonianPathProblemById } from "@/games/hamiltonian-path/problem-selection";
-import { HamiltonianPathDiagnostics } from "@/games/hamiltonian-path/ui/HamiltonianPathDiagnostics";
-import { HamiltonianPathPlay } from "@/games/hamiltonian-path/ui/HamiltonianPathPlay";
+  createHitofudePuzzlePlayRecord,
+  hitofudePuzzlePlayRecordDefinition,
+} from "@/games/hitofude-puzzle/play-record";
+import type { HitofudePuzzleProblemIdentity } from "@/games/hitofude-puzzle/problem/problem";
+import { selectHitofudePuzzleProblemById } from "@/games/hitofude-puzzle/problem-selection";
+import { HitofudePuzzleDiagnostics } from "@/games/hitofude-puzzle/ui/HitofudePuzzleDiagnostics";
+import { HitofudePuzzlePlay } from "@/games/hitofude-puzzle/ui/HitofudePuzzlePlay";
 import type { ProblemId } from "@/games/problem-id";
 
-type PlayableHamiltonianPathProps = {
-  difficulty: HamiltonianPathDifficulty;
+type PlayableHitofudePuzzleProps = {
+  difficulty: HitofudePuzzleDifficulty;
   /** 最初の問題として選ばない問題の ID。URL の問題 ID で問題を指定したときは使わない。 */
   avoidedProblemId?: ProblemId;
 };
 
 function createPlayRecord(
   completed: CompletedGamePlay<
-    HamiltonianPathDifficulty,
-    HamiltonianPathProblemIdentity,
-    HamiltonianPathResult
+    HitofudePuzzleDifficulty,
+    HitofudePuzzleProblemIdentity,
+    HitofudePuzzleResult
   >,
 ) {
-  return createHamiltonianPathPlayRecord({
+  return createHitofudePuzzlePlayRecord({
     ...completed,
     workload: completed.result.workload,
   });
 }
 
-export function PlayableHamiltonianPath({
+export function PlayableHitofudePuzzle({
   difficulty,
   avoidedProblemId,
-}: PlayableHamiltonianPathProps) {
+}: PlayableHitofudePuzzleProps) {
   const requestedProblem = useRequestedProblem((problemId) =>
-    selectHamiltonianPathProblemById(difficulty, problemId),
+    selectHitofudePuzzleProblemById(difficulty, problemId),
   );
-  const play = useHamiltonianPathPlay(
+  const play = useHitofudePuzzlePlay(
     difficulty,
     requestedProblem,
     avoidedProblemId,
   );
   const { screenProps, diagnostics } = usePlayableGame({
-    game: hamiltonianPathCatalogEntry,
+    game: hitofudePuzzleCatalogEntry,
     play,
-    playRecordDefinition: hamiltonianPathPlayRecordDefinition,
+    playRecordDefinition: hitofudePuzzlePlayRecordDefinition,
     createPlayRecord,
-    createPlayAttemptProgress: createHamiltonianPathPlayAttemptProgress,
+    createPlayAttemptProgress: createHitofudePuzzlePlayAttemptProgress,
     createDiagnosticSnapshot(buildRevision) {
-      return createHamiltonianPathDiagnosticSnapshot({
+      return createHitofudePuzzleDiagnosticSnapshot({
         difficulty,
         problemIdentity: play.problemIdentity,
         problem: play.board,
@@ -70,7 +70,7 @@ export function PlayableHamiltonianPath({
 
   return (
     <>
-      <HamiltonianPathPlay
+      <HitofudePuzzlePlay
         {...screenProps}
         board={play.board}
         path={play.path}
@@ -87,7 +87,7 @@ export function PlayableHamiltonianPath({
         onRestart={play.restart}
       />
       {diagnostics.snapshot && (
-        <HamiltonianPathDiagnostics
+        <HitofudePuzzleDiagnostics
           snapshot={diagnostics.snapshot}
           onClose={diagnostics.close}
         />

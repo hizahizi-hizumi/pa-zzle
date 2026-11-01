@@ -1,9 +1,9 @@
-import { createHamiltonianPathPlayAttemptProgress } from "@/games/hamiltonian-path/play-attempt";
-import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
+import { createHitofudePuzzlePlayAttemptProgress } from "@/games/hitofude-puzzle/play-attempt";
+import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
 import {
-  createHamiltonianPathSession,
-  extendHamiltonianPathSessionPath,
-} from "@/games/hamiltonian-path/session/session";
+  createHitofudePuzzleSession,
+  extendHitofudePuzzleSessionPath,
+} from "@/games/hitofude-puzzle/session/session";
 
 /**
  * 右下が穴の 3×3 の盤面。道が通るマスは8つ。
@@ -11,10 +11,10 @@ import {
  * 3 4 5
  * 6 7 #
  */
-const problem = parseHamiltonianPathBoard(["S . .", ". . .", ". . #"]);
+const problem = parseHitofudePuzzleBoard(["S . .", ". . .", ". . #"]);
 const session = {
-  ...extendHamiltonianPathSessionPath(
-    createHamiltonianPathSession(problem, 1_000),
+  ...extendHitofudePuzzleSessionPath(
+    createHitofudePuzzleSession(problem, 1_000),
     1,
     1_000,
   ).session,
@@ -26,7 +26,7 @@ const session = {
 };
 
 test("離れた時点までの実測値と、道が通ったマスと通るマスの数を進み具合にすること", () => {
-  const progress = createHamiltonianPathPlayAttemptProgress(session, 41_000);
+  const progress = createHitofudePuzzlePlayAttemptProgress(session, 41_000);
 
   expect(progress).toEqual({
     elapsedMs: 40_000,

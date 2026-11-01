@@ -2,34 +2,34 @@ import { writeFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import { difficultyLevels } from "@/games/difficulty";
 import {
-  assessHamiltonianPathDifficulty,
-  type HamiltonianPathDifficulty,
-  listHamiltonianPathGenerationConditions,
-} from "@/games/hamiltonian-path/difficulty";
+  assessHitofudePuzzleDifficulty,
+  type HitofudePuzzleDifficulty,
+  listHitofudePuzzleGenerationConditions,
+} from "@/games/hitofude-puzzle/difficulty";
 import {
-  analyzeHamiltonianPathDifficulty,
-  getHamiltonianPathSolveWorkload,
-  searchHamiltonianPathSolutionsForAnalysis,
-} from "@/games/hamiltonian-path/problem/difficulty-analysis";
-import { countHamiltonianPathHoleLayoutViolations } from "@/games/hamiltonian-path/problem/generation/hole-layout";
-import { measureHamiltonianPathStraightRatio } from "@/games/hamiltonian-path/problem/generation/straightness";
-import { getHamiltonianPathSymmetryKey } from "@/games/hamiltonian-path/problem/generation/symmetry";
-import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem/generator";
+  analyzeHitofudePuzzleDifficulty,
+  getHitofudePuzzleSolveWorkload,
+  searchHitofudePuzzleSolutionsForAnalysis,
+} from "@/games/hitofude-puzzle/problem/difficulty-analysis";
+import { countHitofudePuzzleHoleLayoutViolations } from "@/games/hitofude-puzzle/problem/generation/hole-layout";
+import { measureHitofudePuzzleStraightRatio } from "@/games/hitofude-puzzle/problem/generation/straightness";
+import { getHitofudePuzzleSymmetryKey } from "@/games/hitofude-puzzle/problem/generation/symmetry";
+import { generateHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/generator";
 import {
-  createHamiltonianPathProblemIdentity,
-  HAMILTONIAN_PATH_GENERATOR_VERSION,
-  type HamiltonianPathBoardSize,
-  type HamiltonianPathGenerationConditions,
-  type HamiltonianPathSolveWorkload,
-  type HamiltonianPathTargetAssumptionCount,
-} from "@/games/hamiltonian-path/problem/problem";
+  createHitofudePuzzleProblemIdentity,
+  HITOFUDE_PUZZLE_GENERATOR_VERSION,
+  type HitofudePuzzleBoardSize,
+  type HitofudePuzzleGenerationConditions,
+  type HitofudePuzzleSolveWorkload,
+  type HitofudePuzzleTargetAssumptionCount,
+} from "@/games/hitofude-puzzle/problem/problem";
 import {
-  encodeHamiltonianPathPoolHoles,
-  type HamiltonianPathProblemPoolEntry,
-  listHamiltonianPathPoolEntries,
-  toHamiltonianPathPooledProblem,
-} from "@/games/hamiltonian-path/problem/problem-pool";
-import { selectHamiltonianPathProblemForDifficulty } from "@/games/hamiltonian-path/problem-selection";
+  encodeHitofudePuzzlePoolHoles,
+  type HitofudePuzzleProblemPoolEntry,
+  listHitofudePuzzlePoolEntries,
+  toHitofudePuzzlePooledProblem,
+} from "@/games/hitofude-puzzle/problem/problem-pool";
+import { selectHitofudePuzzleProblemForDifficulty } from "@/games/hitofude-puzzle/problem-selection";
 
 const defaultPerLevel = 500;
 const defaultRegeneratePerLevel = 3;
@@ -57,8 +57,8 @@ const poolConditionsByDifficulty = {
   ],
   "5": [{ size: 8, targetAssumptionCount: 7 }],
 } as const satisfies Record<
-  HamiltonianPathDifficulty,
-  readonly HamiltonianPathGenerationConditions[]
+  HitofudePuzzleDifficulty,
+  readonly HitofudePuzzleGenerationConditions[]
 >;
 
 /** 解の道の直進率がこれ以上の問題を、蛇行するだけの単調な道とみなす。研究用 Python の実験の目安と同じ値。 */
@@ -71,7 +71,7 @@ const MONOTONOUS_STRAIGHT_RATIO = 0.6;
  */
 const MAXIMUM_MONOTONOUS_SHARE = 0.1;
 
-const usage = `Usage: bun run generate:hamiltonian-path-pool -- [options]
+const usage = `Usage: bun run generate:hitofude-puzzle-pool -- [options]
 
 レベルごとに、採用率の高い生成条件（盤面サイズ×仮置きの回数の目標）で、決定的な seed の候補を番号順に生成・分析する。
 そのレベルに分類された候補を、回転・反転（8通り）の同型の重複をレベルをまたいで除き、直進率 ${MONOTONOUS_STRAIGHT_RATIO} 以上の
@@ -89,7 +89,7 @@ Options:
                    問題数以上を渡すと全問 (default: ${defaultRegeneratePerLevel})`;
 
 const outputPath = new URL(
-  "../src/games/hamiltonian-path/problem/problem-pool.json",
+  "../src/games/hitofude-puzzle/problem/problem-pool.json",
   import.meta.url,
 );
 
@@ -98,16 +98,16 @@ type Candidate = {
   milliseconds: number;
   /** 分類できたらレベル、できなければ分類の状態か提供範囲外の理由。 */
   outcome: string;
-  difficulty: HamiltonianPathDifficulty | null;
+  difficulty: HitofudePuzzleDifficulty | null;
   symmetryKey: string;
   start: number;
   encodedHoles: string;
   straightRatio: number;
-  workload: HamiltonianPathSolveWorkload | null;
+  workload: HitofudePuzzleSolveWorkload | null;
 };
 
 type ConditionState = {
-  condition: HamiltonianPathGenerationConditions;
+  condition: HitofudePuzzleGenerationConditions;
   /** 候補番号の順。0 から連続して埋まる。 */
   results: Candidate[];
 };
@@ -128,7 +128,7 @@ function readPositiveInteger(name: string, fallback: number): number {
 function conditionKeyOf({
   size,
   targetAssumptionCount,
-}: HamiltonianPathGenerationConditions): string {
+}: HitofudePuzzleGenerationConditions): string {
   return `${size}×${size}/t${targetAssumptionCount}`;
 }
 
@@ -137,19 +137,19 @@ function isMonotonous(straightRatio: number): boolean {
 }
 
 function evaluateCandidate(
-  condition: HamiltonianPathGenerationConditions,
+  condition: HitofudePuzzleGenerationConditions,
   index: number,
 ): Candidate {
   const startedAt = performance.now();
-  const { problem, solution, symmetryKey } = generateHamiltonianPathProblem(
-    createHamiltonianPathProblemIdentity(
+  const { problem, solution, symmetryKey } = generateHitofudePuzzleProblem(
+    createHitofudePuzzleProblemIdentity(
       condition.size,
       condition.targetAssumptionCount,
       index,
     ),
   );
-  const analysis = analyzeHamiltonianPathDifficulty(problem);
-  const assessment = assessHamiltonianPathDifficulty(analysis);
+  const analysis = analyzeHitofudePuzzleDifficulty(problem);
+  const assessment = assessHitofudePuzzleDifficulty(analysis);
   return {
     index,
     milliseconds: performance.now() - startedAt,
@@ -163,11 +163,11 @@ function evaluateCandidate(
       assessment.status === "classified" ? assessment.difficulty : null,
     symmetryKey,
     start: problem.start,
-    encodedHoles: encodeHamiltonianPathPoolHoles(problem),
-    straightRatio: measureHamiltonianPathStraightRatio(solution),
+    encodedHoles: encodeHitofudePuzzlePoolHoles(problem),
+    straightRatio: measureHitofudePuzzleStraightRatio(solution),
     workload:
       analysis.status === "analyzed"
-        ? getHamiltonianPathSolveWorkload(analysis)
+        ? getHitofudePuzzleSolveWorkload(analysis)
         : null,
   };
 }
@@ -175,9 +175,9 @@ function evaluateCandidate(
 function runWorker(args: readonly string[]): void {
   const [size, targetAssumptionCount, start, count] = args.map(Number);
   const condition = {
-    size: size as HamiltonianPathBoardSize,
+    size: size as HitofudePuzzleBoardSize,
     targetAssumptionCount:
-      targetAssumptionCount as HamiltonianPathTargetAssumptionCount,
+      targetAssumptionCount as HitofudePuzzleTargetAssumptionCount,
   };
   const end = start! + count!;
   for (let index = start!; index < end; index += 1) {
@@ -218,7 +218,7 @@ async function runBatch({ state, start, count }: Batch): Promise<Candidate[]> {
  */
 function findMaximumBatchSize({
   targetAssumptionCount,
-}: HamiltonianPathGenerationConditions): number {
+}: HitofudePuzzleGenerationConditions): number {
   return targetAssumptionCount === 0 ? 50 : 5;
 }
 
@@ -256,7 +256,7 @@ async function runBatches(
 }
 
 type SelectedCandidate = {
-  condition: HamiltonianPathGenerationConditions;
+  condition: HitofudePuzzleGenerationConditions;
   candidate: Candidate;
 };
 
@@ -288,7 +288,7 @@ function canTakeMonotonous(
  * 候補が上限まで尽きた条件は飛ばし、残りの条件で埋める。
  */
 function selectLevel(
-  difficulty: HamiltonianPathDifficulty,
+  difficulty: HitofudePuzzleDifficulty,
   states: readonly ConditionState[],
   perLevel: number,
   budget: number,
@@ -393,7 +393,7 @@ function formatCounts(values: readonly (string | number)[]): string {
 function toPoolEntry({
   condition,
   candidate,
-}: SelectedCandidate): HamiltonianPathProblemPoolEntry {
+}: SelectedCandidate): HitofudePuzzleProblemPoolEntry {
   const workload = candidate.workload!;
   return [
     condition.size,
@@ -410,8 +410,8 @@ function toPoolEntry({
 
 function formatPoolJson(
   levels: Record<
-    HamiltonianPathDifficulty,
-    readonly HamiltonianPathProblemPoolEntry[]
+    HitofudePuzzleDifficulty,
+    readonly HitofudePuzzleProblemPoolEntry[]
   >,
 ): string {
   const lines = difficultyLevels.map(
@@ -422,7 +422,7 @@ function formatPoolJson(
           ",\n",
         )}\n    ]${levelIndex < difficultyLevels.length - 1 ? "," : ""}`,
   );
-  return `{\n  "generatorVersion": ${JSON.stringify(HAMILTONIAN_PATH_GENERATOR_VERSION)},\n  "levels": {\n${lines.join("\n")}\n  }\n}\n`;
+  return `{\n  "generatorVersion": ${JSON.stringify(HITOFUDE_PUZZLE_GENERATOR_VERSION)},\n  "levels": {\n${lines.join("\n")}\n  }\n}\n`;
 }
 
 function describeSize(json: string): string {
@@ -431,10 +431,10 @@ function describeSize(json: string): string {
 
 /** 問題集の1レベルの内訳（生成条件、盤面の規模、作業の量、直進率）。 */
 function describeLevelEntries(
-  entries: readonly HamiltonianPathProblemPoolEntry[],
+  entries: readonly HitofudePuzzleProblemPoolEntry[],
   straightRatios: readonly number[],
 ): string[] {
-  const pooled = entries.map(toHamiltonianPathPooledProblem);
+  const pooled = entries.map(toHitofudePuzzlePooledProblem);
   return [
     `  盤面/仮置きの目標: ${formatCounts(pooled.map(({ identity }) => conditionKeyOf(identity.conditions)))}`,
     `  有効マス: ${describeDistribution(pooled.map(({ workload }) => workload.openCellCount))}`,
@@ -450,7 +450,7 @@ function describeLevelEntries(
 function assertPoolConditions(): void {
   for (const { id } of difficultyLevels) {
     const levelConditions =
-      listHamiltonianPathGenerationConditions(id).map(conditionKeyOf);
+      listHitofudePuzzleGenerationConditions(id).map(conditionKeyOf);
     for (const condition of poolConditionsByDifficulty[id]) {
       if (!levelConditions.includes(conditionKeyOf(condition))) {
         throw new RangeError(
@@ -480,12 +480,12 @@ async function runMain(): Promise<void> {
         return state;
       }),
     ]),
-  ) as Record<HamiltonianPathDifficulty, ConditionState[]>;
+  ) as Record<HitofudePuzzleDifficulty, ConditionState[]>;
 
   const prefixLengths = Object.fromEntries(
     difficultyLevels.map(({ id }) => [id, 0]),
-  ) as Record<HamiltonianPathDifficulty, number>;
-  const results = new Map<HamiltonianPathDifficulty, LevelSelection>();
+  ) as Record<HitofudePuzzleDifficulty, number>;
+  const results = new Map<HitofudePuzzleDifficulty, LevelSelection>();
 
   for (;;) {
     const pending = difficultyLevels
@@ -548,8 +548,8 @@ async function runMain(): Promise<void> {
   const wallSeconds = (performance.now() - startedAt) / 1000;
 
   const levels = {} as Record<
-    HamiltonianPathDifficulty,
-    HamiltonianPathProblemPoolEntry[]
+    HitofudePuzzleDifficulty,
+    HitofudePuzzleProblemPoolEntry[]
   >;
   const report: string[] = [];
   for (const { id: difficulty } of difficultyLevels) {
@@ -587,7 +587,7 @@ async function runMain(): Promise<void> {
 }
 
 type VerifyResult = {
-  difficulty: HamiltonianPathDifficulty;
+  difficulty: HitofudePuzzleDifficulty;
   index: number;
   regenerated: boolean;
   straightRatio: number;
@@ -608,20 +608,20 @@ function listRegeneratedIndices(
 }
 
 function verifyEntry(
-  difficulty: HamiltonianPathDifficulty,
+  difficulty: HitofudePuzzleDifficulty,
   index: number,
-  entry: HamiltonianPathProblemPoolEntry,
+  entry: HitofudePuzzleProblemPoolEntry,
   regenerates: boolean,
 ): VerifyResult {
   const failures: string[] = [];
-  const pooled = toHamiltonianPathPooledProblem(entry);
-  if (countHamiltonianPathHoleLayoutViolations(pooled.problem) > 0) {
+  const pooled = toHitofudePuzzlePooledProblem(entry);
+  if (countHitofudePuzzleHoleLayoutViolations(pooled.problem) > 0) {
     failures.push("穴の見た目の基準を満たさない");
   }
-  const solutionSearch = searchHamiltonianPathSolutionsForAnalysis(
+  const solutionSearch = searchHitofudePuzzleSolutionsForAnalysis(
     pooled.problem,
   );
-  const analysis = analyzeHamiltonianPathDifficulty(
+  const analysis = analyzeHitofudePuzzleDifficulty(
     pooled.problem,
     {},
     solutionSearch,
@@ -631,13 +631,13 @@ function verifyEntry(
       `一意解で解法器が解き切れる問題でない (${analysis.status}: ${analysis.reason})`,
     );
   } else {
-    const workload = getHamiltonianPathSolveWorkload(analysis);
+    const workload = getHitofudePuzzleSolveWorkload(analysis);
     if (JSON.stringify(workload) !== JSON.stringify(pooled.workload)) {
       failures.push(
         `作業の量が分析と違う (問題集 ${JSON.stringify(pooled.workload)} / 分析 ${JSON.stringify(workload)})`,
       );
     }
-    const assessment = assessHamiltonianPathDifficulty(analysis);
+    const assessment = assessHitofudePuzzleDifficulty(analysis);
     if (
       assessment.status !== "classified" ||
       assessment.difficulty !== difficulty
@@ -646,10 +646,10 @@ function verifyEntry(
     }
   }
   if (regenerates) {
-    const generated = generateHamiltonianPathProblem(pooled.identity);
+    const generated = generateHitofudePuzzleProblem(pooled.identity);
     if (
       generated.problem.start !== entry[3] ||
-      encodeHamiltonianPathPoolHoles(generated.problem) !== entry[4]
+      encodeHitofudePuzzlePoolHoles(generated.problem) !== entry[4]
     ) {
       failures.push("identity から生成し直した問題が問題集と違う");
     }
@@ -659,7 +659,7 @@ function verifyEntry(
     difficulty,
     index,
     regenerated: regenerates,
-    straightRatio: solution ? measureHamiltonianPathStraightRatio(solution) : 0,
+    straightRatio: solution ? measureHitofudePuzzleStraightRatio(solution) : 0,
     failures,
   };
 }
@@ -668,7 +668,7 @@ function runVerifyWorker(args: readonly string[]): void {
   const [jobIndex, jobCount, regeneratePerLevel] = args.map(Number);
   let position = 0;
   for (const { id: difficulty } of difficultyLevels) {
-    const entries = listHamiltonianPathPoolEntries(difficulty);
+    const entries = listHitofudePuzzlePoolEntries(difficulty);
     const regeneratedIndices = listRegeneratedIndices(
       entries.length,
       regeneratePerLevel!,
@@ -695,7 +695,7 @@ function measureSelection(): string {
   for (const { id: difficulty } of difficultyLevels) {
     for (let index = 0; index < 2000; index += 1) {
       const startedAt = performance.now();
-      selectHamiltonianPathProblemForDifficulty(difficulty, `measure-${index}`);
+      selectHitofudePuzzleProblemForDifficulty(difficulty, `measure-${index}`);
       durations.push(performance.now() - startedAt);
     }
   }
@@ -754,17 +754,17 @@ async function runVerify(): Promise<void> {
   let duplicateCount = 0;
   let total = 0;
   const levels = {} as Record<
-    HamiltonianPathDifficulty,
-    HamiltonianPathProblemPoolEntry[]
+    HitofudePuzzleDifficulty,
+    HitofudePuzzleProblemPoolEntry[]
   >;
-  const unbalancedLevels: HamiltonianPathDifficulty[] = [];
+  const unbalancedLevels: HitofudePuzzleDifficulty[] = [];
   const report: string[] = [];
   for (const { id: difficulty } of difficultyLevels) {
-    levels[difficulty] = [...listHamiltonianPathPoolEntries(difficulty)];
+    levels[difficulty] = [...listHitofudePuzzlePoolEntries(difficulty)];
     for (const entry of levels[difficulty]) {
       total += 1;
-      const { problem, identity } = toHamiltonianPathPooledProblem(entry);
-      const key = getHamiltonianPathSymmetryKey(problem);
+      const { problem, identity } = toHitofudePuzzlePooledProblem(entry);
+      const key = getHitofudePuzzleSymmetryKey(problem);
       if (keys.has(key) || seeds.has(identity.seed)) {
         duplicateCount += 1;
       }

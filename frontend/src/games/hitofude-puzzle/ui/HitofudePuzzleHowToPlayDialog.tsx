@@ -1,22 +1,22 @@
 import { HowToPlayDialog } from "@/components/HowToPlayDialog";
 import { HowToPlayTransition } from "@/components/HowToPlayTransition";
 import { difficultyLevels } from "@/games/difficulty";
-import type { HamiltonianPathDifficulty } from "@/games/hamiltonian-path/difficulty";
+import type { HitofudePuzzleDifficulty } from "@/games/hitofude-puzzle/difficulty";
 import {
-  listHamiltonianPathStrandedCells,
-  showsHamiltonianPathStranding,
-} from "@/games/hamiltonian-path/play/stranding-notice";
-import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
-import { HowToPlayFigure } from "@/games/hamiltonian-path/ui/HamiltonianPathHowToPlayDialog/HowToPlayFigure";
+  listHitofudePuzzleStrandedCells,
+  showsHitofudePuzzleStranding,
+} from "@/games/hitofude-puzzle/play/stranding-notice";
+import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
+import { HowToPlayFigure } from "@/games/hitofude-puzzle/ui/HitofudePuzzleHowToPlayDialog/HowToPlayFigure";
 import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 
-type HamiltonianPathHowToPlayDialogProps = {
+type HitofudePuzzleHowToPlayDialogProps = {
   open: boolean;
   /**
    * 遊んでいる難易度。渡すと、その難易度で取り残しを知らせるときだけ説明する。
    * 難易度を選ぶ前は、取り残しを知らせるレベルを添えて説明する。
    */
-  difficulty?: HamiltonianPathDifficulty;
+  difficulty?: HitofudePuzzleDifficulty;
   onClose: () => void;
 };
 
@@ -26,10 +26,10 @@ type HamiltonianPathHowToPlayDialogProps = {
  * 3 4 5
  * 6 7 8
  */
-const openBoard = parseHamiltonianPathBoard(["S . .", ". . .", ". . ."]);
+const openBoard = parseHitofudePuzzleBoard(["S . .", ". . .", ". . ."]);
 /** 真ん中に穴が開いた盤面と、右下の角が欠けた盤面。 */
-const innerHoleBoard = parseHamiltonianPathBoard(["S . .", ". # .", ". . ."]);
-const edgeHoleBoard = parseHamiltonianPathBoard(["S . .", ". . .", ". . #"]);
+const innerHoleBoard = parseHitofudePuzzleBoard(["S . .", ". # .", ". . ."]);
+const edgeHoleBoard = parseHitofudePuzzleBoard(["S . .", ". . .", ". . #"]);
 
 /** 真ん中の列を縦に通って、左右の列が両方とも端になれなくなった道。 */
 const strandingPath = [0, 1, 4, 7];
@@ -37,25 +37,25 @@ const strandingPath = [0, 1, 4, 7];
 function describeStrandingLevels(): string {
   const levels = difficultyLevels
     .map((level) => level.id)
-    .filter(showsHamiltonianPathStranding);
+    .filter(showsHitofudePuzzleStranding);
   return `レベル${levels[0]}〜${levels.at(-1)}`;
 }
 
 function describeStrandingScope(
-  difficulty: HamiltonianPathDifficulty | undefined,
+  difficulty: HitofudePuzzleDifficulty | undefined,
 ): string | null {
   if (difficulty === undefined) {
     return describeStrandingLevels();
   }
-  return showsHamiltonianPathStranding(difficulty) ? "このレベル" : null;
+  return showsHitofudePuzzleStranding(difficulty) ? "このレベル" : null;
 }
 
 /** ルールと操作を、盤面と同じ見た目の小さな図と短い一文で示す。 */
-export function HamiltonianPathHowToPlayDialog({
+export function HitofudePuzzleHowToPlayDialog({
   open,
   difficulty,
   onClose,
-}: HamiltonianPathHowToPlayDialogProps) {
+}: HitofudePuzzleHowToPlayDialogProps) {
   const strandingScope = describeStrandingScope(difficulty);
 
   return (
@@ -132,7 +132,7 @@ export function HamiltonianPathHowToPlayDialog({
           <HowToPlayFigure
             board={openBoard}
             path={strandingPath}
-            strandedCells={listHamiltonianPathStrandedCells(
+            strandedCells={listHitofudePuzzleStrandedCells(
               openBoard,
               strandingPath,
             )}

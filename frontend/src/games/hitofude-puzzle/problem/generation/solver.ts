@@ -1,9 +1,9 @@
 import {
-  createHamiltonianPathAdjacency,
-  getHamiltonianPathCellPosition,
-  type HamiltonianPathBoard,
-  listHamiltonianPathOpenCells,
-} from "@/games/hamiltonian-path/puzzle/board";
+  createHitofudePuzzleAdjacency,
+  getHitofudePuzzleCellPosition,
+  type HitofudePuzzleBoard,
+  listHitofudePuzzleOpenCells,
+} from "@/games/hitofude-puzzle/puzzle/board";
 
 /**
  * - `status`: `search-limit-reached` なら探索量の上限で打ち切ったため、`solutionCount` は下限にすぎない。
@@ -11,7 +11,7 @@ import {
  * - `firstSolutions`: 最初に見つけた解を2本まで。別解を求める一意化で使う。
  * - `searchStepCount`: たどった探索の節点の数。
  */
-export type HamiltonianPathSolutionSearchResult = {
+export type HitofudePuzzleSolutionSearchResult = {
   status: "complete" | "search-limit-reached";
   solutionCount: number;
   firstSolutions: readonly (readonly number[])[];
@@ -23,13 +23,13 @@ export type HamiltonianPathSolutionSearchResult = {
  * - `searchStepLimit`: 探索の節点の数の上限。
  *   時間ではなく探索量で打ち切るのは、同じ入力に同じ結果を返し、生成器が identity から同じ問題を再現できるようにするため。
  */
-export type HamiltonianPathSolutionSearchOptions = {
+export type HitofudePuzzleSolutionSearchOptions = {
   solutionLimit?: number;
   searchStepLimit?: number;
 };
 
 /** 一意性の確認で1回の探索に許す節点の数。 */
-export const HAMILTONIAN_PATH_UNIQUENESS_SEARCH_STEP_LIMIT = 20_000;
+export const HITOFUDE_PUZZLE_UNIQUENESS_SEARCH_STEP_LIMIT = 20_000;
 
 const keptSolutionCount = 2;
 
@@ -39,17 +39,17 @@ type SearchGraph = {
   openCells: readonly number[];
 };
 
-function createSearchGraph(board: HamiltonianPathBoard): SearchGraph {
+function createSearchGraph(board: HitofudePuzzleBoard): SearchGraph {
   const cellCount = board.size * board.size;
   const colors = new Uint8Array(cellCount);
   for (let cell = 0; cell < cellCount; cell += 1) {
-    const { row, column } = getHamiltonianPathCellPosition(board.size, cell);
+    const { row, column } = getHitofudePuzzleCellPosition(board.size, cell);
     colors[cell] = (row + column) & 1;
   }
   return {
-    neighbors: createHamiltonianPathAdjacency(board),
+    neighbors: createHitofudePuzzleAdjacency(board),
     colors,
-    openCells: listHamiltonianPathOpenCells(board),
+    openCells: listHitofudePuzzleOpenCells(board),
   };
 }
 
@@ -109,7 +109,7 @@ class SolutionSearch {
     this.#stackNextNeighbors = new Int32Array(cellCount);
   }
 
-  run(start: number): HamiltonianPathSolutionSearchResult {
+  run(start: number): HitofudePuzzleSolutionSearchResult {
     const { neighbors, colors, openCells } = this.#graph;
     const visited = this.#visited;
     visited[start] = 1;
@@ -142,7 +142,7 @@ class SolutionSearch {
     return this.#result();
   }
 
-  #result(): HamiltonianPathSolutionSearchResult {
+  #result(): HitofudePuzzleSolutionSearchResult {
     return {
       status: this.#limitReached ? "search-limit-reached" : "complete",
       solutionCount: Math.min(this.#solutionCount, this.#solutionLimit),
@@ -369,23 +369,23 @@ class SolutionSearch {
 }
 
 /** 始点から全有効マスをちょうど1回ずつ通る道を数える。 */
-export function countHamiltonianPathSolutions(
-  board: HamiltonianPathBoard,
-  options: HamiltonianPathSolutionSearchOptions = {},
-): HamiltonianPathSolutionSearchResult {
+export function countHitofudePuzzleSolutions(
+  board: HitofudePuzzleBoard,
+  options: HitofudePuzzleSolutionSearchOptions = {},
+): HitofudePuzzleSolutionSearchResult {
   const search = new SolutionSearch(
     createSearchGraph(board),
     options.solutionLimit ?? 2,
-    options.searchStepLimit ?? HAMILTONIAN_PATH_UNIQUENESS_SEARCH_STEP_LIMIT,
+    options.searchStepLimit ?? HITOFUDE_PUZZLE_UNIQUENESS_SEARCH_STEP_LIMIT,
   );
   return search.run(board.start);
 }
 
 /** 解がただ1つだと、探索量の上限までに確かめられたか。上限に達した盤面は一意とみなさない。 */
-export function isHamiltonianPathUniquelySolvable(
-  board: HamiltonianPathBoard,
-  searchStepLimit = HAMILTONIAN_PATH_UNIQUENESS_SEARCH_STEP_LIMIT,
+export function isHitofudePuzzleUniquelySolvable(
+  board: HitofudePuzzleBoard,
+  searchStepLimit = HITOFUDE_PUZZLE_UNIQUENESS_SEARCH_STEP_LIMIT,
 ): boolean {
-  const result = countHamiltonianPathSolutions(board, { searchStepLimit });
+  const result = countHitofudePuzzleSolutions(board, { searchStepLimit });
   return result.status === "complete" && result.solutionCount === 1;
 }

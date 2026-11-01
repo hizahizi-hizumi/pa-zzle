@@ -2,45 +2,45 @@ import { useEffect, useRef } from "react";
 
 import { GamePlayFrame } from "@/components/GamePlayFrame";
 import { UndoButton } from "@/components/UndoButton";
-import type { HamiltonianPathDifficulty } from "@/games/hamiltonian-path/difficulty";
-import { HAMILTONIAN_PATH_DISPLAY_NAME } from "@/games/hamiltonian-path/display-name";
+import type { HitofudePuzzleDifficulty } from "@/games/hitofude-puzzle/difficulty";
+import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
 import type {
-  HamiltonianPathBlockedMove,
-  HamiltonianPathResult,
-} from "@/games/hamiltonian-path/play/use-hamiltonian-path-play";
+  HitofudePuzzleBlockedMove,
+  HitofudePuzzleResult,
+} from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
 import type {
-  HamiltonianPathBoard as HamiltonianPathBoardState,
-  HamiltonianPathDirection,
-} from "@/games/hamiltonian-path/puzzle/board";
-import type { HamiltonianPathTraceStep } from "@/games/hamiltonian-path/puzzle/transitions";
-import { findArrowKeyDirection } from "@/games/hamiltonian-path/ui/arrow-key-direction";
-import { HamiltonianPathBoard } from "@/games/hamiltonian-path/ui/board/HamiltonianPathBoard";
-import { HamiltonianPathHowToPlayDialog } from "@/games/hamiltonian-path/ui/HamiltonianPathHowToPlayDialog";
-import { HamiltonianPathResultScreen } from "@/games/hamiltonian-path/ui/result/HamiltonianPathResultScreen";
+  HitofudePuzzleBoard as HitofudePuzzleBoardState,
+  HitofudePuzzleDirection,
+} from "@/games/hitofude-puzzle/puzzle/board";
+import type { HitofudePuzzleTraceStep } from "@/games/hitofude-puzzle/puzzle/transitions";
+import { findArrowKeyDirection } from "@/games/hitofude-puzzle/ui/arrow-key-direction";
+import { HitofudePuzzleBoard } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard";
+import { HitofudePuzzleHowToPlayDialog } from "@/games/hitofude-puzzle/ui/HitofudePuzzleHowToPlayDialog";
+import { HitofudePuzzleResultScreen } from "@/games/hitofude-puzzle/ui/result/HitofudePuzzleResultScreen";
 import type {
   GamePlayScreenProps,
   RestartableGamePlayScreenProps,
   UndoableGamePlayScreenProps,
 } from "@/games/play";
 
-type HamiltonianPathPlayProps = GamePlayScreenProps<
-  HamiltonianPathDifficulty,
-  HamiltonianPathResult
+type HitofudePuzzlePlayProps = GamePlayScreenProps<
+  HitofudePuzzleDifficulty,
+  HitofudePuzzleResult
 > &
   RestartableGamePlayScreenProps &
   UndoableGamePlayScreenProps & {
-    board: HamiltonianPathBoardState;
+    board: HitofudePuzzleBoardState;
     path: readonly number[];
     isDeadEnd: boolean;
     strandedCells: readonly number[];
-    blockedMove: HamiltonianPathBlockedMove | null;
+    blockedMove: HitofudePuzzleBlockedMove | null;
     onBeginStroke: (cell: number) => void;
-    onTraceStroke: (step: HamiltonianPathTraceStep) => void;
+    onTraceStroke: (step: HitofudePuzzleTraceStep) => void;
     onEndStroke: () => void;
-    onMoveHeadToward: (direction: HamiltonianPathDirection) => void;
+    onMoveHeadToward: (direction: HitofudePuzzleDirection) => void;
   };
 
-export function HamiltonianPathPlay({
+export function HitofudePuzzlePlay({
   difficulty,
   progress,
   elapsedMs,
@@ -66,7 +66,7 @@ export function HamiltonianPathPlay({
   onChangeDifficulty,
   onBackToHome,
   onOpenDiagnostics,
-}: HamiltonianPathPlayProps) {
+}: HitofudePuzzlePlayProps) {
   const playAreaRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -106,7 +106,7 @@ export function HamiltonianPathPlay({
       ref={playAreaRef}
       progress={progress}
       result={result}
-      title={HAMILTONIAN_PATH_DISPLAY_NAME}
+      title={HITOFUDE_PUZZLE_DISPLAY_NAME}
       metrics={[{ type: "elapsed-time", elapsedMs }]}
       canRestart={canRestart}
       onRestart={onRestart}
@@ -116,14 +116,14 @@ export function HamiltonianPathPlay({
       onBackToHome={onBackToHome}
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
-        <HamiltonianPathHowToPlayDialog
+        <HitofudePuzzleHowToPlayDialog
           open={open}
           difficulty={difficulty}
           onClose={onClose}
         />
       )}
       renderResultScreen={(clearedResult) => (
-        <HamiltonianPathResultScreen
+        <HitofudePuzzleResultScreen
           difficulty={difficulty}
           result={clearedResult}
           recordOutcomeNotice={recordOutcomeNotice}
@@ -139,7 +139,7 @@ export function HamiltonianPathPlay({
       {/* 画面端から始まるタッチはブラウザの戻る操作に取られるので、盤面の左右に余白を残す。 */}
       <main className="flex min-h-0 flex-1 items-center justify-center px-4 py-2 [container-type:size] sm:px-6">
         <div className="relative aspect-square w-[min(100cqw,100cqh,40rem)]">
-          <HamiltonianPathBoard
+          <HitofudePuzzleBoard
             board={board}
             path={path}
             isDeadEnd={isDeadEnd}

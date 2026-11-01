@@ -2,23 +2,23 @@ import { cleanup, render } from "@testing-library/react";
 import { difficultyLevels } from "@/games/difficulty";
 
 import {
-  type HamiltonianPathDifficulty,
-  hamiltonianPathLevelCombinations,
-} from "@/games/hamiltonian-path/difficulty";
+  type HitofudePuzzleDifficulty,
+  hitofudePuzzleLevelCombinations,
+} from "@/games/hitofude-puzzle/difficulty";
 import {
-  areHamiltonianPathCellsAdjacent,
-  getHamiltonianPathCellPosition,
-  listHamiltonianPathOpenCells,
-} from "@/games/hamiltonian-path/puzzle/board";
+  areHitofudePuzzleCellsAdjacent,
+  getHitofudePuzzleCellPosition,
+  listHitofudePuzzleOpenCells,
+} from "@/games/hitofude-puzzle/puzzle/board";
 import {
-  findHamiltonianPathStranding,
-  isHamiltonianPathDeadEnd,
-  isHamiltonianPathSolved,
-} from "@/games/hamiltonian-path/puzzle/rules";
+  findHitofudePuzzleStranding,
+  isHitofudePuzzleDeadEnd,
+  isHitofudePuzzleSolved,
+} from "@/games/hitofude-puzzle/puzzle/rules";
 import {
   _private,
-  HamiltonianPathDifficultyPreview,
-} from "@/games/hamiltonian-path/ui/HamiltonianPathDifficultyPreview";
+  HitofudePuzzleDifficultyPreview,
+} from "@/games/hitofude-puzzle/ui/HitofudePuzzleDifficultyPreview";
 
 const { previewStrip, createPreviewStrip } = _private;
 
@@ -26,14 +26,14 @@ const difficultyIds = difficultyLevels.map(({ id }) => id);
 
 afterEach(cleanup);
 
-function readStrip(difficulty: HamiltonianPathDifficulty) {
+function readStrip(difficulty: HitofudePuzzleDifficulty) {
   const strip = createPreviewStrip(difficulty);
   const { board, path } = strip;
   function toStripCell(cell: number) {
-    const { row, column } = getHamiltonianPathCellPosition(board.size, cell);
+    const { row, column } = getHitofudePuzzleCellPosition(board.size, cell);
     return `${row}:${column}`;
   }
-  const openCells = listHamiltonianPathOpenCells(board);
+  const openCells = listHitofudePuzzleOpenCells(board);
   return {
     ...strip,
     openCells,
@@ -51,8 +51,8 @@ describe("createPreviewStrip", () => {
     ["3", "4"],
     ["4", "5"],
   ] as const satisfies readonly (readonly [
-    HamiltonianPathDifficulty,
-    HamiltonianPathDifficulty,
+    HitofudePuzzleDifficulty,
+    HitofudePuzzleDifficulty,
   ])[];
 
   test.each(difficultyIds)(
@@ -61,13 +61,13 @@ describe("createPreviewStrip", () => {
       const { board, openCells } = readStrip(difficulty);
 
       expect(board.size).toBe(
-        hamiltonianPathLevelCombinations[difficulty].boardSize.maximum,
+        hitofudePuzzleLevelCombinations[difficulty].boardSize.maximum,
       );
       expect(openCells).toHaveLength(board.size * previewStrip.rowCount);
       expect(
         openCells.every(
           (cell) =>
-            getHamiltonianPathCellPosition(board.size, cell).row <
+            getHitofudePuzzleCellPosition(board.size, cell).row <
             previewStrip.rowCount,
         ),
       ).toBe(true);
@@ -87,7 +87,7 @@ describe("createPreviewStrip", () => {
         path
           .slice(1)
           .every((cell, index) =>
-            areHamiltonianPathCellsAdjacent(board.size, path[index]!, cell),
+            areHitofudePuzzleCellsAdjacent(board.size, path[index]!, cell),
           ),
       ).toBe(true);
     },
@@ -96,7 +96,7 @@ describe("createPreviewStrip", () => {
   test("局所の推論だけで決まるレベル1 では、帯の全マスを通り終えること", () => {
     const { board, path } = readStrip("1");
 
-    expect(isHamiltonianPathSolved(board, path)).toBe(true);
+    expect(isHitofudePuzzleSolved(board, path)).toBe(true);
   });
 
   test.each(difficultyIds.filter((difficulty) => difficulty !== "1"))(
@@ -105,8 +105,8 @@ describe("createPreviewStrip", () => {
       const { board, path, undecidedCellCount } = readStrip(difficulty);
 
       expect(undecidedCellCount).toBeGreaterThan(0);
-      expect(isHamiltonianPathDeadEnd(board, path)).toBe(false);
-      expect(findHamiltonianPathStranding(board, path)).toBeNull();
+      expect(isHitofudePuzzleDeadEnd(board, path)).toBe(false);
+      expect(findHitofudePuzzleStranding(board, path)).toBeNull();
     },
   );
 
@@ -129,13 +129,13 @@ describe("createPreviewStrip", () => {
   );
 });
 
-describe("HamiltonianPathDifficultyPreview", () => {
+describe("HitofudePuzzleDifficultyPreview", () => {
   test.each(difficultyIds)(
     "レベル %s では、帯の行のマスだけを描き、穴を描かないこと",
     (difficulty) => {
       const { board } = createPreviewStrip(difficulty);
       const { container } = render(
-        <HamiltonianPathDifficultyPreview difficulty={difficulty} />,
+        <HitofudePuzzleDifficultyPreview difficulty={difficulty} />,
       );
 
       const svg = container.querySelector("svg");

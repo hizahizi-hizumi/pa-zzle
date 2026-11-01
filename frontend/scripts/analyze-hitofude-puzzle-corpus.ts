@@ -2,26 +2,26 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { difficultyLevels } from "@/games/difficulty";
 import {
-  assessHamiltonianPathDifficulty,
-  type HamiltonianPathDifficulty,
-  type HamiltonianPathDifficultyAssessment,
-  listHamiltonianPathGenerationConditions,
-} from "@/games/hamiltonian-path/difficulty";
+  assessHitofudePuzzleDifficulty,
+  type HitofudePuzzleDifficulty,
+  type HitofudePuzzleDifficultyAssessment,
+  listHitofudePuzzleGenerationConditions,
+} from "@/games/hitofude-puzzle/difficulty";
 import {
-  analyzeHamiltonianPathDifficulty,
-  type HamiltonianPathDifficultyAnalysis,
-} from "@/games/hamiltonian-path/problem/difficulty-analysis";
-import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem/generator";
+  analyzeHitofudePuzzleDifficulty,
+  type HitofudePuzzleDifficultyAnalysis,
+} from "@/games/hitofude-puzzle/problem/difficulty-analysis";
+import { generateHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/generator";
 import {
-  createHamiltonianPathProblemIdentity,
-  type HamiltonianPathBoardSize,
-  type HamiltonianPathTargetAssumptionCount,
-  isHamiltonianPathBoardSize,
-  isHamiltonianPathTargetAssumptionCount,
-} from "@/games/hamiltonian-path/problem/problem";
-import { formatHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
+  createHitofudePuzzleProblemIdentity,
+  type HitofudePuzzleBoardSize,
+  type HitofudePuzzleTargetAssumptionCount,
+  isHitofudePuzzleBoardSize,
+  isHitofudePuzzleTargetAssumptionCount,
+} from "@/games/hitofude-puzzle/problem/problem";
+import { formatHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
 
-const usage = `Usage: bun run analyze:hamiltonian-path -- --output <path-prefix> [options]
+const usage = `Usage: bun run analyze:hitofude-puzzle -- --output <path-prefix> [options]
 
 Options:
   --sizes <n,...>        盤面の一辺 (default: 5,6,7,8)
@@ -31,8 +31,8 @@ Options:
   --output <path-prefix> <path-prefix>.jsonl と <path-prefix>.csv へ出力する`;
 
 type CorpusTask = {
-  size: HamiltonianPathBoardSize;
-  targetAssumptionCount: HamiltonianPathTargetAssumptionCount;
+  size: HitofudePuzzleBoardSize;
+  targetAssumptionCount: HitofudePuzzleTargetAssumptionCount;
   index: number;
 };
 
@@ -44,8 +44,8 @@ type CorpusRecord = {
   generationMilliseconds: number;
   analysisMilliseconds: number;
   board: string;
-  difficultyAnalysis: HamiltonianPathDifficultyAnalysis;
-  assessment: HamiltonianPathDifficultyAssessment;
+  difficultyAnalysis: HitofudePuzzleDifficultyAnalysis;
+  assessment: HitofudePuzzleDifficultyAssessment;
 };
 
 type FlatRecord = Record<string, string | number | null>;
@@ -86,17 +86,15 @@ function analyzeTask({
   targetAssumptionCount,
   index,
 }: CorpusTask): CorpusRecord {
-  const identity = createHamiltonianPathProblemIdentity(
+  const identity = createHitofudePuzzleProblemIdentity(
     size,
     targetAssumptionCount,
     index,
   );
   const generationStartedAt = performance.now();
-  const generated = generateHamiltonianPathProblem(identity);
+  const generated = generateHitofudePuzzleProblem(identity);
   const analysisStartedAt = performance.now();
-  const difficultyAnalysis = analyzeHamiltonianPathDifficulty(
-    generated.problem,
-  );
+  const difficultyAnalysis = analyzeHitofudePuzzleDifficulty(generated.problem);
   const analysisEndedAt = performance.now();
   return {
     seed: identity.seed,
@@ -109,14 +107,14 @@ function analyzeTask({
     analysisMilliseconds: roundMilliseconds(
       analysisEndedAt - analysisStartedAt,
     ),
-    board: formatHamiltonianPathBoard(generated.problem).join("/"),
+    board: formatHitofudePuzzleBoard(generated.problem).join("/"),
     difficultyAnalysis,
-    assessment: assessHamiltonianPathDifficulty(difficultyAnalysis),
+    assessment: assessHitofudePuzzleDifficulty(difficultyAnalysis),
   };
 }
 
 /** 研究用 Python の `global_band` と同じ帯。分類（レベル）とは別に、実験と比べるために出す。 */
-function describeBand(analysis: HamiltonianPathDifficultyAnalysis): string {
+function describeBand(analysis: HitofudePuzzleDifficultyAnalysis): string {
   if (analysis.status !== "analyzed") {
     return analysis.status === "invalid" ? "invalid" : "x";
   }
@@ -135,7 +133,7 @@ function describeBand(analysis: HamiltonianPathDifficultyAnalysis): string {
 }
 
 function describeAssessment(
-  assessment: HamiltonianPathDifficultyAssessment,
+  assessment: HitofudePuzzleDifficultyAssessment,
 ): string {
   switch (assessment.status) {
     case "classified":
@@ -477,7 +475,7 @@ function printSupply(records: readonly FlatRecord[]): void {
   );
   for (const { id } of difficultyLevels) {
     const conditionKeys = new Set(
-      listHamiltonianPathGenerationConditions(id).map(
+      listHitofudePuzzleGenerationConditions(id).map(
         ({ size, targetAssumptionCount }) =>
           formatConditionKey(size, targetAssumptionCount),
       ),
@@ -516,9 +514,9 @@ function printSupply(records: readonly FlatRecord[]): void {
 
 function isInLevelScale(
   record: FlatRecord,
-  difficulty: HamiltonianPathDifficulty,
+  difficulty: HitofudePuzzleDifficulty,
 ): boolean {
-  return listHamiltonianPathGenerationConditions(difficulty).some(
+  return listHitofudePuzzleGenerationConditions(difficulty).some(
     ({ size, targetAssumptionCount }) =>
       record.size === size &&
       record.targetAssumptionCount === targetAssumptionCount,
@@ -545,8 +543,8 @@ function printSharedScale(records: readonly FlatRecord[]): void {
   }
 }
 
-function toBoardSize(value: unknown): value is HamiltonianPathBoardSize {
-  return isHamiltonianPathBoardSize(value);
+function toBoardSize(value: unknown): value is HitofudePuzzleBoardSize {
+  return isHitofudePuzzleBoardSize(value);
 }
 
 function createTasks(): CorpusTask[] {
@@ -554,7 +552,7 @@ function createTasks(): CorpusTask[] {
   const targets = readList(
     "targets",
     "0,4,7",
-    isHamiltonianPathTargetAssumptionCount,
+    isHitofudePuzzleTargetAssumptionCount,
   );
   const seedCount = readPositiveInteger("seeds", 100);
   return sizes.flatMap((size) =>
@@ -596,7 +594,7 @@ async function runJobInWorker(jobIndex: number): Promise<CorpusRecord[]> {
   );
   const output = await new Response(worker.stdout).text();
   if ((await worker.exited) !== 0) {
-    throw new Error(`Hamiltonian path corpus worker ${jobIndex} failed`);
+    throw new Error(`Hitofude puzzle corpus worker ${jobIndex} failed`);
   }
   return output
     .trim()

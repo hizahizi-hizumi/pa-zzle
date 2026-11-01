@@ -1,14 +1,14 @@
 import { useLocation } from "react-router";
 import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
-import { hamiltonianPathCatalogEntry } from "@/game-catalog/hamiltonian-path/hamiltonian-path-catalog-entry";
-import { PlayableHamiltonianPath } from "@/game-catalog/hamiltonian-path/PlayableHamiltonianPath";
+import { hitofudePuzzleCatalogEntry } from "@/game-catalog/hitofude-puzzle/hitofude-puzzle-catalog-entry";
+import { PlayableHitofudePuzzle } from "@/game-catalog/hitofude-puzzle/PlayableHitofudePuzzle";
 import { readAvoidedProblemId } from "@/game-catalog/play-location-state";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import { useParams } from "@/router";
 
-export function HamiltonianPathPlayView() {
+export function HitofudePuzzlePlayView() {
   const { difficulty: difficultyParam } = useParams(
-    hamiltonianPathCatalogEntry.playPath,
+    hitofudePuzzleCatalogEntry.playPath,
   );
   const avoidedProblemId = readAvoidedProblemId(useLocation().state);
   const difficulty = parseDifficultyLevel(difficultyParam);
@@ -17,13 +17,13 @@ export function HamiltonianPathPlayView() {
     return (
       <PlayUnavailableNotice
         title="この難易度は選べません"
-        backTo={hamiltonianPathCatalogEntry.entryPath}
+        backTo={hitofudePuzzleCatalogEntry.entryPath}
       />
     );
   }
 
   return (
-    <PlayableHamiltonianPath
+    <PlayableHitofudePuzzle
       key={difficulty}
       difficulty={difficulty}
       avoidedProblemId={avoidedProblemId}

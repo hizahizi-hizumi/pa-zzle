@@ -1,13 +1,13 @@
 import { cleanup, render } from "@testing-library/react";
 import { createElement } from "react";
 
-import type { HamiltonianPathBlockedMove } from "@/games/hamiltonian-path/play/use-hamiltonian-path-play";
-import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
-import { animateBlockedMove } from "@/games/hamiltonian-path/ui/board/HamiltonianPathBoard/animate-blocked-move";
+import type { HitofudePuzzleBlockedMove } from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
+import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
+import { animateBlockedMove } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard/animate-blocked-move";
 import {
-  HamiltonianPathFigure,
-  hamiltonianPathFigureParts,
-} from "@/games/hamiltonian-path/ui/board/HamiltonianPathFigure";
+  HitofudePuzzleFigure,
+  hitofudePuzzleFigureParts,
+} from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleFigure";
 
 /**
  * 中央の右（5）が穴の 3×3 の盤面。先端は中央。
@@ -15,7 +15,7 @@ import {
  * 3 4 #
  * 6 7 8
  */
-const board = parseHamiltonianPathBoard(["S . .", ". . #", ". . ."]);
+const board = parseHitofudePuzzleBoard(["S . .", ". . #", ". . ."]);
 const path = [0, 1, 4];
 
 type Offset = { x: number; y: number };
@@ -55,7 +55,7 @@ describe("animateBlockedMove", () => {
       }),
     });
     const { container } = render(
-      createElement(HamiltonianPathFigure, {
+      createElement(HitofudePuzzleFigure, {
         board,
         path,
         isDeadEnd: false,
@@ -67,7 +67,7 @@ describe("animateBlockedMove", () => {
   });
 
   describe("穴に阻まれた場合", () => {
-    const blockedMove: HamiltonianPathBlockedMove = {
+    const blockedMove: HitofudePuzzleBlockedMove = {
       id: 0,
       direction: "right",
       cell: 5,
@@ -76,8 +76,8 @@ describe("animateBlockedMove", () => {
     test("先端を進もうとした向きへだけ揺らして戻し、×を点けること", () => {
       animateBlockedMove(figure, blockedMove);
 
-      const [head] = findCalls(hamiltonianPathFigureParts.head);
-      const marks = findCalls(hamiltonianPathFigureParts.blockedMark);
+      const [head] = findCalls(hitofudePuzzleFigureParts.head);
+      const marks = findCalls(hitofudePuzzleFigureParts.blockedMark);
       expect(head!.offsets.every(({ x, y }) => x >= 0 && y === 0)).toBe(true);
       expect(head!.offsets.some(({ x }) => x > 0)).toBe(true);
       expect(head!.offsets.at(-1)).toEqual({ x: 0, y: 0 });
@@ -86,7 +86,7 @@ describe("animateBlockedMove", () => {
   });
 
   describe("先端から離れたマスを押した場合", () => {
-    const blockedMove: HamiltonianPathBlockedMove = {
+    const blockedMove: HitofudePuzzleBlockedMove = {
       id: 0,
       direction: null,
       cell: 0,
@@ -95,7 +95,7 @@ describe("animateBlockedMove", () => {
     test("先端を左右に揺らして元の位置へ戻すこと", () => {
       animateBlockedMove(figure, blockedMove);
 
-      const [head] = findCalls(hamiltonianPathFigureParts.head);
+      const [head] = findCalls(hitofudePuzzleFigureParts.head);
       expect(head!.offsets.some(({ x }) => x < 0)).toBe(true);
       expect(head!.offsets.some(({ x }) => x > 0)).toBe(true);
       expect(head!.offsets.every(({ y }) => y === 0)).toBe(true);
@@ -104,7 +104,7 @@ describe("animateBlockedMove", () => {
   });
 
   describe("盤面の外へ進もうとした場合", () => {
-    const blockedMove: HamiltonianPathBlockedMove = {
+    const blockedMove: HitofudePuzzleBlockedMove = {
       id: 0,
       direction: "up",
       cell: null,
@@ -113,15 +113,15 @@ describe("animateBlockedMove", () => {
     test("×は点けず、先端だけを揺らすこと", () => {
       animateBlockedMove(figure, blockedMove);
 
-      const heads = findCalls(hamiltonianPathFigureParts.head);
-      const marks = findCalls(hamiltonianPathFigureParts.blockedMark);
+      const heads = findCalls(hitofudePuzzleFigureParts.head);
+      const marks = findCalls(hitofudePuzzleFigureParts.blockedMark);
       expect(heads).toHaveLength(1);
       expect(marks).toEqual([]);
     });
   });
 
   describe("動きを減らす設定の場合", () => {
-    const blockedMove: HamiltonianPathBlockedMove = {
+    const blockedMove: HitofudePuzzleBlockedMove = {
       id: 0,
       direction: "right",
       cell: 5,
@@ -137,8 +137,8 @@ describe("animateBlockedMove", () => {
     test("先端は揺らさず、×だけを返すこと", () => {
       animateBlockedMove(figure, blockedMove);
 
-      const heads = findCalls(hamiltonianPathFigureParts.head);
-      const marks = findCalls(hamiltonianPathFigureParts.blockedMark);
+      const heads = findCalls(hitofudePuzzleFigureParts.head);
+      const marks = findCalls(hitofudePuzzleFigureParts.blockedMark);
       expect(heads).toEqual([]);
       expect(marks).toHaveLength(1);
     });

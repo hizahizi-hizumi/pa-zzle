@@ -7,11 +7,11 @@ import {
 } from "@testing-library/react";
 import type { ComponentProps } from "react";
 
-import { HAMILTONIAN_PATH_DISPLAY_NAME } from "@/games/hamiltonian-path/display-name";
-import { createHamiltonianPathResult } from "@/games/hamiltonian-path/play/use-hamiltonian-path-play";
-import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
-import type { HamiltonianPathSessionResult } from "@/games/hamiltonian-path/session/session";
-import { HamiltonianPathPlay } from "@/games/hamiltonian-path/ui/HamiltonianPathPlay";
+import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
+import { createHitofudePuzzleResult } from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
+import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
+import type { HitofudePuzzleSessionResult } from "@/games/hitofude-puzzle/session/session";
+import { HitofudePuzzlePlay } from "@/games/hitofude-puzzle/ui/HitofudePuzzlePlay";
 
 afterEach(() => {
   cleanup();
@@ -27,7 +27,7 @@ const workload = {
 };
 
 // 21秒超過で速さ57点、引き直し2回で正確さ34点。待った・盤面を戻すの回数は点に入らない。
-const performance: HamiltonianPathSessionResult = {
+const performance: HitofudePuzzleSessionResult = {
   elapsedMs: 220_000,
   backtrackCount: 2,
   retractedCellCount: 9,
@@ -35,14 +35,14 @@ const performance: HamiltonianPathSessionResult = {
   restartCount: 1,
   inputCount: 40,
 };
-const result = createHamiltonianPathResult(performance, workload);
-const perfectResult = createHamiltonianPathResult(
+const result = createHitofudePuzzleResult(performance, workload);
+const perfectResult = createHitofudePuzzleResult(
   { ...performance, elapsedMs: 190_000, backtrackCount: 0 },
   workload,
 );
 
-describe("HamiltonianPathPlay", () => {
-  const board = parseHamiltonianPathBoard(["S . .", ". . .", ". . ."]);
+describe("HitofudePuzzlePlay", () => {
+  const board = parseHitofudePuzzleBoard(["S . .", ". . .", ". . ."]);
   const callbacks = {
     onBeginStroke: vi.fn(),
     onTraceStroke: vi.fn(),
@@ -57,7 +57,7 @@ describe("HamiltonianPathPlay", () => {
     onChangeDifficulty: vi.fn(),
     onBackToHome: vi.fn(),
   };
-  const baseProps: ComponentProps<typeof HamiltonianPathPlay> = {
+  const baseProps: ComponentProps<typeof HitofudePuzzlePlay> = {
     difficulty: "4",
     progress: "result",
     elapsedMs: performance.elapsedMs,
@@ -74,9 +74,9 @@ describe("HamiltonianPathPlay", () => {
   };
 
   function renderResult(
-    props: Partial<ComponentProps<typeof HamiltonianPathPlay>> = {},
+    props: Partial<ComponentProps<typeof HitofudePuzzlePlay>> = {},
   ) {
-    return render(<HamiltonianPathPlay {...baseProps} {...props} />);
+    return render(<HitofudePuzzlePlay {...baseProps} {...props} />);
   }
 
   beforeEach(() => {
@@ -90,7 +90,7 @@ describe("HamiltonianPathPlay", () => {
 
     test("盤面を見せ、結果画面をまだ出さないこと", () => {
       const boardGroup = screen.getByRole("group", {
-        name: `${HAMILTONIAN_PATH_DISPLAY_NAME}盤面`,
+        name: `${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面`,
       });
       const resultScreen = screen.queryByRole("region", { name: "プレイ結果" });
 
@@ -106,12 +106,12 @@ describe("HamiltonianPathPlay", () => {
 
     test("共通の結果階層でピクトグラム・ゲーム名・難易度・スコアを表示すること", () => {
       const pictogram = document.querySelector(
-        `svg[aria-label="${HAMILTONIAN_PATH_DISPLAY_NAME}"]`,
+        `svg[aria-label="${HITOFUDE_PUZZLE_DISPLAY_NAME}"]`,
       );
       const score = within(screen.getByRole("region", { name: "スコア" }));
 
       expect(pictogram).toBeTruthy();
-      expect(screen.getByText(HAMILTONIAN_PATH_DISPLAY_NAME)).toBeTruthy();
+      expect(screen.getByText(HITOFUDE_PUZZLE_DISPLAY_NAME)).toBeTruthy();
       expect(screen.getByText("レベル 4")).toBeTruthy();
       expect(score.getByText("91")).toBeTruthy();
     });
@@ -128,7 +128,7 @@ describe("HamiltonianPathPlay", () => {
 
     test("盤面を表示しないこと", () => {
       const boardGroup = screen.queryByRole("group", {
-        name: `${HAMILTONIAN_PATH_DISPLAY_NAME}盤面`,
+        name: `${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面`,
       });
 
       expect(boardGroup).toBeNull();
@@ -213,7 +213,7 @@ describe("HamiltonianPathPlay", () => {
 
   function getBoardGroup(): HTMLElement {
     return screen.getByRole("group", {
-      name: `${HAMILTONIAN_PATH_DISPLAY_NAME}盤面`,
+      name: `${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面`,
     });
   }
 
@@ -406,7 +406,7 @@ describe("HamiltonianPathPlay", () => {
 
       test("先端が動くと、フォーカスと止まり先を新しい先端へ移すこと", () => {
         rerender(
-          <HamiltonianPathPlay
+          <HitofudePuzzlePlay
             {...baseProps}
             {...playingProps}
             path={[0, 1, 2]}
@@ -422,7 +422,7 @@ describe("HamiltonianPathPlay", () => {
 
   describe("穴のある盤面の場合", () => {
     // 右上の角（2）と真ん中（4）が穴。
-    const holedBoard = parseHamiltonianPathBoard(["S . #", ". # .", ". . ."]);
+    const holedBoard = parseHitofudePuzzleBoard(["S . #", ". # .", ". . ."]);
 
     beforeEach(() => {
       renderResult({

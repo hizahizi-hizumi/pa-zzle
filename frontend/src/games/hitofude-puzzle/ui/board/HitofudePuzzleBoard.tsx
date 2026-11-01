@@ -7,45 +7,45 @@ import {
   useState,
 } from "react";
 
-import { HAMILTONIAN_PATH_DISPLAY_NAME } from "@/games/hamiltonian-path/display-name";
-import type { HamiltonianPathBlockedMove } from "@/games/hamiltonian-path/play/use-hamiltonian-path-play";
+import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
+import type { HitofudePuzzleBlockedMove } from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
 import {
-  getHamiltonianPathNeighborCell,
-  type HamiltonianPathBoard as HamiltonianPathBoardState,
-  listHamiltonianPathCells,
-} from "@/games/hamiltonian-path/puzzle/board";
-import type { HamiltonianPathTraceStep } from "@/games/hamiltonian-path/puzzle/transitions";
-import { findArrowKeyDirection } from "@/games/hamiltonian-path/ui/arrow-key-direction";
+  getHitofudePuzzleNeighborCell,
+  type HitofudePuzzleBoard as HitofudePuzzleBoardState,
+  listHitofudePuzzleCells,
+} from "@/games/hitofude-puzzle/puzzle/board";
+import type { HitofudePuzzleTraceStep } from "@/games/hitofude-puzzle/puzzle/transitions";
+import { findArrowKeyDirection } from "@/games/hitofude-puzzle/ui/arrow-key-direction";
 import {
   type BoardPoint,
   findCellAt,
   listFingerSteps,
-} from "@/games/hamiltonian-path/ui/board/finger-trace";
-import { animateBlockedMove } from "@/games/hamiltonian-path/ui/board/HamiltonianPathBoard/animate-blocked-move";
-import { animateDeadEnd } from "@/games/hamiltonian-path/ui/board/HamiltonianPathBoard/animate-dead-end";
+} from "@/games/hitofude-puzzle/ui/board/finger-trace";
+import { animateBlockedMove } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard/animate-blocked-move";
+import { animateDeadEnd } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard/animate-dead-end";
 import {
   findCellButton,
-  HamiltonianPathCell,
-  type HamiltonianPathCellState,
-} from "@/games/hamiltonian-path/ui/board/HamiltonianPathBoard/HamiltonianPathCell";
-import { playClearTrace } from "@/games/hamiltonian-path/ui/board/HamiltonianPathBoard/play-clear-trace";
-import { HamiltonianPathFigure } from "@/games/hamiltonian-path/ui/board/HamiltonianPathFigure";
+  HitofudePuzzleCell,
+  type HitofudePuzzleCellState,
+} from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard/HitofudePuzzleCell";
+import { playClearTrace } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard/play-clear-trace";
+import { HitofudePuzzleFigure } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleFigure";
 
-type HamiltonianPathBoardProps = {
-  board: HamiltonianPathBoardState;
+type HitofudePuzzleBoardProps = {
+  board: HitofudePuzzleBoardState;
   /** 始点から先端までに通ったマスの番号。 */
   path: readonly number[];
   isDeadEnd: boolean;
   /** 取り残しとして知らせるマス。 */
   strandedCells: readonly number[];
-  blockedMove: HamiltonianPathBlockedMove | null;
+  blockedMove: HitofudePuzzleBlockedMove | null;
   /** 道が全マスを通り終えたか。 */
   solved: boolean;
   /** クリアしてから演出を終えるまで `true`。 */
   clearing: boolean;
   interactionDisabled: boolean;
   onBeginStroke: (cell: number) => void;
-  onTraceStroke: (step: HamiltonianPathTraceStep) => void;
+  onTraceStroke: (step: HitofudePuzzleTraceStep) => void;
   onEndStroke: () => void;
   onClearAnimationComplete: () => void;
 };
@@ -76,7 +76,7 @@ type FingerDrag = {
  * 矢印キーは先端を動かす操作（プレイ画面が受ける）なので、Tab の止まり先は先端のマス1つにし、
  * マスの間を移るのは Shift と矢印キーにする。先端が動くと、盤面にあるフォーカスも先端へ移す。
  */
-export function HamiltonianPathBoard({
+export function HitofudePuzzleBoard({
   board,
   path,
   isDeadEnd,
@@ -89,7 +89,7 @@ export function HamiltonianPathBoard({
   onTraceStroke,
   onEndStroke,
   onClearAnimationComplete,
-}: HamiltonianPathBoardProps) {
+}: HitofudePuzzleBoardProps) {
   const { size } = board;
   const figureRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<FingerDrag | null>(null);
@@ -136,7 +136,7 @@ export function HamiltonianPathBoard({
     );
   }, [clearing, onClearAnimationComplete, pathLength]);
 
-  function getCellState(cell: number): HamiltonianPathCellState {
+  function getCellState(cell: number): HitofudePuzzleCellState {
     if (holes.has(cell)) return "hole";
     return visited.has(cell) ? "visited" : "unvisited";
   }
@@ -212,7 +212,7 @@ export function HamiltonianPathBoard({
       return;
     }
     event.preventDefault();
-    const neighbor = getHamiltonianPathNeighborCell(
+    const neighbor = getHitofudePuzzleNeighborCell(
       size,
       focusableCell,
       direction,
@@ -231,7 +231,7 @@ export function HamiltonianPathBoard({
     <div
       ref={boardRef}
       role="group"
-      aria-label={`${HAMILTONIAN_PATH_DISPLAY_NAME}盤面`}
+      aria-label={`${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面`}
       className="relative size-full touch-none select-none [-webkit-touch-callout:none]"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -241,7 +241,7 @@ export function HamiltonianPathBoard({
       onContextMenu={(event) => event.preventDefault()}
       onKeyDown={handleKeyDown}
     >
-      <HamiltonianPathFigure
+      <HitofudePuzzleFigure
         ref={figureRef}
         board={board}
         path={path}
@@ -257,8 +257,8 @@ export function HamiltonianPathBoard({
           gridTemplateRows: `repeat(${size}, minmax(0, 1fr))`,
         }}
       >
-        {listHamiltonianPathCells(size).map((cell) => (
-          <HamiltonianPathCell
+        {listHitofudePuzzleCells(size).map((cell) => (
+          <HitofudePuzzleCell
             key={cell}
             size={size}
             cell={cell}

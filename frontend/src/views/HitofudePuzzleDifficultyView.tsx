@@ -1,22 +1,22 @@
 import { DifficultyOption } from "@/components/DifficultyOption";
 import { DifficultySelectionHeading } from "@/components/DifficultySelectionHeading";
 import { HomeBackLink } from "@/components/HomeBackLink";
-import { hamiltonianPathCatalogEntry } from "@/game-catalog/hamiltonian-path/hamiltonian-path-catalog-entry";
+import { hitofudePuzzleCatalogEntry } from "@/game-catalog/hitofude-puzzle/hitofude-puzzle-catalog-entry";
 import { difficultyLevels } from "@/games/difficulty";
-import { HAMILTONIAN_PATH_DISPLAY_NAME } from "@/games/hamiltonian-path/display-name";
-import { HamiltonianPathDifficultyPreview } from "@/games/hamiltonian-path/ui/HamiltonianPathDifficultyPreview";
-import { HamiltonianPathHowToPlayDialog } from "@/games/hamiltonian-path/ui/HamiltonianPathHowToPlayDialog";
+import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
+import { HitofudePuzzleDifficultyPreview } from "@/games/hitofude-puzzle/ui/HitofudePuzzleDifficultyPreview";
+import { HitofudePuzzleHowToPlayDialog } from "@/games/hitofude-puzzle/ui/HitofudePuzzleHowToPlayDialog";
 
-export function HamiltonianPathDifficultyView() {
+export function HitofudePuzzleDifficultyView() {
   return (
     <section className="space-y-6 sm:space-y-8">
       <div className="space-y-2">
         <HomeBackLink />
         <DifficultySelectionHeading
-          title={HAMILTONIAN_PATH_DISPLAY_NAME}
-          gameId={hamiltonianPathCatalogEntry.id}
+          title={HITOFUDE_PUZZLE_DISPLAY_NAME}
+          gameId={hitofudePuzzleCatalogEntry.id}
           renderHowToPlayDialog={({ open, onClose }) => (
-            <HamiltonianPathHowToPlayDialog open={open} onClose={onClose} />
+            <HitofudePuzzleHowToPlayDialog open={open} onClose={onClose} />
           )}
         />
       </div>
@@ -25,11 +25,11 @@ export function HamiltonianPathDifficultyView() {
         {difficultyLevels.map((difficulty) => (
           <DifficultyOption
             key={difficulty.id}
-            playPath={hamiltonianPathCatalogEntry.playPath}
+            playPath={hitofudePuzzleCatalogEntry.playPath}
             difficulty={difficulty.id}
             label={difficulty.label}
           >
-            <HamiltonianPathDifficultyPreview difficulty={difficulty.id} />
+            <HitofudePuzzleDifficultyPreview difficulty={difficulty.id} />
           </DifficultyOption>
         ))}
       </div>

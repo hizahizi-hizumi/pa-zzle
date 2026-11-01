@@ -1,13 +1,13 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 
-import { createHamiltonianPathDiagnosticSnapshot } from "@/games/hamiltonian-path/diagnostics";
-import type { HamiltonianPathDifficulty } from "@/games/hamiltonian-path/difficulty";
-import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem/generator";
+import { createHitofudePuzzleDiagnosticSnapshot } from "@/games/hitofude-puzzle/diagnostics";
+import type { HitofudePuzzleDifficulty } from "@/games/hitofude-puzzle/difficulty";
+import { generateHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/generator";
 import {
-  createHamiltonianPathProblemIdentity,
-  type HamiltonianPathProblemIdentity,
-} from "@/games/hamiltonian-path/problem/problem";
-import { HamiltonianPathDiagnostics } from "@/games/hamiltonian-path/ui/HamiltonianPathDiagnostics";
+  createHitofudePuzzleProblemIdentity,
+  type HitofudePuzzleProblemIdentity,
+} from "@/games/hitofude-puzzle/problem/problem";
+import { HitofudePuzzleDiagnostics } from "@/games/hitofude-puzzle/ui/HitofudePuzzleDiagnostics";
 
 afterEach(cleanup);
 
@@ -23,11 +23,11 @@ function getRowValue(
 }
 
 function createSnapshot(
-  identity: HamiltonianPathProblemIdentity,
-  difficulty: HamiltonianPathDifficulty,
+  identity: HitofudePuzzleProblemIdentity,
+  difficulty: HitofudePuzzleDifficulty,
 ) {
-  const { problem } = generateHamiltonianPathProblem(identity);
-  return createHamiltonianPathDiagnosticSnapshot({
+  const { problem } = generateHitofudePuzzleProblem(identity);
+  return createHitofudePuzzleDiagnosticSnapshot({
     difficulty,
     problemIdentity: identity,
     problem,
@@ -35,17 +35,17 @@ function createSnapshot(
   });
 }
 
-describe("HamiltonianPathDiagnostics", () => {
+describe("HitofudePuzzleDiagnostics", () => {
   describe("迷う分岐の無い問題の場合", () => {
     // hp-5-t0-4: 5×5・穴4。始点から取り残しを避けるだけで道が1通りに決まる。
     const snapshot = createSnapshot(
-      createHamiltonianPathProblemIdentity(5, 0, 4),
+      createHitofudePuzzleProblemIdentity(5, 0, 4),
       "1",
     );
 
     beforeEach(() => {
       render(
-        <HamiltonianPathDiagnostics snapshot={snapshot} onClose={vi.fn()} />,
+        <HitofudePuzzleDiagnostics snapshot={snapshot} onClose={vi.fn()} />,
       );
     });
 
@@ -81,13 +81,13 @@ describe("HamiltonianPathDiagnostics", () => {
   describe("レベル5に分類できた問題の場合", () => {
     // hp-8-t0-7: 8×8・穴7。仮置き8回・最も長い先読み18手で、レベル5 の組み合わせに当たる。
     const snapshot = createSnapshot(
-      createHamiltonianPathProblemIdentity(8, 0, 7),
+      createHitofudePuzzleProblemIdentity(8, 0, 7),
       "5",
     );
 
     beforeEach(() => {
       render(
-        <HamiltonianPathDiagnostics snapshot={snapshot} onClose={vi.fn()} />,
+        <HitofudePuzzleDiagnostics snapshot={snapshot} onClose={vi.fn()} />,
       );
     });
 

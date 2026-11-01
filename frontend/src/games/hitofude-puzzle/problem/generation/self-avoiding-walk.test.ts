@@ -1,8 +1,8 @@
 import {
   _private,
   createRandomSelfAvoidingWalk,
-} from "@/games/hamiltonian-path/problem/generation/self-avoiding-walk";
-import { areHamiltonianPathCellsAdjacent } from "@/games/hamiltonian-path/puzzle/board";
+} from "@/games/hitofude-puzzle/problem/generation/self-avoiding-walk";
+import { areHitofudePuzzleCellsAdjacent } from "@/games/hitofude-puzzle/puzzle/board";
 import { createProblemSeededRandom } from "@/games/problem-seed";
 
 const { createSerpentinePath, mutatePath } = _private;
@@ -13,7 +13,7 @@ function isSelfAvoidingWalk(size: number, path: readonly number[]): boolean {
     path.every(
       (cell, index) =>
         index === 0 ||
-        areHamiltonianPathCellsAdjacent(size, path[index - 1]!, cell),
+        areHitofudePuzzleCellsAdjacent(size, path[index - 1]!, cell),
     )
   );
 }

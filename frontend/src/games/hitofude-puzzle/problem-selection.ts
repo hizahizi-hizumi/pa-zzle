@@ -1,15 +1,15 @@
-import type { HamiltonianPathDifficulty } from "@/games/hamiltonian-path/difficulty";
+import type { HitofudePuzzleDifficulty } from "@/games/hitofude-puzzle/difficulty";
 import {
-  type HamiltonianPathRecordedProblemIdentity,
-  isHamiltonianPathProblemIdentity,
-} from "@/games/hamiltonian-path/problem/problem";
+  type HitofudePuzzleRecordedProblemIdentity,
+  isHitofudePuzzleProblemIdentity,
+} from "@/games/hitofude-puzzle/problem/problem";
 import {
-  findHamiltonianPathPoolEntry,
-  findHamiltonianPathPoolEntryByProblemId,
-  type HamiltonianPathPooledProblem,
-  listHamiltonianPathPoolEntries,
-  toHamiltonianPathPooledProblem,
-} from "@/games/hamiltonian-path/problem/problem-pool";
+  findHitofudePuzzlePoolEntry,
+  findHitofudePuzzlePoolEntryByProblemId,
+  type HitofudePuzzlePooledProblem,
+  listHitofudePuzzlePoolEntries,
+  toHitofudePuzzlePooledProblem,
+} from "@/games/hitofude-puzzle/problem/problem-pool";
 import type { ProblemSeed } from "@/games/problem-seed";
 import { selectProblemPoolEntry } from "@/games/problem-selection";
 
@@ -18,46 +18,44 @@ import { selectProblemPoolEntry } from "@/games/problem-selection";
  * 問題集は生成時に一意解と難易度を確かめ済みで、基準時間に使う作業の量も持つため、
  * プレイ時には生成・解探索・難易度分析を走らせない。
  */
-export function selectHamiltonianPathProblemForDifficulty(
-  difficulty: HamiltonianPathDifficulty,
+export function selectHitofudePuzzleProblemForDifficulty(
+  difficulty: HitofudePuzzleDifficulty,
   seed: ProblemSeed,
-): HamiltonianPathPooledProblem {
+): HitofudePuzzlePooledProblem {
   const entry = selectProblemPoolEntry(
-    listHamiltonianPathPoolEntries(difficulty),
+    listHitofudePuzzlePoolEntries(difficulty),
     seed,
-    `level ${difficulty} Hamiltonian path`,
+    `level ${difficulty} Hitofude puzzle`,
   );
-  return toHamiltonianPathPooledProblem(entry);
+  return toHitofudePuzzlePooledProblem(entry);
 }
 
 /**
  * 記録に残した identity から同じ問題を復元する。
  * 問題集に無い identity（生成器の版が今と違う記録など）は復元できないので `null` を返す。
  */
-export function restoreHamiltonianPathProblem(
-  identity: HamiltonianPathRecordedProblemIdentity,
-): HamiltonianPathPooledProblem | null {
-  const entry = isHamiltonianPathProblemIdentity(identity)
-    ? findHamiltonianPathPoolEntry(identity)
+export function restoreHitofudePuzzleProblem(
+  identity: HitofudePuzzleRecordedProblemIdentity,
+): HitofudePuzzlePooledProblem | null {
+  const entry = isHitofudePuzzleProblemIdentity(identity)
+    ? findHitofudePuzzlePoolEntry(identity)
     : null;
-  return entry ? toHamiltonianPathPooledProblem(entry) : null;
+  return entry ? toHitofudePuzzlePooledProblem(entry) : null;
 }
 
 /** 難易度の問題集から問題 ID で1問を引く。引けない ID には `null` を返す。 */
-export function selectHamiltonianPathProblemById(
-  difficulty: HamiltonianPathDifficulty,
+export function selectHitofudePuzzleProblemById(
+  difficulty: HitofudePuzzleDifficulty,
   problemId: string,
-): HamiltonianPathPooledProblem | null {
-  const entry = findHamiltonianPathPoolEntryByProblemId(difficulty, problemId);
-  return entry ? toHamiltonianPathPooledProblem(entry) : null;
+): HitofudePuzzlePooledProblem | null {
+  const entry = findHitofudePuzzlePoolEntryByProblemId(difficulty, problemId);
+  return entry ? toHitofudePuzzlePooledProblem(entry) : null;
 }
 
 /** 難易度の問題集から問題 ID で1問を引けるかを、問題を復元せずに確かめる。 */
-export function canSelectHamiltonianPathProblemById(
-  difficulty: HamiltonianPathDifficulty,
+export function canSelectHitofudePuzzleProblemById(
+  difficulty: HitofudePuzzleDifficulty,
   problemId: string,
 ): boolean {
-  return (
-    findHamiltonianPathPoolEntryByProblemId(difficulty, problemId) !== null
-  );
+  return findHitofudePuzzlePoolEntryByProblemId(difficulty, problemId) !== null;
 }

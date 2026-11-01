@@ -1,38 +1,38 @@
-import { countHamiltonianPathSolutions } from "@/games/hamiltonian-path/problem/generation/solver";
+import { countHitofudePuzzleSolutions } from "@/games/hitofude-puzzle/problem/generation/solver";
 import {
-  getHamiltonianPathSymmetryKey,
-  listHamiltonianPathBoardSymmetries,
-  mirrorHamiltonianPathBoardLeftRight,
-  rotateHamiltonianPathBoardClockwise,
-} from "@/games/hamiltonian-path/problem/generation/symmetry";
-import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
+  getHitofudePuzzleSymmetryKey,
+  listHitofudePuzzleBoardSymmetries,
+  mirrorHitofudePuzzleBoardLeftRight,
+  rotateHitofudePuzzleBoardClockwise,
+} from "@/games/hitofude-puzzle/problem/generation/symmetry";
+import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
 
-describe("rotateHamiltonianPathBoardClockwise", () => {
-  const board = parseHamiltonianPathBoard(["S . .", ". . #", "# . ."]);
+describe("rotateHitofudePuzzleBoardClockwise", () => {
+  const board = parseHitofudePuzzleBoard(["S . .", ". . #", "# . ."]);
 
   test("穴・始点を時計回りに回すこと", () => {
-    const rotated = rotateHamiltonianPathBoardClockwise(board);
+    const rotated = rotateHitofudePuzzleBoardClockwise(board);
 
     expect(rotated).toEqual(
-      parseHamiltonianPathBoard(["# . S", ". . .", ". # ."]),
+      parseHitofudePuzzleBoard(["# . S", ". . .", ". # ."]),
     );
   });
 });
 
-describe("mirrorHamiltonianPathBoardLeftRight", () => {
-  const board = parseHamiltonianPathBoard(["S . .", ". . #", "# . ."]);
+describe("mirrorHitofudePuzzleBoardLeftRight", () => {
+  const board = parseHitofudePuzzleBoard(["S . .", ". . #", "# . ."]);
 
   test("穴・始点を左右反転すること", () => {
-    const mirrored = mirrorHamiltonianPathBoardLeftRight(board);
+    const mirrored = mirrorHitofudePuzzleBoardLeftRight(board);
 
     expect(mirrored).toEqual(
-      parseHamiltonianPathBoard([". . S", "# . .", ". . #"]),
+      parseHitofudePuzzleBoard([". . S", "# . .", ". . #"]),
     );
   });
 });
 
-describe("listHamiltonianPathBoardSymmetries", () => {
-  const board = parseHamiltonianPathBoard([
+describe("listHitofudePuzzleBoardSymmetries", () => {
+  const board = parseHitofudePuzzleBoard([
     "S . . .",
     ". . . #",
     ". # . .",
@@ -40,38 +40,38 @@ describe("listHamiltonianPathBoardSymmetries", () => {
   ]);
 
   test("8通りのどの盤面も解の数が元の盤面と同じであること", () => {
-    const symmetries = listHamiltonianPathBoardSymmetries(board);
+    const symmetries = listHitofudePuzzleBoardSymmetries(board);
 
     const solutionCounts = symmetries.map(
       (symmetry) =>
-        countHamiltonianPathSolutions(symmetry, { solutionLimit: 1_000 })
+        countHitofudePuzzleSolutions(symmetry, { solutionLimit: 1_000 })
           .solutionCount,
     );
     expect(symmetries).toHaveLength(8);
     expect(new Set(solutionCounts)).toEqual(
       new Set([
-        countHamiltonianPathSolutions(board, { solutionLimit: 1_000 })
+        countHitofudePuzzleSolutions(board, { solutionLimit: 1_000 })
           .solutionCount,
       ]),
     );
   });
 });
 
-describe("getHamiltonianPathSymmetryKey", () => {
-  const board = parseHamiltonianPathBoard(["S . .", ". . .", ". . #"]);
-  const otherBoard = parseHamiltonianPathBoard(["S . .", ". . #", ". . ."]);
+describe("getHitofudePuzzleSymmetryKey", () => {
+  const board = parseHitofudePuzzleBoard(["S . .", ". . .", ". . #"]);
+  const otherBoard = parseHitofudePuzzleBoard(["S . .", ". . #", ". . ."]);
 
   test("回転・反転した盤面に同じキーを返すこと", () => {
-    const keys = listHamiltonianPathBoardSymmetries(board).map(
-      getHamiltonianPathSymmetryKey,
+    const keys = listHitofudePuzzleBoardSymmetries(board).map(
+      getHitofudePuzzleSymmetryKey,
     );
 
     expect(new Set(keys).size).toBe(1);
   });
 
   test("穴の位置が違う盤面に別のキーを返すこと", () => {
-    const key = getHamiltonianPathSymmetryKey(board);
-    const otherKey = getHamiltonianPathSymmetryKey(otherBoard);
+    const key = getHitofudePuzzleSymmetryKey(board);
+    const otherKey = getHitofudePuzzleSymmetryKey(otherBoard);
 
     expect(otherKey).not.toBe(key);
   });

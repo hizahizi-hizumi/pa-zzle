@@ -1,13 +1,13 @@
 import { Pointer } from "lucide-react";
 
 import {
-  getHamiltonianPathCellPosition,
-  type HamiltonianPathBoard,
-} from "@/games/hamiltonian-path/puzzle/board";
-import { HamiltonianPathFigure } from "@/games/hamiltonian-path/ui/board/HamiltonianPathFigure";
+  getHitofudePuzzleCellPosition,
+  type HitofudePuzzleBoard,
+} from "@/games/hitofude-puzzle/puzzle/board";
+import { HitofudePuzzleFigure } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleFigure";
 
 type HowToPlayFigureProps = {
-  board: HamiltonianPathBoard;
+  board: HitofudePuzzleBoard;
   path: readonly number[];
   isDeadEnd?: boolean;
   strandedCells?: readonly number[];
@@ -29,11 +29,11 @@ export function HowToPlayFigure({
   const finger =
     fingerCell === undefined
       ? null
-      : getHamiltonianPathCellPosition(board.size, fingerCell);
+      : getHitofudePuzzleCellPosition(board.size, fingerCell);
 
   return (
     <span aria-hidden="true" className="relative block size-24 shrink-0">
-      <HamiltonianPathFigure
+      <HitofudePuzzleFigure
         board={board}
         path={path}
         isDeadEnd={isDeadEnd}

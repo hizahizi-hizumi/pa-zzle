@@ -1,17 +1,17 @@
 import {
-  getHamiltonianPathCellPosition,
-  type HamiltonianPathBoard,
-  listHamiltonianPathGridNeighbors,
-} from "@/games/hamiltonian-path/puzzle/board";
+  getHitofudePuzzleCellPosition,
+  type HitofudePuzzleBoard,
+  listHitofudePuzzleGridNeighbors,
+} from "@/games/hitofude-puzzle/puzzle/board";
 
 /**
- * 穴の散らばり方の指標。問題を「穴が適度に散らばった盤面」に保つ見た目の基準（`hamiltonianPathHoleLayoutCriteria`）に使う。
+ * 穴の散らばり方の指標。問題を「穴が適度に散らばった盤面」に保つ見た目の基準（`hitofudePuzzleHoleLayoutCriteria`）に使う。
  * - `holeCount`: 穴の数。
  * - `largestHoleClusterSize`: 上下左右につながった穴の塊のうち、最も大きい塊のマスの数。穴が無ければ0。
  * - `quadrantsWithHolesCount`: 枠を上下左右に四分割した区画のうち、穴のある区画の数。奇数の一辺の中央の行・列は両側の区画に数える。
  * - `openBlockRatio`: 枠の中の 2×2 のブロックのうち、4マスとも穴でないブロックの割合。
  */
-export type HamiltonianPathHoleLayout = {
+export type HitofudePuzzleHoleLayout = {
   holeCount: number;
   largestHoleClusterSize: number;
   quadrantsWithHolesCount: number;
@@ -25,7 +25,7 @@ export type HamiltonianPathHoleLayout = {
  * - `minimumQuadrantsWithHoles`: 穴が `quadrantRuleMinimumHoleCount` 個以上あるときに、穴のある区画の数の下限。
  * - `minimumOpenBlockRatio`: 4マスとも穴でない 2×2 のブロックの割合の下限。
  */
-export const hamiltonianPathHoleLayoutCriteria = {
+export const hitofudePuzzleHoleLayoutCriteria = {
   holeRatio: { minimum: 0.08, maximum: 0.25 },
   maximumHoleClusterSize: 3,
   quadrantRuleMinimumHoleCount: 4,
@@ -38,7 +38,7 @@ export const hamiltonianPathHoleLayoutCriteria = {
  */
 const OPEN_BLOCK_SHORTAGE_SCALE = 20;
 
-function measureLargestHoleClusterSize(board: HamiltonianPathBoard): number {
+function measureLargestHoleClusterSize(board: HitofudePuzzleBoard): number {
   const holes = new Set(board.holes);
   const reached = new Set<number>();
   let largest = 0;
@@ -51,7 +51,7 @@ function measureLargestHoleClusterSize(board: HamiltonianPathBoard): number {
     let clusterSize = 0;
     for (let cell = pending.pop(); cell !== undefined; cell = pending.pop()) {
       clusterSize += 1;
-      for (const neighbor of listHamiltonianPathGridNeighbors(
+      for (const neighbor of listHitofudePuzzleGridNeighbors(
         board.size,
         cell,
       )) {
@@ -72,10 +72,10 @@ function listHalves(size: number, position: number): number[] {
   return position < middle ? [0] : position > middle ? [1] : [0, 1];
 }
 
-function countQuadrantsWithHoles(board: HamiltonianPathBoard): number {
+function countQuadrantsWithHoles(board: HitofudePuzzleBoard): number {
   const quadrants = new Set<number>();
   for (const hole of board.holes) {
-    const { row, column } = getHamiltonianPathCellPosition(board.size, hole);
+    const { row, column } = getHitofudePuzzleCellPosition(board.size, hole);
     for (const rowHalf of listHalves(board.size, row)) {
       for (const columnHalf of listHalves(board.size, column)) {
         quadrants.add(rowHalf * 2 + columnHalf);
@@ -85,7 +85,7 @@ function countQuadrantsWithHoles(board: HamiltonianPathBoard): number {
   return quadrants.size;
 }
 
-function measureOpenBlockRatio(board: HamiltonianPathBoard): number {
+function measureOpenBlockRatio(board: HitofudePuzzleBoard): number {
   const { size } = board;
   const holes = new Set(board.holes);
   let openBlockCount = 0;
@@ -99,9 +99,9 @@ function measureOpenBlockRatio(board: HamiltonianPathBoard): number {
   return openBlockCount / (size - 1) ** 2;
 }
 
-export function measureHamiltonianPathHoleLayout(
-  board: HamiltonianPathBoard,
-): HamiltonianPathHoleLayout {
+export function measureHitofudePuzzleHoleLayout(
+  board: HitofudePuzzleBoard,
+): HitofudePuzzleHoleLayout {
   return {
     holeCount: board.holes.length,
     largestHoleClusterSize: measureLargestHoleClusterSize(board),
@@ -115,11 +115,11 @@ export function measureHamiltonianPathHoleLayout(
  * 穴の数の過不足・塊の超過・穴のある区画の不足はその個数を、2×2 のブロックの割合の不足は
  * `OPEN_BLOCK_SHORTAGE_SCALE` 倍して切り上げた値を足す。
  */
-export function countHamiltonianPathHoleLayoutViolations(
-  board: HamiltonianPathBoard,
+export function countHitofudePuzzleHoleLayoutViolations(
+  board: HitofudePuzzleBoard,
 ): number {
-  const criteria = hamiltonianPathHoleLayoutCriteria;
-  const layout = measureHamiltonianPathHoleLayout(board);
+  const criteria = hitofudePuzzleHoleLayoutCriteria;
+  const layout = measureHitofudePuzzleHoleLayout(board);
   const cellCount = board.size * board.size;
   const minimumHoleCount = Math.ceil(criteria.holeRatio.minimum * cellCount);
   const maximumHoleCount = Math.floor(criteria.holeRatio.maximum * cellCount);

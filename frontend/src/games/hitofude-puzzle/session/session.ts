@@ -1,32 +1,32 @@
 import {
-  assertHamiltonianPathProblem,
-  type HamiltonianPathProblem,
-} from "@/games/hamiltonian-path/problem/problem";
+  assertHitofudePuzzleProblem,
+  type HitofudePuzzleProblem,
+} from "@/games/hitofude-puzzle/problem/problem";
 import {
-  getHamiltonianPathNeighborCell,
-  type HamiltonianPathDirection,
-} from "@/games/hamiltonian-path/puzzle/board";
-import { isHamiltonianPathSolved } from "@/games/hamiltonian-path/puzzle/rules";
+  getHitofudePuzzleNeighborCell,
+  type HitofudePuzzleDirection,
+} from "@/games/hitofude-puzzle/puzzle/board";
+import { isHitofudePuzzleSolved } from "@/games/hitofude-puzzle/puzzle/rules";
 import {
-  createInitialHamiltonianPathState,
-  getHamiltonianPathHead,
-  type HamiltonianPathPuzzleState,
-} from "@/games/hamiltonian-path/puzzle/state";
+  createInitialHitofudePuzzleState,
+  getHitofudePuzzleHead,
+  type HitofudePuzzlePuzzleState,
+} from "@/games/hitofude-puzzle/puzzle/state";
 import {
-  extendHamiltonianPath,
-  type HamiltonianPathExtension,
-  type HamiltonianPathExtensionRejection,
-  type HamiltonianPathHeadMove,
-  type HamiltonianPathTraceStep,
-  moveHamiltonianPathHead,
-  rewindHamiltonianPath,
-  traceHamiltonianPath,
-} from "@/games/hamiltonian-path/puzzle/transitions";
+  extendHitofudePuzzle,
+  type HitofudePuzzleExtension,
+  type HitofudePuzzleExtensionRejection,
+  type HitofudePuzzleHeadMove,
+  type HitofudePuzzleTraceStep,
+  moveHitofudePuzzleHead,
+  rewindHitofudePuzzle,
+  traceHitofudePuzzle,
+} from "@/games/hitofude-puzzle/puzzle/transitions";
 import { type GameSession, getClearedSessionElapsedMs } from "@/games/session";
 
-export type HamiltonianPathSession = GameSession<
-  HamiltonianPathProblem,
-  HamiltonianPathPuzzleState
+export type HitofudePuzzleSession = GameSession<
+  HitofudePuzzleProblem,
+  HitofudePuzzlePuzzleState
 > & {
   /** 待ったで盤面操作を取り消した回数。 */
   undoCount: number;
@@ -47,19 +47,19 @@ export type HamiltonianPathSession = GameSession<
    */
   furthestPath: readonly number[];
   /** 待ったで戻せる、各盤面操作の前の道。古い順。盤面を戻すと空にする。 */
-  history: readonly HamiltonianPathPuzzleState[];
+  history: readonly HitofudePuzzlePuzzleState[];
   /**
    * 道をなぞっている間（押してから離すまで）だけ、押す前の道。
    * なぞる間の盤面操作は履歴に積まず、離したときに待ったの1単位としてまとめる。
    */
-  strokeOrigin: HamiltonianPathPuzzleState | null;
+  strokeOrigin: HitofudePuzzlePuzzleState | null;
 };
 
 /**
  * 評価に使うプレイ事実。採点はしない。
  * 引き直しの回数を正確さに使い、戻したマスの数・待った・盤面を戻した回数・入力回数は記録にだけ残す。
  */
-export type HamiltonianPathSessionResult = {
+export type HitofudePuzzleSessionResult = {
   elapsedMs: number;
   backtrackCount: number;
   retractedCellCount: number;
@@ -72,17 +72,17 @@ export type HamiltonianPathSessionResult = {
  * 道を延ばす・先端を動かす操作の結果。延ばせなかったときは `rejection` に理由を添え、道は変えない。
  * プレイ中でない session への操作は受け付けず、理由も添えない。
  */
-export type HamiltonianPathSessionPathChange = {
-  session: HamiltonianPathSession;
-  rejection: HamiltonianPathExtensionRejection | null;
+export type HitofudePuzzleSessionPathChange = {
+  session: HitofudePuzzleSession;
+  rejection: HitofudePuzzleExtensionRejection | null;
 };
 
-export function createHamiltonianPathSession(
-  problem: HamiltonianPathProblem,
+export function createHitofudePuzzleSession(
+  problem: HitofudePuzzleProblem,
   startedAt: number,
-): HamiltonianPathSession {
-  assertHamiltonianPathProblem(problem);
-  const puzzleState = createInitialHamiltonianPathState(problem);
+): HitofudePuzzleSession {
+  assertHitofudePuzzleProblem(problem);
+  const puzzleState = createInitialHitofudePuzzleState(problem);
 
   return {
     status: "playing",
@@ -117,7 +117,7 @@ function countCommonPrefix(
 }
 
 type PathTransitionCounts = Pick<
-  HamiltonianPathSession,
+  HitofudePuzzleSession,
   "backtrackCount" | "retractedCellCount" | "furthestPath"
 >;
 
@@ -126,7 +126,7 @@ type PathTransitionCounts = Pick<
  * なぞりの途中の行き来は数えず、押す前と離した後の道だけを比べるので、1回のなぞりの中の手ぶれは引き直しにならない。
  */
 function countPathTransition(
-  session: HamiltonianPathSession,
+  session: HitofudePuzzleSession,
   before: readonly number[],
   after: readonly number[],
 ): PathTransitionCounts {
@@ -149,9 +149,9 @@ function countPathTransition(
 
 /** 入力1回ぶんの道の変化を、`before` を待ったの1単位として記録し、引き直しを数える。 */
 function commitInput(
-  session: HamiltonianPathSession,
-  before: HamiltonianPathPuzzleState,
-): HamiltonianPathSession {
+  session: HitofudePuzzleSession,
+  before: HitofudePuzzlePuzzleState,
+): HitofudePuzzleSession {
   return {
     ...session,
     ...countPathTransition(session, before.path, session.puzzleState.path),
@@ -162,9 +162,9 @@ function commitInput(
 
 /** 道を変える盤面操作を記録する。なぞっている間は、離したときにまとめて記録する。 */
 function recordPathChange(
-  session: HamiltonianPathSession,
-  puzzleState: HamiltonianPathPuzzleState,
-): HamiltonianPathSession {
+  session: HitofudePuzzleSession,
+  puzzleState: HitofudePuzzlePuzzleState,
+): HitofudePuzzleSession {
   const changed = { ...session, puzzleState };
   return session.strokeOrigin === null
     ? commitInput(changed, session.puzzleState)
@@ -172,8 +172,8 @@ function recordPathChange(
 }
 
 function haveSamePath(
-  left: HamiltonianPathPuzzleState,
-  right: HamiltonianPathPuzzleState,
+  left: HitofudePuzzlePuzzleState,
+  right: HitofudePuzzlePuzzleState,
 ): boolean {
   return (
     left.path.length === right.path.length &&
@@ -182,7 +182,7 @@ function haveSamePath(
 }
 
 /** なぞりを終え、道が変わっていれば押す前の道を待ったの1単位として記録し、引き直しを数える。 */
-function closeStroke(session: HamiltonianPathSession): HamiltonianPathSession {
+function closeStroke(session: HitofudePuzzleSession): HitofudePuzzleSession {
   const { strokeOrigin } = session;
   if (strokeOrigin === null) {
     return session;
@@ -195,17 +195,17 @@ function closeStroke(session: HamiltonianPathSession): HamiltonianPathSession {
 
 /** 延ばした道が全有効マスを通ったら、その時刻でクリアにする。クリアしたらなぞりも終える。 */
 function applyPathMove(
-  session: HamiltonianPathSession,
-  move: HamiltonianPathExtension | HamiltonianPathHeadMove,
+  session: HitofudePuzzleSession,
+  move: HitofudePuzzleExtension | HitofudePuzzleHeadMove,
   operatedAt: number,
-): HamiltonianPathSessionPathChange {
+): HitofudePuzzleSessionPathChange {
   if (move.kind === "rejected") {
     return { session, rejection: move.reason };
   }
 
   const next = recordPathChange(session, move.state);
   return {
-    session: isHamiltonianPathSolved(session.problem, move.state.path)
+    session: isHitofudePuzzleSolved(session.problem, move.state.path)
       ? { ...closeStroke(next), status: "cleared", finishedAt: operatedAt }
       : next,
     rejection: null,
@@ -213,18 +213,18 @@ function applyPathMove(
 }
 
 /** 道の先端から隣のマスへ道を1マス延ばす。 */
-export function extendHamiltonianPathSessionPath(
-  session: HamiltonianPathSession,
+export function extendHitofudePuzzleSessionPath(
+  session: HitofudePuzzleSession,
   cell: number,
   operatedAt: number,
-): HamiltonianPathSessionPathChange {
+): HitofudePuzzleSessionPathChange {
   if (session.status !== "playing") {
     return { session, rejection: null };
   }
 
   return applyPathMove(
     session,
-    extendHamiltonianPath(session.problem, session.puzzleState, cell),
+    extendHitofudePuzzle(session.problem, session.puzzleState, cell),
     operatedAt,
   );
 }
@@ -233,40 +233,40 @@ export function extendHamiltonianPathSessionPath(
  * 道の先端を隣のマスへ動かす。直前のマスへ動かすと道が1マス縮み、それ以外は道を延ばす。
  * ドラッグと矢印キーで道を引くときの1マスぶんの操作。
  */
-export function moveHamiltonianPathSessionHead(
-  session: HamiltonianPathSession,
+export function moveHitofudePuzzleSessionHead(
+  session: HitofudePuzzleSession,
   cell: number,
   operatedAt: number,
-): HamiltonianPathSessionPathChange {
+): HitofudePuzzleSessionPathChange {
   if (session.status !== "playing") {
     return { session, rejection: null };
   }
 
   return applyPathMove(
     session,
-    moveHamiltonianPathHead(session.problem, session.puzzleState, cell),
+    moveHitofudePuzzleHead(session.problem, session.puzzleState, cell),
     operatedAt,
   );
 }
 
 /** 先端から `direction` の向きの隣のマスへ先端を動かす。矢印キーの1回の操作。 */
-export function moveHamiltonianPathSessionHeadToward(
-  session: HamiltonianPathSession,
-  direction: HamiltonianPathDirection,
+export function moveHitofudePuzzleSessionHeadToward(
+  session: HitofudePuzzleSession,
+  direction: HitofudePuzzleDirection,
   operatedAt: number,
-): HamiltonianPathSessionPathChange {
+): HitofudePuzzleSessionPathChange {
   if (session.status !== "playing") {
     return { session, rejection: null };
   }
 
-  const neighbor = getHamiltonianPathNeighborCell(
+  const neighbor = getHitofudePuzzleNeighborCell(
     session.problem.size,
-    getHamiltonianPathHead(session.puzzleState),
+    getHitofudePuzzleHead(session.puzzleState),
     direction,
   );
   return neighbor === null
     ? { session, rejection: "outside-board" }
-    : moveHamiltonianPathSessionHead(session, neighbor, operatedAt);
+    : moveHitofudePuzzleSessionHead(session, neighbor, operatedAt);
 }
 
 /**
@@ -275,11 +275,11 @@ export function moveHamiltonianPathSessionHeadToward(
  * 延ばせないマスを押したときも押す前の道からなぞり始め、延ばせなかった理由を返す。
  * 道から外れた指でも、先端の隣へ戻ればそこから延ばせる。
  */
-export function beginHamiltonianPathSessionStroke(
-  session: HamiltonianPathSession,
+export function beginHitofudePuzzleSessionStroke(
+  session: HitofudePuzzleSession,
   cell: number,
   operatedAt: number,
-): HamiltonianPathSessionPathChange {
+): HitofudePuzzleSessionPathChange {
   if (session.status !== "playing") {
     return { session, rejection: null };
   }
@@ -288,50 +288,46 @@ export function beginHamiltonianPathSessionStroke(
   const stroking = { ...closed, strokeOrigin: closed.puzzleState };
   if (closed.puzzleState.path.includes(cell)) {
     return {
-      session: rewindHamiltonianPathSessionPath(stroking, cell),
+      session: rewindHitofudePuzzleSessionPath(stroking, cell),
       rejection: null,
     };
   }
-  return extendHamiltonianPathSessionPath(stroking, cell, operatedAt);
+  return extendHitofudePuzzleSessionPath(stroking, cell, operatedAt);
 }
 
 /** なぞっている指が隣のマスへ移ったときに道を変える。なぞっていなければ何もしない。 */
-export function traceHamiltonianPathSessionStroke(
-  session: HamiltonianPathSession,
-  step: HamiltonianPathTraceStep,
+export function traceHitofudePuzzleSessionStroke(
+  session: HitofudePuzzleSession,
+  step: HitofudePuzzleTraceStep,
   operatedAt: number,
-): HamiltonianPathSessionPathChange {
+): HitofudePuzzleSessionPathChange {
   if (session.status !== "playing" || session.strokeOrigin === null) {
     return { session, rejection: null };
   }
 
-  const trace = traceHamiltonianPath(
-    session.problem,
-    session.puzzleState,
-    step,
-  );
+  const trace = traceHitofudePuzzle(session.problem, session.puzzleState, step);
   return trace.kind === "unchanged"
     ? { session, rejection: null }
     : applyPathMove(session, trace, operatedAt);
 }
 
 /** 指を離してなぞりを終える。なぞる間に変えた道を、待ったの1単位にする。 */
-export function endHamiltonianPathSessionStroke(
-  session: HamiltonianPathSession,
-): HamiltonianPathSession {
+export function endHitofudePuzzleSessionStroke(
+  session: HitofudePuzzleSession,
+): HitofudePuzzleSession {
   return closeStroke(session);
 }
 
 /** 道の途中のマス（始点を含む）まで道を巻き戻す。道に無いマスや先端なら何もしない。 */
-export function rewindHamiltonianPathSessionPath(
-  session: HamiltonianPathSession,
+export function rewindHitofudePuzzleSessionPath(
+  session: HitofudePuzzleSession,
   cell: number,
-): HamiltonianPathSession {
+): HitofudePuzzleSession {
   if (session.status !== "playing") {
     return session;
   }
 
-  const puzzleState = rewindHamiltonianPath(session.puzzleState, cell);
+  const puzzleState = rewindHitofudePuzzle(session.puzzleState, cell);
   return puzzleState === session.puzzleState
     ? session
     : recordPathChange(session, puzzleState);
@@ -341,10 +337,10 @@ export function rewindHamiltonianPathSessionPath(
  * 直前の盤面操作を1つ取り消す（待った）。巻き戻しも取り消せる。
  * 盤面を戻す前の操作は待ったで戻せない。待ったで前の道筋へ戻したときも、別のマスへ引いたのと同じに引き直しを数える。
  */
-export function undoHamiltonianPathSession(
-  session: HamiltonianPathSession,
-): HamiltonianPathSession {
-  if (!canUndoHamiltonianPathSession(session)) {
+export function undoHitofudePuzzleSession(
+  session: HitofudePuzzleSession,
+): HitofudePuzzleSession {
+  if (!canUndoHitofudePuzzleSession(session)) {
     return session;
   }
 
@@ -359,8 +355,8 @@ export function undoHamiltonianPathSession(
   };
 }
 
-export function canUndoHamiltonianPathSession(
-  session: HamiltonianPathSession,
+export function canUndoHitofudePuzzleSession(
+  session: HitofudePuzzleSession,
 ): boolean {
   return (
     session.status === "playing" && closeStroke(session).history.length > 0
@@ -368,15 +364,15 @@ export function canUndoHamiltonianPathSession(
 }
 
 /** 同じプレイのまま道を始点だけに戻す（盤面を戻す）。経過時間は引き継ぎ、待ったの履歴は消す。 */
-export function restartHamiltonianPathSession(
-  session: HamiltonianPathSession,
-): HamiltonianPathSession {
-  if (!canRestartHamiltonianPathSession(session)) {
+export function restartHitofudePuzzleSession(
+  session: HitofudePuzzleSession,
+): HitofudePuzzleSession {
+  if (!canRestartHitofudePuzzleSession(session)) {
     return session;
   }
 
   const closed = closeStroke(session);
-  const puzzleState = createInitialHamiltonianPathState(closed.problem);
+  const puzzleState = createInitialHitofudePuzzleState(closed.problem);
   return {
     ...closed,
     ...countPathTransition(closed, closed.puzzleState.path, puzzleState.path),
@@ -387,15 +383,15 @@ export function restartHamiltonianPathSession(
 }
 
 /** 道が始点から延びているプレイ中だけ、盤面を戻せる。 */
-export function canRestartHamiltonianPathSession(
-  session: HamiltonianPathSession,
+export function canRestartHitofudePuzzleSession(
+  session: HitofudePuzzleSession,
 ): boolean {
   return session.status === "playing" && session.puzzleState.path.length > 1;
 }
 
-export function getHamiltonianPathSessionResult(
-  session: HamiltonianPathSession,
-): HamiltonianPathSessionResult | null {
+export function getHitofudePuzzleSessionResult(
+  session: HitofudePuzzleSession,
+): HitofudePuzzleSessionResult | null {
   const elapsedMs = getClearedSessionElapsedMs(session);
   if (elapsedMs === null) {
     return null;

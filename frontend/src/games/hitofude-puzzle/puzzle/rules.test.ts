@@ -1,22 +1,22 @@
-import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
+import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
 import {
-  areHamiltonianPathOpenCellsConnected,
-  findHamiltonianPathStranding,
-  isHamiltonianPathDeadEnd,
-  isHamiltonianPathSolved,
-} from "@/games/hamiltonian-path/puzzle/rules";
+  areHitofudePuzzleOpenCellsConnected,
+  findHitofudePuzzleStranding,
+  isHitofudePuzzleDeadEnd,
+  isHitofudePuzzleSolved,
+} from "@/games/hitofude-puzzle/puzzle/rules";
 
 // 0 1 2
 // 3 # 5
 // 6 7 #
-const board = parseHamiltonianPathBoard(["S . .", ". # .", ". . #"]);
+const board = parseHitofudePuzzleBoard(["S . .", ". # .", ". . #"]);
 
-describe("isHamiltonianPathSolved", () => {
-  const openBoard = parseHamiltonianPathBoard(["S . .", ". . .", ". . ."]);
+describe("isHitofudePuzzleSolved", () => {
+  const openBoard = parseHitofudePuzzleBoard(["S . .", ". . .", ". . ."]);
   const solution = [0, 1, 2, 5, 4, 3, 6, 7, 8];
 
   test("始点から全有効マスを1回ずつ、隣り合うマスへ進んだ道を解とすること", () => {
-    const solved = isHamiltonianPathSolved(openBoard, solution);
+    const solved = isHitofudePuzzleSolved(openBoard, solution);
 
     expect(solved).toBe(true);
   });
@@ -30,7 +30,7 @@ describe("isHamiltonianPathSolved", () => {
   ];
 
   test.each(invalidPaths)("%s道を解としないこと", (_, path) => {
-    const solved = isHamiltonianPathSolved(openBoard, path);
+    const solved = isHitofudePuzzleSolved(openBoard, path);
 
     expect(solved).toBe(false);
   });
@@ -39,14 +39,14 @@ describe("isHamiltonianPathSolved", () => {
     const blockedPath = [0, 1, 2, 5, 4, 3, 6];
 
     test("穴を通る道を解としないこと", () => {
-      const solved = isHamiltonianPathSolved(board, blockedPath);
+      const solved = isHitofudePuzzleSolved(board, blockedPath);
 
       expect(solved).toBe(false);
     });
   });
 });
 
-describe("isHamiltonianPathDeadEnd", () => {
+describe("isHitofudePuzzleDeadEnd", () => {
   const cases: readonly [string, readonly number[], boolean][] = [
     ["先端の隣が通過済みのマスか穴だけの", [0, 1, 2, 5], true],
     ["先端から未通過のマスへ延ばせる", [0, 3], false],
@@ -55,30 +55,30 @@ describe("isHamiltonianPathDeadEnd", () => {
   test.each(cases)(
     "%s道の行き止まりの判定が %s であること",
     (_, path, expected) => {
-      const deadEnd = isHamiltonianPathDeadEnd(board, path);
+      const deadEnd = isHitofudePuzzleDeadEnd(board, path);
 
       expect(deadEnd).toBe(expected);
     },
   );
 
   describe("全マスを通った場合", () => {
-    const openBoard = parseHamiltonianPathBoard(["S .", ". ."]);
+    const openBoard = parseHitofudePuzzleBoard(["S .", ". ."]);
     const solution = [0, 1, 3, 2];
 
     test("行き止まりとしないこと", () => {
-      const deadEnd = isHamiltonianPathDeadEnd(openBoard, solution);
+      const deadEnd = isHitofudePuzzleDeadEnd(openBoard, solution);
 
       expect(deadEnd).toBe(false);
     });
   });
 });
 
-describe("findHamiltonianPathStranding", () => {
+describe("findHitofudePuzzleStranding", () => {
   // 0 1 2 3
   // 4 5 6 7
   // 8 9 a b
   // c d e f
-  const openBoard = parseHamiltonianPathBoard([
+  const openBoard = parseHitofudePuzzleBoard([
     "S . . .",
     ". . . .",
     ". . . .",
@@ -91,13 +91,13 @@ describe("findHamiltonianPathStranding", () => {
   const dividingPath = [0, 1, 5, 9, 13, 14];
 
   test("取り残しが無い道には null を返すこと", () => {
-    const stranding = findHamiltonianPathStranding(openBoard, topRowPath);
+    const stranding = findHitofudePuzzleStranding(openBoard, topRowPath);
 
     expect(stranding).toBeNull();
   });
 
   test("先端からも他の未通過マスからも入れないマスを孤立マスとして返すこと", () => {
-    const stranding = findHamiltonianPathStranding(
+    const stranding = findHitofudePuzzleStranding(
       openBoard,
       cornerIsolatingPath,
     );
@@ -106,30 +106,30 @@ describe("findHamiltonianPathStranding", () => {
   });
 
   test("終点にしかなれないマスが2つ以上あれば行き止まりのマスとして返すこと", () => {
-    const stranding = findHamiltonianPathStranding(openBoard, twoDeadEndsPath);
+    const stranding = findHitofudePuzzleStranding(openBoard, twoDeadEndsPath);
 
     expect(stranding?.deadEndCells).toEqual([3, 12]);
   });
 
   test("道で切り離された未通過のマスを返すこと", () => {
-    const stranding = findHamiltonianPathStranding(openBoard, dividingPath);
+    const stranding = findHitofudePuzzleStranding(openBoard, dividingPath);
 
     expect(stranding?.separatedCells).toEqual([4, 8, 12]);
   });
 });
 
-describe("areHamiltonianPathOpenCellsConnected", () => {
-  const connected = parseHamiltonianPathBoard(["S #", ". ."]);
-  const separated = parseHamiltonianPathBoard(["S #", "# ."]);
+describe("areHitofudePuzzleOpenCellsConnected", () => {
+  const connected = parseHitofudePuzzleBoard(["S #", ". ."]);
+  const separated = parseHitofudePuzzleBoard(["S #", "# ."]);
 
   test("穴を回り込んでつながる盤面をつながっているとすること", () => {
-    const result = areHamiltonianPathOpenCellsConnected(connected);
+    const result = areHitofudePuzzleOpenCellsConnected(connected);
 
     expect(result).toBe(true);
   });
 
   test("穴で切り離された盤面をつながっていないとすること", () => {
-    const result = areHamiltonianPathOpenCellsConnected(separated);
+    const result = areHitofudePuzzleOpenCellsConnected(separated);
 
     expect(result).toBe(false);
   });

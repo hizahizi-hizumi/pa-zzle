@@ -1,15 +1,15 @@
 import { cleanup, render } from "@testing-library/react";
 import { createElement } from "react";
 
-import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
-import { animateDeadEnd } from "@/games/hamiltonian-path/ui/board/HamiltonianPathBoard/animate-dead-end";
+import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
+import { animateDeadEnd } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard/animate-dead-end";
 import {
-  HamiltonianPathFigure,
-  hamiltonianPathFigureParts,
-} from "@/games/hamiltonian-path/ui/board/HamiltonianPathFigure";
+  HitofudePuzzleFigure,
+  hitofudePuzzleFigureParts,
+} from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleFigure";
 
 /** 先端（2）から延ばせるマスが無い 3×3 の盤面。 */
-const board = parseHamiltonianPathBoard(["S . .", ". . .", ". . ."]);
+const board = parseHitofudePuzzleBoard(["S . .", ". . .", ". . ."]);
 const path = [0, 1, 4, 5, 2];
 
 afterEach(() => {
@@ -32,7 +32,7 @@ describe("animateDeadEnd", () => {
       }),
     });
     const { container } = render(
-      createElement(HamiltonianPathFigure, {
+      createElement(HitofudePuzzleFigure, {
         board,
         path,
         isDeadEnd: true,
@@ -46,7 +46,7 @@ describe("animateDeadEnd", () => {
     animateDeadEnd(figure);
 
     expect(animatedElements).toEqual([
-      figure.querySelector(`[${hamiltonianPathFigureParts.head}]`),
+      figure.querySelector(`[${hitofudePuzzleFigureParts.head}]`),
     ]);
   });
 

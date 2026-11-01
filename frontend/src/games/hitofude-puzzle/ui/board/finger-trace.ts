@@ -1,5 +1,5 @@
-import { getHamiltonianPathCellPosition } from "@/games/hamiltonian-path/puzzle/board";
-import type { HamiltonianPathTraceStep } from "@/games/hamiltonian-path/puzzle/transitions";
+import { getHitofudePuzzleCellPosition } from "@/games/hitofude-puzzle/puzzle/board";
+import type { HitofudePuzzleTraceStep } from "@/games/hitofude-puzzle/puzzle/transitions";
 
 /** 盤面の上の指の位置。盤面の左上を原点に、マス幅を 1 とした座標。 */
 export type BoardPoint = { x: number; y: number };
@@ -47,7 +47,7 @@ function findFingerCell(
   point: BoardPoint,
   current: number,
 ): number {
-  const { row, column } = getHamiltonianPathCellPosition(size, current);
+  const { row, column } = getHitofudePuzzleCellPosition(size, current);
   const x = Math.min(Math.max(point.x, 0), size);
   const y = Math.min(Math.max(point.y, 0), size);
   const nextRow = row + findSwitchOffset(y, row);
@@ -64,14 +64,14 @@ export function listFingerSteps(
   from: BoardPoint,
   to: BoardPoint,
   current: number,
-): { steps: HamiltonianPathTraceStep[]; cell: number } {
+): { steps: HitofudePuzzleTraceStep[]; cell: number } {
   const deltaX = to.x - from.x;
   const deltaY = to.y - from.y;
   const sampleCount = Math.max(
     1,
     Math.ceil(Math.hypot(deltaX, deltaY) / FINGER_TRACE_STEP),
   );
-  const steps: HamiltonianPathTraceStep[] = [];
+  const steps: HitofudePuzzleTraceStep[] = [];
   let cell = current;
   for (let sample = 1; sample <= sampleCount; sample += 1) {
     const ratio = sample / sampleCount;

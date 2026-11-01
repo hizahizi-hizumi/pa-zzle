@@ -4,24 +4,24 @@ import {
   type ProblemFeatureAxisDisplay,
 } from "@/components/problem-features";
 import {
-  type HamiltonianPathProblemFeatureAxisId,
-  type HamiltonianPathProblemFeatures,
-  hamiltonianPathProblemFeatureAxes,
-} from "@/games/hamiltonian-path/problem/problem-pool";
+  type HitofudePuzzleProblemFeatureAxisId,
+  type HitofudePuzzleProblemFeatures,
+  hitofudePuzzleProblemFeatureAxes,
+} from "@/games/hitofude-puzzle/problem/problem-pool";
 
-export const hamiltonianPathProblemFeatureAxisDisplays = {
+export const hitofudePuzzleProblemFeatureAxisDisplays = {
   "board-size": { label: "盤面", valueFormat: { kind: "square-board-size" } },
 } as const satisfies Record<
-  HamiltonianPathProblemFeatureAxisId,
+  HitofudePuzzleProblemFeatureAxisId,
   ProblemFeatureAxisDisplay
 >;
 
-export function formatHamiltonianPathProblemFeatures(
-  features: HamiltonianPathProblemFeatures,
+export function formatHitofudePuzzleProblemFeatures(
+  features: HitofudePuzzleProblemFeatures,
 ): ProblemFeature[] {
   return formatProblemFeatures(
     features,
-    hamiltonianPathProblemFeatureAxes,
-    hamiltonianPathProblemFeatureAxisDisplays,
+    hitofudePuzzleProblemFeatureAxes,
+    hitofudePuzzleProblemFeatureAxisDisplays,
   );
 }

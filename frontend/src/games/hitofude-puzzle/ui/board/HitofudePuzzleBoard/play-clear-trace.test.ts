@@ -1,14 +1,14 @@
 import { cleanup, render } from "@testing-library/react";
 import { createElement } from "react";
 
-import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
-import { playClearTrace } from "@/games/hamiltonian-path/ui/board/HamiltonianPathBoard/play-clear-trace";
+import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
+import { playClearTrace } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard/play-clear-trace";
 import {
-  HamiltonianPathFigure,
-  hamiltonianPathFigureParts,
-} from "@/games/hamiltonian-path/ui/board/HamiltonianPathFigure";
+  HitofudePuzzleFigure,
+  hitofudePuzzleFigureParts,
+} from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleFigure";
 
-const board = parseHamiltonianPathBoard(["S . .", ". . .", ". . ."]);
+const board = parseHitofudePuzzleBoard(["S . .", ". . .", ". . ."]);
 const path = [0, 1, 2, 5, 4, 3, 6, 7, 8];
 /** 光でなぞる演出とその後の間を十分に超える時間。 */
 const longEnoughMs = 10_000;
@@ -43,7 +43,7 @@ describe("playClearTrace", () => {
       }),
     });
     const { container } = render(
-      createElement(HamiltonianPathFigure, {
+      createElement(HitofudePuzzleFigure, {
         board,
         path,
         isDeadEnd: false,
@@ -58,7 +58,7 @@ describe("playClearTrace", () => {
     await vi.advanceTimersByTimeAsync(longEnoughMs);
 
     expect(animatedElements).toEqual([
-      figure.querySelector(`[${hamiltonianPathFigureParts.clearTrace}]`),
+      figure.querySelector(`[${hitofudePuzzleFigureParts.clearTrace}]`),
     ]);
     expect(onFinished).not.toHaveBeenCalled();
   });

@@ -1,33 +1,33 @@
 import {
-  createHamiltonianPathRefuter,
-  type HamiltonianPathHumanSolveOptions,
-  type HamiltonianPathRefutationStage,
-} from "@/games/hamiltonian-path/problem/generation/human-solver";
+  createHitofudePuzzleRefuter,
+  type HitofudePuzzleHumanSolveOptions,
+  type HitofudePuzzleRefutationStage,
+} from "@/games/hitofude-puzzle/problem/generation/human-solver";
 import {
-  createHamiltonianPathAdjacency,
-  type HamiltonianPathBoard,
-  listHamiltonianPathOpenCells,
-} from "@/games/hamiltonian-path/puzzle/board";
-import { findHamiltonianPathStranding } from "@/games/hamiltonian-path/puzzle/rules";
+  createHitofudePuzzleAdjacency,
+  type HitofudePuzzleBoard,
+  listHitofudePuzzleOpenCells,
+} from "@/games/hitofude-puzzle/puzzle/board";
+import { findHitofudePuzzleStranding } from "@/games/hitofude-puzzle/puzzle/rules";
 
 /** 誤った手を退けるのに要った段階。`6` は1段仮置きを重ねても退けられなかった手。 */
-export type HamiltonianPathBranchRefutationStage =
-  | HamiltonianPathRefutationStage
+export type HitofudePuzzleBranchRefutationStage =
+  | HitofudePuzzleRefutationStage
   | 6;
 
 /**
  * 始点から解の道を引き進めるプレイヤーが出会う分岐。
- * - `branchCount`: 先端から進める手のうち、取り残し（`findHamiltonianPathStranding`）がすぐには見えない手が2つ以上ある地点の数。
+ * - `branchCount`: 先端から進める手のうち、取り残し（`findHitofudePuzzleStranding`）がすぐには見えない手が2つ以上ある地点の数。
  * - `fatalBranchCount`: そのうち、全マスを通れなくなる手を含む地点の数。一意解の問題では、解の道以外の手はすべてそう。
  * - `fatalBranchCountByStage`: 致命的な分岐を、そこで最も見抜きにくい誤った手を退けるのに要る段階で数えたもの。
  * - `longestTrapLength`: 誤った手に入ってから、取り残しがすぐには見えないまま引き進められる最も長いマス数。
  *   探索量の上限に達したら `null`（それより長い）。
  */
-export type HamiltonianPathDrawingBranches = {
+export type HitofudePuzzleDrawingBranches = {
   branchCount: number;
   fatalBranchCount: number;
   fatalBranchCountByStage: Readonly<
-    Record<HamiltonianPathBranchRefutationStage, number>
+    Record<HitofudePuzzleBranchRefutationStage, number>
   >;
   longestTrapLength: number | null;
 };
@@ -38,7 +38,7 @@ const TRAP_SEARCH_STEP_LIMIT = 3_000;
 /**
  * 取り残しがすぐには見えない間だけ道を延ばし続けたときに届く、最も長い道のマス数。解が見つかるか上限に達したら `null`。
  * 研究用 Python の `PathCounter.count`（パリティ・関節点の枝刈りなし）の `max_depth` と同じ量で、
- * 枝刈りの条件は `findHamiltonianPathStranding` と同じ（孤立マス・2つ以上の袋小路・先端から届かないマス）。
+ * 枝刈りの条件は `findHitofudePuzzleStranding` と同じ（孤立マス・2つ以上の袋小路・先端から届かないマス）。
  */
 function measureLongestUnstrandedPath(
   adjacency: readonly (readonly number[])[],
@@ -154,14 +154,14 @@ function measureLongestUnstrandedPath(
  * 一意解なので、解の道以外の手はすべて誤りとして扱い、完成できるかを探索で確かめない。
  * 段階の判定が作業量の上限に達したら `work-limit-reached` を返す。
  */
-export function analyzeHamiltonianPathDrawingBranches(
-  board: HamiltonianPathBoard,
+export function analyzeHitofudePuzzleDrawingBranches(
+  board: HitofudePuzzleBoard,
   solution: readonly number[],
-  options: HamiltonianPathHumanSolveOptions = {},
-): HamiltonianPathDrawingBranches | "work-limit-reached" {
-  const adjacency = createHamiltonianPathAdjacency(board);
-  const openCells = listHamiltonianPathOpenCells(board);
-  const refuter = createHamiltonianPathRefuter(board, options);
+  options: HitofudePuzzleHumanSolveOptions = {},
+): HitofudePuzzleDrawingBranches | "work-limit-reached" {
+  const adjacency = createHitofudePuzzleAdjacency(board);
+  const openCells = listHitofudePuzzleOpenCells(board);
+  const refuter = createHitofudePuzzleRefuter(board, options);
   const fatalBranchCountByStage = { 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
   let branchCount = 0;
   let fatalBranchCount = 0;
@@ -173,13 +173,13 @@ export function analyzeHamiltonianPathDrawingBranches(
     const unstrandedMoves = adjacency[head]!.filter(
       (cell) =>
         !prefix.includes(cell) &&
-        findHamiltonianPathStranding(board, [...prefix, cell]) === null,
+        findHitofudePuzzleStranding(board, [...prefix, cell]) === null,
     );
     if (unstrandedMoves.length < 2) {
       continue;
     }
     branchCount += 1;
-    let hardestStage: HamiltonianPathBranchRefutationStage | null = null;
+    let hardestStage: HitofudePuzzleBranchRefutationStage | null = null;
     for (const wrongMove of unstrandedMoves) {
       if (wrongMove === solution[index + 1]) {
         continue;
@@ -193,7 +193,7 @@ export function analyzeHamiltonianPathDrawingBranches(
       hardestStage = Math.max(
         hardestStage ?? stage,
         stage,
-      ) as HamiltonianPathBranchRefutationStage;
+      ) as HitofudePuzzleBranchRefutationStage;
       const trapPathLength = measureLongestUnstrandedPath(
         adjacency,
         openCells,

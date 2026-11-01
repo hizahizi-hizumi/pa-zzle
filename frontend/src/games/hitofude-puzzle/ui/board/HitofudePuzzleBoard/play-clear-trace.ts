@@ -1,4 +1,4 @@
-import { hamiltonianPathFigureParts } from "@/games/hamiltonian-path/ui/board/HamiltonianPathFigure";
+import { hitofudePuzzleFigureParts } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleFigure";
 import { MOTION_EASING, playAnimations } from "@/lib/motion";
 
 /** 道を1マスなぞる時間。道の長さに比べて短すぎも長すぎもしないよう、全体の長さは下の範囲に収める。 */
@@ -35,7 +35,7 @@ export function playClearTrace(
   return playAnimations({
     animate() {
       const trace = figure?.querySelector(
-        `[${hamiltonianPathFigureParts.clearTrace}]`,
+        `[${hitofudePuzzleFigureParts.clearTrace}]`,
       );
       const animation = trace?.animate?.(clearTraceKeyframes, {
         duration: getClearTraceDurationMs(cellCount),

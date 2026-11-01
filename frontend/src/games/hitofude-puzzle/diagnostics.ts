@@ -6,25 +6,25 @@ import {
 } from "@/games/diagnostics";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import {
-  assessHamiltonianPathDifficulty,
-  type HamiltonianPathDifficulty,
-  type HamiltonianPathDifficultyAssessment,
-} from "@/games/hamiltonian-path/difficulty";
+  assessHitofudePuzzleDifficulty,
+  type HitofudePuzzleDifficulty,
+  type HitofudePuzzleDifficultyAssessment,
+} from "@/games/hitofude-puzzle/difficulty";
 import {
-  analyzeHamiltonianPathDifficulty,
-  type HamiltonianPathDifficultyAnalysis,
-  searchHamiltonianPathSolutionsForAnalysis,
-} from "@/games/hamiltonian-path/problem/difficulty-analysis";
-import type { HamiltonianPathSolutionSearchResult } from "@/games/hamiltonian-path/problem/generation/solver";
-import { measureHamiltonianPathStraightRatio } from "@/games/hamiltonian-path/problem/generation/straightness";
-import { getHamiltonianPathSymmetryKey } from "@/games/hamiltonian-path/problem/generation/symmetry";
+  analyzeHitofudePuzzleDifficulty,
+  type HitofudePuzzleDifficultyAnalysis,
+  searchHitofudePuzzleSolutionsForAnalysis,
+} from "@/games/hitofude-puzzle/problem/difficulty-analysis";
+import type { HitofudePuzzleSolutionSearchResult } from "@/games/hitofude-puzzle/problem/generation/solver";
+import { measureHitofudePuzzleStraightRatio } from "@/games/hitofude-puzzle/problem/generation/straightness";
+import { getHitofudePuzzleSymmetryKey } from "@/games/hitofude-puzzle/problem/generation/symmetry";
 import {
-  type HamiltonianPathProblem,
-  type HamiltonianPathProblemIdentity,
-  isHamiltonianPathProblemIdentity,
-} from "@/games/hamiltonian-path/problem/problem";
-import type { HamiltonianPathPooledProblem } from "@/games/hamiltonian-path/problem/problem-pool";
-import { restoreHamiltonianPathProblem } from "@/games/hamiltonian-path/problem-selection";
+  type HitofudePuzzleProblem,
+  type HitofudePuzzleProblemIdentity,
+  isHitofudePuzzleProblemIdentity,
+} from "@/games/hitofude-puzzle/problem/problem";
+import type { HitofudePuzzlePooledProblem } from "@/games/hitofude-puzzle/problem/problem-pool";
+import { restoreHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem-selection";
 import {
   isNonNegativeFiniteNumber,
   isNonNegativeInteger,
@@ -32,8 +32,8 @@ import {
 } from "@/lib/type-guards";
 
 /** 一意性を確かめた探索の結果。見つけた解そのものは `solution` に分けて持つ。 */
-type HamiltonianPathUniquenessCheck = Pick<
-  HamiltonianPathSolutionSearchResult,
+type HitofudePuzzleUniquenessCheck = Pick<
+  HitofudePuzzleSolutionSearchResult,
   "status" | "solutionCount" | "searchStepCount"
 >;
 
@@ -46,22 +46,22 @@ type HamiltonianPathUniquenessCheck = Pick<
  * - `difficultyAnalysis`: 人間向け解法器の経過（推論段階ごとの発火数・仮置き・先読みの手数）と、描画視点の分岐。
  * - `difficultyAssessment`: 分析から決めたレベル（または提供範囲外の理由）。出題した難易度とは別に、今の規則で分類し直す。
  */
-export type HamiltonianPathDiagnosticSnapshot = InternalDiagnosticSnapshot<
-  "hamiltonian-path",
-  HamiltonianPathDifficulty,
-  HamiltonianPathProblemIdentity
+export type HitofudePuzzleDiagnosticSnapshot = InternalDiagnosticSnapshot<
+  "hitofude-puzzle",
+  HitofudePuzzleDifficulty,
+  HitofudePuzzleProblemIdentity
 > & {
   symmetryKey: string;
-  uniqueness: HamiltonianPathUniquenessCheck;
+  uniqueness: HitofudePuzzleUniquenessCheck;
   solution: readonly number[] | null;
   straightRatio: number | null;
-  difficultyAnalysis: HamiltonianPathDifficultyAnalysis;
-  difficultyAssessment: HamiltonianPathDifficultyAssessment;
+  difficultyAnalysis: HitofudePuzzleDifficultyAnalysis;
+  difficultyAssessment: HitofudePuzzleDifficultyAssessment;
 };
 
 function isUniquenessCheck(
   value: unknown,
-): value is HamiltonianPathUniquenessCheck {
+): value is HitofudePuzzleUniquenessCheck {
   return (
     isRecordObject(value) &&
     (value.status === "complete" || value.status === "search-limit-reached") &&
@@ -77,11 +77,11 @@ function isSolution(value: unknown): value is readonly number[] | null {
   );
 }
 
-const hamiltonianPathDiagnosticFormat: InternalDiagnosticFormat<HamiltonianPathDiagnosticSnapshot> =
+const hitofudePuzzleDiagnosticFormat: InternalDiagnosticFormat<HitofudePuzzleDiagnosticSnapshot> =
   {
-    game: "hamiltonian-path",
+    game: "hitofude-puzzle",
     parseDifficulty: parseDifficultyLevel,
-    isProblemIdentity: isHamiltonianPathProblemIdentity,
+    isProblemIdentity: isHitofudePuzzleProblemIdentity,
     // 解・分析・分類は診断を開いたときの写しで、問題の再現には identity だけを使う。読み戻しでは形の大枠だけを確かめる。
     readDetails({
       symmetryKey,
@@ -106,9 +106,9 @@ const hamiltonianPathDiagnosticFormat: InternalDiagnosticFormat<HamiltonianPathD
             solution,
             straightRatio,
             difficultyAnalysis:
-              difficultyAnalysis as HamiltonianPathDifficultyAnalysis,
+              difficultyAnalysis as HitofudePuzzleDifficultyAnalysis,
             difficultyAssessment:
-              difficultyAssessment as HamiltonianPathDifficultyAssessment,
+              difficultyAssessment as HitofudePuzzleDifficultyAssessment,
           }
         : undefined;
     },
@@ -119,57 +119,57 @@ const hamiltonianPathDiagnosticFormat: InternalDiagnosticFormat<HamiltonianPathD
  * 遊んでいる問題を解き直した正解の道と、難易度を分析し直した結果を添える。
  * 解法器と描画視点の分析を走らせるので、検証情報を開いたときだけ呼ぶ。
  */
-export function createHamiltonianPathDiagnosticSnapshot({
+export function createHitofudePuzzleDiagnosticSnapshot({
   problem,
   ...input
 }: {
-  difficulty: HamiltonianPathDifficulty;
-  problemIdentity: HamiltonianPathProblemIdentity;
-  problem: HamiltonianPathProblem;
+  difficulty: HitofudePuzzleDifficulty;
+  problemIdentity: HitofudePuzzleProblemIdentity;
+  problem: HitofudePuzzleProblem;
   buildRevision: string | null;
-}): HamiltonianPathDiagnosticSnapshot {
-  const solutionSearch = searchHamiltonianPathSolutionsForAnalysis(problem);
+}): HitofudePuzzleDiagnosticSnapshot {
+  const solutionSearch = searchHitofudePuzzleSolutionsForAnalysis(problem);
   const { status, solutionCount, searchStepCount, firstSolutions } =
     solutionSearch;
   const solution =
     status === "complete" && solutionCount === 1
       ? [...firstSolutions[0]!]
       : null;
-  const difficultyAnalysis = analyzeHamiltonianPathDifficulty(
+  const difficultyAnalysis = analyzeHitofudePuzzleDifficulty(
     problem,
     {},
     solutionSearch,
   );
   return {
-    ...createInternalDiagnosticSnapshot(hamiltonianPathDiagnosticFormat, input),
-    symmetryKey: getHamiltonianPathSymmetryKey(problem),
+    ...createInternalDiagnosticSnapshot(hitofudePuzzleDiagnosticFormat, input),
+    symmetryKey: getHitofudePuzzleSymmetryKey(problem),
     uniqueness: { status, solutionCount, searchStepCount },
     solution,
     straightRatio: solution
-      ? measureHamiltonianPathStraightRatio(solution)
+      ? measureHitofudePuzzleStraightRatio(solution)
       : null,
     difficultyAnalysis: structuredClone(difficultyAnalysis),
-    difficultyAssessment: assessHamiltonianPathDifficulty(difficultyAnalysis),
+    difficultyAssessment: assessHitofudePuzzleDifficulty(difficultyAnalysis),
   };
 }
 
-function parseHamiltonianPathDiagnosticSnapshot(
+function parseHitofudePuzzleDiagnosticSnapshot(
   serialized: string,
-): HamiltonianPathDiagnosticSnapshot {
+): HitofudePuzzleDiagnosticSnapshot {
   return parseInternalDiagnosticSnapshot(
     serialized,
-    hamiltonianPathDiagnosticFormat,
+    hitofudePuzzleDiagnosticFormat,
   );
 }
 
 /** 問題集に無い identity は `null` を返す。 */
-function restoreHamiltonianPathProblemFromDiagnosticSnapshot(
-  snapshot: HamiltonianPathDiagnosticSnapshot,
-): HamiltonianPathPooledProblem | null {
-  return restoreHamiltonianPathProblem(snapshot.problemIdentity);
+function restoreHitofudePuzzleProblemFromDiagnosticSnapshot(
+  snapshot: HitofudePuzzleDiagnosticSnapshot,
+): HitofudePuzzlePooledProblem | null {
+  return restoreHitofudePuzzleProblem(snapshot.problemIdentity);
 }
 
 export const _private = {
-  parseHamiltonianPathDiagnosticSnapshot,
-  restoreHamiltonianPathProblemFromDiagnosticSnapshot,
+  parseHitofudePuzzleDiagnosticSnapshot,
+  restoreHitofudePuzzleProblemFromDiagnosticSnapshot,
 };

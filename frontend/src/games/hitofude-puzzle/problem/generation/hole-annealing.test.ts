@@ -1,36 +1,36 @@
 import {
   _private,
-  createHamiltonianPathHoleBoard,
-} from "@/games/hamiltonian-path/problem/generation/hole-annealing";
-import { countHamiltonianPathHoleLayoutViolations } from "@/games/hamiltonian-path/problem/generation/hole-layout";
-import { countHamiltonianPathSolutions } from "@/games/hamiltonian-path/problem/generation/solver";
-import { listHamiltonianPathBoardSymmetries } from "@/games/hamiltonian-path/problem/generation/symmetry";
+  createHitofudePuzzleHoleBoard,
+} from "@/games/hitofude-puzzle/problem/generation/hole-annealing";
+import { countHitofudePuzzleHoleLayoutViolations } from "@/games/hitofude-puzzle/problem/generation/hole-layout";
+import { countHitofudePuzzleSolutions } from "@/games/hitofude-puzzle/problem/generation/solver";
+import { listHitofudePuzzleBoardSymmetries } from "@/games/hitofude-puzzle/problem/generation/symmetry";
 import {
-  type HamiltonianPathBoard,
-  parseHamiltonianPathBoard,
-} from "@/games/hamiltonian-path/puzzle/board";
+  type HitofudePuzzleBoard,
+  parseHitofudePuzzleBoard,
+} from "@/games/hitofude-puzzle/puzzle/board";
 import {
-  areHamiltonianPathOpenCellsConnected,
-  isHamiltonianPathSolved,
-} from "@/games/hamiltonian-path/puzzle/rules";
+  areHitofudePuzzleOpenCellsConnected,
+  isHitofudePuzzleSolved,
+} from "@/games/hitofude-puzzle/puzzle/rules";
 import { createProblemSeededRandom } from "@/games/problem-seed";
 
 const {
   moveHoles,
-  estimateHamiltonianPathHardness,
-  walkHamiltonianPathHolesTowardHardness,
+  estimateHitofudePuzzleHardness,
+  walkHitofudePuzzleHolesTowardHardness,
 } = _private;
 
 /** 6×6 の焼きなましと難しさへの歩行は1回に数秒かかる。 */
 const GENERATION_TIMEOUT_MS = 60_000;
 
-describe("createHamiltonianPathHoleBoard", () => {
+describe("createHitofudePuzzleHoleBoard", () => {
   const seeds = ["hole-board-a", "hole-board-b", "hole-board-c"];
   const generated = seeds.map((seed) =>
-    createHamiltonianPathHoleBoard(5, 0, createProblemSeededRandom(seed)),
+    createHitofudePuzzleHoleBoard(5, 0, createProblemSeededRandom(seed)),
   );
   const regenerated = seeds.map((seed) =>
-    createHamiltonianPathHoleBoard(5, 0, createProblemSeededRandom(seed)),
+    createHitofudePuzzleHoleBoard(5, 0, createProblemSeededRandom(seed)),
   );
 
   test("同じ乱数列から同じ盤面を作ること", () => {
@@ -39,13 +39,13 @@ describe("createHamiltonianPathHoleBoard", () => {
 
   test("穴が見た目の基準を満たし、返した解だけを解に持つ盤面を作ること", () => {
     const checks = generated.map((result) => {
-      const search = countHamiltonianPathSolutions(result!.board);
+      const search = countHitofudePuzzleSolutions(result!.board);
       return {
-        layoutViolations: countHamiltonianPathHoleLayoutViolations(
+        layoutViolations: countHitofudePuzzleHoleLayoutViolations(
           result!.board,
         ),
         solutionCount: search.solutionCount,
-        solved: isHamiltonianPathSolved(result!.board, result!.solution),
+        solved: isHitofudePuzzleSolved(result!.board, result!.solution),
         firstSolution: search.firstSolutions[0],
       };
     });
@@ -62,7 +62,7 @@ describe("createHamiltonianPathHoleBoard", () => {
 });
 
 describe("moveHoles", () => {
-  const board = parseHamiltonianPathBoard([
+  const board = parseHitofudePuzzleBoard([
     ". . # . .",
     ". . . . .",
     "# . S . .",
@@ -74,13 +74,13 @@ describe("moveHoles", () => {
 
   test("始点を穴にせず、穴を昇順に保ち、穴でないマスがつながる盤面だけを返すこと", () => {
     const invalid = moved.filter(
-      (candidate): candidate is HamiltonianPathBoard =>
+      (candidate): candidate is HitofudePuzzleBoard =>
         candidate !== null &&
         (candidate.holes.includes(candidate.start) ||
           candidate.holes.some(
             (hole, index) => index > 0 && candidate.holes[index - 1]! >= hole,
           ) ||
-          !areHamiltonianPathOpenCellsConnected(candidate)),
+          !areHitofudePuzzleOpenCellsConnected(candidate)),
     );
 
     expect(invalid).toEqual([]);
@@ -102,47 +102,47 @@ describe("moveHoles", () => {
   });
 });
 
-describe("estimateHamiltonianPathHardness", () => {
+describe("estimateHitofudePuzzleHardness", () => {
   /** 穴を回り込むしかない、局所の推論だけで決まる盤面。 */
-  const forcedBoard = parseHamiltonianPathBoard(["S . .", "# # .", ". . ."]);
-  const { board } = createHamiltonianPathHoleBoard(
+  const forcedBoard = parseHitofudePuzzleBoard(["S . .", "# # .", ". . ."]);
+  const { board } = createHitofudePuzzleHoleBoard(
     6,
     0,
     createProblemSeededRandom("estimate-hardness"),
   )!;
 
   test("一意解の盤面のどの向きからも同じ見積もりを返すこと", () => {
-    const estimates = listHamiltonianPathBoardSymmetries(board).map(
-      estimateHamiltonianPathHardness,
+    const estimates = listHitofudePuzzleBoardSymmetries(board).map(
+      estimateHitofudePuzzleHardness,
     );
 
     expect(new Set(estimates).size).toBe(1);
   });
 
   test("局所の推論だけで解ける盤面を 0 と見積もること", () => {
-    const estimate = estimateHamiltonianPathHardness(forcedBoard);
+    const estimate = estimateHitofudePuzzleHardness(forcedBoard);
 
     expect(estimate).toBe(0);
   });
 });
 
-describe("walkHamiltonianPathHolesTowardHardness", () => {
-  const origin = createHamiltonianPathHoleBoard(
+describe("walkHitofudePuzzleHolesTowardHardness", () => {
+  const origin = createHitofudePuzzleHoleBoard(
     6,
     0,
     createProblemSeededRandom("walk-origin"),
   )!;
-  const originHardness = estimateHamiltonianPathHardness(origin.board) ?? 0;
+  const originHardness = estimateHitofudePuzzleHardness(origin.board) ?? 0;
 
   test(
     "同じ乱数列から同じ盤面へ歩き、出発の盤面より易しくない一意解の盤面を返すこと",
     () => {
-      const walked = walkHamiltonianPathHolesTowardHardness(
+      const walked = walkHitofudePuzzleHolesTowardHardness(
         origin,
         originHardness + 1,
         createProblemSeededRandom("walk"),
       );
-      const rewalked = walkHamiltonianPathHolesTowardHardness(
+      const rewalked = walkHitofudePuzzleHolesTowardHardness(
         origin,
         originHardness + 1,
         createProblemSeededRandom("walk"),
@@ -150,11 +150,11 @@ describe("walkHamiltonianPathHolesTowardHardness", () => {
 
       expect(rewalked).toEqual(walked);
       expect(
-        estimateHamiltonianPathHardness(walked.board),
+        estimateHitofudePuzzleHardness(walked.board),
       ).toBeGreaterThanOrEqual(originHardness);
-      expect(countHamiltonianPathSolutions(walked.board).solutionCount).toBe(1);
-      expect(countHamiltonianPathHoleLayoutViolations(walked.board)).toBe(0);
-      expect(isHamiltonianPathSolved(walked.board, walked.solution)).toBe(true);
+      expect(countHitofudePuzzleSolutions(walked.board).solutionCount).toBe(1);
+      expect(countHitofudePuzzleHoleLayoutViolations(walked.board)).toBe(0);
+      expect(isHitofudePuzzleSolved(walked.board, walked.solution)).toBe(true);
     },
     GENERATION_TIMEOUT_MS,
   );

@@ -1,19 +1,19 @@
 import {
-  analyzeHamiltonianPathDifficulty,
-  getHamiltonianPathSolveWorkload,
-  type HamiltonianPathAnalyzedDifficulty,
-} from "@/games/hamiltonian-path/problem/difficulty-analysis";
-import { traceHamiltonianPathHumanSolve } from "@/games/hamiltonian-path/problem/generation/human-solver";
-import { listHamiltonianPathBoardSymmetries } from "@/games/hamiltonian-path/problem/generation/symmetry";
-import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem/generator";
-import { createHamiltonianPathProblemIdentity } from "@/games/hamiltonian-path/problem/problem";
-import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
+  analyzeHitofudePuzzleDifficulty,
+  getHitofudePuzzleSolveWorkload,
+  type HitofudePuzzleAnalyzedDifficulty,
+} from "@/games/hitofude-puzzle/problem/difficulty-analysis";
+import { traceHitofudePuzzleHumanSolve } from "@/games/hitofude-puzzle/problem/generation/human-solver";
+import { listHitofudePuzzleBoardSymmetries } from "@/games/hitofude-puzzle/problem/generation/symmetry";
+import { generateHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/generator";
+import { createHitofudePuzzleProblemIdentity } from "@/games/hitofude-puzzle/problem/problem";
+import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
 
 /**
  * 研究用 Python の HumanSolver で仮置き2回（先読み5手と8手）、decision_profile で分岐5の盤面（`hp-7-t4-1` を同型の正規化キーの向きで書いたもの）。
  * 回転・反転すると、解法器は仮置き2回から7回で道を決める。
  */
-const pythonFixtureProblem = parseHamiltonianPathBoard([
+const pythonFixtureProblem = parseHitofudePuzzleBoard([
   ". . # . . . .",
   ". . . # . . .",
   ". . . . . . .",
@@ -23,12 +23,12 @@ const pythonFixtureProblem = parseHamiltonianPathBoard([
   ". S . . . . .",
 ]);
 
-describe("analyzeHamiltonianPathDifficulty", () => {
+describe("analyzeHitofudePuzzleDifficulty", () => {
   describe("一意解の問題の場合", () => {
     const problem = pythonFixtureProblem;
 
     test("規模と推論と描画視点の分岐の特徴を返すこと", () => {
-      const result = analyzeHamiltonianPathDifficulty(problem);
+      const result = analyzeHitofudePuzzleDifficulty(problem);
 
       expect(result).toEqual({
         status: "analyzed",
@@ -59,7 +59,7 @@ describe("analyzeHamiltonianPathDifficulty", () => {
     });
 
     test("推論を進めた回数が上限に達したら評価不能とすること", () => {
-      const result = analyzeHamiltonianPathDifficulty(problem, {
+      const result = analyzeHitofudePuzzleDifficulty(problem, {
         workLimit: 10,
       });
 
@@ -75,23 +75,23 @@ describe("analyzeHamiltonianPathDifficulty", () => {
       ["研究用 Python の盤面", pythonFixtureProblem],
       [
         "hp-7-t0-19",
-        generateHamiltonianPathProblem(
-          createHamiltonianPathProblemIdentity(7, 0, 19),
+        generateHitofudePuzzleProblem(
+          createHitofudePuzzleProblemIdentity(7, 0, 19),
         ).problem,
       ],
     ] as const;
     const heavilyReadOrientation =
-      listHamiltonianPathBoardSymmetries(pythonFixtureProblem)[2]!;
+      listHitofudePuzzleBoardSymmetries(pythonFixtureProblem)[2]!;
 
     test.each(cases)(
       "%s のどの向きからも、同じ分析結果と作業の量を返すこと",
       (_, problem) => {
-        const analyses = listHamiltonianPathBoardSymmetries(problem).map(
-          (orientation) => analyzeHamiltonianPathDifficulty(orientation),
+        const analyses = listHitofudePuzzleBoardSymmetries(problem).map(
+          (orientation) => analyzeHitofudePuzzleDifficulty(orientation),
         );
         const workloads = analyses.map((analysis) =>
           analysis.status === "analyzed"
-            ? getHamiltonianPathSolveWorkload(analysis)
+            ? getHitofudePuzzleSolveWorkload(analysis)
             : null,
         );
 
@@ -102,13 +102,13 @@ describe("analyzeHamiltonianPathDifficulty", () => {
     );
 
     test("仮置きの多い向きの盤面を、その向きだけで読むと仮置きが7回要ること", () => {
-      const trace = traceHamiltonianPathHumanSolve(heavilyReadOrientation);
+      const trace = traceHitofudePuzzleHumanSolve(heavilyReadOrientation);
 
       expect(trace.assumptionCount).toBe(7);
     });
 
     test("仮置きの多い向きの盤面からも、最も仮置きの少ない向きの読み方を採ること", () => {
-      const result = analyzeHamiltonianPathDifficulty(heavilyReadOrientation);
+      const result = analyzeHitofudePuzzleDifficulty(heavilyReadOrientation);
 
       expect(result).toMatchObject({
         status: "analyzed",
@@ -118,7 +118,7 @@ describe("analyzeHamiltonianPathDifficulty", () => {
   });
 
   describe("穴の無い全面盤の場合", () => {
-    const problem = parseHamiltonianPathBoard([
+    const problem = parseHitofudePuzzleBoard([
       "S . . .",
       ". . . .",
       ". . . .",
@@ -126,7 +126,7 @@ describe("analyzeHamiltonianPathDifficulty", () => {
     ]);
 
     test("解が2つ以上あるので成立しない問題とすること", () => {
-      const result = analyzeHamiltonianPathDifficulty(problem);
+      const result = analyzeHitofudePuzzleDifficulty(problem);
 
       expect(result).toMatchObject({
         status: "invalid",
@@ -137,10 +137,10 @@ describe("analyzeHamiltonianPathDifficulty", () => {
 
   describe("始点の色が多い側でない盤面の場合", () => {
     // 3×3 は市松模様の色が5マスと4マスで、道は5マスの色から始まり5マスの色で終わる。
-    const problem = parseHamiltonianPathBoard([". S .", ". . .", ". . ."]);
+    const problem = parseHitofudePuzzleBoard([". S .", ". . .", ". . ."]);
 
     test("解が無いので成立しない問題とすること", () => {
-      const result = analyzeHamiltonianPathDifficulty(problem);
+      const result = analyzeHitofudePuzzleDifficulty(problem);
 
       expect(result).toMatchObject({
         status: "invalid",
@@ -150,7 +150,7 @@ describe("analyzeHamiltonianPathDifficulty", () => {
   });
 });
 
-describe("getHamiltonianPathSolveWorkload", () => {
+describe("getHitofudePuzzleSolveWorkload", () => {
   const analysis = {
     status: "analyzed",
     scale: {
@@ -176,10 +176,10 @@ describe("getHamiltonianPathSolveWorkload", () => {
       fatalBranchCountByStage: { 2: 9, 3: 0, 4: 0, 5: 1, 6: 0 },
       longestTrapLength: 40,
     },
-  } as const satisfies HamiltonianPathAnalyzedDifficulty;
+  } as const satisfies HitofudePuzzleAnalyzedDifficulty;
 
   test("なぞる長さ・先読みの回数と量・迷う分岐の数を取り出すこと", () => {
-    const workload = getHamiltonianPathSolveWorkload(analysis);
+    const workload = getHitofudePuzzleSolveWorkload(analysis);
 
     expect(workload).toEqual({
       openCellCount: 64,

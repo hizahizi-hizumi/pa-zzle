@@ -1,6 +1,6 @@
-import type { HamiltonianPathBlockedMove } from "@/games/hamiltonian-path/play/use-hamiltonian-path-play";
-import type { HamiltonianPathDirection } from "@/games/hamiltonian-path/puzzle/board";
-import { hamiltonianPathFigureParts } from "@/games/hamiltonian-path/ui/board/HamiltonianPathFigure";
+import type { HitofudePuzzleBlockedMove } from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
+import type { HitofudePuzzleDirection } from "@/games/hitofude-puzzle/puzzle/board";
+import { hitofudePuzzleFigureParts } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleFigure";
 import { playRejectionShake, type RejectionShakeTiming } from "@/lib/motion";
 
 const headShakeTiming: RejectionShakeTiming = {
@@ -27,7 +27,7 @@ const directionVectors = {
   right: { x: 1, y: 0 },
   down: { x: 0, y: 1 },
   left: { x: -1, y: 0 },
-} as const satisfies Record<HamiltonianPathDirection, { x: number; y: number }>;
+} as const satisfies Record<HitofudePuzzleDirection, { x: number; y: number }>;
 
 /** SVG の中の要素の CSS の長さは、図の座標（マス幅 1）で読まれる。 */
 function translate(x: number, y: number): Keyframe {
@@ -35,7 +35,7 @@ function translate(x: number, y: number): Keyframe {
 }
 
 function createHeadShakeKeyframes(
-  direction: HamiltonianPathDirection | null,
+  direction: HitofudePuzzleDirection | null,
 ): Keyframe[] {
   if (direction === null) {
     return [
@@ -63,16 +63,16 @@ function createHeadShakeKeyframes(
  */
 export function animateBlockedMove(
   figure: SVGSVGElement | null,
-  blockedMove: HamiltonianPathBlockedMove,
+  blockedMove: HitofudePuzzleBlockedMove,
 ): void {
   playRejectionShake(
-    figure?.querySelector(`[${hamiltonianPathFigureParts.head}]`),
+    figure?.querySelector(`[${hitofudePuzzleFigureParts.head}]`),
     createHeadShakeKeyframes(blockedMove.direction),
     headShakeTiming,
   );
   if (blockedMove.cell !== null) {
     figure
-      ?.querySelector(`[${hamiltonianPathFigureParts.blockedMark}]`)
+      ?.querySelector(`[${hitofudePuzzleFigureParts.blockedMark}]`)
       ?.animate?.(blockedMarkKeyframes, {
         duration: BLOCKED_MARK_DURATION_MS,
         easing: "ease-out",

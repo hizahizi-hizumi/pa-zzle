@@ -1,31 +1,31 @@
 import { difficultyLevels } from "@/games/difficulty";
-import { createHamiltonianPathProblemIdentity } from "@/games/hamiltonian-path/problem/problem";
+import { createHitofudePuzzleProblemIdentity } from "@/games/hitofude-puzzle/problem/problem";
 import {
-  decodeHamiltonianPathPoolProblem,
-  encodeHamiltonianPathPoolHoles,
-  findHamiltonianPathPoolEntry,
-  findHamiltonianPathPoolEntryByProblemId,
-  listHamiltonianPathPoolEntries,
-  toHamiltonianPathPooledProblem,
-  toHamiltonianPathPoolIdentity,
-} from "@/games/hamiltonian-path/problem/problem-pool";
-import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
+  decodeHitofudePuzzlePoolProblem,
+  encodeHitofudePuzzlePoolHoles,
+  findHitofudePuzzlePoolEntry,
+  findHitofudePuzzlePoolEntryByProblemId,
+  listHitofudePuzzlePoolEntries,
+  toHitofudePuzzlePooledProblem,
+  toHitofudePuzzlePoolIdentity,
+} from "@/games/hitofude-puzzle/problem/problem-pool";
+import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
 import { createProblemId } from "@/games/problem-id";
 
-describe("encodeHamiltonianPathPoolHoles", () => {
+describe("encodeHitofudePuzzlePoolHoles", () => {
   // 9マスのビット列のうち、上の中央（1番）と右下（8番）が立つ。
-  const board = parseHamiltonianPathBoard(["S # .", ". . .", ". . #"]);
+  const board = parseHitofudePuzzleBoard(["S # .", ". . .", ". . #"]);
 
   test("枠の全マスの順のビット列を16進で表すこと", () => {
-    const encoded = encodeHamiltonianPathPoolHoles(board);
+    const encoded = encodeHitofudePuzzlePoolHoles(board);
 
     expect(encoded).toBe("408");
   });
 });
 
-describe("decodeHamiltonianPathPoolProblem", () => {
-  describe("encodeHamiltonianPathPoolHoles で表した問題", () => {
-    const problem = parseHamiltonianPathBoard([
+describe("decodeHitofudePuzzlePoolProblem", () => {
+  describe("encodeHitofudePuzzlePoolHoles で表した問題", () => {
+    const problem = parseHitofudePuzzleBoard([
       "# . . . . . . #",
       ". . . # . . . .",
       ". . . . . . . .",
@@ -35,10 +35,10 @@ describe("decodeHamiltonianPathPoolProblem", () => {
       "# . . . # . . .",
       ". . . . . . . .",
     ]);
-    const encoded = encodeHamiltonianPathPoolHoles(problem);
+    const encoded = encodeHitofudePuzzlePoolHoles(problem);
 
     test("元の問題へ戻すこと", () => {
-      const decoded = decodeHamiltonianPathPoolProblem(
+      const decoded = decodeHitofudePuzzlePoolProblem(
         problem.size,
         problem.start,
         encoded,
@@ -61,16 +61,16 @@ describe("decodeHamiltonianPathPoolProblem", () => {
     "%sを拒否すること",
     (_, size, start, encodedHoles) => {
       const act = () =>
-        decodeHamiltonianPathPoolProblem(size, start, encodedHoles);
+        decodeHitofudePuzzlePoolProblem(size, start, encodedHoles);
 
       expect(act).toThrow();
     },
   );
 });
 
-describe("toHamiltonianPathPoolIdentity", () => {
+describe("toHitofudePuzzlePoolIdentity", () => {
   test("盤面サイズ・仮置きの回数の目標・候補番号から identity を作ること", () => {
-    const identity = toHamiltonianPathPoolIdentity([
+    const identity = toHitofudePuzzlePoolIdentity([
       7,
       4,
       219,
@@ -82,12 +82,12 @@ describe("toHamiltonianPathPoolIdentity", () => {
       7,
     ]);
 
-    expect(identity).toEqual(createHamiltonianPathProblemIdentity(7, 4, 219));
+    expect(identity).toEqual(createHitofudePuzzleProblemIdentity(7, 4, 219));
   });
 });
 
-describe("toHamiltonianPathPooledProblem", () => {
-  const problem = parseHamiltonianPathBoard([
+describe("toHitofudePuzzlePooledProblem", () => {
+  const problem = parseHitofudePuzzleBoard([
     ". . # . . .",
     ". . . . . .",
     "# . . S . .",
@@ -95,15 +95,15 @@ describe("toHamiltonianPathPooledProblem", () => {
     ". . . . . .",
     ". # . . . .",
   ]);
-  const identity = createHamiltonianPathProblemIdentity(6, 0, 4);
+  const identity = createHitofudePuzzleProblemIdentity(6, 0, 4);
 
   test("問題集の作業の量と、盤面から数えたなぞる長さを伴うこと", () => {
-    const pooled = toHamiltonianPathPooledProblem([
+    const pooled = toHitofudePuzzlePooledProblem([
       6,
       0,
       4,
       problem.start,
-      encodeHamiltonianPathPoolHoles(problem),
+      encodeHitofudePuzzlePoolHoles(problem),
       2,
       13,
       7,
@@ -124,12 +124,12 @@ describe("toHamiltonianPathPooledProblem", () => {
   });
 });
 
-describe("findHamiltonianPathPoolEntryByProblemId", () => {
+describe("findHitofudePuzzlePoolEntryByProblemId", () => {
   const poolEntries = difficultyLevels.flatMap(({ id: difficulty }) =>
-    listHamiltonianPathPoolEntries(difficulty).map((entry) => ({
+    listHitofudePuzzlePoolEntries(difficulty).map((entry) => ({
       difficulty,
       entry,
-      problemId: createProblemId(toHamiltonianPathPoolIdentity(entry)),
+      problemId: createProblemId(toHitofudePuzzlePoolIdentity(entry)),
     })),
   );
 
@@ -144,32 +144,31 @@ describe("findHamiltonianPathPoolEntryByProblemId", () => {
   test("問題集の全項目をその難易度と問題IDで引けること", () => {
     const unresolvedEntries = poolEntries.filter(
       ({ difficulty, entry, problemId }) =>
-        findHamiltonianPathPoolEntryByProblemId(difficulty, problemId) !==
-        entry,
+        findHitofudePuzzlePoolEntryByProblemId(difficulty, problemId) !== entry,
     );
 
     expect(unresolvedEntries).toEqual([]);
   });
 
   describe("別の難易度の問題ID", () => {
-    const [entry] = listHamiltonianPathPoolEntries("1");
-    const problemId = createProblemId(toHamiltonianPathPoolIdentity(entry!));
+    const [entry] = listHitofudePuzzlePoolEntries("1");
+    const problemId = createProblemId(toHitofudePuzzlePoolIdentity(entry!));
 
     test("null を返すこと", () => {
-      const found = findHamiltonianPathPoolEntryByProblemId("2", problemId);
+      const found = findHitofudePuzzlePoolEntryByProblemId("2", problemId);
 
       expect(found).toBeNull();
     });
   });
 });
 
-describe("findHamiltonianPathPoolEntry", () => {
-  const entry = listHamiltonianPathPoolEntries("3")[0]!;
-  const identity = toHamiltonianPathPoolIdentity(entry);
+describe("findHitofudePuzzlePoolEntry", () => {
+  const entry = listHitofudePuzzlePoolEntries("3")[0]!;
+  const identity = toHitofudePuzzlePoolIdentity(entry);
   const otherTarget = identity.conditions.targetAssumptionCount === 0 ? 4 : 0;
 
   test("問題集の identity から項目を引くこと", () => {
-    const found = findHamiltonianPathPoolEntry(structuredClone(identity));
+    const found = findHitofudePuzzlePoolEntry(structuredClone(identity));
 
     expect(found).toBe(entry);
   });
@@ -191,7 +190,7 @@ describe("findHamiltonianPathPoolEntry", () => {
   test.each(unknownIdentities)(
     "%s identity には null を返すこと",
     (_, unknown) => {
-      const found = findHamiltonianPathPoolEntry(unknown);
+      const found = findHitofudePuzzlePoolEntry(unknown);
 
       expect(found).toBeNull();
     },

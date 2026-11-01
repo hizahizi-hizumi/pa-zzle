@@ -3,22 +3,21 @@
  * - `holes`: 穴の番号。穴は盤面に無いマスで、道は通れず、通らなくてよい。外周の穴は盤面の外形を欠く。昇順で重複しない。
  * - `start`: 道の始点のマス。
  */
-export type HamiltonianPathBoard = {
+export type HitofudePuzzleBoard = {
   size: number;
   holes: readonly number[];
   start: number;
 };
 
 /** 矢印キーなどで先端から進む向き。並びは隣のマスを列挙する順でもある。 */
-export const hamiltonianPathDirections = [
+export const hitofudePuzzleDirections = [
   "up",
   "right",
   "down",
   "left",
 ] as const;
 
-export type HamiltonianPathDirection =
-  (typeof hamiltonianPathDirections)[number];
+export type HitofudePuzzleDirection = (typeof hitofudePuzzleDirections)[number];
 
 const directionOffsets = {
   up: { row: -1, column: 0 },
@@ -26,21 +25,21 @@ const directionOffsets = {
   down: { row: 1, column: 0 },
   left: { row: 0, column: -1 },
 } as const satisfies Record<
-  HamiltonianPathDirection,
+  HitofudePuzzleDirection,
   { row: number; column: number }
 >;
 
-export type HamiltonianPathCellPosition = { row: number; column: number };
+export type HitofudePuzzleCellPosition = { row: number; column: number };
 
-export function getHamiltonianPathCellPosition(
+export function getHitofudePuzzleCellPosition(
   size: number,
   cell: number,
-): HamiltonianPathCellPosition {
+): HitofudePuzzleCellPosition {
   return { row: Math.floor(cell / size), column: cell % size };
 }
 
 /** 枠の中のマス番号か。穴も枠の中にある。 */
-export function isHamiltonianPathCellOnBoard(
+export function isHitofudePuzzleCellOnBoard(
   size: number,
   cell: number,
 ): boolean {
@@ -48,12 +47,12 @@ export function isHamiltonianPathCellOnBoard(
 }
 
 /** `cell` から `direction` の向きに隣り合うマス。枠の外なら `null`。 */
-export function getHamiltonianPathNeighborCell(
+export function getHitofudePuzzleNeighborCell(
   size: number,
   cell: number,
-  direction: HamiltonianPathDirection,
+  direction: HitofudePuzzleDirection,
 ): number | null {
-  const { row, column } = getHamiltonianPathCellPosition(size, cell);
+  const { row, column } = getHitofudePuzzleCellPosition(size, cell);
   const offset = directionOffsets[direction];
   const nextRow = row + offset.row;
   const nextColumn = column + offset.column;
@@ -63,67 +62,65 @@ export function getHamiltonianPathNeighborCell(
   return nextRow * size + nextColumn;
 }
 
-/** 穴を考えない、枠の中で上下左右に隣り合うマス。並びは `hamiltonianPathDirections` に従う。 */
-export function listHamiltonianPathGridNeighbors(
+/** 穴を考えない、枠の中で上下左右に隣り合うマス。並びは `hitofudePuzzleDirections` に従う。 */
+export function listHitofudePuzzleGridNeighbors(
   size: number,
   cell: number,
 ): number[] {
-  return hamiltonianPathDirections.flatMap(function neighborToward(direction) {
-    const neighbor = getHamiltonianPathNeighborCell(size, cell, direction);
+  return hitofudePuzzleDirections.flatMap(function neighborToward(direction) {
+    const neighbor = getHitofudePuzzleNeighborCell(size, cell, direction);
     return neighbor === null ? [] : [neighbor];
   });
 }
 
 /** `from` から見て、上下左右に隣り合う `to` がある向き。隣り合わなければ `null`。 */
-export function findHamiltonianPathDirection(
+export function findHitofudePuzzleDirection(
   size: number,
   from: number,
   to: number,
-): HamiltonianPathDirection | null {
+): HitofudePuzzleDirection | null {
   return (
-    hamiltonianPathDirections.find(
+    hitofudePuzzleDirections.find(
       (direction) =>
-        getHamiltonianPathNeighborCell(size, from, direction) === to,
+        getHitofudePuzzleNeighborCell(size, from, direction) === to,
     ) ?? null
   );
 }
 
-export function areHamiltonianPathCellsAdjacent(
+export function areHitofudePuzzleCellsAdjacent(
   size: number,
   left: number,
   right: number,
 ): boolean {
-  return listHamiltonianPathGridNeighbors(size, left).includes(right);
+  return listHitofudePuzzleGridNeighbors(size, left).includes(right);
 }
 
-export function isHamiltonianPathHole(
-  board: HamiltonianPathBoard,
+export function isHitofudePuzzleHole(
+  board: HitofudePuzzleBoard,
   cell: number,
 ): boolean {
   return board.holes.includes(cell);
 }
 
 /** 枠の全マスの番号。穴を含む。 */
-export function listHamiltonianPathCells(size: number): number[] {
+export function listHitofudePuzzleCells(size: number): number[] {
   return Array.from({ length: size * size }, (_, cell) => cell);
 }
 
 /** 穴でない、道が通るマスの番号。 */
-export function listHamiltonianPathOpenCells(
-  board: HamiltonianPathBoard,
+export function listHitofudePuzzleOpenCells(
+  board: HitofudePuzzleBoard,
 ): number[] {
   const holes = new Set(board.holes);
-  return listHamiltonianPathCells(board.size).filter(
-    (cell) => !holes.has(cell),
-  );
+  return listHitofudePuzzleCells(board.size).filter((cell) => !holes.has(cell));
 }
 
 /**
  * マスごとの、道が次に進める隣のマス（上下左右に隣り合う、穴でないマス）。
- * 穴の項は空。隣の並びは `hamiltonianPathDirections` に従う。
+ * 穴の項は空。隣の並びは `hitofudePuzzleDirections` に従う。
  */
-export function createHamiltonianPathAdjacency(
-  board: HamiltonianPathBoard,
+export function createHitofudePuzzleAdjacency(
+  board: HitofudePuzzleBoard,
 ): readonly (readonly number[])[] {
   const holes = new Set(board.holes);
   return Array.from(
@@ -132,7 +129,7 @@ export function createHamiltonianPathAdjacency(
       if (holes.has(cell)) {
         return [];
       }
-      return listHamiltonianPathGridNeighbors(board.size, cell).filter(
+      return listHitofudePuzzleGridNeighbors(board.size, cell).filter(
         (neighbor) => !holes.has(neighbor),
       );
     },
@@ -145,23 +142,23 @@ function isStrictlyIncreasing(values: readonly number[]): boolean {
   );
 }
 
-export function assertHamiltonianPathBoard(board: HamiltonianPathBoard): void {
+export function assertHitofudePuzzleBoard(board: HitofudePuzzleBoard): void {
   const { size, holes, start } = board;
   if (!Number.isInteger(size) || size < 1) {
     throw new RangeError(
-      "Hamiltonian path board size must be a positive integer",
+      "Hitofude puzzle board size must be a positive integer",
     );
   }
   if (
-    !holes.every((cell) => isHamiltonianPathCellOnBoard(size, cell)) ||
+    !holes.every((cell) => isHitofudePuzzleCellOnBoard(size, cell)) ||
     !isStrictlyIncreasing(holes)
   ) {
     throw new RangeError(
-      "Hamiltonian path holes must be ascending distinct cells on the board",
+      "Hitofude puzzle holes must be ascending distinct cells on the board",
     );
   }
-  if (!isHamiltonianPathCellOnBoard(size, start) || holes.includes(start)) {
-    throw new RangeError("Hamiltonian path start must not be a hole");
+  if (!isHitofudePuzzleCellOnBoard(size, start) || holes.includes(start)) {
+    throw new RangeError("Hitofude puzzle start must not be a hole");
   }
 }
 
@@ -173,8 +170,8 @@ const cellSeparator = " ";
  * 1行が枠の1行で、マスを空白で区切って書く（`.` 道が通るマス、`#` 穴、`S` 始点）。
  * 例: 2×2 で左上が始点、右下が穴 → `["S .", ". #"]`。
  */
-export function formatHamiltonianPathBoard(
-  board: HamiltonianPathBoard,
+export function formatHitofudePuzzleBoard(
+  board: HitofudePuzzleBoard,
 ): string[] {
   const { size } = board;
   const holes = new Set(board.holes);
@@ -190,10 +187,10 @@ export function formatHamiltonianPathBoard(
   );
 }
 
-/** `formatHamiltonianPathBoard` の記法から盤面を作る。 */
-export function parseHamiltonianPathBoard(
+/** `formatHitofudePuzzleBoard` の記法から盤面を作る。 */
+export function parseHitofudePuzzleBoard(
   rows: readonly string[],
-): HamiltonianPathBoard {
+): HitofudePuzzleBoard {
   const size = rows.length;
   const holes: number[] = [];
   let start: number | null = null;
@@ -202,7 +199,7 @@ export function parseHamiltonianPathBoard(
     const notations = line.split(cellSeparator);
     if (notations.length !== size) {
       throw new RangeError(
-        `Hamiltonian path notation row must have ${size} cells: ${line}`,
+        `Hitofude puzzle notation row must have ${size} cells: ${line}`,
       );
     }
     for (const [column, notation] of notations.entries()) {
@@ -211,20 +208,20 @@ export function parseHamiltonianPathBoard(
         holes.push(cell);
       } else if (notation === cellNotation.start) {
         if (start !== null) {
-          throw new RangeError("Hamiltonian path notation must have one start");
+          throw new RangeError("Hitofude puzzle notation must have one start");
         }
         start = cell;
       } else if (notation !== cellNotation.open) {
         throw new RangeError(
-          `Unknown Hamiltonian path cell notation: ${notation}`,
+          `Unknown Hitofude puzzle cell notation: ${notation}`,
         );
       }
     }
   }
   if (start === null) {
-    throw new RangeError("Hamiltonian path notation must have a start");
+    throw new RangeError("Hitofude puzzle notation must have a start");
   }
   const board = { size, holes, start };
-  assertHamiltonianPathBoard(board);
+  assertHitofudePuzzleBoard(board);
   return board;
 }

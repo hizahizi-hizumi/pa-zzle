@@ -1,1 +1,1 @@
-export { HamiltonianPathDifficultyView as default } from "@/views/HamiltonianPathDifficultyView";
+export { HitofudePuzzleDifficultyView as default } from "@/views/HitofudePuzzleDifficultyView";

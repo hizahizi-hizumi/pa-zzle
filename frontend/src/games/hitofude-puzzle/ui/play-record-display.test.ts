@@ -1,13 +1,13 @@
-import { hamiltonianPathPlayRecordDisplay } from "@/games/hamiltonian-path/ui/play-record-display";
+import { hitofudePuzzlePlayRecordDisplay } from "@/games/hitofude-puzzle/ui/play-record-display";
 
-describe("hamiltonianPathPlayRecordDisplay", () => {
+describe("hitofudePuzzlePlayRecordDisplay", () => {
   const personalBestMetricIds =
-    hamiltonianPathPlayRecordDisplay.definition.personalBestMetrics.map(
+    hitofudePuzzlePlayRecordDisplay.definition.personalBestMetrics.map(
       ({ id }) => id,
     );
 
   test("自己ベストで比べる指標をすべて表示できること", () => {
-    const metricIds = hamiltonianPathPlayRecordDisplay.metrics.map(
+    const metricIds = hitofudePuzzlePlayRecordDisplay.metrics.map(
       ({ id }) => id,
     );
 
@@ -15,7 +15,7 @@ describe("hamiltonianPathPlayRecordDisplay", () => {
   });
 
   test("引き直しの回数を単位付きで表示すること", () => {
-    const backtrack = hamiltonianPathPlayRecordDisplay.metrics.find(
+    const backtrack = hitofudePuzzlePlayRecordDisplay.metrics.find(
       ({ id }) => id === "backtrack-count",
     );
 
@@ -25,7 +25,7 @@ describe("hamiltonianPathPlayRecordDisplay", () => {
 
   test("離脱の進み具合を時間・通ったマス・引き直しの順に単位付きで表示すること", () => {
     const progress = Object.values(
-      hamiltonianPathPlayRecordDisplay.progress,
+      hitofudePuzzlePlayRecordDisplay.progress,
     ).map(({ label, formatValue }) => `${label} ${formatValue(12)}`);
 
     expect(progress).toEqual([
@@ -45,7 +45,7 @@ describe("hamiltonianPathPlayRecordDisplay", () => {
     "比較条件 %s を利用者向けラベル %s へ変換すること",
     (comparisonKey, expected) => {
       const label =
-        hamiltonianPathPlayRecordDisplay.getComparisonLabel(comparisonKey);
+        hitofudePuzzlePlayRecordDisplay.getComparisonLabel(comparisonKey);
 
       expect(label).toBe(expected);
     },

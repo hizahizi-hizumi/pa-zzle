@@ -1,9 +1,9 @@
 import {
-  createHamiltonianPathAdjacency,
-  getHamiltonianPathCellPosition,
-  type HamiltonianPathBoard,
-  listHamiltonianPathOpenCells,
-} from "@/games/hamiltonian-path/puzzle/board";
+  createHitofudePuzzleAdjacency,
+  getHitofudePuzzleCellPosition,
+  type HitofudePuzzleBoard,
+  listHitofudePuzzleOpenCells,
+} from "@/games/hitofude-puzzle/puzzle/board";
 
 /**
  * 人間が道を決めるときの推論の段階。数字が大きいほど深い。
@@ -16,10 +16,10 @@ import {
  * - `5` 1段仮置き: 1本の辺を使う・使わないと仮に決め、1〜4を進めた先で矛盾が出たら逆に決める。
  * - `6` 2段仮置き: 5の仮置きの中で、さらに5を重ねて矛盾を探す。
  */
-export const hamiltonianPathReasoningStages = [1, 2, 3, 4, 5, 6] as const;
+export const hitofudePuzzleReasoningStages = [1, 2, 3, 4, 5, 6] as const;
 
-export type HamiltonianPathReasoningStage =
-  (typeof hamiltonianPathReasoningStages)[number];
+export type HitofudePuzzleReasoningStage =
+  (typeof hitofudePuzzleReasoningStages)[number];
 
 type StageCounts = [number, number, number, number, number, number];
 
@@ -38,7 +38,7 @@ type StageCounts = [number, number, number, number, number, number];
  *   時点で、使う・使わないが決まっていた辺の割合。止まらなかったら1。
  * - `edgeCount`: 道に使える辺（上下左右に隣り合う、穴でないマスの組）の数。
  */
-export type HamiltonianPathHumanSolveTrace = {
+export type HitofudePuzzleHumanSolveTrace = {
   status: "solved" | "unresolved" | "work-limit-reached" | "contradiction";
   firingCountByStage: Readonly<StageCounts>;
   decidedEdgeCountByStage: Readonly<StageCounts>;
@@ -55,7 +55,7 @@ export type HamiltonianPathHumanSolveTrace = {
  * - `workLimit`: 推論を進めた回数（段階1〜4を1つ適用した回数。仮置きの中を含む）の上限。
  *   時間ではなく作業量で打ち切るのは、実行環境の速さで結果が変わらないようにするため。
  */
-export type HamiltonianPathHumanSolveOptions = {
+export type HitofudePuzzleHumanSolveOptions = {
   workLimit?: number;
 };
 
@@ -63,7 +63,7 @@ export type HamiltonianPathHumanSolveOptions = {
  * 推論を進めた回数の既定の上限。仕切りのあるルールの 8×8 の1,000問では、1回の解き進め・1本の道の反証とも1万回未満で終わる。
  * 上限は人間の能力を測ったものではなく、分析が終わらない盤面を評価不能として扱うためのもの。
  */
-const HAMILTONIAN_PATH_HUMAN_SOLVE_WORK_LIMIT = 200_000;
+const HITOFUDE_PUZZLE_HUMAN_SOLVE_WORK_LIMIT = 200_000;
 
 const UNKNOWN = 0;
 const USED = 1;
@@ -164,7 +164,7 @@ class StepTracker {
     this.budget = budget;
   }
 
-  fire(stage: HamiltonianPathReasoningStage, decidedEdgeCount: number): void {
+  fire(stage: HitofudePuzzleReasoningStage, decidedEdgeCount: number): void {
     this.steps += 1;
     this.firings[stage - 1] = this.firings[stage - 1]! + 1;
     this.decided[stage - 1] = this.decided[stage - 1]! + decidedEdgeCount;
@@ -191,15 +191,15 @@ class HumanSolver {
   readonly #workLimit: number;
   #work = 0;
 
-  constructor(board: HamiltonianPathBoard, workLimit: number) {
-    const openCells = listHamiltonianPathOpenCells(board);
-    const adjacency = createHamiltonianPathAdjacency(board);
+  constructor(board: HitofudePuzzleBoard, workLimit: number) {
+    const openCells = listHitofudePuzzleOpenCells(board);
+    const adjacency = createHitofudePuzzleAdjacency(board);
     this.#cellIdByBoardCell = new Map(
       openCells.map((cell, index) => [cell, index]),
     );
     this.#cellCount = openCells.length;
     this.#colors = Uint8Array.from(openCells, (cell) => {
-      const { row, column } = getHamiltonianPathCellPosition(board.size, cell);
+      const { row, column } = getHitofudePuzzleCellPosition(board.size, cell);
       return (row + column) & 1;
     });
     this.#incidentEdges = openCells.map(() => []);
@@ -672,7 +672,7 @@ class HumanSolver {
 
   /**
    * 未定の辺を、両端のマスの未定の辺が少ない順（同じなら辺の番号順）に並べる。辺の番号はマスの番号から決まるので、
-   * 同じ盤面でも向きによって仮置きの結果が変わる。難易度の分析は8通りの向きで読み比べる（`analyzeHamiltonianPathDifficulty`）。
+   * 同じ盤面でも向きによって仮置きの結果が変わる。難易度の分析は8通りの向きで読み比べる（`analyzeHitofudePuzzleDifficulty`）。
    */
   #assumptionCandidates(state: SolverState): number[] {
     const candidates: [number, number][] = [];
@@ -787,13 +787,13 @@ function isSignal(error: unknown): boolean {
  * 始点と盤面だけから（解を見ずに）、段階1〜6の推論で道を決めていく経過を追う。
  * 段階1〜2で止まるたびに段階3〜4を加え、それでも進まなければ1段仮置き、さらに2段仮置きを使う。
  */
-export function traceHamiltonianPathHumanSolve(
-  board: HamiltonianPathBoard,
-  options: HamiltonianPathHumanSolveOptions = {},
-): HamiltonianPathHumanSolveTrace {
+export function traceHitofudePuzzleHumanSolve(
+  board: HitofudePuzzleBoard,
+  options: HitofudePuzzleHumanSolveOptions = {},
+): HitofudePuzzleHumanSolveTrace {
   const solver = new HumanSolver(
     board,
-    options.workLimit ?? HAMILTONIAN_PATH_HUMAN_SOLVE_WORK_LIMIT,
+    options.workLimit ?? HITOFUDE_PUZZLE_HUMAN_SOLVE_WORK_LIMIT,
   );
   const state = solver.initialState();
   const tracker = new StepTracker();
@@ -803,7 +803,7 @@ export function traceHamiltonianPathHumanSolve(
   const refutationLengths: number[] = [];
   let firstStallDecidedEdgeRatio: number | null = null;
   let firstAssumptionDecidedEdgeRatio: number | null = null;
-  let status: HamiltonianPathHumanSolveTrace["status"] = "unresolved";
+  let status: HitofudePuzzleHumanSolveTrace["status"] = "unresolved";
 
   try {
     for (;;) {
@@ -864,26 +864,26 @@ export function traceHamiltonianPathHumanSolve(
 }
 
 /** 道がもう全マスを通れないと示すのに要った推論の段階。1段仮置きを重ねて示せたら `5`。 */
-export type HamiltonianPathRefutationStage = 2 | 3 | 4 | 5;
+export type HitofudePuzzleRefutationStage = 2 | 3 | 4 | 5;
 
 /**
  * - `findRefutationStage`: 始点から引いた道 `path` がもう全マスを通れないと示せる最も浅い段階。段階2〜4の推論、
  *   1段仮置きの重ね合わせの順に試し、示せなければ `null`。描画視点の分析で、誤った手を退けるのに要る段階として使う。
  */
-export type HamiltonianPathRefuter = {
+export type HitofudePuzzleRefuter = {
   findRefutationStage(
     path: readonly number[],
-  ): HamiltonianPathRefutationStage | null | "work-limit-reached";
+  ): HitofudePuzzleRefutationStage | null | "work-limit-reached";
 };
 
 /** 同じ盤面で何本もの道を反証するための準備をしておく。 */
-export function createHamiltonianPathRefuter(
-  board: HamiltonianPathBoard,
-  options: HamiltonianPathHumanSolveOptions = {},
-): HamiltonianPathRefuter {
+export function createHitofudePuzzleRefuter(
+  board: HitofudePuzzleBoard,
+  options: HitofudePuzzleHumanSolveOptions = {},
+): HitofudePuzzleRefuter {
   const solver = new HumanSolver(
     board,
-    options.workLimit ?? HAMILTONIAN_PATH_HUMAN_SOLVE_WORK_LIMIT,
+    options.workLimit ?? HITOFUDE_PUZZLE_HUMAN_SOLVE_WORK_LIMIT,
   );
 
   function refutesWithin(base: SolverState, highestStage: 2 | 3 | 4): boolean {

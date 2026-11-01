@@ -1,26 +1,26 @@
 import {
-  analyzeHamiltonianPathDrawingBranches,
-  type HamiltonianPathDrawingBranches,
-} from "@/games/hamiltonian-path/problem/generation/drawing-branches";
+  analyzeHitofudePuzzleDrawingBranches,
+  type HitofudePuzzleDrawingBranches,
+} from "@/games/hitofude-puzzle/problem/generation/drawing-branches";
 import {
-  type HamiltonianPathHumanSolveOptions,
-  type HamiltonianPathHumanSolveTrace,
-  type HamiltonianPathReasoningStage,
-  traceHamiltonianPathHumanSolve,
-} from "@/games/hamiltonian-path/problem/generation/human-solver";
+  type HitofudePuzzleHumanSolveOptions,
+  type HitofudePuzzleHumanSolveTrace,
+  type HitofudePuzzleReasoningStage,
+  traceHitofudePuzzleHumanSolve,
+} from "@/games/hitofude-puzzle/problem/generation/human-solver";
 import {
-  countHamiltonianPathSolutions,
-  type HamiltonianPathSolutionSearchResult,
-} from "@/games/hamiltonian-path/problem/generation/solver";
+  countHitofudePuzzleSolutions,
+  type HitofudePuzzleSolutionSearchResult,
+} from "@/games/hitofude-puzzle/problem/generation/solver";
 import {
-  type HamiltonianPathBoardOrientation,
-  listHamiltonianPathBoardOrientations,
-} from "@/games/hamiltonian-path/problem/generation/symmetry";
+  type HitofudePuzzleBoardOrientation,
+  listHitofudePuzzleBoardOrientations,
+} from "@/games/hitofude-puzzle/problem/generation/symmetry";
 import type {
-  HamiltonianPathProblem,
-  HamiltonianPathSolveWorkload,
-} from "@/games/hamiltonian-path/problem/problem";
-import { listHamiltonianPathOpenCells } from "@/games/hamiltonian-path/puzzle/board";
+  HitofudePuzzleProblem,
+  HitofudePuzzleSolveWorkload,
+} from "@/games/hitofude-puzzle/problem/problem";
+import { listHitofudePuzzleOpenCells } from "@/games/hitofude-puzzle/puzzle/board";
 
 /**
  * 難易度特徴と比べるための問題の規模。挑戦ではなく、なぞる長さと盤面の広さの側の値。
@@ -28,7 +28,7 @@ import { listHamiltonianPathOpenCells } from "@/games/hamiltonian-path/puzzle/bo
  * - `openCellCount`: 道が通るマスの数（なぞる長さ）。
  * - `holeCount`: 穴の数。
  */
-export type HamiltonianPathScaleMetrics = {
+export type HitofudePuzzleScaleMetrics = {
   size: number;
   cellCount: number;
   openCellCount: number;
@@ -37,7 +37,7 @@ export type HamiltonianPathScaleMetrics = {
 
 /**
  * 人間向け解法器（段階1〜6）で、始点と盤面だけから道を決め切った経過から求めた特徴。回転・反転した8通りの盤面のうち、
- * 最も上手に読めた向きの経過（`analyzeHamiltonianPathDifficulty`）で、盤面の向きに依らない。
+ * 最も上手に読めた向きの経過（`analyzeHitofudePuzzleDifficulty`）で、盤面の向きに依らない。
  * - `localReasoningSuffices`: 局所の推論（段階1〜2）だけで道が決まり、一度も止まらなかった。
  * - `regionalReasoningUsed`: 分断・到達・パリティの推論（段階3〜4）で、仮置きの外の盤面を進めたことがある。
  * - `assumptionCount`: 段階1〜4で止まり、1段仮置きで辺を1本決めた回数（先読みを要した回数）。
@@ -48,7 +48,7 @@ export type HamiltonianPathScaleMetrics = {
  * - `firstStallDecidedEdgeRatio`: 最初に止まった時点で、使う・使わないが決まっていた辺の割合。強制の連鎖でどこまで進むか。
  * - `firingCountByStage`: 仮置きの外で各段階の推論を使った回数。添字0が段階1。
  */
-export type HamiltonianPathReasoningFeatures = {
+export type HitofudePuzzleReasoningFeatures = {
   localReasoningSuffices: boolean;
   regionalReasoningUsed: boolean;
   assumptionCount: number;
@@ -57,7 +57,7 @@ export type HamiltonianPathReasoningFeatures = {
   refutationLengths: readonly number[];
   stallCount: number;
   firstStallDecidedEdgeRatio: number;
-  firingCountByStage: Readonly<Record<HamiltonianPathReasoningStage, number>>;
+  firingCountByStage: Readonly<Record<HitofudePuzzleReasoningStage, number>>;
 };
 
 /**
@@ -66,26 +66,26 @@ export type HamiltonianPathReasoningFeatures = {
  *   （`computation-limit`）。評価不能。
  * - `invalid`: 解が無い、2つ以上ある、または一意性を確かめる探索が上限に達した。
  */
-export type HamiltonianPathDifficultyAnalysis =
+export type HitofudePuzzleDifficultyAnalysis =
   | {
       status: "analyzed";
-      scale: HamiltonianPathScaleMetrics;
-      reasoning: HamiltonianPathReasoningFeatures;
-      drawing: HamiltonianPathDrawingBranches;
+      scale: HitofudePuzzleScaleMetrics;
+      reasoning: HitofudePuzzleReasoningFeatures;
+      drawing: HitofudePuzzleDrawingBranches;
     }
   | {
       status: "unsupported";
       reason: "unresolved" | "computation-limit";
-      scale: HamiltonianPathScaleMetrics;
+      scale: HitofudePuzzleScaleMetrics;
     }
   | {
       status: "invalid";
       reason: "no-solution" | "multiple-solutions" | "search-limit-reached";
-      scale: HamiltonianPathScaleMetrics;
+      scale: HitofudePuzzleScaleMetrics;
     };
 
-export type HamiltonianPathAnalyzedDifficulty = Extract<
-  HamiltonianPathDifficultyAnalysis,
+export type HitofudePuzzleAnalyzedDifficulty = Extract<
+  HitofudePuzzleDifficultyAnalysis,
   { status: "analyzed" }
 >;
 
@@ -99,28 +99,28 @@ const UNIQUENESS_SEARCH_STEP_LIMIT = 100_000;
  * 分析の前に、解を2つまで数えて一意性を確かめる。内部診断が分析と同じ探索の結果を見せられるよう、
  * 分析とは別に呼べるようにしている。
  */
-export function searchHamiltonianPathSolutionsForAnalysis(
-  problem: HamiltonianPathProblem,
-): HamiltonianPathSolutionSearchResult {
-  return countHamiltonianPathSolutions(problem, {
+export function searchHitofudePuzzleSolutionsForAnalysis(
+  problem: HitofudePuzzleProblem,
+): HitofudePuzzleSolutionSearchResult {
+  return countHitofudePuzzleSolutions(problem, {
     searchStepLimit: UNIQUENESS_SEARCH_STEP_LIMIT,
   });
 }
 
 function measureScale(
-  problem: HamiltonianPathProblem,
-): HamiltonianPathScaleMetrics {
+  problem: HitofudePuzzleProblem,
+): HitofudePuzzleScaleMetrics {
   return {
     size: problem.size,
     cellCount: problem.size * problem.size,
-    openCellCount: listHamiltonianPathOpenCells(problem).length,
+    openCellCount: listHitofudePuzzleOpenCells(problem).length,
     holeCount: problem.holes.length,
   };
 }
 
 function summarizeReasoning(
-  trace: HamiltonianPathHumanSolveTrace,
-): HamiltonianPathReasoningFeatures {
+  trace: HitofudePuzzleHumanSolveTrace,
+): HitofudePuzzleReasoningFeatures {
   const [local, loop, region, parity, single, deep] = trace.firingCountByStage;
   return {
     localReasoningSuffices: trace.stallCount === 0,
@@ -144,7 +144,7 @@ function summarizeReasoning(
 
 function sumRefutationLengths({
   refutationLengths,
-}: HamiltonianPathReasoningFeatures): number {
+}: HitofudePuzzleReasoningFeatures): number {
   return refutationLengths.reduce((sum, length) => sum + length, 0);
 }
 
@@ -159,8 +159,8 @@ function compareSerialized(left: unknown, right: unknown): number {
  * 上手とする。それでも並ぶ読み方は特徴全体の表記の順で決め、どの向きの盤面から数えても同じ読み方を選ぶ。
  */
 function compareReasoning(
-  left: HamiltonianPathReasoningFeatures,
-  right: HamiltonianPathReasoningFeatures,
+  left: HitofudePuzzleReasoningFeatures,
+  right: HitofudePuzzleReasoningFeatures,
 ): number {
   return (
     left.deepAssumptionCount - right.deepAssumptionCount ||
@@ -172,8 +172,8 @@ function compareReasoning(
 }
 
 type OrientedReasoning = {
-  orientation: HamiltonianPathBoardOrientation;
-  reasoning: HamiltonianPathReasoningFeatures;
+  orientation: HitofudePuzzleBoardOrientation;
+  reasoning: HitofudePuzzleReasoningFeatures;
 };
 
 /**
@@ -182,18 +182,18 @@ type OrientedReasoning = {
  * 盤面の向きによって仮置きの回数や先読みの手数が変わる。
  */
 function readInEveryOrientation(
-  problem: HamiltonianPathProblem,
-  options: HamiltonianPathHumanSolveOptions,
+  problem: HitofudePuzzleProblem,
+  options: HitofudePuzzleHumanSolveOptions,
 ): OrientedReasoning[] | "unresolved" | "computation-limit" {
-  const traces = listHamiltonianPathBoardOrientations(problem).map(
+  const traces = listHitofudePuzzleBoardOrientations(problem).map(
     (orientation) => ({
       orientation,
-      trace: traceHamiltonianPathHumanSolve(orientation.board, options),
+      trace: traceHitofudePuzzleHumanSolve(orientation.board, options),
     }),
   );
   if (traces.some(({ trace }) => trace.status === "contradiction")) {
     throw new Error(
-      "Human solver found a contradiction in a uniquely solvable Hamiltonian path problem",
+      "Human solver found a contradiction in a uniquely solvable Hitofude puzzle problem",
     );
   }
   const readings = traces.flatMap(({ orientation, trace }) =>
@@ -211,18 +211,18 @@ function readInEveryOrientation(
 
 /**
  * 一意性を確かめたうえで、人間向け解法器の経過を特徴へまとめ、解の道を引き進める視点の分岐も測る。
- * 解の道は一意性の探索（`searchHamiltonianPathSolutionsForAnalysis`）から求め、問題からは受け取らない。
+ * 解の道は一意性の探索（`searchHitofudePuzzleSolutionsForAnalysis`）から求め、問題からは受け取らない。
  * 探索を済ませた呼び出し元は、その結果を `solutionSearch` に渡す。
  *
  * 推論の特徴は、回転・反転した8通りの盤面のうち最も上手に読めた向きの読み方から求める（`compareReasoning`）。
  * 盤面の向きで難易度が変わらないようにするためで、「最も上手な読み順でも、少なくともこれだけ先読みが要る」を表す。
  * 描画視点の分岐は、その読み方になった向きの盤面で測る。
  */
-export function analyzeHamiltonianPathDifficulty(
-  problem: HamiltonianPathProblem,
-  options: HamiltonianPathHumanSolveOptions = {},
-  solutionSearch = searchHamiltonianPathSolutionsForAnalysis(problem),
-): HamiltonianPathDifficultyAnalysis {
+export function analyzeHitofudePuzzleDifficulty(
+  problem: HitofudePuzzleProblem,
+  options: HitofudePuzzleHumanSolveOptions = {},
+  solutionSearch = searchHitofudePuzzleSolutionsForAnalysis(problem),
+): HitofudePuzzleDifficultyAnalysis {
   const scale = measureScale(problem);
   if (solutionSearch.status === "search-limit-reached") {
     return { status: "invalid", reason: "search-limit-reached", scale };
@@ -252,7 +252,7 @@ export function analyzeHamiltonianPathDifficulty(
       ({ reasoning }) => compareReasoning(reasoning, best.reasoning) === 0,
     )
     .map(({ orientation }) =>
-      analyzeHamiltonianPathDrawingBranches(
+      analyzeHitofudePuzzleDrawingBranches(
         orientation.board,
         solution.map(orientation.transformCell),
         options,
@@ -267,11 +267,11 @@ export function analyzeHamiltonianPathDifficulty(
 }
 
 /** 分析結果から、速さの基準時間に使う作業の量を取り出す。 */
-export function getHamiltonianPathSolveWorkload({
+export function getHitofudePuzzleSolveWorkload({
   scale,
   reasoning,
   drawing,
-}: HamiltonianPathAnalyzedDifficulty): HamiltonianPathSolveWorkload {
+}: HitofudePuzzleAnalyzedDifficulty): HitofudePuzzleSolveWorkload {
   return {
     openCellCount: scale.openCellCount,
     assumptionCount: reasoning.assumptionCount,

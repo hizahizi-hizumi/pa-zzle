@@ -1,26 +1,26 @@
 import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
 import {
   _private,
-  createHamiltonianPathDiagnosticSnapshot,
-} from "@/games/hamiltonian-path/diagnostics";
-import { getHamiltonianPathSolveWorkload } from "@/games/hamiltonian-path/problem/difficulty-analysis";
-import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem/generator";
-import { selectHamiltonianPathProblemForDifficulty } from "@/games/hamiltonian-path/problem-selection";
+  createHitofudePuzzleDiagnosticSnapshot,
+} from "@/games/hitofude-puzzle/diagnostics";
+import { getHitofudePuzzleSolveWorkload } from "@/games/hitofude-puzzle/problem/difficulty-analysis";
+import { generateHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/generator";
+import { selectHitofudePuzzleProblemForDifficulty } from "@/games/hitofude-puzzle/problem-selection";
 
 const {
-  parseHamiltonianPathDiagnosticSnapshot,
-  restoreHamiltonianPathProblemFromDiagnosticSnapshot,
+  parseHitofudePuzzleDiagnosticSnapshot,
+  restoreHitofudePuzzleProblemFromDiagnosticSnapshot,
 } = _private;
 
 /** レベル3 の問題は難しさへ歩く条件で作るので、生成し直しに数秒〜数十秒かかる。 */
 const GENERATION_TIMEOUT_MS = 60_000;
 
-describe("HamiltonianPathDiagnosticSnapshot", () => {
-  const selected = selectHamiltonianPathProblemForDifficulty(
+describe("HitofudePuzzleDiagnosticSnapshot", () => {
+  const selected = selectHitofudePuzzleProblemForDifficulty(
     "3",
     "diagnostic-seed",
   );
-  const snapshot = createHamiltonianPathDiagnosticSnapshot({
+  const snapshot = createHitofudePuzzleDiagnosticSnapshot({
     difficulty: "3",
     problemIdentity: selected.identity,
     problem: selected.problem,
@@ -53,9 +53,8 @@ describe("HamiltonianPathDiagnosticSnapshot", () => {
   ] as const;
 
   test("コピー形式を復元して同じ問題を再現できること", () => {
-    const parsed = parseHamiltonianPathDiagnosticSnapshot(serialized);
-    const restored =
-      restoreHamiltonianPathProblemFromDiagnosticSnapshot(parsed);
+    const parsed = parseHitofudePuzzleDiagnosticSnapshot(serialized);
+    const restored = restoreHitofudePuzzleProblemFromDiagnosticSnapshot(parsed);
 
     expect(parsed).toEqual(snapshot);
     expect(restored?.problem).toEqual(selected.problem);
@@ -64,7 +63,7 @@ describe("HamiltonianPathDiagnosticSnapshot", () => {
   test(
     "一意解を確かめ、生成器と同じ正解の道を持つこと",
     () => {
-      const { solution } = generateHamiltonianPathProblem(selected.identity);
+      const { solution } = generateHitofudePuzzleProblem(selected.identity);
 
       expect(snapshot.uniqueness).toMatchObject({
         status: "complete",
@@ -79,7 +78,7 @@ describe("HamiltonianPathDiagnosticSnapshot", () => {
     const { difficultyAnalysis, difficultyAssessment } = snapshot;
     const workload =
       difficultyAnalysis.status === "analyzed"
-        ? getHamiltonianPathSolveWorkload(difficultyAnalysis)
+        ? getHitofudePuzzleSolveWorkload(difficultyAnalysis)
         : null;
 
     expect(difficultyAssessment).toMatchObject({
@@ -91,9 +90,9 @@ describe("HamiltonianPathDiagnosticSnapshot", () => {
 
   test.each(invalidCases)("%s JSON を拒否すること", (_, value) => {
     function act() {
-      return parseHamiltonianPathDiagnosticSnapshot(JSON.stringify(value));
+      return parseHitofudePuzzleDiagnosticSnapshot(JSON.stringify(value));
     }
 
-    expect(act).toThrow("Invalid hamiltonian-path diagnostic snapshot");
+    expect(act).toThrow("Invalid hitofude-puzzle diagnostic snapshot");
   });
 });

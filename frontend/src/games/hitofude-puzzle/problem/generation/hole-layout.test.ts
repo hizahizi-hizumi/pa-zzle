@@ -1,11 +1,11 @@
 import {
-  countHamiltonianPathHoleLayoutViolations,
-  measureHamiltonianPathHoleLayout,
-} from "@/games/hamiltonian-path/problem/generation/hole-layout";
-import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
+  countHitofudePuzzleHoleLayoutViolations,
+  measureHitofudePuzzleHoleLayout,
+} from "@/games/hitofude-puzzle/problem/generation/hole-layout";
+import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
 
 /** 穴が4つの区画に1つずつ散らばった 6×6 の盤面。穴に触れる 2×2 のブロックは25のうち9。 */
-const scatteredBoard = parseHamiltonianPathBoard([
+const scatteredBoard = parseHitofudePuzzleBoard([
   "# . . . . .",
   ". . . . . #",
   ". . S . . .",
@@ -15,7 +15,7 @@ const scatteredBoard = parseHamiltonianPathBoard([
 ]);
 
 /** 左上に4つの穴が固まった 6×6 の盤面。 */
-const clusteredBoard = parseHamiltonianPathBoard([
+const clusteredBoard = parseHitofudePuzzleBoard([
   "# # . . . .",
   "# # . . . .",
   ". . S . . .",
@@ -24,10 +24,10 @@ const clusteredBoard = parseHamiltonianPathBoard([
   ". . . . . .",
 ]);
 
-describe("measureHamiltonianPathHoleLayout", () => {
+describe("measureHitofudePuzzleHoleLayout", () => {
   test("穴の数・最も大きい塊・穴のある区画の数・穴の無い 2×2 のブロックの割合を測ること", () => {
     const layouts = [scatteredBoard, clusteredBoard].map(
-      measureHamiltonianPathHoleLayout,
+      measureHitofudePuzzleHoleLayout,
     );
 
     expect(layouts).toEqual([
@@ -47,7 +47,7 @@ describe("measureHamiltonianPathHoleLayout", () => {
   });
 
   describe("一辺が奇数の盤面の中央の穴の場合", () => {
-    const board = parseHamiltonianPathBoard([
+    const board = parseHitofudePuzzleBoard([
       "S . . . .",
       ". . . . .",
       ". . # . .",
@@ -56,15 +56,15 @@ describe("measureHamiltonianPathHoleLayout", () => {
     ]);
 
     test("4つの区画すべてに数えること", () => {
-      const layout = measureHamiltonianPathHoleLayout(board);
+      const layout = measureHitofudePuzzleHoleLayout(board);
 
       expect(layout.quadrantsWithHolesCount).toBe(4);
     });
   });
 });
 
-describe("countHamiltonianPathHoleLayoutViolations", () => {
-  const holelessBoard = parseHamiltonianPathBoard([
+describe("countHitofudePuzzleHoleLayoutViolations", () => {
+  const holelessBoard = parseHitofudePuzzleBoard([
     "S . . . . .",
     ". . . . . .",
     ". . . . . .",
@@ -73,7 +73,7 @@ describe("countHamiltonianPathHoleLayoutViolations", () => {
     ". . . . . .",
   ]);
   /** 2×2 のブロックの半分以上に穴が触れる、通路だらけの盤面。 */
-  const corridorBoard = parseHamiltonianPathBoard([
+  const corridorBoard = parseHitofudePuzzleBoard([
     "S . . . . .",
     ". # . # . .",
     ". . . . . .",
@@ -89,7 +89,7 @@ describe("countHamiltonianPathHoleLayoutViolations", () => {
   ] as const;
 
   test.each(cases)("%s盤面の違反を %i と数えること", (_, board, expected) => {
-    const violations = countHamiltonianPathHoleLayoutViolations(board);
+    const violations = countHitofudePuzzleHoleLayoutViolations(board);
 
     expect(violations).toBe(expected);
   });

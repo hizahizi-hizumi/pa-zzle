@@ -1,16 +1,16 @@
 import {
-  formatHamiltonianPathBoard,
-  getHamiltonianPathCellPosition,
-  type HamiltonianPathBoard,
-} from "@/games/hamiltonian-path/puzzle/board";
+  formatHitofudePuzzleBoard,
+  getHitofudePuzzleCellPosition,
+  type HitofudePuzzleBoard,
+} from "@/games/hitofude-puzzle/puzzle/board";
 
 type CellTransform = (cell: number) => number;
 
 /** マスの写し方で盤面全体（穴と始点の位置）を写す。 */
 function transformBoard(
-  board: HamiltonianPathBoard,
+  board: HitofudePuzzleBoard,
   transformCell: CellTransform,
-): HamiltonianPathBoard {
+): HitofudePuzzleBoard {
   return {
     size: board.size,
     holes: board.holes.map(transformCell).sort((left, right) => left - right),
@@ -20,14 +20,14 @@ function transformBoard(
 
 function rotateCellClockwise(size: number): CellTransform {
   return function rotateCell(cell) {
-    const { row, column } = getHamiltonianPathCellPosition(size, cell);
+    const { row, column } = getHitofudePuzzleCellPosition(size, cell);
     return column * size + (size - 1 - row);
   };
 }
 
 function mirrorCellLeftRight(size: number): CellTransform {
   return function mirrorCell(cell) {
-    const { row, column } = getHamiltonianPathCellPosition(size, cell);
+    const { row, column } = getHitofudePuzzleCellPosition(size, cell);
     return row * size + (size - 1 - column);
   };
 }
@@ -41,15 +41,15 @@ function thenTransform(
   };
 }
 
-export function rotateHamiltonianPathBoardClockwise(
-  board: HamiltonianPathBoard,
-): HamiltonianPathBoard {
+export function rotateHitofudePuzzleBoardClockwise(
+  board: HitofudePuzzleBoard,
+): HitofudePuzzleBoard {
   return transformBoard(board, rotateCellClockwise(board.size));
 }
 
-export function mirrorHamiltonianPathBoardLeftRight(
-  board: HamiltonianPathBoard,
-): HamiltonianPathBoard {
+export function mirrorHitofudePuzzleBoardLeftRight(
+  board: HitofudePuzzleBoard,
+): HitofudePuzzleBoard {
   return transformBoard(board, mirrorCellLeftRight(board.size));
 }
 
@@ -57,15 +57,15 @@ export function mirrorHamiltonianPathBoardLeftRight(
  * 回転・反転した盤面と、元の盤面のマスをその盤面のマスへ写す関数。
  * 解の道など、元の盤面のマスで表した値を写した盤面へ移すのに使う。
  */
-export type HamiltonianPathBoardOrientation = {
-  board: HamiltonianPathBoard;
+export type HitofudePuzzleBoardOrientation = {
+  board: HitofudePuzzleBoard;
   transformCell: CellTransform;
 };
 
 /** 回転4通り（元の盤面を含む）と、それぞれの左右反転4通り。 */
-export function listHamiltonianPathBoardOrientations(
-  board: HamiltonianPathBoard,
-): HamiltonianPathBoardOrientation[] {
+export function listHitofudePuzzleBoardOrientations(
+  board: HitofudePuzzleBoard,
+): HitofudePuzzleBoardOrientation[] {
   const rotate = rotateCellClockwise(board.size);
   const mirror = mirrorCellLeftRight(board.size);
   const rotations: CellTransform[] = [
@@ -87,23 +87,23 @@ export function listHamiltonianPathBoardOrientations(
 }
 
 /** 回転4通りとそれぞれの左右反転4通り。 */
-export function listHamiltonianPathBoardSymmetries(
-  board: HamiltonianPathBoard,
-): HamiltonianPathBoard[] {
-  return listHamiltonianPathBoardOrientations(board).map(
+export function listHitofudePuzzleBoardSymmetries(
+  board: HitofudePuzzleBoard,
+): HitofudePuzzleBoard[] {
+  return listHitofudePuzzleBoardOrientations(board).map(
     (orientation) => orientation.board,
   );
 }
 
 /**
- * 回転・反転で重なる盤面に共通の正規化キー。8通りの盤面それぞれの記法（`formatHamiltonianPathBoard`）を
+ * 回転・反転で重なる盤面に共通の正規化キー。8通りの盤面それぞれの記法（`formatHitofudePuzzleBoard`）を
  * 改行でつないだ文字列のうち、辞書順で最小のもの。問題集の同型除外に使う。
  */
-export function getHamiltonianPathSymmetryKey(
-  board: HamiltonianPathBoard,
+export function getHitofudePuzzleSymmetryKey(
+  board: HitofudePuzzleBoard,
 ): string {
-  const keys = listHamiltonianPathBoardSymmetries(board).map((symmetry) =>
-    formatHamiltonianPathBoard(symmetry).join("\n"),
+  const keys = listHitofudePuzzleBoardSymmetries(board).map((symmetry) =>
+    formatHitofudePuzzleBoard(symmetry).join("\n"),
   );
   return keys.reduce((minimum, key) => (key < minimum ? key : minimum));
 }

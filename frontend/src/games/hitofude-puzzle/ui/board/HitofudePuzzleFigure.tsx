@@ -1,23 +1,23 @@
 import { type Ref, useId } from "react";
 
 import {
-  getHamiltonianPathCellPosition,
-  type HamiltonianPathBoard,
-  listHamiltonianPathOpenCells,
-} from "@/games/hamiltonian-path/puzzle/board";
+  getHitofudePuzzleCellPosition,
+  type HitofudePuzzleBoard,
+  listHitofudePuzzleOpenCells,
+} from "@/games/hitofude-puzzle/puzzle/board";
 import {
-  formatHamiltonianPathOutlinePath,
-  listHamiltonianPathOutlineEdges,
-} from "@/games/hamiltonian-path/ui/board/board-outline";
+  formatHitofudePuzzleOutlinePath,
+  listHitofudePuzzleOutlineEdges,
+} from "@/games/hitofude-puzzle/ui/board/board-outline";
 import {
   getPathColor,
   getVisitedCellColor,
-  hamiltonianPathToneClassNames,
-} from "@/games/hamiltonian-path/ui/hamiltonian-path-tone";
+  hitofudePuzzleToneClassNames,
+} from "@/games/hitofude-puzzle/ui/hitofude-puzzle-tone";
 import { cn } from "@/lib/utils";
 
-type HamiltonianPathFigureProps = {
-  board: HamiltonianPathBoard;
+type HitofudePuzzleFigureProps = {
+  board: HitofudePuzzleBoard;
   /** 始点から先端までに通ったマスの番号。 */
   path: readonly number[];
   /** 全マスを通る前に、先端から延ばせるマスが無くなったか。 */
@@ -76,12 +76,12 @@ const blockedMarkStrokes = (
 );
 
 function getCellCenter(size: number, cell: number): { x: number; y: number } {
-  const { row, column } = getHamiltonianPathCellPosition(size, cell);
+  const { row, column } = getHitofudePuzzleCellPosition(size, cell);
   return { x: column + 0.5, y: row + 0.5 };
 }
 
 /** 盤面の要素を、盤面の反応や演出から探すための印。 */
-export const hamiltonianPathFigureParts = {
+export const hitofudePuzzleFigureParts = {
   outline: "data-outline",
   head: "data-head",
   clearTrace: "data-clear-trace",
@@ -94,7 +94,7 @@ export const hamiltonianPathFigureParts = {
  * 穴は描かず、盤面の外と同じ地を見せる。外形が、外周の穴を盤面の欠けとして、内側の穴を盤面に開いた穴として縁取る。
  * 道とマスの塗りは、通った順に色を移す（`getPathColor`）。
  */
-export function HamiltonianPathFigure({
+export function HitofudePuzzleFigure({
   board,
   path,
   isDeadEnd,
@@ -104,16 +104,16 @@ export function HamiltonianPathFigure({
   showsBlockedMark = false,
   visibleRowCount,
   ref,
-}: HamiltonianPathFigureProps) {
+}: HitofudePuzzleFigureProps) {
   const strandedHatchId = useId();
   const { size } = board;
   const rowCount = visibleRowCount ?? size;
   function isVisibleCell(cell: number): boolean {
-    return getHamiltonianPathCellPosition(size, cell).row < rowCount;
+    return getHitofudePuzzleCellPosition(size, cell).row < rowCount;
   }
   const lastProgressIndex = Math.max(
     1,
-    listHamiltonianPathOpenCells(board).length - 1,
+    listHitofudePuzzleOpenCells(board).length - 1,
   );
   const progressAt = (index: number) => index / lastProgressIndex;
   const visitedOrder = new Map(path.map((cell, index) => [cell, index]));
@@ -132,7 +132,7 @@ export function HamiltonianPathFigure({
       aria-hidden="true"
       className={cn(
         "pointer-events-none absolute inset-0 size-full overflow-visible",
-        hamiltonianPathToneClassNames.pathColorVariables,
+        hitofudePuzzleToneClassNames.pathColorVariables,
       )}
     >
       <defs>
@@ -149,14 +149,14 @@ export function HamiltonianPathFigure({
             x2={0}
             y2={STRANDED_HATCH_GAP}
             strokeWidth={STRANDED_HATCH_WIDTH}
-            className={hamiltonianPathToneClassNames.strandedHatch}
+            className={hitofudePuzzleToneClassNames.strandedHatch}
           />
         </pattern>
       </defs>
-      {listHamiltonianPathOpenCells(board)
+      {listHitofudePuzzleOpenCells(board)
         .filter(isVisibleCell)
         .map((cell) => {
-          const { row, column } = getHamiltonianPathCellPosition(size, cell);
+          const { row, column } = getHitofudePuzzleCellPosition(size, cell);
           const order = visitedOrder.get(cell);
           return (
             <rect
@@ -167,9 +167,9 @@ export function HamiltonianPathFigure({
               height={1}
               vectorEffect="non-scaling-stroke"
               className={cn(
-                hamiltonianPathToneClassNames.gridLine,
+                hitofudePuzzleToneClassNames.gridLine,
                 order === undefined &&
-                  hamiltonianPathToneClassNames.unvisitedCell,
+                  hitofudePuzzleToneClassNames.unvisitedCell,
               )}
               style={
                 order === undefined
@@ -180,11 +180,11 @@ export function HamiltonianPathFigure({
           );
         })}
       {strandedCells.filter(isVisibleCell).map((cell) => {
-        const { row, column } = getHamiltonianPathCellPosition(size, cell);
+        const { row, column } = getHitofudePuzzleCellPosition(size, cell);
         return (
           <rect
             key={`stranded-${cell}`}
-            {...{ [hamiltonianPathFigureParts.strandedCell]: cell }}
+            {...{ [hitofudePuzzleFigureParts.strandedCell]: cell }}
             x={column}
             y={row}
             width={1}
@@ -194,15 +194,15 @@ export function HamiltonianPathFigure({
         );
       })}
       <path
-        {...{ [hamiltonianPathFigureParts.outline]: "" }}
-        d={formatHamiltonianPathOutlinePath(
-          listHamiltonianPathOutlineEdges(board),
+        {...{ [hitofudePuzzleFigureParts.outline]: "" }}
+        d={formatHitofudePuzzleOutlinePath(
+          listHitofudePuzzleOutlineEdges(board),
         )}
         fill="none"
         // 外形は辺ごとの線分なので、線端を四角く伸ばして角の継ぎ目を埋める。
         strokeLinecap="square"
         vectorEffect="non-scaling-stroke"
-        className={hamiltonianPathToneClassNames.outline}
+        className={hitofudePuzzleToneClassNames.outline}
       />
       {centers.slice(1).map((to, index) => {
         const from = centers[index]!;
@@ -223,7 +223,7 @@ export function HamiltonianPathFigure({
       })}
       {solved ? (
         <polyline
-          {...{ [hamiltonianPathFigureParts.clearTrace]: "" }}
+          {...{ [hitofudePuzzleFigureParts.clearTrace]: "" }}
           points={centers.map(({ x, y }) => `${x},${y}`).join(" ")}
           pathLength={1}
           strokeDasharray="1 1"
@@ -231,7 +231,7 @@ export function HamiltonianPathFigure({
           strokeWidth={CLEAR_TRACE_WIDTH}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className={hamiltonianPathToneClassNames.clearTrace}
+          className={hitofudePuzzleToneClassNames.clearTrace}
         />
       ) : null}
       <circle
@@ -239,19 +239,19 @@ export function HamiltonianPathFigure({
         cy={start.y}
         r={START_MARK_RADIUS}
         strokeWidth={START_MARK_OUTLINE_WIDTH}
-        className={hamiltonianPathToneClassNames.startMarkOutline}
+        className={hitofudePuzzleToneClassNames.startMarkOutline}
         style={{ fill: getPathColor(0) }}
       />
       <g transform={`translate(${head.x} ${head.y})`}>
         {/* 揺れは CSS の transform で動かすので、位置の transform 属性とは別の要素に置く。 */}
-        <g {...{ [hamiltonianPathFigureParts.head]: "" }}>
+        <g {...{ [hitofudePuzzleFigureParts.head]: "" }}>
           <circle
             r={HEAD_RING_RADIUS}
             fill="none"
             strokeWidth={isDeadEnd ? DEAD_END_HEAD_RING_WIDTH : HEAD_RING_WIDTH}
             strokeDasharray={isDeadEnd ? DEAD_END_HEAD_DASH : undefined}
             className={
-              isDeadEnd ? hamiltonianPathToneClassNames.deadEndHead : undefined
+              isDeadEnd ? hitofudePuzzleToneClassNames.deadEndHead : undefined
             }
             style={isDeadEnd ? undefined : { stroke: headColor }}
           />
@@ -259,14 +259,14 @@ export function HamiltonianPathFigure({
       </g>
       {blockedMarkCenter === null ? null : (
         <g
-          {...{ [hamiltonianPathFigureParts.blockedMark]: "" }}
+          {...{ [hitofudePuzzleFigureParts.blockedMark]: "" }}
           transform={`translate(${blockedMarkCenter.x} ${blockedMarkCenter.y})`}
           opacity={showsBlockedMark ? 1 : 0}
           strokeLinecap="round"
         >
           <g
             strokeWidth={BLOCKED_MARK_OUTLINE_WIDTH}
-            className={hamiltonianPathToneClassNames.blockedMarkOutline}
+            className={hitofudePuzzleToneClassNames.blockedMarkOutline}
           >
             {blockedMarkStrokes}
           </g>

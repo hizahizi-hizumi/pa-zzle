@@ -6,7 +6,7 @@ const STRAIGHT_RUN_CELL_COUNT = 4;
  * 蛇行するだけの単調な道ほど高い。研究用 Python の `straight_ratio` と同じ定義で、区間の両端のマスも含める。
  * 道は行優先のマス番号の並びで、隣り合うマスの番号の差が進む向きを表す。
  */
-export function measureHamiltonianPathStraightRatio(
+export function measureHitofudePuzzleStraightRatio(
   path: readonly number[],
 ): number {
   if (path.length < 3) {

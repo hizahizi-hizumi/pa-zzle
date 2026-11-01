@@ -1,5 +1,5 @@
 /**
- * ハミルトン路固有の色。共通UIの意味色（`primary`・`success`・`error` など）は流用しない。
+ * 一筆パズル固有の色。共通UIの意味色（`primary`・`success`・`error` など）は流用しない。
  * - 道は始点の青緑から、全マスを通り終える所の紫へ、通った順に色を移す。道が盤面を塗り進むほど色が変わり、
  *   蛇行して隣り合う道の列どうしも色の違いで追える。赤・橙はアプリ共通のエラー色と紛れるので使わない。
  * - 道が通ったマスは、そのマスを通ったときの道の色を淡く塗る。
@@ -11,18 +11,18 @@
  * - 取り残しのマスは、通れないものと同じ系統の色の斜線を薄く引く。マスを塗りつぶさず、まだ通っていないマスだと分かるようにする。
  * 色の値は `pathColorVariables` の CSS 変数として盤面の根に置き、マスと道の色は `getPathColor` などで混ぜて作る。
  */
-export const hamiltonianPathToneClassNames = {
+export const hitofudePuzzleToneClassNames = {
   pathColorVariables:
-    "[--hamiltonian-path-from:var(--color-cyan-600)] [--hamiltonian-path-to:var(--color-violet-600)] [--hamiltonian-path-cell:var(--color-stone-100)] dark:[--hamiltonian-path-from:var(--color-cyan-400)] dark:[--hamiltonian-path-to:var(--color-violet-400)] dark:[--hamiltonian-path-cell:var(--color-stone-800)]",
-  unvisitedCell: "fill-(--hamiltonian-path-cell)",
+    "[--hitofude-puzzle-from:var(--color-cyan-600)] [--hitofude-puzzle-to:var(--color-violet-600)] [--hitofude-puzzle-cell:var(--color-stone-100)] dark:[--hitofude-puzzle-from:var(--color-cyan-400)] dark:[--hitofude-puzzle-to:var(--color-violet-400)] dark:[--hitofude-puzzle-cell:var(--color-stone-800)]",
+  unvisitedCell: "fill-(--hitofude-puzzle-cell)",
   gridLine:
     "stroke-stone-300 stroke-(length:--border-width-normal) dark:stroke-stone-600",
   outline:
     "stroke-stone-800 stroke-(length:--border-width-strong) dark:stroke-stone-200",
   /** 阻まれたマスの×の縁取り。道の上でも×が読めるよう、マスの地の色で囲む。 */
-  blockedMarkOutline: "stroke-(--hamiltonian-path-cell)",
+  blockedMarkOutline: "stroke-(--hitofude-puzzle-cell)",
   /** 始点の印の縁取り。道の上でも印として浮くよう、マスの地の色で囲む。 */
-  startMarkOutline: "stroke-(--hamiltonian-path-cell)",
+  startMarkOutline: "stroke-(--hitofude-puzzle-cell)",
   deadEndHead: "stroke-stone-800 dark:stroke-stone-200",
   strandedHatch: "stroke-stone-800/40 dark:stroke-stone-200/40",
   /** クリアしたとき、始点から終点へ道をなぞる光。 */
@@ -38,11 +38,11 @@ const VISITED_CELL_TINT_PERCENT = 28;
  */
 export function getPathColor(progress: number): string {
   const toPercent = Math.round(Math.min(Math.max(progress, 0), 1) * 100);
-  return `color-mix(in oklch, var(--hamiltonian-path-to) ${toPercent}%, var(--hamiltonian-path-from))`;
+  return `color-mix(in oklch, var(--hitofude-puzzle-to) ${toPercent}%, var(--hitofude-puzzle-from))`;
 }
 
 /** 道が `progress` の位置で通ったマスの塗り。 */
 export function getVisitedCellColor(progress: number): string {
   // 無彩色の地と oklch で混ぜると色相が回って濁るので、地との混ぜ合わせは oklab で行う。
-  return `color-mix(in oklab, ${getPathColor(progress)} ${VISITED_CELL_TINT_PERCENT}%, var(--hamiltonian-path-cell))`;
+  return `color-mix(in oklab, ${getPathColor(progress)} ${VISITED_CELL_TINT_PERCENT}%, var(--hitofude-puzzle-cell))`;
 }

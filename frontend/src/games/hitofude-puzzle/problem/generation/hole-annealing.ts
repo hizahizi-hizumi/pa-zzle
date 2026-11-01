@@ -1,20 +1,20 @@
-import { countHamiltonianPathHoleLayoutViolations } from "@/games/hamiltonian-path/problem/generation/hole-layout";
-import { traceHamiltonianPathHumanSolve } from "@/games/hamiltonian-path/problem/generation/human-solver";
-import { createRandomSelfAvoidingWalk } from "@/games/hamiltonian-path/problem/generation/self-avoiding-walk";
-import { countHamiltonianPathSolutions } from "@/games/hamiltonian-path/problem/generation/solver";
-import { listHamiltonianPathBoardOrientations } from "@/games/hamiltonian-path/problem/generation/symmetry";
-import type { HamiltonianPathBoardSize } from "@/games/hamiltonian-path/problem/problem";
+import { countHitofudePuzzleHoleLayoutViolations } from "@/games/hitofude-puzzle/problem/generation/hole-layout";
+import { traceHitofudePuzzleHumanSolve } from "@/games/hitofude-puzzle/problem/generation/human-solver";
+import { createRandomSelfAvoidingWalk } from "@/games/hitofude-puzzle/problem/generation/self-avoiding-walk";
+import { countHitofudePuzzleSolutions } from "@/games/hitofude-puzzle/problem/generation/solver";
+import { listHitofudePuzzleBoardOrientations } from "@/games/hitofude-puzzle/problem/generation/symmetry";
+import type { HitofudePuzzleBoardSize } from "@/games/hitofude-puzzle/problem/problem";
 import {
-  type HamiltonianPathBoard,
-  listHamiltonianPathCells,
-  listHamiltonianPathGridNeighbors,
-} from "@/games/hamiltonian-path/puzzle/board";
-import { areHamiltonianPathOpenCellsConnected } from "@/games/hamiltonian-path/puzzle/rules";
+  type HitofudePuzzleBoard,
+  listHitofudePuzzleCells,
+  listHitofudePuzzleGridNeighbors,
+} from "@/games/hitofude-puzzle/puzzle/board";
+import { areHitofudePuzzleOpenCellsConnected } from "@/games/hitofude-puzzle/puzzle/rules";
 import type { ProblemRandom } from "@/games/problem-seed";
 
 /** 一意解の盤面と、そのただ1つの解の道。 */
-export type HamiltonianPathUniqueHoleBoard = {
-  board: HamiltonianPathBoard;
+export type HitofudePuzzleUniqueHoleBoard = {
+  board: HitofudePuzzleBoard;
   solution: readonly number[];
 };
 
@@ -27,7 +27,7 @@ const ANNEALING_ITERATIONS = {
   6: 1_500,
   7: 2_000,
   8: 3_000,
-} as const satisfies Record<HamiltonianPathBoardSize, number>;
+} as const satisfies Record<HitofudePuzzleBoardSize, number>;
 
 const START_TEMPERATURE = 2;
 const END_TEMPERATURE = 0.05;
@@ -64,8 +64,8 @@ type SolutionEstimate = {
   firstSolution: readonly number[] | undefined;
 };
 
-function estimateSolutions(board: HamiltonianPathBoard): SolutionEstimate {
-  const search = countHamiltonianPathSolutions(board, {
+function estimateSolutions(board: HitofudePuzzleBoard): SolutionEstimate {
+  const search = countHitofudePuzzleSolutions(board, {
     solutionLimit: SOLUTION_COUNT_CAP,
   });
   const searchLimitReached = search.status === "search-limit-reached";
@@ -116,13 +116,13 @@ const MOVE_START_TO_NEIGHBOR_RATIO = 0.6;
  * 穴でないマスがつながらなくなる近傍や、動かせる先が無い近傍は `null`。
  */
 function moveHoles(
-  board: HamiltonianPathBoard,
+  board: HitofudePuzzleBoard,
   random: ProblemRandom,
-): HamiltonianPathBoard | null {
+): HitofudePuzzleBoard | null {
   const { size } = board;
   const holes = new Set(board.holes);
   let { start } = board;
-  const otherOpenCells = listHamiltonianPathCells(size).filter(
+  const otherOpenCells = listHitofudePuzzleCells(size).filter(
     (cell) => !holes.has(cell) && cell !== start,
   );
   const choice = random();
@@ -143,7 +143,7 @@ function moveHoles(
     const hole = pickValue(board.holes, random);
     const destinations = (
       random() < MOVE_HOLE_TO_NEIGHBOR_RATIO
-        ? listHamiltonianPathGridNeighbors(size, hole)
+        ? listHitofudePuzzleGridNeighbors(size, hole)
         : otherOpenCells
     ).filter((cell) => !holes.has(cell) && cell !== start);
     if (destinations.length === 0) {
@@ -154,7 +154,7 @@ function moveHoles(
   } else {
     const destinations = (
       random() < MOVE_START_TO_NEIGHBOR_RATIO
-        ? listHamiltonianPathGridNeighbors(size, start)
+        ? listHitofudePuzzleGridNeighbors(size, start)
         : otherOpenCells
     ).filter((cell) => !holes.has(cell));
     if (destinations.length === 0) {
@@ -167,13 +167,13 @@ function moveHoles(
     holes: [...holes].sort((left, right) => left - right),
     start,
   };
-  return areHamiltonianPathOpenCellsConnected(moved) ? moved : null;
+  return areHitofudePuzzleOpenCellsConnected(moved) ? moved : null;
 }
 
 function createInitialBoard(
-  size: HamiltonianPathBoardSize,
+  size: HitofudePuzzleBoardSize,
   random: ProblemRandom,
-): HamiltonianPathBoard {
+): HitofudePuzzleBoard {
   const cellCount = size * size;
   const path = createRandomSelfAvoidingWalk(
     size,
@@ -183,26 +183,24 @@ function createInitialBoard(
   const pathCells = new Set(path);
   return {
     size,
-    holes: listHamiltonianPathCells(size).filter(
-      (cell) => !pathCells.has(cell),
-    ),
+    holes: listHitofudePuzzleCells(size).filter((cell) => !pathCells.has(cell)),
     start: path[0]!,
   };
 }
 
 /**
  * 穴の焼きなまし。無作為な自己回避路が通らないマスを穴にした盤面から始め、穴と始点を動かして、
- * 解の数の対数と見た目の基準の違反（`countHamiltonianPathHoleLayoutViolations`）の和を下げる。
+ * 解の数の対数と見た目の基準の違反（`countHitofudePuzzleHoleLayoutViolations`）の和を下げる。
  * 解が無くなる近傍は退ける。一意解で見た目の基準を満たす盤面に着いたら返し、上限の回数で着かなければ `null`。
  */
-function annealHamiltonianPathHoles(
-  size: HamiltonianPathBoardSize,
+function annealHitofudePuzzleHoles(
+  size: HitofudePuzzleBoardSize,
   random: ProblemRandom,
-): HamiltonianPathUniqueHoleBoard | null {
+): HitofudePuzzleUniqueHoleBoard | null {
   const iterations = ANNEALING_ITERATIONS[size];
   let board = createInitialBoard(size, random);
   let estimate = estimateSolutions(board);
-  let layoutViolations = countHamiltonianPathHoleLayoutViolations(board);
+  let layoutViolations = countHitofudePuzzleHoleLayoutViolations(board);
   let energy = measureEnergy(estimate.solutionCount, layoutViolations);
   for (let iteration = 0; iteration < iterations; iteration += 1) {
     if (estimate.isUnique && layoutViolations === 0) {
@@ -216,7 +214,7 @@ function annealHamiltonianPathHoles(
       continue;
     }
     const candidateViolations =
-      countHamiltonianPathHoleLayoutViolations(candidate);
+      countHitofudePuzzleHoleLayoutViolations(candidate);
     const candidateEstimate = estimateSolutions(candidate);
     if (candidateEstimate.solutionCount === 0) {
       continue;
@@ -237,15 +235,15 @@ function annealHamiltonianPathHoles(
 
 /**
  * 一意解の盤面の難しさの見積もり。回転・反転した8通りの盤面のうち、人間向け解法器が2段仮置き無しで解き切れた向きの
- * 「仮置きの回数＋最も長い先読みの手数の小さな重み」の最小。分析（`analyzeHamiltonianPathDifficulty`）の
+ * 「仮置きの回数＋最も長い先読みの手数の小さな重み」の最小。分析（`analyzeHitofudePuzzleDifficulty`）の
  * 最も上手な読み順の、軽い代わり。どの向きでも解き切れなければ `null`。
  */
-function estimateHamiltonianPathHardness(
-  board: HamiltonianPathBoard,
+function estimateHitofudePuzzleHardness(
+  board: HitofudePuzzleBoard,
 ): number | null {
   let easiest: number | null = null;
-  for (const orientation of listHamiltonianPathBoardOrientations(board)) {
-    const trace = traceHamiltonianPathHumanSolve(orientation.board, {
+  for (const orientation of listHitofudePuzzleBoardOrientations(board)) {
+    const trace = traceHitofudePuzzleHumanSolve(orientation.board, {
       workLimit: HARDNESS_ESTIMATE_WORK_LIMIT,
     });
     if (trace.status !== "solved" || trace.deepAssumptionCount > 0) {
@@ -264,7 +262,7 @@ function estimateHamiltonianPathHardness(
   return easiest;
 }
 
-function createBoardKey({ holes, start }: HamiltonianPathBoard): string {
+function createBoardKey({ holes, start }: HitofudePuzzleBoard): string {
   return `${holes.join(",")}/${start}`;
 }
 
@@ -273,12 +271,12 @@ function createBoardKey({ holes, start }: HamiltonianPathBoard): string {
  * 焼きなましと同じ量を低くする目的で、穴と始点を一定の温度で動かし続ける。歩く途中で一意解でなくなってもよい。
  * 仮置きの回数が `targetAssumptionCount` に届くか、上限の回数を歩いたら、通った一意解の盤面のうち最も難しいものを返す。
  */
-function walkHamiltonianPathHolesTowardHardness(
-  origin: HamiltonianPathUniqueHoleBoard,
+function walkHitofudePuzzleHolesTowardHardness(
+  origin: HitofudePuzzleUniqueHoleBoard,
   targetAssumptionCount: number,
   random: ProblemRandom,
-): HamiltonianPathUniqueHoleBoard {
-  const originHardness = estimateHamiltonianPathHardness(origin.board);
+): HitofudePuzzleUniqueHoleBoard {
+  const originHardness = estimateHitofudePuzzleHardness(origin.board);
   let hardest = origin;
   let hardestHardness = originHardness ?? Number.NEGATIVE_INFINITY;
   let board = origin.board;
@@ -294,8 +292,7 @@ function walkHamiltonianPathHolesTowardHardness(
     if (candidate === null) {
       continue;
     }
-    const layoutViolations =
-      countHamiltonianPathHoleLayoutViolations(candidate);
+    const layoutViolations = countHitofudePuzzleHoleLayoutViolations(candidate);
     const estimate = estimateSolutions(candidate);
     if (estimate.solutionCount === 0) {
       continue;
@@ -305,7 +302,7 @@ function walkHamiltonianPathHolesTowardHardness(
       const key = createBoardKey(candidate);
       const hardness = hardnessByBoard.has(key)
         ? hardnessByBoard.get(key)!
-        : estimateHamiltonianPathHardness(candidate);
+        : estimateHitofudePuzzleHardness(candidate);
       hardnessByBoard.set(key, hardness);
       if (hardness === null) {
         continue;
@@ -331,16 +328,16 @@ function walkHamiltonianPathHolesTowardHardness(
  * 焼きなましが一意解に着かなければ `null`（同じ乱数列の続きで作り直せる）。
  * 乱数と探索量の上限だけで決まり、同じ乱数列からは同じ盤面を作る。
  */
-export function createHamiltonianPathHoleBoard(
-  size: HamiltonianPathBoardSize,
+export function createHitofudePuzzleHoleBoard(
+  size: HitofudePuzzleBoardSize,
   targetAssumptionCount: number,
   random: ProblemRandom,
-): HamiltonianPathUniqueHoleBoard | null {
-  const annealed = annealHamiltonianPathHoles(size, random);
+): HitofudePuzzleUniqueHoleBoard | null {
+  const annealed = annealHitofudePuzzleHoles(size, random);
   if (annealed === null || targetAssumptionCount === 0) {
     return annealed;
   }
-  return walkHamiltonianPathHolesTowardHardness(
+  return walkHitofudePuzzleHolesTowardHardness(
     annealed,
     targetAssumptionCount,
     random,
@@ -349,7 +346,7 @@ export function createHamiltonianPathHoleBoard(
 
 export const _private = {
   moveHoles,
-  annealHamiltonianPathHoles,
-  estimateHamiltonianPathHardness,
-  walkHamiltonianPathHolesTowardHardness,
+  annealHitofudePuzzleHoles,
+  estimateHitofudePuzzleHardness,
+  walkHitofudePuzzleHolesTowardHardness,
 };

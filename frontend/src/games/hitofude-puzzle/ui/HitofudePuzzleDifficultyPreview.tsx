@@ -1,17 +1,17 @@
 import {
-  type HamiltonianPathDifficulty,
-  hamiltonianPathLevelCombinations,
-} from "@/games/hamiltonian-path/difficulty";
+  type HitofudePuzzleDifficulty,
+  hitofudePuzzleLevelCombinations,
+} from "@/games/hitofude-puzzle/difficulty";
 import {
-  type HamiltonianPathBoard,
-  listHamiltonianPathCells,
-} from "@/games/hamiltonian-path/puzzle/board";
-import { HamiltonianPathFigure } from "@/games/hamiltonian-path/ui/board/HamiltonianPathFigure";
+  type HitofudePuzzleBoard,
+  listHitofudePuzzleCells,
+} from "@/games/hitofude-puzzle/puzzle/board";
+import { HitofudePuzzleFigure } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleFigure";
 
 /**
  * 難易度プレビューは、盤面の上の3行を切り出した「帯」に、迷わずに引ける所まで引いた道を描く模式図である。実際の問題ではない。
  *
- * - 帯の幅: そのレベルで遊ぶ盤面サイズの上限（`hamiltonianPathLevelCombinations`）。マスの大きさはどのレベルでもそろえる。
+ * - 帯の幅: そのレベルで遊ぶ盤面サイズの上限（`hitofudePuzzleLevelCombinations`）。マスの大きさはどのレベルでもそろえる。
  * - 道: 左上の始点から列ごとに上下へ折り返して帯を埋めていく1本の道のうち、先頭から `decidedRatios` の割合のマスまでを引き、
  *   そこに先端の輪を置く。残りのマスは、先を読んで道筋を決めないと引けない所として空けておく。
  *   割合は、角・通路・袋小路の強制だけで決まる範囲（局所の推論で止まった時点で決まっていた辺の割合の中央値。
@@ -31,11 +31,11 @@ const previewStrip = {
   decidedRatios: { "1": 1, "2": 0.56, "3": 0.47, "4": 0.4, "5": 0.34 },
 } as const satisfies {
   rowCount: number;
-  decidedRatios: Record<HamiltonianPathDifficulty, number>;
+  decidedRatios: Record<HitofudePuzzleDifficulty, number>;
 };
 
 type PreviewStrip = {
-  board: HamiltonianPathBoard;
+  board: HitofudePuzzleBoard;
   /** 始点から先端までに引いた道。 */
   path: number[];
 };
@@ -51,11 +51,11 @@ function listStripSnake(size: number): number[] {
 }
 
 function createPreviewStrip(
-  difficulty: HamiltonianPathDifficulty,
+  difficulty: HitofudePuzzleDifficulty,
 ): PreviewStrip {
-  const size = hamiltonianPathLevelCombinations[difficulty].boardSize.maximum;
+  const size = hitofudePuzzleLevelCombinations[difficulty].boardSize.maximum;
   const stripCellCount = size * previewStrip.rowCount;
-  const holes = listHamiltonianPathCells(size).filter(
+  const holes = listHitofudePuzzleCells(size).filter(
     (cell) => cell >= stripCellCount,
   );
   const snake = listStripSnake(size);
@@ -68,13 +68,13 @@ function createPreviewStrip(
   };
 }
 
-type HamiltonianPathDifficultyPreviewProps = {
-  difficulty: HamiltonianPathDifficulty;
+type HitofudePuzzleDifficultyPreviewProps = {
+  difficulty: HitofudePuzzleDifficulty;
 };
 
-export function HamiltonianPathDifficultyPreview({
+export function HitofudePuzzleDifficultyPreview({
   difficulty,
-}: HamiltonianPathDifficultyPreviewProps) {
+}: HitofudePuzzleDifficultyPreviewProps) {
   const { board, path } = createPreviewStrip(difficulty);
 
   return (
@@ -91,7 +91,7 @@ export function HamiltonianPathDifficultyPreview({
           height: `calc(var(--preview-unit) * ${previewStrip.rowCount})`,
         }}
       >
-        <HamiltonianPathFigure
+        <HitofudePuzzleFigure
           board={board}
           path={path}
           isDeadEnd={false}

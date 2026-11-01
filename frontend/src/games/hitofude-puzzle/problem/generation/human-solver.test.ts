@@ -1,30 +1,30 @@
 import {
-  createHamiltonianPathRefuter,
-  traceHamiltonianPathHumanSolve,
-} from "@/games/hamiltonian-path/problem/generation/human-solver";
-import { countHamiltonianPathSolutions } from "@/games/hamiltonian-path/problem/generation/solver";
-import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem/generator";
-import { createHamiltonianPathProblemIdentity } from "@/games/hamiltonian-path/problem/problem";
+  createHitofudePuzzleRefuter,
+  traceHitofudePuzzleHumanSolve,
+} from "@/games/hitofude-puzzle/problem/generation/human-solver";
+import { countHitofudePuzzleSolutions } from "@/games/hitofude-puzzle/problem/generation/solver";
+import { generateHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/generator";
+import { createHitofudePuzzleProblemIdentity } from "@/games/hitofude-puzzle/problem/problem";
 import {
-  type HamiltonianPathBoard,
-  listHamiltonianPathCells,
-  parseHamiltonianPathBoard,
-} from "@/games/hamiltonian-path/puzzle/board";
+  type HitofudePuzzleBoard,
+  listHitofudePuzzleCells,
+  parseHitofudePuzzleBoard,
+} from "@/games/hitofude-puzzle/puzzle/board";
 import { createProblemSeededRandom } from "@/games/problem-seed";
 
 const generatedIdentities = [
-  createHamiltonianPathProblemIdentity(5, 0, 0),
-  createHamiltonianPathProblemIdentity(6, 0, 0),
-  createHamiltonianPathProblemIdentity(7, 0, 1),
-  createHamiltonianPathProblemIdentity(8, 0, 4),
-  createHamiltonianPathProblemIdentity(7, 4, 3),
+  createHitofudePuzzleProblemIdentity(5, 0, 0),
+  createHitofudePuzzleProblemIdentity(6, 0, 0),
+  createHitofudePuzzleProblemIdentity(7, 0, 1),
+  createHitofudePuzzleProblemIdentity(8, 0, 4),
+  createHitofudePuzzleProblemIdentity(7, 4, 3),
 ];
 
 /** 4×4 か 5×5 に、穴と始点を無作為に置いた盤面。解が2つ以上ある盤面も含む。 */
-function createRandomBoard(seed: string): HamiltonianPathBoard {
+function createRandomBoard(seed: string): HitofudePuzzleBoard {
   const random = createProblemSeededRandom(seed);
   const size = random() < 0.5 ? 4 : 5;
-  const cells = listHamiltonianPathCells(size);
+  const cells = listHitofudePuzzleCells(size);
   const holes = cells.filter(() => random() < 0.15);
   const openCells = cells.filter((cell) => !holes.includes(cell));
   return {
@@ -37,7 +37,7 @@ function createRandomBoard(seed: string): HamiltonianPathBoard {
 /** 解のある無作為盤面と、その解を2本まで。 */
 const solvableRandomCases = Array.from({ length: 80 }, (_, index) => {
   const board = createRandomBoard(`human-solver-property-${index}`);
-  const { firstSolutions } = countHamiltonianPathSolutions(board, {
+  const { firstSolutions } = countHitofudePuzzleSolutions(board, {
     searchStepLimit: Number.POSITIVE_INFINITY,
   });
   return [index, board, firstSolutions] as const;
@@ -204,13 +204,13 @@ const pythonFixtures = [
   },
 ] as const;
 
-describe("traceHamiltonianPathHumanSolve", () => {
+describe("traceHitofudePuzzleHumanSolve", () => {
   describe("研究用 Python が出力した固定盤面の場合", () => {
     test.each(pythonFixtures)(
       "$name で研究用 Python と同じ推論の経過をたどること",
       ({ rows, expected }) => {
-        const trace = traceHamiltonianPathHumanSolve(
-          parseHamiltonianPathBoard(rows),
+        const trace = traceHitofudePuzzleHumanSolve(
+          parseHitofudePuzzleBoard(rows),
         );
 
         expect(trace).toEqual({
@@ -231,13 +231,13 @@ describe("traceHamiltonianPathHumanSolve", () => {
 
   describe("生成した一意解の問題の場合", () => {
     const problems = generatedIdentities.map((identity) =>
-      generateHamiltonianPathProblem(identity),
+      generateHitofudePuzzleProblem(identity),
     );
 
     test.each(problems)(
       "$identity.seed を段階1〜6の推論で解き切ること",
       ({ problem }) => {
-        const trace = traceHamiltonianPathHumanSolve(problem);
+        const trace = traceHitofudePuzzleHumanSolve(problem);
 
         expect(trace.status).toBe("solved");
       },
@@ -248,7 +248,7 @@ describe("traceHamiltonianPathHumanSolve", () => {
     test.each(solvableRandomCases)(
       "盤面 %i で矛盾を返さないこと",
       (_, board) => {
-        const trace = traceHamiltonianPathHumanSolve(board);
+        const trace = traceHitofudePuzzleHumanSolve(board);
 
         expect(trace.status).not.toBe("contradiction");
       },
@@ -256,32 +256,32 @@ describe("traceHamiltonianPathHumanSolve", () => {
   });
 
   describe("始点がどこへも進めない盤面の場合", () => {
-    const board = parseHamiltonianPathBoard(["S #", "# ."]);
+    const board = parseHitofudePuzzleBoard(["S #", "# ."]);
 
     test("矛盾を返すこと", () => {
-      const trace = traceHamiltonianPathHumanSolve(board);
+      const trace = traceHitofudePuzzleHumanSolve(board);
 
       expect(trace.status).toBe("contradiction");
     });
   });
 
   describe("推論を進めた回数が上限に達した場合", () => {
-    const board = parseHamiltonianPathBoard(pythonFixtures[4].rows);
+    const board = parseHitofudePuzzleBoard(pythonFixtures[4].rows);
 
     test("評価不能として打ち切ること", () => {
-      const trace = traceHamiltonianPathHumanSolve(board, { workLimit: 10 });
+      const trace = traceHitofudePuzzleHumanSolve(board, { workLimit: 10 });
 
       expect(trace.status).toBe("work-limit-reached");
     });
   });
 });
 
-describe("createHamiltonianPathRefuter", () => {
+describe("createHitofudePuzzleRefuter", () => {
   describe("解のある小さな無作為盤面の解の道の場合", () => {
     test.each(solvableRandomCases)(
       "盤面 %i の解の道のどの途中までも反証しないこと",
       (_, board, solutions) => {
-        const refuter = createHamiltonianPathRefuter(board);
+        const refuter = createHitofudePuzzleRefuter(board);
 
         const refutations = solutions.flatMap((solution) =>
           solution.map((_, index) =>
@@ -296,10 +296,10 @@ describe("createHamiltonianPathRefuter", () => {
 
   describe("始点が関節点で、両側に領域が残る盤面の場合", () => {
     // 残りの6マスは右上と左下の2つの領域に分かれ、始点だけでつながる。始点は道の端なので、両方へは出られない。
-    const board = parseHamiltonianPathBoard(["# . .", ". S .", ". . #"]);
+    const board = parseHitofudePuzzleBoard(["# . .", ". S .", ". . #"]);
 
     test("分断・到達（段階3）で初めて反証すること", () => {
-      const stage = createHamiltonianPathRefuter(board).findRefutationStage([
+      const stage = createHitofudePuzzleRefuter(board).findRefutationStage([
         board.start,
       ]);
 
@@ -310,7 +310,7 @@ describe("createHamiltonianPathRefuter", () => {
   describe("関節点で分かれた領域の色の数が、通り抜けに合わない盤面の場合", () => {
     // 盤面全体の色の数は道に合う。始点の両隣はどちらも始点のほかに隣が1つしかなく、始点から出なかった側が終点に決まり、
     // その手前のマスが関節点になる。関節点で分かれた領域の色の数が、領域を通り抜ける道に合わない。
-    const board = parseHamiltonianPathBoard([
+    const board = parseHitofudePuzzleBoard([
       "# . S .",
       "# . # .",
       ". . . .",
@@ -318,7 +318,7 @@ describe("createHamiltonianPathRefuter", () => {
     ]);
 
     test("パリティ（段階4）で初めて反証すること", () => {
-      const stage = createHamiltonianPathRefuter(board).findRefutationStage([
+      const stage = createHitofudePuzzleRefuter(board).findRefutationStage([
         board.start,
       ]);
 
@@ -328,14 +328,14 @@ describe("createHamiltonianPathRefuter", () => {
 
   describe("生成した一意解の問題の解の道の場合", () => {
     const cases = generatedIdentities.map((identity) => {
-      const { problem, solution } = generateHamiltonianPathProblem(identity);
+      const { problem, solution } = generateHitofudePuzzleProblem(identity);
       return { seed: identity.seed, problem, solution };
     });
 
     test.each(cases)(
       "$seed の解の道のどの途中までも反証しないこと",
       ({ problem, solution }) => {
-        const refuter = createHamiltonianPathRefuter(problem);
+        const refuter = createHitofudePuzzleRefuter(problem);
 
         const refutations = solution
           .slice(1)

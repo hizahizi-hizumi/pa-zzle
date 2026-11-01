@@ -1,5 +1,5 @@
 import { getDifficultyLabel, parseDifficultyLevel } from "@/games/difficulty";
-import { hamiltonianPathPlayRecordDefinition } from "@/games/hamiltonian-path/play-record";
+import { hitofudePuzzlePlayRecordDefinition } from "@/games/hitofude-puzzle/play-record";
 import {
   createCountMetricPresentation,
   createCountProgressDisplay,
@@ -9,8 +9,8 @@ import {
   timeDeltaMetricPresentation,
 } from "@/records/ui/play-record-display";
 
-export const hamiltonianPathPlayRecordDisplay = createPlayRecordDisplay({
-  definition: hamiltonianPathPlayRecordDefinition,
+export const hitofudePuzzlePlayRecordDisplay = createPlayRecordDisplay({
+  definition: hitofudePuzzlePlayRecordDefinition,
   getComparisonLabel(comparisonKey: string) {
     const difficulty = parseDifficultyLevel(comparisonKey);
     return difficulty ? getDifficultyLabel(difficulty) : null;

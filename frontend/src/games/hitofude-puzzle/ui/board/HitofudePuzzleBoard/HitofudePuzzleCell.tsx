@@ -1,12 +1,12 @@
-import { getHamiltonianPathCellPosition } from "@/games/hamiltonian-path/puzzle/board";
+import { getHitofudePuzzleCellPosition } from "@/games/hitofude-puzzle/puzzle/board";
 
 /** マスの今の状態。`visited` は道が通ったマスで、始点と先端を含む。 */
-export type HamiltonianPathCellState = "hole" | "unvisited" | "visited";
+export type HitofudePuzzleCellState = "hole" | "unvisited" | "visited";
 
-type HamiltonianPathCellProps = {
+type HitofudePuzzleCellProps = {
   size: number;
   cell: number;
-  state: HamiltonianPathCellState;
+  state: HitofudePuzzleCellState;
   isStart: boolean;
   isHead: boolean;
   /** 先端から延ばせるマスが無いか。 */
@@ -36,10 +36,10 @@ const cellStateLabels = {
   hole: "穴",
   unvisited: "未通過",
   visited: "通過済み",
-} as const satisfies Record<HamiltonianPathCellState, string>;
+} as const satisfies Record<HitofudePuzzleCellState, string>;
 
 function describeCell(
-  state: HamiltonianPathCellState,
+  state: HitofudePuzzleCellState,
   isStart: boolean,
   isHead: boolean,
   isDeadEnd: boolean,
@@ -58,7 +58,7 @@ function describeCell(
  * キーボードと支援技術からマスを押す受け口。地・道・印は盤面の絵が下の層に描く。
  * ポインターでの押下は盤面がなぞりとして受けるので、ポインターから届く click（`detail` が 1 以上）は受けない。
  */
-export function HamiltonianPathCell({
+export function HitofudePuzzleCell({
   size,
   cell,
   state,
@@ -70,8 +70,8 @@ export function HamiltonianPathCell({
   focusable,
   onPress,
   onFocus,
-}: HamiltonianPathCellProps) {
-  const { row, column } = getHamiltonianPathCellPosition(size, cell);
+}: HitofudePuzzleCellProps) {
+  const { row, column } = getHitofudePuzzleCellPosition(size, cell);
   const label = [
     `${row + 1}行${column + 1}列`,
     describeCell(state, isStart, isHead, isDeadEnd, isStranded),

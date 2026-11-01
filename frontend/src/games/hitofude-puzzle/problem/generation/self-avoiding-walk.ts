@@ -1,4 +1,4 @@
-import { listHamiltonianPathGridNeighbors } from "@/games/hamiltonian-path/puzzle/board";
+import { listHitofudePuzzleGridNeighbors } from "@/games/hitofude-puzzle/puzzle/board";
 import type { ProblemRandom } from "@/games/problem-seed";
 
 /** 道を混ぜる変形の回数を、盤面のマス数の何倍にするか。 */
@@ -57,7 +57,7 @@ export function createRandomSelfAvoidingWalk(
 ): readonly number[] {
   const cellCount = size * size;
   const gridNeighbors = Array.from({ length: cellCount }, (_, cell) =>
-    listHamiltonianPathGridNeighbors(size, cell),
+    listHitofudePuzzleGridNeighbors(size, cell),
   );
   const serpentine = createSerpentinePath(size);
   const allowsReptation = openCellCount < cellCount;

@@ -1,20 +1,20 @@
-import type { HamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
+import type { HitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
 
 /** 引いている道。`path` は始点から先端までに通ったマスの番号で、先頭は常に始点。 */
-export type HamiltonianPathPuzzleState = {
+export type HitofudePuzzlePuzzleState = {
   path: readonly number[];
 };
 
 /** 道が始点だけの状態。 */
-export function createInitialHamiltonianPathState(
-  board: HamiltonianPathBoard,
-): HamiltonianPathPuzzleState {
+export function createInitialHitofudePuzzleState(
+  board: HitofudePuzzleBoard,
+): HitofudePuzzlePuzzleState {
   return { path: [board.start] };
 }
 
 /** 道の先端のマス。 */
-export function getHamiltonianPathHead(
-  state: HamiltonianPathPuzzleState,
+export function getHitofudePuzzleHead(
+  state: HitofudePuzzlePuzzleState,
 ): number {
   return state.path.at(-1)!;
 }

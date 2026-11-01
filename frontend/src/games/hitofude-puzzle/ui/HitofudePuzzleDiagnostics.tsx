@@ -4,20 +4,20 @@ import {
 } from "@/components/InternalDiagnosticsDialog";
 import { serializeInternalDiagnosticSnapshot } from "@/games/diagnostics";
 import { getDifficultyLabel, type NumericRange } from "@/games/difficulty";
-import type { HamiltonianPathDiagnosticSnapshot } from "@/games/hamiltonian-path/diagnostics";
+import type { HitofudePuzzleDiagnosticSnapshot } from "@/games/hitofude-puzzle/diagnostics";
 import {
-  type HamiltonianPathDifficultyAssessment,
-  hamiltonianPathLevelCombinations,
-} from "@/games/hamiltonian-path/difficulty";
+  type HitofudePuzzleDifficultyAssessment,
+  hitofudePuzzleLevelCombinations,
+} from "@/games/hitofude-puzzle/difficulty";
 import type {
-  HamiltonianPathAnalyzedDifficulty,
-  HamiltonianPathDifficultyAnalysis,
-} from "@/games/hamiltonian-path/problem/difficulty-analysis";
-import type { HamiltonianPathGenerationConditions } from "@/games/hamiltonian-path/problem/problem";
-import { findHamiltonianPathDirection } from "@/games/hamiltonian-path/puzzle/board";
+  HitofudePuzzleAnalyzedDifficulty,
+  HitofudePuzzleDifficultyAnalysis,
+} from "@/games/hitofude-puzzle/problem/difficulty-analysis";
+import type { HitofudePuzzleGenerationConditions } from "@/games/hitofude-puzzle/problem/problem";
+import { findHitofudePuzzleDirection } from "@/games/hitofude-puzzle/puzzle/board";
 
-type HamiltonianPathDiagnosticsProps = {
-  snapshot: HamiltonianPathDiagnosticSnapshot;
+type HitofudePuzzleDiagnosticsProps = {
+  snapshot: HitofudePuzzleDiagnosticSnapshot;
   onClose: () => void;
 };
 
@@ -51,7 +51,7 @@ function formatPercent(ratio: number): string {
 function formatGenerationConditions({
   size,
   targetAssumptionCount,
-}: HamiltonianPathGenerationConditions): string {
+}: HitofudePuzzleGenerationConditions): string {
   return `${size}×${size} / 仮置きの目標 ${targetAssumptionCount}回`;
 }
 
@@ -80,7 +80,7 @@ function formatSolution(size: number, solution: readonly number[]): string {
   return solution
     .slice(1)
     .map((cell, step) => {
-      const direction = findHamiltonianPathDirection(
+      const direction = findHitofudePuzzleDirection(
         size,
         solution[step]!,
         cell,
@@ -92,7 +92,7 @@ function formatSolution(size: number, solution: readonly number[]): string {
 
 function formatUniqueness({
   uniqueness,
-}: HamiltonianPathDiagnosticSnapshot): string {
+}: HitofudePuzzleDiagnosticSnapshot): string {
   const steps = `探索 ${uniqueness.searchStepCount}節点`;
   if (uniqueness.status === "search-limit-reached") {
     return `上限で打ち切り（${steps}）`;
@@ -107,7 +107,7 @@ function formatUniqueness({
 }
 
 function formatAnalysisStatus(
-  analysis: HamiltonianPathDifficultyAnalysis,
+  analysis: HitofudePuzzleDifficultyAnalysis,
 ): string {
   return analysis.status === "analyzed"
     ? "分析済み"
@@ -115,7 +115,7 @@ function formatAnalysisStatus(
 }
 
 function formatAssessment(
-  assessment: HamiltonianPathDifficultyAssessment,
+  assessment: HitofudePuzzleDifficultyAssessment,
 ): string {
   switch (assessment.status) {
     case "classified":
@@ -131,8 +131,8 @@ function formatAssessment(
 
 /** 分類したレベルの組み合わせの各条件に、この問題の値を並べる。 */
 function listLevelConditions(
-  assessment: HamiltonianPathDifficultyAssessment,
-  analysis: HamiltonianPathDifficultyAnalysis,
+  assessment: HitofudePuzzleDifficultyAssessment,
+  analysis: HitofudePuzzleDifficultyAnalysis,
 ): DiagnosticItems {
   if (assessment.status !== "classified" || analysis.status !== "analyzed") {
     return [];
@@ -142,7 +142,7 @@ function listLevelConditions(
     assumptionCount: NumericRange;
     boardSize: NumericRange;
     minimumLongestRefutationLength?: number;
-  } = hamiltonianPathLevelCombinations[assessment.difficulty];
+  } = hitofudePuzzleLevelCombinations[assessment.difficulty];
   const { reasoning, scale } = analysis;
   return [
     {
@@ -174,7 +174,7 @@ function listLevelConditions(
 function listBoardItems({
   difficultyAnalysis: { scale },
   straightRatio,
-}: HamiltonianPathDiagnosticSnapshot): DiagnosticItems {
+}: HitofudePuzzleDiagnosticSnapshot): DiagnosticItems {
   // 同型キーは盤面の記法（8×8 で8行）をつないだ長い文字列で、一覧では読めないので、再現用JSONにだけ収める。
   return [
     { label: "穴", value: `${scale.holeCount}マス`, mono: true },
@@ -188,7 +188,7 @@ function listBoardItems({
 }
 
 function listSolutionItems(
-  snapshot: HamiltonianPathDiagnosticSnapshot,
+  snapshot: HitofudePuzzleDiagnosticSnapshot,
 ): DiagnosticItems {
   const { solution, difficultyAnalysis } = snapshot;
   return [
@@ -206,7 +206,7 @@ function listSolutionItems(
 
 function listReasoningItems({
   reasoning,
-}: HamiltonianPathAnalyzedDifficulty): DiagnosticItems {
+}: HitofudePuzzleAnalyzedDifficulty): DiagnosticItems {
   const refutationStepCount = reasoning.refutationLengths.reduce(
     (sum, length) => sum + length,
     0,
@@ -256,7 +256,7 @@ function listReasoningItems({
 
 function listDrawingItems({
   drawing,
-}: HamiltonianPathAnalyzedDifficulty): DiagnosticItems {
+}: HitofudePuzzleAnalyzedDifficulty): DiagnosticItems {
   return [
     { label: "分岐", value: `${drawing.branchCount}か所`, mono: true },
     { label: "致命分岐", value: `${drawing.fatalBranchCount}か所`, mono: true },
@@ -278,7 +278,7 @@ function listDrawingItems({
 }
 
 function listSections(
-  snapshot: HamiltonianPathDiagnosticSnapshot,
+  snapshot: HitofudePuzzleDiagnosticSnapshot,
 ): InternalDiagnosticSection[] {
   const { difficultyAnalysis, difficultyAssessment } = snapshot;
   const analyzed =
@@ -306,10 +306,10 @@ function listSections(
   ];
 }
 
-export function HamiltonianPathDiagnostics({
+export function HitofudePuzzleDiagnostics({
   snapshot,
   onClose,
-}: HamiltonianPathDiagnosticsProps) {
+}: HitofudePuzzleDiagnosticsProps) {
   return (
     <InternalDiagnosticsDialog
       difficultyLabel={getDifficultyLabel(snapshot.difficulty)}

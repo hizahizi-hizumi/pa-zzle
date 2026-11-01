@@ -1,16 +1,16 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 
 import {
-  createHamiltonianPathResult,
-  useHamiltonianPathPlay,
-} from "@/games/hamiltonian-path/play/use-hamiltonian-path-play";
-import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem/generator";
-import { selectHamiltonianPathProblemForDifficulty } from "@/games/hamiltonian-path/problem-selection";
+  createHitofudePuzzleResult,
+  useHitofudePuzzlePlay,
+} from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
+import { generateHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/generator";
+import { selectHitofudePuzzleProblemForDifficulty } from "@/games/hitofude-puzzle/problem-selection";
 import {
-  findHamiltonianPathDirection,
-  getHamiltonianPathNeighborCell,
-  hamiltonianPathDirections,
-} from "@/games/hamiltonian-path/puzzle/board";
+  findHitofudePuzzleDirection,
+  getHitofudePuzzleNeighborCell,
+  hitofudePuzzleDirections,
+} from "@/games/hitofude-puzzle/puzzle/board";
 import { createProblemId } from "@/games/problem-id";
 import { createProblemSeed } from "@/games/problem-seed";
 
@@ -19,17 +19,17 @@ vi.mock("@/games/problem-seed", async (importOriginal) => ({
   createProblemSeed: vi.fn(),
 }));
 
-type HookResult = { current: ReturnType<typeof useHamiltonianPathPlay> };
+type HookResult = { current: ReturnType<typeof useHitofudePuzzlePlay> };
 
 const difficulty = "1";
-const initialSeed = "use-hamiltonian-path-play-a";
-const otherSeed = "use-hamiltonian-path-play-b";
-const initial = selectHamiltonianPathProblemForDifficulty(
+const initialSeed = "use-hitofude-puzzle-play-a";
+const otherSeed = "use-hitofude-puzzle-play-b";
+const initial = selectHitofudePuzzleProblemForDifficulty(
   difficulty,
   initialSeed,
 );
-const other = selectHamiltonianPathProblemForDifficulty(difficulty, otherSeed);
-const { solution } = generateHamiltonianPathProblem(initial.identity);
+const other = selectHitofudePuzzleProblemForDifficulty(difficulty, otherSeed);
+const { solution } = generateHitofudePuzzleProblem(initial.identity);
 
 /** マスを1つずつ押して離す。 */
 function tapAll(result: HookResult, cells: readonly number[]): void {
@@ -76,12 +76,12 @@ afterEach(() => {
   vi.mocked(createProblemSeed).mockReset();
 });
 
-describe("useHamiltonianPathPlay", () => {
+describe("useHitofudePuzzlePlay", () => {
   let result: HookResult;
 
   beforeEach(() => {
     vi.mocked(createProblemSeed).mockReturnValueOnce(initialSeed);
-    ({ result } = renderHook(() => useHamiltonianPathPlay(difficulty)));
+    ({ result } = renderHook(() => useHitofudePuzzlePlay(difficulty)));
   });
 
   test("seed で選んだ問題の、道が始点だけの盤面でプレイを始めること", () => {
@@ -133,11 +133,11 @@ describe("useHamiltonianPathPlay", () => {
 
   describe("始点から通れない向きへ矢印キーで進もうとした場合", () => {
     const { size, start } = initial.problem;
-    const direction = hamiltonianPathDirections.find((candidate) => {
-      const neighbor = getHamiltonianPathNeighborCell(size, start, candidate);
+    const direction = hitofudePuzzleDirections.find((candidate) => {
+      const neighbor = getHitofudePuzzleNeighborCell(size, start, candidate);
       return neighbor === null || initial.problem.holes.includes(neighbor);
     })!;
-    const neighbor = getHamiltonianPathNeighborCell(size, start, direction);
+    const neighbor = getHitofudePuzzleNeighborCell(size, start, direction);
 
     test("阻まれた操作として、進もうとした向きと隣のマスを残すこと", () => {
       act(() => result.current.moveHeadToward(direction));
@@ -170,7 +170,7 @@ describe("useHamiltonianPathPlay", () => {
   });
 
   describe("道を延ばした後の場合", () => {
-    const direction = findHamiltonianPathDirection(
+    const direction = findHitofudePuzzleDirection(
       initial.problem.size,
       solution[3]!,
       solution[2]!,
@@ -225,7 +225,7 @@ describe("useHamiltonianPathPlay", () => {
       const playResult = result.current.result;
 
       expect(playResult).toEqual(
-        createHamiltonianPathResult(
+        createHitofudePuzzleResult(
           {
             elapsedMs: completedAt! - startedAt,
             backtrackCount: 0,
@@ -297,11 +297,11 @@ describe("useHamiltonianPathPlay", () => {
   });
 });
 
-describe("useHamiltonianPathPlay に最初の問題を渡した場合", () => {
+describe("useHitofudePuzzlePlay に最初の問題を渡した場合", () => {
   let result: HookResult;
 
   beforeEach(() => {
-    ({ result } = renderHook(() => useHamiltonianPathPlay(difficulty, other)));
+    ({ result } = renderHook(() => useHitofudePuzzlePlay(difficulty, other)));
   });
 
   test("渡した問題で始めること", () => {

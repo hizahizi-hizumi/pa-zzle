@@ -7,20 +7,20 @@ import {
 } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 
-import { HAMILTONIAN_PATH_DISPLAY_NAME } from "@/games/hamiltonian-path/display-name";
-import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem/generator";
+import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
+import { generateHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/generator";
 import {
-  selectHamiltonianPathProblemById,
-  selectHamiltonianPathProblemForDifficulty,
-} from "@/games/hamiltonian-path/problem-selection";
+  selectHitofudePuzzleProblemById,
+  selectHitofudePuzzleProblemForDifficulty,
+} from "@/games/hitofude-puzzle/problem-selection";
 import { createProblemId } from "@/games/problem-id";
 import { readPlayAttempts } from "@/records/play-attempt-storage";
 import { readPlayRecords } from "@/records/storage";
-import { HamiltonianPathPlayView } from "@/views/HamiltonianPathPlayView";
+import { HitofudePuzzlePlayView } from "@/views/HitofudePuzzlePlayView";
 import { PlayResultView } from "@/views/PlayResultView";
 
 const internalDiagnostics = vi.hoisted(() => ({ available: false }));
-const problemSeed = "hamiltonian-path-play-view";
+const problemSeed = "hitofude-puzzle-play-view";
 
 vi.mock("@/games/problem-seed", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/games/problem-seed")>()),
@@ -49,16 +49,16 @@ function renderAt(path: string): void {
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route
-          path="/puzzles/hamiltonian-path/play/:difficulty"
+          path="/puzzles/hitofude-puzzle/play/:difficulty"
           element={
             <>
-              <HamiltonianPathPlayView />
+              <HitofudePuzzlePlayView />
               <LocationSearch />
             </>
           }
         />
         <Route
-          path="/puzzles/hamiltonian-path"
+          path="/puzzles/hitofude-puzzle"
           element={<p>難易度選択画面</p>}
         />
         <Route path="/records" element={<p>記録画面</p>} />
@@ -73,7 +73,7 @@ function renderAt(path: string): void {
 
 function listCells(): HTMLElement[] {
   return within(
-    screen.getByRole("group", { name: `${HAMILTONIAN_PATH_DISPLAY_NAME}盤面` }),
+    screen.getByRole("group", { name: `${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面` }),
   ).getAllByRole("button");
 }
 
@@ -95,7 +95,7 @@ function getCellCenter(size: number, cell: number) {
 /** `cells` の先頭のマスを指で押し、残りのマスを順になぞって離す。 */
 function dragThrough(size: number, [pressed, ...cells]: readonly number[]) {
   const surface = screen.getByRole("group", {
-    name: `${HAMILTONIAN_PATH_DISPLAY_NAME}盤面`,
+    name: `${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面`,
   });
   const touch = { pointerId: 1, pointerType: "touch", isPrimary: true };
   fireEvent.pointerDown(surface, {
@@ -121,14 +121,14 @@ function getHeadCell(): number {
   );
 }
 
-describe("HamiltonianPathPlayView", () => {
+describe("HitofudePuzzlePlayView", () => {
   describe("定義済みの難易度の場合", () => {
     const { problem, identity, workload } =
-      selectHamiltonianPathProblemForDifficulty("1", problemSeed);
-    const { solution } = generateHamiltonianPathProblem(identity);
+      selectHitofudePuzzleProblemForDifficulty("1", problemSeed);
+    const { solution } = generateHitofudePuzzleProblem(identity);
 
     beforeEach(() => {
-      renderAt("/puzzles/hamiltonian-path/play/1");
+      renderAt("/puzzles/hitofude-puzzle/play/1");
     });
 
     test("選んだ問題の盤面と、その問題 ID の URL を示すこと", () => {
@@ -174,7 +174,7 @@ describe("HamiltonianPathPlayView", () => {
       beforeEach(() => {
         vi.spyOn(
           screen.getByRole("group", {
-            name: `${HAMILTONIAN_PATH_DISPLAY_NAME}盤面`,
+            name: `${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面`,
           }),
           "getBoundingClientRect",
         ).mockReturnValue(new DOMRect(0, 0, boardWidth, boardWidth));
@@ -218,7 +218,7 @@ describe("HamiltonianPathPlayView", () => {
 
         expect(records).toHaveLength(1);
         expect(records[0]).toMatchObject({
-          gameId: "hamiltonian-path",
+          gameId: "hitofude-puzzle",
           payload: {
             difficulty: "1",
             problemIdentity: identity,
@@ -272,15 +272,15 @@ describe("HamiltonianPathPlayView", () => {
   });
 
   describe("URL の問題 ID で問題を指定した場合", () => {
-    const { identity } = selectHamiltonianPathProblemForDifficulty(
+    const { identity } = selectHitofudePuzzleProblemForDifficulty(
       "5",
       "requested-problem",
     );
     const problemId = createProblemId(identity);
-    const requested = selectHamiltonianPathProblemById("5", problemId)!;
+    const requested = selectHitofudePuzzleProblemById("5", problemId)!;
 
     beforeEach(() => {
-      renderAt(`/puzzles/hamiltonian-path/play/5?problem=${problemId}`);
+      renderAt(`/puzzles/hitofude-puzzle/play/5?problem=${problemId}`);
     });
 
     test("その問題で始めること", () => {
@@ -298,7 +298,7 @@ describe("HamiltonianPathPlayView", () => {
   describe("内部診断を使えるビルドの場合", () => {
     beforeEach(() => {
       internalDiagnostics.available = true;
-      renderAt("/puzzles/hamiltonian-path/play/3");
+      renderAt("/puzzles/hitofude-puzzle/play/3");
       openMenu();
     });
 
@@ -315,7 +315,7 @@ describe("HamiltonianPathPlayView", () => {
 
   describe("定義されていない難易度の場合", () => {
     beforeEach(() => {
-      renderAt("/puzzles/hamiltonian-path/play/9");
+      renderAt("/puzzles/hitofude-puzzle/play/9");
     });
 
     test("選べないことを示して難易度選択へ戻れること", () => {

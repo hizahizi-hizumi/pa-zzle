@@ -2,28 +2,28 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { difficultyLevels } from "@/games/difficulty";
 
-import { HAMILTONIAN_PATH_DISPLAY_NAME } from "@/games/hamiltonian-path/display-name";
-import { HamiltonianPathDifficultyView } from "@/views/HamiltonianPathDifficultyView";
+import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
+import { HitofudePuzzleDifficultyView } from "@/views/HitofudePuzzleDifficultyView";
 
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
 });
 
-describe("HamiltonianPathDifficultyView", () => {
+describe("HitofudePuzzleDifficultyView", () => {
   const difficultyCases = difficultyLevels.map(({ id }) => id);
 
   beforeEach(() => {
     render(
       <MemoryRouter>
-        <HamiltonianPathDifficultyView />
+        <HitofudePuzzleDifficultyView />
       </MemoryRouter>,
     );
   });
 
   test("ゲームの表示名を見出しに出すこと", () => {
     const heading = screen.getByRole("heading", {
-      name: HAMILTONIAN_PATH_DISPLAY_NAME,
+      name: HITOFUDE_PUZZLE_DISPLAY_NAME,
     });
 
     expect(heading).toBeTruthy();
@@ -38,7 +38,7 @@ describe("HamiltonianPathDifficultyView", () => {
 
       const href = option.getAttribute("href");
 
-      expect(href).toBe(`/puzzles/hamiltonian-path/play/${difficulty}`);
+      expect(href).toBe(`/puzzles/hitofude-puzzle/play/${difficulty}`);
     },
   );
 

@@ -1,14 +1,14 @@
 import {
-  areHamiltonianPathCellsAdjacent,
-  getHamiltonianPathCellPosition,
-  type HamiltonianPathBoard,
-  isHamiltonianPathCellOnBoard,
-  isHamiltonianPathHole,
-} from "@/games/hamiltonian-path/puzzle/board";
+  areHitofudePuzzleCellsAdjacent,
+  getHitofudePuzzleCellPosition,
+  type HitofudePuzzleBoard,
+  isHitofudePuzzleCellOnBoard,
+  isHitofudePuzzleHole,
+} from "@/games/hitofude-puzzle/puzzle/board";
 import {
-  getHamiltonianPathHead,
-  type HamiltonianPathPuzzleState,
-} from "@/games/hamiltonian-path/puzzle/state";
+  getHitofudePuzzleHead,
+  type HitofudePuzzlePuzzleState,
+} from "@/games/hitofude-puzzle/puzzle/state";
 
 /**
  * 道を延ばせなかった理由。
@@ -17,38 +17,38 @@ import {
  * - `hole`: 穴。
  * - `visited`: 道がもう通ったマス。
  */
-export type HamiltonianPathExtensionRejection =
+export type HitofudePuzzleExtensionRejection =
   | "outside-board"
   | "not-adjacent"
   | "hole"
   | "visited";
 
-export type HamiltonianPathExtension =
-  | { kind: "extended"; state: HamiltonianPathPuzzleState }
-  | { kind: "rejected"; reason: HamiltonianPathExtensionRejection };
+export type HitofudePuzzleExtension =
+  | { kind: "extended"; state: HitofudePuzzlePuzzleState }
+  | { kind: "rejected"; reason: HitofudePuzzleExtensionRejection };
 
 /**
  * 先端を隣のマスへ動かした結果。`retracted` は直前のマスへ戻って道が1マス縮んだこと。
- * `rejected` の理由は `HamiltonianPathExtension` と同じ。
+ * `rejected` の理由は `HitofudePuzzleExtension` と同じ。
  */
-export type HamiltonianPathHeadMove =
-  | { kind: "extended"; state: HamiltonianPathPuzzleState }
-  | { kind: "retracted"; state: HamiltonianPathPuzzleState }
-  | { kind: "rejected"; reason: HamiltonianPathExtensionRejection };
+export type HitofudePuzzleHeadMove =
+  | { kind: "extended"; state: HitofudePuzzlePuzzleState }
+  | { kind: "retracted"; state: HitofudePuzzlePuzzleState }
+  | { kind: "rejected"; reason: HitofudePuzzleExtensionRejection };
 
 function findExtensionRejection(
-  board: HamiltonianPathBoard,
-  state: HamiltonianPathPuzzleState,
+  board: HitofudePuzzleBoard,
+  state: HitofudePuzzlePuzzleState,
   cell: number,
-): HamiltonianPathExtensionRejection | null {
-  const head = getHamiltonianPathHead(state);
-  if (!isHamiltonianPathCellOnBoard(board.size, cell)) {
+): HitofudePuzzleExtensionRejection | null {
+  const head = getHitofudePuzzleHead(state);
+  if (!isHitofudePuzzleCellOnBoard(board.size, cell)) {
     return "outside-board";
   }
-  if (!areHamiltonianPathCellsAdjacent(board.size, head, cell)) {
+  if (!areHitofudePuzzleCellsAdjacent(board.size, head, cell)) {
     return "not-adjacent";
   }
-  if (isHamiltonianPathHole(board, cell)) {
+  if (isHitofudePuzzleHole(board, cell)) {
     return "hole";
   }
   if (state.path.includes(cell)) {
@@ -58,11 +58,11 @@ function findExtensionRejection(
 }
 
 /** 先端から隣のマスへ道を1マス延ばす。 */
-export function extendHamiltonianPath(
-  board: HamiltonianPathBoard,
-  state: HamiltonianPathPuzzleState,
+export function extendHitofudePuzzle(
+  board: HitofudePuzzleBoard,
+  state: HitofudePuzzlePuzzleState,
   cell: number,
-): HamiltonianPathExtension {
+): HitofudePuzzleExtension {
   const rejection = findExtensionRejection(board, state, cell);
   if (rejection !== null) {
     return { kind: "rejected", reason: rejection };
@@ -71,9 +71,9 @@ export function extendHamiltonianPath(
 }
 
 /** 先端を1マス戻す。道が始点だけなら同じ状態を返す。 */
-export function retractHamiltonianPath(
-  state: HamiltonianPathPuzzleState,
-): HamiltonianPathPuzzleState {
+export function retractHitofudePuzzle(
+  state: HitofudePuzzlePuzzleState,
+): HitofudePuzzlePuzzleState {
   if (state.path.length <= 1) {
     return state;
   }
@@ -81,10 +81,10 @@ export function retractHamiltonianPath(
 }
 
 /** 道の途中のマス（始点を含む）まで巻き戻し、そのマスを先端にする。道に無いマスや先端なら同じ状態を返す。 */
-export function rewindHamiltonianPath(
-  state: HamiltonianPathPuzzleState,
+export function rewindHitofudePuzzle(
+  state: HitofudePuzzlePuzzleState,
   cell: number,
-): HamiltonianPathPuzzleState {
+): HitofudePuzzlePuzzleState {
   const position = state.path.indexOf(cell);
   if (position < 0 || position === state.path.length - 1) {
     return state;
@@ -96,15 +96,15 @@ export function rewindHamiltonianPath(
  * 先端を隣のマスへ動かす。直前のマスへ動かすと道が1マス縮み、それ以外は道を延ばす。
  * ドラッグと矢印キーで道を引くときの1マスぶんの操作。道の途中のマスへの移動は巻き戻さない。
  */
-export function moveHamiltonianPathHead(
-  board: HamiltonianPathBoard,
-  state: HamiltonianPathPuzzleState,
+export function moveHitofudePuzzleHead(
+  board: HitofudePuzzleBoard,
+  state: HitofudePuzzlePuzzleState,
   cell: number,
-): HamiltonianPathHeadMove {
+): HitofudePuzzleHeadMove {
   if (state.path.length >= 2 && state.path.at(-2) === cell) {
-    return { kind: "retracted", state: retractHamiltonianPath(state) };
+    return { kind: "retracted", state: retractHitofudePuzzle(state) };
   }
-  return extendHamiltonianPath(board, state, cell);
+  return extendHitofudePuzzle(board, state, cell);
 }
 
 /**
@@ -114,14 +114,14 @@ export function moveHamiltonianPathHead(
  * - `unchanged`: 道を変えない（先端・道の途中のマスに入った、道から外れた指が動いた、など）。
  * - `rejected`: 先端から進もうとした指が穴に阻まれた。
  */
-export type HamiltonianPathTrace =
-  | { kind: "extended"; state: HamiltonianPathPuzzleState }
-  | { kind: "retracted"; state: HamiltonianPathPuzzleState }
+export type HitofudePuzzleTrace =
+  | { kind: "extended"; state: HitofudePuzzlePuzzleState }
+  | { kind: "retracted"; state: HitofudePuzzlePuzzleState }
   | { kind: "unchanged" }
-  | { kind: "rejected"; reason: HamiltonianPathExtensionRejection };
+  | { kind: "rejected"; reason: HitofudePuzzleExtensionRejection };
 
 /** 指が `from` から `to` へ移った向き。斜めや一直線に離れたマスをつなぐ順を決める。 */
-export type HamiltonianPathTraceStep = {
+export type HitofudePuzzleTraceStep = {
   from: number;
   to: number;
   /** 横の動きの方が大きいか。斜めに移ったとき、横に隣のマスを先に通る。 */
@@ -135,11 +135,11 @@ function listCellsTowards(
   to: number,
   horizontalFirst: boolean,
 ): number[][] {
-  const { row: headRow, column: headColumn } = getHamiltonianPathCellPosition(
+  const { row: headRow, column: headColumn } = getHitofudePuzzleCellPosition(
     size,
     head,
   );
-  const { row, column } = getHamiltonianPathCellPosition(size, to);
+  const { row, column } = getHitofudePuzzleCellPosition(size, to);
   const rowDelta = row - headRow;
   const columnDelta = column - headColumn;
   if (Math.abs(rowDelta) === 1 && Math.abs(columnDelta) === 1) {
@@ -161,13 +161,13 @@ function listCellsTowards(
 }
 
 function extendThrough(
-  board: HamiltonianPathBoard,
-  state: HamiltonianPathPuzzleState,
+  board: HitofudePuzzleBoard,
+  state: HitofudePuzzlePuzzleState,
   cells: readonly number[],
-): HamiltonianPathPuzzleState | null {
+): HitofudePuzzlePuzzleState | null {
   let current = state;
   for (const cell of cells) {
-    const extension = extendHamiltonianPath(board, current, cell);
+    const extension = extendHitofudePuzzle(board, current, cell);
     if (extension.kind === "rejected") {
       return null;
     }
@@ -185,24 +185,21 @@ function extendThrough(
  * - 阻まれたことを返すのは、指が先端から穴へ移ったときだけ。
  *   道から外れた指が動き続けても、同じ障害を何度も返さない。
  */
-export function traceHamiltonianPath(
-  board: HamiltonianPathBoard,
-  state: HamiltonianPathPuzzleState,
-  { from, to, horizontalFirst }: HamiltonianPathTraceStep,
-): HamiltonianPathTrace {
-  const head = getHamiltonianPathHead(state);
+export function traceHitofudePuzzle(
+  board: HitofudePuzzleBoard,
+  state: HitofudePuzzlePuzzleState,
+  { from, to, horizontalFirst }: HitofudePuzzleTraceStep,
+): HitofudePuzzleTrace {
+  const head = getHitofudePuzzleHead(state);
   const movedFromHead = from === head;
   if (state.path.length >= 2 && state.path.at(-2) === to) {
-    return { kind: "retracted", state: retractHamiltonianPath(state) };
+    return { kind: "retracted", state: retractHitofudePuzzle(state) };
   }
-  if (
-    !isHamiltonianPathCellOnBoard(board.size, to) ||
-    state.path.includes(to)
-  ) {
+  if (!isHitofudePuzzleCellOnBoard(board.size, to) || state.path.includes(to)) {
     return { kind: "unchanged" };
   }
-  if (areHamiltonianPathCellsAdjacent(board.size, head, to)) {
-    const extension = extendHamiltonianPath(board, state, to);
+  if (areHitofudePuzzleCellsAdjacent(board.size, head, to)) {
+    const extension = extendHitofudePuzzle(board, state, to);
     if (extension.kind === "extended") {
       return extension;
     }

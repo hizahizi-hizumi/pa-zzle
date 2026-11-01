@@ -1,21 +1,21 @@
-import type { HamiltonianPathSolveWorkload } from "@/games/hamiltonian-path/problem/problem";
+import type { HitofudePuzzleSolveWorkload } from "@/games/hitofude-puzzle/problem/problem";
 import {
-  calculateHamiltonianPathPlayScore,
-  calculateHamiltonianPathSpeedFullScoreMs,
-  calculateHamiltonianPathSpeedScoreRule,
-  calculateHamiltonianPathTimeDeltaMs,
-} from "@/games/hamiltonian-path/score";
+  calculateHitofudePuzzlePlayScore,
+  calculateHitofudePuzzleSpeedFullScoreMs,
+  calculateHitofudePuzzleSpeedScoreRule,
+  calculateHitofudePuzzleTimeDeltaMs,
+} from "@/games/hitofude-puzzle/score";
 import { getGameResultLevel } from "@/games/result";
 
 // レベル1 と レベル5 の問題集の中央値に近い作業の量。
-const lightWorkload: HamiltonianPathSolveWorkload = {
+const lightWorkload: HitofudePuzzleSolveWorkload = {
   openCellCount: 25,
   assumptionCount: 0,
   refutationStepCount: 0,
   longestRefutationLength: 0,
   fatalBranchCount: 3,
 };
-const heavyWorkload: HamiltonianPathSolveWorkload = {
+const heavyWorkload: HitofudePuzzleSolveWorkload = {
   openCellCount: 64,
   assumptionCount: 8,
   refutationStepCount: 71,
@@ -32,14 +32,14 @@ type PlayExample = {
 };
 
 function scorePlay({ elapsedRatio, backtrackCount }: PlayExample): number {
-  return calculateHamiltonianPathPlayScore({
+  return calculateHitofudePuzzlePlayScore({
     elapsedMs: heavyFullScoreMs * elapsedRatio,
     backtrackCount,
     workload: heavyWorkload,
   }).total;
 }
 
-describe("calculateHamiltonianPathSpeedFullScoreMs", () => {
+describe("calculateHitofudePuzzleSpeedFullScoreMs", () => {
   const cases = [
     ["仮置きの要らない小さな盤面", lightWorkload, lightFullScoreMs],
     ["仮置きを重ねる大きな盤面", heavyWorkload, heavyFullScoreMs],
@@ -49,7 +49,7 @@ describe("calculateHamiltonianPathSpeedFullScoreMs", () => {
     "%sで、見渡す5秒になぞるマス1つ0.5秒・迷う分岐1つ3秒・仮置き1回3秒・先読み1手1秒を足すこと",
     (_, workload, expected) => {
       const speedFullScoreMs =
-        calculateHamiltonianPathSpeedFullScoreMs(workload);
+        calculateHitofudePuzzleSpeedFullScoreMs(workload);
 
       expect(speedFullScoreMs).toBe(expected);
     },
@@ -60,8 +60,8 @@ describe("calculateHamiltonianPathSpeedFullScoreMs", () => {
     const overLimit = { ...heavyWorkload, refutationStepCount: 287 };
 
     test("上限の120手までだけを数えること", () => {
-      const atLimitMs = calculateHamiltonianPathSpeedFullScoreMs(atLimit);
-      const overLimitMs = calculateHamiltonianPathSpeedFullScoreMs(overLimit);
+      const atLimitMs = calculateHitofudePuzzleSpeedFullScoreMs(atLimit);
+      const overLimitMs = calculateHitofudePuzzleSpeedFullScoreMs(overLimit);
 
       expect(overLimitMs).toBe(atLimitMs);
       expect(atLimitMs).toBe(220_000);
@@ -69,9 +69,9 @@ describe("calculateHamiltonianPathSpeedFullScoreMs", () => {
   });
 });
 
-describe("calculateHamiltonianPathSpeedScoreRule", () => {
+describe("calculateHitofudePuzzleSpeedScoreRule", () => {
   test("基準時間の3倍で0点になる規則を返すこと", () => {
-    const rule = calculateHamiltonianPathSpeedScoreRule(lightWorkload);
+    const rule = calculateHitofudePuzzleSpeedScoreRule(lightWorkload);
 
     expect(rule).toEqual({
       fullScoreMs: lightFullScoreMs,
@@ -80,7 +80,7 @@ describe("calculateHamiltonianPathSpeedScoreRule", () => {
   });
 });
 
-describe("calculateHamiltonianPathTimeDeltaMs", () => {
+describe("calculateHitofudePuzzleTimeDeltaMs", () => {
   const cases = [
     ["基準時間より速い", lightFullScoreMs - 6_500, -6_500],
     ["基準時間より遅い", lightFullScoreMs + 30_000, 30_000],
@@ -89,7 +89,7 @@ describe("calculateHamiltonianPathTimeDeltaMs", () => {
   test.each(cases)(
     "%sクリア時間から、基準時間との差を返すこと",
     (_, elapsedMs, expected) => {
-      const timeDeltaMs = calculateHamiltonianPathTimeDeltaMs({
+      const timeDeltaMs = calculateHitofudePuzzleTimeDeltaMs({
         elapsedMs,
         workload: lightWorkload,
       });
@@ -99,7 +99,7 @@ describe("calculateHamiltonianPathTimeDeltaMs", () => {
   );
 });
 
-describe("calculateHamiltonianPathPlayScore", () => {
+describe("calculateHitofudePuzzlePlayScore", () => {
   describe("引き直しなしで基準時間内に解いた場合", () => {
     const play = {
       elapsedMs: heavyFullScoreMs,
@@ -108,7 +108,7 @@ describe("calculateHamiltonianPathPlayScore", () => {
     };
 
     test("速さ60点と正確さ40点の満点にすること", () => {
-      const score = calculateHamiltonianPathPlayScore(play);
+      const score = calculateHitofudePuzzlePlayScore(play);
 
       expect(score).toEqual({
         total: 100,
@@ -125,7 +125,7 @@ describe("calculateHamiltonianPathPlayScore", () => {
     };
 
     test("速さを超過時間に比例して減らし、正確さを引き直し1回3点ずつ減らすこと", () => {
-      const score = calculateHamiltonianPathPlayScore(play);
+      const score = calculateHitofudePuzzlePlayScore(play);
 
       expect(score).toEqual({
         total: 55,
@@ -142,7 +142,7 @@ describe("calculateHamiltonianPathPlayScore", () => {
     };
 
     test("どちらも0点を下回らないこと", () => {
-      const score = calculateHamiltonianPathPlayScore(play);
+      const score = calculateHitofudePuzzlePlayScore(play);
 
       expect(score).toEqual({ total: 0, breakdown: { speed: 0, accuracy: 0 } });
     });

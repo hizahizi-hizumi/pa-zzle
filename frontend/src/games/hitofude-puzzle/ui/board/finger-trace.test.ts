@@ -1,9 +1,9 @@
-import type { HamiltonianPathTraceStep } from "@/games/hamiltonian-path/puzzle/transitions";
+import type { HitofudePuzzleTraceStep } from "@/games/hitofude-puzzle/puzzle/transitions";
 import {
   type BoardPoint,
   findCellAt,
   listFingerSteps,
-} from "@/games/hamiltonian-path/ui/board/finger-trace";
+} from "@/games/hitofude-puzzle/ui/board/finger-trace";
 
 const size = 4;
 
@@ -24,7 +24,7 @@ describe("findCellAt", () => {
 
 /** 指を `points` の順に動かしたときの、マスが移った順の一覧と、最後に指がいるマス。 */
 function traceFinger(points: readonly BoardPoint[], current: number) {
-  const steps: HamiltonianPathTraceStep[] = [];
+  const steps: HitofudePuzzleTraceStep[] = [];
   let cell = current;
   for (const [index, to] of points.slice(1).entries()) {
     const moved = listFingerSteps(size, points[index]!, to, cell);

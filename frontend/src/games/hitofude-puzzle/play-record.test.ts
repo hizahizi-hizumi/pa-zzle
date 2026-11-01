@@ -1,16 +1,16 @@
-import { createHamiltonianPathResult } from "@/games/hamiltonian-path/play/use-hamiltonian-path-play";
+import { createHitofudePuzzleResult } from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
 import {
-  createHamiltonianPathPlayRecord,
-  getHamiltonianPathPlayRecordScore,
-  getHamiltonianPathPlayRecordTimeDelta,
-  hamiltonianPathPlayRecordDefinition,
-  isHamiltonianPathPlayRecord,
-  restoreHamiltonianPathRecordedResult,
-} from "@/games/hamiltonian-path/play-record";
-import { createHamiltonianPathProblemIdentity } from "@/games/hamiltonian-path/problem/problem";
+  createHitofudePuzzlePlayRecord,
+  getHitofudePuzzlePlayRecordScore,
+  getHitofudePuzzlePlayRecordTimeDelta,
+  hitofudePuzzlePlayRecordDefinition,
+  isHitofudePuzzlePlayRecord,
+  restoreHitofudePuzzleRecordedResult,
+} from "@/games/hitofude-puzzle/play-record";
+import { createHitofudePuzzleProblemIdentity } from "@/games/hitofude-puzzle/problem/problem";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 
-const problemIdentity = createHamiltonianPathProblemIdentity(8, 7, 16);
+const problemIdentity = createHitofudePuzzleProblemIdentity(8, 7, 16);
 
 // 基準時間は 5 + 64×0.5 + 13×3 + 8×3 + 71×1 = 171秒。
 const workload = {
@@ -33,7 +33,7 @@ const performance = {
 const expectedScore = 86;
 const expectedTimeDeltaMs = 29_000;
 
-const record = createHamiltonianPathPlayRecord({
+const record = createHitofudePuzzlePlayRecord({
   difficulty: "5",
   problemIdentity,
   workload,
@@ -54,13 +54,13 @@ function withPayload(overrides: Record<string, unknown>) {
   return { ...record, payload: { ...record.payload, ...overrides } };
 }
 
-describe("createHamiltonianPathPlayRecord", () => {
+describe("createHitofudePuzzlePlayRecord", () => {
   test("完了プレイと遊んだ問題の事実だけを保存用記録へ写すこと", () => {
     const { id, gameId, payloadVersion, payload } = record;
 
     expect({ id, gameId, payloadVersion }).toEqual({
-      id: "hamiltonian-path:1000:201000:hp-8-t7-16",
-      gameId: "hamiltonian-path",
+      id: "hitofude-puzzle:1000:201000:hp-8-t7-16",
+      gameId: "hitofude-puzzle",
       payloadVersion: 1,
     });
     expect(payload).toEqual({
@@ -77,13 +77,13 @@ describe("createHamiltonianPathPlayRecord", () => {
   });
 
   describe("評価を含む結果を渡した場合", () => {
-    const recordFromResult = createHamiltonianPathPlayRecord({
+    const recordFromResult = createHitofudePuzzlePlayRecord({
       difficulty: "5",
       problemIdentity,
       workload,
       startedAt: 1_000,
       completedAt: 201_000,
-      result: createHamiltonianPathResult(performance, workload),
+      result: createHitofudePuzzleResult(performance, workload),
     });
 
     test("評価を保存しないこと", () => {
@@ -94,23 +94,23 @@ describe("createHamiltonianPathPlayRecord", () => {
   });
 });
 
-describe("getHamiltonianPathPlayRecordScore", () => {
+describe("getHitofudePuzzlePlayRecordScore", () => {
   test("保存した事実から現在のプレイ評価を導出すること", () => {
-    const score = getHamiltonianPathPlayRecordScore(record);
+    const score = getHitofudePuzzlePlayRecordScore(record);
 
     expect(score).toBe(expectedScore);
   });
 });
 
-describe("getHamiltonianPathPlayRecordTimeDelta", () => {
+describe("getHitofudePuzzlePlayRecordTimeDelta", () => {
   test("保存した作業の量から基準時間との差を導出すること", () => {
-    const timeDeltaMs = getHamiltonianPathPlayRecordTimeDelta(record);
+    const timeDeltaMs = getHitofudePuzzlePlayRecordTimeDelta(record);
 
     expect(timeDeltaMs).toBe(expectedTimeDeltaMs);
   });
 });
 
-describe("isHamiltonianPathPlayRecord", () => {
+describe("isHitofudePuzzlePlayRecord", () => {
   const validCases = [
     ["作成した記録", record],
     [
@@ -196,31 +196,31 @@ describe("isHamiltonianPathPlayRecord", () => {
   ] as const;
 
   test.each(validCases)("%s を読み込むこと", (_, value) => {
-    const accepted = isHamiltonianPathPlayRecord(value);
+    const accepted = isHitofudePuzzlePlayRecord(value);
 
     expect(accepted).toBe(true);
   });
 
   test.each(invalidCases)("%s を読み込まないこと", (_, value) => {
-    const accepted = isHamiltonianPathPlayRecord(value);
+    const accepted = isHitofudePuzzlePlayRecord(value);
 
     expect(accepted).toBe(false);
   });
 });
 
-describe("hamiltonianPathPlayRecordDefinition", () => {
+describe("hitofudePuzzlePlayRecordDefinition", () => {
   const metricIds = ["play-score", "time-delta-ms", "backtrack-count"];
 
   test("難易度を自己ベストの比較単位として扱うこと", () => {
     const comparisonKey =
-      hamiltonianPathPlayRecordDefinition.getComparisonKey(record);
+      hitofudePuzzlePlayRecordDefinition.getComparisonKey(record);
 
     expect(comparisonKey).toBe("5");
   });
 
   test("自己ベストを評価点は高いほど、基準時間との差と引き直し回数は小さいほど良いとして比べること", () => {
     const directions =
-      hamiltonianPathPlayRecordDefinition.personalBestMetrics.map(
+      hitofudePuzzlePlayRecordDefinition.personalBestMetrics.map(
         ({ id, direction }) => [id, direction],
       );
 
@@ -235,7 +235,7 @@ describe("hamiltonianPathPlayRecordDefinition", () => {
     const values = metricIds.map((metricId) =>
       getPlayRecordMetricValue(
         record,
-        hamiltonianPathPlayRecordDefinition,
+        hitofudePuzzlePlayRecordDefinition,
         metricId,
       ),
     );
@@ -250,7 +250,7 @@ describe("hamiltonianPathPlayRecordDefinition", () => {
       const values = metricIds.map((metricId) =>
         getPlayRecordMetricValue(
           pastRecord,
-          hamiltonianPathPlayRecordDefinition,
+          hitofudePuzzlePlayRecordDefinition,
           metricId,
         ),
       );
@@ -266,7 +266,7 @@ describe("hamiltonianPathPlayRecordDefinition", () => {
       const values = metricIds.map((metricId) =>
         getPlayRecordMetricValue(
           brokenRecord,
-          hamiltonianPathPlayRecordDefinition,
+          hitofudePuzzlePlayRecordDefinition,
           metricId,
         ),
       );
@@ -276,10 +276,10 @@ describe("hamiltonianPathPlayRecordDefinition", () => {
   });
 });
 
-describe("restoreHamiltonianPathRecordedResult", () => {
+describe("restoreHitofudePuzzleRecordedResult", () => {
   describe("今の版の記録の場合", () => {
     test("記録の成績と問題の作業の量から結果を作り直すこと", () => {
-      const recorded = restoreHamiltonianPathRecordedResult(record);
+      const recorded = restoreHitofudePuzzleRecordedResult(record);
 
       expect(recorded).toMatchObject({
         difficulty: "5",
@@ -304,7 +304,7 @@ describe("restoreHamiltonianPathRecordedResult", () => {
     });
 
     test("記録の項目だけで結果を作ること", () => {
-      const recorded = restoreHamiltonianPathRecordedResult(recordWithExtra);
+      const recorded = restoreHitofudePuzzleRecordedResult(recordWithExtra);
 
       expect(recorded?.result).not.toHaveProperty("blockedMoveCount");
     });
@@ -320,7 +320,7 @@ describe("restoreHamiltonianPathRecordedResult", () => {
     ] as const;
 
     test.each(unrestorableRecords)("%s から結果を作らないこと", (_, value) => {
-      const recorded = restoreHamiltonianPathRecordedResult(value);
+      const recorded = restoreHitofudePuzzleRecordedResult(value);
 
       expect(recorded).toBeNull();
     });

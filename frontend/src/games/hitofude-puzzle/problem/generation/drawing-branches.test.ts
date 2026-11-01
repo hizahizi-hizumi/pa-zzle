@@ -1,6 +1,6 @@
-import { analyzeHamiltonianPathDrawingBranches } from "@/games/hamiltonian-path/problem/generation/drawing-branches";
-import { countHamiltonianPathSolutions } from "@/games/hamiltonian-path/problem/generation/solver";
-import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
+import { analyzeHitofudePuzzleDrawingBranches } from "@/games/hitofude-puzzle/problem/generation/drawing-branches";
+import { countHitofudePuzzleSolutions } from "@/games/hitofude-puzzle/problem/generation/solver";
+import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
 
 /**
  * 研究用 Python（`scripts/research/hamiltonian_path_experiment.py`）の `decision_profile`（一意解）が、同じ盤面に返した分岐。
@@ -94,18 +94,18 @@ const pythonFixtures = [
   },
 ] as const;
 
-describe("analyzeHamiltonianPathDrawingBranches", () => {
+describe("analyzeHitofudePuzzleDrawingBranches", () => {
   describe("研究用 Python が出力した固定盤面の場合", () => {
     const cases = pythonFixtures.map(({ name, rows, expected }) => {
-      const board = parseHamiltonianPathBoard(rows);
-      const solution = countHamiltonianPathSolutions(board).firstSolutions[0]!;
+      const board = parseHitofudePuzzleBoard(rows);
+      const solution = countHitofudePuzzleSolutions(board).firstSolutions[0]!;
       return { name, board, solution, expected };
     });
 
     test.each(cases)(
       "$name で研究用 Python と同じ分岐を数えること",
       ({ board, solution, expected }) => {
-        const branches = analyzeHamiltonianPathDrawingBranches(board, solution);
+        const branches = analyzeHitofudePuzzleDrawingBranches(board, solution);
 
         expect(branches).toEqual(expected);
       },
@@ -113,11 +113,11 @@ describe("analyzeHamiltonianPathDrawingBranches", () => {
   });
 
   describe("推論を進めた回数が上限に達した場合", () => {
-    const board = parseHamiltonianPathBoard(pythonFixtures[2].rows);
-    const solution = countHamiltonianPathSolutions(board).firstSolutions[0]!;
+    const board = parseHitofudePuzzleBoard(pythonFixtures[2].rows);
+    const solution = countHitofudePuzzleSolutions(board).firstSolutions[0]!;
 
     test("作業量の上限に達したことを返すこと", () => {
-      const branches = analyzeHamiltonianPathDrawingBranches(board, solution, {
+      const branches = analyzeHitofudePuzzleDrawingBranches(board, solution, {
         workLimit: 1,
       });
 

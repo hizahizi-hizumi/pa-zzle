@@ -1,12 +1,12 @@
 import { difficultyLevels } from "@/games/difficulty";
 import {
-  assessHamiltonianPathDifficulty,
-  type HamiltonianPathDifficulty,
-  type HamiltonianPathLevelCombination,
-  hamiltonianPathLevelCombinations,
-  listHamiltonianPathGenerationConditions,
-} from "@/games/hamiltonian-path/difficulty";
-import type { HamiltonianPathDifficultyAnalysis } from "@/games/hamiltonian-path/problem/difficulty-analysis";
+  assessHitofudePuzzleDifficulty,
+  type HitofudePuzzleDifficulty,
+  type HitofudePuzzleLevelCombination,
+  hitofudePuzzleLevelCombinations,
+  listHitofudePuzzleGenerationConditions,
+} from "@/games/hitofude-puzzle/difficulty";
+import type { HitofudePuzzleDifficultyAnalysis } from "@/games/hitofude-puzzle/problem/difficulty-analysis";
 
 type AnalysisInput = {
   size: number;
@@ -24,7 +24,7 @@ function toAnalysis({
   longestRefutationLength = 0,
   deepAssumptionCount = 0,
   fatalBranchCount = 3,
-}: AnalysisInput): HamiltonianPathDifficultyAnalysis {
+}: AnalysisInput): HitofudePuzzleDifficultyAnalysis {
   return {
     status: "analyzed",
     scale: {
@@ -59,19 +59,15 @@ const adjacentPairs = difficultyIds.slice(1).map((upperId, index) => {
   const lowerId = difficultyIds[index]!;
   return [
     `${lowerId}→${upperId}`,
-    hamiltonianPathLevelCombinations[
-      lowerId
-    ] as HamiltonianPathLevelCombination,
-    hamiltonianPathLevelCombinations[
-      upperId
-    ] as HamiltonianPathLevelCombination,
+    hitofudePuzzleLevelCombinations[lowerId] as HitofudePuzzleLevelCombination,
+    hitofudePuzzleLevelCombinations[upperId] as HitofudePuzzleLevelCombination,
   ] as const;
 });
 
-describe("hamiltonianPathLevelCombinations", () => {
+describe("hitofudePuzzleLevelCombinations", () => {
   test("局所の推論だけで決まる問題をレベル1だけに置くこと", () => {
     const localOnly = difficultyIds.filter(
-      (id) => hamiltonianPathLevelCombinations[id].localReasoningSuffices,
+      (id) => hitofudePuzzleLevelCombinations[id].localReasoningSuffices,
     );
 
     expect(localOnly).toEqual(["1"]);
@@ -120,11 +116,11 @@ describe("hamiltonianPathLevelCombinations", () => {
   );
 });
 
-describe("assessHamiltonianPathDifficulty", () => {
+describe("assessHitofudePuzzleDifficulty", () => {
   const classifiedCases: readonly (readonly [
     string,
     AnalysisInput,
-    HamiltonianPathDifficulty,
+    HitofudePuzzleDifficulty,
   ])[] = [
     [
       "5×5 で局所の推論だけで決まる",
@@ -146,7 +142,7 @@ describe("assessHamiltonianPathDifficulty", () => {
   test.each(classifiedCases)(
     "%s問題をレベル %s に分類すること",
     (_, input, expected) => {
-      const assessment = assessHamiltonianPathDifficulty(toAnalysis(input));
+      const assessment = assessHitofudePuzzleDifficulty(toAnalysis(input));
 
       expect(assessment).toMatchObject({
         status: "classified",
@@ -168,7 +164,7 @@ describe("assessHamiltonianPathDifficulty", () => {
   test.each(unlistedCases)(
     "%s問題を組み合わせ外として提供しないこと",
     (_, input) => {
-      const assessment = assessHamiltonianPathDifficulty(toAnalysis(input));
+      const assessment = assessHitofudePuzzleDifficulty(toAnalysis(input));
 
       expect(assessment).toMatchObject({
         status: "out-of-range",
@@ -186,7 +182,7 @@ describe("assessHamiltonianPathDifficulty", () => {
     });
 
     test("重すぎるので提供しないこと", () => {
-      const assessment = assessHamiltonianPathDifficulty(analysis);
+      const assessment = assessHitofudePuzzleDifficulty(analysis);
 
       expect(assessment).toEqual({
         status: "out-of-range",
@@ -203,7 +199,7 @@ describe("assessHamiltonianPathDifficulty", () => {
     });
 
     test("軽すぎるので提供しないこと", () => {
-      const assessment = assessHamiltonianPathDifficulty(analysis);
+      const assessment = assessHitofudePuzzleDifficulty(analysis);
 
       expect(assessment).toEqual({
         status: "out-of-range",
@@ -214,7 +210,7 @@ describe("assessHamiltonianPathDifficulty", () => {
 
   const unassessableCases: readonly (readonly [
     string,
-    HamiltonianPathDifficultyAnalysis,
+    HitofudePuzzleDifficultyAnalysis,
   ])[] = [
     [
       "unsupported",
@@ -237,16 +233,16 @@ describe("assessHamiltonianPathDifficulty", () => {
   test.each(unassessableCases)(
     "評価できない分析結果を状態 %s のまま返すこと",
     (expected, analysis) => {
-      const assessment = assessHamiltonianPathDifficulty(analysis);
+      const assessment = assessHitofudePuzzleDifficulty(analysis);
 
       expect(assessment).toEqual({ status: expected });
     },
   );
 });
 
-describe("listHamiltonianPathGenerationConditions", () => {
+describe("listHitofudePuzzleGenerationConditions", () => {
   test("レベルの盤面サイズの範囲の盤面を、すべての仮置きの回数の目標で挙げること", () => {
-    const conditions = listHamiltonianPathGenerationConditions("1");
+    const conditions = listHitofudePuzzleGenerationConditions("1");
 
     expect(conditions).toEqual([
       { size: 5, targetAssumptionCount: 0 },

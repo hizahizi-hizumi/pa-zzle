@@ -1,12 +1,12 @@
-import { createHamiltonianPathHoleBoard } from "@/games/hamiltonian-path/problem/generation/hole-annealing";
-import { getHamiltonianPathSymmetryKey } from "@/games/hamiltonian-path/problem/generation/symmetry";
+import { createHitofudePuzzleHoleBoard } from "@/games/hitofude-puzzle/problem/generation/hole-annealing";
+import { getHitofudePuzzleSymmetryKey } from "@/games/hitofude-puzzle/problem/generation/symmetry";
 import {
-  HAMILTONIAN_PATH_GENERATOR_VERSION,
-  type HamiltonianPathIdentifiedProblem,
-  type HamiltonianPathProblemIdentity,
-  isHamiltonianPathBoardSize,
-  isHamiltonianPathTargetAssumptionCount,
-} from "@/games/hamiltonian-path/problem/problem";
+  HITOFUDE_PUZZLE_GENERATOR_VERSION,
+  type HitofudePuzzleIdentifiedProblem,
+  type HitofudePuzzleProblemIdentity,
+  isHitofudePuzzleBoardSize,
+  isHitofudePuzzleTargetAssumptionCount,
+} from "@/games/hitofude-puzzle/problem/problem";
 import { createProblemSeededRandom } from "@/games/problem-seed";
 
 /**
@@ -14,47 +14,48 @@ import { createProblemSeededRandom } from "@/games/problem-seed";
  * - `symmetryKey`: 回転・反転の同型を問題集から除くための正規化キー。
  * - `generationAttemptCount`: 採用までに穴の焼きなましを始めた回数。
  */
-export type HamiltonianPathGeneratedProblem =
-  HamiltonianPathIdentifiedProblem & {
-    solution: readonly number[];
-    symmetryKey: string;
-    generationAttemptCount: number;
-  };
+export type HitofudePuzzleGeneratedProblem = HitofudePuzzleIdentifiedProblem & {
+  solution: readonly number[];
+  symmetryKey: string;
+  generationAttemptCount: number;
+};
 
 /** 焼きなましを始め直す回数の上限。8×8 でも1回で一意解に着く割合は8割を超えるので、届けば生成器の不具合とみなす。 */
 const MAXIMUM_GENERATION_ATTEMPTS = 20;
 
-function validateIdentity(identity: HamiltonianPathProblemIdentity): void {
-  if (identity.generatorVersion !== HAMILTONIAN_PATH_GENERATOR_VERSION) {
+function validateIdentity(identity: HitofudePuzzleProblemIdentity): void {
+  if (identity.generatorVersion !== HITOFUDE_PUZZLE_GENERATOR_VERSION) {
     throw new Error(
-      `Unsupported Hamiltonian path generator version: ${identity.generatorVersion}`,
+      `Unsupported Hitofude puzzle generator version: ${identity.generatorVersion}`,
     );
   }
   const { size, targetAssumptionCount } = identity.conditions;
-  if (!isHamiltonianPathBoardSize(size)) {
-    throw new RangeError(`Unsupported Hamiltonian path board size: ${size}`);
+  if (!isHitofudePuzzleBoardSize(size)) {
+    throw new RangeError(`Unsupported Hitofude puzzle board size: ${size}`);
   }
-  if (!isHamiltonianPathTargetAssumptionCount(targetAssumptionCount)) {
+  if (!isHitofudePuzzleTargetAssumptionCount(targetAssumptionCount)) {
     throw new RangeError(
-      `Unsupported Hamiltonian path target assumption count: ${targetAssumptionCount}`,
+      `Unsupported Hitofude puzzle target assumption count: ${targetAssumptionCount}`,
     );
   }
 }
 
 /**
- * identity の seed から、穴だけで一意解にした問題を作る（`createHamiltonianPathHoleBoard`）。
+ * identity の seed から、穴だけで一意解にした問題を作る（`createHitofudePuzzleHoleBoard`）。
  * 焼きなましが一意解に着かなければ、同じ乱数列の続きで始め直す。同じ identity からは同じ問題を作る。
  * 回転・反転の同型除外は問題集の生成で `symmetryKey` を使って行う。
  */
-export function generateHamiltonianPathProblem(
-  identity: HamiltonianPathProblemIdentity,
-): HamiltonianPathGeneratedProblem {
+export function generateHitofudePuzzleProblem(
+  identity: HitofudePuzzleProblemIdentity,
+): HitofudePuzzleGeneratedProblem {
   validateIdentity(identity);
   const { seed, conditions } = identity;
+  // 乱数列の接頭辞は、内部ID を `hitofude-puzzle` へ変える前の `hamiltonian-path` のまま固定する。
+  // 変えると同じ identity から別の問題ができ、生成器の版を上げない限り問題集と合わなくなる。
   const random = createProblemSeededRandom(`hamiltonian-path:${seed}`);
 
   for (let attempt = 1; attempt <= MAXIMUM_GENERATION_ATTEMPTS; attempt += 1) {
-    const generated = createHamiltonianPathHoleBoard(
+    const generated = createHitofudePuzzleHoleBoard(
       conditions.size,
       conditions.targetAssumptionCount,
       random,
@@ -66,11 +67,11 @@ export function generateHamiltonianPathProblem(
       problem: generated.board,
       identity,
       solution: generated.solution,
-      symmetryKey: getHamiltonianPathSymmetryKey(generated.board),
+      symmetryKey: getHitofudePuzzleSymmetryKey(generated.board),
       generationAttemptCount: attempt,
     };
   }
   throw new Error(
-    `Could not generate a Hamiltonian path problem for seed ${seed} within ${MAXIMUM_GENERATION_ATTEMPTS} attempts`,
+    `Could not generate a Hitofude puzzle problem for seed ${seed} within ${MAXIMUM_GENERATION_ATTEMPTS} attempts`,
   );
 }
