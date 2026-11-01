@@ -137,6 +137,13 @@ function getHintedCellPositions(): string[] {
     .map((cell) => cell.getAttribute("aria-label")?.split(" ")[0] ?? "");
 }
 
+/** 違反のある行・列として、盤面の中で囲んでいる数。 */
+function getViolatedOutlineCount(): number {
+  return getBoard().querySelectorAll(
+    "[data-violated] > [data-line-violation-outline]",
+  ).length;
+}
+
 function getRuleChips(): HTMLElement[] {
   return within(screen.getByRole("list", { name: "ルール" })).getAllByRole(
     "listitem",
@@ -329,6 +336,21 @@ describe("TakuzuTutorial", () => {
         expect(chips).toEqual(["3つ続かない", "同じ数", "？"]);
         expect(currentChips).toEqual(["同じ数"]);
       });
+
+      test("丸が多すぎる行を作ると、その行を盤面の中で囲み、違反の一言を出すこと", () => {
+        act(() => {
+          getCell(2, 4).focus();
+        });
+        fireEvent.keyDown(getCell(2, 4), { key: "2" });
+        advanceTime(violationReactionDelayMs);
+
+        const message = screen.getByText("丸が多すぎる行があります");
+        const label = getCellLabel(2, 1);
+
+        expect(message).toBeTruthy();
+        expect(label).toBe("2行1列 丸 固定 行の個数超過");
+        expect(getViolatedOutlineCount()).toBe(2);
+      });
     });
 
     describe("同じ並びを示す手順に進んだ場合", () => {
@@ -349,7 +371,7 @@ describe("TakuzuTutorial", () => {
         expect(hinted).toEqual(["3行2列", "3行3列"]);
       });
 
-      test("上の行と同じ並びにすると、上の行と同じ並びになっていることを伝えること", () => {
+      test("上の行と同じ並びにすると、上の行と同じ並びになっていることを伝え、2つの行を囲むこと", () => {
         tapCell(3, 2);
         tapCell(3, 2);
         tapCell(3, 3);
@@ -358,9 +380,10 @@ describe("TakuzuTutorial", () => {
         const message = screen.getByText("上の行と同じ並びになっています");
 
         expect(message).toBeTruthy();
+        expect(getViolatedOutlineCount()).toBe(2);
       });
 
-      test("同じ並びを1マスずつ直す途中では、違反の一言を出さないこと", () => {
+      test("同じ並びを1マスずつ直す途中では、違反の一言も囲みも出さないこと", () => {
         tapCell(3, 2);
         tapCell(3, 2);
         tapCell(3, 3);
@@ -373,6 +396,7 @@ describe("TakuzuTutorial", () => {
 
         expect(message).toBeTruthy();
         expect(label).toBe("3行3列 丸");
+        expect(getViolatedOutlineCount()).toBe(0);
         expect(getHintedCellPositions()).toEqual(["3行2列"]);
       });
     });
@@ -401,6 +425,17 @@ describe("TakuzuTutorial", () => {
         const label = getCell(4, 2).getAttribute("aria-label");
 
         expect(label).toBe("4行2列 四角 列の個数超過");
+      });
+
+      test("ルールに合わない手を置いて違反が続くと、違反の一言を出すこと", () => {
+        tapCell(4, 2);
+        advanceTime(violationReactionDelayMs);
+
+        const message = screen.getByText("四角が多すぎる列があります");
+        const freePlayMessage = screen.queryByText("残りを埋めると完成です");
+
+        expect(message).toBeTruthy();
+        expect(freePlayMessage).toBeNull();
       });
     });
 

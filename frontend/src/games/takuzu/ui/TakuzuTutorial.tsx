@@ -296,6 +296,7 @@ export function TakuzuTutorial({
                 hintCellIndices,
                 hintCueId,
               )}
+              outlinesViolatedLines
               onCycleCell={handleCycleCell}
               onPlaceCell={handlePlaceCell}
             />

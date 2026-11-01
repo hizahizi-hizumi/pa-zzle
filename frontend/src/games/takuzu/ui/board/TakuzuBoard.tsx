@@ -1,4 +1,5 @@
 import {
+  Fragment,
   type KeyboardEvent as ReactKeyboardEvent,
   useCallback,
   useEffect,
@@ -24,6 +25,7 @@ import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
 import { animateTakuzuTileRejection } from "@/games/takuzu/ui/board/TakuzuBoard/animate-tile-rejection";
 import { TakuzuCell } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuCell";
 import { TakuzuLineViolationMark } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuLineViolationMark";
+import { TakuzuLineViolationOutline } from "@/games/takuzu/ui/board/TakuzuBoard/TakuzuLineViolationOutline";
 
 type TakuzuBoardProps = {
   size: number;
@@ -33,6 +35,8 @@ type TakuzuBoardProps = {
   interactionDisabled: boolean;
   /** マスに一時的に重ねる合図。通常のプレイでは渡さない。 */
   cues?: readonly TakuzuCellCue[];
+  /** 個数超過・重複の行・列を、縁の外の印に加えて盤面の中でも囲む。チュートリアルで使い、通常のプレイでは渡さない。 */
+  outlinesViolatedLines?: boolean;
   onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
   onPlaceCell: (cellIndex: number, cell: TakuzuCellValue) => void;
 };
@@ -89,6 +93,7 @@ export function TakuzuBoard({
   operation,
   interactionDisabled,
   cues = [],
+  outlinesViolatedLines = false,
   onCycleCell,
   onPlaceCell,
 }: TakuzuBoardProps) {
@@ -204,13 +209,22 @@ export function TakuzuBoard({
           );
         })}
         {listTakuzuLines(size).map(function renderLineMark(line) {
+          const violated = lineViolationByKey.has(getLineKey(line));
           return (
-            <TakuzuLineViolationMark
-              key={getLineKey(line)}
-              size={size}
-              line={line}
-              violated={lineViolationByKey.has(getLineKey(line))}
-            />
+            <Fragment key={getLineKey(line)}>
+              <TakuzuLineViolationMark
+                size={size}
+                line={line}
+                violated={violated}
+              />
+              {outlinesViolatedLines && (
+                <TakuzuLineViolationOutline
+                  size={size}
+                  line={line}
+                  violated={violated}
+                />
+              )}
+            </Fragment>
           );
         })}
       </div>
