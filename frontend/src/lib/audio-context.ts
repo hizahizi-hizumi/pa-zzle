@@ -1,6 +1,6 @@
 /**
- * 効果音と BGM が共有する、音を出す AudioContext と音声ファイルの読み解き。
- * どちらも同じ AudioContext から鳴らし、出口（GainNode）はそれぞれが持つ。
+ * 効果音と BGM が共有する、音を出す AudioContext と、全ての音が通る最後の出口と、音声ファイルの読み解き。
+ * どちらも同じ AudioContext から鳴らし、音量を掛ける出口（GainNode）はそれぞれが持って `getAudioOutput` につなぐ。
  *
  * ブラウザは利用者が操作するまで音を出させないため、AudioContext は利用者の操作の中で作り動かす。
  * 音を出したい側は `requestAudioContextUnlock` で操作を待ち、動き出したことは `subscribeAudioContextRunning` で受け取る。
@@ -10,8 +10,29 @@
 const UNLOCK_EVENTS = ["pointerdown", "pointerup", "touchend", "keydown"];
 /** 音声ファイルを読み解く速さ。同梱する音声ファイルと同じにし、読み解くときに速さを変えない。 */
 const DECODING_SAMPLE_RATE = 48000;
+/**
+ * 全ての音が通る最後の出口の圧縮。効果音が重なったときや音量を上げたときに、音が割れないよう抑える。
+ * 初期の音量では一つの効果音にも曲にもほぼ掛からず、最大の音量でも出口のピークを -1 dBFS より下に保つ。
+ * 値は DynamicsCompressorNode の単位（dB・比・秒）。
+ *
+ * DynamicsCompressorNode は仕様どおり、圧縮の設定に応じて通る音すべてを持ち上げる（この設定で約 4.5 dB）。
+ * 効果音と BGM の音量は、この持ち上げを含めて決める。
+ */
+const OUTPUT_LIMITING = {
+  threshold: -8,
+  knee: 0,
+  ratio: 20,
+  attack: 0.001,
+  release: 0.15,
+} as const;
+
+type AudioOutput = {
+  context: AudioContext;
+  limiter: DynamicsCompressorNode;
+};
 
 let audioContext: AudioContext | null = null;
+let audioOutput: AudioOutput | null = null;
 let decodingContext: OfflineAudioContext | null = null;
 let unlockListening = false;
 /** AudioContext を動かしたいかを答える関数。どれかが動かしたいと答えたら、次の操作で動かす。 */
@@ -64,6 +85,22 @@ function preferAmbientAudioSession() {
   if (audioSession) {
     audioSession.type = "ambient";
   }
+}
+
+/** `context` の全ての音が通る最後の出口。効果音と BGM の出口をここへつなぐ。 */
+export function getAudioOutput(context: AudioContext): AudioNode {
+  if (audioOutput?.context === context) {
+    return audioOutput.limiter;
+  }
+  const limiter = context.createDynamicsCompressor();
+  limiter.threshold.value = OUTPUT_LIMITING.threshold;
+  limiter.knee.value = OUTPUT_LIMITING.knee;
+  limiter.ratio.value = OUTPUT_LIMITING.ratio;
+  limiter.attack.value = OUTPUT_LIMITING.attack;
+  limiter.release.value = OUTPUT_LIMITING.release;
+  limiter.connect(context.destination);
+  audioOutput = { context, limiter };
+  return limiter;
 }
 
 /** 止まっている AudioContext を動かす。動き出したら `subscribeAudioContextRunning` の購読者へ知らせる。 */

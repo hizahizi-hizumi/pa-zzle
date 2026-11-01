@@ -1,27 +1,22 @@
 /**
- * 効果音を鳴らすかどうかの設定。全ゲームで共通にし、端末に保存して次に開いたときも引き継ぐ。
- * はじめは鳴らす。保存した値を読めないときも鳴らす。
+ * 効果音の音量の設定。BGM の音量とは別に選べる。全ゲームで共通にし、端末に保存して次に開いたときも引き継ぐ。
+ * 0 は鳴らさない。
  *
- * React からは `useSyncExternalStore(subscribeSoundEffectsEnabled, isSoundEffectsEnabled)` で読む。
+ * React からは `useSyncExternalStore(soundEffectsVolumeSetting.subscribe, soundEffectsVolumeSetting.getVolume)` で読む。
  */
 
-import { createStoredEnabledSetting } from "@/lib/stored-enabled-setting";
+import {
+  createStoredVolumeSetting,
+  type VolumeSetting,
+} from "@/lib/stored-volume-setting";
 
-const soundEffectsSetting = createStoredEnabledSetting(
-  "pa-zzle.sound-effects.v1",
-);
+export const soundEffectsVolumeSetting: VolumeSetting =
+  createStoredVolumeSetting({
+    storageKey: "pa-zzle.sound-effects-volume.v1",
+    legacyEnabledStorageKey: "pa-zzle.sound-effects.v1",
+  });
 
-/** 効果音を鳴らす設定か。 */
+/** 効果音を鳴らす音量か。 */
 export function isSoundEffectsEnabled(): boolean {
-  return soundEffectsSetting.isEnabled();
-}
-
-/** 効果音を鳴らすかどうかを選び、端末に保存する。 */
-export function setSoundEffectsEnabled(next: boolean): void {
-  soundEffectsSetting.setEnabled(next);
-}
-
-/** 設定が変わったら `onChange` を呼ぶ。別のタブで変えたときも呼ぶ。購読をやめる関数を返す。 */
-export function subscribeSoundEffectsEnabled(onChange: () => void): () => void {
-  return soundEffectsSetting.subscribe(onChange);
+  return soundEffectsVolumeSetting.getVolume() > 0;
 }

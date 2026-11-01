@@ -1,16 +1,14 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { _private as appDecisionSound } from "@/components/app-decision-sound";
 import { PlayHeader } from "@/components/PlayHeader";
-import {
-  isBackgroundMusicEnabled,
-  setBackgroundMusicEnabled,
-} from "@/lib/background-music-setting";
 import { playSound } from "@/lib/sound-effects";
-import {
-  isSoundEffectsEnabled,
-  setSoundEffectsEnabled,
-} from "@/lib/sound-effects-setting";
 
 vi.mock("@/lib/sound-effects", () => ({
   defineSoundEffect: (url: string) => ({ url }),
@@ -20,8 +18,7 @@ vi.mock("@/lib/sound-effects", () => ({
 afterEach(() => {
   cleanup();
   vi.mocked(playSound).mockClear();
-  setSoundEffectsEnabled(true);
-  setBackgroundMusicEnabled(true);
+  vi.unstubAllGlobals();
   window.localStorage.clear();
 });
 
@@ -72,7 +69,7 @@ describe("PlayHeader", () => {
       expect(props.onChangeDifficulty).toHaveBeenCalledOnce();
     });
 
-    test("メニュー項目を補助操作・移動・説明・検証の順に並べること", () => {
+    test("メニュー項目を補助操作・移動・説明・設定・検証の順に並べること", () => {
       openPlayMenu();
 
       const itemNames = screen
@@ -86,6 +83,7 @@ describe("PlayHeader", () => {
         "難易度変更",
         "ホーム",
         "遊び方",
+        "設定",
         "検証情報",
       ]);
     });
@@ -145,46 +143,34 @@ describe("PlayHeader", () => {
     });
   });
 
-  describe("効果音を鳴らす設定の場合", () => {
+  describe("メニューを開いた場合", () => {
+    let props: ComponentProps<typeof PlayHeader>;
+
     beforeEach(() => {
-      render(<PlayHeader {...createProps()} />);
+      vi.stubGlobal(
+        "ResizeObserver",
+        class {
+          observe() {}
+          unobserve() {}
+          disconnect() {}
+        },
+      );
+      props = createProps();
+      render(<PlayHeader {...props} />);
       openPlayMenu();
     });
 
-    test("メニューに効果音を鳴らす設定として示すこと", () => {
-      const soundEffects = screen.getByRole("menuitemcheckbox", {
-        name: "効果音",
-      });
+    test("メニューの設定で、画面を移らずに効果音と BGM の音量を選ぶダイアログを開くこと", () => {
+      fireEvent.click(screen.getByRole("menuitem", { name: "設定" }));
 
-      expect(soundEffects.getAttribute("aria-checked")).toBe("true");
-    });
-
-    test("メニューの効果音で鳴らさない設定に切り替え、メニューを開いたままにすること", () => {
-      fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "効果音" }));
-
-      const soundEffects = screen.getByRole("menuitemcheckbox", {
-        name: "効果音",
-      });
-      expect(soundEffects.getAttribute("aria-checked")).toBe("false");
-      expect(isSoundEffectsEnabled()).toBe(false);
-    });
-  });
-
-  describe("BGM を流す設定の場合", () => {
-    beforeEach(() => {
-      render(<PlayHeader {...createProps()} />);
-      openPlayMenu();
-    });
-
-    test("メニューの BGM で流さない設定に切り替え、効果音の設定は変えずにメニューを開いたままにすること", () => {
-      fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "BGM" }));
-
-      const backgroundMusic = screen.getByRole("menuitemcheckbox", {
-        name: "BGM",
-      });
-      expect(backgroundMusic.getAttribute("aria-checked")).toBe("false");
-      expect(isBackgroundMusicEnabled()).toBe(false);
-      expect(isSoundEffectsEnabled()).toBe(true);
+      const dialog = screen.getByRole("dialog", { name: "設定" });
+      const volumeNames = within(dialog)
+        .getAllByRole("group")
+        .map((group) => group.textContent);
+      expect(volumeNames).toEqual(["効果音60%", "BGM60%"]);
+      expect(props.onBackToHome).not.toHaveBeenCalled();
+      expect(props.onChangeDifficulty).not.toHaveBeenCalled();
+      expect(playSound).not.toHaveBeenCalled();
     });
   });
 
@@ -200,14 +186,14 @@ describe("PlayHeader", () => {
       render(<PlayHeader {...requiredProps} />);
     });
 
-    test("移動の操作だけをメニューへ並べること", () => {
+    test("移動の操作と設定だけをメニューへ並べること", () => {
       openPlayMenu();
 
       const itemNames = screen
         .getAllByRole("menuitem")
         .map((item) => item.textContent);
 
-      expect(itemNames).toEqual(["別の問題", "難易度変更", "ホーム"]);
+      expect(itemNames).toEqual(["別の問題", "難易度変更", "ホーム", "設定"]);
     });
   });
 });

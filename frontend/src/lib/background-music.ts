@@ -1,24 +1,26 @@
 /**
  * 同梱した曲を、BGM として Web Audio API で継ぎ目なくループ再生する。
- * 効果音と同じ AudioContext（`@/lib/audio-context`）から鳴らし、BGM 用の出口を効果音より十分小さくして、効果音が常に前に聞こえるようにする。
+ * 効果音と同じ AudioContext（`@/lib/audio-context`）から鳴らし、BGM 用の出口を効果音より小さくして、効果音が前に聞こえるようにする。
  *
  * 曲は Vite のアセット import で URL として受け取り、`defineBackgroundMusicTrack` に渡して作る。
  * 流しうる曲は `prepareBackgroundMusic` で先に読み込み、今の画面で流す曲は `playBackgroundMusic` で決める。
  * 曲を切り替えるとクロスフェードし、同じ曲を流したまま別の画面に移っても頭から流し直さない。
- * 流さない設定（`@/lib/background-music-setting`）の間は、読み込みも再生もしない。
+ * 音量は `@/lib/background-music-setting` の設定に従い、流している曲も音量を変えるとすぐに変わる。音量が 0 の間は、読み込みも再生もしない。
  */
 
 import {
   canPlayAudio,
   decodeAudioFile,
+  getAudioOutput,
   getRunningAudioContext,
   requestAudioContextUnlock,
   subscribeAudioContextRunning,
 } from "@/lib/audio-context";
 import {
+  backgroundMusicVolumeSetting,
   isBackgroundMusicEnabled,
-  subscribeBackgroundMusicEnabled,
 } from "@/lib/background-music-setting";
+import { getVolumeGain } from "@/lib/stored-volume-setting";
 
 /** 同梱した、ループする曲1つ。曲は頭から終わりまでで1ループになるよう作り、継ぎ目に無音を入れない。 */
 export type BackgroundMusicTrack = {
@@ -39,17 +41,20 @@ type MusicVoice = {
 };
 
 /**
- * BGM の出口の音量。曲は -18 LUFS 前後で作ってあり、ここで 26 dB 下げる。
- * アプリの画面の効果音（遊ぶゲームを選ぶ・プレイを始める音）は短い区間の大きさが曲より 6 dB ほど上に、
- * 結果の報酬の音は 15 dB 以上上になり、効果音が曲に埋もれない。
+ * 音量が最大のときに BGM の出口で掛ける大きさ。曲は -18.5 LUFS 前後で作ってあり、
+ * 初期の音量では約 0.2 倍（-14 dB）にして、最後の出口の持ち上げ（`@/lib/audio-context`）と合わせて -28 LUFS 前後で流す。
+ * 初期の音量どうしで効果音（`@/lib/sound-effects`）より約 20 dB 小さくし、効果音を曲に埋もれさせない。
+ * 音量が最大では -19 LUFS 前後になり、曲のピークにも最後の出口の圧縮がほぼ掛からない。
  */
-const BACKGROUND_MUSIC_VOLUME = 0.05;
+const BACKGROUND_MUSIC_MAX_GAIN = 0.55;
+/** 音量を変えたとき、出口の大きさが新しい音量に近づく速さ。急に変えて音にノイズが乗らないよう、わずかに時間を掛ける。 */
+const VOLUME_CHANGE_TIME_CONSTANT_SEC = 0.02;
 const FADE_IN_SEC = 1.2;
 const FADE_OUT_SEC = 0.8;
 
 let musicOutput: MusicOutput | null = null;
 let currentVoice: MusicVoice | null = null;
-/** 今の画面で流したい曲の URL。流す設定に変わったときや、読み込み・AudioContext を待ってから流すときに使う。 */
+/** 今の画面で流したい曲の URL。音量を 0 から上げたときや、読み込み・AudioContext を待ってから流すときに使う。 */
 let wantedUrl: string | null = null;
 /** 先に読み込んでおく曲の URL。これと流したい曲・流している曲のほかは、読み込んだデータを捨てる。 */
 let preparedUrls = new Set<string>();
@@ -66,7 +71,7 @@ export function defineBackgroundMusicTrack(url: string): BackgroundMusicTrack {
 
 /**
  * 流しうる曲を渡し、流すときに待たせないよう読み込みを始める。何度呼んでもよい。
- * 前に渡した曲のうち今回渡さず、流してもいない曲は、読み込んだデータを捨てる。流さない設定の間は読み込まない。
+ * 前に渡した曲のうち今回渡さず、流してもいない曲は、読み込んだデータを捨てる。音量が 0 の間は読み込まない。
  */
 export function prepareBackgroundMusic(
   tracks: readonly BackgroundMusicTrack[],
@@ -86,7 +91,7 @@ export function prepareBackgroundMusic(
  * - 流している曲と同じ曲なら、何もしない（頭から流し直さない）。
  * - 別の曲なら、読み込みを終えてからクロスフェードで切り替える。読み込むまでは今の曲を流し続ける。
  * - 利用者がまだ操作しておらず音を出せないときは、操作で AudioContext が動き出した時点で流し始める。
- * - 流さない設定の間は流さず、流す設定に変わったときに流し始める。
+ * - 音量が 0 の間は流さず、音量を 0 から上げたときに流し始める。
  */
 export function playBackgroundMusic(track: BackgroundMusicTrack | null): void {
   if (!canPlayAudio()) {
@@ -110,8 +115,33 @@ function listenForChanges() {
     return;
   }
   listening = true;
-  subscribeBackgroundMusicEnabled(syncBackgroundMusic);
+  backgroundMusicVolumeSetting.subscribe(function applyVolumeChange() {
+    applyBackgroundMusicVolume();
+    syncBackgroundMusic();
+  });
   subscribeAudioContextRunning(syncBackgroundMusic);
+}
+
+function getBackgroundMusicGain(): number {
+  return getVolumeGain(
+    backgroundMusicVolumeSetting.getVolume(),
+    BACKGROUND_MUSIC_MAX_GAIN,
+  );
+}
+
+/** 音量を変えたら、流している曲も含めて出口の大きさを変える。 */
+function applyBackgroundMusicVolume() {
+  if (!musicOutput) {
+    return;
+  }
+  const { context, volume } = musicOutput;
+  const now = context.currentTime;
+  volume.gain.cancelScheduledValues(now);
+  volume.gain.setTargetAtTime(
+    getBackgroundMusicGain(),
+    now,
+    VOLUME_CHANGE_TIME_CONSTANT_SEC,
+  );
 }
 
 function wantsMusic(): boolean {
@@ -205,8 +235,8 @@ function getMusicOutput(): MusicOutput | null {
     return musicOutput;
   }
   const volume = context.createGain();
-  volume.gain.value = BACKGROUND_MUSIC_VOLUME;
-  volume.connect(context.destination);
+  volume.gain.value = getBackgroundMusicGain();
+  volume.connect(getAudioOutput(context));
   musicOutput = { context, volume };
   return musicOutput;
 }

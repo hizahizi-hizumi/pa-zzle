@@ -1,7 +1,8 @@
 import type { BackgroundMusicTrack } from "@/lib/background-music";
 
+import type { VolumeSetting } from "@/lib/stored-volume-setting";
+
 type BackgroundMusic = typeof import("@/lib/background-music");
-type BackgroundMusicSetting = typeof import("@/lib/background-music-setting");
 
 type FakeAudioBuffer = { url: string; duration: number };
 
@@ -10,6 +11,7 @@ function createFakeParam(value: number) {
     value,
     setValueAtTime: vi.fn(),
     linearRampToValueAtTime: vi.fn<(value: number, time: number) => void>(),
+    setTargetAtTime: vi.fn<(target: number, time: number) => void>(),
     cancelScheduledValues: vi.fn(),
   };
 }
@@ -60,6 +62,17 @@ class FakeAudioContext {
     this.gains.push(gain);
     return gain;
   }
+
+  createDynamicsCompressor() {
+    return {
+      threshold: { value: 0 },
+      knee: { value: 0 },
+      ratio: { value: 0 },
+      attack: { value: 0 },
+      release: { value: 0 },
+      connect: vi.fn(),
+    };
+  }
 }
 
 /** 音声ファイルの中身として、取得した URL をそのまま持つ音のデータを返す。 */
@@ -96,7 +109,7 @@ async function unlockByUserGesture(): Promise<void> {
 
 /** AudioContext・読み込んだ曲・設定を一つだけ持つモジュールの状態を、テストごとに作り直して読み込む。 */
 async function importBackgroundMusic(): Promise<
-  BackgroundMusic & Pick<BackgroundMusicSetting, "setBackgroundMusicEnabled">
+  BackgroundMusic & { setBackgroundMusicVolume: VolumeSetting["setVolume"] }
 > {
   vi.resetModules();
   const [backgroundMusic, setting] = await Promise.all([
@@ -105,7 +118,7 @@ async function importBackgroundMusic(): Promise<
   ]);
   return {
     ...backgroundMusic,
-    setBackgroundMusicEnabled: setting.setBackgroundMusicEnabled,
+    setBackgroundMusicVolume: setting.backgroundMusicVolumeSetting.setVolume,
   };
 }
 
@@ -200,7 +213,7 @@ describe("playBackgroundMusic", () => {
   });
 
   describe("曲を流している場合", () => {
-    let backgroundMusic: BackgroundMusic;
+    let backgroundMusic: Awaited<ReturnType<typeof importBackgroundMusic>>;
     let homeTrack: BackgroundMusicTrack;
 
     beforeEach(async () => {
@@ -234,6 +247,24 @@ describe("playBackgroundMusic", () => {
         "/result.mp3",
       ]);
       expect(getStoppedUrls()).toEqual(["/home.mp3"]);
+    });
+
+    describe("初期の音量から半分の音量にした場合", () => {
+      let output: ReturnType<typeof createFakeGain> | undefined;
+      let initialGain: number;
+
+      beforeEach(() => {
+        output = getAudioContext()?.gains[0];
+        initialGain = output?.gain.value ?? 0;
+      });
+
+      test("流している曲の出口の大きさを 1/4 にすること", () => {
+        backgroundMusic.setBackgroundMusicVolume(30);
+
+        const target = output?.gain.setTargetAtTime.mock.lastCall?.[0];
+        expect(target).toBeCloseTo(initialGain / 4);
+        expect(getStoppedUrls()).toEqual([]);
+      });
     });
 
     test("流さない画面に移るとフェードアウトして止めること", () => {
@@ -279,7 +310,7 @@ describe("playBackgroundMusic", () => {
     });
   });
 
-  describe("流さない設定の場合", () => {
+  describe("音量が 0 の設定の場合", () => {
     let backgroundMusic: Awaited<ReturnType<typeof importBackgroundMusic>>;
     let fetch: ReturnType<typeof stubFetch>;
     let homeTrack: BackgroundMusicTrack;
@@ -288,7 +319,7 @@ describe("playBackgroundMusic", () => {
       stubWebAudio();
       fetch = stubFetch();
       backgroundMusic = await importBackgroundMusic();
-      backgroundMusic.setBackgroundMusicEnabled(false);
+      backgroundMusic.setBackgroundMusicVolume(0);
       homeTrack = backgroundMusic.defineBackgroundMusicTrack("/home.mp3");
     });
 
@@ -300,10 +331,10 @@ describe("playBackgroundMusic", () => {
       expect(FakeAudioContext.instances).toEqual([]);
     });
 
-    describe("流したい曲を決めた後に流す設定へ変えた場合", () => {
+    describe("流したい曲を決めた後に音量を上げた場合", () => {
       beforeEach(async () => {
         backgroundMusic.playBackgroundMusic(homeTrack);
-        backgroundMusic.setBackgroundMusicEnabled(true);
+        backgroundMusic.setBackgroundMusicVolume(60);
         await settle();
       });
 
@@ -317,7 +348,7 @@ describe("playBackgroundMusic", () => {
     });
   });
 
-  describe("流している間に流さない設定へ切り替えた場合", () => {
+  describe("流している間に音量を 0 にした場合", () => {
     let backgroundMusic: Awaited<ReturnType<typeof importBackgroundMusic>>;
 
     beforeEach(async () => {
@@ -332,18 +363,18 @@ describe("playBackgroundMusic", () => {
     });
 
     test("フェードアウトして止めること", () => {
-      backgroundMusic.setBackgroundMusicEnabled(false);
+      backgroundMusic.setBackgroundMusicVolume(0);
 
       expect(getStoppedUrls()).toEqual(["/home.mp3"]);
     });
 
-    describe("流す設定へ戻した場合", () => {
+    describe("音量を上げ直した場合", () => {
       beforeEach(() => {
-        backgroundMusic.setBackgroundMusicEnabled(false);
+        backgroundMusic.setBackgroundMusicVolume(0);
       });
 
       test("同じ曲をもう一度流し始めること", () => {
-        backgroundMusic.setBackgroundMusicEnabled(true);
+        backgroundMusic.setBackgroundMusicVolume(60);
 
         expect(getStartedSources().map(({ url }) => url)).toEqual([
           "/home.mp3",
@@ -355,7 +386,7 @@ describe("playBackgroundMusic", () => {
 });
 
 describe("prepareBackgroundMusic", () => {
-  describe("流す設定の場合", () => {
+  describe("音量が 0 より大きい設定の場合", () => {
     let backgroundMusic: BackgroundMusic;
     let fetch: ReturnType<typeof stubFetch>;
 

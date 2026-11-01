@@ -1,6 +1,7 @@
 type BackgroundMusicSetting = typeof import("@/lib/background-music-setting");
 
-const storageKey = "pa-zzle.background-music.v1";
+const storageKey = "pa-zzle.background-music-volume.v1";
+const legacyEnabledStorageKey = "pa-zzle.background-music.v1";
 
 /** 読み込んだ設定を覚えておくモジュールの状態を、テストごとに作り直して読み込む。 */
 async function importBackgroundMusicSetting(): Promise<BackgroundMusicSetting> {
@@ -14,18 +15,29 @@ afterEach(() => {
 
 describe("isBackgroundMusicEnabled", () => {
   const cases = [
-    ["保存した値が無い", null, true],
-    ["流さないと保存した", JSON.stringify({ enabled: false }), false],
-    ["流すと保存した", JSON.stringify({ enabled: true }), true],
-    ["JSON として読めない値を保存した", "{", true],
+    ["何も保存していない", null, null, true],
+    ["音量を 0 と保存した", { volume: 0, unmutedVolume: 60 }, null, false],
+    [
+      "以前のBGMをオフにした設定だけを保存した",
+      null,
+      { enabled: false },
+      false,
+    ],
+    ["以前のBGMをオンにした設定だけを保存した", null, { enabled: true }, true],
   ] as const;
 
-  describe.each(cases)("%s端末の場合", (_, stored, expected) => {
+  describe.each(cases)("%s端末の場合", (_, stored, legacyStored, expected) => {
     let setting: BackgroundMusicSetting;
 
     beforeEach(async () => {
       if (stored !== null) {
-        window.localStorage.setItem(storageKey, stored);
+        window.localStorage.setItem(storageKey, JSON.stringify(stored));
+      }
+      if (legacyStored !== null) {
+        window.localStorage.setItem(
+          legacyEnabledStorageKey,
+          JSON.stringify(legacyStored),
+        );
       }
       setting = await importBackgroundMusicSetting();
     });
@@ -36,48 +48,20 @@ describe("isBackgroundMusicEnabled", () => {
       expect(enabled).toBe(expected);
     });
   });
-
-  describe("効果音を鳴らさないと保存した端末の場合", () => {
-    let setting: BackgroundMusicSetting;
-
-    beforeEach(async () => {
-      window.localStorage.setItem(
-        "pa-zzle.sound-effects.v1",
-        JSON.stringify({ enabled: false }),
-      );
-      setting = await importBackgroundMusicSetting();
-    });
-
-    test("効果音の設定とは別に、流す設定を返すこと", () => {
-      const enabled = setting.isBackgroundMusicEnabled();
-
-      expect(enabled).toBe(true);
-    });
-  });
 });
 
-describe("setBackgroundMusicEnabled", () => {
+describe("backgroundMusicVolumeSetting", () => {
   let setting: BackgroundMusicSetting;
-  let onChange: () => void;
 
   beforeEach(async () => {
     setting = await importBackgroundMusicSetting();
-    onChange = vi.fn();
-    setting.subscribeBackgroundMusicEnabled(onChange);
   });
 
-  test("選んだ設定を返し、購読している側へ知らせること", () => {
-    setting.setBackgroundMusicEnabled(false);
+  test("選んだ音量をBGMの音量として保存すること", () => {
+    setting.backgroundMusicVolumeSetting.commitVolume(30);
 
-    expect(setting.isBackgroundMusicEnabled()).toBe(false);
-    expect(onChange).toHaveBeenCalledOnce();
-  });
-
-  test("選んだ設定を次に開いたときも引き継ぐこと", async () => {
-    setting.setBackgroundMusicEnabled(false);
-
-    const reopened = await importBackgroundMusicSetting();
-
-    expect(reopened.isBackgroundMusicEnabled()).toBe(false);
+    expect(window.localStorage.getItem(storageKey)).toBe(
+      JSON.stringify({ volume: 30, unmutedVolume: 30 }),
+    );
   });
 });

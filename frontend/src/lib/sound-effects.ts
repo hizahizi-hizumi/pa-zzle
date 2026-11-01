@@ -1,7 +1,8 @@
 /**
  * 同梱した音声ファイルを、効果音として Web Audio API で鳴らす。
  * どんな音かは音声ファイルが持ち、いつ・どう鳴らすか（遅らせる、重ねる、揺らす）はコードが持つ。
- * AudioContext は BGM と共有し（`@/lib/audio-context`）、Web Audio API が無い環境と、鳴らさない設定では何もしない。
+ * AudioContext は BGM と共有し（`@/lib/audio-context`）、Web Audio API が無い環境と、音量が 0 の設定では何もしない。
+ * 音量は `@/lib/sound-effects-setting` の設定に従い、鳴っている音も音量を変えるとすぐに変わる。
  *
  * 音声ファイルは Vite のアセット import で URL として受け取り、`defineSoundEffect` に渡して効果音にする。
  * その効果音を鳴らしうる画面を出したときに `prepareSoundEffects` で読み込みを始め、
@@ -15,13 +16,15 @@ import {
   canPlayAudio,
   decodeAudioFile,
   getAudioContext,
+  getAudioOutput,
   requestAudioContextUnlock,
   resumeAudioContext,
 } from "@/lib/audio-context";
 import {
   isSoundEffectsEnabled,
-  subscribeSoundEffectsEnabled,
+  soundEffectsVolumeSetting,
 } from "@/lib/sound-effects-setting";
+import { getVolumeGain } from "@/lib/stored-volume-setting";
 
 /** 同梱した音声ファイル1つ分の効果音。 */
 export type SoundEffect = {
@@ -58,31 +61,35 @@ type PlaySoundOptions = {
 
 type SoundOutput = {
   context: AudioContext;
-  /** 全ての音が通る出口。鳴らさない設定に切り替えたら、鳴っている音もここで消す。 */
+  /** 全ての効果音が通る出口。音量はここで掛け、鳴っている音の音量もここで変える。 */
   master: GainNode;
 };
 
-/** 鳴らさない設定に切り替えたとき、鳴っている音を消す速さ。急に切って音が割れないよう、わずかに時間を掛ける。 */
-const MUTE_TIME_CONSTANT_SEC = 0.02;
 /**
- * 速い連打で音が重なったときだけ効く、出口の圧縮。一つの効果音の大きさ（ピークが 0.2 程度まで）には掛からないようにする。
- * 値は DynamicsCompressorNode の単位（dB・比・秒）。
+ * 音量が最大のときに出口で掛ける大きさ。初期の音量では約 2.2 倍（+6.7 dB）になり、
+ * 最後の出口の持ち上げ（`@/lib/audio-context`）と合わせて音声ファイルより約 11 dB 大きく鳴らす。
+ * BGM（`@/lib/background-music`）とは初期の音量どうしで約 20 dB 差になり、遊ぶゲームを選ぶ・プレイを始める音は、
+ * ホームの曲が大きい箇所でも、その音が鳴る帯域で曲より 10 dB 以上大きく聞こえる。
+ * 音量が最大のときは大きい効果音に最後の出口の圧縮が掛かり、音が割れないようにする。
  */
-const OUTPUT_COMPRESSION = {
-  threshold: -10,
-  knee: 6,
-  ratio: 4,
-  attack: 0.003,
-  release: 0.15,
-} as const;
+const SOUND_EFFECTS_MAX_GAIN = 6;
+/** 音量を変えたとき、出口の大きさが新しい音量に近づく速さ。急に変えて音にノイズが乗らないよう、わずかに時間を掛ける。 */
+const VOLUME_CHANGE_TIME_CONSTANT_SEC = 0.02;
 
 let soundOutput: SoundOutput | null = null;
 /** 読み込みを頼まれた音声ファイルの URL。読み込み中と読み込み済みを含み、読み込みに失敗したら外して読み直せるようにする。 */
 const requestedSoundUrls = new Set<string>();
 const soundBuffers = new Map<string, AudioBuffer>();
-/** 鳴らさない設定の間に読み込みを頼まれた音声ファイルの URL。鳴らす設定に変わったら読み込む。 */
+/** 音量が 0 の間に読み込みを頼まれた音声ファイルの URL。音量を 0 より大きくしたら読み込む。 */
 const soundUrlsWaitingForEnabled = new Set<string>();
 let waitingForEnabled = false;
+
+function getSoundEffectsGain(): number {
+  return getVolumeGain(
+    soundEffectsVolumeSetting.getVolume(),
+    SOUND_EFFECTS_MAX_GAIN,
+  );
+}
 
 /** 音声ファイルの URL から効果音を作る。読み込みは `prepareSoundEffects` で始める。 */
 export function defineSoundEffect(url: string): SoundEffect {
@@ -93,7 +100,7 @@ export function defineSoundEffect(url: string): SoundEffect {
  * 効果音を鳴らしうる画面を出したときに、その画面で鳴らす効果音を渡して呼ぶ。何度呼んでもよい。
  *
  * - 渡した効果音の読み込みを始め、鳴らすときに待たせないようにする。読み込み中と読み込み済みの効果音は読み直さない。
- *   鳴らさない設定の間は読み込まず、鳴らす設定に変わったときに読み込む。
+ *   音量が 0 の間は読み込まず、音量を 0 より大きくしたときに読み込む。
  * - 読み込みに失敗した効果音は、次に読み込みを頼まれたとき（この関数か、鳴らそうとしたとき）に読み直す。
  *   効果音は操作に添えるものなので、失敗を利用者に知らせず、遊ぶのを妨げない。
  * - ブラウザは利用者が操作するまで音を出させないため、次の操作で AudioContext を作り動かせるよう待つ。
@@ -126,7 +133,7 @@ function waitForEnabledToLoad(url: string) {
     return;
   }
   waitingForEnabled = true;
-  const unsubscribe = subscribeSoundEffectsEnabled(
+  const unsubscribe = soundEffectsVolumeSetting.subscribe(
     function loadWaitingSoundsWhenEnabled() {
       if (!isSoundEffectsEnabled()) {
         return;
@@ -165,37 +172,31 @@ function getSoundOutput(): SoundOutput | null {
   }
 
   const master = context.createGain();
-  const compressor = context.createDynamicsCompressor();
-  compressor.threshold.value = OUTPUT_COMPRESSION.threshold;
-  compressor.knee.value = OUTPUT_COMPRESSION.knee;
-  compressor.ratio.value = OUTPUT_COMPRESSION.ratio;
-  compressor.attack.value = OUTPUT_COMPRESSION.attack;
-  compressor.release.value = OUTPUT_COMPRESSION.release;
-  master.connect(compressor);
-  compressor.connect(context.destination);
+  master.gain.value = getSoundEffectsGain();
+  master.connect(getAudioOutput(context));
 
   soundOutput = { context, master };
-  subscribeSoundEffectsEnabled(applySoundEffectsEnabled);
+  soundEffectsVolumeSetting.subscribe(applySoundEffectsVolume);
   return soundOutput;
 }
 
-/** 鳴らさない設定に切り替えたら鳴っている音も出口で消し、鳴らす設定に戻したら出口を開ける。 */
-function applySoundEffectsEnabled() {
+/** 音量を変えたら、鳴っている音も含めて出口の大きさを変える。 */
+function applySoundEffectsVolume() {
   if (!soundOutput) {
     return;
   }
   const { context, master } = soundOutput;
   const now = context.currentTime;
   master.gain.cancelScheduledValues(now);
-  if (isSoundEffectsEnabled()) {
-    master.gain.setValueAtTime(1, now);
-  } else {
-    master.gain.setTargetAtTime(0, now, MUTE_TIME_CONSTANT_SEC);
-  }
+  master.gain.setTargetAtTime(
+    getSoundEffectsGain(),
+    now,
+    VOLUME_CHANGE_TIME_CONSTANT_SEC,
+  );
 }
 
 /**
- * 効果音を鳴らす。鳴らせない環境と、鳴らさない設定では何もしない。鳴らさない設定の間は AudioContext も作らない。
+ * 効果音を鳴らす。鳴らせない環境と、音量が 0 の設定では何もしない。音量が 0 の間は AudioContext も作らない。
  *
  * まだ読み込めていない効果音は鳴らさない。読み込みを待ってから鳴らすと、操作や演出とずれた時に鳴るため待たない。
  * 読み込みを頼まれていない効果音と読み込みに失敗した効果音は、ここで読み込みを始め、次に鳴らすときから鳴らす。

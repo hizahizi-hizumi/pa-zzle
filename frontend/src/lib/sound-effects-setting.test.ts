@@ -1,6 +1,7 @@
 type SoundEffectsSetting = typeof import("@/lib/sound-effects-setting");
 
-const storageKey = "pa-zzle.sound-effects.v1";
+const storageKey = "pa-zzle.sound-effects-volume.v1";
+const legacyEnabledStorageKey = "pa-zzle.sound-effects.v1";
 
 /** 読み込んだ設定を覚えておくモジュールの状態を、テストごとに作り直して読み込む。 */
 async function importSoundEffectsSetting(): Promise<SoundEffectsSetting> {
@@ -14,19 +15,34 @@ afterEach(() => {
 
 describe("isSoundEffectsEnabled", () => {
   const cases = [
-    ["保存した値が無い", null, true],
-    ["鳴らさないと保存した", JSON.stringify({ enabled: false }), false],
-    ["鳴らすと保存した", JSON.stringify({ enabled: true }), true],
-    ["JSON として読めない値を保存した", "{", true],
-    ["形の違う値を保存した", JSON.stringify({ enabled: "no" }), true],
+    ["何も保存していない", null, null, true],
+    ["音量を 0 と保存した", { volume: 0, unmutedVolume: 60 }, null, false],
+    [
+      "以前の効果音をオフにした設定だけを保存した",
+      null,
+      { enabled: false },
+      false,
+    ],
+    [
+      "以前の効果音をオンにした設定だけを保存した",
+      null,
+      { enabled: true },
+      true,
+    ],
   ] as const;
 
-  describe.each(cases)("%s端末の場合", (_, stored, expected) => {
+  describe.each(cases)("%s端末の場合", (_, stored, legacyStored, expected) => {
     let setting: SoundEffectsSetting;
 
     beforeEach(async () => {
       if (stored !== null) {
-        window.localStorage.setItem(storageKey, stored);
+        window.localStorage.setItem(storageKey, JSON.stringify(stored));
+      }
+      if (legacyStored !== null) {
+        window.localStorage.setItem(
+          legacyEnabledStorageKey,
+          JSON.stringify(legacyStored),
+        );
       }
       setting = await importSoundEffectsSetting();
     });
@@ -39,48 +55,18 @@ describe("isSoundEffectsEnabled", () => {
   });
 });
 
-describe("setSoundEffectsEnabled", () => {
+describe("soundEffectsVolumeSetting", () => {
   let setting: SoundEffectsSetting;
-  let onChange: () => void;
 
   beforeEach(async () => {
     setting = await importSoundEffectsSetting();
-    onChange = vi.fn();
-    setting.subscribeSoundEffectsEnabled(onChange);
   });
 
-  test("選んだ設定を返し、購読している側へ知らせること", () => {
-    setting.setSoundEffectsEnabled(false);
+  test("選んだ音量を効果音の音量として保存すること", () => {
+    setting.soundEffectsVolumeSetting.commitVolume(30);
 
-    expect(setting.isSoundEffectsEnabled()).toBe(false);
-    expect(onChange).toHaveBeenCalledOnce();
-  });
-
-  test("選んだ設定を次に開いたときも引き継ぐこと", async () => {
-    setting.setSoundEffectsEnabled(false);
-
-    const reopened = await importSoundEffectsSetting();
-
-    expect(reopened.isSoundEffectsEnabled()).toBe(false);
-  });
-});
-
-describe("subscribeSoundEffectsEnabled", () => {
-  let setting: SoundEffectsSetting;
-  let onChange: () => void;
-
-  beforeEach(async () => {
-    setting = await importSoundEffectsSetting();
-    setting.isSoundEffectsEnabled();
-    onChange = vi.fn();
-    setting.subscribeSoundEffectsEnabled(onChange);
-    window.localStorage.setItem(storageKey, JSON.stringify({ enabled: false }));
-  });
-
-  test("別のタブで変えた設定を読み直して知らせること", () => {
-    window.dispatchEvent(new StorageEvent("storage", { key: storageKey }));
-
-    expect(setting.isSoundEffectsEnabled()).toBe(false);
-    expect(onChange).toHaveBeenCalledOnce();
+    expect(window.localStorage.getItem(storageKey)).toBe(
+      JSON.stringify({ volume: 30, unmutedVolume: 30 }),
+    );
   });
 });
