@@ -5,6 +5,7 @@
  * - `gridLine` / `blockLine`: マスの間の線と、5マスごと・外周の線（`border` の色）。遊び方の図は
  *   マスの隙間の地（`gridLineSurface`）で `gridLine` と同じ色を描く。
  * - `clue`: ヒントの数字。`matchedClue` は塗りがヒントにちょうど合った行・列の数字で、読めるまま退かせる。
+ *   地とも `clue` とも輝度比が 4:1 を超える、両者の中間の濃さにする。
  * - `activeLine`: 押している・キーボードで選んでいるマスの行・列のヒントの地。キーボードで選んでいるマスの輪郭
  *   （`focusOutline`）と、入れる印に選んでいるボタンの地（`selectedMark`）も同じ色相にする。
  * - `strokeTrace`: 遊び方の図で、指でなぞった道筋。押している行・列と同じ色相で、塗りの上でも見える濃さにする。
@@ -16,7 +17,7 @@ export const nonogramToneClassNames = {
   blockLine: "border-slate-500 dark:border-slate-400",
   gridLineSurface: "bg-slate-300 dark:bg-slate-700",
   clue: "text-foreground",
-  matchedClue: "text-slate-300 dark:text-slate-600",
+  matchedClue: "text-slate-500",
   activeLine: "bg-sky-100 dark:bg-sky-950",
   focusOutline: "focus-visible:outline-sky-500",
   selectedMark: "bg-sky-100 dark:bg-sky-950",
