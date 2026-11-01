@@ -41,7 +41,7 @@
 - `aim_play`: 目的 A。中心の操作をどう見せるか
 - `aim_payoff`: 目的 B。どの瞬間の気持ちよさをどう見せるか
 - `static_pose`: 静止状態はどの瞬間の姿か（`cut` の止まり、`seam` の継ぎ目になる）
-- `playback`: `cut` / `seam`（`SKILL.md` の「再生形式」）
+- `playback`: `cut` / `seam`（`references/contract.md` の 2 節）
 
 任意項目:
 
@@ -56,7 +56,7 @@
 
 `make_review_gallery.py` は読み手で形を分ける。候補の SVG はクラス名・keyframes 名が候補間で衝突するため、どちらも同じ文書へインライン展開しない。
 
-色は `frontend/styles/globals.css` から読んだ `--foreground` / `--muted-foreground` を `--game-pictogram-strong` / `--game-pictogram-soft` に、`--background` / `--muted` / `--ring` / `--border` を面・選択枠・未選択枠に使う。SVG が `var()` で参照するアプリのトークン（`SKILL.md` の「色」）も、アプリと同じくライト/ダークの値で定義する（セルフレビュー用はテーマごとの区画に、人間レビュー用は各 `<img>` の外側の `<svg>` に）。他ゲームの比較には `frontend/src/games/*/assets/pictogram.svg`（対象ゲームを除く）を使う（`--games-dir` で変更可）。
+色は `frontend/styles/globals.css` から読んだ `--foreground` / `--muted-foreground` を `--game-pictogram-strong` / `--game-pictogram-soft` に、`--background` / `--muted` / `--ring` / `--border` を面・選択枠・未選択枠に使う。SVG が `var()` で参照するアプリのトークン（`references/contract.md` の 3 節）も、アプリと同じくライト/ダークの値で定義する（セルフレビュー用はテーマごとの区画に、人間レビュー用は各 `<img>` の外側の `<svg>` に）。他ゲームの比較には `frontend/src/games/*/assets/pictogram.svg`（対象ゲームを除く）を使う（`--games-dir` で変更可）。
 
 ### セルフレビュー用（`--audience self`）
 

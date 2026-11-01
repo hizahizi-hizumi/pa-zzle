@@ -35,7 +35,7 @@ solved_moment:    # B の材料。何が揃い、どう終わるか
 |---|---|---|
 | TS / CSS の定数（色の表、CSS 変数） | 定義ファイルを読む。テーマで分岐していれば両方 | 実値。テーマで変わるなら `.dark` 条件で切り替える |
 | Tailwind のパレット色のクラス（`bg-blue-600`、`dark:text-red-400` 等） | `frontend/node_modules/tailwindcss/theme.css` の `--color-<名前>`（`oklch()`） | hex / `rgb()` へ変換した実値。`dark:` 付きのクラスがあれば `.dark` で切り替える |
-| アプリのトークンのクラス（`bg-background`、`border-border`、`text-muted-foreground` 等） | `frontend/styles/globals.css` の `:root`（ライト）と `.dark`（ダーク） | `var(--background)` などで参照する（`SKILL.md` の「色」） |
+| アプリのトークンのクラス（`bg-background`、`border-border`、`text-muted-foreground` 等） | `frontend/styles/globals.css` の `:root`（ライト）と `.dark`（ダーク） | `var(--background)` などで参照する（`references/contract.md` の 3 節） |
 
 `scripts/resolve_color.py` に、クラス名・名前・`oklch()` を並べて渡すと、どの定義元かと値（hex、トークンなら両テーマと `var()` で書けるか）を出す。`oklch()` を hex へ変換して sRGB の色域外を丸めた場合は印が付くので、`notes` に書く。
 
