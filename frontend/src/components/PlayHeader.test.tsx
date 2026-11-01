@@ -187,4 +187,24 @@ describe("PlayHeader", () => {
       expect(itemNames).toEqual(["別の問題", "難易度変更", "ホーム"]);
     });
   });
+
+  describe("問題の条件を計測値に渡した場合", () => {
+    beforeEach(() => {
+      render(
+        <PlayHeader
+          {...createProps()}
+          metrics={[
+            { type: "problem-fact", text: "5手詰" },
+            { type: "elapsed-time", elapsedMs: 65_000 },
+          ]}
+        />,
+      );
+    });
+
+    test("ゲームが渡した文言をそのまま表示すること", () => {
+      const fact = screen.getByText("5手詰");
+
+      expect(fact).toBeTruthy();
+    });
+  });
 });
