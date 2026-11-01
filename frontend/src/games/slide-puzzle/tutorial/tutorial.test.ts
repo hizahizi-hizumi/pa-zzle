@@ -76,6 +76,75 @@ function countShortestPaths(board: SlidePuzzleBoard): number {
   }, 0);
 }
 
+/** 盤面は `toBoardKey` の形で持つ。 */
+type ReachableBoards = {
+  keys: ReadonlySet<string>;
+  /** 盤面ごとの、1手でその盤面へ移ってくる元の盤面。 */
+  previousKeysByKey: ReadonlyMap<string, readonly string[]>;
+};
+
+function toBoardKey(board: SlidePuzzleBoard): string {
+  return board.join(",");
+}
+
+/**
+ * 手を離した後のチュートリアルが受け付ける手（どのマスのタップも含む）で、`start` から届く盤面すべて。
+ * 完成した盤面では解き終えるので、その先へは進めない。
+ */
+function exploreReachableBoards(start: SlidePuzzleBoard): ReachableBoards {
+  const situation: TutorialSituation<
+    SlidePuzzleTutorialRuleId,
+    SlidePuzzleTutorialStep
+  > = { step: null, earnedRuleIds: ["slide", "line"] };
+  const keys = new Set([toBoardKey(start)]);
+  const previousKeysByKey = new Map<string, string[]>();
+  const queue: SlidePuzzleBoard[] = [start];
+  for (let index = 0; index < queue.length; index += 1) {
+    const board = queue[index] ?? [];
+    const key = toBoardKey(board);
+    if (isSlidePuzzleSolved(board)) {
+      continue;
+    }
+    for (const cellIndex of board.keys()) {
+      const { state, outcome } = slidePuzzleTutorial.perform(
+        situation,
+        { board, moveCount: 0, lastMove: null },
+        { cellIndex },
+      );
+      if (outcome !== "continued" && outcome !== "solved") {
+        continue;
+      }
+      const nextKey = toBoardKey(state.board);
+      const previousKeys = previousKeysByKey.get(nextKey) ?? [];
+      previousKeys.push(key);
+      previousKeysByKey.set(nextKey, previousKeys);
+      if (!keys.has(nextKey)) {
+        keys.add(nextKey);
+        queue.push(state.board);
+      }
+    }
+  }
+  return { keys, previousKeysByKey };
+}
+
+/** 届いた盤面のうち、完成した盤面へたどり着ける盤面。完成した盤面から、移ってくる元を逆にたどる。 */
+function listBoardsReachingGoal({
+  previousKeysByKey,
+}: ReachableBoards): ReadonlySet<string> {
+  const goalKey = toBoardKey(goalBoard);
+  const reaching = new Set([goalKey]);
+  const queue = [goalKey];
+  for (let index = 0; index < queue.length; index += 1) {
+    for (const previousKey of previousKeysByKey.get(queue[index] ?? "") ?? []) {
+      if (!reaching.has(previousKey)) {
+        reaching.add(previousKey);
+        queue.push(previousKey);
+      }
+    }
+  }
+  return reaching;
+}
+
 function getProgressAfter(
   progress: Progress,
   cellIndices: readonly number[],
@@ -182,6 +251,18 @@ describe("手順", () => {
 
     expect(isSlidePuzzleSolved(last)).toBe(true);
     expect(boards.length - 1).toBe(4);
+  });
+
+  describe("手を離した後にどう進めても", () => {
+    const reachable = exploreReachableBoards(playSteps(steps.length));
+
+    test("届くどの盤面からも、完成した盤面へたどり着けること", () => {
+      const reaching = listBoardsReachingGoal(reachable);
+      const stuckKeys = [...reachable.keys].filter((key) => !reaching.has(key));
+
+      expect(reachable.keys.has(toBoardKey(goalBoard))).toBe(true);
+      expect(stuckKeys).toEqual([]);
+    });
   });
 
   test("手順を終えた後の残りに、行と列それぞれでまとめてスライドさせられる所があること", () => {
