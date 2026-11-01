@@ -1,11 +1,11 @@
 import {
   type IceFloorMazeDifficulty,
-  iceFloorMazeLevelCombinations,
+  iceFloorMazeLevelCriteria,
 } from "@/games/ice-floor-maze/difficulty";
-import type { IceFloorMazeBoardShape } from "@/games/ice-floor-maze/problem/problem";
 import type {
   IceFloorMazeBoard,
   IceFloorMazeCell,
+  IceFloorMazeChangeableCell,
 } from "@/games/ice-floor-maze/puzzle/board";
 import {
   applyIceFloorMazeSlide,
@@ -24,14 +24,14 @@ import { IceFloorMazeTerrain } from "@/games/ice-floor-maze/ui/board/IceFloorMaz
 import { IceFloorMazeTrail } from "@/games/ice-floor-maze/ui/board/IceFloorMazeTrail";
 
 /**
- * 難易度プレビューは、そのレベルで出す最も広い盤面の上の数行を切り出した「帯」を、駒が岩で止まりながらゴールまで滑る模式図である。実際の問題ではない。
+ * 難易度プレビューは、そのレベルで出す最も広い盤面の上の数行を切り出した「帯」を、駒が止め役で止まりながらゴールまで滑る模式図である。実際の問題ではない。
  *
- * - 帯の幅: そのレベルで出す盤面の形の最も広いもの（`iceFloorMazeLevelCombinations`）。マスの大きさはどのレベルでもそろえる。
+ * - 帯の幅: そのレベルで出す最も広い盤面の形（`iceFloorMazeLevelCriteria` の `largestBoardShape`）。マスの大きさはどのレベルでもそろえる。
  *   帯の下は盤面が続く切り出しとし、下の外壁は描かない。
- * - 道筋: 左上の開始位置から、止まる位置を繋いでゴールへ向かう滑りの列。滑りの数はレベルが上がるほど増え、
- *   止まる場所を何手先まで繋ぐか（計画深さ）の違いを、繋ぐ止まり先の数で表す。
- *   上のレベルは下のレベルの岩をすべて同じマスに含み、道筋は下のレベルの道筋の続きになる。
- * - 岩は道筋の止まりに効くものだけを置く（問題集の問題も、止まりに効かない岩を持たない）。
+ * - 道筋: 左上の開始位置から、止まる位置を繋いでゴールへ向かう滑りの列。上のレベルの道筋は下のレベルの道筋の続きになる。
+ * - 要素: 氷と岩だけのレベル（1・2）は岩だけで、道筋の長さで違いを表す。要素のあるレベルは、そのレベルの挑戦の型が置く要素を
+ *   道筋の上に置く（レベル3 はもろい岩、レベル4 は薄い氷、レベル5 は両方）。もろい岩は滑りを止めて崩れ、薄い氷は通った後に割れる。
+ * - 岩は道筋の止まりに効くものだけを置く（問題集の問題も、駒が通るマスに接しない岩を持たない）。
  */
 const previewStrip = {
   rowCount: 5,
@@ -49,8 +49,29 @@ const previewStrip = {
     { direction: "down", stopper: { x: 8, y: 3 } },
     { direction: "right" },
   ],
-  /** レベルごとに、`slides` の先頭から何手を道筋にするか。 */
-  slideCounts: { "1": 3, "2": 4, "3": 5, "4": 6, "5": 7 },
+  /**
+   * レベルごとに、`slides` の先頭から何手を道筋にするかと、道筋の上に置く要素。
+   * もろい岩は2手目の滑りを止める岩に、薄い氷は3手目の滑りが通るマスに置く。
+   */
+  levels: {
+    "1": { slideCount: 3, elements: [] },
+    "2": { slideCount: 5, elements: [] },
+    "3": {
+      slideCount: 5,
+      elements: [{ cell: "brittle-rock", at: { x: 3, y: 4 } }],
+    },
+    "4": {
+      slideCount: 5,
+      elements: [{ cell: "thin-ice", at: { x: 4, y: 3 } }],
+    },
+    "5": {
+      slideCount: 6,
+      elements: [
+        { cell: "brittle-rock", at: { x: 3, y: 4 } },
+        { cell: "thin-ice", at: { x: 4, y: 3 } },
+      ],
+    },
+  },
 } as const satisfies {
   rowCount: number;
   start: IceFloorMazePoint;
@@ -58,7 +79,16 @@ const previewStrip = {
     direction: IceFloorMazeDirection;
     stopper?: IceFloorMazePoint;
   }[];
-  slideCounts: Record<IceFloorMazeDifficulty, number>;
+  levels: Record<
+    IceFloorMazeDifficulty,
+    {
+      slideCount: number;
+      elements: readonly {
+        cell: IceFloorMazeChangeableCell;
+        at: IceFloorMazePoint;
+      }[];
+    }
+  >;
 };
 
 /** 図の上と左右で、外壁の外に残す余白（マス単位）。 */
@@ -77,24 +107,14 @@ type PreviewRoute = {
   slides: readonly PreviewSlide[];
 };
 
-function getWidestBoardShape(
-  difficulty: IceFloorMazeDifficulty,
-): IceFloorMazeBoardShape {
-  const { boardShapes } = iceFloorMazeLevelCombinations[difficulty];
-  return boardShapes.reduce((widest, shape) =>
-    shape.width * shape.height > widest.width * widest.height ? shape : widest,
-  );
-}
-
 function createPreviewRoute(difficulty: IceFloorMazeDifficulty): PreviewRoute {
-  const { width, height } = getWidestBoardShape(difficulty);
+  const { width, height } =
+    iceFloorMazeLevelCriteria[difficulty].largestBoardShape;
+  const level = previewStrip.levels[difficulty];
   function toCellIndex({ x, y }: IceFloorMazePoint): number {
     return y * width + x;
   }
-  const plannedSlides = previewStrip.slides.slice(
-    0,
-    previewStrip.slideCounts[difficulty],
-  );
+  const plannedSlides = previewStrip.slides.slice(0, level.slideCount);
   const cells: IceFloorMazeCell[] = Array.from(
     { length: width * height },
     () => "ice",
@@ -103,6 +123,9 @@ function createPreviewRoute(difficulty: IceFloorMazeDifficulty): PreviewRoute {
     if ("stopper" in slide) {
       cells[toCellIndex(slide.stopper)] = "rock";
     }
+  }
+  for (const element of level.elements) {
+    cells[toCellIndex(element.at)] = element.cell;
   }
   const board = { width, height, cells };
   const start = toCellIndex(previewStrip.start);

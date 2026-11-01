@@ -3,7 +3,8 @@ import { cleanup, render } from "@testing-library/react";
 import { difficultyLevels } from "@/games/difficulty";
 import {
   type IceFloorMazeDifficulty,
-  iceFloorMazeLevelCombinations,
+  type IceFloorMazeLevelCriteria,
+  iceFloorMazeLevelCriteria,
 } from "@/games/ice-floor-maze/difficulty";
 import {
   getIceFloorMazeCellPosition,
@@ -36,7 +37,7 @@ function readRoute(difficulty: IceFloorMazeDifficulty) {
     return `${x}:${y}`;
   }
   const rockCells = board.cells.flatMap((cell, cellIndex) =>
-    cell === "rock" ? [cellIndex] : [],
+    cell === "rock" || cell === "brittle-rock" ? [cellIndex] : [],
   );
   return {
     ...route,
@@ -81,10 +82,10 @@ describe("createPreviewRoute", () => {
     "レベル %s の帯は、そのレベルで出す最も広い盤面の形で描くこと",
     (difficulty) => {
       const { board } = readRoute(difficulty);
-      const widest =
-        iceFloorMazeLevelCombinations[difficulty].boardShapes.at(-1);
 
-      expect({ width: board.width, height: board.height }).toEqual(widest);
+      expect({ width: board.width, height: board.height }).toEqual(
+        iceFloorMazeLevelCriteria[difficulty].largestBoardShape,
+      );
     },
   );
 
@@ -99,7 +100,7 @@ describe("createPreviewRoute", () => {
         slides.map(({ direction }) => direction),
       );
 
-      expect(slides).toHaveLength(previewStrip.slideCounts[difficulty]);
+      expect(slides).toHaveLength(previewStrip.levels[difficulty].slideCount);
       expect(replayedStops).toEqual(slides.map(({ to }) => to));
       expect(goal).toBe(replayedStops.at(-1));
     },
@@ -115,12 +116,12 @@ describe("createPreviewRoute", () => {
   );
 
   test.each(difficultyIds)(
-    "レベル %s の岩はどれも道筋のどこかの止まる位置のすぐ先にあること",
+    "レベル %s の岩ともろい岩はどれも道筋のどこかの止まる位置のすぐ先にあること",
     (difficulty) => {
       const { board, slides } = readRoute(difficulty);
 
       const rockCells = board.cells.flatMap((cell, cellIndex) =>
-        cell === "rock" ? [cellIndex] : [],
+        cell === "rock" || cell === "brittle-rock" ? [cellIndex] : [],
       );
       const cellsJustBeyondStops = slides.map(({ direction, to }) =>
         getIceFloorMazeNeighbor(board, to, direction),
@@ -131,7 +132,7 @@ describe("createPreviewRoute", () => {
   );
 
   test.each(adjacentLevels)(
-    "レベル %s の岩と道筋を、レベル %s が同じマスにすべて含むこと",
+    "レベル %s の止め役と道筋を、レベル %s が同じマスにすべて含むこと",
     (lower, upper) => {
       const lowerRoute = readRoute(lower);
       const upperRoute = readRoute(upper);
@@ -142,9 +143,36 @@ describe("createPreviewRoute", () => {
       expect(
         upperRoute.stopPoints.slice(0, lowerRoute.stopPoints.length),
       ).toEqual(lowerRoute.stopPoints);
-      expect(upperRoute.slides.length).toBeGreaterThan(
+      expect(upperRoute.slides.length).toBeGreaterThanOrEqual(
         lowerRoute.slides.length,
       );
+    },
+  );
+
+  test.each(difficultyIds)(
+    "レベル %s の帯に置く要素の種類が、そのレベルの挑戦の型が置く要素の種類に含まれること",
+    (difficulty) => {
+      const { board } = readRoute(difficulty);
+      const criteria: IceFloorMazeLevelCriteria =
+        iceFloorMazeLevelCriteria[difficulty];
+
+      const drawnKinds = new Set(
+        board.cells.filter(
+          (cell) => cell === "brittle-rock" || cell === "thin-ice",
+        ),
+      );
+      const levelKinds = new Set(
+        criteria.kind === "tactics"
+          ? []
+          : criteria.patterns.flatMap(({ composition }) =>
+              composition === "mixed"
+                ? ["brittle-rock", "thin-ice"]
+                : [composition],
+            ),
+      );
+
+      expect(levelKinds.isSupersetOf(drawnKinds)).toBe(true);
+      expect(drawnKinds.size > 0).toBe(criteria.kind === "elements");
     },
   );
 });
@@ -158,7 +186,7 @@ describe("IceFloorMazeDifficultyPreview", () => {
       );
 
       expect(container.querySelectorAll("[data-trail]")).toHaveLength(
-        previewStrip.slideCounts[difficulty],
+        previewStrip.levels[difficulty].slideCount,
       );
       expect(container.querySelectorAll("[data-goal]")).toHaveLength(1);
     },
