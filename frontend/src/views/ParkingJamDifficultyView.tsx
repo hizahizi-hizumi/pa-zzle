@@ -14,6 +14,7 @@ export function ParkingJamDifficultyView() {
         <HomeBackLink />
         <DifficultySelectionHeading
           title={PARKING_JAM_DISPLAY_NAME}
+          gameId={parkingJamCatalogEntry.id}
           renderHowToPlayDialog={({ open, onClose }) => (
             <ParkingJamHowToPlayDialog open={open} onClose={onClose} />
           )}

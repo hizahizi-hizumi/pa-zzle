@@ -14,6 +14,7 @@ export function MinesweeperDifficultyView() {
         <HomeBackLink />
         <DifficultySelectionHeading
           title={MINESWEEPER_DISPLAY_NAME}
+          gameId={minesweeperCatalogEntry.id}
           renderHowToPlayDialog={({ open, onClose }) => (
             <MinesweeperHowToPlayDialog open={open} onClose={onClose} />
           )}

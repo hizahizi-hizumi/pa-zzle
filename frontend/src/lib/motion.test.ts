@@ -8,6 +8,7 @@ import {
   playAnimations,
   playRejectionShake,
   prefersReducedMotion,
+  subscribePrefersReducedMotion,
   waitForAnimations,
 } from "@/lib/motion";
 
@@ -102,6 +103,43 @@ describe("prefersReducedMotion", () => {
       const result = prefersReducedMotion();
 
       expect(result).toBe(false);
+    });
+  });
+});
+
+describe("subscribePrefersReducedMotion", () => {
+  describe("設定の変化を知らせる環境の場合", () => {
+    let query: EventTarget;
+    let onChange: ReturnType<typeof vi.fn<() => void>>;
+
+    beforeEach(() => {
+      query = new EventTarget();
+      onChange = vi.fn<() => void>();
+      vi.stubGlobal(
+        "matchMedia",
+        vi.fn(() => query as MediaQueryList),
+      );
+    });
+
+    test("設定が変わるたびに知らせ、購読をやめたあとは知らせないこと", () => {
+      const unsubscribe = subscribePrefersReducedMotion(onChange);
+      query.dispatchEvent(new Event("change"));
+      unsubscribe();
+      query.dispatchEvent(new Event("change"));
+
+      expect(onChange).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("matchMedia が無い環境の場合", () => {
+    beforeEach(() => {
+      vi.stubGlobal("matchMedia", undefined);
+    });
+
+    test("何もせずに購読をやめる関数を返すこと", () => {
+      const unsubscribe = subscribePrefersReducedMotion(vi.fn<() => void>());
+
+      expect(unsubscribe).not.toThrow();
     });
   });
 });

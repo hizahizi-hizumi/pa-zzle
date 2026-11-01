@@ -14,6 +14,7 @@ export function WaterSortDifficultyView() {
         <HomeBackLink />
         <DifficultySelectionHeading
           title={WATER_SORT_DISPLAY_NAME}
+          gameId={waterSortCatalogEntry.id}
           renderHowToPlayDialog={({ open, onClose }) => (
             <WaterSortHowToPlayDialog open={open} onClose={onClose} />
           )}
