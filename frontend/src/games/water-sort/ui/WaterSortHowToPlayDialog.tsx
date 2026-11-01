@@ -75,7 +75,7 @@ export function WaterSortHowToPlayDialog({
         </HowToPlayTransition>
       </li>
       <li className="space-y-2">
-        <p>上に続く同じ色は、入るだけまとめて移る。</p>
+        <p>同じ色が重なっていれば、入るだけまとめて移る。</p>
         <HowToPlayTransition>
           <HowToPlayFigure
             bottles={[

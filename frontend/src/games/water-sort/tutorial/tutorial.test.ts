@@ -16,6 +16,8 @@ import {
   isCompleteWaterSortBottle,
   isStandardWaterSortInitialState,
   isWaterSortCleared,
+  WATER_SORT_BOTTLE_CAPACITY,
+  type WaterSortBottle,
   type WaterSortState,
 } from "@/games/water-sort/puzzle/state";
 import {
@@ -77,6 +79,13 @@ function listReachableStates(from: WaterSortState): WaterSortState[] {
   return [...reached.values()];
 }
 
+/** いちばん上で重なっている同じ色の数。 */
+function countSameColorOnTop(bottle: WaterSortBottle): number {
+  const topColor = bottle.at(-1);
+  const below = bottle.findLastIndex((color) => color !== topColor);
+  return bottle.length - below - 1;
+}
+
 function getMessage(progress: Progress) {
   return getTutorialMessage(waterSortTutorial, progress, {
     entry: "selection",
@@ -107,8 +116,8 @@ describe("手順", () => {
   const boardsBeforeSteps = steps.map(
     (_, index) => playSteps(index).boardState.bottles,
   );
-  const [firstBoard, secondBoard, thirdBoard] = boardsBeforeSteps;
-  const [first, second, third] = steps;
+  const [firstBoard, secondBoard, thirdBoard, fourthBoard] = boardsBeforeSteps;
+  const [first, second, third, fourth] = steps;
   const releasedBottles = playSteps(steps.length).boardState.bottles;
 
   test("empty を示す1手目が、空のボトルへ1つだけ注ぎ、後のルールを先取りしないこと", () => {
@@ -135,7 +144,8 @@ describe("手順", () => {
     expect(amount).toBe(1);
   });
 
-  test("together を示す3手目が、上に続く同じ色をまとめて移し、1色をそろえること", () => {
+  test("together を示す3手目が、重なった同じ色を残さずまとめて移し、1色をそろえること", () => {
+    const source = third && thirdBoard?.[third.move.sourceBottleIndex];
     const amount =
       third && thirdBoard && getWaterSortPourAmount(thirdBoard, third.move);
     const destination =
@@ -143,7 +153,38 @@ describe("手順", () => {
 
     expect(third?.introducedRuleId).toBe("together");
     expect(amount).toBeGreaterThanOrEqual(2);
+    expect(amount).toBe(source && countSameColorOnTop(source));
     expect(destination && isCompleteWaterSortBottle(destination)).toBe(true);
+  });
+
+  test("capacity を示す4手目が、重なった同じ色を空きの足りないボトルへ注ぎ、入るだけ移して残りを注ぎ元に残すこと", () => {
+    const source = fourth && fourthBoard?.[fourth.move.sourceBottleIndex];
+    const destination =
+      fourth && fourthBoard?.[fourth.move.destinationBottleIndex];
+    const amount =
+      fourth && fourthBoard && getWaterSortPourAmount(fourthBoard, fourth.move);
+    const sourceAfter =
+      fourth && releasedBottles[fourth.move.sourceBottleIndex];
+
+    expect(fourth?.introducedRuleId).toBe("capacity");
+    expect(destination?.at(-1)).toBe(source?.at(-1));
+    expect(amount).toBe(
+      WATER_SORT_BOTTLE_CAPACITY - (destination?.length ?? 0),
+    );
+    expect(amount).toBeLessThan(source ? countSameColorOnTop(source) : 0);
+    expect(sourceAfter?.at(-1)).toBe(source?.at(-1));
+  });
+
+  test("4手目より前の手順では、注ぎ先の空きで移る量が変わらないこと", () => {
+    const amountsLimitedByCapacity = steps.slice(0, 3).filter((step, index) => {
+      const board = boardsBeforeSteps[index] ?? [];
+      const source = board[step.move.sourceBottleIndex] ?? [];
+      return (
+        getWaterSortPourAmount(board, step.move) < countSameColorOnTop(source)
+      );
+    });
+
+    expect(amountsLimitedByCapacity).toEqual([]);
   });
 
   test("手順を終えた後の残りを、どの順に注いでも詰まずにそろえられること", () => {
@@ -157,7 +198,7 @@ describe("手順", () => {
   test("手順を終えた後の残りをそろえるのに、自分で何手か注ぐ必要があること", () => {
     const moveCount = countMovesToClear(releasedBottles);
 
-    expect(moveCount).toBe(6);
+    expect(moveCount).toBe(5);
   });
 });
 
@@ -195,23 +236,32 @@ describe("performTutorialAction", () => {
     const earned = released.earnedRuleIds;
     const message = getMessage(released);
 
-    expect(earned).toEqual(["empty", "same-color", "together"]);
+    expect(earned).toEqual(["empty", "same-color", "together", "capacity"]);
     expect(released.stepIndex).toBe(steps.length);
     expect(message).toBe(waterSortTutorial.freePlay);
   });
 
   describe("手を離した後の場合", () => {
-    // 1本目の上は赤、2本目の上は青。
-    const rejected = tapBottles(released, [0, 1]);
-    const pouredAfterRejection = tapBottles(rejected, [4]);
+    // 2本目と3本目の青を空の5本目へ注ぐと、2本目と3本目の上は赤、5本目の上は青になる。
+    const pouredOut = tapBottles(released, [1, 4, 2, 4]);
+    const rejected = tapBottles(pouredOut, [1, 4]);
+    const pouredAfterRejection = tapBottles(rejected, [2]);
 
     test("いちばん上の色が違うボトルへ注ごうとすると、そのわけを言い、注ぎ元を選んだままにすること", () => {
       const message = getMessage(rejected);
 
       expect(rejected.violated).toBe(true);
-      expect(rejected.boardState.bottles).toEqual(released.boardState.bottles);
-      expect(rejected.boardState.sourceBottleIndex).toBe(0);
-      expect(message.headline).toBe("いちばん上の色が違うボトルには注げません");
+      expect(rejected.boardState.bottles).toEqual(pouredOut.boardState.bottles);
+      expect(rejected.boardState.sourceBottleIndex).toBe(1);
+      expect(message.headline).toBe("いちばん上の色が違うと\n注げません");
+    });
+
+    test("満杯のボトルへ注ごうとすると、そのわけを言うこと", () => {
+      const progress = tapBottles(released, [1, 0]);
+      const message = getMessage(progress);
+
+      expect(progress.violated).toBe(true);
+      expect(message.headline).toBe("満杯のボトルには注げません");
     });
 
     test("次に注ぐと、違反の一言を下げて残りをそろえる一言に戻すこと", () => {
@@ -272,9 +322,9 @@ describe("findWaterSortTutorialHintBottle", () => {
     }
 
     expect(progress.phase).toBe("solved");
-    // 最も少ない6手を、注ぎ元と注ぎ先の2回ずつ押して注ぐ。
+    // 最も少ない5手を、注ぎ元と注ぎ先の2回ずつ押して注ぐ。
     expect(progress.boardState.moveCount - released.boardState.moveCount).toBe(
-      12,
+      10,
     );
   });
 
