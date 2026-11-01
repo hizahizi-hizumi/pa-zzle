@@ -1,11 +1,11 @@
-import clearedSoundUrl from "@/games/minesweeper/assets/sounds/cleared.wav";
-import flagPlacedSoundUrl from "@/games/minesweeper/assets/sounds/flag-placed.wav";
-import flagRemovedSoundUrl from "@/games/minesweeper/assets/sounds/flag-removed.wav";
-import mineSteppedSoundUrl from "@/games/minesweeper/assets/sounds/mine-stepped.wav";
-import openingTick1SoundUrl from "@/games/minesweeper/assets/sounds/opening-tick-1.wav";
-import openingTick2SoundUrl from "@/games/minesweeper/assets/sounds/opening-tick-2.wav";
-import openingTick3SoundUrl from "@/games/minesweeper/assets/sounds/opening-tick-3.wav";
-import openingTick4SoundUrl from "@/games/minesweeper/assets/sounds/opening-tick-4.wav";
+import clearedSoundUrl from "@/games/minesweeper/assets/sounds/cleared.flac";
+import flagPlacedSoundUrl from "@/games/minesweeper/assets/sounds/flag-placed.flac";
+import flagRemovedSoundUrl from "@/games/minesweeper/assets/sounds/flag-removed.flac";
+import mineSteppedSoundUrl from "@/games/minesweeper/assets/sounds/mine-stepped.flac";
+import openingTick1SoundUrl from "@/games/minesweeper/assets/sounds/opening-tick-1.flac";
+import openingTick2SoundUrl from "@/games/minesweeper/assets/sounds/opening-tick-2.flac";
+import openingTick3SoundUrl from "@/games/minesweeper/assets/sounds/opening-tick-3.flac";
+import openingTick4SoundUrl from "@/games/minesweeper/assets/sounds/opening-tick-4.flac";
 import type { MinesweeperOperation } from "@/games/minesweeper/play/use-minesweeper-play";
 import type { GameProgress } from "@/games/play";
 import {

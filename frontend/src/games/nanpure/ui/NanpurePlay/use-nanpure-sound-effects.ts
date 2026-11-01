@@ -1,8 +1,8 @@
-import clearedSoundUrl from "@/games/nanpure/assets/sounds/cleared.wav";
-import digitEnteredSoundUrl from "@/games/nanpure/assets/sounds/digit-entered.wav";
-import mistakeEnteredSoundUrl from "@/games/nanpure/assets/sounds/mistake-entered.wav";
-import noteAddedSoundUrl from "@/games/nanpure/assets/sounds/note-added.wav";
-import noteRemovedSoundUrl from "@/games/nanpure/assets/sounds/note-removed.wav";
+import clearedSoundUrl from "@/games/nanpure/assets/sounds/cleared.flac";
+import digitEnteredSoundUrl from "@/games/nanpure/assets/sounds/digit-entered.flac";
+import mistakeEnteredSoundUrl from "@/games/nanpure/assets/sounds/mistake-entered.flac";
+import noteAddedSoundUrl from "@/games/nanpure/assets/sounds/note-added.flac";
+import noteRemovedSoundUrl from "@/games/nanpure/assets/sounds/note-removed.flac";
 import type { NanpureOperation } from "@/games/nanpure/play/use-nanpure-play";
 import type { GameProgress } from "@/games/play";
 import {

@@ -4,9 +4,9 @@ import {
   useOperationSound,
   usePrepareSoundEffects,
 } from "@/games/play-sound-effects";
-import clearedSoundUrl from "@/games/reflection/assets/sounds/cleared.wav";
-import clearedChordSoundUrl from "@/games/reflection/assets/sounds/cleared-chord.wav";
-import piecePlacedSoundUrl from "@/games/reflection/assets/sounds/piece-placed.wav";
+import clearedSoundUrl from "@/games/reflection/assets/sounds/cleared.flac";
+import clearedChordSoundUrl from "@/games/reflection/assets/sounds/cleared-chord.flac";
+import piecePlacedSoundUrl from "@/games/reflection/assets/sounds/piece-placed.flac";
 import type { ReflectionOperation } from "@/games/reflection/play/use-reflection-play";
 import {
   defineSoundEffect,

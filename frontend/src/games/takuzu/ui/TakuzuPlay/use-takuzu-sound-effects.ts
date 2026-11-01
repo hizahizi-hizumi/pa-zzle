@@ -4,11 +4,11 @@ import {
   useOperationSound,
   usePrepareSoundEffects,
 } from "@/games/play-sound-effects";
-import clearedSoundUrl from "@/games/takuzu/assets/sounds/cleared.wav";
-import emptiedSoundUrl from "@/games/takuzu/assets/sounds/emptied.wav";
-import invalidSoundUrl from "@/games/takuzu/assets/sounds/invalid.wav";
-import tileAPlacedSoundUrl from "@/games/takuzu/assets/sounds/tile-a-placed.wav";
-import tileBPlacedSoundUrl from "@/games/takuzu/assets/sounds/tile-b-placed.wav";
+import clearedSoundUrl from "@/games/takuzu/assets/sounds/cleared.flac";
+import emptiedSoundUrl from "@/games/takuzu/assets/sounds/emptied.flac";
+import invalidSoundUrl from "@/games/takuzu/assets/sounds/invalid.flac";
+import tileAPlacedSoundUrl from "@/games/takuzu/assets/sounds/tile-a-placed.flac";
+import tileBPlacedSoundUrl from "@/games/takuzu/assets/sounds/tile-b-placed.flac";
 import type { TakuzuOperation } from "@/games/takuzu/play/use-takuzu-play";
 import type { TakuzuTile } from "@/games/takuzu/puzzle/board";
 import { CLEAR_WAVE_PEAK_MS } from "@/games/takuzu/ui/board/clear/TakuzuClearAnimation";

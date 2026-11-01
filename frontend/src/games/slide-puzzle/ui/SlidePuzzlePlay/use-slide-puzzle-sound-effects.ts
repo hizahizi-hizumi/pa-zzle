@@ -4,16 +4,16 @@ import {
   useOperationSound,
   usePrepareSoundEffects,
 } from "@/games/play-sound-effects";
-import clearNoteA5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-a5.wav";
-import clearNoteB5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-b5.wav";
-import clearNoteC5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-c5.wav";
-import clearNoteC6SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-c6.wav";
-import clearNoteD5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-d5.wav";
-import clearNoteE5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-e5.wav";
-import clearNoteF5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-f5.wav";
-import clearNoteG5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-g5.wav";
-import invalidSoundUrl from "@/games/slide-puzzle/assets/sounds/invalid.wav";
-import slidSoundUrl from "@/games/slide-puzzle/assets/sounds/slid.wav";
+import clearNoteA5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-a5.flac";
+import clearNoteB5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-b5.flac";
+import clearNoteC5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-c5.flac";
+import clearNoteC6SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-c6.flac";
+import clearNoteD5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-d5.flac";
+import clearNoteE5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-e5.flac";
+import clearNoteF5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-f5.flac";
+import clearNoteG5SoundUrl from "@/games/slide-puzzle/assets/sounds/clear-note-g5.flac";
+import invalidSoundUrl from "@/games/slide-puzzle/assets/sounds/invalid.flac";
+import slidSoundUrl from "@/games/slide-puzzle/assets/sounds/slid.flac";
 import type { SlidePuzzleOperation } from "@/games/slide-puzzle/play/use-slide-puzzle-play";
 import { getClearWaveTileDelayMs } from "@/games/slide-puzzle/ui/board/clear-wave";
 import { prefersReducedMotion } from "@/lib/motion";

@@ -1,7 +1,7 @@
-import resultRewardClearSoundUrl from "@/assets/sounds/result-reward-clear.wav";
-import resultRewardGoodSoundUrl from "@/assets/sounds/result-reward-good.wav";
-import resultRewardGreatSoundUrl from "@/assets/sounds/result-reward-great.wav";
-import resultRewardPerfectSoundUrl from "@/assets/sounds/result-reward-perfect.wav";
+import resultRewardClearSoundUrl from "@/assets/sounds/result-reward-clear.flac";
+import resultRewardGoodSoundUrl from "@/assets/sounds/result-reward-good.flac";
+import resultRewardGreatSoundUrl from "@/assets/sounds/result-reward-great.flac";
+import resultRewardPerfectSoundUrl from "@/assets/sounds/result-reward-perfect.flac";
 import type { GameResultLevel } from "@/games/result";
 import { defineSoundEffect, type SoundEffect } from "@/lib/sound-effects";
 

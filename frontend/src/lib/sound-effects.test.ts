@@ -139,7 +139,7 @@ describe("playSound", () => {
       vi.stubGlobal("OfflineAudioContext", undefined);
       fetch = stubFetch();
       soundEffects = await importSoundEffects();
-      sound = soundEffects.defineSoundEffect("/tap.wav");
+      sound = soundEffects.defineSoundEffect("/tap.flac");
     });
 
     test("音声ファイルを読み込まず、何もせずに終わること", () => {
@@ -161,7 +161,7 @@ describe("playSound", () => {
       stubWebAudio();
       stubFetch();
       soundEffects = await importSoundEffects();
-      sound = soundEffects.defineSoundEffect("/tap.wav");
+      sound = soundEffects.defineSoundEffect("/tap.flac");
       soundEffects.prepareSoundEffects([sound]);
       await finishLoading();
     });
@@ -171,7 +171,7 @@ describe("playSound", () => {
 
       expect(FakeAudioContext.instances[0]?.resume).toHaveBeenCalled();
       expect(getStartedSources()).toEqual([
-        { url: "/tap.wav", playbackRate: 1, when: 10.5 },
+        { url: "/tap.flac", playbackRate: 1, when: 10.5 },
       ]);
     });
   });
@@ -197,7 +197,7 @@ describe("playSound", () => {
         }),
       );
       soundEffects = await importSoundEffects();
-      sound = soundEffects.defineSoundEffect("/tap.wav");
+      sound = soundEffects.defineSoundEffect("/tap.flac");
       soundEffects.prepareSoundEffects([sound]);
     });
 
@@ -218,7 +218,7 @@ describe("playSound", () => {
       stubWebAudio();
       stubFetch();
       soundEffects = await importSoundEffects();
-      sound = soundEffects.defineSoundEffect("/tap.wav");
+      sound = soundEffects.defineSoundEffect("/tap.flac");
       soundEffects.prepareSoundEffects([sound]);
       await finishLoading();
       soundEffects.setSoundEffectsEnabled(false);
@@ -238,7 +238,7 @@ describe("playSound", () => {
       stubWebAudio();
       stubFetch();
       soundEffects = await importSoundEffects();
-      const sound = soundEffects.defineSoundEffect("/tap.wav");
+      const sound = soundEffects.defineSoundEffect("/tap.flac");
       soundEffects.prepareSoundEffects([sound]);
       await finishLoading();
       soundEffects.playSound(sound);
@@ -268,8 +268,8 @@ describe("playLayeredSound", () => {
       vi.spyOn(Math, "random").mockReturnValue(1);
       soundEffects = await importSoundEffects();
       layers = [
-        { sound: soundEffects.defineSoundEffect("/low.wav"), offsetMs: 0 },
-        { sound: soundEffects.defineSoundEffect("/high.wav"), offsetMs: 50 },
+        { sound: soundEffects.defineSoundEffect("/low.flac"), offsetMs: 0 },
+        { sound: soundEffects.defineSoundEffect("/high.flac"), offsetMs: 50 },
       ];
       soundEffects.prepareSoundEffects(layers.map(({ sound }) => sound));
       await finishLoading();
@@ -279,8 +279,8 @@ describe("playLayeredSound", () => {
       soundEffects.playLayeredSound(layers, { delayMs: 500 });
 
       expect(getStartedSources()).toEqual([
-        { url: "/low.wav", playbackRate: 1, when: 10.5 },
-        { url: "/high.wav", playbackRate: 1, when: 10.55 },
+        { url: "/low.flac", playbackRate: 1, when: 10.5 },
+        { url: "/high.flac", playbackRate: 1, when: 10.55 },
       ]);
     });
 
@@ -305,11 +305,11 @@ describe("playLayeredSound", () => {
 
     beforeEach(async () => {
       stubWebAudio();
-      stubFetch(["/missing.wav"]);
+      stubFetch(["/missing.flac"]);
       soundEffects = await importSoundEffects();
       layers = [
-        { sound: soundEffects.defineSoundEffect("/tap.wav"), offsetMs: 0 },
-        { sound: soundEffects.defineSoundEffect("/missing.wav"), offsetMs: 0 },
+        { sound: soundEffects.defineSoundEffect("/tap.flac"), offsetMs: 0 },
+        { sound: soundEffects.defineSoundEffect("/missing.flac"), offsetMs: 0 },
       ];
       soundEffects.prepareSoundEffects(layers.map(({ sound }) => sound));
       await finishLoading();
@@ -333,14 +333,14 @@ describe("prepareSoundEffects", () => {
       stubWebAudio();
       fetch = stubFetch();
       soundEffects = await importSoundEffects();
-      sound = soundEffects.defineSoundEffect("/tap.wav");
+      sound = soundEffects.defineSoundEffect("/tap.flac");
     });
 
     test("利用者が操作するまで AudioContext を作らず、音声ファイルの読み込みを始めること", () => {
       soundEffects.prepareSoundEffects([sound]);
 
       expect(FakeAudioContext.instances).toEqual([]);
-      expect(fetch).toHaveBeenCalledExactlyOnceWith("/tap.wav");
+      expect(fetch).toHaveBeenCalledExactlyOnceWith("/tap.flac");
     });
 
     test("何度呼んでも、同じ効果音を読み直さないこと", () => {
@@ -368,7 +368,7 @@ describe("prepareSoundEffects", () => {
       fetch = stubFetch();
       soundEffects = await importSoundEffects();
       soundEffects.setSoundEffectsEnabled(false);
-      sound = soundEffects.defineSoundEffect("/tap.wav");
+      sound = soundEffects.defineSoundEffect("/tap.flac");
     });
 
     test("音声ファイルを読み込まないこと", () => {
@@ -383,7 +383,7 @@ describe("prepareSoundEffects", () => {
       await finishLoading();
       soundEffects.playSound(sound);
 
-      expect(fetch).toHaveBeenCalledExactlyOnceWith("/tap.wav");
+      expect(fetch).toHaveBeenCalledExactlyOnceWith("/tap.flac");
       expect(getStartedSources()).toHaveLength(1);
     });
   });

@@ -4,9 +4,9 @@ import {
   useOperationSound,
   usePrepareSoundEffects,
 } from "@/games/play-sound-effects";
-import clearedSoundUrl from "@/games/water-sort/assets/sounds/cleared.wav";
-import invalidSoundUrl from "@/games/water-sort/assets/sounds/invalid.wav";
-import pouredSoundUrl from "@/games/water-sort/assets/sounds/poured.wav";
+import clearedSoundUrl from "@/games/water-sort/assets/sounds/cleared.flac";
+import invalidSoundUrl from "@/games/water-sort/assets/sounds/invalid.flac";
+import pouredSoundUrl from "@/games/water-sort/assets/sounds/poured.flac";
 import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
 import {
   POUR_ANIMATION_DURATION_MS,

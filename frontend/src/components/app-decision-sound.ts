@@ -9,8 +9,8 @@
 
 import { useEffect } from "react";
 
-import gameSelectSoundUrl from "@/assets/sounds/game-select.wav";
-import playStartSoundUrl from "@/assets/sounds/play-start.wav";
+import gameSelectSoundUrl from "@/assets/sounds/game-select.flac";
+import playStartSoundUrl from "@/assets/sounds/play-start.flac";
 import {
   defineSoundEffect,
   playSound,

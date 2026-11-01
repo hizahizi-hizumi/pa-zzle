@@ -1,6 +1,6 @@
-import blockedSoundUrl from "@/games/parking-jam/assets/sounds/blocked.wav";
-import clearedSoundUrl from "@/games/parking-jam/assets/sounds/cleared.wav";
-import exitedSoundUrl from "@/games/parking-jam/assets/sounds/exited.wav";
+import blockedSoundUrl from "@/games/parking-jam/assets/sounds/blocked.flac";
+import clearedSoundUrl from "@/games/parking-jam/assets/sounds/cleared.flac";
+import exitedSoundUrl from "@/games/parking-jam/assets/sounds/exited.flac";
 import type { ParkingJamOperation } from "@/games/parking-jam/play/use-parking-jam-play";
 import type { GameProgress } from "@/games/play";
 import {
