@@ -4,17 +4,26 @@ import { AppTitleScreen } from "@/components/AppTitleScreen";
 import { GameSelectionGallery } from "@/components/GameSelectionGallery";
 import { useAppHome } from "@/game-catalog/app-home";
 import { gameCatalog } from "@/game-catalog/game-catalog";
+import type { GameCatalogEntry } from "@/game-catalog/game-catalog-entry";
 import {
   enterApp,
   getAppLaunchTitle,
   subscribeAppLaunchTitle,
 } from "@/lib/app-launch";
 
-const games = gameCatalog.map(({ name, pictogramSvg, homePath }) => ({
-  name,
-  pictogramSvg,
-  to: homePath,
-}));
+const games = gameCatalog.map(
+  ({
+    name,
+    pictogramSvg,
+    pictogramShowcaseSvg,
+    homePath,
+  }: GameCatalogEntry) => ({
+    name,
+    pictogramSvg,
+    pictogramShowcaseSvg,
+    to: homePath,
+  }),
+);
 
 export function PuzzleSelectionView() {
   const title = useSyncExternalStore(

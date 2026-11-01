@@ -219,3 +219,83 @@ describe("設定", () => {
     expect(playSound).not.toHaveBeenCalled();
   });
 });
+
+describe("選んでいるパズルの色と動きのあるピクトグラム", () => {
+  const gamesWithShowcase = [
+    {
+      ...games[0],
+      pictogramShowcaseSvg:
+        '<svg viewBox="0 0 120 120" data-game="water-sort-showcase" />',
+    },
+    games[1],
+  ];
+
+  function renderWithShowcase(selectedIndex: number) {
+    return render(
+      <MemoryRouter>
+        <GameSelectionGallery
+          games={gamesWithShowcase}
+          recordsTo="/records"
+          selectedIndex={selectedIndex}
+          continuation={null}
+          onSelect={onSelect}
+        />
+      </MemoryRouter>,
+    );
+  }
+
+  function heroPictogramWrapper(name: string) {
+    return screen
+      .getByRole("link", { name: `${name}を遊ぶ` })
+      .querySelector("svg")?.parentElement;
+  }
+
+  describe("持っているパズルを選んでいる場合", () => {
+    beforeEach(() => {
+      renderWithShowcase(0);
+    });
+
+    test("ヒーローで動かし、候補では静止させて見せること", () => {
+      const heroWrapper = heroPictogramWrapper("ウォーターソート");
+      const selectedButton = screen.getByRole("button", {
+        name: "ウォーターソートを選択",
+      });
+
+      expect(
+        heroWrapper?.querySelector('svg[data-game="water-sort-showcase"]'),
+      ).toBeTruthy();
+      expect(heroWrapper?.getAttribute("data-pictogram-motion")).toBe("play");
+      expect(
+        selectedButton.querySelector('svg[data-game="water-sort-showcase"]'),
+      ).toBeTruthy();
+      expect(
+        selectedButton.querySelector("[data-pictogram-motion]"),
+      ).toBeNull();
+    });
+  });
+
+  describe("持っていないパズルを選んでいる場合", () => {
+    beforeEach(() => {
+      renderWithShowcase(1);
+    });
+
+    test("ヒーローと候補で通常のピクトグラムを静止させて見せること", () => {
+      const heroWrapper = heroPictogramWrapper("ナンプレ");
+
+      expect(
+        heroWrapper?.querySelector('svg[data-game="nanpure"]'),
+      ).toBeTruthy();
+      expect(heroWrapper?.getAttribute("data-pictogram-motion")).toBeNull();
+    });
+
+    test("選んでいない候補では、持っていても通常のピクトグラムを見せること", () => {
+      const unselectedButton = screen.getByRole("button", {
+        name: "ウォーターソートを選択",
+      });
+
+      expect(
+        unselectedButton.querySelector('svg[data-game="water-sort-showcase"]'),
+      ).toBeNull();
+    });
+  });
+});
