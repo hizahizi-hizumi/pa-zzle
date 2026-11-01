@@ -2,6 +2,7 @@ import { Check, X } from "lucide-react";
 import {
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
+  type PointerEvent as ReactPointerEvent,
   type Ref,
   type RefObject,
   useCallback,
@@ -131,6 +132,7 @@ const sceneHoldMs = {
  * - `scenePlaying`: 盤面に場面の動きを任せている間。
  * - `captionScene`: 盤面の下に、どの場面の一言を添えるか。
  * - `captionClassName`: 盤面の下の一言。
+ * - `nextButtonClassName`: 盤面の下の「次へ」。導入を終える段では、一言と一緒に消す。
  */
 const introStageViews = {
   name: {
@@ -142,6 +144,7 @@ const introStageViews = {
     scenePlaying: false,
     captionScene: null,
     captionClassName: "",
+    nextButtonClassName: "",
   },
   goalAppearing: {
     introNameClassName: "",
@@ -153,6 +156,7 @@ const introStageViews = {
     captionScene: "goal",
     captionClassName:
       "animate-in fade-in-0 duration-250 ease-(--ease-enter) motion-reduce:animate-none",
+    nextButtonClassName: "",
   },
   goal: {
     introNameClassName: "",
@@ -162,6 +166,7 @@ const introStageViews = {
     scenePlaying: true,
     captionScene: "goal",
     captionClassName: "",
+    nextButtonClassName: "",
   },
   start: {
     introNameClassName: "",
@@ -172,6 +177,7 @@ const introStageViews = {
     captionScene: "start",
     captionClassName:
       "animate-in fade-in-0 slide-in-from-bottom-1 duration-300 ease-(--ease-enter) motion-reduce:animate-none",
+    nextButtonClassName: "",
   },
   header: {
     introNameClassName:
@@ -184,6 +190,8 @@ const introStageViews = {
     captionScene: "start",
     captionClassName:
       "animate-out fade-out-0 duration-200 fill-mode-forwards ease-(--ease-exit)",
+    nextButtonClassName:
+      "animate-out fade-out-0 duration-200 fill-mode-forwards ease-(--ease-exit)",
   },
   reveal: {
     introNameClassName: "",
@@ -194,6 +202,8 @@ const introStageViews = {
     scenePlaying: false,
     captionScene: null,
     captionClassName: "",
+    nextButtonClassName:
+      "animate-out fade-out-0 duration-200 fill-mode-forwards ease-(--ease-exit)",
   },
   done: {
     introNameClassName: "",
@@ -203,6 +213,7 @@ const introStageViews = {
     scenePlaying: false,
     captionScene: null,
     captionClassName: "",
+    nextButtonClassName: "",
   },
 } as const satisfies Record<
   IntroStage,
@@ -214,6 +225,7 @@ const introStageViews = {
     scenePlaying: boolean;
     captionScene: TutorialIntroScene | null;
     captionClassName: string;
+    nextButtonClassName: string;
   }
 >;
 
@@ -265,7 +277,7 @@ function getMoveFromIntroName(
 /**
  * 開いたときに、パズルの名前と何をするパズルか、ゴールの盤面、始めの盤面を順に見せてから、1つの盤面を埋めながらルールを1つずつ身につけていく画面。
  * 盤面を主役にし、上部にパズルの名前と手に入れたルール、盤面の直上に短い一言だけを出す。
- * 導入はどこを押しても、どのキーでも飛ばせる。
+ * 導入は自分のペースで進められるよう、自動で進むほかに「次へ」で次の場面へ進められ、ほかのどこを押しても、どのキーでも飛ばせる。
  */
 export function TutorialScreen({
   title,
@@ -289,6 +301,7 @@ export function TutorialScreen({
   const titleRef = useRef<HTMLHeadingElement>(null);
   const introPictogramRef = useRef<HTMLSpanElement>(null);
   const introTitleRef = useRef<HTMLSpanElement>(null);
+  const nextButtonRef = useRef<HTMLButtonElement>(null);
   const animatedRef = useRef(false);
   const nameCenteredRef = useRef(nameCentered);
   const stageRef = useRef(stage);
@@ -420,14 +433,49 @@ export function TutorialScreen({
     );
   }, [changeStage, finishScenes, schedule]);
 
-  function skipIntro(): void {
-    if (introPlaying) {
+  // 「次へ」は待たずに次の場面へ進める。最後の場面では、名前を上部へ戻してから最初の手順を始める。
+  function showNextScene(): void {
+    const current = stageRef.current;
+    stopIntroMotion();
+    switch (current) {
+      case "name":
+      case "goalAppearing":
+        changeStage("goal");
+        return;
+      case "goal":
+        changeStage("start");
+        return;
+      case "start":
+        finishScenes();
+        return;
+      case "header":
+      case "reveal":
+        finishIntro();
+        return;
+      case "done":
+        return;
+    }
+  }
+
+  function isOnNextButton(target: EventTarget): boolean {
+    return target instanceof Node && !!nextButtonRef.current?.contains(target);
+  }
+
+  function skipIntro(event: ReactPointerEvent): void {
+    if (introPlaying && !isOnNextButton(event.target)) {
       finishIntro();
     }
   }
 
   function handleKeyDownCapture(event: ReactKeyboardEvent): void {
     if (!introPlaying || event.key === "Escape" || event.key === "Tab") {
+      return;
+    }
+    // 「次へ」を押すキーは、飛ばさずに「次へ」に任せる。
+    if (
+      isOnNextButton(event.target) &&
+      (event.key === "Enter" || event.key === " ")
+    ) {
       return;
     }
     // 導入を飛ばすキーで、閉じるボタンなどを押さないようにする。
@@ -461,7 +509,7 @@ export function TutorialScreen({
         ? intro.startCaption
         : null;
   return (
-    // 導入の間は、どこを押しても、どのキーでも導入を飛ばす。
+    // 導入の間は、「次へ」のほかはどこを押しても、どのキーでも導入を飛ばす。
     <div
       ref={mergeRefs(rootRef, ref)}
       tabIndex={-1}
@@ -614,21 +662,41 @@ export function TutorialScreen({
         })}
       </main>
 
-      <footer className="flex h-28 shrink-0 items-center justify-center gap-2 px-4 pb-2">
-        {caption !== null && (
-          <p
-            key={caption}
-            aria-live="polite"
-            className={cn(
-              "text-balance text-center text-heading whitespace-pre-line [word-break:auto-phrase]",
-              stageView.captionClassName,
+      {/*
+        一言2行と「次へ」が収まる高さに固定し、導入の場面が替わっても、終えたときのボタンが出ても盤面を動かさない。
+        導入の間は一言の場所を2行ぶん取っておき、一言が出ても替わっても「次へ」を動かさない。
+      */}
+      <footer className="flex h-28 shrink-0 flex-col items-center justify-center gap-2 px-4 pb-2">
+        {introPlaying && (
+          <div className="flex min-h-14 flex-col justify-end">
+            {caption !== null && (
+              <p
+                key={caption}
+                aria-live="polite"
+                className={cn(
+                  "text-balance text-center text-heading whitespace-pre-line [word-break:auto-phrase]",
+                  stageView.captionClassName,
+                )}
+              >
+                {caption}
+              </p>
             )}
-          >
-            {caption}
-          </p>
+          </div>
+        )}
+        {introPlaying && (
+          <span className={cn("flex", stageView.nextButtonClassName)}>
+            <Button
+              ref={nextButtonRef}
+              type="button"
+              size="lg"
+              onClick={showNextScene}
+            >
+              次へ
+            </Button>
+          </span>
         )}
         {completed && (
-          <>
+          <div className="flex gap-2">
             <Button type="button" size="lg" onClick={handleFinish}>
               {finishLabels[finish.entry]}
             </Button>
@@ -640,7 +708,7 @@ export function TutorialScreen({
             >
               もう一度
             </Button>
-          </>
+          </div>
         )}
       </footer>
     </div>
