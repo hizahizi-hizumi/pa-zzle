@@ -18,16 +18,17 @@ import {
   isWaterSortCleared,
   WATER_SORT_BOTTLE_CAPACITY,
   type WaterSortBottle,
+  type WaterSortMove,
   type WaterSortState,
 } from "@/games/water-sort/puzzle/state";
 import {
   _private,
   findWaterSortTutorialHintBottle,
-  getWaterSortTutorialShownStepIndex,
+  getWaterSortTutorialShownProgress,
   getWaterSortTutorialStepBottle,
-  listWaterSortTutorialPointedBottles,
   type WaterSortTutorialBoardState,
   type WaterSortTutorialRuleId,
+  type WaterSortTutorialStep,
   waterSortTutorial,
 } from "@/games/water-sort/tutorial/tutorial";
 
@@ -52,17 +53,28 @@ function tapBottles(
   );
 }
 
+/** 注ぎ元を選ぶか注ぐ手順の注ぎ。 */
+function getStepMove(step: WaterSortTutorialStep | undefined): WaterSortMove {
+  if (step === undefined || step.endsWhen === "rejected") {
+    throw new Error("注ぎ元を選ぶか注ぐ手順ではない");
+  }
+  return step.move;
+}
+
 /** 手順で押すボトルを順に押して、`count` 個目の手順まで終える。選ぶ手順の次の注ぐ手順では、注ぎ元を選んだまま注ぎ先だけを押す。 */
 function playSteps(count: number): Progress {
   return tapBottles(
     started,
-    steps.slice(0, count).flatMap(({ move, endsWhen }, index) => {
-      if (endsWhen === "selected") {
-        return [move.sourceBottleIndex];
+    steps.slice(0, count).flatMap((step, index) => {
+      if (step.endsWhen === "selected") {
+        return [step.move.sourceBottleIndex];
+      }
+      if (step.endsWhen === "rejected") {
+        return [step.bottleIndex];
       }
       return steps[index - 1]?.endsWhen === "selected"
-        ? [move.destinationBottleIndex]
-        : [move.sourceBottleIndex, move.destinationBottleIndex];
+        ? [step.move.destinationBottleIndex]
+        : [step.move.sourceBottleIndex, step.move.destinationBottleIndex];
     }),
   );
 }
@@ -136,8 +148,30 @@ describe("手順", () => {
     expect(selected.stepIndex).toBe(1);
     expect(selected.earnedRuleIds).toEqual(["empty"]);
     expect(selected.boardState.sourceBottleIndex).toBe(
-      steps[1]?.move.sourceBottleIndex,
+      getStepMove(steps[1]).sourceBottleIndex,
     );
+  });
+
+  test("sorted を示す手順が、そろったボトルを押させ、選べずに揺れたところで次の手順へ進むこと", () => {
+    const sortedStepIndex = steps.findIndex(
+      ({ introducedRuleId }) => introducedRuleId === "sorted",
+    );
+    const sortedStep = steps[sortedStepIndex];
+    const before = playSteps(sortedStepIndex);
+    const after = playSteps(sortedStepIndex + 1);
+    const bottleIndex =
+      sortedStep?.endsWhen === "rejected" ? sortedStep.bottleIndex : -1;
+    const bottle = before.boardState.bottles[bottleIndex];
+
+    expect(bottle && isCompleteWaterSortBottle(bottle)).toBe(true);
+    expect(after.stepIndex).toBe(sortedStepIndex + 1);
+    expect(after.violated).toBe(false);
+    expect(after.boardState.lastMove).toEqual({
+      type: "rejected",
+      bottleIndex,
+      rejection: "complete",
+    });
+    expect(after.boardState.bottles).toEqual(before.boardState.bottles);
   });
 
   test("empty を示す1手目が、空のボトルへ1つだけ注ぎ、後のルールを先取りしないこと", () => {
@@ -224,10 +258,7 @@ describe("手順", () => {
 });
 
 describe("performTutorialAction", () => {
-  const firstMove = steps[0]?.move ?? {
-    sourceBottleIndex: -1,
-    destinationBottleIndex: -1,
-  };
+  const firstMove = getStepMove(steps[0]);
   const selected = tapBottles(started, [firstMove.sourceBottleIndex]);
   const released = playSteps(steps.length);
 
@@ -257,7 +288,13 @@ describe("performTutorialAction", () => {
     const earned = released.earnedRuleIds;
     const message = getMessage(released);
 
-    expect(earned).toEqual(["empty", "same-color", "together", "capacity"]);
+    expect(earned).toEqual([
+      "empty",
+      "same-color",
+      "together",
+      "sorted",
+      "capacity",
+    ]);
     expect(released.stepIndex).toBe(steps.length);
     expect(message).toBe(waterSortTutorial.freePlay);
   });
@@ -277,14 +314,13 @@ describe("performTutorialAction", () => {
       expect(message.headline).toBe("上の色が違うと注げません");
     });
 
-    test("そろったボトルを選べないことを、手を離す前に、そろったボトルを指す手順の補足で違反と同じ文のまま言い切っていること", () => {
+    test("そろったボトルを選ぼうとしたときの一言が、手を離す前の sorted の手順と同じ文であること", () => {
       const headline = getMessage(tapBottles(released, [3])).headline;
-      const pointingDetails = steps.flatMap(
-        ({ message, pointsAtSortedBottles }) =>
-          pointsAtSortedBottles ? [message.detail] : [],
+      const sortedStep = steps.find(
+        ({ introducedRuleId }) => introducedRuleId === "sorted",
       );
 
-      expect(pointingDetails).toEqual([headline]);
+      expect(sortedStep?.message.headline).toBe(headline);
     });
 
     test("満杯のボトルへ注ごうとすると、そのわけを言うこと", () => {
@@ -303,7 +339,7 @@ describe("performTutorialAction", () => {
     });
 
     const unselectableCases = [
-      ["そろったボトル", 3, "そろったボトルはもう動かせません"],
+      ["そろったボトル", 3, "そろったボトルからは注げません"],
       ["空のボトル", 4, "空のボトルからは注げません"],
     ] as const;
 
@@ -320,53 +356,36 @@ describe("performTutorialAction", () => {
   });
 });
 
-describe("getWaterSortTutorialShownStepIndex", () => {
+describe("getWaterSortTutorialShownProgress", () => {
   const selected = playSteps(1);
   const deselected = tapBottles(selected, [
     selected.boardState.sourceBottleIndex ?? -1,
   ]);
 
   const cases = [
-    ["始めたとき", started, 0],
-    ["注ぎ元を選んで空のボトルへ注ぐ手順へ進んだとき", selected, 1],
-    ["その手順で注ぎ元を選び直したとき", deselected, 0],
-    ["手を離した後", playSteps(steps.length), steps.length],
+    ["始めたとき", started, 0, []],
+    ["注ぎ元を選んで空のボトルへ注ぐ手順へ進んだとき", selected, 1, ["empty"]],
+    ["その手順で注ぎ元を選び直したとき", deselected, 0, []],
   ] as const;
 
   test.each(cases)(
-    "%sは、一言を見せる手順の位置を返すこと",
-    (_, progress, expected) => {
-      const shownStepIndex = getWaterSortTutorialShownStepIndex(
-        progress.stepIndex,
-        progress.boardState,
-      );
+    "%sは、その時点の手順と手に入れたルールで見せること",
+    (_, progress, stepIndex, earnedRuleIds) => {
+      const shown = getWaterSortTutorialShownProgress(progress);
 
-      expect(shownStepIndex).toBe(expected);
+      expect(shown.stepIndex).toBe(stepIndex);
+      expect(shown.earnedRuleIds).toEqual(earnedRuleIds);
     },
   );
 });
 
-describe("listWaterSortTutorialPointedBottles", () => {
-  test("そろったボトルを指す手順では、そろったボトルを返し、ほかの手順では何も返さないこと", () => {
-    const pointedByStep = steps.map((_, index) => {
-      const progress = playSteps(index);
-      return listWaterSortTutorialPointedBottles(
-        getTutorialSituation(waterSortTutorial, progress),
-        progress.boardState,
-      );
-    });
-
-    expect(pointedByStep).toEqual([[], [], [], [], [3]]);
-  });
-});
-
 describe("getWaterSortTutorialStepBottle", () => {
-  const firstMove = steps[0]?.move;
-  const selected = tapBottles(started, [firstMove?.sourceBottleIndex ?? -1]);
+  const firstMove = getStepMove(steps[0]);
+  const selected = tapBottles(started, [firstMove.sourceBottleIndex]);
 
   const cases = [
-    ["注ぎ元を選ぶ前", started, firstMove?.sourceBottleIndex],
-    ["注ぎ元を選んだ後", selected, firstMove?.destinationBottleIndex],
+    ["注ぎ元を選ぶ前", started, firstMove.sourceBottleIndex],
+    ["注ぎ元を選んだ後", selected, firstMove.destinationBottleIndex],
   ] as const;
 
   test.each(cases)(

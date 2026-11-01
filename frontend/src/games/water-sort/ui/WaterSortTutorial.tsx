@@ -21,9 +21,8 @@ import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-
 import { isCompleteWaterSortBottle } from "@/games/water-sort/puzzle/state";
 import {
   findWaterSortTutorialHintBottle,
-  getWaterSortTutorialShownStepIndex,
+  getWaterSortTutorialShownProgress,
   getWaterSortTutorialStepBottle,
-  listWaterSortTutorialPointedBottles,
   type WaterSortTutorialBoardState,
   type WaterSortTutorialRuleId,
   waterSortTutorial,
@@ -47,6 +46,9 @@ type WaterSortTutorialProgress = TutorialProgress<
   WaterSortTutorialRuleId,
   WaterSortTutorialBoardState
 >;
+
+/** そろったボトルを押させる手順で、揺れを見届けてから次の手順の一言と印を出すまでの間。 */
+const REJECTION_STEP_HOLD_MS = 450;
 
 /** 手を離した後、手が止まってから次に押すボトルを示すまでの間。 */
 const IDLE_HINT_DELAY_MS = 4000;
@@ -91,10 +93,9 @@ function createOperation(
   }
 }
 
-/** 注いだ先が1色で満杯にそろったら、そのボトルを一瞬光らせる。 */
 /**
  * 注いだ先が1色で満杯にそろったら、そのボトルを一瞬光らせる。
- * 完成したときは、そろったボトルをすべて同時に光らせる。
+ * 完成したときは、そろったボトルをすべて同時に光らせ、完成の一言を読む間も光らせたままにする。
  */
 function getSortedCues(
   { bottles, lastMove, moveCount }: WaterSortTutorialBoardState,
@@ -113,7 +114,7 @@ function getSortedCues(
       });
   return sortedBottleIndices.map((bottleIndex) => ({
     bottleIndex,
-    kind: "sorted",
+    kind: completed ? "sorted-held" : "sorted",
     id: moveCount,
   }));
 }
@@ -138,11 +139,13 @@ export function WaterSortTutorial({
     useState<WaterSortTutorialProgress | null>(null);
   // 手を引いている間に印の無いボトルを押されたら、印を付け直す。
   const [hintCueId, setHintCueId] = useState(0);
-  // 手順どおりに注いで次の手順へ進んだときの、進む前の進行。注ぐ動きを終えて次の印を付けるまで、一言とルールの並びをこちらで見せる。
-  const [steppedPour, setSteppedPour] = useState<{
+  // 手順どおりの手で次の手順へ進んだときの、進む前の進行。注ぐ動きか揺れを見届けて次の印を付けるまで、一言とルールの並びをこちらで見せる。
+  const [steppedHold, setSteppedHold] = useState<{
     progress: WaterSortTutorialProgress;
     before: WaterSortTutorialProgress;
   } | null>(null);
+  const [shaking, setShaking] = useState(false);
+  const shakeTimerRef = useRef<number | undefined>(undefined);
   // 最後に注いだボトルが戻り始めた、解けた進行。完成の一言は、ボトルが戻るのに合わせて出す。
   const [returningSolvedProgress, setReturningSolvedProgress] =
     useState<WaterSortTutorialProgress | null>(null);
@@ -151,26 +154,20 @@ export function WaterSortTutorial({
   const guiding = situation.step !== null;
   const { boardState } = progress;
   const playing = progress.phase === "playing";
+  const holdingStep =
+    steppedHold?.progress === progress && (pouring || shaking);
   const idleHintShown = playing && !guiding && idleProgress === progress;
   const hintBottle =
-    !playing || pouring
+    !playing || pouring || holdingStep
       ? null
       : guiding
         ? getWaterSortTutorialStepBottle(situation, boardState)
         : idleHintShown
           ? findWaterSortTutorialHintBottle(boardState)
           : null;
-  const progressBeforePour =
-    pouring && steppedPour?.progress === progress
-      ? steppedPour.before
-      : progress;
-  const shownProgress: WaterSortTutorialProgress = {
-    ...progressBeforePour,
-    stepIndex: getWaterSortTutorialShownStepIndex(
-      progressBeforePour.stepIndex,
-      progressBeforePour.boardState,
-    ),
-  };
+  const shownProgress = getWaterSortTutorialShownProgress(
+    holdingStep && steppedHold ? steppedHold.before : progress,
+  );
   const shownSituation = getTutorialSituation(waterSortTutorial, shownProgress);
 
   useEffect(() => {
@@ -185,7 +182,10 @@ export function WaterSortTutorial({
   }, [open, progress, guiding]);
 
   useEffect(() => {
-    return () => window.clearTimeout(returnTimerRef.current);
+    return () => {
+      window.clearTimeout(returnTimerRef.current);
+      window.clearTimeout(shakeTimerRef.current);
+    };
   }, []);
 
   const handleClearAnimationComplete = useCallback(() => {
@@ -208,12 +208,17 @@ export function WaterSortTutorial({
     }
     setProgress(next);
     setOperation(createOperation(next));
-    setSteppedPour(
-      next.boardState.lastMove?.type === "poured" &&
-        next.stepIndex !== progress.stepIndex
-        ? { progress: next, before: progress }
-        : null,
-    );
+    const stepped = next.stepIndex !== progress.stepIndex;
+    setSteppedHold(stepped ? { progress: next, before: progress } : null);
+    const shook = stepped && next.boardState.lastMove?.type === "rejected";
+    window.clearTimeout(shakeTimerRef.current);
+    setShaking(shook);
+    if (shook) {
+      shakeTimerRef.current = window.setTimeout(
+        () => setShaking(false),
+        REJECTION_STEP_HOLD_MS,
+      );
+    }
     if (next.phase === "solved") {
       returnTimerRef.current = window.setTimeout(
         () => setReturningSolvedProgress(next),
@@ -228,9 +233,11 @@ export function WaterSortTutorial({
 
   function restart(): void {
     window.clearTimeout(returnTimerRef.current);
+    window.clearTimeout(shakeTimerRef.current);
     setReturningSolvedProgress(null);
     setIdleProgress(null);
-    setSteppedPour(null);
+    setSteppedHold(null);
+    setShaking(false);
     setOperation(null);
     setPouring(false);
     setProgress(startTutorial(waterSortTutorial));
@@ -274,10 +281,6 @@ export function WaterSortTutorial({
    * 導入の終わりは、最初の手順の一言を出すのと同時に、最初の印を付ける。
    */
   function getCues(messageShown: boolean): WaterSortBottleCue[] {
-    const pointedCues: WaterSortBottleCue[] =
-      listWaterSortTutorialPointedBottles(shownSituation, boardState).map(
-        (bottleIndex) => ({ bottleIndex, kind: "pointed", id: 0 }),
-      );
     const sortedCues =
       pouring || progress.phase === "solved"
         ? []
@@ -288,11 +291,12 @@ export function WaterSortTutorial({
           ? getWaterSortTutorialStepBottle(situation, boardState)
           : null
         : hintBottle;
-    // 同じボトルに重なったら、指し続ける合図を一瞬の合図より先に置いて残す。
-    const cues = [...pointedCues, ...sortedCues];
     return cueBottle === null
-      ? cues
-      : [...cues, { bottleIndex: cueBottle, kind: "hint", id: hintCueId }];
+      ? sortedCues
+      : [
+          ...sortedCues,
+          { bottleIndex: cueBottle, kind: "hint", id: hintCueId },
+        ];
   }
 
   /** 導入の間はゴールの盤面を見せ、始めの盤面の場面で、始めの盤面へ替える。 */
@@ -300,6 +304,7 @@ export function WaterSortTutorial({
     scene,
     playing: scenePlaying,
     onSceneEnd,
+    onStillSceneEnd,
     messageShown,
   }: TutorialBoardIntro) {
     return (
@@ -307,6 +312,7 @@ export function WaterSortTutorial({
         scene={scene}
         playing={scenePlaying}
         onSceneEnd={onSceneEnd}
+        onStillSceneEnd={onStillSceneEnd}
       >
         {(showsGoal) => (
           // 端から2本目へ注ぐとき、傾けたボトルは注ぎ先の中心から画面の端の側へ、ボトルの幅の約2.76倍はみ出す。

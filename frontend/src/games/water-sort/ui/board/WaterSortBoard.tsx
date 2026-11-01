@@ -110,7 +110,9 @@ export function WaterSortBoard({
                   .join("、");
           const isSource = bottleIndex === sourceBottleIndex;
           const isAnimated = animatedBottleIndexes.has(bottleIndex);
-          const cue = cues.find((item) => item.bottleIndex === bottleIndex);
+          const bottleCues = cues.filter(
+            (item) => item.bottleIndex === bottleIndex,
+          );
 
           return (
             <button
@@ -130,25 +132,26 @@ export function WaterSortBoard({
               >
                 <WaterBottle contents={bottle} selected={isSource} />
               </span>
-              {(cue?.kind === "sorted" || cue?.kind === "pointed") && (
-                <span
-                  key={`${cue.kind}-${cue.id}`}
-                  aria-hidden="true"
-                  data-bottle-cue={cue.kind}
-                  className={`pointer-events-none absolute -inset-x-1 top-1 -bottom-1 rounded-b-[1.7rem] rounded-t-md shadow-[0_0_14px_3px] shadow-emerald-400/70 ring-[3px] ring-emerald-500/80 dark:shadow-emerald-300/60 dark:ring-emerald-300/80 ${
-                    cue.kind === "sorted"
-                      ? "fill-mode-forwards animate-out fade-out-0 duration-900 ease-in"
-                      : "animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none"
-                  }`}
-                />
-              )}
-              {cue?.kind === "hint" && (
-                <span
-                  key={cue.id}
-                  aria-hidden="true"
-                  data-bottle-cue={cue.kind}
-                  className="pointer-events-none absolute -inset-1.5 top-0.5 rounded-b-[1.8rem] rounded-t-lg border-[3px] border-sky-600 border-dashed animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none dark:border-sky-400"
-                />
+              {bottleCues.map((cue) =>
+                cue.kind === "hint" ? (
+                  <span
+                    key={`${cue.kind}-${cue.id}`}
+                    aria-hidden="true"
+                    data-bottle-cue={cue.kind}
+                    className="pointer-events-none absolute -inset-1.5 top-0.5 rounded-b-[1.8rem] rounded-t-lg border-[3px] border-sky-600 border-dashed animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none dark:border-sky-400"
+                  />
+                ) : (
+                  <span
+                    key={`${cue.kind}-${cue.id}`}
+                    aria-hidden="true"
+                    data-bottle-cue={cue.kind}
+                    className={`pointer-events-none absolute -inset-x-1 top-1 -bottom-1 rounded-b-[1.7rem] rounded-t-md shadow-[0_0_14px_3px] shadow-emerald-400/70 ring-[3px] ring-emerald-500/80 dark:shadow-emerald-300/60 dark:ring-emerald-300/80 ${
+                      cue.kind === "sorted"
+                        ? "fill-mode-forwards animate-out fade-out-0 duration-900 ease-in"
+                        : "animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none"
+                    }`}
+                  />
+                ),
               )}
             </button>
           );

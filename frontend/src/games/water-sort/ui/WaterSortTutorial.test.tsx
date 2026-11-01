@@ -10,10 +10,13 @@ import {
 import { WaterSortTutorial } from "@/games/water-sort/ui/WaterSortTutorial";
 
 /** 手順ごとに押す、注ぎ元と注ぎ先のボトル（0始まり）。 */
-const stepTaps = [0, 3, 1, 3, 2, 3, 1, 0] as const;
+const stepTaps = [0, 3, 1, 3, 2, 3, 3, 1, 0] as const;
 
 /** 手順を終えた後、残りの赤と青をそろえる注ぎ。 */
 const remainingTaps = [0, 4, 1, 4, 2, 4, 1, 0, 2, 0] as const;
+
+/** そろったボトルを押させる手順で、揺れを見届けてから次の手順へ進むまでの間。 */
+const rejectionStepHoldMs = 450;
 
 /** 手を離した後、手が止まってから次に押すボトルを示すまでの間。 */
 const idleHintDelayMs = 4000;
@@ -75,7 +78,7 @@ function tapBottles(bottleIndices: readonly number[]): void {
 
 /** 合図を付けたボトルの番号（1始まり）。既定は、次に押すボトルの印。 */
 function getCuedBottles(
-  kind: "hint" | "sorted" | "pointed" = "hint",
+  kind: "hint" | "sorted" | "sorted-held" = "hint",
 ): number[] {
   return getBottles().flatMap((bottle, bottleIndex) =>
     bottle.querySelector(`[data-bottle-cue="${kind}"]`)
@@ -126,7 +129,7 @@ describe("WaterSortTutorial", () => {
       expect(headline).toBeTruthy();
       expect(contents).toBe("赤、赤、青、緑");
       expect(cued).toEqual([1]);
-      expect(rules).toEqual(["？", "？", "？", "？"]);
+      expect(rules).toEqual(["？", "？", "？", "？", "？"]);
     });
 
     test("印の注ぎ元を押すと選び、印を空のボトルへ移して、空のボトルに注げることを示すこと", () => {
@@ -140,7 +143,7 @@ describe("WaterSortTutorial", () => {
       expect(pressed).toBe("true");
       expect(cued).toEqual([4]);
       expect(headline).toBeTruthy();
-      expect(rules).toEqual(["空のボトルへ", "？", "？", "？"]);
+      expect(rules).toEqual(["空へ", "？", "？", "？", "？"]);
     });
 
     test("選んだ注ぎ元をもう一度押して選び直すと、選ぶ一言と注ぎ元の印に戻すこと", () => {
@@ -149,10 +152,12 @@ describe("WaterSortTutorial", () => {
       const pressed = getBottle(0).getAttribute("aria-pressed");
       const headline = screen.getByText(firstHeadline);
       const cued = getCuedBottles();
+      const rules = getRuleTexts();
 
       expect(pressed).toBe("false");
       expect(headline).toBeTruthy();
       expect(cued).toEqual([1]);
+      expect(rules).toEqual(["？", "？", "？", "？", "？"]);
     });
 
     test("印の無いボトルを押しても、選ばずに、一言を変えずに印を付け直すこと", () => {
@@ -178,26 +183,52 @@ describe("WaterSortTutorial", () => {
       expect(contents).toEqual(["赤、赤、青", "緑"]);
       expect(headline).toBeTruthy();
       expect(cued).toEqual([2]);
-      expect(rules).toEqual(["空のボトルへ", "同じ色の上へ", "？", "？"]);
+      expect(rules).toEqual(["空へ", "同じ色へ", "？", "？", "？"]);
     });
 
-    test("重なった同じ色をまとめて注いで緑をそろえ、次のルールと一緒に、そろった緑のボトルを指し続けること", () => {
+    test("重なった同じ色をまとめて注いで緑をそろえ、そろった緑のボトルを光らせて、そのボトルを押させること", () => {
       tapBottles(stepTaps.slice(0, 6));
 
       const contents = [getBottleContents(2), getBottleContents(3)];
-      const pointed = getCuedBottles("pointed");
-      const headline = screen.getByText("入るだけ移ります");
-      const detail = screen.getByText("そろったボトルはもう動かせません");
+      const sorted = getCuedBottles("sorted");
+      const cued = getCuedBottles();
+      const headline = screen.getByText("そろったボトルからは注げません");
       const rules = getRuleTexts();
 
       expect(contents).toEqual(["赤、青", "緑、緑、緑、緑"]);
-      expect(pointed).toEqual([4]);
+      expect(sorted).toEqual([4]);
+      expect(cued).toEqual([4]);
       expect(headline).toBeTruthy();
-      expect(detail).toBeTruthy();
       expect(rules).toEqual([
-        "空のボトルへ",
-        "同じ色の上へ",
+        "空へ",
+        "同じ色へ",
         "まとめて",
+        "そろったら",
+        "？",
+      ]);
+    });
+
+    test("そろったボトルを押すと、選ばずに、揺れを見届けてから次のルールの一言と印へ進むこと", () => {
+      tapBottles(stepTaps.slice(0, 7));
+      const pressed = getBottle(3).getAttribute("aria-pressed");
+      const heldHeadline = screen.getByText("そろったボトルからは注げません");
+      const heldCued = getCuedBottles();
+      advanceTime(rejectionStepHoldMs);
+
+      const headline = screen.getByText("入るだけ移ります");
+      const cued = getCuedBottles();
+      const rules = getRuleTexts();
+
+      expect(pressed).toBe("false");
+      expect(heldHeadline).toBeTruthy();
+      expect(heldCued).toEqual([]);
+      expect(headline).toBeTruthy();
+      expect(cued).toEqual([2]);
+      expect(rules).toEqual([
+        "空へ",
+        "同じ色へ",
+        "まとめて",
+        "そろったら",
         "入るだけ",
       ]);
     });
@@ -264,7 +295,7 @@ describe("WaterSortTutorial", () => {
 
       test("そろえ終えると、そろったボトルをすべて光らせてレベル1とのつながりを伝え、レベル1を遊ぶでレベル1を始めること", () => {
         tapBottles(remainingTaps);
-        const sorted = getCuedBottles("sorted");
+        const sorted = getCuedBottles("sorted-held");
         const detail = screen.getByText(
           "レベル1は色が増えますが ルールは同じです",
         );
@@ -288,7 +319,7 @@ describe("WaterSortTutorial", () => {
         expect(caption).toBeTruthy();
         expect(contents).toBe("赤、赤、青、緑");
         expect(cued).toEqual([1]);
-        expect(rules).toEqual(["？", "？", "？", "？"]);
+        expect(rules).toEqual(["？", "？", "？", "？", "？"]);
       });
     });
   });

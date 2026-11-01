@@ -8,6 +8,8 @@ type WaterSortTutorialIntroSceneProps = {
   /** `true` の間、場面の動きを見せる。 */
   playing: boolean;
   onSceneEnd: () => void;
+  /** 動かさずに見せたゴールの場面を終えたら呼ぶ。 */
+  onStillSceneEnd: () => void;
   /** ゴールの盤面を見せるときは `true` を受け取って盤面を描く。 */
   children: (showsGoal: boolean) => ReactNode;
 };
@@ -34,6 +36,7 @@ export function WaterSortTutorialIntroScene({
   scene,
   playing,
   onSceneEnd,
+  onStillSceneEnd,
   children,
 }: WaterSortTutorialIntroSceneProps) {
   const startRef = useRef<HTMLDivElement>(null);
@@ -44,6 +47,10 @@ export function WaterSortTutorialIntroScene({
 
   useEffect(() => {
     if (!playing) {
+      return;
+    }
+    if (scene === "goal") {
+      onStillSceneEnd();
       return;
     }
     const start = startRef.current;
@@ -77,7 +84,7 @@ export function WaterSortTutorialIntroScene({
       fadeOut.cancel();
       setCrossFadeEnded(false);
     };
-  }, [scene, playing, onSceneEnd]);
+  }, [scene, playing, onSceneEnd, onStillSceneEnd]);
 
   return (
     <div className="relative size-full">

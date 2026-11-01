@@ -2,6 +2,7 @@ import type {
   Tutorial,
   TutorialMessage,
   TutorialMoveOutcome,
+  TutorialProgress,
   TutorialSituation,
   TutorialStep,
 } from "@/games/tutorial";
@@ -22,27 +23,30 @@ import {
  * - `empty`: 選んだボトルの液体は、空のボトルに注げる。
  * - `same-color`: いちばん上が同じ色のボトルにも、その上に重ねて注げる。
  * - `together`: いちばん上で重なっている同じ色は、まとめて移る。
+ * - `sorted`: 1色で満杯にそろったボトルからは注げない。
  * - `capacity`: 注ぎ先の空きより多ければ、入るだけ移り、残りは注ぎ元に残る。空きが無ければ注げない。
  */
 export type WaterSortTutorialRuleId =
   | "empty"
   | "same-color"
   | "together"
+  | "sorted"
   | "capacity";
 
 /** 盤面と同じく、ボトルを押す。 */
 export type WaterSortTutorialAction = { bottleIndex: number };
 
 /**
- * - `move`: 印を付け、手順の間だけ受け付ける注ぎ。注ぎ元を押して選ぶと、印を注ぎ先へ移す。
- * - `endsWhen`: 次の手順へ進む手。`selected` は注ぎ元を選んだところで進み、選び方を教える手順に使う。`poured` は注いだところで進む。
- * - `pointsAtSortedBottles`: 一言がそろったボトルを指すので、この手順の間はそろったボトルに合図を出し続ける。
+ * 手順で印を付けて受け付ける手と、次の手順へ進む手。
+ * - `selected`: `move` の注ぎ元を選んだところで進む。選び方を教える手順に使う。
+ * - `poured`: `move` の注ぎ元を選ぶと印を注ぎ先へ移し、注いだところで進む。
+ * - `rejected`: `bottleIndex` のボトルを押し、選べずに揺れたところで進む。できないことを反応で体験させる手順に使う。
  */
-export type WaterSortTutorialStep = TutorialStep<WaterSortTutorialRuleId> & {
-  move: WaterSortMove;
-  endsWhen: "selected" | "poured";
-  pointsAtSortedBottles: boolean;
-};
+export type WaterSortTutorialStep = TutorialStep<WaterSortTutorialRuleId> &
+  (
+    | { endsWhen: "selected" | "poured"; move: WaterSortMove }
+    | { endsWhen: "rejected"; bottleIndex: number }
+  );
 
 /**
  * 注げなかったわけ。
@@ -123,12 +127,13 @@ const goalBottles: WaterSortState = [
   [],
 ];
 
-/** そろったボトルを選ぼうとしたときの一言。手を離す前の手順でも、そろったボトルを指して同じ文で言い切る。 */
-const COMPLETE_REJECTION_MESSAGE = "そろったボトルはもう動かせません";
+/** そろったボトルを選ぼうとしたときの一言。手順でも、そろったボトルを押させる前に同じ文で言い切る。 */
+const COMPLETE_REJECTION_MESSAGE = "そろったボトルからは注げません";
 
 /**
  * まず1本目を押して選ばせ、選んだら空の4本目へ注がせる。
  * 1本目の緑を空の4本目へ注ぎ、2本目の緑をその上に重ね、3本目の2つ重なった緑をまとめて注いで緑をそろえる。
+ * そろった緑の4本目を押させ、選べずに揺れるのを見せる。
  * 最後に、2本目の2つ重なった青を、空きが1つの1本目へ注ぎ、入るだけ移す。
  */
 const steps: readonly WaterSortTutorialStep[] = [
@@ -137,14 +142,12 @@ const steps: readonly WaterSortTutorialStep[] = [
     introducedRuleId: null,
     move: { sourceBottleIndex: 0, destinationBottleIndex: 3 },
     endsWhen: "selected",
-    pointsAtSortedBottles: false,
   },
   {
     message: { headline: "空のボトルに注げます", detail: null },
     introducedRuleId: "empty",
     move: { sourceBottleIndex: 0, destinationBottleIndex: 3 },
     endsWhen: "poured",
-    pointsAtSortedBottles: false,
   },
   {
     message: {
@@ -154,7 +157,6 @@ const steps: readonly WaterSortTutorialStep[] = [
     introducedRuleId: "same-color",
     move: { sourceBottleIndex: 1, destinationBottleIndex: 3 },
     endsWhen: "poured",
-    pointsAtSortedBottles: false,
   },
   {
     message: {
@@ -164,17 +166,21 @@ const steps: readonly WaterSortTutorialStep[] = [
     introducedRuleId: "together",
     move: { sourceBottleIndex: 2, destinationBottleIndex: 3 },
     endsWhen: "poured",
-    pointsAtSortedBottles: false,
+  },
+  {
+    message: { headline: COMPLETE_REJECTION_MESSAGE, detail: null },
+    introducedRuleId: "sorted",
+    bottleIndex: 3,
+    endsWhen: "rejected",
   },
   {
     message: {
       headline: "入るだけ移ります",
-      detail: COMPLETE_REJECTION_MESSAGE,
+      detail: null,
     },
     introducedRuleId: "capacity",
     move: { sourceBottleIndex: 1, destinationBottleIndex: 0 },
     endsWhen: "poured",
-    pointsAtSortedBottles: true,
   },
 ];
 
@@ -253,7 +259,7 @@ function performWaterSortTutorialAction(
   }
 
   if (sourceBottleIndex === null) {
-    if (step !== null && bottleIndex !== step.move.sourceBottleIndex) {
+    if (step !== null && bottleIndex !== getStepSourceBottle(step)) {
       return { state, outcome: "ignored" };
     }
     const rejection = findSourceRejection(bottles, bottleIndex);
@@ -264,7 +270,7 @@ function performWaterSortTutorialAction(
           { type: "rejected", bottleIndex, rejection },
           {},
         ),
-        outcome: "violated",
+        outcome: step?.endsWhen === "rejected" ? "stepped" : "violated",
       };
     }
     return {
@@ -288,7 +294,11 @@ function performWaterSortTutorialAction(
     };
   }
 
-  if (step !== null && bottleIndex !== step.move.destinationBottleIndex) {
+  if (
+    step !== null &&
+    (step.endsWhen === "rejected" ||
+      bottleIndex !== step.move.destinationBottleIndex)
+  ) {
     return { state, outcome: "ignored" };
   }
 
@@ -398,32 +408,37 @@ function findShortestMove(
   return best?.move ?? null;
 }
 
-/**
- * 一言とルールの並びで見せる手順の位置。選ぶ手順の次の手順で、選んだ注ぎ元を選び直したら、選ぶ手順に戻して見せる。
- */
-export function getWaterSortTutorialShownStepIndex(
-  stepIndex: number,
-  { sourceBottleIndex }: WaterSortTutorialBoardState,
-): number {
-  const continuesSelection =
-    steps[stepIndex]?.endsWhen === "poured" &&
-    steps[stepIndex - 1]?.endsWhen === "selected";
-  return continuesSelection && sourceBottleIndex === null
-    ? stepIndex - 1
-    : stepIndex;
+/** 手順で最初に押させるボトル。 */
+function getStepSourceBottle(step: WaterSortTutorialStep): number {
+  return step.endsWhen === "rejected"
+    ? step.bottleIndex
+    : step.move.sourceBottleIndex;
 }
 
-/** 手順の一言が指す、そろったボトル。 */
-export function listWaterSortTutorialPointedBottles(
-  { step }: WaterSortTutorialSituation,
-  { bottles }: WaterSortTutorialBoardState,
-): number[] {
-  if (!step?.pointsAtSortedBottles) {
-    return [];
+/**
+ * 一言とルールの並びで見せる進行。選ぶ手順の次の手順で、選んだ注ぎ元を選び直したら、選ぶ手順に戻し、その手順で手に入れたルールも伏せて見せる。
+ */
+export function getWaterSortTutorialShownProgress<
+  Progress extends TutorialProgress<
+    WaterSortTutorialRuleId,
+    WaterSortTutorialBoardState
+  >,
+>(progress: Progress): Progress {
+  const { stepIndex, boardState, earnedRuleIds } = progress;
+  const step = steps[stepIndex];
+  const continuesSelection =
+    step?.endsWhen === "poured" &&
+    steps[stepIndex - 1]?.endsWhen === "selected";
+  if (!continuesSelection || boardState.sourceBottleIndex !== null) {
+    return progress;
   }
-  return bottles.flatMap((bottle, bottleIndex) =>
-    isCompleteWaterSortBottle(bottle) ? [bottleIndex] : [],
-  );
+  return {
+    ...progress,
+    stepIndex: stepIndex - 1,
+    earnedRuleIds: earnedRuleIds.filter(
+      (ruleId) => ruleId !== step.introducedRuleId,
+    ),
+  };
 }
 
 /** 手順で印を付けるボトル。注ぎ元を選ぶ前は注ぎ元、選んだ後は注ぎ先。手を離した後は `null`。 */
@@ -434,9 +449,10 @@ export function getWaterSortTutorialStepBottle(
   if (step === null) {
     return null;
   }
-  return sourceBottleIndex === null
-    ? step.move.sourceBottleIndex
-    : step.move.destinationBottleIndex;
+  if (step.endsWhen === "rejected" || sourceBottleIndex === null) {
+    return getStepSourceBottle(step);
+  }
+  return step.move.destinationBottleIndex;
 }
 
 /**
@@ -468,9 +484,10 @@ export const waterSortTutorial: Tutorial<
     startCaption: "最初は色が混ざっています",
   },
   rules: [
-    { id: "empty", label: "空のボトルへ" },
-    { id: "same-color", label: "同じ色の上へ" },
+    { id: "empty", label: "空へ" },
+    { id: "same-color", label: "同じ色へ" },
     { id: "together", label: "まとめて" },
+    { id: "sorted", label: "そろったら" },
     { id: "capacity", label: "入るだけ" },
   ],
   steps,
