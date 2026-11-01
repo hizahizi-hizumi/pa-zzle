@@ -4,7 +4,6 @@ import type {
 } from "@/games/water-sort/ui/board/pour/pour-animation";
 import { getWaterColorView } from "@/games/water-sort/ui/board/water-bottle/get-water-color-view";
 
-export const POUR_ANIMATION_DURATION_MS = 1600;
 export const POUR_TRANSFER_START_OFFSET = 0.38;
 export const POUR_TRANSFER_END_OFFSET = 0.72;
 /** 傾けたボトルが向きを変えるときの動き。 */

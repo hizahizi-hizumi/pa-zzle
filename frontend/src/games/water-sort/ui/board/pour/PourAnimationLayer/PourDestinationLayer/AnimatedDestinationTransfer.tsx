@@ -1,12 +1,14 @@
 import { useEffect, useRef } from "react";
 
 import {
-  POUR_ANIMATION_DURATION_MS,
   POUR_TRANSFER_END_OFFSET,
   POUR_TRANSFER_START_OFFSET,
 } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/animation-view";
 import { TransferLiquidView } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/TransferLiquidView";
-import type { PourAnimation } from "@/games/water-sort/ui/board/pour/pour-animation";
+import {
+  POUR_ANIMATION_DURATION_MS,
+  type PourAnimation,
+} from "@/games/water-sort/ui/board/pour/pour-animation";
 
 type AnimatedDestinationTransferProps = {
   animation: PourAnimation;

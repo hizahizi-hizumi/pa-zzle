@@ -12,16 +12,22 @@ type WaterSortTutorialIntroSceneProps = {
   children: (showsGoal: boolean) => ReactNode;
 };
 
-/** ゴールの盤面を薄くして消し、始めの盤面に替えて浮かび上がらせる間。 */
-const FADE_OUT_MS = 300;
-const FADE_IN_MS = 400;
+/** ゴールの盤面を薄くして消しながら、始めの盤面を浮かび上がらせる間。 */
+const CROSS_FADE_MS = 500;
 
 const fadeOutKeyframes: Keyframe[] = [{ opacity: 1 }, { opacity: 0 }];
 const fadeInKeyframes: Keyframe[] = [{ opacity: 0 }, { opacity: 1 }];
 
+function canAnimate(): boolean {
+  return (
+    typeof HTMLElement.prototype.animate === "function" &&
+    !prefersReducedMotion()
+  );
+}
+
 /**
  * 導入で、ゴールの盤面を見せ、始めの盤面へ替える。
- * ゴールの場面は動かさずに見せる。始めの場面では、ゴールの盤面を消してから始めの盤面を浮かび上がらせる。
+ * ゴールの場面は動かさずに見せる。始めの場面では、始まりの一言と同時に、ゴールの盤面を薄くしながら始めの盤面を浮かび上がらせる。
  * 動きを減らす設定では、替えるだけですぐ終える。
  */
 export function WaterSortTutorialIntroScene({
@@ -30,67 +36,64 @@ export function WaterSortTutorialIntroScene({
   onSceneEnd,
   children,
 }: WaterSortTutorialIntroSceneProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [goalFaded, setGoalFaded] = useState(false);
+  const startRef = useRef<HTMLDivElement>(null);
+  const goalRef = useRef<HTMLDivElement>(null);
+  const [crossFadeEnded, setCrossFadeEnded] = useState(false);
+  const crossFading =
+    scene === "start" && playing && !crossFadeEnded && canAnimate();
 
   useEffect(() => {
     if (!playing) {
       return;
     }
-    const container = containerRef.current;
-    if (
-      scene !== "start" ||
-      !container ||
-      typeof container.animate !== "function" ||
-      prefersReducedMotion()
-    ) {
+    const start = startRef.current;
+    const goal = goalRef.current;
+    if (scene !== "start" || !start || !goal || !canAnimate()) {
       onSceneEnd();
       return;
     }
 
     let active = true;
-    const fadeOut = container.animate(fadeOutKeyframes, {
-      duration: FADE_OUT_MS,
-      easing: MOTION_EASING.exit,
-      fill: "forwards",
-    });
-    let fadeIn: Animation | null = null;
-    fadeOut.finished.then(
-      function showStart() {
-        if (!active) {
-          return;
+    // 上に重ねたゴールの盤面を、始まりの一言と同じく出だしから薄くし、下の始めの盤面をすぐ見せ始める。
+    const timing = {
+      duration: CROSS_FADE_MS,
+      easing: MOTION_EASING.enter,
+      fill: "both",
+    } as const;
+    const fadeIn = start.animate(fadeInKeyframes, timing);
+    const fadeOut = goal.animate(fadeOutKeyframes, timing);
+    fadeIn.finished.then(
+      function finishScene() {
+        if (active) {
+          setCrossFadeEnded(true);
+          onSceneEnd();
         }
-        setGoalFaded(true);
-        fadeIn = container.animate(fadeInKeyframes, {
-          duration: FADE_IN_MS,
-          easing: MOTION_EASING.enter,
-          fill: "both",
-        });
-        fadeOut.cancel();
-        fadeIn.finished.then(
-          function finishScene() {
-            if (active) {
-              onSceneEnd();
-            }
-          },
-          function ignoreCancelled() {},
-        );
       },
       function ignoreCancelled() {},
     );
     return () => {
       active = false;
+      fadeIn.cancel();
       fadeOut.cancel();
-      fadeIn?.cancel();
-      setGoalFaded(false);
+      setCrossFadeEnded(false);
     };
   }, [scene, playing, onSceneEnd]);
 
-  const showsGoal =
-    scene === "goal" || (scene === "start" && playing && !goalFaded);
   return (
-    <div ref={containerRef} className="size-full">
-      {children(showsGoal)}
+    <div className="relative size-full">
+      <div ref={startRef} className="size-full">
+        {children(scene === "goal")}
+      </div>
+      {crossFading && (
+        <div
+          ref={goalRef}
+          aria-hidden="true"
+          inert
+          className="absolute inset-0"
+        >
+          {children(true)}
+        </div>
+      )}
     </div>
   );
 }

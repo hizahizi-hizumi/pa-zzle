@@ -1,6 +1,10 @@
 import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
 import type { WaterSortBottle } from "@/games/water-sort/puzzle/state";
 
+export const POUR_ANIMATION_DURATION_MS = 1600;
+/** 注ぐ動きのうち、傾けたボトルを起こし終えて元の場所へ戻り始める時点（0〜1）。 */
+export const POUR_RETURN_START_OFFSET = 0.86;
+
 export type BottleRect = {
   left: number;
   top: number;

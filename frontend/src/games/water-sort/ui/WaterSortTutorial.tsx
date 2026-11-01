@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   type TutorialBoardIntro,
@@ -27,6 +27,10 @@ import {
   waterSortTutorial,
 } from "@/games/water-sort/tutorial/tutorial";
 import type { WaterSortBottleCue } from "@/games/water-sort/ui/board/bottle-cue";
+import {
+  POUR_ANIMATION_DURATION_MS,
+  POUR_RETURN_START_OFFSET,
+} from "@/games/water-sort/ui/board/pour/pour-animation";
 import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
 import { WaterSortTutorialIntroScene } from "@/games/water-sort/ui/WaterSortTutorial/WaterSortTutorialIntroScene";
 
@@ -126,6 +130,10 @@ export function WaterSortTutorial({
     progress: WaterSortTutorialProgress;
     before: WaterSortTutorialProgress;
   } | null>(null);
+  // 最後に注いだボトルが戻り始めた、解けた進行。完成の一言は、ボトルが戻るのに合わせて出す。
+  const [returningSolvedProgress, setReturningSolvedProgress] =
+    useState<WaterSortTutorialProgress | null>(null);
+  const returnTimerRef = useRef<number | undefined>(undefined);
   const situation = getTutorialSituation(waterSortTutorial, progress);
   const guiding = situation.step !== null;
   const { boardState } = progress;
@@ -156,6 +164,10 @@ export function WaterSortTutorial({
     return () => window.clearTimeout(timer);
   }, [open, progress, guiding]);
 
+  useEffect(() => {
+    return () => window.clearTimeout(returnTimerRef.current);
+  }, []);
+
   const handleClearAnimationComplete = useCallback(() => {
     setProgress(completeTutorial);
   }, []);
@@ -182,6 +194,12 @@ export function WaterSortTutorial({
         ? { progress: next, before: progress }
         : null,
     );
+    if (next.phase === "solved") {
+      returnTimerRef.current = window.setTimeout(
+        () => setReturningSolvedProgress(next),
+        POUR_ANIMATION_DURATION_MS * POUR_RETURN_START_OFFSET,
+      );
+    }
     // 示した注ぎ元を選んだら、待たせずに注ぎ先も示す。
     if (idleHintShown && next.boardState.sourceBottleIndex === hintBottle) {
       setIdleProgress(next);
@@ -189,6 +207,8 @@ export function WaterSortTutorial({
   }
 
   function restart(): void {
+    window.clearTimeout(returnTimerRef.current);
+    setReturningSolvedProgress(null);
     setIdleProgress(null);
     setSteppedPour(null);
     setOperation(null);
@@ -212,11 +232,11 @@ export function WaterSortTutorial({
     : { entry: "play", onReturnToPlay: handleClose };
 
   /**
-   * 注いでいる間は、注ぐ前の一言を残す。次の手順の一言は次の印と一緒に、完成の一言は最後の注ぐ動きを終えてから出す。
+   * 注いでいる間は、注ぐ前の一言を残す。次の手順の一言は次の印と一緒に、完成の一言は最後に注いだボトルが戻るのに合わせて出す。
    * 手を離した後に止まって印が出たら、前の違反の一言は下げて、残りをそろえる一言に戻す。
    */
   function getMessage(): TutorialMessage {
-    if (progress.phase === "solved") {
+    if (progress.phase === "solved" && returningSolvedProgress !== progress) {
       return waterSortTutorial.freePlay;
     }
     if (idleHintShown && hintBottle !== null) {

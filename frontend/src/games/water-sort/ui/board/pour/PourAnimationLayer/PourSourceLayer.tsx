@@ -3,14 +3,17 @@ import { useEffect, useRef } from "react";
 import {
   getOverlayStyle,
   getPourStreamStyle,
-  POUR_ANIMATION_DURATION_MS,
   POUR_LAYER_ORDER,
   POUR_TILT_EASING,
   POUR_TRANSFER_END_OFFSET,
   POUR_TRANSFER_START_OFFSET,
 } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/animation-view";
 import { TransferLiquidView } from "@/games/water-sort/ui/board/pour/PourAnimationLayer/TransferLiquidView";
-import type { PourAnimation } from "@/games/water-sort/ui/board/pour/pour-animation";
+import {
+  POUR_ANIMATION_DURATION_MS,
+  POUR_RETURN_START_OFFSET,
+  type PourAnimation,
+} from "@/games/water-sort/ui/board/pour/pour-animation";
 import { WaterBottle } from "@/games/water-sort/ui/board/water-bottle/WaterBottle";
 import { waitForAnimations } from "@/lib/motion";
 
@@ -69,7 +72,7 @@ export function PourSourceLayer({ animation, onFinish }: PourSourceLayerProps) {
         },
         {
           transform: `translate(${deltaX}px, ${hoverY}px) rotate(0deg)`,
-          offset: 0.86,
+          offset: POUR_RETURN_START_OFFSET,
           easing: POUR_TILT_EASING,
         },
         { transform: "translate(0, 0) rotate(0deg)", offset: 1 },
