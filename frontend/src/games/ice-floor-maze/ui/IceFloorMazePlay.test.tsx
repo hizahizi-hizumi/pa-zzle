@@ -34,7 +34,7 @@ const result: IceFloorMazeResult = {
   moveCount: 9,
   undoCount: 2,
   restartCount: 1,
-  boardShape: { width: 10, height: 13 },
+  speedReference: { drawnCellCount: 130, elementCount: 0 },
   optimalMoveCount: 6,
   moveDelta: 3,
   speedRule: { fullScoreMs: 41_000, zeroScoreMs: 82_000 },
@@ -474,7 +474,7 @@ describe("IceFloorMazePlay", () => {
       const undoCount = screen.getByText("待った").parentElement;
       const restartCount = screen.getByText("盤面を戻す").parentElement;
       const efficiencyCriteria = screen.getByText(
-        /最短6手で60点.*12手で30点。総手数には「待った」で取り消した手と「盤面を戻す」前の手も含む/,
+        /最短6手で60点.*22手で30点。総手数には「待った」で取り消した手と「盤面を戻す」前の手も含む/,
       );
       const speedCriteria = screen.getByText(
         /基準時間は盤面130マス × 0\.2秒 \+ 最短6手 × 2\.5秒/,

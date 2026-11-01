@@ -6,17 +6,17 @@ const record = createIceFloorMazePlayRecord({
   difficulty: "4",
   problemIdentity: {
     generatorVersion: "2",
-    seed: "0g050005000000i10f00g1051100ff15005100105016105060-32-48",
-    conditions: { width: 10, height: 10 },
+    seed: "00105000110510101055100005000500605010000550005000150000550105015-90-103",
+    conditions: { width: 10, height: 13 },
   },
   startedAt: 1_000,
-  completedAt: 68_500,
+  completedAt: 52_000,
   result: {
-    elapsedMs: 67_500,
-    moveCount: 20,
+    elapsedMs: 51_000,
+    moveCount: 9,
     undoCount: 2,
     restartCount: 1,
-    optimalMoveCount: 15,
+    optimalMoveCount: 6,
   },
 });
 
@@ -40,9 +40,9 @@ describe("iceFloorMazePlayRecordDisplay", () => {
     const timeDelta = getFormattedMetric("time-delta-ms");
     const moveDelta = getFormattedMetric("move-delta");
 
-    expect(score).toBe("78点");
+    expect(score).toBe("81点");
     expect(timeDelta).toBe("+00:10");
-    expect(moveDelta).toBe("+5");
+    expect(moveDelta).toBe("+3");
   });
 
   const comparisonLabelCases = [
