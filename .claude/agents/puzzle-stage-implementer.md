@@ -56,8 +56,9 @@ Bash は呼び出しごとに作業ディレクトリが戻るので、コマン
    - 撮影: `node .claude/skills/add-puzzle/scripts/capture-screens.mjs`（使い方はスクリプト冒頭）。出力先は brief の作業ディレクトリの下。出力の `browser-check.txt` の problems を確かめる
    - 操作してクリアまで進める確認・操作途中の状態の撮影: `node .claude/skills/add-puzzle/scripts/playtest-driver.mjs`（使い方はスクリプト冒頭）か、作業ディレクトリに書いた Playwright のスクリプト。スマホは `devices['iPhone 13']`（390×664）、PC は 1280×800
    - 撮った画像は Read で開いて自分で見る
-6. 変更を論理単位でコミットする（`git -C <worktree> add <パス>`、`git -C <worktree> commit -F <作業ディレクトリのメッセージファイル>`）。既存のコミットは書き換えず、直しも新しいコミットとして足す。
-7. `git -C <worktree> status --short` が空であることと、`git -C <worktree> log --stat <前段>..HEAD` を確かめてから報告する。
+6. 段で決めたこと（データの形、元の調査コードとの違い、打ち切りの上限とその理由など）を、brief が示す実装前提調査の文書の仮決定一覧に書き足し、関係するコードと同じコミットに含める。
+7. 変更を論理単位でコミットする（`git -C <worktree> add <パス>`、`git -C <worktree> commit -F <作業ディレクトリのメッセージファイル>`）。既存のコミットは書き換えず、直しも新しいコミットとして足す。
+8. `git -C <worktree> status --short` が空であることと、`git -C <worktree> log --stat <前段>..HEAD` を確かめてから報告する。
 
 ## 出力形式
 
