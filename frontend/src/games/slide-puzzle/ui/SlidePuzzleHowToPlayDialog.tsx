@@ -38,7 +38,7 @@ export function SlidePuzzleHowToPlayDialog({
         <HowToPlayFigure board={solvedBoard} />
       </li>
       <li className="space-y-2">
-        <p>空白の隣のタイルをタップすると、空白にスライドする。</p>
+        <p>空白の隣のタイルは、タップすると空白にスライドする。</p>
         <HowToPlayTransition>
           <HowToPlayFigure
             board={singleSlide.before}

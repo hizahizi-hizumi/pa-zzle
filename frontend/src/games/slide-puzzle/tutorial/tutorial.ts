@@ -87,7 +87,7 @@ const goalBoard = createSolvedSlidePuzzleBoard(3);
 const steps: readonly SlidePuzzleTutorialStep[] = [
   {
     message: {
-      headline: "空白の隣のタイルをタップすると\n空白にスライドします",
+      headline: "空白の隣のタイルは\nタップすると空白にスライドします",
       detail: "印のタイルをタップしてください",
     },
     introducedRuleId: "slide",
@@ -96,7 +96,7 @@ const steps: readonly SlidePuzzleTutorialStep[] = [
   {
     message: {
       headline: "5 が正しい位置に収まりました",
-      detail: "この空白は 8 の位置です",
+      detail: "いま空白のところが 8 の正しい位置です",
     },
     introducedRuleId: null,
     tile: 8,
@@ -111,8 +111,8 @@ const steps: readonly SlidePuzzleTutorialStep[] = [
     alternative: {
       tile: 7,
       message: {
-        headline: "4 なら 7 も同時に収まります",
-        detail: "今は印の 4 をタップしてください",
+        headline: "4 をタップすると\n7 も一度に収まります",
+        detail: "まずは印の 4 をタップしてください",
       },
     },
   },
@@ -282,7 +282,7 @@ function describeOffLineTile(tile: SlidePuzzleTile | null): TutorialMessage {
     headline:
       tile === null
         ? "空白と同じ行・列にないタイルはスライドしません"
-        : `${tile} は空白と同じ行・列にありません`,
+        : `${tile} は空白と同じ行にも列にもありません`,
     detail: "空白と同じ行・列のタイルだけがスライドします",
   };
 }
@@ -325,7 +325,7 @@ export function describeSlidePuzzleTutorialOffStepTap(
     ? describeOffLineTile(tile)
     : {
         headline: step.message.headline,
-        detail: "今は印のタイルをタップしてください",
+        detail: "まずは印のタイルをタップしてください",
       };
 }
 
@@ -366,18 +366,18 @@ export const slidePuzzleTutorial: Tutorial<
   ],
   steps,
   freePlay: {
-    headline: "残りも正しい位置に収めると完成です",
-    detail: "ここでは迷ったら少し待つと印が出ます",
+    headline: "残りのタイルも\n正しい位置に収めれば完成です",
+    detail: null,
   },
   completion: {
     selection: {
       headline: "完成です",
-      detail: "レベル1も同じルールで\nほかのタイルをどかしながら並べます",
+      detail: "レベル1も同じルールです\nほかのタイルをどかしながら並べます",
     },
     play: {
       headline: "完成です",
       detail:
-        "プレイ中の盤面も同じルールで\nほかのタイルをどかしながら並べます",
+        "プレイ中の盤面も同じルールです\nほかのタイルをどかしながら並べます",
     },
   },
   start: startSlidePuzzleTutorial,

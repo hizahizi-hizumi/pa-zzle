@@ -367,7 +367,7 @@ describe("takuzuTutorial.describeViolation", () => {
       [tap(cellAt(1, 3))],
       {
         headline: "四角が3つ続いています",
-        detail: "同じものは3つ続けて並べられません",
+        detail: "同じ形は3つ続けられません",
       },
     ],
     [
@@ -376,7 +376,7 @@ describe("takuzuTutorial.describeViolation", () => {
       [place(cellAt(1, 4), "a")],
       {
         headline: "四角が多すぎる行があります",
-        detail: "行も列も四角と丸は同じ数ずつです",
+        detail: "どの行・列も四角と丸は同じ数です",
       },
     ],
     [

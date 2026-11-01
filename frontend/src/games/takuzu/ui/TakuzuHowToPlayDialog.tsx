@@ -24,7 +24,7 @@ export function TakuzuHowToPlayDialog({
         <HowToPlayFigure rows={["abaabbab"]} />
       </li>
       <li className="space-y-2">
-        <p>同じものは3つ以上続けない。</p>
+        <p>同じ形は3つ以上続けない。</p>
         <div className="flex items-center gap-3">
           <HowToPlayFigure rows={["aab"]} />
           <HowToPlayRuleMark allowed />
@@ -33,7 +33,7 @@ export function TakuzuHowToPlayDialog({
         </div>
       </li>
       <li className="space-y-2">
-        <p>同じ並びの行・列は作れない。</p>
+        <p>同じ並びの行・列は作らない。</p>
         <div className="flex items-center gap-3">
           <HowToPlayFigure rows={["abaabbab", "abaabbab"]} violation="line" />
           <HowToPlayRuleMark allowed={false} />
