@@ -229,11 +229,30 @@ describe("beginHamiltonianPathSessionStroke", () => {
   test.each([
     ["仕切りの向こうのマス", 7, "partition"],
     ["先端から離れたマス", 6, "not-adjacent"],
-  ])("%sを押すと理由を返し、なぞり始めないこと", (_, cell, reason) => {
-    const result = beginHamiltonianPathSessionStroke(halfway, cell, startedAt);
+  ])(
+    "%sを押すと理由を返し、道を変えずになぞり始めること",
+    (_, cell, reason) => {
+      const result = beginHamiltonianPathSessionStroke(
+        halfway,
+        cell,
+        startedAt,
+      );
 
-    expect(result.rejection).toBe(reason);
-    expect(result.session).toBe(halfway);
+      expect(result.rejection).toBe(reason);
+      expect(result.session.puzzleState).toBe(halfway.puzzleState);
+      expect(result.session.strokeOrigin).toBe(halfway.puzzleState);
+    },
+  );
+
+  describe("延ばせないマスを押してから先端の隣のマスへなぞった場合", () => {
+    const session = stroke(halfway, [6, 3]);
+
+    test("そこへ道を延ばし、待った1回で押す前の道へ戻すこと", () => {
+      const undone = undoHamiltonianPathSession(session);
+
+      expect(session.puzzleState.path).toEqual([0, 1, 2, 5, 4, 3]);
+      expect(undone.puzzleState.path).toEqual(halfway.puzzleState.path);
+    });
   });
 });
 

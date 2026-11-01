@@ -69,7 +69,7 @@ export type HamiltonianPathSessionResult = {
 };
 
 /**
- * 道を延ばす・先端を動かす操作の結果。延ばせなかったときは `rejection` に理由を添え、session は変えない。
+ * 道を延ばす・先端を動かす操作の結果。延ばせなかったときは `rejection` に理由を添え、道は変えない。
  * プレイ中でない session への操作は受け付けず、理由も添えない。
  */
 export type HamiltonianPathSessionPathChange = {
@@ -272,7 +272,8 @@ export function moveHamiltonianPathSessionHeadToward(
 /**
  * 盤面のマスを押して、道をなぞり始める。
  * 道のマスを押すとそこまで巻き戻し（先端なら変えない）、先端に隣り合うマスを押すとそこへ延ばす。
- * 延ばせないマスを押したときは理由を返し、なぞり始めない。
+ * 延ばせないマスを押したときも押す前の道からなぞり始め、延ばせなかった理由を返す。
+ * 道から外れた指でも、先端の隣へ戻ればそこから延ばせる。
  */
 export function beginHamiltonianPathSessionStroke(
   session: HamiltonianPathSession,
@@ -291,10 +292,7 @@ export function beginHamiltonianPathSessionStroke(
       rejection: null,
     };
   }
-  const change = extendHamiltonianPathSessionPath(stroking, cell, operatedAt);
-  return change.rejection === null
-    ? change
-    : { session, rejection: change.rejection };
+  return extendHamiltonianPathSessionPath(stroking, cell, operatedAt);
 }
 
 /** なぞっている指が隣のマスへ移ったときに道を変える。なぞっていなければ何もしない。 */

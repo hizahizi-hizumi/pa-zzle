@@ -120,6 +120,12 @@ describe("useHamiltonianPathPlay", () => {
         direction: null,
       });
     });
+
+    test("そのままなぞって先端の隣のマスへ入ると道を延ばすこと", () => {
+      drag(result, [cell, solution[1]!]);
+
+      expect(result.current.path).toEqual(solution.slice(0, 2));
+    });
   });
 
   describe("道を延ばした後の場合", () => {

@@ -145,11 +145,12 @@ function applyPathChange(
   blockedMoveId: number,
   direction: HamiltonianPathDirection | null,
 ): HamiltonianPathPlayState {
+  const applied = applyPlaySession(current, session);
   if (rejection === null) {
-    return applyPlaySession(current, session);
+    return applied;
   }
   return {
-    ...current,
+    ...applied,
     blockedMove: {
       id: blockedMoveId,
       reason: rejection,
