@@ -75,7 +75,7 @@ const MAXIMUM_MONOTONOUS_SHARE = 0.1;
 const usage = `Usage: bun run generate:hamiltonian-path-pool -- [options]
 
 レベルごとに、採用率の高い生成条件（盤面サイズ×壁率）で、決定的な seed の候補を番号順に生成・分析する。
-そのレベルに分類された候補を、回転・反転（8通り）の同型の重複を除き、直進率 ${MONOTONOUS_STRAIGHT_RATIO} 以上の
+そのレベルに分類された候補を、回転・反転（8通り）の同型の重複をレベルをまたいで除き、直進率 ${MONOTONOUS_STRAIGHT_RATIO} 以上の
 単調な道を ${MAXIMUM_MONOTONOUS_SHARE * 100}% 以下に抑えながら、生成条件を巡回して問題集へ採る。
 
 Options:
@@ -270,8 +270,9 @@ function canTakeMonotonous(
 }
 
 /**
- * 生成条件を巡回し、各条件の採れる候補を番号順に1つずつ採る。同型の重複と、割合の上限を超える単調な道は飛ばす。
- * 採る問題は各条件の候補の番号順の並びだけで決まり、ワーカー数や一度に調べる候補数に依存しない。
+ * 生成条件を巡回し、各条件の採れる候補を番号順に1つずつ採る。同型の重複（下のレベルで採った問題との重複を含む）と、
+ * 割合の上限を超える単調な道は飛ばす。
+ * 採る問題は各条件の候補の番号順の並びと下のレベルで採った問題だけで決まり、ワーカー数や一度に調べる候補数に依存しない。
  * 巡回がまだ調べていない候補に届いたら、候補を増やす必要があるので `null` を返す。
  * 候補が上限まで尽きた条件は飛ばし、残りの条件で埋める。
  */
@@ -280,6 +281,7 @@ function selectLevel(
   states: readonly ConditionState[],
   perLevel: number,
   budget: number,
+  lowerLevelKeys: ReadonlySet<string>,
 ): LevelSelection | null {
   const queues = states.map((state) =>
     state.results
@@ -291,7 +293,7 @@ function selectLevel(
   const examinedLengths = new Map<ConditionState, number>(
     states.map((state) => [state, 0]),
   );
-  const seenKeys = new Set<string>();
+  const seenKeys = new Set(lowerLevelKeys);
   let duplicateCount = 0;
   let monotonousCount = 0;
   let monotonousSkipCount = 0;
@@ -502,16 +504,26 @@ async function runMain(): Promise<void> {
       }))
       .filter((batch) => batch.count > 0);
     await runBatches(batches, jobs);
-    for (const difficulty of pending) {
+    // 同型の重複はレベルをまたいで除くので、下のレベルから順に、下のレベルが決まってから採る。
+    for (const { id: difficulty } of difficultyLevels) {
+      if (results.has(difficulty)) {
+        continue;
+      }
       const selection = selectLevel(
         difficulty,
         levelStates[difficulty],
         perLevel,
         budget,
+        new Set(
+          [...results.values()].flatMap(({ selected }) =>
+            selected.map(({ candidate }) => candidate.symmetryKey),
+          ),
+        ),
       );
-      if (selection) {
-        results.set(difficulty, selection);
+      if (!selection) {
+        break;
       }
+      results.set(difficulty, selection);
     }
     console.error(
       `${Math.round((performance.now() - startedAt) / 1000)}s ${difficultyLevels
