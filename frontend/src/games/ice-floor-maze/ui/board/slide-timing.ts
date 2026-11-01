@@ -17,3 +17,15 @@ export function getIceFloorMazeSlideProgressMs(
 ): number {
   return (getIceFloorMazeSlideDurationMs(distance) * cells) / distance;
 }
+
+/**
+ * 滑りで割れる薄い氷が割れ始める時刻。駒がそのマスを離れて半マス進んだ時刻とする。
+ * 出発マスは 0 マス目、`path` の `i` 番目は `i + 1` マス目。
+ */
+export function getIceFloorMazeCrackDelayMs(
+  { from, path }: { from: number; path: readonly number[] },
+  cellIndex: number,
+): number {
+  const cellsFromStart = cellIndex === from ? 0 : path.indexOf(cellIndex) + 1;
+  return getIceFloorMazeSlideProgressMs(path.length, cellsFromStart + 0.5);
+}

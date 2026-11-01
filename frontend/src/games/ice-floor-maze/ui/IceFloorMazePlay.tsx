@@ -16,6 +16,7 @@ import { IceFloorMazeBoard } from "@/games/ice-floor-maze/ui/board/IceFloorMazeB
 import { IceFloorMazeHowToPlayDialog } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog";
 import { IceFloorMazeSwipeArea } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeSwipeArea";
 import { IceFloorMazeTrappedNotice } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeTrappedNotice";
+import { useIceFloorMazeSoundEffects } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/use-ice-floor-maze-sound-effects";
 import { IceFloorMazeResultScreen } from "@/games/ice-floor-maze/ui/result/IceFloorMazeResultScreen";
 import type {
   GamePlayScreenProps,
@@ -79,6 +80,7 @@ export function IceFloorMazePlay({
   const playAreaRef = useRef<HTMLElement>(null);
   const [slideAnimating, setSlideAnimating] = useState(false);
   const playing = progress === "playing";
+  useIceFloorMazeSoundEffects(lastSlide, blockedInput, goal, progress);
   // 閉じ込めへ入る滑りでは、駒が滑り着いてから知らせる。閉じ込めの中での滑りでは知らせを出したままにする。
   const showTrappedNotice =
     isTrapped && !(slideAnimating && lastSlide?.entersTrap === true);
