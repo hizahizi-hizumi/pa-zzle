@@ -92,8 +92,23 @@ describe("遊ぶゲームの選択", () => {
     );
   });
 
-  test("候補の切り替えと記録への移動では音を鳴らさないこと", () => {
+  test("別のパズルの候補を選ぶとゲームを選ぶ音を鳴らすこと", () => {
     fireEvent.click(screen.getByRole("button", { name: "ナンプレを選択" }));
+
+    expect(playSound).toHaveBeenCalledExactlyOnceWith(
+      appDecisionSound.gameSelectSound,
+    );
+  });
+
+  test("選んでいる候補をもう一度押しても音を鳴らさないこと", () => {
+    fireEvent.click(
+      screen.getByRole("button", { name: "ウォーターソートを選択" }),
+    );
+
+    expect(playSound).not.toHaveBeenCalled();
+  });
+
+  test("記録への移動では音を鳴らさないこと", () => {
     fireEvent.click(screen.getByRole("link", { name: "記録" }));
 
     expect(playSound).not.toHaveBeenCalled();

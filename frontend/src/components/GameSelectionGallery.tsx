@@ -23,6 +23,13 @@ export function GameSelectionGallery({
 }: GameSelectionGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const selectedGame = games[selectedIndex] ?? games[0];
+
+  function selectGame(index: number) {
+    if (index !== selectedIndex) {
+      playGameSelectSound();
+    }
+    setSelectedIndex(index);
+  }
   const listRef = useRef<HTMLDivElement>(null);
   const [overflow, setOverflow] = useState({ start: false, end: false });
   const [scrollbar, setScrollbar] = useState({ size: 1, offset: 0 });
@@ -109,7 +116,7 @@ export function GameSelectionGallery({
                   type="button"
                   aria-label={`${game.name}を選択`}
                   aria-pressed={isSelected}
-                  onClick={() => setSelectedIndex(index)}
+                  onClick={() => selectGame(index)}
                   className="group flex shrink-0 snap-start focus-visible:outline-none"
                 >
                   <span
