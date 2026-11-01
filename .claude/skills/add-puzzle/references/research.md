@@ -6,19 +6,17 @@
 
 | 手順 | 担当 | 成果物 |
 |---|---|---|
-| 1 Issue の起票 | メイン | 導入調査 Issue（合意節つき） |
-| 2 識別表と番号の予約 | メイン | 識別表、台帳の行、push 済みの段00・段01のブランチ |
-| 3 導入成立性調査とルール変種の比較 | サブエージェント 2〜4 本並行 → メインが統合 | 4ゲートの文書、変種の比較表、実験コード |
-| 4 実装前提調査（段01） | サブエージェント → メインが統合 | 仮決定一覧、スタック計画 |
+| 1 識別表と番号の予約 | メイン | 識別表、台帳の行、段00・段01の worktree と push 済みのブランチ |
+| 2 Issue の起票 | メイン | 導入調査 Issue（予約した候補 ID と合意節つき） |
+| 3 導入成立性調査とルール変種の比較 | サブエージェント 2〜4 本並行 → メインが段00に統合してコミット | 4ゲートの文書、変種の比較表、実験コード |
+| 4 実装前提調査（段01） | サブエージェント → メインが段01に統合してコミット → `puzzle-document-reviewer` | 仮決定一覧、スタック計画 |
 | 5 調査 PR・段01 PR | メイン | 2本の PR |
 
-## 1. Issue の起票
+調査のサブエージェントはリポジトリに書かず、コミットしない。成果物は `/tmp/<game>-work/research/<観点>/` に書かせ（文書・実験コード・試作 HTML・計測の画像）、メインが読んで段の worktree へ取り込み、コミットする。
 
-認識合わせの合意を受けたら、`assets/research-issue.md` で導入調査 Issue を起票する（`docs/棚上げ/README.md`「具体的な作業は Issue で扱う」）。題はテンプレートのコメントの形にし、本文は「参考:」の行から始め、「## 認識合わせの合意（YYYY-MM-DD）」節に合意内容と許可の範囲を書く。
+## 1. 識別表と番号の予約
 
-## 2. 識別表と番号の予約
-
-並行するスタックと番号がぶつからないよう、調査を始めた時点で候補 ID と SPEC 番号を予約し、ほかのブランチから見える形で push する。
+並行するスタックと番号がぶつからないよう、調査を始めた時点で候補 ID と SPEC 番号を予約し、ほかのブランチから見える形で push する。Issue より先に行い、Issue の「参考:」に予約した候補 ID を書く。
 
 | 名前 | 例 | 使う場所 |
 |---|---|---|
@@ -26,24 +24,41 @@
 | ゲーム ID `<game>` | `hamiltonian-path` | ASCII のケバブケース。`frontend/src/games/<game>/`、URL、記録の `gameId` |
 | ブランチ接頭辞 `<prefix>` | `hamiltonian` | `claude/<prefix>-NN-<topic>`。候補ブランチは `claude/<prefix>-x-<軸>-<案>`（プレビュー URL のため短く） |
 | 候補 ID | `PUZZLE-056` | 台帳 `docs/棚上げ/パズル候補.csv` |
-| SPEC 番号 | `SPEC-0NN` | SPEC の段で作る `docs/プロダクト/仕様/パズル/SPEC-0NN.md` |
+| SPEC 番号 | `SPEC-NNN` | SPEC の段で作る `docs/プロダクト/仕様/パズル/SPEC-NNN.md` |
 
-1. 使用中の番号を集める。`list-used-ids.sh` は SPEC のファイルと台帳を見る。ほかのスタックが識別表で予約した SPEC 番号は、続く一行で集める。
+1. 使用中の番号を集める。`list-used-ids.sh` は、origin/main・全ブランチの SPEC のファイル（場所とタイトル）と台帳の行に加え、ほかのスタックが識別表で予約した番号も集め、「次に使える番号」と衝突を出す。
 
    ```sh
    git fetch --all --prune
    .claude/skills/add-puzzle/scripts/list-used-ids.sh
-   git for-each-ref --format='%(refname:short)' refs/remotes/origin | while read -r ref; do
-     git grep -h -o -E '^\| SPEC 番号 \| SPEC-[0-9]{3}' "$ref" -- 'docs/パズル/導入調査/' 2>/dev/null
-   done | grep -o 'SPEC-[0-9]*' | sort -u
    ```
 
-2. 両方を通した次の番号を、候補 ID と SPEC 番号に使う。
-3. `origin/main` から `claude/<prefix>-00-feasibility` を作り、台帳に1行足す（ゲート列は `未確認`、導入判断は `未判断`。既に行があれば足さない）。
-4. その上に `claude/<prefix>-01-research` を作り、`<パズル名>実装前提調査.md` を識別表だけで作る。識別表の行は `| SPEC 番号 | SPEC-0NN |` の形にする（上の一行が拾う）。
+2. 出力の「次に使える番号」を、候補 ID と SPEC 番号に使う。
+3. 段00の worktree を作り、台帳に1行足してコミットする（ゲート列は `未確認`、導入判断は `未判断`。既に行があれば足さない）。
+
+   ```sh
+   git worktree add /tmp/<game>-work/stage-00 -b claude/<prefix>-00-feasibility origin/main
+   ```
+
+4. 段00の上に段01の worktree を作り（`git worktree add /tmp/<game>-work/stage-01 -b claude/<prefix>-01-research claude/<prefix>-00-feasibility`）、`<パズル名>実装前提調査.md` を識別表だけで作ってコミットする。識別表は次の形にする（`list-used-ids.sh` が `SPEC 番号` と `候補 ID` の行を予約として読む）。
+
+   ```markdown
+   | 項目 | 値 |
+   |---|---|
+   | パズル名 | <パズル名> |
+   | ゲーム ID | <game> |
+   | ブランチ接頭辞 | <prefix> |
+   | 候補 ID | PUZZLE-NNN |
+   | SPEC 番号 | SPEC-NNN |
+   ```
+
 5. 両方を push する（PR はまだ作らない）。
 
-予約した番号を SPEC の段の直前にもう一度調べ、ほかのブランチと重なっていたら振り直して識別表を直す。
+予約した番号を SPEC の段の直前にもう一度 `list-used-ids.sh` で調べ、衝突に出ていたら振り直して識別表を直す。
+
+## 2. Issue の起票
+
+`assets/research-issue.md` で導入調査 Issue を起票する（`docs/棚上げ/README.md`「具体的な作業は Issue で扱う」）。題はテンプレートのコメントの形にし、本文は予約した候補 ID を書いた「参考:」の行から始め、「## 認識合わせの合意（YYYY-MM-DD）」節に合意内容と許可の範囲を書く。
 
 ## 3. 導入成立性調査とルール変種の比較
 
@@ -65,21 +80,24 @@
 | 担当 | 内容 | 成果物 |
 |---|---|---|
 | 供給・難易度 | ルール変種の比較、生成器と一意性検証、人間向け解法器、単純なプレイヤー、帯1〜5の分布 | `<パズル名>供給・難易度実験.md`（分けてもよい）、`scripts/research/<game_snake>_*.py` |
-| スマホ操作 | 操作試作（`/tmp/<game>-work/`）、Playwright でマス幅・タッチ・pageerror 0 | `<パズル名>スマホ操作PoC.md` |
+| スマホ操作 | 操作試作、Playwright の `devices['iPhone 13']`（390×664）と幅 320 でマス幅・タッチ・pageerror 0 | `<パズル名>スマホ操作PoC.md` |
 | 名称・権利・市場 | 一般名、避ける名称、表示名の候補、市場実績、近縁との差異 | `<パズル名>名称・権利調査.md` |
 | 実装前提の草稿 | 段01の草稿。ほかの担当の結果に依存する箇所は `【統合時に記入】` で空ける | `<パズル名>実装前提調査.md` の草稿 |
 
-`<game_snake>` はゲーム ID のハイフンをアンダースコアにしたもの。
+`<game_snake>` はゲーム ID のハイフンをアンダースコアにしたもの。成果物の欄は、メインが取り込むときのリポジトリでの置き場所（文書は `docs/パズル/導入調査/<パズル名>/`）。
 
 指示に必ず入れること:
 
 - 認識合わせの合意内容（Issue の合意節）
 - 書式の手本: 直近パズルの同じ文書（main の `docs/パズル/導入調査/リフレクション/`、未マージなら `git show origin/claude/<手本prefix>-01-research:<path>`）
 - 実験コードの決まり: 標準ライブラリだけ、argparse のサブコマンド、seed 固定、`selfcheck` サブコマンド
-- 試作 HTML・一時ルートは PR に入れず `/tmp/<game>-work/` に置く。コミットしない。担当外の文書を触らない
+- 書く場所は `/tmp/<game>-work/research/<観点>/` だけ。リポジトリ・worktree に書かず、コミットしない。担当外の文書を触らない
+- 長い計算は `timeout 590` で区切り、途中結果をファイルに追記して再開できる形にする（Bash の前景は最長10分）
 - 根拠の区分（下記）。`references/pitfalls.md` の「面白さ・問題の質」「難易度」
 
 サブエージェント同士の結論が食い違ったら（例: 一意解に仕切りが要るのに、操作試作は壁なしを推奨）、食い違いを解く追加の確認を指示してから統合する。
+
+統合: メインが `/tmp/<game>-work/research/` の成果物を読み、文書・実験コードを段00の worktree の置き場所へ写し、要約文書（下記）と台帳の更新を加えて、`git -C /tmp/<game>-work/stage-00` で論理単位にコミットする。試作 HTML・計測の画像はリポジトリに入れない。続けて段01を段00の先端へ載せ直す（`git -C /tmp/<game>-work/stage-01 rebase claude/<prefix>-00-feasibility`。段01は段01の文書だけを持つので衝突しない）。push は段00を通常どおり、段01を `--force-with-lease`（着手時の許可の範囲）で行う。
 
 ### 導入成立性調査の文書
 
@@ -105,7 +123,7 @@
 
 ### 章立て
 
-0. **識別表**（冒頭。手順2で作ったもの）
+0. **識別表**（冒頭。手順1で作ったもの）
 1. 目的、根拠の区分、本実装の進め方
 2. 現時点の導入判断（観点 × 状態 × 根拠 × 残り）
 3. 今の pa-zzle から導かれる条件（ゲーム共通仕様・`game-structure.md`・既存ゲームの de facto 標準）
@@ -119,7 +137,13 @@
 11. **本実装スタック**: 段 / branch / 範囲 / 完成条件（`references/implementation.md` の標準スタックから足し引きする）。段の実装担当とレビューに渡す「段の範囲と完成条件」の正になる
 12. **実装へ進むための残件**: 最終レビューで確かめること / 公開前 / 今回は扱わない
 
-仮であることと、最終レビューで判断してほしい点は、この文書と PR 本文だけに置き、SPEC には書かない。段02以降で決めたことはその段の PR 本文に書き、この文書へは SPEC の段でまとめて反映する（全段が同じ文書を書き換えると、積み直しで衝突する）。
+仮であることと、最終レビューで判断してほしい点は、この文書と PR 本文だけに置き、SPEC には書かない。段02以降で決めたことはその段の PR 本文に、最終レビューで人間が覆した判断は最上段 PR 本文の「## 人間の判断」節に書き、この文書（仮決定一覧と「実装で確定した差分」表）へは SPEC の段（最上段）でまとめて反映する（全段が同じ文書を書き換えると、積み直しで衝突する）。
+
+### 段01の統合とレビュー
+
+段01の草稿は「実装前提の草稿」の担当が `/tmp/<game>-work/research/implementation-premise/` に書く。ほかの担当の結果が出てから、`【統合時に記入】` を埋める確認を同じ担当（新しいサブエージェント）に指示し、メインが段01の worktree の `<パズル名>実装前提調査.md` へ写してコミットする。
+
+コミットしたら、先へ進む前に `puzzle-document-reviewer` を当てる（入力は `references/ai-review.md` の「段ごとのセルフレビュー」。リポジトリのルートは段01の worktree、SPEC は「未作成」）。critical / major は、草稿の担当に直した版を `/tmp/<game>-work/research/implementation-premise/` へ書かせ、メインが取り込んでコミットし直す。
 
 ### 差し戻しに強い作り（本実装の進め方に書く）
 
@@ -132,13 +156,14 @@
 
 ## 5. 調査 PR・段01 PR
 
-作成と本文の更新は SKILL.md の「GitHub の操作」に従う。
+作成と本文の更新は `references/github.md` に従う。
 
 - 台帳: 導入成立性調査の最後のコミットで、台帳の行の4ゲートを更新し、`パズル候補/PUZZLE-NNN.md` を索引として作る（調査内容は複製しない）。状態値は `docs/棚上げ/README.md` の例（`未確認` / `確認中` / `通過`）を使う。
 - 調査 PR: `claude/<prefix>-00-feasibility`、base は `main`。導入成立性調査の文書・実験コード・台帳。本文に「## 認識合わせの合意（YYYY-MM-DD）」節（Issue から写す）と `Refs #<Issue番号>`。
 - 段01 PR: `claude/<prefix>-01-research`、base は調査 PR のブランチ。本文に `Refs #<Issue番号>` と Stack 表。
 - PR 本文の型は `references/implementation.md` の「PR 本文」。
-- 両 PR の CI `quality-gate` が success であることを一度確かめる。
+- 両 PR の CI `quality-gate` が success であることを確かめる（実行中なら実装を進め、知らせる前にもう一度確かめる）。
+- PR を作ったら、段00・段01の worktree を消す（`git worktree remove /tmp/<game>-work/stage-00` など。段のブランチを checkout した worktree が残ると積み直しがその段を飛ばす）。
 
 人間には知らせず、`references/implementation.md` へ進む。
 
@@ -146,5 +171,5 @@
 
 - 導入調査 Issue に合意節があり、4ゲートそれぞれに根拠付きの判定がある
 - 識別表の番号が予約され、push されている
-- 段01に仮決定一覧・本実装スタック・残件がある
+- 段01に仮決定一覧・本実装スタック・残件があり、`puzzle-document-reviewer` の critical / major が 0
 - 調査 PR と段01 PR がオープンで、CI `quality-gate` が success

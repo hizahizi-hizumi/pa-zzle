@@ -3,24 +3,43 @@
 // ブラウザエラーと横スクロールの有無を <出力先>/browser-check.txt に書く。
 // 画面を開いて撮るだけで、操作はしない。操作してクリアまで進める確認は別のスクリプトで行う。
 //
+// 端末: 幅 600 未満は Playwright の devices['iPhone 13']（390×664 = Safari の表示領域相当、タッチ、isMobile）の
+// 幅だけを差し替えたもの。600 以上は高さ 800 の PC（既定 1280×800）。画像は scale: 'css'（画像の1px = CSS の1px）で撮る。
+//
 // 使い方:
-//   NODE_PATH="$(npm root -g)" node capture-screens.mjs \
+//   node capture-screens.mjs \
 //     --base-url http://localhost:5173 --game <game> --screens <screens.json> --out <出力先> \
 //     [--widths 390,1280] [--themes light,dark]
 // screens.json: [{ "path": "/puzzles/<game>", "name": "difficulty" }, ...]
 // 出力: <出力先>/<game>__<name>__<幅>__<テーマ>.png と <出力先>/browser-check.txt
 // 終了コード: ブラウザエラーか横スクロールが1件でもあれば 1。
 
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { parseArgs } from "node:util";
 
-const require = createRequire(import.meta.url);
-const { chromium } = require("playwright");
+// playwright はリポジトリの依存に無く、環境の全体インストール（NODE_PATH や /opt/node*/lib/node_modules）から読む。
+function loadPlaywright() {
+  const globalModuleDirectories = [
+    ...(process.env.NODE_PATH ?? "").split(path.delimiter).filter(Boolean),
+    ...(existsSync("/opt") ? readdirSync("/opt", { withFileTypes: true }) : [])
+      .filter((entry) => entry.isDirectory() && entry.name.startsWith("node"))
+      .map((entry) => path.join("/opt", entry.name, "lib", "node_modules")),
+  ];
+  for (const base of [import.meta.url, ...globalModuleDirectories.map((directory) => path.join(directory, "_"))]) {
+    try {
+      return createRequire(base)("playwright");
+    } catch {}
+  }
+  console.error("ERROR: playwright が見つからない。NODE_PATH に playwright のある node_modules を指定する");
+  process.exit(2);
+}
+
+const { chromium, devices } = loadPlaywright();
+const { defaultBrowserType: _webkitOnly, ...iphone13 } = devices["iPhone 13"];
 
 const PHONE_WIDTH_LIMIT = 600;
-const PHONE_HEIGHT = 844;
 const DESKTOP_HEIGHT = 800;
 const FILE_NAME_SEPARATOR = "__";
 
@@ -56,8 +75,11 @@ for (const screen of screens) {
 
 mkdirSync(options.out, { recursive: true });
 
-function viewportFor(width) {
-  return { width, height: width < PHONE_WIDTH_LIMIT ? PHONE_HEIGHT : DESKTOP_HEIGHT };
+function contextOptionsFor(width, theme) {
+  if (width < PHONE_WIDTH_LIMIT) {
+    return { ...iphone13, viewport: { ...iphone13.viewport, width }, colorScheme: theme };
+  }
+  return { viewport: { width, height: DESKTOP_HEIGHT }, colorScheme: theme };
 }
 
 const checkLines = [];
@@ -66,11 +88,8 @@ const browser = await chromium.launch();
 try {
   for (const width of widths) {
     for (const theme of themes) {
-      const page = await browser.newPage({
-        viewport: viewportFor(width),
-        colorScheme: theme,
-        hasTouch: width < PHONE_WIDTH_LIMIT,
-      });
+      const context = await browser.newContext(contextOptionsFor(width, theme));
+      const page = await context.newPage();
       let errors = [];
       page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
       page.on("console", (message) => {
@@ -83,14 +102,14 @@ try {
           () => document.documentElement.scrollWidth > window.innerWidth,
         );
         const fileName = [options.game, screen.name, width, theme].join(FILE_NAME_SEPARATOR) + ".png";
-        await page.screenshot({ path: path.join(options.out, fileName), fullPage: true });
+        await page.screenshot({ path: path.join(options.out, fileName), fullPage: true, scale: "css" });
         problemCount += errors.length + (horizontalOverflow ? 1 : 0);
         checkLines.push(
           `${fileName}\t${screen.path}\terrors=${errors.length}\thorizontal-overflow=${horizontalOverflow ? "yes" : "no"}`,
           ...errors.map((error) => `  ${error}`),
         );
       }
-      await page.close();
+      await context.close();
     }
   }
 } finally {

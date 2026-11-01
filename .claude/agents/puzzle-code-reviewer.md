@@ -2,6 +2,7 @@
 name: puzzle-code-reviewer
 description: 新しいパズルのリポジトリのルート・対象ゲーム・段の範囲・認識合わせの合意内容と最終レビューでの人間の判断・コミット範囲・変更ファイル一覧・差分本文を入力に、差分と関連コードを精読して、標準配置・共通契約・依存方向・統合・テスト・型の問題を critical / major / minor の findings と規約で確定できる論点として返す Agent。`/add-puzzle` Skill の段ごとのレビューと、最終レビューの前の全体レビューから、経緯を渡されずに起動される。
 tools: Read, Grep, Glob
+model: opus
 ---
 
 # puzzle-code-reviewer
