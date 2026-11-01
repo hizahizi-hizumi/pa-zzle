@@ -1,6 +1,5 @@
 import { difficultyLevels } from "@/games/difficulty";
 import { assessNonogramDifficulty } from "@/games/nonogram/difficulty";
-import type { NonogramReadingFeatures } from "@/games/nonogram/problem/difficulty-analysis";
 import { getNonogramSymmetryKey } from "@/games/nonogram/problem/generation/symmetry";
 import { generateNonogramProblem } from "@/games/nonogram/problem/generator";
 import {
@@ -8,6 +7,7 @@ import {
   nonogramPatternStyles,
 } from "@/games/nonogram/problem/problem";
 import {
+  decodeNonogramPoolEntry,
   decodeNonogramPoolSolution,
   encodeNonogramPoolSolution,
   findNonogramPooledProblemByProblemId,
@@ -15,7 +15,6 @@ import {
   listNonogramPoolEntries,
   restoreNonogramPoolEntry,
   toNonogramPooledProblem,
-  toNonogramPoolIdentity,
 } from "@/games/nonogram/problem/problem-pool";
 import { parseNonogramPattern } from "@/games/nonogram/puzzle/pattern";
 import { createProblemId } from "@/games/problem-id";
@@ -72,11 +71,11 @@ describe("decodeNonogramPoolSolution", () => {
   });
 });
 
-describe("toNonogramPoolIdentity", () => {
+describe("decodeNonogramPoolEntry", () => {
   const style = nonogramPatternStyles[7]!;
 
-  test("盤面の大きさ・図柄の作り方の位置・候補番号から identity を作ること", () => {
-    const identity = toNonogramPoolIdentity([
+  test("盤面の大きさ・図柄の作り方の位置・候補番号から identity を作り、難易度の特徴を読み出すこと", () => {
+    const decoded = decodeNonogramPoolEntry([
       10,
       13,
       7,
@@ -90,9 +89,40 @@ describe("toNonogramPoolIdentity", () => {
       0,
     ]);
 
-    expect(identity).toEqual(
-      createNonogramProblemIdentity({ width: 10, height: 13 }, style, 42),
-    );
+    expect(decoded).toEqual({
+      identity: createNonogramProblemIdentity(
+        { width: 10, height: 13 },
+        style,
+        42,
+      ),
+      features: {
+        roundCount: 12,
+        entryLineCount: 5,
+        firstRoundFixedCellCount: 10,
+        minimumProgressedLineCount: 1,
+        narrowRoundCount: 3,
+        readingsBeyondEdgesCount: 0,
+      },
+    });
+  });
+
+  test("扱わない図柄の作り方の位置を拒否すること", () => {
+    const act = () =>
+      decodeNonogramPoolEntry([
+        8,
+        8,
+        nonogramPatternStyles.length,
+        0,
+        "0".repeat(16),
+        1,
+        16,
+        64,
+        16,
+        0,
+        0,
+      ]);
+
+    expect(act).toThrow();
   });
 });
 
@@ -106,16 +136,8 @@ describe("restoreNonogramPoolEntry", () => {
   }
   const { problem, identity } = generated.generated;
   const reference = { poolVersion: "1", problemId: "2-9" };
-  const features: NonogramReadingFeatures = {
-    roundCount: 5,
-    entryLineCount: 8,
-    firstRoundFixedCellCount: 20,
-    minimumProgressedLineCount: 2,
-    narrowRoundCount: 1,
-    readingsBeyondEdgesCount: 0,
-  };
 
-  test("解からヒントを求めた問題と、問題集の難易度の特徴を伴うこと", () => {
+  test("解からヒントを求めた問題と identity に、問題集の中の位置を添えること", () => {
     const pooled = restoreNonogramPoolEntry(
       [
         8,
@@ -123,22 +145,17 @@ describe("restoreNonogramPoolEntry", () => {
         3,
         2,
         encodeNonogramPoolSolution(problem.solution),
-        features.roundCount,
-        features.entryLineCount,
-        features.firstRoundFixedCellCount,
-        features.minimumProgressedLineCount,
-        features.narrowRoundCount,
-        features.readingsBeyondEdgesCount,
+        5,
+        8,
+        20,
+        2,
+        1,
+        0,
       ],
       reference,
     );
 
-    expect(pooled).toEqual({
-      problem,
-      identity,
-      poolReference: reference,
-      features,
-    });
+    expect(pooled).toEqual({ problem, identity, poolReference: reference });
   });
 });
 
@@ -147,7 +164,7 @@ describe("findNonogramPooledProblemByProblemId", () => {
     listNonogramPoolEntries(difficulty).map((entry, entryIndex) => ({
       difficulty,
       poolProblemId: formatNonogramPoolProblemId(difficulty, entryIndex),
-      problemId: createProblemId(toNonogramPoolIdentity(entry)),
+      problemId: createProblemId(decodeNonogramPoolEntry(entry).identity),
     })),
   );
 
@@ -170,12 +187,13 @@ describe("findNonogramPooledProblemByProblemId", () => {
   });
 });
 
-describe("問題集", () => {
+describe("listNonogramPoolEntries", () => {
   const pooledByLevel = difficultyLevels.map(({ id: difficulty }) => ({
     difficulty,
-    pooled: listNonogramPoolEntries(difficulty).map((_, entryIndex) =>
-      toNonogramPooledProblem(difficulty, entryIndex),
-    ),
+    pooled: listNonogramPoolEntries(difficulty).map((entry, entryIndex) => ({
+      ...toNonogramPooledProblem(difficulty, entryIndex),
+      features: decodeNonogramPoolEntry(entry).features,
+    })),
   }));
   const allPooled = pooledByLevel.flatMap(({ pooled }) => pooled);
 

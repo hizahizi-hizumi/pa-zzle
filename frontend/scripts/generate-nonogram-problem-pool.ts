@@ -27,6 +27,7 @@ import {
   nonogramPatternStyles,
 } from "@/games/nonogram/problem/problem";
 import {
+  decodeNonogramPoolEntry,
   decodeNonogramPoolSolution,
   encodeNonogramPoolSolution,
   formatNonogramPoolProblemId,
@@ -35,7 +36,6 @@ import {
   type NonogramProblemPoolEntry,
   restoreNonogramPoolEntry,
   toNonogramPooledProblem,
-  toNonogramPoolIdentity,
 } from "@/games/nonogram/problem/problem-pool";
 import { selectNonogramProblemForDifficulty } from "@/games/nonogram/problem-selection";
 import type { NonogramGridSize } from "@/games/nonogram/puzzle/board";
@@ -476,12 +476,13 @@ function describeLevelEntries(
   difficulty: NonogramDifficulty,
   entries: readonly NonogramProblemPoolEntry[],
 ): string[] {
-  const pooled = entries.map((entry, entryIndex) =>
-    restoreNonogramPoolEntry(entry, {
+  const pooled = entries.map((entry, entryIndex) => ({
+    ...restoreNonogramPoolEntry(entry, {
       poolVersion,
       problemId: formatNonogramPoolProblemId(difficulty, entryIndex),
     }),
-  );
+    features: decodeNonogramPoolEntry(entry).features,
+  }));
   const qualities = pooled.map(({ problem }) =>
     measureNonogramPatternQuality(problem.solution),
   );
@@ -700,8 +701,9 @@ function findVerifyFailure(
   if (analysis.status !== "analyzed") {
     return `線の読みだけで解けない (${analysis.status})`;
   }
-  if (JSON.stringify(analysis.features) !== JSON.stringify(pooled.features)) {
-    return `特徴が分析と違う (${JSON.stringify(pooled.features)} / ${JSON.stringify(analysis.features)})`;
+  const { features } = decodeNonogramPoolEntry(entry);
+  if (JSON.stringify(analysis.features) !== JSON.stringify(features)) {
+    return `特徴が分析と違う (${JSON.stringify(features)} / ${JSON.stringify(analysis.features)})`;
   }
   const assessment = assessNonogramDifficulty(analysis);
   if (
@@ -789,7 +791,7 @@ async function runVerify(): Promise<void> {
       const key = getNonogramSymmetryKey(
         decodeNonogramPoolSolution({ width, height }, encodedSolution),
       );
-      const { seed } = toNonogramPoolIdentity(entry);
+      const { seed } = decodeNonogramPoolEntry(entry).identity;
       if (keys.has(key) || seeds.has(seed)) {
         duplicateCount += 1;
       }

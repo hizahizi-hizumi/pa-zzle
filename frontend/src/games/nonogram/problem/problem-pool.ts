@@ -20,7 +20,7 @@ import { createProblemPoolIdLookup } from "@/games/problem-id";
  *   `createNonogramProblemIdentity` の identity を再構成する。
  * - `encodedSolution` は解の図柄（`encodeNonogramPoolSolution`）。ヒントは解から求まるので持たない。
  *   実行時に生成器・線の読みを呼ばずに問題を復元するため、生成結果そのものを持つ。
- * - 残りは生成時に測った難易度の特徴（`NonogramReadingFeatures`）。プレイ時に分析を走らせずに済むよう持たせる。
+ * - 残りは生成時に測った難易度の特徴（`NonogramReadingFeatures`）。問題集を作り直さずに分類を確かめられるよう持たせる。
  */
 export type NonogramProblemPoolEntry = readonly [
   width: number,
@@ -46,10 +46,15 @@ export type NonogramProblemPoolReference = {
   problemId: string;
 };
 
-/** 問題集から復元した1問。問題集の中の位置と、生成時に測った難易度の特徴を伴う。 */
+/** 問題集の1項目を読み解いた値。問題は `encodedSolution` から復元する。 */
+export type NonogramDecodedPoolEntry = {
+  identity: NonogramProblemIdentity;
+  features: NonogramReadingFeatures;
+};
+
+/** 問題集から復元した1問。問題集の中の位置を伴う。 */
 export type NonogramPooledProblem = NonogramIdentifiedProblem & {
   poolReference: NonogramProblemPoolReference;
-  features: NonogramReadingFeatures;
 };
 
 export type NonogramProblemPool = {
@@ -111,21 +116,38 @@ export function decodeNonogramPoolSolution(
   return { width, height, black };
 }
 
-export function toNonogramPoolIdentity([
+export function decodeNonogramPoolEntry([
   width,
   height,
   styleIndex,
   candidateIndex,
-]: NonogramProblemPoolEntry): NonogramProblemIdentity {
+  ,
+  roundCount,
+  entryLineCount,
+  firstRoundFixedCellCount,
+  minimumProgressedLineCount,
+  narrowRoundCount,
+  readingsBeyondEdgesCount,
+]: NonogramProblemPoolEntry): NonogramDecodedPoolEntry {
   const style = nonogramPatternStyles[styleIndex];
   if (style === undefined) {
     throw new RangeError(`Unknown Nonogram pattern style: ${styleIndex}`);
   }
-  return createNonogramProblemIdentity(
-    { width, height },
-    style,
-    candidateIndex,
-  );
+  return {
+    identity: createNonogramProblemIdentity(
+      { width, height },
+      style,
+      candidateIndex,
+    ),
+    features: {
+      roundCount,
+      entryLineCount,
+      firstRoundFixedCellCount,
+      minimumProgressedLineCount,
+      narrowRoundCount,
+      readingsBeyondEdgesCount,
+    },
+  };
 }
 
 export function formatNonogramPoolProblemId(
@@ -140,33 +162,13 @@ export function restoreNonogramPoolEntry(
   entry: NonogramProblemPoolEntry,
   poolReference: NonogramProblemPoolReference,
 ): NonogramPooledProblem {
-  const [
-    width,
-    height,
-    ,
-    ,
-    encodedSolution,
-    roundCount,
-    entryLineCount,
-    firstRoundFixedCellCount,
-    minimumProgressedLineCount,
-    narrowRoundCount,
-    readingsBeyondEdgesCount,
-  ] = entry;
+  const [width, height, , , encodedSolution] = entry;
   return {
     problem: createNonogramProblem(
       decodeNonogramPoolSolution({ width, height }, encodedSolution),
     ),
-    identity: toNonogramPoolIdentity(entry),
+    identity: decodeNonogramPoolEntry(entry).identity,
     poolReference,
-    features: {
-      roundCount,
-      entryLineCount,
-      firstRoundFixedCellCount,
-      minimumProgressedLineCount,
-      narrowRoundCount,
-      readingsBeyondEdgesCount,
-    },
   };
 }
 
@@ -193,7 +195,7 @@ export function listNonogramPoolEntries(
 
 const findPoolPositionByProblemId = createProblemPoolIdLookup(
   problemPool.levels,
-  toNonogramPoolIdentity,
+  (entry) => decodeNonogramPoolEntry(entry).identity,
 );
 
 /** 難易度の問題集から問題 ID で1問を探して復元する。問題集に無い ID・別の難易度の ID には `null` を返す。 */

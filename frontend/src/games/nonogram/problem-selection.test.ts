@@ -2,6 +2,7 @@ import { difficultyLevels } from "@/games/difficulty";
 import { analyzeNonogramDifficulty } from "@/games/nonogram/problem/difficulty-analysis";
 import { generateNonogramProblem } from "@/games/nonogram/problem/generator";
 import {
+  decodeNonogramPoolEntry,
   listNonogramPoolEntries,
   toNonogramPooledProblem,
 } from "@/games/nonogram/problem/problem-pool";
@@ -14,20 +15,25 @@ import { createProblemId } from "@/games/problem-id";
 // 全問の再生成・解の数え上げ・分析は `bun run generate:nonogram-pool -- --verify` で行い、テストでは等間隔に抜き出した問題だけを確かめる。
 const checkedEntryCountPerDifficulty = 25;
 
+const difficulties = difficultyLevels.map(({ id }) => id);
+
 function sampleEvenly<T>(values: readonly T[], count: number): T[] {
   const step = Math.max(1, Math.floor(values.length / count));
   return values.filter((_, index) => index % step === 0).slice(0, count);
 }
 
 describe("問題集", () => {
-  const cases = difficultyLevels.map(
-    ({ id: difficulty }) =>
+  const cases = difficulties.map(
+    (difficulty) =>
       [
         difficulty,
         sampleEvenly(
-          [...listNonogramPoolEntries(difficulty).keys()],
+          [...listNonogramPoolEntries(difficulty).entries()],
           checkedEntryCountPerDifficulty,
-        ).map((entryIndex) => toNonogramPooledProblem(difficulty, entryIndex)),
+        ).map(([entryIndex, entry]) => ({
+          ...toNonogramPooledProblem(difficulty, entryIndex),
+          features: decodeNonogramPoolEntry(entry).features,
+        })),
       ] as const,
   );
 
@@ -73,10 +79,42 @@ describe("selectNonogramProblemForDifficulty", () => {
     expect(second).toEqual(first);
   });
 
+  test.each(difficulties)(
+    "レベル %s で異なる seed からそのレベルの問題集の複数の問題を選ぶこと",
+    (difficulty) => {
+      const poolProblemIds = new Set(
+        listNonogramPoolEntries(difficulty).map((entry) =>
+          createProblemId(decodeNonogramPoolEntry(entry).identity),
+        ),
+      );
+      const selectedProblemIds = Array.from({ length: 20 }, (_, index) =>
+        createProblemId(
+          selectNonogramProblemForDifficulty(difficulty, `${seed}-${index}`)
+            .identity,
+        ),
+      );
+
+      expect(
+        selectedProblemIds.every((problemId) => poolProblemIds.has(problemId)),
+      ).toBe(true);
+      expect(new Set(selectedProblemIds).size).toBeGreaterThan(1);
+    },
+  );
+
   test("選んだ問題に問題集の中の位置を添えること", () => {
     const selected = selectNonogramProblemForDifficulty("3", seed);
 
     expect(selected.poolReference.problemId).toMatch(/^3-\d+$/);
+  });
+
+  test("選んだ結果に難易度分析を含めず、問題と identity と問題集の中の位置だけを伴うこと", () => {
+    const selected = selectNonogramProblemForDifficulty("1", seed);
+
+    expect(Object.keys(selected).sort()).toEqual([
+      "identity",
+      "poolReference",
+      "problem",
+    ]);
   });
 });
 
