@@ -1,12 +1,23 @@
-import { useGameNavigation } from "@/game-catalog/game-navigation";
 import { hamiltonianPathCatalogEntry } from "@/game-catalog/hamiltonian-path/hamiltonian-path-catalog-entry";
 import {
-  useProblemIdQuerySync,
-  useRequestedProblem,
-} from "@/game-catalog/problem-id-query";
+  type CompletedGamePlay,
+  usePlayableGame,
+} from "@/game-catalog/playable-game";
+import { useRequestedProblem } from "@/game-catalog/problem-id-query";
+import { createHamiltonianPathDiagnosticSnapshot } from "@/games/hamiltonian-path/diagnostics";
 import type { HamiltonianPathDifficulty } from "@/games/hamiltonian-path/difficulty";
-import { useHamiltonianPathPlay } from "@/games/hamiltonian-path/play/use-hamiltonian-path-play";
+import {
+  type HamiltonianPathResult,
+  useHamiltonianPathPlay,
+} from "@/games/hamiltonian-path/play/use-hamiltonian-path-play";
+import { createHamiltonianPathPlayAttemptProgress } from "@/games/hamiltonian-path/play-attempt";
+import {
+  createHamiltonianPathPlayRecord,
+  hamiltonianPathPlayRecordDefinition,
+} from "@/games/hamiltonian-path/play-record";
+import type { HamiltonianPathProblemIdentity } from "@/games/hamiltonian-path/problem/problem";
 import { selectHamiltonianPathProblemById } from "@/games/hamiltonian-path/problem-selection";
+import { HamiltonianPathDiagnostics } from "@/games/hamiltonian-path/ui/HamiltonianPathDiagnostics";
 import { HamiltonianPathPlay } from "@/games/hamiltonian-path/ui/HamiltonianPathPlay";
 import type { ProblemId } from "@/games/problem-id";
 
@@ -16,10 +27,19 @@ type PlayableHamiltonianPathProps = {
   avoidedProblemId?: ProblemId;
 };
 
-/**
- * 1問のプレイを URL の問題 ID と画面遷移へつなぐ。
- * 結果画面・記録表示・検証情報がまだ無いので、完了記録・離脱の記録・検証情報（`usePlayableGame`）にはつながない。
- */
+function createPlayRecord(
+  completed: CompletedGamePlay<
+    HamiltonianPathDifficulty,
+    HamiltonianPathProblemIdentity,
+    HamiltonianPathResult
+  >,
+) {
+  return createHamiltonianPathPlayRecord({
+    ...completed,
+    workload: completed.result.workload,
+  });
+}
+
 export function PlayableHamiltonianPath({
   difficulty,
   avoidedProblemId,
@@ -32,35 +52,45 @@ export function PlayableHamiltonianPath({
     requestedProblem,
     avoidedProblemId,
   );
-  useProblemIdQuerySync(play.problemIdentity);
-  const navigation = useGameNavigation(hamiltonianPathCatalogEntry);
+  const { screenProps, diagnostics } = usePlayableGame({
+    game: hamiltonianPathCatalogEntry,
+    play,
+    playRecordDefinition: hamiltonianPathPlayRecordDefinition,
+    createPlayRecord,
+    createPlayAttemptProgress: createHamiltonianPathPlayAttemptProgress,
+    createDiagnosticSnapshot(buildRevision) {
+      return createHamiltonianPathDiagnosticSnapshot({
+        difficulty,
+        problemIdentity: play.problemIdentity,
+        problem: play.board,
+        buildRevision,
+      });
+    },
+  });
 
   return (
-    <HamiltonianPathPlay
-      difficulty={difficulty}
-      progress={play.progress}
-      elapsedMs={play.elapsedMs}
-      // 結果画面が無いので評価を渡さず、クリア後も盤面を見せたままにする。
-      result={null}
-      recordOutcomeNotice={null}
-      board={play.board}
-      path={play.path}
-      isDeadEnd={play.isDeadEnd}
-      blockedMove={play.blockedMove}
-      canUndo={play.canUndo}
-      canRestart={play.canRestart}
-      onBeginStroke={play.beginStroke}
-      onTraceStroke={play.traceStroke}
-      onEndStroke={play.endStroke}
-      onMoveHeadToward={play.moveHeadToward}
-      onUndo={play.undo}
-      onRestart={play.restart}
-      onReplay={play.replay}
-      onClearAnimationComplete={play.completeClearAnimation}
-      onStartNewProblem={play.startNewProblem}
-      onOpenRecords={navigation.openRecords}
-      onChangeDifficulty={navigation.changeDifficulty}
-      onBackToHome={navigation.backToHome}
-    />
+    <>
+      <HamiltonianPathPlay
+        {...screenProps}
+        board={play.board}
+        path={play.path}
+        isDeadEnd={play.isDeadEnd}
+        blockedMove={play.blockedMove}
+        canUndo={play.canUndo}
+        canRestart={play.canRestart}
+        onBeginStroke={play.beginStroke}
+        onTraceStroke={play.traceStroke}
+        onEndStroke={play.endStroke}
+        onMoveHeadToward={play.moveHeadToward}
+        onUndo={play.undo}
+        onRestart={play.restart}
+      />
+      {diagnostics.snapshot && (
+        <HamiltonianPathDiagnostics
+          snapshot={diagnostics.snapshot}
+          onClose={diagnostics.close}
+        />
+      )}
+    </>
   );
 }
