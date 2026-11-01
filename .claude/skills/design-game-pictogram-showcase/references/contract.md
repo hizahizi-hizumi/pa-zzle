@@ -23,7 +23,7 @@
   - プレイ画面がアプリのトークン（`bg-card` など）で塗っている要素は、同じトークンを `var(--card)` のように参照する。参照できるトークンは `check_animation.py` の許可リストにある。
   - Tailwind のパレット色や TS/CSS の定数は実値を hex か `rgb()` で書く。値は `scripts/resolve_color.py` で引く。
   - テーマで値が変わる色は、祖先 `.dark` を条件にしたルール（`.dark .pz-<game>-x { fill: … }`）で色だけを切り替える。keyframes で動かす色は、`.dark` で切り替える `--pz-<game>-*` 変数を keyframes から参照する。`prefers-color-scheme` は使わない。
-- 実表示サイズで見えない場合に限り、近い役割の色で代え、理由を manifest の `notes` に書く。
+- プレイ画面の値のままでは実表示サイズで背景に溶ける線・面は、見えることを優先して近い役割の色（同じ要素の一段濃い段など）で代え、理由を manifest の `notes` に書く。ライト/ダークの両方で確かめる。
 - 定義元の調べ方は `references/exploration.md` の 1 節。
 
 ## 4. 同時 2 表示
