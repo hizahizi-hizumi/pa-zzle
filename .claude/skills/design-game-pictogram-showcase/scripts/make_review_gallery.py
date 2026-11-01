@@ -3,10 +3,12 @@
 
 self:  one sandboxed srcdoc iframe per candidate (candidates share class names, so they are never
        inlined into one document), with replay, pause, a time scrubber and a play-attribute toggle.
+       It has no decision UI: the agent records its review in self-review.json.
 human: a mobile-first single column page. Every SVG is shown through <img src="data:image/svg+xml...">
-       with the host context (color variables, .dark, data-pictogram-motion) put on its root <svg>,
-       so candidates stay isolated without iframes. Decisions and notes are kept in localStorage and,
-       with --db-doc, in the artifact database.
+       wrapped in an outer <svg> that carries the host context (color variables, .dark,
+       data-pictogram-motion) as an ancestor, as the app does, so candidates stay isolated without
+       iframes. Each <img> has data-view (hero / list / other / base) and data-theme. Decisions and
+       notes are kept in localStorage and, with --db-doc, in the artifact database.
 """
 
 from __future__ import annotations
@@ -57,13 +59,28 @@ DECISIONS = (
     ("part", "一部"),
     ("reject", "除外"),
 )
-# App sizes (GameSelectionGallery): hero box 170px / 225px with 16px / 24px padding,
-# list button 78px / 100px with 18% / 20% padding; sm breakpoint 640px.
+# App sizes (GameSelectionGallery), sm breakpoint 640px:
+# hero box 10.625rem / 14.0625rem (170px / 225px) with p-4 / p-6 (16px / 24px) -> pictogram 138px / 177px;
+# list box 4.875rem / 6.25rem (78px / 100px) with p-[18%] / p-[20%] of that box and a 2px selected border
+# (--border-width-strong, border-box) -> pictogram about 46px / 56px.
 HERO = {"mobile": (138, 16), "desktop": (177, 24)}
 LIST = {"mobile": (78, 0.18), "desktop": (100, 0.20)}
-# The list item pads its pictogram by roughly 18-20% of the button size.
-LIST_PADDING_RATIO = 0.3
+LIST_SELECTED_BORDER = 2
 THEME_ROW_CHROME = 56
+
+
+def list_box_padding(box: int, ratio: float) -> int:
+    return round(box * ratio)
+
+
+def list_content_size(box: int, ratio: float) -> int:
+    return box - 2 * list_box_padding(box, ratio) - 2 * LIST_SELECTED_BORDER
+
+
+def list_padding_for(content: int) -> int:
+    """Padding around a list pictogram of this size, scaled from the app list box nearest in size."""
+    box, ratio = min(LIST.values(), key=lambda item: abs(list_content_size(*item) - content))
+    return round(content * list_box_padding(box, ratio) / list_content_size(box, ratio))
 
 
 @dataclass(frozen=True)
@@ -74,7 +91,9 @@ class Sizes:
     @property
     def frame_height(self) -> int:
         """Initial iframe height before the script fits it to the content."""
-        tallest = max((*self.hero, *(round(size * (1 + 2 * LIST_PADDING_RATIO)) for size in self.list)))
+        tallest = max(
+            (*self.hero, *(size + 2 * (list_padding_for(size) + LIST_SELECTED_BORDER) for size in self.list))
+        )
         return 2 * (tallest + THEME_ROW_CHROME) + 2 * (max(self.list) + THEME_ROW_CHROME)
 
 
@@ -97,7 +116,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--audience", choices=("self", "human"), default="self")
     parser.add_argument("--self-review", type=Path)
     parser.add_argument("--hero-sizes", type=parse_sizes, default=(177, 138), help="self gallery only")
-    parser.add_argument("--list-sizes", type=parse_sizes, default=(60, 50), help="self gallery only")
+    parser.add_argument("--list-sizes", type=parse_sizes, default=(56, 46), help="self gallery only")
     parser.add_argument("--globals-css", type=Path, default=DEFAULT_GLOBALS_CSS)
     parser.add_argument(
         "--games-dir",
@@ -266,7 +285,7 @@ def preview_document(
                 f'</div><span class="pzg-caption">ヒーロー {size}px {label}</span></div>'
             )
         for size in sizes.list:
-            padding = round(size * LIST_PADDING_RATIO)
+            padding = list_padding_for(size)
             slots.append(
                 f'<div class="pzg-slot"><div class="pzg-list-surface" style="padding:{padding}px">'
                 f'<span class="pzg-frame" style="width:{size}px;height:{size}px">{svg}</span>'
@@ -274,7 +293,7 @@ def preview_document(
             )
         compare = ""
         if others:
-            padding = round(list_size * LIST_PADDING_RATIO)
+            padding = list_padding_for(list_size)
             tiles = "".join(
                 f'<span class="pzg-other-surface" title="{html.escape(game)}" style="padding:{padding}px">'
                 f'<span class="pzg-frame" style="width:{list_size}px;height:{list_size}px">{other}</span></span>'
@@ -338,12 +357,6 @@ def self_card(
     <p><strong>B 見せ場:</strong> {html.escape(fields["aim_payoff"])}</p>
     <p><strong>静止状態:</strong> {html.escape(fields["static_pose"])}</p>
     {notes_html}
-    <div class="decisions" role="group" aria-label="{escaped_id} のレビュー">
-      {decision_buttons(candidate_id)}
-    </div>
-    <label class="note-label">メモ
-      <textarea class="review-note" rows="2"></textarea>
-    </label>
   </div>
 </article>
 """
@@ -367,13 +380,7 @@ def self_base_section(
 
 SELF_SCRIPT = """
 (() => {
-  const storageKey = __STORAGE_KEY__;
-  const output = document.getElementById('review-output');
   let paused = false;
-  let review = {};
-
-  try { review = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { review = {}; }
-  const save = () => { try { localStorage.setItem(storageKey, JSON.stringify(review)); } catch {} };
 
   const frameOf = (card) => card.querySelector('.preview');
   const animationsOf = (card) => frameOf(card).contentDocument?.getAnimations() ?? [];
@@ -415,11 +422,6 @@ SELF_SCRIPT = """
     const frame = frameOf(card);
     frame.addEventListener('load', () => afterLoad(card), { once: true });
     if (frame.contentDocument?.readyState === 'complete') afterLoad(card);
-    const id = card.dataset.candidateId;
-    if (!id) return;
-    const state = review[id] || {};
-    if (state.decision) card.querySelector(`[data-decision="${state.decision}"]`)?.classList.add('active');
-    card.querySelector('.review-note').value = state.note || '';
   });
   window.addEventListener('resize', () => document.querySelectorAll('.card').forEach(fitHeight));
 
@@ -445,26 +447,6 @@ SELF_SCRIPT = """
     animationsOf(card).forEach((animation) => { animation.pause(); animation.currentTime = time; });
     card.querySelector('.time').textContent = `${time}ms / ${scrubber.max}ms で停止`;
   }));
-  document.querySelectorAll('.decision').forEach((button) => button.addEventListener('click', () => {
-    const card = button.closest('.card');
-    const id = card.dataset.candidateId;
-    const nextDecision = button.dataset.decision;
-    const currentDecision = review[id]?.decision;
-    review[id] = { ...(review[id] || {}), decision: currentDecision === nextDecision ? null : nextDecision };
-    card.querySelectorAll('.decision').forEach((item) => item.classList.remove('active'));
-    if (review[id].decision) button.classList.add('active');
-    save();
-  }));
-  document.querySelectorAll('.review-note').forEach((textarea) => textarea.addEventListener('input', () => {
-    const id = textarea.closest('.card').dataset.candidateId;
-    review[id] = { ...(review[id] || {}), note: textarea.value };
-    save();
-  }));
-  document.getElementById('show-review').addEventListener('click', () => {
-    output.value = JSON.stringify(review, null, 2);
-    output.style.display = 'block';
-    output.select();
-  });
 })();
 """
 
@@ -487,8 +469,7 @@ def build_self_document(
         for family, members in grouped_by_family(candidates).items()
     )
     title = str(manifest.get("title") or "Showcase pictogram review")
-    storage_key = "pictogram-showcase-self-review:" + str(manifest_path.resolve())
-    script = SELF_SCRIPT.replace("__STORAGE_KEY__", json.dumps(storage_key))
+    script = SELF_SCRIPT
 
     return f"""<!doctype html>
 <html lang="ja">
@@ -520,24 +501,17 @@ def build_self_document(
   .playback {{ font-size: 11px; font-weight: 500; color: #555; border: 1px solid #ccc; border-radius: 6px; padding: 1px 6px; }}
   p {{ margin: 8px 0 0; font-size: 13px; line-height: 1.5; }}
   .notes {{ color: #555; }}
-  .decisions {{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }}
-  .decision.active {{ border-color: #222; background: #222; color: #fff; }}
-  .note-label {{ display: grid; gap: 5px; margin-top: 10px; font-size: 12px; font-weight: 600; }}
-  textarea {{ width: 100%; resize: vertical; border: 1px solid #ccc; border-radius: 8px; padding: 7px; font: inherit; font-weight: 400; }}
-  #review-output {{ display: none; width: 100%; min-height: 180px; margin-top: 12px; }}
   @media (max-width: 560px) {{ body {{ padding: 12px; }} }}
 </style>
 </head>
 <body>
 <header>
   <h1>{html.escape(title)}</h1>
-  <p class="hint">ヒーローは祖先に data-pictogram-motion="play" を付けて再生、一覧選択中は属性なしで静止。ダークは祖先に .dark クラスを付けて表示。時刻スライダーの最大値は周期 - 1ms（cut / seam の 100% 直前、once の終点）。静止状態との一致・切り替え・動きを減らす設定は observe_animation.cjs で測る。</p>
+  <p class="hint">ヒーローは祖先に data-pictogram-motion="play" を付けて再生、一覧選択中は属性なしで静止。ダークは祖先に .dark クラスを付けて表示。時刻スライダーの最大値は周期 - 1ms（cut / seam の 100% 直前、once の終点）。静止状態との一致・切り替え・動きを減らす設定・速度の連続性は observe_animation.cjs で測る。判定は self-review.json に記録する。</p>
   <div class="toolbar">
     <button type="button" id="replay-all">すべて最初から再生</button>
     <button type="button" id="pause-all">一時停止</button>
-    <button type="button" id="show-review">レビューJSONを表示</button>
   </div>
-  <textarea id="review-output" readonly></textarea>
 </header>
 <main>{sections}</main>
 <script>{script}</script>
@@ -546,47 +520,44 @@ def build_self_document(
 """
 
 
-ROOT_SVG = re.compile(r"<svg\b([^>]*)>", re.IGNORECASE)
+ROOT_SVG = re.compile(r"<svg\b", re.IGNORECASE)
+XML_PROLOG = re.compile(r"^\s*(?:<\?xml[^>]*\?>\s*)?(?:<!DOCTYPE[^>]*>\s*)?", re.IGNORECASE)
 
 
-def with_root_attributes(svg: str, values: dict[str, str], theme: str, play: bool) -> str:
-    """Put the host context on the root <svg>, merging an existing class / style attribute."""
-    match = ROOT_SVG.search(svg)
-    if not match:
+def hosted(svg: str, values: dict[str, str], theme: str, play: bool) -> str:
+    """Wrap the SVG in an outer <svg> that plays the app host: it carries the color variables, and
+    .dark and data-pictogram-motion as an ancestor of the candidate's root, like html and the span
+    in the app do."""
+    if not ROOT_SVG.search(svg):
         raise ValueError("SVG has no <svg> root element")
-    attributes = match.group(1)
     style = (
         f"--game-pictogram-strong:{values['foreground']};"
         f"--game-pictogram-soft:{values['muted-foreground']}"
     )
-    existing_style = re.search(r'\sstyle="([^"]*)"', attributes)
-    if existing_style:
-        style = f"{existing_style.group(1).rstrip(';')};{style}"
-        attributes = attributes.replace(existing_style.group(0), "")
-    classes = "dark" if theme == "dark" else ""
-    existing_class = re.search(r'\sclass="([^"]*)"', attributes)
-    if existing_class:
-        classes = f"{existing_class.group(1)} {classes}".strip()
-        attributes = attributes.replace(existing_class.group(0), "")
     extra = f' style="{html.escape(style, quote=True)}"'
-    if classes:
-        extra += f' class="{classes}"'
+    if theme == "dark":
+        extra += ' class="dark"'
     if play:
         extra += ' data-pictogram-motion="play"'
-    return svg[: match.start()] + f"<svg{attributes.rstrip('/')}{extra}>" + svg[match.end() :]
+    inner = XML_PROLOG.sub("", svg, count=1)
+    return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"{extra}>{inner}</svg>'
 
 
 def data_uri(svg: str) -> str:
     return "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode("ascii")
 
 
-def themed_images(svg: str, themes: dict[str, dict[str, str]], play: bool, extra_class: str = "") -> str:
+def themed_images(svg: str, themes: dict[str, dict[str, str]], view: str) -> str:
+    """One <img> per theme; view is hero (played) / list (the candidate still) / other / base."""
+    play = view == "hero"
     images = []
     for theme, values in themes.items():
-        uri = data_uri(with_root_attributes(svg, values, theme, play))
-        classes = f"th-{theme}{' anim' if play else ''}{(' ' + extra_class) if extra_class else ''}"
+        uri = data_uri(hosted(svg, values, theme, play))
+        classes = f"th-{theme}{' anim' if play else ''}"
         source = f' data-src="{uri}"' if play else ""
-        images.append(f'<img class="{classes}" alt=""{source} src="{uri}">')
+        images.append(
+            f'<img class="{classes}" data-view="{view}" data-theme="{theme}" alt=""{source} src="{uri}">'
+        )
     return "".join(images)
 
 
@@ -603,11 +574,11 @@ def human_card(
     subtitle = f"{escaped_id} · " if name else ""
     notes = text_field(candidate, "notes")
     notes_html = f"<p><b>補足:</b> {html.escape(notes)}</p>" if notes else ""
-    still = themed_images(svg, themes, False)
+    still = themed_images(svg, themes, "list")
     compare = ""
     if others:
         tiles = "".join(
-            f'<span class="tile other" title="{html.escape(game)}">{themed_images(other, themes, False)}</span>'
+            f'<span class="tile other" title="{html.escape(game)}">{themed_images(other, themes, "other")}</span>'
             for game, other in others
         )
         compare = (
@@ -620,7 +591,7 @@ def human_card(
   <h3>{html.escape(name or candidate_id)} <small>{subtitle}{html.escape(fields["playback"])}</small></h3>
   <p class="meta">{html.escape(fields["hypothesis"])}</p>
   <div class="views">
-    <figure class="hero">{themed_images(svg, themes, True)}<figcaption>ヒーロー（再生）</figcaption></figure>
+    <figure class="hero">{themed_images(svg, themes, "hero")}<figcaption>ヒーロー（再生）</figcaption></figure>
     <figure><span class="tile selected">{still}</span><figcaption>一覧の選択中（静止）</figcaption></figure>
   </div>
   <button type="button" class="replay">最初から再生</button>
@@ -751,7 +722,7 @@ def build_human_document(
     if base:
         base_svg = read_svg(manifest_path, base, "base_pictogram")
         base_html = (
-            f'<figure class="base"><span class="tile">{themed_images(base_svg, themes, False)}</span>'
+            f'<figure class="base"><span class="tile">{themed_images(base_svg, themes, "base")}</span>'
             "<figcaption>基準（白黒版）</figcaption></figure>"
         )
     title = str(manifest.get("title") or "Showcase pictogram review")

@@ -25,6 +25,7 @@ COMMON_CHECKS = (
     "delayed_start_has_no_static_flash",
     "motion_smooth_no_stutter",
     "parts_stay_attached",
+    "moving_parts_clear_of_others",
     "no_unintended_overlap_or_overflow",
     "transform_and_clip_are_natural",
     "no_broken_transient_frame",
@@ -104,12 +105,17 @@ def validate_candidate_review(candidate_id: str, playback: str, review: Any) -> 
     for check_name in unknown_checks:
         errors.append(f"{candidate_id}: unknown check: {check_name}")
 
-    if result == "pass":
-        failed_checks = [name for name in required if checks.get(name) is not True]
-        if failed_checks:
-            errors.append(
-                f"{candidate_id}: pass requires every check to be true: {', '.join(failed_checks)}"
-            )
+    failed_checks = [name for name in required if checks.get(name) is not True]
+    if result == "pass" and failed_checks:
+        errors.append(
+            f"{candidate_id}: pass requires every check to be true: {', '.join(failed_checks)}"
+        )
+    if result == "reject":
+        if not any(checks.get(name) is False for name in required):
+            errors.append(f"{candidate_id}: reject requires at least one check left false")
+        notes = review.get("notes")
+        if not isinstance(notes, str) or not notes.strip():
+            errors.append(f"{candidate_id}: reject requires notes with the reason")
 
     return errors
 
