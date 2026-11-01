@@ -102,12 +102,16 @@ export function analyzeNonogramDifficulty(
 ): NonogramDifficultyAnalysis {
   const scale = measureScale(problem);
   const trace = traceNonogramReadingRounds(problem.clues);
-  const readingsBeyondEdgesCount =
-    trace.status === "complete"
-      ? countNonogramReadingsBeyondEdges(problem.clues)
-      : null;
-  if (readingsBeyondEdgesCount === null) {
+  if (trace.status === "stalled") {
     return classifyUnreadableProblem(problem, scale);
+  }
+  const readingsBeyondEdgesCount = countNonogramReadingsBeyondEdges(
+    problem.clues,
+  );
+  if (readingsBeyondEdgesCount === null) {
+    throw new Error(
+      "Nonogram readings beyond edges must finish when the reading rounds finish",
+    );
   }
   return {
     status: "analyzed",
