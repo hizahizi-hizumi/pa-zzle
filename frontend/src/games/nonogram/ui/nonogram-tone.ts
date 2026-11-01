@@ -26,5 +26,5 @@ export const nonogramToneClassNames = {
   focusOutline: "focus-visible:outline-sky-500",
   selectedMark: "bg-sky-100 dark:bg-sky-950",
   strokeTrace: "text-sky-500 dark:text-sky-400",
-  previewChain: "bg-sky-300 dark:bg-sky-600",
+  previewChain: "bg-sky-400 dark:bg-sky-600",
 } as const;
