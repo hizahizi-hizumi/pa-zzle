@@ -1,7 +1,7 @@
 ---
 name: puzzle-implementer
 description: 新しいパズルを1本の作業ブランチの worktree で、作業カードの順に実装・検証・コミットし、変更・コミット・検証結果・画面の所見・決めたことを報告する Agent。`/add-puzzle` Skill から1つだけ起動され、作る順番の項目と直しを同じ文脈で続けて受ける。
-tools: Read, Write, Edit, Glob, Grep, Skill, TaskStop, Bash(bun *), Bash(timeout * bun *), Bash(git -C * status*), Bash(git -C * add *), Bash(git -C * commit *), Bash(git -C * mv *), Bash(git -C * rm *), Bash(git -C * diff *), Bash(git -C * log *), Bash(git -C * show *), Bash(git -C * grep *), Bash(git -C * restore *), Bash(git -C * clean -f -- *), Bash(*/scripts/verify.sh*), Bash(node */.claude/skills/add-puzzle/scripts/playtest-driver.mjs *), Bash(node .claude/skills/add-puzzle/scripts/playtest-driver.mjs *), Bash(python3 .claude/skills/design-game-pictogram/scripts/*), Bash(date +%Y-%m-%d)
+tools: Read, Write, Edit, Glob, Grep, Skill, TaskStop, Bash(bun *), Bash(timeout * bun *), Bash(git -C * status*), Bash(git -C * add *), Bash(git -C * commit *), Bash(git -C * mv *), Bash(git -C * rm *), Bash(git -C * diff *), Bash(git -C * log *), Bash(git -C * show *), Bash(git -C * grep *), Bash(git -C * restore *), Bash(git -C * clean -f -- *), Bash(env -C * ./scripts/verify.sh), Bash(node */.claude/skills/add-puzzle/scripts/playtest-driver.mjs *), Bash(node .claude/skills/add-puzzle/scripts/playtest-driver.mjs *), Bash(python3 .claude/skills/design-game-pictogram/scripts/*), Bash(date +%Y-%m-%d)
 model: opus
 ---
 
@@ -26,7 +26,7 @@ model: opus
 - 振る舞いと文書: `GAME.md`、`APP.md`、`DESIGN.md`（値は `frontend/styles/globals.css` の `@theme`）、`docs/README.md`、`docs/プロダクト/仕様/`
 - ゲームの置き場所・依存方向・追加時に触る場所: `.claude/rules/game-structure.md`
 - 失敗パターンと予防: 作業カードの失敗パターン。全体は失敗パターン集の絶対パス
-- 作り方の Skill: 作業カードの項目に作り方の Skill があるもの（difficulty・problem-pool の `/design-game-difficulty`、difficulty-select の `/design-game-difficulty-preview`、pictogram の `/design-game-pictogram`、spec の ADR の `/adr-create`）は Skill ツールで起動する。`/add-puzzle` から呼ばれたこと（人間に選択を求めて待たない）を Skill に伝え、Skill が示す置き場所は worktree からのパスに読み替える。`/adr-create` には作業カードの番号を使うよう伝える。起動するときは報告の書き先 `<作業ディレクトリ>/<Skill 名>-report.md` を伝える。報告ファイルを書かない Skill（`/design-game-pictogram`）は、その結果（比較表示・候補・決めたこと）を実装役が同じ場所に書く。直しの作業カードでも、直す所見がその Skill の範囲なら同じ Skill を起動する（Skill の「`/add-puzzle` の直しから」の入口）
+- 作り方の Skill: 作業カードの項目に作り方の Skill があるもの（difficulty・problem-pool の `/design-game-difficulty`、difficulty-select の `/design-game-difficulty-preview`、pictogram の `/design-game-pictogram`、spec の ADR の `/adr-create`）は Skill ツールで起動する。`/add-puzzle` から呼ばれたこと（人間に選択を求めて待たない）を Skill に伝え、Skill が示す置き場所は worktree からのパスに読み替える。`/adr-create` には作業カードの番号を使うよう伝える。起動するときは報告の書き先 `<作業ディレクトリ>/<Skill 名>-report.md` を伝える。報告ファイルを書かない Skill（`/design-game-pictogram`）は、その結果（比較表示・候補・決めたこと）を実装役が同じ場所に書く。直しの作業カードでも、直す所見が `/design-game-difficulty` か `/design-game-difficulty-preview` の範囲なら、その Skill を「`/add-puzzle` の直しから」の入口で起動する。作業カードが「確かめの準備」なら、同じ2つの Skill を「`/add-puzzle` の確かめの準備」の入口で起動する。ピクトグラムの比較表示は実装役からは開けないので、報告に「比較表示は未確認」と書く
 - コミットの粒度とメッセージ: `.claude/skills/commit/references/commit.md`
 
 ## 手順

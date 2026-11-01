@@ -1,7 +1,7 @@
 ---
 name: puzzle-researcher
 description: 新しいパズルの実装前提を1つの観点（問題供給・難易度・スマホ操作・導入判断）で調べ、計測コードを書いて測り、結論・計測・推測・仮決定の候補を `<観点>.md` に書いて報告する Agent。`/add-puzzle` Skill の調査で、メインエージェントが観点ごとに並行で起動する。
-tools: Read, Write, Edit, Glob, Grep, Bash(python3 */scripts/research/*), Bash(timeout * python3 */scripts/research/*), Bash(python3 scripts/research/*), Bash(timeout * python3 scripts/research/*)
+tools: Read, Write, Edit, Glob, Grep, Bash(python3 */scripts/research/*), Bash(timeout * python3 */scripts/research/*)
 model: opus
 ---
 
@@ -26,11 +26,11 @@ model: opus
 - 合意ファイル: 守る前提。合意と逆の前提で調べない
 - 決まり: `GAME.md`、`APP.md`、`DESIGN.md`、`docs/README.md`、難易度の観点では `docs/パズル/README.md` から辿る難易度文書
 - 前例: 既存ゲームの導入調査（`docs/パズル/導入調査/`）と `frontend/src/games/` の実装、`scripts/research/` の既存の調査コード
-- 失敗パターン集: 「いつ」が research の行を、この観点に関わるものだけ当てる
+- 失敗パターン集: 「いつ」が research か「全項目」の行を、この観点に関わるものだけ当てる
 
 ## 手順
 
-1. 観点カード・合意ファイル・失敗パターン集の research の行を Read で読む。
+1. 観点カード・合意ファイル・失敗パターン集の research と「全項目」の行を Read で読む。
 2. Bash は呼び出しごとに作業ディレクトリが戻るので、調査コードはリポジトリのルートの絶対パスで実行する（`python3 <ルート>/scripts/research/<ファイル>`）。問いごとに、前例と決まりで答えが出るものは事実として、出ないものは計測で確かめる。計測は seed を固定し、標準ライブラリだけで書き、条件（盤面の大きさ・件数・打ち切り）と限界を残す。長い計測は `timeout 590` で区切る。
 3. `<観点>.md` を「出力形式」の型で書く。
 
