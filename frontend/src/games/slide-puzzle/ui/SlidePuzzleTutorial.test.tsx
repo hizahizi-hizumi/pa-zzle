@@ -216,11 +216,21 @@ describe("SlidePuzzleTutorial", () => {
         advanceTime(nextStepCueDelayMs);
       });
 
+      test("離れたタイルもスライドすることと、印のタイルをタップすると何が起きるかを伝えること", () => {
+        const headline = screen.getByText(
+          "空白と同じ行・列なら 離れたタイルもスライドします",
+        );
+        const detail = screen.getByText("4 をタップすると 7 もスライドします");
+
+        expect(headline).toBeTruthy();
+        expect(detail).toBeTruthy();
+      });
+
       test("隣にある 7 をタップしても、スライドさせずに、手順の一言のまま印のタイルを光らせ直すこと", () => {
         tapTiles([7]);
 
         const position = getTilePosition(7);
-        const detail = screen.getByText("4 をタップすると2枚とも収まります");
+        const detail = screen.getByText("4 をタップすると 7 もスライドします");
         const reminded = getCuedTiles("reminder");
 
         expect(position).toBe("2行1列");
@@ -256,7 +266,7 @@ describe("SlidePuzzleTutorial", () => {
       test("わけを伝えた後に印の無い 7 をタップすると、印のタイルを光らせ直して、手順の一言に戻すこと", () => {
         tapTiles([5, 7]);
 
-        const detail = screen.getByText("4 をタップすると2枚とも収まります");
+        const detail = screen.getByText("4 をタップすると 7 もスライドします");
         const reminded = getCuedTiles("reminder");
 
         expect(detail).toBeTruthy();
@@ -270,7 +280,7 @@ describe("SlidePuzzleTutorial", () => {
         const positions = [getTilePosition(4), getTilePosition(7)];
         const landed = getCuedTiles("landed");
 
-        expect(rules).toEqual(["空白にスライド", "同じ行・列はまとめて"]);
+        expect(rules).toEqual(["空白にスライド", "まとめてスライド"]);
         expect(positions).toEqual(["2行1列", "3行1列"]);
         expect(landed).toEqual(["4", "7"]);
       });
@@ -338,7 +348,7 @@ describe("SlidePuzzleTutorial", () => {
       test("並べ終えると、レベル1とのつながりを伝え、レベル1を遊ぶでレベル1を始めること", () => {
         tapTiles(remainingTiles);
         const detail = screen.getByText(
-          "レベル1はじゃまなタイルを どかしながら並べます",
+          "レベル1では じゃまなタイルをどかしながら並べます",
         );
         fireEvent.click(screen.getByRole("button", { name: "レベル1を遊ぶ" }));
 
@@ -448,7 +458,7 @@ describe("SlidePuzzleTutorial", () => {
 
     test("並べ終えると、プレイに戻ることを伝え、プレイに戻る操作で閉じること", () => {
       tapTiles([...stepTiles, ...remainingTiles]);
-      const detail = screen.getByText("プレイ中の盤面も同じルールで解けます");
+      const detail = screen.getByText("プレイ中の盤面も同じルールです");
       fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
 
       expect(detail).toBeTruthy();

@@ -79,7 +79,7 @@ const startBoard: SlidePuzzleBoard = [4, 1, 2, 7, 0, 3, 8, 5, 6];
 const goalBoard = createSolvedSlidePuzzleBoard(3);
 
 /**
- * 5 を下から、8 を左から1枚ずつ収め、左の列の 7 と 4 をまとめて収める。7 は隣にあり1枚でも収まるが、4 なら2枚が一度に収まる。
+ * 5 を下から、8 を左から1枚ずつ収め、左の列の 7 と 4 をまとめて収める。7 は隣にあり1枚でも収まるが、4 なら 7 もスライドして2枚が一度に収まる。
  * 手順を終えると、空白が左上に来て、上の行の 1・2 と右の列の 3・6 が残る。どちらも行・列ごとまとめても収められる。
  */
 const steps: readonly SlidePuzzleTutorialStep[] = [
@@ -101,8 +101,8 @@ const steps: readonly SlidePuzzleTutorialStep[] = [
   },
   {
     message: {
-      headline: "空白と同じ行・列のタイルは\n間のタイルごとスライドします",
-      detail: "4 をタップすると2枚とも収まります",
+      headline: "空白と同じ行・列なら\n離れたタイルもスライドします",
+      detail: "4 をタップすると 7 もスライドします",
     },
     introducedRuleId: "line",
     tile: 4,
@@ -314,7 +314,7 @@ export const slidePuzzleTutorial: Tutorial<
   },
   rules: [
     { id: "slide", label: "空白にスライド" },
-    { id: "line", label: "同じ行・列はまとめて" },
+    { id: "line", label: "まとめてスライド" },
   ],
   steps,
   freePlay: {
@@ -324,11 +324,11 @@ export const slidePuzzleTutorial: Tutorial<
   completion: {
     selection: {
       headline: "完成です",
-      detail: "レベル1はじゃまなタイルを\nどかしながら並べます",
+      detail: "レベル1では\nじゃまなタイルをどかしながら並べます",
     },
     play: {
       headline: "完成です",
-      detail: "プレイ中の盤面も同じルールで解けます",
+      detail: "プレイ中の盤面も同じルールです",
     },
   },
   start: startSlidePuzzleTutorial,
