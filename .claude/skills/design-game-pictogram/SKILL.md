@@ -5,6 +5,7 @@ description: >
   game pictogram, puzzle pictogram, game icon, or SVG used to identify a game in the pa-zzle game list.
   It explores many low-cost concepts before SVG production, filters candidates in stages, compares SVGs at
   real display sizes, and refines the strongest directions into a high-quality final pictogram.
+  Not for the colored or animated showcase pictogram (use design-game-pictogram-showcase).
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash(python3 .claude/skills/design-game-pictogram/scripts/check_svg.py *), Bash(python3 .claude/skills/design-game-pictogram/scripts/make_review_sheet.py *)
 ---
 

@@ -1,13 +1,13 @@
 ---
 name: design-game-pictogram-showcase
 description: >
-  This skill should be used when designing, prototyping, refining, or reviewing a showcase pictogram for the
-  pa-zzle game selection screen: the colored and animated pictogram (hero pictogram) of the selected puzzle,
-  stored as pictogram-showcase.svg. Triggers include "showcase pictogram", "colored pictogram",
-  "animated pictogram", "hero pictogram", "game selection animation", "pictogram-showcase.svg",
-  "選択中パズルの姿", "色付きピクトグラム". It explores color and motion from the puzzle's central action and
-  solved moment, checks the receiving contract, and refines the human-selected direction into a cataloged SVG.
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash
+  This skill should be used when designing, refining, or reviewing the showcase pictogram of the pa-zzle game
+  selection screen: the colored, animated pictogram of the selected puzzle. Triggers include
+  "showcase pictogram", "hero pictogram", "colored pictogram", "animated pictogram", "pictogram animation",
+  "pictogramShowcaseSvg", "pictogram-showcase.svg", "選択中パズルの姿", "色付きピクトグラム",
+  "動くピクトグラム". Not for the monochrome pictogram.svg (use design-game-pictogram).
+argument-hint: <game-id>
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash(python3 .claude/skills/design-game-pictogram-showcase/scripts/*), Bash(bun run --cwd frontend *), Bash(node /tmp/pictogram-showcase-*)
 ---
 
 # design-game-pictogram-showcase
@@ -16,7 +16,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 
 ## 起動
 
-`/design-game-pictogram-showcase`
+`/design-game-pictogram-showcase <game-id>`
 
 対象ゲームの game id（`frontend/src/games/<game>/` のディレクトリ名）を引数または会話 context から受け取る。
 
@@ -49,17 +49,33 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 
 ## 受け口の契約
 
-暫定契約。ウォーターソートでの試作後に見直す前提で置く。変える場合は、アプリ側の受け口・`DESIGN.md`・この節・`scripts/check_animation.py` を同じ変更で揃える。
+暫定契約。ウォーターソートでの試作後に見直す前提で置く。変える場合は、アプリ側の受け口・`DESIGN.md`・`docs/adr/ADR-0004-selected-pictogram-color-motion.md`（決定そのものが変わるなら ADR を置き換える）・この節・`scripts/check_animation.py`・`references/self-review.md` を同じ変更で揃える。
 
 - **置き場所**: `frontend/src/games/<game>/assets/pictogram-showcase.svg`。ゲームごとに任意。無いゲームは白黒 `pictogram.svg` で代替表示される。
 - **1 ファイル 2 役**: 1 ファイルで「色付き静止画」と「アニメ」を兼ねる。
-- **座標系と土台**: `viewBox="0 0 120 120"`。白黒版を土台にし、同じパズルだと分かること。構図の調整は可、別物にしない。
-- **色**: 輪郭など前景の線は `var(--game-pictogram-strong)`、補助は `var(--game-pictogram-soft)`。ライト/ダークは利用側がこの 2 変数で切り替える。ゲーム固有の色は、そのゲームのプレイ画面で実際に使っている色の値をそのまま使う（例: ウォーターソートは `frontend/src/games/water-sort/ui/board/water-bottle/get-water-color-view.ts` の水の色）。色数は制限しない。
+- **座標系と土台**: ルートは `<svg>`、`viewBox="0 0 120 120"`。白黒版を土台にし、同じパズルだと分かること。構図の調整は可、別物にしない。
+- **色**: 輪郭など前景の線は `var(--game-pictogram-strong)`（必須）、補助は `var(--game-pictogram-soft)`。ライト/ダークは利用側がこの 2 変数で切り替える。ゲーム固有の色は、そのゲームのプレイ画面で実際に使っている色の値をそのまま使う（例: ウォーターソートは `frontend/src/games/water-sort/ui/board/water-bottle/get-water-color-view.ts` の水の色）。色数は制限しない。
+- **テーマで変わる色**: アプリは Tailwind の `@custom-variant dark (&:is(.dark *))` により、祖先の `.dark` クラスでダークを表す（`frontend/styles/globals.css`）。プレイ画面の色がライト/ダークで変わるゲームは、SVG 内の `<style>` で祖先 `.dark` を条件にしたセレクタで色だけを切り替えてよい。
+  - 書き方は、先頭の祖先 `.dark `（例: `.dark .pz-<game>-x { fill: … }`）か、`:is(.dark *)` / `:where(.dark *)`（例: `.pz-<game>-x:is(.dark *)`）に限る。再生条件と組み合わせるときは `.dark [data-pictogram-motion="play"] .pz-<game>-x` の形にする。
+  - `.dark` 条件のルールに書けるのは色系プロパティ（`fill`、`stroke`、`color`、`stop-color`、`flood-color`、`lighting-color`、`opacity`、`fill-opacity`、`stroke-opacity`、`stop-opacity`、`flood-opacity`）と `--pz-<game>-` 接頭辞の変数だけとする。animation、形状、配置は切り替えない。`.dark` で切り替える変数は色系プロパティにだけ使う。
+  - keyframes で色を変える要素は、keyframes の値を `var(--pz-<game>-…)` にして `.dark` 条件のルールで変数を切り替える。再生中は keyframes の値が通常のルールより優先されるため。
+  - `@media (prefers-color-scheme: …)` は使わない。アプリのテーマは OS 設定ではなく `.dark` クラスで決まる。
 - **静止状態**: SVG 内の基本スタイル（アニメーション指定なし）で描かれた姿が色付き静止画。下部一覧の選択中、OS の動きを減らす設定、再生しない場面ではこれが表示される。
-- **再生**: アニメーションは SVG 内 `<style>` の CSS animation で書く。アニメーションを付けるセレクタは必ず祖先の `[data-pictogram-motion="play"]` を条件にし、さらに `@media (prefers-reduced-motion: no-preference)` の内側に置く。
-- **継ぎ目**: 静止状態とアニメの始点・終点（ループならその継ぎ目）を同じ姿にし、再生開始・停止・ループで絵が跳ばないこと。ループか 1 回再生かは探索で比べてよい。
-- **同時 2 表示**: SVG はページへインライン展開され、下部一覧の選択中とヒーローで同時に 2 つ表示されうる。`<style>` はページ全体に効くため、クラス名・keyframes 名はすべて `pz-<game-id>-` 接頭辞にし、セレクタの対象は必ず接頭辞付きクラスにする。id 参照（gradient、clipPath 等）は原則使わず、使うなら同時 2 表示で壊れないこと。
-- **禁止**: script、イベント属性、外部参照、SMIL（`<animate>` など）。
+- **再生**: アニメーションは SVG 内 `<style>` の CSS animation で書く。animation 系プロパティを書くルールは、必ず `@media (prefers-reduced-motion: no-preference)` の内側に置き、祖先の `[data-pictogram-motion="play"]` を条件にする。この `@media` 内のルールはすべてこの条件を持つ。`data-pictogram-motion` は `="play"` の祖先条件としてだけ使い、対象自身に付けず、SVG 自身にも設定しない。
+- **継ぎ目**: ループか 1 回再生かは探索で比べてよい。
+  - 1 回再生（`once`）は終点を静止状態と同じ姿にし、終了後に静止状態へ戻るとき跳ばないこと。始点は静止状態と異なってよい（ヒーローは表示と同時に再生されるため）。
+  - ループ（`loop`）は 0% と 100% を同じ姿にし、その継ぎ目の姿を静止状態にする。
+  - 始点が静止状態と異なり `animation-delay` を使う場合は、遅延中に静止状態がちらつかないよう `animation-fill-mode: backwards` または `both` を付ける。
+  - 再生途中で止まる場面（動きを減らす設定への切り替え、ゲームの切り替え、ギャラリーの再生属性の付け外し）で静止状態へ切り替わる跳びは契約の対象外とする。
+- **同時 2 表示**: SVG はページへインライン展開され、下部一覧の選択中とヒーローで同時に 2 つ表示されうる。`<style>` はページ全体に効くため次を守る。
+  - クラス名・keyframes 名・id はすべて `pz-<game-id>-`、独自変数（カスタムプロパティ）は `--pz-<game-id>-` 接頭辞にする。`.dark` 条件を除き、セレクタに現れるクラスもすべて接頭辞付きにする。
+  - セレクタの対象（最後の複合セレクタ）は必ず接頭辞付きクラスを持つ。
+  - `var()` で参照できるのは `--game-pictogram-strong` / `--game-pictogram-soft` と `--pz-<game-id>-` 接頭辞の変数だけとする。
+  - id 参照（gradient、clipPath 等）は原則使わない。使うなら接頭辞付き id への `#` 参照に限り、同時 2 表示で壊れないことをセルフレビューで確かめる。id の重複は不可。
+- **禁止**（ここと、上の座標系・色の `--game-pictogram-strong`・テーマで変わる色・再生・同時 2 表示の規則は `scripts/check_animation.py` が `FAIL` にする。継ぎ目と見た目は検査しない）:
+  - 要素: `script`、`foreignObject`、`image`、`iframe`、`video`、`audio`、SMIL（`animate`、`animateMotion`、`animateTransform`、`animateColor`、`set`、`discard`）
+  - 属性: イベント属性（`on*`）、外部参照（`href` / `src` / `url()` は接頭辞付き id への `#` 参照だけ）
+  - CSS: `transition`（どこでも）、`style` 属性の `animation`、keyframes 内の `animation`。at-rule は `@media (prefers-reduced-motion: no-preference)` 1 種と `@keyframes` だけとし、`@import`、`prefers-color-scheme` などその他の `@media`、入れ子の at-rule、ルール外の文は使わない
 - **実表示サイズの目安**: ヒーロー描画域 約 138px（スマホ）/ 約 177px（PC）、下部一覧の選択中 約 50px（スマホ）/ 約 60px（PC）。
 
 ## 入力
@@ -68,7 +84,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 
 - 対象 game id と白黒版 `frontend/src/games/<game>/assets/pictogram.svg`
 - 該当パズル仕様（`docs/プロダクト/仕様/パズル/README.md` から辿る）: 中心の操作、解けた条件
-- プレイ画面で使う色の定義元（`frontend/src/games/<game>/ui/` 配下を Grep で特定する）
+- プレイ画面で使う色の定義元（`frontend/src/games/<game>/ui/` 配下を Grep で特定する）。テーマで変わるか（Tailwind の `dark:` クラス等）と、ライト/ダークそれぞれの実際の値
 - `DESIGN.md` の「表現の強さ」「ゲーム固有色」「ゲームを表す視覚表現」「動き」「避ける表現」
 - アプリ側の受け口の現状（`frontend/src/components/GamePictogram.tsx`、`frontend/src/components/GameSelectionGallery.tsx`）
 
@@ -99,7 +115,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 - **中心の操作**（A）: プレイヤーが何を見て、何を考え、何をするか
 - **解けた瞬間**（B）: 何が揃い、どう終わるか。プレイ画面で実際に起きる完了の見え方
 
-加えて、動かせる対象、題材の物理、プレイ画面の色とその役割、白黒版が何を描いているかを拾う。詳細は `references/exploration.md`。
+加えて、動かせる対象、題材の物理、プレイ画面の色とその役割、白黒版が何を描いているかを拾う。プレイ画面の色は定義元を確認し、テーマで変わるか（Tailwind の `dark:` クラス等）と実際の値を確かめる。詳細は `references/exploration.md`。
 
 ### 2. 静止状態と動きの仮説を広く発散する
 
@@ -111,7 +127,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 - `static_pose`（静止状態はどの瞬間の姿か。一覧選択中の色付き静止画になる）
 - `playback`（`loop` / `once` の仮置き）
 
-静止状態は動きの始点・終点を兼ねるため、動きと一緒に考える。速度・角度・量だけが違う案を別案として数えない。
+静止状態は 1 回再生の終点・ループの継ぎ目を兼ねるため、動きと一緒に考える。速度・角度・量だけが違う案を別案として数えない。
 
 ### 3. 狙いで束ねて試作候補を選ぶ
 
@@ -123,7 +139,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 
 - 白黒版の SVG を複製して始め、受け口の契約を最初から守る
 - 静止状態を先に描き、白黒版と並べて同じパズルだと分かることを確かめてから動きを足す
-- ゲーム固有色はプレイ画面の定義元から値をそのまま写す
+- ゲーム固有色はプレイ画面の定義元から値をそのまま写す。テーマで変わる色は祖先 `.dark` 条件のルールでダーク側の値へ切り替える
 - SVG 内の transform は `transform-box: fill-box` と `transform-origin` を明示する
 
 `manifest.json` は `references/review.md` の形式で作る。白黒版を `base_pictogram` に指定する。
@@ -135,7 +151,7 @@ python3 .claude/skills/design-game-pictogram-showcase/scripts/check_animation.py
   --manifest path/to/manifest.json
 ```
 
-viewBox、接頭辞、セレクタの漏れ、再生条件（祖先の `[data-pictogram-motion="play"]` と reduced-motion の両方）、禁止要素、使える CSS 変数を決定論的に検査する。A/B/C/D や継ぎ目の一致は判定しない。`PASS` は人間へ提示できる品質を意味しない。
+受け口の契約のうち、viewBox、接頭辞、セレクタの漏れ、再生条件（祖先の `[data-pictogram-motion="play"]` と reduced-motion の両方）、`.dark` 条件で色以外を切り替えていないこと、禁止要素・属性・CSS、使える CSS 変数を決定論的に検査し、違反を `FAIL` にする。`animation-delay` があるのに `animation-fill-mode` が `backwards` / `both` でないルールは `WARN` にする。A/B/C/D、終点・継ぎ目と静止状態の一致、遅延中のちらつきの有無は判定しない。`PASS` は人間へ提示できる品質を意味しない。
 
 ### 6. セルフレビュー用ギャラリーを作る
 
@@ -146,7 +162,7 @@ python3 .claude/skills/design-game-pictogram-showcase/scripts/make_review_galler
   --output /tmp/pictogram-showcase-self-review.html
 ```
 
-各候補をヒーローサイズで再生、一覧選択中サイズで静止、ライト/ダーク両方で同じ文書内に並べる。`--game-pictogram-strong` / `--game-pictogram-soft` と背景は `frontend/styles/globals.css` の値を与える。時刻スライダーと再生属性の切り替えで、始点・終点・継ぎ目を確認できる。
+各候補をヒーローサイズで再生、一覧選択中サイズで静止、ライト/ダーク両方で同じ文書内に並べる。`--game-pictogram-strong` / `--game-pictogram-soft` と背景は `frontend/styles/globals.css` の値を与え、ダーク側はアプリと同じく祖先に `.dark` クラスを付ける。時刻スライダーで終点・継ぎ目を止め、再生属性の切り替えで静止状態と見比べられる。
 
 ### 7. 人間に見せる前にセルフレビューゲートを通す
 
@@ -154,6 +170,11 @@ python3 .claude/skills/design-game-pictogram-showcase/scripts/make_review_galler
 
 - C が弱い候補に C 専用の演出を足さない。A/B の作り方を直して再レビューするか `reject` にする
 - 開始状態や代表フレーム数枚だけで合格にしない
+
+実ブラウザは次の手段で開く。
+
+- Claude Code 環境: `/tmp/pictogram-showcase-<game>/` に Node スクリプトを書き、`node /tmp/pictogram-showcase-<game>/<script>.cjs` で実行する。スクリプトでは `require('playwright')` の `chromium.launch()` でギャラリーを開き、`pageerror` / `console.error` を記録し、スクリーンショットを撮る。動きを減らす設定は `page.emulateMedia({ reducedMotion: 'reduce' })` で再現する。
+- ChatGPT 環境: `docs/メモ/ChatGPT画面確認.md` と `scripts/chatgpt_playwright.py` に従う。
 
 ```sh
 python3 .claude/skills/design-game-pictogram-showcase/scripts/check_self_review.py \
@@ -223,7 +244,7 @@ C が弱いという指摘は、A/B の見直し指示として扱う。
 
    `GameCatalogEntry` に `pictogramShowcaseSvg` が無ければ受け口が未実装なので、登録せず人間へ報告する。
 3. `bun run --cwd frontend check`、`bun run --cwd frontend typecheck`、`bun run --cwd frontend test` を実行する。
-4. 実アプリのパズル選択画面で、ヒーロー（スマホ/PC）、下部一覧の選択中、ライト/ダーク、動きを減らす設定、ゲームの切り替えを確認する。画面の起動と確認手順は `/run` または `docs/メモ/ChatGPT画面確認.md` に従う。
+4. 実アプリのパズル選択画面で、ヒーロー（スマホ/PC）、下部一覧の選択中、ライト/ダーク、動きを減らす設定、ゲームの切り替えを確認する。画面は `bun run --cwd frontend dev` で起動し、Step 7 と同じ手段（Claude Code 環境は Node の Playwright、ChatGPT 環境は `docs/メモ/ChatGPT画面確認.md`）で確認する。
 
 ## 出力先
 
@@ -243,6 +264,7 @@ Skill 配下には特定ゲームの生成物を保存しない。再利用す�
 - `scripts/check_self_review.py` — セルフレビュー記録の品質ゲート検査
 - `.claude/skills/design-game-pictogram/` — 白黒ピクトグラムの設計・検証
 - `DESIGN.md` — 視覚・動きの正本。色の正確な値は `frontend/styles/globals.css`
+- `docs/adr/ADR-0004-selected-pictogram-color-motion.md` — 選択中だけプレイ画面の色と動きで見せる決定と理由
 - `docs/プロダクト/要件/FR-001.md`、`docs/プロダクト/要求/RQ-001.md`、`docs/プロダクト/要求/RQ-002.md` — 狙いの出所
 
 ## 制約

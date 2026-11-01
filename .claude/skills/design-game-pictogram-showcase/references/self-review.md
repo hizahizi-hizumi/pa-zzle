@@ -13,18 +13,26 @@
 
 - ヒーロー 177px / 138px: 祖先に `data-pictogram-motion="play"` を付けて再生
 - 一覧選択中 60px / 50px: 属性なしで静止
-- 上記をライト/ダーク両方で表示（`--game-pictogram-strong` / `--game-pictogram-soft` と背景はアプリの値）
+- 上記をライト/ダーク両方で表示（`--game-pictogram-strong` / `--game-pictogram-soft` と背景はアプリの値。ダーク側は祖先に `.dark` クラスを付ける）
 
 同じ SVG が 1 文書に複数インライン展開されるため、同時 2 表示の干渉もこの状態で確認できる。
+
+実ブラウザは次の手段で開く。
+
+- Claude Code 環境: 一時ディレクトリに Node スクリプト（例: `/tmp/pictogram-showcase-<game>/check-gallery.cjs`）を書き、`node /tmp/pictogram-showcase-<game>/check-gallery.cjs` で実行する。スクリプトでは `require('playwright')` の `chromium.launch()` でギャラリーの HTML を開き、`page.on('pageerror')` / `page.on('console')` を記録し、スクリーンショットを撮る。動きを減らす設定は `page.emulateMedia({ reducedMotion: 'reduce' })` で再現する。
+- ChatGPT 環境: `docs/メモ/ChatGPT画面確認.md` と `scripts/chatgpt_playwright.py` に従う（`page.goto()` は使えないため、ギャラリーの HTML は `page.set_content()` で描画する）。
 
 観察の手順:
 
 1. ヒーローサイズで再生を少なくとも 1 周観察する。1 回再生なら開始から終了後の静止まで、ループなら継ぎ目を 2 回以上またいで見る。
 2. 時刻スライダーで始点・見せ場・終点（ループの継ぎ目直前）を止め、拡大表示でも確認する。必要なら途中フレームを複数時点でキャプチャし、一瞬だけの破綻を見落とさない。
-3. 「再生属性」ボタンで再生を止める・始めるを切り替え、静止状態から再生へ移るときに絵が跳ばないことを確認する。
-4. 一覧選択中サイズの静止状態を、`base_pictogram`（白黒版）と並べて見る。
-5. Playwright の `page.emulateMedia({ reducedMotion: "reduce" })` で開き直し、ヒーローが静止状態になることを確認する。
-6. `pageerror` と `console.error` を記録する。
+3. 終点・継ぎ目が静止状態と同じ姿かを確かめる。「再生属性」ボタンで属性を外した姿（静止状態）と、スライダーで止めた終点（1 回再生）または 0% と周期末（ループ）を見比べる。1 回再生は、終了して静止状態へ戻る瞬間に跳ばないことも再生で確かめる。始点は静止状態と異なってよい。
+4. 始点が静止状態と異なり `animation-delay` を使う候補は、「最初から再生」の直後を複数フレームキャプチャし、遅延中に静止状態がちらつかないことを確かめる。
+5. 一覧選択中サイズの静止状態を、`base_pictogram`（白黒版）と並べて見る。
+6. 動きを減らす設定で開き直し、ヒーローが静止状態になることを確認する。
+7. `pageerror` と `console.error` を記録する。
+
+再生途中で止まる場面（動きを減らす設定への切り替え、ゲームの切り替え、再生属性の付け外し）で静止状態へ切り替わる跳びは、受け口の契約の対象外とし、不合格の理由にしない。
 
 狙いの確認は A → B → C → D の順に行う。C が弱い候補に C 専用の演出を足して直さない。A/B の作り方を直して再レビューするか `reject` にする。
 
@@ -52,12 +60,12 @@
 - `static_is_same_puzzle_as_base`: 静止状態が白黒版と同じパズルだと分かる
 - `static_colors_match_play_screen`: ゲーム固有色がプレイ画面の定義元の値と一致し、前景の線は `--game-pictogram-strong`、補助は `--game-pictogram-soft` を使っている
 - `static_readable_at_list_size`: 一覧選択中サイズで色付き静止画として読め、色や線が潰れず、他のピクトグラムと並べて重量が突出しない
-- `light_and_dark_both_hold`: ライト/ダークの両方で、輪郭とゲーム固有色の見分けが成立する
+- `light_and_dark_both_hold`: ライト/ダークの両方で、輪郭とゲーム固有色の見分けが成立する。プレイ画面の色がテーマで変わるゲームは、ダーク側でダークのプレイ画面の色に切り替わっている
 
 ### 継ぎ目
 
-- `play_start_matches_static`: 再生開始（属性付与）の瞬間に静止状態から絵が跳ばない
-- `play_end_or_loop_seam_clean`: 1 回再生の終点、またはループの継ぎ目が静止状態と同じ姿で、跳ばない
+- `play_end_or_loop_seam_matches_static`: 1 回再生は終点が静止状態と同じ姿で、終了後に静止状態へ戻るとき跳ばない。ループは 0% と 100% が同じ姿で、その継ぎ目の姿が静止状態である
+- `delayed_start_has_no_static_flash`: 始点が静止状態と異なり `animation-delay` を使う場合、`animation-fill-mode: backwards` または `both` により遅延中に静止状態がちらつかない。遅延を使わない、または始点が静止状態と同じなら `true`
 
 ### 実装
 
@@ -93,8 +101,8 @@
         "static_colors_match_play_screen": true,
         "static_readable_at_list_size": true,
         "light_and_dark_both_hold": true,
-        "play_start_matches_static": true,
-        "play_end_or_loop_seam_clean": true,
+        "play_end_or_loop_seam_matches_static": true,
+        "delayed_start_has_no_static_flash": true,
         "parts_stay_attached": true,
         "no_unintended_overlap_or_overflow": true,
         "transform_and_clip_are_natural": true,

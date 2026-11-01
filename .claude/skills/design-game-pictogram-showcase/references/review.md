@@ -19,7 +19,7 @@
       "hypothesis": "片方の瓶が傾き、上の色がもう片方へ移り、受け側が単色で満ちて止まる",
       "aim_play": "「同じ色の上へ注ぐ」判断と操作を 1 回で見せる",
       "aim_payoff": "受け側が単色で満ちた瞬間に動きが止まる",
-      "static_pose": "揃った後の姿",
+      "static_pose": "揃った後の姿（1 回再生の終点）",
       "playback": "once"
     }
   ]
@@ -39,7 +39,7 @@
 - `hypothesis`: 何が起きる案か
 - `aim_play`: 目的 A。中心の操作をどう見せるか
 - `aim_payoff`: 目的 B。どの瞬間の気持ちよさをどう見せるか
-- `static_pose`: 静止状態はどの瞬間の姿か
+- `static_pose`: 静止状態はどの瞬間の姿か（1 回再生の終点、ループの継ぎ目になる）
 - `playback`: `loop` または `once`
 
 任意項目:
@@ -53,7 +53,7 @@
 
 `make_review_gallery.py` は候補ごとに隔離した文書（iframe）を作り、その中に次を並べる。
 
-- ライト/ダークそれぞれで、ヒーロー（既定 177px / 138px、祖先に `data-pictogram-motion="play"`）と一覧選択中（既定 60px / 50px、属性なし）
+- ライト/ダークそれぞれで、ヒーロー（既定 177px / 138px、祖先に `data-pictogram-motion="play"`）と一覧選択中（既定 60px / 50px、属性なし）。ダーク側はアプリと同じく祖先に `.dark` クラスを付ける
 - 色は `frontend/styles/globals.css` から読んだ `--foreground` / `--muted-foreground` を `--game-pictogram-strong` / `--game-pictogram-soft` に、`--background` / `--muted` / `--ring` を面と選択枠に使う
 
 サイズは `--hero-sizes` / `--list-sizes`（カンマ区切り）で変えられる。候補の再生自体は JavaScript が無効でも表示される。JavaScript が有効な環境では次の操作を追加する。
@@ -61,7 +61,7 @@
 - 全候補 / 候補ごとの最初からの再生
 - 全候補の一時停止 / 再開
 - 候補ごとの時刻スライダー（全アニメーションを止め、指定時刻へ移す）
-- 候補ごとの再生属性の切り替え（静止 ↔ 再生の移り目を確かめる）
+- 候補ごとの再生属性の切り替え（属性を外した静止状態と、終点・継ぎ目の姿を見比べる）
 - 候補ごとの方向指定とメモ、レビュー結果 JSON の表示
 
 方向指定は採点ではない。次だけを扱う。
