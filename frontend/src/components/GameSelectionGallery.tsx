@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 
+import { playGameSelectSound } from "@/components/app-decision-sound";
 import { GamePictogram } from "@/components/GamePictogram";
+import { SoundEffectsToggle } from "@/components/GameSelectionGallery/SoundEffectsToggle";
 import type { Path } from "@/router";
 
 type GameSelectionGame = {
@@ -58,16 +60,20 @@ export function GameSelectionGallery({
         <h1 className="absolute inset-x-0 top-0 z-10 flex h-[4.5rem] items-center justify-center border-b-(length:--border-width-normal) bg-background text-screen-title sm:h-20">
           パズル選択
         </h1>
-        <Link
-          to={recordsTo}
-          className="absolute top-0 right-3 z-20 flex h-[4.5rem] items-center px-2 text-supporting font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:right-6 sm:h-20"
-        >
-          記録
-        </Link>
+        <div className="absolute top-0 right-3 z-20 flex h-[4.5rem] items-center gap-1 sm:right-6 sm:h-20">
+          <SoundEffectsToggle />
+          <Link
+            to={recordsTo}
+            className="flex h-full items-center px-2 text-supporting font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            記録
+          </Link>
+        </div>
 
         <Link
           to={selectedGame.to}
           aria-label={`${selectedGame.name}を遊ぶ`}
+          onClick={playGameSelectSound}
           className="flex h-full flex-col items-center justify-center transition-colors duration-(--duration-slow) hover:bg-muted/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         >
           <span className="size-[10.625rem] p-4 sm:size-[14.0625rem] sm:p-6">

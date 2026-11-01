@@ -6,6 +6,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
+import { withPlayStartSound } from "@/components/app-decision-sound";
 import { Button } from "@/components/ui/button";
 
 type GameResultActionsProps = {
@@ -26,12 +27,16 @@ export function GameResultActions({
 }: GameResultActionsProps) {
   return (
     <div className="mt-4 grid gap-3">
-      <Button size="lg" onClick={onStartNewProblem}>
+      <Button size="lg" onClick={withPlayStartSound(onStartNewProblem)}>
         <Play />
         プレイ！
       </Button>
       <div className="grid grid-cols-2 gap-2">
-        <Button variant="outline" disabled={!onReplay} onClick={onReplay}>
+        <Button
+          variant="outline"
+          disabled={!onReplay}
+          onClick={onReplay && withPlayStartSound(onReplay)}
+        >
           <RotateCcw />
           同じ問題
         </Button>

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useSyncExternalStore } from "react";
 
+import { withPlayStartSound } from "@/components/app-decision-sound";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -77,7 +78,7 @@ export function PlayMenu({
             {PLAY_OPERATION_LABELS.replay}
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem onSelect={onStartNewProblem}>
+        <DropdownMenuItem onSelect={withPlayStartSound(onStartNewProblem)}>
           <Play />
           {PLAY_OPERATION_LABELS.startNewProblem}
         </DropdownMenuItem>

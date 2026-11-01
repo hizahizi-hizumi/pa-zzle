@@ -18,7 +18,8 @@ type GameResultSoundDesign = {
   sparkles: readonly number[];
 };
 
-const NOTE = {
+/** 報酬の音とアプリの画面の音で使う、C メジャーの音の周波数（Hz）。 */
+export const NOTE = {
   G4: 392,
   C5: 523.25,
   E5: 659.25,
@@ -76,7 +77,11 @@ const gameResultSoundDesigns: Record<GameResultLevel, GameResultSoundDesign> = {
   },
 };
 
-function createBellNote(
+/**
+ * 鐘のような音色の1音。三角波に、1オクターブ上の短い倍音を重ねる。
+ * アプリが持つ音（結果の報酬、ゲームを選ぶ・プレイを始める音）はこの音色で揃える。
+ */
+export function createBellNote(
   frequency: number,
   offsetMs: number,
   durationMs: number,

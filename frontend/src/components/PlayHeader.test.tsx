@@ -1,14 +1,20 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
-
+import { _private as appDecisionSound } from "@/components/app-decision-sound";
 import { PlayHeader } from "@/components/PlayHeader";
+import { playSound } from "@/lib/sound-effects";
 import {
   isSoundEffectsEnabled,
   setSoundEffectsEnabled,
 } from "@/lib/sound-effects-setting";
 
+vi.mock("@/lib/sound-effects", () => ({
+  playSound: vi.fn(),
+}));
+
 afterEach(() => {
   cleanup();
+  vi.mocked(playSound).mockClear();
   setSoundEffectsEnabled(true);
   window.localStorage.clear();
 });
@@ -97,6 +103,40 @@ describe("PlayHeader", () => {
         expect(props[callbackName]).toHaveBeenCalledOnce();
       },
     );
+
+    test("メニューの別の問題でプレイを始める音を鳴らすこと", () => {
+      openPlayMenu();
+      fireEvent.click(screen.getByRole("menuitem", { name: "別の問題" }));
+
+      expect(playSound).toHaveBeenCalledExactlyOnceWith(
+        appDecisionSound.playStartSound,
+      );
+    });
+
+    const silentMenuItems = [
+      "盤面を戻す",
+      "リセット",
+      "難易度変更",
+      "ホーム",
+      "遊び方",
+      "検証情報",
+    ] as const;
+
+    test.each(silentMenuItems)(
+      "メニューの %s では音を鳴らさないこと",
+      (itemName) => {
+        openPlayMenu();
+        fireEvent.click(screen.getByRole("menuitem", { name: itemName }));
+
+        expect(playSound).not.toHaveBeenCalled();
+      },
+    );
+
+    test("戻るボタンでは音を鳴らさないこと", () => {
+      fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
+
+      expect(playSound).not.toHaveBeenCalled();
+    });
   });
 
   describe("効果音を鳴らす設定の場合", () => {

@@ -1,5 +1,6 @@
 import { PlayIcon } from "lucide-react";
 
+import { withPlayStartSound } from "@/components/app-decision-sound";
 import { Button } from "@/components/ui/button";
 
 type ReplayPlayButtonProps = {
@@ -27,7 +28,7 @@ export function ReplayPlayButton({
         size="icon-sm"
         aria-label={label}
         disabled={!replayable}
-        onClick={onReplay}
+        onClick={withPlayStartSound(onReplay)}
       >
         <PlayIcon />
       </Button>
