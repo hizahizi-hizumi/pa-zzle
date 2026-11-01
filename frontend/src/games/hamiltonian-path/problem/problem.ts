@@ -53,6 +53,22 @@ export type HamiltonianPathIdentifiedProblem = {
 };
 
 /**
+ * 問題を解き切る作業の量。速さの基準時間を問題ごとに決めるために使い、難易度そのものは表さない。
+ * - `openCellCount`: 道が通るマスの数（なぞる長さ）。
+ * - `assumptionCount`: 人間向け解法器で、局所・分断・パリティの推論で止まり、1段仮置きで辺を決めた回数（先読みの回数）。
+ * - `refutationStepCount`: 仮置きごとの、仮置きから矛盾が出るまでの推論の手数の合計（先読みの量）。
+ * - `longestRefutationLength`: そのうち最も長い先読みの手数。仮置きが無ければ0。
+ * - `fatalBranchCount`: 始点から解の道を引き進めるときに、全マスを通れなくなる手を含む分岐の数（迷う地点の数）。
+ */
+export type HamiltonianPathSolveWorkload = {
+  openCellCount: number;
+  assumptionCount: number;
+  refutationStepCount: number;
+  longestRefutationLength: number;
+  fatalBranchCount: number;
+};
+
+/**
  * 生成条件と候補番号から identity を作る。seed は条件ごとに別の系列になるよう条件を含める。
  * 壁率は百分率の整数で書く。例: 8×8・壁率0.15・候補番号 3 は `hp-8-15-3`。
  */

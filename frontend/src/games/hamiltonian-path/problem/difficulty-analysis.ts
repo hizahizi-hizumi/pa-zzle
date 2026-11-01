@@ -8,7 +8,10 @@ import {
   traceHamiltonianPathHumanSolve,
 } from "@/games/hamiltonian-path/problem/generation/human-solver";
 import { countHamiltonianPathSolutions } from "@/games/hamiltonian-path/problem/generation/solver";
-import type { HamiltonianPathProblem } from "@/games/hamiltonian-path/problem/problem";
+import type {
+  HamiltonianPathProblem,
+  HamiltonianPathSolveWorkload,
+} from "@/games/hamiltonian-path/problem/problem";
 import { listHamiltonianPathOpenCells } from "@/games/hamiltonian-path/puzzle/board";
 
 /**
@@ -70,6 +73,11 @@ export type HamiltonianPathDifficultyAnalysis =
       reason: "no-solution" | "multiple-solutions" | "search-limit-reached";
       scale: HamiltonianPathScaleMetrics;
     };
+
+export type HamiltonianPathAnalyzedDifficulty = Extract<
+  HamiltonianPathDifficultyAnalysis,
+  { status: "analyzed" }
+>;
 
 /**
  * 分析で一意性を確かめる探索の節点数の上限。生成器（20,000）より大きくとり、生成器が一意と確かめた問題を
@@ -160,5 +168,23 @@ export function analyzeHamiltonianPathDifficulty(
       },
     },
     drawing,
+  };
+}
+
+/** 分析結果から、速さの基準時間に使う作業の量を取り出す。 */
+export function getHamiltonianPathSolveWorkload({
+  scale,
+  reasoning,
+  drawing,
+}: HamiltonianPathAnalyzedDifficulty): HamiltonianPathSolveWorkload {
+  return {
+    openCellCount: scale.openCellCount,
+    assumptionCount: reasoning.assumptionCount,
+    refutationStepCount: reasoning.refutationLengths.reduce(
+      (sum, length) => sum + length,
+      0,
+    ),
+    longestRefutationLength: reasoning.longestRefutationLength,
+    fatalBranchCount: drawing.fatalBranchCount,
   };
 }
