@@ -4,9 +4,10 @@ import {
   type TutorialBoardIntro,
   TutorialOverlay,
 } from "@/components/TutorialOverlay";
+import type { GameProgress } from "@/games/play";
 import pictogramSvg from "@/games/takuzu/assets/pictogram.svg?raw";
 import type { TakuzuOperation } from "@/games/takuzu/play/use-takuzu-play";
-import type { TakuzuCell } from "@/games/takuzu/puzzle/board";
+import type { TakuzuCell, TakuzuTile } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import {
   findTakuzuTutorialHintCellIndex,
@@ -22,6 +23,7 @@ import type { TakuzuCellCue } from "@/games/takuzu/ui/board/cell-cue";
 import { TakuzuClearAnimation } from "@/games/takuzu/ui/board/clear/TakuzuClearAnimation";
 import { TakuzuBoard } from "@/games/takuzu/ui/board/TakuzuBoard";
 import { TakuzuTutorialRewind } from "@/games/takuzu/ui/TakuzuTutorial/TakuzuTutorialRewind";
+import { useTakuzuSoundEffects } from "@/games/takuzu/ui/use-takuzu-sound-effects";
 import {
   completeTutorial,
   finishTutorialIntro,
@@ -29,6 +31,7 @@ import {
   getTutorialSituation,
   performTutorialAction,
   startTutorial,
+  type TutorialPhase,
   type TutorialProgress,
 } from "@/games/tutorial";
 
@@ -75,6 +78,14 @@ type TakuzuTutorialRecall = {
   id: number;
   progress: TakuzuTutorialProgress;
 };
+
+/** 本番と同じ効果音を、本番のプレイの進行に当てはめて鳴らす。解けた盤面の演出の間が、本番の完成演出の間に当たる。 */
+const soundProgressByPhase = {
+  intro: "playing",
+  playing: "playing",
+  solved: "clearing",
+  completed: "result",
+} as const satisfies Record<TutorialPhase, GameProgress>;
 
 /**
  * 印を付けるまでの間。0 ならすぐ付け、`null` なら付けない。
@@ -149,9 +160,10 @@ export function TakuzuTutorial({
   const [settledViolationProgress, setSettledViolationProgress] =
     useState<TakuzuTutorialProgress | null>(null);
   const [recall, setRecall] = useState<TakuzuTutorialRecall | null>(null);
-  // 固定マスへの操作は本番と同じく、通らない操作として盤面に知らせて揺らす。
-  const [givenCellOperation, setGivenCellOperation] =
-    useState<TakuzuOperation | null>(null);
+  // 本番と同じく、置いた・消した・固定マスで通らなかったを知らせ、音を鳴らす。固定マスは盤面が揺らす。
+  const [operation, setOperation] = useState<TakuzuOperation | null>(null);
+  // 開き直しても同じ知らせとみなされないよう、もう一度始めても数え直さない。
+  const operationIdRef = useRef(0);
   const violationTimerRef = useRef<number | null>(null);
   const situation = getTutorialSituation(takuzuTutorial, progress);
   const guiding = situation.step !== null;
@@ -164,6 +176,12 @@ export function TakuzuTutorial({
     (guiding && recallId !== null) ||
     cueDelayMs === 0 ||
     (cueDelayMs !== null && idleProgress === progress);
+
+  useTakuzuSoundEffects(
+    operation,
+    soundProgressByPhase[progress.phase],
+    boardState.board.size,
+  );
   const idleHintCellIndex =
     cueShown && !guiding
       ? findTakuzuTutorialHintCellIndex(situation, boardState)
@@ -214,6 +232,16 @@ export function TakuzuTutorial({
     setProgress(finishTutorialIntro);
   }
 
+  function notifyOperation(
+    notice:
+      | { type: "placed"; tile: TakuzuTile }
+      | { type: "emptied" }
+      | { type: "invalid"; cellIndex: number },
+  ): void {
+    operationIdRef.current += 1;
+    setOperation({ ...notice, id: operationIdRef.current });
+  }
+
   /** 印の無いマスを押されたら、赤は使わず、印を光らせ直して目を向けさせる。 */
   function recallHint(): void {
     setRecall((current) => ({ id: (current?.id ?? 0) + 1, progress }));
@@ -224,11 +252,7 @@ export function TakuzuTutorial({
       return;
     }
     if (cellViews[action.cellIndex]?.given) {
-      setGivenCellOperation((current) => ({
-        id: (current?.id ?? 0) + 1,
-        type: "invalid",
-        cellIndex: action.cellIndex,
-      }));
+      notifyOperation({ type: "invalid", cellIndex: action.cellIndex });
       if (guiding) {
         recallHint();
       }
@@ -241,6 +265,10 @@ export function TakuzuTutorial({
       }
       return;
     }
+    const placed = next.boardState.board.cells[action.cellIndex] ?? null;
+    notifyOperation(
+      placed === null ? { type: "emptied" } : { type: "placed", tile: placed },
+    );
     setProgress(next);
     // 次の手が来たら、前の手の違反には応えない。
     cancelViolationReaction();
@@ -268,7 +296,7 @@ export function TakuzuTutorial({
     setIdleProgress(null);
     setSettledViolationProgress(null);
     setRecall(null);
-    setGivenCellOperation(null);
+    setOperation(null);
     setProgress(startTutorial(takuzuTutorial));
     setBoardIntroStage(introStage);
   }
@@ -311,7 +339,7 @@ export function TakuzuTutorial({
                 situation,
                 shownBoardState,
               )}
-              operation={givenCellOperation}
+              operation={operation}
               interactionDisabled={progress.phase !== "playing"}
               cues={getCellCues(
                 boardState,

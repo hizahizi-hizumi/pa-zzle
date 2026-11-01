@@ -15,7 +15,6 @@ import invalidSoundUrl from "@/games/takuzu/assets/sounds/invalid.flac";
 import tileAPlacedSoundUrl from "@/games/takuzu/assets/sounds/tile-a-placed.flac";
 import tileBPlacedSoundUrl from "@/games/takuzu/assets/sounds/tile-b-placed.flac";
 import type { TakuzuOperation } from "@/games/takuzu/play/use-takuzu-play";
-import { TAKUZU_BOARD_SIZE } from "@/games/takuzu/problem/problem";
 import type { TakuzuTile } from "@/games/takuzu/puzzle/board";
 import {
   CLEAR_WAVE_PEAK_MS,
@@ -41,9 +40,6 @@ const emptiedSound = defineSoundEffect(emptiedSoundUrl);
 
 const invalidSound = defineSoundEffect(invalidSoundUrl);
 
-/** 完成の波が左上から右下へ渡るまでの順番の数。波の順番はマスの「行 + 列」。 */
-const CLEAR_WAVE_LAST_STEP = (TAKUZU_BOARD_SIZE - 1) * 2;
-
 function getWaveStepOffsetMs(step: number): number {
   return step * CLEAR_WAVE_STAGGER_MS;
 }
@@ -60,16 +56,22 @@ const clearedWaveSounds = [
 /** 波が右下の角に届いたところで鳴らす音。 */
 const clearedChordSound = defineSoundEffect(clearedChordSoundUrl);
 
-const clearedSoundLayers: readonly SoundLayer[] = [
-  ...clearedWaveSounds.map(function createWaveLayer(sound, index): SoundLayer {
-    const step = (CLEAR_WAVE_LAST_STEP * index) / clearedWaveSounds.length;
-    return { sound, offsetMs: getWaveStepOffsetMs(step) };
-  }),
-  {
-    sound: clearedChordSound,
-    offsetMs: getWaveStepOffsetMs(CLEAR_WAVE_LAST_STEP),
-  },
-];
+/** 一辺 `boardSize` の盤面で、完成の波に合わせて鳴らす音の並び。波の順番はマスの「行 + 列」。 */
+function getClearedSoundLayers(boardSize: number): readonly SoundLayer[] {
+  const lastWaveStep = (boardSize - 1) * 2;
+  return [
+    ...clearedWaveSounds.map(
+      function createWaveLayer(sound, index): SoundLayer {
+        const step = (lastWaveStep * index) / clearedWaveSounds.length;
+        return { sound, offsetMs: getWaveStepOffsetMs(step) };
+      },
+    ),
+    {
+      sound: clearedChordSound,
+      offsetMs: getWaveStepOffsetMs(lastWaveStep),
+    },
+  ];
+}
 
 const takuzuSounds: readonly SoundEffect[] = [
   ...Object.values(tilePlacedSounds),
@@ -98,17 +100,21 @@ function playOperationSound(operation: TakuzuOperation) {
   }
 }
 
-/** 左上のタイルがいちばん膨らむのに合わせて鳴らし始める。 */
-function playClearSound() {
-  playLayeredSound(clearedSoundLayers, { delayMs: CLEAR_WAVE_PEAK_MS });
-}
-
-/** マスへの操作と、盤面を完成させた瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。 */
+/**
+ * マスへの操作と、盤面を完成させた瞬間に効果音を鳴らす。結果の報酬の音はアプリが鳴らす。
+ * プレイ画面とチュートリアルで同じ音を鳴らす。クリア音は、一辺 `boardSize` の盤面を渡る完成の波に合わせる。
+ */
 export function useTakuzuSoundEffects(
   operation: TakuzuOperation | null,
   progress: GameProgress,
+  boardSize: number,
 ) {
   usePrepareSoundEffects(takuzuSounds);
   useOperationSound(operation, playOperationSound);
-  useClearSound(progress, playClearSound);
+  // 左上のタイルがいちばん膨らむのに合わせて鳴らし始める。
+  useClearSound(progress, function playClearSound() {
+    playLayeredSound(getClearedSoundLayers(boardSize), {
+      delayMs: CLEAR_WAVE_PEAK_MS,
+    });
+  });
 }

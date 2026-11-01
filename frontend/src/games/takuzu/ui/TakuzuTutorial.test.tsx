@@ -8,6 +8,15 @@ import {
 } from "@testing-library/react";
 
 import { TakuzuTutorial } from "@/games/takuzu/ui/TakuzuTutorial";
+import { playLayeredSound, playSound } from "@/lib/sound-effects";
+
+vi.mock("@/lib/sound-effects", () => ({
+  REPEATED_SOUND_VARIATION: {},
+  defineSoundEffect: (url: string) => ({ url }),
+  playLayeredSound: vi.fn(),
+  playSound: vi.fn(),
+  prepareSoundEffects: vi.fn(),
+}));
 
 type CellPlacement = readonly [row: number, column: number, tile: "A" | "B"];
 
@@ -49,6 +58,8 @@ const introEnoughMs = 3000;
 
 afterEach(() => {
   cleanup();
+  vi.mocked(playSound).mockClear();
+  vi.mocked(playLayeredSound).mockClear();
   delete (HTMLElement.prototype as { animate?: Element["animate"] }).animate;
   vi.unstubAllGlobals();
   vi.useRealTimers();
@@ -222,6 +233,20 @@ describe("TakuzuTutorial", () => {
       expect(label).toBe("1行1列 四角");
       expect(message).toBeTruthy();
       expect(hinted).toEqual(["1行4列"]);
+    });
+
+    test("タップで置くと本番と同じ置いた音を、固定マスを押すと本番と同じ通らない音を鳴らすこと", () => {
+      tapCell(1, 1);
+      tapCell(1, 2);
+
+      const playedUrls = vi
+        .mocked(playSound)
+        .mock.calls.map(([sound]) => sound.url);
+
+      expect(playedUrls).toEqual([
+        expect.stringContaining("tile-a-placed"),
+        expect.stringContaining("invalid"),
+      ]);
     });
 
     const outsideCases = [
@@ -475,6 +500,25 @@ describe("TakuzuTutorial", () => {
 
       expect(message).toBeTruthy();
       expect(onStartPlay).toHaveBeenCalledOnce();
+    });
+
+    test("解き終えると、本番と同じクリア音を鳴らすこと", () => {
+      solveAll();
+
+      const layerUrls = vi
+        .mocked(playLayeredSound)
+        .mock.calls.map(([layers]) => layers.map(({ sound }) => sound.url));
+
+      expect(layerUrls).toEqual([
+        [
+          expect.stringContaining("cleared-wave-1"),
+          expect.stringContaining("cleared-wave-2"),
+          expect.stringContaining("cleared-wave-3"),
+          expect.stringContaining("cleared-wave-4"),
+          expect.stringContaining("cleared-wave-5"),
+          expect.stringContaining("cleared-chord"),
+        ],
+      ]);
     });
 
     test("終えた後のもう一度で、最初から始めること", () => {
