@@ -208,11 +208,44 @@ describe("extendNonogramSessionStroke", () => {
     expect(getNonogramSessionRepaintCount(session)).toBe(2);
   });
 
+  describe("なぞった塗りで図柄と一致した場合", () => {
+    const stroking = startNonogramSessionStroke(
+      withBoard(["#.#", "#..", ".#."]),
+      4,
+      "filled",
+      startedAt,
+    );
+
+    test("なぞった時刻でクリアにし、入力を終えること", () => {
+      const session = extendNonogramSessionStroke(stroking, 5, clearedAt);
+
+      expect(session.status).toBe("cleared");
+      expect(session.finishedAt).toBe(clearedAt);
+      expect(session.stroke).toBeNull();
+    });
+
+    test("その後のなぞりを受け付けないこと", () => {
+      const session = extendNonogramSessionStroke(stroking, 5, clearedAt);
+
+      const next = extendNonogramSessionStroke(session, 3, clearedAt);
+
+      expect(next).toBe(session);
+    });
+  });
+
   describe("入力中でない場合", () => {
     test("session を変えないこと", () => {
       const next = extendNonogramSessionStroke(empty, 1, startedAt);
 
       expect(next).toBe(empty);
+    });
+  });
+
+  describe("クリア済みの場合", () => {
+    test("session を変えないこと", () => {
+      const next = extendNonogramSessionStroke(cleared, 8, clearedAt);
+
+      expect(next).toBe(cleared);
     });
   });
 });
