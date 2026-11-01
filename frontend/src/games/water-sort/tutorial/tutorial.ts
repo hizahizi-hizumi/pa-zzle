@@ -155,7 +155,7 @@ const steps: readonly WaterSortTutorialStep[] = [
   },
   {
     message: {
-      headline: "上の色が同じときだけ\nその上に注げます",
+      headline: "上の色が同じなら\n重ねて注げます",
       detail: null,
     },
     introducedRuleId: "same-color",
@@ -179,7 +179,7 @@ const steps: readonly WaterSortTutorialStep[] = [
   },
   {
     message: {
-      headline: "入る分だけ移ります",
+      headline: "入るだけ移ります",
       detail: null,
     },
     introducedRuleId: "capacity",

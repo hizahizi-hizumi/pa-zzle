@@ -180,9 +180,7 @@ describe("WaterSortTutorial", () => {
       tapBottles([0, 3]);
 
       const contents = [getBottleContents(0), getBottleContents(3)];
-      const headline = screen.getByText(
-        "上の色が同じときだけ その上に注げます",
-      );
+      const headline = screen.getByText("上の色が同じなら 重ねて注げます");
       const cued = getCuedBottles();
       const rules = getRuleTexts();
 
@@ -224,7 +222,7 @@ describe("WaterSortTutorial", () => {
       const stillHeld = screen.queryByText("そろったボトルからは注げません");
       advanceTime(1);
 
-      const headline = screen.getByText("入る分だけ移ります");
+      const headline = screen.getByText("入るだけ移ります");
       const cued = getCuedBottles();
       const rules = getRuleTexts();
 
