@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v6.1.0
+        uses: actions/checkout@v7.0.1
 
       # vite / vitest / tsc はNodeで動くため、ランナー既定ではなくChatGPT実行環境に合わせた.node-versionに固定する。
       - name: Setup Node
