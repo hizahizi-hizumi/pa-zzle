@@ -264,7 +264,7 @@ export function NanpureTutorial({
         : null;
 
     return (
-      <div className="flex w-[min(100cqw,calc(100cqh-4rem),28rem)] flex-col gap-2">
+      <div className="flex w-[min(100cqw,calc(100cqh-3.25rem),28rem)] flex-col gap-2">
         <NanpureClearAnimation
           active={
             progress.phase === "solved" || (scene === "goal" && scenePlaying)
@@ -301,6 +301,7 @@ export function NanpureTutorial({
           canEnterDigit={playing && selectedIsEditable}
           completedDigits={getNanpureTutorialCompletedDigits(boardState)}
           cuedDigit={cuedDigit}
+          size="compact"
           onInputDigit={handleInputDigit}
         />
       </div>

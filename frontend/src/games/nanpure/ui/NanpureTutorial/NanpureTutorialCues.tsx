@@ -67,7 +67,7 @@ const unitCueClassNames = {
 } as const satisfies Record<NanpureTutorialUnitCue["kind"], string>;
 
 const cellCueClassNames = {
-  hint: "m-1 rounded-sm border-[3px] border-sky-600 border-dashed dark:border-sky-400",
+  hint: "m-0.5 rounded-sm border-[3px] border-sky-600 border-dashed dark:border-sky-400",
   fitted:
     "m-1 rounded-sm bg-sky-200/50 ring-2 ring-sky-500/60 ring-inset fill-mode-forwards animate-out fade-out-0 duration-900 ease-in dark:bg-sky-800/40 dark:ring-sky-300/60",
   rejected:
