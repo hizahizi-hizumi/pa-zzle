@@ -2,9 +2,11 @@
 """Check showcase pictogram SVGs against the receiving contract.
 
 The checks are deterministic only: SVG structure, naming prefix, CSS selector
-scope, play gating, dark-theme color switching, and forbidden features. They do
-not judge whether the motion conveys the game, whether the end or loop seam
-matches the static state, or whether it is good.
+scope, play gating, dark-theme color switching, forbidden features, and the
+structure of the declared playback form (once / cut / seam). They do not judge
+whether the motion conveys the game, whether the rendered end, hold, or seam
+matches the static state, or whether it is good; observe_animation.cjs measures
+the rendered poses in a real browser.
 """
 
 from __future__ import annotations
@@ -21,7 +23,7 @@ VIEW_BOX = (0.0, 0.0, 120.0, 120.0)
 SMIL_ELEMENTS = {"animate", "animateMotion", "animateTransform", "animateColor", "set", "discard"}
 FORBIDDEN_ELEMENTS = {"script", "foreignObject", "image", "iframe", "video", "audio"}
 ALLOWED_VARIABLES = {"--game-pictogram-strong", "--game-pictogram-soft"}
-PLAYBACK_VALUES = {"loop", "once"}
+PLAYBACK_VALUES = ("once", "cut", "seam")
 GAME_ID = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 REDUCED_MOTION_MEDIA = re.compile(
     r"^\(\s*prefers-reduced-motion\s*:\s*no-preference\s*\)$", re.IGNORECASE
@@ -55,12 +57,26 @@ COLOR_PROPERTIES = {
     "opacity",
 }
 TIME_VALUE = re.compile(r"^(-?(?:\d+\.?\d*|\.\d+))(ms|s)$", re.IGNORECASE)
+NUMBER_VALUE = re.compile(r"^(?:\d+\.?\d*|\.\d+)$")
+# Inside @keyframes only the per-segment easing is allowed; the other animation-*
+# longhands and the animation shorthand are ignored or invalid there.
+KEYFRAME_ANIMATION_ALLOWED = {"animation-timing-function"}
+ANIMATION_KEYWORDS = {
+    "none", "linear", "ease", "ease-in", "ease-out", "ease-in-out", "step-start", "step-end",
+    "normal", "reverse", "alternate", "alternate-reverse", "forwards", "backwards", "both",
+    "running", "paused", "infinite",
+}
+# Rough guide values for a cut loop; outside them is a WARN, not a FAIL.
+CUT_HOLD_MS = (1500.0, 2500.0)
+# Many stops with no per-segment easing usually mean an easing sampled into linear pieces.
+SAMPLED_EASING_STOPS = 10
 
 
 @dataclass(frozen=True)
 class Candidate:
     candidate_id: str
     path: Path
+    playback: str | None = None
 
 
 @dataclass
@@ -84,6 +100,15 @@ class CssBlock:
 
 
 @dataclass
+class AnimationUse:
+    name: str
+    duration_ms: float
+    delay_ms: float
+    iterations: str
+    where: str
+
+
+@dataclass
 class StyleState:
     """Facts collected across one SVG that are checked after the whole file is read."""
 
@@ -91,6 +116,10 @@ class StyleState:
     report: Report
     dark_variables: set[str] = field(default_factory=set)
     variable_usages: list[tuple[str, str, str]] = field(default_factory=list)
+    animations: list[AnimationUse] = field(default_factory=list)
+    # keyframes name -> {offset percent -> {property -> normalized value}}
+    keyframes: dict[str, dict[float, dict[str, str]]] = field(default_factory=dict)
+    sampled_keyframes: list[str] = field(default_factory=list)
 
 
 def local_name(tag: str) -> str:
@@ -106,6 +135,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--game-id",
         help="game id for the pz-<game-id>- prefix; overrides manifest game_id",
+    )
+    parser.add_argument(
+        "--playback",
+        choices=PLAYBACK_VALUES,
+        help="playback form of the SVG paths given as arguments (manifest candidates use their own)",
     )
     return parser.parse_args()
 
@@ -158,8 +192,11 @@ def candidates_from_manifest(path: Path) -> tuple[list[Candidate], str | None, l
         for key in ("hypothesis", "aim_play", "aim_payoff", "static_pose"):
             if not non_empty_string(entry.get(key)):
                 errors.append(f"{candidate_id}: {key} must be a non-empty string")
-        if entry.get("playback") not in PLAYBACK_VALUES:
-            errors.append(f"{candidate_id}: playback must be loop or once")
+        playback = entry.get("playback")
+        if playback not in PLAYBACK_VALUES:
+            hint = " (loop was split into cut and seam)" if playback == "loop" else ""
+            errors.append(f"{candidate_id}: playback must be once, cut, or seam{hint}")
+            playback = None
 
         file_value = entry.get("file")
         if not non_empty_string(file_value):
@@ -168,7 +205,7 @@ def candidates_from_manifest(path: Path) -> tuple[list[Candidate], str | None, l
         svg_path = Path(file_value)
         if not svg_path.is_absolute():
             svg_path = path.parent / svg_path
-        candidates.append(Candidate(candidate_id, svg_path))
+        candidates.append(Candidate(candidate_id, svg_path, playback))
 
     return candidates, game_id, errors
 
@@ -317,6 +354,77 @@ def has_positive_delay(declared: list[tuple[str, str]]) -> bool:
     return False
 
 
+def split_spaces(text: str) -> list[str]:
+    """Split on whitespace outside parentheses, e.g. keep cubic-bezier(0.2, 0, 0, 1) whole."""
+    tokens: list[str] = []
+    current: list[str] = []
+    depth = 0
+    for char in text:
+        if char == "(":
+            depth += 1
+        elif char == ")":
+            depth -= 1
+        if char.isspace() and depth == 0:
+            if current:
+                tokens.append("".join(current))
+                current = []
+            continue
+        current.append(char)
+    if current:
+        tokens.append("".join(current))
+    return tokens
+
+
+def animation_uses(declared: list[tuple[str, str]], where: str) -> list[AnimationUse]:
+    """Resolve the animation shorthand and longhands of one rule into one entry per animation."""
+    names: list[str] = []
+    durations: list[float] = [0.0]
+    delays: list[float] = [0.0]
+    iterations: list[str] = ["1"]
+    for name, value in declared:
+        items = split_top_level(value, ",")
+        if name == "animation":
+            names, durations, delays, iterations = [], [], [], []
+            for item in items:
+                times: list[float] = []
+                animation_name, count = "none", "1"
+                for token in split_spaces(item):
+                    lowered = token.lower()
+                    time = time_in_ms(token)
+                    if time is not None:
+                        times.append(time)
+                    elif lowered == "infinite" or NUMBER_VALUE.match(token):
+                        count = lowered
+                    elif lowered not in ANIMATION_KEYWORDS and "(" not in token:
+                        animation_name = token.strip("\"'")
+                names.append(animation_name)
+                durations.append(times[0] if times else 0.0)
+                delays.append(times[1] if len(times) > 1 else 0.0)
+                iterations.append(count)
+        elif name == "animation-name":
+            names = [item.strip("\"'") for item in items]
+        elif name == "animation-duration":
+            durations = [time_in_ms(item) or 0.0 for item in items]
+        elif name == "animation-delay":
+            delays = [time_in_ms(item) or 0.0 for item in items]
+        elif name == "animation-iteration-count":
+            iterations = [item.lower() for item in items]
+    uses: list[AnimationUse] = []
+    for index, animation_name in enumerate(names):
+        if animation_name.lower() == "none":
+            continue
+        uses.append(
+            AnimationUse(
+                animation_name,
+                durations[index % len(durations)] if durations else 0.0,
+                delays[index % len(delays)] if delays else 0.0,
+                iterations[index % len(iterations)] if iterations else "1",
+                where,
+            )
+        )
+    return uses
+
+
 def keeps_first_frame_during_delay(declared: list[tuple[str, str]]) -> bool:
     return any(
         name in {"animation", "animation-fill-mode"}
@@ -355,6 +463,8 @@ def check_declarations(
                     f"({', '.join(sorted(COLOR_PROPERTIES))} or --{prefix}* color variables): {name}"
                 )
         check_css_values(value, state, where, property_name=name)
+    if animated and play_gated:
+        state.animations.extend(animation_uses(declared, where))
     if animated and has_positive_delay(declared) and not keeps_first_frame_during_delay(declared):
         report.warn(
             f"{where}: animation-delay without animation-fill-mode backwards/both; if the first "
@@ -464,11 +574,174 @@ def check_keyframes(block: CssBlock, state: StyleState) -> None:
     if not name.startswith(prefix):
         report.error(f"<style>: keyframes name must start with {prefix}: {name or '(empty)'}")
     frames, _ = split_blocks(block.body)
+    stops = state.keyframes.setdefault(name, {})
+    has_segment_easing = False
     for frame in frames:
+        offsets = keyframe_offsets(frame.prelude)
+        if offsets is None:
+            report.error(f"<style>: invalid keyframe selector in @keyframes {name}: {frame.prelude}")
+            offsets = []
+        pose: dict[str, str] = {}
         for prop, value in declarations(frame.body):
-            if prop.startswith("animation") or prop.startswith("transition"):
-                report.error(f"<style>: {prop} inside @keyframes {name} is not allowed")
+            if prop.startswith("transition") or (
+                prop.startswith("animation") and prop not in KEYFRAME_ANIMATION_ALLOWED
+            ):
+                report.error(
+                    f"<style>: {prop} inside @keyframes {name} is not allowed "
+                    "(only animation-timing-function, the easing of the segment that starts there)"
+                )
+            elif prop in KEYFRAME_ANIMATION_ALLOWED:
+                has_segment_easing = True
+            else:
+                pose[prop] = normalize_value(value)
             check_css_values(value, state, f"@keyframes {name}", property_name=prop)
+        for offset in offsets:
+            stops.setdefault(offset, {}).update(pose)
+    if len(stops) >= SAMPLED_EASING_STOPS and not has_segment_easing:
+        state.sampled_keyframes.append(f"{name} ({len(stops)} stops)")
+
+
+def keyframe_offsets(prelude: str) -> list[float] | None:
+    offsets: list[float] = []
+    for item in split_top_level(prelude, ","):
+        lowered = item.strip().lower()
+        if lowered == "from":
+            offsets.append(0.0)
+        elif lowered == "to":
+            offsets.append(100.0)
+        elif re.fullmatch(r"(?:\d+\.?\d*|\.\d+)%", lowered):
+            offsets.append(float(lowered[:-1]))
+        else:
+            return None
+    return offsets
+
+
+def normalize_value(value: str) -> str:
+    value = re.sub(r"\s+", " ", value.strip().lower())
+    return re.sub(r"\s*([(),])\s*", r"\1", value)
+
+
+# A keyframes property without a 0% / 100% stop takes the element's own (static) value there.
+STATIC = "(static)"
+
+
+def property_tracks(stops: dict[float, dict[str, str]]) -> dict[str, list[tuple[float, str]]]:
+    """Per property, its stops in order, with the implicit 0% / 100% filled by STATIC."""
+    tracks: dict[str, list[tuple[float, str]]] = {}
+    for offset in sorted(stops):
+        for prop, value in stops[offset].items():
+            tracks.setdefault(prop, []).append((offset, value))
+    for track in tracks.values():
+        if track[0][0] > 0:
+            track.insert(0, (0.0, STATIC))
+        if track[-1][0] < 100:
+            track.append((100.0, STATIC))
+    return tracks
+
+
+def end_hold_start(track: list[tuple[float, str]]) -> float | None:
+    """Offset from which the property keeps its 100% value; None if the text cannot tell."""
+    end = track[-1][1]
+    start = 100.0
+    for offset, value in reversed(track):
+        if value != end:
+            return None if STATIC in (end, value) else start
+        start = offset
+    return start
+
+
+def motion_start(track: list[tuple[float, str]]) -> float | None:
+    """Offset where the property starts to leave its 0% value; None if the text cannot tell."""
+    first = track[0][1]
+    start = 0.0
+    for offset, value in track:
+        if value != first:
+            return None if STATIC in (first, value) else start
+        start = offset
+    return 100.0
+
+
+def check_playback(state: StyleState, playback: str) -> None:
+    report = state.report
+    uses = state.animations
+    if not uses:
+        return
+    if playback == "once":
+        for use in uses:
+            if use.iterations != "1":
+                report.error(
+                    f"{use.where}: playback once plays each animation one time "
+                    f"(animation-iteration-count 1): {use.name} has {use.iterations}"
+                )
+    else:
+        for use in uses:
+            if use.iterations != "infinite":
+                report.error(
+                    f"{use.where}: playback {playback} loops, so animation-iteration-count must be "
+                    f"infinite: {use.name} has {use.iterations}"
+                )
+        timings = sorted({(use.duration_ms, use.delay_ms) for use in uses})
+        if len(timings) > 1:
+            listed = ", ".join(f"{duration:g}ms delay {delay:g}ms" for duration, delay in timings)
+            if playback == "cut":
+                report.error(
+                    "playback cut: every animation must share one duration and delay so that all "
+                    f"elements switch to the start pose at the same cycle boundary: {listed}"
+                )
+            else:
+                report.warn(
+                    "playback seam: animations do not share one duration and delay, so the whole "
+                    f"picture repeats only at their common multiple; confirm the seam: {listed}"
+                )
+
+    durations = {use.name: use.duration_ms for use in uses}
+    holds: list[float | None] = []
+    beats: list[float | None] = []
+    differing_ends = False
+    for name in sorted({use.name for use in uses}):
+        stops = state.keyframes.get(name)
+        if not stops:
+            continue
+        duration = durations[name]
+        tracks = property_tracks(stops)
+        for prop, track in tracks.items():
+            start, end = track[0][1], track[-1][1]
+            if playback == "seam" and STATIC not in (start, end) and start != end:
+                report.warn(
+                    f"@keyframes {name} {prop}: 0% and 100% differ as written ({start} / {end}); "
+                    "a seam loop needs 0% = 100% = static state; confirm with observe_animation.cjs"
+                )
+            if start != end:
+                differing_ends = True
+            if playback == "cut":
+                hold = end_hold_start(track)
+                beat = motion_start(track)
+                holds.append(None if hold is None else (100 - hold) * duration / 100)
+                beats.append(None if beat is None else beat * duration / 100)
+
+    if playback != "cut":
+        return
+    if not differing_ends:
+        report.warn(
+            "playback cut: 0% and 100% are written the same in every keyframes; a cut loop puts the "
+            "start pose at 0% and the static (payoff) pose at 100% so that the switch is the cycle "
+            "boundary. A switch inside the cycle shows the payoff pose on the first frame and delays "
+            "the start; if nothing changes at the boundary, declare seam"
+        )
+    if holds and all(hold is not None for hold in holds):
+        hold_ms = min(hold for hold in holds if hold is not None)
+        if not CUT_HOLD_MS[0] <= hold_ms <= CUT_HOLD_MS[1]:
+            report.warn(
+                f"playback cut: the picture holds the 100% pose (= static state) for {hold_ms:g}ms "
+                f"before the switch; the guide is {CUT_HOLD_MS[0]:g}-{CUT_HOLD_MS[1]:g}ms"
+            )
+    if beats and all(beat is not None for beat in beats):
+        beat_ms = min(beat for beat in beats if beat is not None)
+        if beat_ms <= 0:
+            report.warn(
+                "playback cut: motion starts right at 0%; hold the start pose briefly "
+                "(guide about 300ms) so the switch reads as a new start"
+            )
 
 
 def check_stylesheet(css: str, state: StyleState) -> bool:
@@ -517,7 +790,7 @@ def parse_view_box(value: str) -> tuple[float, ...] | None:
         return None
 
 
-def check_svg(candidate: Candidate, game_id: str) -> Report:
+def check_svg(candidate: Candidate, game_id: str, playback: str | None = None) -> Report:
     report = Report()
     prefix = f"pz-{game_id}-"
     state = StyleState(prefix, report)
@@ -597,6 +870,15 @@ def check_svg(candidate: Candidate, game_id: str) -> Report:
             animated |= check_stylesheet(text, state)
 
     check_dark_variable_usage(state)
+    if state.sampled_keyframes:
+        report.warn(
+            "many keyframe stops without animation-timing-function look like an easing sampled into "
+            "linear pieces; the speed changes abruptly at every stop and the motion stutters. Use a few "
+            "stops with a per-segment animation-timing-function instead: "
+            + ", ".join(state.sampled_keyframes)
+        )
+    if playback:
+        check_playback(state, playback)
     if not style_found:
         report.error("no <style> element; animation must be written as CSS in <style>")
     if not animated:
@@ -619,7 +901,7 @@ def main() -> int:
 
     if args.manifest:
         candidates, game_id, manifest_errors = candidates_from_manifest(args.manifest)
-    candidates.extend(Candidate(path.stem, path) for path in args.svgs)
+    candidates.extend(Candidate(path.stem, path, args.playback) for path in args.svgs)
     if args.game_id:
         game_id = args.game_id
 
@@ -639,9 +921,10 @@ def main() -> int:
         print(f"FAIL manifest: {error}", file=sys.stderr)
 
     for candidate in candidates:
-        report = check_svg(candidate, game_id)
+        report = check_svg(candidate, game_id, candidate.playback)
         print(f"candidate: {candidate.candidate_id}")
         print(f"file: {candidate.path}")
+        print(f"playback: {candidate.playback or '(not given; playback checks skipped)'}")
         for warning in report.warnings:
             print(f"WARN: {warning}")
         if report.errors:
