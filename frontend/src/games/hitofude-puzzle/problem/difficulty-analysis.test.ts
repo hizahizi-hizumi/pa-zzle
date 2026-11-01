@@ -9,11 +9,8 @@ import { generateHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/g
 import { createHitofudePuzzleProblemIdentity } from "@/games/hitofude-puzzle/problem/problem";
 import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
 
-/**
- * 研究用 Python の HumanSolver で仮置き2回（先読み5手と8手）、decision_profile で分岐5の盤面（`hp-7-t4-1` を同型の正規化キーの向きで書いたもの）。
- * 回転・反転すると、解法器は仮置き2回から7回で道を決める。
- */
-const pythonFixtureProblem = parseHitofudePuzzleBoard([
+/** 2辺カットで1度止まりを抜け、仮置き1局面（先読み5手）で決まる盤面。どの向きから読んでも同じ経過になる。 */
+const fixtureProblem = parseHitofudePuzzleBoard([
   ". . # . . . .",
   ". . . # . . .",
   ". . . . . . .",
@@ -23,9 +20,23 @@ const pythonFixtureProblem = parseHitofudePuzzleBoard([
   ". S . . . . .",
 ]);
 
+/**
+ * 向きで読み方が変わる盤面（版 2 の問題集の `hp-7-t4-14` を同型の正規化キーの向きで書いたもの）。この向きでは仮置き2局面
+ * （5手と10手）、最も上手な向きでは仮置き1局面（5手）で道を決める。
+ */
+const orientationDependentProblem = parseHitofudePuzzleBoard([
+  "# . . . . . .",
+  ". . # . . . #",
+  ". . . . S . #",
+  ". . # . . . .",
+  ". . # . . . .",
+  ". . . . # . .",
+  ". . . . # . .",
+]);
+
 describe("analyzeHitofudePuzzleDifficulty", () => {
   describe("一意解の問題の場合", () => {
-    const problem = pythonFixtureProblem;
+    const problem = fixtureProblem;
 
     test("規模と推論と描画視点の分岐の特徴を返すこと", () => {
       const result = analyzeHitofudePuzzleDifficulty(problem);
@@ -40,14 +51,14 @@ describe("analyzeHitofudePuzzleDifficulty", () => {
         },
         reasoning: {
           localReasoningSuffices: false,
-          regionalReasoningUsed: false,
-          assumptionCount: 2,
+          regionalReasoningUsed: true,
+          assumptionCount: 1,
           deepAssumptionCount: 0,
-          longestRefutationLength: 8,
-          refutationLengths: [5, 8],
+          longestRefutationLength: 5,
+          refutationLengths: [5],
           stallCount: 2,
           firstStallDecidedEdgeRatio: expect.closeTo(25 / 70, 12),
-          firingCountByStage: { 1: 45, 2: 3, 3: 0, 4: 0, 5: 2, 6: 0 },
+          firingCountByStage: { 1: 41, 2: 2, 3: 2, 4: 0, 5: 1, 6: 0 },
         },
         drawing: {
           branchCount: 5,
@@ -72,7 +83,7 @@ describe("analyzeHitofudePuzzleDifficulty", () => {
 
   describe("回転・反転した盤面の場合", () => {
     const cases = [
-      ["研究用 Python の盤面", pythonFixtureProblem],
+      ["向きで読み方が変わる盤面", orientationDependentProblem],
       [
         "hp-7-t0-19",
         generateHitofudePuzzleProblem(
@@ -80,8 +91,7 @@ describe("analyzeHitofudePuzzleDifficulty", () => {
         ).problem,
       ],
     ] as const;
-    const heavilyReadOrientation =
-      listHitofudePuzzleBoardSymmetries(pythonFixtureProblem)[2]!;
+    const heavilyReadOrientation = orientationDependentProblem;
 
     test.each(cases)(
       "%s のどの向きからも、同じ分析結果と作業の量を返すこと",
@@ -101,10 +111,10 @@ describe("analyzeHitofudePuzzleDifficulty", () => {
       },
     );
 
-    test("仮置きの多い向きの盤面を、その向きだけで読むと仮置きが7回要ること", () => {
+    test("仮置きの多い向きの盤面を、その向きだけで読むと仮置きが2局面要ること", () => {
       const trace = traceHitofudePuzzleHumanSolve(heavilyReadOrientation);
 
-      expect(trace.assumptionCount).toBe(7);
+      expect(trace.assumptionCount).toBe(2);
     });
 
     test("仮置きの多い向きの盤面からも、最も仮置きの少ない向きの読み方を採ること", () => {
@@ -112,7 +122,7 @@ describe("analyzeHitofudePuzzleDifficulty", () => {
 
       expect(result).toMatchObject({
         status: "analyzed",
-        reasoning: { assumptionCount: 2, refutationLengths: [5, 8] },
+        reasoning: { assumptionCount: 1, refutationLengths: [5] },
       });
     });
   });

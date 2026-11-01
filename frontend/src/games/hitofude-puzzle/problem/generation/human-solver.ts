@@ -15,6 +15,7 @@ import {
  *   無ければ2本とも使って通り抜け、端が1つなら1本だけ使う。
  * - `4` パリティ: 市松模様の色の数から終点の色を決める。関節点で分かれる領域の色の数が、通り抜けられる数と合うかを見る。
  * - `5` 1段仮置き: 1本の辺を使う・使わないと仮に決め、1〜4を進めた先で矛盾が出たら逆に決める。
+ *   止まった局面ごとに、矛盾が見える手数の上限の最も低い段で矛盾した仮置きをすべて逆に決め、局面1つを1回と数える。
  * - `6` 2段仮置き: 5の仮置きの中で、さらに5を重ねて矛盾を探す。
  */
 export const hitofudePuzzleReasoningStages = [1, 2, 3, 4, 5, 6] as const;
@@ -31,9 +32,10 @@ type StageCounts = [number, number, number, number, number, number];
  * - `contradiction`: 盤面に解が無い。
  *
  * - `firingCountByStage` / `decidedEdgeCountByStage`: 仮置きの外で、各段階の推論を使った回数と、それで決めた辺の数。添字0が段階1。
- * - `assumptionCount`: 段階1〜4で止まり、1段仮置きで辺を1本決めた回数。
+ *   段階5は局面1つで1回と数える。
+ * - `assumptionCount`: 段階1〜4で止まり、1段仮置きで進めた局面の数（先読みを要した回数）。
  * - `deepAssumptionCount`: 1段仮置きでも決まらず、2段仮置きで辺を1本決めた回数。
- * - `refutationLengths`: 仮置きで辺を決めた回ごとの、仮置きから矛盾が出るまでの推論の手数。先読みの長さ。
+ * - `refutationLengths`: 仮置きで進めた局面ごとの、仮置きから矛盾が出るまでの推論の手数の最小。先読みの長さ。
  * - `stallCount`: 段階1〜2だけでは進めなくなった回数。
  * - `firstStallDecidedEdgeRatio` / `firstAssumptionDecidedEdgeRatio`: 最初に段階1〜2で止まった時点と、最初に仮置きへ進んだ
  *   時点で、使う・使わないが決まっていた辺の割合。止まらなかったら1。
@@ -189,8 +191,8 @@ class StepTracker {
 
 /**
  * 辺ごとに「使う・使わない・未定」を決めていく、人間向けの解法器。終点は与えず、始点だけから推論する。
- * 研究用 Python（`scripts/research/hamiltonian_path_experiment.py` の `HumanSolver`）は2辺カットを持たない解法器として
- * 凍結しており、この解法器とは経過が一致しない。
+ * 研究用 Python（`scripts/research/hamiltonian_path_experiment.py` の `HumanSolver`）は2辺カットと局面ごとの仮置きを
+ * 持たない解法器として凍結しており、この解法器とは経過が一致しない。
  */
 class HumanSolver {
   readonly #cellCount: number;
@@ -940,6 +942,32 @@ class HumanSolver {
     return null;
   }
 
+  /**
+   * 止まった局面を1段仮置きで進める。手数の上限の低い段から、未定の辺を両方の向きに仮置きし、ある段で矛盾した仮置きが
+   * 見つかったら、その段で矛盾した仮置きをすべて逆に決める。局面1つを1回と数え、矛盾までの手数の最小を返す。
+   * 決まらなければ `null`。辺を1本ずつ決めると、回数が候補を試す順の副産物になり盤面の向きで変わるので、局面でまとめる。
+   */
+  assumeAtStall(state: SolverState, tracker: StepTracker): number | null {
+    const candidates = this.#assumptionCandidates(state);
+    for (const budget of singleAssumptionBudgets) {
+      const refuted = candidates.flatMap((edge) =>
+        ([USED, UNUSED] as const).flatMap((value) => {
+          const length = this.#tryAssumption(state, edge, value, budget, false);
+          return length === null ? [] : [{ edge, value, length }];
+        }),
+      );
+      if (refuted.length === 0) {
+        continue;
+      }
+      for (const { edge, value } of refuted) {
+        this.setEdge(state, edge, value === USED ? UNUSED : USED);
+      }
+      tracker.fire(5, refuted.length);
+      return Math.min(...refuted.map(({ length }) => length));
+    }
+    return null;
+  }
+
   /** 2段仮置きで辺を1本決める。決めたら矛盾までの手数を返し、決まらなければ `null`。 */
   deepAssumption(state: SolverState, tracker: StepTracker): number | null {
     const candidates = this.#assumptionCandidates(state).slice(
@@ -972,7 +1000,7 @@ function isSignal(error: unknown): boolean {
 
 /**
  * 始点と盤面だけから（解を見ずに）、段階1〜6の推論で道を決めていく経過を追う。
- * 段階1〜2で止まるたびに段階3〜4を加え、それでも進まなければ1段仮置き、さらに2段仮置きを使う。
+ * 段階1〜2で止まるたびに段階3〜4を加え、それでも進まなければ局面ごとの1段仮置き、さらに2段仮置きを使う。
  */
 export function traceHitofudePuzzleHumanSolve(
   board: HitofudePuzzleBoard,
@@ -1013,7 +1041,7 @@ export function traceHitofudePuzzleHumanSolve(
         continue;
       }
       firstAssumptionDecidedEdgeRatio ??= solver.decidedEdgeRatio(state);
-      const singleLength = solver.singleAssumption(state, tracker);
+      const singleLength = solver.assumeAtStall(state, tracker);
       if (singleLength !== null) {
         assumptionCount += 1;
         refutationLengths.push(singleLength);

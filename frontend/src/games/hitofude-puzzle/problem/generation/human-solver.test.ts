@@ -4,6 +4,7 @@ import {
   traceHitofudePuzzleHumanSolve,
 } from "@/games/hitofude-puzzle/problem/generation/human-solver";
 import { countHitofudePuzzleSolutions } from "@/games/hitofude-puzzle/problem/generation/solver";
+import { listHitofudePuzzleBoardSymmetries } from "@/games/hitofude-puzzle/problem/generation/symmetry";
 import { generateHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/generator";
 import { createHitofudePuzzleProblemIdentity } from "@/games/hitofude-puzzle/problem/problem";
 import {
@@ -57,7 +58,7 @@ const solvableRandomCases = Array.from({ length: 80 }, (_, index) => {
 
 /**
  * 製品の解法器が同じ盤面に返した推論の経過（回帰の確認）。推論や数え方を意図して変えたら取り直す。
- * 盤面は穴の問題から、局所の推論だけ・迷う分岐の無い問題・2辺カット・仮置き・20手を超える先読みを含むように選び、
+ * 盤面は穴の問題から、局所の推論だけ・迷う分岐の無い問題・2辺カット・仮置きの局面の数・20手を超える先読みを含むように選び、
  * 同型の正規化キーの向きで書いた。
  */
 const regressionFixtures = [
@@ -122,7 +123,7 @@ const regressionFixtures = [
     },
   },
   {
-    name: "7×7・仮置き1回",
+    name: "7×7・仮置き1局面",
     rows: [
       ". . # . . . .",
       ". . . # . . .",
@@ -133,8 +134,8 @@ const regressionFixtures = [
       ". S . . . . .",
     ],
     expected: {
-      firingCountByStage: [43, 2, 2, 0, 1, 0],
-      decidedEdgeCountByStage: [63, 2, 4, 0, 1, 0],
+      firingCountByStage: [42, 2, 2, 0, 1, 0],
+      decidedEdgeCountByStage: [59, 2, 4, 0, 5, 0],
       assumptionCount: 1,
       deepAssumptionCount: 0,
       refutationLengths: [5],
@@ -168,7 +169,7 @@ const regressionFixtures = [
     },
   },
   {
-    name: "8×8・仮置き6回",
+    name: "8×8・仮置き3局面",
     rows: [
       ". # . . . . . .",
       ". . . . . . # .",
@@ -180,19 +181,19 @@ const regressionFixtures = [
       ". . . S . . . .",
     ],
     expected: {
-      firingCountByStage: [53, 2, 2, 0, 6, 0],
-      decidedEdgeCountByStage: [77, 2, 4, 0, 6, 0],
-      assumptionCount: 6,
+      firingCountByStage: [47, 1, 0, 0, 3, 0],
+      decidedEdgeCountByStage: [67, 1, 0, 0, 21, 0],
+      assumptionCount: 3,
       deepAssumptionCount: 0,
-      refutationLengths: [5, 8, 7, 7, 7, 6],
-      stallCount: 7,
+      refutationLengths: [5, 6, 9],
+      stallCount: 3,
       firstStallDecidedEdgeRatio: 0.3595505617977528,
       firstAssumptionDecidedEdgeRatio: 0.3595505617977528,
       edgeCount: 89,
     },
   },
   {
-    name: "7×7・仮置き9回・20手を超える先読み",
+    name: "7×7・仮置き3局面・20手を超える先読み",
     rows: [
       "# # . . . . .",
       ". . . . . . .",
@@ -203,12 +204,12 @@ const regressionFixtures = [
       "# . . . . . #",
     ],
     expected: {
-      firingCountByStage: [41, 6, 0, 0, 9, 0],
-      decidedEdgeCountByStage: [56, 6, 0, 0, 9, 0],
-      assumptionCount: 9,
+      firingCountByStage: [30, 0, 0, 0, 3, 0],
+      decidedEdgeCountByStage: [45, 0, 0, 0, 26, 0],
+      assumptionCount: 3,
       deepAssumptionCount: 0,
-      refutationLengths: [8, 5, 6, 8, 14, 13, 12, 23, 3],
-      stallCount: 9,
+      refutationLengths: [5, 12, 21],
+      stallCount: 3,
       firstStallDecidedEdgeRatio: 0.3098591549295775,
       firstAssumptionDecidedEdgeRatio: 0.3098591549295775,
       edgeCount: 71,
@@ -237,6 +238,30 @@ describe("traceHitofudePuzzleHumanSolve", () => {
             12,
           ),
         });
+      },
+    );
+  });
+
+  describe("仮置きを要する固定盤面を回転・反転した場合", () => {
+    const cases = regressionFixtures
+      .filter(({ expected }) => expected.assumptionCount > 0)
+      .map(({ name, rows, expected }) => ({
+        name,
+        orientations: listHitofudePuzzleBoardSymmetries(
+          parseHitofudePuzzleBoard(rows),
+        ),
+        assumptionCount: expected.assumptionCount,
+      }));
+
+    test.each(cases)(
+      "$name をどの向きから読んでも、仮置きの局面の数が同じであること",
+      ({ orientations, assumptionCount }) => {
+        const counts = orientations.map(
+          (orientation) =>
+            traceHitofudePuzzleHumanSolve(orientation).assumptionCount,
+        );
+
+        expect(counts).toEqual(counts.map(() => assumptionCount));
       },
     );
   });
