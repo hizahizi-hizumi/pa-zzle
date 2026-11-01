@@ -221,7 +221,10 @@ describe("useNonogramPlay", () => {
         const playResult = result.current.result;
 
         expect(playResult).toMatchObject({ repaintCount: 1, undoCount: 1 });
-        expect(playResult?.score.breakdown).toEqual({ speed: 85, accuracy: 12 });
+        expect(playResult?.score.breakdown).toEqual({
+          speed: 85,
+          accuracy: 12,
+        });
       });
     });
 
@@ -258,7 +261,10 @@ describe("useNonogramPlay", () => {
           repaintCount: 0,
           crossToggleCount: 3,
         });
-        expect(playResult?.score.breakdown).toEqual({ speed: 85, accuracy: 15 });
+        expect(playResult?.score.breakdown).toEqual({
+          speed: 85,
+          accuracy: 15,
+        });
       });
     });
 
