@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from "react";
 import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
+import type { WaterSortBottleCue } from "@/games/water-sort/ui/board/bottle-cue";
 import { PourAnimationLayer } from "@/games/water-sort/ui/board/pour/PourAnimationLayer";
 import { usePourAnimations } from "@/games/water-sort/ui/board/pour/use-pour-animations";
 import { getWaterColorView } from "@/games/water-sort/ui/board/water-bottle/get-water-color-view";
@@ -15,6 +16,8 @@ type WaterSortBoardProps = {
   interactionDisabled: boolean;
   onPourAnimationActivityChange?: (active: boolean) => void;
   onClearAnimationComplete?: () => void;
+  /** ボトルに重ねる合図。チュートリアルだけが渡す。 */
+  cues?: readonly WaterSortBottleCue[];
 };
 
 const invalidBottleShakeKeyframes: Keyframe[] = [
@@ -38,6 +41,7 @@ export function WaterSortBoard({
   interactionDisabled,
   onPourAnimationActivityChange,
   onClearAnimationComplete,
+  cues = [],
 }: WaterSortBoardProps) {
   const bottleRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const { animations, finishAnimation, interruptForBottleInteraction } =
@@ -97,6 +101,7 @@ export function WaterSortBoard({
                   .join("、");
           const isSource = bottleIndex === sourceBottleIndex;
           const isAnimated = animatedBottleIndexes.has(bottleIndex);
+          const cue = cues.find((item) => item.bottleIndex === bottleIndex);
 
           return (
             <button
@@ -116,6 +121,14 @@ export function WaterSortBoard({
               >
                 <WaterBottle contents={bottle} selected={isSource} />
               </span>
+              {cue?.kind === "hint" && (
+                <span
+                  key={cue.id}
+                  aria-hidden="true"
+                  data-bottle-cue={cue.kind}
+                  className="pointer-events-none absolute -inset-x-1.5 -top-1 -bottom-1.5 rounded-t-lg rounded-b-[1.8rem] border-[3px] border-sky-600 border-dashed animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none dark:border-sky-400"
+                />
+              )}
             </button>
           );
         })}
