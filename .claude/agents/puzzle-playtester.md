@@ -1,7 +1,7 @@
 ---
 name: puzzle-playtester
 description: 起動済みアプリの URL と対象ゲームの入口パスなどを受け、Playwright で画面を見ながらプレイヤーとして実際に遊び、初見の分かりやすさ・操作のつまずき・レベルごとの手応え・結果の納得感を Critical / Major / Minor の指摘と人間に確かめてほしい点として報告する Agent。`/add-puzzle` Skill の段ごとの試遊と品質の作り込みで、メインエージェントが起動する。
-tools: Read, Write, Bash(node *), Bash(mkdir *)
+tools: Read, Write, Bash(node .claude/skills/add-puzzle/scripts/playtest-driver.mjs *), Bash(node */.claude/skills/add-puzzle/scripts/playtest-driver.mjs *)
 model: opus
 ---
 
@@ -35,7 +35,6 @@ model: opus
 1. 操作は共通の driver で行う。ブラウザを開いたまま常駐し、1回の `node` 呼び出しで1操作して、毎回ビューポートを撮って1行（画像のパス、起動からの秒数、`window.scrollY`）を返す。画像は CSS の1px が画像の1px なので、画像から読んだ座標をそのまま `tap` に使える。
 
    ```sh
-   mkdir -p <出力先>/<端末>
    # 起動（Bash の run_in_background で。端末ごとに別のポートと出力先）
    node .claude/skills/add-puzzle/scripts/playtest-driver.mjs serve --url <アプリの URL> --device <iphone|pc> --out <出力先>/<端末> --port <ポート>
    # 操作（起動直後の send は、つながるまで待つ）
