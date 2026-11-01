@@ -84,16 +84,16 @@ export function AppTitleScreen({ title, games, onEnter }: AppTitleScreenProps) {
               <BrandMark size="title" />
             </DialogTitle>
 
-            <ul className="grid w-full max-w-[22rem] grid-cols-7 gap-2 sm:max-w-[30rem] sm:gap-4">
+            <ul className="flex max-w-68 flex-wrap justify-center gap-3 sm:max-w-none sm:flex-nowrap sm:gap-4">
               {games.map((game) => (
-                <li key={game.to}>
+                <li key={game.to} className="size-14 sm:size-20">
                   {/* 読み込み中も同じ要素のまま押せなくし、入れるようになったときにピクトグラムを描き直さない。 */}
                   <Link
                     to={game.to}
                     aria-label={`${game.name}を遊ぶ`}
                     inert={!ready}
                     onClick={enterGame}
-                    className="flex aspect-square items-center justify-center rounded-lg border-(length:--border-width-normal) border-border bg-background p-[18%] transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    className="flex size-full items-center justify-center rounded-lg border-(length:--border-width-normal) border-border bg-background p-[18%] transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     <GamePictogram svg={game.pictogramSvg} />
                   </Link>
