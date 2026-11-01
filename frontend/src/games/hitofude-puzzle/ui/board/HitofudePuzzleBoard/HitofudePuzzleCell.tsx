@@ -85,9 +85,9 @@ export function HitofudePuzzleCell({
           onPress(cell);
         }
       }}
-      // フォーカスの枠は穴の縁（マスの辺に沿う角張った濃い線）と見分けられるよう、マスの内側へ下げた角の丸い
-      // ring の色の太い枠にし、マスを ring の色で淡く染める。
-      className="relative m-[10%] min-h-0 min-w-0 rounded-[22%] outline-none focus-visible:z-10 focus-visible:bg-ring/25 focus-visible:outline-4 focus-visible:outline-solid focus-visible:outline-offset-0 focus-visible:outline-ring disabled:cursor-default"
+      // フォーカスの枠は先端の輪（マス幅の8割強の円）と重ならないよう、マスの外側に沿わせる。穴の縁（マスの辺に沿う
+      // 角張った濃い線）とは、角の丸い ring の色の枠と、マスを ring の色で淡く染めることで見分けさせる。
+      className="relative min-h-0 min-w-0 rounded-[22%] outline-none focus-visible:z-10 focus-visible:bg-ring/25 focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-1 focus-visible:outline-ring disabled:cursor-default"
     />
   );
 }
