@@ -670,7 +670,10 @@ class HumanSolver {
     }
   }
 
-  /** 未定の辺を、両端のマスの未定の辺が少ない順（同じなら辺の番号順）に並べる。 */
+  /**
+   * 未定の辺を、両端のマスの未定の辺が少ない順（同じなら辺の番号順）に並べる。辺の番号はマスの番号から決まるので、
+   * 同じ盤面でも向きによって仮置きの結果が変わる。難易度の分析は8通りの向きで読み比べる（`analyzeHamiltonianPathDifficulty`）。
+   */
   #assumptionCandidates(state: SolverState): number[] {
     const candidates: [number, number][] = [];
     for (const [edge, [left, right]] of this.#edgeEnds.entries()) {

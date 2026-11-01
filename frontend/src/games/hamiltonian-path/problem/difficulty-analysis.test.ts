@@ -3,26 +3,35 @@ import {
   getHamiltonianPathSolveWorkload,
   type HamiltonianPathAnalyzedDifficulty,
 } from "@/games/hamiltonian-path/problem/difficulty-analysis";
+import { traceHamiltonianPathHumanSolve } from "@/games/hamiltonian-path/problem/generation/human-solver";
+import { listHamiltonianPathBoardSymmetries } from "@/games/hamiltonian-path/problem/generation/symmetry";
+import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem/generator";
+import { createHamiltonianPathProblemIdentity } from "@/games/hamiltonian-path/problem/problem";
 import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
+
+/**
+ * 研究用 Python の HumanSolver で仮置き1回、decision_profile で分岐8（1段仮置きで退ける誤り手が1つ）の盤面。
+ * 回転・反転すると、解法器は仮置き1回・2回・4回のいずれかで道を決める。
+ */
+const pythonFixtureProblem = parseHamiltonianPathBoard([
+  ". . . .|. .|.",
+  "",
+  ". . . . . . .",
+  "      -",
+  ".|. . . . . .",
+  "  -   -   -",
+  ".|. . . . . .",
+  "      -",
+  ". . . . .|. S",
+  "    -",
+  ". . . . . . .",
+  "",
+  ". . . . . . .",
+]);
 
 describe("analyzeHamiltonianPathDifficulty", () => {
   describe("一意解の問題の場合", () => {
-    // 研究用 Python の HumanSolver で仮置き1回、decision_profile で分岐8（1段仮置きで退ける誤り手が1つ）の盤面。
-    const problem = parseHamiltonianPathBoard([
-      ". . . .|. .|.",
-      "",
-      ". . . . . . .",
-      "      -",
-      ".|. . . . . .",
-      "  -   -   -",
-      ".|. . . . . .",
-      "      -",
-      ". . . . .|. S",
-      "    -",
-      ". . . . . . .",
-      "",
-      ". . . . . . .",
-    ]);
+    const problem = pythonFixtureProblem;
 
     test("規模と推論と描画視点の分岐の特徴を返すこと", () => {
       const result = analyzeHamiltonianPathDifficulty(problem);
@@ -64,6 +73,53 @@ describe("analyzeHamiltonianPathDifficulty", () => {
       expect(result).toMatchObject({
         status: "unsupported",
         reason: "computation-limit",
+      });
+    });
+  });
+
+  describe("回転・反転した盤面の場合", () => {
+    const cases = [
+      ["研究用 Python の盤面", pythonFixtureProblem],
+      [
+        "hp-7-0-782",
+        generateHamiltonianPathProblem(
+          createHamiltonianPathProblemIdentity(7, 0, 782),
+        ).problem,
+      ],
+    ] as const;
+    const heavilyReadOrientation =
+      listHamiltonianPathBoardSymmetries(pythonFixtureProblem)[2]!;
+
+    test.each(cases)(
+      "%s のどの向きからも、同じ分析結果と作業の量を返すこと",
+      (_, problem) => {
+        const analyses = listHamiltonianPathBoardSymmetries(problem).map(
+          (orientation) => analyzeHamiltonianPathDifficulty(orientation),
+        );
+        const workloads = analyses.map((analysis) =>
+          analysis.status === "analyzed"
+            ? getHamiltonianPathSolveWorkload(analysis)
+            : null,
+        );
+
+        expect(analyses[0]?.status).toBe("analyzed");
+        expect(analyses).toEqual(analyses.map(() => analyses[0]));
+        expect(workloads).toEqual(workloads.map(() => workloads[0]));
+      },
+    );
+
+    test("仮置きの多い向きの盤面を、その向きだけで読むと仮置きが4回要ること", () => {
+      const trace = traceHamiltonianPathHumanSolve(heavilyReadOrientation);
+
+      expect(trace.assumptionCount).toBe(4);
+    });
+
+    test("仮置きの多い向きの盤面からも、最も仮置きの少ない向きの読み方を採ること", () => {
+      const result = analyzeHamiltonianPathDifficulty(heavilyReadOrientation);
+
+      expect(result).toMatchObject({
+        status: "analyzed",
+        reasoning: { assumptionCount: 1, refutationLengths: [5] },
       });
     });
   });
