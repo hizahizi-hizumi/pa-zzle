@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from "react";
 import type { WaterSortOperation } from "@/games/water-sort/play/use-water-sort-play";
 import type { WaterSortState } from "@/games/water-sort/puzzle/state";
+import type { WaterSortBottleCue } from "@/games/water-sort/ui/board/bottle-cue";
 import { PourAnimationLayer } from "@/games/water-sort/ui/board/pour/PourAnimationLayer";
 import { usePourAnimations } from "@/games/water-sort/ui/board/pour/use-pour-animations";
 import { getWaterColorView } from "@/games/water-sort/ui/board/water-bottle/get-water-color-view";
@@ -13,6 +14,13 @@ type WaterSortBoardProps = {
   operation: WaterSortOperation | null;
   onSelectBottle: (bottleIndex: number) => void;
   interactionDisabled: boolean;
+  /**
+   * ボトルの並べ方。
+   * - `rows`: 本数に応じて2段に分けて並べる。
+   * - `single-row`: すべてを1段に並べ、置かれた場所の幅いっぱいに広げる。
+   */
+  arrangement?: "rows" | "single-row";
+  cues?: readonly WaterSortBottleCue[];
   onPourAnimationActivityChange?: (active: boolean) => void;
   onClearAnimationComplete?: () => void;
 };
@@ -36,6 +44,8 @@ export function WaterSortBoard({
   operation,
   onSelectBottle,
   interactionDisabled,
+  arrangement = "rows",
+  cues = [],
   onPourAnimationActivityChange,
   onClearAnimationComplete,
 }: WaterSortBoardProps) {
@@ -74,7 +84,10 @@ export function WaterSortBoard({
       animation.destination.bottleIndex,
     ]),
   );
-  const layout = getBoardLayout(state.length);
+  const layout =
+    arrangement === "single-row"
+      ? getSingleRowLayout(state.length)
+      : getBoardLayout(state.length);
 
   return (
     <>
@@ -97,6 +110,7 @@ export function WaterSortBoard({
                   .join("、");
           const isSource = bottleIndex === sourceBottleIndex;
           const isAnimated = animatedBottleIndexes.has(bottleIndex);
+          const cue = cues.find((item) => item.bottleIndex === bottleIndex);
 
           return (
             <button
@@ -116,6 +130,14 @@ export function WaterSortBoard({
               >
                 <WaterBottle contents={bottle} selected={isSource} />
               </span>
+              {cue?.kind === "hint" && (
+                <span
+                  key={cue.id}
+                  aria-hidden="true"
+                  data-bottle-cue={cue.kind}
+                  className="pointer-events-none absolute -inset-1.5 top-0.5 rounded-b-[1.8rem] rounded-t-lg border-[3px] border-sky-600 border-dashed animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none dark:border-sky-400"
+                />
+              )}
             </button>
           );
         })}
@@ -124,6 +146,15 @@ export function WaterSortBoard({
       <PourAnimationLayer animations={animations} onFinish={finishAnimation} />
     </>
   );
+}
+
+function getSingleRowLayout(bottleCount: number) {
+  return {
+    columnCount: bottleCount,
+    width: "100%",
+    columnGap: 14,
+    rowGap: 0,
+  };
 }
 
 function getBoardLayout(bottleCount: number) {
