@@ -68,6 +68,8 @@ describe("HitofudePuzzlePlay", () => {
     isDeadEnd: false,
     strandedCells: [],
     blockedMove: null,
+    backtrackCount: 2,
+    undoCount: 3,
     canUndo: false,
     canRestart: false,
     ...callbacks,
@@ -248,6 +250,19 @@ describe("HitofudePuzzlePlay", () => {
       fireEvent.keyDown(cell!, { key: "ArrowRight" });
 
       expect(callbacks.onMoveHeadToward).toHaveBeenCalledWith("right");
+    });
+
+    test("見出しに引き直しと待ったの回数を表示すること", () => {
+      const header = screen.getByRole("heading", {
+        name: HITOFUDE_PUZZLE_DISPLAY_NAME,
+      }).parentElement!;
+      const metrics = within(header)
+        .getAllByText(/^(引き直し|時間|待った)$/)
+        .map(
+          (label) => `${label.textContent} ${label.nextSibling?.textContent}`,
+        );
+
+      expect(metrics).toEqual(["引き直し 2", "時間 03:40", "待った 3"]);
     });
 
     const modifierCases = [

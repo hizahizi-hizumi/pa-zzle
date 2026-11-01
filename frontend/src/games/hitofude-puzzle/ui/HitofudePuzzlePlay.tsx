@@ -22,6 +22,7 @@ import type {
   RestartableGamePlayScreenProps,
   UndoableGamePlayScreenProps,
 } from "@/games/play";
+import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 
 type HitofudePuzzlePlayProps = GamePlayScreenProps<
   HitofudePuzzleDifficulty,
@@ -34,6 +35,8 @@ type HitofudePuzzlePlayProps = GamePlayScreenProps<
     isDeadEnd: boolean;
     strandedCells: readonly number[];
     blockedMove: HitofudePuzzleBlockedMove | null;
+    backtrackCount: number;
+    undoCount: number;
     onBeginStroke: (cell: number) => void;
     onTraceStroke: (step: HitofudePuzzleTraceStep) => void;
     onEndStroke: () => void;
@@ -51,6 +54,8 @@ export function HitofudePuzzlePlay({
   isDeadEnd,
   strandedCells,
   blockedMove,
+  backtrackCount,
+  undoCount,
   canUndo,
   canRestart,
   onBeginStroke,
@@ -107,7 +112,12 @@ export function HitofudePuzzlePlay({
       progress={progress}
       result={result}
       title={HITOFUDE_PUZZLE_DISPLAY_NAME}
-      metrics={[{ type: "elapsed-time", elapsedMs }]}
+      // 引き直しは正確さの元なので、バイナリパズルの置き直しと同じく見出しの先頭に置き、待ったを添える。
+      metrics={[
+        { type: "count", label: "引き直し", count: backtrackCount },
+        { type: "elapsed-time", elapsedMs },
+        { type: "count", label: PLAY_OPERATION_LABELS.undo, count: undoCount },
+      ]}
       canRestart={canRestart}
       onRestart={onRestart}
       onReplay={onReplay}

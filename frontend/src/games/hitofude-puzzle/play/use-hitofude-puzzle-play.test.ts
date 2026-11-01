@@ -192,6 +192,14 @@ describe("useHitofudePuzzlePlay", () => {
       expect(result.current.path).toEqual(solution.slice(0, 2));
     });
 
+    test("引き直しの回数と待ったの回数を返すこと", () => {
+      tapAll(result, [solution[1]!]);
+      act(() => result.current.undo());
+
+      expect(result.current.backtrackCount).toBe(0);
+      expect(result.current.undoCount).toBe(1);
+    });
+
     test("待ったで直前の1操作を取り消すこと", () => {
       act(() => result.current.undo());
 

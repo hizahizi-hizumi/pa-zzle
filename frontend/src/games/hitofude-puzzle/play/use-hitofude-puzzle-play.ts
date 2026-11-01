@@ -97,6 +97,10 @@ export type HitofudePuzzlePlay = GamePlay<
     strandedCells: readonly number[];
     /** 最後に道を延ばせなかった操作。 */
     blockedMove: HitofudePuzzleBlockedMove | null;
+    /** ここまでの引き直しの回数。なぞりを離したとき・矢印キー・待った・盤面を戻すの後に数える。 */
+    backtrackCount: number;
+    /** ここまでに待ったを使った回数。 */
+    undoCount: number;
     /** マスを押して道をなぞり始める。道のマスならそこまで巻き戻し、先端の隣なら延ばす。 */
     beginStroke: (cell: number) => void;
     /** なぞっている指が隣のマスへ移ったときに道を変える。 */
@@ -354,6 +358,8 @@ export function useHitofudePuzzlePlay(
     isDeadEnd: isHitofudePuzzleDeadEnd(problem, puzzleState.path),
     strandedCells,
     blockedMove,
+    backtrackCount: session.backtrackCount,
+    undoCount: session.undoCount,
     canUndo: canUndoHitofudePuzzleSession(session),
     canRestart: canRestartHitofudePuzzleSession(session),
     beginStroke,
