@@ -1,7 +1,10 @@
 import { GamePlayFrame } from "@/components/GamePlayFrame";
 import type { NanpureDifficulty } from "@/games/nanpure/difficulty";
 import { NANPURE_DISPLAY_NAME } from "@/games/nanpure/display-name";
-import type { NanpureResult } from "@/games/nanpure/play/use-nanpure-play";
+import type {
+  NanpureOperation,
+  NanpureResult,
+} from "@/games/nanpure/play/use-nanpure-play";
 import type {
   NanpureBoard as NanpureBoardState,
   NanpureDigit,
@@ -10,6 +13,7 @@ import type { NanpureNotes } from "@/games/nanpure/session/session";
 import { NanpureClearAnimation } from "@/games/nanpure/ui/board/clear/NanpureClearAnimation";
 import { NanpureBoard } from "@/games/nanpure/ui/board/NanpureBoard";
 import { NanpureHowToPlayDialog } from "@/games/nanpure/ui/NanpureHowToPlayDialog";
+import { useNanpureSoundEffects } from "@/games/nanpure/ui/NanpurePlay/use-nanpure-sound-effects";
 import { NanpureInputPanel } from "@/games/nanpure/ui/play/NanpureInputPanel";
 import { NanpureResultScreen } from "@/games/nanpure/ui/result/NanpureResultScreen";
 import type {
@@ -30,6 +34,7 @@ type NanpurePlayProps = GamePlayScreenProps<NanpureDifficulty, NanpureResult> &
     mistakeCellIndices: readonly number[];
     completedDigits: readonly NanpureDigit[];
     notesMode: boolean;
+    operation: NanpureOperation | null;
     mistakeCount: number;
     undoCount: number;
     onSelectCell: (cellIndex: number) => void;
@@ -52,6 +57,7 @@ export function NanpurePlay({
   mistakeCellIndices,
   completedDigits,
   notesMode,
+  operation,
   mistakeCount,
   undoCount,
   canUndo,
@@ -70,6 +76,8 @@ export function NanpurePlay({
   onClearAnimationComplete,
   onOpenDiagnostics,
 }: NanpurePlayProps) {
+  useNanpureSoundEffects(operation, progress);
+
   const interactionEnabled = progress === "playing";
   const selectedIsEditable =
     selectedCellIndex !== null && clues[selectedCellIndex] === null;

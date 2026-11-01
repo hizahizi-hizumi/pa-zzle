@@ -8,7 +8,10 @@ import type {
 import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import { TAKUZU_DISPLAY_NAME } from "@/games/takuzu/display-name";
-import type { TakuzuResult } from "@/games/takuzu/play/use-takuzu-play";
+import type {
+  TakuzuOperation,
+  TakuzuResult,
+} from "@/games/takuzu/play/use-takuzu-play";
 import type { TakuzuCell } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import type {
@@ -19,6 +22,7 @@ import { TakuzuClearAnimation } from "@/games/takuzu/ui/board/clear/TakuzuClearA
 import { TakuzuBoard } from "@/games/takuzu/ui/board/TakuzuBoard";
 import { TakuzuResultScreen } from "@/games/takuzu/ui/result/TakuzuResultScreen";
 import { TakuzuHowToPlayDialog } from "@/games/takuzu/ui/TakuzuHowToPlayDialog";
+import { useTakuzuSoundEffects } from "@/games/takuzu/ui/TakuzuPlay/use-takuzu-sound-effects";
 import { TakuzuTutorial } from "@/games/takuzu/ui/TakuzuTutorial";
 
 type TakuzuPlayProps = GamePlayScreenProps<TakuzuDifficulty, TakuzuResult> &
@@ -29,6 +33,7 @@ type TakuzuPlayProps = GamePlayScreenProps<TakuzuDifficulty, TakuzuResult> &
     lineViolations: readonly TakuzuLineViolationView[];
     correctionCount: number;
     undoCount: number;
+    operation: TakuzuOperation | null;
     onCycleCell: (cellIndex: number, direction: TakuzuCycleDirection) => void;
     onPlaceCell: (cellIndex: number, cell: TakuzuCell) => void;
   };
@@ -44,6 +49,7 @@ export function TakuzuPlay({
   lineViolations,
   correctionCount,
   undoCount,
+  operation,
   canUndo,
   onCycleCell,
   onPlaceCell,
@@ -58,6 +64,8 @@ export function TakuzuPlay({
   onBackToHome,
   onOpenDiagnostics,
 }: TakuzuPlayProps) {
+  useTakuzuSoundEffects(operation, progress);
+
   return (
     <GamePlayFrame
       progress={progress}
@@ -105,6 +113,7 @@ export function TakuzuPlay({
               size={size}
               cells={cells}
               lineViolations={lineViolations}
+              operation={operation}
               interactionDisabled={progress !== "playing"}
               onCycleCell={onCycleCell}
               onPlaceCell={onPlaceCell}

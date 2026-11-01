@@ -16,6 +16,7 @@ import type { SlidePuzzleBoard as SlidePuzzleBoardState } from "@/games/slide-pu
 import { SlidePuzzleBoard } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard";
 import { SlidePuzzleResultScreen } from "@/games/slide-puzzle/ui/result/SlidePuzzleResultScreen";
 import { SlidePuzzleHowToPlayDialog } from "@/games/slide-puzzle/ui/SlidePuzzleHowToPlayDialog";
+import { useSlidePuzzleSoundEffects } from "@/games/slide-puzzle/ui/SlidePuzzlePlay/use-slide-puzzle-sound-effects";
 import { SlidePuzzleTutorial } from "@/games/slide-puzzle/ui/SlidePuzzleTutorial";
 
 type SlidePuzzlePlayProps = GamePlayScreenProps<
@@ -59,6 +60,7 @@ export function SlidePuzzlePlay({
   onOpenDiagnostics,
 }: SlidePuzzlePlayProps) {
   const playAreaRef = useRef<HTMLElement>(null);
+  useSlidePuzzleSoundEffects(operation, progress, board.length - 1);
 
   useEffect(() => {
     if (progress !== "playing") {
