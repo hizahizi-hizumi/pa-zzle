@@ -471,7 +471,7 @@ describe("useIceFloorMazePlay", () => {
       });
     });
 
-    test("待ったで閉じ込めの前まで戻すと知らせをやめること", () => {
+    test("待ったで閉じ込めの前の、ゴールに止まれる状態まで戻すと知らせをやめること", () => {
       slideInOrder(result, ["left"]);
 
       act(() => result.current.undo());
@@ -479,6 +479,56 @@ describe("useIceFloorMazePlay", () => {
       act(() => result.current.undo());
 
       expect(trappedAfterFirstUndo).toBe(true);
+      expect(result.current.isTrapped).toBe(false);
+    });
+  });
+
+  describe("詰みを経て閉じ込めへ入ってから待ったで戻した場合", () => {
+    // 0  #  #  3
+    // 4  5  6  G
+    // 8  S  10 11
+    // 12 13 14 15
+    // 開始位置 9 から右へ滑ると 11 で詰みになるが、崩さない滑りで 11 へ戻れない 3 へ進めるので、まだ閉じ込めではない。
+    // 11 から上へ滑ると 3 で閉じ込めになる（3・15・12・0 を回るだけ）。開始位置 9 からは上・右でゴール 7 に止まれる。
+    const detourProblem: IceFloorMazePooledProblem = {
+      problem: {
+        board: parseIceFloorMazeBoard([".##.", "....", "....", "...."]),
+        start: 9,
+        goal: 7,
+      },
+      identity: {
+        generatorVersion: "2",
+        seed: "ice-floor-maze-detour",
+        conditions: { width: 4, height: 4 },
+      },
+      optimalMoveCount: 2,
+    };
+
+    beforeEach(() => {
+      ({ result } = renderHook(() => useIceFloorMazePlay("1", detourProblem)));
+      slideInOrder(result, ["right"]);
+    });
+
+    test("詰みでも閉じ込めの前は知らせないこと", () => {
+      expect(result.current.isTrapped).toBe(false);
+    });
+
+    test("戻った先がまだ詰みなら知らせ続け、ゴールに止まれる状態まで戻ると知らせをやめること", () => {
+      slideInOrder(result, ["up"]);
+
+      act(() => result.current.undo());
+      const noticedAfterFirstUndo = result.current.isTrapped;
+      act(() => result.current.undo());
+
+      expect(noticedAfterFirstUndo).toBe(true);
+      expect(result.current.isTrapped).toBe(false);
+    });
+
+    test("知らせた後に盤面を戻すと知らせをやめること", () => {
+      slideInOrder(result, ["up"]);
+
+      act(() => result.current.restart());
+
       expect(result.current.isTrapped).toBe(false);
     });
   });
