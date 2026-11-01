@@ -2,6 +2,10 @@ import { parseNonogramBoard } from "@/games/nonogram/puzzle/board";
 import type { NonogramClue } from "@/games/nonogram/puzzle/clue";
 import { NonogramCellFace } from "@/games/nonogram/ui/board/NonogramCellFace";
 import { listNonogramClueNumbers } from "@/games/nonogram/ui/clue-numbers";
+import {
+  type StrokeTrace,
+  StrokeTraceOverlay,
+} from "@/games/nonogram/ui/NonogramHowToPlayDialog/HowToPlayFigure/StrokeTraceOverlay";
 import { nonogramToneClassNames } from "@/games/nonogram/ui/nonogram-tone";
 import { cn } from "@/lib/utils";
 
@@ -9,17 +13,20 @@ import { cn } from "@/lib/utils";
  * 盤面と同じ見え方で描く、遊び方の小さな図。
  * `rows` の1文字が1マスで、`#` が塗り、`x` が ×、`.` が未確定。
  * `rowClues` を渡すと各行の左に行ヒントを添え、`matchedRows` の行のヒントを盤面と同じく薄くする。
+ * `trace` を渡すと、押し始めたマスに点を置き、離したマスまでの道筋を矢印で重ねる。
  */
 type HowToPlayFigureProps = {
   rows: readonly string[];
   rowClues?: readonly NonogramClue[];
   matchedRows?: readonly boolean[];
+  trace?: StrokeTrace;
 };
 
 export function HowToPlayFigure({
   rows,
   rowClues,
   matchedRows,
+  trace,
 }: HowToPlayFigureProps) {
   const board = parseNonogramBoard(rows);
 
@@ -48,7 +55,7 @@ export function HowToPlayFigure({
       ) : null}
       <span
         className={cn(
-          "inline-grid gap-px border-2",
+          "relative inline-grid gap-px border-2",
           nonogramToneClassNames.gridLineSurface,
           nonogramToneClassNames.blockLine,
         )}
@@ -63,6 +70,13 @@ export function HowToPlayFigure({
             <NonogramCellFace state={state} />
           </span>
         ))}
+        {trace ? (
+          <StrokeTraceOverlay
+            trace={trace}
+            boardWidth={board.width}
+            boardHeight={board.height}
+          />
+        ) : null}
       </span>
     </span>
   );

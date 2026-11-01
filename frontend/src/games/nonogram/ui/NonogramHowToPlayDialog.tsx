@@ -50,8 +50,23 @@ export function NonogramHowToPlayDialog({
       <li className="space-y-2">
         <p>なぞると、同じ行・列のマスにまとめて入れる。</p>
         <HowToPlayTransition>
-          <HowToPlayFigure rows={[".", ".", ".", "."]} />
+          <HowToPlayFigure
+            rows={[".", ".", ".", "."]}
+            trace={{ fromCellIndex: 0, toCellIndex: 2 }}
+          />
           <HowToPlayFigure rows={["#", "#", "#", "."]} />
+        </HowToPlayTransition>
+      </li>
+      <li className="space-y-2">
+        <p>
+          入れるか消すかは、なぞり始めのマスで決まる。同じ印のマスから始めると、離すまで消すだけになる。
+        </p>
+        <HowToPlayTransition>
+          <HowToPlayFigure
+            rows={["#", "#", ".", "#"]}
+            trace={{ fromCellIndex: 0, toCellIndex: 3 }}
+          />
+          <HowToPlayFigure rows={[".", ".", ".", "."]} />
         </HowToPlayTransition>
       </li>
       <li className="space-y-2">
