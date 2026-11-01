@@ -66,7 +66,7 @@ model: opus
 
 - 範囲に含まれる統合が揃っているか。作り込みのレビューでは `game-structure.md`「ゲームを追加するとき」の4手順すべて
 - 前例にあって規約に書かれていない触る場所: `game-catalog.ts` の並び、`frontend/biome.json` の `files.includes` での `problem-pool.json` 除外、`frontend/scripts/generate-<game>-problem-pool.ts`（`--verify`）と `package.json` の scripts、`frontend/src/views/PuzzleSelectionView.test.tsx` の一覧。前例と比べて漏れを示す
-- 一覧に載せる前（範囲に catalog の項目が無い版）では、`game-catalog.test.ts` の未掲載の除外（`gamesNotInCatalogYet`）と、入口とプレイ画面のパスだけのカタログエントリがあってよい。範囲に catalog の項目があるのにこれらが残っていれば指摘する
+- 一覧に載せる前（範囲に catalog の項目が無い版）では、`game-catalog.test.ts` の未掲載の除外（`gamesNotInCatalogYet`）と、一覧に出さないカタログエントリ（後の項目で作るものは仮の実装）があってよい。範囲に catalog の項目があるのにこれらが残っていれば指摘する
 - `pages/` は View を再 export するだけか（`pages.md`）、View の責務（`views.md`）
 
 ### 5. テスト
