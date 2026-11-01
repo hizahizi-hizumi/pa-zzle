@@ -6,8 +6,18 @@ import { difficultyLevels } from "@/games/difficulty";
 import { MINESWEEPER_DISPLAY_NAME } from "@/games/minesweeper/display-name";
 import { MinesweeperDifficultyPreview } from "@/games/minesweeper/ui/MinesweeperDifficultyPreview";
 import { MinesweeperHowToPlayDialog } from "@/games/minesweeper/ui/MinesweeperHowToPlayDialog";
+import { MinesweeperTutorial } from "@/games/minesweeper/ui/MinesweeperTutorial";
+import { useNavigate } from "@/router";
 
 export function MinesweeperDifficultyView() {
+  const navigate = useNavigate();
+
+  function startLevelOne(): void {
+    navigate("/puzzles/minesweeper/play/:difficulty", {
+      params: { difficulty: "1" },
+    });
+  }
+
   return (
     <section className="space-y-6 sm:space-y-8">
       <div className="space-y-2">
@@ -16,6 +26,13 @@ export function MinesweeperDifficultyView() {
           title={MINESWEEPER_DISPLAY_NAME}
           renderHowToPlayDialog={({ open, onClose }) => (
             <MinesweeperHowToPlayDialog open={open} onClose={onClose} />
+          )}
+          renderTutorial={({ open, onClose }) => (
+            <MinesweeperTutorial
+              open={open}
+              onStartPlay={startLevelOne}
+              onClose={onClose}
+            />
           )}
         />
       </div>

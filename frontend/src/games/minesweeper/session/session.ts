@@ -2,7 +2,10 @@ import {
   assertMinesweeperProblem,
   type MinesweeperProblem,
 } from "@/games/minesweeper/problem/problem";
-import { getMinesweeperCellCount } from "@/games/minesweeper/puzzle/board";
+import {
+  getMinesweeperCellCount,
+  type MinesweeperBoard,
+} from "@/games/minesweeper/puzzle/board";
 import {
   getAdjacentMinesweeperMineCount,
   isMinesweeperCleared,
@@ -75,10 +78,11 @@ function applyPuzzleState(
 }
 
 function getVisibleCell(
-  session: MinesweeperSession,
+  board: MinesweeperBoard,
+  puzzleState: MinesweeperPuzzleState,
+  cleared: boolean,
   cellIndex: number,
 ): MinesweeperVisibleCell {
-  const { puzzleState } = session;
   if (puzzleState.steppedMineCellIndices.includes(cellIndex)) {
     return { state: "steppedMine" };
   }
@@ -88,19 +92,27 @@ function getVisibleCell(
   if (puzzleState.revealedCellIndices.includes(cellIndex)) {
     return {
       state: "revealed",
-      adjacentMineCount: getAdjacentMinesweeperMineCount(
-        session.problem.board,
-        cellIndex,
-      ),
+      adjacentMineCount: getAdjacentMinesweeperMineCount(board, cellIndex),
     };
   }
-  if (
-    session.status === "cleared" &&
-    isMinesweeperMine(session.problem.board, cellIndex)
-  ) {
+  if (cleared && isMinesweeperMine(board, cellIndex)) {
     return { state: "mine" };
   }
   return { state: "hidden" };
+}
+
+/** 盤面の見え方。地雷の配置は、解き終えた盤面でだけ明かす。 */
+export function getMinesweeperVisibleCells(
+  board: MinesweeperBoard,
+  puzzleState: MinesweeperPuzzleState,
+  cleared: boolean,
+): MinesweeperVisibleCell[] {
+  return Array.from(
+    { length: getMinesweeperCellCount(board) },
+    function getVisibleCellAtIndex(_, cellIndex) {
+      return getVisibleCell(board, puzzleState, cleared, cellIndex);
+    },
+  );
 }
 
 export function createMinesweeperSession(
@@ -198,10 +210,9 @@ export function getMinesweeperSessionResult(
 export function getMinesweeperSessionVisibleCells(
   session: MinesweeperSession,
 ): MinesweeperVisibleCell[] {
-  return Array.from(
-    { length: getMinesweeperCellCount(session.problem.board) },
-    function getVisibleCellAtIndex(_, cellIndex) {
-      return getVisibleCell(session, cellIndex);
-    },
+  return getMinesweeperVisibleCells(
+    session.problem.board,
+    session.puzzleState,
+    session.status === "cleared",
   );
 }

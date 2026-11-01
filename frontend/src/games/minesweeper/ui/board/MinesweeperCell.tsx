@@ -2,6 +2,7 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 import { useRef } from "react";
 
 import type { MinesweeperVisibleCell } from "@/games/minesweeper/session/session";
+import type { MinesweeperCellCue } from "@/games/minesweeper/ui/board/cell-cue";
 import {
   getMinesweeperCellFaceClassName,
   MinesweeperCellFace,
@@ -13,6 +14,7 @@ type MinesweeperCellProps = {
   cellIndex: number;
   view: MinesweeperVisibleCell;
   disabled: boolean;
+  cue?: MinesweeperCellCue;
   onPress: (cellIndex: number) => void;
   onFlagPress: (cellIndex: number) => void;
 };
@@ -42,7 +44,7 @@ function getAccessibleName(
 function getCellClassName(view: MinesweeperVisibleCell): string {
   const faceClassName = getMinesweeperCellFaceClassName(view, "board");
   const interactionClassName =
-    "min-w-0 touch-manipulation select-none outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
+    "relative isolate min-w-0 touch-manipulation select-none outline-none transition-colors duration-(--duration-fast) focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none";
 
   if (view.state === "hidden" || view.state === "flagged") {
     return `${faceClassName} ${interactionClassName} hover:bg-slate-300 dark:hover:bg-slate-600`;
@@ -54,6 +56,7 @@ export function MinesweeperCell({
   cellIndex,
   view,
   disabled,
+  cue,
   onPress,
   onFlagPress,
 }: MinesweeperCellProps) {
@@ -116,6 +119,28 @@ export function MinesweeperCell({
       className={getCellClassName(view)}
     >
       <MinesweeperCellFace view={view} size="board" />
+      {cue && (
+        <MinesweeperCellCueMark key={`${cue.kind}:${cue.id}`} cue={cue} />
+      )}
     </button>
+  );
+}
+
+const cueClassNames = {
+  fitted:
+    "inset-1 rounded-sm bg-sky-100/60 ring-2 ring-sky-500/50 ring-inset fill-mode-forwards animate-out fade-out-0 duration-900 ease-in dark:bg-sky-900/50 dark:ring-sky-300/50",
+  reason:
+    "inset-0 bg-sky-100/70 ring-2 ring-sky-500/50 ring-inset fill-mode-forwards animate-out fade-out-0 duration-900 ease-in dark:bg-sky-900/50 dark:ring-sky-300/50",
+  hint: "inset-1 rounded-sm border-[3px] border-sky-600 border-dashed animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none dark:border-sky-400",
+} as const satisfies Record<MinesweeperCellCue["kind"], string>;
+
+/** マスに重ねる合図。数字や旗を隠さないよう、マスの面と中身の間に描く。 */
+function MinesweeperCellCueMark({ cue }: { cue: MinesweeperCellCue }) {
+  return (
+    <span
+      aria-hidden="true"
+      data-cell-cue={cue.kind}
+      className={`pointer-events-none absolute -z-10 ${cueClassNames[cue.kind]}`}
+    />
   );
 }

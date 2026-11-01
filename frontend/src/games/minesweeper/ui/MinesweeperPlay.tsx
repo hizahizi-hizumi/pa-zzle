@@ -16,6 +16,7 @@ import {
 import { MinesweeperHowToPlayDialog } from "@/games/minesweeper/ui/MinesweeperHowToPlayDialog";
 import { InputModeToggle } from "@/games/minesweeper/ui/MinesweeperPlay/InputModeToggle";
 import { useMinesweeperSoundEffects } from "@/games/minesweeper/ui/MinesweeperPlay/use-minesweeper-sound-effects";
+import { MinesweeperTutorial } from "@/games/minesweeper/ui/MinesweeperTutorial";
 import { MinesweeperResultScreen } from "@/games/minesweeper/ui/result/MinesweeperResultScreen";
 import type { GamePlayScreenProps } from "@/games/play";
 
@@ -96,6 +97,9 @@ export function MinesweeperPlay({
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
         <MinesweeperHowToPlayDialog open={open} onClose={onClose} />
+      )}
+      renderTutorial={({ open, onClose }) => (
+        <MinesweeperTutorial open={open} onClose={onClose} />
       )}
       renderResultScreen={(clearedResult) => (
         <MinesweeperResultScreen
