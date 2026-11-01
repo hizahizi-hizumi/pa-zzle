@@ -27,9 +27,10 @@ type HamiltonianPathHowToPlayDialogProps = {
  * 6 7 8
  */
 const openBoard = parseHamiltonianPathBoard(["S . .", ". . .", ". . ."]);
-const blockedBoard = parseHamiltonianPathBoard(["S . .", ". # .", ". . ."]);
+/** 真ん中に穴が開いた盤面と、右下の角が欠けた盤面。 */
+const innerHoleBoard = parseHamiltonianPathBoard(["S . .", ". # .", ". . ."]);
+const edgeHoleBoard = parseHamiltonianPathBoard(["S . .", ". . .", ". . #"]);
 
-/** ルールと操作を、盤面と同じ見た目の小さな図と短い一文で示す。 */
 /** 真ん中の列を縦に通って、左右の列が両方とも端になれなくなった道。 */
 const strandingPath = [0, 1, 4, 7];
 
@@ -49,6 +50,7 @@ function describeStrandingScope(
   return showsHamiltonianPathStranding(difficulty) ? "このレベル" : null;
 }
 
+/** ルールと操作を、盤面と同じ見た目の小さな図と短い一文で示す。 */
 export function HamiltonianPathHowToPlayDialog({
   open,
   difficulty,
@@ -70,20 +72,18 @@ export function HamiltonianPathHowToPlayDialog({
       </li>
       <li className="space-y-2">
         <p>
-          壁（暗いマス）と仕切り（マスの間の短い棒）の向こうへは進めない。進もうとすると、そのマスに×が出る。
+          穴（盤面に開いた穴や、縁の欠けた所）は通れず、通らなくてよい。穴へ進もうとすると、そのマスに×が出る。
         </p>
         <div className="flex items-center gap-2">
           <HowToPlayFigure
-            board={blockedBoard}
-            path={[0, 1]}
-            blockedCell={2}
-            fingerCell={2}
+            board={innerHoleBoard}
+            path={[0, 1, 2, 5, 8, 7, 6, 3]}
           />
           <HowToPlayFigure
-            board={blockedBoard}
-            path={[0, 1]}
-            blockedCell={4}
-            fingerCell={4}
+            board={edgeHoleBoard}
+            path={[0, 1, 2, 5]}
+            blockedCell={8}
+            fingerCell={8}
           />
         </div>
       </li>
