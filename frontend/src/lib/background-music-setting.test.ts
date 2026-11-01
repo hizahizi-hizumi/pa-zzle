@@ -16,7 +16,7 @@ afterEach(() => {
 describe("isBackgroundMusicEnabled", () => {
   const cases = [
     ["何も保存していない", null, null, true],
-    ["音量を 0 と保存した", { volume: 0, unmutedVolume: 60 }, null, false],
+    ["音量を 0 と保存した", { volume: 0, unmutedVolume: 6 }, null, false],
     [
       "以前のBGMをオフにした設定だけを保存した",
       null,
@@ -58,10 +58,10 @@ describe("backgroundMusicVolumeSetting", () => {
   });
 
   test("選んだ音量をBGMの音量として保存すること", () => {
-    setting.backgroundMusicVolumeSetting.commitVolume(30);
+    setting.backgroundMusicVolumeSetting.commitVolume(3);
 
     expect(window.localStorage.getItem(storageKey)).toBe(
-      JSON.stringify({ volume: 30, unmutedVolume: 30 }),
+      JSON.stringify({ volume: 3, unmutedVolume: 3 }),
     );
   });
 });

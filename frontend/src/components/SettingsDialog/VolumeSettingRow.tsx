@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { MAX_VOLUME } from "@/lib/stored-volume-setting";
 
 /** スライダーを一度動かしたときに変わる音量。 */
-const VOLUME_STEP = 5;
+const VOLUME_STEP = 1;
 
 type VolumeSettingRowProps = {
   /** 音量を選ぶ音の名前。 */
@@ -59,7 +59,7 @@ export function VolumeSettingRow({
             {label}
           </span>
           <span className="text-supporting text-muted-foreground tabular-nums">
-            {volume}%
+            {volume}
           </span>
         </div>
         <Slider

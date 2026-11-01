@@ -259,7 +259,7 @@ describe("playBackgroundMusic", () => {
       });
 
       test("流している曲の出口の大きさを 1/4 にすること", () => {
-        backgroundMusic.setBackgroundMusicVolume(30);
+        backgroundMusic.setBackgroundMusicVolume(3);
 
         const target = output?.gain.setTargetAtTime.mock.lastCall?.[0];
         expect(target).toBeCloseTo(initialGain / 4);
@@ -334,7 +334,7 @@ describe("playBackgroundMusic", () => {
     describe("流したい曲を決めた後に音量を上げた場合", () => {
       beforeEach(async () => {
         backgroundMusic.playBackgroundMusic(homeTrack);
-        backgroundMusic.setBackgroundMusicVolume(60);
+        backgroundMusic.setBackgroundMusicVolume(6);
         await settle();
       });
 
@@ -374,7 +374,7 @@ describe("playBackgroundMusic", () => {
       });
 
       test("同じ曲をもう一度流し始めること", () => {
-        backgroundMusic.setBackgroundMusicVolume(60);
+        backgroundMusic.setBackgroundMusicVolume(6);
 
         expect(getStartedSources().map(({ url }) => url)).toEqual([
           "/home.mp3",

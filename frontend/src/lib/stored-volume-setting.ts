@@ -9,8 +9,8 @@
 
 import { isRecordObject } from "@/lib/type-guards";
 
-export const MAX_VOLUME = 100;
-export const DEFAULT_VOLUME = 60;
+export const MAX_VOLUME = 10;
+export const DEFAULT_VOLUME = 6;
 
 type SettingStorage = Pick<Storage, "getItem" | "setItem">;
 

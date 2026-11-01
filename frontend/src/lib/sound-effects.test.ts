@@ -345,7 +345,7 @@ describe("playSound", () => {
     });
 
     test("鳴っている音も含め、出口の大きさを 1/4 にすること", () => {
-      soundEffects.setSoundEffectsVolume(30);
+      soundEffects.setSoundEffectsVolume(3);
 
       const target = master?.gain.setTargetAtTime.mock.lastCall?.[0];
       expect(target).toBeCloseTo(initialGain / 4);
@@ -526,7 +526,7 @@ describe("prepareSoundEffects", () => {
     describe("呼んだ後に音量を上げた場合", () => {
       beforeEach(async () => {
         soundEffects.prepareSoundEffects([sound]);
-        soundEffects.setSoundEffectsVolume(60);
+        soundEffects.setSoundEffectsVolume(6);
         await finishLoading();
       });
 

@@ -23,26 +23,21 @@ afterEach(() => {
 
 describe("getVolume", () => {
   const cases = [
-    ["何も保存していない", null, null, 60],
-    ["音量を保存した", { volume: 35, unmutedVolume: 35 }, null, 35],
-    ["消音した音量を保存した", { volume: 0, unmutedVolume: 80 }, null, 0],
+    ["何も保存していない", null, null, 6],
+    ["音量を保存した", { volume: 3, unmutedVolume: 3 }, null, 3],
+    ["消音した音量を保存した", { volume: 0, unmutedVolume: 8 }, null, 0],
     [
       "音量と以前の鳴らさない設定を保存した",
-      { volume: 35, unmutedVolume: 35 },
+      { volume: 3, unmutedVolume: 3 },
       { enabled: false },
-      35,
+      3,
     ],
     ["以前の鳴らさない設定だけを保存した", null, { enabled: false }, 0],
-    ["以前の鳴らす設定だけを保存した", null, { enabled: true }, 60],
-    ["以前の設定として形の違う値を保存した", null, { enabled: "no" }, 60],
-    [
-      "範囲を超える音量を保存した",
-      { volume: 120, unmutedVolume: 60 },
-      null,
-      60,
-    ],
-    ["整数でない音量を保存した", { volume: 12.5, unmutedVolume: 60 }, null, 60],
-    ["戻す音量が 0 の値を保存した", { volume: 0, unmutedVolume: 0 }, null, 60],
+    ["以前の鳴らす設定だけを保存した", null, { enabled: true }, 6],
+    ["以前の設定として形の違う値を保存した", null, { enabled: "no" }, 6],
+    ["範囲を超える音量を保存した", { volume: 11, unmutedVolume: 6 }, null, 6],
+    ["整数でない音量を保存した", { volume: 2.5, unmutedVolume: 6 }, null, 6],
+    ["戻す音量が 0 の値を保存した", { volume: 0, unmutedVolume: 0 }, null, 6],
   ] as const;
 
   describe.each(cases)("%s端末の場合", (_, stored, legacyStored, expected) => {
@@ -79,7 +74,7 @@ describe("getVolume", () => {
     test("初期の音量を返すこと", () => {
       const volume = setting.getVolume();
 
-      expect(volume).toBe(60);
+      expect(volume).toBe(6);
     });
   });
 
@@ -97,7 +92,7 @@ describe("getVolume", () => {
     test("初期の音量に戻すこと", () => {
       setting.toggleMuted();
 
-      expect(setting.getVolume()).toBe(60);
+      expect(setting.getVolume()).toBe(6);
     });
   });
 });
@@ -113,25 +108,25 @@ describe("setVolume", () => {
   });
 
   test("音量を変えて保存し、購読している側へ知らせること", () => {
-    setting.setVolume(25);
+    setting.setVolume(2);
 
-    expect(setting.getVolume()).toBe(25);
-    expect(readStored()).toEqual({ volume: 25, unmutedVolume: 60 });
+    expect(setting.getVolume()).toBe(2);
+    expect(readStored()).toEqual({ volume: 2, unmutedVolume: 6 });
     expect(onChange).toHaveBeenCalledOnce();
   });
 
   test("範囲の外の値は範囲に収めた整数にすること", () => {
-    setting.setVolume(140.2);
+    setting.setVolume(14.2);
 
-    expect(setting.getVolume()).toBe(100);
+    expect(setting.getVolume()).toBe(10);
   });
 
   test("変えた音量を次に開いたときも引き継ぐこと", () => {
-    setting.setVolume(25);
+    setting.setVolume(2);
 
     const reopened = createSetting();
 
-    expect(reopened.getVolume()).toBe(25);
+    expect(reopened.getVolume()).toBe(2);
   });
 
   describe("動かしている途中で 0 にした場合", () => {
@@ -142,7 +137,7 @@ describe("setVolume", () => {
     test("消音を戻すと、その前に選び終えた音量へ戻すこと", () => {
       setting.toggleMuted();
 
-      expect(setting.getVolume()).toBe(60);
+      expect(setting.getVolume()).toBe(6);
     });
   });
 });
@@ -155,21 +150,21 @@ describe("commitVolume", () => {
   });
 
   test("選び終えた音量に変えること", () => {
-    setting.commitVolume(40);
+    setting.commitVolume(4);
 
-    expect(setting.getVolume()).toBe(40);
+    expect(setting.getVolume()).toBe(4);
   });
 
   describe("音量を選び終えてから 0 を選び終えた場合", () => {
     beforeEach(() => {
-      setting.commitVolume(40);
+      setting.commitVolume(4);
       setting.commitVolume(0);
     });
 
     test("消音を戻すと、0 の前に選び終えた音量へ戻すこと", () => {
       setting.toggleMuted();
 
-      expect(setting.getVolume()).toBe(40);
+      expect(setting.getVolume()).toBe(4);
     });
   });
 });
@@ -179,14 +174,14 @@ describe("toggleMuted", () => {
 
   beforeEach(() => {
     setting = createSetting();
-    setting.commitVolume(45);
+    setting.commitVolume(3);
   });
 
   test("鳴らしていれば 0 にし、戻す音量と一緒に保存すること", () => {
     setting.toggleMuted();
 
     expect(setting.getVolume()).toBe(0);
-    expect(readStored()).toEqual({ volume: 0, unmutedVolume: 45 });
+    expect(readStored()).toEqual({ volume: 0, unmutedVolume: 3 });
   });
 
   describe("消音して開き直した場合", () => {
@@ -200,7 +195,7 @@ describe("toggleMuted", () => {
     test("消音する前の音量へ戻すこと", () => {
       reopened.toggleMuted();
 
-      expect(reopened.getVolume()).toBe(45);
+      expect(reopened.getVolume()).toBe(3);
     });
   });
 });
@@ -216,14 +211,14 @@ describe("subscribe", () => {
     setting.subscribe(onChange);
     window.localStorage.setItem(
       storageKey,
-      JSON.stringify({ volume: 10, unmutedVolume: 10 }),
+      JSON.stringify({ volume: 1, unmutedVolume: 1 }),
     );
   });
 
   test("別のタブで変えた音量を読み直して知らせること", () => {
     window.dispatchEvent(new StorageEvent("storage", { key: storageKey }));
 
-    expect(setting.getVolume()).toBe(10);
+    expect(setting.getVolume()).toBe(1);
     expect(onChange).toHaveBeenCalledOnce();
   });
 });
@@ -231,9 +226,9 @@ describe("subscribe", () => {
 describe("getVolumeGain", () => {
   const cases = [
     [0, 0],
-    [50, 0.5],
-    [60, 0.72],
-    [100, 2],
+    [5, 0.5],
+    [6, 0.72],
+    [10, 2],
   ] as const;
 
   test.each(cases)(

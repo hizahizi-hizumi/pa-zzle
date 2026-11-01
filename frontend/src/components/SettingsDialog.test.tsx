@@ -42,8 +42,8 @@ afterEach(() => {
   cleanup();
   vi.mocked(playSound).mockClear();
   vi.unstubAllGlobals();
-  soundEffectsVolumeSetting.commitVolume(60);
-  backgroundMusicVolumeSetting.commitVolume(60);
+  soundEffectsVolumeSetting.commitVolume(6);
+  backgroundMusicVolumeSetting.commitVolume(6);
   window.localStorage.clear();
 });
 
@@ -62,14 +62,14 @@ describe("SettingsDialog", () => {
       const volumes = ["効果音", "BGM"].map((name) => {
         const row = within(dialog).getByRole("group", { name });
         return {
-          text: within(row).getByText("60%").textContent,
+          text: within(row).getByText("6").textContent,
           slider: within(row).getByRole("slider").getAttribute("aria-valuenow"),
         };
       });
 
       expect(volumes).toEqual([
-        { text: "60%", slider: "60" },
-        { text: "60%", slider: "60" },
+        { text: "6", slider: "6" },
+        { text: "6", slider: "6" },
       ]);
     });
 
@@ -78,12 +78,12 @@ describe("SettingsDialog", () => {
 
       fireEvent.keyDown(slider, { key: "ArrowLeft" });
 
-      expect(soundEffectsVolumeSetting.getVolume()).toBe(55);
+      expect(soundEffectsVolumeSetting.getVolume()).toBe(5);
       expect(readStored("pa-zzle.sound-effects-volume.v1")).toEqual({
-        volume: 55,
-        unmutedVolume: 55,
+        volume: 5,
+        unmutedVolume: 5,
       });
-      expect(backgroundMusicVolumeSetting.getVolume()).toBe(60);
+      expect(backgroundMusicVolumeSetting.getVolume()).toBe(6);
       expect(playSound).toHaveBeenCalledExactlyOnceWith(
         appDecisionSound.playStartSound,
       );
@@ -94,12 +94,12 @@ describe("SettingsDialog", () => {
 
       fireEvent.keyDown(slider, { key: "ArrowRight" });
 
-      expect(backgroundMusicVolumeSetting.getVolume()).toBe(65);
+      expect(backgroundMusicVolumeSetting.getVolume()).toBe(7);
       expect(readStored("pa-zzle.background-music-volume.v1")).toEqual({
-        volume: 65,
-        unmutedVolume: 65,
+        volume: 7,
+        unmutedVolume: 7,
       });
-      expect(soundEffectsVolumeSetting.getVolume()).toBe(60);
+      expect(soundEffectsVolumeSetting.getVolume()).toBe(6);
       expect(playSound).not.toHaveBeenCalled();
     });
 
@@ -110,7 +110,7 @@ describe("SettingsDialog", () => {
         within(row).getByRole("button", { name: "効果音を消音" }),
       );
 
-      expect(within(row).getByText("0%")).toBeTruthy();
+      expect(within(row).getByText("0")).toBeTruthy();
       expect(
         within(row)
           .getByRole("button", { name: "効果音を消音" })
@@ -128,8 +128,8 @@ describe("SettingsDialog", () => {
       test("もう一度押すと、消音する前の音量に戻すこと", () => {
         fireEvent.click(screen.getByRole("button", { name: "BGMを消音" }));
 
-        expect(within(getVolumeRow("BGM")).getByText("60%")).toBeTruthy();
-        expect(backgroundMusicVolumeSetting.getVolume()).toBe(60);
+        expect(within(getVolumeRow("BGM")).getByText("6")).toBeTruthy();
+        expect(backgroundMusicVolumeSetting.getVolume()).toBe(6);
       });
     });
 

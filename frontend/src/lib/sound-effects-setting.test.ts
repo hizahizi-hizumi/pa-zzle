@@ -16,7 +16,7 @@ afterEach(() => {
 describe("isSoundEffectsEnabled", () => {
   const cases = [
     ["何も保存していない", null, null, true],
-    ["音量を 0 と保存した", { volume: 0, unmutedVolume: 60 }, null, false],
+    ["音量を 0 と保存した", { volume: 0, unmutedVolume: 6 }, null, false],
     [
       "以前の効果音をオフにした設定だけを保存した",
       null,
@@ -63,10 +63,10 @@ describe("soundEffectsVolumeSetting", () => {
   });
 
   test("選んだ音量を効果音の音量として保存すること", () => {
-    setting.soundEffectsVolumeSetting.commitVolume(30);
+    setting.soundEffectsVolumeSetting.commitVolume(3);
 
     expect(window.localStorage.getItem(storageKey)).toBe(
-      JSON.stringify({ volume: 30, unmutedVolume: 30 }),
+      JSON.stringify({ volume: 3, unmutedVolume: 3 }),
     );
   });
 });
