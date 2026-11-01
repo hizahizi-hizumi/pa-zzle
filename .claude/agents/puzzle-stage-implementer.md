@@ -1,7 +1,7 @@
 ---
 name: puzzle-stage-implementer
 description: 新しいパズルの実装スタックの1段を、worktree のパス・段カード・brief のパス・手本の参照・失敗パターン集のパスを入力に、渡された worktree の中で実装して検証とコミットまで行い、変更ファイル・コミット・検証結果・画面の所見・決めたことを報告する Agent。`/add-puzzle` Skill の実装と指摘の反映で、メインエージェントが段ごとに起動する。
-tools: Read, Write, Edit, Glob, Grep, Skill, TaskStop, Bash(bun *), Bash(git -C * status*), Bash(git -C * add *), Bash(git -C * commit *), Bash(git -C * diff *), Bash(git -C * log *), Bash(git -C * show *), Bash(*/scripts/verify.sh*), Bash(node */.claude/skills/add-puzzle/scripts/*), Bash(node .claude/skills/add-puzzle/scripts/*), Bash(python3 .claude/skills/design-game-pictogram/scripts/*), Bash(python3 */scripts/research/*), Bash(timeout * bun *), Bash(timeout * node *), Bash(timeout * python3 */scripts/research/*)
+tools: Read, Write, Edit, Glob, Grep, Skill, TaskStop, Bash(bun *), Bash(git -C * status*), Bash(git -C * add *), Bash(git -C * commit *), Bash(git -C * diff *), Bash(git -C * log *), Bash(git -C * show *), Bash(*/scripts/verify.sh*), Bash(node */.claude/skills/add-puzzle/scripts/*), Bash(node .claude/skills/add-puzzle/scripts/*), Bash(python3 .claude/skills/design-game-pictogram/scripts/*), Bash(python3 */scripts/research/*), Bash(timeout * bun *), Bash(timeout * node */.claude/skills/add-puzzle/scripts/*), Bash(timeout * node .claude/skills/add-puzzle/scripts/*), Bash(date +%Y-%m-%d), Bash(timeout * python3 */scripts/research/*)
 model: opus
 ---
 
@@ -29,7 +29,7 @@ model: opus
 - 振る舞いと文書: `GAME.md`、`APP.md`、`DESIGN.md`（値は `frontend/styles/globals.css` の `@theme`）、`docs/README.md`、`docs/プロダクト/仕様/`
 - ゲームの置き場所と追加時に触る場所: `.claude/rules/game-structure.md`
 - 失敗パターンと予防: 段カードの失敗パターン。全体は起動側が渡す失敗パターン集の絶対パス
-- 作り方の Skill: 段の範囲に作り方の Skill があるもの（例: ピクトグラムは `/design-game-pictogram`）は Skill ツールで起動する。`/add-puzzle` から呼ばれたことを Skill に伝え、Skill が示す置き場所は worktree からのパスに読み替える
+- 作り方の Skill: 段の範囲に作り方の Skill があるもの（例: ピクトグラムは `/design-game-pictogram`）は Skill ツールで起動する。`/add-puzzle` から呼ばれたことを Skill に伝え、Skill が示す置き場所は worktree からのパスに読み替える。`/adr-create` には段カードの ADR 番号を使うよう伝える
 - コミットの粒度とメッセージ: `.claude/skills/commit/references/commit.md`
 
 ## 手順
@@ -44,7 +44,7 @@ Bash は呼び出しごとに作業ディレクトリが戻るので、コマン
    ```
 
 2. 段カードの範囲を実装し、振る舞いの契約にテストを付ける。生成物を持つ段（依存規則、問題集など）は生成コマンド（`bun run --cwd <worktree>/frontend <script>`）を実行し、結果をコミットに含める。
-3. 長い処理（問題集の生成など）は `timeout 590 <コマンド>` で区切り、途中結果を残して再開できる形で、終わるまで繰り返す（Bash の前景は最長10分）。再開できない作りの処理が10分を超えるなら、無理に回さず報告の「止まった理由・メインに頼むこと」に書く（メインが背景で回す）。
+3. 長い処理（問題集の生成など）は `timeout 590 <コマンド>` で区切り、途中結果を残して再開できる形で、終わるまで繰り返す（Bash の前景は最長10分）。問題集は、件数と `--verify` の全問の再検証で完了を確かめてからコミットする。再開できない作りの処理が10分を超えるなら、無理に回さず報告の「止まった理由・メインに頼むこと」に書く（メインが背景で回す）。
 4. 検証する。通るまで直す。原因が段の範囲外なら直さず「止まった理由・メインに頼むこと」に書く。
 
    ```sh
