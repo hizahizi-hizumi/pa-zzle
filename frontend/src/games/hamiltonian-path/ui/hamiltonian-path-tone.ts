@@ -3,21 +3,23 @@
  * - 道は始点の青緑から、全マスを通り終える所の紫へ、通った順に色を移す。道が盤面を塗り進むほど色が変わり、
  *   蛇行して隣り合う道の列どうしも色の違いで追える。赤・橙はアプリ共通のエラー色と紛れるので使わない。
  * - 道が通ったマスは、そのマスを通ったときの道の色を淡く塗る。
- * - 壁マスと仕切りはどちらも「通れない」ことを示すので、ライトでは同じ系統の最も暗い色にする。
- *   ダークでは壁マスを盤面より暗い穴のままにし、仕切りは暗い地に埋もれないよう明るい棒にする。
+ * - マスの地は、ライトでもダークでも盤面の外の地と分ける。穴は塗らずに盤面の外の地を見せ、外周の欠けと内側の穴を同じものに見せる。
+ * - 盤面の外形（通れるマスと、穴・枠の外との境目）は、「この先へは通れない」ことを示す色の線で縁取る。
+ *   格子は通常の境界幅、外形は強調の境界幅にし、角は丸めない（外形はマスの辺そのもの）。
  * - 道を延ばせなかったとき、進もうとしたマスに×を短く点ける。×は道の先端と同じ色にし、どの道の操作が阻まれたかを結ぶ。
- * - 行き止まりの先端は、道の色をやめ、仕切りと同じ「通れない」色にする。灰色に沈めると見落とされる。
+ * - 行き止まりの先端は、道の色をやめ、外形と同じ「通れない」色にする。灰色に沈めると見落とされる。
  * - 取り残しのマスは、通れないものと同じ系統の色の斜線を薄く引く。マスを塗りつぶさず、まだ通っていないマスだと分かるようにする。
  * 色の値は `pathColorVariables` の CSS 変数として盤面の根に置き、マスと道の色は `getPathColor` などで混ぜて作る。
  */
 export const hamiltonianPathToneClassNames = {
   pathColorVariables:
-    "[--hamiltonian-path-from:var(--color-cyan-600)] [--hamiltonian-path-to:var(--color-violet-600)] [--hamiltonian-path-cell:var(--color-white)] dark:[--hamiltonian-path-from:var(--color-cyan-400)] dark:[--hamiltonian-path-to:var(--color-violet-400)] dark:[--hamiltonian-path-cell:var(--color-stone-800)]",
+    "[--hamiltonian-path-from:var(--color-cyan-600)] [--hamiltonian-path-to:var(--color-violet-600)] [--hamiltonian-path-cell:var(--color-stone-100)] dark:[--hamiltonian-path-from:var(--color-cyan-400)] dark:[--hamiltonian-path-to:var(--color-violet-400)] dark:[--hamiltonian-path-cell:var(--color-stone-800)]",
   unvisitedCell: "fill-(--hamiltonian-path-cell)",
-  wallCell: "fill-stone-800 dark:fill-stone-950",
-  gridLine: "stroke-stone-300 dark:stroke-stone-600",
-  partition: "fill-stone-800 dark:fill-stone-200",
-  /** 阻まれたマスの×の縁取り。壁マスの上でも×が読めるよう、マスの地の色で囲む。 */
+  gridLine:
+    "stroke-stone-300 stroke-(length:--border-width-normal) dark:stroke-stone-600",
+  outline:
+    "stroke-stone-800 stroke-(length:--border-width-strong) dark:stroke-stone-200",
+  /** 阻まれたマスの×の縁取り。道の上でも×が読めるよう、マスの地の色で囲む。 */
   blockedMarkOutline: "stroke-(--hamiltonian-path-cell)",
   /** 始点の印の縁取り。道の上でも印として浮くよう、マスの地の色で囲む。 */
   startMarkOutline: "stroke-(--hamiltonian-path-cell)",

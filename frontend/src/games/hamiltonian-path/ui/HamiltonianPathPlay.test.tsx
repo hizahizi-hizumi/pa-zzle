@@ -420,6 +420,27 @@ describe("HamiltonianPathPlay", () => {
     });
   });
 
+  describe("穴のある盤面の場合", () => {
+    // 右上の角（2）と真ん中（4）が穴。
+    const holedBoard = parseHamiltonianPathBoard(["S . #", ". # .", ". . ."]);
+
+    beforeEach(() => {
+      renderResult({
+        progress: "playing",
+        result: null,
+        board: holedBoard,
+        path: [0],
+      });
+    });
+
+    test("穴のマスの読み上げ名で穴だと知らせること", () => {
+      const cells = within(getBoardGroup()).getAllByRole("button");
+
+      expect(cells[2]?.getAttribute("aria-label")).toBe("1行3列 穴");
+      expect(cells[4]?.getAttribute("aria-label")).toBe("2行2列 穴");
+    });
+  });
+
   describe("取り残しのマスを渡した場合", () => {
     beforeEach(() => {
       renderResult({

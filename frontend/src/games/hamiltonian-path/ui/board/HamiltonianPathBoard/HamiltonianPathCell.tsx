@@ -1,7 +1,7 @@
 import { getHamiltonianPathCellPosition } from "@/games/hamiltonian-path/puzzle/board";
 
 /** マスの今の状態。`visited` は道が通ったマスで、始点と先端を含む。 */
-export type HamiltonianPathCellState = "wall" | "unvisited" | "visited";
+export type HamiltonianPathCellState = "hole" | "unvisited" | "visited";
 
 type HamiltonianPathCellProps = {
   size: number;
@@ -33,7 +33,7 @@ export function findCellButton(
 }
 
 const cellStateLabels = {
-  wall: "壁",
+  hole: "穴",
   unvisited: "未通過",
   visited: "通過済み",
 } as const satisfies Record<HamiltonianPathCellState, string>;

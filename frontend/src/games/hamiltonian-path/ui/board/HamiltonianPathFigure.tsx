@@ -3,9 +3,12 @@ import { type Ref, useId } from "react";
 import {
   getHamiltonianPathCellPosition,
   type HamiltonianPathBoard,
-  listHamiltonianPathCells,
   listHamiltonianPathOpenCells,
 } from "@/games/hamiltonian-path/puzzle/board";
+import {
+  formatHamiltonianPathOutlinePath,
+  listHamiltonianPathOutlineEdges,
+} from "@/games/hamiltonian-path/ui/board/board-outline";
 import {
   getPathColor,
   getVisitedCellColor,
@@ -46,7 +49,7 @@ const HEAD_RING_WIDTH = 0.09;
 const DEAD_END_HEAD_RING_WIDTH = 0.13;
 const DEAD_END_HEAD_DASH = "0.36 0.22";
 const CLEAR_TRACE_WIDTH = 0.1;
-/** 阻まれたマスの×の、中心から端までの長さと太さ。下に敷くマスの地の色の縁で、壁マスの上でも読めるようにする。 */
+/** 阻まれたマスの×の、中心から端までの長さと太さ。下に敷くマスの地の色の縁で、道の上でも読めるようにする。 */
 const BLOCKED_MARK_REACH = 0.2;
 const BLOCKED_MARK_WIDTH = 0.1;
 const BLOCKED_MARK_OUTLINE_WIDTH = 0.2;
@@ -79,6 +82,7 @@ function getCellCenter(size: number, cell: number): { x: number; y: number } {
 
 /** 盤面の要素を、盤面の反応や演出から探すための印。 */
 export const hamiltonianPathFigureParts = {
+  outline: "data-outline",
   head: "data-head",
   clearTrace: "data-clear-trace",
   strandedCell: "data-stranded-cell",
@@ -86,7 +90,8 @@ export const hamiltonianPathFigureParts = {
 } as const;
 
 /**
- * 盤面の絵。マスの塗り・道・始点・先端を、下から順にこの層で描く。始点・先端の印は道より上に描く。
+ * 盤面の絵。マスの塗り・取り残しの斜線・盤面の外形・道・始点・先端を、下から順にこの層で描く。
+ * 穴は描かず、盤面の外と同じ地を見せる。外形が、外周の穴を盤面の欠けとして、内側の穴を盤面に開いた穴として縁取る。
  * 道とマスの塗りは、通った順に色を移す（`getPathColor`）。
  */
 export function HamiltonianPathFigure({
@@ -106,7 +111,6 @@ export function HamiltonianPathFigure({
   function isVisibleCell(cell: number): boolean {
     return getHamiltonianPathCellPosition(size, cell).row < rowCount;
   }
-  const holes = new Set(board.holes);
   const lastProgressIndex = Math.max(
     1,
     listHamiltonianPathOpenCells(board).length - 1,
@@ -149,7 +153,7 @@ export function HamiltonianPathFigure({
           />
         </pattern>
       </defs>
-      {listHamiltonianPathCells(size)
+      {listHamiltonianPathOpenCells(board)
         .filter(isVisibleCell)
         .map((cell) => {
           const { row, column } = getHamiltonianPathCellPosition(size, cell);
@@ -162,15 +166,11 @@ export function HamiltonianPathFigure({
               width={1}
               height={1}
               vectorEffect="non-scaling-stroke"
-              className={
-                holes.has(cell)
-                  ? hamiltonianPathToneClassNames.wallCell
-                  : cn(
-                      hamiltonianPathToneClassNames.gridLine,
-                      order === undefined &&
-                        hamiltonianPathToneClassNames.unvisitedCell,
-                    )
-              }
+              className={cn(
+                hamiltonianPathToneClassNames.gridLine,
+                order === undefined &&
+                  hamiltonianPathToneClassNames.unvisitedCell,
+              )}
               style={
                 order === undefined
                   ? undefined
@@ -193,6 +193,17 @@ export function HamiltonianPathFigure({
           />
         );
       })}
+      <path
+        {...{ [hamiltonianPathFigureParts.outline]: "" }}
+        d={formatHamiltonianPathOutlinePath(
+          listHamiltonianPathOutlineEdges(board),
+        )}
+        fill="none"
+        // 外形は辺ごとの線分なので、線端を四角く伸ばして角の継ぎ目を埋める。
+        strokeLinecap="square"
+        vectorEffect="non-scaling-stroke"
+        className={hamiltonianPathToneClassNames.outline}
+      />
       {centers.slice(1).map((to, index) => {
         const from = centers[index]!;
         return (

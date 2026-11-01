@@ -137,7 +137,7 @@ export function HamiltonianPathBoard({
   }, [clearing, onClearAnimationComplete, pathLength]);
 
   function getCellState(cell: number): HamiltonianPathCellState {
-    if (holes.has(cell)) return "wall";
+    if (holes.has(cell)) return "hole";
     return visited.has(cell) ? "visited" : "unvisited";
   }
 
