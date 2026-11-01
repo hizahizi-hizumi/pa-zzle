@@ -9,7 +9,9 @@
 // 使い方:
 //   node capture-screens.mjs \
 //     --base-url http://localhost:5173 --game <game> --screens <screens.json> --out <出力先> \
-//     [--widths 390,1280] [--themes light,dark]
+//     [--widths 390,1280] [--themes light]
+// テーマ: アプリは今ダーク表示に切り替えないので既定は light だけ。dark は <html> に .dark を付けて撮る
+// （globals.css の .dark の見た目。アプリがダークに切り替える仕組みを持つまでは参考）。
 // screens.json: [{ "path": "/puzzles/<game>", "name": "difficulty" }, ...]
 // 出力: <出力先>/<game>__<name>__<幅>__<テーマ>.png と <出力先>/browser-check.txt
 // 終了コード: ブラウザエラーか横スクロールが1件でもあれば 1。
@@ -50,7 +52,7 @@ const { values: options } = parseArgs({
     screens: { type: "string" },
     out: { type: "string" },
     widths: { type: "string", default: "390,1280" },
-    themes: { type: "string", default: "light,dark" },
+    themes: { type: "string", default: "light" },
   },
 });
 
@@ -89,6 +91,11 @@ try {
   for (const width of widths) {
     for (const theme of themes) {
       const context = await browser.newContext(contextOptionsFor(width, theme));
+      if (theme === "dark") {
+        await context.addInitScript(() => {
+          document.addEventListener("DOMContentLoaded", () => document.documentElement.classList.add("dark"));
+        });
+      }
       const page = await context.newPage();
       let errors = [];
       page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
