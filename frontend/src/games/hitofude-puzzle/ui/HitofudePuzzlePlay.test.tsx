@@ -179,7 +179,7 @@ describe("HitofudePuzzlePlay", () => {
         );
         expect(
           items.filter((item) =>
-            /^(通るマス|分かれ道|数手先を読む|読む手数) /.test(item),
+            /^(通るマス|分かれ道|先読み|先読みで追う手) /.test(item),
           ),
         ).toEqual([]);
         expect(items.findIndex((item) => item.startsWith("速さ"))).toBeLessThan(
@@ -191,7 +191,7 @@ describe("HitofudePuzzlePlay", () => {
         const criteria = screen.getByText(/^基準時間02:04以内/);
 
         expect(criteria.textContent).toBe(
-          "基準時間02:04以内で60点、06:12以上で0点、その間は時間に応じて減らす。基準時間は盤面把握5秒 + 通るマス64マス × 0.5秒 + 分かれ道10か所 × 3秒 + 数手先を読む4回 × 3秒 + 読む手数45手 × 1秒。式の数はこの問題で決まり、プレイでは変わらない。分かれ道は、進む向きを誤ると全マスを通れなくなる所。数手先を読む回数と読む手数は、この問題を盤面から読んで解くのに要る量（読む手数は45手まで数える）。",
+          "基準時間02:04以内で60点、06:12以上で0点、その間は時間に応じて減らす。基準時間は盤面把握5秒 + 通るマス64マス × 0.5秒 + 分かれ道10か所 × 3秒 + 先読み4回 × 3秒 + 先読みで追う手45手 × 1秒。式の数はこの問題の盤面で決まり、遊び方では変わらない。分かれ道は、向きを間違えると全マスを通れなくなる所。先読みは、角や通路だけでは道が決まらず、試しに数手先までたどって向きを決める所。先読みで追う手は、そのとき試しにたどる手の合計（45手を超える分は数えない）。",
         );
       });
 
@@ -199,9 +199,31 @@ describe("HitofudePuzzlePlay", () => {
         const criteria = screen.getByText(/^40点から/);
 
         expect(criteria.textContent).toBe(
-          "40点から、引き直し1回につき3点を減らす。引き直しは、道を戻して前と違うマスへ引いた回数。戻して同じマスへ引いたときは数えない。「待った」・「盤面を戻す」で戻したときも同じに数え、「待った」で前の道筋へ戻したときも1回と数える。",
+          "40点から、引き直し1回につき3点を減らす。引き直しは、道を戻してから前と違うマスへ引いた回数。戻して同じマスへ引き直したときは数えない。どの戻し方でも同じに数え、「待った」で前の道へ戻したときも1回と数える。",
         );
       });
+    });
+  });
+
+  describe("先読みの無い問題を解いた場合", () => {
+    beforeEach(() => {
+      renderResult({
+        result: createHitofudePuzzleResult(performance, {
+          ...workload,
+          assumptionCount: 0,
+          refutationStepCount: 0,
+          longestRefutationLength: 0,
+        }),
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
+      );
+    });
+
+    test("速さの基準の式にも説明にも先読みを出さないこと", () => {
+      const criteria = screen.getByText(/^基準時間\d\d:\d\d以内/);
+
+      expect(criteria.textContent).not.toMatch(/先読み/);
     });
   });
 

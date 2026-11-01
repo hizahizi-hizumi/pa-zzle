@@ -18,7 +18,7 @@ import {
   HITOFUDE_PUZZLE_SPEED_REFUTATION_STEP_LIMIT,
 } from "@/games/hitofude-puzzle/score";
 
-/** 基準時間の式。その問題で0の項は省く。読む手数は上限で打ち切った値を示す。 */
+/** 基準時間の式。その問題で0の項は省く。先読みで追う手は上限で打ち切った値を示す。 */
 function listSpeedFormula({
   openCellCount,
   fatalBranchCount,
@@ -49,7 +49,7 @@ function listSpeedFormula({
     ...(assumptionCount > 0
       ? [
           {
-            label: "数手先を読む",
+            label: "先読み",
             count: assumptionCount,
             unit: "回",
             durationMsPerUnit: HITOFUDE_PUZZLE_SPEED_PER_ASSUMPTION_MS,
@@ -59,7 +59,7 @@ function listSpeedFormula({
     ...(refutationStepCount > 0
       ? [
           {
-            label: "読む手数",
+            label: "先読みで追う手",
             count: Math.min(
               refutationStepCount,
               HITOFUDE_PUZZLE_SPEED_REFUTATION_STEP_LIMIT,
@@ -67,6 +67,30 @@ function listSpeedFormula({
             unit: "手",
             durationMsPerUnit: HITOFUDE_PUZZLE_SPEED_PER_REFUTATION_STEP_MS,
           } as const,
+        ]
+      : []),
+  ];
+}
+
+/** 基準時間の式の言葉の説明。式に出た項だけを説明する。 */
+function listSpeedFormulaNotes({
+  fatalBranchCount,
+  assumptionCount,
+  refutationStepCount,
+}: HitofudePuzzleResult["workload"]): string[] {
+  return [
+    "式の数はこの問題の盤面で決まり、遊び方では変わらない。",
+    ...(fatalBranchCount > 0
+      ? ["分かれ道は、向きを間違えると全マスを通れなくなる所。"]
+      : []),
+    ...(assumptionCount > 0
+      ? [
+          "先読みは、角や通路だけでは道が決まらず、試しに数手先までたどって向きを決める所。",
+        ]
+      : []),
+    ...(refutationStepCount > 0
+      ? [
+          `先読みで追う手は、そのとき試しにたどる手の合計（${HITOFUDE_PUZZLE_SPEED_REFUTATION_STEP_LIMIT}手を超える分は数えない）。`,
         ]
       : []),
   ];
@@ -82,9 +106,7 @@ export function getHitofudePuzzleScoreCriteria(
         maximum: HITOFUDE_PUZZLE_SCORE_MAXIMUMS.speed,
         rule: result.speedRule,
         formula: listSpeedFormula(result.workload),
-        notes: [
-          `式の数はこの問題で決まり、プレイでは変わらない。分かれ道は、進む向きを誤ると全マスを通れなくなる所。数手先を読む回数と読む手数は、この問題を盤面から読んで解くのに要る量（読む手数は${HITOFUDE_PUZZLE_SPEED_REFUTATION_STEP_LIMIT}手まで数える）。`,
-        ],
+        notes: listSpeedFormulaNotes(result.workload),
       }),
     ),
     createScoreItemCriterion(
@@ -99,7 +121,7 @@ export function getHitofudePuzzleScoreCriteria(
           },
         ],
         [
-          `引き直しは、道を戻して前と違うマスへ引いた回数。戻して同じマスへ引いたときは数えない。${formatOperationName("undo")}・${formatOperationName("restart")}で戻したときも同じに数え、${formatOperationName("undo")}で前の道筋へ戻したときも1回と数える。`,
+          `引き直しは、道を戻してから前と違うマスへ引いた回数。戻して同じマスへ引き直したときは数えない。どの戻し方でも同じに数え、${formatOperationName("undo")}で前の道へ戻したときも1回と数える。`,
         ],
       ),
     ),

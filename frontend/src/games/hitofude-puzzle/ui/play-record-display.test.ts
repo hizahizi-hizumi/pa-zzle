@@ -23,6 +23,14 @@ describe("hitofudePuzzlePlayRecordDisplay", () => {
     expect(backtrack?.formatValue(3)).toBe("3回");
   });
 
+  test("引き直しの自己ベストの更新幅を、少なくなった回数として表示すること", () => {
+    const backtrack = hitofudePuzzlePlayRecordDisplay.metrics.find(
+      ({ id }) => id === "backtrack-count",
+    );
+
+    expect(backtrack?.formatImprovement(3)).toBe("3回少ない");
+  });
+
   test("離脱の進み具合を時間・通ったマス・引き直しの順に単位付きで表示すること", () => {
     const progress = Object.values(
       hitofudePuzzlePlayRecordDisplay.progress,
