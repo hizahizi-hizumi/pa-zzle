@@ -10,7 +10,7 @@
 | 実装前提調査 | `docs/パズル/導入調査/<パズル名>/<パズル名>実装前提調査.md` | 下の「実装前提調査の節」 |
 | 調査コード | `scripts/research/<ゲーム ID>_<観点>.py` | seed を固定し、標準ライブラリだけで測る |
 | 難易度の資料 | `docs/パズル/README.md` から辿る難易度文書の決まりに従う | 採用ゲートの根拠。難易度の観点の調査役が下書きする |
-| 台帳の行の初版 | `docs/棚上げ/パズル候補.csv` と `パズル候補/PUZZLE-nnn.md` | 導入判断と各成立性 |
+| 台帳の行 | `docs/棚上げ/パズル候補.csv` と `パズル候補/PUZZLE-nnn.md` | 導入判断と各成立性。対象パズルの行がすでにあれば、その行を更新する |
 
 ## 実装前提調査の節
 
@@ -59,13 +59,13 @@
 
 作り込みを終えた作業ブランチの木を、依存の層で切る。下の層は上の層を import しない（`.claude/rules/game-structure.md` の「依存方向」）ので、下から順に各層が単体でビルドとテストを通る。小さいパズルでは隣の層をまとめてよく、決めた切り方は実装前提調査に書く。
 
-| 層 | 入るもの |
+| 層（ブランチ名の topic） | 入るもの |
 |---|---|
-| 調査 | `docs/パズル/導入調査/<パズル名>/`（実装前提調査は「実装で確定した差分」を含む最終版）、`scripts/research/<ゲーム ID>_*` |
-| ルールと問題 | `frontend/src/games/<game>/` の `puzzle/`・`problem/`（生成と問題集）・`session/`・`difficulty.ts`・`problem-selection.ts`・`display-name.ts`、問題集の生成スクリプトと `package.json` の scripts、`frontend/biome.json`（問題集の除外と、`generate:dependency-rules` で作り直した依存規則） |
-| プレイと画面 | `play/`・`ui/`（難易度プレビュー・遊び方を含む）・`assets/`・`score.ts`・`play-record.ts`・`play-attempt.ts`・`diagnostics.ts` |
-| 掲載 | `frontend/src/game-catalog/<game>/` と `game-catalog.ts`、`frontend/src/pages/puzzles/<game>/` と View、generouted が作り直す `frontend/src/router.ts`、一覧のテスト |
-| 文書 | SPEC・ADR・台帳の行と候補ファイル・各 README の一覧 |
+| 調査（research） | `docs/パズル/導入調査/<パズル名>/`（実装前提調査は「実装で確定した差分」を含む最終版）、`scripts/research/<ゲーム ID>_*` |
+| ルールと問題（rules-problem） | `frontend/src/games/<game>/` の `puzzle/`・`problem/`（生成と問題集）・`session/`・`difficulty.ts`・`problem-selection.ts`・`display-name.ts`、問題集の生成スクリプトと `package.json` の scripts、`frontend/biome.json`（問題集の除外と、`generate:dependency-rules` で作り直した依存規則） |
+| プレイと画面（play-ui） | `play/`・`ui/`（難易度プレビュー・遊び方を含む）・`assets/`・`score.ts`・`play-record.ts`・`play-attempt.ts`・`diagnostics.ts` |
+| 掲載（catalog） | `frontend/src/game-catalog/<game>/` と `game-catalog.ts`、`frontend/src/pages/puzzles/<game>/` と View、generouted が作り直す `frontend/src/router.ts`、一覧のテスト |
+| 文書（docs） | SPEC・ADR・台帳の行と候補ファイル・各 README の一覧、最終レビューで足した正本と失敗パターン集への追記 |
 
 - 一時的な除外: 作業ブランチの最終版には残っていないので、`frontend/src/games/<game>/` を最初に入れる層（ルールと問題）で `frontend/src/game-catalog/game-catalog.test.ts` に手で足し、掲載の層で消す。
 - 層のファイルは `git checkout <作業ブランチ> -- <パス>` で作業ブランチの版を取り込む。どの層にも入らないファイルが残ったら、実装前提調査の「PR の切り方」に足してから切り直す。

@@ -2,7 +2,7 @@
 name: design-game-difficulty
 description: >
   This skill should be used when designing, redesigning, or recalibrating the 5-level difficulty of a pa-zzle
-  puzzle (levers, solvers, problem pool, checks, and ripple to scoring, preview, SPEC and records), including
+  puzzle (levers, solvers, problem pool, checks, ripple), including
   from /add-puzzle, from human play-record JSON, and after rules or assist displays change. Triggers: "/design-game-difficulty", "redesign difficulty levels",
   "recalibrate difficulty from play records", "level 5 is too easy", "難易度を作る", "難易度の作り直し",
   "難易度の再校正", "レベル5が簡単すぎる", "ルールや補助表示を変えた後の難易度の見直し".
@@ -31,6 +31,7 @@ argument-hint: "<パズル名かゲーム ID> [作り直す理由 | プレイ記
 | 入口 | 起動のされ方 | 進め方 |
 |---|---|---|
 | 新規 | `/add-puzzle` の実装役が difficulty・problem-pool の項目で起動する | 流れ 1〜10 をすべて行う。前提は brief の合意節の写しに従い、写しに無いものは合意した意図の範囲で決める。人間に選択を求めて待たない。サブエージェントを起動しない（入れ子にできない）。報告は、実装役が渡す作業ディレクトリの `design-game-difficulty-report.md` に書く（型は `references/handoff.md` の「起動側への報告」）。実装役はそのパスを自分の報告に載せ、メインがそこを読む |
+| `/add-puzzle` の直しから | 実装役が、直しの作業カードの所見が難易度の範囲のときに起動する | 再設計の手順で、所見に関わる所だけやり直す。人間を待たず、前提を変えたい理由と別案は報告の「人間に残す候補」に書く。試遊と F1 は報告の「頼むこと」に書く（メインが回す）。プレビューの追従は起動せず、渡す量を報告に書く（メインが difficulty-select の直しカードを出す）。SPEC は直さず、資料の「SPEC の難易度の節の案」を直す。報告は新規と同じファイルに書く |
 | 再設計 | 人間の指摘（「レベル5が簡単すぎる」「1と3が同じ」など）や、ルール・補助表示の変更を受けて | 今の SPEC・難易度の資料・`difficulty.ts` を読み、流れ 8 で症状から原因を引いてから、流れ 1 に戻って変わる所だけやり直す。前提（守ること 4）か提供範囲を変えるときは、案を `references/handoff.md` の「人間への提示」で示して返事を待つ。それ以外は決めて進む |
 | 再校正 | 人間のプレイ記録 JSON を受けて | `references/recalibration.md` に従う。直すと決めたら、再設計と同じく流れ 8 から入る |
 
