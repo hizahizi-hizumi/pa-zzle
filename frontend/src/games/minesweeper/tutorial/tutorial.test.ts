@@ -60,6 +60,9 @@ function performAll(
 function getStepActions(
   step: MinesweeperTutorialStep,
 ): MinesweeperTutorialAction[] {
+  if (step.operation === "change-mode") {
+    return [{ type: "change-mode", mode: step.mode }];
+  }
   return [
     {
       type: "change-mode",
@@ -67,6 +70,14 @@ function getStepActions(
     },
     { type: step.operation, cellIndex: step.cellIndex },
   ];
+}
+
+/** マスを操作する手順の、操作するマス。 */
+function getStepCellIndex(step: MinesweeperTutorialStep | undefined): number {
+  if (step === undefined || step.operation === "change-mode") {
+    throw new Error("cell step is expected");
+  }
+  return step.cellIndex;
 }
 
 /** 最初の `count` 個の手順を終える。 */
@@ -87,6 +98,8 @@ function isStepDeduced(
 ): boolean {
   const { mineCellIndices, safeCellIndices } = deduceCells(puzzle, ruleIds);
   switch (step.operation) {
+    case "change-mode":
+      return false;
     case "flag":
       return mineCellIndices.has(step.cellIndex);
     case "reveal":
@@ -195,7 +208,7 @@ describe("minesweeperTutorial の盤面", () => {
       operation: first?.operation,
       touchesRevealed: getMinesweeperNeighborCellIndices(
         board,
-        first?.cellIndex ?? 0,
+        getStepCellIndex(first),
       ).some((cellIndex) => initialRevealedCellIndices.includes(cellIndex)),
     };
 
@@ -232,10 +245,10 @@ describe("minesweeperTutorial の盤面", () => {
     test("周りに地雷が無いマスを開かせ、ほかのマスも続けて開くこと", () => {
       const count = getAdjacentMinesweeperMineCount(
         board,
-        step?.cellIndex ?? 0,
+        getStepCellIndex(step),
       );
       const opened = collectMinesweeperRevealCellIndices(board, [
-        step?.cellIndex ?? 0,
+        getStepCellIndex(step),
       ]);
 
       expect(count).toBe(0);
@@ -272,7 +285,7 @@ describe("minesweeperTutorial.perform", () => {
     let progress: Progress;
 
     beforeEach(() => {
-      progress = finishSteps(1);
+      progress = finishSteps(2);
     });
 
     test("印のマスでないマスへの操作と、手順と違う操作を受け付けないこと", () => {
@@ -284,17 +297,17 @@ describe("minesweeperTutorial.perform", () => {
       expect(result).toBe(progress);
     });
 
-    test("切り替えは受け付け、切り替えずに長押しで印のマスに旗を置いても次の手順へ進むこと", () => {
+    test("切り替えは受け付け、開くに戻してから長押しで印のマスに旗を置いても次の手順へ進むこと", () => {
       const switched = performAll(progress, [
-        { type: "change-mode", mode: "flag" },
+        { type: "change-mode", mode: "reveal" },
       ]);
-      const flagged = performAll(progress, [
+      const flagged = performAll(switched, [
         { type: "flag", cellIndex: cellAt(2, 1) },
       ]);
 
-      expect(switched.boardState.mode).toBe("flag");
-      expect(switched.stepIndex).toBe(1);
-      expect(flagged.stepIndex).toBe(2);
+      expect(switched.boardState.mode).toBe("reveal");
+      expect(switched.stepIndex).toBe(2);
+      expect(flagged.stepIndex).toBe(3);
     });
   });
 
@@ -347,11 +360,24 @@ describe("minesweeperTutorial.perform", () => {
 });
 
 describe("getMinesweeperTutorialCue", () => {
-  describe("旗を置く手順で、開くに切り替えている場合", () => {
+  describe("旗へ切り替える手順の場合", () => {
     const progress = finishSteps(1);
     const situation = getTutorialSituation(minesweeperTutorial, progress);
 
-    test("切り替えのボタンに印を付け、補足で切り替え方を言うこと", () => {
+    test("切り替えのボタンだけに印を付けること", () => {
+      const cue = getMinesweeperTutorialCue(situation, progress.boardState);
+
+      expect(cue).toEqual({ modeCued: true, cellIndex: null });
+    });
+  });
+
+  describe("旗に切り替えた後、開くに戻した場合", () => {
+    const progress = performAll(finishSteps(2), [
+      { type: "change-mode", mode: "reveal" },
+    ]);
+    const situation = getTutorialSituation(minesweeperTutorial, progress);
+
+    test("切り替えのボタンと印のマスに印を付け、補足で切り替え方を言うこと", () => {
       const cue = getMinesweeperTutorialCue(situation, progress.boardState);
       const message = adjustMinesweeperTutorialMessage(
         situation,
@@ -362,18 +388,16 @@ describe("getMinesweeperTutorialCue", () => {
         }),
       );
 
-      expect(cue).toEqual({ target: "mode" });
+      expect(cue).toEqual({ modeCued: true, cellIndex: cellAt(2, 1) });
       expect(message.detail).toBe("上のボタンで旗に切り替えます");
     });
   });
 
-  describe("旗に切り替えた場合", () => {
-    const progress = performAll(finishSteps(1), [
-      { type: "change-mode", mode: "flag" },
-    ]);
+  describe("旗に切り替えたまま旗を置く手順に進んだ場合", () => {
+    const progress = finishSteps(2);
     const situation = getTutorialSituation(minesweeperTutorial, progress);
 
-    test("印のマスに印を付け、手順の補足を言うこと", () => {
+    test("印のマスだけに印を付け、手順の補足を言うこと", () => {
       const cue = getMinesweeperTutorialCue(situation, progress.boardState);
       const message = adjustMinesweeperTutorialMessage(
         situation,
@@ -384,8 +408,8 @@ describe("getMinesweeperTutorialCue", () => {
         }),
       );
 
-      expect(cue).toEqual({ target: "cell", cellIndex: cellAt(2, 1) });
-      expect(message.detail).toBe("地雷のマスには旗を置きます");
+      expect(cue).toEqual({ modeCued: false, cellIndex: cellAt(2, 1) });
+      expect(message.detail).toBe("長押しでも旗を置けます");
     });
   });
 });

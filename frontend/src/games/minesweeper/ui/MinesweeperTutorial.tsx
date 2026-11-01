@@ -107,6 +107,10 @@ export function MinesweeperTutorial({
       if (guiding) {
         setHintCueId((id) => id + 1);
       }
+      // 受け付けなかった手のあとに、前に踏んだ地雷の一言を残さない。
+      if (progress.violated) {
+        setProgress({ ...progress, violated: false });
+      }
       return;
     }
     setProgress(next);
@@ -151,8 +155,7 @@ export function MinesweeperTutorial({
     const focusCues = (situation.step?.focusCellIndices ?? []).map(
       (cellIndex): MinesweeperCellCue => ({ cellIndex, kind: "focus", id: 0 }),
     );
-    const hintCellIndex =
-      cue?.target === "cell" ? cue.cellIndex : idleHintCellIndex;
+    const hintCellIndex = cue === null ? idleHintCellIndex : cue.cellIndex;
     const hintCues: MinesweeperCellCue[] =
       hintCellIndex === null
         ? []
@@ -182,7 +185,7 @@ export function MinesweeperTutorial({
           mineCountFocused={
             cuesShown && (situation.step?.focusMineCount ?? false)
           }
-          modeCued={cuesShown && cue?.target === "mode"}
+          modeCued={cuesShown && (cue?.modeCued ?? false)}
           modeCueId={hintCueId}
           modeHidden={!interactive}
           onModeChange={handleModeChange}

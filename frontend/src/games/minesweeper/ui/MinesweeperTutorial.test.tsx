@@ -9,15 +9,18 @@ import {
 
 import { MinesweeperTutorial } from "@/games/minesweeper/ui/MinesweeperTutorial";
 
-type StepOperation = readonly [
-  operation: "reveal" | "flag" | "chord",
-  row: number,
-  column: number,
-];
+type StepOperation =
+  | readonly [
+      operation: "reveal" | "flag" | "chord",
+      row: number,
+      column: number,
+    ]
+  | readonly [operation: "flag-mode"];
 
 /** 手順ごとの印のマスと操作。 */
 const stepOperations: readonly StepOperation[] = [
   ["reveal", 1, 1],
+  ["flag-mode"],
   ["flag", 2, 1],
   ["reveal", 3, 1],
   ["reveal", 4, 1],
@@ -81,7 +84,12 @@ function setFlagMode(flag: boolean): void {
   }
 }
 
-function operate([operation, row, column]: StepOperation): void {
+function operate(step: StepOperation): void {
+  if (step[0] === "flag-mode") {
+    setFlagMode(true);
+    return;
+  }
+  const [operation, row, column] = step;
   setFlagMode(operation === "flag");
   fireEvent.click(getCell(row, column));
 }
@@ -162,40 +170,52 @@ describe("MinesweeperTutorial", () => {
     expect(hintAfter).not.toBe(hintBefore);
   });
 
-  describe("数字を示す手順に進んだ場合", () => {
+  describe("旗への切り替えを示す手順に進んだ場合", () => {
     beforeEach(() => {
       finishSteps(1);
     });
 
-    test("数字のルールを示し、旗への切り替えに印を付けて、決め手の数字を目立たせること", () => {
-      const headline = screen.getByText(/周りの8マスにある地雷の数です/);
+    test("旗を置くことと切り替え方を言い、切り替えのボタンだけに印を付けること", () => {
+      const headline = screen.getByText("地雷のマスには旗を置きます");
       const detail = screen.getByText("上のボタンで旗に切り替えます");
-      const focused = getCuedCells("focus");
 
       expect(headline).toBeTruthy();
       expect(detail).toBeTruthy();
       expect(isModeCued()).toBe(true);
       expect(getCuedCells("hint")).toEqual([]);
+    });
+  });
+
+  describe("数字を示す手順に進んだ場合", () => {
+    beforeEach(() => {
+      finishSteps(2);
+    });
+
+    test("数字のルールを示し、地雷のマスに印を付けて、決め手の数字を目立たせること", () => {
+      const headline = screen.getByText(/周りの8マスにある地雷の数です/);
+      const focused = getCuedCells("focus");
+      const hinted = getCuedCells("hint");
+
+      expect(headline).toBeTruthy();
+      expect(isModeCued()).toBe(false);
+      expect(hinted).toEqual(["7"]);
       expect(focused).toEqual(["1"]);
       expect(getRuleTexts()).toEqual(["周りの地雷", "？", "？", "？"]);
     });
 
-    test("旗に切り替えると、地雷のマスに印を付け、旗を置くと次の手順へ進むこと", () => {
-      setFlagMode(true);
-      const detail = screen.getByText("地雷のマスには旗を置きます");
-      const hinted = getCuedCells("hint");
+    test("旗を置くと、旗の数を数えて次の手順へ進むこと", () => {
       fireEvent.click(getCell(2, 1));
 
       const next = screen.getByText(/旗の数が数字と同じなら/);
+      const flags = screen.getByText("旗").nextElementSibling?.textContent;
 
-      expect(detail).toBeTruthy();
-      expect(hinted).toEqual(["7"]);
       expect(getCellLabel(2, 1)).toBe("旗");
       expect(next).toBeTruthy();
-      expect(screen.getByText("旗").nextElementSibling?.textContent).toBe("1");
+      expect(flags).toBe("1");
     });
 
-    test("切り替えずに長押しで旗を置いても、次の手順へ進むこと", () => {
+    test("開くに戻してから長押しで旗を置いても、次の手順へ進むこと", () => {
+      setFlagMode(false);
       fireEvent.contextMenu(getCell(2, 1));
 
       const next = screen.getByText(/旗の数が数字と同じなら/);
@@ -206,7 +226,7 @@ describe("MinesweeperTutorial", () => {
 
   describe("続けて開く手順を終えた場合", () => {
     beforeEach(() => {
-      finishSteps(4);
+      finishSteps(5);
     });
 
     test("周りに地雷が無いマスから左下が続けて開くこと", () => {
@@ -219,7 +239,7 @@ describe("MinesweeperTutorial", () => {
 
   describe("まとめて開く手順を終えた場合", () => {
     beforeEach(() => {
-      finishSteps(6);
+      finishSteps(7);
     });
 
     test("押した数字の周りの閉じたマスをまとめて開くこと", () => {
@@ -231,7 +251,7 @@ describe("MinesweeperTutorial", () => {
 
   describe("地雷の数を示す手順で開くに戻した場合", () => {
     beforeEach(() => {
-      finishSteps(7);
+      finishSteps(8);
       setFlagMode(false);
     });
 
@@ -272,6 +292,15 @@ describe("MinesweeperTutorial", () => {
       expect(message).toBeTruthy();
       expect(getCellLabel(4, 5)).toBe("踏んだ地雷");
       expect(mistakes).toBe("1");
+    });
+
+    test("地雷を踏んだ後に何も起きないマスを押すと、踏んだ一言を消すこと", () => {
+      operate(["reveal", 4, 5]);
+      operate(["reveal", 1, 3]);
+
+      const message = screen.getByText("残りのマスを開くと完成です");
+
+      expect(message).toBeTruthy();
     });
   });
 
