@@ -16,11 +16,13 @@
 //   scroll <dy>                 マウスホイールでページを縦にスクロールする
 //   wait <ミリ秒>               待ってから撮る
 //   shot                        撮るだけ
+//   zoom <x> <y> <幅> <高さ> [倍率]  ビューポートの矩形を倍率（既定4、1〜8）で描き直して撮る。拡大画像の (px, py) は
+//                               ビューポートの (x + px/倍率, y + py/倍率)。盤面は動かさない
 //   quit                        ブラウザを閉じて常駐を終える
-// 返す1行: <画像のパス> t=<起動からの秒数>s scrollY=<window.scrollY>（quit は "quit"）
+// 返す1行: <画像のパス> t=<起動からの秒数>s scrollY=<window.scrollY>（zoom は末尾に zoom=<倍率>x、quit は "quit"）
 // ブラウザエラー: pageerror と console.error を <画像の出力先>/browser-errors.log に追記する。
 
-import { appendFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { createRequire } from "node:module";
 import path from "node:path";
@@ -31,6 +33,8 @@ const SWIPE_STEPS = 12;
 const HOST = "127.0.0.1";
 const SERVE_WAIT_MILLISECONDS = 30_000;
 const SERVE_RETRY_MILLISECONDS = 300;
+const DEFAULT_ZOOM = 4;
+const MAX_ZOOM = 8;
 
 // playwright はリポジトリの依存に無く、環境の全体インストール（NODE_PATH や /opt/node*/lib/node_modules）から読む。
 function loadPlaywright() {
@@ -88,7 +92,7 @@ async function serve(args) {
   const browser = await chromium.launch();
   const context = await browser.newContext(contextOptionsFor(values.device, devices));
   const page = await context.newPage();
-  const touch = isTouch ? await context.newCDPSession(page) : null;
+  const cdp = await context.newCDPSession(page);
   page.on("pageerror", (error) => appendFileSync(errorLog, `pageerror: ${error.message}\n`));
   page.on("console", (message) => {
     if (message.type() === "error") appendFileSync(errorLog, `console.error: ${message.text()}\n`);
@@ -99,15 +103,15 @@ async function serve(args) {
 
   async function touchSwipe(x1, y1, x2, y2) {
     const point = (x, y) => [{ x, y }];
-    await touch.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: point(x1, y1) });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: point(x1, y1) });
     for (let step = 1; step <= SWIPE_STEPS; step++) {
       const ratio = step / SWIPE_STEPS;
-      await touch.send("Input.dispatchTouchEvent", {
+      await cdp.send("Input.dispatchTouchEvent", {
         type: "touchMove",
         touchPoints: point(x1 + (x2 - x1) * ratio, y1 + (y2 - y1) * ratio),
       });
     }
-    await touch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
   }
 
   async function mouseSwipe(x1, y1, x2, y2) {
@@ -117,6 +121,26 @@ async function serve(args) {
     await page.mouse.up();
   }
 
+  // 縮小した画像を引き伸ばすのではなく、CDP の clip.scale でその倍率で描き直すので、細い線・重なり・境界が見える。
+  // clip は文書の座標なので、ビューポートの座標にスクロール量を足す。
+  function zoomClip(x, y, width, height, magnification = DEFAULT_ZOOM) {
+    const [left, top, w, h, scale] = [x, y, width, height, magnification].map(Number);
+    if (![left, top, w, h].every(Number.isFinite) || w <= 0 || h <= 0) {
+      throw new Error("zoom は <x> <y> <幅> <高さ> [倍率] を数で受ける（幅・高さは正）");
+    }
+    if (!(scale >= 1 && scale <= MAX_ZOOM)) throw new Error(`倍率は 1〜${MAX_ZOOM}: ${magnification}`);
+    return { x: left, y: top, width: w, height: h, scale };
+  }
+
+  async function zoomShot(file, clip) {
+    const scrolled = await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }));
+    const { data } = await cdp.send("Page.captureScreenshot", {
+      format: "png",
+      clip: { ...clip, x: clip.x + scrolled.x, y: clip.y + scrolled.y },
+    });
+    writeFileSync(file, Buffer.from(data, "base64"));
+  }
+
   const operations = {
     goto: (pathname) => page.goto(baseUrl + pathname, { waitUntil: "networkidle" }),
     tap: (x, y) => (isTouch ? page.touchscreen.tap(Number(x), Number(y)) : page.mouse.click(Number(x), Number(y))),
@@ -124,17 +148,21 @@ async function serve(args) {
     scroll: (dy) => page.mouse.wheel(0, Number(dy)),
     wait: (milliseconds) => page.waitForTimeout(Math.max(0, Number(milliseconds) - SETTLE_MILLISECONDS)),
     shot: async () => {},
+    zoom: async () => {},
   };
 
   async function run(name, operands) {
+    const clip = name === "zoom" ? zoomClip(...operands) : null;
     await operations[name](...operands);
     await page.waitForTimeout(SETTLE_MILLISECONDS);
     shotNumber += 1;
     const file = path.join(values.out, `${String(shotNumber).padStart(3, "0")}-${name}.png`);
-    await page.screenshot({ path: file, scale: "css" });
+    if (clip) await zoomShot(file, clip);
+    else await page.screenshot({ path: file, scale: "css" });
+    const note = clip ? ` zoom=${clip.scale}x` : "";
     const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
     const scrollY = await page.evaluate(() => window.scrollY);
-    return `${file} t=${seconds}s scrollY=${scrollY}`;
+    return `${file} t=${seconds}s scrollY=${scrollY}${note}`;
   }
 
   const server = createServer(async (request, response) => {
@@ -194,6 +222,6 @@ if (command === "serve") await serve(rest);
 else if (command === "send") await send(rest);
 else {
   console.error("使い方: node playtest-driver.mjs serve --url <URL> --device <iphone|pc> --out <出力先> --port <ポート>");
-  console.error("        node playtest-driver.mjs send --port <ポート> <goto|tap|swipe|scroll|wait|shot|quit> [引数...]");
+  console.error("        node playtest-driver.mjs send --port <ポート> <goto|tap|swipe|scroll|wait|shot|zoom|quit> [引数...]");
   process.exit(2);
 }
