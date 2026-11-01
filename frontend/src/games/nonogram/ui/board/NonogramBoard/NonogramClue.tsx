@@ -22,10 +22,11 @@ const axisClassNames = {
     "flex-col items-center justify-end pb-[calc(var(--nonogram-cell)*0.12)]",
 } as const;
 
+/** 列ヒントの数字1つの高さは、盤面の大きさを決める盤面が `--nonogram-column-clue-number` で渡す。 */
 const numberClassNames = {
   row: "min-w-[calc(var(--nonogram-cell)*0.42)] text-center",
   column:
-    "h-[calc(var(--nonogram-cell)*0.6)] leading-[calc(var(--nonogram-cell)*0.6)]",
+    "h-(--nonogram-column-clue-number) leading-(--nonogram-column-clue-number)",
 } as const;
 
 export function NonogramClue({

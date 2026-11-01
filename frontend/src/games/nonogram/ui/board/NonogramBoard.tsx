@@ -37,8 +37,13 @@ type NonogramBoardProps = {
   onEndStroke: () => void;
 };
 
-/** ヒントの数字1つが取る幅・高さ（マスの辺に対する比）。 */
-const CLUE_NUMBER_EXTENT = 0.6;
+/** 行ヒントの数字1つが取る幅（マスの辺に対する比）。 */
+const ROW_CLUE_NUMBER_EXTENT = 0.6;
+/**
+ * 列ヒントの数字1つが取る高さ（マスの辺に対する比）。縦に積んだ数字は横に並べた数字より続いて見えるので、
+ * 数字の間を行ヒントより空け、同じ数字が続いても数え分けられるようにする。
+ */
+const COLUMN_CLUE_NUMBER_EXTENT = 0.7;
 /** ヒントと盤面の間（マスの辺に対する比）。 */
 const CLUE_GAP_EXTENT = 0.3;
 /** 広い画面でもマスをこれより大きくしない。 */
@@ -73,10 +78,12 @@ function createBoardLayoutStyle(
   clues: NonogramClues,
 ): CSSProperties {
   const rowClueExtent =
-    countClueNumbers(clues.rows) * CLUE_NUMBER_EXTENT + CLUE_GAP_EXTENT;
+    countClueNumbers(clues.rows) * ROW_CLUE_NUMBER_EXTENT + CLUE_GAP_EXTENT;
   const columnClueExtent =
-    countClueNumbers(clues.columns) * CLUE_NUMBER_EXTENT + CLUE_GAP_EXTENT;
+    countClueNumbers(clues.columns) * COLUMN_CLUE_NUMBER_EXTENT +
+    CLUE_GAP_EXTENT;
   return {
+    "--nonogram-column-clue-number": scaleCell(COLUMN_CLUE_NUMBER_EXTENT),
     "--nonogram-cell": `min(calc(100cqw / ${width + rowClueExtent}), calc(100cqh / ${height + columnClueExtent}), ${MAXIMUM_CELL_SIZE})`,
     gridTemplateColumns: `${scaleCell(rowClueExtent)} ${scaleCell(width)}`,
     gridTemplateRows: `${scaleCell(columnClueExtent)} ${scaleCell(height)}`,
