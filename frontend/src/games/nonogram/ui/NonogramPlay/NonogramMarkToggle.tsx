@@ -43,10 +43,7 @@ export function NonogramMarkToggle({
                 : "hover:bg-accent",
             )}
           >
-            <span
-              aria-hidden="true"
-              className={cn("relative size-5", !selected && "opacity-40")}
-            >
+            <span aria-hidden="true" className="relative size-5">
               <NonogramCellFace state={option.mark} />
             </span>
           </button>
