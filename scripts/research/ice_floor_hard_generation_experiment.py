@@ -3,7 +3,8 @@
 長い問題を局所探索でどこまで作れるか、長いだけで簡単な問題をどの特徴量で見分けられるか、
 最適化の目的関数で出てくる問題がどう変わるかを測る。
 
-盤面は氷と岩だけ。乱数はすべて seed と条件名から作り、結果を再現可能にする。
+盤面は氷と岩だけを基本とし、floor-* の suite では「ふつうの床」（滑って入ると止まる。床から出る
+滑りは氷と同じ）を最適化の対象に加えて比べる。乱数はすべて seed と条件名から作り、結果を再現可能にする。
 Python標準ライブラリだけを使う。
 """
 
@@ -20,6 +21,7 @@ from collections import Counter
 from collections.abc import Callable, Sequence
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import asdict, dataclass
+from itertools import pairwise
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -36,14 +38,20 @@ from ice_floor_difficulty_experiment import (  # noqa: E402
     undo_search_moves,
 )
 from ice_floor_supply_experiment import (  # noqa: E402
+    DX,
+    DY,
+    FLOOR,
     ICE,
     ROCK,
+    STOP,
     Board,
+    Reach,
     canonical_key,
     count_shortest_paths,
     explore,
     percentile,
     random_board,
+    slide,
     without_irrelevant_rocks,
 )
 
@@ -64,9 +72,14 @@ CHECKPOINTS = (500, 1000, 2000, 4000, 8000, 16000)
 # 盤面と停止点グラフ
 
 
-def stop_tables(width: int, height: int, rock: Sequence[bool]) -> tuple[list[int], ...]:
-    """各マスから上・右・下・左へ滑ったときに止まるマス。すぐ岩・外壁なら自分自身。"""
+def stop_tables(
+    width: int, height: int, rock: Sequence[bool], floor: Sequence[bool] = ()
+) -> tuple[list[int], ...]:
+    """各マスから上・右・下・左へ滑ったときに止まるマス。すぐ岩・外壁なら自分自身。
+
+    ふつうの床（floor）は、滑って入ってきた駒をそこで止める。床から出る滑りは氷と同じ。"""
     n = width * height
+    floor = floor or [False] * n
     up, right, down, left = [0] * n, [0] * n, [0] * n, [0] * n
     for x in range(width):
         last = -1
@@ -78,6 +91,8 @@ def stop_tables(width: int, height: int, rock: Sequence[bool]) -> tuple[list[int
             if last < 0:
                 last = cell
             up[cell] = last
+            if floor[cell]:
+                last = cell
         last = -1
         for y in range(height - 1, -1, -1):
             cell = y * width + x
@@ -87,6 +102,8 @@ def stop_tables(width: int, height: int, rock: Sequence[bool]) -> tuple[list[int
             if last < 0:
                 last = cell
             down[cell] = last
+            if floor[cell]:
+                last = cell
     for y in range(height):
         row = y * width
         last = -1
@@ -98,6 +115,8 @@ def stop_tables(width: int, height: int, rock: Sequence[bool]) -> tuple[list[int
             if last < 0:
                 last = cell
             left[cell] = last
+            if floor[cell]:
+                last = cell
         last = -1
         for x in range(width - 1, -1, -1):
             cell = row + x
@@ -107,6 +126,8 @@ def stop_tables(width: int, height: int, rock: Sequence[bool]) -> tuple[list[int
             if last < 0:
                 last = cell
             right[cell] = last
+            if floor[cell]:
+                last = cell
     return up, right, down, left
 
 
@@ -127,13 +148,21 @@ def board_rocks(board: Board) -> list[bool]:
     return [tile == ROCK for tile in board.cells]
 
 
+def board_floors(board: Board) -> list[bool]:
+    return [tile == FLOOR for tile in board.cells]
+
+
+def board_tables(board: Board) -> tuple[list[int], ...]:
+    return stop_tables(board.width, board.height, board_rocks(board), board_floors(board))
+
+
 def to_board(width: int, height: int, rock: Sequence[bool]) -> Board:
     return Board(width, height, "".join(ROCK if r else ICE for r in rock))
 
 
 @dataclass
 class StopGraph:
-    """盤面全体の停止点（岩・外壁に接する氷のマスと開始位置）と、その間の滑り。
+    """盤面全体の停止点（岩・外壁に接する氷のマス、ふつうの床、開始位置）と、その間の滑り。
 
     人は到達できるかを知らずにゴールの手前を逆向きに考えるので、逆向きの推論は
     開始位置から到達できない停止点も含めたこのグラフで行う。"""
@@ -147,7 +176,7 @@ class StopGraph:
 
 def stop_graph(board: Board, start: int) -> StopGraph:
     rock = board_rocks(board)
-    tables = stop_tables(board.width, board.height, rock)
+    tables = board_tables(board)
     nodes = {start}
     for cell, is_rock in enumerate(rock):
         if not is_rock:
@@ -192,7 +221,7 @@ def line_of_sight(board: Board, a: int, b: int) -> bool:
         return False
     cell = a + step
     while cell != b:
-        if board.cells[cell] == ROCK:
+        if board.cells[cell] in (ROCK, FLOOR):
             return False
         cell += step
     return True
@@ -490,6 +519,10 @@ class SearchSpec:
     min_shortest: int = 0  # ゴールに選ぶ最少手数の範囲。max_shortest=0 は上限なし
     max_shortest: int = 0
     temperature: float = 1.5  # sa の初期温度
+    max_floors: int = 0  # ふつうの床の枚数の上限。0 は床を使わない
+    goal_on_floor: bool = False
+    start_on_floor: bool = False
+    min_path_floors: int = 0  # 合成の目的関数で、最短の道筋が床で止まることを求める手の数
 
 
 @dataclass
@@ -514,25 +547,43 @@ Evaluation = tuple[float, int, int]  # (スコア, ゴール, 最少手数)
 
 
 def evaluate_length(
-    width: int, height: int, rock: Sequence[bool], start: int, cap: int
+    width: int,
+    height: int,
+    rock: Sequence[bool],
+    start: int,
+    cap: int,
+    floor: Sequence[bool] = (),
+    goal_on_floor: bool = False,
 ) -> Evaluation:
-    tables = stop_tables(width, height, rock)
+    tables = stop_tables(width, height, rock, floor)
     dist = forward_dist(tables, start)
     best_goal, best = -1, 0
     for state, d in dist.items():
         if cap and d > cap:
+            continue
+        if floor and floor[state] and not goal_on_floor:
             continue
         if d > best or (d == best and state < best_goal):
             best, best_goal = d, state
     return float(best), best_goal, best
 
 
+FLOOR_SHORTFALL_PENALTY = 10.0
+
+
 def composite_score(
-    width: int, tables: tuple[list[int], ...], dist: dict[int, int], start: int, goal: int
+    width: int,
+    tables: tuple[list[int], ...],
+    dist: dict[int, int],
+    start: int,
+    goal: int,
+    floor: Sequence[bool] = (),
+    min_path_floors: int = 0,
 ) -> float:
     """最少手数＋読みどころ（2手以上の遠回りか詰みになる選択肢がある手）−最短解の多さ。
 
-    到達できる停止点のグラフだけで求め、局所探索の1回の評価を軽く保つ。"""
+    到達できる停止点のグラフだけで求め、局所探索の1回の評価を軽く保つ。min_path_floors を与えると、
+    最短の道筋が床で止まる手がそれに足りない分だけ罰を与え、床を中継点に使う盤面へ寄せる。"""
     succ = {s: [t[s] for t in tables if t[s] != s] for s in dist}
     pred: dict[int, list[int]] = {s: [] for s in dist}
     for s, ends in succ.items():
@@ -557,6 +608,7 @@ def composite_score(
     state = start
     prefix = {start}
     decisions = 0
+    floor_stops = 0
     while state != goal:
         remaining = to_goal[state]
         nxt = -1
@@ -572,27 +624,41 @@ def composite_score(
         decisions += costly
         state = nxt
         prefix.add(state)
-    return shortest + decisions - 2.0 * math.log2(ways[goal])
+        floor_stops += bool(floor) and floor[state] and state != goal
+    shortfall = max(0, min_path_floors - floor_stops)
+    return shortest + decisions - 2.0 * math.log2(ways[goal]) - FLOOR_SHORTFALL_PENALTY * shortfall
 
 
 def evaluate_composite(
-    width: int, height: int, rock: Sequence[bool], start: int, min_shortest: int, cap: int
+    width: int,
+    height: int,
+    rock: Sequence[bool],
+    start: int,
+    min_shortest: int,
+    cap: int,
+    floor: Sequence[bool] = (),
+    goal_on_floor: bool = False,
+    min_path_floors: int = 0,
 ) -> Evaluation:
     """範囲内で長い方から6つのゴールを比べる。範囲に届かない盤面は長さだけで比べ、罰を与える。"""
-    tables = stop_tables(width, height, rock)
+    tables = stop_tables(width, height, rock, floor)
     dist = forward_dist(tables, start)
-    in_cap = [d for d in dist.values() if not cap or d <= cap]
-    longest = max(in_cap)
-    floor = max(min_shortest, longest - 2, 1)
+    goals = {
+        s: d
+        for s, d in dist.items()
+        if (not cap or d <= cap) and (goal_on_floor or not floor or not floor[s])
+    }
+    longest = max(goals.values(), default=0)
+    lowest = max(min_shortest, longest - 2, 1)
     candidates = sorted(
-        (s for s, d in dist.items() if floor <= d and (not cap or d <= cap)),
+        (s for s, d in goals.items() if lowest <= d),
         key=lambda s: (-dist[s], s),
     )[:6]
     if longest < max(min_shortest, 1) or not candidates:
         return float(longest) - 100.0, start, 0
     best: Evaluation | None = None
     for goal in candidates:
-        score = composite_score(width, tables, dist, start, goal)
+        score = composite_score(width, tables, dist, start, goal, floor, min_path_floors)
         if best is None or score > best[0]:
             best = (score, goal, dist[goal])
     assert best is not None
@@ -611,14 +677,19 @@ class Searcher:
         self.trace: dict[int, float] = {}
         self.shortest_trace: dict[int, int] = {}
 
-    def evaluate(self, rock: list[bool], start: int) -> Evaluation:
+    def objective(self, rock: list[bool], start: int) -> Evaluation:
         spec = self.spec
         if spec.objective == "length":
-            result = evaluate_length(spec.width, spec.height, rock, start, spec.max_shortest)
-        else:
-            result = evaluate_composite(
-                spec.width, spec.height, rock, start, spec.min_shortest, spec.max_shortest
-            )
+            return evaluate_length(spec.width, spec.height, rock, start, spec.max_shortest)
+        return evaluate_composite(
+            spec.width, spec.height, rock, start, spec.min_shortest, spec.max_shortest
+        )
+
+    def board_of(self, rock: list[bool]) -> Board:
+        return to_board(self.spec.width, self.spec.height, rock)
+
+    def evaluate(self, rock: list[bool], start: int) -> Evaluation:
+        result = self.objective(rock, start)
         self.evaluations += 1
         if self.best is None or result[0] > self.best[0]:
             self.best = (result[0], list(rock), start, result[1], result[2])
@@ -734,16 +805,134 @@ class Searcher:
             population = sorted(population + children, key=lambda p: -p[0])[:population_size]
 
 
+FLOOR_MOVE_SHARE = 0.20  # 床ありの山登りで、近傍のうち床の追加・削除・移動に充てる割合
+
+
+class FloorSearcher(Searcher):
+    """ふつうの床を含む盤面の山登り。状態は岩・床・氷のマスの並び（list[str]）。
+
+    近傍は、開始位置の移動 10%（Searcher と同じ）、床の追加・削除・移動 FLOOR_MOVE_SHARE、
+    残りを岩の反転と岩の移動に半分ずつ充てる。床のマスは岩の反転・移動の対象にしない。"""
+
+    def objective(self, tiles: list[str], start: int) -> Evaluation:  # type: ignore[override]
+        spec = self.spec
+        rock = [t == ROCK for t in tiles]
+        floor = [t == FLOOR for t in tiles]
+        if spec.objective == "length":
+            return evaluate_length(
+                spec.width, spec.height, rock, start, spec.max_shortest, floor, spec.goal_on_floor
+            )
+        return evaluate_composite(
+            spec.width,
+            spec.height,
+            rock,
+            start,
+            spec.min_shortest,
+            spec.max_shortest,
+            floor,
+            spec.goal_on_floor,
+            spec.min_path_floors,
+        )
+
+    def board_of(self, tiles: list[str]) -> Board:  # type: ignore[override]
+        return Board(self.spec.width, self.spec.height, "".join(tiles))
+
+    def initial(self) -> tuple[list[str], int]:  # type: ignore[override]
+        rock, start = super().initial()
+        tiles = [ROCK if r else ICE for r in rock]
+        for _ in range(self.spec.max_floors):
+            self.add_floor(tiles, start)
+        return tiles, start
+
+    def add_floor(self, tiles: list[str], start: int) -> None:
+        cell = self.rng.randrange(self.n)
+        if tiles[cell] == ICE and (cell != start or self.spec.start_on_floor):
+            tiles[cell] = FLOOR
+
+    def mutate_floors(self, tiles: list[str], start: int) -> None:
+        rng = self.rng
+        floors = [c for c, t in enumerate(tiles) if t == FLOOR]
+        operation = rng.randrange(3)
+        if operation == 0 and len(floors) < self.spec.max_floors:
+            self.add_floor(tiles, start)
+        elif operation == 1 and floors:
+            tiles[floors[rng.randrange(len(floors))]] = ICE
+        elif floors:
+            source = floors[rng.randrange(len(floors))]
+            target = rng.randrange(self.n)
+            if tiles[target] == ICE and (target != start or self.spec.start_on_floor):
+                tiles[source], tiles[target] = ICE, FLOOR
+
+    def mutate(self, tiles: list[str], start: int) -> tuple[list[str], int]:  # type: ignore[override]
+        rng = self.rng
+        tiles = list(tiles)
+        roll = rng.random()
+        if roll < 0.10:
+            allowed = (ICE, FLOOR) if self.spec.start_on_floor else (ICE,)
+            cells = [c for c in range(self.n) if tiles[c] in allowed]
+            return tiles, cells[rng.randrange(len(cells))]
+        if roll < 0.10 + FLOOR_MOVE_SHARE:
+            self.mutate_floors(tiles, start)
+            return tiles, start
+        rocks = tiles.count(ROCK)
+        cell = rng.randrange(self.n)
+        if cell == start or tiles[cell] == FLOOR:
+            return tiles, start
+        is_rock = tiles[cell] == ROCK
+        toggles = roll < 0.10 + FLOOR_MOVE_SHARE + (0.90 - FLOOR_MOVE_SHARE) / 2
+        if toggles and (self.min_rocks < rocks if is_rock else rocks < self.max_rocks):
+            tiles[cell] = ICE if is_rock else ROCK
+            return tiles, start
+        if is_rock:
+            target = rng.randrange(self.n)
+            if tiles[target] == ICE and target != start:
+                tiles[cell], tiles[target] = ICE, ROCK
+        else:
+            source = rng.randrange(self.n)
+            if tiles[source] == ROCK:
+                tiles[source], tiles[cell] = ICE, ROCK
+        return tiles, start
+
+
+def without_idle_floors(reach: Reach) -> Board:
+    """駒の動きを変えない床を氷に戻す。
+
+    到達できる滑りが入らない床と、入ってくるどの滑りも氷でも同じマスで止まる（次が岩・外壁）床は、
+    見た目の負担だけを増やすので除く。岩より先に除くと、床で止まっていた滑りを止める岩が残る。"""
+    board = reach.board
+    working: set[int] = set()
+    for (_, direction), result in reach.slides.items():
+        end = result.end
+        if result.outcome != STOP or not result.path or board.cells[end] != FLOOR:
+            continue
+        x, y = end % board.width + DX[direction], end // board.width + DY[direction]
+        inside = 0 <= x < board.width and 0 <= y < board.height
+        if inside and board.cells[y * board.width + x] != ROCK:
+            working.add(end)
+    cells = [
+        ICE if tile == FLOOR and index not in working else tile
+        for index, tile in enumerate(board.cells)
+    ]
+    return Board(board.width, board.height, "".join(cells))
+
+
+def normalize(board: Board, start: int) -> Board:
+    """解に関わらない床と岩を除いた盤面。床のない盤面では無関係な岩を除くだけ。"""
+    if FLOOR in board.cells:
+        board = without_idle_floors(explore(board, start))
+    return without_irrelevant_rocks(explore(board, start))
+
+
 def generate(spec: SearchSpec, seed: str) -> Generated:
     started = time.perf_counter()
-    searcher = Searcher(spec, random.Random(seed))
+    searcher = (FloorSearcher if spec.max_floors else Searcher)(spec, random.Random(seed))
     searcher.run()
     assert searcher.best is not None
-    score, rock, start, goal, shortest = searcher.best
-    board = to_board(spec.width, spec.height, rock)
+    score, state, start, goal, shortest = searcher.best
+    board = searcher.board_of(state)
     reach = explore(board, start)
     assert reach.dist[goal] == shortest, "fast BFS disagrees with explore()"
-    normalized = without_irrelevant_rocks(reach)
+    normalized = normalize(board, start)
     assert explore(normalized, start).dist[goal] == shortest
     return Generated(
         spec.width,
@@ -1148,6 +1337,28 @@ def rejections(plan: LevelPlan, features: Features) -> list[str]:
     return reasons
 
 
+@dataclass(frozen=True)
+class FloorRule:
+    """ふつうの床の使い方。max_floors=0 は床なし（Searcher をそのまま使う）。"""
+
+    max_floors: int = 0
+    goal_on_floor: bool = False
+    start_on_floor: bool = False
+    min_path_floors: int = 0  # 最短の道筋が床で止まる手の下限（目的関数の罰と採用条件）
+
+    @property
+    def label(self) -> str:
+        extras = (
+            (f"・道筋で床{self.min_path_floors}回以上" if self.min_path_floors else "")
+            + ("・ゴール可" if self.goal_on_floor else "")
+            + ("・開始可" if self.start_on_floor else "")
+        )
+        return f"床≦{self.max_floors}{extras}"
+
+
+NO_FLOORS = FloorRule()
+
+
 @dataclass
 class LevelResult:
     level: int
@@ -1156,11 +1367,15 @@ class LevelResult:
     accepted: bool
     reasons: list[str]
     goals_tried: int
+    rule: FloorRule = NO_FLOORS
 
 
-def level_task(task: tuple[LevelPlan, str, int]) -> LevelResult:
-    """1回の最適化で1問を作る。最少手数の上限は試行ごとに範囲内で回し、範囲内の長さを散らす。"""
-    plan, seed, run = task
+def level_task(task: tuple) -> LevelResult:
+    """1回の最適化で1問を作る。最少手数の上限は試行ごとに範囲内で回し、範囲内の長さを散らす。
+
+    task は (plan, seed, run) か、床ありの (plan, seed, run, rule)。"""
+    plan, seed, run = task[:3]
+    rule: FloorRule = task[3] if len(task) > 3 else NO_FLOORS
     cap = plan.min_shortest + run % (plan.max_shortest - plan.min_shortest + 1)
     spec = SearchSpec(
         plan.shape.width,
@@ -1170,6 +1385,10 @@ def level_task(task: tuple[LevelPlan, str, int]) -> LevelResult:
         plan.iterations,
         min_shortest=plan.min_shortest,
         max_shortest=cap,
+        max_floors=rule.max_floors,
+        goal_on_floor=rule.goal_on_floor,
+        start_on_floor=rule.start_on_floor,
+        min_path_floors=rule.min_path_floors,
     )
     generated = generate(spec, seed)
     started = time.perf_counter()
@@ -1182,6 +1401,7 @@ def level_task(task: tuple[LevelPlan, str, int]) -> LevelResult:
             if g != generated.goal
             and g != generated.start
             and plan.min_shortest <= d <= plan.max_shortest
+            and (rule.goal_on_floor or board.cells[g] != FLOOR)
         ),
         key=lambda g: (-reach.dist[g], g),
     )
@@ -1192,6 +1412,10 @@ def level_task(task: tuple[LevelPlan, str, int]) -> LevelResult:
         tried += 1
         features = features_of(board, generated.start, goal)
         reasons = rejections(plan, features)
+        if rule.min_path_floors and path_floor_stops(board, generated.start, goal) < (
+            rule.min_path_floors
+        ):
+            reasons.append("道筋が床で止まらない")
         if first is None:
             first = (goal, features, reasons)
         if not reasons:
@@ -1202,9 +1426,9 @@ def level_task(task: tuple[LevelPlan, str, int]) -> LevelResult:
     if goal != generated.goal:
         generated.goal = goal
         generated.shortest = features.shortest
-        normalized = without_irrelevant_rocks(explore(board, generated.start))
+        normalized = normalize(board, generated.start)
         generated.cells = normalized.cells
-    return LevelResult(plan.level, generated, features, not reasons, reasons, tried)
+    return LevelResult(plan.level, generated, features, not reasons, reasons, tried, rule)
 
 
 def plans_for(args: argparse.Namespace) -> list[LevelPlan]:
@@ -1370,6 +1594,338 @@ def run_verify(args: argparse.Namespace) -> None:
     print(f"checked={checked} mismatches={mismatches}")
 
 
+# ---------------------------------------------------------------------------
+# ふつうの床の比べ直し
+
+
+@dataclass(frozen=True)
+class FloorStats:
+    floors: int  # 解に関わらない床を除いた後の床の数
+    reachable_floors: int  # 到達できる停止点のうち床のマス
+    floor_stops_on_path: int  # 方向番号の小さい手を優先した最短の道筋で、ゴールより前に床で止まる手
+    floors_on_path: int  # その道筋で止まる床のマスの数（同じ床で二度止まっても1）
+    # 道筋が止まる床で問題を区切ったときの、区間ごとの読み深さの最大。道筋が床で止まらなければ 0。
+    # 「この床を通るはず」と見抜いた人が、床を中継点にして読むときの読み深さ
+    relay_depth: int
+    bare_solvable: bool  # 床を氷に戻しても、ゴールに止まれるか
+    bare: Features | None  # 床を氷に戻した盤面の特徴量（岩はそのまま）
+
+
+def shortest_path_states(graph: StopGraph, start: int, goal: int) -> list[int]:
+    """path_choices と同じ規則でたどった最短の道筋の停止点（開始位置を除く）。"""
+    to_goal = graph.rdist[goal]
+    state = start
+    states = []
+    while state != goal:
+        remaining = to_goal[state]
+        state = next(end for _, end in graph.succ[state] if to_goal.get(end) == remaining - 1)
+        states.append(state)
+    return states
+
+
+def path_floor_stops(board: Board, start: int, goal: int) -> int:
+    path = shortest_path_states(stop_graph(board, start), start, goal)
+    return sum(1 for s in path if board.cells[s] == FLOOR and s != goal)
+
+
+def floor_stats(board: Board, start: int, goal: int) -> FloorStats:
+    graph = stop_graph(board, start)
+    reachable = graph.dist[start]
+    path = shortest_path_states(graph, start, goal)
+    relays = [s for s in path if board.cells[s] == FLOOR and s != goal]
+    waypoints = [start, *relays, goal]
+    relay_depth = (
+        max(features_of(board, a, b).human_depth for a, b in pairwise(waypoints)) if relays else 0
+    )
+    bare_board = Board(board.width, board.height, board.cells.replace(FLOOR, ICE))
+    bare_solvable = goal in explore(bare_board, start).dist
+    return FloorStats(
+        floors=board.cells.count(FLOOR),
+        reachable_floors=sum(1 for s in reachable if board.cells[s] == FLOOR),
+        floor_stops_on_path=len(relays),
+        floors_on_path=len(set(relays)),
+        relay_depth=relay_depth,
+        bare_solvable=bare_solvable,
+        bare=features_of(bare_board, start, goal) if bare_solvable else None,
+    )
+
+
+def floor_level_task(task: tuple[LevelPlan, str, int, FloorRule]) -> tuple[LevelResult, FloorStats]:
+    result = level_task(task)
+    g = result.generated
+    return result, floor_stats(g.board, g.start, g.goal)
+
+
+def floor_seed(seed: int, level: int, run: int, rule: FloorRule) -> str:
+    """床なしは levels と同じ seed にし、levels の結果をそのまま再現する。"""
+    base = f"{seed}-levels-{level}-{run}"
+    if rule == NO_FLOORS:
+        return base
+    return (
+        f"{base}-floors{rule.max_floors}"
+        + (f"-path{rule.min_path_floors}" if rule.min_path_floors else "")
+        + ("-goal" if rule.goal_on_floor else "")
+        + ("-start" if rule.start_on_floor else "")
+    )
+
+
+def parse_floor_rule(text: str) -> tuple[int, int]:
+    """「上限」か「上限:道筋で床に止まる手の下限」。"""
+    cap, _, minimum = text.partition(":")
+    return int(cap), int(minimum or 0)
+
+
+def floor_rules(args: argparse.Namespace) -> list[FloorRule]:
+    return [
+        FloorRule(cap, args.goal_on_floor and cap > 0, args.start_on_floor and cap > 0, minimum)
+        for cap, minimum in args.floor_caps
+    ]
+
+
+FLOOR_SUMMARY_COLUMNS = (
+    "shortest",
+    "human_depth",
+    "forward_depth",
+    "backward_depth",
+    "bidir_depth",
+    "trial_moves",
+    "decisions",
+    "forced_steps",
+    "near_paths",
+    "goal_preds_global",
+    "reachable",
+    "stops",
+    "dead_states",
+    "density",
+)
+
+
+def print_floor_group(
+    plan: LevelPlan, label: str, pairs: list[tuple[LevelResult, FloorStats]]
+) -> None:
+    rs = [r for r, _ in pairs]
+    ok = [(r, st) for r, st in pairs if r.accepted]
+    seconds = [r.generated.seconds for r in rs]
+    rate = len(ok) / len(rs)
+    per_problem = statistics.mean(seconds) / rate if rate else float("inf")
+    unique = sum(r.features.optimal_paths == 1 for r in rs)
+    print(
+        f"## {label}: 採用 {len(ok)}/{len(rs)} 1回 平均{statistics.mean(seconds):.2f}s "
+        f"→ 1問 {per_problem:.2f}s、最短解一意（全試行） {unique}/{len(rs)}"
+    )
+    print(f"  外れた理由: {dict(Counter(reason for r in rs for reason in r.reasons))}")
+    fs = [r.features for r, _ in ok]
+    if not fs:
+        return
+    for column in FLOOR_SUMMARY_COLUMNS:
+        print(f"  {column}: {summary([getattr(f, column) for f in fs])}")
+    depths = Counter(f.human_depth for f in fs)
+    print(f"  human_depth の分布 {dict(sorted(depths.items()))}")
+    stats = [st for _, st in ok]
+    if not any(st.floors for st in stats):
+        return
+    using = [(r, st) for r, st in ok if st.floor_stops_on_path]
+    print(
+        f"  床の数: {summary([st.floors for st in stats])}、到達できる床: "
+        f"{summary([st.reachable_floors for st in stats])}、最短の道筋が床で止まる: "
+        f"{len(using)}/{len(ok)}（床で止まる手 {summary([st.floor_stops_on_path for st in stats])}）"
+    )
+    if using:
+        print(
+            f"  床を中継点に区切ったときの読み深さ（道筋が床で止まる問題）: "
+            f"{summary([st.relay_depth for _, st in using])}、元の読み深さとの差 "
+            f"{summary([st.relay_depth - r.features.human_depth for r, st in using])}、"
+            f"すべての床が道筋上 {sum(st.floors_on_path == st.floors for _, st in using)}/{len(using)}"
+        )
+        relay_ok = [st for _, st in using if st.relay_depth >= plan.min_human_depth]
+        print(
+            f"  床で区切った読み深さもレベルの下限以上: 道筋が床で止まる {len(relay_ok)} 問＋止まらない "
+            f"{len(ok) - len(using)} 問（全試行 {len(rs)}）"
+        )
+    solvable = [(r, st) for r, st in ok if st.bare_solvable and st.floors]
+    with_floors = sum(1 for st in stats if st.floors)
+    print(f"  床を氷に戻すと解けなくなる: {with_floors - len(solvable)}/{with_floors}")
+    if solvable:
+        for column in ("shortest", "human_depth", "decisions", "forced_steps", "optimal_paths"):
+            deltas = [
+                getattr(st.bare, column) - getattr(r.features, column)
+                for r, st in solvable
+                if st.bare is not None
+            ]
+            print(
+                f"  床を氷に戻したときの {column} の差（戻した−床あり）: 中央値 "
+                f"{statistics.median(deltas):g}（{min(deltas)}〜{max(deltas)}）、"
+                f"減る {sum(d < 0 for d in deltas)} / 同じ {deltas.count(0)} / "
+                f"増える {sum(d > 0 for d in deltas)}"
+            )
+    for name, group in (
+        ("道筋が床で止まる", using),
+        ("道筋が床で止まらない", [(r, st) for r, st in ok if not st.floor_stops_on_path]),
+    ):
+        if group:
+            print(
+                f"  {name}（{len(group)}問）: human_depth "
+                f"{summary([r.features.human_depth for r, _ in group])}、decisions "
+                f"{summary([r.features.decisions for r, _ in group])}"
+            )
+
+
+def run_floors(args: argparse.Namespace) -> None:
+    """新しい5段階の案の各範囲で、床の枚数の上限ごとに山登りで作った問題を比べる。"""
+    plans = plans_for(args)
+    rules = floor_rules(args)
+    tasks = [
+        (plan, floor_seed(args.seed, plan.level, run, rule), run, rule)
+        for plan in plans
+        for rule in rules
+        for run in range(args.runs)
+    ]
+    results = parallel(floor_level_task, tasks, args.workers)
+    for plan in plans:
+        for rule in rules:
+            pairs = [(r, st) for r, st in results if r.level == plan.level and r.rule == rule]
+            print_floor_group(plan, f"{plan.label} {rule.label}", pairs)
+    if args.dump:
+        with open(args.dump, "a") as out:
+            for r, st in results:
+                g = r.generated
+                out.write(
+                    json.dumps(
+                        {
+                            "level": r.level,
+                            "rule": asdict(r.rule),
+                            "accepted": r.accepted,
+                            "seconds": g.seconds,
+                            "rows": rows_of(g.board),
+                            "start": g.start,
+                            "goal": g.goal,
+                            "features": asdict(r.features),
+                            "floor_stats": asdict(st),
+                        },
+                        ensure_ascii=False,
+                    )
+                    + "\n"
+                )
+
+
+def run_floor_lengths(args: argparse.Namespace) -> None:
+    """長さだけを最大化したとき、床の枚数の上限で最短手数がどこまで伸びるか。"""
+    for shape in args.sizes:
+        print(f"## {shape.label} iterations={args.iterations} runs={args.runs}")
+        for rule in floor_rules(args):
+            tasks = [
+                (
+                    SearchSpec(
+                        shape.width,
+                        shape.height,
+                        args.method,
+                        "length",
+                        args.iterations,
+                        max_floors=rule.max_floors,
+                        goal_on_floor=rule.goal_on_floor,
+                        start_on_floor=rule.start_on_floor,
+                    ),
+                    f"{args.seed}-lengths-{shape.label}-{run}"
+                    + ("" if rule == NO_FLOORS else f"-floors{rule.max_floors}"),
+                )
+                for run in range(args.runs)
+            ]
+            results = parallel(generate_task, tasks, args.workers)
+            floors = [r.cells.count(FLOOR) for r in results]
+            print(
+                f"  {rule.label}: 最短手数 中央値/90%/最大={summary([r.shortest for r in results])} "
+                f"床の数={summary(floors)} 1問={statistics.mean(r.seconds for r in results):.2f}s"
+            )
+
+
+def run_floor_candidates(args: argparse.Namespace) -> None:
+    """床ありで条件に合い、最短の道筋が床で止まる問題を各レベル2問ずつ JSON に書く。"""
+    plans = plans_for(args)
+    rule = floor_rules(args)[-1]
+    tasks = [
+        (plan, f"{args.seed}-floor-candidates-{plan.level}-{run}", run, rule)
+        for plan in plans
+        for run in range(args.runs)
+    ]
+    results = parallel(floor_level_task, tasks, args.workers)
+    output = []
+    for plan in plans:
+        seen: set[tuple[str, int, int]] = set()
+        ok: list[tuple[LevelResult, FloorStats]] = []
+        for r, st in results:
+            g = r.generated
+            key = canonical_key(g.board, g.start, g.goal)
+            if r.level == plan.level and r.accepted and st.floor_stops_on_path and key not in seen:
+                seen.add(key)
+                ok.append((r, st))
+        print(f"{plan.label} {rule.label}: 道筋が床で止まる候補 {len(ok)} 問")
+        if len(ok) < 2:
+            continue
+        ok.sort(key=lambda p: (p[0].features.shortest, p[0].features.human_depth))
+        for quantile in (1 / 3, 2 / 3):
+            r, st = ok[round(quantile * (len(ok) - 1))]
+            g, f = r.generated, r.features
+            board = g.board
+            assert explore(board, g.start).dist[g.goal] == f.shortest
+            assert features_of(board, g.start, g.goal) == f
+            assert board.cells[g.goal] != FLOOR or rule.goal_on_floor
+            output.append(
+                {
+                    "level": plan.level,
+                    "width": g.width,
+                    "height": g.height,
+                    "rows": rows_of(board),
+                    "start": [g.start % g.width, g.start // g.width],
+                    "goal": [g.goal % g.width, g.goal // g.width],
+                    "optimal": f.shortest,
+                    "features": {
+                        **asdict(f),
+                        "floors": st.floors,
+                        "floor_stops_on_path": st.floor_stops_on_path,
+                        "floors_on_path": st.floors_on_path,
+                        "relay_depth": st.relay_depth,
+                        "bare_solvable": st.bare_solvable,
+                        "bare_shortest": st.bare.shortest if st.bare else None,
+                        "bare_human_depth": st.bare.human_depth if st.bare else None,
+                    },
+                }
+            )
+            print(
+                f"L{plan.level} {g.width}x{g.height} 最少{f.shortest} 読み{f.human_depth}"
+                f"（前{f.forward_depth}/逆{f.backward_depth}/両{f.bidir_depth}） 試行{f.trial_moves} "
+                f"読みどころ{f.decisions} 一本道{f.forced_steps} 近い別解{f.near_paths} "
+                f"床{st.floors}（道筋で{st.floor_stops_on_path}回止まる、区切った読み{st.relay_depth}） "
+                f"床を氷に戻すと: "
+                + (f"最少{st.bare.shortest} 読み{st.bare.human_depth}" if st.bare else "解けない")
+            )
+            for line in render_marked(board, g.start, g.goal):
+                print("    " + line)
+    Path(args.output).write_text(json.dumps(output, ensure_ascii=False, indent=1) + "\n")
+    print(f"wrote {len(output)} problems to {args.output}")
+
+
+def run_floor_verify(args: argparse.Namespace) -> None:
+    """床のある盤面で、滑りの表・停止点の BFS・正規化が供給実験の slide / explore と一致するか。"""
+    rng = random.Random(f"{args.seed}-floor-verify")
+    mismatches = 0
+    for _ in range(args.samples):
+        shape = args.sizes[rng.randrange(len(args.sizes))]
+        board = random_board(shape.width, shape.height, rng, 0.20, "b", 0.08)
+        tables = board_tables(board)
+        open_cells = [c for c, t in enumerate(board.cells) if t != ROCK]
+        for cell in open_cells:
+            for direction in DIRECTIONS:
+                result = slide(board, cell, direction)
+                expected = result.end if result.outcome == STOP else cell
+                mismatches += tables[direction][cell] != expected
+        start = open_cells[rng.randrange(len(open_cells))]
+        reach = explore(board, start)
+        mismatches += forward_dist(tables, start) != reach.dist
+        normalized = normalize(board, start)
+        mismatches += explore(normalized, start).dist != reach.dist
+    print(f"checked={args.samples} mismatches={mismatches}")
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -1383,6 +1939,10 @@ def parse_args() -> argparse.Namespace:
             "objectives",
             "levels",
             "candidates",
+            "floor-verify",
+            "floors",
+            "floor-lengths",
+            "floor-candidates",
         ),
     )
     parser.add_argument(
@@ -1414,6 +1974,16 @@ def parse_args() -> argparse.Namespace:
         "--densities", type=float, nargs="+", default=[0.12, 0.16, 0.20, 0.25, 0.30]
     )
     parser.add_argument("--levels", type=int, nargs="+", default=[1, 2, 3, 4, 5])
+    parser.add_argument(
+        "--floor-caps",
+        type=parse_floor_rule,
+        nargs="+",
+        default=[(0, 0), (2, 0), (4, 0), (6, 0), (8, 0)],
+        help="floors / floor-lengths で比べる床の使い方。「上限」か「上限:道筋で床に止まる手の下限」。"
+        "floor-candidates は最後の値を使う",
+    )
+    parser.add_argument("--goal-on-floor", action="store_true", help="ゴールを床に置いてよい")
+    parser.add_argument("--start-on-floor", action="store_true", help="開始位置を床に置いてよい")
     parser.add_argument("--iterations", type=int, default=4000)
     parser.add_argument("--temperature", type=float, default=1.5, help="sa の初期温度")
     parser.add_argument("--runs", type=int, default=20)
@@ -1437,6 +2007,10 @@ def main() -> None:
         "objectives": run_objectives,
         "levels": run_levels,
         "candidates": run_candidates,
+        "floor-verify": run_floor_verify,
+        "floors": run_floors,
+        "floor-lengths": run_floor_lengths,
+        "floor-candidates": run_floor_candidates,
     }
     suites[args.suite](args)
 
