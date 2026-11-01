@@ -155,31 +155,33 @@ export function IceFloorMazePlay({
       )}
     >
       <IceFloorMazeSwipeArea disabled={!playing} onSwipe={onSlide}>
-        <IceFloorMazeBoard
-          board={board}
-          cells={cells}
-          goal={goal}
-          position={position}
-          lastSlide={lastSlide}
-          blockedInput={blockedInput}
-          clearing={progress === "clearing"}
-          onSlideAnimationActivityChange={setSlideAnimating}
-          onClearAnimationComplete={onClearAnimationComplete}
-        />
-      </IceFloorMazeSwipeArea>
-      <footer className="grid h-28 shrink-0 items-end px-4 pb-2">
-        {showTrappedNotice ? (
-          <IceFloorMazeTrappedNotice
-            canUndo={canUndo}
-            onUndo={onUndo}
-            onRestart={onRestart}
+        <main className="flex min-h-0 flex-1 items-center justify-center px-3 py-2 sm:px-6">
+          <IceFloorMazeBoard
+            board={board}
+            cells={cells}
+            goal={goal}
+            position={position}
+            lastSlide={lastSlide}
+            blockedInput={blockedInput}
+            clearing={progress === "clearing"}
+            onSlideAnimationActivityChange={setSlideAnimating}
+            onClearAnimationComplete={onClearAnimationComplete}
           />
-        ) : (
-          <div className="flex h-14 items-center justify-center">
-            <UndoButton disabled={!canUndo} onUndo={onUndo} />
-          </div>
-        )}
-      </footer>
+        </main>
+        <footer className="grid h-28 shrink-0 items-end px-4 pb-2">
+          {showTrappedNotice ? (
+            <IceFloorMazeTrappedNotice
+              canUndo={canUndo}
+              onUndo={onUndo}
+              onRestart={onRestart}
+            />
+          ) : (
+            <div className="flex h-14 items-center justify-center">
+              <UndoButton disabled={!canUndo} onUndo={onUndo} />
+            </div>
+          )}
+        </footer>
+      </IceFloorMazeSwipeArea>
     </GamePlayFrame>
   );
 }

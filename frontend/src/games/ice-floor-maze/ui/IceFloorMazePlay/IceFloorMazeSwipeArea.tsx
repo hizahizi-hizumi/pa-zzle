@@ -34,8 +34,18 @@ type SwipeGesture = {
   decided: boolean;
 };
 
+/** 押した所の、タップで使うボタンなどの部品。そこから始めた指の動きはスワイプとして扱わない。 */
+const TAP_CONTROL_SELECTOR =
+  "button, a, input, select, textarea, [role='button']";
+
+function startsOnTapControl(target: EventTarget): boolean {
+  return (
+    target instanceof Element && target.closest(TAP_CONTROL_SELECTOR) !== null
+  );
+}
+
 /**
- * 盤面の外の余白を含むプレイ領域全体でスワイプを受ける。
+ * 盤面の外の余白と下の操作欄を含むプレイ領域全体でスワイプを受ける。ボタンなどから始めた指の動きは、そのタップに任せて受けない。
  * 向きは指が閾値を超えた時点で決め、指を離すまで待たない。ページのスクロールやズームには使わせない。
  */
 export function IceFloorMazeSwipeArea({
@@ -46,7 +56,12 @@ export function IceFloorMazeSwipeArea({
   const gesture = useRef<SwipeGesture | null>(null);
 
   function handlePointerDown(event: PointerEvent<HTMLElement>) {
-    if (disabled || !event.isPrimary || event.button !== 0) {
+    if (
+      disabled ||
+      !event.isPrimary ||
+      event.button !== 0 ||
+      startsOnTapControl(event.target)
+    ) {
       return;
     }
 
@@ -89,15 +104,15 @@ export function IceFloorMazeSwipeArea({
   }
 
   return (
-    <main
-      className="flex min-h-0 flex-1 touch-none select-none items-center justify-center px-3 py-2 sm:px-6"
+    <div
+      className="flex min-h-0 flex-1 touch-none select-none flex-col"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerEnd}
       onPointerCancel={handlePointerEnd}
     >
       {children}
-    </main>
+    </div>
   );
 }
 
