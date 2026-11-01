@@ -52,11 +52,13 @@ export type TakuzuTutorialStep = TutorialStep<TakuzuTutorialRuleId> & {
  * 直前の手。盤面の上の合図に使う。
  * - `violated`: 置いたマスが、ルールに合わないところに入っている。
  * - `reasonCellIndices`: 置いたタイルが手前の盤面だけで決まっていたときの決め手のマス。決まっていなければ空。
+ * - `fitsStep`: 手を引いている手順のマスに、解と同じタイルを置いた。手を離した後は常に `false`。
  */
 export type TakuzuTutorialMove = {
   cellIndex: number;
   violated: boolean;
   reasonCellIndices: readonly number[];
+  fitsStep: boolean;
 };
 
 /** `moveCount`: 盤面を変えた手の数。同じマスへの合図をやり直す目印に使う。 */
@@ -414,6 +416,7 @@ function performTakuzuTutorialAction(
         placed === null
           ? []
           : getPlacementReason(state.board, earnedRuleIds, cellIndex, placed),
+      fitsStep: step !== null && placed === solution.cells[cellIndex],
     },
   };
 

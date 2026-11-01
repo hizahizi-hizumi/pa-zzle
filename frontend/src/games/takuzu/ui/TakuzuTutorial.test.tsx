@@ -137,12 +137,17 @@ function solveAll(): void {
   placeAll(remainingPlacements);
 }
 
-/** 印を付けているマスの位置。 */
-function getHintedCellPositions(): string[] {
+/** 合図を重ねているマスの位置。 */
+function getCuedCellPositions(kind: "hint" | "fitted"): string[] {
   return within(getBoard())
     .getAllByRole("button")
-    .filter((cell) => cell.querySelector('[data-cell-cue="hint"]'))
+    .filter((cell) => cell.querySelector(`[data-cell-cue="${kind}"]`))
     .map((cell) => cell.getAttribute("aria-label")?.split(" ")[0] ?? "");
+}
+
+/** 印を付けているマスの位置。 */
+function getHintedCellPositions(): string[] {
+  return getCuedCellPositions("hint");
 }
 
 function getRuleItems(): HTMLElement[] {
@@ -214,15 +219,17 @@ describe("TakuzuTutorial", () => {
       expect(rules).toEqual(["伏せたルール", "伏せたルール", "伏せたルール"]);
     });
 
-    test("印のマスをタップすると四角になり、丸の置き方と次のマスを示すこと", () => {
+    test("印のマスをタップすると四角になり、そのマスを光らせて、丸の置き方と次のマスを示すこと", () => {
       tapCell(1, 1);
 
       const label = getCell(1, 1).getAttribute("aria-label");
       const message = screen.getByText("2回タップすると丸になります");
+      const fitted = getCuedCellPositions("fitted");
       const hinted = getHintedCellPositions();
 
       expect(label).toBe("1行1列 四角");
       expect(message).toBeTruthy();
+      expect(fitted).toEqual(["1行1列"]);
       expect(hinted).toEqual(["2行4列"]);
     });
 
@@ -299,6 +306,17 @@ describe("TakuzuTutorial", () => {
         expect(message).toBeTruthy();
         expect(currentRules).toEqual([]);
         expect(animate).not.toHaveBeenCalled();
+      });
+
+      test("解と違う四角では光らせず、丸を置くとそのマスを光らせること", () => {
+        tapCell(1, 3);
+        const fittedOnSquare = getCuedCellPositions("fitted");
+        tapCell(1, 3);
+
+        const fittedOnCircle = getCuedCellPositions("fitted");
+
+        expect(fittedOnSquare).toEqual([]);
+        expect(fittedOnCircle).toEqual(["1行3列"]);
       });
 
       test("丸を置くと、決め手が光った後に次の印を付けること", () => {
@@ -378,12 +396,14 @@ describe("TakuzuTutorial", () => {
         expect(hinted).toHaveLength(1);
       });
 
-      test("どのマスにも置けること", () => {
+      test("どのマスにも置け、正しく置いても光らせないこと", () => {
         tapCell(3, 2);
 
         const label = getCell(3, 2).getAttribute("aria-label");
+        const fitted = getCuedCellPositions("fitted");
 
         expect(label).toBe("3行2列 四角");
+        expect(fitted).toEqual([]);
       });
     });
 

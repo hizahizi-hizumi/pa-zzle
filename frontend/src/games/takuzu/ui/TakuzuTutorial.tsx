@@ -89,25 +89,41 @@ function getCellCues(
   hintCellIndices: readonly number[],
   hintCueId: number,
 ): TakuzuCellCue[] {
-  const { lastMove, moveCount } = state;
-  const moveCues: TakuzuCellCue[] = !lastMove
-    ? []
-    : lastMove.violated
-      ? violationSettled
-        ? [{ cellIndex: lastMove.cellIndex, kind: "rejected", id: moveCount }]
-        : []
-      : lastMove.reasonCellIndices.map((cellIndex) => ({
-          cellIndex,
-          kind: "reason",
-          id: moveCount,
-        }));
   return [
-    ...moveCues,
+    ...getMoveCues(state, violationSettled),
     ...hintCellIndices.map(
       (cellIndex): TakuzuCellCue => ({
         cellIndex,
         kind: "hint",
         id: hintCueId,
+      }),
+    ),
+  ];
+}
+
+/** 直前の手への合図。違反の揺れか、ルールに合う手なら手順のマスを正しく置いた合図と決め手の光。 */
+function getMoveCues(
+  { lastMove, moveCount }: TakuzuTutorialBoardState,
+  violationSettled: boolean,
+): TakuzuCellCue[] {
+  if (!lastMove) {
+    return [];
+  }
+  if (lastMove.violated) {
+    return violationSettled
+      ? [{ cellIndex: lastMove.cellIndex, kind: "rejected", id: moveCount }]
+      : [];
+  }
+  const fittedCues: TakuzuCellCue[] = lastMove.fitsStep
+    ? [{ cellIndex: lastMove.cellIndex, kind: "fitted", id: moveCount }]
+    : [];
+  return [
+    ...fittedCues,
+    ...lastMove.reasonCellIndices.map(
+      (cellIndex): TakuzuCellCue => ({
+        cellIndex,
+        kind: "reason",
+        id: moveCount,
       }),
     ),
   ];

@@ -110,6 +110,14 @@ export function TakuzuCell({
           runViolationCellClassName,
         )}
       />
+      {cue?.kind === "fitted" && (
+        <span
+          key={cue.id}
+          aria-hidden="true"
+          data-cell-cue={cue.kind}
+          className="pointer-events-none absolute inset-1 rounded-sm bg-sky-100/60 ring-2 ring-sky-500/50 ring-inset fill-mode-forwards animate-out fade-out-0 duration-900 ease-in dark:bg-sky-900/50 dark:ring-sky-300/50"
+        />
+      )}
       {cue?.kind === "reason" && (
         <span
           key={cue.id}
