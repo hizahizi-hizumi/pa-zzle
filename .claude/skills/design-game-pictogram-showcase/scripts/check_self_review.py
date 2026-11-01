@@ -9,15 +9,26 @@ from pathlib import Path
 from typing import Any
 
 REQUIRED_CHECKS = (
-    "observed_full_loop_at_target_size",
+    "observed_hero_play_full_cycle",
     "observed_key_moments_zoomed",
-    "start_state_matches_static",
+    "observed_list_selected_static",
+    "observed_light_and_dark",
+    "observed_reduced_motion_static",
+    "aim_a_play_readable",
+    "aim_b_payoff_visible",
+    "aim_c_selection_response_emerges",
+    "aim_d_calm_first_impression",
+    "static_is_same_puzzle_as_base",
+    "static_colors_match_play_screen",
+    "static_readable_at_list_size",
+    "light_and_dark_both_hold",
+    "play_start_matches_static",
+    "play_end_or_loop_seam_clean",
     "parts_stay_attached",
     "no_unintended_overlap_or_overflow",
     "transform_and_clip_are_natural",
     "no_broken_transient_frame",
-    "motion_is_readable_at_target_size",
-    "end_and_loop_return_clean",
+    "dual_instance_ok",
     "no_pageerror",
     "no_unexpected_console_error",
     "no_obvious_unfinished_artifact",
@@ -27,7 +38,7 @@ VALID_RESULTS = {"pass", "reject"}
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Validate the self-review gate before animated pictograms are shown to a human."
+        description="Validate the self-review gate before showcase pictograms are shown to a human."
     )
     parser.add_argument("--manifest", required=True, type=Path)
     parser.add_argument("--self-review", required=True, type=Path)
