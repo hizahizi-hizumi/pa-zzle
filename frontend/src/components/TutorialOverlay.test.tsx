@@ -18,6 +18,9 @@ const intro = {
 /** 名前を上部へ戻してから、最初の手順を始めるまでに十分な間。 */
 const introFinishEnoughMs = 1000;
 
+/** 名前を上部へ戻し始めてから、ルールと一言を出し始めるまでの間。 */
+const revealAfterNameDelayMs = 350;
+
 afterEach(() => {
   cleanup();
   delete (HTMLElement.prototype as { animate?: Element["animate"] }).animate;
@@ -76,7 +79,13 @@ describe("TutorialOverlay", () => {
         introducing={true}
         completed={false}
         finish={{ entry: "play", onReturnToPlay: vi.fn() }}
-        renderBoard={() => <div role="group" aria-label="盤面" />}
+        renderBoard={({ messageShown }) => (
+          <div
+            role="group"
+            aria-label="盤面"
+            data-message-shown={String(messageShown)}
+          />
+        )}
         onIntroEnd={onIntroEnd}
         onRestart={vi.fn()}
         onClose={vi.fn()}
@@ -112,6 +121,21 @@ describe("TutorialOverlay", () => {
 
       expect(onIntroEnd).toHaveBeenCalledOnce();
       expect(nextButton).toBeNull();
+    });
+
+    test("名前を上部へ戻すときは、ルールと一言を出し始めてから、出したことを盤面へ伝えること", () => {
+      pressNext();
+      pressNext();
+      pressNext();
+      const board = screen.getByRole("group", { name: "盤面" });
+      const beforeReveal = board.dataset.messageShown;
+      advanceTime(revealAfterNameDelayMs);
+
+      const revealed = board.dataset.messageShown;
+
+      expect(beforeReveal).toBe("false");
+      expect(revealed).toBe("true");
+      expect(onIntroEnd).not.toHaveBeenCalled();
     });
 
     test("次へでEnterを押しても、導入を飛ばさないこと", () => {

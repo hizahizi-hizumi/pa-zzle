@@ -55,11 +55,13 @@ export type TutorialIntroScene = "goal" | "start";
  * - `scene`: 今見せる場面。導入を終えた後は `null` で、解いている盤面を見せる。
  * - `playing`: 場面の動きを見せる間。盤面が見えるまでと、動きを終えた後は `false` で、場面の終わりの盤面を見せる。
  * - `onSceneEnd`: 場面の動きを終えたら呼ぶ。動きを減らす設定では、動かさずにすぐ呼ぶ。
+ * - `messageShown`: ルールと一言を出している。導入の終わりに、最初の手順の印を一言と同時に出すのに使う。
  */
 export type TutorialBoardIntro = {
   scene: TutorialIntroScene | null;
   playing: boolean;
   onSceneEnd: () => void;
+  messageShown: boolean;
 };
 
 type TutorialScreenProps = {
@@ -308,6 +310,8 @@ export function TutorialScreen({
   // 場面の終わりを一度だけ受け取るため、受け取った段を覚える。
   const endedStageRef = useRef<IntroStage | null>(null);
   const [sceneEnded, setSceneEnded] = useState(false);
+  // 名前を上部へ移す段で、ルールと一言を出し始めた。
+  const [headerMessageShown, setHeaderMessageShown] = useState(false);
   const timersRef = useRef<number[]>([]);
   const animationsRef = useRef<Animation[]>([]);
   const onIntroEndRef = useRef(onIntroEnd);
@@ -338,6 +342,7 @@ export function TutorialScreen({
     stageRef.current = next;
     endedStageRef.current = null;
     setSceneEnded(false);
+    setHeaderMessageShown(false);
     setStage(next);
   }, []);
 
@@ -398,6 +403,7 @@ export function TutorialScreen({
         : [],
     );
     changeStage("header");
+    schedule(() => setHeaderMessageShown(true), REVEAL_AFTER_NAME_DELAY_MS);
     for (const [element, transform] of moves) {
       element.style.transformOrigin = "0 0";
       animationsRef.current.push(
@@ -654,6 +660,10 @@ export function TutorialScreen({
           scene: stageView.scene,
           playing: stageView.scenePlaying && !sceneEnded,
           onSceneEnd: handleSceneEnd,
+          messageShown:
+            stage === "done" ||
+            stage === "reveal" ||
+            (stage === "header" && headerMessageShown),
         })}
       </main>
 
