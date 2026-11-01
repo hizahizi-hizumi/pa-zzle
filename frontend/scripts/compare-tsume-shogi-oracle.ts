@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { createProblemSeededRandom } from "@/games/problem-seed";
 import {
   type TsumeShogiValidation,
@@ -36,7 +36,9 @@ Options:
   --timeout <ms>    oracle の1局面あたりの制限時間 (default: 5000)
   --level <n>       oracle の探索レベル（shtsume の search_level）。低いと最短でも作意でもない詰み手順を返すことがある
                     (default: 3)
-  --verdict <v>     自作の判定がこの値（accepted / unsupported / invalid）の局面だけを照合する`;
+  --verdict <v>     自作の判定がこの値（accepted / unsupported / invalid）の局面だけを照合する
+  --results <path>  照合した局面ごとの {"sfen", "plies", "verdict", "comparison"} を JSONL で書く（問題集の生成の
+                    --oracle-results に渡す）`;
 
 type Sample = { sfen: string; plies: number };
 
@@ -371,6 +373,7 @@ async function runMain(): Promise<void> {
   const counts = new Map<string, number>();
   const mismatches: string[] = [];
   const onlyVerdict = readOption("verdict");
+  const results: string[] = [];
   let comparedCount = 0;
   for (const sample of samples) {
     const validation = validateTsumeShogiProblem(
@@ -386,6 +389,14 @@ async function runMain(): Promise<void> {
       timeoutMilliseconds,
     );
     const comparison = compare(sample, validation, answer, withHandLeft);
+    results.push(
+      JSON.stringify({
+        sfen: sample.sfen,
+        plies: sample.plies,
+        verdict: validation.verdict,
+        comparison,
+      }),
+    );
     const key = `${comparison} (${validation.verdict})`;
     counts.set(key, (counts.get(key) ?? 0) + 1);
     if (!comparison.startsWith("一致")) {
@@ -395,6 +406,10 @@ async function runMain(): Promise<void> {
     }
   }
   oracle.stop();
+  const resultsPath = readOption("results");
+  if (resultsPath !== undefined) {
+    writeFileSync(resultsPath, `${results.join("\n")}\n`);
+  }
 
   console.log(`${comparedCount}局面を照合（候補 ${samples.length}局面）`);
   for (const [key, count] of [...counts].sort()) {
