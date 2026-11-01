@@ -250,7 +250,10 @@ export function WaterSortTutorial({
         onSceneEnd={onSceneEnd}
       >
         {(showsGoal) => (
-          <div className="mx-auto flex h-full w-[min(100cqw,26rem,calc(150cqh+56px))] items-center">
+          // 端から2本目へ注ぐとき、傾けたボトルは注ぎ先の中心から画面の端の側へ、ボトルの幅の約2.76倍はみ出す。
+          // 傾けたボトルも画面の端から16px以上離れるよう、ボトルの幅を (100cqw - 28px) / 7.52 までに抑える。
+          // 100cqw は画面幅から左右16pxの余白を除いた幅で、28px はボトルの隙間2つ分。
+          <div className="mx-auto flex h-full w-[min(100cqw,26rem,calc(150cqh+56px),calc((100cqw-28px)*5/7.52+56px))] items-center">
             <WaterSortBoard
               state={showsGoal ? goalBottles : boardState.bottles}
               sourceBottleIndex={
