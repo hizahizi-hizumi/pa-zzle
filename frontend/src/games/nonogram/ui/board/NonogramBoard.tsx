@@ -211,7 +211,7 @@ export function NonogramBoard({
     onEndStroke();
   }
 
-  function handleKeyboardPress(cellIndex: number): void {
+  function handleCellPress(cellIndex: number): void {
     onStartStroke(cellIndex, mark);
     onEndStroke();
   }
@@ -307,7 +307,7 @@ export function NonogramBoard({
               disabled={interactionDisabled}
               focusable={cellIndex === focusableIndex}
               onElementChange={handleCellElementChange}
-              onKeyboardPress={handleKeyboardPress}
+              onPressCell={handleCellPress}
               onFocus={handleCellFocus}
             />
           );

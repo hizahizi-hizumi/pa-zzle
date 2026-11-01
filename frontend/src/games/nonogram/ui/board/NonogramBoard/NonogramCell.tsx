@@ -18,8 +18,8 @@ type NonogramCellProps = {
     cellIndex: number,
     element: HTMLButtonElement | null,
   ) => void;
-  /** キーボードでマスを押した。 */
-  onKeyboardPress: (cellIndex: number) => void;
+  /** マスを押した。指やマウスの押下は盤面が受けるので、キーボードからの押下でだけ呼ぶ。 */
+  onPressCell: (cellIndex: number) => void;
   onFocus: (cellIndex: number, focusVisible: boolean) => void;
 };
 
@@ -43,7 +43,7 @@ export function NonogramCell({
   disabled,
   focusable,
   onElementChange,
-  onKeyboardPress,
+  onPressCell,
   onFocus,
 }: NonogramCellProps) {
   const buttonRef = useCallback(
@@ -54,7 +54,7 @@ export function NonogramCell({
   function handleClick(event: ReactMouseEvent<HTMLButtonElement>): void {
     // 指やマウスで押した入力は盤面が pointer で受ける。click で受けるのは、`detail` が 0 のキーボードからの押下だけ。
     if (event.detail === 0) {
-      onKeyboardPress(cellIndex);
+      onPressCell(cellIndex);
     }
   }
 
