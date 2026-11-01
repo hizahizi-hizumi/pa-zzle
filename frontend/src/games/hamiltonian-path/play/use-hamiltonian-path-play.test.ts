@@ -128,6 +128,26 @@ describe("useHamiltonianPathPlay", () => {
     });
   });
 
+  describe("阻まれた操作を残している場合", () => {
+    const cell = findCellAwayFromStart();
+
+    beforeEach(() => {
+      tapAll(result, [solution[1]!, cell]);
+    });
+
+    const cases = [
+      ["待った", "undo"],
+      ["盤面を戻す", "restart"],
+      ["リセット", "replay"],
+    ] as const;
+
+    test.each(cases)("%sで阻まれた操作を消すこと", (_, operation) => {
+      act(() => result.current[operation]());
+
+      expect(result.current.blockedMove).toBeNull();
+    });
+  });
+
   describe("道を延ばした後の場合", () => {
     const direction = findHamiltonianPathDirection(
       initial.problem.size,

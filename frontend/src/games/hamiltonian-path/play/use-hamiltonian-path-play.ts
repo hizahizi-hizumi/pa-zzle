@@ -256,25 +256,34 @@ export function useHamiltonianPathPlay(
   }, []);
 
   const undo = useCallback(() => {
-    setPlay((current) =>
-      applyPlaySession(current, undoHamiltonianPathSession(current.session)),
-    );
+    setPlay((current) => {
+      const next = applyPlaySession(
+        current,
+        undoHamiltonianPathSession(current.session),
+      );
+      return next === current ? current : { ...next, blockedMove: null };
+    });
   }, []);
 
   const restart = useCallback(() => {
-    setPlay((current) =>
-      applyPlaySession(current, restartHamiltonianPathSession(current.session)),
-    );
+    setPlay((current) => {
+      const next = applyPlaySession(
+        current,
+        restartHamiltonianPathSession(current.session),
+      );
+      return next === current ? current : { ...next, blockedMove: null };
+    });
   }, []);
 
   const replay = useCallback(() => {
     const startedAt = Date.now();
-    setPlay((current) =>
-      startPlaySession(
+    setPlay((current) => ({
+      ...startPlaySession(
         current,
         createHamiltonianPathSession(current.session.problem, startedAt),
       ),
-    );
+      blockedMove: null,
+    }));
   }, []);
 
   const startNewProblem = useCallback(() => {
