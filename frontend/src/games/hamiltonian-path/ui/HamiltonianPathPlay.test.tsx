@@ -206,6 +206,30 @@ describe("HamiltonianPathPlay", () => {
     });
   });
 
+  function getBoardGroup(): HTMLElement {
+    return screen.getByRole("group", {
+      name: `${HAMILTONIAN_PATH_DISPLAY_NAME}盤面`,
+    });
+  }
+
+  describe("プレイ中の場合", () => {
+    beforeEach(() => {
+      renderResult({ progress: "playing", result: null, path: [0, 1] });
+      vi.spyOn(getBoardGroup(), "getBoundingClientRect").mockReturnValue(
+        new DOMRect(0, 0, 300, 300),
+      );
+    });
+
+    test("マスの読み上げ名に、仕切りのある向きを添えること", () => {
+      const cells = within(getBoardGroup()).getAllByRole("button");
+
+      expect(cells[4]?.getAttribute("aria-label")).toBe(
+        "2行2列 未通過 上・下に仕切り",
+      );
+      expect(cells[2]?.getAttribute("aria-label")).toBe("1行3列 未通過");
+    });
+  });
+
   describe("100点で解いた場合", () => {
     beforeEach(() => {
       renderResult({ result: perfectResult });

@@ -8,7 +8,11 @@ import {
 import { HAMILTONIAN_PATH_DISPLAY_NAME } from "@/games/hamiltonian-path/display-name";
 import type { HamiltonianPathBlockedMove } from "@/games/hamiltonian-path/play/use-hamiltonian-path-play";
 import {
+  getHamiltonianPathNeighborCell,
   type HamiltonianPathBoard as HamiltonianPathBoardState,
+  type HamiltonianPathDirection,
+  hamiltonianPathDirections,
+  hasHamiltonianPathPartition,
   listHamiltonianPathCells,
 } from "@/games/hamiltonian-path/puzzle/board";
 import type { HamiltonianPathTraceStep } from "@/games/hamiltonian-path/puzzle/transitions";
@@ -97,6 +101,15 @@ export function HamiltonianPathBoard({
   function getCellState(cell: number): HamiltonianPathCellState {
     if (walls.has(cell)) return "wall";
     return visited.has(cell) ? "visited" : "unvisited";
+  }
+
+  function listPartitionDirections(cell: number): HamiltonianPathDirection[] {
+    return hamiltonianPathDirections.filter((direction) => {
+      const neighbor = getHamiltonianPathNeighborCell(size, cell, direction);
+      return (
+        neighbor !== null && hasHamiltonianPathPartition(board, cell, neighbor)
+      );
+    });
   }
 
   function toBoardPoint(event: ReactPointerEvent<HTMLElement>): BoardPoint {
@@ -190,6 +203,7 @@ export function HamiltonianPathBoard({
             isStart={cell === board.start}
             isHead={cell === head}
             isDeadEnd={cell === head && isDeadEnd}
+            partitionDirections={listPartitionDirections(cell)}
             disabled={interactionDisabled}
             onPress={pressCell}
           />
