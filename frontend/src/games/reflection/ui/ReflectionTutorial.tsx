@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useState } from "react";
 
 import {
   type TutorialBoardIntro,
@@ -24,10 +24,9 @@ import {
   type ReflectionTutorialRuleId,
   reflectionTutorial,
 } from "@/games/reflection/tutorial/tutorial";
-import type {
-  ReflectionCue,
-  ReflectionCueTarget,
-} from "@/games/reflection/ui/board/cue";
+import type { ReflectionCue } from "@/games/reflection/ui/board/cue";
+import { listReflectionStockPieces } from "@/games/reflection/ui/ReflectionPlay/ReflectionStock";
+import { useReflectionSoundEffects } from "@/games/reflection/ui/ReflectionPlay/use-reflection-sound-effects";
 import {
   ReflectionTutorialStage,
   type ReflectionTutorialView,
@@ -59,6 +58,9 @@ type ReflectionTutorialProgress = TutorialProgress<
  * 外周の数字を読み比べて考えている間は先回りしないよう、長めに待つ。
  */
 const IDLE_HINT_DELAY_MS = 10_000;
+
+/** 置いた音の知らせの番号を、回ごとに重ならないようにずらす幅。1回の手の数はこれより十分少ない。 */
+const RUN_OPERATION_ID_STRIDE = 100_000;
 
 const goalBoardState = reflectionTutorial.goal();
 const { problem } = goalBoardState.session;
@@ -105,10 +107,11 @@ export function ReflectionTutorial({
   );
   const [idleProgress, setIdleProgress] =
     useState<ReflectionTutorialProgress | null>(null);
-  // 手を引いている間に印の無い所を押したら、押した所を縁取り、印を光らせて付け直す。
+  // 手を引いている間に印の無い所を押したら、印を光らせて付け直し、印へ目を向けさせる。
+  // 押した所に赤を出すと、ルールに当たった手だと覚え違えるので出さない。
   const [hintCueId, setHintCueId] = useState(0);
-  const [rejectedTarget, setRejectedTarget] =
-    useState<ReflectionCueTarget | null>(null);
+  // 開き直したり、もう一度始めたりするたびに増やし、前の回と同じ手の数でも置いた音を鳴らす。
+  const [runCount, setRunCount] = useState(0);
   const situation = getTutorialSituation(reflectionTutorial, progress);
   const { step } = situation;
   const guiding = step !== null;
@@ -119,6 +122,17 @@ export function ReflectionTutorial({
     idleHintPending && idleProgress === progress
       ? findReflectionTutorialHint(boardState)
       : null;
+  const boardProgress = getBoardProgress(progress);
+  // 本番のプレイ画面と同じ効果音を、置いた手と完成演出の始まりに鳴らす。
+  useReflectionSoundEffects(
+    boardState.lastMove?.piecePlaced
+      ? {
+          id: runCount * RUN_OPERATION_ID_STRIDE + boardState.moveCount,
+          type: "piece-placed",
+        }
+      : null,
+    boardProgress,
+  );
   const message = getTutorialMessage(reflectionTutorial, progress, {
     entry: onStartPlay ? "selection" : "play",
     violationSettled: true,
@@ -135,6 +149,46 @@ export function ReflectionTutorial({
     return () => window.clearTimeout(timer);
   }, [open, progress, idleHintPending]);
 
+  // 本番と同じく、数字キーでストックの種類を押し、Esc で選んでいるものを解除する。
+  // Esc はチュートリアルを閉じる操作でもあるので、何か選んでいる間だけ選択の解除に使い、閉じる操作より先に受ける。
+  const selecting = boardState.session.selection !== null;
+  const handleKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    if (
+      event.defaultPrevented ||
+      event.repeat ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey
+    ) {
+      return;
+    }
+    if (event.key === "Escape") {
+      if (selecting) {
+        event.stopPropagation();
+        event.preventDefault();
+        perform({ type: "clear-selection" });
+      }
+      return;
+    }
+    const piece = /^[1-9]$/.test(event.key)
+      ? listReflectionStockPieces(problem.inventory)[Number(event.key) - 1]
+      : undefined;
+    if (piece) {
+      event.preventDefault();
+      perform({ type: "stock", piece });
+    }
+  });
+
+  useEffect(() => {
+    if (!open || !playing) {
+      return;
+    }
+    // 閉じる操作は document で受けられるので、それより先に window で受ける。
+    window.addEventListener("keydown", handleKeyDown, { capture: true });
+    return () =>
+      window.removeEventListener("keydown", handleKeyDown, { capture: true });
+  }, [open, playing]);
+
   const handleClearAnimationComplete = useCallback(() => {
     setProgress(completeTutorial);
   }, []);
@@ -143,41 +197,36 @@ export function ReflectionTutorial({
     setProgress(finishTutorialIntro);
   }
 
-  function perform(
-    action: ReflectionTutorialAction,
-    target: ReflectionCueTarget | null,
-  ): void {
+  function perform(action: ReflectionTutorialAction): void {
     const next = performTutorialAction(reflectionTutorial, progress, action);
     if (next === progress) {
-      if (guiding && playing && target !== null) {
-        setRejectedTarget(target);
+      if (guiding && playing) {
         setHintCueId((id) => id + 1);
       }
       return;
     }
-    setRejectedTarget(null);
     setProgress(next);
   }
 
   function handleSelectCell(cellIndex: number): void {
-    perform({ type: "cell", cellIndex }, { type: "cell", cellIndex });
+    perform({ type: "cell", cellIndex });
   }
 
   function handleSelectStockPiece(piece: ReflectionPiece): void {
-    perform({ type: "stock", piece }, { type: "stock", piece });
+    perform({ type: "stock", piece });
   }
 
   function handleSelectClue(entry: ReflectionEntry): void {
-    perform({ type: "clue", entry }, { type: "clue", entry });
+    perform({ type: "clue", entry });
   }
 
   function handleRemovePiece(cellIndex: number): void {
-    perform({ type: "remove", cellIndex }, null);
+    perform({ type: "remove", cellIndex });
   }
 
   function restart(): void {
     setIdleProgress(null);
-    setRejectedTarget(null);
+    setRunCount((count) => count + 1);
     setProgress(startTutorial(reflectionTutorial));
   }
 
@@ -223,9 +272,6 @@ export function ReflectionTutorial({
       }
       cues.push({ target: idleHint.target, kind: "hint", id: hintCueId });
     }
-    if (rejectedTarget !== null) {
-      cues.push({ target: rejectedTarget, kind: "rejected", id: hintCueId });
-    }
     return cues;
   }
 
@@ -252,7 +298,7 @@ export function ReflectionTutorial({
         inventory={problem.inventory}
         goal={goalView}
         current={current}
-        progress={getBoardProgress(progress)}
+        progress={boardProgress}
         interactionDisabled={!playing}
         onSelectCell={handleSelectCell}
         onSelectStockPiece={handleSelectStockPiece}

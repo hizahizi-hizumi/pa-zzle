@@ -14,8 +14,6 @@ const cueClassNames = {
     "ring-2 ring-sky-500/70 ring-inset animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none dark:ring-sky-300/70",
   fitted:
     "bg-sky-100/70 ring-2 ring-sky-500/50 ring-inset fill-mode-forwards animate-out fade-out-0 duration-900 ease-in dark:bg-sky-900/50 dark:ring-sky-300/50",
-  rejected:
-    "ring-[3px] ring-destructive ring-inset fill-mode-forwards animate-out fade-out-0 duration-900 ease-in",
 } as const satisfies Record<ReflectionCueKind, string>;
 
 const placeClassNames = {
@@ -26,7 +24,7 @@ const placeClassNames = {
 
 /**
  * 1か所に重ねる合図。中身を隠さないよう、押せる所の中身より先に描く。
- * 次に押す所の印は、付け直すたびに中を一瞬光らせ、受け付けなかった手にも印で応える。
+ * 次に押す所の印は、付け直すたびに中を一瞬光らせ、受け付けなかった手にも印を光らせ直して応える。
  */
 export function ReflectionCueMarks({
   cues,

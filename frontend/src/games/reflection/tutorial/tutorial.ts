@@ -56,6 +56,7 @@ export type ReflectionTutorialAction =
  * - `place`: 印の種類をストックで選ばせ、印のマスに置かせる。手順の間、`entry` から入れた今の光を見せ続ける。
  * - `entry`: 押させる外周ヒント、または置く場所を決める外周ヒント。
  * - `reasonEntries`: 置く場所を決める外周ヒント。手順の始まりから示し、どの数字で決まるかを盤面で分からせる。
+ * - `resultEntry`: 置いた後に光を見せる外周ヒント。一言が置いた結果として示すものに合わせる。
  */
 export type ReflectionTutorialStep = TutorialStep<ReflectionTutorialRuleId> &
   (
@@ -66,17 +67,20 @@ export type ReflectionTutorialStep = TutorialStep<ReflectionTutorialRuleId> &
         cellIndex: number;
         entry: ReflectionEntry;
         reasonEntries: readonly ReflectionEntry[];
+        resultEntry: ReflectionEntry;
       }
   );
 
 /**
  * 直前の手。盤面の上の合図に使う。
  * - `fittedCellIndex`: この手で手順どおりに置いたマス。
- * - `litEntry`: この手で手順を終えた外周ヒント。次の手まで、その外周ヒントから入れた今の光を見せ、手の結果を盤面で返す。
+ * - `litEntry`: この手で手順を終えたときに光を見せる外周ヒント。次の手まで、その外周ヒントから入れた今の光を見せ、手の結果を盤面で返す。
+ * - `piecePlaced`: この手でピースが盤面に現れた（置いた・移した・入れ替えた・置き換えた）。本番と同じく、置いた音を鳴らすのに使う。
  */
 export type ReflectionTutorialMove = {
   fittedCellIndex: number | null;
   litEntry: ReflectionEntry | null;
+  piecePlaced: boolean;
 };
 
 /**
@@ -162,7 +166,7 @@ const steps: readonly ReflectionTutorialStep[] = [
   {
     type: "light",
     message: {
-      headline: "数字は、ここから入れた光が\n通るマスの数です",
+      headline: "数字は、光が通るマスの数。\n下の記号は、光の行き先です",
       detail: "印の数字を押して、光を出してください",
     },
     introducedRuleId: "number",
@@ -180,6 +184,7 @@ const steps: readonly ReflectionTutorialStep[] = [
     cellIndex: cellAt(3, 3),
     entry: { side: "top", index: 2 },
     reasonEntries: [{ side: "top", index: 2 }],
+    resultEntry: { side: "top", index: 2 },
   },
   {
     type: "place",
@@ -195,6 +200,7 @@ const steps: readonly ReflectionTutorialStep[] = [
       { side: "bottom", index: 4 },
       { side: "right", index: 3 },
     ],
+    resultEntry: { side: "bottom", index: 4 },
   },
   {
     type: "place",
@@ -207,6 +213,7 @@ const steps: readonly ReflectionTutorialStep[] = [
     cellIndex: cellAt(4, 4),
     entry: { side: "bottom", index: 3 },
     reasonEntries: [{ side: "bottom", index: 3 }],
+    resultEntry: { side: "bottom", index: 3 },
   },
   {
     type: "place",
@@ -222,6 +229,7 @@ const steps: readonly ReflectionTutorialStep[] = [
       { side: "top", index: 3 },
       { side: "left", index: 1 },
     ],
+    resultEntry: { side: "left", index: 1 },
   },
 ];
 
@@ -286,7 +294,7 @@ function applyAction(
 /**
  * 手を引いている間の手が、手順どおりか。
  * 光を出す手順では、印の外周ヒントを押す手だけを受け付ける。
- * 置く手順では、印の種類を選ぶ手と、その種類を選んでから印のマスを押す手だけを受け付ける。
+ * 置く手順では、印の種類を選ぶ手と、その種類を選んでから印のマスを押す手と、選んだ種類を解除する手だけを受け付ける。
  */
 function fitsStep(
   step: ReflectionTutorialStep,
@@ -307,6 +315,8 @@ function fitsStep(
       return action.piece === step.piece && !selected;
     case "cell":
       return action.cellIndex === step.cellIndex && selected;
+    case "clear-selection":
+      return selected;
     default:
       return false;
   }
@@ -323,6 +333,21 @@ function isStepDone(
     );
   }
   return session.puzzleState.cells[step.cellIndex] === step.piece;
+}
+
+function countPlacedPieces(session: ReflectionSession): number {
+  return session.puzzleState.cells.filter((cell) => cell !== null).length;
+}
+
+/** 本番のプレイと同じく、盤面が変わり、置いたピースが減っていない手を、ピースを置いた手とする。 */
+function isPiecePlaced(
+  before: ReflectionSession,
+  after: ReflectionSession,
+): boolean {
+  return (
+    after.puzzleState !== before.puzzleState &&
+    countPlacedPieces(after) >= countPlacedPieces(before)
+  );
 }
 
 function startReflectionTutorial(): ReflectionTutorialBoardState {
@@ -369,12 +394,19 @@ function performReflectionTutorialAction(
   }
 
   const stepped = step !== null && isStepDone(step, session);
+  const litEntry = !stepped
+    ? null
+    : step.type === "place"
+      ? step.resultEntry
+      : step.entry;
+  // 結果として見せる光は、本番でその外周ヒントを押したのと同じに扱い、押すと閉じるようにする。
   const next: ReflectionTutorialBoardState = {
-    session,
+    session: litEntry === null ? session : { ...session, laserEntry: litEntry },
     moveCount: state.moveCount + 1,
     lastMove: {
       fittedCellIndex: stepped && step.type === "place" ? step.cellIndex : null,
-      litEntry: stepped ? step.entry : null,
+      litEntry,
+      piecePlaced: isPiecePlaced(state.session, session),
     },
   };
   if (session.status === "cleared") {
@@ -385,7 +417,7 @@ function performReflectionTutorialAction(
 
 const freePlay: TutorialMessage = {
   headline: "残りのピースも置いて\nすべての数字を緑にすると完成です",
-  detail: null,
+  detail: "数字を押すと、今の光が見えます",
 };
 
 /** 合わない配置でも止めないので、ルールに合わない手は無い。 */
@@ -393,22 +425,20 @@ function describeReflectionTutorialViolation(): TutorialMessage {
   return freePlay;
 }
 
-export const REFLECTION_TUTORIAL_SIZE = SIZE;
-
 /**
  * 盤面に見せる光の入口。
- * 手順を終えた手の直後は、その外周ヒントの今の光を見せて結果を返す。置く手順の間は、置く場所を決める外周ヒントの今の光を見せる。
- * 手を離した後は本番と同じく、押した外周ヒントの光を見せる。
+ * 手を引く間は、手順を終えた手の直後はその結果の光を見せ、置く手順の間は置く場所を決める外周ヒントの今の光を見せる。
+ * 手を離した後は本番と同じく、押した外周ヒントの光を見せる。手を離した直後は、最後の手順の結果の光を押したものとして見せる。
  */
 export function getReflectionTutorialLaserEntry(
   { step }: ReflectionTutorialSituation,
   state: ReflectionTutorialBoardState,
 ): ReflectionEntry | null {
-  if (state.lastMove?.litEntry) {
-    return state.lastMove.litEntry;
-  }
   if (step === null) {
     return state.session.laserEntry;
+  }
+  if (state.lastMove?.litEntry) {
+    return state.lastMove.litEntry;
   }
   return step.type === "place" ? step.entry : null;
 }
@@ -502,7 +532,7 @@ export const reflectionTutorial: Tutorial<
   intro: {
     purpose: "外周の数字どおりに光が進むよう\nピースを盤面に置くパズルです",
     goalCaption: "この盤面がゴールです",
-    startCaption: "最初は盤面が空で\nピースは下に並んでいます",
+    startCaption: "最初は盤面が空です。\n数字どおりに光が進む所は緑です",
   },
   rules: [
     { id: "number", label: "数字" },

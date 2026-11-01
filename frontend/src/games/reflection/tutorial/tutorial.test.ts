@@ -539,6 +539,19 @@ describe("reflectionTutorial の進行", () => {
     );
   });
 
+  test("手を離した直後は、最後の手順の結果の光を、押して出した光として見せること", () => {
+    const shown = getReflectionTutorialLaserEntry(
+      getTutorialSituation(reflectionTutorial, released),
+      released.boardState,
+    );
+    const closed = performAll(released, [
+      { type: "clue", entry: { side: "left", index: 1 } },
+    ]);
+
+    expect(shown).toEqual({ side: "left", index: 1 });
+    expect(closed.boardState.session.laserEntry).toBeNull();
+  });
+
   test("手を離した後は、外周ヒントを押すと本番と同じくその光を見せること", () => {
     const progress = performAll(released, [
       { type: "clue", entry: { side: "left", index: 4 } },

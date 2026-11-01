@@ -9,9 +9,8 @@ import {
  * - `hint`: 次に押す所。出た瞬間から分かる強さで示し、`id` が変わるたびに一瞬光らせて付け直す。
  * - `reason`: 次の手を決める外周ヒント。手を決める前から示し続ける。
  * - `fitted`: 手順どおりに置いたマス。一瞬光らせる。
- * - `rejected`: 受け付けなかった手で押した所。一瞬縁取る。
  */
-export type ReflectionCueKind = "hint" | "reason" | "fitted" | "rejected";
+export type ReflectionCueKind = "hint" | "reason" | "fitted";
 
 export type ReflectionCueTarget =
   | { type: "cell"; cellIndex: number }

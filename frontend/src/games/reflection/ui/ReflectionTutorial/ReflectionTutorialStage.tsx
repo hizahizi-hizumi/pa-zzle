@@ -117,7 +117,9 @@ export function ReflectionTutorialStage({
             ? (view.board.cells[view.selection.cellIndex] ?? null)
             : null
         }
-        disabled={interactionDisabled || scene !== null}
+        // 導入の間は盤面の領域ごと押せないので、始めの盤面ではピースを押せる姿のまま見せる。
+        // 解き終えた後は残りが無く、どの種類も押せない。
+        disabled={false}
         cues={view.cues}
         onSelectStockPiece={onSelectStockPiece}
       />
