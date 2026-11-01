@@ -125,7 +125,10 @@ function createPlayState(
   };
 }
 
-/** マスを押して入力を始め、入れるか消すかを知らせる。入力を受け付けなければ何も知らせない。 */
+/**
+ * マスを押して入力を始め、押したマスに入った印を知らせる。印が無くなったら消したと知らせる。
+ * 入力を受け付けなければ何も知らせない。
+ */
 function applyStartStroke(
   state: NonogramPlayState,
   cellIndex: number,
@@ -140,12 +143,13 @@ function applyStartStroke(
   if (next === state) {
     return state;
   }
-  const erasing = state.session.puzzleState.cells[cellIndex] === mark;
+  const cell = next.session.puzzleState.cells[cellIndex] ?? "unknown";
   return {
     ...next,
-    operation: erasing
-      ? { id: operationId, type: "erased" }
-      : { id: operationId, type: "marked", mark },
+    operation:
+      cell === "unknown"
+        ? { id: operationId, type: "erased" }
+        : { id: operationId, type: "marked", mark: cell },
   };
 }
 
