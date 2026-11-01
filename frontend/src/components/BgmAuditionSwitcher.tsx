@@ -1,7 +1,9 @@
 import { ChevronDown } from "lucide-react";
 
 import {
+  type BgmAuditionArrangement,
   type BgmAuditionCandidate,
+  bgmAuditionArrangementLabels,
   bgmAuditionCandidates,
 } from "@/components/BgmAuditionSwitcher/bgm-audition-candidates";
 
@@ -20,6 +22,10 @@ const bandClassNames = {
   regular: "absolute top-[calc(0.625rem+env(safe-area-inset-top))]",
   compact: "fixed top-[env(safe-area-inset-top)]",
 } satisfies Record<BgmAuditionSwitcherProps["band"], string>;
+
+const arrangements = Object.keys(
+  bgmAuditionArrangementLabels,
+) as BgmAuditionArrangement[];
 
 /**
  * BGM の候補を試聴するために、流す候補をその場で切り替える小さな切り替え。画面の左上、ブランドの帯の上に置く。
@@ -50,10 +56,20 @@ export function BgmAuditionSwitcher({
         onChange={(event) => selectByNumber(event.target.value)}
         className="h-full max-w-[calc(50vw-4.25rem)] cursor-pointer appearance-none truncate rounded-full bg-transparent pr-6 pl-2.5 text-[0.6875rem] focus-visible:outline-none"
       >
-        {bgmAuditionCandidates.map(({ number, name }) => (
-          <option key={number} value={number} className="text-foreground">
-            {number} {name}
-          </option>
+        {arrangements.map((arrangement) => (
+          <optgroup
+            key={arrangement}
+            label={bgmAuditionArrangementLabels[arrangement]}
+            className="text-foreground"
+          >
+            {bgmAuditionCandidates
+              .filter((entry) => entry.arrangement === arrangement)
+              .map(({ number, name }) => (
+                <option key={number} value={number} className="text-foreground">
+                  {number} {name}
+                </option>
+              ))}
+          </optgroup>
         ))}
       </select>
       <ChevronDown

@@ -6,16 +6,6 @@
 import { useState } from "react";
 import puzzlePopHomeUrl from "@/assets/bgm-audition/1-puzzle-pop-home.mp3";
 import puzzlePopResultUrl from "@/assets/bgm-audition/1-puzzle-pop-result.mp3";
-import chiptuneHomeUrl from "@/assets/bgm-audition/2-chiptune-home.mp3";
-import chiptuneResultUrl from "@/assets/bgm-audition/2-chiptune-result.mp3";
-import synthPopHomeUrl from "@/assets/bgm-audition/5-synth-pop-home.mp3";
-import synthPopResultUrl from "@/assets/bgm-audition/5-synth-pop-result.mp3";
-import musicBoxStringsHomeUrl from "@/assets/bgm-audition/6-music-box-strings-home.mp3";
-import musicBoxStringsResultUrl from "@/assets/bgm-audition/6-music-box-strings-result.mp3";
-import toyPopHomeUrl from "@/assets/bgm-audition/7-toy-pop-home.mp3";
-import toyPopResultUrl from "@/assets/bgm-audition/7-toy-pop-result.mp3";
-import chipSynthPopHomeUrl from "@/assets/bgm-audition/8-chip-synth-pop-home.mp3";
-import chipSynthPopResultUrl from "@/assets/bgm-audition/8-chip-synth-pop-result.mp3";
 import eightBitMalletHomeUrl from "@/assets/bgm-audition/9-8bit-mallet-home.mp3";
 import eightBitMalletResultUrl from "@/assets/bgm-audition/9-8bit-mallet-result.mp3";
 import skipPopHomeUrl from "@/assets/bgm-audition/10-skip-pop-home.mp3";
@@ -30,11 +20,21 @@ import skipMarimbaResultUrl from "@/assets/bgm-audition/13-skip-marimba-result.m
 import type { AppBackgroundMusicTracks } from "@/components/app-background-music";
 import { defineBackgroundMusicTrack } from "@/lib/background-music";
 
+/** 候補の編成（楽器・音色）。同じ編成の中では、曲（主題・和音・構成）だけが違う。 */
+export type BgmAuditionArrangement = "パズルポップ" | "8bit マレット";
+
 export type BgmAuditionCandidate = {
   number: number;
   name: string;
+  arrangement: BgmAuditionArrangement;
   tracks: AppBackgroundMusicTracks;
 };
+
+/** 編成ごとのまとまりの見出し。並べる順もこの順にする。 */
+export const bgmAuditionArrangementLabels = {
+  パズルポップ: "パズルポップ（マリンバ・木琴・ピチカート）",
+  "8bit マレット": "8bit マレット（マリンバ × チップ音）",
+} satisfies Record<BgmAuditionArrangement, string>;
 
 const BGM_AUDITION_STORAGE_KEY = "pa-zzle.bgm-audition.v1";
 
@@ -45,62 +45,16 @@ export const bgmAuditionCandidates: readonly [
   {
     number: 1,
     name: "パズルポップ",
+    arrangement: "パズルポップ",
     tracks: {
       home: defineBackgroundMusicTrack(puzzlePopHomeUrl),
       result: defineBackgroundMusicTrack(puzzlePopResultUrl),
     },
   },
   {
-    number: 2,
-    name: "チップチューン",
-    tracks: {
-      home: defineBackgroundMusicTrack(chiptuneHomeUrl),
-      result: defineBackgroundMusicTrack(chiptuneResultUrl),
-    },
-  },
-  {
-    number: 5,
-    name: "シンセポップ",
-    tracks: {
-      home: defineBackgroundMusicTrack(synthPopHomeUrl),
-      result: defineBackgroundMusicTrack(synthPopResultUrl),
-    },
-  },
-  {
-    number: 6,
-    name: "オルゴールと弦",
-    tracks: {
-      home: defineBackgroundMusicTrack(musicBoxStringsHomeUrl),
-      result: defineBackgroundMusicTrack(musicBoxStringsResultUrl),
-    },
-  },
-  {
-    number: 7,
-    name: "トイポップ",
-    tracks: {
-      home: defineBackgroundMusicTrack(toyPopHomeUrl),
-      result: defineBackgroundMusicTrack(toyPopResultUrl),
-    },
-  },
-  {
-    number: 8,
-    name: "チップシンセポップ",
-    tracks: {
-      home: defineBackgroundMusicTrack(chipSynthPopHomeUrl),
-      result: defineBackgroundMusicTrack(chipSynthPopResultUrl),
-    },
-  },
-  {
-    number: 9,
-    name: "8bit マレット",
-    tracks: {
-      home: defineBackgroundMusicTrack(eightBitMalletHomeUrl),
-      result: defineBackgroundMusicTrack(eightBitMalletResultUrl),
-    },
-  },
-  {
     number: 10,
     name: "スキップポップ",
+    arrangement: "パズルポップ",
     tracks: {
       home: defineBackgroundMusicTrack(skipPopHomeUrl),
       result: defineBackgroundMusicTrack(skipPopResultUrl),
@@ -109,14 +63,25 @@ export const bgmAuditionCandidates: readonly [
   {
     number: 11,
     name: "ひだまりポップ",
+    arrangement: "パズルポップ",
     tracks: {
       home: defineBackgroundMusicTrack(hidamariPopHomeUrl),
       result: defineBackgroundMusicTrack(hidamariPopResultUrl),
     },
   },
   {
+    number: 9,
+    name: "8bit マレット",
+    arrangement: "8bit マレット",
+    tracks: {
+      home: defineBackgroundMusicTrack(eightBitMalletHomeUrl),
+      result: defineBackgroundMusicTrack(eightBitMalletResultUrl),
+    },
+  },
+  {
     number: 12,
     name: "ピコダッシュ",
+    arrangement: "8bit マレット",
     tracks: {
       home: defineBackgroundMusicTrack(picoDashHomeUrl),
       result: defineBackgroundMusicTrack(picoDashResultUrl),
@@ -125,6 +90,7 @@ export const bgmAuditionCandidates: readonly [
   {
     number: 13,
     name: "スキップマリンバ",
+    arrangement: "8bit マレット",
     tracks: {
       home: defineBackgroundMusicTrack(skipMarimbaHomeUrl),
       result: defineBackgroundMusicTrack(skipMarimbaResultUrl),

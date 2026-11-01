@@ -33,33 +33,33 @@ describe("BgmAuditionSwitcher", () => {
     );
   });
 
-  test("候補を番号と名前で並べること", () => {
-    const options = screen
-      .getAllByRole("option")
-      .map((option) => option.textContent);
+  test("編成ごとにまとめ、同じ編成の中に曲の違う候補を番号と名前で並べること", () => {
+    const groups = screen.getAllByRole("group").map((group) => ({
+      label: group.getAttribute("label"),
+      options: Array.from(group.querySelectorAll("option")).map(
+        (option) => option.textContent,
+      ),
+    }));
 
-    expect(options).toEqual([
-      "1 パズルポップ",
-      "2 チップチューン",
-      "5 シンセポップ",
-      "6 オルゴールと弦",
-      "7 トイポップ",
-      "8 チップシンセポップ",
-      "9 8bit マレット",
-      "10 スキップポップ",
-      "11 ひだまりポップ",
-      "12 ピコダッシュ",
-      "13 スキップマリンバ",
+    expect(groups).toEqual([
+      {
+        label: "パズルポップ（マリンバ・木琴・ピチカート）",
+        options: ["1 パズルポップ", "10 スキップポップ", "11 ひだまりポップ"],
+      },
+      {
+        label: "8bit マレット（マリンバ × チップ音）",
+        options: ["9 8bit マレット", "12 ピコダッシュ", "13 スキップマリンバ"],
+      },
     ]);
   });
 
   test("選んだ候補を知らせること", () => {
     fireEvent.change(screen.getByLabelText("BGM の候補（試聴用）"), {
-      target: { value: "7" },
+      target: { value: "10" },
     });
 
     expect(onSelect).toHaveBeenCalledWith(
-      bgmAuditionCandidates.find(({ number }) => number === 7),
+      bgmAuditionCandidates.find(({ number }) => number === 10),
     );
   });
 });
@@ -74,7 +74,7 @@ describe("useBgmAuditionCandidate", () => {
   });
 
   describe("候補を選んだ場合", () => {
-    const selectedNumber = 8;
+    const selectedNumber = 12;
 
     beforeEach(() => {
       const { result, unmount } = renderHook(useBgmAuditionCandidate);
