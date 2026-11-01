@@ -26,7 +26,7 @@ const workload = {
   longestRefutationLength: 20,
 };
 
-// 21秒超過で速さ57点、引き直し2回で正確さ34点。待った・盤面を戻すは点に入らない。
+// 21秒超過で速さ57点、引き直し2回で正確さ34点。待った・盤面を戻すの回数は点に入らない。
 const performance: HamiltonianPathSessionResult = {
   elapsedMs: 220_000,
   backtrackCount: 2,
@@ -200,7 +200,7 @@ describe("HamiltonianPathPlay", () => {
         const criteria = screen.getByText(/^40点から/);
 
         expect(criteria.textContent).toBe(
-          "40点から、引き直し1回につき3点を減らす。引き直しは、一度引いた道を戻して前と別のマスへ引いた回数で、戻して同じマスへ引き直したときは数えない。「待った」・「盤面を戻す」は減点しないが、戻した後に別のマスへ引けば引き直しに数える。",
+          "40点から、引き直し1回につき3点を減らす。引き直しは、一度引いた道を戻して前と別のマスへ引いた回数で、戻して同じマスへ引き直したときは数えない。「待った」・「盤面を戻す」で戻した後も同じに数え、「待った」で引き直す前の道筋へ戻したことも引き直しに数える。",
         );
       });
     });

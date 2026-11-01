@@ -99,7 +99,7 @@ export function getHamiltonianPathScoreCriteria(
           },
         ],
         [
-          `引き直しは、一度引いた道を戻して前と別のマスへ引いた回数で、戻して同じマスへ引き直したときは数えない。${formatOperationName("undo")}・${formatOperationName("restart")}は減点しないが、戻した後に別のマスへ引けば引き直しに数える。`,
+          `引き直しは、一度引いた道を戻して前と別のマスへ引いた回数で、戻して同じマスへ引き直したときは数えない。${formatOperationName("undo")}・${formatOperationName("restart")}で戻した後も同じに数え、${formatOperationName("undo")}で引き直す前の道筋へ戻したことも引き直しに数える。`,
         ],
       ),
     ),
