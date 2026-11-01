@@ -3,13 +3,14 @@ import { useLocation } from "react-router";
 import { PlayUnavailableNotice } from "@/components/PlayUnavailableNotice";
 import { readAvoidedProblemId } from "@/game-catalog/play-location-state";
 import { PlayableTsumeShogi } from "@/game-catalog/tsume-shogi/PlayableTsumeShogi";
+import { tsumeShogiCatalogEntry } from "@/game-catalog/tsume-shogi/tsume-shogi-catalog-entry";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import { useTsumeShogiProblemPool } from "@/games/tsume-shogi/play/use-tsume-shogi-problem-pool";
 import { useParams } from "@/router";
 
 export function TsumeShogiPlayView() {
   const { difficulty: difficultyParam } = useParams(
-    "/puzzles/tsume-shogi/play/:difficulty",
+    tsumeShogiCatalogEntry.playPath,
   );
   const avoidedProblemId = readAvoidedProblemId(useLocation().state);
   const difficulty = parseDifficultyLevel(difficultyParam);
@@ -19,7 +20,7 @@ export function TsumeShogiPlayView() {
     return (
       <PlayUnavailableNotice
         title="この難易度は選べません"
-        backTo="/puzzles/tsume-shogi"
+        backTo={tsumeShogiCatalogEntry.entryPath}
       />
     );
   }
@@ -28,7 +29,7 @@ export function TsumeShogiPlayView() {
       <PlayUnavailableNotice
         title="問題を読み込めませんでした"
         description="通信できることを確かめて、もう一度開いてください。"
-        backTo="/puzzles/tsume-shogi"
+        backTo={tsumeShogiCatalogEntry.entryPath}
       />
     );
   }
