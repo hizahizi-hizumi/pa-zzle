@@ -5,6 +5,7 @@
  *
  * 音声ファイルは Vite のアセット import で URL として受け取り、`defineSoundEffect` に渡して効果音にする。
  * その効果音を鳴らしうる画面を出したときに `prepareSoundEffects` で読み込みを始め、
+ * 読み込み終えるまで待つときは `loadSoundEffects` を使う。
  * 鳴らすときは `playSound`、素材を時間をずらして重ねるときは `playLayeredSound` を使う。
  * 効果音は音声ファイルの URL で見分けるので、同じ URL から作った効果音は同じ音として読み込み・鳴らす。
  * 回数の多い操作の音には `variation: REPEATED_SOUND_VARIATION` を渡し、同じ音の機械的な繰り返しにしない。
@@ -76,8 +77,11 @@ const DECODING_SAMPLE_RATE = 48000;
 let soundOutput: SoundOutput | null = null;
 let unlockListening = false;
 let decodingContext: OfflineAudioContext | null = null;
-/** 読み込みを頼まれた音声ファイルの URL。読み込み中と読み込み済みを含み、読み込みに失敗したら外して読み直せるようにする。 */
-const requestedSoundUrls = new Set<string>();
+/**
+ * 読み込みを頼まれた音声ファイルの URL と、その読み込みが済む（読み込めたか失敗した）まで待つ Promise。
+ * 鳴らさない設定の間に頼まれたものは、Promise を持たない。読み込みに失敗したら外して読み直せるようにする。
+ */
+const requestedSoundLoads = new Map<string, Promise<void> | null>();
 const soundBuffers = new Map<string, AudioBuffer>();
 /** 鳴らさない設定の間に読み込みを頼まれた音声ファイルの URL。鳴らす設定に変わったら読み込む。 */
 const soundUrlsWaitingForEnabled = new Set<string>();
@@ -113,15 +117,37 @@ export function prepareSoundEffects(sounds: readonly SoundEffect[]): void {
   listenForUnlock();
 }
 
+/**
+ * 渡した効果音の読み込みを `prepareSoundEffects` と同じく始め、すべて済む（読み込めたか失敗した）まで待つ。
+ * 済んだ数が増えるたびに `onProgress` へ、済んだ割合（0〜1）を渡す。
+ * Web Audio API が無い環境と、鳴らさない設定の間は読み込まないので、待たずに済ませる。
+ */
+export async function loadSoundEffects(
+  sounds: readonly SoundEffect[],
+  onProgress?: (progress: number) => void,
+): Promise<void> {
+  prepareSoundEffects(sounds);
+  const loads = sounds.flatMap(({ url }) => requestedSoundLoads.get(url) ?? []);
+  let settledCount = 0;
+  await Promise.all(
+    loads.map(async function reportSettled(load) {
+      await load;
+      settledCount += 1;
+      onProgress?.(settledCount / loads.length);
+    }),
+  );
+}
+
 function requestSoundEffects(sounds: readonly SoundEffect[]) {
   for (const { url } of sounds) {
-    if (requestedSoundUrls.has(url)) {
+    if (requestedSoundLoads.get(url)) {
       continue;
     }
-    requestedSoundUrls.add(url);
     if (isSoundEffectsEnabled()) {
-      loadSoundEffect(url);
-    } else {
+      soundUrlsWaitingForEnabled.delete(url);
+      requestedSoundLoads.set(url, loadSoundEffect(url));
+    } else if (!requestedSoundLoads.has(url)) {
+      requestedSoundLoads.set(url, null);
       waitForEnabledToLoad(url);
     }
   }
@@ -141,24 +167,24 @@ function waitForEnabledToLoad(url: string) {
       unsubscribe();
       waitingForEnabled = false;
       for (const waitingUrl of soundUrlsWaitingForEnabled) {
-        loadSoundEffect(waitingUrl);
+        requestedSoundLoads.set(waitingUrl, loadSoundEffect(waitingUrl));
       }
       soundUrlsWaitingForEnabled.clear();
     },
   );
 }
 
-function loadSoundEffect(url: string) {
+function loadSoundEffect(url: string): Promise<void> | null {
   const context = getDecodingContext();
   if (!context) {
-    return;
+    return null;
   }
-  fetchAndDecode(context, url).then(
+  return fetchAndDecode(context, url).then(
     function keepDecodedSound(buffer) {
       soundBuffers.set(url, buffer);
     },
     function forgetFailedRequest(error: unknown) {
-      requestedSoundUrls.delete(url);
+      requestedSoundLoads.delete(url);
       if (import.meta.env.DEV) {
         console.warn(`効果音を読み込めない: ${url}`, error);
       }
