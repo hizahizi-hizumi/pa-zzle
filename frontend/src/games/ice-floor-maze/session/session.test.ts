@@ -27,6 +27,16 @@ const problem: IceFloorMazeProblem = {
 };
 const solution: readonly IceFloorMazeDirection[] = ["down", "right", "up"];
 
+// 0  1  b
+// 3  c  5
+// 6  7  8
+// 開始位置 0 から右へ滑るともろい岩 2 が崩れ、続けて下へ滑ると薄い氷 4 を通って割る。ゴール 8 へは下・右の2手。
+const elementProblem: IceFloorMazeProblem = {
+  board: parseIceFloorMazeBoard(["..b", ".c.", "..."]),
+  start: 0,
+  goal: 8,
+};
+
 function slideInOrder(
   session: IceFloorMazeSession,
   directions: readonly IceFloorMazeDirection[],
@@ -44,7 +54,10 @@ describe("createIceFloorMazeSession", () => {
     const result = createIceFloorMazeSession(problem, 1_000);
 
     expect(result.status).toBe("playing");
-    expect(result.puzzleState).toBe(17);
+    expect(result.puzzleState).toEqual({
+      position: 17,
+      cells: problem.board.cells,
+    });
     expect(result.history).toEqual([]);
     expect(result.moveCount).toBe(0);
   });
@@ -67,8 +80,10 @@ describe("slideIceFloorMazeSessionPiece", () => {
     const result = slideIceFloorMazeSessionPiece(session, "down", 1_100);
 
     expect(result.outcome).toBe("slid");
-    expect(result.session.puzzleState).toBe(22);
-    expect(result.session.history).toEqual([17]);
+    expect(result.session.puzzleState.position).toBe(22);
+    expect(result.session.history.map(({ position }) => position)).toEqual([
+      17,
+    ]);
     expect(result.session.moveCount).toBe(1);
     expect(result.session.status).toBe("playing");
   });
@@ -76,7 +91,7 @@ describe("slideIceFloorMazeSessionPiece", () => {
   test("通ったマスと止まったマスを滑りの結果として返すこと", () => {
     const result = slideIceFloorMazeSessionPiece(session, "right", 1_100);
 
-    expect(result.outcome === "slid" && result.slide).toEqual({
+    expect(result.outcome === "slid" && result.slide).toMatchObject({
       status: "slid",
       direction: "right",
       from: 17,
@@ -89,7 +104,7 @@ describe("slideIceFloorMazeSessionPiece", () => {
     const result = slideIceFloorMazeSessionPiece(session, "right", 1_100);
 
     expect(result.session.status).toBe("playing");
-    expect(result.session.puzzleState).toBe(19);
+    expect(result.session.puzzleState.position).toBe(19);
   });
 
   test("1マスも動けない向きでは同じ session を返し、成立しなかった滑りを返すこと", () => {
@@ -107,7 +122,7 @@ describe("slideIceFloorMazeSessionPiece", () => {
     );
 
     expect(result.session.status).toBe("cleared");
-    expect(result.session.puzzleState).toBe(18);
+    expect(result.session.puzzleState.position).toBe(18);
     expect(result.session.finishedAt).toBe(2_000);
     expect(result.session.moveCount).toBe(3);
   });
@@ -123,6 +138,57 @@ describe("slideIceFloorMazeSessionPiece", () => {
   });
 });
 
+describe("要素のある問題の場合", () => {
+  const session = createIceFloorMazeSession(elementProblem, 1_000);
+  const changed = slideInOrder(session, ["right", "down"], 1_100);
+
+  test("崩したもろい岩と割った薄い氷を今の盤面に残すこと", () => {
+    const result = slideInOrder(session, ["right", "down"], 1_100);
+
+    expect(result.puzzleState.position).toBe(7);
+    expect(result.puzzleState.cells[2]).toBe("ice");
+    expect(result.puzzleState.cells[4]).toBe("water");
+  });
+
+  test("待ったで直前の滑りの要素の変化も戻すこと", () => {
+    const result = undoIceFloorMazeSession(changed);
+
+    expect(result.puzzleState.position).toBe(1);
+    expect(result.puzzleState.cells[2]).toBe("ice");
+    expect(result.puzzleState.cells[4]).toBe("thin-ice");
+  });
+
+  test("待ったを重ねると、どの要素も変わる前の状態へ戻ること", () => {
+    const result = undoIceFloorMazeSession(undoIceFloorMazeSession(changed));
+
+    expect(result.puzzleState).toEqual({
+      position: 0,
+      cells: elementProblem.board.cells,
+    });
+  });
+
+  test("盤面を戻すで要素の変化も戻すこと", () => {
+    const result = restartIceFloorMazeSession(changed);
+
+    expect(result.puzzleState).toEqual({
+      position: 0,
+      cells: elementProblem.board.cells,
+    });
+    expect(result.restartCount).toBe(1);
+  });
+
+  describe("要素を変えて開始位置へ戻った場合", () => {
+    const returned = slideInOrder(session, ["right", "left"], 1_100);
+
+    test("盤面を戻せること", () => {
+      const result = canRestartIceFloorMazeSession(returned);
+
+      expect(returned.puzzleState.position).toBe(0);
+      expect(result).toBe(true);
+    });
+  });
+});
+
 describe("undoIceFloorMazeSession", () => {
   const session = slideInOrder(
     createIceFloorMazeSession(problem, 1_000),
@@ -133,8 +199,8 @@ describe("undoIceFloorMazeSession", () => {
   test("直前に止まっていた位置へ戻し、総手数を減らさず待ったを数えること", () => {
     const result = undoIceFloorMazeSession(session);
 
-    expect(result.puzzleState).toBe(22);
-    expect(result.history).toEqual([17]);
+    expect(result.puzzleState.position).toBe(22);
+    expect(result.history.map(({ position }) => position)).toEqual([17]);
     expect(result.moveCount).toBe(2);
     expect(result.undoCount).toBe(1);
   });
@@ -170,7 +236,7 @@ describe("restartIceFloorMazeSession", () => {
   test("駒を開始位置へ戻し、総手数と経過時間の起点を引き継いで盤面を戻すを数えること", () => {
     const result = restartIceFloorMazeSession(session);
 
-    expect(result.puzzleState).toBe(17);
+    expect(result.puzzleState.position).toBe(17);
     expect(result.history).toEqual([]);
     expect(result.moveCount).toBe(2);
     expect(result.restartCount).toBe(1);

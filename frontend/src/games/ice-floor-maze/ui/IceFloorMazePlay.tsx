@@ -11,6 +11,7 @@ import type {
 } from "@/games/ice-floor-maze/play/use-ice-floor-maze-play";
 import type { IceFloorMazeBoard as IceFloorMazeBoardState } from "@/games/ice-floor-maze/puzzle/board";
 import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";
+import type { IceFloorMazeStateCell } from "@/games/ice-floor-maze/puzzle/state";
 import { IceFloorMazeBoard } from "@/games/ice-floor-maze/ui/board/IceFloorMazeBoard";
 import { IceFloorMazeHowToPlayDialog } from "@/games/ice-floor-maze/ui/IceFloorMazeHowToPlayDialog";
 import { IceFloorMazeDirectionPad } from "@/games/ice-floor-maze/ui/IceFloorMazePlay/IceFloorMazeDirectionPad";
@@ -30,6 +31,8 @@ type IceFloorMazePlayProps = GamePlayScreenProps<
   RestartableGamePlayScreenProps &
   UndoableGamePlayScreenProps & {
     board: IceFloorMazeBoardState;
+    /** 今の盤面のマス。 */
+    cells: readonly IceFloorMazeStateCell[];
     goal: number;
     /** 駒のいるマス。 */
     position: number;
@@ -54,6 +57,7 @@ export function IceFloorMazePlay({
   result,
   recordOutcomeNotice,
   board,
+  cells,
   goal,
   position,
   moveCount,
@@ -152,6 +156,7 @@ export function IceFloorMazePlay({
       <IceFloorMazeSwipeArea disabled={!playing} onSwipe={onSlide}>
         <IceFloorMazeBoard
           board={board}
+          cells={cells}
           goal={goal}
           position={position}
           lastSlide={lastSlide}

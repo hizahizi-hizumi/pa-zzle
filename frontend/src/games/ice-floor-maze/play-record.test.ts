@@ -14,11 +14,12 @@ const {
 } = _private;
 
 // 問題集のレベル4 の代表問題（10×13、最短6手）。基準時間は 130マス × 0.2秒 + 6手 × 2.5秒 = 41秒。
-const seed = "048052444a402020c84028080600a1218-90-103";
+const seed =
+  "00105000110510101055100005000500605010000550005000150000550105015-90-103";
 const record = createIceFloorMazePlayRecord({
   difficulty: "4",
   problemIdentity: {
-    generatorVersion: "1",
+    generatorVersion: "2",
     seed,
     conditions: { width: 10, height: 13 },
   },
@@ -100,7 +101,7 @@ describe("isIceFloorMazePlayRecord", () => {
         ...record,
         payload: {
           ...record.payload,
-          problemIdentity: { generatorVersion: "1", seed, conditions: {} },
+          problemIdentity: { generatorVersion: "2", seed, conditions: {} },
         },
       },
     ],
@@ -157,14 +158,15 @@ describe("restoreIceFloorMazeRecordedResult", () => {
   });
 });
 
-describe("生成器の版が今と違う記録の場合", () => {
+describe("初期版（氷と岩だけ）の生成器の記録の場合", () => {
+  // 上の代表問題を初期版の符号（岩を1ビットとした16進）で記録したもの。
   const olderRecord: PlayRecord = {
     ...record,
     payload: {
       ...record.payload,
       problemIdentity: {
-        generatorVersion: "0",
-        seed: "older-generator-seed",
+        generatorVersion: "1",
+        seed: "048052444a402020c84028080600a1218-90-103",
         conditions: { width: 10, height: 13 },
       },
     },

@@ -3,17 +3,26 @@ import {
   type IceFloorMazeProblem,
 } from "@/games/ice-floor-maze/problem/problem";
 import {
+  applyIceFloorMazeSlide,
   type IceFloorMazeDirection,
   type IceFloorMazeSlide,
   isIceFloorMazeCleared,
   slideIceFloorMazePiece,
 } from "@/games/ice-floor-maze/puzzle/rules";
+import {
+  createIceFloorMazeInitialState,
+  type IceFloorMazeState,
+  isSameIceFloorMazeState,
+} from "@/games/ice-floor-maze/puzzle/state";
 import { type GameSession, getClearedSessionElapsedMs } from "@/games/session";
 
-/** 今の盤面は駒のいるマスの番号。 */
-export type IceFloorMazeSession = GameSession<IceFloorMazeProblem, number> & {
-  /** 待ったで戻れる、これまでに止まった位置。最後が直前の位置。盤面を戻すと空になる。 */
-  history: readonly number[];
+/** 今の盤面は、駒の位置と変化した要素を合わせた状態。 */
+export type IceFloorMazeSession = GameSession<
+  IceFloorMazeProblem,
+  IceFloorMazeState
+> & {
+  /** 待ったで戻れる、これまでの状態。最後が直前の状態。盤面を戻すと空になる。 */
+  history: readonly IceFloorMazeState[];
   /** 成立した滑りの回数。待ったで取り消した手と、盤面を戻す前の手も含む。 */
   moveCount: number;
   undoCount: number;
@@ -48,7 +57,7 @@ export function createIceFloorMazeSession(
   return {
     status: "playing",
     problem,
-    puzzleState: problem.start,
+    puzzleState: createIceFloorMazeInitialState(problem.board, problem.start),
     history: [],
     startedAt,
     finishedAt: null,
@@ -58,7 +67,7 @@ export function createIceFloorMazeSession(
   };
 }
 
-/** 駒を `direction` へ、岩か外壁にぶつかるまで滑らせる。ゴールで止まればクリアになる。 */
+/** 駒を `direction` へ、止め役か外壁にぶつかるまで滑らせる。ゴールで止まればクリアになる。 */
 export function slideIceFloorMazeSessionPiece(
   session: IceFloorMazeSession,
   direction: IceFloorMazeDirection,
@@ -68,8 +77,8 @@ export function slideIceFloorMazeSessionPiece(
     return { outcome: "ignored", session };
   }
 
-  const { problem, puzzleState: position } = session;
-  const slide = slideIceFloorMazePiece(problem.board, position, direction);
+  const { problem, puzzleState } = session;
+  const slide = slideIceFloorMazePiece(problem.board, puzzleState, direction);
   if (slide.status === "blocked") {
     return { outcome: "blocked", slide, session };
   }
@@ -81,15 +90,15 @@ export function slideIceFloorMazeSessionPiece(
     session: {
       ...session,
       status: cleared ? "cleared" : "playing",
-      puzzleState: slide.to,
-      history: [...session.history, position],
+      puzzleState: applyIceFloorMazeSlide(puzzleState, slide),
+      history: [...session.history, puzzleState],
       finishedAt: cleared ? movedAt : null,
       moveCount: session.moveCount + 1,
     },
   };
 }
 
-/** 駒を直前に止まっていた位置へ戻す。総手数は減らさない。 */
+/** 駒と要素を直前の状態へ戻す。崩れたもろい岩・割れた薄い氷も戻る。総手数は減らさない。 */
 export function undoIceFloorMazeSession(
   session: IceFloorMazeSession,
 ): IceFloorMazeSession {
@@ -97,16 +106,16 @@ export function undoIceFloorMazeSession(
     return session;
   }
 
-  const previousPosition = session.history.at(-1)!;
+  const previousState = session.history.at(-1)!;
   return {
     ...session,
-    puzzleState: previousPosition,
+    puzzleState: previousState,
     history: session.history.slice(0, -1),
     undoCount: session.undoCount + 1,
   };
 }
 
-/** 同じプレイのまま駒を開始位置へ戻す（盤面を戻す）。経過時間と総手数は引き継ぐ。 */
+/** 同じプレイのまま駒と要素を初期状態へ戻す（盤面を戻す）。経過時間と総手数は引き継ぐ。 */
 export function restartIceFloorMazeSession(
   session: IceFloorMazeSession,
 ): IceFloorMazeSession {
@@ -116,7 +125,10 @@ export function restartIceFloorMazeSession(
 
   return {
     ...session,
-    puzzleState: session.problem.start,
+    puzzleState: createIceFloorMazeInitialState(
+      session.problem.board,
+      session.problem.start,
+    ),
     history: [],
     restartCount: session.restartCount + 1,
   };
@@ -128,13 +140,17 @@ export function canUndoIceFloorMazeSession(
   return session.status === "playing" && session.history.length > 0;
 }
 
-/** 駒が開始位置にいないプレイ中だけ、盤面を戻せる。 */
+/** 盤面が初期状態でない（駒が開始位置にいないか、要素が変わった）プレイ中だけ、盤面を戻せる。 */
 export function canRestartIceFloorMazeSession(
   session: IceFloorMazeSession,
 ): boolean {
+  const { problem, puzzleState } = session;
   return (
     session.status === "playing" &&
-    session.puzzleState !== session.problem.start
+    !isSameIceFloorMazeState(
+      puzzleState,
+      createIceFloorMazeInitialState(problem.board, problem.start),
+    )
   );
 }
 

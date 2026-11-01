@@ -35,7 +35,7 @@ vi.mock("@/games/ice-floor-maze/problem-selection", async () => {
         goal: 18,
       },
       identity: {
-        generatorVersion: "1",
+        generatorVersion: "2",
         seed,
         conditions: { width: 5, height: 5 },
       },
@@ -299,7 +299,7 @@ describe("useIceFloorMazePlay", () => {
         goal: 1,
       },
       identity: {
-        generatorVersion: "1",
+        generatorVersion: "2",
         seed: "ice-floor-maze-requested",
         conditions: { width: 4, height: 4 },
       },
@@ -330,13 +330,70 @@ describe("useIceFloorMazePlay", () => {
     });
   });
 
+  describe("要素のある問題を渡した場合", () => {
+    // 0  1  b
+    // 3  c  5
+    // 6  7  8
+    // 開始位置 0 から右へ滑るともろい岩 2 が崩れ、続けて下へ滑ると薄い氷 4 を通って割る。
+    const elementProblem: IceFloorMazePooledProblem = {
+      problem: {
+        board: parseIceFloorMazeBoard(["..b", ".c.", "..."]),
+        start: 0,
+        goal: 8,
+      },
+      identity: {
+        generatorVersion: "2",
+        seed: "ice-floor-maze-elements",
+        conditions: { width: 3, height: 3 },
+      },
+      optimalMoveCount: 2,
+    };
+
+    beforeEach(() => {
+      ({ result } = renderHook(() => useIceFloorMazePlay("3", elementProblem)));
+    });
+
+    test("崩したもろい岩と割った薄い氷を直前の滑りと今の盤面で渡すこと", () => {
+      slideInOrder(result, ["right", "down"]);
+
+      const { lastSlide, cells } = result.current;
+
+      expect(lastSlide).toMatchObject({
+        from: 1,
+        to: 7,
+        crumbledRock: null,
+        crackedIce: [4],
+      });
+      expect(cells[2]).toBe("ice");
+      expect(cells[4]).toBe("water");
+    });
+
+    test("待ったで割った薄い氷を戻すこと", () => {
+      slideInOrder(result, ["right", "down"]);
+
+      act(() => result.current.undo());
+
+      expect(result.current.position).toBe(1);
+      expect(result.current.cells[4]).toBe("thin-ice");
+    });
+
+    test("要素を変えて開始位置へ戻っても盤面を戻せること", () => {
+      slideInOrder(result, ["right", "left"]);
+
+      const { position, canRestart } = result.current;
+
+      expect(position).toBe(0);
+      expect(canRestart).toBe(true);
+    });
+  });
+
   describe("最初に避ける問題を渡し、最初に引いた seed がその問題を指す場合", () => {
     beforeEach(() => {
       vi.spyOn(problemSeed, "createProblemSeed")
         .mockReturnValueOnce("ice-floor-maze-avoided")
         .mockReturnValueOnce("ice-floor-maze-other");
       const avoidedProblemId = createProblemId({
-        generatorVersion: "1",
+        generatorVersion: "2",
         seed: "ice-floor-maze-avoided",
         conditions: { width: 5, height: 5 },
       });

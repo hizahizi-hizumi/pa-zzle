@@ -34,6 +34,18 @@ describe("exploreIceFloorMazeStops", () => {
     expect(moveCounts).toEqual([0, 1, 2, 3, 4, 4, 5]);
   });
 
+  describe("要素のある盤面の場合", () => {
+    const elementBoard = parseIceFloorMazeBoard([".b.", "...", "..c"]);
+
+    test("停止点のグラフを作らないこと", () => {
+      function act() {
+        exploreIceFloorMazeStops(elementBoard, origin);
+      }
+
+      expect(act).toThrow();
+    });
+  });
+
   test("各停止点の4方向の滑りを、成立しない方向も含めて持つこと", () => {
     const graph = exploreIceFloorMazeStops(board, origin);
 

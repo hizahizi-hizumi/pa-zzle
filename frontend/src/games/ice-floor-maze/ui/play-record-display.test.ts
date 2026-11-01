@@ -5,8 +5,8 @@ import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 const record = createIceFloorMazePlayRecord({
   difficulty: "4",
   problemIdentity: {
-    generatorVersion: "1",
-    seed: "048052444a402020c84028080600a1218-90-103",
+    generatorVersion: "2",
+    seed: "00105000110510101055100005000500605010000550005000150000550105015-90-103",
     conditions: { width: 10, height: 13 },
   },
   startedAt: 1_000,

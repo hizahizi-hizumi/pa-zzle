@@ -79,6 +79,7 @@ describe("IceFloorMazePlay", () => {
         recordOutcomeNotice={null}
         elapsedMs={65_000}
         board={board}
+        cells={board.cells}
         goal={18}
         position={17}
         moveCount={7}
@@ -314,6 +315,8 @@ describe("IceFloorMazePlay", () => {
         from: 17,
         to: 19,
         path: [18, 19],
+        crumbledRock: null,
+        crackedIce: [],
         passedGoal: true,
         isClearingMove: false,
         entersTrap: true,
@@ -343,6 +346,8 @@ describe("IceFloorMazePlay", () => {
         from: 19,
         to: 15,
         path: [18, 17, 16, 15],
+        crumbledRock: null,
+        crackedIce: [],
         passedGoal: true,
         isClearingMove: false,
         entersTrap: false,
@@ -373,6 +378,8 @@ describe("IceFloorMazePlay", () => {
       from: 15,
       to: 17,
       path: [16, 17],
+      crumbledRock: null,
+      crackedIce: [],
       passedGoal: false,
       isClearingMove: false,
       entersTrap: false,

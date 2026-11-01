@@ -10,7 +10,7 @@ import { createProblemId } from "@/games/problem-id";
 
 describe("decodeIceFloorMazePoolEntry", () => {
   const entry: IceFloorMazeProblemPoolEntry = [
-    "8000000000000000-9-63",
+    "50000000000000000000000000000000-9-63",
     8,
     8,
     4,
@@ -21,8 +21,8 @@ describe("decodeIceFloorMazePoolEntry", () => {
 
     expect(decoded).toEqual({
       identity: {
-        generatorVersion: "1",
-        seed: "8000000000000000-9-63",
+        generatorVersion: "2",
+        seed: "50000000000000000000000000000000-9-63",
         conditions: { width: 8, height: 8 },
       },
       optimalMoveCount: 4,

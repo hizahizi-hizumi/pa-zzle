@@ -10,10 +10,12 @@ import {
   type IceFloorMazeBoard,
 } from "@/games/ice-floor-maze/puzzle/board";
 import {
+  applyIceFloorMazeSlide,
   getIceFloorMazeNeighbor,
   type IceFloorMazeDirection,
   slideIceFloorMazePiece,
 } from "@/games/ice-floor-maze/puzzle/rules";
+import { createIceFloorMazeInitialState } from "@/games/ice-floor-maze/puzzle/state";
 import {
   _private,
   IceFloorMazeDifficultyPreview,
@@ -53,12 +55,12 @@ function replayStops(
   directions: readonly IceFloorMazeDirection[],
 ): number[] {
   const stops: number[] = [];
-  let position = start;
+  let state = createIceFloorMazeInitialState(board, start);
   for (const direction of directions) {
-    const slide = slideIceFloorMazePiece(board, position, direction);
+    const slide = slideIceFloorMazePiece(board, state, direction);
     if (slide.status === "slid") {
       stops.push(slide.to);
-      position = slide.to;
+      state = applyIceFloorMazeSlide(state, slide);
     }
   }
   return stops;

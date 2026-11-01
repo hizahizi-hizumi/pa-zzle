@@ -45,6 +45,8 @@ describe("IceFloorMazeBoard", () => {
     from: 0,
     to: 3,
     path: [1, 2, 3],
+    crumbledRock: null,
+    crackedIce: [],
     passedGoal: false,
     isClearingMove: false,
     entersTrap: false,
@@ -76,6 +78,7 @@ describe("IceFloorMazeBoard", () => {
       const element = (blocked: IceFloorMazeBlockedInput | null) => (
         <IceFloorMazeBoard
           board={board}
+          cells={board.cells}
           goal={15}
           position={3}
           lastSlide={lastSlide}
@@ -99,6 +102,47 @@ describe("IceFloorMazeBoard", () => {
       expect(trails).toHaveLength(1);
       expect(cancelAnimation).not.toHaveBeenCalled();
       expect(onSlideAnimationActivityChange).toHaveBeenLastCalledWith(true);
+    });
+  });
+
+  describe("要素が変わった盤面の場合", () => {
+    // b c x
+    // 3 4 5
+    // 6 7 8
+    // もろい岩 0 が崩れて氷になり、薄い氷 1 が割れて水面になった。
+    const elementBoard = parseIceFloorMazeBoard(["bcx", "...", "..."]);
+    const cells = ["ice", "water", ...elementBoard.cells.slice(2)] as const;
+
+    beforeEach(() => {
+      render(
+        <IceFloorMazeBoard
+          board={elementBoard}
+          cells={cells}
+          goal={8}
+          position={3}
+          lastSlide={null}
+          blockedInput={null}
+          clearing={false}
+          onSlideAnimationActivityChange={vi.fn()}
+          onClearAnimationComplete={vi.fn()}
+        />,
+      );
+    });
+
+    test("初期盤面ではなく今の盤面のマスを描くこと", () => {
+      const boardImage = screen.getByRole("img", { name: "盤面" });
+
+      const drawn = {
+        brittleRock: boardImage.querySelectorAll("[data-brittle-rock-cell]"),
+        thinIce: boardImage.querySelectorAll("[data-thin-ice-cell]"),
+        water: boardImage.querySelectorAll("[data-water-cell]"),
+        outside: boardImage.querySelectorAll("[data-outside-cell]"),
+      };
+
+      expect(drawn.brittleRock).toHaveLength(0);
+      expect(drawn.thinIce).toHaveLength(0);
+      expect(drawn.water).toHaveLength(1);
+      expect(drawn.outside).toHaveLength(1);
     });
   });
 });

@@ -1,9 +1,13 @@
-import type { IceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
+import {
+  type IceFloorMazeBoard,
+  isIceFloorMazeStaticBoard,
+} from "@/games/ice-floor-maze/puzzle/board";
 import {
   type IceFloorMazeSlide,
   iceFloorMazeDirections,
   slideIceFloorMazePiece,
 } from "@/games/ice-floor-maze/puzzle/rules";
+import { createIceFloorMazeInitialState } from "@/games/ice-floor-maze/puzzle/state";
 
 export type IceFloorMazeStopMove = Extract<
   IceFloorMazeSlide,
@@ -11,7 +15,8 @@ export type IceFloorMazeStopMove = Extract<
 >;
 
 /**
- * 起点から滑りを重ねて止まれる位置（停止点）と、その間の移動。
+ * 要素の無い盤面で、起点から滑りを重ねて止まれる位置（停止点）と、その間の移動。
+ * 盤面が変わらないので、状態は駒の位置だけで決まる。要素のある盤面は状態のグラフ（`state-graph.ts`）でたどる。
  * - `stops`: 起点を含む到達できる停止点。起点からの最少手数の昇順。
  * - `moveCounts`: 停止点ごとの、起点から止まるまでの最少手数。
  * - `slides`: 停止点ごとの、上・右・下・左の4方向の滑り。成立しない方向も含む。
@@ -23,11 +28,17 @@ export type IceFloorMazeStopGraph = {
   slides: ReadonlyMap<number, readonly IceFloorMazeSlide[]>;
 };
 
-/** 起点から幅優先で停止点をたどる。 */
+/** 要素の無い盤面で、起点から幅優先で停止点をたどる。 */
 export function exploreIceFloorMazeStops(
   board: IceFloorMazeBoard,
   origin: number,
 ): IceFloorMazeStopGraph {
+  if (!isIceFloorMazeStaticBoard(board)) {
+    throw new RangeError(
+      "Ice floor maze stop graph needs a board without changeable cells",
+    );
+  }
+
   const stops = [origin];
   const moveCounts = new Map([[origin, 0]]);
   const slides = new Map<number, readonly IceFloorMazeSlide[]>();
@@ -35,7 +46,11 @@ export function exploreIceFloorMazeStops(
   for (let order = 0; order < stops.length; order += 1) {
     const stop = stops[order]!;
     const stopSlides = iceFloorMazeDirections.map((direction) =>
-      slideIceFloorMazePiece(board, stop, direction),
+      slideIceFloorMazePiece(
+        board,
+        createIceFloorMazeInitialState(board, stop),
+        direction,
+      ),
     );
     slides.set(stop, stopSlides);
     for (const slide of stopSlides) {

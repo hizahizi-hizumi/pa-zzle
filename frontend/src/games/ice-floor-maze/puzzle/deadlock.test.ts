@@ -1,6 +1,36 @@
-import { parseIceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
+import {
+  type IceFloorMazeBoard,
+  parseIceFloorMazeBoard,
+} from "@/games/ice-floor-maze/puzzle/board";
 import { classifyIceFloorMazeDeadlock } from "@/games/ice-floor-maze/puzzle/deadlock";
+import {
+  applyIceFloorMazeSlide,
+  type IceFloorMazeDirection,
+  slideIceFloorMazePiece,
+} from "@/games/ice-floor-maze/puzzle/rules";
+import {
+  createIceFloorMazeInitialState,
+  type IceFloorMazeState,
+} from "@/games/ice-floor-maze/puzzle/state";
 import { exploreIceFloorMazeStops } from "@/games/ice-floor-maze/puzzle/stop-graph";
+
+/** どの要素もまだ変わっていない盤面で、駒を `start` に置いて滑りを重ねた状態。 */
+function slideInOrder(
+  board: IceFloorMazeBoard,
+  start: number,
+  directions: readonly IceFloorMazeDirection[],
+): IceFloorMazeState {
+  return directions.reduce(
+    (state, direction) => {
+      const slide = slideIceFloorMazePiece(board, state, direction);
+      if (slide.status === "blocked") {
+        throw new Error(`blocked: ${direction} from ${state.position}`);
+      }
+      return applyIceFloorMazeSlide(state, slide);
+    },
+    createIceFloorMazeInitialState(board, start),
+  );
+}
 
 describe("classifyIceFloorMazeDeadlock", () => {
   // 8×8 の研究用盤面（下の Python 一致の8×8と同じ）。開始位置 12、ゴール 29。
@@ -23,9 +53,77 @@ describe("classifyIceFloorMazeDeadlock", () => {
   ] as const;
 
   test.each(cases)("%sと判定すること", (_, position, expected) => {
-    const status = classifyIceFloorMazeDeadlock(board, position, goal);
+    const status = classifyIceFloorMazeDeadlock(
+      board,
+      createIceFloorMazeInitialState(board, position),
+      goal,
+    );
 
     expect(status).toBe(expected);
+  });
+
+  describe("要素のある盤面の場合", () => {
+    // G # 2 3 b 5 6
+    const brittleBoard = parseIceFloorMazeBoard([".#..b.."]);
+    // G # 2 c 4
+    const thinBoard = parseIceFloorMazeBoard([".#.c."]);
+    // G b 2 3 4
+    const reachableBoard = parseIceFloorMazeBoard([".b..."]);
+    // G 1 2 b 4
+    const pushedBoard = parseIceFloorMazeBoard(["...b."]);
+    const elementCases = [
+      [
+        "もろい岩を崩せばゴールで止まれる",
+        reachableBoard,
+        slideInOrder(reachableBoard, 4, []),
+        "goal-reachable",
+      ],
+      [
+        "もろい岩を崩す手が残る間は、ゴールが無くても閉じ込めでない",
+        brittleBoard,
+        slideInOrder(brittleBoard, 6, []),
+        "goal-unreachable",
+      ],
+      [
+        "崩した後に戻れない状態は閉じ込めでない",
+        brittleBoard,
+        slideInOrder(brittleBoard, 6, ["left"]),
+        "goal-unreachable",
+      ],
+      [
+        "崩した後の往復だけが残れば閉じ込め",
+        brittleBoard,
+        slideInOrder(brittleBoard, 6, ["left", "left"]),
+        "trapped",
+      ],
+      [
+        "薄い氷を割る手が残る間は閉じ込めでない",
+        thinBoard,
+        slideInOrder(thinBoard, 4, []),
+        "goal-unreachable",
+      ],
+      [
+        "割れた水面に阻まれて動けなければ閉じ込め",
+        thinBoard,
+        slideInOrder(thinBoard, 4, ["left"]),
+        "trapped",
+      ],
+      [
+        "隣のもろい岩は押しても崩れないので、動けなければ閉じ込め",
+        pushedBoard,
+        slideInOrder(pushedBoard, 4, []),
+        "trapped",
+      ],
+    ] as const;
+
+    test.each(elementCases)(
+      "%sと判定すること",
+      (_, elementBoard, state, expected) => {
+        const status = classifyIceFloorMazeDeadlock(elementBoard, state, 0);
+
+        expect(status).toBe(expected);
+      },
+    );
   });
 
   describe("研究用 Python の固定盤面の場合", () => {
@@ -89,7 +187,7 @@ describe("classifyIceFloorMazeDeadlock", () => {
             stop,
             status: classifyIceFloorMazeDeadlock(
               researchBoard,
-              stop,
+              createIceFloorMazeInitialState(researchBoard, stop),
               researchGoal,
             ),
           }))

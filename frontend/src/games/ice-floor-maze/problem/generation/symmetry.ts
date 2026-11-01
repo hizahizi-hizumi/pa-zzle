@@ -92,8 +92,11 @@ export function listIceFloorMazeSymmetries(
 }
 
 const cellCodes = {
-  rock: "#",
   ice: ".",
+  rock: "#",
+  "brittle-rock": "b",
+  "thin-ice": "c",
+  outside: "x",
 } as const satisfies Record<IceFloorMazeCell, string>;
 
 /** 盤面の大きさは最大168マスなので、マスの番号は3桁で辞書順と数の順が揃う。 */
@@ -111,7 +114,7 @@ function formatSymmetryKey(problem: IceFloorMazeProblem): string {
 
 /**
  * 回転・反転で重なる問題に共通の正規化キー。移した問題それぞれのキーのうち辞書順で最小のもの。
- * キーは盤面の形・岩（`#`）と氷（`.`）の並び・開始位置・ゴールをつなぐ。
+ * キーは盤面の形・マスの種類の並び（`.` 氷、`#` 岩、`b` もろい岩、`c` 薄い氷、`x` 盤面の外）・開始位置・ゴールをつなぐ。
  */
 export function getIceFloorMazeSymmetryKey(
   problem: IceFloorMazeProblem,
