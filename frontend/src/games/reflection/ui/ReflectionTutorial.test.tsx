@@ -243,7 +243,7 @@ describe("ReflectionTutorial", () => {
         const reasonCues = getCueKinds(getClue("上3列"));
 
         expect(pressed).toBe("true");
-        expect(message).toContain("ブラックホールは光を吸い込みます");
+        expect(message).toContain("ブラックホールは、光を吸い込みます");
         expect(stockCues).toEqual(["hint"]);
         expect(reasonCues).toEqual(["reason"]);
       });
@@ -313,7 +313,7 @@ describe("ReflectionTutorial", () => {
         const message = getMessage();
         const cues = getCueKinds(getStock("右下がりの鏡"));
 
-        expect(message).toContain("残りのピースも置いて");
+        expect(message).toContain("残りのピースも置きましょう");
         expect(cues).toEqual([]);
       });
 

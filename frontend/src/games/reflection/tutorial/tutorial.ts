@@ -166,8 +166,8 @@ const steps: readonly ReflectionTutorialStep[] = [
   {
     type: "light",
     message: {
-      headline: "数字は、光が通るマスの数。\n下の記号は、光の行き先です",
-      detail: "印の数字を押して、光を出してください",
+      headline: "数字は、光が通るマスの数です。\n下の記号は、光の行き先です",
+      detail: "印の数字を押して、光を見てください",
     },
     introducedRuleId: "number",
     entry: { side: "left", index: 1 },
@@ -175,9 +175,9 @@ const steps: readonly ReflectionTutorialStep[] = [
   {
     type: "place",
     message: {
-      headline: "ブラックホールは光を吸い込みます",
+      headline: "ブラックホールは、光を吸い込みます",
       detail:
-        "点の付いた3は、3マス目で吸い込まれる光です\n選んで、印のマスに置いてください",
+        "点の付いた3は、光が3マス目で吸い込まれます。\n印を順に押して、置いてください",
     },
     introducedRuleId: "black-hole",
     piece: "black-hole",
@@ -191,7 +191,7 @@ const steps: readonly ReflectionTutorialStep[] = [
     message: {
       headline: "斜め鏡は、光を直角に曲げます",
       detail:
-        "斜めの矢印は、外へ出る光です。この2は\n2マス目で曲がり、もう1つの2から出ます",
+        "斜めの矢印は、光が外へ出ます。\n下の2の光は2マス目で曲がり、右の2から出ます",
     },
     introducedRuleId: "mirror",
     piece: "slash",
@@ -206,8 +206,8 @@ const steps: readonly ReflectionTutorialStep[] = [
   {
     type: "place",
     message: {
-      headline: "反射体は、光をはね返します。\n戻る道のマスも数えます",
-      detail: "折り返す矢印の3は、2マス目で戻る光です",
+      headline: "反射体は、光をはね返します。\n戻る道のマスも数に入ります",
+      detail: "折り返す矢印の3は、光が2マス目ではね返ります",
     },
     introducedRuleId: "reflector",
     piece: "reflector",
@@ -219,8 +219,8 @@ const steps: readonly ReflectionTutorialStep[] = [
   {
     type: "place",
     message: {
-      headline: "両面鏡は、当たる光をはね返し\n沿う光は通します",
-      detail: "最初に出した光は、そのまま通ります",
+      headline: "両面鏡は、当たる光をはね返し\n鏡に沿う光は通します",
+      detail: "最初に見た左の5の光は、そのまま通ります",
     },
     introducedRuleId: "double",
     piece: "horizontal-double",
@@ -417,7 +417,7 @@ function performReflectionTutorialAction(
 }
 
 const freePlay: TutorialMessage = {
-  headline: "残りのピースも置いて\nすべての数字を緑にすると完成です",
+  headline: "残りのピースも置きましょう。\nすべての数字が緑になれば完成です",
   detail: "数字を押すと、今の光が見えます",
 };
 
@@ -533,7 +533,7 @@ export const reflectionTutorial: Tutorial<
   intro: {
     purpose: "外周の数字どおりに光が進むよう\nピースを盤面に置くパズルです",
     goalCaption: "この盤面がゴールです",
-    startCaption: "最初は盤面が空です。\n数字どおりに光が進む所は緑です",
+    startCaption: "最初は盤面が空です。\nもう合っている数字は緑です",
   },
   rules: [
     { id: "number", label: "数字" },
