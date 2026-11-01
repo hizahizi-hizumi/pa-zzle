@@ -12,28 +12,42 @@
 //       velocity between neighbouring steps (relative to its peak speed) is reported (WARN only)
 //   (g) optional: overlap between the shapes of two selectors over one cycle (--overlap A|B, WARN only)
 //   (h) the static state's visible bounds (viewBox units, stroke included) against the base pictogram and
-//       the median of the other games' pictogram.svg (NOTE only; references/motion.md)
+//       the median of the other games' pictogram.svg, and its ink coverage at list size against theirs
+//       (NOTE only; references/motion.md)
 //   (i) pageerror / console.error
+//   (j) optional: a filmstrip of real-time screenshots of the 138px hero over one cycle (--filmstrip)
+//   (k) optional: static / end screenshots and errors in WebKit when it can be launched (--webkit)
 // Each candidate is rendered alone in its own page (never in a srcdoc iframe; see references/self-review.md).
-// Theme colors come from frontend/styles/globals.css (:root and .dark), as make_review_gallery.py does.
-//
-// Playwright is loaded with require('playwright'); run where it resolves (e.g. NODE_PATH holds a global
-// install). If it does not, run with NODE_PATH=<dir containing playwright> or install it there.
-//
-// node observe_animation.cjs --manifest <manifest.json> [--only id,id] [--out <dir>] [--cycles 3.3]
-//   [--pixels] [--overlap '<selector>|<selector>' ...] [--smooth-threshold 0.15] [--globals-css <file>]
-//   [--games-dir <dir>]
+// The host defines the color tokens of frontend/styles/globals.css (:root and .dark) like the app, so an
+// SVG may reference the app color tokens with var().
 'use strict';
 
 const fs = require('fs');
 const path = require('path');
-const { chromium } = require('playwright');
+const { loadPlaywright } = require('./playwright_resolve.cjs');
+
+const USAGE = `usage: node observe_animation.cjs --manifest <manifest.json> [options]
+  --only id,id               observe only these candidates
+  --out <dir>                screenshots and observe-report.json (default: <manifest dir>/observe)
+  --cycles <n>               cut: cycles of real frames to record (default 3.3)
+  --pixels                   pixel difference between the end and the static screenshots
+  --overlap '<sel>|<sel>'    overlap of two selectors over one cycle (repeatable; the manifest
+                             candidate field "overlap" adds pairs per candidate)
+  --smooth-threshold <x>     speed jump relative to peak that is a WARN (default 0.15)
+  --filmstrip                real-time screenshots of the 138px hero over one cycle, in one image
+  --filmstrip-interval <ms>  minimum time between filmstrip frames (default 100)
+  --webkit                   also render the static state and the end in WebKit, if it can be launched
+  --globals-css <file>       theme colors (default: frontend/styles/globals.css)
+  --games-dir <dir>          other games' pictogram.svg for size and ink comparison
+  -h, --help                 show this help`;
 
 const REPOSITORY_ROOT = path.resolve(__dirname, '../../../..');
 const DEFAULT_GLOBALS_CSS = path.join(REPOSITORY_ROOT, 'frontend/styles/globals.css');
 const DEFAULT_GAMES_DIR = path.join(REPOSITORY_ROOT, 'frontend/src/games');
 const THEME_SELECTORS = { light: ':root', dark: '.dark' };
 const THEME_TOKENS = ['foreground', 'muted-foreground', 'background'];
+const FILMSTRIP_HERO_INDEX = 1;
+const FILMSTRIP_COLUMNS = 8;
 const FALLBACK_THEMES = {
   light: { foreground: 'oklch(0.145 0 0)', 'muted-foreground': 'oklch(0.556 0 0)', background: 'oklch(1 0 0)' },
   dark: { foreground: 'oklch(0.985 0 0)', 'muted-foreground': 'oklch(0.708 0 0)', background: 'oklch(0.145 0 0)' },
@@ -52,11 +66,19 @@ const PIXEL_CHANNEL_THRESHOLD = 24;
 const OVERLAP_MIN_AREA = 0.25;
 const PLAYBACKS = new Set(['once', 'cut', 'seam']);
 
+function parseOverlap(value) {
+  const pair = String(value).split('|').map((part) => part.trim());
+  if (pair.length !== 2 || !pair[0] || !pair[1]) throw new Error(`overlap takes '<selector>|<selector>': ${value}`);
+  return pair;
+}
+
 function parseArgs(argv) {
-  const args = { cycles: 3.3, only: [], pixels: false, overlap: [], smoothThreshold: 0.15, globalsCss: DEFAULT_GLOBALS_CSS, gamesDir: DEFAULT_GAMES_DIR };
+  const args = { cycles: 3.3, only: [], pixels: false, overlap: [], smoothThreshold: 0.15, globalsCss: DEFAULT_GLOBALS_CSS, gamesDir: DEFAULT_GAMES_DIR,
+    filmstrip: false, filmstripInterval: 100, webkit: false };
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i];
-    if (flag === '--manifest') args.manifest = argv[++i];
+    if (flag === '-h' || flag === '--help') { console.log(USAGE); process.exit(0); }
+    else if (flag === '--manifest') args.manifest = argv[++i];
     else if (flag === '--out') args.out = argv[++i];
     else if (flag === '--only') args.only = argv[++i].split(',').filter(Boolean);
     else if (flag === '--cycles') args.cycles = Number(argv[++i]);
@@ -64,16 +86,19 @@ function parseArgs(argv) {
     else if (flag === '--smooth-threshold') args.smoothThreshold = Number(argv[++i]);
     else if (flag === '--globals-css') args.globalsCss = argv[++i];
     else if (flag === '--games-dir') args.gamesDir = argv[++i];
-    else if (flag === '--overlap') {
-      const pair = argv[++i].split('|').map((part) => part.trim());
-      if (pair.length !== 2 || !pair[0] || !pair[1]) throw new Error(`--overlap takes '<selector>|<selector>': ${argv[i]}`);
-      args.overlap.push(pair);
-    } else throw new Error(`unknown argument: ${flag}`);
+    else if (flag === '--filmstrip') args.filmstrip = true;
+    else if (flag === '--filmstrip-interval') args.filmstripInterval = Number(argv[++i]);
+    else if (flag === '--webkit') args.webkit = true;
+    else if (flag === '--overlap') args.overlap.push(parseOverlap(argv[++i]));
+    else throw new Error(`unknown argument: ${flag}\n${USAGE}`);
   }
-  if (!args.manifest) {
-    throw new Error("usage: observe_animation.cjs --manifest <manifest.json> [--only id,id] [--out dir] [--cycles 3.3] [--pixels] [--overlap 'A|B'] [--smooth-threshold 0.15] [--globals-css file] [--games-dir dir]");
-  }
+  if (!args.manifest) throw new Error(USAGE);
   return args;
+}
+
+function candidateOverlaps(candidate, globalPairs) {
+  const own = candidate.overlap == null ? [] : (Array.isArray(candidate.overlap) ? candidate.overlap : [candidate.overlap]);
+  return [...globalPairs, ...own.map(parseOverlap)];
 }
 
 function loadThemes(file) {
@@ -88,11 +113,11 @@ function loadThemes(file) {
   for (const [theme, selector] of Object.entries(THEME_SELECTORS)) {
     const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const block = (css.match(new RegExp(`^${escaped}\\s*\\{([\\s\\S]*?)^\\}`, 'm')) || [])[1] || '';
-    themes[theme] = {};
+    themes[theme] = { tokens: Object.fromEntries([...block.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()])) };
     for (const token of THEME_TOKENS) {
-      const match = block.match(new RegExp(`--${token}\\s*:\\s*([^;]+);`));
-      if (!match) console.error(`WARN: --${token} not found in ${selector} of ${file}; using fallback`);
-      themes[theme][token] = match ? match[1].trim() : FALLBACK_THEMES[theme][token];
+      const value = themes[theme].tokens[`--${token}`];
+      if (!value) console.error(`WARN: --${token} not found in ${selector} of ${file}; using fallback`);
+      themes[theme][token] = value || FALLBACK_THEMES[theme][token];
     }
   }
   return themes;
@@ -105,7 +130,10 @@ function hostPage(svg, { play, theme, themes, deferred }) {
   const motion = play ? ' data-pictogram-motion="play"' : '';
   const content = deferred ? '' : svg;
   const heroes = HERO_SIZES.map((size) => `<span class="host hero"${motion} style="width:${size}px;height:${size}px">${content}</span>`).join('');
+  const declarations = (tokens) => Object.entries(tokens || {}).map(([name, value]) => `${name}:${value}`).join(';');
   return `<!doctype html><html${theme === 'dark' ? ' class="dark"' : ''}><head><style>
+:root{${declarations(themes.light.tokens)}}
+.dark{${declarations(themes.dark.tokens)}}
 html,body{margin:0;background:${colors.background}}
 body{display:flex;gap:8px;align-items:flex-start;padding:8px}
 .host{display:block;--game-pictogram-strong:${colors.foreground};--game-pictogram-soft:${colors['muted-foreground']}}
@@ -384,6 +412,19 @@ async function render(context, svg, options) {
   return { page, errors };
 }
 
+// Jumps of several shapes at (nearly) the same time share one cause (one segment boundary moving a group),
+// so they are reported once per time, worst first.
+function groupJumps(entries) {
+  const sorted = [...entries].sort((a, b) => a.atMs - b.atMs);
+  const groups = [];
+  for (const entry of sorted) {
+    const last = groups[groups.length - 1];
+    if (last && entry.atMs - last[last.length - 1].atMs <= 2 * SMOOTH_STEP_MS) last.push(entry);
+    else groups.push([entry]);
+  }
+  return groups.map((group) => group.sort((a, b) => b.worstJump - a.worstJump));
+}
+
 function classify(state, references) {
   for (const [label, reference] of Object.entries(references)) {
     if (differences(state, reference).length === 0) return label;
@@ -437,14 +478,40 @@ function delayFlashes(frames, startState, staticState) {
   return [...flashes.values()];
 }
 
-async function staticBounds(context, svg, themes) {
+// Mean ink of the list-size static pictogram: per pixel, its colour distance from the background
+// relative to the foreground's (1 = a foreground pixel, 0 = background), averaged over the square.
+// Unlike the bounds, it reflects how much is drawn inside the outline, so board-like pictograms compare.
+async function inkCoverage(page, themes) {
+  const shot = await page.locator('.host.list').screenshot();
+  return page.evaluate(async ([data, background, foreground]) => {
+    const toRgb = (color) => {
+      const canvas = document.createElement('canvas'); canvas.width = canvas.height = 1;
+      const context = canvas.getContext('2d'); context.fillStyle = color; context.fillRect(0, 0, 1, 1);
+      return [...context.getImageData(0, 0, 1, 1).data.slice(0, 3)];
+    };
+    const image = await new Promise((resolve) => { const img = new Image(); img.onload = () => resolve(img); img.src = 'data:image/png;base64,' + data; });
+    const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height;
+    const context = canvas.getContext('2d'); context.drawImage(image, 0, 0);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    const bg = toRgb(background); const fg = toRgb(foreground);
+    const distance = (r, g, b) => Math.max(Math.abs(r - bg[0]), Math.abs(g - bg[1]), Math.abs(b - bg[2]));
+    const full = distance(...fg) || 1;
+    let sum = 0;
+    for (let i = 0; i < pixels.length; i += 4) sum += Math.min(1, distance(pixels[i], pixels[i + 1], pixels[i + 2]) / full);
+    return sum / (pixels.length / 4);
+  }, [shot.toString('base64'), themes.light.background, themes.light.foreground]);
+}
+
+async function staticMeasures(context, svg, themes) {
   const { page } = await render(context, svg, { play: false, theme: 'light', themes });
-  const result = await page.evaluate(() => window.__pz.bounds());
+  const bounds = await page.evaluate(() => window.__pz.bounds());
+  const ink = await inkCoverage(page, themes);
   await page.close();
-  return result;
+  return { bounds, ink };
 }
 
 const size = (bounds) => Math.sqrt(bounds.width * bounds.height);
+const bottom = (bounds) => bounds.centerY + bounds.height / 2;
 const median = (values) => { const sorted = [...values].sort((a, b) => a - b); const mid = Math.floor(sorted.length / 2); return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2; };
 
 // Bounds of the base pictogram and of the other games' pictogram.svg, measured once.
@@ -453,14 +520,18 @@ async function referenceBounds(browser, manifest, manifestPath, options) {
   const result = { base: null, others: [] };
   if (manifest.base_pictogram) {
     const file = path.isAbsolute(manifest.base_pictogram) ? manifest.base_pictogram : path.join(path.dirname(manifestPath), manifest.base_pictogram);
-    if (fs.existsSync(file)) result.base = await staticBounds(context, fs.readFileSync(file, 'utf8'), options.themes);
+    if (fs.existsSync(file)) {
+      const measures = await staticMeasures(context, fs.readFileSync(file, 'utf8'), options.themes);
+      result.base = measures.bounds;
+      result.baseInk = measures.ink;
+    }
   }
   if (fs.existsSync(options.gamesDir)) {
     for (const game of fs.readdirSync(options.gamesDir).sort()) {
       const file = path.join(options.gamesDir, game, 'assets/pictogram.svg');
       if (game === manifest.game_id || !fs.existsSync(file)) continue;
-      const bounds = await staticBounds(context, fs.readFileSync(file, 'utf8'), options.themes);
-      if (bounds) result.others.push({ game, ...bounds });
+      const { bounds, ink } = await staticMeasures(context, fs.readFileSync(file, 'utf8'), options.themes);
+      if (bounds) result.others.push({ game, ...bounds, ink });
     }
   }
   await context.close();
@@ -535,7 +606,21 @@ async function observe(browser, candidate, options) {
     }
     if (references.others.length) {
       report.staticBounds.vsOthers = { games: references.others.length, sizeRatioToMedian: Number((size(bounds) / median(references.others.map(size))).toFixed(2)),
-        centerYMedian: Number(median(references.others.map((b) => b.centerY)).toFixed(1)) };
+        centerYMedian: Number(median(references.others.map((b) => b.centerY)).toFixed(1)), bottomMedian: Number(median(references.others.map(bottom)).toFixed(1)) };
+    }
+  }
+  const ink = await inkCoverage(light.rest.page, options.themes);
+  report.ink = { coverage: Number(ink.toFixed(3)), listSize: LIST_SIZE };
+  if (options.references.baseInk) report.ink.vsBase = Number((ink / options.references.baseInk).toFixed(2));
+  if (options.references.others.length) {
+    const othersMedian = median(options.references.others.map((other) => other.ink));
+    report.ink.othersMedian = Number(othersMedian.toFixed(3));
+    report.ink.vsOthersMedian = Number((ink / othersMedian).toFixed(2));
+    report.ink.others = options.references.others.map((other) => ({ game: other.game, coverage: Number(other.ink.toFixed(3)) }));
+    const inks = options.references.others.map((other) => other.ink);
+    report.ink.othersRange = [Number(Math.min(...inks).toFixed(3)), Number(Math.max(...inks).toFixed(3))];
+    if (ink < Math.min(...inks) || ink > Math.max(...inks)) {
+      report.notes.push(`ink coverage at ${LIST_SIZE}px (${(ink * 100).toFixed(1)}%) is outside the other games' range ${report.ink.othersRange.map((v) => (v * 100).toFixed(1) + '%').join('-')}; check the weight in the comparison row`);
     }
   }
   if (!timings.length) fail('no running animation with the play attribute');
@@ -573,13 +658,14 @@ async function observe(browser, candidate, options) {
     }
 
     let worst = { margin: Infinity, key: null, atMs: 0 };
-    const overlaps = options.overlap.map((pair) => ({ pair: pair.join(' | '), maxArea: 0, atMs: null }));
+    const overlapPairs = candidateOverlaps(candidate, options.overlap);
+    const overlaps = overlapPairs.map((pair) => ({ pair: pair.join(' | '), maxArea: 0, atMs: null }));
     for (let time = 0; time < windowEnd; time += OVERFLOW_STEP_MS) {
       await play.page.evaluate((t) => window.__pz.seek(t), time);
       const sample = await play.page.evaluate(() => window.__pz.overflow());
       if (sample.margin < worst.margin) worst = { ...sample, atMs: time };
       if (overlaps.length) {
-        const areas = await play.page.evaluate((pairs) => window.__pz.overlap(pairs), options.overlap);
+        const areas = await play.page.evaluate((pairs) => window.__pz.overlap(pairs), overlapPairs);
         areas.forEach((area, i) => { if (area > overlaps[i].maxArea) { overlaps[i].maxArea = area; overlaps[i].atMs = time; } });
       }
     }
@@ -601,8 +687,15 @@ async function observe(browser, candidate, options) {
     const smooth = await play.page.evaluate(([from, to, step]) => window.__pz.smoothness(from, to, step), [scanFrom, scanTo, SMOOTH_STEP_MS]);
     smooth.sort((a, b) => b.worstJump - a.worstJump);
     report.smoothness = { stepMs: SMOOTH_STEP_MS, threshold: options.smoothThreshold, movingShapes: smooth.length, shapes: smooth };
-    smooth.filter((entry) => entry.worstJump > options.smoothThreshold).forEach((entry) => {
-      report.warnings.push(`speed jumps ${entry.worstJump} of peak at ${entry.atMs}ms (${entry.element}); a stutter unless it is an intended collision or appearance`);
+    groupJumps(smooth.filter((entry) => entry.worstJump > options.smoothThreshold)).forEach((group) => {
+      const worst = group[0];
+      const others = group.slice(1, 4).map((entry) => entry.element);
+      const span = group.map((entry) => entry.atMs);
+      const at = Math.min(...span) === Math.max(...span) ? `${worst.atMs}ms` : `${Math.min(...span)}-${Math.max(...span)}ms`;
+      const shapes = group.length === 1
+        ? `${worst.worstJump} of peak (${worst.element})`
+        : `${group.length} shapes at once, worst ${worst.worstJump} of peak (${worst.element}), also ${others.join(', ')}${group.length > 4 ? ', ...' : ''}; likely one cause`;
+      report.warnings.push(`speed jump at ${at}: ${shapes}; a stutter unless it is an intended collision, appearance, or start`);
     });
 
     const live = await render(context, svg, { play: true, theme: 'light', themes: options.themes, deferred: true });
@@ -632,7 +725,10 @@ async function observe(browser, candidate, options) {
       }
     }
     errors.push(...live.errors);
+    if (options.filmstrip) report.filmstrip = await filmstrip(context, svg, candidate, report, options);
   }
+  if (options.webkitBrowser) await observeWebkit(options.webkitBrowser, svg, candidate, options, report);
+  else if (options.webkit) report.webkit = { available: false, reason: options.webkitReason };
 
   errors.push(...light.rest.errors, ...play.errors);
   report.errors = errors;
@@ -641,12 +737,75 @@ async function observe(browser, candidate, options) {
   return report;
 }
 
+// Real-time screenshots of the 138px hero from the moment the SVG is inserted, over one cycle (cut: past
+// the first switch), laid out in one image with the animation time of each frame.
+async function filmstrip(context, svg, candidate, report, options) {
+  const page = await render(context, svg, { play: true, theme: 'light', themes: options.themes, deferred: true });
+  const recordMs = report.delayMs + report.periodMs + (candidate.playback === 'once' ? 300 : 600);
+  await page.page.evaluate((markup) => document.querySelectorAll('.host').forEach((host) => { host.innerHTML = markup; }), svg);
+  const hero = page.page.locator('.host.hero').nth(FILMSTRIP_HERO_INDEX);
+  const frames = [];
+  const started = Date.now();
+  while (Date.now() - started < recordMs) {
+    const before = Date.now();
+    const time = await page.page.evaluate(() => { const first = document.querySelector('.host.hero').getAnimations({ subtree: true })[0]; return first ? first.currentTime || 0 : 0; });
+    frames.push({ label: `${Math.round(time)}ms`, data: (await hero.screenshot()).toString('base64') });
+    const wait = options.filmstripInterval - (Date.now() - before);
+    if (wait > 0) await page.page.waitForTimeout(wait);
+  }
+  const sheet = await page.page.evaluate(async ([items, columns, background, color]) => {
+    const images = await Promise.all(items.map((item) => new Promise((resolve) => { const img = new Image(); img.onload = () => resolve(img); img.src = 'data:image/png;base64,' + item.data; })));
+    const cellWidth = images[0].width; const cellHeight = images[0].height + 16;
+    const canvas = document.createElement('canvas');
+    canvas.width = cellWidth * Math.min(columns, images.length); canvas.height = cellHeight * Math.ceil(images.length / columns);
+    const context = canvas.getContext('2d');
+    context.fillStyle = background; context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = color; context.font = '11px sans-serif';
+    images.forEach((img, i) => {
+      const x = (i % columns) * cellWidth; const y = Math.floor(i / columns) * cellHeight;
+      context.drawImage(img, x, y);
+      context.fillText(items[i].label, x + 4, y + img.height + 12);
+    });
+    return canvas.toDataURL('image/png').split(',')[1];
+  }, [frames, FILMSTRIP_COLUMNS, options.themes.light.background, options.themes.light['muted-foreground']]);
+  const file = path.join(options.out, `${candidate.id}-filmstrip.png`);
+  fs.writeFileSync(file, Buffer.from(sheet, 'base64'));
+  await page.page.close();
+  return { frames: frames.length, size: HERO_SIZES[FILMSTRIP_HERO_INDEX], file: path.basename(file) };
+}
+
+// WebKit (the engine of Safari and the iOS app web view): static and end screenshots per theme, the end
+// compared with the static state by computed style within WebKit, and page errors.
+async function observeWebkit(browser, svg, candidate, options, report) {
+  report.webkit = { available: true, themes: {} };
+  try {
+    const context = await browser.newContext({ viewport: { width: 420, height: 200 }, deviceScaleFactor: 1 });
+    for (const theme of ['light', 'dark']) {
+      const suffix = theme === 'light' ? '' : `-${theme}`;
+      const rest = await render(context, svg, { play: false, theme, themes: options.themes });
+      const staticState = await rest.page.evaluate(() => window.__pz.state());
+      fs.writeFileSync(path.join(options.out, `${candidate.id}-webkit${suffix}-static.png`), await rest.page.locator('.host.hero').first().screenshot());
+      const play = await render(context, svg, { play: true, theme, themes: options.themes });
+      await play.page.evaluate((epsilon) => window.__pz.seekEach('end', epsilon), END_OFFSET_MS);
+      const endDiff = differences(await play.page.evaluate(() => window.__pz.state()), staticState);
+      fs.writeFileSync(path.join(options.out, `${candidate.id}-webkit${suffix}-end.png`), await play.page.locator('.host.hero').first().screenshot());
+      const errors = [...rest.errors, ...play.errors];
+      report.webkit.themes[theme] = { endVsStatic: endDiff, errors };
+      if (endDiff.length) report.warnings.push(`webkit ${theme}: end differs from the static state: ${endDiff.slice(0, 3).join(' | ')}`);
+      if (errors.length) report.failures.push(`webkit ${theme}: page errors: ${errors.join(' | ')}`);
+    }
+    await context.close();
+  } catch (error) {
+    report.webkit = { available: false, reason: String(error.message || error).split('\n')[0] };
+  }
+}
+
 function printReport(report) {
   const lines = [`candidate: ${report.id} (${report.playback}, period ${report.periodMs}ms, delay ${report.delayMs}ms)`];
   for (const [theme, result] of Object.entries(report.themes)) {
     const parts = [`end vs static ${result.endVsStatic ? result.endVsStatic.length : '-'} difference(s)`];
     if (result.reducedMotion) parts.push(`reduced motion ${result.reducedMotion.animations} animation(s) / ${result.reducedMotion.differences.length} difference(s)`);
-    if (result.endVsStaticPixels) parts.push(`end vs static pixels ${result.endVsStaticPixels.pixels} (${(result.endVsStaticPixels.ratio * 100).toFixed(2)}%), max channel diff ${result.endVsStaticPixels.max}`);
+    if (result.endVsStaticPixels) parts.push(`end vs static pixels ${result.endVsStaticPixels.pixels} (${(result.endVsStaticPixels.ratio * 100).toFixed(2)}%), max channel diff ${result.endVsStaticPixels.max} (edges of animated layers rasterize differently; up to about 4% is expected, judge by computed style)`);
     lines.push(`  ${theme}: ${parts.join(', ')}`);
   }
   if (report.playback === 'cut') {
@@ -660,16 +819,29 @@ function printReport(report) {
   }
   if (report.staticBounds) {
     const b = report.staticBounds;
-    const parts = [`${b.width}x${b.height} centre (${b.centerX}, ${b.centerY})`];
+    const parts = [`${b.width}x${b.height} centre (${b.centerX}, ${b.centerY}) bottom ${Number(bottom(b).toFixed(1))}`];
     if (b.vsBase) parts.push(`vs base centre ${b.vsBase.dx >= 0 ? '+' : ''}${b.vsBase.dx}, ${b.vsBase.dy >= 0 ? '+' : ''}${b.vsBase.dy} size x${b.vsBase.sizeRatio}`);
-    if (b.vsOthers) parts.push(`size x${b.vsOthers.sizeRatioToMedian} of the median of ${b.vsOthers.games} other game(s) (their centre y ${b.vsOthers.centerYMedian})`);
+    if (b.vsOthers) parts.push(`size x${b.vsOthers.sizeRatioToMedian} of the median of ${b.vsOthers.games} other game(s) (their centre y ${b.vsOthers.centerYMedian}, bottom ${b.vsOthers.bottomMedian})`);
     lines.push(`  static bounds: ${parts.join(', ')}`);
+  }
+  if (report.ink) {
+    const ink = report.ink;
+    const parts = [`${(ink.coverage * 100).toFixed(1)}% at ${ink.listSize}px`];
+    if (ink.vsBase != null) parts.push(`x${ink.vsBase} of base`);
+    if (ink.othersMedian != null) parts.push(`x${ink.vsOthersMedian} of the other games' median ${(ink.othersMedian * 100).toFixed(1)}% (their range ${ink.othersRange.map((v) => (v * 100).toFixed(1) + '%').join('-')})`);
+    lines.push(`  ink coverage: ${parts.join(', ')}`);
   }
   if (report.minViewBoxMargin) lines.push(`  min viewBox margin ${report.minViewBoxMargin.margin} at ${report.minViewBoxMargin.atMs}ms (${report.minViewBoxMargin.element})`);
   if (report.smoothness) {
     const top = report.smoothness.shapes[0];
     lines.push(`  smoothness (${report.smoothness.stepMs}ms scan, threshold ${report.smoothness.threshold}): ${report.smoothness.movingShapes} moving shape(s)` +
       (top ? `, worst jump ${top.worstJump} at ${top.atMs}ms (${top.element})` : ''));
+  }
+  if (report.filmstrip) lines.push(`  filmstrip: ${report.filmstrip.frames} real-time frame(s) at ${report.filmstrip.size}px -> ${report.filmstrip.file}`);
+  if (report.webkit) {
+    lines.push(report.webkit.available
+      ? `  webkit: ${Object.entries(report.webkit.themes).map(([theme, r]) => `${theme} end vs static ${r.endVsStatic.length} difference(s)`).join(', ')}`
+      : `  NOTE: WebKit was not checked (${report.webkit.reason}); record that Safari rendering is unverified`);
   }
   (report.overlaps || []).forEach((entry) => lines.push(`  overlap ${entry.pair}: ${entry.atMs == null ? 'none' : `max ${entry.maxArea} viewBox units^2 at ${entry.atMs}ms`}`));
   report.notes.forEach((note) => lines.push(`  NOTE: ${note}`));
@@ -689,7 +861,15 @@ function printReport(report) {
   const candidates = manifest.candidates
     .filter((candidate) => !options.only.length || options.only.includes(candidate.id))
     .map((candidate) => ({ ...candidate, file: path.isAbsolute(candidate.file) ? candidate.file : path.join(path.dirname(manifestPath), candidate.file) }));
-  const browser = await chromium.launch();
+  const playwright = loadPlaywright();
+  const browser = await playwright.chromium.launch();
+  if (options.webkit) {
+    try {
+      options.webkitBrowser = await playwright.webkit.launch();
+    } catch (error) {
+      options.webkitReason = String(error.message || error).split('\n')[0];
+    }
+  }
   options.references = await referenceBounds(browser, manifest, manifestPath, options);
   const reports = [];
   for (const candidate of candidates) {
@@ -703,6 +883,7 @@ function printReport(report) {
     printReport(report);
   }
   await browser.close();
+  if (options.webkitBrowser) await options.webkitBrowser.close();
   fs.writeFileSync(path.join(options.out, 'observe-report.json'), JSON.stringify(reports, null, 1));
   console.log(`report: ${path.join(options.out, 'observe-report.json')}`);
   process.exit(reports.some((report) => report.failures.length) ? 1 : 0);

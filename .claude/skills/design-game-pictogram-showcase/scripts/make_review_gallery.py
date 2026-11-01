@@ -24,6 +24,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from check_animation import APP_COLOR_TOKENS
 from check_self_review import load_json as load_self_review_json
 from check_self_review import validate as validate_self_review
 
@@ -88,13 +89,13 @@ class Sizes:
     hero: tuple[int, ...]
     list: tuple[int, ...]
 
-    @property
-    def frame_height(self) -> int:
+    def frame_height(self, compare_row: bool) -> int:
         """Initial iframe height before the script fits it to the content."""
         tallest = max(
             (*self.hero, *(size + 2 * (list_padding_for(size) + LIST_SELECTED_BORDER) for size in self.list))
         )
-        return 2 * (tallest + THEME_ROW_CHROME) + 2 * (max(self.list) + THEME_ROW_CHROME)
+        compare = max(self.list) + THEME_ROW_CHROME if compare_row else 0
+        return 2 * (tallest + THEME_ROW_CHROME + compare)
 
 
 def parse_sizes(value: str) -> tuple[int, ...]:
@@ -146,7 +147,11 @@ def load_themes(path: Path) -> dict[str, dict[str, str]]:
     themes: dict[str, dict[str, str]] = {}
     for theme, selector in THEME_SELECTORS.items():
         block = css_block(css, selector) or ""
-        values: dict[str, str] = {}
+        # Every custom property of the block, keyed with its leading "--", so the hosts define the app
+        # color tokens that an SVG may reference with var().
+        values: dict[str, str] = {
+            name: value.strip() for name, value in re.findall(r"(--[\w-]+)\s*:\s*([^;]+);", block)
+        }
         for token in THEME_TOKENS:
             match = re.search(rf"--{re.escape(token)}\s*:\s*([^;]+);", block)
             if match:
@@ -237,11 +242,21 @@ def grouped_by_family(candidates: list[dict[str, Any]]) -> dict[str, list[dict[s
     return grouped
 
 
+def app_token_declarations(values: dict[str, str], tokens: tuple[str, ...] | None = None) -> str:
+    """The app's custom properties as declarations; tokens limits them to these names."""
+    return ";".join(
+        f"{name}:{value}"
+        for name, value in values.items()
+        if name.startswith("--") and (tokens is None or name[2:] in tokens)
+    )
+
+
 def theme_style(themes: dict[str, dict[str, str]]) -> str:
     rules = []
     for theme, values in themes.items():
         rules.append(
-            f".pzg-{theme}{{--pzg-fg:{values['foreground']};--pzg-muted-fg:{values['muted-foreground']};"
+            f".pzg-{theme}{{{app_token_declarations(values)};--pzg-fg:{values['foreground']};"
+            f"--pzg-muted-fg:{values['muted-foreground']};"
             f"--pzg-bg:{values['background']};--pzg-muted:{values['muted']};--pzg-ring:{values['ring']};"
             f"--pzg-border:{values['border']}}}"
         )
@@ -312,10 +327,10 @@ def preview_document(
     return f"<!doctype html><html><head>{style}</head><body>{''.join(sections)}</body></html>"
 
 
-def preview_frame(title: str, document: str, sizes: Sizes) -> str:
+def preview_frame(title: str, document: str, height: int) -> str:
     return (
         f'<iframe class="preview" title="{html.escape(title)}" sandbox="allow-same-origin" '
-        f'style="height:{sizes.frame_height}px" srcdoc="{html.escape(document, quote=True)}"></iframe>'
+        f'style="height:{height}px" srcdoc="{html.escape(document, quote=True)}"></iframe>'
     )
 
 
@@ -344,7 +359,7 @@ def self_card(
     name_html = f"{html.escape(name)} <small>{escaped_id}</small>" if name else escaped_id
     return f"""
 <article class="card" data-candidate-id="{escaped_id}">
-  {preview_frame(f"{candidate_id} preview", document, sizes)}
+  {preview_frame(f"{candidate_id} preview", document, sizes.frame_height(bool(others)))}
   <div class="controls">
     <button type="button" class="replay-one">最初から再生</button>
     <button type="button" class="toggle-motion">再生属性を外す</button>
@@ -373,7 +388,7 @@ def self_base_section(
     return f"""
 <section class="family">
   <h2>基準（白黒版）</h2>
-  <div class="grid"><article class="card base">{preview_frame("base pictogram", document, sizes)}</article></div>
+  <div class="grid"><article class="card base">{preview_frame("base pictogram", document, sizes.frame_height(False))}</article></div>
 </section>
 """
 
@@ -391,9 +406,10 @@ SELF_SCRIPT = """
     return Math.max(longest, (timing.delay || 0) + Number(timing.duration || 0) * iterations);
   }, 0);
 
+  // The body's own height: the root's scrollHeight never drops below the iframe's current height.
   const fitHeight = (card) => {
     const doc = frameOf(card).contentDocument;
-    if (doc?.body) frameOf(card).style.height = `${Math.ceil(doc.documentElement.scrollHeight)}px`;
+    if (doc?.body) frameOf(card).style.height = `${Math.ceil(doc.body.getBoundingClientRect().height)}px`;
   };
 
   const refreshScrubber = (card) => {
@@ -527,10 +543,12 @@ XML_PROLOG = re.compile(r"^\s*(?:<\?xml[^>]*\?>\s*)?(?:<!DOCTYPE[^>]*>\s*)?", re
 def hosted(svg: str, values: dict[str, str], theme: str, play: bool) -> str:
     """Wrap the SVG in an outer <svg> that plays the app host: it carries the color variables, and
     .dark and data-pictogram-motion as an ancestor of the candidate's root, like html and the span
-    in the app do."""
+    in the app do. The app color tokens are set for the theme on the wrapper, as :root / .dark do in
+    the app, because an SVG image document does not see the page's variables."""
     if not ROOT_SVG.search(svg):
         raise ValueError("SVG has no <svg> root element")
     style = (
+        f"{app_token_declarations(values, APP_COLOR_TOKENS)};"
         f"--game-pictogram-strong:{values['foreground']};"
         f"--game-pictogram-soft:{values['muted-foreground']}"
     )
