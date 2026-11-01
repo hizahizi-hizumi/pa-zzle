@@ -1,3 +1,4 @@
+import type { DifficultyLevel } from "@/games/difficulty";
 import type { ProblemFeatureValue } from "@/games/problem-feature";
 import type { ProblemId } from "@/games/problem-id";
 import {
@@ -138,6 +139,31 @@ export function collectZukanLevelFeatures(
   };
 }
 
+/**
+ * レベルの特徴を、レベルごとに一度だけ求めて持っておく関数を作る。
+ * 問題集は図鑑を開いている間に変わらないので、絞り込みを閉じて開き直しても、離脱の保存で図鑑が導き直されても求め直さない。
+ */
+export function createZukanLevelFeaturesCache(
+  axes: readonly ZukanFeatureAxisSource[],
+  findValues: (
+    problem: ZukanProblem,
+  ) => ReadonlyMap<string, ProblemFeatureValue> | null,
+): (
+  difficulty: DifficultyLevel,
+  problems: readonly ZukanProblem[],
+) => ZukanLevelFeatures {
+  const cache = new Map<DifficultyLevel, ZukanLevelFeatures>();
+  return function findLevelFeatures(difficulty, problems) {
+    const cached = cache.get(difficulty);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const features = collectZukanLevelFeatures(problems, axes, findValues);
+    cache.set(difficulty, features);
+    return features;
+  };
+}
+
 function isValueInOption(
   value: ProblemFeatureValue,
   option: ZukanFeatureOption,
@@ -166,6 +192,7 @@ export type ZukanPerformanceCondition =
   | "optimal-moves"
   | "over-optimal-moves";
 
+/** 成績の軸ごとの条件。特徴の軸と同じく、軸の中はどれかに、軸をまたいではすべてに当たる問題が当たる。 */
 export const zukanPerformanceConditionsByAxis = {
   mistakes: ["no-mistakes", "with-mistakes"],
   moves: ["optimal-moves", "over-optimal-moves"],
@@ -173,6 +200,20 @@ export const zukanPerformanceConditionsByAxis = {
   ZukanPerformanceAxis,
   readonly ZukanPerformanceCondition[]
 >;
+
+const zukanPerformanceAxisOrder = Object.keys(
+  zukanPerformanceConditionsByAxis,
+) as ZukanPerformanceAxis[];
+
+/** 値が成績の軸 `axis` の条件か。 */
+export function isZukanPerformanceConditionOfAxis(
+  value: string,
+  axis: ZukanPerformanceAxis,
+): value is ZukanPerformanceCondition {
+  const axisConditions: readonly string[] =
+    zukanPerformanceConditionsByAxis[axis];
+  return axisConditions.includes(value);
+}
 
 /** 図鑑の解いた問題に、ミスや手数を数えた成績が1つでもあるときだけ、その成績の軸を返す。 */
 export function listZukanPerformanceAxes(
@@ -251,8 +292,21 @@ export function hasZukanFeatureConditions({
   return Object.values(features).some((keys) => keys.length > 0);
 }
 
+/** 成績の条件を軸ごとに分ける。条件を選んでいない軸は持たない。 */
+function groupPerformanceConditions(
+  performances: readonly ZukanPerformanceCondition[],
+): ZukanPerformanceCondition[][] {
+  return zukanPerformanceAxisOrder
+    .map((axis) =>
+      performances.filter((condition) =>
+        isZukanPerformanceConditionOfAxis(condition, axis),
+      ),
+    )
+    .filter((axisConditions) => axisConditions.length > 0);
+}
+
 /**
- * 条件に当たるかを判定する関数を作る。状態・成績はそれぞれの中のどれかに、特徴は軸ごとに選んだ選択肢のどれかに当たり、
+ * 条件に当たるかを判定する関数を作る。状態は選んだ中のどれかに、特徴と成績は軸ごとに選んだ選択肢のどれかに当たり、
  * それらをすべて満たす問題が当たる。成績の条件は解いた問題だけが当たる。
  * 特徴の条件は、レベルの特徴 `levelFeatures` の選択肢と値で判定し、求めていなければどの問題も当たらない。
  */
@@ -261,6 +315,9 @@ export function createZukanFilterMatcher(
   levelFeatures: ZukanLevelFeatures | null,
 ): (problem: ZukanProblem) => boolean {
   const statuses = new Set(conditions.statuses);
+  const performanceConditions = groupPerformanceConditions(
+    conditions.performances,
+  );
   const featureConditions = Object.entries(conditions.features)
     .filter(([, keys]) => keys.length > 0)
     .map(([axisId, keys]) => {
@@ -280,9 +337,10 @@ export function createZukanFilterMatcher(
       return false;
     }
     if (
-      conditions.performances.length > 0 &&
-      !conditions.performances.some((condition) =>
-        meetsPerformance(problem, condition),
+      !performanceConditions.every((axisConditions) =>
+        axisConditions.some((condition) =>
+          meetsPerformance(problem, condition),
+        ),
       )
     ) {
       return false;
@@ -340,18 +398,34 @@ function countFeatureOptions(
 
 function countPerformanceConditions(
   problems: readonly ZukanProblem[],
+  conditions: ZukanFilterConditions,
+  levelFeatures: ZukanLevelFeatures | null,
 ): Record<ZukanPerformanceCondition, number> {
-  const conditions = Object.values(zukanPerformanceConditionsByAxis).flat();
   const counts: Record<ZukanPerformanceCondition, number> = {
     "no-mistakes": 0,
     "with-mistakes": 0,
     "optimal-moves": 0,
     "over-optimal-moves": 0,
   };
-  for (const problem of problems) {
-    for (const condition of conditions) {
-      if (meetsPerformance(problem, condition)) {
-        counts[condition] += 1;
+  for (const axis of zukanPerformanceAxisOrder) {
+    const matchesOthers = createZukanFilterMatcher(
+      {
+        ...conditions,
+        performances: conditions.performances.filter(
+          (condition) => !isZukanPerformanceConditionOfAxis(condition, axis),
+        ),
+      },
+      levelFeatures,
+    );
+    const axisConditions = zukanPerformanceConditionsByAxis[axis];
+    for (const problem of problems) {
+      if (!matchesOthers(problem)) {
+        continue;
+      }
+      for (const condition of axisConditions) {
+        if (meetsPerformance(problem, condition)) {
+          counts[condition] += 1;
+        }
       }
     }
   }
@@ -359,8 +433,8 @@ function countPerformanceConditions(
 }
 
 /**
- * 選択肢ごとに、その選択肢とほかの種類の条件に当たる問題を数える。同じ種類（特徴は同じ軸）で選んでいるほかの選択肢は数に関わらない。
- * 種類の中はどれかに当たればよいので、選択肢を選ぶと、少なくともこの数の問題が当たる。
+ * 選択肢ごとに、その選択肢とほかの種類の条件に当たる問題を数える。同じ種類（特徴と成績は同じ軸）で選んでいるほかの選択肢は数に関わらない。
+ * 種類（特徴と成績は軸）の中はどれかに当たればよいので、選択肢を選ぶと、少なくともこの数の問題が当たる。
  * 特徴の選択肢は、レベルの特徴 `levelFeatures` を求めているときだけ数える。
  */
 export function countZukanFilterOptions(
@@ -382,12 +456,9 @@ export function countZukanFilterOptions(
         ? {}
         : countFeatureOptions(problems, conditions, levelFeatures),
     performances: countPerformanceConditions(
-      problems.filter(
-        createZukanFilterMatcher(
-          { ...conditions, performances: [] },
-          levelFeatures,
-        ),
-      ),
+      problems,
+      conditions,
+      levelFeatures,
     ),
   };
 }

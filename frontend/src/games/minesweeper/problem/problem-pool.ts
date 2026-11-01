@@ -116,7 +116,7 @@ export function findMinesweeperPoolProblemFeatures(
   return { rows, columns, mineCount };
 }
 
-/** 図鑑の絞り込みで問題を分ける特徴の軸。地雷の数は5個ごとにまとめる。 */
+/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
 export const minesweeperProblemFeatureAxes = [
   {
     id: "board-size",
@@ -126,7 +126,6 @@ export const minesweeperProblemFeatureAxes = [
   },
   {
     id: "mine-count",
-    countRangeWidth: 5,
     getValue({ mineCount }) {
       return createCountFeatureValue(mineCount);
     },

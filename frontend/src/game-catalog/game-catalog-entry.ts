@@ -61,7 +61,7 @@ export type RecordResultContext = {
 /** 図鑑の絞り込みで問題を分ける、問題の特徴の1つの軸と、その名前と値の書き方。 */
 export type ProblemFeatureFilterAxis = {
   id: string;
-  /** 1つのレベルの問題集にある値の種類が多いとき、数をまとめる幅。数の軸だけが持つ。 */
+  /** 1つのレベルの問題集にある値の種類が多いとき、数をまとめる幅。数の軸だけが、`display` の値の書き方から持つ。 */
   countRangeWidth?: number;
   display: ProblemFeatureAxisDisplay;
 };
@@ -157,11 +157,17 @@ export function createProblemFeatureFilter<Features, Id extends string>(
   displays: Readonly<Record<Id, ProblemFeatureAxisDisplay>>,
 ): ProblemFeatureFilter {
   return {
-    axes: axes.map(({ id, countRangeWidth }) => ({
-      id,
-      countRangeWidth,
-      display: displays[id],
-    })),
+    axes: axes.map(({ id }) => {
+      const display = displays[id];
+      return {
+        id,
+        countRangeWidth:
+          display.valueFormat.kind === "count"
+            ? display.valueFormat.rangeWidth
+            : undefined,
+        display,
+      };
+    }),
     findPoolProblemValues(difficulty, problemId) {
       const features = findPoolProblemFeatures(difficulty, problemId);
       return features === null

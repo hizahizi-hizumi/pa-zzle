@@ -21,11 +21,12 @@ export type ProblemFeatureCountUnit =
 /**
  * 問題の特徴の1つの軸の名前と、値の書き方。
  * 数は単位を付けて書き、盤面は行と列の数で書く。正方形の盤面しか無い軸は辺の数で書く。
+ * 図鑑の絞り込みで数の値を選択肢にするとき、1つのレベルの問題集にある値の種類が多ければ `rangeWidth` の幅の範囲にまとめる。まとめ方はゲームが決める。
  */
 export type ProblemFeatureAxisDisplay = {
   label: string;
   valueFormat:
-    | { kind: "count"; unit: ProblemFeatureCountUnit }
+    | { kind: "count"; unit: ProblemFeatureCountUnit; rangeWidth?: number }
     | { kind: "board-size" }
     | { kind: "square-board-size" };
 };

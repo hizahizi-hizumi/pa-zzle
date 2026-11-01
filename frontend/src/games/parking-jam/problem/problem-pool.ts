@@ -168,7 +168,7 @@ export function findParkingJamPoolProblemFeatures(
   return { rows: height, columns: width, vehicleCount, fixedAreaCount };
 }
 
-/** 図鑑の絞り込みで問題を分ける特徴の軸。車の台数は3台ごとにまとめる。 */
+/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
 export const parkingJamProblemFeatureAxes = [
   {
     id: "parking-lot-size",
@@ -178,14 +178,12 @@ export const parkingJamProblemFeatureAxes = [
   },
   {
     id: "vehicle-count",
-    countRangeWidth: 3,
     getValue({ vehicleCount }) {
       return createCountFeatureValue(vehicleCount);
     },
   },
   {
     id: "fixed-area-count",
-    countRangeWidth: 2,
     getValue({ fixedAreaCount }) {
       return createCountFeatureValue(fixedAreaCount);
     },

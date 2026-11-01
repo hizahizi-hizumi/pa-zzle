@@ -1,4 +1,5 @@
 import { ListFilterIcon, XIcon } from "lucide-react";
+import { VisuallyHidden } from "radix-ui";
 import { useId, useSyncExternalStore } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +20,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ZukanFilterPanel } from "@/zukan/ui/GameZukanScreen/ZukanFilter/ZukanFilterPanel";
+import { ZukanHeaderButton } from "@/zukan/ui/GameZukanScreen/ZukanHeaderButton";
 import type { ZukanFilterFeatureAxis } from "@/zukan/ui/GameZukanScreen/zukan-filter-appearance";
 import {
   countZukanFilterConditions,
@@ -78,21 +80,25 @@ export function ZukanFilter({
   const isFiltering = conditionCount > 0;
 
   const trigger = (
-    <Button
-      variant="ghost"
-      size="sm"
+    <ZukanHeaderButton
       aria-label={
         isFiltering ? `絞り込み、条件${conditionCount}つ` : "絞り込み"
       }
-    >
-      <ListFilterIcon aria-hidden="true" />
-      絞り込み
-      {isFiltering && (
-        <Badge variant="secondary">
-          <span className="tabular-nums">{conditionCount}</span>
-        </Badge>
-      )}
-    </Button>
+      icon={<ListFilterIcon aria-hidden="true" />}
+      label="絞り込み"
+      mark={
+        // 条件を付け外ししても見出しの並びの要素を足し引きしないよう、条件の数の印は常に置き、条件が無い間は見えなくする。
+        <span
+          aria-hidden="true"
+          data-condition-count-mark=""
+          className={isFiltering ? "inline-flex" : "invisible inline-flex"}
+        >
+          <Badge>
+            <span className="tabular-nums">{conditionCount}</span>
+          </Badge>
+        </span>
+      }
+    />
   );
   const panel = (
     <ZukanFilterPanel
@@ -117,11 +123,16 @@ export function ZukanFilter({
           </>
         )}
       </p>
+      {/* 押した解除が押せなくなってもフォーカスを見失わないよう、条件が無い間も押せないことを示すだけにする。 */}
       <Button
         variant="outline"
         size="sm"
-        disabled={!isFiltering}
-        onClick={() => onConditionsChange(noZukanFilterConditions)}
+        aria-disabled={!isFiltering}
+        onClick={() => {
+          if (isFiltering) {
+            onConditionsChange(noZukanFilterConditions);
+          }
+        }}
       >
         解除
       </Button>
@@ -132,16 +143,14 @@ export function ZukanFilter({
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetTrigger asChild>{trigger}</SheetTrigger>
-        <SheetContent
-          side="bottom"
-          showCloseButton={false}
-          className="max-h-[85dvh] gap-0"
-        >
-          <SheetHeader className="flex-row items-center justify-between pb-2">
+        <SheetContent side="bottom" layout="sections" showCloseButton={false}>
+          <SheetHeader layout="inline">
             <SheetTitle>絞り込み</SheetTitle>
-            <SheetDescription className="sr-only">
-              条件に当たる問題を台紙の前に集めます。
-            </SheetDescription>
+            <VisuallyHidden.Root asChild>
+              <SheetDescription>
+                条件に当たる問題を台紙の前に集めます。
+              </SheetDescription>
+            </VisuallyHidden.Root>
             <SheetClose asChild>
               <Button variant="ghost" size="icon" aria-label="閉じる">
                 <XIcon aria-hidden="true" />
@@ -149,9 +158,7 @@ export function ZukanFilter({
             </SheetClose>
           </SheetHeader>
           <div className="min-h-0 overflow-y-auto px-4 pb-2">{panel}</div>
-          <SheetFooter className="border-t pb-[max(--spacing(4),env(safe-area-inset-bottom))]">
-            {summary}
-          </SheetFooter>
+          <SheetFooter variant="bar">{summary}</SheetFooter>
         </SheetContent>
       </Sheet>
     );
@@ -160,16 +167,14 @@ export function ZukanFilter({
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent
-        align="end"
-        aria-labelledby={titleId}
-        className="grid w-96 gap-3"
-      >
-        <h2 id={titleId} className="font-semibold">
-          絞り込み
-        </h2>
-        {panel}
-        <div className="border-t pt-3">{summary}</div>
+      <PopoverContent align="end" size="wide" aria-labelledby={titleId}>
+        <div className="grid gap-3">
+          <h2 id={titleId} className="font-semibold">
+            絞り込み
+          </h2>
+          {panel}
+          <div className="border-t pt-3">{summary}</div>
+        </div>
       </PopoverContent>
     </Popover>
   );

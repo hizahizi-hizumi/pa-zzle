@@ -281,7 +281,7 @@ export function findReflectionPoolProblemFeatures(
   };
 }
 
-/** 図鑑の絞り込みで問題を分ける特徴の軸。ピースの数は4個ごとにまとめる。 */
+/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
 export const reflectionProblemFeatureAxes = [
   {
     id: "board-size",
@@ -291,7 +291,6 @@ export const reflectionProblemFeatureAxes = [
   },
   {
     id: "piece-count",
-    countRangeWidth: 4,
     getValue({ pieceCount }) {
       return createCountFeatureValue(pieceCount);
     },

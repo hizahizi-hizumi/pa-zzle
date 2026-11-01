@@ -141,8 +141,8 @@ type StampRunCallbacks = {
   onProgress: (progress: ZukanStampProgress) => void;
   /** 最後のマスの動きが終わったか、飛ばしたとき。 */
   onEnd: () => void;
-  /** タップで飛ばしたとき。`onEnd` より先に呼ぶ。 */
-  onSkippedByTap: () => void;
+  /** タップで飛ばしたとき。`target` はタップした要素。`onEnd` より先に呼ぶ。 */
+  onSkippedByTap: (target: EventTarget | null) => void;
 };
 
 /**
@@ -300,7 +300,7 @@ function runZukanStamps(
       start &&
       Math.hypot(event.clientX - start.x, event.clientY - start.y) < TAP_SLOP_PX
     ) {
-      onSkippedByTap();
+      onSkippedByTap(event.target);
       end();
     }
   }
@@ -361,6 +361,11 @@ type ZukanChangeRevealOptions = {
   changeIndices: readonly number[];
   /** 開いている台紙のスクロール領域。マスは `data-index` に台紙の中の位置を持つ。 */
   scrollerRef: RefObject<HTMLElement | null>;
+  /**
+   * 演出を飛ばしたタップのクリックも届ける要素か。見方・絞り込みのように、押せば最後の姿まで飛ばしたうえで、そのまま開いてよい操作。
+   * ほかの要素では、飛ばすためのタップでマスを選んだりリンクを開いたりしないよう、続くクリックを届けない。
+   */
+  isClickThroughTarget: (target: EventTarget | null) => boolean;
   /**
    * レベル `difficulty` の変化を見せ終えたとき。押していく演出では、最後まで押したときか飛ばしたとき。
    * 動きを減らす設定では、印を載せた台紙を見せたとき。途中でやめたときは呼ばない。
@@ -424,9 +429,13 @@ export function useZukanChangeReveal(
         setProgress({ ...next, difficulty: revealingDifficulty });
       },
       onEnd: notifyShown,
-      onSkippedByTap() {
+      onSkippedByTap(target) {
         stopSuppressingClick.current();
-        stopSuppressingClick.current = suppressNextClick();
+        stopSuppressingClick.current = latest.current.isClickThroughTarget(
+          target,
+        )
+          ? cancelNothing
+          : suppressNextClick();
       },
     });
     return function stopStamps() {

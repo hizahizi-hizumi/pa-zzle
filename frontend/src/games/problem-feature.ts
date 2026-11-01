@@ -6,14 +6,10 @@ export type ProblemFeatureValue =
   | { kind: "count"; count: number }
   | { kind: "board-size"; rows: number; columns: number };
 
-/**
- * 問題の特徴を分ける1つの軸。ゲームが自分の特徴の型 `Features` から値を取り出す。
- * 数の軸は、1つのレベルの問題集にある値の種類が多いとき、`countRangeWidth` の幅の範囲にまとめる。まとめ方はゲームが決める。
- */
+/** 問題の特徴を分ける1つの軸。ゲームが自分の特徴の型 `Features` から値を取り出す。 */
 export type ProblemFeatureAxis<Features, Id extends string = string> = {
   id: Id;
   getValue(features: Features): ProblemFeatureValue;
-  countRangeWidth?: number;
 };
 
 export function createCountFeatureValue(count: number): ProblemFeatureValue {

@@ -199,11 +199,10 @@ export function findNanpurePoolProblemFeatures(
   return { clueCount: clueMask.filter(Boolean).length };
 }
 
-/** 図鑑の絞り込みで問題を分ける特徴の軸。初期数字の数は3個ごとにまとめる。 */
+/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
 export const nanpureProblemFeatureAxes = [
   {
     id: "clue-count",
-    countRangeWidth: 3,
     getValue({ clueCount }) {
       return createCountFeatureValue(clueCount);
     },

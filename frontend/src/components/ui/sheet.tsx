@@ -47,10 +47,13 @@ function SheetContent({
   className,
   children,
   side = "right",
+  layout = "default",
   showCloseButton = true,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: "top" | "right" | "bottom" | "left"
+  // sections: 見出し・本文・足元を間を空けずに積み、本文だけをスクロールさせる。上下から出すときは画面の高さの85%までにする。
+  layout?: "default" | "sections"
   showCloseButton?: boolean
 }) {
   return (
@@ -68,6 +71,10 @@ function SheetContent({
             "inset-x-0 top-0 h-auto border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
           side === "bottom" &&
             "inset-x-0 bottom-0 h-auto border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+          layout === "sections" && "gap-0",
+          layout === "sections" &&
+            (side === "top" || side === "bottom") &&
+            "max-h-[85dvh]",
           className
         )}
         {...props}
@@ -84,21 +91,44 @@ function SheetContent({
   )
 }
 
-function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
+function SheetHeader({
+  className,
+  layout = "default",
+  ...props
+}: React.ComponentProps<"div"> & {
+  // inline: 題名と操作（閉じるボタンなど）を1行に並べ、操作を右端に置く。
+  layout?: "default" | "inline"
+}) {
   return (
     <div
       data-slot="sheet-header"
-      className={cn("flex flex-col gap-1.5 p-4", className)}
+      className={cn(
+        "flex flex-col gap-1.5 p-4",
+        layout === "inline" && "flex-row items-center justify-between pb-2",
+        className
+      )}
       {...props}
     />
   )
 }
 
-function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
+function SheetFooter({
+  className,
+  variant = "default",
+  ...props
+}: React.ComponentProps<"div"> & {
+  // bar: 本文と線で区切った帯にし、画面の下端の安全域を避ける。
+  variant?: "default" | "bar"
+}) {
   return (
     <div
       data-slot="sheet-footer"
-      className={cn("mt-auto flex flex-col gap-2 p-4", className)}
+      className={cn(
+        "mt-auto flex flex-col gap-2 p-4",
+        variant === "bar" &&
+          "border-t pb-[max(--spacing(4),env(safe-area-inset-bottom))]",
+        className
+      )}
       {...props}
     />
   )

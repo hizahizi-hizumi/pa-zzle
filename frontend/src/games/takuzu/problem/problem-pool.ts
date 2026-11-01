@@ -247,11 +247,10 @@ export function findTakuzuPoolProblemFeatures(
   return { givenCount: givenMask.filter(Boolean).length };
 }
 
-/** 図鑑の絞り込みで問題を分ける特徴の軸。初期配置のマスの数は3マスごとにまとめる。 */
+/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
 export const takuzuProblemFeatureAxes = [
   {
     id: "given-count",
-    countRangeWidth: 3,
     getValue({ givenCount }) {
       return createCountFeatureValue(givenCount);
     },

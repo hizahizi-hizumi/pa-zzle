@@ -114,14 +114,12 @@ export function findWaterSortPoolProblemFeatures(
 export const waterSortProblemFeatureAxes = [
   {
     id: "color-count",
-    countRangeWidth: 3,
     getValue({ colorCount }) {
       return createCountFeatureValue(colorCount);
     },
   },
   {
     id: "empty-bottle-count",
-    countRangeWidth: 2,
     getValue({ emptyBottleCount }) {
       return createCountFeatureValue(emptyBottleCount);
     },

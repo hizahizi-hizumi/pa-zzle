@@ -10,6 +10,7 @@ import {
   countZukanFilterConditions,
   countZukanFilterOptions,
   createZukanFilterMatcher,
+  createZukanLevelFeaturesCache,
   getZukanFeatureOptionKey,
   hasZukanFeatureConditions,
   listZukanPerformanceAxes,
@@ -167,6 +168,51 @@ describe("collectZukanLevelFeatures", () => {
   });
 });
 
+describe("collectZukanLevelFeatures で特徴を求められない問題がある場合", () => {
+  const problems = [1, 2, 3].map((number) => createSolvedProblem(number));
+
+  test("求められない問題の値を持たず、求められた問題の値だけから選択肢を作ること", () => {
+    const features = collectZukanLevelFeatures(
+      problems,
+      [{ id: "colors" }],
+      ({ number }) =>
+        number === 2 ? null : new Map([["colors", count(number + 3)]]),
+    );
+
+    expect({
+      problemIds: [...features.valuesByProblem.keys()],
+      options: features.axes[0]?.options,
+    }).toEqual({
+      problemIds: ["p-1", "p-3"],
+      options: [
+        { kind: "count", min: 4, max: 4 },
+        { kind: "count", min: 6, max: 6 },
+      ],
+    });
+  });
+});
+
+describe("createZukanLevelFeaturesCache", () => {
+  const problems = [1, 2].map((number) => createSolvedProblem(number));
+
+  test("レベルごとに一度だけ特徴を求め、同じレベルでは求めた結果を返すこと", () => {
+    const findValues = vi.fn(
+      ({ number }: ZukanProblem) => new Map([["colors", count(number)]]),
+    );
+    const findLevelFeatures = createZukanLevelFeaturesCache(
+      [{ id: "colors" }],
+      findValues,
+    );
+
+    const first = findLevelFeatures("3", problems);
+    const second = findLevelFeatures("3", [...problems]);
+    findLevelFeatures("4", problems);
+
+    expect(second).toBe(first);
+    expect(findValues).toHaveBeenCalledTimes(4);
+  });
+});
+
 describe("createZukanFilterMatcher", () => {
   const perfect = createSolvedProblem(1, {
     bestScore: 100,
@@ -272,6 +318,22 @@ describe("createZukanFilterMatcher", () => {
       [2, 3],
     ],
     [
+      "同じ軸の成績はどれかに当たれば当たる",
+      {
+        ...noZukanFilterConditions,
+        performances: ["optimal-moves", "over-optimal-moves"],
+      },
+      [1, 2, 3],
+    ],
+    [
+      "別の軸の成績はすべてに当たる問題だけが当たる",
+      {
+        ...noZukanFilterConditions,
+        performances: ["no-mistakes", "over-optimal-moves"],
+      },
+      [3],
+    ],
+    [
       "成績の条件をかけると、挑戦中と未挑戦は当たらない",
       {
         ...noZukanFilterConditions,
@@ -297,6 +359,42 @@ describe("createZukanFilterMatcher", () => {
     const matchedNumbers = listNumbers(problems.filter(matches));
 
     expect(matchedNumbers).toEqual(expected);
+  });
+
+  describe("特徴を求められない問題がある場合", () => {
+    const featuresWithUnknown = collectZukanLevelFeatures(
+      problems,
+      [{ id: "colors" }],
+      ({ problemId }) =>
+        problemId === "p-4"
+          ? null
+          : new Map([["colors", count(colorValues[problemId] ?? 0)]]),
+    );
+
+    test("特徴を求められない問題は、特徴の条件に当たらないこと", () => {
+      const matches = createZukanFilterMatcher(
+        {
+          ...noZukanFilterConditions,
+          features: { colors: [fourColors, sixColors] },
+        },
+        featuresWithUnknown,
+      );
+
+      const matchedNumbers = listNumbers(problems.filter(matches));
+
+      expect(matchedNumbers).toEqual([1, 3, 5]);
+    });
+
+    test("特徴の条件が無ければ、特徴を求められない問題もほかの条件で当たること", () => {
+      const matches = createZukanFilterMatcher(
+        { ...noZukanFilterConditions, statuses: ["attempted"] },
+        featuresWithUnknown,
+      );
+
+      const matchedNumbers = listNumbers(problems.filter(matches));
+
+      expect(matchedNumbers).toEqual([4]);
+    });
   });
 
   describe("特徴を求めていない場合", () => {
@@ -416,11 +514,29 @@ describe("countZukanFilterOptions", () => {
         empty: { [key(1)]: 0, [key(2)]: 0 },
       },
       performances: {
-        "no-mistakes": 1,
+        "no-mistakes": 0,
         "with-mistakes": 0,
         "optimal-moves": 1,
         "over-optimal-moves": 0,
       },
+    });
+  });
+
+  test("成績の選択肢は、同じ軸で選んでいる選択肢に関わらず、ほかの軸の成績の条件をかけて数えること", () => {
+    const counts = countZukanFilterOptions(
+      problems,
+      {
+        ...noZukanFilterConditions,
+        performances: ["no-mistakes", "optimal-moves"],
+      },
+      levelFeatures,
+    );
+
+    expect(counts.performances).toEqual({
+      "no-mistakes": 1,
+      "with-mistakes": 0,
+      "optimal-moves": 1,
+      "over-optimal-moves": 1,
     });
   });
 

@@ -14,13 +14,13 @@ import type { ZukanProblemChange } from "@/zukan/zukan-last-viewed";
 
 type ZukanProblemSquareProps = {
   problem: ZukanProblem;
-  /** 台紙の中の位置。押した・矢印で動いたマスと、変化を押すマスを台紙が見分けるのに使う。 */
+  /** 台紙に番号の順で置いた中の位置。押した・矢印で動いたマスと、変化を押すマスを台紙が見分けるのに使う。 */
   index: number;
   numberDigitCount: number;
   /** 台紙へ Tab で入ったときにフォーカスを受けるマスか。 */
   isTabStop: boolean;
   isSelected: boolean;
-  /** 絞り込みの条件に当たらなかったか。 */
+  /** 絞り込みの条件に当たらなかったか。台紙は、当たらなかったマスを `data-filtered-out` で見分けて後ろへ並べる。 */
   isFilteredOut: boolean;
   /** この台紙を開いて見せる、前回からの変化。無ければ `null`。 */
   change: ZukanProblemChange | null;
@@ -72,6 +72,7 @@ function ZukanProblemSquareContent({
       type="button"
       data-index={index}
       data-change-stage={changeStage ?? undefined}
+      data-filtered-out={isFilteredOut ? "" : undefined}
       tabIndex={isTabStop ? 0 : -1}
       aria-label={
         isFilteredOut ? `${description} 絞り込みの条件外` : description
