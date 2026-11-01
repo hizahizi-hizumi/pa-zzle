@@ -153,16 +153,22 @@ describe("createPreviewChain", () => {
 });
 
 describe("NonogramDifficultyPreview", () => {
-  test.each(difficultyIds)(
-    "レベル %s の図は読み上げから外し、ヒントの数字を描かないこと",
-    (difficulty) => {
+  describe.each(difficultyIds)("レベル %s の図", (difficulty) => {
+    let preview: Element | null;
+
+    beforeEach(() => {
       const { container } = render(
         <NonogramDifficultyPreview difficulty={difficulty} />,
       );
-      const preview = container.firstElementChild;
+      preview = container.firstElementChild;
+    });
 
-      expect(preview?.getAttribute("aria-hidden")).toBe("true");
-      expect(preview?.textContent).toBe("");
-    },
-  );
+    test("読み上げから外し、ヒントの数字を描かないこと", () => {
+      const ariaHidden = preview?.getAttribute("aria-hidden");
+      const text = preview?.textContent;
+
+      expect(ariaHidden).toBe("true");
+      expect(text).toBe("");
+    });
+  });
 });
