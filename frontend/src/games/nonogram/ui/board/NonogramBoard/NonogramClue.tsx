@@ -1,5 +1,6 @@
 import type { NonogramLine } from "@/games/nonogram/puzzle/board";
 import type { NonogramClue as NonogramClueValue } from "@/games/nonogram/puzzle/clue";
+import { listNonogramClueNumbers } from "@/games/nonogram/ui/clue-numbers";
 import { nonogramToneClassNames } from "@/games/nonogram/ui/nonogram-tone";
 import { cn } from "@/lib/utils";
 
@@ -27,18 +28,13 @@ const numberClassNames = {
     "h-[calc(var(--nonogram-cell)*0.6)] leading-[calc(var(--nonogram-cell)*0.6)]",
 } as const;
 
-/** 黒の無い行・列のヒントは `0` と示す。 */
-function listClueNumbers(clue: NonogramClueValue): readonly number[] {
-  return clue.length === 0 ? [0] : clue;
-}
-
 export function NonogramClue({
   line,
   clue,
   matched,
   active,
 }: NonogramClueProps) {
-  const numbers = listClueNumbers(clue);
+  const numbers = listNonogramClueNumbers(clue);
 
   return (
     <div

@@ -1,6 +1,7 @@
 import { parseNonogramBoard } from "@/games/nonogram/puzzle/board";
 import type { NonogramClue } from "@/games/nonogram/puzzle/clue";
 import { NonogramCellFace } from "@/games/nonogram/ui/board/NonogramCellFace";
+import { listNonogramClueNumbers } from "@/games/nonogram/ui/clue-numbers";
 import { nonogramToneClassNames } from "@/games/nonogram/ui/nonogram-tone";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +38,7 @@ export function HowToPlayFigure({
                   : nonogramToneClassNames.clue,
               )}
             >
-              {(clue.length === 0 ? [0] : clue).map((length, blockIndex) => (
+              {listNonogramClueNumbers(clue).map((length, blockIndex) => (
                 // biome-ignore lint/suspicious/noArrayIndexKey: ヒントの数字の並びで決まる
                 <span key={blockIndex}>{length}</span>
               ))}
