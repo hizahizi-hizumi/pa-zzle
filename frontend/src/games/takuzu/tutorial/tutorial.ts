@@ -629,6 +629,11 @@ export const takuzuTutorial: Tutorial<
   TakuzuTutorialBoardState,
   TakuzuTutorialAction
 > = {
+  intro: {
+    purpose: "ルールに合うように、四角と丸ですべてのマスを埋めるパズルです",
+    goalCaption: "この形がゴールです",
+    startCaption: "最初は、いくつかのマスだけが埋まっています",
+  },
   rules: [
     { id: "run", label: "3つ続かない" },
     { id: "count", label: "同じ数" },
@@ -640,8 +645,14 @@ export const takuzuTutorial: Tutorial<
     detail: "迷ったら、少し待つと印が出ます",
   },
   completion: {
-    headline: "完成です",
-    detail: "本番は 8×8 で、ルールは同じです",
+    selection: {
+      headline: "完成です",
+      detail: "本番は 8×8 で、ルールは同じです",
+    },
+    play: {
+      headline: "完成です",
+      detail: "プレイ中の盤面も、同じルールで埋められます",
+    },
   },
   start: startTakuzuTutorial,
   goal: getTakuzuTutorialGoal,

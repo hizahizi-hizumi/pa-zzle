@@ -2,16 +2,17 @@ import type { ReactNode } from "react";
 
 import {
   type TutorialBoardIntro,
-  type TutorialFinishAction,
+  type TutorialFinish,
   type TutorialRuleChip,
   TutorialScreen,
 } from "@/components/TutorialOverlay/TutorialScreen";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import type { TutorialMessage } from "@/games/tutorial";
+import type { TutorialIntro, TutorialMessage } from "@/games/tutorial";
 
 export type {
   TutorialBoardIntro,
-  TutorialFinishAction,
+  TutorialFinish,
+  TutorialIntroScene,
   TutorialRuleChip,
 } from "@/components/TutorialOverlay/TutorialScreen";
 
@@ -21,12 +22,14 @@ type TutorialOverlayProps = {
   title: string;
   /** パズル選択と同じピクトグラム。導入で名前と一緒に見せ、その後も上部で名前に添える。 */
   pictogramSvg: string;
+  /** 操作より先に見せる、何をするパズルかの一文と、ゴール・始まりの盤面に添える一言。 */
+  intro: TutorialIntro;
   rules: readonly TutorialRuleChip[];
   message: TutorialMessage;
   /** 導入を見せている間。開いたときと、もう一度始めたときは導入から始まる。 */
   introducing: boolean;
   completed: boolean;
-  finishAction: TutorialFinishAction;
+  finish: TutorialFinish;
   /** ゲーム固有の盤面。盤面の大きさは盤面の側が、この領域の大きさから決める。導入の盤面の段も盤面が受け持つ。 */
   renderBoard: (intro: TutorialBoardIntro) => ReactNode;
   /** 導入を終えたか、飛ばした。 */
@@ -37,17 +40,18 @@ type TutorialOverlayProps = {
 
 /**
  * 1つの盤面を埋めながらルールを1つずつ身につけていく全画面の枠。
- * 開くたびに中の画面を作り直し、パズルの名前と盤面の導入から始める。
+ * 開くたびに中の画面を作り直し、パズルの名前、何をするパズルか、ゴールと始まりの盤面を見せる導入から始める。
  */
 export function TutorialOverlay({
   open,
   title,
   pictogramSvg,
+  intro,
   rules,
   message,
   introducing,
   completed,
-  finishAction,
+  finish,
   renderBoard,
   onIntroEnd,
   onRestart,
@@ -68,11 +72,12 @@ export function TutorialOverlay({
         <TutorialScreen
           title={title}
           pictogramSvg={pictogramSvg}
+          intro={intro}
           rules={rules}
           message={message}
           introducing={introducing}
           completed={completed}
-          finishAction={finishAction}
+          finish={finish}
           renderBoard={renderBoard}
           onIntroEnd={onIntroEnd}
           onRestart={onRestart}

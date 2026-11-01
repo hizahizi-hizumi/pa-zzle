@@ -46,8 +46,16 @@ const fakeTutorial: Tutorial<
     { id: "second", label: "2つ目" },
   ],
   steps: [operationStep, firstRuleStep, secondRuleStep],
+  intro: {
+    purpose: "何をするか",
+    goalCaption: "ゴール",
+    startCaption: "始まり",
+  },
   freePlay: createMessage("残り"),
-  completion: createMessage("完了"),
+  completion: {
+    selection: createMessage("本番へ"),
+    play: createMessage("プレイへ"),
+  },
   start() {
     return 0;
   },
@@ -194,38 +202,64 @@ describe("getTutorialMessage", () => {
   const solved = performAll(released, ["solved"]);
 
   test("導入の間は、導入を終えて最初に出す一言を用意しておくこと", () => {
-    const result = getTutorialMessage(fakeTutorial, introducing, false);
+    const result = getTutorialMessage(fakeTutorial, introducing, {
+      entry: "selection",
+      violationSettled: false,
+    });
 
     expect(result).toBe(operationStep.message);
   });
 
   test("今の手順の一言を出すこと", () => {
-    const result = getTutorialMessage(fakeTutorial, started, false);
+    const result = getTutorialMessage(fakeTutorial, started, {
+      entry: "selection",
+      violationSettled: false,
+    });
 
     expect(result).toBe(operationStep.message);
   });
 
   test("違反が続いたときに、今の盤面と手に入れたルールから決めた違反の一言を出すこと", () => {
-    const result = getTutorialMessage(fakeTutorial, violated, true);
+    const result = getTutorialMessage(fakeTutorial, violated, {
+      entry: "selection",
+      violationSettled: true,
+    });
 
     expect(result).toEqual(createMessage("2手目の違反（first）"));
   });
 
   test("違反が続くまでは、今の手順の一言を出すこと", () => {
-    const result = getTutorialMessage(fakeTutorial, violated, false);
+    const result = getTutorialMessage(fakeTutorial, violated, {
+      entry: "selection",
+      violationSettled: false,
+    });
 
     expect(result).toBe(firstRuleStep.message);
   });
 
   test("手を離した後は、残りを解く間の一言を出すこと", () => {
-    const result = getTutorialMessage(fakeTutorial, released, false);
+    const result = getTutorialMessage(fakeTutorial, released, {
+      entry: "selection",
+      violationSettled: false,
+    });
 
     expect(result).toBe(fakeTutorial.freePlay);
   });
 
-  test("解けたら、解き終えたときの一言を出すこと", () => {
-    const result = getTutorialMessage(fakeTutorial, solved, false);
+  const entryCases = [
+    ["selection", "本番へ"],
+    ["play", "プレイへ"],
+  ] as const;
 
-    expect(result).toBe(fakeTutorial.completion);
-  });
+  test.each(entryCases)(
+    "解けたら、開いた場所に合わせた解き終えたときの一言を出すこと: %s",
+    (entry, headline) => {
+      const result = getTutorialMessage(fakeTutorial, solved, {
+        entry,
+        violationSettled: false,
+      });
+
+      expect(result).toEqual(createMessage(headline));
+    },
+  );
 });

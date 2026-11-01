@@ -45,7 +45,10 @@ const idleHintDelayMs = 4000;
 const introBoardStartMs = 550;
 
 /** 導入を最後まで見せるのに十分な間。 */
-const introEnoughMs = 3000;
+const introEnoughMs = 8000;
+
+/** 動きを減らす設定で、ゴールの盤面を見せる間。 */
+const stillGoalHoldMs = 2800;
 
 afterEach(() => {
   cleanup();
@@ -86,6 +89,11 @@ async function advanceTimeInSlices(ms: number): Promise<void> {
       await vi.advanceTimersByTimeAsync(sliceMs);
     });
   }
+}
+
+/** 導入を飛ばして、最初の手順から始める。 */
+function skipIntro(): void {
+  fireEvent.pointerDown(getBoard());
 }
 
 function stubReducedMotion(): void {
@@ -187,6 +195,7 @@ describe("TakuzuTutorial", () => {
             onClose={onClose}
           />,
         );
+      skipIntro();
     });
 
     test("パズルの名前と4×4の盤面を出し、何をするかと最初に押すマスを示して、ルールを伏せておくこと", () => {
@@ -387,14 +396,19 @@ describe("TakuzuTutorial", () => {
       expect(onStartPlay).toHaveBeenCalledOnce();
     });
 
-    test("終えた後のもう一度で、最初から始めること", () => {
+    test("終えた後のもう一度で、始まりの盤面を見せてから最初から始めること", () => {
       solveAll();
       fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
+      const caption = screen.getByText(
+        "最初は、いくつかのマスだけが埋まっています",
+      );
+      advanceTime(introEnoughMs);
 
       const message = screen.getByText("四角と丸で、盤面を埋めていきます");
       const label = getCell(1, 1).getAttribute("aria-label");
       const chips = getRuleChipTexts();
 
+      expect(caption).toBeTruthy();
       expect(message).toBeTruthy();
       expect(label).toBe("1行1列 空き");
       expect(chips).toEqual(["？", "？", "？"]);
@@ -405,6 +419,7 @@ describe("TakuzuTutorial", () => {
       fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
       rerenderTutorial(false);
       rerenderTutorial(true);
+      skipIntro();
 
       const message = screen.getByText("四角と丸で、盤面を埋めていきます");
 
@@ -425,17 +440,21 @@ describe("TakuzuTutorial", () => {
       );
     });
 
-    test("開くと、パズル選択と同じピクトグラムと名前を出し、解き終えた盤面を、印を付けずに見せること", () => {
+    test("開くと、パズル選択と同じピクトグラムと名前、何をするパズルかを出し、解き終えた盤面を、印を付けずに見せること", () => {
       const pictogram = screen.getByRole("img", {
         name: "バイナリパズル",
         hidden: true,
       });
       const title = screen.getByRole("heading", { name: "バイナリパズル" });
+      const purpose = screen.getByText(
+        "ルールに合うように、四角と丸ですべてのマスを埋めるパズルです",
+      );
       const labels = [getCellLabel(1, 1), getCellLabel(2, 2)];
       const hinted = getHintedCellPositions();
 
       expect(pictogram).toBeTruthy();
       expect(title).toBeTruthy();
+      expect(purpose).toBeTruthy();
       expect(labels).toEqual(["1行1列 四角", "2行2列 丸"]);
       expect(hinted).toEqual([]);
     });
@@ -526,7 +545,34 @@ describe("TakuzuTutorial", () => {
       render(<TakuzuTutorial open={true} onClose={onClose} />);
     });
 
-    test("導入を見せずに、始めの盤面の最初の手順から始めること", () => {
+    test("最初の画面で、何をするパズルかとゴールの盤面を、ゴールの一言と一緒に見せること", () => {
+      const purpose = screen.getByText(
+        "ルールに合うように、四角と丸ですべてのマスを埋めるパズルです",
+      );
+      const caption = screen.getByText("この形がゴールです");
+      const label = getCellLabel(1, 1);
+
+      expect(purpose).toBeTruthy();
+      expect(caption).toBeTruthy();
+      expect(label).toBe("1行1列 四角");
+    });
+
+    test("ゴールを見せた後に、始まりの一言を添えて始めの盤面を見せること", () => {
+      advanceTime(stillGoalHoldMs);
+
+      const caption = screen.getByText(
+        "最初は、いくつかのマスだけが埋まっています",
+      );
+      const label = getCellLabel(1, 1);
+
+      expect(caption).toBeTruthy();
+      expect(label).toBe("1行1列 空き");
+    });
+
+    test("最後まで見せると、始めの盤面の最初の手順から始めること", () => {
+      advanceTime(stillGoalHoldMs);
+      advanceTime(introEnoughMs);
+
       const headline = screen.getByText("四角と丸で、盤面を埋めていきます");
       const label = getCellLabel(1, 1);
       const hinted = getHintedCellPositions();
@@ -540,12 +586,17 @@ describe("TakuzuTutorial", () => {
   describe("プレイ中に開いた場合", () => {
     beforeEach(() => {
       render(<TakuzuTutorial open={true} onClose={onClose} />);
+      skipIntro();
     });
 
-    test("解き終えると、プレイに戻る操作で閉じること", () => {
+    test("解き終えると、プレイに戻ることを伝え、プレイに戻る操作で閉じること", () => {
       solveAll();
+      const detail = screen.getByText(
+        "プレイ中の盤面も、同じルールで埋められます",
+      );
       fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
 
+      expect(detail).toBeTruthy();
       expect(onClose).toHaveBeenCalledOnce();
     });
   });
