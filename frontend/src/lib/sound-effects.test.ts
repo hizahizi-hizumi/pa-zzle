@@ -1,20 +1,31 @@
-import type { SoundTone } from "@/lib/sound-effects";
+import type { SoundEffect, SoundLayer } from "@/lib/sound-effects";
 
 type SoundEffects = typeof import("@/lib/sound-effects");
 type SoundEffectsSetting = typeof import("@/lib/sound-effects-setting");
 
-function createFakeOscillator() {
+type FakeAudioBuffer = { url: string };
+
+function createFakeBufferSource() {
   return {
-    type: "sine" as OscillatorType,
-    frequency: {
-      setValueAtTime: vi.fn<(value: number, time: number) => void>(),
-      exponentialRampToValueAtTime: vi.fn(),
-    },
+    buffer: null as FakeAudioBuffer | null,
+    playbackRate: { value: 1 },
     connect: vi.fn(),
     disconnect: vi.fn(),
     addEventListener: vi.fn(),
     start: vi.fn<(when: number) => void>(),
-    stop: vi.fn(),
+  };
+}
+
+function createFakeGain() {
+  return {
+    gain: {
+      value: 1,
+      setValueAtTime: vi.fn(),
+      setTargetAtTime: vi.fn<(target: number, time: number) => void>(),
+      cancelScheduledValues: vi.fn(),
+    },
+    connect: vi.fn(),
+    disconnect: vi.fn(),
   };
 }
 
@@ -23,7 +34,8 @@ class FakeAudioContext {
   state: AudioContextState = "suspended";
   currentTime = 10;
   destination = {};
-  oscillators: ReturnType<typeof createFakeOscillator>[] = [];
+  sources: ReturnType<typeof createFakeBufferSource>[] = [];
+  gains: ReturnType<typeof createFakeGain>[] = [];
   resume = vi.fn(async () => {
     this.state = "running";
   });
@@ -32,13 +44,11 @@ class FakeAudioContext {
     FakeAudioContext.instances.push(this);
   }
 
-  createOscillator() {
-    const oscillator = createFakeOscillator();
-    this.oscillators.push(oscillator);
-    return oscillator;
+  createBufferSource() {
+    const source = createFakeBufferSource();
+    this.sources.push(source);
+    return source;
   }
-
-  gains: ReturnType<typeof createFakeGain>[] = [];
 
   createGain() {
     const gain = createFakeGain();
@@ -58,30 +68,31 @@ class FakeAudioContext {
   }
 }
 
-function createFakeGain() {
-  return {
-    gain: {
-      setValueAtTime: vi.fn(),
-      setTargetAtTime: vi.fn<(target: number, time: number) => void>(),
-      cancelScheduledValues: vi.fn(),
-      linearRampToValueAtTime: vi.fn<(value: number, time: number) => void>(),
-      exponentialRampToValueAtTime: vi.fn(),
-    },
-    connect: vi.fn(),
-    disconnect: vi.fn(),
-  };
+/** 音声ファイルの中身として、取得した URL をそのまま持つ音のデータを返す。 */
+class FakeOfflineAudioContext {
+  async decodeAudioData(data: ArrayBuffer): Promise<FakeAudioBuffer> {
+    return { url: new TextDecoder().decode(data) };
+  }
 }
 
-const tones: SoundTone[] = [
-  { waveform: "triangle", frequency: 440, durationMs: 100, volume: 0.1 },
-  {
-    waveform: "sine",
-    frequency: 660,
-    offsetMs: 50,
-    durationMs: 100,
-    volume: 0.1,
-  },
-];
+function stubFetch(failingUrls: readonly string[] = []) {
+  const fetch = vi.fn(async (url: string) => ({
+    ok: !failingUrls.includes(url),
+    arrayBuffer: async () => new TextEncoder().encode(url).buffer,
+  }));
+  vi.stubGlobal("fetch", fetch);
+  return fetch;
+}
+
+function stubWebAudio() {
+  vi.stubGlobal("AudioContext", FakeAudioContext);
+  vi.stubGlobal("OfflineAudioContext", FakeOfflineAudioContext);
+}
+
+/** 読み込みの取得と読み解きを終わらせる。 */
+function finishLoading(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
 
 /** AudioContext と設定を一つだけ持つモジュールの状態を、テストごとに作り直して読み込む。 */
 async function importSoundEffects(): Promise<
@@ -98,6 +109,18 @@ async function importSoundEffects(): Promise<
   };
 }
 
+function getStartedSources() {
+  return (
+    FakeAudioContext.instances[0]?.sources.map(
+      ({ buffer, playbackRate, start }) => ({
+        url: buffer?.url,
+        playbackRate: playbackRate.value,
+        when: start.mock.calls[0]?.[0],
+      }),
+    ) ?? []
+  );
+}
+
 afterEach(() => {
   FakeAudioContext.instances = [];
   vi.unstubAllGlobals();
@@ -108,81 +131,101 @@ afterEach(() => {
 describe("playSound", () => {
   describe("Web Audio API が無い環境の場合", () => {
     let soundEffects: SoundEffects;
+    let fetch: ReturnType<typeof stubFetch>;
+    let sound: SoundEffect;
 
     beforeEach(async () => {
       vi.stubGlobal("AudioContext", undefined);
+      vi.stubGlobal("OfflineAudioContext", undefined);
+      fetch = stubFetch();
       soundEffects = await importSoundEffects();
+      sound = soundEffects.defineSoundEffect("/tap.wav");
     });
 
-    test("何もせずに終わること", () => {
-      const act = () => soundEffects.playSound(tones);
+    test("音声ファイルを読み込まず、何もせずに終わること", () => {
+      const act = () => {
+        soundEffects.prepareSoundEffects([sound]);
+        soundEffects.playSound(sound);
+      };
 
       expect(act).not.toThrow();
+      expect(fetch).not.toHaveBeenCalled();
     });
   });
 
-  describe("Web Audio API がある環境の場合", () => {
+  describe("読み込みを終えた効果音の場合", () => {
     let soundEffects: SoundEffects;
+    let sound: SoundEffect;
 
     beforeEach(async () => {
-      vi.stubGlobal("AudioContext", FakeAudioContext);
+      stubWebAudio();
+      stubFetch();
       soundEffects = await importSoundEffects();
+      sound = soundEffects.defineSoundEffect("/tap.wav");
+      soundEffects.prepareSoundEffects([sound]);
+      await finishLoading();
     });
 
-    test("止まっている AudioContext を動かし、音ごとに遅らせた時刻から鳴らすこと", () => {
-      soundEffects.playSound(tones, { delayMs: 500 });
+    test("止まっている AudioContext を動かし、遅らせた時刻から鳴らすこと", () => {
+      soundEffects.playSound(sound, { delayMs: 500 });
 
-      const [context] = FakeAudioContext.instances;
-      expect(context?.resume).toHaveBeenCalled();
-      expect(
-        context?.oscillators.map(({ type, start }) => [
-          type,
-          start.mock.calls[0]?.[0],
-        ]),
-      ).toEqual([
-        ["triangle", 10.5],
-        ["sine", 10.55],
+      expect(FakeAudioContext.instances[0]?.resume).toHaveBeenCalled();
+      expect(getStartedSources()).toEqual([
+        { url: "/tap.wav", playbackRate: 1, when: 10.5 },
       ]);
     });
   });
 
-  describe("揺らぎを付けた場合", () => {
+  describe("まだ読み込めていない効果音の場合", () => {
     let soundEffects: SoundEffects;
+    let sound: SoundEffect;
+    let respond: () => void;
 
     beforeEach(async () => {
-      vi.stubGlobal("AudioContext", FakeAudioContext);
-      vi.spyOn(Math, "random").mockReturnValue(1);
+      stubWebAudio();
+      const fetchResponded = new Promise<void>((resolve) => {
+        respond = resolve;
+      });
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (url: string) => {
+          await fetchResponded;
+          return {
+            ok: true,
+            arrayBuffer: async () => new TextEncoder().encode(url).buffer,
+          };
+        }),
+      );
       soundEffects = await importSoundEffects();
+      sound = soundEffects.defineSoundEffect("/tap.wav");
+      soundEffects.prepareSoundEffects([sound]);
     });
 
-    test("一つの効果音の音すべてを、同じ幅だけ高く大きくして鳴らすこと", () => {
-      soundEffects.playSound(tones, {
-        variation: { pitchCents: 1200, volumeRatio: 0.5 },
-      });
+    test("読み込みを待って遅れて鳴らすことをしないこと", async () => {
+      soundEffects.playSound(sound);
+      respond();
+      await finishLoading();
 
-      const [context] = FakeAudioContext.instances;
-      const frequencies = context?.oscillators.map(
-        ({ frequency }) => frequency.setValueAtTime.mock.calls[0]?.[0],
-      );
-      const peakVolumes = context?.gains
-        .slice(1)
-        .map(({ gain }) => gain.linearRampToValueAtTime.mock.calls[0]?.[0]);
-      expect(frequencies).toEqual([880, 1320]);
-      expect(peakVolumes).toEqual([expect.closeTo(0.15), expect.closeTo(0.15)]);
+      expect(getStartedSources()).toEqual([]);
     });
   });
 
   describe("鳴らさない設定の場合", () => {
     let soundEffects: Awaited<ReturnType<typeof importSoundEffects>>;
+    let sound: SoundEffect;
 
     beforeEach(async () => {
-      vi.stubGlobal("AudioContext", FakeAudioContext);
+      stubWebAudio();
+      stubFetch();
       soundEffects = await importSoundEffects();
+      sound = soundEffects.defineSoundEffect("/tap.wav");
+      soundEffects.prepareSoundEffects([sound]);
+      await finishLoading();
       soundEffects.setSoundEffectsEnabled(false);
     });
 
     test("AudioContext を作らないこと", () => {
-      soundEffects.playSound(tones);
+      soundEffects.playSound(sound);
 
       expect(FakeAudioContext.instances).toEqual([]);
     });
@@ -192,9 +235,13 @@ describe("playSound", () => {
     let soundEffects: Awaited<ReturnType<typeof importSoundEffects>>;
 
     beforeEach(async () => {
-      vi.stubGlobal("AudioContext", FakeAudioContext);
+      stubWebAudio();
+      stubFetch();
       soundEffects = await importSoundEffects();
-      soundEffects.playSound(tones);
+      const sound = soundEffects.defineSoundEffect("/tap.wav");
+      soundEffects.prepareSoundEffects([sound]);
+      await finishLoading();
+      soundEffects.playSound(sound);
     });
 
     test("鳴っている音を出口で消すこと", () => {
@@ -210,22 +257,134 @@ describe("playSound", () => {
   });
 });
 
+describe("playLayeredSound", () => {
+  describe("読み込みを終えた素材を重ねた場合", () => {
+    let soundEffects: SoundEffects;
+    let layers: SoundLayer[];
+
+    beforeEach(async () => {
+      stubWebAudio();
+      stubFetch();
+      vi.spyOn(Math, "random").mockReturnValue(1);
+      soundEffects = await importSoundEffects();
+      layers = [
+        { sound: soundEffects.defineSoundEffect("/low.wav"), offsetMs: 0 },
+        { sound: soundEffects.defineSoundEffect("/high.wav"), offsetMs: 50 },
+      ];
+      soundEffects.prepareSoundEffects(layers.map(({ sound }) => sound));
+      await finishLoading();
+    });
+
+    test("素材ごとにずらした時刻から鳴らすこと", () => {
+      soundEffects.playLayeredSound(layers, { delayMs: 500 });
+
+      expect(getStartedSources()).toEqual([
+        { url: "/low.wav", playbackRate: 1, when: 10.5 },
+        { url: "/high.wav", playbackRate: 1, when: 10.55 },
+      ]);
+    });
+
+    test("揺らぎを付けると、素材すべてを同じ幅だけ高く大きくして鳴らすこと", () => {
+      soundEffects.playLayeredSound(layers, {
+        variation: { pitchCents: 1200, volumeRatio: 0.5 },
+      });
+
+      const effectVolumes = FakeAudioContext.instances[0]?.gains
+        .slice(1)
+        .map(({ gain }) => gain.value);
+      expect(
+        getStartedSources().map(({ playbackRate }) => playbackRate),
+      ).toEqual([2, 2]);
+      expect(effectVolumes).toEqual([1.5]);
+    });
+  });
+
+  describe("読み込みに失敗した素材を含む場合", () => {
+    let soundEffects: SoundEffects;
+    let layers: SoundLayer[];
+
+    beforeEach(async () => {
+      stubWebAudio();
+      stubFetch(["/missing.wav"]);
+      soundEffects = await importSoundEffects();
+      layers = [
+        { sound: soundEffects.defineSoundEffect("/tap.wav"), offsetMs: 0 },
+        { sound: soundEffects.defineSoundEffect("/missing.wav"), offsetMs: 0 },
+      ];
+      soundEffects.prepareSoundEffects(layers.map(({ sound }) => sound));
+      await finishLoading();
+    });
+
+    test("どの素材も鳴らさないこと", () => {
+      soundEffects.playLayeredSound(layers);
+
+      expect(getStartedSources()).toEqual([]);
+    });
+  });
+});
+
 describe("prepareSoundEffects", () => {
-  beforeEach(async () => {
-    vi.stubGlobal("AudioContext", FakeAudioContext);
-    const soundEffects = await importSoundEffects();
-    soundEffects.prepareSoundEffects();
+  describe("鳴らす設定の場合", () => {
+    let soundEffects: SoundEffects;
+    let fetch: ReturnType<typeof stubFetch>;
+    let sound: SoundEffect;
+
+    beforeEach(async () => {
+      stubWebAudio();
+      fetch = stubFetch();
+      soundEffects = await importSoundEffects();
+      sound = soundEffects.defineSoundEffect("/tap.wav");
+    });
+
+    test("利用者が操作するまで AudioContext を作らず、音声ファイルの読み込みを始めること", () => {
+      soundEffects.prepareSoundEffects([sound]);
+
+      expect(FakeAudioContext.instances).toEqual([]);
+      expect(fetch).toHaveBeenCalledExactlyOnceWith("/tap.wav");
+    });
+
+    test("何度呼んでも、同じ効果音を読み直さないこと", () => {
+      soundEffects.prepareSoundEffects([sound]);
+      soundEffects.prepareSoundEffects([sound]);
+
+      expect(fetch).toHaveBeenCalledOnce();
+    });
+
+    test("利用者の操作で AudioContext を作って動かすこと", () => {
+      soundEffects.prepareSoundEffects([sound]);
+      window.dispatchEvent(new Event("pointerdown"));
+
+      expect(FakeAudioContext.instances[0]?.resume).toHaveBeenCalled();
+    });
   });
 
-  test("利用者が操作するまで AudioContext を作らないこと", () => {
-    const contexts = FakeAudioContext.instances;
+  describe("鳴らさない設定の場合", () => {
+    let soundEffects: Awaited<ReturnType<typeof importSoundEffects>>;
+    let fetch: ReturnType<typeof stubFetch>;
+    let sound: SoundEffect;
 
-    expect(contexts).toEqual([]);
-  });
+    beforeEach(async () => {
+      stubWebAudio();
+      fetch = stubFetch();
+      soundEffects = await importSoundEffects();
+      soundEffects.setSoundEffectsEnabled(false);
+      sound = soundEffects.defineSoundEffect("/tap.wav");
+    });
 
-  test("利用者の操作で AudioContext を作って動かすこと", () => {
-    window.dispatchEvent(new Event("pointerdown"));
+    test("音声ファイルを読み込まないこと", () => {
+      soundEffects.prepareSoundEffects([sound]);
 
-    expect(FakeAudioContext.instances[0]?.resume).toHaveBeenCalled();
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
+    test("鳴らす設定に変えたら読み込み、鳴らせるようにすること", async () => {
+      soundEffects.prepareSoundEffects([sound]);
+      soundEffects.setSoundEffectsEnabled(true);
+      await finishLoading();
+      soundEffects.playSound(sound);
+
+      expect(fetch).toHaveBeenCalledExactlyOnceWith("/tap.wav");
+      expect(getStartedSources()).toHaveLength(1);
+    });
   });
 });

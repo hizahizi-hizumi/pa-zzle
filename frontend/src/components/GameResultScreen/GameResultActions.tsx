@@ -6,7 +6,10 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
-import { withPlayStartSound } from "@/components/app-decision-sound";
+import {
+  usePrepareAppDecisionSounds,
+  withPlayStartSound,
+} from "@/components/app-decision-sound";
 import { Button } from "@/components/ui/button";
 
 type GameResultActionsProps = {
@@ -25,6 +28,7 @@ export function GameResultActions({
   onChangeDifficulty,
   onBackToHome,
 }: GameResultActionsProps) {
+  usePrepareAppDecisionSounds();
   return (
     <div className="mt-4 grid gap-3">
       <Button size="lg" onClick={withPlayStartSound(onStartNewProblem)}>

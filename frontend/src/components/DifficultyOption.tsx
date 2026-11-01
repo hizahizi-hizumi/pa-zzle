@@ -1,7 +1,10 @@
 import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { playPlayStartSound } from "@/components/app-decision-sound";
+import {
+  playPlayStartSound,
+  usePrepareAppDecisionSounds,
+} from "@/components/app-decision-sound";
 import { DifficultyLevelPieces } from "@/components/DifficultyLevelPieces";
 import type { DifficultyLevel } from "@/games/difficulty";
 import { Link, type Path } from "@/router";
@@ -27,6 +30,7 @@ export function DifficultyOption({
   label,
   children,
 }: DifficultyOptionProps) {
+  usePrepareAppDecisionSounds();
   return (
     <Link
       to={playPath}

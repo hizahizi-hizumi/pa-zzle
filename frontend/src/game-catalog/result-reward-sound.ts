@@ -1,6 +1,9 @@
 import { useEffect, useRef } from "react";
 
-import { getGameResultSound } from "@/components/game-result-sound";
+import {
+  gameResultSoundList,
+  getGameResultSound,
+} from "@/components/game-result-sound";
 import type { GameProgress } from "@/games/play";
 import { getGameResultLevel } from "@/games/result";
 import { playSound, prepareSoundEffects } from "@/lib/sound-effects";
@@ -18,7 +21,7 @@ export function useResultRewardSound(
   const previousProgressRef = useRef(progress);
 
   useEffect(() => {
-    prepareSoundEffects();
+    prepareSoundEffects(gameResultSoundList);
   }, []);
 
   // 完成演出の完了は盤面の演出から届き、重ねて届くこともあるので、進行が結果へ移ったことを見て一度だけ鳴らす。
