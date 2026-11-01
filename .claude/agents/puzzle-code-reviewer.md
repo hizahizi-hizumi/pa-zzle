@@ -1,6 +1,6 @@
 ---
 name: puzzle-code-reviewer
-description: 新しいパズルのリポジトリのルート・対象ゲーム・段の範囲・認識合わせの合意内容と最終レビューでの人間の判断・コミット範囲・変更ファイル一覧・差分本文を入力に、差分と関連コードを精読して、標準配置・共通契約・依存方向・統合・テスト・型の問題を critical / major / minor の findings と規約で確定できる論点として返す Agent。`/add-puzzle` Skill の段ごとのレビューと、最終レビューの前の全体レビューから、経緯を渡されずに起動される。
+description: 新しいパズルのリポジトリのルート・対象ゲーム・段の範囲・認識合わせの合意内容と最終レビューでの人間の判断・コミット範囲・変更ファイル一覧・差分本文を入力に、差分と関連コードを精読して、標準配置・共通契約・依存方向・統合・テスト・型の問題を critical / major / minor の findings と規約で確定できる論点として返す Agent。`/add-puzzle` Skill の段ごとのレビューと、品質の作り込みから、経緯を渡されずに起動される。
 tools: Read, Grep, Glob
 model: opus
 ---
@@ -16,7 +16,7 @@ model: opus
 - 入力（起動側のプロンプトで受け取る。すべて必須）
   - リポジトリのルート: レビューする版を展開したディレクトリ。以下のパスはすべてここからの相対パスとして読む
   - 対象ゲーム: ゲーム ID（`frontend/src/games/<game>/` の `<game>`）とパズル名
-  - 範囲ファイルのパス: 今回レビューする段（全体レビューでは全段）の範囲と完成条件
+  - 範囲ファイルのパス: 今回レビューする段（作り込みのレビューでは全段）の範囲と完成条件
   - 合意ファイルのパス: 認識合わせの合意内容と、最終レビューでの人間の判断。最終レビューの前は合意内容だけ
   - 比較基準のコミット範囲（例: `<BASE>..claude/<prefix>-03-playable`）
   - 範囲内の変更ファイル一覧のファイルのパス
@@ -64,7 +64,7 @@ model: opus
 
 ### 4. 統合（ゲームの外側）
 
-- 段の範囲に含まれる統合が揃っているか。全体レビューでは `game-structure.md`「ゲームを追加するとき」の4手順すべて
+- 段の範囲に含まれる統合が揃っているか。作り込みのレビューでは `game-structure.md`「ゲームを追加するとき」の4手順すべて
 - 前例にあって規約に書かれていない触る場所: `game-catalog.ts` の並び、`frontend/biome.json` の `files.includes` での `problem-pool.json` 除外、`frontend/scripts/generate-<game>-problem-pool.ts`（`--verify`）と `package.json` の scripts、`frontend/src/views/PuzzleSelectionView.test.tsx` の一覧。前例と比べて漏れを示す
 - カタログに載せる前の段では、`game-catalog.test.ts` の未掲載の除外（`gamesNotInCatalogYet`）と、入口とプレイ画面のパスだけのカタログエントリがあってよい。カタログに載せる段より後にこれらが残っていれば指摘する
 - `pages/` は View を再 export するだけか（`pages.md`）、View の責務（`views.md`）
@@ -73,7 +73,6 @@ model: opus
 
 - 置き方・命名・構造が `vitest.md` に従うか（コロケーション、「〜こと」、条件は describe、AAA、DOM は利用者から観測できる契約）
 - 振る舞いの契約にテストがあるか: ルール判定、問題の成立（一意解など対象 SPEC の条件）、identity からの再現性、難易度分類、採点、記録の読み戻し、プレビューの入れ子・単調性など既存ゲームが持つ種類
-- 特定の不具合の再発防止だけを目的にしたテストを要求しない（`AGENTS.md`「検証」）
 
 ### 6. 型とコード
 
