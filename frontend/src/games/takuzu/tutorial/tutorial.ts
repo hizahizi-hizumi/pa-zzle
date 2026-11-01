@@ -106,40 +106,40 @@ function cellAt(row: number, column: number): number {
 const steps: readonly TakuzuTutorialStep[] = [
   {
     message: {
-      headline: "四角と丸で、盤面を埋めていきます",
+      headline: "四角と丸で盤面を埋めていきます",
       detail: "印のマスをタップしてください",
     },
     introducedRuleId: null,
     cellIndices: [cellAt(1, 1)],
   },
   {
-    message: { headline: "2回タップすると、丸になります", detail: null },
+    message: { headline: "2回タップすると丸になります", detail: null },
     introducedRuleId: null,
     cellIndices: [cellAt(2, 4)],
   },
   {
-    message: { headline: "同じものは、3つ続けて並べられません", detail: null },
+    message: { headline: "同じものは3つ続けて並べられません", detail: null },
     introducedRuleId: "run",
     cellIndices: [cellAt(1, 3)],
   },
   {
-    message: { headline: "縦にも、3つ続けて並べられません", detail: null },
+    message: { headline: "縦にも3つ続けて並べられません", detail: null },
     introducedRuleId: null,
     cellIndices: [cellAt(2, 1)],
   },
   {
-    message: { headline: "行の四角と丸は、同じ数ずつです", detail: null },
+    message: { headline: "行の四角と丸は同じ数ずつです", detail: null },
     introducedRuleId: "count",
     cellIndices: [cellAt(1, 4)],
   },
   {
-    message: { headline: "列も、四角と丸は同じ数ずつです", detail: null },
+    message: { headline: "列も四角と丸は同じ数ずつです", detail: null },
     introducedRuleId: null,
     cellIndices: [cellAt(4, 4)],
   },
   {
     message: {
-      headline: "このマスも、\nここまでのルールで決まります",
+      headline: "このマスも\nここまでのルールで決まります",
       detail: null,
     },
     introducedRuleId: null,
@@ -485,8 +485,8 @@ const lineNames = { row: "行", column: "列" } as const satisfies Record<
 
 /** 違反の一言の補足に添える、当たったルールそのもの。 */
 const ruleStatements = {
-  run: "同じものは、3つ続けて並べられません",
-  count: "行も列も、四角と丸は同じ数ずつです",
+  run: "同じものは3つ続けて並べられません",
+  count: "行も列も四角と丸は同じ数ずつです",
   duplicate: "同じ並びの行・列は作れません",
 } as const satisfies Record<TakuzuTutorialRuleId, string>;
 
@@ -630,9 +630,9 @@ export const takuzuTutorial: Tutorial<
   TakuzuTutorialAction
 > = {
   intro: {
-    purpose: "四角と丸で、ルールに合うように\nすべてのマスを埋めるパズルです",
+    purpose: "四角と丸でルールに合うように\nすべてのマスを埋めるパズルです",
     goalCaption: "この形がゴールです",
-    startCaption: "最初は、一部のマスだけ埋まっています",
+    startCaption: "最初は一部のマスだけ埋まっています",
   },
   rules: [
     { id: "run", label: "3つ続かない" },
@@ -642,16 +642,16 @@ export const takuzuTutorial: Tutorial<
   steps,
   freePlay: {
     headline: "残りを埋めると完成です",
-    detail: "迷ったら、少し待つと印が出ます",
+    detail: "迷ったら少し待つと印が出ます",
   },
   completion: {
     selection: {
       headline: "完成です",
-      detail: "レベル1は 8×8 で、ルールは同じです",
+      detail: "レベル1は 8×8 の盤面で\nルールは同じです",
     },
     play: {
       headline: "完成です",
-      detail: "プレイ中の盤面も、同じルールで埋められます",
+      detail: "プレイ中の盤面も同じルールで埋められます",
     },
   },
   start: startTakuzuTutorial,

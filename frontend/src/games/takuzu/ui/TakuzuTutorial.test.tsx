@@ -201,7 +201,7 @@ describe("TakuzuTutorial", () => {
     test("パズルの名前と4×4の盤面を出し、何をするかと最初に押すマスを示して、ルールを伏せておくこと", () => {
       const title = screen.getByRole("heading", { name: "バイナリパズル" });
       const cells = within(getBoard()).getAllByRole("button");
-      const headline = screen.getByText("四角と丸で、盤面を埋めていきます");
+      const headline = screen.getByText("四角と丸で盤面を埋めていきます");
       const detail = screen.getByText("印のマスをタップしてください");
       const hinted = getHintedCellPositions();
       const chips = getRuleChipTexts();
@@ -218,7 +218,7 @@ describe("TakuzuTutorial", () => {
       tapCell(1, 1);
 
       const label = getCell(1, 1).getAttribute("aria-label");
-      const message = screen.getByText("2回タップすると、丸になります");
+      const message = screen.getByText("2回タップすると丸になります");
       const hinted = getHintedCellPositions();
 
       expect(label).toBe("1行1列 四角");
@@ -252,7 +252,7 @@ describe("TakuzuTutorial", () => {
       });
 
       test("ルールを示してチップに加え、今示しているルールとして目立たせること", () => {
-        const message = screen.getByText("同じものは、3つ続けて並べられません");
+        const message = screen.getByText("同じものは3つ続けて並べられません");
         const chips = getRuleChipTexts();
         const currentChips = getCurrentRuleChipTexts();
 
@@ -293,7 +293,7 @@ describe("TakuzuTutorial", () => {
         tapCell(1, 3);
         advanceTime(violationReactionDelayMs * 2);
 
-        const message = screen.getByText("縦にも、3つ続けて並べられません");
+        const message = screen.getByText("縦にも3つ続けて並べられません");
         const currentChips = getCurrentRuleChipTexts();
 
         expect(message).toBeTruthy();
@@ -320,7 +320,7 @@ describe("TakuzuTutorial", () => {
       });
 
       test("ルールを示してチップに加え、今示しているルールとして目立たせること", () => {
-        const message = screen.getByText("行の四角と丸は、同じ数ずつです");
+        const message = screen.getByText("行の四角と丸は同じ数ずつです");
         const chips = getRuleChipTexts();
         const currentChips = getCurrentRuleChipTexts();
 
@@ -399,10 +399,10 @@ describe("TakuzuTutorial", () => {
     test("終えた後のもう一度で、始まりの盤面を見せてから最初から始めること", () => {
       solveAll();
       fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
-      const caption = screen.getByText("最初は、一部のマスだけ埋まっています");
+      const caption = screen.getByText("最初は一部のマスだけ埋まっています");
       advanceTime(introEnoughMs);
 
-      const message = screen.getByText("四角と丸で、盤面を埋めていきます");
+      const message = screen.getByText("四角と丸で盤面を埋めていきます");
       const label = getCell(1, 1).getAttribute("aria-label");
       const chips = getRuleChipTexts();
 
@@ -419,7 +419,7 @@ describe("TakuzuTutorial", () => {
       rerenderTutorial(true);
       skipIntro();
 
-      const message = screen.getByText("四角と丸で、盤面を埋めていきます");
+      const message = screen.getByText("四角と丸で盤面を埋めていきます");
 
       expect(onClose).toHaveBeenCalledOnce();
       expect(message).toBeTruthy();
@@ -445,7 +445,7 @@ describe("TakuzuTutorial", () => {
       });
       const title = screen.getByRole("heading", { name: "バイナリパズル" });
       const purpose = screen.getByText(
-        "四角と丸で、ルールに合うように すべてのマスを埋めるパズルです",
+        "四角と丸でルールに合うように すべてのマスを埋めるパズルです",
       );
       const labels = [getCellLabel(1, 1), getCellLabel(2, 2)];
       const hinted = getHintedCellPositions();
@@ -460,7 +460,7 @@ describe("TakuzuTutorial", () => {
     test("最後まで見せると、始めの盤面で最初の手順の一言と印を出すこと", async () => {
       await advanceTimeInSlices(introEnoughMs);
 
-      const headline = screen.getByText("四角と丸で、盤面を埋めていきます");
+      const headline = screen.getByText("四角と丸で盤面を埋めていきます");
       const labels = [getCellLabel(1, 1), getCellLabel(1, 2)];
       const hinted = getHintedCellPositions();
       const chips = getRuleChipTexts();
@@ -502,7 +502,7 @@ describe("TakuzuTutorial", () => {
         (_, skip) => {
           skip();
 
-          const headline = screen.getByText("四角と丸で、盤面を埋めていきます");
+          const headline = screen.getByText("四角と丸で盤面を埋めていきます");
           const label = getCellLabel(1, 1);
           const hinted = getHintedCellPositions();
 
@@ -545,7 +545,7 @@ describe("TakuzuTutorial", () => {
 
     test("最初の画面で、何をするパズルかとゴールの盤面を、ゴールの一言と一緒に見せること", () => {
       const purpose = screen.getByText(
-        "四角と丸で、ルールに合うように すべてのマスを埋めるパズルです",
+        "四角と丸でルールに合うように すべてのマスを埋めるパズルです",
       );
       const caption = screen.getByText("この形がゴールです");
       const label = getCellLabel(1, 1);
@@ -558,7 +558,7 @@ describe("TakuzuTutorial", () => {
     test("ゴールを見せた後に、始まりの一言を添えて始めの盤面を見せること", () => {
       advanceTime(stillGoalHoldMs);
 
-      const caption = screen.getByText("最初は、一部のマスだけ埋まっています");
+      const caption = screen.getByText("最初は一部のマスだけ埋まっています");
       const label = getCellLabel(1, 1);
 
       expect(caption).toBeTruthy();
@@ -569,7 +569,7 @@ describe("TakuzuTutorial", () => {
       advanceTime(stillGoalHoldMs);
       advanceTime(introEnoughMs);
 
-      const headline = screen.getByText("四角と丸で、盤面を埋めていきます");
+      const headline = screen.getByText("四角と丸で盤面を埋めていきます");
       const label = getCellLabel(1, 1);
       const hinted = getHintedCellPositions();
 
@@ -588,7 +588,7 @@ describe("TakuzuTutorial", () => {
     test("解き終えると、プレイに戻ることを伝え、プレイに戻る操作で閉じること", () => {
       solveAll();
       const detail = screen.getByText(
-        "プレイ中の盤面も、同じルールで埋められます",
+        "プレイ中の盤面も同じルールで埋められます",
       );
       fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
 
