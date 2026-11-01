@@ -34,10 +34,12 @@ export type WaterSortTutorialRuleId =
 export type WaterSortTutorialAction = { bottleIndex: number };
 
 /**
- * - `move`: 印を付け、手順の間だけ受け付ける注ぎ。注ぎ元を押して選ぶと、印を注ぎ先へ移す。注ぐと次の手順へ進む。
+ * - `move`: 印を付け、手順の間だけ受け付ける注ぎ。注ぎ元を押して選ぶと、印を注ぎ先へ移す。
+ * - `endsWhen`: 次の手順へ進む手。`selected` は注ぎ元を選んだところで進み、選び方を教える手順に使う。`poured` は注いだところで進む。
  */
 export type WaterSortTutorialStep = TutorialStep<WaterSortTutorialRuleId> & {
   move: WaterSortMove;
+  endsWhen: "selected" | "poured";
 };
 
 /**
@@ -119,26 +121,35 @@ const goalBottles: WaterSortState = [
   [],
 ];
 
+/** 満杯のボトルに注ごうとしたときの一言。容量の手順でも、手を離す前に同じ文で言い切る。 */
+const FULL_REJECTION_MESSAGE = "満杯のボトルには注げません";
+
 /**
+ * まず1本目を押して選ばせ、選んだら空の4本目へ注がせる。
  * 1本目の緑を空の4本目へ注ぎ、2本目の緑をその上に重ね、3本目の2つ重なった緑をまとめて注いで緑をそろえる。
  * 最後に、2本目の2つ重なった青を、空きが1つの1本目へ注ぎ、入るだけ移す。
  */
 const steps: readonly WaterSortTutorialStep[] = [
   {
-    message: {
-      headline: "空のボトルに注げます",
-      detail: "印のボトルを押してください",
-    },
+    message: { headline: "注ぐボトルを押して選びます", detail: null },
+    introducedRuleId: null,
+    move: { sourceBottleIndex: 0, destinationBottleIndex: 3 },
+    endsWhen: "selected",
+  },
+  {
+    message: { headline: "空のボトルに注げます", detail: null },
     introducedRuleId: "empty",
     move: { sourceBottleIndex: 0, destinationBottleIndex: 3 },
+    endsWhen: "poured",
   },
   {
     message: {
-      headline: "いちばん上が同じ色なら\n重ねて注げます",
+      headline: "上が同じ色なら\n重ねて注げます",
       detail: null,
     },
     introducedRuleId: "same-color",
     move: { sourceBottleIndex: 1, destinationBottleIndex: 3 },
+    endsWhen: "poured",
   },
   {
     message: {
@@ -147,14 +158,16 @@ const steps: readonly WaterSortTutorialStep[] = [
     },
     introducedRuleId: "together",
     move: { sourceBottleIndex: 2, destinationBottleIndex: 3 },
+    endsWhen: "poured",
   },
   {
     message: {
       headline: "空きが足りないときは\n入るだけ移ります",
-      detail: null,
+      detail: FULL_REJECTION_MESSAGE,
     },
     introducedRuleId: "capacity",
     move: { sourceBottleIndex: 1, destinationBottleIndex: 0 },
+    endsWhen: "poured",
   },
 ];
 
@@ -253,7 +266,7 @@ function performWaterSortTutorialAction(
         { type: "selected", bottleIndex },
         { sourceBottleIndex: bottleIndex },
       ),
-      outcome: "continued",
+      outcome: step?.endsWhen === "selected" ? "stepped" : "continued",
     };
   }
 
@@ -304,8 +317,8 @@ const rejectionMessages = {
   empty: "空のボトルからは注げません",
   complete: "このボトルはもうそろっています",
   "no-destination": "このボトルはどこにも注げません",
-  "different-color": "いちばん上の色が違うと\n注げません",
-  full: "満杯のボトルには注げません",
+  "different-color": "上の色が違うと\n注げません",
+  full: FULL_REJECTION_MESSAGE,
 } as const satisfies Record<WaterSortTutorialRejection, string>;
 
 /** 選べないボトルを押したか、注げない先を押したとき。手を離した後にだけ起き、それまでに4つのルールを示している。 */
@@ -415,8 +428,8 @@ export const waterSortTutorial: Tutorial<
   WaterSortTutorialAction
 > = {
   intro: {
-    purpose: "液体を注ぎ分けて\n色ごとにそろえるパズルです",
-    goalCaption: "色ごとにそろえばゴールです",
+    purpose: "液体を注ぎ分けて\n色をそろえるパズルです",
+    goalCaption: "1本ずつ同じ色になればゴールです",
     startCaption: "最初は色が混ざっています",
   },
   rules: [

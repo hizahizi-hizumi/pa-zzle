@@ -50,16 +50,18 @@ function tapBottles(
   );
 }
 
-/** 手順の注ぎ元と注ぎ先を順に押して、`count` 手目まで進める。 */
+/** 手順で押すボトルを順に押して、`count` 個目の手順まで終える。選ぶ手順の次の注ぐ手順では、注ぎ元を選んだまま注ぎ先だけを押す。 */
 function playSteps(count: number): Progress {
   return tapBottles(
     started,
-    steps
-      .slice(0, count)
-      .flatMap(({ move }) => [
-        move.sourceBottleIndex,
-        move.destinationBottleIndex,
-      ]),
+    steps.slice(0, count).flatMap(({ move, endsWhen }, index) => {
+      if (endsWhen === "selected") {
+        return [move.sourceBottleIndex];
+      }
+      return steps[index - 1]?.endsWhen === "selected"
+        ? [move.destinationBottleIndex]
+        : [move.sourceBottleIndex, move.destinationBottleIndex];
+    }),
   );
 }
 
@@ -113,12 +115,28 @@ describe("盤面", () => {
 });
 
 describe("手順", () => {
-  const boardsBeforeSteps = steps.map(
-    (_, index) => playSteps(index).boardState.bottles,
+  const pourSteps = steps.flatMap((step, index) =>
+    step.endsWhen === "poured"
+      ? [{ step, board: playSteps(index).boardState.bottles }]
+      : [],
   );
-  const [firstBoard, secondBoard, thirdBoard, fourthBoard] = boardsBeforeSteps;
-  const [first, second, third, fourth] = steps;
+  const [first, second, third, fourth] = pourSteps.map(({ step }) => step);
+  const [firstBoard, secondBoard, thirdBoard, fourthBoard] = pourSteps.map(
+    ({ board }) => board,
+  );
   const releasedBottles = playSteps(steps.length).boardState.bottles;
+
+  test("最初の手順が、ルールを示さずに注ぎ元を選ばせ、選ぶと empty を示して空のボトルへ注ぐ手順へ進むこと", () => {
+    const selected = playSteps(1);
+
+    expect(steps[0]?.endsWhen).toBe("selected");
+    expect(started.earnedRuleIds).toEqual([]);
+    expect(selected.stepIndex).toBe(1);
+    expect(selected.earnedRuleIds).toEqual(["empty"]);
+    expect(selected.boardState.sourceBottleIndex).toBe(
+      steps[1]?.move.sourceBottleIndex,
+    );
+  });
 
   test("empty を示す1手目が、空のボトルへ1つだけ注ぎ、後のルールを先取りしないこと", () => {
     const destination =
@@ -176,13 +194,14 @@ describe("手順", () => {
   });
 
   test("4手目より前の手順では、注ぎ先の空きで移る量が変わらないこと", () => {
-    const amountsLimitedByCapacity = steps.slice(0, 3).filter((step, index) => {
-      const board = boardsBeforeSteps[index] ?? [];
-      const source = board[step.move.sourceBottleIndex] ?? [];
-      return (
-        getWaterSortPourAmount(board, step.move) < countSameColorOnTop(source)
-      );
-    });
+    const amountsLimitedByCapacity = pourSteps
+      .slice(0, 3)
+      .filter(({ step, board }) => {
+        const source = board[step.move.sourceBottleIndex] ?? [];
+        return (
+          getWaterSortPourAmount(board, step.move) < countSameColorOnTop(source)
+        );
+      });
 
     expect(amountsLimitedByCapacity).toEqual([]);
   });
@@ -229,7 +248,7 @@ describe("performTutorialAction", () => {
       firstMove.sourceBottleIndex,
     );
     expect(deselected.boardState.sourceBottleIndex).toBeNull();
-    expect(deselected.stepIndex).toBe(0);
+    expect(deselected.stepIndex).toBe(1);
   });
 
   test("手順どおりに注ぐたびに、示したルールを手に入れて、最後に手を離すこと", () => {
@@ -253,7 +272,7 @@ describe("performTutorialAction", () => {
       expect(rejected.violated).toBe(true);
       expect(rejected.boardState.bottles).toEqual(pouredOut.boardState.bottles);
       expect(rejected.boardState.sourceBottleIndex).toBe(1);
-      expect(message.headline).toBe("いちばん上の色が違うと\n注げません");
+      expect(message.headline).toBe("上の色が違うと\n注げません");
     });
 
     test("満杯のボトルへ注ごうとすると、そのわけを言うこと", () => {
