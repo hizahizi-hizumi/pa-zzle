@@ -142,11 +142,11 @@ const realToneClassNames = {
   squareLastMoveFrom: "bg-[#e0782a]/15",
   // 反証は、朱が升に染みたような色。輪郭は付けない。
   squareRefutation:
-    "bg-[radial-gradient(circle_at_50%_50%,rgb(200_50_25/0.5),rgb(200_50_25/0.22)_75%)]",
+    "bg-[radial-gradient(circle_at_50%_50%,rgb(200_50_25/0.72),rgb(200_50_25/0.42)_78%)]",
   squareRejected: "bg-[#bd4024]/35",
   // 詰みは、木と別の色相（藍）が升に染みたような色。
   squareMated:
-    "bg-[radial-gradient(circle_at_50%_50%,rgb(48_46_150/0.5),rgb(48_46_150/0.22)_75%)]",
+    "bg-[radial-gradient(circle_at_50%_50%,rgb(48_46_150/0.66),rgb(48_46_150/0.4)_78%)]",
   handSelected:
     "bg-[radial-gradient(circle_at_55%_60%,rgb(70_40_10/0.16),rgb(70_40_10/0)_70%)]",
   handRejected: "bg-[#bd4024]/35",

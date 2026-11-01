@@ -8,16 +8,20 @@ import {
 } from "@/lib/motion";
 
 const rejectedPieceShakeTiming: RejectionShakeTiming = {
-  durationMs: 220,
+  durationMs: 320,
   easing: "ease-out",
 };
 
-/** 駒の幅に対する揺れ幅。1往復目を大きく、2往復目で収める。 */
+/**
+ * 駒の幅に対する揺れ幅。1往復目を大きく、2往復目で収める。
+ * 木目の細かい盤の上でも「押したが動かなかった」と分かるよう、駒の幅の 1/4 ほど振る。
+ */
 const rejectedPieceShakeKeyframes: Keyframe[] = [
   { transform: "translateX(0)" },
-  { transform: "translateX(-8%)" },
-  { transform: "translateX(8%)" },
-  { transform: "translateX(-4%)" },
+  { transform: "translateX(-24%)" },
+  { transform: "translateX(24%)" },
+  { transform: "translateX(-14%)" },
+  { transform: "translateX(7%)" },
   { transform: "translateX(0)" },
 ];
 

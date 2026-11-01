@@ -90,11 +90,7 @@ export function RealPieceDefs({ ids }: RealPieceDefsProps) {
         <stop offset="1" stopOpacity="0.7" className={realTone.pieceEdgeDark} />
       </linearGradient>
       <radialGradient id={ids.specular} cx="0.32" cy="0.22" r="0.6">
-        <stop
-          offset="0"
-          stopOpacity="0.3"
-          className={realTone.pieceSpecular}
-        />
+        <stop offset="0" stopOpacity="0.3" className={realTone.pieceSpecular} />
         <stop offset="1" stopOpacity="0" className={realTone.pieceSpecular} />
       </radialGradient>
       <linearGradient id={ids.ink} x1="0" y1="0" x2="0.3" y2="1">
