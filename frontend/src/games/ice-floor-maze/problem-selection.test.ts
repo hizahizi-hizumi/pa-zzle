@@ -1,15 +1,29 @@
 // @vitest-environment node
 
-import { difficultyLevels } from "@/games/difficulty";
+import { difficultyLevels, isInNumericRange } from "@/games/difficulty";
 import {
   assessIceFloorMazeDifficulty,
   type IceFloorMazeDifficulty,
+  type IceFloorMazeLevelCriteria,
+  iceFloorMazeLevelCriteria,
   isIceFloorMazeBoardShapeOfDifficulty,
 } from "@/games/ice-floor-maze/difficulty";
 import { analyzeIceFloorMazeDifficulty } from "@/games/ice-floor-maze/problem/difficulty-analysis";
-import { removeIceFloorMazeIrrelevantRocks } from "@/games/ice-floor-maze/problem/generation/relevant-rocks";
+import {
+  CELL_BRITTLE,
+  CELL_ICE,
+  CELL_ROCK,
+  CELL_THIN,
+  countShortestSolutions,
+  createElementRules,
+  exploreStateSpace,
+  findUsedCells,
+  measureDistancesToGoal,
+  toGenerationBoard,
+} from "@/games/ice-floor-maze/problem/generation/state-space";
 import { getIceFloorMazeSymmetryKey } from "@/games/ice-floor-maze/problem/generation/symmetry";
 import {
+  type IceFloorMazePooledProblem,
   listIceFloorMazePoolEntries,
   restoreIceFloorMazePoolEntry,
 } from "@/games/ice-floor-maze/problem/problem-pool";
@@ -21,6 +35,8 @@ import {
 import { createProblemId } from "@/games/problem-id";
 
 const difficulties = difficultyLevels.map(({ id }) => id);
+/** 分析し直して分類を確かめる、各レベルの先頭の問題の数。全問は `generate:ice-floor-maze-pool -- --verify` で確かめる。 */
+const classifiedSampleSize = 24;
 
 function listPooledProblems(difficulty: IceFloorMazeDifficulty) {
   return listIceFloorMazePoolEntries(difficulty).map(
@@ -28,11 +44,83 @@ function listPooledProblems(difficulty: IceFloorMazeDifficulty) {
   );
 }
 
+/** 全問で毎回確かめる軽い性質。分類の採用条件（条件1・2・おとり）は重いので、各レベルの先頭の問題だけで確かめる。 */
+function listStructuralViolations(
+  difficulty: IceFloorMazeDifficulty,
+  { problem, optimalMoveCount, identity }: IceFloorMazePooledProblem,
+): string[] {
+  const criteria: IceFloorMazeLevelCriteria =
+    iceFloorMazeLevelCriteria[difficulty];
+  const board = toGenerationBoard(problem.board);
+  const rules = createElementRules(board);
+  const space = exploreStateSpace(rules, problem.start, {
+    goal: problem.goal,
+  })!;
+  const toGoal = measureDistancesToGoal(space);
+  const used = findUsedCells(space);
+  const composition =
+    rules.elements.length === 0
+      ? "none"
+      : new Set(rules.kinds).size === 2
+        ? "mixed"
+        : rules.kinds[0] === CELL_BRITTLE
+          ? "brittle-rock"
+          : "thin-ice";
+  const patternMatches =
+    criteria.kind === "tactics"
+      ? composition === "none" &&
+        criteria.patterns.some((pattern) =>
+          isInNumericRange(optimalMoveCount, pattern.optimalMoveCount),
+        )
+      : criteria.patterns.some(
+          (pattern) =>
+            pattern.composition === composition &&
+            isInNumericRange(optimalMoveCount, pattern.optimalMoveCount) &&
+            isInNumericRange(rules.elements.length, pattern.elementCount),
+        );
+  const unusedDrawnCells = [...board.cells.entries()].filter(
+    ([cell, code]) =>
+      used[cell] === 0 &&
+      (code === CELL_ICE ||
+        code === CELL_THIN ||
+        ((code === CELL_ROCK || code === CELL_BRITTLE) &&
+          !rules.beyond.some((table) => used[table[cell]!] === 1))),
+  );
+  return [
+    ...(isIceFloorMazeBoardShapeOfDifficulty(identity.conditions, difficulty)
+      ? []
+      : ["盤面の形"]),
+    ...(patternMatches ? [] : ["要素・最少手数"]),
+    ...(toGoal[0] === optimalMoveCount ? [] : ["最少手数"]),
+    ...(countShortestSolutions(space, toGoal, optimalMoveCount) === 1
+      ? []
+      : ["最短解が一意でない"]),
+    ...(unusedDrawnCells.length === 0 ? [] : ["駒が通らない盤面のマス"]),
+  ].map((violation) => `${identity.seed}: ${violation}`);
+}
+
 describe("問題集", () => {
   test.each(difficulties)(
-    "レベル %s の全問題が、分析でそのレベルに分類され、保存した最少手数が分析と一致すること",
+    "レベル %s の全問題が、そのレベルの盤面の形・要素・最少手数で、最短解が一意で、駒が通らないマスを盤面に描かないこと",
     (difficulty) => {
       const pooled = listPooledProblems(difficulty);
+
+      const violations = pooled.flatMap((problem) =>
+        listStructuralViolations(difficulty, problem),
+      );
+
+      expect(pooled.length).toBeGreaterThanOrEqual(300);
+      expect(violations).toEqual([]);
+    },
+  );
+
+  test.each(difficulties)(
+    "レベル %s の先頭の問題が、分析でそのレベルに分類され、保存した最少手数が分析と一致すること",
+    (difficulty) => {
+      const pooled = listPooledProblems(difficulty).slice(
+        0,
+        classifiedSampleSize,
+      );
 
       const outcomes = pooled.map(({ problem, optimalMoveCount }) => {
         const analysis = analyzeIceFloorMazeDifficulty(problem);
@@ -40,49 +128,35 @@ describe("問題集", () => {
         const level =
           assessment.status === "classified"
             ? assessment.difficulty
-            : assessment.status;
+            : JSON.stringify(assessment);
         const analyzedMoveCount =
-          analysis.status === "invalid"
-            ? null
-            : analysis.features.optimalMoveCount;
+          analysis.status === "analyzed"
+            ? analysis.features.optimalMoveCount
+            : null;
         return analyzedMoveCount === optimalMoveCount
           ? level
           : `${level}（最少手数 ${optimalMoveCount} → ${analyzedMoveCount}）`;
       });
 
-      expect(pooled.length).toBeGreaterThanOrEqual(100);
       expect(new Set(outcomes)).toEqual(new Set([difficulty]));
     },
   );
 
   test.each(difficulties)(
-    "レベル %s の全問題が、そのレベルの盤面の形で、無関係な岩を含まないこと",
+    "レベル %s の生成条件ごとの問題数の差が、要素の種類で見て1問以内であること",
     (difficulty) => {
       const pooled = listPooledProblems(difficulty);
 
-      const violations = pooled.filter(
-        ({ problem: { board, start } }) =>
-          !isIceFloorMazeBoardShapeOfDifficulty(board, difficulty) ||
-          removeIceFloorMazeIrrelevantRocks(board, start).cells.some(
-            (cell, cellIndex) => cell !== board.cells[cellIndex],
+      const countsByComposition = Map.groupBy(pooled, ({ problem }) => {
+        const kinds = new Set(
+          problem.board.cells.filter(
+            (cell) => cell === "brittle-rock" || cell === "thin-ice",
           ),
-      );
-
-      expect(violations).toEqual([]);
-    },
-  );
-
-  test.each(difficulties)(
-    "レベル %s の盤面の形ごとの問題数の差が1問以内であること",
-    (difficulty) => {
-      const entries = listIceFloorMazePoolEntries(difficulty);
-
-      const countsByShape = Map.groupBy(
-        entries,
-        ([, width, height]) => `${width}x${height}`,
-      );
-      const counts = [...countsByShape.values()].map(
-        (shapeEntries) => shapeEntries.length,
+        );
+        return [...kinds].sort().join("+");
+      });
+      const counts = [...countsByComposition.values()].map(
+        (problems) => problems.length,
       );
 
       expect(Math.max(...counts) - Math.min(...counts)).toBeLessThanOrEqual(1);

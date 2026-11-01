@@ -13,8 +13,12 @@ import {
 } from "react-router";
 
 import { createPlayLocationState } from "@/game-catalog/play-location-state";
+import { isIceFloorMazeBoardShapeOfDifficulty } from "@/games/ice-floor-maze/difficulty";
 import { ICE_FLOOR_MAZE_DISPLAY_NAME } from "@/games/ice-floor-maze/display-name";
-import type { IceFloorMazeProblem } from "@/games/ice-floor-maze/problem/problem";
+import type {
+  IceFloorMazeBoardShape,
+  IceFloorMazeProblem,
+} from "@/games/ice-floor-maze/problem/problem";
 import { selectIceFloorMazeProblemForDifficulty } from "@/games/ice-floor-maze/problem-selection";
 import type { IceFloorMazeDirection } from "@/games/ice-floor-maze/puzzle/rules";
 import {
@@ -72,12 +76,15 @@ function readProblemId(router: PlayRouter): string | null {
 }
 
 /** 盤面の外壁の枠を除いた列数・行数。 */
-function readBoardShape(): string {
+function readBoardShape(): IceFloorMazeBoardShape {
   const board = screen.getByRole("img", { name: "盤面" });
   const [, , viewWidth, viewHeight] = (board.getAttribute("viewBox") ?? "")
     .split(" ")
     .map(Number);
-  return `${Math.round(viewWidth ?? 0)}×${Math.round(viewHeight ?? 0)}`;
+  return {
+    width: Math.round(viewWidth ?? 0),
+    height: Math.round(viewHeight ?? 0),
+  };
 }
 
 const arrowKeyByDirection = {
@@ -128,30 +135,25 @@ function openMenu(): void {
 }
 
 describe("IceFloorMazePlayView", () => {
-  const boardShapeCases = [
-    ["1", ["8×8", "8×10"]],
-    ["3", ["9×12", "10×13"]],
-    ["5", ["12×14"]],
-  ] as const;
+  const boardShapeCases = ["1", "3", "5"] as const;
 
-  describe.each(boardShapeCases)(
-    "レベル %s の場合",
-    (difficulty, levelShapes) => {
-      beforeEach(() => {
-        renderAt(`/puzzles/ice-floor-maze/play/${difficulty}`);
+  describe.each(boardShapeCases)("レベル %s の場合", (difficulty) => {
+    beforeEach(() => {
+      renderAt(`/puzzles/ice-floor-maze/play/${difficulty}`);
+    });
+
+    test("問題集からそのレベルの盤面の形に収まる問題を選んでプレイ画面を表示すること", () => {
+      const heading = screen.getByRole("heading", {
+        name: ICE_FLOOR_MAZE_DISPLAY_NAME,
       });
+      const shape = readBoardShape();
 
-      test("問題集からそのレベルの盤面の形の問題を選んでプレイ画面を表示すること", () => {
-        const heading = screen.getByRole("heading", {
-          name: ICE_FLOOR_MAZE_DISPLAY_NAME,
-        });
-        const shape = readBoardShape();
-
-        expect(heading).toBeTruthy();
-        expect(levelShapes).toContain(shape);
-      });
-    },
-  );
+      expect(heading).toBeTruthy();
+      expect(isIceFloorMazeBoardShapeOfDifficulty(shape, difficulty)).toBe(
+        true,
+      );
+    });
+  });
 
   describe("定義済みの難易度の場合", () => {
     beforeEach(() => {
@@ -183,21 +185,20 @@ describe("IceFloorMazePlayView", () => {
   describe("内部診断を使えるビルドの場合", () => {
     beforeEach(() => {
       internalDiagnostics.available = true;
-      // 方針別の計画深さが同じ値になる問題では、計画深さの表示が複数になるので、問題を固定する。
       vi.spyOn(problemSeed, "createProblemSeed").mockReturnValue("diagnostics");
       renderAt("/puzzles/ice-floor-maze/play/3");
       openMenu();
     });
 
-    test("メニューの検証情報から出題中の問題の盤面の形と分類・計画深さを開けること", () => {
+    test("メニューの検証情報から出題中の問題の盤面の形と分類・要素の種類を開けること", () => {
       fireEvent.click(screen.getByRole("menuitem", { name: "検証情報" }));
 
       const dialog = within(screen.getByRole("dialog", { name: "検証情報" }));
 
       // 出題した難易度と、分析し直した分類。
       expect(dialog.getAllByText("レベル 3")).toHaveLength(2);
-      expect(dialog.getByText(/^(9×12|10×13)$/)).toBeTruthy();
-      expect(dialog.getByText(/^3（/)).toBeTruthy();
+      expect(dialog.getByText(/^\d+×\d+$/)).toBeTruthy();
+      expect(dialog.getByText(/^(もろい岩|薄い氷)$/)).toBeTruthy();
     });
   });
 
