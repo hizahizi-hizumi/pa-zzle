@@ -231,7 +231,7 @@ export function HitofudePuzzleBoard({
     <div
       ref={boardRef}
       role="group"
-      aria-label={`${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面`}
+      aria-label={`${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面 ${size}行${size}列`}
       className="relative size-full touch-none select-none [-webkit-touch-callout:none]"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}

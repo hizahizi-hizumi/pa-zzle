@@ -68,6 +68,7 @@ describe("HitofudePuzzlePlay", () => {
     isDeadEnd: false,
     strandedCells: [],
     blockedMove: null,
+    pathNotice: null,
     backtrackCount: 2,
     undoCount: 3,
     canUndo: false,
@@ -92,7 +93,7 @@ describe("HitofudePuzzlePlay", () => {
 
     test("盤面を見せ、結果画面をまだ出さないこと", () => {
       const boardGroup = screen.getByRole("group", {
-        name: `${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面`,
+        name: `${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面 3行3列`,
       });
       const resultScreen = screen.queryByRole("region", { name: "プレイ結果" });
 
@@ -130,7 +131,7 @@ describe("HitofudePuzzlePlay", () => {
 
     test("盤面を表示しないこと", () => {
       const boardGroup = screen.queryByRole("group", {
-        name: `${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面`,
+        name: `${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面 3行3列`,
       });
 
       expect(boardGroup).toBeNull();
@@ -215,7 +216,7 @@ describe("HitofudePuzzlePlay", () => {
 
   function getBoardGroup(): HTMLElement {
     return screen.getByRole("group", {
-      name: `${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面`,
+      name: `${HITOFUDE_PUZZLE_DISPLAY_NAME}盤面 3行3列`,
     });
   }
 
@@ -471,6 +472,97 @@ describe("HitofudePuzzlePlay", () => {
 
       expect(cells[2]?.getAttribute("aria-label")).toBe("1行3列 取り残し");
     });
+  });
+
+  describe("盤面の変化の読み上げ", () => {
+    const playingProps = { progress: "playing", result: null } as const;
+    const cases = [
+      [
+        "穴に阻まれた",
+        {
+          path: [0],
+          pathNotice: { id: 1, change: "blocked", cell: 1, reason: "hole" },
+        },
+        "1行2列、穴へは進めない",
+      ],
+      [
+        "盤面の外へ進もうとした",
+        {
+          path: [0],
+          pathNotice: {
+            id: 1,
+            change: "blocked",
+            cell: null,
+            reason: "outside-board",
+          },
+        },
+        "盤面の外へは進めない",
+      ],
+      [
+        "道を縮めた",
+        {
+          path: [0, 1],
+          pathNotice: {
+            id: 2,
+            change: "shortened",
+            head: 1,
+            newlyStranded: false,
+          },
+        },
+        "1行2列まで縮めた",
+      ],
+      [
+        "行き止まりになった",
+        {
+          path: [0, 1, 4, 5, 2],
+          isDeadEnd: true,
+          strandedCells: [3, 6, 7, 8],
+          pathNotice: {
+            id: 3,
+            change: "extended",
+            head: 2,
+            newlyStranded: true,
+          },
+        },
+        "行き止まり。先端から進めるマスが無い",
+      ],
+      [
+        "取り残しが出た",
+        {
+          path: [0, 1, 4, 7],
+          strandedCells: [2, 3],
+          pathNotice: {
+            id: 4,
+            change: "extended",
+            head: 7,
+            newlyStranded: true,
+          },
+        },
+        "取り残し2マス。今の道のままでは通れない",
+      ],
+      [
+        "道を延ばしただけの",
+        {
+          path: [0, 1],
+          pathNotice: {
+            id: 5,
+            change: "extended",
+            head: 1,
+            newlyStranded: false,
+          },
+        },
+        "",
+      ],
+    ] as const;
+
+    test.each(cases)(
+      "%sとき、状態の変化を読み上げの領域に出すこと",
+      (_, props, expected) => {
+        renderResult({ ...playingProps, ...props });
+
+        expect(screen.getByRole("status").textContent).toBe(expected);
+      },
+    );
   });
 
   describe("プレイを終えて完成演出中の場合", () => {

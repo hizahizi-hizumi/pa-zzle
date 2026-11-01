@@ -147,6 +147,16 @@ describe("useHitofudePuzzlePlay", () => {
         cell: neighbor,
       });
     });
+
+    test("読み上げで知らせる変化として、阻まれたマスと理由を残すこと", () => {
+      act(() => result.current.moveHeadToward(direction));
+
+      expect(result.current.pathNotice).toMatchObject({
+        change: "blocked",
+        cell: neighbor,
+        reason: neighbor === null ? "outside-board" : "hole",
+      });
+    });
   });
 
   describe("阻まれた操作を残している場合", () => {
@@ -180,16 +190,28 @@ describe("useHitofudePuzzlePlay", () => {
       tapAll(result, solution.slice(1, 4));
     });
 
-    test("来た向きへ先端を動かすと道を1マス縮めること", () => {
+    test("来た向きへ先端を動かすと道を1マス縮め、縮んだことを残すこと", () => {
       act(() => result.current.moveHeadToward(direction));
 
       expect(result.current.path).toEqual(solution.slice(0, 3));
+      expect(result.current.pathNotice).toMatchObject({
+        change: "shortened",
+        head: solution[2],
+      });
     });
 
-    test("道の途中のマスを押すとそこまで巻き戻すこと", () => {
-      tapAll(result, [solution[1]!]);
+    test("道を延ばすと、延びたことを残すこと", () => {
+      expect(result.current.pathNotice).toMatchObject({
+        change: "extended",
+        head: solution[3],
+        newlyStranded: false,
+      });
+    });
 
-      expect(result.current.path).toEqual(solution.slice(0, 2));
+    test("待ったで、残した変化を消すこと", () => {
+      act(() => result.current.undo());
+
+      expect(result.current.pathNotice).toBeNull();
     });
 
     test("引き直しの回数と待ったの回数を返すこと", () => {
@@ -198,6 +220,12 @@ describe("useHitofudePuzzlePlay", () => {
 
       expect(result.current.backtrackCount).toBe(0);
       expect(result.current.undoCount).toBe(1);
+    });
+
+    test("道の途中のマスを押すとそこまで巻き戻すこと", () => {
+      tapAll(result, [solution[1]!]);
+
+      expect(result.current.path).toEqual(solution.slice(0, 2));
     });
 
     test("待ったで直前の1操作を取り消すこと", () => {

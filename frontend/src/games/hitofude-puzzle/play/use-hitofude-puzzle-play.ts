@@ -19,7 +19,10 @@ import {
 } from "@/games/hitofude-puzzle/puzzle/board";
 import { isHitofudePuzzleDeadEnd } from "@/games/hitofude-puzzle/puzzle/rules";
 import { getHitofudePuzzleHead } from "@/games/hitofude-puzzle/puzzle/state";
-import type { HitofudePuzzleTraceStep } from "@/games/hitofude-puzzle/puzzle/transitions";
+import type {
+  HitofudePuzzleExtensionRejection,
+  HitofudePuzzleTraceStep,
+} from "@/games/hitofude-puzzle/puzzle/transitions";
 import {
   calculateHitofudePuzzlePlayScore,
   calculateHitofudePuzzleSpeedScoreRule,
@@ -74,6 +77,27 @@ export type HitofudePuzzleBlockedMove = {
   cell: number | null;
 };
 
+/**
+ * 最後の盤面操作で、道に起きた変化。プレイ画面が読み上げで知らせるために持つ。
+ * `id` は操作ごとに変わり、同じ変化が続いても別の操作として知らせられるようにする。
+ * - `blocked`: 道を延ばせなかった。`cell` と `reason` は進もうとしたマスとその理由。
+ * - `shortened`: 道が縮んだ（来た向きへ戻った・道の途中のマスを押した）。`head` は縮んだ後の先端。
+ * - `extended`: 道が延びた。`head` は延びた後の先端。
+ * `newlyStranded` は、この操作で取り残しのマスが増えたか（取り残しを知らせない難易度では常に `false`）。
+ */
+export type HitofudePuzzlePathNotice = { id: number } & (
+  | {
+      change: "blocked";
+      cell: number | null;
+      reason: HitofudePuzzleExtensionRejection;
+    }
+  | {
+      change: "shortened" | "extended";
+      head: number;
+      newlyStranded: boolean;
+    }
+);
+
 /** 操作が進もうとした先。 */
 type HitofudePuzzleMoveTarget = Pick<
   HitofudePuzzleBlockedMove,
@@ -97,6 +121,8 @@ export type HitofudePuzzlePlay = GamePlay<
     strandedCells: readonly number[];
     /** 最後に道を延ばせなかった操作。 */
     blockedMove: HitofudePuzzleBlockedMove | null;
+    /** 最後の盤面操作（なぞり・矢印キー・マスを押す）で道に起きた変化。待った・盤面を戻すの後は `null`。 */
+    pathNotice: HitofudePuzzlePathNotice | null;
     /** ここまでの引き直しの回数。なぞりを離したとき・矢印キー・待った・盤面を戻すの後に数える。 */
     backtrackCount: number;
     /** ここまでに待ったを使った回数。 */
@@ -117,6 +143,7 @@ type HitofudePuzzlePlayState = {
   session: HitofudePuzzleSession;
   progress: GameProgress;
   blockedMove: HitofudePuzzleBlockedMove | null;
+  pathNotice: HitofudePuzzlePathNotice | null;
 };
 
 function createPlayState(
@@ -129,6 +156,7 @@ function createPlayState(
     session: createHitofudePuzzleSession(problem, startedAt),
     progress: "playing",
     blockedMove: null,
+    pathNotice: null,
   };
 }
 
@@ -151,22 +179,56 @@ export function createHitofudePuzzleResult(
   };
 }
 
-/** 道を変える操作の結果を反映する。延ばせなかったときは、阻まれた操作として残す。 */
+/** 道を変える操作の前後の道から、知らせる変化を求める。道が変わらなければ `null`。 */
+function findPathNotice(
+  before: HitofudePuzzleSession,
+  after: HitofudePuzzleSession,
+  id: number,
+  listStrandedCells: (session: HitofudePuzzleSession) => readonly number[],
+): HitofudePuzzlePathNotice | null {
+  const beforeLength = before.puzzleState.path.length;
+  const afterLength = after.puzzleState.path.length;
+  if (beforeLength === afterLength) {
+    return null;
+  }
+  return {
+    id,
+    change: afterLength < beforeLength ? "shortened" : "extended",
+    head: getHitofudePuzzleHead(after.puzzleState),
+    newlyStranded:
+      listStrandedCells(after).length > listStrandedCells(before).length,
+  };
+}
+
+/**
+ * 道を変える操作の結果を反映する。延ばせなかったときは、阻まれた操作として残す。
+ * 道が変わったか阻まれたときは、読み上げで知らせる変化を残す。
+ */
 function applyPathChange(
   current: HitofudePuzzlePlayState,
   { session, rejection }: HitofudePuzzleSessionPathChange,
-  blockedMoveId: number,
+  operationId: number,
   target: HitofudePuzzleMoveTarget,
+  listStrandedCells: (session: HitofudePuzzleSession) => readonly number[],
 ): HitofudePuzzlePlayState {
   const applied = applyPlaySession(current, session);
   if (rejection === null) {
-    return applied;
+    const pathNotice = findPathNotice(
+      current.session,
+      session,
+      operationId,
+      listStrandedCells,
+    );
+    return pathNotice === null ? applied : { ...applied, pathNotice };
   }
   return {
     ...applied,
-    blockedMove: {
-      id: blockedMoveId,
-      ...target,
+    blockedMove: { id: operationId, ...target },
+    pathNotice: {
+      id: operationId,
+      change: "blocked",
+      cell: target.cell,
+      reason: rejection,
     },
   };
 }
@@ -227,44 +289,70 @@ export function useHitofudePuzzlePlay(
       Date.now(),
     ),
   );
-  const { session, progress, problemIdentity, workload, blockedMove } = play;
+  const {
+    session,
+    progress,
+    problemIdentity,
+    workload,
+    blockedMove,
+    pathNotice,
+  } = play;
   const elapsedMs = useSessionElapsedMs(session);
   const { problem, puzzleState } = session;
+  const showsStranding = showsHitofudePuzzleStranding(difficulty);
   const strandedCells = useMemo(
     () =>
-      showsHitofudePuzzleStranding(difficulty)
+      showsStranding
         ? listHitofudePuzzleStrandedCells(problem, puzzleState.path)
         : [],
-    [difficulty, problem, puzzleState],
+    [showsStranding, problem, puzzleState],
+  );
+  const listStrandedCells = useCallback(
+    (target: HitofudePuzzleSession) =>
+      showsStranding
+        ? listHitofudePuzzleStrandedCells(
+            target.problem,
+            target.puzzleState.path,
+          )
+        : [],
+    [showsStranding],
   );
 
-  const nextBlockedMoveId = useRef(0);
+  const nextOperationId = useRef(0);
 
-  const beginStroke = useCallback((cell: number) => {
-    const operatedAt = Date.now();
-    const blockedMoveId = nextBlockedMoveId.current++;
-    setPlay((current) =>
-      applyPathChange(
-        current,
-        beginHitofudePuzzleSessionStroke(current.session, cell, operatedAt),
-        blockedMoveId,
-        targetCell(current.session, cell),
-      ),
-    );
-  }, []);
+  const beginStroke = useCallback(
+    (cell: number) => {
+      const operatedAt = Date.now();
+      const operationId = nextOperationId.current++;
+      setPlay((current) =>
+        applyPathChange(
+          current,
+          beginHitofudePuzzleSessionStroke(current.session, cell, operatedAt),
+          operationId,
+          targetCell(current.session, cell),
+          listStrandedCells,
+        ),
+      );
+    },
+    [listStrandedCells],
+  );
 
-  const traceStroke = useCallback((step: HitofudePuzzleTraceStep) => {
-    const operatedAt = Date.now();
-    const blockedMoveId = nextBlockedMoveId.current++;
-    setPlay((current) =>
-      applyPathChange(
-        current,
-        traceHitofudePuzzleSessionStroke(current.session, step, operatedAt),
-        blockedMoveId,
-        targetCell(current.session, step.to),
-      ),
-    );
-  }, []);
+  const traceStroke = useCallback(
+    (step: HitofudePuzzleTraceStep) => {
+      const operatedAt = Date.now();
+      const operationId = nextOperationId.current++;
+      setPlay((current) =>
+        applyPathChange(
+          current,
+          traceHitofudePuzzleSessionStroke(current.session, step, operatedAt),
+          operationId,
+          targetCell(current.session, step.to),
+          listStrandedCells,
+        ),
+      );
+    },
+    [listStrandedCells],
+  );
 
   const endStroke = useCallback(() => {
     setPlay((current) =>
@@ -275,22 +363,26 @@ export function useHitofudePuzzlePlay(
     );
   }, []);
 
-  const moveHeadToward = useCallback((direction: HitofudePuzzleDirection) => {
-    const operatedAt = Date.now();
-    const blockedMoveId = nextBlockedMoveId.current++;
-    setPlay((current) =>
-      applyPathChange(
-        current,
-        moveHitofudePuzzleSessionHeadToward(
-          current.session,
-          direction,
-          operatedAt,
+  const moveHeadToward = useCallback(
+    (direction: HitofudePuzzleDirection) => {
+      const operatedAt = Date.now();
+      const operationId = nextOperationId.current++;
+      setPlay((current) =>
+        applyPathChange(
+          current,
+          moveHitofudePuzzleSessionHeadToward(
+            current.session,
+            direction,
+            operatedAt,
+          ),
+          operationId,
+          targetDirection(current.session, direction),
+          listStrandedCells,
         ),
-        blockedMoveId,
-        targetDirection(current.session, direction),
-      ),
-    );
-  }, []);
+      );
+    },
+    [listStrandedCells],
+  );
 
   const undo = useCallback(() => {
     setPlay((current) => {
@@ -298,7 +390,9 @@ export function useHitofudePuzzlePlay(
         current,
         undoHitofudePuzzleSession(current.session),
       );
-      return next === current ? current : { ...next, blockedMove: null };
+      return next === current
+        ? current
+        : { ...next, blockedMove: null, pathNotice: null };
     });
   }, []);
 
@@ -308,7 +402,9 @@ export function useHitofudePuzzlePlay(
         current,
         restartHitofudePuzzleSession(current.session),
       );
-      return next === current ? current : { ...next, blockedMove: null };
+      return next === current
+        ? current
+        : { ...next, blockedMove: null, pathNotice: null };
     });
   }, []);
 
@@ -320,6 +416,7 @@ export function useHitofudePuzzlePlay(
         createHitofudePuzzleSession(current.session.problem, startedAt),
       ),
       blockedMove: null,
+      pathNotice: null,
     }));
   }, []);
 
@@ -358,6 +455,7 @@ export function useHitofudePuzzlePlay(
     isDeadEnd: isHitofudePuzzleDeadEnd(problem, puzzleState.path),
     strandedCells,
     blockedMove,
+    pathNotice,
     backtrackCount: session.backtrackCount,
     undoCount: session.undoCount,
     canUndo: canUndoHitofudePuzzleSession(session),

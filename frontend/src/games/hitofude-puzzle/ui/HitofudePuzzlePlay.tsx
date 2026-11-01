@@ -6,6 +6,7 @@ import type { HitofudePuzzleDifficulty } from "@/games/hitofude-puzzle/difficult
 import { HITOFUDE_PUZZLE_DISPLAY_NAME } from "@/games/hitofude-puzzle/display-name";
 import type {
   HitofudePuzzleBlockedMove,
+  HitofudePuzzlePathNotice,
   HitofudePuzzleResult,
 } from "@/games/hitofude-puzzle/play/use-hitofude-puzzle-play";
 import type {
@@ -16,6 +17,7 @@ import type { HitofudePuzzleTraceStep } from "@/games/hitofude-puzzle/puzzle/tra
 import { findArrowKeyDirection } from "@/games/hitofude-puzzle/ui/arrow-key-direction";
 import { HitofudePuzzleBoard } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard";
 import { HitofudePuzzleHowToPlayDialog } from "@/games/hitofude-puzzle/ui/HitofudePuzzleHowToPlayDialog";
+import { HitofudePuzzleStatusAnnouncement } from "@/games/hitofude-puzzle/ui/HitofudePuzzlePlay/HitofudePuzzleStatusAnnouncement";
 import { HitofudePuzzleResultScreen } from "@/games/hitofude-puzzle/ui/result/HitofudePuzzleResultScreen";
 import type {
   GamePlayScreenProps,
@@ -35,6 +37,7 @@ type HitofudePuzzlePlayProps = GamePlayScreenProps<
     isDeadEnd: boolean;
     strandedCells: readonly number[];
     blockedMove: HitofudePuzzleBlockedMove | null;
+    pathNotice: HitofudePuzzlePathNotice | null;
     backtrackCount: number;
     undoCount: number;
     onBeginStroke: (cell: number) => void;
@@ -54,6 +57,7 @@ export function HitofudePuzzlePlay({
   isDeadEnd,
   strandedCells,
   blockedMove,
+  pathNotice,
   backtrackCount,
   undoCount,
   canUndo,
@@ -164,6 +168,12 @@ export function HitofudePuzzlePlay({
             onClearAnimationComplete={onClearAnimationComplete}
           />
         </div>
+        <HitofudePuzzleStatusAnnouncement
+          board={board}
+          notice={pathNotice}
+          isDeadEnd={isDeadEnd}
+          strandedCellCount={strandedCells.length}
+        />
       </main>
       <footer className="grid h-28 shrink-0 items-end px-4 pb-2">
         <div className="flex h-14 items-center justify-center">
