@@ -198,17 +198,48 @@ function getFilterButton(): HTMLElement {
   return screen.getByRole("button", { name: /^絞り込み/ });
 }
 
+/** 絞り込みの選択肢。読み上げ名は、名前に当たる問題の数を添えた「名前、数問」。 */
+function getFilterOption(
+  panel: HTMLElement,
+  groupName: string,
+  optionName: string,
+): HTMLElement {
+  return within(
+    within(panel).getByRole("toolbar", { name: groupName }),
+  ).getByRole("button", { name: new RegExp(`^${optionName}、`) });
+}
+
 function chooseFilterOption(
   panel: HTMLElement,
   groupName: string,
   optionName: string,
 ) {
-  fireEvent.click(
-    within(within(panel).getByRole("toolbar", { name: groupName })).getByRole(
-      "button",
-      { name: optionName },
-    ),
-  );
+  fireEvent.click(getFilterOption(panel, groupName, optionName));
+}
+
+function listFilterOptionNames(panel: HTMLElement, groupName: string) {
+  return within(within(panel).getByRole("toolbar", { name: groupName }))
+    .getAllByRole("button")
+    .map((option) => option.getAttribute("aria-label"));
+}
+
+/** 押せない選択肢の名前。 */
+function listDisabledFilterOptionNames(panel: HTMLElement) {
+  return within(panel)
+    .getAllByRole("toolbar")
+    .flatMap((toolbar) => within(toolbar).getAllByRole("button"))
+    .filter((option) => option.hasAttribute("disabled"))
+    .map((option) => option.getAttribute("aria-label"));
+}
+
+/** 要素の入れ子と、要素ごとの属性の名前。文字・属性の値は除く。 */
+function describeElementStructure(element: Element): string {
+  const attributeNames = [...element.attributes]
+    .map(({ name }) => name)
+    .sort()
+    .join(",");
+  const children = [...element.children].map(describeElementStructure).join("");
+  return `<${element.tagName} ${attributeNames}>${children}</${element.tagName}>`;
 }
 
 function getSheetScroller(name: string): HTMLElement {
@@ -777,22 +808,52 @@ describe("GameZukanScreen", () => {
       panel = await screen.findByRole("dialog", { name: "絞り込み" });
     });
 
-    test("状態・問題の特徴・成績の種類ごとに、開いているレベルで選べる選択肢を示すこと", () => {
+    test("状態・問題の特徴・成績の種類ごとに、開いているレベルで選べる選択肢を、当たる問題の数を添えて示すこと", () => {
       const toolbarCount = within(panel).getAllByRole("toolbar").length;
       const groups = ["状態", "初期数字", "ミス", "手数"].map((name) => [
         name,
-        within(within(panel).getByRole("toolbar", { name }))
-          .getAllByRole("button")
-          .map((option) => option.textContent),
+        listFilterOptionNames(panel, name),
       ]);
 
       expect(toolbarCount).toBe(4);
       expect(groups).toEqual([
-        ["状態", ["perfect", "great", "good", "clear", "挑戦中", "未挑戦"]],
-        ["初期数字", ["24個", "25個", "26個"]],
-        ["ミス", ["ミスなし", "ミスあり"]],
-        ["手数", ["最短手数", "最短より多い"]],
+        [
+          "状態",
+          [
+            "perfect、0問",
+            "great、1問",
+            "good、0問",
+            "clear、1問",
+            "挑戦中、1問",
+            "未挑戦、1問",
+          ],
+        ],
+        ["初期数字", ["24個、2問", "25個、1問", "26個、1問"]],
+        ["ミス", ["ミスなし、1問", "ミスあり、0問"]],
+        ["手数", ["最短手数、0問", "最短より多い、1問"]],
       ]);
+    });
+
+    test("当たる問題が無い選択肢を押せなくすること", () => {
+      const disabledNames = listDisabledFilterOptionNames(panel);
+
+      expect(disabledNames).toEqual([
+        "perfect、0問",
+        "good、0問",
+        "ミスあり、0問",
+        "最短手数、0問",
+      ]);
+    });
+
+    test("選択肢を選んでも、選択肢の中の要素の並びを変えないこと", () => {
+      const option = getFilterOption(panel, "状態", "great");
+      const before = describeElementStructure(option);
+
+      fireEvent.click(option);
+      const after = describeElementStructure(option);
+
+      expect(option.getAttribute("aria-pressed")).toBe("true");
+      expect(after).toBe(before);
     });
 
     test("開いているレベルの全問の特徴の値だけを求めること", () => {
@@ -813,6 +874,22 @@ describe("GameZukanScreen", () => {
       beforeEach(() => {
         chooseFilterOption(panel, "状態", "挑戦中");
         chooseFilterOption(panel, "状態", "未挑戦");
+      });
+
+      test("ほかの種類の選択肢には、選んだ状態の中で当たる問題の数を示し、無いものを押せなくすること", () => {
+        const featureNames = listFilterOptionNames(panel, "初期数字");
+        const disabledNames = listDisabledFilterOptionNames(panel);
+
+        expect(featureNames).toEqual(["24個、0問", "25個、1問", "26個、1問"]);
+        expect(disabledNames).toEqual([
+          "perfect、0問",
+          "good、0問",
+          "24個、0問",
+          "ミスなし、0問",
+          "ミスあり、0問",
+          "最短手数、0問",
+          "最短より多い、0問",
+        ]);
       });
 
       test("当たった問題を番号の順に前へ、当たらなかった問題を条件外として番号の順に後ろへ並べること", () => {
@@ -955,10 +1032,33 @@ describe("GameZukanScreen", () => {
       });
     });
 
+    describe("選んでいる選択肢に当たる問題が、ほかの種類の条件で無くなった場合", () => {
+      beforeEach(() => {
+        chooseFilterOption(panel, "状態", "great");
+        chooseFilterOption(panel, "状態", "挑戦中");
+        chooseFilterOption(panel, "初期数字", "24個");
+      });
+
+      test("選んでいる選択肢は、当たる数が0でも押せて、押すと外せること", () => {
+        const option = getFilterOption(panel, "状態", "挑戦中");
+        const nameBefore = option.getAttribute("aria-label");
+        const disabledBefore = option.hasAttribute("disabled");
+
+        fireEvent.click(option);
+
+        expect(nameBefore).toBe("挑戦中、0問");
+        expect(disabledBefore).toBe(false);
+        expect(option.getAttribute("aria-pressed")).toBe("false");
+        expect(option.hasAttribute("disabled")).toBe(true);
+      });
+    });
+
     describe("当たる問題が無い場合", () => {
       beforeEach(() => {
-        chooseFilterOption(panel, "状態", "未挑戦");
-        chooseFilterOption(panel, "ミス", "ミスなし");
+        chooseFilterOption(panel, "状態", "great");
+        chooseFilterOption(panel, "状態", "挑戦中");
+        chooseFilterOption(panel, "初期数字", "24個");
+        chooseFilterOption(panel, "状態", "great");
       });
 
       test("当たる問題が無いことを示し、全問を条件外として番号の順に並べること", () => {

@@ -19,10 +19,17 @@ const toggleVariants = cva(
         sm: "h-8 min-w-8 px-1.5",
         lg: "h-10 min-w-10 px-2.5",
       },
+      // filled: 押している間は主色で塗って文字を反転させ、押していないものと塗りの明暗ではっきり見分けさせる。
+      selection: {
+        default: "",
+        filled:
+          "data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:data-[state=on]:bg-primary/90 hover:data-[state=on]:text-primary-foreground",
+      },
     },
     defaultVariants: {
       variant: "default",
       size: "default",
+      selection: "default",
     },
   }
 )
@@ -31,13 +38,14 @@ function Toggle({
   className,
   variant,
   size,
+  selection,
   ...props
 }: React.ComponentProps<typeof TogglePrimitive.Root> &
   VariantProps<typeof toggleVariants>) {
   return (
     <TogglePrimitive.Root
       data-slot="toggle"
-      className={cn(toggleVariants({ variant, size, className }))}
+      className={cn(toggleVariants({ variant, size, selection, className }))}
       {...props}
     />
   )

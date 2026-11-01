@@ -1,6 +1,7 @@
 import type { ProblemFeatureValue } from "@/games/problem-feature";
 import type { ProblemId } from "@/games/problem-id";
 import {
+  countZukanProblemsByStatus,
   type GameZukan,
   getZukanProblemStatus,
   type ZukanProblem,
@@ -294,6 +295,100 @@ export function createZukanFilterMatcher(
         options.some((option) => isValueInOption(value, option))
       );
     });
+  };
+}
+
+/** 選択肢ごとの、当たる問題の数。 */
+export type ZukanFilterOptionCounts = {
+  statuses: Readonly<Record<ZukanProblemStatus, number>>;
+  /** 特徴の軸の ID ごとに、選択肢のキーごとの数。 */
+  features: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  performances: Readonly<Record<ZukanPerformanceCondition, number>>;
+};
+
+function countFeatureOptions(
+  problems: readonly ZukanProblem[],
+  conditions: ZukanFilterConditions,
+  levelFeatures: ZukanLevelFeatures,
+): Record<string, Record<string, number>> {
+  return Object.fromEntries(
+    levelFeatures.axes.map(({ axisId, options }) => {
+      const matchesOthers = createZukanFilterMatcher(
+        { ...conditions, features: { ...conditions.features, [axisId]: [] } },
+        levelFeatures,
+      );
+      const counts: Record<string, number> = Object.fromEntries(
+        options.map((option) => [getZukanFeatureOptionKey(option), 0]),
+      );
+      for (const problem of problems.filter(matchesOthers)) {
+        const value = levelFeatures.valuesByProblem
+          .get(problem.problemId)
+          ?.get(axisId);
+        const option =
+          value === undefined
+            ? undefined
+            : options.find((candidate) => isValueInOption(value, candidate));
+        if (option !== undefined) {
+          const key = getZukanFeatureOptionKey(option);
+          counts[key] = (counts[key] ?? 0) + 1;
+        }
+      }
+      return [axisId, counts];
+    }),
+  );
+}
+
+function countPerformanceConditions(
+  problems: readonly ZukanProblem[],
+): Record<ZukanPerformanceCondition, number> {
+  const conditions = Object.values(zukanPerformanceConditionsByAxis).flat();
+  const counts: Record<ZukanPerformanceCondition, number> = {
+    "no-mistakes": 0,
+    "with-mistakes": 0,
+    "optimal-moves": 0,
+    "over-optimal-moves": 0,
+  };
+  for (const problem of problems) {
+    for (const condition of conditions) {
+      if (meetsPerformance(problem, condition)) {
+        counts[condition] += 1;
+      }
+    }
+  }
+  return counts;
+}
+
+/**
+ * 選択肢ごとに、その選択肢とほかの種類の条件に当たる問題を数える。同じ種類（特徴は同じ軸）で選んでいるほかの選択肢は数に関わらない。
+ * 種類の中はどれかに当たればよいので、選択肢を選ぶと、少なくともこの数の問題が当たる。
+ * 特徴の選択肢は、レベルの特徴 `levelFeatures` を求めているときだけ数える。
+ */
+export function countZukanFilterOptions(
+  problems: readonly ZukanProblem[],
+  conditions: ZukanFilterConditions,
+  levelFeatures: ZukanLevelFeatures | null,
+): ZukanFilterOptionCounts {
+  return {
+    statuses: countZukanProblemsByStatus(
+      problems.filter(
+        createZukanFilterMatcher(
+          { ...conditions, statuses: [] },
+          levelFeatures,
+        ),
+      ),
+    ),
+    features:
+      levelFeatures === null
+        ? {}
+        : countFeatureOptions(problems, conditions, levelFeatures),
+    performances: countPerformanceConditions(
+      problems.filter(
+        createZukanFilterMatcher(
+          { ...conditions, performances: [] },
+          levelFeatures,
+        ),
+      ),
+    ),
   };
 }
 

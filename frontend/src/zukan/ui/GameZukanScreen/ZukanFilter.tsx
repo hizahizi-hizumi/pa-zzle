@@ -24,6 +24,7 @@ import {
   countZukanFilterConditions,
   noZukanFilterConditions,
   type ZukanFilterConditions,
+  type ZukanFilterOptionCounts,
   type ZukanPerformanceAxis,
 } from "@/zukan/zukan-filter";
 
@@ -34,6 +35,10 @@ type ZukanFilterProps = {
   /** 開いているレベルで選べる特徴の軸。条件を選ぶ並びを開いている間だけ求める。 */
   featureAxes: readonly ZukanFilterFeatureAxis[];
   performanceAxes: readonly ZukanPerformanceAxis[];
+  /** 開いているレベルの選択肢ごとの、今の条件で当たる問題の数。 */
+  optionCounts: ZukanFilterOptionCounts;
+  /** 開いているレベルの選択肢ごとの、条件をかけないときに当たる問題の数。 */
+  optionCountLimits: ZukanFilterOptionCounts;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConditionsChange: (conditions: ZukanFilterConditions) => void;
@@ -61,6 +66,8 @@ export function ZukanFilter({
   matchedCount,
   featureAxes,
   performanceAxes,
+  optionCounts,
+  optionCountLimits,
   open,
   onOpenChange,
   onConditionsChange,
@@ -81,8 +88,8 @@ export function ZukanFilter({
       <ListFilterIcon aria-hidden="true" />
       絞り込み
       {isFiltering && (
-        <Badge variant="secondary" className="tabular-nums">
-          {conditionCount}
+        <Badge variant="secondary">
+          <span className="tabular-nums">{conditionCount}</span>
         </Badge>
       )}
     </Button>
@@ -92,6 +99,8 @@ export function ZukanFilter({
       conditions={conditions}
       featureAxes={featureAxes}
       performanceAxes={performanceAxes}
+      optionCounts={optionCounts}
+      optionCountLimits={optionCountLimits}
       onConditionsChange={onConditionsChange}
     />
   );

@@ -8,6 +8,7 @@ import {
   arrangeZukanProblems,
   collectZukanLevelFeatures,
   countZukanFilterConditions,
+  countZukanFilterOptions,
   createZukanFilterMatcher,
   getZukanFeatureOptionKey,
   hasZukanFeatureConditions,
@@ -310,6 +311,161 @@ describe("createZukanFilterMatcher", () => {
       const matchedNumbers = listNumbers(problems.filter(matches));
 
       expect(matchedNumbers).toEqual([]);
+    });
+  });
+});
+
+describe("countZukanFilterOptions", () => {
+  const problems = [
+    createSolvedProblem(1, {
+      bestScore: 100,
+      fewestMistakes: 0,
+      fewestMoves: { completionMoveCount: 20, optimalMoveCount: 20 },
+    }),
+    createSolvedProblem(2, {
+      bestScore: 85,
+      fewestMistakes: 2,
+      fewestMoves: { completionMoveCount: 24, optimalMoveCount: 20 },
+    }),
+    createSolvedProblem(3, {
+      bestScore: 95,
+      fewestMistakes: 0,
+      fewestMoves: { completionMoveCount: 22, optimalMoveCount: 20 },
+    }),
+    createUnsolvedProblem(4, true),
+    createUnsolvedProblem(5, false),
+  ];
+  const colorValues: Record<string, number> = {
+    "p-1": 4,
+    "p-2": 5,
+    "p-3": 6,
+    "p-4": 4,
+    "p-5": 6,
+  };
+  const emptyValues: Record<string, number> = {
+    "p-1": 1,
+    "p-2": 2,
+    "p-3": 2,
+    "p-4": 2,
+    "p-5": 1,
+  };
+  const levelFeatures = collectZukanLevelFeatures(
+    problems,
+    [{ id: "colors" }, { id: "empty" }],
+    ({ problemId }) =>
+      new Map([
+        ["colors", count(colorValues[problemId] ?? 0)],
+        ["empty", count(emptyValues[problemId] ?? 0)],
+      ]),
+  );
+  function key(value: number): string {
+    return getZukanFeatureOptionKey({ kind: "count", min: value, max: value });
+  }
+
+  test("条件が無ければ、選択肢ごとにその選択肢だけに当たる問題を数えること", () => {
+    const counts = countZukanFilterOptions(
+      problems,
+      noZukanFilterConditions,
+      levelFeatures,
+    );
+
+    expect(counts).toEqual({
+      statuses: {
+        perfect: 1,
+        great: 1,
+        good: 1,
+        clear: 0,
+        attempted: 1,
+        untouched: 1,
+      },
+      features: {
+        colors: { [key(4)]: 2, [key(5)]: 1, [key(6)]: 2 },
+        empty: { [key(1)]: 2, [key(2)]: 3 },
+      },
+      performances: {
+        "no-mistakes": 2,
+        "with-mistakes": 1,
+        "optimal-moves": 1,
+        "over-optimal-moves": 2,
+      },
+    });
+  });
+
+  test("ほかの種類の条件に当たる問題だけを数え、同じ種類で選んでいる選択肢は数に関わらないこと", () => {
+    const counts = countZukanFilterOptions(
+      problems,
+      {
+        statuses: ["perfect", "untouched"],
+        features: { colors: [key(4)] },
+        performances: ["over-optimal-moves"],
+      },
+      levelFeatures,
+    );
+
+    expect(counts).toEqual({
+      statuses: {
+        perfect: 0,
+        great: 0,
+        good: 0,
+        clear: 0,
+        attempted: 0,
+        untouched: 0,
+      },
+      features: {
+        colors: { [key(4)]: 0, [key(5)]: 0, [key(6)]: 0 },
+        empty: { [key(1)]: 0, [key(2)]: 0 },
+      },
+      performances: {
+        "no-mistakes": 1,
+        "with-mistakes": 0,
+        "optimal-moves": 1,
+        "over-optimal-moves": 0,
+      },
+    });
+  });
+
+  test("ほかの種類の条件を組み合わせても、選択肢ごとに数えること", () => {
+    const counts = countZukanFilterOptions(
+      problems,
+      {
+        statuses: ["perfect", "great", "untouched"],
+        features: { empty: [key(1)] },
+        performances: [],
+      },
+      levelFeatures,
+    );
+
+    expect(counts).toEqual({
+      statuses: {
+        perfect: 1,
+        great: 0,
+        good: 0,
+        clear: 0,
+        attempted: 0,
+        untouched: 1,
+      },
+      features: {
+        colors: { [key(4)]: 1, [key(5)]: 0, [key(6)]: 1 },
+        empty: { [key(1)]: 2, [key(2)]: 1 },
+      },
+      performances: {
+        "no-mistakes": 1,
+        "with-mistakes": 0,
+        "optimal-moves": 1,
+        "over-optimal-moves": 0,
+      },
+    });
+  });
+
+  describe("特徴を求めていない場合", () => {
+    test("特徴の選択肢を数えないこと", () => {
+      const counts = countZukanFilterOptions(
+        problems,
+        noZukanFilterConditions,
+        null,
+      );
+
+      expect(counts.features).toEqual({});
     });
   });
 });

@@ -61,6 +61,7 @@ import {
   arrangeZukanProblems,
   collectZukanLevelFeatures,
   countZukanFilterConditions,
+  countZukanFilterOptions,
   createZukanFilterMatcher,
   hasZukanFeatureConditions,
   listZukanPerformanceAxes,
@@ -130,6 +131,8 @@ function findSelectedProblem(
   const problem = problems[index];
   return problem ? { problem, index } : null;
 }
+
+const noProblems: readonly ZukanProblem[] = [];
 
 function arrangeOpenProblems(
   section: ZukanDifficultySection | undefined,
@@ -321,6 +324,21 @@ export function GameZukanScreen({
     () => listZukanPerformanceAxes(zukan),
     [zukan],
   );
+  const openProblems = openSection?.problems ?? noProblems;
+  const filterOptionCounts = useMemo(
+    () =>
+      countZukanFilterOptions(openProblems, filterConditions, levelFeatures),
+    [openProblems, filterConditions, levelFeatures],
+  );
+  const filterOptionCountLimits = useMemo(
+    () =>
+      countZukanFilterOptions(
+        openProblems,
+        noZukanFilterConditions,
+        levelFeatures,
+      ),
+    [openProblems, levelFeatures],
+  );
   const openAppearance: ZukanChangeAppearance =
     prefersReducedMotion || openRevealStatus === "marked"
       ? "marked"
@@ -508,6 +526,8 @@ export function GameZukanScreen({
             matchedCount={arrangement.matchedCount}
             featureAxes={listFilterFeatureAxes(levelFeatures, featureAxes)}
             performanceAxes={performanceAxes}
+            optionCounts={filterOptionCounts}
+            optionCountLimits={filterOptionCountLimits}
             open={isFilterOpen}
             onOpenChange={handleFilterOpenChange}
             onConditionsChange={handleFilterConditionsChange}
