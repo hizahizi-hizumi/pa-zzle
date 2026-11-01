@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 
-import {
-  playGameSelectSound,
-  usePrepareAppDecisionSounds,
-} from "@/components/app-decision-sound";
+import { playGameSelectSound } from "@/components/app-decision-sound";
 import { GamePictogram } from "@/components/GamePictogram";
 import { SoundEffectsToggle } from "@/components/GameSelectionGallery/SoundEffectsToggle";
 import type { Path } from "@/router";
@@ -24,7 +21,6 @@ export function GameSelectionGallery({
   games,
   recordsTo,
 }: GameSelectionGalleryProps) {
-  usePrepareAppDecisionSounds();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const selectedGame = games[selectedIndex] ?? games[0];
 

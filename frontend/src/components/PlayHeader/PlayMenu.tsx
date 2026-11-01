@@ -10,10 +10,7 @@ import {
 } from "lucide-react";
 import { useSyncExternalStore } from "react";
 
-import {
-  usePrepareAppDecisionSounds,
-  withPlayStartSound,
-} from "@/components/app-decision-sound";
+import { withPlayStartSound } from "@/components/app-decision-sound";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -51,7 +48,6 @@ export function PlayMenu({
   onOpenHowToPlay,
   onOpenDiagnostics,
 }: PlayMenuProps) {
-  usePrepareAppDecisionSounds();
   const soundEffectsEnabled = useSyncExternalStore(
     subscribeSoundEffectsEnabled,
     isSoundEffectsEnabled,

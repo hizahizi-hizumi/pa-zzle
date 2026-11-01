@@ -5,9 +5,9 @@ import { prefersReducedMotion } from "@/lib/motion";
 import { prepareSoundEffects, type SoundEffect } from "@/lib/sound-effects";
 
 /**
- * プレイ画面で鳴らすゲームの効果音を、画面を出したときに読み込み始め、次の操作で音を出せるようにする。
- * ゲームの効果音のフック（`use<Game>SoundEffects`）で、そのゲームの効果音すべてを渡して呼ぶ。
- * `sounds` はモジュールの最上位で作った一覧を渡す。
+ * 効果音を鳴らしうる画面を出したときに、その効果音の読み込みを始め、次の操作で音を出せるようにする。
+ * ゲームの効果音のフック（`use<Game>SoundEffects`）は、そのゲームの効果音すべてを渡して呼ぶ。
+ * アプリの画面の音と結果の報酬の音も、それを鳴らす画面の上位で呼ぶ。
  */
 export function usePrepareSoundEffects(sounds: readonly SoundEffect[]): void {
   useEffect(() => {

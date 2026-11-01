@@ -1,9 +1,6 @@
 import { PlayIcon } from "lucide-react";
 
-import {
-  usePrepareAppDecisionSounds,
-  withPlayStartSound,
-} from "@/components/app-decision-sound";
+import { withPlayStartSound } from "@/components/app-decision-sound";
 import { Button } from "@/components/ui/button";
 
 type ReplayPlayButtonProps = {
@@ -20,7 +17,6 @@ export function ReplayPlayButton({
   replayable,
   onReplay,
 }: ReplayPlayButtonProps) {
-  usePrepareAppDecisionSounds();
   const label = replayable ? replayLabel : unavailableReplayLabel;
 
   return (

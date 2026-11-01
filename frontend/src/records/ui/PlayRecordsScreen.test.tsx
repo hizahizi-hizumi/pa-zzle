@@ -28,7 +28,6 @@ import type { PlayRecordGameCatalog } from "@/records/ui/play-record-display";
 vi.mock("@/lib/sound-effects", () => ({
   defineSoundEffect: (url: string) => ({ url }),
   playSound: vi.fn(),
-  prepareSoundEffects: vi.fn(),
 }));
 
 const playRecordGames = [
