@@ -277,21 +277,29 @@ describe("takuzuTutorial.perform", () => {
   describe("3つ続かないことを示す手順で", () => {
     const runStep = finishSteps(2);
 
-    test("四角を置くと、ルールに合わないとして進まず、3つ続くマスを示すこと", () => {
+    function getRunFlags(progress: Progress): boolean[] {
+      return getTakuzuTutorialCellViews(
+        getTutorialSituation(takuzuTutorial, progress),
+        progress.boardState,
+      )
+        .slice(0, 4)
+        .map((view) => view.inViolatingRun);
+    }
+
+    test("丸へ向かう途中の四角では、ルールに合わないところを見せず、進まないこと", () => {
       const result = performAll(runStep, [tap(cellAt(1, 3))]);
-      const cellViews = getTakuzuTutorialCellViews(
-        getTutorialSituation(takuzuTutorial, result),
-        result.boardState,
-      );
+
+      expect(result.violated).toBe(false);
+      expect(result.stepIndex).toBe(2);
+      expect(getRunFlags(result)).toEqual([false, false, false, false]);
+    });
+
+    test("キーで四角を置くと、ルールに合わないとして進まず、3つ続くマスを示すこと", () => {
+      const result = performAll(runStep, [place(cellAt(1, 3), "a")]);
 
       expect(result.violated).toBe(true);
       expect(result.stepIndex).toBe(2);
-      expect(cellViews.slice(0, 4).map((view) => view.inViolatingRun)).toEqual([
-        true,
-        true,
-        true,
-        false,
-      ]);
+      expect(getRunFlags(result)).toEqual([true, true, true, false]);
     });
 
     test("丸にすると、並んだ2つの四角を決め手にして次の手順へ進むこと", () => {
@@ -339,6 +347,24 @@ describe("takuzuTutorial.perform", () => {
         { axis: "row", index: 1, overfilled: false, duplicated: true },
         { axis: "row", index: 2, overfilled: false, duplicated: true },
       ]);
+    });
+
+    test("同じ並びを1マスずつ直す途中では、ルールに合わないところを見せないこと", () => {
+      const result = performAll(sameAsAbove, [tap(cellAt(3, 3))]);
+      const situation = getTutorialSituation(takuzuTutorial, result);
+      const runFlags = getTakuzuTutorialCellViews(
+        situation,
+        result.boardState,
+      ).map((view) => view.inViolatingRun);
+      const lineViolations = getTakuzuTutorialLineViolations(
+        situation,
+        result.boardState,
+      );
+
+      expect(result.boardState.board.cells[cellAt(3, 3)]).toBe("b");
+      expect(result.violated).toBe(false);
+      expect(runFlags.every((flag) => !flag)).toBe(true);
+      expect(lineViolations).toEqual([]);
     });
   });
 

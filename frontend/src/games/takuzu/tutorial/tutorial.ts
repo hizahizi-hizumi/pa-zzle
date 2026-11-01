@@ -63,11 +63,13 @@ export type TakuzuTutorialStep = TutorialStep<TakuzuTutorialRuleId> & {
 
 /**
  * 直前の手。盤面の上の合図に使う。
+ * - `towardStep`: 手を引いている手順のマスを、正しい手へ向かう途中にした。責めないよう、ルールに合わないところを見せない。
  * - `violated`: 置いたマスが、見せているルールに合わないところに入っている。
  * - `reasonCellIndices`: 置いたタイルが手前の盤面だけで決まっていたときの決め手のマス。決まっていなければ空。
  */
 export type TakuzuTutorialMove = {
   cellIndex: number;
+  towardStep: boolean;
   violated: boolean;
   reasonCellIndices: readonly number[];
 };
@@ -369,6 +371,22 @@ function findVisibleViolations(
   };
 }
 
+const noViolations: TakuzuRuleViolations = {
+  runCellIndices: [],
+  overfilledLines: [],
+  duplicateLines: [],
+};
+
+/** 盤面に見せる違反。手順のマスを正しい手へ向かう途中にした直後は、責めないよう何も見せない。 */
+function findShownViolations(
+  { board, lastMove }: TakuzuTutorialBoardState,
+  ruleIds: readonly TakuzuTutorialRuleId[],
+): TakuzuRuleViolations {
+  return lastMove?.towardStep
+    ? noViolations
+    : findVisibleViolations(board, ruleIds);
+}
+
 function isCellInViolation(
   board: TakuzuBoard,
   violations: TakuzuRuleViolations,
@@ -410,6 +428,34 @@ function getPlacementReason(
     : [];
 }
 
+/**
+ * 手を引いている手順のマスを、正しい手へ向かう途中にしたか。
+ * 解のタイルにした手と、同じ向きにもう一度押せば解のタイルになり、そうすればルールに合わないところが無くなる手を、途中とみなす。
+ * 途中でない手（別のマスのタイルのせいでルールに合わないままになる手や、キーで違うタイルを置いた手）は、ルールに合わないところを見せる。
+ */
+function isTowardStep(
+  { step, earnedRuleIds }: TakuzuTutorialSituation,
+  board: TakuzuBoard,
+  action: TakuzuTutorialAction,
+  placed: TakuzuCell,
+): boolean {
+  if (step === null || !step.cellIndices.includes(action.cellIndex)) {
+    return false;
+  }
+  const target = solution.cells[action.cellIndex] ?? null;
+  if (placed === target) {
+    return true;
+  }
+  if (
+    action.type !== "cycle" ||
+    getNextTakuzuCell(placed, action.direction) !== target
+  ) {
+    return false;
+  }
+  const reached = placeTakuzuCell(givens, board, action.cellIndex, target);
+  return !hasTakuzuRuleViolation(findVisibleViolations(reached, earnedRuleIds));
+}
+
 function isStepDone(step: TakuzuTutorialStep, board: TakuzuBoard): boolean {
   return step.cellIndices.every(
     (cellIndex) => board.cells[cellIndex] === solution.cells[cellIndex],
@@ -442,12 +488,16 @@ function performTakuzuTutorialAction(
     return { state, outcome: "ignored" };
   }
 
-  const shownViolations = findVisibleViolations(board, earnedRuleIds);
+  const towardStep = isTowardStep(situation, board, action, placed);
+  const shownViolations = towardStep
+    ? noViolations
+    : findVisibleViolations(board, earnedRuleIds);
   const next: TakuzuTutorialBoardState = {
     board,
     moveCount: state.moveCount + 1,
     lastMove: {
       cellIndex,
+      towardStep,
       violated: isCellInViolation(board, shownViolations, cellIndex),
       reasonCellIndices:
         placed === null
@@ -473,7 +523,7 @@ export function getTakuzuTutorialCellViews(
   state: TakuzuTutorialBoardState,
 ): TakuzuCellView[] {
   const runCellIndices = new Set(
-    findVisibleViolations(state.board, earnedRuleIds).runCellIndices,
+    findShownViolations(state, earnedRuleIds).runCellIndices,
   );
   return state.board.cells.map(function createCellView(cell, cellIndex) {
     return {
@@ -492,8 +542,8 @@ export function getTakuzuTutorialLineViolations(
   { earnedRuleIds }: TakuzuTutorialSituation,
   state: TakuzuTutorialBoardState,
 ): TakuzuLineViolationView[] {
-  const { overfilledLines, duplicateLines } = findVisibleViolations(
-    state.board,
+  const { overfilledLines, duplicateLines } = findShownViolations(
+    state,
     earnedRuleIds,
   );
   return listTakuzuLines(state.board.size).flatMap(
@@ -624,7 +674,7 @@ function describeTakuzuTutorialViolation(
 ): TutorialMessage {
   const descriptions = listViolationDescriptions(
     state.board,
-    findVisibleViolations(state.board, earnedRuleIds),
+    findShownViolations(state, earnedRuleIds),
   );
   const lastCellIndex = state.lastMove?.cellIndex;
   const description =

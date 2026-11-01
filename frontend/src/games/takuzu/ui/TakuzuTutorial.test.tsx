@@ -252,25 +252,35 @@ describe("TakuzuTutorial", () => {
         expect(currentChips).toEqual(["3つ続かない"]);
       });
 
-      test("違反が続くまでは、違反の一言も揺れも出さないこと", () => {
+      test("丸へ向かう途中の四角では、待っても違反の一言も揺れも出さず、印を付け続けること", () => {
         const animate = installAnimate();
         tapCell(1, 3);
-        advanceTime(violationReactionDelayMs - 1);
+        advanceTime(violationReactionDelayMs * 4);
 
-        const message = screen.queryByText("四角が3つ続いています");
+        const message = screen.getByText("同じものは、3つ続けて並べられません");
+        const label = getCell(1, 3).getAttribute("aria-label");
 
-        expect(message).toBeNull();
+        expect(message).toBeTruthy();
+        expect(label).toBe("1行3列 四角");
         expect(animate).not.toHaveBeenCalled();
+        expect(getHintedCellPositions()).toEqual(["1行3列"]);
       });
 
-      test("四角を置いて違反が続くと、違反の一言を出して置いたタイルを揺らし、印を付け続けること", () => {
+      test("キーで四角を置いて違反が続くと、違反の一言を出して置いたタイルを揺らし、印を付け続けること", () => {
         const animate = installAnimate();
-        tapCell(1, 3);
+        act(() => {
+          getCell(1, 3).focus();
+        });
+        fireEvent.keyDown(getCell(1, 3), { key: "1" });
+        const messageBeforeSettled = screen.queryByText(
+          "四角が3つ続いています",
+        );
         advanceTime(violationReactionDelayMs);
 
         const message = screen.getByText("四角が3つ続いています");
         const label = getCell(1, 3).getAttribute("aria-label");
 
+        expect(messageBeforeSettled).toBeNull();
         expect(message).toBeTruthy();
         expect(label).toBe("1行3列 四角 3連続");
         expect(animate).toHaveBeenCalledOnce();
@@ -348,6 +358,22 @@ describe("TakuzuTutorial", () => {
         const message = screen.getByText("上の行と同じ並びになっています");
 
         expect(message).toBeTruthy();
+      });
+
+      test("同じ並びを1マスずつ直す途中では、違反の一言を出さないこと", () => {
+        tapCell(3, 2);
+        tapCell(3, 2);
+        tapCell(3, 3);
+        advanceTime(violationReactionDelayMs);
+        tapCell(3, 3);
+        advanceTime(violationReactionDelayMs * 4);
+
+        const message = screen.getByText("同じ並びの行・列は作れません");
+        const label = getCellLabel(3, 3);
+
+        expect(message).toBeTruthy();
+        expect(label).toBe("3行3列 丸");
+        expect(getHintedCellPositions()).toEqual(["3行2列"]);
       });
     });
 
