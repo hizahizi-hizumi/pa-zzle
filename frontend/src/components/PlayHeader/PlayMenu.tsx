@@ -1,11 +1,11 @@
 import {
   CircleHelp,
+  Grid2x2,
   Home,
   MoreHorizontal,
   Play,
   RefreshCw,
   RotateCcw,
-  SlidersHorizontal,
   Wrench,
 } from "lucide-react";
 import { useSyncExternalStore } from "react";
@@ -32,7 +32,7 @@ type PlayMenuProps = {
   canRestart: boolean;
   onReplay?: () => void;
   onStartNewProblem: () => void;
-  onChangeDifficulty: () => void;
+  onOpenGameHome: () => void;
   onBackToHome: () => void;
   onOpenHowToPlay?: () => void;
   onOpenDiagnostics?: () => void;
@@ -43,7 +43,7 @@ export function PlayMenu({
   canRestart,
   onReplay,
   onStartNewProblem,
-  onChangeDifficulty,
+  onOpenGameHome,
   onBackToHome,
   onOpenHowToPlay,
   onOpenDiagnostics,
@@ -82,9 +82,9 @@ export function PlayMenu({
           <Play />
           {PLAY_OPERATION_LABELS.startNewProblem}
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={onChangeDifficulty}>
-          <SlidersHorizontal />
-          難易度変更
+        <DropdownMenuItem onSelect={onOpenGameHome}>
+          <Grid2x2 />
+          ゲームのホーム
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={onBackToHome}>
           <Home />

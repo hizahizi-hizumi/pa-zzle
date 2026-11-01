@@ -53,8 +53,7 @@ export function MinesweeperPlay({
   onChordCell,
   onReplay,
   onStartNewProblem,
-  onOpenRecords,
-  onChangeDifficulty,
+  onOpenGameHome,
   onBackToHome,
   onClearAnimationComplete,
   onOpenDiagnostics,
@@ -91,7 +90,7 @@ export function MinesweeperPlay({
       }
       onReplay={handleReplay}
       onStartNewProblem={handleStartNewProblem}
-      onChangeDifficulty={onChangeDifficulty}
+      onOpenGameHome={onOpenGameHome}
       onBackToHome={onBackToHome}
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
@@ -104,9 +103,7 @@ export function MinesweeperPlay({
           recordOutcomeNotice={recordOutcomeNotice}
           onReplay={handleReplay}
           onStartNewProblem={handleStartNewProblem}
-          onOpenRecords={onOpenRecords}
-          onChangeDifficulty={onChangeDifficulty}
-          onBackToHome={onBackToHome}
+          onOpenGameHome={onOpenGameHome}
           onOpenDiagnostics={onOpenDiagnostics}
         />
       )}

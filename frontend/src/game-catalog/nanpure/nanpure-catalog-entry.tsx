@@ -28,7 +28,7 @@ export const nanpureCatalogEntry = {
   id: nanpurePlayRecordDefinition.gameId,
   name: NANPURE_DISPLAY_NAME,
   pictogramSvg,
-  entryPath: "/puzzles/nanpure",
+  homePath: "/puzzles/nanpure",
   playPath: "/puzzles/nanpure/play/:difficulty",
   playRecordDisplay: nanpurePlayRecordDisplay,
   recordProblemPlayTarget(record) {

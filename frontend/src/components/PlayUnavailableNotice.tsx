@@ -2,7 +2,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Link, type Path } from "@/router";
 
-type DifficultySelectionPath = Exclude<
+type GameHomePath = Exclude<
   Extract<Path, `/puzzles/${string}`>,
   `${string}/:${string}`
 >;
@@ -10,10 +10,10 @@ type DifficultySelectionPath = Exclude<
 type PlayUnavailableNoticeProps = {
   title: string;
   description?: string;
-  backTo: DifficultySelectionPath;
+  backTo: GameHomePath;
 };
 
-/** URLで指定されたプレイを始められないことを示し、難易度選択へ戻す。 */
+/** URLで指定されたプレイを始められないことを示し、ゲームのホームへ戻す。 */
 export function PlayUnavailableNotice({
   title,
   description,
@@ -26,7 +26,7 @@ export function PlayUnavailableNotice({
         <AlertDescription>
           {description && <p>{description}</p>}
           <Button asChild>
-            <Link to={backTo}>難易度選択へ戻る</Link>
+            <Link to={backTo}>ゲームのホームへ戻る</Link>
           </Button>
         </AlertDescription>
       </Alert>

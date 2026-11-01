@@ -1,1 +1,1 @@
-export { ReflectionDifficultyView as default } from "@/views/ReflectionDifficultyView";
+export { ReflectionHomeView as default } from "@/views/ReflectionHomeView";

@@ -17,7 +17,7 @@ export function WaterSortPlayView() {
     return (
       <PlayUnavailableNotice
         title="この難易度は選べません"
-        backTo={waterSortCatalogEntry.entryPath}
+        backTo={waterSortCatalogEntry.homePath}
       />
     );
   }

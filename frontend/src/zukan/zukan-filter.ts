@@ -141,7 +141,7 @@ export function collectZukanLevelFeatures(
 
 /**
  * レベルの特徴を、レベルごとに一度だけ求めて持っておく関数を作る。
- * 問題集は図鑑を開いている間に変わらないので、絞り込みを閉じて開き直しても、離脱の保存で図鑑が導き直されても求め直さない。
+ * 問題集はゲームのホームを開いている間に変わらないので、絞り込みを閉じて開き直しても、離脱の保存で図鑑が導き直されても求め直さない。
  */
 export function createZukanLevelFeaturesCache(
   axes: readonly ZukanFeatureAxisSource[],

@@ -50,6 +50,7 @@ function renderRouterAt(entry: InitialEntry): PlayRouter {
         path: "/puzzles/minesweeper/play/:difficulty",
         element: <MinesweeperPlayView />,
       },
+      { path: "/puzzles/minesweeper", element: <p>ゲームのホーム画面</p> },
     ],
     { initialEntries: [entry] },
   );
@@ -76,7 +77,7 @@ describe("MinesweeperPlayView", () => {
 
     test("プレイ画面を表示すること", () => {
       const backButton = screen.getByRole("button", {
-        name: "難易度選択へ戻る",
+        name: "ゲームのホームへ戻る",
       });
 
       expect(backButton).toBeTruthy();
@@ -89,9 +90,11 @@ describe("MinesweeperPlayView", () => {
       renderAt("/puzzles/minesweeper/play/9");
     });
 
-    test("選べない難易度であることを示し難易度選択へ戻る導線を出すこと", () => {
+    test("選べない難易度であることを示しゲームのホームへ戻る導線を出すこと", () => {
       const message = screen.getByText("この難易度は選べません");
-      const backLink = screen.getByRole("link", { name: "難易度選択へ戻る" });
+      const backLink = screen.getByRole("link", {
+        name: "ゲームのホームへ戻る",
+      });
 
       expect(message).toBeTruthy();
       expect(backLink.getAttribute("href")).toBe("/puzzles/minesweeper");
@@ -144,6 +147,34 @@ describe("MinesweeperPlayView", () => {
 
         expect(problemId).toBe(poolProblemId);
         expect(router.state.historyAction).toBe("POP");
+      });
+
+      test("戻るボタンで、遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
+        fireEvent.click(
+          screen.getByRole("button", { name: "ゲームのホームへ戻る" }),
+        );
+        const { historyAction, location } = router.state;
+
+        expect(location.pathname).toBe("/puzzles/minesweeper");
+        expect(location.search).toBe(`?problem=${poolProblemId}`);
+        expect(historyAction).toBe("REPLACE");
+      });
+
+      describe("メニューからゲームのホームを選んだ場合", () => {
+        beforeEach(() => {
+          openMenu();
+        });
+
+        test("遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
+          fireEvent.click(
+            screen.getByRole("menuitem", { name: "ゲームのホーム" }),
+          );
+          const { historyAction, location } = router.state;
+
+          expect(location.pathname).toBe("/puzzles/minesweeper");
+          expect(location.search).toBe(`?problem=${poolProblemId}`);
+          expect(historyAction).toBe("REPLACE");
+        });
       });
 
       describe("メニューからリセットした場合", () => {

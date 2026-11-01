@@ -58,8 +58,7 @@ export function TakuzuPlay({
   onReplay,
   onClearAnimationComplete,
   onStartNewProblem,
-  onOpenRecords,
-  onChangeDifficulty,
+  onOpenGameHome,
   onBackToHome,
   onOpenDiagnostics,
 }: TakuzuPlayProps) {
@@ -79,7 +78,7 @@ export function TakuzuPlay({
       onRestart={onRestart}
       onReplay={onReplay}
       onStartNewProblem={onStartNewProblem}
-      onChangeDifficulty={onChangeDifficulty}
+      onOpenGameHome={onOpenGameHome}
       onBackToHome={onBackToHome}
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
@@ -92,9 +91,7 @@ export function TakuzuPlay({
           recordOutcomeNotice={recordOutcomeNotice}
           onReplay={onReplay}
           onStartNewProblem={onStartNewProblem}
-          onOpenRecords={onOpenRecords}
-          onChangeDifficulty={onChangeDifficulty}
-          onBackToHome={onBackToHome}
+          onOpenGameHome={onOpenGameHome}
           onOpenDiagnostics={onOpenDiagnostics}
         />
       )}

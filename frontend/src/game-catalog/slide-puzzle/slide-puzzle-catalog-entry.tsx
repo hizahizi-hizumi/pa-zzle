@@ -28,7 +28,7 @@ export const slidePuzzleCatalogEntry = {
   id: slidePuzzlePlayRecordDefinition.gameId,
   name: SLIDE_PUZZLE_DISPLAY_NAME,
   pictogramSvg,
-  entryPath: "/puzzles/slide-puzzle",
+  homePath: "/puzzles/slide-puzzle",
   playPath: "/puzzles/slide-puzzle/play/:difficulty",
   playRecordDisplay: slidePuzzlePlayRecordDisplay,
   recordProblemPlayTarget(record) {

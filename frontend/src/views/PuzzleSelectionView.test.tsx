@@ -38,13 +38,18 @@ describe("PuzzleSelectionView", () => {
     ).toEqual(games.map(([name]) => `${name}を選択`));
   });
 
-  test.each(games)("%sを選択してその入口へ進めること", (name, entryPath) => {
-    const selectButton = screen.getByRole("button", { name: `${name}を選択` });
+  test.each(games)(
+    "%sを選択してそのゲームのホームへ進めること",
+    (name, homePath) => {
+      const selectButton = screen.getByRole("button", {
+        name: `${name}を選択`,
+      });
 
-    fireEvent.click(selectButton);
+      fireEvent.click(selectButton);
 
-    const heroLink = screen.getByRole("link", { name: `${name}を遊ぶ` });
-    expect(heroLink.getAttribute("href")).toBe(entryPath);
-    expect(selectButton.getAttribute("aria-pressed")).toBe("true");
-  });
+      const heroLink = screen.getByRole("link", { name: `${name}を遊ぶ` });
+      expect(heroLink.getAttribute("href")).toBe(homePath);
+      expect(selectButton.getAttribute("aria-pressed")).toBe("true");
+    },
+  );
 });

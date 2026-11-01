@@ -11,18 +11,25 @@ import { useNavigate } from "@/router";
 
 type Navigate = ReturnType<typeof useNavigate>;
 
-type GameNavigationTarget = Pick<GameCatalogEntry, "entryPath" | "playPath">;
+type GameNavigationTarget = Pick<GameCatalogEntry, "homePath" | "playPath">;
 
 export function createGameNavigation(
   navigate: Navigate,
   game: GameNavigationTarget,
 ): GameNavigation {
   return {
-    openRecords() {
-      navigate("/records");
-    },
-    changeDifficulty() {
-      navigate(game.entryPath);
+    openGameHome(selectedProblemId, options) {
+      navigate(
+        {
+          pathname: game.homePath,
+          search:
+            selectedProblemId === undefined
+              ? ""
+              : createProblemIdSearch(selectedProblemId),
+        },
+        // ゲームのホームは台紙のマスを一度に多く描くので、分けて描かずに一度に描き、開くまでの時間を縮める。
+        { replace: options?.replacesHistory ?? false, flushSync: true },
+      );
     },
     backToHome() {
       navigate("/");
@@ -38,10 +45,10 @@ export function createGameNavigation(
 
 export function useGameNavigation(game: GameNavigationTarget): GameNavigation {
   const navigate = useNavigate();
-  const { entryPath, playPath } = game;
+  const { homePath, playPath } = game;
   return useMemo(
-    () => createGameNavigation(navigate, { entryPath, playPath }),
-    [navigate, entryPath, playPath],
+    () => createGameNavigation(navigate, { homePath, playPath }),
+    [navigate, homePath, playPath],
   );
 }
 

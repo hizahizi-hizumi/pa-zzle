@@ -27,9 +27,7 @@ export function SlidePuzzleResultScreen({
   recordOutcomeNotice,
   onReplay,
   onStartNewProblem,
-  onOpenRecords,
-  onChangeDifficulty,
-  onBackToHome,
+  onOpenGameHome,
   onOpenDiagnostics,
 }: SlidePuzzleResultScreenProps) {
   return (
@@ -51,9 +49,7 @@ export function SlidePuzzleResultScreen({
       scoreCriteria={getSlidePuzzleScoreCriteria(result)}
       onStartNewProblem={onStartNewProblem}
       onReplay={onReplay}
-      onOpenRecords={onOpenRecords}
-      onChangeDifficulty={onChangeDifficulty}
-      onBackToHome={onBackToHome}
+      onOpenGameHome={onOpenGameHome}
       onOpenDiagnostics={onOpenDiagnostics}
     />
   );

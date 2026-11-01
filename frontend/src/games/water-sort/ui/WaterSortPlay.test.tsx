@@ -2,13 +2,20 @@ import {
   act,
   cleanup,
   fireEvent,
-  render,
+  render as renderWithoutRouter,
   screen,
 } from "@testing-library/react";
+import type { ReactElement } from "react";
+import { MemoryRouter } from "react-router";
 import type { WaterSortResult } from "@/games/water-sort/play/use-water-sort-play";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
 import { WaterSortPlay } from "@/games/water-sort/ui/WaterSortPlay";
 import { PlayRecordOutcomeNotice } from "@/records/ui/PlayRecordOutcomeNotice";
+
+/** 結果画面はブランドの帯からホームへ戻るリンクを持つので、ルーターの中で描く。 */
+function render(ui: ReactElement) {
+  return renderWithoutRouter(ui, { wrapper: MemoryRouter });
+}
 
 afterEach(() => {
   cleanup();
@@ -35,9 +42,8 @@ const baseProps = {
   onRestart: vi.fn(),
   onReplay: vi.fn(),
   onStartNewProblem: vi.fn(),
-  onOpenRecords: vi.fn(),
   onClearAnimationComplete: vi.fn(),
-  onChangeDifficulty: vi.fn(),
+  onOpenGameHome: vi.fn(),
   onBackToHome: vi.fn(),
 };
 
@@ -253,7 +259,7 @@ describe("WaterSortPlay", () => {
     const restart = vi.fn();
     const replay = vi.fn();
     const startNewProblem = vi.fn();
-    const onChangeDifficulty = vi.fn();
+    const onOpenGameHome = vi.fn();
     const onBackToHome = vi.fn();
     const onOpenDiagnostics = vi.fn();
     render(
@@ -262,7 +268,7 @@ describe("WaterSortPlay", () => {
         onRestart={restart}
         onReplay={replay}
         onStartNewProblem={startNewProblem}
-        onChangeDifficulty={onChangeDifficulty}
+        onOpenGameHome={onOpenGameHome}
         onBackToHome={onBackToHome}
         onOpenDiagnostics={onOpenDiagnostics}
       />,
@@ -286,7 +292,7 @@ describe("WaterSortPlay", () => {
       screen.getByRole("button", { name: "その他の操作" }),
       { button: 0, ctrlKey: false },
     );
-    fireEvent.click(screen.getByRole("menuitem", { name: "難易度変更" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "ゲームのホーム" }));
     fireEvent.pointerDown(
       screen.getByRole("button", { name: "その他の操作" }),
       { button: 0, ctrlKey: false },
@@ -300,7 +306,7 @@ describe("WaterSortPlay", () => {
     expect(restart).toHaveBeenCalledOnce();
     expect(replay).toHaveBeenCalledOnce();
     expect(startNewProblem).toHaveBeenCalledOnce();
-    expect(onChangeDifficulty).toHaveBeenCalledOnce();
+    expect(onOpenGameHome).toHaveBeenCalledOnce();
     expect(onBackToHome).toHaveBeenCalledOnce();
     expect(onOpenDiagnostics).toHaveBeenCalledOnce();
   });
@@ -483,11 +489,10 @@ describe("WaterSortPlay", () => {
     expect(baseProps.onClearAnimationComplete).toHaveBeenCalledOnce();
   });
 
-  test("クリア後に次の問題・再挑戦・難易度変更・ホーム移動を通知すること", () => {
+  test("クリア後に次の問題・ゲームのホームへの移動・再挑戦を通知すること", () => {
     const replay = vi.fn();
     const startNewProblem = vi.fn();
-    const onChangeDifficulty = vi.fn();
-    const onBackToHome = vi.fn();
+    const onOpenGameHome = vi.fn();
     render(
       <WaterSortPlay
         {...baseProps}
@@ -495,22 +500,18 @@ describe("WaterSortPlay", () => {
         result={createResult()}
         onReplay={replay}
         onStartNewProblem={startNewProblem}
-        onChangeDifficulty={onChangeDifficulty}
-        onBackToHome={onBackToHome}
+        onOpenGameHome={onOpenGameHome}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "プレイ！" }));
-    fireEvent.click(screen.getByRole("button", { name: "同じ問題" }));
-    fireEvent.click(screen.getByRole("button", { name: "難易度変更" }));
-    fireEvent.click(screen.getByRole("button", { name: "ホーム" }));
+    fireEvent.click(screen.getByRole("button", { name: "次の問題" }));
+    fireEvent.click(screen.getByRole("button", { name: "ゲームのホームへ" }));
+    fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
     expect(startNewProblem).toHaveBeenCalledOnce();
+    expect(onOpenGameHome).toHaveBeenCalledOnce();
     expect(replay).toHaveBeenCalledOnce();
-    expect(onChangeDifficulty).toHaveBeenCalledOnce();
-    expect(onBackToHome).toHaveBeenCalledOnce();
   });
 
-  test("自己ベスト更新内容と記録画面への導線を表示すること", () => {
-    const onOpenRecords = vi.fn();
+  test("自己ベスト更新内容を表示すること", () => {
     render(
       <WaterSortPlay
         {...baseProps}
@@ -544,17 +545,13 @@ describe("WaterSortPlay", () => {
             display={waterSortPlayRecordDisplay}
           />
         }
-        onOpenRecords={onOpenRecords}
       />,
     );
-
-    fireEvent.click(screen.getByRole("button", { name: "記録を確認" }));
 
     const bestUpdate = screen.getByRole("region", { name: "自己ベスト更新" });
 
     expect(bestUpdate.textContent).toContain("スコア");
     expect(bestUpdate.textContent).toContain("92点");
     expect(bestUpdate.textContent).toContain("100点");
-    expect(onOpenRecords).toHaveBeenCalledOnce();
   });
 });

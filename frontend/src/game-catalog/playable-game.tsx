@@ -10,7 +10,7 @@ import { useProblemIdQuerySync } from "@/game-catalog/problem-id-query";
 import { useRecordResultNavigation } from "@/game-catalog/record-result-navigation";
 import { useResultRewardSound } from "@/game-catalog/result-reward-sound";
 import type { GamePlay, GamePlayScreenProps } from "@/games/play";
-import type { ProblemIdentity } from "@/games/problem-id";
+import { createProblemId, type ProblemIdentity } from "@/games/problem-id";
 import type { PlayScore, ScoreItem } from "@/games/score";
 import { usePlayAttemptRecord } from "@/records/hooks/use-play-attempt-record";
 import { useSavePlayRecord } from "@/records/hooks/use-save-play-record";
@@ -40,7 +40,7 @@ type PlayableGameSource<
   Result extends ScoredResult,
   Snapshot,
 > = {
-  game: Pick<GameCatalogEntry, "entryPath" | "playPath" | "playRecordDisplay">;
+  game: Pick<GameCatalogEntry, "homePath" | "playPath" | "playRecordDisplay">;
   play: GamePlay<Difficulty, Identity, Session, Result>;
   playRecordDefinition: PlayRecordDefinition;
   /** クリアしたプレイの完了記録を作る。記録を作り直さないよう、描画ごとに作り直さない関数を渡す。 */
@@ -140,8 +140,12 @@ export function usePlayableGame<
       onReplay: play.replay,
       onClearAnimationComplete: play.completeClearAnimation,
       onStartNewProblem: play.startNewProblem,
-      onOpenRecords: navigation.openRecords,
-      onChangeDifficulty: navigation.changeDifficulty,
+      // やめた問題のプレイ画面は、ブラウザの戻るで開き直さないよう履歴に残さない。
+      onOpenGameHome() {
+        navigation.openGameHome(createProblemId(problemIdentity), {
+          replacesHistory: true,
+        });
+      },
       onBackToHome: navigation.backToHome,
       onOpenDiagnostics: diagnostics.open,
     },

@@ -51,6 +51,7 @@ function renderAt(entry: InitialEntry): ResultRouter {
         element: <PlayResultView />,
       },
       { path: "/puzzles/nanpure/play/:difficulty", element: <p>プレイ画面</p> },
+      { path: "/puzzles/nanpure", element: <p>ゲームのホーム</p> },
       { path: "/records", element: <p>記録画面</p> },
     ],
     { initialEntries: [entry] },
@@ -84,8 +85,8 @@ describe("今の版の記録の場合", () => {
     expect(bestUpdate).toBeNull();
   });
 
-  test("プレイ！で記録と同じ難易度のプレイ画面へ記録の問題を避けて移ること", () => {
-    fireEvent.click(screen.getByRole("button", { name: "プレイ！" }));
+  test("次の問題で記録と同じ難易度のプレイ画面へ記録の問題を避けて移ること", () => {
+    fireEvent.click(screen.getByRole("button", { name: "次の問題" }));
 
     const { location } = router.state;
 
@@ -94,12 +95,21 @@ describe("今の版の記録の場合", () => {
     expect(location.state).toEqual(createPlayLocationState(nanpureProblemId));
   });
 
-  test("同じ問題で記録の問題 ID を付けたプレイ画面へ移ること", () => {
-    fireEvent.click(screen.getByRole("button", { name: "同じ問題" }));
+  test("もう一度で記録の問題 ID を付けたプレイ画面へ移ること", () => {
+    fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
 
     const { location } = router.state;
 
     expect(location.pathname).toBe("/puzzles/nanpure/play/3");
+    expect(location.search).toBe(`?problem=${nanpureProblemId}`);
+  });
+
+  test("ゲームのホームへで、記録の問題を選んだゲームのホームへ移ること", () => {
+    fireEvent.click(screen.getByRole("button", { name: "ゲームのホームへ" }));
+
+    const { location } = router.state;
+
+    expect(location.pathname).toBe("/puzzles/nanpure");
     expect(location.search).toBe(`?problem=${nanpureProblemId}`);
   });
 });
@@ -139,8 +149,8 @@ describe("問題集に無い問題の記録の場合", () => {
     renderAt(createResultPath(unreplayableRecord));
   });
 
-  test("同じ問題を押せない状態で出すこと", () => {
-    const replayButton = screen.getByRole("button", { name: "同じ問題" });
+  test("もう一度を押せない状態で出すこと", () => {
+    const replayButton = screen.getByRole("button", { name: "もう一度" });
 
     expect(replayButton.hasAttribute("disabled")).toBe(true);
   });

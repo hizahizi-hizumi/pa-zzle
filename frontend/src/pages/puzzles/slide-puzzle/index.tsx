@@ -1,1 +1,1 @@
-export { SlidePuzzleDifficultyView as default } from "@/views/SlidePuzzleDifficultyView";
+export { SlidePuzzleHomeView as default } from "@/views/SlidePuzzleHomeView";

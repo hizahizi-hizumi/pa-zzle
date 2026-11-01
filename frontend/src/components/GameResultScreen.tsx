@@ -43,9 +43,8 @@ type GameResultScreenProps = {
   onStartNewProblem: () => void;
   /** 省略すると同じ問題を遊び直す操作を押せない状態で出す。 */
   onReplay?: () => void;
-  onOpenRecords: () => void;
-  onChangeDifficulty: () => void;
-  onBackToHome: () => void;
+  /** ゲームのホームへ移る。 */
+  onOpenGameHome: () => void;
   /** 省略すると検証情報を開く操作を出さない。 */
   onOpenDiagnostics?: () => void;
 };
@@ -61,9 +60,7 @@ export function GameResultScreen({
   scoreCriteria,
   onStartNewProblem,
   onReplay,
-  onOpenRecords,
-  onChangeDifficulty,
-  onBackToHome,
+  onOpenGameHome,
   onOpenDiagnostics,
 }: GameResultScreenProps) {
   const resultLevel = getGameResultLevel(score);
@@ -82,7 +79,7 @@ export function GameResultScreen({
       aria-label="プレイ結果"
       className="fixed inset-0 z-(--layer-overlay) flex min-h-svh flex-col overflow-y-auto bg-background outline-none"
     >
-      <BrandIdentityHeader />
+      <BrandIdentityHeader linkToHome />
       <GameResultConfetti level={resultLevel} />
       <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-4 py-3 pb-[max(calc(var(--spacing)*4),env(safe-area-inset-bottom))]">
         <GameResultIdentity
@@ -111,10 +108,8 @@ export function GameResultScreen({
 
         <GameResultActions
           onStartNewProblem={onStartNewProblem}
+          onOpenGameHome={onOpenGameHome}
           onReplay={onReplay}
-          onOpenRecords={onOpenRecords}
-          onChangeDifficulty={onChangeDifficulty}
-          onBackToHome={onBackToHome}
         />
 
         <GameResultDetails

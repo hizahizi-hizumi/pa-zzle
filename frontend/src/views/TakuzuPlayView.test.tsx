@@ -5,8 +5,15 @@ import {
   screen,
   within,
 } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router";
+import {
+  createMemoryRouter,
+  MemoryRouter,
+  Route,
+  RouterProvider,
+  Routes,
+} from "react-router";
 
+import { createProblemId } from "@/games/problem-id";
 import { selectTakuzuProblemForDifficulty } from "@/games/takuzu/problem-selection";
 import { readPlayRecords } from "@/records/storage";
 import { PlayResultView } from "@/views/PlayResultView";
@@ -41,7 +48,7 @@ function renderAt(path: string): void {
           path="/puzzles/takuzu/play/:difficulty"
           element={<TakuzuPlayView />}
         />
-        <Route path="/puzzles/takuzu" element={<p>難易度選択画面</p>} />
+        <Route path="/puzzles/takuzu" element={<p>ゲームのホーム画面</p>} />
         <Route path="/records" element={<p>記録画面</p>} />
         <Route
           path="/puzzles/:game/result/:recordId"
@@ -50,6 +57,30 @@ function renderAt(path: string): void {
       </Routes>
     </MemoryRouter>,
   );
+}
+
+type PlayRouter = ReturnType<typeof createMemoryRouter>;
+
+function renderRouterAt(path: string): PlayRouter {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/puzzles/takuzu/play/:difficulty",
+        element: <TakuzuPlayView />,
+      },
+      { path: "/puzzles/takuzu", element: <p>ゲームのホーム画面</p> },
+    ],
+    { initialEntries: [path] },
+  );
+  render(<RouterProvider router={router} />);
+  return router;
+}
+
+function openMenu(): void {
+  fireEvent.pointerDown(screen.getByRole("button", { name: "その他の操作" }), {
+    button: 0,
+    ctrlKey: false,
+  });
 }
 
 describe("TakuzuPlayView", () => {
@@ -80,10 +111,12 @@ describe("TakuzuPlayView", () => {
         expect(result).not.toBeNull();
       });
 
-      test("難易度変更で難易度選択画面へ移ること", () => {
-        fireEvent.click(screen.getByRole("menuitem", { name: "難易度変更" }));
+      test("ゲームのホームでゲームのホーム画面へ移ること", () => {
+        fireEvent.click(
+          screen.getByRole("menuitem", { name: "ゲームのホーム" }),
+        );
 
-        expect(screen.getByText("難易度選択画面")).toBeTruthy();
+        expect(screen.getByText("ゲームのホーム画面")).toBeTruthy();
       });
 
       describe("内部診断を使えない環境の場合", () => {
@@ -95,10 +128,12 @@ describe("TakuzuPlayView", () => {
       });
     });
 
-    test("戻るボタンで難易度選択画面へ移ること", () => {
-      fireEvent.click(screen.getByRole("button", { name: "難易度選択へ戻る" }));
+    test("戻るボタンでゲームのホーム画面へ移ること", () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "ゲームのホームへ戻る" }),
+      );
 
-      expect(screen.getByText("難易度選択画面")).toBeTruthy();
+      expect(screen.getByText("ゲームのホーム画面")).toBeTruthy();
     });
   });
 
@@ -198,15 +233,9 @@ describe("TakuzuPlayView", () => {
         });
       });
 
-      test("記録を確認で記録画面へ移ること", () => {
-        fireEvent.click(screen.getByRole("button", { name: "記録を確認" }));
-
-        expect(screen.getByText("記録画面")).toBeTruthy();
-      });
-
       describe("同じ問題を置き直しなしで解き直した場合", () => {
         beforeEach(() => {
-          fireEvent.click(screen.getByRole("button", { name: "同じ問題" }));
+          fireEvent.click(screen.getByRole("button", { name: "もう一度" }));
           solve();
         });
 
@@ -247,12 +276,55 @@ describe("TakuzuPlayView", () => {
       renderAt("/puzzles/takuzu/play/9");
     });
 
-    test("選べない難易度であることを示し難易度選択へ戻る導線を出すこと", () => {
+    test("選べない難易度であることを示しゲームのホームへ戻る導線を出すこと", () => {
       const message = screen.getByText("この難易度は選べません");
-      const backLink = screen.getByRole("link", { name: "難易度選択へ戻る" });
+      const backLink = screen.getByRole("link", {
+        name: "ゲームのホームへ戻る",
+      });
 
       expect(message).toBeTruthy();
       expect(backLink.getAttribute("href")).toBe("/puzzles/takuzu");
+    });
+  });
+
+  describe("問題集にある問題IDで開いた場合", () => {
+    const poolProblemId = createProblemId(
+      selectTakuzuProblemForDifficulty("1", "game-home-navigation").identity,
+    );
+    let router: PlayRouter;
+
+    beforeEach(() => {
+      router = renderRouterAt(
+        `/puzzles/takuzu/play/1?problem=${poolProblemId}`,
+      );
+    });
+
+    test("戻るボタンで、遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "ゲームのホームへ戻る" }),
+      );
+      const { historyAction, location } = router.state;
+
+      expect(location.pathname).toBe("/puzzles/takuzu");
+      expect(location.search).toBe(`?problem=${poolProblemId}`);
+      expect(historyAction).toBe("REPLACE");
+    });
+
+    describe("メニューからゲームのホームを選んだ場合", () => {
+      beforeEach(() => {
+        openMenu();
+      });
+
+      test("遊んでいる問題のIDを付けたゲームのホームへ履歴を置き換えて移ること", () => {
+        fireEvent.click(
+          screen.getByRole("menuitem", { name: "ゲームのホーム" }),
+        );
+        const { historyAction, location } = router.state;
+
+        expect(location.pathname).toBe("/puzzles/takuzu");
+        expect(location.search).toBe(`?problem=${poolProblemId}`);
+        expect(historyAction).toBe("REPLACE");
+      });
     });
   });
 });

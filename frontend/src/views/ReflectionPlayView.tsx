@@ -17,7 +17,7 @@ export function ReflectionPlayView() {
     return (
       <PlayUnavailableNotice
         title="この難易度は選べません"
-        backTo={reflectionCatalogEntry.entryPath}
+        backTo={reflectionCatalogEntry.homePath}
       />
     );
   }

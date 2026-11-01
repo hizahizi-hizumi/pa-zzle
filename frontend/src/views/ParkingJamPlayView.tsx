@@ -17,7 +17,7 @@ export function ParkingJamPlayView() {
     return (
       <PlayUnavailableNotice
         title="この難易度は選べません"
-        backTo={parkingJamCatalogEntry.entryPath}
+        backTo={parkingJamCatalogEntry.homePath}
       />
     );
   }

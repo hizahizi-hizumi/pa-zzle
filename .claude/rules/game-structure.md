@@ -47,7 +47,7 @@ frontend/src/games/
 - `session/session.ts`: 1問に対する1回のプレイ状態、操作、経過事実を置く。
 - `play/`: 問題供給、session、評価を組み合わせ、UIへプレイ状態と操作を提供する。
 - `ui/`: ゲーム固有の表示とユーザー操作を扱う。結果画面はプレイ画面と記録の結果画面の両方から使うので、プレイ画面の内部実装ではなく `ui/result/` に置く。
-- `display-name.ts`: 利用者に見せるゲーム名 `<GAME>_DISPLAY_NAME` を置く。カタログ・難易度選択・プレイ画面・盤面の読み上げ名・結果画面はこれを参照し、ゲーム名を直書きしない。
+- `display-name.ts`: 利用者に見せるゲーム名 `<GAME>_DISPLAY_NAME` を置く。カタログ・ゲームのホーム・プレイ画面・盤面の読み上げ名・結果画面はこれを参照し、ゲーム名を直書きしない。
 - `difficulty.ts`: ゲームとしての難易度の分類方針を置く。難易度レベルの一覧・表示名は `games/difficulty.ts` の共通契約を使う。
 - `score.ts`: 完了したプレイの事実をゲーム固有の評価へ変換する。
 - `problem-selection.ts`: 開始条件に合う問題を問題供給元と難易度方針から選ぶ。
@@ -143,7 +143,7 @@ frontend/src/games/
 - プレイ画面は、盤面操作の音を `games/play-sound-effects.ts` の `useOperationSound` で、プレイフックが返す `id` 付きの操作の知らせから鳴らす。クリア音は `useClearSound` で完成演出の始まりに鳴らす。
 - 動きを減らす設定では、不成立の動きが出ず画面が何も変わらない操作の音と、完成演出が無くすぐ結果へ進むときのクリア音を鳴らさない。完成した盤面を保持して見せるゲームだけ、その姿に合わせたクリア音を `useClearSound` へ渡す。
 - 結果を受け取る瞬間の報酬の音はアプリが `usePlayableGame` で鳴らすので、ゲームは鳴らさない。
-- ゲームを選ぶ・プレイを始める音はアプリの共通部品（難易度の選択肢、結果画面、プレイ中のメニュー）が `@/components/app-decision-sound` で鳴らすので、ゲームは鳴らさない。
+- ゲームを選ぶ・プレイを始める音はアプリの共通部品（ゲームのホームの「ランダムに遊ぶ」と図鑑の「遊ぶ」、結果画面、プレイ中のメニュー）が `@/components/app-decision-sound` で鳴らすので、ゲームは鳴らさない。
 
 ## 依存方向
 
@@ -180,6 +180,7 @@ frontend/src/game-catalog/
 ├── game-catalog-entry.ts
 ├── game-catalog.ts
 ├── game-navigation.ts
+├── game-home.tsx
 ├── playable-game.tsx
 ├── recorded-game-result.ts
 ├── internal-diagnostics-dialog.ts
@@ -196,7 +197,8 @@ frontend/src/game-catalog/
 
 - `game-catalog-entry.ts`: 1ゲーム分のカタログ項目 `GameCatalogEntry` と、記録や離脱したプレイの問題を遊び直すプレイ画面・記録から描く結果画面（`RecordResultContext`）の契約を置く。
 - `game-catalog.ts`: 全ゲームを表示順に並べた `gameCatalog` を置く。パズル選択・記録・結果の画面は、ゲームを列挙せずこれを回す。
-- `game-navigation.ts`: 記録・入口（難易度選択）・ホーム・同じゲームの次の問題へ移る `GameNavigation` と、記録の問題を遊び直すプレイ画面を開く `openRecordProblemPlay` を置く。ゲームの画面からの遷移はこれを使い、パスを直書きしない。入口とプレイ画面のパスはカタログ項目の `entryPath`・`playPath` を正とする。
+- `game-navigation.ts`: ゲームのホーム（問題を選んだ状態でも開ける。プレイから戻るときは履歴を置き換える `replacesHistory`）・ホーム・同じゲームの次の問題へ移る `GameNavigation` と、記録の問題を遊び直すプレイ画面を開く `openRecordProblemPlay` を置く。ゲームの画面からの遷移はこれを使い、パスを直書きしない。ゲームのホームとプレイ画面のパスはカタログ項目の `homePath`・`playPath` を正とする。
+- `game-home.tsx`: ゲームのホームを、そのゲームの図鑑・前回からの変化・URL の `problem` クエリで選ぶ問題・プレイ画面への遷移へつなぐ `useGameHome` を置く。返す `screenProps` をゲームのホームの画面へそのまま渡す。
 - `playable-game.tsx`: 1問のプレイを URL の問題 ID・完了記録の保存と記録の結果画面への遷移・離脱の記録・画面遷移・検証情報へつなぐ `usePlayableGame` を置く。返す `screenProps` をプレイ画面へそのまま渡す。
 - `recorded-game-result.ts`: 記録から作り直した結果を、次の問題（記録と同じ難易度で記録の問題を避ける）・画面遷移・検証情報へつなぐ `useRecordedGameResult` と、`Recorded<Game>Result` の props `RecordedGameResultProps` を置く。
 - `internal-diagnostics-dialog.ts`: 検証情報のダイアログを開いたときだけ診断スナップショットを作る `useInternalDiagnosticsDialog` を置く。検証情報を開く操作は内部診断を使えるビルドでだけ出し、ダイアログはスナップショットがあるときだけ描く。
@@ -205,7 +207,7 @@ frontend/src/game-catalog/
 - `record-result-location-state.ts`: 結果画面へ渡す location state（記録の保存結果）の作成と、形を確かめた読み取りを置く。
 - `record-result-navigation.ts`: クリアして記録を保存できたプレイを、記録の結果画面 `/puzzles/<game>/result/<記録ID>` へ履歴を置き換えて移す共通フックを置く。
 - `result-reward-sound.ts`: プレイを終えて結果を受け取る瞬間に、評価段階に応じた報酬の音を鳴らす共通フックを置く。記録から開いた結果画面では鳴らさない。
-- `<game>-catalog-entry.tsx`: ID（記録の `gameId`）、表示名、ピクトグラム、入口パス、プレイ画面のパス、記録表示、記録や離脱したプレイの問題を遊び直す難易度と問題 ID、記録から描く結果画面を持つ。遊び直し先は記録一覧の全行で求めるので、問題を復元せず問題集の索引で引けるかだけを確かめる。結果画面は今の版の記録からだけ描き、描けない記録には `null` を返す。
+- `<game>-catalog-entry.tsx`: ID（記録の `gameId`）、表示名、ピクトグラム、ゲームのホームのパス、プレイ画面のパス、記録表示、記録や離脱したプレイの問題を遊び直す難易度と問題 ID、記録から描く結果画面を持つ。遊び直し先は記録一覧の全行で求めるので、問題を復元せず問題集の索引で引けるかだけを確かめる。結果画面は今の版の記録からだけ描き、描けない記録には `null` を返す。
 - `Playable<Game>.tsx`: URL の問題 ID で最初の問題を引いて `play/` を始め、`usePlayableGame` に完了記録・離脱の進み具合・診断スナップショットの作り方を渡し、`ui/<Game>Play.tsx` と診断ダイアログを描く。記録を保存できたクリアは記録の結果画面へ移し、その場の結果画面は記録の保存に失敗したプレイでだけ出す。
 - `Recorded<Game>Result.tsx`: `useRecordedGameResult` に診断スナップショットの作り方を渡し、記録から作り直した結果を `ui/result/<Game>ResultScreen.tsx` と診断ダイアログで描く。
 
@@ -213,5 +215,5 @@ frontend/src/game-catalog/
 
 1. `games/<game>/` を標準配置で実装する。
 2. `game-catalog/<game>/` に `Playable<Game>.tsx`、`Recorded<Game>Result.tsx`、`<game>-catalog-entry.tsx` を置き、`game-catalog.ts` の並びへ加える。
-3. `pages/puzzles/<game>/` と、そのルートの View（難易度選択・プレイ）を置く。
+3. `pages/puzzles/<game>/` と、そのルートの View（ゲームのホーム・プレイ）を置く。ゲームのホームは `pages/puzzles/<game>/index.tsx` に置き、`pages/puzzles/[game]/` の動的ルートにまとめない（静的な `<game>/play/` を持つゲームでは静的な枝が優先され、ゲームのホームが開けなくなる）。
 4. `bun run --cwd frontend generate:dependency-rules` で `frontend/biome.json` の依存規則を生成し直す。規則は `src/games/` 直下のディレクトリから全ゲームに同じ形で作られ、生成結果との一致はテストで検査される。

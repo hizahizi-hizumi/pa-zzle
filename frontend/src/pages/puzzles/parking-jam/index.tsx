@@ -1,1 +1,1 @@
-export { ParkingJamDifficultyView as default } from "@/views/ParkingJamDifficultyView";
+export { ParkingJamHomeView as default } from "@/views/ParkingJamHomeView";
