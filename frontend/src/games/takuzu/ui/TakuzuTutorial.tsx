@@ -6,6 +6,7 @@ import {
 } from "@/components/TutorialOverlay";
 import type { GameProgress } from "@/games/play";
 import pictogramSvg from "@/games/takuzu/assets/pictogram.svg?raw";
+import { TAKUZU_DISPLAY_NAME } from "@/games/takuzu/display-name";
 import type { TakuzuOperation } from "@/games/takuzu/play/use-takuzu-play";
 import type { TakuzuCell, TakuzuTile } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
@@ -360,7 +361,7 @@ export function TakuzuTutorial({
   return (
     <TutorialOverlay
       open={open}
-      title="バイナリパズル"
+      title={TAKUZU_DISPLAY_NAME}
       pictogramSvg={pictogramSvg}
       rules={takuzuTutorial.rules.map((rule) => ({
         ...rule,
