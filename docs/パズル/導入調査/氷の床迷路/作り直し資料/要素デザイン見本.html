@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>氷の床迷路 盤面と追加要素のデザイン見本</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ===== 氷の床迷路 盤面（アプリ本体 IceFloorMazeBoard / ice-floor-maze-tone.ts を土台にした見本） =====
+   1マス = 1単位の SVG 座標で描く。色は Tailwind の oklch 値（アプリの tone と同じ段階）。
+   - 外壁・岩・もろい岩: 石の色（stone）。「ぶつかって止まる面」。
+   - 氷・薄い氷・水面: 青の系統の明るさの段階。明るい＝滑れる、暗く沈んだ＝入れない。
+   - 雪: 白い面。駒が入り込んで止まる、柔らかい地面。
+   - ゴール: アンバー。駒: 白い縁取り（主駒は丸・インディゴ、相棒は四角・エメラルド）。 */
+:root {
+  --ifm-wall: oklch(70.9% 0.01 56.259);          /* stone-400 */
+  --ifm-stone: oklch(70.9% 0.01 56.259);         /* stone-400 */
+  --ifm-stone-shadow: oklch(55.3% 0.013 58.071); /* stone-500 */
+  --ifm-ice: oklch(95.1% 0.026 236.824);         /* sky-100 */
+  --ifm-joint: oklch(90.1% 0.058 230.902);       /* sky-200 */
+  --ifm-thin: oklch(85.5% 0.085 231);            /* sky-200〜300 の間 */
+  --ifm-thin-crack: oklch(100% 0 0);
+  --ifm-water: oklch(58.8% 0.158 241.966);       /* sky-600 */
+  --ifm-water-deep: oklch(50% 0.134 242.749);    /* sky-700 */
+  --ifm-wave: oklch(90.1% 0.058 230.902 / 0.9);  /* sky-200 */
+  --ifm-snow: oklch(100% 0 0);
+  --ifm-snow-edge: oklch(78% 0.035 245);
+  --ifm-snow-dot: oklch(88% 0.03 240);
+  --ifm-goal-cell: oklch(96.2% 0.059 95.617);    /* amber-100 */
+  --ifm-goal: oklch(76.9% 0.188 70.08);          /* amber-500 */
+  --ifm-a: oklch(51.1% 0.262 276.966);           /* indigo-600 */
+  --ifm-b: oklch(59.6% 0.145 163.225);           /* emerald-600 */
+  --ifm-rim: oklch(100% 0 0);
+  --ifm-trail-a: oklch(67.3% 0.182 276.935 / 0.45); /* indigo-400/45 */
+  --ifm-trail-b: oklch(76.5% 0.177 163.223 / 0.5);  /* emerald-400/50 */
+}
+:root[data-theme="dark"] {
+  --ifm-wall: oklch(55.3% 0.013 58.071);         /* stone-500 */
+  --ifm-stone: oklch(55.3% 0.013 58.071);
+  --ifm-stone-shadow: oklch(44.4% 0.011 73.639); /* stone-600 */
+  --ifm-ice: oklch(27.9% 0.041 260.031);         /* slate-800 */
+  --ifm-joint: oklch(37.2% 0.044 257.287);       /* slate-700 */
+  --ifm-thin: oklch(40% 0.075 240);
+  --ifm-thin-crack: oklch(90% 0.03 235 / 0.95);
+  --ifm-water: oklch(19% 0.055 250);
+  --ifm-water-deep: oklch(14% 0.04 252);
+  --ifm-wave: oklch(74.6% 0.16 232.661 / 0.85);  /* sky-400 */
+  --ifm-snow: oklch(92.9% 0.013 255.508);        /* slate-200 */
+  --ifm-snow-edge: oklch(70.4% 0.04 256.788);    /* slate-400 */
+  --ifm-snow-dot: oklch(82% 0.025 255);
+  --ifm-goal-cell: oklch(27.9% 0.077 45.635);    /* amber-950 */
+  --ifm-goal: oklch(82.8% 0.189 84.429);         /* amber-400 */
+  --ifm-a: oklch(67.3% 0.182 276.935);           /* indigo-400 */
+  --ifm-b: oklch(76.5% 0.177 163.223);           /* emerald-400 */
+  --ifm-rim: oklch(98.4% 0.003 247.858);         /* slate-50 */
+  --ifm-trail-a: oklch(78.5% 0.115 274.713 / 0.35); /* indigo-300/35 */
+  --ifm-trail-b: oklch(84.5% 0.143 164.978 / 0.35); /* emerald-300/35 */
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ifm-wall: oklch(55.3% 0.013 58.071);
+    --ifm-stone: oklch(55.3% 0.013 58.071);
+    --ifm-stone-shadow: oklch(44.4% 0.011 73.639);
+    --ifm-ice: oklch(27.9% 0.041 260.031);
+    --ifm-joint: oklch(37.2% 0.044 257.287);
+    --ifm-thin: oklch(40% 0.075 240);
+    --ifm-thin-crack: oklch(90% 0.03 235 / 0.95);
+    --ifm-water: oklch(19% 0.055 250);
+    --ifm-water-deep: oklch(14% 0.04 252);
+    --ifm-wave: oklch(74.6% 0.16 232.661 / 0.85);
+    --ifm-snow: oklch(92.9% 0.013 255.508);
+    --ifm-snow-edge: oklch(70.4% 0.04 256.788);
+    --ifm-snow-dot: oklch(82% 0.025 255);
+    --ifm-goal-cell: oklch(27.9% 0.077 45.635);
+    --ifm-goal: oklch(82.8% 0.189 84.429);
+    --ifm-a: oklch(67.3% 0.182 276.935);
+    --ifm-b: oklch(76.5% 0.177 163.223);
+    --ifm-rim: oklch(98.4% 0.003 247.858);
+    --ifm-trail-a: oklch(78.5% 0.115 274.713 / 0.35);
+    --ifm-trail-b: oklch(84.5% 0.143 164.978 / 0.35);
+  }
+}
+.ifm-board { position: relative; }
+.ifm-svg { position: absolute; overflow: visible; display: block; pointer-events: none; }
+.ifm-wall { fill: var(--ifm-wall); stroke: var(--ifm-wall); stroke-width: 0.36; stroke-linejoin: round; }
+.ifm-wall-fill { fill: var(--ifm-wall); }
+.ifm-ice { fill: var(--ifm-ice); }
+.ifm-joint { fill: none; stroke: var(--ifm-joint); stroke-width: 0.04; }
+.ifm-goal-cell { fill: var(--ifm-goal-cell); }
+.ifm-stone { fill: var(--ifm-stone); }
+.ifm-stone-shadow { fill: var(--ifm-stone-shadow); }
+.ifm-rock-crack { fill: none; stroke: var(--ifm-stone-shadow); stroke-width: 0.06; stroke-linecap: round; stroke-linejoin: round; }
+.ifm-thin { fill: var(--ifm-thin); }
+.ifm-thin-crack { fill: none; stroke: var(--ifm-thin-crack); stroke-width: 0.055; stroke-linecap: round; stroke-linejoin: round; }
+.ifm-thin-crack-dark { fill: none; stroke: var(--ifm-water); stroke-width: 0.05; stroke-linecap: round; stroke-linejoin: round; }
+.ifm-thin-glint { fill: none; stroke: var(--ifm-thin-crack); stroke-width: 0.07; stroke-linecap: round; opacity: 0.8; }
+.ifm-water { fill: var(--ifm-water); }
+.ifm-water-deep { fill: var(--ifm-water-deep); }
+.ifm-wave { fill: none; stroke: var(--ifm-wave); stroke-width: 0.06; stroke-linecap: round; }
+.ifm-ripple { fill: none; stroke: var(--ifm-wave); stroke-width: 0.06; }
+.ifm-snow { fill: var(--ifm-snow); stroke: var(--ifm-snow-edge); stroke-width: 0.045; stroke-linejoin: round; }
+.ifm-snow-flat { fill: var(--ifm-snow); }
+.ifm-snow-shadow { fill: var(--ifm-snow-edge); }
+.ifm-snow-dot { fill: var(--ifm-snow-dot); }
+.ifm-wet { fill: var(--ifm-joint); }
+.ifm-goal-ring { fill: none; stroke: var(--ifm-goal); stroke-width: 0.08; }
+.ifm-goal-dot { fill: var(--ifm-goal); }
+.ifm-trail { fill: var(--ifm-trail-a); }
+.ifm-trail.is-b { fill: var(--ifm-trail-b); }
+.ifm-piece-a { fill: var(--ifm-a); stroke: var(--ifm-rim); stroke-width: 0.08; }
+.ifm-piece-b { fill: var(--ifm-b); stroke: var(--ifm-rim); stroke-width: 0.08; }
+.ifm-sel { fill: none; stroke-width: 0.075; stroke-linecap: round; stroke-linejoin: round; opacity: 0; }
+.ifm-sel-a { stroke: var(--ifm-a); }
+.ifm-sel-b { stroke: var(--ifm-b); }
+.ifm-anim { transform-box: fill-box; transform-origin: center; }
+/* 駒（div）。中の SVG は 1マス = 1単位、中心が原点。 */
+.piece { position: absolute; left: 0; top: 0; pointer-events: none; transition-property: transform; transition-timing-function: linear; }
+.piece > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; display: block; }
+.piece .pc { transform-box: fill-box; transform-origin: center; }
+.piece.selected .ifm-sel { opacity: 1; }
+.piece[data-sel="lift"] .pc { transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1), opacity 150ms; }
+.piece[data-sel="lift"].selected .pc { transform: scale(1.14); filter: drop-shadow(0 0.06px 0.04px rgb(0 0 0 / 0.45)); }
+.piece[data-sel="lift"].dim .pc { opacity: 0.6; transform: scale(0.9); }
+.piece.bump .pc { animation: ifm-bump 180ms ease-out; }
+@keyframes ifm-bump { 40% { transform: scale(0.86); } }
+@media (prefers-reduced-motion: reduce) { .piece { transition-duration: 0ms !important; } .piece.bump .pc { animation: none; } }
+:root.reduce-motion .piece { transition-duration: 0ms !important; }
+:root.reduce-motion .piece.bump .pc { animation: none; }
+
+/* ---- 見本ページの器（アプリの共通UIトークンに合わせた静かな器） ---- */
+:root {
+  --bg: oklch(1 0 0); --fg: oklch(0.145 0 0); --muted: oklch(0.97 0 0); --muted-fg: oklch(0.556 0 0); --border: oklch(0.922 0 0); --ring: oklch(0.708 0 0);
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: oklch(0.145 0 0); --fg: oklch(0.985 0 0); --muted: oklch(0.269 0 0); --muted-fg: oklch(0.708 0 0); --border: oklch(1 0 0 / 10%); --ring: oklch(0.556 0 0);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--fg); font-family: "Zen Kaku Gothic New", system-ui, sans-serif; font-size: 1rem; line-height: 1.5rem; }
+:root.gray main { filter: grayscale(1); }
+header.bar { position: sticky; top: 0; z-index: 50; background: var(--bg); border-bottom: 1px solid var(--border); }
+header.bar .in { max-width: 1120px; margin: 0 auto; padding: 8px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+header.bar h1 { font-size: 0.875rem; line-height: 1.25rem; font-weight: 600; margin: 0; }
+.toggles { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; font-size: 0.875rem; line-height: 1.25rem; color: var(--fg); background: var(--bg); border: 1px solid var(--border); border-radius: 0.5rem; padding: 6px 12px; cursor: pointer; }
+button:hover { background: var(--muted); }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+main { max-width: 1120px; margin: 0 auto; padding: 24px 16px 96px; display: grid; gap: 48px; }
+section { display: grid; gap: 16px; }
+h2 { font-size: 1.125rem; line-height: 1.75rem; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+h3 { font-size: 1rem; line-height: 1.5rem; font-weight: 600; margin: 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+p { margin: 0; }
+.lead { color: var(--muted-fg); font-size: 0.875rem; line-height: 1.375rem; max-width: 60em; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px; }
+.card { border: 1px solid var(--border); border-radius: 0.75rem; padding: 16px; display: grid; gap: 12px; align-content: start; }
+.card.adopted { border-color: var(--fg); border-width: 2px; padding: 15px; }
+.badge { font-size: 0.75rem; line-height: 1rem; font-weight: 500; border-radius: 999px; padding: 2px 8px; border: 1px solid var(--border); color: var(--muted-fg); }
+.adopted .badge { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.card p { font-size: 0.875rem; line-height: 1.375rem; }
+.card p.no { color: var(--muted-fg); }
+.sizes { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.size { display: grid; gap: 4px; justify-items: start; }
+.size small, .cap { font-size: 0.75rem; line-height: 1rem; color: var(--muted-fg); font-variant-numeric: tabular-nums; }
+.row { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+.demo { display: grid; gap: 8px; justify-items: start; }
+.demo .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.lineup { display: grid; gap: 4px; }
+.labels { display: grid; font-size: 0.6875rem; line-height: 0.875rem; color: var(--muted-fg); text-align: center; }
+.labels span { overflow: hidden; }
+.note { font-size: 0.875rem; line-height: 1.375rem; border-left: 2px solid var(--border); padding-left: 12px; color: var(--muted-fg); }
+table.decide { border-collapse: collapse; font-size: 0.875rem; line-height: 1.375rem; width: 100%; }
+table.decide th, table.decide td { border-bottom: 1px solid var(--border); padding: 8px; text-align: left; vertical-align: top; }
+table.decide th { font-weight: 600; white-space: nowrap; }
+.play-area { touch-action: none; user-select: none; -webkit-user-select: none; }
+</style>
+</head>
+<body>
+<header class="bar"><div class="in">
+  <h1>氷の床迷路 盤面と追加要素のデザイン見本</h1>
+  <div class="toggles">
+    <button type="button" id="t-light" aria-pressed="true">ライト</button>
+    <button type="button" id="t-dark" aria-pressed="false">ダーク</button>
+    <button type="button" id="t-gray" aria-pressed="false">グレースケール</button>
+    <button type="button" id="t-reduce" aria-pressed="false">動きを減らす</button>
+  </div>
+</div></header>
+<main>
+
+<section>
+  <h2>採用案の一覧</h2>
+  <p class="lead">アプリ本体の盤面（石の外壁と岩、目地の入った明るい氷、アンバーのゴール、白い縁取りの駒、半透明の跡）をそのまま土台にし、4要素を足した。左から 氷・薄い氷・水面・雪・岩・もろい岩・盤面の外・ゴール・主駒・相棒（選択中）。明るさは「滑れる＝明るい（氷・薄い氷・雪）／入れない・止まる＝暗い・出っ張る・沈む（水面・岩）」の順に並べ、形でも「出っ張り（岩・もろい岩）」「くぼみ（水面）」「平らな面（氷・薄い氷・雪）」に分けた。グレースケールの切り替えで色なしでも区別できるかを確かめられる。</p>
+  <div class="row" id="lineups"></div>
+  <table class="decide">
+    <tr><th>要素</th><th>採用した見た目</th><th>状態が変わる瞬間</th></tr>
+    <tr><td>相棒の駒</td><td>主駒は丸（ゴールの丸い輪に収まる）、相棒は角の丸い四角。どちらも白い縁取り（白い縁＝動かせる駒）。相棒はエメラルド。選んでいる駒はマスの四隅に駒の色のかぎ。</td><td>選び替えたとき、かぎが少し外から寄って現れる（150ms）。跡は動かした駒の色。</td></tr>
+    <tr><td>もろい岩</td><td>岩と同じ石の塊が、上から下まで通る割れ目で2つに分かれている。割れ目から下の氷が見える。</td><td>ぶつかって止まった瞬間に、割れ目で2つに分かれ、ぶつかった向きへ傾きながら沈んで消える（300ms）。</td></tr>
+    <tr><td>薄い氷 → 水面</td><td>薄い氷: 氷より一段濃い青（下の水が透ける）に白いひび。水面: 濃い青、上の縁に影（くぼみ）と小さな波。</td><td>駒がそのマスを離れた瞬間（滑りに合わせて順に）、ひびの線で3つに割れて沈み、水面に波紋が広がる（280ms＋波紋）。</td></tr>
+    <tr><td>雪</td><td>ふちが波打つ平らな白い面がマスいっぱいに積もる。影を付けず、出っ張りに見せない。</td><td>駒が離れた瞬間に、しぼんで消え、濡れた跡が一瞬残って氷に戻る（260ms）。</td></tr>
+    <tr><td>盤面の外</td><td>描かない（画面の地）。外壁が盤面の形に沿って曲がり、内側の穴も外壁で縁取る。</td><td>変化しない。</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>相棒の駒</h2>
+  <p class="lead">駒をタップして選び、スワイプで滑らせる。どちらをゴールへ運ぶか、どちらが選ばれているかが、形で分かること。</p>
+  <h3>駒の形と色</h3>
+  <div class="cards" id="c-partner"></div>
+  <h3>選んでいる駒の示し方</h3>
+  <div class="cards" id="c-select"></div>
+  <div class="row" id="d-partner"></div>
+</section>
+
+<section>
+  <h2>もろい岩</h2>
+  <p class="lead">岩と同じく止め役。一度ぶつかって止まると、その滑りの後で崩れて氷になる。「止め役であること」と「一度で壊れること」の両方が静止状態で読めること。</p>
+  <div class="cards" id="c-brittle"></div>
+  <div class="row" id="d-brittle"></div>
+</section>
+
+<section>
+  <h2>薄い氷と水面</h2>
+  <p class="lead">薄い氷は滑れる氷。駒が通って（または止まって）離れると割れて水面になる。駒は水には入れず、水面の手前で止まる。「まだ滑れる」と「もう入れない」を取り違えないこと。</p>
+  <div class="cards" id="c-thin"></div>
+  <div class="row" id="d-thin"></div>
+</section>
+
+<section>
+  <h2>雪</h2>
+  <p class="lead">滑っている駒は雪に入るとそこで止まる。駒が離れると雪は溶けて氷になる。岩（手前で止まる）と違い「入り込んで止まる」ことが読めること。</p>
+  <div class="cards" id="c-snow"></div>
+  <div class="row" id="d-snow"></div>
+</section>
+
+<section>
+  <h2>盤面の外</h2>
+  <p class="lead">一度も通らないマス。外壁と同じく止め役。</p>
+  <div class="cards" id="c-outside"></div>
+</section>
+
+<section>
+  <h2>4要素が混ざった盤面</h2>
+  <p class="lead">実際の問題は1つの要素ずつだが、見分けの確認のために全部を1つの盤面に置いた。動かせる: 駒をタップして選び、スワイプか矢印キー（Tab で選び替え）。丸い駒をゴールで止めるとクリアの演出。</p>
+  <div class="row" id="mixed"></div>
+  <div class="row" id="mixed-play"></div>
+</section>
+
+<section>
+  <h2>実寸での見え方</h2>
+  <p class="lead">試遊の問題と同じ大きさの盤面を、スマートフォンでの実際のマスの大きさで描いた。320px 幅で 12×14 は1マス約24px、10×12 は約29px。</p>
+  <div class="row" id="real"></div>
+</section>
+
+<section>
+  <h2>動きの決まり</h2>
+  <div class="note">
+    <p>・動くのは状態が変わる瞬間だけ。止まっている間は何も動かさない（常時のゆらぎ・きらめきは付けない）。</p>
+    <p>・滑りはアプリと同じ（距離に比例・等速・上限 400ms）。薄い氷は駒がそのマスを離れる時刻に合わせて順に割れ、もろい岩は止まった時刻に崩れ、雪は駒が離れる時刻に溶ける。</p>
+    <p>・変化の動きは 260〜300ms（波紋だけ 420ms）で、次の操作を待たせない。消える動きは exit、現れる動きは enter のイージング（@theme と同じ値）。</p>
+    <p>・動きを減らす設定（prefers-reduced-motion、この見本では右上の切り替え）では、滑り・変化とも動かさず、変わった後の姿へすぐ切り替える。</p>
+  </div>
+</section>
+</main>
+<script>
+// ===== 氷の床迷路 盤面の描画と状態変化の動き =====
+// 盤面の文字: "." 氷 / "#" 岩 / "b" もろい岩 / "c" 薄い氷 / "w" 水面（薄い氷が割れた後） / "s" 雪 / "x" 盤面の外
+const IFM = (() => {
+  const NS = "http://www.w3.org/2000/svg";
+  const T = 0.18; // 外壁の太さ（アプリの ICE_FLOOR_MAZE_WALL_THICKNESS と同じ）
+  const n = (v) => Math.round(v * 1000) / 1000;
+  const DEFAULT = { brittle: "split", thin: "cracked", water: "pool", snow: "patch", outside: "void", partner: "square", select: "brackets" };
+  const EASE = {
+    standard: "cubic-bezier(0.4, 0, 0.2, 1)",
+    enter: "cubic-bezier(0, 0, 0.2, 1)",
+    exit: "cubic-bezier(0.4, 0, 1, 1)",
+    celebrate: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+  };
+  /** 滑りの時間（アプリと同じ: 距離に比例、上限 400ms、等速）。 */
+  const slideMs = (dist) => Math.min(400, 45 + 32 * dist);
+
+  // 薄い氷のひび: 中心から3方向へ折れ曲がって伸びる（十字や×に見せない）。割れるときはこの線で3つの破片に分かれる。
+  const C = [0.44, 0.54];
+  const BR = [
+    { k: [0.6, 0.3], e: [0.76, 0], t: 0.6 },
+    { k: [0.7, 0.72], e: [1, 0.84], t: 0.35 },
+    { k: [0.22, 0.44], e: [0, 0.3], t: 0.45 },
+  ];
+  // 破片: ひびの間の角（時計回り）。
+  const BETWEEN = [[[1, 0]], [[1, 1], [0, 1]], [[0, 0]]];
+  const shardPolys = BR.map((b, i) => {
+    const nb = BR[(i + 1) % BR.length];
+    return [C, b.k, b.e, ...BETWEEN[i], nb.e, nb.k];
+  });
+  const shardDirs = [[0.8, -0.4], [0, 1], [-0.6, -0.6]];
+
+  const DEFS = `<defs>
+<clipPath id="ifm-split-l" clipPathUnits="objectBoundingBox"><polygon points="0,0 .5,0 .4,.36 .56,.6 .38,1 0,1"/></clipPath>
+<clipPath id="ifm-split-r" clipPathUnits="objectBoundingBox"><polygon points=".6,0 1,0 1,1 .48,1 .66,.6 .5,.36"/></clipPath>
+${shardPolys.map((p, i) => `<clipPath id="ifm-shard-${i}" clipPathUnits="objectBoundingBox"><polygon points="${p.map((q) => q.join(",")).join(" ")}"/></clipPath>`).join("")}
+</defs>`;
+
+  // ---- 地形 ----
+  const rock = (x, y) =>
+    `<rect class="ifm-stone-shadow" x="${n(x + 0.06)}" y="${n(y + 0.14)}" width=".88" height=".8" rx=".18"/>` +
+    `<rect class="ifm-stone" x="${n(x + 0.06)}" y="${n(y + 0.06)}" width=".88" height=".8" rx=".18"/>`;
+
+  function brittle(x, y, v) {
+    if (v === "rubble") {
+      const stone = (sx, sy, w, h) =>
+        `<rect class="ifm-stone-shadow" x="${n(x + sx)}" y="${n(y + sy + 0.07)}" width="${w}" height="${h}" rx=".12"/>` +
+        `<rect class="ifm-stone" x="${n(x + sx)}" y="${n(y + sy)}" width="${w}" height="${h}" rx=".12"/>`;
+      return stone(0.3, 0.06, 0.44, 0.36) + stone(0.06, 0.46, 0.46, 0.42) + stone(0.54, 0.5, 0.4, 0.38);
+    }
+    if (v === "lines") {
+      return rock(x, y) + `<path class="ifm-rock-crack" d="M${n(x + 0.56)} ${n(y + 0.08)}L${n(x + 0.44)} ${n(y + 0.36)}L${n(x + 0.6)} ${n(y + 0.56)}L${n(x + 0.42)} ${n(y + 0.84)}M${n(x + 0.6)} ${n(y + 0.56)}L${n(x + 0.84)} ${n(y + 0.5)}"/>`;
+    }
+    // split: 岩が割れ目で2つに分かれ、隙間から氷が見える
+    return `<g class="ifm-anim" data-chunk="l" clip-path="url(#ifm-split-l)">${rock(x, y)}</g><g class="ifm-anim" data-chunk="r" clip-path="url(#ifm-split-r)">${rock(x, y)}</g>`;
+  }
+
+  const crackPath = (x, y) =>
+    BR.map((b) => {
+      const end = [b.k[0] + b.t * (b.e[0] - b.k[0]), b.k[1] + b.t * (b.e[1] - b.k[1])];
+      return `M${n(x + C[0])} ${n(y + C[1])}L${n(x + b.k[0])} ${n(y + b.k[1])}L${n(x + end[0])} ${n(y + end[1])}`;
+    }).join("");
+
+  function thin(x, y, v) {
+    const pane = `<rect class="ifm-thin" x="${n(x + 0.02)}" y="${n(y + 0.02)}" width=".96" height=".96" rx=".06"/>`;
+    if (v === "darkcrack") {
+      return `<path class="ifm-thin-crack-dark" d="M${n(x + 0.18)} ${n(y + 0.22)}L${n(x + 0.42)} ${n(y + 0.46)}L${n(x + 0.38)} ${n(y + 0.6)}L${n(x + 0.8)} ${n(y + 0.82)}M${n(x + 0.42)} ${n(y + 0.46)}L${n(x + 0.72)} ${n(y + 0.3)}"/>`;
+    }
+    if (v === "frost") {
+      return pane + `<path class="ifm-thin-glint" d="M${n(x + 0.24)} ${n(y + 0.58)}L${n(x + 0.58)} ${n(y + 0.24)}M${n(x + 0.42)} ${n(y + 0.76)}L${n(x + 0.76)} ${n(y + 0.42)}"/>`;
+    }
+    return pane + `<path class="ifm-thin-crack" d="${crackPath(x, y)}"/>`;
+  }
+
+  const wave = (x, y) => `M${n(x)} ${n(y)}q.075 -.08 .15 0t.15 0`;
+  function water(x, y, v) {
+    const base = `<rect class="ifm-water" x="${n(x + 0.02)}" y="${n(y + 0.02)}" width=".96" height=".96" rx=".06"/>`;
+    if (v === "flat") return base;
+    // pool: 一段沈んだ水面。上の縁に影（岩は下に影＝盛り上がり、水面は上に影＝くぼみ）と、小さな波。
+    return base +
+      `<path class="ifm-water-deep" d="M${n(x + 0.02)} ${n(y + 0.16)}V${n(y + 0.08)}q0 -.06 .06 -.06H${n(x + 0.92)}q.06 0 .06 .06V${n(y + 0.16)}Z"/>` +
+      `<path class="ifm-wave" d="${wave(x + 0.2, y + 0.5)}${wave(x + 0.5, y + 0.74)}"/>`;
+  }
+
+  function scallop(x, y, a = 0.08, b = 0.92, r = 0.2, per = 3) {
+    const step = (b - a) / per;
+    const A = (px, py) => `A${r} ${r} 0 0 1 ${n(x + px)} ${n(y + py)}`;
+    let d = `M${n(x + a)} ${n(y + a)}`;
+    for (let i = 1; i <= per; i++) d += A(a + step * i, a);
+    for (let i = 1; i <= per; i++) d += A(b, a + step * i);
+    for (let i = 1; i <= per; i++) d += A(b - step * i, b);
+    for (let i = 1; i <= per; i++) d += A(a, b - step * i);
+    return d + "Z";
+  }
+  function snow(x, y, v) {
+    if (v === "mound") {
+      const d = (dy) => `M${n(x + 0.1)} ${n(y + 0.84 + dy)}C${n(x + 0.08)} ${n(y + 0.52 + dy)} ${n(x + 0.3)} ${n(y + 0.36 + dy)} ${n(x + 0.44)} ${n(y + 0.44 + dy)}C${n(x + 0.52)} ${n(y + 0.22 + dy)} ${n(x + 0.84)} ${n(y + 0.24 + dy)} ${n(x + 0.86)} ${n(y + 0.52 + dy)}C${n(x + 0.95)} ${n(y + 0.6 + dy)} ${n(x + 0.94)} ${n(y + 0.8 + dy)} ${n(x + 0.9)} ${n(y + 0.84 + dy)}Z`;
+      return `<path class="ifm-snow-shadow" d="${d(0.08)}"/><path class="ifm-snow-flat" d="${d(0)}"/>`;
+    }
+    if (v === "powder") {
+      let dots = "";
+      for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) dots += `<circle class="ifm-snow" cx="${n(x + 0.2 + i * 0.3)}" cy="${n(y + 0.2 + j * 0.3)}" r=".1"/>`;
+      return dots;
+    }
+    // patch: 氷の上に積もった、ふちが波打つ平らな雪
+    return `<path class="ifm-snow" d="${scallop(x, y)}"/>` +
+      `<circle class="ifm-snow-dot" cx="${n(x + 0.3)}" cy="${n(y + 0.32)}" r=".045"/><circle class="ifm-snow-dot" cx="${n(x + 0.68)}" cy="${n(y + 0.62)}" r=".045"/>`;
+  }
+
+  /** マスに載る要素。氷・盤面の外は地形側で描くので空。 */
+  function cell(ch, x, y, opt = {}) {
+    const v = { ...DEFAULT, ...opt };
+    switch (ch) {
+      case "#": return rock(x, y);
+      case "b": return brittle(x, y, v.brittle);
+      case "c": return thin(x, y, v.thin);
+      case "w": return water(x, y, v.water);
+      case "s": return snow(x, y, v.snow);
+      case "x": return v.outside === "stone" ? `<rect class="ifm-wall-fill" x="${x}" y="${y}" width="1" height="1"/>` : "";
+      default: return "";
+    }
+  }
+
+  /** 外壁・氷・目地・ゴールの地。外壁は盤面のマスの外形に沿って T の太さで囲む（盤面の外のマスは囲みの外）。 */
+  function terrain(rows, goal, opt = {}) {
+    const v = { ...DEFAULT, ...opt };
+    const H = rows.length, W = rows[0].length;
+    const inside = (x, y) => x >= 0 && y >= 0 && x < W && y < H && rows[y][x] !== "x";
+    const framed = (x, y) => v.outside === "stone" ? x >= 0 && y >= 0 && x < W && y < H : inside(x, y);
+    let wall = "", ice = "", joint = "";
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      if (framed(x, y)) wall += `M${x} ${y}h1v1h-1Z`;
+      if (!inside(x, y)) continue;
+      ice += `M${x} ${y}h1v1h-1Z`;
+      if (inside(x + 1, y)) joint += `M${x + 1} ${y}v1`;
+      if (inside(x, y + 1)) joint += `M${x} ${y + 1}h1`;
+    }
+    return `<path class="ifm-wall" d="${wall}"/><path class="ifm-ice" d="${ice}"/>` +
+      (goal ? `<rect class="ifm-goal-cell" x="${goal[0]}" y="${goal[1]}" width="1" height="1"/>` : "") +
+      `<path class="ifm-joint" d="${joint}"/>`;
+  }
+
+  const goalMark = (g) =>
+    `<g data-goal><circle class="ifm-goal-ring" cx="${g[0] + 0.5}" cy="${g[1] + 0.5}" r=".4"/><circle class="ifm-goal-dot" cx="${g[0] + 0.5}" cy="${g[1] + 0.5}" r=".11"/>` +
+    `<circle class="ifm-goal-ring ifm-anim" data-burst cx="${g[0] + 0.5}" cy="${g[1] + 0.5}" r=".4" opacity="0"/></g>`;
+
+  /** 直前の滑りの跡（アプリと同じ: 幅 .42 の丸い帯）。 */
+  function trailGeom(from, to) {
+    const w = 0.42;
+    return {
+      x: Math.min(from[0], to[0]) + 0.5 - w / 2,
+      y: Math.min(from[1], to[1]) + 0.5 - w / 2,
+      width: Math.abs(to[0] - from[0]) + w,
+      height: Math.abs(to[1] - from[1]) + w,
+      rx: w / 2,
+      origin: to[0] > from[0] ? "left center" : to[0] < from[0] ? "right center" : to[1] > from[1] ? "center top" : "center bottom",
+      axis: from[1] === to[1] ? "scaleX" : "scaleY",
+    };
+  }
+
+  /** 駒の中身（1マス = 1単位、中心が原点）。主駒 "a" は丸、相棒 "b" は角の丸い四角。 */
+  function piece(who, opt = {}) {
+    const v = { ...DEFAULT, ...opt };
+    const body = who === "a" || v.partner === "circle"
+      ? `<circle class="ifm-piece-${who}" r=".32"/>`
+      : `<rect class="ifm-piece-${who}" x="-.29" y="-.29" width=".58" height=".58" rx=".12"${v.partnerColor === "orange" ? ' style="fill:#e0662a"' : ""}/>`;
+    let sel = "";
+    if (v.select === "brackets") {
+      const a = 0.47, l = 0.2;
+      sel = `<path class="ifm-sel ifm-sel-${who} ifm-anim" d="M${-a} ${-a + l}V${-a}H${-a + l}M${a - l} ${-a}H${a}V${-a + l}M${a} ${a - l}V${a}H${a - l}M${-a + l} ${a}H${-a}V${a - l}"/>`;
+    } else if (v.select === "ring") {
+      sel = who === "a" || v.partner === "circle"
+        ? `<circle class="ifm-sel ifm-sel-${who} ifm-anim" r=".45" stroke-width=".06"/>`
+        : `<rect class="ifm-sel ifm-sel-${who} ifm-anim" x="-.43" y="-.43" width=".86" height=".86" rx=".2" stroke-width=".06"/>`;
+    }
+    return `<svg viewBox="-0.5 -0.5 1 1">${sel}<g class="pc">${body}</g></svg>`;
+  }
+
+  function svgEl(tag, attrs = {}) {
+    const el = document.createElementNS(NS, tag);
+    for (const [k, val] of Object.entries(attrs)) el.setAttribute(k, val);
+    return el;
+  }
+
+  // ---- 状態変化の動き（Web Animations）。動きを減らす設定では呼ばない。 ----
+  function overlay(fx, html) {
+    const g = svgEl("g");
+    g.innerHTML = html;
+    fx.appendChild(g);
+    return g;
+  }
+  function cleanup(g, anims) {
+    Promise.all(anims.map((a) => a.finished)).catch(() => {}).then(() => g.remove());
+  }
+
+  /** もろい岩が崩れる: 割れ目から2つに分かれて、ぶつかった向きへ傾きながら沈んで消える。 */
+  function crumble(fx, x, y, delay, dir = [0, 0], opt = {}) {
+    const v = { ...DEFAULT, ...opt };
+    const g = overlay(fx, brittle(x, y, "split"));
+    const [dx, dy] = dir;
+    const anims = [...g.querySelectorAll("[data-chunk]")].map((chunk) => {
+      const s = chunk.dataset.chunk === "l" ? -1 : 1;
+      return chunk.animate([
+        { transform: "translate(0px, 0px) rotate(0deg) scale(1)", opacity: 1 },
+        { transform: `translate(${n(s * 0.05)}px, 0px) rotate(${s * 4}deg) scale(1)`, opacity: 1, offset: 0.3 },
+        { transform: `translate(${n(s * 0.12 + dx * 0.12)}px, ${n(0.1 + dy * 0.12)}px) rotate(${s * 16}deg) scale(0.5)`, opacity: 0 },
+      ], { duration: 300, delay, easing: EASE.exit, fill: "both" });
+    });
+    if (v.brittle !== "split") {
+      // 見本の別案でも、崩れる動き自体は同じにする
+    }
+    cleanup(g, anims);
+  }
+
+  /** 薄い氷が割れる: ひびの線で4つに割れて沈み、水面に波紋が広がる。 */
+  function shatter(fx, x, y, delay) {
+    const pane = thin(x, y, "cracked");
+    const ripple = `<circle class="ifm-ripple ifm-anim" cx="${x + 0.5}" cy="${y + 0.5}" r=".16" opacity="0"/>`;
+    const g = overlay(fx, ripple + shardPolys.map((_, i) => `<g class="ifm-anim" data-shard="${i}" clip-path="url(#ifm-shard-${i})">${pane}</g>`).join(""));
+    const anims = [...g.querySelectorAll("[data-shard]")].map((s) => {
+      const [ox, oy] = shardDirs[+s.dataset.shard];
+      return s.animate([
+        { transform: "translate(0px, 0px) scale(1)", opacity: 1 },
+        { transform: `translate(${n(ox * 0.03)}px, ${n(oy * 0.03)}px) scale(0.96)`, opacity: 1, offset: 0.25 },
+        { transform: `translate(${n(ox * 0.06)}px, ${n(oy * 0.06)}px) scale(0.55)`, opacity: 0 },
+      ], { duration: 280, delay, easing: EASE.exit, fill: "both" });
+    });
+    anims.push(g.querySelector(".ifm-ripple").animate([
+      { transform: "scale(1)", opacity: 0.9 },
+      { transform: "scale(2.6)", opacity: 0 },
+    ], { duration: 420, delay: delay + 120, easing: EASE.enter, fill: "both" }));
+    cleanup(g, anims);
+  }
+
+  /** 雪が溶ける: 雪がしぼんで消え、濡れた跡が一瞬残って氷に戻る。 */
+  function melt(fx, x, y, delay, opt = {}) {
+    const v = { ...DEFAULT, ...opt };
+    const wet = `<rect class="ifm-wet ifm-anim" x="${n(x + 0.12)}" y="${n(y + 0.12)}" width=".76" height=".76" rx=".3" opacity="0"/>`;
+    const g = overlay(fx, wet + `<g class="ifm-anim" data-snow>${snow(x, y, v.snow)}</g>`);
+    const anims = [
+      g.querySelector("[data-snow]").animate([
+        { transform: "scale(1, 1)", opacity: 1 },
+        { transform: "scale(0.7, 0.55)", opacity: 0 },
+      ], { duration: 260, delay, easing: EASE.exit, fill: "both" }),
+      g.querySelector(".ifm-wet").animate([
+        { opacity: 0 }, { opacity: 0.9, offset: 0.35 }, { opacity: 0 },
+      ], { duration: 460, delay, easing: EASE.standard, fill: "both" }),
+    ];
+    cleanup(g, anims);
+  }
+
+  /** 盤面のマスが変わったときの動き。古い姿を上に重ねて消す（下には新しい姿が描いてある）。 */
+  function animateChange(fx, from, x, y, delay, dir, opt) {
+    if (from === "b") crumble(fx, x, y, delay, dir, opt);
+    else if (from === "c") shatter(fx, x, y, delay);
+    else if (from === "s") melt(fx, x, y, delay, opt);
+  }
+
+  /** 選んだ駒の四隅のかぎが、少し外から寄って現れる。 */
+  function selectPop(pieceEl) {
+    const sel = pieceEl.querySelector(".ifm-sel");
+    sel?.animate([
+      { transform: "scale(1.3)", opacity: 0 },
+      { transform: "scale(1)", opacity: 1 },
+    ], { duration: 150, easing: EASE.enter });
+  }
+
+  /** クリア: アプリと同じくゴールの輪が広がり、駒が一度ふくらむ。 */
+  function celebrate(svg, pieceEl, delay) {
+    svg.querySelector("[data-burst]")?.animate([
+      { transform: "scale(1)", opacity: 0.9 },
+      { transform: "scale(2.2)", opacity: 0 },
+    ], { duration: 560, delay, easing: EASE.celebrate });
+    pieceEl?.querySelector(".pc")?.animate([
+      { transform: "scale(1)" }, { transform: "scale(1.18)", offset: 0.4 }, { transform: "scale(1)" },
+    ], { duration: 360, delay, easing: EASE.celebrate });
+  }
+
+  /** 跡を滑りと同じ速さで伸ばす。 */
+  function growTrail(rect, geom, duration) {
+    rect.style.transformBox = "fill-box";
+    rect.style.transformOrigin = geom.origin;
+    rect.animate([{ transform: `${geom.axis}(0)` }, { transform: `${geom.axis}(1)` }], { duration, easing: "linear" });
+  }
+
+  return { NS, T, DEFAULT, EASE, DEFS, slideMs, cell, terrain, goalMark, trailGeom, piece, svgEl, animateChange, selectPop, celebrate, growTrail };
+})();
+
+</script>
+<script>
+(() => {
+  const root = document.documentElement;
+  const reduced = () => root.classList.contains("reduce-motion") || matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+
+  // ---- 規則（試遊ページと同じ。薄い氷が割れた後は "w"） ----
+  function slideState(s, W, H, who, dir) {
+    const [dx, dy] = DIRS[dir];
+    const me = s[who], other = who === "a" ? s.b : s.a;
+    let [x, y] = me; const path = [[x, y]]; let stop = "wall";
+    for (;;) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= W || ny >= H) break;
+      const c = s.cells[ny * W + nx];
+      if (c === "#" || c === "b" || c === "x" || c === "w") { stop = c === "b" ? "brittle" : "wall"; break; }
+      if (other && other[0] === nx && other[1] === ny) break;
+      x = nx; y = ny; path.push([x, y]);
+      if (c === "s") break;
+    }
+    if (path.length === 1) return null;
+    const cells = s.cells.slice();
+    for (const [px, py] of path.slice(0, -1)) { const i = py * W + px; if (cells[i] === "c") cells[i] = "w"; else if (cells[i] === "s") cells[i] = "."; }
+    if (stop === "brittle") cells[(y + dy) * W + (x + dx)] = ".";
+    const next = { cells, a: s.a, b: s.b }; next[who] = [x, y];
+    return { state: next, path };
+  }
+
+  // ---- 盤面の表示 ----
+  class BoardView {
+    constructor(spec, px, opt = {}) {
+      const T = IFM.T;
+      this.spec = spec; this.px = px; this.opt = opt;
+      this.H = spec.rows.length; this.W = spec.rows[0].length;
+      const { W, H } = this;
+      this.wrap = el("div"); this.wrap.style.padding = T * px + "px"; this.wrap.style.display = "inline-block";
+      this.board = el("div", "ifm-board"); this.board.style.width = W * px + "px"; this.board.style.height = H * px + "px";
+      this.wrap.appendChild(this.board);
+      const svg = IFM.svgEl("svg", { class: "ifm-svg", viewBox: `${-T} ${-T} ${W + 2 * T} ${H + 2 * T}` });
+      Object.assign(svg.style, { left: -T * px + "px", top: -T * px + "px", width: (W + 2 * T) * px + "px", height: (H + 2 * T) * px + "px" });
+      svg.innerHTML = IFM.DEFS + `<g>${IFM.terrain(spec.rows, spec.goal, opt)}</g><g data-cells></g><g data-fx></g><rect data-trail class="ifm-trail" style="display:none"/>` + (spec.goal ? IFM.goalMark(spec.goal) : "");
+      this.svg = svg; this.board.appendChild(svg);
+      this.cellLayer = svg.querySelector("[data-cells]"); this.fx = svg.querySelector("[data-fx]"); this.trail = svg.querySelector("[data-trail]");
+      this.cellEls = []; this.drawn = [];
+      for (let i = 0; i < W * H; i++) { const g = IFM.svgEl("g"); this.cellLayer.appendChild(g); this.cellEls.push(g); this.drawn.push(null); }
+      this.pieces = {};
+      for (const who of ["a", "b"]) {
+        if (!spec[who]) continue;
+        const p = el("div", "piece" + (who === "b" ? " partner" : ""));
+        p.innerHTML = IFM.piece(who, opt); p.dataset.sel = opt.select || IFM.DEFAULT.select;
+        p.style.width = p.style.height = px + "px";
+        this.board.appendChild(p); this.pieces[who] = p;
+      }
+      this.duo = !!spec.b;
+      this.reset();
+    }
+    reset() {
+      this.fx.innerHTML = "";
+      this.state = { cells: this.spec.rows.join("").split(""), a: this.spec.a && this.spec.a.slice(), b: this.spec.b && this.spec.b.slice() };
+      this.selected = this.spec.selected || "a";
+      this.cleared = false;
+      this.renderCells(null);
+      this.setTrail(this.spec.trail || null);
+      this.place(0);
+    }
+    renderCells(path) {
+      const { W } = this;
+      const dist = path ? path.length - 1 : 0, D = IFM.slideMs(dist);
+      const dir = path && path.length > 1 ? [Math.sign(path[1][0] - path[0][0]), Math.sign(path[1][1] - path[0][1])] : [0, 0];
+      this.state.cells.forEach((c, i) => {
+        if (this.drawn[i] === c) return;
+        const x = i % W, y = (i / W) | 0, prev = this.drawn[i];
+        this.cellEls[i].innerHTML = IFM.cell(c, x, y, this.opt);
+        this.drawn[i] = c;
+        if (!path || reduced() || prev == null) return;
+        const k = path.findIndex(([px, py]) => px === x && py === y);
+        const delay = prev === "b" ? D : k >= 0 ? D * (k + 0.5) / dist : 0;
+        IFM.animateChange(this.fx, prev, x, y, delay, dir, this.opt);
+      });
+    }
+    setTrail(t) {
+      if (!t) { this.trail.style.display = "none"; return; }
+      const g = IFM.trailGeom(t.from, t.to);
+      for (const k of ["x", "y", "width", "height", "rx"]) this.trail.setAttribute(k, g[k]);
+      this.trail.setAttribute("class", "ifm-trail" + (t.who === "b" ? " is-b" : ""));
+      this.trail.style.display = "";
+      return g;
+    }
+    place(dist, who) {
+      for (const k of Object.keys(this.pieces)) {
+        const p = this.state[k], e = this.pieces[k];
+        e.style.transitionDuration = reduced() || k !== who ? "0ms" : IFM.slideMs(dist) + "ms";
+        e.style.transform = `translate(${p[0] * this.px}px, ${p[1] * this.px}px)`;
+        const was = e.classList.contains("selected"), now = this.duo && k === this.selected;
+        e.classList.toggle("selected", now);
+        e.classList.toggle("dim", this.duo && !now);
+        if (now && !was && !reduced() && this.ready) IFM.selectPop(e);
+      }
+      this.ready = true;
+    }
+    select(who) { if (!this.duo) return; this.selected = who; this.place(0); }
+    move(dir, who = this.selected) {
+      if (this.cleared) return false;
+      const r = slideState(this.state, this.W, this.H, who, dir);
+      if (!r) { const e = this.pieces[who]; e.classList.remove("bump"); void e.offsetWidth; e.classList.add("bump"); return false; }
+      this.state = r.state;
+      const dist = r.path.length - 1;
+      const g = this.setTrail({ from: r.path[0], to: r.path[dist], who });
+      if (!reduced()) IFM.growTrail(this.trail, g, IFM.slideMs(dist));
+      this.renderCells(r.path);
+      this.place(dist, who);
+      const goal = this.spec.goal;
+      if (goal && this.state.a[0] === goal[0] && this.state.a[1] === goal[1]) {
+        this.cleared = true;
+        if (!reduced()) IFM.celebrate(this.svg, this.pieces.a, IFM.slideMs(dist));
+      }
+      return true;
+    }
+    pieceAt(e) {
+      const r = this.board.getBoundingClientRect();
+      const x = Math.floor((e.clientX - r.left) / this.px), y = Math.floor((e.clientY - r.top) / this.px);
+      return Object.keys(this.pieces).find((k) => this.state[k][0] === x && this.state[k][1] === y) || null;
+    }
+    interactive() {
+      const area = this.wrap; area.classList.add("play-area"); area.tabIndex = 0;
+      let touch = null, fired = false;
+      area.addEventListener("pointerdown", (e) => { touch = [e.clientX, e.clientY]; fired = false; const w = this.pieceAt(e); if (w) this.select(w); });
+      area.addEventListener("pointermove", (e) => {
+        if (!touch || fired) return;
+        const dx = e.clientX - touch[0], dy = e.clientY - touch[1];
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return;
+        fired = true; this.move(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up"));
+      });
+      addEventListener("pointerup", () => { touch = null; });
+      const KEYS = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" };
+      area.addEventListener("keydown", (e) => {
+        if (e.key === "Tab" && this.duo) { e.preventDefault(); this.select(this.selected === "a" ? "b" : "a"); return; }
+        if (KEYS[e.key]) { e.preventDefault(); this.move(KEYS[e.key]); }
+      });
+      return this;
+    }
+  }
+
+  const sizeRow = (spec, opt, sizes = [40, 29, 24]) => {
+    const row = el("div", "sizes");
+    for (const px of sizes) { const s = el("div", "size"); s.appendChild(new BoardView(spec, px, opt).wrap); s.appendChild(el("small", "", `${px}px`)); row.appendChild(s); }
+    return row;
+  };
+  function cards(id, items) {
+    const host = $(id);
+    for (const it of items) {
+      const c = el("div", "card" + (it.adopted ? " adopted" : ""));
+      const h = el("h3"); h.appendChild(el("span", "", it.title)); h.appendChild(el("span", "badge", it.adopted ? "採用" : "見送り"));
+      c.appendChild(h);
+      c.appendChild(sizeRow(it.spec, it.opt || {}));
+      for (const t of [].concat(it.text)) c.appendChild(el("p", it.adopted ? "" : "no", t));
+      host.appendChild(c);
+    }
+  }
+  function demo(hostId, title, spec, script, px = 40, opt = {}) {
+    const d = el("div", "demo");
+    d.appendChild(el("span", "cap", title));
+    const v = new BoardView(spec, px, opt);
+    d.appendChild(v.wrap);
+    const btns = el("div", "btns");
+    let timers = [];
+    const play = el("button", "", "▶ 再生");
+    play.type = "button";
+    play.addEventListener("click", () => {
+      timers.forEach(clearTimeout); timers = []; v.reset();
+      let t = 250;
+      for (const step of script) {
+        const [what, arg] = step;
+        timers.push(setTimeout(() => (what === "sel" ? v.select(arg) : v.move(arg, what)), t));
+        t += what === "sel" ? 450 : 750;
+      }
+    });
+    const reset = el("button", "", "戻す"); reset.type = "button";
+    reset.addEventListener("click", () => { timers.forEach(clearTimeout); v.reset(); });
+    btns.append(play, reset); d.appendChild(btns);
+    $(hostId).appendChild(d);
+    return v;
+  }
+
+  // ---- 一覧 ----
+  {
+    const labels = ["氷", "薄い氷", "水面", "雪", "岩", "もろい岩", "盤面の外", "ゴール", "主駒", "相棒"];
+    const spec = { rows: [".cws#bx...", ".........."], goal: [7, 0], a: [8, 0], b: [9, 0], selected: "b" };
+    for (const px of [40, 29, 24]) {
+      const box = el("div", "lineup");
+      box.appendChild(new BoardView(spec, px).wrap);
+      const lab = el("div", "labels"); lab.style.gridTemplateColumns = `repeat(10, ${px}px)`; lab.style.paddingLeft = IFM.T * px + "px";
+      if (px >= 40) labels.forEach((t) => lab.appendChild(el("span", "", t)));
+      box.appendChild(lab); box.appendChild(el("small", "cap", `${px}px`));
+      $("lineups").appendChild(box);
+    }
+  }
+
+  // ---- 相棒の駒 ----
+  const duoSpec = { rows: ["#....", ".....", "...#."], goal: [4, 0], a: [1, 1], b: [3, 1], selected: "a", trail: { from: [1, 2], to: [1, 1], who: "a" } };
+  cards("c-partner", [
+    { title: "A 丸い主駒と四角い相棒", adopted: true, spec: duoSpec,
+      text: ["主駒はアプリと同じ丸、相棒は角の丸い四角。どちらも白い縁取りで「動かせる駒」とそろえ、丸＝ゴールの丸い輪に収まる駒、と形で読ませる。色に頼らないのでグレースケールでも区別できる。",
+        "相棒は岩（縁取りなし・マスいっぱい・下に影）より小さく白い縁があるので、岩とは大きさと縁で分かれる。色はエメラルド: 主駒のインディゴ、氷と水の青、ゴールのアンバー、石の灰のどれとも色相が離れる。"] },
+    { title: "B 色違いの丸", spec: duoSpec, opt: { partner: "circle" },
+      text: "形が同じで色だけが違う。グレースケールでは明るさの差しか残らず、どちらをゴールへ運ぶかが形から分からない。" },
+    { title: "C 橙の四角（試遊v3の色）", spec: duoSpec, opt: { partnerColor: "orange" },
+      text: "ゴールのアンバーと色相が近く、相棒がゴールの上や隣にいると輪と混ざって見える。" },
+  ]);
+  cards("c-select", [
+    { title: "A 四隅のかぎ", adopted: true, spec: duoSpec,
+      text: ["選んでいる駒のマスの四隅に、駒と同じ色のかぎを出す。リフレクションで選んだマスを示す四隅の鉤形と同じ言葉づかい。駒そのものの形・色・大きさは変えないので、選ばれていない駒も止め役としてそのまま読める。",
+        "ゴールの輪（丸）や跡（帯）とは形が重ならない。選び替えたときは、かぎが少し外から寄って現れる（150ms）。"] },
+    { title: "B 外側の輪", spec: duoSpec, opt: { select: "ring" },
+      text: "丸い輪がゴールの輪と同じ形になり、主駒がゴールの隣や上にいると、どちらが選択でどちらがゴールか紛れる。" },
+    { title: "C 持ち上げ", spec: duoSpec, opt: { select: "lift" },
+      text: "選んだ駒を大きく・影付きにし、他を薄くする。止め役として使う駒が薄くなって判断材料が弱まり、24px では大きさの差も読みにくい。" },
+  ]);
+  demo("d-partner", "動き: 相棒を選んで滑らせ、主駒の止め役にする（ゴールで止まるとクリアの演出）",
+    { rows: ["......", "......", "......"], goal: [3, 0], a: [0, 0], b: [4, 2], selected: "a" },
+    [["sel", "b"], ["b", "up"], ["sel", "a"], ["a", "right"]]);
+
+  // ---- もろい岩 ----
+  const brSpec = { rows: ["#b...", ".....", "..#b."], goal: [4, 0], a: [4, 2] };
+  cards("c-brittle", [
+    { title: "A 割れた岩", adopted: true, spec: brSpec,
+      text: ["岩と同じ石の色・大きさ・下の影で「ぶつかって止まる物」と読ませ、上から下まで通る割れ目で2つに分かれていることで「次は持たない」と読ませる。割れ目から下の氷が見えるので、崩れた後に氷になることにもつながる。",
+        "崩れるときはこの割れ目で2つに分かれ、ぶつかった向きへ傾きながら沈んで消える。前触れの揺れは崩れるまでの時間を延ばすので付けない。"] },
+    { title: "B 石積み", spec: brSpec, opt: { brittle: "rubble" },
+      text: "小石が3つ。崩れやすさは伝わるが、岩より小さく隙間が多いので、通り抜けられそう（止め役でない）に見える。24px では散らかって見える。" },
+    { title: "C ひびの線", spec: brSpec, opt: { brittle: "lines" },
+      text: "岩の上に暗い線を引く。24px では線が細く汚れのように見え、グレースケールでは岩とほとんど同じになる。" },
+  ]);
+  demo("d-brittle", "動き: ぶつかって崩れる → 戻ってもう一度滑ると通り抜ける",
+    { rows: ["......", "....b.", "......"], a: [0, 1] }, [["a", "right"], ["a", "left"], ["a", "right"]]);
+
+  // ---- 薄い氷と水面 ----
+  const thSpec = { rows: ["c.cw.", ".w...", "..c#."], goal: [4, 0], a: [2, 2] };
+  cards("c-thin", [
+    { title: "A ひびの入った薄い氷と、沈んだ水面", adopted: true, spec: thSpec,
+      text: ["薄い氷は氷より一段濃い青（下の水が透けている）に白いひび。割れるときはこのひびの線で3つに割れて沈み、水面に波紋が広がる。駒は滑りに合わせて、そのマスを離れた瞬間に後ろの氷を割っていく。",
+        "水面は濃い青で、上の縁に影（岩は下に影＝出っ張り、水面は上に影＝くぼみ）と小さな波。明るさが 氷＞薄い氷＞水面 の段階になり、グレースケールでも順に読める。ダークでは水面を氷より暗い穴にし、波だけを明るく残す。"] },
+    { title: "B 暗いひびの線と平らな水", spec: thSpec, opt: { thin: "darkcrack", water: "flat" },
+      text: "試遊v3に近い、氷に暗い線を引くだけの薄い氷。氷との差が線だけで、24px では目地と紛れる。平らな水は波とくぼみの影がなく、グレースケールで岩と近い色の板に見える。" },
+    { title: "C 霜の板（ひびなし）", spec: thSpec, opt: { thin: "frost" },
+      text: "光の筋で薄い板を表す。きれいだが「割れる」ことが形から伝わらず、ただの色違いの氷に見える。" },
+  ]);
+  demo("d-thin", "動き: 薄い氷を渡ると後ろで割れる → 戻ると水面の手前で止まる",
+    { rows: ["......", ".cc...", "......"], a: [0, 1] }, [["a", "right"], ["a", "left"]]);
+
+  // ---- 雪 ----
+  const snSpec = { rows: ["s.c..", "..s#.", ".s..w"], goal: [4, 0], a: [1, 2] };
+  cards("c-snow", [
+    { title: "A 積もった雪", adopted: true, spec: snSpec,
+      text: ["ふちが波打つ平らな白い面がマスいっぱいに積もる。影を付けずに平らにして、岩のような出っ張り（手前で止まる）ではなく、入り込んで止まる地面だと読ませる。駒が乗っても四隅の白が見える。",
+        "溶けるときはしぼんで消え、濡れた跡が一瞬残って氷に戻る。"] },
+    { title: "B 雪の山", spec: snSpec, opt: { snow: "mound" },
+      text: "下に影のある盛り上がり。雪らしいが、岩と同じく「手前でぶつかって止まる物」に見え、雪に入って止まる決まりと逆の読み方を誘う。" },
+    { title: "C 粉雪の点", spec: snSpec, opt: { snow: "powder" },
+      text: "白い点を並べる。24px では点が1〜2px になり、ゴールの中心の点や汚れと紛れる。駒が乗ると隠れてしまう。" },
+  ]);
+  demo("d-snow", "動き: 雪に入って止まる → 離れると溶ける → 次は通り抜ける",
+    { rows: ["......", "...s..", "......"], a: [0, 1] }, [["a", "right"], ["a", "right"], ["a", "left"]]);
+
+  // ---- 盤面の外 ----
+  const outSpec = { rows: ["xx...", "x....", "..x..", "....x"], goal: [4, 1], a: [1, 3] };
+  cards("c-outside", [
+    { title: "A 外壁が盤面の形に沿う", adopted: true, spec: outSpec,
+      text: "盤面の外のマスは描かず画面の地のままにし、外壁が盤面の形に沿って曲がる。内側にある盤面の外も外壁で縁取った穴になる。止まるのは外壁にぶつかるから、と読め、岩（置かれた障害物）と盤面の端が混ざらない。" },
+    { title: "B 石で埋める", spec: outSpec, opt: { outside: "stone" },
+      text: "外壁と同じ石でマスを埋める。外形は四角のままだが、大きな岩の塊に見え、岩と盤面の端の区別がつきにくい。" },
+  ]);
+
+  // ---- 混ざった盤面 ----
+  const mixed = {
+    rows: ["x..#....", "..b....s", ".s......", ".....c#.", "#....c..", "..w..s..", "....b...", "..#....x"],
+    goal: [6, 6], a: [3, 1], b: [7, 4], selected: "a", trail: { from: [3, 7], to: [3, 1], who: "a" },
+  };
+  for (const px of [40, 29, 24]) { const s = el("div", "size"); s.appendChild(new BoardView(mixed, px).wrap); s.appendChild(el("small", "", `${px}px`)); $("mixed").appendChild(s); }
+  {
+    const d = el("div", "demo");
+    d.appendChild(el("span", "cap", "動かせる盤面（40px）"));
+    const spec = { ...mixed, trail: null, a: [0, 1], b: [7, 3] };
+    const v = new BoardView(spec, 40).interactive();
+    d.appendChild(v.wrap);
+    const btns = el("div", "btns"); const r = el("button", "", "最初に戻す"); r.type = "button"; r.addEventListener("click", () => v.reset()); btns.appendChild(r); d.appendChild(btns);
+    $("mixed-play").appendChild(d);
+  }
+
+  // ---- 実寸 ----
+  const real = [
+    { cap: "12×14・24px（試遊の最も大きい盤面に4要素を置いた例）", px: 24, spec: { rows: ["##.#..#..#.x", "...#....c...", "#..s.....#.#", "#.#....#..#.", ".#.#.##.b.#.", "#.#....##...", "#..c..#.....", "#.....##..s.", "....#......#", ".#..w#..#...", ".#.....#..b.", "#..#..#.##..", "..s..#.....#", "x.#...#..#.#"], goal: [0, 10], a: [2, 1], b: [5, 7], selected: "b", trail: { from: [1, 7], to: [5, 7], who: "b" } } },
+    { cap: "10×12・29px（試遊 v09 もろい岩）", px: 29, spec: { rows: [".#......##", ".####.##..", ".##.......", ".....##...", "#.b.....##", "#b#b.#...#", "...##.##..", "..#...b...", "...b..#...", "....#.#..#", ".#.......#", "..###b..#x"], goal: [6, 10], a: [5, 0] } },
+    { cap: "10×10・29px（試遊 v04 雪・内側に盤面の外）", px: 29, spec: { rows: ["#.#..#.#..", ".....#.ss#", "......##.#", "#.....#.s.", "#..#####..", ".#..#.....", ".x..#.....", ".#..#s#..#", "..#s..#...", "#....#x#.."], goal: [6, 0], a: [1, 2] } },
+    { cap: "10×10・29px（試遊 v11 薄い氷、2マス割った後）", px: 29, spec: { rows: ["#....###..", "...##...#.", "....###c..", "###...#...", ".#.c#.#...", "ww..##.c..", ".....#.#..", "..#..#.#..", "#......##.", "..#c....#."], goal: [7, 3], a: [2, 5], trail: { from: [0, 5], to: [2, 5], who: "a" } } },
+    { cap: "10×12・29px（試遊 v05 相棒）", px: 29, spec: { rows: ["#..##.#..#", "x#.#......", "##.##.....", "...#..#...", "..###.....", "#.........", "..#.......", "..###..##.", "...##....#", ".#.##..#..", "##........", "......#.##"], goal: [8, 4], a: [0, 11], b: [5, 1], selected: "a" } },
+  ];
+  for (const r of real) { const s = el("div", "size"); s.appendChild(new BoardView(r.spec, r.px).wrap); s.appendChild(el("small", "", r.cap)); $("real").appendChild(s); }
+
+  // ---- 切り替え ----
+  const setTheme = (t) => { root.dataset.theme = t; $("t-light").setAttribute("aria-pressed", String(t === "light")); $("t-dark").setAttribute("aria-pressed", String(t === "dark")); };
+  $("t-light").addEventListener("click", () => setTheme("light"));
+  $("t-dark").addEventListener("click", () => setTheme("dark"));
+  const flip = (id, cls) => $(id).addEventListener("click", () => { const on = root.classList.toggle(cls); $(id).setAttribute("aria-pressed", String(on)); });
+  flip("t-gray", "gray"); flip("t-reduce", "reduce-motion");
+  const q = new URLSearchParams(location.search);
+  if (q.get("theme")) setTheme(q.get("theme"));
+  if (q.has("gray")) { root.classList.add("gray"); $("t-gray").setAttribute("aria-pressed", "true"); }
+  window.__views = { BoardView };
+})();
+</script>
+</body>
+</html>
