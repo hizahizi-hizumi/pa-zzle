@@ -5,8 +5,11 @@ import { MOTION_EASING, playAnimations } from "@/lib/motion";
 const CLEAR_TRACE_MS_PER_CELL = 28;
 const CLEAR_TRACE_MIN_MS = 640;
 const CLEAR_TRACE_MAX_MS = 1_400;
-/** なぞり終えた道を、結果へ進める前に見せておく時間。動きを減らす設定でも、完成した道を読める間を残す。 */
-const CLEAR_TRACE_HOLD_MS = 600;
+/**
+ * なぞり終えた道を、結果へ進める前に見せておく時間。完成した道の形がこのゲームの報酬なので、
+ * 完成した形を報酬にするリフレクションの全光路と同じ間を置き、動きを減らす設定でも同じ間を残す。
+ */
+const CLEAR_TRACE_HOLD_MS = 700;
 
 const clearTraceKeyframes: Keyframe[] = [
   { strokeDashoffset: 1 },
@@ -36,7 +39,7 @@ export function playClearTrace(
       );
       const animation = trace?.animate?.(clearTraceKeyframes, {
         duration: getClearTraceDurationMs(cellCount),
-        easing: MOTION_EASING.standard,
+        easing: MOTION_EASING.celebrate,
         fill: "backwards",
       });
       return animation === undefined ? [] : [animation];
@@ -47,5 +50,3 @@ export function playClearTrace(
     onFinished,
   });
 }
-
-export const _private = { getClearTraceDurationMs };

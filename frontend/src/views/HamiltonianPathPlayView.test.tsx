@@ -7,6 +7,7 @@ import {
 } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 
+import { HAMILTONIAN_PATH_DISPLAY_NAME } from "@/games/hamiltonian-path/display-name";
 import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem/generator";
 import {
   selectHamiltonianPathProblemById,
@@ -72,7 +73,7 @@ function renderAt(path: string): void {
 
 function listCells(): HTMLElement[] {
   return within(
-    screen.getByRole("group", { name: "ハミルトン路盤面" }),
+    screen.getByRole("group", { name: `${HAMILTONIAN_PATH_DISPLAY_NAME}盤面` }),
   ).getAllByRole("button");
 }
 
@@ -93,7 +94,9 @@ function getCellCenter(size: number, cell: number) {
 
 /** `cells` の先頭のマスを指で押し、残りのマスを順になぞって離す。 */
 function dragThrough(size: number, [pressed, ...cells]: readonly number[]) {
-  const surface = screen.getByRole("group", { name: "ハミルトン路盤面" });
+  const surface = screen.getByRole("group", {
+    name: `${HAMILTONIAN_PATH_DISPLAY_NAME}盤面`,
+  });
   const touch = { pointerId: 1, pointerType: "touch", isPrimary: true };
   fireEvent.pointerDown(surface, {
     ...touch,
@@ -170,7 +173,9 @@ describe("HamiltonianPathPlayView", () => {
     describe("盤面を指でなぞった場合", () => {
       beforeEach(() => {
         vi.spyOn(
-          screen.getByRole("group", { name: "ハミルトン路盤面" }),
+          screen.getByRole("group", {
+            name: `${HAMILTONIAN_PATH_DISPLAY_NAME}盤面`,
+          }),
           "getBoundingClientRect",
         ).mockReturnValue(new DOMRect(0, 0, boardWidth, boardWidth));
         dragThrough(problem.size, solution.slice(0, 5));

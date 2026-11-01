@@ -3,6 +3,7 @@ import {
   _private,
   createHamiltonianPathDiagnosticSnapshot,
 } from "@/games/hamiltonian-path/diagnostics";
+import { getHamiltonianPathSolveWorkload } from "@/games/hamiltonian-path/problem/difficulty-analysis";
 import { generateHamiltonianPathProblem } from "@/games/hamiltonian-path/problem/generator";
 import { selectHamiltonianPathProblemForDifficulty } from "@/games/hamiltonian-path/problem-selection";
 
@@ -69,17 +70,16 @@ describe("HamiltonianPathDiagnosticSnapshot", () => {
 
   test("問題集の問題を分析し直して、問題集と同じ作業の量とレベルを得ること", () => {
     const { difficultyAnalysis, difficultyAssessment } = snapshot;
+    const workload =
+      difficultyAnalysis.status === "analyzed"
+        ? getHamiltonianPathSolveWorkload(difficultyAnalysis)
+        : null;
 
     expect(difficultyAssessment).toMatchObject({
       status: "classified",
       difficulty: "3",
     });
-    expect(difficultyAnalysis).toMatchObject({
-      status: "analyzed",
-      scale: { openCellCount: selected.workload.openCellCount },
-      reasoning: { assumptionCount: selected.workload.assumptionCount },
-      drawing: { fatalBranchCount: selected.workload.fatalBranchCount },
-    });
+    expect(workload).toEqual(selected.workload);
   });
 
   test.each(invalidCases)("%s JSON を拒否すること", (_, value) => {

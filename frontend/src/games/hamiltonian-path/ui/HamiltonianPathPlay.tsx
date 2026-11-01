@@ -13,6 +13,7 @@ import type {
   HamiltonianPathDirection,
 } from "@/games/hamiltonian-path/puzzle/board";
 import type { HamiltonianPathTraceStep } from "@/games/hamiltonian-path/puzzle/transitions";
+import { findArrowKeyDirection } from "@/games/hamiltonian-path/ui/arrow-key-direction";
 import { HamiltonianPathBoard } from "@/games/hamiltonian-path/ui/board/HamiltonianPathBoard";
 import { HamiltonianPathHowToPlayDialog } from "@/games/hamiltonian-path/ui/HamiltonianPathHowToPlayDialog";
 import { HamiltonianPathResultScreen } from "@/games/hamiltonian-path/ui/result/HamiltonianPathResultScreen";
@@ -31,19 +32,12 @@ type HamiltonianPathPlayProps = GamePlayScreenProps<
     board: HamiltonianPathBoardState;
     path: readonly number[];
     isDeadEnd: boolean;
+    strandedCells: readonly number[];
     blockedMove: HamiltonianPathBlockedMove | null;
     onBeginStroke: (cell: number) => void;
     onTraceStroke: (step: HamiltonianPathTraceStep) => void;
     onEndStroke: () => void;
     onMoveHeadToward: (direction: HamiltonianPathDirection) => void;
-  };
-
-const directionByArrowKey: Readonly<Record<string, HamiltonianPathDirection>> =
-  {
-    ArrowUp: "up",
-    ArrowRight: "right",
-    ArrowDown: "down",
-    ArrowLeft: "left",
   };
 
 export function HamiltonianPathPlay({
@@ -55,6 +49,7 @@ export function HamiltonianPathPlay({
   board,
   path,
   isDeadEnd,
+  strandedCells,
   blockedMove,
   canUndo,
   canRestart,
@@ -80,7 +75,7 @@ export function HamiltonianPathPlay({
     }
 
     function handleKeyDown(event: KeyboardEvent) {
-      const direction = directionByArrowKey[event.key];
+      const direction = findArrowKeyDirection(event.key);
       // メニューやダイアログはプレイ画面の外へ描画される。そこでの操作や、矢印キーを自分で扱う部品の操作は盤面へ流さない。
       const { target } = event;
       const targetsPlayArea =
@@ -121,7 +116,11 @@ export function HamiltonianPathPlay({
       onBackToHome={onBackToHome}
       onOpenDiagnostics={onOpenDiagnostics}
       renderHowToPlayDialog={({ open, onClose }) => (
-        <HamiltonianPathHowToPlayDialog open={open} onClose={onClose} />
+        <HamiltonianPathHowToPlayDialog
+          open={open}
+          difficulty={difficulty}
+          onClose={onClose}
+        />
       )}
       renderResultScreen={(clearedResult) => (
         <HamiltonianPathResultScreen
@@ -144,6 +143,7 @@ export function HamiltonianPathPlay({
             board={board}
             path={path}
             isDeadEnd={isDeadEnd}
+            strandedCells={strandedCells}
             blockedMove={blockedMove}
             solved={progress !== "playing"}
             clearing={progress === "clearing"}
