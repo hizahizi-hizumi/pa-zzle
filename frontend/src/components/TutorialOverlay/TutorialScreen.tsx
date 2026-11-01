@@ -668,10 +668,11 @@ export function TutorialScreen({
       </main>
 
       {/*
-        一言2行と「次へ」が収まる高さに固定し、導入の場面が替わっても、終えたときのボタンが出ても盤面を動かさない。
+        高さを固定し、導入の場面が替わっても、終えたときのボタンが出ても盤面を動かさない。
+        一言2行ぶんの場所と「次へ」を並べると上下へ2pxずつはみ出すが、盤面の下の余白と下端の余白に収まる。
         導入の間は一言の場所を2行ぶん取っておき、一言が出ても替わっても「次へ」を動かさない。
       */}
-      <footer className="flex h-28 shrink-0 flex-col items-center justify-center gap-2 px-4 pb-2">
+      <footer className="flex h-28 shrink-0 flex-col items-center justify-center gap-3 px-4 pb-2">
         {introPlaying && (
           <div className="flex min-h-14 flex-col justify-end">
             {caption !== null && (
