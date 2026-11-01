@@ -288,11 +288,13 @@ describe("minesweeperTutorial.perform", () => {
       progress = finishSteps(2);
     });
 
-    test("印のマスでないマスを開く手、手順と違う操作、後の手順で旗を置かせるマスへの旗を受け付けないこと", () => {
+    test("印のマスでないマスを開く手、手順と違う操作、手順で操作させるマスへの旗を受け付けないこと", () => {
       const result = performAll(progress, [
         { type: "reveal", cellIndex: cellAt(3, 1) },
         { type: "reveal", cellIndex: cellAt(2, 1) },
         { type: "flag", cellIndex: cellAt(3, 4) },
+        { type: "flag", cellIndex: cellAt(6, 5) },
+        { type: "flag", cellIndex: cellAt(4, 4) },
       ]);
 
       expect(result).toBe(progress);

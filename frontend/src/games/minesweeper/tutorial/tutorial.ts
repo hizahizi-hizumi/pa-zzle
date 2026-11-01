@@ -160,7 +160,7 @@ const steps: readonly MinesweeperTutorialStep[] = [
   },
   {
     message: {
-      headline: "数字の数だけ旗があれば\n残りのマスに地雷はありません",
+      headline: "この1の地雷は旗のマスなので\n残りのマスに地雷はありません",
       detail: null,
     },
     introducedRuleId: null,
@@ -216,7 +216,7 @@ const steps: readonly MinesweeperTutorialStep[] = [
   {
     message: {
       headline: "上の地雷の数は\n盤面全体の地雷の数です",
-      detail: "旗は3つなので残りの地雷は1つです",
+      detail: "見つけた地雷は3つなので\n残りは1つです",
     },
     introducedRuleId: "total",
     operation: "reveal",
@@ -397,16 +397,27 @@ function isStepDone(
   }
 }
 
-/** 後の手順で旗を置かせるマス。先に置かれると、その手順で置く手が残らない。 */
-function listLaterFlagCellIndices(step: MinesweeperTutorialStep): number[] {
-  return steps
-    .slice(steps.indexOf(step) + 1)
-    .flatMap((later) => (later.operation === "flag" ? [later.cellIndex] : []));
-}
+/**
+ * 手順で操作させるマスと、まとめて開かせるマス。手を引いている間は、ここに旗を置いたり外したりさせない。
+ * 置くと開かせるマスが開かず、手順で置いた旗を外すと数字が足りなくなり、印どおりに押しても盤面が応えなくなる。
+ */
+const guidedCellIndices = new Set(
+  steps.flatMap(function listGuidedCellIndices(step): number[] {
+    if (step.operation === "change-mode") {
+      return [];
+    }
+    return step.operation === "chord"
+      ? [
+          step.cellIndex,
+          ...getMinesweeperNeighborCellIndices(board, step.cellIndex),
+        ]
+      : [step.cellIndex];
+  }),
+);
 
 /**
  * 手を引いている間に受け付ける操作。印のマスへの手順どおりの操作のほか、旗は自分用の目印なので、
- * 旗を置けると教えた後は、開かせるマスと後の手順で旗を置かせるマスを除いて、どこにでも置き・外しできるようにする。
+ * 旗を置けると教えた後は、手順に関わらないマスへ置き・外しできるようにする。
  */
 function isAcceptedWhileGuiding(
   step: MinesweeperTutorialStep,
@@ -422,8 +433,7 @@ function isAcceptedWhileGuiding(
     action.type === "flag" &&
     steps.indexOf(step) >=
       steps.findIndex((candidate) => candidate.operation === "flag") &&
-    action.cellIndex !== step.cellIndex &&
-    !listLaterFlagCellIndices(step).includes(action.cellIndex)
+    !guidedCellIndices.has(action.cellIndex)
   );
 }
 
