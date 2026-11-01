@@ -47,5 +47,3 @@ export function playClearTrace(
     onFinished,
   });
 }
-
-export const _private = { getClearTraceDurationMs };

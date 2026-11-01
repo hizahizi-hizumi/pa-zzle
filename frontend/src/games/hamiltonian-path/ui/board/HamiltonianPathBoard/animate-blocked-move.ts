@@ -103,5 +103,3 @@ export function animateBlockedMove(
       easing: "ease-out",
     });
 }
-
-export const _private = { createHeadShakeKeyframes, findBlockingPartitionKey };
