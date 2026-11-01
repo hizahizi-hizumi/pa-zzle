@@ -50,7 +50,7 @@ Playwright は `scripts/playwright_resolve.cjs` が探す（`require('playwright
 - 重なりのセレクタは SVG 内のクラスや構造で書く。動く対象と、それが近づく対象を組にする。例: 動く要素 `.pz-<game>-moving` と盤の他の要素 `.pz-<game>-board` なら `--overlap '.pz-<game>-moving|.pz-<game>-board'`。同じクラスの中で 1 つだけが動くなら、動く方に別のクラスを足して分けるか、兄弟結合子（`'.pz-<game>-moving|.pz-<game>-moving ~ .pz-<game>-cell'`）で残りを指す。B 側から A 側の図形は除かれる。全要素が時間差で動くなど、動く側と相手側が同じ集合なら、同じセレクタを両側に書く（`'.pz-<game>-tile|.pz-<game>-tile'`）。セレクタに当たる要素どうしを調べ、同じ要素の中の図形どうし（駒の枠とその数字など）と入れ子の要素どうしは調べない。接触を意図した組（手渡し、着地）も出るため、スクリーンショットで判断する。
 - 候補ごとに動く対象が違うなら、manifest の候補に `"overlap": "<A>|<B>"`（複数なら配列）を書く。`--overlap` は全候補に効く。
 - `ink coverage` の `NOTE` は判定ではない。比較列で重さが突出していないかを見る合図にする（`references/motion.md` の 4 節）。
-- `NOTE: WebKit was not checked` が出たら、Safari での表示を確かめていないことを `self-review.json` の `notes` と人間への報告に書く。`references/motion.md` の 6 節の書き方を守っているかは `check_animation.py` の `WARN` で確かめる。
+- `NOTE: WebKit was not checked` が出たら、Safari での表示を確かめていないことを `self-review.json` の `notes` と人間への報告に書く。`references/motion.md` の 6 節の書き方のうち、`check_animation.py` は色の記法を `WARN`、入れ子の CSS を `FAIL` にする。`d` のアニメーションと相対色は検査しないので目で確かめる。
 
 ### 1.2 ギャラリーで狙いと見た目を見る
 

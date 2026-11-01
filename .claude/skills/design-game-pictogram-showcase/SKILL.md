@@ -10,7 +10,6 @@ argument-hint: <game-id>
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash(python3 .claude/skills/design-game-pictogram-showcase/scripts/check_animation.py *), Bash(python3 .claude/skills/design-game-pictogram-showcase/scripts/check_self_review.py *), Bash(python3 .claude/skills/design-game-pictogram-showcase/scripts/make_review_gallery.py *), Bash(python3 .claude/skills/design-game-pictogram-showcase/scripts/resolve_color.py *), Bash(node .claude/skills/design-game-pictogram-showcase/scripts/observe_animation.cjs *), Bash(node .claude/skills/design-game-pictogram-showcase/scripts/check_gallery.cjs *), Bash(python3 /tmp/pictogram-showcase-*), Bash(node /tmp/pictogram-showcase-*), Bash(bun run --cwd frontend *)
 ---
 
-
 # design-game-pictogram-showcase
 
 パズル選択画面で、選ばれたパズルを色と動きで見せる `pictogram-showcase.svg` を作る Skill。下部一覧の選択中は色付きで静止し、上部のヒーローでは動く。人間が方向を選び、選ばれた方向を仕上げてカタログへ登録するまでを扱う。
@@ -20,6 +19,12 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash(python3 .claude/skills/design
 `/design-game-pictogram-showcase <game-id>`
 
 game id は `frontend/src/games/<game>/` のディレクトリ名。
+
+## 依頼別の入口
+
+- **新規**: 動作フローの 1 から始める。
+- **既存 SVG の改善**: 既存の SVG を manifest に入れて 4 の自己チェックで診断し、6 から続ける。
+- **レビューのみ**: 対象を変更せず 4 の自己チェックを行い、A → B → C → D の順に findings を返す。
 
 ## 体験の狙い
 
@@ -38,7 +43,7 @@ game id は `frontend/src/games/<game>/` のディレクトリ名。
 - 色はプレイ画面の色をそのまま使う。
 - 書き方の規則は `references/contract.md`。違反は `scripts/check_animation.py` が報告する。
 
-白黒版の作成・変更、アプリ側の受け口と `DESIGN.md` の変更はこの Skill では行わない。白黒版が無ければ先に `/design-game-pictogram` を使う。契約と食い違ったら止めて人間へ報告する。
+白黒版の作成・変更、アプリ側の受け口と `DESIGN.md` の変更はこの Skill では行わない。白黒版が無ければ先に `/design-game-pictogram` を使う。アプリ側の受け口と `references/contract.md` が食い違ったら、止めて人間へ報告する。
 
 ## 動作フロー
 
@@ -61,21 +66,14 @@ A と B の材料が欠けたまま次へ進まない。詳しくは `references
 
 ### 3. 束ねて試作する
 
-A の見せ方 × B の見せ場で束ね、系統ごとに代表を選ぶ。代表を、A と B の核が伝わるところまで試作する。静止状態を先に描いて白黒版と並べ、同じパズルに見えることを確かめてから動きを足す。緩急は区間ごとのイージングで書く（`references/motion.md`）。候補は `manifest.json` にまとめる（`references/review.md` の 1 節）。
+A の見せ方 × B の見せ場で束ね、系統ごとに代表を選ぶ。代表を、A と B の核が伝わるところまで試作する。静止状態を先に描いて白黒版と並べ、同じパズルに見えることを確かめてから動きを足す。束ね方は `references/exploration.md` の 7 節、試作の削り方は 8 節、緩急は `references/motion.md` の 3 節。候補は `manifest.json` にまとめる（`references/review.md` の 1 節）。
 
 ### 4. 自己チェックする
 
-```sh
-python3 .claude/skills/design-game-pictogram-showcase/scripts/check_animation.py --manifest <manifest>
-node .claude/skills/design-game-pictogram-showcase/scripts/observe_animation.cjs --manifest <manifest> --out <dir> --filmstrip
-python3 .claude/skills/design-game-pictogram-showcase/scripts/make_review_gallery.py --manifest <manifest> --audience self --output <html>
-```
-
-- `check_animation.py` は契約違反を検査する。
-- `observe_animation.cjs` は実ブラウザで、静止状態との一致、切り替え、かくつき、はみ出し、大きさとインク量を測る。
-- セルフレビュー用ギャラリーで、A → B → C → D と見た目を実表示サイズで確かめる。
-
-結果を `self-review.json` に記録し、`scripts/check_self_review.py` を通す。通らない候補は人間へ見せない（`references/self-review.md`）。
+1. `scripts/check_animation.py --manifest <manifest>` で契約違反を検査する。
+2. `scripts/observe_animation.cjs` で、実ブラウザでの静止状態との一致、切り替え、かくつき、はみ出し、大きさとインク量を測る（コマンドと報告の読み方は `references/self-review.md` の 1.1 節）。
+3. `scripts/make_review_gallery.py --audience self` でセルフレビュー用ギャラリーを作り、`scripts/check_gallery.cjs` で崩れを確かめてから、A → B → C → D と見た目を実表示サイズで確かめる（1.2 節）。
+4. 結果を `self-review.json` に記録し、`scripts/check_self_review.py` を通す（2〜4 節）。通らない候補は人間へ見せない。
 
 ### 5. 人間に方向を選んでもらう
 
@@ -89,7 +87,7 @@ node .claude/skills/design-game-pictogram-showcase/scripts/check_gallery.cjs <ht
 
 ### 6. 選ばれた方向を掘る
 
-選ばれた A と B を保ったまま、間・誇張・終わり方など良くなりうる差分だけを少数案に分岐し、4〜5 を繰り返す。案数は人間の指定を優先する。新しい方向が要ると分かったときだけ発散へ戻る。
+選ばれた A と B を保ったまま、間・誇張・終わり方など良くなりうる差分だけを少数案に分岐し、4〜5 を繰り返す。案数は人間の指定を優先する。レビュー結果の読み方は `references/review.md` の 6 節、分岐の幅と発散へ戻る条件は `references/exploration.md` の 9〜10 節。
 
 ### 7. 仕上げて登録する
 
@@ -99,7 +97,7 @@ node .claude/skills/design-game-pictogram-showcase/scripts/check_gallery.cjs <ht
 2. `frontend/src/games/<game>/assets/pictogram-showcase.svg` に置く。
 3. `frontend/src/game-catalog/<game>/<game>-catalog-entry.tsx` で `?raw` import し、`pictogramShowcaseSvg` に渡す。
 4. `bun run --cwd frontend check` / `typecheck` / `test` を通す。
-5. 実アプリのパズル選択画面で、ヒーロー・一覧の選択中・ライト/ダーク・動きを減らす設定を確かめる。
+5. `bun run --cwd frontend dev` をバックグラウンドで起動し、実アプリのパズル選択画面で、ヒーロー・一覧の選択中・ライト/ダーク・動きを減らす設定を確かめる（Playwright のスクリプトは `/tmp/pictogram-showcase-<game>/` に置き、`scripts/playwright_resolve.cjs` で読み込む）。
 
 ## 出力先
 
