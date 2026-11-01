@@ -1,163 +1,156 @@
-import { isInNumericRange, type NumericRange } from "@/games/difficulty";
-import { removeIceFloorMazeIrrelevantRocks } from "@/games/ice-floor-maze/problem/generation/relevant-rocks";
+import {
+  analyzeIceFloorMazeDifficulty,
+  type IceFloorMazeDifficultyAnalysis,
+} from "@/games/ice-floor-maze/problem/difficulty-analysis";
+import type { ElementRecipe } from "@/games/ice-floor-maze/problem/generation/element-objective";
+import {
+  type ElementSearchSettings,
+  searchElementProblem,
+} from "@/games/ice-floor-maze/problem/generation/element-search";
+import {
+  type GenerationProblem,
+  markOutsideCells,
+} from "@/games/ice-floor-maze/problem/generation/outside-cells";
+import {
+  CELL_ICE,
+  CELL_ROCK,
+  fromGenerationBoard,
+} from "@/games/ice-floor-maze/problem/generation/state-space";
 import { getIceFloorMazeSymmetryKey } from "@/games/ice-floor-maze/problem/generation/symmetry";
 import {
+  searchTacticProblem,
+  type TacticRecipe,
+} from "@/games/ice-floor-maze/problem/generation/tactic-search";
+import {
+  assertIceFloorMazeProblem,
   createIceFloorMazeProblemIdentity,
-  type IceFloorMazeBoardShape,
   type IceFloorMazeIdentifiedProblem,
-  isIceFloorMazeBoardShape,
+  type IceFloorMazeProblem,
 } from "@/games/ice-floor-maze/problem/problem";
-import type {
-  IceFloorMazeBoard,
-  IceFloorMazeCell,
-} from "@/games/ice-floor-maze/puzzle/board";
-import { exploreIceFloorMazeStops } from "@/games/ice-floor-maze/puzzle/stop-graph";
 import {
   createProblemSeededRandom,
-  type ProblemRandom,
   type ProblemSeed,
 } from "@/games/problem-seed";
 
 /**
+ * 1問の生成条件。
+ * - `tactics`: 氷と岩だけの盤面で、手筋の点を最大にする山登り（研究用の生成 v2）。
+ * - `elements`: もろい岩・薄い氷を置き、難しさの点を最大にする山登り（研究用の生成 v4）。`search` は山登りの止め方。
+ */
+export type IceFloorMazeGenerationRecipe =
+  | { kind: "tactics"; recipe: TacticRecipe }
+  | {
+      kind: "elements";
+      recipe: ElementRecipe;
+      search: ElementSearchSettings;
+    };
+
+/**
+ * 生成器が返す問題。盤面は駒が通らないマスを盤面の外にして切り落としてある。
  * - `optimalMoveCount`: 開始位置からゴールで止まるまでの最少手数。
  * - `symmetryKey`: 回転・反転の同型を問題集から除くための正規化キー。
- * - `generationAttemptCount`: 採用までに作った盤面の数。
+ * - `analysis`: 盤面の外にした後の問題の難易度の特徴。
+ * - `searchIterationCount` / `acceptedAtIteration`: 山登りの回数と、要素のある問題で採用条件を初めて満たした回。
  */
 export type IceFloorMazeGeneratedProblem = IceFloorMazeIdentifiedProblem & {
   optimalMoveCount: number;
   symmetryKey: string;
-  generationAttemptCount: number;
+  analysis: IceFloorMazeDifficultyAnalysis;
+  searchIterationCount: number;
+  acceptedAtIteration: number | null;
 };
 
-/** 盤面と開始位置に対して、ゴールに置ける停止点。 */
-export type IceFloorMazeGoalCandidate = {
-  goal: number;
-  optimalMoveCount: number;
+type SearchOutcome = {
+  problem: GenerationProblem;
+  iterationCount: number;
+  acceptedAtIteration: number | null;
 };
 
-/**
- * 岩を置いて開始位置を決めた盤面と、その盤面で選べるゴール。
- * 盤面は無関係な岩を除いてある。ゴールの候補は最少手数が提供範囲に入る停止点で、マスの番号の昇順。
- */
-export type IceFloorMazeBoardCandidate = {
-  board: IceFloorMazeBoard;
-  start: number;
-  goalCandidates: readonly IceFloorMazeGoalCandidate[];
-};
-
-/** 長い問題が出やすい密度。 */
-export const ICE_FLOOR_MAZE_ROCK_DENSITY = 0.2;
-
-/**
- * 問題として出す最少手数の範囲。1〜2手の問題は読む余地がなく、15手以上は作業の量が多いだけになりやすい。
- */
-export const iceFloorMazeOptimalMoveCountRange = {
-  minimum: 3,
-  maximum: 14,
-} as const satisfies NumericRange;
-
-const MAXIMUM_GENERATION_ATTEMPTS = 100;
-
-function placeRocksRandomly(
-  shape: IceFloorMazeBoardShape,
-  random: ProblemRandom,
-): IceFloorMazeBoard {
-  const cells = Array.from(
-    { length: shape.width * shape.height },
-    (): IceFloorMazeCell =>
-      random() < ICE_FLOOR_MAZE_ROCK_DENSITY ? "rock" : "ice",
-  );
-  return { width: shape.width, height: shape.height, cells };
-}
-
-function chooseRandomly<T>(values: readonly T[], random: ProblemRandom): T {
-  return values[Math.floor(random() * values.length)]!;
-}
-
-function validateShape(shape: IceFloorMazeBoardShape): void {
-  const { width, height } = shape;
-  if (!isIceFloorMazeBoardShape({ width, height })) {
-    throw new RangeError(
-      `Unsupported ice floor maze board shape: ${width}x${height}`,
-    );
+function search(
+  generation: IceFloorMazeGenerationRecipe,
+  seed: ProblemSeed,
+): SearchOutcome | null {
+  const random = createProblemSeededRandom(`ice-floor-maze:${seed}`);
+  if (generation.kind === "tactics") {
+    const { recipe } = generation;
+    const found = searchTacticProblem(recipe, random);
+    return found
+      ? {
+          problem: {
+            board: {
+              width: recipe.width,
+              height: recipe.height,
+              cells: found.stopper.map((value) =>
+                value === 1 ? CELL_ROCK : CELL_ICE,
+              ),
+            },
+            start: found.start,
+            goal: found.goal,
+          },
+          iterationCount: recipe.iterations,
+          acceptedAtIteration: null,
+        }
+      : null;
   }
+  const found = searchElementProblem(
+    generation.recipe,
+    random,
+    generation.search,
+  );
+  return found && found.goal >= 0
+    ? {
+        problem: { board: found.board, start: found.start, goal: found.goal },
+        iterationCount: found.iterationCount,
+        acceptedAtIteration: found.acceptedAtIteration,
+      }
+    : null;
 }
 
-/**
- * 岩を密度どおりにランダムに置き、氷のマスから開始位置を選び、到達できる停止点からゴールの候補を求める。
- * 氷のマスが無い盤面では `null`。ゴールの候補が無い盤面もそのまま返し、採否は呼び出し側が決める。
- */
-export function generateIceFloorMazeBoardCandidate(
-  shape: IceFloorMazeBoardShape,
-  random: ProblemRandom,
-): IceFloorMazeBoardCandidate | null {
-  validateShape(shape);
-  const placedBoard = placeRocksRandomly(shape, random);
-  const iceCells = placedBoard.cells.flatMap((cell, cellIndex) =>
-    cell === "ice" ? [cellIndex] : [],
-  );
-  if (iceCells.length === 0) {
+function toPlayableProblem(
+  problem: GenerationProblem,
+): IceFloorMazeProblem | null {
+  const playable = {
+    board: fromGenerationBoard(problem.board),
+    start: problem.start,
+    goal: problem.goal,
+  };
+  try {
+    assertIceFloorMazeProblem(playable);
+  } catch {
     return null;
   }
-
-  const start = chooseRandomly(iceCells, random);
-  const board = removeIceFloorMazeIrrelevantRocks(placedBoard, start);
-  const { moveCounts } = exploreIceFloorMazeStops(board, start);
-  const goalCandidates = [...moveCounts]
-    .filter(([, moveCount]) =>
-      isInNumericRange(moveCount, iceFloorMazeOptimalMoveCountRange),
-    )
-    .map(([goal, optimalMoveCount]) => ({ goal, optimalMoveCount }))
-    .sort((left, right) => left.goal - right.goal);
-  return { board, start, goalCandidates };
+  return playable;
 }
 
-/** 盤面の候補から、選んだゴールの問題を作る。 */
-export function createIceFloorMazeGeneratedProblem(
-  candidate: IceFloorMazeBoardCandidate,
-  goalCandidate: IceFloorMazeGoalCandidate,
-  generationAttemptCount: number,
-): IceFloorMazeGeneratedProblem {
-  const problem = {
-    board: candidate.board,
-    start: candidate.start,
-    goal: goalCandidate.goal,
-  };
+/**
+ * 生成条件と seed から1問を作る。同じ条件と seed からは同じ問題を作る。
+ * 山登りで盤面を作り、駒が通らないマスを盤面の外にして切り落とし、難易度の特徴を求める。
+ * 採否（どのレベルに当たるか）は呼び出し側が分類で決める。範囲の手数で止まれる盤面を作れない、打ち切る方式で
+ * 採用条件を満たさない、切り落とした盤面が遊べる形でないときは `null`。
+ */
+export function generateIceFloorMazeProblem(
+  generation: IceFloorMazeGenerationRecipe,
+  seed: ProblemSeed,
+): IceFloorMazeGeneratedProblem | null {
+  const outcome = search(generation, seed);
+  if (!outcome) {
+    return null;
+  }
+  const problem = toPlayableProblem(markOutsideCells(outcome.problem));
+  if (!problem) {
+    return null;
+  }
+  const analysis = analyzeIceFloorMazeDifficulty(problem);
+  if (analysis.status !== "analyzed") {
+    return null;
+  }
   return {
     problem,
     identity: createIceFloorMazeProblemIdentity(problem),
-    optimalMoveCount: goalCandidate.optimalMoveCount,
+    optimalMoveCount: analysis.features.optimalMoveCount,
     symmetryKey: getIceFloorMazeSymmetryKey(problem),
-    generationAttemptCount,
+    analysis,
+    searchIterationCount: outcome.iterationCount,
+    acceptedAtIteration: outcome.acceptedAtIteration,
   };
-}
-
-/**
- * seed の乱数列で盤面の候補を作り、ゴールの候補がある盤面からゴールを等確率で選ぶ。
- * ゴールの候補が無ければ同じ乱数列で盤面を作り直す。同じ seed と形からは同じ問題を作る。
- * 難易度ごとにゴールを選ぶ問題集の生成では、`generateIceFloorMazeBoardCandidate` を直接使う。
- */
-export function generateIceFloorMazeProblem(
-  seed: ProblemSeed,
-  shape: IceFloorMazeBoardShape,
-): IceFloorMazeGeneratedProblem {
-  validateShape(shape);
-  const random = createProblemSeededRandom(
-    `ice-floor-maze:${seed}:${shape.width}x${shape.height}`,
-  );
-
-  for (let attempt = 1; attempt <= MAXIMUM_GENERATION_ATTEMPTS; attempt += 1) {
-    const candidate = generateIceFloorMazeBoardCandidate(shape, random);
-    if (!candidate || candidate.goalCandidates.length === 0) {
-      continue;
-    }
-    return createIceFloorMazeGeneratedProblem(
-      candidate,
-      chooseRandomly(candidate.goalCandidates, random),
-      attempt,
-    );
-  }
-  throw new Error(
-    `Could not generate an ice floor maze problem for seed ${seed} within ${MAXIMUM_GENERATION_ATTEMPTS} attempts`,
-  );
 }

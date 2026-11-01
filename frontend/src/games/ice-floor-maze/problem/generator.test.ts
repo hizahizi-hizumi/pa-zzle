@@ -1,170 +1,114 @@
-import { isInNumericRange } from "@/games/difficulty";
-import {
-  listIceFloorMazeRelevantRocks,
-  removeIceFloorMazeIrrelevantRocks,
-} from "@/games/ice-floor-maze/problem/generation/relevant-rocks";
+// @vitest-environment node
+
+import type { ElementRecipe } from "@/games/ice-floor-maze/problem/generation/element-objective";
+import { fullElementSearch } from "@/games/ice-floor-maze/problem/generation/element-search";
 import { getIceFloorMazeSymmetryKey } from "@/games/ice-floor-maze/problem/generation/symmetry";
+import { createTacticWeights } from "@/games/ice-floor-maze/problem/generation/tactic-search";
 import {
-  generateIceFloorMazeBoardCandidate,
   generateIceFloorMazeProblem,
-  iceFloorMazeOptimalMoveCountRange,
+  type IceFloorMazeGenerationRecipe,
 } from "@/games/ice-floor-maze/problem/generator";
 import {
   assertIceFloorMazeProblem,
-  restoreIceFloorMazeProblem,
+  createIceFloorMazeProblemIdentity,
 } from "@/games/ice-floor-maze/problem/problem";
-import { exploreIceFloorMazeStops } from "@/games/ice-floor-maze/puzzle/stop-graph";
-import { createProblemSeededRandom } from "@/games/problem-seed";
+
+const tacticRecipe: IceFloorMazeGenerationRecipe = {
+  kind: "tactics",
+  recipe: {
+    width: 8,
+    height: 8,
+    shortest: { minimum: 6, maximum: 9 },
+    weights: createTacticWeights(["stopper"], ["trap-lure"]),
+    iterations: 60,
+    maximumRockDensity: 0.34,
+  },
+};
+
+const elementRecipe: ElementRecipe = {
+  variant: "thin-ice",
+  width: 8,
+  height: 8,
+  shortest: { minimum: 8, maximum: 12 },
+  elements: { minimum: 3, maximum: 4 },
+  minimumEach: 0,
+  minimumUses: 3,
+  decoyShare: 0.2,
+  forcedShare: 0.25,
+  maximumRockDensity: 0.3,
+};
 
 describe("generateIceFloorMazeProblem", () => {
-  const shapes = [
-    { width: 8, height: 8 },
-    { width: 9, height: 12 },
-    { width: 12, height: 14 },
-  ];
-  const seeds = Array.from({ length: 10 }, (_, index) => `test-${index}`);
-  const cases = shapes.flatMap((shape) =>
-    seeds.map((seed) => ({ shape, seed })),
-  );
+  const recipes = [
+    ["氷と岩だけの山登り", tacticRecipe, "none"],
+    [
+      "薄い氷を置く山登り",
+      {
+        kind: "elements",
+        recipe: elementRecipe,
+        search: { ...fullElementSearch, iterations: 30 },
+      },
+      "thin-ice",
+    ],
+  ] as const satisfies readonly (readonly [
+    string,
+    IceFloorMazeGenerationRecipe,
+    string,
+  ])[];
 
-  test.each(cases)(
-    "$shape.width×$shape.height・$seed で、盤面の形どおりの成立した問題を作ること",
-    ({ shape, seed }) => {
-      const { problem } = generateIceFloorMazeProblem(seed, shape);
+  test.each(recipes)(
+    "%s で、盤面の外を切り落とした遊べる問題と、その分析・identity・正規化キーを返すこと",
+    (_, recipe, composition) => {
+      const generated = generateIceFloorMazeProblem(recipe, "generator-test")!;
 
-      expect(() => assertIceFloorMazeProblem(problem)).not.toThrow();
-      expect(problem.board.width).toBe(shape.width);
-      expect(problem.board.height).toBe(shape.height);
-    },
-  );
+      function act() {
+        assertIceFloorMazeProblem(generated.problem);
+      }
 
-  test.each(cases)(
-    "$shape.width×$shape.height・$seed で、最少手数が提供範囲に入り、BFS の最少手数と一致すること",
-    ({ shape, seed }) => {
-      const generated = generateIceFloorMazeProblem(seed, shape);
-
-      const { problem } = generated;
-      const bfsMoveCount = exploreIceFloorMazeStops(
-        problem.board,
-        problem.start,
-      ).moveCounts.get(problem.goal);
-
-      expect(generated.optimalMoveCount).toBe(bfsMoveCount);
-      expect(
-        isInNumericRange(
-          generated.optimalMoveCount,
-          iceFloorMazeOptimalMoveCountRange,
-        ),
-      ).toBe(true);
-    },
-  );
-
-  test.each(cases)(
-    "$shape.width×$shape.height・$seed で、無関係な岩の無い盤面にすること",
-    ({ shape, seed }) => {
-      const { problem } = generateIceFloorMazeProblem(seed, shape);
-
-      const normalizedBoard = removeIceFloorMazeIrrelevantRocks(
-        problem.board,
-        problem.start,
+      expect(act).not.toThrow();
+      expect(generated.analysis).toMatchObject({
+        status: "analyzed",
+        composition,
+        features: { optimalMoveCount: generated.optimalMoveCount },
+      });
+      expect(generated.identity).toEqual(
+        createIceFloorMazeProblemIdentity(generated.problem),
       );
-
-      expect(normalizedBoard).toEqual(problem.board);
-    },
-  );
-
-  test.each(cases)(
-    "$shape.width×$shape.height・$seed で、identity から同じ問題を復号でき、同型判定キーを添えること",
-    ({ shape, seed }) => {
-      const generated = generateIceFloorMazeProblem(seed, shape);
-
-      const restored = restoreIceFloorMazeProblem(generated.identity);
-
-      expect(restored.problem).toEqual(generated.problem);
-      expect(generated.identity.conditions).toEqual(shape);
       expect(generated.symmetryKey).toBe(
         getIceFloorMazeSymmetryKey(generated.problem),
       );
+      expect(generated.problem.board.width).toBeLessThanOrEqual(
+        generated.problem.board.height,
+      );
     },
   );
 
-  describe("同じ seed と形の場合", () => {
-    const shape = { width: 9, height: 12 };
+  test.each(recipes)(
+    "%s で、同じ条件と seed から同じ問題を作ること",
+    (_, recipe) => {
+      const first = generateIceFloorMazeProblem(recipe, "same-seed");
+      const second = generateIceFloorMazeProblem(recipe, "same-seed");
 
-    test("同じ問題を作ること", () => {
-      const first = generateIceFloorMazeProblem("same", shape);
-      const second = generateIceFloorMazeProblem("same", { ...shape });
+      expect(second?.identity).toEqual(first?.identity);
+    },
+  );
 
-      expect(second).toEqual(first);
-    });
-  });
+  describe("採用条件を満たした時点で打ち切る方式で、条件を満たさないまま諦める回数に達した場合", () => {
+    const recipe: IceFloorMazeGenerationRecipe = {
+      kind: "elements",
+      recipe: elementRecipe,
+      search: {
+        iterations: 3000,
+        stopWhenAccepted: true,
+        minimumHardness: Number.POSITIVE_INFINITY,
+        giveUpAfter: 5,
+      },
+    };
 
-  describe("違う seed の場合", () => {
-    const shape = { width: 8, height: 8 };
+    test("問題を作らないこと", () => {
+      const generated = generateIceFloorMazeProblem(recipe, "give-up");
 
-    test("違う問題を作ること", () => {
-      const first = generateIceFloorMazeProblem("first", shape);
-      const second = generateIceFloorMazeProblem("second", shape);
-
-      expect(second.identity).not.toEqual(first.identity);
-    });
-  });
-
-  const unsupportedShapes = [
-    ["横長", { width: 10, height: 8 }],
-    ["最も広い形より広い", { width: 12, height: 16 }],
-  ] as const;
-
-  test.each(unsupportedShapes)("%sの盤面を拒否すること", (_, shape) => {
-    function act() {
-      generateIceFloorMazeProblem("seed", shape);
-    }
-
-    expect(act).toThrow();
-  });
-});
-
-describe("generateIceFloorMazeBoardCandidate", () => {
-  const shape = { width: 10, height: 13 };
-
-  describe("固定の乱数列の場合", () => {
-    let random: () => number;
-
-    beforeEach(() => {
-      random = createProblemSeededRandom("candidate");
-    });
-
-    test("ゴールの候補を、開始位置からの最少手数が提供範囲に入る停止点だけからマスの番号の昇順に並べること", () => {
-      const candidate = generateIceFloorMazeBoardCandidate(shape, random);
-
-      const moveCounts = candidate
-        ? exploreIceFloorMazeStops(candidate.board, candidate.start).moveCounts
-        : new Map<number, number>();
-      const expectedGoals = [...moveCounts]
-        .filter(([, moveCount]) =>
-          isInNumericRange(moveCount, iceFloorMazeOptimalMoveCountRange),
-        )
-        .map(([goal, optimalMoveCount]) => ({ goal, optimalMoveCount }))
-        .sort((left, right) => left.goal - right.goal);
-
-      expect(candidate?.goalCandidates).toEqual(expectedGoals);
-      expect(candidate?.goalCandidates.length).toBeGreaterThan(0);
-    });
-
-    test("開始位置から到達できる停止点の滑りに関わる岩だけを残すこと", () => {
-      const candidate = generateIceFloorMazeBoardCandidate(shape, random);
-
-      const rocks = candidate?.board.cells.flatMap((cell, cellIndex) =>
-        cell === "rock" ? [cellIndex] : [],
-      );
-      const relevantRocks = candidate
-        ? listIceFloorMazeRelevantRocks(
-            candidate.board,
-            exploreIceFloorMazeStops(candidate.board, candidate.start),
-          )
-        : [];
-
-      expect(rocks).toEqual(relevantRocks);
+      expect(generated).toBeNull();
     });
   });
 });

@@ -1,148 +1,294 @@
 import {
   assessIceFloorMazeDifficulty,
   isIceFloorMazeBoardShapeOfDifficulty,
-  listIceFloorMazeBoardShapes,
 } from "@/games/ice-floor-maze/difficulty";
 import type {
   IceFloorMazeDifficultyAnalysis,
-  IceFloorMazeDifficultyFeatures,
+  IceFloorMazeElementComposition,
+  IceFloorMazeElementFeatures,
+  IceFloorMazeTacticFeatures,
 } from "@/games/ice-floor-maze/problem/difficulty-analysis";
 import type { IceFloorMazeBoardShape } from "@/games/ice-floor-maze/problem/problem";
 
-const baseFeatures: IceFloorMazeDifficultyFeatures = {
-  optimalMoveCount: 4,
+const shape8x8 = { width: 8, height: 8 };
+const shape10x10 = { width: 10, height: 10 };
+const shape9x11 = { width: 9, height: 11 };
+
+const baseTactics: IceFloorMazeTacticFeatures = {
+  optimalMoveCount: 8,
   optimalSolutionCount: 1,
-  reachableStopCount: 20,
-  approachPlanningDepth: 1,
-  alignPlanningDepth: 1,
-  trialMoveCount: 4,
-  detourMoveCount: 1,
-  goalPassingStopCount: 0,
+  forcedMoveCount: 0,
+  reachableStopCount: 30,
   deadStopCount: 0,
+  tags: ["stopper", "detour"],
+  readingDepth: 2,
+  nearPathCount: 10,
+  passLureCount: 0,
+  trapLureCount: 0,
+  silentTrapLureCount: 0,
+  reentryCount: 0,
+  detourCount: 1,
+  funnelDepth: 1,
+  forkCount: 1,
 };
 
-function analyzed(
+const baseElements: IceFloorMazeElementFeatures = {
+  optimalMoveCount: 14,
+  optimalSolutionCount: 1,
+  forcedMoveCount: 1,
+  reachableStateCount: 500,
+  deadStateCount: 300,
+  elementCount: 4,
+  brittleRockCount: 0,
+  thinIceCount: 4,
+  usedElementCount: 3,
+  decoyCount: 1,
+  weakDecoyCount: 0,
+  irrelevantElementCount: 0,
+  useCount: 4,
+  orderDependencyCount: 3,
+  orderChain: 3,
+  orderTrapCount: 2,
+  lureCount: 3,
+  solutionRepeatCount: 0,
+  nearRepeatCount: 0,
+  brittleChainCount: 0,
+  looksReading: "unsolvable",
+  staticShortcut: false,
+  stateReadingDepth: 6,
+  hardness: 40,
+};
+
+function tactics(
   shape: IceFloorMazeBoardShape,
-  planningDepth: number,
-  optimalMoveCount: number,
+  features: Partial<IceFloorMazeTacticFeatures>,
 ): IceFloorMazeDifficultyAnalysis {
   return {
     status: "analyzed",
     shape,
-    planningDepth,
-    strategies: ["approach"],
-    features: { ...baseFeatures, optimalMoveCount },
+    composition: "none",
+    features: { ...baseTactics, ...features },
   };
 }
 
-function unsupported(
+function elements(
   shape: IceFloorMazeBoardShape,
-  optimalMoveCount: number,
+  composition: Exclude<IceFloorMazeElementComposition, "none">,
+  features: Partial<IceFloorMazeElementFeatures>,
 ): IceFloorMazeDifficultyAnalysis {
   return {
-    status: "unsupported",
-    reason: "planning-depth-limit-exceeded",
+    status: "analyzed",
     shape,
-    features: {
-      ...baseFeatures,
-      optimalMoveCount,
-      approachPlanningDepth: null,
-      alignPlanningDepth: null,
-    },
+    composition,
+    features: { ...baseElements, ...features },
   };
 }
-
-const shape8x8 = { width: 8, height: 8 };
-const shape8x10 = { width: 8, height: 10 };
-const shape9x12 = { width: 9, height: 12 };
-const shape10x13 = { width: 10, height: 13 };
-const shape12x14 = { width: 12, height: 14 };
 
 describe("assessIceFloorMazeDifficulty", () => {
   const classifiedCases = [
-    ["8×8 で計画深さ1・最短3手", shape8x8, 1, 3, "1"],
-    ["8×10 で計画深さ1・最短4手", shape8x10, 1, 4, "1"],
-    ["8×10 で計画深さ1・最短5手", shape8x10, 1, 5, "2"],
-    ["9×12 で計画深さ2・最短3手", shape9x12, 2, 3, "2"],
-    ["9×12 で計画深さ3", shape9x12, 3, 6, "3"],
-    ["10×13 で計画深さ3", shape10x13, 3, 4, "3"],
-    ["10×13 で計画深さ4", shape10x13, 4, 5, "4"],
-    ["12×14 で計画深さ4", shape12x14, 4, 8, "4"],
-    ["12×14 で計画深さ5", shape12x14, 5, 7, "5"],
-    ["12×14 で計画深さ6・最短14手", shape12x14, 6, 14, "5"],
+    [
+      "氷と岩だけ・止め石・読み2手・最短8手",
+      tactics(shape8x8, {}),
+      "1",
+      "none",
+    ],
+    [
+      "氷と岩だけ・止め石と回り込み・読み3手・最短11手",
+      tactics(shape10x10, {
+        optimalMoveCount: 11,
+        tags: ["stopper", "wrap-around", "detour"],
+        readingDepth: 3,
+      }),
+      "2",
+      "none",
+    ],
+    [
+      "氷と岩だけ・通過の誘いと入り直しと遠回り・読み4手・最短15手",
+      tactics(shape10x10, {
+        optimalMoveCount: 15,
+        tags: ["pass-lure", "reentry", "detour", "fork"],
+        readingDepth: 4,
+        nearPathCount: 40,
+      }),
+      "2",
+      "none",
+    ],
+    [
+      "もろい岩だけ4個",
+      elements(shape8x8, "brittle-rock", {
+        brittleRockCount: 4,
+        thinIceCount: 0,
+      }),
+      "3",
+      "brittle-rock",
+    ],
+    ["薄い氷だけ4個", elements(shape10x10, "thin-ice", {}), "3", "thin-ice"],
+    [
+      "薄い氷だけ7個",
+      elements(shape10x10, "thin-ice", {
+        elementCount: 7,
+        thinIceCount: 7,
+        decoyCount: 2,
+      }),
+      "4",
+      "thin-ice",
+    ],
+    [
+      "もろい岩2個と薄い氷3個",
+      elements(shape8x8, "mixed", {
+        elementCount: 5,
+        brittleRockCount: 2,
+        thinIceCount: 3,
+        decoyCount: 1,
+      }),
+      "4",
+      "mixed",
+    ],
+    [
+      "もろい岩3個と薄い氷5個・難しさ50",
+      elements(shape9x11, "mixed", {
+        optimalMoveCount: 18,
+        elementCount: 8,
+        brittleRockCount: 3,
+        thinIceCount: 5,
+        decoyCount: 2,
+        hardness: 50,
+      }),
+      "5",
+      "mixed",
+    ],
   ] as const;
-  const classifiedAnalyses = classifiedCases.map(
-    ([name, shape, planningDepth, optimalMoveCount, difficulty]) =>
-      [
-        name,
-        analyzed(shape, planningDepth, optimalMoveCount),
-        planningDepth,
-        difficulty,
-      ] as const,
-  );
 
-  test.each(classifiedAnalyses)(
-    "計画深さ・最短手数・盤面の形の組をレベルへ分類すること: %s",
-    (_, analysis, planningDepth, difficulty) => {
+  test.each(classifiedCases)(
+    "要素・手筋・手数の組をレベルへ分類すること: %s",
+    (_, analysis, difficulty, composition) => {
       const assessment = assessIceFloorMazeDifficulty(analysis);
 
       expect(assessment).toEqual({
         status: "classified",
         difficulty,
-        planningDepth,
+        composition,
       });
     },
   );
 
   const unlistedCases = [
-    ["8×8 で計画深さ1・最短5手", analyzed(shape8x8, 1, 5), 1, shape8x8],
-    ["8×8 で計画深さ3", analyzed(shape8x8, 3, 5), 3, shape8x8],
-    ["12×14 で計画深さ1", analyzed(shape12x14, 1, 3), 1, shape12x14],
-    ["10×13 で計画深さ5", analyzed(shape10x13, 5, 7), 5, shape10x13],
+    [
+      "氷と岩だけ・止め石だけ・最短12手",
+      tactics(shape8x8, { optimalMoveCount: 12 }),
+    ],
+    [
+      "氷と岩だけ・止め石と詰みの誘い",
+      tactics(shape8x8, { tags: ["stopper", "trap-lure"] }),
+    ],
+    ["レベル1の手筋だが盤面がレベル1の形に収まらない", tactics(shape10x10, {})],
+    [
+      "もろい岩と薄い氷8個だが難しさが低い",
+      elements(shape10x10, "mixed", {
+        optimalMoveCount: 18,
+        elementCount: 8,
+        brittleRockCount: 3,
+        thinIceCount: 5,
+        decoyCount: 2,
+        hardness: 30,
+      }),
+    ],
+    [
+      "もろい岩だけ7個",
+      elements(shape8x8, "brittle-rock", {
+        elementCount: 7,
+        brittleRockCount: 7,
+        thinIceCount: 0,
+        decoyCount: 2,
+      }),
+    ],
   ] as const;
 
   test.each(unlistedCases)(
     "どのレベルの組にも当たらない問題を提供範囲外とすること: %s",
-    (_, analysis, planningDepth, shape) => {
+    (_, analysis) => {
       const assessment = assessIceFloorMazeDifficulty(analysis);
 
-      expect(assessment).toEqual({
+      expect(assessment).toMatchObject({
         status: "out-of-range",
         reason: "unlisted-combination",
-        planningDepth,
-        shape,
       });
     },
   );
 
-  const moveCountCases = [
-    ["最短2手", analyzed(shape8x8, 1, 2), "too-light", 2],
-    ["最短15手", analyzed(shape12x14, 5, 15), "too-long", 15],
-    ["評価不能で最短15手", unsupported(shape12x14, 15), "too-long", 15],
+  const unmetCases = [
+    [
+      "最短解が2つ",
+      tactics(shape8x8, { optimalSolutionCount: 2 }),
+      ["multiple-solutions"],
+    ],
+    [
+      "一本道が最短の4分の1を超える",
+      tactics(shape8x8, { forcedMoveCount: 3 }),
+      ["forced"],
+    ],
+    ["読めない", tactics(shape8x8, { readingDepth: null }), ["unreadable"]],
+    [
+      "同じ向きが続く手と、もろい岩の連鎖",
+      elements(shape8x8, "mixed", {
+        brittleRockCount: 2,
+        thinIceCount: 2,
+        nearRepeatCount: 1,
+        brittleChainCount: 1,
+      }),
+      ["repeated-direction", "brittle-chain"],
+    ],
+    [
+      "効かない要素があり、おとりが無い",
+      elements(shape8x8, "thin-ice", {
+        irrelevantElementCount: 1,
+        decoyCount: 0,
+      }),
+      ["irrelevant-element", "few-decoys"],
+    ],
+    [
+      "要素7個でおとりが1個",
+      elements(shape8x8, "thin-ice", { elementCount: 7, decoyCount: 1 }),
+      ["few-decoys"],
+    ],
+    [
+      "使う回数が2回で、見た目どおりで解ける",
+      elements(shape8x8, "thin-ice", { useCount: 2, staticShortcut: true }),
+      ["few-uses", "static-shortcut"],
+    ],
+    [
+      "両方の盤面でもろい岩が1個",
+      elements(shape8x8, "mixed", { brittleRockCount: 1, thinIceCount: 3 }),
+      ["element-mix"],
+    ],
   ] as const;
 
-  test.each(moveCountCases)(
-    "最短手数が提供範囲を外れる問題を、計画深さより先に提供範囲外とすること: %s",
-    (_, analysis, reason, optimalMoveCount) => {
+  test.each(unmetCases)(
+    "採用条件を満たさない問題を、満たさない条件とともに提供範囲外とすること: %s",
+    (_, analysis, unmetConditions) => {
       const assessment = assessIceFloorMazeDifficulty(analysis);
 
       expect(assessment).toEqual({
         status: "out-of-range",
-        reason,
-        optimalMoveCount,
+        reason: "unmet-conditions",
+        unmetConditions,
       });
     },
   );
 
-  describe("読む手数の上限まで読んでも解けない場合", () => {
-    const analysis = unsupported(shape12x14, 10);
+  describe("状態の数が上限を超える場合", () => {
+    const analysis: IceFloorMazeDifficultyAnalysis = {
+      status: "unsupported",
+      reason: "state-limit-exceeded",
+      shape: shape10x10,
+    };
 
-    test("レベル5へ入れず評価不能とすること", () => {
+    test("評価不能とすること", () => {
       const assessment = assessIceFloorMazeDifficulty(analysis);
 
       expect(assessment).toEqual({
         status: "unsupported",
-        reason: "planning-depth-limit-exceeded",
+        reason: "state-limit-exceeded",
       });
     });
   });
@@ -168,34 +314,22 @@ describe("assessIceFloorMazeDifficulty", () => {
 describe("isIceFloorMazeBoardShapeOfDifficulty", () => {
   const cases = [
     [shape8x8, "1", true],
-    [shape8x10, "1", true],
-    [shape8x10, "2", true],
-    [shape9x12, "1", false],
-    [shape10x13, "4", true],
-    [shape10x13, "5", false],
-    [shape12x14, "5", true],
+    [{ width: 7, height: 8 }, "1", true],
+    [{ width: 8, height: 9 }, "1", false],
+    [shape10x10, "2", true],
+    [shape9x11, "4", false],
+    [shape9x11, "5", true],
+    [{ width: 10, height: 12 }, "5", true],
+    [{ width: 11, height: 12 }, "5", false],
+    [{ width: 9, height: 8 }, "5", false],
   ] as const;
 
   test.each(cases)(
-    "盤面の形がレベルで出す形かを返すこと: %o レベル %s",
+    "盤面の形がレベルで出す最も広い形に収まる縦長かを返すこと: %o レベル %s",
     (shape, difficulty, expected) => {
       const result = isIceFloorMazeBoardShapeOfDifficulty(shape, difficulty);
 
       expect(result).toBe(expected);
     },
   );
-});
-
-describe("listIceFloorMazeBoardShapes", () => {
-  test("どれかのレベルで出す形を重複なく狭い順に返すこと", () => {
-    const shapes = listIceFloorMazeBoardShapes();
-
-    expect(shapes).toEqual([
-      shape8x8,
-      shape8x10,
-      shape9x12,
-      shape10x13,
-      shape12x14,
-    ]);
-  });
 });

@@ -12,13 +12,13 @@ const {
 } = _private;
 
 const selected = selectIceFloorMazeProblemForDifficulty(
-  "3",
+  "5",
   "ice-floor-maze-diagnostics",
 );
 
 describe("createIceFloorMazeDiagnosticSnapshot", () => {
   const snapshot = createIceFloorMazeDiagnosticSnapshot({
-    difficulty: "3",
+    difficulty: "5",
     problemIdentity: selected.identity,
     buildRevision: "test-revision",
   });
@@ -31,16 +31,16 @@ describe("createIceFloorMazeDiagnosticSnapshot", () => {
     expect(snapshot.difficultyAnalysis).toEqual(expectedAnalysis);
     expect(snapshot.difficultyAssessment).toMatchObject({
       status: "classified",
-      difficulty: "3",
-      planningDepth: 3,
+      difficulty: "5",
+      composition: "mixed",
     });
-    expect(serialized).toContain('"trialMoveCount"');
+    expect(serialized).toContain('"hardness"');
   });
 });
 
 describe("parseIceFloorMazeDiagnosticSnapshot", () => {
   const snapshot = createIceFloorMazeDiagnosticSnapshot({
-    difficulty: "3",
+    difficulty: "5",
     problemIdentity: selected.identity,
     buildRevision: "test-revision",
   });
