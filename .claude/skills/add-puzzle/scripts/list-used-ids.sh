@@ -1,9 +1,9 @@
 #!/bin/bash
 # list-used-ids.sh
-# origin のすべてのブランチ（origin/main を含む）から、SPEC 番号と候補 ID（PUZZLE-NNN）の使用と予約を集め、
+# origin のすべてのブランチ（origin/main を含む）から、SPEC 番号・候補 ID（PUZZLE-NNN）・ADR 番号の使用と予約を集め、
 # 番号ごとに、次に使える番号・衝突・origin/main に無い使用と予約を標準出力へ書く。
 #
-# 使用: SPEC は仕様ディレクトリのファイル（場所とタイトル）、候補 ID は台帳の行（名称）。
+# 使用: SPEC は仕様ディレクトリのファイル（場所とタイトル）、候補 ID は台帳の行（名称）、ADR は docs/adr のファイル（タイトル）。
 # 予約: 導入調査の `*実装前提調査.md` の識別表の行（`| SPEC 番号 | SPEC-NNN |`、`| 候補 ID | PUZZLE-NNN |`）。
 # 衝突: 同じ番号を、別の場所・タイトル・名称・パズルに使っているもの。
 #   予約を持つブランチの中の使用は、その予約と同じものとして数え、ほかのブランチの同じ使用も同じものとして数える
@@ -22,6 +22,7 @@ readonly SPEC_DIRECTORY="docs/プロダクト/仕様/"
 readonly CANDIDATE_LEDGER="docs/棚上げ/パズル候補.csv"
 readonly RESEARCH_DIRECTORY="docs/パズル/導入調査/"
 readonly RESEARCH_DOCUMENT_SUFFIX="実装前提調査.md"
+readonly ADR_DIRECTORY="docs/adr/"
 readonly SHOWN_BRANCHES=5
 
 if ! git rev-parse --verify --quiet "$MAIN_REF" >/dev/null; then
@@ -41,17 +42,17 @@ remote_branches() {
     grep -v -x -e 'origin/HEAD' -e 'origin'
 }
 
-# 入力と出力: <blob>\t<パス>[\t...]。番号を持ちうるファイル（SPEC・台帳・実装前提調査）の行だけを通す。
+# 入力と出力: <blob>\t<パス>[\t...]。番号を持ちうるファイル（SPEC・台帳・実装前提調査・ADR）の行だけを通す。
 keep_numbered_files() {
   awk -F'\t' -v ledger="$CANDIDATE_LEDGER" -v suffix="$RESEARCH_DOCUMENT_SUFFIX" '
-    $2 ~ /\/SPEC-[0-9]+\.md$/ || $2 == ledger || substr($2, length($2) - length(suffix) + 1) == suffix'
+    $2 ~ /\/SPEC-[0-9]+\.md$/ || $2 ~ /^docs\/adr\/ADR-[0-9]+-[^\/]*\.md$/ || $2 == ledger || substr($2, length($2) - length(suffix) + 1) == suffix'
 }
 
 # 出力: <blob>\t<パス>\t<ブランチ>
 list_files_by_ref() {
   local ref
   for ref in $(remote_branches); do
-    git -c core.quotepath=false ls-tree -r "$ref" -- "$SPEC_DIRECTORY" "$CANDIDATE_LEDGER" "$RESEARCH_DIRECTORY" |
+    git -c core.quotepath=false ls-tree -r "$ref" -- "$SPEC_DIRECTORY" "$CANDIDATE_LEDGER" "$RESEARCH_DIRECTORY" "$ADR_DIRECTORY" |
       awk -F'\t' -v ref="$ref" '{ split($1, meta, " "); print meta[3] "\t" $2 "\t" ref }'
   done | keep_numbered_files
 }
@@ -60,12 +61,12 @@ list_files_by_ref() {
 # 出力: <blob>\t<パス>
 list_main_history_files() {
   git -c core.quotepath=false log "$MAIN_REF" --format= --raw --no-abbrev --no-renames -- \
-    "$SPEC_DIRECTORY" "$CANDIDATE_LEDGER" "$RESEARCH_DIRECTORY" |
+    "$SPEC_DIRECTORY" "$CANDIDATE_LEDGER" "$RESEARCH_DIRECTORY" "$ADR_DIRECTORY" |
     awk -F'\t' '{ split($1, meta, " "); if (meta[4] !~ /^0+$/) print meta[4] "\t" $2 }' |
     keep_numbered_files | sort -u
 }
 
-# 出力: <種類 SPEC|PUZZLE>\t<番号>\t<use|reserve>\t<ラベル>
+# 出力: <種類 SPEC|PUZZLE|ADR>\t<番号>\t<use|reserve>\t<ラベル>
 facts_of_file() {
   local blob="$1" path="$2"
   case "$path" in
@@ -74,6 +75,12 @@ facts_of_file() {
       number="$(grep -o 'SPEC-[0-9]\+' <<<"${path##*/}")"
       title="$(git cat-file blob "$blob" | sed -n 's/^# \(SPEC-[0-9]* *\)\{0,1\}//p' | head -1)"
       printf 'SPEC\t%s\tuse\t%s（%s）\n' "$number" "${path#docs/プロダクト/}" "$title"
+      ;;
+    "$ADR_DIRECTORY"ADR-*.md)
+      local number title
+      number="$(grep -o 'ADR-[0-9]\+' <<<"${path##*/}")"
+      title="$(git cat-file blob "$blob" | sed -n 's/^# //p' | head -1)"
+      printf 'ADR\t%s\tuse\t%s\n' "$number" "$title"
       ;;
     "$CANDIDATE_LEDGER")
       git cat-file blob "$blob" | awk -F, '/^PUZZLE-[0-9]+,/ { print "PUZZLE\t" $1 "\tuse\t台帳（" $3 "）" }'
@@ -148,8 +155,9 @@ report() {
     }
     END {
       print "## " heading
-      printf "%s の最大: %s-%03d\n", main_ref, kind, main_largest
-      printf "次に使える番号（%s・全ブランチ・識別表の予約のどれとも重ならない）: %s-%03d\n", main_ref, kind, largest + 1
+      digits = kind == "ADR" ? 4 : 3
+      printf "%s の最大: %s-%0" digits "d\n", main_ref, kind, main_largest
+      printf "次に使える番号（%s・全ブランチ・識別表の予約のどれとも重ならない）: %s-%0" digits "d\n", main_ref, kind, largest + 1
       print "衝突（同じ番号を別のものに使っている）:"
       collisions = 0
       for (id in owner_count) {
@@ -174,3 +182,4 @@ report() {
 
 report "SPEC" "SPEC"
 report "PUZZLE" "候補 ID（台帳の名称と識別表の予約）"
+report "ADR" "ADR"
