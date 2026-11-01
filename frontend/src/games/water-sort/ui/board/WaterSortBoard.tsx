@@ -135,7 +135,7 @@ export function WaterSortBoard({
                   key={`${cue.kind}-${cue.id}`}
                   aria-hidden="true"
                   data-bottle-cue={cue.kind}
-                  className={`pointer-events-none absolute -inset-x-1 top-1 -bottom-1 rounded-b-[1.7rem] rounded-t-md shadow-[0_0_14px_3px] shadow-sky-400/70 ring-[3px] ring-sky-400/80 dark:shadow-sky-300/60 dark:ring-sky-300/80 ${
+                  className={`pointer-events-none absolute -inset-x-1 top-1 -bottom-1 rounded-b-[1.7rem] rounded-t-md shadow-[0_0_14px_3px] shadow-emerald-400/70 ring-[3px] ring-emerald-500/80 dark:shadow-emerald-300/60 dark:ring-emerald-300/80 ${
                     cue.kind === "sorted"
                       ? "fill-mode-forwards animate-out fade-out-0 duration-900 ease-in"
                       : "animate-in fade-in-0 duration-(--duration-normal) ease-(--ease-enter) motion-reduce:animate-none"

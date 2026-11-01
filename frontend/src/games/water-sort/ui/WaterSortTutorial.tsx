@@ -281,7 +281,7 @@ export function WaterSortTutorial({
     const sortedCues =
       pouring || progress.phase === "solved"
         ? []
-        : getSortedCues(boardState, false);
+        : getSortedCues(boardState, progress.phase === "completed");
     const cueBottle =
       progress.phase === "intro"
         ? messageShown

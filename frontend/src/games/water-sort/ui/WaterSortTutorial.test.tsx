@@ -262,7 +262,7 @@ describe("WaterSortTutorial", () => {
         expect(cued).toHaveLength(1);
       });
 
-      test("そろえ終えると、最後にそろえたボトルを光らせてレベル1とのつながりを伝え、レベル1を遊ぶでレベル1を始めること", () => {
+      test("そろえ終えると、そろったボトルをすべて光らせてレベル1とのつながりを伝え、レベル1を遊ぶでレベル1を始めること", () => {
         tapBottles(remainingTaps);
         const sorted = getCuedBottles("sorted");
         const detail = screen.getByText(
@@ -270,7 +270,7 @@ describe("WaterSortTutorial", () => {
         );
         fireEvent.click(screen.getByRole("button", { name: "レベル1を遊ぶ" }));
 
-        expect(sorted).toEqual([1]);
+        expect(sorted).toEqual([1, 4, 5]);
         expect(detail).toBeTruthy();
         expect(onStartPlay).toHaveBeenCalledOnce();
       });
