@@ -15,11 +15,12 @@ type ReflectionClearLightProps = {
 const stepSelector = "[data-clear-light-step]";
 
 /** 全光路を伸ばし切るまでの時間。光路の本数によらず同じ長さにする。 */
-const CLEAR_LIGHT_SPREAD_MS = 640;
-const CLEAR_LIGHT_DRAW_MS = 420;
+export const CLEAR_LIGHT_SPREAD_MS = 640;
+export const CLEAR_LIGHT_DRAW_MS = 420;
 /**
  * 全光路が点いた盤面を、結果画面へ切り替える前に見せておく時間。
  * 揃った光路の形がこのゲームの報酬なので、伸ばし終えた後や動きを減らす設定でも、静止した全光路を読める間を残す。
+ * 全光路が点いたときの音（`assets/sounds/cleared-chord.flac`）は、この間に鳴り終える長さで作っているので、変えるなら作り直す。
  */
 const CLEAR_LIGHT_HOLD_MS = 700;
 /** 演出を始めてから結果へ進めるまでの時間。光路の本数によらず、全光路を伸ばし切る時間に見せておく時間を足した長さにする。 */

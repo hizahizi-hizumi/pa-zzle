@@ -310,6 +310,14 @@ export const parkingJamPlayRecordDefinition = {
   getComparisonKey(record) {
     return isParkingJamPlayRecord(record) ? record.payload.difficulty : null;
   },
+  // 車は1回ずつ出すので、完成までの手数は問題の車の数で決まり、手数は持たない。出せなかった出庫をミスとする。
+  getClearPerformance(record) {
+    if (!isParkingJamPlayRecord(record)) {
+      return null;
+    }
+    const { elapsedMs, failedMoveCount } = record.payload.performance;
+    return { elapsedMs, mistakeCount: failedMoveCount };
+  },
   personalBestMetrics: [
     {
       id: "play-score",

@@ -12,6 +12,8 @@ import {
 
 const extractor = await testExtractor();
 const MARKER = "/* {ref} */";
+// リポジトリの全testファイルを解析するので、testファイルの数に比例して既定の5秒を超えうる。
+const REPOSITORY_TEST_FILES_TIMEOUT_MS = 30_000;
 
 const source = `import { render } from "@testing-library/react";
 
@@ -189,7 +191,7 @@ test("別のtest", () => {});
         units.map((unit) => unit.source),
       );
     }
-  });
+  }, REPOSITORY_TEST_FILES_TIMEOUT_MS);
 });
 
 describe("buildDecisionState parts", () => {

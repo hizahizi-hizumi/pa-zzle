@@ -6,7 +6,7 @@ import {
   restoreIceFloorMazeProblem,
 } from "@/games/ice-floor-maze/problem/problem";
 import problemPoolJson from "@/games/ice-floor-maze/problem/problem-pool.json";
-import { createProblemPoolIdLookup } from "@/games/problem-id";
+import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 
 /**
  * 事前生成した問題集の1問。
@@ -72,15 +72,22 @@ export function listIceFloorMazePoolEntries(
   return problemPool.levels[difficulty];
 }
 
-const findPoolPositionByProblemId = createProblemPoolIdLookup(
+const poolIndex = createProblemPoolIndex(
   problemPool.levels,
   (entry) => decodeIceFloorMazePoolEntry(entry).identity,
 );
+
+/** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。 */
+export function listIceFloorMazePoolProblemIds(
+  difficulty: IceFloorMazeDifficulty,
+): readonly ProblemId[] {
+  return poolIndex.listProblemIds(difficulty);
+}
 
 /** 難易度の問題集から問題 ID で1問を探す。問題集に無い ID・別の難易度の ID には `null` を返す。 */
 export function findIceFloorMazePoolEntryByProblemId(
   difficulty: IceFloorMazeDifficulty,
   problemId: string,
 ): IceFloorMazeProblemPoolEntry | null {
-  return findPoolPositionByProblemId(difficulty, problemId)?.entry ?? null;
+  return poolIndex.findPositionById(difficulty, problemId)?.entry ?? null;
 }

@@ -15,7 +15,11 @@ import {
   type NanpureCell,
   type NanpureDigit,
 } from "@/games/nanpure/puzzle/board";
-import { createProblemPoolIdLookup } from "@/games/problem-id";
+import {
+  createCountFeatureValue,
+  type ProblemFeatureAxis,
+} from "@/games/problem-feature";
+import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 
 /**
  * 事前生成した問題集の1問。
@@ -125,17 +129,24 @@ export function listNanpurePoolEntries(
   return problemPool.levels[difficulty];
 }
 
-const findPoolPositionByProblemId = createProblemPoolIdLookup(
+const poolIndex = createProblemPoolIndex(
   problemPool.levels,
   toNanpurePoolIdentity,
 );
+
+/** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。 */
+export function listNanpurePoolProblemIds(
+  difficulty: NanpureDifficulty,
+): readonly ProblemId[] {
+  return poolIndex.listProblemIds(difficulty);
+}
 
 /** 難易度の問題集から問題 ID で1問を探す。問題集に無い ID・別の難易度の ID には `null` を返す。 */
 export function findNanpurePoolEntryByProblemId(
   difficulty: NanpureDifficulty,
   problemId: string,
 ): NanpureProblemPoolEntry | null {
-  return findPoolPositionByProblemId(difficulty, problemId)?.entry ?? null;
+  return poolIndex.findPositionById(difficulty, problemId)?.entry ?? null;
 }
 
 let entriesBySeed: ReadonlyMap<string, NanpureProblemPoolEntry> | undefined;
@@ -166,3 +177,37 @@ export function findNanpurePoolEntry(
     ? entry
     : null;
 }
+
+/** 始めたときの盤面を見れば分かる、問題の特徴。盤面は全問 9×9 なので持たない。 */
+export type NanpureProblemFeatures = {
+  clueCount: number;
+};
+
+/**
+ * 難易度の問題集の1問の特徴を、問題を復元せずにヒントの位置から求める。問題集に無い ID・別の難易度の ID には `null` を返す。
+ * 図鑑の絞り込みでレベルの全問について求めるので、解の読み解きと問題の検査をしない。
+ */
+export function findNanpurePoolProblemFeatures(
+  difficulty: NanpureDifficulty,
+  problemId: string,
+): NanpureProblemFeatures | null {
+  const entry = findNanpurePoolEntryByProblemId(difficulty, problemId);
+  if (!entry) {
+    return null;
+  }
+  const clueMask = decodeMask(entry[2].slice(NANPURE_CELL_COUNT));
+  return { clueCount: clueMask.filter(Boolean).length };
+}
+
+/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
+export const nanpureProblemFeatureAxes = [
+  {
+    id: "clue-count",
+    getValue({ clueCount }) {
+      return createCountFeatureValue(clueCount);
+    },
+  },
+] as const satisfies readonly ProblemFeatureAxis<NanpureProblemFeatures>[];
+
+export type NanpureProblemFeatureAxisId =
+  (typeof nanpureProblemFeatureAxes)[number]["id"];

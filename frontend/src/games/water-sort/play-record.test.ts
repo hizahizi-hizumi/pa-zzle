@@ -211,3 +211,14 @@ describe("生成器の版が今と違う記録の場合", () => {
     expect(restored).toBeNull();
   });
 });
+
+test("クリアの成績として、経過時間と、完成までの手数と最短手数を読むこと", () => {
+  const performance = waterSortPlayRecordDefinition.getClearPerformance(
+    createRecord(),
+  );
+
+  expect(performance).toEqual({
+    elapsedMs: 65_000,
+    moves: { completionMoveCount: 12, optimalMoveCount: 10 },
+  });
+});

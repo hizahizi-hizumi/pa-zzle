@@ -3,6 +3,7 @@ import { createProblemId } from "@/games/problem-id";
 import {
   decodeWaterSortPoolEntry,
   findWaterSortPoolEntryByProblemId,
+  findWaterSortPoolProblemFeatures,
   listWaterSortPoolEntries,
 } from "@/games/water-sort/problem/problem-pool";
 
@@ -30,5 +31,30 @@ describe("findWaterSortPoolEntryByProblemId", () => {
     );
 
     expect(unresolvedEntries).toEqual([]);
+  });
+});
+
+describe("findWaterSortPoolProblemFeatures", () => {
+  const [entry] = listWaterSortPoolEntries("3");
+  if (!entry) {
+    throw new Error("No level 3 water sort pool entry");
+  }
+  const problemId = createProblemId(decodeWaterSortPoolEntry(entry).identity);
+
+  test("問題集の1問の特徴を、項目の色数と空ボトルの数で返すこと", () => {
+    const features = findWaterSortPoolProblemFeatures("3", problemId);
+
+    expect(features).toEqual({
+      colorCount: entry[1],
+      emptyBottleCount: entry[2],
+    });
+  });
+
+  test("問題集に無い ID と、別の難易度の ID には null を返すこと", () => {
+    const unknown = findWaterSortPoolProblemFeatures("3", "unknown");
+    const otherDifficulty = findWaterSortPoolProblemFeatures("1", problemId);
+
+    expect(unknown).toBeNull();
+    expect(otherDifficulty).toBeNull();
   });
 });

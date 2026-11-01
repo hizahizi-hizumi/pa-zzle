@@ -1,0 +1,14 @@
+{
+  "$comment": "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH は上限を絞るためではなく引き上げるために設定している。クラウド環境では基盤側が 1 を注入し、環境設定の環境変数より優先されるため、ここで上書きしてサブエージェントのネストを許可する。",
+  "env": {
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "3"
+  },
+  "permissions": {
+    "allow": [
+      "mcp__claude-artifacts__publish_version",
+      "mcp__claude-artifacts__publish_files",
+      "mcp__claude-artifacts__edit_version",
+      "mcp__claude-artifacts__upload_asset"
+    ]
+  }
+}

@@ -198,6 +198,13 @@ export const minesweeperPlayRecordDefinition = {
   getComparisonKey(record) {
     return isMinesweeperPlayRecord(record) ? record.payload.difficulty : null;
   },
+  getClearPerformance(record) {
+    if (!isMinesweeperPlayRecord(record)) {
+      return null;
+    }
+    const { elapsedMs, mistakeCount } = record.payload.performance;
+    return { elapsedMs, mistakeCount };
+  },
   personalBestMetrics: [
     {
       id: "play-score",

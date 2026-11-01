@@ -1,6 +1,7 @@
 import { difficultyLevels } from "@/games/difficulty";
 import {
   findMinesweeperPoolEntryByProblemId,
+  findMinesweeperPoolProblemFeatures,
   listMinesweeperPoolEntries,
   toMinesweeperPoolIdentity,
 } from "@/games/minesweeper/problem/problem-pool";
@@ -30,5 +31,31 @@ describe("findMinesweeperPoolEntryByProblemId", () => {
     );
 
     expect(unresolvedEntries).toEqual([]);
+  });
+});
+
+describe("findMinesweeperPoolProblemFeatures", () => {
+  const [entry] = listMinesweeperPoolEntries("3");
+  if (!entry) {
+    throw new Error("No level 3 minesweeper pool entry");
+  }
+  const problemId = createProblemId(toMinesweeperPoolIdentity("3", entry));
+
+  test("問題集の1問の特徴を、項目の盤面の行数・列数と地雷の数で返すこと", () => {
+    const features = findMinesweeperPoolProblemFeatures("3", problemId);
+
+    expect(features).toEqual({
+      rows: entry[0],
+      columns: entry[1],
+      mineCount: entry[2],
+    });
+  });
+
+  test("問題集に無い ID と、別の難易度の ID には null を返すこと", () => {
+    const unknown = findMinesweeperPoolProblemFeatures("3", "unknown");
+    const otherDifficulty = findMinesweeperPoolProblemFeatures("1", problemId);
+
+    expect(unknown).toBeNull();
+    expect(otherDifficulty).toBeNull();
   });
 });

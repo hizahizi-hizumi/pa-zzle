@@ -6,6 +6,7 @@ import {
   decodeTakuzuPoolProblem,
   encodeTakuzuPoolProblem,
   findTakuzuPoolEntryByProblemId,
+  findTakuzuPoolProblemFeatures,
   getTakuzuRemovalTechniqueLimitCode,
   listTakuzuPoolEntries,
   toTakuzuPooledProblem,
@@ -127,5 +128,30 @@ describe("findTakuzuPoolEntryByProblemId", () => {
     );
 
     expect(unresolvedEntries).toEqual([]);
+  });
+});
+
+describe("findTakuzuPoolProblemFeatures", () => {
+  const [entry] = listTakuzuPoolEntries("3");
+  if (!entry) {
+    throw new Error("No level 3 takuzu pool entry");
+  }
+  const problemId = createProblemId(toTakuzuPoolIdentity(entry));
+  const { givens } = toTakuzuPooledProblem(entry).problem;
+
+  test("問題集の1問の特徴を、復元した問題の初期配置のマスの数で返すこと", () => {
+    const features = findTakuzuPoolProblemFeatures("3", problemId);
+
+    expect(features).toEqual({
+      givenCount: givens.cells.filter((cell) => cell !== null).length,
+    });
+  });
+
+  test("問題集に無い ID と、別の難易度の ID には null を返すこと", () => {
+    const unknown = findTakuzuPoolProblemFeatures("3", "unknown");
+    const otherDifficulty = findTakuzuPoolProblemFeatures("1", problemId);
+
+    expect(unknown).toBeNull();
+    expect(otherDifficulty).toBeNull();
   });
 });

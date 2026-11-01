@@ -5,7 +5,12 @@ import {
   type ParkingJamProblemIdentity,
 } from "@/games/parking-jam/problem/problem";
 import problemPoolJson from "@/games/parking-jam/problem/problem-pool.json";
-import { createProblemPoolIdLookup } from "@/games/problem-id";
+import {
+  createBoardSizeFeatureValue,
+  createCountFeatureValue,
+  type ProblemFeatureAxis,
+} from "@/games/problem-feature";
+import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 
 /** 問題集が参照する生成条件。`ParkingJamGenerationConditions` の各値を定義順に並べる。 */
 export type ParkingJamProblemPoolConditions = readonly [
@@ -115,10 +120,16 @@ export function listParkingJamPoolEntries(
   return problemPool.levels[difficulty];
 }
 
-const findPoolPositionByProblemId = createProblemPoolIdLookup(
-  problemPool.levels,
-  (entry) => toParkingJamPoolIdentity(entry),
+const poolIndex = createProblemPoolIndex(problemPool.levels, (entry) =>
+  toParkingJamPoolIdentity(entry),
 );
+
+/** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。 */
+export function listParkingJamPoolProblemIds(
+  difficulty: ParkingJamDifficulty,
+): readonly ProblemId[] {
+  return poolIndex.listProblemIds(difficulty);
+}
 
 /**
  * 難易度の問題集から問題 ID で1問を探す。問題集に無い ID・別の難易度の ID には `null` を返す。
@@ -128,9 +139,56 @@ export function findParkingJamPoolEntryByProblemId(
   difficulty: ParkingJamDifficulty,
   problemId: string,
 ): ParkingJamProblemPoolEntry | null {
-  return findPoolPositionByProblemId(difficulty, problemId)?.entry ?? null;
+  return poolIndex.findPositionById(difficulty, problemId)?.entry ?? null;
 }
 
 export function getParkingJamProblemPoolDifficultyModelVersion(): string {
   return problemPool.difficultyModelVersion;
 }
+
+/** 始めたときの盤面を見れば分かる、問題の特徴。固定物（植え込み）は、つながった1か所を1つと数える。 */
+export type ParkingJamProblemFeatures = {
+  rows: number;
+  columns: number;
+  vehicleCount: number;
+  fixedAreaCount: number;
+};
+
+/** 難易度の問題集の1問の特徴を、盤面を生成し直さずに問題集の生成条件から求める。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+export function findParkingJamPoolProblemFeatures(
+  difficulty: ParkingJamDifficulty,
+  problemId: string,
+): ParkingJamProblemFeatures | null {
+  const entry = findParkingJamPoolEntryByProblemId(difficulty, problemId);
+  if (!entry) {
+    return null;
+  }
+  const { width, height, vehicleCount, fixedAreaCount } =
+    toParkingJamPoolIdentity(entry).conditions;
+  return { rows: height, columns: width, vehicleCount, fixedAreaCount };
+}
+
+/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
+export const parkingJamProblemFeatureAxes = [
+  {
+    id: "parking-lot-size",
+    getValue({ rows, columns }) {
+      return createBoardSizeFeatureValue(rows, columns);
+    },
+  },
+  {
+    id: "vehicle-count",
+    getValue({ vehicleCount }) {
+      return createCountFeatureValue(vehicleCount);
+    },
+  },
+  {
+    id: "fixed-area-count",
+    getValue({ fixedAreaCount }) {
+      return createCountFeatureValue(fixedAreaCount);
+    },
+  },
+] as const satisfies readonly ProblemFeatureAxis<ParkingJamProblemFeatures>[];
+
+export type ParkingJamProblemFeatureAxisId =
+  (typeof parkingJamProblemFeatureAxes)[number]["id"];

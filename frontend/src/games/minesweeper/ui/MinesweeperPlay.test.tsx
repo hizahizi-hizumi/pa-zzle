@@ -49,6 +49,7 @@ describe("MinesweeperPlay", () => {
           progress="playing"
           result={null}
           recordOutcomeNotice={null}
+          operation={null}
           onRevealCell={onRevealCell}
           onToggleFlag={onToggleFlag}
           onChordCell={vi.fn()}
@@ -215,6 +216,7 @@ describe("MinesweeperPlay", () => {
           progress="playing"
           result={null}
           recordOutcomeNotice={null}
+          operation={null}
           onRevealCell={vi.fn()}
           onToggleFlag={vi.fn()}
           onChordCell={vi.fn()}
@@ -263,6 +265,7 @@ describe("MinesweeperPlay", () => {
           progress="playing"
           result={null}
           recordOutcomeNotice={null}
+          operation={null}
           onRevealCell={onRevealCell}
           onToggleFlag={onToggleFlag}
           onChordCell={vi.fn()}
@@ -318,6 +321,7 @@ describe("MinesweeperPlay", () => {
           {...createResultProps()}
           visibleCells={visibleCells}
           progress="clearing"
+          operation={null}
           onRevealCell={onRevealCell}
         />,
       );
@@ -512,6 +516,7 @@ function createResultProps(): ComponentProps<typeof MinesweeperPlay> {
       score: { total: 77, breakdown: { accuracy: 45, speed: 32 } },
     },
     recordOutcomeNotice: null,
+    operation: null,
     onRevealCell: vi.fn(),
     onToggleFlag: vi.fn(),
     onChordCell: vi.fn(),

@@ -1,4 +1,8 @@
-import { createProblemPoolIdLookup } from "@/games/problem-id";
+import {
+  createCountFeatureValue,
+  type ProblemFeatureAxis,
+} from "@/games/problem-feature";
+import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 import type { WaterSortDifficulty } from "@/games/water-sort/difficulty";
 import {
   WATER_SORT_GENERATOR_VERSION,
@@ -66,15 +70,61 @@ export function listWaterSortPoolEntries(
   return problemPool.levels[difficulty];
 }
 
-const findPoolPositionByProblemId = createProblemPoolIdLookup(
+const poolIndex = createProblemPoolIndex(
   problemPool.levels,
   (entry) => decodeWaterSortPoolEntry(entry).identity,
 );
+
+/** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。 */
+export function listWaterSortPoolProblemIds(
+  difficulty: WaterSortDifficulty,
+): readonly ProblemId[] {
+  return poolIndex.listProblemIds(difficulty);
+}
 
 /** 難易度の問題集から問題 ID で1問を探す。問題集に無い ID・別の難易度の ID には `null` を返す。 */
 export function findWaterSortPoolEntryByProblemId(
   difficulty: WaterSortDifficulty,
   problemId: string,
 ): WaterSortProblemPoolEntry | null {
-  return findPoolPositionByProblemId(difficulty, problemId)?.entry ?? null;
+  return poolIndex.findPositionById(difficulty, problemId)?.entry ?? null;
 }
+
+/** 始めたときの盤面を見れば分かる、問題の特徴。 */
+export type WaterSortProblemFeatures = {
+  colorCount: number;
+  emptyBottleCount: number;
+};
+
+/** 難易度の問題集の1問の特徴を、問題を復元せずに問題集の項目から求める。問題集に無い ID・別の難易度の ID には `null` を返す。 */
+export function findWaterSortPoolProblemFeatures(
+  difficulty: WaterSortDifficulty,
+  problemId: string,
+): WaterSortProblemFeatures | null {
+  const entry = findWaterSortPoolEntryByProblemId(difficulty, problemId);
+  if (!entry) {
+    return null;
+  }
+  const { colorCount, emptyBottleCount } =
+    decodeWaterSortPoolEntry(entry).identity.conditions;
+  return { colorCount, emptyBottleCount };
+}
+
+/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
+export const waterSortProblemFeatureAxes = [
+  {
+    id: "color-count",
+    getValue({ colorCount }) {
+      return createCountFeatureValue(colorCount);
+    },
+  },
+  {
+    id: "empty-bottle-count",
+    getValue({ emptyBottleCount }) {
+      return createCountFeatureValue(emptyBottleCount);
+    },
+  },
+] as const satisfies readonly ProblemFeatureAxis<WaterSortProblemFeatures>[];
+
+export type WaterSortProblemFeatureAxisId =
+  (typeof waterSortProblemFeatureAxes)[number]["id"];

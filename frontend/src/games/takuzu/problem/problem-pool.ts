@@ -1,4 +1,8 @@
-import { createProblemPoolIdLookup } from "@/games/problem-id";
+import {
+  createCountFeatureValue,
+  type ProblemFeatureAxis,
+} from "@/games/problem-feature";
+import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 import type { TakuzuDifficulty } from "@/games/takuzu/difficulty";
 import {
   assertTakuzuProblem,
@@ -171,17 +175,24 @@ export function listTakuzuPoolEntries(
   return problemPool.levels[difficulty];
 }
 
-const findPoolPositionByProblemId = createProblemPoolIdLookup(
+const poolIndex = createProblemPoolIndex(
   problemPool.levels,
   toTakuzuPoolIdentity,
 );
+
+/** 難易度の問題集の全問の問題 ID を、問題集の並び順で返す。 */
+export function listTakuzuPoolProblemIds(
+  difficulty: TakuzuDifficulty,
+): readonly ProblemId[] {
+  return poolIndex.listProblemIds(difficulty);
+}
 
 /** 難易度の問題集から問題 ID で1問を探す。問題集に無い ID・別の難易度の ID には `null` を返す。 */
 export function findTakuzuPoolEntryByProblemId(
   difficulty: TakuzuDifficulty,
   problemId: string,
 ): TakuzuProblemPoolEntry | null {
-  return findPoolPositionByProblemId(difficulty, problemId)?.entry ?? null;
+  return poolIndex.findPositionById(difficulty, problemId)?.entry ?? null;
 }
 
 let entriesBySeed: ReadonlyMap<string, TakuzuProblemPoolEntry> | undefined;
@@ -214,3 +225,37 @@ export function findTakuzuPoolEntry(
     conditions.extraGivenCount === identity.conditions.extraGivenCount;
   return matches ? entry : null;
 }
+
+/** 始めたときの盤面を見れば分かる、問題の特徴。盤面は全問 8×8 なので持たない。 */
+export type TakuzuProblemFeatures = {
+  givenCount: number;
+};
+
+/**
+ * 難易度の問題集の1問の特徴を、問題を復元せずに初期配置の位置から求める。問題集に無い ID・別の難易度の ID には `null` を返す。
+ * 図鑑の絞り込みでレベルの全問について求めるので、解の読み解きと問題の検査をしない。
+ */
+export function findTakuzuPoolProblemFeatures(
+  difficulty: TakuzuDifficulty,
+  problemId: string,
+): TakuzuProblemFeatures | null {
+  const entry = findTakuzuPoolEntryByProblemId(difficulty, problemId);
+  if (!entry) {
+    return null;
+  }
+  const givenMask = decodeBits(entry[3].slice(hexDigitCount));
+  return { givenCount: givenMask.filter(Boolean).length };
+}
+
+/** 図鑑の絞り込みで問題を分ける特徴の軸。 */
+export const takuzuProblemFeatureAxes = [
+  {
+    id: "given-count",
+    getValue({ givenCount }) {
+      return createCountFeatureValue(givenCount);
+    },
+  },
+] as const satisfies readonly ProblemFeatureAxis<TakuzuProblemFeatures>[];
+
+export type TakuzuProblemFeatureAxisId =
+  (typeof takuzuProblemFeatureAxes)[number]["id"];

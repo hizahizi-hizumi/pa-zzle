@@ -5,6 +5,7 @@ import {
   decodeNanpurePoolProblem,
   encodeNanpurePoolProblem,
   findNanpurePoolEntryByProblemId,
+  findNanpurePoolProblemFeatures,
   listNanpurePoolEntries,
   toNanpurePooledProblem,
   toNanpurePoolIdentity,
@@ -99,5 +100,30 @@ describe("findNanpurePoolEntryByProblemId", () => {
     );
 
     expect(unresolvedEntries).toEqual([]);
+  });
+});
+
+describe("findNanpurePoolProblemFeatures", () => {
+  const [entry] = listNanpurePoolEntries("3");
+  if (!entry) {
+    throw new Error("No level 3 nanpure pool entry");
+  }
+  const problemId = createProblemId(toNanpurePoolIdentity(entry));
+  const { clues } = toNanpurePooledProblem(entry).problem;
+
+  test("問題集の1問の特徴を、復元した問題の初期数字の数で返すこと", () => {
+    const features = findNanpurePoolProblemFeatures("3", problemId);
+
+    expect(features).toEqual({
+      clueCount: clues.filter((cell) => cell !== null).length,
+    });
+  });
+
+  test("問題集に無い ID と、別の難易度の ID には null を返すこと", () => {
+    const unknown = findNanpurePoolProblemFeatures("3", "unknown");
+    const otherDifficulty = findNanpurePoolProblemFeatures("1", problemId);
+
+    expect(unknown).toBeNull();
+    expect(otherDifficulty).toBeNull();
   });
 });

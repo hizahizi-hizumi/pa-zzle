@@ -293,6 +293,16 @@ export const waterSortPlayRecordDefinition = {
   getComparisonKey(record) {
     return isWaterSortPlayRecord(record) ? record.payload.difficulty : null;
   },
+  getClearPerformance(record) {
+    if (!isWaterSortPlayRecord(record)) {
+      return null;
+    }
+    const { elapsedMs, optimalMoveCount } = record.payload.performance;
+    const completionMoveCount = getCompletionMoveCount(record);
+    return completionMoveCount === null
+      ? { elapsedMs }
+      : { elapsedMs, moves: { completionMoveCount, optimalMoveCount } };
+  },
   personalBestMetrics: [
     {
       id: "play-score",

@@ -7,6 +7,7 @@ import {
   encodeReflectionPoolSolution,
   findReflectionPooledProblem,
   findReflectionPooledProblemByProblemId,
+  findReflectionPoolProblemFeatures,
   formatReflectionPoolProblemId,
   listReflectionPoolEntries,
   restoreReflectionPoolEntry,
@@ -144,5 +145,27 @@ describe("findReflectionPooledProblemByProblemId", () => {
     );
 
     expect(unresolvedEntries).toEqual([]);
+  });
+});
+
+describe("findReflectionPoolProblemFeatures", () => {
+  const pooled = toReflectionPooledProblem("3", 0);
+  const problemId = createProblemId(pooled.identity);
+
+  test("問題集の1問の特徴を、復元した問題の盤面の大きさと手持ちのピースの数で返すこと", () => {
+    const features = findReflectionPoolProblemFeatures("3", problemId);
+
+    expect(features).toEqual({
+      size: pooled.problem.size,
+      pieceCount: pooled.workload.pieceCount,
+    });
+  });
+
+  test("問題集に無い ID と、別の難易度の ID には null を返すこと", () => {
+    const unknown = findReflectionPoolProblemFeatures("3", "unknown");
+    const otherDifficulty = findReflectionPoolProblemFeatures("1", problemId);
+
+    expect(unknown).toBeNull();
+    expect(otherDifficulty).toBeNull();
   });
 });

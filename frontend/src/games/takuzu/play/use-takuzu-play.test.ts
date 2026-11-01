@@ -19,6 +19,9 @@ const otherSeed = "use-takuzu-play-b";
 const initial = selectTakuzuProblemForDifficulty(difficulty, initialSeed);
 const other = selectTakuzuProblemForDifficulty(difficulty, otherSeed);
 const firstEmptyCellIndex = initial.problem.givens.cells.indexOf(null);
+const givenCellIndex = initial.problem.givens.cells.findIndex(
+  (cell) => cell !== null,
+);
 const secondEmptyCellIndex = initial.problem.givens.cells.indexOf(
   null,
   firstEmptyCellIndex + 1,
@@ -84,9 +87,74 @@ describe("useTakuzuPlay", () => {
       expect(result.current.cells[firstEmptyCellIndex]?.cell).toBe("b");
     });
 
+    test("操作する前は操作を知らせないこと", () => {
+      const { operation } = result.current;
+
+      expect(operation).toBeNull();
+    });
+
+    const placedTileCases = [
+      ["forward", "a"],
+      ["backward", "b"],
+    ] as const;
+
+    test.each(placedTileCases)(
+      "空きマスを %s に巡回すると置いたタイル %s を知らせること",
+      (direction, expectedTile) => {
+        act(() => result.current.cycleCell(firstEmptyCellIndex, direction));
+
+        expect(result.current.operation).toMatchObject({
+          type: "placed",
+          tile: expectedTile,
+        });
+      },
+    );
+
+    test("固定マスへの巡回を、盤面を変えずに通らない操作として知らせること", () => {
+      act(() => result.current.cycleCell(givenCellIndex, "forward"));
+
+      expect(result.current.operation).toMatchObject({
+        type: "invalid",
+        cellIndex: givenCellIndex,
+      });
+      expect(listCells(result)).toEqual(initial.problem.givens.cells);
+    });
+
+    test("固定マスへ直接置く操作を通らない操作として知らせること", () => {
+      act(() => result.current.placeCell(givenCellIndex, null));
+
+      expect(result.current.operation?.type).toBe("invalid");
+    });
+
+    test("空きマスを空きにする操作を知らせないこと", () => {
+      act(() => result.current.placeCell(firstEmptyCellIndex, null));
+
+      expect(result.current.operation).toBeNull();
+    });
+
     describe("空きマスへタイルを置いた場合", () => {
       beforeEach(() => {
         act(() => result.current.cycleCell(firstEmptyCellIndex, "forward"));
+      });
+
+      test("マスを空きに戻すと空きに戻したことを知らせること", () => {
+        act(() => result.current.placeCell(firstEmptyCellIndex, null));
+
+        expect(result.current.operation?.type).toBe("emptied");
+      });
+
+      test("同じマスをもう一度押すと別の id で知らせること", () => {
+        const firstId = result.current.operation?.id;
+
+        act(() => result.current.cycleCell(firstEmptyCellIndex, "forward"));
+
+        expect(result.current.operation?.id).not.toBe(firstId);
+      });
+
+      test("待ったで操作の知らせを消すこと", () => {
+        act(() => result.current.undo());
+
+        expect(result.current.operation).toBeNull();
       });
 
       test("待ったで置いたタイルを取り消して待った回数を数えること", () => {

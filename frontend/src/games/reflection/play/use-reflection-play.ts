@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import {
   applyPlaySession,
@@ -60,6 +60,13 @@ export type ReflectionLaserView = {
   trace: ReflectionLaserTrace;
 };
 
+/**
+ * ピースを盤面に置いた操作の知らせ。効果音を鳴らすため、操作ごとに増える `id` を付ける。
+ * 手持ちのピースを置く、盤面のピースを別のマスへ移す・入れ替える・別の種類で置き換えるときに知らせる。
+ * 選択とその解除、手持ちへ戻す、光路の表示、盤面を戻す・リセットでは知らせない。
+ */
+export type ReflectionOperation = { id: number; type: "piece-placed" };
+
 /** クリアしたプレイの事実と、それを遊んだ問題の作業の量から導いた評価。 */
 export type ReflectionResult = ReflectionSessionResult & {
   workload: ReflectionSolveWorkload;
@@ -82,6 +89,7 @@ export type ReflectionPlay = GamePlay<
     stock: ReflectionInventory;
     selection: ReflectionSelection | null;
     laser: ReflectionLaserView | null;
+    operation: ReflectionOperation | null;
     selectStockPiece: (piece: ReflectionPiece) => void;
     selectCell: (cellIndex: number) => void;
     selectClue: (entry: ReflectionEntry) => void;
@@ -95,6 +103,7 @@ type ReflectionPlayState = {
   problemIdentity: ReflectionProblemIdentity;
   poolReference: ReflectionProblemPoolReference;
   workload: ReflectionSolveWorkload;
+  operation: ReflectionOperation | null;
 };
 
 function createPlayState(
@@ -107,7 +116,28 @@ function createPlayState(
     problemIdentity: identity,
     poolReference,
     workload,
+    operation: null,
   };
+}
+
+function countPlacedPieces(board: ReflectionBoard): number {
+  return board.cells.filter((cell) => cell !== null).length;
+}
+
+/** 操作の前後の session から、ピースを盤面に置いた操作なら知らせる。盤面のピースが減った操作は手持ちへ戻す操作なので知らせない。 */
+function createOperation(
+  id: number,
+  previous: ReflectionSession,
+  next: ReflectionSession,
+): ReflectionOperation | null {
+  if (
+    next.puzzleState === previous.puzzleState ||
+    countPlacedPieces(next.puzzleState) <
+      countPlacedPieces(previous.puzzleState)
+  ) {
+    return null;
+  }
+  return { id, type: "piece-placed" };
 }
 
 function selectProblem(
@@ -157,10 +187,24 @@ export function useReflectionPlay(
   );
   const { session, progress, problemIdentity, workload } = play;
   const elapsedMs = useSessionElapsedMs(session);
+  const nextOperationId = useRef(0);
 
   const updateSession = useCallback(
     (update: (current: ReflectionSession) => ReflectionSession) => {
-      setPlay((current) => applyPlaySession(current, update(current.session)));
+      const operationId = nextOperationId.current++;
+      setPlay((current) => {
+        const next = applyPlaySession(current, update(current.session));
+        return next === current
+          ? current
+          : {
+              ...next,
+              operation: createOperation(
+                operationId,
+                current.session,
+                next.session,
+              ),
+            };
+      });
     },
     [],
   );
@@ -207,17 +251,24 @@ export function useReflectionPlay(
   }, [updateSession]);
 
   const restart = useCallback(() => {
-    updateSession(restartReflectionSession);
-  }, [updateSession]);
+    setPlay((current) => {
+      const next = applyPlaySession(
+        current,
+        restartReflectionSession(current.session),
+      );
+      return next === current ? current : { ...next, operation: null };
+    });
+  }, []);
 
   const replay = useCallback(() => {
     const startedAt = Date.now();
-    setPlay((current) =>
-      startPlaySession(
+    setPlay((current) => ({
+      ...startPlaySession(
         current,
         createReflectionSession(current.session.problem, startedAt),
       ),
-    );
+      operation: null,
+    }));
   }, []);
 
   const completeClearAnimation = useCallback(() => {
@@ -264,6 +315,7 @@ export function useReflectionPlay(
     stock,
     selection: session.selection,
     laser,
+    operation: play.operation,
     canRestart: canRestartReflectionSession(session),
     selectStockPiece,
     selectCell,

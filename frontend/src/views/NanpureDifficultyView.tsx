@@ -14,6 +14,7 @@ export function NanpureDifficultyView() {
         <HomeBackLink />
         <DifficultySelectionHeading
           title={NANPURE_DISPLAY_NAME}
+          gameId={nanpureCatalogEntry.id}
           renderHowToPlayDialog={({ open, onClose }) => (
             <NanpureHowToPlayDialog open={open} onClose={onClose} />
           )}

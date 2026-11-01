@@ -5,6 +5,8 @@ import {
   screen,
   within,
 } from "@testing-library/react";
+
+import { _private as appDecisionSound } from "@/components/app-decision-sound";
 import { createMinesweeperPlayRecord } from "@/games/minesweeper/play-record";
 import { minesweeperPlayRecordDisplay } from "@/games/minesweeper/ui/play-record-display";
 import { createNanpurePlayRecord } from "@/games/nanpure/play-record";
@@ -18,10 +20,15 @@ import { createTakuzuProblemIdentity } from "@/games/takuzu/problem/problem";
 import { takuzuPlayRecordDisplay } from "@/games/takuzu/ui/play-record-display";
 import { createWaterSortPlayRecord } from "@/games/water-sort/play-record";
 import { waterSortPlayRecordDisplay } from "@/games/water-sort/ui/play-record-display";
+import { playSound } from "@/lib/sound-effects";
 import type { PlayAttempt } from "@/records/play-attempt";
-
 import { PlayRecordsScreen } from "@/records/ui/PlayRecordsScreen";
 import type { PlayRecordGameCatalog } from "@/records/ui/play-record-display";
+
+vi.mock("@/lib/sound-effects", () => ({
+  defineSoundEffect: (url: string) => ({ url }),
+  playSound: vi.fn(),
+}));
 
 const playRecordGames = [
   { name: "ウォーターソート", playRecordDisplay: waterSortPlayRecordDisplay },
@@ -476,9 +483,10 @@ describe("PlayRecordsScreen の同じ問題をプレイ", () => {
   afterEach(() => {
     cleanup();
     onReplay.mockReset();
+    vi.mocked(playSound).mockClear();
   });
 
-  test("遊び直せる記録ではその記録を渡して遊び直しを求めること", () => {
+  test("遊び直せる記録ではその記録を渡して遊び直しを求め、プレイを始める音を鳴らすこと", () => {
     const history = screen.getByRole("list");
     const replayButton = within(history).getByRole("button", {
       name: "同じ問題をプレイ",
@@ -486,6 +494,9 @@ describe("PlayRecordsScreen の同じ問題をプレイ", () => {
     fireEvent.click(replayButton);
 
     expect(onReplay).toHaveBeenCalledExactlyOnceWith(replayableRecord);
+    expect(playSound).toHaveBeenCalledExactlyOnceWith(
+      appDecisionSound.playStartSound,
+    );
   });
 
   test("遊び直せない記録では押せないボタンで今は遊べないことを示すこと", () => {

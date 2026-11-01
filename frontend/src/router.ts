@@ -6,6 +6,7 @@ import { components, hooks, utils } from '@generouted/react-router/client'
 export type Path =
   | `/`
   | `/puzzles/:game/result/:recordId`
+  | `/puzzles/:game/zukan`
   | `/puzzles/ice-floor-maze`
   | `/puzzles/ice-floor-maze/play/:difficulty`
   | `/puzzles/minesweeper`
@@ -26,6 +27,7 @@ export type Path =
 
 export type Params = {
   '/puzzles/:game/result/:recordId': { game: string; recordId: string }
+  '/puzzles/:game/zukan': { game: string }
   '/puzzles/ice-floor-maze/play/:difficulty': { difficulty: string }
   '/puzzles/minesweeper/play/:difficulty': { difficulty: string }
   '/puzzles/nanpure/play/:difficulty': { difficulty: string }

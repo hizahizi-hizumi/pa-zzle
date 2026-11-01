@@ -211,6 +211,11 @@ export const takuzuPlayRecordDefinition = {
   getComparisonKey(record) {
     return isTakuzuPlayRecord(record) ? record.payload.difficulty : null;
   },
+  getClearPerformance(record) {
+    return isTakuzuPlayRecord(record)
+      ? { elapsedMs: record.payload.performance.elapsedMs }
+      : null;
+  },
   personalBestMetrics: [
     {
       id: "play-score",

@@ -8,14 +8,21 @@ function isNotFoundMatch(match: UIMatch | undefined): boolean {
   return match?.params["*"] !== undefined;
 }
 
+// 図鑑は台紙だけをスクロールさせるので、画面の高さに収める。
+function isViewportRoute(match: UIMatch | undefined): boolean {
+  return match?.id === "puzzles/[game]/zukan/index";
+}
+
 export default function AppPage() {
   const location = useLocation();
   const matches = useMatches();
   const contentLayout = isNotFoundMatch(matches.at(-1))
     ? "fill"
-    : location.pathname === "/"
-      ? "full"
-      : "contained";
+    : isViewportRoute(matches.at(-1))
+      ? "viewport"
+      : location.pathname === "/"
+        ? "full"
+        : "contained";
 
   return (
     <AppShell contentLayout={contentLayout}>
