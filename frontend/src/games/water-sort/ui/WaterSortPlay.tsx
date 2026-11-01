@@ -18,6 +18,7 @@ import { WaterSortBoard } from "@/games/water-sort/ui/board/WaterSortBoard";
 import { WaterSortResultScreen } from "@/games/water-sort/ui/result/WaterSortResultScreen";
 import { WaterSortHowToPlayDialog } from "@/games/water-sort/ui/WaterSortHowToPlayDialog";
 import { DeadlockNotice } from "@/games/water-sort/ui/WaterSortPlay/DeadlockNotice";
+import { useWaterSortSoundEffects } from "@/games/water-sort/ui/WaterSortPlay/use-water-sort-sound-effects";
 import { WaterSortTutorial } from "@/games/water-sort/ui/WaterSortTutorial";
 
 type WaterSortPlayProps = GamePlayScreenProps<
@@ -62,6 +63,7 @@ export function WaterSortPlay({
 }: WaterSortPlayProps) {
   const [hasActivePourAnimation, setHasActivePourAnimation] = useState(false);
   const showDeadlockNotice = isDeadlocked && !hasActivePourAnimation;
+  useWaterSortSoundEffects(operation, progress);
 
   return (
     <GamePlayFrame

@@ -6,10 +6,14 @@ import {
   SLIDE_PUZZLE_BLANK,
   type SlidePuzzleBoard as SlidePuzzleBoardState,
 } from "@/games/slide-puzzle/puzzle/state";
+import {
+  CLEAR_WAVE_DURATION_MS,
+  clearWaveKeyframes,
+  getClearWaveTileDelayMs,
+} from "@/games/slide-puzzle/ui/board/clear-wave";
 import { SlidePuzzleTile } from "@/games/slide-puzzle/ui/board/SlidePuzzleBoard/SlidePuzzleTile";
 import type { SlidePuzzleTileCue } from "@/games/slide-puzzle/ui/board/tile-cue";
 import {
-  MOTION_DURATION_MS,
   MOTION_EASING,
   playAnimations,
   playRejectionShake,
@@ -27,10 +31,6 @@ type SlidePuzzleBoardProps = {
   onClearAnimationComplete: () => void;
 };
 
-/** タイルの滑りは `--duration-normal` で終わる。完成演出は最後のタイルが収まってから始める。 */
-const SLIDE_DURATION_MS = MOTION_DURATION_MS.normal;
-const CLEAR_WAVE_STAGGER_MS = 32;
-const CLEAR_WAVE_DURATION_MS = 360;
 const CLEAR_HOLD_MS = 240;
 
 const invalidTileShakeTiming: RejectionShakeTiming = {
@@ -44,16 +44,6 @@ const invalidTileShakeKeyframes: Keyframe[] = [
   { transform: "translateX(5%)" },
   { transform: "translateX(-2.5%)" },
   { transform: "translateX(0)" },
-];
-
-const clearWaveKeyframes: Keyframe[] = [
-  { transform: "translateY(0)" },
-  {
-    transform: "translateY(-6%)",
-    boxShadow: "0 6px 12px rgb(0 0 0 / 0.12)",
-    offset: 0.4,
-  },
-  { transform: "translateY(0)" },
 ];
 
 export function SlidePuzzleBoard({
@@ -143,7 +133,7 @@ function animateClearWave(
     (element, order) =>
       element?.animate?.(clearWaveKeyframes, {
         duration: CLEAR_WAVE_DURATION_MS,
-        delay: SLIDE_DURATION_MS + order * CLEAR_WAVE_STAGGER_MS,
+        delay: getClearWaveTileDelayMs(order),
         easing: MOTION_EASING.celebrate,
       }) ?? [],
   );

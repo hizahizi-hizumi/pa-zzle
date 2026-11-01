@@ -92,6 +92,21 @@ describe("useMinesweeperPlay", () => {
         act(() => hook.result.current.revealCell(hiddenSafeCellIndex));
       });
 
+      test("開いたマスの数を操作の知らせとして返すこと", () => {
+        const play = hook.result.current;
+        const openedCellCount = play.visibleCells.filter(
+          (cell, cellIndex) =>
+            cell.state === "revealed" &&
+            initialVisibleCells[cellIndex]?.state !== "revealed",
+        ).length;
+
+        expect(play.operation).toMatchObject({
+          type: "cells-opened",
+          cellIndex: hiddenSafeCellIndex,
+          openedCellCount,
+        });
+      });
+
       test("リセットで同じ問題を初期状態の新しいプレイとして始めること", () => {
         act(() => hook.result.current.replay());
 
@@ -100,6 +115,39 @@ describe("useMinesweeperPlay", () => {
         expect(play.problemIdentity).toEqual(identity);
         expect(play.visibleCells).toEqual(initialVisibleCells);
         expect(play.status).toBe("playing");
+        expect(play.operation).toBeNull();
+      });
+    });
+
+    test("盤面が変わらない操作では操作の知らせを返さないこと", () => {
+      act(() => hook.result.current.revealCell(initialRevealedCellIndices[0]!));
+
+      expect(hook.result.current.operation).toBeNull();
+    });
+
+    describe("旗を立てた場合", () => {
+      beforeEach(() => {
+        act(() => hook.result.current.toggleFlag(hiddenSafeCellIndex));
+      });
+
+      test("旗を立てたことを操作の知らせとして返すこと", () => {
+        expect(hook.result.current.operation).toMatchObject({
+          type: "flag-placed",
+          cellIndex: hiddenSafeCellIndex,
+        });
+      });
+
+      test("同じマスの旗を外すと別の操作の知らせとして返すこと", () => {
+        const placed = hook.result.current.operation;
+
+        act(() => hook.result.current.toggleFlag(hiddenSafeCellIndex));
+
+        const removed = hook.result.current.operation;
+        expect(removed).toMatchObject({
+          type: "flag-removed",
+          cellIndex: hiddenSafeCellIndex,
+        });
+        expect(removed?.id).not.toBe(placed?.id);
       });
     });
 
@@ -115,6 +163,15 @@ describe("useMinesweeperPlay", () => {
         expect(play.mistakeCount).toBe(1);
         expect(play.visibleCells[hiddenMineCellIndex]).toEqual({
           state: "steppedMine",
+        });
+      });
+
+      test("踏んだ地雷の数を操作の知らせとして返すこと", () => {
+        expect(hook.result.current.operation).toMatchObject({
+          type: "mine-stepped",
+          cellIndex: hiddenMineCellIndex,
+          steppedMineCount: 1,
+          openedCellCount: 0,
         });
       });
 

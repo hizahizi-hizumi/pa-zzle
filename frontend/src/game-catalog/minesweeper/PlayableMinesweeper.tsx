@@ -57,6 +57,7 @@ export function PlayableMinesweeper({
         flagCount={play.flagCount}
         mistakeCount={play.mistakeCount}
         visibleCells={play.visibleCells}
+        operation={play.operation}
         onRevealCell={play.revealCell}
         onToggleFlag={play.toggleFlag}
         onChordCell={play.chordCell}

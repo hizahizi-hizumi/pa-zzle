@@ -80,6 +80,7 @@ describe("TakuzuPlay", () => {
         progress={progress}
         correctionCount={3}
         undoCount={4}
+        operation={null}
         canUndo={canUndo}
         canRestart
         elapsedMs={65_000}

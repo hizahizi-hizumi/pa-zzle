@@ -6,6 +6,7 @@ import {
   TutorialOverlay,
 } from "@/components/TutorialOverlay";
 import pictogramSvg from "@/games/takuzu/assets/pictogram.svg?raw";
+import type { TakuzuOperation } from "@/games/takuzu/play/use-takuzu-play";
 import type { TakuzuCell } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
 import {
@@ -147,10 +148,14 @@ export function TakuzuTutorial({
     useState<TakuzuTutorialProgress | null>(null);
   // 手を引いている間に印の無いマスを押されたら、印を付け直す。
   const [hintCueId, setHintCueId] = useState(0);
+  // 固定マスへの操作は本番と同じく、通らない操作として盤面に知らせて揺らす。
+  const [givenCellOperation, setGivenCellOperation] =
+    useState<TakuzuOperation | null>(null);
   const violationTimerRef = useRef<number | null>(null);
   const situation = getTutorialSituation(takuzuTutorial, progress);
   const guiding = situation.step !== null;
   const { boardState } = progress;
+  const cellViews = getTakuzuTutorialCellViews(situation, boardState);
   const violationSettled = settledViolationProgress === progress;
   const cueDelayMs = getCueDelayMs(progress, guiding);
   const cueShown =
@@ -202,6 +207,14 @@ export function TakuzuTutorial({
   }
 
   function perform(action: TakuzuTutorialAction): void {
+    if (cellViews[action.cellIndex]?.given) {
+      setGivenCellOperation((current) => ({
+        id: (current?.id ?? 0) + 1,
+        type: "invalid",
+        cellIndex: action.cellIndex,
+      }));
+      return;
+    }
     const next = performTutorialAction(takuzuTutorial, progress, action);
     if (next === progress) {
       if (guiding) {
@@ -235,6 +248,7 @@ export function TakuzuTutorial({
     cancelViolationReaction();
     setIdleProgress(null);
     setSettledViolationProgress(null);
+    setGivenCellOperation(null);
     setProgress(startTutorial(takuzuTutorial));
   }
 
@@ -272,6 +286,7 @@ export function TakuzuTutorial({
                 situation,
                 shownBoardState,
               )}
+              operation={givenCellOperation}
               interactionDisabled={progress.phase !== "playing"}
               cues={getCellCues(
                 boardState,

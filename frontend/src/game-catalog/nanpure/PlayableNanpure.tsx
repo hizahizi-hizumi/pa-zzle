@@ -55,6 +55,7 @@ export function PlayableNanpure({
         mistakeCellIndices={play.mistakeCellIndices}
         completedDigits={play.completedDigits}
         notesMode={play.notesMode}
+        operation={play.operation}
         mistakeCount={play.mistakeCount}
         undoCount={play.undoCount}
         canUndo={play.canUndo}

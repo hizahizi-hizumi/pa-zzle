@@ -32,6 +32,7 @@ function createProps(): ComponentProps<typeof NanpurePlay> {
     mistakeCellIndices: [],
     completedDigits: [],
     notesMode: false,
+    operation: null,
     elapsedMs: 65_000,
     mistakeCount: 2,
     undoCount: 1,

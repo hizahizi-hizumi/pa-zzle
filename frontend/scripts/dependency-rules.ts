@@ -130,7 +130,11 @@ function createApplicationLayerOverrides(): BiomeOverride[] {
       ],
     ),
     restrictImports(
-      ["src/games/*.{ts,tsx}", "!src/games/play.ts"],
+      [
+        "src/games/*.{ts,tsx}",
+        "!src/games/play.ts",
+        "!src/games/play-sound-effects.ts",
+      ],
       [
         {
           group: [...gamesCommonBoundaryImports, "react*"],
@@ -140,12 +144,12 @@ function createApplicationLayerOverrides(): BiomeOverride[] {
       ],
     ),
     restrictImports(
-      ["src/games/play.ts"],
+      ["src/games/play.ts", "src/games/play-sound-effects.ts"],
       [
         {
           group: gamesCommonBoundaryImports,
           message:
-            "[dependency/games-common-play-boundary] ゲーム共通のプレイ進行は React へだけ依存でき、具体ゲーム・記録・UI合成へ依存しない。",
+            "[dependency/games-common-play-boundary] ゲーム共通のプレイ進行と効果音は React へだけ依存でき、具体ゲーム・記録・UI合成へ依存しない。",
         },
       ],
     ),
