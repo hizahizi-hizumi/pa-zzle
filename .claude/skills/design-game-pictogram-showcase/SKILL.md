@@ -7,7 +7,7 @@ description: >
   "pictogramShowcaseSvg", "pictogram-showcase.svg", "選択中パズルの姿", "色付きピクトグラム",
   "動くピクトグラム". Not for the monochrome pictogram.svg (use design-game-pictogram).
 argument-hint: <game-id>
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash(python3 .claude/skills/design-game-pictogram-showcase/scripts/check_animation.py *), Bash(python3 .claude/skills/design-game-pictogram-showcase/scripts/check_self_review.py *), Bash(python3 .claude/skills/design-game-pictogram-showcase/scripts/make_review_gallery.py *), Bash(python3 .claude/skills/design-game-pictogram-showcase/scripts/resolve_color.py *), Bash(node .claude/skills/design-game-pictogram-showcase/scripts/observe_animation.cjs *), Bash(node .claude/skills/design-game-pictogram-showcase/scripts/check_gallery.cjs *), Bash(python3 /tmp/pictogram-showcase-*), Bash(node /tmp/pictogram-showcase-*), Bash(bun run --cwd frontend *)
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash(python3 .claude/skills/design-game-pictogram-showcase/scripts/check_animation.py *), Bash(python3 .claude/skills/design-game-pictogram-showcase/scripts/check_self_review.py *), Bash(python3 .claude/skills/design-game-pictogram-showcase/scripts/make_review_gallery.py *), Bash(python3 .claude/skills/design-game-pictogram-showcase/scripts/resolve_color.py *), Bash(node .claude/skills/design-game-pictogram-showcase/scripts/observe_animation.cjs *), Bash(node .claude/skills/design-game-pictogram-showcase/scripts/check_gallery.cjs *), Bash(node .claude/skills/design-game-pictogram-showcase/scripts/capture_frames.cjs *), Bash(python3 /tmp/pictogram-showcase-*), Bash(node /tmp/pictogram-showcase-*), Bash(bun run --cwd frontend *)
 ---
 
 # design-game-pictogram-showcase
@@ -66,14 +66,18 @@ A と B の材料が欠けたまま次へ進まない。詳しくは `references
 
 ### 3. 束ねて試作する
 
-A の見せ方 × B の見せ場で束ね、系統ごとに代表を選ぶ。代表を、A と B の核が伝わるところまで試作する。静止状態を先に描いて白黒版と並べ、同じパズルに見えることを確かめてから動きを足す。束ね方は `references/exploration.md` の 7 節、試作の削り方は 8 節、緩急は `references/motion.md` の 3 節。候補は `manifest.json` にまとめる（`references/review.md` の 1 節）。
+A の見せ方 × B の見せ場で束ね、系統ごとに代表を選ぶ。代表の組は、人間がヒーローで見て違いが分かる幅を優先し、見せ場と終わり方が同じ代表で埋めない。成立しなさそうという予測だけで系統を落とさない。代表を、A と B の核が伝わるところまで試作する。静止状態を先に描いて白黒版と並べ、同じパズルに見えることを確かめてから動きを足す。束ね方は `references/exploration.md` の 7 節、試作の削り方は 8 節、緩急は `references/motion.md` の 3 節。候補は `manifest.json` にまとめる（`references/review.md` の 1 節）。
 
-### 4. 自己チェックする
+### 4. 自己チェックとレビューで、人間へ見せる品質へ引き上げる
+
+この段は、候補を人間へ見せる品質へ引き上げる段とする。違和感や `WARN` は、説明を付けて通す前に、直せるなら直す。
 
 1. `scripts/check_animation.py --manifest <manifest>` で契約違反を検査する。
 2. `scripts/observe_animation.cjs` で、実ブラウザでの静止状態との一致、切り替え、かくつき、はみ出し、大きさとインク量を測る（コマンドと報告の読み方は `references/self-review.md` の 1.1 節）。
 3. `scripts/make_review_gallery.py --audience self` でセルフレビュー用ギャラリーを作り、`scripts/check_gallery.cjs` で崩れを確かめてから、A → B → C → D と見た目を実表示サイズで確かめる（1.2 節）。
-4. 結果を `self-review.json` に記録し、`scripts/check_self_review.py` を通す（2〜4 節）。通らない候補は人間へ見せない。
+4. 結果を `self-review.json` に記録し、`scripts/check_self_review.py` を通す（2〜4 節）。
+5. `scripts/capture_frames.cjs --manifest <manifest> --out <dir>` でコマ撮り画像を作り、作り手とは別のコンテキストで `showcase-pictogram-reviewer` エージェントにレビューさせる。渡すのは manifest・コマ撮り画像・観察スクリプトの報告のパスで、`self-review.json` は渡さない。サブエージェントはさらにサブエージェントを起動できないことがあるため、作り手もサブエージェントのときは、レビュー役の起動はメインが行う。
+6. レビューの blocking を直し、2〜5 をやり直す。blocking が無くなった候補だけを人間へ見せる。
 
 ### 5. 人間に方向を選んでもらう
 
@@ -112,9 +116,10 @@ Skill 配下には特定ゲームの生成物を置かない。
 - `references/contract.md` — SVG の書き方の規則（受け口の契約）
 - `references/exploration.md` — 材料抽出、色の定義元の調べ方、発散、再生形式の選び方、束ね方
 - `references/motion.md` — 再生形式の作り方、周期と止まりの目安、イージング、構図の範囲、動きの量、WebKit で崩れない書き方
-- `references/review.md` — manifest、ギャラリー、人間レビューの受け渡しと問い方
+- `references/review.md` — manifest、ギャラリー、人間レビューの受け渡しと問い方、これまでの人間レビューの傾向
+- `.claude/agents/showcase-pictogram-reviewer.md` — 人間へ見せる前のレビュー役
 - `references/self-review.md` — 観察方法、必須チェックリスト、`self-review.json`
-- `scripts/` — 検査（`check_animation.py`、`check_self_review.py`）、観察（`observe_animation.cjs`）、ギャラリー（`make_review_gallery.py`、`check_gallery.cjs`）、色の実値（`resolve_color.py`）。オプションは各スクリプトの `--help`
+- `scripts/` — 検査（`check_animation.py`、`check_self_review.py`）、観察（`observe_animation.cjs`、`capture_frames.cjs`）、ギャラリー（`make_review_gallery.py`、`check_gallery.cjs`）、色の実値（`resolve_color.py`）。オプションは各スクリプトの `--help`
 - `DESIGN.md` の「ゲームピクトグラム」、`docs/adr/ADR-0004-selected-pictogram-color-motion.md`
 
 ## 制約
