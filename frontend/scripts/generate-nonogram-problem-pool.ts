@@ -61,9 +61,10 @@ const poolVersion = "1";
  * 平滑化の回数は、候補の上限まで調べても採れないので除く。レベル1・2は平滑化1〜2回、レベル3は0〜1回、
  * レベル4・5は平滑化なしにする。
  * レベル5は、黒の確率 0.60 以上では連鎖の深い問題が候補1000個に1問ほどしかできないので 0.45〜0.55 に絞る。
- * レベル3〜5は左右対称を除く。左右対称の図柄は、各行が左右対称だと知っていれば行の塊の置き方が絞れて連鎖が縮み
- * （左右対称に合う置き方だけで読む連鎖の深さは、レベル3で中央値4・レベル4で中央値5だけ浅い）、
- * レベル3・4の左右対称の問題のほとんどがそのレベルの深さの範囲を下回るため。
+ * 左右対称はレベル1だけに残し、レベル2〜5では除く。左右対称の図柄は、各行が左右対称だと知っていれば行の塊の置き方が
+ * 絞れて連鎖が縮み（左右対称に合う置き方だけで読む連鎖の深さは、レベル2で中央値3・レベル3で中央値4・レベル4で中央値5だけ浅い）、
+ * レベル2〜4の左右対称の問題のほとんどがそのレベルの深さの範囲を下回るため。
+ * レベル1は最下位なので、範囲を下回っても易しい側に外れるだけとして残す。
  */
 const levelPatternStyles: Record<
   NonogramDifficulty,
@@ -73,7 +74,7 @@ const levelPatternStyles: Record<
     ({ smoothingCount }) => smoothingCount >= 1,
   ),
   "2": nonogramPatternStyles.filter(
-    ({ smoothingCount }) => smoothingCount >= 1,
+    ({ smoothingCount, mirrored }) => smoothingCount >= 1 && !mirrored,
   ),
   "3": nonogramPatternStyles.filter(
     ({ smoothingCount, mirrored }) => smoothingCount <= 1 && !mirrored,
