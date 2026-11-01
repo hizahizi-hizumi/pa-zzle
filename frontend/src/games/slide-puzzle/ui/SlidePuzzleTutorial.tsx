@@ -207,6 +207,24 @@ export function SlidePuzzleTutorial({
     onStartPlay?.();
   }
 
+  /**
+   * 印の無いタイルへの答えは、進行が変わるまで出す。
+   * 手を離した後に止まって印が出たら、前の違反の一言は下げて、残りを収める一言に戻す。
+   */
+  function getMessage(): TutorialMessage {
+    if (offStepAnswer?.progress === progress) {
+      return offStepAnswer.message;
+    }
+    if (!guiding && hintTile !== null) {
+      return slidePuzzleTutorial.freePlay;
+    }
+    return getTutorialMessage(slidePuzzleTutorial, progress, {
+      entry: finish.entry,
+      // 1回のタップで決まる手なので、一瞬だけ違反になる途中の状態は無い。
+      violationSettled: true,
+    });
+  }
+
   const finish: TutorialFinish = onStartPlay
     ? { entry: "selection", onStartPlay: handleStartPlay }
     : { entry: "play", onReturnToPlay: handleClose };
@@ -260,15 +278,7 @@ export function SlidePuzzleTutorial({
         earned: progress.earnedRuleIds.includes(rule.id),
         current: situation.step?.introducedRuleId === rule.id,
       }))}
-      message={
-        offStepAnswer?.progress === progress
-          ? offStepAnswer.message
-          : getTutorialMessage(slidePuzzleTutorial, progress, {
-              entry: finish.entry,
-              // 1回のタップで決まる手なので、一瞬だけ違反になる途中の状態は無い。
-              violationSettled: true,
-            })
-      }
+      message={getMessage()}
       introducing={progress.phase === "intro"}
       completed={progress.phase === "completed"}
       finish={finish}

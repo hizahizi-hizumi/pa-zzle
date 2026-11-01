@@ -33,7 +33,7 @@ export type SlidePuzzleTutorialAction = { cellIndex: number };
 /**
  * - `tile`: 印を付け、手順の間だけタップを受け付けるタイル。スライドさせると次の手順へ進む。
  *   どの手順のタイルも、スライドさせると動いたタイルがすべて自分の場所に収まる。
- * - `alternative`: 印は無いが、それまでの読みでも空白に入るタイル。タップされたら、盤面は変えずに、印のタイルを選ぶわけを返す。
+ * - `alternative`: 印は無いが、それまでの読みでも空白が自分の場所になっていて、スライドさせれば収まるタイル。タップされたら、盤面は変えずに、印のタイルを選ぶわけを返す。
  */
 export type SlidePuzzleTutorialStep =
   TutorialStep<SlidePuzzleTutorialRuleId> & {
@@ -67,7 +67,7 @@ type SlidePuzzleTutorialSituation = TutorialSituation<
 >;
 
 /**
- * 8枚すべてが崩れ、空白が真ん中から始まる。空白の場所に入る番号のタイルが、いつも空白と同じ行・列にあり、
+ * 8枚すべてが崩れ、空白が真ん中から始まる。空白を自分の場所とするタイルが、いつも空白の隣にあり、
  * それをスライドさせるたびに1枚ずつ自分の場所に収まるので、遠回りせずに8手で完成する。最短の解き方はこの1通りだけ。
  *
  * ```text
@@ -81,8 +81,8 @@ const startBoard: SlidePuzzleBoard = [4, 1, 2, 7, 0, 3, 8, 5, 6];
 const goalBoard = createSolvedSlidePuzzleBoard(3);
 
 /**
- * 5 を下から、8 を左から1枚ずつ入れ、左の列の 7 と 4 をまとめて入れる。7 は隣にあり1枚でも入るが、4 なら2枚が一度に入る。
- * 手順を終えると、空白が左上に来て、上の行の 1・2 と右の列の 3・6 が残る。どちらも行・列ごとまとめても入れられる。
+ * 5 を下から、8 を左から1枚ずつ収め、左の列の 7 と 4 をまとめて収める。7 は隣にあり1枚でも収まるが、4 なら2枚が一度に収まる。
+ * 手順を終えると、空白が左上に来て、上の行の 1・2 と右の列の 3・6 が残る。どちらも行・列ごとまとめても収められる。
  */
 const steps: readonly SlidePuzzleTutorialStep[] = [
   {
@@ -95,31 +95,31 @@ const steps: readonly SlidePuzzleTutorialStep[] = [
   },
   {
     message: {
-      headline: "空白に入るタイルが隣にあれば、\nそのタイルをスライドさせます",
-      detail: "ここには 8 のタイルが入ります",
+      headline: "5 のタイルが、\n自分の場所に収まりました",
+      detail: "この空白は 8 の場所です。8 も収めましょう",
     },
     introducedRuleId: null,
     tile: 8,
   },
   {
     message: {
-      headline: "離れたタイルも、まとめてスライドします",
-      detail:
-        "空白と同じ行・列のタイルだけがスライドします。\n4 をタップすると、7 と 4 のタイルが一度に入ります",
+      headline:
+        "空白と同じ行・列のタイルだけが、\n離れていてもまとめてスライドします",
+      detail: "4 をタップすると、7 と 4 が一度に収まります",
     },
     introducedRuleId: "line",
     tile: 4,
     alternative: {
       tile: 7,
       message: {
-        headline: "7 のタイルも、空白に入ります",
-        detail: "4 をタップすると、7 と 4 のタイルが一度に入ります",
+        headline: "7 だけを収めることもできます",
+        detail: "4 をタップすると、7 と 4 が一度に収まります",
       },
     },
   },
 ];
 
-/** 空白の場所に入る番号。空白が右下にあるときは無い。 */
+/** 空白を自分の場所とするタイル。空白が右下にあるときは無い。 */
 function getTileForBlank(board: SlidePuzzleBoard): SlidePuzzleTile | null {
   const blankIndex = findSlidePuzzleBlankIndex(board);
   return blankIndex === board.length - 1 ? null : blankIndex + 1;
@@ -143,7 +143,7 @@ function listLandedTiles(
 }
 
 /**
- * 空白に入る番号のタイルを、空白と同じ行・列にある間スライドさせ続けた盤面の並び。始めの盤面から始まる。
+ * 空白を自分の場所とするタイルを、空白と同じ行・列にある間スライドさせて収め続けた盤面の並び。始めの盤面から始まる。
  * 手に入れたルールを当てはめるだけの読みで、どこまで進めるかを確かめるのに使う。
  */
 function listBoardsByReading(
@@ -293,18 +293,29 @@ function describeSlidePuzzleTutorialViolation(
 }
 
 /**
- * 手を引いている間に、印の無いタイルをタップしたときの一言。それまでの読みでも空白に入るタイルなら、印のタイルを選ぶわけを言う。
- * それ以外は `null` で、印を付け直すだけにする。
+ * 手を引いている間に、印の無いタイルをタップしたときの一言。手を離した後と、タイルの無いところでは `null`。
+ * それまでの読みでも収まるタイルなら、印のタイルを選ぶわけを言う。それ以外は、手順の見出しのまま印のタイルへ向かわせる。
  */
 export function describeSlidePuzzleTutorialOffStepTap(
   { step }: SlidePuzzleTutorialSituation,
   state: SlidePuzzleTutorialBoardState,
   cellIndex: number,
 ): TutorialMessage | null {
-  const alternative = step?.alternative;
-  return alternative && state.board[cellIndex] === alternative.tile
-    ? alternative.message
-    : null;
+  const tile = state.board[cellIndex];
+  if (
+    step === null ||
+    tile === undefined ||
+    tile === SLIDE_PUZZLE_BLANK ||
+    tile === step.tile
+  ) {
+    return null;
+  }
+  return tile === step.alternative?.tile
+    ? step.alternative.message
+    : {
+        headline: step.message.headline,
+        detail: "今は印のタイルをタップしてください",
+      };
 }
 
 /** 手順で印を付けるタイル。手を離した後は `null`。 */
@@ -344,7 +355,7 @@ export const slidePuzzleTutorial: Tutorial<
   ],
   steps,
   freePlay: {
-    headline: "残りを並べると完成です",
+    headline: "残りも自分の場所に収めると完成です",
     detail: "迷ったら、少し待つと印が出ます",
   },
   completion: {

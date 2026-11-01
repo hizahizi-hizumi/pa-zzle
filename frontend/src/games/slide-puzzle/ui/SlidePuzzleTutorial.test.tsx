@@ -138,13 +138,15 @@ describe("SlidePuzzleTutorial", () => {
       expect(chips).toEqual(["空白にスライド", "？"]);
     });
 
-    test("印の無いタイルを押しても、スライドさせずに印を付け直すこと", () => {
+    test("印の無いタイルを押しても、スライドさせずに、印のタイルをタップするよう伝えて印を付け直すこと", () => {
       tapTiles([7]);
 
       const position = getTilePosition(7);
+      const detail = screen.getByText("今は印のタイルをタップしてください");
       const hinted = getCuedTiles("hint");
 
       expect(position).toBe("2行1列");
+      expect(detail).toBeTruthy();
       expect(hinted).toEqual(["5"]);
     });
 
@@ -153,7 +155,7 @@ describe("SlidePuzzleTutorial", () => {
       const position = getTilePosition(5);
       const landed = getCuedTiles("landed");
       const headline = screen.getByText(
-        "空白に入るタイルが隣にあれば、 そのタイルをスライドさせます",
+        "5 のタイルが、 自分の場所に収まりました",
       );
       const hintedBeforeDelay = getCuedTiles("hint");
       advanceTime(nextStepCueDelayMs);
@@ -177,7 +179,7 @@ describe("SlidePuzzleTutorial", () => {
         tapTiles([7]);
 
         const position = getTilePosition(7);
-        const headline = screen.getByText("7 のタイルも、空白に入ります");
+        const headline = screen.getByText("7 だけを収めることもできます");
         const hinted = getCuedTiles("hint");
 
         expect(position).toBe("2行1列");
@@ -204,7 +206,7 @@ describe("SlidePuzzleTutorial", () => {
       });
 
       test("残りを並べることを伝え、手が止まったときだけ次にスライドさせるタイルを示すこと", () => {
-        const headline = screen.getByText("残りを並べると完成です");
+        const headline = screen.getByText("残りも自分の場所に収めると完成です");
         const hintedBeforeIdle = getCuedTiles("hint");
         advanceTime(idleHintDelayMs);
 
@@ -223,11 +225,22 @@ describe("SlidePuzzleTutorial", () => {
         );
         tapTiles([1]);
 
-        const restored = screen.getByText("残りを並べると完成です");
+        const restored = screen.getByText("残りも自分の場所に収めると完成です");
 
         expect(position).toBe("2行3列");
         expect(headline).toBeTruthy();
         expect(restored).toBeTruthy();
+      });
+
+      test("空白と同じ行・列にないタイルをタップした後に止まると、印を出して、残りを収める一言に戻すこと", () => {
+        tapTiles([3]);
+        advanceTime(idleHintDelayMs);
+
+        const headline = screen.getByText("残りも自分の場所に収めると完成です");
+        const hinted = getCuedTiles("hint");
+
+        expect(headline).toBeTruthy();
+        expect(hinted).toEqual(["1"]);
       });
 
       test("並べ終えると、レベル1とのつながりを伝え、レベル1を遊ぶでレベル1を始めること", () => {

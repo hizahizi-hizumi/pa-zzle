@@ -139,7 +139,7 @@ describe("手順", () => {
   );
 
   test.each(ruleCases)(
-    "%i 手目のタイルをスライドさせると、動いたタイルがすべて自分の場所に収まり、その1枚目が空白に入る番号であること",
+    "%i 手目のタイルをスライドさせると、動いたタイルがすべて自分の場所に収まり、その1枚目が空白を自分の場所とするタイルであること",
     (_, step, board) => {
       const slide = getSlidePuzzleSlide(board, board.indexOf(step.tile));
       const next = slide ? applySlidePuzzleSlide(board, slide) : board;
@@ -175,7 +175,7 @@ describe("手順", () => {
     },
   );
 
-  test("手順を終えた後の残りを、空白に入る番号をスライドさせ続けるだけで完成させられること", () => {
+  test("手順を終えた後の残りを、空白を自分の場所とするタイルを収め続けるだけで完成させられること", () => {
     const boards = listBoardsByReading(playSteps(steps.length));
 
     const last = boards.at(-1) ?? [];
@@ -250,7 +250,7 @@ describe("performTutorialAction", () => {
       });
     });
 
-    test("次にスライドさせると、違反の一言を下げて残りを並べる一言に戻すこと", () => {
+    test("次にスライドさせると、違反の一言を下げて残りを収める一言に戻すこと", () => {
       const message = getTutorialMessage(
         slidePuzzleTutorial,
         slidAfterRejection,
