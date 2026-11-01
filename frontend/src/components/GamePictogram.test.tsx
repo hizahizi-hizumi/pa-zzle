@@ -14,3 +14,14 @@ test("渡されたSVGをDOMとして描画すること", () => {
 
   expect(pictogram).toBeTruthy();
 });
+
+test("動きを再生するときだけ再生中であることを包む要素に示すこと", () => {
+  const { container, rerender } = render(<GamePictogram svg={svg} />);
+  const wrapper = container.firstElementChild;
+
+  expect(wrapper?.getAttribute("data-pictogram-motion")).toBeNull();
+
+  rerender(<GamePictogram svg={svg} motion="play" />);
+
+  expect(wrapper?.getAttribute("data-pictogram-motion")).toBe("play");
+});

@@ -69,6 +69,74 @@ test("候補を選ぶとヒーローを切り替えること", () => {
   expect(nanpureButton.getAttribute("aria-pressed")).toBe("true");
 });
 
+describe("選んでいるパズルの色と動きのあるピクトグラム", () => {
+  const gamesWithShowcase = [
+    {
+      ...games[0],
+      pictogramShowcaseSvg:
+        '<svg viewBox="0 0 120 120" data-game="water-sort-showcase" />',
+    },
+    games[1],
+  ];
+
+  function heroPictogramWrapper(name: string) {
+    return screen
+      .getByRole("link", { name: `${name}を遊ぶ` })
+      .querySelector("svg")?.parentElement;
+  }
+
+  beforeEach(() => {
+    render(
+      <MemoryRouter>
+        <GameSelectionGallery games={gamesWithShowcase} recordsTo="/records" />
+      </MemoryRouter>,
+    );
+  });
+
+  test("持っているパズルを選ぶと、ヒーローで動かし、候補では静止させて見せること", () => {
+    const heroWrapper = heroPictogramWrapper("ウォーターソート");
+    const selectedButton = screen.getByRole("button", {
+      name: "ウォーターソートを選択",
+    });
+
+    expect(
+      heroWrapper?.querySelector('svg[data-game="water-sort-showcase"]'),
+    ).toBeTruthy();
+    expect(heroWrapper?.getAttribute("data-pictogram-motion")).toBe("play");
+    expect(
+      selectedButton.querySelector('svg[data-game="water-sort-showcase"]'),
+    ).toBeTruthy();
+    expect(selectedButton.querySelector("[data-pictogram-motion]")).toBeNull();
+  });
+
+  test("選んでいない候補では、持っていても通常のピクトグラムを見せること", () => {
+    fireEvent.click(screen.getByRole("button", { name: "ナンプレを選択" }));
+
+    const unselectedButton = screen.getByRole("button", {
+      name: "ウォーターソートを選択",
+    });
+    expect(
+      unselectedButton.querySelector('svg[data-game="water-sort"]'),
+    ).toBeTruthy();
+    expect(
+      unselectedButton.querySelector('svg[data-game="water-sort-showcase"]'),
+    ).toBeNull();
+  });
+
+  test("持っていないパズルを選ぶと、ヒーローと候補で通常のピクトグラムを静止させて見せること", () => {
+    fireEvent.click(screen.getByRole("button", { name: "ナンプレを選択" }));
+
+    const heroWrapper = heroPictogramWrapper("ナンプレ");
+    expect(heroWrapper?.querySelector('svg[data-game="nanpure"]')).toBeTruthy();
+    expect(heroWrapper?.getAttribute("data-pictogram-motion")).toBeNull();
+    expect(
+      screen
+        .getByRole("button", { name: "ナンプレを選択" })
+        .querySelector('svg[data-game="nanpure"]'),
+    ).toBeTruthy();
+  });
+});
+
 test("記録画面への導線を表示すること", () => {
   renderGallery();
 

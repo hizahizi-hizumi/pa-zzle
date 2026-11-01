@@ -55,6 +55,8 @@ export type GameCatalogEntry = {
   id: string;
   name: string;
   pictogramSvg: string;
+  /** パズル選択で選んでいるときに見せる、プレイ画面の色と動きを持つピクトグラム。持たないゲームは `pictogramSvg` を見せる。 */
+  pictogramShowcaseSvg?: string;
   entryPath: GameEntryPath;
   playPath: GamePlayPath;
   playRecordDisplay: PlayRecordDisplayDefinition;

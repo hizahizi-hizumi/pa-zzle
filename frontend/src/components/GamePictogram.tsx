@@ -3,6 +3,8 @@ import { useEffect, useRef } from "react";
 type GamePictogramProps = {
   svg: string;
   variant?: "default" | "result";
+  /** `play` のとき、SVG が自身の `<style>` に持つ動きを再生させる。既定の `rest` では静止状態を見せる。 */
+  motion?: "rest" | "play";
 };
 
 const baseClassName =
@@ -15,6 +17,7 @@ const resultColorClassName =
 export function GamePictogram({
   svg,
   variant = "default",
+  motion = "rest",
 }: GamePictogramProps) {
   const containerRef = useRef<HTMLSpanElement>(null);
 
@@ -35,6 +38,7 @@ export function GamePictogram({
     <span
       ref={containerRef}
       className={`${baseClassName} ${variant === "result" ? resultColorClassName : defaultColorClassName}`}
+      data-pictogram-motion={motion === "play" ? "play" : undefined}
       aria-hidden="true"
     />
   );
