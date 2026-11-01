@@ -210,6 +210,28 @@ def valid_clearance(spec: str) -> bool:
     return True
 
 
+def based_on_errors(candidate_id: str, based_on: object, manifest_dir: Path) -> list[str]:
+    """based_on: a non-empty list of {"id", "file", "label"?}; each file must exist."""
+    if not isinstance(based_on, list) or not based_on:
+        return [f"{candidate_id}: based_on must be a non-empty array of objects"]
+    errors: list[str] = []
+    for index, origin in enumerate(based_on):
+        where = f"{candidate_id}: based_on[{index}]"
+        if not isinstance(origin, dict):
+            errors.append(f"{where} must be an object")
+            continue
+        if not non_empty_string(origin.get("id")):
+            errors.append(f"{where}.id must be a non-empty string")
+        file_value = origin.get("file")
+        if not non_empty_string(file_value):
+            errors.append(f"{where}.file must be a non-empty string")
+            continue
+        origin_path = Path(file_value) if Path(file_value).is_absolute() else manifest_dir / file_value
+        if not origin_path.is_file():
+            errors.append(f"{where}.file not found: {origin_path}")
+    return errors
+
+
 def candidates_from_manifest(path: Path) -> tuple[list[Candidate], str | None, list[str]]:
     try:
         manifest = json.loads(path.read_text(encoding="utf-8"))
@@ -281,6 +303,9 @@ def candidates_from_manifest(path: Path) -> tuple[list[Candidate], str | None, l
                 errors.append(
                     f"{candidate_id}: clearance must be '<selector>|<selector>[|<min>]' or a list of them"
                 )
+        based_on = entry.get("based_on")
+        if based_on is not None:
+            errors.extend(based_on_errors(candidate_id, based_on, path.parent))
 
         file_value = entry.get("file")
         if not non_empty_string(file_value):
