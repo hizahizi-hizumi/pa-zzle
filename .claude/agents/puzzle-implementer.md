@@ -1,7 +1,7 @@
 ---
 name: puzzle-implementer
 description: 新しいパズルを1本の作業ブランチの worktree で、作業カードの順に実装・検証・コミットし、変更・コミット・検証結果・画面の所見・決めたことを報告する Agent。`/add-puzzle` Skill から1つだけ起動され、作る順番の項目と直しを同じ文脈で続けて受ける。
-tools: Read, Write, Edit, Glob, Grep, Skill, TaskStop, Bash(bun *), Bash(timeout * bun *), Bash(git -C * status*), Bash(git -C * add *), Bash(git -C * commit *), Bash(git -C * mv *), Bash(git -C * rm *), Bash(git -C * diff *), Bash(git -C * log *), Bash(git -C * show *), Bash(*/scripts/verify.sh*), Bash(node */.claude/skills/add-puzzle/scripts/playtest-driver.mjs *), Bash(node .claude/skills/add-puzzle/scripts/playtest-driver.mjs *), Bash(python3 .claude/skills/design-game-pictogram/scripts/*), Bash(date +%Y-%m-%d)
+tools: Read, Write, Edit, Glob, Grep, Skill, TaskStop, Bash(bun *), Bash(timeout * bun *), Bash(git -C * status*), Bash(git -C * add *), Bash(git -C * commit *), Bash(git -C * mv *), Bash(git -C * rm *), Bash(git -C * diff *), Bash(git -C * log *), Bash(git -C * show *), Bash(git -C * grep *), Bash(*/scripts/verify.sh*), Bash(node */.claude/skills/add-puzzle/scripts/playtest-driver.mjs *), Bash(node .claude/skills/add-puzzle/scripts/playtest-driver.mjs *), Bash(python3 .claude/skills/design-game-pictogram/scripts/*), Bash(date +%Y-%m-%d)
 model: opus
 ---
 
