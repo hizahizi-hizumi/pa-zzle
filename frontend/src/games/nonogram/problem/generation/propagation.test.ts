@@ -498,7 +498,11 @@ describe("propagateNonogramLineReadings", () => {
 
   describe("2×2 の対角の図柄の場合", () => {
     const clues = computeNonogramClues(parseNonogramPattern(["#.", ".#"]));
-    const grid = createUnknownNonogramSolveGrid({ width: 2, height: 2 });
+    let grid: NonogramSolveGrid;
+
+    beforeEach(() => {
+      grid = createUnknownNonogramSolveGrid({ width: 2, height: 2 });
+    });
 
     test("どのマスも決めずに止まること", () => {
       const status = propagateNonogramLineReadings(clues, grid);
@@ -510,16 +514,20 @@ describe("propagateNonogramLineReadings", () => {
 
   describe("ヒントに合わないマスが入っている場合", () => {
     const clues = computeNonogramClues(parseNonogramPattern(["##", "##"]));
-    const grid: NonogramSolveGrid = {
-      width: 2,
-      height: 2,
-      cells: [
-        nonogramSolveCell.white,
-        nonogramSolveCell.unknown,
-        nonogramSolveCell.unknown,
-        nonogramSolveCell.unknown,
-      ],
-    };
+    let grid: NonogramSolveGrid;
+
+    beforeEach(() => {
+      grid = {
+        width: 2,
+        height: 2,
+        cells: [
+          nonogramSolveCell.white,
+          nonogramSolveCell.unknown,
+          nonogramSolveCell.unknown,
+          nonogramSolveCell.unknown,
+        ],
+      };
+    });
 
     test("矛盾を返すこと", () => {
       const status = propagateNonogramLineReadings(clues, grid);
