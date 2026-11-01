@@ -18,6 +18,14 @@ import chipSynthPopHomeUrl from "@/assets/bgm-audition/8-chip-synth-pop-home.mp3
 import chipSynthPopResultUrl from "@/assets/bgm-audition/8-chip-synth-pop-result.mp3";
 import eightBitMalletHomeUrl from "@/assets/bgm-audition/9-8bit-mallet-home.mp3";
 import eightBitMalletResultUrl from "@/assets/bgm-audition/9-8bit-mallet-result.mp3";
+import skipPopHomeUrl from "@/assets/bgm-audition/10-skip-pop-home.mp3";
+import skipPopResultUrl from "@/assets/bgm-audition/10-skip-pop-result.mp3";
+import hidamariPopHomeUrl from "@/assets/bgm-audition/11-hidamari-pop-home.mp3";
+import hidamariPopResultUrl from "@/assets/bgm-audition/11-hidamari-pop-result.mp3";
+import picoDashHomeUrl from "@/assets/bgm-audition/12-pico-dash-home.mp3";
+import picoDashResultUrl from "@/assets/bgm-audition/12-pico-dash-result.mp3";
+import skipMarimbaHomeUrl from "@/assets/bgm-audition/13-skip-marimba-home.mp3";
+import skipMarimbaResultUrl from "@/assets/bgm-audition/13-skip-marimba-result.mp3";
 
 import type { AppBackgroundMusicTracks } from "@/components/app-background-music";
 import { defineBackgroundMusicTrack } from "@/lib/background-music";
@@ -88,6 +96,38 @@ export const bgmAuditionCandidates: readonly [
     tracks: {
       home: defineBackgroundMusicTrack(eightBitMalletHomeUrl),
       result: defineBackgroundMusicTrack(eightBitMalletResultUrl),
+    },
+  },
+  {
+    number: 10,
+    name: "スキップポップ",
+    tracks: {
+      home: defineBackgroundMusicTrack(skipPopHomeUrl),
+      result: defineBackgroundMusicTrack(skipPopResultUrl),
+    },
+  },
+  {
+    number: 11,
+    name: "ひだまりポップ",
+    tracks: {
+      home: defineBackgroundMusicTrack(hidamariPopHomeUrl),
+      result: defineBackgroundMusicTrack(hidamariPopResultUrl),
+    },
+  },
+  {
+    number: 12,
+    name: "ピコダッシュ",
+    tracks: {
+      home: defineBackgroundMusicTrack(picoDashHomeUrl),
+      result: defineBackgroundMusicTrack(picoDashResultUrl),
+    },
+  },
+  {
+    number: 13,
+    name: "スキップマリンバ",
+    tracks: {
+      home: defineBackgroundMusicTrack(skipMarimbaHomeUrl),
+      result: defineBackgroundMusicTrack(skipMarimbaResultUrl),
     },
   },
 ];
