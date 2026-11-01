@@ -121,10 +121,10 @@ export function WaterSortTutorial({
     useState<WaterSortTutorialProgress | null>(null);
   // 手を引いている間に印の無いボトルを押されたら、印を付け直す。
   const [hintCueId, setHintCueId] = useState(0);
-  // 手順どおりに注いだときの、その手順の一言。注ぐ動きを終えて次の印を付けるまで出し続ける。
-  const [steppedAnswer, setSteppedAnswer] = useState<{
+  // 手順どおりに注いで次の手順へ進んだときの、進む前の進行。注ぐ動きを終えて次の印を付けるまで、一言とルールの並びをこちらで見せる。
+  const [steppedPour, setSteppedPour] = useState<{
     progress: WaterSortTutorialProgress;
-    message: TutorialMessage;
+    before: WaterSortTutorialProgress;
   } | null>(null);
   const situation = getTutorialSituation(waterSortTutorial, progress);
   const guiding = situation.step !== null;
@@ -139,6 +139,11 @@ export function WaterSortTutorial({
         : idleHintShown
           ? findWaterSortTutorialHintBottle(boardState)
           : null;
+  const shownProgress =
+    pouring && steppedPour?.progress === progress
+      ? steppedPour.before
+      : progress;
+  const shownSituation = getTutorialSituation(waterSortTutorial, shownProgress);
 
   useEffect(() => {
     if (!open || progress.phase !== "playing" || guiding) {
@@ -171,9 +176,10 @@ export function WaterSortTutorial({
     }
     setProgress(next);
     setOperation(createOperation(next));
-    setSteppedAnswer(
-      situation.step && next.stepIndex !== progress.stepIndex
-        ? { progress: next, message: situation.step.message }
+    setSteppedPour(
+      next.boardState.lastMove?.type === "poured" &&
+        next.stepIndex !== progress.stepIndex
+        ? { progress: next, before: progress }
         : null,
     );
     // 示した注ぎ元を選んだら、待たせずに注ぎ先も示す。
@@ -184,7 +190,7 @@ export function WaterSortTutorial({
 
   function restart(): void {
     setIdleProgress(null);
-    setSteppedAnswer(null);
+    setSteppedPour(null);
     setOperation(null);
     setPouring(false);
     setProgress(startTutorial(waterSortTutorial));
@@ -213,35 +219,43 @@ export function WaterSortTutorial({
     if (progress.phase === "solved") {
       return waterSortTutorial.freePlay;
     }
-    if (pouring && steppedAnswer?.progress === progress) {
-      return steppedAnswer.message;
-    }
     if (idleHintShown && hintBottle !== null) {
       return waterSortTutorial.freePlay;
     }
-    return getTutorialMessage(waterSortTutorial, progress, {
+    return getTutorialMessage(waterSortTutorial, shownProgress, {
       entry: finish.entry,
       // 1回のタップで決まる手なので、一瞬だけ違反になる途中の状態は無い。
       violationSettled: true,
     });
   }
 
-  // そろった合図は、注ぐ動きを終えてボトルが戻ってから光らせる。
-  const sortedCues =
-    pouring || progress.phase === "solved" ? [] : getSortedCues(boardState);
-  const cues: WaterSortBottleCue[] =
-    hintBottle === null
+  /**
+   * そろった合図は、注ぐ動きを終えてボトルが戻ってから光らせる。
+   * 導入の終わりは、最初の手順の一言を出すのと同時に、最初の印を付ける。
+   */
+  function getCues(messageShown: boolean): WaterSortBottleCue[] {
+    const sortedCues =
+      pouring || progress.phase === "solved" ? [] : getSortedCues(boardState);
+    const cueBottle =
+      progress.phase === "intro"
+        ? messageShown
+          ? getWaterSortTutorialStepBottle(situation, boardState)
+          : null
+        : hintBottle;
+    return cueBottle === null
       ? sortedCues
       : [
           ...sortedCues,
-          { bottleIndex: hintBottle, kind: "hint", id: hintCueId },
+          { bottleIndex: cueBottle, kind: "hint", id: hintCueId },
         ];
+  }
 
   /** 導入の間はゴールの盤面を見せ、始めの盤面の場面で、始めの盤面へ替える。 */
   function renderBoard({
     scene,
     playing: scenePlaying,
     onSceneEnd,
+    messageShown,
   }: TutorialBoardIntro) {
     return (
       <WaterSortTutorialIntroScene
@@ -261,7 +275,7 @@ export function WaterSortTutorial({
               }
               operation={scene === null ? operation : null}
               arrangement="single-row"
-              cues={cues}
+              cues={scene === null ? getCues(messageShown) : []}
               interactionDisabled={progress.phase !== "playing"}
               onSelectBottle={handleSelectBottle}
               onPourAnimationActivityChange={setPouring}
@@ -281,8 +295,8 @@ export function WaterSortTutorial({
       intro={waterSortTutorial.intro}
       rules={waterSortTutorial.rules.map((rule) => ({
         ...rule,
-        earned: progress.earnedRuleIds.includes(rule.id),
-        current: situation.step?.introducedRuleId === rule.id,
+        earned: shownProgress.earnedRuleIds.includes(rule.id),
+        current: shownSituation.step?.introducedRuleId === rule.id,
       }))}
       message={getMessage()}
       introducing={progress.phase === "intro"}

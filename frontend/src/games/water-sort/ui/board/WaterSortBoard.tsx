@@ -135,7 +135,7 @@ export function WaterSortBoard({
                   key={cue.id}
                   aria-hidden="true"
                   data-bottle-cue={cue.kind}
-                  className="pointer-events-none absolute inset-x-[4px] top-3 bottom-[4px] rounded-b-[1.15rem] bg-sky-100/60 ring-2 ring-sky-500/50 ring-inset fill-mode-forwards animate-out fade-out-0 duration-900 ease-in dark:bg-sky-900/50 dark:ring-sky-300/50"
+                  className="pointer-events-none absolute -inset-x-1 top-1 -bottom-1 rounded-b-[1.7rem] rounded-t-md shadow-[0_0_14px_3px] shadow-sky-400/70 ring-[3px] ring-sky-400/80 fill-mode-forwards animate-out fade-out-0 duration-900 ease-in dark:shadow-sky-300/60 dark:ring-sky-300/80"
                 />
               )}
               {cue?.kind === "hint" && (
