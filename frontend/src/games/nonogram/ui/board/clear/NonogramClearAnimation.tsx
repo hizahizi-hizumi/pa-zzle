@@ -21,7 +21,7 @@ const CLEAR_WAVE_STAGGER_MS = 28;
 const CLEAR_WAVE_DURATION_MS = 420;
 const CLEAR_HOLD_MS = 480;
 /** 動きを減らす設定で、完成した図柄を見せてから完了するまで。 */
-const REDUCED_MOTION_HOLD_MS = 900;
+export const REDUCED_MOTION_HOLD_MS = 900;
 
 const fadeKeyframes: Keyframe[] = [{ opacity: 1 }, { opacity: 0 }];
 

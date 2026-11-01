@@ -1,6 +1,9 @@
 import { cleanup, render } from "@testing-library/react";
 
-import { NonogramClearAnimation } from "@/games/nonogram/ui/board/clear/NonogramClearAnimation";
+import {
+  NonogramClearAnimation,
+  REDUCED_MOTION_HOLD_MS,
+} from "@/games/nonogram/ui/board/clear/NonogramClearAnimation";
 
 afterEach(() => {
   cleanup();
@@ -30,8 +33,10 @@ describe("NonogramClearAnimation", () => {
     });
 
     test("完成した図柄を見せる間を置いてから完了を通知すること", () => {
+      vi.advanceTimersByTime(REDUCED_MOTION_HOLD_MS - 1);
       const calledBeforeHold = onComplete.mock.calls.length;
-      vi.runAllTimers();
+
+      vi.advanceTimersByTime(1);
 
       expect(calledBeforeHold).toBe(0);
       expect(onComplete).toHaveBeenCalledOnce();
