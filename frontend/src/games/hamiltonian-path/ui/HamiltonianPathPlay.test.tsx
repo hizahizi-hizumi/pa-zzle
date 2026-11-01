@@ -206,6 +206,15 @@ describe("HamiltonianPathPlay", () => {
     });
   });
 
+  /** 盤面を一辺 300px の正方形として置いたときの、マスの中心の座標。 */
+  function getCellCenter(cell: number) {
+    const cellWidth = 300 / board.size;
+    return {
+      clientX: ((cell % board.size) + 0.5) * cellWidth,
+      clientY: (Math.floor(cell / board.size) + 0.5) * cellWidth,
+    };
+  }
+
   function getBoardGroup(): HTMLElement {
     return screen.getByRole("group", {
       name: `${HAMILTONIAN_PATH_DISPLAY_NAME}盤面`,
@@ -213,6 +222,8 @@ describe("HamiltonianPathPlay", () => {
   }
 
   describe("プレイ中の場合", () => {
+    const touch = { pointerId: 1, pointerType: "touch", isPrimary: true };
+
     beforeEach(() => {
       renderResult({ progress: "playing", result: null, path: [0, 1] });
       vi.spyOn(getBoardGroup(), "getBoundingClientRect").mockReturnValue(
@@ -227,6 +238,167 @@ describe("HamiltonianPathPlay", () => {
         "2行2列 未通過 上・下に仕切り",
       );
       expect(cells[2]?.getAttribute("aria-label")).toBe("1行3列 未通過");
+    });
+
+    const arrowKeyCases = [
+      ["ArrowUp", "up"],
+      ["ArrowRight", "right"],
+      ["ArrowDown", "down"],
+      ["ArrowLeft", "left"],
+    ] as const;
+
+    test.each(arrowKeyCases)(
+      "%s キーでその向きへ先端を動かす操作を通知すること",
+      (key, direction) => {
+        fireEvent.keyDown(document.body, { key });
+
+        expect(callbacks.onMoveHeadToward).toHaveBeenCalledWith(direction);
+      },
+    );
+
+    test("盤面のマスにフォーカスがあっても矢印キーを盤面へ流すこと", () => {
+      const [cell] = within(getBoardGroup()).getAllByRole("button");
+      fireEvent.keyDown(cell!, { key: "ArrowRight" });
+
+      expect(callbacks.onMoveHeadToward).toHaveBeenCalledWith("right");
+    });
+
+    const modifierCases = [
+      ["altKey"],
+      ["ctrlKey"],
+      ["metaKey"],
+      ["shiftKey"],
+    ] as const;
+
+    test.each(modifierCases)(
+      "%s 付きの矢印キーは盤面へ流さないこと",
+      (modifier) => {
+        fireEvent.keyDown(document.body, {
+          key: "ArrowRight",
+          [modifier]: true,
+        });
+
+        expect(callbacks.onMoveHeadToward).not.toHaveBeenCalled();
+      },
+    );
+
+    test("ほかの部品が先に扱った矢印キーは盤面へ流さないこと", () => {
+      const event = new KeyboardEvent("keydown", {
+        key: "ArrowRight",
+        bubbles: true,
+        cancelable: true,
+      });
+      event.preventDefault();
+      document.body.dispatchEvent(event);
+
+      expect(callbacks.onMoveHeadToward).not.toHaveBeenCalled();
+    });
+
+    describe("プレイ画面の外の要素で矢印キーを押した場合", () => {
+      let outside: HTMLButtonElement;
+
+      beforeEach(() => {
+        outside = document.createElement("button");
+        document.body.append(outside);
+      });
+
+      afterEach(() => {
+        outside.remove();
+      });
+
+      test("盤面へ流さないこと", () => {
+        fireEvent.keyDown(outside, { key: "ArrowRight" });
+
+        expect(callbacks.onMoveHeadToward).not.toHaveBeenCalled();
+      });
+    });
+
+    test("指で押してなぞり、離すまでを1回のなぞりとして通知すること", () => {
+      fireEvent.pointerDown(getBoardGroup(), { ...touch, ...getCellCenter(1) });
+      fireEvent.pointerMove(getBoardGroup(), { ...touch, ...getCellCenter(2) });
+      fireEvent.pointerUp(getBoardGroup(), touch);
+
+      expect(callbacks.onBeginStroke).toHaveBeenCalledWith(1);
+      expect(callbacks.onTraceStroke).toHaveBeenCalledWith({
+        from: 1,
+        to: 2,
+        horizontalFirst: true,
+      });
+      expect(callbacks.onEndStroke).toHaveBeenCalledOnce();
+    });
+
+    test("2本目以降の指は受けないこと", () => {
+      fireEvent.pointerDown(getBoardGroup(), {
+        ...touch,
+        isPrimary: false,
+        ...getCellCenter(1),
+      });
+
+      expect(callbacks.onBeginStroke).not.toHaveBeenCalled();
+    });
+
+    const interruptionCases = [
+      ["pointercancel", fireEvent.pointerCancel],
+      ["lostpointercapture", fireEvent.lostPointerCapture],
+    ] as const;
+
+    test.each(interruptionCases)(
+      "%s でなぞりを閉じ、その後の指の動きを通知しないこと",
+      (_, interrupt) => {
+        fireEvent.pointerDown(getBoardGroup(), {
+          ...touch,
+          ...getCellCenter(1),
+        });
+        interrupt(getBoardGroup(), touch);
+        fireEvent.pointerMove(getBoardGroup(), {
+          ...touch,
+          ...getCellCenter(2),
+        });
+
+        expect(callbacks.onEndStroke).toHaveBeenCalledOnce();
+        expect(callbacks.onTraceStroke).not.toHaveBeenCalled();
+      },
+    );
+
+    test("指やマウスから届くマスの click では、マスを押す操作を通知しないこと", () => {
+      const [cell] = within(getBoardGroup()).getAllByRole("button");
+      fireEvent.click(cell!, { detail: 1 });
+
+      expect(callbacks.onBeginStroke).not.toHaveBeenCalled();
+    });
+
+    test("キーボードや支援技術から押したマスは、押して離す操作として通知すること", () => {
+      const [cell] = within(getBoardGroup()).getAllByRole("button");
+      fireEvent.click(cell!, { detail: 0 });
+
+      expect(callbacks.onBeginStroke).toHaveBeenCalledWith(0);
+      expect(callbacks.onEndStroke).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("プレイを終えて完成演出中の場合", () => {
+    beforeEach(() => {
+      renderResult({ progress: "clearing" });
+      vi.spyOn(getBoardGroup(), "getBoundingClientRect").mockReturnValue(
+        new DOMRect(0, 0, 300, 300),
+      );
+    });
+
+    test("矢印キーを盤面へ流さないこと", () => {
+      fireEvent.keyDown(document.body, { key: "ArrowRight" });
+
+      expect(callbacks.onMoveHeadToward).not.toHaveBeenCalled();
+    });
+
+    test("盤面のなぞりを受けないこと", () => {
+      fireEvent.pointerDown(getBoardGroup(), {
+        pointerId: 1,
+        pointerType: "touch",
+        isPrimary: true,
+        ...getCellCenter(1),
+      });
+
+      expect(callbacks.onBeginStroke).not.toHaveBeenCalled();
     });
   });
 

@@ -331,6 +331,63 @@ describe("endHamiltonianPathSessionStroke", () => {
   });
 });
 
+describe("なぞりの途中の場合", () => {
+  const stroking = traceHamiltonianPathSessionStroke(
+    beginHamiltonianPathSessionStroke(halfway, 4, startedAt).session,
+    { from: 4, to: 3, horizontalFirst: true },
+    startedAt,
+  ).session;
+
+  describe("undoHamiltonianPathSession", () => {
+    const undone = undoHamiltonianPathSession(stroking);
+
+    test("なぞりを終えて、押す前の道へ戻すこと", () => {
+      const { strokeOrigin, undoCount } = undone;
+
+      expect(undone.puzzleState.path).toEqual(halfway.puzzleState.path);
+      expect(strokeOrigin).toBeNull();
+      expect(undoCount).toBe(1);
+    });
+
+    test("その後の指の動きでは道を変えないこと", () => {
+      const { session } = traceHamiltonianPathSessionStroke(
+        undone,
+        { from: 3, to: 6, horizontalFirst: true },
+        startedAt,
+      );
+
+      expect(session).toBe(undone);
+    });
+  });
+
+  describe("restartHamiltonianPathSession", () => {
+    const restarted = restartHamiltonianPathSession(stroking);
+
+    test("なぞりを終えて道を始点だけに戻し、待ったで戻せなくすること", () => {
+      const { strokeOrigin, restartCount } = restarted;
+
+      expect(restarted.puzzleState.path).toEqual([problem.start]);
+      expect(strokeOrigin).toBeNull();
+      expect(restartCount).toBe(1);
+      expect(canUndoHamiltonianPathSession(restarted)).toBe(false);
+    });
+  });
+
+  describe("canUndoHamiltonianPathSession", () => {
+    const firstStroke = beginHamiltonianPathSessionStroke(
+      initial,
+      1,
+      startedAt,
+    ).session;
+
+    test("最初のなぞりで道を変えていれば待ったできること", () => {
+      const canUndo = canUndoHamiltonianPathSession(firstStroke);
+
+      expect(canUndo).toBe(true);
+    });
+  });
+});
+
 describe("traceHamiltonianPathSessionStroke で全有効マスを通った場合", () => {
   const stroking = traceHamiltonianPathSessionStroke(
     beginHamiltonianPathSessionStroke(halfway, 3, startedAt).session,
