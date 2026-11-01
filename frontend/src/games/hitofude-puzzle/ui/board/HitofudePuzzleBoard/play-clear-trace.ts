@@ -5,11 +5,23 @@ import { MOTION_EASING, playAnimations } from "@/lib/motion";
 const CLEAR_TRACE_MS_PER_CELL = 28;
 const CLEAR_TRACE_MIN_MS = 640;
 const CLEAR_TRACE_MAX_MS = 1_400;
+/** なぞる光が終点に着いたときに、終点の印を膨らませて置く時間。 */
+const END_MARK_POP_MS = 360;
+const endMarkPopKeyframes: Keyframe[] = [
+  { transform: "scale(0)" },
+  { transform: "scale(1.5)", offset: 0.6 },
+  { transform: "scale(1)" },
+];
 /**
  * なぞり終えた道を、結果へ進める前に見せておく時間。完成した道の形がこのゲームの報酬なので、
- * 完成した形を報酬にするリフレクションの全光路と同じ間を置き、動きを減らす設定でも同じ間を残す。
+ * 道全体を見渡せる間を置く。
  */
-const CLEAR_TRACE_HOLD_MS = 700;
+const CLEAR_TRACE_HOLD_MS = 1_000;
+/**
+ * 動きを減らす設定で、完成した道を結果へ進める前に見せておく時間。光でなぞる時間が無い分を足し、
+ * 動かす設定でなぞり始めてから結果へ進むまでと同じくらい、完成した道を見られるようにする。
+ */
+const REDUCED_MOTION_CLEAR_HOLD_MS = 2_000;
 
 const clearTraceKeyframes: Keyframe[] = [
   { strokeDashoffset: 1 },
@@ -24,8 +36,8 @@ function getClearTraceDurationMs(cellCount: number): number {
 }
 
 /**
- * クリアした道を、始点から終点へ光でなぞってから `onFinished` を呼ぶ。戻り値は演出を取り消す関数。
- * 動きを減らす設定では、なぞり終えた光を出したまま同じ間だけ見せる。
+ * クリアした道を、始点から終点へ光でなぞり、着いた所で終点の印を膨らませて置いてから `onFinished` を呼ぶ。
+ * 戻り値は演出を取り消す関数。動きを減らす設定では、なぞり終えた光と終点の印を出したまま見せる。
  */
 export function playClearTrace(
   figure: SVGSVGElement | null,
@@ -34,18 +46,26 @@ export function playClearTrace(
 ): () => void {
   return playAnimations({
     animate() {
-      const trace = figure?.querySelector(
-        `[${hitofudePuzzleFigureParts.clearTrace}]`,
-      );
-      const animation = trace?.animate?.(clearTraceKeyframes, {
-        duration: getClearTraceDurationMs(cellCount),
-        easing: MOTION_EASING.celebrate,
-        fill: "backwards",
-      });
-      return animation === undefined ? [] : [animation];
+      const traceDurationMs = getClearTraceDurationMs(cellCount);
+      const trace = figure
+        ?.querySelector(`[${hitofudePuzzleFigureParts.clearTrace}]`)
+        ?.animate?.(clearTraceKeyframes, {
+          duration: traceDurationMs,
+          easing: MOTION_EASING.celebrate,
+          fill: "backwards",
+        });
+      const endMark = figure
+        ?.querySelector(`[${hitofudePuzzleFigureParts.endMark}]`)
+        ?.animate?.(endMarkPopKeyframes, {
+          duration: END_MARK_POP_MS,
+          delay: traceDurationMs,
+          easing: MOTION_EASING.celebrate,
+          fill: "backwards",
+        });
+      return [trace, endMark].filter((animation) => animation !== undefined);
     },
     completion: { type: "after-animations", holdMs: CLEAR_TRACE_HOLD_MS },
-    reducedMotionHoldMs: CLEAR_TRACE_HOLD_MS,
+    reducedMotionHoldMs: REDUCED_MOTION_CLEAR_HOLD_MS,
     unanimatedHoldMs: 0,
     onFinished,
   });

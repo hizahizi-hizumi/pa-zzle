@@ -53,12 +53,13 @@ describe("playClearTrace", () => {
     figure = container.querySelector("svg")!;
   });
 
-  test("クリアした道を光でなぞり、なぞり終えるまで完了を知らせないこと", async () => {
+  test("クリアした道を光でなぞって終点の印を置き、終えるまで完了を知らせないこと", async () => {
     playClearTrace(figure, path.length, onFinished);
     await vi.advanceTimersByTimeAsync(longEnoughMs);
 
     expect(animatedElements).toEqual([
       figure.querySelector(`[${hitofudePuzzleFigureParts.clearTrace}]`),
+      figure.querySelector(`[${hitofudePuzzleFigureParts.endMark}]`),
     ]);
     expect(onFinished).not.toHaveBeenCalled();
   });

@@ -52,7 +52,10 @@ const HEAD_RING_WIDTH = 0.09;
 const DEAD_END_HEAD_RADIUS = HEAD_RING_RADIUS + HEAD_RING_WIDTH / 2;
 const DEAD_END_BAR_HALF_LENGTH = 0.24;
 const DEAD_END_BAR_WIDTH = 0.12;
-const CLEAR_TRACE_WIDTH = 0.1;
+/** クリアしたとき道をなぞる光の太さ。道の線の半分ほどにし、道の色の上で光として読める太さにする。 */
+const CLEAR_TRACE_WIDTH = 0.15;
+/** クリアしたとき、先端の輪に代えて終点に置く印の半径。始点の印より一回り大きくし、道の両端を結ぶ。 */
+const END_MARK_RADIUS = 0.26;
 /**
  * 阻まれたマスの×の、中心から端までの長さと太さ。マスの半分ほどに広げ、短く点いても見落とされない大きさにする。
  * 下に敷くマスの地の色の縁で、道の上でも読めるようにする。
@@ -92,12 +95,14 @@ export const hitofudePuzzleFigureParts = {
   outline: "data-outline",
   head: "data-head",
   clearTrace: "data-clear-trace",
+  endMark: "data-end-mark",
   strandedCell: "data-stranded-cell",
   blockedMark: "data-blocked-mark",
 } as const;
 
 /**
  * 盤面の絵。マスの塗り・取り残しの斜線・盤面の外形・道・始点・先端を、下から順にこの層で描く。
+ * 道が全マスを通り終えたら、先端の輪に代えて終点の印を置き、始点から終点へなぞる光を重ねる。
  * 穴は描かず、盤面の外と同じ地を見せる。外形が、外周の穴を盤面の欠けとして、内側の穴を盤面に開いた穴として縁取る。
  * 道とマスの塗りは、通った順に色を移す（`getPathColor`）。
  */
@@ -249,33 +254,45 @@ export function HitofudePuzzleFigure({
         className={hitofudePuzzleToneClassNames.startMarkOutline}
         style={{ fill: getPathColor(0) }}
       />
-      <g transform={`translate(${head.x} ${head.y})`}>
-        {/* 揺れは CSS の transform で動かすので、位置の transform 属性とは別の要素に置く。 */}
-        <g {...{ [hitofudePuzzleFigureParts.head]: "" }}>
-          {isDeadEnd ? (
-            <>
-              <circle
-                r={DEAD_END_HEAD_RADIUS}
-                className={hitofudePuzzleToneClassNames.deadEndHead}
-              />
-              <rect
-                x={-DEAD_END_BAR_HALF_LENGTH}
-                y={-DEAD_END_BAR_WIDTH / 2}
-                width={DEAD_END_BAR_HALF_LENGTH * 2}
-                height={DEAD_END_BAR_WIDTH}
-                className={hitofudePuzzleToneClassNames.deadEndBar}
-              />
-            </>
-          ) : (
-            <circle
-              r={HEAD_RING_RADIUS}
-              fill="none"
-              strokeWidth={HEAD_RING_WIDTH}
-              style={{ stroke: headColor }}
-            />
-          )}
+      {solved ? (
+        <g transform={`translate(${head.x} ${head.y})`}>
+          <circle
+            {...{ [hitofudePuzzleFigureParts.endMark]: "" }}
+            r={END_MARK_RADIUS}
+            strokeWidth={START_MARK_OUTLINE_WIDTH}
+            className={hitofudePuzzleToneClassNames.startMarkOutline}
+            style={{ fill: headColor }}
+          />
         </g>
-      </g>
+      ) : (
+        <g transform={`translate(${head.x} ${head.y})`}>
+          {/* 揺れは CSS の transform で動かすので、位置の transform 属性とは別の要素に置く。 */}
+          <g {...{ [hitofudePuzzleFigureParts.head]: "" }}>
+            {isDeadEnd ? (
+              <>
+                <circle
+                  r={DEAD_END_HEAD_RADIUS}
+                  className={hitofudePuzzleToneClassNames.deadEndHead}
+                />
+                <rect
+                  x={-DEAD_END_BAR_HALF_LENGTH}
+                  y={-DEAD_END_BAR_WIDTH / 2}
+                  width={DEAD_END_BAR_HALF_LENGTH * 2}
+                  height={DEAD_END_BAR_WIDTH}
+                  className={hitofudePuzzleToneClassNames.deadEndBar}
+                />
+              </>
+            ) : (
+              <circle
+                r={HEAD_RING_RADIUS}
+                fill="none"
+                strokeWidth={HEAD_RING_WIDTH}
+                style={{ stroke: headColor }}
+              />
+            )}
+          </g>
+        </g>
+      )}
       {blockedMarkCenter === null ? null : (
         <g
           {...{ [hitofudePuzzleFigureParts.blockedMark]: "" }}
