@@ -31,11 +31,13 @@ solved_moment:    # B の材料。何が揃い、どう終わるか
 
 `frontend/src/games/<game>/ui/` 配下で、盤・駒・状態の要素がどう塗られているかを Grep し、定義元ごとに値を引く。
 
-| 定義元 | 値の引き方 | SVG での書き方 |
-|---|---|---|
-| TS / CSS の定数（色の表、CSS 変数） | 定義ファイルを読む。テーマで分岐していれば両方 | 実値。テーマで変わるなら `.dark` 条件で切り替える |
-| Tailwind のパレット色のクラス（`bg-blue-600`、`dark:text-red-400` 等） | `frontend/node_modules/tailwindcss/theme.css` の `--color-<名前>`（`oklch()`） | hex / `rgb()` へ変換した実値。`dark:` 付きのクラスがあれば `.dark` で切り替える |
-| アプリのトークンのクラス（`bg-background`、`border-border`、`text-muted-foreground` 等） | `frontend/styles/globals.css` の `:root`（ライト）と `.dark`（ダーク） | `var(--background)` などで参照する（`references/contract.md` の 3 節） |
+| 定義元 | 値の引き方 |
+|---|---|
+| TS / CSS の定数（色の表、CSS 変数） | 定義ファイルを読む。テーマで分岐していれば両方 |
+| Tailwind のパレット色のクラス（`bg-blue-600`、`dark:text-red-400` 等） | `frontend/node_modules/tailwindcss/theme.css` の `--color-<名前>`（`oklch()`） |
+| アプリのトークンのクラス（`bg-background`、`border-border`、`text-muted-foreground` 等） | `frontend/styles/globals.css` の `:root`（ライト）と `.dark`（ダーク） |
+
+SVG での書き方は `references/contract.md` の 3 節。
 
 `scripts/resolve_color.py` に、クラス名・名前・`oklch()` を並べて渡すと、どの定義元かと値（hex、トークンなら両テーマと `var()` で書けるか）を出す。`oklch()` を hex へ変換して sRGB の色域外を丸めた場合は印が付くので、`notes` に書く。
 
@@ -160,14 +162,11 @@ D（落ち着き）は発散段階で案を縛らない。ただし、常時大�
 試作は `aim_play` と `aim_payoff` が伝わる最小実装にする。
 
 - 静止状態を先に描き、白黒版と並べて同じパズルだと分かることを確かめる
-- 色はプレイ画面の定義元から写す（1 節の表）。試作の段階でも別の色に置き換えない。テーマで変わる実値は、ダーク側の値を祖先 `.dark` 条件のルールで切り替える。アプリのトークンは `var()` で参照すればテーマに追従する
-- 輪郭など前景の線は `var(--game-pictogram-strong)`、補助は `var(--game-pictogram-soft)` にする
-- プレイ画面の値のままでは実表示サイズで見えない線・面（淡い枠線など）は、見えることを優先して近い役割の色で代え、理由を `notes` に書く
-- 数字・記号は白黒版の字形を流用する。複数の字が 1 本のパスにまとまっている場合は、サブパス（`M` で始まる区切り）ごとに座標を見て字ごとに分け、1 字 1 要素にする（字ごとに色や動きを付けられる）。白黒版に無い字形は `<text>` で書き、`font-family` に `system-ui, sans-serif` などシステムの sans-serif 系を明示する。横は `text-anchor="middle"` で中心を合わせ、縦は `y` をマスの中心から字の大きさの約 0.35 倍下げて合わせる（`dominant-baseline` は描画環境で効き方が揃わない）。一覧サイズで読めるか確かめる
+- 色は試作の段階でもプレイ画面の色から置き換えない（書き方は `references/contract.md` の 3 節）
+- 字形の扱いは `references/contract.md` の 5 節。白黒版で複数の字が 1 本のパスにまとまっている場合は、サブパス（`M` で始まる区切り）ごとに座標を見て字ごとに分け、1 字 1 要素にする（字ごとに色や動きを付けられる）。`<text>` は横を `text-anchor="middle"` で中心に合わせ、縦は `y` をマスの中心から字の大きさの約 0.35 倍下げて合わせる（`dominant-baseline` は描画環境で効き方が揃わない）。一覧サイズで読めるか確かめる
 - 例えば「最後の一手」が核なら、そこまでの手を細かく作り込むより、最後の一手の前の間と、その手で盤面が変わる瞬間を優先する
-- 回転・拡縮は `transform-box: fill-box` と `transform-origin` を明示する
-- 緩急は keyframe 内の `animation-timing-function` で付け、イージングを線形 keyframe へサンプリングしない（`references/motion.md`）
-- 構図の調整は `references/motion.md` の「構図を変えてよい範囲」に収める
+- 回転・拡縮の中心は `transform-origin` で明示する。`transform-box` の選び方は `references/motion.md` の 7 節
+- 緩急は `references/motion.md` の 3 節、構図の調整は 4 節に従う
 
 完成品質の細部に時間を使うのは、人間が方向を選んだ後にする。
 
