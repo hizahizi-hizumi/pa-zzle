@@ -1,0 +1,84 @@
+name: Dependabot Auto-merge
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: read
+
+jobs:
+  enable-auto-merge:
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v3.1.0
+
+      # 基準と理由は ADR-0004。
+      - name: Check auto-merge eligibility
+        id: eligibility
+        shell: bash
+        env:
+          PACKAGE_ECOSYSTEM: ${{ steps.metadata.outputs.package-ecosystem }}
+          UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
+          DEPENDENCY_NAMES: ${{ steps.metadata.outputs.dependency-names }}
+        run: |
+          set -euo pipefail
+
+          official_owners=(actions github dependabot)
+          # 自動マージした更新で問題を起こしたアクションを owner/repo で載せる。
+          excluded_actions=()
+
+          skip() {
+            echo "Auto-merge skipped: $*"
+            exit 0
+          }
+
+          [[ "$PACKAGE_ECOSYSTEM" == "github_actions" ]] || skip "ecosystem is ${PACKAGE_ECOSYSTEM:-unknown}"
+          case "$UPDATE_TYPE" in
+            version-update:semver-minor | version-update:semver-patch) ;;
+            *) skip "update type is ${UPDATE_TYPE:-unknown}" ;;
+          esac
+
+          IFS=',' read -r -a dependency_names <<< "$DEPENDENCY_NAMES"
+          (( ${#dependency_names[@]} > 0 )) || skip "no dependencies found"
+          for raw_name in "${dependency_names[@]}"; do
+            name="$(xargs <<< "$raw_name")"
+            owner="${name%%/*}"
+            repo_path="${name#*/}"
+            action="$owner/${repo_path%%/*}"
+
+            [[ " ${official_owners[*]} " == *" $owner "* ]] || skip "$name is not published by GitHub"
+            [[ " ${excluded_actions[*]} " != *" $action "* ]] || skip "$action is excluded"
+          done
+
+          echo "eligible=true" >> "$GITHUB_OUTPUT"
+
+      # GITHUB_TOKEN で予約したマージは main の push ワークフローを起動しないため、App のトークンを使う。
+      - name: Create GitHub App token
+        if: steps.eligibility.outputs.eligible == 'true'
+        id: app-token
+        uses: actions/create-github-app-token@v3.3.0
+        with:
+          client-id: ${{ secrets.AUTOMERGE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AUTOMERGE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      # マージ自体は必須チェックが通ってから GitHub が行う。
+      - name: Enable auto-merge
+        if: steps.eligibility.outputs.eligible == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge --auto --merge "$PR_URL"
