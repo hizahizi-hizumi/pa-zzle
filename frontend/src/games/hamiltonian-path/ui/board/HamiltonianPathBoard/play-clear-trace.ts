@@ -36,7 +36,7 @@ export function playClearTrace(
       );
       const animation = trace?.animate?.(clearTraceKeyframes, {
         duration: getClearTraceDurationMs(cellCount),
-        easing: MOTION_EASING.standard,
+        easing: MOTION_EASING.celebrate,
         fill: "backwards",
       });
       return animation === undefined ? [] : [animation];
