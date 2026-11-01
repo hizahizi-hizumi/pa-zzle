@@ -1,7 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="一筆パズル">
-  <rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <path d="M18 18H78V42H102V102H18Z" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linejoin="round"/>
   <g fill="var(--game-pictogram-soft)">
-    <circle cx="90" cy="30" r="5"/>
     <circle cx="90" cy="50" r="5"/>
     <circle cx="70" cy="70" r="5"/>
     <circle cx="90" cy="70" r="5"/>
