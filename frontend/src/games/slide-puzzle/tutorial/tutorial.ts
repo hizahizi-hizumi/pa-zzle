@@ -96,7 +96,7 @@ const steps: readonly SlidePuzzleTutorialStep[] = [
   {
     message: {
       headline: "5 が正しい位置に収まりました",
-      detail: "いま空白のところが 8 の正しい位置です",
+      detail: "この空白に 8 が収まります",
     },
     introducedRuleId: null,
     tile: 8,
@@ -111,8 +111,8 @@ const steps: readonly SlidePuzzleTutorialStep[] = [
     alternative: {
       tile: 7,
       message: {
-        headline: "4 をタップすると\n7 も一度に収まります",
-        detail: "まずは印の 4 をタップしてください",
+        headline: "4 をタップすれば\n7 もまとめて収まります",
+        detail: "印の 4 をタップしてください",
       },
     },
   },
@@ -372,12 +372,12 @@ export const slidePuzzleTutorial: Tutorial<
   completion: {
     selection: {
       headline: "完成です",
-      detail: "レベル1も同じルールです\nほかのタイルをどかしながら並べます",
+      detail: "レベル1も同じルールです\nじゃまなタイルをどかしながら並べます",
     },
     play: {
       headline: "完成です",
       detail:
-        "プレイ中の盤面も同じルールです\nほかのタイルをどかしながら並べます",
+        "プレイ中の盤面も同じルールで解けます\nじゃまなタイルをどかしながら並べます",
     },
   },
   start: startSlidePuzzleTutorial,

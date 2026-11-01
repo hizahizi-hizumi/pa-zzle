@@ -130,12 +130,12 @@ const steps: readonly TakuzuTutorialStep[] = [
     cellIndices: [cellAt(2, 1)],
   },
   {
-    message: { headline: "どの行も四角と丸が同じ数です", detail: null },
+    message: { headline: "どの行も四角と丸は同じ数です", detail: null },
     introducedRuleId: "count",
     cellIndices: [cellAt(1, 4)],
   },
   {
-    message: { headline: "どの列も四角と丸が同じ数です", detail: null },
+    message: { headline: "どの列も四角と丸は同じ数です", detail: null },
     introducedRuleId: null,
     cellIndices: [cellAt(4, 4)],
   },
@@ -639,7 +639,7 @@ export const takuzuTutorial: Tutorial<
   },
   rules: [
     { id: "run", label: "3つ続けない" },
-    { id: "count", label: "同じ数" },
+    { id: "count", label: "同じ数にする" },
     { id: "duplicate", label: "同じ並びにしない" },
   ],
   steps,

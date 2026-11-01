@@ -338,13 +338,13 @@ describe("TakuzuTutorial", () => {
       });
 
       test("ルールを示してルールの並びに加え、今示しているルールとして目立たせること", () => {
-        const message = screen.getByText("どの行も四角と丸が同じ数です");
+        const message = screen.getByText("どの行も四角と丸は同じ数です");
         const rules = getRuleTexts();
         const currentRules = getCurrentRuleTexts();
 
         expect(message).toBeTruthy();
-        expect(rules).toEqual(["3つ続けない", "同じ数", "？"]);
-        expect(currentRules).toEqual(["同じ数"]);
+        expect(rules).toEqual(["3つ続けない", "同じ数にする", "？"]);
+        expect(currentRules).toEqual(["同じ数にする"]);
       });
     });
 
@@ -361,7 +361,11 @@ describe("TakuzuTutorial", () => {
         const hinted = getHintedCellPositions();
 
         expect(message).toBeTruthy();
-        expect(rules).toEqual(["3つ続けない", "同じ数", "同じ並びにしない"]);
+        expect(rules).toEqual([
+          "3つ続けない",
+          "同じ数にする",
+          "同じ並びにしない",
+        ]);
         expect(currentRules).toEqual(["同じ並びにしない"]);
         expect(hinted).toEqual(["2行2列", "2行3列"]);
       });

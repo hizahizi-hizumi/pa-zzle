@@ -173,12 +173,12 @@ describe("SlidePuzzleTutorial", () => {
         advanceTime(nextStepCueDelayMs);
       });
 
-      test("隣にある 7 をタップすると、スライドさせずに、4 をタップすると 7 も一度に収まることを伝えること", () => {
+      test("隣にある 7 をタップすると、スライドさせずに、4 をタップすれば 7 もまとめて収まることを伝えること", () => {
         tapTiles([7]);
 
         const position = getTilePosition(7);
         const headline = screen.getByText(
-          "4 をタップすると 7 も一度に収まります",
+          "4 をタップすれば 7 もまとめて収まります",
         );
         const hinted = getCuedTiles("hint");
 
@@ -264,7 +264,7 @@ describe("SlidePuzzleTutorial", () => {
       test("並べ終えると、レベル1とのつながりを伝え、レベル1を遊ぶでレベル1を始めること", () => {
         tapTiles(remainingTiles);
         const detail = screen.getByText(
-          "レベル1も同じルールです ほかのタイルをどかしながら並べます",
+          "レベル1も同じルールです じゃまなタイルをどかしながら並べます",
         );
         fireEvent.click(screen.getByRole("button", { name: "レベル1を遊ぶ" }));
 
@@ -366,7 +366,7 @@ describe("SlidePuzzleTutorial", () => {
     test("並べ終えると、プレイに戻ることを伝え、プレイに戻る操作で閉じること", () => {
       tapTiles([...stepTiles, ...remainingTiles]);
       const detail = screen.getByText(
-        "プレイ中の盤面も同じルールです ほかのタイルをどかしながら並べます",
+        "プレイ中の盤面も同じルールで解けます じゃまなタイルをどかしながら並べます",
       );
       fireEvent.click(screen.getByRole("button", { name: "プレイに戻る" }));
 
