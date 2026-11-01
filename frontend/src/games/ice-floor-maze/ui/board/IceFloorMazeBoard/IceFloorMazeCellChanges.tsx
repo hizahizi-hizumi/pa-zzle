@@ -16,8 +16,8 @@ import {
 } from "@/games/ice-floor-maze/ui/board/IceFloorMazeCellClipPaths";
 import { IceFloorMazeCellFace } from "@/games/ice-floor-maze/ui/board/IceFloorMazeCellFace";
 import {
+  getIceFloorMazeCrackDelayMs,
   getIceFloorMazeSlideDurationMs,
-  getIceFloorMazeSlideProgressMs,
 } from "@/games/ice-floor-maze/ui/board/slide-timing";
 import { iceFloorMazeToneClassNames } from "@/games/ice-floor-maze/ui/ice-floor-maze-tone";
 import { MOTION_EASING, prefersReducedMotion } from "@/lib/motion";
@@ -108,16 +108,6 @@ function formatCellTransform(
   return `translate(${x} ${y})`;
 }
 
-/** 駒がそのマスを離れて半マス進んだ時刻。出発マスは 0 マス目、`path` の `i` 番目は `i + 1` マス目。 */
-function getCrackDelayMs(slide: IceFloorMazeLastSlide, cellIndex: number) {
-  const cellsFromStart =
-    cellIndex === slide.from ? 0 : slide.path.indexOf(cellIndex) + 1;
-  return getIceFloorMazeSlideProgressMs(
-    slide.path.length,
-    cellsFromStart + 0.5,
-  );
-}
-
 function animateCellChanges(
   layer: SVGGElement,
   slide: IceFloorMazeLastSlide,
@@ -164,7 +154,10 @@ function animateCellChanges(
   for (const cracking of layer.querySelectorAll<SVGGElement>(
     "[data-cracking-ice]",
   )) {
-    const delay = getCrackDelayMs(slide, Number(cracking.dataset.crackingIce));
+    const delay = getIceFloorMazeCrackDelayMs(
+      slide,
+      Number(cracking.dataset.crackingIce),
+    );
     animations.push(
       keepVisible(cracking, delay + RIPPLE_DELAY_MS + RIPPLE_DURATION_MS),
     );
