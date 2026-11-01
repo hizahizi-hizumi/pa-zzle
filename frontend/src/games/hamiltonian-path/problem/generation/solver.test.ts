@@ -3,12 +3,65 @@ import {
   isHamiltonianPathUniquelySolvable,
 } from "@/games/hamiltonian-path/problem/generation/solver";
 import {
+  createHamiltonianPathAdjacency,
+  createHamiltonianPathPartition,
   type HamiltonianPathBoard,
+  listHamiltonianPathCells,
+  listHamiltonianPathGridNeighbors,
+  listHamiltonianPathOpenCells,
+  normalizeHamiltonianPathPartitions,
   parseHamiltonianPathBoard,
 } from "@/games/hamiltonian-path/puzzle/board";
+import { isHamiltonianPathSolved } from "@/games/hamiltonian-path/puzzle/rules";
+import { createProblemSeededRandom } from "@/games/problem-seed";
 
 function createOpenBoard(size: number, start: number): HamiltonianPathBoard {
   return { size, walls: [], partitions: [], start };
+}
+
+/** 4×4 か 5×5 に、壁マス・仕切り・始点を無作為に置いた盤面。有効マスがつながらない盤面・解の無い盤面も含む。 */
+function createRandomBoard(seed: string): HamiltonianPathBoard {
+  const random = createProblemSeededRandom(seed);
+  const size = random() < 0.5 ? 4 : 5;
+  const cells = listHamiltonianPathCells(size);
+  const walls = cells.filter(() => random() < 0.06);
+  const openCells = cells.filter((cell) => !walls.includes(cell));
+  const partitions = openCells.flatMap((cell) =>
+    listHamiltonianPathGridNeighbors(size, cell)
+      .filter(
+        (neighbor) =>
+          neighbor > cell && openCells.includes(neighbor) && random() < 0.12,
+      )
+      .map((neighbor) => createHamiltonianPathPartition(cell, neighbor)),
+  );
+  return {
+    size,
+    walls,
+    partitions: normalizeHamiltonianPathPartitions(partitions),
+    start: openCells[Math.floor(random() * openCells.length)]!,
+  };
+}
+
+/** 枝刈りをせずに、始点から全ての有効マスを1回ずつ通る道を数える。 */
+function countPathsByBruteForce(board: HamiltonianPathBoard): number {
+  const adjacency = createHamiltonianPathAdjacency(board);
+  const openCellCount = listHamiltonianPathOpenCells(board).length;
+  const visited = new Set([board.start]);
+  function countFrom(head: number): number {
+    if (visited.size === openCellCount) {
+      return 1;
+    }
+    let count = 0;
+    for (const next of adjacency[head]!) {
+      if (!visited.has(next)) {
+        visited.add(next);
+        count += countFrom(next);
+        visited.delete(next);
+      }
+    }
+    return count;
+  }
+  return countFrom(board.start);
 }
 
 /**
@@ -292,6 +345,27 @@ describe("countHamiltonianPathSolutions", () => {
         expect(all?.searchStepCount ?? null).toBe(
           allSolutionsWithoutPartitions?.searchStepCount ?? null,
         );
+      },
+    );
+  });
+
+  describe("小さな無作為盤面の場合", () => {
+    const cases = Array.from({ length: 60 }, (_, index) => {
+      const board = createRandomBoard(`solver-property-${index}`);
+      return [index, board, countPathsByBruteForce(board)] as const;
+    });
+
+    test.each(cases)(
+      "盤面 %i の解を、枝刈りをしない総当たりと同じ数だけ数え、見つけた解が全マスを通る道であること",
+      (_, board, expectedCount) => {
+        const result = countHamiltonianPathSolutions(board, unlimited);
+        const solved = result.firstSolutions.map((solution) =>
+          isHamiltonianPathSolved(board, solution),
+        );
+
+        expect(result.status).toBe("complete");
+        expect(result.solutionCount).toBe(expectedCount);
+        expect(solved).not.toContain(false);
       },
     );
   });
