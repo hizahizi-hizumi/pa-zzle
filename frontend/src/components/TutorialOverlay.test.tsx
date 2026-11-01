@@ -6,7 +6,10 @@ import {
   screen,
 } from "@testing-library/react";
 
-import { TutorialOverlay } from "@/components/TutorialOverlay";
+import {
+  type TutorialBoardIntro,
+  TutorialOverlay,
+} from "@/components/TutorialOverlay";
 
 /** 盤面は場面の動きを終えないので、導入は「次へ」を押したときだけ進む。 */
 const intro = {
@@ -17,6 +20,10 @@ const intro = {
 
 /** 名前を上部へ戻してから、最初の手順を始めるまでに十分な間。 */
 const introFinishEnoughMs = 1000;
+
+/** 場面の動きを終えてから次の場面へ進むまでの読む間。動かさずに見せた場面は長く止める。 */
+const animatedSceneHoldMs = 1200;
+const stillSceneHoldMs = 2800;
 
 /** 名前を上部へ戻し始めてから、ルールと一言を出し始めるまでの間。 */
 const revealAfterNameDelayMs = 350;
@@ -61,6 +68,8 @@ function pressNext(): void {
 
 describe("TutorialOverlay", () => {
   let onIntroEnd: ReturnType<typeof vi.fn<() => void>>;
+  // 盤面に渡された導入の場面。盤面の代わりに場面の終わりを伝える。
+  let boardIntro: TutorialBoardIntro | undefined;
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -79,13 +88,16 @@ describe("TutorialOverlay", () => {
         introducing={true}
         completed={false}
         finish={{ entry: "play", onReturnToPlay: vi.fn() }}
-        renderBoard={({ messageShown }) => (
-          <div
-            role="group"
-            aria-label="盤面"
-            data-message-shown={String(messageShown)}
-          />
-        )}
+        renderBoard={(currentIntro) => {
+          boardIntro = currentIntro;
+          return (
+            <div
+              role="group"
+              aria-label="盤面"
+              data-message-shown={String(currentIntro.messageShown)}
+            />
+          );
+        }}
         onIntroEnd={onIntroEnd}
         onRestart={vi.fn()}
         onClose={vi.fn()}
@@ -137,6 +149,25 @@ describe("TutorialOverlay", () => {
       expect(revealed).toBe("true");
       expect(onIntroEnd).not.toHaveBeenCalled();
     });
+
+    test.each([
+      ["動きで見せ終えた", "onSceneEnd", animatedSceneHoldMs],
+      ["動かさずに見せた", "onStillSceneEnd", stillSceneHoldMs],
+    ] as const)(
+      "ゴールの場面を%sら、その読む間だけ止めてから始まりの盤面へ進むこと",
+      (_, sceneEnd, holdMs) => {
+        pressNext();
+        act(() => boardIntro?.[sceneEnd]());
+        advanceTime(holdMs - 1);
+        const goalCaption = screen.queryByText(intro.goalCaption);
+        advanceTime(1);
+
+        const startCaption = screen.queryByText(intro.startCaption);
+
+        expect(goalCaption).not.toBeNull();
+        expect(startCaption).not.toBeNull();
+      },
+    );
 
     test("次へでEnterを押しても、導入を飛ばさないこと", () => {
       fireEvent.keyDown(screen.getByRole("button", { name: "次へ" }), {

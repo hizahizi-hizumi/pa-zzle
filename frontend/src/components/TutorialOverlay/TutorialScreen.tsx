@@ -55,12 +55,14 @@ export type TutorialIntroScene = "goal" | "start";
  * - `scene`: 今見せる場面。導入を終えた後は `null` で、解いている盤面を見せる。
  * - `playing`: 場面の動きを見せる間。盤面が見えるまでと、動きを終えた後は `false` で、場面の終わりの盤面を見せる。
  * - `onSceneEnd`: 場面の動きを終えたら呼ぶ。動きを減らす設定では、動かさずにすぐ呼ぶ。
+ * - `onStillSceneEnd`: 場面を動かさずに見せる盤面が、`onSceneEnd` の代わりに呼ぶ。動きを減らす設定と同じだけ止めて読ませる。
  * - `messageShown`: ルールと一言を出している。導入の終わりに、最初の手順の印を一言と同時に出すのに使う。
  */
 export type TutorialBoardIntro = {
   scene: TutorialIntroScene | null;
   playing: boolean;
   onSceneEnd: () => void;
+  onStillSceneEnd: () => void;
   messageShown: boolean;
 };
 
@@ -420,24 +422,34 @@ export function TutorialScreen({
     );
   }, [changeStage, finishIntro, schedule]);
 
-  // 盤面が場面の動きを終えたら、読む間だけ待って次の場面へ進む。
-  const handleSceneEnd = useCallback(() => {
-    const current = stageRef.current;
-    if (
-      (current !== "goal" && current !== "start") ||
-      endedStageRef.current === current
-    ) {
-      return;
-    }
-    endedStageRef.current = current;
-    setSceneEnded(true);
-    const holdMs =
-      sceneHoldMs[animatedRef.current ? "animated" : "still"][current];
-    schedule(
-      current === "goal" ? () => changeStage("start") : finishScenes,
-      holdMs,
-    );
-  }, [changeStage, finishScenes, schedule]);
+  /**
+   * 盤面が場面の動きを終えたら、読む間だけ待って次の場面へ進む。
+   * 場面を動かさずに見せた盤面は、動きを減らす設定と同じだけ止めて読ませる。
+   */
+  const endScene = useCallback(
+    (shownStill: boolean) => {
+      const current = stageRef.current;
+      if (
+        (current !== "goal" && current !== "start") ||
+        endedStageRef.current === current
+      ) {
+        return;
+      }
+      endedStageRef.current = current;
+      setSceneEnded(true);
+      const holdMs =
+        sceneHoldMs[animatedRef.current && !shownStill ? "animated" : "still"][
+          current
+        ];
+      schedule(
+        current === "goal" ? () => changeStage("start") : finishScenes,
+        holdMs,
+      );
+    },
+    [changeStage, finishScenes, schedule],
+  );
+  const handleSceneEnd = useCallback(() => endScene(false), [endScene]);
+  const handleStillSceneEnd = useCallback(() => endScene(true), [endScene]);
 
   // 「次へ」は待たずに次の場面へ進める。最後の場面では、名前を上部へ戻してから最初の手順を始める。
   function showNextScene(): void {
@@ -660,6 +672,7 @@ export function TutorialScreen({
           scene: stageView.scene,
           playing: stageView.scenePlaying && !sceneEnded,
           onSceneEnd: handleSceneEnd,
+          onStillSceneEnd: handleStillSceneEnd,
           messageShown:
             stage === "done" ||
             stage === "reveal" ||
