@@ -6,7 +6,7 @@
  *   マスの隙間の地（`gridLineSurface`）で `gridLine` と同じ色を描く。
  * - `clue`: ヒントの数字。`matchedClue` は塗りがヒントにちょうど合った行・列の数字で、読めるまま退かせる。
  * - `activeLine`: 押している・キーボードで選んでいるマスの行・列のヒントの地。キーボードで選んでいるマスの輪郭
- *   （`focusOutline`）も同じ色相にする。
+ *   （`focusOutline`）と、入れる印に選んでいるボタンの地（`selectedMark`）も同じ色相にする。
  */
 export const nonogramToneClassNames = {
   filled: "bg-slate-800 dark:bg-slate-200",
@@ -18,4 +18,5 @@ export const nonogramToneClassNames = {
   matchedClue: "text-slate-300 dark:text-slate-600",
   activeLine: "bg-sky-100 dark:bg-sky-950",
   focusOutline: "focus-visible:outline-sky-500",
+  selectedMark: "bg-sky-100 dark:bg-sky-950",
 } as const;

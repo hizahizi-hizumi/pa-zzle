@@ -1,5 +1,6 @@
 import type { NonogramMark } from "@/games/nonogram/session/session";
 import { NonogramCellFace } from "@/games/nonogram/ui/board/NonogramCellFace";
+import { nonogramToneClassNames } from "@/games/nonogram/ui/nonogram-tone";
 import { cn } from "@/lib/utils";
 
 type NonogramMarkToggleProps = {
@@ -23,7 +24,7 @@ export function NonogramMarkToggle({
     <div
       role="group"
       aria-label="入れる印"
-      className="inline-flex items-center gap-1 rounded-full border-(length:--border-width-normal) bg-background p-1"
+      className="inline-flex h-12 items-center gap-0.5 rounded-full border-(length:--border-width-normal) bg-background p-0.5 shadow-raised"
     >
       {markOptions.map((option) => {
         const selected = option.mark === mark;
@@ -36,8 +37,10 @@ export function NonogramMarkToggle({
             disabled={disabled}
             onClick={() => onChange(option.mark)}
             className={cn(
-              "flex size-11 touch-manipulation items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
-              selected ? "bg-foreground/10" : "hover:bg-accent",
+              "flex aspect-square h-full touch-manipulation items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+              selected
+                ? nonogramToneClassNames.selectedMark
+                : "hover:bg-accent",
             )}
           >
             <span
