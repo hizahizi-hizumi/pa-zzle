@@ -1,4 +1,3 @@
-import { isInNumericRange, type NumericRange } from "@/games/difficulty";
 import { listNonogramLines } from "@/games/nonogram/puzzle/board";
 import {
   getNonogramPatternLine,
@@ -25,17 +24,15 @@ export type NonogramPatternQuality = {
 /**
  * 問題にする図柄の条件。黒が少なすぎ・多すぎる図柄、ヒントが0の行・列が続く図柄、
  * ばらばらの黒が目立つ図柄を除き、塊のまとまった図柄を残す。
+ * - `minimumBlackRatio` / `maximumBlackRatio`: 黒マスの割合の下限と上限（どちらも含む）。
  * - `maximumBlankLineCount`: 黒の無い行・列の数（縦横合わせて）の上限。
  */
 export const nonogramPatternRequirements = {
-  blackRatio: { minimum: 0.35, maximum: 0.72 },
+  minimumBlackRatio: 0.35,
+  maximumBlackRatio: 0.72,
   maximumBlankLineCount: 1,
   maximumIsolatedBlackRatio: 0.12,
-} as const satisfies {
-  blackRatio: NumericRange;
-  maximumBlankLineCount: number;
-  maximumIsolatedBlackRatio: number;
-};
+} as const satisfies Record<string, number>;
 
 const orthogonalSteps = [
   [1, 0],
@@ -136,10 +133,8 @@ export function meetsNonogramPatternRequirements(
   quality: NonogramPatternQuality,
 ): boolean {
   return (
-    isInNumericRange(
-      quality.blackRatio,
-      nonogramPatternRequirements.blackRatio,
-    ) &&
+    nonogramPatternRequirements.minimumBlackRatio <= quality.blackRatio &&
+    quality.blackRatio <= nonogramPatternRequirements.maximumBlackRatio &&
     quality.blankRowCount + quality.blankColumnCount <=
       nonogramPatternRequirements.maximumBlankLineCount &&
     quality.isolatedBlackRatio <=
