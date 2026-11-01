@@ -150,7 +150,7 @@ describe("SlidePuzzleTutorial", () => {
       expect(headline).toBeTruthy();
       expect(positions).toEqual(["1行1列", "3行2列"]);
       expect(hinted).toEqual(["5"]);
-      expect(rules).toEqual(["空白にスライド", "？"]);
+      expect(rules).toEqual(["空白にスライド", "伏せたルール"]);
     });
 
     test("印の無いタイルを押しても、スライドさせずに、一言を変えずに印を付け直すこと", () => {
@@ -294,7 +294,7 @@ describe("SlidePuzzleTutorial", () => {
         expect(caption).toBeTruthy();
         expect(position).toBe("3行2列");
         expect(hinted).toEqual(["5"]);
-        expect(rules).toEqual(["空白にスライド", "？"]);
+        expect(rules).toEqual(["空白にスライド", "伏せたルール"]);
       });
     });
   });

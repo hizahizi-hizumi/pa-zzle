@@ -244,7 +244,7 @@ describe("TakuzuTutorial", () => {
       expect(headline).toBeTruthy();
       expect(detail).toBeTruthy();
       expect(hinted).toEqual(["1行1列"]);
-      expect(rules).toEqual(["？", "？", "？"]);
+      expect(rules).toEqual(["伏せたルール", "伏せたルール", "伏せたルール"]);
     });
 
     test("印のマスをタップすると四角になり、そのマスを光らせて、丸の置き方と次のマスを示すこと", () => {
@@ -292,7 +292,7 @@ describe("TakuzuTutorial", () => {
         const currentRules = getCurrentRuleTexts();
 
         expect(message).toBeTruthy();
-        expect(rules).toEqual(["3つ続けない", "？", "？"]);
+        expect(rules).toEqual(["3つ続けない", "伏せたルール", "伏せたルール"]);
         expect(currentRules).toEqual(["3つ続けない"]);
       });
 
@@ -371,7 +371,7 @@ describe("TakuzuTutorial", () => {
         const currentRules = getCurrentRuleTexts();
 
         expect(message).toBeTruthy();
-        expect(rules).toEqual(["3つ続けない", "同じ数にする", "？"]);
+        expect(rules).toEqual(["3つ続けない", "同じ数にする", "伏せたルール"]);
         expect(currentRules).toEqual(["同じ数にする"]);
       });
     });
@@ -461,7 +461,7 @@ describe("TakuzuTutorial", () => {
       expect(caption).toBeTruthy();
       expect(message).toBeTruthy();
       expect(label).toBe("1行1列 空き");
-      expect(rules).toEqual(["？", "？", "？"]);
+      expect(rules).toEqual(["伏せたルール", "伏せたルール", "伏せたルール"]);
     });
 
     test("閉じてから開き直すと、最初から始まること", () => {
@@ -520,7 +520,7 @@ describe("TakuzuTutorial", () => {
       expect(headline).toBeTruthy();
       expect(labels).toEqual(["1行1列 空き", "1行2列 四角 固定"]);
       expect(hinted).toEqual(["1行1列"]);
-      expect(rules).toEqual(["？", "？", "？"]);
+      expect(rules).toEqual(["伏せたルール", "伏せたルール", "伏せたルール"]);
     });
 
     describe("盤面の段まで進んだ場合", () => {
