@@ -18,6 +18,7 @@ import { findArrowKeyDirection } from "@/games/hitofude-puzzle/ui/arrow-key-dire
 import { HitofudePuzzleBoard } from "@/games/hitofude-puzzle/ui/board/HitofudePuzzleBoard";
 import { HitofudePuzzleHowToPlayDialog } from "@/games/hitofude-puzzle/ui/HitofudePuzzleHowToPlayDialog";
 import { HitofudePuzzleStatusAnnouncement } from "@/games/hitofude-puzzle/ui/HitofudePuzzlePlay/HitofudePuzzleStatusAnnouncement";
+import { useHitofudePuzzleSoundEffects } from "@/games/hitofude-puzzle/ui/HitofudePuzzlePlay/use-hitofude-puzzle-sound-effects";
 import { HitofudePuzzleResultScreen } from "@/games/hitofude-puzzle/ui/result/HitofudePuzzleResultScreen";
 import type {
   GamePlayScreenProps,
@@ -77,6 +78,7 @@ export function HitofudePuzzlePlay({
   onOpenDiagnostics,
 }: HitofudePuzzlePlayProps) {
   const playAreaRef = useRef<HTMLElement>(null);
+  useHitofudePuzzleSoundEffects(pathNotice, progress, path.length);
 
   useEffect(() => {
     if (progress !== "playing") {

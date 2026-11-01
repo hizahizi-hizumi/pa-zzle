@@ -15,6 +15,7 @@ const endMarkPopKeyframes: Keyframe[] = [
 /**
  * なぞり終えた道を、結果へ進める前に見せておく時間。完成した道の形がこのゲームの報酬なので、
  * 道全体を見渡せる間を置く。
+ * 終点の印を置いたときの音（`assets/sounds/cleared-end.flac`）は、印を置いてからこの間に鳴り終える長さで作っているので、変えるなら作り直す。
  */
 const CLEAR_TRACE_HOLD_MS = 1_000;
 /**
@@ -28,7 +29,8 @@ const clearTraceKeyframes: Keyframe[] = [
   { strokeDashoffset: 0 },
 ];
 
-function getClearTraceDurationMs(cellCount: number): number {
+/** 道を始点から終点まで光でなぞる時間。なぞり終えたときに終点の印を置く。 */
+export function getClearTraceDurationMs(cellCount: number): number {
   return Math.min(
     CLEAR_TRACE_MAX_MS,
     Math.max(CLEAR_TRACE_MIN_MS, cellCount * CLEAR_TRACE_MS_PER_CELL),
