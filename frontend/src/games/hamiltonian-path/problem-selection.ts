@@ -11,34 +11,65 @@ import type { ProblemSeed } from "@/games/problem-seed";
 import { selectProblemPoolEntry } from "@/games/problem-selection";
 
 /**
- * 問題集ができるまでの仮の生成条件。難易度分析をしていないので、レベルの難しさは保証しない。
- * 値は組み合わせモデルの規模の範囲（盤面サイズ 5〜8・壁率）から1つずつ選んだもの。
+ * 問題集ができるまでの仮の候補。生成条件と、その条件の候補番号のうち、難易度分析でそのレベルに分類された番号を
+ * 小さい順に20個並べた固定の一覧。一覧が決まっているので、URL の問題 ID から問題を引ける。
+ * 生成条件は、組み合わせ定義（`hamiltonianPathLevelCombinations`）の盤面サイズの範囲のうち、分析スクリプトの問題集合で
+ * そのレベルに分類された割合が高いもの（レベル1: 87%、2: 17%、3: 26%、4: 25%、5: 7%）。
  */
-const provisionalConditionsByDifficulty = {
-  "1": { size: 5, wallRatio: 0.15 },
-  "2": { size: 6, wallRatio: 0.15 },
-  "3": { size: 6, wallRatio: 0 },
-  "4": { size: 7, wallRatio: 0 },
-  "5": { size: 8, wallRatio: 0 },
+const provisionalCandidatesByDifficulty = {
+  "1": {
+    conditions: { size: 5, wallRatio: 0 },
+    candidateIndices: [
+      0, 1, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23,
+    ],
+  },
+  "2": {
+    conditions: { size: 6, wallRatio: 0 },
+    candidateIndices: [
+      5, 6, 34, 39, 41, 43, 44, 61, 86, 91, 99, 100, 106, 114, 116, 126, 136,
+      137, 149, 153,
+    ],
+  },
+  "3": {
+    conditions: { size: 7, wallRatio: 0 },
+    candidateIndices: [
+      2, 4, 15, 17, 25, 28, 33, 35, 36, 39, 43, 46, 51, 53, 58, 59, 60, 61, 63,
+      64,
+    ],
+  },
+  "4": {
+    conditions: { size: 8, wallRatio: 0 },
+    candidateIndices: [
+      4, 8, 9, 14, 15, 19, 21, 30, 41, 44, 46, 47, 50, 57, 58, 64, 65, 74, 81,
+      83,
+    ],
+  },
+  "5": {
+    conditions: { size: 8, wallRatio: 0 },
+    candidateIndices: [
+      16, 18, 22, 29, 31, 34, 43, 45, 51, 75, 119, 136, 153, 162, 187, 196, 215,
+      243, 256, 265,
+    ],
+  },
 } as const satisfies Record<
   HamiltonianPathDifficulty,
-  HamiltonianPathGenerationConditions
+  {
+    conditions: HamiltonianPathGenerationConditions;
+    candidateIndices: readonly number[];
+  }
 >;
-
-/**
- * 難易度ごとに出す仮の候補の数。候補番号 0 からこの数までの identity を、問題集の代わりの固定の一覧にする。
- * 一覧が決まっているので、URL の問題 ID から問題を引ける。
- */
-const PROVISIONAL_CANDIDATE_COUNT = 30;
 
 function listProvisionalIdentities(
   difficulty: HamiltonianPathDifficulty,
 ): HamiltonianPathProblemIdentity[] {
-  const { size, wallRatio } = provisionalConditionsByDifficulty[difficulty];
-  return Array.from(
-    { length: PROVISIONAL_CANDIDATE_COUNT },
-    (_, candidateIndex) =>
-      createHamiltonianPathProblemIdentity(size, wallRatio, candidateIndex),
+  const { conditions, candidateIndices } =
+    provisionalCandidatesByDifficulty[difficulty];
+  return candidateIndices.map((candidateIndex) =>
+    createHamiltonianPathProblemIdentity(
+      conditions.size,
+      conditions.wallRatio,
+      candidateIndex,
+    ),
   );
 }
 
