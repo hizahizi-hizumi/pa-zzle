@@ -3,7 +3,7 @@ import { type ReactNode, useRef } from "react";
 import {
   type TutorialBoardIntro,
   type TutorialFinish,
-  type TutorialRuleChip,
+  type TutorialRuleListItem,
   TutorialScreen,
 } from "@/components/TutorialOverlay/TutorialScreen";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -13,7 +13,7 @@ export type {
   TutorialBoardIntro,
   TutorialFinish,
   TutorialIntroScene,
-  TutorialRuleChip,
+  TutorialRuleListItem,
 } from "@/components/TutorialOverlay/TutorialScreen";
 
 type TutorialOverlayProps = {
@@ -24,7 +24,7 @@ type TutorialOverlayProps = {
   pictogramSvg: string;
   /** 操作より先に見せる、何をするパズルかの一文と、ゴール・始まりの盤面に添える一言。 */
   intro: TutorialIntro;
-  rules: readonly TutorialRuleChip[];
+  rules: readonly TutorialRuleListItem[];
   message: TutorialMessage;
   /** 導入を見せている間。開いたときと、もう一度始めたときは導入から始まる。 */
   introducing: boolean;

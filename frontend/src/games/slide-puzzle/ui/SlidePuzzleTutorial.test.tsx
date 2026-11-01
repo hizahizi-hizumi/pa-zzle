@@ -96,7 +96,7 @@ function getCuedTiles(kind: "hint" | "landed"): string[] {
     .map((tile) => tile.textContent ?? "");
 }
 
-function getRuleChipTexts(): string[] {
+function getRuleTexts(): string[] {
   return within(screen.getByRole("list", { name: "ルール" }))
     .getAllByRole("listitem")
     .map((item) => item.textContent ?? "");
@@ -130,12 +130,12 @@ describe("SlidePuzzleTutorial", () => {
       );
       const positions = [getTilePosition(4), getTilePosition(5)];
       const hinted = getCuedTiles("hint");
-      const chips = getRuleChipTexts();
+      const rules = getRuleTexts();
 
       expect(headline).toBeTruthy();
       expect(positions).toEqual(["1行1列", "3行2列"]);
       expect(hinted).toEqual(["5"]);
-      expect(chips).toEqual(["空白にスライド", "？"]);
+      expect(rules).toEqual(["空白にスライド", "伏せたルール"]);
     });
 
     test("印の無いタイルを押しても、スライドさせずに、印のタイルをタップするよう伝えて印を付け直すこと", () => {
@@ -195,14 +195,14 @@ describe("SlidePuzzleTutorial", () => {
         expect(headline).toBeTruthy();
       });
 
-      test("ルールをチップに加え、離れたタイルをタップすると間のタイルもまとめてスライドさせること", () => {
-        const chips = getRuleChipTexts();
+      test("ルールをルールの並びに加え、離れたタイルをタップすると間のタイルもまとめてスライドさせること", () => {
+        const rules = getRuleTexts();
         tapTiles([4]);
 
         const positions = [getTilePosition(4), getTilePosition(7)];
         const landed = getCuedTiles("landed");
 
-        expect(chips).toEqual(["空白にスライド", "同じ行・列はまとめて"]);
+        expect(rules).toEqual(["空白にスライド", "同じ行・列はまとめて"]);
         expect(positions).toEqual(["2行1列", "3行1列"]);
         expect(landed).toEqual(["4", "7"]);
       });
@@ -268,12 +268,12 @@ describe("SlidePuzzleTutorial", () => {
 
         const position = getTilePosition(5);
         const hinted = getCuedTiles("hint");
-        const chips = getRuleChipTexts();
+        const rules = getRuleTexts();
 
         expect(caption).toBeTruthy();
         expect(position).toBe("3行2列");
         expect(hinted).toEqual(["5"]);
-        expect(chips).toEqual(["空白にスライド", "？"]);
+        expect(rules).toEqual(["空白にスライド", "伏せたルール"]);
       });
     });
   });

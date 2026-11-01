@@ -25,7 +25,7 @@ export type TutorialRule<RuleId extends string> = {
 /**
  * 手を引く1手順。ゲームは、手順で操作させるところと、そこを終えたとみなす盤面を、この型を広げて持つ。
  * - `message`: この手順の間の一言。
- * - `introducedRuleId`: この手順で示すルール。手順を始めた時点で手に入り、上部のチップでも今示しているルールとして目立たせる。
+ * - `introducedRuleId`: この手順で示すルール。手順を始めた時点で手に入り、上部のルールの並びでも今示しているルールとして目立たせる。
  */
 export type TutorialStep<RuleId extends string> = {
   message: TutorialMessage;

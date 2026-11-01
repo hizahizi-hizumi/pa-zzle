@@ -145,23 +145,23 @@ function getHintedCellPositions(): string[] {
     .map((cell) => cell.getAttribute("aria-label")?.split(" ")[0] ?? "");
 }
 
-function getRuleChips(): HTMLElement[] {
+function getRuleItems(): HTMLElement[] {
   return within(screen.getByRole("list", { name: "ルール" })).getAllByRole(
     "listitem",
   );
 }
 
-function getRuleChipTexts(): string[] {
-  return getRuleChips().map((item) => item.textContent ?? "");
+function getRuleTexts(): string[] {
+  return getRuleItems().map((item) => item.textContent ?? "");
 }
 
 function getCellLabel(row: number, column: number): string | null {
   return getCell(row, column).getAttribute("aria-label");
 }
 
-/** 今の手順で示しているルールとして目立たせているチップ。 */
-function getCurrentRuleChipTexts(): string[] {
-  return getRuleChips()
+/** 今の手順で示しているルールとして目立たせているもの。 */
+function getCurrentRuleTexts(): string[] {
+  return getRuleItems()
     .filter((item) => item.querySelector('[aria-current="step"]'))
     .map((item) => item.textContent ?? "");
 }
@@ -204,14 +204,14 @@ describe("TakuzuTutorial", () => {
       const headline = screen.getByText("四角と丸で盤面を埋めていきます");
       const detail = screen.getByText("印のマスをタップしてください");
       const hinted = getHintedCellPositions();
-      const chips = getRuleChipTexts();
+      const rules = getRuleTexts();
 
       expect(title).toBeTruthy();
       expect(cells).toHaveLength(16);
       expect(headline).toBeTruthy();
       expect(detail).toBeTruthy();
       expect(hinted).toEqual(["1行1列"]);
-      expect(chips).toEqual(["？", "？", "？"]);
+      expect(rules).toEqual(["伏せたルール", "伏せたルール", "伏せたルール"]);
     });
 
     test("印のマスをタップすると四角になり、丸の置き方と次のマスを示すこと", () => {
@@ -251,14 +251,14 @@ describe("TakuzuTutorial", () => {
         finishSteps(2);
       });
 
-      test("ルールを示してチップに加え、今示しているルールとして目立たせること", () => {
+      test("ルールを示してルールの並びに加え、今示しているルールとして目立たせること", () => {
         const message = screen.getByText("同じものは3つ続けて並べられません");
-        const chips = getRuleChipTexts();
-        const currentChips = getCurrentRuleChipTexts();
+        const rules = getRuleTexts();
+        const currentRules = getCurrentRuleTexts();
 
         expect(message).toBeTruthy();
-        expect(chips).toEqual(["3つ続かない", "？", "？"]);
-        expect(currentChips).toEqual(["3つ続かない"]);
+        expect(rules).toEqual(["3つ続かない", "伏せたルール", "伏せたルール"]);
+        expect(currentRules).toEqual(["3つ続かない"]);
       });
 
       test("違反が続くまでは、違反の一言も揺れも出さないこと", () => {
@@ -294,10 +294,10 @@ describe("TakuzuTutorial", () => {
         advanceTime(violationReactionDelayMs * 2);
 
         const message = screen.getByText("縦にも3つ続けて並べられません");
-        const currentChips = getCurrentRuleChipTexts();
+        const currentRules = getCurrentRuleTexts();
 
         expect(message).toBeTruthy();
-        expect(currentChips).toEqual([]);
+        expect(currentRules).toEqual([]);
         expect(animate).not.toHaveBeenCalled();
       });
 
@@ -319,14 +319,14 @@ describe("TakuzuTutorial", () => {
         finishSteps(4);
       });
 
-      test("ルールを示してチップに加え、今示しているルールとして目立たせること", () => {
+      test("ルールを示してルールの並びに加え、今示しているルールとして目立たせること", () => {
         const message = screen.getByText("行の四角と丸は同じ数ずつです");
-        const chips = getRuleChipTexts();
-        const currentChips = getCurrentRuleChipTexts();
+        const rules = getRuleTexts();
+        const currentRules = getCurrentRuleTexts();
 
         expect(message).toBeTruthy();
-        expect(chips).toEqual(["3つ続かない", "同じ数", "？"]);
-        expect(currentChips).toEqual(["同じ数"]);
+        expect(rules).toEqual(["3つ続かない", "同じ数", "伏せたルール"]);
+        expect(currentRules).toEqual(["同じ数"]);
       });
     });
 
@@ -336,15 +336,15 @@ describe("TakuzuTutorial", () => {
         advanceTime(nextStepCueDelayMs);
       });
 
-      test("ルールを示してチップに加え、2行目の2マスに印を付けること", () => {
+      test("ルールを示してルールの並びに加え、2行目の2マスに印を付けること", () => {
         const message = screen.getByText("同じ並びの行・列は作れません");
-        const chips = getRuleChipTexts();
-        const currentChips = getCurrentRuleChipTexts();
+        const rules = getRuleTexts();
+        const currentRules = getCurrentRuleTexts();
         const hinted = getHintedCellPositions();
 
         expect(message).toBeTruthy();
-        expect(chips).toEqual(["3つ続かない", "同じ数", "同じ並びなし"]);
-        expect(currentChips).toEqual(["同じ並びなし"]);
+        expect(rules).toEqual(["3つ続かない", "同じ数", "同じ並びなし"]);
+        expect(currentRules).toEqual(["同じ並びなし"]);
         expect(hinted).toEqual(["2行2列", "2行3列"]);
       });
 
@@ -404,12 +404,12 @@ describe("TakuzuTutorial", () => {
 
       const message = screen.getByText("四角と丸で盤面を埋めていきます");
       const label = getCell(1, 1).getAttribute("aria-label");
-      const chips = getRuleChipTexts();
+      const rules = getRuleTexts();
 
       expect(caption).toBeTruthy();
       expect(message).toBeTruthy();
       expect(label).toBe("1行1列 空き");
-      expect(chips).toEqual(["？", "？", "？"]);
+      expect(rules).toEqual(["伏せたルール", "伏せたルール", "伏せたルール"]);
     });
 
     test("閉じてから開き直すと、最初から始まること", () => {
@@ -463,12 +463,12 @@ describe("TakuzuTutorial", () => {
       const headline = screen.getByText("四角と丸で盤面を埋めていきます");
       const labels = [getCellLabel(1, 1), getCellLabel(1, 2)];
       const hinted = getHintedCellPositions();
-      const chips = getRuleChipTexts();
+      const rules = getRuleTexts();
 
       expect(headline).toBeTruthy();
       expect(labels).toEqual(["1行1列 空き", "1行2列 四角 固定"]);
       expect(hinted).toEqual(["1行1列"]);
-      expect(chips).toEqual(["？", "？", "？"]);
+      expect(rules).toEqual(["伏せたルール", "伏せたルール", "伏せたルール"]);
     });
 
     describe("盤面の段まで進んだ場合", () => {

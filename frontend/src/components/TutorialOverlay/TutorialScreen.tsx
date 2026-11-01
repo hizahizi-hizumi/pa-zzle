@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import {
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
@@ -12,7 +12,6 @@ import {
 } from "react";
 
 import { GamePictogram } from "@/components/GamePictogram";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DialogClose,
@@ -25,9 +24,9 @@ import { cn } from "@/lib/utils";
 
 /**
  * 上部に並べるルール。手に入れるまでは中身を伏せる。
- * - `current`: 今の手順で示しているルール。一言で示したルールがどれかを、チップの側でも分かるようにする。
+ * - `current`: 今の手順で示しているルール。一言で示したルールがどれかを、ルールの並びの側でも分かるようにする。
  */
-export type TutorialRuleChip = {
+export type TutorialRuleListItem = {
   id: string;
   label: string;
   earned: boolean;
@@ -68,7 +67,7 @@ type TutorialScreenProps = {
   /** パズル選択と同じピクトグラム。名前と一緒に見せる。 */
   pictogramSvg: string;
   intro: TutorialIntro;
-  rules: readonly TutorialRuleChip[];
+  rules: readonly TutorialRuleListItem[];
   message: TutorialMessage;
   /** 導入を見せている間。開いたときと、もう一度始めたときに導入から始まる。 */
   introducing: boolean;
@@ -502,37 +501,50 @@ export function TutorialScreen({
             </DialogClose>
           </div>
         </header>
+        {/* 押せる部品に見えないよう、枠や塗りを付けず、文書の一部として読める印と文字で並べる。 */}
         <ul
           aria-label="ルール"
           className={cn(
-            "flex min-h-6 shrink-0 flex-wrap gap-1.5 px-4",
+            "flex min-h-6 shrink-0 flex-wrap items-center gap-x-4 gap-y-1 px-4 text-supporting",
             stageView.rulesClassName,
           )}
         >
-          {rules.map(function renderRuleChip(rule) {
+          {rules.map(function renderRule(rule) {
             return (
               <li key={rule.id} className="flex">
                 {rule.earned ? (
-                  // 手に入れた瞬間だけ現れる動きを付けるため、伏せたチップと別の要素にして作り直す。
+                  // 手に入れた瞬間だけ現れる動きを付けるため、伏せたルールと別の要素にして作り直す。
                   <span
                     key="earned"
-                    className="flex animate-in fade-in-0 zoom-in-75 duration-300 ease-(--ease-enter) motion-reduce:animate-none"
+                    aria-current={rule.current ? "step" : undefined}
+                    className={cn(
+                      "flex animate-in items-center gap-1 fade-in-0 zoom-in-75 duration-300 ease-(--ease-enter) motion-reduce:animate-none",
+                      rule.current
+                        ? "text-foreground"
+                        : "text-muted-foreground",
+                    )}
                   >
-                    <Badge
-                      variant="secondary"
-                      aria-current={rule.current ? "step" : undefined}
+                    <Check aria-hidden="true" className="size-3.5 shrink-0" />
+                    {/* 今のルールだけ太くしても並びがずれないよう、太い字の幅を先に取っておく。 */}
+                    <span
+                      data-label={rule.label}
                       className={cn(
-                        "transition-shadow duration-300",
-                        rule.current && "ring-2 ring-ring",
+                        "inline-flex flex-col after:invisible after:h-0 after:overflow-hidden after:font-semibold after:content-[attr(data-label)]",
+                        rule.current && "font-semibold",
                       )}
                     >
                       {rule.label}
-                    </Badge>
+                    </span>
                   </span>
                 ) : (
-                  <Badge key="hidden" variant="outline">
-                    ？
-                  </Badge>
+                  // 中身を伏せたルール。文字を伏せた跡のような、控えめな棒だけを置く。盤面の印の破線とは見分けられる形にする。
+                  <span key="hidden" className="flex h-5 items-center">
+                    <span className="sr-only">伏せたルール</span>
+                    <span
+                      aria-hidden="true"
+                      className="h-1.5 w-12 rounded-full bg-muted-foreground/25"
+                    />
+                  </span>
                 )}
               </li>
             );
