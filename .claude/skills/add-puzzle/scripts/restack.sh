@@ -1,28 +1,34 @@
 #!/bin/bash
 # restack.sh
 # 原因の段のブランチを直したあと、その上の段を新しい先端へ積み直す。
+# --onto <rev> を付けると、スタックの全段を <rev>（例: origin/main）の上へ積み直す。
 #
 # 既定は dry-run: 使い捨ての worktree で積み直しを試し、旧コミット ID・段ごとに載せ直すコミット・
 # 衝突する段とファイルを出す。ローカルのブランチも origin も変えない。
-# --execute: rerere を有効にし、--update-refs で上の段のブランチを積み直し、各段の先端で検証し、
-# すべて通ったときだけ push --atomic --force-with-lease する。
+# --execute: --update-refs で上の段のブランチを積み直し、各段が下の段を祖先に持つことと各段の先端の検証を
+# 確かめ、すべて通ったときだけ push --atomic --force-with-lease する。
+# rerere はこのスクリプトの git 呼び出しにだけ有効にし、リポジトリの設定は変えない。
 #
 # 使い方:
 #   restack.sh [--execute [--continue] | --abort] [--remote <名前>] [--old-base <rev>] [--verify <コマンド>] \
 #     [--record <ファイル>] <原因の段のブランチ> <上の段のブランチ>...
-#   上の段のブランチは下の段から順に並べる。
+#   restack.sh --onto <rev> [同じオプション] <最下段のブランチ> <上の段のブランチ>...
+#   段のブランチは下の段から順に並べる。
 #
 # 前提:
 #   - すべての段のローカルブランチがある。原因の段のブランチには直したコミットがある。
-#   - <old-base>（既定は <remote>/<原因の段>。直す前の原因の段の先端）が、すぐ上の段の祖先である。
-#   - 上の段のブランチは、どの worktree でも checkout していない（--update-refs が書き換えずに飛ばすため）。
+#   - <old-base>（既定は <remote>/<原因の段>。--onto では <rev> と最下段の merge-base）が、
+#     積み直す最も下の段の祖先である。
+#   - 積み直す段のブランチは、どの worktree でも checkout していない（--update-refs が書き換えずに飛ばすため）。
 #
 # 衝突: rerere で解けない衝突で止まったら、出力された worktree で解いて git add し、
-# 同じ引数に --continue を付けて再実行する。検証で落ちたときも、直してから --continue で検証と push をやり直せる。
+# 同じ引数に --continue を付けて再実行する。
+# 検証に落ちたら --abort で戻し、原因の段で直してから積み直しをやり直す。積み直した後の段にコミットを
+# 足して --continue すると、その上の段が直しを含まないので、祖先の確認で止まる。
 # --abort: 途中の積み直しを捨て、段のブランチを積み直す前のコミットへ戻す。
 # 出力の旧コミット ID は PR 本文に残す（ローカルの tag や reflog はコンテナと一緒に消える）。
 #
-# 終了コード: 0 成功（dry-run では衝突なし）、1 前提か検証の失敗、2 引数の誤り、3 衝突で停止。
+# 終了コード: 0 成功（dry-run では衝突なし）、1 前提・祖先・検証の失敗、2 引数の誤り、3 衝突で停止。
 
 set -euo pipefail
 
@@ -45,6 +51,7 @@ execute=false
 resume=false
 abort=false
 remote=origin
+onto=""
 old_base=""
 verify_command="$DEFAULT_VERIFY_COMMAND"
 record_file=""
@@ -55,6 +62,7 @@ while (($# > 0)); do
     --continue) resume=true ;;
     --abort) abort=true ;;
     --remote) remote="${2:?}"; shift ;;
+    --onto) onto="${2:?}"; shift ;;
     --old-base) old_base="${2:?}"; shift ;;
     --verify) verify_command="${2:?}"; shift ;;
     --record) record_file="${2:?}"; shift ;;
@@ -65,7 +73,7 @@ while (($# > 0)); do
   shift
 done
 
-(($# >= 2)) || usage
+if [[ -n "$onto" ]]; then (($# >= 1)) || usage; else (($# >= 2)) || usage; fi
 if $resume && ! $execute; then
   echo "ERROR: --continue は --execute と一緒に使う" >&2
   usage
@@ -75,10 +83,19 @@ if $abort && $execute; then
   usage
 fi
 
-readonly cause_branch="$1"
-shift
-readonly upper_branches=("$@")
-readonly stack_branches=("$cause_branch" "${upper_branches[@]}")
+# new_base: 積み直す段を載せる先。stack_branches: 旧コミットを控え、検証し、push する段。
+if [[ -n "$onto" ]]; then
+  readonly cause_branch=""
+  new_base="$onto"
+  readonly upper_branches=("$@")
+  readonly stack_branches=("${upper_branches[@]}")
+else
+  readonly cause_branch="$1"
+  shift
+  new_base="$cause_branch"
+  readonly upper_branches=("$@")
+  readonly stack_branches=("$cause_branch" "${upper_branches[@]}")
+fi
 readonly top_branch="${upper_branches[-1]}"
 
 cd "$(git rev-parse --show-toplevel)"
@@ -92,6 +109,7 @@ readonly state_dir
 readonly rebase_tree="$state_dir/tree"
 readonly old_ids_file="$state_dir/old-ids.tsv"
 readonly stack_file="$state_dir/stack"
+readonly -a RERERE_OPTIONS=(-c rerere.enabled=true -c rerere.autoUpdate=true)
 
 sha_of() {
   git rev-parse --verify --quiet "$1^{commit}" || echo "なし"
@@ -109,7 +127,7 @@ branches_checked_out_in_worktrees() {
 stage_of_commit() {
   local commit="$1" branch old_sha
   while IFS=$'\t' read -r branch old_sha _; do
-    [[ "$branch" == "$cause_branch" ]] && continue
+    [[ -n "$cause_branch" && "$branch" == "$cause_branch" ]] && continue
     if git merge-base --is-ancestor "$commit" "$old_sha"; then
       echo "$branch"
       return
@@ -124,10 +142,11 @@ check_preconditions() {
     git rev-parse --verify --quiet "refs/heads/$branch" >/dev/null ||
       fail "ローカルブランチ $branch がない。git branch $branch $remote/$branch で作る"
   done
+  git rev-parse --verify --quiet "$new_base^{commit}" >/dev/null || fail "積み直す先 $new_base がない"
   git rev-parse --verify --quiet "$old_base^{commit}" >/dev/null ||
-    fail "直す前の原因の段の先端 $old_base がない。git fetch するか --old-base で指定する"
-  [[ "$(sha_of "$cause_branch")" != "$(sha_of "$old_base")" ]] ||
-    fail "$cause_branch が $old_base から動いていない。原因の段を直してコミットしてから実行する"
+    fail "積み直す前の土台 $old_base がない。git fetch するか --old-base で指定する"
+  [[ "$(sha_of "$new_base")" != "$(sha_of "$old_base")" ]] ||
+    fail "$new_base が $old_base から動いていない。原因の段を直してコミットしてから実行する（--onto では、すでに $new_base の上にある）"
 
   previous="$old_base"
   for branch in "${upper_branches[@]}"; do
@@ -161,13 +180,13 @@ record_old_ids() {
   for branch in "${stack_branches[@]}"; do
     printf '%s\t%s\t%s\n' "$branch" "$(sha_of "refs/heads/$branch")" "$(sha_of "$remote/$branch")" >>"$old_ids_file"
   done
-  printf '%s\n' "$old_base" "${stack_branches[@]}" >"$stack_file"
+  printf '%s\n' "$old_base" "$new_base" "${stack_branches[@]}" >"$stack_file"
 }
 
 print_old_ids() {
   local branch local_sha remote_sha
   echo "## 旧コミット ID（積み直し前。PR 本文に残す）"
-  echo "直す前の原因の段の先端: $(git rev-parse "$old_base")"
+  echo "積み直す前の土台: $(git rev-parse "$old_base")"
   echo "| ブランチ | ローカル | $remote |"
   echo "|---|---|---|"
   while IFS=$'\t' read -r branch local_sha remote_sha; do
@@ -175,7 +194,7 @@ print_old_ids() {
   done <"$old_ids_file"
   if [[ -n "$record_file" ]]; then
     {
-      echo "直す前の原因の段の先端: $(git rev-parse "$old_base")"
+      echo "積み直す前の土台: $(git rev-parse "$old_base")"
       cat "$old_ids_file"
     } >"$record_file"
   fi
@@ -185,7 +204,7 @@ print_old_ids() {
 print_plan() {
   local branch previous="$old_base"
   echo "## 載せ直すコミット（段ごと）"
-  echo "$cause_branch: 新しい先端 $(short "$(sha_of "$cause_branch")")（直す前の先端 $(short "$(git rev-parse "$old_base")") に無いコミット $(git rev-list --count "$old_base..$cause_branch") 件）"
+  echo "載せる先 $new_base: $(short "$(sha_of "$new_base")")（積み直す前の土台 $(short "$(git rev-parse "$old_base")") に無いコミット $(git rev-list --count "$old_base..$new_base") 件）"
   for branch in "${upper_branches[@]}"; do
     echo "$branch: $(git rev-list --count "$previous..$branch") コミット"
     git log --oneline --no-decorate "$previous..$branch" | sed 's/^/  /'
@@ -215,7 +234,7 @@ drive_rebase() {
       unmerged_files | sed 's/^/  /'
       return "$EXIT_CONFLICT"
     fi
-    GIT_EDITOR=true git -C "$rebase_tree" -c rerere.enabled=true -c rerere.autoUpdate=true rebase --continue >/dev/null 2>&1 || true
+    GIT_EDITOR=true git -C "$rebase_tree" "${RERERE_OPTIONS[@]}" rebase --continue >/dev/null 2>&1 || true
   done
 }
 
@@ -232,8 +251,7 @@ dry_run() {
   print_plan
 
   git worktree add --quiet --detach "$rebase_tree" "$top_branch"
-  git -C "$rebase_tree" -c rerere.enabled=true -c rerere.autoUpdate=true \
-    rebase --onto "$cause_branch" "$old_base" >/dev/null 2>&1 || true
+  git -C "$rebase_tree" "${RERERE_OPTIONS[@]}" rebase --onto "$new_base" "$old_base" >/dev/null 2>&1 || true
   drive_rebase || status=$?
 
   echo "## dry-run の結果"
@@ -262,8 +280,8 @@ verify_stages() {
     git worktree remove --force "$verify_tree"
   done
   if ((${#failed[@]} > 0)); then
-    echo "検証に落ちた段: ${failed[*]}。push していない。直してから --continue で検証と push をやり直す。"
-    echo "積み直しを捨てるときは、同じ引数に --abort を付けて実行する。"
+    echo "検証に落ちた段: ${failed[*]}。push していない。"
+    echo "同じ引数に --abort を付けて戻し、原因の段で直してから積み直しをやり直す。"
     return "$EXIT_FAILURE"
   fi
 }
@@ -289,18 +307,31 @@ push_stages() {
   fi
 }
 
+# 検証に落ちた段だけを直して --continue すると、その上の段が直しを含まないまま push されるのを防ぐ。
+check_stack_ancestry() {
+  local branch previous="$new_base"
+  for branch in "${upper_branches[@]}"; do
+    if ! git merge-base --is-ancestor "$previous" "$branch"; then
+      echo "$previous が $branch の祖先ではない。push していない。"
+      echo "同じ引数に --abort を付けて戻し、原因の段で直してから積み直しをやり直す。"
+      return "$EXIT_FAILURE"
+    fi
+    previous="$branch"
+  done
+}
+
 print_range_diff() {
   local old_top
   old_top="$(awk -F'\t' -v top="$top_branch" '$1 == top { print $2 }' "$old_ids_file")"
   echo "## 積み直しの対応（git range-diff。= は同じ変更、! は内容が変わったコミット）"
-  git range-diff --no-color -s "$old_base..$old_top" "$cause_branch..$top_branch" || true
+  git range-diff --no-color -s "$old_base..$old_top" "$new_base..$top_branch" || true
   echo
 }
 
 run_execute() {
   if $resume; then
     [[ -d "$state_dir" ]] || fail "続きの状態 $state_dir がない。--continue を付けずに実行する"
-    diff -q <(printf '%s\n' "$old_base" "${stack_branches[@]}") "$stack_file" >/dev/null ||
+    diff -q <(printf '%s\n' "$old_base" "$new_base" "${stack_branches[@]}") "$stack_file" >/dev/null ||
       fail "前回と引数が違う（前回: $(tr '\n' ' ' <"$stack_file")）"
   else
     [[ ! -e "$state_dir" ]] || fail "前回の積み直しが残っている: $state_dir。続けるなら --continue、捨てるなら --abort を付けて同じ引数で実行する"
@@ -309,10 +340,8 @@ run_execute() {
     record_old_ids
     print_old_ids
     print_plan
-    git config rerere.enabled true
-    git config rerere.autoUpdate true
     git worktree add --quiet --detach "$rebase_tree" "$top_branch"
-    git -C "$rebase_tree" rebase --update-refs --onto "$cause_branch" "$old_base" "$top_branch" >/dev/null 2>&1 || true
+    git -C "$rebase_tree" "${RERERE_OPTIONS[@]}" rebase --update-refs --onto "$new_base" "$old_base" "$top_branch" >/dev/null 2>&1 || true
   fi
 
   if [[ -d "$rebase_tree" ]] && rebase_in_progress; then
@@ -327,6 +356,7 @@ run_execute() {
   git -C "$rebase_tree" switch --quiet --detach
 
   print_range_diff
+  check_stack_ancestry
   verify_stages
   push_stages
   print_old_ids
@@ -354,11 +384,22 @@ run_abort() {
 if [[ -z "$old_base" ]]; then
   if ($resume || $abort) && [[ -f "$stack_file" ]]; then
     old_base="$(head -1 "$stack_file")"
+  elif [[ -n "$onto" ]]; then
+    old_base="$(git merge-base "$onto" "${upper_branches[0]}")" || fail "$onto と ${upper_branches[0]} に共通の祖先がない"
   else
     old_base="$remote/$cause_branch"
   fi
 fi
-# origin へ push すると <remote>/<原因の段> が動くので、直す前の先端はコミット ID で持つ。
+# --onto の先は fetch で動くので、最初の実行の時点のコミット ID で持つ。
+if [[ -n "$onto" ]]; then
+  if ($resume || $abort) && [[ -f "$stack_file" ]]; then
+    new_base="$(sed -n 2p "$stack_file")"
+  else
+    new_base="$(git rev-parse --verify --quiet "$onto^{commit}")" || fail "積み直す先 $onto がない"
+  fi
+fi
+readonly new_base
+# origin へ push すると <remote>/<原因の段> が動くので、積み直す前の土台はコミット ID で持つ。
 old_base="$(git rev-parse --verify --quiet "$old_base^{commit}" || echo "$old_base")"
 
 if $abort; then
