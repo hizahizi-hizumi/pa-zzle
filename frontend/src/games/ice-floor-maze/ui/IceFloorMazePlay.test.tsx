@@ -222,7 +222,7 @@ describe("IceFloorMazePlay", () => {
     });
 
     test("閉じ込めの知らせを出さないこと", () => {
-      const notice = screen.queryByText("閉じ込められた");
+      const notice = screen.queryByText("もうゴールに止まれない");
 
       expect(notice).toBeNull();
     });
@@ -266,12 +266,12 @@ describe("IceFloorMazePlay", () => {
     });
   });
 
-  describe("閉じ込められた場合", () => {
+  describe("閉じ込めに入った場合", () => {
     beforeEach(() => {
       renderPlay({ isTrapped: true });
     });
 
-    test("閉じ込められたことを知らせ、待ったと盤面を戻すへ導くこと", () => {
+    test("もうゴールに止まれないことを知らせ、待ったと盤面を戻すへ導くこと", () => {
       const notice = screen.getByRole("status");
 
       fireEvent.click(within(notice).getByRole("button", { name: "待った" }));
@@ -279,7 +279,7 @@ describe("IceFloorMazePlay", () => {
         within(notice).getByRole("button", { name: "盤面を戻す" }),
       );
 
-      expect(within(notice).getByText("閉じ込められた")).toBeTruthy();
+      expect(within(notice).getByText("もうゴールに止まれない")).toBeTruthy();
       expect(callbacks.onUndo).toHaveBeenCalledOnce();
       expect(callbacks.onRestart).toHaveBeenCalledOnce();
     });
@@ -326,10 +326,10 @@ describe("IceFloorMazePlay", () => {
 
       test("駒が滑り着くまで知らせず、滑り着いてから知らせること", async () => {
         rerenderPlay({ isTrapped: true, lastSlide });
-        const noticeWhileSliding = screen.queryByText("閉じ込められた");
+        const noticeWhileSliding = screen.queryByText("もうゴールに止まれない");
         await act(async () => finishSlideAnimation());
 
-        const noticeAfterSliding = screen.queryByText("閉じ込められた");
+        const noticeAfterSliding = screen.queryByText("もうゴールに止まれない");
 
         expect(noticeWhileSliding).toBeNull();
         expect(noticeAfterSliding).not.toBeNull();

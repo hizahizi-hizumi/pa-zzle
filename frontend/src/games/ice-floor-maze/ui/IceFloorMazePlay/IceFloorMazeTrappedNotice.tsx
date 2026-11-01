@@ -9,7 +9,10 @@ type IceFloorMazeTrappedNoticeProps = {
   onRestart: () => void;
 };
 
-/** ゴールへ行けず、崩す・割る滑りのほかは同じところを回るだけになったこと（閉じ込め）を知らせ、戻る操作へ導く。 */
+/**
+ * もうゴールに止まれないことを知らせ、戻る操作へ導く。閉じ込め（ゴールで止まれず、崩す・割る滑りのほかは同じところを回るだけ）に
+ * 入ったときに出し、ゴールに止まれる状態へ戻るまで出し続ける。駒はまだ動けるので、動けないとは言わない。
+ */
 export function IceFloorMazeTrappedNotice({
   canUndo,
   onUndo,
@@ -21,7 +24,7 @@ export function IceFloorMazeTrappedNotice({
       className="mx-auto max-w-md rounded-xl border-(length:--border-width-normal) bg-muted/50 px-3 py-2"
     >
       <div className="text-center">
-        <p className="text-play-context">閉じ込められた</p>
+        <p className="text-play-context">もうゴールに止まれない</p>
       </div>
       <div className="mt-1 flex justify-center gap-1">
         <Button

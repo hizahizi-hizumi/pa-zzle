@@ -8,7 +8,10 @@ import type {
 import type { IceFloorMazePooledProblem } from "@/games/ice-floor-maze/problem/problem-pool";
 import { selectIceFloorMazeProblemForDifficulty } from "@/games/ice-floor-maze/problem-selection";
 import type { IceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
-import { classifyIceFloorMazeDeadlock } from "@/games/ice-floor-maze/puzzle/deadlock";
+import {
+  classifyIceFloorMazeDeadlock,
+  type IceFloorMazeDeadlockStatus,
+} from "@/games/ice-floor-maze/puzzle/deadlock";
 import {
   doesIceFloorMazeSlidePassGoal,
   getIceFloorMazeNeighbor,
@@ -55,7 +58,7 @@ import { calculateTimeDeltaMs, type SpeedScoreRule } from "@/games/score";
  * 直前の成立した滑り。盤面はこれで跡を描き、滑りを動かす。`id` は滑りごとに変わる。
  * `from` から `path` のマスを順に通り、最後のマス `to` で止まった。`passedGoal` はゴールを止まらずに通り過ぎたか。
  * `crumbledRock` はこの滑りで崩れたもろい岩、`crackedIce` は割れて水面になった薄い氷のマス。
- * `entersTrap` は閉じ込めを知らせていない状態から知らせる状態へ入ったか。知らせた後の滑りでは `false`。
+ * `entersTrap` はもうゴールに止まれないことを知らせていない状態から、知らせる状態へ入ったか。知らせた後の滑りでは `false`。
  * 成立しない向きの入力では変わらず、待った・盤面を戻す・リセット・別の問題で消える。
  */
 export type IceFloorMazeLastSlide = {
@@ -142,8 +145,9 @@ export type IceFloorMazePlay = GamePlay<
     restartCount: number;
     optimalMoveCount: number;
     /**
-     * 閉じ込めを知らせるプレイ中だけ `true`。ゴールで止まれず、もろい岩を崩さず薄い氷を割らない滑りでは同じところを回るだけの
-     * 状態（閉じ込め）に入ったら知らせ、そこから崩す・割る滑りで進んでも、待った・盤面を戻すで戻るまで知らせ続ける。
+     * もうゴールに止まれないことを知らせるプレイ中だけ `true`。ゴールで止まれず、もろい岩を崩さず薄い氷を割らない滑りでは
+     * 同じところを回るだけの状態（閉じ込め）に入ったら知らせ、そこから崩す・割る滑りで進んでも、待った・盤面を戻すで戻っても、
+     * ゴールで止まれる状態に戻るまで知らせ続ける。
      */
     isTrapped: boolean;
     lastSlide: IceFloorMazeLastSlide | null;
@@ -158,6 +162,8 @@ type IceFloorMazePlayState = {
   problemIdentity: IceFloorMazeProblemIdentity;
   optimalMoveCount: number;
   progress: GameProgress;
+  /** もうゴールに止まれないことを知らせているか。どの状態から来たかで決まるので、盤面の状態とは別に持つ。 */
+  trapNoticed: boolean;
   lastSlide: IceFloorMazeLastSlide | null;
   blockedInput: IceFloorMazeBlockedInput | null;
 };
@@ -177,6 +183,7 @@ function createPlayState(
     problemIdentity: identity,
     optimalMoveCount,
     progress: "playing",
+    trapNoticed: false,
     ...clearedInputs,
   };
 }
@@ -224,19 +231,15 @@ function slideInPlay(
     };
   }
 
-  const wasTrapNoticed = isTrapNoticedAt(
-    board,
-    current.session.puzzleState,
-    goal,
-  );
-  const trapNoticed = noticeTrapAfterSlide(
+  const trapNoticed = noticeTrap(
     board,
     session.puzzleState,
     goal,
-    wasTrapNoticed,
+    current.trapNoticed,
   );
   return {
     ...applyPlaySession(current, session),
+    trapNoticed,
     lastSlide: {
       id: inputId,
       direction,
@@ -247,44 +250,72 @@ function slideInPlay(
       crackedIce: slide.crackedIce,
       passedGoal: doesIceFloorMazeSlidePassGoal(slide, goal),
       isClearingMove: session.status === "cleared",
-      entersTrap: trapNoticed && !wasTrapNoticed,
+      entersTrap: trapNoticed && !current.trapNoticed,
     },
     blockedInput: null,
   };
 }
 
-/**
- * 状態ごとの、閉じ込めを知らせるか。閉じ込めの判定は状態のグラフをたどるので、同じ状態を何度も判定しない。
- * 状態のオブジェクトは滑るたびに作られ、待ったで戻る先として使い回され、別の問題の状態と共有されないので、状態だけを鍵にする。
- * 閉じ込めから崩す・割る滑りで進んだ先は、詰みのままでも閉じ込めでなくなることがある。知らせが消えて抜け出せたと
- * 誤らせないよう、知らせた状態から滑った先は知らせ続ける（詰みから滑った先は詰みのまま）。
- */
-const trapNoticedByState = new WeakMap<IceFloorMazeState, boolean>();
+/** 待った・盤面を戻すで戻った後の状態。戻った先でも、知らせるかを決め直す。 */
+function returnInPlay(
+  current: IceFloorMazePlayState,
+  returned: IceFloorMazeSession,
+): IceFloorMazePlayState {
+  const next = applyPlaySession(current, returned);
+  if (next === current) {
+    return current;
+  }
+  const { board, goal } = returned.problem;
+  return {
+    ...next,
+    trapNoticed: noticeTrap(
+      board,
+      returned.puzzleState,
+      goal,
+      current.trapNoticed,
+    ),
+    ...clearedInputs,
+  };
+}
 
-function isTrapNoticedAt(
+/**
+ * 状態ごとの、ゴールで止まれるかの判定。判定は状態のグラフをたどるので、同じ状態を何度も判定しない。
+ * 状態のオブジェクトは滑るたびに作られ、待ったで戻る先として使い回され、別の問題の状態と共有されないので、状態だけを鍵にする。
+ */
+const deadlockStatusByState = new WeakMap<
+  IceFloorMazeState,
+  IceFloorMazeDeadlockStatus
+>();
+
+function classifyDeadlock(
   board: IceFloorMazeBoard,
   state: IceFloorMazeState,
   goal: number,
-): boolean {
-  return noticeTrapAfterSlide(board, state, goal, false);
+): IceFloorMazeDeadlockStatus {
+  const cached = deadlockStatusByState.get(state);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const status = classifyIceFloorMazeDeadlock(board, state, goal);
+  deadlockStatusByState.set(state, status);
+  return status;
 }
 
-function noticeTrapAfterSlide(
+/**
+ * 移った先の状態で、もうゴールに止まれないことを知らせるか。閉じ込めに入ったら知らせる。
+ * 知らせた後は、崩す・割る滑りで閉じ込めでなくなっても、待った・盤面を戻すで戻っても、詰みのままなら知らせ続ける。
+ * 知らせが消えて、抜け出せた・戻れたと誤らせないため。ゴールで止まれる状態に戻ったら知らせをやめる。
+ */
+function noticeTrap(
   board: IceFloorMazeBoard,
   state: IceFloorMazeState,
   goal: number,
   wasTrapNoticed: boolean,
 ): boolean {
-  const cached = trapNoticedByState.get(state);
-  if (cached !== undefined) {
-    return cached;
-  }
-
-  const noticed =
-    wasTrapNoticed ||
-    classifyIceFloorMazeDeadlock(board, state, goal) === "trapped";
-  trapNoticedByState.set(state, noticed);
-  return noticed;
+  const status = classifyDeadlock(board, state, goal);
+  return (
+    status === "trapped" || (wasTrapNoticed && status !== "goal-reachable")
+  );
 }
 
 /** `initialProblem` を渡すと、その問題で始める。渡さなければ `avoidedProblemId` の問題を避けて選ぶ。 */
@@ -310,23 +341,15 @@ export function useIceFloorMazePlay(
   }, []);
 
   const undo = useCallback(() => {
-    setPlay((current) => {
-      const next = applyPlaySession(
-        current,
-        undoIceFloorMazeSession(current.session),
-      );
-      return next === current ? current : { ...next, ...clearedInputs };
-    });
+    setPlay((current) =>
+      returnInPlay(current, undoIceFloorMazeSession(current.session)),
+    );
   }, []);
 
   const restart = useCallback(() => {
-    setPlay((current) => {
-      const next = applyPlaySession(
-        current,
-        restartIceFloorMazeSession(current.session),
-      );
-      return next === current ? current : { ...next, ...clearedInputs };
-    });
+    setPlay((current) =>
+      returnInPlay(current, restartIceFloorMazeSession(current.session)),
+    );
   }, []);
 
   const replay = useCallback(() => {
@@ -336,6 +359,7 @@ export function useIceFloorMazePlay(
         current,
         createIceFloorMazeSession(current.session.problem, startedAt),
       ),
+      trapNoticed: false,
       ...clearedInputs,
     }));
   }, []);
@@ -355,11 +379,7 @@ export function useIceFloorMazePlay(
 
   const { board, goal } = session.problem;
   const { puzzleState } = session;
-  const isTrapped = useMemo(
-    () =>
-      session.status === "playing" && isTrapNoticedAt(board, puzzleState, goal),
-    [board, goal, puzzleState, session.status],
-  );
+  const isTrapped = session.status === "playing" && play.trapNoticed;
   const result = useMemo(() => {
     const sessionResult = getIceFloorMazeSessionResult(session);
     return sessionResult
