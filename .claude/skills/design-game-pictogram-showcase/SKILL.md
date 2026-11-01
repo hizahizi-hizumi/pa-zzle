@@ -91,7 +91,7 @@ node .claude/skills/design-game-pictogram-showcase/scripts/check_gallery.cjs <ht
 
 ### 6. 選ばれた方向を掘る
 
-選ばれた A と B を保ったまま、間・誇張・終わり方など良くなりうる差分だけを少数案に分岐し、4〜5 を繰り返す。案数は人間の指定を優先する。レビュー結果の読み方は `references/review.md` の 6 節、分岐の幅と発散へ戻る条件は `references/exploration.md` の 9〜10 節。
+選ばれた A と B を保ったまま、間・誇張・終わり方など良くなりうる差分だけを少数案に分岐し、4〜5 を繰り返す。案数は人間の指定を優先する。各候補の manifest に `based_on` で元の案を書く（`references/review.md` の 1 節）。レビュー結果の読み方は `references/review.md` の 6 節、分岐の幅と発散へ戻る条件は `references/exploration.md` の 9〜10 節。
 
 ### 7. 仕上げて登録する
 

@@ -7,9 +7,11 @@ self:  one sandboxed srcdoc iframe per candidate (candidates share class names, 
 human: a mobile-first single column page. Every SVG is shown through <img src="data:image/svg+xml...">
        wrapped in an outer <svg> that carries the host context (color variables, .dark,
        data-pictogram-motion) as an ancestor, as the app does, so candidates stay isolated without
-       iframes. Each <img> has data-view (hero / list / other / base) and data-theme, and a candidate's
-       <img> also data-candidate (its id). Decisions and
-       notes are kept in localStorage and, with --db-doc, in the artifact database.
+       iframes. Each <img> has data-view (hero / list / other / base / previous-hero / previous-list) and
+       data-theme; a candidate's <img> also has data-candidate (its id), and a previous-round design's
+       <img> data-previous (its based_on id). Previous-round designs that the candidates are based on are
+       shown first, without decision UI. Decisions and notes are kept in localStorage and, with --db-doc,
+       in the artifact database.
 """
 
 from __future__ import annotations
@@ -25,7 +27,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from check_animation import APP_COLOR_TOKENS, PLAYBACK_VALUES
+from check_animation import APP_COLOR_TOKENS, PLAYBACK_VALUES, based_on_errors
 from check_self_review import load_json as load_self_review_json
 from check_self_review import validate as validate_self_review
 
@@ -208,6 +210,51 @@ def read_svg(manifest_path: Path, value: object, label: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{label} has no file")
     return resolve(manifest_path, value).read_text(encoding="utf-8")
+
+
+@dataclass(frozen=True)
+class Origin:
+    """A previous-round design a candidate is based on (manifest based_on)."""
+
+    id: str
+    path: Path
+    label: str
+
+    @property
+    def key(self) -> tuple[str, Path]:
+        return (self.id, self.path)
+
+    @property
+    def caption(self) -> str:
+        return f"{self.label}（{self.id}）" if self.label else self.id
+
+
+def origins_of(manifest_path: Path, candidate: dict[str, Any]) -> list[Origin]:
+    based_on = candidate.get("based_on")
+    if based_on is None:
+        return []
+    errors = based_on_errors(text_field(candidate, "id"), based_on, manifest_path.parent)
+    if errors:
+        raise ValueError("; ".join(errors))
+    return [
+        Origin(
+            id=text_field(origin, "id"),
+            path=resolve(manifest_path, origin["file"]).resolve(),
+            label=text_field(origin, "label"),
+        )
+        for origin in based_on
+    ]
+
+
+def origins_with_derived(
+    manifest_path: Path, candidates: list[dict[str, Any]]
+) -> list[tuple[Origin, list[dict[str, Any]]]]:
+    """Each origin once, with the candidates based on it, in order of first reference."""
+    grouped: dict[tuple[str, Path], tuple[Origin, list[dict[str, Any]]]] = {}
+    for candidate in candidates:
+        for origin in origins_of(manifest_path, candidate):
+            grouped.setdefault(origin.key, (origin, []))[1].append(candidate)
+    return list(grouped.values())
 
 
 def other_game_pictograms(games_dir: Path, game_id: str) -> list[tuple[str, str]]:
@@ -567,12 +614,23 @@ def data_uri(svg: str) -> str:
     return "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode("ascii")
 
 
+PLAYED_VIEWS = frozenset({"hero", "previous-hero"})
+
+
 def themed_images(
-    svg: str, themes: dict[str, dict[str, str]], view: str, candidate_id: str | None = None
+    svg: str,
+    themes: dict[str, dict[str, str]],
+    view: str,
+    candidate_id: str | None = None,
+    *,
+    previous_id: str | None = None,
 ) -> str:
-    """One <img> per theme; view is hero (played) / list (the candidate still) / other / base."""
-    play = view == "hero"
+    """One <img> per theme; view is hero / previous-hero (played), list / previous-list (still), other or
+    base."""
+    play = view in PLAYED_VIEWS
     candidate = f' data-candidate="{html.escape(candidate_id)}"' if candidate_id else ""
+    if previous_id:
+        candidate += f' data-previous="{html.escape(previous_id)}"'
     images = []
     for theme, values in themes.items():
         uri = data_uri(hosted(svg, values, theme, play))
@@ -584,13 +642,24 @@ def themed_images(
     return "".join(images)
 
 
+def origin_line(origins: list[Origin], anchors: dict[tuple[str, Path], str]) -> str:
+    if not origins:
+        return ""
+    links = "、".join(
+        f'<a href="#{anchors[origin.key]}">{html.escape(origin.caption)}</a>' for origin in origins
+    )
+    return f'<p class="origin">元の案: {links}</p>'
+
+
 def human_card(
     manifest_path: Path,
     candidate: dict[str, Any],
     themes: dict[str, dict[str, str]],
     others: list[tuple[str, str]],
+    anchors: dict[tuple[str, Path], str],
 ) -> str:
     candidate_id, fields = candidate_fields(candidate)
+    origin_html = origin_line(origins_of(manifest_path, candidate), anchors)
     svg = read_svg(manifest_path, candidate.get("file"), f"candidate {candidate_id}")
     escaped_id = html.escape(candidate_id)
     name = text_field(candidate, "name")
@@ -612,6 +681,7 @@ def human_card(
     return f"""
 <article class="card" data-id="{escaped_id}">
   <h3>{html.escape(name or candidate_id)} <small>{subtitle}{html.escape(fields["playback"])}</small></h3>
+  {origin_html}
   <p class="meta">{html.escape(fields["hypothesis"])}</p>
   <div class="views">
     <figure class="hero">{themed_images(svg, themes, "hero", candidate_id)}<figcaption>ヒーロー（再生）</figcaption></figure>
@@ -628,6 +698,43 @@ def human_card(
   <div class="decisions" role="group" aria-label="{escaped_id} の判定">{decision_buttons(candidate_id)}</div>
   <textarea class="note" rows="2" placeholder="メモ"></textarea>
 </article>"""
+
+
+def previous_card(
+    origin: Origin, anchor: str, derived: list[dict[str, Any]], themes: dict[str, dict[str, str]]
+) -> str:
+    svg = origin.path.read_text(encoding="utf-8")
+    subtitle = f" <small>{html.escape(origin.id)}</small>" if origin.label else ""
+    derived_names = "、".join(
+        html.escape(text_field(candidate, "name") or text_field(candidate, "id")) for candidate in derived
+    )
+    return f"""
+<article class="previous" id="{anchor}">
+  <h3>{html.escape(origin.label or origin.id)}{subtitle}</h3>
+  <p class="meta">この案から: {derived_names}</p>
+  <div class="views">
+    <figure class="hero">{themed_images(svg, themes, "previous-hero", previous_id=origin.id)}<figcaption>ヒーロー（再生）</figcaption></figure>
+    <figure><span class="tile selected">{themed_images(svg, themes, "previous-list", previous_id=origin.id)}</span><figcaption>一覧の選択中（静止）</figcaption></figure>
+  </div>
+  <button type="button" class="replay">最初から再生</button>
+</article>"""
+
+
+def previous_section(
+    origins: list[tuple[Origin, list[dict[str, Any]]]],
+    anchors: dict[tuple[str, Path], str],
+    themes: dict[str, dict[str, str]],
+) -> str:
+    if not origins:
+        return ""
+    cards = "".join(
+        previous_card(origin, anchors[origin.key], derived, themes) for origin, derived in origins
+    )
+    return (
+        '<h2 class="family">前回の候補</h2>'
+        '<p class="lead">今回の案の元になった前回の案です。見比べるためのもので、判定はしません。</p>'
+        f"{cards}"
+    )
 
 
 HUMAN_SCRIPT = """
@@ -665,8 +772,8 @@ HUMAN_SCRIPT = """
       card.querySelectorAll('.decision').forEach((item) => item.classList.toggle('active', item.dataset.decision === entry(id).decision));
       save();
     }));
-    card.querySelector('.replay').addEventListener('click', () => visibleHeroes(card).forEach(restart));
   });
+  document.querySelectorAll('.replay').forEach((button) => button.addEventListener('click', () => visibleHeroes(button.closest('article')).forEach(restart)));
   document.getElementById('overall').addEventListener('input', (event) => { review.overall = event.target.value; save(); });
   document.getElementById('replay-all').addEventListener('click', () => visibleHeroes(document).forEach(restart));
   const themeButton = document.getElementById('theme');
@@ -735,9 +842,11 @@ def build_human_document(
     db_doc: str | None,
 ) -> str:
     light, dark = themes["light"], themes["dark"]
+    origins = origins_with_derived(manifest_path, candidates)
+    anchors = {origin.key: f"previous-{index}" for index, (origin, _) in enumerate(origins, start=1)}
     families = "".join(
         f'<h2 class="family">{html.escape(family)}</h2>'
-        + "".join(human_card(manifest_path, candidate, themes, others) for candidate in members)
+        + "".join(human_card(manifest_path, candidate, themes, others, anchors) for candidate in members)
         for family, members in grouped_by_family(candidates).items()
     )
     base = manifest.get("base_pictogram")
@@ -784,9 +893,12 @@ def build_human_document(
   button {{ font: inherit; font-size: 14px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--muted-fg); background: var(--bg); color: var(--fg); }}
   #save-status {{ font-size: 12px; }}
   .family {{ font-size: 15px; margin: 24px 0 8px; line-height: 1.4; }}
-  .card {{ background: var(--bg); border-radius: 12px; padding: 14px; margin-bottom: 14px; border: 1px solid var(--border); }}
-  .card h3 {{ font-size: 16px; margin: 0 0 4px; line-height: 1.4; }}
-  .card small {{ font-weight: 400; font-size: 11px; }}
+  .card, .previous {{ background: var(--bg); border-radius: 12px; padding: 14px; margin-bottom: 14px; border: 1px solid var(--border); }}
+  .previous {{ border-style: dashed; }}
+  .card h3, .previous h3 {{ font-size: 16px; margin: 0 0 4px; line-height: 1.4; }}
+  .card small, .previous small {{ font-weight: 400; font-size: 11px; }}
+  .origin {{ font-size: 12px; margin: 0 0 6px; line-height: 1.5; }}
+  .origin a {{ color: inherit; }}
   .meta {{ font-size: 12px; margin: 0 0 10px; line-height: 1.5; }}
   .views {{ display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }}
   figure {{ margin: 0; text-align: center; }}
@@ -826,6 +938,7 @@ def build_human_document(
   <span id="save-status"></span>
 </div>
 {base_html}
+{previous_section(origins, anchors, themes)}
 {families}
 <h2 class="family">全体メモ</h2>
 <textarea id="overall" rows="5" placeholder="候補どうしの比較、組み合わせたい点、次に試したいことなど"></textarea>
