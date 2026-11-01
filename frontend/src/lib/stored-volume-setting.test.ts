@@ -23,7 +23,7 @@ afterEach(() => {
 
 describe("getVolume", () => {
   const cases = [
-    ["何も保存していない", null, null, 6],
+    ["何も保存していない", null, null, 5],
     ["音量を保存した", { volume: 3, unmutedVolume: 3 }, null, 3],
     ["消音した音量を保存した", { volume: 0, unmutedVolume: 8 }, null, 0],
     [
@@ -33,11 +33,11 @@ describe("getVolume", () => {
       3,
     ],
     ["以前の鳴らさない設定だけを保存した", null, { enabled: false }, 0],
-    ["以前の鳴らす設定だけを保存した", null, { enabled: true }, 6],
-    ["以前の設定として形の違う値を保存した", null, { enabled: "no" }, 6],
-    ["範囲を超える音量を保存した", { volume: 11, unmutedVolume: 6 }, null, 6],
-    ["整数でない音量を保存した", { volume: 2.5, unmutedVolume: 6 }, null, 6],
-    ["戻す音量が 0 の値を保存した", { volume: 0, unmutedVolume: 0 }, null, 6],
+    ["以前の鳴らす設定だけを保存した", null, { enabled: true }, 5],
+    ["以前の設定として形の違う値を保存した", null, { enabled: "no" }, 5],
+    ["範囲を超える音量を保存した", { volume: 11, unmutedVolume: 6 }, null, 5],
+    ["整数でない音量を保存した", { volume: 2.5, unmutedVolume: 6 }, null, 5],
+    ["戻す音量が 0 の値を保存した", { volume: 0, unmutedVolume: 0 }, null, 5],
   ] as const;
 
   describe.each(cases)("%s端末の場合", (_, stored, legacyStored, expected) => {
@@ -74,7 +74,7 @@ describe("getVolume", () => {
     test("初期の音量を返すこと", () => {
       const volume = setting.getVolume();
 
-      expect(volume).toBe(6);
+      expect(volume).toBe(5);
     });
   });
 
@@ -92,7 +92,7 @@ describe("getVolume", () => {
     test("初期の音量に戻すこと", () => {
       setting.toggleMuted();
 
-      expect(setting.getVolume()).toBe(6);
+      expect(setting.getVolume()).toBe(5);
     });
   });
 });
@@ -111,7 +111,7 @@ describe("setVolume", () => {
     setting.setVolume(2);
 
     expect(setting.getVolume()).toBe(2);
-    expect(readStored()).toEqual({ volume: 2, unmutedVolume: 6 });
+    expect(readStored()).toEqual({ volume: 2, unmutedVolume: 5 });
     expect(onChange).toHaveBeenCalledOnce();
   });
 
@@ -137,7 +137,7 @@ describe("setVolume", () => {
     test("消音を戻すと、その前に選び終えた音量へ戻すこと", () => {
       setting.toggleMuted();
 
-      expect(setting.getVolume()).toBe(6);
+      expect(setting.getVolume()).toBe(5);
     });
   });
 });

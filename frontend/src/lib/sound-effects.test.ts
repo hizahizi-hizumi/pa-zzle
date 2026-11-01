@@ -327,7 +327,7 @@ describe("playSound", () => {
     });
   });
 
-  describe("鳴らしている間に初期の音量から半分の音量にした場合", () => {
+  describe("鳴らしている間に初期の音量から 1 段階下げた場合", () => {
     let soundEffects: Awaited<ReturnType<typeof importSoundEffects>>;
     let master: ReturnType<typeof createFakeGain> | undefined;
     let initialGain: number;
@@ -344,11 +344,11 @@ describe("playSound", () => {
       initialGain = master?.gain.value ?? 0;
     });
 
-    test("鳴っている音も含め、出口の大きさを 1/4 にすること", () => {
-      soundEffects.setSoundEffectsVolume(3);
+    test("鳴っている音も含め、出口の大きさを音量の比の二乗にすること", () => {
+      soundEffects.setSoundEffectsVolume(4);
 
       const target = master?.gain.setTargetAtTime.mock.lastCall?.[0];
-      expect(target).toBeCloseTo(initialGain / 4);
+      expect(target).toBeCloseTo(initialGain * (4 / 5) ** 2);
     });
   });
 });

@@ -138,7 +138,7 @@ describe("設定", () => {
     const volumeNames = within(dialog)
       .getAllByRole("group")
       .map((group) => group.textContent);
-    expect(volumeNames).toEqual(["効果音6", "BGM6"]);
+    expect(volumeNames).toEqual(["効果音5", "BGM5"]);
     expect(playSound).not.toHaveBeenCalled();
   });
 });

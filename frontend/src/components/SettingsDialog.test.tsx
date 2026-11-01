@@ -11,6 +11,7 @@ import { SettingsDialog } from "@/components/SettingsDialog";
 import { backgroundMusicVolumeSetting } from "@/lib/background-music-setting";
 import { playSound } from "@/lib/sound-effects";
 import { soundEffectsVolumeSetting } from "@/lib/sound-effects-setting";
+import { DEFAULT_VOLUME } from "@/lib/stored-volume-setting";
 
 vi.mock("@/lib/sound-effects", () => ({
   defineSoundEffect: (url: string) => ({ url }),
@@ -42,8 +43,8 @@ afterEach(() => {
   cleanup();
   vi.mocked(playSound).mockClear();
   vi.unstubAllGlobals();
-  soundEffectsVolumeSetting.commitVolume(6);
-  backgroundMusicVolumeSetting.commitVolume(6);
+  soundEffectsVolumeSetting.commitVolume(DEFAULT_VOLUME);
+  backgroundMusicVolumeSetting.commitVolume(DEFAULT_VOLUME);
   window.localStorage.clear();
 });
 
@@ -62,14 +63,14 @@ describe("SettingsDialog", () => {
       const volumes = ["効果音", "BGM"].map((name) => {
         const row = within(dialog).getByRole("group", { name });
         return {
-          text: within(row).getByText("6").textContent,
+          text: within(row).getByText("5").textContent,
           slider: within(row).getByRole("slider").getAttribute("aria-valuenow"),
         };
       });
 
       expect(volumes).toEqual([
-        { text: "6", slider: "6" },
-        { text: "6", slider: "6" },
+        { text: "5", slider: "5" },
+        { text: "5", slider: "5" },
       ]);
     });
 
@@ -78,12 +79,12 @@ describe("SettingsDialog", () => {
 
       fireEvent.keyDown(slider, { key: "ArrowLeft" });
 
-      expect(soundEffectsVolumeSetting.getVolume()).toBe(5);
+      expect(soundEffectsVolumeSetting.getVolume()).toBe(4);
       expect(readStored("pa-zzle.sound-effects-volume.v1")).toEqual({
-        volume: 5,
-        unmutedVolume: 5,
+        volume: 4,
+        unmutedVolume: 4,
       });
-      expect(backgroundMusicVolumeSetting.getVolume()).toBe(6);
+      expect(backgroundMusicVolumeSetting.getVolume()).toBe(5);
       expect(playSound).toHaveBeenCalledExactlyOnceWith(
         appDecisionSound.playStartSound,
       );
@@ -94,12 +95,12 @@ describe("SettingsDialog", () => {
 
       fireEvent.keyDown(slider, { key: "ArrowRight" });
 
-      expect(backgroundMusicVolumeSetting.getVolume()).toBe(7);
+      expect(backgroundMusicVolumeSetting.getVolume()).toBe(6);
       expect(readStored("pa-zzle.background-music-volume.v1")).toEqual({
-        volume: 7,
-        unmutedVolume: 7,
+        volume: 6,
+        unmutedVolume: 6,
       });
-      expect(soundEffectsVolumeSetting.getVolume()).toBe(6);
+      expect(soundEffectsVolumeSetting.getVolume()).toBe(5);
       expect(playSound).not.toHaveBeenCalled();
     });
 
@@ -128,8 +129,8 @@ describe("SettingsDialog", () => {
       test("もう一度押すと、消音する前の音量に戻すこと", () => {
         fireEvent.click(screen.getByRole("button", { name: "BGMを消音" }));
 
-        expect(within(getVolumeRow("BGM")).getByText("6")).toBeTruthy();
-        expect(backgroundMusicVolumeSetting.getVolume()).toBe(6);
+        expect(within(getVolumeRow("BGM")).getByText("5")).toBeTruthy();
+        expect(backgroundMusicVolumeSetting.getVolume()).toBe(5);
       });
     });
 

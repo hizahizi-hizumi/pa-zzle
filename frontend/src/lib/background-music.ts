@@ -42,11 +42,11 @@ type MusicVoice = {
 
 /**
  * 音量が最大のときに BGM の出口で掛ける大きさ。曲は -18.5 LUFS 前後で作ってあり、
- * 初期の音量では約 0.2 倍（-14 dB）にして、最後の出口の持ち上げ（`@/lib/audio-context`）と合わせて -28 LUFS 前後で流す。
+ * 初期の音量では約 0.05 倍（-26 dB）にして、最後の出口の持ち上げ（`@/lib/audio-context`）と合わせて -40 LUFS 前後で流す。
  * 初期の音量どうしで効果音（`@/lib/sound-effects`）より約 20 dB 小さくし、効果音を曲に埋もれさせない。
- * 音量が最大では -19 LUFS 前後になり、曲のピークにも最後の出口の圧縮がほぼ掛からない。
+ * 音量が最大では -28 LUFS 前後になり、曲のピークに最後の出口の圧縮は掛からない。
  */
-const BACKGROUND_MUSIC_MAX_GAIN = 0.55;
+const BACKGROUND_MUSIC_MAX_GAIN = 0.198;
 /** 音量を変えたとき、出口の大きさが新しい音量に近づく速さ。急に変えて音にノイズが乗らないよう、わずかに時間を掛ける。 */
 const VOLUME_CHANGE_TIME_CONSTANT_SEC = 0.02;
 const FADE_IN_SEC = 1.2;

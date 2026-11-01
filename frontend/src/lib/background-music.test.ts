@@ -249,7 +249,7 @@ describe("playBackgroundMusic", () => {
       expect(getStoppedUrls()).toEqual(["/home.mp3"]);
     });
 
-    describe("初期の音量から半分の音量にした場合", () => {
+    describe("初期の音量から 1 段階下げた場合", () => {
       let output: ReturnType<typeof createFakeGain> | undefined;
       let initialGain: number;
 
@@ -258,11 +258,11 @@ describe("playBackgroundMusic", () => {
         initialGain = output?.gain.value ?? 0;
       });
 
-      test("流している曲の出口の大きさを 1/4 にすること", () => {
-        backgroundMusic.setBackgroundMusicVolume(3);
+      test("流している曲の出口の大きさを、音量の比の二乗にすること", () => {
+        backgroundMusic.setBackgroundMusicVolume(4);
 
         const target = output?.gain.setTargetAtTime.mock.lastCall?.[0];
-        expect(target).toBeCloseTo(initialGain / 4);
+        expect(target).toBeCloseTo(initialGain * (4 / 5) ** 2);
         expect(getStoppedUrls()).toEqual([]);
       });
     });

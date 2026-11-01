@@ -167,7 +167,7 @@ describe("PlayHeader", () => {
       const volumeNames = within(dialog)
         .getAllByRole("group")
         .map((group) => group.textContent);
-      expect(volumeNames).toEqual(["効果音6", "BGM6"]);
+      expect(volumeNames).toEqual(["効果音5", "BGM5"]);
       expect(props.onBackToHome).not.toHaveBeenCalled();
       expect(props.onChangeDifficulty).not.toHaveBeenCalled();
       expect(playSound).not.toHaveBeenCalled();

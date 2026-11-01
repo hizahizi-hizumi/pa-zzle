@@ -10,7 +10,7 @@
 import { isRecordObject } from "@/lib/type-guards";
 
 export const MAX_VOLUME = 10;
-export const DEFAULT_VOLUME = 6;
+export const DEFAULT_VOLUME = 5;
 
 type SettingStorage = Pick<Storage, "getItem" | "setItem">;
 
@@ -58,7 +58,7 @@ export type VolumeSetting = {
 /**
  * 音量を、出口の GainNode に掛ける大きさにする。`maxGain` は音量が `MAX_VOLUME` のときの大きさ。
  * 耳は音の大きさを比で感じるので、スライダーの位置が音量の感じ方とおおよそ揃うよう、音量の二乗に比例させる
- * （音量が半分で -12 dB、`DEFAULT_VOLUME` で -8.9 dB）。
+ * （音量が半分の `DEFAULT_VOLUME` で -12 dB）。
  */
 export function getVolumeGain(volume: number, maxGain: number): number {
   return maxGain * (volume / MAX_VOLUME) ** 2;
