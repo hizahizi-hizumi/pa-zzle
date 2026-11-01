@@ -42,6 +42,8 @@ function listBoardsWithinDistanceFromSolved(
   return entries;
 }
 
+const SOLVER_TEST_TIMEOUT_MS = 30_000;
+
 describe("createSlidePuzzlePatternDatabaseHeuristic", () => {
   // テストでは小さな集合だけを使い、構築を一瞬で終わらせる。
   const database = buildSlidePuzzlePatternDatabase(4, [[1, 2], [5, 6], [3]]);
@@ -68,6 +70,8 @@ describe("createSlidePuzzlePatternDatabaseHeuristic", () => {
 
       expect(result).toMatchObject({ status: "solved", optimalMoveCount });
     },
+    // 最短手数の探索を実際に回すため、遅い実行環境では既定の 5 秒を超えることがある。
+    SOLVER_TEST_TIMEOUT_MS,
   );
 
   test.each(cases)(
