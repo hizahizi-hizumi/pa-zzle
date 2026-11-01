@@ -31,7 +31,8 @@ const defaultLimits: NonogramSolutionSearchLimits = {
 
 /**
  * ヒントに合う解を数える。仮に決めるマスは行優先で最初の未確定マスで、黒を先に試す。
- * 問題の採否には使わず、線の読みだけで解ける問題の解がただ1つであることを確かめるのに使う。
+ * 生成器の採否には使わない。難易度分析で、線の読みで止まる問題の解が1つ（線の読みだけでは届かない）か複数かを分け、
+ * 問題集の検証で、収めた問題の解がただ1つであることを確かめるのに使う。
  */
 export function countNonogramSolutions(
   clues: NonogramClues,
