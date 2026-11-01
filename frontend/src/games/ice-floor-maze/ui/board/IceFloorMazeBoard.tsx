@@ -95,7 +95,7 @@ const clearPopKeyframes: Keyframe[] = [
 ];
 
 /**
- * 盤面の外壁・氷・岩・もろい岩・薄い氷・水面・ゴール・駒と直前の滑りの跡を描き、滑り・ぶつかって止まる反応・
+ * 盤面の外壁・氷・岩・もろい岩・崩れた跡・薄い氷・水面・ゴール・駒と直前の滑りの跡を描き、滑り・ぶつかって止まる反応・
  * ゴールの通過・崩れる・割れる・押し戻し・完成演出を動かす。入力は受けない。
  */
 export function IceFloorMazeBoard({
@@ -241,22 +241,28 @@ export function IceFloorMazeBoard({
           width: `min(100cqw, min(100cqh, 44rem) * ${aspectRatio})`,
         }}
       >
-        <IceFloorMazeTerrain board={board} cells={cells} goal={goal} />
+        <IceFloorMazeTerrain
+          board={board}
+          cells={cells}
+          goal={goal}
+          beneathCellFaces={
+            lastSlide ? (
+              <IceFloorMazeTrail
+                key={lastSlide.id}
+                ref={trailRef}
+                board={board}
+                direction={lastSlide.direction}
+                from={lastSlide.from}
+                to={lastSlide.to}
+              />
+            ) : null
+          }
+        />
         {lastSlide ? (
           <IceFloorMazeCellChanges
             key={`cell-changes-${lastSlide.id}`}
             board={board}
             slide={lastSlide}
-          />
-        ) : null}
-        {lastSlide ? (
-          <IceFloorMazeTrail
-            key={lastSlide.id}
-            ref={trailRef}
-            board={board}
-            direction={lastSlide.direction}
-            from={lastSlide.from}
-            to={lastSlide.to}
           />
         ) : null}
         <g transform={`translate(${goalCenter.x} ${goalCenter.y})`}>

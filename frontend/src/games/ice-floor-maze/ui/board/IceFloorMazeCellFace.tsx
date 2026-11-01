@@ -3,17 +3,30 @@ import {
   createIceFloorMazeCrackPath,
   createIceFloorMazeWaterHollowPath,
   createIceFloorMazeWavePath,
+  formatIceFloorMazePolygon,
   iceFloorMazePaneShape,
   iceFloorMazeRockShape,
+  iceFloorMazeRubbleChipPolygons,
 } from "@/games/ice-floor-maze/ui/board/cell-shapes";
 import type { IceFloorMazeCellClipIds } from "@/games/ice-floor-maze/ui/board/IceFloorMazeCellClipPaths";
 import { iceFloorMazeToneClassNames } from "@/games/ice-floor-maze/ui/ice-floor-maze-tone";
 
-/** 氷の地の上に載せて描くマス。氷と盤面の外は地形の地で描く。 */
-export type IceFloorMazeCellFaceKind = Exclude<
-  IceFloorMazeStateCell,
-  "ice" | "outside"
->;
+/**
+ * 氷の地の上に載せて描くマス。氷と盤面の外は地形の地で描く。
+ * `rubble` は、もろい岩が崩れてできた氷のマスに残す石くずの跡。
+ */
+export type IceFloorMazeCellFaceKind =
+  | Exclude<IceFloorMazeStateCell, "ice" | "outside">
+  | "rubble";
+
+const rockTones = {
+  face: iceFloorMazeToneClassNames.stoneFace,
+  shadow: iceFloorMazeToneClassNames.stoneShadow,
+};
+const brittleRockTones = {
+  face: iceFloorMazeToneClassNames.brittleFace,
+  shadow: iceFloorMazeToneClassNames.brittleShadow,
+};
 
 type IceFloorMazeCellFaceProps = {
   kind: IceFloorMazeCellFaceKind;
@@ -36,7 +49,7 @@ export function IceFloorMazeCellFace({
 }: IceFloorMazeCellFaceProps) {
   switch (kind) {
     case "rock":
-      return renderRockBlock();
+      return renderRockBlock(rockTones);
     case "brittle-rock":
       return (
         <>
@@ -47,7 +60,7 @@ export function IceFloorMazeCellFace({
               clipPath={`url(#${clipId})`}
               style={{ transformBox: "fill-box", transformOrigin: "center" }}
             >
-              {renderRockBlock()}
+              {renderRockBlock(brittleRockTones)}
             </g>
           ))}
         </>
@@ -67,6 +80,15 @@ export function IceFloorMazeCellFace({
           ))}
         </>
       );
+    case "rubble":
+      return iceFloorMazeRubbleChipPolygons.map((polygon) => (
+        <polygon
+          key={formatIceFloorMazePolygon(polygon)}
+          points={formatIceFloorMazePolygon(polygon)}
+          strokeLinejoin="round"
+          className={iceFloorMazeToneClassNames.rubble}
+        />
+      ));
     case "water":
       return (
         <>
@@ -87,7 +109,7 @@ export function IceFloorMazeCellFace({
   }
 }
 
-function renderRockBlock() {
+function renderRockBlock(tones: { face: string; shadow: string }) {
   const { inset, width, height, shadowDepth, cornerRadius } =
     iceFloorMazeRockShape;
   return (
@@ -98,7 +120,7 @@ function renderRockBlock() {
         width={width}
         height={height}
         rx={cornerRadius}
-        className={iceFloorMazeToneClassNames.stoneShadow}
+        className={tones.shadow}
       />
       <rect
         x={inset}
@@ -106,7 +128,7 @@ function renderRockBlock() {
         width={width}
         height={height}
         rx={cornerRadius}
-        className={iceFloorMazeToneClassNames.stoneFace}
+        className={tones.face}
       />
     </>
   );
