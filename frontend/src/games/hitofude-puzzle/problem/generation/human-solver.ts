@@ -301,6 +301,18 @@ class HumanSolver {
     return state;
   }
 
+  /** `before` から状態が変わった辺を、両端の盤面のマスの組（小さい方が先）で挙げる。 */
+  listChangedEdges(
+    state: SolverState,
+    before: Int8Array,
+  ): (readonly [number, number])[] {
+    return this.#edgeEnds.flatMap(([left, right], edge) =>
+      state.edges[edge] === before[edge]
+        ? []
+        : [[this.#boardCells[left]!, this.#boardCells[right]!] as const],
+    );
+  }
+
   /** 使う・使わないと決まった辺を、両端の盤面のマスの組（小さい方が先）で挙げる。 */
   listDecidedEdges(
     state: SolverState,
@@ -1017,6 +1029,16 @@ function isSignal(error: unknown): boolean {
 }
 
 /**
+ * 局所の推論（段階1〜2）だけでは進めなくなった局面（考えどころ）。
+ * - `decidedEdges`: その局面を抜けるまでに（段階3〜4か仮置きで）決まった辺。両端の盤面のマスの組（小さい方が先）。
+ * - `refutationLength`: 仮置きで抜けたときの先読みの手数。段階3〜4で抜けたら 0。
+ */
+export type HitofudePuzzleStall = {
+  decidedEdges: readonly (readonly [number, number])[];
+  refutationLength: number;
+};
+
+/**
  * 始点と盤面だけから（解を見ずに）、段階1〜6の推論で道を決めていく経過を追う。
  * 段階1〜2で止まるたびに段階3〜4を加え、それでも進まなければ局面ごとの1段仮置き、さらに2段仮置きを使う。
  */
@@ -1024,11 +1046,42 @@ export function traceHitofudePuzzleHumanSolve(
   board: HitofudePuzzleBoard,
   options: HitofudePuzzleHumanSolveOptions = {},
 ): HitofudePuzzleHumanSolveTrace {
+  return runHumanSolve(board, options, null);
+}
+
+/**
+ * `traceHitofudePuzzleHumanSolve` と同じ経過で、局所の推論だけでは進めなくなった局面を順に挙げる。
+ * 盤面の向きは与えられたまま読む。
+ */
+export function listHitofudePuzzleStalls(
+  board: HitofudePuzzleBoard,
+): HitofudePuzzleStall[] {
+  const stalls: HitofudePuzzleStall[] = [];
+  runHumanSolve(board, {}, (stall) => stalls.push(stall));
+  return stalls;
+}
+
+function runHumanSolve(
+  board: HitofudePuzzleBoard,
+  options: HitofudePuzzleHumanSolveOptions,
+  onStall: ((stall: HitofudePuzzleStall) => void) | null,
+): HitofudePuzzleHumanSolveTrace {
   const solver = new HumanSolver(
     board,
     options.workLimit ?? HITOFUDE_PUZZLE_HUMAN_SOLVE_WORK_LIMIT,
   );
   const state = solver.initialState();
+  /** 止まった局面の、止まった時点の辺の状態と、抜けたときの先読みの手数。抜けたら `onStall` へ渡す。 */
+  let openStall: { edges: Int8Array; refutationLength: number } | null = null;
+  const closeStall = () => {
+    if (onStall !== null && openStall !== null) {
+      onStall({
+        decidedEdges: solver.listChangedEdges(state, openStall.edges),
+        refutationLength: openStall.refutationLength,
+      });
+    }
+    openStall = null;
+  };
   const tracker = new StepTracker();
   let assumptionCount = 0;
   let deepAssumptionCount = 0;
@@ -1040,11 +1093,15 @@ export function traceHitofudePuzzleHumanSolve(
 
   try {
     for (;;) {
+      closeStall();
       solver.propagate(state, tracker, 2);
       if (solver.isComplete(state)) {
         break;
       }
       stallCount += 1;
+      if (onStall !== null) {
+        openStall = { edges: Int8Array.from(state.edges), refutationLength: 0 };
+      }
       firstStallDecidedEdgeRatio ??= solver.decidedEdgeRatio(state);
       const usedBefore = state.usedTotal;
       const unknownBefore = countUnknownEdges(state);
@@ -1061,6 +1118,9 @@ export function traceHitofudePuzzleHumanSolve(
       firstAssumptionDecidedEdgeRatio ??= solver.decidedEdgeRatio(state);
       const singleLength = solver.assumeAtStall(state, tracker);
       if (singleLength !== null) {
+        if (openStall !== null) {
+          openStall.refutationLength = singleLength;
+        }
         assumptionCount += 1;
         refutationLengths.push(singleLength);
         continue;
@@ -1069,9 +1129,13 @@ export function traceHitofudePuzzleHumanSolve(
       if (deepLength === null) {
         break;
       }
+      if (openStall !== null) {
+        openStall.refutationLength = deepLength;
+      }
       deepAssumptionCount += 1;
       refutationLengths.push(deepLength);
     }
+    closeStall();
     if (solver.isComplete(state)) {
       status = "solved";
     }
@@ -1180,9 +1244,9 @@ export function createHitofudePuzzleRefuter(
 
 /**
  * 盤面に始点から道 `path` を引いた状態から、段階 `highestStage` までの推論（仮置き無し）を進め、使う・使わないと決まった辺を
- * 返す。矛盾したら `null`。推論ごとの導き方を小さな盤面で確かめるために使う。
+ * 返す。矛盾したら `null`。推論ごとの導き方を小さな盤面で確かめることと、難易度選択の見本で局所の推論だけで決まる辺を描くことに使う。
  */
-function deduceHitofudePuzzleEdges(
+export function deduceHitofudePuzzleEdges(
   board: HitofudePuzzleBoard,
   path: readonly number[],
   highestStage: 2 | 3 | 4,
@@ -1205,5 +1269,3 @@ function deduceHitofudePuzzleEdges(
     unused: solver.listDecidedEdges(state, UNUSED),
   };
 }
-
-export const _private = { deduceHitofudePuzzleEdges };

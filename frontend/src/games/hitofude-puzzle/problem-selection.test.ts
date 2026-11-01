@@ -15,6 +15,7 @@ import { generateHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/g
 import {
   HITOFUDE_PUZZLE_GENERATOR_VERSION,
   type HitofudePuzzleRecordedProblemIdentity,
+  type HitofudePuzzleSolveWorkload,
 } from "@/games/hitofude-puzzle/problem/problem";
 import {
   listHitofudePuzzlePoolEntries,
@@ -291,6 +292,34 @@ describe("selectHitofudePuzzlePreviewProblem", () => {
       expect(problems).toContainEqual(first);
       expect(first.size).toBe(largestSize);
       expect(second).toEqual(first);
+    });
+
+    test("最も大きい盤面の問題のうち、先読みの重さが真ん中の問題を選ぶこと", () => {
+      const loadOf = ({
+        assumptionCount,
+        longestRefutationLength,
+      }: HitofudePuzzleSolveWorkload) =>
+        measureHitofudePuzzleLookaheadLoad(
+          assumptionCount,
+          longestRefutationLength,
+        );
+      const candidates = listHitofudePuzzlePoolEntries(difficulty)
+        .map(toHitofudePuzzlePooledProblem)
+        .filter(({ problem }) => problem.size === largestSize);
+      const loads = candidates
+        .map(({ workload }) => loadOf(workload))
+        .sort((left, right) => left - right);
+      const selected = selectHitofudePuzzlePreviewProblem(difficulty);
+      const selectedCandidate = candidates.find(
+        ({ problem }) =>
+          problem.start === selected.start &&
+          problem.holes.join() === selected.holes.join(),
+      );
+
+      expect(selectedCandidate).toBeDefined();
+      expect(loadOf(selectedCandidate!.workload)).toBe(
+        loads[Math.floor((loads.length - 1) / 2)],
+      );
     });
   });
 });

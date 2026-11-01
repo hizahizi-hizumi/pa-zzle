@@ -9,6 +9,8 @@
  * - 道を延ばせなかったとき、進もうとしたマスに×を短く点ける。×は道の先端と同じ色にし、どの道の操作が阻まれたかを結ぶ。
  * - 行き止まりの先端は、道の色をやめ、外形と同じ「通れない」色で塗った円にマスの地の色の横棒を通す（進入禁止の標識の形）。
  *   灰色に沈めると見落とされ、欠けた輪は読み込み中に見える。アプリ共通のエラー色は使わない。
+ * - 難易度選択の見本の考えどころの印（?）は、道の終わりの色（紫）で塗り、背景の色で縁取って格子・穴の縁の上でも読めるようにする。
+ *   共通の操作アイコンと同じ色にせず、盤面の上の印として読ませる。
  * 色の値は `pathColorVariables` の CSS 変数として盤面の根に置き、マスと道の色は `getPathColor` などで混ぜて作る。
  */
 export const hitofudePuzzleToneClassNames = {
@@ -25,6 +27,7 @@ export const hitofudePuzzleToneClassNames = {
   startMarkOutline: "stroke-(--hitofude-puzzle-cell)",
   deadEndHead: "fill-stone-800 dark:fill-stone-200",
   deadEndBar: "fill-(--hitofude-puzzle-cell)",
+  thinkingMark: "fill-violet-600 stroke-background dark:fill-violet-300",
   /** クリアしたとき、始点から終点へ道をなぞる光。 */
   clearTrace: "stroke-white/80 dark:stroke-white/70",
 } as const;

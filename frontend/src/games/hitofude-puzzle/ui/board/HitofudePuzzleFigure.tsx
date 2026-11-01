@@ -28,11 +28,6 @@ type HitofudePuzzleFigureProps = {
   blockedCell?: number | null;
   /** ×の印を点けたまま描くか。遊び方の図で、阻まれたときの盤面の反応を見せるときに使う。 */
   showsBlockedMark?: boolean;
-  /**
-   * 上から何行を描くか。省略すると全行を描く。難易度プレビューで、盤面の上の帯だけを切り出すときに使う。
-   * 描かない行のマスは描かない。道・始点・先端は描く行の中に置く。
-   */
-  visibleRowCount?: number;
   ref?: Ref<SVGSVGElement>;
 };
 
@@ -107,14 +102,9 @@ export function HitofudePuzzleFigure({
   solved,
   blockedCell = null,
   showsBlockedMark = false,
-  visibleRowCount,
   ref,
 }: HitofudePuzzleFigureProps) {
   const { size } = board;
-  const rowCount = visibleRowCount ?? size;
-  function isVisibleCell(cell: number): boolean {
-    return getHitofudePuzzleCellPosition(size, cell).row < rowCount;
-  }
   const lastProgressIndex = Math.max(
     1,
     listHitofudePuzzleOpenCells(board).length - 1,
@@ -132,39 +122,36 @@ export function HitofudePuzzleFigure({
   return (
     <svg
       ref={ref}
-      viewBox={`0 0 ${size} ${rowCount}`}
+      viewBox={`0 0 ${size} ${size}`}
       aria-hidden="true"
       className={cn(
         "pointer-events-none absolute inset-0 size-full overflow-visible",
         hitofudePuzzleToneClassNames.pathColorVariables,
       )}
     >
-      {listHitofudePuzzleOpenCells(board)
-        .filter(isVisibleCell)
-        .map((cell) => {
-          const { row, column } = getHitofudePuzzleCellPosition(size, cell);
-          const order = visitedOrder.get(cell);
-          return (
-            <rect
-              key={cell}
-              x={column}
-              y={row}
-              width={1}
-              height={1}
-              vectorEffect="non-scaling-stroke"
-              className={cn(
-                hitofudePuzzleToneClassNames.gridLine,
-                order === undefined &&
-                  hitofudePuzzleToneClassNames.unvisitedCell,
-              )}
-              style={
-                order === undefined
-                  ? undefined
-                  : { fill: getVisitedCellColor(progressAt(order)) }
-              }
-            />
-          );
-        })}
+      {listHitofudePuzzleOpenCells(board).map((cell) => {
+        const { row, column } = getHitofudePuzzleCellPosition(size, cell);
+        const order = visitedOrder.get(cell);
+        return (
+          <rect
+            key={cell}
+            x={column}
+            y={row}
+            width={1}
+            height={1}
+            vectorEffect="non-scaling-stroke"
+            className={cn(
+              hitofudePuzzleToneClassNames.gridLine,
+              order === undefined && hitofudePuzzleToneClassNames.unvisitedCell,
+            )}
+            style={
+              order === undefined
+                ? undefined
+                : { fill: getVisitedCellColor(progressAt(order)) }
+            }
+          />
+        );
+      })}
       <path
         {...{ [hitofudePuzzleFigureParts.outline]: "" }}
         d={formatHitofudePuzzleOutlinePath(

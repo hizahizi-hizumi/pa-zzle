@@ -1,11 +1,11 @@
 import type { HitofudePuzzleDifficulty } from "@/games/hitofude-puzzle/difficulty";
+import { measureHitofudePuzzleLookaheadLoad } from "@/games/hitofude-puzzle/problem/generation/human-solver";
 import type { HitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/problem";
 import {
   type HitofudePuzzleRecordedProblemIdentity,
   isHitofudePuzzleProblemIdentity,
 } from "@/games/hitofude-puzzle/problem/problem";
 import {
-  decodeHitofudePuzzlePoolProblem,
   findHitofudePuzzlePoolEntry,
   findHitofudePuzzlePoolEntryByProblemId,
   type HitofudePuzzlePooledProblem,
@@ -64,25 +64,37 @@ export function canSelectHitofudePuzzleProblemById(
 
 /**
  * 難易度選択の見本にする、そのレベルの代表の1問。問題集から決定的に選ぶ。
- * レベルで遊ぶ最も大きい盤面の問題のうち、穴の数が真ん中（同じ数なら問題集の先）のもの。
- * 大きさの違いと、そのレベルでよく見る穴の量を見せる。
+ * レベルで遊ぶ最も大きい盤面の問題のうち、先読みの重さ（問題集の作業の量から求める）が真ん中のもの。
+ * 先読みの重さが同じなら穴の数で並べ、それも同じなら問題集の先のものを先にする。
+ * 先読みの重さはレベルを分ける量なので、どの問題集でも、見本の考えどころはそのレベルのふつうの量になる。
  */
 export function selectHitofudePuzzlePreviewProblem(
   difficulty: HitofudePuzzleDifficulty,
 ): HitofudePuzzleProblem {
   const entries = listHitofudePuzzlePoolEntries(difficulty);
   const largestSize = Math.max(...entries.map(([size]) => size));
-  const problems = entries
+  const candidates = entries
     .filter(([size]) => size === largestSize)
-    .map(([size, , , start, encodedHoles]) =>
-      decodeHitofudePuzzlePoolProblem(size, start, encodedHoles),
-    )
-    .sort((left, right) => left.holes.length - right.holes.length);
-  const median = problems[Math.floor((problems.length - 1) / 2)];
+    .map((entry) => {
+      const { problem, workload } = toHitofudePuzzlePooledProblem(entry);
+      return {
+        problem,
+        lookaheadLoad: measureHitofudePuzzleLookaheadLoad(
+          workload.assumptionCount,
+          workload.longestRefutationLength,
+        ),
+      };
+    })
+    .sort(
+      (left, right) =>
+        left.lookaheadLoad - right.lookaheadLoad ||
+        left.problem.holes.length - right.problem.holes.length,
+    );
+  const median = candidates[Math.floor((candidates.length - 1) / 2)];
   if (median === undefined) {
     throw new RangeError(
       `No level ${difficulty} Hitofude puzzle in the problem pool`,
     );
   }
-  return median;
+  return median.problem;
 }
