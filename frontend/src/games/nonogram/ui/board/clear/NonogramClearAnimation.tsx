@@ -19,7 +19,7 @@ const CLEAR_SWELL_DELAY_MS = 240;
 const CLEAR_SWELL_DURATION_MS = 560;
 const CLEAR_HOLD_MS = 480;
 /** 動きを減らす設定で、完成した図柄を見せてから完了するまで。 */
-export const REDUCED_MOTION_HOLD_MS = 900;
+const REDUCED_MOTION_HOLD_MS = 900;
 
 const fadeKeyframes: Keyframe[] = [{ opacity: 1 }, { opacity: 0 }];
 
@@ -91,3 +91,5 @@ export function NonogramClearAnimation({
     </div>
   );
 }
+
+export const _private = { REDUCED_MOTION_HOLD_MS };

@@ -1,9 +1,11 @@
 import { cleanup, render } from "@testing-library/react";
 
 import {
+  _private,
   NonogramClearAnimation,
-  REDUCED_MOTION_HOLD_MS,
 } from "@/games/nonogram/ui/board/clear/NonogramClearAnimation";
+
+const { REDUCED_MOTION_HOLD_MS } = _private;
 
 afterEach(() => {
   cleanup();
