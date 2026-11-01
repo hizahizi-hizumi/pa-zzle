@@ -41,7 +41,7 @@ export type NonogramSession = GameSession<NonogramProblem, NonogramBoard> & {
   undoCount: number;
   /** 盤面を戻した回数。 */
   restartCount: number;
-  /** 終えた入力と待ったで塗りを消したマスの数。入力中のマスは `stroke` から数える。 */
+  /** 終えた入力・待った・盤面を戻すで塗りを消したマスの数。入力中のマスは `stroke` から数える。 */
   settledRepaintCount: number;
 };
 
@@ -327,7 +327,8 @@ export function canUndoNonogramSession(session: NonogramSession): boolean {
 
 /**
  * 同じプレイのまま全マスを未確定へ戻す（盤面を戻す）。経過時間と記録は引き継ぐ。
- * 盤面を戻して消えた塗りは塗り直しに数えない。盤面を戻す前の入力は待ったで戻せない。
+ * 盤面を戻す操作そのものは減点しないが、消えた塗りは待ったと同じく塗り直しに数える。
+ * 盤面を戻す前の入力は待ったで戻せない。
  */
 export function restartNonogramSession(
   session: NonogramSession,
@@ -336,11 +337,16 @@ export function restartNonogramSession(
     return session;
   }
 
+  const settled = settleStroke(session);
+  const emptyBoard = createEmptyNonogramBoard(session.problem);
   return {
-    ...settleStroke(session),
-    puzzleState: createEmptyNonogramBoard(session.problem),
+    ...settled,
+    puzzleState: emptyBoard,
     history: [],
-    restartCount: session.restartCount + 1,
+    restartCount: settled.restartCount + 1,
+    settledRepaintCount:
+      settled.settledRepaintCount +
+      countRepaintedCells(settled.puzzleState, emptyBoard),
   };
 }
 
@@ -352,7 +358,7 @@ export function canRestartNonogramSession(session: NonogramSession): boolean {
   );
 }
 
-/** 塗りを未確定か × に変えたマスの数。待ったで消えた塗りも数え、盤面を戻しても0に戻さない。 */
+/** 塗りを未確定か × に変えたマスの数。待ったと盤面を戻すで消えた塗りも数える。 */
 export function getNonogramSessionRepaintCount(
   session: NonogramSession,
 ): number {

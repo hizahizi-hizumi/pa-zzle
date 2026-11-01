@@ -267,22 +267,24 @@ describe("undoNonogramSession", () => {
 });
 
 describe("restartNonogramSession", () => {
-  describe("塗りと × がある場合", () => {
-    const session = tap(
-      undoNonogramSession(
-        tap(createNonogramSession(problem, startedAt), 0, "filled"),
-      ),
-      1,
-      "filled",
+  describe("待ったで塗りを消した後に塗りと × がある場合", () => {
+    const undone = undoNonogramSession(
+      tap(createNonogramSession(problem, startedAt), 0, "filled"),
     );
+    const session = drag(tap(undone, 1, "crossed"), [3, 4, 5], "filled");
 
-    test("全マスを未確定に戻し、塗り直しの数を引き継ぎ、待ったで戻せなくすること", () => {
+    test("全マスを未確定に戻し、待ったで戻せなくすること", () => {
       const next = restartNonogramSession(session);
 
       expect(formatBoard(next.puzzleState)).toEqual(["...", "...", "..."]);
-      expect(getNonogramSessionRepaintCount(next)).toBe(1);
       expect(next.restartCount).toBe(1);
       expect(canUndoNonogramSession(next)).toBe(false);
+    });
+
+    test("それまでの塗り直しに、消えた塗りのマスを足すこと", () => {
+      const next = restartNonogramSession(session);
+
+      expect(getNonogramSessionRepaintCount(next)).toBe(1 + 3);
     });
   });
 
