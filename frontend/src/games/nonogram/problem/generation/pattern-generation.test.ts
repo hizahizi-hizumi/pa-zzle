@@ -5,12 +5,13 @@ import {
 import type { NonogramPatternStyle } from "@/games/nonogram/problem/problem";
 import type { NonogramGridSize } from "@/games/nonogram/puzzle/board";
 import {
-  formatNonogramPattern,
+  _private as nonogramPattern,
   parseNonogramPattern,
 } from "@/games/nonogram/puzzle/pattern";
 import type { ProblemRandom } from "@/games/problem-seed";
 
 const { smoothNonogramPattern } = _private;
+const { formatNonogramPattern } = nonogramPattern;
 
 type ReplayedRandom = {
   random: ProblemRandom;

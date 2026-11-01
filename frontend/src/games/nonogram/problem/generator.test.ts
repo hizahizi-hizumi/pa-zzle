@@ -6,8 +6,8 @@ import {
 import { countNonogramSolutions } from "@/games/nonogram/problem/generation/solution-count";
 import { getNonogramSymmetryKey } from "@/games/nonogram/problem/generation/symmetry";
 import {
+  _private,
   createNonogramCandidateIdentity,
-  findNonogramPatternRejection,
   generateNonogramProblem,
   type NonogramGeneratedProblem,
 } from "@/games/nonogram/problem/generator";
@@ -21,6 +21,8 @@ import {
   nonogramPatternStyles,
 } from "@/games/nonogram/problem/problem";
 import { parseNonogramPattern } from "@/games/nonogram/puzzle/pattern";
+
+const { findNonogramPatternRejection } = _private;
 
 const candidatesPerSize = 30;
 

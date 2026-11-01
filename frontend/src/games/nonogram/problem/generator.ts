@@ -77,7 +77,7 @@ function validateIdentity(identity: NonogramProblemIdentity): void {
  * 採るのは、図柄の条件を満たし、1本ずつの線の読みだけで全マスが決まる（解がただ1つの）図柄。
  * 採否は探索をせずに決まるので、探索の打ち切りに左右されない。
  */
-export function findNonogramPatternRejection(
+function findNonogramPatternRejection(
   pattern: NonogramPattern,
 ): NonogramCandidateRejection | null {
   if (
@@ -119,3 +119,5 @@ export function generateNonogramProblem(
     },
   };
 }
+
+export const _private = { findNonogramPatternRejection };

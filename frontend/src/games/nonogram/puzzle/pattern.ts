@@ -54,7 +54,7 @@ export function parseNonogramPattern(rows: readonly string[]): NonogramPattern {
 }
 
 /** `parseNonogramPattern` と同じ記法で、1行を1文字列にする。 */
-export function formatNonogramPattern(pattern: NonogramPattern): string[] {
+function formatNonogramPattern(pattern: NonogramPattern): string[] {
   return Array.from({ length: pattern.height }, function formatRow(_, row) {
     return pattern.black
       .slice(row * pattern.width, (row + 1) * pattern.width)
@@ -71,3 +71,5 @@ export function getNonogramPatternLine(
     (cellIndex) => pattern.black[cellIndex] === true,
   );
 }
+
+export const _private = { formatNonogramPattern };

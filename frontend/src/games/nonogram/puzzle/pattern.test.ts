@@ -1,8 +1,10 @@
 import {
-  formatNonogramPattern,
+  _private,
   getNonogramPatternLine,
   parseNonogramPattern,
 } from "@/games/nonogram/puzzle/pattern";
+
+const { formatNonogramPattern } = _private;
 
 describe("parseNonogramPattern", () => {
   test("`#` を黒、`.` を白として行優先で読むこと", () => {
