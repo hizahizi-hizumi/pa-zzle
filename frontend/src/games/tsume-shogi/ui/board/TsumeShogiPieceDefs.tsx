@@ -19,8 +19,7 @@ export type TsumeShogiPieceDefIds = {
   defenderFace: string;
   /** 面に淡く重ねる、縦に通る柾目。 */
   grain: string;
-  /** 案R: 面取りの縁、面の陰影、ぼかした影。 */
-  /** 案R の駒の塗り（`TsumeShogiPieceDefs/RealPieceDefs.tsx`）。 */
+  /** 案R の駒の塗りと字形（`TsumeShogiPieceDefs/RealPieceDefs.tsx`）。 */
   real: TsumeShogiRealPieceDefIds;
 };
 

@@ -17,6 +17,7 @@ import {
 import { difficultyLevels } from "@/games/difficulty";
 import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
 import { createProblemId } from "@/games/problem-id";
+import { TSUME_SHOGI_DISPLAY_NAME } from "@/games/tsume-shogi/display-name";
 
 import { TSUME_SHOGI_DEFENDER_REPLY_DELAY_MS } from "@/games/tsume-shogi/play/use-tsume-shogi-play";
 import type { TsumeShogiProblem } from "@/games/tsume-shogi/problem/problem";
@@ -596,11 +597,16 @@ describe("TsumeShogiPlayView", () => {
 
       test("その問題で始めURLを置き換えないこと", () => {
         const problemId = readProblemId(router);
-        const plies = screen.queryByText(`${requested.problem.plies}手詰`);
+        const header = screen.getByRole("heading", {
+          name: TSUME_SHOGI_DISPLAY_NAME,
+        }).parentElement;
+        const plies = header
+          ? within(header).getByText(`${requested.problem.plies}手詰`)
+          : null;
 
         expect(problemId).toBe(requestedProblemId);
         expect(router.state.historyAction).toBe("POP");
-        expect(plies).not.toBeNull();
+        expect(plies).toBeTruthy();
       });
     });
 

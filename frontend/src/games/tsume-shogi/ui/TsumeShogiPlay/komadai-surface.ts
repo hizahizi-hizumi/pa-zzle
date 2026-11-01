@@ -12,15 +12,15 @@ const REAL_KOMADAI_SIDE = "6px";
  * 駒台の面。案ごとに形を変える。
  * - `current`: 角丸の淡い木の帯。
  * - `quiet`: 盤の罫線と同じ細い線で囲うだけの、角の立った枠。地は画面と同じ。
- * - `real`: 盤と同じ系統で一段濃い木の台。角を立て、手前に木口をのぞかせ、盤と同じ左上の光で影を落とす。
- *   盤の木の左右の端にそろえる（盤の右の段の列の分だけ右を空ける）。
+ * - `real`: 盤と同じ材で一段暗い木の台。縁を一段高い枠にし、角を立て、手前に同じ材の木口をのぞかせる。
+ *   盤の木の左右の端にそろえ、盤との間は空けずに盤の落ち影の下へ差し込む。
  */
 export const komadaiClassName = cn(
   {
     current: "rounded-md",
     quiet: "",
     real: cn(
-      "h-full w-[calc(100%-var(--board-rank-band)+var(--board-frame))] pb-[6px]",
+      "mx-auto -mt-1 h-[calc(100%+0.25rem)] w-[calc(100%-2*var(--board-wood-inset))] pb-[6px]",
       realTone.komadaiTopFallback,
       realTone.komadaiShadow,
     ),
@@ -31,13 +31,15 @@ export const komadaiClassName = cn(
 export const komadaiStyle: CSSProperties | undefined =
   tsumeShogiBoardStyle === "real"
     ? {
+        // 木口（天面と同じ材で明度を下げる）、天面を一段暗くする層、天面の木目の順に重ねる。
         backgroundImage: [
-          "linear-gradient(rgb(40 20 5/0.2), rgb(40 20 5/0.45))",
-          `url("${tsumeShogiWoodTextures.komadaiSide}")`,
+          "linear-gradient(rgb(0 0 0/0.3), rgb(0 0 0/0.3))",
+          `url("${tsumeShogiWoodTextures.komadaiTop}")`,
+          "linear-gradient(rgb(0 0 0/0.08), rgb(0 0 0/0.08))",
           `url("${tsumeShogiWoodTextures.komadaiTop}")`,
         ].join(", "),
-        backgroundPosition: "bottom, bottom, top",
-        backgroundSize: `100% ${REAL_KOMADAI_SIDE}, 100% ${REAL_KOMADAI_SIDE}, 100% calc(100% - ${REAL_KOMADAI_SIDE})`,
+        backgroundPosition: "bottom, bottom, top, top",
+        backgroundSize: `100% ${REAL_KOMADAI_SIDE}, 100% ${REAL_KOMADAI_SIDE}, 100% calc(100% - ${REAL_KOMADAI_SIDE}), 100% calc(100% - ${REAL_KOMADAI_SIDE})`,
         backgroundRepeat: "no-repeat",
       }
     : undefined;

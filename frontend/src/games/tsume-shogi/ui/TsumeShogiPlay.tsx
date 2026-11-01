@@ -26,11 +26,16 @@ import type {
   TsumeShogiSessionPhase,
 } from "@/games/tsume-shogi/session/session";
 import { TsumeShogiClearAnimation } from "@/games/tsume-shogi/ui/board/clear/TsumeShogiClearAnimation";
+import { tsumeShogiRealToneClassNames } from "@/games/tsume-shogi/ui/board/real/real-tone";
 import {
   TsumeShogiBoard,
   tsumeShogiBoardFrameStyle,
 } from "@/games/tsume-shogi/ui/board/TsumeShogiBoard";
 import { TsumeShogiPieceDefs } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceDefs";
+import {
+  tsumeShogiBoardStyle,
+  tsumeShogiPlaySurface,
+} from "@/games/tsume-shogi/ui/board-style";
 import { TsumeShogiResultScreen } from "@/games/tsume-shogi/ui/result/TsumeShogiResultScreen";
 import { TsumeShogiHowToPlayDialog } from "@/games/tsume-shogi/ui/TsumeShogiHowToPlayDialog";
 import {
@@ -40,6 +45,13 @@ import {
 import { TsumeShogiPieceBox } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiPieceBox";
 import { TsumeShogiPlayStatus } from "@/games/tsume-shogi/ui/TsumeShogiPlay/TsumeShogiPlayStatus";
 import { useShortPlayArea } from "@/games/tsume-shogi/ui/TsumeShogiPlay/use-short-play-area";
+import { cn } from "@/lib/utils";
+
+/** 案R の比較用に、プレイ領域の地を座卓の面にした版。既定は画面の地のまま（盤の落ち影だけ）。 */
+const playSurfaceClassName =
+  tsumeShogiBoardStyle === "real" && tsumeShogiPlaySurface === "table"
+    ? tsumeShogiRealToneClassNames.tableSurface
+    : undefined;
 
 type TsumeShogiPlayProps = GamePlayScreenProps<
   TsumeShogiDifficulty,
@@ -71,11 +83,10 @@ type TsumeShogiPlayProps = GamePlayScreenProps<
  * 320px では余白を取らない。PC では 40rem まで広げる。
  */
 const boardSizeStyle = {
-  "--board-gutter": "clamp(0px, calc((100cqw - 320px) / 3), 0.75rem)",
   ...tsumeShogiBoardFrameStyle,
   "--board-chrome": "calc(2 * 3rem + 1.25rem + 3 * 0.25rem)",
   "--board-width":
-    "min(calc(100cqw - 2 * var(--board-gutter)), calc((100cqh - var(--board-chrome) - var(--board-file-band) - var(--board-bottom)) * 352 / 386 + var(--board-frame) + var(--board-rank-band)), 40rem)",
+    "min(calc(100cqw - 2 * var(--board-gutter)), calc((100cqh - var(--board-chrome) - var(--board-file-band) - var(--board-bottom)) * 352 / 386 + var(--board-left) + var(--board-rank-band)), 40rem)",
 } as CSSProperties;
 
 /**
@@ -205,7 +216,10 @@ export function TsumeShogiPlay({
         {/* 他のゲームと同じく、盤を残りの高さの中央に置き、待ったを画面の下の中央に置く。 */}
         <main
           ref={boardAreaRef}
-          className="flex min-h-0 flex-1 items-center justify-center py-1 [container-type:size]"
+          className={cn(
+            "flex min-h-0 flex-1 items-center justify-center py-1 [container-type:size]",
+            playSurfaceClassName,
+          )}
           style={boardSizeStyle}
         >
           {/* 玉方の駒台・盤・攻方の駒台を、盤の幅にそろえた同じ形の帯で上下対称に並べる。 */}
@@ -216,7 +230,8 @@ export function TsumeShogiPlay({
             <div className="h-12">
               <TsumeShogiPieceBox />
             </div>
-            <div className="relative h-[calc((var(--board-width)-var(--board-frame)-var(--board-rank-band))*386/352+var(--board-file-band)+var(--board-bottom))]">
+            {/* 盤の落ち影が下の駒台に掛かるよう、盤を駒台より前に置く。 */}
+            <div className="relative z-10 h-[calc((var(--board-width)-var(--board-left)-var(--board-rank-band))*386/352+var(--board-file-band)+var(--board-bottom))]">
               <TsumeShogiClearAnimation
                 active={progress === "clearing"}
                 onClearAnimationComplete={onClearAnimationComplete}
@@ -267,7 +282,12 @@ export function TsumeShogiPlay({
           </p>
         </main>
         {!shortPlayArea && (
-          <footer className="grid h-28 shrink-0 items-end px-4 pb-2">
+          <footer
+            className={cn(
+              "grid h-28 shrink-0 items-end px-4 pb-2",
+              playSurfaceClassName,
+            )}
+          >
             <div className="flex h-14 items-center justify-center">
               {undoButton}
             </div>

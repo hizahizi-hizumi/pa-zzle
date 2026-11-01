@@ -2,6 +2,7 @@ import type { TsumeShogiPieceType } from "@/games/tsume-shogi/puzzle/position";
 import { tsumeShogiPieceShapes } from "@/games/tsume-shogi/ui/board/piece-shape";
 import { tsumeShogiRealToneClassNames as realTone } from "@/games/tsume-shogi/ui/board/real/real-tone";
 import { getTsumeShogiPieceGlyphPath } from "@/games/tsume-shogi/ui/board/real/selected-fonts";
+import { REAL_THICKNESS_RATIO } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceGlyph/RealPieceGlyph";
 import { tsumeShogiBoardStyle } from "@/games/tsume-shogi/ui/board-style";
 import { tsumeShogiToneClassNames } from "@/games/tsume-shogi/ui/tsume-shogi-tone";
 import { cn } from "@/lib/utils";
@@ -166,14 +167,14 @@ export function PieceMovementFigure({ type }: PieceMovementFigureProps) {
         >
           <path
             d={shape.outline}
-            transform={`translate(0 ${shape.height * (9 / 112)})`}
+            transform={`translate(0 ${shape.height * REAL_THICKNESS_RATIO})`}
             className={realTone.pieceSide}
           />
           <path
             d={shape.outline}
             strokeWidth={6}
             strokeLinejoin="round"
-            className={cn(realTone.pieceFace, realTone.pieceOutline)}
+            className={cn(realTone.pieceFace, realTone.miniaturePieceOutline)}
           />
           <path
             d={getTsumeShogiPieceGlyphPath(type)}

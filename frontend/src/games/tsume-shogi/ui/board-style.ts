@@ -6,10 +6,10 @@
  * URL のクエリで選ぶと、同じタブの間は覚えておく。
  * - `boardStyle`: 上の3案。
  * - `pieceFont` / `coordFont`: 案R の駒の字・筋段の書体候補（`board/real/font-candidates.ts` の id）。
- * - `wood`: 案R の木目。`photo`（写真由来）か `procedural`（手続き生成）。
+ * - `surface`: 案R のプレイ領域の地。`plain`（既定。画面の地のまま、盤の落ち影だけ）か `table`（座卓の面）。
  */
 export type TsumeShogiBoardStyle = "current" | "quiet" | "real";
-export type TsumeShogiWoodSource = "photo" | "procedural";
+export type TsumeShogiPlaySurface = "plain" | "table";
 
 function readOption<T extends string>(
   key: string,
@@ -35,8 +35,8 @@ function isBoardStyle(value: string | null): value is TsumeShogiBoardStyle {
   return value === "current" || value === "quiet" || value === "real";
 }
 
-function isWoodSource(value: string | null): value is TsumeShogiWoodSource {
-  return value === "photo" || value === "procedural";
+function isPlaySurface(value: string | null): value is TsumeShogiPlaySurface {
+  return value === "plain" || value === "table";
 }
 
 function isAnyText(value: string | null): value is string {
@@ -49,10 +49,10 @@ export const tsumeShogiBoardStyle: TsumeShogiBoardStyle = readOption(
   "current",
 );
 
-export const tsumeShogiWoodSource: TsumeShogiWoodSource = readOption(
-  "wood",
-  isWoodSource,
-  "procedural",
+export const tsumeShogiPlaySurface: TsumeShogiPlaySurface = readOption(
+  "surface",
+  isPlaySurface,
+  "plain",
 );
 
 /** 書体の id。候補に無い id は使う側で既定に戻す。 */

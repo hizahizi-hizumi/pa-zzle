@@ -1,7 +1,13 @@
+import { useId } from "react";
+
 import { tsumeShogiPieceShapes } from "@/games/tsume-shogi/ui/board/piece-shape";
 import { tsumeShogiRealToneClassNames as realTone } from "@/games/tsume-shogi/ui/board/real/real-tone";
 import { getTsumeShogiPieceGlyphPath } from "@/games/tsume-shogi/ui/board/real/selected-fonts";
 import { useTsumeShogiPieceDefIds } from "@/games/tsume-shogi/ui/board/TsumeShogiPieceDefs";
+import {
+  TSUGE_TILE_HEIGHT,
+  TSUGE_TILE_WIDTH,
+} from "@/games/tsume-shogi/ui/board/TsumeShogiPieceDefs/RealPieceDefs";
 import {
   glyphSizeClassNames,
   promotedTypes,
@@ -16,20 +22,41 @@ import { cn } from "@/lib/utils";
  */
 export const REAL_PIECE_SCALE = 1.1;
 /** 駒の厚み。実物の駒尻の厚み（約8mm）を、斜め上から見て面の下にのぞく分に縮めた。駒の高さに対する比。 */
-const THICKNESS_RATIO = 9 / 112;
-/** 影のずれ（0.1mm）。光は左上から当たる。 */
-const softShadowOffset = { x: 14, y: 18 } as const;
-const liftedSoftShadowOffset = { x: 36, y: 60 } as const;
-const contactShadowOffset = { x: 4, y: 5 } as const;
-/** 盛上げの字の縁と影のずれ（0.1mm）。3倍の画面で 1〜2 画素になる。 */
-const glyphEdgeOffset = 4;
-const glyphShadowOffset = { x: 9, y: 11 } as const;
+export const REAL_THICKNESS_RATIO = 9 / 112;
+/**
+ * 駒の影。ぼかしのフィルタを駒ごとに掛けず、少しずつずらして重ねた半透明の形で柔らかく見せる（0.1mm と不透明度）。
+ * 持ち上げた駒は升の約 15% 浮くので、影を遠く薄く落とす。
+ */
+const restingShadows = [
+  { x: 3, y: 4, opacity: 0.28 },
+  { x: 8, y: 11, opacity: 0.12 },
+  { x: 14, y: 19, opacity: 0.06 },
+] as const;
+const liftedShadows = [
+  { x: 16, y: 58, opacity: 0.12 },
+  { x: 26, y: 74, opacity: 0.08 },
+  { x: 36, y: 90, opacity: 0.05 },
+] as const;
+/** 盛上げの字の上辺の艶のずれ（0.1mm）。3倍の画面で 1 画素ほど。 */
+const glyphGlossOffset = 3.5;
+
+/** 駒ごとに柘植の木目の位置をずらす量（0.1mm）。駒の id から決め、描き直しても変わらない。 */
+function grainOffset(seed: string): { x: number; y: number } {
+  let hash = 2166136261;
+  for (const character of seed) {
+    hash = Math.imul(hash ^ character.charCodeAt(0), 16777619);
+  }
+  const unsigned = hash >>> 0;
+  return {
+    x: ((unsigned % 997) / 997) * (TSUGE_TILE_WIDTH / 2),
+    y: (((unsigned >>> 10) % 991) / 991) * (TSUGE_TILE_HEIGHT / 2),
+  };
+}
 
 /**
- * 案R: 柘植の盛上駒。面は柘植の木目、縁は約 1px の面取りで左上の辺が明るく右下の辺が暗い。
- * 手前に木口の色の厚みをのぞかせ、盤と同じ左上の光で柔らかい影と接地の濃い影を右下へ落とす。
- * 字は濡れた黒漆（成駒は朱漆）を盛り上げ、左上に明るい縁、右下に暗い縁と影を付ける。
- * 持ち上げた駒（選んだ駒）は影を長く薄くする。
+ * 案R: 柘植の盛上駒。面は柘植の細かく不規則な木目（駒ごとに模様の位置が違う）で、外形に硬い線を引かない。
+ * 面取りは縁の光と陰のにじみで表し、左上が明るく右下が暗い。手前に同じ色相で暗い厚みをのぞかせ、左上の光で右下へ影を落とす。
+ * 字は漆の暗い茶黒（成駒は朱漆）を盛り上げ、上辺に細い艶を入れる。
  */
 export function RealPieceGlyph({
   type,
@@ -39,19 +66,18 @@ export function RealPieceGlyph({
 }: TsumeShogiPieceGlyphProps) {
   const defIds = useTsumeShogiPieceDefIds();
   const ids = defIds?.real ?? null;
+  const offset = grainOffset(useId());
   const shape = tsumeShogiPieceShapes[type];
   const defender = side === "defender";
   const outline = defender ? shape.defenderOutline : shape.outline;
   const face = defender ? shape.defenderFace : shape.face;
-  const thickness = shape.height * THICKNESS_RATIO;
+  const thickness = shape.height * REAL_THICKNESS_RATIO;
   const glyphY = defender
     ? shape.height - shape.glyphCenterY
     : shape.glyphCenterY;
   const top = -shape.height / 2 - thickness / 2;
   const glyphTransform = `translate(0 ${glyphY})${defender ? " rotate(180)" : ""}`;
-  const glyph = getTsumeShogiPieceGlyphPath(type);
   const promoted = promotedTypes.has(type);
-  const soft = lifted ? liftedSoftShadowOffset : softShadowOffset;
 
   return (
     <svg
@@ -63,22 +89,15 @@ export function RealPieceGlyph({
       )}
     >
       <g transform={`scale(${REAL_PIECE_SCALE}) translate(0 ${top})`}>
-        {ids && (
+        {(lifted ? liftedShadows : restingShadows).map((shadow) => (
           <path
+            key={`${shadow.x}-${shadow.y}`}
             d={outline}
-            transform={`translate(${soft.x} ${thickness + soft.y})`}
-            filter={`url(#${ids.softShadow})`}
-            opacity={lifted ? 0.5 : 0.38}
-            className={realTone.pieceSoftShadow}
+            transform={`translate(${shadow.x} ${thickness + shadow.y})`}
+            opacity={shadow.opacity}
+            className={realTone.pieceShadow}
           />
-        )}
-        {!lifted && (
-          <path
-            d={outline}
-            transform={`translate(${contactShadowOffset.x} ${thickness + contactShadowOffset.y})`}
-            className={realTone.pieceContactShadow}
-          />
-        )}
+        ))}
         <path
           d={outline}
           transform={`translate(0 ${thickness})`}
@@ -87,48 +106,53 @@ export function RealPieceGlyph({
         <path d={outline} className={realTone.pieceFace} />
         {ids && (
           <>
-            <path d={outline} fill={`url(#${ids.edge})`} />
-            <path d={face} fill={`url(#${ids.face})`} />
-            <path d={face} fill={`url(#${ids.specular})`} />
+            {/* 模様は参照した要素の座標で敷かれるので、座標をずらして描き、同じ量だけ戻して置く。 */}
+            <g transform={`translate(${offset.x} ${offset.y})`}>
+              <path
+                d={outline}
+                transform={`translate(${-offset.x} ${-offset.y})`}
+                fill={`url(#${ids.face})`}
+              />
+            </g>
+            <path
+              d={face}
+              fill="none"
+              strokeWidth={16}
+              strokeLinejoin="round"
+              opacity={0.45}
+              stroke={`url(#${ids.edge})`}
+            />
+            <path
+              d={face}
+              fill="none"
+              strokeWidth={6}
+              strokeLinejoin="round"
+              opacity={0.6}
+              stroke={`url(#${ids.edge})`}
+            />
+            <path d={outline} fill={`url(#${ids.specular})`} />
           </>
         )}
-        <path
-          d={outline}
-          fill="none"
-          strokeWidth={2}
-          strokeLinejoin="round"
-          className={realTone.pieceOutline}
-        />
-        <path
-          d={glyph}
-          transform={`translate(${glyphShadowOffset.x} ${glyphShadowOffset.y}) ${glyphTransform}`}
-          className={realTone.glyphShadow}
-        />
-        <path
-          d={glyph}
-          transform={`translate(${glyphEdgeOffset} ${glyphEdgeOffset}) ${glyphTransform}`}
-          className={realTone.glyphDarkEdge}
-        />
-        <path
-          d={glyph}
-          transform={`translate(${-glyphEdgeOffset} ${-glyphEdgeOffset}) ${glyphTransform}`}
-          className={
-            promoted ? realTone.vermilionHighlight : realTone.glyphHighlight
-          }
-        />
-        <path
-          d={glyph}
-          transform={glyphTransform}
-          fill={ids ? `url(#${promoted ? ids.vermilion : ids.ink})` : undefined}
-          // CSS の塗りは fill 属性より強いので、模様を参照できないときだけ平らな色を付ける。
-          className={
-            ids
-              ? undefined
-              : promoted
-                ? realTone.vermilionFlat
-                : realTone.inkFlat
-          }
-        />
+        {ids ? (
+          <>
+            <use
+              href={`#${ids.glyphs[type]}`}
+              transform={`translate(0 ${-glyphGlossOffset}) ${glyphTransform}`}
+              className={realTone.glyphGloss}
+            />
+            <use
+              href={`#${ids.glyphs[type]}`}
+              transform={glyphTransform}
+              fill={`url(#${promoted ? ids.vermilion : ids.ink})`}
+            />
+          </>
+        ) : (
+          <path
+            d={getTsumeShogiPieceGlyphPath(type)}
+            transform={glyphTransform}
+            className={promoted ? realTone.vermilionFlat : realTone.inkFlat}
+          />
+        )}
       </g>
     </svg>
   );

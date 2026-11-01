@@ -126,7 +126,7 @@ export function TsumeShogiHand({
               <span
                 className={cn(
                   "flex transition-transform duration-(--duration-fast)",
-                  selected && "-translate-y-0.5",
+                  selected && tsumeShogiToneClassNames.pieceLift,
                 )}
               >
                 <TsumeShogiPieceGlyph
@@ -136,17 +136,15 @@ export function TsumeShogiHand({
                   lifted={selected}
                 />
               </span>
-              {/* 枚数は駒に重ねず、駒の右下の外に添える。 */}
-              {hand[type] > 1 && (
-                <span
-                  className={cn(
-                    "self-end text-play-meta tabular-nums",
-                    handCountClassName,
-                  )}
-                >
-                  {hand[type]}
-                </span>
-              )}
+              {/* 枚数は駒に重ねず、駒の右下の外に添える。1枚でも欄の幅を取り、枚数が変わっても並びをずらさない。 */}
+              <span
+                className={cn(
+                  "w-[1ch] self-end text-play-meta tabular-nums",
+                  handCountClassName,
+                )}
+              >
+                {hand[type] > 1 ? hand[type] : null}
+              </span>
             </button>
           );
         })}

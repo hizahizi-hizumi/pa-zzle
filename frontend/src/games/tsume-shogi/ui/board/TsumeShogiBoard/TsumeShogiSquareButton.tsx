@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
  * - `selected`: 選んでいる攻方の駒。
  * - `rejected`: 選んでいる攻方の駒で、直前の入力を着手させなかったことを返している間（動きを減らす設定）。
  * - `last-move`: 最後に指した手の移動先。
+ * - `last-move-from`: 最後に指した手の移動元（盤上の駒を動かした手だけ）。
  * - `refutation`: 誤王手への玉方の反証の移動先。
  * - `mated`: 詰んだ玉。
  */
@@ -26,6 +27,7 @@ export type TsumeShogiSquareHighlight =
   | "selected"
   | "rejected"
   | "last-move"
+  | "last-move-from"
   | "refutation"
   | "mated";
 
@@ -33,6 +35,7 @@ const highlightClassNames = {
   selected: tsumeShogiToneClassNames.squareSelected,
   rejected: tsumeShogiToneClassNames.squareRejected,
   "last-move": tsumeShogiToneClassNames.squareLastMove,
+  "last-move-from": tsumeShogiToneClassNames.squareLastMoveFrom,
   refutation: tsumeShogiToneClassNames.squareRefutation,
   mated: tsumeShogiToneClassNames.squareMated,
 } as const satisfies Record<TsumeShogiSquareHighlight, string>;
@@ -116,6 +119,8 @@ export function TsumeShogiSquareButton({
       aria-label={`${formatTsumeShogiSquare(square)}${pieceLabel}`}
       aria-pressed={selectable ? selected : undefined}
       aria-disabled={disabled || undefined}
+      data-file={square.file}
+      data-rank={square.rank}
       data-mated-king={highlight === "mated" ? "" : undefined}
       onPointerUp={tapHandlers.onPointerUp}
       onClick={tapHandlers.onClick}
@@ -129,10 +134,21 @@ export function TsumeShogiSquareButton({
       )}
     >
       {piece && (
+        // 詰みの波で一度だけ光る層。ふだんは見えない。
+        <span
+          data-clear-glow=""
+          className={cn(
+            "pointer-events-none absolute inset-0 opacity-0",
+            tsumeShogiToneClassNames.clearGlow,
+          )}
+        />
+      )}
+      {piece && (
         <span
           // 指した手ごとに作り直し、到着の動きを1回だけ流す。
           key={arrivedMove ? JSON.stringify(arrivedMove.move) : "still"}
           ref={pieceRef}
+          data-piece=""
           data-selected-piece={selected ? "" : undefined}
           className={cn(
             "absolute inset-0 flex items-center justify-center transition-transform duration-(--duration-fast)",

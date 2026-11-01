@@ -15,8 +15,8 @@ import {
 } from "@/games/tsume-shogi/ui/board-style";
 
 /** 案R の既定の書体（比較シートで選んだ推し）。 */
-const defaultPieceFont: TsumeShogiPieceFontId = "shippori-antique-b1";
-const defaultCoordinateFont: TsumeShogiCoordinateFontId = "shippori-mincho";
+const defaultPieceFont: TsumeShogiPieceFontId = "kaisei-tokumin";
+const defaultCoordinateFont: TsumeShogiCoordinateFontId = "zen-old-mincho-500";
 
 function isPieceFontId(value: string | null): value is TsumeShogiPieceFontId {
   return value !== null && value in tsumeShogiPieceFontNames;

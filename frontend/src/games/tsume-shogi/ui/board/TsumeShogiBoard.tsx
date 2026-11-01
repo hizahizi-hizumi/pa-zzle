@@ -52,7 +52,10 @@ const ranks = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
  * 幅の広い画面ほど縁を太くする。盤を置く画面は、この寸法を含めて盤の大きさを決める。
  */
 const currentFrameStyle = {
+  "--board-gutter": "clamp(0px, calc((100cqw - 320px) / 3), 0.75rem)",
   "--board-frame": "clamp(3px, calc(3px + (100cqw - 320px) / 20), 6px)",
+  "--board-left": "var(--board-frame)",
+  "--board-wood-inset": "0px",
   "--board-rank-band": "clamp(11px, calc(11px + (100cqw - 320px) / 14), 16px)",
   "--board-file-band": "1rem",
   "--board-bottom": "var(--board-frame)",
@@ -60,7 +63,10 @@ const currentFrameStyle = {
 
 /** 案S: 縁を持たない。外枠の線が画面の端にかからない分だけ空ける。 */
 const quietFrameStyle = {
+  "--board-gutter": "clamp(0px, calc((100cqw - 320px) / 3), 0.75rem)",
   "--board-frame": "2px",
+  "--board-left": "var(--board-frame)",
+  "--board-wood-inset": "0px",
   "--board-rank-band": "clamp(13px, calc(13px + (100cqw - 320px) / 14), 18px)",
   "--board-file-band": "0.875rem",
   "--board-bottom": "var(--board-frame)",
@@ -68,14 +74,18 @@ const quietFrameStyle = {
 
 /**
  * 案R: 木の盤の縁（`--board-frame`）の外に筋・段を書き、盤の下に手前の側面（木口）をのぞかせる。
+ * 段の列と同じ幅を盤の左にも空け（`--board-left`）、盤の木を左右の中央に置く。段は右の余白に収まる。
+ * `--board-wood-inset` は、盤の外枠から盤の木の左右の端までの幅。駒台の端をこれでそろえる。
+ * 320px でも盤を画面の縁に付けず、置いた盤に見える余白を左右に残す（`--board-gutter`）。
  * 筋・段の帯と盤の下の欄は、縁と側面を含めた寸法。
  */
 const realFrameStyle = {
-  // 320px でも盤を画面の縁に付けず、置いた盤に見える余白を左右に残す。
-  "--board-gutter": "clamp(6px, calc(6px + (100cqw - 320px) / 7), 12px)",
+  "--board-gutter": "clamp(4px, calc(4px + (100cqw - 320px) / 7), 12px)",
   "--board-frame": "clamp(7px, calc(7px + (100cqw - 320px) / 16), 12px)",
   "--board-rank-band":
-    "calc(var(--board-frame) + clamp(15px, calc(15px + (100cqw - 320px) / 14), 19px))",
+    "calc(var(--board-frame) + clamp(13px, calc(13px + (100cqw - 320px) / 14), 18px))",
+  "--board-left": "var(--board-rank-band)",
+  "--board-wood-inset": "calc(var(--board-rank-band) - var(--board-frame))",
   "--board-file-band": "calc(var(--board-frame) + 0.9375rem)",
   "--board-bottom":
     "calc(var(--board-frame) + clamp(7px, calc(7px + (100cqw - 320px) / 16), 11px))",
@@ -159,13 +169,19 @@ export function TsumeShogiBoard({
         ? "refutation"
         : "last-move";
     }
+    if (
+      lastMove?.move.kind === "board" &&
+      isSameTsumeShogiSquare(lastMove.move.from, square)
+    ) {
+      return "last-move-from";
+    }
     return null;
   }
 
   return (
     <div
       className={cn(
-        "grid size-full grid-cols-[var(--board-frame)_minmax(0,1fr)_var(--board-rank-band)] grid-rows-[var(--board-file-band)_minmax(0,1fr)_var(--board-bottom)]",
+        "grid size-full grid-cols-[var(--board-left)_minmax(0,1fr)_var(--board-rank-band)] grid-rows-[var(--board-file-band)_minmax(0,1fr)_var(--board-bottom)]",
         tsumeShogiBoardStyle === "current" && "rounded-[3px]",
         tsumeShogiToneClassNames.boardSlab,
       )}

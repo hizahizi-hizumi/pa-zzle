@@ -49,6 +49,7 @@ const currentToneClassNames = {
   promotedText: "fill-red-700",
   squareSelected: "bg-sky-200 dark:bg-sky-900",
   squareLastMove: "bg-[#dcae66] dark:bg-[#6b4a26]",
+  squareLastMoveFrom: "",
   squareRefutation: "bg-rose-200 dark:bg-rose-900/80",
   squareRejected: "bg-rose-300 dark:bg-rose-800",
   squareMated: "bg-amber-400 dark:bg-amber-600",
@@ -59,6 +60,7 @@ const currentToneClassNames = {
   refutationText: "text-rose-700 dark:text-rose-300",
   focusRing: "focus-visible:outline-foreground/70",
   pieceLift: "-translate-y-[6%]",
+  clearGlow: "bg-white/45",
 } as const;
 
 type TsumeShogiToneClassNames = Record<
@@ -93,6 +95,7 @@ const quietToneClassNames = {
   promotedText: "fill-red-700 dark:fill-red-400",
   squareSelected: "bg-sky-100 dark:bg-sky-900/50",
   squareLastMove: "bg-foreground/[0.08]",
+  squareLastMoveFrom: "",
   squareRefutation: "bg-rose-100 dark:bg-rose-950/70",
   squareRejected: "bg-rose-200 dark:bg-rose-900/60",
   squareMated: "bg-amber-200/80 dark:bg-amber-800/50",
@@ -102,6 +105,7 @@ const quietToneClassNames = {
   refutationText: "text-rose-700 dark:text-rose-300",
   focusRing: "focus-visible:outline-foreground/70",
   pieceLift: "-translate-y-[6%]",
+  clearGlow: "bg-white/45",
 } as const satisfies TsumeShogiToneClassNames;
 
 /**
@@ -109,16 +113,17 @@ const quietToneClassNames = {
  * ダークでも盤と駒は木のまま（周りだけ暗い）なので、筋段の色を除いて `dark:` を付けない。
  */
 const realToneClassNames = {
-  boardSurface: "bg-[#e3b466]",
+  boardSurface: "bg-[#e5b86a]",
   boardSlab: "",
   boardGrain: "hidden",
-  boardLine: "border-[#1a1410]/90",
-  boardOutline: "outline-[#1a1410]/90",
-  boardEdge: "border-[#1a1410]/90",
-  boardStar: "bg-[#1a1410]",
+  // 黒漆の罫線と星。茶を含んだ黒にする。外枠も内側と同じ太さ。
+  boardLine: "border-[#2a1b10]/90",
+  boardOutline: "outline-[#2a1b10]/90",
+  boardEdge: "border-[#2a1b10]/90",
+  boardStar: "bg-[#2a1b10]",
   coordinate: "text-[#6b4a2b] dark:text-[#c9ab85]",
   komadai: "",
-  pieceFill: "fill-[#e8cc8a]",
+  pieceFill: "fill-[#f0d68e]",
   pieceFaceTop: "",
   pieceFaceBottom: "",
   pieceBevelLight: "",
@@ -127,28 +132,33 @@ const realToneClassNames = {
   pieceSide: "",
   pieceStroke: "stroke-[#7a5224]/45",
   pieceShadow: "",
-  pieceText: "fill-[#111111]",
+  pieceText: "fill-[#20150d]",
   promotedText: "fill-[#bd4024]",
-  // 選んだ駒は持ち上げて示す（`TsumeShogiPieceGlyph` の `lifted`）。升の地は変えない。
-  squareSelected: "",
-  // 最後の手は、木を暖かく明るくする。
-  squareLastMove:
-    "bg-[radial-gradient(circle_at_50%_55%,rgb(255_240_178/0.9),rgb(255_208_112/0.55)_72%)]",
-  // 反証は朱の輪郭で、最後の手（明るい地）と形でも見分ける。
+  // 選んだ駒は持ち上げて示す（`pieceLift` と `TsumeShogiPieceGlyph` の `lifted`）。升には、駒の影が落ちたような弱い地だけを付ける。
+  squareSelected:
+    "bg-[radial-gradient(circle_at_55%_60%,rgb(70_40_10/0.16),rgb(70_40_10/0)_70%)]",
+  // 最後の手の移動先は、はっきり分かる強さの暖色を木に掛け合わせる。移動元は同じ色を弱く。
+  squareLastMove: "bg-[#e0782a]/35",
+  squareLastMoveFrom: "bg-[#e0782a]/15",
+  // 反証は、朱が升に染みたような色。輪郭は付けない。
   squareRefutation:
-    "bg-[#bd4024]/15 shadow-[inset_0_0_0_2px_rgb(176_52_28/0.85)]",
+    "bg-[radial-gradient(circle_at_50%_50%,rgb(200_50_25/0.5),rgb(200_50_25/0.22)_75%)]",
   squareRejected: "bg-[#bd4024]/35",
-  // 詰みは木と別の色相（藍）にする。
-  squareMated: "bg-[#3b3aa0]/25 shadow-[inset_0_0_0_2px_rgb(52_50_150/0.85)]",
-  handSelected: "",
+  // 詰みは、木と別の色相（藍）が升に染みたような色。
+  squareMated:
+    "bg-[radial-gradient(circle_at_50%_50%,rgb(48_46_150/0.5),rgb(48_46_150/0.22)_75%)]",
+  handSelected:
+    "bg-[radial-gradient(circle_at_55%_60%,rgb(70_40_10/0.16),rgb(70_40_10/0)_70%)]",
   handRejected: "bg-[#bd4024]/35",
   handHover: "not-aria-disabled:not-aria-pressed:hover:bg-[#3b230b]/10",
   refutationText: "text-rose-700 dark:text-rose-300",
-  // 明るい木の上でもダークの周りでも見えるよう、墨色 2px の内側に明るい縁を添える。
-  focusRing:
-    "focus-visible:outline-[#1a1410] focus-visible:shadow-[inset_0_0_0_4px_rgb(255_250_235/0.95)]",
-  // 選んだ駒を 3px ほど持ち上げる。
-  pieceLift: "-translate-y-[9%]",
+  // キーボード操作の枠は輪郭線だけにし、升の地（反証・詰みなど）を上書きしない。明るい木の上で墨色 2px は十分に見える。
+  focusRing: "focus-visible:outline-[#1a1410]",
+  // 選んだ駒を升の約 15% 持ち上げる。
+  pieceLift: "-translate-y-[15%]",
+  // 詰みの波で升に一度だけ差す光。木の上で暖かく明るくする。
+  clearGlow:
+    "bg-[radial-gradient(circle_at_50%_50%,rgb(255_244_200/0.85),rgb(255_226_150/0)_75%)]",
 } as const satisfies TsumeShogiToneClassNames;
 
 export const tsumeShogiToneClassNames: TsumeShogiToneClassNames = {

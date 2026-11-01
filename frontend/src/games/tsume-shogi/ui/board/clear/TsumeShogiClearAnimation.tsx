@@ -1,5 +1,9 @@
 import { type ReactNode, useEffect, useRef } from "react";
 
+import {
+  planTsumeShogiClearWave,
+  type TsumeShogiClearWaveSquare,
+} from "@/games/tsume-shogi/ui/board/clear/clear-wave";
 import { MOTION_EASING, playAnimations } from "@/lib/motion";
 
 type TsumeShogiClearAnimationProps = {
@@ -8,21 +12,11 @@ type TsumeShogiClearAnimationProps = {
   children: ReactNode;
 };
 
-const boardSquaresSelector = "[data-board-squares] > button";
+/** 波で動かす升（駒のある升）。升のボタンが `data-file` / `data-rank` に升の位置を置き、駒と光の層を子に持つ。 */
+const waveSquareSelector = "[data-board-squares] > button[data-file]";
+const pieceSelector = ":scope > [data-piece]";
+const glowSelector = ":scope > [data-clear-glow]";
 const matedKingAttribute = "data-mated-king";
-const BOARD_FILES = 9;
-
-/** 詰めた手の駒が着いてから、詰みの波が立つまで。 */
-const CLEAR_START_DELAY_MS = 260;
-/** 玉の升から1升離れるごとに、波が届くのを遅らせる。 */
-const CLEAR_WAVE_STAGGER_MS = 70;
-const CLEAR_WAVE_DURATION_MS = 420;
-const CLEAR_KING_DURATION_MS = 620;
-/** 波が収まった詰み上がりの盤を見せる時間。 */
-const CLEAR_SETTLE_MS = 700;
-/** 揺らさないときも、揺らしたときと同じくらいの間だけ詰み上がりを見せる。 */
-const CLEAR_STILL_HOLD_MS =
-  CLEAR_START_DELAY_MS + CLEAR_KING_DURATION_MS + CLEAR_SETTLE_MS;
 
 /** 詰んだ玉は大きく揺れて沈む。 */
 const matedKingKeyframes: Keyframe[] = [
@@ -40,25 +34,29 @@ const wavePieceKeyframes: Keyframe[] = [
   { transform: "translateY(0) scale(1)" },
 ];
 
-/** 升の地（玉の升の詰みの色）は、波の先頭で一度明るく光る。 */
-const waveSquareKeyframes: Keyframe[] = [
-  { filter: "brightness(1)" },
-  { filter: "brightness(1.18)", offset: 0.35 },
-  { filter: "brightness(1)" },
+/** 升の光の層は、波の先頭で一度だけ現れて消える。 */
+const glowKeyframes: Keyframe[] = [
+  { opacity: 0 },
+  { opacity: 1, offset: 0.35 },
+  { opacity: 0 },
 ];
 
-function squareIndexDistance(index: number, origin: number): number {
-  const file = index % BOARD_FILES;
-  const rank = Math.floor(index / BOARD_FILES);
-  const originFile = origin % BOARD_FILES;
-  const originRank = Math.floor(origin / BOARD_FILES);
-  return Math.max(Math.abs(file - originFile), Math.abs(rank - originRank));
+function readWaveSquares(squares: readonly HTMLElement[]) {
+  return squares.map(
+    (element): TsumeShogiClearWaveSquare => ({
+      square: {
+        file: Number(element.dataset.file),
+        rank: Number(element.dataset.rank),
+      },
+      matedKing: element.hasAttribute(matedKingAttribute),
+    }),
+  );
 }
 
 /**
  * 詰んだ瞬間に入力を止め、玉の升を詰みの色で染め、玉を大きく揺らす。同時に玉の升から盤の端へ波を広げ、
- * 盤上の駒を順に浮かせて升を一度光らせる。盤全体が応えるので、他のゲームの完成演出（盤全体の波・脈動・光）と同じ強さになる。
- * 動きを減らす設定では揺らさず、同じくらいの間だけ詰み上がりを見せる。
+ * 駒のある升を順に光らせて駒を浮かせる。盤全体が応えるので、他のゲームの完成演出（盤全体の波・脈動・光）と同じ強さになる。
+ * 動きを減らす設定でも、演出と同じ長さだけ詰み上がりを見せてから結果へ進める（`planTsumeShogiClearWave`）。
  */
 export function TsumeShogiClearAnimation({
   active,
@@ -70,46 +68,49 @@ export function TsumeShogiClearAnimation({
   useEffect(() => {
     if (!active) return;
 
+    const squares = Array.from(
+      containerRef.current?.querySelectorAll<HTMLElement>(waveSquareSelector) ??
+        [],
+    ).filter(
+      (element) =>
+        element.querySelector(pieceSelector) !== null ||
+        element.hasAttribute(matedKingAttribute),
+    );
+    const plan = planTsumeShogiClearWave(readWaveSquares(squares));
+    const elementsBySquare = new Map(
+      squares.map((element) => [
+        `${element.dataset.file}-${element.dataset.rank}`,
+        element,
+      ]),
+    );
+
     return playAnimations({
       animate() {
-        const squares = Array.from(
-          containerRef.current?.querySelectorAll<HTMLElement>(
-            boardSquaresSelector,
-          ) ?? [],
-        );
-        const kingIndex = squares.findIndex((square) =>
-          square.hasAttribute(matedKingAttribute),
-        );
-        if (kingIndex < 0) return [];
-        return squares.flatMap((square, index) => {
-          const distance = squareIndexDistance(index, kingIndex);
-          const delay = CLEAR_START_DELAY_MS + distance * CLEAR_WAVE_STAGGER_MS;
-          const piece = square.querySelector<HTMLElement>(":scope > span");
-          const animations: Animation[] = [];
-          const squareAnimation = square.animate?.(waveSquareKeyframes, {
-            duration: CLEAR_WAVE_DURATION_MS,
-            delay,
-            easing: MOTION_EASING.celebrate,
-          });
-          if (squareAnimation) animations.push(squareAnimation);
-          const pieceAnimation = piece?.animate?.(
-            index === kingIndex ? matedKingKeyframes : wavePieceKeyframes,
-            {
-              duration:
-                index === kingIndex
-                  ? CLEAR_KING_DURATION_MS
-                  : CLEAR_WAVE_DURATION_MS,
-              delay,
-              easing: MOTION_EASING.celebrate,
-            },
+        return plan.steps.flatMap((step) => {
+          const square = elementsBySquare.get(
+            `${step.square.file}-${step.square.rank}`,
           );
-          if (pieceAnimation) animations.push(pieceAnimation);
-          return animations;
+          const timing = {
+            duration: step.durationMs,
+            delay: step.delayMs,
+            easing: MOTION_EASING.celebrate,
+          };
+          return [
+            square
+              ?.querySelector<HTMLElement>(pieceSelector)
+              ?.animate?.(
+                step.matedKing ? matedKingKeyframes : wavePieceKeyframes,
+                timing,
+              ),
+            square
+              ?.querySelector<HTMLElement>(glowSelector)
+              ?.animate?.(glowKeyframes, timing),
+          ].filter((animation) => animation !== undefined);
         });
       },
-      completion: { type: "after-animations", holdMs: CLEAR_SETTLE_MS },
-      reducedMotionHoldMs: CLEAR_STILL_HOLD_MS,
-      unanimatedHoldMs: CLEAR_STILL_HOLD_MS,
+      completion: { type: "after-duration", durationMs: plan.totalMs },
+      reducedMotionHoldMs: plan.totalMs,
+      unanimatedHoldMs: plan.totalMs,
       onFinished: onClearAnimationComplete,
     });
   }, [active, onClearAnimationComplete]);
