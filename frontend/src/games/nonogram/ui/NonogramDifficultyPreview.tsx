@@ -152,4 +152,4 @@ export function NonogramDifficultyPreview({
   );
 }
 
-export const _private = { previewChain, createPreviewChain };
+export const _private = { createPreviewChain };
