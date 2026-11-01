@@ -12,6 +12,7 @@ import {
   searchHitofudePuzzleSolutionsForAnalysis,
 } from "@/games/hitofude-puzzle/problem/difficulty-analysis";
 import { countHitofudePuzzleHoleLayoutViolations } from "@/games/hitofude-puzzle/problem/generation/hole-layout";
+import { measureHitofudePuzzleLookaheadLoad } from "@/games/hitofude-puzzle/problem/generation/human-solver";
 import { measureHitofudePuzzleStraightRatio } from "@/games/hitofude-puzzle/problem/generation/straightness";
 import { getHitofudePuzzleSymmetryKey } from "@/games/hitofude-puzzle/problem/generation/symmetry";
 import { generateHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/generator";
@@ -21,7 +22,7 @@ import {
   type HitofudePuzzleBoardSize,
   type HitofudePuzzleGenerationConditions,
   type HitofudePuzzleSolveWorkload,
-  type HitofudePuzzleTargetAssumptionCount,
+  type HitofudePuzzleTargetLookaheadLoad,
 } from "@/games/hitofude-puzzle/problem/problem";
 import {
   encodeHitofudePuzzlePoolHoles,
@@ -37,25 +38,25 @@ const defaultRegeneratePerLevel = 3;
 /**
  * レベルごとに候補を作る生成条件。並びは1問あたりの計算の少ない順。
  * レベルの盤面サイズの範囲にある条件のうち、そのレベルの1問を安く作れる条件に寄せる
- * （`docs/パズル/導入調査/ハミルトン路/ハミルトン路難易度.md` §16）。レベル1 は同型の重なりが多い 5×5 を使わない。
- * 8×8・目標7 の候補はレベル5 のために多く作るので、その候補のうちレベル3・4 に分類されたものもそのレベルで使う。
+ * （`docs/パズル/導入調査/ハミルトン路/ハミルトン路難易度.md` §17）。レベル1 は同型の重なりが多い 5×5 を使わない。
+ * 8×8・目標4 の候補はレベル5 のために多く作るので、その候補のうちレベル3・4 に分類されたものもそのレベルで使う。
  * 条件を巡回して1問ずつ採るので、レベルの中の盤面サイズ・目標の混ざり方もこの一覧で決まる。
  */
 const poolConditionsByDifficulty = {
-  "1": [{ size: 6, targetAssumptionCount: 0 }],
+  "1": [{ size: 6, targetLookaheadLoad: 0 }],
   "2": [
-    { size: 7, targetAssumptionCount: 0 },
-    { size: 6, targetAssumptionCount: 0 },
+    { size: 7, targetLookaheadLoad: 0 },
+    { size: 6, targetLookaheadLoad: 0 },
   ],
   "3": [
-    { size: 7, targetAssumptionCount: 4 },
-    { size: 8, targetAssumptionCount: 7 },
+    { size: 7, targetLookaheadLoad: 2 },
+    { size: 8, targetLookaheadLoad: 4 },
   ],
   "4": [
-    { size: 7, targetAssumptionCount: 4 },
-    { size: 8, targetAssumptionCount: 7 },
+    { size: 7, targetLookaheadLoad: 2 },
+    { size: 8, targetLookaheadLoad: 4 },
   ],
-  "5": [{ size: 8, targetAssumptionCount: 7 }],
+  "5": [{ size: 8, targetLookaheadLoad: 4 }],
 } as const satisfies Record<
   HitofudePuzzleDifficulty,
   readonly HitofudePuzzleGenerationConditions[]
@@ -73,7 +74,7 @@ const MAXIMUM_MONOTONOUS_SHARE = 0.1;
 
 const usage = `Usage: bun run generate:hitofude-puzzle-pool -- [options]
 
-レベルごとに、採用率の高い生成条件（盤面サイズ×仮置きの回数の目標）で、決定的な seed の候補を番号順に生成・分析する。
+レベルごとに、採用率の高い生成条件（盤面サイズ×先読みの重さの目標）で、決定的な seed の候補を番号順に生成・分析する。
 そのレベルに分類された候補を、回転・反転（8通り）の同型の重複をレベルをまたいで除き、直進率 ${MONOTONOUS_STRAIGHT_RATIO} 以上の
 単調な道を ${MAXIMUM_MONOTONOUS_SHARE * 100}% 以下に抑えながら、生成条件を巡回して問題集へ採る。
 
@@ -127,9 +128,9 @@ function readPositiveInteger(name: string, fallback: number): number {
 
 function conditionKeyOf({
   size,
-  targetAssumptionCount,
+  targetLookaheadLoad,
 }: HitofudePuzzleGenerationConditions): string {
-  return `${size}×${size}/t${targetAssumptionCount}`;
+  return `${size}×${size}/t${targetLookaheadLoad}`;
 }
 
 function isMonotonous(straightRatio: number): boolean {
@@ -144,7 +145,7 @@ function evaluateCandidate(
   const { problem, solution, symmetryKey } = generateHitofudePuzzleProblem(
     createHitofudePuzzleProblemIdentity(
       condition.size,
-      condition.targetAssumptionCount,
+      condition.targetLookaheadLoad,
       index,
     ),
   );
@@ -173,11 +174,11 @@ function evaluateCandidate(
 }
 
 function runWorker(args: readonly string[]): void {
-  const [size, targetAssumptionCount, start, count] = args.map(Number);
+  const [size, targetLookaheadLoad, start, count] = args.map(Number);
   const condition = {
     size: size as HitofudePuzzleBoardSize,
-    targetAssumptionCount:
-      targetAssumptionCount as HitofudePuzzleTargetAssumptionCount,
+    targetLookaheadLoad:
+      targetLookaheadLoad as HitofudePuzzleTargetLookaheadLoad,
   };
   const end = start! + count!;
   for (let index = start!; index < end; index += 1) {
@@ -195,7 +196,7 @@ async function runBatch({ state, start, count }: Batch): Promise<Candidate[]> {
       Bun.fileURLToPath(import.meta.url),
       "--worker",
       String(condition.size),
-      String(condition.targetAssumptionCount),
+      String(condition.targetLookaheadLoad),
       String(start),
       String(count),
     ],
@@ -217,9 +218,9 @@ async function runBatch({ state, start, count }: Batch): Promise<Candidate[]> {
  * 難しさへ歩く条件は1候補が数秒〜数十秒かかるので、穴の焼きなましだけの条件より細かく分ける。
  */
 function findMaximumBatchSize({
-  targetAssumptionCount,
+  targetLookaheadLoad,
 }: HitofudePuzzleGenerationConditions): number {
-  return targetAssumptionCount === 0 ? 50 : 5;
+  return targetLookaheadLoad === 0 ? 50 : 5;
 }
 
 async function runBatches(
@@ -397,7 +398,7 @@ function toPoolEntry({
   const workload = candidate.workload!;
   return [
     condition.size,
-    condition.targetAssumptionCount,
+    condition.targetLookaheadLoad,
     candidate.index,
     candidate.start,
     candidate.encodedHoles,
@@ -436,10 +437,11 @@ function describeLevelEntries(
 ): string[] {
   const pooled = entries.map(toHitofudePuzzlePooledProblem);
   return [
-    `  盤面/仮置きの目標: ${formatCounts(pooled.map(({ identity }) => conditionKeyOf(identity.conditions)))}`,
+    `  盤面/先読みの重さの目標: ${formatCounts(pooled.map(({ identity }) => conditionKeyOf(identity.conditions)))}`,
     `  有効マス: ${describeDistribution(pooled.map(({ workload }) => workload.openCellCount))}`,
     `  穴: ${describeDistribution(pooled.map(({ problem }) => problem.holes.length))}`,
-    `  仮置きの回数: ${describeDistribution(pooled.map(({ workload }) => workload.assumptionCount))}`,
+    `  仮置きの局面: ${describeDistribution(pooled.map(({ workload }) => workload.assumptionCount))}`,
+    `  先読みの重さ: ${describeDistribution(pooled.map(({ workload }) => measureHitofudePuzzleLookaheadLoad(workload.assumptionCount, workload.longestRefutationLength)))}`,
     `  先読みの手数の合計: ${describeDistribution(pooled.map(({ workload }) => workload.refutationStepCount))}`,
     `  最も長い先読み: ${describeDistribution(pooled.map(({ workload }) => workload.longestRefutationLength))}`,
     `  迷う分岐: ${describeDistribution(pooled.map(({ workload }) => workload.fatalBranchCount))}`,

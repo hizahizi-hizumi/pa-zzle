@@ -69,7 +69,7 @@ describe("decodeHitofudePuzzlePoolProblem", () => {
 });
 
 describe("toHitofudePuzzlePoolIdentity", () => {
-  test("盤面サイズ・仮置きの回数の目標・候補番号から identity を作ること", () => {
+  test("盤面サイズ・先読みの重さの目標・候補番号から identity を作ること", () => {
     const identity = toHitofudePuzzlePoolIdentity([
       7,
       4,
@@ -165,7 +165,7 @@ describe("findHitofudePuzzlePoolEntryByProblemId", () => {
 describe("findHitofudePuzzlePoolEntry", () => {
   const entry = listHitofudePuzzlePoolEntries("3")[0]!;
   const identity = toHitofudePuzzlePoolIdentity(entry);
-  const otherTarget = identity.conditions.targetAssumptionCount === 0 ? 4 : 0;
+  const otherTarget = identity.conditions.targetLookaheadLoad === 0 ? 4 : 0;
 
   test("問題集の identity から項目を引くこと", () => {
     const found = findHitofudePuzzlePoolEntry(structuredClone(identity));
@@ -174,14 +174,14 @@ describe("findHitofudePuzzlePoolEntry", () => {
   });
 
   const unknownIdentities = [
-    ["seed が問題集に無い", { ...identity, seed: "hp-8-t7-999999" }],
+    ["seed が問題集に無い", { ...identity, seed: "hp-8-t4-999999" }],
     [
       "生成条件が seed と食い違う",
       {
         ...identity,
         conditions: {
           ...identity.conditions,
-          targetAssumptionCount: otherTarget,
+          targetLookaheadLoad: otherTarget,
         },
       },
     ],

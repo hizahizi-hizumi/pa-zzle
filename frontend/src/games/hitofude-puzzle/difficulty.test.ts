@@ -7,6 +7,11 @@ import {
   listHitofudePuzzleGenerationConditions,
 } from "@/games/hitofude-puzzle/difficulty";
 import type { HitofudePuzzleDifficultyAnalysis } from "@/games/hitofude-puzzle/problem/difficulty-analysis";
+import { measureHitofudePuzzleLookaheadLoad } from "@/games/hitofude-puzzle/problem/generation/human-solver";
+import {
+  hitofudePuzzleBoardSizes,
+  hitofudePuzzleTargetLookaheadLoads,
+} from "@/games/hitofude-puzzle/problem/problem";
 
 type AnalysisInput = {
   size: number;
@@ -40,6 +45,10 @@ function toAnalysis({
       deepAssumptionCount,
       longestRefutationLength,
       refutationLengths: [],
+      lookaheadLoad: measureHitofudePuzzleLookaheadLoad(
+        assumptionCount,
+        longestRefutationLength,
+      ),
       stallCount: localReasoningSuffices ? 0 : assumptionCount + 1,
       firstStallDecidedEdgeRatio: localReasoningSuffices ? 1 : 0.5,
       firingCountByStage: { 1: 40, 2: 5, 3: 0, 4: 0, 5: assumptionCount, 6: 0 },
@@ -74,21 +83,19 @@ describe("hitofudePuzzleLevelCombinations", () => {
   });
 
   test.each(adjacentPairs)(
-    "レベル %s で、上のレベルの仮置きの回数と盤面サイズの範囲が両端とも下のレベルより小さくならないこと",
+    "レベル %s で、上のレベルの先読みの重さと盤面サイズの範囲が両端とも下のレベルより小さくならないこと",
     (_, lower, upper) => {
       const lowerBounds = [
-        lower.assumptionCount.minimum,
-        lower.assumptionCount.maximum,
+        lower.lookaheadLoad.minimum,
+        lower.lookaheadLoad.maximum,
         lower.boardSize.minimum,
         lower.boardSize.maximum,
-        lower.minimumLongestRefutationLength ?? 0,
       ];
       const upperBounds = [
-        upper.assumptionCount.minimum,
-        upper.assumptionCount.maximum,
+        upper.lookaheadLoad.minimum,
+        upper.lookaheadLoad.maximum,
         upper.boardSize.minimum,
         upper.boardSize.maximum,
-        upper.minimumLongestRefutationLength ?? 0,
       ];
 
       const narrowed = upperBounds.filter(
@@ -96,6 +103,15 @@ describe("hitofudePuzzleLevelCombinations", () => {
       );
 
       expect(narrowed).toEqual([]);
+    },
+  );
+
+  test.each(adjacentPairs.slice(1))(
+    "レベル %s で、先読みの重さの範囲が隙間なく続き、重ならないこと",
+    (_, lower, upper) => {
+      const gap = upper.lookaheadLoad.minimum - lower.lookaheadLoad.maximum;
+
+      expect(gap).toBe(1);
     },
   );
 
@@ -128,13 +144,39 @@ describe("assessHitofudePuzzleDifficulty", () => {
       "1",
     ],
     ["6×6 で分断の推論で止まりを抜ける", { size: 6 }, "2"],
-    ["7×7 で仮置き1回", { size: 7, assumptionCount: 1 }, "2"],
-    ["7×7 で仮置き2回", { size: 7, assumptionCount: 2 }, "3"],
-    ["8×8 で仮置き3回", { size: 8, assumptionCount: 3 }, "3"],
-    ["7×7 で仮置き6回", { size: 7, assumptionCount: 6 }, "4"],
     [
-      "8×8 で仮置き7回・9手の先読み",
-      { size: 8, assumptionCount: 7, longestRefutationLength: 9 },
+      "7×7 で仮置き1局面・5手の先読み",
+      { size: 7, assumptionCount: 1, longestRefutationLength: 5 },
+      "2",
+    ],
+    [
+      "7×7 で仮置き1局面・12手の先読み",
+      { size: 7, assumptionCount: 1, longestRefutationLength: 12 },
+      "3",
+    ],
+    [
+      "8×8 で仮置き2局面・先読みがどれも8手以内",
+      { size: 8, assumptionCount: 2, longestRefutationLength: 8 },
+      "3",
+    ],
+    [
+      "7×7 で仮置き2局面・10手の先読み",
+      { size: 7, assumptionCount: 2, longestRefutationLength: 10 },
+      "4",
+    ],
+    [
+      "8×8 で仮置き3局面・先読みがどれも8手以内",
+      { size: 8, assumptionCount: 3, longestRefutationLength: 8 },
+      "4",
+    ],
+    [
+      "8×8 で仮置き3局面・9手の先読み",
+      { size: 8, assumptionCount: 3, longestRefutationLength: 9 },
+      "5",
+    ],
+    [
+      "8×8 で仮置き2局面・21手の先読み",
+      { size: 8, assumptionCount: 2, longestRefutationLength: 21 },
       "5",
     ],
   ];
@@ -153,11 +195,17 @@ describe("assessHitofudePuzzleDifficulty", () => {
 
   const unlistedCases: readonly (readonly [string, AnalysisInput])[] = [
     ["7×7 で局所の推論だけで決まる", { size: 7, localReasoningSuffices: true }],
-    ["6×6 で仮置き2回", { size: 6, assumptionCount: 2 }],
-    ["7×7 で仮置き7回", { size: 7, assumptionCount: 7 }],
     [
-      "8×8 で仮置き7回だが先読みがどれも8手以内",
-      { size: 8, assumptionCount: 7, longestRefutationLength: 8 },
+      "6×6 で仮置き2局面",
+      { size: 6, assumptionCount: 2, longestRefutationLength: 5 },
+    ],
+    [
+      "7×7 で仮置き3局面・9手の先読み",
+      { size: 7, assumptionCount: 3, longestRefutationLength: 9 },
+    ],
+    [
+      "8×8 で仮置き1局面・先読みが8手以内",
+      { size: 8, assumptionCount: 1, longestRefutationLength: 5 },
     ],
   ];
 
@@ -176,7 +224,7 @@ describe("assessHitofudePuzzleDifficulty", () => {
   describe("2段仮置きを要する問題の場合", () => {
     const analysis = toAnalysis({
       size: 8,
-      assumptionCount: 8,
+      assumptionCount: 3,
       longestRefutationLength: 20,
       deepAssumptionCount: 1,
     });
@@ -241,16 +289,18 @@ describe("assessHitofudePuzzleDifficulty", () => {
 });
 
 describe("listHitofudePuzzleGenerationConditions", () => {
-  test("レベルの盤面サイズの範囲の盤面を、すべての仮置きの回数の目標で挙げること", () => {
+  const expected = hitofudePuzzleBoardSizes
+    .filter((size) => size <= 6)
+    .flatMap((size) =>
+      hitofudePuzzleTargetLookaheadLoads.map((targetLookaheadLoad) => ({
+        size,
+        targetLookaheadLoad,
+      })),
+    );
+
+  test("レベルの盤面サイズの範囲の盤面を、すべての先読みの重さの目標で挙げること", () => {
     const conditions = listHitofudePuzzleGenerationConditions("1");
 
-    expect(conditions).toEqual([
-      { size: 5, targetAssumptionCount: 0 },
-      { size: 5, targetAssumptionCount: 4 },
-      { size: 5, targetAssumptionCount: 7 },
-      { size: 6, targetAssumptionCount: 0 },
-      { size: 6, targetAssumptionCount: 4 },
-      { size: 6, targetAssumptionCount: 7 },
-    ]);
+    expect(conditions).toEqual(expected);
   });
 });

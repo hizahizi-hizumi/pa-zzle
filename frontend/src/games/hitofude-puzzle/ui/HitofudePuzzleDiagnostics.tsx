@@ -50,9 +50,9 @@ function formatPercent(ratio: number): string {
 
 function formatGenerationConditions({
   size,
-  targetAssumptionCount,
+  targetLookaheadLoad,
 }: HitofudePuzzleGenerationConditions): string {
-  return `${size}×${size} / 仮置きの目標 ${targetAssumptionCount}回`;
+  return `${size}×${size} / 先読みの重さの目標 ${targetLookaheadLoad}`;
 }
 
 /** 段階ごとの数を「段階: 数」で並べる。 */
@@ -139,9 +139,8 @@ function listLevelConditions(
   }
   const combination: {
     localReasoningSuffices: boolean;
-    assumptionCount: NumericRange;
+    lookaheadLoad: NumericRange;
     boardSize: NumericRange;
-    minimumLongestRefutationLength?: number;
   } = hitofudePuzzleLevelCombinations[assessment.difficulty];
   const { reasoning, scale } = analysis;
   return [
@@ -150,8 +149,8 @@ function listLevelConditions(
       value: `${formatDecided(reasoning.localReasoningSuffices)}（条件 ${formatDecided(combination.localReasoningSuffices)}）`,
     },
     {
-      label: "仮置き",
-      value: `${reasoning.assumptionCount}回（条件 ${formatRange(combination.assumptionCount, "回")}）`,
+      label: "先読みの重さ",
+      value: `${reasoning.lookaheadLoad}（条件 ${formatRange(combination.lookaheadLoad, "")}）`,
       mono: true,
     },
     {
@@ -159,15 +158,6 @@ function listLevelConditions(
       value: `${scale.size}×${scale.size}（条件 ${formatRange(combination.boardSize, "")}）`,
       mono: true,
     },
-    ...(combination.minimumLongestRefutationLength === undefined
-      ? []
-      : [
-          {
-            label: "最も長い先読み",
-            value: `${reasoning.longestRefutationLength}手（条件 ${combination.minimumLongestRefutationLength}手以上）`,
-            mono: true,
-          },
-        ]),
   ];
 }
 
@@ -234,7 +224,7 @@ function listReasoningItems({
     },
     {
       label: "仮置き",
-      value: `${reasoning.assumptionCount}回 / 2段 ${reasoning.deepAssumptionCount}回`,
+      value: `${reasoning.assumptionCount}局面 / 2段 ${reasoning.deepAssumptionCount}回`,
       mono: true,
     },
     {
@@ -243,7 +233,7 @@ function listReasoningItems({
       mono: true,
     },
     {
-      label: "仮置きごとの手数",
+      label: "局面ごとの手数",
       value:
         reasoning.refutationLengths.length === 0
           ? "なし"

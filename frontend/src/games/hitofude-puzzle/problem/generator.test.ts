@@ -21,10 +21,10 @@ describe("generateHitofudePuzzleProblem", () => {
   const identity = createHitofudePuzzleProblemIdentity(6, 0, 0);
 
   test.each(conditions)(
-    "一辺 %i・仮置きの回数の目標 %i で、穴が見た目の基準を満たす一意解の問題を作ること",
-    (size, targetAssumptionCount) => {
+    "一辺 %i・先読みの重さの目標 %i で、穴が見た目の基準を満たす一意解の問題を作ること",
+    (size, targetLookaheadLoad) => {
       const { problem, solution } = generateHitofudePuzzleProblem(
-        createHitofudePuzzleProblemIdentity(size, targetAssumptionCount, 0),
+        createHitofudePuzzleProblemIdentity(size, targetLookaheadLoad, 0),
       );
       const search = countHitofudePuzzleSolutions(problem);
       const assertProblem = () => assertHitofudePuzzleProblem(problem);
@@ -81,18 +81,18 @@ describe("generateHitofudePuzzleProblem", () => {
           ...identity,
           conditions: {
             size: 10 as HitofudePuzzleProblemIdentity["conditions"]["size"],
-            targetAssumptionCount: 0,
+            targetLookaheadLoad: 0,
           },
         },
       ],
       [
-        "対応していない仮置きの回数の目標",
+        "対応していない先読みの重さの目標",
         {
           ...identity,
           conditions: {
             size: 6,
-            targetAssumptionCount:
-              5 as HitofudePuzzleProblemIdentity["conditions"]["targetAssumptionCount"],
+            targetLookaheadLoad:
+              5 as HitofudePuzzleProblemIdentity["conditions"]["targetLookaheadLoad"],
           },
         },
       ],

@@ -13,12 +13,12 @@ import { parseHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
 
 describe("createHitofudePuzzleProblemIdentity", () => {
   test("条件と候補番号を seed に含めた今の版の identity を作ること", () => {
-    const identity = createHitofudePuzzleProblemIdentity(8, 7, 3);
+    const identity = createHitofudePuzzleProblemIdentity(8, 4, 3);
 
     expect(identity).toEqual({
       generatorVersion: HITOFUDE_PUZZLE_GENERATOR_VERSION,
-      seed: "hp-8-t7-3",
-      conditions: { size: 8, targetAssumptionCount: 7 },
+      seed: "hp-8-t4-3",
+      conditions: { size: 8, targetLookaheadLoad: 4 },
     });
   });
 });
@@ -31,11 +31,11 @@ describe("isHitofudePuzzleProblemIdentity", () => {
     ["seed が空", { ...identity, seed: "" }],
     [
       "扱わない盤面サイズ",
-      { ...identity, conditions: { size: 10, targetAssumptionCount: 0 } },
+      { ...identity, conditions: { size: 10, targetLookaheadLoad: 0 } },
     ],
     [
-      "扱わない仮置きの回数の目標",
-      { ...identity, conditions: { size: 6, targetAssumptionCount: 5 } },
+      "扱わない先読みの重さの目標",
+      { ...identity, conditions: { size: 6, targetLookaheadLoad: 7 } },
     ],
     [
       "前の版の生成条件の",
@@ -65,7 +65,7 @@ describe("isHitofudePuzzleRecordedProblemIdentity", () => {
   };
   const brokenCurrentIdentity = {
     ...createHitofudePuzzleProblemIdentity(6, 0, 1),
-    conditions: { size: 12, targetAssumptionCount: 0 },
+    conditions: { size: 12, targetLookaheadLoad: 0 },
   };
 
   test("生成器の版が違う記録の identity も読めること", () => {

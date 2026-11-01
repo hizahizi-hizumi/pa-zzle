@@ -6,6 +6,7 @@ import {
   type HitofudePuzzleHumanSolveOptions,
   type HitofudePuzzleHumanSolveTrace,
   type HitofudePuzzleReasoningStage,
+  measureHitofudePuzzleLookaheadLoad,
   traceHitofudePuzzleHumanSolve,
 } from "@/games/hitofude-puzzle/problem/generation/human-solver";
 import {
@@ -40,10 +41,11 @@ export type HitofudePuzzleScaleMetrics = {
  * 最も上手に読めた向きの経過（`analyzeHitofudePuzzleDifficulty`）で、盤面の向きに依らない。
  * - `localReasoningSuffices`: 局所の推論（段階1〜2）だけで道が決まり、一度も止まらなかった。
  * - `regionalReasoningUsed`: 分断・到達・パリティの推論（段階3〜4）で、仮置きの外の盤面を進めたことがある。
- * - `assumptionCount`: 段階1〜4で止まり、1段仮置きで辺を1本決めた回数（先読みを要した回数）。
+ * - `assumptionCount`: 段階1〜4で止まり、1段仮置きで進めた局面の数（先読みを要した回数）。
  * - `deepAssumptionCount`: 2段仮置きで辺を1本決めた回数。
- * - `longestRefutationLength`: 仮置きから矛盾が出るまでの推論の手数の最大（最も長い先読み）。仮置きが無ければ0。
- * - `refutationLengths`: 仮置きで辺を決めた回ごとの、矛盾までの推論の手数。
+ * - `longestRefutationLength`: 局面ごとの先読みの手数の最大（最も長い先読み）。仮置きが無ければ0。
+ * - `refutationLengths`: 仮置きで進めた局面ごとの、仮置きから矛盾が出るまでの推論の手数の最小。
+ * - `lookaheadLoad`: 先読みの重さ（`measureHitofudePuzzleLookaheadLoad`）。局面の数に、長い先読みの段を足したもの。
  * - `stallCount`: 段階1〜2だけでは進めなくなった回数。
  * - `firstStallDecidedEdgeRatio`: 最初に止まった時点で、使う・使わないが決まっていた辺の割合。強制の連鎖でどこまで進むか。
  * - `firingCountByStage`: 仮置きの外で各段階の推論を使った回数。添字0が段階1。
@@ -55,6 +57,7 @@ export type HitofudePuzzleReasoningFeatures = {
   deepAssumptionCount: number;
   longestRefutationLength: number;
   refutationLengths: readonly number[];
+  lookaheadLoad: number;
   stallCount: number;
   firstStallDecidedEdgeRatio: number;
   firingCountByStage: Readonly<Record<HitofudePuzzleReasoningStage, number>>;
@@ -122,13 +125,18 @@ function summarizeReasoning(
   trace: HitofudePuzzleHumanSolveTrace,
 ): HitofudePuzzleReasoningFeatures {
   const [local, loop, region, parity, single, deep] = trace.firingCountByStage;
+  const longestRefutationLength = Math.max(0, ...trace.refutationLengths);
   return {
     localReasoningSuffices: trace.stallCount === 0,
     regionalReasoningUsed: region + parity > 0,
     assumptionCount: trace.assumptionCount,
     deepAssumptionCount: trace.deepAssumptionCount,
-    longestRefutationLength: Math.max(0, ...trace.refutationLengths),
+    longestRefutationLength,
     refutationLengths: trace.refutationLengths,
+    lookaheadLoad: measureHitofudePuzzleLookaheadLoad(
+      trace.assumptionCount,
+      longestRefutationLength,
+    ),
     stallCount: trace.stallCount,
     firstStallDecidedEdgeRatio: trace.firstStallDecidedEdgeRatio,
     firingCountByStage: {
@@ -179,7 +187,7 @@ type OrientedReasoning = {
 /**
  * 回転・反転した8通りの盤面のそれぞれで、人間向け解法器が道を決め切った読み方。解き切れた向きが無ければ、
  * 評価不能の理由を返す。どの向きでも解法器は同じ推論を使うが、仮置きを試す辺の順がマスの番号に従うので、
- * 盤面の向きによって仮置きの回数や先読みの手数が変わる。
+ * 盤面の向きによって仮置きで決まる辺、ひいては後の局面の数や先読みの手数が変わることがある。
  */
 function readInEveryOrientation(
   problem: HitofudePuzzleProblem,

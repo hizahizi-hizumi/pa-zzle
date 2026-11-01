@@ -14,7 +14,7 @@ import {
   type HitofudePuzzleBoardSize,
   type HitofudePuzzleGenerationConditions,
   hitofudePuzzleBoardSizes,
-  hitofudePuzzleTargetAssumptionCounts,
+  hitofudePuzzleTargetLookaheadLoads,
 } from "@/games/hitofude-puzzle/problem/problem";
 
 export type HitofudePuzzleDifficulty = DifficultyLevel;
@@ -23,52 +23,46 @@ export type HitofudePuzzleDifficulty = DifficultyLevel;
  * 1つのレベルが求める組み合わせ。
  * - `localReasoningSuffices`: 局所の推論（角・通路・袋小路、輪と端の連結の禁止）だけで道が決まるか。
  *   レベル1だけが真で、それより上は局所の推論で止まる地点を少なくとも1つ持つ。
- * - `assumptionCount`: 局所・分断・パリティの推論で止まり、数手先の破綻を読んで（1段仮置きで）道を決めた回数。
- *   レベルの挑戦の中身（先読みを重ねる回数）を決める。
+ * - `lookaheadLoad`: 先読みの重さ（仮置きで進めた局面の数に、8手を超える長い先読みの段を足したもの）。
+ *   レベルの挑戦の中身（数手先の破綻を読む局面の多さと深さ）を決める。
  * - `boardSize`: 盤面の一辺。読む範囲となぞる長さで、単独でレベルを決めないよう隣のレベルと重なる範囲で許す。
- * - `minimumLongestRefutationLength`: 最も長い先読み（仮置きから矛盾が出るまでの推論の手数）の下限。省略したレベルでは問わない。
- *   解法器は先読みの手数の上限を3手・8手・20手・60手と広げながら仮置きを試すので、9以上は「どの辺を仮定しても
- *   8手以内には破綻が見えない局面が少なくとも1回あった」ことを表す。
  */
 export type HitofudePuzzleLevelCombination = {
   localReasoningSuffices: boolean;
-  assumptionCount: NumericRange;
+  lookaheadLoad: NumericRange;
   boardSize: NumericRange<HitofudePuzzleBoardSize>;
-  minimumLongestRefutationLength?: number;
 };
 
 /**
- * 各レベルの組み合わせ。先読みの回数を1段ずつ上げ、盤面サイズの範囲は両端とも下げない。
- * 隣のレベルとは盤面サイズの範囲が重なり、重なった盤面では先読みの回数でレベルが分かれる。
- * レベル5だけは長い先読みも求め、短い先読みを何度も繰り返すだけで決まる問題と分ける。
+ * 各レベルの組み合わせ。先読みの重さを1段ずつ上げ、盤面サイズの範囲は両端とも下げない。
+ * 隣のレベルとは盤面サイズの範囲が重なり、重なった盤面では先読みの重さでレベルが分かれる。
  * 境界は人間の実プレイで確かめる前の暫定値。
  */
 export const hitofudePuzzleLevelCombinations = {
   "1": {
     localReasoningSuffices: true,
-    assumptionCount: { minimum: 0, maximum: 0 },
+    lookaheadLoad: { minimum: 0, maximum: 0 },
     boardSize: { minimum: 5, maximum: 6 },
   },
   "2": {
     localReasoningSuffices: false,
-    assumptionCount: { minimum: 0, maximum: 1 },
+    lookaheadLoad: { minimum: 0, maximum: 1 },
     boardSize: { minimum: 6, maximum: 7 },
   },
   "3": {
     localReasoningSuffices: false,
-    assumptionCount: { minimum: 2, maximum: 3 },
+    lookaheadLoad: { minimum: 2, maximum: 2 },
     boardSize: { minimum: 7, maximum: 8 },
   },
   "4": {
     localReasoningSuffices: false,
-    assumptionCount: { minimum: 4, maximum: 6 },
+    lookaheadLoad: { minimum: 3, maximum: 3 },
     boardSize: { minimum: 7, maximum: 8 },
   },
   "5": {
     localReasoningSuffices: false,
-    assumptionCount: { minimum: 7, maximum: Number.POSITIVE_INFINITY },
+    lookaheadLoad: { minimum: 4, maximum: Number.POSITIVE_INFINITY },
     boardSize: { minimum: 8, maximum: 8 },
-    minimumLongestRefutationLength: 9,
   },
 } as const satisfies Record<
   HitofudePuzzleDifficulty,
@@ -77,7 +71,7 @@ export const hitofudePuzzleLevelCombinations = {
 
 type HitofudePuzzleAssessedReasoning = Pick<
   HitofudePuzzleReasoningFeatures,
-  "assumptionCount" | "longestRefutationLength"
+  "assumptionCount" | "longestRefutationLength" | "lookaheadLoad"
 >;
 
 /**
@@ -109,10 +103,8 @@ function matchesLevelCombination(
 ): boolean {
   return (
     combination.localReasoningSuffices === reasoning.localReasoningSuffices &&
-    isInNumericRange(reasoning.assumptionCount, combination.assumptionCount) &&
-    isInNumericRange(size, combination.boardSize) &&
-    reasoning.longestRefutationLength >=
-      (combination.minimumLongestRefutationLength ?? 0)
+    isInNumericRange(reasoning.lookaheadLoad, combination.lookaheadLoad) &&
+    isInNumericRange(size, combination.boardSize)
   );
 }
 
@@ -135,6 +127,7 @@ export function assessHitofudePuzzleDifficulty(
       const assessedReasoning = {
         assumptionCount: reasoning.assumptionCount,
         longestRefutationLength: reasoning.longestRefutationLength,
+        lookaheadLoad: reasoning.lookaheadLoad,
       };
       const difficulty = difficultyLevels.find(({ id }) =>
         matchesLevelCombination(
@@ -155,8 +148,8 @@ export function assessHitofudePuzzleDifficulty(
 }
 
 /**
- * レベルの盤面サイズの範囲に入る生成条件（盤面サイズと仮置きの回数の目標の組）をすべて挙げる。問題の候補を作る範囲に使う。
- * 仮置きの回数の目標はレベルの判定条件ではなく、候補の分布を寄せる生成条件なので、どのレベルにも全ての値を挙げる。
+ * レベルの盤面サイズの範囲に入る生成条件（盤面サイズと先読みの重さの目標の組）をすべて挙げる。問題の候補を作る範囲に使う。
+ * 先読みの重さの目標はレベルの判定条件ではなく、候補の分布を寄せる生成条件なので、どのレベルにも全ての値を挙げる。
  */
 export function listHitofudePuzzleGenerationConditions(
   difficulty: HitofudePuzzleDifficulty,
@@ -165,9 +158,9 @@ export function listHitofudePuzzleGenerationConditions(
   return hitofudePuzzleBoardSizes
     .filter((size) => isInNumericRange(size, boardSize))
     .flatMap((size) =>
-      hitofudePuzzleTargetAssumptionCounts.map((targetAssumptionCount) => ({
+      hitofudePuzzleTargetLookaheadLoads.map((targetLookaheadLoad) => ({
         size,
-        targetAssumptionCount,
+        targetLookaheadLoad,
       })),
     );
 }

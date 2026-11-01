@@ -5,7 +5,7 @@ import {
   type HitofudePuzzleIdentifiedProblem,
   type HitofudePuzzleProblemIdentity,
   isHitofudePuzzleBoardSize,
-  isHitofudePuzzleTargetAssumptionCount,
+  isHitofudePuzzleTargetLookaheadLoad,
 } from "@/games/hitofude-puzzle/problem/problem";
 import { createProblemSeededRandom } from "@/games/problem-seed";
 
@@ -29,13 +29,13 @@ function validateIdentity(identity: HitofudePuzzleProblemIdentity): void {
       `Unsupported Hitofude puzzle generator version: ${identity.generatorVersion}`,
     );
   }
-  const { size, targetAssumptionCount } = identity.conditions;
+  const { size, targetLookaheadLoad } = identity.conditions;
   if (!isHitofudePuzzleBoardSize(size)) {
     throw new RangeError(`Unsupported Hitofude puzzle board size: ${size}`);
   }
-  if (!isHitofudePuzzleTargetAssumptionCount(targetAssumptionCount)) {
+  if (!isHitofudePuzzleTargetLookaheadLoad(targetLookaheadLoad)) {
     throw new RangeError(
-      `Unsupported Hitofude puzzle target assumption count: ${targetAssumptionCount}`,
+      `Unsupported Hitofude puzzle target lookahead load: ${targetLookaheadLoad}`,
     );
   }
 }
@@ -57,7 +57,7 @@ export function generateHitofudePuzzleProblem(
   for (let attempt = 1; attempt <= MAXIMUM_GENERATION_ATTEMPTS; attempt += 1) {
     const generated = createHitofudePuzzleHoleBoard(
       conditions.size,
-      conditions.targetAssumptionCount,
+      conditions.targetLookaheadLoad,
       random,
     );
     if (generated === null) {

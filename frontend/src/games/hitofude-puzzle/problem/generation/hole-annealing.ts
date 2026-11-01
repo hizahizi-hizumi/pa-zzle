@@ -1,5 +1,8 @@
 import { countHitofudePuzzleHoleLayoutViolations } from "@/games/hitofude-puzzle/problem/generation/hole-layout";
-import { traceHitofudePuzzleHumanSolve } from "@/games/hitofude-puzzle/problem/generation/human-solver";
+import {
+  measureHitofudePuzzleLookaheadLoad,
+  traceHitofudePuzzleHumanSolve,
+} from "@/games/hitofude-puzzle/problem/generation/human-solver";
 import { createRandomSelfAvoidingWalk } from "@/games/hitofude-puzzle/problem/generation/self-avoiding-walk";
 import { countHitofudePuzzleSolutions } from "@/games/hitofude-puzzle/problem/generation/solver";
 import { listHitofudePuzzleBoardOrientations } from "@/games/hitofude-puzzle/problem/generation/symmetry";
@@ -42,18 +45,24 @@ const SOLUTION_COUNT_CAP = 32;
 const LAYOUT_VIOLATION_WEIGHT = 1.5;
 
 /**
- * 難しさへ歩く回数の上限。仮置きの回数が目標に届かなくても、ここまでで最も難しかった一意解の盤面を返す。
+ * 難しさへ歩く回数の上限。先読みの重さが目標に届かなくても、ここまでで最も難しかった一意解の盤面を返す。
  */
 const HARDENING_WALK_ITERATIONS = 20_000;
 
-/** 難しさへ歩くときの、一意解の盤面どうしの比べ方。難しさ1の差を、解の数の対数1の差と同じ重さに数える。 */
+/**
+ * 難しさへ歩くときの、一意解の盤面どうしの比べ方。難しさ1の差を、解の数の対数1の差と同じ重さに数える。
+ * 温度は、先読みの重さ4（8×8・目標4）に届く歩行の割合が 0.5 より高かった 0.3 にする。
+ */
 const HARDENING_SCORE_WEIGHT = 1;
-const HARDENING_TEMPERATURE = 0.5;
+const HARDENING_TEMPERATURE = 0.3;
 
 /** 難しさを見積もる人間向け解法器の、推論を進めた回数の上限。分析（200,000）より小さくとり、歩く1歩を軽くする。 */
 const HARDNESS_ESTIMATE_WORK_LIMIT = 50_000;
 
-/** 難しさの見積もりに数える、最も長い先読みの手数の上限。仮置きの回数の1回より重くならないようにする。 */
+/**
+ * 難しさの見積もりで、同じ先読みの重さの盤面を比べる最も長い先読みの手数の上限と重み。先読みの重さの1段より
+ * 重くならないようにし、長い先読みの段に近い盤面へ寄せる。
+ */
 const LONGEST_REFUTATION_SCORE_CAP = 20;
 const LONGEST_REFUTATION_SCORE_SCALE = 40;
 
@@ -235,7 +244,7 @@ function annealHitofudePuzzleHoles(
 
 /**
  * 一意解の盤面の難しさの見積もり。回転・反転した8通りの盤面のうち、人間向け解法器が2段仮置き無しで解き切れた向きの
- * 「仮置きの回数＋最も長い先読みの手数の小さな重み」の最小。分析（`analyzeHitofudePuzzleDifficulty`）の
+ * 「先読みの重さ＋最も長い先読みの手数の小さな重み」の最小。分析（`analyzeHitofudePuzzleDifficulty`）の
  * 最も上手な読み順の、軽い代わり。どの向きでも解き切れなければ `null`。
  */
 function estimateHitofudePuzzleHardness(
@@ -251,7 +260,10 @@ function estimateHitofudePuzzleHardness(
     }
     const longestRefutationLength = Math.max(0, ...trace.refutationLengths);
     const hardness =
-      trace.assumptionCount +
+      measureHitofudePuzzleLookaheadLoad(
+        trace.assumptionCount,
+        longestRefutationLength,
+      ) +
       Math.min(longestRefutationLength, LONGEST_REFUTATION_SCORE_CAP) /
         LONGEST_REFUTATION_SCORE_SCALE;
     easiest = easiest === null ? hardness : Math.min(easiest, hardness);
@@ -269,11 +281,11 @@ function createBoardKey({ holes, start }: HitofudePuzzleBoard): string {
 /**
  * 一意解の盤面から、難しさへ歩く。一意解で見た目の基準を満たす盤面では難しいほど低く、それ以外の盤面では
  * 焼きなましと同じ量を低くする目的で、穴と始点を一定の温度で動かし続ける。歩く途中で一意解でなくなってもよい。
- * 仮置きの回数が `targetAssumptionCount` に届くか、上限の回数を歩いたら、通った一意解の盤面のうち最も難しいものを返す。
+ * 先読みの重さが `targetLookaheadLoad` に届くか、上限の回数を歩いたら、通った一意解の盤面のうち最も難しいものを返す。
  */
 function walkHitofudePuzzleHolesTowardHardness(
   origin: HitofudePuzzleUniqueHoleBoard,
-  targetAssumptionCount: number,
+  targetLookaheadLoad: number,
   random: ProblemRandom,
 ): HitofudePuzzleUniqueHoleBoard {
   const originHardness = estimateHitofudePuzzleHardness(origin.board);
@@ -285,7 +297,7 @@ function walkHitofudePuzzleHolesTowardHardness(
   for (
     let iteration = 0;
     iteration < HARDENING_WALK_ITERATIONS &&
-    hardestHardness < targetAssumptionCount;
+    hardestHardness < targetLookaheadLoad;
     iteration += 1
   ) {
     const candidate = moveHoles(board, random);
@@ -324,22 +336,22 @@ function walkHitofudePuzzleHolesTowardHardness(
 }
 
 /**
- * 穴だけで一意解にした盤面を作る。焼きなましで一意解に着いたら、`targetAssumptionCount` が正なら難しさへ歩く。
+ * 穴だけで一意解にした盤面を作る。焼きなましで一意解に着いたら、`targetLookaheadLoad` が正なら難しさへ歩く。
  * 焼きなましが一意解に着かなければ `null`（同じ乱数列の続きで作り直せる）。
  * 乱数と探索量の上限だけで決まり、同じ乱数列からは同じ盤面を作る。
  */
 export function createHitofudePuzzleHoleBoard(
   size: HitofudePuzzleBoardSize,
-  targetAssumptionCount: number,
+  targetLookaheadLoad: number,
   random: ProblemRandom,
 ): HitofudePuzzleUniqueHoleBoard | null {
   const annealed = annealHitofudePuzzleHoles(size, random);
-  if (annealed === null || targetAssumptionCount === 0) {
+  if (annealed === null || targetLookaheadLoad === 0) {
     return annealed;
   }
   return walkHitofudePuzzleHolesTowardHardness(
     annealed,
-    targetAssumptionCount,
+    targetLookaheadLoad,
     random,
   );
 }

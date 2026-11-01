@@ -27,20 +27,21 @@ export const hitofudePuzzleBoardSizes = [5, 6, 7, 8] as const;
 export type HitofudePuzzleBoardSize = (typeof hitofudePuzzleBoardSizes)[number];
 
 /**
- * 生成器へ渡す、仮置きの回数の目標。一意解に着いた後も、人間向け解法器の仮置きの回数がこれに届くまで穴を動かし続ける。
- * 0 なら一意解に着いた盤面をそのまま採る。難易度の判定条件ではなく、候補の分布を上のレベルへ寄せる生成条件。
+ * 生成器へ渡す、先読みの重さ（`measureHitofudePuzzleLookaheadLoad`）の目標。一意解に着いた後も、人間向け解法器で
+ * 測った先読みの重さがこれに届くまで穴を動かし続ける。0 なら一意解に着いた盤面をそのまま採る。
+ * 難易度の判定条件ではなく、候補の分布を上のレベルへ寄せる生成条件。
  */
-export const hitofudePuzzleTargetAssumptionCounts = [0, 4, 7] as const;
+export const hitofudePuzzleTargetLookaheadLoads = [0, 2, 4] as const;
 
-export type HitofudePuzzleTargetAssumptionCount =
-  (typeof hitofudePuzzleTargetAssumptionCounts)[number];
+export type HitofudePuzzleTargetLookaheadLoad =
+  (typeof hitofudePuzzleTargetLookaheadLoads)[number];
 
 /** 生成手順を変えて同じ identity から別の問題ができるようになったら上げる。 */
-export const HITOFUDE_PUZZLE_GENERATOR_VERSION = "2";
+export const HITOFUDE_PUZZLE_GENERATOR_VERSION = "3";
 
 export type HitofudePuzzleGenerationConditions = {
   size: HitofudePuzzleBoardSize;
-  targetAssumptionCount: HitofudePuzzleTargetAssumptionCount;
+  targetLookaheadLoad: HitofudePuzzleTargetLookaheadLoad;
 };
 
 /** 同じ問題を再現するための情報。記録から同じ問題を引き直すときに使う。 */
@@ -62,8 +63,8 @@ export type HitofudePuzzleIdentifiedProblem = {
 /**
  * 問題を解き切る作業の量。速さの基準時間を問題ごとに決めるために使い、難易度そのものは表さない。
  * - `openCellCount`: 道が通るマスの数（なぞる長さ）。
- * - `assumptionCount`: 人間向け解法器で、局所・分断・パリティの推論で止まり、1段仮置きで辺を決めた回数（先読みの回数）。
- * - `refutationStepCount`: 仮置きごとの、仮置きから矛盾が出るまでの推論の手数の合計（先読みの量）。
+ * - `assumptionCount`: 人間向け解法器で、局所・分断・パリティの推論で止まり、1段仮置きで進めた局面の数（先読みの回数）。
+ * - `refutationStepCount`: 局面ごとの、仮置きから矛盾が出るまでの推論の手数（最も短いもの）の合計（先読みの量）。
  * - `longestRefutationLength`: そのうち最も長い先読みの手数。仮置きが無ければ0。
  * - `fatalBranchCount`: 始点から解の道を引き進めるときに、全マスを通れなくなる手を含む分岐の数（迷う地点の数）。
  */
@@ -114,17 +115,17 @@ export function isHitofudePuzzleWorkloadOfIdentity(
 
 /**
  * 生成条件と候補番号から identity を作る。seed は条件ごとに別の系列になるよう条件を含める。
- * 例: 8×8・仮置きの回数の目標 7・候補番号 3 は `hp-8-t7-3`。
+ * 例: 8×8・先読みの重さの目標 4・候補番号 3 は `hp-8-t4-3`。
  */
 export function createHitofudePuzzleProblemIdentity(
   size: HitofudePuzzleBoardSize,
-  targetAssumptionCount: HitofudePuzzleTargetAssumptionCount,
+  targetLookaheadLoad: HitofudePuzzleTargetLookaheadLoad,
   candidateIndex: number,
 ): HitofudePuzzleProblemIdentity {
   return {
     generatorVersion: HITOFUDE_PUZZLE_GENERATOR_VERSION,
-    seed: `hp-${size}-t${targetAssumptionCount}-${candidateIndex}`,
-    conditions: { size, targetAssumptionCount },
+    seed: `hp-${size}-t${targetLookaheadLoad}-${candidateIndex}`,
+    conditions: { size, targetLookaheadLoad },
   };
 }
 
@@ -134,10 +135,10 @@ export function isHitofudePuzzleBoardSize(
   return hitofudePuzzleBoardSizes.some((size) => size === value);
 }
 
-export function isHitofudePuzzleTargetAssumptionCount(
+export function isHitofudePuzzleTargetLookaheadLoad(
   value: unknown,
-): value is HitofudePuzzleTargetAssumptionCount {
-  return hitofudePuzzleTargetAssumptionCounts.some((count) => count === value);
+): value is HitofudePuzzleTargetLookaheadLoad {
+  return hitofudePuzzleTargetLookaheadLoads.some((count) => count === value);
 }
 
 /**
@@ -161,12 +162,12 @@ export function isHitofudePuzzleProblemIdentity(
     return false;
   }
 
-  const { size, targetAssumptionCount } = value.conditions;
+  const { size, targetLookaheadLoad } = value.conditions;
   return (
     value.generatorVersion === HITOFUDE_PUZZLE_GENERATOR_VERSION &&
     isNonEmptyString(value.seed) &&
     isHitofudePuzzleBoardSize(size) &&
-    isHitofudePuzzleTargetAssumptionCount(targetAssumptionCount)
+    isHitofudePuzzleTargetLookaheadLoad(targetLookaheadLoad)
   );
 }
 

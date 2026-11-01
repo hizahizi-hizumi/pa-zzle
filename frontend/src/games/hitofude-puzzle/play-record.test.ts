@@ -10,7 +10,7 @@ import {
 import { createHitofudePuzzleProblemIdentity } from "@/games/hitofude-puzzle/problem/problem";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
 
-const problemIdentity = createHitofudePuzzleProblemIdentity(8, 7, 16);
+const problemIdentity = createHitofudePuzzleProblemIdentity(8, 4, 16);
 
 // 基準時間は 5 + 64×0.5 + 13×3 + 8×3 + 71×1 = 171秒。
 const workload = {
@@ -59,16 +59,16 @@ describe("createHitofudePuzzlePlayRecord", () => {
     const { id, gameId, payloadVersion, payload } = record;
 
     expect({ id, gameId, payloadVersion }).toEqual({
-      id: "hitofude-puzzle:1000:201000:hp-8-t7-16",
+      id: "hitofude-puzzle:1000:201000:hp-8-t4-16",
       gameId: "hitofude-puzzle",
       payloadVersion: 1,
     });
     expect(payload).toEqual({
       difficulty: "5",
       problemIdentity: {
-        generatorVersion: "2",
-        seed: "hp-8-t7-16",
-        conditions: { size: 8, targetAssumptionCount: 7 },
+        generatorVersion: "3",
+        seed: "hp-8-t4-16",
+        conditions: { size: 8, targetLookaheadLoad: 4 },
       },
       workload,
       performance,
@@ -140,7 +140,7 @@ describe("isHitofudePuzzlePlayRecord", () => {
       withPayload({
         problemIdentity: {
           ...problemIdentity,
-          conditions: { size: 10, targetAssumptionCount: 0 },
+          conditions: { size: 10, targetLookaheadLoad: 0 },
         },
       }),
     ],

@@ -1,6 +1,7 @@
 import {
   _private,
   createHitofudePuzzleRefuter,
+  measureHitofudePuzzleLookaheadLoad,
   traceHitofudePuzzleHumanSolve,
 } from "@/games/hitofude-puzzle/problem/generation/human-solver";
 import { countHitofudePuzzleSolutions } from "@/games/hitofude-puzzle/problem/generation/solver";
@@ -311,6 +312,28 @@ describe("traceHitofudePuzzleHumanSolve", () => {
       expect(trace.status).toBe("work-limit-reached");
     });
   });
+});
+
+describe("measureHitofudePuzzleLookaheadLoad", () => {
+  const cases = [
+    ["仮置きが無い", 0, 0, 0],
+    ["仮置き2局面で、先読みがどれも8手以内", 2, 8, 2],
+    ["仮置き2局面で、最も長い先読みが9手", 2, 9, 3],
+    ["仮置き2局面で、最も長い先読みが20手", 2, 20, 3],
+    ["仮置き2局面で、最も長い先読みが21手", 2, 21, 4],
+  ] as const;
+
+  test.each(cases)(
+    "%sなら、先読みの重さを %i局面・最長 %i手から %i とすること",
+    (_, assumptionCount, longestRefutationLength, expected) => {
+      const load = measureHitofudePuzzleLookaheadLoad(
+        assumptionCount,
+        longestRefutationLength,
+      );
+
+      expect(load).toBe(expected);
+    },
+  );
 });
 
 describe("deduceHitofudePuzzleEdges", () => {

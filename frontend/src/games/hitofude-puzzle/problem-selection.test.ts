@@ -9,6 +9,7 @@ import {
   getHitofudePuzzleSolveWorkload,
 } from "@/games/hitofude-puzzle/problem/difficulty-analysis";
 import { countHitofudePuzzleHoleLayoutViolations } from "@/games/hitofude-puzzle/problem/generation/hole-layout";
+import { measureHitofudePuzzleLookaheadLoad } from "@/games/hitofude-puzzle/problem/generation/human-solver";
 import { getHitofudePuzzleSymmetryKey } from "@/games/hitofude-puzzle/problem/generation/symmetry";
 import { generateHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/generator";
 import {
@@ -66,19 +67,17 @@ describe("問題集", () => {
     "難易度 %s の全問題の盤面サイズと作業の量が、その難易度の組み合わせに収まること",
     (difficulty) => {
       const combination = hitofudePuzzleLevelCombinations[difficulty];
-      const minimumLongestRefutationLength =
-        "minimumLongestRefutationLength" in combination
-          ? combination.minimumLongestRefutationLength
-          : 0;
 
       const outOfCombination = listPooledProblems(difficulty).filter(
         ({ problem, workload }) =>
           !isInNumericRange(problem.size, combination.boardSize) ||
           !isInNumericRange(
-            workload.assumptionCount,
-            combination.assumptionCount,
+            measureHitofudePuzzleLookaheadLoad(
+              workload.assumptionCount,
+              workload.longestRefutationLength,
+            ),
+            combination.lookaheadLoad,
           ) ||
-          workload.longestRefutationLength < minimumLongestRefutationLength ||
           workload.fatalBranchCount === 0,
       );
 
@@ -138,7 +137,7 @@ describe("問題集", () => {
 
   const annealedOnlyDifficulties = difficulties.filter((difficulty) =>
     listPooledProblems(difficulty).some(
-      ({ identity }) => identity.conditions.targetAssumptionCount === 0,
+      ({ identity }) => identity.conditions.targetLookaheadLoad === 0,
     ),
   );
 
@@ -147,7 +146,7 @@ describe("問題集", () => {
     (difficulty) => {
       const sampled = sampleEvenly(
         listPooledProblems(difficulty).filter(
-          ({ identity }) => identity.conditions.targetAssumptionCount === 0,
+          ({ identity }) => identity.conditions.targetLookaheadLoad === 0,
         ),
         regeneratedEntryCountPerDifficulty,
       );

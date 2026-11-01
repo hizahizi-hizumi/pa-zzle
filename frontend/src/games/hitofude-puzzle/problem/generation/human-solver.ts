@@ -91,6 +91,24 @@ const END_CANDIDATES = 4;
 
 /** 単一辺の仮置きで矛盾を探す、推論の手数の上限の段階。短い先読みで見つかる仮置きから使う。 */
 const singleAssumptionBudgets = [3, 8, 20, 60] as const;
+/** 短い先読みとみなす手数の上限。この手数の段を超えて上限を広げた先読みを、長い先読みとして重く数える。 */
+const SHORT_LOOKAHEAD_STEP_LIMIT = 8;
+
+/**
+ * 先読みの重さ。仮置きで進めた局面の数に、最も長い先読みが短い先読み（8手以内）に収まらず、手数の上限を広げた段の数
+ * （9〜20手なら1、21手以上なら2）を足す。長い先読みが1回要ることを、短い先読みの局面が1つ増えるのと同じ重さに数える。
+ */
+export function measureHitofudePuzzleLookaheadLoad(
+  assumptionCount: number,
+  longestRefutationLength: number,
+): number {
+  const widenedBudgetCount = singleAssumptionBudgets.filter(
+    (budget) =>
+      budget >= SHORT_LOOKAHEAD_STEP_LIMIT && longestRefutationLength > budget,
+  ).length;
+  return assumptionCount + widenedBudgetCount;
+}
+
 /** 2段仮置きの外側の仮置きに許す推論の手数と、試す辺の数。 */
 const DEEP_ASSUMPTION_BUDGET = 200;
 const DEEP_ASSUMPTION_EDGE_COUNT = 24;

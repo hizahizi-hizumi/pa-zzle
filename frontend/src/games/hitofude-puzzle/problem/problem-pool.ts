@@ -8,7 +8,7 @@ import {
   type HitofudePuzzleProblemIdentity,
   type HitofudePuzzleSolveWorkload,
   isHitofudePuzzleBoardSize,
-  isHitofudePuzzleTargetAssumptionCount,
+  isHitofudePuzzleTargetLookaheadLoad,
 } from "@/games/hitofude-puzzle/problem/problem";
 import problemPoolJson from "@/games/hitofude-puzzle/problem/problem-pool.json";
 import {
@@ -24,7 +24,7 @@ import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
 
 /**
  * 事前生成した問題集の1問。
- * - `size`・`targetAssumptionCount`・`candidateIndex` から `createHitofudePuzzleProblemIdentity` で identity を再構成する。
+ * - `size`・`targetLookaheadLoad`・`candidateIndex` から `createHitofudePuzzleProblemIdentity` で identity を再構成する。
  * - `start` と `encodedHoles`（`encodeHitofudePuzzlePoolHoles`）で盤面を表す。解の道は持たない。
  *   実行時に生成器・解探索を呼ばずに問題を復元するため、生成結果そのものを持つ。
  * - 残りは生成時の分析結果（`HitofudePuzzleSolveWorkload`）。速さの基準時間に使う。
@@ -32,7 +32,7 @@ import { createProblemPoolIndex, type ProblemId } from "@/games/problem-id";
  */
 export type HitofudePuzzleProblemPoolEntry = readonly [
   size: number,
-  targetAssumptionCount: number,
+  targetLookaheadLoad: number,
   candidateIndex: number,
   start: number,
   encodedHoles: string,
@@ -123,20 +123,20 @@ export function decodeHitofudePuzzlePoolProblem(
 
 export function toHitofudePuzzlePoolIdentity([
   size,
-  targetAssumptionCount,
+  targetLookaheadLoad,
   candidateIndex,
 ]: HitofudePuzzleProblemPoolEntry): HitofudePuzzleProblemIdentity {
   if (!isHitofudePuzzleBoardSize(size)) {
     throw new RangeError(`Unsupported Hitofude puzzle board size: ${size}`);
   }
-  if (!isHitofudePuzzleTargetAssumptionCount(targetAssumptionCount)) {
+  if (!isHitofudePuzzleTargetLookaheadLoad(targetLookaheadLoad)) {
     throw new RangeError(
-      `Unsupported Hitofude puzzle target assumption count: ${targetAssumptionCount}`,
+      `Unsupported Hitofude puzzle target lookahead load: ${targetLookaheadLoad}`,
     );
   }
   return createHitofudePuzzleProblemIdentity(
     size,
-    targetAssumptionCount,
+    targetLookaheadLoad,
     candidateIndex,
   );
 }
@@ -217,8 +217,7 @@ export function findHitofudePuzzlePoolEntry(
   }
   const { conditions } = toHitofudePuzzlePoolIdentity(entry);
   return conditions.size === identity.conditions.size &&
-    conditions.targetAssumptionCount ===
-      identity.conditions.targetAssumptionCount
+    conditions.targetLookaheadLoad === identity.conditions.targetLookaheadLoad
     ? entry
     : null;
 }

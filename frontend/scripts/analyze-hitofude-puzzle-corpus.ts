@@ -15,9 +15,10 @@ import { generateHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/g
 import {
   createHitofudePuzzleProblemIdentity,
   type HitofudePuzzleBoardSize,
-  type HitofudePuzzleTargetAssumptionCount,
+  type HitofudePuzzleTargetLookaheadLoad,
+  hitofudePuzzleTargetLookaheadLoads,
   isHitofudePuzzleBoardSize,
-  isHitofudePuzzleTargetAssumptionCount,
+  isHitofudePuzzleTargetLookaheadLoad,
 } from "@/games/hitofude-puzzle/problem/problem";
 import { formatHitofudePuzzleBoard } from "@/games/hitofude-puzzle/puzzle/board";
 
@@ -25,21 +26,21 @@ const usage = `Usage: bun run analyze:hitofude-puzzle -- --output <path-prefix> 
 
 Options:
   --sizes <n,...>        盤面の一辺 (default: 5,6,7,8)
-  --targets <n,...>      仮置きの回数の目標 (default: 0,4,7)
+  --targets <n,...>      先読みの重さの目標 (default: ${hitofudePuzzleTargetLookaheadLoads.join(",")})
   --seeds <n>            条件ごとの seed 数 (default: 100)
   --jobs <n>             並列ワーカー数 (default: 1)
   --output <path-prefix> <path-prefix>.jsonl と <path-prefix>.csv へ出力する`;
 
 type CorpusTask = {
   size: HitofudePuzzleBoardSize;
-  targetAssumptionCount: HitofudePuzzleTargetAssumptionCount;
+  targetLookaheadLoad: HitofudePuzzleTargetLookaheadLoad;
   index: number;
 };
 
 type CorpusRecord = {
   seed: string;
   size: number;
-  targetAssumptionCount: number;
+  targetLookaheadLoad: number;
   generationAttemptCount: number;
   generationMilliseconds: number;
   analysisMilliseconds: number;
@@ -83,12 +84,12 @@ function roundMilliseconds(value: number): number {
 
 function analyzeTask({
   size,
-  targetAssumptionCount,
+  targetLookaheadLoad,
   index,
 }: CorpusTask): CorpusRecord {
   const identity = createHitofudePuzzleProblemIdentity(
     size,
-    targetAssumptionCount,
+    targetLookaheadLoad,
     index,
   );
   const generationStartedAt = performance.now();
@@ -99,7 +100,7 @@ function analyzeTask({
   return {
     seed: identity.seed,
     size,
-    targetAssumptionCount,
+    targetLookaheadLoad,
     generationAttemptCount: generated.generationAttemptCount,
     generationMilliseconds: roundMilliseconds(
       analysisStartedAt - generationStartedAt,
@@ -113,23 +114,20 @@ function analyzeTask({
   };
 }
 
-/** 研究用 Python の `global_band` と同じ帯。分類（レベル）とは別に、実験と比べるために出す。 */
+/** 先読みの重さの帯。盤面サイズを問わない分類で、分類（レベル）とは別に、条件ごとの分布を見るために出す。 */
 function describeBand(analysis: HitofudePuzzleDifficultyAnalysis): string {
   if (analysis.status !== "analyzed") {
     return analysis.status === "invalid" ? "invalid" : "x";
   }
-  const { assumptionCount, deepAssumptionCount, localReasoningSuffices } =
+  const { lookaheadLoad, deepAssumptionCount, localReasoningSuffices } =
     analysis.reasoning;
-  if (deepAssumptionCount > 0 || assumptionCount >= 7) {
+  if (localReasoningSuffices) {
+    return "1";
+  }
+  if (deepAssumptionCount > 0 || lookaheadLoad >= 4) {
     return "5";
   }
-  if (assumptionCount >= 4) {
-    return "4";
-  }
-  if (assumptionCount >= 2) {
-    return "3";
-  }
-  return localReasoningSuffices ? "1" : "2";
+  return String(Math.max(2, lookaheadLoad + 1));
 }
 
 function describeAssessment(
@@ -150,7 +148,7 @@ function flattenRecord(record: CorpusRecord): FlatRecord {
   const flat: FlatRecord = {
     seed: record.seed,
     size: record.size,
-    targetAssumptionCount: record.targetAssumptionCount,
+    targetLookaheadLoad: record.targetLookaheadLoad,
     openCellCount: analysis.scale.openCellCount,
     holeCount: analysis.scale.holeCount,
     generationAttemptCount: record.generationAttemptCount,
@@ -163,6 +161,7 @@ function flattenRecord(record: CorpusRecord): FlatRecord {
     const { reasoning, drawing } = analysis;
     Object.assign(flat, {
       assumptionCount: reasoning.assumptionCount,
+      lookaheadLoad: reasoning.lookaheadLoad,
       deepAssumptionCount: reasoning.deepAssumptionCount,
       longestRefutationLength: reasoning.longestRefutationLength,
       refutationLengths: reasoning.refutationLengths.join(" "),
@@ -291,19 +290,17 @@ const levelOrder = [
 
 function formatConditionKey(
   size: unknown,
-  targetAssumptionCount: unknown,
+  targetLookaheadLoad: unknown,
 ): string {
-  return `${size}x${size}/t${targetAssumptionCount}`;
+  return `${size}x${size}/t${targetLookaheadLoad}`;
 }
 
 function conditionKey(record: FlatRecord): string {
-  return formatConditionKey(record.size, record.targetAssumptionCount);
+  return formatConditionKey(record.size, record.targetLookaheadLoad);
 }
 
 function printConditionSummary(records: readonly FlatRecord[]): void {
-  console.log(
-    "## 条件ごとの帯（研究用 Python の global_band）・分類・生成の作り直し・時間",
-  );
+  console.log("## 条件ごとの帯（先読みの重さ）・分類・生成の作り直し・時間");
   console.log(
     [
       "condition",
@@ -348,6 +345,7 @@ const featureColumns = [
   "openCellCount",
   "holeCount",
   "assumptionCount",
+  "lookaheadLoad",
   "longestRefutationLength",
   "stallCount",
   "firstStallDecidedEdgeRatio",
@@ -395,7 +393,7 @@ function printFeaturesBy(
 
 function printLevelScale(records: readonly FlatRecord[]): void {
   console.log(
-    "\n## レベルごとの盤面サイズ・仮置きの回数の目標の内訳（問題数）",
+    "\n## レベルごとの盤面サイズ・先読みの重さの目標の内訳（問題数）",
   );
   for (const { id } of difficultyLevels) {
     const group = records.filter((record) => record.level === id);
@@ -476,8 +474,8 @@ function printSupply(records: readonly FlatRecord[]): void {
   for (const { id } of difficultyLevels) {
     const conditionKeys = new Set(
       listHitofudePuzzleGenerationConditions(id).map(
-        ({ size, targetAssumptionCount }) =>
-          formatConditionKey(size, targetAssumptionCount),
+        ({ size, targetLookaheadLoad }) =>
+          formatConditionKey(size, targetLookaheadLoad),
       ),
     );
     const candidates = records.filter((record) =>
@@ -517,9 +515,9 @@ function isInLevelScale(
   difficulty: HitofudePuzzleDifficulty,
 ): boolean {
   return listHitofudePuzzleGenerationConditions(difficulty).some(
-    ({ size, targetAssumptionCount }) =>
+    ({ size, targetLookaheadLoad }) =>
       record.size === size &&
-      record.targetAssumptionCount === targetAssumptionCount,
+      record.targetLookaheadLoad === targetLookaheadLoad,
   );
 }
 
@@ -551,15 +549,15 @@ function createTasks(): CorpusTask[] {
   const sizes = readList("sizes", "5,6,7,8", toBoardSize);
   const targets = readList(
     "targets",
-    "0,4,7",
-    isHitofudePuzzleTargetAssumptionCount,
+    hitofudePuzzleTargetLookaheadLoads.join(","),
+    isHitofudePuzzleTargetLookaheadLoad,
   );
   const seedCount = readPositiveInteger("seeds", 100);
   return sizes.flatMap((size) =>
-    targets.flatMap((targetAssumptionCount) =>
+    targets.flatMap((targetLookaheadLoad) =>
       Array.from({ length: seedCount }, (_, index) => ({
         size,
-        targetAssumptionCount,
+        targetLookaheadLoad,
         index,
       })),
     ),
@@ -606,7 +604,7 @@ async function runJobInWorker(jobIndex: number): Promise<CorpusRecord[]> {
 function compareTasks(left: CorpusRecord, right: CorpusRecord): number {
   return (
     left.size - right.size ||
-    left.targetAssumptionCount - right.targetAssumptionCount ||
+    left.targetLookaheadLoad - right.targetLookaheadLoad ||
     left.seed.localeCompare(right.seed, "en", { numeric: true })
   );
 }
