@@ -22,6 +22,7 @@ vi.mock("@/games/problem-seed", async (importOriginal) => ({
 
 afterEach(() => {
   cleanup();
+  window.localStorage.clear();
   vi.useRealTimers();
 });
 
@@ -38,6 +39,13 @@ function renderAt(path: string): void {
   );
 }
 
+function openMenu(): void {
+  fireEvent.pointerDown(screen.getByRole("button", { name: "その他の操作" }), {
+    button: 0,
+    ctrlKey: false,
+  });
+}
+
 function getBoard(): HTMLElement {
   return screen.getByRole("group", { name: "盤" });
 }
@@ -46,10 +54,11 @@ function tapSquare(name: RegExp): void {
   fireEvent.click(within(getBoard()).getByRole("button", { name }));
 }
 
-function tapHand(character: string): void {
+function tapHand(pieceName: string): void {
   fireEvent.click(
-    within(screen.getByRole("group", { name: "攻方の持駒" })).getByText(
-      character,
+    within(screen.getByRole("group", { name: "攻方の持駒" })).getByRole(
+      "button",
+      { name: new RegExp(`^${pieceName} `) },
     ),
   );
 }
@@ -64,6 +73,12 @@ describe("TsumeShogiPlayView", () => {
   describe("定義済みの難易度の場合", () => {
     beforeEach(() => {
       renderAt("/puzzles/tsume-shogi/play/1");
+    });
+
+    test("遊び方を自動では開かないこと", () => {
+      const dialog = screen.queryByRole("dialog");
+
+      expect(dialog).toBeNull();
     });
 
     test("9×9の盤を表示すること", () => {
@@ -101,16 +116,19 @@ describe("TsumeShogiPlayView", () => {
       expect(silverOn1a).toBeTruthy();
     });
 
-    test("作意どおりに指すと玉方が応手し、詰めると詰みを示すこと", () => {
+    test("作意どおりに指すと玉方が応手し、詰めると完成演出の後に詰みを示すこと", () => {
       tapHand("銀");
       tapSquare(/^2二$/);
       waitForDefenderReply();
       tapSquare(/^4三 攻方の龍$/);
       tapSquare(/^1三$/);
+      act(() => {
+        vi.runAllTimers();
+      });
 
       const cleared = screen.getByRole("region", { name: "詰み" });
 
-      expect(cleared).toBeTruthy();
+      expect(within(cleared).getByText(/^3手詰 ・ レベル 1 ・ /)).toBeTruthy();
     });
 
     test("詰まない王手には玉方の反証を指し、待ったで判断地点へ戻れること", () => {
@@ -133,16 +151,94 @@ describe("TsumeShogiPlayView", () => {
       ).toBeTruthy();
     });
 
+    describe("王手を指して玉方の応手を待っている場合", () => {
+      beforeEach(() => {
+        tapHand("銀");
+        const destination = within(getBoard()).getByRole("button", {
+          name: /^2二$/,
+        });
+        destination.focus();
+        fireEvent.click(destination);
+      });
+
+      test("指した升のフォーカスを残したまま、盤の升を押せなくすること", () => {
+        const playedSquare = within(getBoard()).getByRole("button", {
+          name: "2二 攻方の銀",
+        });
+
+        expect(document.activeElement).toBe(playedSquare);
+        expect(playedSquare.getAttribute("aria-disabled")).toBe("true");
+      });
+    });
+
+    describe("駒を選んでから遊び方を開いた場合", () => {
+      beforeEach(() => {
+        tapSquare(/^4三 攻方の龍$/);
+        openMenu();
+        fireEvent.click(screen.getByRole("menuitem", { name: "遊び方" }));
+      });
+
+      test("遊び方を閉じる Escape で駒の選択を解除しないこと", () => {
+        fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+
+        const dragon = within(getBoard()).getByRole("button", {
+          name: "4三 攻方の龍",
+        });
+
+        expect(screen.queryByRole("dialog")).toBeNull();
+        expect(dragon.getAttribute("aria-pressed")).toBe("true");
+      });
+    });
+
     test("王手にならない手は着手させないこと", () => {
       tapSquare(/^4三 攻方の龍$/);
       tapSquare(/^4四$/);
 
-      const status = screen.getByRole("status");
-
-      expect(status.textContent).toBe("王手になる手だけ指せます");
+      expect(screen.getByRole("status").textContent).toBe("");
       expect(
-        within(getBoard()).getByRole("button", { name: "4三 攻方の龍" }),
+        within(getBoard())
+          .getByRole("button", { name: "4三 攻方の龍" })
+          .getAttribute("aria-pressed"),
+      ).toBe("true");
+      expect(
+        within(getBoard()).getByRole("button", { name: "4四" }),
       ).toBeTruthy();
+      expect(screen.getByText("指せません")).toBeTruthy();
+    });
+
+    describe("成・不成のどちらも指せる移動を選んだ場合", () => {
+      beforeEach(() => {
+        tapSquare(/^1一 攻方の銀$/);
+        tapSquare(/^2二$/);
+      });
+
+      test("成・不成を選ぶまで駒を動かさないこと", () => {
+        const picker = screen.getByRole("group", { name: "成・不成" });
+
+        expect(picker).toBeTruthy();
+        expect(
+          within(getBoard()).getByRole("button", { name: "1一 攻方の銀" }),
+        ).toBeTruthy();
+      });
+
+      const choices = [
+        ["成", "2二 攻方の成銀"],
+        ["不成", "2二 攻方の銀"],
+      ] as const;
+
+      test.each(choices)("%sを選ぶとその駒で指すこと", (choice, label) => {
+        fireEvent.click(
+          within(screen.getByRole("group", { name: "成・不成" })).getByRole(
+            "button",
+            { name: choice },
+          ),
+        );
+
+        expect(screen.queryByRole("group", { name: "成・不成" })).toBeNull();
+        expect(
+          within(getBoard()).getByRole("button", { name: label }),
+        ).toBeTruthy();
+      });
     });
   });
 });

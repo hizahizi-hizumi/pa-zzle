@@ -192,18 +192,6 @@ function withTurns(
   };
 }
 
-/** 盤面に見せている最後の手。まだ指していなければ `null`。 */
-export function getTsumeShogiSessionLastMove(
-  session: TsumeShogiSession,
-): TsumeShogiMove | null {
-  const lastTurn = session.turns.at(-1);
-  if (!lastTurn) return null;
-
-  return session.defenderReplyPending
-    ? lastTurn.attackerMove
-    : (lastTurn.defenderMove ?? lastTurn.attackerMove);
-}
-
 export function getTsumeShogiSessionPhase(
   session: TsumeShogiSession,
 ): TsumeShogiSessionPhase {
