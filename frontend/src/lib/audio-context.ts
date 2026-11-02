@@ -68,6 +68,7 @@ export function getAudioContext(): AudioContext | null {
   }
   preferAmbientAudioSession();
   audioContext = new AudioContextClass();
+  audioContext.addEventListener("statechange", notifyIfRunning);
   return audioContext;
 }
 
@@ -122,6 +123,13 @@ export function subscribeAudioContextRunning(
   return function unsubscribe() {
     runningListeners.delete(onRunning);
   };
+}
+
+/** ブラウザが止めた AudioContext を自ら動かし直したとき（画面が見えるようになったときなど）も、動き出したことを知らせる。 */
+function notifyIfRunning() {
+  if (audioContext?.state === "running") {
+    notifyRunning();
+  }
 }
 
 function notifyRunning() {

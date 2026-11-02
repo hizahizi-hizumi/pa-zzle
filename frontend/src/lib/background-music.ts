@@ -11,6 +11,7 @@
  * 読み込みは今の画面で流す曲を先にし、流しうる曲はそのあとで1曲ずつ取得しておく。
  * 曲を切り替えるとクロスフェードし、同じ曲を流したまま別の画面に移っても頭から流し直さない。
  * 音量は `@/lib/background-music-setting` の設定に従い、流している曲も音量を変えるとすぐに変わる。音量が 0 の間は、読み込みも再生もしない。
+ * 画面が見えない間（タブを切り替えた・アプリを裏に回したなど）はフェードアウトして止め、見えるようになったら止めた位置から流し直す。
  */
 
 import {
@@ -77,6 +78,13 @@ type VoiceSource<Source> = {
   gain: GainNode;
 };
 
+/** ループ再生と、流している曲の中の位置を求めるための、流し始めた時刻と1ループの中の位置（秒）。 */
+type LoopSource = VoiceSource<AudioBufferSourceNode> & {
+  track: DecodedTrack;
+  startTime: number;
+  position: number;
+};
+
 /**
  * 流している1曲。切り替えるときは、次の曲が鳴り始めてから、前の曲をフェードアウトしながら次の曲をフェードインする。
  * 読み解くまでは要素でストリーミング再生し（`stream`）、読み解いたらループ再生（`loop`）へ渡す。
@@ -87,7 +95,7 @@ type MusicVoice = {
   sounding: boolean;
   fading: boolean;
   stream: VoiceSource<StreamPlayer> | null;
-  loop: VoiceSource<AudioBufferSourceNode> | null;
+  loop: LoopSource | null;
 };
 
 /**
@@ -129,6 +137,8 @@ let currentVoice: MusicVoice | null = null;
 const previousVoices = new Set<MusicVoice>();
 /** 今の画面で流したい曲の URL。音量を 0 から上げたときや、AudioContext を待ってから流すときに使う。 */
 let wantedUrl: string | null = null;
+/** 画面が見えなくなって止めた曲と、止めたときの1ループの中の位置（秒）。見えるようになったら、ここから流し直す。 */
+let resumePosition: { url: string; position: number } | null = null;
 /** 先に取得しておく曲の URL。これと流したい曲・流している曲のほかは、取得したファイルを捨てる。 */
 let preparedUrls = new Set<string>();
 /** 取得した曲のファイル。読み込みは一度に1曲ずつにし、今の画面で流す曲の到着を遅らせない。 */
@@ -214,6 +224,18 @@ function listenForChanges() {
   });
   subscribeAudioContextRunning(syncBackgroundMusic);
   listenForStreamPlayerChanges(syncBackgroundMusic);
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+}
+
+function handleVisibilityChange() {
+  if (!isPageVisible()) {
+    rememberResumePosition();
+  }
+  syncBackgroundMusic();
+}
+
+function isPageVisible(): boolean {
+  return document.visibilityState !== "hidden";
 }
 
 function getBackgroundMusicGain(): number {
@@ -238,8 +260,14 @@ function applyBackgroundMusicVolume() {
   );
 }
 
+/** 今、曲を流したいか。画面が見えない間は流さない。 */
 function wantsMusic(): boolean {
-  return isBackgroundMusicEnabled() && wantedUrl !== null;
+  return getLoadingUrl() !== null && isPageVisible();
+}
+
+/** 読み込んで読み解いておく、流したい曲の URL。画面が見えない間も、見えるようになったときに待たせないよう読み込む。 */
+function getLoadingUrl(): string | null {
+  return isBackgroundMusicEnabled() ? wantedUrl : null;
 }
 
 /** 設定・流したい曲・読み込み・AudioContext・要素の状態に合わせて、流す曲と読み込みを揃える。 */
@@ -353,7 +381,13 @@ function startVoice(output: MusicOutput, url: string): MusicVoice | null {
   if (track) {
     const startTime = output.context.currentTime + heldMs / 1000;
     const voice = createVoice(output, url);
-    voice.loop = startLoopSource(output, voice.fader, track, startTime, 0);
+    voice.loop = startLoopSource(
+      output,
+      voice.fader,
+      track,
+      startTime,
+      takeResumePosition(url),
+    );
     beginSounding(voice, startTime);
     return voice;
   }
@@ -413,7 +447,7 @@ function startLoopSource(
   track: DecodedTrack,
   startTime: number,
   position: number,
-): VoiceSource<AudioBufferSourceNode> {
+): LoopSource {
   const gain = context.createGain();
   gain.connect(destination);
   const source = context.createBufferSource();
@@ -426,7 +460,7 @@ function startLoopSource(
   }
   source.connect(gain);
   source.start(startTime, loopStart + position);
-  return { source, gain };
+  return { source, gain, track, startTime, position };
 }
 
 /**
@@ -546,6 +580,31 @@ function getLoopPosition(
   return position < 0 ? position + loopDuration : position;
 }
 
+/** 流している曲をループ再生していれば、流している1ループの中の位置を、見えるようになったときのために覚えておく。 */
+function rememberResumePosition() {
+  const voice = currentVoice;
+  const loop = voice?.sounding ? voice.loop : null;
+  if (!voice || !loop || !musicOutput) {
+    resumePosition = null;
+    return;
+  }
+  const playedSec = Math.max(
+    0,
+    musicOutput.context.currentTime - loop.startTime,
+  );
+  resumePosition = {
+    url: voice.url,
+    position: getLoopPosition(loop.track, loop.position + playedSec),
+  };
+}
+
+/** 覚えておいた `url` の曲の位置を返して忘れる。覚えていなければ、曲の頭から流す。 */
+function takeResumePosition(url: string): number {
+  const position = resumePosition?.url === url ? resumePosition.position : 0;
+  resumePosition = null;
+  return position;
+}
+
 function crossfade(
   from: GainNode,
   to: GainNode,
@@ -605,7 +664,7 @@ function disposeStream({ source, gain }: VoiceSource<StreamPlayer>) {
 }
 
 /** ループ再生は、フェードアウトの終わりに止めるよう頼んである。 */
-function disposeLoop({ source, gain }: VoiceSource<AudioBufferSourceNode>) {
+function disposeLoop({ source, gain }: LoopSource) {
   source.disconnect();
   gain.disconnect();
 }
@@ -615,7 +674,7 @@ function disposeLoop({ source, gain }: VoiceSource<AudioBufferSourceNode>) {
  * 使っていない要素のうち、流したい曲でない曲を読み込ませている要素は止める。
  */
 function preloadWantedTrack() {
-  const url = wantsMusic() ? wantedUrl : null;
+  const url = getLoadingUrl();
   releaseIdleStreamPlayers(function isWantedStream(playerUrl) {
     return playerUrl === url && !decodedTracks.has(playerUrl);
   });
@@ -677,7 +736,7 @@ function fetchNextTrackFile() {
 }
 
 function findTrackFileToFetch(): string | null {
-  const playingUrl = wantsMusic() ? wantedUrl : null;
+  const playingUrl = getLoadingUrl();
   if (playingUrl !== null && isStreamingFromNetwork(playingUrl)) {
     return null;
   }
@@ -742,7 +801,7 @@ function getReceivedPart(url: string): Blob | null {
 
 /** 流したい曲のファイルを取得したら読み解く。 */
 function decodeWantedTrack() {
-  const url = wantsMusic() ? wantedUrl : null;
+  const url = getLoadingUrl();
   if (url === null || decodingUrl !== null || decodedTracks.has(url)) {
     return;
   }
@@ -756,7 +815,7 @@ function decodeWantedTrack() {
     function keepDecodedTrack(buffer) {
       decodingUrl = null;
       const track = knownTracks.get(url);
-      if (track && wantsMusic() && wantedUrl === url) {
+      if (track && getLoadingUrl() === url) {
         decodedTracks.set(url, toDecodedTrack(buffer, track));
       }
       syncBackgroundMusic();
@@ -786,7 +845,7 @@ function forgetUnwantedTracks() {
     }
   }
   for (const url of decodedTracks.keys()) {
-    if (!wantsMusic() || url !== wantedUrl) {
+    if (url !== getLoadingUrl()) {
       decodedTracks.delete(url);
     }
   }

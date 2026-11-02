@@ -98,6 +98,7 @@ class FakeAudioContext {
   resume = vi.fn(async () => {
     this.state = "running";
   });
+  addEventListener = vi.fn();
 
   constructor() {
     FakeAudioContext.instances.push(this);
@@ -276,6 +277,15 @@ function findAudio(src: string): FakeAudio | undefined {
   return FakeAudio.instances.find((audio) => audio.src === src);
 }
 
+/** 画面が見えるかを変え、変わったことを知らせる。 */
+function changeVisibility(visibilityState: DocumentVisibilityState): void {
+  Object.defineProperty(document, "visibilityState", {
+    configurable: true,
+    get: () => visibilityState,
+  });
+  document.dispatchEvent(new Event("visibilitychange"));
+}
+
 /** 前のテストで読み込んだモジュールが待つ操作の購読を、次のテストへ持ち越さない。 */
 const addedWindowListeners: [string, EventListenerOrEventListenerObject][] = [];
 
@@ -300,6 +310,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  Reflect.deleteProperty(document, "visibilityState");
   for (const [type, listener] of addedWindowListeners.splice(0)) {
     window.removeEventListener(type, listener, true);
     window.removeEventListener(type, listener);
@@ -655,6 +666,55 @@ describe("playBackgroundMusic", () => {
         const target = output?.gain.setTargetAtTime.mock.lastCall?.[0];
         expect(target).toBeCloseTo(initialGain * (4 / 5) ** 2);
         expect(getStoppedLoopUrls()).toEqual([]);
+      });
+    });
+
+    describe("画面が見えなくなった場合", () => {
+      test("フェードアウトして止めること", () => {
+        changeVisibility("hidden");
+
+        expect(getStoppedLoopUrls()).toEqual(["/home.mp3"]);
+      });
+    });
+
+    describe("画面が見えなくなってから見えるようになった場合", () => {
+      beforeEach(async () => {
+        const context = getAudioContext();
+        if (context) {
+          context.currentTime = 22;
+        }
+        changeVisibility("hidden");
+        await settle(1000);
+      });
+
+      test("止めた位置から流し直すこと", () => {
+        changeVisibility("visible");
+
+        expect(getLoopStarts()).toEqual([
+          { url: "/home.mp3", loop: true, when: 10, offset: 0 },
+          { url: "/home.mp3", loop: true, when: 22, offset: 12 },
+        ]);
+      });
+
+      describe("AudioContext が止まっている場合", () => {
+        beforeEach(() => {
+          const context = getAudioContext();
+          if (context) {
+            context.state = "suspended";
+          }
+        });
+
+        test("見えるようになっただけでは流さず、次の操作で流し直すこと", async () => {
+          changeVisibility("visible");
+          const loopCountBeforeGesture = getLoopStarts().length;
+          await unlockByUserGesture();
+
+          expect(loopCountBeforeGesture).toBe(1);
+          expect(getLoopStarts().at(-1)).toMatchObject({
+            url: "/home.mp3",
+            offset: 12,
+          });
+        });
       });
     });
 

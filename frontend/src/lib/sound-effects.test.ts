@@ -42,6 +42,7 @@ class FakeAudioContext {
   resume = vi.fn(async () => {
     this.state = "running";
   });
+  addEventListener = vi.fn();
 
   constructor() {
     FakeAudioContext.instances.push(this);
