@@ -16,12 +16,33 @@ export type BoardPoint = { x: number; y: number };
 export const ISLAND_RADIUS = 0.4;
 
 /** 2本の橋の、平行な2線の中心どうしの間隔。 */
-export const DOUBLE_BRIDGE_SPACING = 0.2;
+const DOUBLE_BRIDGE_SPACING = 0.2;
 
 /** 島の外を押したとき、線からこの距離までを、その線の辺を押したとみなす。 */
 const TAP_REACH = 0.5;
 
 const pointTolerance = 1e-9;
+
+/** 盤面全体を描いた枠の、画面上の位置と大きさ。 */
+export type BoardFrame = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
+
+/** 画面上の点（`clientX`・`clientY`）を盤面の座標へ写す。 */
+export function toBoardPoint(
+  board: BridgesBoard,
+  frame: BoardFrame,
+  clientX: number,
+  clientY: number,
+): BoardPoint {
+  return {
+    x: ((clientX - frame.left) / frame.width) * board.width,
+    y: ((clientY - frame.top) / frame.height) * board.height,
+  };
+}
 
 export function getIslandCenter(island: BridgesIsland): BoardPoint {
   return { x: island.column + 0.5, y: island.row + 0.5 };
@@ -72,13 +93,41 @@ function findIslandAt(board: BridgesBoard, point: BoardPoint): number | null {
   return index < 0 ? null : index;
 }
 
-type EdgeDistance = { edge: number; distance: number };
+/**
+ * 島の外を押した点から見た、1つの候補の辺。
+ * - `distance`: 線（2島の中心を結ぶ線）までの距離。
+ * - `midpointOffset`: 2島の間の真ん中からの、線に沿ったずれを、真ん中から島の中心までの長さで割った値（真ん中で 0、島の中心で 1）。
+ * - `midpointDistance`: 2島の間の真ん中までの距離。
+ * - `span`: 2島の中心の間の長さ。
+ */
+type EdgeCandidate = {
+  edge: number;
+  distance: number;
+  midpointOffset: number;
+  midpointDistance: number;
+  span: number;
+};
 
-/** 両端の島の中心の間にある辺と、その中心線までの距離。 */
+/**
+ * 交わる2辺の交点の近くで、線までの距離の差がこれ以下なら、人はどちらの線を狙ったか距離では分からないとみなし、
+ * 2島の間の真ん中に近い方を選ぶ。人は「つなぎたい2島の間の真ん中」を押すので、短い辺の真ん中が長い辺の上に乗る所で、
+ * 最も近い線だけでは狙いと違う辺を選ぶ。値は、問題集の盤面で真ん中を狙う押し方と、交点を避けて線を狙う押し方を
+ * 指のぶれ付きで模した比較で、前者の当たりが上がり、後者の当たりがほとんど落ちない所に置いた。
+ */
+const CROSSING_AMBIGUITY = 0.15;
+
+/**
+ * 交わる2辺の真ん中がどちらもこの距離の内にあれば、真ん中が重なっているとみなし、短い辺を選ぶ。
+ * 真ん中が重なる所では、真ん中からのずれは指のぶれでしか決まらないので、いつも同じ辺を選んで予測できるようにする。
+ * 長い辺は、交点を避けた所を押すかなぞって架ける。
+ */
+const SHARED_MIDPOINT_RADIUS = 0.15;
+
+/** 両端の島の中心の間にあり、線から半マスまでの辺。 */
 function listReachableEdges(
   board: BridgesBoard,
   point: BoardPoint,
-): EdgeDistance[] {
+): EdgeCandidate[] {
   return getBridgesNetwork(board).edges.flatMap(
     ({ from, to, orientation }, edge) => {
       const start = getIslandCenter(board.islands[from]!);
@@ -88,26 +137,87 @@ function listReachableEdges(
           ? [point.x, point.y, start.x, end.x, start.y]
           : [point.y, point.x, start.y, end.y, start.x];
       const distance = Math.abs(across - line);
+      const halfSpan = (high - low) / 2;
+      const alongOffset = Math.abs(along - (low + halfSpan));
       return low < along && along < high && distance <= TAP_REACH
-        ? [{ edge, distance }]
+        ? [
+            {
+              edge,
+              distance,
+              midpointOffset: alongOffset / halfSpan,
+              midpointDistance: Math.hypot(alongOffset, distance),
+              span: high - low,
+            },
+          ]
         : [];
     },
   );
 }
 
-/** 最も近い辺。最も近い辺が2つ以上あれば、押し分けられないので `null`。 */
-function findNearestEdge(candidates: readonly EdgeDistance[]): number | null {
-  const nearest = Math.min(...candidates.map(({ distance }) => distance));
-  const closest = candidates.filter(
-    ({ distance }) => distance - nearest <= pointTolerance,
-  );
-  return closest.length === 1 ? closest[0]!.edge : null;
+function compareBySpan(left: EdgeCandidate, right: EdgeCandidate): number {
+  return left.span - right.span;
+}
+
+function compareByMidpoint(left: EdgeCandidate, right: EdgeCandidate): number {
+  const offsetDifference = left.midpointOffset - right.midpointOffset;
+  return Math.abs(offsetDifference) > pointTolerance
+    ? offsetDifference
+    : compareBySpan(left, right);
+}
+
+/** 並べた先頭の辺。先頭と2番目が `compare` で同じなら、押し分けられないので `null`。 */
+function findFirst(
+  candidates: readonly EdgeCandidate[],
+  compare: (left: EdgeCandidate, right: EdgeCandidate) => number,
+): number | null {
+  const [first, second] = [...candidates].sort(compare);
+  return second && compare(first!, second) === 0 ? null : first!.edge;
 }
 
 /**
- * 押した位置が指す島か辺。島の丸の中なら島。島の外なら、線から半マスまでの辺のうち最も近いもの。
+ * 押した点が指す辺。線が最も近い辺を選ぶ。最も近い辺と交わり、線までの距離の差が `CROSSING_AMBIGUITY` 以下の辺があれば、
+ * 真ん中が重なっていれば短い辺を、そうでなければ2島の間の真ん中に近い（線に沿ったずれが辺の長さに対して小さい）辺を選ぶ。
+ * それでも決まらない（同じ距離の平行な2線など）ときは `null`。
+ */
+function selectEdge(
+  candidates: readonly EdgeCandidate[],
+  crossingEdges: readonly (readonly number[])[],
+): number | null {
+  const nearestDistance = Math.min(
+    ...candidates.map(({ distance }) => distance),
+  );
+  const closest = candidates.filter(
+    ({ distance }) => distance - nearestDistance <= pointTolerance,
+  );
+  const ambiguous = candidates.filter(
+    (candidate) =>
+      closest.includes(candidate) ||
+      (candidate.distance - nearestDistance <= CROSSING_AMBIGUITY &&
+        closest.some(({ edge }) =>
+          crossingEdges[edge]!.includes(candidate.edge),
+        )),
+  );
+  if (ambiguous.length === 1) {
+    return ambiguous[0]!.edge;
+  }
+  const crosses = ambiguous.some(({ edge }) =>
+    ambiguous.some((other) => crossingEdges[edge]!.includes(other.edge)),
+  );
+  if (!crosses) {
+    return null;
+  }
+  const atSharedMidpoint = ambiguous.filter(
+    ({ midpointDistance }) => midpointDistance <= SHARED_MIDPOINT_RADIUS,
+  );
+  return atSharedMidpoint.length >= 2
+    ? findFirst(atSharedMidpoint, compareBySpan)
+    : findFirst(ambiguous, compareByMidpoint);
+}
+
+/**
+ * 押した位置が指す島か辺。島の丸の中なら島。島の外なら、線から半マスまでの辺から `selectEdge` で選ぶ。
  * 交わる2辺の近くを押したときは、片方にだけ橋があれば橋のある方を選ぶ。橋の無い方は交わる橋に阻まれて架けられないので、
- * 架かった橋を回す操作を取らせない。どちらにも橋が無ければ最も近い線、つまり交点からの対角線で分けた区画の線を選ぶ。
+ * 架かった橋を回す操作を取らせない。
  */
 export function findBoardTarget(
   board: BridgesBoard,
@@ -128,7 +238,8 @@ export function findBoardTarget(
       bridges[edge] !== 0 ||
       !crossingEdges[edge]!.some((crossing) => bridgedCandidates.has(crossing)),
   );
-  const edge = findNearestEdge(selectable);
+  const edge =
+    selectable.length === 0 ? null : selectEdge(selectable, crossingEdges);
   return edge === null ? null : { kind: "edge", edge };
 }
 
