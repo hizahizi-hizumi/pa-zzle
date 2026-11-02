@@ -6,6 +6,7 @@ import {
 } from "react";
 
 import { TutorialCue } from "@/components/TutorialCue";
+import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import { TutorialSubduable } from "@/components/TutorialSubduable";
 import { getTakuzuCellPosition } from "@/games/takuzu/puzzle/board";
 import type { TakuzuCycleDirection } from "@/games/takuzu/puzzle/transitions";
@@ -27,6 +28,8 @@ type TakuzuCellProps = {
   cue: TakuzuCellCue | undefined;
   /** チュートリアルで手を引いている間、元の明るさで残すマスのほかのマスのタイルを一段沈める。 */
   subdued: boolean;
+  /** チュートリアルで手を引いている間、画面全体の覆いからこのマスを抜く。 */
+  spotlit: boolean;
   focusable: boolean;
   onElementChange: (
     cellIndex: number,
@@ -65,6 +68,7 @@ export function TakuzuCell({
   disabled,
   cue,
   subdued,
+  spotlit,
   focusable,
   onElementChange,
   onCycle,
@@ -118,6 +122,7 @@ export function TakuzuCell({
           runViolationCellClassName,
         )}
       />
+      <TutorialSpotlight active={spotlit} className="inset-0" />
       {cue?.kind === "fitted" && (
         <span
           aria-hidden="true"

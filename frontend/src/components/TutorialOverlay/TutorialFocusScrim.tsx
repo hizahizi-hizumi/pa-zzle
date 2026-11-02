@@ -63,7 +63,10 @@ function measureHoles(svg: SVGSVGElement, container: HTMLElement): Hole[] {
         y: round(rect.top - origin.top - padding),
         width: round(width),
         height: round(height),
-        radius: round(Math.min(radius + padding, width / 2, height / 2)),
+        // 余白を足すときは、角丸のある物だけ角丸も同じだけ広げて元の形に沿わせる。角の無い物は角の無いまま抜く。
+        radius: round(
+          radius > 0 ? Math.min(radius + padding, width / 2, height / 2) : 0,
+        ),
       },
     ];
   });
@@ -80,7 +83,7 @@ function getHolesKey(holes: readonly Hole[]): string {
 /**
  * 画面全体に暗い覆いを重ね、次に押す所・決め手・一言だけを抜いて元の明るさで見せる（コーチマーク）。
  *
- * 覆いは画面の一番上に置いた1枚の SVG に描き、抜く所は `<mask>` の角丸の四角で空ける。
+ * 覆いは画面の一番上に置いた1枚の SVG に描き、抜く所は `<mask>` の四角で空ける。四角の角丸は抜く物の角丸に合わせる。
  * - 盤面の物は transform・will-change・アニメーションで重なりの文脈が分かれているので、物を z-index で覆いの上へ持ち上げる作りは文脈を越えられない。
  * - 抜く所ごとに外側へ大きく広がる box-shadow で覆いを作ると、離れた2つ目の抜く所を1つ目の影が塗りつぶし、合成レイヤーに載った物では影が巨大なレイヤーになる。
  * - SVG の mask は重なりの文脈にも合成レイヤーにも左右されず、抜く所がいくつあっても、重なっても1枚の覆いのまま崩れない。

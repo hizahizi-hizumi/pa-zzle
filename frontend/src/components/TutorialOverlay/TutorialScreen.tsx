@@ -15,10 +15,7 @@ import {
 import { GamePictogram } from "@/components/GamePictogram";
 import { TutorialFocusModeSwitch } from "@/components/TutorialOverlay/TutorialFocusModeSwitch";
 import { TutorialFocusScrim } from "@/components/TutorialOverlay/TutorialFocusScrim";
-import {
-  TUTORIAL_SPOTLIGHT_ATTRIBUTE,
-  TUTORIAL_SPOTLIGHT_PADDING_ATTRIBUTE,
-} from "@/components/TutorialSpotlight";
+import { TUTORIAL_SPOTLIGHT_ATTRIBUTE } from "@/components/TutorialSpotlight";
 import { useTutorialFocusMode } from "@/components/tutorial-focus-mode";
 import { Button } from "@/components/ui/button";
 import {
@@ -313,6 +310,8 @@ export function TutorialScreen({
   const animationsRef = useRef<Animation[]>([]);
   const onIntroEndRef = useRef(onIntroEnd);
   const introPlaying = stage !== "done";
+  const scrimActive =
+    focusMode === "screen" && guiding && !introPlaying && !completed;
 
   useLayoutEffect(() => {
     onIntroEndRef.current = onIntroEnd;
@@ -655,23 +654,20 @@ export function TutorialScreen({
         <div
           aria-live="polite"
           className={cn(
-            "flex h-24 shrink-0 flex-col items-center justify-start px-4 pt-3",
+            "flex h-28 shrink-0 flex-col items-center justify-start px-4 pt-1",
             stageView.rulesClassName,
           )}
         >
-          {/* 画面全体に覆いを重ねる見せ方では、一言を覆いから抜いて読めるようにする。角丸は抜く所の形にだけ使う。 */}
+          {/* 一言は補助面（muted）に載せ、どの段でも同じ面として見せる。画面全体に覆いを重ねる見せ方では、盤面の物と同じく、その面を元の形のまま覆いから抜く。まとまりは背景差だけで示し、枠と影は重ねない。 */}
           <p
             key={`${message.headline}\n${message.detail ?? ""}`}
-            {...{
-              [TUTORIAL_SPOTLIGHT_ATTRIBUTE]: "",
-              [TUTORIAL_SPOTLIGHT_PADDING_ATTRIBUTE]: 12,
-            }}
-            className="flex animate-in rounded-sm flex-col items-center gap-0.5 text-balance text-center duration-300 ease-(--ease-enter) fade-in-0 slide-in-from-bottom-1 whitespace-pre-line [word-break:auto-phrase] motion-reduce:animate-none"
+            {...{ [TUTORIAL_SPOTLIGHT_ATTRIBUTE]: "" }}
+            className="flex animate-in rounded-md bg-muted p-3 flex-col items-center gap-0.5 text-balance text-center duration-(--duration-normal) ease-(--ease-enter) fade-in-0 whitespace-pre-line [word-break:auto-phrase] motion-reduce:animate-none"
           >
             <span className="text-heading">{message.headline}</span>
-            {/* 補足が無いときは空の行を置かず、覆いから抜く所を見出しの大きさに収める。一言の場所は高さを固定しているので、盤面は動かない。 */}
+            {/* 補足が無いときは空の行を置かず、覆いから抜く所を文字のある所だけにする。一言の場所は高さを固定しているので、盤面は動かない。 */}
             {message.detail && (
-              <span className="min-h-5 text-muted-foreground text-supporting">
+              <span className="text-muted-foreground text-supporting">
                 {message.detail}
               </span>
             )}
@@ -772,12 +768,7 @@ export function TutorialScreen({
         )}
       </footer>
 
-      <TutorialFocusScrim
-        active={
-          focusMode === "screen" && guiding && !introPlaying && !completed
-        }
-        containerRef={rootRef}
-      />
+      <TutorialFocusScrim active={scrimActive} containerRef={rootRef} />
       <TutorialFocusModeSwitch ref={focusModeSwitchRef} />
     </div>
   );

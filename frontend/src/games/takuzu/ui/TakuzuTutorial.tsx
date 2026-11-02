@@ -453,6 +453,7 @@ export function TakuzuTutorial({
       })}
       introducing={progress.phase === "intro"}
       completed={progress.phase === "completed"}
+      guiding={progress.phase === "playing" && guiding}
       finish={finish}
       renderBoard={renderBoard}
       onIntroEnd={handleIntroEnd}

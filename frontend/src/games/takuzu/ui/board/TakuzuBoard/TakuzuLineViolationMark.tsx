@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 
+import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import type { TakuzuLine } from "@/games/takuzu/puzzle/board";
 import { violationMarkTimingClassName } from "@/games/takuzu/ui/board/TakuzuBoard/violation-mark-timing";
 import { lineViolationBarClassName } from "@/games/takuzu/ui/board/violation-mark-style";
@@ -65,6 +66,15 @@ export function TakuzuLineViolationMark({
             barPlacementClassNames[line.axis][edge],
             violationMarkTimingClassName,
           )}
+        />
+        {/* チュートリアルで画面全体に覆いを重ねる間も、違反の印を覆いに埋もれさせない。 */}
+        <TutorialSpotlight
+          active={violated}
+          className={cn(
+            "rounded-full",
+            barPlacementClassNames[line.axis][edge],
+          )}
+          padding={4}
         />
       </span>
     );

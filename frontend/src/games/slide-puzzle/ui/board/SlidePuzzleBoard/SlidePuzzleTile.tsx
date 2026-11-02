@@ -1,6 +1,7 @@
 import type { Ref } from "react";
 
 import { TutorialCue } from "@/components/TutorialCue";
+import { TutorialSpotlight } from "@/components/TutorialSpotlight";
 import { TutorialSubduable } from "@/components/TutorialSubduable";
 import {
   getSlidePuzzleColumn,
@@ -12,7 +13,7 @@ import { SlidePuzzleTileFace } from "@/games/slide-puzzle/ui/board/SlidePuzzleTi
 import type { SlidePuzzleTileCue } from "@/games/slide-puzzle/ui/board/tile-cue";
 
 /** 盤面の幅を一辺のマス数で等分する。 */
-const tileSizeClassByBoardSize: Record<SlidePuzzleBoardSize, string> = {
+export const tileSizeClassByBoardSize: Record<SlidePuzzleBoardSize, string> = {
   3: "size-1/3",
   4: "size-1/4",
   5: "size-1/5",
@@ -30,6 +31,8 @@ type SlidePuzzleTileProps = {
   cue: SlidePuzzleTileCue | undefined;
   /** チュートリアルで手を引いている間、元の明るさで残すタイルのほかのタイルを一段沈める。 */
   subdued: boolean;
+  /** チュートリアルで手を引いている間、画面全体の覆いからこのタイルを抜く。 */
+  spotlit: boolean;
   slideAnimated: boolean;
   faceRef: Ref<HTMLSpanElement>;
   onPress: (cellIndex: number) => void;
@@ -42,6 +45,7 @@ export function SlidePuzzleTile({
   disabled,
   cue,
   subdued,
+  spotlit,
   slideAnimated,
   faceRef,
   onPress,
@@ -64,6 +68,10 @@ export function SlidePuzzleTile({
       <TutorialSubduable subdued={subdued}>
         <SlidePuzzleTileFace tile={tile} boardSize={boardSize} ref={faceRef} />
       </TutorialSubduable>
+      <TutorialSpotlight
+        active={spotlit}
+        className="inset-[1cqw] rounded-[1.6cqw]"
+      />
       {cue?.kind === "landed" && (
         <span
           aria-hidden="true"

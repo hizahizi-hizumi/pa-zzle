@@ -203,6 +203,7 @@ export function TakuzuBoard({
                 focusedCellIndices !== null &&
                 !focusedCellIndices.includes(cellIndex)
               }
+              spotlit={focusedCellIndices?.includes(cellIndex) ?? false}
               focusable={cellIndex === focusableCellIndex}
               onElementChange={handleCellElementChange}
               onCycle={onCycleCell}
