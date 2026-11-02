@@ -1,0 +1,134 @@
+<title>ノノグラム 認識合わせ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="page.css">
+
+<main class="review">
+  <div class="hero">
+    <div>
+      <p class="eyebrow">認識合わせ</p>
+      <h1>ノノグラム</h1>
+      <p class="lead">こういうパズルだと理解しています。イメージと違っていたら、一言かスクショで教えてください。</p>
+    </div>
+  </div>
+
+  <section>
+    <h2>触ってみる</h2>
+    <p class="hint">タップで 塗る → × → 空白。行と列の数字どおりに塗ればクリア。</p>
+    <div class="demo">
+      <div id="demo"></div>
+      <p class="state" id="demo-state">数字は、黒く塗るマスが何個続くかを表します。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>解き方</h2>
+    <p class="hint">当てずっぽうではなく、数字から「ここは必ず黒」を決めていく。</p>
+    <div class="pair">
+      <figure><div data-board="progress"></div><figcaption><b>途中</b>1行で決まったマスが、交わる列の手がかりになる。そろった行は数字が薄くなる。</figcaption></figure>
+      <figure><div data-board="solved"></div><figcaption><b>クリア</b>全部の数字に合うと、模様が出る。</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>レベルの違い</h2>
+    <p class="hint">5段階。上ほど盤面が縦に伸び、手がかりが少なくなる。</p>
+    <div class="pair">
+      <figure><div data-board="l1"></div><figcaption><b>L1</b>小さく、どこからでも解き始められる。</figcaption></figure>
+      <figure><div data-board="l5"></div><figcaption><b>L5</b>縦長で、解き始められる所が少ない。</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>似ているゲームとの違い</h2>
+    <div class="pair">
+      <figure><figcaption><b>タクズ（もうある）</b>白黒を決める。数字は盤面の中。</figcaption></figure>
+      <figure><figcaption><b>ノノグラム</b>白黒を決める。数字は盤面の外にあり、黒が何個続くかを表す。</figcaption></figure>
+    </div>
+  </section>
+
+  <div class="more">
+    <details>
+      <summary>こちらで決めて進めること<span class="c">6</span></summary>
+      <div>
+        <ul>
+          <li><b>完成図は模様</b>　絵は数百問もそろえられないため</li>
+          <li><b>ズームなし、横10マスまで</b>　幅の狭いスマホでも1マス24pxで押せる</li>
+          <li><b>どのレベルも推理だけで解ける</b>　上級者には物足りないかも</li>
+          <li><b>正解・不正解は出さない</b>　そろった行の数字を薄くするだけ</li>
+          <li><b>点数は速さが中心、塗り直しは少し減点</b>　×は何度付け外ししても減点しない</li>
+          <li><b>名前は「ノノグラム」</b>　「ピクロス」などは商標のため</li>
+        </ul>
+      </div>
+    </details>
+    <details>
+      <summary>まだ分からないこと<span class="c">3</span></summary>
+      <div>
+        <ul>
+          <li>模様で達成感が出るか</li>
+          <li>縦15マスが小さいスマホに入るか</li>
+          <li>iPhone でのなぞる操作</li>
+        </ul>
+      </div>
+    </details>
+  </div>
+
+  <footer>イメージどおりなら「OK」だけで大丈夫です。</footer>
+</main>
+
+<script>
+(function () {
+  var INK = '#171717', DIM = '#8f8f8f', LINE = '#d4d4d4', BG = '#ffffff';
+  function rows(s) { return s.map(function (r) { return r.split('').map(Number); }); }
+  function clues(line) { var c = [], n = 0; line.forEach(function (v) { if (v === 1) n++; else if (n) { c.push(n); n = 0; } }); if (n) c.push(n); return c.length ? c : [0]; }
+  function col(g, k) { return g.map(function (r) { return r[k]; }); }
+  function same(a, b) { return a.join() === b.join(); }
+
+  // sol: 解。state: 0 空白・1 塗り・2 ×。done: 行・列の数字を薄くするか。
+  function svg(sol, state, opt) {
+    opt = opt || {};
+    var H = sol.length, W = sol[0].length, cs = opt.cell || 16;
+    var rowC = sol.map(clues), colC = W ? Array.from({ length: W }, function (_, k) { return clues(col(sol, k)); }) : [];
+    var fs = Math.max(9, Math.round(cs * 0.6)), left = Math.max.apply(null, rowC.map(function (c) { return c.length; })) * fs * 0.9 + 6;
+    var top = Math.max.apply(null, colC.map(function (c) { return c.length; })) * (fs + 2) + 4;
+    var o = ['<svg viewBox="0 0 ' + (left + W * cs + 2) + ' ' + (top + H * cs + 2) + '" role="img" aria-label="盤面">'];
+    var cur = state.map(function (r) { return r.map(function (v) { return v === 1 ? 1 : 0; }); });
+    rowC.forEach(function (c, r) { var ok = opt.dim && same(clues(cur[r]), c); o.push('<text x="' + (left - 4) + '" y="' + (top + r * cs + cs * 0.72) + '" text-anchor="end" font-size="' + fs + '" font-weight="600" fill="' + (ok ? DIM : INK) + '" opacity="' + (ok ? 0.55 : 1) + '">' + c.join('\u2002') + '</text>'); });
+    colC.forEach(function (c, k) { var ok = opt.dim && same(clues(col(cur, k)), c); c.forEach(function (v, i) { o.push('<text x="' + (left + k * cs + cs / 2) + '" y="' + (top - 4 - (c.length - 1 - i) * (fs + 2)) + '" text-anchor="middle" font-size="' + fs + '" font-weight="600" fill="' + (ok ? DIM : INK) + '" opacity="' + (ok ? 0.55 : 1) + '">' + v + '</text>'); }); });
+    for (var r = 0; r < H; r++) for (var k = 0; k < W; k++) {
+      var x = left + k * cs, y = top + r * cs, v = state[r][k];
+      o.push('<rect data-r="' + r + '" data-k="' + k + '" x="' + x + '" y="' + y + '" width="' + cs + '" height="' + cs + '" fill="' + (v === 1 ? INK : BG) + '" stroke="' + (v === 1 ? INK : LINE) + '"/>');
+      if (v === 2) o.push('<path pointer-events="none" d="M' + (x + cs * 0.3) + ',' + (y + cs * 0.3) + 'l' + cs * 0.4 + ',' + cs * 0.4 + 'm0,-' + cs * 0.4 + 'l-' + cs * 0.4 + ',' + cs * 0.4 + '" stroke="' + DIM + '" stroke-width="1.4"/>');
+    }
+    o.push('<rect x="' + left + '" y="' + top + '" width="' + W * cs + '" height="' + H * cs + '" fill="none" stroke="' + INK + '" stroke-width="1.5"/>');
+    for (var g = 5; g < W; g += 5) o.push('<path d="M' + (left + g * cs) + ',' + top + 'v' + H * cs + '" stroke="' + INK + '" stroke-width="1.2"/>');
+    for (var h = 5; h < H; h += 5) o.push('<path d="M' + left + ',' + (top + h * cs) + 'h' + W * cs + '" stroke="' + INK + '" stroke-width="1.2"/>');
+    o.push('</svg>');
+    return o.join('');
+  }
+
+  // 触れる見本（5×5）
+  var heart = rows(['01010', '11111', '11111', '01110', '00100']);
+  var st = heart.map(function (r) { return r.map(function () { return 0; }); });
+  var box = document.getElementById('demo'), msg = document.getElementById('demo-state');
+  function draw() {
+    var cur = st.map(function (r) { return r.map(function (v) { return v === 1 ? 1 : 0; }); });
+    var won = heart.every(function (r, i) { return same(clues(cur[i]), clues(r)); }) && heart[0].every(function (_, k) { return same(clues(col(cur, k)), clues(col(heart, k))); });
+    box.innerHTML = svg(heart, won ? cur : st, { cell: 40, dim: true });
+    box.firstChild.style.width = '240px';
+    msg.textContent = won ? 'クリア！' : '数字は、黒く塗るマスが何個続くかを表します。';
+    msg.className = won ? 'state done' : 'state';
+  }
+  box.addEventListener('click', function (e) { var t = e.target; if (!t.dataset || t.dataset.r === undefined) return; var r = +t.dataset.r, k = +t.dataset.k; st[r][k] = (st[r][k] + 1) % 3; draw(); });
+  draw();
+
+  // 図
+  var pic = rows(['0011111100', '0110000110', '1101001011', '1000000001', '1010000101', '1001111001', '0100000010', '0011001100', '0001111000', '0000110000']);
+  var prog = pic.map(function (r, i) { return r.map(function (v, k) { var d = [0, 1, 2, 3, 8, 9].indexOf(i) >= 0 || (i === 4 && (k === 0 || k === 9)); return d ? (v ? 1 : 2) : 0; }); });
+  var l1 = rows(['0011100', '0111110', '1101011', '1111111', '1011101', '0100010', '0011100']);
+  var l5 = []; var seed = 7; for (var i = 0; i < 15; i++) { var row = ''; for (var k = 0; k < 10; k++) { seed = (seed * 1103515245 + 12345) % 2147483648; row += seed / 2147483648 < 0.5 ? '1' : '0'; } l5.push(row); } l5 = rows(l5);
+  var empty = function (g) { return g.map(function (r) { return r.map(function () { return 0; }); }); };
+  var boards = { progress: svg(pic, prog, { cell: 14, dim: true }), solved: svg(pic, pic, { cell: 14 }), l1: svg(l1, empty(l1), { cell: 14 }), l5: svg(l5, empty(l5), { cell: 10 }) };
+  document.querySelectorAll('[data-board]').forEach(function (el) { el.innerHTML = boards[el.dataset.board]; });
+})();
+</script>
