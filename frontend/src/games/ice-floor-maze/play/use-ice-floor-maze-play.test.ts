@@ -337,6 +337,44 @@ describe("useIceFloorMazePlay", () => {
     expect(result.current.restartCount).toBe(0);
   });
 
+  describe("移れる状態が少ない詰みに入った場合", () => {
+    // G  1  #
+    // 3  #  5
+    // 6  7  S
+    // #  #  11
+    // 開始位置 8 から左・上の2手でゴール 0 に止まる。下は 11 で止まり、詰みの中は 11 と 5 を行き来するだけになる。
+    const confinedProblem: IceFloorMazePooledProblem = {
+      problem: {
+        board: parseIceFloorMazeBoard(["..#", ".#.", "...", "##."]),
+        start: 8,
+        goal: 0,
+      },
+      identity: {
+        generatorVersion: "3",
+        seed: "ice-floor-maze-confined-deadlock",
+        conditions: { width: 3, height: 4 },
+      },
+      optimalMoveCount: 2,
+    };
+
+    beforeEach(() => {
+      ({ result } = renderHook(() =>
+        useIceFloorMazePlay("1", confinedProblem),
+      ));
+    });
+
+    test("詰みに入った滑りで知らせ、知らせ始めた滑りとして渡すこと", () => {
+      act(() => result.current.slide("down"));
+
+      expect(result.current.isTrapped).toBe(true);
+      expect(result.current.lastSlide).toMatchObject({
+        from: 8,
+        to: 11,
+        entersTrap: true,
+      });
+    });
+  });
+
   describe("ゴールで止まった場合", () => {
     beforeEach(() => {
       slideInOrder(result, ["right"]);

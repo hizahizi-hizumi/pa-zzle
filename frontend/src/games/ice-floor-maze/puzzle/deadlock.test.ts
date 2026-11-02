@@ -2,7 +2,7 @@ import {
   type IceFloorMazeBoard,
   parseIceFloorMazeBoard,
 } from "@/games/ice-floor-maze/puzzle/board";
-import { isIceFloorMazeDeadlocked } from "@/games/ice-floor-maze/puzzle/deadlock";
+import { findIceFloorMazeDeadlock } from "@/games/ice-floor-maze/puzzle/deadlock";
 import {
   applyIceFloorMazeSlide,
   type IceFloorMazeDirection,
@@ -32,7 +32,7 @@ function slideInOrder(
   );
 }
 
-describe("isIceFloorMazeDeadlocked", () => {
+describe("findIceFloorMazeDeadlock", () => {
   // 8×8 の研究用盤面（下の Python 一致の8×8と同じ）。開始位置 12、ゴール 29。
   const board = parseIceFloorMazeBoard([
     "#...#.#.",
@@ -53,13 +53,13 @@ describe("isIceFloorMazeDeadlocked", () => {
   ] as const;
 
   test.each(cases)("%sと判定すること", (_, position, expected) => {
-    const deadlocked = isIceFloorMazeDeadlocked(
+    const deadlock = findIceFloorMazeDeadlock(
       board,
       createIceFloorMazeInitialState(board, position),
       goal,
     );
 
-    expect(deadlocked).toBe(expected);
+    expect(deadlock !== null).toBe(expected);
   });
 
   describe("要素のある盤面の場合", () => {
@@ -79,48 +79,48 @@ describe("isIceFloorMazeDeadlocked", () => {
         reachableBoard,
         slideInOrder(reachableBoard, 4, []),
         0,
-        false,
+        null,
       ],
       [
-        "崩す手が残っていても、どう滑ってもゴールへ行けなければ詰み",
+        "崩す手が残っていても、どう滑ってもゴールへ行けなければ詰みで、崩す前の1つと崩した後の3つへ移れる",
         brittleBoard,
         slideInOrder(brittleBoard, 6, []),
         0,
-        true,
+        { reachableStateCount: 4 },
       ],
       [
-        "割る手が残っていても、どう滑ってもゴールへ行けなければ詰み",
+        "割る手が残っていても、どう滑ってもゴールへ行けなければ詰みで、割る前と割った後の2つへ移れる",
         thinBoard,
         slideInOrder(thinBoard, 4, []),
         0,
-        true,
+        { reachableStateCount: 2 },
       ],
       [
-        "雪山でゴールが埋まれば詰み",
+        "雪山でゴールが埋まれば詰みで、両端の2つへ移れる",
         snowGoalBoard,
         slideInOrder(snowGoalBoard, 0, ["right"]),
         4,
-        true,
+        { reachableStateCount: 2 },
       ],
       [
-        "動かせない塊がゴールに乗れば詰み",
+        "動かせない塊がゴールに乗れば詰みで、両端の2つへ移れる",
         blockGoalBoard,
         slideInOrder(blockGoalBoard, 0, ["right"]),
         3,
-        true,
+        { reachableStateCount: 2 },
       ],
     ] as const;
 
     test.each(elementCases)(
       "%sと判定すること",
       (_, elementBoard, state, goalCell, expected) => {
-        const deadlocked = isIceFloorMazeDeadlocked(
+        const deadlock = findIceFloorMazeDeadlock(
           elementBoard,
           state,
           goalCell,
         );
 
-        expect(deadlocked).toBe(expected);
+        expect(deadlock).toEqual(expected);
       },
     );
   });
@@ -174,12 +174,13 @@ describe("isIceFloorMazeDeadlocked", () => {
         const { stops } = exploreIceFloorMazeStops(researchBoard, start);
 
         const dead = stops
-          .filter((stop) =>
-            isIceFloorMazeDeadlocked(
-              researchBoard,
-              createIceFloorMazeInitialState(researchBoard, stop),
-              researchGoal,
-            ),
+          .filter(
+            (stop) =>
+              findIceFloorMazeDeadlock(
+                researchBoard,
+                createIceFloorMazeInitialState(researchBoard, stop),
+                researchGoal,
+              ) !== null,
           )
           .sort((left, right) => left - right);
 

@@ -8,7 +8,10 @@ import type {
 import type { IceFloorMazePooledProblem } from "@/games/ice-floor-maze/problem/problem-pool";
 import { selectIceFloorMazeProblemForDifficulty } from "@/games/ice-floor-maze/problem-selection";
 import type { IceFloorMazeBoard } from "@/games/ice-floor-maze/puzzle/board";
-import { isIceFloorMazeDeadlocked } from "@/games/ice-floor-maze/puzzle/deadlock";
+import {
+  findIceFloorMazeDeadlock,
+  type IceFloorMazeDeadlock,
+} from "@/games/ice-floor-maze/puzzle/deadlock";
 import {
   doesIceFloorMazeSlidePassGoal,
   getIceFloorMazeNeighbor,
@@ -153,7 +156,8 @@ export type IceFloorMazePlay = GamePlay<
     optimalMoveCount: number;
     /**
      * もうゴールに止まれないことを知らせるプレイ中だけ `true`。詰み（どう滑ってもゴールで止まれない）のまま、
-     * 待った・盤面を戻すを使わずに `deadlockNoticeSlideCount` 回滑ったら知らせ、そこから待った・盤面を戻すで戻っても、
+     * 待った・盤面を戻すを使わずに `deadlockNoticeSlideCount` 回滑ったら知らせる。詰みの中で移れる状態が
+     * `confinedDeadlockStateCount` 以下なら、その状態へ滑った時点で知らせる。そこから待った・盤面を戻すで戻っても、
      * ゴールで止まれる状態に戻るまで知らせ続ける。
      */
     isTrapped: boolean;
@@ -185,6 +189,12 @@ type IceFloorMazePlayState = {
  * 詰みに入ってすぐ知らせると試行錯誤を遮るので、詰みのまま滑り続けて気づいていなさそうなときだけ知らせる。
  */
 const deadlockNoticeSlideCount = 10;
+
+/**
+ * 詰みの中で移れる状態（今の状態を含む）がこの数以下なら、滑りを数えずにすぐ知らせる。
+ * 数種類の状態を行き来するだけなら試行錯誤の余地が無く、知らせを遅らせても待たせるだけになる。
+ */
+const confinedDeadlockStateCount = 3;
 
 /** 詰みでない状態の、知らせまでの数と知らせ。 */
 const notDeadlocked = {
@@ -260,7 +270,7 @@ function slideInPlay(
 
   const deadlockNotice = noticeDeadlockAfterSlide(
     current,
-    isDeadlocked(board, session.puzzleState, goal),
+    findDeadlock(board, session.puzzleState, goal),
   );
   return {
     ...applyPlaySession(current, session),
@@ -294,7 +304,7 @@ function returnInPlay(
     return current;
   }
   const { board, goal } = returned.problem;
-  const deadlockNotice = isDeadlocked(board, returned.puzzleState, goal)
+  const deadlockNotice = findDeadlock(board, returned.puzzleState, goal)
     ? { deadlockedSlideCount: 0, trapNoticed: current.trapNoticed }
     : notDeadlocked;
   return {
@@ -305,42 +315,48 @@ function returnInPlay(
 }
 
 /**
- * 状態ごとの、詰みかの判定。判定は状態のグラフをたどるので、同じ状態を何度も判定しない。
+ * 状態ごとの、詰みの判定。判定は状態のグラフをたどるので、同じ状態を何度も判定しない。
  * 状態のオブジェクトは滑るたびに作られ、待ったで戻る先として使い回され、別の問題の状態と共有されないので、状態だけを鍵にする。
  */
-const deadlockedByState = new WeakMap<IceFloorMazeState, boolean>();
+const deadlockByState = new WeakMap<
+  IceFloorMazeState,
+  IceFloorMazeDeadlock | null
+>();
 
-function isDeadlocked(
+function findDeadlock(
   board: IceFloorMazeBoard,
   state: IceFloorMazeState,
   goal: number,
-): boolean {
-  const cached = deadlockedByState.get(state);
+): IceFloorMazeDeadlock | null {
+  const cached = deadlockByState.get(state);
   if (cached !== undefined) {
     return cached;
   }
-  const deadlocked = isIceFloorMazeDeadlocked(board, state, goal);
-  deadlockedByState.set(state, deadlocked);
-  return deadlocked;
+  const deadlock = findIceFloorMazeDeadlock(board, state, goal);
+  deadlockByState.set(state, deadlock);
+  return deadlock;
 }
 
 /**
  * 滑った後に、もうゴールに止まれないことを知らせるか。詰みの状態から滑るたびに数え、
- * `deadlockNoticeSlideCount` 回に達したら知らせる。詰みの状態からどう滑っても詰みのままなので、
- * 一度知らせたら滑っても消えない。
+ * `deadlockNoticeSlideCount` 回に達したら知らせる。移れる状態が `confinedDeadlockStateCount` 以下の詰みへ
+ * 滑ったら、数えずに知らせる。詰みの状態からどう滑っても詰みのままなので、一度知らせたら滑っても消えない。
  */
 function noticeDeadlockAfterSlide(
   { deadlockedSlideCount, trapNoticed }: IceFloorMazePlayState,
-  deadlocked: boolean,
+  deadlock: IceFloorMazeDeadlock | null,
 ): Pick<IceFloorMazePlayState, "deadlockedSlideCount" | "trapNoticed"> {
-  if (!deadlocked) {
+  if (!deadlock) {
     return notDeadlocked;
   }
   const nextCount =
     deadlockedSlideCount === null ? 0 : deadlockedSlideCount + 1;
   return {
     deadlockedSlideCount: nextCount,
-    trapNoticed: trapNoticed || nextCount >= deadlockNoticeSlideCount,
+    trapNoticed:
+      trapNoticed ||
+      nextCount >= deadlockNoticeSlideCount ||
+      deadlock.reachableStateCount <= confinedDeadlockStateCount,
   };
 }
 
