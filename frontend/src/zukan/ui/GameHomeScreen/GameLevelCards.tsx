@@ -29,11 +29,11 @@ function scrollCardIntoView(card: Element, behavior: ScrollBehavior) {
 /**
  * ゲームのホームで、遊ぶレベルを選び、その台紙を開くカード。
  * 各カードに、5段階の中の位置、レベルの名前、解いた数を示し、切り替えずに全レベルを比べられるようにする。
- * 台紙を広く見せるよう、カードは5段階の位置の帯と、名前と解いた数の行の2行に収める。1行に並べ、収まらない幅では横に送る。
+ * 台紙を広く見せるよう、カードは5段階の位置の帯と、名前と解いた数の行の2行に収める。スマートフォンでも3枚が並んで見える幅にし、1行に並べ、収まらない幅では横に送る。
  * 矢印キーはカードの間でフォーカスを動かすだけにし、選ぶのは押したときと Enter・Space にする。通り過ぎたレベルの台紙を開いて描き直したり、変化を見せ終えたりしない。
  * 開いているカードが送った先にあれば、見える位置へ送る。開くレベルはこの画面を描いたあとに決まり直すことがあるので、利用者がカードを触るまでは決まり直すたびに送る。
  * 端で切れたカードを押したときも、押したカードを見える位置へ送る。
- * まだ見せていない変化のあるレベルには、名前の横に小さな点を付ける。
+ * まだ見せていない変化のあるレベルには、カードの右上に小さな点を付ける。
  */
 export function GameLevelCards({
   levels,
@@ -80,17 +80,19 @@ export function GameLevelCards({
             data-difficulty={difficulty}
             onClick={handleCardClick}
           >
-            <DifficultyLevelPieces level={difficulty} />
+            <span className="flex items-start justify-between gap-1">
+              <DifficultyLevelPieces level={difficulty} />
+              {hasUnseenChanges && (
+                <span
+                  aria-hidden="true"
+                  data-unseen-change-mark=""
+                  className="size-1.5 shrink-0 rounded-full bg-foreground"
+                />
+              )}
+            </span>
             <span className="flex items-baseline justify-between gap-1 text-meta">
-              <span className="relative font-medium">
+              <span className="font-medium">
                 {getDifficultyLabel(difficulty)}
-                {hasUnseenChanges && (
-                  <span
-                    aria-hidden="true"
-                    data-unseen-change-mark=""
-                    className="absolute top-0.5 -right-2 size-1.5 rounded-full bg-foreground"
-                  />
-                )}
               </span>
               <span className="font-normal text-muted-foreground tabular-nums">
                 <span aria-hidden="true">
