@@ -4,9 +4,12 @@
  * - ホーム・難易度選択・記録と、それ以外の案内の画面（ページが見つからないなど）: ホームの曲
  * - プレイ画面: 盤面を解いている間はプレイ中の曲。クリアして完成演出が始まったらフェードアウトし、クリア音と報酬の音を前に出す
  * - 結果画面: 結果の曲
+ *
+ * プレイに入るときは、流れている曲を引いて間を空けてからプレイ中の曲を立ち上げ、ここから解くという区切りを聞かせる。
+ * そのほかの曲の切り替えはクロスフェードにする。
  */
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { matchPath, useLocation } from "react-router";
 
 import homeMusicUrl from "@/assets/background-music/home.mp3";
@@ -15,6 +18,7 @@ import { usePlayMusicAuditionCandidate } from "@/components/play-music-audition"
 import type { GameProgress } from "@/games/play";
 import {
   type BackgroundMusicTrack,
+  type BackgroundMusicTransition,
   defineBackgroundMusicTrack,
   playBackgroundMusic,
   prepareBackgroundMusic,
@@ -65,6 +69,29 @@ const sceneGains = {
   result: 1,
 } as const satisfies Record<Exclude<AppBackgroundMusicScene, "silent">, number>;
 
+/**
+ * プレイに入るとき、流れている曲を引く長さ。選んだ直後に素早く引き、選ぶ場面が終わったことをすぐ伝える。
+ * 短すぎると曲が途切れたように聞こえるので、引いていると分かる長さは残す。
+ */
+const ENTER_PLAY_FADE_OUT_SEC = 0.7;
+/** 曲を引き切ってから、プレイ中の曲を立ち上げるまでの無音。前の曲の余韻を残さず、ここから解くという区切りを作る。 */
+const ENTER_PLAY_SILENCE_SEC = 0.5;
+/**
+ * プレイ中の曲を立ち上げる長さ。盤面を見て解き始める間に、いつ鳴り始めたか気づかないほどゆっくり入れ、
+ * 曲で注意を引かずに集中する場をつくる。
+ */
+const ENTER_PLAY_FADE_IN_SEC = 3;
+
+/** プレイに入るときの切り替え。前の曲とプレイ中の曲を重ねない。 */
+const enterPlayTransition: BackgroundMusicTransition = {
+  kind: "break",
+  fadeOutSec: ENTER_PLAY_FADE_OUT_SEC,
+  silenceSec: ENTER_PLAY_SILENCE_SEC,
+  fadeInSec: ENTER_PLAY_FADE_IN_SEC,
+};
+
+const crossfadeTransition: BackgroundMusicTransition = { kind: "crossfade" };
+
 const PLAY_PATH_PATTERN = "/puzzles/:game/play/:difficulty";
 const RESULT_PATH_PATTERN = "/puzzles/:game/result/:recordId";
 
@@ -110,6 +137,19 @@ export function selectAppBackgroundMusic(
 }
 
 /**
+ * 場面が移るときの曲の切り替え方。ほかの場面からプレイの場面に入るときは区切り、そのほかはクロスフェードにする。
+ * 初めて流すとき（`previousScene` が `null`）にプレイの場面なら、区切りと同じくゆっくり立ち上げる。
+ */
+export function selectAppBackgroundMusicTransition(
+  previousScene: AppBackgroundMusicScene | null,
+  scene: AppBackgroundMusicScene,
+): BackgroundMusicTransition {
+  return scene === "play" && previousScene !== "play"
+    ? enterPlayTransition
+    : crossfadeTransition;
+}
+
+/**
  * 今の画面に合わせて BGM を流す。アプリの全画面を包む部品で一度呼ぶ。
  * 流しうる曲は先に読み込み、画面を移ったときに待たせない。読み込みは今の画面の曲を先にし、そのあとは
  * ホームから難易度を選んでプレイに入るときに間に合うようプレイ中の曲を、最後にプレイを終えるまでに要る結果の曲を読み込む。
@@ -128,6 +168,7 @@ export function useAppBackgroundMusic(): void {
   });
   const track = music?.track ?? null;
   const gain = music?.gain;
+  const previousScene = useRef<AppBackgroundMusicScene | null>(null);
 
   useEffect(() => {
     const { home, result } = appBackgroundMusicTracks;
@@ -135,8 +176,13 @@ export function useAppBackgroundMusic(): void {
   }, [play]);
 
   useEffect(() => {
-    playBackgroundMusic(track, { gain });
-  }, [track, gain]);
+    const transition = selectAppBackgroundMusicTransition(
+      previousScene.current,
+      scene,
+    );
+    previousScene.current = scene;
+    playBackgroundMusic(track, { gain, transition });
+  }, [scene, track, gain]);
 }
 
 /**

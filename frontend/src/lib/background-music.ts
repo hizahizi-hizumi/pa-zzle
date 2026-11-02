@@ -10,6 +10,7 @@
  * 流しうる曲は `prepareBackgroundMusic` で渡し、今の画面で流す曲は `playBackgroundMusic` で決める。
  * 読み込みは今の画面で流す曲を先にし、流しうる曲はそのあとで1曲ずつ取得しておく。
  * 曲を切り替えるとクロスフェードし、同じ曲を流したまま別の画面に移っても頭から流し直さない。
+ * 場面の区切りを聞かせたいときは、`playBackgroundMusic` の `transition` で、前の曲を引き切って間を空けてから次の曲を立ち上げる。
  * 場面に合わせて曲を奥へ下げるときは、`playBackgroundMusic` の `gain` で曲に掛ける大きさを決める。
  * 音量は `@/lib/background-music-setting` の設定に従い、流している曲も音量を変えるとすぐに変わる。音量が 0 の間は、読み込みも再生もしない。
  * 画面が見えない間（タブを切り替えた・アプリを裏に回したなど）はフェードアウトして止め、見えるようになったら止めた位置から流し直す。
@@ -52,10 +53,29 @@ export type BackgroundMusicTrack = {
   readonly loopLength: number;
 };
 
+/**
+ * 別の曲へ切り替えるときの流し方。
+ *
+ * - `crossfade`: 次の曲が鳴り始めてから、前の曲をフェードアウトしながら次の曲をフェードインする。
+ * - `break`: 前の曲をすぐ `fadeOutSec` かけてフェードアウトし、引き切ってから `silenceSec` の無音を空けて、
+ *   次の曲を `fadeInSec` かけてフェードインする。前の曲と次の曲を重ねない。
+ *   無音を空け終える前にまた別の曲へ切り替えても、空けた無音は守り、前の曲と次の曲を重ねない。
+ */
+export type BackgroundMusicTransition =
+  | { kind: "crossfade" }
+  | {
+      kind: "break";
+      fadeOutSec: number;
+      silenceSec: number;
+      fadeInSec: number;
+    };
+
 /** `playBackgroundMusic` で、流す曲の流し方を決める。 */
 export type PlayBackgroundMusicOptions = {
   /** 曲に掛ける大きさ（倍）。音量の設定で決まる BGM の大きさに、さらに掛ける。省くと 1。 */
   gain?: number;
+  /** 流している曲から別の曲へ切り替えるときの流し方。省くとクロスフェード。同じ曲を流し続けるときは使わない。 */
+  transition?: BackgroundMusicTransition;
 };
 
 /** 読み解いた曲と、その中でループする区間（秒）。 */
@@ -93,7 +113,7 @@ type LoopSource = VoiceSource<AudioBufferSourceNode> & {
 };
 
 /**
- * 流している1曲。切り替えるときは、次の曲が鳴り始めてから、前の曲をフェードアウトしながら次の曲をフェードインする。
+ * 流している1曲。切り替えるときは、切り替え方（`BackgroundMusicTransition`）に従って前の曲をフェードアウトし、次の曲をフェードインする。
  * 読み解くまでは要素でストリーミング再生し（`stream`）、読み解いたらループ再生（`loop`）へ渡す。
  */
 type MusicVoice = {
@@ -103,8 +123,12 @@ type MusicVoice = {
   level: GainNode;
   /** `level` を近づけている大きさ。 */
   levelGain: number;
-  sounding: boolean;
-  fading: boolean;
+  /** 鳴り始めるときにフェードインする長さ。 */
+  fadeInSec: number;
+  /** 鳴り始める時刻（AudioContext の時刻）。ループ再生を後の時刻に始めるよう頼んであれば、その時刻。まだなら `null`。 */
+  soundingFrom: number | null;
+  /** フェードアウトし終える時刻（AudioContext の時刻）。フェードアウトを始めていなければ `null`。 */
+  fadedAt: number | null;
   stream: VoiceSource<StreamPlayer> | null;
   loop: LoopSource | null;
 };
@@ -147,12 +171,14 @@ const RELEASE_MARGIN_MS = 100;
 let musicOutput: MusicOutput | null = null;
 /** 今の画面で流したい曲の音。まだ鳴り始めていないことがある。 */
 let currentVoice: MusicVoice | null = null;
-/** 前の曲の音。今の曲が鳴り始めるまでは流し続け、鳴り始めたらフェードアウトする。 */
+/** 前の曲の音。クロスフェードなら今の曲が鳴り始めるまでは流し続け、鳴り始めたらフェードアウトする。区切るならすぐフェードアウトする。 */
 const previousVoices = new Set<MusicVoice>();
 /** 今の画面で流したい曲の URL。音量を 0 から上げたときや、AudioContext を待ってから流すときに使う。 */
 let wantedUrl: string | null = null;
 /** 今の画面で流したい曲に掛ける大きさ。 */
 let wantedGain = 1;
+/** 今の画面で流したい曲を、鳴り始めるときにフェードインする長さ。曲を切り替えたときの流し方で決まる。 */
+let wantedFadeInSec = FADE_IN_SEC;
 /** 画面が見えなくなって止めた曲と、止めたときの1ループの中の位置（秒）。見えるようになったら、ここから流し直す。 */
 let resumePosition: { url: string; position: number } | null = null;
 /** 先に取得しておく曲の URL。これと流したい曲・流している曲のほかは、取得したファイルを捨てる。 */
@@ -205,18 +231,25 @@ export function prepareBackgroundMusic(
  * 今の画面で流す曲を決める。`null` ならフェードアウトして止める。
  *
  * - 流している曲と同じ曲なら、頭から流し直さない。`gain` だけが違えば、流したまま大きさを変える。
- * - 別の曲なら、次の曲が鳴り始めてからクロスフェードで切り替える。鳴り始めるまでは今の曲を流し続ける。
+ * - 別の曲なら、`transition` で切り替える。クロスフェードなら、次の曲が鳴り始めるまでは今の曲を流し続ける。
  * - 利用者がまだ操作しておらず音を出せないときは、曲の読み込みだけを始め、操作の中で流し始める。
  * - 音量が 0 の間は流さず、音量を 0 から上げたときに流し始める。
  */
 export function playBackgroundMusic(
   track: BackgroundMusicTrack | null,
-  { gain = 1 }: PlayBackgroundMusicOptions = {},
+  {
+    gain = 1,
+    transition = { kind: "crossfade" },
+  }: PlayBackgroundMusicOptions = {},
 ): void {
   if (!canPlayAudio()) {
     return;
   }
-  wantedUrl = track?.url ?? null;
+  const url = track?.url ?? null;
+  if (url !== wantedUrl) {
+    beginTransition(transition);
+  }
+  wantedUrl = url;
   wantedGain = gain;
   if (track) {
     knownTracks.set(track.url, track);
@@ -231,6 +264,39 @@ export function playBackgroundMusic(
  */
 export function holdBackgroundMusicStart(durationMs: number): void {
   startHeldUntilMs = Math.max(startHeldUntilMs, performance.now() + durationMs);
+}
+
+/**
+ * 別の曲へ切り替え始める。区切るなら、今の曲をすぐフェードアウトし、
+ * 前の曲がすべて引き切ってから無音を空け終えるまで、次の曲を流し始めない。
+ */
+function beginTransition(transition: BackgroundMusicTransition) {
+  if (transition.kind === "crossfade") {
+    wantedFadeInSec = FADE_IN_SEC;
+    return;
+  }
+  wantedFadeInSec = transition.fadeInSec;
+  retireCurrentVoice();
+  fadeOutPreviousVoices(transition.fadeOutSec);
+  holdStartUntilSilence(transition.silenceSec);
+}
+
+/** 前の曲がすべてフェードアウトし終えてから `silenceSec` 後まで、次の曲を流し始めない。前の曲が無ければ待たない。 */
+function holdStartUntilSilence(silenceSec: number) {
+  if (!musicOutput) {
+    return;
+  }
+  const fadedAts = [...previousVoices].map(
+    ({ fadedAt }) => fadedAt ?? Number.NEGATIVE_INFINITY,
+  );
+  if (fadedAts.length === 0) {
+    return;
+  }
+  const silentUntil = Math.max(...fadedAts) + silenceSec;
+  const heldSec = silentUntil - musicOutput.context.currentTime;
+  if (heldSec > 0) {
+    holdBackgroundMusicStart(heldSec * 1000);
+  }
 }
 
 function listenForChanges() {
@@ -386,23 +452,35 @@ function applyWantedGain() {
   gain.setTargetAtTime(wantedGain, now, LEVEL_CHANGE_TIME_CONSTANT_SEC);
 }
 
-/** 今の曲を前の曲へ回す。まだ鳴り始めていなければ、そのまま止める。 */
+/**
+ * 今の曲を前の曲へ回す。まだ鳴り始めていなければ、そのまま止める。
+ * 後の時刻に鳴り始めるよう頼んだだけの曲も、聞こえる前に止め、切り替えた後の画面で鳴らさない。
+ */
 function retireCurrentVoice() {
   if (!currentVoice) {
     return;
   }
-  if (currentVoice.sounding) {
+  if (isAudible(currentVoice)) {
     previousVoices.add(currentVoice);
   } else {
+    currentVoice.loop?.source.stop();
     disposeVoice(currentVoice);
   }
   currentVoice = null;
 }
 
+function isAudible({ soundingFrom }: MusicVoice): boolean {
+  return (
+    soundingFrom !== null &&
+    musicOutput !== null &&
+    soundingFrom <= musicOutput.context.currentTime
+  );
+}
+
 /** 前の曲のうち、フェードアウトを始めていない `url` の曲を、今の曲へ戻すために取り出す。 */
 function takePreviousVoice(url: string): MusicVoice | null {
   for (const voice of previousVoices) {
-    if (voice.url === url && !voice.fading) {
+    if (voice.url === url && voice.fadedAt === null) {
       previousVoices.delete(voice);
       return voice;
     }
@@ -478,8 +556,9 @@ function createVoice(
     fader,
     level,
     levelGain: wantedGain,
-    sounding: false,
-    fading: false,
+    fadeInSec: wantedFadeInSec,
+    soundingFrom: null,
+    fadedAt: null,
     stream: null,
     loop: null,
   };
@@ -551,10 +630,10 @@ function isPadded({ buffer, loopDuration }: DecodedTrack): boolean {
 
 /** 曲が鳴り始めたら、フェードインし、前の曲をフェードアウトする。 */
 function beginSounding(voice: MusicVoice, startTime: number) {
-  voice.sounding = true;
+  voice.soundingFrom = startTime;
   const { gain } = voice.fader;
   gain.setValueAtTime(0, startTime);
-  gain.linearRampToValueAtTime(1, startTime + FADE_IN_SEC);
+  gain.linearRampToValueAtTime(1, startTime + voice.fadeInSec);
   fadeOutPreviousVoices();
 }
 
@@ -564,7 +643,7 @@ function advanceCurrentVoice() {
   if (!voice?.stream || !musicOutput) {
     return;
   }
-  if (!voice.sounding && voice.stream.source.playing) {
+  if (voice.soundingFrom === null && voice.stream.source.playing) {
     beginSounding(voice, musicOutput.context.currentTime);
   }
   const track = decodedTracks.get(voice.url);
@@ -588,7 +667,7 @@ function handOffToLoop(
   }
   voice.stream = null;
   const now = output.context.currentTime;
-  if (!voice.sounding) {
+  if (voice.soundingFrom === null) {
     disposeStream(stream);
     voice.loop = startLoopSource(output, voice.fader, track, now, 0);
     beginSounding(voice, now);
@@ -642,7 +721,7 @@ function getLoopPosition(
 /** 流している曲をループ再生していれば、流している1ループの中の位置を、見えるようになったときのために覚えておく。 */
 function rememberResumePosition() {
   const voice = currentVoice;
-  const loop = voice?.sounding ? voice.loop : null;
+  const loop = voice && voice.soundingFrom !== null ? voice.loop : null;
   if (!voice || !loop || !musicOutput) {
     resumePosition = null;
     return;
@@ -677,30 +756,31 @@ function crossfade(
   to.gain.linearRampToValueAtTime(1, startTime + durationSec);
 }
 
-function fadeOutPreviousVoices() {
+function fadeOutPreviousVoices(fadeOutSec = FADE_OUT_SEC) {
   for (const voice of previousVoices) {
-    fadeOutVoice(voice);
+    fadeOutVoice(voice, fadeOutSec);
   }
 }
 
-function fadeOutVoice(voice: MusicVoice) {
-  if (voice.fading || !musicOutput) {
+/** 曲をフェードアウトして止める。フェードアウトを始めている曲は、始めたときの長さのまま引き切る。 */
+function fadeOutVoice(voice: MusicVoice, fadeOutSec: number) {
+  if (voice.fadedAt !== null || !musicOutput) {
     return;
   }
-  voice.fading = true;
   const now = musicOutput.context.currentTime;
+  voice.fadedAt = now + fadeOutSec;
   const { gain } = voice.fader;
   gain.cancelScheduledValues(now);
   gain.setValueAtTime(gain.value, now);
-  gain.linearRampToValueAtTime(0, now + FADE_OUT_SEC);
-  voice.loop?.source.stop(now + FADE_OUT_SEC);
+  gain.linearRampToValueAtTime(0, voice.fadedAt);
+  voice.loop?.source.stop(voice.fadedAt);
   setTimeout(
     function disposeFadedVoice() {
       previousVoices.delete(voice);
       disposeVoice(voice);
       syncBackgroundMusic();
     },
-    FADE_OUT_SEC * 1000 + RELEASE_MARGIN_MS,
+    fadeOutSec * 1000 + RELEASE_MARGIN_MS,
   );
 }
 
