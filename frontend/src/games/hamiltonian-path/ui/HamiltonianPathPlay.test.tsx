@@ -1,0 +1,233 @@
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
+import type { ComponentProps } from "react";
+
+import { HAMILTONIAN_PATH_DISPLAY_NAME } from "@/games/hamiltonian-path/display-name";
+import { createHamiltonianPathResult } from "@/games/hamiltonian-path/play/use-hamiltonian-path-play";
+import { parseHamiltonianPathBoard } from "@/games/hamiltonian-path/puzzle/board";
+import type { HamiltonianPathSessionResult } from "@/games/hamiltonian-path/session/session";
+import { HamiltonianPathPlay } from "@/games/hamiltonian-path/ui/HamiltonianPathPlay";
+
+afterEach(() => {
+  cleanup();
+});
+
+// 基準時間 5 + 64 × 0.5 + 10 × 3 + 4 × 3 + min(130, 120) × 1 = 199秒（03:19）、0点になる時間 09:57。
+const workload = {
+  openCellCount: 64,
+  fatalBranchCount: 10,
+  assumptionCount: 4,
+  refutationStepCount: 130,
+  longestRefutationLength: 20,
+};
+
+// 21秒超過で速さ57点、引き直し2回で正確さ34点。待った・盤面を戻すは点に入らない。
+const performance: HamiltonianPathSessionResult = {
+  elapsedMs: 220_000,
+  backtrackCount: 2,
+  retractedCellCount: 9,
+  undoCount: 3,
+  restartCount: 1,
+  inputCount: 40,
+};
+const result = createHamiltonianPathResult(performance, workload);
+const perfectResult = createHamiltonianPathResult(
+  { ...performance, elapsedMs: 190_000, backtrackCount: 0 },
+  workload,
+);
+
+describe("HamiltonianPathPlay", () => {
+  const board = parseHamiltonianPathBoard([
+    "S . .",
+    "- -",
+    ". . .",
+    "  - -",
+    ". . .",
+  ]);
+  const callbacks = {
+    onBeginStroke: vi.fn(),
+    onTraceStroke: vi.fn(),
+    onEndStroke: vi.fn(),
+    onMoveHeadToward: vi.fn(),
+    onUndo: vi.fn(),
+    onRestart: vi.fn(),
+    onReplay: vi.fn(),
+    onClearAnimationComplete: vi.fn(),
+    onStartNewProblem: vi.fn(),
+    onOpenRecords: vi.fn(),
+    onChangeDifficulty: vi.fn(),
+    onBackToHome: vi.fn(),
+  };
+  const baseProps: ComponentProps<typeof HamiltonianPathPlay> = {
+    difficulty: "4",
+    progress: "result",
+    elapsedMs: performance.elapsedMs,
+    result,
+    recordOutcomeNotice: null,
+    board,
+    path: [0, 1, 2, 5, 4, 3, 6, 7, 8],
+    isDeadEnd: false,
+    blockedMove: null,
+    canUndo: false,
+    canRestart: false,
+    ...callbacks,
+  };
+
+  function renderResult(
+    props: Partial<ComponentProps<typeof HamiltonianPathPlay>> = {},
+  ) {
+    render(<HamiltonianPathPlay {...baseProps} {...props} />);
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("完成演出中の場合", () => {
+    beforeEach(() => {
+      renderResult({ progress: "clearing" });
+    });
+
+    test("盤面を見せ、結果画面をまだ出さないこと", () => {
+      const boardGroup = screen.getByRole("group", {
+        name: `${HAMILTONIAN_PATH_DISPLAY_NAME}盤面`,
+      });
+      const resultScreen = screen.queryByRole("region", { name: "プレイ結果" });
+
+      expect(boardGroup).toBeTruthy();
+      expect(resultScreen).toBeNull();
+    });
+  });
+
+  describe("完成演出を終えた場合", () => {
+    beforeEach(() => {
+      renderResult();
+    });
+
+    test("共通の結果階層でピクトグラム・ゲーム名・難易度・スコアを表示すること", () => {
+      const pictogram = document.querySelector(
+        `svg[aria-label="${HAMILTONIAN_PATH_DISPLAY_NAME}"]`,
+      );
+      const score = within(screen.getByRole("region", { name: "スコア" }));
+
+      expect(pictogram).toBeTruthy();
+      expect(screen.getByText(HAMILTONIAN_PATH_DISPLAY_NAME)).toBeTruthy();
+      expect(screen.getByText("レベル 4")).toBeTruthy();
+      expect(score.getByText("91")).toBeTruthy();
+    });
+
+    test("時間と基準時間との差・引き直しを主な成績として表示すること", () => {
+      const terms = screen.getAllByRole("term").map((term) => term.textContent);
+      const definitions = screen
+        .getAllByRole("definition")
+        .map((definition) => definition.textContent);
+
+      expect(terms).toEqual(["時間", "引き直し"]);
+      expect(definitions).toEqual(["03:40", "基準 +00:21", "2回"]);
+    });
+
+    test("盤面を表示しないこと", () => {
+      const boardGroup = screen.queryByRole("group", {
+        name: `${HAMILTONIAN_PATH_DISPLAY_NAME}盤面`,
+      });
+
+      expect(boardGroup).toBeNull();
+    });
+
+    const actionCases = [
+      ["プレイ！", "onStartNewProblem"],
+      ["同じ問題", "onReplay"],
+      ["記録を確認", "onOpenRecords"],
+      ["難易度変更", "onChangeDifficulty"],
+      ["ホーム", "onBackToHome"],
+    ] as const;
+
+    test.each(actionCases)(
+      "%s ボタンで対応する操作を通知すること",
+      (buttonName, callbackName) => {
+        fireEvent.click(screen.getByRole("button", { name: buttonName }));
+
+        expect(callbacks[callbackName]).toHaveBeenCalledOnce();
+      },
+    );
+
+    describe("スコアの内訳を開いた場合", () => {
+      beforeEach(() => {
+        fireEvent.click(
+          screen.getByRole("button", { name: "スコアの内訳・採点基準" }),
+        );
+      });
+
+      test("速さ・正確さの点を速さから並べ、操作の回数・基準時間・作業の量を内訳に表示すること", () => {
+        const items = screen
+          .getAllByRole("term")
+          .map(
+            (term) => `${term.textContent} ${term.nextSibling?.textContent}`,
+          );
+
+        expect(items).toEqual(
+          expect.arrayContaining([
+            "速さ 57 / 60",
+            "正確さ 34 / 40",
+            "待った 3回",
+            "盤面を戻す 1回",
+            "基準時間 03:19",
+            "なぞるマス 64マス",
+            "迷う分岐 10か所",
+            "先読み 4回",
+            "先読みの手数 130手",
+          ]),
+        );
+        expect(items.findIndex((item) => item.startsWith("速さ"))).toBeLessThan(
+          items.findIndex((item) => item.startsWith("正確さ")),
+        );
+      });
+
+      test("速さの基準を、作業の量から求める式と0点になる時間で表示すること", () => {
+        const criteria = screen.getByText(/^基準時間03:19以内/);
+
+        expect(criteria.textContent).toBe(
+          "基準時間03:19以内で60点、09:57以上で0点、その間は時間に応じて減らす。基準時間は盤面把握5秒 + なぞるマス64マス × 0.5秒 + 迷う分岐10か所 × 3秒 + 先読み4回 × 3秒 + 先読みの手数120手 × 1秒。迷う分岐は、始点から引き進めると全マスを通れなくなる向きを含む分岐。先読みの回数と手数は、この問題を盤面から読んで解くときに要る数（手数は120手まで数える）。",
+        );
+      });
+
+      test("正確さの基準を、引き直しの減点と数え方で表示すること", () => {
+        const criteria = screen.getByText(/^40点から/);
+
+        expect(criteria.textContent).toBe(
+          "40点から、引き直し1回につき3点を減らす。引き直しは、一度引いた道を戻して前と別のマスへ引いた回数で、戻して同じマスへ引き直したときは数えない。「待った」・「盤面を戻す」は減点しないが、戻した後に別のマスへ引けば引き直しに数える。",
+        );
+      });
+    });
+  });
+
+  describe("100点で解いた場合", () => {
+    beforeEach(() => {
+      renderResult({ result: perfectResult });
+    });
+
+    test("最高段階として称え、基準時間より速かった差を負の時間で表示すること", () => {
+      expect(screen.getByText("パーフェクト！")).toBeTruthy();
+      expect(screen.getByText("基準 -00:09")).toBeTruthy();
+    });
+  });
+
+  describe("検証情報のつなぎ先を渡した場合", () => {
+    const onOpenDiagnostics = vi.fn();
+
+    beforeEach(() => {
+      renderResult({ onOpenDiagnostics });
+    });
+
+    test("検証情報ボタンで検証情報を開く操作を通知すること", () => {
+      fireEvent.click(screen.getByRole("button", { name: "検証情報" }));
+
+      expect(onOpenDiagnostics).toHaveBeenCalledOnce();
+    });
+  });
+});

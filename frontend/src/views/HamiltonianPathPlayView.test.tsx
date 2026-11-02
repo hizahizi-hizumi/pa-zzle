@@ -13,8 +13,12 @@ import {
   selectHamiltonianPathProblemForDifficulty,
 } from "@/games/hamiltonian-path/problem-selection";
 import { createProblemId } from "@/games/problem-id";
+import { readPlayAttempts } from "@/records/play-attempt-storage";
+import { readPlayRecords } from "@/records/storage";
 import { HamiltonianPathPlayView } from "@/views/HamiltonianPathPlayView";
+import { PlayResultView } from "@/views/PlayResultView";
 
+const internalDiagnostics = vi.hoisted(() => ({ available: false }));
 const problemSeed = "hamiltonian-path-play-view";
 
 vi.mock("@/games/problem-seed", async (importOriginal) => ({
@@ -23,12 +27,16 @@ vi.mock("@/games/problem-seed", async (importOriginal) => ({
 }));
 
 vi.mock("@/lib/internal-diagnostics", () => ({
-  internalDiagnosticsAvailable: false,
+  get internalDiagnosticsAvailable() {
+    return internalDiagnostics.available;
+  },
   buildRevision: null,
 }));
 
 afterEach(() => {
   cleanup();
+  internalDiagnostics.available = false;
+  window.localStorage.clear();
 });
 
 function LocationSearch() {
@@ -51,6 +59,11 @@ function renderAt(path: string): void {
         <Route
           path="/puzzles/hamiltonian-path"
           element={<p>難易度選択画面</p>}
+        />
+        <Route path="/records" element={<p>記録画面</p>} />
+        <Route
+          path="/puzzles/:game/result/:recordId"
+          element={<PlayResultView />}
         />
       </Routes>
     </MemoryRouter>,
@@ -92,6 +105,13 @@ function dragThrough(size: number, [pressed, ...cells]: readonly number[]) {
   fireEvent.pointerUp(surface, touch);
 }
 
+function openMenu(): void {
+  fireEvent.pointerDown(screen.getByRole("button", { name: "その他の操作" }), {
+    button: 0,
+    ctrlKey: false,
+  });
+}
+
 function getHeadCell(): number {
   return listCells().findIndex((cell) =>
     cell.getAttribute("aria-label")?.includes("先端"),
@@ -100,10 +120,8 @@ function getHeadCell(): number {
 
 describe("HamiltonianPathPlayView", () => {
   describe("定義済みの難易度の場合", () => {
-    const { problem, identity } = selectHamiltonianPathProblemForDifficulty(
-      "1",
-      problemSeed,
-    );
+    const { problem, identity, workload } =
+      selectHamiltonianPathProblemForDifficulty("1", problemSeed);
     const { solution } = generateHamiltonianPathProblem(identity);
 
     beforeEach(() => {
@@ -179,12 +197,71 @@ describe("HamiltonianPathPlayView", () => {
         }
       });
 
-      test("盤面の操作を受け付けなくなること", () => {
-        const enabledCells = listCells().filter(
-          (cell) => !(cell as HTMLButtonElement).disabled,
+      test("結果画面で難易度とスコアを示すこと", () => {
+        const resultScreen = within(
+          screen.getByRole("region", { name: "プレイ結果" }),
         );
 
-        expect(enabledCells).toHaveLength(0);
+        expect(resultScreen.getByText("レベル 1")).toBeTruthy();
+        expect(
+          resultScreen.getByRole("region", { name: "スコア" }),
+        ).toBeTruthy();
+      });
+
+      test("遊んだ問題と作業の量とプレイの事実を記録へ保存すること", () => {
+        const records = readPlayRecords();
+
+        expect(records).toHaveLength(1);
+        expect(records[0]).toMatchObject({
+          gameId: "hamiltonian-path",
+          payload: {
+            difficulty: "1",
+            problemIdentity: identity,
+            workload,
+            performance: { backtrackCount: 0, undoCount: 0, restartCount: 0 },
+          },
+        });
+      });
+
+      test("記録を確認で記録画面へ移ること", () => {
+        fireEvent.click(screen.getByRole("button", { name: "記録を確認" }));
+
+        expect(screen.getByText("記録画面")).toBeTruthy();
+      });
+
+      describe("同じ問題をもう一度解いた場合", () => {
+        beforeEach(() => {
+          fireEvent.click(screen.getByRole("button", { name: "同じ問題" }));
+          for (const cell of solution.slice(1)) {
+            tapCell(cell);
+          }
+        });
+
+        test("もう1件の記録として保存すること", () => {
+          const records = readPlayRecords();
+
+          expect(records).toHaveLength(2);
+        });
+      });
+    });
+
+    describe("途中で別の問題へ移った場合", () => {
+      beforeEach(() => {
+        tapCell(solution[1]!);
+        openMenu();
+        fireEvent.click(screen.getByRole("menuitem", { name: "別の問題" }));
+      });
+
+      test("離れたプレイの進み具合を道の長さとともに記録すること", () => {
+        const abandoned = readPlayAttempts().find(
+          (attempt) => attempt.abandonment !== null,
+        );
+
+        expect(abandoned?.abandonment?.progress).toMatchObject({
+          visitedCellCount: 2,
+          openCellCount: workload.openCellCount,
+          backtrackCount: 0,
+        });
       });
     });
   });
@@ -210,6 +287,24 @@ describe("HamiltonianPathPlayView", () => {
         cells[requested.problem.start]?.getAttribute("aria-label"),
       ).toContain("始点");
       expect(search.textContent).toBe(`?problem=${problemId}`);
+    });
+  });
+
+  describe("内部診断を使えるビルドの場合", () => {
+    beforeEach(() => {
+      internalDiagnostics.available = true;
+      renderAt("/puzzles/hamiltonian-path/play/3");
+      openMenu();
+    });
+
+    test("メニューの検証情報から、出題中の問題を分析し直した検証情報を開けること", () => {
+      fireEvent.click(screen.getByRole("menuitem", { name: "検証情報" }));
+
+      const dialog = within(screen.getByRole("dialog", { name: "検証情報" }));
+
+      // 出題した難易度と、分析し直した判定。
+      expect(dialog.getAllByText("レベル 3")).toHaveLength(2);
+      expect(dialog.getByText(/^一意（探索 \d+節点）$/)).toBeTruthy();
     });
   });
 

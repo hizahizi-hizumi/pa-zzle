@@ -15,6 +15,7 @@ import type {
 import type { HamiltonianPathTraceStep } from "@/games/hamiltonian-path/puzzle/transitions";
 import { HamiltonianPathBoard } from "@/games/hamiltonian-path/ui/board/HamiltonianPathBoard";
 import { HamiltonianPathHowToPlayDialog } from "@/games/hamiltonian-path/ui/HamiltonianPathHowToPlayDialog";
+import { HamiltonianPathResultScreen } from "@/games/hamiltonian-path/ui/result/HamiltonianPathResultScreen";
 import type {
   GamePlayScreenProps,
   RestartableGamePlayScreenProps,
@@ -46,9 +47,11 @@ const directionByArrowKey: Readonly<Record<string, HamiltonianPathDirection>> =
   };
 
 export function HamiltonianPathPlay({
+  difficulty,
   progress,
   elapsedMs,
   result,
+  recordOutcomeNotice,
   board,
   path,
   isDeadEnd,
@@ -64,6 +67,7 @@ export function HamiltonianPathPlay({
   onReplay,
   onClearAnimationComplete,
   onStartNewProblem,
+  onOpenRecords,
   onChangeDifficulty,
   onBackToHome,
   onOpenDiagnostics,
@@ -119,8 +123,19 @@ export function HamiltonianPathPlay({
       renderHowToPlayDialog={({ open, onClose }) => (
         <HamiltonianPathHowToPlayDialog open={open} onClose={onClose} />
       )}
-      // 結果画面が無い。評価を渡すと完成演出の後に盤面の代わりに何も描かないので、呼び出し側は評価を渡さない。
-      renderResultScreen={() => null}
+      renderResultScreen={(clearedResult) => (
+        <HamiltonianPathResultScreen
+          difficulty={difficulty}
+          result={clearedResult}
+          recordOutcomeNotice={recordOutcomeNotice}
+          onReplay={onReplay}
+          onStartNewProblem={onStartNewProblem}
+          onOpenRecords={onOpenRecords}
+          onChangeDifficulty={onChangeDifficulty}
+          onBackToHome={onBackToHome}
+          onOpenDiagnostics={onOpenDiagnostics}
+        />
+      )}
     >
       {/* 画面端から始まるタッチはブラウザの戻る操作に取られるので、盤面の左右に余白を残す。 */}
       <main className="flex min-h-0 flex-1 items-center justify-center px-4 py-2 [container-type:size] sm:px-6">
