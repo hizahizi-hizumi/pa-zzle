@@ -98,7 +98,9 @@ export function BridgesBoard({
   const boardRef = useRef<HTMLDivElement>(null);
   const figureRef = useRef<SVGSVGElement>(null);
   const [drag, setDrag] = useState<IslandDrag | null>(null);
-  const [focusedIsland, setFocusedIsland] = useState(0);
+  const [selectedIsland, setSelectedIsland] = useState(0);
+  // 別の問題へ移ると島の数が減ることがあるので、描画のたびに今の盤面の島へ丸める。
+  const focusedIsland = Math.min(selectedIsland, board.islands.length - 1);
   const [keyboardFocused, setKeyboardFocused] = useState(false);
   const islandBridgeCounts = countBridgesIslandBridges(board, { bridges });
   const blockingEdges =
@@ -205,7 +207,7 @@ export function BridgesBoard({
     }
     const next = findIslandToward(board, focusedIsland, direction);
     if (next !== null && boardRef.current) {
-      setFocusedIsland(next);
+      setSelectedIsland(next);
       findIslandButton(boardRef.current, next)?.focus();
     }
   }
@@ -241,7 +243,7 @@ export function BridgesBoard({
               data-island={island}
               tabIndex={island === focusedIsland ? 0 : -1}
               onFocus={() => {
-                setFocusedIsland(island);
+                setSelectedIsland(island);
                 setKeyboardFocused(true);
               }}
               onBlur={() => setKeyboardFocused(false)}
