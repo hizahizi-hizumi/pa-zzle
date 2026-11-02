@@ -13,6 +13,7 @@ import { measureHitofudePuzzleLookaheadLoad } from "@/games/hitofude-puzzle/prob
 import { getHitofudePuzzleSymmetryKey } from "@/games/hitofude-puzzle/problem/generation/symmetry";
 import { generateHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/generator";
 import {
+  createHitofudePuzzleProblemIdentity,
   HITOFUDE_PUZZLE_GENERATOR_VERSION,
   type HitofudePuzzleRecordedProblemIdentity,
 } from "@/games/hitofude-puzzle/problem/problem";
@@ -224,7 +225,14 @@ describe("restoreHitofudePuzzleProblem", () => {
     HitofudePuzzleRecordedProblemIdentity,
   ][] = [
     ["生成器の版が今と違う", { ...selected.identity, generatorVersion: "0" }],
-    ["問題集に無い seed の", { ...selected.identity, seed: "hp-8-0-999999" }],
+    [
+      "問題集に無い候補番号の",
+      createHitofudePuzzleProblemIdentity(
+        selected.identity.conditions.size,
+        selected.identity.conditions.targetLookaheadLoad,
+        999_999,
+      ),
+    ],
   ];
 
   test.each(unknownIdentities)(

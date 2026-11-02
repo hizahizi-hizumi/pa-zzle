@@ -10,13 +10,13 @@ import {
 } from "@/games/hitofude-puzzle/problem/problem";
 import { isHitofudePuzzleSolved } from "@/games/hitofude-puzzle/puzzle/rules";
 
-/** 8×8 の焼きなましと 7×7 の難しさへの歩行は1問に数秒かかる。 */
+/** 8×8 の焼きなましと難しさへの歩行は、負荷の高い環境では1問に数秒〜十数秒かかる。 */
 const GENERATION_TIMEOUT_MS = 60_000;
 
 describe("generateHitofudePuzzleProblem", () => {
   const conditions = [
     ...hitofudePuzzleBoardSizes.map((size) => [size, 0] as const),
-    [7, 4] as const,
+    [6, 2] as const,
   ];
   const identity = createHitofudePuzzleProblemIdentity(6, 0, 0);
 

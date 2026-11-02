@@ -4,16 +4,13 @@ import {
   createHitofudePuzzleDiagnosticSnapshot,
 } from "@/games/hitofude-puzzle/diagnostics";
 import { getHitofudePuzzleSolveWorkload } from "@/games/hitofude-puzzle/problem/difficulty-analysis";
-import { generateHitofudePuzzleProblem } from "@/games/hitofude-puzzle/problem/generator";
+import { countHitofudePuzzleSolutions } from "@/games/hitofude-puzzle/problem/generation/solver";
 import { selectHitofudePuzzleProblemForDifficulty } from "@/games/hitofude-puzzle/problem-selection";
 
 const {
   parseHitofudePuzzleDiagnosticSnapshot,
   restoreHitofudePuzzleProblemFromDiagnosticSnapshot,
 } = _private;
-
-/** レベル3 の問題は難しさへ歩く条件で作るので、生成し直しに数秒〜数十秒かかる。 */
-const GENERATION_TIMEOUT_MS = 60_000;
 
 describe("HitofudePuzzleDiagnosticSnapshot", () => {
   const selected = selectHitofudePuzzleProblemForDifficulty(
@@ -27,6 +24,7 @@ describe("HitofudePuzzleDiagnosticSnapshot", () => {
     buildRevision: "abcdef1234567890",
   });
   const serialized = serializeInternalDiagnosticSnapshot(snapshot);
+  const solutionSearch = countHitofudePuzzleSolutions(selected.problem);
   const invalidCases = [
     ["形式の版が違う", { ...snapshot, formatVersion: 2 }],
     ["別のゲーム", { ...snapshot, game: "reflection" }],
@@ -60,19 +58,13 @@ describe("HitofudePuzzleDiagnosticSnapshot", () => {
     expect(restored?.problem).toEqual(selected.problem);
   });
 
-  test(
-    "一意解を確かめ、生成器と同じ正解の道を持つこと",
-    () => {
-      const { solution } = generateHitofudePuzzleProblem(selected.identity);
+  test("一意解を確かめ、解探索が見つけたただ1つの正解の道を持つこと", () => {
+    const { uniqueness, solution } = snapshot;
 
-      expect(snapshot.uniqueness).toMatchObject({
-        status: "complete",
-        solutionCount: 1,
-      });
-      expect(snapshot.solution).toEqual(solution);
-    },
-    GENERATION_TIMEOUT_MS,
-  );
+    expect(uniqueness).toMatchObject({ status: "complete", solutionCount: 1 });
+    expect(solutionSearch.solutionCount).toBe(1);
+    expect(solution).toEqual(solutionSearch.firstSolutions[0]);
+  });
 
   test("問題集の問題を分析し直して、問題集と同じ作業の量とレベルを得ること", () => {
     const { difficultyAnalysis, difficultyAssessment } = snapshot;

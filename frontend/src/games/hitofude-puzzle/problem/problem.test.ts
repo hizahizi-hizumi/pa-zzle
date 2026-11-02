@@ -37,10 +37,7 @@ describe("isHitofudePuzzleProblemIdentity", () => {
       "扱わない先読みの重さの目標",
       { ...identity, conditions: { size: 6, targetLookaheadLoad: 7 } },
     ],
-    [
-      "前の版の生成条件の",
-      { ...identity, conditions: { size: 6, wallRatio: 0 } },
-    ],
+    ["先読みの重さの目標が無い", { ...identity, conditions: { size: 6 } }],
     ["生成条件が無い", { ...identity, conditions: undefined }],
   ];
 
@@ -59,9 +56,9 @@ describe("isHitofudePuzzleProblemIdentity", () => {
 
 describe("isHitofudePuzzleRecordedProblemIdentity", () => {
   const otherVersionIdentity = {
-    generatorVersion: "1",
-    seed: "hp-8-15-3",
-    conditions: { size: 8, wallRatio: 0.15 },
+    generatorVersion: "0",
+    seed: "hp-8-3",
+    conditions: { size: 8 },
   };
   const brokenCurrentIdentity = {
     ...createHitofudePuzzleProblemIdentity(6, 0, 1),
