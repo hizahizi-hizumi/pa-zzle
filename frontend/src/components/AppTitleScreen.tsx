@@ -84,7 +84,8 @@ export function AppTitleScreen({ title, games, onEnter }: AppTitleScreenProps) {
               <BrandMark size="title" />
             </DialogTitle>
 
-            <ul className="flex max-w-68 flex-wrap justify-center gap-3 sm:max-w-none sm:flex-nowrap sm:gap-4">
+            {/* ピクトグラムは、スマートフォンとタブレットでは4つずつで折り返し、PC では1段に並べる。 */}
+            <ul className="flex max-w-68 flex-wrap justify-center gap-3 sm:max-w-92 sm:gap-4 lg:max-w-none lg:flex-nowrap">
               {games.map((game) => (
                 <li key={game.to} className="size-14 sm:size-20">
                   {/* 読み込み中も同じ要素のまま押せなくし、入れるようになったときにピクトグラムを描き直さない。 */}
