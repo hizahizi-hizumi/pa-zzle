@@ -42,6 +42,8 @@ type BridgesFigureProps = {
   blockingEdges?: readonly number[];
   /** 阻んだ橋の線を点けたまま描くか。遊び方の図で、阻まれたときの盤面の反応を見せるときに使う。 */
   showsBlockingEdges?: boolean;
+  /** 丸を淡い黄色で塗る島。難易度プレビューで、数字の読みだけでは橋が決まらない島を示す。 */
+  highlightedIslands?: readonly number[];
   ref?: Ref<SVGSVGElement>;
 };
 
@@ -91,6 +93,7 @@ export function BridgesFigure({
   focusedIsland = null,
   blockingEdges = [],
   showsBlockingEdges = false,
+  highlightedIslands = [],
   ref,
 }: BridgesFigureProps) {
   const { width, height, islands } = board;
@@ -175,7 +178,11 @@ export function BridgesFigure({
               cy={y}
               r={ISLAND_RADIUS - tone.outlineWidth / 2}
               strokeWidth={tone.outlineWidth}
-              className={tone.disc}
+              className={cn(
+                tone.disc,
+                highlightedIslands.includes(index) &&
+                  bridgesToneClassNames.highlightedIsland,
+              )}
             />
             <text
               x={x}

@@ -38,6 +38,19 @@ describe("BridgesDifficultyView", () => {
     },
   );
 
+  test.each(difficultyCases)(
+    "レベル %s の選択肢に盤面の見本を出すこと",
+    (difficulty) => {
+      const option = screen.getByRole("link", {
+        name: `レベル ${difficulty}`,
+      });
+
+      const figure = option.querySelector("svg");
+
+      expect(figure).not.toBeNull();
+    },
+  );
+
   test("遊び方を開けること", () => {
     fireEvent.click(screen.getByRole("button", { name: "遊び方" }));
 
