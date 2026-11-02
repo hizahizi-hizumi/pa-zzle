@@ -2,6 +2,7 @@ import { CircleHelp } from "lucide-react";
 import { type ReactNode, type Ref, useEffect, useRef, useState } from "react";
 
 import { GamePictogram } from "@/components/GamePictogram";
+import { HomeBackLink } from "@/components/HomeBackLink";
 import type { HowToPlayDialogControl } from "@/components/HowToPlayDialog";
 import { ZukanHeaderButton } from "@/zukan/ui/GameHomeScreen/ZukanHeaderButton";
 
@@ -22,8 +23,8 @@ type GameHomeHeadingProps = {
 };
 
 /**
- * ゲームのホームの見出し。ピクトグラムとゲーム名に、解いた問題の数を全問の数と並べた静かな計数と、遊び方などの層を開くボタンを添える。
- * 狭い画面では計数とボタンをピクトグラムの下から1行に並べ、ボタンはアイコンで示す。
+ * ゲームのホームの見出し。ホームへ戻るアイコンを頭に置いたピクトグラムとゲーム名に、解いた問題の数を全問の数と並べた静かな計数と、遊び方などの層を開くボタンを添える。
+ * 台紙を広く見せるよう、PC では1行に並べ、それより狭い画面では計数とボタンをゲーム名の下の1行に並べる。狭い画面ではボタンをアイコンで示す。
  */
 export function GameHomeHeading({
   gameTitle,
@@ -49,8 +50,12 @@ export function GameHomeHeading({
   }, [howToPlayOpen]);
 
   return (
-    <header className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1 border-b-(length:--border-width-normal) pb-3">
-      <span className="size-8 sm:row-span-2 sm:size-12">
+    <header className="grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-x-2 gap-y-1 lg:grid-cols-[auto_auto_minmax(0,1fr)_auto] lg:gap-x-3">
+      {/* アイコンの線をゲーム名の下の計数と同じ左端にそろえるよう、ボタンの内側の余白の分だけ外へ出す。 */}
+      <span className="-ms-2 flex">
+        <HomeBackLink iconOnly />
+      </span>
+      <span className="size-8 lg:size-10">
         <GamePictogram svg={pictogramSvg} />
       </span>
       <h1
@@ -62,9 +67,10 @@ export function GameHomeHeading({
       </h1>
       <div
         ref={actionsRef}
-        className="col-span-2 flex flex-wrap items-center justify-between gap-x-1 sm:col-span-1"
+        className="col-span-3 flex flex-wrap items-center justify-between gap-x-1 lg:col-span-1 lg:gap-x-4"
       >
-        <p className="text-supporting whitespace-nowrap text-muted-foreground tabular-nums">
+        {/* 狭い画面でもボタンを増やせる幅を残して計数とボタンを1行に収めるよう、計数を小さくする。 */}
+        <p className="text-meta whitespace-nowrap text-muted-foreground tabular-nums sm:text-supporting">
           <span aria-hidden="true">
             解いた問題 {solvedCount} / {problemCount}
           </span>

@@ -11,7 +11,6 @@ import {
 } from "react";
 
 import { withPlayStartSound } from "@/components/app-decision-sound";
-import { HomeBackLink } from "@/components/HomeBackLink";
 import type { HowToPlayDialogControl } from "@/components/HowToPlayDialog";
 import type {
   ProblemFeature,
@@ -115,8 +114,6 @@ export type GameHomeScreenProps = {
   findProblemFeatureValues: (
     problem: ZukanProblem,
   ) => ReadonlyMap<string, ProblemFeatureValue> | null;
-  /** レベルのカードに示す、その難易度の盤面の見本を描く。 */
-  renderLevelPreview: (difficulty: DifficultyLevel) => ReactNode;
   /** ゲーム固有の遊び方ダイアログを描く。開閉の状態は見出しが持ち、引数で渡す。 */
   renderHowToPlayDialog: (control: HowToPlayDialogControl) => ReactNode;
 };
@@ -291,7 +288,7 @@ function listPendingChanges(
 
 /**
  * 1ゲームのホーム。遊ぶレベルを選んでプレイを始める操作と、そのゲームの図鑑を1画面にまとめる。
- * 上から、ホームへ戻る導線、ゲーム名の見出し、レベルのカード、開いているレベルで遊ぶ「ランダムに遊ぶ」、開いているレベルの台紙を置く。
+ * 上から、ホームへ戻る導線を頭に置いたゲーム名の見出し、レベルのカード、開いているレベルで遊ぶ「ランダムに遊ぶ」、開いているレベルの台紙を置く。
  * 開いたときは、選んでおく問題があればそのレベル、無ければそのゲームで最後にクリアまたは離脱したレベル、そのゲームを遊んだことが無ければ最も低いレベルを開く。
  * 最も低いレベルのカードもほかのカードと同じ姿で示し、推奨として強調しない。
  * 開いたときは、ほかの画面から移ってきてもフォーカスを見失わないよう、選んでおいた問題のマス、無ければゲーム名の見出しへフォーカスを置く。
@@ -321,7 +318,6 @@ export function GameHomeScreen({
   onLevelChangesShown,
   featureAxes,
   findProblemFeatureValues,
-  renderLevelPreview,
   renderHowToPlayDialog,
 }: GameHomeScreenProps) {
   const [initialSelectedKey] = useState(() =>
@@ -599,9 +595,6 @@ export function GameHomeScreen({
 
   return (
     <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 pt-4 sm:px-6 sm:pt-6 lg:pb-8">
-      <div>
-        <HomeBackLink />
-      </div>
       <GameHomeHeading
         gameTitle={gameTitle}
         pictogramSvg={pictogramSvg}
@@ -631,11 +624,7 @@ export function GameHomeScreen({
         activationMode="manual"
         className="mt-3 min-h-0 flex-1"
       >
-        <GameLevelCards
-          levels={levelCards}
-          openDifficulty={openDifficulty}
-          renderLevelPreview={renderLevelPreview}
-        />
+        <GameLevelCards levels={levelCards} openDifficulty={openDifficulty} />
         <div className="grid sm:grid-cols-[--spacing(64)]">
           <Button ref={playRandomRef} size="lg" onClick={handlePlayRandom}>
             <Shuffle aria-hidden="true" />

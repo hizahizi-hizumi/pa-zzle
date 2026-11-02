@@ -158,9 +158,6 @@ function createScreen(
         describeProblem={describeProblem}
         featureAxes={featureAxes}
         findProblemFeatureValues={findProblemFeatureValues}
-        renderLevelPreview={(difficulty) => (
-          <span data-level-preview={difficulty} />
-        )}
         renderHowToPlayDialog={({ open }) =>
           open ? <p>遊び方のダイアログ</p> : null
         }
@@ -874,18 +871,6 @@ describe("GameHomeScreen", () => {
       const backLink = screen.getByRole("link", { name: "戻る" });
 
       expect(backLink.getAttribute("href")).toBe("/");
-    });
-
-    test("レベルのカードに、そのレベルの盤面の見本を描くこと", () => {
-      const previews = within(screen.getByRole("tablist", { name: "レベル" }))
-        .getAllByRole("tab")
-        .map((tab) =>
-          tab
-            .querySelector("[data-level-preview]")
-            ?.getAttribute("data-level-preview"),
-        );
-
-      expect(previews).toEqual(["1", "2", "3", "4", "5"]);
     });
 
     test("ランダムに遊ぶを押すと、開いているレベルでプレイを始めること", () => {

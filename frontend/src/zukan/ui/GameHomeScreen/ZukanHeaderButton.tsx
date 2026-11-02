@@ -26,14 +26,16 @@ export function ZukanHeaderButton({
   ...props
 }: ZukanHeaderButtonProps) {
   return (
+    // アイコンをボタンの直下に置き、アイコンを持つボタンの詰めた余白にする。狭い画面でも計数と並べるボタンを増やせる幅を残す。
     <Button variant="ghost" size="sm" {...props}>
-      <span className="relative inline-flex items-center gap-1.5">
-        {icon}
-        <span className="max-sm:sr-only">{label}</span>
-        {mark !== undefined && (
-          <span className="absolute -top-3 left-full">{mark}</span>
-        )}
-      </span>
+      {icon}
+      <span className="max-sm:sr-only">{label}</span>
+      {mark !== undefined && (
+        // 印の置き場は幅を持たせず、ボタンの間隔の分だけ戻して、見えている中身の右肩に付ける。
+        <span className="relative -ms-1.5 h-4">
+          <span className="absolute -top-3 left-0">{mark}</span>
+        </span>
+      )}
     </Button>
   );
 }

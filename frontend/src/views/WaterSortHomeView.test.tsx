@@ -63,14 +63,6 @@ describe("WaterSortHomeView", () => {
     expect(cards).toHaveLength(levelLabels.length);
   });
 
-  test.each(levelLabels)("%s のカードに盤面の見本を描くこと", (label) => {
-    const card = screen.getByRole("tab", { name: new RegExp(`^${label}、`) });
-
-    const preview = card.firstElementChild?.firstElementChild;
-
-    expect(preview).toBeTruthy();
-  });
-
   test("遊び方を開けること", () => {
     fireEvent.click(screen.getByRole("button", { name: "遊び方" }));
 

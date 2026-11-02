@@ -96,7 +96,6 @@ function GameHome({ game }: GameHomeProps) {
     <GameHomeScreen
       key={game.id}
       {...screenProps}
-      renderLevelPreview={() => null}
       renderHowToPlayDialog={() => null}
     />
   );

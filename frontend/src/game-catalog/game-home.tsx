@@ -29,11 +29,8 @@ import {
 } from "@/zukan/zukan-last-viewed-storage";
 
 export type GameHome = {
-  /** ゲームのホーム `GameHomeScreen` へそのまま渡す、図鑑・選んでおく問題・プレイを始める操作。盤面の見本と遊び方はゲームの View が描く。 */
-  screenProps: Omit<
-    GameHomeScreenProps,
-    "renderLevelPreview" | "renderHowToPlayDialog"
-  >;
+  /** ゲームのホーム `GameHomeScreen` へそのまま渡す、図鑑・選んでおく問題・プレイを始める操作。遊び方はゲームの View が描く。 */
+  screenProps: Omit<GameHomeScreenProps, "renderHowToPlayDialog">;
 };
 
 /**
