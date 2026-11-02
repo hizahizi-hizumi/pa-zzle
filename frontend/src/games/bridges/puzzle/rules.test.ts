@@ -51,7 +51,8 @@ function createState(
 
 /**
  * 橋をマス目に描いて、島の本数・交差・つながりを数える素朴な判定器。
- * 辺の一覧と交差の一覧を使わず、マスに書いた線と、島から4方向へ伸びる線だけを見る。
+ * 辺の一覧は、架けた橋の両端の島からマス目に線を描くためにだけ使う。交差の一覧・島ごとの辺・つながりの判定は使わず、
+ * マスに書いた線と、島から4方向へ伸びる線だけを見る。
  */
 function judgeNaively(board: BridgesBoard, state: BridgesPuzzleState) {
   const { edges } = getBridgesNetwork(board);
@@ -203,8 +204,9 @@ function createRandomSolvedSample(
   const board = createRandomBoard(random);
   const { edges, crossingEdges } = getBridgesNetwork(board);
   const bridges = edges.map((): BridgeCount => 0);
-  const isFree = (edge: number) =>
-    crossingEdges[edge]!.every((other) => bridges[other] === 0);
+  function isFree(edge: number): boolean {
+    return crossingEdges[edge]!.every((other) => bridges[other] === 0);
+  }
   const reached = new Set([0]);
   for (;;) {
     const frontier = edges
