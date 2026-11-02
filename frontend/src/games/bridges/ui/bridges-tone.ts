@@ -8,6 +8,7 @@ import type { BridgesIslandStatus } from "@/games/bridges/puzzle/rules";
  *   色だけに頼らないよう、縁の太さも状態で変える（ちょうどは細く、多すぎは太く）。数字はどの状態でも地の丸に対して 4.5:1 以上。
  * - 交わる橋に阻まれたときは、阻んだ橋を多すぎと同じ薔薇色で短く点ける（規則に合わないものの色）。
  * - 島を押している間に見せる、架けられる相手への線は、状態のどれとも紛れない空色にする。
+ * - 難易度プレビューで印を付ける島は、盤面の状態のどれとも紛れない淡い黄色で塗る。
  */
 export const bridgesToneClassNames = {
   ground: "fill-stone-100 dark:fill-stone-800",
@@ -16,6 +17,7 @@ export const bridgesToneClassNames = {
   guide: "stroke-sky-500/45 dark:stroke-sky-400/45",
   guidePreview: "stroke-sky-500 dark:stroke-sky-400",
   focusRing: "stroke-sky-600 dark:stroke-sky-300",
+  highlightedIsland: "fill-amber-200 dark:fill-amber-900",
 } as const;
 
 type IslandTone = {

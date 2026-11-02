@@ -3,6 +3,7 @@ import { DifficultySelectionHeading } from "@/components/DifficultySelectionHead
 import { HomeBackLink } from "@/components/HomeBackLink";
 import { bridgesCatalogEntry } from "@/game-catalog/bridges/bridges-catalog-entry";
 import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
+import { BridgesDifficultyPreview } from "@/games/bridges/ui/BridgesDifficultyPreview";
 import { BridgesHowToPlayDialog } from "@/games/bridges/ui/BridgesHowToPlayDialog";
 import { difficultyLevels } from "@/games/difficulty";
 
@@ -28,7 +29,7 @@ export function BridgesDifficultyView() {
             difficulty={difficulty.id}
             label={difficulty.label}
           >
-            {null}
+            <BridgesDifficultyPreview difficulty={difficulty.id} />
           </DifficultyOption>
         ))}
       </div>
