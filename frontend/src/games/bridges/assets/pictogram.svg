@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ブリッジパズル">
+  <g fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"><path d="M46 31h28M46 41h28M36 50v20"/><circle cx="36" cy="36" r="14"/><circle cx="84" cy="36" r="14"/><circle cx="36" cy="84" r="14"/></g>
+</svg>

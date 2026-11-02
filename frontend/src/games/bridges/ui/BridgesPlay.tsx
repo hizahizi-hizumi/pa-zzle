@@ -1,0 +1,88 @@
+import { GamePlayFrame } from "@/components/GamePlayFrame";
+import { UndoButton } from "@/components/UndoButton";
+import type { BridgesDifficulty } from "@/games/bridges/difficulty";
+import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
+import type { BridgesResult } from "@/games/bridges/play/use-bridges-play";
+import type { BridgesBoard as BridgesBoardState } from "@/games/bridges/puzzle/board";
+import type { BridgesIslandStatus } from "@/games/bridges/puzzle/rules";
+import type { BridgeCount } from "@/games/bridges/puzzle/state";
+import { BridgesHowToPlayDialog } from "@/games/bridges/ui/BridgesHowToPlayDialog";
+import { BridgesBoard } from "@/games/bridges/ui/board/BridgesBoard";
+import type {
+  GamePlayScreenProps,
+  RestartableGamePlayScreenProps,
+  UndoableGamePlayScreenProps,
+} from "@/games/play";
+import { PLAY_OPERATION_LABELS } from "@/games/play-vocabulary";
+
+type BridgesPlayProps = GamePlayScreenProps<BridgesDifficulty, BridgesResult> &
+  RestartableGamePlayScreenProps &
+  UndoableGamePlayScreenProps & {
+    board: BridgesBoardState;
+    bridges: readonly BridgeCount[];
+    islandStatuses: readonly BridgesIslandStatus[];
+    undoCount: number;
+    onCycleEdge: (edge: number) => void;
+  };
+
+/** 1問のプレイ画面。結果画面を持たないので、クリアした後も盤面を見せたままにする。 */
+export function BridgesPlay({
+  progress,
+  elapsedMs,
+  result,
+  board,
+  bridges,
+  islandStatuses,
+  undoCount,
+  canUndo,
+  canRestart,
+  onCycleEdge,
+  onUndo,
+  onRestart,
+  onReplay,
+  onStartNewProblem,
+  onChangeDifficulty,
+  onBackToHome,
+  onOpenDiagnostics,
+}: BridgesPlayProps) {
+  return (
+    <GamePlayFrame
+      progress={progress}
+      result={result}
+      title={BRIDGES_DISPLAY_NAME}
+      metrics={[
+        { type: "elapsed-time", elapsedMs },
+        { type: "count", label: PLAY_OPERATION_LABELS.undo, count: undoCount },
+      ]}
+      canRestart={canRestart}
+      onRestart={onRestart}
+      onReplay={onReplay}
+      onStartNewProblem={onStartNewProblem}
+      onChangeDifficulty={onChangeDifficulty}
+      onBackToHome={onBackToHome}
+      onOpenDiagnostics={onOpenDiagnostics}
+      renderHowToPlayDialog={({ open, onClose }) => (
+        <BridgesHowToPlayDialog open={open} onClose={onClose} />
+      )}
+      renderResultScreen={() => null}
+    >
+      {/* 画面端から始まるタッチはブラウザの戻る操作に取られるので、盤面の左右に余白を残す。 */}
+      <main className="flex min-h-0 flex-1 items-center justify-center px-4 py-2 [container-type:size] sm:px-6">
+        <div className="relative aspect-square w-[min(100cqw,100cqh,40rem)]">
+          <BridgesBoard
+            board={board}
+            bridges={bridges}
+            islandStatuses={islandStatuses}
+            interactionDisabled={progress !== "playing"}
+            onCycleEdge={onCycleEdge}
+          />
+        </div>
+      </main>
+      <footer className="grid h-28 shrink-0 items-end px-4 pb-2">
+        <div className="flex h-14 items-center justify-center">
+          <UndoButton disabled={!canUndo} onUndo={onUndo} />
+        </div>
+      </footer>
+    </GamePlayFrame>
+  );
+}
