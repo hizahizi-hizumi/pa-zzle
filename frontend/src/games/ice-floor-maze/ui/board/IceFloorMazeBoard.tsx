@@ -150,6 +150,8 @@ export function IceFloorMazeBoard({
   const aspectRatio = viewBox.width / viewBox.height;
   const piece = getIceFloorMazeCellCenter(board, position);
   const goalCenter = getIceFloorMazeCellCenter(board, goal);
+  // 雪山は動かないので、ゴールに載ったら二度と止まれない。輪がはみ出すと「まだ入れる」と読めるので描かない。
+  const isGoalBuried = cells[goal] === "snow-mound";
 
   // 次の滑りが来たら、表示中の滑りを止めて駒を終点（次の滑りの始点）へ飛ばしてから次の滑りを始める。
   // 成立しない向きの入力では止めず、押し戻しを重ねる。
@@ -298,9 +300,11 @@ export function IceFloorMazeBoard({
                   to={lastSlide.to}
                 />
               ) : null}
-              <g transform={`translate(${goalCenter.x} ${goalCenter.y})`}>
-                <IceFloorMazeGoalMark />
-              </g>
+              {isGoalBuried ? null : (
+                <g transform={`translate(${goalCenter.x} ${goalCenter.y})`}>
+                  <IceFloorMazeGoalMark />
+                </g>
+              )}
             </>
           }
         />

@@ -443,16 +443,18 @@ describe("IceFloorMazeBoard", () => {
       ["snow", "ice", "ice", "ice", "snow-mound", "ice", "ice", "ice", "ice"],
       [8],
       '[data-snow-mound-cell="4"]',
+      false,
     ],
     [
       "押した滑る氷の塊",
       ["snow", "ice", "ice", "ice", "ice", "ice", "ice", "ice", "ice"],
       [4],
       '[data-sliding-block-cell="4"]',
+      true,
     ],
   ] as const)(
     "%sがゴールをふさいだ盤面の場合",
-    (_, cells, blocks, coveringSelector) => {
+    (_, cells, blocks, coveringSelector, drawsGoalMark) => {
       // s 1 2
       // 3 G 5
       // 6 7 8
@@ -476,16 +478,19 @@ describe("IceFloorMazeBoard", () => {
         );
       });
 
-      test("ゴールをふさぐ要素を、ゴールの印の上に重ねて描くこと", () => {
+      test("ゴールをふさぐ要素を描き、動かせる塊の下にだけゴールの印を残すこと", () => {
         const boardImage = screen.getByRole("img", { name: "盤面" });
         const goalMark = boardImage.querySelector("[data-goal]");
         const covering = boardImage.querySelector(coveringSelector);
 
         expect(covering).not.toBeNull();
-        expect(
-          goalMark!.compareDocumentPosition(covering!) &
-            Node.DOCUMENT_POSITION_FOLLOWING,
-        ).toBeTruthy();
+        expect(goalMark !== null).toBe(drawsGoalMark);
+        if (goalMark !== null) {
+          expect(
+            goalMark.compareDocumentPosition(covering!) &
+              Node.DOCUMENT_POSITION_FOLLOWING,
+          ).toBeTruthy();
+        }
       });
 
       test("雪と、状態の塊のマスにある塊を描くこと", () => {
