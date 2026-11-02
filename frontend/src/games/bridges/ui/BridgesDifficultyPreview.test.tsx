@@ -2,7 +2,6 @@ import { cleanup, render } from "@testing-library/react";
 
 import {
   assessBridgesDifficulty,
-  type BridgesLevelCombination,
   bridgesLevelCombinations,
 } from "@/games/bridges/difficulty";
 import { analyzeBridgesDifficulty } from "@/games/bridges/problem/difficulty-analysis";
@@ -11,6 +10,11 @@ import {
   createInitialBridgeBounds,
 } from "@/games/bridges/problem/generation/bridge-bounds";
 import { propagateBridgesCountReasoning } from "@/games/bridges/problem/generation/human-solver";
+import { getBridgesSymmetryKey } from "@/games/bridges/problem/generation/symmetry";
+import {
+  listBridgesPoolEntries,
+  toBridgesPooledProblem,
+} from "@/games/bridges/problem/problem-pool";
 import {
   type BridgesBoard,
   getBridgesNetwork,
@@ -19,20 +23,11 @@ import {
   _private,
   BridgesDifficultyPreview,
 } from "@/games/bridges/ui/BridgesDifficultyPreview";
-import { difficultyLevels, isInNumericRange } from "@/games/difficulty";
+import { difficultyLevels } from "@/games/difficulty";
 
-const { createPreviewStrip } = _private;
+const { createPreviewBoard } = _private;
 
 const difficultyIds = difficultyLevels.map(({ id }) => id);
-
-/** 帯は盤面の一部なので、島の数の下限は帯には当てない。 */
-const stripCombinationKeys = [
-  "boardSize",
-  "openingEdgeRatio",
-  "countRoundCount",
-  "connectivityRoundCount",
-  "countReasoningUndecidedRatio",
-] as const satisfies readonly (keyof BridgesLevelCombination)[];
 
 /** 数字の読み（ちょうど・少なくとも）を尽くしても、橋の本数が決まらない辺を持つ島。 */
 function listCountUndecidedIslands(board: BridgesBoard): number[] {
@@ -49,75 +44,58 @@ function listCountUndecidedIslands(board: BridgesBoard): number[] {
   );
 }
 
+function medianIslandCount(difficulty: (typeof difficultyIds)[number]): number {
+  const counts = listBridgesPoolEntries(difficulty)
+    .map((entry) => toBridgesPooledProblem(entry).problem.islands.length)
+    .sort((left, right) => left - right);
+  return counts[Math.floor(counts.length / 2)]!;
+}
+
 afterEach(cleanup);
 
 describe("BridgesDifficultyPreview", () => {
-  describe.each(difficultyIds)("レベル %s の帯", (difficulty) => {
-    const { board, markedIslands } = createPreviewStrip(difficulty);
+  describe.each(difficultyIds)("レベル %s の縮図", (difficulty) => {
+    const { board, markedIslands } = createPreviewBoard(difficulty);
 
-    test("一意解で、試し置きなしで解けること", () => {
-      const analysis = analyzeBridgesDifficulty(board);
-
-      expect(analysis).toMatchObject({
-        status: "analyzed",
-        requiresTrial: false,
-      });
-    });
-
-    test("島の数を除き、そのレベルの組み合わせに入ること", () => {
+    test("そのレベルに分類される一意解の盤面であること", () => {
       const assessment = assessBridgesDifficulty(
         analyzeBridgesDifficulty(board),
       );
-      const features =
-        "features" in assessment ? assessment.features : undefined;
 
-      const misses = stripCombinationKeys.filter(
-        (key) =>
-          features === undefined ||
-          !isInNumericRange(
-            features[key],
-            bridgesLevelCombinations[difficulty][key],
-          ),
-      );
-
-      expect(misses).toEqual([]);
+      expect(assessment).toMatchObject({ status: "classified", difficulty });
     });
 
-    test("帯の幅がそのレベルの盤面の一辺の上限であること", () => {
-      const width = board.width;
+    test("一辺がそのレベルの盤面の一辺の上限で、島の数が問題集の中央値であること", () => {
+      const { width, height, islands } = board;
 
-      expect(width).toBe(
-        bridgesLevelCombinations[difficulty].boardSize.maximum,
-      );
+      expect({ width, height, islandCount: islands.length }).toEqual({
+        width: bridgesLevelCombinations[difficulty].boardSize.maximum,
+        height: bridgesLevelCombinations[difficulty].boardSize.maximum,
+        islandCount: medianIslandCount(difficulty),
+      });
     });
 
-    test("印が数字の読みだけでは決まらない島にちょうど付くこと", () => {
+    test("問題集の問題と同じ形でないこと", () => {
+      const key = getBridgesSymmetryKey(board);
+      const poolKeys = difficultyIds.flatMap((level) =>
+        listBridgesPoolEntries(level).map((entry) =>
+          getBridgesSymmetryKey(toBridgesPooledProblem(entry).problem),
+        ),
+      );
+
+      expect(poolKeys).not.toContain(key);
+    });
+
+    test("輪が数字の読みだけでは決まらない島にちょうど付くこと", () => {
       const undecided = listCountUndecidedIslands(board);
 
       expect(markedIslands).toEqual(undecided);
     });
   });
 
-  test("どのレベルの帯も4行であること", () => {
-    const heights = difficultyIds.map(
-      (difficulty) => createPreviewStrip(difficulty).board.height,
-    );
-
-    expect(new Set(heights)).toEqual(new Set([4]));
-  });
-
-  test("上のレベルほど島が多いこと", () => {
-    const islandCounts = difficultyIds.map(
-      (difficulty) => createPreviewStrip(difficulty).board.islands.length,
-    );
-
-    expect(islandCounts).toEqual([...islandCounts].sort((a, b) => a - b));
-    expect(new Set(islandCounts).size).toBe(islandCounts.length);
-  });
-
-  test("上のレベルほど印が減らないこと", () => {
+  test("上のレベルほど輪が減らないこと", () => {
     const markCounts = difficultyIds.map(
-      (difficulty) => createPreviewStrip(difficulty).markedIslands.length,
+      (difficulty) => createPreviewBoard(difficulty).markedIslands.length,
     );
 
     expect(markCounts).toEqual([...markCounts].sort((a, b) => a - b));
@@ -132,11 +110,11 @@ describe("BridgesDifficultyPreview", () => {
       ).container;
     });
 
-    test("読み上げから隠し、橋を描かないこと", () => {
+    test("読み上げから隠し、数字と橋を描かないこと", () => {
       const root = container.firstElementChild;
 
       expect(root?.getAttribute("aria-hidden")).toBe("true");
-      expect(container.querySelectorAll("line")).toHaveLength(0);
+      expect(container.querySelectorAll("line, text")).toHaveLength(0);
     });
   });
 });

@@ -365,6 +365,7 @@ function listEffectiveDeductions(
 function deduceByTrial(
   context: BridgesSolverContext,
   bounds: BridgeBounds,
+  options: BridgesHumanSolveOptions,
 ): Deductions {
   const { lower, upper } = bounds;
   for (const edge of upper.keys()) {
@@ -379,7 +380,7 @@ function deduceByTrial(
       trial.lower[edge] = count;
       trial.upper[edge] = count;
       try {
-        runTiers(context, trial, "D", null);
+        runTiers(context, trial, "D", null, options);
         if (
           isEveryEdgeDecided(trial) &&
           !areAllBridgeComponentsJoined(context, trial.lower)
@@ -406,15 +407,56 @@ function deduceByTrial(
   return new Map();
 }
 
+/** 3島以上の組で閉じない読み（C1g）だけの推論。2島で閉じない読み（C1p）と同じ手詰まりで一緒に当てるのに使う。 */
+function deduceClosingGroups(
+  context: BridgesSolverContext,
+  bounds: BridgeBounds,
+): Deductions {
+  return deduceUnclosedGroups(context, bounds, false);
+}
+
+/** 同じ辺の範囲をいくつかの推論が狭めたら、それらの重なりにする。 */
+function mergeDeductions(
+  deductions: readonly [number, readonly [number, number]][],
+): [number, readonly [number, number]][] {
+  const merged = new Map<number, readonly [number, number]>();
+  for (const [edge, [atLeast, atMost]] of deductions) {
+    const current = merged.get(edge);
+    merged.set(
+      edge,
+      current
+        ? [Math.max(current[0], atLeast), Math.min(current[1], atMost)]
+        : [atLeast, atMost],
+    );
+  }
+  return [...merged];
+}
+
+/**
+ * 解き方の選び方。
+ * - `closingTiersTogether`: 2島で閉じない読み（C1p）で進める手詰まりでは、3島以上の組で閉じない読み（C1g）も同じ手詰まりで一緒に当てる。
+ *   どちらも「架けると組が閉じる」同じ読みで、人は同じ局面で両方を見る。分けて当てると、低い段だけを当てる規則のせいで
+ *   C1g で決まる所が次の手詰まりへ回り、つながりの読みの回数が増える。研究用の解法器との突き合わせでだけ `false` にする。
+ */
+export type BridgesHumanSolveOptions = {
+  closingTiersTogether: boolean;
+};
+
+const defaultHumanSolveOptions: BridgesHumanSolveOptions = {
+  closingTiersTogether: true,
+};
+
 /**
  * `maximumTier` までの段で、全辺が決まるか手詰まるまで進める。全辺が決まれば `true`。
  * 各手詰まりでは、低い段から順に、範囲を狭められる最初の段を盤面全体へ同時に当てる。適用の順に依らない。
+ * C1p で進める手詰まりでは、`options.closingTiersTogether` なら C1g も一緒に当て、C1g で新たに決まった辺があれば段を C1g と記録する。
  */
 function runTiers(
   context: BridgesSolverContext,
   bounds: BridgeBounds,
   maximumTier: BridgesReasoningTier,
   rounds: BridgesReasoningRound[] | null,
+  options: BridgesHumanSolveOptions = defaultHumanSolveOptions,
 ): boolean {
   const limit = tierRank(maximumTier);
   for (;;) {
@@ -435,14 +477,36 @@ function runTiers(
       if (effective.length === 0) {
         continue;
       }
-      for (const [edge, [atLeast, atMost]] of effective) {
+      const together =
+        options.closingTiersTogether &&
+        tier === "C1p" &&
+        tierRank("C1g") <= limit
+          ? listEffectiveDeductions(
+              deduceClosingGroups(context, bounds),
+              bounds,
+            )
+          : [];
+      const merged = mergeDeductions([...effective, ...together]);
+      for (const [edge, [atLeast, atMost]] of merged) {
         if (atLeast > atMost) {
           throw new BridgesContradiction();
         }
         bounds.lower[edge] = atLeast;
         bounds.upper[edge] = atMost;
       }
-      rounds?.push({ tier, edgeCount: effective.length });
+      const widenedByGroups = merged.some(
+        ([edge, range]) =>
+          !effective.some(
+            ([own, ownRange]) =>
+              own === edge &&
+              ownRange[0] === range[0] &&
+              ownRange[1] === range[1],
+          ),
+      );
+      rounds?.push({
+        tier: widenedByGroups ? "C1g" : tier,
+        edgeCount: merged.length,
+      });
       progressed = true;
       break;
     }
@@ -452,7 +516,7 @@ function runTiers(
     if (limit < tierRank("T")) {
       return false;
     }
-    const trialDeductions = deduceByTrial(context, bounds);
+    const trialDeductions = deduceByTrial(context, bounds, options);
     if (trialDeductions.size === 0) {
       return false;
     }
@@ -468,6 +532,7 @@ function runTiers(
 export function traceBridgesHumanSolve(
   board: BridgesBoard,
   maximumTier: BridgesReasoningTier = "T",
+  options: BridgesHumanSolveOptions = defaultHumanSolveOptions,
 ): BridgesHumanSolveTrace {
   const context = createBridgesSolverContext(board);
   const bounds = createInitialBridgeBounds(context);
@@ -475,7 +540,7 @@ export function traceBridgesHumanSolve(
   const edgeCount = bounds.lower.length;
   let solved: boolean;
   try {
-    solved = runTiers(context, bounds, maximumTier, rounds);
+    solved = runTiers(context, bounds, maximumTier, rounds, options);
   } catch (error) {
     if (!(error instanceof BridgesContradiction)) {
       throw error;

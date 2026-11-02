@@ -12,7 +12,7 @@ import { createProblemSeededRandom } from "@/games/problem-seed";
  * 生成器が返す1つの候補。一意解かどうか・レベルは、問題集の生成で分析・分類して決める。
  * - `solution`: 作ったときの橋（辺ごとの本数）。一意解の問題では唯一の解。問題集の分析と検証に使い、プレイには渡さない。
  * - `symmetryKey`: 回転・反転の同型を問題集から除くための正規化キー。
- * - `generationAttemptCount`: 島を2つ以上置けるまで木を育て直した回数。
+ * - `generationAttemptCount`: 島を2つ以上置き、上下左右の端の行・列のどれにも島がある木になるまで育て直した回数。
  */
 export type BridgesGeneratedProblem = BridgesIdentifiedProblem & {
   solution: readonly number[];
@@ -20,8 +20,11 @@ export type BridgesGeneratedProblem = BridgesIdentifiedProblem & {
   generationAttemptCount: number;
 };
 
-/** 木を育て直す回数の上限。6×6 でも1回で島が2つ以上になるので、届けば生成器の不具合とみなす。 */
-const MAXIMUM_GENERATION_ATTEMPTS = 20;
+/**
+ * 木を育て直す回数の上限。上下左右の端の行・列のどれにも島がある木になるまで育て直す。
+ * 6×6 の疎な条件でも多くて二十数回なので、届けば生成器の不具合とみなす。
+ */
+const MAXIMUM_GENERATION_ATTEMPTS = 200;
 
 function validateIdentity(identity: BridgesProblemIdentity): void {
   if (identity.generatorVersion !== BRIDGES_GENERATOR_VERSION) {

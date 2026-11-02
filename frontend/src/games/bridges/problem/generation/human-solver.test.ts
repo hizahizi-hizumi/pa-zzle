@@ -15,8 +15,10 @@ const cases = researchCases.map((researchCase) => ({
 describe("traceBridgesHumanSolve", () => {
   describe("研究用の解法器（scripts/research/bridges_parity_cases.py）で解いた盤面の場合", () => {
     // 研究用の解法器は、全辺の本数が決まれば全島がつながらなくても solved と返す。製品コードはそれを contradiction と返す。
+    // 研究用の解法器は C1p と C1g を別の手詰まりで当てるので、突き合わせではそれに合わせる。
+    const separately = { closingTiersTogether: false };
     const traces = cases.map(({ parsed }) =>
-      traceBridgesHumanSolve(parsed, "T"),
+      traceBridgesHumanSolve(parsed, "T", separately),
     );
 
     test("手詰まりごとの段と狭めた辺の数が一致すること", () => {
@@ -47,7 +49,11 @@ describe("traceBridgesHumanSolve", () => {
     test("数字の読みだけで決まる行き先の割合が一致すること", () => {
       const ratios = cases.map(({ parsed }) =>
         Number(
-          traceBridgesHumanSolve(parsed, "A2").decidedEdgeRatio.toFixed(6),
+          traceBridgesHumanSolve(
+            parsed,
+            "A2",
+            separately,
+          ).decidedEdgeRatio.toFixed(6),
         ),
       );
 
@@ -74,6 +80,59 @@ describe("traceBridgesHumanSolve", () => {
         "D",
         "T",
       ]);
+    });
+  });
+
+  describe("2島で閉じない読みと3島以上の組で閉じない読みが同じ手詰まりで使える盤面の場合", () => {
+    // 問題集のレベル5 の1問（版 2）。最初のつながりの手詰まりで、C1p と同じ局面で C1g も使える。
+    const board = parseBridgesBoard([
+      ".1...2...2",
+      "1.2.3.2.1.",
+      "..........",
+      "2.2.5..3.2",
+      "..........",
+      ".2..5...1.",
+      "3.1.......",
+      "....2...1.",
+      "..........",
+      "1...2.2.2.",
+    ]);
+    function countConnectivityRounds(closingTiersTogether: boolean): number {
+      return traceBridgesHumanSolve(board, "D", {
+        closingTiersTogether,
+      }).rounds.filter(({ tier }) => tier.startsWith("C") || tier === "D")
+        .length;
+    }
+
+    test("一緒に当てると、つながりの手詰まりが1回減ること", () => {
+      const counts = [
+        countConnectivityRounds(false),
+        countConnectivityRounds(true),
+      ];
+
+      expect(counts).toEqual([3, 2]);
+    });
+  });
+
+  describe("研究用の解法器で解いた盤面を、閉じない読みを一緒に当てて解いた場合", () => {
+    function countConnectivityRounds(
+      board: (typeof cases)[number]["parsed"],
+      closingTiersTogether: boolean,
+    ): number {
+      return traceBridgesHumanSolve(board, "D", {
+        closingTiersTogether,
+      }).rounds.filter(({ tier }) => tier.startsWith("C") || tier === "D")
+        .length;
+    }
+
+    test("どの盤面でも、つながりの手詰まりが分けて当てたときより増えないこと", () => {
+      const increased = cases.filter(
+        ({ parsed }) =>
+          countConnectivityRounds(parsed, true) >
+          countConnectivityRounds(parsed, false),
+      );
+
+      expect(increased).toEqual([]);
     });
   });
 
