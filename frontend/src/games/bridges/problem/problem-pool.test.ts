@@ -51,8 +51,8 @@ describe("decodeBridgesPoolProblem", () => {
   // 7×7 は 49 ビットで13桁、末尾の3ビットは埋め草。
   test.each([
     ["盤面の大きさと合わない桁数", 7, "8".padEnd(12, "0"), "1"],
-    ["16進でない文字", 7, "8".padEnd(12, "0") + "g", "1"],
-    ["末尾の埋め草に立ったビット", 7, "8".padEnd(12, "0") + "1", "1"],
+    ["16進でない文字", 7, `${"8".padEnd(12, "0")}g`, "1"],
+    ["末尾の埋め草に立ったビット", 7, `${"8".padEnd(12, "0")}1`, "1"],
     ["島の数と合わない数字の数", 7, "8".padEnd(13, "0"), "11"],
     ["9 の数字", 7, "8".padEnd(13, "0"), "9"],
     ["隣り合う島", 7, "c".padEnd(13, "0"), "11"],
@@ -146,6 +146,16 @@ describe("同梱の問題集", () => {
         "3",
         createProblemId(identity),
       );
+
+      expect(found).toBeNull();
+    });
+
+    test("seed が同じで生成条件が違う identity では引けないこと", () => {
+      const otherSplitRate = identity.conditions.splitRate === 0 ? 0.2 : 0;
+      const found = findBridgesPoolEntry({
+        ...identity,
+        conditions: { ...identity.conditions, splitRate: otherSplitRate },
+      });
 
       expect(found).toBeNull();
     });
