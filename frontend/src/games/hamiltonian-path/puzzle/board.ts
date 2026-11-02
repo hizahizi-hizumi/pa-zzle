@@ -140,14 +140,18 @@ export function isHamiltonianPathWall(
   return board.walls.includes(cell);
 }
 
+/** 盤面の全マスの番号。壁マスを含む。 */
+export function listHamiltonianPathCells(size: number): number[] {
+  return Array.from({ length: size * size }, (_, cell) => cell);
+}
+
 export function listHamiltonianPathOpenCells(
   board: HamiltonianPathBoard,
 ): number[] {
   const walls = new Set(board.walls);
-  return Array.from(
-    { length: board.size * board.size },
-    (_, cell) => cell,
-  ).filter((cell) => !walls.has(cell));
+  return listHamiltonianPathCells(board.size).filter(
+    (cell) => !walls.has(cell),
+  );
 }
 
 /**
