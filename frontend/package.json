@@ -28,7 +28,8 @@
     "analyze:reflection": "bun scripts/analyze-reflection-corpus.ts",
     "analyze:hitofude-puzzle": "bun scripts/analyze-hitofude-puzzle-corpus.ts",
     "generate:reflection-pool": "bun scripts/generate-reflection-problem-pool.ts",
-    "generate:hitofude-puzzle-pool": "bun scripts/generate-hitofude-puzzle-problem-pool.ts"
+    "generate:hitofude-puzzle-pool": "bun scripts/generate-hitofude-puzzle-problem-pool.ts",
+    "generate:tsume-shogi-pool": "bun scripts/generate-tsume-shogi-problem-pool.ts"
   },
   "dependencies": {
     "@fontsource/zen-kaku-gothic-new": "5.3.0",
