@@ -7,9 +7,8 @@
 
 import { useSyncExternalStore } from "react";
 
-import playAuditionAUrl from "@/assets/background-music/play-audition/play-a.mp3";
-import playAuditionBUrl from "@/assets/background-music/play-audition/play-b.mp3";
-import playAuditionCUrl from "@/assets/background-music/play-audition/play-c.mp3";
+import playAuditionDUrl from "@/assets/background-music/play-audition/play-d.mp3";
+import playAuditionEUrl from "@/assets/background-music/play-audition/play-e.mp3";
 import {
   type BackgroundMusicTrack,
   defineBackgroundMusicTrack,
@@ -28,27 +27,19 @@ export const playMusicAuditionCandidates: readonly [
   ...PlayMusicAuditionCandidate[],
 ] = [
   {
-    id: "A",
-    name: "ゆっくりした拍",
+    id: "D",
+    name: "鐘の音型",
     track: defineBackgroundMusicTrack({
-      url: playAuditionAUrl,
-      loopLength: 6_144_000,
+      url: playAuditionDUrl,
+      loopLength: 7_168_000,
     }),
   },
   {
-    id: "B",
-    name: "かすかな拍",
+    id: "E",
+    name: "パルスの音型",
     track: defineBackgroundMusicTrack({
-      url: playAuditionBUrl,
-      loopLength: 5_760_000,
-    }),
-  },
-  {
-    id: "C",
-    name: "拍なし",
-    track: defineBackgroundMusicTrack({
-      url: playAuditionCUrl,
-      loopLength: 6_144_000,
+      url: playAuditionEUrl,
+      loopLength: 7_168_000,
     }),
   },
 ];

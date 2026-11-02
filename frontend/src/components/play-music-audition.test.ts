@@ -13,16 +13,16 @@ afterEach(() => {
 
 describe("readPlayMusicAuditionCandidate", () => {
   describe("候補を保存していない端末の場合", () => {
-    test("候補 A を返すこと", () => {
+    test("候補 D を返すこと", () => {
       const candidate = _private.readPlayMusicAuditionCandidate();
 
-      expect(candidate.id).toBe("A");
+      expect(candidate.id).toBe("D");
     });
   });
 
   describe("候補を選んだ場合", () => {
     beforeEach(() => {
-      const selected = playMusicAuditionCandidates.find(({ id }) => id === "C");
+      const selected = playMusicAuditionCandidates.find(({ id }) => id === "E");
       if (selected) {
         selectPlayMusicAuditionCandidate(selected);
       }
@@ -31,8 +31,8 @@ describe("readPlayMusicAuditionCandidate", () => {
     test("読み込み直しても選んだ候補を返すこと", () => {
       const candidate = _private.readPlayMusicAuditionCandidate();
 
-      expect(candidate.id).toBe("C");
-      expect(window.localStorage.getItem(storageKey)).toBe("C");
+      expect(candidate.id).toBe("E");
+      expect(window.localStorage.getItem(storageKey)).toBe("E");
     });
   });
 
@@ -41,10 +41,10 @@ describe("readPlayMusicAuditionCandidate", () => {
       window.localStorage.setItem(storageKey, "Z");
     });
 
-    test("候補 A を返すこと", () => {
+    test("候補 D を返すこと", () => {
       const candidate = _private.readPlayMusicAuditionCandidate();
 
-      expect(candidate.id).toBe("A");
+      expect(candidate.id).toBe("D");
     });
   });
 });
