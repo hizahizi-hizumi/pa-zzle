@@ -1,0 +1,88 @@
+import { growBridgesIslandTree } from "@/games/bridges/problem/generation/island-tree";
+import {
+  type BridgesGenerationConditions,
+  bridgesBoardSizes,
+} from "@/games/bridges/problem/problem";
+import {
+  assertBridgesBoard,
+  getBridgesNetwork,
+} from "@/games/bridges/puzzle/board";
+import { isBridgesSolved } from "@/games/bridges/puzzle/rules";
+import type { BridgeCount } from "@/games/bridges/puzzle/state";
+import { createProblemSeededRandom } from "@/games/problem-seed";
+
+describe("growBridgesIslandTree", () => {
+  const layouts = bridgesBoardSizes.flatMap((size) => {
+    const random = createProblemSeededRandom(`island-tree-${size}`);
+    const conditions: BridgesGenerationConditions = {
+      size,
+      islandDensity: 0.3,
+      doubleBridgeRate: 0.3,
+      extraBridgeRate: 0.15,
+    };
+    return Array.from(
+      { length: 40 },
+      () => growBridgesIslandTree(conditions, random)!,
+    );
+  });
+
+  test("島が上下左右に隣り合わない、形の正しい盤面を作ること", () => {
+    const errors = layouts.flatMap(({ board }) => {
+      try {
+        assertBridgesBoard(board);
+        return [];
+      } catch (error) {
+        return [String(error)];
+      }
+    });
+
+    expect(errors).toEqual([]);
+  });
+
+  test("作った橋が、交わらず全島がつながり、数字とちょうど合う解であること", () => {
+    const solved = layouts.map(({ board, solution }) =>
+      isBridgesSolved(board, { bridges: solution as BridgeCount[] }),
+    );
+
+    expect(solved).toEqual(layouts.map(() => true));
+  });
+
+  test("2本の橋と輪の橋を含むこと", () => {
+    const hasDouble = layouts.some(({ solution }) => solution.includes(2));
+    const hasCycle = layouts.some(
+      ({ board, solution }) =>
+        solution.filter((count) => count > 0).length >= board.islands.length,
+    );
+
+    expect([hasDouble, hasCycle]).toEqual([true, true]);
+  });
+
+  describe("同じ乱数列の場合", () => {
+    const conditions: BridgesGenerationConditions = {
+      size: 8,
+      islandDensity: 0.24,
+      doubleBridgeRate: 0.1,
+      extraBridgeRate: 0,
+    };
+
+    test("同じ盤面と解を作ること", () => {
+      const results = [0, 1].map(() =>
+        growBridgesIslandTree(
+          conditions,
+          createProblemSeededRandom("island-tree-repeat"),
+        ),
+      );
+
+      expect(results[0]).toEqual(results[1]);
+    });
+  });
+
+  test("解の本数が辺の数だけあること", () => {
+    const lengths = layouts.map(
+      ({ board, solution }) =>
+        solution.length === getBridgesNetwork(board).edges.length,
+    );
+
+    expect(lengths).toEqual(layouts.map(() => true));
+  });
+});
