@@ -395,6 +395,44 @@ describe("deduceHitofudePuzzleEdges", () => {
     });
   });
 
+  describe("2辺カットの同じ集合に木の辺が3本以上並ぶ盤面の場合", () => {
+    // 始点から推論を進めると、使わない辺が決まって 13-14 と 11-16 が同じ集合の隣り合わない2本の組になり、
+    // 13-14 を使うことから 11-16 を使わないと決まる。2本の間の領域を取り違えると、端の数を誤って矛盾を導く。
+    const board = parseHitofudePuzzleBoard([
+      ". . . . .",
+      "# . . . .",
+      ". . # . .",
+      ". . . . #",
+      "# S . . #",
+    ]);
+    const [solution] = countHitofudePuzzleSolutions(board).firstSolutions as [
+      readonly number[],
+    ];
+    const solutionEdges = new Set(listPathEdges(solution));
+
+    test("解の道のどの途中からも、分断の推論（段階3）で解と食い違う辺を決めないこと", () => {
+      const disagreements = solution.flatMap((_, index) => {
+        const deduced = deduceHitofudePuzzleEdges(
+          board,
+          solution.slice(0, index + 1),
+          3,
+        );
+        return deduced === null
+          ? ["矛盾"]
+          : [
+              ...deduced.used
+                .map((edge) => edge.join("-"))
+                .filter((edge) => !solutionEdges.has(edge)),
+              ...deduced.unused
+                .map((edge) => edge.join("-"))
+                .filter((edge) => solutionEdges.has(edge)),
+            ];
+      });
+
+      expect(disagreements).toEqual([]);
+    });
+  });
+
   describe("一意解の小さな無作為盤面の解の道の場合", () => {
     const cases = solvableRandomCases.flatMap(([index, board, solutions]) =>
       solutions.length === 1
