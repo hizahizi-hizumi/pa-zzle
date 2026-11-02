@@ -43,7 +43,7 @@ game id は `frontend/src/games/<game>/` のディレクトリ名。
 - 色はプレイ画面の色をそのまま使う。
 - 書き方の規則は `references/contract.md`。違反は `scripts/check_animation.py` が報告する。
 
-白黒版の作成・変更、アプリ側の受け口と `DESIGN.md` の変更はこの Skill では行わない。白黒版が無ければ先に `/design-game-pictogram` を使う。アプリ側の受け口と `references/contract.md` が食い違ったら、止めて人間へ報告する。
+白黒版の作成・変更、アプリ側の受け口と `DESIGN.md` の変更はこの Skill では行わない。白黒版の方を直す方が良いと考えたときは、修正案 SVG を候補の `base_revision` に添えて人間に判断を求め（`references/review.md` の 1 節）、採用されたら白黒版の変更は `/design-game-pictogram` で行う。白黒版が無ければ先に `/design-game-pictogram` を使う。アプリ側の受け口と `references/contract.md` が食い違ったら、止めて人間へ報告する。
 
 ## 動作フロー
 

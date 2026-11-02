@@ -210,6 +210,15 @@ def valid_clearance(spec: str) -> bool:
     return True
 
 
+def optional_file_errors(label: str, value: object, manifest_dir: Path) -> list[str]:
+    if value is None:
+        return []
+    if not non_empty_string(value):
+        return [f"{label} must be a non-empty string when present"]
+    file_path = Path(value) if Path(value).is_absolute() else manifest_dir / value
+    return [] if file_path.is_file() else [f"{label} not found: {file_path}"]
+
+
 def based_on_errors(candidate_id: str, based_on: object, manifest_dir: Path) -> list[str]:
     """based_on: a non-empty list of {"id", "file", "label"?}; each file must exist."""
     if not isinstance(based_on, list) or not based_on:
@@ -246,13 +255,7 @@ def candidates_from_manifest(path: Path) -> tuple[list[Candidate], str | None, l
         errors.append("game_id must be a non-empty string")
         game_id = None
 
-    base = manifest.get("base_pictogram")
-    if base is not None and not non_empty_string(base):
-        errors.append("base_pictogram must be a non-empty string when present")
-    elif isinstance(base, str):
-        base_path = Path(base) if Path(base).is_absolute() else path.parent / base
-        if not base_path.is_file():
-            errors.append(f"base_pictogram not found: {base_path}")
+    errors.extend(optional_file_errors("base_pictogram", manifest.get("base_pictogram"), path.parent))
 
     entries = manifest.get("candidates")
     if not isinstance(entries, list) or not entries:
@@ -306,6 +309,9 @@ def candidates_from_manifest(path: Path) -> tuple[list[Candidate], str | None, l
         based_on = entry.get("based_on")
         if based_on is not None:
             errors.extend(based_on_errors(candidate_id, based_on, path.parent))
+        errors.extend(
+            optional_file_errors(f"{candidate_id}: base_revision", entry.get("base_revision"), path.parent)
+        )
 
         file_value = entry.get("file")
         if not non_empty_string(file_value):
