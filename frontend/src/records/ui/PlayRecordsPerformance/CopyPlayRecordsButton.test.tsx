@@ -8,7 +8,7 @@ import {
 
 import type { PlayRecord } from "@/records/play-record";
 import { serializePlayRecordsForCopy } from "@/records/play-record-copy";
-import { CopyPlayRecordsButton } from "@/records/ui/PlayRecordsScreen/CopyPlayRecordsButton";
+import { CopyPlayRecordsButton } from "@/records/ui/PlayRecordsPerformance/CopyPlayRecordsButton";
 
 const records: PlayRecord[] = [
   {

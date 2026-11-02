@@ -21,7 +21,7 @@ import {
 import { formatPlayedAt } from "@/lib/format-played-at";
 import type { PlayRecord } from "@/records/play-record";
 import { getPlayRecordMetricValue } from "@/records/play-record-definition";
-import { getTrendValueAxis } from "@/records/ui/PlayRecordsScreen/trend-value-axis";
+import { getTrendValueAxis } from "@/records/ui/PlayRecordsPerformance/PlayRecordsTrend/trend-value-axis";
 import type { PlayRecordDisplayDefinition } from "@/records/ui/play-record-display";
 
 type PlayRecordsTrendProps = {

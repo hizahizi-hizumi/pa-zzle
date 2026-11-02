@@ -48,6 +48,9 @@ export const waterSortCatalogEntry = {
     );
   },
   listPoolProblemIds: listWaterSortPoolProblemIds,
+  hasRecordResult(record) {
+    return restoreWaterSortRecordedResult(record) !== null;
+  },
   renderRecordResult(record, context) {
     const recorded = restoreWaterSortRecordedResult(record);
     return recorded ? (

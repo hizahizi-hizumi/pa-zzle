@@ -53,14 +53,17 @@ export function getPersonalBests(
   });
 }
 
-export function getPersonalBestMetricIdsForRecord(
-  record: PlayRecord,
-  personalBests: readonly PersonalBest[],
+/** 比較単位（同じゲームの同じ開始条件）の記録を、完了した時刻の新しい順に選ぶ。 */
+export function listComparableRecords(
+  records: readonly PlayRecord[],
   definition: PlayRecordDefinition,
-): string[] {
-  return definition.personalBestMetrics.flatMap((metric) => {
-    const value = metric.getValue(record);
-    const best = personalBests.find((item) => item.metricId === metric.id);
-    return value !== null && best && value === best.value ? [metric.id] : [];
-  });
+  comparisonKey: string,
+): PlayRecord[] {
+  return records
+    .filter(
+      (record) =>
+        definition.isRecord(record) &&
+        definition.getComparisonKey(record) === comparisonKey,
+    )
+    .sort((left, right) => right.completedAt - left.completedAt);
 }

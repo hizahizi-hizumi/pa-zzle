@@ -48,6 +48,9 @@ export const parkingJamCatalogEntry = {
     );
   },
   listPoolProblemIds: listParkingJamPoolProblemIds,
+  hasRecordResult(record) {
+    return restoreParkingJamRecordedResult(record) !== null;
+  },
   renderRecordResult(record, context) {
     const recorded = restoreParkingJamRecordedResult(record);
     return recorded ? (

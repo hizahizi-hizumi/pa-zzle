@@ -120,6 +120,8 @@ export function useGameHome(game: GameCatalogEntry): GameHome {
       describeProblem,
       featureAxes: game.problemFeatureFilter.axes,
       findProblemFeatureValues,
+      records,
+      playRecordDisplay: game.playRecordDisplay,
     },
   };
 }

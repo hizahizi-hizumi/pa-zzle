@@ -48,6 +48,9 @@ export const nanpureCatalogEntry = {
     );
   },
   listPoolProblemIds: listNanpurePoolProblemIds,
+  hasRecordResult(record) {
+    return restoreNanpureRecordedResult(record) !== null;
+  },
   renderRecordResult(record, context) {
     const recorded = restoreNanpureRecordedResult(record);
     return recorded ? (

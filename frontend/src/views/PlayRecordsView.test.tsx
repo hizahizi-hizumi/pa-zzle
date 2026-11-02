@@ -4,6 +4,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
@@ -16,6 +17,10 @@ import {
   startPlayAttempt,
 } from "@/records/play-attempt-storage";
 import type { PlayRecord } from "@/records/play-record";
+import {
+  createPlayRecordsLocationState,
+  readPlayRecordsLocationState,
+} from "@/records/play-records-location-state";
 import { writePlayRecords } from "@/records/storage";
 import { PlayRecordsView } from "@/views/PlayRecordsView";
 
@@ -48,14 +53,17 @@ const abandonment = {
 
 type RecordsRouter = ReturnType<typeof createMemoryRouter>;
 
-function renderRecords(records: readonly PlayRecord[]): RecordsRouter {
+function renderRecords(
+  records: readonly PlayRecord[],
+  initialState: unknown = null,
+): RecordsRouter {
   writePlayRecords(records);
   const router = createMemoryRouter(
     [
       { path: "/records", element: <PlayRecordsView /> },
       { path: "*", element: null },
     ],
-    { initialEntries: ["/records"] },
+    { initialEntries: [{ pathname: "/records", state: initialState }] },
   );
   render(<RouterProvider router={router} />);
   return router;
@@ -66,45 +74,93 @@ afterEach(() => {
   window.localStorage.clear();
 });
 
+function getRow(name: RegExp): HTMLElement {
+  return within(screen.getByRole("list", { name: "遊んだ日" })).getByRole(
+    "button",
+    { name },
+  );
+}
+
 describe("PlayRecordsView", () => {
-  describe("問題集にある問題の記録の場合", () => {
+  describe("結果画面を描ける記録の場合", () => {
     let router: RecordsRouter;
 
     beforeEach(() => {
       router = renderRecords([minesweeperRecord]);
     });
 
-    test("同じ問題をプレイで記録の難易度のプレイ画面をその問題のIDで開くこと", () => {
-      fireEvent.click(screen.getByRole("button", { name: "同じ問題をプレイ" }));
-      const { pathname, search } = router.state.location;
+    test("行を押すと、その記録の結果画面を開くこと", () => {
+      fireEvent.click(getRow(/マインスイーパー/));
+      const { pathname } = router.state.location;
 
-      expect(pathname).toBe("/puzzles/minesweeper/play/1");
-      expect(search).toBe(
-        `?problem=${createProblemId(minesweeperProblem.identity)}`,
+      expect(pathname).toBe(
+        `/puzzles/minesweeper/result/${encodeURIComponent(minesweeperRecord.id)}`,
       );
+    });
+
+    test("行を押すと、戻ったときのために記録画面の履歴へ一覧の位置を残すこと", async () => {
+      fireEvent.click(getRow(/マインスイーパー/));
+      await act(() => router.navigate(-1));
+      const { pathname, state } = router.state.location;
+
+      expect(pathname).toBe("/records");
+      expect(readPlayRecordsLocationState(state)).toEqual({
+        shownEntryCount: 40,
+        scrollY: 0,
+      });
+    });
+
+    test("行に、レベルと図鑑の番号を示すこと", () => {
+      const row = getRow(/マインスイーパー/);
+
+      expect(row.textContent).toContain("レベル 1");
+      expect(row.textContent).toMatch(/No\.\d{4}/);
     });
   });
 
-  describe("別の難易度の問題集にある問題の記録の場合", () => {
-    const otherDifficultyRecord = {
+  describe("一覧から開いたプレイから戻った場合", () => {
+    let scrollTo: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+      renderRecords(
+        [minesweeperRecord],
+        createPlayRecordsLocationState(80, 1200),
+      );
+    });
+
+    afterEach(() => {
+      scrollTo.mockRestore();
+    });
+
+    test("開いたときと同じ位置へスクロールを戻すこと", () => {
+      expect(scrollTo).toHaveBeenCalledWith(0, 1200);
+    });
+  });
+
+  describe("今の規則で結果を作れない記録の場合", () => {
+    const oldGeneratorRecord = {
       ...minesweeperRecord,
-      payload: { ...minesweeperRecord.payload, difficulty: "2" },
+      payload: {
+        ...minesweeperRecord.payload,
+        problemIdentity: {
+          ...minesweeperProblem.identity,
+          generatorVersion: "0",
+        },
+      },
     };
     let router: RecordsRouter;
 
     beforeEach(() => {
-      router = renderRecords([otherDifficultyRecord]);
+      router = renderRecords([oldGeneratorRecord]);
     });
 
-    test("押せないボタンで今は遊べないことを示し、記録画面に留まること", () => {
-      const unavailableButton = screen.getByRole("button", {
-        name: "この記録の問題は今は遊べません",
-      });
-      fireEvent.click(unavailableButton);
-      const { pathname } = router.state.location;
+    test("行を押すと、問題を選ばずにゲームのホームを開くこと", () => {
+      fireEvent.click(getRow(/マインスイーパー/));
+      const { pathname, search } = router.state.location;
 
-      expect(unavailableButton.hasAttribute("disabled")).toBe(true);
-      expect(pathname).toBe("/records");
+      expect(pathname).toBe("/puzzles/minesweeper");
+      expect(search).toBe("");
     });
   });
 
@@ -117,14 +173,26 @@ describe("PlayRecordsView", () => {
       router = renderRecords([]);
     });
 
-    test("同じ問題をプレイで離脱したプレイの難易度のプレイ画面をその問題のIDで開くこと", () => {
-      fireEvent.click(screen.getByRole("button", { name: "同じ問題をプレイ" }));
+    test("行を押すと、その問題を選んだゲームのホームを開くこと", () => {
+      fireEvent.click(getRow(/離脱/));
       const { pathname, search } = router.state.location;
 
-      expect(pathname).toBe("/puzzles/minesweeper/play/1");
+      expect(pathname).toBe("/puzzles/minesweeper");
       expect(search).toBe(
         `?problem=${createProblemId(minesweeperProblem.identity)}`,
       );
+    });
+  });
+
+  describe("今のアプリに無いゲームの記録だけの場合", () => {
+    beforeEach(() => {
+      renderRecords([{ ...minesweeperRecord, gameId: "unknown-game" }]);
+    });
+
+    test("記録が無いものとして示すこと", () => {
+      const message = screen.getByText("まだ記録がありません");
+
+      expect(message).toBeTruthy();
     });
   });
 

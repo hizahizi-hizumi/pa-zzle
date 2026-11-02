@@ -48,6 +48,9 @@ export const iceFloorMazeCatalogEntry = {
     );
   },
   listPoolProblemIds: listIceFloorMazePoolProblemIds,
+  hasRecordResult(record) {
+    return restoreIceFloorMazeRecordedResult(record) !== null;
+  },
   renderRecordResult(record, context) {
     const recorded = restoreIceFloorMazeRecordedResult(record);
     return recorded ? (

@@ -48,6 +48,9 @@ export const slidePuzzleCatalogEntry = {
     );
   },
   listPoolProblemIds: listSlidePuzzlePoolProblemIds,
+  hasRecordResult(record) {
+    return restoreSlidePuzzleRecordedResult(record) !== null;
+  },
   renderRecordResult(record, context) {
     const recorded = restoreSlidePuzzleRecordedResult(record);
     return recorded ? (

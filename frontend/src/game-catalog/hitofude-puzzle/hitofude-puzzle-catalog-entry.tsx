@@ -48,6 +48,9 @@ export const hitofudePuzzleCatalogEntry = {
     );
   },
   listPoolProblemIds: listHitofudePuzzlePoolProblemIds,
+  hasRecordResult(record) {
+    return restoreHitofudePuzzleRecordedResult(record) !== null;
+  },
   renderRecordResult(record, context) {
     const recorded = restoreHitofudePuzzleRecordedResult(record);
     return recorded ? (
