@@ -123,17 +123,20 @@ describe("BridgesDifficultyPreview", () => {
     expect(markCounts).toEqual([...markCounts].sort((a, b) => a - b));
   });
 
-  test.each(difficultyIds)(
-    "レベル %s の図は読み上げから隠し、橋を描かないこと",
-    (difficulty) => {
-      const { container } = render(
-        <BridgesDifficultyPreview difficulty={difficulty} />,
-      );
+  describe.each(difficultyIds)("レベル %s の図を描いた場合", (difficulty) => {
+    let container: HTMLElement;
 
+    beforeEach(() => {
+      container = render(
+        <BridgesDifficultyPreview difficulty={difficulty} />,
+      ).container;
+    });
+
+    test("読み上げから隠し、橋を描かないこと", () => {
       const root = container.firstElementChild;
 
       expect(root?.getAttribute("aria-hidden")).toBe("true");
       expect(container.querySelectorAll("line")).toHaveLength(0);
-    },
-  );
+    });
+  });
 });
