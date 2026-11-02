@@ -45,10 +45,12 @@ function notifyChange() {
 /**
  * `url` の曲を読み込ませた要素を返す。読み込ませた要素が無ければ、使っていない要素に読み込ませる。
  * `file` を渡すと、ネットワークから読み込まず、そのファイルを読み込ませる。全ての要素を使っていれば `null`。
+ * `partial` なら、`file` は取得中のファイルの届いた分なので、終わりまで流したら頭に戻らずに止める。
  */
 export function getStreamPlayer(
   url: string,
   file: Blob | null,
+  { partial }: { partial: boolean } = { partial: false },
 ): StreamPlayer | null {
   const loaded = players.find((player) => player.url === url);
   if (loaded) {
@@ -58,7 +60,7 @@ export function getStreamPlayer(
   if (!player) {
     return null;
   }
-  loadStreamPlayer(player, url, file);
+  loadStreamPlayer(player, url, file, partial);
   return player;
 }
 
@@ -126,12 +128,13 @@ function loadStreamPlayer(
   player: StreamPlayer,
   url: string,
   file: Blob | null,
+  partial: boolean,
 ) {
   const { element } = player;
   player.url = url;
   player.objectUrl = file ? URL.createObjectURL(file) : null;
   // 読み解いてバッファのループへ渡すまでのつなぎ。読み解けなかったときも、要素のループで流し続ける。
-  element.loop = true;
+  element.loop = !partial;
   element.preload = "auto";
   element.src = player.objectUrl ?? url;
 }

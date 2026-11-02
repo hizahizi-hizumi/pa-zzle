@@ -2,7 +2,7 @@
  * 同梱した曲を BGM として流す。効果音と同じ AudioContext（`@/lib/audio-context`）から鳴らし、
  * BGM 用の出口を効果音より小さくして、効果音が前に聞こえるようにする。
  *
- * 曲は `<audio>` 要素のストリーミング再生ですぐに流し始め、裏で曲全体を取得して読み解いたら、
+ * 曲のファイルは一度だけ取得する。取得し終える前に流すときは、届いた分を `<audio>` 要素で流し始め、取得し終えたら読み解いて、
  * 読み解いた曲の継ぎ目のないループ再生へ短いクロスフェードで渡す。要素のループは継ぎ目に隙間が出るブラウザがあるので、渡すまでのつなぎにだけ使う。
  * 要素の音も AudioContext へ通し、音量は BGM の出口で掛ける。モバイルのブラウザには、要素の `volume` をプログラムから変えられないものがある。
  *
@@ -57,6 +57,14 @@ type DecodedTrack = {
   loopDuration: number;
 };
 
+/** 取得中の曲のファイルの、届いた分。 */
+type ReceivedPart = {
+  url: string;
+  type: string;
+  chunks: Uint8Array<ArrayBuffer>[];
+  size: number;
+};
+
 type MusicOutput = {
   context: AudioContext;
   /** BGM すべてが通る出口。 */
@@ -107,6 +115,10 @@ const LOOP_HANDOFF_LEAD_SEC = 0.1;
 const MP3_LEADING_PADDING_LENGTH = 576 + 529;
 /** 要素の曲の長さが1ループより長いと見なす差（秒）。これより長ければ、要素も先頭の詰め物を流している。 */
 const PADDED_DURATION_TOLERANCE_SEC = 0.001;
+/**
+ * 取得中の曲を、届いた分だけ要素で流し始めるのに要る大きさ（バイト）。128 kbps の曲で約4秒分あり、流している間に残りが届く。
+ */
+const RECEIVED_PART_MIN_BYTES = 64 * 1024;
 /** フェードを終えてから要素を止めるまでの余裕。タイマーが早く来ても、鳴っている要素を止めない。 */
 const RELEASE_MARGIN_MS = 100;
 
@@ -122,6 +134,8 @@ let preparedUrls = new Set<string>();
 /** 取得した曲のファイル。読み込みは一度に1曲ずつにし、今の画面で流す曲の到着を遅らせない。 */
 const trackFiles = new Map<string, Blob>();
 let fetchingUrl: string | null = null;
+/** 取得中の曲の、届いた分。 */
+let receivedPart: ReceivedPart | null = null;
 let trackFileFetchScheduled = false;
 const failedUrls = new Set<string>();
 /** 流したい曲を読み解いたもの。1分で 20 MB 以上あるので、流したい曲のほかは持ち続けない。 */
@@ -329,7 +343,8 @@ function takePreviousVoice(url: string): MusicVoice | null {
 }
 
 /**
- * 曲を流し始める。読み解いてあればループ再生で、まだならストリーミング再生で流す。
+ * 曲を流し始める。読み解いてあればループ再生で、まだなら取得したファイルか、取得中のファイルの届いた分を要素で流す。
+ * 届いた分が足りなければ、届くのを待って流し始める。取得できなかった曲は、要素にネットワークから読み込ませて流す。
  * 流し始めを待たせている間は、読み解いてあれば待たせた時刻にループ再生を始め、まだなら待たせた時刻にもう一度試す。
  */
 function startVoice(output: MusicOutput, url: string): MusicVoice | null {
@@ -346,7 +361,12 @@ function startVoice(output: MusicOutput, url: string): MusicVoice | null {
     syncAfterHeldStart(heldMs);
     return null;
   }
-  const player = getStreamPlayer(url, trackFiles.get(url) ?? null);
+  const file = trackFiles.get(url) ?? null;
+  const part = file ? null : getReceivedPart(url);
+  if (!file && !part && !failedUrls.has(url)) {
+    return null;
+  }
+  const player = getStreamPlayer(url, file ?? part, { partial: part !== null });
   if (!player) {
     return null;
   }
@@ -591,7 +611,7 @@ function disposeLoop({ source, gain }: VoiceSource<AudioBufferSourceNode>) {
 }
 
 /**
- * 流したい曲がまだ流れていなければ、要素に読み込ませておき、流し始めるときに待たせない。
+ * 流したい曲がまだ流れておらず、取得し終えて読み解いている間なら、要素に読み込ませておき、流し始めるときに待たせない。
  * 使っていない要素のうち、流したい曲でない曲を読み込ませている要素は止める。
  */
 function preloadWantedTrack() {
@@ -602,7 +622,10 @@ function preloadWantedTrack() {
   if (url === null || currentVoice?.url === url || decodedTracks.has(url)) {
     return;
   }
-  getStreamPlayer(url, trackFiles.get(url) ?? null);
+  const file = trackFiles.get(url);
+  if (file) {
+    getStreamPlayer(url, file);
+  }
 }
 
 /**
@@ -665,12 +688,56 @@ function findTrackFileToFetch(): string | null {
   );
 }
 
+/** 曲のファイルを取得する。届いた分は、取得し終える前に流し始められるよう `receivedPart` に溜める。 */
 async function fetchTrackFile(url: string): Promise<Blob> {
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`);
   }
-  return response.blob();
+  if (!response.body) {
+    return response.blob();
+  }
+  const part: ReceivedPart = {
+    url,
+    type: response.headers.get("Content-Type") ?? "",
+    chunks: [],
+    size: 0,
+  };
+  receivedPart = part;
+  try {
+    const reader = response.body.getReader();
+    for (
+      let read = await reader.read();
+      !read.done;
+      read = await reader.read()
+    ) {
+      receiveChunk(part, read.value);
+    }
+  } finally {
+    receivedPart = null;
+  }
+  return new Blob(part.chunks, { type: part.type });
+}
+
+/** 届いた分が流し始められる大きさになったら、待っている曲を流し始める。 */
+function receiveChunk(part: ReceivedPart, chunk: Uint8Array<ArrayBuffer>) {
+  const wasEnough = part.size >= RECEIVED_PART_MIN_BYTES;
+  part.chunks.push(chunk);
+  part.size += chunk.byteLength;
+  if (!wasEnough && part.size >= RECEIVED_PART_MIN_BYTES) {
+    syncBackgroundMusic();
+  }
+}
+
+/** 取得中の `url` の曲の届いた分。流し始められる大きさに届いていなければ `null`。 */
+function getReceivedPart(url: string): Blob | null {
+  if (
+    receivedPart?.url !== url ||
+    receivedPart.size < RECEIVED_PART_MIN_BYTES
+  ) {
+    return null;
+  }
+  return new Blob(receivedPart.chunks, { type: receivedPart.type });
 }
 
 /** 流したい曲のファイルを取得したら読み解く。 */
