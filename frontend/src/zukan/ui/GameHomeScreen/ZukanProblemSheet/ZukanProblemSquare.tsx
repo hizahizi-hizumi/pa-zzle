@@ -1,7 +1,9 @@
 import { memo } from "react";
 
-import { getGameResultStyle } from "@/components/game-result-style";
-import type { ZukanChangeStage } from "@/zukan/ui/GameHomeScreen/zukan-change-reveal";
+import {
+  getZukanStamp,
+  type ZukanChangeStage,
+} from "@/zukan/ui/GameHomeScreen/zukan-change-reveal";
 import {
   describeZukanProblem,
   getZukanProblemStatusClassName,
@@ -31,7 +33,9 @@ type ZukanProblemSquareProps = {
 /**
  * 台紙の1問のマス。状態を塗りと枠だけで示し、文字は読み上げ名に持たせる。
  * 押す・矢印キーの操作は台紙がまとめて受けるので、マス自身はイベントを持たない。
- * 前回からの変化は、マスに着くまで前回の姿で描く。押していく演出が動かす押す姿・浮いた影・輪を、押し終えるまで重ねておく。
+ * 前回からの変化は、マスに着くまで前回の姿で描く。押していく演出が動かす押す姿・浮いた影を、押し終えるまで重ねておく。
+ * 段階が上がったマスは、押す姿に前の段階の色を重ね、落ちながら今の色へ塗り替えられるようにする。
+ * 押していく演出が押し方を決められるよう、変化したマスに今の段階と段階が上がったかを持たせる。
  * 動きを減らす設定では今の姿に印を載せる。
  * 絞り込みの条件に当たらなかったマスは、色を変えずに薄くする。選んでいる間は、選んだことが分かるよう薄くしない。
  */
@@ -62,16 +66,15 @@ function ZukanProblemSquareContent({
   const stampClassName = isLifted ? "z-30" : "";
   const filteredOutClassName = isFilteredOut && !isSelected ? "opacity-30" : "";
   const description = describeZukanProblem(problem, numberDigitCount, change);
-  const ringColorClassName =
-    status === "attempted" || status === "untouched"
-      ? ""
-      : getGameResultStyle(status).scoreClassName;
+  const stamp = change === null ? null : getZukanStamp(problem, change);
 
   return (
     <button
       type="button"
       data-index={index}
       data-change-stage={changeStage ?? undefined}
+      data-change-level={stamp?.level}
+      data-change-raised={stamp?.isRaised ? "" : undefined}
       data-filtered-out={isFilteredOut ? "" : undefined}
       tabIndex={isTabStop ? 0 : -1}
       aria-label={
@@ -81,23 +84,22 @@ function ZukanProblemSquareContent({
       className={`relative size-3.5 scroll-m-3 outline-offset-1 sm:size-4 ${getZukanProblemStatusClassName(shownStatus)} ${selectionClassName} ${stampClassName} ${filteredOutClassName}`}
     >
       {hasStamp && (
-        <>
-          <span
-            aria-hidden="true"
-            data-stamp-part="ring"
-            className={`pointer-events-none absolute inset-0 border-2 border-current opacity-0 ${ringColorClassName}`}
-          />
-          <span
-            aria-hidden="true"
-            data-stamp-part="face"
-            className={`pointer-events-none absolute inset-0 opacity-0 ${getZukanProblemStatusClassName(status)}`}
-          >
+        <span
+          aria-hidden="true"
+          data-stamp-part="face"
+          className={`pointer-events-none absolute inset-0 opacity-0 ${getZukanProblemStatusClassName(status)}`}
+        >
+          {change?.kind === "raised" && (
             <span
-              data-stamp-part="shadow"
-              className="absolute inset-0 opacity-0 shadow-[0_3px_5px_rgb(0_0_0/0.35)]"
+              data-stamp-part="previous"
+              className={`absolute inset-0 ${getZukanProblemStatusClassName(change.previousStatus)}`}
             />
-          </span>
-        </>
+          )}
+          <span
+            data-stamp-part="shadow"
+            className="absolute inset-0 opacity-0 shadow-[0_3px_5px_rgb(0_0_0/0.35)]"
+          />
+        </span>
       )}
       {changeStage === "marked" && (
         <span

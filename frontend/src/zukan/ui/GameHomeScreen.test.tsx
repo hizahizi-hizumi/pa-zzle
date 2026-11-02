@@ -1498,6 +1498,21 @@ describe("GameHomeScreen", () => {
     }
 
     let animate: ReturnType<typeof vi.fn>;
+
+    /** 変化したマスの押す姿を動かした数。 */
+    function countStampFaceAnimations(): number {
+      return animate.mock.contexts.filter(
+        (element) =>
+          element instanceof Element &&
+          element.getAttribute("data-stamp-part") === "face",
+      ).length;
+    }
+
+    /** 押していく演出が台紙の外に重ねて描く効果の層。 */
+    function queryStampEffectLayers(): NodeListOf<Element> {
+      return document.querySelectorAll("[data-zukan-stamp-effects]");
+    }
+
     let reducedMotionListeners: Set<() => void>;
     let prefersReduced: boolean;
 
@@ -1599,6 +1614,17 @@ describe("GameHomeScreen", () => {
           expect(solvedCount).toBe("解いた問題 1 / 1200");
         });
 
+        test("段階が上がったマスにだけ、押す姿に前の段階の色を重ねておくこと", () => {
+          const squaresWithPrevious = within(getSheet("レベル 3の問題"))
+            .getAllByRole("button")
+            .filter((square) =>
+              square.querySelector('[data-stamp-part="previous"]'),
+            )
+            .map((square) => square.getAttribute("aria-label")?.split(" ")[0]);
+
+          expect(squaresWithPrevious).toEqual(["No.0005"]);
+        });
+
         test("マスの読み上げ名は、変化とともに今の状態を示すこと", () => {
           const names = getChangedSquareNames("レベル 3の問題");
 
@@ -1659,10 +1685,16 @@ describe("GameHomeScreen", () => {
           await finishStamps();
         });
 
-        test("変化したマスを、1マスごとに押す姿・浮いた影・戻り・輪の4つずつ動かしたこと", () => {
-          const animatedCount = animate.mock.calls.length;
+        test("変化したマスごとに、押す姿を落として戻す2つの動きをしたこと", () => {
+          const faceAnimationCount = countStampFaceAnimations();
 
-          expect(animatedCount).toBe(8);
+          expect(faceAnimationCount).toBe(4);
+        });
+
+        test("押していく間に重ねて描いた効果を片付けたこと", () => {
+          const effectLayers = queryStampEffectLayers();
+
+          expect(effectLayers).toHaveLength(0);
         });
 
         test("マスを今の姿で描き、変化の段階を残さないこと", () => {
@@ -1718,6 +1750,12 @@ describe("GameHomeScreen", () => {
         beforeEach(async () => {
           await advanceStamps(400);
           tap(document.body, { x: 10, y: 10 });
+        });
+
+        test("重ねて描いていた効果を片付けること", () => {
+          const effectLayers = queryStampEffectLayers();
+
+          expect(effectLayers).toHaveLength(0);
         });
 
         test("最後の姿まで飛ばし、見せ終えたと知らせること", () => {
@@ -1896,6 +1934,13 @@ describe("GameHomeScreen", () => {
           expect(animate.mock.calls.length).toBe(animatedCountAfterUnmount);
           expect(onLevelChangesShown).not.toHaveBeenCalled();
         });
+
+        test("重ねて描いていた効果を片付けること", () => {
+          cleanup();
+          const effectLayers = queryStampEffectLayers();
+
+          expect(effectLayers).toHaveLength(0);
+        });
       });
 
       describe("押している途中で、変化をまだ見せていないレベルへ切り替えた場合", () => {
@@ -1942,7 +1987,7 @@ describe("GameHomeScreen", () => {
           const tabCounts = getTabCounts();
           const markedTabs = getMarkedTabNames();
 
-          expect(animate.mock.calls.length).toBe(4);
+          expect(countStampFaceAnimations()).toBe(2);
           expect(levelCounts).toEqual([
             "perfect 0問",
             "great 0問",

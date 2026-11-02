@@ -57,6 +57,10 @@ type PlaySoundOptions = {
   delayMs?: number;
   /** 鳴らすたびに音程と音量をわずかに揺らす。省略すると毎回同じ音で鳴らす。 */
   variation?: SoundVariation;
+  /** 再生の速さに掛ける倍率。音程と長さが変わる。揺らぎと合わせて掛ける。省略すると 1。 */
+  playbackRate?: number;
+  /** 音量に掛ける倍率。揺らぎと合わせて掛ける。省略すると 1。 */
+  volume?: number;
 };
 
 type SoundOutput = {
@@ -217,7 +221,12 @@ export function playSound(
  */
 export function playLayeredSound(
   layers: readonly SoundLayer[],
-  { delayMs = 0, variation }: PlaySoundOptions = {},
+  {
+    delayMs = 0,
+    variation,
+    playbackRate = 1,
+    volume = 1,
+  }: PlaySoundOptions = {},
 ): number | null {
   if (!isSoundEffectsEnabled() || layers.length === 0) {
     return null;
@@ -234,7 +243,11 @@ export function playLayeredSound(
     return null;
   }
   const startTime = output.context.currentTime + delayMs / 1000;
-  const scale = variation ? pickVariationScale(variation) : NO_VARIATION_SCALE;
+  const varied = variation ? pickVariationScale(variation) : NO_VARIATION_SCALE;
+  const scale = {
+    playbackRate: varied.playbackRate * playbackRate,
+    volume: varied.volume * volume,
+  };
   scheduleLayers(output, loadedLayers, startTime, scale);
   return delayMs + getLayersDurationMs(loadedLayers, scale);
 }

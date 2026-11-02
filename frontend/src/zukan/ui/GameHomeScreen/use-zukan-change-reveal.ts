@@ -1,19 +1,27 @@
 import { type RefObject, useEffect, useRef, useState } from "react";
 
 import type { DifficultyLevel } from "@/games/difficulty";
+import { prepareSoundEffects } from "@/lib/sound-effects";
 import {
   findZukanFollowScrollTop,
+  findZukanHeaviestStamp,
   findZukanRevealScrollTop,
-  findZukanStampParts,
   groupZukanStampSlots,
   isZukanSpanInView,
   isZukanStampTargetVisible,
   joinZukanVerticalSpans,
   planZukanStamps,
-  playZukanStamp,
+  readZukanStamp,
   type ZukanChangeAppearance,
   type ZukanVerticalSpan,
 } from "@/zukan/ui/GameHomeScreen/zukan-change-reveal";
+import {
+  createZukanStampEffectLayer,
+  findZukanStampParts,
+  playZukanStamp,
+  type ZukanStampTarget,
+} from "@/zukan/ui/GameHomeScreen/zukan-stamp-effects";
+import { zukanStampSounds } from "@/zukan/ui/GameHomeScreen/zukan-stamp-sound";
 
 /** 変化したマスを押していく演出の進み。押す回の数で表す。 */
 export type ZukanStampProgress = {
@@ -30,8 +38,8 @@ const notStarted: ZukanStampProgress = {
   landedSlotCount: 0,
 };
 
-/** なめらかなスクロールの終わりを待つ上限。終わりを知らせない環境や、動かずに終わったときに先へ進む。 */
-const SCROLL_SETTLE_MAX_MS = 600;
+/** 台紙を寄せるスクロールの長さ。ブラウザのなめらかなスクロールより短く決まった長さにし、押す間を空けすぎない。 */
+const SHEET_SCROLL_DURATION_MS = 220;
 /** 押してから離すまでに動いた距離がこれ未満なら、スクロールではなくタップとみなす。 */
 const TAP_SLOP_PX = 10;
 /** 演出を飛ばしたタップに続くクリックを待つ上限。 */
@@ -65,46 +73,55 @@ function readSpan(element: Element): ZukanVerticalSpan {
   return { top, bottom };
 }
 
+/** 動き始めと終わりをゆるめる3次の緩急。`MOTION_EASING.standard` と同じ向きの形を、スクロール位置の計算に使う。 */
+function easeInOutCubic(t: number): number {
+  return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+}
+
+type SheetScrollConditions = {
+  /** 寄せている途中でも、これが成り立ったら寄せ終えたものとする。 */
+  isReached: () => boolean;
+  /** 利用者が台紙を触ったなど、寄せるのをやめて先へ進むか。 */
+  isInterrupted: () => boolean;
+};
+
 /**
- * 台紙を `top` へなめらかにスクロールし、スクロールが終わるか、途中で `isReached` が成り立ったら `onSettled` を呼ぶ。
- * 動かす必要が無ければすぐ呼ぶ。戻り値は待つのをやめる関数。
+ * 台紙を `top` へ `SHEET_SCROLL_DURATION_MS` で寄せ、寄せ終えるか、途中で `isReached` か `isInterrupted` が成り立ったら `onSettled` を呼ぶ。
+ * 動かす必要が無ければすぐ呼ぶ。戻り値は寄せるのをやめる関数で、やめたあとは呼ばない。
  */
-function scrollSmoothly(
+function scrollSheet(
   scroller: HTMLElement,
   top: number | null,
   onSettled: () => void,
-  isReached: () => boolean = () => false,
+  { isReached, isInterrupted }: SheetScrollConditions,
 ): () => void {
   const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
-  const clampedTop = top === null ? null : Math.min(top, maxTop);
-  if (
-    clampedTop === null ||
-    Math.abs(clampedTop - scroller.scrollTop) < 1 ||
-    typeof scroller.scrollTo !== "function"
-  ) {
+  const from = scroller.scrollTop;
+  const to = top === null ? from : Math.min(top, maxTop);
+  if (Math.abs(to - from) < 1) {
     onSettled();
     return cancelNothing;
   }
-
-  function settle() {
-    stop();
-    onSettled();
-  }
-  function settleIfReached() {
-    if (isReached()) {
-      settle();
+  let frame = 0;
+  let startedAt: number | null = null;
+  function step(now: number) {
+    if (isInterrupted()) {
+      onSettled();
+      return;
     }
+    startedAt ??= now;
+    const progress = Math.min(1, (now - startedAt) / SHEET_SCROLL_DURATION_MS);
+    scroller.scrollTop = from + (to - from) * easeInOutCubic(progress);
+    if (progress >= 1 || isReached()) {
+      onSettled();
+      return;
+    }
+    frame = window.requestAnimationFrame(step);
   }
-  function stop() {
-    scroller.removeEventListener("scrollend", settle);
-    scroller.removeEventListener("scroll", settleIfReached);
-    window.clearTimeout(timer);
-  }
-  scroller.addEventListener("scrollend", settle);
-  scroller.addEventListener("scroll", settleIfReached);
-  const timer = window.setTimeout(settle, SCROLL_SETTLE_MAX_MS);
-  scroller.scrollTo({ top: clampedTop, behavior: "smooth" });
-  return stop;
+  frame = window.requestAnimationFrame(step);
+  return function cancel() {
+    window.cancelAnimationFrame(frame);
+  };
 }
 
 function findSquare(scroller: HTMLElement, index: number): Element | null {
@@ -149,7 +166,9 @@ type StampRunCallbacks = {
  * 台紙 `scroller` の、押す順に並べた位置 `indices` のマスを押していく。
  * 変化したマス全体が見えるよう台紙をスクロールし、スクロールの終わりと前回の姿を見せる最短の時間を待ってから押し始める。
  * 押す回ごとに、次のマスが見えていなければ追ってスクロールし、次のマスが見えたところで押す。押す前に見えていないマスは動かさず、その回にマスの姿だけを変える。
+ * 回ごとに、押したマスのうち最も重い変化のマスだけが音を鳴らす。押す前に見えていないマスは鳴らさない。
  * 利用者が台紙をスクロールし始めたら、追うスクロールはやめる。タップ（ほとんど動かさずに離す）かキーを押すと最後の姿まで飛ばす。
+ * 粒や衝撃波は台紙の外に重ねた層に描き、飛ばしたときもやめたときも層ごと片付ける。
  * 戻り値は、`onEnd` を呼ばずにやめる関数。
  */
 function runZukanStamps(
@@ -158,7 +177,16 @@ function runZukanStamps(
   { onProgress, onEnd, onSkippedByTap }: StampRunCallbacks,
 ): () => void {
   const slots = groupZukanStampSlots(indices);
-  const { slotStartMs } = planZukanStamps(slots.length);
+  const { slotStartMs } = planZukanStamps(
+    slots.map((slotIndices) =>
+      slotIndices.flatMap((index) => {
+        const square = findSquare(scroller, index);
+        const stamp = square ? readZukanStamp(square) : null;
+        return stamp ? [stamp] : [];
+      }),
+    ),
+  );
+  const effectLayer = createZukanStampEffectLayer(scroller);
   const lastIndex = indices.at(-1) ?? 0;
   const timers = new Set<number>();
   const cancels: (() => void)[] = [];
@@ -181,10 +209,15 @@ function runZukanStamps(
   function scrollThen(
     top: number | null,
     then: () => void,
-    isReached?: () => boolean,
+    isReached: () => boolean = () => false,
   ) {
     if (!stopped) {
-      cancels.push(scrollSmoothly(scroller, top, then, isReached));
+      cancels.push(
+        scrollSheet(scroller, top, then, {
+          isReached,
+          isInterrupted: () => !followsScroll,
+        }),
+      );
     }
   }
   function report(next: ZukanStampProgress) {
@@ -223,23 +256,29 @@ function runZukanStamps(
       return;
     }
     const view = readSpan(scroller);
-    const stampParts = (slots[slot] ?? []).flatMap((index) => {
+    const targets = (slots[slot] ?? []).flatMap((index): ZukanStampTarget[] => {
       const square = findSquare(scroller, index);
-      const parts =
-        square && isZukanSpanInView(view, readSpan(square))
-          ? findZukanStampParts(square)
-          : null;
-      return parts ? [parts] : [];
+      if (square === null || !isZukanSpanInView(view, readSpan(square))) {
+        return [];
+      }
+      const parts = findZukanStampParts(square);
+      const stamp = readZukanStamp(square);
+      return parts && stamp ? [{ square, parts, stamp }] : [];
     });
+    const soundTarget = findZukanHeaviestStamp(
+      targets.map(({ stamp }) => stamp),
+    );
     report({ ...progress, startedSlotCount: slot + 1 });
-    let landingCount = stampParts.length;
-    runningStampCount += stampParts.length;
+    let landingCount = targets.length;
+    runningStampCount += targets.length;
     if (landingCount === 0) {
       land(slot);
     }
-    for (const parts of stampParts) {
+    targets.forEach((target, order) => {
       cancels.push(
-        playZukanStamp(parts, {
+        playZukanStamp(target, {
+          layer: effectLayer,
+          playsSound: order === soundTarget,
           onLanded() {
             landingCount -= 1;
             if (landingCount === 0) {
@@ -252,7 +291,7 @@ function runZukanStamps(
           },
         }),
       );
-    }
+    });
     const nextSlot = slot + 1;
     if (nextSlot < slots.length) {
       wait((slotStartMs[nextSlot] ?? 0) - (slotStartMs[slot] ?? 0), () =>
@@ -329,6 +368,7 @@ function runZukanStamps(
     for (const [type, listener] of listeners) {
       document.removeEventListener(type, listener as EventListener, true);
     }
+    effectLayer.remove();
   }
 
   for (const [type, listener] of listeners) {
@@ -393,6 +433,10 @@ export function useZukanChangeReveal(
   useEffect(() => {
     latest.current = options;
   });
+
+  useEffect(() => {
+    prepareSoundEffects(zukanStampSounds);
+  }, []);
 
   // 飛ばしたタップに続くクリックは演出を終えたあとに届くので、演出ではなく画面を離れるまで待つ。
   useEffect(

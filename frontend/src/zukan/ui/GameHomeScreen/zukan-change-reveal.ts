@@ -1,5 +1,5 @@
 import type { ProblemId } from "@/games/problem-id";
-import { MOTION_EASING, playAnimations } from "@/lib/motion";
+import { type GameResultLevel, gameResultLevels } from "@/games/result";
 import {
   getZukanProblemStatus,
   type ZukanProblem,
@@ -23,67 +23,103 @@ export type ZukanChangeAppearance = "animated" | "marked";
  */
 export type ZukanChangeStage = "waiting" | "stamping" | "landed" | "marked";
 
+/** 押す1マスの、押し方の強さを決める変化。 */
+export type ZukanStamp = {
+  /** 今の評価段階。 */
+  level: GameResultLevel;
+  /** 前回解いていて、評価段階が上がったか。 */
+  isRaised: boolean;
+};
+
+/** 変化したマスの、今の評価段階と前回の状態。押していく演出は、マスに載せたこれを読んで押し方を決める。 */
+export function getZukanStamp(
+  problem: ZukanProblem,
+  change: ZukanProblemChange,
+): ZukanStamp | null {
+  const status = getZukanProblemStatus(problem);
+  return status === "attempted" || status === "untouched"
+    ? null
+    : { level: status, isRaised: change.kind === "raised" };
+}
+
+/** マスの `data-change-level` と `data-change-raised` から、押す変化を読む。 */
+export function readZukanStamp(square: Element): ZukanStamp | null {
+  const level = square.getAttribute("data-change-level");
+  const solvedLevel = gameResultLevels.find((value) => value === level);
+  return solvedLevel === undefined
+    ? null
+    : {
+        level: solvedLevel,
+        isRaised: square.hasAttribute("data-change-raised"),
+      };
+}
+
+/**
+ * 押す変化の重さ。perfect、段階の上がり、great、good、clear の順に重い。
+ * まとめて押す回で音を代表して鳴らすマスを選ぶのに使う。
+ */
+export function getZukanStampWeight({ level, isRaised }: ZukanStamp): number {
+  const levelWeight = gameResultLevels.indexOf(level);
+  return level === "perfect"
+    ? gameResultLevels.length + 1
+    : isRaised
+      ? gameResultLevels.length
+      : levelWeight;
+}
+
+/** `stamps` のうち最も重い変化の位置。空なら `null`。 */
+export function findZukanHeaviestStamp(
+  stamps: readonly ZukanStamp[],
+): number | null {
+  let heaviest: number | null = null;
+  stamps.forEach((stamp, index) => {
+    const current = heaviest === null ? undefined : stamps[heaviest];
+    if (
+      current === undefined ||
+      getZukanStampWeight(stamp) > getZukanStampWeight(current)
+    ) {
+      heaviest = index;
+    }
+  });
+  return heaviest;
+}
+
+/** 押す1マスの動きの長さ。perfect は落とす間とその後の余韻を長く取る。 */
+export const ZUKAN_STAMP_DURATION_MS = {
+  /** 浮いた姿から縮んでマスに着くまで。 */
+  drop: 200,
+  perfectDrop: 300,
+  /** マスに着いてから、少し膨らんで戻るまで。 */
+  settle: 200,
+  /** マスに着いてから、衝撃波と粒が消えるまで。 */
+  impactTail: 380,
+  perfectImpactTail: 520,
+} as const;
+
+/** 1マスを押し始めてから、その動きが終わるまで。 */
+export function getZukanStampTailMs({ level }: ZukanStamp): number {
+  return level === "perfect"
+    ? ZUKAN_STAMP_DURATION_MS.perfectDrop +
+        ZUKAN_STAMP_DURATION_MS.perfectImpactTail
+    : ZUKAN_STAMP_DURATION_MS.drop + ZUKAN_STAMP_DURATION_MS.impactTail;
+}
+
 /** 台紙を開いてから、最初のマスを押し始めるまでの最短の時間。台紙のスクロールが長ければ、その終わりまで待つ。 */
 const PREVIOUS_STATE_HOLD_MS = 300;
-/** 押す姿が、大きく浮いた所から現れて縮み、マスに着くまで。 */
-const STAMP_DROP_DURATION_MS = 190;
-/** 押す姿が現れ終える、マスに着くまでの長さに対する割合。 */
-const STAMP_APPEAR_OFFSET = 0.36;
-/** マスに着いてから、少し行き過ぎた姿から戻るまで。 */
-const STAMP_SETTLE_DURATION_MS = 150;
-/** マスに着いたときにマスから広がって消える輪の長さ。 */
-const STAMP_RING_DURATION_MS = 300;
-/** 浮いた姿の大きさ。現れ始めと、現れ終えたとき。 */
-const STAMP_LIFTED_SCALE = 2.4;
-const STAMP_APPEARED_SCALE = 2.2;
-/** マスに着いた瞬間の、行き過ぎて縮んだ大きさ。 */
-const STAMP_PRESSED_SCALE = 0.82;
-/** 輪が広がりきったときの大きさ。台紙のスクロール領域の内側余白は、この輪が収まる幅にしてある。 */
-const STAMP_RING_SCALE = 2.8;
 /** 変化が少ないときの、隣り合う順のマスを押し始める間隔。 */
-const STAMP_INTERVAL_MAX_MS = 150;
-/** 開いてから、最後のマスの輪が消えるまでの上限。変化が多ければ押す間隔を詰める。台紙のスクロールを待つ分は含めない。 */
-const REVEAL_DURATION_MAX_MS = 1500;
+const STAMP_INTERVAL_MAX_MS = 160;
+/** 変化が多いときにも空ける、押し始める間隔の下限。 */
+const STAMP_INTERVAL_MIN_MS = 50;
+/** 開いてから、最後のマスの動きが消えるまでの目安の上限。変化が多ければ押す間隔を詰める。台紙のスクロールを待つ分は含めない。 */
+const REVEAL_DURATION_MAX_MS = 1700;
+/** perfect を含む回の前に置く間。直前で溜めて、perfect を特別に見せる。 */
+const PERFECT_PAUSE_MS = 180;
+/** perfect の前に間を置く回の数の上限。perfect が多くても全体の長さを保つ。 */
+const PAUSED_SLOT_LIMIT = 2;
 /** 1つずつ押すマスの数。これより後に変化したマスは、最後にまとめて押す。 */
 const INDIVIDUAL_STAMP_LIMIT = 12;
-/** 1マスを押し始めてから、そのマスの動きが終わるまで。 */
-const STAMP_TAIL_MS =
-  STAMP_DROP_DURATION_MS +
-  Math.max(STAMP_SETTLE_DURATION_MS, STAMP_RING_DURATION_MS);
-/** 押すマスを見えているものとする、台紙の見える範囲の端からの距離。浮いた姿と輪が端で切れない幅。 */
+/** 押すマスを見えているものとする、台紙の見える範囲の端からの距離。浮いた姿と衝撃波が端で切れない幅。 */
 const REVEAL_SCROLL_MARGIN_PX = 32;
-
-const stampDropKeyframes: Keyframe[] = [
-  {
-    transform: `scale(${STAMP_LIFTED_SCALE})`,
-    opacity: 0,
-    easing: MOTION_EASING.enter,
-  },
-  {
-    transform: `scale(${STAMP_APPEARED_SCALE})`,
-    opacity: 1,
-    offset: STAMP_APPEAR_OFFSET,
-    easing: MOTION_EASING.standard,
-  },
-  { transform: `scale(${STAMP_PRESSED_SCALE})`, opacity: 1 },
-];
-
-/** 浮いている間だけ影を見せ、マスに着くまでに消す。影は塗りと別の要素にして、透明度だけを動かす。 */
-const stampShadowKeyframes: Keyframe[] = [
-  { opacity: 1 },
-  { opacity: 1, offset: STAMP_APPEAR_OFFSET, easing: MOTION_EASING.standard },
-  { opacity: 0 },
-];
-
-const stampSettleKeyframes: Keyframe[] = [
-  { transform: `scale(${STAMP_PRESSED_SCALE})`, opacity: 1 },
-  { transform: "scale(1)", opacity: 1 },
-];
-
-const stampRingKeyframes: Keyframe[] = [
-  { transform: "scale(1)", opacity: 0.9 },
-  { transform: `scale(${STAMP_RING_SCALE})`, opacity: 0 },
-];
 
 /** 変化したマスを押す順のうち `order` 番目のマスを押す回。1つずつ押す数より後のマスは、最後の1回にまとめる。 */
 export function getZukanStampSlot(order: number): number {
@@ -95,12 +131,12 @@ export function countZukanStampSlots(changeCount: number): number {
   return changeCount === 0 ? 0 : getZukanStampSlot(changeCount - 1) + 1;
 }
 
-/** 押す順に並べたマスの位置 `indices` を、押す回ごとに分ける。 */
-export function groupZukanStampSlots(indices: readonly number[]): number[][] {
-  const slots: number[][] = [];
-  indices.forEach((index, order) => {
+/** 押す順に並べたものを、押す回ごとに分ける。 */
+export function groupZukanStampSlots<Item>(items: readonly Item[]): Item[][] {
+  const slots: Item[][] = [];
+  items.forEach((item, order) => {
     const slot = getZukanStampSlot(order);
-    slots[slot] = [...(slots[slot] ?? []), index];
+    slots[slot] = [...(slots[slot] ?? []), item];
   });
   return slots;
 }
@@ -113,124 +149,57 @@ export type ZukanStampPlan = {
   endMs: number;
 };
 
+const typicalStampTailMs = getZukanStampTailMs({
+  level: "clear",
+  isRaised: false,
+});
+
 /**
- * 押す回が `slotCount` 回のときの時刻を決める。少ないうちは一定の間隔で押し、多ければ全体が上限に収まるよう間隔を詰める。
+ * 回ごとに押すマスの変化 `slots` から、押し始める時刻を決める。
+ * 少ないうちは一定の間隔で押し、多ければ全体が上限に収まるよう間隔を詰める。
+ * perfect を含む回の前には間を置き、その分だけ後の回を後ろへずらす。間を置くのは最初の回を除いて上限の数まで。
  */
-export function planZukanStamps(slotCount: number): ZukanStampPlan {
-  const lastStartMaxMs = REVEAL_DURATION_MAX_MS - STAMP_TAIL_MS;
+export function planZukanStamps(
+  slots: readonly (readonly ZukanStamp[])[],
+): ZukanStampPlan {
+  let pausedSlotCount = 0;
+  const pauses = slots.map((stamps, slot): number => {
+    const hasPerfect = stamps.some(({ level }) => level === "perfect");
+    if (!hasPerfect || slot === 0 || pausedSlotCount >= PAUSED_SLOT_LIMIT) {
+      return 0;
+    }
+    pausedSlotCount += 1;
+    return PERFECT_PAUSE_MS;
+  });
+  const totalPauseMs = pauses.reduce((total, pause) => total + pause, 0);
   const intervalMs =
-    slotCount > 1
-      ? Math.min(
-          STAMP_INTERVAL_MAX_MS,
-          (lastStartMaxMs - PREVIOUS_STATE_HOLD_MS) / (slotCount - 1),
+    slots.length > 1
+      ? Math.max(
+          STAMP_INTERVAL_MIN_MS,
+          Math.min(
+            STAMP_INTERVAL_MAX_MS,
+            (REVEAL_DURATION_MAX_MS -
+              typicalStampTailMs -
+              PREVIOUS_STATE_HOLD_MS -
+              totalPauseMs) /
+              (slots.length - 1),
+          ),
         )
       : 0;
-  const slotStartMs = Array.from({ length: slotCount }, (_, slot) =>
-    Math.round(PREVIOUS_STATE_HOLD_MS + slot * intervalMs),
-  );
-  const lastStartMs = slotStartMs.at(-1) ?? 0;
-  return {
-    slotStartMs,
-    endMs: slotCount === 0 ? 0 : lastStartMs + STAMP_TAIL_MS,
-  };
-}
-
-/**
- * 押すマスの中の、押す姿・浮いた影・輪の要素。マスは `data-stamp-part` にそれぞれ `face`・`shadow`・`ring` を付けて描く。
- */
-export type ZukanStampParts = {
-  face: Element;
-  shadow: Element;
-  ring: Element;
-};
-
-export function findZukanStampParts(square: Element): ZukanStampParts | null {
-  const face = square.querySelector('[data-stamp-part="face"]');
-  const shadow = square.querySelector('[data-stamp-part="shadow"]');
-  const ring = square.querySelector('[data-stamp-part="ring"]');
-  return face && shadow && ring ? { face, shadow, ring } : null;
-}
-
-type ZukanStampCallbacks = {
-  /** 押す姿がマスに着いたとき。マスを今の姿にし、数を数え上げる時機。 */
-  onLanded: () => void;
-  /** 着いたあとの戻りと輪が終わったとき。 */
-  onFinished: () => void;
-};
-
-function canAnimate({ face, shadow, ring }: ZukanStampParts): boolean {
-  return [face, shadow, ring].every(
-    (element) => typeof element.animate === "function",
-  );
-}
-
-/**
- * 変化したマスを押す。押す姿を大きく浮いた姿から縮めてマスに着かせ、着いたら少し行き過ぎた姿から戻しながら輪を広げて消す。
- * 着いたことと終わったことは、時刻の見込みではなく Animation の終わりで知らせる。
- * 動きを減らす設定と、動かせない環境では動かさず、すぐに着いて終わったものとする。戻り値は動きを取り消す関数。
- */
-export function playZukanStamp(
-  parts: ZukanStampParts,
-  { onLanded, onFinished }: ZukanStampCallbacks,
-): () => void {
-  const isAnimatable = canAnimate(parts);
-  let dropAnimations: Animation[] = [];
-  let cancelSettle = function cancelNothing() {};
-
-  function animateDrop(): Animation[] {
-    dropAnimations = isAnimatable
-      ? [
-          parts.face.animate(stampDropKeyframes, {
-            duration: STAMP_DROP_DURATION_MS,
-            fill: "forwards",
-          }),
-          parts.shadow.animate(stampShadowKeyframes, {
-            duration: STAMP_DROP_DURATION_MS,
-          }),
-        ]
-      : [];
-    return dropAnimations;
-  }
-  function animateSettle(): Animation[] {
-    return isAnimatable
-      ? [
-          parts.face.animate(stampSettleKeyframes, {
-            duration: STAMP_SETTLE_DURATION_MS,
-            easing: MOTION_EASING.celebrate,
-          }),
-          parts.ring.animate(stampRingKeyframes, {
-            duration: STAMP_RING_DURATION_MS,
-            easing: MOTION_EASING.celebrate,
-          }),
-        ]
-      : [];
-  }
-  function land() {
-    onLanded();
-    cancelSettle = playAnimations({
-      animate: animateSettle,
-      completion: { type: "after-animations", holdMs: 0 },
-      reducedMotionHoldMs: 0,
-      unanimatedHoldMs: 0,
-      onFinished,
-    });
-    // 着いた姿を保っていた動きは、戻りの動きが引き継いだので外す。
-    for (const animation of dropAnimations) {
-      animation.cancel();
-    }
-  }
-
-  const cancelDrop = playAnimations({
-    animate: animateDrop,
-    completion: { type: "after-animations", holdMs: 0 },
-    reducedMotionHoldMs: 0,
-    unanimatedHoldMs: 0,
-    onFinished: land,
+  let pausedMs = 0;
+  const slotStartMs = slots.map((_, slot) => {
+    pausedMs += pauses[slot] ?? 0;
+    return Math.round(PREVIOUS_STATE_HOLD_MS + slot * intervalMs + pausedMs);
   });
-  return function cancel() {
-    cancelDrop();
-    cancelSettle();
-  };
+  const endMs = Math.max(
+    0,
+    ...slots.flatMap((stamps, slot) =>
+      stamps.map(
+        (stamp) => (slotStartMs[slot] ?? 0) + getZukanStampTailMs(stamp),
+      ),
+    ),
+  );
+  return { slotStartMs, endMs };
 }
 
 /** 台紙のスクロール領域で見えている範囲や、マスの範囲の、画面の上下の位置。 */
@@ -259,7 +228,7 @@ export function isZukanSpanInView(
   );
 }
 
-/** 押すマスの範囲 `target` が、浮いた姿と輪が端で切れない余白を空けて見えているか。 */
+/** 押すマスの範囲 `target` が、浮いた姿が端で切れない余白を空けて見えているか。 */
 export function isZukanStampTargetVisible(
   view: ZukanVerticalSpan,
   target: ZukanVerticalSpan,

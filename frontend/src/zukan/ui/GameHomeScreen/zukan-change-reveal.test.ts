@@ -1,13 +1,19 @@
 import {
   countZukanStampSlots,
   findZukanFollowScrollTop,
+  findZukanHeaviestStamp,
   findZukanRevealScrollTop,
+  getZukanStamp,
   getZukanStampSlot,
   groupZukanStampSlots,
   planZukanStamps,
-  playZukanStamp,
-  type ZukanStampParts,
+  readZukanStamp,
+  type ZukanStamp,
 } from "@/zukan/ui/GameHomeScreen/zukan-change-reveal";
+import type { ZukanProblem } from "@/zukan/zukan-collection";
+
+const clearStamp: ZukanStamp = { level: "clear", isRaised: false };
+const perfectStamp: ZukanStamp = { level: "perfect", isRaised: false };
 
 describe("getZukanStampSlot", () => {
   const cases = [
@@ -59,28 +65,169 @@ describe("groupZukanStampSlots", () => {
   });
 });
 
+describe("getZukanStamp", () => {
+  const problem: ZukanProblem = {
+    kind: "solved",
+    number: 1,
+    difficulty: "1",
+    problemId: "p-1",
+    bestScore: 92,
+    fastestElapsedMs: 60_000,
+    fewestMoves: null,
+    fewestMistakes: null,
+    firstClearedAt: 0,
+  };
+
+  const cases = [
+    [
+      "新しく解いたマスを、今の段階で上がっていないものとすること",
+      { kind: "newly-solved", previousStatus: "untouched" },
+      false,
+    ],
+    [
+      "段階が上がったマスを、今の段階で上がったものとすること",
+      { kind: "raised", previousStatus: "good" },
+      true,
+    ],
+  ] as const;
+
+  test.each(cases)("%s", (_, change, expectedRaised) => {
+    const stamp = getZukanStamp(problem, change);
+
+    expect(stamp).toEqual({ level: "great", isRaised: expectedRaised });
+  });
+});
+
+describe("readZukanStamp", () => {
+  function createSquare(attributes: Record<string, string>): Element {
+    const square = document.createElement("button");
+    for (const [name, value] of Object.entries(attributes)) {
+      square.setAttribute(name, value);
+    }
+    return square;
+  }
+
+  describe("今の段階と段階が上がったことを載せたマスの場合", () => {
+    const square = createSquare({
+      "data-change-level": "perfect",
+      "data-change-raised": "",
+    });
+
+    test("載せた変化を読むこと", () => {
+      const stamp = readZukanStamp(square);
+
+      expect(stamp).toEqual({ level: "perfect", isRaised: true });
+    });
+  });
+
+  describe("段階を載せていないマスの場合", () => {
+    const square = createSquare({});
+
+    test("読まないこと", () => {
+      const stamp = readZukanStamp(square);
+
+      expect(stamp).toBeNull();
+    });
+  });
+});
+
+describe("findZukanHeaviestStamp", () => {
+  const cases: [string, ZukanStamp[], number | null][] = [
+    ["押すマスが無い", [], null],
+    [
+      "新しく解いた段階が違う",
+      [
+        clearStamp,
+        { level: "great", isRaised: false },
+        { level: "good", isRaised: false },
+      ],
+      1,
+    ],
+    [
+      "新しく great で解いたマスと、good へ上がったマスがある",
+      [
+        { level: "great", isRaised: false },
+        { level: "good", isRaised: true },
+      ],
+      1,
+    ],
+    [
+      "段階が上がったマスと、新しく perfect で解いたマスがある",
+      [{ level: "great", isRaised: true }, perfectStamp],
+      1,
+    ],
+  ];
+
+  test.each(cases)(
+    "最も重い変化のマスを選ぶこと: %s",
+    (_, stamps, expected) => {
+      const heaviest = findZukanHeaviestStamp(stamps);
+
+      expect(heaviest).toBe(expected);
+    },
+  );
+});
+
 describe("planZukanStamps", () => {
   describe("押す回が少ない場合", () => {
-    const slotCount = 3;
+    const slots = [[clearStamp], [clearStamp], [clearStamp]];
 
     test("前回の姿を少し見せてから、一定の間隔で押し始めること", () => {
-      const plan = planZukanStamps(slotCount);
+      const plan = planZukanStamps(slots);
 
-      expect(plan.slotStartMs).toEqual([300, 450, 600]);
+      expect(plan.slotStartMs).toEqual([300, 460, 620]);
+    });
+  });
+
+  describe("perfect を含む回がある場合", () => {
+    const slots = [[clearStamp], [perfectStamp], [clearStamp]];
+
+    test("perfect を押す前に間を置き、後の回もその分だけ後ろへずらすこと", () => {
+      const plan = planZukanStamps(slots);
+
+      expect(plan.slotStartMs).toEqual([300, 640, 800]);
+    });
+
+    test("後の回より perfect の余韻が長く続けば、その終わりを全体の終わりにすること", () => {
+      const plan = planZukanStamps(slots);
+
+      expect(plan.endMs).toBe(1460);
+    });
+  });
+
+  describe("最初の回が perfect の場合", () => {
+    test("前回の姿を見せる間より長く待たないこと", () => {
+      const plan = planZukanStamps([[perfectStamp], [clearStamp]]);
+
+      expect(plan.slotStartMs[0]).toBe(300);
+    });
+  });
+
+  describe("perfect を含む回が多い場合", () => {
+    const slots = Array.from({ length: 6 }, () => [perfectStamp]);
+
+    test("間を置くのは2回までにすること", () => {
+      const plan = planZukanStamps(slots);
+      const gaps = plan.slotStartMs
+        .slice(1)
+        .map((startMs, slot) => startMs - (plan.slotStartMs[slot] ?? 0));
+      const longGaps = gaps.filter((gap) => gap > Math.min(...gaps));
+
+      expect(longGaps).toHaveLength(2);
     });
   });
 
   describe("押す回が多い場合", () => {
-    const slotCount = 13;
+    const slots = Array.from({ length: 13 }, () => [clearStamp]);
 
-    test("全体を1.5秒以内に収めること", () => {
-      const plan = planZukanStamps(slotCount);
+    test("全体を1.7秒以内に収めること", () => {
+      const plan = planZukanStamps(slots);
 
-      expect(plan.endMs).toBeLessThanOrEqual(1500);
+      expect(plan.endMs).toBeLessThanOrEqual(1700);
     });
 
     test("押す間隔を詰めても、回の順に押し始めること", () => {
-      const plan = planZukanStamps(slotCount);
+      const plan = planZukanStamps(slots);
       const isAscending = plan.slotStartMs.every(
         (startMs, slot) =>
           slot === 0 || startMs > (plan.slotStartMs[slot - 1] ?? 0),
@@ -179,137 +326,6 @@ describe("findZukanFollowScrollTop", () => {
       const top = findZukanFollowScrollTop(view, scrollTop, next, fittingRest);
 
       expect(top).toBe(scrollTop + 700 - (500 - 32));
-    });
-  });
-});
-
-type FakeAnimation = Animation & {
-  keyframes: Keyframe[];
-  finish: () => void;
-};
-
-function createFakeElement(animations: FakeAnimation[]): Element {
-  return {
-    animate: vi.fn((keyframes: Keyframe[]) => {
-      let resolveFinished: (animation: Animation) => void = () => {};
-      let rejectFinished: (reason: unknown) => void = () => {};
-      const animation = {
-        keyframes,
-        finished: new Promise<Animation>((resolve, reject) => {
-          resolveFinished = resolve;
-          rejectFinished = reject;
-        }),
-        cancel: vi.fn(() => rejectFinished(new DOMException("", "AbortError"))),
-        finish: () => resolveFinished(animation as unknown as Animation),
-      };
-      animation.finished.catch(() => {});
-      animations.push(animation as unknown as FakeAnimation);
-      return animation;
-    }),
-  } as unknown as Element;
-}
-
-async function flushPromises() {
-  await new Promise((resolve) => setTimeout(resolve, 0));
-}
-
-const compositableProperties = new Set([
-  "transform",
-  "opacity",
-  "offset",
-  "easing",
-]);
-
-describe("playZukanStamp", () => {
-  let animations: FakeAnimation[];
-  let parts: ZukanStampParts;
-  let onLanded: ReturnType<typeof vi.fn<() => void>>;
-  let onFinished: ReturnType<typeof vi.fn<() => void>>;
-
-  beforeEach(() => {
-    animations = [];
-    parts = {
-      face: createFakeElement(animations),
-      shadow: createFakeElement(animations),
-      ring: createFakeElement(animations),
-    };
-    onLanded = vi.fn<() => void>();
-    onFinished = vi.fn<() => void>();
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  describe("動きを減らさない設定の場合", () => {
-    test("押す姿の動きが終わるまでは、マスに着いたことを知らせないこと", async () => {
-      playZukanStamp(parts, { onLanded, onFinished });
-      await flushPromises();
-
-      expect(onLanded).not.toHaveBeenCalled();
-    });
-
-    test("押す姿の動きが終わるとマスに着いたことを知らせ、戻りと輪の動きが終わると終わったことを知らせること", async () => {
-      playZukanStamp(parts, { onLanded, onFinished });
-      for (const animation of [...animations]) {
-        animation.finish();
-      }
-      await flushPromises();
-      const landedBeforeSettle = onLanded.mock.calls.length;
-      const finishedBeforeSettle = onFinished.mock.calls.length;
-      for (const animation of animations.slice(2)) {
-        animation.finish();
-      }
-      await flushPromises();
-
-      expect([landedBeforeSettle, finishedBeforeSettle]).toEqual([1, 0]);
-      expect(onFinished).toHaveBeenCalledTimes(1);
-    });
-
-    test("変形と透明度だけを動かすこと", async () => {
-      playZukanStamp(parts, { onLanded, onFinished });
-      for (const animation of [...animations]) {
-        animation.finish();
-      }
-      await flushPromises();
-      const animatedProperties = new Set(
-        animations.flatMap(({ keyframes }) =>
-          keyframes.flatMap((keyframe) => Object.keys(keyframe)),
-        ),
-      );
-
-      expect(
-        [...animatedProperties].every((property) =>
-          compositableProperties.has(property),
-        ),
-      ).toBe(true);
-    });
-
-    test("取り消すと、着いたことも終わったことも知らせないこと", async () => {
-      const cancel = playZukanStamp(parts, { onLanded, onFinished });
-
-      cancel();
-      await flushPromises();
-
-      expect(onLanded).not.toHaveBeenCalled();
-      expect(onFinished).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("動きを減らす設定の場合", () => {
-    beforeEach(() => {
-      vi.stubGlobal(
-        "matchMedia",
-        vi.fn(() => ({ matches: true }) as MediaQueryList),
-      );
-    });
-
-    test("動かさずに、すぐにマスに着いて終わったことを知らせること", () => {
-      playZukanStamp(parts, { onLanded, onFinished });
-
-      expect(animations).toEqual([]);
-      expect(onLanded).toHaveBeenCalledTimes(1);
-      expect(onFinished).toHaveBeenCalledTimes(1);
     });
   });
 });
