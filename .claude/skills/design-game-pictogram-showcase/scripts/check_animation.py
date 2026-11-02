@@ -219,6 +219,25 @@ def optional_file_errors(label: str, value: object, manifest_dir: Path) -> list[
     return [] if file_path.is_file() else [f"{label} not found: {file_path}"]
 
 
+def base_revision_errors(candidate_id: str, value: object, manifest_dir: Path) -> list[str]:
+    """base_revision is one SVG path, or a list of paths or {file, label} objects."""
+    label = f"{candidate_id}: base_revision"
+    if not isinstance(value, list):
+        return optional_file_errors(label, value, manifest_dir)
+    if not value:
+        return [f"{label} must not be an empty list"]
+    errors: list[str] = []
+    for index, item in enumerate(value):
+        item_label = f"{label}[{index}]"
+        if isinstance(item, dict):
+            if "label" in item and not non_empty_string(item["label"]):
+                errors.append(f"{item_label}.label must be a non-empty string when present")
+            errors.extend(optional_file_errors(f"{item_label}.file", item.get("file") or "", manifest_dir))
+        else:
+            errors.extend(optional_file_errors(item_label, item or "", manifest_dir))
+    return errors
+
+
 def based_on_errors(candidate_id: str, based_on: object, manifest_dir: Path) -> list[str]:
     """based_on: a non-empty list of {"id", "file", "label"?}; each file must exist."""
     if not isinstance(based_on, list) or not based_on:
@@ -309,9 +328,7 @@ def candidates_from_manifest(path: Path) -> tuple[list[Candidate], str | None, l
         based_on = entry.get("based_on")
         if based_on is not None:
             errors.extend(based_on_errors(candidate_id, based_on, path.parent))
-        errors.extend(
-            optional_file_errors(f"{candidate_id}: base_revision", entry.get("base_revision"), path.parent)
-        )
+        errors.extend(base_revision_errors(candidate_id, entry.get("base_revision"), path.parent))
 
         file_value = entry.get("file")
         if not non_empty_string(file_value):

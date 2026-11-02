@@ -651,6 +651,19 @@ def origin_line(origins: list[Origin], anchors: dict[tuple[str, Path], str]) -> 
     return f'<p class="origin">元の案: {links}</p>'
 
 
+def base_revisions(value: object) -> list[tuple[object, str]]:
+    """(file, caption) for each revised monochrome pictogram of a candidate's base_revision."""
+    if not value:
+        return []
+    if not isinstance(value, list):
+        return [(value, "白黒版の修正案")]
+    revisions = []
+    for item in value:
+        file, label = (item.get("file"), item.get("label")) if isinstance(item, dict) else (item, None)
+        revisions.append((file, f"白黒版の修正案（{label}）" if label else "白黒版の修正案"))
+    return revisions
+
+
 def human_card(
     manifest_path: Path,
     candidate: dict[str, Any],
@@ -674,15 +687,16 @@ def human_card(
         if base_svg
         else ""
     )
-    revision = candidate.get("base_revision")
+    revisions = base_revisions(candidate.get("base_revision"))
     revision_row = ""
-    if revision:
-        revision_svg = read_svg(manifest_path, revision, f"candidate {candidate_id} base_revision")
-        revision_row = (
-            f'<div class="bases">{base_figure}'
-            f'<figure><span class="tile">{themed_images(revision_svg, themes, "base-revision", candidate_id)}</span>'
-            "<figcaption>白黒版の修正案</figcaption></figure></div>"
+    if revisions:
+        figures = "".join(
+            f'<figure><span class="tile">'
+            f'{themed_images(read_svg(manifest_path, file, f"candidate {candidate_id} base_revision"), themes, "base-revision", candidate_id)}'
+            f"</span><figcaption>{html.escape(caption)}</figcaption></figure>"
+            for file, caption in revisions
         )
+        revision_row = f'<div class="bases">{base_figure}{figures}</div>'
         base_figure = ""
     compare = ""
     if others:
@@ -918,7 +932,7 @@ def build_human_document(
   .views {{ display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }}
   figure {{ margin: 0; text-align: center; }}
   .stills {{ display: flex; flex-direction: column; gap: 10px; }}
-  .bases {{ display: flex; gap: 14px; margin-top: 10px; }}
+  .bases {{ display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; }}
   figcaption {{ font-size: 11px; margin-top: 4px; }}
   .hero {{ background: color-mix(in oklab, var(--muted) 30%, var(--bg)); border-radius: 8px; padding: {hero_mobile_pad}px; }}
   .hero img {{ display: block; width: {hero_mobile}px; height: {hero_mobile}px; }}
