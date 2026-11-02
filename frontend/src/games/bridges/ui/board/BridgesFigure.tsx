@@ -206,7 +206,7 @@ export function BridgesFigure({
               dominantBaseline="central"
               fontSize={CLUE_FONT_SIZE}
               fontWeight={700}
-              className={cn("select-none", tone.clue)}
+              className={cn("select-none font-sans", tone.clue)}
             >
               {island.clue}
             </text>
