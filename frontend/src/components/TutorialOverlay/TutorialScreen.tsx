@@ -13,6 +13,13 @@ import {
 } from "react";
 
 import { GamePictogram } from "@/components/GamePictogram";
+import { TutorialFocusModeSwitch } from "@/components/TutorialOverlay/TutorialFocusModeSwitch";
+import { TutorialFocusScrim } from "@/components/TutorialOverlay/TutorialFocusScrim";
+import {
+  TUTORIAL_SPOTLIGHT_ATTRIBUTE,
+  TUTORIAL_SPOTLIGHT_PADDING_ATTRIBUTE,
+} from "@/components/TutorialSpotlight";
+import { useTutorialFocusMode } from "@/components/tutorial-focus-mode";
 import { Button } from "@/components/ui/button";
 import {
   DialogClose,
@@ -74,6 +81,8 @@ type TutorialScreenProps = {
   /** 導入を見せている間。開いたときと、もう一度始めたときに導入から始まる。 */
   introducing: boolean;
   completed: boolean;
+  /** 手を引いている間。画面全体に覆いを重ねる見せ方では、この間だけ覆いを出す。 */
+  guiding?: boolean;
   finish: TutorialFinish;
   /** ゲーム固有の盤面。盤面の大きさは盤面の側が、この領域の大きさから決める。 */
   renderBoard: (intro: TutorialBoardIntro) => ReactNode;
@@ -276,12 +285,15 @@ export function TutorialScreen({
   message,
   introducing,
   completed,
+  guiding = false,
   finish,
   renderBoard,
   onIntroEnd,
   onRestart,
   ref,
 }: TutorialScreenProps) {
+  const focusMode = useTutorialFocusMode();
+  const focusModeSwitchRef = useRef<HTMLDivElement>(null);
   const [stage, setStage] = useState<IntroStage>(introducing ? "name" : "done");
   // 名前を上部の外で大きく見せている間。上部の名前は伏せ、大きな名前の下に何をするパズルかの一文を出す。
   const [nameCentered, setNameCentered] = useState(introducing);
@@ -447,6 +459,13 @@ export function TutorialScreen({
     return target instanceof Node && !!nextButtonRef.current?.contains(target);
   }
 
+  /** 見せ方の切り替えは、導入の段を進めずに押せるようにする。 */
+  function isOnFocusModeSwitch(target: EventTarget): boolean {
+    return (
+      target instanceof Node && !!focusModeSwitchRef.current?.contains(target)
+    );
+  }
+
   /**
    * 今の段の動きを終えて、その段の終わりの画面を見せる。終える動きが無ければ何もせず `false` を返す。
    * ゴールと始めの盤面を見ないまま手順に入らないよう、2つの盤面の場面は「次へ」でしか先へ進めない。
@@ -483,13 +502,22 @@ export function TutorialScreen({
   }
 
   function handlePointerDownCapture(event: ReactPointerEvent): void {
-    if (introPlaying && !isOnNextButton(event.target)) {
+    if (
+      introPlaying &&
+      !isOnNextButton(event.target) &&
+      !isOnFocusModeSwitch(event.target)
+    ) {
       finishStageMotion();
     }
   }
 
   function handleKeyDownCapture(event: ReactKeyboardEvent): void {
-    if (!introPlaying || event.key === "Escape" || event.key === "Tab") {
+    if (
+      !introPlaying ||
+      event.key === "Escape" ||
+      event.key === "Tab" ||
+      isOnFocusModeSwitch(event.target)
+    ) {
       return;
     }
     // 「次へ」を押すキーは、今の段の動きを終えさせずに「次へ」に任せる。
@@ -535,7 +563,7 @@ export function TutorialScreen({
     <div
       ref={mergeRefs(rootRef, ref)}
       tabIndex={-1}
-      className="flex min-h-0 flex-1 flex-col outline-none"
+      className="relative flex min-h-0 flex-1 flex-col outline-none"
       onPointerDownCapture={handlePointerDownCapture}
       onKeyDownCapture={handleKeyDownCapture}
     >
@@ -631,14 +659,22 @@ export function TutorialScreen({
             stageView.rulesClassName,
           )}
         >
+          {/* 画面全体に覆いを重ねる見せ方では、一言を覆いから抜いて読めるようにする。角丸は抜く所の形にだけ使う。 */}
           <p
             key={`${message.headline}\n${message.detail ?? ""}`}
-            className="flex animate-in flex-col items-center gap-0.5 text-balance text-center duration-300 ease-(--ease-enter) fade-in-0 slide-in-from-bottom-1 whitespace-pre-line [word-break:auto-phrase] motion-reduce:animate-none"
+            {...{
+              [TUTORIAL_SPOTLIGHT_ATTRIBUTE]: "",
+              [TUTORIAL_SPOTLIGHT_PADDING_ATTRIBUTE]: 12,
+            }}
+            className="flex animate-in rounded-sm flex-col items-center gap-0.5 text-balance text-center duration-300 ease-(--ease-enter) fade-in-0 slide-in-from-bottom-1 whitespace-pre-line [word-break:auto-phrase] motion-reduce:animate-none"
           >
             <span className="text-heading">{message.headline}</span>
-            <span className="min-h-5 text-muted-foreground text-supporting">
-              {message.detail}
-            </span>
+            {/* 補足が無いときは空の行を置かず、覆いから抜く所を見出しの大きさに収める。一言の場所は高さを固定しているので、盤面は動かない。 */}
+            {message.detail && (
+              <span className="min-h-5 text-muted-foreground text-supporting">
+                {message.detail}
+              </span>
+            )}
           </p>
         </div>
 
@@ -735,6 +771,14 @@ export function TutorialScreen({
           </div>
         )}
       </footer>
+
+      <TutorialFocusScrim
+        active={
+          focusMode === "screen" && guiding && !introPlaying && !completed
+        }
+        containerRef={rootRef}
+      />
+      <TutorialFocusModeSwitch ref={focusModeSwitchRef} />
     </div>
   );
 }

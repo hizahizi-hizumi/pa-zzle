@@ -29,6 +29,8 @@ type TutorialOverlayProps = {
   /** 導入を見せている間。開いたときと、もう一度始めたときは導入から始まる。 */
   introducing: boolean;
   completed: boolean;
+  /** 手を引いている間。画面全体に覆いを重ねる見せ方では、この間だけ覆いを出す。 */
+  guiding?: boolean;
   finish: TutorialFinish;
   /** ゲーム固有の盤面。盤面の大きさは盤面の側が、この領域の大きさから決める。導入の盤面の段も盤面が受け持つ。 */
   renderBoard: (intro: TutorialBoardIntro) => ReactNode;
@@ -51,6 +53,7 @@ export function TutorialOverlay({
   message,
   introducing,
   completed,
+  guiding = false,
   finish,
   renderBoard,
   onIntroEnd,
@@ -87,6 +90,7 @@ export function TutorialOverlay({
           message={message}
           introducing={introducing}
           completed={completed}
+          guiding={guiding}
           finish={finish}
           renderBoard={renderBoard}
           onIntroEnd={onIntroEnd}
