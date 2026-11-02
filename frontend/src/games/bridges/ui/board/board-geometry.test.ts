@@ -1,4 +1,8 @@
-import { parseBridgesBoard } from "@/games/bridges/puzzle/board";
+import {
+  findBridgesEdgeToward,
+  getBridgesNetwork,
+  parseBridgesBoard,
+} from "@/games/bridges/puzzle/board";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
 import {
   findBoardTarget,
@@ -70,22 +74,76 @@ describe("findBoardTarget", () => {
     expect(target).toEqual(expected);
   });
 
-  describe("交わる辺の片方に橋がある場合", () => {
+  describe("交わる辺の横の方に橋がある場合", () => {
     const horizontalBridged: readonly BridgeCount[] = [0, 0, 0, 1];
+
+    test("縦の線に近い所を押しても橋のある横の辺を指すこと", () => {
+      const target = findBoardTarget(board, horizontalBridged, {
+        x: 2.6,
+        y: 2.2,
+      });
+
+      expect(target).toEqual({ kind: "edge", edge: 3 });
+    });
+  });
+
+  describe("交わる辺の縦の方に橋がある場合", () => {
     const verticalBridged: readonly BridgeCount[] = [0, 0, 2, 0];
 
     test.each([
-      ["横の橋がある", horizontalBridged, { x: 2.6, y: 2.2 }, 3],
-      ["縦の橋がある", verticalBridged, { x: 2.2, y: 2.6 }, 2],
-      ["縦の橋がある", verticalBridged, { x: 3.0, y: 2.0 }, 2],
-    ] as const)(
-      "%sとき、橋の無い線に近い所を押しても橋のある辺 %s を指すこと",
-      (_, bridges, point, expected) => {
-        const target = findBoardTarget(board, bridges, point);
+      ["横の線に近い所", { x: 2.2, y: 2.6 }],
+      ["2本の線からちょうど同じ距離の所", { x: 3.0, y: 2.0 }],
+    ] as const)("%sを押しても橋のある縦の辺を指すこと", (_, point) => {
+      const target = findBoardTarget(board, verticalBridged, point);
 
-        expect(target).toEqual({ kind: "edge", edge: expected });
-      },
+      expect(target).toEqual({ kind: "edge", edge: 2 });
+    });
+  });
+
+  describe("短い辺の真ん中が長い辺の上に乗る盤面の場合", () => {
+    // 縦の E–J（(1,4)-(3,4)、間が1マス）の真ん中 (4.5, 2.5) を、横の G–H（(2,2)-(2,6)、間が3マス）が通る。
+    const crossingBoard = parseBridgesBoard([
+      "2..2..2",
+      ".2..3..",
+      "3.1...2",
+      ".2..3..",
+      ".......",
+      ".2.1...",
+      "3...4.2",
+    ]);
+    function islandAt(row: number, column: number): number {
+      return crossingBoard.islands.findIndex(
+        (island) => island.row === row && island.column === column,
+      );
+    }
+    const shortEdge = findBridgesEdgeToward(
+      crossingBoard,
+      islandAt(1, 4),
+      "down",
     );
+    const longEdge = findBridgesEdgeToward(
+      crossingBoard,
+      islandAt(2, 2),
+      "right",
+    );
+    const empty = getBridgesNetwork(crossingBoard).edges.map(
+      (): BridgeCount => 0,
+    );
+
+    test.each([
+      ["短い辺の真ん中", "短い", { x: 4.5, y: 2.5 }],
+      // 試遊で縦の E–J を狙って押した位置（390px 幅の画面の (245, 274)）。
+      ["試遊で短い辺を狙って押した所", "短い", { x: 4.478, y: 2.483 }],
+      ["交点から横の線に沿って離れた所", "長い", { x: 4.8, y: 2.5 }],
+      ["交点から縦の線に沿って離れた所", "短い", { x: 4.5, y: 2.8 }],
+    ] as const)("%sを押すと%s辺を指すこと", (_, expected, point) => {
+      const target = findBoardTarget(crossingBoard, empty, point);
+
+      expect(target).toEqual({
+        kind: "edge",
+        edge: expected === "短い" ? shortEdge : longEdge,
+      });
+    });
   });
 
   describe("交わらない辺に橋がある場合", () => {
