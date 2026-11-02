@@ -1,168 +1,240 @@
-<title>ノノグラムの最終レビュー</title>
+<title>ノノグラム 最終レビュー</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap">
 <style>
-/* デジタル庁デザインシステム（DADS）のトークンとコンポーネントの値。@digital-go-jp/design-tokens 2.1.0 と design-system-example-components（MIT）から写した。DADS はダーク表示を定めていないので明るい表示だけにする。 */
+/* Vercel Geist に寄せた見た目。書体は Geist（日本語は Noto Sans JP）。Geist の色は公式の値が公開されていないので、Vercel の画面に合わせた近似。明るい表示だけ。 */
 .review {
-  --color-key-900: #0017c1;
-  --color-key-1000: #00118f;
-  --color-blue-50: #e8f1fe;
-  --color-solid-gray-50: #f2f2f2;
-  --color-solid-gray-100: #e6e6e6;
-  --color-solid-gray-420: #949494;
-  --color-solid-gray-536: #767676;
-  --color-solid-gray-800: #333333;
-  --color-solid-gray-900: #1a1a1a;
-  --color-magenta-900: #8b008b;
-  --color-orange-800: #c74700;
-  --color-yellow-300: #ffd43d;
-  --color-white: #ffffff;
-  --color-black: #000000;
+  --bg: #ffffff;
+  --bg-subtle: #fafafa;
+  --fg: #171717;
+  --fg-muted: #666666;
+  --fg-faint: #8f8f8f;
+  --border: #ebebeb;
+  --border-strong: #171717;
+  --link: #0070f3;
+  --ok: #0a7d33;
+  --radius: 12px;
   color-scheme: light;
-  background: var(--color-white);
-  color: var(--color-solid-gray-800);
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 1rem; font-weight: 400; line-height: 1.7; letter-spacing: 0.02em; /* Std-16N-170 */
-  max-width: 45rem;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Geist', 'Noto Sans JP', sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 40rem;
   margin: 0 auto;
   padding-block: 2rem 4rem;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 body:has(.review) { background: #ffffff; }
-.review h1 { color: var(--color-solid-gray-900); font-size: 1.75rem; font-weight: 700; line-height: 1.5; letter-spacing: 0.01em; margin: 0 0 1.5rem; text-wrap: balance; } /* Std-28B-150 */
-.review h2 { /* 見出し Std-20B-150 とチップ */
-  position: relative; color: var(--color-solid-gray-900);
-  font-size: 1.25rem; font-weight: 700; line-height: 1.5; letter-spacing: 0.02em;
-  margin: 3rem 0 1rem; padding-left: calc(1em / 3 + 0.5em); text-wrap: balance;
-}
-.review h2::before { content: ""; position: absolute; left: 0; top: 0.2em; bottom: 0.1em; width: calc(1em / 3); background: var(--color-key-900); }
-.review p { margin: 0 0 1rem; }
-.review strong { color: var(--color-solid-gray-900); }
-.review ol, .review ul { margin: 0 0 1rem; padding-left: 2rem; }
-.review li { padding-block: 0.5rem; }
-.review a { color: var(--color-key-1000); text-decoration: underline; text-underline-offset: 0.1875rem; }
-.review a:visited { color: var(--color-magenta-900); }
-.review a:hover { text-decoration-thickness: 0.1875rem; }
-.review a:active { color: var(--color-orange-800); text-decoration-thickness: 1px; }
-.review a:focus-visible, .review summary:focus-visible {
-  outline: 4px solid var(--color-black); outline-offset: 2px; border-radius: 4px;
-  background: var(--color-yellow-300); box-shadow: 0 0 0 2px var(--color-yellow-300); color: var(--color-key-1000);
-}
-.review figure { margin: 1rem 0 1.5rem; }
-.review img, .review figure svg { display: block; max-width: 100%; height: auto; }
-.review figcaption { font-size: 0.875rem; line-height: 1.3; letter-spacing: 0; color: var(--color-solid-gray-536); margin-top: 0.5rem; } /* Dns-14N-130 */
-/* ノティフィケーションバナー（info1・standard） */
-.review .banner {
-  display: grid; grid-template-columns: 1.5rem 1fr; gap: 1rem;
-  border: 3px solid var(--color-key-900); border-radius: 12px; color: var(--color-key-900);
-  padding: 1rem 1rem 1.5rem; margin-bottom: 2rem;
-}
-.review .banner svg { margin-top: 3px; }
-.review .banner-title { color: var(--color-solid-gray-900); font-size: 1.0625rem; font-weight: 700; line-height: 1.7; margin: 0; } /* Std-17B-170 */
-.review .banner-body { grid-column: 1 / -1; color: var(--color-solid-gray-800); }
-.review .banner-body p:last-child { margin-bottom: 0; }
-/* テーブル */
-.review .table-wrap { overflow-x: auto; margin: 0 0 1rem; }
-.review table { width: 100%; border-collapse: collapse; }
-.review th, .review td { padding: 1.25rem 1rem; text-align: start; vertical-align: top; }
-.review thead tr { border-bottom: 1px solid var(--color-black); background: var(--color-solid-gray-100); }
-.review tbody tr { border-bottom: 1px solid var(--color-solid-gray-420); }
-/* ディスクロージャー */
-.review details { margin: 0 0 1rem; }
-.review summary { display: flex; gap: 0.5rem; align-items: flex-start; width: fit-content; list-style: none; cursor: default; }
+.review * { box-sizing: border-box; }
+.review h1, .review h2, .review h3, .review p { margin: 0; }
+.review a { color: var(--link); text-decoration: none; }
+.review a:hover { text-decoration: underline; }
+.review a:focus-visible, .review summary:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; border-radius: 6px; }
+.review img, .review svg { display: block; max-width: 100%; height: auto; }
+.review .mono { font-family: 'Geist Mono', monospace; }
+
+/* 見出し */
+.review .eyebrow { color: var(--fg-muted); font-size: 0.875rem; }
+.review h1 { font-size: 2rem; font-weight: 600; letter-spacing: -0.04em; line-height: 1.2; margin-top: 0.25rem; }
+.review .lead { color: var(--fg-muted); margin-top: 0.75rem; }
+.review .hero { display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: end; }
+.review .hero img { width: 104px; border: 1px solid var(--border); border-radius: 8px; }
+.review section { margin-top: 2.5rem; }
+.review h2 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.4; display: flex; gap: 0.5rem; align-items: baseline; }
+.review h2 .n { color: var(--fg-faint); font-family: 'Geist Mono', monospace; font-size: 0.875rem; font-weight: 400; }
+.review .hint { color: var(--fg-muted); font-size: 0.875rem; margin-top: 0.25rem; }
+
+/* やること */
+.review .todo { list-style: none; padding: 0; margin: 1.5rem 0 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+.review .todo a { display: block; height: 100%; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem; color: var(--fg); }
+.review .todo a:hover { border-color: var(--border-strong); text-decoration: none; }
+.review .todo .k { font-family: 'Geist Mono', monospace; font-size: 0.75rem; color: var(--fg-faint); }
+.review .todo b { display: block; font-weight: 600; }
+.review .todo span { display: block; color: var(--fg-muted); font-size: 0.8125rem; line-height: 1.4; }
+
+/* 遊ぶ */
+.review .cards { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; gap: 0.5rem; }
+.review .play { display: grid; grid-template-columns: auto 1fr auto; gap: 0.25rem 0.75rem; align-items: center; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.875rem 1rem; }
+.review .lv { font-family: 'Geist Mono', monospace; font-size: 0.75rem; font-weight: 500; border: 1px solid var(--border); border-radius: 6px; padding: 0.125rem 0.375rem; color: var(--fg-muted); }
+.review .play b { font-weight: 600; }
+.review .play p { grid-column: 2 / -1; color: var(--fg-muted); font-size: 0.875rem; line-height: 1.5; }
+.review .btn { justify-self: end; white-space: nowrap; background: var(--fg); color: var(--bg); border-radius: 999px; font-size: 0.875rem; font-weight: 500; padding: 0.375rem 0.875rem; }
+.review a.btn:hover { text-decoration: none; opacity: 0.85; }
+.review .btn .t { color: #a1a1a1; font-family: 'Geist Mono', monospace; font-weight: 400; margin-left: 0.25rem; }
+
+/* 答える */
+.review .q { border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; }
+.review .q h3 { font-size: 1rem; font-weight: 600; }
+.review .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.75rem; }
+.review .opt { border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; font-size: 0.875rem; line-height: 1.5; color: var(--fg-muted); display: grid; gap: 0.375rem; align-content: start; }
+.review .opt.rec { border: 1.5px solid var(--border-strong); color: var(--fg); }
+.review .tag { justify-self: start; font-size: 0.75rem; font-weight: 500; border-radius: 999px; padding: 0.0625rem 0.5rem; background: var(--bg-subtle); border: 1px solid var(--border); color: var(--fg-muted); }
+.review .rec .tag { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+.review .opt b { color: var(--fg); font-weight: 600; }
+.review .cost { color: var(--fg-faint); font-size: 0.8125rem; }
+
+/* マージ */
+.review .prs { list-style: none; padding: 0; margin: 1rem 0 0; border: 1px solid var(--border); border-radius: var(--radius); }
+.review .prs li { display: grid; grid-template-columns: 1.25rem 3.5rem 1fr auto; gap: 0.5rem; align-items: center; padding: 0.625rem 1rem; border-top: 1px solid var(--border); font-size: 0.9375rem; }
+.review .prs li:first-child { border-top: 0; }
+.review .prs .i { color: var(--fg-faint); font-family: 'Geist Mono', monospace; font-size: 0.75rem; }
+.review .prs .ci { color: var(--ok); font-size: 0.8125rem; }
+
+/* 参考（畳む） */
+.review .more { margin-top: 2.5rem; border-top: 1px solid var(--border); }
+.review details { border-bottom: 1px solid var(--border); }
+.review summary { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.875rem 0; cursor: pointer; list-style: none; font-weight: 500; }
 .review summary::-webkit-details-marker { display: none; }
-.review summary:hover { text-decoration: underline; text-underline-offset: 0.1875rem; }
-.review summary svg { flex: none; color: var(--color-key-1000); margin-top: calc((1.7em - 24px) / 2); }
-.review details[open] summary svg { transform: rotate(180deg); }
-.review details > ul { margin-top: 0.5rem; }
+.review summary::after { content: "+"; color: var(--fg-faint); font-family: 'Geist Mono', monospace; }
+.review details[open] summary::after { content: "−"; }
+.review summary .c { color: var(--fg-faint); font-family: 'Geist Mono', monospace; font-size: 0.8125rem; font-weight: 400; margin-left: auto; }
+.review details > div { padding: 0 0 1rem; font-size: 0.9375rem; color: var(--fg-muted); }
+.review details ul { margin: 0; padding-left: 1.25rem; display: grid; gap: 0.375rem; }
+.review details li b { color: var(--fg); font-weight: 500; }
+.review .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.75rem; }
+.review .stat { border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem 0.75rem; }
+.review .stat .v { color: var(--fg); font-family: 'Geist Mono', monospace; font-size: 1.125rem; font-weight: 500; }
+.review .stat .l { font-size: 0.75rem; }
+.review .stat p { font-size: 0.8125rem; line-height: 1.4; margin-top: 0.25rem; }
+.review footer { margin-top: 2rem; color: var(--fg-muted); font-size: 0.875rem; }
+@media (max-width: 380px) { .review .opts { grid-template-columns: 1fr; } }
 </style>
 
 <main class="review">
-  <h1>ノノグラムの最終レビュー（1回目）</h1>
-
-  <div class="banner" role="region" aria-labelledby="ask">
-    <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><circle cx="12" cy="8" r="1" fill="#fff"/><path d="M11 11h2v6h-2z" fill="#fff"/></svg>
-    <p class="banner-title" id="ask">ノノグラムができました</p>
-    <div class="banner-body">
-      <p>15分ほど遊んで、下の3点に意見をください。問題なければ、PR #101〜#105 を番号順にマージしてください。</p>
+  <div class="hero">
+    <div>
+      <p class="eyebrow">最終レビュー · 1回目</p>
+      <h1>ノノグラム</h1>
+      <p class="lead">行と列の数字どおりにマスを塗るパズル。推理だけで解けて、正解・不正解は出ません。</p>
     </div>
+    <img src="board-level3.png" alt="レベル3の途中の盤面">
   </div>
 
-  <p>行・列のヒントどおりにマスを塗るパズルです。正誤は出さず、どのレベルも仮置きなしで解けます。レベルが上がるほど盤面が縦に伸び、連鎖が長くなり、手を付けられる行が減ります。</p>
-  <figure>
-    <img src="board-level3.png" alt="レベル3を解いている途中の盤面" width="300">
-    <figcaption>レベル3を解いている途中</figcaption>
-  </figure>
-
-  <h2>遊んでほしい順</h2>
-  <ol>
-    <li><a href="https://ng-work.pa-zzle.workers.dev/">一覧</a>からノノグラムを開き、遊び方を読まずにレベル1を1問（2分ほど）。説明なしで始められるかを見てください。</li>
-    <li><a href="https://ng-work.pa-zzle.workers.dev/puzzles/nonogram/play/3?problem=ng-10x10-d0.55-s0-n-812">レベル3</a>を1問（4分ほど）。ヒントが薄くなる見た目が分かりやすいか、iPhone でなぞっている途中に画面がスクロールしないかを見てください。</li>
-    <li><a href="https://ng-work.pa-zzle.workers.dev/puzzles/nonogram/play/5?problem=ng-10x15-d0.45-s0-n-2077">レベル5</a>を1問（6分ほど）。レベル3より読みが深いと感じるか、盤面が広いだけに感じるかを見てください。</li>
-    <li>クリア後の結果画面で、塗り直しの減点が自分の出来と合っているかを見てください。</li>
+  <ol class="todo">
+    <li><a href="#play"><span class="k">1</span><b>遊ぶ</b><span>3問・12分</span></a></li>
+    <li><a href="#ask"><span class="k">2</span><b>答える</b><span>質問3つ</span></a></li>
+    <li><a href="#merge"><span class="k">3</span><b>マージ</b><span>PR 5つ</span></a></li>
   </ol>
 
-  <h2>意見がほしい3点</h2>
-  <p>意見がなければ、それぞれ推奨のまま進めます。</p>
-  <ol>
-    <li><strong>レベル5が上級者に物足りなくないか。</strong>推奨は今のまま、仮置きなしで解ける問題だけにすることです。試しに塗る遊びにならず、最後まで読みが主役になります。物足りなければ、レベル5だけ2行を同時に考える問題を混ぜられますが、生成と難易度を作り直すことになります。</li>
-    <li><strong>ヒントに合った行・列のヒントの薄さ。</strong>推奨は今の濃さです。合ったことが分かりつつ、読み返せます。もっと薄くすると、合ったのは分かりやすくなりますが、読み返しにくくなります。
-      <figure>
-        <img src="hint-compare.png" alt="今の濃さと、もっと薄くした場合の比較" width="330">
-        <figcaption>今の濃さ（左）ともっと薄くした場合（右）</figcaption>
-      </figure>
-    </li>
-    <li><strong>塗り直しの減点の重さ。</strong>推奨は1マス3点です。読んでから塗る人と試しに塗る人の差がはっきり出ます。押し間違いに優しくするなら1マス2点です。</li>
-  </ol>
-
-  <h2>認識合わせから変えたこと</h2>
-  <ul>
-    <li>模様の左右対称は、レベル1だけにしました。対称だと半分読めば残りが分かり、レベル5が半分の時間で解けてしまったためです。</li>
-    <li>盤面を最初に戻しても減点しない約束でしたが、戻して消えた塗りは塗り直しに数えるようにしました。数えないと、間違えても戻せば満点が取れたためです。</li>
-  </ul>
-
-  <h2>AI が遊んだ結果</h2>
-  <p>レベル1・3・5を1問ずつ遊び、2分10秒・3分40秒・3分54秒でした。レベル5では、手を付けられる行が2本だけの局面で止まりました。遊んで見つけた「塗ったマスからなぞると消しになるのが分からない」「列のヒントの数字が詰まって数え違える」「レベル1・3・5の手応えが同じ」は直してあります。</p>
-
-  <h2>こちらで決めたこと</h2>
-  <p>意見がなければこのままにします。後から変えると手戻りが大きいのは次の3つです。</p>
-  <ul>
-    <li>盤面は最大10×15（変えると、画面・生成・難易度をやり直し）</li>
-    <li>難易度は、連鎖の長さ・手を付けられる行の数・1行の塊の数・盤面の大きさの組み合わせで分ける（変えると、難易度と問題集をやり直し）</li>
-    <li>操作はタップとなぞりで、塗りと×を切り替える（変えると、画面をやり直し）</li>
-  </ul>
-  <details>
-    <summary><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#fff"/><path d="M12 15.525 16.925 10.625H7.075L12 15.525ZM12 22.85C6.008 22.85 1.15 17.992 1.15 12S6.008 1.15 12 1.15 22.85 6.008 22.85 12 17.992 22.85 12 22.85Z" fill="currentColor"/></svg>ほかに決めたこと（9件）</summary>
-    <ul>
-      <li>問題は各レベル500問</li>
-      <li>クリアすると模様が一度ふくらむ演出</li>
-      <li>難易度選択の図は、盤面の大きさと連鎖を階段の線で描く</li>
-      <li>…</li>
+  <section id="play">
+    <h2>遊ぶ</h2>
+    <p class="hint">上から順に。遊び方は読まずに始めてください。</p>
+    <ul class="cards">
+      <li class="play">
+        <span class="lv">L1</span><b>説明なしで遊べる？</b>
+        <a class="btn" href="https://ng-work.pa-zzle.workers.dev/">遊ぶ<span class="t">2分</span></a>
+        <p>一覧から開いてください。</p>
+      </li>
+      <li class="play">
+        <span class="lv">L3</span><b>そろったと分かる？</b>
+        <a class="btn" href="https://ng-work.pa-zzle.workers.dev/puzzles/nonogram/play/3?problem=ng-10x10-d0.55-s0-n-812">遊ぶ<span class="t">4分</span></a>
+        <p>そろった行は数字が薄くなります。iPhone なら、なぞっている途中で画面が動かないかも。</p>
+      </li>
+      <li class="play">
+        <span class="lv">L5</span><b>L3 より難しい？</b>
+        <a class="btn" href="https://ng-work.pa-zzle.workers.dev/puzzles/nonogram/play/5?problem=ng-10x15-d0.45-s0-n-2077">遊ぶ<span class="t">6分</span></a>
+        <p>ただ広いだけに感じないか。</p>
+      </li>
+      <li class="play">
+        <span class="lv">結果</span><b>点数に納得できる？</b>
+        <span></span>
+        <p>塗り直すと、1マスごとに減点されます。</p>
+      </li>
     </ul>
-  </details>
+  </section>
 
-  <h2>まだ確かめていないこと</h2>
-  <ul>
-    <li>実機でしか分からないこと: 幅320のスマホでの押し間違い、効果音</li>
-    <li>人が遊ばないと分からないこと: 基準時間（レベル1で72秒〜レベル5で176秒）が妥当か、模様で達成感が出るか</li>
-    <li>「ノノグラム」の商標</li>
-  </ul>
+  <section id="ask">
+    <h2>答える</h2>
+    <p class="hint">おすすめは今の作りです。返事がなければ、このまま進めます。</p>
+    <div class="cards">
+      <div class="q">
+        <h3>L5、物足りなくない？</h3>
+        <div class="opts">
+          <div class="opt rec"><span class="tag">おすすめ</span><b>推理だけで解ける問題に限る</b>最後まで考えて解ける。</div>
+          <div class="opt"><span class="tag">別案</span><b>L5 だけ、2行を同時に考える問題も出す</b>歯ごたえが増す。<span class="cost">作り直し: 生成と難易度</span></div>
+        </div>
+      </div>
+      <div class="q">
+        <h3>そろった行の数字、この薄さでいい？</h3>
+        <div class="opts">
+          <div class="opt rec"><span class="tag">おすすめ</span><img src="hint-now.png" alt="今の薄さ">そろったと分かり、読み返せる。</div>
+          <div class="opt"><span class="tag">別案</span><img src="hint-lighter.png" alt="もっと薄くした場合">そろったのがよく分かる。読み返しにくい。</div>
+        </div>
+      </div>
+      <div class="q">
+        <h3>塗り直しの減点、重すぎない？</h3>
+        <div class="opts">
+          <div class="opt rec"><span class="tag">おすすめ</span><b>1マス 3点</b>推理して塗った人が報われる。</div>
+          <div class="opt"><span class="tag">別案</span><b>1マス 2点</b>押し間違いに優しい。</div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  <h2>PR</h2>
-  <p>CI はすべて通っています。この順にマージしてください。</p>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th scope="col">PR</th><th scope="col">中身</th></tr></thead>
-      <tbody>
-        <tr><td>#101</td><td>調査</td></tr>
-        <tr><td>#102</td><td>ルールと問題集</td></tr>
-        <tr><td>#103</td><td>画面・スコア・記録</td></tr>
-        <tr><td>#104</td><td>一覧への掲載</td></tr>
-        <tr><td>#105</td><td>SPEC・ADR・台帳</td></tr>
-      </tbody>
-    </table>
+  <section id="merge">
+    <h2>マージ</h2>
+    <p class="hint">問題なければ、上から順に。</p>
+    <ol class="prs">
+      <li><span class="i">1</span><a class="mono" href="#">#101</a><span>調査</span><span class="ci">CI 通過</span></li>
+      <li><span class="i">2</span><a class="mono" href="#">#102</a><span>ルールと問題</span><span class="ci">CI 通過</span></li>
+      <li><span class="i">3</span><a class="mono" href="#">#103</a><span>画面・点数・記録</span><span class="ci">CI 通過</span></li>
+      <li><span class="i">4</span><a class="mono" href="#">#104</a><span>一覧に載せる</span><span class="ci">CI 通過</span></li>
+      <li><span class="i">5</span><a class="mono" href="#">#105</a><span>仕様と記録</span><span class="ci">CI 通過</span></li>
+    </ol>
+  </section>
+
+  <div class="more">
+    <details>
+      <summary>AI が遊んだ結果</summary>
+      <div>
+        <div class="stats">
+          <div class="stat"><div class="l">L1</div><div class="v">2:10</div><p>迷わず解けた</p></div>
+          <div class="stat"><div class="l">L3</div><div class="v">3:40</div><p>列がそろうのを待つ場面あり</p></div>
+          <div class="stat"><div class="l">L5</div><div class="v">3:54</div><p>手がかりが2行だけの場面で止まった</p></div>
+        </div>
+        <ul>
+          <li><b>なぞると消えるのが分かりにくい</b> → 遊び方に図を足した</li>
+          <li><b>縦の数字が詰まって数え違える</b> → 数字を大きくした</li>
+          <li><b>L1・L3・L5 の難しさが同じ</b> → レベルの分け方を直した</li>
+        </ul>
+      </div>
+    </details>
+    <details>
+      <summary>最初の約束から変えたこと<span class="c">2</span></summary>
+      <div>
+        <ul>
+          <li><b>左右対称の模様は L1 だけ</b>　対称だと L5 が半分の時間で解けた</li>
+          <li><b>リセットで消した塗りも減点</b>　しないとリセットで満点が取れた</li>
+        </ul>
+      </div>
+    </details>
+    <details>
+      <summary>AI が決めたこと<span class="c">12</span></summary>
+      <div>
+        <ul>
+          <li><b>盤面は最大 10×15</b>　変えると画面・生成・難易度を作り直し</li>
+          <li><b>難易度は、推理の長さと手がかりの少なさで分ける</b>　変えると難易度と問題を作り直し</li>
+          <li><b>操作はタップとなぞる、塗りと×は切り替え</b>　変えると画面を作り直し</li>
+          <li>問題は各レベル500問</li>
+          <li>クリアすると模様がふくらむ</li>
+          <li>ほか7つ</li>
+        </ul>
+      </div>
+    </details>
+    <details>
+      <summary>まだ確かめていないこと<span class="c">4</span></summary>
+      <div>
+        <ul>
+          <li>幅の狭い iPhone での押し間違い</li>
+          <li>効果音（耳で聞いていない）</li>
+          <li>人が遊んだときの時間（L1 72秒〜L5 176秒を目安にしている）</li>
+          <li>「ノノグラム」の商標</li>
+        </ul>
+      </div>
+    </details>
   </div>
 
-  <p>指摘は一言とスクショで大丈夫です。記録画面からコピーした JSON を貼ってもらえれば、難易度の調整に使います。</p>
+  <footer>気になる点は、一言とスクショで送ってください。記録画面のコピーで取れる JSON を貼ってもらえると、難易度の調整に使えます。</footer>
 </main>
