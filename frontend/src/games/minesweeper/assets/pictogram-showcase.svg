@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="マインスイーパー">
+<style>
+.pz-minesweeper-line{fill:#cad5e2}.dark .pz-minesweeper-line{fill:#45556c}
+.pz-minesweeper-hid{fill:#e2e8f0}.dark .pz-minesweeper-hid{fill:#314158}
+.pz-minesweeper-open{fill:var(--background)}
+.pz-minesweeper-minebg{fill:#f1f5f9}.dark .pz-minesweeper-minebg{fill:#1d293d}
+.pz-minesweeper-mine{fill:#314158;stroke:#314158}.dark .pz-minesweeper-mine{fill:#e2e8f0;stroke:#e2e8f0}
+.pz-minesweeper-flag{fill:#e7000b;stroke:#e7000b}.dark .pz-minesweeper-flag{fill:#ff6467;stroke:#ff6467}
+.pz-minesweeper-n1{fill:#155dfc}.dark .pz-minesweeper-n1{fill:#51a2ff}
+.pz-minesweeper-n2{fill:#007a55;stroke:#007a55}.dark .pz-minesweeper-n2{fill:#00d492;stroke:#00d492}
+.pz-minesweeper-cv21{transform-box:fill-box;transform-origin:50% 50%;transform:scale(0.6);opacity:0}
+.pz-minesweeper-ct21{transform-box:view-box;transform-origin:60px 88px;transform:scale(1);opacity:1}
+.pz-minesweeper-cv00{transform-box:fill-box;transform-origin:50% 50%;transform:scale(0.6);opacity:0}
+.pz-minesweeper-ct00{transform-box:view-box;transform-origin:32px 32px;transform:scale(1);opacity:1}
+.pz-minesweeper-cv01{transform-box:fill-box;transform-origin:50% 50%;transform:scale(0.6);opacity:0}
+.pz-minesweeper-ct01{transform-box:view-box;transform-origin:60px 32px;transform:scale(1);opacity:1}
+.pz-minesweeper-cv02{transform-box:fill-box;transform-origin:50% 50%;transform:scale(0.6);opacity:0}
+.pz-minesweeper-cv22{transform-box:fill-box;transform-origin:50% 50%;transform:scale(0.6);opacity:0}
+.pz-minesweeper-ct22{transform-box:view-box;transform-origin:88px 88px;transform:scale(1);opacity:1}
+.pz-minesweeper-board{transform-box:view-box;transform-origin:60px 60px;transform:scale(1)}
+@media (prefers-reduced-motion: no-preference){
+[data-pictogram-motion="play"] .pz-minesweeper-cv21{animation:pz-minesweeper-cv21 4950ms linear infinite}
+[data-pictogram-motion="play"] .pz-minesweeper-ct21{animation:pz-minesweeper-ct21 4950ms linear infinite}
+[data-pictogram-motion="play"] .pz-minesweeper-cv00{animation:pz-minesweeper-cv00 4950ms linear infinite}
+[data-pictogram-motion="play"] .pz-minesweeper-ct00{animation:pz-minesweeper-ct00 4950ms linear infinite}
+[data-pictogram-motion="play"] .pz-minesweeper-cv01{animation:pz-minesweeper-cv01 4950ms linear infinite}
+[data-pictogram-motion="play"] .pz-minesweeper-ct01{animation:pz-minesweeper-ct01 4950ms linear infinite}
+[data-pictogram-motion="play"] .pz-minesweeper-cv02{animation:pz-minesweeper-cv02 4950ms linear infinite}
+[data-pictogram-motion="play"] .pz-minesweeper-cv22{animation:pz-minesweeper-cv22 4950ms linear infinite}
+[data-pictogram-motion="play"] .pz-minesweeper-ct22{animation:pz-minesweeper-ct22 4950ms linear infinite}
+[data-pictogram-motion="play"] .pz-minesweeper-board{animation:pz-minesweeper-board 4950ms linear infinite}
+@keyframes pz-minesweeper-cv21{0%{transform:scale(1);opacity:1}7.071%{transform:scale(1);opacity:1;animation-timing-function:cubic-bezier(0.3,0,0.2,1)}9.697%{transform:scale(0.84);opacity:1}11.111%{transform:scale(0.84);opacity:1;animation-timing-function:cubic-bezier(0.4,0,0.6,1)}14.747%{transform:scale(0.6);opacity:0}100%{transform:scale(0.6);opacity:0}}
+@keyframes pz-minesweeper-ct21{0%{transform:scale(0.5);opacity:0}12.323%{transform:scale(0.5);opacity:0;animation-timing-function:cubic-bezier(0.34,1.5,0.64,1)}17.98%{transform:scale(1);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes pz-minesweeper-cv00{0%{transform:scale(1);opacity:1}19.192%{transform:scale(1);opacity:1;animation-timing-function:cubic-bezier(0.3,0,0.2,1)}21.818%{transform:scale(0.84);opacity:1}23.232%{transform:scale(0.84);opacity:1;animation-timing-function:cubic-bezier(0.4,0,0.6,1)}26.869%{transform:scale(0.6);opacity:0}100%{transform:scale(0.6);opacity:0}}
+@keyframes pz-minesweeper-ct00{0%{transform:scale(0.5);opacity:0}24.444%{transform:scale(0.5);opacity:0;animation-timing-function:cubic-bezier(0.34,1.5,0.64,1)}30.101%{transform:scale(1);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes pz-minesweeper-cv01{0%{transform:scale(1);opacity:1}31.313%{transform:scale(1);opacity:1;animation-timing-function:cubic-bezier(0.3,0,0.2,1)}33.939%{transform:scale(0.84);opacity:1}35.354%{transform:scale(0.84);opacity:1;animation-timing-function:cubic-bezier(0.4,0,0.6,1)}38.99%{transform:scale(0.6);opacity:0}100%{transform:scale(0.6);opacity:0}}
+@keyframes pz-minesweeper-ct01{0%{transform:scale(0.5);opacity:0}36.566%{transform:scale(0.5);opacity:0;animation-timing-function:cubic-bezier(0.34,1.5,0.64,1)}42.222%{transform:scale(1);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes pz-minesweeper-cv02{0%{transform:scale(1);opacity:1}43.434%{transform:scale(1);opacity:1;animation-timing-function:cubic-bezier(0.3,0,0.2,1)}46.061%{transform:scale(0.84);opacity:1}47.475%{transform:scale(0.84);opacity:1;animation-timing-function:cubic-bezier(0.4,0,0.6,1)}51.111%{transform:scale(0.6);opacity:0}100%{transform:scale(0.6);opacity:0}}
+@keyframes pz-minesweeper-cv22{0%{transform:scale(1);opacity:1}47.475%{transform:scale(1);opacity:1;animation-timing-function:cubic-bezier(0.4,0,0.6,1)}51.515%{transform:scale(0.6);opacity:0}100%{transform:scale(0.6);opacity:0}}
+@keyframes pz-minesweeper-ct22{0%{transform:scale(0.5);opacity:0}48.687%{transform:scale(0.5);opacity:0;animation-timing-function:cubic-bezier(0.34,1.5,0.64,1)}54.343%{transform:scale(1);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes pz-minesweeper-board{0%{transform:scale(1)}47.475%{transform:scale(1);animation-timing-function:cubic-bezier(0.3,0,0.2,1)}54.141%{transform:scale(1.04);animation-timing-function:cubic-bezier(0.4,0,0.6,1)}61.616%{transform:scale(1)}100%{transform:scale(1)}}
+}
+</style>
+<g class="pz-minesweeper-board"><rect class="pz-minesweeper-line" x="19" y="19" width="82" height="82"/><rect class="pz-minesweeper-open" x="19" y="19" width="26" height="26"/><rect class="pz-minesweeper-open" x="47" y="19" width="26" height="26"/><rect class="pz-minesweeper-open" x="75" y="19" width="26" height="26"/><rect class="pz-minesweeper-hid" x="19" y="47" width="26" height="26"/><rect class="pz-minesweeper-open" x="47" y="47" width="26" height="26"/><rect class="pz-minesweeper-open" x="75" y="47" width="26" height="26"/><rect class="pz-minesweeper-open" x="19" y="75" width="26" height="26"/><rect class="pz-minesweeper-open" x="47" y="75" width="26" height="26"/><rect class="pz-minesweeper-minebg" x="75" y="75" width="26" height="26"/><g class="pz-minesweeper-ct00"><text class="pz-minesweeper-n1" x="32" y="38.8" font-family="system-ui, sans-serif" font-size="19.5" font-weight="700" text-anchor="middle">1</text></g><g class="pz-minesweeper-ct01"><text class="pz-minesweeper-n1" x="60" y="38.8" font-family="system-ui, sans-serif" font-size="19.5" font-weight="700" text-anchor="middle">1</text></g><g><g class="pz-minesweeper-flag" stroke-linejoin="round"><path d="M28 52V69" fill="none" stroke-width="4" stroke-linecap="round"/><path d="M29.5 52H38.5L35 56L38.5 60H29.5Z" stroke-width="2"/></g></g><g><path class="pz-minesweeper-n2" stroke-width="13" stroke-linejoin="round" d="M62 0V94L242 273Q287 318 322 357Q357 396 377 434Q397 472 397 514Q397 565 368.5 590.5Q340 616 294 616Q251 616 212.5 597.5Q174 579 133 545L63 629Q98 659 132.5 680Q167 701 208 712.5Q249 724 302 724Q371 724 421 699Q471 674 498 630Q525 586 525 526Q525 466 500 415Q475 364 433 317.5Q391 271 338 222L223 115V107H551V0Z" transform="translate(54.115 66.95) scale(0.0192 -0.0192)"/></g><g><text class="pz-minesweeper-n1" x="88" y="66.8" font-family="system-ui, sans-serif" font-size="19.5" font-weight="700" text-anchor="middle">1</text></g><g><text class="pz-minesweeper-n1" x="32" y="94.8" font-family="system-ui, sans-serif" font-size="19.5" font-weight="700" text-anchor="middle">1</text></g><g class="pz-minesweeper-ct21"><path class="pz-minesweeper-n2" stroke-width="13" stroke-linejoin="round" d="M62 0V94L242 273Q287 318 322 357Q357 396 377 434Q397 472 397 514Q397 565 368.5 590.5Q340 616 294 616Q251 616 212.5 597.5Q174 579 133 545L63 629Q98 659 132.5 680Q167 701 208 712.5Q249 724 302 724Q371 724 421 699Q471 674 498 630Q525 586 525 526Q525 466 500 415Q475 364 433 317.5Q391 271 338 222L223 115V107H551V0Z" transform="translate(54.115 94.95) scale(0.0192 -0.0192)"/></g><g class="pz-minesweeper-ct22"><g class="pz-minesweeper-mine" stroke-linecap="round"><circle cx="85.5" cy="88.5" r="6.5" stroke="none"/><path d="M89.5 84.5L92.5 81.5" fill="none" stroke-width="2"/></g></g><rect class="pz-minesweeper-hid pz-minesweeper-cv00" x="19" y="19" width="26" height="26"/><rect class="pz-minesweeper-hid pz-minesweeper-cv01" x="47" y="19" width="26" height="26"/><rect class="pz-minesweeper-hid pz-minesweeper-cv02" x="75" y="19" width="26" height="26"/><rect class="pz-minesweeper-hid pz-minesweeper-cv21" x="47" y="75" width="26" height="26"/><rect class="pz-minesweeper-hid pz-minesweeper-cv22" x="75" y="75" width="26" height="26"/><rect x="18" y="18" width="84" height="84" rx="2" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/></g>
+</svg>

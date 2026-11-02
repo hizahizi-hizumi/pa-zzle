@@ -6,6 +6,7 @@ import {
 import { RecordedMinesweeperResult } from "@/game-catalog/minesweeper/RecordedMinesweeperResult";
 import { parseDifficultyLevel } from "@/games/difficulty";
 import pictogramSvg from "@/games/minesweeper/assets/pictogram.svg?raw";
+import pictogramShowcaseSvg from "@/games/minesweeper/assets/pictogram-showcase.svg?raw";
 import { MINESWEEPER_DISPLAY_NAME } from "@/games/minesweeper/display-name";
 import {
   isMinesweeperPlayRecord,
@@ -28,6 +29,7 @@ export const minesweeperCatalogEntry = {
   id: minesweeperPlayRecordDefinition.gameId,
   name: MINESWEEPER_DISPLAY_NAME,
   pictogramSvg,
+  pictogramShowcaseSvg,
   homePath: "/puzzles/minesweeper",
   playPath: "/puzzles/minesweeper/play/:difficulty",
   playRecordDisplay: minesweeperPlayRecordDisplay,
