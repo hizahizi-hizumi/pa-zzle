@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ブリッジパズル">
+  <path d="M49 25H71M49 35H71" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M30 49V71" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M49 90H71" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="30" cy="30" r="15" fill="var(--game-pictogram-soft)" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <circle cx="90" cy="30" r="15" fill="var(--game-pictogram-soft)" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <circle cx="30" cy="90" r="15" fill="var(--game-pictogram-soft)" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+  <circle cx="90" cy="90" r="15" fill="none" stroke="var(--game-pictogram-strong)" stroke-width="4"/>
+</svg>
