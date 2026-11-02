@@ -125,9 +125,18 @@ export function isBridgesRecordedProblemIdentity(
 }
 
 /**
- * 問題の形を確かめる。盤面の形が正しいこと。
+ * 問題の形を確かめる。盤面の形が正しく、生成器が扱う一辺の正方形であること。
+ * プレイ画面は正方形の枠に盤面を描き、押した位置を同じ枠から求めるので、正方形でない盤面は受け付けない。
  * 一意解であることは探索を要するので、ここでは確かめない（問題集の生成と検証で確かめる）。
  */
 export function assertBridgesProblem(problem: BridgesProblem): void {
   assertBridgesBoard(problem);
+  if (
+    problem.width !== problem.height ||
+    !bridgesBoardSizes.some((size) => size === problem.width)
+  ) {
+    throw new RangeError(
+      `Bridges problem must be a square board of ${bridgesBoardSizes.join(", ")} cells`,
+    );
+  }
 }
