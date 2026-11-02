@@ -42,6 +42,7 @@ export function PlayableBridges({
       bridges={play.bridges}
       islandStatuses={play.islandStatuses}
       undoCount={play.undoCount}
+      edgeNotice={play.edgeNotice}
       canUndo={play.canUndo}
       canRestart={play.canRestart}
       onCycleEdge={play.cycleEdge}

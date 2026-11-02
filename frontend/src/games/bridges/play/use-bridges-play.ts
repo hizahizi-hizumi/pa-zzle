@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import type { BridgesDifficulty } from "@/games/bridges/difficulty";
 import type {
@@ -37,6 +37,19 @@ import { selectProblemAvoiding } from "@/games/problem-selection";
 /** クリアしたプレイの評価。評価規則を持たないので、クリアしても評価は無く、盤面を見せたままにする。 */
 export type BridgesResult = never;
 
+/**
+ * 最後の盤面操作で、橋に起きた変化。盤面が阻まれた操作を返し、プレイ画面が読み上げで知らせるために持つ。
+ * `id` は操作ごとに変わり、同じ変化が続いても別の操作として知らせられるようにする。
+ * - `changed`: 辺 `edge` の橋が `count` 本になった。
+ * - `blocked`: 辺 `edge` に架けようとしたが、交わる辺 `crossingEdges` の橋に阻まれた。
+ * - `undone`: 待ったで1つ前の盤面へ戻した。
+ */
+export type BridgesEdgeNotice = { id: number } & (
+  | { change: "changed"; edge: number; count: BridgeCount }
+  | { change: "blocked"; edge: number; crossingEdges: readonly number[] }
+  | { change: "undone" }
+);
+
 export type BridgesPlay = GamePlay<
   BridgesDifficulty,
   BridgesProblemIdentity,
@@ -52,6 +65,8 @@ export type BridgesPlay = GamePlay<
     islandStatuses: readonly BridgesIslandStatus[];
     /** ここまでに待ったを使った回数。 */
     undoCount: number;
+    /** 最後の盤面操作（橋を回す・待った）で橋に起きた変化。盤面を戻す・リセットの後は `null`。 */
+    edgeNotice: BridgesEdgeNotice | null;
     /** 辺の橋を 1本 → 2本 → なし と回す。交わる橋に阻まれたら架けない。 */
     cycleEdge: (edge: number) => void;
   };
@@ -60,6 +75,7 @@ type BridgesPlayState = {
   problemIdentity: BridgesProblemIdentity;
   session: BridgesSession;
   progress: GameProgress;
+  edgeNotice: BridgesEdgeNotice | null;
 };
 
 function createPlayState(
@@ -70,6 +86,7 @@ function createPlayState(
     problemIdentity: identity,
     session: createBridgesSession(problem, startedAt),
     progress: "playing",
+    edgeNotice: null,
   };
 }
 
@@ -102,36 +119,71 @@ export function useBridgesPlay(
   const elapsedMs = useSessionElapsedMs(session);
   const { problem, puzzleState } = session;
 
+  const nextOperationId = useRef(0);
+
   const cycleEdge = useCallback((edge: number) => {
     const operatedAt = Date.now();
-    setPlay((current) =>
-      applyPlaySession(
-        current,
-        cycleBridgesSessionEdge(current.session, edge, operatedAt).session,
-      ),
-    );
+    const id = nextOperationId.current++;
+    setPlay((current) => {
+      const { session, crossingEdges } = cycleBridgesSessionEdge(
+        current.session,
+        edge,
+        operatedAt,
+      );
+      if (crossingEdges !== null) {
+        return {
+          ...current,
+          session,
+          edgeNotice: { id, change: "blocked", edge, crossingEdges },
+        };
+      }
+      const next = applyPlaySession(current, session);
+      return next === current
+        ? current
+        : {
+            ...next,
+            edgeNotice: {
+              id,
+              change: "changed",
+              edge,
+              count: session.puzzleState.bridges[edge]!,
+            },
+          };
+    });
   }, []);
 
   const undo = useCallback(() => {
-    setPlay((current) =>
-      applyPlaySession(current, undoBridgesSession(current.session)),
-    );
+    const id = nextOperationId.current++;
+    setPlay((current) => {
+      const next = applyPlaySession(
+        current,
+        undoBridgesSession(current.session),
+      );
+      return next === current
+        ? current
+        : { ...next, edgeNotice: { id, change: "undone" } };
+    });
   }, []);
 
   const restart = useCallback(() => {
-    setPlay((current) =>
-      applyPlaySession(current, restartBridgesSession(current.session)),
-    );
+    setPlay((current) => {
+      const next = applyPlaySession(
+        current,
+        restartBridgesSession(current.session),
+      );
+      return next === current ? current : { ...next, edgeNotice: null };
+    });
   }, []);
 
   const replay = useCallback(() => {
     const startedAt = Date.now();
-    setPlay((current) =>
-      startPlaySession(
+    setPlay((current) => ({
+      ...startPlaySession(
         current,
         createBridgesSession(current.session.problem, startedAt),
       ),
-    );
+      edgeNotice: null,
+    }));
   }, []);
 
   const startNewProblem = useCallback(() => {
@@ -161,6 +213,7 @@ export function useBridgesPlay(
     bridges: puzzleState.bridges,
     islandStatuses: listBridgesIslandStatuses(problem, puzzleState),
     undoCount: session.undoCount,
+    edgeNotice: play.edgeNotice,
     canUndo: canUndoBridgesSession(session),
     canRestart: canRestartBridgesSession(session),
     cycleEdge,

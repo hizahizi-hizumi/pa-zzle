@@ -2,11 +2,15 @@ import { GamePlayFrame } from "@/components/GamePlayFrame";
 import { UndoButton } from "@/components/UndoButton";
 import type { BridgesDifficulty } from "@/games/bridges/difficulty";
 import { BRIDGES_DISPLAY_NAME } from "@/games/bridges/display-name";
-import type { BridgesResult } from "@/games/bridges/play/use-bridges-play";
+import type {
+  BridgesEdgeNotice,
+  BridgesResult,
+} from "@/games/bridges/play/use-bridges-play";
 import type { BridgesBoard as BridgesBoardState } from "@/games/bridges/puzzle/board";
 import type { BridgesIslandStatus } from "@/games/bridges/puzzle/rules";
 import type { BridgeCount } from "@/games/bridges/puzzle/state";
 import { BridgesHowToPlayDialog } from "@/games/bridges/ui/BridgesHowToPlayDialog";
+import { BridgesStatusAnnouncement } from "@/games/bridges/ui/BridgesPlay/BridgesStatusAnnouncement";
 import { BridgesBoard } from "@/games/bridges/ui/board/BridgesBoard";
 import type {
   GamePlayScreenProps,
@@ -22,10 +26,11 @@ type BridgesPlayProps = GamePlayScreenProps<BridgesDifficulty, BridgesResult> &
     bridges: readonly BridgeCount[];
     islandStatuses: readonly BridgesIslandStatus[];
     undoCount: number;
+    edgeNotice: BridgesEdgeNotice | null;
     onCycleEdge: (edge: number) => void;
   };
 
-/** 1問のプレイ画面。結果画面を持たないので、クリアした後も盤面を見せたままにする。 */
+/** 1問のプレイ画面。結果画面を持たないので、クリアの演出を終えた後も盤面を見せたままにする。 */
 export function BridgesPlay({
   progress,
   elapsedMs,
@@ -34,12 +39,14 @@ export function BridgesPlay({
   bridges,
   islandStatuses,
   undoCount,
+  edgeNotice,
   canUndo,
   canRestart,
   onCycleEdge,
   onUndo,
   onRestart,
   onReplay,
+  onClearAnimationComplete,
   onStartNewProblem,
   onChangeDifficulty,
   onBackToHome,
@@ -73,10 +80,18 @@ export function BridgesPlay({
             board={board}
             bridges={bridges}
             islandStatuses={islandStatuses}
+            edgeNotice={edgeNotice}
+            clearing={progress === "clearing"}
             interactionDisabled={progress !== "playing"}
             onCycleEdge={onCycleEdge}
+            onClearAnimationComplete={onClearAnimationComplete}
           />
         </div>
+        <BridgesStatusAnnouncement
+          board={board}
+          notice={edgeNotice}
+          solved={progress !== "playing"}
+        />
       </main>
       <footer className="grid h-28 shrink-0 items-end px-4 pb-2">
         <div className="flex h-14 items-center justify-center">
