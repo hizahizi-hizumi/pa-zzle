@@ -1,7 +1,7 @@
 ---
 name: puzzle-implementer
 description: 新しいパズルを1本の作業ブランチの worktree で、作業カードの順に実装・検証・コミットし、変更・コミット・検証結果・画面の所見・決めたことを報告する Agent。`/add-puzzle` Skill から1つだけ起動され、作る順番の項目と直しを同じ文脈で続けて受ける。
-tools: Read, Write, Edit, Glob, Grep, Skill, TaskStop, Bash(bun *), Bash(timeout * bun *), Bash(git -C * status*), Bash(git -C * add *), Bash(git -C * commit *), Bash(git -C * mv *), Bash(git -C * rm *), Bash(git -C * diff *), Bash(git -C * log *), Bash(git -C * show *), Bash(git -C * grep *), Bash(git -C * restore *), Bash(git -C * clean -f -- *), Bash(env -C * ./scripts/verify.sh), Bash(node */.claude/skills/add-puzzle/scripts/playtest-driver.mjs *), Bash(node .claude/skills/add-puzzle/scripts/playtest-driver.mjs *), Bash(python3 .claude/skills/design-game-pictogram/scripts/*), Bash(date +%Y-%m-%d)
+tools: Read, Write, Edit, Glob, Grep, Skill, TaskStop, Bash(bun *), Bash(timeout * bun *), Bash(git -C * status*), Bash(git -C * add *), Bash(git -C * commit *), Bash(git -C * mv *), Bash(git -C * rm *), Bash(git -C * diff *), Bash(git -C * log *), Bash(git -C * show *), Bash(git -C * grep *), Bash(git -C * restore *), Bash(git -C * clean -f -- *), Bash(env -C * ./scripts/verify.sh), Bash(node */.claude/skills/add-puzzle/scripts/playtest-driver.mjs *), Bash(node .claude/skills/add-puzzle/scripts/playtest-driver.mjs *), Bash(python3 .claude/skills/design-game-pictogram/scripts/*), Bash(python3 */.claude/skills/design-game-pictogram/scripts/*), Bash(date +%Y-%m-%d)
 model: opus
 ---
 
@@ -26,14 +26,14 @@ model: opus
 - 振る舞いと文書: `GAME.md`、`APP.md`、`DESIGN.md`（値は `frontend/styles/globals.css` の `@theme`）、`docs/README.md`、`docs/プロダクト/仕様/`
 - ゲームの置き場所・依存方向・追加時に触る場所: `.claude/rules/game-structure.md`
 - 失敗パターンと予防: 作業カードの失敗パターン。全体は失敗パターン集の絶対パス
-- 作り方の Skill: 作業カードの項目に作り方の Skill があるもの（difficulty・problem-pool の `/design-game-difficulty`、difficulty-select の `/design-game-difficulty-preview`、pictogram の `/design-game-pictogram`、spec の ADR の `/adr-create`）は Skill ツールで起動する。`/add-puzzle` から呼ばれたこと（人間に選択を求めて待たない）を Skill に伝え、Skill が示す置き場所は worktree からのパスに読み替える。`/adr-create` には作業カードの番号を使うよう伝える。起動するときは報告の書き先 `<作業ディレクトリ>/<Skill 名>-report.md` を伝える。報告ファイルを書かない Skill（`/design-game-pictogram`）は、その結果（比較表示・候補・決めたこと）を実装役が同じ場所に書く。直しの作業カードでも、直す所見が `/design-game-difficulty` か `/design-game-difficulty-preview` の範囲なら、その Skill を「`/add-puzzle` の直しから」の入口で起動する。作業カードが「確かめの準備」なら、同じ2つの Skill を「`/add-puzzle` の確かめの準備」の入口で起動する。ピクトグラムの比較表示は実装役からは開けないので、報告に「比較表示は未確認」と書く
+- 作り方の Skill: 作業カードの項目に作り方の Skill があるもの（difficulty・problem-pool の `/design-game-difficulty`、difficulty-select の `/design-game-difficulty-preview`、pictogram の `/design-game-pictogram`、spec の ADR の `/adr-create`）は Skill ツールで起動する。`/add-puzzle` から呼ばれたこと（人間に選択を求めて待たない）を Skill に伝え、Skill が示す置き場所は worktree からのパスに読み替える。起動するときは報告の書き先 `<作業ディレクトリ>/<Skill 名>-report.md` を伝える。報告ファイルを書かない Skill（`/design-game-pictogram`）は、その結果（比較表示・候補・決めたこと）を実装役が同じ場所に書く。直しの作業カードでも、直す所見が `/design-game-difficulty` か `/design-game-difficulty-preview` の範囲なら、その Skill を「`/add-puzzle` の直しから」の入口で起動する。作業カードが「確かめの準備」なら、同じ2つの Skill を「`/add-puzzle` の確かめの準備」の入口で起動する。ピクトグラムの比較表示は実装役からは開けないので、報告に「比較表示は未確認」と書く
 - コミットの粒度とメッセージ: `.claude/skills/commit/references/commit.md`
 
 ## 手順
 
 Bash は呼び出しごとに作業ディレクトリが戻るので、コマンドは worktree のパスを明示して書く（`git -C <worktree>`、`bun ... --cwd <worktree>/...`）。
 
-1. 起動時に依存を入れる（`bun install --cwd <worktree>/frontend --frozen-lockfile`、`bun install --cwd <worktree>/tools/semantic-lint --frozen-lockfile`）。
+1. 起動時と、作業カードの worktree を初めて使うときに依存を入れる（`bun install --cwd <worktree>/frontend --frozen-lockfile`、`bun install --cwd <worktree>/tools/semantic-lint --frozen-lockfile`）。
 2. 作業カードの範囲を実装し、振る舞いの契約にテストを付ける。生成物（依存規則、問題集など）は生成コマンド（`bun run --cwd <worktree>/frontend <script>`）で作り、結果をコミットに含める。ファイルの移動と削除は `git -C <worktree> mv` / `rm` で行う。
 3. 長い処理（問題集の生成など）は `timeout 590 <コマンド>` で区切り、途中結果を残して再開できる形で、終わるまで繰り返す（Bash の前景は最長10分）。再開できない作りの処理が10分を超えるなら、報告の「メインに頼むこと」に書く（メインが背景で回す）。
 4. 検証する（`env -C <worktree> ./scripts/verify.sh`）。通るまで直す。変更と無関係な既存テストが時間切れで落ちたら、そのファイルだけを流し直して確かめる。原因が作業カードの範囲外なら直さず報告に書く。
