@@ -657,6 +657,7 @@ def human_card(
     themes: dict[str, dict[str, str]],
     others: list[tuple[str, str]],
     anchors: dict[tuple[str, Path], str],
+    base_svg: str | None,
 ) -> str:
     candidate_id, fields = candidate_fields(candidate)
     origin_html = origin_line(origins_of(manifest_path, candidate), anchors)
@@ -667,6 +668,12 @@ def human_card(
     notes = text_field(candidate, "notes")
     notes_html = f"<p><b>補足:</b> {html.escape(notes)}</p>" if notes else ""
     still = themed_images(svg, themes, "list", candidate_id)
+    base_figure = (
+        f'<figure><span class="tile">{themed_images(base_svg, themes, "base")}</span>'
+        "<figcaption>元のピクトグラム（白黒）</figcaption></figure>"
+        if base_svg
+        else ""
+    )
     compare = ""
     if others:
         tiles = "".join(
@@ -685,7 +692,10 @@ def human_card(
   <p class="meta">{html.escape(fields["hypothesis"])}</p>
   <div class="views">
     <figure class="hero">{themed_images(svg, themes, "hero", candidate_id)}<figcaption>ヒーロー（再生）</figcaption></figure>
-    <figure><span class="tile selected">{still}</span><figcaption>一覧の選択中（静止）</figcaption></figure>
+    <div class="stills">
+      <figure><span class="tile selected">{still}</span><figcaption>一覧の選択中（静止）</figcaption></figure>
+      {base_figure}
+    </div>
   </div>
   <button type="button" class="replay">最初から再生</button>
   {compare}
@@ -842,21 +852,15 @@ def build_human_document(
     db_doc: str | None,
 ) -> str:
     light, dark = themes["light"], themes["dark"]
+    base = manifest.get("base_pictogram")
+    base_svg = read_svg(manifest_path, base, "base_pictogram") if base else None
     origins = origins_with_derived(manifest_path, candidates)
     anchors = {origin.key: f"previous-{index}" for index, (origin, _) in enumerate(origins, start=1)}
     families = "".join(
         f'<h2 class="family">{html.escape(family)}</h2>'
-        + "".join(human_card(manifest_path, candidate, themes, others, anchors) for candidate in members)
+        + "".join(human_card(manifest_path, candidate, themes, others, anchors, base_svg) for candidate in members)
         for family, members in grouped_by_family(candidates).items()
     )
-    base = manifest.get("base_pictogram")
-    base_html = ""
-    if base:
-        base_svg = read_svg(manifest_path, base, "base_pictogram")
-        base_html = (
-            f'<figure class="base"><span class="tile">{themed_images(base_svg, themes, "base")}</span>'
-            "<figcaption>基準（白黒版）</figcaption></figure>"
-        )
     title = str(manifest.get("title") or "Showcase pictogram review")
     game_id = str(manifest.get("game_id") or "")
     storage_key = f"pictogram-showcase-review:{game_id}:{db_doc or manifest_path.resolve()}"
@@ -902,6 +906,7 @@ def build_human_document(
   .meta {{ font-size: 12px; margin: 0 0 10px; line-height: 1.5; }}
   .views {{ display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }}
   figure {{ margin: 0; text-align: center; }}
+  .stills {{ display: flex; flex-direction: column; gap: 10px; }}
   figcaption {{ font-size: 11px; margin-top: 4px; }}
   .hero {{ background: color-mix(in oklab, var(--muted) 30%, var(--bg)); border-radius: 8px; padding: {hero_mobile_pad}px; }}
   .hero img {{ display: block; width: {hero_mobile}px; height: {hero_mobile}px; }}
@@ -919,7 +924,6 @@ def build_human_document(
   .decision.active {{ background: var(--fg); color: var(--bg); border-color: var(--fg); }}
   textarea {{ width: 100%; margin-top: 8px; font: inherit; font-size: 16px; padding: 8px; border-radius: 8px;
     border: 1px solid var(--muted-fg); background: var(--bg); color: var(--fg); }}
-  .base {{ display: inline-block; margin: 4px 0 0; }}
   #review-output {{ min-height: 160px; font-size: 12px; }}
   @media (min-width: 640px) {{
     .hero {{ padding: {hero_desktop_pad}px; }}
@@ -937,7 +941,6 @@ def build_human_document(
   <button type="button" id="replay-all">すべて最初から再生</button>
   <span id="save-status"></span>
 </div>
-{base_html}
 {previous_section(origins, anchors, themes)}
 {families}
 <h2 class="family">全体メモ</h2>
