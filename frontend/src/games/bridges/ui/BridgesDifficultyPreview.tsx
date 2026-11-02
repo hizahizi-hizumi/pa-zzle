@@ -13,10 +13,9 @@ const PREVIEW_ROWS = 5;
 
 /**
  * レベルごとの盤面と、図に描く行。`board` は盤面全体の記法（`formatBridgesBoard`）、`top` は描き始める行。
- * `marks` は描く行と同じ形で、`o` が輪を付ける島。
  * 盤面はそのレベルの組み合わせ（`bridgesLevelCombinations`）に当たる一意解の盤面で、問題集の問題ではない（生成器で作り、
  * 問題集と同型でないものを選んだ）。一辺はそのレベルの盤面の一辺の上限で、図には盤面の横幅いっぱいを `PREVIEW_ROWS` 行だけ描く。
- * 描く行は、上のレベルほど島が減らず、輪（数字の読みを尽くしても橋が決まらず、つながりを読んで決める島）がはっきり増える所を選んだ。
+ * 描く行は、上のレベルほど島が減らない所を選んだ。
  */
 const previewBoards = {
   "1": {
@@ -30,7 +29,6 @@ const previewBoards = {
       "..2...2",
     ],
     top: 0,
-    marks: [".......", ".......", ".......", ".......", "......."],
   },
   "2": {
     board: [
@@ -44,7 +42,6 @@ const previewBoards = {
       ".2..2.1.",
     ],
     top: 0,
-    marks: ["........", "........", "........", "........", "........"],
   },
   "3": {
     board: [
@@ -59,7 +56,6 @@ const previewBoards = {
       "2.2.2.3.2",
     ],
     top: 1,
-    marks: ["......o.o", ".........", "........o", ".........", "........."],
   },
   "4": {
     board: [
@@ -75,13 +71,6 @@ const previewBoards = {
       "..1......2",
     ],
     top: 4,
-    marks: [
-      "..........",
-      "..o....o.o",
-      "..........",
-      "o.o......o",
-      "..........",
-    ],
   },
   "5": {
     board: [
@@ -97,31 +86,19 @@ const previewBoards = {
       "1.2..3.2.1",
     ],
     top: 1,
-    marks: [
-      "..........",
-      "....o.o.o.",
-      ".....o.o.o",
-      "....o.o...",
-      "o.o..o....",
-    ],
   },
 } as const satisfies Record<
   BridgesDifficulty,
-  { board: readonly string[]; top: number; marks: readonly string[] }
+  { board: readonly string[]; top: number }
 >;
-
-const MARK_NOTATION = "o";
 
 /**
  * 島の丸の半径と縁の太さ（マス幅を 1 とした値）。色は盤面の島と同じにし、大きさと縁の太さは見本の大きさに合わせて盤面と違える。
- * 盤面の縁の太さ（0.06）は1マス 10px では1px 未満で消えるので太くし、盤面の半径（0.4）では外側の輪と重なるので小さくする。
+ * 盤面の縁の太さ（0.06）は1マス 10px では1px 未満で消えるので太くし、半径は隣の島の丸と離れて見えるよう盤面（0.4）より小さくする。
  */
 const ISLAND_RADIUS = 0.3;
 const ISLAND_OUTLINE_WIDTH = 0.12;
-/** 輪の半径と太さ。島の丸から離して描き、島の丸の色や大きさの違いに見えないようにする。 */
-const MARK_RADIUS = 0.45;
-const MARK_WIDTH = 0.08;
-/** 地の四方の余白（マス幅を 1 とした値）。端の行・列の輪が地の縁に接して見えないようにする。 */
+/** 地の四方の余白（マス幅を 1 とした値）。端の行・列の島の丸が地の縁に接して見えないようにする。 */
 const GROUND_PADDING = 0.2;
 
 type PreviewBoard = {
@@ -130,22 +107,15 @@ type PreviewBoard = {
   top: number;
   /** 描く行にある島の番号。 */
   shownIslands: number[];
-  /** 輪を付ける島の番号。 */
-  markedIslands: number[];
 };
 
 function createPreviewBoard(difficulty: BridgesDifficulty): PreviewBoard {
-  const { board: rows, top, marks } = previewBoards[difficulty];
+  const { board: rows, top } = previewBoards[difficulty];
   const board = parseBridgesBoard(rows);
-  const markRows: readonly string[] = marks;
   const shownIslands = board.islands.flatMap(({ row }, index) =>
     row >= top && row < top + PREVIEW_ROWS ? [index] : [],
   );
-  const markedIslands = shownIslands.filter((index) => {
-    const { row, column } = board.islands[index]!;
-    return markRows[row - top]?.[column] === MARK_NOTATION;
-  });
-  return { board, top, shownIslands, markedIslands };
+  return { board, top, shownIslands };
 }
 
 type BridgesDifficultyPreviewProps = {
@@ -155,14 +125,13 @@ type BridgesDifficultyPreviewProps = {
 /**
  * 難易度プレビューは、そのレベルの盤面の横幅いっぱいを数行だけ、解き始めの姿（島だけ。数字と橋は描かない）で描く模式図である。
  * - 横幅（盤面の一辺）と描く行の島の数で、上のレベルほど盤面が広く島が多いことを示す。マスの大きさと行の数はどのレベルでもそろえる。
- * - 数字の読みだけでは橋が決まらない島に輪を付ける。上のレベルほど多く、つながりを読んで決める所が広いことを示す。
- * - 数字は見本の大きさでは読めないので描かない。島の丸は盤面の足りない島と同じ色の白い丸にし（大きさと縁の太さは見本に合わせる）、輪は丸から離して線だけで描く。
+ * - 数字は見本の大きさでは読めないので描かない。島の丸は盤面の足りない島と同じ色の白い丸にする（大きさと縁の太さは見本に合わせる）。
+ * - 島に印を付けない。見本の大きさでは何の印か分からない（最終レビューの人間の判断）。
  */
 export function BridgesDifficultyPreview({
   difficulty,
 }: BridgesDifficultyPreviewProps) {
-  const { board, top, shownIslands, markedIslands } =
-    createPreviewBoard(difficulty);
+  const { board, top, shownIslands } = createPreviewBoard(difficulty);
   const { width } = board;
   const groundWidth = width + GROUND_PADDING * 2;
   const groundHeight = PREVIEW_ROWS + GROUND_PADDING * 2;
@@ -190,28 +159,15 @@ export function BridgesDifficultyPreview({
         />
         {shownIslands.map((island) => {
           const { row, column } = board.islands[island]!;
-          const cx = column + 0.5;
-          const cy = row - top + 0.5;
           return (
-            <g key={`${row}:${column}`}>
-              {markedIslands.includes(island) && (
-                <circle
-                  cx={cx}
-                  cy={cy}
-                  r={MARK_RADIUS}
-                  fill="none"
-                  strokeWidth={MARK_WIDTH}
-                  className={bridgesToneClassNames.previewMark}
-                />
-              )}
-              <circle
-                cx={cx}
-                cy={cy}
-                r={ISLAND_RADIUS}
-                strokeWidth={ISLAND_OUTLINE_WIDTH}
-                className={tone.disc}
-              />
-            </g>
+            <circle
+              key={`${row}:${column}`}
+              cx={column + 0.5}
+              cy={row - top + 0.5}
+              r={ISLAND_RADIUS}
+              strokeWidth={ISLAND_OUTLINE_WIDTH}
+              className={tone.disc}
+            />
           );
         })}
       </svg>

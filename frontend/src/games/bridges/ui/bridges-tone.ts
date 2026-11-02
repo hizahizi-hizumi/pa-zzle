@@ -10,8 +10,6 @@ import type { BridgesIslandStatus } from "@/games/bridges/puzzle/rules";
  * - 島を押している間に見せる、架けられる相手への線は、状態のどれとも紛れない空色にする。
  *   今離せば回す辺は濃い空色、どちらを狙ったか決まらない所を押したときの候補の辺は、架けられる相手への線と同じ淡い空色にする
  *   （どれも「架けられる所」の案内で、回す辺とは分ける）。
- * - 難易度の見本で数字の読みだけでは決まらない島に付ける輪は、島の縁と同じ濃い色の線にする（盤面の形の一部として読ませ、
- *   状態の色と紛れないようにする）。
  */
 export const bridgesToneClassNames = {
   ground: "fill-stone-100 dark:fill-stone-800",
@@ -20,7 +18,6 @@ export const bridgesToneClassNames = {
   guide: "stroke-sky-500/45 dark:stroke-sky-400/45",
   guidePreview: "stroke-sky-500 dark:stroke-sky-400",
   focusRing: "stroke-sky-600 dark:stroke-sky-300",
-  previewMark: "stroke-stone-700 dark:stroke-stone-300",
 } as const;
 
 type IslandTone = {
