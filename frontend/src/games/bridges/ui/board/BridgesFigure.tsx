@@ -167,7 +167,7 @@ export function BridgesFigure({
       </g>
       <g
         {...{ [bridgesFigureParts.ambiguousEdges]: "" }}
-        className={bridgesToneClassNames.guidePreview}
+        className={bridgesToneClassNames.guide}
         strokeWidth={GUIDE_PREVIEW_LINE_WIDTH}
         strokeLinecap="round"
         opacity={0}

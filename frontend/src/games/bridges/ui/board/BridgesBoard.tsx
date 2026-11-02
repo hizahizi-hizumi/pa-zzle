@@ -102,11 +102,17 @@ export function BridgesBoard({
   // 別の問題へ移ると島の数が減ることがあるので、描画のたびに今の盤面の島へ丸める。
   const focusedIsland = Math.min(selectedIsland, board.islands.length - 1);
   const [keyboardFocused, setKeyboardFocused] = useState(false);
-  /** 最後に、どちらを狙ったか決まらない所を押したときの候補の辺。`id` は押すたびに変え、同じ所を続けて押しても点け直す。 */
+  /**
+   * 最後に、どちらを狙ったか決まらない所を押したときの、押した盤面と候補の辺。`id` は押すたびに変え、同じ所を続けて押しても点け直す。
+   */
   const [ambiguousTap, setAmbiguousTap] = useState<{
     id: number;
+    board: BridgesBoardState;
     edges: readonly number[];
   } | null>(null);
+  // 別の問題へ移った後は、前の盤面の辺を今の盤面に描かない。
+  const ambiguousEdges =
+    ambiguousTap?.board === board ? ambiguousTap.edges : [];
   const islandBridgeCounts = countBridgesIslandBridges(board, { bridges });
   const blockingEdges =
     edgeNotice?.change === "blocked" ? edgeNotice.crossingEdges : [];
@@ -166,6 +172,7 @@ export function BridgesBoard({
     if (target.kind === "ambiguous") {
       setAmbiguousTap((current) => ({
         id: (current?.id ?? 0) + 1,
+        board,
         edges: target.edges,
       }));
       return;
@@ -252,7 +259,7 @@ export function BridgesBoard({
         guide={guide}
         focusedIsland={keyboardFocused ? focusedIsland : null}
         blockingEdges={blockingEdges}
-        ambiguousEdges={ambiguousTap?.edges ?? []}
+        ambiguousEdges={ambiguousEdges}
       />
       <ul className="sr-only">
         {board.islands.map(({ row, column, clue }, island) => (
